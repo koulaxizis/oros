@@ -235,6 +235,23 @@
       "nd.contact": "{name}: name day",
       "nd.more": "+{n} more",
       "lbl.feeds": "App feeds",
+      "hh.head": "Shared with a household",
+      "hh.share": "Share with a household",
+      "hh.go": "Share",
+      "hh.stop": "Stop sharing",
+      "hh.del": "Delete shared calendar",
+      "hh.in": "Shared in {hh}",
+      "hh.by": "Last changed by {n}",
+      "hh.none": "Share a label with the house icon: everyone in the household sees and edits its events.",
+      "hh.nohh": "Create or join a household first, in the Household app.",
+      "hh.open": "Open Household",
+      "hh.share.text": "Everyone in the household will see and edit the events of “{n}”. Reminders stay yours.",
+      "hh.stop.text": "“{n}” leaves {hh} for everyone, and you keep your own copy. The others can bring it back from Household for 30 days.",
+      "hh.del.text": "“{n}” leaves {hh} for everyone, and you keep no copy. The others can bring it back from Household for 30 days.",
+      "hh.shared": "Shared with {hh}",
+      "hh.stopped": "Sharing stopped. Your own copy is in your labels.",
+      "hh.deleted": "Shared calendar deleted",
+      "hh.fail": "Could not reach the household. Try again.",
       "lbl.feed.ro": "Read-only — managed by its app",
       "lbl.manage": "Manage labels",
       "lbl.acts": "Quick filters",
@@ -466,6 +483,23 @@
       "nd.contact": "Γιορτάζει: {name}",
       "nd.more": "+{n} ακόμη",
       "lbl.feeds": "Ροές εφαρμογών",
+      "hh.head": "Κοινά με νοικοκυριό",
+      "hh.share": "Κοινή χρήση με νοικοκυριό",
+      "hh.go": "Κοινή χρήση",
+      "hh.stop": "Διακοπή κοινής χρήσης",
+      "hh.del": "Διαγραφή κοινού ημερολογίου",
+      "hh.in": "Κοινό στο «{hh}»",
+      "hh.by": "Τελευταία αλλαγή: {n}",
+      "hh.none": "Μοιράσου μια ετικέτα με το εικονίδιο του σπιτιού: όλοι στο νοικοκυριό βλέπουν και αλλάζουν τα συμβάντα της.",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.share.text": "Όλοι στο νοικοκυριό θα βλέπουν και θα αλλάζουν τα συμβάντα της ετικέτας «{n}». Οι υπενθυμίσεις μένουν δικές σου.",
+      "hh.stop.text": "Η «{n}» φεύγει από το «{hh}» για όλους και εσύ κρατάς δικό σου αντίγραφο. Οι άλλοι μπορούν να τη φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.del.text": "Η «{n}» φεύγει από το «{hh}» για όλους και εσύ δεν κρατάς αντίγραφο. Οι άλλοι μπορούν να τη φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.shared": "Κοινό με «{hh}»",
+      "hh.stopped": "Η κοινή χρήση σταμάτησε. Το αντίγραφό σου είναι στις ετικέτες σου.",
+      "hh.deleted": "Το κοινό ημερολόγιο διαγράφηκε",
+      "hh.fail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "lbl.feed.ro": "Μόνο ανάγνωση — διαχειρίζεται η εφαρμογή της",
       "lbl.manage": "Διαχείριση ετικετών",
       "lbl.acts": "Γρήγορα φίλτρα",
@@ -1007,8 +1041,9 @@ function transientNote(title, body) {
   }
 
   function labelById(id) {
-    for (var i = 0; i < state.labels.length; i++) {
-      if (state.labels[i].id === id) return state.labels[i];
+    var own = ownLabels();
+    for (var i = 0; i < own.length; i++) {
+      if (own[i].id === id) return own[i];
     }
     for (var f = 0; f < FEED_LABELS.length; f++) {
       if (FEED_LABELS[f].id === id) return FEED_LABELS[f];
@@ -1091,7 +1126,7 @@ function transientNote(title, body) {
   }
 
   function loadState() {
-    var raw = null;
+    var raw = null, hhEvs = state.events.filter(isHhEv);   // BR-HH: not in DATA_KEY
     try { raw = localStorage.getItem(DATA_KEY); } catch (e0) { raw = null; }
     try {
       var d = JSON.parse(raw);
@@ -1126,25 +1161,38 @@ function transientNote(title, body) {
       if (raw) { try { localStorage.setItem(RESCUE_KEY, raw); } catch (e3) {} }
       if (!state.labels.length) state.labels = defaultLabels();
     }
+    state.events = state.events.filter(function (e) { return !isHhEv(e); }).concat(hhEvs);
     writeStore();
   }
 
   // CA-7: the disk holds exactly what the getter hands to sync —
   // the merge's canonical form (sorted by id, sanitized, canonical
   // seed names). The closed-app proxy then reads the same bytes.
-  var quotaWarned = false;
+  // BR-HH: only the person's own calendar (personal()); true when the
+  // stored bytes changed.
+  var quotaWarned = false, lastStore = null;
   function writeStore() {
+    var canon = mergeCalendars(personal(state), null), text = JSON.stringify(canon);
+    hhOwnIds = {};
+    canon.events.forEach(function (e) { hhOwnIds[e.id] = 1; });
+    var changed = text !== lastStore;
     try {
-      localStorage.setItem(DATA_KEY, JSON.stringify(mergeCalendars(state, null)));
+      localStorage.setItem(DATA_KEY, text);
+      lastStore = text;
       quotaWarned = false;
     } catch (e) {
       // R30: one message per failure streak, never silence.
       if (!quotaWarned) { quotaWarned = true; transientNote(t("toast.quota")); }
+      changed = true;
     }
+    return changed;
   }
+  // An edit of a shared calendar only goes to its household: the
+  // person's own cloud copy is marked dirty only when it changed.
   function saveState() {
-    writeStore();
-    markDirty();
+    hhTombMoved();
+    if (writeStore()) markDirty();
+    hhPush();
   }
 
   // Shell sync bridge — canonical __orosSyncApi funnel (Part VII).
@@ -1152,6 +1200,175 @@ function transientNote(title, body) {
     try {
       if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     } catch (e) {}
+  }
+
+  /* ---------- 2a. Calendars shared with a household (BR-HH) ----------
+     A shared calendar is a household document of kind "cal"
+     (window.parent.orosHousehold, household/engine.js). calendar/house.js
+     turns it into a label "hh-<document id>" (hhLabels, never in
+     state.labels) and events of that label. They live only in memory:
+     never in DATA_KEY nor in the person's own cloud copy (personal()),
+     and every edit leaves through saveState() → hhPush() as the fields
+     that changed. Nothing here merges a shared calendar: the household
+     merge does, field by field, and hhInject() rebuilds the events from
+     its result, so the two can never answer each other. Reminders stay
+     personal (REM_KEY, this device). */
+  var HHc = window.OrosCalHouse || null, HC = window.OrosHouseCore || null;
+  var hhLabels = [];      // the shared calendars, as labels
+  var hhLast = {};        // document id → the projection last read or sent
+  var hhInfo = {};        // label id → { box, id, hh }
+  var hhOwnIds = {};      // event ids last written to DATA_KEY
+  var hhWant = null;      // a deep link to a shared event not built yet
+  var hhNoCopy = {};      // calendars deleted here: no own copy
+  var hhBuilt = false;    // the first build ran
+  function hhApi() {
+    if (!HHc || !HC) return null;
+    try {
+      var p = window.parent;
+      return p && p !== window && p.orosHousehold && typeof p.orosHousehold.docs === "function" ? p.orosHousehold : null;
+    } catch (e) { return null; }
+  }
+  function isHh(id) { return !!HHc && HHc.isShared(id); }
+  function isHhEv(e) { return !!e && isHh(e.labelId); }
+  function personal(st) {
+    var o = {};
+    Object.keys(st).forEach(function (k) { o[k] = st[k]; });
+    o.events = (st.events || []).filter(function (e) { return !isHhEv(e); });
+    return o;
+  }
+  // The person's labels and the shared calendars: chips, the event
+  // dialog, filters.
+  function ownLabels() { return hhLabels.length ? state.labels.concat(hhLabels) : state.labels; }
+  // An event moved from the person's own calendar into a shared one is
+  // gone from the own calendar on every device of theirs (tombstone).
+  function hhTombMoved() {
+    var now = Date.now();
+    state.events.forEach(function (e) {
+      if (!isHhEv(e) || !hhOwnIds[e.id]) return;
+      state.deleted = state.deleted.filter(function (d) { return d.id !== e.id; });
+      state.deleted.push({ id: e.id, mtime: Math.max(now, e.mtime || 0) });
+    });
+  }
+  function hhSig(labels, events) {
+    var evs = events.slice().sort(function (a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); });
+    return JSON.stringify(labels) + JSON.stringify(evs.map(function (e) {
+      return [HHc.project(null, [e]).items[e.id] || null, e.labelId, e.remindMin, e.hhBy || ""];
+    }));
+  }
+  // Rebuilds the shared calendars from the household; true when what is
+  // on screen changed. Calendars that left a household (this person
+  // stopped sharing, left, was removed) become calendars of their own.
+  function hhInject() {
+    var h = hhApi();
+    if (!h) return false;
+    var rem = HHc.readRem(), labels = [], evs = [], info = {};
+    h.docs("cal").forEach(function (d) {
+      if (!d.ready) return;
+      var v = h.view(d.box, d.id, ["o"]);
+      if (!v) return;
+      var b = HHc.build(v, d.id, rem);
+      info[b.label.id] = { box: d.box, id: d.id, hh: d.hh };
+      hhLast[d.id] = HHc.project(b.label, b.events);
+      labels.push(b.label);
+      evs = evs.concat(b.events);
+    });
+    hhBuilt = true;
+    hhInfo = info;
+    var changed = hhSig(hhLabels, state.events.filter(isHhEv)) !== hhSig(labels, evs);
+    if (changed) {
+      hhLabels = labels;
+      state.events = state.events.filter(function (e) { return !isHhEv(e); }).concat(evs);
+    }
+    var copies = hhCopies(h);
+    if (copies) saveState();
+    if (changed || copies) refreshOpenDlg();
+    if (hhWant) {
+      var w = hhWant;
+      hhWant = null;
+      if (findEvent(w.id)) setTimeout(function () { __orosCalendarOpen(w.id, w.date); }, 0);
+    }
+    return changed || copies;
+  }
+  // The own copy "lbc-<document id>" of a calendar that left a household
+  // (same event ids: every device of the person makes the very same one).
+  function hhCopies(h) {
+    var made = false, now = Date.now();
+    h.archived("cal").forEach(function (a) {
+      if (!a.take) return;
+      if (hhNoCopy[a.id]) { h.dropArchived(a.box, a.id); return; }
+      var lid = HHc.COPY + a.id;
+      if (!state.labels.some(function (l) { return l.id === lid; })) {
+        var c = HHc.copyOf(HC.view(a.doc, ["o"]), a.id, now), ids = {};
+        ids[lid] = 1;
+        c.events.forEach(function (e) { ids[e.id] = 1; });
+        // newer than any tombstone the share left on these ids
+        state.deleted = state.deleted.filter(function (d) { return !ids[d.id]; });
+        state.events = state.events.filter(function (e) { return !ids[e.id]; });
+        var lbl = sanitizeLabel(c.label);
+        if (lbl) state.labels.push(lbl);
+        c.events.forEach(function (e) { var s = sanitizeEvent(e); if (s) state.events.push(s); });
+        made = true;
+      }
+      h.dropArchived(a.box, a.id);
+    });
+    return made;
+  }
+  // Sends what changed in the shared calendars since they were last read.
+  var lastRem = null;
+  function hhPush() {
+    var h = hhApi();
+    if (!h || !HHc) return;
+    var rem = HHc.readRem(), gone = [];
+    hhLabels.forEach(function (l) {
+      var inf = hhInfo[l.id];
+      if (!inf || !hhLast[inf.id]) return;
+      var mine = state.events.filter(function (e) { return e.labelId === l.id; });
+      mine.forEach(function (e) { if (e.remindMin) rem[e.id] = e.remindMin; else delete rem[e.id]; });
+      var prev = hhLast[inf.id], cur = HHc.project(l, mine);
+      var d = HC.diffItems(prev.items, cur.items, HHc.FIELDS), m = {}, anyM = false;
+      if (prev.m.c !== cur.m.c) { m.c = cur.m.c; anyM = true; }
+      hhLast[inf.id] = cur;
+      if (d) gone = gone.concat(d.del);
+      if (cur.m.t && cur.m.t !== prev.m.t) h.retitle(inf.box, inf.id, cur.m.t);
+      if (d || anyM) h.change(inf.box, inf.id, { set: d ? d.set : {}, del: d ? d.del : [], m: m });
+    });
+    gone.forEach(function (id) { if (!findEvent(id) || !isHhEv(findEvent(id))) delete rem[id]; });
+    var txt = JSON.stringify(rem);
+    if (txt === lastRem) return;
+    lastRem = txt;
+    try {
+      if (Object.keys(rem).length) localStorage.setItem(HHc.REM_KEY, txt);
+      else localStorage.removeItem(HHc.REM_KEY);
+    } catch (e) {}
+  }
+  // Who last changed a shared event (another member only).
+  function hhByOf(e) {
+    var h = hhApi(), src = e && e._src ? e._src : e, inf = src ? hhInfo[src.labelId] : null;
+    if (!h || !inf || !src.hhBy || src.hhBy === h.me(inf.box)) return null;
+    return h.member(inf.box, src.hhBy);
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      if (hhInject()) {
+        renderChips();
+        renderAll();
+        renderDay();
+        if ($("lbl-dlg") && $("lbl-dlg").open) renderLblList();
+      }
+    }, 0);
+  }
+  function hhBoot() {
+    var h = hhApi();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
 
   // orosDialog lives in the parent shell (same-origin iframe).
@@ -1331,9 +1548,9 @@ function transientNote(title, body) {
   // their own chip, NO_LABEL. Filtering only hides, never changes them.
   var NO_LABEL = "lbl-nolabel";
   function eventVisible(e) {
-    var own = false;
-    for (var i = 0; i < state.labels.length; i++) {
-      if (state.labels[i].id === e.labelId) { own = true; break; }
+    var own = false, lbls = ownLabels();
+    for (var i = 0; i < lbls.length; i++) {
+      if (lbls[i].id === e.labelId) { own = true; break; }
     }
     return labelVisible(own ? e.labelId : NO_LABEL);
   }
@@ -3694,14 +3911,14 @@ function transientNote(title, body) {
   // Every chip of the filter row, in row order: own labels, "No label",
   // the feeds, the subscribed calendars.
   function filterIds() {
-    var ids = state.labels.map(function (l) { return l.id; });
+    var ids = ownLabels().map(function (l) { return l.id; });
     ids.push(NO_LABEL);
     FEED_LABELS.forEach(function (fl) { ids.push(fl.id); });
     state.subs.forEach(function (x) { ids.push("sub-" + x.id); });
     return ids;
   }
   function isOwnFilter(id) {
-    return id === NO_LABEL || state.labels.some(function (l) { return l.id === id; });
+    return id === NO_LABEL || ownLabels().some(function (l) { return l.id === id; });
   }
 
   // One way to change the filter: sets each id, then saves the chips
@@ -3824,8 +4041,8 @@ function transientNote(title, body) {
     sep.setAttribute("aria-hidden", "true");
     acts.appendChild(sep);
     row.appendChild(acts);
-    state.labels.forEach(function (l) {
-      var c = chipEl(l.id, l.color, lblName(l));
+    ownLabels().forEach(function (l) {
+      var c = chipEl(l.id, l.color, lblName(l), isHh(l.id) ? "chip-hh" : "");
       wireChip(c, l.id, function () {
         labelVis[l.id] = !labelVisible(l.id);
         renderChips();
@@ -3933,6 +4150,16 @@ function transientNote(title, body) {
       tag.style.background = lb.color;
       tag.textContent = (lb.name !== undefined) ? lblName(lb) : feedLabelName(lb);
       title.appendChild(tag);
+    }
+    var by = isHhEv(e) ? hhByOf(e) : null;   // BR-HH: another member changed it last
+    if (by) {
+      var bc = document.createElement("span");
+      bc.className = "ev-by";
+      bc.style.background = by.color;
+      bc.textContent = by.initials;
+      bc.title = t("hh.by").replace("{n}", by.name);
+      bc.setAttribute("aria-label", bc.title);
+      title.appendChild(bc);
     }
     main.appendChild(title);
 
@@ -4515,7 +4742,7 @@ function transientNote(title, body) {
       row.appendChild(c);
     };
     mk(null, t("lbl.none"), null);
-    state.labels.forEach(function (l) { mk(l.id, lblName(l), l.color); });
+    ownLabels().forEach(function (l) { mk(l.id, lblName(l), l.color); });
   }
 
   var dlgQr = null;
@@ -5148,6 +5375,18 @@ function transientNote(title, body) {
       });
       row.appendChild(inp);
 
+      // BR-HH: share this calendar with a household
+      if (hhApi()) {
+        var sh = document.createElement("button");
+        sh.type = "button";
+        sh.className = "btn lbl-hh";
+        sh.innerHTML = HH_SVG;
+        sh.title = t("hh.share");
+        sh.setAttribute("aria-label", t("hh.share") + ": " + lblName(l));
+        sh.addEventListener("click", function () { hhOpen("share", l.id); });
+        row.appendChild(sh);
+      }
+
       var del = document.createElement("button");
       del.type = "button";
       del.className = "btn danger lbl-del";
@@ -5168,6 +5407,7 @@ function transientNote(title, body) {
       row.appendChild(pal);   // color palette (toggled by the dot button)
       list.appendChild(row);
     });
+    hhLblRows(list);
     // Feed labels — visible but IMMUTABLE: born from FEED_LABELS,
     // never from state.labels, so no rename/delete/color controls.
     // Pure transparency: the user sees why these chips exist.
@@ -5206,6 +5446,196 @@ function transientNote(title, body) {
       emp.textContent = t("lbl.empty");
       list.appendChild(emp);
     }
+  }
+
+  // BR-HH: the shared calendars in the label manager. Name and colour
+  // change for the whole household; "Stop sharing" leaves everyone an
+  // own copy, "Delete" leaves none here.
+  var HH_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+  function hhLabelOf(id) {
+    for (var i = 0; i < hhLabels.length; i++) if (hhLabels[i].id === id) return hhLabels[i];
+    return null;
+  }
+  function hhLblRows(list) {
+    var h = hhApi();
+    if (!h) return;
+    var hd = document.createElement("div");
+    hd.className = "lbl-feeds-head";
+    hd.textContent = t("hh.head");
+    list.appendChild(hd);
+    if (!hhLabels.length) {
+      var hint = document.createElement("div");
+      hint.className = "lbl-hh-hint";
+      hint.textContent = t(h.list().length ? "hh.none" : "hh.nohh");
+      list.appendChild(hint);
+      if (!h.list().length) {
+        var op = document.createElement("button");
+        op.type = "button";
+        op.className = "btn lbl-hh-open";
+        op.textContent = t("hh.open");
+        op.addEventListener("click", function () {
+          $("lbl-dlg").close();
+          try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+        });
+        list.appendChild(op);
+      }
+      return;
+    }
+    hhLabels.forEach(function (l0) {
+      var lid = l0.id, inf = hhInfo[lid] || {};
+      var row = document.createElement("div");
+      row.className = "lbl-row hh";
+      var dot = document.createElement("button");
+      dot.type = "button";
+      dot.className = "lbl-color-btn";
+      dot.style.background = l0.color;
+      dot.setAttribute("aria-label", t("lbl.color"));
+      dot.title = t("lbl.color");
+      var pal = document.createElement("div");
+      pal.className = "lbl-palette";
+      pal.hidden = true;
+      dot.addEventListener("click", function () {
+        document.querySelectorAll(".lbl-palette").forEach(function (p) { if (p !== pal) p.hidden = true; });
+        pal.hidden = !pal.hidden;
+      });
+      LABEL_PALETTE.forEach(function (c) {
+        var sw = document.createElement("button");
+        sw.type = "button";
+        sw.className = "lbl-swatch" + (c === l0.color ? " active" : "");
+        sw.style.background = c;
+        sw.setAttribute("aria-label", c);
+        sw.addEventListener("click", function () {
+          var lv = hhLabelOf(lid);
+          if (!lv) return;
+          lv.color = c;
+          saveState();
+          renderLblList(); renderChips(); renderAll(); renderDay();
+        });
+        pal.appendChild(sw);
+      });
+      row.appendChild(dot);
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.className = "lbl-name-in";
+      inp.maxLength = 40;
+      inp.value = l0.name;
+      inp.addEventListener("change", function () {
+        var lv = hhLabelOf(lid), nm = inp.value.trim().slice(0, 40);
+        if (!lv) return;
+        if (nm) lv.name = nm;
+        inp.value = lv.name;
+        saveState();
+        renderChips(); renderAll(); renderDay();
+      });
+      row.appendChild(inp);
+      var where = document.createElement("div");
+      where.className = "lbl-hh-in";
+      where.textContent = t("hh.in").replace("{hh}", inf.hh || "");
+      row.appendChild(where);
+      var stop = document.createElement("button");
+      stop.type = "button";
+      stop.className = "btn lbl-hh-stop";
+      stop.textContent = t("hh.stop");
+      stop.addEventListener("click", function () { hhOpen("stop", lid); });
+      row.appendChild(stop);
+      var del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn danger lbl-del";
+      del.textContent = t("lbl.delete");
+      del.addEventListener("click", function () { hhOpen("del", lid); });
+      row.appendChild(del);
+      row.appendChild(pal);
+      list.appendChild(row);
+    });
+  }
+  // One small dialog for the three questions: share (pick the
+  // household), stop sharing, delete.
+  var hhMode = null, hhFor = null;
+  function hhOpen(mode, lid) {
+    var h = hhApi();
+    if (!h) return;
+    var l = labelById(lid);
+    if (!l) return;
+    hhMode = mode; hhFor = lid;
+    $("hh-dlg-title").textContent = t(mode === "share" ? "hh.share" : (mode === "stop" ? "hh.stop" : "hh.del"));
+    $("hh-dlg-text").textContent = t("hh." + mode + ".text").replace("{n}", lblName(l)).replace("{hh}", (hhInfo[lid] || {}).hh || "");
+    var sel = $("hh-dlg-box"), hhs = h.list();
+    sel.textContent = "";
+    hhs.forEach(function (x) {
+      var o = document.createElement("option");
+      o.value = x.box;
+      o.textContent = x.name || "?";
+      sel.appendChild(o);
+    });
+    sel.hidden = mode !== "share" || hhs.length < 2;
+    $("hh-dlg-nohh").hidden = mode !== "share" || hhs.length > 0;
+    var go = $("hh-dlg-go");
+    go.textContent = t(mode === "share" ? "hh.go" : (mode === "stop" ? "hh.stop" : "lbl.delete"));
+    go.className = "btn " + (mode === "del" ? "danger" : "prim");
+    go.disabled = mode === "share" && !hhs.length;
+    $("hh-dlg").showModal();
+  }
+  function hhShare(lid, box) {
+    var h = hhApi(), l = null;
+    state.labels.forEach(function (x) { if (x.id === lid) l = x; });
+    if (!h || !l) return;
+    var hh = (h.list().filter(function (x) { return x.box === box; })[0] || {}).name || "";
+    var evs = state.events.filter(function (e) { return e.labelId === lid; });
+    // ids the household does not take get a new one (imported events)
+    evs.forEach(function (e) {
+      if (HHc.ID_RE.test(e.id)) return;
+      state.deleted.push({ id: e.id, mtime: Date.now() });
+      e.id = uid();
+    });
+    var proj = HHc.project({ name: lblName(l), color: l.color }, evs);
+    var rem = HHc.readRem();
+    $("hh-dlg-go").disabled = true;
+    Promise.resolve(h.share(box, "cal", proj.m.t, { set: proj.items, m: { c: proj.m.c } })).then(function (id) {
+      // the calendar leaves the person's own one on every device of theirs
+      var now = Date.now(), gone = {};
+      gone[lid] = 1;
+      evs.forEach(function (e) { gone[e.id] = 1; if (e.remindMin) rem[e.id] = e.remindMin; });
+      try { localStorage.setItem(HHc.REM_KEY, JSON.stringify(rem)); } catch (e) {}
+      state.events = state.events.filter(function (e) { return !gone[e.id]; });
+      state.labels = state.labels.filter(function (x) { return x.id !== lid; });
+      state.deleted = state.deleted.filter(function (d) { return !gone[d.id]; });
+      Object.keys(gone).forEach(function (k) { state.deleted.push({ id: k, mtime: now }); });
+      if (labelVis[lid] === false) labelVis[HHc.PREFIX + id] = false;
+      delete labelVis[lid];
+      hhInject();
+      saveState();
+      $("hh-dlg").close();
+      renderLblList(); renderChips(); renderAll(); renderDay();
+      transientNote(t("hh.shared").replace("{hh}", hh));
+    }, function () {
+      $("hh-dlg-go").disabled = false;
+      transientNote(t("hh.fail"));
+    });
+  }
+  function hhStop(lid, drop) {
+    var h = hhApi(), inf = hhInfo[lid];
+    if (!h || !inf) return;
+    if (drop) hhNoCopy[inf.id] = 1;
+    $("hh-dlg-go").disabled = true;
+    Promise.resolve(h.unshare(inf.box, inf.id)).then(function () {
+      hhInject();
+      saveState();
+      $("hh-dlg").close();
+      renderLblList(); renderChips(); renderAll(); renderDay();
+      transientNote(t(drop ? "hh.deleted" : "hh.stopped"));
+    }, function () {
+      $("hh-dlg-go").disabled = false;
+      transientNote(t("hh.fail"));
+    });
+  }
+  if ($("hh-dlg")) {
+    $("hh-dlg-go").addEventListener("click", function () {
+      if (hhMode === "share") hhShare(hhFor, $("hh-dlg-box").value);
+      else if (hhMode === "stop") hhStop(hhFor, false);
+      else if (hhMode === "del") hhStop(hhFor, true);
+    });
+    $("hh-dlg-no").addEventListener("click", function () { $("hh-dlg").close(); });
+    $("hh-dlg").addEventListener("click", function (ev) { if (ev.target === this) this.close(); });
   }
 
   $("lbl-add").addEventListener("click", function () {
@@ -5664,14 +6094,15 @@ function transientNote(title, body) {
   var RP = window.OrosRecordPkg || null, CPK = window.OrosCalPackage || null;
   var recFile = RP && CPK && window.OrosBundle ? RP.ui(CPK.DESC, {
     lang: function () { return LANG; },
-    get: function () { return mergeCalendars(state, null); },
+    get: function () { return mergeCalendars(personal(state), null); },   // BR-HH: own calendar only
     title: function () { return "Calendar"; },
     set: function (next) {
       if (!next || !Array.isArray(next.events)) return;
+      var hhEvs = state.events.filter(isHhEv);
       state = {
         ver: 1,
         labels: (Array.isArray(next.labels) ? next.labels : []).map(sanitizeLabel).filter(Boolean),
-        events: next.events.map(sanitizeEvent).filter(Boolean),
+        events: next.events.map(sanitizeEvent).filter(function (e) { return e && !isHhEv(e); }).concat(hhEvs),
         deleted: (Array.isArray(next.deleted) ? next.deleted : []).map(sanitizeTomb).filter(Boolean),
         subs: state.subs                // never from a file
       };
@@ -5882,7 +6313,11 @@ function transientNote(title, body) {
     for (var i = 0; i < state.events.length; i++) {
       if (state.events[i].id === evId) { ev = state.events[i]; break; }
     }
-    if (!ev) return;   // deleted meanwhile — day selection suffices
+    if (!ev) {         // deleted meanwhile — day selection suffices,
+      // unless it is in a shared calendar not built yet
+      if (hhApi()) hhWant = { id: evId, date: ymd };
+      return;
+    }
 
     // Paint settle first (mirrors the checkReminders boot sweep
     // timing — dialogs need the paints finished before showModal).
@@ -6582,7 +7017,7 @@ function transientNote(title, body) {
   function openScal() {
     if (!shareApi()) { toast(t("fr.noshare")); return; }
     var opts = [{ v: "", l: t("sc.all") }];
-    state.labels.forEach(function (l) { opts.push({ v: l.id, l: lblName(l) }); });
+    ownLabels().forEach(function (l) { opts.push({ v: l.id, l: lblName(l) }); });
     fillSel($("sc-lbl"), opts, "");
     fillSel($("sc-range"), [{ v: "all", l: t("sc.r.all") }, { v: "month", l: t("sc.r.month") }, { v: "3m", l: t("sc.r.3m") },
       { v: "year", l: t("sc.r.year") }, { v: "pick", l: t("sc.r.pick") }], "all");
@@ -6781,6 +7216,7 @@ function transientNote(title, body) {
   renderChips();
   setView("month");
   selectDay(todayYMD());
+  hhBoot();            // BR-HH: calendars shared with a household
   setTimeout(checkReminders, 1500);   // boot sweep (after paints settle)
   // Wave 6/#C1: staged deep link consumption — renamed from
   // deepLink() to __orosCalendarOpen() for DL_BRIDGE parity.
@@ -7154,7 +7590,9 @@ function transientNote(title, body) {
     var lbls = Array.isArray(data.labels)
       ? data.labels.map(sanitizeLabel).filter(Boolean)
       : defaultLabels();   // παλιό-peer blob χωρίς labels → seed
-    state = { ver: 1, labels: lbls, events: evs, deleted: dels,
+    // BR-HH: the shared calendars are not in the person's copy; they stay.
+    var hhEvs = state.events.filter(isHhEv);
+    state = { ver: 1, labels: lbls, events: evs.filter(function (e) { return !isHhEv(e); }).concat(hhEvs), deleted: dels,
               subs: Array.isArray(data.subs) ? data.subs.map(sanitizeSub).filter(Boolean) : [] };
     // CA-10: Undo data survives a pull (R28) — undoDelete/undoMove/
     // undoExdate all work by id on the live state.

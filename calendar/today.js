@@ -1,7 +1,7 @@
 // ============================================================
 // orOS Calendar — Today provider (v1.2.0, wave 4)
 // Loaded by the shell (today/host.js) through apps.json "today".
-// Read-only: reads oros-calendar-data, oros-contacts-data and the
+// Read-only: reads oros-calendar-data (+ the shared oros-calendar-hh), oros-contacts-data and the
 // Calendar's cached copy of its world days (oros-cal-days), never
 // writes, never fetches. The rules are calendar/occur.js (eventsOn:
 // your own events, series included, the same walk the Calendar draws
@@ -29,13 +29,19 @@
 
   var PROVIDER = {
     id: "calendar",
-    keys: ["oros-calendar-data", "oros-contacts-data", "oros-cal-days", "oros-pet-data"],
+    keys: ["oros-calendar-data", "oros-calendar-hh", "oros-contacts-data", "oros-cal-days", "oros-pet-data"],
     collect: function (ctx) {
       var ND = root.OrosNamedays, OCC = root.OrosCalOccur;
       // A pack language: English + the calendar pack, when one is loaded.
       if (!W[ctx.lang] && root.orosI18n) root.orosI18n.table(W, "calendar", ctx.lang);
       var w = W[ctx.lang] || W.en, el = ctx.lang === "el", out = [];
       var cal = OCC ? ctx.readJSON("oros-calendar-data") : null;
+      // calendars shared with a household (calendar/house.js mirror)
+      var hh = OCC ? ctx.readJSON("oros-calendar-hh") : null;
+      if (hh && Array.isArray(hh.events) && hh.events.length) {
+        cal = { events: (cal && Array.isArray(cal.events) ? cal.events : []).concat(hh.events),
+                deleted: cal && Array.isArray(cal.deleted) ? cal.deleted : [] };
+      }
       if (cal && Array.isArray(cal.events)) {
         for (var e = 0; e <= ctx.horizon; e++) {
           var on = ctx.addDays(ctx.today, e);

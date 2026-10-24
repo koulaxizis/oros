@@ -78,6 +78,11 @@ Tapping a feed row opens the app it comes from. To change it, edit it there.
 
 The Calendar reads a subscribed calendar when you open it (if it's been more than half an hour) and every 3 hours while it stays open; `Refresh` reads it at once. Offline, you see the last copy. Many servers let the browser read the calendar directly. Those that don't are read through the orOS relay that [Reader](app:feeds) uses, with its address from Reader's `Settings` or from [Mail](app:mail); without one, the window tells you so. In the same window you can rename a subscription, tap its dot to change its colour, or `Remove` it (`Undo` brings it back).
 
+## Share a calendar with your household
+Once you're in a household (the [Household](app:household) app), a label can become a calendar you share. In `Manage labels`, tap the house icon next to the label and press `Share`. Its events leave your own calendar and go to the household: everyone there sees them with the label's colour and can add, change, move and delete them from their own orOS. Shared calendars are listed under `Shared with a household`, where a new name or colour changes it for everyone. A small circle with initials on an event shows who in the household changed it last.
+
+Reminders stay yours: each person picks their own in the event's `Reminder`, and orOS reminds you even when the Calendar is closed. The events are encrypted on your devices before they leave, and they don't go into your own sync copy or your .oroscal file (an .ics export and `Send calendar to someone` include them). `Stop sharing` takes the calendar out of the household for everyone and leaves you an own copy with its events; `Delete` leaves you none. Either way, the others can bring it back from [Household](app:household) for 30 days.
+
 ## Share free times
 `More` › `Share free times…` makes a link with the times you're free, so someone can pick one, like a booking page. Choose what it's for, the length (15 minutes to 2 hours), how many days ahead (3 to 30), the hours of the day, and whether Saturday and Sunday count. Your name and email come from your [Mail](app:mail) account when there is one. The window says how many free times it found, and `Make the link…` opens [Send to someone](help:t/share), where you copy, share or email the link.
 
