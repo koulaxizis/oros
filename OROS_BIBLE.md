@@ -7972,7 +7972,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household / Νοικοκυριό: shared lists between people, wave 1 (#PR) — 3.48.00
+### 2026-10-24 — Household / Νοικοκυριό: shared lists between people, wave 1 (#579) — 3.48.00
 - Chris 2026-10-24 14:52 asked for collaboration between users (calendars, expenses, maps, watering, chores, shopping lists); 14:56 approved the plan (Part IX). Wave 1: the foundation and shared lists.
 - **Relay:** `relay/house.js` (new), route `/h/` in `relay/core.js`, `HouseBox` exported in `relay/worker.js`, Durable Object binding `HOUSE` + migration `house-v1` in `relay/wrangler.toml` (BR-HH, Part VI).
 - **Shell:** `household/core.js` (CRDT + roster + membership merge), `household/crypto.js` (AES-GCM, ECDH, HKDF, PBKDF2 invites), `household/engine.js` (`window.orosHousehold`, slice `household`, IndexedDB `oros-household`, notifications ns `household`).
