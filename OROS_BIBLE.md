@@ -7973,7 +7973,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household wave 2: shared calendars (#PR) — 3.49.00
+### 2026-10-24 — Household wave 2: shared calendars (#580) — 3.49.00
 - Wave 2 of the Household plan (Chris 2026-10-24 14:56, "go on with everything" 15:44). Calendar › Manage labels: the house icon shares a label with a household; "Shared with a household" lists shared calendars (name and colour for everyone, Stop sharing keeps an own copy, Delete keeps none). Everyone adds, edits, moves and deletes events; reminders stay personal and fire with the Calendar closed; initials of who changed an event last. Today and universal search show shared events. BR-HH (Part VI).
 - Files: `calendar/{house.js (new),calendar.js,calendar.css,index.html,today.js,search.js,help.*.txt}`, `index.html` (loads `calendar/house.js`), `shell.js` (`calRemTick` reads the mirror; APP_VERSION), `sw.js`, `i18n/de/{calendar.js,help/calendar.txt}`, `tests/calendar-house.test.js` (9), What's new, Bible.
 
