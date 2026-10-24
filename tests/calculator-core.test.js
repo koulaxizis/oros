@@ -312,3 +312,59 @@ test("page wiring: scripts, panes, palette, help", () => {
     assert.ok(!/no brackets|δεν έχει παρενθέσεις|χωρίς παρενθέσεις/i.test(h), f + ": the no-brackets limit is gone");
   }
 });
+
+// ---- Troll mode: quips only, the answer is never changed ----
+test("trollQuip: lines about the answer win over the pools", () => {
+  const q = (ctx) => C.trollQuip(ctx, 1, null, () => 0);
+  assert.equal(q({ err: true }), "troll.q.err");
+  assert.equal(q({ bare: true }), "troll.q.bare");
+  assert.equal(q({ v: 42, a: 40, b: 2, op: "add" }), "troll.q.42");
+  assert.equal(q({ v: 17, a: 17, b: 0, op: "add" }), "troll.q.same");
+  assert.equal(q({ v: 9, a: 9, b: 1, op: "div" }), "troll.q.same");
+  assert.equal(q({ v: 0, a: 15, b: 15, op: "sub" }), "troll.q.zero");
+  assert.equal(q({ v: 7, a: 3, b: 4, op: "add" }), "troll.q.easy");
+  assert.equal(q({ v: 0.5, expr: "sin(30)" }), "troll.q.trig");
+  assert.equal(q({ v: 91.44, expr: "3 ft to cm", unit: true }), "troll.q.units");
+  assert.equal(q({ v: 777, a: 700, b: 77, op: "add" }), "troll.q.rep");
+  assert.equal(q({ v: 2e9, a: 2e5, b: 1e4, op: "mul" }), "troll.q.big");
+  assert.equal(q({ v: -88, a: 12, b: 100, op: "sub" }), "troll.q.neg");
+  assert.equal(q({ v: 3.14159, a: 22, b: 7.0028, op: "div" }), "troll.q.dec");
+  assert.equal(q({ v: 120, a: 100, b: 20, op: "add" }), "troll.q.g1");
+});
+
+test("trollQuip: never the same line twice in a row, pools grow with the level", () => {
+  assert.equal(C.trollQuip({ v: 42 }, 1, "troll.q.42", () => 0), "troll.q.g1");
+  assert.equal(C.trollQuip({ v: 120 }, 1, "troll.q.g1", () => 0), "troll.q.g2");
+  const seen = (lvl) => {
+    const out = new Set();
+    for (let i = 0; i < 400; i++) out.add(C.trollQuip({ v: 120 }, lvl, null, () => i / 400));
+    return [...out];
+  };
+  assert.ok(seen(0).every((k) => /^troll\.q\.g\d$/.test(k)));
+  assert.equal(seen(0).length, 8);
+  assert.equal(seen(1).length, 16);
+  assert.equal(seen(2).length, 22);
+  assert.ok(seen(2).some((k) => /^troll\.q\.r\d$/.test(k)));
+  for (let i = 0; i < 50; i++) {
+    const last = "troll.q.g" + (1 + (i % 8));
+    assert.notEqual(C.trollQuip({ v: 120 }, 0, last, Math.random), last);
+  }
+});
+
+test("Troll mode: every quip in EN, EL and DE; no lie left in the app", () => {
+  const src = read("calculator/calculator.js");
+  const pack = JSON.parse(/^orosPack\("de", "calculator", (\{[\s\S]*\})\);\s*$/.exec(read("i18n/de/calculator.js"))[1]);
+  const i = src.indexOf("var TROLL_STRINGS = {");
+  const block = src.slice(i, src.indexOf("\n  };", i));
+  const en = block.slice(0, block.indexOf("    el: {")), el = block.slice(block.indexOf("    el: {"));
+  for (const k of C.trollQuipKeys()) {
+    assert.ok(en.includes('"' + k + '":'), "EN " + k);
+    assert.ok(el.includes('"' + k + '":'), "EL " + k);
+    assert.ok(pack[k], "DE " + k);
+  }
+  assert.ok(!/shouldLie|applyLie|lied: lied/.test(src), "Troll mode must never change an answer");
+  assert.ok(!Object.keys(pack).some((k) => k.startsWith("troll.toast.")));
+  const html = read("calculator/index.html");
+  assert.match(html, /id="calc-quip"/);
+  assert.match(html, /id="sci-quip"/);
+});

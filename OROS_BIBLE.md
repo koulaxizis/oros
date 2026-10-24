@@ -1445,7 +1445,7 @@ Multitasking (several live app frames) is an approved EXPERIMENT, off by default
 ```
 oros-calculator-data = { ver:1, troll, trollIntensity (0|1|2), mem (number|null), sciOn,
   sm{ mem, sciOn, troll, trollIntensity },              // ms stamps, LWW per setting
-  history[{ id, expr, res, ts, lied? }] (ts DESC, cap 50),
+  history[{ id, expr, res, ts, lied? }] (ts DESC, cap 50),  // lied: only old entries (TR-1), never written now
   deleted{ id: ts } }                                    // tombstones, pruned 30 days of data time
 ```
 
@@ -2598,6 +2598,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-10-22 · Calculator Troll mode never lies (TR-1), Chris 17:03 «Troll mode on αλλά με πάντα σωστά αποτελέσματα συνοδευόμενα από ατάκες»:** Troll mode keeps the toggle and its three levels but the answer is ALWAYS the real one; it only adds a quip under the result (`#calc-quip` in Standard, `#sci-quip` in Scientific), picked by `CalcCore.trollQuip(ctx, level, last)`: a line about the answer first (error, bare `=`, `x+0`/`x×1`, 42, unit conversion, zero, sums of small whole numbers, trig, repeated digits, ≥ 1e9, negative, 4+ decimals), else a pool by level (Subtle gentle, Balanced + cheeky, Rampant + roast), never the same key twice in a row. EN/EL in `TROLL_STRINGS`, DE in `i18n/de/calculator.js`. New history entries carry no `lied`; old ones that the former Troll mode changed show a `≈` mark (`calc.history.lied`). This is NOT the rejected Prank Calculator (wrong results). Tests `tests/calculator-core.test.js` (any `shouldLie`/`applyLie` back in `calculator.js` fails them).
 - **2026-10-16 · Notifications with orOS closed (optional Web Push), Chris 23:56 «Ναι σε όλα»:** an explicit, user-approved exception to the no-Google rule, ONLY as this switch (Settings › Notifications › Notifications with orOS closed): OFF by default, opt-in per device, with a clear EN/EL note that the push goes through Google (Chrome, Android), Microsoft (Edge) or Mozilla (Firefox), which see only an encrypted packet (RFC 8291) and its time. Relay boxes are Durable Objects with alarms (#460, 2.71.x); the app side is `webpush.js` (#471, 2.77.00). Nothing else changes: no Google speech, no other Google dependency.
 - **2026-10-16 · App interoperability, Chris 23:35 "Όλα με τη σειρά":** six waves from /mnt/project-files/app-interop/app-interop-report.md, one PR each, auto-continue after each merge: 1 "Send to an app" sheet (BR-SEND), 2 Files opens files in apps, 3 Office apps linked to each other, 4 record apps → Spreadsheet, 5 pictures and sound, 6 small everyday links. One writer per slice stays; no new service.
 
@@ -3350,7 +3351,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - Pet World: F key always feeds kibble, Feed button offers a choice.
 - Meals EL `toast.importBad` says "Meal Planner"; Characters MD export headings always English; Names: Enter/Space on a focused mode tab does nothing; Pixel: size/seed change silently drops hand painting.
 - Quote: reminders treat Sent/Accepted quotes with no due date as due (empty date compares early); PDF fallback prints US dates in EN.
-- Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).
+- ~~Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).~~ Fixed by TR-1 (2026-10-22): Troll mode no longer changes answers; old `lied` entries show `≈`.
 - Gomoku records vs-computer games after undo, Chess does not; Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options.
 
 ## Part X-B — Troubleshooting (known symptoms → cause → fix)
@@ -7952,6 +7953,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - DRIVE-DL: Files › orOS Drive, when nothing is mirrored yet, shows "Get orOS Drive" under the intro, opening `/download/` (`?lang=el` in Greek) in a new tab.
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
+
+### 2026-10-24 — Calculator: Troll mode with always-correct answers and quips (TR-1, #573) — 3.42.03
+- Chris 2026-10-22 17:03: «Troll mode on αλλά με πάντα σωστά αποτελέσματα συνοδευόμενα από ατάκες». The old Troll mode changed some answers by a few percent; now the answer is always the real one and `CalcCore.trollQuip` picks a quip shown under it (`#calc-quip`, `#sci-quip`): lines about the answer first, else pools by level, never the same twice in a row (decision TR-1, Part IX). Old `lied` history entries show `≈`.
+- Files: `calculator/{core.js,calculator.js,calculator.css,index.html,help.*.txt}`, `i18n/de/{calculator.js,help/calculator.txt,STATUS.md}`, `tests/calculator-core.test.js` (+3), What's new, Bible.
+  - Tests: full suite green. Chromium, real shell, EL and DE at 360 px, EN at 1280 px: every answer correct (42, 56 088, Error, −21, 1.5, 91.44 cm) with its line, no horizontal scroll, no console errors; off clears the line. Not tested: a real phone, Safari, real Dropbox sync.
 
 ### 2026-10-23 — Calling from Contacts in the Android app (EXT-1) — 3.42.02
 - Chris 2026-10-22: in the installed APK, tapping a phone number on a contact's card showed Chrome's error page inside the app instead of the phone's call apps. The `tel:` link navigated the app frame, which Chrome on Android cannot hand to the dialer. The shell now opens `tel:`, `sms:`, `smsto:`, `mailto:` and `geo:` links clicked in any app frame from the top window (EXT-1, Part II), so every app (Contacts, CRM, Share links, Invoices, Certificates, ...) gets the chooser; the "Leave site?" guard stays silent for the handoff.

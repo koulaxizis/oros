@@ -13,6 +13,8 @@
 //   4. Finance: VAT, percentage change, loan amortisation,
 //      compound savings, CSV.
 //   5. Graph helpers: grid steps, roots, extrema, intersections.
+//   6. Troll mode quips: picks the line that goes with a result;
+//      the result itself is never touched.
 // UMD: module.exports in Node (tests), window.CalcCore in a browser.
 // ============================================================
 (function (root) {
@@ -919,6 +921,61 @@
     return analyse(h, x0, x1, n, maxEach).roots.map(function (x) { return { x: x, y: f(x) }; });
   }
 
+  // ---------- 6. Troll mode quips ----------
+  // Troll mode always shows the correct result (Chris 2026-10-22);
+  // only the line beside it is picked here. ctx: { v (the result),
+  // a, b, op (Standard), expr (Scientific source), unit, err, bare }.
+  // level: 0 subtle (gentle pool), 1 balanced (+ cheeky), 2 rampant
+  // (+ roast). A line about the result itself wins over the pools;
+  // the same key never comes twice in a row. Returns a pack key.
+  var QUIP_POOLS = [
+    ["g1", "g2", "g3", "g4", "g5", "g6", "g7", "g8"],
+    ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"],
+    ["r1", "r2", "r3", "r4", "r5", "r6"]
+  ];
+  var TRIG_RE = /sin|cos|tan|ημ|συν|εφ/i;
+  function quipSpecial(ctx) {
+    if (ctx.err) return "err";
+    if (ctx.bare) return "bare";
+    var v = ctx.v;
+    if (!isNum(v)) return null;
+    if (ctx.op && isNum(ctx.b) &&
+        (((ctx.op === "add" || ctx.op === "sub") && ctx.b === 0) ||
+         ((ctx.op === "mul" || ctx.op === "div") && ctx.b === 1))) return "same";
+    if (v === 42) return "42";
+    if (ctx.unit) return "units";
+    if (v === 0) return "zero";
+    if (ctx.op && ctx.op !== "div" && [ctx.a, ctx.b].every(function (n) {
+      return isNum(n) && n === Math.floor(n) && n >= 0 && n <= 10;
+    })) return "easy";
+    if (ctx.expr && TRIG_RE.test(ctx.expr)) return "trig";
+    var abs = Math.abs(v);
+    if (abs >= 111 && abs < 1e15 && abs === Math.floor(abs) &&
+        /^(\d)\1{2,}$/.test(String(abs))) return "rep";
+    if (abs >= 1e9) return "big";
+    if (v < 0) return "neg";
+    var dec = String(clean(v)).split(".")[1];
+    if (dec && dec.indexOf("e") === -1 && dec.length >= 4) return "dec";
+    return null;
+  }
+  function trollQuip(ctx, level, last, rnd) {
+    rnd = rnd || Math.random;
+    var sp = quipSpecial(ctx || {});
+    if (sp && "troll.q." + sp !== last) return "troll.q." + sp;
+    var lvl = (level === 0 || level === 2) ? level : 1;
+    var pool = [];
+    for (var i = 0; i <= lvl; i++) pool = pool.concat(QUIP_POOLS[i]);
+    pool = pool.map(function (k) { return "troll.q." + k; })
+      .filter(function (k) { return k !== last; });
+    return pool[Math.min(pool.length - 1, Math.floor(rnd() * pool.length))];
+  }
+  // Every key trollQuip can return (the string packs must hold them all).
+  function trollQuipKeys() {
+    var out = ["err", "bare", "same", "42", "units", "zero", "easy", "trig", "rep", "big", "neg", "dec"];
+    QUIP_POOLS.forEach(function (p) { out = out.concat(p); });
+    return out.map(function (k) { return "troll.q." + k; });
+  }
+
   var API = {
     clean: clean, addR: addR, tokenize: tokenize, parse: parse, evaluate: evaluate, calc: calc, compile: compile,
     formatNum: formatNum, gamma: gamma, factorial: factorial,
@@ -926,7 +983,8 @@
     progEval: progEval, progFormat: progFormat, progGroup: progGroup, progToggleBit: progToggleBit, progBit: progBit,
     parseNum: parseNum, cents: cents, vat: vat, pctChange: pctChange, pctOf: pctOf, whatPct: whatPct,
     loan: loan, savings: savings, toCsv: toCsv,
-    niceStep: niceStep, analyse: analyse, intersections: intersections
+    niceStep: niceStep, analyse: analyse, intersections: intersections,
+    trollQuip: trollQuip, trollQuipKeys: trollQuipKeys
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.CalcCore = API;
