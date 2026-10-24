@@ -7978,7 +7978,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household wave 6: what the others changed, on the bell and in Today (#PR) — 3.53.00
+### 2026-10-24 — Household wave 6: what the others changed, on the bell and in Today (#584) — 3.53.00
 - Wave 6 of the Household plan. When someone in a household changes shared things, the bell gets one line per household once the burst is over (10 quiet minutes, or an hour), for example "Shopping: Nikos +3 ~1, −1"; Today shows the same per household for the day ("Today at home"). Device-local, own changes left out. The Household app now waits a few seconds for the shell's engine when an invite link opens it. Push with orOS closed comes later (relay change). BR-HH (Part VI).
 - Files: `household/{recent.js (new),today.js (new),engine.js,app.js,help.*.txt}`, `apps.json`, `index.html`, `sw.js`, `shell.js` (APP_VERSION), `i18n/de/help/household.txt`, `tests/household-recent.test.js` (5), What's new, Bible.
 
