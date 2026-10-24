@@ -396,6 +396,15 @@
                listId: l.id, listName: l.name, hdr: hdr };
     return raw ? mo : R.message(root.orosMailCompose, mo);
   }
+  // "Stay?" (clean-up wave 2): answered like a confirmation request.
+  function askFor(l, s, hdr, raw) {
+    var box = l.reply || l.from, tok = C.token(l, s.id);
+    var ae = R.askEmail({ list: l, sub: s, lang: C.langOf(s, l), mailbox: box, tok: tok, confirm: R.mailto(box, "confirm " + tok) });
+    var mo = { from: { name: l.fromName, addr: l.from }, to: { name: s.name, addr: s.email },
+               reply: l.reply, subject: ae.subject, text: ae.text, html: ae.html,
+               listId: l.id, listName: l.name, hdr: hdr };
+    return raw ? mo : R.message(root.orosMailCompose, mo);
+  }
   function sendBin(ch, from, to, bin) {
     return sendCreds(ch).then(function (cr) {
       return relay({ op: "send", acct: cr.acct, smtp: cr.smtp, from: from, rcpt: [to], raw: root.orosMailCompose.b64(bin) }, SEND_TIMEOUT);
@@ -611,11 +620,16 @@
       if (st2 === "off" || st2 === "bounce" || st2 === "spam") return false;
       z.off = now; z.offSt = "off";
       tally.u++;
-    } else {
-      if (st2 !== "pend") return false;
+    } else if (st2 === "pend") {
       z.conf = now;
       tally.c++;
-    }
+    } else if (s.ask && (st2 === "on" ? s.ask > C.lastSeen(s) : st2 === "off" && s.off >= s.ask)) {
+      // the answer to "Stay?": they stay (also when it came after the
+      // 30 days were up and they had been unsubscribed for not answering)
+      z.conf = now;
+      tally.c++;
+      tally.k = (tally.k || 0) + 1;
+    } else return false;
     z.m = stamp(z.m);
     replaceIn(d.subs, z);
     return true;
@@ -883,10 +897,11 @@
       put(d, "lists", y);
     });
   }
-  // Once a day per list on its device: those the plan names go (C.cleanApply,
-  // re-checked on fresh data). More than C.cleanPlan allows in one go
-  // waits for the user ({ wait: n }).
-  // → Promise<[{ list, pend, gone } | { list, wait }]>
+  // Once a day per list on its device: those who did not answer "Stay?"
+  // in time are unsubscribed (C.askTimeouts), then those the plan names
+  // go (C.cleanApply, re-checked on fresh data). More than C.cleanPlan
+  // allows in one go waits for the user ({ wait: n }).
+  // → Promise<[{ list, pend, gone, off } | { list, wait }]>
   function runClean() {
     var run = function () {
       var now = Date.now(), o = devState(), day = dayKey(now), out = [];
@@ -895,12 +910,12 @@
         change(function (d) {
           var l = C.list(d, l0.id);
           if (!l || C.cleanOf(l).dev !== o.dev) return false;
+          var off = C.askTimeouts(d, l.id, now);
           var plan = C.cleanPlan(d, l.id, now);
-          if (!plan.n) return false;
-          if (!plan.ok) { out.push({ list: l, wait: plan.n }); return false; }
-          var n = C.cleanApply(d, plan, now);
-          if (!n.pend && !n.gone) return false;
-          out.push({ list: l, pend: n.pend, gone: n.gone });
+          if (plan.n && !plan.ok) out.push({ list: l, wait: plan.n });
+          var n = plan.n && plan.ok ? C.cleanApply(d, plan, now) : { pend: 0, gone: 0 };
+          if (!off && !n.pend && !n.gone) return false;
+          out.push({ list: l, pend: n.pend, gone: n.gone, off: off });
         });
         o.cln[l0.id] = day;
       });
@@ -918,10 +933,11 @@
   // env: { fs() → orosFS|null, dirty(), onState(state), onChange(),
   //        notify(kind, info) }   kind: "done" {issue} | "paused" {issue, err}
   //                               | "started" {issue} | "inbox" {tally}
-  //                               | "invfail" {list, err}
+  //                               | "invfail" {list, err} | "askfail" {list, err}
   function create(env) {
     var timer = null, busy = false, state = { k: "" }, stopped = false;
     var failedInv = {};       // list id → true: no more invitations in this window after an error
+    var failedAsk = {};       // the same for "Stay?" e-mails
     var apiMax = {};          // chan id → a smaller batch after a failed relay call
     function call(name, a) { try { if (env[name]) env[name](a, arguments[2]); } catch (e) {} }
     function setState(s) { state = s; call("onState", s); }
@@ -929,7 +945,7 @@
     function later(ms) { clearTimeout(timer); if (!stopped) timer = setTimeout(step, ms); }
     function kick() { if (!busy) later(50); }
 
-    // the next job: { kind: "inv"|"issue"|"cap"|"other"|"paused", … }
+    // the next job: { kind: "inv"|"issue"|"ask"|"cap"|"other"|"paused", … }
     function nextJob(d, dev, now) {
       var lists = C.live(d.lists);
       for (var i = 0; i < lists.length; i++) {
@@ -951,6 +967,14 @@
         }
         if (capLeft(ch2) <= 0) return { kind: "cap", chan: ch2, issue: x };
         return { kind: "issue", list: l2, chan: ch2, sub: p.next, issue: x, prog: p };
+      }
+      // "Stay?" e-mails, when no issue of this device waits: only on the
+      // list's clean-up device
+      for (var a = 0; a < lists.length; a++) {
+        var la = lists[a], cha = C.chan(d, la.chan);
+        if (!cha || capLeft(cha) <= 0 || failedAsk[la.id] || C.cleanOf(la).dev !== dev) continue;
+        var asks = C.asksDue(d, la.id, now);
+        if (asks.length) return { kind: "ask", list: la, chan: cha, sub: asks[0], left: asks.length };
       }
       var other = C.live(d.issues).filter(function (x) { return x.st === "sending"; })[0];
       if (other) return { kind: "other", issue: other };
@@ -1052,7 +1076,7 @@
           call("dirty");
         }
         setState({ k: "issue", issue: job.issue, prog: job.prog });
-      } else setState({ k: "inv", left: job.left });
+      } else setState({ k: job.kind, left: job.left });
       if (C.isApi(job.chan)) { runApi(job, release); return; }
       var l = job.list, ch = job.chan, s = job.sub;
       var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
@@ -1062,21 +1086,23 @@
       }).then(function (cr) {
         // the subscriber may have left meanwhile (Inbox, another device)
         var fresh = read(), cur = C.sub(fresh, s.id);
-        if (!cur || (job.kind === "issue" ? C.status(cur) !== "on" : C.status(cur) !== "pend")) throw { code: "skip" };
+        if (!cur || (job.kind === "issue" ? C.status(cur) !== "on" : job.kind === "ask" ? C.status(cur) !== "on" || cur.ask > C.lastSeen(cur)
+                                                                 : C.status(cur) !== "pend")) throw { code: "skip" };
         if (job.kind === "issue") {
           var xi = C.issue(fresh, job.issue.id);
           if (!xi || xi.st !== "sending" || C.sentSet(fresh, xi.id)[s.id]) throw { code: "skip" };
         }
-        var bin = job.kind === "inv" ? confirmFor(l, cur, cr.hdr).bin : buildFor(job.issue, l, cur, { hdr: cr.hdr }).bin;
+        var bin = job.kind === "inv" ? confirmFor(l, cur, cr.hdr).bin : job.kind === "ask" ? askFor(l, cur, cr.hdr).bin
+                                                                    : buildFor(job.issue, l, cur, { hdr: cr.hdr }).bin;
         return relay({ op: "send", acct: cr.acct, smtp: cr.smtp, from: l.from, rcpt: [cur.email],
                        raw: root.orosMailCompose.b64(bin) }, SEND_TIMEOUT);
       }).then(function () {
         countUsed(ch.id);
         change(function (dd) {
-          if (job.kind === "inv") {
+          if (job.kind === "inv" || job.kind === "ask") {
             var cur = C.sub(dd, s.id);
             if (!cur) return false;
-            var z = copy(cur); z.inv = Date.now(); put(dd, "subs", z);
+            var z = copy(cur); z[job.kind] = Date.now(); put(dd, "subs", z);
           } else dd.sent[job.issue.id] = (dd.sent[job.issue.id] || []).concat([s.id]);
         });
         changed();
@@ -1108,13 +1134,14 @@
           if (!xi || xi.st !== "sending") throw { code: "skip" };
           subs = C.nextSubs(fresh, xi, max).filter(function (s) { return C.status(s) === "on"; });
         } else {
-          subs = C.invitesDue(fresh, l.id).slice(0, max);
+          subs = (job.kind === "ask" ? C.asksDue(fresh, l.id, Date.now()) : C.invitesDue(fresh, l.id)).slice(0, max);
         }
         if (!subs.length) throw { code: "skip" };
         var lf = C.list(fresh, l.id) || l, size = 0;
         for (var i = 0; i < subs.length; i++) {
           var s = subs[i];
-          var o = job.kind === "inv" ? confirmFor(lf, s, null, true) : buildFor(xi, lf, s, { raw: true });
+          var o = job.kind === "inv" ? confirmFor(lf, s, null, true) : job.kind === "ask" ? askFor(lf, s, null, true)
+                                                                     : buildFor(xi, lf, s, { raw: true });
           var rq = R.apiReq(root.orosMailCompose, ch.preset, ch.dom, o);
           var n = JSON.stringify(rq).length;
           if (n > 2 * 1024 * 1024 - 1024) { if (!batch.length) throw { code: "too-big" }; break; }
@@ -1142,7 +1169,7 @@
               if (!cur) return;
               var z = copy(cur);
               if (refused.indexOf(id) >= 0) { z.off = at; z.offSt = "bounce"; }
-              else if (job.kind === "inv") z.inv = at;
+              else if (job.kind === "inv" || job.kind === "ask") z[job.kind] = at;
               else return;
               put(dd, "subs", z);
             });
@@ -1196,9 +1223,9 @@
         later(job.chan.rate * 1000);
         return;
       }
-      if (job.kind === "inv") {
-        failedInv[job.list.id] = true;
-        call("notify", "invfail", { list: job.list, err: errCode(e) });
+      if (job.kind === "inv" || job.kind === "ask") {
+        (job.kind === "inv" ? failedInv : failedAsk)[job.list.id] = true;
+        call("notify", job.kind + "fail", { list: job.list, err: errCode(e) });
         later(1000);
         return;
       }
@@ -1210,7 +1237,7 @@
     function inbox(loud) {
       return checkInbox().then(function (tally) {
         if (tally.u + tally.s + tally.c + tally.b) changed();
-        if (!loud && (tally.s || tally.u || tally.b)) call("notify", "inbox", { tally: tally });
+        if (!loud && (tally.s || tally.u || tally.b || tally.k)) call("notify", "inbox", { tally: tally });
         if (tally.s) later(1000);
         return tally;
       });

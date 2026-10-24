@@ -20,7 +20,8 @@ test.before(async () => {
 });
 
 const LIST = { id: "list-1", m: 1, name: "Φίλοι", chan: "chan-1", from: "me@example.com", fromName: "Χρήστος", reply: "", lang: "en",
-  addr: "1 Main St, Athens", why: "You signed up on my site.", theme: "classic", color: "#2f6fde", salt: "abcdefgh12" };
+  addr: "1 Main St, Athens", why: "You signed up on my site.", theme: "classic", color: "#2f6fde", salt: "abcdefgh12",
+  clnIdle: 0 }; // subscribers here signed up in 1970: no "Stay?" e-mails (see newsletter-clean.test.js)
 const API = { id: "chan-1", m: 1, name: "", kind: "smtp", preset: "postmark", via: "api", host: "smtp.postmarkapp.com", user: "x", rate: 1, cap: 300 };
 const KEY = "pm-SECRET-123";
 function sub(email, extra) {

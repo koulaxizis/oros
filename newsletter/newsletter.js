@@ -111,10 +111,13 @@
       "en.done": "Names added: {n}",
       "subs.export": "Export CSV", "subs.inbox": "Check Inbox", "subs.invite": "Send confirmation requests ({n})",
       "subs.clean": "Clean up…", "cl.title": "Clean up the list",
-      "cl.text": "Keeps the list from growing with people who will never read it. Newsletter doesn't track opens, so it deletes only people who never confirmed or who already left.",
+      "cl.text": "Keeps the list from growing with people who will never read it. Newsletter doesn't track opens, so it deletes only people who never confirmed or who already left, and asks those with no sign of life for a long time whether they want to stay.",
       "cl.pend": "Delete people who did not confirm", "cl.pendN": "{n} days after the request",
       "cl.gone": "Delete people who left (unsubscribed, bounced, spam)", "cl.goneN": "{n} days after they left",
       "cl.goneHint": "A fingerprint of the address stays, so an import can't add them again. If they sign up again themselves, they are welcome.",
+      "cl.idle": "Ask “Do you still want it?” after", "cl.idleN": "{n} months without a sign of life",
+      "cl.idleHint": "A sign of life is signing up or confirming; Newsletter counts no opens. Whoever doesn't answer within 30 days is unsubscribed. At most 20 a day (or 5% of the list), oldest first.",
+      "cl.idleNow": "{n} would be asked whether they want to stay.", "bar.ask": "Sending “Do you still want it?”: {n} left",
       "cl.never": "Never", "cl.devHere": "Runs once a day on this device while orOS is open.",
       "cl.devOther": "Runs once a day on another of your devices.", "cl.devNone": "Starts on the device that sends this list.",
       "cl.here": "Run it on this device", "cl.now": "Now: {p} unconfirmed and {g} who left would be deleted.", "cl.nobody": "Nobody to delete now.",
@@ -326,10 +329,13 @@
       "en.done": "Προστέθηκαν ονόματα: {n}",
       "subs.export": "Εξαγωγή CSV", "subs.inbox": "Έλεγχος Εισερχομένων", "subs.invite": "Αποστολή αιτημάτων επιβεβαίωσης ({n})",
       "subs.clean": "Καθαρισμός…", "cl.title": "Καθαρισμός της λίστας",
-      "cl.text": "Για να μη μεγαλώνει η λίστα με ανθρώπους που δεν θα τη διαβάσουν ποτέ. Το Ενημερωτικό δελτίο δεν μετρά ανοίγματα, οπότε διαγράφει μόνο όσους δεν επιβεβαίωσαν ποτέ ή έχουν ήδη φύγει.",
+      "cl.text": "Για να μη μεγαλώνει η λίστα με ανθρώπους που δεν θα τη διαβάσουν ποτέ. Το Ενημερωτικό δελτίο δεν μετρά ανοίγματα, οπότε διαγράφει μόνο όσους δεν επιβεβαίωσαν ποτέ ή έχουν ήδη φύγει, και ρωτά όσους δεν έδωσαν σημάδι ζωής για καιρό αν θέλουν να μείνουν.",
       "cl.pend": "Διαγραφή όσων δεν επιβεβαίωσαν", "cl.pendN": "{n} ημέρες μετά το αίτημα",
       "cl.gone": "Διαγραφή όσων έφυγαν (απεγγραφή, επιστροφή, spam)", "cl.goneN": "{n} ημέρες αφού έφυγαν",
       "cl.goneHint": "Μένει ένα αποτύπωμα της διεύθυνσης, ώστε μια εισαγωγή να μην τους ξαναβάλει. Αν ξαναγραφτούν μόνοι τους, είναι ευπρόσδεκτοι.",
+      "cl.idle": "Ερώτηση «Θέλεις να συνεχίσεις;» μετά από", "cl.idleN": "{n} μήνες χωρίς σημάδι ζωής",
+      "cl.idleHint": "Σημάδι ζωής είναι η εγγραφή ή η επιβεβαίωση· το Ενημερωτικό δελτίο δεν μετρά ανοίγματα. Όποιος δεν απαντήσει σε 30 ημέρες απεγγράφεται. Έως 20 τη μέρα (ή το 5% της λίστας), οι παλαιότεροι πρώτα.",
+      "cl.idleNow": "Θα ρωτηθούν {n} αν θέλουν να μείνουν.", "bar.ask": "Αποστολή «Θέλεις να συνεχίσεις;»: απομένουν {n}",
       "cl.never": "Ποτέ", "cl.devHere": "Γίνεται μία φορά τη μέρα σε αυτή τη συσκευή, όσο είναι ανοιχτό το orOS.",
       "cl.devOther": "Γίνεται μία φορά τη μέρα σε άλλη συσκευή σου.", "cl.devNone": "Ξεκινά στη συσκευή που στέλνει αυτή τη λίστα.",
       "cl.here": "Να γίνεται σε αυτή τη συσκευή", "cl.now": "Τώρα θα διαγράφονταν {p} που δεν επιβεβαίωσαν και {g} που έφυγαν.", "cl.nobody": "Κανείς για διαγραφή τώρα.",
@@ -2274,6 +2280,8 @@
     dlg.appendChild(field(t("cl.pend"), fp));
     var fg = sel(opts(C.CLEAN_GONE, "cl.goneN"), String(c.gone));
     dlg.appendChild(field(t("cl.gone"), fg, t("cl.goneHint")));
+    var fi = sel(C.CLEAN_IDLE.map(function (n) { return [String(n), t("cl.idleN", { n: n })]; }).concat([["0", t("cl.never")]]), String(c.idle));
+    dlg.appendChild(field(t("cl.idle"), fi, t("cl.idleHint")));
     var devP = el("p", "hint");
     dlg.appendChild(devP);
     var here = btn(t("cl.here"), "", function () { c.dev = dev; showDev(); });
@@ -2304,15 +2312,16 @@
     row.appendChild(csv);
     row.appendChild(go);
     dlg.appendChild(row);
-    function set() { return { pend: +fp.value, gone: +fg.value }; }
+    function set() { return { pend: +fp.value, gone: +fg.value, idle: +fi.value }; }
     function showDev() {
       devP.textContent = t(c.dev === dev ? "cl.devHere" : c.dev ? "cl.devOther" : "cl.devNone");
       here.hidden = c.dev === dev;
     }
     function preview() {
       plan = C.cleanPlan(data, l.id, Date.now(), set());
-      now.textContent = plan.n ? t("cl.now", { p: plan.pend.length, g: plan.gone.length }) + (plan.ok ? "" : " " + t("cl.wait", { max: C.CLEAN_MAX }))
-                               : t("cl.nobody");
+      var asks = C.idleCount(data, l.id, Date.now(), +fi.value);
+      now.textContent = (plan.n ? t("cl.now", { p: plan.pend.length, g: plan.gone.length }) + (plan.ok ? "" : " " + t("cl.wait", { max: C.CLEAN_MAX }))
+                                : t("cl.nobody")) + (asks ? " " + t("cl.idleNow", { n: asks }) : "");
       csv.disabled = go.disabled = !plan.n;
     }
     // the settings onto the stored record (fields a newer orOS added stay)
@@ -2320,13 +2329,14 @@
       var cur = C.list(data, l.id);
       if (!cur) return;
       var base = copy(cur), v = set();
-      base.clnPend = v.pend; base.clnGone = v.gone;
+      base.clnPend = v.pend; base.clnGone = v.gone; base.clnIdle = v.idle;
       if (c.dev) base.clnDev = c.dev;
       var rec = C.normList(base);
       if (JSON.stringify(rec) !== JSON.stringify(C.normList(cur))) put("lists", rec);
     }
     fp.addEventListener("change", preview);
     fg.addEventListener("change", preview);
+    fi.addEventListener("change", preview);
     showDev();
     preview();
     actionsRow(dlg, [], t("dlg.save"), function () { save(); dlg.close(); renderAll(); });
@@ -3061,7 +3071,7 @@
       } else if (!on && wakeLock) { wakeLock.release(); wakeLock = null; }
     } catch (e) {}
   }
-  function sendingHere() { var k = sendState().k; return !runner && (k === "issue" || k === "inv"); }
+  function sendingHere() { var k = sendState().k; return !runner && (k === "issue" || k === "inv" || k === "ask"); }
   function startSending() {
     if (runner) {
       var off = runner.on(function (kind) { if (kind === "data") reloadQuiet(); else refreshQuiet(); });
@@ -3077,7 +3087,7 @@
       notify: function (kind, info) {
         if (kind === "done") showToast(t("toast.sentAll", { s: shownSubj(info.issue), n: info.issue.n }));
         else if (kind === "paused") showToast(t("vw.err", { e: errStored(info.err) }));
-        else if (kind === "invfail") showToast(errStored(info.err));
+        else if (kind === "invfail" || kind === "askfail") showToast(errStored(info.err));
       }
     });
   }
@@ -3095,6 +3105,7 @@
       txt = t("bar.sending", { s: shownSubj(s.issue), a: s.prog.sent + 1, b: s.prog.total });
       label = t("bar.pause"); fn = function () { pauseIssue(s.issue.id); };
     } else if (s.k === "inv") txt = t("bar.inv", { n: s.left });
+    else if (s.k === "ask") txt = t("bar.ask", { n: s.left });
     else if (s.k === "cap") { txt = t("bar.cap", { c: s.chan.cap }); }
     else if (s.k === "offline") txt = t("bar.offline");
     else if (s.k === "wait") txt = t("bar.wait");
