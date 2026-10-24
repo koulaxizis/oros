@@ -192,7 +192,8 @@
       "category": "Lifestyle",
       "icon": "household",
       "url": "household/",
-      "type": "internal"
+      "type": "internal",
+      "today": ["recent.js", "today.js"]
     },
     {
       "id": "meals",

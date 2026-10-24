@@ -52,6 +52,7 @@
     var pendIO = opts.pending;              // { load() → obj, save(obj) }
     var now = opts.now || function () { return Date.now(); };
     var notify = opts.notify || function () {};
+    var onChanged = opts.changed || function () {};   // (box, id, before, after): a pull changed a shared document
     var WS = opts.WebSocket || null;
     var relay = String(opts.relay || RELAY).replace(/\/+$/, "");
     var lang = opts.lang || function () { return "en"; };
@@ -246,6 +247,7 @@
             var changed = !r || !Core.same(merged, r.doc);
             return setRec(box, k, { rev: rev, doc: merged, dirty: !Core.same(merged, remote) }).then(function () {
               if (changed) emit({ type: k === ROSTER ? "roster" : "doc", box: box, id: k, remote: true });
+              if (changed && r && k !== ROSTER) { try { onChanged(box, k, r.doc, merged); } catch (x) { log(x); } }
               return { rev: rev, doc: merged };
             });
           }, function () {
@@ -887,6 +889,38 @@
     en: { "n.req": "{name}: someone asks to join", "n.joined": "You are now in {name}", "n.removed": "You are no longer in {name}", "n.title": "Household" },
     el: { "n.req": "{name}: κάποιος ζητά να μπει", "n.joined": "Είσαι πλέον στο νοικοκυριό {name}", "n.removed": "Δεν είσαι πια στο νοικοκυριό {name}", "n.title": "Νοικοκυριό" }
   };
+  // What the others changed (household/recent.js): device-local, rung
+  // on the bell once a burst is over (one line per household), shown by
+  // the Today row "Today at home".
+  var recent = {
+    eng: null,
+    io: function () { return lsIO(root.OrosHouseRecent ? root.OrosHouseRecent.RECENT_KEY : "oros-household-recent"); },
+    note: function (box, id, before, after) {
+      var R = root.OrosHouseRecent, eng = recent.eng;
+      if (!R || !eng) return;
+      var sum = R.summarize(before, after, eng.me(box));
+      if (!sum) return;
+      var hh = eng.list().filter(function (x) { return x.box === box; })[0];
+      var tc = after && after.m && after.m.t, title = tc && typeof tc[0] === "string" ? tc[0] : "";
+      var st = R.load(recent.io().load());
+      R.add(st, box, hh ? hh.name : "", id, title, sum, function (mid) { var m = eng.member(box, mid); return m ? m.name : ""; }, Date.now());
+      recent.io().save(st);
+    },
+    ring: function () {
+      var R = root.OrosHouseRecent, N = root.orosNotifs;
+      if (!R || !N || typeof N.emit !== "function") return;
+      var io = recent.io(), raw = io.load();
+      if (!raw) return;
+      var st = R.load(raw), list = R.due(st, Date.now());
+      if (!list.length) return;
+      io.save(R.prune(st, Date.now()));
+      list.forEach(function (x) {
+        try { N.emit({ ns: "household", key: "chg:" + x.box + ":" + x.from, type: "info",
+                       title: x.hh || STR[(root.orosI18n && root.orosI18n.lang && String(root.orosI18n.lang()).slice(0, 2) === "el") ? "el" : "en"]["n.title"],
+                       body: x.body, deepLink: "household:" + x.box }); } catch (e) {}
+      });
+    }
+  };
   function boot() {
     if (!root || !root.document || !Core || !X || !root.indexedDB || !root.crypto || !root.crypto.subtle) return;
     var lang = function () {
@@ -902,6 +936,7 @@
       WebSocket: root.WebSocket,
       lang: lang,
       log: function (e) { try { console.warn("orOS household:", e && e.message || e); } catch (x) {} },
+      changed: function (box, id, before, after) { recent.note(box, id, before, after); },
       notify: function (what, box, d) {
         var N = root.orosNotifs, s = STR[lang()];
         if (!N || typeof N.emit !== "function") return;
@@ -911,6 +946,8 @@
       }
     });
     root.orosHousehold = eng;
+    recent.eng = eng;
+    setInterval(recent.ring, 60000);
     var registered = false;
     function register() {
       var s = root.orosSync;
