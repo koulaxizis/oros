@@ -99,6 +99,26 @@
       "menu.edit": "Group and people", "menu.share": "Share the summary", "menu.file": "Send the group file",
       "menu.export": "Export (CSV, PDF)", "menu.arch": "Archive the group", "menu.unarch": "Bring back from the archive",
       "menu.del": "Delete the group",
+      "menu.hhShare": "Share with a household…",
+      "menu.hhStop": "Stop sharing…",
+      "hh.share.t": "Share with a household",
+      "hh.share.x": "Everyone in the household sees this group in their own Split and adds expenses and payments to it. Each person picks which one they are.",
+      "hh.which": "Household",
+      "hh.go": "Share",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.open": "Open Household",
+      "hh.stop.t": "Stop sharing",
+      "hh.stop.x": "“{g}” leaves {hh} for everyone, and you keep your own copy. The others can bring it back from Household for 30 days.",
+      "hh.del.t": "Delete the shared group",
+      "hh.del.go": "Delete",
+      "hh.del.x": "“{g}” leaves {hh} for everyone, and you keep no copy. The others can bring it back from Household for 30 days.",
+      "hh.in": "Shared in {hh}",
+      "hh.by": "Last changed by {n}",
+      "hh.big": "This group is too big to share. Archive or export older expenses first.",
+      "toast.hhShared": "Shared with {hh}",
+      "toast.hhStopped": "Sharing stopped. Your own copy is in your groups.",
+      "toast.hhDel": "Shared group deleted",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "home.empty": "No groups yet. A trip, a shared flat, a night out: make a group, add the people, then the expenses.",
       "home.arch": "Archived ({n})",
       "g.people": "{n} people", "g.people1": "1 person", "g.exps": "{n} expenses", "g.exps1": "1 expense",
@@ -225,6 +245,26 @@
       "menu.edit": "Ομάδα και άτομα", "menu.share": "Κοινοποίηση σύνοψης", "menu.file": "Αποστολή αρχείου ομάδας",
       "menu.export": "Εξαγωγή (CSV, PDF)", "menu.arch": "Αρχειοθέτηση ομάδας", "menu.unarch": "Επαναφορά από το αρχείο",
       "menu.del": "Διαγραφή ομάδας",
+      "menu.hhShare": "Κοινή χρήση με νοικοκυριό…",
+      "menu.hhStop": "Διακοπή κοινής χρήσης…",
+      "hh.share.t": "Κοινή χρήση με νοικοκυριό",
+      "hh.share.x": "Όλοι στο νοικοκυριό βλέπουν αυτή την ομάδα στη δική τους Μοιρασιά και προσθέτουν έξοδα και πληρωμές. Ο καθένας διαλέγει ποιος είναι.",
+      "hh.which": "Νοικοκυριό",
+      "hh.go": "Κοινή χρήση",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.stop.x": "Η «{g}» φεύγει από το «{hh}» για όλους και εσύ κρατάς δικό σου αντίγραφο. Οι άλλοι μπορούν να τη φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.del.t": "Διαγραφή κοινής ομάδας",
+      "hh.del.go": "Διαγραφή",
+      "hh.del.x": "Η «{g}» φεύγει από το «{hh}» για όλους και εσύ δεν κρατάς αντίγραφο. Οι άλλοι μπορούν να τη φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.in": "Κοινή στο «{hh}»",
+      "hh.by": "Τελευταία αλλαγή: {n}",
+      "hh.big": "Η ομάδα είναι πολύ μεγάλη για κοινή χρήση. Αρχειοθέτησε ή εξήγαγε πρώτα παλιότερα έξοδα.",
+      "toast.hhShared": "Κοινή με «{hh}»",
+      "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Το αντίγραφό σου είναι στις ομάδες σου.",
+      "toast.hhDel": "Η κοινή ομάδα διαγράφηκε",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "home.empty": "Καμία ομάδα ακόμα. Ταξίδι, συγκατοίκηση, έξοδος: φτιάξε μια ομάδα, βάλε τα άτομα και μετά τα έξοδα.",
       "home.arch": "Αρχειοθετημένες ({n})",
       "g.people": "{n} άτομα", "g.people1": "1 άτομο", "g.exps": "{n} έξοδα", "g.exps1": "1 έξοδο",
@@ -1179,6 +1219,7 @@
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.groups)) {
           data = mergeSplit(parsed, parsed);
+          lastStore = JSON.stringify(data);
           return;
         }
       } catch (e) {}
@@ -1188,17 +1229,301 @@
     data = emptyData();
   }
 
-  var saveFailShown = false;
+  var saveFailShown = false, lastStore = null;
   // Canonicalize, persist, mark dirty. Callers stamp m themselves (R27).
+  // BR-HH: only the person's own groups are stored and synced (own());
+  // the groups shared with a household go to it as the records that
+  // changed (hhPush), and the slice is marked dirty only when the own
+  // part changed.
   function commit() {
-    data = mergeSplit(data, data);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      saveFailShown = false;
-    } catch (e) {
-      if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
+    var mine = own(data), text;
+    data = joinShared(mine, sharedPart(data));
+    text = JSON.stringify(mine);
+    if (text !== lastStore) {
+      try {
+        localStorage.setItem(STORAGE_KEY, text);
+        lastStore = text;
+        saveFailShown = false;
+      } catch (e) {
+        if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
+      }
+      if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     }
-    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    hhPush();
+  }
+
+  // ---------- 6a. Groups shared with a household (BR-HH) ----------
+  // A shared group is a household document of kind "split"
+  // (window.parent.orosHousehold, household/engine.js; split/house.js
+  // turns it into records and back). It keeps its id, and its records
+  // sit in `data` like any other, in memory only: own() leaves them out
+  // of the stored and synced copy, and "who am I" there is the
+  // document's "me:<member>" item, so each member picks their own.
+  // Nothing here merges a shared group: the household merge does, and
+  // hhInject() rebuilds its records from the result.
+  var HHs = window.OrosSplitHouse || null, HC = window.OrosHouseCore || null;
+  var hhInfo = {};        // group id → { box, id, hh }
+  var hhLast = {};        // group id → the projection last read or sent
+  var hhMe = {};          // group id → { member id: person id }
+  var hhBy = {};          // record id → member id of its last change
+  var hhNoCopy = {};      // documents deleted here: no own copy
+  var hhWant = null;      // a deep link to a shared group not built yet
+  function hhApi() {
+    if (!HHs || !HC) return null;
+    try {
+      var p = window.parent;
+      return p && p !== window && p.orosHousehold && typeof p.orosHousehold.docs === "function" ? p.orosHousehold : null;
+    } catch (e) { return null; }
+  }
+  function isShared(gid) { return !!hhInfo[gid]; }
+  function splitBy(d, keepShared) {
+    var out = { ver: DATA_VER, tombs: keepShared ? {} : d.tombs || {} };
+    COLLS.forEach(function (C) {
+      var list = (d[C.key] || []).filter(function (x) {
+        return !!isShared(C.child ? groupOf(x.id) : x.id) === keepShared;
+      });
+      if (list.length || !C.opt) out[C.key] = list;
+    });
+    return out;
+  }
+  // The person's own groups, canonical (what is stored and synced).
+  function own(d) { var o = splitBy(d, false); return mergeSplit(o, o); }
+  // The shared groups' records, each through its normaliser.
+  function sharedPart(d) {
+    var o = splitBy(d, true);
+    COLLS.forEach(function (C) {
+      if (!o[C.key]) return;
+      o[C.key] = o[C.key].map(C.norm).filter(Boolean).sort(function (x, y) { return cmpStr(x.id, y.id); });
+    });
+    return o;
+  }
+  function joinShared(mine, sh) {
+    var out = {};
+    Object.keys(mine).forEach(function (k) { out[k] = mine[k]; });
+    COLLS.forEach(function (C) {
+      var add = sh[C.key] || [];
+      if (!add.length) return;
+      out[C.key] = (out[C.key] || []).concat(add).sort(function (x, y) { return cmpStr(x.id, y.id); });
+    });
+    return out;
+  }
+  function myMid(gid) { var h = hhApi(), inf = hhInfo[gid]; return h && inf ? h.me(inf.box) : ""; }
+  function sigOf(d) { return JSON.stringify(sharedPart(d)) + JSON.stringify(hhBy); }
+  // Rebuilds the shared groups from the household; true when what is
+  // on screen changed. Groups that left a household become the
+  // person's own again (archive "take": stopped sharing, left, removed).
+  function hhInject() {
+    var h = hhApi();
+    if (!h) return false;
+    var before = sigOf(data), info = {}, sh = { groups: [], people: [], exp: [], pay: [], rec: [], mine: [] };
+    var adopted = false, by = {}, mineOwn = own(data);
+    h.docs("split").forEach(function (d) {
+      if (!d.ready) return;
+      var b = HHs.build(h.view(d.box, d.id));
+      if (!b || info[b.gid]) return;
+      info[b.gid] = { box: d.box, id: d.id, hh: d.hh };
+      var part = { groups: [b.group], people: b.people, exp: b.exp, pay: b.pay, rec: b.rec, mine: [] };
+      var mid = h.me(d.box);
+      if (mid && b.me[mid]) part.mine.push({ id: b.gid, m: 1, v: b.me[mid] });
+      // the person's own copy of this very group joins it (newer only)
+      if (groupById(mineOwn, b.gid) || peopleOf(mineOwn, b.gid).length) {
+        var add = HHs.adopt(h.get(d.box, d.id), b.gid, mineOwn);
+        ["people", "exp", "pay", "rec"].forEach(function (k) { if (add[k].length) { part[k] = part[k].concat(add[k]); adopted = true; } });
+        if (!b.me[mid] && meOf(mineOwn, b.gid)) { part.mine = [{ id: b.gid, m: 1, v: meOf(mineOwn, b.gid) }]; adopted = true; }
+        tombstone("grp", b.gid);
+      }
+      // newer than the person's own tombstone of it, so no merge of the
+      // whole data (an import, a restore) ever drops it
+      b.group.m = Math.max(b.group.m, (data.tombs["grp:" + b.gid] || 0) + 1);
+      // what the household holds, through Split's own normalisers
+      var norm = {};
+      COLLS.forEach(function (C) { norm[C.key] = (part[C.key] || []).map(C.norm).filter(Boolean); });
+      ["groups", "people", "exp", "pay", "rec", "mine"].forEach(function (k) { sh[k] = sh[k].concat(norm[k]); });
+      var cleanB = { groups: norm.groups, people: norm.people.filter(function (x) { return b.people.some(function (y) { return y.id === x.id; }); }),
+                     exp: norm.exp.filter(function (x) { return b.exp.some(function (y) { return y.id === x.id; }); }),
+                     pay: norm.pay.filter(function (x) { return b.pay.some(function (y) { return y.id === x.id; }); }),
+                     rec: norm.rec.filter(function (x) { return b.rec.some(function (y) { return y.id === x.id; }); }) };
+      hhLast[b.gid] = HHs.project(b.gid, cleanB, b.me);
+      hhMe[b.gid] = b.me;
+      Object.keys(b.by).forEach(function (k) { by[k] = b.by[k]; });
+    });
+    // groups that left the household leave this screen with it (the
+    // archive's own copy, if any, comes back in hhCopies)
+    var left = Object.keys(hhInfo).filter(function (g) { return !info[g]; });
+    if (left.length) {
+      COLLS.forEach(function (C) {
+        if (!data[C.key]) return;
+        data[C.key] = data[C.key].filter(function (x) { return left.indexOf(C.child ? groupOf(x.id) : x.id) < 0; });
+      });
+    }
+    hhInfo = info;
+    hhBy = by;
+    var mineNow = own(data);
+    data = joinShared(mineNow, sharedPart(joinShared({ groups: [], people: [], exp: [], pay: [], mine: [] }, sh)));
+    var copies = hhCopies(h);
+    var changed = sigOf(data) !== before;
+    if (adopted || copies || changed) commit();
+    if (hhWant && groupById(data, hhWant.group)) { var w = hhWant; hhWant = null; setTimeout(function () { openSearchTarget(w); }, 0); }
+    return changed || copies;
+  }
+  // The own copy of a group that left a household, same ids, stamped
+  // now (newer than the tombstone the share left).
+  function hhCopies(h) {
+    var made = false, now = Date.now();
+    h.archived("split").forEach(function (a) {
+      if (!a.take) return;
+      if (hhNoCopy[a.id]) { h.dropArchived(a.box, a.id); return; }
+      var c = HHs.copyOf(HC.view(a.doc), now);
+      if (c && !isShared(c.gid) && !groupById(data, c.gid)) {
+        var mid = h.me(a.box);
+        ["grp:" + c.gid].concat(c.people.map(function (x) { return "per:" + x.id; }), c.exp.map(function (x) { return "exp:" + x.id; }),
+          c.pay.map(function (x) { return "pay:" + x.id; }), c.rec.map(function (x) { return "rec:" + x.id; }))
+          .forEach(function (k) { delete data.tombs[k]; });
+        var part = { groups: [c.group], people: c.people, exp: c.exp, pay: c.pay, rec: c.rec,
+                     mine: mid && c.me[mid] ? [{ id: c.gid, m: now, v: c.me[mid] }] : [] };
+        COLLS.forEach(function (C) {
+          var add = (part[C.key] || []).map(C.norm).filter(Boolean);
+          if (!add.length) return;
+          data[C.key] = (data[C.key] || []).filter(function (x) { return (C.child ? groupOf(x.id) : x.id) !== c.gid; }).concat(add);
+        });
+        made = true;
+      }
+      h.dropArchived(a.box, a.id);
+    });
+    return made;
+  }
+  // Sends what changed in the shared groups since they were last read.
+  function hhPush() {
+    var h = hhApi();
+    if (!h) return;
+    Object.keys(hhInfo).forEach(function (gid) {
+      var inf = hhInfo[gid], prev = hhLast[gid];
+      if (!prev) return;
+      var me = {}, mid = h.me(inf.box);
+      Object.keys(hhMe[gid] || {}).forEach(function (k) { me[k] = hhMe[gid][k]; });
+      if (mid) { var v = meOf(data, gid); if (v) me[mid] = v; else delete me[mid]; }
+      var cur = HHs.project(gid, data, me);
+      if (!groupById(data, gid)) return;           // gone here: unshare does that, never a push
+      var d = HC.diffItems(prev.items, cur.items, HHs.FIELDS), m = {}, anyM = false;
+      ["col", "cur", "arch"].forEach(function (f) { if (prev.m[f] !== cur.m[f]) { m[f] = cur.m[f]; anyM = true; } });
+      hhLast[gid] = cur;
+      hhMe[gid] = me;
+      if (cur.m.t && cur.m.t !== prev.m.t) h.retitle(inf.box, inf.id, cur.m.t);
+      if (d || anyM) h.change(inf.box, inf.id, { set: d ? d.set : {}, del: d ? d.del : [], m: m });
+    });
+  }
+  // The group's menu: share it, or stop sharing it.
+  function hhMenu(g) {
+    if (!hhApi()) return [];
+    return isShared(g.id) ? [["hhstop", "menu.hhStop", function () { hhAsk("stop", g.id); }]]
+                          : [["hhshare", "menu.hhShare", function () { hhAsk("share", g.id); }]];
+  }
+  // One dialog for the three questions: share (pick the household),
+  // stop sharing, delete for everyone.
+  function hhAsk(mode, gid) {
+    var h = hhApi(), g = groupById(data, gid);
+    if (!h || !g) return;
+    var hhs = h.list(), inf = hhInfo[gid] || {};
+    var dlg = makeDialog("sp-hh", t("hh." + mode + ".t"));
+    var form = el("form");
+    form.appendChild(el("p", "hint", mode === "share" ? (hhs.length ? t("hh.share.x") : t("hh.nohh"))
+                                                         : t("hh." + mode + ".x", { g: g.n, hh: inf.hh || "" })));
+    var sel = el("select");
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (mode === "share" && hhs.length > 1) form.appendChild(field(t("hh.which"), sel, "sp-hh-box"));
+    var err = errLine();
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok;
+    if (mode === "share" && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(mode === "share" ? "hh.go" : (mode === "stop" ? "hh.stop.t" : "hh.del.go")), mode === "del" ? "danger" : "primary", null);
+      ok.type = "submit";
+    }
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      ok.disabled = true;
+      var done = function (key, vars) { dlg.close(); showToast(t(key, vars)); };
+      var fail = function () { ok.disabled = false; showErr(err, t("toast.hhFail"), ok); };
+      if (mode === "share") {
+        var box = sel.value, hhName = (hhs.filter(function (x) { return x.box === box; })[0] || {}).name || "";
+        var me = {}, mid = h.me(box), mv = meOf(data, gid);
+        if (mid && mv) me[mid] = mv;
+        var proj = HHs.project(gid, data, me);
+        if (JSON.stringify(proj).length > 900000) { ok.disabled = false; showErr(err, t("hh.big"), ok); return; }
+        Promise.resolve(h.share(box, "split", g.n, { set: proj.items, m: { g: gid, col: proj.m.col, cur: proj.m.cur, arch: proj.m.arch } })).then(function () {
+          tombstone("grp", gid);          // it leaves the own groups on every device of the person
+          hhInject();
+          commit();
+          renderAll();
+          done("toast.hhShared", { hh: hhName });
+        }, fail);
+        return;
+      }
+      if (mode === "del") hhNoCopy[inf.id] = 1;
+      Promise.resolve(h.unshare(inf.box, inf.id)).then(function () {
+        hhInject();
+        commit();
+        if (mode === "del" || !groupById(data, gid)) goHome(); else renderAll();
+        done(mode === "del" ? "toast.hhDel" : "toast.hhStopped");
+      }, fail);
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // A pull of the person's own copy that still holds a shared group (a
+  // second device that had not heard of the share yet): what is newer
+  // than the household's copy joins it.
+  function hhAdopt(src) {
+    var h = hhApi(), gone = [];
+    if (!h || !src) return gone;
+    Object.keys(hhInfo).forEach(function (gid) {
+      if (!groupById(src, gid) && !(src.people || []).some(function (x) { return groupOf(x.id) === gid; })) return;
+      var inf = hhInfo[gid], add = HHs.adopt(h.get(inf.box, inf.id), gid, src);
+      gone.push(gid);                // it leaves the own copy on every device
+      ["people", "exp", "pay", "rec"].forEach(function (k) {
+        var C = null;
+        COLLS.forEach(function (c) { if (c.key === k) C = c; });
+        add[k].map(C.norm).filter(Boolean).forEach(function (x) {
+          var cur = findIn(data[k] || [], x.id);
+          if (cur && cur.m >= x.m) return;
+          data[k] = (data[k] || []).filter(function (y) { return y.id !== x.id; }).concat([x]);
+        });
+      });
+    });
+    return gone;
+  }
+  // Who changed a shared record last (another member only).
+  function hhByOf(gid, recId) {
+    var h = hhApi(), inf = hhInfo[gid], mid = hhBy[recId];
+    if (!h || !inf || !mid || mid === h.me(inf.box)) return null;
+    return h.member(inf.box, mid);
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      if (hhInject() && !document.querySelector("dialog[open]")) renderAll();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = hhApi();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
 
   // Repeating expenses whose date has come: added as ordinary expenses
@@ -1282,6 +1607,7 @@
 
   // ---------- 7. Rendering ----------
   var UI = {
+    house: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
@@ -1368,7 +1694,15 @@
     dot.setAttribute("aria-hidden", "true");
     b.appendChild(dot);
     var mid = el("span", "g-mid");
-    mid.appendChild(el("span", "g-name", g.n));
+    var gn = el("span", "g-name", g.n);
+    if (isShared(g.id)) {
+      var hhIc = el("span", "hh-ic");
+      hhIc.innerHTML = UI.house;
+      hhIc.title = t("hh.in", { hh: hhInfo[g.id].hh || "" });
+      hhIc.setAttribute("aria-hidden", "true");
+      gn.appendChild(hhIc);
+    }
+    mid.appendChild(gn);
     var np = peopleOf(data, g.id).length, ne = expOf(data, g.id).length;
     mid.appendChild(el("span", "g-sub", (np === 1 ? t("g.people1") : t("g.people", { n: np })) + " · " +
                                          (ne === 1 ? t("g.exps1") : t("g.exps", { n: ne }))));
@@ -1383,7 +1717,7 @@
       stTxt = t("g.spent", { a: moneyIn(groupTotal(data, g.id), g.cur) });
     }
     b.appendChild(el("span", stCls, stTxt));
-    b.setAttribute("aria-label", g.n + ", " + mid.lastChild.textContent + ", " + stTxt);
+    b.setAttribute("aria-label", g.n + (isShared(g.id) ? ", " + t("hh.in", { hh: hhInfo[g.id].hh || "" }) : "") + ", " + mid.lastChild.textContent + ", " + stTxt);
     b.addEventListener("click", function () { openGroup(g.id); });
     return b;
   }
@@ -1535,12 +1869,23 @@
     }
     mid.appendChild(el("span", "tx-note", sub));
     b.appendChild(mid);
+    byChip(b, x.id);
     b.appendChild(el("span", "tx-amt", money(x.a)));
     b.setAttribute("aria-label", (x.t || catName(x.c)) + ", " + money(x.a) + ", " + sub + ", " + dateShort(x.d) +
                                  (marks.length ? ", " + marks.join(", ") : ""));
     b.addEventListener("click", function () { expDialog(x.id); });
     li.appendChild(b);
     return li;
+  }
+  // BR-HH: initials of the member who changed a shared record last.
+  function byChip(b, id) {
+    var who = hhByOf(groupOf(id), id);
+    if (!who) return;
+    var c = el("span", "by-chip", who.initials);
+    c.style.background = who.color;
+    c.title = t("hh.by", { n: who.name });
+    c.setAttribute("aria-label", c.title);
+    b.appendChild(c);
   }
   function payRow(p) {
     var li = el("li");
@@ -1554,6 +1899,7 @@
     mid.appendChild(el("span", "tx-cat", whoName(p.f) + " → " + whoName(p.to)));
     mid.appendChild(el("span", "tx-note", t("row.pay")));
     b.appendChild(mid);
+    byChip(b, p.id);
     b.appendChild(el("span", "tx-amt", money(p.a)));
     b.setAttribute("aria-label", t("bal.paidAria", { f: whoName(p.f), a: money(p.a), t: whoName(p.to) }) + ", " + dateShort(p.d));
     b.addEventListener("click", function () { payDialog(p.id, null); });
@@ -3816,8 +4162,8 @@
             ["file", "menu.file", sendGroupFile]].concat(of).concat([
             ["export", "menu.export", exportDialog],
             ["fromapp", "menu.fromApp", function () { importOther(g.id); }],
-            ["arch", g.arch ? "menu.unarch" : "menu.arch", toggleArchive],
-            ["del", "menu.del", deleteGroup]]);
+            ["arch", g.arch ? "menu.unarch" : "menu.arch", toggleArchive]]).concat(hhMenu(g)).concat([
+            ["del", "menu.del", isShared(g.id) ? function () { hhAsk("del", g.id); } : deleteGroup]]);
   }
   function openMenu() {
     var menu = $("menu"), btn = $("menu-btn");
@@ -3965,7 +4311,7 @@
     api.registerSlice("split", sliceGet, sliceSet, STORAGE_KEY, mergeSplit);
   }
 
-  function sliceGet() { return mergeSplit(data, data); }   // canonical copy (R26)
+  function sliceGet() { return own(data); }   // canonical copy (R26), own groups only (BR-HH)
 
   // A pull: adopt, persist without dirty (R6), redraw the page but
   // never an open dialog (what you are typing stays, SS-4 lesson).
@@ -3974,12 +4320,20 @@
     var before = JSON.stringify(data);
     window.__orosSyncApi._suppress = true;
     try {
-      data = mergeSplit(incoming, incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      var gone = hhAdopt(incoming), adopted = gone.length > 0;
+      var keep = sharedPart(data), inc = splitBy(incoming, false);
+      inc.tombs = Object.assign({}, inc.tombs);
+      gone.forEach(function (g) { inc.tombs["grp:" + g] = Math.max(Date.now(), (inc.tombs["grp:" + g] || 0) + 1); });
+      inc = mergeSplit(inc, inc);
+      data = joinShared(inc, keep);
+      lastStore = JSON.stringify(inc);
+      localStorage.setItem(STORAGE_KEY, lastStore);
+      if (adopted) lastStore = null;     // the new tombstones go up (commit below)
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
+    if (adopted) { commit(); hhRefresh(); }
     if (JSON.stringify(data) === before) return;
     runRecurring();   // a series that just arrived: its due dates (deterministic ids)
     renderAll();
@@ -4040,6 +4394,7 @@
     inheritPalette();
     watchPalette();
     renderAll();
+    hhBoot();          // BR-HH: groups shared with a household
   }
 
   boot();
@@ -4060,7 +4415,7 @@
     if (tg && tg.asNew && !document.querySelector("dialog[open]")) { newExpenseFrom(tg.asNew); return; }
     if (tg && tg.newGroup && !document.querySelector("dialog[open]")) { newGroupFrom(tg.newGroup); return; }
     if (!tg || typeof tg.group !== "string" || document.querySelector("dialog[open]")) return;
-    if (!groupById(data, tg.group)) return;
+    if (!groupById(data, tg.group)) { if (hhApi()) hhWant = tg; return; }
     var x = typeof tg.exp === "string" && groupOf(tg.exp) === tg.group ? findIn(data.exp, tg.exp) : null;
     if (x) prefs.tab = "exp";
     openGroup(tg.group);

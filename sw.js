@@ -1423,6 +1423,7 @@ var PRECACHE_URLS = [
   "split/split.css",
   "split/split.js",
   "split/import.js",
+  "split/house.js",
   "spreadsheet/",
   "spreadsheet/index.html",
   "spreadsheet/search.js",
