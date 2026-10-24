@@ -21,6 +21,9 @@
 // become issues (newsletter/engine.js runFeeds), read through the
 // Reader's network layer (feeds/core.js + feeds/fetch.js), which the
 // runner loads into the shell the first time a feed is due.
+// List clean-up: every hour (first after 2 minutes) the lists this
+// device cleans lose their long-unconfirmed and long-gone subscribers
+// (newsletter/engine.js runClean), once a day each.
 // fn(kind) is called with "state" or "data".
 // Honest limit: orOS closed = nothing is sent; a background tab is
 // slowed by the browser (about one message a minute).
@@ -49,7 +52,9 @@
       inbox: "Newsletter: {list}", subs: "{n} new", unsubs: "{n} unsubscribed", bounced: "{n} bounced",
       inv: "Confirmation requests stopped", invBody: "Open Newsletter: the sending account needs a look.",
       rssDraft: "New draft from RSS: “{s}”", rssDraftBody: "Open Newsletter to look it over and send it.",
-      rssSend: "Sending “{s}” (RSS)"
+      rssSend: "Sending “{s}” (RSS)",
+      clean: "Newsletter: {list} cleaned up", cleanBody: "{p} unconfirmed and {g} who had left were deleted.",
+      cleanWait: "Newsletter: {list} waits for your OK", cleanWaitBody: "{n} people would be deleted at once. Open Subscribers › Clean up to look and confirm."
     },
     el: {
       "run.done": "Το «{s}» στάλθηκε σε {n}", done1: "Το «{s}» στάλθηκε σε 1",
@@ -58,7 +63,9 @@
       inbox: "Ενημερωτικό δελτίο: {list}", subs: "{n} νέοι", unsubs: "{n} διαγραφές", bounced: "{n} επιστροφές",
       inv: "Σταμάτησαν τα αιτήματα επιβεβαίωσης", invBody: "Άνοιξε το Ενημερωτικό δελτίο: ο λογαριασμός αποστολής θέλει έλεγχο.",
       rssDraft: "Νέο πρόχειρο από RSS: «{s}»", rssDraftBody: "Άνοιξε το Ενημερωτικό δελτίο για να το δεις και να το στείλεις.",
-      rssSend: "Αποστολή «{s}» (RSS)"
+      rssSend: "Αποστολή «{s}» (RSS)",
+      clean: "Ενημερωτικό δελτίο: καθαρισμός της λίστας {list}", cleanBody: "Διαγράφηκαν {p} που δεν επιβεβαίωσαν και {g} που είχαν φύγει.",
+      cleanWait: "Ενημερωτικό δελτίο: η λίστα {list} περιμένει το ΟΚ σου", cleanWaitBody: "Θα διαγράφονταν {n} άτομα μαζί. Άνοιξε Συνδρομητές › Καθαρισμός για να δεις και να επιβεβαιώσεις."
     }
   };
   // The shell's language; a pack language (orosI18n) reads the
@@ -152,6 +159,19 @@
       if (res.length) { fire("data"); engine.kick(); }
     }, function () {}).then(function () { setTimeout(feeds, RSS_EVERY); });
   }
+  // List clean-up: once a day per list, on the list's clean-up device.
+  var CLEAN_EVERY = 60 * 60 * 1000;
+  function clean() {
+    if (!engine) { setTimeout(clean, CLEAN_EVERY); return; }
+    E.runClean().then(function (res) {
+      res.forEach(function (o) {
+        var name = o.list.name.slice(0, 60);
+        emit(o.wait ? { key: "cleanwait-" + o.list.id + "-" + E.dayKey(), type: "reminder", title: tx("cleanWait", { list: name }), body: tx("cleanWaitBody", { n: o.wait }) }
+                    : { key: "clean-" + o.list.id + "-" + E.dayKey(), type: "info", title: tx("clean", { list: name }), body: tx("cleanBody", { p: o.pend, g: o.gone }) });
+      });
+      if (res.some(function (o) { return !o.wait; })) { dirty(); fire("data"); }
+    }, function () {}).then(function () { setTimeout(clean, CLEAN_EVERY); });
+  }
   function fire(kind) {
     listeners = listeners.filter(function (fn) {
       try { fn(kind); return true; } catch (e) { return false; }     // a closed app frame
@@ -226,4 +246,5 @@
   registerSlice();
   setTimeout(start, 2000);
   setTimeout(feeds, 30000);
+  setTimeout(clean, 120000);
 })(window);

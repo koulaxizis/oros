@@ -27,6 +27,9 @@ The key needs permission to send and to read bounces or suppressions. Brevo's AP
 
 An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
 
+## Clean up the list
+`Clean up…` keeps a list from growing with people who will never read it. Newsletter doesn't track opens, so it deletes only people who never confirmed (30 days after the confirmation request, by default) and people who left: unsubscribed, bounced or marked as spam (90 days after they left). Active subscribers are never deleted. Those who left are deleted for good, like `Delete for good`; those who never confirmed can be invited again. It runs once a day while orOS is open, on one device per list: the one that sends the list (`Run it on this device` picks another). More than 200 people, or more than a fifth of the list, at once wait for you: the dialog shows who would go, `Export them (CSV)` saves them first and `Clean up now` deletes them.
+
 ## Email platforms (MailerLite, Mailchimp, Brevo)
 If you also keep subscribers on MailerLite, Mailchimp or Brevo, connect the account first in [Settings](app:settings) › `Connected services`. Then, on `Subscribers`, `Email platforms` links the list to a group (MailerLite), an audience (Mailchimp) or a contact list (Brevo). `Sync` reads everyone there and shows what would change before anything does; `Apply` makes the changes.
 - `Bring their subscribers here`: people on the platform who aren't on this list are added, with the tag of the platform and the basis `Gave consent`.
