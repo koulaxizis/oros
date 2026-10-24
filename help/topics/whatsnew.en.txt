@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.47.00
+- Newsletter: subscribers who have shown no sign of life for 12 months (no sign-up or confirmation; opens are not counted) get one e-mail asking "Do you still want it?". Replying keeps them on the list; whoever doesn't answer within 30 days is unsubscribed. At most 20 a day per list, oldest first. Change the months, or switch it off, in Subscribers › Clean up….
+
 ## Version 3.46.00
 - Newsletter: lists clean themselves up. Once a day, people who never confirmed (30 days after the request) and people who left (90 days after they unsubscribed or bounced) are deleted, so the list doesn't grow for nothing. Active subscribers are never touched, and a big clean-up waits for your OK. Subscribers › Clean up… sets the days, shows who would go and exports them first.
 
