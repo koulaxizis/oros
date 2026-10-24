@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.43.00
+- Assistant: it now sees the labels of your items (Calendar, To-Do, Kanban, Contacts, Notes, Bookmarks tags, Media Shelf tags), whether a task is done and its priority, and a title's status and rating. Ask "which events have no label?" or "show my cards with the label Bug" and it lists them, up to 50 per app. It can also set, add or remove labels and a task's priority, and the same change to many items comes as one card with one Apply and one Undo.
+
 ## Version 3.42.06
 - Calendar: more ways to filter. Long-press a chip (or right-click / Alt+click it) to show only that one; do it again to bring them all back. A new No label chip shows or hides your events without a label. All, None and My events sit before the chips.
 

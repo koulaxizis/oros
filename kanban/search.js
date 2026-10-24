@@ -19,16 +19,26 @@
     return m ? new Date(+m[1], +m[2] - 1, +m[3], 12).getTime() : 0;
   }
   function arr(a) { return Array.isArray(a) ? a : []; }
+  // Same English as kanban.js where it has the text (orosI18n packs:
+  // pack "kanban"; the shell runs this file).
+  var S = { en: { "srch.labels": "Labels: " }, el: { "srch.labels": "Ετικέτες: " } };
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known && I.known(lang) && !S[lang]) I.table(S, "kanban", lang);
+    return S[lang] || S.en;
+  }
 
   var PROVIDER = {
     id: "kanban",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var d = ctx.readJSON(KEY), out = [], w = words(ctx.code || ctx.lang);
       if (!d || !Array.isArray(d.boards)) return out;
       var gone = d.boardDeleted && typeof d.boardDeleted === "object" ? d.boardDeleted : {};
       d.boards.forEach(function (b) {
         if (!b || typeof b.id !== "string" || b.archived || gone[b.id] || b.id.indexOf("tpl-") === 0) return;
+        var bl = {};
+        arr(b.labels).forEach(function (l) { if (l && typeof l.id === "string" && str(l.name)) bl[l.id] = str(l.name); });
         arr(b.columns).forEach(function (c) {
           if (!c || typeof c.id !== "string") return;
           arr(c.cards).forEach(function (k) {
@@ -37,13 +47,16 @@
             var info = arr(k.info).map(function (x) {
               return x ? [str(x.label), str(x.value)].filter(Boolean).join(": ") : "";
             });
+            var labels = arr(k.labels).map(function (id) { return bl[id] || ""; }).filter(Boolean);
             out.push({
               id: k.id,
               title: str(k.text),
-              text: [str(k.notes)].concat(sub, info, [str(k.lane), str(b.name) + " › " + str(c.name)])
+              text: [labels.length ? w["srch.labels"] + labels.join(", ") : "", str(k.notes)]
+                .concat(sub, info, [str(k.lane), str(b.name) + " › " + str(c.name)])
                 .filter(Boolean).join(" · "),
               when: dueMs(k.due),
-              target: { board: b.id, col: c.id, card: k.id }
+              target: { board: b.id, col: c.id, card: k.id },
+              labels: labels
             });
           });
         });

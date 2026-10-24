@@ -13,6 +13,18 @@
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
 
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
+  // Same English as todo.js where it has the text (orosI18n packs:
+  // pack "todo"; the shell runs this file, a pack language reads the
+  // pack when the shell has it, else English).
+  var S = {
+    en: { "srch.labels": "Labels: ", "srch.done": "Done", "srch.prio": "Priority {n}" },
+    el: { "srch.labels": "Ετικέτες: ", "srch.done": "Ολοκληρώθηκε", "srch.prio": "Προτεραιότητα {n}" }
+  };
+  function words(lang) {
+    var I = root && root.orosI18n;
+    if (I && I.known && I.known(lang) && !S[lang]) I.table(S, "todo", lang);
+    return S[lang] || S.en;
+  }
   function dueMs(s) {
     var m = typeof s === "string" && YMD.exec(s);
     return m ? new Date(+m[1], +m[2] - 1, +m[3], 12).getTime() : 0;
@@ -22,8 +34,12 @@
     id: "todo",
     keys: [KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var d = ctx.readJSON(KEY), out = [], w = words(ctx.code || ctx.lang);
       if (!d || !Array.isArray(d.lists)) return out;
+      var dead = d.deleted && typeof d.deleted === "object" ? d.deleted : {}, lname2 = {};
+      (Array.isArray(d.labels) ? d.labels : []).forEach(function (l) {
+        if (l && typeof l.id === "string" && str(l.name) && !(typeof dead[l.id] === "number" && dead[l.id] >= (l.mtime || 0))) lname2[l.id] = str(l.name);
+      });
       d.lists.forEach(function (l) {
         if (!l || typeof l.id !== "string") return;
         var lname = str(l.name);
@@ -34,12 +50,17 @@
             return x ? [str(x.label), str(x.value)].filter(Boolean).join(": ") : "";
           }).filter(Boolean);
           var subs = (Array.isArray(it.subs) ? it.subs : []).map(function (x) { return x ? str(x.text) : ""; }).filter(Boolean);
+          var labels = (Array.isArray(it.labels) ? it.labels : []).map(function (id) { return lname2[id] || ""; }).filter(Boolean);
+          var state = [it.done ? w["srch.done"] : "",
+                       it.prio === 1 || it.prio === 2 || it.prio === 3 ? w["srch.prio"].replace("{n}", it.prio) : "",
+                       labels.length ? w["srch.labels"] + labels.join(", ") : ""];
           out.push({
             id: it.id,
             title: str(it.text),
-            text: [str(it.notes)].concat(info).concat(subs).concat([lname]).filter(Boolean).join(" · "),
+            text: state.concat([str(it.notes)]).concat(info).concat(subs).concat([lname]).filter(Boolean).join(" · "),
             when: dueMs(it.due),
-            target: { list: l.id, item: it.id }
+            target: { list: l.id, item: it.id },
+            labels: labels
           });
         });
       });

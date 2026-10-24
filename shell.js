@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.42.06";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.43.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3253,7 +3253,7 @@
     home: function () { if (state.running) returnToDesktop(); },
     open: function (id) { openAppById(id); }
   };
-  window.orosAssistSearch = function (q, ids) {
+  window.orosAssistSearch = function (q, ids, opts) {
     var S = window.orosSearch;
     if (!S) return Promise.resolve([]);
     var allow = {};
@@ -3261,6 +3261,23 @@
     var apps = searchApps().filter(function (a) { return allow[a.id]; });
     if (!apps.length) return Promise.resolve([]);
     if (!searchReader) searchReader = S.makeReader(localStorage);
+    // { all: true } (AS-LBL): every item of the allowed apps, unscored,
+    // for the Assistant's label filter ("events without a label").
+    if (opts && opts.all) {
+      return S.load(apps, APP_VERSION).then(function () {
+        var ctx = { q: "", words: [], fold: S.fold, lang: langBase(), code: state.lang, limit: 1000, readJSON: searchReader };
+        var out = [];
+        (window.orosSearchProviders || []).forEach(function (pv) {
+          if (!pv || typeof pv.search !== "function" || !allow[pv.id]) return;
+          var list;
+          try { list = pv.search(ctx); } catch (e) { list = null; }
+          if (!Array.isArray(list)) return;
+          var hits = list.map(S.cleanHit).filter(Boolean).slice(0, 1000);
+          if (hits.length) out.push({ id: pv.id, total: hits.length, hits: hits });
+        });
+        return JSON.parse(JSON.stringify(out));
+      });
+    }
     return S.load(apps, APP_VERSION).then(function () {
       return S.run(window.orosSearchProviders, String(q || ""), {
         lang: langBase(), code: state.lang, readJSON: searchReader,
