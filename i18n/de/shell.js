@@ -31,6 +31,7 @@ orosPack("de", "shell", {
  "app.dice": "Würfel & Münze",
  "app.dots": "Käsekästchen",
  "app.familytree": "Stammbaum",
+ "app.publish": "Verlag",
  "app.together": "Zusammen",
  "app.household": "Haushalt",
  "app.feeds": "Reader",
