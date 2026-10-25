@@ -80,13 +80,15 @@ Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Versch
 - Nach einer Änderung sagt die Karte, was passiert ist, und hat `Rückgängig`. Rückgängig geht, bis du den Assistenten verlässt; danach änderst du es in der App selbst zurück.
 - Hat sich der Eintrag inzwischen geändert (zum Beispiel auf einem anderen Gerät), wird nichts geändert, und die Karte sagt es.
 - Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, bis zu 200 Einträge: oben, was jeder Eintrag bekommt, dann die ersten 10 (`Alle zeigen` bringt den Rest); ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
+- Verschiedene Änderungen an mehreren Einträgen (zum Beispiel die neuen Angaben von zehn Personen aus einer Liste) kommen ebenfalls als eine Karte, jeder Eintrag mit eigenem `Vorher` und `Nachher`. In Kontakte hat jede Zeile einen Haken: Nimm ihn weg bei allem, was bleiben soll, wie es ist.
 
 Was er ändern kann:
 - [Aufgaben](app:todo): eine Aufgabe als erledigt oder nicht erledigt markieren, ihr Datum verschieben, sie umbenennen, ihre Notiz, Labels oder Priorität ändern, sie löschen.
 - [Kalender](app:calendar): einen Termin verschieben (Tag, Beginn, Ende), umbenennen, Ort, Label oder Notiz ändern, löschen. Er kann auch deine Termine nach Label auflisten oder die ohne Label („welche Termine haben kein Label?"). Neue Labels legst du im Kalender an.
 - [Budget](app:budget): Betrag, Datum, Kategorie oder Notiz eines Eintrags ändern, ihn löschen.
 - [Lesezeichen](app:bookmarks): ein Lesezeichen umbenennen, seine Notiz oder Tags ändern, es löschen.
-- [Kontakte](app:contacts): Name, Organisation, Geburtstag, Notiz oder Labels eines Kontakts ändern, eine Telefonnummer oder E-Mail hinzufügen (die alten bleiben), ihn löschen.
+- [Kontakte](app:contacts): Name, Spitzname, Organisation, Berufsbezeichnung, Geburtstag, Notiz oder Labels eines Kontakts ändern; eine Telefonnummer, E-Mail, Website oder Adresse hinzufügen (die alten bleiben) oder eine geänderte ersetzen; eine Zeile zur Notiz hinzufügen; ihn löschen. Hänge eine Visitenkarte, ein Formular, eine Liste, eine vCard oder eine E-Mail-Signatur an und bitte „aktualisiere meine Kontakte damit": Der Assistent sucht zuerst jede Person, schlägt nur Neues oder Abweichendes vor und bietet einen neuen Kontakt für alle an, die noch fehlen.
+- [CRM](app:crm): USt-IdNr. oder Steuernummer, Finanzamt, Berufsbezeichnung, Telefon, E-Mail, Website oder Adresse eines Kunden eintragen, Name oder Kurzname ändern, eine Zeile zur Notiz hinzufügen (Bankdaten oder eine Biografie gehören dorthin). Telefon, E-Mail, Website oder Adresse, die schon da sind, werden nur ersetzt, wenn du sagst, dass sie sich geändert haben. Kunden werden in CRM selbst gelöscht.
 - [Kanban](app:kanban): eine Karte in eine andere Spalte verschieben („Verschieb die Rechnungskarte nach Erledigt“), Fälligkeit, Titel, Notiz oder Labels ändern, sie löschen. Ein Verschieben startet die eigenen Automatisierungen der Spalte, und die Karte zeigt, was sie ändern.
 - [Medienregal](app:shelf): den Status eines Titels ändern (vorgemerkt, läuft gerade, fertig, abgebrochen), Name oder Notiz ändern, ihn löschen.
 - [Gewohnheiten](app:habits): eine Ja/Nein-Gewohnheit für heute abhaken oder den Haken entfernen, eine Gewohnheit umbenennen.
@@ -94,14 +96,16 @@ Was er ändern kann:
 
 Manche Änderungen bleiben in der App, und der Assistent sagt das: das Abhaken einer wiederkehrenden Aufgabe (die App berechnet ihr nächstes Datum), das Verschieben oder Löschen eines wiederkehrenden Termins (du wählst dieses Mal oder die ganze Serie), wiederkehrende Budget-Einträge, Einträge mit Belegen oder in einer anderen Währung, Lesezeichen mit gespeicherter Kopie, Kanban-Karten mit Dateien auf der orOS-Disk oder auf einem archivierten Board, Gewohnheiten, die eine Menge zählen, und das Löschen einer Gewohnheit oder Pflanze (das entfernt ihren ganzen Verlauf). Nur das Ergebnis geht an den KI-Dienst zurück („übernommen“ oder „nicht übernommen“), nie, wie der Eintrag vorher aussah.
 
-## Fotos und PDFs
-Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto (JPEG, PNG, WebP, GIF) oder ein PDF anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 3 Dateien gehen mit einer Nachricht.
+## Fotos, PDFs und Dokumente
+Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto, ein PDF oder ein Dokument anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 3 Dateien gehen mit einer Nachricht.
 - Frag zum Beispiel „Füge diesen Beleg zu meinen Ausgaben hinzu“, „Speichere diese Visitenkarte als Kontakt“, „Trag das Konzert von diesem Plakat in meinen Kalender ein“ oder „Fass diesen Vertrag in einer Notiz zusammen“. Der Assistent liest die Datei und bereitet die Eintragskarte vor, die du wie gewohnt prüfst und speicherst.
 - Über dem Nachrichtenfeld siehst du jede Datei, ihre Größe und wohin sie geht. Die Datei geht nur an diesen Dienst, und nur wenn du `Senden` drückst. Große Fotos werden vorher verkleinert.
 - Claude, ChatGPT, Gemini und OpenRouter lesen Fotos und PDFs selbst. Mistral liest Fotos selbst.
 - Alle anderen Fälle funktionieren auch: orOS liest den Text der Datei zuerst auf diesem Gerät und sendet nur diesen Text. PDFs laufen über PDF.js; ein gescanntes PDF (ohne Text darin) und die Wörter in einem Foto laufen über Tesseract, auf Englisch und Griechisch. So liest Mistral PDFs, ein lokales Modell PDFs und Fotos und das eingebaute Browsermodell beides. Der Chip zeigt dann `nur Text`.
 - Wenn ein Foto zum ersten Mal so gelesen wird, wird die Texterkennung einmalig von orOS selbst geladen (etwa 7 MB). Sonst wird nichts kontaktiert, und die Datei verlässt nie das Gerät.
 - Für ein lokales Modell mit Bildverständnis (llava, gemma3, qwen2.5-vl und andere) setze in den Einstellungen den Haken bei `Dieses Modell kann Fotos sehen`: Fotos gehen dann als Bilder.
+- Dokumente werden immer auf diesem Gerät gelesen, und nur ihr Text geht an den Dienst: Word (.docx, .doc), LibreOffice (.odt, .ods, .odp), Excel (.xlsx, .xls), PowerPoint (.pptx), RTF, E-Books (.epub), Webseiten, vCards, E-Mails (.eml), CSV, Markdown und reiner Text. Tabellen behalten ihre Spalten, Tabellenblätter kommen Blatt für Blatt. Nichts in einem Dokument wird ausgeführt.
+- Fotos in anderen Formaten (BMP, AVIF, SVG sowie HEIC oder TIFF, wo der Browser sie öffnen kann) werden zuerst als JPEG oder PNG neu gezeichnet.
 - Dateien werden nicht mit der Unterhaltung gespeichert und nie synchronisiert. Nachdem du den Assistenten verlassen hast, zeigt die Unterhaltung sie als `nicht behalten`, und sie werden nicht noch einmal gesendet. Dateien kosten Tokens wie Text: Eine PDF-Seite oder ein Foto ist etwa so viel wie eine Seite Text.
 
 ## Im Internet suchen

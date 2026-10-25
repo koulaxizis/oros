@@ -676,3 +676,8 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
    The shell's panel has its own title bar (new chat, open the full
    Assistant, close); the conversation list stays in the full app. */
 body.as-mini #toolbar, body.as-mini #side, body.as-mini #scrim { display: none !important; }
+/* Ticks on a change card (wave CF1): a row left out is dimmed */
+.chg-table .chg-tick { width: 28px; padding-inline: 4px; }
+.chg-table .chg-tick input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent, currentColor); }
+.chg-table tr.chg-off td, .chg-table tr.chg-off th { opacity: 0.45; }
+.chg-table tr.chg-off td.chg-tick { opacity: 1; }

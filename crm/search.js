@@ -59,7 +59,7 @@
         out.push({
           id: c.id,
           title: str(c.alias) ? str(c.name) + " (" + str(c.alias) + ")" : str(c.name),
-          text: [str(c.afm), str(c.phone), str(c.email), str(c.job),
+          text: [str(c.afm), str(c.doy), str(c.phone), str(c.email), str(c.job), str(c.addr), str(c.country), str(c.web),
                  arr(c.people).map(function (p) { return p && str(p.n); }).filter(Boolean).join(", "),
                  str(c.note)].filter(Boolean).join(" · "),
           target: { cust: c.id }
