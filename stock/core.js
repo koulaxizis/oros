@@ -1,6 +1,7 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.7.0; 1.7 adds the point of
-// sale lists sales / pls / zs, see "Point of sale" below)
+// orOS Stock — core.js (shared logic, v1.8.0; 1.7 adds the point of
+// sale lists sales / pls / zs, see "Point of sale" below; 1.8 the
+// consignment list cons, see "Consignment" below)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -46,6 +47,9 @@
 //     expiring(data, today, days), lotNames(data, itemId)
 //   closing a period (1.6): normClose, closePeriod(data, d, nowMs, id),
 //     openMove(data), OPEN_ID, closeInfo(data, d)
+//   consignment (1.8): normCons, consOf(data, w), consList(data),
+//     lastSettle(data, w), consDue(data, today), settleMove(data, w,
+//     left, d, id, nowMs), consInvoice(data, w, move), addMonths
 // Data (synced slice "stock", key oros-stock-data):
 //   { ver: 1, items, cats, units, sups, pos, moves: [row…] each sorted
 //     by id, settings: { m, cur, vat, neg }, tombs: { id: deletedAt } }
@@ -373,6 +377,32 @@
     return { id: x.id, m: x.m, name: name, arch: x.arch === 1 && x.id !== WH_MAIN ? 1 : 0 };
   }
 
+  // ---------- Consignment (1.8) ----------
+  // A warehouse may be a shop that sells your goods on consignment (a
+  // bookshop, a gallery, a deli): you send stock there with a normal
+  // transfer, it stays yours, and every few months the shop says what
+  // is left on its shelf. The difference was sold: a settlement is a
+  // normal "out" movement in that warehouse (src "cons:<warehouse id>",
+  // price = the product's sale price), and Invoices is opened with the
+  // lines at the shop's discount. Nothing else is stored.
+  //   cons   one row per consignment warehouse (LWW + tombs; its id IS
+  //          the warehouse id): { id, m, on: 1|0, disc: % the shop
+  //          keeps (0–90), every: months between settlements (0 = no
+  //          reminder, ≤ 24), who: the name to invoice ("" = the
+  //          warehouse's name) }. A separate top-level list (like pics)
+  //          so a 1.7 device that renames the warehouse can't strip it;
+  //          written only when it has rows, so a 1.7 device just drops it
+  //          on its own merge.
+  var CONS_SRC = "cons:", MAX_CONS = 200;
+  function normCons(x) {
+    if (!base(x) || x.id === WH_MAIN) return null;
+    var disc = clampInt(x.disc, 0, 90), every = clampInt(x.every, 0, 24);
+    return {
+      id: x.id, m: x.m, on: x.on === 0 ? 0 : 1, disc: disc === null ? 0 : disc,
+      every: every === null ? 0 : every, who: cleanText(x.who, NAME_LEN, false)
+    };
+  }
+
   // ---------- Point of sale (1.7, wave 46) ----------
   // Three more top-level lists, written only when they have rows (so
   // data without a sale stays byte-identical, and a 1.6 device drops
@@ -561,6 +591,8 @@
     if (pls.length) out.pls = pls;
     var zs = pick("zs", normZ, MAX_ZS);
     if (zs.length) out.zs = zs;
+    var cons = pick("cons", normCons, MAX_CONS);
+    if (cons.length) out.cons = cons;
     var sa = normSettings(a.settings), sb = normSettings(b.settings);
     out.settings = sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa;
     var sortedTombs = {};
@@ -1271,6 +1303,110 @@
     Object.keys(all).forEach(function (i) { if (all[i][key]) out[i] = all[i][key]; });
     return out;
   }
+  // ---------- Consignment (1.8) ----------
+  // n months after a day; the day is kept when the month has it, else
+  // the month's last day (Jan 31 + 1 → Feb 28)
+  function addMonths(ymd, n) {
+    var y = +ymd.slice(0, 4), mo = +ymd.slice(5, 7) - 1 + n, d = +ymd.slice(8, 10);
+    y += Math.floor(mo / 12); mo = ((mo % 12) + 12) % 12;
+    var last = new Date(Date.UTC(y, mo + 1, 0)).getUTCDate();
+    return y + "-" + pad2(mo + 1) + "-" + pad2(Math.min(d, last));
+  }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function whRow(data, w) {
+    var list = (data && data.whs) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === w) return list[i];
+    return null;
+  }
+  // the consignment settings of warehouse w (on), or null
+  function consOf(data, w) {
+    if (!w || !whRow(data, w)) return null;
+    var list = (data && data.cons) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === w && list[i].on === 1) return list[i];
+    return null;
+  }
+  // [{ wh, cons }] for every consignment warehouse not archived, by name
+  function consList(data) {
+    return ((data && data.whs) || []).filter(function (w) { return !w.arch && consOf(data, w.id); })
+      .map(function (w) { return { wh: w, cons: consOf(data, w.id) }; })
+      .sort(function (x, y) { return cmpStr(x.wh.name.toLowerCase(), y.wh.name.toLowerCase()) || cmpStr(x.wh.id, y.wh.id); });
+  }
+  // the day of the last live settlement in w, "" when none
+  function lastSettle(data, w) {
+    var last = "", src = CONS_SRC + w;
+    liveAll(data && data.moves).forEach(function (x) { if (x.src === src && x.d > last) last = x.d; });
+    return last;
+  }
+  // the first day stock went into w (a transfer in, or any movement
+  // there; the opening balance of a closed period counts as its day)
+  function firstIn(data, w) {
+    var first = "";
+    liveAll(ledger(data)).forEach(function (x) {
+      var hit = x.t === "xfer" ? x.w2 === w : (x.t === "open" ? x.lines.some(function (l) { return l.w === w; }) : x.w === w);
+      if (hit && (!first || x.d < first)) first = x.d;
+    });
+    return first;
+  }
+  // Consignment warehouses whose settlement is due: every > 0, stock
+  // still there, and the last settlement (else the first delivery) is
+  // at least `every` months before today. → [{ wh, cons, since, due }]
+  function consDue(data, today) {
+    var all = whQty(data);
+    return consList(data).filter(function (r) { return r.cons.every > 0; }).map(function (r) {
+      var w = r.wh.id, holds = Object.keys(all).some(function (i) { return (all[i][w] || 0) > 0; });
+      if (!holds) return null;
+      var since = lastSettle(data, w) || firstIn(data, w);
+      if (!since) return null;
+      var due = addMonths(since, r.cons.every);
+      return due <= today ? { wh: r.wh, cons: r.cons, since: since, due: due } : null;
+    }).filter(Boolean);
+  }
+  // A settlement: left = { itemId: thousandths still on the shop's
+  // shelf } (an item not named = nothing changed, all of it is left).
+  // Every item held in w with less left than is there was sold: one
+  // "out" movement in w, each line at the item's sale price. → the
+  // movement (normalized), or null when nothing was sold.
+  function settleMove(data, w, left, d, id, nowMs) {
+    if (!consOf(data, w) || !isYmd(d) || !ID_RE.test(String(id || ""))) return null;
+    var have = qtyIn(data, w), lines = [];
+    var items = dict();
+    ((data && data.items) || []).forEach(function (it) { items[it.id] = it; });
+    Object.keys(have).sort(cmpStr).forEach(function (i) {
+      var q = have[i];
+      if (!(q > 0) || !items[i]) return;
+      var l = left && typeof left === "object" && has(left, i) ? clampInt(left[i], 0, Q_MAX) : q;
+      if (l === null || l >= q) return;
+      lines.push({ i: i, q: -(q - l), p: items[i].price });
+    });
+    if (!lines.length) return null;
+    return normMove({ id: id, m: isInt(nowMs) ? nowMs : Date.now(), d: d, t: "out", w: w,
+                      src: CONS_SRC + w, ref: "", note: "", lines: lines });
+  }
+  // The Invoices prefill (BR-INV-NEW) for a settlement movement: the
+  // shop as client, one line per product at its sale price less the
+  // shop's discount. Lines carry no code on purpose: the stock already
+  // came off with the settlement, so Invoices must not offer to take it
+  // out again. null when the movement isn't a settlement of w.
+  function consInvoice(data, w, move) {
+    var c = consOf(data, w), wh = whRow(data, w);
+    if (!c || !wh || !move || move.src !== CONS_SRC + w || move.t !== "out") return null;
+    var items = dict();
+    ((data && data.items) || []).forEach(function (it) { items[it.id] = it; });
+    var lines = [];
+    move.lines.forEach(function (l) {
+      var it = items[l.i];
+      if (!it) return;
+      var row = { d: it.sku ? it.name + " (" + it.sku + ")" : it.name, q: -l.q / 1000, p: (l.p || 0) / 100, vat: it.vat };
+      if (c.disc) row.disc = c.disc;
+      lines.push(row);
+    });
+    if (!lines.length) return null;
+    var cur = data.settings && data.settings.cur;
+    var out = { name: c.who || wh.name, items: lines.slice(0, 50), ref: { app: "stock", id: "cons-" + move.id } };
+    if (cur) out.cur = cur;
+    return out;
+  }
+
   function whName(data, w, mainLabel) {
     var id = w || WH_MAIN, list = (data && data.whs) || [];
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i].name;
@@ -1508,7 +1644,9 @@
     LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
     OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
     ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath,
-    PAYS: PAYS, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales
+    PAYS: PAYS, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
+    CONS_SRC: CONS_SRC, normCons: normCons, consOf: consOf, consList: consList, lastSettle: lastSettle,
+    consDue: consDue, settleMove: settleMove, consInvoice: consInvoice, addMonths: addMonths
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosStockCore = api;

@@ -71,6 +71,14 @@ Wenn du Ware an mehr als einem Ort hast (ein Laden und ein Lagerraum, zwei Filia
 
 Nachbestellen, Mindestmengen und der Gesamtwert gelten für das ganze Geschäft. Ein benutztes Lager kann archiviert, aber nicht gelöscht werden; lagere seinen Bestand zuerst um.
 
+### Kommission
+Ein Laden, der deine Waren verkauft und dich für das Verkaufte bezahlt (eine Buchhandlung, eine Galerie, ein Feinkostladen), ist ein Lager mit eingeschalteter Kommission. Lege den Laden unter Einstellungen › `Lager` an und wähle daneben `Kommission…`: den Rabatt des Ladens, eine Erinnerung alle paar Monate und, falls abweichend, den Namen für die Rechnung.
+- Schicke Bestand mit `Neu` › `Umlagerung` dorthin: er gehört weiter dir, nur an einem anderen Ort.
+- Wenn der Laden meldet, was übrig ist, öffne die Kachel `Kommission` im Tab Produkte und wähle `Abrechnen…`. Gib ein, was noch im Regal steht; der Rest wird zum Verkaufspreis des Produkts als verkauft gebucht.
+- Nach `Buchen` öffnet `Rechnung erstellen` die Rechnungen mit dem Laden als Kunde und den Zeilen zu seinem Rabatt. Die Zeilen tragen keinen Produktcode, damit Rechnungen den Bestand nicht ein zweites Mal abbucht.
+- Hake `Den Rest zurück … holen` an, um die Kommission zu beenden: der Rest geht ins Hauptlager zurück.
+- Die Kachel wird gelb, wenn eine Abrechnung fällig ist. Storniere die Verkaufsbewegung, um eine Abrechnung rückgängig zu machen.
+
 ## Nachbestellen
 `Nachbestellen` listet jedes Produkt bei oder unter seiner Mindestmenge, nach Lieferant gruppiert, mit einer vorgeschlagenen Menge (die `Bestellmenge` des Produkts, oder genug für die doppelte Mindestmenge, abzüglich dessen, was schon bestellt ist). Für jeden Lieferanten:
 - `Bestellung erstellen` legt eine Bestellung mit diesen Zeilen an.

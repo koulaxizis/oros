@@ -736,6 +736,13 @@
     box.appendChild(tile(t("tile.value"), money(value), null));
     box.appendChild(tile(t("tile.low"), String(low), low ? function () { setTab("order"); } : null, low ? "warn" : ""));
     box.appendChild(tile(t("tile.out"), String(out), out ? function () { prefs.f = "out"; savePrefs(); render(); } : null, out ? "bad" : ""));
+    // consignment shops (1.8): how many are due for a settlement
+    if (window.OrosStockConsign && C.consList(data).length) {
+      var due = C.consDue(data, todayYmd()).length, CT = window.OrosStockConsign.TEXT;
+      var ct = CT[LANG] || CT.en;
+      box.appendChild(tile(ct["cons.tile"] || CT.en["cons.tile"], due ? (ct["cons.dueN"] || CT.en["cons.dueN"]).split("{n}").join(String(due)) : String(C.consList(data).length),
+        openConsign, due ? "warn" : ""));
+    }
   }
   function tile(label, value, onClick, tone) {
     var n = el(onClick ? "button" : "div", "tile" + (onClick ? " tile-btn" : "") + (tone ? " " + tone : ""));
@@ -3158,6 +3165,12 @@
           askName(t("wh.name"), C.NAME_LEN, function (v) { setName(w.main ? C.WH_MAIN : w.id, v); }, w.name);
         });
         li.appendChild(ren);
+        if (!w.main && !w.arch && window.OrosStockConsign) {
+          var cn = el("button", "link-btn", C.consOf(data, w.id) ? consText("cons.title") : consText("cons.link"));
+          cn.type = "button";
+          cn.addEventListener("click", function () { window.OrosStockConsign.settings(consApi(draw), w.id); });
+          li.appendChild(cn);
+        }
         if (!w.main) {
           var useIt = used(w.id);
           var b2 = el("button", "link-btn" + (useIt && !w.arch ? "" : " danger"), w.arch ? t("wh.unarch") : (useIt ? t("wh.arch") : t("wh.del")));
@@ -3687,6 +3700,47 @@
       openOut: openOut
     });
   }
+
+  // ---------- 9a'. Consignment (1.8) ----------
+  // The UI lives in consign.js; this hands it the app's helpers and
+  // its two writes: the consignment settings of a warehouse and the
+  // movements of a settlement (a sale, and maybe a transfer back).
+  function consText(k) {
+    var CT = window.OrosStockConsign.TEXT;
+    if (window.orosI18n && !CT[LANG]) window.orosI18n.table(CT, "stock", LANG);
+    return (CT[LANG] || CT.en)[k] || CT.en[k];
+  }
+  function consApi(after) {
+    return {
+      lang: LANG, locale: LOCALE, core: C, el: el, button: button, makeDialog: makeDialog, showDialog: showDialog,
+      field: field, checkRow: checkRow, toast: showToast, actionToast: actionToast,
+      fmtQ: fmtQ, qtyStr: qtyStr, readQty: readQty, money: money, fmtDay: fmtDay,
+      fmtNum: function (q) { return nf(3).format(q / 1000); },
+      todayYmd: todayYmd, newId: newId, mainWh: mainWh, openAt: openAtFn,
+      data: function () { return data; },
+      byItem: function (id) { return byId("items", id); },
+      after: after || null,
+      putCons: function (row) {
+        if (!Array.isArray(data.cons)) data.cons = [];
+        var cur = byId("cons", row.id);
+        if (cur) {
+          var same = Object.keys(row).every(function (k) { return cur[k] === row[k]; });
+          if (same) return;
+          Object.keys(row).forEach(function (k) { cur[k] = row[k]; });
+          stamp(cur);
+        } else { row.m = Date.now(); data.cons.push(row); }
+        save();
+        render();
+      },
+      addMoves: function (list) {
+        var now = Date.now();
+        list.forEach(function (mv) { mv.m = now; data.moves.push(mv); });
+        save();
+        render();
+      }
+    };
+  }
+  function openConsign() { if (window.OrosStockConsign) window.OrosStockConsign.open(consApi()); }
 
   // ---------- 9a. Point of sale (1.7, wave 46) ----------
   // The till lives in pos.js; this hands it the app's helpers and the
