@@ -71,6 +71,14 @@ If you keep stock in more than one place (a shop and a storeroom, two branches),
 
 Reorder, minimums and the total value stay for the whole business. A warehouse that was used can be archived, not deleted; move its stock out first.
 
+### Consignment
+A shop that sells your goods and pays you for what sold (a bookshop, a gallery, a deli) is a warehouse with consignment on. In Settings › `Warehouses`, add the shop and choose `Consignment…` next to it: the shop's discount %, a reminder every few months and, if different, the name to invoice.
+- Send stock there with `New` › `Transfer`: it is still yours, only somewhere else.
+- When the shop tells you what is left, open the `Consignment` tile on the Products tab and choose `Settle…`. Type what is still on the shelf; the rest is recorded as sold at each product's sale price.
+- After `Record`, `Make the invoice` opens Invoices with the shop as client and the lines at its discount. The lines carry no product code, so Invoices doesn't take the stock out a second time.
+- Tick `Bring what is left back` to end the consignment: the rest moves back to the main warehouse.
+- The tile turns yellow when a settlement is due. Void the sale movement to undo a settlement.
+
 ## Reorder
 `Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum, less what is already on order). For each supplier:
 - `Create order` makes a purchase order with those lines.

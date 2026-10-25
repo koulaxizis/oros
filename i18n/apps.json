@@ -895,6 +895,7 @@
   {
    "app": "stock",
    "files": [
+    "stock/consign.js",
     "stock/core.js",
     "stock/package.js",
     "stock/pos.js",

@@ -584,3 +584,13 @@ dialog.pc-dlg.pos-dlg { width: min(1180px, calc(100vw - 24px)); height: calc(100
 .shop-row .dlg-actions { margin-top: 6px; }
 .shop-row .dlg-btn { flex: 1 1 120px; }
 .imp2-list { margin: 6px 0 6px 20px; padding: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+
+/* ---------- Consignment (1.8, consign.js) ---------- */
+.cons-row { flex-wrap: wrap; gap: 6px 10px; }
+.cons-row .badge { margin-left: 0; margin-top: 4px; }
+.cons-acts { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cons-line { gap: 10px; }
+.cons-q { width: 6.5em; flex: 0 0 auto; text-align: right; min-height: 40px; }
+.cons-q.bad { border-color: var(--danger); color: var(--danger); }
+.cons-sum { font-weight: 600; margin: 10px 0 4px; }
+.cons-sum.bad, .err-msg { color: var(--danger); }
