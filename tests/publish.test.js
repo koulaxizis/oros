@@ -161,3 +161,18 @@ test("the search provider finds by words and ISBN, skips deleted titles", () => 
   assert.match(hits[0].text, /978-618-5321-00-0/);
   assert.match(hits[0].text, /6185321009/);
 });
+
+test("settings keep the publisher name and fields of a later version", () => {
+  let d = C.setSet(C.empty(), { imp: "  Gull Press\n" }, 10);
+  assert.equal(d.set.imp, "Gull Press");
+  assert.equal(d.set.cur, "EUR");
+  d = C.setCur(d, "USD", 20);
+  assert.deepEqual([d.set.cur, d.set.imp], ["USD", "Gull Press"]);
+  const later = JSON.parse(C.serialize(d));
+  later.set.logo = "x.png";
+  later.set.m = 30;
+  const old = C.normalize(later);
+  assert.equal(old.set.logo, "x.png");
+  assert.equal(C.setSet(old, { imp: "New" }, 40).set.logo, "x.png");
+  assert.equal(C.serialize(C.merge(d, later)), C.serialize(C.merge(later, d)));
+});

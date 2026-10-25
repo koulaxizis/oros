@@ -15,7 +15,7 @@ Tap a title to edit it. Every change is saved as you type. `Delete` removes a ti
 A title can have authors, translators, illustrators, editors, a cover designer, a narrator or others. Use `+ Person` and pick the role.
 
 ### Formats
-Each format keeps its ISBN, price, pages, size (width × height in mm), spine, weight, binding and paper; an audiobook keeps its length in minutes. The price is in the currency of the settings (⚙).
+Each format keeps its ISBN, price, pages, size (width × height in mm), spine, weight, binding and paper; an audiobook keeps its length in minutes. The price is in the currency of the settings (⚙), where you also type the `Publisher name` for covers and press texts.
 
 The ISBN field checks the number as you type: a wrong check digit, a missing digit, or a number another title already uses. `Next free` fills in the next unused number of your blocks.
 

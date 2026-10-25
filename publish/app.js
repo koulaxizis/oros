@@ -109,7 +109,8 @@
       "chk.title": "Check an ISBN", "chk.ph": "Paste or type any ISBN",
       "chk.ok": "Valid. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "In use: {list}", "chk.free": "Not used by any of your titles.",
-      "set.title": "Settings", "set.cur": "Currency for prices", "set.done": "Saved",
+      "set.title": "Settings", "set.cur": "Currency for prices", "set.imp": "Publisher name",
+      "set.impHint": "Goes on covers and press texts.", "set.done": "Saved",
       "toast.copied": "Copied", "toast.saved": "Saved", "toast.exported": "Saved",
       "full": "This device is out of storage space. The change was not saved.",
       "untitled": "Untitled", "by": "by {list}"
@@ -177,7 +178,8 @@
       "chk.title": "Έλεγχος ISBN", "chk.ph": "Επικόλλησε ή γράψε οποιοδήποτε ISBN",
       "chk.ok": "Σωστό. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "Σε χρήση: {list}", "chk.free": "Δεν το έχει κανένας από τους τίτλους σου.",
-      "set.title": "Ρυθμίσεις", "set.cur": "Νόμισμα για τις τιμές", "set.done": "Αποθηκεύτηκε",
+      "set.title": "Ρυθμίσεις", "set.cur": "Νόμισμα για τις τιμές", "set.imp": "Όνομα εκδότη",
+      "set.impHint": "Μπαίνει σε εξώφυλλα και δελτία τύπου.", "set.done": "Αποθηκεύτηκε",
       "toast.copied": "Αντιγράφηκε", "toast.saved": "Αποθηκεύτηκε", "toast.exported": "Αποθηκεύτηκε",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
       "untitled": "Χωρίς τίτλο", "by": "του/της {list}"
@@ -1114,11 +1116,16 @@
     var list = CURRENCIES.indexOf(data.set.cur) >= 0 ? CURRENCIES : CURRENCIES.concat([data.set.cur]);
     var cur = select(list.map(function (c) { return [c, c]; }), data.set.cur);
     dlg.appendChild(field(t("set.cur"), cur));
+    var imp = input("text", data.set.imp, { maxlength: "120", autocomplete: "organization" });
+    dlg.appendChild(field(t("set.imp"), imp, el("span", "hint", t("set.impHint"))));
     var acts = el("div", "acts");
     acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
     acts.appendChild(button(t("btn.save"), "btn pri", function () {
       dlg.close();
-      if (cur.value !== data.set.cur) { commit(C.setCur(data, cur.value, Date.now())); toast(t("set.done")); }
+      var patch = {};
+      if (cur.value !== data.set.cur) patch.cur = cur.value;
+      if (imp.value.trim() !== data.set.imp) patch.imp = imp.value.trim();
+      if (Object.keys(patch).length) { commit(C.setSet(data, patch, Date.now())); toast(t("set.done")); }
     }));
     dlg.appendChild(acts);
     showDialog(dlg);

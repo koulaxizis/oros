@@ -13,7 +13,8 @@
 //                the agency gave it, with hyphens ("978-618-5321")
 //     isbnx:  [{ id, m, note }],         numbers used outside the app or
 //                spoiled; id = the 13 digits
-//     set:    { m, cur },
+//     set:    { m, cur, imp },          imp = the publisher's name
+//                (covers, press texts); unknown fields ride along
 //     tombs:  { id: ms } }
 //   Later waves add lists of { id, m, … } rows; until a device knows a
 //   list it keeps and merges it as it came (LWW by m per id), so an
@@ -274,12 +275,22 @@
   }
   var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX };
 
-  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
 
   function cleanSet(raw) {
     var s = raw && typeof raw === "object" ? raw : {};
-    return { m: ms(s.m), cur: typeof s.cur === "string" && CURS.test(s.cur) ? s.cur : "EUR" };
+    var out = { m: ms(s.m), cur: typeof s.cur === "string" && CURS.test(s.cur) ? s.cur : "EUR", imp: line(s.imp, 120) };
+    // Settings of a later version ride along unchanged (bounded).
+    var extra = {}, any = false;
+    Object.keys(s).forEach(function (k) {
+      if (SET_KEYS.indexOf(k) >= 0 || !/^[a-z][A-Za-z0-9]{0,23}$/.test(k)) return;
+      extra[k] = plain(s[k]);
+      any = true;
+    });
+    if (any && JSON.stringify(extra).length <= MAX_EXTRA) Object.keys(extra).forEach(function (k) { out[k] = extra[k]; });
+    return out;
   }
+  var SET_KEYS = ["m", "cur", "imp"];
 
   function newer(a, b) {
     if (a.m !== b.m) return a.m > b.m;
@@ -358,9 +369,15 @@
     return normalize(out);
   }
   function setCur(d, cur, now) {
+    if (!CURS.test(cur || "")) return normalize(d);
+    return setSet(d, { cur: cur }, now);
+  }
+  // patch: { cur?, imp? } → one settings write (other fields kept)
+  function setSet(d, patch, now) {
     var out = normalize(d);
-    if (!CURS.test(cur || "")) return out;
-    out.set = { m: bump(out.set.m, now), cur: cur };
+    var s = Object.assign({}, out.set, patch || {});
+    s.m = bump(out.set.m, now);
+    out.set = cleanSet(s);
     return out;
   }
   function find(d, list, id) { return ((d && d[list]) || []).filter(function (r) { return r.id === id; })[0] || null; }
@@ -482,7 +499,7 @@
     VER: VER, LISTS: LISTS, STATUS: STATUS, FMT_KINDS: FMT_KINDS, ROLES: ROLES, MAX_PPL: MAX_PPL, MAX_FMTS: MAX_FMTS,
     COVER_DIR: COVER_DIR, COVER_RE: COVER_RE,
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, canon: canon,
-    uid: uid, put: put, remove: remove, setCur: setCur, find: find,
+    uid: uid, put: put, remove: remove, setCur: setCur, setSet: setSet, find: find,
     check13: check13, check10: check10, parseIsbn: parseIsbn, isbn10: isbn10, parseBlock: parseBlock,
     blockIsbn: blockIsbn, inBlock: inBlock, hyphen: hyphen, ean13: ean13, barcodeSvg: barcodeSvg,
     used: used, clashes: clashes, nextFree: nextFree, blockUsage: blockUsage,

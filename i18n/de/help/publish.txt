@@ -15,7 +15,7 @@ Tippe auf einen Titel, um ihn zu bearbeiten. Jede Änderung wird beim Tippen ges
 Ein Titel kann Autoren, Übersetzer, Illustratoren, Lektoren, eine Covergestaltung, einen Sprecher oder andere haben. Nutze `+ Person` und wähle die Rolle.
 
 ### Ausgaben
-Jede Ausgabe führt ISBN, Preis, Seiten, Maße (Breite × Höhe in mm), Buchrücken, Gewicht, Bindung und Papier; ein Hörbuch führt seine Länge in Minuten. Der Preis steht in der Währung der Einstellungen (⚙).
+Jede Ausgabe führt ISBN, Preis, Seiten, Maße (Breite × Höhe in mm), Buchrücken, Gewicht, Bindung und Papier; ein Hörbuch führt seine Länge in Minuten. Der Preis steht in der Währung der Einstellungen (⚙), wo du unter `Name des Verlags` auch den Verlag für Umschläge und Pressetexte einträgst.
 
 Das ISBN-Feld prüft die Nummer beim Tippen: eine falsche Prüfziffer, eine fehlende Ziffer oder eine Nummer, die schon ein anderer Titel hat. `Nächste freie` setzt die nächste unbenutzte Nummer deiner Blöcke ein.
 

@@ -131,6 +131,8 @@ orosPack("de", "publish", {
  "sec.ppl": "Personen",
  "sec.texts": "Texte",
  "set.cur": "Währung für Preise",
+ "set.imp": "Name des Verlags",
+ "set.impHint": "Steht auf Umschlägen und Pressetexten.",
  "set.done": "Gespeichert",
  "set.title": "Einstellungen",
  "sort.label": "Sortieren",
