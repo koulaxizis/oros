@@ -7988,7 +7988,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-25 — Household wave 8: nothing is lost if a household is gone (#PR) — 3.62.00
+### 2026-10-25 — Household wave 8: nothing is lost if a household is gone (#593) — 3.62.00
 - Chris 2026-10-25 10:28 («Αν θα εξασφαλίσει την ομαλή λειτουργία της κοινής χρήσης, κάνε το. Να είμαστε σίγουροι πως δεν θα χαθεί τίποτα!»). Every household is also kept on the person's orOS disk (folder "Household backup", one file per household and device) and so reaches their own cloud encrypted. A gone box brings its documents back from there, even on a device that had lost them; "Start it again" makes a new household with everything in it; households no longer here can go back to the apps as own copies. BR-HH (Part VI).
 - Files: `household/{backup.js (new),engine.js,app.js,app.css,index.html,help.*.txt}`, `index.html`, `shell.js` (APP_VERSION), `sw.js`, `i18n/de/{household.js,help/household.txt,STATUS.md}`, `tests/household-backup.test.js` (4), What's new, Bible.
 
