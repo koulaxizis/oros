@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.67.00
+- Layout: a book cover in one step. Choose the size, the pages and the paper, and you get back cover, spine and front cover on one page with bleed, fold guides, the ISBN barcode and your logo. In Publishing, press Cover in Layout on a paperback or hardback to start it already filled in, or attach the front picture and your logo in the Assistant and ask it to set up the cover.
+
 ## Version 3.66.00
 - Newsletter by chat, last part: "add our latest release" brings the newest products from the shop you connected (WooCommerce or Shopify), with prices and pictures, and other publishers' products come as product cards from their pages. Each block lands in its section (top story, news, products, banners, closing note), and when you say the issue is ready, the Assistant opens Newsletter's check and then its send screen. You still press Send yourself.
 
