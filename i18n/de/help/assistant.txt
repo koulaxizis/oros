@@ -36,7 +36,7 @@ Wenn eine Frage deine Daten braucht, durchsucht der Assistent deine Apps, ähnli
 
 In der Antwort sind Titel in der Akzentfarbe Links: Tippe auf einen, um diesen Eintrag in seiner App zu öffnen. Eine graue Zeile über der Antwort zeigt, wonach gesucht wurde und was du geteilt hast.
 
-Jedes Ergebnis zeigt auch seine Labels (Tags bei Lesezeichen und im Medienregal) und bei einer Aufgabe, ob sie erledigt ist, und ihre Priorität. So kannst du fragen „Welche Aufgaben haben kein Label?“ oder „Zeig meine Karten mit dem Label Bug“: Der Assistent bringt dann jeden solchen Eintrag aus den Apps mit Labels (Aufgaben, Kalender, Kanban, Kontakte, Notizen, Lesezeichen, Medienregal), bis zu 50 pro App. Er setzt nur Labels, die du schon hast (Tags bei Lesezeichen sind freie Wörter); neue Labels legst du in der App an.
+Jedes Ergebnis zeigt auch seine Labels (Tags bei Lesezeichen und im Medienregal) und bei einer Aufgabe, ob sie erledigt ist, und ihre Priorität. So kannst du fragen „Welche Aufgaben haben kein Label?“ oder „Zeig meine Karten mit dem Label Bug“: Der Assistent bringt dann jeden solchen Eintrag aus den Apps mit Labels (Aufgaben, Kalender, Kanban, Kontakte, Notizen, Lesezeichen, Medienregal), bis zu 200 pro App. Er setzt nur Labels, die du schon hast (Tags bei Lesezeichen sind freie Wörter); neue Labels legst du in der App an.
 
 Reicht ein kurzes Ergebnis nicht, fragt der Assistent eventuell nach dem ganzen Eintrag, zum Beispiel einer langen Notiz. Bei einer App auf `Erst fragen` siehst du noch eine Karte mit dem Anfang des Eintrags und seiner Größe; drücke `Teilen` oder `Nicht teilen`.
 
@@ -73,7 +73,7 @@ Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Versch
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
 - Nach einer Änderung sagt die Karte, was passiert ist, und hat `Rückgängig`. Rückgängig geht, bis du den Assistenten verlässt; danach änderst du es in der App selbst zurück.
 - Hat sich der Eintrag inzwischen geändert (zum Beispiel auf einem anderen Gerät), wird nichts geändert, und die Karte sagt es.
-- Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, die jeden Eintrag zeigt; ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
+- Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, bis zu 200 Einträge: oben, was jeder Eintrag bekommt, dann die ersten 10 (`Alle zeigen` bringt den Rest); ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
 
 Was er ändern kann:
 - [Aufgaben](app:todo): eine Aufgabe als erledigt oder nicht erledigt markieren, ihr Datum verschieben, sie umbenennen, ihre Notiz, Labels oder Priorität ändern, sie löschen.

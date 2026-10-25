@@ -385,6 +385,8 @@ button:disabled { cursor: default; opacity: 0.4; }
 .chg-table td { overflow-wrap: anywhere; min-width: 0; }
 .chg-many { max-height: 50vh; overflow-y: auto; }
 .chg-many .entry-title { margin: 10px 0 0; }
+.chg-sum ul { margin: 4px 0 0; padding-inline-start: 20px; font-weight: 700; }
+.chg-more { margin-top: 8px; }
 .chg-b { color: var(--text-dim); text-decoration: line-through; text-decoration-color: var(--danger); }
 .chg-b.gone { text-decoration: line-through; }
 .chg-a { font-weight: 700; }

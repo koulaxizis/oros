@@ -1234,7 +1234,7 @@
       type: "object",
       properties: {
         query: { type: "string", description: "Words to look for (every word must match). May be left out when label is given." },
-        label: { type: "string", description: "Only items with this label (a label's or tag's name), or \"none\" for items without any label. Without query it lists every such item (up to 50 per app) of the apps that have labels: todo, calendar, kanban, contacts, notes, bookmarks (tags), shelf (tags)." },
+        label: { type: "string", description: "Only items with this label (a label's or tag's name), or \"none\" for items without any label. Without query it lists every such item (up to 200 per app) of the apps that have labels: todo, calendar, kanban, contacts, notes, bookmarks (tags), shelf (tags)." },
         apps: { type: "array", items: { type: "string" },
                 description: "Optional app ids to search (from list_apps). Leave out to search every allowed app." }
       }
@@ -1396,7 +1396,7 @@
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
         refs: { type: "array", items: { type: "string" },
-                description: "update only: several refs of the same app (up to 50) that get the same change, instead of ref." },
+                description: "update only: several refs of the same app (up to 200) that get the same change, instead of ref." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
@@ -1476,7 +1476,8 @@
   var RESULT_TEXT = 400;   // characters of an item's text sent to the model
   var PER_APP     = 8;     // items per app
   var MAX_ITEMS   = 30;    // items per search
-  var WIDE        = 50;    // items per app and search: one app, or a label filter
+  var WIDE        = 50;    // items per app and search: one app
+  var LABEL_WIDE  = 200;   // items per app and search with a label filter (refs take 200 too)
 
   function ymd(ms) {
     if (!ms) return "";
@@ -1490,12 +1491,12 @@
   // Shell search groups → the items a search would share, in rank
   // order. nameOf(id) gives the app's shown name.
   // opts.wide (one app, or a label filter): up to WIDE items per app
-  // and in all, instead of PER_APP / MAX_ITEMS.
+  // and in all, instead of PER_APP / MAX_ITEMS; opts.label: LABEL_WIDE.
   function packHits(groups, nameOf, opts) {
-    var items = [], wide = !!(opts && opts.wide);
+    var items = [], wide = !!(opts && opts.wide), cap = opts && opts.label ? LABEL_WIDE : WIDE;
     (Array.isArray(groups) ? groups : []).forEach(function (g) {
       if (!g || !Array.isArray(g.hits)) return;
-      g.hits.slice(0, wide ? WIDE : PER_APP).forEach(function (h) {
+      g.hits.slice(0, wide ? cap : PER_APP).forEach(function (h) {
         if (!h || !h.title) return;
         var text = squash(h.text);
         if (text.length > RESULT_TEXT) text = text.slice(0, RESULT_TEXT) + "…";
@@ -1507,7 +1508,7 @@
       });
     });
     items.sort(function (a, b) { return b.score - a.score; });
-    return items.slice(0, wide ? WIDE : MAX_ITEMS);
+    return items.slice(0, wide ? cap : MAX_ITEMS);
   }
 
   // ---------- 7b. Label filter (AS-LBL) ----------
@@ -1542,7 +1543,7 @@
       if (!g.hits.some(function (h) { return h && Array.isArray(h.labels); })) return;
       apps.push(g.id);
       var hits = g.hits.filter(function (h) { return h && labelHit(h.labels, want); });
-      if (hits.length > WIDE) more[g.id] = hits.length - WIDE;
+      if (hits.length > LABEL_WIDE) more[g.id] = hits.length - LABEL_WIDE;
       if (hits.length) out.push({ id: g.id, total: hits.length, hits: hits });
     });
     return { groups: out, apps: apps, more: more };
@@ -2340,7 +2341,7 @@
     makeSSE: makeSSE, makeReducer: makeReducer, ProviderError: ProviderError, errorFrom: errorFrom,
     modelsRequest: modelsRequest, parseModels: parseModels,
     packHits: packHits, searchResult: searchResult, ymd: ymd,
-    labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE,
+    labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
     toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
