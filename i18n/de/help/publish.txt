@@ -42,6 +42,7 @@ Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), 
 - `Produkt in Stock` öffnet ein neues Produkt in [Stock](app:stock) mit Name, ISBN als SKU und Barcode und dem Preis. Hat Stock es schon, öffnet sich sein Blatt.
 - `Block im Newsletter` fügt Titel, Untertitel, Autor und Klappentext in einen [Newsletter](app:newsletter)-Entwurf deiner Wahl ein, mit einem Button zum Buch, wenn es in deinem Shop ist.
 - `Pressemitteilung in Writer` öffnet ein neues [Writer](app:writer)-Dokument mit einer Pressemitteilung aus Titel, Texten, Ausgaben und deinem Verlagsnamen. Lies und bearbeite sie, bevor du sie verschickst.
+- `Release-Paket in Atelier` erstellt fünf Designs in [Atelier](app:atelier), in einem Ordner mit dem Namen des Buchs: Instagram-Post, Story, Website-Banner, Lesezeichen und A3-Plakat, jeweils mit Cover, Titel, Autor, Erscheinungszeile, Preis und deinem Verlagsnamen (und dem neuesten Rezensionszitat auf Lesezeichen und Plakat). Atelier fragt vorher; jedes Design bleibt bearbeitbar.
 
 In der anderen App wird nichts gespeichert, bevor du es dort speicherst.
 

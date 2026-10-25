@@ -1356,7 +1356,17 @@
     openDoc(d.id);
   }
   function createDoc(opts) { addDoc(AX.newDesign(opts, now())); }
-  AT.createDoc = createDoc; AT.addDoc = addDoc;
+  // several new designs at once (the release kit, kit.js): into folder
+  // fid ("" = none), then Home shows that folder
+  function addDocs(list, fid) {
+    if (!list.length) return;
+    list.forEach(function (d) { data.docs.push(d); });
+    data = M.normData(data);
+    save();
+    if (AT.folders && fid) { AT.folders.place(list.map(function (d) { return d.id; }), fid); AT.folders.open(fid); }
+    if (AT.doc) goHome(); else renderHome();
+  }
+  AT.createDoc = createDoc; AT.addDoc = addDoc; AT.addDocs = addDocs;
 
   function openDoc(id) {
     var d = findDoc(id);
@@ -1701,6 +1711,12 @@
     // the editor; it is saved only on Save and runs only on Run.
     if (tg && tg.newRecipe) {
       if (AT.recipes && AT.recipes.draft) AT.recipes.draft(tg.newRecipe);
+      return;
+    }
+    // { releaseKit: { title, sub, author, line, price, imprint, quote,
+    // img } }: Publishing's release kit (kit.js, wave P9); asks first
+    if (tg && tg.releaseKit) {
+      if (AT.kit) AT.kit.make(tg.releaseKit);
       return;
     }
     if (tg && tg.newTemplate) {

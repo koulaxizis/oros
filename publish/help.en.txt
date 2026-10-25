@@ -42,6 +42,7 @@ Under `Send to other apps` pick a format (when the title has more than one), the
 - `Item in Stock` opens a new product in [Stock](app:stock) with the name, the ISBN as SKU and barcode, and the price. If Stock already has it, its sheet opens instead.
 - `Block in Newsletter` adds the title, subtitle, author and back-cover text to a [Newsletter](app:newsletter) draft you pick, with a button to the book when it is in your shop.
 - `Press release in Writer` opens a new [Writer](app:writer) document with a press release built from the title, the texts, the formats and your publisher name. Read it and edit it before you send it.
+- `Release kit in Atelier` makes five designs in [Atelier](app:atelier), in a folder named after the book: an Instagram post, a story, a site banner, a bookmark and an A3 poster, each with the cover, title, author, release line, price and your publisher name (and the newest review quote on the bookmark and the poster). Atelier asks first; every design stays editable.
 
 Nothing is saved in the other app until you save it there.
 

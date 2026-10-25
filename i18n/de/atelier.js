@@ -1351,5 +1351,14 @@ orosPack("de", "atelier", {
  "cl.port": "Hochformat",
  "cl.story": "Story",
  "cl.land": "Querformat",
- "cl.a4": "A4"
+ "cl.a4": "A4",
+ "kit.ask": "Das Release-Paket für „{t}“ erstellen? Fünf Designs (Instagram-Post, Story, Website-Banner, Lesezeichen, A3-Plakat) in einem neuen Ordner.",
+ "kit.go": "Paket erstellen",
+ "kit.done": "Release-Paket fertig: {n} Designs im Ordner „{f}“.",
+ "kit.noPic": "Das Cover ließ sich nicht lesen; die Designs haben an seiner Stelle eine Fläche.",
+ "kit.post": "Instagram-Post",
+ "kit.story": "Story",
+ "kit.banner": "Website-Banner",
+ "kit.bookmark": "Lesezeichen",
+ "kit.poster": "Plakat A3"
 });
