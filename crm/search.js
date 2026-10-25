@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — universal search provider (v1.1.0)
+// orOS CRM — universal search provider (v1.2.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"; "searchOff": true, so it starts switched off: the data
 // is about other people). Read-only: reads oros-crm-data, never
@@ -12,6 +12,10 @@
 //     shown is the expected close (open) or the close day
 //   • an open follow-up: its text; customer as text; its day
 //   • a history entry with text: its first line; customer; its day
+//   • a contract (W4): its title; customer, end day, note; opens the
+//     customer
+// A customer that matches leads its text with its balance in Invoices
+// (W5, OrosCrmCore.balance with OrosInvoicesCore, both in the shell).
 // A row hidden by a tombstone (tomb ≥ m) or whose customer is gone
 // is skipped, the way the merge hides it.
 // Opens through the generic deep link: __orosOpenAt("crm",
@@ -26,6 +30,16 @@
     el: { "new": "Νέα", contact: "Επικοινωνία", proposal: "Πρόταση", nego: "Διαπραγμάτευση", won: "Κερδήθηκε", lost: "Χάθηκε" }
   };
 
+  // the partner's balance in Invoices (W5): the app's own words, so a
+  // pack language takes them from the "crm" pack
+  var BAL = {
+    en: { "ov.in": "Owes you {v}", "ov.out": "You owe {v}", "ct.sec": "Contracts", "ct.until": "Until {d}" },
+    el: { "ov.in": "Σου χρωστά {v}", "ov.out": "Του χρωστάς {v}", "ct.sec": "Συμβάσεις", "ct.until": "Έως {d}" }
+  };
+  function todayYmd() {
+    var d = new Date();
+    return d.getFullYear() + "-" + (d.getMonth() < 9 ? "0" : "") + (d.getMonth() + 1) + "-" + (d.getDate() < 10 ? "0" : "") + d.getDate();
+  }
   function str(v) { return typeof v === "string" ? v.trim() : ""; }
   function arr(a) { return Array.isArray(a) ? a : []; }
   function dayMs(s) {
@@ -53,17 +67,42 @@
       }
       var names = {}, stg = {};
       arr(d.stg).forEach(function (r) { if (!gone(r)) stg[r.id] = r; });
+      // W5: a matching partner shows what is open with them in Invoices
+      // first (both cores are in the shell; worked out only for hits)
+      var CC = root.OrosCrmCore, IC = root.OrosInvoicesCore, inv = null, cd = null, today = todayYmd();
+      var W = BAL[ctx.code] || (I ? I.table(BAL, "crm", ctx.code) : BAL.en);
+      function balanceOf(c, hay) {
+        if (!CC || !IC || typeof CC.balance !== "function") return "";
+        var f = ctx.fold(hay);
+        if (!ctx.words.every(function (w) { return f.indexOf(w) >= 0; })) return "";
+        if (inv === null) { inv = false; try { var raw = ctx.readJSON("oros-invoices-data"); inv = raw ? IC.normalize(raw) : false; } catch (e) { inv = false; } }
+        if (!inv) return "";
+        if (!cd) cd = CC.norm(d);
+        var b = CC.balance(cd, c, IC, inv, today), bits = [];
+        Object.keys(b["in"]).sort().forEach(function (cur) { bits.push(W["ov.in"].replace("{v}", CC.moneyStr(b["in"][cur].open, cur, L))); });
+        Object.keys(b.out).sort().forEach(function (cur) { bits.push(W["ov.out"].replace("{v}", CC.moneyStr(b.out[cur].open, cur, L))); });
+        return bits.join(" · ");
+      }
       d.cust.forEach(function (c) {
         if (gone(c) || !str(c.name)) return;
         names[c.id] = str(c.name);
+        var title = str(c.alias) ? str(c.name) + " (" + str(c.alias) + ")" : str(c.name);
+        var text = [str(c.afm), str(c.doy), str(c.phone), str(c.email), str(c.job), str(c.addr), str(c.country), str(c.web),
+                    arr(c.people).map(function (p) { return p && str(p.n); }).filter(Boolean).join(", "),
+                    str(c.note)].filter(Boolean).join(" · ");
+        var bal = balanceOf(c, title + " " + text);
         out.push({
           id: c.id,
-          title: str(c.alias) ? str(c.name) + " (" + str(c.alias) + ")" : str(c.name),
-          text: [str(c.afm), str(c.doy), str(c.phone), str(c.email), str(c.job), str(c.addr), str(c.country), str(c.web),
-                 arr(c.people).map(function (p) { return p && str(p.n); }).filter(Boolean).join(", "),
-                 str(c.note)].filter(Boolean).join(" · "),
+          title: title,
+          text: bal ? bal + " · " + text : text,
           target: { cust: c.id }
         });
+      });
+      // contracts (W4): their title; the partner and the end as text
+      rows(d.ctr, function (x, cn) {
+        if (!str(x.t)) return null;
+        return { id: x.id, title: str(x.t), text: [cn, W["ct.sec"], YMD.test(x.to || "") ? W["ct.until"].replace("{d}", x.to) : "", str(x.note)].filter(Boolean).join(" · "),
+                 when: dayMs(x.to || x.from), target: { cust: x.cust } };
       });
       function rows(list, f) {
         arr(list).forEach(function (x) {

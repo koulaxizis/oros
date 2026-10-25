@@ -182,6 +182,7 @@
     "crm/crm.js",
     "crm/platforms.js",
     "crm/search.js",
+    "crm/today.js",
     "crm/webform.js"
    ]
   },

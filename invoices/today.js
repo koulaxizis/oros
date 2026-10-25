@@ -1,19 +1,20 @@
 // ============================================================
-// orOS Invoices — Today provider (v1.0.0)
+// orOS Invoices — Today provider (v1.1.0)
 // Loaded by the shell (today/host.js) through apps.json "today"
 // (after invoices/core.js). Read-only: reads oros-invoices-data,
 // never writes. Which documents are due is invoices/core.js
 // (dueRows), the same the Calendar feed and the shell reminder use:
 // issued invoices, receipts and records with money still owed whose
-// due date passed or comes within the summary's days. Templates
+// due date passed or comes within the summary's days, and received
+// invoices still to pay the same way (wave 7, { bill }). Templates
 // whose recurring draft is ready give one line each. Opens the
 // document (generic deep link { invoice }) or Invoices itself.
 // ============================================================
 (function (root) {
   "use strict";
   var W = {
-    en: { owes: "{a} owed", rec: "Recurring invoice ready to check: {n}" },
-    el: { owes: "οφείλονται {a}", rec: "Επαναλαμβανόμενο τιμολόγιο για έλεγχο: {n}" }
+    en: { owes: "{a} owed", rec: "Recurring invoice ready to check: {n}", billPay: "To pay: {a}" },
+    el: { owes: "οφείλονται {a}", rec: "Επαναλαμβανόμενο τιμολόγιο για έλεγχο: {n}", billPay: "Προς πληρωμή: {a}" }
   };
   // orosI18n (the shell's ../i18n.js): a pack language included.
   function i18n() { return typeof window !== "undefined" && window.orosI18n; }
@@ -41,6 +42,17 @@
           text: w.owes.replace("{a}", money(r.bal, r.cur, ctx.lang)),
           target: { invoice: r.id }
         });
+      });
+      // received invoices (wave 7) still to pay whose due day passed or
+      // comes within the summary's days
+      var last = ctx.addDays(ctx.today, ctx.horizon);
+      if (typeof C.billBalance === "function") C.live(data.bills || []).forEach(function (b) {
+        if (!b.due || b.due > last) return;
+        var bal = C.billBalance(data, b);
+        if (bal <= 0) return;
+        out.push({ id: "bill-" + b.id, due: b.due, kind: "task",
+                   title: (b.num || "—") + " · " + b.sup.name, text: w.billPay.replace("{a}", money(bal, b.cur, ctx.lang)),
+                   target: { bill: b.id } });
       });
       var seen = {};
       C.recurringDue(data, ctx.today).forEach(function (x) {

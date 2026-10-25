@@ -10,6 +10,7 @@ orosPack("de", "invoices", {
  "bad": "Nicht ausgestellt. timologisi.online meldet:",
  "bal": "Saldo",
  "bank": "Bankverbindung",
+ "billPay": "Zu zahlen: {a}",
  "bl.afm": "Steuernummer des Lieferanten (ΑΦΜ)",
  "bl.allSt": "Alle",
  "bl.crm": "Partner im CRM",

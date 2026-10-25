@@ -47,6 +47,7 @@ For totals and overviews, such as "how much did I spend on groceries this month?
 - Budget: income, expenses and each category of a month.
 - Timesheet: hours and amounts of a month per project.
 - To-Do: open, late and due-today tasks per list, and what is due next.
+- CRM: "what is open with …?" for one partner: what they owe you and you owe them, stock on consignment, orders, hours not billed, royalties, contracts and the next follow-up. When several partners match, the assistant asks which one.
 - Calendar, Habits, Plant Care and the other apps that appear in `Today`: what is late, today and in the next days.
 
 For an app set to `Ask first` you see the summary on a card before it is shared; press `Share` or `Don't share`. Only those lines leave the device, not the entries themselves. Budget starts at `Never`, so allow it in `Settings` → `Your data` first.

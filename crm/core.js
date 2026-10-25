@@ -59,6 +59,8 @@
 //     reminder day, contractsOf(data, custId, today), ctrState(c, today)
 //     → "on" | "soon" | "ended"; ctr?: [{ id, m, cust, t, from?, to?,
 //     rem, val?, note, file?, fup? }] (see normCtr).
+//   balance(data, c, I, inv, today) → { in, out: { CUR: { open, overdue } } }
+//     what a partner owes you / you owe them in Invoices (W5)
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
 //     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), prefs: { pm, cur, forget }, wf?: web form,
@@ -446,6 +448,23 @@
     if (c.to && c.to < today) return "ended";
     if (c.to && ctrRemindDay(c) <= today) return "soon";
     return "on";
+  }
+
+  // What a partner owes you and what you owe them in Invoices (partner
+  // card W5: search, Contacts, the Assistant): the Overview's numbers
+  // without royalties. I = OrosInvoicesCore, inv = its data (I.parse).
+  // → { in: { CUR: { open, overdue } }, out: { CUR: { open, overdue } } }
+  function balance(data, c, I, inv, today) {
+    var out = { "in": {}, out: {} };
+    if (!c || !I || !inv || typeof I.byCrm !== "function") return out;
+    function take(tt, side) {
+      Object.keys(tt || {}).forEach(function (cur) {
+        if (tt[cur].open > 0) side[cur] = { open: tt[cur].open, overdue: tt[cur].overdue || 0 };
+      });
+    }
+    take(I.byCrm(inv, c.id, today, linksOf(data, c, "inv").map(function (x) { return x.v; })).totals, out["in"]);
+    if (typeof I.billsByCrm === "function") take(I.billsByCrm(inv, c.id, today, c.afm || "").totals, out.out);
+    return out;
   }
 
   var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr };
@@ -1055,7 +1074,7 @@
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
-    normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState,
+    normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };
