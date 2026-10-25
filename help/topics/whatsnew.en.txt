@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.64.00
+- Newsletter by chat: the Assistant now also adds pictures. An article or a book comes as a picture beside a short text with a button, and "a banner to …" becomes a linked picture. Newsletter copies each picture from the web when the site allows it; when it doesn't, it tells you which ones to pick yourself.
+
 ## Version 3.63.00
 - Newsletter by chat: tell the Assistant what goes into your newsletter as it reaches you ("add the interview from this link", "a note about Friday's event with a button"). It answers with a card of ready blocks (headings, text, quotes, buttons, lists); open it in Newsletter, pick the draft (or start a new one), and the blocks go in before the footer, with Undo. The Assistant never sends: sending stays your step in Newsletter.
 
