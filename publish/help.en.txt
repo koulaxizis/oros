@@ -67,7 +67,7 @@ In Settings › `Answers and contract…` write your own texts; {name}, {title},
 ## Posts
 Plan your social posts once: the text, a picture and the day (a time if you like). `+ Post` in the `Posts` tab adds one; on a title, `Send to other apps` › `Plan a post…` starts one with the title, its people, the release line and a quote, and its cover as the picture. Pick the networks it is for: the count under the text tells you when it is over a network's limit.
 
-On the day the post is listed as due here and in the [Calendar](app:calendar). Open it and post it from each network's own page: `Copy and open` copies the text and opens Mastodon, Bluesky, X, Threads or LinkedIn with the text already in it. Facebook and Instagram have no such page, so they open their home page and you paste the text. `Copy the picture` and `Save the picture` hand you the picture. Nothing is sent from orOS and no network account is needed here; for Mastodon write your server in Settings (for example mastodon.social). Then `Mark posted`.
+On the day the post is listed as due here, in the [Calendar](app:calendar) and in [Today](app:today). Open it and post it from each network's own page: `Copy and open` copies the text and opens Mastodon, Bluesky, X, Threads or LinkedIn with the text already in it. Facebook and Instagram have no such page, so they open their home page and you paste the text. `Copy the picture` and `Save the picture` hand you the picture. Nothing is sent from orOS and no network account is needed here; for Mastodon write your server in Settings (for example mastodon.social). Then `Mark posted`.
 
 ## ISBN
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
@@ -84,3 +84,4 @@ For every block you see how many numbers are in use, the next free one (`Copy` o
 
 ## Find it from anywhere
 - The menu's search box finds a title by its words, its people or any of its ISBNs (with or without hyphens, ISBN-10 too). Choosing one opens the title.
+- [Today](app:today) lists your posts and release-plan steps when they are due, the release days coming up, review copies to follow up and, in one line, the manuscripts waiting too long for an answer.

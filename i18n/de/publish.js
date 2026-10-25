@@ -414,5 +414,7 @@ orosPack("de", "publish", {
  "net.threads": "Threads",
  "net.facebook": "Facebook",
  "net.linkedin": "LinkedIn",
- "net.instagram": "Instagram"
+ "net.instagram": "Instagram",
+ "td.rc": "Rezensionsexemplar nachfassen: {n}",
+ "td.subs": "Manuskripte, die auf Antwort warten: {n}"
 });

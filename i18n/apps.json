@@ -708,7 +708,8 @@
    "app": "publish",
    "files": [
     "publish/app.js",
-    "publish/feed.js"
+    "publish/feed.js",
+    "publish/today.js"
    ]
   },
   {
