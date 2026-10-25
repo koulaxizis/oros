@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 34525 of 34534 (99%)
+- Strings: 34566 of 34575 (99%)
 - Help pages: 149 of 149 (100%)
 - Shown in the language list: yes
 
@@ -131,7 +131,7 @@ text is still written in the code. They switch over wave by wave
 | spot | 100% | 54 / 54 |
 | spreadsheet | 100% | 355 / 355 |
 | stickies | 100% | 124 / 124 |
-| stock | 100% | 652 / 652 |
+| stock | 100% | 693 / 693 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 382 / 382 |
 | sudoku | 100% | 139 / 139 |

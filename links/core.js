@@ -527,7 +527,8 @@
   };
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
-  var STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
+  // a quantity (Stock), or a price from a supplier's price list (Stock wave P10)
+  var PRODUCT_PUT = { stock_quantity: "int", manage_stock: "bool", regular_price: "money" };
   // Publishing wave P2: a title becomes a DRAFT product (the person
   // publishes it in the shop); found again by its SKU (the ISBN).
   var SKU = /^[A-Za-z0-9_-]{1,40}$/;
@@ -544,8 +545,8 @@
       ["GET", /^\/products\/[0-9]{1,12}\/variations$/, q(null), null],
       ["POST", /^\/products$/, null, DRAFT_BODY, "wdraft"],
       ["GET", /^\/settings\/products\/woocommerce_(weight|dimension)_unit$/, null, null],
-      ["PUT", /^\/products\/[0-9]{1,12}$/, null, STOCK_BODY],
-      ["PUT", /^\/products\/[0-9]{1,12}\/variations\/[0-9]{1,12}$/, null, STOCK_BODY],
+      ["PUT", /^\/products\/[0-9]{1,12}$/, null, PRODUCT_PUT],
+      ["PUT", /^\/products\/[0-9]{1,12}\/variations\/[0-9]{1,12}$/, null, PRODUCT_PUT],
       ["GET", /^\/orders$/, q({ status: WORDS, after: DT, modified_after: DT }), null],
       ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
       ["PUT", /^\/orders\/[0-9]{1,12}$/, null, { status: "status" }],

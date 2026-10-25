@@ -900,6 +900,7 @@
     "stock/core.js",
     "stock/package.js",
     "stock/pos.js",
+    "stock/pricelist.js",
     "stock/shop.js",
     "stock/stock.js",
     "stock/today.js"

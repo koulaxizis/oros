@@ -103,7 +103,14 @@ const CASES = [
   [{ m: "DELETE", path: "/products/12" }, "method"],
   [{ m: "PUT", path: "/products/12", body: { stock_quantity: 5, manage_stock: true } }, ""],
   [{ m: "PUT", path: "/products/12/variations/14", body: { stock_quantity: 0 } }, ""],
-  [{ m: "PUT", path: "/products/12", body: { regular_price: "1.00" } }, "body"],
+  // Stock P10: a price from a supplier's price list
+  [{ m: "PUT", path: "/products/12", body: { regular_price: "17.50" } }, ""],
+  [{ m: "PUT", path: "/products/12/variations/14", body: { regular_price: "9" } }, ""],
+  [{ m: "PUT", path: "/products/12", body: { regular_price: 17.5 } }, "body"],
+  [{ m: "PUT", path: "/products/12", body: { regular_price: "-1" } }, "body"],
+  [{ m: "PUT", path: "/products/12", body: { regular_price: "" } }, "body"],   // "" would clear the price in Woo
+  [{ m: "PUT", path: "/products/12", body: { sale_price: "1.00" } }, "body"],
+  [{ m: "PUT", path: "/products/12", body: { status: "publish" } }, "body"],
   [{ m: "PUT", path: "/products/12", body: { stock_quantity: 1.5 } }, "body"],
   [{ m: "PUT", path: "/products/12", body: {} }, "body"],
   [{ m: "PUT", path: "/products/12" }, "body"],

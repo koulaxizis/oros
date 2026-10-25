@@ -2269,6 +2269,12 @@
     add.type = "button";
     add.addEventListener("click", function () { supEditor(null); });
     li2.appendChild(add);
+    if (window.OrosStockPriceList) {
+      var plb = el("button", "txt-btn", "📄 " + plText("pl.sups"));
+      plb.type = "button";
+      plb.addEventListener("click", function () { openPriceList(""); });
+      li2.appendChild(plb);
+    }
     ul.appendChild(li2);
   }
 
@@ -2984,6 +2990,11 @@
     err.hidden = true;
     dlg.appendChild(err);
     var acts = el("div", "dlg-actions");
+    if (!isNew && window.OrosStockPriceList) {
+      var plw = el("div", "dlg-actions tight");
+      plw.appendChild(button("📄 " + plText("pl.link"), "", function () { dlg.close(); openPriceList(x.id); }));
+      dlg.insertBefore(plw, err);
+    }
     if (!isNew) acts.appendChild(button(t("ed.delete"), "danger", function () {
       confirmDialog(t("sup.delQ"), t("ed.delete"), true, function () { dlg.close(); removeRow("sups", byId("sups", x.id) || x); });
     }));
@@ -3705,6 +3716,12 @@
   // The UI lives in consign.js; this hands it the app's helpers and
   // its two writes: the consignment settings of a warehouse and the
   // movements of a settlement (a sale, and maybe a transfer back).
+  // pricelist.js texts (a pack language through orosI18n, like consText)
+  function plText(k) {
+    var S = window.OrosStockPriceList.STR;
+    if (window.orosI18n && !S[LANG]) window.orosI18n.table(S, "stock", LANG);
+    return (S[LANG] || S.en)[k] || S.en[k];
+  }
   function consText(k) {
     var CT = window.OrosStockConsign.TEXT;
     if (window.orosI18n && !CT[LANG]) window.orosI18n.table(CT, "stock", LANG);
@@ -3741,6 +3758,27 @@
     };
   }
   function openConsign() { if (window.OrosStockConsign) window.OrosStockConsign.open(consApi()); }
+
+  // ---------- 9. Supplier price lists (wave P10, pricelist.js) ----------
+  // One write per Apply (setData: persist + render); the file is read
+  // like the product import (CSV, or .xlsx through SheetJS).
+  function openPriceList(supId) {
+    var PL = window.OrosStockPriceList, I = window.OrosStockImport, K = window.OrosImportKit;
+    if (!PL || !window.OrosStockPrices || !I || !K) return;
+    PL.open({
+      lang: LANG, locale: LOCALE, el: el, button: button, makeDialog: makeDialog, showDialog: showDialog,
+      field: field, selectInput: selectInput, checkRow: checkRow, toast: showToast, actionToast: actionToast,
+      money: money, newId: newId,
+      data: function () { return data; },
+      setData: function (d) { data = d; save(); render(); },
+      readRows: function () {
+        return pickFile(I.ACCEPT).then(function (file) {
+          if (!file) return null;
+          return K.readFile(file, I.MAX_FILE).then(function (f) { return I.readBytes(f.bytes, f.name, getXlsx); });
+        });
+      }
+    }, supId || "");
+  }
 
   // ---------- 9a. Point of sale (1.7, wave 46) ----------
   // The till lives in pos.js; this hands it the app's helpers and the
