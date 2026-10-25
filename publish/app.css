@@ -1,0 +1,278 @@
+/* ============================================================
+   orOS Publishing — stylesheet
+   The colours come from the shell (inheritPalette + watchPalette
+   in app.js); the values below are only the fallback for a page
+   opened with ?standalone. Works from 360 px wide, no sideways
+   scroll, touch targets at least 40 px.
+   Sections: 1 palette + reset · 2 toolbar + tabs · 3 lists ·
+   4 title editor · 5 ISBN register · 6 dialogs · 7 toast · 8 small
+   screens
+   ============================================================ */
+
+/* ---------- 1. Palette fallback + reset ---------- */
+:root {
+  --bg:           #14120d;
+  --text:         #f0ead9;
+  --text-dim:     #a89f8a;
+  --accent:       #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft:  rgba(212, 175, 55, 0.20);
+  --panel-bg:     #1d1a13;
+  --border:       #322d20;
+  --danger:       #e06c75;
+  --ok:           #3fae6a;
+  --warn:         #e5a50a;
+}
+html[data-theme="light"] { --ok: #1f8a4c; --warn: #a86a00; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+dialog { margin: auto; }
+html { color-scheme: dark; }
+html[data-theme="light"] { color-scheme: light; }
+
+body {
+  font: 15px/1.45 "Nunito", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+button, select, input, textarea { font: inherit; color: inherit; }
+button, select { cursor: pointer; }
+button:disabled { cursor: default; opacity: 0.45; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input, select, textarea {
+  min-width: 0;
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 10px;
+  font-size: 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+textarea { resize: vertical; line-height: 1.45; min-height: 90px; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--text-dim); }
+.spacer { flex: 1 1 0; min-width: 0; }
+
+.btn {
+  min-height: 40px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: #14120d; }
+.btn.pri:hover:not(:disabled) { background: var(--accent-hover); }
+.btn.danger { color: var(--danger); }
+.btn.small { min-height: 34px; padding: 4px 10px; font-size: 13px; }
+.icon-btn {
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+}
+.icon-btn:hover { border-color: var(--border); }
+
+/* ---------- 2. Toolbar + tabs ---------- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+}
+#toolbar h1 { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#tabbar { display: flex; gap: 4px; padding: 6px 12px 0; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+.tab {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+#main { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+.view { max-width: 980px; margin: 0 auto; padding: 12px 16px 40px; }
+
+/* ---------- 3. Lists ---------- */
+.list-tools { display: flex; gap: 8px; margin-bottom: 8px; }
+.list-tools input { flex: 1 1 auto; }
+.list-tools select { flex: 0 0 150px; width: 150px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip {
+  min-height: 34px;
+  padding: 4px 12px;
+  border-radius: 17px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 13px;
+}
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.rows { list-style: none; display: grid; gap: 8px; }
+.trow {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+.trow:hover { border-color: var(--accent); }
+.thumb {
+  width: 52px;
+  height: 72px;
+  border-radius: 4px;
+  background: var(--border);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--text-dim);
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.tmain { min-width: 0; }
+.tname { display: block; font-weight: 700; overflow-wrap: anywhere; }
+.tsub { display: block; font-size: 13px; color: var(--text-dim); overflow-wrap: anywhere; }
+.tside { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 12px; }
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+.badge.st-idea { color: var(--text-dim); }
+.badge.st-prod { color: var(--warn); border-color: var(--warn); }
+.badge.st-out { color: var(--ok); border-color: var(--ok); }
+.badge.st-oop { color: var(--danger); border-color: var(--danger); }
+.badge.gap { color: var(--warn); }
+.empty { text-align: center; padding: 40px 12px; color: var(--text-dim); }
+.empty p { margin-bottom: 14px; }
+.flash { animation: flash 1.4s ease-out; }
+@keyframes flash { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: none; } }
+
+/* ---------- 4. Title editor ---------- */
+.ed-head { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.ed-head h2 { font-size: 18px; flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.sec {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: var(--panel-bg);
+}
+.sec > h3 { font-size: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.sec > h3 .spacer + .btn { margin-left: auto; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.grid .wide { grid-column: 1 / -1; }
+.fld { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld > span { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.fld .hint { font-size: 12px; color: var(--text-dim); }
+.fld .hint.bad { color: var(--danger); }
+.fld .hint.good { color: var(--ok); }
+.inrow { display: flex; gap: 6px; align-items: stretch; }
+.inrow > input, .inrow > select { flex: 1 1 auto; }
+.inrow > .btn { flex: 0 0 auto; }
+.person { display: grid; grid-template-columns: 150px 1fr 40px; gap: 6px; margin-bottom: 6px; }
+.fmt { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+.fmt-head { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.fmt-head select { flex: 1 1 160px; width: auto; }
+.cover-box { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.cover-box .thumb { width: 120px; height: 170px; font-size: 34px; }
+.cover-acts { display: flex; flex-direction: column; gap: 6px; }
+.gaps { font-size: 13px; color: var(--warn); margin-bottom: 10px; }
+.gaps.none { color: var(--ok); }
+
+/* ---------- 5. ISBN register ---------- */
+.block { border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin-bottom: 12px; background: var(--panel-bg); }
+.block-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.block-head strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+.meter { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; margin: 6px 0 10px; }
+.meter > i { display: block; height: 100%; background: var(--accent); }
+.nums { list-style: none; display: grid; gap: 4px; font-size: 14px; }
+.nums li { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.nums code, .isbn { font-family: Consolas, "SF Mono", monospace; font-size: 13px; }
+.linkish { background: none; border: 0; color: var(--accent); text-decoration: underline; padding: 0; min-height: 0; text-align: left; }
+.warnbox { border: 1px solid var(--warn); color: var(--warn); border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-size: 14px; }
+.next { font-size: 14px; margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- 6. Dialogs (R32: centered) ---------- */
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+  color: var(--text);
+  padding: 16px;
+  width: min(520px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+dialog h3 { font-size: 16px; margin-bottom: 12px; }
+dialog .acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 14px; }
+dialog .fld { margin-bottom: 10px; }
+.bc-prev { background: #fff; border-radius: 8px; padding: 12px; display: flex; justify-content: center; }
+.bc-prev img { width: 100%; max-width: 300px; height: auto; }
+
+/* ---------- 7. Toast ---------- */
+#toast {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%) translateY(20px);
+  max-width: calc(100vw - 32px);
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%); pointer-events: auto; }
+#toast button { background: transparent; border: 0; color: inherit; font-weight: 700; text-decoration: underline; min-height: 32px; }
+
+/* ---------- 8. Small screens ---------- */
+@media (max-width: 560px) {
+  .view { padding: 10px 12px 40px; }
+  .list-tools select { flex-basis: 120px; width: 120px; }
+  .person { grid-template-columns: 1fr 40px; }
+  .person select { grid-column: 1 / -1; }
+  .trow { grid-template-columns: 44px 1fr; }
+  .trow .thumb { width: 44px; height: 62px; }
+  .tside { grid-column: 2; flex-direction: row; flex-wrap: wrap; align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flash { animation: none; }
+  #toast { transition: none; }
+}
+
+[hidden] { display: none !important; }
