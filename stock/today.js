@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — Today provider (v1.1.0)
+// orOS Stock — Today provider (v1.2.0)
 // Loaded by the shell (today/host.js) through apps.json "today".
 // Read-only: reads oros-stock-data, never writes. The rules are
 // stock/core.js (OrosStockCore, loaded by the shell for the low-stock
@@ -11,14 +11,16 @@
 //     day: a late delivery shows under Overdue (opens the order);
 //   - lots with stock left that expire within 7 days, as tasks on
 //     their expiry day: an expired lot shows under Overdue (opens the
-//     product).
+//     product);
+//   - consignment shops due for a settlement (1.2.0, publisher wave
+//     P13), as tasks on the day it fell due (opens the shops).
 // ============================================================
 (function (root) {
   "use strict";
   var KEY = "oros-stock-data";
   var S = {
-    en: { low: "To reorder: {n}", po: "Delivery expected: {no}", from: "from {s}", items: "{n} products to come", exp: "Expires: {n}", lot: "lot {l}" },
-    el: { low: "Για παραγγελία: {n}", po: "Αναμένεται παράδοση: {no}", from: "από {s}", items: "έρχονται {n} προϊόντα", exp: "Λήγει: {n}", lot: "παρτίδα {l}" }
+    en: { low: "To reorder: {n}", po: "Delivery expected: {no}", from: "from {s}", items: "{n} products to come", exp: "Expires: {n}", lot: "lot {l}", cons: "Settle with {s}" },
+    el: { low: "Για παραγγελία: {n}", po: "Αναμένεται παράδοση: {no}", from: "από {s}", items: "έρχονται {n} προϊόντα", exp: "Λήγει: {n}", lot: "παρτίδα {l}", cons: "Εκκαθάριση με {s}" }
   };
   function tr(lang, k, p) {
     // A pack language: English + the stock pack, when one is loaded.
@@ -61,6 +63,11 @@
             kind: "task",
             target: { item: x.item.id }
           });
+        });
+      }
+      if (C.consDue) {
+        C.consDue(data, ctx.today).forEach(function (x) {
+          out.push({ id: "cons-" + x.wh.id, due: x.due, title: tr(ctx.lang, "cons", { s: x.wh.name }), kind: "task", target: { view: "cons" } });
         });
       }
       return out;

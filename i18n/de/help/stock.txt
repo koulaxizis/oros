@@ -77,7 +77,7 @@ Ein Laden, der deine Waren verkauft und dich für das Verkaufte bezahlt (eine Bu
 - Wenn der Laden meldet, was übrig ist, öffne die Kachel `Kommission` im Tab Produkte und wähle `Abrechnen…`. Gib ein, was noch im Regal steht; der Rest wird zum Verkaufspreis des Produkts als verkauft gebucht.
 - Nach `Buchen` öffnet `Rechnung erstellen` die Rechnungen mit dem Laden als Kunde und den Zeilen zu seinem Rabatt. Die Zeilen tragen keinen Produktcode, damit Rechnungen den Bestand nicht ein zweites Mal abbucht.
 - Hake `Den Rest zurück … holen` an, um die Kommission zu beenden: der Rest geht ins Hauptlager zurück.
-- Die Kachel wird gelb, wenn eine Abrechnung fällig ist. Storniere die Verkaufsbewegung, um eine Abrechnung rückgängig zu machen.
+- Die Kachel wird gelb, wenn eine Abrechnung fällig ist, und [Heute](app:today) erinnert dich daran. Storniere die Verkaufsbewegung, um eine Abrechnung rückgängig zu machen.
 
 ## Nachbestellen
 `Nachbestellen` listet jedes Produkt bei oder unter seiner Mindestmenge, nach Lieferant gruppiert, mit einer vorgeschlagenen Menge (die `Bestellmenge` des Produkts, oder genug für die doppelte Mindestmenge, abzüglich dessen, was schon bestellt ist). Für jeden Lieferanten:

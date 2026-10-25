@@ -4075,6 +4075,7 @@
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
     if (target.view === "shop") { openShop(); return; }
+    if (target.view === "cons") { openConsign(); return; }
     if (typeof target.po === "string" && byId("pos", target.po)) {
       setTab("order");
       poSheet(target.po);
