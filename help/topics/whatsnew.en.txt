@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.75.00
+- Publishing and Atelier: a release kit in one click. On a title, Release kit in Atelier makes five designs in a new folder named after the book: a square post, a story, a web banner, a bookmark and an A3 poster, each with the cover, title, author, release line, price and your imprint, in a colour taken from the cover. Everything stays editable.
+
 ## Version 3.74.00
 - Publishing: review copies and reviews. On each title, note who got a copy for review (names come back with their outlet and address on the next title). Three weeks later the copy is flagged and Follow up by e-mail opens a kind reminder in Mail. When the review comes, keep its link and a quote: the newest quotes go into the title's Newsletter blocks, and Copy the quotes gives them to you for the shop.
 
