@@ -8,11 +8,15 @@
 //     titles: [{ id, m, t, sub, ser, sn, st, rel "YYYY-MM-DD"|"", lang,
 //                ppl: [{ r, n, crm? }], fmts: [{ id, k, isbn, price,
 //                pages, w, h, sp, wt, bind, paper, dur, note }],
-//                blurb, bio, kw, notes, cov }],
+//                blurb, bio, kw, notes, cov, plan?, roy? }],
+//                roy (wave P6): royalty terms [{ id, n, pct, base
+//                "list"|"net", k "" | format kind, adv }]
 //     blocks: [{ id, m, p, note }],      ISBN blocks: p = the prefix as
 //                the agency gave it, with hyphens ("978-618-5321")
 //     isbnx:  [{ id, m, note }],         numbers used outside the app or
 //                spoiled; id = the 13 digits
+//     stmts:  [{ id, m, n, from, to, cur, rows, rec, due, paid, v }]
+//                royalty statements as issued (wave P6, royalty.js)
 //     set:    { m, cur, imp },          imp = the publisher's name
 //                (covers, press texts); unknown fields ride along
 //     tombs:  { id: ms } }
@@ -35,7 +39,7 @@
   "use strict";
 
   var VER = 1;
-  var LISTS = ["titles", "blocks", "isbnx"];
+  var LISTS = ["titles", "blocks", "isbnx", "stmts"];
   var STATUS = ["idea", "prod", "out", "oop"];
   var FMT_KINDS = ["pb", "hb", "eb", "ab", "ot"];
   var ROLES = ["a", "t", "i", "e", "c", "n", "o"];
@@ -229,7 +233,7 @@
     if (wid > 0 && okId(raw.wp.a)) out.wp = { a: raw.wp.a, id: wid };
     return out;
   }
-  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan"];
+  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy"];
   // Release plan (wave P4): the steps from manuscript to presentation,
   // each with a date counted back from the release date (days).
   var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres", "x"];
@@ -242,6 +246,46 @@
     var n = line(raw.n, 80);
     if (n) o.n = n;
     if (k === "x" && !n) return null;          // an own step needs its name
+    return o;
+  }
+  // Royalty terms (wave P6): who is paid, pct of the list price or of
+  // what came in (net), on one format kind or all ("" ), and the
+  // advance paid on signing (currency units), recouped first.
+  var ROY_BASES = ["list", "net"], MAX_ROY = 8;
+  function cleanRoy(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var n = line(raw.n, 120);
+    if (!n) return null;
+    return {
+      id: raw.id, n: n, pct: num(raw.pct, 0, 100, 2), base: oneOf(raw.base, ROY_BASES, "list"),
+      k: FMT_KINDS.indexOf(raw.k) >= 0 ? raw.k : "", adv: num(raw.adv, 0, 1e7, 2)
+    };
+  }
+  // A royalty statement as issued: a record, so later edits of terms or
+  // sales never change what was sent. rows: one per title format,
+  // rec: one per term (advance before, earned, payable), sums in cents.
+  var MAX_STMT_ROWS = 300;
+  function cents(v) { return typeof v === "number" && isFinite(v) && Math.abs(v) <= 1e12 ? Math.round(v) : 0; }
+  function cleanStmt(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var n = line(raw.n, 120);
+    if (!n || !okYmd(raw.from) || !okYmd(raw.to) || raw.from > raw.to) return null;
+    var rows = (Array.isArray(raw.rows) ? raw.rows : []).slice(0, MAX_STMT_ROWS).map(function (r) {
+      if (!r || typeof r !== "object" || !okId(r.ti) || !okId(r.tr)) return null;
+      var o = { ti: r.ti, tr: r.tr, t: line(r.t, 200), k: FMT_KINDS.indexOf(r.k) >= 0 ? r.k : "",
+                isbn: /^\d{13}$/.test(r.isbn || "") ? r.isbn : "", q: num(r.q, -1e7, 1e7, 3),
+                base: oneOf(r.base, ROY_BASES, "list"), u: num(r.u, 0, 1e9, 2), b: cents(r.b),
+                pct: num(r.pct, 0, 100, 2), e: cents(r.e) };
+      return o.t ? o : null;
+    }).filter(Boolean);
+    var rec = (Array.isArray(raw.rec) ? raw.rec : []).slice(0, MAX_STMT_ROWS).map(function (r) {
+      if (!r || typeof r !== "object" || !okId(r.ti) || !okId(r.tr)) return null;
+      return { ti: r.ti, tr: r.tr, adv: cents(r.adv), left: cents(r.left), e: cents(r.e), pay: cents(r.pay) };
+    }).filter(Boolean);
+    var o = { id: raw.id, m: ms(raw.m), n: n, from: raw.from, to: raw.to,
+              cur: typeof raw.cur === "string" && CURS.test(raw.cur) ? raw.cur : "EUR",
+              rows: rows, rec: rec, due: cents(raw.due), paid: okYmd(raw.paid) ? raw.paid : "", note: text(raw.note, 1000) };
+    if (raw.v === 1) o.v = 1;
     return o;
   }
   function cleanTitle(raw) {
@@ -268,6 +312,13 @@
       return true;
     }).slice(0, MAX_PLAN);
     if (plan.length) out.plan = plan;
+    var rids = {};
+    var roy = (Array.isArray(raw.roy) ? raw.roy : []).map(cleanRoy).filter(function (x) {
+      if (!x || rids[x.id]) return false;
+      rids[x.id] = 1;
+      return true;
+    }).slice(0, MAX_ROY);
+    if (roy.length) out.roy = roy;
     // Fields of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(raw).forEach(function (k) {
@@ -298,9 +349,9 @@
     p.m = ms(raw.m);
     return p;
   }
-  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX };
+  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt };
 
-  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
+  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
 
   function cleanSet(raw) {
     var s = raw && typeof raw === "object" ? raw : {};
@@ -692,7 +743,8 @@
     coverPath: coverPath, coversInUse: coversInUse, fromPrefill: fromPrefill,
     shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease,
     STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
-    planState: planState, byDay: byDay
+    planState: planState, byDay: byDay,
+    ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishCore = API;

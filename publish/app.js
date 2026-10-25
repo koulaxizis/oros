@@ -114,6 +114,26 @@
       "plan.add": "+ Step", "plan.addName": "Name of the step", "plan.todo": "Send to To-Do", "plan.del": "Remove step",
       "plan.late": "late", "plan.lateN": "{n} late", "plan.next": "Next: {s} · {d}", "plan.allDone": "All steps done.",
       "plan.noRel": "Set the release date first.", "plan.todoBy": "By {d} · {t}", "plan.todoNone": "No open steps to send.", "plan.date": "Date",
+      "tab.roy": "Royalties",
+      "sec.roy": "Royalties", "roy.none": "No royalty terms. Add who is paid for this book, how much and on what.",
+      "roy.add": "+ Terms", "roy.who": "Paid to", "roy.pct": "Royalty (%)", "roy.base": "On", "roy.base.list": "List price", "roy.base.net": "What came in (net)",
+      "roy.k": "Formats", "roy.k.all": "All formats", "roy.adv": "Advance ({cur})", "roy.del": "Remove these terms",
+      "roy.hint": "Sales come from Stock: every sale recorded there (till, shop orders, invoices, consignment settlements) of a product whose SKU or barcode is the format's ISBN. Sales Stock never saw, such as e-books, are typed into the statement.",
+      "roy.people": "Who is paid", "roy.peopleNone": "No royalty terms yet. Open a title and add them in its Royalties section.",
+      "roy.titlesN": "{n} titles", "roy.newSt": "New statement…", "roy.stmts": "Statements", "roy.stmtsNone": "No statements yet.",
+      "roy.period": "Period", "roy.p.half": "Last half-year", "roy.p.year": "Last year", "roy.p.quarter": "Last quarter", "roy.p.custom": "Other dates",
+      "roy.from": "From", "roy.to": "To", "roy.units": "Units", "roy.unit": "Per unit ({cur})", "roy.earned": "Earned",
+      "roy.advLeft": "Advance still to recoup: {a}", "roy.advRec": "Advance recouped this time: {a}",
+      "roy.due": "Payable: {a}", "roy.issue": "Issue statement", "roy.issued": "Statement issued",
+      "roy.warnClosed": "Stock closed its books inside this period: sales before that date are archived and not counted here. Type them in if needed.",
+      "roy.warnMissing": "Not in Stock (no product with this ISBN): {list}. Type the units by hand.",
+      "roy.empty": "Nothing to put on this statement: no title has terms for this person.",
+      "roy.st": "Royalty statement", "roy.stFor": "{n} · {from} – {to}", "roy.paidOn": "Paid {d}", "roy.unpaid": "Not paid yet",
+      "roy.void": "Voided", "roy.print": "Print or PDF", "roy.mail": "E-mail", "roy.budget": "Add to Budget",
+      "roy.markPaid": "Mark paid", "roy.markUnpaid": "Mark not paid", "roy.voidIt": "Void", "roy.voidQ": "Void this statement? It stays in the list, crossed out, and no longer counts towards the advance.",
+      "roy.mailSubj": "Royalty statement {from} – {to}", "roy.mailHi": "Hello {n},", "roy.mailBody": "Here is your royalty statement for {from} – {to}.",
+      "roy.th.title": "Title", "roy.th.fmt": "Format", "roy.th.units": "Units", "roy.th.base": "Base", "roy.th.pct": "%", "roy.th.earned": "Earned",
+      "roy.total": "Earned in the period", "roy.advance": "Advance",
       "send.title": "Send to other apps", "send.hint": "Nothing is saved in the other app until you save it there. Your shop gets a draft that you publish yourself.",
       "send.fmt": "Format", "send.noFmt": "Add a format first.", "send.shop": "Draft in my shop", "send.stock": "Item in Stock",
       "send.news": "Block in Newsletter", "send.pr": "Press release in Writer", "send.noApp": "That app could not be opened from here.",
@@ -211,6 +231,26 @@
       "plan.add": "+ Βήμα", "plan.addName": "Όνομα βήματος", "plan.todo": "Στείλε στο To-Do", "plan.del": "Αφαίρεση βήματος",
       "plan.late": "καθυστερεί", "plan.lateN": "{n} καθυστερούν", "plan.next": "Επόμενο: {s} · {d}", "plan.allDone": "Έγιναν όλα τα βήματα.",
       "plan.noRel": "Βάλε πρώτα ημερομηνία κυκλοφορίας.", "plan.todoBy": "Έως {d} · {t}", "plan.todoNone": "Δεν υπάρχουν ανοιχτά βήματα.", "plan.date": "Ημερομηνία",
+      "tab.roy": "Δικαιώματα",
+      "sec.roy": "Δικαιώματα", "roy.none": "Δεν υπάρχουν όροι δικαιωμάτων. Πρόσθεσε ποιος πληρώνεται για αυτό το βιβλίο, πόσο και επί ποιου.",
+      "roy.add": "+ Όροι", "roy.who": "Δικαιούχος", "roy.pct": "Ποσοστό (%)", "roy.base": "Επί", "roy.base.list": "Τιμής καταλόγου", "roy.base.net": "Εισπράξεων (καθαρά)",
+      "roy.k": "Μορφές", "roy.k.all": "Όλες οι μορφές", "roy.adv": "Προκαταβολή ({cur})", "roy.del": "Αφαίρεση αυτών των όρων",
+      "roy.hint": "Οι πωλήσεις έρχονται από το Απόθεμα: κάθε πώληση που καταγράφηκε εκεί (ταμείο, παραγγελίες καταστήματος, τιμολόγια, εκκαθαρίσεις παρακαταθηκών) προϊόντος που έχει ως κωδικό ή barcode το ISBN της μορφής. Πωλήσεις που δεν πέρασαν από το Απόθεμα, όπως τα e-book, τις γράφεις στην εκκαθάριση.",
+      "roy.people": "Δικαιούχοι", "roy.peopleNone": "Δεν υπάρχουν ακόμα όροι δικαιωμάτων. Άνοιξε έναν τίτλο και πρόσθεσέ τους στην ενότητα Δικαιώματα.",
+      "roy.titlesN": "{n} τίτλοι", "roy.newSt": "Νέα εκκαθάριση…", "roy.stmts": "Εκκαθαρίσεις", "roy.stmtsNone": "Καμία εκκαθάριση ακόμα.",
+      "roy.period": "Περίοδος", "roy.p.half": "Τελευταίο εξάμηνο", "roy.p.year": "Πέρσι", "roy.p.quarter": "Τελευταίο τρίμηνο", "roy.p.custom": "Άλλες ημερομηνίες",
+      "roy.from": "Από", "roy.to": "Έως", "roy.units": "Τεμάχια", "roy.unit": "Ανά τεμάχιο ({cur})", "roy.earned": "Δικαιώματα",
+      "roy.advLeft": "Προκαταβολή που μένει να συμψηφιστεί: {a}", "roy.advRec": "Συμψηφίστηκε με την προκαταβολή: {a}",
+      "roy.due": "Πληρωτέο: {a}", "roy.issue": "Έκδοση εκκαθάρισης", "roy.issued": "Η εκκαθάριση εκδόθηκε",
+      "roy.warnClosed": "Το Απόθεμα έκλεισε βιβλία μέσα σε αυτή την περίοδο: οι πωλήσεις πριν από εκείνη την ημέρα έχουν αρχειοθετηθεί και δεν μετρούν εδώ. Γράψ' τες με το χέρι αν χρειάζεται.",
+      "roy.warnMissing": "Δεν υπάρχουν στο Απόθεμα (κανένα προϊόν με αυτό το ISBN): {list}. Γράψε τα τεμάχια με το χέρι.",
+      "roy.empty": "Δεν υπάρχει τίποτα για αυτή την εκκαθάριση: κανένας τίτλος δεν έχει όρους για αυτό το πρόσωπο.",
+      "roy.st": "Εκκαθάριση δικαιωμάτων", "roy.stFor": "{n} · {from} – {to}", "roy.paidOn": "Πληρώθηκε {d}", "roy.unpaid": "Απλήρωτη",
+      "roy.void": "Ακυρωμένη", "roy.print": "Εκτύπωση ή PDF", "roy.mail": "E-mail", "roy.budget": "Στον Προϋπολογισμό",
+      "roy.markPaid": "Σήμανση ως πληρωμένη", "roy.markUnpaid": "Σήμανση ως απλήρωτη", "roy.voidIt": "Ακύρωση", "roy.voidQ": "Να ακυρωθεί αυτή η εκκαθάριση; Μένει στη λίστα διαγραμμένη και δεν μετρά πια στην προκαταβολή.",
+      "roy.mailSubj": "Εκκαθάριση δικαιωμάτων {from} – {to}", "roy.mailHi": "Καλησπέρα {n},", "roy.mailBody": "Σου στέλνω την εκκαθάριση δικαιωμάτων για {from} – {to}.",
+      "roy.th.title": "Τίτλος", "roy.th.fmt": "Μορφή", "roy.th.units": "Τεμάχια", "roy.th.base": "Βάση", "roy.th.pct": "%", "roy.th.earned": "Δικαιώματα",
+      "roy.total": "Δικαιώματα περιόδου", "roy.advance": "Προκαταβολή",
       "send.title": "Στείλε σε άλλες εφαρμογές", "send.hint": "Τίποτα δεν αποθηκεύεται στην άλλη εφαρμογή πριν το αποθηκεύσεις εκεί. Το κατάστημά σου παίρνει πρόχειρο που το δημοσιεύεις εσύ.",
       "send.fmt": "Μορφή", "send.noFmt": "Πρόσθεσε πρώτα μια μορφή.", "send.shop": "Πρόχειρο στο κατάστημά μου", "send.stock": "Είδος στο Απόθεμα",
       "send.news": "Μπλοκ στο Newsletter", "send.pr": "Δελτίο τύπου στο Writer", "send.noApp": "Η εφαρμογή δεν άνοιξε από εδώ.",
@@ -329,11 +369,11 @@
     catch (e) { data = C.empty(); }
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null") || {};
-      if (p.tab === "isbn" || p.tab === "titles") prefs.tab = p.tab;
+      if (p.tab === "isbn" || p.tab === "titles" || p.tab === "roy") prefs.tab = p.tab;
       if (["rel", "t", "m"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
       if (C.STATUS.indexOf(p.st) >= 0) prefs.st = p.st;
     } catch (e) { /* defaults */ }
-    view.name = prefs.tab === "isbn" ? "isbn" : "list";
+    view.name = prefs.tab === "isbn" || prefs.tab === "roy" ? prefs.tab : "list";
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* not important */ } }
   function persist() {
@@ -675,6 +715,12 @@
     sp.id = "ed-plan";
     sec.appendChild(sp);
     renderPlan();
+
+    // Royalty terms (wave P6)
+    var sr = el("section", "sec roy");
+    sr.id = "ed-roy";
+    sec.appendChild(sr);
+    renderTerms();
 
     // People
     var s2 = el("section", "sec");
@@ -1306,6 +1352,313 @@
     }
   }
 
+  // ---------- 6c. Royalties (wave P6) ----------
+  // Terms live on the title (section Royalties); the tab lists who is
+  // paid and the statements issued. A statement is built from Stock's
+  // sales (royalty.js), the units can be corrected or typed, and once
+  // issued it is a record: printed, e-mailed, added to Budget, paid.
+  var RY = window.OrosPublishRoyalty;
+  var STOCK_KEY = "oros-stock-data";
+  function stockData() {
+    try { var d = JSON.parse(localStorage.getItem(STOCK_KEY) || "null"); return d && typeof d === "object" ? d : null; }
+    catch (e) { return null; }
+  }
+  function cents(c) { return money((c || 0) / 100); }
+  function writeTerms(roy) {
+    writeTitle({ roy: roy });
+    renderTerms();
+  }
+  function renderTerms() {
+    var box = $("ed-roy"), tt = currentTitle();
+    if (!box || !tt) return;
+    box.textContent = "";
+    box.appendChild(el("h3", "", t("sec.roy")));
+    var roy = tt.roy || [];
+    if (!roy.length) box.appendChild(el("p", "muted", t("roy.none")));
+    var dl = el("datalist");
+    dl.id = "roy-names";
+    (tt.ppl || []).forEach(function (p) { var o = el("option"); o.value = p.n; dl.appendChild(o); });
+    box.appendChild(dl);
+    function patch(id, p) {
+      var cur = currentTitle();
+      if (!cur) return;
+      writeTitle({ roy: (cur.roy || []).map(function (x) { return x.id === id ? Object.assign({}, x, p) : x; }) });
+    }
+    roy.forEach(function (r) {
+      var row = el("div", "fmt roy-term");
+      var g = el("div", "grid");
+      var who = input("text", r.n, { maxlength: "120", list: "roy-names" });
+      who.addEventListener("change", function () { if (who.value.trim()) patch(r.id, { n: who.value.trim() }); });
+      g.appendChild(field(t("roy.who"), who));
+      var pct = input("text", String(r.pct).replace(".", LANG === "en" ? "." : ","), { inputmode: "decimal", maxlength: "6" });
+      pct.addEventListener("change", function () { var v = C.num(pct.value, 0, 100, 2); patch(r.id, { pct: v }); });
+      g.appendChild(field(t("roy.pct"), pct));
+      var base = select(C.ROY_BASES.map(function (b) { return [b, t("roy.base." + b)]; }), r.base);
+      base.addEventListener("change", function () { patch(r.id, { base: base.value }); });
+      g.appendChild(field(t("roy.base"), base));
+      var k = select([["", t("roy.k.all")]].concat(C.FMT_KINDS.map(function (x) { return [x, t("fmt." + x)]; })), r.k);
+      k.addEventListener("change", function () { patch(r.id, { k: k.value }); });
+      g.appendChild(field(t("roy.k"), k));
+      var adv = input("text", r.adv ? String(r.adv) : "", { inputmode: "decimal", maxlength: "10" });
+      adv.addEventListener("change", function () { patch(r.id, { adv: C.num(adv.value, 0, 1e7, 2) }); });
+      g.appendChild(field(t("roy.adv", { cur: data.set.cur }), adv));
+      row.appendChild(g);
+      var del = button("✕ " + t("roy.del"), "btn small", function () {
+        writeTerms((currentTitle().roy || []).filter(function (x) { return x.id !== r.id; }));
+      });
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+    var acts = el("div", "send-row");
+    var add = button(t("roy.add"), "btn small", function () {
+      var cur = currentTitle();
+      if (!cur || (cur.roy || []).length >= C.MAX_ROY) return;
+      var a = C.authors(cur)[0] || ((cur.ppl || [])[0] || {}).n || "";
+      writeTerms((cur.roy || []).concat([{ id: C.uid(), n: a || "?", pct: 10, base: "list", k: "", adv: 0 }]));
+    });
+    acts.appendChild(add);
+    box.appendChild(acts);
+  }
+
+  function stmtLabel(st) { return t("roy.stFor", { n: st.n, from: fmtDate(st.from), to: fmtDate(st.to) }); }
+  function renderRoy() {
+    var sec = $("view-roy");
+    sec.textContent = "";
+    sec.appendChild(el("p", "muted", t("roy.hint")));
+    var hd = el("div", "ed-head");
+    hd.appendChild(el("h2", "", t("roy.people")));
+    sec.appendChild(hd);
+    var ps = RY ? RY.people(data) : [];
+    if (!ps.length) sec.appendChild(el("p", "muted", t("roy.peopleNone")));
+    ps.forEach(function (p) {
+      var row = el("div", "trow roy-person");
+      var body = el("div", "tmain");
+      body.appendChild(el("div", "tname", p.n));
+      body.appendChild(el("div", "tsub", t("roy.titlesN", { n: p.titles.length }) + " · " + p.titles.map(function (x) { return x.t; }).join(", ")));
+      row.appendChild(body);
+      row.appendChild(button(t("roy.newSt"), "btn small pri", function (e) { e.stopPropagation(); newStatement(p.n); }));
+      sec.appendChild(row);
+    });
+    var h2 = el("div", "ed-head");
+    h2.appendChild(el("h2", "", t("roy.stmts")));
+    sec.appendChild(h2);
+    var list = (data.stmts || []).slice().sort(function (a, b) { return a.to < b.to ? 1 : a.to > b.to ? -1 : (a.n < b.n ? -1 : 1); });
+    if (!list.length) sec.appendChild(el("p", "muted", t("roy.stmtsNone")));
+    list.forEach(function (st) {
+      var row = button("", "trow roy-st" + (st.v === 1 ? " void" : ""), function () { viewStatement(st.id); });
+      var body = el("div", "tmain");
+      body.appendChild(el("div", "tname", stmtLabel(st)));
+      body.appendChild(el("div", "tsub", st.v === 1 ? t("roy.void") : (st.paid ? t("roy.paidOn", { d: fmtDate(st.paid) }) : t("roy.unpaid"))));
+      row.appendChild(body);
+      row.appendChild(el("span", "roy-amt", cents(st.due)));
+      sec.appendChild(row);
+    });
+  }
+
+  function newStatement(name) {
+    if (!RY) return;
+    var dlg = el("dialog", "roy-dlg");
+    dlg.appendChild(el("h3", "", t("roy.st") + " · " + name));
+    var pers = RY.periods(todayYmd());
+    var g = el("div", "grid");
+    var per = select(pers.map(function (p) { return [p.id, t("roy.p." + p.id)]; }).concat([["custom", t("roy.p.custom")]]), "half");
+    g.appendChild(field(t("roy.period"), per));
+    var from = input("date", pers[0].from), to = input("date", pers[0].to);
+    g.appendChild(field(t("roy.from"), from));
+    g.appendChild(field(t("roy.to"), to));
+    dlg.appendChild(g);
+    per.addEventListener("change", function () {
+      var p = pers.filter(function (x) { return x.id === per.value; })[0];
+      if (p) { from.value = p.from; to.value = p.to; }
+      build();
+    });
+    [from, to].forEach(function (i) { i.addEventListener("change", function () { per.value = "custom"; build(); }); });
+    var body = el("div", "roy-body");
+    dlg.appendChild(body);
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    var go = button(t("roy.issue"), "btn pri", issue);
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    var st = null;
+    function build() {
+      body.textContent = "";
+      st = null;
+      if (!C.okYmd(from.value) || !C.okYmd(to.value) || from.value > to.value) { go.disabled = true; return; }
+      st = RY.build(data, stockData(), name, from.value, to.value, data.set.cur);
+      if (!st.rows.length) { body.appendChild(el("p", "muted", t("roy.empty"))); go.disabled = true; return; }
+      go.disabled = false;
+      if (st.warn.closed) body.appendChild(el("p", "warnbox", t("roy.warnClosed")));
+      if (st.warn.missing.length) body.appendChild(el("p", "warnbox", t("roy.warnMissing", { list: st.warn.missing.filter(function (x, i, a) { return a.indexOf(x) === i; }).join(", ") })));
+      var tb = el("div", "roy-rows");
+      st.rows.forEach(function (r, i) {
+        var line = el("div", "roy-row");
+        var nm = el("div", "roy-name");
+        nm.appendChild(el("div", "", r.t));
+        nm.appendChild(el("div", "muted small", t("fmt." + r.k) + (r.isbn ? " · " + C.hyphen(r.isbn, data.blocks) : "") + " · " + r.pct + "% " + t("roy.base." + r.base).toLowerCase()));
+        line.appendChild(nm);
+        var q = input("text", String(r.q).replace(".", LANG === "en" ? "." : ","), { inputmode: "decimal", maxlength: "10", "aria-label": t("roy.units") + ": " + r.t });
+        q.addEventListener("input", function () { setRow(i, "q", q); });
+        line.appendChild(field(t("roy.units"), q));
+        if (r.base === "net") {
+          var u = input("text", String(r.u / 100).replace(".", LANG === "en" ? "." : ","), { inputmode: "decimal", maxlength: "10", "aria-label": t("roy.unit", { cur: data.set.cur }) + ": " + r.t });
+          u.addEventListener("input", function () { setRow(i, "u", u); });
+          line.appendChild(field(t("roy.unit", { cur: data.set.cur }), u));
+        }
+        var e = el("div", "roy-e");
+        e.dataset.i = String(i);
+        line.appendChild(e);
+        tb.appendChild(line);
+      });
+      body.appendChild(tb);
+      var sum = el("div", "roy-sum");
+      sum.setAttribute("aria-live", "polite");
+      body.appendChild(sum);
+      paint();
+    }
+    function setRow(i, k, inp) {
+      var raw = String(inp.value || "").trim().replace(",", ".");
+      var v = raw === "" ? 0 : Number(raw);
+      var bad = !isFinite(v) || (k === "u" && v < 0) || Math.abs(v) > 1e7;
+      inp.classList.toggle("bad", bad);
+      if (bad) { go.disabled = true; return; }
+      go.disabled = false;
+      st.rows[i][k] = k === "u" ? Math.round(v * 100) : Math.round(v * 1000) / 1000;
+      paint();
+    }
+    function paint() {
+      st = Object.assign(RY.recompute(st, data), { warn: st.warn });
+      [].forEach.call(body.querySelectorAll(".roy-e"), function (n) {
+        var r = st.rows[+n.dataset.i];
+        n.textContent = t("roy.earned") + ": " + cents(r.e);
+      });
+      var sum = body.querySelector(".roy-sum");
+      sum.textContent = "";
+      var tot = st.rows.reduce(function (a, r) { return a + r.e; }, 0);
+      sum.appendChild(el("div", "", t("roy.total") + ": " + cents(tot)));
+      var left = 0, rec = 0;
+      st.rec.forEach(function (x) { left += Math.max(0, x.left - x.e); rec += Math.min(x.left, x.e); });
+      if (rec) sum.appendChild(el("div", "muted", t("roy.advRec", { a: cents(rec) })));
+      if (left) sum.appendChild(el("div", "muted", t("roy.advLeft", { a: cents(left) })));
+      sum.appendChild(el("strong", "", t("roy.due", { a: cents(st.due) })));
+    }
+    function issue() {
+      if (!st || go.disabled) return;
+      var row = Object.assign({}, st, { id: C.uid() });
+      delete row.warn;
+      dlg.close();
+      commit(C.put(data, "stmts", row, Date.now()));
+      toast(t("roy.issued"));
+      viewStatement(row.id);
+    }
+    showDialog(dlg);
+    build();
+  }
+
+  function stmtText(st) {
+    var out = [t("roy.mailHi", { n: st.n }), "", t("roy.mailBody", { from: fmtDate(st.from), to: fmtDate(st.to) }), ""];
+    st.rows.forEach(function (r) {
+      out.push(r.t + " (" + t("fmt." + r.k) + "): " + r.q + " × " + cents(r.u) + " = " + cents(r.b) + " × " + r.pct + "% = " + cents(r.e));
+    });
+    out.push("");
+    out.push(t("roy.total") + ": " + cents(st.rows.reduce(function (a, r) { return a + r.e; }, 0)));
+    st.rec.forEach(function (x) {
+      if (!x.adv) return;
+      var tt = C.find(data, "titles", x.ti);
+      out.push(t("roy.advance") + (tt ? " · " + tt.t : "") + ": " + t("roy.advRec", { a: cents(Math.min(x.left, x.e)) }) + " · " + t("roy.advLeft", { a: cents(Math.max(0, x.left - x.e)) }));
+    });
+    out.push(t("roy.due", { a: cents(st.due) }));
+    if (data.set.imp) { out.push(""); out.push(data.set.imp); }
+    return out.join("\n");
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[c]; });
+  }
+  function stmtHtml(st) {
+    var rows = st.rows.map(function (r) {
+      return "<tr><td>" + esc(r.t) + "</td><td>" + esc(t("fmt." + r.k)) + (r.isbn ? "<br><small>" + esc(C.hyphen(r.isbn, data.blocks)) + "</small>" : "") +
+        "</td><td class=n>" + esc(String(r.q)) + "</td><td class=n>" + esc(cents(r.b)) + "</td><td class=n>" + esc(String(r.pct)) +
+        "</td><td class=n>" + esc(cents(r.e)) + "</td></tr>";
+    }).join("");
+    var adv = st.rec.filter(function (x) { return x.adv; }).map(function (x) {
+      var tt = C.find(data, "titles", x.ti);
+      return "<p>" + esc(t("roy.advance") + (tt ? " · " + tt.t : "") + ": " + cents(x.adv) + " · " + t("roy.advRec", { a: cents(Math.min(x.left, x.e)) }) + " · " + t("roy.advLeft", { a: cents(Math.max(0, x.left - x.e)) })) + "</p>";
+    }).join("");
+    var tot = st.rows.reduce(function (a, r) { return a + r.e; }, 0);
+    return "<!doctype html><html lang=\"" + esc(LANG) + "\"><head><meta charset=\"utf-8\"><title>" + esc(t("roy.st")) + "</title><style>" +
+      "body{font:12pt/1.4 system-ui,sans-serif;margin:18mm;color:#000}h1{font-size:18pt;margin:0 0 4px}table{border-collapse:collapse;width:100%;margin:14px 0}" +
+      "th,td{border-bottom:1px solid #999;padding:5px 6px;text-align:left;vertical-align:top}.n{text-align:right;white-space:nowrap}small{color:#555}" +
+      ".due{font-size:14pt;font-weight:700}</style></head><body>" +
+      (data.set.imp ? "<p><strong>" + esc(data.set.imp) + "</strong></p>" : "") +
+      "<h1>" + esc(t("roy.st")) + "</h1><p>" + esc(stmtLabel(st)) + (st.v === 1 ? " · " + esc(t("roy.void")) : "") + "</p>" +
+      "<table><thead><tr><th>" + esc(t("roy.th.title")) + "</th><th>" + esc(t("roy.th.fmt")) + "</th><th class=n>" + esc(t("roy.th.units")) +
+      "</th><th class=n>" + esc(t("roy.th.base")) + "</th><th class=n>" + esc(t("roy.th.pct")) + "</th><th class=n>" + esc(t("roy.th.earned")) +
+      "</th></tr></thead><tbody>" + rows + "</tbody></table>" +
+      "<p>" + esc(t("roy.total") + ": " + cents(tot)) + "</p>" + adv +
+      "<p class=due>" + esc(t("roy.due", { a: cents(st.due) })) + "</p>" +
+      (st.paid ? "<p>" + esc(t("roy.paidOn", { d: fmtDate(st.paid) })) + "</p>" : "") + "</body></html>";
+  }
+  function printHtml(html) {
+    var old = $("roy-print");
+    if (old) old.remove();
+    var fr = document.createElement("iframe");
+    fr.id = "roy-print";
+    fr.setAttribute("aria-hidden", "true");
+    fr.tabIndex = -1;
+    fr.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    fr.addEventListener("load", function () { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { /* the browser refused */ } }, { once: true });
+    fr.srcdoc = html;
+    document.body.appendChild(fr);
+  }
+  function viewStatement(id) {
+    var st = C.find(data, "stmts", id);
+    if (!st) return;
+    var dlg = el("dialog", "roy-dlg");
+    dlg.appendChild(el("h3", "", t("roy.st")));
+    dlg.appendChild(el("p", "", stmtLabel(st) + (st.v === 1 ? " · " + t("roy.void") : "")));
+    var pre = el("pre", "roy-text", stmtText(st));
+    dlg.appendChild(pre);
+    dlg.appendChild(el("p", "muted", st.v === 1 ? t("roy.void") : (st.paid ? t("roy.paidOn", { d: fmtDate(st.paid) }) : t("roy.unpaid"))));
+    var acts = el("div", "send-row");
+    acts.appendChild(button("🖨 " + t("roy.print"), "btn small", function () { printHtml(stmtHtml(st)); }));
+    if (st.v !== 1) {
+      acts.appendChild(button("✉ " + t("roy.mail"), "btn small", function () {
+        dlg.close();
+        openAt("mail", { compose: { to: "", subject: t("roy.mailSubj", { from: fmtDate(st.from), to: fmtDate(st.to) }).slice(0, 300), body: stmtText(st).slice(0, 20000) } });
+      }));
+      var P = null;
+      try { P = window.parent && typeof window.parent.__orosOpenBudgetNew === "function" ? window.parent : null; } catch (e) { P = null; }
+      if (P && st.due > 0) acts.appendChild(button(t("roy.budget"), "btn small", function () {
+        var ok = P.__orosOpenBudgetNew({ k: "o", a: st.due, d: st.paid || todayYmd(), c: "o-other", src: "publish",
+          n: (t("roy.st") + " · " + stmtLabel(st)).slice(0, 140) });
+        if (ok === false) toast(t("send.noApp")); else dlg.close();
+      }));
+      acts.appendChild(button(st.paid ? t("roy.markUnpaid") : t("roy.markPaid"), "btn small", function () {
+        dlg.close();
+        commit(C.put(data, "stmts", Object.assign({}, st, { paid: st.paid ? "" : todayYmd() }), Date.now()));
+      }));
+      acts.appendChild(button(t("roy.voidIt"), "btn small danger", function () {
+        dlg.close();
+        var q = el("dialog");
+        q.appendChild(el("h3", "", t("roy.voidIt") + " · " + stmtLabel(st)));
+        q.appendChild(el("p", "muted", t("roy.voidQ")));
+        var qa = el("div", "acts");
+        qa.appendChild(button(t("btn.cancel"), "btn", function () { q.close(); }));
+        qa.appendChild(button(t("roy.voidIt"), "btn pri", function () {
+          q.close();
+          commit(C.put(data, "stmts", Object.assign({}, st, { v: 1 }), Date.now()));
+        }));
+        q.appendChild(qa);
+        showDialog(q);
+      }));
+    }
+    dlg.appendChild(acts);
+    var a2 = el("div", "acts");
+    a2.appendChild(button(t("btn.close"), "btn pri", function () { dlg.close(); }));
+    dlg.appendChild(a2);
+    showDialog(dlg);
+  }
+
   // ---------- 7. Barcode dialog ----------
   function barcodeDialog(tt, fmtId) {
     flushEdits();
@@ -1569,15 +1922,17 @@
 
   // ---------- render ----------
   function render() {
-    var tab = view.name === "isbn" ? "isbn" : "titles";
+    var tab = view.name === "isbn" || view.name === "roy" ? view.name : "titles";
     [].forEach.call(document.querySelectorAll(".tab"), function (b) {
       b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false");
     });
     $("view-list").hidden = view.name !== "list";
     $("view-title").hidden = view.name !== "title";
     $("view-isbn").hidden = view.name !== "isbn";
+    $("view-roy").hidden = view.name !== "roy";
     if (view.name === "list") renderList();
     else if (view.name === "title") renderEditor();
+    else if (view.name === "roy") renderRoy();
     else renderIsbn();
   }
 
@@ -1588,7 +1943,7 @@
       b.addEventListener("click", function () {
         prefs.tab = b.dataset.tab;
         savePrefs();
-        setView({ name: b.dataset.tab === "isbn" ? "isbn" : "list", id: "" });
+        setView({ name: b.dataset.tab === "isbn" || b.dataset.tab === "roy" ? b.dataset.tab : "list", id: "" });
         render();
       });
     });
@@ -1610,14 +1965,14 @@
     }
   });
 
-  // target = { title: id } | { view: "isbn" } | { isbn: "…" } (opens the
+  // target = { title: id } | { view: "isbn" | "roy" } | { isbn: "…" } (opens the
   // title that has it, else the register) | { new: { t|title, author?,
   // isbn?, rel?, plan? } } or { asNew: {…} } (the Assistant's card) asks
   // before creating; nothing is written on arrival.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
-    if (target.view === "isbn") { setView({ name: "isbn", id: "" }); render(); return; }
+    if (target.view === "isbn" || target.view === "roy") { setView({ name: target.view, id: "" }); render(); return; }
     if (typeof target.isbn === "string") {
       var p = C.parseIsbn(target.isbn), uses = p.ok ? (C.used(data)[p.isbn] || []).filter(function (u) { return u.title; }) : [];
       if (uses.length) { openTitle(uses[0].title); return; }
