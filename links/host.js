@@ -382,7 +382,10 @@
     var writes = reqs.some(function (r) { return r.m !== "GET"; });
     // a write that must happen once travels alone (the relay refuses more)
     if (pl.once && writes && reqs.length > 1) return Promise.reject(err("bad"));
-    var once = !!(pl.once && writes);
+    // a new WooCommerce product (Publishing P2) is not idempotent either:
+    // never sent a second way after a failure (it may have arrived)
+    var once = !!(pl.once && writes) || (a.p === "woo" && reqs.some(function (r) { return r.m === "POST" && r.path === "/products"; }));
+    if (once && reqs.length > 1) return Promise.reject(err("bad"));
     // A write that must not happen twice (an invoicing provider issues a
     // tax document) is never retried another way after it was tried:
     // when the way is not known yet, a read finds it first.

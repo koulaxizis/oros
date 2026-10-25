@@ -192,6 +192,7 @@ orosPack("de", "publish", {
  "shop.err.denied": "orOS erlaubt diesen Aufruf nicht.",
  "shop.err.gone": "Dieser Shop wurde getrennt.",
  "shop.err.bad": "Etwas ist schiefgelaufen.",
+ "shop.err.unknown": "Der Shop hat es nicht bestätigt. Der Entwurf ist vielleicht schon da: Schau in deinem Shop nach, bevor du es noch einmal versuchst.",
  "news.btn": "Zum Buch",
  "pr.head": "PRESSEMITTEILUNG",
  "pr.lead": "„{t}“ von {a} ist erschienen.",
