@@ -1,0 +1,42 @@
+# Verlag
+Verlag ist der Schreibtisch eines kleinen Verlags: jedes Buch, das du verlegst, mit Ausgaben, ISBNs, Preisen, Maßen, Klappentext und Cover, deine ISBN-Blöcke mit der nächsten freien Nummer und Barcodes für die Rückseite.
+
+## Erste Schritte
+1. Tippe auf `Neuer Titel`, schreibe den Titel und, wenn du willst, den Autor.
+2. Füge unter `Ausgaben` jede Ausgabe hinzu (Taschenbuch, E-Book, Hörbuch…). Jede Ausgabe hat ihre eigene ISBN und ihren eigenen Preis.
+3. Fülle Klappentext, die Personen, die am Buch gearbeitet haben, und das Erscheinungsdatum aus. Die Zeile oben sagt, was vor dem Erscheinen `Es fehlt noch`.
+
+## Titel
+Der Tab `Titel` zeigt deine Bücher mit Cover, Personen, ISBNs und Status (`Idee`, `In Produktion`, `Erschienen`, `Vergriffen`). Filtere nach Status, suche nach Titel, Person oder ISBN und sortiere nach Erscheinungsdatum, Titel oder letzter Bearbeitung.
+
+Tippe auf einen Titel, um ihn zu bearbeiten. Jede Änderung wird beim Tippen gespeichert. `Löschen` entfernt einen Titel; `Rückgängig` holt ihn direkt danach zurück.
+
+### Personen
+Ein Titel kann Autoren, Übersetzer, Illustratoren, Lektoren, eine Covergestaltung, einen Sprecher oder andere haben. Nutze `+ Person` und wähle die Rolle.
+
+### Ausgaben
+Jede Ausgabe führt ISBN, Preis, Seiten, Maße (Breite × Höhe in mm), Buchrücken, Gewicht, Bindung und Papier; ein Hörbuch führt seine Länge in Minuten. Der Preis steht in der Währung der Einstellungen (⚙), wo du unter `Name des Verlags` auch den Verlag für Umschläge und Pressetexte einträgst.
+
+Das ISBN-Feld prüft die Nummer beim Tippen: eine falsche Prüfziffer, eine fehlende Ziffer oder eine Nummer, die schon ein anderer Titel hat. `Nächste freie` setzt die nächste unbenutzte Nummer deiner Blöcke ein.
+
+### Barcode
+`Barcode` bei einer Ausgabe mit ISBN zeigt den EAN-13 für die Rückseite, mit „ISBN …“ über den Strichen. `SVG herunterladen` liefert eine Vektordatei in Standardgröße (etwa 37 × 29 mm), `PNG herunterladen` ein scharfes Bild. Lass beim Platzieren einen weißen Rand darum.
+
+### Cover
+`Coverbild hinzufügen` behält eine Kopie des Vorderdeckels (bis 1600 px, ohne Standort- oder Kameradaten) in [Dateien](app:files), Ordner Publishing/Covers. Sie erreicht deine anderen Geräte mit Vault Drive. Die Druckdatei des Covers selbst entsteht im [Layout](app:layout).
+
+## ISBN
+Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
+
+Für jeden Block siehst du, wie viele Nummern vergeben sind, die nächste freie (`Kopieren` oder `Neuer Titel damit`) und die Liste der vergebenen Nummern mit ihren Titeln.
+
+- `Außerhalb der App vergeben`: Nummern, die du vor orOS an Bücher vergeben hast, oder verdorbene. orOS bietet sie nicht mehr an.
+- `Doppelt vergebene Nummern` erscheint oben, wenn zwei Ausgaben dieselbe ISBN haben.
+- `ISBN prüfen` sagt dir, ob eine Nummer gültig ist, zeigt ihre ISBN-10 und ob einer deiner Titel sie hat.
+
+## Deine Daten
+- Alles bleibt auf diesem Gerät und wird laufend gespeichert.
+- Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen dir Titel und Blöcke verschlüsselt auf deine anderen Geräte. Coverbilder reisen mit Vault Drive.
+
+## Von überall finden
+- Das Suchfeld im Menü findet einen Titel über seine Wörter, seine Personen oder eine seiner ISBNs (mit oder ohne Bindestriche, auch ISBN-10). Die Auswahl öffnet den Titel.

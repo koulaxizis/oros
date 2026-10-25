@@ -384,6 +384,15 @@
       "search": "search.js"
     },
     {
+      "id": "publish",
+      "name": "Publishing",
+      "category": "Business",
+      "icon": "publish",
+      "url": "publish/",
+      "type": "internal",
+      "search": "search.js"
+    },
+    {
       "id": "prompter",
       "name": "Prompter",
       "category": "Creativity",

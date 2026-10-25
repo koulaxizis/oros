@@ -702,6 +702,12 @@
    ]
   },
   {
+   "app": "publish",
+   "files": [
+    "publish/app.js"
+   ]
+  },
+  {
    "app": "qr",
    "files": [
     "qr/qr.js"
