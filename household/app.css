@@ -174,3 +174,5 @@ input[type="text"], input[type="password"], input[type="url"], select {
 .where { margin: 4px 0 10px; }
 .where > summary { cursor: pointer; font-size: 13px; color: var(--text-dim); padding: 4px 0; }
 .where[open] > summary { margin-bottom: 6px; }
+.bk > summary { cursor: pointer; font-weight: 600; }
+.bk[open] > summary { margin-bottom: 6px; }

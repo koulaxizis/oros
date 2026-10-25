@@ -41,6 +41,13 @@ Ein Haushalt kann statt im orOS-Relay in einem Ordner auf deinem eigenen Nextclo
 
 Einladungen, Bestätigung, das Entfernen von Personen und der Schlüsselwechsel funktionieren genauso. Der Einladungslink enthält Adresse und Anmeldung des Ordners, gib ihm also ein Passwort oder schicke ihn nur der Person, für die er gedacht ist. Alles im Ordner bleibt Ende-zu-Ende-verschlüsselt: Der Server sieht nur verschlüsselte Dateien. Änderungen kommen an, wenn orOS öffnet, nach vorne kommt oder online geht, und alle 10 Minuten (bei einem Ordner gibt es keine sofortigen Aktualisierungen und keine Benachrichtigungen bei geschlossenem orOS). Wer aus dem Haushalt entfernt wurde, kann nicht mehr lesen, was danach geschrieben wird, hat aber noch die Anmeldung des Ordners: Ändere das App-Passwort, wenn das wichtig ist.
 
+## Eine Kopie auf deinem orOS-Laufwerk
+Jeder Haushalt, in dem du bist, wird auch auf deinem orOS-Laufwerk aufbewahrt, im Ordner `Household backup` (eine Datei pro Haushalt und Gerät). Deine eigene Synchronisierung bringt sie mit deinem Passwort verschlüsselt in deine Cloud, wie jede Datei des Laufwerks, also haben sie auch deine anderen Geräte. orOS schreibt sie, nachdem es den Haushalt erreicht hat, höchstens alle 10 Minuten und nur, wenn sich etwas geändert hat.
+
+Ist das Postfach eines Haushalts weg (gelöscht oder 180 Tage lang von niemandem geöffnet), sagt seine Seite, dass nichts verloren ist: Was geteilt wurde, kommt aus dieser Kopie zurück, auch auf einem Gerät, das es verloren hatte. `Neu starten` legt einen neuen Haushalt mit allem an, mit dir als Admin; lade danach die anderen erneut ein (nur auf einem Gerät). `Von diesem Gerät entfernen` holt die Listen als deine eigenen Kopien in deine Apps zurück.
+
+Haushalte, in denen du nicht mehr bist, stehen unter `Kopien auf deinem orOS-Laufwerk`: `Zurück in meine Apps`, `Neu starten` oder `Löschen` (von deinem Laufwerk, auf allen deinen Geräten).
+
 ## Privatsphäre und Sicherheit
 - Der orOS-Server (ein kleiner Cloudflare-Worker) speichert nur unlesbare Daten und vergisst einen Haushalt, den 180 Tage niemand geöffnet hat.
 - Der Schlüssel bleibt auf deinen Geräten und reist mit deiner eigenen Synchronisierung (Dropbox, WebDAV), sodass auch deine anderen Geräte im Haushalt sind.

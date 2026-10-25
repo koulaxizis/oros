@@ -41,6 +41,13 @@ A household can live in a folder on your own Nextcloud or WebDAV server instead 
 
 Invites, approval, removing someone and the key change work the same. The invite link carries the folder's address and sign-in, so give it a password or send it only to the person it is for. Everything in the folder stays end-to-end encrypted: the server sees only scrambled files. Changes arrive when orOS opens, comes to the front or goes online, and every 10 minutes (there are no instant updates or notifications with orOS closed for a folder). Someone removed from the household can no longer read what is written after the removal, but still has the folder's sign-in: change the app password when that matters.
 
+## A copy on your orOS disk
+Every household you are in is also kept on your orOS disk, in the folder `Household backup` (one file per household and device). Your own sync takes it to your cloud encrypted with your passphrase, like every file of the disk, so your other devices have it too. orOS writes it after it has reached the household, at most every 10 minutes and only when something changed.
+
+If a household's box is gone (deleted, or nobody opened it for 180 days), its page says that nothing is lost: what was shared comes back from this copy, even on a device that had lost it. `Start it again` makes a new household with all of it and you as its admin; then invite the others again (do it on one device only). `Remove from this device` brings the lists back to your apps as your own copies.
+
+Households you are no longer in are listed under `Copies on your orOS disk`: `Bring back to my apps`, `Start again` or `Delete` (from your disk, on all your devices).
+
 ## Privacy and safety
 - The orOS server (a small Cloudflare worker) keeps only scrambled data it cannot read, and forgets a household nobody has opened for 180 days.
 - The key stays on your devices and travels with your own sync (Dropbox, WebDAV), so your other devices are in the household too.

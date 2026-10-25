@@ -41,6 +41,18 @@
       "arch.restore": "Share again", "arch.drop": "Forget",
       "leave.btn": "Leave this household", "del.btn": "Delete the household",
       "gone.forget": "Remove from this device",
+      "gone.safe": "Nothing is lost: everything shared here is on this device and in the copy on your orOS disk.",
+      "gone.restart": "Start it again",
+      "ask.restart": "Start “{name}” again? orOS makes a new household with everything that was shared in it, with you as its admin. Then invite the others again. Do this on one device only: whoever starts it invites the rest.",
+      "ask.restartYes": "Start again",
+      "restarted": "“{name}” started again. Invite the others.",
+      "bk.sum": "Copies on your orOS disk ({n})",
+      "bk.hint": "Households you are no longer in, kept on your orOS disk (folder “Household backup”). Bring their lists back to your apps or start the household again.",
+      "bk.meta": "saved {d} · {n} shared",
+      "bk.take": "Bring back to my apps", "bk.restart": "Start again", "bk.drop": "Delete",
+      "bk.taken": "{n} shared things go back to your apps as your own copies when you open them.",
+      "ask.bkDrop": "Delete the copy of “{name}” from your orOS disk, on all your devices? Do this only if you no longer need its lists.",
+      "ask.bkDropYes": "Delete",
       "gone.removed": "You are no longer in this household. Its lists stay on this device as your own copies.",
       "gone.deleted": "This household was deleted, or orOS cannot reach it any more.",
       "st.ok": "Up to date", "st.sync": "Updating…", "st.offline": "Offline: changes wait on this device and go out later.",
@@ -109,6 +121,18 @@
       "arch.restore": "Κοινή ξανά", "arch.drop": "Διαγραφή",
       "leave.btn": "Αποχώρηση από το νοικοκυριό", "del.btn": "Διαγραφή του νοικοκυριού",
       "gone.forget": "Αφαίρεση από αυτή τη συσκευή",
+      "gone.safe": "Δεν χάθηκε τίποτα: ό,τι μοιραζόσασταν εδώ υπάρχει σε αυτή τη συσκευή και στο αντίγραφο στον δίσκο σου του orOS.",
+      "gone.restart": "Ξεκίνα το ξανά",
+      "ask.restart": "Να ξεκινήσει ξανά το «{name}»; Το orOS φτιάχνει νέο νοικοκυριό με ό,τι μοιραζόσασταν, με εσένα διαχειριστή. Μετά προσκαλείς ξανά τους άλλους. Κάν’ το σε μία μόνο συσκευή: όποιος το ξεκινήσει προσκαλεί τους υπόλοιπους.",
+      "ask.restartYes": "Ξεκίνα ξανά",
+      "restarted": "Το «{name}» ξεκίνησε ξανά. Προσκάλεσε τους άλλους.",
+      "bk.sum": "Αντίγραφα στον δίσκο σου του orOS ({n})",
+      "bk.hint": "Νοικοκυριά στα οποία δεν είσαι πια, φυλαγμένα στον δίσκο σου του orOS (φάκελος «Household backup»). Φέρε τις λίστες τους πίσω στις εφαρμογές σου ή ξεκίνα ξανά το νοικοκυριό.",
+      "bk.meta": "αποθήκευση {d} · {n} κοινά",
+      "bk.take": "Πίσω στις εφαρμογές μου", "bk.restart": "Ξεκίνα ξανά", "bk.drop": "Διαγραφή",
+      "bk.taken": "{n} κοινά επιστρέφουν στις εφαρμογές σου ως δικά σου αντίγραφα μόλις τις ανοίξεις.",
+      "ask.bkDrop": "Διαγραφή του αντιγράφου του «{name}» από τον δίσκο σου του orOS, σε όλες τις συσκευές σου; Κάν’ το μόνο αν δεν χρειάζεσαι πια τις λίστες του.",
+      "ask.bkDropYes": "Διαγραφή",
       "gone.removed": "Δεν είσαι πια σε αυτό το νοικοκυριό. Οι λίστες του μένουν σε αυτή τη συσκευή ως δικά σου αντίγραφα.",
       "gone.deleted": "Το νοικοκυριό διαγράφηκε ή το orOS δεν μπορεί πια να το βρει.",
       "st.ok": "Ενημερωμένο", "st.sync": "Ενημέρωση…", "st.offline": "Εκτός σύνδεσης: οι αλλαγές περιμένουν σε αυτή τη συσκευή και φεύγουν αργότερα.",
@@ -289,6 +313,8 @@
     var out = hh.status === "removed" || hh.status === "gone";
     $("gone-card").hidden = !out;
     $("gone-text").textContent = hh.status === "removed" ? t("gone.removed") : t("gone.deleted");
+    $("gone-safe").hidden = hh.status !== "gone" || !H.restart;
+    $("gone-restart").hidden = hh.status !== "gone" || !H.restart;
     $("inv-btn").hidden = out;
     $("hh-rename").hidden = out;
     $("leave-btn").hidden = out;
@@ -324,6 +350,40 @@
       if (h.reqs) b.appendChild(el("span", "dot", String(h.reqs)));
       b.addEventListener("click", function () { local.active = h.box; saveLocal(); render(); });
       box.appendChild(b);
+    });
+  }
+  // Copies on the orOS disk of households no longer here (wave 8). Read
+  // from the disk when the page opens, comes back, or after an action.
+  var bkList = [];
+  function loadBackups() {
+    if (!H || typeof H.backups !== "function") return;
+    H.backups().then(function (l) { bkList = l.filter(function (b) { return !b.live && !b.gone; }); renderBackups(); }, function () {});
+  }
+  function renderBackups() {
+    var d = $("bk");
+    d.hidden = !bkList.length;
+    $("bk-sum").textContent = t("bk.sum", { n: bkList.length });
+    var ul = $("bk-list");
+    ul.textContent = "";
+    bkList.forEach(function (b) {
+      var li = el("li", "row-item");
+      var txt = el("span", "grow");
+      txt.appendChild(el("span", "name", b.name || "?"));
+      txt.appendChild(el("span", "hint small block", t("bk.meta", { d: b.at ? fmtDate(b.at) : "?", n: b.docs })));
+      li.appendChild(txt);
+      li.appendChild(btn(t("bk.drop"), "chip sm", function () {
+        ask(t("ask.bkDrop", { name: b.name || "?" }), t("ask.bkDropYes"), function () { run(H.dropBackup(b.box), loadBackups); });
+      }));
+      li.appendChild(btn(t("bk.restart"), "chip sm", function () {
+        ask(t("ask.restart", { name: b.name || "?" }), t("ask.restartYes"), function () {
+          run(H.restart(b.box, myName()), function (nb) { local.active = nb; saveLocal(); toast(t("restarted", { name: b.name || "?" })); loadBackups(); });
+        });
+        $("ask-yes").className = "chip pri";
+      }));
+      li.appendChild(btn(t("bk.take"), "chip sm pri", function () {
+        run(H.takeBackup(b.box), function (n) { toast(t("bk.taken", { n: n })); });
+      }));
+      ul.appendChild(li);
     });
   }
   function renderPending(pend) {
@@ -657,7 +717,15 @@
     });
     $("gone-forget").addEventListener("click", function () {
       var hh = current(H.list());
-      if (hh) { H.forget(hh.box); render(); }
+      if (hh) { H.forget(hh.box); render(); loadBackups(); }
+    });
+    $("gone-restart").addEventListener("click", function () {
+      var hh = current(H.list());
+      if (!hh) return;
+      ask(t("ask.restart", { name: hh.name }), t("ask.restartYes"), function () {
+        run(H.restart(hh.box), function (nb) { local.active = nb; saveLocal(); toast(t("restarted", { name: hh.name })); loadBackups(); });
+      });
+      $("ask-yes").className = "chip pri";
     });
     $("ask-yes").addEventListener("click", function () { var f = askFn; askFn = null; $("ask-dlg").close(); if (f) f(); });
     $("ask-no").addEventListener("click", function () {
@@ -682,7 +750,7 @@
       if (!(p && p !== window && p.orosShortcuts && typeof p.orosShortcuts.handle === "function")) return;
       if (p.orosShortcuts.handle(e)) e.stopPropagation();
     }, true);
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) refresh(); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) { refresh(); loadBackups(); } });
   }
 
   // ---------- 6. Live state ----------
@@ -765,7 +833,7 @@
         if (!H) { setTimeout(start, 250); return; }
       }
       if (H) {
-        H.ready().then(function () { render(); refresh(); takePending(); });
+        H.ready().then(function () { render(); refresh(); takePending(); loadBackups(); });
         watch();
       }
       render();
