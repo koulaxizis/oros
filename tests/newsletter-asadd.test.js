@@ -69,7 +69,7 @@ test("every block the card sends is kept by Newsletter as it is", () => {
 test("asAdd takes only plain kinds and drops empty blocks", () => {
   const v = C.asAdd({
     blocks: [
-      { k: "prod", items: [{ name: "x", href: "https://x.example.com" }] },
+      { k: "video", url: "https://x.example.com/v" },
       { k: "head", t: "x" },
       { k: "p", t: "" },
       { k: "btn", t: "Go", href: "" },
@@ -146,4 +146,77 @@ test("asAdd turns picture addresses into pics and never takes a file", () => {
   assert.equal(bad.blocks.length, 1);
   assert.equal(bad.blocks[0].f, "");
   assert.deepEqual(bad.pics, []);
+});
+
+// Wave N3: products from other sites, and the user's own shop.
+test("products blocks: other sites' products with prices in cents, or a shop request", () => {
+  const n = A.normNewsletter({ blocks: [
+    { kind: "products", button_text: "Buy", products: [
+      { name: "Night Book", url: "https://other.example.com/night", price: 14.9, currency: "usd", image_url: "https://other.example.com/n.jpg" },
+      { name: "Day Book", url: "https://other.example.com/day" }] },
+    { kind: "shop_products", count: 2, search: "Νύχτα" },
+    { kind: "shop_products" }
+  ] });
+  assert.equal(n.ok, true);
+  assert.deepEqual(n.blocks[0].items[0], { name: "Night Book", href: "https://other.example.com/night", price: 1490, cur: "USD", t: "", src: "https://other.example.com/n.jpg" });
+  assert.equal(n.blocks[0].items[1].price, undefined);
+  assert.deepEqual(n.blocks[1], { k: "prod", items: [], bt: "", shop: { n: 2, q: "Νύχτα" } });
+  assert.deepEqual(n.blocks[2].shop, { n: 1 });
+  assert.deepEqual(n.view[1], { kind: "shop_products", text: "", n: 2, q: "Νύχτα" });
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: [] }] }).err, /no products/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: [{ name: "x" }] }] }).err, /url/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: [{ name: "x", url: "https://a.example.com", price: "free" }] }] }).err, /price/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "shop_products", count: 12 }] }).err, /count/);
+  const ten = Array.from({ length: 10 }, (_, i) => ({ name: "p" + i, url: "https://a.example.com/" + i }));
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: ten }] }).err, /at most 9/);
+
+  const v = C.asAdd({ blocks: n.blocks });
+  assert.deepEqual(v.pics, [{ i: 0, j: 0, src: "https://other.example.com/n.jpg" }]);
+  assert.deepEqual(v.shops, [{ i: 1, n: 2, q: "Νύχτα" }, { i: 2, n: 1, q: "" }]);
+  assert.equal(v.blocks[0].items[0].price, 1490);
+  assert.equal(v.blocks[0].items[0].f, "");
+  assert.equal(v.blocks[0].items[0].src, "");
+  assert.equal(v.blocks[0].bt, "Buy");
+  // the shape stays what normBlock makes, so the block is found again unchanged
+  v.blocks.forEach((b) => assert.deepEqual(C.normBlock(JSON.parse(JSON.stringify(b))), b));
+  // a bridge caller can't bring a shop link or an empty block
+  const w = C.asAdd({ blocks: [{ k: "prod", items: [{ name: "x", href: "https://a.example.com", f: "/internal/Newsletter/a.jpg" }], sh: "woo", acct: "abcdefgh12", at: 5 },
+                               { k: "prod", items: [] }] });
+  assert.equal(w.blocks.length, 1);
+  assert.equal(w.blocks[0].sh, undefined);
+  assert.equal(w.blocks[0].acct, undefined);
+  assert.equal(w.blocks[0].items[0].f, "");
+});
+
+test("shop auto: the newest products, or the newest that match, from the first shop", async () => {
+  const S = require(path.join(root, "newsletter/shop.js"));
+  const prods = [
+    { id: 3, name: "Νύχτα στο λιμάνι", permalink: "https://shop.example.com/p/3", price: "12.00", regular_price: "12.00", status: "publish", images: [{ src: "https://shop.example.com/wp-content/uploads/3.jpg" }] },
+    { id: 2, name: "Day trip", permalink: "https://shop.example.com/p/2", price: "9.50", regular_price: "9.50", status: "publish" },
+    { id: 1, name: "Μια νύχτα ακόμα", permalink: "https://shop.example.com/p/1", price: "8", regular_price: "10", on_sale: true, status: "publish" }
+  ];
+  const calls = [];
+  globalThis.parent = { orosLinks: {
+    list: () => [{ id: "abcdefgh12", p: "woo", name: "Noxpress", site: "https://shop.example.com" }],
+    call: (acct, reqs) => { calls.push(reqs); return Promise.resolve(reqs.map((r) => ({ data: /currencies/.test(r.path) ? { code: "EUR" } : (/page=1&/.test(r.path) ? prods : []) }))); },
+    statusCode: () => ""
+  } };
+  const oldFetch = globalThis.fetch;
+  globalThis.fetch = () => Promise.reject(new Error("blocked"));
+  try {
+    const run = (o) => new Promise((res, rej) => S.auto(o, (items, sh, acct, fails) => res({ items, sh, acct, fails }), (m) => rej(new Error(m))));
+    const one = await run({ n: 1 });
+    assert.equal(one.items.length, 1);
+    assert.equal(one.items[0].name, "Νύχτα στο λιμάνι");
+    assert.equal(one.items[0].price, 1200);
+    assert.equal(one.sh, "woo");
+    assert.equal(one.acct, "abcdefgh12");
+    const two = await run({ n: 2, q: "νυχτα" });
+    assert.deepEqual(two.items.map((x) => x.name), ["Νύχτα στο λιμάνι", "Μια νύχτα ακόμα"]);
+    assert.equal(two.items[1].was, 1000);
+    await assert.rejects(run({ n: 1, q: "nothing like this" }));
+  } finally {
+    globalThis.fetch = oldFetch;
+    delete globalThis.parent;
+  }
 });

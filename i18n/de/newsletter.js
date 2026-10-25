@@ -867,5 +867,8 @@ orosPack("de", "newsletter", {
  "as.cut": "({n} weitere passten nicht: Eine Ausgabe fasst 60 Blöcke.)",
  "as.none": "Nichts hinzuzufügen: Die Blöcke waren leer.",
  "as.pic1": "Ein Bild konnte nicht von seiner Seite kopiert werden: Wähle es in seinem Block.",
- "as.pics": "{n} Bilder konnten nicht von ihren Seiten kopiert werden: Wähle sie in ihren Blöcken."
+ "as.pics": "{n} Bilder konnten nicht von ihren Seiten kopiert werden: Wähle sie in ihren Blöcken.",
+ "as.shop": "{n} Produkte aus deinem Shop hinzugefügt.",
+ "as.shop1": "1 Produkt aus deinem Shop hinzugefügt.",
+ "as.shopFail": "Die Produkte aus deinem Shop konnten nicht hinzugefügt werden:"
 });

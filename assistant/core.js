@@ -1459,7 +1459,8 @@
   // asAdd). The user picks the draft in Newsletter; nothing is added
   // before that and nothing is ever sent from here.
   var NL_KINDS = { heading: "h", text: "p", quote: "quote", button: "btn", list: "list", divider: "hr", spacer: "sp",
-                   image: "img", picture_text: "imgtxt" };
+                   image: "img", picture_text: "imgtxt", products: "prod", shop_products: "prod" };
+  var NL_PROD_MAX = 9;
   var NL_MAX = 20;
   var TOOL_NEWSLETTER = {
     name: "newsletter_add",
@@ -1473,13 +1474,17 @@
       "picture_text (image_url?, heading and/or text, button_text + button_url?, side left|right?: a picture beside a short text, good for an article or a book). " +
       "image_url is the direct https address of a picture (jpg, png, webp or gif) that the user gave or that a page you read shows; " +
       "never make one up. Newsletter copies the picture when the site allows it, otherwise the user picks it. " +
+      "products (items: up to " + NL_PROD_MAX + " of {name, url, price?, currency?, text?, image_url?}, button_text?: product cards from other sites, e.g. other publishers' books; " +
+      "give a price only as the page shows it) · " +
+      "shop_products (count?, search?, button_text?: the newest products of the user's own connected shop, or the newest whose name has the search words; " +
+      "Newsletter reads them from the shop itself, e.g. 'our latest release' = count 1). " +
       "At most " + NL_MAX + " blocks per call.",
     params: {
       type: "object",
       properties: {
         blocks: { type: "array", description: "The blocks to add, in order.",
                   items: { type: "object", properties: {
-                    kind: { type: "string", "enum": ["heading", "text", "quote", "button", "list", "divider", "spacer", "image", "picture_text"] },
+                    kind: { type: "string", "enum": ["heading", "text", "quote", "button", "list", "divider", "spacer", "image", "picture_text", "products", "shop_products"] },
                     text: { type: "string", description: "heading, text, quote, picture_text: the words; button: its label." },
                     level: { type: "integer", description: "heading: 1 (big), 2 or 3 (small)." },
                     by: { type: "string", description: "quote: who said it." },
@@ -1490,6 +1495,16 @@
                     button_text: { type: "string", description: "picture_text: a button's label (with button_url)." },
                     button_url: { type: "string", description: "picture_text: the button's http(s) address." },
                     side: { type: "string", "enum": ["left", "right"], description: "picture_text: the picture's side (default left)." },
+                    products: { type: "array", description: "products: the products.",
+                                items: { type: "object", properties: {
+                                  name: { type: "string" }, url: { type: "string", description: "The product's http(s) page." },
+                                  price: { type: "number", description: "In currency units, e.g. 14.9." },
+                                  currency: { type: "string", description: "3-letter code, e.g. EUR." },
+                                  text: { type: "string", description: "One short line." },
+                                  image_url: { type: "string", description: "The product picture's direct https address." }
+                                }, required: ["name", "url"] } },
+                    count: { type: "integer", description: "shop_products: how many (1-" + NL_PROD_MAX + ", default 1)." },
+                    search: { type: "string", description: "shop_products: words in the product's name (optional)." },
                     items: { type: "array", items: { type: "string" }, description: "list: the items." },
                     ordered: { type: "boolean", description: "list: numbered instead of bullets." },
                     align: { type: "string", "enum": ["left", "center", "right"] }
@@ -1563,13 +1578,41 @@
           if (b.side === "right") o.side = "r";
           shown = [o.hd, o.t, o.bt ? "[" + o.bt + " → " + o.bh + "]" : ""].filter(Boolean).join(" · ");
         }
+      } else if (kind === "products") {
+        var raw = Array.isArray(b.products) ? b.products : [];
+        if (!raw.length) return bad("Block " + n + " (products) has no products.");
+        if (raw.length > NL_PROD_MAX) return bad("Block " + n + ": at most " + NL_PROD_MAX + " products in one block.");
+        o.items = [];
+        for (var j = 0; j < raw.length; j++) {
+          var it = isObj(raw[j]) ? raw[j] : {}, q = { name: line(it.name, 200), href: webUrl(it.url) };
+          if (!q.name || !q.href) return bad("Block " + n + ", product " + (j + 1) + ": needs a name and an http(s) url.");
+          var pr = num(it.price);
+          if (it.price !== undefined && it.price !== null && !(pr >= 0 && pr < 1e9)) return bad("Block " + n + ", product " + (j + 1) + ": price must be a number.");
+          if (pr >= 0) { q.price = Math.round(pr * 100); q.cur = /^[A-Za-z]{3}$/.test(String(it.currency || "")) ? String(it.currency).toUpperCase() : "EUR"; }
+          q.t = line(it.text, 300);
+          var ps = picUrl(it.image_url);
+          if (it.image_url && !ps) return bad("Block " + n + ", product " + (j + 1) + ": image_url must be a direct https address of a picture.");
+          if (ps) q.src = ps;
+          o.items.push(q);
+        }
+        o.bt = line(b.button_text, 40);
+        shown = o.items.map(function (x) { return x.name + (x.price >= 0 ? " (" + (x.price / 100).toFixed(2) + " " + x.cur + ")" : ""); }).join(" · ");
+      } else if (kind === "shop_products") {
+        var cnt = b.count === undefined || b.count === null ? 1 : b.count;
+        if (!(typeof cnt === "number" && Math.floor(cnt) === cnt && cnt >= 1 && cnt <= NL_PROD_MAX)) return bad("Block " + n + ": count must be 1-" + NL_PROD_MAX + ".");
+        o.items = [];
+        o.bt = line(b.button_text, 40);
+        o.shop = { n: cnt };
+        var sq = line(b.search, 100);
+        if (sq) o.shop.q = sq;
+        shown = "";
       }
       if ((kind === "heading" || kind === "text" || kind === "quote" || kind === "list" || kind === "button") && !o.t) {
         return bad("Block " + n + " (" + kind + ") has no text.");
       }
       if (b.align === "center" || b.align === "right") o.al = b.align;
       out.push(o);
-      view.push({ kind: kind, text: shown });
+      view.push(kind === "shop_products" ? { kind: kind, text: "", n: o.shop.n, q: o.shop.q || "" } : { kind: kind, text: shown });
     }
     return { ok: true, blocks: out, subj: line(args.subject, 200), view: view };
   }
@@ -1876,7 +1919,7 @@
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
     }
     if (!opts.builtin && opts.newsletter) {
-      lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. Write in the language of the issue (the user's, unless they say otherwise). The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. Sending is always the user's step in Newsletter.");
+      lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. The user's own products (\"our latest release\", \"our new book\") come from their shop with shop_products, never from a web search; other people's products (other publishers, partners) go in a products block from pages you read, with their own links and only prices the page shows. Write in the language of the issue (the user's, unless they say otherwise). The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. Sending is always the user's step in Newsletter.");
     }
     return lines.join("\n");
   }
@@ -2476,7 +2519,7 @@
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pageAllowed: pageAllowed, webResult: webResult,
     BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
-    normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, normNewsletter: normNewsletter
+    normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, normNewsletter: normNewsletter
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistCore = api;

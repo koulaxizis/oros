@@ -1432,8 +1432,12 @@
   // and empty ones are dropped. A picture never comes as a file: img /
   // imgtxt carry `src`, the https address the app copies the picture
   // from (pics), and start with no picture of their own.
-  // → { blocks, pics: [{ i, src }], subj, issue } | null
-  var AS_KINDS = ["h", "p", "quote", "btn", "list", "hr", "sp", "img", "imgtxt"];
+  // A product block (wave N3) brings products from other sites (each
+  // item's src is copied the same way, pics with j = the item) or asks
+  // for the user's own shop: `shop: { n, q? }` (shops), filled by
+  // shop.js when it is added; it never carries a shop link of its own.
+  // → { blocks, pics: [{ i, j?, src }], shops: [{ i, n, q }], subj, issue } | null
+  var AS_KINDS = ["h", "p", "quote", "btn", "list", "hr", "sp", "img", "imgtxt", "prod"];
   var AS_MAX = 20;
   function picSrc(u) {
     u = webUrl(u);
@@ -1441,7 +1445,7 @@
   }
   function asAdd(v) {
     if (!v || typeof v !== "object" || !Array.isArray(v.blocks)) return null;
-    var blocks = [], pics = [];
+    var blocks = [], pics = [], shops = [];
     v.blocks.slice(0, AS_MAX).forEach(function (raw) {
       if (!raw || typeof raw !== "object" || AS_KINDS.indexOf(raw.k) < 0) return;
       var b = normBlock(raw);
@@ -1452,6 +1456,17 @@
         delete b.src;
         b.f = ""; b.b = 0;
         if (b.k === "imgtxt" && !b.hd && !b.t) return;
+      } else if (b.k === "prod") {
+        delete b.sh; delete b.acct; delete b.at;
+        b.items.forEach(function (it, j) {
+          it.f = ""; it.b = 0; it.id = "";
+          var ps = picSrc(it.src);
+          if (ps) pics.push({ i: blocks.length, j: j, src: ps });
+          it.src = "";
+        });
+        var sh = raw.shop && typeof raw.shop === "object" ? raw.shop : null;
+        if (sh && !b.items.length) shops.push({ i: blocks.length, n: clamp(sh.n, 1, 9, 1), q: oneLine(sh.q, 100) });
+        else if (!b.items.length) return;
       } else if (b.k === "btn") {
         if (!b.t || !b.href) return;
       } else if (b.k !== "hr" && b.k !== "sp" && !b.t) return;
@@ -1459,7 +1474,7 @@
       blocks.push(b);
     });
     if (!blocks.length) return null;
-    return { blocks: blocks, pics: pics, subj: oneLine(v.subj, LIM.subj), issue: validId(v.issue) ? v.issue : "" };
+    return { blocks: blocks, pics: pics, shops: shops, subj: oneLine(v.subj, LIM.subj), issue: validId(v.issue) ? v.issue : "" };
   }
   // Where added blocks go: before the closing footer (and a social row
   // right above it), else at the end.
