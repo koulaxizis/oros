@@ -85,6 +85,7 @@ What it can change:
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
 - [Bookmarks](app:bookmarks): rename a bookmark, change its note or tags, delete it.
 - [Contacts](app:contacts): change a contact's name, nickname, organisation, job title, birthday, note or labels; add a phone number, e-mail, website or address (the old ones stay), or replace one that changed; add a line to the note; delete it. Attach a business card, a form, a list, a vCard or an e-mail signature and ask "update my contacts from this": the assistant looks everyone up first, proposes only what is new or different, and offers a new contact for anyone who isn't there.
+- [CRM](app:crm): fill in a customer's VAT or tax number, tax office, job title, phone, e-mail, website or address, change its name or alias, add a line to its note (bank details or a bio go there). A phone, e-mail, website or address it already has is replaced only when you say it changed. Customers are deleted in CRM itself.
 - [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title, note or labels, delete it. A move runs the column's own automations, and the card shows what they change.
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
 - [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.

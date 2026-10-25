@@ -157,7 +157,7 @@ test("core: change_item offers changes with every field, and the people rule whe
   const src = fs.readFileSync(path.join(REPO, "assistant/core.js"), "utf8");
   assert.match(src, /P\.changes = \{ type: "array"/);
   const pr = C.systemPrompt({ lang: "en", now: NOW, apps: ["Contacts (contacts)"], entries: ["contact"], changes: ["contacts"], files: "pdf" });
-  assert.match(pr, /look each person up in Contacts with search_data first/);
+  assert.match(pr, /look each one up first with search_data \(Contacts, and CRM/);
   const noFiles = C.systemPrompt({ lang: "en", now: NOW, apps: ["Contacts (contacts)"], entries: ["contact"], changes: ["contacts"] });
   assert.ok(!/look each person up/.test(noFiles));
 });
@@ -254,4 +254,67 @@ test("assistant.js: documents are read on the device, other photos redrawn, tick
   for (const k of ["att.docs", "att.err.photo", "chg.textEach", "chg.tickHint", "chg.tick", "f.nickname", "f.job", "f.website"]) {
     assert.equal((src.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k);
   }
+});
+
+// ---------- edits.js: CRM customers (wave CF2) ----------
+const CRM = require(path.join(REPO, "crm/core.js"));
+function crmData() {
+  return CRM.norm({ ver: 1, cust: [
+    { id: "cust000001", m: 1000, name: "Anna Pappa", kind: "person", st: "active", phone: "+30 691 234 5678", note: "met at the fair" },
+    { id: "cust000002", m: 1000, name: "Acme", kind: "co", st: "lead", afm: "094014201", addr: "Old St 1, 10431 Athens" }],
+    deals: [], acts: [], fups: [], tags: [], stg: [], prefs: {}, tombs: { cust000009: NOW - 1000 } });
+}
+function crmRun(d, target, args) {
+  const ch = ok(args);
+  const p = E.plan("crm", d, target, ch, NOW);
+  assert.equal(p.ok, true, p.err);
+  const a = E.apply("crm", d, target, ch, NOW, p.before);
+  assert.equal(a.ok, true, a.err);
+  return { p, a };
+}
+test("crm: tax id, tax office, job, web, address and a note line; stored exactly as CRM itself stores it", () => {
+  const { p, a } = crmRun(crmData(), { cust: "cust000001" }, { ref: "r1", action: "update", tax_id: "EL 094014201", tax_office: "Α' Αθηνών",
+    job_title: "Author", website: "anna.example", address: { street: "Main 5", zip: "26221", city: "Patra", country: "Greece" }, note_add: "IBAN GR16 0110 1250 0000 0001 2300 695" });
+  assert.deepEqual(p.rows.map((r) => r.f), ["job", "vat", "taxoffice", "address", "website", "note"]);
+  const c = a.data.cust.find((x) => x.id === "cust000001");
+  assert.equal(c.afm, "EL094014201"); assert.equal(c.doy, "Α' Αθηνών"); assert.equal(c.job, "Author");
+  assert.equal(c.addr, "Main 5, 26221 Patra"); assert.equal(c.country, "Greece"); assert.equal(c.web, "anna.example");
+  assert.equal(c.note, "met at the fair\nIBAN GR16 0110 1250 0000 0001 2300 695");
+  assert.equal(c.m, NOW);
+  // CRM's own normaliser and merge keep it byte for byte, and it wins over the old copy
+  assert.deepEqual(CRM.norm(a.data), a.data);
+  assert.deepEqual(CRM.merge(crmData(), a.data), a.data);
+  assert.deepEqual(CRM.merge(a.data, crmData()), a.data);
+});
+test("crm: a filled single field is replaced only with old_* / address_replace; a bad Greek ΑΦΜ is refused", () => {
+  const ph = E.plan("crm", crmData(), { cust: "cust000001" }, ok({ ref: "r1", action: "update", phone: "6970000000" }), NOW);
+  assert.match(ph.err, /already has phone \+30 691 234 5678; to replace it pass old_phone/);
+  const rp = crmRun(crmData(), { cust: "cust000001" }, { ref: "r1", action: "update", phone: "6970000000", old_phone: "6912345678" }).a;
+  assert.equal(rp.data.cust[0].phone, "6970000000");
+  const ad = E.plan("crm", crmData(), { cust: "cust000002" }, ok({ ref: "r1", action: "update", address: { street: "New 2", city: "Volos" } }), NOW);
+  assert.match(ad.err, /address_replace/);
+  const afm = E.plan("crm", crmData(), { cust: "cust000002" }, ok({ ref: "r1", action: "update", tax_id: "123456789" }), NOW);
+  assert.match(afm.err, /Greek check digit/);
+  assert.match(E.plan("crm", crmData(), { deal: "x" }, ok({ ref: "r1", action: "update", note: "x" }), NOW).err, /Only a CRM customer/);
+  assert.match(E.plan("crm", crmData(), { cust: "cust000001" }, ok({ ref: "r1", action: "update", labels: ["x"] }), NOW).err, /has no labels/);
+  assert.deepEqual(E.actionsFor("crm"), ["update"]);
+});
+test("crm: undo puts the customer back, only while it still looks as the change left it", () => {
+  const { a } = crmRun(crmData(), { cust: "cust000001" }, { ref: "r1", action: "update", tax_id: "094014201" });
+  const u = E.apply("crm", crmData(), { cust: "cust000001" }, ok({ ref: "r1", action: "update", tax_id: "094014201" }), NOW, null).undo;
+  const back = E.undo("crm", a.data, u, NOW + 5);
+  assert.equal(back.ok, true, back.err);
+  const c = back.data.cust[0];
+  assert.equal(c.afm, undefined);
+  assert.equal(c.m, NOW + 5);
+  assert.deepEqual(CRM.norm(back.data), back.data);
+  const moved = JSON.parse(JSON.stringify(a.data)); moved.cust[0].m += 1;
+  assert.match(E.undo("crm", moved, u, NOW + 9).err, /changed since/);
+});
+test("crm: ticks and the search text the model sees", () => {
+  const p = E.plan("crm", crmData(), { cust: "cust000002" }, ok({ ref: "r1", action: "update", tax_office: "ΔΟΥ Χ", website: "acme.example" }), NOW);
+  assert.equal(E.canTick("crm", p.rows), true);
+  const S = require(path.join(REPO, "crm/search.js"));
+  const hits = S.search({ readJSON: () => crmData(), lang: "en" });
+  assert.match(hits.find((h) => h.title === "Acme").text, /094014201 · Old St 1, 10431 Athens/);
 });

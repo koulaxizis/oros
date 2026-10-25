@@ -62,12 +62,15 @@
     bookmarks: { key: "oros-bookmarks-data", actions: ["update", "delete"] },
     // Phase 4 wave 2
     contacts:  { key: "oros-contacts-data",  actions: ["update", "delete"] },
+    // Wave CF2: a CRM customer's details (deleting one takes its deals
+    // and history with it, so that stays in CRM).
+    crm:       { key: "oros-crm-data",       actions: ["update"] },
     kanban:    { key: "oros-kanban-data",    actions: ["reschedule", "update", "move", "delete"] },
     shelf:     { key: "oros-shelf-data",     actions: ["update", "delete"] },
     habits:    { key: "oros-habits-data",    actions: ["complete", "reopen", "update"] },
     plants:    { key: "oros-plants-data",    actions: ["complete", "update"] }
   };
-  var APP_IDS = ["todo", "calendar", "budget", "bookmarks", "contacts", "kanban", "shelf", "habits", "plants"];
+  var APP_IDS = ["todo", "calendar", "budget", "bookmarks", "contacts", "crm", "kanban", "shelf", "habits", "plants"];
   // What each app's update may set (the tool's argument names).
   var SETTABLE = {
     todo:      { title: 1, date: 1, note: 1, label: 1, labels: 1, priority: 1 },
@@ -78,13 +81,15 @@
                  // wave CF1: contacts from any document
                  nickname: 1, job_title: 1, address: 1, address_replace: 1, website: 1,
                  old_phone: 1, old_email: 1, old_website: 1, note_add: 1 },
+    crm:       { title: 1, nickname: 1, job_title: 1, tax_id: 1, tax_office: 1, phone: 1, old_phone: 1, email: 1, old_email: 1,
+                 website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1 },
     kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1 },
     shelf:     { title: 1, note: 1, status: 1 },
     habits:    { title: 1 },
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "column", "kind", "status", "done", "watered", "org", "job", "phone", "email", "address", "website", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "note"];
+  var VIEW_ORDER = ["title", "nickname", "column", "kind", "status", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "note"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -213,6 +218,12 @@
       if (!has(set, olds[oi][1])) return bad(ok + " goes with " + olds[oi][1] + " (the new value that takes its place).");
       set[ok] = line(args[ok], olds[oi][2]);
     }
+    if (has(args, "tax_id") && typeof args.tax_id === "string" && args.tax_id.trim()) {
+      var tx = line(args.tax_id, 20).replace(/\s+/g, "").toUpperCase();
+      if (!/^[A-Z0-9.\-]+$/.test(tx)) return bad("tax_id must be letters and digits, e.g. 123456789 or EL123456789.");
+      set.tax_id = tx;
+    }
+    if (has(args, "tax_office") && typeof args.tax_office === "string") set.tax_office = line(args.tax_office, 60);
     if (has(args, "note_add") && typeof args.note_add === "string" && args.note_add.trim()) {
       if (has(set, "note")) return bad("give note (replaces) or note_add (adds), not both.");
       set.note_add = para(args.note_add, 1000);
@@ -1741,10 +1752,127 @@
     return { ok: true };
   }
 
+  // ---------- 6b. CRM (wave CF2) ----------
+  // oros-crm-data { ver, cust: [c], deals, acts, fups, tags, stg, prefs,
+  // tombs: { id: deletedAt } } (crm/core.js): every row is whole-record
+  // LWW on c.m, alive while c.m > tombs[id]; rows sorted by id; a
+  // customer's keys in normCust order, empty values left out. Only a
+  // customer's details change here. Single fields (phone, e-mail, web,
+  // address) are filled when empty; one that already holds something
+  // else is replaced only with old_* (or address_replace), so nothing
+  // the user typed is lost by a guess. Bank details or a bio have no
+  // field: they go in the note (note_add).
+  var CRM_KEYS = ["id", "m", "name", "kind", "st", "alias", "afm", "doy", "job", "addr", "country", "phone", "email",
+                  "web", "src", "note", "star", "ct", "tags", "people"];
+  function crmText(v, max, multi) {
+    if (typeof v !== "string") return "";
+    var t = v.replace(/\r\n?/g, "\n");
+    t = multi ? t.replace(/[\u0000-\u0008\u000B-\u001F\u007F\u2028\u2029]/g, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim()
+              : t.replace(/[\u0000-\u001F\u007F\u2028\u2029]/g, " ").replace(/\s+/g, " ").trim();
+    return t.slice(0, max);
+  }
+  function crmFind(d, target) {
+    if (!isObj(d) || !Array.isArray(d.cust) || !isObj(target) || typeof target.cust !== "string") return null;
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    for (var i = 0; i < d.cust.length; i++) {
+      var c = d.cust[i];
+      if (isObj(c) && c.id === target.cust) {
+        if (typeof tombs[c.id] === "number" && tombs[c.id] >= (c.m || 0)) return null;
+        return { c: c, i: i };
+      }
+    }
+    return null;
+  }
+  function crmView(c) {
+    return { title: crmText(c.name, 120), nickname: crmText(c.alias, 80), job: crmText(c.job, 80), vat: crmText(c.afm, 20),
+             taxoffice: crmText(c.doy, 60), phone: crmText(c.phone, 40), email: crmText(c.email, 120),
+             address: [crmText(c.addr, 200), crmText(c.country, 60)].filter(Boolean).join(", "),
+             website: crmText(c.web, 300), note: crmText(c.note, 2000, true) };
+  }
+  function crmOrder(c) {
+    var o = {};
+    CRM_KEYS.forEach(function (k) { if (has(c, k) && c[k] !== "" && c[k] !== null && c[k] !== undefined) o[k] = c[k]; });
+    Object.keys(c).forEach(function (k) { if (!has(o, k) && CRM_KEYS.indexOf(k) < 0) o[k] = c[k]; });
+    return o;
+  }
+  // Greek ΑΦΜ check digit (crm/core.js validAfm)
+  function afmOk(v) {
+    v = String(v || "").replace(/^(EL|GR)/i, "");
+    if (!/^\d{9}$/.test(v) || v === "000000000") return false;
+    var sum = 0;
+    for (var i = 0; i < 8; i++) sum += (+v.charAt(i)) * Math.pow(2, 8 - i);
+    return (sum % 11) % 10 === +v.charAt(8);
+  }
+  function crmChange(d, target, ch, now) {
+    var h = crmFind(d, target);
+    if (!h) return bad(isObj(target) && target.cust ? "That customer is no longer in CRM." : "Only a CRM customer's details can be changed here (not deals, activities or follow-ups).");
+    if (ch.action !== "update") return bad("A CRM customer can only be updated here; delete it in CRM.");
+    var c = clone(h.c), before = crmView(h.c), s = ch.set;
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.crm[k]; });
+    if (notOk.length) return bad("A CRM customer has no " + notOk.join(", ") + " here (bank details or a bio go in note_add).");
+    if (has(s, "title")) { var nm = crmText(s.title, 120); if (!nm) return bad("A customer needs a name."); c.name = nm; }
+    if (has(s, "nickname")) c.alias = crmText(s.nickname, 80);
+    if (has(s, "job_title")) c.job = crmText(s.job_title, 80);
+    if (has(s, "tax_office")) c.doy = crmText(s.tax_office, 60);
+    if (has(s, "tax_id")) {
+      var gr = !c.country || /^(gr|greece|ελλάδα|ελλαδα|hellas)$/i.test(String(c.country).trim());
+      if (gr && /^((EL|GR)?)\d{9}$/i.test(s.tax_id) && !afmOk(s.tax_id)) return bad("tax_id " + s.tax_id + " fails the Greek check digit: read it again from the document.");
+      c.afm = s.tax_id;
+    }
+    var singles = [["phone", "phone", 40, function (a, b) { return ctSamePhone(a, b); }],
+                   ["email", "email", 120, function (a, b) { return a.toLowerCase() === b.toLowerCase(); }],
+                   ["website", "web", 300, function (a, b) { return ctWeb(a) === ctWeb(b); }]];
+    for (var i = 0; i < singles.length; i++) {
+      var S = singles[i];
+      if (!has(s, S[0])) continue;
+      var cur = crmText(c[S[1]], S[2]), nv = crmText(s[S[0]], S[2]), old = s["old_" + S[0]];
+      if (cur && S[3](cur, nv)) continue;
+      if (cur && !old) return bad("The customer already has " + S[0] + " " + cur + "; to replace it pass old_" + S[0] + " (only when the document says it changed).");
+      if (old && !(cur && S[3](cur, old))) return bad("old_" + S[0] + " " + old + " is not the customer's " + S[0] + (cur ? " (" + cur + ")" : " (none)") + ".");
+      c[S[1]] = nv;
+    }
+    if (has(s, "address")) {
+      var a = s.address, line1 = [a.street, [a.zip, a.city].filter(Boolean).join(" "), a.region].filter(Boolean).join(", ").slice(0, 200);
+      var curA = crmText(c.addr, 200);
+      if (line1 && line1.toLowerCase() !== curA.toLowerCase()) {
+        if (curA && !s.address_replace) return bad("The customer already has the address " + curA + "; pass address_replace: true to replace it.");
+        c.addr = line1;
+      }
+      if (a.country && (!c.country || s.address_replace)) c.country = crmText(a.country, 60);
+    }
+    if (has(s, "note")) c.note = crmText(s.note, 2000, true);
+    if (has(s, "note_add")) {
+      var on = crmText(c.note, 2000, true), add = crmText(s.note_add, 2000, true);
+      if (on.indexOf(add) < 0) {
+        var nn = on ? on + "\n" + add : add;
+        if (nn.length > 2000) return bad("The note would be " + nn.length + " characters; CRM keeps 2000. Shorten note_add or rewrite the note with note.");
+        c.note = nn;
+      }
+    }
+    var after = crmView(c);
+    if (JSON.stringify(after) === JSON.stringify(before)) return bad("Nothing would change: the customer already looks like that.");
+    c.m = stampAfter(now, Math.max(h.c.m || 0, isObj(d.tombs) && typeof d.tombs[c.id] === "number" ? d.tombs[c.id] : 0));
+    var prev = h.c;
+    c = crmOrder(c);
+    d.cust[h.i] = c;
+    return { ok: true, title: before.title, before: before, after: after, del: false,
+             undo: { t: "set", app: "crm", target: { cust: c.id }, prev: clone(prev), next: clone(c) } };
+  }
+  function crmUndo(d, u, now) {
+    if (u.t !== "set" || !isObj(u.prev) || !isObj(u.next)) return bad("bad undo");
+    var h = crmFind(d, u.target);
+    if (!h) return bad("That customer is no longer in CRM.");
+    if (JSON.stringify(h.c) !== JSON.stringify(u.next)) return bad("The customer changed since; nothing was undone.");
+    var c = clone(u.prev);
+    c.m = stampAfter(now, h.c.m);
+    d.cust[h.i] = crmOrder(c);
+    return { ok: true };
+  }
+
   var CHANGE = { todo: todoChange, calendar: calChange, budget: budgetChange, bookmarks: bookmarksChange,
-                 contacts: contactsChange, kanban: kanbanChange, shelf: shelfChange, habits: habitsChange, plants: plantsChange };
+                 contacts: contactsChange, crm: crmChange, kanban: kanbanChange, shelf: shelfChange, habits: habitsChange, plants: plantsChange };
   var UNDO = { todo: todoUndo, calendar: calUndo, budget: budgetUndo, bookmarks: bookmarksUndo,
-               contacts: contactsUndo, kanban: kanbanUndo, shelf: shelfUndo, habits: habitsUndo, plants: plantsUndo };
+               contacts: contactsUndo, crm: crmUndo, kanban: kanbanUndo, shelf: shelfUndo, habits: habitsUndo, plants: plantsUndo };
 
   // ---------- 7. Plan, apply, undo ----------
   // data = the app's stored JSON (parsed), target = the ref's target,
@@ -1789,7 +1917,10 @@
   var ROW_KEYS = {
     contacts: { title: ["title"], nickname: ["nickname"], org: ["org"], job: ["job_title"],
                 phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
-                website: ["website", "old_website"], birthday: ["date"], labels: ["label", "labels"], note: ["note", "note_add"] }
+                website: ["website", "old_website"], birthday: ["date"], labels: ["label", "labels"], note: ["note", "note_add"] },
+    crm: { title: ["title"], nickname: ["nickname"], job: ["job_title"], vat: ["tax_id"], taxoffice: ["tax_office"],
+           phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
+           website: ["website", "old_website"], note: ["note", "note_add"] }
   };
   function canTick(appId, rows) {
     var m = ROW_KEYS[appId];

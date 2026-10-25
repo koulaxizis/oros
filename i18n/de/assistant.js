@@ -92,6 +92,7 @@ orosPack("de", "assistant", {
  "f.label": "Label",
  "f.nickname": "Spitzname",
  "f.priority": "Priorität",
+ "f.taxoffice": "Finanzamt",
  "f.website": "Website",
  "lbl.search": "Label: {label}",
  "lbl.none": "ohne Label",
