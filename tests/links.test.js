@@ -111,7 +111,26 @@ const CASES = [
   [{ m: "PUT", path: "/orders/55", body: { status: "trash" } }, "body"],
   [{ m: "POST", path: "/orders/55/notes", body: { note: "Shipped", customer_note: false } }, ""],
   [{ m: "POST", path: "/orders", body: { status: "pending" } }, "path"],
-  [{ m: "GET", path: "/products", body: {} }, "body"]
+  [{ m: "GET", path: "/products", body: {} }, "body"],
+  // Publishing P2: a draft product, found again by its SKU
+  [{ m: "GET", path: "/products?sku=9786185555019" }, ""],
+  [{ m: "GET", path: "/products?sku=97861*" }, "query"],
+  [{ m: "GET", path: "/settings/products/woocommerce_weight_unit" }, ""],
+  [{ m: "GET", path: "/settings/products/woocommerce_dimension_unit" }, ""],
+  [{ m: "GET", path: "/settings/products/woocommerce_currency" }, "path"],
+  [{ m: "POST", path: "/products", body: { name: "Book", type: "simple", status: "draft", sku: "9786185555019", regular_price: "14.40",
+    description: "<p>Text</p>", short_description: "", weight: "0.32", dimensions: { length: "21", width: "14", height: "1.8" }, virtual: false, manage_stock: false } }, ""],
+  [{ m: "POST", path: "/products", body: { name: "E-book", status: "draft", virtual: true } }, ""],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "publish" } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book" } }, "body"],
+  [{ m: "POST", path: "/products", body: { status: "draft", sku: "1" } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", type: "variable" } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", regular_price: 14.4 } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", dimensions: { depth: "1" } } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", dimensions: {} } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", images: [{ src: "https://x/y.jpg" }] } }, "body"],
+  [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", description: "x".repeat(8001) } }, "body"],
+  [{ m: "POST", path: "/products/12", body: { name: "Book", status: "draft" } }, "path"]
 ];
 test("checkReq (app) and checkExtReq (relay) agree on every case", () => {
   for (const [r, want] of CASES) {

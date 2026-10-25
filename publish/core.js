@@ -217,13 +217,17 @@
   function cleanFmt(raw) {
     if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
     var pi = parseIsbn(typeof raw.isbn === "string" ? raw.isbn : "");
-    return {
+    var out = {
       id: raw.id, k: oneOf(raw.k, FMT_KINDS, "pb"), isbn: pi.ok ? pi.isbn : "",
       price: num(raw.price, 0, 1e6, 2), pages: num(raw.pages, 0, 100000, 0),
       w: num(raw.w, 0, 2000, 1), h: num(raw.h, 0, 2000, 1), sp: num(raw.sp, 0, 500, 1),
       wt: num(raw.wt, 0, 100000, 0), bind: line(raw.bind, 60), paper: line(raw.paper, 80),
       dur: num(raw.dur, 0, 100000, 0), note: line(raw.note, 200)
     };
+    // the shop product made from it (wave P2): Connected services account + product id
+    var wid = raw.wp && typeof raw.wp === "object" ? num(raw.wp.id, 0, 1e12, 0) : 0;
+    if (wid > 0 && okId(raw.wp.a)) out.wp = { a: raw.wp.a, id: wid };
+    return out;
   }
   var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov"];
   function cleanTitle(raw) {
@@ -495,6 +499,114 @@
     return t;
   }
 
+  // ---------- To other apps (wave P2) ----------
+  // Each builder is pure: the app sends what it returns through the
+  // shell (WooCommerce via orosLinks, the others as deep links), and
+  // nothing is saved there until the person saves it.
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+  function paras(s) {
+    return String(s || "").split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean)
+      .map(function (p) { return "<p>" + esc(p).replace(/\n/g, "<br>") + "</p>"; }).join("");
+  }
+  // a number as WooCommerce's decimal text: at most 3 decimals, no trailing zeros
+  function wcDec(v) {
+    if (!(v > 0) || v >= 1e6) return "";
+    var s = (Math.round(v * 1000) / 1000).toFixed(3).replace(/\.?0+$/, "");
+    return s === "0" ? "" : s;
+  }
+  var WEIGHT_G = { kg: 1000, g: 1, lbs: 453.59237, oz: 28.349523125 };
+  var LEN_MM = { m: 1000, cm: 10, mm: 1, "in": 25.4, yd: 914.4 };
+  var DRAFT_BYTES = 15000;          // the relay takes 16 KB per request
+  function utf8Len(s) { return typeof TextEncoder !== "undefined" ? new TextEncoder().encode(s).length : unescape(encodeURIComponent(s)).length; }
+  // A format as a WooCommerce draft product body (POST /products).
+  // o: { label: format name added to the product name ("" = none),
+  //      about: heading over the biography, wu / du: the shop's weight
+  //      and dimension units ("" = unknown: no weight / dimensions),
+  //      price: false leaves the price out (another currency) }
+  function shopDraft(t, f, o) {
+    o = o || {};
+    var name = line(t.t + (o.label ? " (" + o.label + ")" : ""), 200);
+    var b = { name: name, type: "simple", status: "draft" };
+    if (f.isbn) b.sku = f.isbn;
+    if (o.price !== false && f.price > 0) b.regular_price = f.price.toFixed(2);
+    var by = authors(t);
+    if (by.length) b.short_description = "<p>" + esc(by.join(", ")) + "</p>";
+    var blurb = paras(t.blurb), bio = paras(t.bio);
+    var desc = blurb + (bio ? "<h3>" + esc(o.about || "") + "</h3>" + bio : "");
+    if (f.k === "eb" || f.k === "ab") b.virtual = true;
+    else {
+      var wu = WEIGHT_G[o.wu], du = LEN_MM[o.du];
+      var w = wu && f.wt ? wcDec(f.wt / wu) : "";
+      if (w) b.weight = w;
+      if (du) {
+        var dm = {}, any = false;
+        [["length", f.h], ["width", f.w], ["height", f.sp]].forEach(function (x) {
+          var v = x[1] ? wcDec(x[1] / du) : "";
+          if (v) { dm[x[0]] = v; any = true; }
+        });
+        if (any) b.dimensions = dm;
+      }
+    }
+    // fits the relay: the biography goes first, then the blurb is cut
+    function size(d) { var c = Object.assign({}, b); if (d) c.description = d; return utf8Len(JSON.stringify(c)); }
+    function fits(d) { return d.length <= 8000 && size(d) <= DRAFT_BYTES; }
+    if (desc && !fits(desc)) desc = blurb;
+    var keep = String(t.blurb || "").length;
+    while (desc && !fits(desc)) {
+      keep = Math.floor(keep * 0.8);
+      desc = keep > 0 ? paras(String(t.blurb).slice(0, keep).trim() + "…") : "";
+    }
+    if (desc) b.description = desc;
+    return b;
+  }
+  // A Stock item prefill ({ newItem } deep link): price in cents.
+  function stockPrefill(t, f, label) {
+    var p = { name: line(t.t + (label ? " (" + label + ")" : ""), 120), note: authors(t).join(", ") };
+    if (f.isbn) { p.sku = f.isbn; p.bc = f.isbn; }
+    if (f.price > 0) p.price = Math.round(f.price * 100);
+    return p;
+  }
+  // Newsletter blocks (asAdd deep link): heading, text, and a button
+  // to the shop page when the person has one.
+  function newsBlocks(t, o) {
+    o = o || {};
+    var head = [t.sub, authors(t).join(", ")].filter(Boolean).join("\n");
+    var out = [{ k: "h", t: line(t.t, 300) }];
+    var txt = [head, t.blurb].filter(Boolean).join("\n\n");
+    if (txt) out.push({ k: "p", t: txt.slice(0, 4000) });
+    if (o.href && /^https:\/\/[^\s]+$/.test(o.href) && o.btn) out.push({ k: "btn", t: line(o.btn, 80), href: o.href });
+    return out;
+  }
+  // A press release (Writer newDoc): plain text, paragraphs on blank
+  // lines. S: the strings in the app's language (see app.js "pr.*").
+  function pressRelease(t, fmts, S, o) {
+    o = o || {};
+    function f(k, vars) {
+      var s = S[k] || "";
+      Object.keys(vars || {}).forEach(function (v) { s = s.split("{" + v + "}").join(String(vars[v])); });
+      return s;
+    }
+    var by = authors(t).join(", ");
+    var parts = [S.head];
+    var lead = o.imp ? (by ? f("leadImp", { imp: o.imp, t: t.t, a: by }) : f("leadImpNoA", { imp: o.imp, t: t.t }))
+                     : (by ? f("lead", { t: t.t, a: by }) : f("leadNoA", { t: t.t }));
+    parts.push(lead + (o.rel ? " " + f("rel", { d: o.rel }) : ""));
+    if (t.sub) parts.push(t.sub);
+    if (t.blurb) parts.push(t.blurb.trim());
+    if (t.bio) parts.push(S.about + "\n" + t.bio.trim());
+    var rows = [];
+    (fmts || []).forEach(function (x) {
+      var bits = [x.label];
+      if (x.isbn) bits.push("ISBN " + x.isbn);
+      if (x.pages) bits.push(f("pages", { n: x.pages }));
+      if (x.price) bits.push(x.price);
+      rows.push(bits.join(" · "));
+    });
+    if (rows.length) parts.push(S.details + "\n" + rows.join("\n"));
+    if (o.imp) parts.push(S.contact + "\n" + o.imp);
+    return { title: line(f("docTitle", { t: t.t }), 200), text: parts.filter(Boolean).join("\n\n") };
+  }
+
   var API = {
     VER: VER, LISTS: LISTS, STATUS: STATUS, FMT_KINDS: FMT_KINDS, ROLES: ROLES, MAX_PPL: MAX_PPL, MAX_FMTS: MAX_FMTS,
     COVER_DIR: COVER_DIR, COVER_RE: COVER_RE,
@@ -504,7 +616,8 @@
     blockIsbn: blockIsbn, inBlock: inBlock, hyphen: hyphen, ean13: ean13, barcodeSvg: barcodeSvg,
     used: used, clashes: clashes, nextFree: nextFree, blockUsage: blockUsage,
     fold: fold, authors: authors, list: list, gaps: gaps, okYmd: okYmd, num: num,
-    coverPath: coverPath, coversInUse: coversInUse, fromPrefill: fromPrefill
+    coverPath: coverPath, coversInUse: coversInUse, fromPrefill: fromPrefill,
+    shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishCore = API;

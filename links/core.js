@@ -60,7 +60,7 @@
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
         { k: "cs", re: /^cs_[a-f0-9]{40}$/ }
       ],
-      apps: ["stock", "newsletter"],
+      apps: ["stock", "newsletter", "publish"],
       probe: "/products?per_page=1"
     },
     // timologisi.online (Novus Conceptus): a Greek e-invoicing provider.
@@ -514,6 +514,8 @@
     odq: function (b) { return has(b, "domain") && has(b, "fields") && has(b, "order"); },
     // Notion: search only with the "pages" filter
     ntq: function (b) { return has(b, "filter"); },
+    // WooCommerce: a new product only as a draft, always with a name
+    wdraft: function (b) { return b.status === "draft" && has(b, "name"); },
     // Shopify: a query is always there; products with a page size,
     // nodes with ids, the shop name with nothing
     sfq: function (b) {
@@ -526,12 +528,22 @@
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
   var STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
+  // Publishing wave P2: a title becomes a DRAFT product (the person
+  // publishes it in the shop); found again by its SKU (the ISBN).
+  var SKU = /^[A-Za-z0-9_-]{1,40}$/;
+  var DRAFT_BODY = {
+    name: "text", type: "ptype", status: "draft", sku: "sku", regular_price: "money",
+    description: "desc", short_description: "desc", weight: "dec", dimensions: "dims",
+    virtual: "bool", manage_stock: "bool"
+  };
   var ALLOW = {
     woo: [
       ["GET", /^\/system_status$/, null, null],
-      ["GET", /^\/products$/, q({ status: WORDS, type: WORDS, modified_after: DT }), null],
+      ["GET", /^\/products$/, q({ status: WORDS, type: WORDS, modified_after: DT, sku: SKU }), null],
       ["GET", /^\/products\/[0-9]{1,12}$/, null, null],
       ["GET", /^\/products\/[0-9]{1,12}\/variations$/, q(null), null],
+      ["POST", /^\/products$/, null, DRAFT_BODY, "wdraft"],
+      ["GET", /^\/settings\/products\/woocommerce_(weight|dimension)_unit$/, null, null],
       ["PUT", /^\/products\/[0-9]{1,12}$/, null, STOCK_BODY],
       ["PUT", /^\/products\/[0-9]{1,12}\/variations\/[0-9]{1,12}$/, null, STOCK_BODY],
       ["GET", /^\/orders$/, q({ status: WORDS, after: DT, modified_after: DT }), null],
@@ -631,6 +643,14 @@
     if (kind === "bool") return v === true || v === false;
     if (kind === "status") return ORDER_ST.indexOf(v) >= 0;
     if (kind === "text") return typeof v === "string" && v.length > 0 && v.length <= 1000;
+    if (kind === "draft") return v === "draft";
+    if (kind === "ptype") return v === "simple";
+    if (kind === "sku") return typeof v === "string" && SKU.test(v);
+    if (kind === "money") return typeof v === "string" && /^[0-9]{1,7}(\.[0-9]{1,2})?$/.test(v);
+    if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
+    if (kind === "desc") return typeof v === "string" && v.length <= 8000;
+    if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
+      Object.keys(v).every(function (k) { return (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]); });
     if (kind === "tolinv") return okInvoice(v);
     if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
     if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);

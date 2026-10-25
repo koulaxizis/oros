@@ -25,6 +25,15 @@ Das ISBN-Feld prüft die Nummer beim Tippen: eine falsche Prüfziffer, eine fehl
 ### Cover
 `Coverbild hinzufügen` behält eine Kopie des Vorderdeckels (bis 1600 px, ohne Standort- oder Kameradaten) in [Dateien](app:files), Ordner Publishing/Covers. Sie erreicht deine anderen Geräte mit Vault Drive. Die Druckdatei des Covers selbst entsteht im [Layout](app:layout).
 
+### An andere Apps senden
+Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), dann:
+- `Entwurf in meinem Shop` legt einen Produktentwurf in deinem WooCommerce-Shop an, verbunden mit deinen eigenen Schlüsseln unter [Einstellungen](app:settings) › Verbundene Dienste: Name, SKU (die ISBN), Preis, Klappentext, Gewicht und Maße in den Einheiten des Shops. Hat der Shop schon ein Produkt mit dieser ISBN, verknüpft orOS es und legt nichts an. Bilder und Kategorien fügst du hinzu und veröffentlichst im Shop; `Im Shop öffnen` bringt dich hin.
+- `Produkt in Stock` öffnet ein neues Produkt in [Stock](app:stock) mit Name, ISBN als SKU und Barcode und dem Preis. Hat Stock es schon, öffnet sich sein Blatt.
+- `Block im Newsletter` fügt Titel, Untertitel, Autor und Klappentext in einen [Newsletter](app:newsletter)-Entwurf deiner Wahl ein, mit einem Button zum Buch, wenn es in deinem Shop ist.
+- `Pressemitteilung in Writer` öffnet ein neues [Writer](app:writer)-Dokument mit einer Pressemitteilung aus Titel, Texten, Ausgaben und deinem Verlagsnamen. Lies und bearbeite sie, bevor du sie verschickst.
+
+In der anderen App wird nichts gespeichert, bevor du es dort speicherst.
+
 ## ISBN
 Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
 
