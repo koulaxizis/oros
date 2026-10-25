@@ -109,6 +109,16 @@ War ein Gerät offline und hat vor der Synchronisierung einen Verkauf im Zeitrau
 ## Lieferanten
 Der Tab `Lieferanten` speichert Namen, Ansprechpartner, Telefon, E-Mail, USt-IdNr. und Lieferzeit. `Aus Kontakte` übernimmt eine Person oder Firma aus [Kontakte](app:contacts) als neuen Lieferanten.
 
+### Preislisten von Lieferanten
+Schickt dir ein Verlag oder Großhändler eine Preisliste (CSV oder Excel), öffne den Lieferanten und wähle `Preisliste…` (oder `Preisliste von einem Lieferanten…` unter der Liste). Wähle die Datei: Bestand findet die Kopfzeile an ihren Namen (ISBN, EAN, Code, Titel, Preis, Nettopreis, Rabatt, Verfügbarkeit; Englisch oder Griechisch) und vergleicht jede Zeile mit deinen Produkten über den Code, ISBN-10 und ISBN-13 gleichermaßen, oder über den genauen Titel. Es zeigt:
+- `Neue Preise`: den Ladenpreis der Liste (und den Nettopreis, oder Ladenpreis minus Rabatt), wo er abweicht;
+- `Beim Lieferanten nicht mehr erhältlich`: vergriffene oder nicht lieferbare Titel, die hier noch einen Mindestbestand haben; angehakt werden Mindestbestand und Bestellmenge 0, damit `Nachbestellen` sie nicht mehr vorschlägt (dein Bestand bleibt verkäuflich);
+- `Noch nicht im Bestand`: Titel, die du nicht hast; angehakt werden sie mit dem Preis der Liste und Menge 0 angelegt.
+
+Hake an, was du übernehmen willst, und wähle `Im Bestand übernehmen` (eine Änderung, mit Rückgängig). Mit `Die Produkte der Liste … zuordnen` erhalten diese Produkte auch den Lieferanten und seinen Code, damit `Nachbestellen` sie unter ihm gruppiert und die Bestellung per `E-Mail` seine Codes nennt.
+
+Ist ein WooCommerce-Shop verbunden, setzt `An den Shop senden` danach die neuen Preise im Shop (jedes Produkt wird über seine SKU gefunden, also die ISBN oder den Code) und legt die neuen Titel als Entwürfe an, die du dort veröffentlichst. Ohne diesen Knopf geht nichts an den Shop; verkauft der Shop in einer anderen Währung, werden keine Preise gesendet. Ein Produkt im Angebot, dessen Angebotspreis nicht unter dem neuen Preis liegt, bleibt unverändert: ändere zuerst das Angebot im Shop.
+
 ## Der Shop (WooCommerce)
 Verbinde deinen WooCommerce-Shop einmal unter Einstellungen › [Verbundene Dienste](app:settings), dann öffne `Shop (WooCommerce)` über `Neu` oder hier in den Einstellungen.
 - `Produkte`: `Produkte aus dem Shop holen` liest jedes Produkt und jede Variante. `In Bestand importieren` fügt die neuen hinzu und aktualisiert Name, SKU, Verkaufspreis und Kategorie der vorhandenen (zugeordnet über das Shop-Produkt, dann SKU, dann Name). Hake das Kästchen darunter an, um auch die Mengen hier auf die des Shops zu setzen, als eine Inventur.
