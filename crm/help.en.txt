@@ -65,6 +65,13 @@ In `Settings`, `orOS file (.oroscrm)` saves every customer with its people, hist
 - The form and its keys sync with your CRM. One device collects the messages; on another one press `Collect on this device`.
 - `Turn the form off` stops the form on your site and deletes the messages still waiting at the relay.
 
+## Partners: suppliers, shops, authors, associates
+- A record can be more than a customer. In the editor, `Role` lets you pick Customer, Supplier, Consignment shop, Author / contributor or Associate (more than one is fine). Once a record has another role, chips above the list show each role on its own.
+- `In other apps` on a record's page lists what it is linked to: a supplier or a consignment shop in [Stock](help:a/stock), a client in [Work hours](help:a/timesheet), a client in [Invoices](help:a/invoices), or a person on titles in [Publishing](help:a/publish). `+ Link` picks one; records that look the same (same VAT no., e-mail or name) come first. A record of another app belongs to one partner: linking it here moves it from the other one.
+- Invoices of a linked Invoices client show in the record's `Documents`. People that Publishing already ties to this customer show too.
+- `Settings` › `Find matches in other apps` lists the likely pairs (`Link all` takes them in one go) and the records that aren't here yet (`Add` makes a new record with the right role, linked).
+- Linking never changes Stock, Work hours, Invoices or Publishing: only CRM keeps the link.
+
 ## Update from online sources
 `Update online` on a customer's page (or `Update customers from online sources` in Settings, for all of them) looks only where the customer already points: the Gravatar profile of their own e-mail the website saved in the customer, and the public GitHub, Bluesky or Mastodon profiles these point to, Wikidata entries that name them, and, for a company, OpenStreetMap by name and address or phone. It suggests a website, phone, e-mail, address and, for a person, a job title. An empty field is filled; anything else goes into the note as a line such as "Instagram: https://…", so nothing you typed is replaced. Each suggestion says where it came from and how sure it is; nothing changes until you tap `Apply selected`, and `Undo` puts the customers back. When you check a single record, the window also offers DuckDuckGo search links (the web, LinkedIn, Facebook, Instagram, X, TikTok) that you open yourself. If the Assistant is set to search with your own SearXNG server, a few records at a time are also searched there by name; those results always start unticked. Facebook, Instagram, LinkedIn, X and TikTok are never read, and no one is searched for by name alone.
 

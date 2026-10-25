@@ -600,15 +600,19 @@
   }
   // BR-CRM-INV: the documents of one CRM customer, for CRM Lite to
   // show read-only. A document belongs to it when the document or its
-  // client carries that crm id. Drafts are left out.
+  // client carries that crm id, or the client is one CRM linked to the
+  // customer itself and that has no crm id of its own (also: [client
+  // id], BR-CRM-LINK). Drafts are left out.
   // → { rows: [{ id, kind, no, date, due, total, paid, status, cur }],
   //     totals: { CUR: { invoiced, paid, open, overdue } } }
-  function byCrm(data, id, day) {
+  function byCrm(data, id, day, also) {
     var out = { rows: [], totals: {} };
     id = crmId(id);
     if (!id || !data) return out;
     var mine = {};
-    live(data.clients).forEach(function (c) { if (c.crm === id) mine[c.id] = true; });
+    live(data.clients).forEach(function (c) {
+      if (c.crm ? c.crm === id : Array.isArray(also) && also.indexOf(c.id) >= 0) mine[c.id] = true;
+    });
     live(data.docs).forEach(function (d) {
       if (d.st === "draft" || !(d.crm === id || mine[d.cli])) return;
       var tt = totals(d), st = status(data, d, day);
