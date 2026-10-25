@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33907 of 33916 (99%)
+- Strings: 33923 of 33932 (99%)
 - Help pages: 148 of 148 (100%)
 - Shown in the language list: yes
 
@@ -90,7 +90,7 @@ text is still written in the code. They switch over wave by wave
 | netizen | 100% | 121 / 121 |
 | newsletter | 100% | 854 / 854 |
 | nonogram | 100% | 70 / 70 |
-| notes | 100% | 173 / 173 |
+| notes | 100% | 189 / 189 |
 | oracle | 100% | 38 / 38 |
 | passwords | 100% | 321 / 321 |
 | pet | 100% | 106 / 106 |

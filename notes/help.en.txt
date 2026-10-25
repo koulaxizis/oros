@@ -78,6 +78,11 @@ Pick a notebook from the list at the top of the tree. The book button with a plu
 - Import again whenever you like: new pages come in. Pages you changed in Notion change here only if you tick `Replace the text of pages imported before`, and that replaces your edits here to those pages. Deleted pages don't come back unless you tick `Bring back what was deleted here`.
 - orOS only reads Notion: nothing there changes. Notion doesn't answer browsers, so the reading goes through the orOS relay, which keeps nothing; a large workspace takes a minute or two.
 
+## A notebook for the household
+With a [household](app:household) set up, open the notebook, then `⋯` next to the notebook selector › `Share with a household`. The notebook moves into the household with its pages and labels: everyone in it reads and writes it in their own Notes, and the selector shows the household's name next to it. If two people change the same page at once, both texts are kept, as between your own devices. Which page is open and which branches are unfolded stay on each device. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+A page longer than about 60,000 characters cannot be shared, nor a notebook over about 480,000 characters in all. If a shared page grows too long, the household keeps its last version and yours is kept in your own notebook. `Stop sharing` takes the notebook out of the household for everyone and brings it back to your own notebooks with every page; the others can bring it back from the Household app for 30 days. Search finds pages of your own notebooks only.
+
 ## Sync and backup
 Notebooks, pages and labels sync between your devices through [orOS sync](help:t/sync). Which page is open, which branches of the tree are unfolded and the tree's width stay on this device.
 

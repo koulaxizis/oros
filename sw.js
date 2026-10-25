@@ -476,6 +476,7 @@ var PRECACHE_URLS = [
   "notes/notes.css",
   "notes/notes.js",
   "notes/package.js",
+  "notes/house.js",
   "notes/search.js",
   "notes/platforms.js",
   "wiki/",
