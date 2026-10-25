@@ -52,6 +52,14 @@ Der Tab `Honorare` zeigt alle Berechtigten. `Neue Abrechnung…` nimmt einen Zei
 
 Zuerst wird der Vorschuss verrechnet: was frühere Abrechnungen mit denselben Bedingungen verdient haben, wird davon abgezogen, und nur der Rest ist zahlbar. Eine ausgestellte Abrechnung ist ein Beleg, der sich nicht ändert, wenn sich Bedingungen oder Verkäufe ändern. Von dort: `Drucken oder PDF`, `E-Mail` (Mail öffnet sich mit dem Text), `Ins Budget` (eine Ausgabe, die du dort bestätigst), `Als bezahlt markieren` oder `Stornieren` (sie bleibt durchgestrichen in der Liste und zählt nicht mehr für den Vorschuss).
 
+## Einsendungen
+Manuskripte, die man dir schickt. `+ Einsendung` legt eine von Hand an; öffne in [Mail](app:mail) die Nachricht und wähle `Andere Apps` › `Manuskript-Einsendung in Verlag`, um sie mit Absender, Betreff und Text anzulegen.
+
+Jede hat einen Status (`Neu`, `Wird gelesen`, `In der engeren Wahl`, `Angenommen`, `Abgelehnt`). Die Antworten öffnen Mail mit einem fertigen Text: `Danke sagen`, `Ablehnen` oder `Annehmen`; der Tag der Antwort wird gespeichert. Eine Einsendung, die nach 90 Tagen noch neu oder in Lektüre ist und keine Antwort hat, wird markiert (die Tage änderst du unter Einstellungen › `Antworten und Vertrag…`). `Zum Titel machen` legt einen Titel mit Autor und deinen Notizen an.
+
+### Antworten und Vertrag
+Unter Einstellungen › `Antworten und Vertrag…` schreibst du eigene Texte; {name}, {title}, {imprint} und {days} werden ausgefüllt. Bei einem Titel öffnet `Vertrag in Writer` (in jeder Honorarbedingung) einen Vertragsentwurf in [Writer](app:writer) mit Namen, Ausgaben, Prozentsatz und Vorschuss, zum Fertigstellen und Speichern als PDF. Der eingebaute Entwurf ist ein Ausgangspunkt, keine Rechtsberatung.
+
 ## ISBN
 Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
 

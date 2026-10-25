@@ -17,8 +17,15 @@
 //                spoiled; id = the 13 digits
 //     stmts:  [{ id, m, n, from, to, cur, rows, rec, due, paid, v }]
 //                royalty statements as issued (wave P6, royalty.js)
-//     set:    { m, cur, imp },          imp = the publisher's name
-//                (covers, press texts); unknown fields ride along
+//     subs:   [{ id, m, n, email, t, d, st, note, ans, ti }]
+//                manuscripts sent to the publisher (wave P7): st new |
+//                read | short | yes | no; ans = day last answered; ti =
+//                the title made from it
+//     set:    { m, cur, imp, tpl?, subDays? }, imp = the publisher's
+//                name (covers, press texts); tpl (wave P7) = the
+//                person's own texts { ack, no, yes, con } ("" = the
+//                built-in one), subDays = days before an unanswered
+//                submission is flagged (90); unknown fields ride along
 //     tombs:  { id: ms } }
 //   Later waves add lists of { id, m, … } rows; until a device knows a
 //   list it keeps and merges it as it came (LWW by m per id), so an
@@ -39,7 +46,7 @@
   "use strict";
 
   var VER = 1;
-  var LISTS = ["titles", "blocks", "isbnx", "stmts"];
+  var LISTS = ["titles", "blocks", "isbnx", "stmts", "subs"];
   var STATUS = ["idea", "prod", "out", "oop"];
   var FMT_KINDS = ["pb", "hb", "eb", "ab", "ot"];
   var ROLES = ["a", "t", "i", "e", "c", "n", "o"];
@@ -288,6 +295,34 @@
     if (raw.v === 1) o.v = 1;
     return o;
   }
+  // A manuscript sent in (wave P7). Only what the person typed or Mail
+  // passed on; the e-mail itself stays in Mail.
+  var SUB_ST = ["new", "read", "short", "yes", "no"];
+  function cleanSub(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var n = line(raw.n, 120), email = line(raw.email, 200);
+    if (!n && !email) return null;
+    var o = { id: raw.id, m: ms(raw.m), n: n, email: /^[^\s@<>]+@[^\s@<>]+$/.test(email) ? email : "",
+              t: line(raw.t, 200), d: okYmd(raw.d) ? raw.d : "", st: oneOf(raw.st, SUB_ST, "new"),
+              note: text(raw.note, 4000), ans: okYmd(raw.ans) ? raw.ans : "" };
+    if (okId(raw.ti)) o.ti = raw.ti;
+    return o;
+  }
+  // Waiting too long: still new or being read, never answered (or
+  // answered only before it arrived) and older than `days`.
+  function subsLate(d, today, days) {
+    var n = typeof days === "number" && days > 0 ? days : 90;
+    var lim = addDays(today, -n);
+    return ((d && d.subs) || []).filter(function (x) {
+      return (x.st === "new" || x.st === "read") && x.d && x.d <= lim && (!x.ans || x.ans < x.d);
+    }).sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : byId(a, b); });
+  }
+  // {name} → vars.name in a template; unknown names stay as written
+  function fillTpl(tpl, vars) {
+    return String(tpl || "").replace(/\{([a-z]{1,12})\}/g, function (all, k) {
+      return Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : all;
+    });
+  }
   function cleanTitle(raw) {
     if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
     var t = line(raw.t, 200);
@@ -349,13 +384,21 @@
     p.m = ms(raw.m);
     return p;
   }
-  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt };
+  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt, subs: cleanSub };
 
-  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
+  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], subs: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
 
   function cleanSet(raw) {
     var s = raw && typeof raw === "object" ? raw : {};
     var out = { m: ms(s.m), cur: typeof s.cur === "string" && CURS.test(s.cur) ? s.cur : "EUR", imp: line(s.imp, 120) };
+    // wave P7: own texts for answers and the contract, days to answer
+    if (s.tpl && typeof s.tpl === "object") {
+      var tp = {};
+      TPL_KEYS.forEach(function (k) { var v = text(s.tpl[k], k === "con" ? 20000 : 6000); if (v.trim()) tp[k] = v; });
+      if (Object.keys(tp).length) out.tpl = tp;
+    }
+    var sd = num(s.subDays, 0, 365, 0);
+    if (sd) out.subDays = sd;
     // Settings of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(s).forEach(function (k) {
@@ -366,7 +409,8 @@
     if (any && JSON.stringify(extra).length <= MAX_EXTRA) Object.keys(extra).forEach(function (k) { out[k] = extra[k]; });
     return out;
   }
-  var SET_KEYS = ["m", "cur", "imp"];
+  var SET_KEYS = ["m", "cur", "imp", "tpl", "subDays"];
+  var TPL_KEYS = ["ack", "no", "yes", "con"];
 
   function newer(a, b) {
     if (a.m !== b.m) return a.m > b.m;
@@ -744,7 +788,8 @@
     shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease,
     STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
     planState: planState, byDay: byDay,
-    ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt
+    ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
+    SUB_ST: SUB_ST, TPL_KEYS: TPL_KEYS, cleanSub: cleanSub, subsLate: subsLate, fillTpl: fillTpl
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishCore = API;

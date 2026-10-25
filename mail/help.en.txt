@@ -122,6 +122,7 @@ Mail can sign and encrypt messages with OpenPGP, the standard used by Thunderbir
 - `A note`: saves the message's text as a new page in [Notes](app:notes).
 - `A bookmark`: one of the message's links goes to [Bookmarks](app:bookmarks), ready for you to save.
 - `Sender to Contacts`: opens a new contact in [Contacts](app:contacts) with the sender's name and email filled in, or their card when you already have them.
+- `Manuscript submission in Publishing`: for a publisher, files the message as a submission in [Publishing](app:publish) (name, address, subject as the working title, the text as notes); you check it and press `Save` there.
 - `Log in CRM`: opens [CRM](app:crm) with a new log entry for the other person (the sender, or who you wrote to), with the subject, the start of the text and the date filled in; you save it there.
 - `Summary by the Assistant` and `Reply drafted by the Assistant` open the [AI Assistant](app:assistant) with the question ready, using the key you set there. Very long messages are cut to fit; you press send there, and you copy the reply into Mail yourself.
 From the other side, an email address on a contact's card in Contacts and `Email` on a saved event in [Calendar](app:calendar) open a new message here (when Mail has an account on this device).
