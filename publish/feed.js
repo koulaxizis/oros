@@ -4,15 +4,16 @@
 // file) shows, under the chip "Publishing" / «Εκδόσεις»:
 //   - the release date of every title not out of print: "Release: …";
 //   - every step of a title's release plan (wave P4) that is not done
-//     yet, on its date: "Proofs 1 · …".
+//     yet, on its date: "Proofs 1 · …";
+//   - every planned post (wave P12) not marked posted: "Post 10:00 · …".
 // Nothing is stored or synced by it; it only reads Publishing's own
 // blob (synced slice "publish", key oros-publish-data). Publishing's
 // editor uses the same step names.
 //
 // API (window.OrosPublishFeed):
-//   byDay(data) → { "YYYY-MM-DD": [{ title, k, n, t, step? }] }
+//   byDay(data) → { "YYYY-MM-DD": [{ title, k, n, t, step?, post? }] }
 //   stage(k, n, lang) → the step's name ("Proofs 1", or n for own steps)
-//   label(row, lang) → "Release: Title" | "Proofs 1 · Title"
+//   label(row, lang) → "Release: Title" | "Proofs 1 · Title" | "Post 10:00 · text"
 // ============================================================
 (function (root) {
   "use strict";
@@ -27,13 +28,13 @@
       "stage.ms": "Manuscript in", "stage.ed": "Editing", "stage.p1": "Proofs 1", "stage.cov": "Cover ready",
       "stage.p2": "Proofs 2", "stage.isbn": "ISBN and barcode", "stage.p3": "Proofs 3", "stage.print": "To the printer",
       "stage.pres": "Presentation", "stage.x": "Step",
-      "feed.rel": "Release: {t}", "feed.step": "{s} · {t}"
+      "feed.rel": "Release: {t}", "feed.step": "{s} · {t}", "feed.post": "Post {h}· {t}"
     },
     el: {
       "stage.ms": "Παράδοση χειρογράφου", "stage.ed": "Επιμέλεια", "stage.p1": "Διορθώσεις 1", "stage.cov": "Έτοιμο εξώφυλλο",
       "stage.p2": "Διορθώσεις 2", "stage.isbn": "ISBN και barcode", "stage.p3": "Διορθώσεις 3", "stage.print": "Στο τυπογραφείο",
       "stage.pres": "Παρουσίαση", "stage.x": "Βήμα",
-      "feed.rel": "Κυκλοφορία: {t}", "feed.step": "{s} · {t}"
+      "feed.rel": "Κυκλοφορία: {t}", "feed.step": "{s} · {t}", "feed.post": "Ανάρτηση {h}· {t}"
     }
   };
   function i18n() { return typeof window !== "undefined" && window.orosI18n; }
@@ -59,6 +60,7 @@
   function label(row, lang) {
     var tb = text(lang);
     if (row.k === "rel") return fill(tb["feed.rel"], { t: row.t });
+    if (row.k === "post") return fill(tb["feed.post"] || TEXT.en["feed.post"], { h: row.n ? row.n + " " : "", t: row.t });
     return fill(tb["feed.step"], { s: stage(row.k, row.n, lang), t: row.t });
   }
 

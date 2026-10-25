@@ -64,6 +64,11 @@ Jede hat einen Status (`Neu`, `Wird gelesen`, `In der engeren Wahl`, `Angenommen
 ### Antworten und Vertrag
 Unter Einstellungen › `Antworten und Vertrag…` schreibst du eigene Texte; {name}, {title}, {imprint} und {days} werden ausgefüllt. Bei einem Titel öffnet `Vertrag in Writer` (in jeder Honorarbedingung) einen Vertragsentwurf in [Writer](app:writer) mit Namen, Ausgaben, Prozentsatz und Vorschuss, zum Fertigstellen und Speichern als PDF. Der eingebaute Entwurf ist ein Ausgangspunkt, keine Rechtsberatung.
 
+## Beiträge
+Plane deine Beiträge für soziale Netzwerke einmal: Text, Bild und Tag (wenn du willst, eine Uhrzeit). `+ Beitrag` im Tab `Beiträge` fügt einen hinzu; bei einem Titel startet `An andere Apps senden` › `Beitrag planen…` einen mit dem Titel, seinen Beteiligten, der Erscheinungszeile und einem Zitat, und dem Cover als Bild. Wähle die Netzwerke: die Zählung unter dem Text sagt dir, wann er über dem Limit eines Netzwerks liegt.
+
+Am Tag steht der Beitrag hier als fällig und im [Kalender](app:calendar). Öffne ihn und poste ihn von der Seite des jeweiligen Netzwerks: `Kopieren und … öffnen` kopiert den Text und öffnet Mastodon, Bluesky, X, Threads oder LinkedIn mit dem Text schon darin. Facebook und Instagram haben keine solche Seite, deshalb öffnet sich ihre Startseite und du fügst den Text ein. `Bild kopieren` und `Bild speichern` geben dir das Bild. Nichts wird von orOS gesendet und hier ist kein Konto nötig; für Mastodon trage deinen Server in den Einstellungen ein (zum Beispiel mastodon.social). Dann `Als gepostet markieren`.
+
 ## ISBN
 Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
 

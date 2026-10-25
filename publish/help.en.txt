@@ -64,6 +64,11 @@ Each has a status (`New`, `Being read`, `Shortlisted`, `Accepted`, `Declined`). 
 ### Answers and contract
 In Settings › `Answers and contract…` write your own texts; {name}, {title}, {imprint} and {days} are filled in. On a title, `Contract in Writer` (in each set of royalty terms) opens a contract draft in [Writer](app:writer) with the names, formats, percentage and advance filled in, to finish and save as PDF. The built-in draft is a starting point, not legal advice.
 
+## Posts
+Plan your social posts once: the text, a picture and the day (a time if you like). `+ Post` in the `Posts` tab adds one; on a title, `Send to other apps` › `Plan a post…` starts one with the title, its people, the release line and a quote, and its cover as the picture. Pick the networks it is for: the count under the text tells you when it is over a network's limit.
+
+On the day the post is listed as due here and in the [Calendar](app:calendar). Open it and post it from each network's own page: `Copy and open` copies the text and opens Mastodon, Bluesky, X, Threads or LinkedIn with the text already in it. Facebook and Instagram have no such page, so they open their home page and you paste the text. `Copy the picture` and `Save the picture` hand you the picture. Nothing is sent from orOS and no network account is needed here; for Mastodon write your server in Settings (for example mastodon.social). Then `Mark posted`.
+
 ## ISBN
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
 

@@ -66,7 +66,7 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Death anniversaries` from [Family Tree](app:familytree), such as "Maria · 10 years since death", for people with an exact date of death.
 - `Invoices`: unpaid invoices on their due date, from [Invoices](app:invoices).
 - `Media Shelf`: the day you finished a book, film, album or game, and release dates on your wishlist, from [Media Shelf](app:shelf).
-- `Publishing`: the release date of your titles and the open steps of their release plan, from [Publishing](app:publish).
+- `Publishing`: the release date of your titles and the open steps of their release plan, and the social posts you planned, from [Publishing](app:publish).
 - `Holidays` (Greek public holidays), `Name days` of your contacts, and `World days` such as international observances.
 - `Moon & Sky`: moon phases, equinoxes and solstices, meteor showers and eclipses from [Moon & Sky](app:sky). This one starts off: tap or click its chip to turn it on.
 - `Medicines`: the first and last day of a medicine course and the day a medicine you count runs out, from [Health](app:health). Health data is private, so this one starts off too.

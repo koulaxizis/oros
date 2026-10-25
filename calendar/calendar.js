@@ -2926,12 +2926,12 @@ function transientNote(title, body) {
     if (!days || !days[dateStr]) return [];
     return days[dateStr].map(function (r) {
       return {
-        id: "pub-" + r.k + "-" + r.title + "-" + (r.step || "") + "-" + dateStr,   // per-render key, never stored
+        id: "pub-" + r.k + "-" + r.title + "-" + (r.step || r.post || "") + "-" + dateStr,   // per-render key, never stored
         title: window.OrosPublishFeed.label(r, LB),
         labelId: "lbl-feed-publish",
         start: null,                                     // all-day
         _feed: true,
-        _openAt: { app: "publish", target: { title: r.title } }
+        _openAt: { app: "publish", target: r.post ? { post: r.post } : { title: r.title } }
       };
     });
   }

@@ -48,7 +48,7 @@
   "use strict";
 
   var VER = 1;
-  var LISTS = ["titles", "blocks", "isbnx", "stmts", "subs"];
+  var LISTS = ["titles", "blocks", "isbnx", "stmts", "subs", "posts"];
   var STATUS = ["idea", "prod", "out", "oop"];
   var FMT_KINDS = ["pb", "hb", "eb", "ab", "ot"];
   var ROLES = ["a", "t", "i", "e", "c", "n", "o"];
@@ -367,6 +367,53 @@
       return (x.st === "new" || x.st === "read") && x.d && x.d <= lim && (!x.ans || x.ans < x.d);
     }).sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : byId(a, b); });
   }
+  // A planned social post (wave P12): written once, on its day (and
+  // hour) Publishing shows it as due; it is posted by the person, from
+  // the network's own page (intent links: no keys, works for anyone).
+  // img = a picture on the orOS disk (a title's cover or a file from
+  // Files), never the bytes.
+  var POST_NETS = ["mastodon", "bluesky", "x", "threads", "facebook", "linkedin", "instagram"];
+  var POST_MAX = { mastodon: 500, bluesky: 300, x: 280, threads: 500, facebook: 63206, linkedin: 3000, instagram: 2200 };
+  var DISK_RE = /^\/internal\/[^\u0000-\u001f]{1,300}$/;
+  function cleanPost(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id) || !okYmd(raw.d)) return null;
+    var tx = text(raw.tx, 5000), img = typeof raw.img === "string" && DISK_RE.test(raw.img) && raw.img.indexOf("/../") < 0 && !/\/\.\.?$/.test(raw.img) ? raw.img : "";
+    if (!tx.trim() && !img) return null;
+    var nets = [];
+    (Array.isArray(raw.nets) ? raw.nets : []).forEach(function (n) { if (POST_NETS.indexOf(n) >= 0 && nets.indexOf(n) < 0) nets.push(n); });
+    nets.sort(function (a, b) { return POST_NETS.indexOf(a) - POST_NETS.indexOf(b); });
+    var o = { id: raw.id, m: ms(raw.m), d: raw.d, at: typeof raw.at === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(raw.at) ? raw.at : "",
+              tx: tx, img: img, nets: nets, done: okYmd(raw.done) ? raw.done : "" };
+    if (okId(raw.ti)) o.ti = raw.ti;
+    return o;
+  }
+  // Posts not marked posted whose day (and hour, when given) has come,
+  // oldest first. now = "YYYY-MM-DD HH:MM" (local time).
+  function postsDue(d, now) {
+    var day = String(now || "").slice(0, 10), hm = String(now || "").slice(11, 16);
+    return ((d && d.posts) || []).filter(function (p) {
+      return !p.done && (p.d < day || (p.d === day && (!p.at || !hm || p.at <= hm)));
+    }).sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : (a.at < b.at ? -1 : a.at > b.at ? 1 : byId(a, b)); });
+  }
+  // The network's own "new post" page with the text in it; "" when the
+  // network has none (Facebook, Instagram: copy, then open the app) or
+  // no Mastodon server is set. inst = the person's Mastodon server.
+  var MAST_RE = /^(?=.{3,100}$)[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
+  function postUrl(net, tx, inst) {
+    var q = encodeURIComponent(String(tx || ""));
+    switch (net) {
+      case "mastodon": return MAST_RE.test(inst || "") ? "https://" + inst + "/share?text=" + q : "";
+      case "bluesky": return "https://bsky.app/intent/compose?text=" + q;
+      case "x": return "https://x.com/intent/post?text=" + q;
+      case "threads": return "https://www.threads.net/intent/post?text=" + q;
+      case "linkedin": return "https://www.linkedin.com/feed/?shareActive=true&text=" + q;
+      default: return "";
+    }
+  }
+  var POST_HOME = { facebook: "https://www.facebook.com/", instagram: "https://www.instagram.com/" };
+  // characters as the networks count them (code points)
+  function postLen(tx) { return Array.from(String(tx || "")).length; }
+
   // {name} → vars.name in a template; unknown names stay as written
   function fillTpl(tpl, vars) {
     return String(tpl || "").replace(/\{([a-z]{1,12})\}/g, function (all, k) {
@@ -441,7 +488,7 @@
     p.m = ms(raw.m);
     return p;
   }
-  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt, subs: cleanSub };
+  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt, subs: cleanSub, posts: cleanPost };
 
   function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], subs: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
 
@@ -456,6 +503,9 @@
     }
     var sd = num(s.subDays, 0, 365, 0);
     if (sd) out.subDays = sd;
+    // wave P12: the person's Mastodon server, for "post" links
+    var ma = line(s.mast, 100).toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (MAST_RE.test(ma)) out.mast = ma;
     // Settings of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(s).forEach(function (k) {
@@ -466,7 +516,7 @@
     if (any && JSON.stringify(extra).length <= MAX_EXTRA) Object.keys(extra).forEach(function (k) { out[k] = extra[k]; });
     return out;
   }
-  var SET_KEYS = ["m", "cur", "imp", "tpl", "subDays"];
+  var SET_KEYS = ["m", "cur", "imp", "tpl", "subDays", "mast"];
   var TPL_KEYS = ["ack", "no", "yes", "con"];
 
   function newer(a, b) {
@@ -721,6 +771,13 @@
       if (t.rel) add(t.rel, { title: t.id, k: "rel", t: t.t });
       (t.plan || []).forEach(function (s) { if (!s.done && s.d) add(s.d, { title: t.id, k: s.k, n: s.n || "", t: t.t, step: s.id }); });
     });
+    // wave P12: planned posts not yet posted, "Post 10:00 · first words…"
+    ((d && d.posts) || []).forEach(function (p) {
+      if (p.done) return;
+      var first = p.tx.replace(/\s+/g, " ").trim();
+      if (first.length > 50) first = first.slice(0, 49).trim() + "…";
+      add(p.d, { title: p.ti || "", k: "post", n: p.at, t: first, post: p.id });
+    });
     return out;
   }
 
@@ -850,7 +907,8 @@
     planState: planState, byDay: byDay,
     ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
     SUB_ST: SUB_ST, TPL_KEYS: TPL_KEYS, cleanSub: cleanSub, subsLate: subsLate, fillTpl: fillTpl,
-    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, quotes: quotes, pressList: pressList
+    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, quotes: quotes, pressList: pressList,
+    POST_NETS: POST_NETS, POST_MAX: POST_MAX, POST_HOME: POST_HOME, cleanPost: cleanPost, postsDue: postsDue, postUrl: postUrl, postLen: postLen
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishCore = API;
