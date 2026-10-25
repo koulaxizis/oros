@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.58.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.59.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1724,6 +1724,7 @@
       prefs = Core.readPrefs(JSON.parse(localStorage.getItem("oros-garage-prefs")));
       notified = JSON.parse(localStorage.getItem(GARAGE_NOTIFIED_KEY)) || {};
     } catch (e) { return; }
+    if (window.OrosGarageHouse) raw = window.OrosGarageHouse.withShared(raw && Array.isArray(raw.vehicles) ? raw : null);   // shared vehicles (BR-HH wave 7e)
     if (!raw || !Array.isArray(raw.vehicles) || !raw.vehicles.length) return;
     if (prefs.remind < 0 || new Date().getHours() < prefs.remind) return;
     if (todayAbsorbs("garage")) return;                 // said in today's summary

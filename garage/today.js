@@ -16,9 +16,13 @@
 
   var PROVIDER = {
     id: "garage",
-    keys: [KEY, "oros-garage-prefs"],
+    keys: [KEY, "oros-garage-hh", "oros-garage-prefs"],
     collect: function (ctx) {
-      var C = root.OrosGarageCore, raw = ctx.readJSON(KEY);
+      var C = root.OrosGarageCore, raw = ctx.readJSON(KEY), GH = root.OrosGarageHouse;
+      if (GH) {                                     // shared vehicles (BR-HH wave 7e)
+        var sets = GH.readMirror(ctx.readJSON(GH.MIRROR_KEY));
+        if (sets.length) raw = GH.union(raw && Array.isArray(raw.vehicles) ? raw : null, sets);
+      }
       if (!C || !raw || !Array.isArray(raw.vehicles) || !raw.vehicles.length) return [];
       var prefs = C.readPrefs(ctx.readJSON("oros-garage-prefs"));
       var data = C.merge(raw, raw, ctx.now), out = [];

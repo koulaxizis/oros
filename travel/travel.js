@@ -2696,6 +2696,7 @@
     if (!G) return out;
     try {
       var raw = JSON.parse(localStorage.getItem("oros-garage-data") || "null");
+      if (window.OrosGarageHouse) raw = window.OrosGarageHouse.withShared(raw && Array.isArray(raw.vehicles) ? raw : null);   // shared vehicles (BR-HH wave 7e)
       if (!raw || !Array.isArray(raw.vehicles)) return out;
       var d = G.merge(raw, raw, Date.now());
       out.cur = d.settings && d.settings.cur ? d.settings.cur : "EUR";

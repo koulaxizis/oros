@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.59.00
+- Garage: share the family car. Pick the vehicle, then Settings › Household › Share with a household: everyone who drives it logs fill-ups, services and costs in their own Garage, sees the same numbers and gets its reminders once. Currency and reminder times stay your own.
+
 ## Version 3.58.00
 - Together: share a relationship with your partner. Open it, then Settings › Household › Share with a household: you both see the same counter, milestones, moments and special days, and what either of you adds reaches the other. Gift ideas, reminders and the PIN stay your own.
 

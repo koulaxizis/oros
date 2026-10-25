@@ -107,6 +107,16 @@
       "f.items": "What was done", "f.cost": "Cost ({c})", "f.shop": "Garage / shop", "f.cat": "Category", "f.amount": "Amount ({c})",
       "f.kmOpt": "Odometer (km, optional)",
       "ed.fuel": "Fuel", "ed.charge": "Charging", "ed.service": "Service", "ed.cost": "Expense", "ed.odo": "Km reading",
+      "hh.sec": "Household", "hh.share.t": "Share with a household", "hh.stop.t": "Stop sharing",
+      "hh.share.x": "{name} moves into the household with its fill-ups, services, tyres, renewals and costs: everyone who drives it logs in their own Garage and gets its reminders. Currency and reminder times stay each person's own; receipt photos stay in your Files.",
+      "hh.big": "{name} has too many entries to share (a household holds about 2900 per vehicle).",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "{name} is shared in {hh}: what anyone logs reaches everyone.",
+      "hh.stop.x": "{name} leaves {hh} for everyone and comes back to your own Garage with everything logged. The others can bring it back from Household for 30 days.",
+      "hh.tag": "Shared in {hh}",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. The vehicle is back in your own Garage.",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "ed.save": "Save", "ed.cancel": "Cancel", "ed.delete": "Delete", "ed.budget": "Add to Budget",
       "ed.vehicleNew": "New vehicle", "ed.vehicleEdit": "Edit vehicle", "ed.type": "Type", "ed.name": "Name",
       "ed.make": "Make", "ed.model": "Model", "ed.year": "Year", "ed.plate": "Plate", "ed.fuelType": "Fuel",
@@ -235,6 +245,16 @@
       "f.items": "Τι έγινε", "f.cost": "Κόστος ({c})", "f.shop": "Συνεργείο / κατάστημα", "f.cat": "Κατηγορία", "f.amount": "Ποσό ({c})",
       "f.kmOpt": "Χιλιομετρητής (km, προαιρετικά)",
       "ed.fuel": "Καύσιμα", "ed.charge": "Φόρτιση", "ed.service": "Σέρβις", "ed.cost": "Έξοδο", "ed.odo": "Χιλιόμετρα",
+      "hh.sec": "Νοικοκυριό", "hh.share.t": "Κοινή χρήση με νοικοκυριό", "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.share.x": "Το «{name}» μεταφέρεται στο νοικοκυριό με τους ανεφοδιασμούς, τα σέρβις, τα λάστιχα, τις ανανεώσεις και τα έξοδά του: όποιος το οδηγεί καταγράφει στο δικό του Γκαράζ και παίρνει τις υπενθυμίσεις του. Το νόμισμα και οι ώρες υπενθύμισης μένουν του καθενός· οι φωτογραφίες αποδείξεων μένουν στα Αρχεία σου.",
+      "hh.big": "Το «{name}» έχει πάρα πολλές καταχωρίσεις για κοινή χρήση (ένα νοικοκυριό χωράει περίπου 2900 ανά όχημα).",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Το «{name}» είναι κοινό στο «{hh}»: ό,τι καταγράφει ο καθένας φτάνει σε όλους.",
+      "hh.stop.x": "Το «{name}» φεύγει από το «{hh}» για όλους και επιστρέφει στο δικό σου Γκαράζ με όλες τις καταγραφές. Οι άλλοι μπορούν να το φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.tag": "Κοινό στο «{hh}»",
+      "toast.hhShared": "Κοινό με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Το όχημα είναι ξανά στο δικό σου Γκαράζ.",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "ed.save": "Αποθήκευση", "ed.cancel": "Άκυρο", "ed.delete": "Διαγραφή", "ed.budget": "Προσθήκη στα Έσοδα & Έξοδα",
       "ed.vehicleNew": "Νέο όχημα", "ed.vehicleEdit": "Επεξεργασία οχήματος", "ed.type": "Τύπος", "ed.name": "Όνομα",
       "ed.make": "Μάρκα", "ed.model": "Μοντέλο", "ed.year": "Έτος", "ed.plate": "Πινακίδα", "ed.fuelType": "Καύσιμο",
@@ -439,26 +459,164 @@
       try {
         var parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object" && Array.isArray(parsed.vehicles)) {
-          data = canonical(parsed);
+          data = pdata = canonical(parsed);
           return;
         }
       } catch (e) {}
       try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e) {}
       try { console.error("[orOS] garage: unreadable data copied to " + STORAGE_KEY + "-broken"); } catch (e) {}
     }
-    data = emptyData();
+    data = pdata = emptyData();
   }
 
   var saveFailShown = false;
+  // With shared vehicles (BR-HH wave 7e), `data` is the union of the own
+  // data and the household copies; an edit is split back: a shared
+  // vehicle's records go to its household, the rest stays own (pdata,
+  // the only thing stored and synced).
   function save() {
     data = canonical(data);
+    var sets = hhSets();
+    if (sets.length) {
+      var sp = GH.split(data, sets);
+      sp.parts.forEach(function (part, i) {
+        if (JSON.stringify(part) !== JSON.stringify(canonical(sets[i].data))) HS.push(part, sets[i].key);
+      });
+      var own = C.merge(pdata, sp.own);
+      var same = JSON.stringify(own) === JSON.stringify(pdata);
+      pdata = own;
+      data = GH.union(pdata, hhSets());
+      if (same) return;
+    } else pdata = data;
+    saveOwn();
+  }
+  function saveOwn() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; showToast(t("toast.save")); }   // R30
     }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+  }
+
+  // ---------- 2b. Household (BR-HH wave 7e) ----------
+  // One vehicle can be shared with a household (garage/house.js): it
+  // MOVES there with all its records (the own copies get tombstones) and
+  // shows in the vehicle bar next to the own ones; stop sharing brings it
+  // back. Settings and reminder prefs never travel.
+  var pdata = null;
+  var GH = window.OrosGarageHouse;
+  var HS = (window.OrosHouseShare && GH && GH.whole && window.OrosHouseCore) ? window.OrosHouseShare.attach({
+    kind: "garage",
+    whole: GH.whole,
+    adopt: function (copy) {
+      pdata = C.merge(pdata, copy);
+      saveOwn();
+    }
+  }) : null;
+  var HH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg>';
+  function hhOn() { return !!(HS && HS.api()); }
+  function hhSets() {
+    return HS ? HS.keys().map(function (k) { var g = HS.get(k); return { key: k, hh: g.hh || g.t, data: g.data }; }) : [];
+  }
+  function hhView() { data = HS ? GH.union(pdata, hhSets()) : pdata; }
+  function hhOf(vid) {
+    return hhSets().filter(function (s) { return s.data.vehicles.some(function (v) { return v.id === vid; }); })[0] || null;
+  }
+  function hhSettings(dlg) {
+    var v = curVehicle();
+    if (!hhOn() || !v) return;
+    var s = hhOf(v.id);
+    dlg.appendChild(el("div", "dlg-lbl", t("hh.sec")));
+    dlg.appendChild(el("p", "dlg-sub", s ? t("hh.in", { name: v.name, hh: s.hh }) : t("hh.share.x", { name: v.name })));
+    var row = el("div", "dlg-actions tight");
+    var b = button(t(s ? "hh.stop.t" : "hh.share.t"), "", function () { dlg.close(); hhAsk(); });
+    b.id = "gr-hh";
+    row.appendChild(b);
+    dlg.appendChild(row);
+  }
+  function hhAsk() {
+    var v = curVehicle();
+    if (!hhOn() || !v) return;
+    var s = hhOf(v.id), hhs = HS.households();
+    var dlg = makeDialog("gr-hhdlg");
+    dlg.appendChild(el("div", "dlg-title", t(s ? "hh.stop.t" : "hh.share.t")));
+    var big = !s && !GH.fits(pdata, v.id);
+    dlg.appendChild(el("p", "dlg-sub", s ? t("hh.stop.x", { name: v.name, hh: s.hh }) :
+      (big ? t("hh.big", { name: v.name }) : (hhs.length ? t("hh.share.x", { name: v.name }) : t("hh.nohh")))));
+    var sel = el("select");
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (!s && !big && hhs.length > 1) dlg.appendChild(field(t("hh.which"), sel, "gr-hhbox"));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.cancel"), "", function () { dlg.close(); }));
+    var ok = null;
+    if (big) {
+      ok = null;
+    } else if (!s && !hhs.length) {
+      ok = button(t("hh.open"), "primary", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = button(t(s ? "hh.stop.t" : "hh.go"), "primary", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; showToast(t("toast.hhFail")); };
+        if (!s) {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          var ids = GH.moved(pdata, v.id);
+          HS.share(box, v.name, GH.only(pdata, v.id)).then(function () {
+            var now = Date.now(), d = JSON.parse(JSON.stringify(pdata));
+            ids.forEach(function (id) {
+              var row = null;
+              ["vehicles", "fuel", "service", "plans", "tyres", "renewals", "costs", "odo"].forEach(function (k) {
+                row = row || d[k].filter(function (r) { return r.id === id; })[0] || null;
+              });
+              d.tombs[id] = Math.max(now, row ? row.m + 1 : 0, d.tombs[id] || 0);
+            });
+            pdata = canonical(d);
+            saveOwn();
+            hhView();
+            dlg.close();
+            render();
+            showToast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        HS.unshare(s.key).then(function () {
+          hhView();
+          dlg.close();
+          render();
+          showToast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    if (ok) { ok.id = "gr-hhok"; acts.appendChild(ok); }
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued || !HS) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var before = JSON.stringify(data);
+      HS.inject();
+      hhView();
+      if (document.querySelector("dialog[open]")) return;      // what is being typed stays (SS-4)
+      if (JSON.stringify(data) !== before) render();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = HS && HS.api();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    document.addEventListener("close", function () { setTimeout(function () { if (!document.querySelector("dialog[open]")) hhRefresh(); }, 0); }, true);
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
 
   function loadPrefs() {
@@ -843,6 +1001,8 @@
       dot.style.background = COLORS[v.col];
       b.appendChild(dot);
       b.appendChild(el("span", "", vIcon(v)));
+      var hv = hhOf(v.id);
+      if (hv) { b.insertAdjacentHTML("beforeend", HH_SVG); b.title = t("hh.tag", { hh: hv.hh }); }
       b.appendChild(el("span", "", v.name));
       b.addEventListener("click", function () { prefs.vid = v.id; savePrefs(); render(); });
       bar.appendChild(b);
@@ -977,6 +1137,8 @@
     body.appendChild(sub);
     body.appendChild(el("div", "v-km", km !== null ? t("v.km", { km: fmtKm(km) }) : t("v.noKm")));
     if (v.arch) body.appendChild(el("div", "archived-note", t("v.archived")));
+    var hs = hhOf(v.id);
+    if (hs) body.appendChild(el("div", "v-hh", t("hh.tag", { hh: hs.hh })));
     card.appendChild(body);
     var acts = el("div", "v-acts");
     var eb = el("button", "txt-btn", t("v.edit"));
@@ -2626,6 +2788,7 @@
     va.appendChild(button(t("btn.vehicles"), "", function () { dlg.close(); vehiclesDialog(); }));
     va.appendChild(button(t("set.addVehicle"), "", function () { dlg.close(); vehicleEditor(null); }));
     dlg.appendChild(va);
+    hhSettings(dlg);
     dlg.appendChild(el("div", "dlg-lbl", t("set.data")));
     var io = el("div", "dlg-actions tight");
     io.style.flexWrap = "wrap";
@@ -3209,20 +3372,21 @@
     api.registerSlice("garage", sliceGet, sliceSet, STORAGE_KEY, mergeFn);
   }
 
-  function sliceGet() { return canonical(data); }   // canonical copy (R26)
+  function sliceGet() { return canonical(pdata); }   // canonical copy (R26) of the own data only
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.vehicles)) return;
-    var before = JSON.stringify(data);
+    var before = JSON.stringify(pdata);
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
-      data = canonical(incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      pdata = canonical(incoming);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata));
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
     }
-    if (JSON.stringify(data) === before) return;   // no toast (sync feedback = taskbar dot)
+    if (JSON.stringify(pdata) === before) return;   // no toast (sync feedback = taskbar dot)
+    hhView();
     render();
   }
 
@@ -3300,6 +3464,7 @@
     applyI18n();
     wire();
     registerSync();
+    hhBoot();
     inheritPalette();
     watchPalette();
     render();
