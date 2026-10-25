@@ -7985,7 +7985,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-25 — Household wave 7e: the family car (#PR) — 3.59.00
+### 2026-10-25 — Household wave 7e: the family car (#590) — 3.59.00
 - Wave 7e of the Household plan (Chris approved all of wave 7, 2026-10-24 23:14). Garage › (a vehicle) › Settings › Household › "Share with a household": the vehicle moves into the household with all its records; everyone who drives it logs in their own Garage and gets its reminders once (shell, Today, Calendar, Travel read it too). Settings stay private; a vehicle with more than 2900 records is refused. "Stop sharing" brings it back. BR-HH (Part VI).
 - Files: `garage/{house.js (new),garage.js,garage.css,index.html,today.js,help.*.txt}`, `calendar/{calendar.js,index.html}`, `travel/{travel.js,index.html}`, `index.html`, `shell.js` (APP_VERSION, garageCheckTick), `sw.js`, `i18n/de/{garage.js,help/garage.txt,STATUS.md}`, `tests/garage-house.test.js` (5), What's new, Bible.
 
