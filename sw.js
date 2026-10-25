@@ -1097,6 +1097,7 @@ var PRECACHE_URLS = [
   "petcare/index.html",
   "petcare/search.js",
   "petcare/core.js",
+  "petcare/house.js",
   "petcare/petcare.css",
   "petcare/petcare.js",
   "wheel/",

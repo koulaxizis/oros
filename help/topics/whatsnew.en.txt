@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.57.00
+- Pet Health Book: share your pets with your household. In Settings › Household, Share with a household gives everyone the same pets and health book: a vaccine, vet visit, dose or weight one person logs reaches everyone, and a shared pet reminds once. Your own book stays under Only mine.
+
 ## Version 3.56.00
 - Baby: two parents, one baby. In Settings › Household, Share with a household moves your children into the household: both parents log feeds, sleep and nappies on their own phone and see the same day, with initials on what the other logged. Units and reminders stay your own, and a shared child reminds once.
 

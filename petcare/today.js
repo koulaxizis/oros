@@ -48,9 +48,13 @@
 
   var PROVIDER = {
     id: "petcare",
-    keys: [KEY],
+    keys: [KEY, "oros-petcare-hh"],
     collect: function (ctx) {
-      var C = root.OrosPetcareCore, raw = ctx.readJSON(KEY);
+      var C = root.OrosPetcareCore, raw = ctx.readJSON(KEY), PH = root.OrosPetcareHouse;
+      if (PH) {                                   // shared books (BR-HH wave 7c): a shared pet once
+        var sets = PH.readMirror(ctx.readJSON(PH.MIRROR_KEY));
+        if (sets.length) raw = PH.union(raw && Array.isArray(raw.pets) ? raw : null, sets);
+      }
       if (!C || !raw || !Array.isArray(raw.pets) || !raw.pets.length) return [];
       var w = words(ctx.lang);
       var data = C.merge(raw, raw, ctx.now), out = [];
