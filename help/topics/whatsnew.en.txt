@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.62.01
+- Assistant: the same change to many items now comes in one card for up to 200 items (it was 50), so 119 Calendar events no longer need three cards. The card says on top what every item gets and shows the first 10; "Show all" lists the rest. One Apply, one Undo.
+
 ## Version 3.62.00
 - Household: a copy of every household you are in is now kept on your orOS disk (folder "Household backup") and travels to your cloud encrypted. If a household is ever gone, nothing is lost: start it again with everything in it, or bring its lists back to your apps.
 

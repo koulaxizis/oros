@@ -30,7 +30,8 @@
 
   var YMD = /^(\d{4})-(\d{2})-(\d{2})$/;
   var YM = /^(\d{4})-(\d{2})$/;
-  var MAX_CATS = 40, MAX_PROJECTS = 40, MAX_LISTS = 40, MAX_ITEMS = 60;
+  var MAX_CATS = 40, MAX_PROJECTS = 40, MAX_LISTS = 40, MAX_ITEMS = 60,
+      MAX_EVENTS = 200;   // calendarEvents (by label / month): as many as refs take
   // Apps with a summary of their own; any other app needs a Today provider.
   var OWN = { budget: "month", timesheet: "month", todo: "lists" };
 
@@ -260,9 +261,9 @@
     items.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.time || "") < (b.time || "") ? -1 : (a.time || "") > (b.time || "") ? 1 : 0; });
     if (opts.label) out.filter_label = want ? want.name : "none";
     if (opts.month) out.month = opts.month;
-    out.items = items.slice(0, MAX_ITEMS);
+    out.items = items.slice(0, MAX_EVENTS);
     out.listed = items.length;
-    if (items.length > MAX_ITEMS) out.more_items = items.length - MAX_ITEMS;
+    if (items.length > MAX_EVENTS) out.more_items = items.length - MAX_EVENTS;
     return out;
   }
 
