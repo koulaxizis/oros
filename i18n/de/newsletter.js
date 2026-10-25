@@ -865,5 +865,7 @@ orosPack("de", "newsletter", {
  "as.added": "{n} Blöcke hinzugefügt",
  "as.added1": "1 Block hinzugefügt",
  "as.cut": "({n} weitere passten nicht: Eine Ausgabe fasst 60 Blöcke.)",
- "as.none": "Nichts hinzuzufügen: Die Blöcke waren leer."
+ "as.none": "Nichts hinzuzufügen: Die Blöcke waren leer.",
+ "as.pic1": "Ein Bild konnte nicht von seiner Seite kopiert werden: Wähle es in seinem Block.",
+ "as.pics": "{n} Bilder konnten nicht von ihren Seiten kopiert werden: Wähle sie in ihren Blöcken."
 });
