@@ -344,6 +344,7 @@
       "chg.ask.many": "Change these {n} items in {app}?",
       "chg.textMany": "{name} asks to make the same change to {n} of your items. Check them: nothing changes until you press Apply.",
       "chg.many": "{n} items", "f.label": "Label",
+      "chg.sum": "Every one of the {n} items gets:", "chg.showAll": "Show all ({n} more)",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
       "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
@@ -620,6 +621,7 @@
       "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
       "chg.textMany": "Το {name} ζητά την ίδια αλλαγή σε {n} στοιχεία σου. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
       "chg.many": "{n} στοιχεία", "f.label": "Ετικέτα",
+      "chg.sum": "Και τα {n} στοιχεία παίρνουν:", "chg.showAll": "Δείξε όλες ({n} ακόμη)",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
       "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
@@ -2148,7 +2150,7 @@
     return Promise.resolve(search).then(function (groups) {
       var lf = label ? C.filterLabel(groups, label) : null;
       if (lf) groups = lf.groups;
-      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; }, { wide: !!label || ids.length === 1 });
+      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; }, { wide: !!label || ids.length === 1, label: !!label });
       var free = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "always"; });
       var ask = items.filter(function (it) { return byId[it.app] && byId[it.app].perm === "ask"; });
       var choice = ask.length ? askConsent(shown, ask) : Promise.resolve({ chosen: [], always: [] });
@@ -2337,7 +2339,7 @@
   // Apply, one write. Every item is checked again on Apply against
   // what the card showed; if any one changed meanwhile or no longer
   // fits, nothing is written. Undo takes all of them back, or none.
-  var MANY_MAX = 50;
+  var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
   function changeMany(c, args, apps) {
     if (args.action !== "update") return Promise.resolve({ content: "Error: refs is only for update; change other things one item at a time with ref.", err: 1 });
     if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
@@ -2471,15 +2473,44 @@
   function chgRows(rows) {
     return Array.isArray(rows) ? rows.filter(function (x) { return x && typeof x.f === "string" && /^[a-z]{1,12}$/.test(x.f); }) : [];
   }
-  // A batch (refs): each item's title and its own before → after.
+  // A batch (refs): first what every item gets (the "after" values all
+  // items share), then each item's title and its own before → after;
+  // past CHG_SHOWN items the rest wait behind "Show all".
+  var CHG_SHOWN = 10;
+  function chgShared(list) {
+    var first = list.length ? chgRows(list[0].rows) : [];
+    return first.filter(function (row) {
+      return list.every(function (m) {
+        return chgRows(m.rows).some(function (x) { return x.f === row.f && JSON.stringify(x.a) === JSON.stringify(row.a); });
+      });
+    });
+  }
   function chgList(host, many) {
+    var list = (Array.isArray(many) ? many : []).filter(Boolean);
+    var shared = chgShared(list);
+    if (list.length > 1 && shared.length) {
+      var sum = el("div", "chg-sum");
+      sum.appendChild(el("p", "dlg-hint", t("chg.sum", { n: list.length })));
+      var ul = el("ul");
+      shared.forEach(function (row) { ul.appendChild(el("li", "", t("f." + row.f) + " → " + chgValue(row.f, row.a))); });
+      sum.appendChild(ul);
+      host.appendChild(sum);
+    }
     var box = el("div", "chg-many");
-    (Array.isArray(many) ? many : []).forEach(function (m) {
-      if (!m) return;
+    function add(m) {
       if (m.title) box.appendChild(el("p", "entry-title", String(m.title)));
       box.appendChild(chgTable(chgRows(m.rows), false));
-    });
+    }
+    list.slice(0, CHG_SHOWN).forEach(add);
     host.appendChild(box);
+    if (list.length > CHG_SHOWN) {
+      var more = button(t("chg.showAll", { n: list.length - CHG_SHOWN }), "", function () {
+        more.remove();
+        list.slice(CHG_SHOWN).forEach(add);
+      });
+      more.classList.add("chg-more");
+      host.appendChild(more);
+    }
   }
   // The confirm card. → Promise<bool>
   function askChange(appName, pl, action) {

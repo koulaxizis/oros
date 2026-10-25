@@ -36,7 +36,7 @@ When a question needs your data, the assistant searches your apps, much like the
 
 In the answer, titles in the accent colour are links: tap one to open that item in its app. A grey line above the answer shows what was searched and what you shared.
 
-Each result also shows its labels (tags in Bookmarks and Media Shelf), and for a task whether it is done and its priority. So you can ask "which tasks have no label?" or "show my cards with the label Bug": the assistant then lists every such item of the apps that have labels (To-Do, Calendar, Kanban, Contacts, Notes, Bookmarks, Media Shelf), up to 50 per app. Labels are changed only to ones you already have (tags in Bookmarks are free words); new labels are made in the app.
+Each result also shows its labels (tags in Bookmarks and Media Shelf), and for a task whether it is done and its priority. So you can ask "which tasks have no label?" or "show my cards with the label Bug": the assistant then lists every such item of the apps that have labels (To-Do, Calendar, Kanban, Contacts, Notes, Bookmarks, Media Shelf), up to 200 per app. Labels are changed only to ones you already have (tags in Bookmarks are free words); new labels are made in the app.
 
 When a short result is not enough, the assistant may ask for the whole item, for example a long note. For an app set to `Ask first` you see one more card with the beginning of the item and its size; press `Share` or `Don't share`.
 
@@ -76,7 +76,7 @@ Ask, for example, "mark the plumber call as done", "move the dentist to Friday a
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
 - After a change the card says what happened and has `Undo`. Undo works until you leave the Assistant; after that, change it back in the app itself.
 - If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
-- The same change to several items (for example "give every event without a label the label Work") comes as one card that lists each item; one `Apply` changes them all, and `Undo` takes them all back.
+- The same change to several items (for example "give every event without a label the label Work") comes as one card, up to 200 items: on top what every item gets, then the first 10 items (`Show all` lists the rest); one `Apply` changes them all, and `Undo` takes them all back.
 
 What it can change:
 - [To-Do](app:todo): mark a task done or not done, move its date, rename it, change its note, labels or priority, delete it.

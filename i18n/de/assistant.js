@@ -81,6 +81,8 @@ orosPack("de", "assistant", {
  "chg.ask.many": "Diese {n} Einträge in {app} ändern?",
  "chg.textMany": "{name} möchte {n} deiner Einträge auf dieselbe Weise ändern. Prüfe sie: Nichts ändert sich, bevor du auf Übernehmen tippst.",
  "chg.many": "{n} Einträge",
+ "chg.sum": "Alle {n} Einträge bekommen:",
+ "chg.showAll": "Alle zeigen ({n} weitere)",
  "f.label": "Label",
  "f.priority": "Priorität",
  "lbl.search": "Label: {label}",

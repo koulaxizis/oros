@@ -103,10 +103,10 @@ test("calendar summary: a month lists that month's events (a repeating one from 
 
 test("calendar summary: more than the cap is counted, not sent", () => {
   const d = cal();
-  for (let i = 0; i < 70; i++) d.events.push({ id: "n" + i, date: "2025-01-" + String(1 + (i % 28)).padStart(2, "0"), title: "N" + i, mtime: 1 });
+  for (let i = 0; i < 210; i++) d.events.push({ id: "n" + i, date: "2025-01-" + String(1 + (i % 28)).padStart(2, "0"), title: "N" + i, mtime: 1 });
   const s = S.calendarEvents(d, { label: "none" });
-  assert.equal(s.items.length, 60);
-  assert.equal(s.listed, 73);
+  assert.equal(s.items.length, 200);
+  assert.equal(s.listed, 213);
   assert.equal(s.more_items, 13);
 });
 
@@ -279,7 +279,7 @@ test("search hits carry labels and the hidden fields: To-Do, Kanban, Contacts, N
   assert.equal(S2.cleanHit({ title: "x" }).labels, undefined);
 });
 
-test("label filter: none, a name with its seed names, apps without labels drop out, 50 per app", () => {
+test("label filter: none, a name with its seed names, apps without labels drop out, 200 per app", () => {
   assert.equal(C.labelHit([], "none"), true);
   assert.equal(C.labelHit(["Work"], "none"), false);
   assert.equal(C.labelHit(["Εργασία"], "work"), true);
@@ -287,12 +287,13 @@ test("label filter: none, a name with its seed names, apps without labels drop o
   assert.equal(C.labelHit(["Workout"], "work"), false);
   assert.equal(C.labelHit(undefined, "none"), false);
   const hits = [];
-  for (let i = 0; i < 60; i++) hits.push({ id: "h" + i, title: "E" + i, text: "", labels: [] });
+  for (let i = 0; i < 210; i++) hits.push({ id: "h" + i, title: "E" + i, text: "", labels: [] });
   const f = C.filterLabel([{ id: "calendar", hits }, { id: "files", hits: [{ id: "f", title: "doc" }] }], "none");
   assert.deepEqual(f.apps, ["calendar"]);
   assert.deepEqual(f.more, { calendar: 10 });
-  const packed = C.packHits(f.groups, (id) => id, { wide: true });
-  assert.equal(packed.length, 50);
+  const packed = C.packHits(f.groups, (id) => id, { wide: true, label: true });
+  assert.equal(packed.length, 200);
+  assert.equal(C.packHits(f.groups, (id) => id, { wide: true }).length, 50);
   assert.equal(C.packHits(f.groups, (id) => id).length, 8);
   const res = JSON.parse(C.searchResult("", packed.slice(0, 1).map((x) => Object.assign(x, { ref: "r1" })), { label: "none", more: { Calendar: 10 }, noLabels: ["Files"] }));
   assert.equal(res.label, "none");
@@ -307,4 +308,26 @@ test("shell: the Assistant's search has an all-items mode for the label filter",
   const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
   assert.match(src, /orosAssistSearch\(q, ids, \{ all: !q \}\)/);
   assert.match(src, /C\.filterLabel\(groups, label\)/);
+});
+
+// ---------- 200 in one card (Chris 2026-10-25) ----------
+test("refs take up to 200; label lists and calendar lists reach 200; the card sums up and shows 10 first", () => {
+  const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(src, /var MANY_MAX = 200;/);
+  assert.match(src, /var CHG_SHOWN = 10;/);
+  assert.match(src, /"chg\.showAll":/);
+  assert.match(src, /label: !!label \}\);/);
+  const C2 = C;
+  assert.equal(C2.WIDE, 50);
+  assert.equal(C2.LABEL_WIDE, 200);
+  const g = [{ id: "calendar", hits: Array.from({ length: 250 }, (_, i) => ({ id: "e" + i, title: "E" + i, text: "", labels: [] })) }];
+  assert.equal(C2.packHits(g, (x) => x, { wide: true, label: true }).length, 200);
+  assert.equal(C2.packHits(g, (x) => x, { wide: true }).length, 50);
+  const f = C2.filterLabel(g, "none");
+  assert.equal(f.more.calendar, 50);
+  const S2 = S;
+  const events = Array.from({ length: 230 }, (_, i) => ({ id: "e" + i, title: "E" + i, date: "2026-11-" + String(1 + (i % 28)).padStart(2, "0") }));
+  const out = S2.calendarEvents({ events: events, labels: [] }, { label: "none" });
+  assert.equal(out.items.length, 200);
+  assert.equal(out.more_items, 30);
 });
