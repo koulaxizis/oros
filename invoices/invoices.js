@@ -2174,10 +2174,11 @@
     $("bills-sum").hidden = !ks.length;
     $("bills-sum").textContent = ks.length ? t("bl.owedSum", { a: ks.map(function (k) { return money(sums[k], k); }).join(" + "), n: n }) : "";
   }
-  function billDialog(id) {
+  // pre (a new bill only): { crm, name, afm } from the CRM partner card
+  function billDialog(id, pre) {
     var b = id ? C.bill(data, id) : null;
     if (id && !b) return;
-    var src = b || { sup: { name: "", afm: "" }, cur: data.prof.cur || "EUR", date: todayKey() };
+    var src = b || { sup: { name: pre ? pre.name : "", afm: pre ? pre.afm : "" }, crm: pre ? pre.crm : "", cur: data.prof.cur || "EUR", date: todayKey() };
     var dlg = makeDialog("inv-bill", t("bl.title"));
     dlg.classList.add("wide");
     var form = el("form");
@@ -4212,6 +4213,8 @@
   //   { client: { id? | crm? | afm? | name? } }   that client's documents
   //   { bills: { crm?, afm? } } the Received tab, of one CRM partner when
   //                           given (CRM partner card); { bill: id } one
+  //   { newBill: { crm?, name?, afm? } } a new received invoice from that
+  //                           partner (CRM partner card), saved only on Save
   //   { openFile: { token } } "Open with" an .orosinvoices file
   //                           (fileopen.js): the File taken once with
   //                           window.parent.__orosTakeFile(token)
@@ -4246,6 +4249,13 @@
                      name: typeof tg.bills.name === "string" ? tg.bills.name.slice(0, 120) : "" };
       if (!billFilter.crm && !billFilter.afm) billFilter = null;
       setTab("bills");
+      return;
+    }
+    if (tg.newBill && typeof tg.newBill === "object") {
+      if (view === "edit" && ed && ed.dirty) return;
+      var nb = tg.newBill, str = function (v, n) { return typeof v === "string" ? v.trim().slice(0, n) : ""; };
+      setTab("bills");
+      billDialog(null, { crm: /^[A-Za-z0-9_-]{1,60}$/.test(nb.crm || "") ? nb.crm : "", name: str(nb.name, C.LIM.name), afm: str(nb.afm, 60) });
       return;
     }
     if (typeof tg.bill === "string") {

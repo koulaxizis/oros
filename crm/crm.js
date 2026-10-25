@@ -119,6 +119,15 @@
       "ov.work": "Work", "ov.workLine": "Not billed yet: {h} · {v}", "ov.workNone": "Everything billed", "ov.h": "{n} h",
       "ov.pub": "Publishing", "ov.titles": "Titles: {n}", "ov.royDue": "Royalties due: {v}", "ov.adv": "Advance still to earn back: {v}",
       "ov.rel": "Relationship", "ov.deals": "Open deals: {n} · {v}", "ov.open": "Open",
+      "ac.bill": "+ Received invoice", "ac.order": "+ Order", "ac.settle": "Settlement", "ac.hours": "Hours", "ac.roy": "Royalties", "ac.folder": "Folder",
+      "ct.sec": "Contracts", "ct.add": "+ Contract", "ct.none": "No contracts. Add one to keep its end day and be reminded in time.",
+      "ct.new": "New contract", "ct.edit": "Contract", "ct.t": "Title", "ct.tPh": "Consignment agreement", "ct.from": "Starts", "ct.to": "Ends",
+      "ct.rem": "Remind me", "ct.remN": "{n} days before the end", "ct.rem0": "On the last day", "ct.val": "Value ({c})", "ct.note": "Note",
+      "ct.file": "File", "ct.attach": "Attach a file…", "ct.openFile": "Open the file", "ct.detach": "Detach (the file stays in Files)", "ct.pending": "Saved to Files on Save: {n}", "ct.unpick": "Don't attach",
+      "ct.until": "Until {d}", "ct.noEnd": "No end day", "ct.soon": "Ends {d}", "ct.ended": "Ended {d}", "ct.fromD": "from {d}",
+      "ct.fup": "Contract ends: {t} ({d})", "ct.fupHint": "With an end day, a follow-up reminds you in Agenda, Today, Calendar and notifications.",
+      "ct.toBad": "The end is before the start.",
+      "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
       "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
       "docs.invNone": "No invoices yet. Invoices you issue with the Invoice button show up here.",
@@ -270,6 +279,15 @@
       "ov.work": "Εργασία", "ov.workLine": "Δεν έχουν χρεωθεί: {h} · {v}", "ov.workNone": "Όλα χρεωμένα", "ov.h": "{n} ώρ.",
       "ov.pub": "Εκδόσεις", "ov.titles": "Τίτλοι: {n}", "ov.royDue": "Δικαιώματα προς πληρωμή: {v}", "ov.adv": "Προκαταβολή που δεν έχει καλυφθεί: {v}",
       "ov.rel": "Σχέση", "ov.deals": "Ανοιχτές ευκαιρίες: {n} · {v}", "ov.open": "Άνοιγμα",
+      "ac.bill": "+ Λαμβανόμενο τιμολόγιο", "ac.order": "+ Παραγγελία", "ac.settle": "Εκκαθάριση", "ac.hours": "Ώρες", "ac.roy": "Δικαιώματα", "ac.folder": "Φάκελος",
+      "ct.sec": "Συμβάσεις", "ct.add": "+ Σύμβαση", "ct.none": "Καμία σύμβαση. Πρόσθεσε μία για να κρατάς τη λήξη της και να σου θυμίζει εγκαίρως.",
+      "ct.new": "Νέα σύμβαση", "ct.edit": "Σύμβαση", "ct.t": "Τίτλος", "ct.tPh": "Σύμβαση παρακαταθήκης", "ct.from": "Έναρξη", "ct.to": "Λήξη",
+      "ct.rem": "Υπενθύμιση", "ct.remN": "{n} ημέρες πριν τη λήξη", "ct.rem0": "Την τελευταία ημέρα", "ct.val": "Αξία ({c})", "ct.note": "Σημείωση",
+      "ct.file": "Αρχείο", "ct.attach": "Επισύναψη αρχείου…", "ct.openFile": "Άνοιγμα αρχείου", "ct.detach": "Αποσύνδεση (το αρχείο μένει στα Αρχεία)", "ct.pending": "Αποθηκεύεται στα Αρχεία με την Αποθήκευση: {n}", "ct.unpick": "Χωρίς αρχείο",
+      "ct.until": "Έως {d}", "ct.noEnd": "Χωρίς λήξη", "ct.soon": "Λήγει {d}", "ct.ended": "Έληξε {d}", "ct.fromD": "από {d}",
+      "ct.fup": "Λήξη σύμβασης: {t} ({d})", "ct.fupHint": "Με ημέρα λήξης, ένα follow-up σου το θυμίζει στην Ατζέντα, στο Σήμερα, στο Ημερολόγιο και στις ειδοποιήσεις.",
+      "ct.toBad": "Η λήξη είναι πριν την έναρξη.",
+      "toast.ctrDel": "Η σύμβαση διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
       "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
       "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
@@ -588,7 +606,8 @@
     var kids = {
       deals: data.deals.filter(function (d) { return d.cust === c.id; }),
       acts: data.acts.filter(function (a) { return a.cust === c.id; }),
-      fups: data.fups.filter(function (f) { return f.cust === c.id; })
+      fups: data.fups.filter(function (f) { return f.cust === c.id; }),
+      ctr: (data.ctr || []).filter(function (k) { return k.cust === c.id; })
     };
     var pt = C.ptOf(data, c.id);
     tomb(c.id);
@@ -598,7 +617,8 @@
       delete data.tombs[c.id];
       var back = Object.assign({}, c, { m: stamp(c) });
       data.cust.push(back);
-      ["deals", "acts", "fups"].forEach(function (k) {
+      if (kids.ctr.length && !data.ctr) data.ctr = [];
+      ["deals", "acts", "fups", "ctr"].forEach(function (k) {
         kids[k].forEach(function (r) {
           if (!C.byId(data[k], r.id)) data[k].push(Object.assign({}, r, { m: stamp(r) }));
         });
@@ -890,6 +910,7 @@
       row.appendChild(m);
       s.appendChild(row);
     }
+    overviewActions(pane, c, x);
     // money, both ways
     var sm = sec(t("ov.money"));
     var ins = Object.keys(x.money["in"]), outs = Object.keys(x.money.out);
@@ -953,10 +974,227 @@
         t("ov.budAll", { n: x.budget.n, i: curMoney(x.budget.all.i, x.budget.cur), o: curMoney(x.budget.all.o, x.budget.cur) }));
     }
     if (!C.linksOf(data, c).length && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
+    renderContracts(pane, c);
     // the relationship itself
     var sr = sec(t("ov.rel"));
     line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));
     if (x.crm.deals) line(sr, t("ov.deals", { n: x.crm.deals, v: money(x.crm.val) }));
+  }
+
+  // ----- Actions, contracts and the partner folder (partner card W4) -----
+  // Each action opens the other app where the work is done; nothing is
+  // written there from here (prefills are saved only in that app).
+  function overviewActions(pane, c, x) {
+    var row = el("div", "chips ov-acts");
+    function chip(label, fn) {
+      var b = el("button", "txt-btn", label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      row.appendChild(b);
+    }
+    if (C.hasRole(data, c, "sup") || x.bills.n) chip(t("ac.bill"), function () { openIn("invoices", { newBill: { crm: c.id, name: c.name, afm: c.afm || "" } }); });
+    x.sups.slice(0, 3).forEach(function (r) { chip(t("ac.order") + (x.sups.length > 1 ? " · " + r.name : ""), function () { openIn("stock", { sup: r.id }); }); });
+    if (x.shops.length) chip(t("ac.settle"), function () { openIn("stock", { view: "cons" }); });
+    x.work.slice(0, 3).forEach(function (r) { chip(t("ac.hours") + (x.work.length > 1 ? " · " + r.name : ""), function () { openIn("timesheet", { client: r.id }); }); });
+    if (x.pub.titles.length || C.hasRole(data, c, "auth")) chip(t("ac.roy"), function () { openIn("publish", { view: "roy" }); });
+    if (diskApi()) chip(t("ac.folder"), function () { openFolder(c); });
+    if (row.firstChild) pane.appendChild(row);
+  }
+  function diskApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.write === "function" && typeof f.stat === "function" && typeof f.mkdir === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  // /internal/CRM/<partner name>: a plain folder in Files, made on demand
+  function folderOf(c) {
+    var n = String(c.name || "").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/^[\s.-]+|[\s.]+$/g, "").slice(0, 60);
+    return "/internal/CRM/" + (n || c.id);
+  }
+  function openFolder(c) {
+    var fs = diskApi(), dir = folderOf(c);
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    Promise.resolve(fs.stat(dir)).catch(function () { return null; }).then(function (st) {
+      return st ? null : Promise.resolve(fs.mkdir("/internal/CRM")).catch(function () {}).then(function () { return fs.mkdir(dir); });
+    }).then(function () { openIn("files", { path: dir, dir: true }); }, function () { showToast(t("toast.noDisk")); });
+  }
+  // A file never replaces another: "name (2).ext" when the name is taken.
+  function freePath(fs, dir, name) {
+    var dot = name.lastIndexOf("."), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+    function attempt(i) {
+      var p = dir + "/" + (i > 1 ? base + " (" + i + ")" : base) + ext;
+      return Promise.resolve(fs.stat(p)).catch(function () { return null; }).then(function (st) { return st && i < 50 ? attempt(i + 1) : p; });
+    }
+    return attempt(1);
+  }
+  function fileName(f) {
+    var n = String(f && f.name || "file").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/^[\s.]+/, "").slice(-100);
+    return n || "file";
+  }
+  function ctrLine(k, today) {
+    var st = C.ctrState(k, today), bits = [];
+    if (k.from) bits.push(t("ct.fromD", { d: fmtDate(k.from) }));
+    if (k.val) bits.push(money(k.val));
+    if (k.file) bits.push(k.file.split("/").pop());
+    return { st: st, title: st === "ended" ? t("ct.ended", { d: fmtDate(k.to) }) : (st === "soon" ? t("ct.soon", { d: fmtDate(k.to) }) : (k.to ? t("ct.until", { d: fmtDate(k.to) }) : t("ct.noEnd"))),
+             sub: bits.join(" · ") };
+  }
+  function renderContracts(pane, c) {
+    var s = el("div", "sec"), h = secHead(t("ct.sec")), today = todayYmd();
+    h.appendChild(el("span", "spacer"));
+    var add = el("button", "link-btn", t("ct.add"));
+    add.type = "button";
+    add.addEventListener("click", function () { ctrEditor(null, c); });
+    h.appendChild(add);
+    s.appendChild(h);
+    var list = C.contractsOf(data, c.id, today);
+    if (!list.length) s.appendChild(el("p", "hint", t("ct.none")));
+    list.forEach(function (k) {
+      var l = ctrLine(k, today);
+      var row = el("button", "person ctr-row" + (l.st === "ended" ? " ended" : ""));
+      row.type = "button";
+      row.addEventListener("click", function () { ctrEditor(k, c); });
+      var m = el("span", "row-main");
+      m.appendChild(el("span", "row-title", k.t));
+      m.appendChild(el("span", "row-sub" + (l.st === "soon" ? " late" : ""), [l.title, l.sub].filter(Boolean).join(" · ")));
+      row.appendChild(m);
+      s.appendChild(row);
+    });
+    pane.appendChild(s);
+  }
+  // A row written without commit (the caller commits once for all).
+  function putRow(key, row) {
+    if (!data[key]) data[key] = [];
+    var list = data[key], prev = C.byId(list, row.id), next = Object.assign({}, row);
+    next.m = stamp(prev);
+    if (data.tombs[next.id] && data.tombs[next.id] >= next.m) next.m = data.tombs[next.id] + 1;
+    if (prev) list[list.indexOf(prev)] = next; else list.push(next);
+    return next;
+  }
+  // The contract and the follow-up that reminds of its end, in one write.
+  // The follow-up is an ordinary one (Agenda, Today, Calendar, reminders):
+  // moved with the end day while open, a new one when the end changes
+  // after it was done, removed when the end day is taken away.
+  function saveCtr(r, prev) {
+    var today = todayYmd(), cur = r.fup ? C.byId(data.fups, r.fup) : null;
+    if (r.fup && !cur) delete r.fup;
+    if (r.to && r.to >= today) {
+      var day = C.ctrRemindDay(r);
+      if (day < today) day = today;
+      var text = C.cleanText(t("ct.fup", { t: r.t, d: fmtDate(r.to) }), 300);
+      if (cur && !cur.done) {
+        if (cur.d !== day || cur.text !== text || cur.cust !== r.cust) putRow("fups", Object.assign({}, cur, { d: day, text: text, cust: r.cust }));
+      } else if (!cur || !prev || prev.to !== r.to || prev.rem !== r.rem) {
+        var f = putRow("fups", { id: C.newId(Date.now()), cust: r.cust, d: day, text: text });
+        r.fup = f.id;
+      }
+    } else if (!r.to && cur && !cur.done) {
+      tomb(cur.id);
+      delete r.fup;
+    }
+    putRow("ctr", r);
+    return commit();
+  }
+  function removeCtr(k) {
+    var f = k.fup ? C.byId(data.fups, k.fup) : null;
+    tomb(k.id);
+    if (f && !f.done) tomb(f.id); else f = null;
+    if (!commit()) return;
+    undoToast(t("toast.ctrDel"), function () {
+      delete data.tombs[k.id];
+      putRow("ctr", k);
+      if (f) { delete data.tombs[f.id]; putRow("fups", f); }
+      commit();
+    });
+  }
+  function openCtrFile(path) {
+    if (!diskApi()) { showToast(t("toast.noDisk")); return; }
+    openIn("files", { path: path });
+  }
+  function ctrEditor(k, c) {
+    var dlg = makeDialog("crm-ctr", true);
+    var x = k ? Object.assign({}, k) : { cust: c.id, t: "", rem: 30 };
+    dlg.appendChild(el("h2", "dlg-title", t(k ? "ct.edit" : "ct.new") + " · " + c.name));
+    var title = field(dlg, t("ct.t"), inp("text", x.t, 120, t("ct.tPh")));
+    var err = errorHint(dlg);
+    dlg.appendChild(err);
+    var row = el("div", "fld-row");
+    dlg.appendChild(row);
+    var from = field(row, t("ct.from"), inp("date", x.from || "", 10));
+    var to = field(row, t("ct.to"), inp("date", x.to || "", 10));
+    var row2 = el("div", "fld-row");
+    dlg.appendChild(row2);
+    var rems = [0, 7, 14, 30, 60, 90];
+    if (rems.indexOf(x.rem) < 0) rems.push(x.rem);
+    var rem = field(row2, t("ct.rem"), selectEl(rems.sort(function (a, b) { return a - b; }).map(function (n) {
+      return [String(n), n ? t("ct.remN", { n: n }) : t("ct.rem0")];
+    }), String(x.rem)));
+    var val = field(row2, t("ct.val", { c: data.prefs.cur }), inp("text", x.val ? (x.val / 100).toLocaleString(LOCALE) : "", 20));
+    val.inputMode = "decimal";
+    dlg.appendChild(el("p", "hint", t("ct.fupHint")));
+    var note = field(dlg, t("ct.note"), area(x.note || "", 2000));
+    // the file: picked here, written to the partner's folder only on Save
+    var pending = null, fileBox = el("div", "ctr-file");
+    function linkBtn(label, fn) {
+      var b = el("button", "link-btn", label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      fileBox.appendChild(b);
+    }
+    dlg.appendChild(el("span", "dlg-lbl", t("ct.file")));
+    dlg.appendChild(fileBox);
+    function drawFile() {
+      fileBox.innerHTML = "";
+      if (x.file) {
+        linkBtn(t("ct.openFile") + " · " + x.file.split("/").pop(), function () { dlg.close(); openCtrFile(x.file); });
+        linkBtn(t("ct.detach"), function () { delete x.file; drawFile(); });
+      } else if (pending) {
+        fileBox.appendChild(el("p", "hint", t("ct.pending", { n: fileName(pending) })));
+        linkBtn(t("ct.unpick"), function () { pending = null; drawFile(); });
+      } else if (diskApi()) {
+        linkBtn(t("ct.attach"), function () {
+          var host = dialogHost(), acc = ".pdf,application/pdf,image/*,.odt,.docx,.txt";
+          var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPick(acc);
+          Promise.resolve(pick).then(function (f) {
+            if (!f) return;
+            if (f.size > 20 * 1024 * 1024) { showToast(t("toast.fileBig")); return; }
+            pending = f;
+            drawFile();
+          }, function () {});
+        });
+      } else fileBox.appendChild(el("p", "hint", t("toast.noDisk")));
+    }
+    drawFile();
+
+    function save() {
+      var tt = C.cleanText(title.value, 120);
+      if (!tt) { err.textContent = t("ed.titleReq"); err.hidden = false; title.focus(); return; }
+      var cents = val.value.trim() ? C.parseMoney(val.value) : 0;
+      if (cents === null) { err.textContent = t("ed.valBad"); err.hidden = false; val.focus(); return; }
+      if (C.isYmd(from.value) && C.isYmd(to.value) && to.value < from.value) { err.textContent = t("ct.toBad"); err.hidden = false; to.focus(); return; }
+      var r = Object.assign({}, k || { id: C.newId(Date.now()), cust: c.id }, {
+        t: tt, from: C.isYmd(from.value) ? from.value : "", to: C.isYmd(to.value) ? to.value : "",
+        rem: +rem.value || 0, val: cents, note: C.cleanText(note.value, 2000, true)
+      });
+      ["from", "to", "val", "note"].forEach(function (f) { if (!r[f]) delete r[f]; });
+      if (x.file) r.file = x.file; else delete r.file;
+      dlg.close();
+      if (!pending) { saveCtr(r, k); return; }
+      var fs = diskApi(), dir = folderOf(c);
+      if (!fs) { showToast(t("toast.noDisk")); saveCtr(r, k); return; }
+      freePath(fs, dir, fileName(pending)).then(function (p) {
+        return fs.write(p, pending).then(function () { return p; });
+      }).then(function (p) {
+        r.file = p;
+        // the dialog was closed: re-read what is stored now before the write
+        var now = C.byId(data.ctr || [], r.id);
+        if (now && k && now.m !== k.m) r = Object.assign({}, now, { file: p });
+        if (saveCtr(r, k)) showToast(t("toast.fileSaved", { p: p.replace(/^\/internal\//, "") }));
+      }, function () { showToast(t("toast.noDisk")); saveCtr(r, k); });
+    }
+    actions(dlg, save, k ? function () { dlg.close(); removeCtr(k); } : null);
+    showDialog(dlg);
+    title.focus();
   }
 
   function whyText(w) { return w ? t("lk.why." + w) : ""; }

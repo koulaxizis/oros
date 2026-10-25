@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.5.0)
+// orOS CRM — core.js (shared logic, v1.6.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -55,9 +55,13 @@
 //     "tsc:<id>"|"inv:<id>"|"pub:<folded name>"] }] links to records of
 //     Stock, Timesheet, Invoices and Publishing. CRM writes only its
 //     own data: the other apps are read, never changed.
+//   Contracts (partner card W4): normCtr, ctrRemindDay(c) → the
+//     reminder day, contractsOf(data, custId, today), ctrState(c, today)
+//     → "on" | "soon" | "ended"; ctr?: [{ id, m, cust, t, from?, to?,
+//     rem, val?, note, file?, fup? }] (see normCtr).
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
-//     sorted by id, pt?: partners (1.5), prefs: { pm, cur, forget }, wf?: web form,
+//     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), prefs: { pm, cur, forget }, wf?: web form,
 //     tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
@@ -73,7 +77,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -81,7 +85,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -403,7 +407,48 @@
     return o;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt };
+  // Contracts (partner card W4, 1.6): a top-level list like pt, written
+  // only when it has rows (an older CRM drops it on its own merge and
+  // the next union brings it back). { id, m, cust, t (title), from?,
+  // to? (the day it ends), rem (days before to for the reminder),
+  // val? (cents), note, file? (/internal/ path on the orOS disk),
+  // fup? (the follow-up that reminds of the end: an ordinary fup, so
+  // Today, the agenda, Calendar and notifications need nothing new) }
+  var FILE_RE = /^\/internal\/[^\u0000-\u001f]{1,300}$/;
+  function normCtr(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x) || !ID_RE.test(x.cust)) return null;
+    var title = str(x, "t", 120);
+    if (!title) return null;
+    var o = { id: x.id, m: x.m, cust: x.cust, t: title };
+    if (isYmd(x.from)) o.from = x.from;
+    if (isYmd(x.to)) o.to = x.to;
+    o.rem = isInt(x.rem) && x.rem >= 0 && x.rem <= 365 ? x.rem : 30;
+    if (isInt(x.val) && x.val > 0 && x.val <= VAL_MAX) o.val = x.val;
+    put(o, "note", str(x, "note", 2000, true));
+    if (typeof x.file === "string" && FILE_RE.test(x.file) && x.file.indexOf("/../") < 0) o.file = x.file;
+    if (typeof x.fup === "string" && ID_RE.test(x.fup)) o.fup = x.fup;
+    return o;
+  }
+  // The day the end is to be remembered ("" without an end day).
+  function ctrRemindDay(c) { return c && c.to ? addDays(c.to, -(c.rem || 0)) : ""; }
+  // One partner's contracts: the running ones by end day, then the
+  // ones without an end, then the ended ones (newest first).
+  function contractsOf(data, custId, today) {
+    return (data.ctr || []).filter(function (c) { return c.cust === custId; }).sort(function (a, b) {
+      var ea = a.to && a.to < today ? 2 : (a.to ? 0 : 1), eb = b.to && b.to < today ? 2 : (b.to ? 0 : 1);
+      if (ea !== eb) return ea - eb;
+      if (ea === 2) return cmpStr(b.to, a.to) || cmpStr(a.id, b.id);
+      return cmpStr(a.to || "", b.to || "") || cmpStr(a.t, b.t) || cmpStr(a.id, b.id);
+    });
+  }
+  // A contract's state: "ended" | "soon" (the reminder day has come) | "on"
+  function ctrState(c, today) {
+    if (c.to && c.to < today) return "ended";
+    if (c.to && ctrRemindDay(c) <= today) return "soon";
+    return "on";
+  }
+
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -496,7 +541,7 @@
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      if (k !== "pt" || list.length) out[k] = list;
+      if ((k !== "pt" && k !== "ctr") || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
@@ -1010,6 +1055,7 @@
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
+    normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };
