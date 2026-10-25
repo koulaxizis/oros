@@ -106,7 +106,16 @@
       "afm.ok": "valid", "afm.bad": "check digit does not match",
       "people.add": "+ Person", "people.none": "No people yet. Link someone from Contacts or add a name.",
       "people.open": "Open in Contacts", "people.gone": "removed from Contacts",
-      "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups", "sub.docs": "Documents",
+      "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups", "sub.docs": "Documents", "sub.ov": "Overview",
+      "ov.none": "Nothing in other apps yet. Link this record's supplier, shop, client or titles under In other apps.",
+      "ov.money": "Money", "ov.in": "Owes you {v}", "ov.overdue": "overdue {v}", "ov.out": "You owe {v}",
+      "ov.outRoy": "royalties, statements: {n}", "ov.even": "Nothing open.",
+      "ov.shops": "Consignment", "ov.shopLine": "Products: {p} · pieces: {q} · {v} at sale price", "ov.shopEmpty": "Nothing on the shelf now",
+      "ov.last": "Last settled {d}", "ov.never": "Not settled yet", "ov.due": "Settlement due since {d}",
+      "ov.sups": "Orders", "ov.supLine": "Open orders: {n} · pieces to come: {q} · {v}", "ov.supNone": "No open orders",
+      "ov.work": "Work", "ov.workLine": "Not billed yet: {h} · {v}", "ov.workNone": "Everything billed", "ov.h": "{n} h",
+      "ov.pub": "Publishing", "ov.titles": "Titles: {n}", "ov.royDue": "Royalties due: {v}", "ov.adv": "Advance still to earn back: {v}",
+      "ov.rel": "Relationship", "ov.deals": "Open deals: {n} · {v}", "ov.open": "Open",
       "act.inv": "Invoice", "act.quote": "Quote",
       "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
       "docs.invNone": "No invoices yet. Invoices you issue with the Invoice button show up here.",
@@ -239,7 +248,16 @@
       "afm.ok": "έγκυρο", "afm.bad": "το ψηφίο ελέγχου δεν ταιριάζει",
       "people.add": "+ Άνθρωπος", "people.none": "Κανένας ακόμη. Σύνδεσε κάποιον από τις Επαφές ή γράψε ένα όνομα.",
       "people.open": "Άνοιγμα στις Επαφές", "people.gone": "δεν υπάρχει πια στις Επαφές",
-      "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups", "sub.docs": "Έγγραφα",
+      "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups", "sub.docs": "Έγγραφα", "sub.ov": "Σύνοψη",
+      "ov.none": "Τίποτα σε άλλες εφαρμογές ακόμη. Σύνδεσε τον προμηθευτή, το κατάστημα, τον πελάτη ή τους τίτλους αυτής της εγγραφής στο «Σε άλλες εφαρμογές».",
+      "ov.money": "Χρήματα", "ov.in": "Σου χρωστά {v}", "ov.overdue": "ληξιπρόθεσμα {v}", "ov.out": "Του χρωστάς {v}",
+      "ov.outRoy": "δικαιώματα, εκκαθαρίσεις: {n}", "ov.even": "Τίποτα ανοιχτό.",
+      "ov.shops": "Παρακαταθήκη", "ov.shopLine": "Προϊόντα: {p} · τεμάχια: {q} · {v} σε τιμή πώλησης", "ov.shopEmpty": "Τίποτα στο ράφι τώρα",
+      "ov.last": "Τελευταία εκκαθάριση {d}", "ov.never": "Χωρίς εκκαθάριση ακόμη", "ov.due": "Εκκαθάριση οφείλεται από {d}",
+      "ov.sups": "Παραγγελίες", "ov.supLine": "Ανοιχτές παραγγελίες: {n} · τεμάχια που έρχονται: {q} · {v}", "ov.supNone": "Καμία ανοιχτή παραγγελία",
+      "ov.work": "Εργασία", "ov.workLine": "Δεν έχουν χρεωθεί: {h} · {v}", "ov.workNone": "Όλα χρεωμένα", "ov.h": "{n} ώρ.",
+      "ov.pub": "Εκδόσεις", "ov.titles": "Τίτλοι: {n}", "ov.royDue": "Δικαιώματα προς πληρωμή: {v}", "ov.adv": "Προκαταβολή που δεν έχει καλυφθεί: {v}",
+      "ov.rel": "Σχέση", "ov.deals": "Ανοιχτές ευκαιρίες: {n} · {v}", "ov.open": "Άνοιγμα",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
       "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
       "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
@@ -459,7 +477,7 @@
 
   // ---------- 2. Storage + prefs ----------
   var data = C.empty();
-  var prefs = { tab: "cust", sel: "", filter: "all", tag: "", role: "", sort: "name", sub: "hist", stage: "new" };
+  var prefs = { tab: "cust", sel: "", filter: "all", tag: "", role: "", sort: "name", sub: "ov", stage: "new" };
 
   function load() {
     var raw = null;
@@ -482,7 +500,7 @@
         if (typeof p.tag === "string") prefs.tag = p.tag;
         if (C.ROLES.indexOf(p.role) >= 0) prefs.role = p.role;
         if (["name", "last", "next", "value"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
-        if (["hist", "deals", "fups", "docs"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
+        if (["ov", "hist", "deals", "fups", "docs"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
         if (typeof p.stage === "string") prefs.stage = p.stage;
       }
     } catch (e) {}
@@ -815,6 +833,79 @@
       sec.appendChild(row);
     });
     box.appendChild(sec);
+  }
+
+
+  // ----- Overview (partner card W2, crm/overview.js) -----
+  function openIn(app, target) {
+    var s = shell();
+    if (s && typeof s.__orosOpenAt === "function") s.__orosOpenAt(app, target || {});
+  }
+  function pieces(q) { return (Math.round(q / 10) / 100).toLocaleString(LOCALE); }
+  function curList(map, fn) { return Object.keys(map).sort().map(function (cur) { return fn(cur, map[cur]); }).join(" · "); }
+  function renderOverview(pane, c) {
+    var OV = window.OrosCrmOverview;
+    if (!OV) return;
+    var x = OV.build({ data: data, cust: c, today: todayYmd(), nowMs: Date.now(), links: C.linksOf(data, c),
+      inv: invData(), I: window.OrosInvoicesCore, alsoInv: invLinks(c),
+      stock: stockData(), S: window.OrosStockCore, ts: tsData(), T: window.orosTimesheetCore, pub: pubData() });
+    function sec(label, app, target) {
+      var s = el("div", "sec");
+      var h = secHead(label);
+      if (app) {
+        h.appendChild(el("span", "spacer"));
+        var b = el("button", "link-btn", t("ov.open"));
+        b.type = "button";
+        b.addEventListener("click", function () { openIn(app, target); });
+        h.appendChild(b);
+      }
+      s.appendChild(h);
+      pane.appendChild(s);
+      return s;
+    }
+    function line(s, title, sub, late) {
+      var row = el("div", "person");
+      var m = el("div", "row-main");
+      m.appendChild(el("div", "row-title", title));
+      if (sub) m.appendChild(el("div", "row-sub" + (late ? " late" : ""), sub));
+      row.appendChild(m);
+      s.appendChild(row);
+    }
+    // money, both ways
+    var sm = sec(t("ov.money"));
+    var ins = Object.keys(x.money["in"]), outs = Object.keys(x.money.out);
+    if (!ins.length && !outs.length) sm.appendChild(el("p", "hint", t("ov.even")));
+    ins.sort().forEach(function (cur) {
+      var v = x.money["in"][cur];
+      line(sm, t("ov.in", { v: curMoney(v.open, cur) }), v.overdue > 0 ? t("ov.overdue", { v: curMoney(v.overdue, cur) }) : "", v.overdue > 0);
+    });
+    outs.sort().forEach(function (cur) {
+      line(sm, t("ov.out", { v: curMoney(x.money.out[cur], cur) }), x.pub.open ? t("ov.outRoy", { n: x.pub.open }) : "");
+    });
+    x.shops.forEach(function (r) {
+      var s = sec(t("ov.shops") + " · " + r.name, "stock", { view: "cons" });
+      line(s, r.q > 0 ? t("ov.shopLine", { p: r.products, q: pieces(r.q), v: curMoney(r.value, r.cur) }) : t("ov.shopEmpty"),
+        r.due ? t("ov.due", { d: fmtDate(r.due) }) : (r.last ? t("ov.last", { d: fmtDate(r.last) }) : t("ov.never")), !!r.due);
+    });
+    x.sups.forEach(function (r) {
+      var s = sec(t("ov.sups") + " · " + r.name, "stock", { sup: r.id });
+      line(s, r.open ? t("ov.supLine", { n: r.open, q: pieces(r.left), v: curMoney(r.value, r.cur) }) : t("ov.supNone"));
+    });
+    x.work.forEach(function (r) {
+      var s = sec(t("ov.work") + " · " + r.name, "timesheet", { client: r.id });
+      line(s, r.ms > 0 ? t("ov.workLine", { h: t("ov.h", { n: (Math.round(r.ms / 360000) / 10).toLocaleString(LOCALE) }), v: curMoney(r.amount, r.cur) }) : t("ov.workNone"));
+    });
+    if (x.pub.titles.length || Object.keys(x.pub.due).length || Object.keys(x.pub.adv).length) {
+      var sp = sec(t("ov.pub"), "publish", { view: "roy" });
+      if (x.pub.titles.length) line(sp, t("ov.titles", { n: x.pub.titles.length }), x.pub.titles.slice(0, 8).map(function (r) { return r.t; }).join(" · "));
+      if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
+      if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
+    }
+    if (!C.linksOf(data, c).length && !x.pub.titles.length) pane.appendChild(el("p", "hint", t("ov.none")));
+    // the relationship itself
+    var sr = sec(t("ov.rel"));
+    line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));
+    if (x.crm.deals) line(sr, t("ov.deals", { n: x.crm.deals, v: money(x.crm.val) }));
   }
 
   function whyText(w) { return w ? t("lk.why." + w) : ""; }
@@ -1212,7 +1303,7 @@
     var custDeals = data.deals.filter(function (d) { return d.cust === c.id; });
     var custFups = data.fups.filter(function (f) { return f.cust === c.id; });
     var openF = custFups.filter(function (f) { return !f.done; });
-    var subs = [["hist", t("sub.hist") + " (" + custActs.length + ")"],
+    var subs = [["ov", t("sub.ov")], ["hist", t("sub.hist") + " (" + custActs.length + ")"],
                 ["deals", t("sub.deals") + " (" + custDeals.length + ")"],
                 ["fups", t("sub.fups") + " (" + openF.length + ")"]];
     var docs = docsFor(c);
@@ -1231,7 +1322,8 @@
     box.appendChild(st);
     var pane = el("div", "");
     box.appendChild(pane);
-    if (prefs.sub === "hist") renderHistory(pane, c, custActs);
+    if (prefs.sub === "ov") renderOverview(pane, c);
+    else if (prefs.sub === "hist") renderHistory(pane, c, custActs);
     else if (prefs.sub === "deals") renderCustDeals(pane, c, custDeals);
     else if (prefs.sub === "docs") renderCustDocs(pane, c, docs);
     else renderCustFups(pane, c, custFups);
