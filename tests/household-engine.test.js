@@ -22,7 +22,28 @@ test.before(async () => {
 test.after(() => X._setIter(600000));
 
 let clock = 1.75e12;
+// OROS_HH=folder (tests/household-folder.test.js): the same suite against
+// a household in a shared WebDAV folder (household/folder.js, wave 7g).
+const FOLDER = process.env.OROS_HH === "folder";
+const DAV = FOLDER ? { url: "https://dav.test/remote.php/dav/files/u/orOS", user: "u", pass: "app-pass" } : undefined;
+function folderWorld() {
+  const { FakeWebDAV } = require("./harness");
+  const dav = new FakeWebDAV();
+  const w = { dav, calls: [] };
+  const f = dav.fetchFor("x");
+  w.fetch = async (url, init) => {
+    clock += 10;
+    w.calls.push(init.method + " " + String(url).replace(/^https:\/\/[^/]+/, ""));
+    return f(url, init);
+  };
+  return w;
+}
+function stored(w, box) {
+  if (FOLDER) return Array.from(w.dav.files.entries()).filter(([k]) => k.includes("/oros-hh-" + box + "/d/")).map(([, f]) => f.data.toString("latin1")).join("");
+  return Array.from(w.boxes.get(box).st.docs.values()).map((d) => Buffer.from(d.data).toString("latin1")).join("");
+}
 function relayWorld() {
+  if (FOLDER) return folderWorld();
   const w = fake.world();
   w.calls = [];
   w.fetch = async (url, init) => {
@@ -60,9 +81,9 @@ async function household() {
   const w = relayWorld();
   const ana = person(w, "Ana"), nik = person(w, "Nikos");
   await ana.eng.ready(); await nik.eng.ready();
-  const box = await ana.eng.create("Home", "Ana");
+  const box = await ana.eng.create("Home", "Ana", DAV);
   const inv = await ana.eng.invite(box, { days: 2, uses: 20 });
-  assert.match(inv.link, /\/share\/#h1\./);
+  assert.match(inv.link, FOLDER ? /\/share\/#h3\./ : /\/share\/#h1\./);
   const j = await nik.eng.join(inv.link, "Nikos");
   assert.deepEqual(j, { box, state: "wait" });
   await nik.eng.checkJoins();
@@ -94,7 +115,7 @@ test("create, invite, join with approval: both see the same roster", async () =>
 test("an invite with a password, a refused request, an expired code", async () => {
   const w = relayWorld();
   const ana = person(w, "Ana"), eva = person(w, "Eva");
-  const box = await ana.eng.create("Flat", "Ana");
+  const box = await ana.eng.create("Flat", "Ana", DAV);
   const inv = await ana.eng.invite(box, { days: 1, uses: 1, password: "secret pass" });
   await assert.rejects(eva.eng.join(inv.link, "Eva"), /locked/);
   await assert.rejects(eva.eng.join(inv.link, "Eva", "wrong"), /password/);
@@ -132,8 +153,9 @@ test("shared list: offline edits from both sides merge, then nothing more is upl
   await ana.eng.sync(box); await nik.eng.sync(box); await ana.eng.sync(box);
   assert.equal(puts(w), before);
   // the relay only ever saw ciphertext
-  const stored = Array.from(w.boxes.get(box).st.docs.values()).map((d) => Buffer.from(d.data).toString("latin1")).join("");
-  assert.ok(!stored.includes("Milk") && !stored.includes("Shopping") && !stored.includes("Nikos"));
+  const st = stored(w, box);
+  assert.ok(st.length > 100);
+  assert.ok(!st.includes("Milk") && !st.includes("Shopping") && !st.includes("Nikos"));
 });
 
 test("removing a member rotates the key: locked out, and a later member reads old documents", async () => {

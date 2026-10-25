@@ -150,7 +150,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, .tab:focus-visi
 .dlg h2 { font-size: 18px; }
 .field { display: flex; flex-direction: column; gap: 4px; min-width: 0; border: 0; }
 .field legend, .field > span { font-size: 13px; color: var(--text-dim); margin-bottom: 4px; }
-input[type="text"], input[type="password"], select {
+input[type="text"], input[type="password"], input[type="url"], select {
   min-height: 40px; padding: 6px 10px; min-width: 0; width: 100%;
   border: 1px solid var(--border); border-radius: 8px;
   background: var(--bg); color: var(--text); font: inherit;
@@ -171,3 +171,6 @@ input[type="text"], input[type="password"], select {
 }
 .check-row { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; }
 .check-row input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
+.where { margin: 4px 0 10px; }
+.where > summary { cursor: pointer; font-size: 13px; color: var(--text-dim); padding: 4px 0; }
+.where[open] > summary { margin-bottom: 6px; }

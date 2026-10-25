@@ -36,6 +36,7 @@
 
   var Core = (root && root.OrosHouseCore) || (typeof require === "function" ? require("./core.js") : null);
   var X = (root && root.OrosHouseCrypto) || (typeof require === "function" ? require("./crypto.js") : null);
+  var Folder = (root && root.OrosHouseFolder) || (typeof require === "function" ? require("./folder.js") : null);
 
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var SHARE_PAGE = "https://useoros.online/share/";
@@ -59,6 +60,9 @@
     var lang = opts.lang || function () { return "en"; };
     var log = opts.log || function () {};
     var later = opts.later || function (fn, ms) { return setTimeout(fn, ms); };
+    // a household in a shared WebDAV / Nextcloud folder (wave 7g): the
+    // same routes, answered from files there (household/folder.js)
+    var folder = Folder ? Folder.make({ fetch: fetchFn, relay: opts.davRelay }) : null;
 
     var mem = Core.cleanMembership(memIO.load());
     var pend = cleanPending(pendIO.load());
@@ -93,6 +97,8 @@
             !Core.BOX_RE.test(e.mid || "") || typeof e.pub !== "string" || !e.priv || typeof e.priv.d !== "string") return;
         out[b] = { box: b, secret: e.secret, rid: e.rid, mid: e.mid, pub: e.pub, priv: e.priv, name: Core.line(e.name, 40),
                    at: +e.at || 0, state: e.state === "refused" || e.state === "gone" ? e.state : "wait" };
+        var dav = Core.cleanDav(e.dav);
+        if (dav) out[b].dav = dav;
       });
       return out;
     }
@@ -130,8 +136,17 @@
     }
 
     // ---------- relay calls ----------
+    function davOf(box, o) {
+      return (o && o.dav) || (entry(box) && entry(box).dav) || (pend[box] && pend[box].dav) || null;
+    }
     function call(method, box, path, o) {
       o = o || {};
+      var dav = davOf(box, o);
+      if (dav) {
+        if (!folder) return Promise.reject(fail("nofolder"));
+        return folder.request(dav, method, box, path, { json: o.json, bytes: o.bytes, rev: o.rev, invite: o.invite,
+                                                        epoch: entry(box) ? entry(box).epoch : 0, now: now() });
+      }
       var h = {};
       var go = function () {
         var init = { method: method, headers: h, cache: "no-store" };
@@ -438,8 +453,10 @@
     }
 
     // ---------- households ----------
-    function createHousehold(name, myName) {
+    function createHousehold(name, myName, davIn) {
       name = Core.line(name, 60); myName = Core.line(myName, 40);
+      var dav = davIn ? Core.cleanDav(davIn) : null;
+      if (davIn && !dav) return Promise.reject(fail("dav-url"));
       if (!name || !myName) return Promise.reject(fail("name"));
       if (Object.keys(mem.hh).length >= LIMITS.households) return Promise.reject(fail("toomany"));
       var box = X.rand(16), K = X.newKey(), A = X.rand(32), mid = X.rand(16), mk;
@@ -449,11 +466,12 @@
       }).then(function (W) {
         return Promise.all([X.sha256hex(W), X.sha256hex(A)]);
       }).then(function (h) {
-        return call("POST", box, "", { json: { act: "new", wh: h[0], ah: h[1] }, noauth: true });
+        return call("POST", box, "", { json: { act: "new", wh: h[0], ah: h[1] }, noauth: true, dav: dav });
       }).then(function (res) {
         if (!res.ok) return httpFail(res);
         var t = now();
         mem.hh[box] = { name: name, mid: mid, pub: mk.pub, priv: mk.priv, keys: { 1: K }, epoch: 1, adm: A, at: t, m: t };
+        if (dav) mem.hh[box].dav = dav;
         delete mem.tomb[box];
         saveMem();
         var set = {};
@@ -469,7 +487,7 @@
       var days = [1, 2, 7, 30].indexOf(o.days) >= 0 ? o.days : 2;
       var uses = o.uses === 1 ? 1 : 20;
       var I = X.rand(32), exp = now() + days * DAY, code, ih;
-      return Promise.all([X.sha256hex(I), X.makeCode(box, I, o.password || "")]).then(function (r) {
+      return Promise.all([X.sha256hex(I), X.makeCode(box, I, o.password || "", e.dav || null)]).then(function (r) {
         ih = r[0]; code = r[1];
         return call("POST", box, "/i", { json: { ih: ih, exp: exp, n: uses } });
       }).then(function (res) {
@@ -492,9 +510,10 @@
       var parsed = X.parseCode(input);
       if (!parsed) return Promise.reject(fail("code"));
       var p = parsed.locked ? (password ? X.unlock(parsed, password).catch(function () { throw fail("password"); }) : Promise.reject(fail("locked"))) : Promise.resolve(parsed);
-      var box, I, mk, mid = X.rand(16);
+      var box, I, mk, mid = X.rand(16), dav = null;
       return p.then(function (c) {
         box = c.box; I = c.secret;
+        if (c.dav) { dav = Core.cleanDav(c.dav); if (!dav) throw fail("code"); }
         if (entry(box)) throw fail("already");
         if (Object.keys(mem.hh).length >= LIMITS.households) throw fail("toomany");
         return X.newMemberKey();
@@ -502,12 +521,13 @@
         mk = k;
         return X.inviteSeal(I, box, { v: 1, n: myName, pub: mk.pub, mid: mid, at: now() });
       }).then(function (bytes) {
-        return call("POST", box, "/j", { invite: I, bytes: bytes });
+        return call("POST", box, "/j", { invite: I, bytes: bytes, dav: dav });
       }).then(function (res) {
         if (res.status === 404) throw fail("expired");
         if (!res.ok) return httpFail(res);
         return jsonOf(res).then(function (j) {
           pend[box] = { box: box, secret: I, rid: j.data.rid, mid: mid, pub: mk.pub, priv: mk.priv, name: myName, at: now(), state: "wait" };
+          if (dav) pend[box].dav = dav;
           savePend();
           return { box: box, state: "wait" };
         });
@@ -528,6 +548,7 @@
             Object.keys(a.keys).forEach(function (k) { if (/^[1-9]\d{0,8}$/.test(k)) { keys[k] = a.keys[k]; ep = Math.max(ep, +k); } });
             var t = now();
             mem.hh[box] = { name: Core.line(a.name, 60), mid: p.mid, pub: p.pub, priv: p.priv, keys: keys, epoch: ep, adm: "", at: t, m: t };
+            if (p.dav) mem.hh[box].dav = p.dav;
             delete mem.tomb[box];
             delete pend[box];
             savePend();
@@ -745,7 +766,7 @@
 
     // ---------- live notices ----------
     function openSocket(box, tries) {
-      if (!WS || sockets[box] || !entry(box)) return;
+      if (!WS || sockets[box] || !entry(box) || entry(box).dav) return;     // a folder has no live notices
       var s = { ws: null, tries: tries || 0, timer: null, ping: null };
       sockets[box] = s;
       token(box).then(function (w) {
@@ -810,13 +831,14 @@
     function list() {
       return Object.keys(mem.hh).map(function (box) {
         var e = mem.hh[box], r = rosterOf(box), i = info[box] || {};
-        return { box: box, name: r.name || e.name, me: e.mid, admin: !!e.adm, epoch: e.epoch,
+        return { box: box, name: r.name || e.name, me: e.mid, admin: !!e.adm, epoch: e.epoch, folder: e.dav ? hostOf(e.dav.url) : "",
                  members: r.members, docs: r.docs, invites: r.invites.map(function (x) {
                    return { ih: x.ih, link: x.code ? SHARE_PAGE + "#" + x.code : "", pw: x.pw, exp: x.exp, n: x.n, by: x.by };
                  }),
                  reqs: (i.reqs || []).length, status: i.status || "", err: i.err || "", at: i.at || 0, size: i.size || 0 };
       }).sort(function (a, b) { return (mem.hh[a.box].at - mem.hh[b.box].at) || (a.box < b.box ? -1 : 1); });
     }
+    function hostOf(url) { try { return new URL(url).host; } catch (e) { return "?"; } }
     function pending() {
       return Object.keys(pend).map(function (b) { var p = pend[b]; return { box: b, name: p.name, at: p.at, state: p.state }; });
     }
@@ -829,7 +851,8 @@
       LIMITS: LIMITS, SHARE_PAGE: SHARE_PAGE,
       ready: ready, sync: sync, syncAll: syncAll, list: list, pending: pending, member: member,
       me: function (box) { var e = entry(box); return e ? e.mid : ""; },
-      create: createHousehold, invite: invite, withdraw: withdraw, join: join, checkJoins: checkJoins, dismissJoin: dismissJoin,
+      create: createHousehold, probeFolder: function (dav) { return folder ? folder.probe(dav) : Promise.resolve("nofolder"); },
+      invite: invite, withdraw: withdraw, join: join, checkJoins: checkJoins, dismissJoin: dismissJoin,
       requests: requests, accept: accept, refuse: refuse,
       setMe: setMe, rename: rename, removeMember: removeMember, makeAdmin: makeAdmin, leave: leave, remove: removeHousehold,
       rotate: rotate, forget: function (box) { forget(box, "left"); },
@@ -842,7 +865,7 @@
       liveOn: liveOn, liveOff: liveOff,
       // Wakes with orOS closed (relay /h/<box>/p): { pid, wt, ct }
       ping: function (box, body) {
-        if (!entry(box)) return Promise.resolve(false);
+        if (!entry(box) || entry(box).dav) return Promise.resolve(false);
         return call("POST", box, "/p", { json: body }).then(function (res) { return res.ok; }, function () { return false; });
       },
       unping: function (box, pid) {

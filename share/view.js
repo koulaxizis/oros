@@ -818,14 +818,15 @@
     c.appendChild(inp);
   }
   // A household invite (household/, BR-HH): "#h1.<box>.<secret>" or
-  // "#h2.…" with a password. Nothing is fetched here: the code waits in
+  // "#h2.…" with a password ("#h3." / "#h4." for a household in a shared
+  // folder). Nothing is fetched here: the code waits in
   // this browser's storage for the Household app, which asks to join.
-  var HH_RE = /^#?(h[12]\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_.-]{43,140})$/;
+  var HH_RE = /^#?(h[1-4]\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_.-]{43,1700})$/;
   function houseInvite(code) {
     var c = card();
     c.appendChild(el("h1", "", t("hhTitle")));
     c.appendChild(el("p", "", t("hhText")));
-    if (code.charAt(1) === "2") c.appendChild(el("p", "hint", t("hhPw")));
+    if (code.charAt(1) === "2" || code.charAt(1) === "4") c.appendChild(el("p", "hint", t("hhPw")));
     var acts = el("div", "acts");
     acts.appendChild(btn(t("hhGo"), "prim", function () {
       try { localStorage.setItem("oros-household-invite", JSON.stringify({ code: code, at: Date.now() })); } catch (e) {}

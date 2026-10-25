@@ -46,6 +46,17 @@
       "st.ok": "Up to date", "st.sync": "Updating…", "st.offline": "Offline: changes wait on this device and go out later.",
       "st.err": "Could not update ({e}).", "st.big": "A shared list is too big to send. Remove some items.",
       "new.title": "New household", "new.name": "Name of the household", "new.namePh": "Home", "new.me": "Your name, as the others will see it",
+      "new.where": "Keep it in a shared folder (Nextcloud, WebDAV)",
+      "new.whereX": "Instead of the orOS relay, the household lives in a folder on your own Nextcloud or WebDAV server: everyone in it needs that folder's address and sign-in, which travel in the invite links. Everything in it stays end-to-end encrypted.",
+      "new.davUrl": "Address of the folder (WebDAV)", "new.davUser": "User name", "new.davPass": "App password",
+      "new.davRelay": "Through the orOS relay (for servers that do not answer browsers)",
+      "hh.folder": "Kept in a shared folder on {host}. Changes arrive when orOS opens or comes to the front, and every 10 minutes.",
+      "inv.folder": "This household is in a shared folder: the link carries the folder's address and sign-in. Give it a password, or send it only to the person it is for.",
+      "err.dav-url": "Write the folder's full https address.", "err.dav-auth": "The server did not accept the user name or app password.",
+      "err.dav-404": "There is no such folder on the server. Make it first, or check the address.",
+      "err.dav-cond": "This server does not keep two people from overwriting each other (If-None-Match), so it cannot hold a household.",
+      "err.dav-cors": "The server does not answer browsers. Tick “Through the orOS relay” and try again.",
+      "err.dav-net": "Could not reach the server. Check the address and your connection.",
       "new.go": "Create", "btn.cancel": "Cancel", "btn.save": "Save", "btn.done": "Done", "btn.close": "Close",
       "join.title": "Join a household", "join.link": "Invite link", "join.pw": "Password of the invite", "join.go": "Ask to join",
       "join.hint": "A member of the household lets you in. Until then nothing is shared with you.",
@@ -103,6 +114,17 @@
       "st.ok": "Ενημερωμένο", "st.sync": "Ενημέρωση…", "st.offline": "Εκτός σύνδεσης: οι αλλαγές περιμένουν σε αυτή τη συσκευή και φεύγουν αργότερα.",
       "st.err": "Η ενημέρωση δεν έγινε ({e}).", "st.big": "Μια κοινή λίστα είναι πολύ μεγάλη για να σταλεί. Βγάλε μερικά στοιχεία.",
       "new.title": "Νέο νοικοκυριό", "new.name": "Όνομα του νοικοκυριού", "new.namePh": "Σπίτι", "new.me": "Το όνομά σου, όπως θα το βλέπουν οι άλλοι",
+      "new.where": "Να μένει σε κοινόχρηστο φάκελο (Nextcloud, WebDAV)",
+      "new.whereX": "Αντί για το relay του orOS, το νοικοκυριό μένει σε έναν φάκελο στον δικό σου server Nextcloud ή WebDAV: όλοι όσοι είναι μέσα χρειάζονται τη διεύθυνση και τη σύνδεση του φακέλου, που ταξιδεύουν μέσα στους συνδέσμους πρόσκλησης. Όλα μέσα του μένουν κρυπτογραφημένα από άκρο σε άκρο.",
+      "new.davUrl": "Διεύθυνση του φακέλου (WebDAV)", "new.davUser": "Όνομα χρήστη", "new.davPass": "Κωδικός εφαρμογής",
+      "new.davRelay": "Μέσω του relay του orOS (για servers που δεν απαντούν σε browsers)",
+      "hh.folder": "Μένει σε κοινόχρηστο φάκελο στο {host}. Οι αλλαγές έρχονται όταν ανοίγει το orOS ή έρχεται μπροστά, και κάθε 10 λεπτά.",
+      "inv.folder": "Αυτό το νοικοκυριό είναι σε κοινόχρηστο φάκελο: ο σύνδεσμος περιέχει τη διεύθυνση και τη σύνδεση του φακέλου. Βάλε κωδικό ή στείλ’ τον μόνο σε όποιον προορίζεται.",
+      "err.dav-url": "Γράψε την πλήρη διεύθυνση https του φακέλου.", "err.dav-auth": "Ο server δεν δέχτηκε το όνομα χρήστη ή τον κωδικό εφαρμογής.",
+      "err.dav-404": "Δεν υπάρχει τέτοιος φάκελος στον server. Φτιάξ’ τον πρώτα ή έλεγξε τη διεύθυνση.",
+      "err.dav-cond": "Αυτός ο server δεν εμποδίζει δύο άτομα να γράψουν το ένα πάνω στο άλλο (If-None-Match), οπότε δεν μπορεί να κρατήσει νοικοκυριό.",
+      "err.dav-cors": "Ο server δεν απαντά σε browsers. Τσέκαρε «Μέσω του relay του orOS» και δοκίμασε ξανά.",
+      "err.dav-net": "Δεν βρέθηκε ο server. Έλεγξε τη διεύθυνση και τη σύνδεση.",
       "new.go": "Δημιουργία", "btn.cancel": "Άκυρο", "btn.save": "Αποθήκευση", "btn.done": "Τέλος", "btn.close": "Κλείσιμο",
       "join.title": "Μπες σε νοικοκυριό", "join.link": "Σύνδεσμος πρόσκλησης", "join.pw": "Κωδικός της πρόσκλησης", "join.go": "Ζήτα να μπεις",
       "join.hint": "Ένα μέλος του νοικοκυριού σε αφήνει να μπεις. Μέχρι τότε δεν μοιράζεται τίποτα μαζί σου.",
@@ -261,6 +283,8 @@
     if (!hh) return;
     if (local.active !== hh.box) { local.active = hh.box; saveLocal(); }
     $("hh-name").textContent = hh.name || "?";
+    $("hh-folder").hidden = !hh.folder;
+    $("hh-folder").textContent = hh.folder ? t("hh.folder", { host: hh.folder }) : "";
     renderStatus(hh);
     var out = hh.status === "removed" || hh.status === "gone";
     $("gone-card").hidden = !out;
@@ -434,6 +458,9 @@
     $("new-name").value = "";
     $("new-me").value = myName();
     $("new-msg").textContent = "";
+    $("new-where").open = false;
+    ["new-dav-url", "new-dav-user", "new-dav-pass"].forEach(function (id) { $(id).value = ""; });
+    $("new-dav-relay").checked = false;
     $("new-dlg").showModal();
     $("new-name").focus();
   }
@@ -441,8 +468,16 @@
     ev.preventDefault();
     var name = $("new-name").value, me = $("new-me").value;
     if (!C.line(name, 60) || !C.line(me, 40)) { $("new-msg").textContent = t("err.name"); return; }
+    var dav = null;
+    if ($("new-where").open && $("new-dav-url").value.trim()) {
+      dav = { url: $("new-dav-url").value.trim(), user: $("new-dav-user").value, pass: $("new-dav-pass").value, relay: $("new-dav-relay").checked };
+    }
     $("new-go").disabled = true;
-    H.create(name, me).then(function (box) {
+    // a folder is tried first (it answers, takes a file only once)
+    Promise.resolve(dav && typeof H.probeFolder === "function" ? H.probeFolder(dav) : "").then(function (code) {
+      if (code) { var e = new Error(code); e.code = code; throw e; }
+      return H.create(name, me, dav || undefined);
+    }).then(function (box) {
       $("new-go").disabled = false;
       $("new-dlg").close();
       local.active = box; saveLocal();
@@ -493,6 +528,8 @@
     $("inv-msg").textContent = "";
     $("inv-form").hidden = false;
     $("inv-out").hidden = true;
+    var hh = current(H.list());
+    $("inv-folder").hidden = !(hh && hh.folder);
     $("inv-dlg").showModal();
   }
   function submitInvite(ev) {

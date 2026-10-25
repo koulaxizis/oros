@@ -173,27 +173,42 @@
       return S.deriveKey({ name: "PBKDF2", hash: "SHA-256", salt: salt, iterations: ITER }, k, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
     });
   }
-  function makeCode(box, iB64, password) {
+  // A household in a shared folder (wave 7g) adds the folder (address
+  // and sign-in) to the code: "h3" open, "h4" with a password.
+  function makeCode(box, iB64, password, dav) {
     if (!BOX_RE.test(box) || !SECRET_RE.test(iB64)) return Promise.reject(new Error("bad invite"));
-    if (!password) return Promise.resolve("h1." + box + "." + iB64);
+    var extra = dav ? TE.encode(JSON.stringify({ url: dav.url, user: dav.user || "", pass: dav.pass || "", relay: !!dav.relay })) : null;
+    if (!password) return Promise.resolve(extra ? "h3." + box + "." + iB64 + "." + b64u(extra) : "h1." + box + "." + iB64);
     var salt = randBytes(16), iv = randBytes(12);
     return pwKey(password, salt).then(function (k) {
-      return S.encrypt({ name: "AES-GCM", iv: iv, additionalData: TE.encode(box) }, k, unb64u(iB64));
-    }).then(function (ct) { return "h2." + box + "." + b64u(salt) + "." + b64u(cat([iv, new Uint8Array(ct)])); });
+      return S.encrypt({ name: "AES-GCM", iv: iv, additionalData: TE.encode(box) }, k, extra ? cat([unb64u(iB64), extra]) : unb64u(iB64));
+    }).then(function (ct) { return (extra ? "h4." : "h2.") + box + "." + b64u(salt) + "." + b64u(cat([iv, new Uint8Array(ct)])); });
+  }
+  function davOf(bytes) {
+    try { var d = JSON.parse(TD.decode(bytes)); return d && typeof d === "object" && typeof d.url === "string" ? d : null; } catch (e) { return null; }
   }
   // A code, an invite link, or anything with one inside → parsed code.
   function parseCode(text) {
-    var m = /(?:^|[#\/\s])(h1)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})(?![A-Za-z0-9_.-])/.exec(String(text || ""));
+    var t = String(text || "");
+    var m = /(?:^|[#\/\s])(h1)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})(?![A-Za-z0-9_.-])/.exec(t);
     if (m) return { box: m[2], secret: m[3], locked: false };
-    m = /(?:^|[#\/\s])(h2)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{80,90})(?![A-Za-z0-9_.-])/.exec(String(text || ""));
+    m = /(?:^|[#\/\s])(h2)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{80,90})(?![A-Za-z0-9_.-])/.exec(t);
     if (m) return { box: m[2], salt: m[3], sealed: m[4], locked: true };
+    m = /(?:^|[#\/\s])(h3)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})\.([A-Za-z0-9_-]{16,1500})(?![A-Za-z0-9_.-])/.exec(t);
+    if (m) { var d = davOf(unb64u(m[4])); return d ? { box: m[2], secret: m[3], locked: false, dav: d } : null; }
+    m = /(?:^|[#\/\s])(h4)\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{100,1600})(?![A-Za-z0-9_.-])/.exec(t);
+    if (m) return { box: m[2], salt: m[3], sealed: m[4], locked: true, folder: true };
     return null;
   }
   function unlock(parsed, password) {
     var raw = unb64u(parsed.sealed);
     return pwKey(password, unb64u(parsed.salt)).then(function (k) {
       return S.decrypt({ name: "AES-GCM", iv: raw.slice(0, 12), additionalData: TE.encode(parsed.box) }, k, raw.slice(12));
-    }).then(function (pt) { return { box: parsed.box, secret: b64u(new Uint8Array(pt)), locked: false }; });
+    }).then(function (pt) {
+      var b = new Uint8Array(pt), out = { box: parsed.box, secret: b64u(b.slice(0, 32)), locked: false };
+      if (parsed.folder) { out.dav = davOf(b.slice(32)); if (!out.dav) throw new Error("bad invite"); }
+      return out;
+    });
   }
 
   var api = {
