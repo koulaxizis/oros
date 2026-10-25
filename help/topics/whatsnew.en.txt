@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.79.00
+- Invoices: the month for your accountant in one file. On the Dashboard, pick a month and get a ZIP with a summary, your documents and payments as CSV with their PDFs, Budget's entries and receipts, Stock's purchases and sales, and your shop's orders. It is saved in Files, and you can e-mail it from Mail with one tap.
+
 ## Version 3.78.00
 - CRM: an Overview tab, first on every record, with everything about the partner in one place: what they owe you and what you owe them (royalty statements not paid yet), what a consignment shop has on its shelf and when a settlement is due, open orders with a supplier, hours not billed yet, their titles and any advance still to earn back, and when you last spoke. `Open` takes you to that app. Nothing is stored: it is worked out from the other apps each time.
 

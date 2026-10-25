@@ -381,6 +381,7 @@
   {
    "app": "invoices",
    "files": [
+    "invoices/acctpack.js",
     "invoices/invoices.js",
     "invoices/mydata-ui.js",
     "invoices/package.js",
