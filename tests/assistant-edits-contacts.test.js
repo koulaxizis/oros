@@ -67,7 +67,7 @@ test("wiring: contacts is editable with update and delete only", () => {
 test("update: name, org, note, birthday; stamps only the changed fields, newer than before", () => {
   const d = data();
   const { p, a } = run(d, "c1", { ref: "r1", action: "update", title: "Anna Maria Papadopoulou", org: "Acme Ltd", note: "new", date: "1990-03-17" });
-  assert.deepEqual(p.before, { title: "Anna Pappa", org: "Acme", phone: "+30 691 234 5678", email: "Anna@Example.com", birthday: "", labels: "", note: "old" });
+  assert.deepEqual(p.before, { title: "Anna Pappa", nickname: "", org: "Acme", job: "", phone: "+30 691 234 5678", email: "Anna@Example.com", address: "", website: "", birthday: "", labels: "", note: "old" });
   assert.deepEqual(p.after.title, "Anna Maria Papadopoulou");
   assert.deepEqual(p.rows.map((r) => r.f), ["title", "org", "birthday", "note"]);
   const c = find(a.data, "c1");

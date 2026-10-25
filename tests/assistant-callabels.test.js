@@ -174,7 +174,7 @@ test("tools: change_item takes label, labels, priority and refs; app_summary tak
 
 test("assistant.js: refs go through one card, are checked again on Apply, and undo all or none", () => {
   const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
-  const many = src.slice(src.indexOf("function changeMany("), src.indexOf("function undoChange("));
+  const many = src.slice(src.indexOf("function changeMany("), src.indexOf("function changeList("));
   assert.match(many, /args\.action !== "update"/);
   assert.match(many, /MANY_MAX/);
   assert.match(many, /refs must all be items of the same app/);
