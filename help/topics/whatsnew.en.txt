@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.76.00
+- CRM: partners, not only customers. A record can be a supplier, a consignment shop, an author or contributor, or an associate as well (more than one at once), with a chip for each role above the list. `In other apps` on a record shows and links what belongs to it in Stock, Work hours, Invoices and Publishing, and Settings › Find matches in other apps pairs them by VAT no., e-mail or name and adds the ones missing. Invoices of a linked client show in Documents. The first step towards one card with everything about a partner.
+
 ## Version 3.75.00
 - Publishing and Atelier: a release kit in one click. On a title, Release kit in Atelier makes five designs in a new folder named after the book: a square post, a story, a web banner, a bookmark and an A3 poster, each with the cover, title, author, release line, price and your imprint, in a colour taken from the cover. Everything stays editable.
 
