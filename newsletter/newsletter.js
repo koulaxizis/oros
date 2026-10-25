@@ -88,6 +88,12 @@
       "ed.l2Add": "+ {l} version", "ed.l2Remove": "Remove the {l} version", "ed.l2Removed": "Version removed",
       "ed.l2Hint": "Subscribers who read {b} get the {b} version; everyone else gets the {a} one.",
       "tpl.save": "Save as template", "tpl.name": "Template name", "tpl.saved": "Template saved", "tpl.full": "Too many templates: delete one first",
+      "as.title": "Add to an issue", "as.text": "{n} blocks from the Assistant. Pick the draft they go into, or start a new one.",
+      "as.text1": "One block from the Assistant. Pick the draft it goes into, or start a new one.",
+      "as.drafts": "Drafts", "as.newDraft": "Or a new draft", "as.list": "List", "as.create": "New draft",
+      "as.noList": "Make a list first: an issue belongs to a list.", "as.newList": "New list",
+      "as.added": "{n} blocks added", "as.added1": "1 block added", "as.cut": "({n} more did not fit: an issue holds 60 blocks.)",
+      "as.none": "Nothing to add: the blocks were empty.",
       "tpl.new": "New issue", "tpl.blank": "Blank issue", "tpl.from": "Or start from a template", "tpl.delete": "Delete template",
       "sd.now": "Now", "sd.later": "Later", "sd.when": "Send on", "sd.schedule": "Schedule", "sd.whenBad": "Pick a time in the future",
       "sd.whenHint": "orOS sends it from this device: if orOS isn't open then, it starts the next time you open it here.",
@@ -306,6 +312,12 @@
       "ed.l2Add": "+ Έκδοση στα {l}", "ed.l2Remove": "Αφαίρεση της έκδοσης στα {l}", "ed.l2Removed": "Η έκδοση αφαιρέθηκε",
       "ed.l2Hint": "Όσοι διαβάζουν {b} παίρνουν την έκδοση στα {b}· όλοι οι άλλοι αυτή στα {a}.",
       "tpl.save": "Αποθήκευση ως πρότυπο", "tpl.name": "Όνομα προτύπου", "tpl.saved": "Το πρότυπο αποθηκεύτηκε", "tpl.full": "Πάρα πολλά πρότυπα: διάγραψε πρώτα ένα",
+      "as.title": "Προσθήκη σε τεύχος", "as.text": "{n} blocks από τον Βοηθό. Διάλεξε το πρόχειρο όπου θα μπουν ή ξεκίνα νέο.",
+      "as.text1": "Ένα block από τον Βοηθό. Διάλεξε το πρόχειρο όπου θα μπει ή ξεκίνα νέο.",
+      "as.drafts": "Πρόχειρα", "as.newDraft": "Ή νέο πρόχειρο", "as.list": "Λίστα", "as.create": "Νέο πρόχειρο",
+      "as.noList": "Φτιάξε πρώτα μια λίστα: κάθε τεύχος ανήκει σε λίστα.", "as.newList": "Νέα λίστα",
+      "as.added": "Προστέθηκαν {n} blocks", "as.added1": "Προστέθηκε 1 block", "as.cut": "({n} ακόμα δεν χώρεσαν: ένα τεύχος έχει έως 60 blocks.)",
+      "as.none": "Τίποτα για προσθήκη: τα blocks ήταν κενά.",
       "tpl.new": "Νέο τεύχος", "tpl.blank": "Κενό τεύχος", "tpl.from": "Ή ξεκίνα από πρότυπο", "tpl.delete": "Διαγραφή προτύπου",
       "sd.now": "Τώρα", "sd.later": "Αργότερα", "sd.when": "Αποστολή στις", "sd.schedule": "Προγραμματισμός", "sd.whenBad": "Διάλεξε μια μελλοντική ώρα",
       "sd.whenHint": "Το στέλνει το orOS από αυτή τη συσκευή: αν δεν είναι ανοιχτό τότε, ξεκινά μόλις το ανοίξεις εδώ.",
@@ -4159,14 +4171,112 @@
 
   boot();
 
+  // ---------- Blocks from the Assistant (chat compose N1) ----------
+  // The Assistant's "Add to the newsletter" card. A dialog that is
+  // open is left alone: the blocks wait until it closes.
+  function asAddTarget(raw) {
+    var v = C.asAdd(raw);
+    if (!v) { showToast(t("as.none")); return; }
+    var open = document.querySelector("dialog[open]");
+    if (open) { open.addEventListener("close", function () { setTimeout(function () { asAddTarget(raw); }, 0); }, { once: true }); return; }
+    var drafts = C.live(data.issues).filter(function (x) { return x.st === "draft" && x.fmt === "blocks" && !x.imp; });
+    var target = v.issue ? C.issue(data, v.issue) : null;
+    if (target && (target.st !== "draft" || target.fmt !== "blocks")) target = null;
+    if (!target && view === "edit" && edIssue) {
+      var cur = C.issue(data, edIssue.id);
+      if (cur && cur.st === "draft" && cur.fmt === "blocks") target = cur;
+    }
+    if (target) { addAsBlocks(target.id, v.blocks); return; }
+    asAddDialog(v, drafts);
+  }
+  function asAddDialog(v, drafts) {
+    var lists = C.live(data.lists);
+    var dlg = makeDialog("nl-asadd", t("as.title"));
+    dlg.appendChild(el("p", "dlg-text", v.blocks.length === 1 ? t("as.text1") : t("as.text", { n: v.blocks.length })));
+    if (drafts.length) {
+      dlg.appendChild(el("p", "dlg-h", t("as.drafts")));
+      var ul = el("ul", "plain tpl-list");
+      drafts.sort(function (a, b) { return b.m - a.m; }).slice(0, 8).forEach(function (x) {
+        var l = C.list(data, x.list);
+        var li = el("li", "tpl-row");
+        var b = el("button", "row");
+        b.type = "button";
+        var txt = el("span", "row-txt");
+        txt.appendChild(el("span", "row-no", shownSubj(x)));
+        txt.appendChild(el("span", "row-sub", [l ? l.name : "", when(x.m)].filter(Boolean).join(" · ")));
+        b.appendChild(txt);
+        b.addEventListener("click", function () { dlg.close(); addAsBlocks(x.id, v.blocks); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      dlg.appendChild(ul);
+    }
+    if (!lists.length) {
+      dlg.appendChild(el("p", "hint", t("as.noList")));
+      actionsRow(dlg, [], t("as.newList"), function () { dlg.close(); listDialog(null); });
+      openDialog(dlg);
+      return;
+    }
+    dlg.appendChild(el("p", "dlg-h", t("as.newDraft")));
+    var cl = curList() || lists[0];
+    var pick = sel(lists.map(function (l) { return [l.id, l.name || "—"]; }), cl.id);
+    if (lists.length > 1) dlg.appendChild(field(t("as.list"), pick));
+    var subj = inp("text", v.subj, C.LIM.subj);
+    dlg.appendChild(field(t("ed.subj"), subj));
+    actionsRow(dlg, [], t("as.create"), function () {
+      var l = C.list(data, pick.value) || cl;
+      dlg.close();
+      var x = C.normIssue({ id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks", subj: subj.value,
+                            blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
+      put("issues", x);
+      addAsBlocks(x.id, v.blocks);
+    });
+    openDialog(dlg, drafts.length ? null : subj);
+  }
+  // Adds the blocks to that draft (the version being edited, when it is
+  // the open one) before its footer, opens it, and offers Undo.
+  function addAsBlocks(id, blocks) {
+    flushIssue();
+    var x0 = C.issue(data, id);
+    if (!x0 || x0.st !== "draft") return;
+    var x = copy(x0), cx = side(x);
+    var room = C.LIM.blocks - cx.blocks.length;
+    if (room <= 0) { showToast(t("bk.full")); return; }
+    var add = copy(blocks).slice(0, room);
+    snap(x);
+    var before = copy(cx.blocks);
+    var at = C.insertAt(cx.blocks);
+    Array.prototype.splice.apply(cx.blocks, [at, 0].concat(add));
+    put("issues", x);
+    prefs.list = x.list;
+    savePrefs();
+    viewId = x.id;
+    showView("edit");
+    focusBlock(at);
+    var msg = add.length === 1 ? t("as.added1") : t("as.added", { n: add.length });
+    if (add.length < blocks.length) msg += " " + t("as.cut", { n: blocks.length - add.length });
+    undoToast(msg, function () {
+      var c0 = C.issue(data, id);
+      if (!c0 || c0.st !== "draft") return;
+      var c1 = copy(c0);
+      side(c1).blocks = before;
+      put("issues", c1);
+      if (view === "edit" && viewId === id) renderEditor();
+    });
+  }
+
   // Deep links (shell __orosOpenAt / __orosTakeTarget):
   //   { issue: id }   open that issue (universal search)
   //   { list: id }    show that list's issues
   //   { openFile: { token } }  "Open with" an .orosnewsletter file
   //                   (fileopen.js): the File taken once with
   //                   window.parent.__orosTakeFile(token)
+  //   { asAdd: { blocks, subj?, issue? } }  blocks from the Assistant
+  //                   (chat compose N1): added to a draft only after the
+  //                   user picks it (or the open draft); Undo in the toast
   function openTarget(tg) {
     if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
+    if (tg && tg.asAdd) { asAddTarget(tg.asAdd); return; }
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (typeof tg.issue === "string" && C.issue(data, tg.issue)) {
       var x = C.issue(data, tg.issue);

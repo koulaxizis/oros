@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.63.00
+- Newsletter by chat: tell the Assistant what goes into your newsletter as it reaches you ("add the interview from this link", "a note about Friday's event with a button"). It answers with a card of ready blocks (headings, text, quotes, buttons, lists); open it in Newsletter, pick the draft (or start a new one), and the blocks go in before the footer, with Undo. The Assistant never sends: sending stays your step in Newsletter.
+
 ## Version 3.62.01
 - Assistant: the same change to many items now comes in one card for up to 200 items (it was 50), so 119 Calendar events no longer need three cards. The card says on top what every item gets and shows the first 10; "Show all" lists the rest. One Apply, one Undo.
 

@@ -852,5 +852,18 @@ orosPack("de", "newsletter", {
  "wd.5": "Freitag",
  "wd.6": "Samstag",
  "web": "Newsletter-Archiv",
- "why": "Du erhältst dies, weil du {l} abonniert hast."
+ "why": "Du erhältst dies, weil du {l} abonniert hast.",
+ "as.title": "Zu einer Ausgabe hinzufügen",
+ "as.text": "{n} Blöcke vom Assistenten. Wähle den Entwurf, in den sie kommen, oder beginne einen neuen.",
+ "as.text1": "Ein Block vom Assistenten. Wähle den Entwurf, in den er kommt, oder beginne einen neuen.",
+ "as.drafts": "Entwürfe",
+ "as.newDraft": "Oder ein neuer Entwurf",
+ "as.list": "Liste",
+ "as.create": "Neuer Entwurf",
+ "as.noList": "Lege zuerst eine Liste an: Jede Ausgabe gehört zu einer Liste.",
+ "as.newList": "Neue Liste",
+ "as.added": "{n} Blöcke hinzugefügt",
+ "as.added1": "1 Block hinzugefügt",
+ "as.cut": "({n} weitere passten nicht: Eine Ausgabe fasst 60 Blöcke.)",
+ "as.none": "Nichts hinzuzufügen: Die Blöcke waren leer."
 });

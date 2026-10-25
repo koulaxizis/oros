@@ -1455,6 +1455,88 @@
     };
   }
 
+  // Chat compose N1: blocks for a newsletter issue (newsletter/core.js
+  // asAdd). The user picks the draft in Newsletter; nothing is added
+  // before that and nothing is ever sent from here.
+  var NL_KINDS = { heading: "h", text: "p", quote: "quote", button: "btn", list: "list", divider: "hr", spacer: "sp" };
+  var NL_MAX = 20;
+  var TOOL_NEWSLETTER = {
+    name: "newsletter_add",
+    description: "Add content to one of the user's newsletter issues (the Newsletter app): a list of blocks " +
+      "in the order they appear. The user sees them on a card, opens Newsletter and picks the draft they " +
+      "go into (or a new draft); they are added before the issue's footer. Nothing is added by this call, " +
+      "and the newsletter is never sent from here: the user sends it in Newsletter. Block kinds: " +
+      "heading (text, level 1 big | 2 | 3 small) · text (text: paragraphs, **bold**, *italic* and [links](https://…) allowed) · " +
+      "quote (text, by?) · button (text, url) · list (items, ordered?) · divider · spacer. " +
+      "At most " + NL_MAX + " blocks per call.",
+    params: {
+      type: "object",
+      properties: {
+        blocks: { type: "array", description: "The blocks to add, in order.",
+                  items: { type: "object", properties: {
+                    kind: { type: "string", "enum": ["heading", "text", "quote", "button", "list", "divider", "spacer"] },
+                    text: { type: "string", description: "heading, text, quote: the words; button: its label." },
+                    level: { type: "integer", description: "heading: 1 (big), 2 or 3 (small)." },
+                    by: { type: "string", description: "quote: who said it." },
+                    url: { type: "string", description: "button: the http(s) address it opens." },
+                    items: { type: "array", items: { type: "string" }, description: "list: the items." },
+                    ordered: { type: "boolean", description: "list: numbered instead of bullets." },
+                    align: { type: "string", "enum": ["left", "center", "right"] }
+                  }, required: ["kind"] } },
+        subject: { type: "string", description: "A subject for a new draft (optional)." },
+        issue_ref: { type: "string", description: "The ref of a newsletter issue that search_data returned, to add to that draft (optional)." }
+      },
+      required: ["blocks"]
+    }
+  };
+  // newsletter_add arguments → { ok, blocks (Newsletter's own block
+  // shape), subj, view: [{ kind, text }] } | { ok: false, err }.
+  function normNewsletter(args) {
+    if (!isObj(args)) return bad("The arguments must be an object.");
+    var list = Array.isArray(args.blocks) ? args.blocks : [];
+    if (!list.length) return bad("blocks is empty.");
+    if (list.length > NL_MAX) return bad("At most " + NL_MAX + " blocks per call; split them into more calls.");
+    var out = [], view = [];
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i], n = i + 1;
+      if (!isObj(b)) return bad("Block " + n + " is not an object.");
+      var kind = String(b.kind || "");
+      if (!NL_KINDS.hasOwnProperty(kind)) return bad("Block " + n + ": unknown kind. Use one of: " + Object.keys(NL_KINDS).join(", ") + ".");
+      var o = { k: NL_KINDS[kind] }, shown = "";
+      if (kind === "heading") {
+        o.t = line(b.text, 300);
+        if (b.level === 1 || b.level === 3) o.lv = b.level;
+        shown = o.t;
+      } else if (kind === "text") {
+        o.t = para(b.text, 20000);
+        shown = o.t;
+      } else if (kind === "quote") {
+        o.t = para(b.text, 4000);
+        o.by = line(b.by, 200);
+        shown = o.t + (o.by ? " — " + o.by : "");
+      } else if (kind === "button") {
+        o.t = line(b.text, 80);
+        o.href = webUrl(b.url);
+        if (!o.href) return bad("Block " + n + ": a button needs an http(s) url.");
+        shown = o.t + " → " + o.href;
+      } else if (kind === "list") {
+        var items = (Array.isArray(b.items) ? b.items : []).map(function (x) { return line(x, 500); }).filter(Boolean).slice(0, 50);
+        o.t = items.join("\n");
+        if (b.ordered === true) o.ord = 1;
+        shown = items.join(" · ");
+      } else if (kind === "spacer") {
+        o.h = 24;
+      }
+      if ((kind === "heading" || kind === "text" || kind === "quote" || kind === "list" || kind === "button") && !o.t) {
+        return bad("Block " + n + " (" + kind + ") has no text.");
+      }
+      if (b.align === "center" || b.align === "right") o.al = b.align;
+      out.push(o);
+      view.push({ kind: kind, text: shown });
+    }
+    return { ok: true, blocks: out, subj: line(args.subject, 200), view: view };
+  }
+
   // The tools phase 1 offered (searching only); kept for the tests.
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
   // opts = { data: the user lets it search, summary: at least one
@@ -1469,6 +1551,7 @@
     if (opts.entries) out.push(TOOL_ENTRY);
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
+    if (opts.newsletter) out.push(TOOL_NEWSLETTER);
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
     return out;
   }
@@ -1754,6 +1837,9 @@
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
+    }
+    if (!opts.builtin && opts.newsletter) {
+      lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. Write in the language of the issue (the user's, unless they say otherwise). The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. Sending is always the user's step in Newsletter.");
     }
     return lines.join("\n");
   }
@@ -2353,7 +2439,7 @@
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pageAllowed: pageAllowed, webResult: webResult,
     BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
-    normAutomation: normAutomation
+    normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, normNewsletter: normNewsletter
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistCore = api;

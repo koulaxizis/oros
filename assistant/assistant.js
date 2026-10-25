@@ -197,6 +197,8 @@
       "entry.quote": "New quote · {app}", "entry.sheet": "New sheet · {app}",
       "entry.slides": "New presentation · {app}", "entry.bookmark": "New bookmark · {app}", "entry.note": "New note · {app}",
       "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
+      "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
+      "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space",
       "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
       "rc.file": "Save as file", "rc.saved": "Saved {name}. Send it to anyone with orOS.",
       "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
@@ -472,6 +474,8 @@
       "entry.quote": "Νέα προσφορά · {app}", "entry.sheet": "Νέο φύλλο · {app}",
       "entry.slides": "Νέα παρουσίαση · {app}", "entry.bookmark": "Νέος σελιδοδείκτης · {app}", "entry.note": "Νέα σημείωση · {app}",
       "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
+      "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
+      "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό",
       "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
       "rc.file": "Αποθήκευση ως αρχείο", "rc.saved": "Αποθηκεύτηκε το {name}. Στείλ' το σε όποιον έχει orOS.",
       "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
@@ -1953,10 +1957,11 @@
     var sumIds = summaryIds(apps);
     var chgApps = builtin ? [] : changeApps(apps);
     var rcApps = builtin ? [] : recipeApps();
+    var nlOn = !builtin && !!installed().newsletter;
     var wmode = webMode(pid);
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, web: !!wmode && wmode !== "native",
-                                            recipes: rcApps.map(function (a) { return a.id; }) });
+                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -1964,6 +1969,7 @@
       entries: kinds,
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      newsletter: nlOn,
       files: builtin ? "" : "pdf",
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
@@ -2114,6 +2120,7 @@
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
+    if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
@@ -2207,6 +2214,25 @@
     return {
       content: "Shown to the user as a card with the " + a.steps.length + " steps. They will open it in the app, check it, save it and run it themselves, or dismiss it. Nothing is saved or run yet.",
       ui: { k: "recipe", args: JSON.parse(JSON.stringify(args)), st: "" }
+    };
+  }
+
+  // newsletter_add (chat compose N1): checked now, shown as a card with
+  // the blocks; the button opens Newsletter ({ asAdd }), where the user
+  // picks the draft. An issue ref is turned into the issue's id here.
+  function nlIssue(c, ref) {
+    var r = c && c.refs && typeof ref === "string" ? c.refs[ref.replace(/^oros:/, "").trim()] : null;
+    return r && r.app === "newsletter" && r.target && typeof r.target.issue === "string" ? r.target.issue : "";
+  }
+  function proposeNewsletter(c, args) {
+    if (!installed().newsletter) return { content: "Error: the Newsletter app is not installed.", err: 1, ui: { k: "nlErr" } };
+    var n = C.normNewsletter(args);
+    if (!n.ok) return { content: "Error: " + n.err, err: 1, ui: { k: "nlErr" } };
+    var a = JSON.parse(JSON.stringify(args));
+    if (a.issue_ref) { a.issue = nlIssue(c, a.issue_ref); delete a.issue_ref; }
+    return {
+      content: "Shown to the user as a card with the " + n.blocks.length + " block(s). They will open Newsletter and pick the draft, or dismiss it. Nothing is added yet.",
+      ui: { k: "nl", args: a, st: "" }
     };
   }
 
@@ -3269,6 +3295,8 @@
         if (ui.k === "entryErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
+        if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
+        if (ui.k === "nlErr") return;
         if (ui.k === "change") { drawChange(host, r, c); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");
@@ -3464,6 +3492,49 @@
         ui.st = "opened";
         saveChat(c).then(function () {
           if (!runEntry({ call: { fn: "openAt", args: [a.app, { newRecipe: draft }] } })) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+  // A newsletter card (newsletter_add): rebuilt from the stored
+  // arguments with the same check every time.
+  function drawNewsletter(host, r, c) {
+    var ui = r.ui, have = installed();
+    var n = C.normNewsletter(ui.args);
+    if (!n.ok || !have.newsletter) {
+      host.appendChild(el("div", "tool-line", t("entry.gone", { app: have.newsletter || "Newsletter" })));
+      return;
+    }
+    var name = have.newsletter;
+    var card = el("section", "entry-card nl-card");
+    card.appendChild(el("h3", "entry-head", t("nl.head", { app: name })));
+    if (n.subj) card.appendChild(el("p", "entry-title", n.subj));
+    var ol = el("ol", "entry-list nl-blocks");
+    n.view.forEach(function (v) {
+      var li = el("li");
+      li.appendChild(el("b", "", t("nl.k." + v.kind)));
+      if (v.text) li.appendChild(document.createTextNode(" " + (v.text.length > 240 ? v.text.slice(0, 239) + "…" : v.text)));
+      ol.appendChild(li);
+    });
+    card.appendChild(ol);
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("nl.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("entry.open", { app: name }), "primary", function () {
+        ui.st = "opened";
+        var target = { asAdd: { blocks: n.blocks, subj: n.subj, issue: typeof ui.args.issue === "string" ? ui.args.issue : "" } };
+        saveChat(c).then(function () {
+          if (!runEntry({ call: { fn: "openAt", args: ["newsletter", target] } })) { ui.st = "failed"; saveChat(c); }
           renderMessages();
         });
       }));
