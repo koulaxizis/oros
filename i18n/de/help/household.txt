@@ -36,6 +36,11 @@ Wenn jemand im Haushalt geteilte Dinge hinzufügt, ändert oder entfernt, bekomm
 
 Bei geschlossenem orOS: Hake unten auf der Seite eines Haushalts `Benachrichtige mich über Änderungen, wenn orOS geschlossen ist` an (Einstellungen › Benachrichtigungen › `Benachrichtigungen bei geschlossenem orOS` muss auf diesem Gerät an sein). Ein paar Minuten nachdem jemand anderes etwas Geteiltes ändert, bekommt dieses Gerät eine Benachrichtigung, höchstens alle 15 Minuten. Es reist nur „etwas hat sich geändert“, auf diesem Gerät für sich selbst verschlüsselt; das Relay sieht nie, was oder wer es geändert hat.
 
+## In deinem eigenen Ordner (Nextcloud, WebDAV)
+Ein Haushalt kann statt im orOS-Relay in einem Ordner auf deinem eigenen Nextcloud- oder WebDAV-Server liegen. Öffne beim Erstellen `In einem geteilten Ordner aufbewahren (Nextcloud, WebDAV)` und schreibe die WebDAV-Adresse des Ordners (in Nextcloud: Dateien › Einstellungen › WebDAV, dazu der Name des Ordners), deinen Benutzernamen und ein App-Passwort (Nextcloud: Einstellungen › Sicherheit › Geräte & Sitzungen). orOS prüft zuerst, dass der Server antwortet und nie zwei Personen sich gegenseitig überschreiben lässt; antwortet dein Server Browsern nicht, hake `Über das orOS-Relay` an (es reicht die Anfragen weiter und behält nichts).
+
+Einladungen, Bestätigung, das Entfernen von Personen und der Schlüsselwechsel funktionieren genauso. Der Einladungslink enthält Adresse und Anmeldung des Ordners, gib ihm also ein Passwort oder schicke ihn nur der Person, für die er gedacht ist. Alles im Ordner bleibt Ende-zu-Ende-verschlüsselt: Der Server sieht nur verschlüsselte Dateien. Änderungen kommen an, wenn orOS öffnet, nach vorne kommt oder online geht, und alle 10 Minuten (bei einem Ordner gibt es keine sofortigen Aktualisierungen und keine Benachrichtigungen bei geschlossenem orOS). Wer aus dem Haushalt entfernt wurde, kann nicht mehr lesen, was danach geschrieben wird, hat aber noch die Anmeldung des Ordners: Ändere das App-Passwort, wenn das wichtig ist.
+
 ## Privatsphäre und Sicherheit
 - Der orOS-Server (ein kleiner Cloudflare-Worker) speichert nur unlesbare Daten und vergisst einen Haushalt, den 180 Tage niemand geöffnet hat.
 - Der Schlüssel bleibt auf deinen Geräten und reist mit deiner eigenen Synchronisierung (Dropbox, WebDAV), sodass auch deine anderen Geräte im Haushalt sind.

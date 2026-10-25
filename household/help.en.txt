@@ -36,6 +36,11 @@ When someone in the household adds, changes or removes shared things, the bell g
 
 With orOS closed: tick `Tell me about changes when orOS is closed` at the bottom of a household's page (Settings › Notifications › `Notifications with orOS closed` must be on for this device). A few minutes after someone else changes something shared, this device gets one notification, at most every 15 minutes. Only "something changed" travels, encrypted on this device for itself; the relay never sees what changed or who changed it.
 
+## In your own folder (Nextcloud, WebDAV)
+A household can live in a folder on your own Nextcloud or WebDAV server instead of the orOS relay. When you create it, open `Keep it in a shared folder (Nextcloud, WebDAV)` and write the folder's WebDAV address (on Nextcloud: Files › Settings › WebDAV, plus the folder's name), your user name and an app password (Nextcloud: Settings › Security › Devices & sessions). orOS first checks that the server answers and never lets two people overwrite each other; if your server does not answer browsers, tick `Through the orOS relay` (it passes the requests on and keeps nothing).
+
+Invites, approval, removing someone and the key change work the same. The invite link carries the folder's address and sign-in, so give it a password or send it only to the person it is for. Everything in the folder stays end-to-end encrypted: the server sees only scrambled files. Changes arrive when orOS opens, comes to the front or goes online, and every 10 minutes (there are no instant updates or notifications with orOS closed for a folder). Someone removed from the household can no longer read what is written after the removal, but still has the folder's sign-in: change the app password when that matters.
+
 ## Privacy and safety
 - The orOS server (a small Cloudflare worker) keeps only scrambled data it cannot read, and forgets a household nobody has opened for 180 days.
 - The key stays on your devices and travels with your own sync (Dropbox, WebDAV), so your other devices are in the household too.

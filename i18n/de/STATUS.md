@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33923 of 33932 (99%)
+- Strings: 33937 of 33946 (99%)
 - Help pages: 148 of 148 (100%)
 - Shown in the language list: yes
 
@@ -61,7 +61,7 @@ text is still written in the code. They switch over wave by wave
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 59 / 59 |
-| household | 99% | 114 / 115 |
+| household | 99% | 128 / 129 |
 | invoices | 100% | 531 / 531 |
 | jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 273 / 273 |

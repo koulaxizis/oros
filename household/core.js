@@ -314,6 +314,16 @@
   }
 
   // ---------- membership (own slice) ----------
+  // A household in a shared WebDAV folder (wave 7g): its address and
+  // sign-in (the folder's own; household/folder.js).
+  function cleanDav(d) {
+    if (!isObj(d) || typeof d.url !== "string" || d.url.length > 400) return null;
+    var url = d.url.replace(/\/+$/, ""), u;
+    try { u = new URL(url); } catch (x) { return null; }
+    if (u.protocol !== "https:" || u.username || u.password || u.search || u.hash) return null;
+    var s = function (v, n) { return typeof v === "string" && v.length <= n ? v : ""; };
+    return { url: url, user: s(d.user, 200), pass: s(d.pass, 400), relay: d.relay === true };
+  }
   function cleanEntry(e) {
     if (!isObj(e) || !BOX_RE.test(e.mid || "")) return null;
     var keys = {};
@@ -329,9 +339,12 @@
     if (!priv) return null;
     var epoch = 0;
     Object.keys(keys).forEach(function (ep) { if (+ep > epoch) epoch = +ep; });
-    return { name: line(e.name, 60), mid: e.mid, pub: typeof e.pub === "string" && /^[A-Za-z0-9_-]{80,100}$/.test(e.pub) ? e.pub : "",
+    var out = { name: line(e.name, 60), mid: e.mid, pub: typeof e.pub === "string" && /^[A-Za-z0-9_-]{80,100}$/.test(e.pub) ? e.pub : "",
              priv: priv, keys: keys, epoch: epoch, adm: KEY_RE.test(e.adm || "") ? e.adm : "",
              at: stampOk(e.at) ? e.at : 0, m: stampOk(e.m) ? e.m : 0 };
+    var dav = cleanDav(e.dav);
+    if (dav) out.dav = dav;
+    return out;
   }
   function cleanMembership(d) {
     var out = { v: VER, hh: {}, tomb: {} };
@@ -380,7 +393,7 @@
     VER: VER, TOMB_MS: TOMB_MS, COLORS: COLORS, MAX_VALUE: MAX_VALUE, BOX_RE: BOX_RE,
     empty: empty, clean: clean, canon: canon, merge: merge, same: same, clock: clock, newestOf: newestOf,
     apply: apply, view: view, diffItems: diffItems, roster: roster, initials: initials, line: line,
-    cleanMembership: cleanMembership, mergeMembership: mergeMembership
+    cleanMembership: cleanMembership, mergeMembership: mergeMembership, cleanDav: cleanDav
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosHouseCore = api;

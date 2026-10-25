@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.61.00
+- Household: keep a household in a folder on your own Nextcloud or WebDAV server instead of the orOS relay. Invites, approval and removing someone work the same, and everything in the folder stays end-to-end encrypted.
+
 ## Version 3.60.00
 - Notes: share a notebook with your household. Open it, then ⋯ next to the notebook selector › Share with a household: everyone reads and writes the same pages in their own Notes, and if two people change a page at once both texts are kept.
 

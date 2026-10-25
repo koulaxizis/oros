@@ -41,6 +41,7 @@
         <button type="button" class="icon-btn sm" id="hh-rename"></button>
       </div>
       <p id="hh-status" class="hint small" aria-live="polite"></p>
+      <p id="hh-folder" class="hint small" hidden></p>
 
       <div id="gone-card" class="card warn" hidden>
         <p id="gone-text"></p>
@@ -96,6 +97,20 @@
       <label class="field"><span data-i18n="new.me">Your name, as the others will see it</span>
         <input type="text" id="new-me" maxlength="40" required>
       </label>
+      <details id="new-where" class="where">
+        <summary data-i18n="new.where">Keep it in a shared folder (Nextcloud, WebDAV)</summary>
+        <p class="hint small" data-i18n="new.whereX">Instead of the orOS relay, the household lives in a folder on your own Nextcloud or WebDAV server: everyone in it needs that folder's address and sign-in, which travel in the invite links. Everything in it stays end-to-end encrypted.</p>
+        <label class="field"><span data-i18n="new.davUrl">Address of the folder (WebDAV)</span>
+          <input type="url" id="new-dav-url" maxlength="400" autocomplete="off" spellcheck="false" placeholder="https://cloud.example.com/remote.php/dav/files/me/Home">
+        </label>
+        <label class="field"><span data-i18n="new.davUser">User name</span>
+          <input type="text" id="new-dav-user" maxlength="200" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="field"><span data-i18n="new.davPass">App password</span>
+          <input type="password" id="new-dav-pass" maxlength="400" autocomplete="off">
+        </label>
+        <label class="row check-row"><input type="checkbox" id="new-dav-relay"> <span data-i18n="new.davRelay">Through the orOS relay (for servers that do not answer browsers)</span></label>
+      </details>
       <p class="msg" id="new-msg" role="alert"></p>
       <div class="row end">
         <button type="button" class="chip" id="new-cancel" data-i18n="btn.cancel">Cancel</button>
@@ -141,6 +156,7 @@
           <input type="text" id="inv-pw" maxlength="100" autocomplete="off">
         </label>
         <p class="hint small" data-i18n="inv.hint">Whoever opens the link asks to join; you or another member accepts the request.</p>
+        <p class="hint small" id="inv-folder" data-i18n="inv.folder" hidden>This household is in a shared folder: the link carries the folder's address and sign-in. Give it a password, or send it only to the person it is for.</p>
         <p class="msg" id="inv-msg" role="alert"></p>
         <div class="row end">
           <button type="button" class="chip" id="inv-cancel" data-i18n="btn.cancel">Cancel</button>
