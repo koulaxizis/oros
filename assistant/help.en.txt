@@ -69,7 +69,7 @@ For work you repeat in [Atelier](app:atelier), [Layout](app:layout) or [Photo La
 The assistant can only use the steps the app's Automations offer (the same list as `Add a step`), never code. If you ask for something they cannot do, it says so.
 
 ## Newsletter
-Build a [Newsletter](app:newsletter) issue by chat: "add the interview from https://…", "a short paragraph about our new release with a button to the shop". With a link, the assistant reads the page first (when it may search the internet) and writes a short summary in its own words. The card lists the blocks; `Open in Newsletter` lets you pick the draft they go into (or a new one) and adds them there before the footer. Nothing is added before that, and the assistant never sends a newsletter.
+Build a [Newsletter](app:newsletter) issue by chat: "add the interview from https://…", "a short paragraph about our new release with a button to the shop". With a link, the assistant reads the page first (when it may search the internet) and writes a short summary in its own words, with the page's main picture beside it when it finds one. "A banner to https://…" with a picture address becomes a linked picture. The card lists the blocks; `Open in Newsletter` lets you pick the draft they go into (or a new one) and adds them there before the footer. Nothing is added before that, and the assistant never sends a newsletter.
 
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.

@@ -94,6 +94,7 @@
       "as.noList": "Make a list first: an issue belongs to a list.", "as.newList": "New list",
       "as.added": "{n} blocks added", "as.added1": "1 block added", "as.cut": "({n} more did not fit: an issue holds 60 blocks.)",
       "as.none": "Nothing to add: the blocks were empty.",
+      "as.pic1": "One picture could not be copied from its site: pick it in its block.", "as.pics": "{n} pictures could not be copied from their sites: pick them in their blocks.",
       "tpl.new": "New issue", "tpl.blank": "Blank issue", "tpl.from": "Or start from a template", "tpl.delete": "Delete template",
       "sd.now": "Now", "sd.later": "Later", "sd.when": "Send on", "sd.schedule": "Schedule", "sd.whenBad": "Pick a time in the future",
       "sd.whenHint": "orOS sends it from this device: if orOS isn't open then, it starts the next time you open it here.",
@@ -318,6 +319,7 @@
       "as.noList": "Φτιάξε πρώτα μια λίστα: κάθε τεύχος ανήκει σε λίστα.", "as.newList": "Νέα λίστα",
       "as.added": "Προστέθηκαν {n} blocks", "as.added1": "Προστέθηκε 1 block", "as.cut": "({n} ακόμα δεν χώρεσαν: ένα τεύχος έχει έως 60 blocks.)",
       "as.none": "Τίποτα για προσθήκη: τα blocks ήταν κενά.",
+      "as.pic1": "Μία εικόνα δεν αντιγράφηκε από τη σελίδα της: διάλεξέ τη στο block της.", "as.pics": "{n} εικόνες δεν αντιγράφηκαν από τις σελίδες τους: διάλεξέ τες στα blocks τους.",
       "tpl.new": "Νέο τεύχος", "tpl.blank": "Κενό τεύχος", "tpl.from": "Ή ξεκίνα από πρότυπο", "tpl.delete": "Διαγραφή προτύπου",
       "sd.now": "Τώρα", "sd.later": "Αργότερα", "sd.when": "Αποστολή στις", "sd.schedule": "Προγραμματισμός", "sd.whenBad": "Διάλεξε μια μελλοντική ώρα",
       "sd.whenHint": "Το στέλνει το orOS από αυτή τη συσκευή: αν δεν είναι ανοιχτό τότε, ξεκινά μόλις το ανοίξεις εδώ.",
@@ -4186,7 +4188,7 @@
       var cur = C.issue(data, edIssue.id);
       if (cur && cur.st === "draft" && cur.fmt === "blocks") target = cur;
     }
-    if (target) { addAsBlocks(target.id, v.blocks); return; }
+    if (target) { addAsBlocks(target.id, v.blocks, v.pics); return; }
     asAddDialog(v, drafts);
   }
   function asAddDialog(v, drafts) {
@@ -4205,7 +4207,7 @@
         txt.appendChild(el("span", "row-no", shownSubj(x)));
         txt.appendChild(el("span", "row-sub", [l ? l.name : "", when(x.m)].filter(Boolean).join(" · ")));
         b.appendChild(txt);
-        b.addEventListener("click", function () { dlg.close(); addAsBlocks(x.id, v.blocks); });
+        b.addEventListener("click", function () { dlg.close(); addAsBlocks(x.id, v.blocks, v.pics); });
         li.appendChild(b);
         ul.appendChild(li);
       });
@@ -4229,13 +4231,14 @@
       var x = C.normIssue({ id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks", subj: subj.value,
                             blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
       put("issues", x);
-      addAsBlocks(x.id, v.blocks);
+      addAsBlocks(x.id, v.blocks, v.pics);
     });
     openDialog(dlg, drafts.length ? null : subj);
   }
   // Adds the blocks to that draft (the version being edited, when it is
-  // the open one) before its footer, opens it, and offers Undo.
-  function addAsBlocks(id, blocks) {
+  // the open one) before its footer, opens it, and offers Undo; then
+  // copies the pictures (pics) into their blocks.
+  function addAsBlocks(id, blocks, pics) {
     flushIssue();
     var x0 = C.issue(data, id);
     if (!x0 || x0.st !== "draft") return;
@@ -4263,6 +4266,48 @@
       put("issues", c1);
       if (view === "edit" && viewId === id) renderEditor();
     });
+    var todo = (pics || []).filter(function (p) { return p.i < add.length; });
+    if (todo.length) asPics(id, side(x) !== x, add, at, todo);
+  }
+  // The blocks' pictures, copied one after another from their web
+  // addresses (only sites that allow it: CORS). A block that was moved,
+  // removed or given a picture meanwhile is left alone.
+  var PIC_WAIT = 15000, PIC_MAX = 15 * 1024 * 1024;
+  function fetchPic(src) {
+    var ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, PIC_WAIT) : 0;
+    return fetch(src, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", signal: ctl ? ctl.signal : undefined }).then(function (res) {
+      if (!res.ok) throw new Error("http");
+      return res.blob();
+    }).then(function (b) {
+      clearTimeout(timer);
+      if (!/^image\/(jpeg|png|webp|gif)$/i.test(b.type || "") || b.size > PIC_MAX) throw new Error("type");
+      return b;
+    }, function (e) { clearTimeout(timer); throw e; });
+  }
+  function asPics(id, onL2, added, at, todo) {
+    var fails = 0, k = 0, was = added.map(function (b) { return JSON.stringify(b); });
+    function next() {
+      if (k >= todo.length) {
+        if (fails) showToast(fails === 1 ? t("as.pic1") : t("as.pics", { n: fails }));
+        return;
+      }
+      var p = todo[k++], want = added[p.i].k, wj = was[p.i];
+      fetchPic(p.src).then(storeImage).then(function (r) {
+        var cur = C.issue(data, id);
+        if (!cur || cur.st !== "draft") return;
+        var x = copy(cur), cx = onL2 && x.l2 ? x.l2 : x, i = -1;
+        cx.blocks.forEach(function (b, j) {
+          if (i < 0 && j >= at && b.k === want && !b.f && JSON.stringify(b) === wj) i = j;
+        });
+        if (i < 0) return;
+        cx.blocks[i].f = r.path; cx.blocks[i].w = r.w; cx.blocks[i].h = r.h; cx.blocks[i].b = r.b;
+        put("issues", x);
+        if (view === "edit" && viewId === id) renderEditor();
+      }, function () { fails++; }).then(next, next);
+    }
+    if (!orosFS()) { showToast(t("toast.noDisk")); return; }
+    next();
   }
 
   // Deep links (shell __orosOpenAt / __orosTakeTarget):
