@@ -33,6 +33,9 @@ With a release date set, `Make the plan` dates every step back from it: manuscri
 - `Send to To-Do` adds the open steps to a new list named after the book, each with its date.
 - When you make a new title with a release date, tick `Make the release plan from the release date` and the plan is there from the start. The Assistant can set it up too: "new book Night Sea by Ann Writer, out on 15 March".
 
+### Review copies and reviews
+In a title, `Review copies and reviews` keeps who got the book: name, outlet, e-mail and the day it went out (names you used before are offered again, with their outlet and address). Three weeks later with no review the copy is marked `follow up`; `Follow up by e-mail` opens Mail with a short, kind note and keeps the day. When a review comes, set the status to `Reviewed` and add its link and a quote: the two newest quotes go into the Newsletter blocks of the title, and `Copy the quotes` puts them all on the clipboard for the shop page or a post.
+
 ### Send to other apps
 Under `Send to other apps` pick a format (when the title has more than one), then:
 - `Draft in my shop` creates a draft product in your WooCommerce shop, connected with your own keys in [Settings](app:settings) › Connected services: name, SKU (the ISBN), price, back-cover text, weight and size in the shop's own units. If the shop already has a product with that ISBN, orOS links it and creates nothing. You add pictures and categories and publish it in the shop; `Open in the shop` takes you there.

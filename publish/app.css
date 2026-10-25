@@ -327,3 +327,8 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .badge.sub-short { color: var(--warn); border-color: var(--warn); }
 .badge.sub-yes { color: var(--ok); border-color: var(--ok); }
 .badge.sub-no { color: var(--text-dim); }
+
+/* ---------- Review copies (wave P8) ---------- */
+.badge.rc-sent { color: var(--accent); border-color: var(--accent); }
+.badge.rc-rev { color: var(--ok); border-color: var(--ok); }
+.badge.rc-no { color: var(--text-dim); }
