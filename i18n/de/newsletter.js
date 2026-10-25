@@ -870,5 +870,6 @@ orosPack("de", "newsletter", {
  "as.pics": "{n} Bilder konnten nicht von ihren Seiten kopiert werden: Wähle sie in ihren Blöcken.",
  "as.shop": "{n} Produkte aus deinem Shop hinzugefügt.",
  "as.shop1": "1 Produkt aus deinem Shop hinzugefügt.",
- "as.shopFail": "Die Produkte aus deinem Shop konnten nicht hinzugefügt werden:"
+ "as.shopFail": "Die Produkte aus deinem Shop konnten nicht hinzugefügt werden:",
+ "as.noDraft": "Es gibt noch keinen Entwurf zum Prüfen."
 });

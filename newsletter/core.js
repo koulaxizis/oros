@@ -284,7 +284,7 @@
   // (short scalars only), so this device never strips them on a save.
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
-                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at"];
+                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
                    "clnPend", "clnGone", "clnIdle", "clnDev"];
   function keepExtra(src, out, skip) {
@@ -320,6 +320,7 @@
     var pad = clamp(b.pad, 0, 48, 0);
     if (pad) o.pad = pad;
     if (validColor(b.bg)) o.bg = b.bg.toLowerCase();
+    if (SECTIONS.indexOf(b.sec) >= 0 && o.k !== "head" && o.k !== "foot") o.sec = b.sec;
     return o;
   }
   function normBtnStyle(b, o) {
@@ -1476,12 +1477,23 @@
     if (!blocks.length) return null;
     return { blocks: blocks, pics: pics, shops: shops, subj: oneLine(v.subj, LIM.subj), issue: validId(v.issue) ? v.issue : "" };
   }
-  // Where added blocks go: before the closing footer (and a social row
-  // right above it), else at the end.
-  function insertAt(blocks) {
-    var i = blocks.length;
-    while (i > 0 && blocks[i - 1] && (blocks[i - 1].k === "foot" || blocks[i - 1].k === "social")) i--;
-    return i;
+  // Where an added block goes: before the closing footer (and a social
+  // row right above it), else at the end. A block with a section (wave
+  // N4: top story, news, products, promotion, closing; `sec`, only the
+  // Assistant sets it) goes after the blocks of its own and earlier
+  // sections, before the first block of a later one; blocks without a
+  // section (the user's own) are left where they are.
+  var SECTIONS = ["top", "news", "prod", "promo", "end"];
+  function insertAt(blocks, sec) {
+    var end = blocks.length;
+    while (end > 0 && blocks[end - 1] && (blocks[end - 1].k === "foot" || blocks[end - 1].k === "social")) end--;
+    var r = SECTIONS.indexOf(sec);
+    if (r < 0) return end;
+    for (var i = 0; i < end; i++) {
+      var s = blocks[i] && SECTIONS.indexOf(blocks[i].sec);
+      if (s > r) return i;
+    }
+    return end;
   }
 
   var api = {
@@ -1494,7 +1506,7 @@
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,
-    empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, AS_KINDS: AS_KINDS, AS_MAX: AS_MAX, asAdd: asAdd, insertAt: insertAt, normSub: normSub,
+    empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, AS_KINDS: AS_KINDS, AS_MAX: AS_MAX, asAdd: asAdd, insertAt: insertAt, SECTIONS: SECTIONS, normSub: normSub,
     normChan: normChan, normList: normList, normIssue: normIssue,
     status: status, mergeNewsletter: mergeNewsletter, normSeg: normSeg, normTpl: normTpl, normL2: normL2,
     segMatch: segMatch, seg: seg, segsOf: segsOf, langOf: langOf, contentFor: contentFor, schedDue: schedDue, schedMine: schedMine,
