@@ -555,5 +555,8 @@ orosPack("de", "assistant", {
  "nl.k.products": "Produkte",
  "nl.k.shop_products": "Aus deinem Shop",
  "nl.shopN": "die {n} neuesten, beim Hinzufügen aus dem Shop gelesen",
- "nl.shopQ": "die {n} neuesten mit „{q}“, beim Hinzufügen aus dem Shop gelesen"
+ "nl.shopQ": "die {n} neuesten mit „{q}“, beim Hinzufügen aus dem Shop gelesen",
+ "entry.book": "Neues Buch zum Verlegen · {app}",
+ "f.rel": "Erscheinungstermin (mit dem Erscheinungsplan)",
+ "f.isbn": "ISBN"
 });

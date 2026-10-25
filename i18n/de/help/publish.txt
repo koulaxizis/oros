@@ -25,6 +25,14 @@ Das ISBN-Feld prüft die Nummer beim Tippen: eine falsche Prüfziffer, eine fehl
 ### Cover
 `Coverbild hinzufügen` behält eine Kopie des Vorderdeckels (bis 1600 px, ohne Standort- oder Kameradaten) in [Dateien](app:files), Ordner Publishing/Covers. Sie erreicht deine anderen Geräte mit Vault Drive. Die Druckdatei des Covers selbst entsteht im [Layout](app:layout).
 
+### Erscheinungsplan
+Mit einem Erscheinungstermin datiert `Plan anlegen` jeden Schritt von dort zurück: Manuskript da, Lektorat, Korrektur 1, 2 und 3, Cover fertig, ISBN und Barcode, an die Druckerei, und die Präsentation zwei Wochen nach dem Erscheinen. Hake einen Schritt ab, wenn er erledigt ist, ändere jedes Datum, entferne, was du nicht brauchst, oder füge mit `+ Schritt` einen eigenen hinzu. Die Zeile über der Liste sagt, was verspätet ist und was als Nächstes kommt.
+
+- `Neu datieren ab Erscheinungstermin` verschiebt die offenen Schritte, wenn sich der Termin ändert; erledigte behalten ihre Daten.
+- Der Erscheinungstermin und jeder offene Schritt erscheinen im [Kalender](app:calendar) unter dem Chip `Verlag`.
+- `An To-Do senden` legt die offenen Schritte in eine neue Liste mit dem Namen des Buchs, jeden mit seinem Datum.
+- Legst du einen neuen Titel mit Erscheinungstermin an, hake `Erscheinungsplan ab dem Erscheinungstermin anlegen` an, und der Plan ist von Anfang an da. Auch der Assistent kann ihn anlegen: „neues Buch Nachtmeer von Anna Autorin, erscheint am 15. März“.
+
 ### An andere Apps senden
 Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), dann:
 - `Entwurf in meinem Shop` legt einen Produktentwurf in deinem WooCommerce-Shop an, verbunden mit deinen eigenen Schlüsseln unter [Einstellungen](app:settings) › Verbundene Dienste: Name, SKU (die ISBN), Preis, Klappentext, Gewicht und Maße in den Einheiten des Shops. Hat der Shop schon ein Produkt mit dieser ISBN, verknüpft orOS es und legt nichts an. Bilder und Kategorien fügst du hinzu und veröffentlichst im Shop; `Im Shop öffnen` bringt dich hin.

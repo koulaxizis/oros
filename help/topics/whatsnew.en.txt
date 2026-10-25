@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.70.00
+- Publishing: a release plan for each title. Give the release date and the steps are dated back from it (manuscript, editing, proofs, cover, ISBN, printer, presentation), each one you can move, tick or rename. Open steps and release days show in the Calendar (chip Publishing), late steps are marked, and Send to To-Do turns the plan into a list. The Assistant can start a new title with its plan: «new book Night Sea by Ann Writer, out on 15 March».
+
 ## Version 3.69.00
 - Publishing: send a title to your other apps. A format becomes a draft product in your WooCommerce shop (name, ISBN as SKU, price, weight, size, blurb and biography; you publish it there), a new item in Stock, a block for Newsletter or a press release in Writer. Nothing is saved in the other app until you save it there.
 

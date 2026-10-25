@@ -284,3 +284,17 @@ dialog .fld { margin-bottom: 10px; }
 .shop-dlg { max-width: 460px; }
 .shop-msg { min-height: 1.4em; margin: 8px 0; }
 .shop-msg.bad { color: var(--danger); }
+/* Release plan (wave P4) */
+.plan-sum { font-size: 13px; margin-bottom: 8px; color: var(--text-dim); }
+.plan-sum.bad { color: var(--danger); }
+.plan-list { list-style: none; display: grid; gap: 6px; }
+.step { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.step input[type=checkbox] { width: 24px; height: 24px; flex: 0 0 auto; }
+.step-name { flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; }
+.step input[type=date] { flex: 0 1 160px; width: 160px; min-width: 0; }
+.step .icon-btn { flex: 0 0 auto; }
+.step.done .step-name { text-decoration: line-through; color: var(--text-dim); }
+.step.late .step-name { color: var(--danger); }
+.badge.late { color: var(--danger); border-color: var(--danger); }
+label.check { display: flex; gap: 8px; align-items: center; margin: 4px 0 10px; font-size: 14px; }
+label.check input { width: 20px; height: 20px; flex: 0 0 auto; }

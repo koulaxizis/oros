@@ -229,7 +229,21 @@
     if (wid > 0 && okId(raw.wp.a)) out.wp = { a: raw.wp.a, id: wid };
     return out;
   }
-  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov"];
+  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan"];
+  // Release plan (wave P4): the steps from manuscript to presentation,
+  // each with a date counted back from the release date (days).
+  var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres", "x"];
+  var STAGE_DAYS = { ms: -120, ed: -90, p1: -60, cov: -50, p2: -45, isbn: -40, p3: -30, print: -21, pres: 14 };
+  var MAX_PLAN = 20;
+  function cleanStep(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var k = oneOf(raw.k, STAGES, "x");
+    var o = { id: raw.id, k: k, d: okYmd(raw.d) ? raw.d : "", done: raw.done === 1 ? 1 : 0 };
+    var n = line(raw.n, 80);
+    if (n) o.n = n;
+    if (k === "x" && !n) return null;          // an own step needs its name
+    return o;
+  }
   function cleanTitle(raw) {
     if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
     var t = line(raw.t, 200);
@@ -247,6 +261,13 @@
       blurb: text(raw.blurb, 4000), bio: text(raw.bio, 3000), kw: line(raw.kw, 400), notes: text(raw.notes, 4000),
       cov: typeof raw.cov === "string" && COVER_RE.test(raw.cov) ? raw.cov : ""
     };
+    var sids = {};
+    var plan = (Array.isArray(raw.plan) ? raw.plan : []).map(cleanStep).filter(function (x) {
+      if (!x || sids[x.id]) return false;
+      sids[x.id] = 1;
+      return true;
+    }).slice(0, MAX_PLAN);
+    if (plan.length) out.plan = plan;
     // Fields of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(raw).forEach(function (k) {
@@ -499,6 +520,58 @@
     return t;
   }
 
+  // ---------- Release plan (wave P4) ----------
+  function addDays(ymd, n) {
+    var p = ymd.split("-"), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n));
+    return d.toISOString().slice(0, 10);
+  }
+  // The standard steps dated back from the release date. Steps already
+  // in the plan keep their id, their done mark and their own name; a
+  // done step keeps its date; own steps ("x") stay as they are.
+  function makePlan(rel, plan, newId) {
+    if (!okYmd(rel)) return (plan || []).slice();
+    var have = {};
+    (plan || []).forEach(function (s) { if (s.k !== "x" && !have[s.k]) have[s.k] = s; });
+    var out = STAGES.filter(function (k) { return k !== "x"; }).map(function (k) {
+      var old = have[k];
+      var d = old && old.done && old.d ? old.d : addDays(rel, STAGE_DAYS[k]);
+      var s = { id: old ? old.id : newId(), k: k, d: d, done: old ? old.done : 0 };
+      if (old && old.n) s.n = old.n;
+      return s;
+    });
+    (plan || []).forEach(function (s) { if (s.k === "x") out.push(s); });
+    return sortPlan(out).slice(0, MAX_PLAN);
+  }
+  function sortPlan(plan) {
+    return plan.slice().sort(function (a, b) {
+      if (!a.d !== !b.d) return a.d ? -1 : 1;
+      return a.d < b.d ? -1 : a.d > b.d ? 1 : STAGES.indexOf(a.k) - STAGES.indexOf(b.k);
+    });
+  }
+  // Where a title stands on a day: steps not done whose date has passed
+  // (late), and the next open step.
+  function planState(t, today) {
+    var open = sortPlan((t.plan || []).filter(function (s) { return !s.done && s.d; }));
+    return {
+      late: open.filter(function (s) { return s.d < today; }),
+      next: open.filter(function (s) { return s.d >= today; })[0] || null,
+      done: (t.plan || []).filter(function (s) { return s.done; }).length,
+      total: (t.plan || []).length
+    };
+  }
+  // Calendar rows (publish/feed.js): release dates of titles not yet
+  // out of print, and every open step with a date.
+  function byDay(d) {
+    var out = {};
+    function add(day, row) { (out[day] = out[day] || []).push(row); }
+    ((d && d.titles) || []).forEach(function (t) {
+      if (t.st === "oop") return;
+      if (t.rel) add(t.rel, { title: t.id, k: "rel", t: t.t });
+      (t.plan || []).forEach(function (s) { if (!s.done && s.d) add(s.d, { title: t.id, k: s.k, n: s.n || "", t: t.t, step: s.id }); });
+    });
+    return out;
+  }
+
   // ---------- To other apps (wave P2) ----------
   // Each builder is pure: the app sends what it returns through the
   // shell (WooCommerce via orosLinks, the others as deep links), and
@@ -617,7 +690,9 @@
     used: used, clashes: clashes, nextFree: nextFree, blockUsage: blockUsage,
     fold: fold, authors: authors, list: list, gaps: gaps, okYmd: okYmd, num: num,
     coverPath: coverPath, coversInUse: coversInUse, fromPrefill: fromPrefill,
-    shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease
+    shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease,
+    STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
+    planState: planState, byDay: byDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishCore = API;

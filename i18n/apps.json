@@ -705,7 +705,8 @@
   {
    "app": "publish",
    "files": [
-    "publish/app.js"
+    "publish/app.js",
+    "publish/feed.js"
    ]
   },
   {
