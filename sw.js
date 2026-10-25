@@ -1749,6 +1749,7 @@ var PRECACHE_URLS = [
   "household/core.js",
   "household/crypto.js",
   "household/folder.js",
+  "household/backup.js",
   "household/recent.js",
   "household/engine.js",
   "household/whole.js",

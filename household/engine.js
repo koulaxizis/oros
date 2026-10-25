@@ -15,7 +15,12 @@
 //     only, filled from the box (never copied into the person's own
 //     cloud slices: one path per piece of data, no loops);
 //   - a join waiting for an answer: localStorage
-//     "oros-household-pending" (this device only).
+//     "oros-household-pending" (this device only);
+//   - a backup of every household's documents (wave 8,
+//     household/backup.js): one file per household and device on the
+//     person's orOS disk, which reaches their own cloud encrypted. It is
+//     only read back when a box is gone: the documents come back, the
+//     household can start again in a new box with everything in it.
 // Sync per household: GET the revisions, fetch what changed, merge
 // (core.merge, so nothing is lost), upload only documents that differ
 // from what the box holds, with If-Match (a refused write fetches,
@@ -37,6 +42,7 @@
   var Core = (root && root.OrosHouseCore) || (typeof require === "function" ? require("./core.js") : null);
   var X = (root && root.OrosHouseCrypto) || (typeof require === "function" ? require("./crypto.js") : null);
   var Folder = (root && root.OrosHouseFolder) || (typeof require === "function" ? require("./folder.js") : null);
+  var Bk = (root && root.OrosHouseBackup) || (typeof require === "function" ? require("./backup.js") : null);
 
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   var SHARE_PAGE = "https://useoros.online/share/";
@@ -63,6 +69,9 @@
     // a household in a shared WebDAV / Nextcloud folder (wave 7g): the
     // same routes, answered from files there (household/folder.js)
     var folder = Folder ? Folder.make({ fetch: fetchFn, relay: opts.davRelay }) : null;
+    // the backup files (wave 8): { dev() → this device's tag, list() →
+    // [file name], read(name) → text, write(name, text), remove(name) }
+    var bkIO = Bk && opts.backup ? opts.backup : null;
 
     var mem = Core.cleanMembership(memIO.load());
     var pend = cleanPending(pendIO.load());
@@ -78,6 +87,10 @@
     var sockets = {};
     var readyP = null;
     var wtok = {};
+    var bkLast = {};        // box → the body this device's file holds
+    var bkAt = {};          // box → when this device last wrote it
+    var bkTimer = {};
+    var bkBack = {};        // box → its backup was read back (box gone)
 
     // ---------- small helpers ----------
     function emit(ev) {
@@ -221,7 +234,7 @@
           if (d.moved) return newEpoch(box).then(function (okk) { if (okk) return pass(box); });
           return pullDocs(box, d).then(function () { return pushDirty(box); }).then(function () {
             return afterRoster(box);
-          });
+          }).then(function () { bkSoon(box); });
         });
       });
     }
@@ -375,6 +388,147 @@
       var i = info[box] = info[box] || {};
       i.status = "gone";
       emit({ type: "status", box: box });
+      return backIn(box);
+    }
+
+    // ---------- the backup on the orOS disk (wave 8) ----------
+    function bkSoon(box) {
+      if (!bkIO || bkTimer[box]) return;
+      var wait = Math.max(3000, (bkAt[box] || 0) + Bk.EVERY_MS - now());
+      bkTimer[box] = later(function () { bkTimer[box] = null; bkWrite(box).catch(log); }, wait);
+    }
+    // Writes this device's copy of a household when it changed. Only
+    // after a pass that reached the box: a device that has not read the
+    // box yet (or reads it no more) never replaces a good copy.
+    function bkWrite(box) {
+      var e = entry(box), d = docs[box];
+      if (!bkIO || !e || !d || (info[box] || {}).status !== "ok") return Promise.resolve(false);
+      var all = {};
+      Object.keys(d).forEach(function (k) { all[k] = d[k].doc; });
+      var b = Bk.body(box, rosterOf(box).name || e.name, all);
+      var dev = bkIO.dev(), name = Bk.fileName(box, dev);
+      var prev = bkLast[box] !== undefined ? Promise.resolve(bkLast[box])
+        : Promise.resolve().then(function () { return bkIO.read(name); }).then(function (t) { return Bk.bodyOf(Bk.parse(t)); }, function () { return null; });
+      return prev.then(function (p) {
+        if (p && Bk.same(p, b)) { bkLast[box] = p; return false; }
+        bkAt[box] = now();
+        return Promise.resolve(bkIO.write(name, Bk.wrap(b, now(), dev))).then(function () { bkLast[box] = b; return true; });
+      });
+    }
+    // Every box with a copy due (or every box): written now (orOS goes
+    // to the background, the tests).
+    function backupNow(all) {
+      if (!bkIO) return Promise.resolve();
+      return Promise.all(Object.keys(mem.hh).filter(function (b) { return all || bkTimer[b]; }).map(function (b) {
+        clearTimeout(bkTimer[b]); bkTimer[b] = null;
+        return bkWrite(b).catch(log);
+      }));
+    }
+    // Every backup file on the disk, read and merged per household.
+    function bkAll() {
+      if (!bkIO) return Promise.resolve({});
+      return Promise.resolve().then(function () { return bkIO.list(); }).then(function (names) {
+        return Promise.all((names || []).filter(function (n) { return !!Bk.boxOf(n); }).map(function (n) {
+          return Promise.resolve().then(function () { return bkIO.read(n); }).then(function (t) {
+            var p = Bk.parse(t);
+            return p && p.box === Bk.boxOf(n) ? p : null;
+          }, function () { return null; });
+        }));
+      }, function () { return []; }).then(Bk.collect);
+    }
+    // A gone box: what the backup files hold joins this device's copy,
+    // so a device that had lost its copy shows everything again (and
+    // "Remove from this device" or "Start again" carry all of it).
+    function backIn(box) {
+      if (!bkIO || bkBack[box]) return Promise.resolve();
+      bkBack[box] = true;
+      return bkAll().then(function (all) {
+        var c = all[box];
+        if (!c || !entry(box)) return;
+        return Promise.all(Object.keys(c.docs).map(function (k) {
+          var r = rec(box, k), merged = Core.merge(r ? r.doc : null, c.docs[k]);
+          if (r && Core.same(merged, r.doc)) return null;
+          return setRec(box, k, { rev: r ? r.rev : 0, doc: merged, dirty: false }).then(function () {
+            emit({ type: k === ROSTER ? "roster" : "doc", box: box, id: k, remote: true });
+          });
+        }));
+      }).catch(log);
+    }
+    function backups() {
+      return bkAll().then(function (all) {
+        return Object.keys(all).map(function (box) {
+          var c = all[box], e = entry(box);
+          var n = Object.keys(c.docs).filter(function (k) { return k !== ROSTER; }).length;
+          return { box: box, name: (e && e.name) || c.name, at: c.at, files: c.files, docs: n,
+                   live: !!e && (info[box] || {}).status !== "gone", gone: !!e && (info[box] || {}).status === "gone" };
+        }).sort(function (a, b) { return b.at - a.at || (a.box < b.box ? -1 : 1); });
+      });
+    }
+    // Every document of a household that is not here any more: to the
+    // archive as private copies (apps take them when they open).
+    function takeBackup(box) {
+      if (entry(box) && (info[box] || {}).status !== "gone") return Promise.reject(fail("live"));
+      return bkAll().then(function (all) {
+        var c = all[box];
+        if (!c) throw fail("nobackup");
+        var n = 0;
+        Object.keys(c.docs).forEach(function (k) {
+          if (k === ROSTER) return;
+          archive(box, k, c.docs[k], "backup", true, c.name);
+          n++;
+        });
+        return n;
+      });
+    }
+    function dropBackup(box) {
+      if (!bkIO) return Promise.resolve(0);
+      return Promise.resolve().then(function () { return bkIO.list(); }).then(function (names) {
+        var mine = (names || []).filter(function (n) { return Bk.boxOf(n) === box; });
+        delete bkLast[box];
+        return Promise.all(mine.map(function (n) { return Promise.resolve(bkIO.remove(n)).catch(log); })).then(function () { return mine.length; });
+      });
+    }
+    // A household whose box is gone (or that is only in a backup now)
+    // starts again in a new box: same name, me as its admin, every
+    // document this device and the backup files hold. The others join
+    // again with a new invite. The old box's copies here are dropped
+    // without private copies (they are in the new box), then its backup
+    // files, once the new box has its own.
+    function restart(box, myNameIn) {
+      var e = entry(box);
+      if (e && (info[box] || {}).status !== "gone") return Promise.reject(fail("live"));
+      var all = {}, name = "", myName = "", dav = e && e.dav ? e.dav : null;
+      return bkAll().then(function (bk) {
+        var c = bk[box];
+        Object.keys(docs[box] || {}).forEach(function (k) { all[k] = docs[box][k].doc; });
+        if (c) Object.keys(c.docs).forEach(function (k) { all[k] = all[k] ? Core.merge(all[k], c.docs[k]) : c.docs[k]; });
+        var ro = Core.roster(all[ROSTER] || null);
+        var mine = e ? ro.members.filter(function (m) { return m.id === e.mid; })[0] : null;
+        name = (e && (ro.name || e.name)) || ro.name || (c && c.name) || "";
+        myName = Core.line(myNameIn, 40) || (mine && mine.name) || "";
+        if (!Object.keys(all).some(function (k) { return k !== ROSTER; }) && !e) throw fail("nobackup");
+        return createHousehold(name || "?", myName || "?", dav);
+      }).then(function (nb) {
+        var titles = {};
+        Core.roster(all[ROSTER] || null).docs.forEach(function (d) { titles[d.id] = d.title; });
+        return Object.keys(all).filter(function (k) { return k !== ROSTER; }).sort().reduce(function (p, k) {
+          return p.then(function () {
+            var d = all[k], v = Core.view(d);
+            var title = typeof v.m.t === "string" && v.m.t ? v.m.t : (titles[k] || "");
+            return shareDoc(nb, d.kind, title, null, d).catch(log);
+          });
+        }, Promise.resolve()).then(function () {
+          if (e) {
+            Object.keys(docs[box] || {}).forEach(function (k) { dropRec(box, k); });
+            delete docs[box]; delete info[box]; delete reqs[box];
+            closeSocket(box);
+            delete mem.hh[box];
+            mem.tomb[box] = now();
+            saveMem();
+          }
+          return sync(nb);
+        }).then(function () { return backupNow(true); }).then(function () { return dropBackup(box); }).then(function () { return nb; });
+      });
     }
 
     // A new key epoch: read my envelope with the token I still hold.
@@ -689,10 +843,10 @@
     }
 
     // ---------- the archive ----------
-    function archive(box, k, doc, why, take) {
+    function archive(box, k, doc, why, take, hh) {
       var v = Core.view(doc);
       var a = { id: "x/" + box + "/" + k, box: box, k: k, kind: doc.kind, title: typeof v.m.t === "string" ? v.m.t : "",
-                hh: (entry(box) || {}).name || "", doc: doc, at: now(), why: why, take: !!take };
+                hh: (entry(box) || {}).name || hh || "", doc: doc, at: now(), why: why, take: !!take };
       arch[box + "/" + k] = a;
       Promise.resolve(store.put(a)).catch(log);
       emit({ type: "archive" });
@@ -862,6 +1016,7 @@
       share: shareDoc, change: function (box, id, changes) { return changeDoc(box, id, changes) || Promise.resolve(false); },
       retitle: retitle, unshare: unshare,
       archived: archived, dropArchived: dropArchived, restore: restore,
+      backups: backups, backupNow: backupNow, takeBackup: takeBackup, dropBackup: dropBackup, restart: restart,
       liveOn: liveOn, liveOff: liveOff,
       // Wakes with orOS closed (relay /h/<box>/p): { pid, wt, ct }
       ping: function (box, body) {
@@ -961,6 +1116,33 @@
   // here ("Something changed in <household>"). The box sends it a
   // couple of minutes after someone else's change (relay/house.js). A
   // new key epoch clears the rows on the relay, so they are sent again.
+  // The backup files (wave 8) on the orOS disk (fs.js; vault.js takes
+  // them to the person's cloud). The device tag names this device's
+  // files; a new tag (browser data cleared) starts new files, the old
+  // ones stay and are read back too.
+  var BKDEV_KEY = "oros-household-bkdev";
+  function diskIO() {
+    var B = root.OrosHouseBackup;
+    function fs() { var F = root.orosFS; if (!F || typeof F.writeText !== "function") throw new Error("nofs"); return F; }
+    return {
+      dev: function () {
+        var d = "";
+        try { d = localStorage.getItem(BKDEV_KEY) || ""; } catch (e) {}
+        if (!B.DEV_RE.test(d)) {
+          d = X.rand(8);
+          try { localStorage.setItem(BKDEV_KEY, d); } catch (e) {}
+        }
+        return d;
+      },
+      list: function () {
+        return fs().ls(B.DIR).then(function (l) { return (l || []).filter(function (f) { return f && !f.dir; }).map(function (f) { return f.name; }); },
+                                    function () { return []; });
+      },
+      read: function (name) { return fs().readText(B.DIR + "/" + name); },
+      write: function (name, text) { return fs().writeText(B.DIR + "/" + name, text); },
+      remove: function (name) { return fs().rm(B.DIR + "/" + name); }
+    };
+  }
   var WAKE_KEY = "oros-household-push";
   var wake = {
     eng: null, busy: false, timer: null,
@@ -1030,6 +1212,7 @@
       log: function (e) { try { console.warn("orOS household:", e && e.message || e); } catch (x) {} },
       changed: function (box, id, before, after) { recent.note(box, id, before, after); },
       dev: function () { return wake.pid(); },
+      backup: root.OrosHouseBackup ? diskIO() : null,
       notify: function (what, box, d) {
         var N = root.orosNotifs, s = STR[lang()];
         if (!N || typeof N.emit !== "function") return;
@@ -1063,6 +1246,7 @@
       if (root.document.hidden) {
         hiddenAt = Date.now();
         offTimer = setTimeout(function () { eng.liveOff(); }, 60000);
+        eng.backupNow();
       } else {
         clearTimeout(offTimer);
         eng.liveOn();

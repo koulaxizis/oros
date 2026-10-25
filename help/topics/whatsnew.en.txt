@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.62.00
+- Household: a copy of every household you are in is now kept on your orOS disk (folder "Household backup") and travels to your cloud encrypted. If a household is ever gone, nothing is lost: start it again with everything in it, or bring its lists back to your apps.
+
 ## Version 3.61.00
 - Household: keep a household in a folder on your own Nextcloud or WebDAV server instead of the orOS relay. Invites, approval and removing someone work the same, and everything in the folder stays end-to-end encrypted.
 

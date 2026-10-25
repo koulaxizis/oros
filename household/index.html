@@ -35,6 +35,12 @@
 
     <section id="pend" hidden></section>
 
+    <details id="bk" class="card bk" hidden>
+      <summary id="bk-sum"></summary>
+      <p class="hint small" data-i18n="bk.hint">Households you are no longer in, kept on your orOS disk (folder “Household backup”). Bring their lists back to your apps or start the household again.</p>
+      <ul id="bk-list" class="rows"></ul>
+    </details>
+
     <section id="home" hidden>
       <div class="hh-head">
         <h2 id="hh-name" class="hh-name"></h2>
@@ -45,7 +51,11 @@
 
       <div id="gone-card" class="card warn" hidden>
         <p id="gone-text"></p>
-        <button type="button" class="chip" id="gone-forget" data-i18n="gone.forget">Remove from this device</button>
+        <p id="gone-safe" class="hint small" data-i18n="gone.safe" hidden>Nothing is lost: everything shared here is on this device and in the copy on your orOS disk.</p>
+        <div class="row wrap">
+          <button type="button" class="chip pri" id="gone-restart" data-i18n="gone.restart" hidden>Start it again</button>
+          <button type="button" class="chip" id="gone-forget" data-i18n="gone.forget">Remove from this device</button>
+        </div>
       </div>
 
       <div id="req-card" class="card accent" hidden>
