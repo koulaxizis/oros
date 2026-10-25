@@ -60,7 +60,8 @@ function build(pt, extra) {
 
 test("consignment shop: shelf at sale price and a settlement due; unlinked shops left out", () => {
   const x = build({ ln: ["wh:wh00001"] });
-  assert.deepEqual(x.shops, [{ id: "wh00001", name: "Shop", products: 1, q: 4000, value: 8000, cur: "EUR", last: "", due: "2026-03-01" }]);
+  assert.deepEqual(x.shops, [{ id: "wh00001", name: "Shop", products: 1, q: 4000, value: 8000, cur: "EUR", last: "", due: "2026-03-01",
+    unbilled: { n: 0, value: 0, moves: [] } }]);
 });
 
 test("supplier: only open orders of that supplier, pieces still to come at the order's cost", () => {
@@ -120,4 +121,36 @@ test("received invoices (Invoices wave 7): what you owe the partner, by crm id o
   // an Invoices core without bills (an older cached copy) shows none
   const y = O.build({ data, cust: data.cust[0], today: TODAY, nowMs: NOW, links: [], inv, I: { byCrm: I.byCrm } });
   assert.deepEqual(y.bills, { n: 0, last: "", open: {} });
+});
+
+test("consignment settled but not invoiced (doc src), and Budget entries that name the partner", () => {
+  const SINCE = Date.UTC(2026, 9, 26);
+  const st = S.merge({
+    items: [{ id: "item001", m: 1, name: "Book", price: 2000, unit: "pc" }],
+    whs: [{ id: "wh00001", m: 1, name: "Shop" }],
+    cons: [{ id: "wh00001", m: 1, on: 1, disc: 25, every: 1 }],
+    moves: [
+      { id: "mv00001", m: 1, t: "in", d: "2026-01-01", lines: [{ i: "item001", q: 10000 }] },
+      { id: "mv00002", m: 1, t: "xfer", d: "2026-02-01", w2: "wh00001", lines: [{ i: "item001", q: 6000 }] },
+      { id: "mv00003", m: SINCE - 1, t: "out", d: "2026-03-01", w: "wh00001", src: "cons:wh00001", lines: [{ i: "item001", q: -1000, p: 2000 }] },
+      { id: "mv00004", m: SINCE + 1, t: "out", d: "2026-10-26", w: "wh00001", src: "cons:wh00001", lines: [{ i: "item001", q: -2000, p: 2000 }] },
+      { id: "mv00005", m: SINCE + 2, t: "out", d: "2026-10-27", w: "wh00001", src: "cons:wh00001", lines: [{ i: "item001", q: -1000, p: 2000 }] }
+    ],
+    settings: { m: 1, cur: "EUR" }
+  }, null, NOW);
+  const inv = I.normalize({ ver: 1, clients: [], pays: [], docs: [{ id: "doc-001", kind: "inv", st: "issued", ser: "ser-inv", seq: 1,
+    num: "INV-1", date: "2026-10-27", cur: "EUR", c: { name: "Shop" }, lines: [{ d: "Book", q: 1, p: 1500, vat: 0 }], src: "stock:cons-mv00005", m: 1 }] });
+  const data = C.norm({ cust: [{ id: "cust001", m: 1, name: "Shop" }], pt: [{ id: "cust001", m: 1, roles: ["shop"], ln: ["wh:wh00001"] }] });
+  const cust = data.cust[0];
+  const bud = { ver: 1, set: { m: 1, cur: "EUR" }, tombs: { "tx:t3": 9 }, tx: [
+    { id: "t1", m: 1, d: "2026-03-01", a: 5000, k: "i", c: "", n: "", crm: "cust001" },
+    { id: "t2", m: 1, d: "2025-03-01", a: 700, k: "o", c: "", n: "", crm: "cust001" },
+    { id: "t3", m: 1, d: "2026-03-01", a: 900, k: "o", c: "", n: "", crm: "cust001" },
+    { id: "t4", m: 1, d: "2026-03-01", a: 900, k: "o", c: "", n: "", crm: "other" }
+  ] };
+  const x = O.build({ data, cust, today: TODAY, nowMs: NOW, links: C.linksOf(data, cust), stock: st, S, inv, I, bud });
+  assert.deepEqual(x.shops[0].unbilled, { n: 1, value: 3000, moves: [{ id: "mv00004", d: "2026-10-26" }] },
+    "the old settlement (before sources were kept) and the invoiced one are left out; 2 × 20 € less 25 %");
+  assert.deepEqual(x.budget, { n: 2, last: "2026-03-01", cur: "EUR", year: { i: 5000, o: 0 }, all: { i: 5000, o: 700 } });
+  assert.deepEqual(O.build({ data, cust, today: TODAY, nowMs: NOW, links: [], inv: null, I }).budget.n, 0);
 });

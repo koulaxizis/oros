@@ -84,6 +84,7 @@
   var DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
   var CUR_RE = /^[A-Z]{3}$/;
   var LOGO_RE = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+\/]+=*$/;
+  var SRC_RE = /^[a-z0-9]{1,20}:[A-Za-z0-9_-]{1,60}$/;
 
   // The series every install starts with: deterministic ids, never
   // stored until the user edits one (then the stored copy wins).
@@ -188,7 +189,7 @@
     client: ["id", "name", "afm", "doy", "job", "addr", "country", "email", "phone", "note", "crm", "m", "del"],
     doc:    ["id", "kind", "st", "ser", "seq", "num", "date", "due", "cur", "cli", "c", "s", "lines",
              "gDisc", "wht", "exempt", "terms", "notes", "ref", "crm", "mark", "file", "sent", "plang",
-             "xnet", "xvat", "m", "del"],
+             "xnet", "xvat", "src", "m", "del"],
     pay:    ["id", "doc", "date", "amt", "how", "note", "bud", "m", "del"],
     tpl:    ["id", "name", "kind", "cli", "cur", "lines", "gDisc", "wht", "exempt", "terms", "notes",
              "rep", "next", "dom", "m", "del"],
@@ -305,6 +306,9 @@
     out.file = typeof x.file === "string" && /^\/internal\/[^\u0000-\u001f]{1,300}$/.test(x.file) &&
                x.file.indexOf("/../") < 0 ? x.file : "";
     out.sent = validDay(x.sent) ? x.sent : "";
+    // wave 7: what the document was made from ("app:id", BR-INV-NEW
+    // ref), written only when set; an older device keeps it as an extra
+    if (typeof x.src === "string" && SRC_RE.test(x.src)) out.src = x.src;
     out.plang = x.plang === "en" || x.plang === "el" ? x.plang : "";
     if (x.kind === "ext") {
       out.xnet = cents(x.xnet);
@@ -700,6 +704,14 @@
     });
     out.rows.sort(function (x, y) { return cmpStr(x.date, y.date) || cmpStr(x.num, y.num) || cmpStr(x.id, y.id); });
     return out;
+  }
+
+  // Wave 7 — the documents made from one source ("app:id", the ref of
+  // a BR-INV-NEW prefill, e.g. "stock:cons-<movement>"), drafts
+  // included, cancelled ones left out: [doc].
+  function bySrc(data, src) {
+    if (!data || typeof src !== "string" || !SRC_RE.test(src)) return [];
+    return live(data.docs).filter(function (d) { return d.src === src && d.st !== "void"; });
   }
 
   // Wave 7 — received invoices (bills): what you owe your suppliers.
@@ -1290,7 +1302,7 @@
     lineNet: lineNet, totals: totals, paysOf: paysOf, paidOf: paidOf, creditsOf: creditsOf,
     owes: owes, balance: balance, status: status, lateDays: lateDays, sign: sign, counts: counts,
     byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, stockOut: stockOut, statement: statement,
-    billTotal: billTotal, billPays: billPays, billPaid: billPaid, billBalance: billBalance,
+    bySrc: bySrc, billTotal: billTotal, billPays: billPays, billPaid: billPaid, billBalance: billBalance,
     billStatus: billStatus, bill: bill, billsOpen: billsOpen, billsByCrm: billsByCrm, billSuppliers: billSuppliers,
     EU: EU, euCountry: euCountry, vatPrefix: vatPrefix, reverseCharge: reverseCharge,
     ibanOf: ibanOf, ibanOk: ibanOk, epcPayload: epcPayload, payLinkOk: payLinkOk, payLinkFor: payLinkFor,

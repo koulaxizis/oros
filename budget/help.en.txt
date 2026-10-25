@@ -11,6 +11,8 @@ The `Entries` tab lists the month's entries by day, with a `Day total`. Tap an e
 
 `Search all entries…` looks through every month, not just the open one. The menu next to it shows `All entries`, `Expenses only` or `Income only`.
 
+If you use [CRM](help:a/crm), an entry can name the customer, supplier or other partner it is with (`Partner in CRM`); that partner's card then shows this year's and all-time income and expenses with them. Payments sent from Invoices bring their partner along.
+
 ## Monthly limits
 On `Limits`, `Set limit` gives an expense category a monthly limit, and `All expenses` takes an overall one. Limits apply to every month. Each bar shows how much is spent and how much is left, and turns to `Close to the limit` at 80% and `Over the limit` after 100%. When you pass a limit in the current month, orOS sends you one [notification](help:t/notifications).
 

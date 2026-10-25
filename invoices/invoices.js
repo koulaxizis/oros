@@ -2471,8 +2471,11 @@
       var who = C.partyName(data, d);
       var ok;
       try {
-        ok = open({ k: "i", a: p.amt, d: p.date, c: "i-free", src: "invoices",
-                    n: ((d.num || kindName(d.kind)) + (who ? " \u00b7 " + who : "")).slice(0, 140) });
+        var pre = { k: "i", a: p.amt, d: p.date, c: "i-free", src: "invoices",
+                    n: ((d.num || kindName(d.kind)) + (who ? " \u00b7 " + who : "")).slice(0, 140) };
+        var cl = C.client(data, d.cli), crm = d.crm || (cl && cl.crm) || "";
+        if (crm) pre.crm = crm;   // the CRM partner, kept on the Budget entry (BR-CRM-LINK)
+        ok = open(pre);
       } catch (e) { ok = false; }
       if (ok === false) { showToast(t("toast.budgetNo")); return; }
       var cur = C.byId(data.pays, p.id);
@@ -4276,6 +4279,7 @@
           }
           if (p.notes) x.notes = p.notes;
           if (p.gDisc) x.gDisc = p.gDisc;
+          if (p.ref) x.src = p.ref.app + ":" + p.ref.id;   // wave 7: what it was made from
         });
         ed.dirty = true;
         shelter();

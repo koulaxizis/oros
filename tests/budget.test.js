@@ -397,3 +397,15 @@ test("accounts and transfers: merge stays canonical, deletes stick", () => {
   assert.deepEqual(ab.xfer, []);
   assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "set", "tombs"]);
 });
+
+test("CRM partner on an entry (BR-CRM-LINK): kept when valid, only when set, and through the prefill", () => {
+  assert.equal(B.normTx(tx("t1", 1, { crm: "cust001" })).crm, "cust001");
+  assert.equal("crm" in B.normTx(tx("t1", 1, { crm: "bad id!" })), false);
+  assert.equal("crm" in B.normTx(tx("t1", 1)), false);
+  assert.equal(B.normPrefill({ k: "i", a: 100, crm: "cust001" }).crm, "cust001");
+  assert.equal("crm" in B.normPrefill({ k: "i", a: 100, crm: 7 }), false);
+  // an older copy without the field and a newer one with it merge to the newer
+  const a = D({ tx: [tx("t1", 1)] }), b = D({ tx: [tx("t1", 2, { crm: "cust001" })] });
+  assert.equal(B.mergeBudget(a, b).tx[0].crm, "cust001");
+  assert.equal(canon(B.mergeBudget(a, b)), canon(B.mergeBudget(b, a)));
+});

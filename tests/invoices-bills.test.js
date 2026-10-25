@@ -121,3 +121,16 @@ test("sync: bills and their payments from two devices both survive", async () =>
   assert.equal(C.billPaid(a, "bil-1"), 5000);
   assert.equal(a.bills.length, 2);
 });
+
+test("doc source (wave 7): kept when valid, found by bySrc, cancelled documents left out", () => {
+  const doc = (id, extra) => Object.assign({ id, kind: "inv", st: "issued", ser: "ser-inv", seq: 1, num: "INV-1", date: "2026-10-01",
+    cur: "EUR", c: { name: "Shop" }, lines: [{ d: "Book", q: 1, p: 1000, vat: 24 }], m: 1 }, extra || {});
+  const d = model({ docs: [doc("doc-1", { src: "stock:cons-mv1" }), doc("doc-2", { src: "stock:cons-mv2", st: "void" }),
+    doc("doc-3", { src: "bad src" }), doc("doc-4", { st: "draft", src: "stock:cons-mv4" })] });
+  assert.equal(d.docs[0].src, "stock:cons-mv1");
+  assert.equal("src" in d.docs[2], false);
+  assert.deepEqual(C.bySrc(d, "stock:cons-mv1").map((x) => x.id), ["doc-1"]);
+  assert.deepEqual(C.bySrc(d, "stock:cons-mv2"), []);
+  assert.deepEqual(C.bySrc(d, "stock:cons-mv4").map((x) => x.id), ["doc-4"], "a draft counts: the invoice is on its way");
+  assert.deepEqual(C.bySrc(d, ""), []);
+});

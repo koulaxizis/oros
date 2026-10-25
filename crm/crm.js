@@ -110,6 +110,8 @@
       "ov.none": "Nothing in other apps yet. Link this record's supplier, shop, client or titles under In other apps.",
       "ov.money": "Money", "ov.in": "Owes you {v}", "ov.overdue": "overdue {v}", "ov.out": "You owe {v}",
       "ov.outRoy": "royalties, statements: {n}", "ov.even": "Nothing open.", "ov.outBills": "received invoices: {n}",
+      "ov.unbilled": "Settled, not invoiced: {n} · {v}", "ov.invoiceIt": "Invoice the settlement of {d}",
+      "ov.budget": "Budget", "ov.budYear": "This year: income {i} · expenses {o}", "ov.budAll": "Entries: {n} · all time: income {i} · expenses {o}",
       "ov.bills": "Received invoices", "ov.billsOpen": "Still to pay: {v}", "ov.billsPaid": "All paid", "ov.billsN": "Invoices: {n} · latest {d}",
       "ov.shops": "Consignment", "ov.shopLine": "Products: {p} · pieces: {q} · {v} at sale price", "ov.shopEmpty": "Nothing on the shelf now",
       "ov.last": "Last settled {d}", "ov.never": "Not settled yet", "ov.due": "Settlement due since {d}",
@@ -253,6 +255,8 @@
       "ov.none": "Τίποτα σε άλλες εφαρμογές ακόμη. Σύνδεσε τον προμηθευτή, το κατάστημα, τον πελάτη ή τους τίτλους αυτής της εγγραφής στο «Σε άλλες εφαρμογές».",
       "ov.money": "Χρήματα", "ov.in": "Σου χρωστά {v}", "ov.overdue": "ληξιπρόθεσμα {v}", "ov.out": "Του χρωστάς {v}",
       "ov.outRoy": "δικαιώματα, εκκαθαρίσεις: {n}", "ov.even": "Τίποτα ανοιχτό.", "ov.outBills": "λαμβανόμενα τιμολόγια: {n}",
+      "ov.unbilled": "Εκκαθαρίσεις χωρίς τιμολόγιο: {n} · {v}", "ov.invoiceIt": "Τιμολόγηση εκκαθάρισης {d}",
+      "ov.budget": "Έσοδα & Έξοδα", "ov.budYear": "Φέτος: έσοδα {i} · έξοδα {o}", "ov.budAll": "Κινήσεις: {n} · συνολικά: έσοδα {i} · έξοδα {o}",
       "ov.bills": "Λαμβανόμενα τιμολόγια", "ov.billsOpen": "Μένουν να πληρωθούν: {v}", "ov.billsPaid": "Όλα πληρωμένα", "ov.billsN": "Τιμολόγια: {n} · τελευταίο {d}",
       "ov.shops": "Παρακαταθήκη", "ov.shopLine": "Προϊόντα: {p} · τεμάχια: {q} · {v} σε τιμή πώλησης", "ov.shopEmpty": "Τίποτα στο ράφι τώρα",
       "ov.last": "Τελευταία εκκαθάριση {d}", "ov.never": "Χωρίς εκκαθάριση ακόμη", "ov.due": "Εκκαθάριση οφείλεται από {d}",
@@ -850,7 +854,8 @@
     if (!OV) return;
     var x = OV.build({ data: data, cust: c, today: todayYmd(), nowMs: Date.now(), links: C.linksOf(data, c),
       inv: invData(), I: window.OrosInvoicesCore, alsoInv: invLinks(c),
-      stock: stockData(), S: window.OrosStockCore, ts: tsData(), T: window.orosTimesheetCore, pub: pubData() });
+      stock: stockData(), S: window.OrosStockCore, ts: tsData(), T: window.orosTimesheetCore, pub: pubData(),
+      bud: readForeign("oros-budget-data", function (raw) { return JSON.parse(raw); }) });
     function sec(label, app, target) {
       var s = el("div", "sec");
       var h = secHead(label);
@@ -898,6 +903,23 @@
       var s = sec(t("ov.shops") + " · " + r.name, "stock", { view: "cons" });
       line(s, r.q > 0 ? t("ov.shopLine", { p: r.products, q: pieces(r.q), v: curMoney(r.value, r.cur) }) : t("ov.shopEmpty"),
         r.due ? t("ov.due", { d: fmtDate(r.due) }) : (r.last ? t("ov.last", { d: fmtDate(r.last) }) : t("ov.never")), !!r.due);
+      if (r.unbilled.n) {
+        line(s, t("ov.unbilled", { n: r.unbilled.n, v: curMoney(r.unbilled.value, r.cur) }), "", true);
+        // the invoice opens in Invoices prefilled (BR-INV-NEW), saved only there
+        var acts = el("div", "chips"), S = window.OrosStockCore, d = stockData();
+        r.unbilled.moves.slice(0, 6).forEach(function (mv) {
+          var mvr = null;
+          (d && d.moves || []).forEach(function (x) { if (x.id === mv.id) mvr = x; });
+          var pre = S && mvr ? S.consInvoice(d, r.id, mvr) : null;
+          if (!pre) return;
+          if (!pre.crm) pre.crm = c.id;
+          var b = el("button", "txt-btn", t("ov.invoiceIt", { d: fmtDate(mv.d) }));
+          b.type = "button";
+          b.addEventListener("click", function () { openIn("invoices", { "new": pre }); });
+          acts.appendChild(b);
+        });
+        if (acts.firstChild) s.appendChild(acts);
+      }
     });
     x.sups.forEach(function (r) {
       var s = sec(t("ov.sups") + " · " + r.name, "stock", { sup: r.id });
@@ -913,7 +935,12 @@
       if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
       if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
     }
-    if (!C.linksOf(data, c).length && !x.pub.titles.length && !x.bills.n) pane.appendChild(el("p", "hint", t("ov.none")));
+    if (x.budget.n) {
+      var sbu = sec(t("ov.budget"), "budget", {});
+      line(sbu, t("ov.budYear", { i: curMoney(x.budget.year.i, x.budget.cur), o: curMoney(x.budget.year.o, x.budget.cur) }),
+        t("ov.budAll", { n: x.budget.n, i: curMoney(x.budget.all.i, x.budget.cur), o: curMoney(x.budget.all.o, x.budget.cur) }));
+    }
+    if (!C.linksOf(data, c).length && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
     // the relationship itself
     var sr = sec(t("ov.rel"));
     line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));

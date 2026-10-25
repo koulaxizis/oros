@@ -193,6 +193,7 @@ orosPack("de", "budget", {
  "f.acc": "Konto",
  "f.amount": "Betrag",
  "f.cat": "Kategorie",
+ "f.crm": "Partner im CRM",
  "f.cur": "Währung",
  "f.date": "Datum",
  "f.from": "Aus {app}",

@@ -11,6 +11,8 @@ Der Tab `Einträge` listet die Einträge des Monats nach Tag, mit einer `Tagessu
 
 `Alle Einträge durchsuchen…` sucht in jedem Monat, nicht nur im offenen. Das Menü daneben zeigt `Alle Einträge`, `Nur Ausgaben` oder `Nur Einnahmen`.
 
+Wenn du [CRM](help:a/crm) nutzt, kann ein Eintrag den Kunden, Lieferanten oder anderen Partner nennen, mit dem er war (`Partner im CRM`); die Karte dieses Partners zeigt dann die Einnahmen und Ausgaben mit ihm in diesem Jahr und insgesamt. Zahlungen, die du aus Invoices schickst, bringen ihren Partner mit.
+
 ## Monatslimits
 Unter `Limits` gibt `Limit setzen` einer Ausgabenkategorie ein Monatslimit, und `Alle Ausgaben` nimmt ein Gesamtlimit. Limits gelten für jeden Monat. Jeder Balken zeigt, wie viel ausgegeben und wie viel übrig ist, und wechselt bei 80 % zu `Nah am Limit` und über 100 % zu `Über dem Limit`. Wenn du im aktuellen Monat ein Limit überschreitest, schickt dir orOS eine [Benachrichtigung](help:t/notifications).
 
