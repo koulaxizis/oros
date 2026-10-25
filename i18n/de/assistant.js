@@ -511,5 +511,14 @@ orosPack("de", "assistant", {
  "rc.head": "Automation · {app}",
  "rc.hint": "Öffnet {app} mit diesen Schritten. Du prüfst und speicherst sie; nichts läuft, bevor du dort auf Ausführen tippst.",
  "rc.file": "Als Datei speichern",
- "rc.saved": "{name} gespeichert. Schick sie an alle, die orOS haben."
+ "rc.saved": "{name} gespeichert. Schick sie an alle, die orOS haben.",
+ "nl.head": "Für eine Newsletter-Ausgabe · {app}",
+ "nl.hint": "Öffnet {app}: Du wählst den Entwurf, in den diese Blöcke kommen, oder einen neuen. Vorher wird nichts hinzugefügt oder gesendet.",
+ "nl.k.heading": "Überschrift",
+ "nl.k.text": "Text",
+ "nl.k.quote": "Zitat",
+ "nl.k.button": "Button",
+ "nl.k.list": "Liste",
+ "nl.k.divider": "Trennlinie",
+ "nl.k.spacer": "Abstand"
 });

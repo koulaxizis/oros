@@ -1425,6 +1425,33 @@
     return { k: "no", msg: msg };
   }
 
+  // ---------- Blocks from the Assistant (chat compose, wave N1) ----------
+  // __orosOpenAt("newsletter", { asAdd: { blocks, subj?, issue? } }) is
+  // the Assistant's newsletter_add card. Only kinds that need no picture
+  // and no shop come this way; each block goes through normBlock like a
+  // saved one, and empty ones are dropped. → { blocks, subj, issue } | null
+  var AS_KINDS = ["h", "p", "quote", "btn", "list", "hr", "sp"];
+  var AS_MAX = 20;
+  function asAdd(v) {
+    if (!v || typeof v !== "object" || !Array.isArray(v.blocks)) return null;
+    var blocks = v.blocks.slice(0, AS_MAX).map(function (b) {
+      return b && typeof b === "object" && AS_KINDS.indexOf(b.k) >= 0 ? normBlock(b) : null;
+    }).filter(function (b) {
+      if (!b) return false;
+      if (b.k === "btn") return !!(b.t && b.href);
+      return b.k === "hr" || b.k === "sp" || !!b.t;
+    });
+    if (!blocks.length) return null;
+    return { blocks: blocks, subj: oneLine(v.subj, LIM.subj), issue: validId(v.issue) ? v.issue : "" };
+  }
+  // Where added blocks go: before the closing footer (and a social row
+  // right above it), else at the end.
+  function insertAt(blocks) {
+    var i = blocks.length;
+    while (i > 0 && blocks[i - 1] && (blocks[i - 1].k === "foot" || blocks[i - 1].k === "social")) i--;
+    return i;
+  }
+
   var api = {
     STORAGE_KEY: STORAGE_KEY, LIM: LIM, PRESETS: PRESETS, MAIL_DEFAULTS: MAIL_DEFAULTS, SECS: SECS,
     THEMES: THEMES, FONTS: FONTS, BTN_SHAPES: BTN_SHAPES, HEAD_SIZES: HEAD_SIZES, ALIGNS: ALIGNS, HR_STYLES: HR_STYLES,
@@ -1435,7 +1462,7 @@
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,
-    empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, normSub: normSub,
+    empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, AS_KINDS: AS_KINDS, AS_MAX: AS_MAX, asAdd: asAdd, insertAt: insertAt, normSub: normSub,
     normChan: normChan, normList: normList, normIssue: normIssue,
     status: status, mergeNewsletter: mergeNewsletter, normSeg: normSeg, normTpl: normTpl, normL2: normL2,
     segMatch: segMatch, seg: seg, segsOf: segsOf, langOf: langOf, contentFor: contentFor, schedDue: schedDue, schedMine: schedMine,
