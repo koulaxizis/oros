@@ -137,16 +137,18 @@
       "web.err.setup": "{src} isn't set up yet: add its key or address in Settings → Internet.",
       "web.err.empty": "The page had no text to read.", "web.err.fail": "The search with {src} didn't work.",
       "set.usageWeb": "{n} web searches",
-      "btn.attach": "Attach a photo or PDF", "att.title": "Attach a file",
-      "att.what": "A photo (JPEG, PNG, WebP, GIF) or a PDF: a receipt, a business card, a poster, a document. Up to {n} per message.",
+      "btn.attach": "Attach a photo, PDF or document", "att.title": "Attach a file",
+      "att.what": "A photo, a PDF or a document (Word, LibreOffice, Excel, PowerPoint, RTF, e-book, web page, vCard, e-mail, text): a receipt, a business card, a form, a list. Up to {n} per message.",
+      "att.docs": "Documents are read on this device: only their text goes to {name}, never the file.",
       "att.whatImg": "A photo (JPEG, PNG, WebP, GIF): a receipt, a business card, a poster. Up to {n} per message.",
       "att.hint": "The file goes only to {name}, only when you press Send. Large photos are made smaller first. Files are not kept with the conversation: once you leave the Assistant they can't be sent again.",
-      "att.device": "From this device…", "att.disk": "From the orOS disk…", "att.diskTitle": "Photos and PDFs on the orOS disk",
-      "att.up": "Up one folder", "att.loading": "Loading…", "att.empty": "No photos or PDFs here.", "att.reading": "Reading the file…",
+      "att.device": "From this device…", "att.disk": "From the orOS disk…", "att.diskTitle": "Photos, PDFs and documents on the orOS disk",
+      "att.up": "Up one folder", "att.loading": "Loading…", "att.empty": "No photos, PDFs or documents here.", "att.reading": "Reading the file…",
       "att.goes": "Goes to {name} when you send · {size}", "att.remove": "Remove {name}",
       "att.gone": "not kept", "att.goneTip": "The file was only kept while the Assistant was open; it is not sent again.",
       "att.err.none": "{name} can't read files here. Claude, ChatGPT, Gemini, Mistral and OpenRouter can.",
-      "att.err.type": "Only photos (JPEG, PNG, WebP, GIF) and PDF files can be attached.",
+      "att.err.type": "That kind of file can't be read here. Photos, PDFs and documents (Word, LibreOffice, Excel, PowerPoint, RTF, e-books, web pages, vCards, e-mails, text) can.",
+      "att.err.photo": "This device can't open that kind of photo. Save it as JPEG or PNG and attach it again.",
       "att.err.pdf": "{name} can't read PDF files here. Claude, ChatGPT, Gemini and OpenRouter can; photos work.",
       "att.err.size": "That file is too big ({size}; at most {max}).", "att.err.count": "At most {n} files per message.",
       "att.err.read": "Could not read that file.",
@@ -344,6 +346,9 @@
       "chg.ask.many": "Change these {n} items in {app}?",
       "chg.textMany": "{name} asks to make the same change to {n} of your items. Check them: nothing changes until you press Apply.",
       "chg.many": "{n} items", "f.label": "Label",
+      "chg.textEach": "{name} asks to change {n} of your items, each in its own way. Check them: nothing changes until you press Apply.",
+      "chg.tickHint": "Untick a row to leave it as it is.", "chg.tick": "Change {f}",
+      "f.nickname": "Nickname", "f.job": "Job title", "f.website": "Website",
       "chg.sum": "Every one of the {n} items gets:", "chg.showAll": "Show all ({n} more)",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
@@ -414,16 +419,18 @@
       "web.err.setup": "Το {src} δεν έχει ρυθμιστεί ακόμη: βάλε το κλειδί ή τη διεύθυνσή του στις Ρυθμίσεις → Internet.",
       "web.err.empty": "Η σελίδα δεν είχε κείμενο για ανάγνωση.", "web.err.fail": "Η αναζήτηση με το {src} δεν δούλεψε.",
       "set.usageWeb": "{n} αναζητήσεις στο internet",
-      "btn.attach": "Επισύναψη φωτογραφίας ή PDF", "att.title": "Επισύναψη αρχείου",
-      "att.what": "Μια φωτογραφία (JPEG, PNG, WebP, GIF) ή ένα PDF: απόδειξη, κάρτα επαγγελματία, αφίσα, έγγραφο. Έως {n} ανά μήνυμα.",
+      "btn.attach": "Επισύναψη φωτογραφίας, PDF ή εγγράφου", "att.title": "Επισύναψη αρχείου",
+      "att.what": "Μια φωτογραφία, ένα PDF ή ένα έγγραφο (Word, LibreOffice, Excel, PowerPoint, RTF, e-book, ιστοσελίδα, vCard, email, κείμενο): απόδειξη, κάρτα επαγγελματία, φόρμα, λίστα. Έως {n} ανά μήνυμα.",
+      "att.docs": "Τα έγγραφα διαβάζονται σε αυτή τη συσκευή: στο {name} πηγαίνει μόνο το κείμενό τους, ποτέ το αρχείο.",
       "att.whatImg": "Μια φωτογραφία (JPEG, PNG, WebP, GIF): απόδειξη, κάρτα επαγγελματία, αφίσα. Έως {n} ανά μήνυμα.",
       "att.hint": "Το αρχείο πηγαίνει μόνο στο {name}, μόνο όταν πατήσεις Αποστολή. Οι μεγάλες φωτογραφίες μικραίνουν πρώτα. Τα αρχεία δεν κρατιούνται με τη συζήτηση: όταν βγεις από τον Βοηθό δεν ξαναστέλνονται.",
-      "att.device": "Από αυτή τη συσκευή…", "att.disk": "Από τον δίσκο του orOS…", "att.diskTitle": "Φωτογραφίες και PDF στον δίσκο του orOS",
-      "att.up": "Έναν φάκελο πάνω", "att.loading": "Φόρτωση…", "att.empty": "Δεν υπάρχουν φωτογραφίες ή PDF εδώ.", "att.reading": "Διαβάζεται το αρχείο…",
+      "att.device": "Από αυτή τη συσκευή…", "att.disk": "Από τον δίσκο του orOS…", "att.diskTitle": "Φωτογραφίες, PDF και έγγραφα στον δίσκο του orOS",
+      "att.up": "Έναν φάκελο πάνω", "att.loading": "Φόρτωση…", "att.empty": "Δεν υπάρχουν φωτογραφίες, PDF ή έγγραφα εδώ.", "att.reading": "Διαβάζεται το αρχείο…",
       "att.goes": "Πηγαίνει στο {name} με την αποστολή · {size}", "att.remove": "Αφαίρεση: {name}",
       "att.gone": "δεν κρατήθηκε", "att.goneTip": "Το αρχείο κρατήθηκε μόνο όσο ήταν ανοιχτός ο Βοηθός· δεν ξαναστέλνεται.",
       "att.err.none": "Το {name} δεν διαβάζει αρχεία εδώ. Το κάνουν τα Claude, ChatGPT, Gemini, Mistral και OpenRouter.",
-      "att.err.type": "Επισυνάπτονται μόνο φωτογραφίες (JPEG, PNG, WebP, GIF) και αρχεία PDF.",
+      "att.err.type": "Αυτό το είδος αρχείου δεν διαβάζεται εδώ. Διαβάζονται φωτογραφίες, PDF και έγγραφα (Word, LibreOffice, Excel, PowerPoint, RTF, e-book, ιστοσελίδες, vCard, email, κείμενο).",
+      "att.err.photo": "Αυτή η συσκευή δεν ανοίγει αυτό το είδος φωτογραφίας. Αποθήκευσέ τη ως JPEG ή PNG και επισύναψέ τη ξανά.",
       "att.err.pdf": "Το {name} δεν διαβάζει PDF εδώ. Το κάνουν τα Claude, ChatGPT, Gemini και OpenRouter· οι φωτογραφίες δουλεύουν.",
       "att.err.size": "Το αρχείο είναι πολύ μεγάλο ({size}· έως {max}).", "att.err.count": "Έως {n} αρχεία ανά μήνυμα.",
       "att.err.read": "Δεν διαβάστηκε το αρχείο.",
@@ -621,6 +628,9 @@
       "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
       "chg.textMany": "Το {name} ζητά την ίδια αλλαγή σε {n} στοιχεία σου. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
       "chg.many": "{n} στοιχεία", "f.label": "Ετικέτα",
+      "chg.textEach": "Το {name} ζητά να αλλάξει {n} στοιχεία σου, το καθένα διαφορετικά. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
+      "chg.tickHint": "Βγάλε το τικ από μια γραμμή για να μείνει όπως είναι.", "chg.tick": "Αλλαγή: {f}",
+      "f.nickname": "Ψευδώνυμο", "f.job": "Ιδιότητα", "f.website": "Ιστότοπος",
       "chg.sum": "Και τα {n} στοιχεία παίρνουν:", "chg.showAll": "Δείξε όλες ({n} ακόμη)",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
@@ -1497,8 +1507,17 @@
   var attMem = {};         // id → base64, this session only
   var attBusy = 0;         // files being read
   var IMG_EDGE = 1568;     // longest side a photo is shrunk to
-  var DISK_EXT = /\.(jpe?g|png|webp|gif|pdf)$/i;
-  var EXT_TYPE = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", pdf: "application/pdf" };
+  var DT = window.OrosDocText || null;   // documents → text (doctext.js)
+  var EXT_TYPE = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", pdf: "application/pdf",
+                   bmp: "image/bmp", avif: "image/avif", heic: "image/heic", heif: "image/heif", tif: "image/tiff", tiff: "image/tiff",
+                   svg: "image/svg+xml", ico: "image/x-icon", jfif: "image/jpeg" };
+  // Photos the services don't take as they are: redrawn as JPEG
+  // (PNG for SVG) on the device first, when the browser can open them.
+  function otherPhoto(type) { return /^image\//.test(type) && !C.attKind(type); }
+  function attAccept() {
+    return Object.keys(EXT_TYPE).map(function (e) { return "." + e; })
+      .concat(DT ? DT.EXT.map(function (e) { return "." + e; }) : []).concat(["image/*", "application/pdf"]).join(",");
+  }
 
   function attId() { return "a" + newId().slice(1); }
   function fmtSize(n) {
@@ -1513,10 +1532,42 @@
     var pid = curProv();
     return t("att.err." + code, { name: provName(pid), max: fmtSize(C.ATT_PDF), n: C.ATT_MAX });
   }
+  function sizeErr(size, type) {
+    return t("att.err.size", { size: fmtSize(size), max: fmtSize(C.attLimit(type)) });
+  }
   function typeOf(name, type) {
+    var doc = DT ? DT.kindOf(name, type) : "";
+    if (doc) return doc;
     if (C.attKind(type)) return type;
     var m = /\.([a-z0-9]+)$/i.exec(String(name || ""));
     return m && EXT_TYPE[m[1].toLowerCase()] || String(type || "");
+  }
+  // Any other photo → { blob, type } in a kind every service takes.
+  function redraw(blob, type) {
+    function draw(src, w, h, done) {
+      var k = Math.min(1, IMG_EDGE / Math.max(w, h, 1));
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+      var g = cv.getContext("2d"), png = type === "image/svg+xml";
+      if (!png) { g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height); }
+      g.drawImage(src, 0, 0, cv.width, cv.height);
+      if (done) done();
+      return new Promise(function (resolve, reject) {
+        cv.toBlob(function (b) { b ? resolve({ blob: b, type: png ? "image/png" : "image/jpeg" }) : reject(new Error("photo")); }, png ? "image/png" : "image/jpeg", 0.85);
+      });
+    }
+    var viaImg = function () {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(blob), im = new Image();
+        im.onload = function () { draw(im, im.naturalWidth || 1024, im.naturalHeight || 1024, function () { URL.revokeObjectURL(url); }).then(resolve, reject); };
+        im.onerror = function () { URL.revokeObjectURL(url); reject(new Error("photo")); };
+        im.src = url;
+      });
+    };
+    if (type === "image/svg+xml" || typeof createImageBitmap !== "function") return viaImg();
+    return createImageBitmap(blob).then(function (bmp) {
+      return draw(bmp, bmp.width, bmp.height, function () { if (bmp.close) bmp.close(); });
+    }, viaImg);
   }
   function readB64(blob) {
     return new Promise(function (resolve, reject) {
@@ -1547,18 +1598,22 @@
   }
   // name, blob (a File or a Blob from the orOS disk) → one pending file
   function addBlob(name, blob) {
-    var pid = curProv(), type = typeOf(name, blob && blob.type);
-    var pre = C.checkAtt(pid, pending.concat(new Array(attBusy)), { type: type, size: C.attKind(type) === "img" ? 1 : blob.size });
-    if (pre) { showToast(pre === "size" ? t("att.err.size", { size: fmtSize(blob.size), max: fmtSize(C.ATT_PDF) }) : attErr(pre)); return Promise.resolve(); }
+    var pid = curProv(), type = typeOf(name, blob && blob.type), other = otherPhoto(type);
+    var pre = C.checkAtt(pid, pending.concat(new Array(attBusy)), { type: other ? "image/jpeg" : type, size: other || C.attKind(type) === "img" ? 1 : blob.size });
+    if (pre) { showToast(pre === "size" ? sizeErr(blob.size, type) : attErr(pre)); return Promise.resolve(); }
     attBusy++;
     renderAtt();
-    return (C.attKind(type) === "img" ? shrink(blob, type) : Promise.resolve({ blob: blob, type: type })).then(function (r) {
+    var prep = other ? redraw(blob, type).then(function (r) { return shrink(r.blob, r.type); }, function () { throw { shown: t("att.err.photo") }; })
+             : C.attKind(type) === "img" ? shrink(blob, type) : Promise.resolve({ blob: blob, type: type });
+    return prep.then(function (r) {
       var code = C.checkAtt(pid, pending, { type: r.type, size: r.blob.size });
       if (code) {
-        throw { shown: code === "size" ? t("att.err.size", { size: fmtSize(r.blob.size), max: fmtSize(C.attKind(r.type) === "pdf" ? C.ATT_PDF : C.ATT_IMG) }) : attErr(code) };
+        throw { shown: code === "size" ? sizeErr(r.blob.size, r.type) : attErr(code) };
       }
       return readB64(r.blob).then(function (b64) {
-        var a = C.normAtt({ id: attId(), name: String(name || "file").replace(/[\\/]/g, "_"), type: r.type, size: r.blob.size });
+        var nm = String(name || "file").replace(/[\\/]/g, "_");
+        if (other) nm = nm.replace(/\.[a-z0-9]+$/i, "") + (r.type === "image/png" ? ".png" : ".jpg");
+        var a = C.normAtt({ id: attId(), name: nm, type: r.type, size: r.blob.size });
         if (!a || !b64) throw {};
         attMem[a.id] = b64;
         pending.push(a);
@@ -1623,6 +1678,7 @@
     dlg.appendChild(el("p", "dlg-text", t("att.what", { n: C.ATT_MAX })));
     dlg.appendChild(el("p", "dlg-hint", t("att.hint", { name: provName(curProv()) })));
     if (!caps.img || !caps.pdf) dlg.appendChild(el("p", "dlg-hint", t(!caps.img && !caps.pdf ? "att.localBoth" : !caps.pdf ? "att.localPdf" : "att.localImg", { name: provName(curProv()) })));
+    if (DT) dlg.appendChild(el("p", "dlg-hint", t("att.docs", { name: provName(curProv()) })));
     caps = { img: true, pdf: true };
     var acts = el("div", "dlg-actions att-acts");
     acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
@@ -1630,7 +1686,7 @@
     if (fs) acts.appendChild(button(t("att.disk"), "", function () { dlg.close(); diskPicker(fs); }));
     acts.appendChild(button(t("att.device"), "primary", function () {
       var inp = $("att-file");
-      inp.accept = caps.pdf ? "image/jpeg,image/png,image/webp,image/gif,application/pdf" : "image/jpeg,image/png,image/webp,image/gif";
+      inp.accept = attAccept();
       inp.value = "";
       dlg.close();
       inp.click();
@@ -1660,7 +1716,7 @@
     acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
     var cwd = ROOT, caps = { img: true, pdf: true };
-    function usable(name) { var ty = typeOf(name, ""), k = C.attKind(ty); return DISK_EXT.test(name) && !!caps[k]; }
+    function usable(name) { var ty = typeOf(name, ""); return !!C.attKind(ty) || otherPhoto(ty); }
     function go(path) {
       cwd = path;
       var my = ++gen;
@@ -1821,6 +1877,30 @@
       });
     });
   }
+  // A document (doctext.js): Word, LibreOffice, spreadsheets, slides,
+  // e-books, RTF, HTML, vCard, e-mail, text. Spreadsheets and old .doc
+  // files need SheetJS, loaded from orOS's own vendor/ folder.
+  var XLSX_SRC = "../vendor/xlsx.full.min.js", sheetsP = null;
+  function sheets() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (sheetsP) return sheetsP;
+    sheetsP = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = XLSX_SRC;
+      sc.onload = function () { window.XLSX ? res(window.XLSX) : rej(new Error("xlsx")); };
+      sc.onerror = function () { sheetsP = null; rej(new Error("xlsx")); };
+      document.head.appendChild(sc);
+    });
+    return sheetsP;
+  }
+  function docText(a, onProgress) {
+    if (!DT) return Promise.reject(new Error("doctext"));
+    if (onProgress) onProgress({ progress: 0.1 });
+    return DT.read(b64Bytes(attMem[a.id]), a.name, { type: a.type, sheets: sheets, max: C.ATT_TEXT_DOC * 2 }).then(function (tx) {
+      if (onProgress) onProgress({ progress: 1 });
+      return tx;
+    });
+  }
   // Read every pending file that needs it. → Promise (never rejects;
   // a file that can't be read gets "" and the model is told so)
   var attReadPct = -1;
@@ -1832,7 +1912,7 @@
     renderAtt();
     return todo.reduce(function (pr, a) {
       return pr.then(function () {
-        var fn = C.attKind(a.type) === "pdf" ? pdfText : photoText;
+        var k = C.attKind(a.type), fn = k === "pdf" ? pdfText : k === "doc" ? docText : photoText;
         return fn(a, function (m) { attReadPct = Math.round((m.progress || 0) * 100); renderAtt(); })
           .then(function (tx) { attText[a.id] = String(tx || "").trim(); }, function (e) {
             attText[a.id] = "";
@@ -2293,6 +2373,7 @@
   }
   function changeItem(c, args, apps) {
     if (!E) return Promise.resolve({ content: "Error: changes are not available.", err: 1 });
+    if (args && Array.isArray(args.changes)) return changeList(c, args, apps);
     if (args && Array.isArray(args.refs)) return changeMany(c, args, apps);
     var ch = E.normArgs(args);
     if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
@@ -2310,11 +2391,14 @@
     var pl = E.plan(app.id, readStore(key), r.target, ch, Date.now());
     if (!pl.ok) return Promise.resolve({ content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } });
     var base = { k: "change", app: app.name, act: ch.action, title: pl.title, rows: pl.rows };
+    pl.tick = !pl.del && E.canTick(app.id, pl.rows);
     return askChange(app.name, pl, ch.action).then(function (ok) {
       if (!ok) {
         base.st = "declined";
         return { content: JSON.stringify({ ref: ch.ref, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
       }
+      var left = ok.off && ok.off[0] && ok.off[0].length ? ok.off[0] : [];
+      if (left.length) ch = E.without(app.id, ch, left);
       var res = E.apply(app.id, readStore(key), r.target, ch, Date.now(), pl.before);
       if (!res.ok) {
         base.st = "failed";
@@ -2332,7 +2416,8 @@
       base.st = "done";
       base.u = uid;
       base.rows = res.rows;
-      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." }), ui: base };
+      var skipped = left.length ? " The user left these out (not changed): " + left.join(", ") + "." : "";
+      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." + skipped }), ui: base };
     });
   }
   // The same update to several items of one app (refs): one card, one
@@ -2418,6 +2503,99 @@
       return { content: JSON.stringify({ refs: refs, applied: true, action: "update", items: plans.length, note: "The user applied the change to " + plans.length + " items. They can undo it." + sameNote }), ui: base };
     });
   }
+  // Different updates to several items of one app (changes: [{ ref,
+  // fields… }], wave CF1: e.g. ten people from one list or form). One
+  // card: each item's own before → after, and for Contacts a tick on
+  // every row, so the user leaves out what should stay. Planned in a
+  // row on the same data; on Apply each item is checked again against
+  // what the card showed, and if one changed meanwhile nothing is
+  // written. Undo takes all of them back, or none.
+  var LIST_MAX = 100;
+  function changeList(c, args, apps) {
+    if (args.action && args.action !== "update") return Promise.resolve({ content: "Error: changes is only for update; change other things one item at a time with ref.", err: 1 });
+    if ((args.ref !== undefined && args.ref !== null && args.ref !== "") || Array.isArray(args.refs)) return Promise.resolve({ content: "Error: give ref, refs or changes, not more than one.", err: 1 });
+    var list = args.changes.filter(function (x) { return x && typeof x === "object" && !Array.isArray(x); });
+    if (!list.length) return Promise.resolve({ content: "Error: changes is empty.", err: 1 });
+    if (list.length > LIST_MAX) return Promise.resolve({ content: "Error: at most " + LIST_MAX + " changes at a time.", err: 1 });
+    var chs = [], appId = "", seen = {};
+    for (var i = 0; i < list.length; i++) {
+      var one = Object.assign({}, list[i], { action: "update" });
+      var ch = E.normArgs(one);
+      if (!ch.ok) return Promise.resolve({ content: "Error: changes[" + i + "]: " + ch.err, err: 1 });
+      if (seen[ch.ref]) return Promise.resolve({ content: "Error: " + ch.ref + " is in changes twice; put all of its changes in one entry.", err: 1 });
+      seen[ch.ref] = 1;
+      var r = c.refs ? c.refs[ch.ref] : null;
+      if (!r) return Promise.resolve({ content: "Error: unknown ref " + ch.ref + ". Find the item with search_data or app_summary first.", err: 1 });
+      if (appId && r.app !== appId) return Promise.resolve({ content: "Error: changes must all be items of the same app.", err: 1 });
+      appId = r.app;
+      chs.push({ ch: ch, target: r.target });
+    }
+    var app = null;
+    changeApps(apps).forEach(function (a) { if (a.id === appId) app = a; });
+    if (!app) {
+      var readable = apps.some(function (a) { return a.id === appId; });
+      return Promise.resolve({ content: readable
+        ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
+        : "Error: the user does not allow this app to be read any more.", err: 1 });
+    }
+    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    chs.forEach(function (x) {
+      var res = E.apply(app.id, data, x.target, x.ch, now, null);
+      if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
+      if (!res.ok) { bad.push(x.ch.ref + ": " + res.err); return; }
+      var pl = E.plan(app.id, data, x.target, x.ch, now);
+      data = res.data;
+      plans.push({ x: x, pl: pl });
+    });
+    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix or leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
+    var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
+    var tick = plans.every(function (p) { return E.canTick(app.id, p.pl.rows); });
+    var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
+    return askChange(app.name, { many: many, tick: tick, each: true }, "update").then(function (ok) {
+      if (!ok) {
+        base.st = "declined";
+        return { content: JSON.stringify({ refs: plans.map(function (p) { return p.x.ch.ref; }), applied: false, note: "The user did not apply the changes. Nothing changed." }), ui: base };
+      }
+      var off = ok.off || {}, d = readStore(key), undos = [], t2 = Date.now(), fail = null, done = [], left = [], shown = [];
+      plans.forEach(function (p, i) {
+        if (fail) return;
+        var ch = off[i] && off[i].length ? E.without(app.id, p.x.ch, off[i]) : p.x.ch;
+        if (off[i] && off[i].length) left.push(p.x.ch.ref + (ch ? " (" + off[i].join(", ") + ")" : " (all)"));
+        if (!ch) return;
+        var res = E.apply(app.id, d, p.x.target, ch, t2, p.pl.before);
+        if (!res.ok) { fail = res; return; }
+        d = res.data;
+        undos.push(res.undo);
+        done.push(p.x.ch.ref);
+        shown.push({ title: p.pl.title, rows: res.rows });
+      });
+      if (fail) {
+        base.st = "failed";
+        base.msg = fail.conflict ? t("chg.conflict") : fail.err;
+        return { content: "Error: " + fail.err + " Nothing was changed.", err: 1, ui: base };
+      }
+      if (!undos.length) {
+        base.st = "declined";
+        return { content: JSON.stringify({ applied: false, note: "The user left every row out. Nothing changed." }), ui: base };
+      }
+      if (!writeStore(key, d)) {
+        base.st = "failed";
+        base.msg = t("chg.storage");
+        return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
+      }
+      markAppDirty();
+      var uid = newId();
+      undoMem[uid] = { app: app.id, key: key, undos: undos };
+      base.st = "done";
+      base.u = uid;
+      base.many = shown;
+      base.title = t("chg.many", { n: shown.length });
+      var leftNote = left.length ? " The user left out (not changed): " + left.join("; ") + "." : "";
+      return { content: JSON.stringify({ refs: done, applied: true, action: "update", items: done.length, note: "The user applied the changes to " + done.length + " items. They can undo them." + leftNote + sameNote }), ui: base };
+    });
+  }
   function undoChange(c, r) {
     var ui = r.ui, mem = undoMem[ui.u];
     if (!mem) return;
@@ -2452,16 +2630,23 @@
     if (f === "category" && /^cat:/.test(v)) return t(v.replace(/^cat:/, "cat."));
     return String(v);
   }
-  function chgTable(rows, del) {
+  // tick(row) → a checkbox for the row (the confirm card, wave CF1) or null
+  function chgTable(rows, del, tick) {
     var wrap = el("div", "chg-table");
     var tb = el("table");
     var hr = el("tr");
+    if (tick) hr.appendChild(el("th", "chg-tick", ""));
     hr.appendChild(el("th", "", ""));
     hr.appendChild(el("th", "", t("chg.before")));
     if (!del) hr.appendChild(el("th", "", t("chg.after")));
     tb.appendChild(hr);
     rows.forEach(function (row) {
       var tr = el("tr");
+      if (tick) {
+        var td = el("td", "chg-tick"), cb = tick(row, tr);
+        if (cb) td.appendChild(cb);
+        tr.appendChild(td);
+      }
       tr.appendChild(el("th", "", t("f." + row.f)));
       tr.appendChild(el("td", "chg-b" + (del ? " gone" : ""), chgValue(row.f, row.b)));
       if (!del) tr.appendChild(el("td", "chg-a", chgValue(row.f, row.a)));
@@ -2485,9 +2670,9 @@
       });
     });
   }
-  function chgList(host, many) {
+  function chgList(host, many, tickOf) {
     var list = (Array.isArray(many) ? many : []).filter(Boolean);
-    var shared = chgShared(list);
+    var shared = tickOf ? [] : chgShared(list);
     if (list.length > 1 && shared.length) {
       var sum = el("div", "chg-sum");
       sum.appendChild(el("p", "dlg-hint", t("chg.sum", { n: list.length })));
@@ -2498,8 +2683,9 @@
     }
     var box = el("div", "chg-many");
     function add(m) {
+      var i = list.indexOf(m);
       if (m.title) box.appendChild(el("p", "entry-title", String(m.title)));
-      box.appendChild(chgTable(chgRows(m.rows), false));
+      box.appendChild(chgTable(chgRows(m.rows), false, tickOf ? function (row, tr) { return tickOf(i, row, tr); } : null));
     }
     list.slice(0, CHG_SHOWN).forEach(add);
     host.appendChild(box);
@@ -2525,19 +2711,39 @@
       }
       var card = el("section", "consent chg-card");
       card.setAttribute("role", "group");
+      // Ticks (wave CF1): every row starts ticked; off[i] = the fields
+      // of item i the user unticked. Apply needs one tick at least.
+      var off = {}, total = 0, offN = 0, yes = null;
+      function tickOf(i, row, tr) {
+        total++;
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.setAttribute("aria-label", t("chg.tick", { f: t("f." + row.f) }));
+        cb.addEventListener("change", function () {
+          var l = off[i] || (off[i] = []), at = l.indexOf(row.f);
+          if (cb.checked && at >= 0) { l.splice(at, 1); offN--; }
+          if (!cb.checked && at < 0) { l.push(row.f); offN++; }
+          tr.classList.toggle("chg-off", !cb.checked);
+          if (yes) yes.disabled = offN >= total;
+        });
+        return cb;
+      }
       if (pl.many) {
         card.appendChild(el("h3", "", t("chg.ask.many", { app: appName, n: pl.many.length })));
-        card.appendChild(el("p", "consent-text", t("chg.textMany", { name: provName(curProv()), n: pl.many.length })));
-        chgList(card, pl.many);
+        card.appendChild(el("p", "consent-text", t(pl.each ? "chg.textEach" : "chg.textMany", { name: provName(curProv()), n: pl.many.length })));
+        if (pl.tick) card.appendChild(el("p", "dlg-hint", t("chg.tickHint")));
+        chgList(card, pl.many, pl.tick ? tickOf : null);
       } else {
         card.appendChild(el("h3", "", t("chg.ask." + action, { app: appName })));
         card.appendChild(el("p", "consent-text", t("chg.text", { name: provName(curProv()) })));
+        if (pl.tick) card.appendChild(el("p", "dlg-hint", t("chg.tickHint")));
         if (pl.title) card.appendChild(el("p", "entry-title", pl.title));
-        card.appendChild(chgTable(pl.rows, pl.del));
+        card.appendChild(chgTable(pl.rows, pl.del, pl.tick ? function (row, tr) { return tickOf(0, row, tr); } : null));
       }
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("chg.no"), "", function () { finish(false); }));
-      var yes = button(pl.del ? t("chg.yesDel") : t("chg.yes"), pl.del ? "danger" : "primary", function () { finish(true); });
+      yes = button(pl.del ? t("chg.yesDel") : t("chg.yes"), pl.del ? "danger" : "primary", function () { finish(offN ? { off: off } : true); });
       acts.appendChild(yes);
       card.appendChild(acts);
       if (busy) { busy.consent = function () { finish(false); }; busy.card = card; }

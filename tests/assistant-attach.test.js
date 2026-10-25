@@ -32,7 +32,11 @@ test("attach: checkAtt codes", () => {
   assert.equal(C.checkAtt("browser", [], { type: "image/png", size: 10 }), "");
   assert.equal(C.checkAtt("mistral", [], { type: "application/pdf", size: 10 }), "");
   assert.equal(C.checkAtt("nope", [], { type: "image/png", size: 10 }), "none");
-  assert.equal(C.checkAtt("anthropic", [], { type: "text/html", size: 10 }), "type");
+  assert.equal(C.checkAtt("anthropic", [], { type: "application/x-msdownload", size: 10 }), "type");
+  // documents (wave DOC1) are read as text on the device, up to ATT_DOC
+  assert.equal(C.checkAtt("anthropic", [], { type: "text/html", size: 10 }), "");
+  assert.equal(C.checkAtt("anthropic", [], { type: "application/msword", size: C.ATT_DOC }), "");
+  assert.equal(C.checkAtt("anthropic", [], { type: "application/msword", size: C.ATT_DOC + 1 }), "size");
   assert.equal(C.checkAtt("anthropic", [], { type: "image/svg+xml", size: 10 }), "type");
   assert.equal(C.checkAtt("anthropic", [], { type: "image/png", size: 0 }), "size");
   assert.equal(C.checkAtt("anthropic", [], { type: "image/png", size: C.ATT_IMG + 1 }), "size");
@@ -44,7 +48,7 @@ test("attach: checkAtt codes", () => {
 test("attach: normAtt keeps only the metadata, cleans the name", () => {
   assert.deepEqual(C.normAtt(withData(IMG)), IMG);
   assert.equal(C.normAtt({ id: "x", name: "a", type: "image/png", size: 1 }), null);
-  assert.equal(C.normAtt({ id: "aimg0001", name: "a", type: "text/plain", size: 1 }), null);
+  assert.equal(C.normAtt({ id: "aimg0001", name: "a", type: "application/zip", size: 1 }), null);
   const n = C.normAtt({ id: "aimg0001", name: "a\u0000b\nc", type: "image/png", size: -4 });
   assert.equal(n.name, "a b c");
   assert.equal(n.size, 0);
@@ -126,6 +130,6 @@ test("attach: a stored conversation carries no file data", () => {
 test("attach: system prompt mentions files only when the provider reads them", () => {
   const base = { lang: "en", now: Date.UTC(2026, 9, 14), apps: ["Notes (notes)"], entries: ["expense"] };
   assert.ok(!/attach photos/.test(C.systemPrompt(base)));
-  assert.match(C.systemPrompt(Object.assign({ files: "pdf" }, base)), /attach photos and PDF files/);
-  assert.match(C.systemPrompt(Object.assign({ files: "img" }, base)), /attach photos to a message/);
+  assert.match(C.systemPrompt(Object.assign({ files: "pdf" }, base)), /attach photos, PDF files and documents/);
+  assert.match(C.systemPrompt(Object.assign({ files: "img" }, base)), /attach photos and documents to a message/);
 });

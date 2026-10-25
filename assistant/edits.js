@@ -74,14 +74,17 @@
     calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1, label: 1, labels: 1 },
     budget:    { amount: 1, date: 1, category: 1, note: 1 },
     bookmarks: { title: 1, note: 1, label: 1, labels: 1 },
-    contacts:  { title: 1, org: 1, phone: 1, email: 1, date: 1, note: 1, label: 1, labels: 1 },
+    contacts:  { title: 1, org: 1, phone: 1, email: 1, date: 1, note: 1, label: 1, labels: 1,
+                 // wave CF1: contacts from any document
+                 nickname: 1, job_title: 1, address: 1, address_replace: 1, website: 1,
+                 old_phone: 1, old_email: 1, old_website: 1, note_add: 1 },
     kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1 },
     shelf:     { title: 1, note: 1, status: 1 },
     habits:    { title: 1 },
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "column", "kind", "status", "done", "watered", "org", "phone", "email", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "note"];
+  var VIEW_ORDER = ["title", "nickname", "column", "kind", "status", "done", "watered", "org", "job", "phone", "email", "address", "website", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "note"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -180,6 +183,39 @@
       var em = line(args.email, 120);
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return bad("email must be an e-mail address.");
       set.email = em;
+    }
+    // Wave CF1 (Contacts from any document): more of a contact card.
+    if (has(args, "nickname") && typeof args.nickname === "string") set.nickname = line(args.nickname, 60);
+    if (has(args, "job_title") && typeof args.job_title === "string") set.job_title = line(args.job_title, 80);
+    if (has(args, "address") && args.address !== null && args.address !== undefined && args.address !== "") {
+      var ad = typeof args.address === "string" ? { street: args.address } : args.address;
+      if (!isObj(ad)) return bad("address must be an object { street, city, zip, region, country, type }.");
+      var ao = {};
+      [["street", 120], ["city", 60], ["zip", 20], ["region", 60], ["country", 60]].forEach(function (f) { ao[f[0]] = line(ad[f[0]], f[1]); });
+      if (!ao.street && !ao.city && !ao.zip && !ao.region && !ao.country) return bad("address must not be empty.");
+      if (has(ad, "type") && ad.type !== "" && ["home", "work", "other"].indexOf(ad.type) < 0) return bad("address type must be home, work or other.");
+      ao.type = ad.type || "home";
+      set.address = ao;
+    }
+    if (has(args, "address_replace") && args.address_replace === true) {
+      if (!set.address) return bad("address_replace goes with address.");
+      set.address_replace = true;
+    }
+    if (has(args, "website") && args.website !== null && args.website !== undefined && args.website !== "") {
+      var wb = line(args.website, 300);
+      if (!/^(https?:\/\/)?[^\s\/.]+(\.[^\s\/.]+)+(\/\S*)?$/i.test(wb)) return bad("website must be a web address, e.g. example.com.");
+      set.website = wb;
+    }
+    var olds = [["old_phone", "phone", 40], ["old_email", "email", 120], ["old_website", "website", 300]];
+    for (var oi = 0; oi < olds.length; oi++) {
+      var ok = olds[oi][0];
+      if (!has(args, ok) || args[ok] === null || args[ok] === undefined || args[ok] === "") continue;
+      if (!has(set, olds[oi][1])) return bad(ok + " goes with " + olds[oi][1] + " (the new value that takes its place).");
+      set[ok] = line(args[ok], olds[oi][2]);
+    }
+    if (has(args, "note_add") && typeof args.note_add === "string" && args.note_add.trim()) {
+      if (has(set, "note")) return bad("give note (replaces) or note_add (adds), not both.");
+      set.note_add = para(args.note_add, 1000);
     }
     if (has(args, "column") && args.column !== null && args.column !== undefined && args.column !== "") {
       var co = line(args.column, 120);
@@ -811,7 +847,7 @@
   var CT_FIELDS = CT_OLD.concat(CT_NEW);
   var CT_STAMPS = CT_FIELDS.concat(["log"]);
   // what this adapter may change (and Undo puts back)
-  var CT_RAW = ["given", "middle", "family", "org", "phones", "emails", "events", "labelIds", "note"];
+  var CT_RAW = ["given", "middle", "family", "nickname", "org", "jobTitle", "phones", "emails", "addresses", "websites", "events", "labelIds", "note"];
   function ctNum(v) { return typeof v === "number" && isFinite(v); }
   function ctJ(v) { return JSON.stringify(v === undefined ? null : v); }
   function ctMaxStamp(c) {
@@ -901,9 +937,13 @@
     var ls = ctLabels(d);
     return {
       title: ctName(c),
+      nickname: ctStr(c.nickname),
       org: ctStr(c.org),
+      job: ctStr(c.jobTitle),
       phone: ctVals(c.phones).join(", "),
       email: ctVals(c.emails).join(", "),
+      address: (Array.isArray(c.addresses) ? c.addresses : []).map(ctAddrLine).filter(Boolean).join(" · "),
+      website: ctVals(c.websites).join(", "),
       birthday: ctBday(c),
       labels: (Array.isArray(c.labelIds) ? c.labelIds : []).map(function (id) {
         var l = ls.filter(function (x) { return x.id === id; })[0];
@@ -911,6 +951,27 @@
       }).filter(Boolean).join(", "),
       note: typeof c.note === "string" ? c.note : ""
     };
+  }
+  function ctAddrLine(a) {
+    if (!isObj(a)) return "";
+    var place = [ctStr(a.zip), ctStr(a.city)].filter(Boolean).join(" ");
+    return [ctStr(a.street), place, ctStr(a.region), ctStr(a.country)].filter(Boolean).join(", ");
+  }
+  function ctWeb(v) { return String(v || "").toLowerCase().replace(/^https?:\/\/(www\.)?/, "").replace(/\/+$/, ""); }
+  // Replace the value matching `old` in a { v, type } list (its type
+  // stays), or add `nv` when there is no `old`; a value already there
+  // is not added twice. → the new list | null (old not found)
+  function ctPut(list, nv, old, same, type) {
+    var out = (Array.isArray(list) ? list : []).map(clone);
+    if (old) {
+      var at = -1;
+      out.forEach(function (x, i) { if (at < 0 && isObj(x) && same(ctStr(x.v), old)) at = i; });
+      if (at < 0) return null;
+      out[at] = { v: nv, type: out[at].type || type };
+      return out.filter(function (x, i) { return i === at || !(isObj(x) && same(ctStr(x.v), nv)); });
+    }
+    if (out.some(function (x) { return isObj(x) && same(ctStr(x.v), nv); })) return out;
+    return out.concat([{ v: nv, type: type }]);
   }
   function ctDigits(s) { return String(s || "").replace(/\D+/g, ""); }
   // "+30 69…" and "69…" are the same number (8+ digits in common at the end)
@@ -952,16 +1013,30 @@
     }
     if (has(s, "org")) c.org = s.org.slice(0, 80);
     if (!ctName(c)) return bad("A contact needs a name or a company; it would have neither.");
-    if (has(s, "phone")) {
-      var ph = s.phone.slice(0, 40);
-      if (!ctVals(c.phones).some(function (v) { return ctSamePhone(v, ph); })) {
-        c.phones = (Array.isArray(c.phones) ? c.phones.slice() : []).concat([{ v: ph, type: "mobile" }]);
-      }
+    if (has(s, "nickname")) c.nickname = s.nickname.slice(0, 60);
+    if (has(s, "job_title")) c.jobTitle = s.job_title.slice(0, 80);
+    var back = function (msg) { CT_RAW.forEach(function (k) { if (has(prev, k)) c[k] = prev[k]; else delete c[k]; }); return bad(msg); };
+    var lists = [["phone", "phones", 40, "mobile", ctSamePhone, "number"],
+                 ["email", "emails", 120, "home", function (a, b) { return a.toLowerCase() === b.toLowerCase(); }, "e-mail"],
+                 ["website", "websites", 300, "home", function (a, b) { return ctWeb(a) === ctWeb(b); }, "website"]];
+    for (var li = 0; li < lists.length; li++) {
+      var L = lists[li];
+      if (!has(s, L[0])) continue;
+      var nl2 = ctPut(c[L[1]], s[L[0]].slice(0, L[2]), s["old_" + L[0]] || "", L[4], L[3]);
+      if (!nl2) return back("old_" + L[0] + " " + s["old_" + L[0]] + " is not one of the contact's " + L[5] + "s; to add a " + L[5] + ", leave old_" + L[0] + " out.");
+      if (ctJ(nl2) !== ctJ(c[L[1]])) c[L[1]] = nl2;
     }
-    if (has(s, "email")) {
-      var em = s.email.slice(0, 120), low = em.toLowerCase();
-      if (!ctVals(c.emails).some(function (v) { return v.toLowerCase() === low; })) {
-        c.emails = (Array.isArray(c.emails) ? c.emails.slice() : []).concat([{ v: em, type: "home" }]);
+    if (has(s, "address")) {
+      var na = s.address, adds = (Array.isArray(c.addresses) ? c.addresses : []).map(clone), key = ctAddrLine(na).toLowerCase();
+      if (!adds.some(function (x) { return ctAddrLine(x).toLowerCase() === key; })) {
+        var at = -1;
+        if (s.address_replace) {
+          adds.forEach(function (x, i) { if (at < 0 && isObj(x) && x.type === na.type) at = i; });
+          if (at < 0 && adds.length === 1) at = 0;
+        }
+        var row = { street: na.street, city: na.city, zip: na.zip, region: na.region, country: na.country, type: na.type };
+        if (at >= 0) adds[at] = row; else adds.push(row);
+        c.addresses = adds;
       }
     }
     if (has(s, "date")) {
@@ -976,6 +1051,14 @@
       if (ctJ(evs) !== ctJ(c.events)) c.events = evs.sort(ctEvSort);
     }
     if (has(s, "note")) c.note = s.note.slice(0, 500);
+    if (has(s, "note_add")) {
+      var old = typeof c.note === "string" ? c.note.trim() : "", add = s.note_add.trim();
+      if (old.indexOf(add) < 0) {
+        var nn = old ? old + "\n" + add : add;
+        if (nn.length > 500) return back("The note would be " + nn.length + " characters; Contacts keeps 500. Shorten note_add (" + (500 - old.length - (old ? 1 : 0)) + " characters are free) or rewrite the whole note with note.");
+        c.note = nn;
+      }
+    }
     if (has(s, "label") || has(s, "labels")) {
       var nl = newLabelIds(ctLabels(d), Array.isArray(c.labelIds) ? c.labelIds : [], s, "Contacts", "Contacts (Labels)");
       if (nl.err) { CT_RAW.forEach(function (k) { if (has(prev, k)) c[k] = prev[k]; else delete c[k]; }); return bad(nl.err); }
@@ -1701,6 +1784,26 @@
     if (!r.ok) return r;
     return { ok: true, data: d };
   }
+  // Ticks on the card (wave CF1): which change_item arguments make
+  // each diff row, so the user can leave a row out. Contacts only.
+  var ROW_KEYS = {
+    contacts: { title: ["title"], nickname: ["nickname"], org: ["org"], job: ["job_title"],
+                phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
+                website: ["website", "old_website"], birthday: ["date"], labels: ["label", "labels"], note: ["note", "note_add"] }
+  };
+  function canTick(appId, rows) {
+    var m = ROW_KEYS[appId];
+    return !!m && Array.isArray(rows) && rows.length > 0 && rows.every(function (r) { return r && has(m, r.f); });
+  }
+  // ch (normArgs) without the rows the user left out → ch | null (nothing left)
+  function without(appId, ch, offRows) {
+    var m = ROW_KEYS[appId];
+    if (!m || !ch || !ch.ok) return ch;
+    var set = clone(ch.set);
+    (offRows || []).forEach(function (f) { (m[f] || []).forEach(function (k) { delete set[k]; }); });
+    if (!Object.keys(set).length) return null;
+    return { ok: true, ref: ch.ref, action: ch.action, set: set };
+  }
   function storageKey(appId) { return has(APPS, appId) ? APPS[appId].key : ""; }
   // Which of the readable app ids take changes.
   function editableApps(ids) {
@@ -1710,7 +1813,7 @@
   var api = {
     ACTIONS: ACTIONS, APP_IDS: APP_IDS, VIEW_ORDER: VIEW_ORDER, CAT_NAMES: CAT_NAMES,
     normArgs: normArgs, buildDiff: buildDiff, plan: plan, apply: apply, undo: undo,
-    storageKey: storageKey, editableApps: editableApps,
+    storageKey: storageKey, editableApps: editableApps, canTick: canTick, without: without,
     actionsFor: function (appId) { return has(APPS, appId) ? APPS[appId].actions.slice() : []; }
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

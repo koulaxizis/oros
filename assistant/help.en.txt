@@ -77,13 +77,14 @@ Ask, for example, "mark the plumber call as done", "move the dentist to Friday a
 - After a change the card says what happened and has `Undo`. Undo works until you leave the Assistant; after that, change it back in the app itself.
 - If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
 - The same change to several items (for example "give every event without a label the label Work") comes as one card, up to 200 items: on top what every item gets, then the first 10 items (`Show all` lists the rest); one `Apply` changes them all, and `Undo` takes them all back.
+- Different changes to several items (for example the new details of ten people from a list) also come as one card, each item with its own `Before` and `After`. In Contacts every row has a tick: untick what should stay as it is.
 
 What it can change:
 - [To-Do](app:todo): mark a task done or not done, move its date, rename it, change its note, labels or priority, delete it.
 - [Calendar](app:calendar): move an event (day, start, end), rename it, change its place, label or note, delete it. It can also list your events by label, or the ones without a label ("which events have no label?"). New labels are made in Calendar.
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
 - [Bookmarks](app:bookmarks): rename a bookmark, change its note or tags, delete it.
-- [Contacts](app:contacts): change a contact's name, organisation, birthday , note or labels, add a phone number or e-mail (the old ones stay), delete it.
+- [Contacts](app:contacts): change a contact's name, nickname, organisation, job title, birthday, note or labels; add a phone number, e-mail, website or address (the old ones stay), or replace one that changed; add a line to the note; delete it. Attach a business card, a form, a list, a vCard or an e-mail signature and ask "update my contacts from this": the assistant looks everyone up first, proposes only what is new or different, and offers a new contact for anyone who isn't there.
 - [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title, note or labels, delete it. A move runs the column's own automations, and the card shows what they change.
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
 - [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.
@@ -91,14 +92,16 @@ What it can change:
 
 Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, bookmarks with a saved copy, Kanban cards with files on the orOS disk or on an archived board, habits that count an amount, and deleting a habit or a plant (that removes its whole history). Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
-## Photos and PDFs
-Press the paper clip next to the message box to attach a photo (JPEG, PNG, WebP, GIF) or a PDF, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 3 files go with one message.
+## Photos, PDFs and documents
+Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 3 files go with one message.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.
 - Above the message box you see each file and its size, and where it goes. The file goes only to that service, only when you press `Send`. Large photos are made smaller first.
 - Claude, ChatGPT, Gemini and OpenRouter read photos and PDFs themselves. Mistral reads photos itself.
 - Every other case works too: orOS reads the file's text on this device first and sends only that text. PDFs go through PDF.js; a scanned PDF (no text inside) and the words in a photo go through Tesseract, in English and Greek. This is how Mistral reads PDFs, a local model reads PDFs and photos, and the built-in browser model reads both. The chip then says `text only`.
 - The first time a photo is read this way, the text engine is downloaded once from orOS itself (about 7 MB). Nothing else is contacted, and the file never leaves the device.
 - For a local model with vision (llava, gemma3, qwen2.5-vl and others) tick `This model can see photos` in the settings: photos then go as pictures.
+- Documents are read on this device, always, and only their text goes to the service: Word (.docx, .doc), LibreOffice (.odt, .ods, .odp), Excel (.xlsx, .xls), PowerPoint (.pptx), RTF, e-books (.epub), web pages, vCards, e-mails (.eml), CSV, Markdown and plain text. Tables keep their columns, spreadsheets come sheet by sheet. Nothing in a document runs.
+- Photos in other formats (BMP, AVIF, SVG, and HEIC or TIFF where the browser can open them) are redrawn as JPEG or PNG first.
 - Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
 
 ## Search the internet
