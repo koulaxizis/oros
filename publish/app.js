@@ -2618,6 +2618,7 @@
   });
 
   // target = { title: id } | { view: "isbn" | "roy" | "subs" | "posts" } | { post: id } |
+  // { asNew: { post: 1, tx, d, at?, nets?, book? } } (the Assistant's post card) |
   // { submit: { n?, email?, t?, d?, note? } } (Mail, BR-PUB-SUB) | { isbn: "…" } (opens the
   // title that has it, else the register) | { new: { t|title, author?,
   // isbn?, rel?, plan? } } or { asNew: {…} } (the Assistant's card) asks
@@ -2648,6 +2649,20 @@
       if (uses.length) { openTitle(uses[0].title); return; }
       setView({ name: "isbn", id: "" });
       render();
+      return;
+    }
+    // the Assistant's "post" card (wave P14): the post dialog, filled in, nothing saved
+    if (target.asNew && typeof target.asNew === "object" && target.asNew.post === 1) {
+      var ap = target.asNew, bk = typeof ap.book === "string" ? C.fold(ap.book) : "";
+      var tt = bk ? data.titles.filter(function (x) { return C.fold(x.t) === bk; })[0] : null;
+      setView({ name: "posts", id: "" });
+      render();
+      var pre = { tx: typeof ap.tx === "string" ? ap.tx.slice(0, 5000) : "", d: C.okYmd(ap.d) ? ap.d : todayYmd(),
+        at: typeof ap.at === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(ap.at) ? ap.at : "" };
+      var nets = Array.isArray(ap.nets) ? ap.nets.filter(function (k) { return C.POST_NETS.indexOf(k) >= 0; }) : [];
+      if (nets.length) pre.nets = nets;
+      if (tt) { pre.ti = tt.id; if (C.coverPath(tt.cov)) pre.img = C.coverPath(tt.cov); }
+      postDialog(null, pre);
       return;
     }
     // { asNew } is the Assistant's propose_entry "book" card (wave P4): the same dialog

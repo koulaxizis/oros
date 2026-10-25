@@ -558,5 +558,11 @@ orosPack("de", "assistant", {
  "nl.shopQ": "die {n} neuesten mit „{q}“, beim Hinzufügen aus dem Shop gelesen",
  "entry.book": "Neues Buch zum Verlegen · {app}",
  "f.rel": "Erscheinungstermin (mit dem Erscheinungsplan)",
- "f.isbn": "ISBN"
+ "f.isbn": "ISBN",
+ "entry.post": "Geplanter Beitrag · {app}",
+ "entry.settlement": "Kommissionsabrechnung · {app}",
+ "f.networks": "Wo",
+ "f.book": "Zu",
+ "stMain": "Eigener Bestand",
+ "stSold": "verkauft"
 });
