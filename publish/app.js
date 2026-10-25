@@ -152,6 +152,13 @@
       "tpl.yes.text": "Dear {name},\n\nWe read “{title}” with great pleasure and would like to talk about publishing it. When would it suit you to meet or speak?\n\nWith best wishes,\n{imprint}",
       "tpl.con.text": "PUBLISHING AGREEMENT (draft)\n\nDate: {date}\n\nBetween {imprint} (the Publisher) and {name} (the Author).\n\n1. The work. The Author grants the Publisher the right to publish “{title}” in these formats: {formats}.\n2. Royalties. The Publisher pays the Author {pct}% of {base} on every copy sold, with a statement at least once a year.\n3. Advance. On signing, the Publisher pays an advance of {adv}, recouped from the royalties.\n4. Term and territory: ______\n5. Delivery and approval of the manuscript: ______\n6. Rights return to the Author if the work stays out of print for ______\n\nThis draft is a starting point, not legal advice: have it checked before signing.\n\nFor the Publisher ______________          The Author ______________",
       "con.btn": "Contract in Writer", "con.doc": "Contract · {t} · {n}", "con.base.list": "the list price", "con.base.net": "the net receipts",
+      "sec.rc": "Review copies and reviews", "rc.none": "Who got the book for review, and what they wrote. A reminder comes 3 weeks after a copy went out.",
+      "rc.add": "+ Review copy", "rc.n": "Name", "rc.out": "Outlet (paper, blog, show)", "rc.email": "E-mail", "rc.d": "Sent",
+      "rc.st": "Status", "rc.st.sent": "Sent", "rc.st.rev": "Reviewed", "rc.st.no": "No review",
+      "rc.url": "Link to the review (https)", "rc.q": "Quote", "rc.rd": "Review date", "rc.fu": "Followed up {d}",
+      "rc.late": "follow up", "rc.follow": "Follow up by e-mail", "rc.copyQ": "Copy the quotes",
+      "rc.badUrl": "The link must start with https://", "rc.del": "Delete",
+      "rc.fuSubj": "“{title}”", "rc.fuBody": "Dear {name},\n\nI hope “{title}” reached you safely. If you have had a chance to read it, we would love to hear what you thought, and to share your review if you write one.\n\nWith best wishes,\n{imprint}",
       "send.title": "Send to other apps", "send.hint": "Nothing is saved in the other app until you save it there. Your shop gets a draft that you publish yourself.",
       "send.fmt": "Format", "send.noFmt": "Add a format first.", "send.shop": "Draft in my shop", "send.stock": "Item in Stock",
       "send.news": "Block in Newsletter", "send.pr": "Press release in Writer", "send.noApp": "That app could not be opened from here.",
@@ -287,6 +294,13 @@
       "tpl.yes.text": "Αγαπητέ/ή {name},\n\nδιαβάσαμε το «{title}» με μεγάλη χαρά και θα θέλαμε να μιλήσουμε για την έκδοσή του. Πότε θα σας βόλευε να συναντηθούμε ή να μιλήσουμε;\n\nΜε εκτίμηση,\n{imprint}",
       "tpl.con.text": "ΣΥΜΒΑΣΗ ΕΚΔΟΣΗΣ (σχέδιο)\n\nΗμερομηνία: {date}\n\nΜεταξύ {imprint} (ο Εκδότης) και {name} (ο Συγγραφέας).\n\n1. Το έργο. Ο Συγγραφέας παραχωρεί στον Εκδότη το δικαίωμα να εκδώσει το «{title}» στις εξής μορφές: {formats}.\n2. Δικαιώματα. Ο Εκδότης καταβάλλει στον Συγγραφέα {pct}% επί {base} για κάθε αντίτυπο που πωλείται, με εκκαθάριση τουλάχιστον μία φορά τον χρόνο.\n3. Προκαταβολή. Με την υπογραφή ο Εκδότης καταβάλλει προκαταβολή {adv}, που συμψηφίζεται με τα δικαιώματα.\n4. Διάρκεια και περιοχή: ______\n5. Παράδοση και έγκριση του χειρογράφου: ______\n6. Τα δικαιώματα επιστρέφουν στον Συγγραφέα αν το έργο μείνει εξαντλημένο για ______\n\nΤο σχέδιο αυτό είναι αφετηρία, όχι νομική συμβουλή: δώστε το για έλεγχο πριν την υπογραφή.\n\nΓια τον Εκδότη ______________          Ο Συγγραφέας ______________",
       "con.btn": "Συμβόλαιο στον Writer", "con.doc": "Συμβόλαιο · {t} · {n}", "con.base.list": "της τιμής καταλόγου", "con.base.net": "των καθαρών εισπράξεων",
+      "sec.rc": "Αντίτυπα κριτικής και κριτικές", "rc.none": "Ποιος πήρε το βιβλίο για κριτική και τι έγραψε. Υπενθύμιση έρχεται 3 εβδομάδες μετά την αποστολή.",
+      "rc.add": "+ Αντίτυπο κριτικής", "rc.n": "Όνομα", "rc.out": "Μέσο (εφημερίδα, blog, εκπομπή)", "rc.email": "E-mail", "rc.d": "Στάλθηκε",
+      "rc.st": "Κατάσταση", "rc.st.sent": "Στάλθηκε", "rc.st.rev": "Έγραψε κριτική", "rc.st.no": "Χωρίς κριτική",
+      "rc.url": "Σύνδεσμος της κριτικής (https)", "rc.q": "Απόσπασμα", "rc.rd": "Ημερομηνία κριτικής", "rc.fu": "Υπενθύμιση {d}",
+      "rc.late": "για υπενθύμιση", "rc.follow": "Υπενθύμιση με e-mail", "rc.copyQ": "Αντιγραφή αποσπασμάτων",
+      "rc.badUrl": "Ο σύνδεσμος πρέπει να αρχίζει με https://", "rc.del": "Διαγραφή",
+      "rc.fuSubj": "«{title}»", "rc.fuBody": "Αγαπητέ/ή {name},\n\nελπίζω το «{title}» να έφτασε καλά. Αν προλάβατε να το διαβάσετε, θα χαιρόμασταν πολύ να μάθουμε τη γνώμη σας, και να μοιραστούμε την κριτική σας αν γράψετε.\n\nΜε εκτίμηση,\n{imprint}",
       "send.title": "Στείλε σε άλλες εφαρμογές", "send.hint": "Τίποτα δεν αποθηκεύεται στην άλλη εφαρμογή πριν το αποθηκεύσεις εκεί. Το κατάστημά σου παίρνει πρόχειρο που το δημοσιεύεις εσύ.",
       "send.fmt": "Μορφή", "send.noFmt": "Πρόσθεσε πρώτα μια μορφή.", "send.shop": "Πρόχειρο στο κατάστημά μου", "send.stock": "Είδος στο Απόθεμα",
       "send.news": "Μπλοκ στο Newsletter", "send.pr": "Δελτίο τύπου στο Writer", "send.noApp": "Η εφαρμογή δεν άνοιξε από εδώ.",
@@ -758,6 +772,12 @@
     sr.id = "ed-roy";
     sec.appendChild(sr);
     renderTerms();
+
+    // Review copies (wave P8)
+    var sc = el("section", "sec rc");
+    sc.id = "ed-rc";
+    sec.appendChild(sc);
+    renderRc();
 
     // People
     var s2 = el("section", "sec");
@@ -1864,6 +1884,132 @@
       base: t("con.base." + r.base), adv: r.adv ? money(r.adv) : money(0),
       formats: fmts.length ? fmts.join(", ") : (r.k ? t("fmt." + r.k) : t("roy.k.all")) });
     openAt("writer", { newDoc: { title: t("con.doc", { t: tt.t, n: r.n }).slice(0, 120), text: C.fillTpl(tplText("con"), vars) } });
+  }
+
+  // ---------- 6e. Review copies (wave P8) ----------
+  // Per title: who got a copy, follow-ups after 3 weeks (Mail), and the
+  // review that came (link + quote), which Newsletter blocks then carry.
+  function writeRc(list) {
+    writeTitle({ rc: list });
+    renderRc();
+  }
+  function renderRc() {
+    var box = $("ed-rc"), tt = currentTitle();
+    if (!box || !tt) return;
+    box.textContent = "";
+    box.appendChild(el("h3", "", t("sec.rc")));
+    var list = (tt.rc || []).slice().sort(function (a, b) { return (a.d || "") < (b.d || "") ? 1 : (a.d || "") > (b.d || "") ? -1 : (a.id < b.id ? -1 : 1); });
+    if (!list.length) box.appendChild(el("p", "muted", t("rc.none")));
+    var due = {};
+    C.rcDue({ titles: [tt] }, todayYmd()).forEach(function (x) { due[x.rc.id] = 1; });
+    list.forEach(function (x) {
+      var row = button("", "trow roy-st rc-row", function () { rcDialog(x.id); });
+      var body = el("div", "tmain");
+      body.appendChild(el("div", "tname", [x.n, x.out].filter(Boolean).join(" · ")));
+      var meta = [x.d ? t("rc.d") + " " + fmtDate(x.d) : "", x.fu ? t("rc.fu", { d: fmtDate(x.fu) }) : "", x.q ? "“" + x.q.slice(0, 80) + (x.q.length > 80 ? "…" : "") + "”" : ""];
+      body.appendChild(el("div", "tsub", meta.filter(Boolean).join(" · ")));
+      row.appendChild(body);
+      var side = el("div", "tside");
+      side.appendChild(el("span", "badge rc-" + x.st, t("rc.st." + x.st)));
+      if (due[x.id]) side.appendChild(el("span", "badge gap", t("rc.late")));
+      row.appendChild(side);
+      box.appendChild(row);
+    });
+    var acts = el("div", "send-row");
+    var add = button(t("rc.add"), "btn small", function () { rcDialog(null); });
+    add.disabled = list.length >= C.MAX_RC;
+    acts.appendChild(add);
+    var qs = C.quotes(tt);
+    if (qs.length) acts.appendChild(button("❝ " + t("rc.copyQ"), "btn small", function () {
+      copyText(qs.map(function (q) { return "“" + q.q + "” — " + q.who + (q.url ? "\n" + q.url : ""); }).join("\n\n"));
+    }));
+    box.appendChild(acts);
+  }
+  function rcDialog(id) {
+    flushEdits();
+    var tt = currentTitle();
+    if (!tt) return;
+    var x = id ? (tt.rc || []).filter(function (r) { return r.id === id; })[0] : null;
+    var v = x || { n: "", out: "", email: "", d: todayYmd(), st: "sent", url: "", q: "", rd: "", fu: "" };
+    var dlg = el("dialog", "roy-dlg");
+    dlg.appendChild(el("h3", "", x ? [x.n, x.out].filter(Boolean).join(" · ") : t("rc.add").replace(/^\+\s*/, "")));
+    var press = C.pressList(data);
+    var dl = el("datalist");
+    dl.id = "rc-names";
+    press.forEach(function (p) { var o = el("option"); o.value = p.n || p.out; dl.appendChild(o); });
+    dlg.appendChild(dl);
+    var g = el("div", "grid");
+    var n = input("text", v.n, { maxlength: "120", list: "rc-names", autocomplete: "off" });
+    var out = input("text", v.out, { maxlength: "120" });
+    var em = input("email", v.email, { maxlength: "200", autocomplete: "off" });
+    // a name from the list fills in the outlet and the address
+    n.addEventListener("change", function () {
+      var k = C.fold(n.value), p = press.filter(function (r) { return C.fold(r.n || r.out) === k; })[0];
+      if (p && !out.value) out.value = p.out || "";
+      if (p && !em.value) em.value = p.email || "";
+    });
+    var d = input("date", v.d);
+    var st = select(C.RC_ST.map(function (k) { return [k, t("rc.st." + k)]; }), v.st);
+    g.appendChild(field(t("rc.n"), n));
+    g.appendChild(field(t("rc.out"), out));
+    g.appendChild(field(t("rc.email"), em));
+    g.appendChild(field(t("rc.d"), d));
+    g.appendChild(field(t("rc.st"), st));
+    var rd = input("date", v.rd);
+    var rdf = field(t("rc.rd"), rd);
+    g.appendChild(rdf);
+    var url = input("url", v.url, { maxlength: "500", placeholder: "https://" });
+    var uf = field(t("rc.url"), url);
+    uf.classList.add("wide");
+    g.appendChild(uf);
+    var q = input("textarea", v.q, { maxlength: "600", rows: "3" });
+    var qf = field(t("rc.q"), q);
+    qf.classList.add("wide");
+    g.appendChild(qf);
+    dlg.appendChild(g);
+    function sync() { var on = st.value === "rev"; rdf.hidden = !on; uf.hidden = !on; qf.hidden = !on; }
+    st.addEventListener("change", function () { if (st.value === "rev" && !rd.value) rd.value = todayYmd(); sync(); });
+    sync();
+    var err = el("p", "hint bad");
+    err.hidden = true;
+    dlg.appendChild(err);
+    function row(extra) {
+      var rev = st.value === "rev";
+      return Object.assign({ id: x ? x.id : C.uid(), n: n.value.trim(), out: out.value.trim(), email: em.value.trim(),
+        d: C.okYmd(d.value) ? d.value : "", st: st.value, url: rev ? url.value.trim() : "", q: rev ? q.value.trim() : "",
+        rd: rev && C.okYmd(rd.value) ? rd.value : "", fu: v.fu || "" }, extra || {});
+    }
+    function save(extra) {
+      var r = row(extra);
+      if (!r.n && !r.out) { n.focus(); return null; }
+      if (r.url && !/^https:\/\/[^\s<>\x22]+$/.test(r.url)) { err.textContent = t("rc.badUrl"); err.hidden = false; url.focus(); return null; }
+      var cur = currentTitle();
+      if (!cur) return null;
+      writeRc((cur.rc || []).filter(function (y) { return y.id !== r.id; }).concat([r]));
+      return r;
+    }
+    var more = el("div", "send-row");
+    more.appendChild(button("✉ " + t("rc.follow"), "btn small", function () {
+      var r = save({ fu: todayYmd() });
+      if (!r) return;
+      dlg.close();
+      var vars = { name: r.n || r.out, title: tt.t, imprint: data.set.imp || "" };
+      var body = C.fillTpl(t("rc.fuBody"), vars);
+      if (r.email) openAt("mail", { compose: { to: r.email, subject: C.fillTpl(t("rc.fuSubj"), vars).slice(0, 300), body: body } });
+      else { copyText(body); toast(t("sub.noMail")); }
+    }));
+    dlg.appendChild(more);
+    var acts = el("div", "acts");
+    if (x) acts.appendChild(button(t("rc.del"), "btn danger", function () {
+      dlg.close();
+      var cur = currentTitle();
+      if (cur) writeRc((cur.rc || []).filter(function (y) { return y.id !== x.id; }));
+    }));
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.save"), "btn pri", function () { if (save()) dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    if (!x) n.focus();
   }
 
   // ---------- 7. Barcode dialog ----------
