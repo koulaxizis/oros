@@ -23,12 +23,15 @@
 //   S.active()         → the key on screen; S.get(key) → the copy
 //                        { box, id, hh, t, last, raw, by, rest, data }
 //   S.keys()           → the household copies, sorted
-//   S.push(data)       → sends what changed in the copy on screen
+//   S.push(data, key)  → sends what changed in the copy on screen (or in
+//                        the copy `key`, for apps that show several)
 //   S.share(box, title, data) → Promise of "<box>/<doc>"
-//   S.unshare()        → Promise (the copy on screen leaves for all)
+//   S.unshare(key)     → Promise (the copy on screen, or `key`, leaves
+//                        for all)
 //   S.households()     → [{ box, name }]
-//   S.member(mid)      → { name, initials, color } of the copy on screen
-//   S.me()             → this person's member id in the copy on screen
+//   S.member(mid, key) → { name, initials, color } of the copy on screen
+//                        (or `key`)
+//   S.me(key)          → this person's member id in that copy
 // Exposes window.OrosHouseShare and, under Node, module.exports.
 // ============================================================
 (function (root) {
@@ -89,8 +92,8 @@
       active = want;
       return active;
     }
-    function push(data) {
-      var h = api(), g = groups[active];
+    function push(data, key) {
+      var h = api(), g = groups[key || active];
       if (!h || !g) return false;
       g.data = data;
       var r = o.whole.push(g.last, data, o.extra ? o.extra(g, data) : null, g.raw);
@@ -108,21 +111,21 @@
         return box + "/" + id;
       });
     }
-    function unshare() {
-      var h = api(), g = groups[active];
+    function unshare(key) {
+      var h = api(), g = groups[key || active];
       if (!h || !g) return Promise.reject(new Error("nothing shared"));
-      return Promise.resolve(h.unshare(g.box, g.id)).then(function () { active = ""; inject(); });
+      return Promise.resolve(h.unshare(g.box, g.id)).then(function () { if (!key || key === active) active = ""; inject(); });
     }
     function households() {
       var h = api();
       return h ? h.list().map(function (x) { return { box: x.box, name: x.name || "" }; }) : [];
     }
-    function member(mid) {
-      var h = api(), g = groups[active];
+    function member(mid, key) {
+      var h = api(), g = groups[key || active];
       return h && g && mid ? h.member(g.box, mid) : null;
     }
-    function me() {
-      var h = api(), g = groups[active];
+    function me(key) {
+      var h = api(), g = groups[key || active];
       return h && g && typeof h.me === "function" ? h.me(g.box) || "" : "";
     }
     return {

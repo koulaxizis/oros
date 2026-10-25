@@ -17,11 +17,15 @@
 
   var PROVIDER = {
     id: "together",
-    keys: [KEY, "oros-contacts-data"],
+    keys: [KEY, "oros-together-hh", "oros-contacts-data"],
     collect: function (ctx) {
       var C = root.TogetherCore;
       if (!C) return [];
-      var raw = ctx.readJSON(KEY);
+      var raw = ctx.readJSON(KEY), TH = root.TogetherHouse;
+      if (TH) {                                     // shared relationships (BR-HH wave 7d)
+        var sets = TH.readMirror(ctx.readJSON(TH.MIRROR_KEY));
+        if (sets.length) raw = TH.union(raw, sets);
+      }
       if (!raw || !Array.isArray(raw.rels) || !raw.rels.length) return [];
       var data = C.normalize(raw), idx = C.contactIndex(ctx.readJSON("oros-contacts-data"));
       var out = [], line = C.todayLine(data, idx, ctx.today, ctx.lang);

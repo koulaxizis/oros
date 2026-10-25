@@ -40,6 +40,15 @@
       "first.private": "Everything stays in orOS on your devices. Nobody else sees it.",
       "btn.add": "New relationship", "btn.settings": "Settings", "btn.edit": "Edit", "btn.save": "Save", "btn.cancel": "Cancel",
       "btn.delete": "Delete", "btn.close": "Close", "btn.done": "Done",
+      "hh.sec": "Household", "hh.share.t": "Share with a household", "hh.stop.t": "Stop sharing",
+      "hh.share.x": "{name} moves into the household with its moments, special days and meetings: you both see and add to the same story in your own Together. Gift ideas, settings and the PIN stay yours, and photos stay in your Files.",
+      "hh.which": "Household", "hh.go": "Share", "hh.open": "Open Household",
+      "hh.nohh": "Make or join a household first, in the Household app.",
+      "hh.in": "{name} is shared in {hh}: what either of you adds reaches the other.",
+      "hh.stop.x": "{name} leaves {hh} for everyone and comes back to your own Together with everything added. The others can bring it back from Household for 30 days.",
+      "hh.tag": "shared in {hh}",
+      "toast.hhShared": "Shared with {hh}", "toast.hhStopped": "Sharing stopped. The relationship is back in your own Together.",
+      "toast.hhFail": "Could not reach the household. Try again.",
       "sec.coming": "Coming up", "sec.recent": "Recently",
       "rel.new": "New relationship", "rel.edit": "Edit the relationship",
       "rel.people": "Who", "rel.fromContacts": "From Contacts", "rel.namePh": "Or write a name", "rel.addName": "Add",
@@ -160,6 +169,15 @@
       "first.private": "Όλα μένουν στο orOS, στις συσκευές σου. Κανείς άλλος δεν τα βλέπει.",
       "btn.add": "Νέα σχέση", "btn.settings": "Ρυθμίσεις", "btn.edit": "Επεξεργασία", "btn.save": "Αποθήκευση", "btn.cancel": "Άκυρο",
       "btn.delete": "Διαγραφή", "btn.close": "Κλείσιμο", "btn.done": "Έτοιμο",
+      "hh.sec": "Νοικοκυριό", "hh.share.t": "Κοινή χρήση με νοικοκυριό", "hh.stop.t": "Διακοπή κοινής χρήσης",
+      "hh.share.x": "Το «{name}» μεταφέρεται στο νοικοκυριό με τις στιγμές, τις ξεχωριστές μέρες και τις συναντήσεις του: βλέπετε και προσθέτετε και οι δύο στην ίδια ιστορία, ο καθένας στο δικό του Μαζί. Οι ιδέες για δώρα, οι ρυθμίσεις και το PIN μένουν δικά σου, και οι φωτογραφίες μένουν στα Αρχεία σου.",
+      "hh.which": "Νοικοκυριό", "hh.go": "Κοινή χρήση", "hh.open": "Άνοιγμα Νοικοκυριού",
+      "hh.nohh": "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.",
+      "hh.in": "Το «{name}» είναι κοινό στο «{hh}»: ό,τι προσθέτει ο ένας φτάνει στον άλλον.",
+      "hh.stop.x": "Το «{name}» φεύγει από το «{hh}» για όλους και επιστρέφει στο δικό σου Μαζί με όσα προστέθηκαν. Οι άλλοι μπορούν να το φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.tag": "κοινό στο «{hh}»",
+      "toast.hhShared": "Κοινό με «{hh}»", "toast.hhStopped": "Η κοινή χρήση σταμάτησε. Η σχέση είναι ξανά στο δικό σου Μαζί.",
+      "toast.hhFail": "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.",
       "sec.coming": "Έρχονται", "sec.recent": "Πρόσφατα",
       "rel.new": "Νέα σχέση", "rel.edit": "Επεξεργασία σχέσης",
       "rel.people": "Ποιος ή ποια", "rel.fromContacts": "Από τις Επαφές", "rel.namePh": "Ή γράψε ένα όνομα", "rel.addName": "Προσθήκη",
@@ -333,8 +351,9 @@
   }
 
   function load() {
-    try { data = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
-    catch (e) { data = C.empty(); }
+    try { pdata = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
+    catch (e) { pdata = C.empty(); }
+    data = pdata;
     try {
       var l = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
       if (l && typeof l.active === "string") local.active = l.active.slice(0, 64);
@@ -346,27 +365,175 @@
     } catch (e) {}
   }
   function persist() {
-    try { localStorage.setItem(STORAGE_KEY, C.serialize(data)); return true; }
+    try { localStorage.setItem(STORAGE_KEY, C.serialize(pdata)); return true; }
     catch (e) { toast(t("full")); return false; }
   }
   function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(local)); } catch (e) {} }
 
+  // With shared relationships (BR-HH wave 7d), `data` is the union of
+  // the own data and the household copies; an edit is split back: each
+  // shared relationship's records go to its household, the rest stays
+  // own (pdata, the only thing stored and synced).
   function save(next) {
     if (C.serialize(next) === C.serialize(data)) { render(); return; }
-    data = next;
+    var sets = hhSets();
+    if (!sets.length) {
+      data = pdata = next;
+    } else {
+      var sp = TH.split(next, sets);
+      sp.parts.forEach(function (part, i) {
+        if (C.serialize(part) !== C.serialize(sets[i].data)) HS.push(part, sets[i].key);
+      });
+      var own = C.merge(pdata, sp.own);
+      var same = C.serialize(own) === C.serialize(pdata);
+      pdata = own;
+      data = TH.union(pdata, hhSets());
+      if (same) { render(); return; }
+    }
     if (!persist()) return;
     var api = syncApi();
     if (api && typeof api.markDirty === "function") api.markDirty();
     render();
   }
 
-  function sliceGet() { return C.normalize(data); }
+  function sliceGet() { return C.normalize(pdata); }   // the own data only
   function sliceSet(incoming) {
-    var merged = C.merge(data, incoming);
-    if (C.serialize(merged) === C.serialize(data)) return;
-    data = merged;
+    var merged = C.merge(pdata, incoming);
+    if (C.serialize(merged) === C.serialize(pdata)) return;
+    pdata = merged;
     persist();
+    hhView();
     render();
+  }
+
+  // ---------- 2b. Household (BR-HH wave 7d) ----------
+  // One relationship can be shared with a household (together/house.js):
+  // it MOVES there (the own copies get tombstones) and shows as a tab
+  // next to the own ones; stop sharing brings it back. Gift ideas and
+  // settings never travel.
+  var pdata = null;
+  var TH = window.TogetherHouse;
+  var HS = (window.OrosHouseShare && TH && TH.whole && window.OrosHouseCore) ? window.OrosHouseShare.attach({
+    kind: "together",
+    whole: TH.whole,
+    adopt: function (copy) {
+      pdata = C.merge(pdata, copy);
+      persist();
+      var api = syncApi();
+      if (api && typeof api.markDirty === "function") api.markDirty();
+    }
+  }) : null;
+  function hhOn() { return !!(HS && HS.api()); }
+  function hhSets() {
+    return HS ? HS.keys().map(function (k) { var g = HS.get(k); return { key: k, hh: g.hh || g.t, data: g.data }; }) : [];
+  }
+  function hhView() { data = HS ? TH.union(pdata, hhSets()) : pdata; }
+  // The household copy that holds a relationship, or null.
+  function hhOf(relId) {
+    return hhSets().filter(function (s) { return s.data.rels.some(function (r) { return r.id === relId; }); })[0] || null;
+  }
+  function hhSettings() {
+    var box = $("set-hh");
+    if (!box) return;
+    var rel = activeRel();
+    box.hidden = !hhOn() || !rel;
+    if (box.hidden) return;
+    var s = hhOf(rel.id), name = C.relName(rel, contacts(), "");
+    $("set-hh-p").textContent = s ? t("hh.in", { name: name, hh: s.hh }) : t("hh.share.x", { name: name });
+    $("set-hh-go").textContent = t(s ? "hh.stop.t" : "hh.share.t");
+  }
+  function hhAsk() {
+    var rel = activeRel();
+    if (!hhOn() || !rel) return;
+    $("set-dlg").close();
+    var s = hhOf(rel.id), hhs = HS.households(), name = C.relName(rel, contacts(), "");
+    var old = $("hh-dlg");
+    if (old) old.remove();
+    var dlg = el("dialog", "dlg");
+    dlg.id = "hh-dlg";
+    var body = el("div", "dlg-body");
+    body.appendChild(el("h2", "", t(s ? "hh.stop.t" : "hh.share.t")));
+    body.appendChild(el("p", "hint", s ? t("hh.stop.x", { name: name, hh: s.hh }) : (hhs.length ? t("hh.share.x", { name: name }) : t("hh.nohh"))));
+    var sel = el("select");
+    sel.id = "hh-box";
+    hhs.forEach(function (x) { var o = el("option", "", x.name || "?"); o.value = x.box; sel.appendChild(o); });
+    if (!s && hhs.length > 1) {
+      var lab = el("label", "field");
+      lab.appendChild(el("span", "", t("hh.which")));
+      lab.appendChild(sel);
+      body.appendChild(lab);
+    }
+    var acts = el("div", "actions");
+    acts.appendChild(el("span", "spacer"));
+    acts.appendChild(btn(t("btn.cancel"), "chip", function () { dlg.close(); }));
+    var ok;
+    if (!s && !hhs.length) {
+      ok = btn(t("hh.open"), "chip pri", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      });
+    } else {
+      ok = btn(t(s ? "hh.stop.t" : "hh.go"), "chip pri", function () {
+        ok.disabled = true;
+        var fail = function () { ok.disabled = false; toast(t("toast.hhFail")); };
+        if (!s) {
+          var box = sel.value, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+          var ids = TH.moved(pdata, rel.id);
+          HS.share(box, name, TH.only(pdata, rel.id)).then(function () {
+            var now = Date.now(), d = C.normalize(pdata);
+            ids.forEach(function (id) {
+              var row = null;
+              ["rels", "moments", "days", "meets"].forEach(function (k) { row = row || C.find(d, k, id); });
+              d.tombs[id] = Math.max(now, row ? row.m + 1 : 0, d.tombs[id] || 0);
+            });
+            pdata = C.normalize(d);
+            persist();
+            var api = syncApi();
+            if (api && typeof api.markDirty === "function") api.markDirty();
+            hhView();
+            dlg.close();
+            render();
+            toast(t("toast.hhShared", { hh: x.name || "" }));
+          }, fail);
+          return;
+        }
+        HS.unshare(s.key).then(function () {
+          hhView();
+          dlg.close();
+          render();
+          toast(t("toast.hhStopped"));
+        }, fail);
+      });
+    }
+    ok.id = "hh-ok";
+    acts.appendChild(ok);
+    body.appendChild(acts);
+    dlg.appendChild(body);
+    dlg.addEventListener("close", function () { setTimeout(function () { dlg.remove(); }, 0); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  var hhQueued = false;
+  function hhRefresh() {
+    if (hhQueued || !HS) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      var before = C.serialize(data);
+      HS.inject();
+      hhView();
+      if (draft || moDraft || dayDraft || meetDraft) return;     // an open editor keeps its edits
+      if (C.serialize(data) !== before) render();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = HS && HS.api();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    Promise.resolve(h.ready()).then(hhRefresh, hhRefresh);
   }
   function registerSync() {
     var api = syncApi();
@@ -615,7 +782,9 @@
 
     $("names").textContent = C.relName(rel, idx, me);
     var pron = rel.pron && !rel.discreet ? " · " + rel.pron : "";
-    $("since").textContent = t(shownDay < rel.start ? "since.future" : "since", { date: fmtDate(rel.start, { day: "numeric", month: "long", year: "numeric" }) }) + pron;
+    var hs = hhOf(rel.id);
+    $("since").textContent = t(shownDay < rel.start ? "since.future" : "since", { date: fmtDate(rel.start, { day: "numeric", month: "long", year: "numeric" }) }) + pron +
+      (hs ? " · " + t("hh.tag", { hh: hs.hh }) : "");
 
     var img = $("cover");
     $("hero").classList.toggle("has-photo", !!rel.cover);
@@ -1615,6 +1784,7 @@
     C.GIFT_DAYS.forEach(function (n) { var o = el("option", "", n ? t("gift.daysN", { n: n }) : t("gift.off")); o.value = String(n); gs.appendChild(o); });
     gs.value = String(data.prefs.giftDays);
     $("set-about").textContent = t("set.about");
+    hhSettings();
     pinMode = null;
     renderPinArea();
     $("set-dlg").showModal();
@@ -1831,6 +2001,7 @@
     $("ct-close").addEventListener("click", function () { $("ct-dlg").close(); });
     $("pic-close").addEventListener("click", function () { $("pic-dlg").close(); });
     $("set-close").addEventListener("click", function () { $("set-dlg").close(); });
+    if ($("set-hh-go")) $("set-hh-go").addEventListener("click", hhAsk);
     $("set-me").addEventListener("change", function () { save(C.setPrefs(data, { me: this.value }, Date.now())); });
     $("set-live").addEventListener("change", function () { save(C.setPrefs(data, { live: this.checked }, Date.now())); });
     $("set-confetti").addEventListener("change", function () { save(C.setPrefs(data, { confetti: this.checked }, Date.now())); });
@@ -1944,6 +2115,7 @@
     applyI18n();
     wire();
     registerSync();
+    hhBoot();
     inheritPalette();
     watchPalette();
     loadLock();

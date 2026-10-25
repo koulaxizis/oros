@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.57.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.58.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -2143,6 +2143,7 @@
     if (!Core) return;
     var raw;
     try { raw = JSON.parse(localStorage.getItem(Core.STORAGE_KEY)); } catch (e) { return; }
+    if (window.TogetherHouse) raw = window.TogetherHouse.withShared(raw);   // shared relationships (BR-HH wave 7d)
     if (!raw || !Array.isArray(raw.rels) || !raw.rels.length) return;
     var data = Core.normalize(raw);
     if (new Date().getHours() < data.prefs.hour) return;

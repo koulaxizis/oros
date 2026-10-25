@@ -64,6 +64,11 @@ Count the time you have spent together with someone you love: days, weeks, month
 - `Share card` makes an image with your names and your days, weeks or years together, on your photo. Save it in Files, download it, or share it with the apps of your phone. Only the image leaves orOS.
 - In `Moments`, `Slideshow` shows the photos of your moments one after the other (arrows, swipe, or pause).
 
+## Share with your partner
+With a [household](app:household) set up (just the two of you, or the whole home), open a relationship, then the gear › `Household` › `Share with a household`. That relationship moves into the household with its moments, special days and meetings: you both see the same counter and milestones, and a moment or meeting either of you adds reaches the other. The tab shows "shared in …". Gift ideas, settings, reminders and the PIN stay yours, so a surprise stays a surprise. Photos stay in your Files: the other side sees the moment without the picture. Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+`Stop sharing` takes the relationship out of the household for everyone and brings it back to your own Together with everything added; the others can bring it back from the Household app for 30 days.
+
 ## Backup file
 - `Settings` › `Backup and moving` › `Save a backup file` saves everything in Together as one file, with a password if you like. The photos stay in Files.
 - `Import a file` brings such a file into this orOS (handy without sync). It only adds and updates: nothing here is deleted.

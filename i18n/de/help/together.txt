@@ -64,6 +64,11 @@ Zählt die Zeit, die du mit einem geliebten Menschen verbracht hast: Tage, Woche
 - `Karte zum Teilen` erstellt ein Bild mit euren Namen und euren Tagen, Wochen oder Jahren zusammen, auf eurem Foto. Speichere es in Dateien, lade es herunter oder teile es mit den Apps deines Handys. Nur das Bild verlässt orOS.
 - In `Momente` zeigt `Diashow` die Fotos eurer Momente nacheinander (Pfeile, Wischen oder Pause).
 
+## Mit deinem Partner teilen
+Ist ein [Haushalt](app:household) eingerichtet (nur ihr zwei oder das ganze Zuhause), öffne eine Beziehung, dann das Zahnrad › `Haushalt` › `Mit einem Haushalt teilen`. Diese Beziehung zieht mit ihren Momenten, besonderen Tagen und Treffen in den Haushalt: Ihr seht beide denselben Zähler und dieselben Meilensteine, und ein Moment oder Treffen, das eine Person ergänzt, erreicht die andere. Der Tab zeigt „geteilt in …“. Geschenkideen, Einstellungen, Erinnerungen und die PIN bleiben deine, eine Überraschung bleibt also eine Überraschung. Fotos bleiben in deinen Dateien: Die andere Seite sieht den Moment ohne das Bild. Alles ist Ende-zu-Ende-verschlüsselt: Das orOS-Relay reicht nur weiter, was es nicht lesen kann.
+
+`Teilen beenden` nimmt die Beziehung für alle aus dem Haushalt und bringt sie mit allem Ergänzten in dein eigenes Zusammen zurück; die anderen können sie 30 Tage lang über die App Haushalt zurückholen.
+
 ## Sicherungsdatei
 - `Einstellungen` › `Sicherung und Umzug` › `Sicherungsdatei speichern` speichert alles aus Zusammen in einer Datei, auf Wunsch mit Passwort. Die Fotos bleiben in Dateien.
 - `Datei importieren` holt so eine Datei in dieses orOS (praktisch ohne Sync). Es fügt nur hinzu und aktualisiert: Hier wird nichts gelöscht.
