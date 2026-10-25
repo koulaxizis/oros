@@ -59,6 +59,9 @@ Der Streifen unter der Arbeitsfläche zeigt die Seiten deines Designs. `+` fügt
 - Videos und Töne laufen bei `Abspielen` und unter `Herunterladen` › `Video` (mit Ton). Ein GIF zeigt das bewegte Video ohne Ton. Die Diashow spielt die Videos und den Seitenton ebenfalls ab und zeigt die Auftritte jeder Seite. Bilder, PDF und PowerPoint nutzen das erste Bild des Videos.
 - Video- und Tondateien bleiben auf deiner orOS-Disk und werden wie deine Fotos mit Vault Drive synchronisiert, große Dateien belegen also auf jedem Gerät Platz.
 
+## Release-Paket (für Verlage)
+In [Verlag](app:publish) fragt `Release-Paket in Atelier` bei einem Titel hier einmal nach und erstellt dann fünf Designs in einem neuen Ordner mit dem Namen des Buchs: Instagram-Post, Story, Website-Banner, Lesezeichen und A3-Plakat, mit dem Cover, den Texten und einer Hintergrundfarbe vom Rand des Covers. Es sind normale Designs: Ändere, was du willst, und lade sie wie gewohnt herunter.
+
 ## Serienerstellung
 - Schreib Felder in geschweiften Klammern in ein Textfeld oder eine Tabelle, etwa {name} oder {date}, und wähle dann `Mehr` › `Serienerstellung…`.
 - Füge eine Liste ein (eine aus einer Tabelle kopierte Tabelle oder ein Name pro Zeile) oder öffne eine CSV- oder Excel-Datei. Die erste Zeile enthält die Spaltennamen; eine Spalte füllt das Feld mit demselben Namen, und du kannst ändern, welche Spalte wohin geht.

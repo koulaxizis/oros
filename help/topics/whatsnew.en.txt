@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.75.00
+- Publishing and Atelier: a release kit in one click. On a title, Release kit in Atelier makes five designs in a new folder named after the book: a square post, a story, a web banner, a bookmark and an A3 poster, each with the cover, title, author, release line, price and your imprint, in a colour taken from the cover. Everything stays editable.
+
+## Version 3.74.00
+- Publishing: review copies and reviews. On each title, note who got a copy for review (names come back with their outlet and address on the next title). Three weeks later the copy is flagged and Follow up by e-mail opens a kind reminder in Mail. When the review comes, keep its link and a quote: the newest quotes go into the title's Newsletter blocks, and Copy the quotes gives them to you for the shop.
+
+## Version 3.73.00
+- Publishing: manuscript submissions. Keep the manuscripts people send you, by hand or from Mail (Other apps › Manuscript submission in Publishing), with a status for each. Thank, decline or accept with your own ready texts through Mail; a submission waiting more than 90 days is flagged, and Make it a title starts the book. On a title, Contract in Writer opens a contract draft with the names, formats, percentage and advance filled in.
+
 ## Version 3.72.00
 - Publishing: royalties. Give each title its terms (who, a percentage of the list price or of what you receive, which formats, the advance), and the Royalties tab makes a statement per person and period from Stock's sales by ISBN, consignment shops included, returns taken off. Add sales Stock never saw, check every figure, then issue it: print or PDF, e-mail, add to Budget, mark paid. The advance is recouped first.
 

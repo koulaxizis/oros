@@ -33,12 +33,16 @@ Mit einem Erscheinungstermin datiert `Plan anlegen` jeden Schritt von dort zurü
 - `An To-Do senden` legt die offenen Schritte in eine neue Liste mit dem Namen des Buchs, jeden mit seinem Datum.
 - Legst du einen neuen Titel mit Erscheinungstermin an, hake `Erscheinungsplan ab dem Erscheinungstermin anlegen` an, und der Plan ist von Anfang an da. Auch der Assistent kann ihn anlegen: „neues Buch Nachtmeer von Anna Autorin, erscheint am 15. März“.
 
+### Rezensionsexemplare und Rezensionen
+Bei einem Titel hält `Rezensionsexemplare und Rezensionen` fest, wer das Buch bekam: Name, Medium, E-Mail und Versandtag (früher verwendete Namen werden mit Medium und Adresse wieder angeboten). Drei Wochen später ohne Rezension wird das Exemplar mit `nachfassen` markiert; `Per E-Mail nachfassen` öffnet Mail mit einer kurzen, freundlichen Nachricht und merkt sich den Tag. Kommt eine Rezension, setze den Status auf `Rezensiert` und füge Link und Zitat hinzu: die zwei neuesten Zitate kommen in die Newsletter-Blöcke des Titels, und `Zitate kopieren` legt alle in die Zwischenablage, für die Shopseite oder einen Beitrag.
+
 ### An andere Apps senden
 Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), dann:
 - `Entwurf in meinem Shop` legt einen Produktentwurf in deinem WooCommerce-Shop an, verbunden mit deinen eigenen Schlüsseln unter [Einstellungen](app:settings) › Verbundene Dienste: Name, SKU (die ISBN), Preis, Klappentext, Gewicht und Maße in den Einheiten des Shops. Hat der Shop schon ein Produkt mit dieser ISBN, verknüpft orOS es und legt nichts an. Bilder und Kategorien fügst du hinzu und veröffentlichst im Shop; `Im Shop öffnen` bringt dich hin.
 - `Produkt in Stock` öffnet ein neues Produkt in [Stock](app:stock) mit Name, ISBN als SKU und Barcode und dem Preis. Hat Stock es schon, öffnet sich sein Blatt.
 - `Block im Newsletter` fügt Titel, Untertitel, Autor und Klappentext in einen [Newsletter](app:newsletter)-Entwurf deiner Wahl ein, mit einem Button zum Buch, wenn es in deinem Shop ist.
 - `Pressemitteilung in Writer` öffnet ein neues [Writer](app:writer)-Dokument mit einer Pressemitteilung aus Titel, Texten, Ausgaben und deinem Verlagsnamen. Lies und bearbeite sie, bevor du sie verschickst.
+- `Release-Paket in Atelier` erstellt fünf Designs in [Atelier](app:atelier), in einem Ordner mit dem Namen des Buchs: Instagram-Post, Story, Website-Banner, Lesezeichen und A3-Plakat, jeweils mit Cover, Titel, Autor, Erscheinungszeile, Preis und deinem Verlagsnamen (und dem neuesten Rezensionszitat auf Lesezeichen und Plakat). Atelier fragt vorher; jedes Design bleibt bearbeitbar.
 
 In der anderen App wird nichts gespeichert, bevor du es dort speicherst.
 
@@ -51,6 +55,14 @@ Der Tab `Honorare` zeigt alle Berechtigten. `Neue Abrechnung…` nimmt einen Zei
 - Verkäufe, die das Lager nie gesehen hat (E-Books, eine Buchmesse), trägst du ein, und jede Zahl lässt sich vor dem Ausstellen korrigieren.
 
 Zuerst wird der Vorschuss verrechnet: was frühere Abrechnungen mit denselben Bedingungen verdient haben, wird davon abgezogen, und nur der Rest ist zahlbar. Eine ausgestellte Abrechnung ist ein Beleg, der sich nicht ändert, wenn sich Bedingungen oder Verkäufe ändern. Von dort: `Drucken oder PDF`, `E-Mail` (Mail öffnet sich mit dem Text), `Ins Budget` (eine Ausgabe, die du dort bestätigst), `Als bezahlt markieren` oder `Stornieren` (sie bleibt durchgestrichen in der Liste und zählt nicht mehr für den Vorschuss).
+
+## Einsendungen
+Manuskripte, die man dir schickt. `+ Einsendung` legt eine von Hand an; öffne in [Mail](app:mail) die Nachricht und wähle `Andere Apps` › `Manuskript-Einsendung in Verlag`, um sie mit Absender, Betreff und Text anzulegen.
+
+Jede hat einen Status (`Neu`, `Wird gelesen`, `In der engeren Wahl`, `Angenommen`, `Abgelehnt`). Die Antworten öffnen Mail mit einem fertigen Text: `Danke sagen`, `Ablehnen` oder `Annehmen`; der Tag der Antwort wird gespeichert. Eine Einsendung, die nach 90 Tagen noch neu oder in Lektüre ist und keine Antwort hat, wird markiert (die Tage änderst du unter Einstellungen › `Antworten und Vertrag…`). `Zum Titel machen` legt einen Titel mit Autor und deinen Notizen an.
+
+### Antworten und Vertrag
+Unter Einstellungen › `Antworten und Vertrag…` schreibst du eigene Texte; {name}, {title}, {imprint} und {days} werden ausgefüllt. Bei einem Titel öffnet `Vertrag in Writer` (in jeder Honorarbedingung) einen Vertragsentwurf in [Writer](app:writer) mit Namen, Ausgaben, Prozentsatz und Vorschuss, zum Fertigstellen und Speichern als PDF. Der eingebaute Entwurf ist ein Ausgangspunkt, keine Rechtsberatung.
 
 ## ISBN
 Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.

@@ -33,12 +33,16 @@ With a release date set, `Make the plan` dates every step back from it: manuscri
 - `Send to To-Do` adds the open steps to a new list named after the book, each with its date.
 - When you make a new title with a release date, tick `Make the release plan from the release date` and the plan is there from the start. The Assistant can set it up too: "new book Night Sea by Ann Writer, out on 15 March".
 
+### Review copies and reviews
+In a title, `Review copies and reviews` keeps who got the book: name, outlet, e-mail and the day it went out (names you used before are offered again, with their outlet and address). Three weeks later with no review the copy is marked `follow up`; `Follow up by e-mail` opens Mail with a short, kind note and keeps the day. When a review comes, set the status to `Reviewed` and add its link and a quote: the two newest quotes go into the Newsletter blocks of the title, and `Copy the quotes` puts them all on the clipboard for the shop page or a post.
+
 ### Send to other apps
 Under `Send to other apps` pick a format (when the title has more than one), then:
 - `Draft in my shop` creates a draft product in your WooCommerce shop, connected with your own keys in [Settings](app:settings) › Connected services: name, SKU (the ISBN), price, back-cover text, weight and size in the shop's own units. If the shop already has a product with that ISBN, orOS links it and creates nothing. You add pictures and categories and publish it in the shop; `Open in the shop` takes you there.
 - `Item in Stock` opens a new product in [Stock](app:stock) with the name, the ISBN as SKU and barcode, and the price. If Stock already has it, its sheet opens instead.
 - `Block in Newsletter` adds the title, subtitle, author and back-cover text to a [Newsletter](app:newsletter) draft you pick, with a button to the book when it is in your shop.
 - `Press release in Writer` opens a new [Writer](app:writer) document with a press release built from the title, the texts, the formats and your publisher name. Read it and edit it before you send it.
+- `Release kit in Atelier` makes five designs in [Atelier](app:atelier), in a folder named after the book: an Instagram post, a story, a site banner, a bookmark and an A3 poster, each with the cover, title, author, release line, price and your publisher name (and the newest review quote on the bookmark and the poster). Atelier asks first; every design stays editable.
 
 Nothing is saved in the other app until you save it there.
 
@@ -51,6 +55,14 @@ The `Royalties` tab lists everyone with terms. `New statement…` takes a period
 - sales Stock never saw (e-books, a book fair) are typed in, and every figure can be corrected before you issue.
 
 The advance is recouped first: what earlier statements earned on the same terms is taken off it, and only the rest is payable. An issued statement is a record that doesn't change when terms or sales do. From it: `Print or PDF`, `E-mail` (Mail opens with the text), `Add to Budget` (an expense you confirm there), `Mark paid`, or `Void` (it stays in the list, crossed out, and no longer counts towards the advance).
+
+## Submissions
+Manuscripts people send you. `+ Submission` adds one by hand; in [Mail](app:mail), open the message and choose `Other apps` › `Manuscript submission in Publishing` to file it with the sender, the subject and the text filled in.
+
+Each has a status (`New`, `Being read`, `Shortlisted`, `Accepted`, `Declined`). The answers open Mail with a ready text: `Thank for it`, `Decline` or `Accept`; the day you answered is kept. A submission still new or being read with no answer after 90 days is flagged (change the days in Settings › `Answers and contract…`). `Make it a title` starts a title with the author and your notes.
+
+### Answers and contract
+In Settings › `Answers and contract…` write your own texts; {name}, {title}, {imprint} and {days} are filled in. On a title, `Contract in Writer` (in each set of royalty terms) opens a contract draft in [Writer](app:writer) with the names, formats, percentage and advance filled in, to finish and save as PDF. The built-in draft is a starting point, not legal advice.
 
 ## ISBN
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.

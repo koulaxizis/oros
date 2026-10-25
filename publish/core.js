@@ -11,14 +11,23 @@
 //                blurb, bio, kw, notes, cov, plan?, roy? }],
 //                roy (wave P6): royalty terms [{ id, n, pct, base
 //                "list"|"net", k "" | format kind, adv }]
+//                rc (wave P8): review copies [{ id, n, out, email, d,
+//                st "sent"|"rev"|"no", url, q, rd, fu }]
 //     blocks: [{ id, m, p, note }],      ISBN blocks: p = the prefix as
 //                the agency gave it, with hyphens ("978-618-5321")
 //     isbnx:  [{ id, m, note }],         numbers used outside the app or
 //                spoiled; id = the 13 digits
 //     stmts:  [{ id, m, n, from, to, cur, rows, rec, due, paid, v }]
 //                royalty statements as issued (wave P6, royalty.js)
-//     set:    { m, cur, imp },          imp = the publisher's name
-//                (covers, press texts); unknown fields ride along
+//     subs:   [{ id, m, n, email, t, d, st, note, ans, ti }]
+//                manuscripts sent to the publisher (wave P7): st new |
+//                read | short | yes | no; ans = day last answered; ti =
+//                the title made from it
+//     set:    { m, cur, imp, tpl?, subDays? }, imp = the publisher's
+//                name (covers, press texts); tpl (wave P7) = the
+//                person's own texts { ack, no, yes, con } ("" = the
+//                built-in one), subDays = days before an unanswered
+//                submission is flagged (90); unknown fields ride along
 //     tombs:  { id: ms } }
 //   Later waves add lists of { id, m, … } rows; until a device knows a
 //   list it keeps and merges it as it came (LWW by m per id), so an
@@ -39,7 +48,7 @@
   "use strict";
 
   var VER = 1;
-  var LISTS = ["titles", "blocks", "isbnx", "stmts"];
+  var LISTS = ["titles", "blocks", "isbnx", "stmts", "subs"];
   var STATUS = ["idea", "prod", "out", "oop"];
   var FMT_KINDS = ["pb", "hb", "eb", "ab", "ot"];
   var ROLES = ["a", "t", "i", "e", "c", "n", "o"];
@@ -233,7 +242,7 @@
     if (wid > 0 && okId(raw.wp.a)) out.wp = { a: raw.wp.a, id: wid };
     return out;
   }
-  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy"];
+  var TITLE_KEYS = ["id", "m", "t", "sub", "ser", "sn", "st", "rel", "lang", "ppl", "fmts", "blurb", "bio", "kw", "notes", "cov", "plan", "roy", "rc"];
   // Release plan (wave P4): the steps from manuscript to presentation,
   // each with a date counted back from the release date (days).
   var STAGES = ["ms", "ed", "p1", "cov", "p2", "isbn", "p3", "print", "pres", "x"];
@@ -288,6 +297,82 @@
     if (raw.v === 1) o.v = 1;
     return o;
   }
+  // A review copy (wave P8): who got the book (n, their outlet, e-mail),
+  // the day it went out (d), and what came of it: st sent | rev (a
+  // review came: its https link, a quote, its day rd) | no (none will
+  // come). fu = the day of the last follow-up.
+  var RC_ST = ["sent", "rev", "no"], MAX_RC = 150, RC_DAYS = 21;
+  function cleanRc(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var n = line(raw.n, 120), o = line(raw.out, 120);
+    if (!n && !o) return null;
+    var email = line(raw.email, 200), url = line(raw.url, 500);
+    return {
+      id: raw.id, n: n, out: o, email: /^[^\s@<>]+@[^\s@<>]+$/.test(email) ? email : "", d: okYmd(raw.d) ? raw.d : "",
+      st: oneOf(raw.st, RC_ST, "sent"), url: /^https:\/\/[^\s<>"]+$/.test(url) ? url : "", q: text(raw.q, 600).trim(),
+      rd: okYmd(raw.rd) ? raw.rd : "", fu: okYmd(raw.fu) ? raw.fu : ""
+    };
+  }
+  // Copies to follow up: sent, no review yet, and `days` (21) since
+  // they went out or since the last follow-up. → [{ title, rc }]
+  function rcDue(d, today, days) {
+    var n = typeof days === "number" && days > 0 ? days : RC_DAYS, lim = addDays(today, -n), out = [];
+    ((d && d.titles) || []).forEach(function (t) {
+      (t.rc || []).forEach(function (x) {
+        if (x.st !== "sent" || !x.d) return;
+        var since = x.fu && x.fu > x.d ? x.fu : x.d;
+        if (since <= lim) out.push({ title: t, rc: x });
+      });
+    });
+    return out.sort(function (a, b) { return a.rc.d < b.rc.d ? -1 : a.rc.d > b.rc.d ? 1 : byId(a.rc, b.rc); });
+  }
+  // The quotes of a title's reviews, newest first: [{ q, who, url }]
+  function quotes(t) {
+    return (t.rc || []).filter(function (x) { return x.st === "rev" && x.q; })
+      .sort(function (a, b) { return (a.rd || "") < (b.rd || "") ? 1 : (a.rd || "") > (b.rd || "") ? -1 : byId(a, b); })
+      .map(function (x) { return { q: x.q, who: x.out || x.n, url: x.url }; });
+  }
+  // Everyone a copy went to, across titles (for the name list): newest
+  // details per name
+  function pressList(d) {
+    var by = {};
+    ((d && d.titles) || []).forEach(function (t) {
+      (t.rc || []).forEach(function (x) {
+        var k = fold(x.n || x.out);
+        if (!k) return;
+        if (!by[k] || (x.d || "") > (by[k].d || "")) by[k] = { n: x.n, out: x.out, email: x.email, d: x.d };
+      });
+    });
+    return Object.keys(by).sort().map(function (k) { return by[k]; });
+  }
+  // A manuscript sent in (wave P7). Only what the person typed or Mail
+  // passed on; the e-mail itself stays in Mail.
+  var SUB_ST = ["new", "read", "short", "yes", "no"];
+  function cleanSub(raw) {
+    if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
+    var n = line(raw.n, 120), email = line(raw.email, 200);
+    if (!n && !email) return null;
+    var o = { id: raw.id, m: ms(raw.m), n: n, email: /^[^\s@<>]+@[^\s@<>]+$/.test(email) ? email : "",
+              t: line(raw.t, 200), d: okYmd(raw.d) ? raw.d : "", st: oneOf(raw.st, SUB_ST, "new"),
+              note: text(raw.note, 4000), ans: okYmd(raw.ans) ? raw.ans : "" };
+    if (okId(raw.ti)) o.ti = raw.ti;
+    return o;
+  }
+  // Waiting too long: still new or being read, never answered (or
+  // answered only before it arrived) and older than `days`.
+  function subsLate(d, today, days) {
+    var n = typeof days === "number" && days > 0 ? days : 90;
+    var lim = addDays(today, -n);
+    return ((d && d.subs) || []).filter(function (x) {
+      return (x.st === "new" || x.st === "read") && x.d && x.d <= lim && (!x.ans || x.ans < x.d);
+    }).sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : byId(a, b); });
+  }
+  // {name} → vars.name in a template; unknown names stay as written
+  function fillTpl(tpl, vars) {
+    return String(tpl || "").replace(/\{([a-z]{1,12})\}/g, function (all, k) {
+      return Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : all;
+    });
+  }
   function cleanTitle(raw) {
     if (!raw || typeof raw !== "object" || !okId(raw.id)) return null;
     var t = line(raw.t, 200);
@@ -319,6 +404,13 @@
       return true;
     }).slice(0, MAX_ROY);
     if (roy.length) out.roy = roy;
+    var cids = {};
+    var rc = (Array.isArray(raw.rc) ? raw.rc : []).map(cleanRc).filter(function (x) {
+      if (!x || cids[x.id]) return false;
+      cids[x.id] = 1;
+      return true;
+    }).slice(0, MAX_RC);
+    if (rc.length) out.rc = rc;
     // Fields of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(raw).forEach(function (k) {
@@ -349,13 +441,21 @@
     p.m = ms(raw.m);
     return p;
   }
-  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt };
+  var CLEAN = { titles: cleanTitle, blocks: cleanBlock, isbnx: cleanX, stmts: cleanStmt, subs: cleanSub };
 
-  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
+  function empty() { return { ver: VER, titles: [], blocks: [], isbnx: [], stmts: [], subs: [], set: { m: 0, cur: "EUR", imp: "" }, tombs: {} }; }
 
   function cleanSet(raw) {
     var s = raw && typeof raw === "object" ? raw : {};
     var out = { m: ms(s.m), cur: typeof s.cur === "string" && CURS.test(s.cur) ? s.cur : "EUR", imp: line(s.imp, 120) };
+    // wave P7: own texts for answers and the contract, days to answer
+    if (s.tpl && typeof s.tpl === "object") {
+      var tp = {};
+      TPL_KEYS.forEach(function (k) { var v = text(s.tpl[k], k === "con" ? 20000 : 6000); if (v.trim()) tp[k] = v; });
+      if (Object.keys(tp).length) out.tpl = tp;
+    }
+    var sd = num(s.subDays, 0, 365, 0);
+    if (sd) out.subDays = sd;
     // Settings of a later version ride along unchanged (bounded).
     var extra = {}, any = false;
     Object.keys(s).forEach(function (k) {
@@ -366,7 +466,8 @@
     if (any && JSON.stringify(extra).length <= MAX_EXTRA) Object.keys(extra).forEach(function (k) { out[k] = extra[k]; });
     return out;
   }
-  var SET_KEYS = ["m", "cur", "imp"];
+  var SET_KEYS = ["m", "cur", "imp", "tpl", "subDays"];
+  var TPL_KEYS = ["ack", "no", "yes", "con"];
 
   function newer(a, b) {
     if (a.m !== b.m) return a.m > b.m;
@@ -698,6 +799,9 @@
     var out = [{ k: "h", t: line(t.t, 300) }];
     var txt = [head, t.blurb].filter(Boolean).join("\n\n");
     if (txt) out.push({ k: "p", t: txt.slice(0, 4000) });
+    // reviews (wave P8): the two newest quotes
+    var qs = quotes(t).slice(0, 2).map(function (x) { return "“" + x.q + "” — " + x.who; });
+    if (qs.length) out.push({ k: "p", t: qs.join("\n\n").slice(0, 2000) });
     if (o.href && /^https:\/\/[^\s]+$/.test(o.href) && o.btn) out.push({ k: "btn", t: line(o.btn, 80), href: o.href });
     return out;
   }
@@ -744,7 +848,9 @@
     shopDraft: shopDraft, stockPrefill: stockPrefill, newsBlocks: newsBlocks, pressRelease: pressRelease,
     STAGES: STAGES, STAGE_DAYS: STAGE_DAYS, MAX_PLAN: MAX_PLAN, addDays: addDays, makePlan: makePlan, sortPlan: sortPlan,
     planState: planState, byDay: byDay,
-    ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt
+    ROY_BASES: ROY_BASES, MAX_ROY: MAX_ROY, cleanRoy: cleanRoy, cleanStmt: cleanStmt,
+    SUB_ST: SUB_ST, TPL_KEYS: TPL_KEYS, cleanSub: cleanSub, subsLate: subsLate, fillTpl: fillTpl,
+    RC_ST: RC_ST, RC_DAYS: RC_DAYS, MAX_RC: MAX_RC, cleanRc: cleanRc, rcDue: rcDue, quotes: quotes, pressList: pressList
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosPublishCore = API;

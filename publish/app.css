@@ -316,3 +316,19 @@ label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
 .roy-sum { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
 .roy-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 13px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 40vh; overflow: auto; }
 .small { font-size: 12px; }
+
+/* ---------- Submissions (wave P7) ---------- */
+#tabbar { overflow-x: auto; scrollbar-width: none; }
+#tabbar .tab { flex: 0 0 auto; white-space: nowrap; }
+#view-subs .ed-head { flex-wrap: wrap; }
+#view-subs .chips { flex: 1 1 260px; margin-bottom: 0; }
+.sub-row .tside { flex: 0 0 auto; }
+.badge.sub-new { color: var(--accent); border-color: var(--accent); }
+.badge.sub-short { color: var(--warn); border-color: var(--warn); }
+.badge.sub-yes { color: var(--ok); border-color: var(--ok); }
+.badge.sub-no { color: var(--text-dim); }
+
+/* ---------- Review copies (wave P8) ---------- */
+.badge.rc-sent { color: var(--accent); border-color: var(--accent); }
+.badge.rc-rev { color: var(--ok); border-color: var(--ok); }
+.badge.rc-no { color: var(--text-dim); }

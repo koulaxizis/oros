@@ -228,7 +228,7 @@
       "to.other": "Another app…", "to.otherHint": "Writer, Wiki, Text Tools and the other apps that take text.",
       "to.link": "A bookmark", "to.linkHint": "Pick one of its {n} links.", "to.nolinks": "This message has no links.", "to.pick": "Pick a link",
       "to.travel": "Booking to Travel", "to.travelHint": "Flights, hotels, trains, car hire or tickets found in this e-mail.",
-      "to.contact": "Sender to Contacts", "to.crm": "Log in CRM", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
+      "to.contact": "Sender to Contacts", "to.pub": "Manuscript submission in Publishing", "to.crm": "Log in CRM", "to.sum": "Summary by the Assistant", "to.reply": "Reply drafted by the Assistant",
       "to.aiHint": "Opens the Assistant with the question ready (long messages are cut); you send it.",
       "ai.sum": "Summarise this e-mail in a few sentences, in the language it is written in.",
       "ai.reply": "Write a short, polite reply to this e-mail, in its language. I will edit it before sending.",
@@ -439,7 +439,7 @@
       "to.other": "Άλλη εφαρμογή…", "to.otherHint": "Writer, Wiki, Εργαλεία κειμένου και οι άλλες εφαρμογές που δέχονται κείμενο.",
       "to.link": "Σελιδοδείκτης", "to.linkHint": "Διάλεξε έναν από τους {n} συνδέσμους του.", "to.nolinks": "Το μήνυμα δεν έχει συνδέσμους.", "to.pick": "Διάλεξε σύνδεσμο",
       "to.travel": "Κράτηση στα Ταξίδια", "to.travelHint": "Πτήσεις, ξενοδοχεία, τρένα, ενοικιάσεις ή εισιτήρια που βρέθηκαν στο μήνυμα.",
-      "to.contact": "Αποστολέας στις Επαφές", "to.crm": "Καταγραφή στους Πελάτες", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
+      "to.contact": "Αποστολέας στις Επαφές", "to.pub": "Υποβολή χειρογράφου στις Εκδόσεις", "to.crm": "Καταγραφή στους Πελάτες", "to.sum": "Περίληψη από τον Βοηθό", "to.reply": "Πρόχειρη απάντηση από τον Βοηθό",
       "to.aiHint": "Ανοίγει τον Βοηθό με την ερώτηση έτοιμη (τα μεγάλα μηνύματα κόβονται)· τη στέλνεις εσύ.",
       "ai.sum": "Κάνε περίληψη αυτού του email σε λίγες προτάσεις, στη γλώσσα που είναι γραμμένο.",
       "ai.reply": "Γράψε μια σύντομη, ευγενική απάντηση σε αυτό το email, στη γλώσσα του. Θα τη διορθώσω πριν τη στείλω.",
@@ -4323,6 +4323,12 @@
   function msgHead(m) {
     return t("to.from") + " " + C.fmtInput(m.from || { addr: "" }) + "\n" + t("to.date") + " " + fmtFullDate(m.date);
   }
+  // "YYYY-MM-DD" of a message date (local day), "" when there is none
+  function localDay(v) {
+    var d = v ? new Date(v) : null;
+    if (!d || isNaN(d.getTime())) return "";
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
   function appsDialog(m, p) {
     var sh = shellApps();
     if (!sh) return;
@@ -4370,6 +4376,14 @@
       item(t("to.contact"), from.name ? from.name + " <" + from.addr + ">" : from.addr, function () {
         go("contacts", { add: { email: from.addr, name: from.name || "" } });
       });
+      // BR-PUB-SUB (owner Publishing, wave P7): a manuscript sent in
+      // becomes a submission there, after the person confirms it
+      if (appThere("publish")) {
+        item(t("to.pub"), from.name ? from.name + " <" + from.addr + ">" : from.addr, function () {
+          go("publish", { submit: { n: (from.name || "").slice(0, 120), email: from.addr.slice(0, 200), t: subj.slice(0, 200),
+                                    d: localDay(m.date), note: body.slice(0, 3000) } });
+        });
+      }
     }
     function ask(lead) {
       var head = lead + "\n\n" + msgHead(m) + "\n" + t("to.subj") + " " + subj + "\n\n";

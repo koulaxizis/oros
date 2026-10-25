@@ -16,6 +16,7 @@
     "atelier/collage.js",
     "atelier/core.js",
     "atelier/imagine.js",
+    "atelier/kit.js",
     "atelier/library/icons.js",
     "atelier/magic.js",
     "atelier/magicai.js",

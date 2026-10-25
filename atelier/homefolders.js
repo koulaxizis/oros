@@ -144,6 +144,8 @@
   }
 
   AT.folders = { renderBar: renderBar, inCurrent: inCurrent, moveMenu: moveMenu, created: created,
-    current: current, nameOf: nameOf,
+    current: current, nameOf: nameOf, open: setOpen,
+    // a new folder by name (kit.js) → its id, "" when it can't be made
+    add: function (nm) { var res = FO.add(R, nm, AT.now()); if (res.id) { R = res.r; store(); } return res.id; },
     place: function (ids, f) { R = FO.move(R, ids, f, AT.now()); store(); }, folderOf: function (id) { return FO.folderOf(R, id); } };
 })();
