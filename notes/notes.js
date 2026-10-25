@@ -268,8 +268,9 @@
 
   function saveNow() {
     normalizeState();
+    var own = hhSplit();             // BR-HH wave 7f: only the own notebooks are stored
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(own));
     } catch (e) {
       // #4: quota exceeded / private mode — never crash the boot loop
       // or the beforeunload flush; the user gets a visible receipt.
@@ -547,7 +548,8 @@
     state.notebooks.forEach(function (nb) {
       var opt = document.createElement("option");
       opt.value = nb.id;
-      opt.textContent = nb.name;
+      var hs = hhOf(nb.id);
+      opt.textContent = hs ? tf("hh.tag", { name: nb.name, hh: hs.hh }) : nb.name;
       if (nb.id === currentNotebook().id) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -1477,6 +1479,40 @@
   STRINGS.en["imp.err"] = "These files could not be read.";
   STRINGS.el["imp.err"] = "Δεν ήταν δυνατή η ανάγνωση αυτών των αρχείων.";
 
+  // BR-HH wave 7f: a notebook shared with a household
+  STRINGS.en["hh.share.t"] = "Share with a household";
+  STRINGS.el["hh.share.t"] = "Κοινή χρήση με νοικοκυριό";
+  STRINGS.en["hh.stop.t"] = "Stop sharing";
+  STRINGS.el["hh.stop.t"] = "Διακοπή κοινής χρήσης";
+  STRINGS.en["hh.share.x"] = "\"{name}\" moves into the household with its pages and labels: everyone in it reads and writes it in their own Notes. If two people change the same page at once, both texts are kept.";
+  STRINGS.el["hh.share.x"] = "Το «{name}» μεταφέρεται στο νοικοκυριό με τις σελίδες και τις ετικέτες του: όλοι όσοι είναι εκεί το διαβάζουν και γράφουν σε αυτό από τις δικές τους Σημειώσεις. Αν δύο άτομα αλλάξουν την ίδια σελίδα μαζί, κρατιούνται και τα δύο κείμενα.";
+  STRINGS.en["hh.long"] = "\"{name}\" has a page too long to share (about 60,000 characters at most). Split it into shorter pages first.";
+  STRINGS.el["hh.long"] = "Το «{name}» έχει σελίδα πολύ μεγάλη για κοινή χρήση (έως περίπου 60.000 χαρακτήρες). Χώρισέ τη πρώτα σε μικρότερες σελίδες.";
+  STRINGS.en["hh.full"] = "\"{name}\" is too big to share (a household holds about 480,000 characters per notebook). Move some pages to another notebook first.";
+  STRINGS.el["hh.full"] = "Το «{name}» είναι πολύ μεγάλο για κοινή χρήση (ένα νοικοκυριό χωράει περίπου 480.000 χαρακτήρες ανά σημειωματάριο). Μετάφερε πρώτα κάποιες σελίδες σε άλλο σημειωματάριο.";
+  STRINGS.en["hh.which"] = "Household";
+  STRINGS.el["hh.which"] = "Νοικοκυριό";
+  STRINGS.en["hh.go"] = "Share";
+  STRINGS.el["hh.go"] = "Κοινή χρήση";
+  STRINGS.en["hh.open"] = "Open Household";
+  STRINGS.el["hh.open"] = "Άνοιγμα Νοικοκυριού";
+  STRINGS.en["hh.nohh"] = "Make or join a household first, in the Household app.";
+  STRINGS.el["hh.nohh"] = "Φτιάξε πρώτα ένα νοικοκυριό ή μπες σε ένα, από την εφαρμογή Νοικοκυριό.";
+  STRINGS.en["hh.stop.x"] = "\"{name}\" leaves {hh} for everyone and comes back to your own notebooks with every page. The others can bring it back from Household for 30 days.";
+  STRINGS.el["hh.stop.x"] = "Το «{name}» φεύγει από το «{hh}» για όλους και επιστρέφει στα δικά σου σημειωματάρια με όλες τις σελίδες. Οι άλλοι μπορούν να το φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.";
+  STRINGS.en["hh.tag"] = "{name} · {hh}";
+  STRINGS.el["hh.tag"] = "{name} · {hh}";
+  STRINGS.en["hh.del"] = "This notebook is shared in {hh}: its pages are deleted for everyone.";
+  STRINGS.el["hh.del"] = "Αυτό το σημειωματάριο είναι κοινό στο «{hh}»: οι σελίδες του διαγράφονται για όλους.";
+  STRINGS.en["toast.hhShared"] = "Shared with {hh}";
+  STRINGS.el["toast.hhShared"] = "Κοινό με «{hh}»";
+  STRINGS.en["toast.hhStopped"] = "Sharing stopped. The notebook is back with your own.";
+  STRINGS.el["toast.hhStopped"] = "Η κοινή χρήση σταμάτησε. Το σημειωματάριο είναι ξανά στα δικά σου.";
+  STRINGS.en["toast.hhFail"] = "Could not reach the household. Try again.";
+  STRINGS.el["toast.hhFail"] = "Δεν έγινε σύνδεση με το νοικοκυριό. Δοκίμασε ξανά.";
+  STRINGS.en["toast.hhLong"] = "A page got too long to share: the household keeps its last version, yours is in your own notebook.";
+  STRINGS.el["toast.hhLong"] = "Μια σελίδα έγινε πολύ μεγάλη για κοινή χρήση: το νοικοκυριό κρατά την τελευταία της εκδοχή, η δική σου είναι στο δικό σου σημειωματάριο.";
+
   function tf(key, params) {
     return t(key).replace(/\{(\w+)\}/g, function (m, n) { return params && params[n] !== undefined ? String(params[n]) : m; });
   }
@@ -1730,8 +1766,9 @@
   function deleteNotebook(id) {
     var nb = state.notebooks.find(function (n) { return n.id === id; });
     if (!nb) return;
+    var hs = hhOf(id);
     askConfirm(t("book.delete"),
-      '"' + nb.name + '" — ' + t("book.confirm"),
+      '"' + nb.name + '" — ' + t("book.confirm") + (hs ? " " + tf("hh.del", { hh: hs.hh }) : ""),
       t("book.delete"), function () { doDeleteNotebook(id); });
   }
 
@@ -3556,6 +3593,217 @@
     return canonNotes({ ver: DATA_VER, notebooks: notebooks, pages: pages, labels: labels, tombs: tombs });
   }
 
+  // ---------- 7b. Household (BR-HH wave 7f) ----------
+  // One notebook can be shared with a household (notes/house.js): it
+  // MOVES there with its pages and labels (the own copies get
+  // tombstones) and shows in the notebook selector next to the own
+  // ones; stop sharing brings it back. `state` is what is on screen
+  // (the own notebooks + the shared ones); `pdata` is the own data
+  // while something is shared (null when nothing is: then `state` is
+  // the own data), the only thing stored and synced. Every save splits
+  // `state` back: a shared notebook's records go to its household.
+  var pdata = null;
+  var NH = window.OrosNotesHouse ? window.OrosNotesHouse.make({ merge: mergeNotesStates, canon: canonNotes }) : null;
+  var HS = (NH && window.OrosHouseShare && window.OrosHouseCore) ? window.OrosHouseShare.attach({
+    kind: "notes",
+    whole: NH.whole,
+    adopt: function (copy) {
+      pdata = canonNotes(mergeNotesStates(pdata || canonNotes(curState()), copy));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(pdata)); } catch (e) {}
+      markSyncDirty();
+    }
+  }) : null;
+  function curState() {
+    return { ver: state.ver, notebooks: state.notebooks, pages: state.pages, labels: state.labels, tombs: state.tombs };
+  }
+  function stateFrom(d) {
+    state.ver = DATA_VER;
+    state.notebooks = d.notebooks;
+    state.pages = d.pages;
+    state.labels = d.labels;
+    state.tombs = d.tombs;
+  }
+  function hhOn() { return !!(HS && HS.api()); }
+  function hhSets() {
+    return HS ? HS.keys().map(function (k) { var g = HS.get(k); return { key: k, hh: g.hh || g.t, data: g.data }; }) : [];
+  }
+  function hhOf(nbId) {
+    return hhSets().filter(function (s) { return s.data.notebooks.some(function (n) { return n.id === nbId; }); })[0] || null;
+  }
+  // The own data the screen stands for: the split of `state`, with the
+  // tombstones of what moved (the union leaves them out) and a tombstone
+  // for every own record that went to a household since.
+  function ownOf(cur, sets, sp) {
+    var prev = pdata || canonNotes(cur), own = sp.own, now = Date.now();
+    var tombs = {};
+    Object.keys(prev.tombs || {}).forEach(function (k) { tombs[k] = prev.tombs[k]; });
+    Object.keys(own.tombs || {}).forEach(function (k) { tombs[k] = Math.max(tombs[k] || 0, own.tombs[k]); });
+    var had = {};
+    ["notebooks", "pages", "labels"].forEach(function (k) {
+      (prev[k] || []).forEach(function (r) { had[NH.tombKey(k, r.id)] = r.mtime || 0; });
+    });
+    sp.parts.forEach(function (part) {
+      ["notebooks", "pages", "labels"].forEach(function (k) {
+        part[k].forEach(function (r) {
+          var key = NH.tombKey(k, r.id);
+          if (key in had) tombs[key] = Math.max(tombs[key] || 0, now, had[key] + 1);
+        });
+      });
+    });
+    own.tombs = tombs;
+    return own;
+  }
+  function ownNow() {
+    var cur = curState(), sets = hhSets();
+    if (!sets.length || !NH) return cur;
+    return canonNotes(ownOf(cur, sets, NH.split(cur, sets)));
+  }
+  // saveNow's half: sends what changed in each shared notebook and
+  // returns the own data to store. A page too long to travel: the
+  // household keeps the version it has, this one becomes a page of the
+  // own notebooks (marked like a conflict copy), nothing is lost.
+  function hhSplit() {
+    var cur = curState(), sets = hhSets();
+    if (!sets.length || !NH) { pdata = null; return cur; }
+    var sp = NH.split(cur, sets), longs = [];
+    sp.parts.forEach(function (part, i) {
+      var ids = NH.long(part);
+      if (ids.length) {
+        var was = {};
+        sets[i].data.pages.forEach(function (p) { was[p.id] = p; });
+        part.pages = part.pages.map(function (p) {
+          if (ids.indexOf(p.id) < 0) return p;
+          longs.push(p);
+          return was[p.id] || null;
+        }).filter(Boolean);
+      }
+      if (JSON.stringify(part) !== JSON.stringify(sets[i].data)) HS.push(part, sets[i].key);
+    });
+    var own = ownOf(cur, sets, sp);
+    if (longs.length) {
+      var now = Date.now();
+      var home = own.notebooks.filter(function (n) { return n.id !== SEED_NB_ID; })[0] || own.notebooks[0];
+      if (!home) { home = seedNotebook(); own.notebooks.push(home); }
+      longs.forEach(function (p, i) {
+        var c = JSON.parse(JSON.stringify(p));
+        c.id = p.id + "~l" + (now + i).toString(36);
+        c.nb = home.id; c.parent = null; c.labels = []; c.pinned = false;
+        c.mtime = c.ct = c.st = now; c.cf = 1;
+        delete c.h; delete c.hx;
+        own.pages.push(c);
+      });
+    }
+    pdata = canonNotes(own);
+    if (longs.length) {
+      notifyTransient(t("toast.hhLong"));
+      setTimeout(function () { hhRefresh(true); }, 0);
+    }
+    return pdata;
+  }
+  // What is on screen: the own notebooks + every shared one.
+  function hhView() {
+    var sets = hhSets();
+    if (!NH) return;
+    if (!sets.length) {
+      if (pdata) { stateFrom(JSON.parse(JSON.stringify(pdata))); pdata = null; normalizeState(); }
+      return;
+    }
+    pdata = pdata || canonNotes(curState());
+    stateFrom(NH.union(pdata, sets));
+    normalizeState();
+  }
+  function hhAsk(nbId) {
+    var nb = state.notebooks.filter(function (n) { return n.id === nbId; })[0];
+    if (!hhOn() || !nb) return;
+    var s = hhOf(nb.id), hhs = HS.households();
+    var own = pdata || canonNotes(curState());
+    var why = s ? "" : NH.fits(own, nb.id);
+    var body = s ? tf("hh.stop.x", { name: nb.name, hh: s.hh }) :
+      (why ? tf("hh." + why, { name: nb.name }) : (hhs.length ? tf("hh.share.x", { name: nb.name }) : t("hh.nohh")));
+    var buttons = [{ label: t("dlg.cancel") }], sel = null;
+    if (s) {
+      buttons.push({ label: t("hh.stop.t"), primary: true, danger: true, fn: function () {
+        HS.unshare(s.key).then(function () {
+          hhView();
+          saveNow();
+          renderAll();
+          notifyTransient(t("toast.hhStopped"));
+        }, function () { notifyTransient(t("toast.hhFail")); });
+      } });
+    } else if (!why && !hhs.length) {
+      buttons.push({ label: t("hh.open"), primary: true, fn: function () {
+        try { window.parent.__orosOpenAt("household", null); } catch (e) {}
+      } });
+    } else if (!why) {
+      buttons.push({ label: t("hh.go"), primary: true, fn: function () {
+        var box = sel ? sel.value : hhs[0].box, x = hhs.filter(function (y) { return y.box === box; })[0] || {};
+        flushSave();
+        var mine = pdata || canonNotes(curState());
+        var keys = NH.tombs(mine, nb.id), moved = {};
+        NH.moved(mine, nb.id).forEach(function (id) { moved[id] = 1; });
+        HS.share(box, nb.name, NH.only(mine, nb.id)).then(function () {
+          var now = Date.now(), d = JSON.parse(JSON.stringify(pdata || canonNotes(curState())));
+          var stamp = {};
+          ["notebooks", "pages", "labels"].forEach(function (k) {
+            d[k].forEach(function (r) { if (moved[r.id]) stamp[NH.tombKey(k, r.id)] = r.mtime || 0; });
+            d[k] = d[k].filter(function (r) { return !moved[r.id]; });
+          });
+          keys.forEach(function (k) { d.tombs[k] = Math.max(now, (stamp[k] || 0) + 1, d.tombs[k] || 0); });
+          pdata = canonNotes(d);
+          hhView();
+          saveNow();
+          markSyncDirty();
+          renderAll();
+          notifyTransient(tf("toast.hhShared", { hh: x.name || "" }));
+        }, function () { notifyTransient(t("toast.hhFail")); });
+      } });
+    }
+    var dlg = uiDlg(s ? t("hh.stop.t") : t("hh.share.t"), body, buttons, null);
+    var row = dlg.lastElementChild, btns = row.querySelectorAll("button");
+    if (btns.length > 1) btns[btns.length - 1].id = "nt-hhok";
+    if (!s && !why && hhs.length > 1) {
+      sel = document.createElement("select");
+      sel.id = "nt-hhbox";
+      sel.setAttribute("aria-label", t("hh.which"));
+      sel.style.cssText = "display:block;width:100%;box-sizing:border-box;margin:0 0 14px;padding:8px 10px;" +
+        "background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:7px;font-size:13px;";
+      hhs.forEach(function (y) { var o = document.createElement("option"); o.value = y.box; o.textContent = y.name || "?"; sel.appendChild(o); });
+      dlg.insertBefore(sel, row);
+    }
+  }
+  var hhQueued = false;
+  function hhRefresh(force) {
+    if (hhQueued || !HS) return;
+    hhQueued = true;
+    setTimeout(function () {
+      hhQueued = false;
+      if (document.getElementById("nt-dlg") && !force) return;     // what is being typed stays
+      flushSave();
+      var before = JSON.stringify(canonNotes(curState()));
+      HS.inject();
+      hhView();
+      if (!force && JSON.stringify(canonNotes(curState())) === before) return;
+      saveNow();
+      var cur = pageById(prefs.current), nbId = currentNbId();
+      if (!cur || cur.nb !== nbId) {
+        var first = state.pages.filter(function (p) { return p.nb === nbId; })[0];
+        prefs.current = (first && first.id) || null;
+        savePrefs();
+      }
+      renderAll();
+    }, 0);
+  }
+  function hhBoot() {
+    var h = HS && HS.api();
+    if (!h) return;
+    var off = h.on(function (e) {
+      if (e && (e.type === "doc" || e.type === "list" || e.type === "roster" || e.type === "archive")) hhRefresh();
+    });
+    window.addEventListener("pagehide", function () { try { off(); } catch (e) {} });
+    document.addEventListener("close", function () { setTimeout(function () { if (!document.getElementById("nt-dlg")) hhRefresh(); }, 0); }, true);
+    Promise.resolve(h.ready()).then(function () { hhRefresh(); }, function () { hhRefresh(); });
+  }
+
   // ---------- 8. Sync slice registration ----------
   function sliceGet() {
     // Canonical deep copy (NO-2) — never the live objects: the engine
@@ -3564,27 +3812,26 @@
     // Whatever was edited up to here is about to be compared with, or
     // sent to, the cloud: the next edit starts a new ancestry step.
     editedSinceSync = {};
-    return canonNotes(JSON.parse(JSON.stringify({
-      ver: state.ver, notebooks: state.notebooks,
-      pages: state.pages, labels: state.labels, tombs: state.tombs
-    })));
+    return canonNotes(JSON.parse(JSON.stringify(ownNow())));     // the own notebooks only (BR-HH 7f)
   }
 
   function sliceSet(data, info) {
     if (!data || typeof data !== "object") return;
     var incoming = JSON.stringify(canonNotes(data));
-    var mine = JSON.stringify(canonNotes({
-      ver: state.ver, notebooks: state.notebooks, pages: state.pages,
-      labels: state.labels, tombs: state.tombs
-    }));
+    var mine = JSON.stringify(canonNotes(ownNow()));
     if (incoming === mine) return;          // echo suppression — no re-render/toast
     var hadCopies = {};
     state.pages.forEach(function (p) { if (p.cf) hadCopies[p.id] = true; });
-    state.ver       = DATA_VER;
-    state.notebooks = Array.isArray(data.notebooks) ? data.notebooks : [];
-    state.pages     = Array.isArray(data.pages)     ? data.pages     : [];
-    state.labels = Array.isArray(data.labels) ? data.labels : [];
-    state.tombs  = (data.tombs && typeof data.tombs === "object") ? data.tombs : {};
+    var inc = {
+      ver: DATA_VER,
+      notebooks: Array.isArray(data.notebooks) ? data.notebooks : [],
+      pages: Array.isArray(data.pages) ? data.pages : [],
+      labels: Array.isArray(data.labels) ? data.labels : [],
+      tombs: (data.tombs && typeof data.tombs === "object") ? data.tombs : {}
+    };
+    var sets = hhSets();
+    if (sets.length) { pdata = canonNotes(inc); inc = NH.union(pdata, sets); }
+    stateFrom(inc);
     normalizeState();
     saveNow();
     // What is stored now is what the cloud knows: the next local edit
@@ -3609,10 +3856,7 @@
       // from what came in — compared in canonical form (the stored
       // lists are in this device's order; comparing them raw called
       // every merge "different" and cost an upload each time).
-      var after = JSON.stringify(canonNotes({
-        ver: state.ver, notebooks: state.notebooks, pages: state.pages,
-        labels: state.labels, tombs: state.tombs
-      }));
+      var after = JSON.stringify(canonNotes(ownNow()));
       if (after !== incoming) markSyncDirty();
     }
   }
@@ -3752,6 +3996,7 @@
           }]
         ];
         if (IMP) actions.push([t("imp.btn"), openImport]);
+        if (hhOn()) actions.push([t(hhOf(nb.id) ? "hh.stop.t" : "hh.share.t"), function () { hhAsk(nb.id); }, "nt-hh"]);
         
         actions.forEach(function (pair) {
           if (pair[1] === null) {
@@ -3763,6 +4008,7 @@
             var b = document.createElement("button");
             b.className = "node-menu-item";
             b.textContent = pair[0];
+            if (pair[2]) b.id = pair[2];
             b.addEventListener("click", function () {
               menu.remove();
               pair[1]();
@@ -4098,6 +4344,7 @@
   inheritPalette();
   renderAll();
   registerNotesSlice();
+  hhBoot();
   wireUI();
   attachTreeDnD();     // #5: tree drag & drop (guard: attach once)
   initSplitter();

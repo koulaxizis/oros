@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.60.00
+- Notes: share a notebook with your household. Open it, then ⋯ next to the notebook selector › Share with a household: everyone reads and writes the same pages in their own Notes, and if two people change a page at once both texts are kept.
+
 ## Version 3.59.00
 - Garage: share the family car. Pick the vehicle, then Settings › Household › Share with a household: everyone who drives it logs fill-ups, services and costs in their own Garage, sees the same numbers and gets its reminders once. Currency and reminder times stay your own.
 

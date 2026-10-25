@@ -78,6 +78,11 @@ Wähle ein Notizbuch aus der Liste oben im Baum. Die Buch-Taste mit Plus unter d
 - Importiere erneut, so oft du willst: Neue Seiten kommen herein. Seiten, die du in Notion geändert hast, ändern sich hier nur, wenn du `Text früher importierter Seiten ersetzen` anhakst, und das ersetzt deine Änderungen hier an diesen Seiten. Gelöschte Seiten kommen nicht zurück, außer du hakst `Hier Gelöschtes zurückholen` an.
 - orOS liest Notion nur: Dort ändert sich nichts. Notion antwortet Browsern nicht direkt, daher läuft das Lesen über das orOS-Relay, das nichts speichert; ein großer Workspace braucht ein bis zwei Minuten.
 
+## Ein Notizbuch für den Haushalt
+Ist ein [Haushalt](app:household) eingerichtet, öffne das Notizbuch, dann `⋯` neben der Notizbuchauswahl › `Mit einem Haushalt teilen`. Das Notizbuch zieht mit seinen Seiten und Labels in den Haushalt: Alle dort lesen und schreiben darin in ihren eigenen Notizen, und die Auswahl zeigt den Namen des Haushalts daneben. Ändern zwei Personen gleichzeitig dieselbe Seite, bleiben beide Texte erhalten, wie zwischen deinen eigenen Geräten. Welche Seite offen ist und welche Zweige aufgeklappt sind, bleibt auf jedem Gerät. Alles ist Ende-zu-Ende-verschlüsselt: Das orOS-Relay reicht nur weiter, was es nicht lesen kann.
+
+Eine Seite mit mehr als etwa 60.000 Zeichen kann nicht geteilt werden, ebenso wenig ein Notizbuch mit insgesamt mehr als etwa 480.000 Zeichen. Wird eine geteilte Seite zu lang, behält der Haushalt ihre letzte Fassung, und deine bleibt in deinem eigenen Notizbuch. `Teilen beenden` nimmt das Notizbuch für alle aus dem Haushalt und bringt es mit allen Seiten zu deinen eigenen Notizbüchern zurück; die anderen können es 30 Tage lang über die App Haushalt zurückholen. Die Suche findet nur Seiten deiner eigenen Notizbücher.
+
 ## Synchronisierung und Sicherung
 Notizbücher, Seiten und Labels werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen. Welche Seite offen ist, welche Zweige des Baums aufgeklappt sind und die Breite des Baums bleiben auf diesem Gerät.
 

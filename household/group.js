@@ -11,13 +11,18 @@
 //     parent: "rels",            // the list of shareable records
 //     children: ["moments", …],  // lists whose rows point to a parent
 //     key: "rel",                // the field that points
-//     keep: ["gifts"]            // lists that never travel (optional)
+//     keep: ["gifts"],           // lists that never travel (optional)
+//     tomb(list, id)             // the tombstone key of a record
+//                                // (optional; Notes: "nb:<id>")
 //   })
 //   only(own, pid)      → the parent and its rows (what is shared)
-//   moved(own, pid)     → their ids, sorted (the own tombstones)
+//   moved(own, pid)     → their ids, sorted
+//   tombs(own, pid)     → their tombstone keys, sorted (= moved without
+//                         spec.tomb)
 //   union(own, sets)    → what the app shows and the readers read: the
 //                         own data without what moved + every shared
-//                         record; everything else (settings, `keep`
+//                         record (an own row of a shared parent that
+//                         no set holds shows too: split sends it); everything else (settings, `keep`
 //                         lists) from the own data; own tombstones of
 //                         shared ids left out
 //   split(next, sets)   → { own, parts }: an edit of the union back
@@ -35,6 +40,7 @@
 
   function make(spec) {
     var P = spec.parent, KIDS = spec.children, K = spec.key, ALL = [P].concat(KIDS);
+    var TK = spec.tomb || function (k, id) { return id; };
 
     function only(own, pid) {
       var d = spec.normalize(own), out = spec.empty();
@@ -47,19 +53,29 @@
       ALL.forEach(function (k) { d[k].forEach(function (r) { ids.push(r.id); }); });
       return ids.sort(cmpStr);
     }
+    function tombs(own, pid) {
+      var d = only(own, pid), keys = [];
+      ALL.forEach(function (k) { d[k].forEach(function (r) { keys.push(TK(k, r.id)); }); });
+      return keys.sort(cmpStr);
+    }
     function union(own, sets) {
       var o = spec.normalize(own);
       if (!sets || !sets.length) return o;
-      var pids = {}, shared = {}, out = JSON.parse(JSON.stringify(o));
+      var pids = {}, shared = {}, tk = {}, out = JSON.parse(JSON.stringify(o));
       ALL.forEach(function (k) { out[k] = []; });
       sets.forEach(function (s) {
         (s.data[P] || []).forEach(function (r) { pids[r.id] = 1; });
-        ALL.forEach(function (k) { (s.data[k] || []).forEach(function (r) { shared[r.id] = 1; out[k].push(r); }); });
+        ALL.forEach(function (k) {
+          (s.data[k] || []).forEach(function (r) { shared[r.id] = 1; tk[TK(k, r.id)] = 1; out[k].push(r); });
+        });
       });
       out[P] = out[P].concat(o[P].filter(function (r) { return !pids[r.id]; }));
-      KIDS.forEach(function (k) { out[k] = out[k].concat(o[k].filter(function (r) { return !pids[r[K]] && !shared[r.id]; })); });
+      // An own row of a shared parent that the set does not hold yet was
+      // written on another own device before the move reached it: it
+      // shows, and the next split takes it to the household.
+      KIDS.forEach(function (k) { out[k] = out[k].concat(o[k].filter(function (r) { return !shared[r.id]; })); });
       out.tombs = {};
-      Object.keys(o.tombs || {}).forEach(function (id) { if (!shared[id]) out.tombs[id] = o.tombs[id]; });
+      Object.keys(o.tombs || {}).forEach(function (id) { if (!tk[id]) out.tombs[id] = o.tombs[id]; });
       return spec.normalize(out);
     }
     function split(next, sets) {
@@ -73,7 +89,7 @@
       });
       return { own: spec.normalize(own), parts: parts.map(function (p) { return spec.normalize(p); }) };
     }
-    return { only: only, moved: moved, union: union, split: split };
+    return { only: only, moved: moved, tombs: tombs, union: union, split: split };
   }
 
   var api = { make: make };
