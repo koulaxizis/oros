@@ -38,6 +38,9 @@ Das Abzeichen `Preflight` in der Statusleiste wird grün, orange oder rot. Klick
 
 `Bild (PNG / JPG)` exportiert eine Seite als Bild mit 72, 150 oder 300 dpi (bis 16 Megapixel).
 
+## Buchumschlag
+Tippe in `Neues Dokument` auf `Buchumschlag…`. Wähle `Buchformat`, die Zahl der `Seiten` und das `Papier`: Seitenlayout berechnet den Buchrücken, aber frag die Druckerei nach seiner Breite und trag ihren Wert unter `Buchrücken (mm)` ein, denn der gilt. Für einen Umschlag mit Klappen füllst du `Klappen (mm, 0 = keine)` aus. Trag Titel, Autor, `Text der Rückseite`, `ISBN` und `Verlag` ein und tippe auf `Bild wählen…` für die Vorderseite. Du bekommst eine Seite mit Rückseite, Buchrücken und Vorderseite nebeneinander, Beschnitt rundum, Hilfslinien an den Falzen und einem ISBN-Strichcode als Vektor in Schwarz auf der Rückseite. Alles bleibt bearbeitbar, und der PDF-Export funktioniert wie bei jedem Dokument. Die App Verlag öffnet dieses Fenster schon ausgefüllt mit `Umschlag im Seitenlayout`.
+
 ## Datenzusammenführung
 Erstelle viele Namenskarten, Etiketten, Namensschilder oder Urkunden aus einem Entwurf und einer CSV-Datei (aus Tabelle, Excel oder dem Export eines Adressbuchs; getrennt durch Kommas, Semikolons oder Tabs, mit den Feldnamen in der ersten Zeile).
 - Schreib in einem Textrahmen `{{Name}}` dort, wo ein Wert hinkommt, mit den Spaltennamen der Datei (Groß- und Kleinschreibung und Akzente spielen keine Rolle). Die Formatierung bleibt: Ein fettes `{{Titel}}` ergibt einen fetten Titel. Eine Zeile, die nur leere Felder enthält, fällt weg, damit Etiketten keine Leerzeilen haben.
