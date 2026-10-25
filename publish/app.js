@@ -76,7 +76,7 @@
       "fmt.kind": "Format", "fmt.isbn": "ISBN", "fmt.price": "Price ({cur})", "fmt.pages": "Pages",
       "fmt.w": "Width (mm)", "fmt.h": "Height (mm)", "fmt.sp": "Spine (mm)", "fmt.wt": "Weight (g)",
       "fmt.bind": "Binding", "fmt.paper": "Paper", "fmt.dur": "Length (minutes)", "fmt.note": "Note",
-      "fmt.next": "Next free", "fmt.barcode": "Barcode", "fmt.del": "Remove format",
+      "fmt.next": "Next free", "fmt.barcode": "Barcode", "fmt.cover": "Cover in Layout", "cov.noLayout": "Layout could not be opened from here.", "fmt.del": "Remove format",
       "isbn.ok": "Valid ISBN · ISBN-10 {ten}", "isbn.ok13": "Valid ISBN (979, no ISBN-10)",
       "isbn.len": "An ISBN has 13 digits (or 10 for an old one).", "isbn.check": "The check digit does not match: a typo?",
       "isbn.prefix": "An ISBN-13 starts with 978 or 979.",
@@ -145,7 +145,7 @@
       "fmt.kind": "Μορφή", "fmt.isbn": "ISBN", "fmt.price": "Τιμή ({cur})", "fmt.pages": "Σελίδες",
       "fmt.w": "Πλάτος (mm)", "fmt.h": "Ύψος (mm)", "fmt.sp": "Ράχη (mm)", "fmt.wt": "Βάρος (g)",
       "fmt.bind": "Βιβλιοδεσία", "fmt.paper": "Χαρτί", "fmt.dur": "Διάρκεια (λεπτά)", "fmt.note": "Σημείωση",
-      "fmt.next": "Επόμενο ελεύθερο", "fmt.barcode": "Barcode", "fmt.del": "Αφαίρεση μορφής",
+      "fmt.next": "Επόμενο ελεύθερο", "fmt.barcode": "Barcode", "fmt.cover": "Εξώφυλλο στο Layout", "cov.noLayout": "Το Layout δεν άνοιξε από εδώ.", "fmt.del": "Αφαίρεση μορφής",
       "isbn.ok": "Σωστό ISBN · ISBN-10 {ten}", "isbn.ok13": "Σωστό ISBN (979, χωρίς ISBN-10)",
       "isbn.len": "Το ISBN έχει 13 ψηφία (ή 10 για παλιό).", "isbn.check": "Το ψηφίο ελέγχου δεν ταιριάζει: μήπως τυπογραφικό λάθος;",
       "isbn.prefix": "Το ISBN-13 αρχίζει από 978 ή 979.",
@@ -733,6 +733,7 @@
     var bc = button(t("fmt.barcode"), "btn small", function () { barcodeDialog(currentTitle(), f.id); });
     bc.disabled = !f.isbn;
     head.appendChild(bc);
+    if (f.k === "pb" || f.k === "hb") head.appendChild(button(t("fmt.cover"), "btn small", function () { coverInLayout(currentTitle(), f.id); }));
     head.appendChild(button(t("fmt.del"), "btn small danger", function () {
       writeTitle({ fmts: currentTitle().fmts.filter(function (x) { return x.id !== f.id; }) }, true);
     }));
@@ -911,6 +912,30 @@
     }
     box.appendChild(acts);
     return box;
+  }
+
+  // The Book cover dialog of Layout, filled in from this title and
+  // format (Layout's own deep link { cover }); nothing is made there
+  // until Create.
+  function coverInLayout(tt, fmtId) {
+    flushEdits();
+    tt = currentTitle() || tt;
+    var f = tt && tt.fmts.filter(function (x) { return x.id === fmtId; })[0];
+    if (!f) return;
+    var price = "";
+    if (f.price) {
+      try { price = new Intl.NumberFormat(LOCALE, { style: "currency", currency: data.set.cur }).format(f.price); }
+      catch (e) { price = f.price + " " + data.set.cur; }
+    }
+    var pre = {
+      title: tt.t, sub: tt.sub, author: C.authors(tt).join(", "), blurb: tt.blurb, imprint: data.set.imp,
+      isbn: f.isbn, isbnShown: f.isbn ? C.hyphen(f.isbn, data.blocks) : "", price: price,
+      pages: f.pages || 0, w: f.w || 0, h: f.h || 0, spine: f.sp || 0
+    };
+    var p = tt.cov ? C.coverPath(tt.cov) : null;
+    if (p) pre.img = p;
+    try { window.parent.__orosOpenAt("layout", { cover: pre }); }
+    catch (e) { toast(t("cov.noLayout")); }
   }
 
   // ---------- 7. Barcode dialog ----------

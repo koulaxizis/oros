@@ -236,6 +236,7 @@ body.panel-closed #side { display: none; }
 }
 #st-page, #st-sel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.cov-btn { width: 100%; margin-bottom: 12px; }
 .tpl {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   padding: 8px 4px; background: transparent; color: var(--text);

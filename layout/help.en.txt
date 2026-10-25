@@ -38,6 +38,9 @@ The `Preflight` badge in the status bar turns green, orange or red. Click it for
 
 `Image (PNG / JPG)` exports one page as a picture at 72, 150 or 300 dpi (up to 16 megapixels).
 
+## Book cover
+In `New document`, press `Book cover…`. Choose the `Trim size`, the number of `Pages` and the `Paper`: Layout works out the spine, but ask your printer for its width and type their figure in `Spine (mm)`, because theirs is the one that counts. Add `Flaps (mm, 0 = none)` for a cover with flaps. Fill in the title, author, `Back cover text`, `ISBN` and `Publisher`, and press `Choose picture…` for the front. You get one page with the back cover, the spine and the front cover side by side, bleed all round, guides on the folds and a vector ISBN barcode in black on the back. Everything stays editable, and the PDF export works as for any document. The Publishing app opens this dialog already filled in with `Cover in Layout`.
+
 ## Data merge
 Make many name cards, labels, badges or certificates from one design and a CSV file (from Spreadsheet, Excel or any address book export; separated by commas, semicolons or tabs, with the field names in the first row).
 - In a text frame, type `{{Name}}` where a value goes, using the column names of the file (capitals and accents don't matter). Formatting stays: a bold `{{Title}}` gives a bold title. A line that only holds empty fields is left out, so labels have no blank lines.

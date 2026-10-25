@@ -150,6 +150,17 @@
       "colors.mode": "Mode", "colors.rgb": "RGB", "colors.cmyk": "CMYK", "colors.hex": "Hex",
       "colors.keep": "Black and Paper cannot be deleted.", "colors.used": "Objects using it switch to Black.",
       "colors.note": "CMYK is shown on screen with a simple conversion (no colour profile); the PDF gets the exact CMYK values.",
+      "cov.title": "Book cover", "cov.btn": "Book cover…", "cov.docName": "Cover: {title}",
+      "cov.intro": "Back cover, spine and front cover on one page, with bleed, fold guides and the ISBN barcode. Ask your printer for the spine width: their figure is the one to use.",
+      "cov.f.title": "Title", "cov.f.sub": "Subtitle", "cov.f.author": "Author", "cov.f.size": "Trim size", "cov.f.w": "Width (mm)", "cov.f.h": "Height (mm)",
+      "cov.f.pages": "Pages", "cov.f.paper": "Paper", "cov.f.spine": "Spine (mm)", "cov.f.flap": "Flaps (mm, 0 = none)", "cov.f.bleed": "Bleed (mm)",
+      "cov.f.blurb": "Back cover text", "cov.f.isbn": "ISBN", "cov.f.price": "Price (optional)", "cov.f.imprint": "Publisher", "cov.f.pic": "Front picture",
+      "cov.pickPic": "Choose picture…", "cov.noPic": "None (a coloured cover; place one later)",
+      "cov.spineHint": "Spine: {mm} mm. Estimated from the pages and the paper; type the printer's figure to override it.",
+      "cov.badSize": "The trim size must be between 50 and 500 mm wide and 50 and 700 mm high.", "cov.badIsbn": "This ISBN is not valid (check digit).",
+      "cov.p.u70": "Uncoated 70 g/m²", "cov.p.u80": "Uncoated 80 g/m²", "cov.p.u90": "Uncoated 90 g/m²", "cov.p.u100": "Uncoated 100 g/m²",
+      "cov.p.bulk80": "Bulky (book wove) 80 g/m²", "cov.p.bulk90": "Bulky (book wove) 90 g/m²",
+      "cov.p.c115": "Coated 115 g/m²", "cov.p.c135": "Coated 135 g/m²", "cov.p.c150": "Coated 150 g/m²",
       "new.title": "New document", "new.from": "Start from", "new.blank": "Blank", "new.name": "Name", "new.size": "Page size", "new.custom": "Custom",
       "new.orient": "Orientation", "new.portrait": "Portrait", "new.landscape": "Landscape", "new.pages": "Pages",
       "new.facing": "Facing pages (spreads)", "new.margins": "Margins", "new.cols": "Columns", "new.gut": "Gutter",
@@ -328,6 +339,17 @@
       "colors.mode": "Τύπος", "colors.rgb": "RGB", "colors.cmyk": "CMYK", "colors.hex": "Hex",
       "colors.keep": "Το Μαύρο και το Χαρτί δεν διαγράφονται.", "colors.used": "Ό,τι το χρησιμοποιεί γίνεται Μαύρο.",
       "colors.note": "Το CMYK φαίνεται στην οθόνη με απλή μετατροπή (χωρίς προφίλ χρώματος)· το PDF παίρνει τις ακριβείς τιμές CMYK.",
+      "cov.title": "Εξώφυλλο βιβλίου", "cov.btn": "Εξώφυλλο βιβλίου…", "cov.docName": "Εξώφυλλο: {title}",
+      "cov.intro": "Οπισθόφυλλο, ράχη και εξώφυλλο σε μία σελίδα, με bleed, οδηγούς για τα διπλώματα και το barcode του ISBN. Ζήτα από το τυπογραφείο το πάχος της ράχης: ισχύει το δικό τους νούμερο.",
+      "cov.f.title": "Τίτλος", "cov.f.sub": "Υπότιτλος", "cov.f.author": "Συγγραφέας", "cov.f.size": "Διάσταση βιβλίου", "cov.f.w": "Πλάτος (mm)", "cov.f.h": "Ύψος (mm)",
+      "cov.f.pages": "Σελίδες", "cov.f.paper": "Χαρτί", "cov.f.spine": "Ράχη (mm)", "cov.f.flap": "Αυτιά (mm, 0 = χωρίς)", "cov.f.bleed": "Bleed (mm)",
+      "cov.f.blurb": "Κείμενο οπισθόφυλλου", "cov.f.isbn": "ISBN", "cov.f.price": "Τιμή (προαιρετικά)", "cov.f.imprint": "Εκδότης", "cov.f.pic": "Εικόνα εξωφύλλου",
+      "cov.pickPic": "Επιλογή εικόνας…", "cov.noPic": "Καμία (χρωματιστό εξώφυλλο· βάζεις εικόνα μετά)",
+      "cov.spineHint": "Ράχη: {mm} mm. Εκτίμηση από τις σελίδες και το χαρτί· γράψε το νούμερο του τυπογραφείου για να το αλλάξεις.",
+      "cov.badSize": "Η διάσταση πρέπει να είναι 50 έως 500 mm πλάτος και 50 έως 700 mm ύψος.", "cov.badIsbn": "Αυτό το ISBN δεν είναι σωστό (ψηφίο ελέγχου).",
+      "cov.p.u70": "Μάλλινο 70 γρ.", "cov.p.u80": "Μάλλινο 80 γρ.", "cov.p.u90": "Μάλλινο 90 γρ.", "cov.p.u100": "Μάλλινο 100 γρ.",
+      "cov.p.bulk80": "Ογκώδες (βιβλιόχαρτο) 80 γρ.", "cov.p.bulk90": "Ογκώδες (βιβλιόχαρτο) 90 γρ.",
+      "cov.p.c115": "Velvet/illustration 115 γρ.", "cov.p.c135": "Velvet/illustration 135 γρ.", "cov.p.c150": "Velvet/illustration 150 γρ.",
       "new.title": "Νέο έγγραφο", "new.from": "Ξεκίνα από", "new.blank": "Κενό", "new.name": "Όνομα", "new.size": "Μέγεθος σελίδας", "new.custom": "Προσαρμοσμένο",
       "new.orient": "Προσανατολισμός", "new.portrait": "Κάθετο", "new.landscape": "Οριζόντιο", "new.pages": "Σελίδες",
       "new.facing": "Αντικριστές σελίδες", "new.margins": "Περιθώρια", "new.cols": "Στήλες", "new.gut": "Κενό στηλών",
@@ -1132,6 +1154,15 @@
     // the editor; it is saved only on Save and runs only on Run.
     if (tg && tg.newRecipe) {
       if (LY.recipes && LY.recipes.draft) LY.recipes.draft(tg.newRecipe);
+      return;
+    }
+    // { cover: { title, author, …, img } }: the Book cover dialog,
+    // filled in (Publishing, the Assistant); nothing is made until
+    // Create. img: a picture on the orOS disk, only under /internal/.
+    if (tg && tg.cover && typeof tg.cover === "object") {
+      if (document.querySelector("dialog[open]") || !LY.cover) return;
+      if (LY.doc) goHome();
+      LY.cover.open(tg.cover);
       return;
     }
     if (tg && tg.placeImage) {
