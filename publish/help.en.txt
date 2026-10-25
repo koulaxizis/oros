@@ -42,6 +42,16 @@ Under `Send to other apps` pick a format (when the title has more than one), the
 
 Nothing is saved in the other app until you save it there.
 
+## Royalties
+On a title, the `Royalties` section says who is paid for it: the name, the percentage, `On` the list price or on what came in (net), which formats (or all) and the advance paid on signing. Several terms per title are fine (the paperback at 10 % of the list price, the e-book at 25 % of net, the translator's 2 %).
+
+The `Royalties` tab lists everyone with terms. `New statement…` takes a period (last half-year, last year, last quarter or your own dates) and fills in the units:
+- they come from Stock: every sale recorded there (the till, shop orders, invoices, consignment settlements) of a product whose SKU or barcode is the format's ISBN, less customer returns; voided movements don't count;
+- "net" is what came in without VAT; a consignment settlement counts after the shop's discount;
+- sales Stock never saw (e-books, a book fair) are typed in, and every figure can be corrected before you issue.
+
+The advance is recouped first: what earlier statements earned on the same terms is taken off it, and only the rest is payable. An issued statement is a record that doesn't change when terms or sales do. From it: `Print or PDF`, `E-mail` (Mail opens with the text), `Add to Budget` (an expense you confirm there), `Mark paid`, or `Void` (it stays in the list, crossed out, and no longer counts towards the advance).
+
 ## ISBN
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
 

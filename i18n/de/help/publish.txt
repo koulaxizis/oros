@@ -42,6 +42,16 @@ Wähle unter `An andere Apps senden` eine Ausgabe (wenn der Titel mehrere hat), 
 
 In der anderen App wird nichts gespeichert, bevor du es dort speicherst.
 
+## Honorare
+Bei einem Titel sagt der Abschnitt `Honorare`, wer dafür bezahlt wird: Name, Prozentsatz, `Auf` den Ladenpreis oder auf die Einnahmen (netto), welche Ausgaben (oder alle) und den Vorschuss bei Vertragsunterzeichnung. Mehrere Bedingungen pro Titel sind möglich (Taschenbuch 10 % vom Ladenpreis, E-Book 25 % netto, 2 % für die Übersetzung).
+
+Der Tab `Honorare` zeigt alle Berechtigten. `Neue Abrechnung…` nimmt einen Zeitraum (letztes Halbjahr, letztes Jahr, letztes Quartal oder eigene Daten) und füllt die Stückzahlen aus:
+- sie kommen aus dem Lager: jeder dort gebuchte Verkauf (Kasse, Shop-Bestellungen, Rechnungen, Kommissionsabrechnungen) eines Produkts, dessen SKU oder Barcode die ISBN der Ausgabe ist, abzüglich Kundenretouren; stornierte Bewegungen zählen nicht;
+- „netto“ ist, was ohne MwSt. hereinkam; eine Kommissionsabrechnung zählt nach dem Rabatt des Ladens;
+- Verkäufe, die das Lager nie gesehen hat (E-Books, eine Buchmesse), trägst du ein, und jede Zahl lässt sich vor dem Ausstellen korrigieren.
+
+Zuerst wird der Vorschuss verrechnet: was frühere Abrechnungen mit denselben Bedingungen verdient haben, wird davon abgezogen, und nur der Rest ist zahlbar. Eine ausgestellte Abrechnung ist ein Beleg, der sich nicht ändert, wenn sich Bedingungen oder Verkäufe ändern. Von dort: `Drucken oder PDF`, `E-Mail` (Mail öffnet sich mit dem Text), `Ins Budget` (eine Ausgabe, die du dort bestätigst), `Als bezahlt markieren` oder `Stornieren` (sie bleibt durchgestrichen in der Liste und zählt nicht mehr für den Vorschuss).
+
 ## ISBN
 Die nationale ISBN-Agentur gibt einem Verlag einen Nummernblock, zum Beispiel 978-618-5321 für 100 Bücher. Im Tab `ISBN` tippst du auf `Block hinzufügen` und schreibst das Präfix mit seinen Bindestrichen genau so, wie die Agentur es vergeben hat.
 

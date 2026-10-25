@@ -298,3 +298,21 @@ dialog .fld { margin-bottom: 10px; }
 .badge.late { color: var(--danger); border-color: var(--danger); }
 label.check { display: flex; gap: 8px; align-items: center; margin: 4px 0 10px; font-size: 14px; }
 label.check input { width: 20px; height: 20px; flex: 0 0 auto; }
+
+/* ---------- Royalties (wave P6) ---------- */
+.roy-term .grid { margin-bottom: 8px; }
+.roy-person, .roy-st { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; text-align: left; }
+.roy-person .tmain, .roy-st .tmain { flex: 1 1 200px; min-width: 0; }
+.roy-person, .roy-st { margin-bottom: 8px; }
+.roy-amt { font-weight: 700; white-space: nowrap; }
+.roy-st.void .tname, .roy-st.void .roy-amt { text-decoration: line-through; color: var(--text-dim); }
+.roy-dlg { width: min(720px, calc(100vw - 24px)); }
+.roy-rows { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.roy-row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: flex-end; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+.roy-name { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.roy-row .fld { flex: 0 1 120px; }
+.roy-row input.bad { border-color: var(--danger); }
+.roy-e { flex: 0 0 auto; font-weight: 600; white-space: nowrap; padding-bottom: 8px; }
+.roy-sum { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
+.roy-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 13px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 40vh; overflow: auto; }
+.small { font-size: 12px; }
