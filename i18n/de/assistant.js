@@ -522,5 +522,7 @@ orosPack("de", "assistant", {
  "nl.k.button": "Button",
  "nl.k.list": "Liste",
  "nl.k.divider": "Trennlinie",
- "nl.k.spacer": "Abstand"
+ "nl.k.spacer": "Abstand",
+ "nl.k.image": "Bild",
+ "nl.k.picture_text": "Bild und Text"
 });

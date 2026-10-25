@@ -46,7 +46,7 @@ test("normNewsletter maps the model's blocks to Newsletter blocks", () => {
 test("normNewsletter refuses what Newsletter could not keep", () => {
   assert.equal(A.normNewsletter({}).ok, false);
   assert.equal(A.normNewsletter({ blocks: [] }).ok, false);
-  assert.match(A.normNewsletter({ blocks: [{ kind: "image" }] }).err, /unknown kind/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "video" }] }).err, /unknown kind/);
   assert.match(A.normNewsletter({ blocks: [{ kind: "button", text: "Go", url: "javascript:alert(1)" }] }).err, /http/);
   assert.match(A.normNewsletter({ blocks: [{ kind: "text", text: "  " }] }).err, /no text/);
   const many = { blocks: Array.from({ length: A.NL_MAX + 1 }, () => ({ kind: "divider" })) };
@@ -69,7 +69,7 @@ test("every block the card sends is kept by Newsletter as it is", () => {
 test("asAdd takes only plain kinds and drops empty blocks", () => {
   const v = C.asAdd({
     blocks: [
-      { k: "img", f: "/internal/Newsletter/x.png" },
+      { k: "prod", items: [{ name: "x", href: "https://x.example.com" }] },
       { k: "head", t: "x" },
       { k: "p", t: "" },
       { k: "btn", t: "Go", href: "" },
@@ -106,4 +106,44 @@ test("the tool and its prompt line come only with Newsletter", () => {
   assert.match(on, /never that they were added or sent/);
   assert.doesNotMatch(off, /newsletter_add/);
   assert.doesNotMatch(A.systemPrompt({ lang: "en", now: 0, newsletter: true, builtin: true }), /newsletter_add/);
+});
+
+// Wave N2: pictures come as web addresses, never as files.
+test("picture blocks carry the picture's https address, checked", () => {
+  const n = A.normNewsletter({ blocks: [
+    { kind: "picture_text", image_url: "https://shop.example.com/cover.jpg", heading: "New book", text: "Out now.",
+      button_text: "Get it", button_url: "https://shop.example.com/b", side: "right", alt: "Cover" },
+    { kind: "image", url: "https://fair.example.com", alt: "Book fair banner" }
+  ] });
+  assert.equal(n.ok, true);
+  assert.deepEqual(n.blocks[0], { k: "imgtxt", src: "https://shop.example.com/cover.jpg", alt: "Cover", hd: "New book", t: "Out now.",
+                                  bt: "Get it", bh: "https://shop.example.com/b", side: "r" });
+  assert.deepEqual(n.blocks[1], { k: "img", alt: "Book fair banner", href: "https://fair.example.com/" });
+  assert.match(A.normNewsletter({ blocks: [{ kind: "image", image_url: "http://x.example.com/a.jpg" }] }).err, /https/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "image", image_url: "https://u:p@x.example.com/a.jpg" }] }).err, /https/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "picture_text", heading: "H", button_text: "Go" }] }).err, /button/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "picture_text", image_url: "https://x.example.com/a.jpg" }] }).err, /heading or text/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "image", url: "ftp://x" }] }).err, /url/);
+});
+
+test("asAdd turns picture addresses into pics and never takes a file", () => {
+  const n = A.normNewsletter({ blocks: [
+    { kind: "heading", text: "H" },
+    { kind: "picture_text", image_url: "https://shop.example.com/cover.jpg", heading: "New book" },
+    { kind: "image", alt: "Banner", url: "https://fair.example.com" }
+  ] });
+  const v = C.asAdd({ blocks: n.blocks });
+  assert.deepEqual(v.pics, [{ i: 1, src: "https://shop.example.com/cover.jpg" }]);
+  assert.equal(v.blocks[1].k, "imgtxt");
+  assert.equal(v.blocks[1].f, "");
+  assert.equal(v.blocks[1].hd, "New book");
+  assert.ok(!("src" in v.blocks[1]));
+  assert.equal(v.blocks[2].href, "https://fair.example.com/");
+  const bad = C.asAdd({ blocks: [
+    { k: "img", f: "/internal/Newsletter/old.jpg", src: "http://plain.example.com/a.jpg" },
+    { k: "imgtxt", src: "https://x.example.com/a.jpg" }
+  ] });
+  assert.equal(bad.blocks.length, 1);
+  assert.equal(bad.blocks[0].f, "");
+  assert.deepEqual(bad.pics, []);
 });

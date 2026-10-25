@@ -5,8 +5,8 @@
   },
   "apps": {
     "assistant": {
-      "bytes": 524213,
-      "ms": 51
+      "bytes": 631899,
+      "ms": 87
     },
     "atelier": {
       "bytes": 1998248,

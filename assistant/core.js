@@ -1458,7 +1458,8 @@
   // Chat compose N1: blocks for a newsletter issue (newsletter/core.js
   // asAdd). The user picks the draft in Newsletter; nothing is added
   // before that and nothing is ever sent from here.
-  var NL_KINDS = { heading: "h", text: "p", quote: "quote", button: "btn", list: "list", divider: "hr", spacer: "sp" };
+  var NL_KINDS = { heading: "h", text: "p", quote: "quote", button: "btn", list: "list", divider: "hr", spacer: "sp",
+                   image: "img", picture_text: "imgtxt" };
   var NL_MAX = 20;
   var TOOL_NEWSLETTER = {
     name: "newsletter_add",
@@ -1467,18 +1468,28 @@
       "go into (or a new draft); they are added before the issue's footer. Nothing is added by this call, " +
       "and the newsletter is never sent from here: the user sends it in Newsletter. Block kinds: " +
       "heading (text, level 1 big | 2 | 3 small) · text (text: paragraphs, **bold**, *italic* and [links](https://…) allowed) · " +
-      "quote (text, by?) · button (text, url) · list (items, ordered?) · divider · spacer. " +
+      "quote (text, by?) · button (text, url) · list (items, ordered?) · divider · spacer · " +
+      "image (image_url?, alt?, url?: a picture, linked to url when given; a banner is an image with a url) · " +
+      "picture_text (image_url?, heading and/or text, button_text + button_url?, side left|right?: a picture beside a short text, good for an article or a book). " +
+      "image_url is the direct https address of a picture (jpg, png, webp or gif) that the user gave or that a page you read shows; " +
+      "never make one up. Newsletter copies the picture when the site allows it, otherwise the user picks it. " +
       "At most " + NL_MAX + " blocks per call.",
     params: {
       type: "object",
       properties: {
         blocks: { type: "array", description: "The blocks to add, in order.",
                   items: { type: "object", properties: {
-                    kind: { type: "string", "enum": ["heading", "text", "quote", "button", "list", "divider", "spacer"] },
-                    text: { type: "string", description: "heading, text, quote: the words; button: its label." },
+                    kind: { type: "string", "enum": ["heading", "text", "quote", "button", "list", "divider", "spacer", "image", "picture_text"] },
+                    text: { type: "string", description: "heading, text, quote, picture_text: the words; button: its label." },
                     level: { type: "integer", description: "heading: 1 (big), 2 or 3 (small)." },
                     by: { type: "string", description: "quote: who said it." },
-                    url: { type: "string", description: "button: the http(s) address it opens." },
+                    url: { type: "string", description: "button: the http(s) address it opens; image: where a click on it goes." },
+                    image_url: { type: "string", description: "image, picture_text: the picture's direct https address." },
+                    alt: { type: "string", description: "image, picture_text: what the picture shows, for people who can't see it." },
+                    heading: { type: "string", description: "picture_text: its heading." },
+                    button_text: { type: "string", description: "picture_text: a button's label (with button_url)." },
+                    button_url: { type: "string", description: "picture_text: the button's http(s) address." },
+                    side: { type: "string", "enum": ["left", "right"], description: "picture_text: the picture's side (default left)." },
                     items: { type: "array", items: { type: "string" }, description: "list: the items." },
                     ordered: { type: "boolean", description: "list: numbered instead of bullets." },
                     align: { type: "string", "enum": ["left", "center", "right"] }
@@ -1489,6 +1500,13 @@
       required: ["blocks"]
     }
   };
+  // A picture's address: https only (an http picture would not load in
+  // the page that copies it), no user name or password.
+  function picUrl(u) {
+    u = webUrl(u);
+    if (!/^https:\/\//i.test(u)) return "";
+    try { var x = new URL(u); return x.username || x.password ? "" : x.href; } catch (e) { return ""; }
+  }
   // newsletter_add arguments → { ok, blocks (Newsletter's own block
   // shape), subj, view: [{ kind, text }] } | { ok: false, err }.
   function normNewsletter(args) {
@@ -1526,6 +1544,25 @@
         shown = items.join(" · ");
       } else if (kind === "spacer") {
         o.h = 24;
+      } else if (kind === "image" || kind === "picture_text") {
+        var src = picUrl(b.image_url);
+        if (b.image_url && !src) return bad("Block " + n + ": image_url must be a direct https address of a picture.");
+        if (src) o.src = src;
+        o.alt = line(b.alt, 300);
+        if (kind === "image") {
+          o.href = webUrl(b.url);
+          if (b.url && !o.href) return bad("Block " + n + ": url must be an http(s) address.");
+          shown = [o.alt, src ? "(" + src + ")" : "", o.href ? "→ " + o.href : ""].filter(Boolean).join(" ");
+        } else {
+          o.hd = line(b.heading, 200);
+          o.t = para(b.text, 4000);
+          o.bt = line(b.button_text, 80);
+          o.bh = webUrl(b.button_url);
+          if (!o.hd && !o.t) return bad("Block " + n + " (picture_text) needs a heading or text.");
+          if (!!o.bt !== !!o.bh) return bad("Block " + n + ": a button needs both button_text and an http(s) button_url.");
+          if (b.side === "right") o.side = "r";
+          shown = [o.hd, o.t, o.bt ? "[" + o.bt + " → " + o.bh + "]" : ""].filter(Boolean).join(" · ");
+        }
       }
       if ((kind === "heading" || kind === "text" || kind === "quote" || kind === "list" || kind === "button") && !o.t) {
         return bad("Block " + n + " (" + kind + ") has no text.");
@@ -1839,7 +1876,7 @@
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
     }
     if (!opts.builtin && opts.newsletter) {
-      lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. Write in the language of the issue (the user's, unless they say otherwise). The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. Sending is always the user's step in Newsletter.");
+      lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. Write in the language of the issue (the user's, unless they say otherwise). The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. Sending is always the user's step in Newsletter.");
     }
     return lines.join("\n");
   }

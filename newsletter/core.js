@@ -1425,24 +1425,41 @@
     return { k: "no", msg: msg };
   }
 
-  // ---------- Blocks from the Assistant (chat compose, wave N1) ----------
+  // ---------- Blocks from the Assistant (chat compose, waves N1-N2) ----------
   // __orosOpenAt("newsletter", { asAdd: { blocks, subj?, issue? } }) is
-  // the Assistant's newsletter_add card. Only kinds that need no picture
-  // and no shop come this way; each block goes through normBlock like a
-  // saved one, and empty ones are dropped. → { blocks, subj, issue } | null
-  var AS_KINDS = ["h", "p", "quote", "btn", "list", "hr", "sp"];
+  // the Assistant's newsletter_add card. Only kinds that need no shop
+  // come this way; each block goes through normBlock like a saved one,
+  // and empty ones are dropped. A picture never comes as a file: img /
+  // imgtxt carry `src`, the https address the app copies the picture
+  // from (pics), and start with no picture of their own.
+  // → { blocks, pics: [{ i, src }], subj, issue } | null
+  var AS_KINDS = ["h", "p", "quote", "btn", "list", "hr", "sp", "img", "imgtxt"];
   var AS_MAX = 20;
+  function picSrc(u) {
+    u = webUrl(u);
+    return /^https:\/\/[^\s\/?#@]+/i.test(u) && u.length <= 2000 ? u : "";
+  }
   function asAdd(v) {
     if (!v || typeof v !== "object" || !Array.isArray(v.blocks)) return null;
-    var blocks = v.blocks.slice(0, AS_MAX).map(function (b) {
-      return b && typeof b === "object" && AS_KINDS.indexOf(b.k) >= 0 ? normBlock(b) : null;
-    }).filter(function (b) {
-      if (!b) return false;
-      if (b.k === "btn") return !!(b.t && b.href);
-      return b.k === "hr" || b.k === "sp" || !!b.t;
+    var blocks = [], pics = [];
+    v.blocks.slice(0, AS_MAX).forEach(function (raw) {
+      if (!raw || typeof raw !== "object" || AS_KINDS.indexOf(raw.k) < 0) return;
+      var b = normBlock(raw);
+      if (!b) return;
+      var src = "";
+      if (b.k === "img" || b.k === "imgtxt") {
+        src = picSrc(raw.src);
+        delete b.src;
+        b.f = ""; b.b = 0;
+        if (b.k === "imgtxt" && !b.hd && !b.t) return;
+      } else if (b.k === "btn") {
+        if (!b.t || !b.href) return;
+      } else if (b.k !== "hr" && b.k !== "sp" && !b.t) return;
+      if (src) pics.push({ i: blocks.length, src: src });
+      blocks.push(b);
     });
     if (!blocks.length) return null;
-    return { blocks: blocks, subj: oneLine(v.subj, LIM.subj), issue: validId(v.issue) ? v.issue : "" };
+    return { blocks: blocks, pics: pics, subj: oneLine(v.subj, LIM.subj), issue: validId(v.issue) ? v.issue : "" };
   }
   // Where added blocks go: before the closing footer (and a social row
   // right above it), else at the end.
