@@ -134,6 +134,24 @@
       "roy.mailSubj": "Royalty statement {from} – {to}", "roy.mailHi": "Hello {n},", "roy.mailBody": "Here is your royalty statement for {from} – {to}.",
       "roy.th.title": "Title", "roy.th.fmt": "Format", "roy.th.units": "Units", "roy.th.base": "Base", "roy.th.pct": "%", "roy.th.earned": "Earned",
       "roy.total": "Earned in the period", "roy.advance": "Advance",
+      "tab.subs": "Submissions",
+      "sub.add": "+ Submission", "sub.none": "No manuscripts yet. Add one here, or in Mail open the message and choose Other apps › Manuscript submission in Publishing.",
+      "sub.n": "Name", "sub.email": "E-mail", "sub.t": "Working title", "sub.d": "Received", "sub.st": "Status", "sub.note": "Notes",
+      "sub.st.new": "New", "sub.st.read": "Being read", "sub.st.short": "Shortlisted", "sub.st.yes": "Accepted", "sub.st.no": "Declined",
+      "sub.all": "All", "sub.open": "Open",
+      "sub.late": "{n} waiting more than {d} days without an answer", "sub.lateOne": "no answer for {d} days",
+      "sub.ans": "Answered {d}", "sub.from": "From Mail: check and save.",
+      "sub.ack": "Thank for it", "sub.no": "Decline", "sub.yes": "Accept",
+      "sub.mkTitle": "Make it a title", "sub.titleMade": "Title created", "sub.openTitle": "Open the title",
+      "sub.del": "Delete", "sub.deleted": "Submission deleted", "sub.noMail": "Without an e-mail address the answer goes to the clipboard.",
+      "sub.subj.ack": "Your manuscript “{title}”", "sub.subj.no": "Your manuscript “{title}”", "sub.subj.yes": "Your manuscript “{title}”",
+      "tpl.title": "Answers and contract", "tpl.hint": "Your own texts. {name}, {title}, {imprint}, {days} and, in the contract, {pct}, {base}, {adv}, {formats}, {date} are filled in. Empty = the built-in text.",
+      "tpl.ack": "Thanks for a manuscript", "tpl.no": "Declining", "tpl.yes": "Accepting", "tpl.con": "Contract", "tpl.days": "Flag a submission after (days)",
+      "tpl.ack.text": "Dear {name},\n\nThank you for sending us “{title}”. It has arrived and we will read it carefully. We usually answer within {days} days.\n\nWith best wishes,\n{imprint}",
+      "tpl.no.text": "Dear {name},\n\nThank you for letting us read “{title}”. After careful reading we have decided not to publish it. This is not a judgement of its worth: we can take on only a few books each year. We wish you every success in finding it the right home.\n\nWith best wishes,\n{imprint}",
+      "tpl.yes.text": "Dear {name},\n\nWe read “{title}” with great pleasure and would like to talk about publishing it. When would it suit you to meet or speak?\n\nWith best wishes,\n{imprint}",
+      "tpl.con.text": "PUBLISHING AGREEMENT (draft)\n\nDate: {date}\n\nBetween {imprint} (the Publisher) and {name} (the Author).\n\n1. The work. The Author grants the Publisher the right to publish “{title}” in these formats: {formats}.\n2. Royalties. The Publisher pays the Author {pct}% of {base} on every copy sold, with a statement at least once a year.\n3. Advance. On signing, the Publisher pays an advance of {adv}, recouped from the royalties.\n4. Term and territory: ______\n5. Delivery and approval of the manuscript: ______\n6. Rights return to the Author if the work stays out of print for ______\n\nThis draft is a starting point, not legal advice: have it checked before signing.\n\nFor the Publisher ______________          The Author ______________",
+      "con.btn": "Contract in Writer", "con.doc": "Contract · {t} · {n}", "con.base.list": "the list price", "con.base.net": "the net receipts",
       "send.title": "Send to other apps", "send.hint": "Nothing is saved in the other app until you save it there. Your shop gets a draft that you publish yourself.",
       "send.fmt": "Format", "send.noFmt": "Add a format first.", "send.shop": "Draft in my shop", "send.stock": "Item in Stock",
       "send.news": "Block in Newsletter", "send.pr": "Press release in Writer", "send.noApp": "That app could not be opened from here.",
@@ -251,6 +269,24 @@
       "roy.mailSubj": "Εκκαθάριση δικαιωμάτων {from} – {to}", "roy.mailHi": "Καλησπέρα {n},", "roy.mailBody": "Σου στέλνω την εκκαθάριση δικαιωμάτων για {from} – {to}.",
       "roy.th.title": "Τίτλος", "roy.th.fmt": "Μορφή", "roy.th.units": "Τεμάχια", "roy.th.base": "Βάση", "roy.th.pct": "%", "roy.th.earned": "Δικαιώματα",
       "roy.total": "Δικαιώματα περιόδου", "roy.advance": "Προκαταβολή",
+      "tab.subs": "Υποβολές",
+      "sub.add": "+ Υποβολή", "sub.none": "Κανένα χειρόγραφο ακόμα. Πρόσθεσε ένα εδώ, ή στο Mail άνοιξε το μήνυμα και διάλεξε Άλλες εφαρμογές › Υποβολή χειρογράφου στις Εκδόσεις.",
+      "sub.n": "Όνομα", "sub.email": "E-mail", "sub.t": "Τίτλος εργασίας", "sub.d": "Παραλαβή", "sub.st": "Κατάσταση", "sub.note": "Σημειώσεις",
+      "sub.st.new": "Νέα", "sub.st.read": "Σε ανάγνωση", "sub.st.short": "Στη μικρή λίστα", "sub.st.yes": "Εγκρίθηκε", "sub.st.no": "Απορρίφθηκε",
+      "sub.all": "Όλες", "sub.open": "Ανοιχτές",
+      "sub.late": "{n} περιμένουν πάνω από {d} ημέρες χωρίς απάντηση", "sub.lateOne": "χωρίς απάντηση {d} ημέρες",
+      "sub.ans": "Απαντήθηκε {d}", "sub.from": "Από το Mail: έλεγξε και αποθήκευσε.",
+      "sub.ack": "Ευχαριστήριο", "sub.no": "Απόρριψη", "sub.yes": "Έγκριση",
+      "sub.mkTitle": "Κάν' το τίτλο", "sub.titleMade": "Ο τίτλος δημιουργήθηκε", "sub.openTitle": "Άνοιγμα τίτλου",
+      "sub.del": "Διαγραφή", "sub.deleted": "Η υποβολή διαγράφηκε", "sub.noMail": "Χωρίς διεύθυνση e-mail η απάντηση αντιγράφεται στο πρόχειρο.",
+      "sub.subj.ack": "Το χειρόγραφό σας «{title}»", "sub.subj.no": "Το χειρόγραφό σας «{title}»", "sub.subj.yes": "Το χειρόγραφό σας «{title}»",
+      "tpl.title": "Απαντήσεις και συμβόλαιο", "tpl.hint": "Τα δικά σου κείμενα. Συμπληρώνονται τα {name}, {title}, {imprint}, {days} και, στο συμβόλαιο, τα {pct}, {base}, {adv}, {formats}, {date}. Κενό = το ενσωματωμένο κείμενο.",
+      "tpl.ack": "Ευχαριστήριο για χειρόγραφο", "tpl.no": "Απόρριψη", "tpl.yes": "Έγκριση", "tpl.con": "Συμβόλαιο", "tpl.days": "Σήμανση υποβολής μετά από (ημέρες)",
+      "tpl.ack.text": "Αγαπητέ/ή {name},\n\nσας ευχαριστούμε που μας στείλατε το «{title}». Το λάβαμε και θα το διαβάσουμε με προσοχή. Συνήθως απαντάμε μέσα σε {days} ημέρες.\n\nΜε εκτίμηση,\n{imprint}",
+      "tpl.no.text": "Αγαπητέ/ή {name},\n\nσας ευχαριστούμε που μας εμπιστευτήκατε το «{title}». Μετά από προσεκτική ανάγνωση αποφασίσαμε να μην το εκδώσουμε. Δεν είναι κρίση για την αξία του: μπορούμε να αναλάβουμε λίγα βιβλία κάθε χρόνο. Σας ευχόμαστε να βρει το σωστό σπίτι.\n\nΜε εκτίμηση,\n{imprint}",
+      "tpl.yes.text": "Αγαπητέ/ή {name},\n\nδιαβάσαμε το «{title}» με μεγάλη χαρά και θα θέλαμε να μιλήσουμε για την έκδοσή του. Πότε θα σας βόλευε να συναντηθούμε ή να μιλήσουμε;\n\nΜε εκτίμηση,\n{imprint}",
+      "tpl.con.text": "ΣΥΜΒΑΣΗ ΕΚΔΟΣΗΣ (σχέδιο)\n\nΗμερομηνία: {date}\n\nΜεταξύ {imprint} (ο Εκδότης) και {name} (ο Συγγραφέας).\n\n1. Το έργο. Ο Συγγραφέας παραχωρεί στον Εκδότη το δικαίωμα να εκδώσει το «{title}» στις εξής μορφές: {formats}.\n2. Δικαιώματα. Ο Εκδότης καταβάλλει στον Συγγραφέα {pct}% επί {base} για κάθε αντίτυπο που πωλείται, με εκκαθάριση τουλάχιστον μία φορά τον χρόνο.\n3. Προκαταβολή. Με την υπογραφή ο Εκδότης καταβάλλει προκαταβολή {adv}, που συμψηφίζεται με τα δικαιώματα.\n4. Διάρκεια και περιοχή: ______\n5. Παράδοση και έγκριση του χειρογράφου: ______\n6. Τα δικαιώματα επιστρέφουν στον Συγγραφέα αν το έργο μείνει εξαντλημένο για ______\n\nΤο σχέδιο αυτό είναι αφετηρία, όχι νομική συμβουλή: δώστε το για έλεγχο πριν την υπογραφή.\n\nΓια τον Εκδότη ______________          Ο Συγγραφέας ______________",
+      "con.btn": "Συμβόλαιο στον Writer", "con.doc": "Συμβόλαιο · {t} · {n}", "con.base.list": "της τιμής καταλόγου", "con.base.net": "των καθαρών εισπράξεων",
       "send.title": "Στείλε σε άλλες εφαρμογές", "send.hint": "Τίποτα δεν αποθηκεύεται στην άλλη εφαρμογή πριν το αποθηκεύσεις εκεί. Το κατάστημά σου παίρνει πρόχειρο που το δημοσιεύεις εσύ.",
       "send.fmt": "Μορφή", "send.noFmt": "Πρόσθεσε πρώτα μια μορφή.", "send.shop": "Πρόχειρο στο κατάστημά μου", "send.stock": "Είδος στο Απόθεμα",
       "send.news": "Μπλοκ στο Newsletter", "send.pr": "Δελτίο τύπου στο Writer", "send.noApp": "Η εφαρμογή δεν άνοιξε από εδώ.",
@@ -362,18 +398,19 @@
   // ---------- 2. Storage, prefs, sync slice ----------
   var data = C.empty();
   var prefs = { tab: "titles", sort: "rel", st: "" };
-  var view = { name: "list", id: "" };    // list | title | isbn
+  var view = { name: "list", id: "" };    // list | title | isbn | roy | subs
+  var TABS = ["titles", "isbn", "roy", "subs"];
 
   function load() {
     try { data = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
     catch (e) { data = C.empty(); }
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null") || {};
-      if (p.tab === "isbn" || p.tab === "titles" || p.tab === "roy") prefs.tab = p.tab;
+      if (TABS.indexOf(p.tab) >= 0) prefs.tab = p.tab;
       if (["rel", "t", "m"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
       if (C.STATUS.indexOf(p.st) >= 0) prefs.st = p.st;
     } catch (e) { /* defaults */ }
-    view.name = prefs.tab === "isbn" || prefs.tab === "roy" ? prefs.tab : "list";
+    view.name = prefs.tab === "titles" ? "list" : prefs.tab;
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* not important */ } }
   function persist() {
@@ -1403,10 +1440,12 @@
       adv.addEventListener("change", function () { patch(r.id, { adv: C.num(adv.value, 0, 1e7, 2) }); });
       g.appendChild(field(t("roy.adv", { cur: data.set.cur }), adv));
       row.appendChild(g);
-      var del = button("✕ " + t("roy.del"), "btn small", function () {
+      var ra = el("div", "send-row");
+      ra.appendChild(button("📝 " + t("con.btn"), "btn small", function () { flushEdits(); contractToWriter(r.id); }));
+      ra.appendChild(button("✕ " + t("roy.del"), "btn small", function () {
         writeTerms((currentTitle().roy || []).filter(function (x) { return x.id !== r.id; }));
-      });
-      row.appendChild(del);
+      }));
+      row.appendChild(ra);
       box.appendChild(row);
     });
     var acts = el("div", "send-row");
@@ -1659,6 +1698,174 @@
     showDialog(dlg);
   }
 
+  // ---------- 6d. Submissions + contract (wave P7) ----------
+  // Manuscripts sent in: added by hand or from Mail (BR-PUB-SUB), each
+  // with a status, answered with the person's own texts (set.tpl, else
+  // the built-in ones) through Mail, flagged when unanswered too long.
+  // A royalty term can become a contract draft in Writer.
+  var subFilter = "open";
+  function tplText(k) { return (data.set.tpl && data.set.tpl[k]) || t("tpl." + k + ".text"); }
+  function subDays() { return data.set.subDays || 90; }
+  function tplVars(o) {
+    return Object.assign({ imprint: data.set.imp || "", days: subDays(), date: fmtDate(todayYmd()) }, o);
+  }
+  function renderSubs() {
+    var sec = $("view-subs");
+    sec.textContent = "";
+    var late = C.subsLate(data, todayYmd(), subDays());
+    if (late.length) sec.appendChild(el("p", "warnbox", t("sub.late", { n: late.length, d: subDays() })));
+    var hd = el("div", "ed-head");
+    var chips = el("div", "chips");
+    [["open", t("sub.open")], ["all", t("sub.all")]].concat(C.SUB_ST.map(function (x) { return [x, t("sub.st." + x)]; })).forEach(function (c) {
+      var b = button(c[1], "chip", function () { subFilter = c[0]; renderSubs(); });
+      b.setAttribute("aria-pressed", subFilter === c[0] ? "true" : "false");
+      chips.appendChild(b);
+    });
+    hd.appendChild(chips);
+    hd.appendChild(button(t("sub.add"), "btn pri", function () { subDialog(null, null); }));
+    sec.appendChild(hd);
+    var lateIds = {};
+    late.forEach(function (x) { lateIds[x.id] = 1; });
+    var list = (data.subs || []).filter(function (x) {
+      return subFilter === "all" || (subFilter === "open" ? x.st !== "yes" && x.st !== "no" : x.st === subFilter);
+    }).sort(function (a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : (a.id < b.id ? 1 : -1); });
+    if (!(data.subs || []).length) sec.appendChild(el("p", "muted", t("sub.none")));
+    else if (!list.length) sec.appendChild(el("p", "muted", t("empty.list")));
+    list.forEach(function (x) {
+      var row = button("", "trow roy-st sub-row", function () { subDialog(x.id, null); });
+      var body = el("div", "tmain");
+      body.appendChild(el("div", "tname", (x.n || x.email) + (x.t ? " · " + x.t : "")));
+      var meta = [x.d ? fmtDate(x.d) : "", x.ans ? t("sub.ans", { d: fmtDate(x.ans) }) : ""].filter(Boolean).join(" · ");
+      body.appendChild(el("div", "tsub", meta));
+      row.appendChild(body);
+      var side = el("div", "tside");
+      side.appendChild(el("span", "badge sub-" + x.st, t("sub.st." + x.st)));
+      if (lateIds[x.id]) side.appendChild(el("span", "badge gap", t("sub.lateOne", { d: subDays() })));
+      row.appendChild(side);
+      sec.appendChild(row);
+    });
+  }
+  // id = an existing submission, or null with pre = a prefill (Mail)
+  function subDialog(id, pre) {
+    var x = id ? C.find(data, "subs", id) : null;
+    if (id && !x) return;
+    var v = x || Object.assign({ n: "", email: "", t: "", d: todayYmd(), st: "new", note: "", ans: "" }, pre || {});
+    var dlg = el("dialog", "roy-dlg");
+    dlg.appendChild(el("h3", "", x ? (x.n || x.email) : t("sub.add").replace(/^\+\s*/, "")));
+    if (pre) dlg.appendChild(el("p", "muted", t("sub.from")));
+    var g = el("div", "grid");
+    var n = input("text", v.n, { maxlength: "120", autocomplete: "off" });
+    var em = input("email", v.email, { maxlength: "200", autocomplete: "off" });
+    var tt = input("text", v.t, { maxlength: "200" });
+    var d = input("date", v.d);
+    var st = select(C.SUB_ST.map(function (k) { return [k, t("sub.st." + k)]; }), v.st);
+    g.appendChild(field(t("sub.n"), n));
+    g.appendChild(field(t("sub.email"), em));
+    var tf = field(t("sub.t"), tt);
+    tf.classList.add("wide");
+    g.appendChild(tf);
+    g.appendChild(field(t("sub.d"), d));
+    g.appendChild(field(t("sub.st"), st));
+    var note = input("textarea", v.note, { maxlength: "4000", rows: "4" });
+    var nf = field(t("sub.note"), note);
+    nf.classList.add("wide");
+    g.appendChild(nf);
+    dlg.appendChild(g);
+    if (v.ans) dlg.appendChild(el("p", "muted", t("sub.ans", { d: fmtDate(v.ans) })));
+    function row(extra) {
+      return Object.assign({ id: x ? x.id : C.uid(), n: n.value.trim(), email: em.value.trim(), t: tt.value.trim(),
+        d: C.okYmd(d.value) ? d.value : "", st: st.value, note: note.value, ans: v.ans || "", ti: v.ti }, extra || {});
+    }
+    function save(extra) {
+      var r = row(extra);
+      if (!r.n && !r.email) { n.focus(); return null; }
+      commit(C.put(data, "subs", r, Date.now()));
+      return r;
+    }
+    // an answer: Mail opens with the text; the submission is saved with
+    // the day and the status the answer implies
+    function answer(k) {
+      var r = save({ ans: todayYmd(), st: k === "no" ? "no" : k === "yes" ? "yes" : (st.value === "new" ? "read" : st.value) });
+      if (!r) return;
+      dlg.close();
+      var vars = tplVars({ name: r.n || r.email, title: r.t || "" });
+      var body = C.fillTpl(tplText(k), vars), subj = C.fillTpl(t("sub.subj." + k), vars);
+      if (r.email) openAt("mail", { compose: { to: r.email, subject: subj.slice(0, 300), body: body.slice(0, 20000) } });
+      else { copyText(body); toast(t("sub.noMail")); }
+    }
+    var ans = el("div", "send-row");
+    ans.appendChild(button("✉ " + t("sub.ack"), "btn small", function () { answer("ack"); }));
+    ans.appendChild(button("✉ " + t("sub.no"), "btn small", function () { answer("no"); }));
+    ans.appendChild(button("✉ " + t("sub.yes"), "btn small", function () { answer("yes"); }));
+    if (v.ti && C.find(data, "titles", v.ti)) {
+      ans.appendChild(button("📖 " + t("sub.openTitle"), "btn small", function () { dlg.close(); openTitle(v.ti); }));
+    } else {
+      ans.appendChild(button("📖 " + t("sub.mkTitle"), "btn small", function () {
+        var name = tt.value.trim() || t("untitled"), tid = C.uid(), now = Date.now();
+        var trow = { id: tid, t: name, st: "idea", ppl: n.value.trim() ? [{ r: "a", n: n.value.trim() }] : [], fmts: [], notes: note.value.slice(0, 4000) };
+        var r = row({ st: "yes", ti: tid });
+        if (!r.n && !r.email) { n.focus(); return; }
+        dlg.close();
+        commit(C.put(C.put(data, "titles", trow, now), "subs", r, now));
+        toast(t("sub.titleMade"));
+        openTitle(tid);
+      }));
+    }
+    dlg.appendChild(ans);
+    var acts = el("div", "acts");
+    if (x) acts.appendChild(button(t("sub.del"), "btn danger", function () {
+      dlg.close();
+      var keep = JSON.parse(JSON.stringify(x));
+      commit(C.remove(data, "subs", x.id, Date.now()));
+      toast(t("sub.deleted"), t("btn.undo"), function () { commit(C.put(data, "subs", keep, Date.now())); });
+    }));
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.save"), "btn pri", function () { if (save()) dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    if (!x && !pre) n.focus();
+  }
+  function tplDialog() {
+    var dlg = el("dialog", "roy-dlg");
+    dlg.appendChild(el("h3", "", t("tpl.title")));
+    dlg.appendChild(el("p", "muted", t("tpl.hint")));
+    var areas = {};
+    C.TPL_KEYS.forEach(function (k) {
+      var a = input("textarea", tplText(k), { maxlength: k === "con" ? "20000" : "6000", rows: k === "con" ? "10" : "6" });
+      areas[k] = a;
+      dlg.appendChild(field(t("tpl." + k), a));
+    });
+    var days = input("number", String(subDays()), { min: "1", max: "365", inputmode: "numeric" });
+    dlg.appendChild(field(t("tpl.days"), days));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.save"), "btn pri", function () {
+      var tp = {};
+      C.TPL_KEYS.forEach(function (k) {
+        var val = areas[k].value;
+        // the built-in text, unchanged, stays built-in (so it follows the language)
+        if (val.trim() && val !== t("tpl." + k + ".text")) tp[k] = val;
+      });
+      var dd = C.num(days.value, 1, 365, 0) || 90;
+      dlg.close();
+      commit(C.setSet(data, { tpl: tp, subDays: dd === 90 ? 0 : dd }, Date.now()));
+      toast(t("set.done"));
+    }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+  function contractToWriter(termId) {
+    var tt = currentTitle();
+    var r = tt && (tt.roy || []).filter(function (x) { return x.id === termId; })[0];
+    if (!r) return;
+    var fmts = (tt.fmts || []).filter(function (f) { return !r.k || f.k === r.k; })
+      .map(function (f) { return t("fmt." + f.k) + (f.isbn ? " (ISBN " + C.hyphen(f.isbn, data.blocks) + ")" : ""); });
+    var vars = tplVars({ name: r.n, title: tt.t, pct: String(r.pct).replace(".", LANG === "en" ? "." : ","),
+      base: t("con.base." + r.base), adv: r.adv ? money(r.adv) : money(0),
+      formats: fmts.length ? fmts.join(", ") : (r.k ? t("fmt." + r.k) : t("roy.k.all")) });
+    openAt("writer", { newDoc: { title: t("con.doc", { t: tt.t, n: r.n }).slice(0, 120), text: C.fillTpl(tplText("con"), vars) } });
+  }
+
   // ---------- 7. Barcode dialog ----------
   function barcodeDialog(tt, fmtId) {
     flushEdits();
@@ -1884,6 +2091,9 @@
     dlg.appendChild(field(t("set.cur"), cur));
     var imp = input("text", data.set.imp, { maxlength: "120", autocomplete: "organization" });
     dlg.appendChild(field(t("set.imp"), imp, el("span", "hint", t("set.impHint"))));
+    var more = el("div", "send-row");
+    more.appendChild(button(t("tpl.title") + "…", "btn small", function () { dlg.close(); tplDialog(); }));
+    dlg.appendChild(more);
     var acts = el("div", "acts");
     acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
     acts.appendChild(button(t("btn.save"), "btn pri", function () {
@@ -1922,7 +2132,7 @@
 
   // ---------- render ----------
   function render() {
-    var tab = view.name === "isbn" || view.name === "roy" ? view.name : "titles";
+    var tab = TABS.indexOf(view.name) > 0 ? view.name : "titles";
     [].forEach.call(document.querySelectorAll(".tab"), function (b) {
       b.setAttribute("aria-selected", b.dataset.tab === tab ? "true" : "false");
     });
@@ -1930,9 +2140,11 @@
     $("view-title").hidden = view.name !== "title";
     $("view-isbn").hidden = view.name !== "isbn";
     $("view-roy").hidden = view.name !== "roy";
+    $("view-subs").hidden = view.name !== "subs";
     if (view.name === "list") renderList();
     else if (view.name === "title") renderEditor();
     else if (view.name === "roy") renderRoy();
+    else if (view.name === "subs") renderSubs();
     else renderIsbn();
   }
 
@@ -1943,7 +2155,7 @@
       b.addEventListener("click", function () {
         prefs.tab = b.dataset.tab;
         savePrefs();
-        setView({ name: b.dataset.tab === "isbn" || b.dataset.tab === "roy" ? b.dataset.tab : "list", id: "" });
+        setView({ name: b.dataset.tab === "titles" ? "list" : b.dataset.tab, id: "" });
         render();
       });
     });
@@ -1965,14 +2177,25 @@
     }
   });
 
-  // target = { title: id } | { view: "isbn" | "roy" } | { isbn: "…" } (opens the
+  // target = { title: id } | { view: "isbn" | "roy" | "subs" } |
+  // { submit: { n?, email?, t?, d?, note? } } (Mail, BR-PUB-SUB) | { isbn: "…" } (opens the
   // title that has it, else the register) | { new: { t|title, author?,
   // isbn?, rel?, plan? } } or { asNew: {…} } (the Assistant's card) asks
   // before creating; nothing is written on arrival.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
-    if (target.view === "isbn" || target.view === "roy") { setView({ name: target.view, id: "" }); render(); return; }
+    if (TABS.indexOf(target.view) > 0) { setView({ name: target.view, id: "" }); render(); return; }
+    // BR-PUB-SUB: Mail's "Other apps" (wave P7): the form opens
+    // filled in; nothing is saved before Save
+    if (target.submit && typeof target.submit === "object") {
+      setView({ name: "subs", id: "" });
+      render();
+      var sb = target.submit;
+      subDialog(null, { n: typeof sb.n === "string" ? sb.n : "", email: typeof sb.email === "string" ? sb.email : "",
+        t: typeof sb.t === "string" ? sb.t : "", d: C.okYmd(sb.d) ? sb.d : todayYmd(), note: typeof sb.note === "string" ? sb.note : "" });
+      return;
+    }
     if (typeof target.isbn === "string") {
       var p = C.parseIsbn(target.isbn), uses = p.ok ? (C.used(data)[p.isbn] || []).filter(function (u) { return u.title; }) : [];
       if (uses.length) { openTitle(uses[0].title); return; }

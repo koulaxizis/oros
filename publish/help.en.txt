@@ -52,6 +52,14 @@ The `Royalties` tab lists everyone with terms. `New statement…` takes a period
 
 The advance is recouped first: what earlier statements earned on the same terms is taken off it, and only the rest is payable. An issued statement is a record that doesn't change when terms or sales do. From it: `Print or PDF`, `E-mail` (Mail opens with the text), `Add to Budget` (an expense you confirm there), `Mark paid`, or `Void` (it stays in the list, crossed out, and no longer counts towards the advance).
 
+## Submissions
+Manuscripts people send you. `+ Submission` adds one by hand; in [Mail](app:mail), open the message and choose `Other apps` › `Manuscript submission in Publishing` to file it with the sender, the subject and the text filled in.
+
+Each has a status (`New`, `Being read`, `Shortlisted`, `Accepted`, `Declined`). The answers open Mail with a ready text: `Thank for it`, `Decline` or `Accept`; the day you answered is kept. A submission still new or being read with no answer after 90 days is flagged (change the days in Settings › `Answers and contract…`). `Make it a title` starts a title with the author and your notes.
+
+### Answers and contract
+In Settings › `Answers and contract…` write your own texts; {name}, {title}, {imprint} and {days} are filled in. On a title, `Contract in Writer` (in each set of royalty terms) opens a contract draft in [Writer](app:writer) with the names, formats, percentage and advance filled in, to finish and save as PDF. The built-in draft is a starting point, not legal advice.
+
 ## ISBN
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
 

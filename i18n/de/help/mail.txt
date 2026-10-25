@@ -122,6 +122,7 @@ Mail kann Nachrichten mit OpenPGP signieren und verschlüsseln, dem Standard von
 - `Eine Notiz`: speichert den Text der Nachricht als neue Seite in [Notizen](app:notes).
 - `Ein Lesezeichen`: Einer der Links der Nachricht kommt in [Lesezeichen](app:bookmarks), bereit zum Speichern.
 - `Absender zu Kontakte`: öffnet einen neuen Kontakt in [Kontakte](app:contacts) mit Name und E-Mail des Absenders, oder seine Karte, wenn du ihn schon hast.
+- `Manuskript-Einsendung in Verlag`: für Verlage, legt die Nachricht als Einsendung in [Verlag](app:publish) an (Name, Adresse, Betreff als Arbeitstitel, der Text als Notizen); du prüfst sie und tippst dort auf `Speichern`.
 - `Im CRM festhalten`: öffnet [CRM](app:crm) mit einem neuen Eintrag für die andere Person (den Absender oder die Person, der du geschrieben hast), mit Betreff, Textanfang und Datum ausgefüllt; speichern tust du dort.
 - `Zusammenfassung vom Assistenten` und `Antwortentwurf vom Assistenten` öffnen den [Assistent](app:assistant) mit der fertigen Frage und dem Schlüssel, den du dort eingestellt hast. Sehr lange Nachrichten werden passend gekürzt; senden tust du dort, und die Antwort kopierst du selbst in Mail.
 Andersherum öffnen eine E-Mail-Adresse auf einer Kontaktkarte in Kontakte und `E-Mail` bei einem gespeicherten Termin im [Kalender](app:calendar) hier eine neue Nachricht (wenn Mail auf diesem Gerät ein Konto hat).

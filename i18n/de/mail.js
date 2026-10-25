@@ -425,6 +425,7 @@ orosPack("de", "mail", {
  "to.app": "Mail",
  "to.btn": "Andere Apps",
  "to.contact": "Absender zu Kontakte",
+ "to.pub": "Manuskript-Einsendung in Verlag",
  "to.crm": "Im CRM festhalten",
  "to.date": "Datum:",
  "to.from": "Von:",
