@@ -63,7 +63,7 @@
       "gap.author": "author", "gap.fmt": "a format", "gap.isbn": "ISBN", "gap.price": "price", "gap.pages": "pages",
       "gap.blurb": "back-cover text", "gap.rel": "release date", "gap.cov": "cover",
       "gaps.n": "{n} missing",
-      "new.title": "New title", "new.name": "Title", "new.author": "Author (optional)", "new.go": "Create",
+      "new.title": "New title", "new.name": "Title", "new.author": "Author (optional)", "new.go": "Create", "new.plan": "Make the release plan from the release date",
       "sec.main": "The book", "sec.ppl": "People", "sec.fmts": "Formats", "sec.texts": "Texts", "sec.cover": "Cover",
       "f.t": "Title", "f.sub": "Subtitle", "f.ser": "Series", "f.sn": "No. in series", "f.st": "Status",
       "f.rel": "Release date", "f.lang": "Language",
@@ -109,6 +109,11 @@
       "chk.title": "Check an ISBN", "chk.ph": "Paste or type any ISBN",
       "chk.ok": "Valid. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "In use: {list}", "chk.free": "Not used by any of your titles.",
+      "plan.title": "Release plan", "plan.none": "Set the release date, then make the plan: orOS dates every step back from it (manuscript, editing, proofs, cover, ISBN, printer, presentation).",
+      "plan.make": "Make the plan", "plan.redate": "Re-date from the release date", "plan.redateHint": "Open steps get new dates from the release date; done steps keep theirs.",
+      "plan.add": "+ Step", "plan.addName": "Name of the step", "plan.todo": "Send to To-Do", "plan.del": "Remove step",
+      "plan.late": "late", "plan.lateN": "{n} late", "plan.next": "Next: {s} · {d}", "plan.allDone": "All steps done.",
+      "plan.noRel": "Set the release date first.", "plan.todoBy": "By {d} · {t}", "plan.todoNone": "No open steps to send.", "plan.date": "Date",
       "send.title": "Send to other apps", "send.hint": "Nothing is saved in the other app until you save it there. Your shop gets a draft that you publish yourself.",
       "send.fmt": "Format", "send.noFmt": "Add a format first.", "send.shop": "Draft in my shop", "send.stock": "Item in Stock",
       "send.news": "Block in Newsletter", "send.pr": "Press release in Writer", "send.noApp": "That app could not be opened from here.",
@@ -155,7 +160,7 @@
       "gap.author": "συγγραφέας", "gap.fmt": "μορφή", "gap.isbn": "ISBN", "gap.price": "τιμή", "gap.pages": "σελίδες",
       "gap.blurb": "κείμενο οπισθόφυλλου", "gap.rel": "ημερομηνία κυκλοφορίας", "gap.cov": "εξώφυλλο",
       "gaps.n": "λείπουν {n}",
-      "new.title": "Νέος τίτλος", "new.name": "Τίτλος", "new.author": "Συγγραφέας (προαιρετικό)", "new.go": "Δημιουργία",
+      "new.title": "Νέος τίτλος", "new.name": "Τίτλος", "new.author": "Συγγραφέας (προαιρετικό)", "new.go": "Δημιουργία", "new.plan": "Φτιάξε την πορεία έκδοσης από την ημερομηνία κυκλοφορίας",
       "sec.main": "Το βιβλίο", "sec.ppl": "Πρόσωπα", "sec.fmts": "Μορφές", "sec.texts": "Κείμενα", "sec.cover": "Εξώφυλλο",
       "f.t": "Τίτλος", "f.sub": "Υπότιτλος", "f.ser": "Σειρά", "f.sn": "Αρ. στη σειρά", "f.st": "Κατάσταση",
       "f.rel": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα",
@@ -201,6 +206,11 @@
       "chk.title": "Έλεγχος ISBN", "chk.ph": "Επικόλλησε ή γράψε οποιοδήποτε ISBN",
       "chk.ok": "Σωστό. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "Σε χρήση: {list}", "chk.free": "Δεν το έχει κανένας από τους τίτλους σου.",
+      "plan.title": "Πορεία έκδοσης", "plan.none": "Βάλε ημερομηνία κυκλοφορίας και φτιάξε την πορεία: το orOS βάζει ημερομηνίες σε κάθε βήμα μετρώντας ανάποδα (χειρόγραφο, επιμέλεια, διορθώσεις, εξώφυλλο, ISBN, τυπογραφείο, παρουσίαση).",
+      "plan.make": "Φτιάξε την πορεία", "plan.redate": "Νέες ημερομηνίες από την κυκλοφορία", "plan.redateHint": "Τα ανοιχτά βήματα παίρνουν νέες ημερομηνίες από την κυκλοφορία· όσα έγιναν κρατούν τις δικές τους.",
+      "plan.add": "+ Βήμα", "plan.addName": "Όνομα βήματος", "plan.todo": "Στείλε στο To-Do", "plan.del": "Αφαίρεση βήματος",
+      "plan.late": "καθυστερεί", "plan.lateN": "{n} καθυστερούν", "plan.next": "Επόμενο: {s} · {d}", "plan.allDone": "Έγιναν όλα τα βήματα.",
+      "plan.noRel": "Βάλε πρώτα ημερομηνία κυκλοφορίας.", "plan.todoBy": "Έως {d} · {t}", "plan.todoNone": "Δεν υπάρχουν ανοιχτά βήματα.", "plan.date": "Ημερομηνία",
       "send.title": "Στείλε σε άλλες εφαρμογές", "send.hint": "Τίποτα δεν αποθηκεύεται στην άλλη εφαρμογή πριν το αποθηκεύσεις εκεί. Το κατάστημά σου παίρνει πρόχειρο που το δημοσιεύεις εσύ.",
       "send.fmt": "Μορφή", "send.noFmt": "Πρόσθεσε πρώτα μια μορφή.", "send.shop": "Πρόχειρο στο κατάστημά μου", "send.stock": "Είδος στο Απόθεμα",
       "send.news": "Μπλοκ στο Newsletter", "send.pr": "Δελτίο τύπου στο Writer", "send.noApp": "Η εφαρμογή δεν άνοιξε από εδώ.",
@@ -538,6 +548,14 @@
     var au = input("text", pf.author || "", { maxlength: "120" });
     dlg.appendChild(field(t("new.name"), name));
     dlg.appendChild(field(t("new.author"), au));
+    var rel = input("date", pf.rel || "");
+    dlg.appendChild(field(t("f.rel"), rel));
+    var pl = input("checkbox", "");
+    pl.checked = pf.plan !== false;
+    var pll = el("label", "check");
+    pll.appendChild(pl);
+    pll.appendChild(el("span", "", t("new.plan")));
+    dlg.appendChild(pll);
     var acts = el("div", "acts");
     acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
     var go = button(t("new.go"), "btn pri", function () {
@@ -546,6 +564,10 @@
       var id = C.uid(), now = Date.now();
       var row = { id: id, t: nm, st: "idea", ppl: au.value.trim() ? [{ r: "a", n: au.value.trim() }] : [], fmts: [] };
       if (pf.isbn) row.fmts = [{ id: C.uid(), k: "pb", isbn: pf.isbn }];
+      if (C.okYmd(rel.value)) {
+        row.rel = rel.value;
+        if (pl.checked) row.plan = C.makePlan(rel.value, [], C.uid);
+      }
       dlg.close();
       commit(C.put(data, "titles", row, now));
       openTitle(id);
@@ -642,11 +664,17 @@
     st.addEventListener("change", function () { writeTitle({ st: st.value }); });
     g1.appendChild(field(t("f.st"), st));
     var rel = input("date", tt.rel);
-    rel.addEventListener("change", function () { if (!rel.value || C.okYmd(rel.value)) writeTitle({ rel: rel.value }); });
+    rel.addEventListener("change", function () { if (!rel.value || C.okYmd(rel.value)) { writeTitle({ rel: rel.value }); renderPlan(); } });
     g1.appendChild(field(t("f.rel"), rel));
     textField("lang", t("f.lang"), 40);
     s1.appendChild(g1);
     sec.appendChild(s1);
+
+    // Release plan (wave P4)
+    var sp = el("section", "sec plan");
+    sp.id = "ed-plan";
+    sec.appendChild(sp);
+    renderPlan();
 
     // People
     var s2 = el("section", "sec");
@@ -985,6 +1013,108 @@
     if (p) pre.img = p;
     try { window.parent.__orosOpenAt("layout", { cover: pre }); }
     catch (e) { toast(t("cov.noLayout")); }
+  }
+
+  // ---------- 6a. Release plan (wave P4) ----------
+  var PF = window.OrosPublishFeed;
+  function stageName(st) { return PF ? PF.stage(st.k, st.n, LANG) : (st.n || st.k); }
+  function todayYmd() {
+    var d = new Date();
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function writePlan(plan) {
+    writeTitle({ plan: C.sortPlan(plan) });
+    renderPlan();
+  }
+  function renderPlan() {
+    var box = $("ed-plan"), tt = currentTitle();
+    if (!box || !tt) return;
+    box.textContent = "";
+    box.appendChild(el("h3", "", t("plan.title")));
+    var plan = tt.plan || [];
+    if (!plan.length) {
+      box.appendChild(el("p", "muted", t("plan.none")));
+      var mk = button(t("plan.make"), "btn small pri", function () { writePlan(C.makePlan(currentTitle().rel, [], C.uid)); });
+      mk.disabled = !tt.rel;
+      box.appendChild(mk);
+      if (!tt.rel) box.appendChild(el("p", "muted small", t("plan.noRel")));
+      return;
+    }
+    var today = todayYmd(), ps = C.planState(tt, today);
+    var sum = el("p", "plan-sum" + (ps.late.length ? " bad" : ""));
+    var bits = [];
+    if (ps.late.length) bits.push(t("plan.lateN", { n: ps.late.length }));
+    if (ps.next) bits.push(t("plan.next", { s: stageName(ps.next), d: fmtDate(ps.next.d) }));
+    if (!ps.late.length && !ps.next) bits.push(ps.done === ps.total ? t("plan.allDone") : "");
+    sum.textContent = bits.filter(Boolean).join(" · ");
+    box.appendChild(sum);
+    var ul = el("ul", "plan-list");
+    C.sortPlan(plan).forEach(function (st) {
+      var li = el("li", "step" + (st.done ? " done" : "") + (!st.done && st.d && st.d < today ? " late" : ""));
+      var cb = input("checkbox", "");
+      cb.checked = !!st.done;
+      cb.setAttribute("aria-label", stageName(st));
+      cb.addEventListener("change", function () { patchStep(st.id, { done: cb.checked ? 1 : 0 }); });
+      li.appendChild(cb);
+      var nm = el("span", "step-name", stageName(st));
+      li.appendChild(nm);
+      if (!st.done && st.d && st.d < today) li.appendChild(el("span", "badge late", t("plan.late")));
+      var d = input("date", st.d);
+      d.setAttribute("aria-label", stageName(st));
+      d.addEventListener("change", function () { if (!d.value || C.okYmd(d.value)) patchStep(st.id, { d: d.value }); });
+      li.appendChild(d);
+      var del = button("✕", "icon-btn", function () { writePlan(currentTitle().plan.filter(function (x) { return x.id !== st.id; })); });
+      del.setAttribute("aria-label", t("plan.del"));
+      del.title = t("plan.del");
+      li.appendChild(del);
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    var acts = el("div", "send-row");
+    var rd = button(t("plan.redate"), "btn small", function () { writePlan(C.makePlan(currentTitle().rel, currentTitle().plan, C.uid)); });
+    rd.disabled = !tt.rel;
+    rd.title = t("plan.redateHint");
+    acts.appendChild(rd);
+    acts.appendChild(button(t("plan.add"), "btn small", addStepDialog));
+    acts.appendChild(button("✅ " + t("plan.todo"), "btn small", planToTodo));
+    box.appendChild(acts);
+  }
+  function patchStep(id, patch) {
+    var tt = currentTitle();
+    if (!tt) return;
+    writePlan((tt.plan || []).map(function (x) { return x.id === id ? Object.assign({}, x, patch) : x; }));
+  }
+  function addStepDialog() {
+    var dlg = el("dialog");
+    dlg.appendChild(el("h3", "", t("plan.add").replace(/^\+\s*/, "")));
+    var n = input("text", "", { maxlength: "80" });
+    dlg.appendChild(field(t("plan.addName"), n));
+    var d = input("date", "");
+    dlg.appendChild(field(t("plan.date"), d));
+    var acts = el("div", "acts");
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    var go = button(t("btn.add"), "btn pri", function () {
+      var tt = currentTitle();
+      if (!tt || !n.value.trim() || (tt.plan || []).length >= C.MAX_PLAN) return;
+      dlg.close();
+      writePlan((tt.plan || []).concat([{ id: C.uid(), k: "x", n: n.value.trim(), d: C.okYmd(d.value) ? d.value : "", done: 0 }]));
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    dlg.addEventListener("keydown", function (e) { if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); go.click(); } });
+    showDialog(dlg);
+    n.focus();
+  }
+  function planToTodo() {
+    flushEdits();
+    var tt = currentTitle();
+    if (!tt) return;
+    var open = C.sortPlan((tt.plan || []).filter(function (x) { return !x.done; }));
+    if (!open.length) { toast(t("plan.todoNone")); return; }
+    var items = open.map(function (x) {
+      return { text: stageName(x) + " · " + tt.t, note: x.d ? t("plan.todoBy", { d: fmtDate(x.d), t: tt.t }) : tt.t };
+    });
+    openAt("todo", { addItems: { newList: tt.t.slice(0, 60), from: t("app.name"), items: items.slice(0, 50) } });
   }
 
   // ---------- 6b. To other apps (wave P2) ----------
@@ -1482,7 +1612,8 @@
 
   // target = { title: id } | { view: "isbn" } | { isbn: "…" } (opens the
   // title that has it, else the register) | { new: { t|title, author?,
-  // isbn?, … } } (asks before creating, nothing is written on arrival).
+  // isbn?, rel?, plan? } } or { asNew: {…} } (the Assistant's card) asks
+  // before creating; nothing is written on arrival.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
@@ -1494,12 +1625,15 @@
       render();
       return;
     }
-    if (target["new"] && typeof target["new"] === "object") {
-      var n = target["new"], pi = C.parseIsbn(typeof n.isbn === "string" ? n.isbn : "");
+    // { asNew } is the Assistant's propose_entry "book" card (wave P4): the same dialog
+    var n = target["new"] && typeof target["new"] === "object" ? target["new"] : target.asNew && typeof target.asNew === "object" ? target.asNew : null;
+    if (n) {
+      var pi = C.parseIsbn(typeof n.isbn === "string" ? n.isbn : "");
       setView({ name: "list", id: "" });
       render();
       newTitleDialog({ t: typeof (n.t || n.title) === "string" ? String(n.t || n.title).slice(0, 200) : "",
-        author: typeof n.author === "string" ? n.author.slice(0, 120) : "", isbn: pi.ok ? pi.isbn : "" });
+        author: typeof n.author === "string" ? n.author.slice(0, 120) : "", isbn: pi.ok ? pi.isbn : "",
+        rel: C.okYmd(n.rel) ? n.rel : "", plan: n.plan === 1 });
     }
   };
   function takePending() {

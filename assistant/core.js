@@ -1289,13 +1289,14 @@
       "pet_record (pet?, record vaccine|deworm|visit|medication|weight, date?, title?, next_due?, vet?, cost?, dose?, weight_kg?, note?) · " +
       "media (title, media book|film|series|album|podcast|game, status want|now|done|dropped, by?, year?: Media Shelf, also books) · " +
       "place (title, lat+lon or query: Maps, the user saves it) · " +
-      "shared_expense (group?, title?, amount?, paid_by?, date?, currency?, note?: Split). " +
+      "shared_expense (group?, title?, amount?, paid_by?, date?, currency?, note?: Split) · " +
+      "book (title, by?, date?, isbn?: a title the user PUBLISHES, in Publishing; date = the release date, and the card offers the release plan counted back from it). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
-                                         "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense"] },
+                                         "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
         text: { type: "string", description: "note: the note's text (plain text)." },
         items: { type: "array", description: "todo: the tasks.",
@@ -1353,7 +1354,8 @@
         weight_kg: { type: "number", description: "pet_record weight: kg." },
         media: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"] },
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "media: want = to read/watch, now = in progress, done, dropped." },
-        by: { type: "string", description: "media: author, director or artist." },
+        by: { type: "string", description: "media: author, director or artist. book: the author." },
+        isbn: { type: "string", description: "book: the ISBN-13, hyphens allowed." },
         year: { type: "integer", description: "media: year." },
         lat: { type: "number", description: "place: latitude (only if you know it)." },
         lon: { type: "number", description: "place: longitude (only if you know it)." },
@@ -1715,21 +1717,26 @@
   // book_cover arguments → { ok, cover: { title, sub, author, blurb,
   // imprint, isbn, price, pages, w, h }, pics: { front, logo } ("2" = the 2nd picture, or a name),
   // view: [[key, text]] } | { ok: false, err }
+  // An ISBN-13 as the user typed it → { v: 13 digits } | { v: "" } | { err }.
+  function isbn13(raw) {
+    var isbn = line(raw, 30);
+    if (!isbn) return { v: "" };
+    var d = isbn.replace(/^isbn(-1[03])?:?\s*/i, "").replace(/[\s-]/g, "");
+    if (!/^97[89]\d{10}$/.test(d)) return { err: "isbn must be the 13 digits of an ISBN (978 or 979), hyphens allowed." };
+    var sum = 0;
+    for (var i = 0; i < 12; i++) sum += (+d[i]) * (i % 2 ? 3 : 1);
+    if (String((10 - sum % 10) % 10) !== d[12]) return { err: "This ISBN's check digit is wrong; ask the user for the right number." };
+    return { v: d };
+  }
   function normCover(args) {
     if (!isObj(args)) return bad("The arguments must be an object.");
     var title = line(args.title, 200);
     if (!title) return bad("title is empty.");
     var cv = { title: title, sub: line(args.subtitle, 200), author: line(args.author, 200), blurb: para(args.back_text, 4000),
                imprint: line(args.publisher, 120), price: line(args.price, 40) };
-    var isbn = line(args.isbn, 30);
-    if (isbn) {
-      var d = isbn.replace(/^isbn(-1[03])?:?\s*/i, "").replace(/[\s-]/g, "");
-      if (!/^97[89]\d{10}$/.test(d)) return bad("isbn must be the 13 digits of an ISBN (978 or 979), hyphens allowed.");
-      var sum = 0;
-      for (var i = 0; i < 12; i++) sum += (+d[i]) * (i % 2 ? 3 : 1);
-      if (String((10 - sum % 10) % 10) !== d[12]) return bad("This ISBN's check digit is wrong; ask the user for the right number.");
-      cv.isbn = d;
-    }
+    var isbn = isbn13(args.isbn);
+    if (isbn.err) return bad(isbn.err);
+    if (isbn.v) cv.isbn = isbn.v;
     var pg = typeof args.pages === "number" ? Math.round(args.pages) : parseInt(args.pages, 10);
     if (pg > 0 && pg <= 5000) cv.pages = pg;
     var tr = COVER_SIZES.indexOf(args.trim) >= 0 ? args.trim : "140x210";
@@ -2079,10 +2086,12 @@
     // and opens its own new-item form prefilled; nothing is saved there
     // until the user saves (BR-W8-6).
     contact: "contacts", customer: "crm", card: "kanban", habit: "habits", workout: "fitness",
-    car: "garage", plant: "plants", pet_record: "petcare", media: "shelf", place: "maps", shared_expense: "split"
+    car: "garage", plant: "plants", pet_record: "petcare", media: "shelf", place: "maps", shared_expense: "split",
+    // publisher wave P4: a new title in Publishing, with its release plan
+    book: "publish"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
-                     "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense"];
+                     "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book"];
   // Invoices' currencies (invoices/core.js CURRENCIES, BR-INV-NEW).
   var INV_CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD", "AUD", "SEK", "NOK", "DKK",
                         "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "JPY"];
@@ -2513,6 +2522,19 @@
         f.push(["query", q]);
       }
       return { o: o, f: f, title: nm };
+    },
+    book: function (a) {
+      var t2 = line(a.title, 200);
+      if (!t2) return { err: "book needs a title." };
+      var o = { t: t2 }, f = [], d = {};
+      put(o, f, "author", line(a.by, 120), "by");
+      var e = optDate(a.date, "date", d);
+      if (e) return { err: e };
+      if (d.v) { o.rel = d.v; o.plan = 1; f.push(["rel", d.v]); }
+      var ib = isbn13(a.isbn);
+      if (ib.err) return { err: ib.err };
+      put(o, f, "isbn", ib.v, "isbn");
+      return { o: o, f: f, title: t2 };
     },
     shared_expense: function (a) {
       var o = {}, f = [], d = {};

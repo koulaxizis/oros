@@ -188,7 +188,7 @@
       "lbl.feed.meals": "Meals",
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget",
-      "lbl.feed.shelf": "Media Shelf",
+      "lbl.feed.shelf": "Media Shelf", "lbl.feed.publish": "Publishing",
       "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
@@ -436,7 +436,7 @@
       "lbl.feed.meals": "Γεύματα",
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός",
-      "lbl.feed.shelf": "Το ράφι μου",
+      "lbl.feed.shelf": "Το ράφι μου", "lbl.feed.publish": "Εκδόσεις",
       "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
@@ -942,6 +942,7 @@ function transientNote(title, body) {
     { id: "lbl-feed-meals",  color: "#ff9e64" },   // orange — Meal Planner plan
     { id: "lbl-feed-budget", color: "#2bb673" },   // emerald — Budget recurring entries (distinct from the lime greens)
     { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
+    { id: "lbl-feed-publish", color: "#b5835a" },  // bronze — Publishing release dates + release-plan steps
     { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-together", color: "#ef5d8a" }, // rose — Together anniversaries, milestones, moments
@@ -975,6 +976,7 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-baby") return t("lbl.feed.baby");
     if (l.id === "lbl-feed-together") return t("lbl.feed.together");
     if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
+    if (l.id === "lbl-feed-publish") return t("lbl.feed.publish");
     if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
@@ -2899,6 +2901,41 @@ function transientNote(title, body) {
     });
   }
 
+  // Publishing read-only feed (publish/core.js + publish/feed.js, loaded
+  // by index.html): release dates ("Release: …") and the open steps of
+  // each release plan ("Proofs 1 · …"). Never stored; micro-cached ~1s.
+  // Click → Publishing opens that title.
+  var PUBLISH_DATA_KEY = "oros-publish-data";
+  var publishCache = { when: 0, days: null };
+  function publishDays() {
+    var now = Date.now(), F = window.OrosPublishFeed;
+    if (!F) return null;
+    if (now - publishCache.when > 1000) {
+      publishCache.days = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(PUBLISH_DATA_KEY));
+        if (d && typeof d === "object") publishCache.days = F.byDay(d);
+      } catch (e) {}
+      publishCache.when = now;
+    }
+    return publishCache.days;
+  }
+  function publishFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-publish")) return [];
+    var days = publishDays();
+    if (!days || !days[dateStr]) return [];
+    return days[dateStr].map(function (r) {
+      return {
+        id: "pub-" + r.k + "-" + r.title + "-" + (r.step || "") + "-" + dateStr,   // per-render key, never stored
+        title: window.OrosPublishFeed.label(r, LB),
+        labelId: "lbl-feed-publish",
+        start: null,                                     // all-day
+        _feed: true,
+        _openAt: { app: "publish", target: { title: r.title } }
+      };
+    });
+  }
+
   // Invoices read-only feed (invoices/core.js dueOn, loaded by
   // index.html: the same rule as the app, Today and the reminder).
   // Issued invoices, receipts and records with money still owed, on
@@ -3076,6 +3113,7 @@ function transientNote(title, body) {
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
     .concat(shelfFeedOn(dateStr))
+    .concat(publishFeedOn(dateStr))
     .concat(invoicesFeedOn(dateStr))
     .concat(babyFeedOn(dateStr))
     .concat(togetherFeedOn(dateStr))

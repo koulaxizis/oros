@@ -582,6 +582,7 @@ var PRECACHE_URLS = [
   "publish/core.js",
   "publish/app.js",
   "publish/search.js",
+  "publish/feed.js",
   "invoices/today.js",
   "invoices/mydata-ui.js",
   "crm/",

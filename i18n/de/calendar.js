@@ -387,5 +387,6 @@ orosPack("de", "calendar", {
  "wd": "Mo, Di, Mi, Do, Fr, Sa, So",
  "wd.full": "Sonntag … Samstag",
  "wd.short": "So, Mo, Di, Mi, Do, Fr, Sa",
- "wx.day": "Vorhersage: {t}"
+ "wx.day": "Vorhersage: {t}",
+ "lbl.feed.publish": "Verlag"
 });

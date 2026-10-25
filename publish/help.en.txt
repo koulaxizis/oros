@@ -25,6 +25,14 @@ The ISBN field checks the number as you type: a wrong check digit, a missing dig
 ### Cover
 `Add a cover picture` keeps a copy of the front cover (up to 1600 px, without location or camera data) in [Files](app:files), folder Publishing/Covers. It reaches your other devices with Vault Drive. The print file of the cover itself is made in [Layout](app:layout).
 
+### Release plan
+With a release date set, `Make the plan` dates every step back from it: manuscript in, editing, proofs 1, 2 and 3, cover ready, ISBN and barcode, to the printer, and the presentation two weeks after the release. Tick a step when it is done, change any date, remove what you don't need, or add your own step with `+ Step`. The line above the list says what is late and what comes next.
+
+- `Re-date from the release date` moves the open steps when the release date changes; done steps keep their dates.
+- The release date and every open step show in [Calendar](app:calendar) under the `Publishing` chip.
+- `Send to To-Do` adds the open steps to a new list named after the book, each with its date.
+- When you make a new title with a release date, tick `Make the release plan from the release date` and the plan is there from the start. The Assistant can set it up too: "new book Night Sea by Ann Writer, out on 15 March".
+
 ### Send to other apps
 Under `Send to other apps` pick a format (when the title has more than one), then:
 - `Draft in my shop` creates a draft product in your WooCommerce shop, connected with your own keys in [Settings](app:settings) › Connected services: name, SKU (the ISBN), price, back-cover text, weight and size in the shop's own units. If the shop already has a product with that ISBN, orOS links it and creates nothing. You add pictures and categories and publish it in the shop; `Open in the shop` takes you there.

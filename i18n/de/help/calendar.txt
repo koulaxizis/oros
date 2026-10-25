@@ -58,6 +58,7 @@ Andere Apps fügen schreibgeschützte Zeilen hinzu, jede mit eigenem Chip, damit
 - `Todestage` aus [Stammbaum](app:familytree), etwa „Maria · 10 Jahre seit dem Tod“, für Personen mit genauem Todesdatum.
 - `Rechnungen`: unbezahlte Rechnungen an ihrem Fälligkeitstag, aus [Rechnungen](app:invoices).
 - `Medienregal`: der Tag, an dem du ein Buch, einen Film, ein Album oder ein Spiel beendet hast, und Erscheinungstermine auf deiner Wunschliste, aus [Medienregal](app:shelf).
+- `Verlag`: der Erscheinungstermin deiner Titel und die offenen Schritte ihres Erscheinungsplans, aus [Verlag](app:publish).
 - `Feiertage` (griechische gesetzliche Feiertage), `Namenstage` deiner Kontakte und `Welttage` wie internationale Gedenktage.
 - `Mond & Himmel`: Mondphasen, Tagundnachtgleichen und Sonnenwenden, Meteorschauer und Finsternisse aus [Mond & Himmel](app:sky). Dieser Feed ist anfangs aus: Tippe oder klicke auf seinen Chip, um ihn einzuschalten.
 - `Medikamente`: der erste und letzte Tag einer Medikamenteneinnahme und der Tag, an dem ein gezähltes Medikament ausgeht, aus [Gesundheit](app:health). Gesundheitsdaten sind privat, daher ist auch dieser anfangs aus.
