@@ -202,6 +202,7 @@
   {
    "app": "designkit",
    "files": [
+    "designkit/cover.js",
     "designkit/fx.js",
     "designkit/media.js",
     "designkit/model.js",
@@ -699,6 +700,12 @@
    "files": [
     "pubdomain/pubdomain.js",
     "pubdomain/rules.js"
+   ]
+  },
+  {
+   "app": "publish",
+   "files": [
+    "publish/app.js"
    ]
   },
   {

@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 33988 of 33997 (99%)
-- Help pages: 148 of 148 (100%)
+- Strings: 34221 of 34230 (99%)
+- Help pages: 149 of 149 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 535 / 535 |
+| assistant | 100% | 557 / 557 |
 | atelier | 100% | 1353 / 1353 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -38,7 +38,7 @@ text is still written in the code. They switch over wave by wave
 | crm | 100% | 444 / 444 |
 | crossword | 100% | 170 / 170 |
 | cycle | 100% | 203 / 203 |
-| designkit | 100% | 164 / 164 |
+| designkit | 100% | 174 / 174 |
 | device | 100% | 124 / 124 |
 | diary | 100% | 234 / 234 |
 | dice | 100% | 52 / 52 |
@@ -66,7 +66,7 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 273 / 273 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 474 / 474 |
+| layout | 100% | 510 / 510 |
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 51 / 51 |
 | links | 100% | 2 / 2 |
@@ -88,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | music | 100% | 432 / 432 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
-| newsletter | 100% | 869 / 869 |
+| newsletter | 100% | 873 / 873 |
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 189 / 189 |
 | oracle | 100% | 38 / 38 |
@@ -103,6 +103,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 64 / 64 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
+| publish | 100% | 160 / 160 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -117,7 +118,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 525 / 525 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 902 / 902 |
+| shell | 100% | 903 / 903 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -160,9 +161,3 @@ text is still written in the code. They switch over wave by wave
 | writer | 100% | 377 / 377 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
-
-## Lines to fix
-
-These show English until fixed (usually the English text changed).
-
-- de/help/assistant.txt: links or key caps differ from assistant/help.en.txt

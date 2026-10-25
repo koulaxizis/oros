@@ -1,0 +1,42 @@
+# Publishing
+Publishing is a desk for a small publisher: every book you publish with its formats, ISBNs, prices, sizes, back-cover text and cover, your ISBN blocks with the next free number, and barcodes for the back cover.
+
+## Getting started
+1. Press `New title`, write the title and, if you like, the author.
+2. Under `Formats` add each edition (paperback, e-book, audiobook…). Every format has its own ISBN and price.
+3. Fill in the back-cover text, the people who worked on the book and the release date. The line at the top says what is `Still missing` before the release.
+
+## Titles
+The `Titles` tab lists your books with their cover, people, ISBNs and status (`Idea`, `In production`, `Released`, `Out of print`). Filter by status, search by title, person or ISBN, and sort by release date, title or last edit.
+
+Tap a title to edit it. Every change is saved as you type. `Delete` removes a title; `Undo` brings it back right after.
+
+### People
+A title can have authors, translators, illustrators, editors, a cover designer, a narrator or others. Use `+ Person` and pick the role.
+
+### Formats
+Each format keeps its ISBN, price, pages, size (width × height in mm), spine, weight, binding and paper; an audiobook keeps its length in minutes. The price is in the currency of the settings (⚙), where you also type the `Publisher name` for covers and press texts.
+
+The ISBN field checks the number as you type: a wrong check digit, a missing digit, or a number another title already uses. `Next free` fills in the next unused number of your blocks.
+
+### Barcode
+`Barcode` on a format with an ISBN shows the EAN-13 for the back cover, with "ISBN …" above the bars. `Download SVG` gives a vector at the standard size (about 37 × 29 mm), `Download PNG` a sharp picture. Leave a white margin around it when you place it.
+
+### Cover
+`Add a cover picture` keeps a copy of the front cover (up to 1600 px, without location or camera data) in [Files](app:files), folder Publishing/Covers. It reaches your other devices with Vault Drive. The print file of the cover itself is made in [Layout](app:layout).
+
+## ISBN
+Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
+
+For every block you see how many numbers are in use, the next free one (`Copy` or `New title with it`) and the list of numbers in use with their titles.
+
+- `Used outside this app`: numbers you gave to books before you used orOS, or spoiled ones. orOS will not offer them again.
+- `Numbers used twice` appears at the top when two formats have the same ISBN.
+- `Check an ISBN` tells you if any number is valid, shows its ISBN-10 and whether one of your titles has it.
+
+## Your data
+- Everything stays on this device and is saved as you go.
+- With orOS sync switched on in [Settings](app:settings), your titles and blocks follow you to your other devices, encrypted. Cover pictures travel with Vault Drive.
+
+## Find it from anywhere
+- The menu's search box finds a title by its words, its people or any of its ISBNs (with or without hyphens, ISBN-10 too). Choosing one opens the title.

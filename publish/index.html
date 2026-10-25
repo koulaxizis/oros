@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VAcNShnEY+pSoHzEFhiyQDlQNf5bTjjXEylay7WNF98='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=publish" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Publishing · orOS</title>
+
+  <link rel="stylesheet" href="app.css?v=3.67.00">
+
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="app-title" data-i18n="app.name">Publishing</h1>
+    <span class="spacer"></span>
+    <button type="button" class="icon-btn" id="settings-btn" data-i18n-label="btn.settings">⚙</button>
+    <button type="button" class="btn pri" id="new-btn" data-i18n="btn.new">New title</button>
+  </header>
+
+  <nav id="tabbar" role="tablist">
+    <button type="button" class="tab" role="tab" data-tab="titles" data-i18n="tab.titles">Titles</button>
+    <button type="button" class="tab" role="tab" data-tab="isbn" data-i18n="tab.isbn">ISBN</button>
+  </nav>
+
+  <main id="main">
+    <section id="view-list" class="view" role="tabpanel"></section>
+    <section id="view-title" class="view" hidden></section>
+    <section id="view-isbn" class="view" role="tabpanel" hidden></section>
+  </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="../i18n.js?v=3.67.00" data-app="publish"></script>
+  <script src="core.js?v=3.67.00"></script>
+  <script src="app.js?v=3.67.00"></script>
+
+</body>
+</html>

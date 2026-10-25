@@ -1077,6 +1077,11 @@
         grid.appendChild(b);
       });
       body.appendChild(grid);
+      if (LY.cover) {
+        var cov = btn(t("cov.btn"), function () { close(); LY.cover.open({ title: name.getAttribute("data-auto") || name.value === t("doc.untitled") ? "" : name.value.trim() }); });
+        cov.classList.add("cov-btn");
+        body.appendChild(cov);
+      }
       setupForm(form, s, true);
       body.appendChild(form);
       var act = el("div", "dlg-actions");
