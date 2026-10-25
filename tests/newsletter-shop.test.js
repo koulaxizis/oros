@@ -149,7 +149,7 @@ test("E4: Shopify goes only through the fixed Storefront queries, never through 
   assert.equal(L.checkKeys("shopify", { key: "0123456789abcdef0123456789abcdefa" }).ok, false);
   assert.equal(L.PLATFORMS.shopify.direct, true);
   assert.equal(X.checkExtReq("shopify", ok), "p");
-  assert.deepEqual(L.PLATFORMS.woo.apps, ["stock", "newsletter"]);
+  assert.deepEqual(L.PLATFORMS.woo.apps, ["stock", "newsletter", "publish"]);
 });
 
 test("E4: fresh prices update name, page, prices and stock, keep the picture, count the gone", () => {

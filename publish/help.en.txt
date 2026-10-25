@@ -25,6 +25,15 @@ The ISBN field checks the number as you type: a wrong check digit, a missing dig
 ### Cover
 `Add a cover picture` keeps a copy of the front cover (up to 1600 px, without location or camera data) in [Files](app:files), folder Publishing/Covers. It reaches your other devices with Vault Drive. The print file of the cover itself is made in [Layout](app:layout).
 
+### Send to other apps
+Under `Send to other apps` pick a format (when the title has more than one), then:
+- `Draft in my shop` creates a draft product in your WooCommerce shop, connected with your own keys in [Settings](app:settings) › Connected services: name, SKU (the ISBN), price, back-cover text, weight and size in the shop's own units. If the shop already has a product with that ISBN, orOS links it and creates nothing. You add pictures and categories and publish it in the shop; `Open in the shop` takes you there.
+- `Item in Stock` opens a new product in [Stock](app:stock) with the name, the ISBN as SKU and barcode, and the price. If Stock already has it, its sheet opens instead.
+- `Block in Newsletter` adds the title, subtitle, author and back-cover text to a [Newsletter](app:newsletter) draft you pick, with a button to the book when it is in your shop.
+- `Press release in Writer` opens a new [Writer](app:writer) document with a press release built from the title, the texts, the formats and your publisher name. Read it and edit it before you send it.
+
+Nothing is saved in the other app until you save it there.
+
 ## ISBN
 Your national ISBN agency gives a publisher a block of numbers, for example 978-618-5321 for 100 books. In the `ISBN` tab, `Add a block` and write the prefix with its hyphens exactly as the agency gave it.
 

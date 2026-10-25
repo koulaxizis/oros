@@ -276,3 +276,11 @@ dialog .fld { margin-bottom: 10px; }
 }
 
 [hidden] { display: none !important; }
+/* To other apps (wave P2) */
+.send .small { font-size: 13px; margin-bottom: 8px; }
+.send-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.send-link { font-size: 13px; }
+.send-link a { color: var(--accent); }
+.shop-dlg { max-width: 460px; }
+.shop-msg { min-height: 1.4em; margin: 8px 0; }
+.shop-msg.bad { color: var(--danger); }

@@ -3966,6 +3966,10 @@
   //   { po: id }    → that purchase order (Today: expected deliveries)
   //   { out: req }  → a prefilled sale / return (BR-ST-OUT, core outRequest)
   //   { view: "shop" } → the shop (Settings › Connected services)
+  //   { newItem: { name, sku?, bc?, price?, note? } } → a new product
+  //                   prefilled (Publishing wave P2; price in cents),
+  //                   saved only when the person saves it; a product
+  //                   with the same SKU or barcode opens instead
   // Unknown targets are ignored; an open dialog (unsaved edits) wins.
   //   { openFile: { token } } → "Open with" an .orosstock file
   //                   (fileopen.js): the File is taken once with
@@ -3975,6 +3979,7 @@
     if (target.openFile) { if (recFile) recFile.openTarget(target.openFile); return; }
     if (document.querySelector("dialog[open]")) return;
     if (target.out && typeof target.out === "object") { openOut(target.out); return; }
+    if (target.newItem && typeof target.newItem === "object") { openNewItem(target.newItem); return; }
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
     if (target.view === "shop") { openShop(); return; }
@@ -3995,6 +4000,22 @@
       setTab("sups");
       supEditor(byId("sups", target.sup));
     }
+  }
+  function openNewItem(src) {
+    var pre = {};
+    ["name", "sku", "bc", "note"].forEach(function (k) { if (typeof src[k] === "string") pre[k] = src[k]; });
+    if (typeof src.price === "number") pre.price = src.price;
+    var sku = C.fold(pre.sku || ""), bc = C.fold(pre.bc || "").replace(/\s+/g, "");
+    var same = data.items.filter(function (o) { return (sku && C.fold(o.sku) === sku) || (bc && o.bc && C.fold(o.bc) === bc); })[0];
+    if (same) {
+      if (same.arch && prefs.f !== "arch") prefs.f = "arch";
+      else if (!same.arch && prefs.f === "arch") prefs.f = "all";
+      setTab("items");
+      itemSheet(same.id);
+      return;
+    }
+    setTab("items");
+    itemEditor(null, pre);
   }
   function openOut(req) {
     var r = C.outRequest(data, req, todayYmd());

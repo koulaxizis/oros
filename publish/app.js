@@ -109,6 +109,28 @@
       "chk.title": "Check an ISBN", "chk.ph": "Paste or type any ISBN",
       "chk.ok": "Valid. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "In use: {list}", "chk.free": "Not used by any of your titles.",
+      "send.title": "Send to other apps", "send.hint": "Nothing is saved in the other app until you save it there. Your shop gets a draft that you publish yourself.",
+      "send.fmt": "Format", "send.noFmt": "Add a format first.", "send.shop": "Draft in my shop", "send.stock": "Item in Stock",
+      "send.news": "Block in Newsletter", "send.pr": "Press release in Writer", "send.noApp": "That app could not be opened from here.",
+      "send.linked": "In the shop: product #{id}", "send.open": "Open in the shop",
+      "shop.title": "Draft in the shop · {fmt}", "shop.acct": "Shop",
+      "shop.none": "Connect your WooCommerce shop first, in Settings › Connected services. Your keys stay on your devices.",
+      "shop.connect": "Connected services",
+      "shop.what": "orOS creates a draft product with the name, SKU (the ISBN), price, back-cover text, weight and size. Add pictures, categories and stock in the shop, then publish it there.",
+      "shop.go": "Create draft", "shop.busy": "Talking to the shop…", "shop.done": "Draft created: product #{id}.",
+      "shop.exists": "The shop already has a product with this ISBN ({name}, #{id}). orOS linked it to this format and created nothing.",
+      "shop.cur": "The shop sells in {shop} and your prices are in {mine}, so the draft has no price.",
+      "shop.dup": "The shop refused it: the ISBN is already used as a SKU (maybe by a product in the trash).",
+      "shop.err.offline": "You're offline.", "shop.err.auth": "The shop did not accept the keys. Check them in Settings › Connected services.",
+      "shop.err.notfound": "The shop's REST API was not found at that address.", "shop.err.network": "The shop did not answer.",
+      "shop.err.relay": "The shop doesn't answer this browser, and the orOS relay could not reach it either.",
+      "shop.err.server": "The shop answered with an error.", "shop.err.busy": "The shop asks you to wait a little.",
+      "shop.err.keys": "This device doesn't have the shop's keys.", "shop.err.denied": "orOS doesn't allow this call.",
+      "shop.err.gone": "This shop was disconnected.", "shop.err.bad": "Something went wrong.",
+      "news.btn": "See the book",
+      "pr.head": "PRESS RELEASE", "pr.lead": "«{t}» by {a} is out.", "pr.leadNoA": "«{t}» is out.",
+      "pr.leadImp": "{imp} presents «{t}» by {a}.", "pr.leadImpNoA": "{imp} presents «{t}».", "pr.rel": "Release date: {d}.",
+      "pr.about": "About the author", "pr.details": "Details", "pr.pages": "{n} pages", "pr.contact": "Contact", "pr.docTitle": "Press release: {t}",
       "set.title": "Settings", "set.cur": "Currency for prices", "set.imp": "Publisher name",
       "set.impHint": "Goes on covers and press texts.", "set.done": "Saved",
       "toast.copied": "Copied", "toast.saved": "Saved", "toast.exported": "Saved",
@@ -178,6 +200,28 @@
       "chk.title": "Έλεγχος ISBN", "chk.ph": "Επικόλλησε ή γράψε οποιοδήποτε ISBN",
       "chk.ok": "Σωστό. ISBN-13 {thirteen}{ten}", "chk.ten": " · ISBN-10 {ten}",
       "chk.uses": "Σε χρήση: {list}", "chk.free": "Δεν το έχει κανένας από τους τίτλους σου.",
+      "send.title": "Στείλε σε άλλες εφαρμογές", "send.hint": "Τίποτα δεν αποθηκεύεται στην άλλη εφαρμογή πριν το αποθηκεύσεις εκεί. Το κατάστημά σου παίρνει πρόχειρο που το δημοσιεύεις εσύ.",
+      "send.fmt": "Μορφή", "send.noFmt": "Πρόσθεσε πρώτα μια μορφή.", "send.shop": "Πρόχειρο στο κατάστημά μου", "send.stock": "Είδος στο Απόθεμα",
+      "send.news": "Μπλοκ στο Newsletter", "send.pr": "Δελτίο τύπου στο Writer", "send.noApp": "Η εφαρμογή δεν άνοιξε από εδώ.",
+      "send.linked": "Στο κατάστημα: προϊόν #{id}", "send.open": "Άνοιγμα στο κατάστημα",
+      "shop.title": "Πρόχειρο στο κατάστημα · {fmt}", "shop.acct": "Κατάστημα",
+      "shop.none": "Σύνδεσε πρώτα το κατάστημά σου WooCommerce, στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες. Τα κλειδιά σου μένουν στις συσκευές σου.",
+      "shop.connect": "Συνδεδεμένες υπηρεσίες",
+      "shop.what": "Το orOS φτιάχνει πρόχειρο προϊόν με όνομα, SKU (το ISBN), τιμή, κείμενο οπισθόφυλλου, βάρος και διαστάσεις. Εικόνες, κατηγορίες και απόθεμα τα βάζεις στο κατάστημα και το δημοσιεύεις από εκεί.",
+      "shop.go": "Δημιουργία πρόχειρου", "shop.busy": "Μιλάω με το κατάστημα…", "shop.done": "Έγινε το πρόχειρο: προϊόν #{id}.",
+      "shop.exists": "Το κατάστημα έχει ήδη προϊόν με αυτό το ISBN ({name}, #{id}). Το orOS το συνέδεσε με αυτή τη μορφή και δεν έφτιαξε τίποτα.",
+      "shop.cur": "Το κατάστημα πουλά σε {shop} και οι τιμές σου είναι σε {mine}, οπότε το πρόχειρο μένει χωρίς τιμή.",
+      "shop.dup": "Το κατάστημα το αρνήθηκε: το ISBN υπάρχει ήδη ως SKU (ίσως σε προϊόν στα διαγραμμένα).",
+      "shop.err.offline": "Είσαι εκτός σύνδεσης.", "shop.err.auth": "Το κατάστημα δεν δέχτηκε τα κλειδιά. Έλεγξέ τα στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "shop.err.notfound": "Δεν βρέθηκε το REST API του καταστήματος σε αυτή τη διεύθυνση.", "shop.err.network": "Το κατάστημα δεν απάντησε.",
+      "shop.err.relay": "Το κατάστημα δεν απαντά σε αυτόν τον browser και δεν απάντησε ούτε το relay του orOS.",
+      "shop.err.server": "Το κατάστημα απάντησε με σφάλμα.", "shop.err.busy": "Το κατάστημα ζητά λίγη αναμονή.",
+      "shop.err.keys": "Αυτή η συσκευή δεν έχει τα κλειδιά του καταστήματος.", "shop.err.denied": "Το orOS δεν επιτρέπει αυτή την κλήση.",
+      "shop.err.gone": "Αυτό το κατάστημα αποσυνδέθηκε.", "shop.err.bad": "Κάτι πήγε στραβά.",
+      "news.btn": "Δες το βιβλίο",
+      "pr.head": "ΔΕΛΤΙΟ ΤΥΠΟΥ", "pr.lead": "Κυκλοφορεί το «{t}» του/της {a}.", "pr.leadNoA": "Κυκλοφορεί το «{t}».",
+      "pr.leadImp": "Οι εκδόσεις {imp} παρουσιάζουν το «{t}» του/της {a}.", "pr.leadImpNoA": "Οι εκδόσεις {imp} παρουσιάζουν το «{t}».", "pr.rel": "Ημερομηνία κυκλοφορίας: {d}.",
+      "pr.about": "Για τον συγγραφέα", "pr.details": "Στοιχεία", "pr.pages": "{n} σελίδες", "pr.contact": "Επικοινωνία", "pr.docTitle": "Δελτίο τύπου: {t}",
       "set.title": "Ρυθμίσεις", "set.cur": "Νόμισμα για τις τιμές", "set.imp": "Όνομα εκδότη",
       "set.impHint": "Μπαίνει σε εξώφυλλα και δελτία τύπου.", "set.done": "Αποθηκεύτηκε",
       "toast.copied": "Αντιγράφηκε", "toast.saved": "Αποθηκεύτηκε", "toast.exported": "Αποθηκεύτηκε",
@@ -663,6 +707,9 @@
     s5.appendChild(el("h3", "", t("sec.cover")));
     s5.appendChild(coverBox(tt));
     sec.appendChild(s5);
+
+    // To other apps (wave P2)
+    sec.appendChild(sendBox(tt));
     refreshGaps();
   }
   function refreshGaps() {
@@ -936,6 +983,195 @@
     if (p) pre.img = p;
     try { window.parent.__orosOpenAt("layout", { cover: pre }); }
     catch (e) { toast(t("cov.noLayout")); }
+  }
+
+  // ---------- 6b. To other apps (wave P2) ----------
+  // The shop gets a draft through Connected services (the person's own
+  // WooCommerce keys, kept by the shell); Stock, Newsletter and Writer
+  // get prefills they show before anything is saved.
+  var sendFmt = { title: "", fmt: "" };
+  function links() {
+    try { return window.parent && window.parent !== window && window.parent.orosLinks && typeof window.parent.orosLinks.list === "function" ? window.parent.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  function openAt(app, target) {
+    try { window.parent.__orosOpenAt(app, target); return true; }
+    catch (e) { toast(t("send.noApp")); return false; }
+  }
+  function fmtLabel(tt, f) { return tt.fmts.length > 1 ? t("fmt." + f.k) : ""; }
+  function money(v) {
+    try { return new Intl.NumberFormat(LOCALE, { style: "currency", currency: data.set.cur }).format(v); }
+    catch (e) { return v + " " + data.set.cur; }
+  }
+  function shopAcct(f) {
+    var Lk = links();
+    var list = Lk ? Lk.list("woo") : [];
+    return f.wp ? list.filter(function (a) { return a.id === f.wp.a; })[0] || null : null;
+  }
+  // https only: an address the person typed for their own shop
+  function shopUrl(a, path) {
+    var site = a && typeof a.site === "string" ? a.site.replace(/\/+$/, "") : "";
+    return /^https:\/\/[^\s\/?#@]+(\/[^\s?#]*)?$/i.test(site) ? site + path : "";
+  }
+  // a name from the shop as plain text: tags out, entities decoded (shown with textContent)
+  function shopText(v) {
+    var ent = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " " };
+    return String(v || "").replace(/<[^>]*>/g, "").replace(/&(#x[0-9a-f]{1,6}|#[0-9]{1,7}|[a-z]{2,6});/gi, function (all, e) {
+      var cp = e[0] !== "#" ? null : (e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10));
+      if (cp === null) return ent[e.toLowerCase()] || all;
+      return cp > 31 && cp < 0x110000 && !(cp >= 0xd800 && cp <= 0xdfff) ? String.fromCodePoint(cp) : all;
+    }).replace(/\s+/g, " ").trim().slice(0, 120);
+  }
+  function sendBox(tt) {
+    var box = el("section", "sec send");
+    box.appendChild(el("h3", "", t("send.title")));
+    box.appendChild(el("p", "muted small", t("send.hint")));
+    if (sendFmt.title !== tt.id || !tt.fmts.some(function (f) { return f.id === sendFmt.fmt; })) {
+      sendFmt = { title: tt.id, fmt: tt.fmts.length ? tt.fmts[0].id : "" };
+    }
+    function cur() {
+      var x = currentTitle();
+      return x && x.fmts.filter(function (f) { return f.id === sendFmt.fmt; })[0];
+    }
+    var row = el("div", "send-row");
+    var link = el("p", "send-link");
+    function showLink() {
+      link.textContent = "";
+      var f = cur(), a = f && shopAcct(f), u = a ? shopUrl(a, "/wp-admin/post.php?post=" + f.wp.id + "&action=edit") : "";
+      if (!f || !f.wp) { link.hidden = true; return; }
+      link.hidden = false;
+      link.appendChild(el("span", "", t("send.linked", { id: f.wp.id }) + " "));
+      if (u) {
+        var an = el("a", "", t("send.open"));
+        an.href = u;
+        an.target = "_blank";
+        an.rel = "noopener noreferrer";
+        link.appendChild(an);
+      }
+    }
+    if (tt.fmts.length > 1) {
+      var fs = select(tt.fmts.map(function (f) { return [f.id, t("fmt." + f.k) + (f.isbn ? " · " + C.hyphen(f.isbn, data.blocks) : "")]; }), sendFmt.fmt);
+      fs.addEventListener("change", function () { sendFmt.fmt = fs.value; showLink(); });
+      box.appendChild(field(t("send.fmt"), fs));
+    }
+    var fmtBtns = [
+      button("🛍️ " + t("send.shop"), "btn small", function () { var f = cur(); if (f) shopDialog(f.id); }),
+      button("📦 " + t("send.stock"), "btn small", function () {
+        flushEdits();
+        var x = currentTitle(), f = cur();
+        if (x && f) openAt("stock", { newItem: C.stockPrefill(x, f, fmtLabel(x, f)) });
+      })
+    ];
+    fmtBtns.forEach(function (b) { b.disabled = !tt.fmts.length; row.appendChild(b); });
+    row.appendChild(button("📰 " + t("send.news"), "btn small", function () {
+      flushEdits();
+      var x = currentTitle(), f = cur(), a = f && shopAcct(f);
+      if (!x) return;
+      var href = a ? shopUrl(a, "/?p=" + f.wp.id) : "";
+      openAt("newsletter", { asAdd: { blocks: C.newsBlocks(x, { btn: t("news.btn"), href: href }), subj: x.t } });
+    }));
+    row.appendChild(button("📝 " + t("send.pr"), "btn small", function () {
+      flushEdits();
+      var x = currentTitle();
+      if (!x) return;
+      var S = {};
+      ["head", "lead", "leadNoA", "leadImp", "leadImpNoA", "rel", "about", "details", "pages", "contact", "docTitle"].forEach(function (k) { S[k] = t("pr." + k); });
+      var rows = x.fmts.map(function (f) {
+        return { label: t("fmt." + f.k), isbn: f.isbn ? C.hyphen(f.isbn, data.blocks) : "", pages: f.pages || 0, price: f.price ? money(f.price) : "" };
+      });
+      openAt("writer", { newDoc: C.pressRelease(x, rows, S, { imp: data.set.imp, rel: fmtDate(x.rel) }) });
+    }));
+    box.appendChild(row);
+    if (!tt.fmts.length) box.appendChild(el("p", "muted small", t("send.noFmt")));
+    box.appendChild(link);
+    showLink();
+    return box;
+  }
+
+  function shopDialog(fmtId) {
+    flushEdits();
+    var tt = currentTitle();
+    var f = tt && tt.fmts.filter(function (x) { return x.id === fmtId; })[0];
+    if (!f) return;
+    var Lk = links();
+    var accts = Lk ? Lk.list("woo") : [];
+    var dlg = el("dialog", "shop-dlg");
+    dlg.appendChild(el("h3", "", t("shop.title", { fmt: t("fmt." + f.k) })));
+    var acts = el("div", "acts");
+    if (!accts.length) {
+      dlg.appendChild(el("p", "", t("shop.none")));
+      acts.appendChild(button(t("btn.close"), "btn", function () { dlg.close(); }));
+      acts.appendChild(button(t("shop.connect"), "btn pri", function () { dlg.close(); openAt("settings", "services"); }));
+      dlg.appendChild(acts);
+      showDialog(dlg);
+      return;
+    }
+    var pick = select(accts.map(function (a) { return [a.id, a.name || a.site || a.id]; }),
+      f.wp && accts.some(function (a) { return a.id === f.wp.a; }) ? f.wp.a : accts[0].id);
+    if (accts.length > 1) dlg.appendChild(field(t("shop.acct"), pick));
+    dlg.appendChild(el("p", "muted", t("shop.what")));
+    var msg = el("p", "shop-msg");
+    msg.setAttribute("role", "status");
+    dlg.appendChild(msg);
+    var go = button(t("shop.go"), "btn pri", run);
+    acts.appendChild(button(t("btn.close"), "btn", function () { dlg.close(); }));
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    showDialog(dlg);
+
+    function say(text, bad) { msg.textContent = text; msg.className = "shop-msg" + (bad ? " bad" : ""); }
+    function fail(e) {
+      var code = (e && e.code) || (typeof e === "string" ? e : "bad");
+      var k = "shop.err." + code;
+      say(t(k) === k ? t("shop.err.bad") : t(k), true);
+      go.disabled = false;
+    }
+    function ok(x) { return x && x.status >= 200 && x.status < 300; }
+    // the link lives on the format; a format removed meanwhile keeps nothing
+    function remember(acct, id) {
+      var x = currentTitle();
+      if (!x || x.id !== tt.id || !x.fmts.some(function (y) { return y.id === f.id; })) return;
+      writeTitle({ fmts: x.fmts.map(function (y) { return y.id === f.id ? Object.assign({}, y, { wp: { a: acct, id: id } }) : y; }) }, true);
+    }
+    function run() {
+      var acct = pick.value;
+      go.disabled = true;
+      say(t("shop.busy"));
+      flushEdits();
+      var x = currentTitle() || tt;
+      var ff = x.fmts.filter(function (y) { return y.id === f.id; })[0] || f;
+      var reqs = [
+        { m: "GET", path: "/data/currencies/current" },
+        { m: "GET", path: "/settings/products/woocommerce_weight_unit" },
+        { m: "GET", path: "/settings/products/woocommerce_dimension_unit" }
+      ];
+      if (ff.isbn) reqs.push({ m: "GET", path: "/products?sku=" + ff.isbn });
+      Lk.call(acct, reqs).then(function (res) {
+        var code = Lk.statusCode(res[0]);
+        if (code) throw { code: code };
+        var shopCur = res[0].data && typeof res[0].data.code === "string" ? res[0].data.code : "";
+        var wu = ok(res[1]) && res[1].data ? String(res[1].data.value || "") : "";
+        var du = ok(res[2]) && res[2].data ? String(res[2].data.value || "") : "";
+        var found = ff.isbn && ok(res[3]) && Array.isArray(res[3].data) ? res[3].data.filter(function (p) { return p && p.id > 0; })[0] : null;
+        if (found) {
+          remember(acct, found.id);
+          say(t("shop.exists", { name: shopText(found.name), id: found.id }));
+          return;
+        }
+        var samePrice = !shopCur || shopCur === data.set.cur;
+        var body = C.shopDraft(x, ff, { label: fmtLabel(x, ff), about: t("f.bio"), wu: wu, du: du, price: samePrice });
+        return Lk.call(acct, [{ m: "POST", path: "/products", body: body }]).then(function (r) {
+          var y = r[0];
+          if (ok(y) && y.data && y.data.id > 0) {
+            remember(acct, y.data.id);
+            say(t("shop.done", { id: y.data.id }) + (samePrice || !ff.price ? "" : " " + t("shop.cur", { shop: shopCur, mine: data.set.cur })));
+            return;
+          }
+          if (y && y.status === 400 && y.data && /sku/.test(String(y.data.code || ""))) { say(t("shop.dup"), true); go.disabled = false; return; }
+          throw { code: Lk.statusCode(y) || "bad" };
+        });
+      }).catch(fail);
+    }
   }
 
   // ---------- 7. Barcode dialog ----------

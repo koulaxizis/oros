@@ -76,6 +76,13 @@ const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       WORDS = /^[a-z][a-z,-]{0,80}$/, ORDERBY = /^(date|id|modified|title)$/, ORD = /^(asc|desc)$/;
 function q(extra) { return Object.assign({ page: NUM, per_page: PER, orderby: ORDERBY, order: ORD }, extra || {}); }
 const STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
+// Publishing wave P2: a title becomes a DRAFT product, found again by its SKU.
+const SKU = /^[A-Za-z0-9_-]{1,40}$/;
+const DRAFT_BODY = {
+  name: "text", type: "ptype", status: "draft", sku: "sku", regular_price: "money",
+  description: "desc", short_description: "desc", weight: "dec", dimensions: "dims",
+  virtual: "bool", manage_stock: "bool"
+};
 const VAT_RE = /^[0-9]{9}$/, DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, UID = /^[A-F0-9]{40}$/, MARK = /^[0-9]{1,20}$/,
       SERIES = /^[A-Za-z0-9._-]{1,50}$/, AA = /^[0-9]{1,15}$/, ITYPE = /^[0-9]{1,2}\.[0-9]$/;
 const TOL_TYPES = ["1.1", "1.2", "1.3", "2.1", "2.2", "2.3", "5.1", "5.2", "11.1", "11.2", "11.4"];
@@ -160,7 +167,9 @@ const WHOLE = {
   odco: (b) => "fields" in b,
   odq: (b) => "domain" in b && "fields" in b && "order" in b,
   // Notion: search only with the "pages" filter
-  ntq: (b) => "filter" in b
+  ntq: (b) => "filter" in b,
+  // WooCommerce: a new product only as a draft, always with a name
+  wdraft: (b) => b.status === "draft" && "name" in b
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
@@ -171,9 +180,11 @@ export const PLATFORMS = {
     auth: (b) => ["Authorization", "Basic " + btoa(b.ck + ":" + b.cs)],
     allow: [
       ["GET", /^\/system_status$/, null, null],
-      ["GET", /^\/products$/, q({ status: WORDS, type: WORDS, modified_after: DT }), null],
+      ["GET", /^\/products$/, q({ status: WORDS, type: WORDS, modified_after: DT, sku: SKU }), null],
       ["GET", /^\/products\/[0-9]{1,12}$/, null, null],
       ["GET", /^\/products\/[0-9]{1,12}\/variations$/, q(null), null],
+      ["POST", /^\/products$/, null, DRAFT_BODY, "wdraft"],
+      ["GET", /^\/settings\/products\/woocommerce_(weight|dimension)_unit$/, null, null],
       ["PUT", /^\/products\/[0-9]{1,12}$/, null, STOCK_BODY],
       ["PUT", /^\/products\/[0-9]{1,12}\/variations\/[0-9]{1,12}$/, null, STOCK_BODY],
       ["GET", /^\/orders$/, q({ status: WORDS, after: DT, modified_after: DT }), null],
@@ -375,6 +386,14 @@ function okVal(kind, v) {
   if (kind === "bool") return v === true || v === false;
   if (kind === "status") return ORDER_ST.indexOf(v) >= 0;
   if (kind === "text") return typeof v === "string" && v.length > 0 && v.length <= 1000;
+  if (kind === "draft") return v === "draft";
+  if (kind === "ptype") return v === "simple";
+  if (kind === "sku") return typeof v === "string" && SKU.test(v);
+  if (kind === "money") return typeof v === "string" && /^[0-9]{1,7}(\.[0-9]{1,2})?$/.test(v);
+  if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
+  if (kind === "desc") return typeof v === "string" && v.length <= 8000;
+  if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
+    Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);
   if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
   if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);
