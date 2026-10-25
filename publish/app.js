@@ -152,6 +152,7 @@
       "tpl.yes.text": "Dear {name},\n\nWe read “{title}” with great pleasure and would like to talk about publishing it. When would it suit you to meet or speak?\n\nWith best wishes,\n{imprint}",
       "tpl.con.text": "PUBLISHING AGREEMENT (draft)\n\nDate: {date}\n\nBetween {imprint} (the Publisher) and {name} (the Author).\n\n1. The work. The Author grants the Publisher the right to publish “{title}” in these formats: {formats}.\n2. Royalties. The Publisher pays the Author {pct}% of {base} on every copy sold, with a statement at least once a year.\n3. Advance. On signing, the Publisher pays an advance of {adv}, recouped from the royalties.\n4. Term and territory: ______\n5. Delivery and approval of the manuscript: ______\n6. Rights return to the Author if the work stays out of print for ______\n\nThis draft is a starting point, not legal advice: have it checked before signing.\n\nFor the Publisher ______________          The Author ______________",
       "con.btn": "Contract in Writer", "con.doc": "Contract · {t} · {n}", "con.base.list": "the list price", "con.base.net": "the net receipts",
+      "kit.btn": "Release kit in Atelier", "kit.lineOn": "Out {d}", "kit.lineNow": "Out now",
       "sec.rc": "Review copies and reviews", "rc.none": "Who got the book for review, and what they wrote. A reminder comes 3 weeks after a copy went out.",
       "rc.add": "+ Review copy", "rc.n": "Name", "rc.out": "Outlet (paper, blog, show)", "rc.email": "E-mail", "rc.d": "Sent",
       "rc.st": "Status", "rc.st.sent": "Sent", "rc.st.rev": "Reviewed", "rc.st.no": "No review",
@@ -294,6 +295,7 @@
       "tpl.yes.text": "Αγαπητέ/ή {name},\n\nδιαβάσαμε το «{title}» με μεγάλη χαρά και θα θέλαμε να μιλήσουμε για την έκδοσή του. Πότε θα σας βόλευε να συναντηθούμε ή να μιλήσουμε;\n\nΜε εκτίμηση,\n{imprint}",
       "tpl.con.text": "ΣΥΜΒΑΣΗ ΕΚΔΟΣΗΣ (σχέδιο)\n\nΗμερομηνία: {date}\n\nΜεταξύ {imprint} (ο Εκδότης) και {name} (ο Συγγραφέας).\n\n1. Το έργο. Ο Συγγραφέας παραχωρεί στον Εκδότη το δικαίωμα να εκδώσει το «{title}» στις εξής μορφές: {formats}.\n2. Δικαιώματα. Ο Εκδότης καταβάλλει στον Συγγραφέα {pct}% επί {base} για κάθε αντίτυπο που πωλείται, με εκκαθάριση τουλάχιστον μία φορά τον χρόνο.\n3. Προκαταβολή. Με την υπογραφή ο Εκδότης καταβάλλει προκαταβολή {adv}, που συμψηφίζεται με τα δικαιώματα.\n4. Διάρκεια και περιοχή: ______\n5. Παράδοση και έγκριση του χειρογράφου: ______\n6. Τα δικαιώματα επιστρέφουν στον Συγγραφέα αν το έργο μείνει εξαντλημένο για ______\n\nΤο σχέδιο αυτό είναι αφετηρία, όχι νομική συμβουλή: δώστε το για έλεγχο πριν την υπογραφή.\n\nΓια τον Εκδότη ______________          Ο Συγγραφέας ______________",
       "con.btn": "Συμβόλαιο στον Writer", "con.doc": "Συμβόλαιο · {t} · {n}", "con.base.list": "της τιμής καταλόγου", "con.base.net": "των καθαρών εισπράξεων",
+      "kit.btn": "Πακέτο κυκλοφορίας στο Atelier", "kit.lineOn": "Κυκλοφορεί {d}", "kit.lineNow": "Κυκλοφορεί τώρα",
       "sec.rc": "Αντίτυπα κριτικής και κριτικές", "rc.none": "Ποιος πήρε το βιβλίο για κριτική και τι έγραψε. Υπενθύμιση έρχεται 3 εβδομάδες μετά την αποστολή.",
       "rc.add": "+ Αντίτυπο κριτικής", "rc.n": "Όνομα", "rc.out": "Μέσο (εφημερίδα, blog, εκπομπή)", "rc.email": "E-mail", "rc.d": "Στάλθηκε",
       "rc.st": "Κατάσταση", "rc.st.sent": "Στάλθηκε", "rc.st.rev": "Έγραψε κριτική", "rc.st.no": "Χωρίς κριτική",
@@ -1315,6 +1317,17 @@
         return { label: t("fmt." + f.k), isbn: f.isbn ? C.hyphen(f.isbn, data.blocks) : "", pages: f.pages || 0, price: f.price ? money(f.price) : "" };
       });
       openAt("writer", { newDoc: C.pressRelease(x, rows, S, { imp: data.set.imp, rel: fmtDate(x.rel) }) });
+    }));
+    // the release kit in Atelier (wave P9): post, story, banner, bookmark, poster
+    row.appendChild(button("🎨 " + t("kit.btn"), "btn small", function () {
+      flushEdits();
+      var x = currentTitle();
+      if (!x) return;
+      var f = cur() || x.fmts.filter(function (y) { return y.price > 0; })[0];
+      var q = C.quotes(x)[0];
+      openAt("atelier", { releaseKit: { title: x.t, sub: x.sub, author: C.authors(x).join(", "),
+        line: x.rel && x.rel > todayYmd() ? t("kit.lineOn", { d: fmtDate(x.rel) }) : t("kit.lineNow"),
+        price: f && f.price ? money(f.price) : "", imprint: data.set.imp, quote: q ? q.q : "", img: C.coverPath(x.cov) || "" } });
     }));
     box.appendChild(row);
     if (!tt.fmts.length) box.appendChild(el("p", "muted small", t("send.noFmt")));

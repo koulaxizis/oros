@@ -59,6 +59,9 @@ The strip under the canvas shows the pages of your design. `+` adds a page; each
 - Videos and sounds play in `Play` and in `Download` › `Video` (with their sound). A GIF shows the moving video without sound. The slide show plays the videos and the page sound too, and runs the entrance animations of each page. Pictures, PDF and PowerPoint use the video's first frame.
 - Video and sound files stay on your orOS disk and sync with Vault Drive like your photos, so large files take space on every device.
 
+## Release kit (for publishers)
+In [Publishing](app:publish), `Release kit in Atelier` on a title asks here once, then makes five designs in a new folder named after the book: Instagram post, story, site banner, bookmark and A3 poster, with the cover, the texts and a background colour taken from the cover's edge. They are ordinary designs: change anything, then download as usual.
+
 ## Bulk create
 - Write fields in curly brackets in a text box or a table, like {name} or {date}, then choose `More` › `Bulk create…`.
 - Paste a list (a table copied from a spreadsheet, or one name per line) or open a CSV or Excel file. The first row has the column names; a column fills the field with the same name, and you can change which column goes where.

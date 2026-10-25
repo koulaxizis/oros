@@ -364,5 +364,8 @@ orosPack("de", "publish", {
  "rc.badUrl": "Der Link muss mit https:// beginnen",
  "rc.del": "Löschen",
  "rc.fuSubj": "„{title}“",
- "rc.fuBody": "Liebe/r {name},\n\nich hoffe, „{title}“ ist gut angekommen. Wenn Sie schon zum Lesen gekommen sind, würden wir uns sehr über Ihre Meinung freuen und Ihre Rezension gern teilen, falls Sie eine schreiben.\n\nMit freundlichen Grüßen\n{imprint}"
+ "rc.fuBody": "Liebe/r {name},\n\nich hoffe, „{title}“ ist gut angekommen. Wenn Sie schon zum Lesen gekommen sind, würden wir uns sehr über Ihre Meinung freuen und Ihre Rezension gern teilen, falls Sie eine schreiben.\n\nMit freundlichen Grüßen\n{imprint}",
+ "kit.btn": "Release-Paket in Atelier",
+ "kit.lineOn": "Erscheint am {d}",
+ "kit.lineNow": "Jetzt erschienen"
 });
