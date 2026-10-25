@@ -518,7 +518,7 @@
   var edTimer = 0;
   function openTitle(id) {
     if (!C.find(data, "titles", id)) return;
-    view = { name: "title", id: id };
+    setView({ name: "title", id: id });
     render();
     $("main").scrollTop = 0;
   }
@@ -531,7 +531,25 @@
     if (rebuild) return;
     refreshGaps();
   }
-  function later(fn) { clearTimeout(edTimer); edTimer = setTimeout(fn, 350); }
+  // One pending write at a time: typing in another field first writes
+  // the pending one (so a quick move from field to field loses nothing);
+  // leaving the editor or the page writes it at once.
+  var edPending = null, edSrc = null;
+  function later(fn, src) {
+    if (edPending && edSrc !== src) flushEdits();
+    clearTimeout(edTimer);
+    edPending = fn; edSrc = src;
+    edTimer = setTimeout(flushEdits, 350);
+  }
+  function flushEdits() {
+    clearTimeout(edTimer);
+    var fn = edPending;
+    edPending = null; edSrc = null;
+    if (fn) fn();
+  }
+  function setView(v) { flushEdits(); view = v; }
+  window.addEventListener("pagehide", flushEdits);
+  document.addEventListener("visibilitychange", function () { if (document.hidden) flushEdits(); });
 
   function renderEditor() {
     var sec = $("view-title");
@@ -540,7 +558,7 @@
     var tt = currentTitle();
     if (!tt) { view = { name: "list", id: "" }; render(); return; }
     var head = el("div", "ed-head");
-    head.appendChild(button("← " + t("btn.back"), "btn", function () { view = { name: "list", id: "" }; render(); }));
+    head.appendChild(button("← " + t("btn.back"), "btn", function () { setView({ name: "list", id: "" }); render(); }));
     var h = el("h2", "", tt.t);
     h.id = "ed-h";
     head.appendChild(h);
@@ -563,7 +581,7 @@
           if (key === "t" && !i.value.trim()) return;
           if (key === "t") $("ed-h").textContent = i.value;
           writeTitle(p);
-        });
+        }, i);
       });
       var f = field(label, i);
       if (wide) f.classList.add("wide");
@@ -607,7 +625,7 @@
       });
       del.setAttribute("aria-label", t("btn.remove"));
       r.addEventListener("change", function () { writeTitle({ ppl: pplFromDom() }); });
-      n.addEventListener("input", function () { later(function () { writeTitle({ ppl: pplFromDom() }); }); });
+      n.addEventListener("input", function () { later(function () { writeTitle({ ppl: pplFromDom() }); }, n); });
       row.appendChild(r);
       row.appendChild(n);
       row.appendChild(del);
@@ -635,7 +653,7 @@
     s4.appendChild(el("h3", "", t("sec.texts")));
     [["blurb", 4000, "textarea"], ["bio", 3000, "textarea"], ["kw", 400, "text"], ["notes", 4000, "textarea"]].forEach(function (d) {
       var i = input(d[2], tt[d[0]], { maxlength: String(d[1]) });
-      i.addEventListener("input", function () { later(function () { var p = {}; p[d[0]] = i.value; writeTitle(p); }); });
+      i.addEventListener("input", function () { later(function () { var p = {}; p[d[0]] = i.value; writeTitle(p); }, i); });
       s4.appendChild(field(t("f." + d[0]), i));
     });
     sec.appendChild(s4);
@@ -743,7 +761,7 @@
       if (v === null) return;      // keep the old number until the new one is valid
       writeTitle({ fmts: fmtsWith({ isbn: v }) });
     }
-    isbnIn.addEventListener("input", function () { later(onIsbn); });
+    isbnIn.addEventListener("input", function () { later(onIsbn, isbnIn); });
     isbnIn.addEventListener("blur", function () {
       var p = C.parseIsbn(isbnIn.value);
       if (p.ok) isbnIn.value = C.hyphen(p.isbn, data.blocks);
@@ -756,13 +774,13 @@
     function numField(key, label, step, max) {
       var i = input("number", f[key] || "", { min: "0", max: String(max), step: step, inputmode: "decimal" });
       i.addEventListener("input", function () {
-        later(function () { var p = {}; p[key] = i.value === "" ? 0 : C.num(i.value, 0, max, step === "0.01" ? 2 : step === "0.1" ? 1 : 0); writeTitle({ fmts: fmtsWith(p) }); });
+        later(function () { var p = {}; p[key] = i.value === "" ? 0 : C.num(i.value, 0, max, step === "0.01" ? 2 : step === "0.1" ? 1 : 0); writeTitle({ fmts: fmtsWith(p) }); }, i);
       });
       grid.appendChild(field(label, i));
     }
     function txtField(key, label, max) {
       var i = input("text", f[key], { maxlength: String(max) });
-      i.addEventListener("input", function () { later(function () { var p = {}; p[key] = i.value; writeTitle({ fmts: fmtsWith(p) }); }); });
+      i.addEventListener("input", function () { later(function () { var p = {}; p[key] = i.value; writeTitle({ fmts: fmtsWith(p) }); }, i); });
       grid.appendChild(field(label, i));
     }
     numField("price", t("fmt.price", { cur: data.set.cur }), "0.01", 1e6);
@@ -814,7 +832,7 @@
     acts.appendChild(button(t("btn.del"), "btn pri", function () {
       dlg.close();
       var keep = JSON.parse(JSON.stringify(tt));
-      view = { name: "list", id: "" };
+      setView({ name: "list", id: "" });
       commit(C.remove(data, "titles", tt.id, Date.now()));
       if (tt.cov) dropCoverLater(tt.cov);
       toast(t("del.done", { t: tt.t }), t("btn.undo"), function () {
@@ -897,6 +915,8 @@
 
   // ---------- 7. Barcode dialog ----------
   function barcodeDialog(tt, fmtId) {
+    flushEdits();
+    tt = currentTitle() || tt;
     var f = tt && tt.fmts.filter(function (x) { return x.id === fmtId; })[0];
     if (!f || !f.isbn) return;
     var svg = C.barcodeSvg(f.isbn, data.blocks);
@@ -1175,7 +1195,7 @@
       b.addEventListener("click", function () {
         prefs.tab = b.dataset.tab;
         savePrefs();
-        view = { name: b.dataset.tab === "isbn" ? "isbn" : "list", id: "" };
+        setView({ name: b.dataset.tab === "isbn" ? "isbn" : "list", id: "" });
         render();
       });
     });
@@ -1192,7 +1212,7 @@
   document.addEventListener("keydown", function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === "Escape" && view.name === "title" && !document.querySelector("dialog[open]")) {
-      view = { name: "list", id: "" };
+      setView({ name: "list", id: "" });
       render();
     }
   });
@@ -1203,17 +1223,17 @@
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
-    if (target.view === "isbn") { view = { name: "isbn", id: "" }; render(); return; }
+    if (target.view === "isbn") { setView({ name: "isbn", id: "" }); render(); return; }
     if (typeof target.isbn === "string") {
       var p = C.parseIsbn(target.isbn), uses = p.ok ? (C.used(data)[p.isbn] || []).filter(function (u) { return u.title; }) : [];
       if (uses.length) { openTitle(uses[0].title); return; }
-      view = { name: "isbn", id: "" };
+      setView({ name: "isbn", id: "" });
       render();
       return;
     }
     if (target["new"] && typeof target["new"] === "object") {
       var n = target["new"], pi = C.parseIsbn(typeof n.isbn === "string" ? n.isbn : "");
-      view = { name: "list", id: "" };
+      setView({ name: "list", id: "" });
       render();
       newTitleDialog({ t: typeof (n.t || n.title) === "string" ? String(n.t || n.title).slice(0, 200) : "",
         author: typeof n.author === "string" ? n.author.slice(0, 120) : "", isbn: pi.ok ? pi.isbn : "" });
