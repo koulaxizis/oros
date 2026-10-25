@@ -539,5 +539,12 @@ orosPack("de", "assistant", {
  "nl.k.divider": "Trennlinie",
  "nl.k.spacer": "Abstand",
  "nl.k.image": "Bild",
- "nl.k.picture_text": "Bild und Text"
+ "nl.k.picture_text": "Bild und Text",
+ "nl.checkHead": "Bereit zum Senden? · {app}",
+ "nl.checkHint": "Öffnet die Prüfung der Ausgabe in {app}: was fehlt und, wenn alles stimmt, den Sendebildschirm. Auf Senden drückst du dort.",
+ "nl.checkOpen": "Prüfung öffnen",
+ "nl.k.products": "Produkte",
+ "nl.k.shop_products": "Aus deinem Shop",
+ "nl.shopN": "die {n} neuesten, beim Hinzufügen aus dem Shop gelesen",
+ "nl.shopQ": "die {n} neuesten mit „{q}“, beim Hinzufügen aus dem Shop gelesen"
 });

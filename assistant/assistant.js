@@ -198,7 +198,8 @@
       "entry.slides": "New presentation · {app}", "entry.bookmark": "New bookmark · {app}", "entry.note": "New note · {app}",
       "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
-      "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text",
+      "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text", "nl.checkHead": "Ready to send? · {app}", "nl.checkHint": "Opens the issue's check in {app}: what is missing, and when all is well, the send screen. You press Send there.", "nl.checkOpen": "Open the check",
+      "nl.k.products": "Products", "nl.k.shop_products": "From your shop", "nl.shopN": "the newest {n}, read from the shop when added", "nl.shopQ": "the newest {n} named \u201c{q}\u201d, read from the shop when added",
       "cv.head": "Book cover · {app}", "cv.hint": "Opens the Book cover window in {app} with this filled in, and the pictures saved to Files › Pictures › Covers. You check it and press Create; nothing is made before that.",
       "cv.f.title": "Title", "cv.f.sub": "Subtitle", "cv.f.author": "Author", "cv.f.imprint": "Publisher", "cv.f.isbn": "ISBN", "cv.f.price": "Price",
       "cv.f.pages": "Pages", "cv.f.trim": "Size", "cv.f.blurb": "Back cover", "cv.front": "Front picture", "cv.logo": "Logo",
@@ -479,7 +480,8 @@
       "entry.slides": "Νέα παρουσίαση · {app}", "entry.bookmark": "Νέος σελιδοδείκτης · {app}", "entry.note": "Νέα σημείωση · {app}",
       "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
-      "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο",
+      "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο", "nl.checkHead": "Έτοιμο για αποστολή; · {app}", "nl.checkHint": "Ανοίγει τον έλεγχο του τεύχους ({app}): τι λείπει και, όταν όλα είναι εντάξει, την οθόνη αποστολής. Το Αποστολή το πατάς εσύ εκεί.", "nl.checkOpen": "Άνοιγμα ελέγχου",
+      "nl.k.products": "Προϊόντα", "nl.k.shop_products": "Από το κατάστημά σου", "nl.shopN": "τα {n} νεότερα, από το κατάστημα τη στιγμή της προσθήκης", "nl.shopQ": "τα {n} νεότερα με «{q}», από το κατάστημα τη στιγμή της προσθήκης",
       "cv.head": "Εξώφυλλο βιβλίου · {app}", "cv.hint": "Ανοίγει το παράθυρο «Εξώφυλλο βιβλίου» ({app}) συμπληρωμένο, και οι εικόνες αποθηκεύονται στα Αρχεία › Εικόνες › Covers. Το ελέγχεις και πατάς Δημιουργία· τίποτα δεν φτιάχνεται πριν από αυτό.",
       "cv.f.title": "Τίτλος", "cv.f.sub": "Υπότιτλος", "cv.f.author": "Συγγραφέας", "cv.f.imprint": "Εκδότης", "cv.f.isbn": "ISBN", "cv.f.price": "Τιμή",
       "cv.f.pages": "Σελίδες", "cv.f.trim": "Διάσταση", "cv.f.blurb": "Οπισθόφυλλο", "cv.front": "Εικόνα εξωφύλλου", "cv.logo": "Λογότυπο",
@@ -2136,6 +2138,7 @@
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
+    if (call.name === "newsletter_check") return Promise.resolve(proposeNlCheck(c, call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
@@ -2349,6 +2352,16 @@
       card.appendChild(acts);
     }
     host.appendChild(card);
+  }
+
+  function proposeNlCheck(c, args) {
+    if (!installed().newsletter) return { content: "Error: the Newsletter app is not installed.", err: 1, ui: { k: "nlErr" } };
+    var issue = args && args.issue_ref ? nlIssue(c, String(args.issue_ref)) : "";
+    if (args && args.issue_ref && !issue) return { content: "Error: unknown issue_ref. Use a ref that search_data returned for a Newsletter issue, or leave it out.", err: 1, ui: { k: "nlErr" } };
+    return {
+      content: "Shown to the user as a card. It opens Newsletter's pre-send check; the user sends from there. Nothing is sent yet.",
+      ui: { k: "nlCheck", issue: issue, st: "" }
+    };
   }
 
   // read_item: the full text of an item a search returned (its ref),
@@ -3411,6 +3424,7 @@
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
+        if (ui.k === "nlCheck") { drawNlCheck(host, r, c); return; }
         if (ui.k === "nlErr") return;
         if (ui.k === "cover") { drawCover(host, r, c); return; }
         if (ui.k === "coverErr") return;
@@ -3633,6 +3647,7 @@
     n.view.forEach(function (v) {
       var li = el("li");
       li.appendChild(el("b", "", t("nl.k." + v.kind)));
+      if (v.kind === "shop_products") li.appendChild(document.createTextNode(" " + (v.q ? t("nl.shopQ", { n: v.n, q: v.q }) : t("nl.shopN", { n: v.n }))));
       if (v.text) li.appendChild(document.createTextNode(" " + (v.text.length > 240 ? v.text.slice(0, 239) + "…" : v.text)));
       ol.appendChild(li);
     });
@@ -3652,6 +3667,30 @@
         var target = { asAdd: { blocks: n.blocks, subj: n.subj, issue: typeof ui.args.issue === "string" ? ui.args.issue : "" } };
         saveChat(c).then(function () {
           if (!runEntry({ call: { fn: "openAt", args: ["newsletter", target] } })) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+  function drawNlCheck(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.newsletter) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Newsletter" }))); return; }
+    var name = have.newsletter;
+    var card = el("section", "entry-card nl-card");
+    card.appendChild(el("h3", "entry-head", t("nl.checkHead", { app: name })));
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("nl.checkHint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () { ui.st = "dismissed"; saveChat(c); renderMessages(); }));
+      acts.appendChild(button(t("nl.checkOpen"), "primary", function () {
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          var tg = { check: { issue: typeof ui.issue === "string" ? ui.issue : "" } };
+          if (!runEntry({ call: { fn: "openAt", args: ["newsletter", tg] } })) { ui.st = "failed"; saveChat(c); }
           renderMessages();
         });
       }));

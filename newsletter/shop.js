@@ -510,6 +510,37 @@
     reset();
   }
 
+  // auto({ n, q }, done, fail) (newsletter by chat, wave N3): the
+  // shop's newest n products (WooCommerce by date, Shopify by last
+  // update), or the newest whose name or line has every word of q, from
+  // the first connected shop, without the picker; pictures copied as
+  // pick does. done(items, sh, acct, fails) like pick; fail(text).
+  var AUTO_PAGES = 3;
+  function auto(o, done, fail) {
+    if (!links()) { fail(t("shop.noShell")); return; }
+    var accts = accounts();
+    if (!accts.length) { fail(t("shop.none")); return; }
+    var a = accts[0], n = Math.max(1, Math.min(MAX, o && o.n | 0 || 1));
+    var q = C.oneLine(String(o && o.q || ""), 100), words = C.fold(q).split(/\s+/).filter(Boolean);
+    var st = { acct: a.id, page: 1, next: "", done: false, cur: "" }, got = [], seen = {};
+    function fits(p) {
+      var s = C.fold(p.name + " " + p.t);
+      return words.every(function (w) { return s.indexOf(w) >= 0; });
+    }
+    function step(round) {
+      return loadMore(st, a.p === "shopify" ? q : "").then(function (items) {
+        items.forEach(function (p) { if (got.length < n && !seen[p.id] && fits(p)) { seen[p.id] = 1; got.push(p); } });
+        if (got.length >= n || st.done || round >= AUTO_PAGES) return got;
+        return step(round + 1);
+      });
+    }
+    step(1).then(function (list) {
+      var items = list.map(toItem).filter(Boolean);
+      if (!items.length) { fail(t("shop.empty")); return; }
+      return copyPics(a, items).then(function (fails) { done(items, a.p, a.id, fails); });
+    })["catch"](function (e) { fail(errText(e)); });
+  }
+
   // refresh(block, done): read the block's products again; done(items,
   // gone) with fresh prices, or nothing when the shop couldn't answer.
   function refresh(b, done) {
@@ -580,7 +611,7 @@
     init: function (helpers) { A = helpers; },
     has: function () { return !!links() && accounts().length > 0; },
     hasWoo: function () { return !!links() && accounts(["woo"]).length > 0; },
-    pick: pick, refresh: refresh, customers: customers, t: t
+    pick: pick, refresh: refresh, customers: customers, auto: auto, t: t
   };
   if (NODE) module.exports = api;
   else root.OrosNewsletterShop = api;

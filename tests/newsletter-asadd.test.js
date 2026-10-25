@@ -31,13 +31,13 @@ test("normNewsletter maps the model's blocks to Newsletter blocks", () => {
   assert.equal(n.ok, true);
   assert.equal(n.subj, "October news");
   assert.deepEqual(n.blocks, [
-    { k: "h", t: "Interview with Maria", lv: 1 },
-    { k: "p", t: "Maria talks about her new book.\n\nRead **all** of it [here](https://example.com/i)." },
-    { k: "quote", t: "Books are slow on purpose.", by: "Maria" },
-    { k: "btn", t: "Read the interview", href: "https://example.com/interview", al: "center" },
-    { k: "list", t: "One\nTwo", ord: 1 },
-    { k: "hr" },
-    { k: "sp", h: 24 }
+    { k: "h", t: "Interview with Maria", lv: 1, sec: "news" },
+    { k: "p", t: "Maria talks about her new book.\n\nRead **all** of it [here](https://example.com/i).", sec: "news" },
+    { k: "quote", t: "Books are slow on purpose.", by: "Maria", sec: "news" },
+    { k: "btn", t: "Read the interview", href: "https://example.com/interview", al: "center", sec: "news" },
+    { k: "list", t: "One\nTwo", ord: 1, sec: "news" },
+    { k: "hr", sec: "news" },
+    { k: "sp", h: 24, sec: "news" }
   ]);
   assert.equal(n.view.length, 7);
   assert.equal(n.view[3].text, "Read the interview → https://example.com/interview");
@@ -52,7 +52,7 @@ test("normNewsletter refuses what Newsletter could not keep", () => {
   const many = { blocks: Array.from({ length: A.NL_MAX + 1 }, () => ({ kind: "divider" })) };
   assert.match(A.normNewsletter(many).err, /At most/);
   // a heading of level 2 is Newsletter's default and is left out
-  assert.deepEqual(A.normNewsletter({ blocks: [{ kind: "heading", text: "H", level: 2 }] }).blocks, [{ k: "h", t: "H" }]);
+  assert.deepEqual(A.normNewsletter({ blocks: [{ kind: "heading", text: "H", level: 2 }] }).blocks, [{ k: "h", t: "H", sec: "news" }]);
 });
 
 test("every block the card sends is kept by Newsletter as it is", () => {
@@ -69,7 +69,7 @@ test("every block the card sends is kept by Newsletter as it is", () => {
 test("asAdd takes only plain kinds and drops empty blocks", () => {
   const v = C.asAdd({
     blocks: [
-      { k: "prod", items: [{ name: "x", href: "https://x.example.com" }] },
+      { k: "video", url: "https://x.example.com/v" },
       { k: "head", t: "x" },
       { k: "p", t: "" },
       { k: "btn", t: "Go", href: "" },
@@ -117,8 +117,8 @@ test("picture blocks carry the picture's https address, checked", () => {
   ] });
   assert.equal(n.ok, true);
   assert.deepEqual(n.blocks[0], { k: "imgtxt", src: "https://shop.example.com/cover.jpg", alt: "Cover", hd: "New book", t: "Out now.",
-                                  bt: "Get it", bh: "https://shop.example.com/b", side: "r" });
-  assert.deepEqual(n.blocks[1], { k: "img", alt: "Book fair banner", href: "https://fair.example.com/" });
+                                  bt: "Get it", bh: "https://shop.example.com/b", side: "r", sec: "news" });
+  assert.deepEqual(n.blocks[1], { k: "img", alt: "Book fair banner", href: "https://fair.example.com/", sec: "promo" });
   assert.match(A.normNewsletter({ blocks: [{ kind: "image", image_url: "http://x.example.com/a.jpg" }] }).err, /https/);
   assert.match(A.normNewsletter({ blocks: [{ kind: "image", image_url: "https://u:p@x.example.com/a.jpg" }] }).err, /https/);
   assert.match(A.normNewsletter({ blocks: [{ kind: "picture_text", heading: "H", button_text: "Go" }] }).err, /button/);
@@ -146,4 +146,115 @@ test("asAdd turns picture addresses into pics and never takes a file", () => {
   assert.equal(bad.blocks.length, 1);
   assert.equal(bad.blocks[0].f, "");
   assert.deepEqual(bad.pics, []);
+});
+
+// Wave N3: products from other sites, and the user's own shop.
+test("products blocks: other sites' products with prices in cents, or a shop request", () => {
+  const n = A.normNewsletter({ blocks: [
+    { kind: "products", button_text: "Buy", products: [
+      { name: "Night Book", url: "https://other.example.com/night", price: 14.9, currency: "usd", image_url: "https://other.example.com/n.jpg" },
+      { name: "Day Book", url: "https://other.example.com/day" }] },
+    { kind: "shop_products", count: 2, search: "Νύχτα" },
+    { kind: "shop_products" }
+  ] });
+  assert.equal(n.ok, true);
+  assert.deepEqual(n.blocks[0].items[0], { name: "Night Book", href: "https://other.example.com/night", price: 1490, cur: "USD", t: "", src: "https://other.example.com/n.jpg" });
+  assert.equal(n.blocks[0].items[1].price, undefined);
+  assert.deepEqual(n.blocks[1], { k: "prod", items: [], bt: "", shop: { n: 2, q: "Νύχτα" }, sec: "prod" });
+  assert.deepEqual(n.blocks[2].shop, { n: 1 });
+  assert.deepEqual(n.view[1], { kind: "shop_products", text: "", n: 2, q: "Νύχτα" });
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: [] }] }).err, /no products/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: [{ name: "x" }] }] }).err, /url/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: [{ name: "x", url: "https://a.example.com", price: "free" }] }] }).err, /price/);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "shop_products", count: 12 }] }).err, /count/);
+  const ten = Array.from({ length: 10 }, (_, i) => ({ name: "p" + i, url: "https://a.example.com/" + i }));
+  assert.match(A.normNewsletter({ blocks: [{ kind: "products", products: ten }] }).err, /at most 9/);
+
+  const v = C.asAdd({ blocks: n.blocks });
+  assert.deepEqual(v.pics, [{ i: 0, j: 0, src: "https://other.example.com/n.jpg" }]);
+  assert.deepEqual(v.shops, [{ i: 1, n: 2, q: "Νύχτα" }, { i: 2, n: 1, q: "" }]);
+  assert.equal(v.blocks[0].items[0].price, 1490);
+  assert.equal(v.blocks[0].items[0].f, "");
+  assert.equal(v.blocks[0].items[0].src, "");
+  assert.equal(v.blocks[0].bt, "Buy");
+  // the shape stays what normBlock makes, so the block is found again unchanged
+  v.blocks.forEach((b) => assert.deepEqual(C.normBlock(JSON.parse(JSON.stringify(b))), b));
+  // a bridge caller can't bring a shop link or an empty block
+  const w = C.asAdd({ blocks: [{ k: "prod", items: [{ name: "x", href: "https://a.example.com", f: "/internal/Newsletter/a.jpg" }], sh: "woo", acct: "abcdefgh12", at: 5 },
+                               { k: "prod", items: [] }] });
+  assert.equal(w.blocks.length, 1);
+  assert.equal(w.blocks[0].sh, undefined);
+  assert.equal(w.blocks[0].acct, undefined);
+  assert.equal(w.blocks[0].items[0].f, "");
+});
+
+test("shop auto: the newest products, or the newest that match, from the first shop", async () => {
+  const S = require(path.join(root, "newsletter/shop.js"));
+  const prods = [
+    { id: 3, name: "Νύχτα στο λιμάνι", permalink: "https://shop.example.com/p/3", price: "12.00", regular_price: "12.00", status: "publish", images: [{ src: "https://shop.example.com/wp-content/uploads/3.jpg" }] },
+    { id: 2, name: "Day trip", permalink: "https://shop.example.com/p/2", price: "9.50", regular_price: "9.50", status: "publish" },
+    { id: 1, name: "Μια νύχτα ακόμα", permalink: "https://shop.example.com/p/1", price: "8", regular_price: "10", on_sale: true, status: "publish" }
+  ];
+  const calls = [];
+  globalThis.parent = { orosLinks: {
+    list: () => [{ id: "abcdefgh12", p: "woo", name: "Noxpress", site: "https://shop.example.com" }],
+    call: (acct, reqs) => { calls.push(reqs); return Promise.resolve(reqs.map((r) => ({ data: /currencies/.test(r.path) ? { code: "EUR" } : (/page=1&/.test(r.path) ? prods : []) }))); },
+    statusCode: () => ""
+  } };
+  const oldFetch = globalThis.fetch;
+  globalThis.fetch = () => Promise.reject(new Error("blocked"));
+  try {
+    const run = (o) => new Promise((res, rej) => S.auto(o, (items, sh, acct, fails) => res({ items, sh, acct, fails }), (m) => rej(new Error(m))));
+    const one = await run({ n: 1 });
+    assert.equal(one.items.length, 1);
+    assert.equal(one.items[0].name, "Νύχτα στο λιμάνι");
+    assert.equal(one.items[0].price, 1200);
+    assert.equal(one.sh, "woo");
+    assert.equal(one.acct, "abcdefgh12");
+    const two = await run({ n: 2, q: "νυχτα" });
+    assert.deepEqual(two.items.map((x) => x.name), ["Νύχτα στο λιμάνι", "Μια νύχτα ακόμα"]);
+    assert.equal(two.items[1].was, 1000);
+    await assert.rejects(run({ n: 1, q: "nothing like this" }));
+  } finally {
+    globalThis.fetch = oldFetch;
+    delete globalThis.parent;
+  }
+});
+
+// Wave N4: each block has a section and lands in it; "ready to send"
+// opens Newsletter's own check, never sends.
+test("sections: defaults, refusals, and Newsletter keeps them", () => {
+  const n = A.normNewsletter({ blocks: [
+    { kind: "heading", text: "Top", section: "top" },
+    { kind: "text", text: "Bye", section: "end" },
+    { kind: "text", text: "News" }
+  ] });
+  assert.deepEqual(n.blocks.map((b) => b.sec), ["top", "end", "news"]);
+  assert.match(A.normNewsletter({ blocks: [{ kind: "text", text: "x", section: "middle" }] }).err, /section/);
+  n.blocks.forEach((b) => assert.deepEqual(C.normBlock(JSON.parse(JSON.stringify(b))), b));
+  // a section Newsletter does not know is dropped, the block stays
+  assert.deepEqual(C.normBlock({ k: "p", t: "x", sec: "middle" }).sec, undefined);
+  assert.equal(C.normBlock({ k: "head", sec: "top" }).sec, undefined);
+  Object.keys(A.NL_SECS).forEach((k) => assert.ok(C.SECTIONS.includes(A.NL_SECS[k]), k));
+});
+
+test("insertAt puts a block after its own section and before later ones", () => {
+  const d = [{ k: "head" }, { k: "h", sec: "top" }, { k: "p", sec: "news" }, { k: "prod", sec: "prod" },
+             { k: "img", sec: "promo" }, { k: "p", sec: "end" }, { k: "social" }, { k: "foot" }];
+  assert.equal(C.insertAt(d, "top"), 2);
+  assert.equal(C.insertAt(d, "news"), 3);
+  assert.equal(C.insertAt(d, "prod"), 4);
+  assert.equal(C.insertAt(d, "promo"), 5);
+  assert.equal(C.insertAt(d, "end"), 6);
+  assert.equal(C.insertAt(d), 6);
+  // blocks written by hand (no section) keep their place; new ones go after them
+  assert.equal(C.insertAt([{ k: "head" }, { k: "p" }, { k: "foot" }], "top"), 2);
+  assert.equal(C.insertAt([{ k: "head" }, { k: "p" }, { k: "p", sec: "end" }, { k: "foot" }], "news"), 2);
+});
+
+test("newsletter_check comes only with Newsletter", () => {
+  const names = (o) => A.toolsFor(o).map((x) => x.name);
+  assert.ok(!names({ entries: true }).includes("newsletter_check"));
+  assert.ok(names({ entries: true, newsletter: true }).includes("newsletter_check"));
+  assert.match(A.systemPrompt({ lang: "en", now: 0, newsletter: true, entries: ["todo"] }), /newsletter_check; sending is always the user's step/);
 });

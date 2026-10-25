@@ -94,6 +94,8 @@
       "as.noList": "Make a list first: an issue belongs to a list.", "as.newList": "New list",
       "as.added": "{n} blocks added", "as.added1": "1 block added", "as.cut": "({n} more did not fit: an issue holds 60 blocks.)",
       "as.none": "Nothing to add: the blocks were empty.",
+      "as.shop": "{n} products from your shop added.", "as.shop1": "1 product from your shop added.", "as.shopFail": "The products from your shop could not be added:",
+      "as.noDraft": "There is no draft to check yet.",
       "as.pic1": "One picture could not be copied from its site: pick it in its block.", "as.pics": "{n} pictures could not be copied from their sites: pick them in their blocks.",
       "tpl.new": "New issue", "tpl.blank": "Blank issue", "tpl.from": "Or start from a template", "tpl.delete": "Delete template",
       "sd.now": "Now", "sd.later": "Later", "sd.when": "Send on", "sd.schedule": "Schedule", "sd.whenBad": "Pick a time in the future",
@@ -319,6 +321,8 @@
       "as.noList": "Φτιάξε πρώτα μια λίστα: κάθε τεύχος ανήκει σε λίστα.", "as.newList": "Νέα λίστα",
       "as.added": "Προστέθηκαν {n} blocks", "as.added1": "Προστέθηκε 1 block", "as.cut": "({n} ακόμα δεν χώρεσαν: ένα τεύχος έχει έως 60 blocks.)",
       "as.none": "Τίποτα για προσθήκη: τα blocks ήταν κενά.",
+      "as.shop": "Προστέθηκαν {n} προϊόντα από το κατάστημά σου.", "as.shop1": "Προστέθηκε 1 προϊόν από το κατάστημά σου.", "as.shopFail": "Τα προϊόντα από το κατάστημά σου δεν προστέθηκαν:",
+      "as.noDraft": "Δεν υπάρχει ακόμα πρόχειρο για έλεγχο.",
       "as.pic1": "Μία εικόνα δεν αντιγράφηκε από τη σελίδα της: διάλεξέ τη στο block της.", "as.pics": "{n} εικόνες δεν αντιγράφηκαν από τις σελίδες τους: διάλεξέ τες στα blocks τους.",
       "tpl.new": "Νέο τεύχος", "tpl.blank": "Κενό τεύχος", "tpl.from": "Ή ξεκίνα από πρότυπο", "tpl.delete": "Διαγραφή προτύπου",
       "sd.now": "Τώρα", "sd.later": "Αργότερα", "sd.when": "Αποστολή στις", "sd.schedule": "Προγραμματισμός", "sd.whenBad": "Διάλεξε μια μελλοντική ώρα",
@@ -4188,8 +4192,24 @@
       var cur = C.issue(data, edIssue.id);
       if (cur && cur.st === "draft" && cur.fmt === "blocks") target = cur;
     }
-    if (target) { addAsBlocks(target.id, v.blocks, v.pics); return; }
+    if (target) { addAsBlocks(target.id, v.blocks, v.pics, v.shops); return; }
     asAddDialog(v, drafts);
+  }
+  function asCheck(raw) {
+    var open = document.querySelector("dialog[open]");
+    if (open) { open.addEventListener("close", function () { setTimeout(function () { asCheck(raw); }, 0); }, { once: true }); return; }
+    flushIssue();
+    var ok = function (x) { return x && x.st === "draft" && !x.imp; };
+    var id = raw && typeof raw === "object" && typeof raw.issue === "string" ? raw.issue : "";
+    var x = ok(C.issue(data, id)) ? C.issue(data, id) : null;
+    if (!x && view === "edit" && edIssue && ok(C.issue(data, edIssue.id))) x = C.issue(data, edIssue.id);
+    if (!x) x = C.live(data.issues).filter(ok).sort(function (a, b) { return b.m - a.m; })[0] || null;
+    if (!x) { showToast(t("as.noDraft")); return; }
+    prefs.list = x.list;
+    savePrefs();
+    viewId = x.id;
+    showView("edit");
+    checkDialog(C.issue(data, x.id), true);
   }
   function asAddDialog(v, drafts) {
     var lists = C.live(data.lists);
@@ -4207,7 +4227,7 @@
         txt.appendChild(el("span", "row-no", shownSubj(x)));
         txt.appendChild(el("span", "row-sub", [l ? l.name : "", when(x.m)].filter(Boolean).join(" · ")));
         b.appendChild(txt);
-        b.addEventListener("click", function () { dlg.close(); addAsBlocks(x.id, v.blocks, v.pics); });
+        b.addEventListener("click", function () { dlg.close(); addAsBlocks(x.id, v.blocks, v.pics, v.shops); });
         li.appendChild(b);
         ul.appendChild(li);
       });
@@ -4231,14 +4251,15 @@
       var x = C.normIssue({ id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks", subj: subj.value,
                             blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
       put("issues", x);
-      addAsBlocks(x.id, v.blocks, v.pics);
+      addAsBlocks(x.id, v.blocks, v.pics, v.shops);
     });
     openDialog(dlg, drafts.length ? null : subj);
   }
   // Adds the blocks to that draft (the version being edited, when it is
   // the open one) before its footer, opens it, and offers Undo; then
-  // copies the pictures (pics) into their blocks.
-  function addAsBlocks(id, blocks, pics) {
+  // copies the pictures (pics) into their blocks and fills the product
+  // blocks that ask for the user's shop (shops).
+  function addAsBlocks(id, blocks, pics, shops) {
     flushIssue();
     var x0 = C.issue(data, id);
     if (!x0 || x0.st !== "draft") return;
@@ -4248,14 +4269,17 @@
     var add = copy(blocks).slice(0, room);
     snap(x);
     var before = copy(cx.blocks);
-    var at = C.insertAt(cx.blocks);
-    Array.prototype.splice.apply(cx.blocks, [at, 0].concat(add));
+    // one by one, each at its section's place (C.insertAt); the first
+    // place is where the editor scrolls to
+    add.forEach(function (b) { cx.blocks.splice(C.insertAt(cx.blocks, b.sec), 0, b); });
+    var first = Math.min.apply(null, add.map(function (b) { return cx.blocks.indexOf(b); }));
+    var at = 0;
     put("issues", x);
     prefs.list = x.list;
     savePrefs();
     viewId = x.id;
     showView("edit");
-    focusBlock(at);
+    focusBlock(first);
     var msg = add.length === 1 ? t("as.added1") : t("as.added", { n: add.length });
     if (add.length < blocks.length) msg += " " + t("as.cut", { n: blocks.length - add.length });
     undoToast(msg, function () {
@@ -4266,8 +4290,33 @@
       put("issues", c1);
       if (view === "edit" && viewId === id) renderEditor();
     });
+    var onL2 = side(x) !== x;
     var todo = (pics || []).filter(function (p) { return p.i < add.length; });
-    if (todo.length) asPics(id, side(x) !== x, add, at, todo);
+    if (todo.length) asPics(id, onL2, add, at, todo);
+    (shops || []).filter(function (p) { return p.i < add.length; }).forEach(function (p) { asShop(id, onL2, add, at, p); });
+  }
+  // The live copy of block i of what was added, if it is unchanged
+  // since (its JSON then = wj): → { x, b } or null.
+  function liveAdded(id, onL2, at, k, wj) {
+    var cur = C.issue(data, id);
+    if (!cur || cur.st !== "draft") return null;
+    var x = copy(cur), cx = onL2 && x.l2 ? x.l2 : x, hit = null;
+    cx.blocks.forEach(function (b, j) { if (!hit && j >= at && b.k === k && JSON.stringify(b) === wj) hit = b; });
+    return hit ? { x: x, b: hit } : null;
+  }
+  // A product block from the user's own shop (wave N3, shop.js auto)
+  function asShop(id, onL2, added, at, p) {
+    var wj = JSON.stringify(added[p.i]);
+    if (!Sh) { showToast(shopT("shop.none")); return; }
+    Sh.auto({ n: p.n, q: p.q }, function (items, sh, acct, fails) {
+      var hit = liveAdded(id, onL2, at, "prod", wj);
+      if (!hit || hit.b.items.length) return;
+      hit.b.items = items.slice(0, Sh.MAX);
+      hit.b.sh = sh; hit.b.acct = acct; hit.b.at = Date.now();
+      put("issues", hit.x);
+      if (view === "edit" && viewId === id) renderEditor();
+      showToast(fails ? shopT("shop.imgFail", { n: fails }) : (items.length === 1 ? t("as.shop1") : t("as.shop", { n: items.length })));
+    }, function (msg) { showToast(t("as.shopFail") + " " + msg); });
   }
   // The blocks' pictures, copied one after another from their web
   // addresses (only sites that allow it: CORS). A block that was moved,
@@ -4294,15 +4343,12 @@
       }
       var p = todo[k++], want = added[p.i].k, wj = was[p.i];
       fetchPic(p.src).then(storeImage).then(function (r) {
-        var cur = C.issue(data, id);
-        if (!cur || cur.st !== "draft") return;
-        var x = copy(cur), cx = onL2 && x.l2 ? x.l2 : x, i = -1;
-        cx.blocks.forEach(function (b, j) {
-          if (i < 0 && j >= at && b.k === want && !b.f && JSON.stringify(b) === wj) i = j;
-        });
-        if (i < 0) return;
-        cx.blocks[i].f = r.path; cx.blocks[i].w = r.w; cx.blocks[i].h = r.h; cx.blocks[i].b = r.b;
-        put("issues", x);
+        var hit = liveAdded(id, onL2, at, want, wj);
+        var ref = hit && (typeof p.j === "number" ? (hit.b.items || [])[p.j] : hit.b);
+        if (!ref || ref.f) return;
+        ref.f = r.path; ref.w = r.w; ref.h = r.h; ref.b = r.b;
+        was[p.i] = JSON.stringify(hit.b);
+        put("issues", hit.x);
         if (view === "edit" && viewId === id) renderEditor();
       }, function () { fails++; }).then(next, next);
     }
@@ -4316,12 +4362,17 @@
   //   { openFile: { token } }  "Open with" an .orosnewsletter file
   //                   (fileopen.js): the File taken once with
   //                   window.parent.__orosTakeFile(token)
+  //   { check: { issue? } }  the Assistant's "Ready to send?" (N4): that
+  //                   draft, the open one or the newest, through the
+  //                   pre-send check to the send dialog (sending is
+  //                   still the user's Send there)
   //   { asAdd: { blocks, subj?, issue? } }  blocks from the Assistant
   //                   (chat compose N1): added to a draft only after the
   //                   user picks it (or the open draft); Undo in the toast
   function openTarget(tg) {
     if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (tg && tg.asAdd) { asAddTarget(tg.asAdd); return; }
+    if (tg && tg.check) { asCheck(tg.check); return; }
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (typeof tg.issue === "string" && C.issue(data, tg.issue)) {
       var x = C.issue(data, tg.issue);

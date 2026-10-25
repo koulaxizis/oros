@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 34201 of 34210 (99%)
+- Strings: 34212 of 34221 (99%)
 - Help pages: 149 of 149 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 541 / 541 |
+| assistant | 100% | 548 / 548 |
 | atelier | 100% | 1353 / 1353 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -88,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | music | 100% | 432 / 432 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
-| newsletter | 100% | 869 / 869 |
+| newsletter | 100% | 873 / 873 |
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 189 / 189 |
 | oracle | 100% | 38 / 38 |
