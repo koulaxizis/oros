@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.80.00
+- Publishing: plan your social posts. In the new Posts tab write a post once, with a picture (a title's cover or any picture) and a day, and pick the networks. On the day it shows as due here and in the Calendar; Copy and open opens Mastodon, Bluesky, X, Threads or LinkedIn with the text already in it (Facebook and Instagram: paste it). No accounts or keys in orOS, nothing is posted for you. A title's Send to other apps › Plan a post… starts one from the book.
+
 ## Version 3.79.00
 - Invoices: the month for your accountant in one file. On the Dashboard, pick a month and get a ZIP with a summary, your documents and payments as CSV with their PDFs, Budget's entries and receipts, Stock's purchases and sales, and your shop's orders. It is saved in Files, and you can e-mail it from Mail with one tap.
 
