@@ -729,6 +729,39 @@
     var P = window.OrosPublishCore;
     return P ? readForeign(PUB_KEY, function (raw) { return P.normalize(JSON.parse(raw)); }) : null;
   }
+  // The three cores load only when this device has that app's data, and
+  // only when a record page or the matches dialog needs them (the
+  // first-open budget of CRM stays as it was). Same ?v= as crm/core.js.
+  var CORE_SRC = [[STOCK_KEY, "OrosStockCore", "../stock/core.js"], [TS_KEY, "orosTimesheetCore", "../timesheet/core.js"],
+                  [PUB_KEY, "OrosPublishCore", "../publish/core.js"]];
+  var coresLoading = null, coresTried = {};   // tried once per page: a failed load is not retried
+  function hasKey(k) { try { return !!localStorage.getItem(k); } catch (e) { return false; } }
+  function coresMissing() {
+    return CORE_SRC.filter(function (x) { return !window[x[1]] && !coresTried[x[2]] && hasKey(x[0]); });
+  }
+  function loadCores(done) {
+    var miss = coresMissing();
+    if (!miss.length) { done(); return; }
+    if (!coresLoading) {
+      var own = document.querySelector('script[src^="core.js"]');
+      var v = own ? (own.getAttribute("src").split("?")[1] || "") : "";
+      coresLoading = { wait: [] };
+      var left = miss.length;
+      miss.forEach(function (x) {
+        var s = document.createElement("script");
+        s.src = x[2] + (v ? "?" + v : "");
+        coresTried[x[2]] = 1;
+        s.onload = s.onerror = function () {
+          if (--left) return;
+          var w = coresLoading.wait;
+          coresLoading = null;
+          w.forEach(function (fn) { fn(); });
+        };
+        document.head.appendChild(s);
+      });
+    }
+    coresLoading.wait.push(done);
+  }
   function linkCands() {
     if (!LK) return [];
     return LK.candidates({ stock: stockData(), ts: tsData(), inv: invData(), pub: pubData() },
@@ -753,6 +786,11 @@
 
   function renderLinks(box, c) {
     if (!LK) return;
+    if (coresMissing().length) {
+      // after the cores load, draw again only if this record is still shown
+      loadCores(function () { if (prefs.sel === c.id && prefs.tab === "cust" && !document.querySelector("dialog[open]")) renderDetail(); });
+      return;
+    }
     var cands = linkCands();
     var rows = LK.linked(data, c, cands, pubData());
     if (!rows.length && !cands.length) return;   // nothing in other apps on this device
@@ -2341,7 +2379,7 @@
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
     list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
     list.appendChild(button(t("en.all"), "sheet-btn", function () { dlg.close(); enrichOpen(data.cust); }));
-    if (LK) list.appendChild(button(t("set.match"), "sheet-btn", function () { dlg.close(); matchDialog(); }));
+    if (LK) list.appendChild(button(t("set.match"), "sheet-btn", function () { dlg.close(); loadCores(matchDialog); }));
     if (PL && PL.has()) list.appendChild(button(PL.label(), "sheet-btn", function () { dlg.close(); PL.open(); }));
     if (WF) list.appendChild(button(WF.label(), "sheet-btn", function () { dlg.close(); WF.open(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
