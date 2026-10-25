@@ -199,6 +199,10 @@
       "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
       "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text",
+      "cv.head": "Book cover · {app}", "cv.hint": "Opens the Book cover window in {app} with this filled in, and the pictures saved to Files › Pictures › Covers. You check it and press Create; nothing is made before that.",
+      "cv.f.title": "Title", "cv.f.sub": "Subtitle", "cv.f.author": "Author", "cv.f.imprint": "Publisher", "cv.f.isbn": "ISBN", "cv.f.price": "Price",
+      "cv.f.pages": "Pages", "cv.f.trim": "Size", "cv.f.blurb": "Back cover", "cv.front": "Front picture", "cv.logo": "Logo",
+      "cv.gone": "{name}: no longer here, pick it in {app}", "cv.none": "none, pick one in {app}",
       "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
       "rc.file": "Save as file", "rc.saved": "Saved {name}. Send it to anyone with orOS.",
       "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
@@ -476,6 +480,10 @@
       "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
       "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο",
+      "cv.head": "Εξώφυλλο βιβλίου · {app}", "cv.hint": "Ανοίγει το παράθυρο «Εξώφυλλο βιβλίου» ({app}) συμπληρωμένο, και οι εικόνες αποθηκεύονται στα Αρχεία › Εικόνες › Covers. Το ελέγχεις και πατάς Δημιουργία· τίποτα δεν φτιάχνεται πριν από αυτό.",
+      "cv.f.title": "Τίτλος", "cv.f.sub": "Υπότιτλος", "cv.f.author": "Συγγραφέας", "cv.f.imprint": "Εκδότης", "cv.f.isbn": "ISBN", "cv.f.price": "Τιμή",
+      "cv.f.pages": "Σελίδες", "cv.f.trim": "Διάσταση", "cv.f.blurb": "Οπισθόφυλλο", "cv.front": "Εικόνα εξωφύλλου", "cv.logo": "Λογότυπο",
+      "cv.gone": "{name}: δεν είναι πια εδώ, διάλεξέ την ({app})", "cv.none": "καμία, διάλεξε μία ({app})",
       "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
       "rc.file": "Αποθήκευση ως αρχείο", "rc.saved": "Αποθηκεύτηκε το {name}. Στείλ' το σε όποιον έχει orOS.",
       "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
@@ -1495,6 +1503,8 @@
   // own Send (core.js section 3b). Never stored, synced or exported.
   var pending = [];        // [{ id, name, type, size }] for the next message
   var attMem = {};         // id → base64, this session only
+  var attOrig = {};        // id → the photo as picked (full size, for a book cover), this session only
+  var ORIG_MAX = 40 * 1024 * 1024;
   var attBusy = 0;         // files being read
   var IMG_EDGE = 1568;     // longest side a photo is shrunk to
   var DISK_EXT = /\.(jpe?g|png|webp|gif|pdf)$/i;
@@ -1561,6 +1571,7 @@
         var a = C.normAtt({ id: attId(), name: String(name || "file").replace(/[\\/]/g, "_"), type: r.type, size: r.blob.size });
         if (!a || !b64) throw {};
         attMem[a.id] = b64;
+        if (C.attKind(type) === "img" && blob.size <= ORIG_MAX) attOrig[a.id] = blob;
         pending.push(a);
       });
     }).catch(function (e) {
@@ -1577,11 +1588,12 @@
   function removeAtt(id) {
     pending = pending.filter(function (a) { return a.id !== id; });
     delete attMem[id];
+    delete attOrig[id];
     delete attText[id];
     renderAtt();
   }
   function clearPending(keepData) {
-    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attText[a.id]; });
+    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attOrig[a.id]; delete attText[a.id]; });
     pending = [];
     renderAtt();
   }
@@ -1958,10 +1970,11 @@
     var chgApps = builtin ? [] : changeApps(apps);
     var rcApps = builtin ? [] : recipeApps();
     var nlOn = !builtin && !!installed().newsletter;
+    var cvOn = !builtin && !!installed().layout;
     var wmode = webMode(pid);
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, web: !!wmode && wmode !== "native",
-                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -1970,6 +1983,7 @@
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       newsletter: nlOn,
+      cover: cvOn,
       files: builtin ? "" : "pdf",
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
@@ -2121,6 +2135,7 @@
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
+    if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
@@ -2234,6 +2249,106 @@
       content: "Shown to the user as a card with the " + n.blocks.length + " block(s). They will open Newsletter and pick the draft, or dismiss it. Nothing is added yet.",
       ui: { k: "nl", args: a, st: "" }
     };
+  }
+
+  // book_cover (publisher P3b): checked now, shown as a card; the
+  // pictures are found among the user's attachments now and kept by
+  // id (their files live only in this session's memory).
+  function coverPic(c, ref) {
+    if (!ref) return null;
+    var msgs = (c && c.msgs || []).filter(function (m) { return m && m.r === "user" && Array.isArray(m.att); });
+    var imgs = function (m) { return m.att.filter(function (a) { return a && C.attKind(a.type) === "img"; }); };
+    for (var i = msgs.length - 1; i >= 0; i--) {
+      var byName = imgs(msgs[i]).filter(function (a) { return a.name === ref; })[0];
+      if (byName) return { id: byName.id, name: byName.name };
+    }
+    if (!/^\d{1,2}$/.test(ref)) return null;
+    for (var j = msgs.length - 1; j >= 0; j--) {
+      var l = imgs(msgs[j]);
+      if (l.length) return l[+ref - 1] ? { id: l[+ref - 1].id, name: l[+ref - 1].name } : null;
+    }
+    return null;
+  }
+  function proposeCover(c, args) {
+    if (!installed().layout) return { content: "Error: the Layout app is not installed.", err: 1, ui: { k: "coverErr" } };
+    var n = C.normCover(args);
+    if (!n.ok) return { content: "Error: " + n.err, err: 1, ui: { k: "coverErr" } };
+    var front = coverPic(c, n.pics.front), logo = coverPic(c, n.pics.logo);
+    if (n.pics.front && !front) return { content: "Error: no attached picture \u201c" + n.pics.front + "\u201d. Give its number (1 = the first picture of the user's latest message with pictures) or its file name.", err: 1, ui: { k: "coverErr" } };
+    if (n.pics.logo && !logo) return { content: "Error: no attached picture \u201c" + n.pics.logo + "\u201d for the logo.", err: 1, ui: { k: "coverErr" } };
+    return {
+      content: "Shown to the user as a card" + (front ? " with the front picture \u201c" + front.name + "\u201d" : " without a front picture") +
+        (logo ? " and the logo \u201c" + logo.name + "\u201d" : "") + ". They will open it in Layout's Book cover window and create it there, or dismiss it. Nothing is made yet.",
+      ui: { k: "cover", args: JSON.parse(JSON.stringify(args)), front: front, logo: logo, st: "" }
+    };
+  }
+  // A kept photo → a file in Files › Pictures › Covers (a new name, so
+  // nothing there is ever replaced) → its path, or "" when it is gone.
+  var COVER_DIR = "/internal/Pictures/Covers";
+  function savePic(p) {
+    var F = null;
+    try { F = window.parent && window.parent !== window ? window.parent.orosFS : null; } catch (e) { F = null; }
+    if (!p || !F || typeof F.writeBlob !== "function") return Promise.resolve("");
+    var blob = attOrig[p.id] || (attMem[p.id] ? new Blob([b64Bytes(attMem[p.id])], { type: "image/jpeg" }) : null);
+    if (!blob) return Promise.resolve("");
+    var ext = /png/.test(blob.type) ? ".png" : /webp/.test(blob.type) ? ".webp" : /gif/.test(blob.type) ? ".gif" : ".jpg";
+    var base = String(p.name || "picture").replace(/\.[^.]*$/, "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").replace(/^\.+/, "").trim().slice(0, 60) || "picture";
+    var path = COVER_DIR + "/" + base + "-" + Math.random().toString(36).slice(2, 8) + ext;
+    return Promise.resolve(F.writeBlob(path, blob)).then(function () { return path; }, function () { return ""; });
+  }
+  function drawCover(host, r, c) {
+    var ui = r.ui, have = installed();
+    var n = C.normCover(ui.args);
+    if (!n.ok || !have.layout) {
+      host.appendChild(el("div", "tool-line", t("entry.gone", { app: have.layout || "Layout" })));
+      return;
+    }
+    var name = have.layout;
+    var card = el("section", "entry-card cv-card");
+    card.appendChild(el("h3", "entry-head", t("cv.head", { app: name })));
+    var ul = el("ul", "entry-list");
+    n.view.forEach(function (v) {
+      var li = el("li");
+      li.appendChild(el("b", "", t("cv.f." + v[0])));
+      li.appendChild(document.createTextNode(" " + (v[1].length > 240 ? v[1].slice(0, 239) + "\u2026" : v[1])));
+      ul.appendChild(li);
+    });
+    [["front", ui.front], ["logo", ui.logo]].forEach(function (x) {
+      if (x[0] === "logo" && !x[1]) return;
+      var li = el("li");
+      li.appendChild(el("b", "", t("cv." + x[0])));
+      var kept = x[1] && (attOrig[x[1].id] || attMem[x[1].id]);
+      li.appendChild(document.createTextNode(" " + (!x[1] ? t("cv.none", { app: name }) : kept ? x[1].name : t("cv.gone", { name: x[1].name, app: name }))));
+      ul.appendChild(li);
+    });
+    card.appendChild(ul);
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("cv.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      var go = button(t("entry.open", { app: name }), "primary", function () {
+        go.disabled = true;
+        Promise.all([savePic(ui.front), savePic(ui.logo)]).then(function (paths) {
+          var cover = JSON.parse(JSON.stringify(n.cover));
+          if (paths[0]) cover.img = paths[0];
+          if (paths[1]) cover.logo = paths[1];
+          ui.st = "opened";
+          return saveChat(c).then(function () {
+            if (!runEntry({ call: { fn: "openAt", args: ["layout", { cover: cover }] } })) { ui.st = "failed"; saveChat(c); }
+            renderMessages();
+          });
+        });
+      });
+      acts.appendChild(go);
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
   }
 
   // read_item: the full text of an item a search returned (its ref),
@@ -3297,6 +3412,8 @@
         if (ui.k === "recipeErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
         if (ui.k === "nlErr") return;
+        if (ui.k === "cover") { drawCover(host, r, c); return; }
+        if (ui.k === "coverErr") return;
         if (ui.k === "change") { drawChange(host, r, c); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");

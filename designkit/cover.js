@@ -152,7 +152,9 @@
 
   // ---------- builder ----------
   // spec: { name, w, h, pages?, sheet?, spine?, flap?, bleed?, title, sub,
-  //         author, blurb, imprint, isbn, price, img: { a, iw, ih, nm } }
+  //         author, blurb, imprint, isbn, price, img: { a, iw, ih, nm },
+  //         logo: { a, iw, ih, nm } (the publisher's logo: back cover
+  //         and the foot of the spine) }
   // opts: { now, lang } → a normalized document (model v1).
   function build(spec, opts) {
     var s = spec || {}, o = opts || {}, now = o.now || 1;
@@ -207,9 +209,12 @@
     item("rect", -b, -b, g.W + 2 * b, g.H + 2 * b, { fill: "sw-cover", sw: 0, lock: 1 });
     var fx = g.front.x, fw = g.front.w + (g.flapR ? 0 : b);
     var pic = item("img", fx, -b, fw, g.H + 2 * b, { fit: "fill" });
-    if (s.img && typeof s.img.a === "string") {
-      pic.a = s.img.a; pic.nm = line(s.img.nm, 120); pic.iw = Math.round(num(s.img.iw, 0, 100000, 0)); pic.ih = Math.round(num(s.img.ih, 0, 100000, 0));
+    function setPic(it, src) {
+      if (!src || typeof src.a !== "string") return;
+      it.a = src.a; it.nm = line(src.nm, 120); it.iw = Math.round(num(src.iw, 0, 100000, 0)); it.ih = Math.round(num(src.ih, 0, 100000, 0));
     }
+    setPic(pic, s.img);
+    var logo = s.logo && typeof s.logo.a === "string" ? s.logo : null;
     // front texts
     var ix = fx + m, iw = g.front.w - 2 * m;
     var top = [["ps-ctitle", title || " "]];
@@ -217,8 +222,11 @@
     text(ix, m + 6 * MM, iw, Math.min(g.H * 0.4, 90 * MM), top, { va: "t" });
     if (author) text(ix, g.H - m - 22 * MM, iw, 22 * MM, [["ps-cauth", author]], { va: "b" });
     // spine: one line turned 90° (reads top to bottom), only when it fits
+    // the logo at the foot of the spine (when the spine is 6 mm or more)
+    var spLogo = logo && g.spine >= 6 * MM ? g.spine - 2 * MM : 0;
+    if (spLogo) setPic(item("img", g.sp.x + MM, g.H - m - spLogo, spLogo, spLogo, { fit: "fit" }), logo);
     if (g.spine >= 3 * MM) {
-      var sl = g.H - 2 * m, cx = g.sp.x + g.spine / 2, cy = g.H / 2;
+      var sl = g.H - 2 * m - (spLogo ? spLogo + 4 * MM : 0), cx = g.sp.x + g.spine / 2, cy = m + sl / 2;
       var words = [author, title].filter(Boolean).join("  ·  ") + (imprint ? "  ·  " + imprint : "");
       text(cx - sl / 2, cy - g.spine / 2, sl, g.spine, [["ps-spine", words || " "]], { rot: 90, va: "c" });
     }
@@ -226,7 +234,9 @@
     var bx = g.back.x + m, bw = g.back.w - 2 * m;
     var bcW = 37.29 * MM, bcH = 25.9 * MM;
     if (blurb) text(bx, m + 6 * MM, bw, g.H - 2 * m - bcH - 16 * MM, [["ps-back", blurb]], { va: "t" });
-    if (imprint) text(bx, g.H - m - 10 * MM, bw - bcW - 6 * MM, 10 * MM, [["ps-imprint", imprint]], { va: "b" });
+    var lw = logo ? 16 * MM : 0;
+    if (logo) setPic(item("img", bx, g.H - m - lw, lw, lw, { fit: "fit" }), logo);
+    if (imprint) text(bx + (lw ? lw + 3 * MM : 0), g.H - m - 10 * MM, bw - bcW - 6 * MM - (lw ? lw + 3 * MM : 0), 10 * MM, [["ps-imprint", imprint]], { va: "b" });
     var code = isbn13(s.isbn);
     if (code) {
       var gx = g.back.x + g.back.w - m - bcW, gy = g.H - m - bcH, grp = M.newId("gr");

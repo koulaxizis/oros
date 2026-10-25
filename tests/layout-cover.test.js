@@ -92,3 +92,17 @@ test("a thin book gets no spine text, bad input never throws", () => {
   assert.equal(z.items.find((i) => i.t === "img").a, "");
   near(z.setup.w, 280 * MM);
 });
+
+test("the publisher's logo sits on the back cover and at the foot of the spine", () => {
+  const logo = { a: "b".repeat(64) + ".png", iw: 500, ih: 500, nm: "logo.png" };
+  const d = CV.build({ w: 140, h: 210, pages: 240, sheet: 0.1, title: "T", author: "A", imprint: "Press", logo }, { now: 3 });
+  const logos = d.items.filter((i) => i.t === "img" && i.a === logo.a);
+  assert.equal(logos.length, 2);
+  assert.ok(logos.every((i) => i.fit === "fit"));
+  const onSpine = logos.find((i) => i.x > 140 * MM && i.x < 152.5 * MM);
+  assert.ok(onSpine, "one on the spine");
+  const spineText = d.items.find((i) => i.rot === 90);
+  assert.ok(spineText.y + spineText.h / 2 + spineText.w / 2 <= onSpine.y + 0.01, "spine text ends above the logo");
+  const thin = CV.build({ w: 140, h: 210, pages: 60, sheet: 0.1, title: "T", logo }, { now: 3 });
+  assert.equal(thin.items.filter((i) => i.a === logo.a).length, 1, "thin spine: back cover only");
+});

@@ -71,6 +71,9 @@ Der Assistent nutzt nur die Schritte, die die Automationen der App anbieten (die
 ## Newsletter
 Stell eine [Newsletter](app:newsletter)-Ausgabe im Chat zusammen: „füge das Interview von https://… hinzu", „ein kurzer Absatz über unsere neue Ausgabe mit einem Button zum Shop". Bei einem Link liest der Assistent zuerst die Seite (wenn er im Internet suchen darf) und schreibt eine kurze Zusammenfassung in eigenen Worten, mit dem Hauptbild der Seite daneben, wenn er eines findet. „Ein Banner zu https://…“ mit einer Bildadresse wird ein verlinktes Bild. Die Karte zeigt die Blöcke; `In Newsletter öffnen` lässt dich den Entwurf wählen (oder einen neuen) und fügt sie dort vor der Fußzeile ein. Vorher wird nichts hinzugefügt, und der Assistent sendet nie einen Newsletter.
 
+## Buchumschlag
+Hänge das Bild für die Vorderseite an (und dein Logo, wenn es auf den Umschlag soll) und bitte zum Beispiel: „richte den Umschlag von «Titel» von Autor ein, 240 Seiten". Die Karte zeigt die Angaben und die Bilder; `In Seitenlayout öffnen` speichert die Bilder unter Dateien › Bilder › Covers und öffnet das Fenster Buchumschlag von [Seitenlayout](app:layout) ausgefüllt, wo du alles prüfst und auf Erstellen tippst. Bilder aus einer früheren Sitzung werden nicht behalten; häng sie neu an oder wähle sie in Seitenlayout.
+
 ## Ändern, was du schon hast
 Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.

@@ -8,7 +8,7 @@
 //     deep link { cover: { img: "/internal/…" } }, only under
 //     /internal/); it is stored as a normal asset (assets.js)
 //   - LY.cover.open(prefill): prefill { title, sub, author, blurb,
-//     imprint, isbn, isbnShown, price, pages, w, h, spine, img }
+//     imprint, isbn, isbnShown, price, pages, w, h, spine, img, logo }
 //     from Publishing or the Assistant; every field stays editable
 //   - nothing is saved until Create
 // ============================================================
@@ -53,7 +53,8 @@
       var cur = CV.SIZES.filter(function (s) { return s[0] === f.size; })[0];
       if (cur) { f.w = cur[1]; f.h = cur[2]; }
     }
-    var diskPic = safePath(pre.img), devPic = null;
+    // the front picture and the publisher's logo: { disk: path, dev: File }
+    var pics = { img: { disk: safePath(pre.img), dev: null }, logo: { disk: safePath(pre.logo), dev: null } };
 
     LY.openDialog(t("cov.title"), function (body, close) {
       body.appendChild(el("p", "hint", t("cov.intro")));
@@ -120,25 +121,24 @@
       body.appendChild(g4);
       body.appendChild(txt("cov.f.imprint", "imprint", 120));
 
-      // the front picture
-      var picRow = el("div", "dlg-actions");
-      var picName = el("span", "hint");
-      function showPic() {
-        picName.textContent = devPic ? devPic.name : diskPic ? diskPic.split("/").pop() : t("cov.noPic");
-      }
-      var fileIn = el("input"); fileIn.type = "file"; fileIn.accept = "image/*"; fileIn.hidden = true;
-      fileIn.addEventListener("change", function () {
-        var fl = fileIn.files && fileIn.files[0];
-        if (fl && fl.size <= IMG_MAX) { devPic = fl; diskPic = ""; }
-        showPic();
+      // the front picture and the logo
+      ["img", "logo"].forEach(function (k) {
+        var P = pics[k], row = el("div", "dlg-actions"), nm = el("span", "hint");
+        function show() { nm.textContent = P.dev ? P.dev.name : P.disk ? P.disk.split("/").pop() : t(k === "img" ? "cov.noPic" : "cov.noLogo"); }
+        var fileIn = el("input"); fileIn.type = "file"; fileIn.accept = "image/*"; fileIn.hidden = true;
+        fileIn.addEventListener("change", function () {
+          var fl = fileIn.files && fileIn.files[0];
+          if (fl && fl.size <= IMG_MAX) { P.dev = fl; P.disk = ""; }
+          show();
+        });
+        row.appendChild(el("span", "fld-lbl", t(k === "img" ? "cov.f.pic" : "cov.f.logo")));
+        row.appendChild(nm);
+        row.appendChild(el("span", "spacer"));
+        row.appendChild(U.btn(t("cov.pickPic"), function () { fileIn.click(); }));
+        body.appendChild(row);
+        body.appendChild(fileIn);
+        show();
       });
-      picRow.appendChild(el("span", "fld-lbl", t("cov.f.pic")));
-      picRow.appendChild(picName);
-      picRow.appendChild(el("span", "spacer"));
-      picRow.appendChild(U.btn(t("cov.pickPic"), function () { fileIn.click(); }));
-      body.appendChild(picRow);
-      body.appendChild(fileIn);
-      showPic();
 
       var bad = el("p", "hint warn");
       bad.hidden = true;
@@ -161,11 +161,12 @@
           imprint: f.imprint, isbn: f.isbn, isbnShown: f.isbnShown, price: f.price
         };
         if (f.spine !== "" && isFinite(f.spine)) spec.spine = f.spine;
-        picture().then(function (res) {
-          if (res) spec.img = { a: res.id, iw: res.w, ih: res.h, nm: res.name };
+        Promise.all([picture(pics.img), picture(pics.logo)]).then(function (res) {
+          if (res[0]) spec.img = { a: res[0].id, iw: res[0].w, ih: res[0].h, nm: res[0].name };
+          if (res[1]) spec.logo = { a: res[1].id, iw: res[1].w, ih: res[1].h, nm: res[1].name };
           close();
           LY.addDoc(CV.build(spec, { now: LY.now(), lang: LY.BASE }));
-          if (res === false) LY.toast(t("img.fail"));
+          if (res[0] === false || res[1] === false) LY.toast(t("img.fail"));
         });
       }, "primary");
       act.appendChild(go);
@@ -173,12 +174,12 @@
     }, true);
 
     // → the asset { id, w, h, name }, null (no picture) or false (failed)
-    function picture() {
+    function picture(P) {
       var src;
-      if (devPic) src = Promise.resolve(devPic);
-      else if (diskPic && diskFs()) {
-        src = Promise.resolve(diskFs().read(diskPic)).then(function (blob) {
-          return blob && blob.size && blob.size <= IMG_MAX ? new File([blob], diskPic.split("/").pop(), { type: blob.type || "" }) : null;
+      if (P.dev) src = Promise.resolve(P.dev);
+      else if (P.disk && diskFs()) {
+        src = Promise.resolve(diskFs().read(P.disk)).then(function (blob) {
+          return blob && blob.size && blob.size <= IMG_MAX ? new File([blob], P.disk.split("/").pop(), { type: blob.type || "" }) : null;
         });
       } else return Promise.resolve(null);
       return src.then(function (file) { return file ? A.importFile(file) : false; }).then(null, function () { return false; });

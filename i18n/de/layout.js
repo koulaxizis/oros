@@ -484,6 +484,8 @@ orosPack("de", "layout", {
  "cov.f.h": "Höhe (mm)",
  "cov.f.imprint": "Verlag",
  "cov.f.isbn": "ISBN",
+ "cov.f.logo": "Verlagslogo",
+ "cov.noLogo": "Keins",
  "cov.f.pages": "Seiten",
  "cov.f.paper": "Papier",
  "cov.f.pic": "Bild für die Vorderseite",

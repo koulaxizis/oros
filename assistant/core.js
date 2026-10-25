@@ -1574,6 +1574,74 @@
     return { ok: true, blocks: out, subj: line(args.subject, 200), view: view };
   }
 
+  // Publisher P3b: a book cover set up in Layout (layout/cover.js, the
+  // deep link { cover }). The card names the pictures; the user opens
+  // the Book cover window there, where everything stays editable.
+  var COVER_SIZES = ["105x170", "120x190", "125x190", "130x200", "135x210", "140x210", "148x210", "150x230", "170x240", "210x297", "215x215"];
+  var TOOL_COVER = {
+    name: "book_cover",
+    description: "Set up a printable book cover in the Layout app: back cover, spine and front cover on one page, with bleed, " +
+      "fold guides and the ISBN barcode. Use it when the user wants a cover made, even from a picture they attached. " +
+      "The user gets a card and opens Layout's Book cover window with these details filled in; everything stays editable there " +
+      "and nothing is made before that, so say it is ready to open, never that the cover was made. " +
+      "Pictures: front_picture is the attached picture for the front cover, logo the publisher's logo (it goes on the back cover " +
+      "and the spine); give each as its number among the pictures of the user's latest message that has pictures (1 = the first " +
+      "one they attached there), or as its file name when you know it. " +
+      "Ask for the title and the author when you don't have them; never invent an ISBN.",
+    params: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "The book's title." },
+        subtitle: { type: "string" },
+        author: { type: "string", description: "The author (or authors, comma separated)." },
+        back_text: { type: "string", description: "The back cover text (blurb), only when the user gave it or asked you to write one." },
+        publisher: { type: "string", description: "The publisher's name (imprint)." },
+        isbn: { type: "string", description: "The ISBN the user gave (13 digits, hyphens allowed)." },
+        price: { type: "string", description: "The price as printed, with the currency (e.g. \u20ac14.90)." },
+        pages: { type: "integer", description: "Number of pages (for the spine)." },
+        trim: { type: "string", "enum": COVER_SIZES, description: "Trim size in mm, width x height (default 140x210)." },
+        front_picture: { type: "string", description: "The front cover picture: its number (1 = first picture of the latest message with pictures) or file name." },
+        logo: { type: "string", description: "The publisher's logo picture: its number or file name." }
+      },
+      required: ["title"]
+    }
+  };
+  // book_cover arguments → { ok, cover: { title, sub, author, blurb,
+  // imprint, isbn, price, pages, w, h }, pics: { front, logo } ("2" = the 2nd picture, or a name),
+  // view: [[key, text]] } | { ok: false, err }
+  function normCover(args) {
+    if (!isObj(args)) return bad("The arguments must be an object.");
+    var title = line(args.title, 200);
+    if (!title) return bad("title is empty.");
+    var cv = { title: title, sub: line(args.subtitle, 200), author: line(args.author, 200), blurb: para(args.back_text, 4000),
+               imprint: line(args.publisher, 120), price: line(args.price, 40) };
+    var isbn = line(args.isbn, 30);
+    if (isbn) {
+      var d = isbn.replace(/^isbn(-1[03])?:?\s*/i, "").replace(/[\s-]/g, "");
+      if (!/^97[89]\d{10}$/.test(d)) return bad("isbn must be the 13 digits of an ISBN (978 or 979), hyphens allowed.");
+      var sum = 0;
+      for (var i = 0; i < 12; i++) sum += (+d[i]) * (i % 2 ? 3 : 1);
+      if (String((10 - sum % 10) % 10) !== d[12]) return bad("This ISBN's check digit is wrong; ask the user for the right number.");
+      cv.isbn = d;
+    }
+    var pg = typeof args.pages === "number" ? Math.round(args.pages) : parseInt(args.pages, 10);
+    if (pg > 0 && pg <= 5000) cv.pages = pg;
+    var tr = COVER_SIZES.indexOf(args.trim) >= 0 ? args.trim : "140x210";
+    cv.w = +tr.split("x")[0]; cv.h = +tr.split("x")[1];
+    function pic(v) { return typeof v === "number" && v >= 1 && v <= 20 ? String(Math.round(v)) : line(v, 120); }
+    var pics = { front: pic(args.front_picture), logo: pic(args.logo) };
+    var view = [["title", title]];
+    if (cv.sub) view.push(["sub", cv.sub]);
+    if (cv.author) view.push(["author", cv.author]);
+    if (cv.imprint) view.push(["imprint", cv.imprint]);
+    if (cv.isbn) view.push(["isbn", cv.isbn]);
+    if (cv.price) view.push(["price", cv.price]);
+    if (cv.pages) view.push(["pages", String(cv.pages)]);
+    view.push(["trim", tr.replace("x", " \u00d7 ") + " mm"]);
+    if (cv.blurb) view.push(["blurb", cv.blurb]);
+    return { ok: true, cover: cv, pics: pics, view: view };
+  }
+
   // The tools phase 1 offered (searching only); kept for the tests.
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
   // opts = { data: the user lets it search, summary: at least one
@@ -1589,6 +1657,7 @@
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER);
+    if (opts.cover) out.push(TOOL_COVER);
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
     return out;
   }
@@ -1874,6 +1943,9 @@
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
+    }
+    if (!opts.builtin && opts.cover) {
+      lines.push("For a book cover (front, spine and back for print), call book_cover with the details the user gave and the attached pictures: the front picture and, when there is one, the publisher's logo. The user opens it in Layout and edits it there; never say it was made.");
     }
     if (!opts.builtin && opts.newsletter) {
       lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. Write in the language of the issue (the user's, unless they say otherwise). The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. Sending is always the user's step in Newsletter.");
@@ -2476,7 +2548,7 @@
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pageAllowed: pageAllowed, webResult: webResult,
     BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
-    normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, normNewsletter: normNewsletter
+    normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, normNewsletter: normNewsletter, normCover: normCover, COVER_SIZES: COVER_SIZES
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistCore = api;
