@@ -2668,6 +2668,7 @@ function transientNote(title, body) {
       garageCache.rows = null;
       try {
         var d = JSON.parse(localStorage.getItem(GARAGE_DATA_KEY));
+        if (window.OrosGarageHouse) d = window.OrosGarageHouse.withShared(d && Array.isArray(d.vehicles) ? d : null);   // shared vehicles (BR-HH wave 7e)
         if (d && typeof d === "object" && Array.isArray(d.vehicles) && d.vehicles.length) {
           d = Core.merge(d, d, now);
           var today = Core.ymdOf(new Date(now)), names = {}, rows = [];

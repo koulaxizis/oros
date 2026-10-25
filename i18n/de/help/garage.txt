@@ -43,6 +43,11 @@ In `Einstellungen` liest `Aus einer anderen App importieren` den Export eines an
 - aCar: Menu, Backup & Restore, Export to CSV, und wähle die Datei mit den Tankfüllungen (oder den Service-Einträgen).
 - LubeLogger: Öffne bei einem Fahrzeug die Einträge Gas, Service, Repair, Upgrade oder Tax und nutze Export to CSV; importiere eine Datei nach der anderen in dasselbe Fahrzeug.
 
+## Das Familienauto
+Ist ein [Haushalt](app:household) eingerichtet, wähle das Fahrzeug, dann das Zahnrad › `Haushalt` › `Mit einem Haushalt teilen`. Das Fahrzeug zieht mit allen Tankstopps, Services, Plänen, Reifen, Erneuerungen, Kosten und Ständen in den Haushalt: Alle, die es fahren, tragen in ihrer eigenen Garage ein, sehen denselben Verbrauch und dieselben Kosten und bekommen seine Erinnerungen einmal. Ein Haus-Symbol in der Fahrzeugleiste zeigt, welche Fahrzeuge geteilt sind. Währung und Erinnerungszeiten bleiben bei jeder Person; Belegfotos bleiben in deinen Dateien (die anderen sehen, dass es einen Beleg gibt). Alles ist Ende-zu-Ende-verschlüsselt: Das orOS-Relay reicht nur weiter, was es nicht lesen kann.
+
+Ein Fahrzeug mit mehr als etwa 2900 Einträgen kann nicht geteilt werden. `Teilen beenden` nimmt das Fahrzeug für alle aus dem Haushalt und bringt es mit allen Einträgen in deine eigene Garage zurück; die anderen können es 30 Tage lang über die App Haushalt zurückholen.
+
 ## Synchronisierung und Sicherung
 Fahrzeuge, Einträge, Erneuerungen, Pläne, Reifen und deine Währung werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Belegfotos reisen getrennt, mit der Vault-Drive-Synchronisierung; bis sie ankommen, zeigt ein Foto `Nicht auf diesem Gerät`. Die Uhrzeit der Erinnerung, die Verbrauchseinheit, die Reifengrenzen und der offene Tab bleiben auf jedem Gerät.
 

@@ -1086,6 +1086,7 @@ var PRECACHE_URLS = [
   "garage/index.html",
   "garage/search.js",
   "garage/core.js",
+  "garage/house.js",
   "garage/garage.css",
   "garage/garage.js",
   "garage/import.js",

@@ -43,6 +43,11 @@ In `Settings`, `Import from another app` reads the export of another vehicle log
 - aCar: Menu, Backup & Restore, Export to CSV, and pick the fill-up records (or the service records) file.
 - LubeLogger: on a vehicle, open Gas, Service, Repair, Upgrade or Tax records and use Export to CSV; import one file at a time into the same vehicle.
 
+## The family car
+With a [household](app:household) set up, pick the vehicle, then the gear › `Household` › `Share with a household`. The vehicle moves into the household with all its fill-ups, services, plans, tyres, renewals, costs and readings: everyone who drives it logs in their own Garage, sees the same consumption and costs, and gets its reminders once. A house mark in the vehicle bar shows which vehicles are shared. Currency and reminder times stay each person's own; receipt photos stay in your Files (the others see that a receipt exists). Everything is end-to-end encrypted: the orOS relay only passes on what it cannot read.
+
+A vehicle with more than about 2900 entries cannot be shared. `Stop sharing` takes the vehicle out of the household for everyone and brings it back to your own Garage with everything logged; the others can bring it back from the Household app for 30 days.
+
 ## Sync and backup
 Vehicles, entries, renewals, plans, tyres and your currency sync between your devices through [orOS sync](help:t/sync). Receipt photos travel separately, with Vault Drive sync; until they arrive, a photo shows `Not on this device`. The reminder hour, consumption unit, tyre limits and open tab stay on each device.
 
