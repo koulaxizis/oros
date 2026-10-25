@@ -21,6 +21,13 @@
 //              (wave 3: more business profiles; the key is left out
 //              while empty, and an older device drops it on its own
 //              merge, which costs nothing: the union keeps it here)
+//     bills:   [ { id, num, date, due, cur, sup{name, afm}, crm, net,
+//                  vat, note, m } | tomb ]
+//     bpays:   [ { id, bill, date, amt, how, note, m } | tomb ]
+//              (wave 7, BR-CRM-LINK partner card: invoices you
+//              RECEIVED from suppliers and what you paid on them;
+//              left out while empty, like profs. They are never
+//              counted in revenue, VAT or myDATA: only what you owe.)
 //   Wave 3 fields that ride as flat extras (so an older device keeps
 //   them, see withExtras): doc.pid / tpl.pid / series.pid = the profile
 //   (none = the main one, prof), prof.qr = 0 turns the payment QR off.
@@ -188,7 +195,9 @@
     prof:   ["name", "trade", "job", "addr", "country", "afm", "doy", "phone", "email", "web", "iban",
              "logo", "cur", "vat", "days", "wht", "plang", "terms", "footer", "m"],
     biz:    ["id", "name", "trade", "job", "addr", "country", "afm", "doy", "phone", "email", "web", "iban",
-             "logo", "terms", "footer", "m", "del"]
+             "logo", "terms", "footer", "m", "del"],
+    bill:   ["id", "num", "date", "due", "cur", "sup", "crm", "net", "vat", "note", "m", "del"],
+    bpay:   ["id", "bill", "date", "amt", "how", "note", "m", "del"]
   };
   function withExtras(out, x, known) {
     var n = 0;
@@ -364,6 +373,36 @@
     }, x, KNOWN.biz);
   }
 
+  // Wave 7: a received invoice (a bill) and a payment you made on it.
+  function normBill(x) {
+    if (!baseOk(x)) return null;
+    if (x.del) return tomb(x);
+    var sp = (x.sup && typeof x.sup === "object") ? x.sup : {};
+    var sup = { name: cleanText(sp.name, LIM.name), afm: cleanText(sp.afm, LIM.short) };
+    if (!sup.name || !validDay(x.date)) return null;
+    var out = {
+      id: x.id, num: cleanText(x.num, LIM.num), date: x.date, due: validDay(x.due) ? x.due : "",
+      cur: curOk(x.cur) ? x.cur : "EUR", sup: sup
+    };
+    var c = crmId(x.crm);
+    if (c) out.crm = c;
+    out.net = cents(x.net);
+    out.vat = cents(x.vat);
+    out.note = cleanBlock(x.note, LIM.note);
+    out.m = x.m;
+    return withExtras(out, x, KNOWN.bill);
+  }
+  function normBpay(x) {
+    if (!baseOk(x)) return null;
+    if (x.del) return tomb(x);
+    if (!refId(x.bill) || !validDay(x.date) || !isInt(x.amt) || x.amt === 0 || Math.abs(x.amt) > LIM.money) return null;
+    return withExtras({
+      id: x.id, bill: x.bill, date: x.date, amt: x.amt,
+      how: HOWS.indexOf(x.how) >= 0 ? x.how : "other",
+      note: cleanText(x.note, LIM.short * 2), m: x.m
+    }, x, KNOWN.bpay);
+  }
+
   // ---------- 3. Merge, parse, backup ----------
   // Newer m wins; equal m: a tombstone wins, then the larger JSON
   // (symmetric, so both devices pick the same record).
@@ -403,6 +442,10 @@
     };
     var profs = mergeList(a.profs, b.profs, normBiz);
     if (profs.length) out.profs = profs;
+    var bills = mergeList(a.bills, b.bills, normBill);
+    if (bills.length) out.bills = bills;
+    var bpays = mergeList(a.bpays, b.bpays, normBpay);
+    if (bpays.length) out.bpays = bpays;
     return out;
   }
   function normalize(x) { return mergeInvoices(x, x); }
@@ -656,6 +699,75 @@
       out.totals[d.cur] = (out.totals[d.cur] || 0) + bal;
     });
     out.rows.sort(function (x, y) { return cmpStr(x.date, y.date) || cmpStr(x.num, y.num) || cmpStr(x.id, y.id); });
+    return out;
+  }
+
+  // Wave 7 — received invoices (bills): what you owe your suppliers.
+  // Totals, paid amounts and statuses are computed, never stored.
+  function billTotal(b) { return b && !b.del ? (b.net || 0) + (b.vat || 0) : 0; }
+  function billPays(data, billId) {
+    return live(data.bpays).filter(function (p) { return p.bill === billId; })
+      .sort(function (x, y) { return cmpStr(x.date, y.date) || cmpStr(x.id, y.id); });
+  }
+  function billPaid(data, billId) {
+    var s = 0;
+    billPays(data, billId).forEach(function (p) { s += p.amt; });
+    return s;
+  }
+  function billBalance(data, b) { return b && !b.del ? billTotal(b) - billPaid(data, b.id) : 0; }
+  // paid | overdue | partial | unpaid
+  function billStatus(data, b, day) {
+    if (billBalance(data, b) <= 0) return "paid";
+    if (b.due && b.due < (day || today())) return "overdue";
+    return billPaid(data, b.id) > 0 ? "partial" : "unpaid";
+  }
+  function bill(data, id) { return byId(data.bills, id); }
+  // What you still owe per currency: { CUR: { open, overdue, n } }.
+  function billsOpen(data, day) {
+    var out = {};
+    live(data.bills).forEach(function (b) {
+      var bal = billBalance(data, b);
+      if (bal <= 0) return;
+      var t = out[b.cur] || (out[b.cur] = { open: 0, overdue: 0, n: 0 });
+      t.open += bal;
+      t.n++;
+      if (billStatus(data, b, day) === "overdue") t.overdue += bal;
+    });
+    return out;
+  }
+  // The bills of one CRM partner (BR-CRM-LINK): the bill carries that
+  // crm id, or it carries none and its supplier's ΑΦΜ is the one given.
+  // → { rows: [{ id, num, sup, date, due, total, paid, bal, status, cur }],
+  //     totals: { CUR: { billed, paid, open, overdue } } }
+  function billsByCrm(data, id, day, afm) {
+    var out = { rows: [], totals: {} };
+    id = crmId(id);
+    if (!data || (!id && !afm)) return out;
+    var key = String(afm || "").replace(/\s+/g, "").replace(/^(EL|GR)/i, "").toUpperCase();
+    live(data.bills).forEach(function (b) {
+      var mine = b.crm ? b.crm === id : !!key && b.sup.afm.replace(/\s+/g, "").replace(/^(EL|GR)/i, "").toUpperCase() === key;
+      if (!mine) return;
+      var total = billTotal(b), paid = billPaid(data, b.id), bal = total - paid, st = billStatus(data, b, day);
+      out.rows.push({ id: b.id, num: b.num, sup: b.sup.name, date: b.date, due: b.due, total: total,
+                      paid: paid, bal: bal, status: st, cur: b.cur });
+      var t = out.totals[b.cur] || (out.totals[b.cur] = { billed: 0, paid: 0, open: 0, overdue: 0 });
+      t.billed += total;
+      t.paid += paid;
+      if (bal > 0) { t.open += bal; if (st === "overdue") t.overdue += bal; }
+    });
+    out.rows.sort(function (x, y) { return cmpStr(y.date, x.date) || cmpStr(y.id, x.id); });
+    return out;
+  }
+  // The suppliers you have recorded bills from, newest first, one per
+  // name + ΑΦΜ: [{ name, afm, crm }] (the form's suggestions).
+  function billSuppliers(data) {
+    var seen = {}, out = [];
+    live(data.bills).slice().sort(function (x, y) { return y.m - x.m || cmpStr(x.id, y.id); }).forEach(function (b) {
+      var k = fold(b.sup.name) + "|" + b.sup.afm;
+      if (seen[k]) return;
+      seen[k] = 1;
+      out.push({ name: b.sup.name, afm: b.sup.afm, crm: b.crm || "" });
+    });
     return out;
   }
 
@@ -1167,7 +1279,7 @@
     addMonths: addMonths, dayDiff: dayDiff, newId: newId, hashId: hashId, curOk: curOk,
     normParty: normParty, normSeller: normSeller, normLine: normLine, normLines: normLines,
     normSeries: normSeries, normClient: normClient, normDoc: normDoc, normPay: normPay,
-    normTpl: normTpl, normProf: normProf,
+    normTpl: normTpl, normProf: normProf, normBill: normBill, normBpay: normBpay,
     mergeInvoices: mergeInvoices, normalize: normalize, empty: empty, parse: parse,
     toBackup: toBackup, fromBackup: fromBackup,
     live: live, byId: byId, anyId: anyId, doc: doc, client: client, clientOf: clientOf,
@@ -1178,6 +1290,8 @@
     lineNet: lineNet, totals: totals, paysOf: paysOf, paidOf: paidOf, creditsOf: creditsOf,
     owes: owes, balance: balance, status: status, lateDays: lateDays, sign: sign, counts: counts,
     byCrm: byCrm, clientOpen: clientOpen, dueList: dueList, dueOn: dueOn, dueRows: dueRows, reminder: reminder, stockOut: stockOut, statement: statement,
+    billTotal: billTotal, billPays: billPays, billPaid: billPaid, billBalance: billBalance,
+    billStatus: billStatus, bill: bill, billsOpen: billsOpen, billsByCrm: billsByCrm, billSuppliers: billSuppliers,
     EU: EU, euCountry: euCountry, vatPrefix: vatPrefix, reverseCharge: reverseCharge,
     ibanOf: ibanOf, ibanOk: ibanOk, epcPayload: epcPayload, payLinkOk: payLinkOk, payLinkFor: payLinkFor,
     normBiz: normBiz, profiles: profiles, profileOf: profileOf, sellerOf: sellerOf, seriesForProfile: seriesForProfile,

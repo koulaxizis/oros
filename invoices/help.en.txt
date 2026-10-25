@@ -30,6 +30,9 @@ A receipt is usually paid at once: leave `Paid now` ticked when you issue it.
 - A `Credit note` corrects an invoice you issued: choose it under `Corrects`.
 - A recorded invoice (`Record an invoice issued elsewhere`) keeps the number, net and VAT amounts and the ΜΑΡΚ of an invoice issued in myDATA or by your provider. `Attach` keeps its official PDF on the orOS disk, under Invoices. Payments and statuses work as for any invoice.
 
+## Received invoices
+The `Received` tab keeps the invoices your suppliers send you, so you see what you owe, to whom and by when. `New` › `Record a received invoice` (or `+ Received invoice` in the tab) asks for the supplier, their ΑΦΜ, the invoice number, its date, the pay-by date and the net and VAT amounts. If you use [CRM](help:a/crm), pick the supplier's record under `Partner in CRM`: the invoice then shows on that partner's card (a received invoice without a partner shows on the card whose ΑΦΜ matches). Open one to add a payment, mark it paid, edit or delete it. Received invoices never count in your revenue, VAT, the dashboard or myDATA: they only keep track of what you owe.
+
 ## PDF, sending and sharing
 `PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in. In Mail the PDF is already attached (a recorded invoice brings its official PDF) and a copy stays on the orOS disk under Invoices; in another email app, attach the PDF you saved. `Mark as sent` notes the date you sent it.
 

@@ -109,7 +109,8 @@
       "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups", "sub.docs": "Documents", "sub.ov": "Overview",
       "ov.none": "Nothing in other apps yet. Link this record's supplier, shop, client or titles under In other apps.",
       "ov.money": "Money", "ov.in": "Owes you {v}", "ov.overdue": "overdue {v}", "ov.out": "You owe {v}",
-      "ov.outRoy": "royalties, statements: {n}", "ov.even": "Nothing open.",
+      "ov.outRoy": "royalties, statements: {n}", "ov.even": "Nothing open.", "ov.outBills": "received invoices: {n}",
+      "ov.bills": "Received invoices", "ov.billsOpen": "Still to pay: {v}", "ov.billsPaid": "All paid", "ov.billsN": "Invoices: {n} · latest {d}",
       "ov.shops": "Consignment", "ov.shopLine": "Products: {p} · pieces: {q} · {v} at sale price", "ov.shopEmpty": "Nothing on the shelf now",
       "ov.last": "Last settled {d}", "ov.never": "Not settled yet", "ov.due": "Settlement due since {d}",
       "ov.sups": "Orders", "ov.supLine": "Open orders: {n} · pieces to come: {q} · {v}", "ov.supNone": "No open orders",
@@ -251,7 +252,8 @@
       "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups", "sub.docs": "Έγγραφα", "sub.ov": "Σύνοψη",
       "ov.none": "Τίποτα σε άλλες εφαρμογές ακόμη. Σύνδεσε τον προμηθευτή, το κατάστημα, τον πελάτη ή τους τίτλους αυτής της εγγραφής στο «Σε άλλες εφαρμογές».",
       "ov.money": "Χρήματα", "ov.in": "Σου χρωστά {v}", "ov.overdue": "ληξιπρόθεσμα {v}", "ov.out": "Του χρωστάς {v}",
-      "ov.outRoy": "δικαιώματα, εκκαθαρίσεις: {n}", "ov.even": "Τίποτα ανοιχτό.",
+      "ov.outRoy": "δικαιώματα, εκκαθαρίσεις: {n}", "ov.even": "Τίποτα ανοιχτό.", "ov.outBills": "λαμβανόμενα τιμολόγια: {n}",
+      "ov.bills": "Λαμβανόμενα τιμολόγια", "ov.billsOpen": "Μένουν να πληρωθούν: {v}", "ov.billsPaid": "Όλα πληρωμένα", "ov.billsN": "Τιμολόγια: {n} · τελευταίο {d}",
       "ov.shops": "Παρακαταθήκη", "ov.shopLine": "Προϊόντα: {p} · τεμάχια: {q} · {v} σε τιμή πώλησης", "ov.shopEmpty": "Τίποτα στο ράφι τώρα",
       "ov.last": "Τελευταία εκκαθάριση {d}", "ov.never": "Χωρίς εκκαθάριση ακόμη", "ov.due": "Εκκαθάριση οφείλεται από {d}",
       "ov.sups": "Παραγγελίες", "ov.supLine": "Ανοιχτές παραγγελίες: {n} · τεμάχια που έρχονται: {q} · {v}", "ov.supNone": "Καμία ανοιχτή παραγγελία",
@@ -880,8 +882,18 @@
       line(sm, t("ov.in", { v: curMoney(v.open, cur) }), v.overdue > 0 ? t("ov.overdue", { v: curMoney(v.overdue, cur) }) : "", v.overdue > 0);
     });
     outs.sort().forEach(function (cur) {
-      line(sm, t("ov.out", { v: curMoney(x.money.out[cur], cur) }), x.pub.open ? t("ov.outRoy", { n: x.pub.open }) : "");
+      var bo = x.bills.open[cur], sub = [];
+      if (bo) sub.push(t("ov.outBills", { n: bo.n }));
+      if (x.pub.open && x.pub.due[cur]) sub.push(t("ov.outRoy", { n: x.pub.open }));
+      if (bo && bo.overdue > 0) sub.push(t("ov.overdue", { v: curMoney(bo.overdue, cur) }));
+      line(sm, t("ov.out", { v: curMoney(x.money.out[cur], cur) }), sub.join(" · "), !!(bo && bo.overdue > 0));
     });
+    if (x.bills.n) {
+      var sb = sec(t("ov.bills"), "invoices", { bills: { crm: c.id, afm: c.afm || "", name: c.name } });
+      var bk = Object.keys(x.bills.open);
+      line(sb, bk.length ? t("ov.billsOpen", { v: curList(x.bills.open, function (cur, v) { return curMoney(v.open, cur); }) }) : t("ov.billsPaid"),
+        t("ov.billsN", { n: x.bills.n, d: fmtDate(x.bills.last) }));
+    }
     x.shops.forEach(function (r) {
       var s = sec(t("ov.shops") + " · " + r.name, "stock", { view: "cons" });
       line(s, r.q > 0 ? t("ov.shopLine", { p: r.products, q: pieces(r.q), v: curMoney(r.value, r.cur) }) : t("ov.shopEmpty"),
@@ -901,7 +913,7 @@
       if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
       if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
     }
-    if (!C.linksOf(data, c).length && !x.pub.titles.length) pane.appendChild(el("p", "hint", t("ov.none")));
+    if (!C.linksOf(data, c).length && !x.pub.titles.length && !x.bills.n) pane.appendChild(el("p", "hint", t("ov.none")));
     // the relationship itself
     var sr = sec(t("ov.rel"));
     line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));

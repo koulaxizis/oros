@@ -6,12 +6,17 @@
 // stored: two devices can never disagree on a total.
 //
 // API (window.OrosCrmOverview, module.exports under Node):
-//   build(x) → { money, shops, sups, work, pub, crm }
+//   build(x) → { money, bills, shops, sups, work, pub, crm }
 //     x = { data, cust, today "YYYY-MM-DD", nowMs, links: [{ k, v }],
 //           inv?, I? (Invoices data + core), stock?, S? (Stock),
 //           ts?, T? (Timesheet), pub? (Publishing data), alsoInv: [id] }
 //   money.in  { CUR: { open, overdue } }   owed to you (Invoices)
-//   money.out { CUR: cents }               owed by you (royalties due)
+//   money.out { CUR: cents }               owed by you (received invoices
+//                                          still open + royalties due)
+//   bills { n, last "YYYY-MM-DD"|"", open: { CUR: { open, overdue, n } } }
+//         received invoices of this partner (Invoices wave 7): the
+//         bill names the crm id, or none and the supplier's ΑΦΜ is the
+//         record's
 //   shops [{ id, name, products, q, value, cur, last, due }]
 //         consignment shops: what is on their shelf (thousandths,
 //         value at the products' sale price), the last settlement,
@@ -41,6 +46,22 @@
         if (tt[cur].open > 0) out["in"][cur] = { open: tt[cur].open, overdue: tt[cur].overdue };
       });
     }
+    return out;
+  }
+
+  function bills(x) {
+    var out = { n: 0, last: "", open: {} };
+    if (!x.inv || !x.I || typeof x.I.billsByCrm !== "function") return out;
+    var r = x.I.billsByCrm(x.inv, x.cust.id, x.today, x.cust.afm || "");
+    out.n = r.rows.length;
+    out.last = r.rows.length ? r.rows[0].date : "";
+    r.rows.forEach(function (b) {
+      if (b.bal <= 0) return;
+      var t = out.open[b.cur] || (out.open[b.cur] = { open: 0, overdue: 0, n: 0 });
+      t.open += b.bal;
+      t.n++;
+      if (b.status === "overdue") t.overdue += b.bal;
+    });
     return out;
   }
 
@@ -131,9 +152,10 @@
   }
 
   function build(x) {
-    var m = money(x), p = pub(x);
+    var m = money(x), p = pub(x), b = bills(x);
+    Object.keys(b.open).forEach(function (cur) { add(m.out, cur, b.open[cur].open); });
     Object.keys(p.due).forEach(function (cur) { add(m.out, cur, p.due[cur]); });
-    return { money: m, shops: shops(x), sups: sups(x), work: work(x), pub: p, crm: crm(x) };
+    return { money: m, bills: b, shops: shops(x), sups: sups(x), work: work(x), pub: p, crm: crm(x) };
   }
 
   var API = { build: build };

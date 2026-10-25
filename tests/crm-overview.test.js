@@ -104,3 +104,20 @@ test("Invoices: what a customer owes, open and overdue per currency", () => {
   assert.equal(x.money.in.EUR.open > 0, true);
   assert.equal(x.money.in.EUR.overdue, x.money.in.EUR.open);
 });
+
+test("received invoices (Invoices wave 7): what you owe the partner, by crm id or ΑΦΜ, joins the money owed", () => {
+  const inv = I.normalize({ ver: 1, clients: [], docs: [], pays: [],
+    bills: [
+      { id: "bil-001", m: 1, crm: "cust001", num: "A1", date: "2026-10-01", due: "2026-10-10", cur: "EUR", sup: { name: "Me" }, net: 10000, vat: 2400 },
+      { id: "bil-002", m: 1, num: "A2", date: "2026-10-20", cur: "EUR", sup: { name: "Me SA", afm: "EL999" }, net: 1000, vat: 0 },
+      { id: "bil-003", m: 1, crm: "other", num: "A3", date: "2026-10-21", cur: "EUR", sup: { name: "Me", afm: "999" }, net: 5000, vat: 0 }
+    ],
+    bpays: [{ id: "bpy-001", m: 1, bill: "bil-001", date: "2026-10-05", amt: 2400 }] });
+  const data = C.norm({ cust: [{ id: "cust001", m: 1, name: "Me", afm: "999" }] });
+  const x = O.build({ data, cust: data.cust[0], today: TODAY, nowMs: NOW, links: [], inv, I });
+  assert.deepEqual(x.bills, { n: 2, last: "2026-10-20", open: { EUR: { open: 11000, overdue: 10000, n: 2 } } });
+  assert.deepEqual(x.money.out, { EUR: 11000 });
+  // an Invoices core without bills (an older cached copy) shows none
+  const y = O.build({ data, cust: data.cust[0], today: TODAY, nowMs: NOW, links: [], inv, I: { byCrm: I.byCrm } });
+  assert.deepEqual(y.bills, { n: 0, last: "", open: {} });
+});

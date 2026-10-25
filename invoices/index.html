@@ -16,6 +16,7 @@
   <header id="toolbar">
     <nav id="tabs" role="tablist">
       <button type="button" class="tab" role="tab" data-tab="docs" id="tab-docs"></button>
+      <button type="button" class="tab" role="tab" data-tab="bills" id="tab-bills"></button>
       <button type="button" class="tab" role="tab" data-tab="clients" id="tab-clients"></button>
       <button type="button" class="tab" role="tab" data-tab="dash" id="tab-dash"></button>
     </nav>
@@ -44,6 +45,19 @@
         <p class="empty-t" data-i18n="docs.empty">No invoices yet.</p>
         <p class="hint" data-i18n="docs.emptyHint">Create your first invoice with New, or record one you issued elsewhere.</p>
       </div>
+    </section>
+
+    <!-- Received invoices (bills) -->
+    <section id="v-bills" class="view" role="tabpanel" hidden>
+      <div class="filters three">
+        <input type="search" id="bq" autocomplete="off" spellcheck="false">
+        <select id="b-status"></select>
+        <button type="button" class="wide-btn" id="add-bill"></button>
+      </div>
+      <p class="hint" id="b-filter" hidden></p>
+      <p class="banner info" id="bills-sum" hidden></p>
+      <ol id="bills" class="rows"></ol>
+      <p class="hint" id="bills-empty" data-i18n="bl.empty">No received invoices yet.</p>
     </section>
 
     <!-- Clients -->

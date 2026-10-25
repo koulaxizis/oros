@@ -273,8 +273,9 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
   margin-bottom: 10px;
 }
 .filters.two { grid-template-columns: minmax(0, 1fr) auto; }
+.filters.three { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; }
 #v-dash .filters { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-#f-client { margin: -2px 0 10px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+#f-client, #b-filter { margin: -2px 0 10px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 .rows { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .row {
   display: flex;
@@ -667,6 +668,8 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
   .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .filters #q { grid-column: 1 / -1; }
   .filters.two { grid-template-columns: minmax(0, 1fr); }
+  .filters.three { grid-template-columns: minmax(0, 1fr) auto; }
+  .filters.three #bq { grid-column: 1 / -1; }
   .pp-meta { text-align: left; align-items: flex-start; }
   .paper { padding: 12px; }
   .pay-main { grid-template-columns: minmax(0, 1fr) auto; }
