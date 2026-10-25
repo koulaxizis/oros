@@ -141,6 +141,12 @@
       "imp.bad": "No name column found. The first row must hold column names such as Name, Company or First name.",
       "imp.done": "Imported {n} customers",
       "mail.subj": "Subject: {s}", "mail.noCust": "No customer has {email}. Add one, then log the email.",
+      "tl.g.all": "All", "tl.g.crm": "Contacts", "tl.g.money": "Money", "tl.g.stock": "Stock", "tl.g.work": "Work", "tl.g.pub": "Publishing",
+      "tl.won": "Deal won", "tl.lost": "Deal lost", "tl.inv": "Invoice issued", "tl.cred": "Credit note", "tl.pay": "Payment received",
+      "tl.bill": "Invoice received", "tl.bpay": "You paid", "tl.po": "Order sent", "tl.recv": "Goods received", "tl.ship": "Delivered to the shop",
+      "tl.settle": "Settlement", "tl.back": "Back from the shop", "tl.work": "Work", "tl.stmt": "Royalty statement", "tl.roy": "Royalties paid",
+      "tl.bin": "Income", "tl.bout": "Expense", "tl.pcs": "{q} pcs", "tl.more": "Show more ({n})",
+      "tl.app.crm": "CRM", "tl.app.invoices": "Invoices", "tl.app.stock": "Stock", "tl.app.timesheet": "Timesheet", "tl.app.publish": "Publishing", "tl.app.budget": "Budget",
       "hist.none": "Nothing logged yet.", "deals.none": "No deals yet.", "fups.none": "No follow-ups.",
       "fups.done": "Done", "hist.add": "+ Log", "deals.add": "+ Deal", "fups.add": "+ Follow-up",
       "stage.new": "New", "stage.contact": "Contacted", "stage.proposal": "Proposal", "stage.nego": "Negotiation",
@@ -286,6 +292,12 @@
       "imp.bad": "Δεν βρέθηκε στήλη ονόματος. Η πρώτη γραμμή πρέπει να έχει ονόματα στηλών, όπως Επωνυμία, Όνομα ή Name.",
       "imp.done": "Εισήχθησαν {n} πελάτες",
       "mail.subj": "Θέμα: {s}", "mail.noCust": "Κανένας πελάτης δεν έχει το {email}. Πρόσθεσέ τον και μετά κατέγραψε το email.",
+      "tl.g.all": "Όλα", "tl.g.crm": "Επαφές", "tl.g.money": "Χρήματα", "tl.g.stock": "Απόθεμα", "tl.g.work": "Εργασία", "tl.g.pub": "Εκδόσεις",
+      "tl.won": "Κερδισμένη ευκαιρία", "tl.lost": "Χαμένη ευκαιρία", "tl.inv": "Έκδοση τιμολογίου", "tl.cred": "Πιστωτικό", "tl.pay": "Είσπραξη",
+      "tl.bill": "Λαμβανόμενο τιμολόγιο", "tl.bpay": "Πλήρωσες", "tl.po": "Παραγγελία", "tl.recv": "Παραλαβή", "tl.ship": "Παράδοση στο κατάστημα",
+      "tl.settle": "Εκκαθάριση", "tl.back": "Επιστροφή από το κατάστημα", "tl.work": "Εργασία", "tl.stmt": "Εκκαθάριση δικαιωμάτων", "tl.roy": "Πληρωμή δικαιωμάτων",
+      "tl.bin": "Έσοδο", "tl.bout": "Έξοδο", "tl.pcs": "{q} τεμ.", "tl.more": "Περισσότερα ({n})",
+      "tl.app.crm": "Πελάτες", "tl.app.invoices": "Τιμολόγια", "tl.app.stock": "Απόθεμα", "tl.app.timesheet": "Ώρες εργασίας", "tl.app.publish": "Εκδόσεις", "tl.app.budget": "Έσοδα & Έξοδα",
       "hist.none": "Τίποτα καταγεγραμμένο ακόμη.", "deals.none": "Καμία ευκαιρία ακόμη.", "fups.none": "Κανένα follow-up.",
       "fups.done": "Ολοκληρωμένα", "hist.add": "+ Καταγραφή", "deals.add": "+ Ευκαιρία", "fups.add": "+ Follow-up",
       "stage.new": "Νέα", "stage.contact": "Επικοινωνία", "stage.proposal": "Πρόταση", "stage.nego": "Διαπραγμάτευση",
@@ -1342,7 +1354,7 @@
     var custDeals = data.deals.filter(function (d) { return d.cust === c.id; });
     var custFups = data.fups.filter(function (f) { return f.cust === c.id; });
     var openF = custFups.filter(function (f) { return !f.done; });
-    var subs = [["ov", t("sub.ov")], ["hist", t("sub.hist") + " (" + custActs.length + ")"],
+    var subs = [["ov", t("sub.ov")], ["hist", t("sub.hist") + " (" + histCount(c, custActs) + ")"],
                 ["deals", t("sub.deals") + " (" + custDeals.length + ")"],
                 ["fups", t("sub.fups") + " (" + openF.length + ")"]];
     var docs = docsFor(c);
@@ -1383,27 +1395,100 @@
     pane.appendChild(h);
   }
 
+  // ----- One timeline (partner card W3, crm/timeline.js) -----
+  var tlGroup = "", tlMore = 0;   // session only: the group shown, how many more pages
+  var TL_ICON = { won: "deal", lost: "deal", inv: "doc", cred: "doc", pay: "doc", bill: "doc", bpay: "doc",
+                  stmt: "doc", roy: "doc", bin: "doc", bout: "doc", po: "log", recv: "log", ship: "log",
+                  settle: "log", back: "log", work: "clock" };
+  function timelineOf(c) {
+    var TL = window.OrosCrmTimeline;
+    if (!TL) return null;
+    return TL.build({ data: data, cust: c, links: C.linksOf(data, c), tz: new Date().getTimezoneOffset(), day: todayYmd(),
+      inv: invData(), I: window.OrosInvoicesCore, alsoInv: invLinks(c), stock: stockData(), S: window.OrosStockCore,
+      ts: tsData(), pub: pubData(), bud: readForeign("oros-budget-data", function (raw) { return JSON.parse(raw); }) });
+  }
+  function tlLine(e) {
+    var bits = [t("tl." + e.k)];
+    if (e.n) bits.push(e.n);
+    if (typeof e.amt === "number" && (e.amt || e.k !== "stmt")) bits.push(e.cur ? curMoney(e.amt, e.cur) : money(e.amt));
+    if (e.q) bits.push(t("tl.pcs", { q: pieces(e.q) }));
+    if (e.ms) bits.push(t("ov.h", { n: (Math.round(e.ms / 360000) / 10).toLocaleString(LOCALE) }));
+    return bits.join(" · ");
+  }
   function renderHistory(pane, c, list) {
     addLine(pane, t("hist.add"), function () { logEditor(null, c.id); });
+    var all = tlCache && tlCache.id === c.id ? tlCache.all : timelineOf(c);
+    tlCache = null;
+    if (all) {
+      var TL = window.OrosCrmTimeline, groups = TL.GROUPS.filter(function (g) { return TL.filter(all, g).length; });
+      if (groups.length > 1) {
+        var chips = el("div", "chips");
+        [""].concat(groups).forEach(function (g) {
+          var b = el("button", "chip" + (tlGroup === g ? " on" : ""), t("tl.g." + (g || "all")));
+          b.type = "button";
+          b.setAttribute("aria-pressed", tlGroup === g ? "true" : "false");
+          b.addEventListener("click", function () { tlGroup = g; tlMore = 0; renderDetail(); });
+          chips.appendChild(b);
+        });
+        pane.appendChild(chips);
+      } else tlGroup = "";
+      var shown = TL.filter(all, tlGroup);
+      if (!shown.length) { pane.appendChild(el("p", "hint", t("hist.none"))); return; }
+      var box = el("div", "timeline"), limit = 150 * (tlMore + 1);
+      shown.slice(0, limit).forEach(function (e) {
+        if (e.k === "act") {
+          var a = C.byId(data.acts, e.act);
+          if (a) box.appendChild(actItem(a, c));
+          return;
+        }
+        var it = el("button", "tl-item");
+        it.type = "button";
+        it.style.textAlign = "left";
+        var ico = el("span", "tl-ico");
+        ico.innerHTML = UI[TL_ICON[e.k] || "log"];
+        it.appendChild(ico);
+        var main = el("span", "row-main");
+        main.appendChild(el("span", "tl-when", [fmtDate(e.day), t("tl.app." + (e.open ? e.open.app : "crm"))].join(" · ")));
+        main.appendChild(el("span", "tl-text", tlLine(e)));
+        if (e.text) main.appendChild(el("span", "tl-when", e.text));
+        if (e.from) main.appendChild(el("span", "tl-when", fmtDate(e.from) + " – " + fmtDate(e.day)));
+        it.appendChild(main);
+        it.addEventListener("click", function () {
+          if (e.deal) { var d = C.byId(data.deals, e.deal); if (d) dealEditor(d, c.id); return; }
+          if (e.open) openIn(e.open.app, e.open.target);
+        });
+        box.appendChild(it);
+      });
+      pane.appendChild(box);
+      if (shown.length > limit) addLine(pane, t("tl.more", { n: shown.length - limit }), function () { tlMore++; renderDetail(); });
+      return;
+    }
     if (!list.length) { pane.appendChild(el("p", "hint", t("hist.none"))); return; }
     var tl = el("div", "timeline");
-    list.forEach(function (a) {
-      var it = el("button", "tl-item");
-      it.type = "button";
-      it.style.textAlign = "left";
-      var ico = el("span", "tl-ico");
-      ico.innerHTML = UI[KIND_ICON[a.k]];
-      it.appendChild(ico);
-      var main = el("span", "row-main");
-      var dealRow = a.deal ? C.byId(data.deals, a.deal) : null;
-      var meta = [t("k." + a.k), fmtMs(a.at), a.who || "", dealRow ? dealRow.title : ""].filter(Boolean).join(" · ");
-      main.appendChild(el("span", "tl-when", meta));
-      if (a.text) main.appendChild(el("span", "tl-text", a.text));
-      it.appendChild(main);
-      it.addEventListener("click", function () { logEditor(a, c.id); });
-      tl.appendChild(it);
-    });
+    list.forEach(function (a) { tl.appendChild(actItem(a, c)); });
     pane.appendChild(tl);
+  }
+  var tlCache = null;   // one build per drawing: the tab's count, then the list
+  function histCount(c, acts) {
+    var all = timelineOf(c);
+    tlCache = { id: c.id, all: all };
+    return all ? all.length : acts.length;
+  }
+  function actItem(a, c) {
+    var it = el("button", "tl-item");
+    it.type = "button";
+    it.style.textAlign = "left";
+    var ico = el("span", "tl-ico");
+    ico.innerHTML = UI[KIND_ICON[a.k]];
+    it.appendChild(ico);
+    var main = el("span", "row-main");
+    var dealRow = a.deal ? C.byId(data.deals, a.deal) : null;
+    var meta = [t("k." + a.k), fmtMs(a.at), a.who || "", dealRow ? dealRow.title : ""].filter(Boolean).join(" · ");
+    main.appendChild(el("span", "tl-when", meta));
+    if (a.text) main.appendChild(el("span", "tl-text", a.text));
+    it.appendChild(main);
+    it.addEventListener("click", function () { logEditor(a, c.id); });
+    return it;
   }
 
   function dealRowEl(d, showCust) {

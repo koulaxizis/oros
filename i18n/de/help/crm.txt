@@ -14,6 +14,8 @@ Tippe unter `Personen` auf `+ Person`. Wähle jemanden `Aus Kontakte` (Telefon u
 ## Verlauf, Wiedervorlagen und die Agenda
 `Kontakt notieren` hält einen Anruf, eine E-Mail, ein Treffen, eine Nachricht oder eine Notiz fest, mit Datum und Uhrzeit, mit wem du gesprochen hast und um welchen Deal es ging. Wähle `Nächste Wiedervorlage`, um im selben Fenster den nächsten Schritt zu planen.
 
+`Verlauf` auf einem Eintrag ist eine Zeitleiste mit allem, was mit diesem Partner geschah, das Neueste zuerst: deine notierten Kontakte und abgeschlossenen Deals, und aus den anderen Apps deine Rechnungen und erhaltenen Zahlungen, erhaltene Rechnungen und was du bezahlt hast, Bestellungen, Wareneingänge, Lieferungen, Abrechnungen und Rückgaben im Bestand, Stunden pro Tag in der Zeiterfassung, Honorarabrechnungen und -zahlungen im Verlag und Budget-Einträge, die den Partner nennen. Die Chips darüber zeigen eine Art auf einmal; tippe auf einen Eintrag, um ihn in seiner App zu öffnen. Im CRM gespeichert wird nur, was du hier notiert hast.
+
 Eine Wiedervorlage hat einen Tag, eine optionale Uhrzeit und das, was zu tun ist. `Agenda` zeigt die überfälligen, die von heute und die der nächsten 7 Tage. Tippe auf den Kreis, um eine als erledigt zu markieren; die Meldung, die dann erscheint, bietet `Notieren` an. Das Menü einer Wiedervorlage verschiebt sie auf `Morgen` oder `In einer Woche` oder sendet sie an [Aufgaben](app:todo).
 
 Offene Wiedervorlagen erscheinen auch in [Heute](app:today), wo das Häkchen sie in CRM erledigt, und im [Kalender](app:calendar) unter `Kunden`, zusammen mit dem erwarteten Abschlusstag offener Deals. Ein Kontakt, der Person eines Kunden ist, bekommt in [Kontakte](app:contacts) eine Taste `Kunde:`.
