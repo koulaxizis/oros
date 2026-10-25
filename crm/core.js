@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.4.0)
+// orOS CRM — core.js (shared logic, v1.5.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -44,9 +44,20 @@
 //   calendarOn(data, ymd, today) → [{ k: fup|late|done|close, fup|deal }]
 //   custsForContact(data, contactId) → [cust]
 //   normWf(x) → the web form record | null (crm/webform.js)
+//   partners (1.5, BR-CRM-LINK): ROLES, LINK_KINDS, rolesOf(c),
+//     normPt, ptOf(data, custId), rolesOf(data, c), hasRole(data, c, r),
+//     lnOf(data, c), rolesRow(data, custId, roles) → pt row to save,
+//     normRoles(v), normLinks(v), pubKey(name),
+//     linksOf(data, c, kind?) → [{ key, k, v }], linkOwner(data, key) →
+//     cust | null, linkMove(data, custId, key) → [pt rows to save]
+//   pt?: [{ id = customer id, m, roles?: ["cust"|"sup"|"shop"|"auth"|
+//     "assoc"] (absent = a customer only), ln?: ["sup:<id>"|"wh:<id>"|
+//     "tsc:<id>"|"inv:<id>"|"pub:<folded name>"] }] links to records of
+//     Stock, Timesheet, Invoices and Publishing. CRM writes only its
+//     own data: the other apps are read, never changed.
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
-//     sorted by id, prefs: { pm, cur, forget }, wf?: web form,
+//     sorted by id, pt?: partners (1.5), prefs: { pm, cur, forget }, wf?: web form,
 //     tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
@@ -62,7 +73,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -70,7 +81,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -218,6 +229,106 @@
     return o;
   }
 
+  // ---------- Partners (1.5, BR-CRM-LINK) ----------
+  // A record can be more than a customer: a supplier, a shop that
+  // sells on consignment, an author / contributor, an associate, and
+  // it can be linked to rows of other apps by their ids (Publishing
+  // people have no id: their folded name). Both live in a top-level
+  // list pt, one row per customer (its id IS the customer id, so the
+  // customer's tombstone hides it): { id, m, roles?, ln? }. A separate
+  // list, like Stock's cons, so a 1.4 device that edits the customer
+  // can't strip them: it drops pt on its own merge, and the union of
+  // the next merge brings it back. Written only when it has rows, so
+  // data without partners keeps its bytes. roles is stored only when
+  // it is not "customer only".
+  var ROLES = ["cust", "sup", "shop", "auth", "assoc"];
+  var LINK_KINDS = ["sup", "wh", "tsc", "inv", "pub"];
+  var LINK_ID_RE = /^(sup|wh|tsc|inv):[A-Za-z0-9_-]{1,60}$/;
+  function normRoles(v) {
+    if (!Array.isArray(v)) return null;
+    var out = ROLES.filter(function (r) { return v.indexOf(r) >= 0; });
+    if (!out.length || (out.length === 1 && out[0] === "cust")) return null;
+    return out;
+  }
+  function pubKey(name) {
+    var f = fold(cleanText(name, 120)).replace(/\s+/g, " ").trim().slice(0, 80).trim();
+    return f ? "pub:" + f : "";
+  }
+  function normLink(s) {
+    if (typeof s !== "string") return "";
+    if (LINK_ID_RE.test(s)) return s;
+    if (s.slice(0, 4) === "pub:") return pubKey(s.slice(4));
+    return "";
+  }
+  function normLinks(v) {
+    var out = [];
+    if (Array.isArray(v)) v.forEach(function (s) {
+      var k = normLink(s);
+      if (k && out.indexOf(k) < 0 && out.length < LIMITS.links) out.push(k);
+    });
+    return out.sort(cmpStr);
+  }
+  function normPt(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var o = { id: x.id, m: x.m };
+    var roles = normRoles(x.roles);
+    if (roles) o.roles = roles;
+    var ln = normLinks(x.ln);
+    if (ln.length) o.ln = ln;
+    return o;
+  }
+  function ptOf(data, custId) { return (data && byId(data.pt, custId)) || null; }
+  function rolesOf(data, c) { var p = c && ptOf(data, c.id); return p && p.roles ? p.roles : ["cust"]; }
+  function hasRole(data, c, r) { return rolesOf(data, c).indexOf(r) >= 0; }
+  function lnOf(data, c) { var p = c && ptOf(data, c.id); return (p && p.ln) || []; }
+  // The pt row to save for new roles (the links stay)
+  function rolesRow(data, custId, roles) {
+    var r = own(ptOf(data, custId) || { id: custId });
+    var rl = normRoles(roles);
+    if (rl) r.roles = rl; else delete r.roles;
+    return r;
+  }
+  function linksOf(data, c, kind) {
+    return lnOf(data, c).map(function (key) {
+      var i = key.indexOf(":");
+      return { key: key, k: key.slice(0, i), v: key.slice(i + 1) };
+    }).filter(function (x) { return !kind || x.k === kind; });
+  }
+  // One record of another app belongs to one partner. Two devices may
+  // link it to two partners at once: the first by id answers.
+  function linkOwner(data, key) {
+    key = normLink(key);
+    if (!key || !data) return null;
+    var pts = (data.pt || []).slice().sort(function (a, b) { return cmpStr(a.id, b.id); });
+    for (var i = 0; i < pts.length; i++) {
+      if ((pts[i].ln || []).indexOf(key) >= 0) { var c = byId(data.cust, pts[i].id); if (c) return c; }
+    }
+    return null;
+  }
+  // Link key to custId (custId "" = unlink it everywhere): the pt rows
+  // that change, as copies for the caller to save.
+  function linkMove(data, custId, key) {
+    key = normLink(key);
+    var out = [];
+    if (!key || !data) return out;
+    var ids = (data.pt || []).map(function (p) { return p.id; });
+    if (custId && ids.indexOf(custId) < 0 && byId(data.cust, custId)) ids.push(custId);
+    ids.forEach(function (id) {
+      var r = own(ptOf(data, id) || { id: id });
+      var ln = (r.ln || []).slice(), i = ln.indexOf(key);
+      if (id === custId) {
+        if (i >= 0 || ln.length >= LIMITS.links) return;
+        ln.push(key);
+      } else {
+        if (i < 0) return;
+        ln.splice(i, 1);
+      }
+      if (ln.length) r.ln = ln.sort(cmpStr); else delete r.ln;
+      out.push(r);
+    });
+    return out;
+  }
+
   function normDeal(x) {
     if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x) || !ID_RE.test(x.cust)) return null;
     var title = str(x, "title", 120);
@@ -292,7 +403,7 @@
     return o;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg };
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -380,11 +491,12 @@
       Object.keys(best[k]).sort(cmpStr).forEach(function (id) {
         var x = best[k][id];
         if (id in tombs && tombs[id] >= x.m) return;
-        if (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust]) return;
+        if (k === "pt" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
+        if (k === "pt" && !x.roles && !x.ln) return;      // nothing left to say
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      out[k] = list;
+      if (k !== "pt" || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
@@ -896,7 +1008,10 @@
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
     customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail,
     backup: backup, restore: restore,
-    reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact
+    reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
+    ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
+    normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
+    linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosCrmCore = API;

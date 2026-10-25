@@ -43,6 +43,7 @@
   "use strict";
 
   var C = window.OrosCrmCore;
+  var LK = window.OrosCrmLinks || null;   // partners across apps (links.js)
   var STORAGE_KEY  = "oros-crm-data";
   var PREFS_KEY    = "oros-crm-prefs";
   var CONTACTS_KEY = "oros-contacts-data";
@@ -85,6 +86,21 @@
       "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal",
       "k.call": "Call", "k.mail": "Email", "k.meet": "Meeting", "k.msg": "Message", "k.note": "Note",
       "sec.info": "Details", "sec.people": "People", "sec.notes": "Notes",
+      "role.cust": "Customer", "role.sup": "Supplier", "role.shop": "Consignment shop", "role.auth": "Author / contributor", "role.assoc": "Associate",
+      "fr.cust": "Customers", "fr.sup": "Suppliers", "fr.shop": "Shops", "fr.auth": "Authors", "fr.assoc": "Associates",
+      "ed.roles": "Role", "ed.rolesHint": "More than one is fine.",
+      "sec.links": "In other apps", "links.add": "+ Link",
+      "links.none": "Not linked yet to a supplier, a consignment shop, a client or a title in another app.",
+      "lk.sup": "Stock · supplier", "lk.wh": "Stock · consignment shop", "lk.tsc": "Work hours · client", "lk.inv": "Invoices · client",
+      "lk.pub": "Publishing · titles: {n}", "lk.gone": "No longer there", "lk.auto": "set in Publishing", "lk.unlink": "Unlink",
+      "lk.title": "Link {name}", "lk.hint": "Records of Stock, Work hours, Invoices and Publishing. Linking changes nothing in those apps.",
+      "lk.q": "Search", "lk.empty": "Nothing to link: no suppliers, consignment shops, clients or Publishing people on this device yet.",
+      "lk.why.afm": "same VAT no.", "lk.why.email": "same email", "lk.why.name": "same name", "lk.owner": "linked to {name}",
+      "lk.link": "Link", "lk.done": "Linked: {name}", "lk.undone": "Unlinked: {name}",
+      "set.match": "Find matches in other apps",
+      "mt.hint": "Records in other apps that look like your customers. Nothing is linked until you tap.",
+      "mt.pairs": "Likely the same", "mt.all": "Link all ({n})", "mt.loose": "Not here yet", "mt.new": "Add",
+      "mt.none": "Nothing new to link.", "mt.added": "Added: {name}", "mt.linkedN": "Linked: {n}",
       "fact.afm": "VAT ID", "fact.doy": "Tax office", "fact.job": "Profession", "fact.addr": "Address", "fact.country": "Country",
       "fact.phone": "Phone", "fact.email": "Email", "fact.web": "Website", "fact.src": "Source", "fact.tags": "Tags", "fact.since": "Customer since",
       "afm.ok": "valid", "afm.bad": "check digit does not match",
@@ -203,6 +219,21 @@
       "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία",
       "k.call": "Κλήση", "k.mail": "Email", "k.meet": "Συνάντηση", "k.msg": "Μήνυμα", "k.note": "Σημείωση",
       "sec.info": "Στοιχεία", "sec.people": "Άνθρωποι", "sec.notes": "Σημειώσεις",
+      "role.cust": "Πελάτης", "role.sup": "Προμηθευτής", "role.shop": "Κατάστημα παρακαταθήκης", "role.auth": "Συγγραφέας / συντελεστής", "role.assoc": "Συνεργάτης",
+      "fr.cust": "Πελάτες", "fr.sup": "Προμηθευτές", "fr.shop": "Καταστήματα", "fr.auth": "Συγγραφείς", "fr.assoc": "Συνεργάτες",
+      "ed.roles": "Ρόλος", "ed.rolesHint": "Μπορείς να διαλέξεις περισσότερους από έναν.",
+      "sec.links": "Σε άλλες εφαρμογές", "links.add": "+ Σύνδεση",
+      "links.none": "Δεν έχει συνδεθεί ακόμη με προμηθευτή, κατάστημα παρακαταθήκης, πελάτη ή τίτλο άλλης εφαρμογής.",
+      "lk.sup": "Απόθεμα · προμηθευτής", "lk.wh": "Απόθεμα · κατάστημα παρακαταθήκης", "lk.tsc": "Ώρες εργασίας · πελάτης", "lk.inv": "Τιμολόγια · πελάτης",
+      "lk.pub": "Εκδόσεις · τίτλοι: {n}", "lk.gone": "Δεν υπάρχει πια", "lk.auto": "από τις Εκδόσεις", "lk.unlink": "Αποσύνδεση",
+      "lk.title": "Σύνδεση: {name}", "lk.hint": "Εγγραφές από Απόθεμα, Ώρες εργασίας, Τιμολόγια και Εκδόσεις. Η σύνδεση δεν αλλάζει τίποτα σε αυτές τις εφαρμογές.",
+      "lk.q": "Αναζήτηση", "lk.empty": "Δεν υπάρχει κάτι για σύνδεση: ακόμη κανένας προμηθευτής, κατάστημα, πελάτης ή άνθρωπος των Εκδόσεων σε αυτή τη συσκευή.",
+      "lk.why.afm": "ίδιο ΑΦΜ", "lk.why.email": "ίδιο email", "lk.why.name": "ίδιο όνομα", "lk.owner": "συνδεδεμένο με {name}",
+      "lk.link": "Σύνδεση", "lk.done": "Συνδέθηκε: {name}", "lk.undone": "Αποσυνδέθηκε: {name}",
+      "set.match": "Εύρεση αντιστοιχιών σε άλλες εφαρμογές",
+      "mt.hint": "Εγγραφές άλλων εφαρμογών που μοιάζουν με πελάτες σου. Τίποτα δεν συνδέεται αν δεν το πατήσεις.",
+      "mt.pairs": "Μάλλον οι ίδιοι", "mt.all": "Σύνδεση όλων ({n})", "mt.loose": "Δεν υπάρχουν ακόμη εδώ", "mt.new": "Προσθήκη",
+      "mt.none": "Τίποτα νέο για σύνδεση.", "mt.added": "Προστέθηκε: {name}", "mt.linkedN": "Συνδέθηκαν: {n}",
       "fact.afm": "ΑΦΜ", "fact.doy": "ΔΟΥ", "fact.job": "Επάγγελμα", "fact.addr": "Διεύθυνση", "fact.country": "Χώρα",
       "fact.phone": "Τηλέφωνο", "fact.email": "Email", "fact.web": "Ιστότοπος", "fact.src": "Πηγή", "fact.tags": "Ετικέτες", "fact.since": "Πελάτης από",
       "afm.ok": "έγκυρο", "afm.bad": "το ψηφίο ελέγχου δεν ταιριάζει",
@@ -404,6 +435,8 @@
     return (s || "?").toUpperCase();
   }
   function tagOf(id) { return C.byId(data.tags, id); }
+  function hasRoles(c) { var p = C.ptOf(data, c.id); return !!(p && p.roles); }
+  function rolesText(c) { return C.rolesOf(data, c).map(function (r) { return t("role." + r); }).join(", "); }
   function custColor(c) {
     var tg = c && c.tags && c.tags.length ? tagOf(c.tags[0]) : null;
     return tg ? COLORS[tg.col] : "";
@@ -426,7 +459,7 @@
 
   // ---------- 2. Storage + prefs ----------
   var data = C.empty();
-  var prefs = { tab: "cust", sel: "", filter: "all", tag: "", sort: "name", sub: "hist", stage: "new" };
+  var prefs = { tab: "cust", sel: "", filter: "all", tag: "", role: "", sort: "name", sub: "hist", stage: "new" };
 
   function load() {
     var raw = null;
@@ -447,6 +480,7 @@
         if (typeof p.sel === "string") prefs.sel = p.sel;
         if (["all", "lead", "active", "past", "star", "forgot"].indexOf(p.filter) >= 0) prefs.filter = p.filter;
         if (typeof p.tag === "string") prefs.tag = p.tag;
+        if (C.ROLES.indexOf(p.role) >= 0) prefs.role = p.role;
         if (["name", "last", "next", "value"].indexOf(p.sort) >= 0) prefs.sort = p.sort;
         if (["hist", "deals", "fups", "docs"].indexOf(p.sub) >= 0) prefs.sub = p.sub;
         if (typeof p.stage === "string") prefs.stage = p.stage;
@@ -520,6 +554,7 @@
       acts: data.acts.filter(function (a) { return a.cust === c.id; }),
       fups: data.fups.filter(function (f) { return f.cust === c.id; })
     };
+    var pt = C.ptOf(data, c.id);
     tomb(c.id);
     if (prefs.sel === c.id) { prefs.sel = ""; savePrefs(); }
     if (!commit()) return;
@@ -532,6 +567,7 @@
           if (!C.byId(data[k], r.id)) data[k].push(Object.assign({}, r, { m: stamp(r) }));
         });
       });
+      if (pt) { data.pt = (data.pt || []).filter(function (p) { return p.id !== c.id; }); data.pt.push(Object.assign({}, pt, { m: stamp(pt) })); }
       prefs.sel = c.id;
       commit();
     });
@@ -665,6 +701,183 @@
     s.__orosOpenAt("todo", { addItems: { from: t("app"), items: [{ text: C.cleanText(f.text, 300), note: note.slice(0, 1000) }] } });
   }
 
+
+  // ----- Partners across apps (BR-CRM-LINK, crm/links.js) -----
+  // Read-only: each app's data only through its own core, parsed once
+  // per stored string. CRM writes only its own pt rows (crm/core.js 1.5).
+  var STOCK_KEY = "oros-stock-data", TS_KEY = "oros-timesheet-data", PUB_KEY = "oros-publish-data";
+  var foreign = {};
+  function readForeign(key, parse) {
+    var raw = null;
+    try { raw = localStorage.getItem(key); } catch (e) {}
+    var f = foreign[key] || (foreign[key] = { raw: undefined, data: null });
+    if (raw !== f.raw) {
+      f.raw = raw;
+      try { f.data = raw ? parse(raw) : null; } catch (e) { f.data = null; }
+    }
+    return f.data;
+  }
+  function stockData() {
+    var S = window.OrosStockCore;
+    return S ? readForeign(STOCK_KEY, function (raw) { return S.merge(JSON.parse(raw), null); }) : null;
+  }
+  function tsData() {
+    var T = window.orosTimesheetCore;
+    return T ? readForeign(TS_KEY, function (raw) { return T.parse(raw); }) : null;
+  }
+  function pubData() {
+    var P = window.OrosPublishCore;
+    return P ? readForeign(PUB_KEY, function (raw) { return P.normalize(JSON.parse(raw)); }) : null;
+  }
+  function linkCands() {
+    if (!LK) return [];
+    return LK.candidates({ stock: stockData(), ts: tsData(), inv: invData(), pub: pubData() },
+      { stock: window.OrosStockCore });
+  }
+  function invLinks(c) { return C.linksOf(data, c, "inv").map(function (x) { return x.v; }); }
+  function linkLabel(x) { return t("lk." + x.k, { n: x.n || 0 }); }
+  // pt rows (roles + links): one commit for all; a row whose customer
+  // was deleted must come after its tombstone, like upsert
+  function savePt(rows) {
+    if (!rows.length) return false;
+    if (!data.pt) data.pt = [];
+    rows.forEach(function (r) {
+      var prev = C.byId(data.pt, r.id), next = Object.assign({}, r);
+      next.m = stamp(prev);
+      if (data.tombs[next.id] && data.tombs[next.id] >= next.m) next.m = data.tombs[next.id] + 1;
+      if (prev) data.pt[data.pt.indexOf(prev)] = next; else data.pt.push(next);
+    });
+    return commit();
+  }
+  function setLink(custId, key) { return savePt(C.linkMove(data, custId, key)); }
+
+  function renderLinks(box, c) {
+    if (!LK) return;
+    var cands = linkCands();
+    var rows = LK.linked(data, c, cands, pubData());
+    if (!rows.length && !cands.length) return;   // nothing in other apps on this device
+    var sec = el("div", "sec");
+    var h = secHead(t("sec.links"));
+    h.appendChild(el("span", "spacer"));
+    var add = el("button", "link-btn", t("links.add"));
+    add.type = "button";
+    add.addEventListener("click", function () { linkPicker(c); });
+    h.appendChild(add);
+    sec.appendChild(h);
+    if (!rows.length) sec.appendChild(el("p", "hint", t("links.none")));
+    rows.forEach(function (x) {
+      var row = el("div", "person");
+      var main = el("div", "row-main");
+      main.appendChild(el("div", "row-title", x.gone ? t("lk.gone") : x.name));
+      main.appendChild(el("div", "row-sub", linkLabel(x) + (x.auto ? " · " + t("lk.auto") : "") + (x.sub ? " · " + x.sub : "")));
+      row.appendChild(main);
+      if (!x.auto) row.appendChild(iconBtn("x", t("lk.unlink") + " " + (x.name || ""), function () {
+        if (setLink("", x.key)) undoToast(t("lk.undone", { name: x.name || t("lk.gone") }), function () { setLink(c.id, x.key); });
+      }, "mini"));
+      sec.appendChild(row);
+    });
+    box.appendChild(sec);
+  }
+
+  function whyText(w) { return w ? t("lk.why." + w) : ""; }
+  function linkPicker(c) {
+    var dlg = makeDialog("crm-link", true);
+    dlg.appendChild(el("h2", "dlg-title", t("lk.title", { name: c.name })));
+    dlg.appendChild(el("p", "hint", t("lk.hint")));
+    var all = LK.forCust(data, c, linkCands());
+    var q = field(dlg, t("lk.q"), inp("search", "", 80));
+    var list = el("div", "sheet-list");
+    dlg.appendChild(list);
+    function draw() {
+      list.innerHTML = "";
+      var words = C.fold(q.value.trim()).split(/\s+/).filter(Boolean);
+      var shown = all.filter(function (r) {
+        var hay = C.fold([r.cand.name, r.cand.sub, r.cand.afm, r.cand.email, linkLabel(r.cand)].join(" "));
+        return words.every(function (w) { return hay.indexOf(w) >= 0; });
+      });
+      if (!all.length) list.appendChild(el("p", "hint", t("lk.empty")));
+      shown.slice(0, 100).forEach(function (r) {
+        var b = button("", "sheet-btn", function () {
+          dlg.close();
+          if (setLink(c.id, r.cand.key)) undoToast(t("lk.done", { name: r.cand.name }), function () {
+            setLink(r.owner ? r.owner.id : "", r.cand.key);
+          });
+        });
+        var m = el("span", "row-main");
+        m.appendChild(el("span", "row-title", r.cand.name));
+        var bits = [linkLabel(r.cand), r.cand.sub || "", whyText(r.why), r.owner ? t("lk.owner", { name: r.owner.name }) : ""];
+        m.appendChild(el("span", "row-sub", bits.filter(Boolean).join(" · ")));
+        b.appendChild(m);
+        list.appendChild(b);
+      });
+    }
+    q.addEventListener("input", draw);
+    draw();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    q.focus();
+  }
+
+  function matchDialog() {
+    var dlg = makeDialog("crm-match", true);
+    dlg.appendChild(el("h2", "dlg-title", t("set.match")));
+    dlg.appendChild(el("p", "hint", t("mt.hint")));
+    var body = el("div", "");
+    dlg.appendChild(body);
+    function draw() {
+      body.innerHTML = "";
+      var r = LK.suggest(data, linkCands());
+      if (!r.pairs.length && !r.loose.length) { body.appendChild(el("p", "hint", t("mt.none"))); return; }
+      if (r.pairs.length) {
+        var h = secHead(t("mt.pairs"));
+        h.appendChild(el("span", "spacer"));
+        var allB = el("button", "link-btn", t("mt.all", { n: r.pairs.length }));
+        allB.type = "button";
+        allB.addEventListener("click", function () {
+          var n = 0;
+          r.pairs.forEach(function (p) { if (setLink(p.cust.id, p.cand.key)) n++; });
+          showToast(t("mt.linkedN", { n: n }));
+          draw();
+        });
+        h.appendChild(allB);
+        body.appendChild(h);
+        r.pairs.forEach(function (p) {
+          var row = el("div", "person");
+          var m = el("div", "row-main");
+          m.appendChild(el("div", "row-title", p.cand.name + " → " + p.cust.name));
+          m.appendChild(el("div", "row-sub", [linkLabel(p.cand), whyText(p.why)].join(" · ")));
+          row.appendChild(m);
+          row.appendChild(button(t("lk.link"), "", function () { if (setLink(p.cust.id, p.cand.key)) draw(); }));
+          body.appendChild(row);
+        });
+      }
+      if (r.loose.length) {
+        body.appendChild(secHead(t("mt.loose")));
+        r.loose.slice(0, 200).forEach(function (cand) {
+          var row = el("div", "person");
+          var m = el("div", "row-main");
+          m.appendChild(el("div", "row-title", cand.name));
+          m.appendChild(el("div", "row-sub", [linkLabel(cand), cand.sub || "", cand.k === "wh" ? "" : t("role." + LK.KIND_ROLE[cand.k])].filter(Boolean).join(" · ")));
+          row.appendChild(m);
+          row.appendChild(button(t("mt.new"), "", function () {
+            var now = Date.now();
+            var nc = LK.newCust(cand, C.newId(now), now);
+            if (data.cust.length >= C.LIMITS.cust) { showToast(t("toast.full")); return; }
+            if (upsert("cust", nc.cust) && savePt([nc.pt])) { showToast(t("mt.added", { name: cand.name })); draw(); }
+          }));
+          body.appendChild(row);
+        });
+      }
+    }
+    draw();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+  }
+
   // ---------- 5. Customers list ----------
   function filtered() {
     var q = C.fold($("cust-q").value.trim());
@@ -679,8 +892,9 @@
       else if (prefs.filter === "star") { if (!c.star) return false; }
       else if (prefs.filter === "forgot") { if (!forgot[c.id]) return false; }
       if (prefs.tag && (!c.tags || c.tags.indexOf(prefs.tag) < 0)) return false;
+      if (prefs.role && !C.hasRole(data, c, prefs.role)) return false;
       if (!words.length) return true;
-      var hay = C.fold([c.name, c.alias, c.afm, c.phone, c.email, c.job, c.addr, c.src, c.note,
+      var hay = C.fold([c.name, c.alias, c.afm, c.phone, c.email, c.job, c.addr, c.src, c.note, rolesText(c),
         (c.people || []).map(function (p) { return personView(p).name + " " + (p.role || ""); }).join(" "),
         (c.tags || []).map(function (id) { return tagNames[id] || ""; }).join(" ")].join(" "));
       return words.every(function (w) { return hay.indexOf(w) >= 0; });
@@ -709,6 +923,18 @@
       b.type = "button";
       b.setAttribute("aria-pressed", prefs.filter === f ? "true" : "false");
       b.addEventListener("click", function () { prefs.filter = f; savePrefs(); renderCustomers(); });
+      box.appendChild(b);
+    });
+    // roles: shown once a record is more than a customer
+    var used = {};
+    data.cust.forEach(function (c) { if (hasRoles(c)) C.rolesOf(data, c).forEach(function (r) { used[r] = 1; }); });
+    if (prefs.role && !used[prefs.role]) prefs.role = "";
+    C.ROLES.forEach(function (r) {
+      if (!used[r]) return;
+      var b = el("button", "chip" + (prefs.role === r ? " on" : ""), t("fr." + r));
+      b.type = "button";
+      b.setAttribute("aria-pressed", prefs.role === r ? "true" : "false");
+      b.addEventListener("click", function () { prefs.role = prefs.role === r ? "" : r; savePrefs(); renderCustomers(); });
       box.appendChild(b);
     });
     if (prefs.tag && !tagOf(prefs.tag)) prefs.tag = "";
@@ -759,6 +985,7 @@
       main.appendChild(title);
       var sub = el("span", "row-sub");
       sub.appendChild(el("span", "st-" + c.st, t("st." + c.st)));
+      if (hasRoles(c)) sub.appendChild(document.createTextNode(" · " + rolesText(c)));
       sub.appendChild(document.createTextNode(" · " + lastLine(r.last[c.id])));
       if (r.next[c.id]) {
         var late = r.next[c.id] < todayYmd(), today = r.next[c.id] === todayYmd();
@@ -810,7 +1037,7 @@
     hm.appendChild(el("h2", "c-name", c.name));
     var sub = el("div", "c-sub");
     sub.appendChild(el("span", "st-badge st-" + c.st, t("st." + c.st)));
-    sub.appendChild(document.createTextNode(" " + [t("kind." + c.kind), c.alias || ""].filter(Boolean).join(" · ")));
+    sub.appendChild(document.createTextNode(" " + [t("kind." + c.kind), hasRoles(c) ? rolesText(c) : "", c.alias || ""].filter(Boolean).join(" · ")));
     hm.appendChild(sub);
     head.appendChild(hm);
     var starB = iconBtn(c.star ? "starOn" : "star", t("aria.star"), function () {
@@ -939,6 +1166,7 @@
       sp.appendChild(row);
     });
     box.appendChild(sp);
+    renderLinks(box, c);
 
     // sub-tabs
     var custActs = data.acts.filter(function (a) { return a.cust === c.id; })
@@ -1070,7 +1298,7 @@
     if (!canInvoice() && !canQuote()) return null;
     var di = invData(), dq = quoteData();
     return {
-      inv: di ? window.OrosInvoicesCore.byCrm(di, c.id, todayYmd()) : { rows: [], totals: {} },
+      inv: di ? window.OrosInvoicesCore.byCrm(di, c.id, todayYmd(), invLinks(c)) : { rows: [], totals: {} },
       quotes: dq ? window.OrosQuoteCore.forClient(dq, { name: c.name, afm: c.afm }) : []
     };
   }
@@ -1182,7 +1410,7 @@
     if (!di || !window.OrosInvoicesCore) return null;
     var out = {}, any = false, today = todayYmd();
     data.cust.forEach(function (c) {
-      var tt = window.OrosInvoicesCore.byCrm(di, c.id, today).totals;
+      var tt = window.OrosInvoicesCore.byCrm(di, c.id, today, invLinks(c)).totals;
       Object.keys(tt).forEach(function (cur) {
         any = true;
         var o = out[cur] || (out[cur] = { open: 0, overdue: 0 });
@@ -1622,6 +1850,27 @@
     dlg.appendChild(el("span", "dlg-lbl", t("ed.status")));
     var st = seg(C.CUST_ST.map(function (s) { return [s, t("st." + s)]; }), x.st);
     dlg.appendChild(st);
+    var roles = (c ? C.rolesOf(data, c) : ((pre && pre.roles) || ["cust"])).slice();
+    var roleBox = el("div", "checks");
+    function drawRoles() {
+      roleBox.innerHTML = "";
+      C.ROLES.forEach(function (r) {
+        var on = roles.indexOf(r) >= 0;
+        var b = el("button", "chip" + (on ? " on" : ""), t("role." + r));
+        b.type = "button";
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        b.addEventListener("click", function () {
+          var i = roles.indexOf(r);
+          if (i >= 0) { if (roles.length > 1) roles.splice(i, 1); } else roles.push(r);
+          drawRoles();
+        });
+        roleBox.appendChild(b);
+      });
+    }
+    drawRoles();
+    dlg.appendChild(el("span", "dlg-lbl", t("ed.roles")));
+    dlg.appendChild(roleBox);
+    dlg.appendChild(el("p", "hint", t("ed.rolesHint")));
     var starRow = el("label", "check-row");
     var star = el("input"); star.type = "checkbox"; star.checked = !!x.star;
     starRow.appendChild(star); starRow.appendChild(el("span", "", t("ed.star")));
@@ -1713,6 +1962,9 @@
       if (star.checked) row.star = 1; else delete row.star;
       dlg.close();
       var saved = upsert("cust", row);
+      if (saved) {
+        if (JSON.stringify(C.normRoles(roles)) !== JSON.stringify(C.normRoles(C.rolesOf(data, saved)))) savePt([C.rolesRow(data, saved.id, roles)]);
+      }
       if (saved && !c) { prefs.sel = saved.id; prefs.sub = "hist"; savePrefs(); if (prefs.tab !== "cust") setTab("cust"); else render(); }
       if (saved && !c && pre && pre.then) pre.then(saved);
     }
@@ -2089,6 +2341,7 @@
     list.appendChild(button(t("set.tags"), "sheet-btn", function () { tagManager(null); }));
     list.appendChild(button(t("set.import"), "sheet-btn", function () { dlg.close(); importCsv(); }));
     list.appendChild(button(t("en.all"), "sheet-btn", function () { dlg.close(); enrichOpen(data.cust); }));
+    if (LK) list.appendChild(button(t("set.match"), "sheet-btn", function () { dlg.close(); matchDialog(); }));
     if (PL && PL.has()) list.appendChild(button(PL.label(), "sheet-btn", function () { dlg.close(); PL.open(); }));
     if (WF) list.appendChild(button(WF.label(), "sheet-btn", function () { dlg.close(); WF.open(); }));
     list.appendChild(button(t("set.export"), "sheet-btn", exportCsv));
@@ -2927,7 +3180,7 @@
     // Contacts edited in another frame/tab: people lines are live
     window.addEventListener("storage", function (e) {
       if (document.querySelector("dialog[open]")) return;
-      if ((e.key === CONTACTS_KEY || e.key === INV_KEY || e.key === QUOTE_KEY) && prefs.tab === "cust") renderDetail();
+      if ([CONTACTS_KEY, INV_KEY, QUOTE_KEY, STOCK_KEY, TS_KEY, PUB_KEY].indexOf(e.key) >= 0 && prefs.tab === "cust") renderDetail();
       else if (e.key === INV_KEY && prefs.tab === "dash") renderDash();
     });
     setInterval(function () {
