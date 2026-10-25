@@ -7983,7 +7983,7 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
 
-### 2026-10-24 — Household wave 7c: pets shared with a household (#PR) — 3.57.00
+### 2026-10-24 — Household wave 7c: pets shared with a household (#588) — 3.57.00
 - Wave 7c of the Household plan (Chris approved all of wave 7, 2026-10-24 23:14). Pet Health Book › Settings › Household › "Share with a household": everyone gets the same pets and health book; what one person logs reaches everyone, with initials on records someone else wrote; the shell's reminders, Today and the Calendar feed read a shared pet from the household, so it reminds once. The own book stays under "Only mine"; "Stop sharing" leaves the stopper a copy. BR-HH (Part VI).
 - Files: `petcare/{house.js (new),petcare.js,petcare.css,index.html,today.js,help.*.txt}`, `calendar/{calendar.js,index.html}`, `index.html`, `shell.js` (APP_VERSION, petcareCheckTick), `sw.js`, `i18n/de/{petcare.js,help/petcare.txt,STATUS.md}`, `tests/petcare-house.test.js` (6), What's new, Bible.
 
