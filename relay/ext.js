@@ -75,7 +75,8 @@ const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
       WORDS = /^[a-z][a-z,-]{0,80}$/, ORDERBY = /^(date|id|modified|title)$/, ORD = /^(asc|desc)$/;
 function q(extra) { return Object.assign({ page: NUM, per_page: PER, orderby: ORDERBY, order: ORD }, extra || {}); }
-const STOCK_BODY = { stock_quantity: "int", manage_stock: "bool" };
+// a quantity (Stock), or a price from a supplier's price list (Stock wave P10)
+const PRODUCT_PUT = { stock_quantity: "int", manage_stock: "bool", regular_price: "money" };
 // Publishing wave P2: a title becomes a DRAFT product, found again by its SKU.
 const SKU = /^[A-Za-z0-9_-]{1,40}$/;
 const DRAFT_BODY = {
@@ -185,8 +186,8 @@ export const PLATFORMS = {
       ["GET", /^\/products\/[0-9]{1,12}\/variations$/, q(null), null],
       ["POST", /^\/products$/, null, DRAFT_BODY, "wdraft"],
       ["GET", /^\/settings\/products\/woocommerce_(weight|dimension)_unit$/, null, null],
-      ["PUT", /^\/products\/[0-9]{1,12}$/, null, STOCK_BODY],
-      ["PUT", /^\/products\/[0-9]{1,12}\/variations\/[0-9]{1,12}$/, null, STOCK_BODY],
+      ["PUT", /^\/products\/[0-9]{1,12}$/, null, PRODUCT_PUT],
+      ["PUT", /^\/products\/[0-9]{1,12}\/variations\/[0-9]{1,12}$/, null, PRODUCT_PUT],
       ["GET", /^\/orders$/, q({ status: WORDS, after: DT, modified_after: DT }), null],
       ["GET", /^\/orders\/[0-9]{1,12}$/, null, null],
       ["PUT", /^\/orders\/[0-9]{1,12}$/, null, { status: "status" }],

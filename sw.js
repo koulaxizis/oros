@@ -1095,6 +1095,8 @@ var PRECACHE_URLS = [
   "stock/import.js",
   "stock/shop.js",
   "stock/consign.js",
+  "stock/prices.js",
+  "stock/pricelist.js",
   "stock/today.js",
   "garage/",
   "garage/index.html",

@@ -109,6 +109,16 @@ If a device was offline and recorded a sale inside the period before it synced, 
 ## Suppliers
 The `Suppliers` tab keeps names, contact person, phone, e-mail, VAT number and delivery time. `From Contacts` copies a person or company from [Contacts](app:contacts) into a new supplier.
 
+### Supplier price lists
+When a publisher or a wholesaler sends you a price list (CSV or Excel), open the supplier and choose `Price list…` (or `Price list from a supplier…` under the list). Pick the file: Stock finds the header row by its names (ISBN, EAN, code, title, price, net price, discount, availability; English or Greek) and compares every line with your products by code, ISBN-10 and ISBN-13 alike, or by the exact title. It shows:
+- `New prices`: the list's retail price (and net price, or retail less the discount) where it differs;
+- `No longer available from the supplier`: titles marked out of print or unavailable that still have a minimum here; ticked, their minimum and reorder quantity become 0 so `Reorder` stops asking for them (what you hold stays for sale);
+- `Not in Stock yet`: titles you don't have; ticked, they are added with the list's price and quantity 0.
+
+Tick what to take and choose `Apply in Stock` (one change, with Undo). With `Put the products the list names under…` ticked, those products also get the supplier and the supplier's code, so `Reorder` groups them under that supplier and the `E-mail` order names the supplier's codes.
+
+If a WooCommerce shop is connected, `Send to the shop` then sets the new prices in the shop (each product found by its SKU, which is the ISBN or code) and makes the new titles as draft products that you publish there. Nothing goes to the shop without that button; if the shop sells in another currency, no prices are sent. A product on sale whose sale price is not below the new price is left as it is: change the sale in the shop first.
+
 ## The shop (WooCommerce)
 Connect your WooCommerce shop once in Settings › [Connected services](app:settings), then open `Shop (WooCommerce)` from `New` or from Settings here.
 - `Products`: `Get products from the shop` reads every product and variation. `Import into Stock` adds the new ones and updates name, SKU, sale price and category of those you already have (matched by the shop product, then SKU, then name). Tick the box under it to also set the quantities here to the shop's, as one stock count.
