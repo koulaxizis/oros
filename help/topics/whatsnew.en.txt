@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.71.00
+- Stock: consignment shops. Mark a warehouse as a bookshop that sells your goods on consignment, with its discount and how often you settle. When it is time (a tile shows it), count what is still on the shop's shelf: the rest is recorded as sold at your price, what you take back can come home, and Invoices opens with the shop's discount already in.
+
 ## Version 3.70.00
 - Publishing: a release plan for each title. Give the release date and the steps are dated back from it (manuscript, editing, proofs, cover, ISBN, printer, presentation), each one you can move, tick or rename. Open steps and release days show in the Calendar (chip Publishing), late steps are marked, and Send to To-Do turns the plan into a list. The Assistant can start a new title with its plan: «new book Night Sea by Ann Writer, out on 15 March».
 
