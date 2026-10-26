@@ -368,6 +368,10 @@
       "cr.declinedLink": "Not linked: you said no", "cr.failed": "Not saved: {msg}",
       "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
       "f.people": "People",
+      "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
+      "cr.v.expense": "Expense", "cr.v.income": "Income",
+      "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
+      "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
       "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
@@ -667,6 +671,10 @@
       "cr.declinedLink": "Δεν συνδέθηκαν: είπες όχι", "cr.failed": "Δεν αποθηκεύτηκε: {msg}",
       "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
       "f.people": "Άνθρωποι",
+      "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
+      "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
+      "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
+      "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
       "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
@@ -3024,15 +3032,42 @@
   function createApps(apps) {
     if (!N || !shell()) return [];
     var have = installed();
-    return apps.filter(function (a) { return N.APP_IDS.indexOf(a.id) >= 0 && have[a.id]; });
+    return apps.filter(function (a) { return (N.APP_IDS.indexOf(a.id) >= 0 || ADD_IDS.indexOf(a.id) >= 0) && have[a.id]; });
   }
+  // AS-ADD2 (wave A1): the everyday apps' new items are in
+  // assistant/additems.js, loaded the first time (Bookmarks also needs
+  // its own core for addresses). Same API as create.js.
+  var ADD_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban"];
+  var addScripts = {};
+  function loadOnce(src) {
+    if (!addScripts[src]) {
+      addScripts[src] = new Promise(function (resolve) {
+        var sc = document.createElement("script");
+        sc.src = src;
+        sc.onload = sc.onerror = function () { resolve(); };
+        document.head.appendChild(sc);
+      });
+    }
+    return addScripts[src];
+  }
+  function createMod(appId) {
+    if (N.APP_IDS.indexOf(appId) >= 0) return Promise.resolve(N);
+    if (ADD_IDS.indexOf(appId) < 0) return Promise.resolve(null);
+    var need = [window.OrosAssistAdd ? null : "additems.js"];
+    if (appId === "bookmarks" && !window.OrosBookmarksCore) need.push("../bookmarks/core.js");
+    return Promise.all(need.filter(Boolean).map(loadOnce)).then(function () {
+      if (appId === "bookmarks" && !window.OrosBookmarksCore) return null;
+      return window.OrosAssistAdd || null;
+    });
+  }
+  function createCtx() { return { today: ymdNow(), lang: LANG, bm: window.OrosBookmarksCore || null }; }
   function crmNorm(d) {
     try { return window.OrosCrmCore && typeof window.OrosCrmCore.norm === "function" ? window.OrosCrmCore.norm(d) : d; } catch (e) { return d; }
   }
-  function addRef(c, appId, id, title) {
+  function addRef(c, appId, id, title, target) {
     c.refN = (c.refN || 0) + 1;
     var ref = "r" + c.refN;
-    c.refs[ref] = { app: appId, target: N.targetOf(appId, id), title: title, id: id };
+    c.refs[ref] = { app: appId, target: target || N.targetOf(appId, id), title: title, id: id };
     return ref;
   }
   function noCreate(apps, id) {
@@ -3043,7 +3078,19 @@
   }
   function createItems(c, args, apps) {
     if (!N) return Promise.resolve({ content: "Error: adding records is not available.", err: 1 });
-    var nm = N.normItems(args);
+    var appId = args && typeof args === "object" ? String(args.app || "") : "";
+    if (N.APP_IDS.indexOf(appId) < 0 && ADD_IDS.indexOf(appId) < 0) {
+      return Promise.resolve({ content: "Error: app must be one of: " + N.APP_IDS.concat(ADD_IDS).join(", ") + ".", err: 1 });
+    }
+    if (!createApps(apps).some(function (a) { return a.id === appId; })) return Promise.resolve(noCreate(apps, appId));
+    return createMod(appId).then(function (M) {
+      if (!M) return { content: "Error: adding to " + appId + " is not available right now.", err: 1 };
+      return createWith(M, c, args, apps);
+    });
+  }
+  function createWith(M, c, args, apps) {
+    var ctx = createCtx();
+    var nm = M.normItems(args, ctx);
     if (!nm.ok) return Promise.resolve({ content: "Error: " + nm.err, err: 1 });
     var app = createApps(apps).filter(function (a) { return a.id === nm.app; })[0];
     if (!app) return Promise.resolve(noCreate(apps, nm.app));
@@ -3062,9 +3109,9 @@
         items[i].person = { c: r.target, n: nmC, role: items[i].role };
       }
     }
-    var key = N.storageKey(app.id);
+    var key = M.storageKey(app.id);
     return (app.id === "crm" ? crmCores() : Promise.resolve()).then(function () {
-      var pl = N.plan(app.id, readStore(key), items);
+      var pl = M.plan(app.id, readStore(key), items, ctx);
       if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } };
       var base = { k: "create", app: app.name, rows: pl.rows };
       return askCreate(app.name, pl.rows, false).then(function (ok) {
@@ -3072,7 +3119,7 @@
           base.st = "declined";
           return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base };
         }
-        var res = N.apply(app.id, readStore(key), items, Date.now(), ok.skip);
+        var res = M.apply(app.id, readStore(key), items, Date.now(), ok.skip, ctx);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
@@ -3085,16 +3132,16 @@
           return { content: "Error: the records could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base };
         }
         markAppDirty();
-        var added = res.made.map(function (m) { return { ref: addRef(c, app.id, m.id, m.title), name: m.title }; });
+        var added = res.made.map(function (m) { return { ref: addRef(c, app.id, m.sid || m.id, m.title, m.target), name: m.title }; });
         var left = [];
         pl.rows.forEach(function (row, i) {
           if (!ok.skip[i]) return;
           var o = { name: row.title };
-          if (row.dup) { o.already = addRef(c, app.id, row.dup.id, row.dup.title); o.already_name = row.dup.title; }
+          if (row.dup) { o.already = addRef(c, app.id, row.dup.id, row.dup.title, row.dup.target); o.already_name = row.dup.title; }
           left.push(o);
         });
         var uid = newId();
-        undoMem[uid] = { app: app.id, key: key, cr: res.undo };
+        undoMem[uid] = { app: app.id, key: key, cr: res.undo, mod: M };
         base.st = "done";
         base.u = uid;
         base.added = res.made.map(function (m) { return m.i; });
@@ -3179,8 +3226,10 @@
     if (cb) head.appendChild(cb);
     head.appendChild(el("span", "entry-title", String(row.title || "")));
     box.appendChild(head);
-    if (row.dup) box.appendChild(el("p", "dlg-hint", t("cr.dup", { name: String(row.dup.title || "") })));
-    if (row.same) box.appendChild(el("p", "dlg-hint", t("cr.same")));
+    if (row.dup && row.same) box.appendChild(el("p", "dlg-hint", t("cr.sameAdd", { name: String(row.dup.title || "") })));
+    else if (row.dup) box.appendChild(el("p", "dlg-hint", t("cr.dup", { name: String(row.dup.title || "") })));
+    else if (row.same) box.appendChild(el("p", "dlg-hint", t("cr.same")));
+    if (row.hint && row.hint.k === "newList") box.appendChild(el("p", "dlg-hint", t("cr.newList", { name: String(row.hint.name || "") })));
     var f = Array.isArray(row.fields) ? row.fields : [];
     if (f.length) {
       var tb = el("table", "cr-fields");
@@ -3197,6 +3246,9 @@
   }
   function crValue(f, v) {
     if ((f === "kind" || f === "status") && STRINGS.en["cr.v." + v] !== undefined) return t("cr.v." + v);
+    if (f === "reminder" && typeof v === "number") {
+      return v === 1440 ? t("cr.rem.d1") : v % 1440 === 0 ? t("cr.rem.d", { n: v / 1440 }) : v % 60 === 0 ? t("cr.rem.h", { n: v / 60 }) : t("cr.rem.m", { n: v });
+    }
     return String(v == null ? "" : v);
   }
   function crList(host, rows, cbOf) {
@@ -3259,7 +3311,7 @@
   function undoCreate(c, r) {
     var ui = r.ui, mem = undoMem[ui.u];
     if (!mem || !N) return;
-    var res = N.undo(mem.app, readStore(mem.key), mem.cr, Date.now());
+    var res = (mem.mod || N).undo(mem.app, readStore(mem.key), mem.cr, Date.now());
     if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
     if (!writeStore(mem.key, mem.app === "crm" ? crmNorm(res.data) : res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
     markAppDirty();

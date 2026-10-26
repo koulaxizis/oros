@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.88.00
+- Assistant: it can now add tasks, calendar events, expenses and income, notes, bookmarks and Kanban cards itself, one or many at once ("put the 12 deadlines from this PDF in my calendar", "add these receipts to Budget"). You see them on one card and tick what goes in; something that looks like what you already have starts unticked. Nothing is saved until you press Add, and Undo takes it back.
+
 ## Version 3.87.00
 - Lyric Sync: word by word, for karaoke. Time every word with the new Words mode, see the song as a waveform and drag any line or word mark to fix it, loop a line while you fine-tune, measure your tap delay so taps land on the beat, shift all times at once, and name the singers of a duet. Check lists what distributors refuse (untimed or out-of-order lines, labels like [Chorus], lines too short or too long). New exports: Enhanced LRC and ASS karaoke; TTML and WebVTT carry the word times too, and the preview fills word by word.
 
