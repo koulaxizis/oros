@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 35082 of 35105 (99%)
+- Strings: 35099 of 35122 (99%)
 - Help pages: 150 of 150 (100%)
 - Shown in the language list: yes
 
@@ -70,7 +70,7 @@ text is still written in the code. They switch over wave by wave
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 51 / 51 |
 | links | 100% | 2 / 2 |
-| lyricsync | 100% | 165 / 165 |
+| lyricsync | 100% | 182 / 182 |
 | mahjong | 100% | 69 / 69 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 60 / 60 |

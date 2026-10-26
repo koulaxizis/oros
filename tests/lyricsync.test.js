@@ -310,3 +310,55 @@ test("tags that cannot be rewritten safely make nothing", () => {
   assert.equal(ID3.lang3("el-GR"), "ell");
   assert.equal(ID3.lang3(""), "und");
 });
+
+// ---------- Wave 4: rough sync from what Whisper heard ----------
+const AL = require("../lyricsync/align.js");
+
+test("rough sync lines the lyrics up with the heard words", () => {
+  const lines = [{ t: "Hello big world" }, { t: "Second line here" }, { t: "" }, { t: "[Chorus]" }, { t: "Middle bit" }, { t: "And it ends now" }];
+  const cues = [
+    { start: 1, end: 3, text: " Hello, big world!" },
+    { start: 4, end: 6, text: "second lie here" },       // a word heard wrong still matches by its neighbours
+    { start: 9, end: 11, text: "and it end now yeah" }  // an extra word, a near miss
+  ];
+  const r = AL.align(lines, cues);
+  assert.equal(r.starts[0], 1000);
+  assert.equal(r.starts[1], 4000);
+  assert.equal(r.starts[2], null);                       // blank line
+  assert.equal(r.starts[3], null);                       // labels are never timed
+  assert.ok(r.starts[4] > 4000 && r.starts[4] < 9000);   // between its neighbours by word count
+  assert.equal(r.starts[5], 9000);
+  assert.ok(r.matched >= 9 && r.words === 12);
+  // Greek: accents, capitals and final sigma do not count
+  const g = AL.align([{ t: "Καλημέρα κόσμε" }, { t: "Τι κάνεις σήμερα" }], [{ start: 2, end: 3, text: "ΚΑΛΗΜΕΡΑ ΚΟΣΜΕ" }, { start: 5, end: 7, text: "τι κανεισ σημερα" }]);
+  assert.deepEqual(g.starts, [2000, 5000]);
+});
+
+test("rough sync never goes back in time and copes with nothing heard", () => {
+  // the second line is heard first (a repeat): its time would go back, so it is dropped
+  const lines = [{ t: "one two three" }, { t: "four five six" }, { t: "seven eight nine" }];
+  const cues = [{ start: 1, end: 2, text: "one two three" }, { start: 0.2, end: 0.5, text: "four five six" }, { start: 6, end: 7, text: "seven eight nine" }];
+  const r = AL.align(lines, cues);
+  for (let i = 1; i < r.starts.length; i++) if (r.starts[i] !== null && r.starts[i - 1] !== null) assert.ok(r.starts[i] >= r.starts[i - 1]);
+  assert.deepEqual(AL.align(lines, []).starts, [null, null, null]);
+  assert.deepEqual(AL.align([], cues).starts, []);
+  // a later word matched first moves the start back by the words before it
+  const m = AL.align([{ t: "xyzzy plugh hello" }], [{ start: 10, end: 11, text: "hello" }]);
+  assert.equal(m.starts[0], 10000 - 2 * 280);
+  // heard words get times inside their cue by letter count
+  const h = AL.heard([{ start: 0, end: 1, text: "ab abcdef" }]);
+  assert.deepEqual(h.map((x) => x.ms), [0, 250]);
+  assert.ok(AL.similar("gonna", "going") >= 0.6);
+  assert.ok(AL.similar("love", "hate") < 0.6);
+});
+
+test("16 kHz mono samples from any sample rate", () => {
+  const sr = 48000, n = 4800;
+  const ch = [new Float32Array(n).fill(0.5), new Float32Array(n).fill(-0.5)];
+  const buf = { sampleRate: sr, numberOfChannels: 2, length: n, getChannelData: (c) => ch[c] };
+  const out = AL.to16k(buf);
+  assert.equal(out.length, 1600);
+  assert.ok(out.every((x) => Math.abs(x) < 1e-6));
+  const one = { sampleRate: 16000, numberOfChannels: 1, length: 16000, getChannelData: () => new Float32Array(16000).fill(0.25) };
+  assert.equal(AL.to16k(one, 0.5).length, 8000);
+});
