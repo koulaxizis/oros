@@ -49,6 +49,7 @@
           <label><span data-i18n="f.artist">Artist</span><input type="text" id="f-artist" maxlength="200" autocomplete="off"></label>
           <label><span data-i18n="f.album">Album</span><input type="text" id="f-album" maxlength="200" autocomplete="off"></label>
           <label><span data-i18n="f.lang">Language code</span><input type="text" id="f-lang" maxlength="20" autocomplete="off" data-i18n-ph="f.langPh"></label>
+          <label class="wide"><span data-i18n="f.singers">Singers, for duets (comma between names)</span><input type="text" id="f-singers" maxlength="250" autocomplete="off" data-i18n-ph="f.singersPh"></label>
         </div>
         <label for="lyrics-text" class="lbl" data-i18n="f.lyrics">Lyrics, one line per line. A blank line starts a new verse.</label>
         <textarea id="lyrics-text" rows="14" spellcheck="false"></textarea>
@@ -76,16 +77,32 @@
 
       <!-- Sync -->
       <div id="p-sync" role="tabpanel" aria-labelledby="tab-sync" hidden>
+        <div id="wave-box" hidden>
+          <canvas id="wave" role="img" data-i18n-aria="wave.label"></canvas>
+          <div class="row wave-tools">
+            <button type="button" id="zoom-out" class="chip icon" data-i18n-aria="wave.out">−</button>
+            <button type="button" id="zoom-in" class="chip icon" data-i18n-aria="wave.in">+</button>
+            <button type="button" id="loop-btn" class="chip" aria-pressed="false" data-i18n="wave.loop">Loop line</button>
+            <span id="wave-hint" class="dim"></span>
+          </div>
+        </div>
         <div class="row">
           <div class="seg" role="radiogroup" data-i18n-aria="mode.label">
             <button type="button" role="radio" id="mode-tap" data-mode="tap" data-i18n="mode.tap">Tap</button>
             <button type="button" role="radio" id="mode-hold" data-mode="hold" data-i18n="mode.hold">Hold</button>
+            <button type="button" role="radio" id="mode-words" data-mode="words" data-i18n="mode.words">Words</button>
           </div>
           <button type="button" id="undo-btn" class="chip" data-i18n="btn.undo">Undo</button>
           <button type="button" id="redo-btn" class="chip" data-i18n="btn.redo">Redo</button>
           <span id="progress" class="dim"></span>
         </div>
+        <div class="row more">
+          <button type="button" id="check-btn" class="chip" data-i18n="btn.check">Check</button>
+          <button type="button" id="shift-btn" class="chip" data-i18n="btn.shift">Shift all</button>
+          <button type="button" id="calib-btn" class="chip" data-i18n="btn.calib">Tap delay</button>
+        </div>
         <p id="mode-hint" class="hint"></p>
+        <div id="word-strip" hidden></div>
 
         <div id="line-tools" hidden>
           <label class="time-in"><span class="sr-only" data-i18n="f.start">Start</span><input type="text" id="line-time" inputmode="decimal" autocomplete="off"></label>
@@ -96,6 +113,8 @@
           <button type="button" class="chip nudge" data-nudge="100">+0.1</button>
           <button type="button" id="line-from" class="chip" data-i18n="btn.syncFrom">Sync from here</button>
           <button type="button" id="line-clear" class="chip" data-i18n="btn.clearTime">Clear time</button>
+          <button type="button" id="line-words" class="chip" data-i18n="btn.clearWords">Clear word times</button>
+          <label id="line-singer-box" class="singer"><span class="sr-only" data-i18n="f.singer">Singer</span><select id="line-singer"></select></label>
         </div>
 
         <ol id="lines"></ol>
@@ -128,6 +147,35 @@
     <div class="dlg-btns"><button type="button" class="chip" id="export-close" data-i18n="btn.close">Close</button></div>
   </dialog>
 
+  <dialog id="check-dlg" aria-labelledby="check-title">
+    <h2 id="check-title" data-i18n="ck.title">Check</h2>
+    <p class="hint" id="check-sum"></p>
+    <ul id="check-list"></ul>
+    <div class="dlg-btns"><button type="button" class="chip" id="check-close" data-i18n="btn.close">Close</button></div>
+  </dialog>
+
+  <dialog id="shift-dlg" aria-labelledby="shift-title">
+    <h2 id="shift-title" data-i18n="sh.title">Shift all times</h2>
+    <p class="hint" data-i18n="sh.hint">Moves every timed line and word by the same amount, for example when the song file has a different intro.</p>
+    <label class="lbl" for="shift-in" data-i18n="sh.label">Seconds (minus = earlier)</label>
+    <input type="text" id="shift-in" inputmode="decimal" autocomplete="off">
+    <div class="dlg-btns">
+      <button type="button" class="chip" id="shift-no" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" class="chip pri" id="shift-yes" data-i18n="sh.apply">Shift</button>
+    </div>
+  </dialog>
+
+  <dialog id="calib-dlg" aria-labelledby="calib-title">
+    <h2 id="calib-title" data-i18n="cal.title">Tap delay</h2>
+    <p class="hint" data-i18n="cal.hint">Everyone taps a little late. Press Start, then tap the button (or Space) on each of the 8 clicks you hear. Lyric Sync takes your delay off every tap.</p>
+    <p id="calib-now" class="calib-now"></p>
+    <button type="button" id="calib-pad" class="pad calib-pad" data-i18n="cal.start">Start</button>
+    <div class="dlg-btns">
+      <button type="button" class="chip" id="calib-reset" data-i18n="cal.reset">Set to 0</button>
+      <button type="button" class="chip" id="calib-close" data-i18n="btn.close">Close</button>
+    </div>
+  </dialog>
+
   <dialog id="confirm-dlg" aria-labelledby="confirm-msg">
     <p id="confirm-msg"></p>
     <div class="dlg-btns">
@@ -141,6 +189,7 @@
   <script src="../i18n.js?v=3.85.00" data-app="lyricsync"></script>
   <script src="core.js?v=3.85.00"></script>
   <script src="formats.js?v=3.85.00"></script>
+  <script src="wave.js"></script>
   <script src="app.js?v=3.85.00"></script>
 
 </body>

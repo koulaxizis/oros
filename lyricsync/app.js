@@ -33,7 +33,8 @@
   var DEVICE_KEY = "oros-lyricsync-device";
   var C = window.LyricsyncCore, F = window.LyricsyncFormats;
   var MAX_AUDIO = 400 * 1024 * 1024, MAX_TEXT_FILE = 4 * 1024 * 1024, MAX_UNDO = 300;
-  var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.json,.txt";
+  var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.json,.txt";
+  var MAX_WAVE = 80 * 1024 * 1024, SPANS = [4, 8, 16, 32, 64];
   var AUDIO_ACCEPT = "audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.oga,.opus,.webm";
 
   // ---------- 1. Language ----------
@@ -80,6 +81,24 @@
       "imp.ask": "Replace the lyrics and times of this song with the file?", "imp.yes": "Replace",
       "imp.done": "{n} lines read from {name}",
       "btn.close": "Close", "btn.cancel": "Cancel", "btn.delete": "Delete",
+      "f.singers": "Singers, for duets (comma between names)", "f.singersPh": "e.g. Anna, Nikos", "f.singer": "Singer", "singer.n": "Singer {n}",
+      "wave.label": "Waveform of the song with the lines' start marks", "wave.out": "Show more of the song", "wave.in": "Zoom in", "wave.loop": "Loop line",
+      "wave.hint": "Drag a mark to move it; tap anywhere else to jump there.", "wave.big": "The waveform is shown for song files up to 80 MB.", "wave.none": "This song's waveform could not be drawn.",
+      "mode.words": "Words", "mode.wordsHint": "Word by word, for karaoke: tap as each word starts. The first tap of a line also starts the line. Tap a word above to time again from it.",
+      "btn.check": "Check", "btn.shift": "Shift all", "btn.calib": "Tap delay", "btn.clearWords": "Clear word times",
+      "words.count": "{n}/{total} words", "pad.word": "Next word: {w}",
+      "ck.title": "Check", "ck.none": "Nothing to fix. The lyrics are ready to send.", "ck.sum": "{n} things to look at. Tap one to go to its line.", "ck.line": "Line {n}",
+      "ck.untimed": "has no time yet", "ck.order": "starts before a line above it", "ck.short": "is on screen for less than half a second",
+      "ck.long": "is very long (over 80 characters): split it in two", "ck.label": "looks like a label or a repeat mark ([Chorus], x2): distributors want only the sung words",
+      "ck.words": "has only some of its words timed", "ck.gap": "stays on screen 15 seconds or more: press End line where the singing stops",
+      "sh.title": "Shift all times", "sh.hint": "Moves every timed line and word by the same amount, for example when the song file has a different intro.",
+      "sh.label": "Seconds (minus = earlier)", "sh.apply": "Shift", "sh.bad": "Write a number of seconds, for example -1.5 or 0.25.", "sh.done": "Every time moved by {s} s",
+      "cal.title": "Tap delay", "cal.hint": "Everyone taps a little late. Press Start, then tap the button (or Space) on each of the 8 clicks you hear. Lyric Sync takes your delay off every tap.",
+      "cal.start": "Start", "cal.tap": "Tap on the click", "cal.now": "Your tap delay now: {n} ms", "cal.done": "Measured {n} ms. Every tap is corrected from now on.",
+      "cal.fail": "Not enough taps landed on the clicks. Try again.", "cal.reset": "Set to 0",
+      "ex.elrc": "Enhanced LRC", "ex.elrcD": "LRC with a time for every word, for karaoke players.",
+      "ex.ass": "ASS karaoke", "ex.assD": "Karaoke subtitles that fill word by word, for video tools (Aegisub, ffmpeg, VLC).",
+      "ex.words": "{n} lines have a time for every word.", "ex.issues": "{n} things to check before you send it to a distributor.", "ex.check": "Check",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -124,6 +143,24 @@
       "imp.ask": "Να αντικατασταθούν οι στίχοι και οι χρόνοι αυτού του τραγουδιού με το αρχείο;", "imp.yes": "Αντικατάσταση",
       "imp.done": "Διαβάστηκαν {n} γραμμές από το {name}",
       "btn.close": "Κλείσιμο", "btn.cancel": "Άκυρο", "btn.delete": "Διαγραφή",
+      "f.singers": "Τραγουδιστές, για ντουέτα (κόμμα ανάμεσα στα ονόματα)", "f.singersPh": "π.χ. Άννα, Νίκος", "f.singer": "Τραγουδιστής", "singer.n": "Τραγουδιστής {n}",
+      "wave.label": "Η κυματομορφή του τραγουδιού με τα σημάδια έναρξης των γραμμών", "wave.out": "Δείξε περισσότερο από το τραγούδι", "wave.in": "Μεγέθυνση", "wave.loop": "Επανάληψη γραμμής",
+      "wave.hint": "Σύρε ένα σημάδι για να το μετακινήσεις· πάτα οπουδήποτε αλλού για να πας εκεί.", "wave.big": "Η κυματομορφή φαίνεται για αρχεία τραγουδιών έως 80 MB.", "wave.none": "Η κυματομορφή αυτού του τραγουδιού δεν σχεδιάστηκε.",
+      "mode.words": "Λέξεις", "mode.wordsHint": "Λέξη λέξη, για καραόκε: πάτα τη στιγμή που ξεκινά κάθε λέξη. Το πρώτο πάτημα μιας γραμμής ξεκινά και τη γραμμή. Πάτα μια λέξη από πάνω για να ξαναρχίσεις από αυτή.",
+      "btn.check": "Έλεγχος", "btn.shift": "Μετακίνηση όλων", "btn.calib": "Καθυστέρηση πατήματος", "btn.clearWords": "Σβήσε τους χρόνους λέξεων",
+      "words.count": "{n}/{total} λέξεις", "pad.word": "Επόμενη λέξη: {w}",
+      "ck.title": "Έλεγχος", "ck.none": "Τίποτα για διόρθωση. Οι στίχοι είναι έτοιμοι για αποστολή.", "ck.sum": "{n} σημεία για να δεις. Πάτα ένα για να πας στη γραμμή του.", "ck.line": "Γραμμή {n}",
+      "ck.untimed": "δεν έχει ακόμα χρόνο", "ck.order": "ξεκινά πριν από μια γραμμή πιο πάνω", "ck.short": "μένει στην οθόνη λιγότερο από μισό δευτερόλεπτο",
+      "ck.long": "είναι πολύ μεγάλη (πάνω από 80 χαρακτήρες): χώρισέ τη στα δύο", "ck.label": "μοιάζει με ετικέτα ή σημάδι επανάληψης ([Ρεφρέν], x2): οι διανομείς θέλουν μόνο τα λόγια που τραγουδιούνται",
+      "ck.words": "έχει χρόνο μόνο σε μερικές λέξεις", "ck.gap": "μένει στην οθόνη 15 δευτερόλεπτα ή περισσότερο: πάτα Τέλος γραμμής εκεί που σταματά το τραγούδι",
+      "sh.title": "Μετακίνηση όλων των χρόνων", "sh.hint": "Μετακινεί κάθε γραμμή και λέξη με χρόνο κατά το ίδιο διάστημα, για παράδειγμα όταν το αρχείο του τραγουδιού έχει άλλη εισαγωγή.",
+      "sh.label": "Δευτερόλεπτα (μείον = νωρίτερα)", "sh.apply": "Μετακίνηση", "sh.bad": "Γράψε έναν αριθμό δευτερολέπτων, για παράδειγμα -1.5 ή 0.25.", "sh.done": "Όλοι οι χρόνοι μετακινήθηκαν κατά {s} δ.",
+      "cal.title": "Καθυστέρηση πατήματος", "cal.hint": "Όλοι πατάμε λίγο αργά. Πάτα Έναρξη και μετά πάτα το κουμπί (ή το Space) σε καθένα από τα 8 κλικ που ακούς. Ο Συγχρονισμός στίχων αφαιρεί την καθυστέρησή σου από κάθε πάτημα.",
+      "cal.start": "Έναρξη", "cal.tap": "Πάτα στο κλικ", "cal.now": "Η καθυστέρησή σου τώρα: {n} ms", "cal.done": "Μετρήθηκαν {n} ms. Κάθε πάτημα διορθώνεται από τώρα.",
+      "cal.fail": "Λίγα πατήματα έπεσαν πάνω στα κλικ. Δοκίμασε ξανά.", "cal.reset": "Μηδενισμός",
+      "ex.elrc": "Enhanced LRC", "ex.elrcD": "LRC με χρόνο για κάθε λέξη, για players καραόκε.",
+      "ex.ass": "ASS καραόκε", "ex.assD": "Υπότιτλοι καραόκε που γεμίζουν λέξη λέξη, για προγράμματα βίντεο (Aegisub, ffmpeg, VLC).",
+      "ex.words": "{n} γραμμές έχουν χρόνο σε κάθε λέξη.", "ex.issues": "{n} σημεία για έλεγχο πριν το στείλεις σε διανομέα.", "ex.check": "Έλεγχος",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -158,7 +195,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
-  var dev = { mode: "tap", speed: 1 };
+  var dev = { mode: "tap", speed: 1, lat: 0, span: 8 };
 
   function syncApi() {
     try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
@@ -170,7 +207,9 @@
     catch (e) { data = C.empty(); }
     try {
       var d = JSON.parse(localStorage.getItem(DEVICE_KEY) || "null") || {};
-      if (d.mode === "hold") dev.mode = "hold";
+      if (d.mode === "hold" || d.mode === "words") dev.mode = d.mode;
+      if (typeof d.lat === "number" && d.lat >= 0 && d.lat <= 400) dev.lat = Math.round(d.lat);
+      if (SPANS.indexOf(d.span) >= 0) dev.span = d.span;
       if ([1, 0.9, 0.75, 0.5].indexOf(d.speed) >= 0) dev.speed = d.speed;
     } catch (e) { /* defaults */ }
   }
@@ -327,15 +366,21 @@
   var tab = "lyrics";
   var cursor = 0;              // the next line a tap times
   var sel = -1;                // the selected line (tools act on it)
+  var toolsOpen = false;       // the line tools show for a line the user picked, not while tapping
   var holding = -1;            // Hold mode: the line being held
   var undoStack = [], redoStack = [];
   var tlist = null;            // C.timed() of the open song, rebuilt on change
   var audioUrl = "", audioOk = false;
   var player = null;
   var lyricsTimer = 0;
+  var wl = 0, wk = 0;          // Words mode: the next line and word to time
+  var peaks = null, wave = null, loopOn = false;
 
   function timedList() { if (!tlist && cur) tlist = C.timed(cur.ln, cur.dur); return tlist || []; }
   function nowMs() { return player ? Math.round(player.currentTime * 1000) : 0; }
+  // A tap's time: the play position less the measured tap delay (in
+  // song time, so it scales with the speed).
+  function tapMs() { return Math.max(0, nowMs() - Math.round(dev.lat * (player ? player.playbackRate : 1))); }
 
   // A change of lines: undo point, save, repaint.
   function setLines(lines, keepRedo) {
@@ -430,6 +475,7 @@
     cur = p; tlist = null;
     undoStack = []; redoStack = [];
     cursor = C.nextUntimed(cur.ln, 0); sel = -1; holding = -1;
+    wl = cursor < cur.ln.length ? cursor : 0; wk = 0; loopOn = false; peaks = null;
     showView(true);
     setTab(toTab || (cur.ln.length ? "sync" : "lyrics"));
     renderEditor(false);
@@ -456,7 +502,21 @@
     player.playbackRate = dev.speed;
     audioOk = true;
     renderAudio();
+    loadPeaks(blob);
   }
+  function loadPeaks(blob) {
+    peaks = null;
+    var id = cur && cur.id;
+    $("wave-hint").textContent = t("wave.hint");
+    if (!window.LyricsyncWave) return;
+    if (blob.size > MAX_WAVE) { $("wave-hint").textContent = t("wave.big"); return; }
+    window.LyricsyncWave.peaks(blob).then(function (pk) {
+      if (!cur || cur.id !== id) return;
+      peaks = pk;
+      drawWave();
+    }, function () { $("wave-hint").textContent = t("wave.none"); });
+  }
+  function drawWave() { if (wave && cur && tab === "sync" && !$("wave-box").hidden) wave.draw(); }
   function loadAudio() {
     var id = cur.id;
     renderAudio();
@@ -497,6 +557,7 @@
       $("p-" + n).hidden = n !== name;
     });
     $("transport").hidden = name === "lyrics";
+    $("wave-box").hidden = name !== "sync";
     if (name === "sync") renderSync();
     if (name === "preview") renderStage();
   }
@@ -509,6 +570,7 @@
       var inp = $(fid);
       if (document.activeElement !== inp) inp.value = cur[fields[fid]] || "";
     });
+    if (document.activeElement !== $("f-singers")) $("f-singers").value = (cur.vn || []).join(", ");
     var ta = $("lyrics-text");
     if (!(keepText && document.activeElement === ta)) ta.value = C.toText(cur.ln);
     $("lyrics-count").textContent = t("lyrics.count", { n: cur.ln.length });
@@ -548,7 +610,7 @@
       var early = l.s !== null && l.s < lastS;          // earlier than a line above it
       if (l.s !== null) lastS = Math.max(lastS, l.s);
       if (l.p && i) li.classList.add("verse");
-      if (i === cursor) li.classList.add("cursor");
+      if (dev.mode === "words" ? i === wl : i === cursor) li.classList.add("cursor");
       if (i === sel) li.classList.add("sel");
       if (i === holding) li.classList.add("holding");
       if (i === nowIdx) li.classList.add("now");
@@ -558,6 +620,8 @@
       b.appendChild(el("span", "ts" + (l.s === null ? " dim" : early ? " bad" : ""), l.s === null ? "–:––.––" : C.fmt(l.s, "clock")));
       b.appendChild(el("span", "lt", l.t));
       if (l.e !== null) b.appendChild(el("span", "te dim", "→ " + C.fmt(l.e, "clock")));
+      if (l.w) b.appendChild(el("span", "tw" + (C.wordsDone(l) ? "" : " part"), t("words.count", { n: l.w.filter(function (x) { return x !== null; }).length, total: l.w.length })));
+      if (l.v && cur.vn && cur.vn[l.v - 1]) b.appendChild(el("span", "tv", cur.vn[l.v - 1]));
       b.setAttribute("aria-label", l.t + ", " + (l.s === null ? t("sync.untimed") : C.fmt(l.s, "clock")));
       b.addEventListener("click", function () { selectLine(i); });
       li.appendChild(b);
@@ -567,11 +631,14 @@
     $("progress").textContent = t("sync.progress", { n: C.timedCount(cur.ln), total: cur.ln.length });
     $("undo-btn").disabled = !undoStack.length;
     $("redo-btn").disabled = !redoStack.length;
-    ["tap", "hold"].forEach(function (m) { $("mode-" + m).setAttribute("aria-checked", dev.mode === m ? "true" : "false"); });
-    $("mode-hint").textContent = t(dev.mode === "tap" ? "mode.tapHint" : "mode.holdHint");
+    ["tap", "hold", "words"].forEach(function (m) { $("mode-" + m).setAttribute("aria-checked", dev.mode === m ? "true" : "false"); });
+    $("mode-hint").textContent = t("mode." + dev.mode + "Hint");
+    $("loop-btn").setAttribute("aria-pressed", loopOn ? "true" : "false");
+    renderStrip();
     renderTools();
     renderPad();
-    scrollToLine(holding >= 0 ? holding : cursor);
+    drawWave();
+    scrollToLine(holding >= 0 ? holding : dev.mode === "words" ? wl : cursor);
   }
   function scrollToLine(i) {
     var li = $("lines").children[Math.min(i, cur.ln.length - 1)];
@@ -580,7 +647,7 @@
     if (box.top < 120 || box.bottom > vh - 140) li.scrollIntoView({ block: "center", behavior: "auto" });
   }
   function renderTools() {
-    var on = cur && sel >= 0 && sel < cur.ln.length;
+    var on = cur && toolsOpen && sel >= 0 && sel < cur.ln.length;
     $("line-tools").hidden = !on;
     if (!on) return;
     var l = cur.ln[sel], inp = $("line-time");
@@ -588,19 +655,57 @@
     [].forEach.call(document.querySelectorAll(".nudge"), function (b) { b.disabled = l.s === null; });
     $("line-play").disabled = l.s === null || !audioOk;
     $("line-clear").disabled = l.s === null;
+    $("line-words").hidden = !l.w;
+    var many = (cur.vn || []).filter(Boolean).length >= 2, sg = $("line-singer");
+    $("line-singer-box").hidden = !many;
+    if (many) {
+      sg.textContent = "";
+      cur.vn.forEach(function (n, k) {
+        var o = el("option", "", n || t("singer.n", { n: k + 1 }));
+        o.value = String(k + 1);
+        sg.appendChild(o);
+      });
+      sg.value = String(l.v || 1);
+    }
+  }
+  // Words mode: the line being timed, one chip per word with its time.
+  function renderStrip() {
+    var box = $("word-strip");
+    box.hidden = dev.mode !== "words" || !cur || !cur.ln[wl];
+    if (box.hidden) return;
+    box.textContent = "";
+    var l = cur.ln[wl], ws = C.words(l.t);
+    ws.forEach(function (w, k) {
+      var b = el("button", "wchip" + (k === wk ? " next" : "") + (l.w && l.w[k] !== null ? " done" : ""));
+      b.type = "button";
+      b.appendChild(el("span", "ww", w));
+      b.appendChild(el("span", "wt dim", l.w && l.w[k] !== null ? C.fmt(l.w[k], "clock") : "–"));
+      b.addEventListener("click", function () { wk = k; renderStrip(); renderPad(); });
+      box.appendChild(b);
+    });
   }
   function renderPad() {
     if (!cur) return;
     var done = cursor >= cur.ln.length, pad = $("pad");
-    $("pad-label").textContent = !audioOk || (player && player.paused) ? t("pad.start") : t(dev.mode === "tap" ? "pad.tap" : "pad.hold");
-    $("pad-next").textContent = done ? t("pad.done") : t("pad.next", { line: cur.ln[cursor].t });
+    $("pad-label").textContent = !audioOk || (player && player.paused) ? t("pad.start") : t(dev.mode === "hold" ? "pad.hold" : "pad.tap");
+    if (dev.mode === "words") {
+      var ws = cur.ln[wl] ? C.words(cur.ln[wl].t) : [];
+      done = !ws.length || wk >= ws.length;
+      $("pad-next").textContent = done ? t("pad.done") : t("pad.word", { w: ws[wk] });
+    } else $("pad-next").textContent = done ? t("pad.done") : t("pad.next", { line: cur.ln[cursor].t });
     pad.classList.toggle("holding", holding >= 0);
     pad.disabled = !cur.ln.length;
     $("end-btn").disabled = !audioOk || C.prevTimed(cur.ln, Math.min(cursor, cur.ln.length)) < 0;
   }
 
   function selectLine(i) {
-    sel = sel === i ? -1 : i;
+    sel = sel === i && toolsOpen ? -1 : i;
+    toolsOpen = sel >= 0;
+    if (dev.mode === "words" && sel >= 0) {
+      var l = cur.ln[i];
+      wl = i; wk = 0;
+      if (l.w) { var k = l.w.indexOf(null); wk = k < 0 ? 0 : k; }
+    }
     renderSync();
   }
 
@@ -610,10 +715,11 @@
     if (!cur || !cur.ln.length) return;
     if (!audioOk) { toast(t("sync.needAudio")); return; }
     if (player.paused) { play(); toast(t("sync.started")); return; }
+    if (dev.mode === "words") { tapWord(); return; }
     if (cursor >= cur.ln.length) { toast(t("sync.allDone")); return; }
-    var at = nowMs(), i = cursor;
+    var at = tapMs(), i = cursor;
     if (dev.mode === "hold") holding = i;
-    sel = i;
+    sel = i; toolsOpen = false;
     if (dev.mode === "tap") cursor = i + 1;
     setLines(C.startAt(cur.ln, i, at));
   }
@@ -622,7 +728,7 @@
     var i = holding;
     holding = -1;
     cursor = i + 1;
-    var at = nowMs();
+    var at = tapMs();
     if (cur.ln[i] && cur.ln[i].s !== null && at > cur.ln[i].s) {
       // the release is part of the same step as the press: one undo
       var prev = undoStack.length ? undoStack[undoStack.length - 1] : null;
@@ -633,14 +739,28 @@
   }
   function endLine() {
     if (!cur || !audioOk) return;
-    var k = C.prevTimed(cur.ln, Math.min(cursor, cur.ln.length));
+    var k = C.prevTimed(cur.ln, Math.min(dev.mode === "words" ? (wk > 0 ? wl + 1 : wl) : cursor, cur.ln.length));
     if (k < 0) { toast(t("sync.noEnd")); return; }
-    setLines(C.endAt(cur.ln, k, nowMs()));
+    setLines(C.endAt(cur.ln, k, tapMs()));
+  }
+  // Words mode: time word wk of line wl, then move on (to the next
+  // line's first word after the last word).
+  function tapWord() {
+    var l = cur.ln[wl];
+    if (!l) { toast(t("sync.allDone")); return; }
+    var n = C.words(l.t).length;
+    if (wk >= n) { toast(t("sync.allDone")); return; }
+    var i = wl, k = wk;
+    sel = i; toolsOpen = false;
+    wk++;
+    if (wk >= n) { if (wl + 1 < cur.ln.length) { wl++; wk = 0; } }
+    cursor = Math.max(cursor, i + 1);
+    setLines(C.wordAt(cur.ln, i, k, tapMs()));
   }
 
   function syncFrom(i) {
     if (!cur || i < 0) return;
-    cursor = i; sel = -1;
+    cursor = i; sel = -1; wl = i; wk = 0;
     var k = C.prevTimed(cur.ln, i);
     var at = k >= 0 ? cur.ln[k].s : (cur.ln[i].s !== null ? Math.max(0, cur.ln[i].s - 3000) : 0);
     if (audioOk) { player.currentTime = at / 1000; }
@@ -663,13 +783,19 @@
     $("clock").textContent = C.fmt(ms, "clock");
     var seek = $("seek");
     if (document.activeElement !== seek) seek.value = String(player.currentTime || 0);
+    // Loop line: back to the selected line's start at its end.
+    if (loopOn && !player.paused && sel >= 0) {
+      var lx = timedList().filter(function (x) { return x.i === sel; })[0];
+      if (lx && (ms >= lx.e || ms < lx.s - 1000)) { player.currentTime = lx.s / 1000; ms = lx.s; }
+    }
     var k = C.lineAt(timedList(), ms);
     if (k !== lastNow) {
       lastNow = k;
       var idx = k >= 0 ? timedList()[k].i : -1;
       [].forEach.call($("lines").children, function (li) { li.classList.toggle("now", +li.dataset.i === idx); });
       renderStage();
-    }
+    } else stageWords(ms);
+    drawWave();
   }
   var raf = 0;
   function loop() { tick(); raf = player.paused ? 0 : requestAnimationFrame(loop); }
@@ -682,9 +808,128 @@
     if (k < 0) { upcoming = -1; for (var j = 0; j < L.length; j++) if (L[j].s > ms) { upcoming = j - 1; break; } if (upcoming === -1 && L.length && ms >= L[L.length - 1].e) upcoming = L.length - 1; }
     function txt(n) { return n >= 0 && n < L.length ? L[n].t : ""; }
     $("st-prev").textContent = txt(k >= 0 ? k - 1 : upcoming);
-    $("st-now").textContent = k >= 0 ? L[k].t : "♪";
+    var now = $("st-now");
+    now.textContent = "";
+    if (k >= 0 && L[k].words) {
+      L[k].words.forEach(function (w, j) {
+        if (j) now.appendChild(document.createTextNode(" "));
+        var sp = el("span", "sw", w.t);
+        sp.dataset.s = w.s;
+        now.appendChild(sp);
+      });
+      stageWords(ms);
+    } else now.textContent = k >= 0 ? L[k].t : "♪";
     $("st-next").textContent = txt((k >= 0 ? k : upcoming) + 1);
     $("st-next2").textContent = txt((k >= 0 ? k : upcoming) + 2);
+  }
+
+  // Karaoke fill: the words already sung are lit.
+  function stageWords(ms) {
+    if (tab !== "preview") return;
+    [].forEach.call($("st-now").querySelectorAll(".sw"), function (sp) { sp.classList.toggle("sung", ms >= +sp.dataset.s); });
+  }
+
+  // ---------- 11b. Waveform, check, shift, tap delay (wave 2) ----------
+  function waveState() {
+    var l = cur && sel >= 0 ? cur.ln[sel] : null;
+    return { list: timedList(), sel: sel, now: nowMs(), dur: cur ? cur.dur : 0, peaks: peaks, span: dev.span * 1000, words: l && l.w ? l.w : null };
+  }
+  function zoom(d) {
+    var k = SPANS.indexOf(dev.span) + d;
+    if (k < 0 || k >= SPANS.length) return;
+    dev.span = SPANS[k]; saveDev();
+    $("zoom-in").disabled = k === 0; $("zoom-out").disabled = k === SPANS.length - 1;
+    drawWave();
+  }
+
+  var CK_ORDER = ["untimed", "order", "short", "gap", "long", "label", "words"];
+  function openCheck() {
+    if (!cur) return;
+    flushLyrics();
+    var list = C.issues(cur.ln, cur.dur), ul = $("check-list");
+    list.sort(function (a, b) { return a.i - b.i || CK_ORDER.indexOf(a.code) - CK_ORDER.indexOf(b.code); });
+    $("check-sum").textContent = list.length ? t("ck.sum", { n: list.length }) : t("ck.none");
+    ul.textContent = "";
+    list.forEach(function (it) {
+      var li = el("li");
+      var b = el("button", "ck-row");
+      b.type = "button";
+      b.appendChild(el("strong", "", t("ck.line", { n: it.i + 1 })));
+      b.appendChild(el("span", "ck-text", cur.ln[it.i].t));
+      b.appendChild(el("span", "dim", t("ck." + it.code)));
+      b.addEventListener("click", function () {
+        $("check-dlg").close();
+        if ($("export-dlg").open) $("export-dlg").close();
+        setTab("sync");
+        sel = it.i; toolsOpen = true;
+        renderSync();
+        scrollToLine(it.i);
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+    $("check-dlg").showModal();
+  }
+
+  function openShift() {
+    if (!cur) return;
+    $("shift-in").value = "";
+    $("shift-dlg").showModal();
+  }
+  function applyShift() {
+    var v = $("shift-in").value.trim().replace(",", ".");
+    if (!/^[-+]?\d+(\.\d+)?$/.test(v) || Math.abs(+v) > 3600) { toast(t("sh.bad")); return; }
+    $("shift-dlg").close();
+    var d = Math.round(+v * 1000);
+    if (!d) return;
+    setLines(C.shiftAll(cur.ln, d));
+    toast(t("sh.done", { s: (d > 0 ? "+" : "") + (d / 1000) }));
+  }
+
+  // Tap delay: 8 clicks 0.6 s apart after a 1.2 s lead-in; each tap is
+  // matched to the nearest click; the median of the matches (0-400 ms)
+  // becomes the delay taken off every tap.
+  var cal = null;
+  function renderCalib() {
+    $("calib-now").textContent = t("cal.now", { n: dev.lat });
+    $("calib-pad").textContent = cal ? t("cal.tap") : t("cal.start");
+  }
+  function calibPress() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!cal) {
+      if (!AC) return;
+      if (player && !player.paused) player.pause();
+      var ac = new AC(), t0 = ac.currentTime + 1.2, clicks = [];
+      for (var k = 0; k < 8; k++) {
+        var at = t0 + k * 0.6, o = ac.createOscillator(), g = ac.createGain();
+        o.frequency.value = k % 4 ? 880 : 1320;
+        g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(0.5, at + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, at + 0.08);
+        o.connect(g); g.connect(ac.destination); o.start(at); o.stop(at + 0.1);
+        clicks.push(at);
+      }
+      cal = { ac: ac, clicks: clicks, taps: [] };
+      setTimeout(finishCalib, (1.2 + 8 * 0.6 + 0.6) * 1000);
+      renderCalib();
+      return;
+    }
+    cal.taps.push(cal.ac.currentTime);
+  }
+  function finishCalib() {
+    if (!cal) return;
+    var c = cal; cal = null;
+    var d = [];
+    c.taps.forEach(function (tp) {
+      var best = null;
+      c.clicks.forEach(function (ck) { var x = tp - ck; if (x > -0.15 && x < 0.45 && (best === null || Math.abs(x) < Math.abs(best))) best = x; });
+      if (best !== null) d.push(best * 1000);
+    });
+    try { c.ac.close(); } catch (e) {}
+    if (d.length < 5) { toast(t("cal.fail")); renderCalib(); return; }
+    d.sort(function (a, b) { return a - b; });
+    dev.lat = Math.max(0, Math.min(400, Math.round(d[d.length >> 1])));
+    saveDev();
+    renderCalib();
+    toast(t("cal.done", { n: dev.lat }));
   }
 
   // ---------- 12. Import and export ----------
@@ -699,6 +944,8 @@
     return r.lines.map(function (l) {
       var o = { id: C.newId("l", Math.random), t: l.t, s: l.s, e: l.e };
       if (l.p) o.p = 1;
+      if (l.w) o.w = l.w;
+      if (l.v) o.v = l.v;
       return o;
     });
   }
@@ -706,6 +953,7 @@
     var next = Object.assign({}, cur, { ln: linesFrom(r) });
     ["name", "ar", "al", "lg"].forEach(function (k) { if (r[k] && !cur[k]) next[k] = r[k]; });
     if (r.dur && !cur.dur) next.dur = r.dur;
+    if (r.vn && r.vn.filter(Boolean).length && !(cur.vn && cur.vn.length)) next.vn = r.vn;
     undoStack.push({ ln: cur.ln, cursor: cursor, sel: sel }); redoStack = [];
     if (putProject(next)) {
       cur = C.find(data, cur.id); tlist = null;
@@ -744,11 +992,20 @@
   function openExport() {
     if (!cur) return;
     flushLyrics();
-    var n = C.timedCount(cur.ln), ul = $("export-list");
-    $("export-sum").textContent = n ? t("ex.sum", { n: n, total: cur.ln.length }) : t("ex.none");
+    var n = C.timedCount(cur.ln), nw = C.wordCount(cur.ln), ul = $("export-list"), iss = C.issues(cur.ln, cur.dur).length;
+    var sum = $("export-sum");
+    sum.textContent = n ? t("ex.sum", { n: n, total: cur.ln.length }) + (nw ? " " + t("ex.words", { n: nw }) : "") : t("ex.none");
+    if (n && iss) {
+      sum.appendChild(document.createTextNode(" " + t("ex.issues", { n: iss }) + " "));
+      var ck = el("button", "link-btn", t("ex.check"));
+      ck.type = "button";
+      ck.addEventListener("click", openCheck);
+      sum.appendChild(ck);
+    }
     ul.textContent = "";
-    ["lrc", "srt", "vtt", "ttml", "json", "txt"].forEach(function (k) {
+    ["lrc", "elrc", "srt", "vtt", "ttml", "ass", "json", "txt"].forEach(function (k) {
       var spec = F.EXPORTS[k], timedOnly = k !== "json" && k !== "txt";
+      if (spec.words && !nw) return;
       var li = el("li", "ex-row");
       var txt = el("div", "ex-txt");
       txt.appendChild(el("strong", "", t("ex." + k) + " (" + spec.ext + ")"));
@@ -757,7 +1014,7 @@
       b.type = "button";
       b.disabled = timedOnly && !n;
       b.addEventListener("click", function () {
-        var name = fileTitle(cur) + spec.ext;
+        var name = fileTitle(cur) + (k === "elrc" ? ".karaoke" : "") + spec.ext;
         saveFile(spec.fn(cur), name, spec.mime, spec.ext).then(function (ok) { if (ok) toast(t("ex.saved", { name: name })); });
       });
       li.appendChild(txt);
@@ -826,8 +1083,52 @@
       if (player) player.playbackRate = dev.speed;
     });
 
-    ["tap", "hold"].forEach(function (m) {
-      $("mode-" + m).addEventListener("click", function () { dev.mode = m; saveDev(); renderSync(); });
+    ["tap", "hold", "words"].forEach(function (m) {
+      $("mode-" + m).addEventListener("click", function () {
+        dev.mode = m; saveDev();
+        if (m === "words" && cur) { wl = sel >= 0 ? sel : Math.min(cursor, Math.max(0, cur.ln.length - 1)); wk = 0; }
+        renderSync();
+      });
+    });
+    $("check-btn").addEventListener("click", openCheck);
+    $("check-close").addEventListener("click", function () { $("check-dlg").close(); });
+    $("shift-btn").addEventListener("click", openShift);
+    $("shift-no").addEventListener("click", function () { $("shift-dlg").close(); });
+    $("shift-yes").addEventListener("click", applyShift);
+    $("shift-in").addEventListener("keydown", function (e) { if (e.code === "Enter" || e.code === "NumpadEnter") { e.preventDefault(); applyShift(); } });
+    $("calib-btn").addEventListener("click", function () { renderCalib(); $("calib-dlg").showModal(); });
+    $("calib-pad").addEventListener("pointerdown", function (e) { e.preventDefault(); calibPress(); });
+    $("calib-pad").addEventListener("click", function (e) { if (e.detail === 0) calibPress(); });
+    $("calib-dlg").addEventListener("keydown", function (e) { if (e.code === "Space") { e.preventDefault(); if (!e.repeat) calibPress(); } });
+    $("calib-reset").addEventListener("click", function () { dev.lat = 0; saveDev(); renderCalib(); });
+    $("calib-close").addEventListener("click", function () { $("calib-dlg").close(); });
+    $("calib-dlg").addEventListener("close", function () { if (cal) { try { cal.ac.close(); } catch (e) {} cal = null; } });
+    $("zoom-in").addEventListener("click", function () { zoom(-1); });
+    $("zoom-out").addEventListener("click", function () { zoom(1); });
+    $("loop-btn").addEventListener("click", function () { loopOn = !loopOn; $("loop-btn").setAttribute("aria-pressed", loopOn ? "true" : "false"); });
+    if (window.LyricsyncWave) {
+      wave = window.LyricsyncWave.create($("wave"), {
+        state: waveState,
+        seek: function (ms) { if (audioOk) { player.currentTime = ms / 1000; tick(); } },
+        move: function (i, k, ms) { if (cur) { sel = i; setLines(C.moveMark(cur.ln, i, k, ms)); } }
+      });
+      window.addEventListener("resize", drawWave);
+    }
+    zoom(0);
+    $("f-singers").addEventListener("change", function () {
+      if (!cur) return;
+      var vn = $("f-singers").value.split(",").map(function (x) { return x.trim(); }).slice(0, 4);
+      while (vn.length && !vn[vn.length - 1]) vn.pop();
+      var next = Object.assign({}, cur, { vn: vn });
+      if (!vn.length) delete next.vn;
+      if (putProject(next)) { cur = C.find(data, cur.id); renderTools(); }
+    });
+    $("line-words").addEventListener("click", function () { if (sel >= 0 && cur) setLines(C.clearWords(cur.ln, sel)); });
+    $("line-singer").addEventListener("change", function () {
+      if (sel < 0 || !cur) return;
+      var lines = cur.ln.map(function (l) { return Object.assign({}, l); }), v = +$("line-singer").value;
+      if (v > 1) lines[sel].v = v; else delete lines[sel].v;
+      setLines(lines);
     });
     $("undo-btn").addEventListener("click", undo);
     $("redo-btn").addEventListener("click", redo);
@@ -890,6 +1191,7 @@
           if (tab !== "sync" || !cur.ln.length) break;
           e.preventDefault();
           sel = Math.max(0, Math.min(cur.ln.length - 1, (sel < 0 ? cursor : sel) + (e.code === "ArrowUp" ? -1 : 1)));
+          toolsOpen = true;
           renderSync();
           break;
         case "Comma": case "Period":
