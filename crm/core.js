@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.7.0)
+// orOS CRM — core.js (shared logic, v1.8.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -73,7 +73,7 @@
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
 //     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), rsl?: Revenue Splitter links (1.7), prefs: { pm, cur, forget }, wf?: web form,
-//     tombs: { id: deletedAt } }
+//     cs?: Contacts sync rows (1.8), tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
 // ============================================================
@@ -88,7 +88,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, rsl: 2000, rsNames: 5 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, rsl: 2000, rsNames: 5, cs: 2000, csOld: 5 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -96,7 +96,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl", "cs"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -510,7 +510,74 @@
     return out;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, rsl: normRsl };
+  // ---------- Contacts sync rows (1.8, CT-CRM) ----------
+  // One row per customer that has a linked contact (its id IS the
+  // customer id). For a person: the contact it is synced with (c),
+  // when that pair started (t) and, per mapped field, the value and
+  // stamp CRM last agreed on (f). For a company: its name (n) and
+  // earlier names (o), so a contact whose company was renamed follows.
+  // Its own list, like pt: a 1.7 device drops it on its own merge and
+  // the union of the next merge brings it back.
+  var CS_FIELDS = { name: 120, phone: 40, email: 120, web: 300, job: 80, addr: 200, country: 60 };
+  function normCs(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var o = { id: x.id, m: x.m };
+    if (typeof x.c === "string" && CREF_RE.test(x.c) && isInt(x.t) && x.t > 0) {
+      o.c = x.c;
+      o.t = x.t;
+      var f = {}, any = false;
+      if (x.f && typeof x.f === "object") Object.keys(CS_FIELDS).forEach(function (k) {
+        var r = x.f[k];
+        if (!Array.isArray(r) || r.length !== 2 || typeof r[0] !== "string" || !isInt(r[1]) || r[1] < -1) return;
+        f[k] = [cleanText(r[0], CS_FIELDS[k]), r[1]];
+        any = true;
+      });
+      if (any) o.f = f;
+    }
+    var n = cleanText(x.n, 120);
+    if (n) {
+      o.n = n;
+      var old = [];
+      if (Array.isArray(x.o)) x.o.forEach(function (v) {
+        var s = cleanText(v, 120);
+        if (s && s !== n && old.indexOf(s) < 0) old.push(s);
+      });
+      old.sort(cmpStr);
+      if (old.length) o.o = old.slice(0, LIMITS.csOld);
+    }
+    return o;
+  }
+  // Two copies of one row → one, field by field (symmetric).
+  function csJoin(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    var hi = b.m > a.m || (b.m === a.m && canon(b) > canon(a)) ? b : a, lo = hi === a ? b : a;
+    var o = { id: hi.id, m: hi.m };
+    if (hi.c) {
+      o.c = hi.c;
+      o.t = lo.c === hi.c ? Math.min(lo.t, hi.t) : hi.t;
+      var f = {};
+      Object.keys(CS_FIELDS).forEach(function (k) {
+        var x = hi.f && hi.f[k], y = lo.c === hi.c && lo.f ? lo.f[k] : null;
+        var w = !x ? y : (!y ? x : (y[1] > x[1] || (y[1] === x[1] && canon(y) > canon(x)) ? y : x));
+        if (w) f[k] = w.slice();
+      });
+      if (Object.keys(f).length) o.f = f;
+    }
+    var n = hi.n || lo.n;
+    if (n) {
+      o.n = n;
+      var old = [];
+      [hi.n, lo.n].concat(hi.o || [], lo.o || []).forEach(function (s) {
+        if (s && s !== n && old.indexOf(s) < 0) old.push(s);
+      });
+      old.sort(cmpStr);
+      if (old.length) o.o = old.slice(0, LIMITS.csOld);
+    }
+    return o;
+  }
+
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, rsl: normRsl, cs: normCs };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -579,7 +646,8 @@
         if (Array.isArray(list)) list.forEach(function (raw) {
           var x = LISTS[k](raw);
           if (!x) return;
-          lww(best[k], x);
+          if (k === "cs") best.cs[x.id] = csJoin(best.cs[x.id], x);
+          else lww(best[k], x);
         });
       });
       Object.keys(best[k]).forEach(function (id) { if (best[k][id].m > newest) newest = best[k][id].m; });
@@ -600,11 +668,11 @@
         if (id in tombs && tombs[id] >= x.m) return;
         // an emptied pt or rsl row stays: dropping it would let another
         // device's older copy bring the link back
-        if (k === "pt" || k === "rsl" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
+        if (k === "pt" || k === "rsl" || k === "cs" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      if ((k !== "pt" && k !== "ctr" && k !== "rsl") || list.length) out[k] = list;
+      if ((k !== "pt" && k !== "ctr" && k !== "rsl" && k !== "cs") || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
@@ -1118,7 +1186,7 @@
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
-    normRsl: normRsl, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
+    normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };

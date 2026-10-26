@@ -36,7 +36,7 @@ test("shell: every live push into a named app finds its frame through appFrameOf
   while ((m = re.exec(SHELL))) { assert.equal(m[1], m[2]); n++; }
   assert.equal(n, uses.length);
   const shows = SHELL.match(/appShow\(("[a-z0-9]+"|appId)\);[^\n]*\n\s*var f = appFrameOf\(/g) || [];
-  assert.equal(shows.length, uses.length - 4, "all but the 4 background pushes (timesheet x3, cycle check)");
+  assert.equal(shows.length, uses.length - 5, "all but the 5 background pushes (timesheet x3, cycle check, contacts/CRM sync reload)");
 });
 
 // ---------- the frame code of shell.js in a sandbox ----------

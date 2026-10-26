@@ -43,6 +43,7 @@
   "use strict";
 
   var C = window.OrosCrmCore;
+  var CS = window.OrosCrmContactSync || null;   // CT-CRM (crm/contactsync.js)
   var LK = window.OrosCrmLinks || null;   // partners across apps (links.js)
   var STORAGE_KEY  = "oros-crm-data";
   var PREFS_KEY    = "oros-crm-prefs";
@@ -86,6 +87,10 @@
       "act.call": "Call", "act.mail": "Email", "act.map": "Map", "act.log": "Log contact", "act.fup": "Follow-up", "act.deal": "Deal",
       "k.call": "Call", "k.mail": "Email", "k.meet": "Meeting", "k.msg": "Message", "k.note": "Note",
       "sec.info": "Details", "sec.people": "People", "sec.notes": "Notes",
+      "sec.ctdiff": "Different in Contacts",
+      "ctdiff.hint": "This customer and the linked contact are kept in sync. These details differed before the link: pick the one both keep.",
+      "ctdiff.crm": "Here: {v}", "ctdiff.ct": "Contact: {v}", "ctdiff.empty": "(empty)",
+      "ctdiff.keepCrm": "Keep this", "ctdiff.keepCt": "Keep the contact's", "ctdiff.done": "Kept: {f}",
       "role.cust": "Customer", "role.sup": "Supplier", "role.shop": "Consignment shop", "role.auth": "Author / contributor", "role.assoc": "Associate",
       "fr.cust": "Customers", "fr.sup": "Suppliers", "fr.shop": "Shops", "fr.auth": "Authors", "fr.assoc": "Associates",
       "ed.roles": "Role", "ed.rolesHint": "More than one is fine.",
@@ -279,6 +284,10 @@
       "act.call": "Κλήση", "act.mail": "Email", "act.map": "Χάρτης", "act.log": "Καταγραφή", "act.fup": "Follow-up", "act.deal": "Ευκαιρία",
       "k.call": "Κλήση", "k.mail": "Email", "k.meet": "Συνάντηση", "k.msg": "Μήνυμα", "k.note": "Σημείωση",
       "sec.info": "Στοιχεία", "sec.people": "Άνθρωποι", "sec.notes": "Σημειώσεις",
+      "sec.ctdiff": "Διαφορές με τις Επαφές",
+      "ctdiff.hint": "Ο πελάτης και η συνδεδεμένη επαφή συγχρονίζονται. Αυτά τα στοιχεία διέφεραν πριν τη σύνδεση: διάλεξε ποιο θα κρατήσουν και οι δύο.",
+      "ctdiff.crm": "Εδώ: {v}", "ctdiff.ct": "Επαφή: {v}", "ctdiff.empty": "(κενό)",
+      "ctdiff.keepCrm": "Κράτα αυτό", "ctdiff.keepCt": "Κράτα της επαφής", "ctdiff.done": "Κρατήθηκε: {f}",
       "role.cust": "Πελάτης", "role.sup": "Προμηθευτής", "role.shop": "Κατάστημα παρακαταθήκης", "role.auth": "Συγγραφέας / συντελεστής", "role.assoc": "Συνεργάτης",
       "fr.cust": "Πελάτες", "fr.sup": "Προμηθευτές", "fr.shop": "Καταστήματα", "fr.auth": "Συγγραφείς", "fr.assoc": "Συνεργάτες",
       "ed.roles": "Ρόλος", "ed.rolesHint": "Μπορείς να διαλέξεις περισσότερους από έναν.",
@@ -581,16 +590,21 @@
   var data = C.empty();
   var prefs = { tab: "cust", sel: "", filter: "all", tag: "", role: "", sort: "name", sub: "ov", stage: "new" };
 
+  // `saved` = the JSON of the data as last stored or adopted (a copy:
+  // the mutations change `data` in place): commit() compares against
+  // it to stamp CRM's own edits of synced contact fields.
+  var saved = "";
   function load() {
     var raw = null;
     try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-    if (!raw) { data = C.empty(); return; }
+    if (!raw) { data = C.empty(); saved = ""; return; }
     try { data = C.norm(JSON.parse(raw)); }
     catch (e) {
       // keep the unreadable copy, start clean (never silently overwrite)
       try { localStorage.setItem(STORAGE_KEY + "-broken", raw); } catch (e2) {}
       data = C.empty();
     }
+    saved = JSON.stringify(data);
   }
   function loadPrefs() {
     try {
@@ -618,8 +632,12 @@
   // failures are surfaced (R30), the slice is marked dirty.
   function commit() {
     var next = C.norm(data);
+    // CT-CRM: a synced field changed here takes this edit's stamp, so
+    // it reaches the linked contact (and wins over an older change there)
+    if (CS && next.cs && saved) next = CS.stampEdits(C, JSON.parse(saved), next);
+    var json = JSON.stringify(next);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      localStorage.setItem(STORAGE_KEY, json);
     } catch (e) {
       load();                     // back to what is really stored
       showToast(t("toast.full"));
@@ -627,6 +645,7 @@
       return false;
     }
     data = next;
+    saved = json;
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     render();
     return true;
@@ -1845,6 +1864,7 @@
       sp.appendChild(row);
     });
     box.appendChild(sp);
+    renderCtDiffs(box, c);
     renderLinks(box, c);
 
     // sub-tabs
@@ -1877,6 +1897,49 @@
     else if (prefs.sub === "deals") renderCustDeals(pane, c, custDeals);
     else if (prefs.sub === "docs") renderCustDocs(pane, c, docs);
     else renderCustFups(pane, c, custFups);
+  }
+
+  // CT-CRM: details that differed from the linked contact before the
+  // link; nothing changes until the user keeps one side.
+  function syncHost() {
+    try { return window.parent && window.parent !== window ? window.parent : null; } catch (e) { return null; }
+  }
+  function contactsRaw() {
+    try { return JSON.parse(localStorage.getItem(CONTACTS_KEY) || "null"); } catch (e) { return null; }
+  }
+  function contactsMerge() {
+    var h = syncHost();
+    try { return (h && h.OrosContactsMerge) || window.OrosContactsMerge || null; } catch (e) { return null; }
+  }
+  function renderCtDiffs(box, c) {
+    if (!CS || c.kind !== "person") return;
+    var ctd = contactsRaw();
+    var list = ctd ? CS.diffs(C, contactsMerge(), data, ctd, c.id) : [];
+    if (!list.length) return;
+    var sec = el("div", "sec ctdiff");
+    sec.appendChild(secHead(t("sec.ctdiff")));
+    sec.appendChild(el("p", "hint", t("ctdiff.hint")));
+    list.forEach(function (x) {
+      var row = el("div", "person");
+      var main = el("div", "row-main");
+      main.appendChild(el("div", "row-title", t("ed." + x.k)));
+      main.appendChild(el("div", "row-sub", t("ctdiff.crm", { v: x.crm || t("ctdiff.empty") })));
+      main.appendChild(el("div", "row-sub", t("ctdiff.ct", { v: x.ct || t("ctdiff.empty") })));
+      row.appendChild(main);
+      var acts = el("div", "ctdiff-acts");
+      if (x.crm || x.k !== "name") acts.appendChild(button(t("ctdiff.keepCrm"), "", function () { keepSide(c, x.k, "crm"); }));
+      if (x.ct || x.k !== "name") acts.appendChild(button(t("ctdiff.keepCt"), "", function () { keepSide(c, x.k, "ct"); }));
+      row.appendChild(acts);
+      sec.appendChild(row);
+    });
+    box.appendChild(sec);
+  }
+  function keepSide(c, k, which) {
+    var ctd = contactsRaw();
+    var next = ctd ? CS.keep(C, contactsMerge(), data, ctd, c.id, k, which, stamp(C.byId(data.cust, c.id))) : null;
+    if (!next) return;
+    data = next;
+    if (commit()) showToast(t("ctdiff.done", { f: t("ed." + k) }));
   }
 
   function secHead(label) {
@@ -3808,7 +3871,8 @@
     window.__orosSyncApi._suppress = true;   // R6: a pull never marks dirty
     try {
       data = C.norm(incoming);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      saved = JSON.stringify(data);
+      localStorage.setItem(STORAGE_KEY, saved);
     } catch (e) {
     } finally {
       window.__orosSyncApi._suppress = false;
@@ -3817,6 +3881,16 @@
     if (!document.querySelector("dialog[open]")) render();
     else renderBadge();
   }
+
+  // CT-CRM: the shell wrote the stored copy (a linked contact changed):
+  // adopt it now, so the next save or push can't put the old one back.
+  window.__orosDataReload = function () {
+    var before = JSON.stringify(data);
+    load();
+    if (JSON.stringify(data) === before) return;
+    if (!document.querySelector("dialog[open]")) render();
+    else renderBadge();
+  };
 
   // ---------- 15. Wiring & boot ----------
   var TABS = ["cust", "pipe", "agenda", "dash"];
