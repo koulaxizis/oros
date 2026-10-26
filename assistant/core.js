@@ -32,19 +32,24 @@
       name: "Claude (Anthropic)", kind: "anthropic", key: "yes",
       base: "https://api.anthropic.com/v1",
       keyUrl: "https://console.anthropic.com/settings/keys",
-      model: "claude-opus-5-5", att: { img: 1, pdf: 1 }, web: 1
+      model: "claude-opus-5-5", att: { img: 1, pdf: 1 }, web: 1,
+      // 32 MB per request (base64 and text included), 100 PDF pages
+      // under a 1M context, 100 photos (platform.claude.com, PDF support / Vision)
+      attSend: 22 * 1024 * 1024, attPages: 100, attN: 100
     },
     openai: {
       name: "ChatGPT (OpenAI)", kind: "openai", key: "yes",
       base: "https://api.openai.com/v1",
       keyUrl: "https://platform.openai.com/api-keys",
-      usage: true, model: "", att: { img: 1, pdf: 1 }
+      usage: true, model: "", att: { img: 1, pdf: 1 },
+      attSend: 30 * 1024 * 1024       // 50 MB of files per request (file inputs guide)
     },
     gemini: {
       name: "Gemini (Google)", kind: "gemini", key: "yes",
       base: "https://generativelanguage.googleapis.com/v1beta",
       keyUrl: "https://aistudio.google.com/apikey",
-      model: "", att: { img: 1, pdf: 1 }
+      model: "", att: { img: 1, pdf: 1 },
+      attSend: 13 * 1024 * 1024       // inline data was 20 MB per request (base64 too); kept under it
     },
     mistral: {
       name: "Mistral", kind: "openai", key: "yes",
@@ -304,11 +309,19 @@
     if (!DT && typeof module !== "undefined" && module.exports) { try { DT = require("./doctext.js"); } catch (e) {} }
     (DT ? DT.TYPES : []).forEach(function (ty) { ATT_TYPES[ty] = "doc"; });
   })();
-  var ATT_MAX = 3;                       // files per message
-  var ATT_IMG = 5 * 1024 * 1024;         // bytes per photo (after shrinking)
-  var ATT_PDF = 10 * 1024 * 1024;        // bytes per PDF
-  var ATT_DOC = 20 * 1024 * 1024;        // bytes per document (read on the device)
-  var ATT_SEND = 12 * 1024 * 1024;       // bytes of files per request
+  var ATT_MAX = 30;                      // files per message
+  var ATT_FILE = 30 * 1024 * 1024;       // bytes per file as picked
+  var ATT_IMG = 5 * 1024 * 1024;         // bytes per photo after shrinking (Claude takes 5 MB a photo)
+  var ATT_PDF = ATT_FILE;                // bytes per PDF
+  var ATT_DOC = ATT_FILE;                // bytes per document (read on the device)
+  var ATT_SEND = 12 * 1024 * 1024;       // bytes of files per request, unless the provider says (attSend)
+  // What one request to provider pid may carry as files: bytes, PDF
+  // pages (0 = no limit we know of) and files. A file past that goes
+  // as the text orOS reads on the device (attBudget, userOut).
+  function attRoom(pid) {
+    var p = PROVIDERS[pid] || {};
+    return { bytes: p.attSend || ATT_SEND, pages: p.attPages || 0, n: p.attN || 0 };
+  }
   var ATT_ID = /^a[a-z0-9]{6,40}$/;
   var B64 = /^[A-Za-z0-9+\/]*={0,2}$/;
   // What the provider reads itself. A local server reads photos only
@@ -369,7 +382,12 @@
         return;
       }
       if (typeof raw.data !== "string" || !raw.data || !B64.test(raw.data)) { notes.push(attNote(a, "gone")); return; }
-      if (!sendable[a.id]) { notes.push(attNote(a, "budget")); return; }
+      if (!sendable[a.id]) {
+        // too much for one request: the text read on the device, when there is some
+        if (typeof raw.text === "string") notes.push(raw.text.trim() ? attTextBlock(a, raw.text) : attNote(a, "notext"));
+        else notes.push(attNote(a, "budget"));
+        return;
+      }
       att.push({ type: a.type, name: a.name, data: raw.data });
     });
     var dev = !!(PROVIDERS[pid] && PROVIDERS[pid].device) || !!(conf && conf.nt);
@@ -378,17 +396,20 @@
     if (notes.length) text = notes.join("\n") + (text ? "\n" + text : "");
     return { text: text, att: att };
   }
-  // Which attachments fit in one request, newest first → { id: 1 }
+  // Which attachments fit in one request, newest first → { id: 1 }.
+  // raw.pages = a PDF's page count, when the Assistant counted it.
   function attBudget(msgs, pid, conf) {
-    var caps = attCaps(pid, conf), left = ATT_SEND, ok = {};
+    var caps = attCaps(pid, conf), room = attRoom(pid), left = room.bytes, pages = room.pages, n = room.n, ok = {};
     for (var i = msgs.length - 1; i >= 0; i--) {
       var m = msgs[i];
       if (!m || m.r !== "user" || !Array.isArray(m.att)) continue;
       m.att.forEach(function (raw) {
         var a = normAtt(raw);
         if (!a || !caps[attKind(a.type)] || typeof raw.data !== "string") return;
-        var n = Math.ceil(raw.data.length * 3 / 4);
-        if (n <= left) { ok[a.id] = 1; left -= n; }
+        var b = Math.ceil(raw.data.length * 3 / 4);
+        var pg = attKind(a.type) === "pdf" ? Math.max(0, Math.floor(Number(raw.pages) || 0)) : 0;
+        if (b > left || (room.pages && pg > pages) || (room.n && n < 1)) return;
+        ok[a.id] = 1; left -= b; pages -= pg; n--;
       });
     }
     return ok;
@@ -2718,7 +2739,7 @@
     toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat,
-    ATT_TYPES: ATT_TYPES, ATT_MAX: ATT_MAX, ATT_IMG: ATT_IMG, ATT_PDF: ATT_PDF, ATT_DOC: ATT_DOC, ATT_SEND: ATT_SEND,
+    ATT_TYPES: ATT_TYPES, ATT_MAX: ATT_MAX, ATT_FILE: ATT_FILE, attRoom: attRoom, attBudget: attBudget, ATT_IMG: ATT_IMG, ATT_PDF: ATT_PDF, ATT_DOC: ATT_DOC, ATT_SEND: ATT_SEND,
     ATT_TEXT: ATT_TEXT, ATT_TEXT_DOC: ATT_TEXT_DOC, attLimit: attLimit, attCaps: attCaps, attKind: attKind, normAtt: normAtt, checkAtt: checkAtt,
     WEB_USES: WEB_USES, webCan: webCan, webTool: webTool, webSources: webSources,
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,

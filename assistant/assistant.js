@@ -1541,7 +1541,18 @@
   }
   // Every service takes files now (what it can't read goes as text).
   function attAllowed() { return ready(); }
-  function attLocal(a) { return !C.attCaps(curProv(), provConf(curProv()))[C.attKind(a.type)]; }
+  function attLocal(a) { return !C.attCaps(curProv(), provConf(curProv()))[C.attKind(a.type)] || attOver(a); }
+  // A file the service reads itself but that doesn't fit in one request
+  // with the others (core.js attRoom: bytes, PDF pages, files): it goes
+  // as the text read on this device instead.
+  function attOver(a) {
+    var pid = curProv();
+    if (!attMem[a.id] || !C.attCaps(pid, provConf(pid))[C.attKind(a.type)]) return false;
+    var ok = C.attBudget([{ r: "user", att: pending.map(function (p) {
+      return { id: p.id, name: p.name, type: p.type, size: p.size, data: attMem[p.id] || "", pages: attPages[p.id] };
+    }) }], pid, provConf(pid));
+    return !ok[a.id];
+  }
   function attErr(code) {
     var pid = curProv();
     return t("att.err." + code, { name: provName(pid), max: fmtSize(C.ATT_PDF), n: C.ATT_MAX });
@@ -1593,12 +1604,15 @@
   }
   // A photo larger than IMG_EDGE (or heavier than 1.5 MB) is redrawn
   // smaller as JPEG: the AI reads it as well, it costs fewer tokens and
-  // leaves the device lighter. GIFs stay as they are.
+  // leaves the device lighter (Claude takes 5 MB and, with more than 20
+  // photos, 2000 px a photo). A GIF stays as it is while it is within
+  // both; a bigger one becomes a JPEG of its first frame.
   function shrink(blob, type) {
-    if (type === "image/gif" || typeof createImageBitmap !== "function") return Promise.resolve({ blob: blob, type: type });
+    if (typeof createImageBitmap !== "function") return Promise.resolve({ blob: blob, type: type });
     return createImageBitmap(blob).then(function (bmp) {
       var w = bmp.width, h = bmp.height, k = Math.min(1, IMG_EDGE / Math.max(w, h));
-      if (k === 1 && blob.size <= 1.5 * 1024 * 1024) { if (bmp.close) bmp.close(); return { blob: blob, type: type }; }
+      var keep = type === "image/gif" ? blob.size <= C.ATT_IMG : blob.size <= 1.5 * 1024 * 1024;
+      if (k === 1 && keep) { if (bmp.close) bmp.close(); return { blob: blob, type: type }; }
       var cv = document.createElement("canvas");
       cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
       var g = cv.getContext("2d");
@@ -1606,13 +1620,14 @@
       g.drawImage(bmp, 0, 0, cv.width, cv.height);
       if (bmp.close) bmp.close();
       return new Promise(function (resolve) {
-        cv.toBlob(function (b) { resolve(b && b.size < blob.size ? { blob: b, type: "image/jpeg" } : { blob: blob, type: type }); }, "image/jpeg", 0.85);
+        cv.toBlob(function (b) { resolve(b && (k < 1 || b.size < blob.size) ? { blob: b, type: "image/jpeg" } : { blob: blob, type: type }); }, "image/jpeg", 0.85);
       });
     }, function () { return { blob: blob, type: type }; });
   }
   // name, blob (a File or a Blob from the orOS disk) → one pending file
   function addBlob(name, blob) {
     var pid = curProv(), type = typeOf(name, blob && blob.type), other = otherPhoto(type);
+    if (blob && blob.size > C.ATT_FILE) { showToast(t("att.err.size", { size: fmtSize(blob.size), max: fmtSize(C.ATT_FILE) })); return Promise.resolve(); }
     var pre = C.checkAtt(pid, pending.concat(new Array(attBusy)), { type: other ? "image/jpeg" : type, size: other || C.attKind(type) === "img" ? 1 : blob.size });
     if (pre) { showToast(pre === "size" ? sizeErr(blob.size, type) : attErr(pre)); return Promise.resolve(); }
     attBusy++;
@@ -1649,10 +1664,11 @@
     delete attMem[id];
     delete attOrig[id];
     delete attText[id];
+    delete attPages[id];
     renderAtt();
   }
   function clearPending(keepData) {
-    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attOrig[a.id]; delete attText[a.id]; });
+    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attOrig[a.id]; delete attText[a.id]; delete attPages[a.id]; });
     pending = [];
     renderAtt();
   }
@@ -1783,6 +1799,7 @@
         if (!attMem[a.id]) return a;
         var o = { id: a.id, name: a.name, type: a.type, size: a.size, data: attMem[a.id] };
         if (typeof attText[a.id] === "string") o.text = attText[a.id];
+        if (typeof attPages[a.id] === "number") o.pages = attPages[a.id];
         return o;
       }) };
     });
@@ -1800,9 +1817,35 @@
   var OCR_BASE = "../vendor/tesseract/";
   var READ_PAGES = 40, OCR_PAGES = 5;
   var pdfjsP = null, ocrP = null, ocrW = null;
+  var attPages = {};       // id → a PDF's page count (0 = couldn't count), for a service with a page limit
   function needsText(a) {
+    if (typeof attText[a.id] === "string" || !attMem[a.id]) return false;
     var caps = C.attCaps(curProv(), provConf(curProv()));
-    return !caps[C.attKind(a.type)] && typeof attText[a.id] !== "string" && !!attMem[a.id];
+    return !caps[C.attKind(a.type)] || attOver(a);
+  }
+  // A PDF going as a file to a service that counts pages (Claude): its
+  // page count first, so that one past the limit goes as text.
+  function needsPages(a) {
+    var pid = curProv();
+    return C.attKind(a.type) === "pdf" && !!C.attRoom(pid).pages && C.attCaps(pid, provConf(pid)).pdf &&
+      typeof attPages[a.id] !== "number" && !!attMem[a.id];
+  }
+  function countPages() {
+    var todo = pending.filter(needsPages);
+    attBusy++;
+    renderAtt();
+    return pdfjs().then(function (lib) {
+      return todo.reduce(function (pr, a) {
+        return pr.then(function () {
+          return lib.getDocument({ data: b64Bytes(attMem[a.id]), isEvalSupported: false, enableXfa: false,
+                                   disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise
+            .then(function (pdf) { attPages[a.id] = pdf.numPages || 0; if (pdf.destroy) pdf.destroy(); });
+        }).catch(function () { attPages[a.id] = 0; });
+      }, Promise.resolve());
+    }, function () { todo.forEach(function (a) { attPages[a.id] = 0; }); }).then(function () {
+      attBusy--;
+      renderAtt();
+    });
   }
   function pdfjs() {
     if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
@@ -1948,7 +1991,9 @@
     var text = box.value.trim();
     if ((!text && !pending.length) || busy || attBusy) return;
     if (!ready()) { settingsDialog(); return; }
-    // Files the service can't read: their text first, then the message.
+    // PDF pages first where the service counts them, then the text of
+    // files the service can't read (or that don't fit), then the message.
+    if (pending.some(needsPages)) { countPages().then(function () { if (!pending.some(needsPages)) send(); }); return; }
     if (pending.some(needsText)) { readPending().then(function () { if (!pending.some(needsText)) send(); }); return; }
     if (text.length > MAX_INPUT) text = text.slice(0, MAX_INPUT);
     // A file the chosen AI can't read (the provider changed since) stays
