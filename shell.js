@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.89.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.91.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1164,6 +1164,7 @@
       tickSafe("mealsCheckTick", mealsCheckTickThrottled); // Meal Planner: pantry best-before reminder (60s throttle)
       tickSafe("budgetCheckTick", budgetCheckTickThrottled); // Budget: subscription charge reminders (60s throttle)
       tickSafe("crmCheckTick", crmCheckTickThrottled);     // CRM: follow-up reminders (60s throttle)
+      tickSafe("contactCrmSync", contactCrmSyncThrottled); // CT-CRM: linked contacts ↔ CRM customers (60s throttle)
       tickSafe("keepCheckTick", keepCheckTickThrottled);   // Contacts: keep in touch, "reach out" (60s throttle)
       tickSafe("garageCheckTick", garageCheckTickThrottled); // Garage: renewals + service reminder (60s throttle)
       tickSafe("storageCheckTick", storageCheckTickThrottled); // Storage: warranty ends + return-by dates (60s throttle)
@@ -1251,6 +1252,7 @@
   // The manual unlock pulls directly (no auto-sync event): tell the
   // summary that this device's data has caught up (or failed to).
   function todaySyncSettled(ok) {
+    if (ok) ctcrmAfterSync();             // CT-CRM: linked contacts ↔ CRM after the pull
     var T = window.orosToday;
     try { if (T && typeof T.syncSettled === "function") T.syncSettled(ok); } catch (e) {}
   }
@@ -1663,6 +1665,72 @@
     crmLastTick = now;
     crmCheckTick();
   }
+
+  // CT-CRM — linked contacts ↔ CRM customers, both ways. Reads both
+  // stored copies (the apps may be closed) and asks
+  // crm/contactsync.js (the SAME file the CRM app runs) what each side
+  // takes: per field the newer change, a difference that existed
+  // before the link waits for the user in CRM. Each side is written
+  // by its own rules (CRM's norm, Contacts' field stamps); an app
+  // that is open re-reads its copy at once, so its next save or push
+  // can't put the old one back. Runs after each sync (with a cloud,
+  // not before this session's first one has ended, at most 2 minutes
+  // after the boot: an early write would hold back a pull of the
+  // closed app), on the tick, and 1.5 s after either app writes (a
+  // storage event from its frame); nothing to do when neither copy
+  // changed since the last pass. A pass that
+  // finds both sides equal writes nothing: no loop, no upload.
+  var CT_DATA_KEY = "oros-contacts-data";
+  var ctcrmSeen = { crm: null, ct: null }, ctcrmTimer = null, ctcrmLastTick = 0, ctcrmSynced = false;
+  function ctcrmMayRun() {
+    if (ctcrmSynced || Date.now() - shellBootAt > 120000) return true;
+    try { return !(window.orosSync && window.orosSync.isConnected()); } catch (e) { return true; }
+  }
+  function ctcrmAfterSync() {
+    ctcrmSynced = true;
+    try { contactCrmSync(); } catch (e) {}
+  }
+  function ctcrmReload(appId) {
+    if (appLive(appId)) {
+      var f = appFrameOf(appId);           // a background push: the app stays where it is
+      try { if (f && f.contentWindow && typeof f.contentWindow.__orosDataReload === "function") f.contentWindow.__orosDataReload(); } catch (e) {}
+    }
+  }
+  function contactCrmSync() {
+    var S = window.OrosCrmContactSync, Core = window.OrosCrmCore, MG = window.OrosContactsMerge;
+    if (!S || !Core || !MG || !ctcrmMayRun()) return;   // stale bundle — silent
+    var rc, rt;
+    try { rc = localStorage.getItem(CRM_DATA_KEY); rt = localStorage.getItem(CT_DATA_KEY); } catch (e) { return; }
+    if (!rc || !rt || (rc === ctcrmSeen.crm && rt === ctcrmSeen.ct)) return;
+    ctcrmSeen = { crm: rc, ct: rt };
+    var crm, ctd;
+    try { crm = JSON.parse(rc); ctd = JSON.parse(rt); } catch (e) { return; }
+    if (!crm || !Array.isArray(crm.cust) || !crm.cust.length || !ctd || !Array.isArray(ctd.contacts)) return;
+    var r = S.run(Core, MG, crm, ctd, Date.now()), wrote = false;
+    if (r.crm) {
+      try { localStorage.setItem(CRM_DATA_KEY, JSON.stringify(r.crm)); wrote = true; ctcrmReload("crm"); } catch (e) {}
+    }
+    if (r.contacts) {
+      try { localStorage.setItem(CT_DATA_KEY, JSON.stringify(r.contacts)); wrote = true; ctcrmReload("contacts"); } catch (e) {}
+    }
+    if (!wrote) return;
+    try { ctcrmSeen = { crm: localStorage.getItem(CRM_DATA_KEY), ct: localStorage.getItem(CT_DATA_KEY) }; } catch (e) {}
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+  }
+  function contactCrmSyncThrottled() {
+    var now = Date.now();
+    if (now - ctcrmLastTick < 60000) return;
+    ctcrmLastTick = now;
+    contactCrmSync();
+  }
+  if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
+    window.orosSync.onAutoSync(function (kind) { if (kind === "done") ctcrmAfterSync(); });
+  }
+  window.addEventListener("storage", function (e) {
+    if (e.key !== CRM_DATA_KEY && e.key !== CT_DATA_KEY) return;
+    clearTimeout(ctcrmTimer);
+    ctcrmTimer = setTimeout(function () { try { if (enginesMayRun()) contactCrmSync(); } catch (err) {} }, 1500);
+  });
 
   // Contacts — keep in touch. Reads "oros-contacts-data" directly
   // (works with the app CLOSED) and asks contacts/keep.js (loaded by

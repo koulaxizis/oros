@@ -64,7 +64,10 @@
     contacts:  { key: "oros-contacts-data",  actions: ["update", "delete"] },
     // Wave CF2: a CRM customer's details (deleting one takes its deals
     // and history with it, so that stays in CRM).
-    crm:       { key: "oros-crm-data",       actions: ["update"] },
+    // Wave A2: also a customer's roles, a deal (update; reschedule =
+    // expected close) and a follow-up (complete, reopen, reschedule,
+    // update).
+    crm:       { key: "oros-crm-data",       actions: ["complete", "reopen", "reschedule", "update"] },
     kanban:    { key: "oros-kanban-data",    actions: ["reschedule", "update", "move", "delete"] },
     shelf:     { key: "oros-shelf-data",     actions: ["update", "delete"] },
     habits:    { key: "oros-habits-data",    actions: ["complete", "reopen", "update"] },
@@ -85,14 +88,16 @@
                  nickname: 1, job_title: 1, address: 1, address_replace: 1, website: 1,
                  old_phone: 1, old_email: 1, old_website: 1, note_add: 1 },
     crm:       { title: 1, nickname: 1, job_title: 1, tax_id: 1, tax_office: 1, phone: 1, old_phone: 1, email: 1, old_email: 1,
-                 website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1 },
+                 website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1, roles: 1 },
+    crm_deal:  { title: 1, amount: 1, date: 1, note: 1, stage: 1, probability: 1, reason: 1 },
+    crm_fup:   { title: 1, date: 1, start: 1 },
     kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1 },
     shelf:     { title: 1, note: 1, status: 1 },
     habits:    { title: 1 },
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "column", "kind", "status", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "date", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "note"];
+  var VIEW_ORDER = ["title", "nickname", "column", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "note"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -102,6 +107,10 @@
   };
   var CAT_NAMES = ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"];
   var MAX_CENTS = 100000000000;
+  // CRM partner roles (crm/core.js ROLES) by the words the model knows.
+  var ROLE_WORDS = { customer: "cust", cust: "cust", supplier: "sup", sup: "sup", shop: "shop", author: "auth", auth: "auth",
+                     contributor: "auth", associate: "assoc", assoc: "assoc", partner: "assoc" };
+  var CRM_ROLES = ["cust", "sup", "shop", "auth", "assoc"];
 
   var CTRL = /[\u0000-\u0008\u000b-\u001f\u007f\u2028\u2029]/g;
   var ID_RE = /^[A-Za-z0-9_.:-]{1,80}$/;
@@ -262,6 +271,32 @@
     if (has(args, "status") && args.status !== null && args.status !== undefined && args.status !== "") {
       if (STATUS_NAMES.indexOf(args.status) < 0) return bad("status must be one of: " + STATUS_NAMES.join(", ") + ".");
       set.status = args.status;
+    }
+    // Wave A2 (CRM): roles of a customer, a deal's stage, chance, reason.
+    if (has(args, "roles") && args.roles !== null && args.roles !== undefined) {
+      if (!Array.isArray(args.roles)) return bad("roles must be a list, e.g. [\"customer\", \"supplier\"].");
+      var rl = [];
+      for (var ri = 0; ri < args.roles.length; ri++) {
+        var rc = ROLE_WORDS[String(args.roles[ri]).toLowerCase().trim()];
+        if (!rc) return bad("roles must be from: " + Object.keys(ROLE_WORDS).filter(function (w) { return w.length > 4; }).join(", ") + ".");
+        if (rl.indexOf(rc) < 0) rl.push(rc);
+      }
+      if (!rl.length) return bad("roles must name at least one role (customer for a plain customer).");
+      set.roles = rl;
+    }
+    if (has(args, "stage") && args.stage !== null && args.stage !== undefined && args.stage !== "") {
+      var sg = line(String(args.stage), 30);
+      if (!sg) return bad("stage must not be empty.");
+      set.stage = sg;
+    }
+    if (has(args, "probability") && args.probability !== null && args.probability !== undefined && args.probability !== "") {
+      var pb = +args.probability;
+      if (!(pb >= 0 && pb <= 100) || Math.round(pb) !== pb) return bad("probability must be a whole number 0-100.");
+      set.probability = pb;
+    }
+    if (has(args, "reason") && typeof args.reason === "string") {
+      if (args.reason.trim().length > 200) return bad("reason is " + args.reason.trim().length + " characters; CRM keeps 200.");
+      set.reason = line(args.reason, 200);
     }
     var keys = Object.keys(set);
     if (action === "move") {
@@ -1810,10 +1845,17 @@
     return (sum % 11) % 10 === +v.charAt(8);
   }
   function crmChange(d, target, ch, now) {
+    if (isObj(target) && typeof target.deal === "string") return crmDealChange(d, target, ch, now);
+    if (isObj(target) && typeof target.fup === "string") return crmFupChange(d, target, ch, now);
     var h = crmFind(d, target);
-    if (!h) return bad(isObj(target) && target.cust ? "That customer is no longer in CRM." : "Only a CRM customer's details can be changed here (not deals, activities or follow-ups).");
+    if (!h) return bad(isObj(target) && target.cust ? "That customer is no longer in CRM." : "A CRM customer, deal or follow-up can be changed here, not a history entry.");
     if (ch.action !== "update") return bad("A CRM customer can only be updated here; delete it in CRM.");
     var c = clone(h.c), before = crmView(h.c), s = ch.set;
+    if (has(s, "roles")) {
+      var only = {};
+      Object.keys(s).forEach(function (k) { if (k !== "roles") only[k] = s[k]; });
+      return crmRolesChange(d, h, s.roles, Object.keys(only).length ? { ok: true, ref: ch.ref, action: ch.action, set: only } : null, now);
+    }
     var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.crm[k]; });
     if (notOk.length) return bad("A CRM customer has no " + notOk.join(", ") + " here (bank details or a bio go in note_add).");
     if (has(s, "title")) { var nm = crmText(s.title, 120); if (!nm) return bad("A customer needs a name."); c.name = nm; }
@@ -1861,22 +1903,253 @@
     }
     var after = crmView(c);
     if (JSON.stringify(after) === JSON.stringify(before)) return bad("Nothing would change: the customer already looks like that.");
-    c.m = stampAfter(now, Math.max(h.c.m || 0, isObj(d.tombs) && typeof d.tombs[c.id] === "number" ? d.tombs[c.id] : 0));
+    c.m = crmStamp(d, c.id, h.c.m, now);
     var prev = h.c;
     c = crmOrder(c);
     d.cust[h.i] = c;
+    crmStampCs(d, prev, c);
     return { ok: true, title: before.title, before: before, after: after, del: false,
              undo: { t: "set", app: "crm", target: { cust: c.id }, prev: clone(prev), next: clone(c) } };
   }
+  // CT-CRM (crm/contactsync.js): a customer synced with a contact
+  // keeps, per synced field, the value and stamp CRM agreed on in
+  // d.cs. A change made here takes the customer's new stamp there, the
+  // way the CRM app's own save does, so it reaches the contact (an
+  // unstamped value would read as a stale copy and be put back).
+  var CS_FIELDS = ["name", "phone", "email", "web", "job", "addr", "country"];
+  function crmStampCs(d, prev, c) {
+    if (!isObj(d) || !Array.isArray(d.cs)) return;
+    for (var i = 0; i < d.cs.length; i++) {
+      var row = d.cs[i];
+      if (!isObj(row) || row.id !== c.id || typeof row.c !== "string") continue;
+      var nr = null;
+      CS_FIELDS.forEach(function (k) {
+        var v = typeof c[k] === "string" ? c[k] : "";
+        if ((typeof prev[k] === "string" ? prev[k] : "") === v) return;
+        nr = nr || clone(row);
+        nr.f = isObj(nr.f) ? nr.f : {};
+        nr.f[k] = [v, c.m];
+      });
+      if (nr) { nr.m = Math.max((row.m || 0) + 1, c.m); d.cs[i] = nr; }
+      return;
+    }
+  }
   function crmUndo(d, u, now) {
     if (u.t !== "set" || !isObj(u.prev) || !isObj(u.next)) return bad("bad undo");
+    if (u.list) return crmRowUndo(d, u, now);
+    if (u.pt) {
+      if (u.cust) {
+        var hc = crmFind(d, u.cust.target);
+        if (!hc || JSON.stringify(hc.c) !== JSON.stringify(u.cust.next)) return bad("The customer changed since; nothing was undone.");
+      }
+      var r = crmRowUndo(d, u.pt, now);
+      if (!r.ok || !u.cust) return r;
+      u = u.cust;
+    }
     var h = crmFind(d, u.target);
     if (!h) return bad("That customer is no longer in CRM.");
     if (JSON.stringify(h.c) !== JSON.stringify(u.next)) return bad("The customer changed since; nothing was undone.");
     var c = clone(u.prev);
     c.m = stampAfter(now, h.c.m);
     d.cust[h.i] = crmOrder(c);
+    crmStampCs(d, h.c, d.cust[h.i]);
     return { ok: true };
+  }
+
+  // ---------- 6c. CRM roles, deals, follow-ups (wave A2) ----------
+  function crmStamp(d, id, prevM, now) {
+    return stampAfter(now, Math.max(prevM || 0, isObj(d.tombs) && typeof d.tombs[id] === "number" ? d.tombs[id] : 0));
+  }
+  function crmRow(d, list, id) {
+    if (!isObj(d) || !Array.isArray(d[list])) return null;
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    for (var i = 0; i < d[list].length; i++) {
+      var x = d[list][i];
+      if (isObj(x) && x.id === id) return typeof tombs[id] === "number" && tombs[id] >= (x.m || 0) ? null : { x: x, i: i };
+    }
+    return null;
+  }
+  // A row put in (or replaced) the way crm/core.js stores it: the list
+  // sorted by id, a new list (pt) where CRM's norm puts it.
+  var CRM_LISTS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl"];
+  function crmPut(d, list, row) {
+    if (!Array.isArray(d[list])) {
+      var keep = {};
+      Object.keys(d).forEach(function (k) { keep[k] = d[k]; delete d[k]; });
+      var at = CRM_LISTS.indexOf(list), done = false;
+      Object.keys(keep).forEach(function (k) {
+        var ki = CRM_LISTS.indexOf(k);
+        if (!done && (ki < 0 ? k !== "ver" : ki > at)) { d[list] = []; done = true; }
+        d[k] = keep[k];
+      });
+      if (!done) d[list] = [];
+    }
+    var h = crmRow(d, list, row.id);
+    if (h) d[list][h.i] = row;
+    else {
+      d[list] = d[list].filter(function (x) { return !(isObj(x) && x.id === row.id); });
+      d[list].push(row);
+    }
+    d[list].sort(function (a, b) { return cmpStr(String(a && a.id), String(b && b.id)); });
+  }
+  function crmRowUndo(d, u, now) {
+    var h = crmRow(d, u.list, u.next.id);
+    if (!h || JSON.stringify(h.x) !== JSON.stringify(u.next)) return bad("It changed in CRM since; nothing was undone.");
+    var x = clone(u.prev || { id: u.next.id });
+    x.m = stampAfter(now, h.x.m);
+    crmPut(d, u.list, u.list === "pt" ? crmPtOrder(x) : x);
+    return { ok: true };
+  }
+  function crmPtOrder(x) {
+    var o = { id: x.id, m: x.m };
+    if (Array.isArray(x.roles) && x.roles.length) o.roles = x.roles;
+    if (Array.isArray(x.ln) && x.ln.length) o.ln = x.ln;
+    return o;
+  }
+  function crmRolesOf(d, id) {
+    var p = crmRow(d, "pt", id);
+    return p && Array.isArray(p.x.roles) && p.x.roles.length ? p.x.roles.slice() : ["cust"];
+  }
+  // roles → the customer's pt row (crm/core.js rolesRow: the links
+  // stay; "customer only" is stored as no roles). rest = the other
+  // fields of the same update, changed as usual.
+  function crmRolesChange(d, h, roles, rest, now) {
+    var c0 = h.c, id = c0.id;
+    var cur = crmRolesOf(d, id);
+    var want = CRM_ROLES.filter(function (r) { return roles.indexOf(r) >= 0; });
+    var r1 = null;
+    if (rest) {
+      r1 = crmChange(d, { cust: id }, rest, now);
+      if (!r1.ok && !/^Nothing would change/.test(r1.err)) return r1;
+      if (!r1.ok) r1 = null;
+    }
+    var before = rest && r1 ? r1.before : crmView(c0), after = rest && r1 ? r1.after : crmView(c0);
+    before.roles = cur.join(",");
+    after.roles = want.join(",");
+    if (before.roles === after.roles) {
+      if (r1) { r1.before = before; r1.after = after; return r1; }
+      return bad("Nothing would change: the customer already has these roles.");
+    }
+    var ph = crmRow(d, "pt", id);
+    var prev = ph ? clone(ph.x) : null;
+    var row = crmPtOrder({ id: id, m: crmStamp(d, id, ph ? ph.x.m : 0, now), roles: want.length === 1 && want[0] === "cust" ? null : want,
+                           ln: ph ? ph.x.ln : null });
+    crmPut(d, "pt", row);
+    return { ok: true, title: before.title, before: before, after: after, del: false,
+             undo: { t: "set", app: "crm", target: { cust: id }, prev: {}, next: {}, pt: { t: "set", list: "pt", prev: prev, next: clone(row) },
+                     cust: r1 ? r1.undo : null } };
+  }
+  var STAGE_IDS = ["new", "contact", "proposal", "nego"];
+  // crm/crm.js / i18n "stage.*": a built-in stage by any of its names
+  // i18n-inline-ok: CRM's stage names in EN, EL and DE for matching what the user says (data, no UI text)
+  var STAGE_WORDS = {
+    "new": ["New", "Νέα", "Neu"], contact: ["Contacted", "Επικοινωνία", "Kontaktiert"],
+    proposal: ["Proposal", "Πρόταση", "Angebot"], nego: ["Negotiation", "Διαπραγμάτευση", "Verhandlung"],
+    won: ["Won", "Κερδήθηκε", "Gewonnen"], lost: ["Lost", "Χάθηκε", "Verloren"]
+  };
+  function crmStageList(d) {
+    var rec = {}, out = [];
+    (Array.isArray(d.stg) ? d.stg : []).forEach(function (r) { if (isObj(r) && crmRow(d, "stg", r.id)) rec[r.id] = r; });
+    STAGE_IDS.forEach(function (id) {
+      var r = rec[id] || {};
+      if (!r.off) out.push({ id: id, names: (r.name ? [r.name] : []).concat(STAGE_WORDS[id], [id]), show: r.name || "stg:" + id });
+    });
+    Object.keys(rec).forEach(function (id) {
+      if (STAGE_IDS.indexOf(id) < 0 && typeof rec[id].name === "string" && rec[id].name) out.push({ id: id, names: [rec[id].name], show: rec[id].name });
+    });
+    ["won", "lost"].forEach(function (id) { out.push({ id: id, names: STAGE_WORDS[id].concat([id]), show: "stg:" + id }); });
+    return out;
+  }
+  function crmStageShow(d, id) {
+    var hit = crmStageList(d).filter(function (x) { return x.id === id; })[0];
+    if (hit) return hit.show;
+    return STAGE_WORDS[id] ? "stg:" + id : id;
+  }
+  function crmCur(d) { return isObj(d.prefs) && typeof d.prefs.cur === "string" ? d.prefs.cur : "EUR"; }
+  function dealView(d, x) {
+    return { title: crmText(x.title, 120), stage: crmStageShow(d, x.stage),
+             amount: typeof x.val === "number" && x.val ? (x.val / 100).toFixed(2) + " " + crmCur(d) : "",
+             probability: typeof x.prob === "number" ? x.prob + "%" : "", close: realDate(x.close) || "",
+             reason: x.stage === "lost" ? crmText(x.why, 200) : "", note: crmText(x.note, 2000, true) };
+  }
+  var DEAL_KEYS = ["id", "m", "cust", "title", "val", "stage", "prob", "close", "cd", "why", "note", "ct"];
+  function crmKeyed(x, keys) {
+    var o = {};
+    keys.forEach(function (k) { if (has(x, k) && x[k] !== "" && x[k] !== null && x[k] !== undefined) o[k] = x[k]; });
+    return o;
+  }
+  function crmDealChange(d, target, ch, now) {
+    var h = crmRow(d, "deals", target.deal);
+    if (!h || !crmFind(d, { cust: h.x.cust })) return bad("That deal is no longer in CRM.");
+    if (ch.action !== "update" && ch.action !== "reschedule") return bad("A deal takes update (title, amount, date = expected close, stage, probability, reason, note) or reschedule (date); it is deleted in CRM.");
+    var s = ch.set;
+    if (ch.action === "reschedule" && (has(s, "start") || has(s, "end"))) return bad("A deal's reschedule takes only date (the expected close).");
+    var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.crm_deal[k]; });
+    if (notOk.length) return bad("A deal has no " + notOk.join(", ") + ".");
+    var x = clone(h.x), before = dealView(d, h.x);
+    if (has(s, "title")) {
+      if (s.title.length > 120) return bad("title is " + s.title.length + " characters; a deal's title holds 120.");
+      x.title = s.title;
+    }
+    if (has(s, "amount")) {
+      if (s.amount > 99999999999) return bad("amount is out of range.");
+      x.val = s.amount;
+    }
+    if (has(s, "date")) x.close = s.date;
+    if (has(s, "probability")) x.prob = s.probability;
+    if (has(s, "note")) x.note = crmText(s.note, 2000, true);
+    if (has(s, "stage")) {
+      var f = foldName(s.stage), hit = null;
+      crmStageList(d).forEach(function (st) { if (!hit && st.names.some(function (n) { return foldName(n) === f; })) hit = st; });
+      if (!hit) return bad("CRM has no stage named \"" + s.stage + "\". Its stages: " + crmStageList(d).map(function (st) { return st.names[0]; }).join(", ") + ".");
+      if (hit.id !== x.stage) {
+        x.stage = hit.id;
+        if (hit.id === "won" || hit.id === "lost") x.cd = kbLocalDay(now); else delete x.cd;
+      }
+    }
+    if (has(s, "reason")) {
+      if (x.stage !== "lost") return bad("reason is only for a lost deal (stage Lost).");
+      x.why = s.reason;
+    }
+    var after = dealView(d, x);
+    if (JSON.stringify(after) === JSON.stringify(before)) return bad("Nothing would change: the deal already looks like that.");
+    x.m = crmStamp(d, x.id, h.x.m, now);
+    x = crmKeyed(x, DEAL_KEYS);
+    d.deals[h.i] = x;
+    return { ok: true, title: before.title, before: before, after: after, del: false,
+             undo: { t: "set", app: "crm", list: "deals", prev: clone(h.x), next: clone(x) } };
+  }
+  function fupView(x) {
+    return { title: crmText(x.text, 300), done: !!x.done, date: realDate(x.d) || "", start: typeof x.t === "string" ? x.t : "" };
+  }
+  var FUP_KEYS = ["id", "m", "cust", "d", "text", "t", "deal", "done"];
+  function crmFupChange(d, target, ch, now) {
+    var h = crmRow(d, "fups", target.fup);
+    if (!h || !crmFind(d, { cust: h.x.cust })) return bad("That follow-up is no longer in CRM.");
+    var x = clone(h.x), before = fupView(h.x), s = ch.set;
+    if (ch.action === "complete") {
+      if (x.done) return bad("That follow-up is already done.");
+      x.done = kbLocalDay(now);
+    } else if (ch.action === "reopen") {
+      if (!x.done) return bad("That follow-up is not done.");
+      delete x.done;
+    } else {
+      var notOk = Object.keys(s).filter(function (k) { return !SETTABLE.crm_fup[k]; });
+      if (notOk.length) return bad("A follow-up has no " + notOk.join(", ") + " (it takes title, date and start).");
+      if (has(s, "title")) {
+        if (s.title.length > 300) return bad("title is " + s.title.length + " characters; a follow-up holds 300.");
+        x.text = s.title;
+      }
+      if (has(s, "date")) x.d = s.date;
+      if (has(s, "start")) x.t = s.start;
+    }
+    var after = fupView(x);
+    if (JSON.stringify(after) === JSON.stringify(before)) return bad("Nothing would change: the follow-up already looks like that.");
+    x.m = crmStamp(d, x.id, h.x.m, now);
+    x = crmKeyed(x, FUP_KEYS);
+    d.fups[h.i] = x;
+    return { ok: true, title: before.title, before: before, after: after, del: false,
+             undo: { t: "set", app: "crm", list: "fups", prev: clone(h.x), next: clone(x) } };
   }
 
   var CHANGE = { todo: todoChange, calendar: calChange, budget: budgetChange, bookmarks: bookmarksChange,
@@ -1928,7 +2201,7 @@
     contacts: { title: ["title"], nickname: ["nickname"], org: ["org"], job: ["job_title"],
                 phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
                 website: ["website", "old_website"], birthday: ["date"], labels: ["label", "labels"], note: ["note", "note_add"] },
-    crm: { title: ["title"], nickname: ["nickname"], job: ["job_title"], vat: ["tax_id"], taxoffice: ["tax_office"],
+    crm: { title: ["title"], nickname: ["nickname"], job: ["job_title"], vat: ["tax_id"], taxoffice: ["tax_office"], roles: ["roles"],
            phone: ["phone", "old_phone"], email: ["email", "old_email"], address: ["address", "address_replace"],
            website: ["website", "old_website"], note: ["note", "note_add"] }
   };

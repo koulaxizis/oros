@@ -5496,6 +5496,15 @@ document.addEventListener("keydown", function (e) {
     if (fixed) markDirty();
   };
 
+  // CT-CRM: the shell wrote the stored copy (a linked CRM customer
+  // changed, crm/contactsync.js); its fields are already stamped by
+  // merge.js restamp. Adopt it the way a pull is adopted.
+  window.__orosDataReload = function () {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem(DATA_KEY)); } catch (e) { d = null; }
+    if (d && typeof d === "object" && Array.isArray(d.contacts)) setFromSync(d);
+  };
+
   // Canonical sync bridge — Contract B funnel. Live registration
   // with mergeFn means: closed-app proxies, offline divergence
   // guard, carry mailbox flush and register-pull all work for this

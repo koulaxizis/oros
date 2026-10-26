@@ -90,6 +90,13 @@ The assistant can also add straight to [To-Do](app:todo), [Calendar](app:calenda
 - Events are one-off (a repeating event is set in Calendar); an expense is in your main currency.
 - `Undo` takes them back until you leave the Assistant, as long as you haven't changed them in the app.
 
+## A customer's history, follow-ups and deals
+In [CRM](app:crm) the assistant can also add to a customer it has found (or just added): an entry in their history ("log my call with Alpha Books today: we agreed on 200 pages"), a follow-up ("remind me to send them the contract on Tuesday at 10:00") or a deal ("a new deal with Alpha, second edition editing, 800 euros, in Negotiation"). Same card, ticks and `Undo` as above.
+- The customer (and the deal a call or follow-up is about) is always the one the assistant found, never a name it guessed.
+- A deal's stage is one of your pipeline's stages, by the name you see; without one it starts in the first. A deal marked Won or Lost gets today as its closing day.
+- Something that looks like one already there (the same entry in their history, an open follow-up on the same day, an open deal with the same title) starts unticked.
+- `Undo` doesn't take back a deal that has history or follow-ups since.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
@@ -104,7 +111,7 @@ What it can change:
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
 - [Bookmarks](app:bookmarks): rename a bookmark, change its note or tags, delete it.
 - [Contacts](app:contacts): change a contact's name, nickname, organisation, job title, birthday, note or labels; add a phone number, e-mail, website or address (the old ones stay), or replace one that changed; add a line to the note; delete it. Attach a business card, a form, a list, a vCard or an e-mail signature and ask "update my contacts from this": the assistant looks everyone up first, proposes only what is new or different, and adds anyone who isn't there on one card (see New contacts and CRM customers).
-- [CRM](app:crm): fill in a customer's VAT or tax number, tax office, job title, phone, e-mail, website or address, change its name or alias, add a line to its note (bank details or a bio go there). A phone, e-mail, website or address it already has is replaced only when you say it changed. Customers are deleted in CRM itself.
+- [CRM](app:crm): set a customer's roles (customer, supplier, consignment shop, author / contributor, associate; their links stay); change a deal's title, amount, expected close, stage (Won or Lost also sets the closing day), chance, why it was lost or note; mark a follow-up done or not done, move it to another day or time, or change its text. Also fill in a customer's VAT or tax number, tax office, job title, phone, e-mail, website or address, change its name or alias, add a line to its note (bank details or a bio go there). A phone, e-mail, website or address it already has is replaced only when you say it changed. Customers are deleted in CRM itself.
 - [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title, note or labels, delete it. A move runs the column's own automations, and the card shows what they change.
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
 - [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.

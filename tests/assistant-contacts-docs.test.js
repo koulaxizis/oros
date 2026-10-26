@@ -339,9 +339,10 @@ test("crm: a filled single field is replaced only with old_* / address_replace; 
   assert.match(ad.err, /address_replace/);
   const afm = E.plan("crm", crmData(), { cust: "cust000002" }, ok({ ref: "r1", action: "update", tax_id: "123456789" }), NOW);
   assert.match(afm.err, /Greek check digit/);
-  assert.match(E.plan("crm", crmData(), { deal: "x" }, ok({ ref: "r1", action: "update", note: "x" }), NOW).err, /Only a CRM customer/);
+  assert.match(E.plan("crm", crmData(), { deal: "x" }, ok({ ref: "r1", action: "update", note: "x" }), NOW).err, /That deal is no longer in CRM/);
+  assert.match(E.plan("crm", crmData(), { act: "x" }, ok({ ref: "r1", action: "update", note: "x" }), NOW).err, /not a history entry/);
   assert.match(E.plan("crm", crmData(), { cust: "cust000001" }, ok({ ref: "r1", action: "update", labels: ["x"] }), NOW).err, /has no labels/);
-  assert.deepEqual(E.actionsFor("crm"), ["update"]);
+  assert.deepEqual(E.actionsFor("crm"), ["complete", "reopen", "reschedule", "update"]);
 });
 test("crm: undo puts the customer back, only while it still looks as the change left it", () => {
   const { a } = crmRun(crmData(), { cust: "cust000001" }, { ref: "r1", action: "update", tax_id: "094014201" });

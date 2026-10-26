@@ -258,6 +258,10 @@ button.row:hover, .row.click:hover { border-color: var(--accent); }
 #crm-ctr .fld-row > div { min-width: 0; }
 #crm-ctr .fld-row input, #crm-ctr .fld-row select { width: 100%; min-width: 0; box-sizing: border-box; }
 .person .row-main { font-size: 13px; }
+/* CT-CRM: details that differ from the linked contact */
+.ctdiff .person { flex-wrap: wrap; }
+.ctdiff .row-main { min-width: 0; overflow-wrap: anywhere; }
+.ctdiff-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
 .timeline { display: flex; flex-direction: column; gap: 8px; }
 .tl-item { display: flex; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); }
 .tl-ico { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
