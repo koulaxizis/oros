@@ -140,3 +140,81 @@ test("search finds songs by words and skips deleted ones", () => {
   assert.deepEqual(hits[0].target, { song: "a" });
   assert.match(hits[0].text, /Band · Hello/);
 });
+
+// ---------- wave 2: words, singers, checks, karaoke formats ----------
+function wordSample() {
+  let L = C.relyric([], "Hello big world\nSecond line", rand);
+  L = C.wordAt(L, 0, 0, 1000); L = C.wordAt(L, 0, 1, 1400); L = C.wordAt(L, 0, 2, 1900);
+  L = C.startAt(L, 1, 3000); L = C.endAt(L, 1, 4500);
+  L[1].v = 2;
+  return C.cleanProject({ id: "w", name: "S", ar: "A", vn: ["Anna", "Bob"], dur: 9000, ln: L, mtime: 1 });
+}
+
+test("words: timing, moving with the line, bad word times dropped", () => {
+  const p = wordSample();
+  assert.deepEqual(p.ln[0].w, [1000, 1400, 1900]);
+  assert.equal(p.ln[0].s, 1000);
+  assert.ok(C.wordsDone(p.ln[0]));
+  // re-timing word 1 earlier clears nothing before it, later words after it stay
+  let L = C.wordAt(p.ln, 0, 1, 1200);
+  assert.deepEqual(L[0].w, [1000, 1200, 1900]);
+  // a word before an earlier word's time drops that later time
+  L = C.wordAt(p.ln, 0, 0, 1500);
+  assert.deepEqual([L[0].s, L[0].w], [1500, [1500, 1900, 2400]]);   // a re-tap moves the words with the line
+  // nudge and setStart carry the words
+  assert.deepEqual(C.nudge(p.ln, 0, 100)[0].w, [1100, 1500, 2000]);
+  assert.deepEqual(C.setStart(p.ln, 0, 500)[0].w, [500, 900, 1400]);
+  assert.deepEqual(C.shiftAll(p.ln, -200)[0].w, [800, 1200, 1700]);
+  // a line end before a word drops the words; clearTime drops them
+  assert.equal(C.endAt(p.ln, 0, 1500)[0].w, undefined);
+  assert.equal(C.clearTime(p.ln, 0)[0].w, undefined);
+  // drag on the waveform stays between neighbours
+  assert.deepEqual(C.moveMark(p.ln, 0, 1, 5000)[0].w, [1000, 1900, 1900]);
+  assert.deepEqual(C.moveMark(p.ln, 0, -1, 1200)[0].w.slice(0, 1), [1200]);
+  assert.equal(C.moveMark(p.ln, 1, -1, 100)[1].s, 1001);
+  // the merge keeps words; text edits keep them on unchanged lines
+  assert.deepEqual(C.normalize({ items: [p] }).items[0].ln[0].w, [1000, 1400, 1900]);
+  assert.equal(C.relyric(p.ln, "Hello big world\nOther", rand)[0].w.length, 3);
+  assert.equal(C.cleanProject({ id: "x", ln: [{ id: "a", t: "a b", s: 5, e: null, w: [5] }], mtime: 1 }).ln[0].w, undefined);
+  const T = C.timed(p.ln, 9000);
+  assert.deepEqual(T[0].words.map((w) => [w.t, w.s, w.e]), [["Hello", 1000, 1400], ["big", 1400, 1900], ["world", 1900, 3000]]);
+  assert.equal(T[1].v, 2);
+});
+
+test("quality check codes", () => {
+  let L = C.relyric([], "a\n[Chorus]\nla la (x2)\n" + "x".repeat(90) + "\nlast one", rand);
+  L = C.startAt(L, 0, 5000); L = C.startAt(L, 1, 5100); L = C.startAt(L, 2, 1000); L = C.startAt(L, 4, 30000);
+  L = C.wordAt(L, 4, 0, 30000);
+  const codes = C.issues(L, 60000).map((x) => x.i + ":" + x.code);
+  for (const c of ["0:short", "1:label", "2:order", "2:label", "3:untimed", "3:long", "4:words"]) assert.ok(codes.includes(c), c + " in " + codes);
+  assert.ok(codes.includes("1:gap"));                                   // 5.1 s → 30 s without an end
+});
+
+test("karaoke exports read back with their words and singers", () => {
+  const p = wordSample();
+  const elrc = F.toElrc(p);
+  assert.match(elrc, /\[00:01\.00\]<00:01\.00>Hello <00:01\.40>big <00:01\.90>world <00:03\.00>/);
+  assert.doesNotMatch(F.toLrc(p), /</);
+  const vtt = F.toVtt(p);
+  assert.match(vtt, /Hello <00:00:01\.400>big <00:00:01\.900>world/);
+  const ttml = F.toTtml(p);
+  assert.match(ttml, /itunes:timing="Word"/);
+  assert.match(ttml, /<span begin="00:00:01\.400" end="00:00:01\.900">big<\/span>/);
+  assert.match(ttml, /xml:id="v2"><ttm:name type="full">Bob/);
+  assert.match(ttml, /ttm:agent="v2">Second line/);
+  const ass = F.toAss(p);
+  assert.match(ass, /Dialogue: 0,0:00:01\.00,0:00:03\.00,Default,Anna,0,0,0,,\{\\kf40\}Hello \{\\kf50\}big \{\\kf110\}world/);
+  for (const [name, text] of [["a.lrc", elrc], ["a.vtt", vtt], ["a.ttml", ttml], ["a.ass", ass], ["a.json", F.toJson(p)]]) {
+    const r = F.parse(name, text);
+    assert.deepEqual(r.lines[0].w, [1000, 1400, 1900], name);
+    assert.equal(r.lines[1].w, undefined, name);
+  }
+  const tr = F.parse("a.ttml", ttml);
+  assert.deepEqual(tr.vn, ["Anna", "Bob"]);
+  assert.equal(tr.lines[1].v, 2);
+  assert.equal(F.parse("a.json", F.toJson(p)).lines[1].v, 2);
+  assert.equal(F.kindOf("x", "[Script Info]\nTitle: t\n[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,hi"), "ass");
+  // ASS braces in the text never become tags
+  const q = C.cleanProject({ id: "b", ln: [{ id: "l", t: "a {b} c", s: 0, e: 1000 }], mtime: 1 });
+  assert.match(F.toAss(q), /,,\{\\kf100\}a \(b\) c$/m);
+});

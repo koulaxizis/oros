@@ -4,7 +4,7 @@ Lyric Sync times the words of a song to the music, line by line, the way distrib
 ## Getting started
 - Press `New song`, then `Choose the song` to pick the audio file (MP3, M4A, WAV, FLAC, Ogg and more).
 - In the `Lyrics` tab, write or paste the words, one line per line. A blank line starts a new verse. Title, artist, album and language code go into the exported files.
-- `Open file` on the first screen starts a song from an audio file or from a lyrics file you already have (LRC, SRT, WebVTT, TTML, our JSON or text). You can also drop a file on the window.
+- `Open file` on the first screen starts a song from an audio file or from a lyrics file you already have (LRC, Enhanced LRC, SRT, WebVTT, TTML, ASS, our JSON or text). You can also drop a file on the window.
 
 ## Sync
 Open the `Sync` tab. The first press of the big button (or [[Space]]) starts the song. Then:
@@ -13,6 +13,20 @@ Open the `Sync` tab. The first press of the big button (or [[Space]]) starts the
 The marked line (▸) is the next one to time, and the line playing now is lit. `Undo` (or [[Backspace]]) takes back the last step and `Redo` brings it back.
 
 For a fast song, set the speed to 75% or 50%: the pitch stays the same and the times are still right.
+
+## Word by word (karaoke)
+Choose `Words`. The line being timed shows above the list, one button per word; tap the big button (or [[Space]]) as each word starts. The first word also starts the line, and after the last word the next line follows. Tap a word button to time again from that word, or a line in the list to move to it. A line shows how many of its words have a time; `Clear word times` takes them off. Lines with every word timed fill word by word in the preview and in the karaoke exports.
+
+## The waveform
+Under the play bar the song is drawn as a waveform with a mark at the start of each line (and, for the selected line, each word). Drag a mark to move it; tap anywhere else to jump there. `+` and `−` zoom; `Loop line` plays the selected line again and again while you fine-tune it.
+
+## Tap delay, shift, singers
+- `Tap delay` measures how late you tap: press `Start` and tap on the 8 clicks. The delay is taken off every tap on this device.
+- `Shift all` moves every time by the same number of seconds, for example when another version of the song has a longer intro.
+- For a duet, write the singers' names in the `Lyrics` tab (comma between them). Then a selected line has a singer menu, and TTML and ASS name the singer of each line.
+
+## Check before you send
+`Check` lists what distributors usually refuse: lines with no time, lines that start before the line above, lines on screen for less than half a second or for 15 seconds or more, lines over 80 characters, labels and repeat marks such as [Chorus] or x2, and lines with only some words timed. Tap an item to go to its line.
 
 ## Fix a line
 Tap a line in the list to select it. Then:
@@ -26,12 +40,14 @@ Changing the words in the `Lyrics` tab keeps the times of the lines that did not
 - [[Space]]: tap or hold (Sync), play or pause (Preview). [[P]]: play or pause.
 - [[←]] [[→]]: 2 seconds back or forward ([[Shift]]: 10 seconds). [[↑]] [[↓]]: select a line.
 - [[Ctrl+Z]] and [[Ctrl+Shift+Z]]: undo and redo.
+- [[E]]: end line. [[,]] [[.]]: move the selected line by 0.01 s.
 
 ## Preview and export
 `Preview` shows the lines as they will appear in a player, with the current line large. `Export` saves the file you need:
-- `LRC` for music players, karaoke and LRCLIB.
+- `LRC` for music players and LRCLIB; `Enhanced LRC` (shown when lines have word times) adds a time to every word for karaoke players.
 - `SRT` and `WebVTT` for video and the web.
-- `TTML` for Apple Music, iTunes, YouTube and distributors such as DistroKid.
+- `TTML` for Apple Music, iTunes, YouTube and distributors such as DistroKid, with word timing and singers when you have them.
+- `ASS karaoke` for video tools such as Aegisub, ffmpeg and VLC: the words fill as they are sung.
 - `JSON (orOS)` keeps everything, to open it again later; `Text` is just the words.
 
 ## Your data
