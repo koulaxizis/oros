@@ -50,8 +50,15 @@ Changing the words in the `Lyrics` tab keeps the times of the lines that did not
 - `ASS karaoke` for video tools such as Aegisub, ffmpeg and VLC: the words fill as they are sung.
 - `JSON (orOS)` keeps everything, to open it again later; `Text` is just the words.
 
+## With other apps
+- In [Music](app:music), open a song's menu and choose `Sync lyrics`. The song opens here straight from your Music folder, with the lyrics it already has. In `Export`, `Lyrics for Music` saves the .lrc file next to the song, and Music shows the lyrics as it plays (on your other devices too, with Vault Drive).
+- In [Studio](app:studio), `Export` → `Sync lyrics` puts your mix in Music and opens it here.
+- `MP3 with the lyrics inside` (for MP3 songs) saves a copy of the song with the words in its tags, plain and synced, for phones, car stereos and players that read them. Your song file is not changed.
+- `Lyric video in Montage` (for songs on the orOS disk) opens a new [Montage](app:montage) project with the song and every line as a text clip.
+- `.lrc`, `.srt`, `.vtt`, `.ttml` and `.ass` files open here from [Files](app:files), or from your computer's "Open with" when orOS is installed.
+
 ## Your data
 - The lyrics and their times are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted.
-- The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too.
+- The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too. A song opened from Music is read from your Music folder, so it is there on every device that has the file (Vault Drive).
 - `Delete` on the first screen removes the lyrics and times from all your devices; the song file itself is not touched.
 - The menu's search finds your songs by title, artist or words.
