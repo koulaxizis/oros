@@ -267,7 +267,7 @@
       "ct.share": "Share",
       "ct.familytree": "Family tree", "ct.together": "Together",
       "ct.qr": "QR code",
-      "ct.crm": "Customer: {name}",
+      "ct.crm": "Customer: {name}", "ct.crmIn": "owes you {v}", "ct.crmOut": "you owe {v}",
       "ct.share.done": "Contact copied to clipboard",
       "ct.share.fail": "Could not copy — please retry",
       "ct.maps": "Show on map",
@@ -553,7 +553,7 @@
       "ct.share": "Κοινοποίηση",
       "ct.familytree": "Οικογενειακό δέντρο", "ct.together": "Μαζί",
       "ct.qr": "Κωδικός QR",
-      "ct.crm": "Πελάτης: {name}",
+      "ct.crm": "Πελάτης: {name}", "ct.crmIn": "σου χρωστά {v}", "ct.crmOut": "του χρωστάς {v}",
       "ct.share.done": "Η επαφή αντιγράφηκε στο πρόχειρο",
       "ct.share.fail": "Η αντιγραφή απέτυχε — δοκίμασε ξανά",
       "ct.maps": "Εμφάνιση στον χάρτη",
@@ -2300,11 +2300,29 @@ function openViewCard(c) {
     if (crmCore) {
       try { crmData = crmCore.norm(JSON.parse(localStorage.getItem("oros-crm-data"))); } catch (e) { crmData = null; }
     }
+    // With Invoices (its core is in the shell too), what is open with
+    // that partner follows the name (partner card W5; read only).
+    var invCore = null, invData = null;
+    if (crmData) {
+      try { invCore = shell.OrosInvoicesCore || null; } catch (e) {}
+      if (invCore && typeof crmCore.balance === "function") {
+        try { invData = invCore.parse(localStorage.getItem("oros-invoices-data")); } catch (e) { invData = null; }
+      }
+    }
+    function crmBalance(cu) {
+      if (!invData) return "";
+      var d = new Date(), today = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+      var bal = crmCore.balance(crmData, cu, invCore, invData, today), bits = [];
+      Object.keys(bal["in"]).sort().forEach(function (cur) { bits.push(t("ct.crmIn").replace("{v}", crmCore.moneyStr(bal["in"][cur].open, cur, LANG))); });
+      Object.keys(bal.out).sort().forEach(function (cur) { bits.push(t("ct.crmOut").replace("{v}", crmCore.moneyStr(bal.out[cur].open, cur, LANG))); });
+      return bits.join(" · ");
+    }
     if (crmData) crmCore.custsForContact(crmData, c.id).slice(0, 3).forEach(function (cu) {
       var b = document.createElement("button");
       b.type = "button";
       b.className = "ct-view-share";
-      b.textContent = t("ct.crm").replace("{name}", cu.name);
+      var owed = crmBalance(cu);
+      b.textContent = t("ct.crm").replace("{name}", cu.name) + (owed ? " · " + owed : "");
       b.addEventListener("click", function () {
         closeViewCard();
         shell.__orosOpenAt("crm", { cust: cu.id });

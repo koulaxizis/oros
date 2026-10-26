@@ -32,7 +32,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.82.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.83.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -11298,7 +11298,7 @@
   };
 
   // BR-B1 — "Send to Budget". Any app (Garage, Split, …) calls
-  // window.parent.__orosOpenBudgetNew({k, a, d?, n?, c?, src?}) from an
+  // window.parent.__orosOpenBudgetNew({k, a, d?, n?, c?, src?, crm?}) from an
   // explicit button; Budget opens its New entry form prefilled and the
   // user confirms with Save (a prefill, never data). Strict validation
   // here (false = rejected, nothing opens); only a fresh plain copy of
@@ -11322,6 +11322,7 @@
     if (typeof p.n === "string") q.n = p.n.slice(0, 500);
     if (typeof p.c === "string" && /^[a-z0-9-]{1,64}$/.test(p.c)) q.c = p.c;
     if (typeof p.src === "string" && /^[a-z0-9]{1,20}$/.test(p.src)) q.src = p.src;
+    if (typeof p.crm === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(p.crm)) q.crm = p.crm;   // CRM partner (BR-CRM-LINK)
     var has = false;
     for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === "budget") has = true;
     if (!has) return false;

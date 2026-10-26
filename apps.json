@@ -332,7 +332,7 @@
       "type": "internal",
       "search": "search.js",
       "searchOff": true,
-      "today": "today.js"
+      "today": ["links.js", "overview.js", "today.js"]
     },
     {
       "id": "stock",

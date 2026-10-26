@@ -26,6 +26,10 @@
 //   agenda(rows, today, days)    any app with a Today provider
 //                                 (today/host.js agenda): what is late,
 //                                 today and in the next days
+//   crmPartner(C, data, q, today, build)
+//                                 CRM: one partner's card (partner card
+//                                 W5): what is open both ways, stock,
+//                                 hours, royalties, contracts, contact
 //   preview(sum, lang)           → [line] what the consent card shows
 // Exposes window.OrosAssistSummary and, under Node, module.exports.
 // ============================================================
@@ -76,10 +80,69 @@
       days = n;
     }
     var out = { ok: true, app: app, month: month, days: days };
+    if (app === "crm" && typeof args.partner === "string" && args.partner.trim()) {
+      out.partner = args.partner.replace(/\s+/g, " ").trim().slice(0, 120);
+    }
     if (app === "calendar") {
       out.monthSet = monthSet;
       if (typeof args.label === "string" && args.label.trim()) out.label = args.label.replace(/\s+/g, " ").trim().slice(0, 40);
     }
+    return out;
+  }
+
+  // ---------- CRM: one partner (partner card W5) ----------
+  // C = OrosCrmCore, data = CRM data (C.norm), q = the partner's name as
+  // the user said it, build(c) = the partner card's Overview
+  // (OrosCrmOverview.build with the other apps' cores) or null. Several
+  // matches → only their names, so the model asks which one. Amounts
+  // in currency units, per currency.
+  function crmPartner(C, data, q, today, build) {
+    var out = { app: "crm", partner: q };
+    var words = C.fold(q).split(/\s+/).filter(Boolean);
+    var hits = data.cust.filter(function (c) {
+      var hay = C.fold([c.name, c.alias || "", c.afm || "", c.email || ""].join(" "));
+      return words.every(function (w) { return hay.indexOf(w) >= 0; });
+    });
+    var exact = hits.filter(function (c) { return C.fold(c.name) === C.fold(q) || C.fold(c.alias || "") === C.fold(q); });
+    if (exact.length === 1) hits = exact;
+    if (!hits.length) { out.found = false; return out; }
+    if (hits.length > 1) {
+      out.found = false;
+      out.matches = hits.slice(0, 20).map(function (c) { return C.custName(c); });
+      if (hits.length > 20) out.more_matches = hits.length - 20;
+      return out;
+    }
+    var c = hits[0], x = build ? build(c) : null;
+    out.found = true;
+    out.name = C.custName(c);
+    out.roles = C.rolesOf(data, c);
+    out.target = { cust: c.id };
+    function units(map, f) {
+      var o = {};
+      Object.keys(map || {}).forEach(function (cur) { var v = f ? f(map[cur]) : map[cur]; if (v) o[cur] = money(v); });
+      return o;
+    }
+    out.contracts = C.contractsOf ? C.contractsOf(data, c.id, today).slice(0, 10).map(function (k) {
+      return { title: k.t, from: k.from || "", to: k.to || "", state: C.ctrState(k, today) };
+    }) : [];
+    if (!x) return out;
+    out.owes_you = units(x.money["in"], function (v) { return v.open; });
+    out.owes_you_overdue = units(x.money["in"], function (v) { return v.overdue; });
+    out.you_owe = units(x.money.out);
+    out.received_invoices = { count: x.bills.n, open: units(x.bills.open, function (v) { return v.open; }) };
+    out.consignment = x.shops.map(function (r) {
+      return { shop: r.name, pieces: Math.round(r.q / 1000), value: money(r.value), currency: r.cur, settlement_due: r.due || "",
+               last_settled: r.last || "", settled_not_invoiced: r.unbilled.n };
+    });
+    out.orders = x.sups.map(function (r) { return { supplier: r.name, open_orders: r.open, pieces_to_come: Math.round(r.left / 1000), value: money(r.value), currency: r.cur }; });
+    out.hours_not_billed = x.work.map(function (r) { return { client: r.name, hours: hours(r.ms), amount: money(r.amount), currency: r.cur }; });
+    out.titles = x.pub.titles.slice(0, 20).map(function (r) { return r.t; });
+    out.royalties_due = units(x.pub.due);
+    out.advance_left = units(x.pub.adv);
+    out.last_contact = x.crm.last ? new Date(x.crm.last).toISOString().slice(0, 10) : "";
+    out.next_followup = x.crm.next || "";
+    out.open_deals = { count: x.crm.deals, value: money(x.crm.val), currency: data.prefs.cur };
+    if (x.budget.n) out.budget = { entries: x.budget.n, currency: x.budget.cur, this_year_income: money(x.budget.year.i), this_year_expenses: money(x.budget.year.o) };
     return out;
   }
 
@@ -355,11 +418,15 @@
     en: { inc: "Income", exp: "Expenses", net: "Balance", ent: "entries", h: "h", bill: "billable",
           open: "open", done: "done", late: "late", today: "due today", none: "Nothing in this period.",
           run: "Running now", more: "+{n} more", uncat: "Uncategorized",
-          lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold" },
+          lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
+          pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
+          orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
-          lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν" }
+          lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
+          pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
+          orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Σύμβαση", next: "Επόμενο follow-up" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -398,6 +465,20 @@
                  (l.due_today ? ", " + l.due_today + " " + w.today : ""));
       });
       more(s.more_lists);
+    } else if (s.app === "crm" && s.partner) {
+      if (!s.found) out.push(s.matches ? w.pick + ": " + s.matches.join(", ") : w.nopart.replace("{q}", s.partner));
+      else {
+        var cm = function (o) { return Object.keys(o || {}).map(function (k) { return amt(o[k], k); }).join(", "); };
+        out.push(s.name);
+        if (cm(s.owes_you)) out.push(w.owes + ": " + cm(s.owes_you) + (cm(s.owes_you_overdue) ? " (" + w.over + " " + cm(s.owes_you_overdue) + ")" : ""));
+        if (cm(s.you_owe)) out.push(w.owe + ": " + cm(s.you_owe));
+        (s.consignment || []).forEach(function (r) { out.push(r.shop + ": " + r.pieces + " · " + amt(r.value, r.currency) + (r.settlement_due ? " · " + w.settle + " " + r.settlement_due : "")); });
+        (s.orders || []).forEach(function (r) { if (r.open_orders) out.push(r.supplier + ": " + r.open_orders + " " + w.orders); });
+        (s.hours_not_billed || []).forEach(function (r) { if (r.hours) out.push(r.client + ": " + r.hours.toFixed(2) + " " + w.h); });
+        if (cm(s.royalties_due)) out.push(w.roy + ": " + cm(s.royalties_due));
+        (s.contracts || []).forEach(function (k) { out.push(w.ctr + ": " + k.title + (k.to ? " → " + k.to : "")); });
+        if (s.next_followup) out.push(w.next + ": " + s.next_followup);
+      }
     } else if (s.app === "stock" && Array.isArray(s.products)) {
       out.push(s.month + " · " + s.units + " " + w.stSold + " · " + amt(s.amount, s.currency));
       if (s.places.length > 1) out.push(s.places.map(function (p) { return p.name + ": " + p.units; }).join(" · "));
@@ -426,7 +507,7 @@
   var API = {
     VERSION: "1.0.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
-    todoLists: todoLists, calendarEvents: calendarEvents, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    todoLists: todoLists, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

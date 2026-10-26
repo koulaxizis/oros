@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 34721 of 34744 (99%)
+- Strings: 34841 of 34864 (99%)
 - Help pages: 149 of 149 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 566 / 566 |
+| assistant | 100% | 576 / 576 |
 | atelier | 100% | 1362 / 1362 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -21,7 +21,7 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 232 / 232 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
-| budget | 100% | 555 / 555 |
+| budget | 100% | 556 / 556 |
 | calculator | 100% | 165 / 165 |
 | calendar | 97% | 390 / 398 |
 | capture | 100% | 54 / 54 |
@@ -33,9 +33,9 @@ text is still written in the code. They switch over wave by wave
 | chores | 100% | 207 / 207 |
 | commands | English for now | 41 / 41 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 299 / 299 |
+| contacts | 100% | 301 / 301 |
 | converter | 100% | 68 / 68 |
-| crm | 100% | 515 / 515 |
+| crm | 100% | 596 / 596 |
 | crossword | 100% | 170 / 170 |
 | cycle | 100% | 203 / 203 |
 | designkit | 100% | 174 / 174 |
@@ -62,7 +62,7 @@ text is still written in the code. They switch over wave by wave
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 59 / 59 |
 | household | 99% | 142 / 143 |
-| invoices | 97% | 602 / 616 |
+| invoices | 97% | 628 / 642 |
 | jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 273 / 273 |
 | labels | 100% | 88 / 88 |

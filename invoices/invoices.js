@@ -60,7 +60,16 @@
   var STRINGS = {
     en: {
       "app": "Invoices", "settings": "Settings", "back": "Back", "new": "New",
-      "tab.docs": "Invoices", "tab.clients": "Clients", "tab.dash": "Dashboard",
+      "tab.docs": "Invoices", "tab.clients": "Clients", "tab.dash": "Dashboard", "tab.bills": "Received",
+      "bl.search": "Search received invoices", "bl.new": "Received invoice", "bl.title": "Received invoice",
+      "bl.empty": "No received invoices yet. Record the invoices your suppliers send you: you see what you owe, to whom and by when.",
+      "bl.sup": "Supplier", "bl.afm": "Supplier's VAT no. (ΑΦΜ)", "bl.crm": "Partner in CRM", "bl.num": "Invoice number",
+      "bl.date": "Invoice date", "bl.due": "Pay by", "bl.net": "Net", "bl.vat": "VAT", "bl.note": "Note", "bl.total": "Total",
+      "bl.owedSum": "You owe {a} ({n})", "bl.open": "Still owed", "bl.allSt": "All", "bl.crmF": "Partner: {c}",
+      "bl.needSup": "Type the supplier's name", "bl.needAmt": "Type the amount of the invoice",
+      "bl.hint": "Only what you owe is kept here: received invoices never count in your revenue, VAT or myDATA.",
+      "new.bill": "Record a received invoice", "new.billHint": "An invoice a supplier sent you: track what you owe and what you paid.",
+      "toast.blDel": "Received invoice deleted",
       "kind.inv": "Invoice", "kind.rcpt": "Receipt", "kind.pro": "Proforma", "kind.cred": "Credit note",
       "kind.ext": "Recorded invoice",
       "kinds.inv": "Invoices", "kinds.rcpt": "Receipts", "kinds.pro": "Proformas", "kinds.cred": "Credit notes",
@@ -209,7 +218,16 @@
     },
     el: {
       "app": "Τιμολόγια", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
-      "tab.docs": "Παραστατικά", "tab.clients": "Πελάτες", "tab.dash": "Επισκόπηση",
+      "tab.docs": "Παραστατικά", "tab.clients": "Πελάτες", "tab.dash": "Επισκόπηση", "tab.bills": "Λαμβανόμενα",
+      "bl.search": "Αναζήτηση λαμβανόμενων", "bl.new": "Λαμβανόμενο", "bl.title": "Λαμβανόμενο τιμολόγιο",
+      "bl.empty": "Κανένα λαμβανόμενο τιμολόγιο ακόμη. Κατάγραψε τα τιμολόγια που σου στέλνουν οι προμηθευτές: βλέπεις τι χρωστάς, σε ποιον και ως πότε.",
+      "bl.sup": "Προμηθευτής", "bl.afm": "ΑΦΜ προμηθευτή", "bl.crm": "Συνεργάτης στο CRM", "bl.num": "Αριθμός τιμολογίου",
+      "bl.date": "Ημερομηνία τιμολογίου", "bl.due": "Πληρωμή ως", "bl.net": "Καθαρό", "bl.vat": "ΦΠΑ", "bl.note": "Σημείωση", "bl.total": "Σύνολο",
+      "bl.owedSum": "Χρωστάς {a} ({n})", "bl.open": "Ανεξόφλητα", "bl.allSt": "Όλα", "bl.crmF": "Συνεργάτης: {c}",
+      "bl.needSup": "Γράψε το όνομα του προμηθευτή", "bl.needAmt": "Γράψε το ποσό του τιμολογίου",
+      "bl.hint": "Εδώ κρατιέται μόνο τι χρωστάς: τα λαμβανόμενα δεν μετρούν ποτέ στα έσοδα, στον ΦΠΑ ή στο myDATA.",
+      "new.bill": "Καταχώριση λαμβανόμενου τιμολογίου", "new.billHint": "Τιμολόγιο που σου έστειλε προμηθευτής: παρακολουθείς τι χρωστάς και τι πλήρωσες.",
+      "toast.blDel": "Το λαμβανόμενο διαγράφηκε",
       "kind.inv": "Τιμολόγιο", "kind.rcpt": "Απόδειξη", "kind.pro": "Προτιμολόγιο", "kind.cred": "Πιστωτικό",
       "kind.ext": "Καταχωρισμένο τιμολόγιο",
       "kinds.inv": "Τιμολόγια", "kinds.rcpt": "Αποδείξεις", "kinds.pro": "Προτιμολόγια", "kinds.cred": "Πιστωτικά",
@@ -446,6 +464,7 @@
     plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     doc:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h5"/></svg>',
     users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
+    inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg>',
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     up:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg>',
@@ -485,7 +504,7 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  var TABS = ["docs", "clients", "dash"];
+  var TABS = ["docs", "bills", "clients", "dash"];
   var RANGES = ["thisMonth", "lastMonth", "thisQuarter", "thisYear", "lastYear", "custom"];
   function loadPrefs() {
     var v = null;
@@ -518,6 +537,8 @@
   function findDoc(id) { return C.doc(data, id); }
   function liveList(name) { return C.live(data[name]); }
   function profList() { return data.profs || (data.profs = []); }   // left out of the data while empty
+  function billList() { return data.bills || (data.bills = []); }   // wave 7, likewise
+  function bpayList() { return data.bpays || (data.bpays = []); }
   function replaceIn(list, rec) {
     for (var i = 0; i < list.length; i++) if (list[i].id === rec.id) { list[i] = rec; return; }
     list.push(rec);
@@ -618,7 +639,7 @@
   }
   function showView(v) {
     view = v;
-    ["docs", "clients", "dash", "edit", "view", "set"].forEach(function (k) {
+    ["docs", "bills", "clients", "dash", "edit", "view", "set"].forEach(function (k) {
       $("v-" + k).hidden = k !== v;
     });
     TABS.forEach(function (k) {
@@ -632,6 +653,7 @@
   function renderView() {
     if (view === "docs") renderDocs();
     else if (view === "clients") renderClients();
+    else if (view === "bills") renderBills();
     else if (view === "dash") renderDash();
     else if (view === "view") renderViewer();
     else if (view === "set") renderSettings();
@@ -2073,6 +2095,271 @@
     openDialog(dlg, a);
   }
 
+  // ---------- Received invoices (bills, wave 7) ----------
+  // What suppliers billed you and what you paid: never revenue, VAT or
+  // myDATA. A bill can name its CRM partner (BR-CRM-LINK).
+  var billFilter = null;   // { crm, afm, name } from the CRM partner card (session only)
+  function putBill(b) { b.m = stamp(b.m); replaceIn(billList(), b); saveNow(); }
+  function crmPartners() {
+    var o = readOther("oros-crm-data", "cust");
+    if (!o) return [];
+    return o.cust.filter(function (c) {
+      return c && !c.del && typeof c.id === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(c.id) && typeof c.name === "string" && c.name;
+    }).map(function (c) { return { id: c.id, name: C.cleanText(c.name, 120), afm: C.cleanText(c.afm, 60) }; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, loc()); });
+  }
+  function billMine(b) {
+    if (!billFilter) return true;
+    var f = C.billsByCrm({ bills: [b], bpays: [] }, billFilter.crm, todayKey(), billFilter.afm);
+    return f.rows.length > 0;
+  }
+  function billRow(b, today) {
+    var li = el("li");
+    var bt = el("button", "row");
+    bt.type = "button";
+    var st = C.billStatus(data, b, today), bal = C.billBalance(data, b);
+    var main = el("span", "row-txt");
+    var top = el("span", "row-top");
+    top.appendChild(el("span", "row-no", b.sup.name));
+    top.appendChild(el("span", "chip st-" + st, statusName(st)));
+    main.appendChild(top);
+    main.appendChild(el("span", "row-sub", [b.num, day(b.date)].filter(Boolean).join(" · ")));
+    bt.appendChild(main);
+    var right = el("span", "row-amt");
+    right.appendChild(el("span", "amt", money(C.billTotal(b), b.cur)));
+    var note = "";
+    if (st === "overdue") {
+      var n = C.lateDays(b, today);
+      note = n === 1 ? t("row.late1") : t("row.late", { n: n });
+    } else if (st === "partial") note = t("row.left", { a: money(bal, b.cur) });
+    else if (st === "unpaid" && b.due) note = t("row.due", { d: day(b.due) });
+    if (note) right.appendChild(el("span", "row-note" + (st === "overdue" ? " bad" : ""), note));
+    bt.appendChild(right);
+    bt.addEventListener("click", function () { billView(b.id); });
+    li.appendChild(bt);
+    return li;
+  }
+  function renderBills() {
+    var stSel = $("b-status");
+    fillSelect(stSel, [["", t("bl.allSt")], ["open", t("bl.open")]].concat(
+      ["overdue", "partial", "unpaid", "paid"].map(function (k) { return [k, statusName(k)]; })), stSel.value || "");
+    var today = todayKey(), q = C.fold($("bq").value), stF = stSel.value;
+    var box = $("b-filter");
+    box.hidden = !billFilter;
+    if (billFilter) {
+      box.textContent = "";
+      box.appendChild(document.createTextNode(t("bl.crmF", { c: billFilter.name || billFilter.afm || billFilter.crm }) + " "));
+      var clr = el("button", "link-btn", t("f.clientClear"));
+      clr.type = "button";
+      clr.addEventListener("click", function () { billFilter = null; renderBills(); });
+      box.appendChild(clr);
+    }
+    var all = liveList("bills");
+    var list = all.filter(function (b) {
+      if (!billMine(b)) return false;
+      var st = C.billStatus(data, b, today);
+      if (stF === "open" ? st === "paid" : (stF && st !== stF)) return false;
+      return !q || C.fold([b.sup.name, b.sup.afm, b.num, b.note].join(" ")).indexOf(q) >= 0;
+    }).sort(function (a, b) {
+      return (b.date > a.date ? 1 : b.date < a.date ? -1 : 0) || (b.m - a.m);
+    });
+    var ol = $("bills");
+    ol.textContent = "";
+    list.slice(0, 500).forEach(function (b) { ol.appendChild(billRow(b, today)); });
+    if (all.length && !list.length) ol.appendChild(el("li", "hint", t("docs.none")));
+    $("bills-empty").hidden = all.length > 0;
+    // What you owe, of what is shown, per currency.
+    var sums = {}, n = 0;
+    list.forEach(function (b) {
+      var bal = C.billBalance(data, b);
+      if (bal > 0) { sums[b.cur] = (sums[b.cur] || 0) + bal; n++; }
+    });
+    var ks = Object.keys(sums).sort();
+    $("bills-sum").hidden = !ks.length;
+    $("bills-sum").textContent = ks.length ? t("bl.owedSum", { a: ks.map(function (k) { return money(sums[k], k); }).join(" + "), n: n }) : "";
+  }
+  // pre (a new bill only): { crm, name, afm } from the CRM partner card
+  function billDialog(id, pre) {
+    var b = id ? C.bill(data, id) : null;
+    if (id && !b) return;
+    var src = b || { sup: { name: pre ? pre.name : "", afm: pre ? pre.afm : "" }, crm: pre ? pre.crm : "", cur: data.prof.cur || "EUR", date: todayKey() };
+    var dlg = makeDialog("inv-bill", t("bl.title"));
+    dlg.classList.add("wide");
+    var form = el("form");
+    form.method = "dialog";
+    var sup = input("text", src.sup.name, C.LIM.name);
+    var known = C.billSuppliers(data);
+    var dl = el("datalist");
+    dl.id = "bl-sups";
+    known.forEach(function (k) { var o = el("option"); o.value = k.name; dl.appendChild(o); });
+    sup.setAttribute("list", dl.id);
+    var afm = input("text", src.sup.afm, 60);
+    var partners = crmPartners();
+    var crm = select([["", "—"]].concat(partners.map(function (c) { return [c.id, c.name]; })), src.crm || "");
+    if (src.crm && crm.value !== src.crm) {   // a partner this device does not have (yet): kept as is
+      var keep = el("option", "", src.crm);
+      keep.value = src.crm;
+      crm.appendChild(keep);
+      crm.value = src.crm;
+    }
+    sup.addEventListener("change", function () {
+      var k = known.filter(function (x) { return C.fold(x.name) === C.fold(sup.value); })[0];
+      if (k && !afm.value) afm.value = k.afm;
+      if (k && k.crm && !crm.value && partners.some(function (c) { return c.id === k.crm; })) crm.value = k.crm;
+      if (!crm.value) {
+        var p = partners.filter(function (c) { return (afm.value && c.afm === afm.value) || C.fold(c.name) === C.fold(sup.value); });
+        if (p.length === 1) crm.value = p[0].id;
+      }
+    });
+    var num = input("text", src.num || "", C.LIM.num);
+    var dt = input("date", src.date || todayKey());
+    var due = input("date", src.due || "");
+    var cur = select(currencyOpts(src.cur), src.cur || "EUR");
+    var net = input("text", b ? C.moneyInput(b.net, LANG) : "", 20);
+    var vat = input("text", b ? C.moneyInput(b.vat, LANG) : "", 20);
+    net.inputMode = vat.inputMode = "decimal";
+    var note = area(src.note || "", 2, C.LIM.note);
+    form.appendChild(dl);
+    form.appendChild(field(t("bl.sup"), sup));
+    form.appendChild(row(field(t("bl.afm"), afm), field(t("bl.num"), num)));
+    if (partners.length || src.crm) form.appendChild(field(t("bl.crm"), crm));
+    form.appendChild(row(field(t("bl.date"), dt), field(t("bl.due"), due)));
+    form.appendChild(row(field(t("bl.net"), net), field(t("bl.vat"), vat), field(t("ed.cur"), cur)));
+    form.appendChild(field(t("bl.note"), note, t("bl.hint")));
+    var left = [];
+    if (b) left.push(btn(t("vw.delete"), "danger", function () { dlg.close(); deleteBill(b); }));
+    actions(form, left, t("dlg.save"));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!C.cleanText(sup.value, C.LIM.name)) { showToast(t("bl.needSup")); sup.focus(); return; }
+      var n = net.value.trim() ? C.parseMoney(net.value) : 0, v = vat.value.trim() ? C.parseMoney(vat.value) : 0;
+      if (isNaN(n)) { showToast(t("toast.badNum", { f: t("bl.net") })); net.focus(); return; }
+      if (isNaN(v)) { showToast(t("toast.badNum", { f: t("bl.vat") })); vat.focus(); return; }
+      if (!n && !v) { showToast(t("bl.needAmt")); net.focus(); return; }
+      if (!C.validDay(dt.value) || (due.value && !C.validDay(due.value))) { showToast(t("toast.badDate")); return; }
+      var x = b ? JSON.parse(JSON.stringify(b)) : { id: C.newId(), m: 0 };
+      x.sup = { name: sup.value, afm: afm.value };
+      x.num = num.value; x.date = dt.value; x.due = due.value; x.cur = cur.value;
+      x.net = n; x.vat = v; x.note = note.value;
+      if (crm.value) x.crm = crm.value; else delete x.crm;
+      var rec = C.normBill(Object.assign({}, x, { m: 1 }));
+      if (!rec) { showToast(t("toast.badDate")); return; }
+      rec.m = x.m;
+      putBill(rec);
+      dlg.close();
+      renderAll();
+      if (!b) billView(rec.id);
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, b ? null : sup);
+  }
+  function deleteBill(b) {
+    var pays = C.billPays(data, b.id);
+    replaceIn(billList(), tombOf(b));
+    pays.forEach(function (p) { replaceIn(bpayList(), tombOf(p)); });
+    saveNow();
+    renderAll();
+    undoToast(t("toast.blDel"), function () {
+      restore("bills", b);
+      pays.forEach(function (p) { restore("bpays", p); });
+      saveNow();
+      renderAll();
+    });
+  }
+  function billView(id) {
+    var b = C.bill(data, id);
+    if (!b) return;
+    var dlg = makeDialog("inv-billv", b.sup.name);
+    dlg.classList.add("wide");
+    var today = todayKey(), st = C.billStatus(data, b, today), bal = C.billBalance(data, b);
+    var head = el("p", "dlg-text");
+    head.appendChild(el("span", "chip st-" + st, statusName(st)));
+    head.appendChild(document.createTextNode(" " + [b.num, day(b.date), b.due ? t("row.due", { d: day(b.due) }) : "", b.sup.afm].filter(Boolean).join(" · ")));
+    dlg.appendChild(head);
+    if (b.note) dlg.appendChild(el("p", "hint", b.note));
+    var tb = el("div", "totals");
+    [[t("bl.net"), money(b.net, b.cur), ""], [t("bl.vat"), money(b.vat, b.cur), ""], [t("bl.total"), money(C.billTotal(b), b.cur), ""],
+     [t("tot.paid"), money(C.billPaid(data, b.id), b.cur), ""],
+     [t("tot.bal"), money(Math.max(0, bal), b.cur), bal > 0 ? "grand bal" : "grand"]].forEach(function (x) {
+      var r = el("div", "tot-row" + (x[2] ? " " + x[2] : ""));
+      r.appendChild(el("span", "", x[0]));
+      r.appendChild(el("span", "", x[1]));
+      tb.appendChild(r);
+    });
+    dlg.appendChild(tb);
+    dlg.appendChild(el("h3", "sec-h", t("vw.pays")));
+    var pays = C.billPays(data, b.id);
+    if (!pays.length) dlg.appendChild(el("p", "hint", t("vw.noPays")));
+    var ul = el("ul", "pays");
+    pays.forEach(function (p) {
+      var li = el("li", "pay");
+      var pb = el("button", "pay-main");
+      pb.type = "button";
+      pb.appendChild(el("span", "pay-d", day(p.date)));
+      pb.appendChild(el("span", "pay-h", howName(p.how) + (p.note ? " · " + p.note : "")));
+      pb.appendChild(el("span", "pay-a", money(p.amt, b.cur)));
+      pb.addEventListener("click", function () { dlg.close(); billPayDialog(b, p); });
+      li.appendChild(pb);
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("vw.edit"), "", function () { dlg.close(); billDialog(b.id); }));
+    acts.appendChild(el("span", "spacer"));
+    if (bal > 0) {
+      acts.appendChild(btn(t("vw.pay"), "", function () { dlg.close(); billPayDialog(b, null); }));
+      acts.appendChild(btn(t("vw.paid"), "primary", function () {
+        bpayList().push({ id: C.newId(), bill: b.id, date: today, amt: bal, how: "bank", note: "", m: stamp(0) });
+        saveNow();
+        dlg.close();
+        showToast(t("toast.payAdded", { a: money(bal, b.cur) }));
+        renderAll();
+      }));
+    }
+    acts.appendChild(btn(t("dlg.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    openDialog(dlg, null);
+  }
+  function billPayDialog(b, p) {
+    var dlg = makeDialog("inv-bpay", t("pay.title") + " · " + (b.num || b.sup.name));
+    var form = el("form");
+    form.method = "dialog";
+    var a = input("text", C.moneyInput(p ? p.amt : Math.max(0, C.billBalance(data, b)), LANG));
+    a.inputMode = "decimal";
+    var dt = input("date", p ? p.date : todayKey());
+    var how = select(C.HOWS.map(function (h) { return [h, howName(h)]; }), p ? p.how : "bank");
+    var note = input("text", p ? p.note : "", 120);
+    form.appendChild(row(field(t("pay.amt") + " (" + b.cur + ")", a), field(t("pay.date"), dt)));
+    form.appendChild(field(t("pay.how"), how));
+    form.appendChild(field(t("pay.note"), note));
+    var left = [];
+    if (p) left.push(btn(t("pay.del"), "danger", function () {
+      dlg.close();
+      replaceIn(bpayList(), tombOf(p));
+      saveNow();
+      renderAll();
+      undoToast(t("toast.payDel"), function () { restore("bpays", p); saveNow(); renderAll(); });
+    }));
+    actions(form, left, t("dlg.save"));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var amt = C.parseMoney(a.value);
+      if (isNaN(amt) || !amt) { showToast(t("toast.badNum", { f: t("pay.amt") })); a.focus(); return; }
+      if (!C.validDay(dt.value)) { showToast(t("toast.badDate")); return; }
+      var x = p ? JSON.parse(JSON.stringify(p)) : { id: C.newId(), bill: b.id, m: 0 };
+      x.amt = amt; x.date = dt.value; x.how = how.value; x.note = C.cleanText(note.value, 120);
+      x.m = stamp(x.m);
+      replaceIn(bpayList(), x);
+      saveNow();
+      dlg.close();
+      if (!p) showToast(t("toast.payAdded", { a: money(amt, b.cur) }));
+      renderAll();
+      billView(b.id);
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, a);
+  }
+
   // The "New" menu.
   function newMenu() {
     var dlg = makeDialog("inv-new", t("new.title"));
@@ -2090,6 +2377,7 @@
     item(t("new.pro"), t("new.proHint"), function () { newDoc("pro"); });
     item(t("new.cred"), t("new.credHint"), function () { newDoc("cred"); });
     item(t("new.ext"), t("new.extHint"), function () { newDoc("ext"); });
+    item(t("new.bill"), t("new.billHint"), function () { billDialog(null); });
     var tpls = liveList("tpls");
     if (tpls.length) item(t("new.tpl"), t("new.tplHint", { n: tpls.length }), templatePicker);
     dlg.appendChild(list);
@@ -2188,8 +2476,11 @@
       var who = C.partyName(data, d);
       var ok;
       try {
-        ok = open({ k: "i", a: p.amt, d: p.date, c: "i-free", src: "invoices",
-                    n: ((d.num || kindName(d.kind)) + (who ? " \u00b7 " + who : "")).slice(0, 140) });
+        var pre = { k: "i", a: p.amt, d: p.date, c: "i-free", src: "invoices",
+                    n: ((d.num || kindName(d.kind)) + (who ? " \u00b7 " + who : "")).slice(0, 140) };
+        var cl = C.client(data, d.cli), crm = d.crm || (cl && cl.crm) || "";
+        if (crm) pre.crm = crm;   // the CRM partner, kept on the Budget entry (BR-CRM-LINK)
+        ok = open(pre);
       } catch (e) { ok = false; }
       if (ok === false) { showToast(t("toast.budgetNo")); return; }
       var cur = C.byId(data.pays, p.id);
@@ -3797,7 +4088,7 @@
       n.textContent = t(n.getAttribute("data-i18n"));
     });
     document.title = t("app") + " · orOS";
-    var icons = { docs: UI.doc, clients: UI.users, dash: UI.chart };
+    var icons = { docs: UI.doc, bills: UI.inbox, clients: UI.users, dash: UI.chart };
     TABS.forEach(function (k) {
       var b = $("tab-" + k);
       b.innerHTML = icons[k] + "<span></span>";
@@ -3812,6 +4103,11 @@
     $("new-btn").title = t("new");
     $("q").placeholder = t("f.search");
     $("q").setAttribute("aria-label", t("f.search"));
+    $("bq").placeholder = t("bl.search");
+    $("bq").setAttribute("aria-label", t("bl.search"));
+    $("b-status").setAttribute("aria-label", t("bl.open"));
+    $("add-bill").innerHTML = UI.plus + "<span></span>";
+    $("add-bill").lastChild.textContent = t("bl.new");
     $("cq").placeholder = t("cli.search");
     $("cq").setAttribute("aria-label", t("cli.search"));
     $("add-client").innerHTML = UI.plus + "<span></span>";
@@ -3854,6 +4150,9 @@
     $("setup-go").addEventListener("click", setupFirst);
     $("q").addEventListener("input", renderDocs);
     $("cq").addEventListener("input", renderClients);
+    $("bq").addEventListener("input", renderBills);
+    $("b-status").addEventListener("change", renderBills);
+    $("add-bill").addEventListener("click", function () { billDialog(null); });
     [["f-status", "st"], ["f-kind", "kind"], ["f-year", "year"]].forEach(function (x) {
       $(x[0]).addEventListener("change", function () { prefs.f[x[1]] = $(x[0]).value; savePrefs(); renderDocs(); });
     });
@@ -3939,6 +4238,10 @@
   //                           when the user saves or issues it
   //   { invoice: id }         open that document (search, CRM Lite)
   //   { client: { id? | crm? | afm? | name? } }   that client's documents
+  //   { bills: { crm?, afm? } } the Received tab, of one CRM partner when
+  //                           given (CRM partner card); { bill: id } one
+  //   { newBill: { crm?, name?, afm? } } a new received invoice from that
+  //                           partner (CRM partner card), saved only on Save
   //   { openFile: { token } } "Open with" an .orosinvoices file
   //                           (fileopen.js): the File taken once with
   //                           window.parent.__orosTakeFile(token)
@@ -3964,6 +4267,27 @@
     if (typeof tg.invoice === "string") {
       if (view === "edit" && ed && ed.dirty) return;
       openDoc(tg.invoice);
+      return;
+    }
+    if (tg.bills && typeof tg.bills === "object") {
+      if (view === "edit" && ed && ed.dirty) return;
+      billFilter = { crm: typeof tg.bills.crm === "string" ? tg.bills.crm.slice(0, 60) : "",
+                     afm: typeof tg.bills.afm === "string" ? tg.bills.afm.slice(0, 60) : "",
+                     name: typeof tg.bills.name === "string" ? tg.bills.name.slice(0, 120) : "" };
+      if (!billFilter.crm && !billFilter.afm) billFilter = null;
+      setTab("bills");
+      return;
+    }
+    if (tg.newBill && typeof tg.newBill === "object") {
+      if (view === "edit" && ed && ed.dirty) return;
+      var nb = tg.newBill, str = function (v, n) { return typeof v === "string" ? v.trim().slice(0, n) : ""; };
+      setTab("bills");
+      billDialog(null, { crm: /^[A-Za-z0-9_-]{1,60}$/.test(nb.crm || "") ? nb.crm : "", name: str(nb.name, C.LIM.name), afm: str(nb.afm, 60) });
+      return;
+    }
+    if (typeof tg.bill === "string") {
+      if (view === "edit" && ed && ed.dirty) return;
+      if (C.bill(data, tg.bill)) { setTab("bills"); billView(tg.bill); }
       return;
     }
     if (tg.client && typeof tg.client === "object") {
@@ -3992,6 +4316,7 @@
           }
           if (p.notes) x.notes = p.notes;
           if (p.gDisc) x.gDisc = p.gDisc;
+          if (p.ref) x.src = p.ref.app + ":" + p.ref.id;   // wave 7: what it was made from
         });
         ed.dirty = true;
         shelter();

@@ -1384,6 +1384,7 @@
       "this month' or 'what is on this week'. calendar also lists the user's labels with how many events " +
       "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +
+      "crm with partner answers 'what is open with X?' for one partner. " +
       "The user sees the summary first and may hold it back.",
     params: {
       type: "object",
@@ -1391,7 +1392,8 @@
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, timesheet, stock: YYYY-MM (default: this month). calendar: list that month's events." },
         label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one." },
-        days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." }
+        days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
+        partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
       },
       required: ["app"]
     }

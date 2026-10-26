@@ -2934,6 +2934,46 @@
     });
     return tsCore;
   }
+  // CRM's partner card (W5): its core, links and Overview, loaded the
+  // first time; the other apps' cores are the shell's (read-only).
+  var crmScripts = null;
+  function crmCores() {
+    if (window.OrosCrmOverview && window.OrosCrmCore) return Promise.resolve(true);
+    if (crmScripts) return crmScripts;
+    var chain = Promise.resolve();
+    ["../crm/core.js", "../crm/links.js", "../crm/overview.js"].forEach(function (src) {
+      chain = chain.then(function () {
+        return new Promise(function (resolve) {
+          var sc = document.createElement("script");
+          sc.src = src;
+          sc.onload = sc.onerror = function () { resolve(); };
+          document.head.appendChild(sc);
+        });
+      });
+    });
+    crmScripts = chain.then(function () { return !!(window.OrosCrmOverview && window.OrosCrmCore); });
+    return crmScripts;
+  }
+  function crmPartnerSummary(q, today) {
+    return crmCores().then(function (ok) {
+      if (!ok) throw new Error("no core");
+      var C = window.OrosCrmCore, OV = window.OrosCrmOverview, p = shell() || {};
+      var data = C.norm(readStore("oros-crm-data"));
+      function raw(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+      var I = p.OrosInvoicesCore || null, SC = p.OrosStockCore || null, T = p.orosTimesheetCore || null;
+      var inv = null, stock = null, ts = null;
+      try { inv = I && raw("oros-invoices-data") ? I.parse(raw("oros-invoices-data")) : null; } catch (e) { inv = null; }
+      try { stock = SC && raw("oros-stock-data") ? SC.merge(JSON.parse(raw("oros-stock-data")), null) : null; } catch (e) { stock = null; }
+      try { ts = T && raw("oros-timesheet-data") ? T.parse(raw("oros-timesheet-data")) : null; } catch (e) { ts = null; }
+      var pub = readStore("oros-publish-data"), bud = readStore("oros-budget-data");
+      return S.crmPartner(C, data, q, today, function (c) {
+        try {
+          return OV.build({ data: data, cust: c, today: today, nowMs: Date.now(), links: C.linksOf(data, c), inv: inv, I: I,
+                            alsoInv: C.linksOf(data, c, "inv").map(function (x) { return x.v; }), stock: stock, S: SC, ts: ts, T: T, pub: pub, bud: bud });
+        } catch (e) { return null; }
+      });
+    });
+  }
   function agendaRows(appId, days) {
     var p = shell();
     try {
@@ -2944,6 +2984,7 @@
   function buildSummary(a, today) {
     var ag = agendaIds().indexOf(a.app) >= 0;
     if (a.app === "budget") return Promise.resolve(S.budgetMonth(readStore("oros-budget-data"), a.month, LANG));
+    if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
     if (a.app === "timesheet") {
       return timesheetCore().then(function (core) {
         if (!core) throw new Error("no core");
@@ -3000,6 +3041,12 @@
           c.refs[it.ref] = { app: app.id, target: it.target, title: it.title };
           delete it.target;
         });
+        if (sum.target !== undefined) {   // CRM: the partner's card
+          c.refN = (c.refN || 0) + 1;
+          sum.ref = "r" + c.refN;
+          c.refs[sum.ref] = { app: app.id, target: sum.target, title: sum.name || app.name };
+          delete sum.target;
+        }
         sum.app_name = app.name;
         return { content: JSON.stringify(sum), ui: { k: "sum", app: app.name } };
       });

@@ -248,6 +248,15 @@ button.row:hover, .row.click:hover { border-color: var(--accent); }
 .subtab.on { color: var(--accent); border-bottom-color: var(--accent); }
 .person { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .person:last-child { border-bottom: none; }
+/* partner card W4: contracts (a row is a button), the actions row, the file of a contract */
+.ctr-row { width: 100%; background: none; border: none; border-bottom: 1px solid var(--border); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ctr-row:hover .row-title { color: var(--accent); }
+.ctr-row.ended { opacity: .65; }
+.ov-acts { margin: 4px 0 12px; }
+.ctr-file { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 8px; }
+.ctr-file .hint { margin: 0; }
+#crm-ctr .fld-row > div { min-width: 0; }
+#crm-ctr .fld-row input, #crm-ctr .fld-row select { width: 100%; min-width: 0; box-sizing: border-box; }
 .person .row-main { font-size: 13px; }
 .timeline { display: flex; flex-direction: column; gap: 8px; }
 .tl-item { display: flex; gap: 10px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); }

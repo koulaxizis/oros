@@ -132,7 +132,7 @@
       "acc.empty": "No accounts yet: Budget works without them too.", "acc.none": "No account",
       "acc.bal": "Balances today", "acc.deleted": "Account deleted", "acc.full": "Up to {n} accounts",
       "acc.keep": "Its entries stay, without an account.", "acc.open.aria": "Open the accounts",
-      "f.acc": "Account", "err.name": "Write a name", "err.open": "Type a balance, for example -120,50",
+      "f.acc": "Account", "f.crm": "Partner in CRM", "err.name": "Write a name", "err.open": "Type a balance, for example -120,50",
       "xf.btn": "Transfer", "xf.new": "Transfer between accounts", "xf.edit": "Edit transfer",
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
@@ -237,7 +237,7 @@
       "acc.empty": "Δεν υπάρχουν λογαριασμοί: η εφαρμογή δουλεύει και χωρίς αυτούς.", "acc.none": "Χωρίς λογαριασμό",
       "acc.bal": "Υπόλοιπα σήμερα", "acc.deleted": "Ο λογαριασμός διαγράφηκε", "acc.full": "Έως {n} λογαριασμοί",
       "acc.keep": "Οι κινήσεις του μένουν, χωρίς λογαριασμό.", "acc.open.aria": "Άνοιγμα λογαριασμών",
-      "f.acc": "Λογαριασμός", "err.name": "Γράψε ένα όνομα", "err.open": "Γράψε ένα ποσό, για παράδειγμα -120,50",
+      "f.acc": "Λογαριασμός", "f.crm": "Συνεργάτης στο CRM", "err.name": "Γράψε ένα όνομα", "err.open": "Γράψε ένα ποσό, για παράδειγμα -120,50",
       "xf.btn": "Μεταφορά", "xf.new": "Μεταφορά μεταξύ λογαριασμών", "xf.edit": "Επεξεργασία μεταφοράς",
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
@@ -504,13 +504,19 @@
   // entry form. A bad kind, amount or date drops it all; the optional
   // parts are cleaned or left empty. It is never stored as such.
   var SRC_RE = /^[a-z0-9]{1,20}$/;
+  // crm (since the CRM partner card, BR-CRM-LINK): the CRM partner an
+  // entry is with, an opaque id written only when set; an older
+  // version keeps it as a flat extra.
+  var CRM_RE = /^[A-Za-z0-9_-]{1,60}$/;
   function normPrefill(p) {
     if (!p || typeof p !== "object" || !KINDS[p.k] || !okCents(p.a)) return null;
     var hasD = p.d !== undefined && p.d !== null && p.d !== "";
     if (hasD && !parseYmd(p.d)) return null;
-    return { k: p.k, a: p.a, d: hasD ? p.d : "", n: normText(p.n, NOTE_LEN),
-             c: typeof p.c === "string" && ID_RE.test(p.c) ? p.c : "",
-             src: typeof p.src === "string" && SRC_RE.test(p.src) ? p.src : "" };
+    var out = { k: p.k, a: p.a, d: hasD ? p.d : "", n: normText(p.n, NOTE_LEN),
+                c: typeof p.c === "string" && ID_RE.test(p.c) ? p.c : "",
+                src: typeof p.src === "string" && SRC_RE.test(p.src) ? p.src : "" };
+    if (typeof p.crm === "string" && CRM_RE.test(p.crm)) out.crm = p.crm;
+    return out;
   }
 
   // Optional account of an entry or a recurring entry: `ac` (account
@@ -546,6 +552,7 @@
     // receipt file names on the orOS disk, one string, space-separated.
     if (!(okCur3(y.oc) && okCents(y.oa))) { delete y.oc; delete y.oa; }
     if (!(typeof y.rc === "string" && RC_STR_RE.test(y.rc))) delete y.rc;
+    if (!(typeof y.crm === "string" && CRM_RE.test(y.crm))) delete y.crm;
     return y;
   }
   var CUR3_RE = /^[A-Z]{3}$/;
@@ -1852,6 +1859,27 @@
     if (sel.value !== (selected || "")) sel.value = "";
     return sel;
   }
+  // CRM partners to pick for an entry (read-only from CRM's data).
+  function crmPartners() {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem("oros-crm-data") || "null"); } catch (e) {}
+    var list = o && Array.isArray(o.cust) ? o.cust : [];
+    return list.filter(function (c) { return c && !c.del && typeof c.id === "string" && CRM_RE.test(c.id) && typeof c.name === "string" && c.name; })
+      .map(function (c) { return { id: c.id, name: normText(c.name, 80) }; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, LOCALE); });
+  }
+  function crmSelect(selected) {
+    var parts = crmPartners();
+    if (!parts.length && !selected) return null;
+    var sel = el("select");
+    var none = el("option", "", "\u2014"); none.value = ""; sel.appendChild(none);
+    parts.forEach(function (c) { var o = el("option", "", c.name); o.value = c.id; sel.appendChild(o); });
+    if (selected && !parts.some(function (c) { return c.id === selected; })) {   // not on this device (yet): kept
+      var k = el("option", "", selected); k.value = selected; sel.appendChild(k);
+    }
+    sel.value = selected || "";
+    return sel;
+  }
   function txDialog(id, preset) {
     var x = id ? findIn(data.tx, id) : null;
     if (id && !x) return;
@@ -1944,6 +1972,8 @@
     row.appendChild(field(t("f.cat"), sel, "bd-cat"));
     form.appendChild(row);
     if (accSel) form.appendChild(field(t("f.acc"), accSel, "bd-acc"));
+    var crmSel = crmSelect(x ? x.crm || "" : (pre && pre.crm) || "");
+    if (crmSel) form.appendChild(field(t("f.crm"), crmSel, "bd-crm"));
     form.appendChild(field(t("f.note"), note, "bd-note"));
     // Receipt photo / PDF on the orOS disk, and its total from text.
     var rowId = x ? x.id : newId();
@@ -1978,11 +2008,14 @@
       var cur0 = x ? findIn(data.tx, x.id) : null;   // may have changed by a pull meanwhile
       var ac = accSel ? accSel.value : (cur0 ? cur0.ac || "" : "");
       if (!rcb && cur0) rc = cur0.rc || "";
+      // Without CRM partners the field is absent and an entry keeps its partner.
+      var crm = crmSel ? crmSel.value : (cur0 ? cur0.crm || "" : (pre && pre.crm) || "");
       if (cur0) {
         if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n || (cur0.ac || "") !== ac ||
-            (cur0.oc || "") !== oc || (cur0.oa || 0) !== oa || (cur0.rc || "") !== rc) {
+            (cur0.oc || "") !== oc || (cur0.oa || 0) !== oa || (cur0.rc || "") !== rc || (cur0.crm || "") !== crm) {
           cur0.d = date.value; cur0.a = cents; cur0.k = k; cur0.c = c; cur0.n = n;
           if (ac) cur0.ac = ac; else delete cur0.ac;
+          if (crm) cur0.crm = crm; else delete cur0.crm;
           if (oc) { cur0.oc = oc; cur0.oa = oa; } else { delete cur0.oc; delete cur0.oa; }
           if (rc) cur0.rc = rc; else delete cur0.rc;
           cur0.m = stamp(cur0.m);
@@ -1995,6 +2028,7 @@
         if (ac) nx.ac = ac;
         if (oc) { nx.oc = oc; nx.oa = oa; }
         if (rc) nx.rc = rc;
+        if (crm) nx.crm = crm;
         data.tx.push(nx);
         commit();
       }

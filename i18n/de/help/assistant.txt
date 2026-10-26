@@ -47,6 +47,7 @@ Für Summen und Überblicke, etwa „Wie viel habe ich diesen Monat für Lebensm
 - Budget: Einnahmen, Ausgaben und jede Kategorie eines Monats.
 - Zeiterfassung: Stunden und Beträge eines Monats pro Projekt.
 - Aufgaben: offene, überfällige und heute fällige Aufgaben pro Liste und was als Nächstes fällig ist.
+- CRM: „Was ist mit … offen?“ für einen Partner: was er dir schuldet und du ihm, Kommissionsware, Bestellungen, nicht abgerechnete Stunden, Tantiemen, Verträge und das nächste Follow-up. Passen mehrere Partner, fragt der Assistent, welcher gemeint ist.
 - Kalender, Gewohnheiten, Pflanzenpflege und die anderen Apps, die in `Heute` erscheinen: was überfällig ist, heute und in den nächsten Tagen.
 
 Bei einer App auf `Erst fragen` siehst du die Zusammenfassung auf einer Karte, bevor sie geteilt wird; drücke `Teilen` oder `Nicht teilen`. Nur diese Zeilen verlassen das Gerät, nicht die Einträge selbst. Budget steht anfangs auf `Nie`, erlaube es also zuerst unter `Einstellungen` → `Deine Daten`.

@@ -109,13 +109,25 @@
       "sub.hist": "History", "sub.deals": "Deals", "sub.fups": "Follow-ups", "sub.docs": "Documents", "sub.ov": "Overview",
       "ov.none": "Nothing in other apps yet. Link this record's supplier, shop, client or titles under In other apps.",
       "ov.money": "Money", "ov.in": "Owes you {v}", "ov.overdue": "overdue {v}", "ov.out": "You owe {v}",
-      "ov.outRoy": "royalties, statements: {n}", "ov.even": "Nothing open.",
+      "ov.outRoy": "royalties, statements: {n}", "ov.even": "Nothing open.", "ov.outBills": "received invoices: {n}",
+      "ov.unbilled": "Settled, not invoiced: {n} · {v}", "ov.invoiceIt": "Invoice the settlement of {d}",
+      "ov.budget": "Budget", "ov.budYear": "This year: income {i} · expenses {o}", "ov.budAll": "Entries: {n} · all time: income {i} · expenses {o}",
+      "ov.bills": "Received invoices", "ov.billsOpen": "Still to pay: {v}", "ov.billsPaid": "All paid", "ov.billsN": "Invoices: {n} · latest {d}",
       "ov.shops": "Consignment", "ov.shopLine": "Products: {p} · pieces: {q} · {v} at sale price", "ov.shopEmpty": "Nothing on the shelf now",
       "ov.last": "Last settled {d}", "ov.never": "Not settled yet", "ov.due": "Settlement due since {d}",
       "ov.sups": "Orders", "ov.supLine": "Open orders: {n} · pieces to come: {q} · {v}", "ov.supNone": "No open orders",
       "ov.work": "Work", "ov.workLine": "Not billed yet: {h} · {v}", "ov.workNone": "Everything billed", "ov.h": "{n} h",
       "ov.pub": "Publishing", "ov.titles": "Titles: {n}", "ov.royDue": "Royalties due: {v}", "ov.adv": "Advance still to earn back: {v}",
       "ov.rel": "Relationship", "ov.deals": "Open deals: {n} · {v}", "ov.open": "Open",
+      "ac.bill": "+ Received invoice", "ac.order": "+ Order", "ac.settle": "Settlement", "ac.hours": "Hours", "ac.roy": "Royalties", "ac.folder": "Folder",
+      "ct.sec": "Contracts", "ct.add": "+ Contract", "ct.none": "No contracts. Add one to keep its end day and be reminded in time.",
+      "ct.new": "New contract", "ct.edit": "Contract", "ct.t": "Title", "ct.tPh": "Consignment agreement", "ct.from": "Starts", "ct.to": "Ends",
+      "ct.rem": "Remind me", "ct.remN": "{n} days before the end", "ct.rem0": "On the last day", "ct.val": "Value ({c})", "ct.note": "Note",
+      "ct.file": "File", "ct.attach": "Attach a file…", "ct.openFile": "Open the file", "ct.detach": "Detach (the file stays in Files)", "ct.pending": "Saved to Files on Save: {n}", "ct.unpick": "Don't attach",
+      "ct.until": "Until {d}", "ct.noEnd": "No end day", "ct.soon": "Ends {d}", "ct.ended": "Ended {d}", "ct.fromD": "from {d}",
+      "ct.fup": "Contract ends: {t} ({d})", "ct.fupHint": "With an end day, a follow-up reminds you in Agenda, Today, Calendar and notifications.",
+      "ct.toBad": "The end is before the start.",
+      "toast.ctrDel": "Contract deleted", "toast.noDisk": "The orOS disk is not available here.", "toast.fileSaved": "Saved in Files: {p}", "toast.fileBig": "Up to 20 MB per file.",
       "act.inv": "Invoice", "act.quote": "Quote",
       "docs.inv": "Invoices", "docs.quote": "Quotes", "docs.allInv": "All in Invoices",
       "docs.invNone": "No invoices yet. Invoices you issue with the Invoice button show up here.",
@@ -138,6 +150,12 @@
       "imp.bad": "No name column found. The first row must hold column names such as Name, Company or First name.",
       "imp.done": "Imported {n} customers",
       "mail.subj": "Subject: {s}", "mail.noCust": "No customer has {email}. Add one, then log the email.",
+      "tl.g.all": "All", "tl.g.crm": "Contacts", "tl.g.money": "Money", "tl.g.stock": "Stock", "tl.g.work": "Work", "tl.g.pub": "Publishing",
+      "tl.won": "Deal won", "tl.lost": "Deal lost", "tl.inv": "Invoice issued", "tl.cred": "Credit note", "tl.pay": "Payment received",
+      "tl.bill": "Invoice received", "tl.bpay": "You paid", "tl.po": "Order sent", "tl.recv": "Goods received", "tl.ship": "Delivered to the shop",
+      "tl.settle": "Settlement", "tl.back": "Back from the shop", "tl.work": "Work", "tl.stmt": "Royalty statement", "tl.roy": "Royalties paid",
+      "tl.bin": "Income", "tl.bout": "Expense", "tl.pcs": "{q} pcs", "tl.more": "Show more ({n})",
+      "tl.app.crm": "CRM", "tl.app.invoices": "Invoices", "tl.app.stock": "Stock", "tl.app.timesheet": "Timesheet", "tl.app.publish": "Publishing", "tl.app.budget": "Budget",
       "hist.none": "Nothing logged yet.", "deals.none": "No deals yet.", "fups.none": "No follow-ups.",
       "fups.done": "Done", "hist.add": "+ Log", "deals.add": "+ Deal", "fups.add": "+ Follow-up",
       "stage.new": "New", "stage.contact": "Contacted", "stage.proposal": "Proposal", "stage.nego": "Negotiation",
@@ -251,13 +269,25 @@
       "sub.hist": "Ιστορικό", "sub.deals": "Ευκαιρίες", "sub.fups": "Follow-ups", "sub.docs": "Έγγραφα", "sub.ov": "Σύνοψη",
       "ov.none": "Τίποτα σε άλλες εφαρμογές ακόμη. Σύνδεσε τον προμηθευτή, το κατάστημα, τον πελάτη ή τους τίτλους αυτής της εγγραφής στο «Σε άλλες εφαρμογές».",
       "ov.money": "Χρήματα", "ov.in": "Σου χρωστά {v}", "ov.overdue": "ληξιπρόθεσμα {v}", "ov.out": "Του χρωστάς {v}",
-      "ov.outRoy": "δικαιώματα, εκκαθαρίσεις: {n}", "ov.even": "Τίποτα ανοιχτό.",
+      "ov.outRoy": "δικαιώματα, εκκαθαρίσεις: {n}", "ov.even": "Τίποτα ανοιχτό.", "ov.outBills": "λαμβανόμενα τιμολόγια: {n}",
+      "ov.unbilled": "Εκκαθαρίσεις χωρίς τιμολόγιο: {n} · {v}", "ov.invoiceIt": "Τιμολόγηση εκκαθάρισης {d}",
+      "ov.budget": "Έσοδα & Έξοδα", "ov.budYear": "Φέτος: έσοδα {i} · έξοδα {o}", "ov.budAll": "Κινήσεις: {n} · συνολικά: έσοδα {i} · έξοδα {o}",
+      "ov.bills": "Λαμβανόμενα τιμολόγια", "ov.billsOpen": "Μένουν να πληρωθούν: {v}", "ov.billsPaid": "Όλα πληρωμένα", "ov.billsN": "Τιμολόγια: {n} · τελευταίο {d}",
       "ov.shops": "Παρακαταθήκη", "ov.shopLine": "Προϊόντα: {p} · τεμάχια: {q} · {v} σε τιμή πώλησης", "ov.shopEmpty": "Τίποτα στο ράφι τώρα",
       "ov.last": "Τελευταία εκκαθάριση {d}", "ov.never": "Χωρίς εκκαθάριση ακόμη", "ov.due": "Εκκαθάριση οφείλεται από {d}",
       "ov.sups": "Παραγγελίες", "ov.supLine": "Ανοιχτές παραγγελίες: {n} · τεμάχια που έρχονται: {q} · {v}", "ov.supNone": "Καμία ανοιχτή παραγγελία",
       "ov.work": "Εργασία", "ov.workLine": "Δεν έχουν χρεωθεί: {h} · {v}", "ov.workNone": "Όλα χρεωμένα", "ov.h": "{n} ώρ.",
       "ov.pub": "Εκδόσεις", "ov.titles": "Τίτλοι: {n}", "ov.royDue": "Δικαιώματα προς πληρωμή: {v}", "ov.adv": "Προκαταβολή που δεν έχει καλυφθεί: {v}",
       "ov.rel": "Σχέση", "ov.deals": "Ανοιχτές ευκαιρίες: {n} · {v}", "ov.open": "Άνοιγμα",
+      "ac.bill": "+ Λαμβανόμενο τιμολόγιο", "ac.order": "+ Παραγγελία", "ac.settle": "Εκκαθάριση", "ac.hours": "Ώρες", "ac.roy": "Δικαιώματα", "ac.folder": "Φάκελος",
+      "ct.sec": "Συμβάσεις", "ct.add": "+ Σύμβαση", "ct.none": "Καμία σύμβαση. Πρόσθεσε μία για να κρατάς τη λήξη της και να σου θυμίζει εγκαίρως.",
+      "ct.new": "Νέα σύμβαση", "ct.edit": "Σύμβαση", "ct.t": "Τίτλος", "ct.tPh": "Σύμβαση παρακαταθήκης", "ct.from": "Έναρξη", "ct.to": "Λήξη",
+      "ct.rem": "Υπενθύμιση", "ct.remN": "{n} ημέρες πριν τη λήξη", "ct.rem0": "Την τελευταία ημέρα", "ct.val": "Αξία ({c})", "ct.note": "Σημείωση",
+      "ct.file": "Αρχείο", "ct.attach": "Επισύναψη αρχείου…", "ct.openFile": "Άνοιγμα αρχείου", "ct.detach": "Αποσύνδεση (το αρχείο μένει στα Αρχεία)", "ct.pending": "Αποθηκεύεται στα Αρχεία με την Αποθήκευση: {n}", "ct.unpick": "Χωρίς αρχείο",
+      "ct.until": "Έως {d}", "ct.noEnd": "Χωρίς λήξη", "ct.soon": "Λήγει {d}", "ct.ended": "Έληξε {d}", "ct.fromD": "από {d}",
+      "ct.fup": "Λήξη σύμβασης: {t} ({d})", "ct.fupHint": "Με ημέρα λήξης, ένα follow-up σου το θυμίζει στην Ατζέντα, στο Σήμερα, στο Ημερολόγιο και στις ειδοποιήσεις.",
+      "ct.toBad": "Η λήξη είναι πριν την έναρξη.",
+      "toast.ctrDel": "Η σύμβαση διαγράφηκε", "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "toast.fileSaved": "Αποθηκεύτηκε στα Αρχεία: {p}", "toast.fileBig": "Έως 20 MB ανά αρχείο.",
       "act.inv": "Τιμολόγιο", "act.quote": "Προσφορά",
       "docs.inv": "Τιμολόγια", "docs.quote": "Προσφορές", "docs.allInv": "Όλα στα Τιμολόγια",
       "docs.invNone": "Δεν υπάρχουν τιμολόγια ακόμη. Όσα εκδίδεις με το κουμπί Τιμολόγιο εμφανίζονται εδώ.",
@@ -280,6 +310,12 @@
       "imp.bad": "Δεν βρέθηκε στήλη ονόματος. Η πρώτη γραμμή πρέπει να έχει ονόματα στηλών, όπως Επωνυμία, Όνομα ή Name.",
       "imp.done": "Εισήχθησαν {n} πελάτες",
       "mail.subj": "Θέμα: {s}", "mail.noCust": "Κανένας πελάτης δεν έχει το {email}. Πρόσθεσέ τον και μετά κατέγραψε το email.",
+      "tl.g.all": "Όλα", "tl.g.crm": "Επαφές", "tl.g.money": "Χρήματα", "tl.g.stock": "Απόθεμα", "tl.g.work": "Εργασία", "tl.g.pub": "Εκδόσεις",
+      "tl.won": "Κερδισμένη ευκαιρία", "tl.lost": "Χαμένη ευκαιρία", "tl.inv": "Έκδοση τιμολογίου", "tl.cred": "Πιστωτικό", "tl.pay": "Είσπραξη",
+      "tl.bill": "Λαμβανόμενο τιμολόγιο", "tl.bpay": "Πλήρωσες", "tl.po": "Παραγγελία", "tl.recv": "Παραλαβή", "tl.ship": "Παράδοση στο κατάστημα",
+      "tl.settle": "Εκκαθάριση", "tl.back": "Επιστροφή από το κατάστημα", "tl.work": "Εργασία", "tl.stmt": "Εκκαθάριση δικαιωμάτων", "tl.roy": "Πληρωμή δικαιωμάτων",
+      "tl.bin": "Έσοδο", "tl.bout": "Έξοδο", "tl.pcs": "{q} τεμ.", "tl.more": "Περισσότερα ({n})",
+      "tl.app.crm": "Πελάτες", "tl.app.invoices": "Τιμολόγια", "tl.app.stock": "Απόθεμα", "tl.app.timesheet": "Ώρες εργασίας", "tl.app.publish": "Εκδόσεις", "tl.app.budget": "Έσοδα & Έξοδα",
       "hist.none": "Τίποτα καταγεγραμμένο ακόμη.", "deals.none": "Καμία ευκαιρία ακόμη.", "fups.none": "Κανένα follow-up.",
       "fups.done": "Ολοκληρωμένα", "hist.add": "+ Καταγραφή", "deals.add": "+ Ευκαιρία", "fups.add": "+ Follow-up",
       "stage.new": "Νέα", "stage.contact": "Επικοινωνία", "stage.proposal": "Πρόταση", "stage.nego": "Διαπραγμάτευση",
@@ -570,7 +606,8 @@
     var kids = {
       deals: data.deals.filter(function (d) { return d.cust === c.id; }),
       acts: data.acts.filter(function (a) { return a.cust === c.id; }),
-      fups: data.fups.filter(function (f) { return f.cust === c.id; })
+      fups: data.fups.filter(function (f) { return f.cust === c.id; }),
+      ctr: (data.ctr || []).filter(function (k) { return k.cust === c.id; })
     };
     var pt = C.ptOf(data, c.id);
     tomb(c.id);
@@ -580,7 +617,8 @@
       delete data.tombs[c.id];
       var back = Object.assign({}, c, { m: stamp(c) });
       data.cust.push(back);
-      ["deals", "acts", "fups"].forEach(function (k) {
+      if (kids.ctr.length && !data.ctr) data.ctr = [];
+      ["deals", "acts", "fups", "ctr"].forEach(function (k) {
         kids[k].forEach(function (r) {
           if (!C.byId(data[k], r.id)) data[k].push(Object.assign({}, r, { m: stamp(r) }));
         });
@@ -848,7 +886,8 @@
     if (!OV) return;
     var x = OV.build({ data: data, cust: c, today: todayYmd(), nowMs: Date.now(), links: C.linksOf(data, c),
       inv: invData(), I: window.OrosInvoicesCore, alsoInv: invLinks(c),
-      stock: stockData(), S: window.OrosStockCore, ts: tsData(), T: window.orosTimesheetCore, pub: pubData() });
+      stock: stockData(), S: window.OrosStockCore, ts: tsData(), T: window.orosTimesheetCore, pub: pubData(),
+      bud: readForeign("oros-budget-data", function (raw) { return JSON.parse(raw); }) });
     function sec(label, app, target) {
       var s = el("div", "sec");
       var h = secHead(label);
@@ -871,6 +910,7 @@
       row.appendChild(m);
       s.appendChild(row);
     }
+    overviewActions(pane, c, x);
     // money, both ways
     var sm = sec(t("ov.money"));
     var ins = Object.keys(x.money["in"]), outs = Object.keys(x.money.out);
@@ -880,12 +920,39 @@
       line(sm, t("ov.in", { v: curMoney(v.open, cur) }), v.overdue > 0 ? t("ov.overdue", { v: curMoney(v.overdue, cur) }) : "", v.overdue > 0);
     });
     outs.sort().forEach(function (cur) {
-      line(sm, t("ov.out", { v: curMoney(x.money.out[cur], cur) }), x.pub.open ? t("ov.outRoy", { n: x.pub.open }) : "");
+      var bo = x.bills.open[cur], sub = [];
+      if (bo) sub.push(t("ov.outBills", { n: bo.n }));
+      if (x.pub.open && x.pub.due[cur]) sub.push(t("ov.outRoy", { n: x.pub.open }));
+      if (bo && bo.overdue > 0) sub.push(t("ov.overdue", { v: curMoney(bo.overdue, cur) }));
+      line(sm, t("ov.out", { v: curMoney(x.money.out[cur], cur) }), sub.join(" · "), !!(bo && bo.overdue > 0));
     });
+    if (x.bills.n) {
+      var sb = sec(t("ov.bills"), "invoices", { bills: { crm: c.id, afm: c.afm || "", name: c.name } });
+      var bk = Object.keys(x.bills.open);
+      line(sb, bk.length ? t("ov.billsOpen", { v: curList(x.bills.open, function (cur, v) { return curMoney(v.open, cur); }) }) : t("ov.billsPaid"),
+        t("ov.billsN", { n: x.bills.n, d: fmtDate(x.bills.last) }));
+    }
     x.shops.forEach(function (r) {
       var s = sec(t("ov.shops") + " · " + r.name, "stock", { view: "cons" });
       line(s, r.q > 0 ? t("ov.shopLine", { p: r.products, q: pieces(r.q), v: curMoney(r.value, r.cur) }) : t("ov.shopEmpty"),
         r.due ? t("ov.due", { d: fmtDate(r.due) }) : (r.last ? t("ov.last", { d: fmtDate(r.last) }) : t("ov.never")), !!r.due);
+      if (r.unbilled.n) {
+        line(s, t("ov.unbilled", { n: r.unbilled.n, v: curMoney(r.unbilled.value, r.cur) }), "", true);
+        // the invoice opens in Invoices prefilled (BR-INV-NEW), saved only there
+        var acts = el("div", "chips"), S = window.OrosStockCore, d = stockData();
+        r.unbilled.moves.slice(0, 6).forEach(function (mv) {
+          var mvr = null;
+          (d && d.moves || []).forEach(function (x) { if (x.id === mv.id) mvr = x; });
+          var pre = S && mvr ? S.consInvoice(d, r.id, mvr) : null;
+          if (!pre) return;
+          if (!pre.crm) pre.crm = c.id;
+          var b = el("button", "txt-btn", t("ov.invoiceIt", { d: fmtDate(mv.d) }));
+          b.type = "button";
+          b.addEventListener("click", function () { openIn("invoices", { "new": pre }); });
+          acts.appendChild(b);
+        });
+        if (acts.firstChild) s.appendChild(acts);
+      }
     });
     x.sups.forEach(function (r) {
       var s = sec(t("ov.sups") + " · " + r.name, "stock", { sup: r.id });
@@ -901,11 +968,233 @@
       if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
       if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
     }
-    if (!C.linksOf(data, c).length && !x.pub.titles.length) pane.appendChild(el("p", "hint", t("ov.none")));
+    if (x.budget.n) {
+      var sbu = sec(t("ov.budget"), "budget", {});
+      line(sbu, t("ov.budYear", { i: curMoney(x.budget.year.i, x.budget.cur), o: curMoney(x.budget.year.o, x.budget.cur) }),
+        t("ov.budAll", { n: x.budget.n, i: curMoney(x.budget.all.i, x.budget.cur), o: curMoney(x.budget.all.o, x.budget.cur) }));
+    }
+    if (!C.linksOf(data, c).length && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
+    renderContracts(pane, c);
     // the relationship itself
     var sr = sec(t("ov.rel"));
     line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));
     if (x.crm.deals) line(sr, t("ov.deals", { n: x.crm.deals, v: money(x.crm.val) }));
+  }
+
+  // ----- Actions, contracts and the partner folder (partner card W4) -----
+  // Each action opens the other app where the work is done; nothing is
+  // written there from here (prefills are saved only in that app).
+  function overviewActions(pane, c, x) {
+    var row = el("div", "chips ov-acts");
+    function chip(label, fn) {
+      var b = el("button", "txt-btn", label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      row.appendChild(b);
+    }
+    if (C.hasRole(data, c, "sup") || x.bills.n) chip(t("ac.bill"), function () { openIn("invoices", { newBill: { crm: c.id, name: c.name, afm: c.afm || "" } }); });
+    x.sups.slice(0, 3).forEach(function (r) { chip(t("ac.order") + (x.sups.length > 1 ? " · " + r.name : ""), function () { openIn("stock", { sup: r.id }); }); });
+    if (x.shops.length) chip(t("ac.settle"), function () { openIn("stock", { view: "cons" }); });
+    x.work.slice(0, 3).forEach(function (r) { chip(t("ac.hours") + (x.work.length > 1 ? " · " + r.name : ""), function () { openIn("timesheet", { client: r.id }); }); });
+    if (x.pub.titles.length || C.hasRole(data, c, "auth")) chip(t("ac.roy"), function () { openIn("publish", { view: "roy" }); });
+    if (diskApi()) chip(t("ac.folder"), function () { openFolder(c); });
+    if (row.firstChild) pane.appendChild(row);
+  }
+  function diskApi() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && typeof f.write === "function" && typeof f.stat === "function" && typeof f.mkdir === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  // /internal/CRM/<partner name>: a plain folder in Files, made on demand
+  function folderOf(c) {
+    var n = String(c.name || "").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/^[\s.-]+|[\s.]+$/g, "").slice(0, 60);
+    return "/internal/CRM/" + (n || c.id);
+  }
+  function openFolder(c) {
+    var fs = diskApi(), dir = folderOf(c);
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    Promise.resolve(fs.stat(dir)).catch(function () { return null; }).then(function (st) {
+      return st ? null : Promise.resolve(fs.mkdir("/internal/CRM")).catch(function () {}).then(function () { return fs.mkdir(dir); });
+    }).then(function () { openIn("files", { path: dir, dir: true }); }, function () { showToast(t("toast.noDisk")); });
+  }
+  // A file never replaces another: "name (2).ext" when the name is taken.
+  function freePath(fs, dir, name) {
+    var dot = name.lastIndexOf("."), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+    function attempt(i) {
+      var p = dir + "/" + (i > 1 ? base + " (" + i + ")" : base) + ext;
+      return Promise.resolve(fs.stat(p)).catch(function () { return null; }).then(function (st) { return st && i < 50 ? attempt(i + 1) : p; });
+    }
+    return attempt(1);
+  }
+  function fileName(f) {
+    var n = String(f && f.name || "file").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/^[\s.]+/, "").slice(-100);
+    return n || "file";
+  }
+  function ctrLine(k, today) {
+    var st = C.ctrState(k, today), bits = [];
+    if (k.from) bits.push(t("ct.fromD", { d: fmtDate(k.from) }));
+    if (k.val) bits.push(money(k.val));
+    if (k.file) bits.push(k.file.split("/").pop());
+    return { st: st, title: st === "ended" ? t("ct.ended", { d: fmtDate(k.to) }) : (st === "soon" ? t("ct.soon", { d: fmtDate(k.to) }) : (k.to ? t("ct.until", { d: fmtDate(k.to) }) : t("ct.noEnd"))),
+             sub: bits.join(" · ") };
+  }
+  function renderContracts(pane, c) {
+    var s = el("div", "sec"), h = secHead(t("ct.sec")), today = todayYmd();
+    h.appendChild(el("span", "spacer"));
+    var add = el("button", "link-btn", t("ct.add"));
+    add.type = "button";
+    add.addEventListener("click", function () { ctrEditor(null, c); });
+    h.appendChild(add);
+    s.appendChild(h);
+    var list = C.contractsOf(data, c.id, today);
+    if (!list.length) s.appendChild(el("p", "hint", t("ct.none")));
+    list.forEach(function (k) {
+      var l = ctrLine(k, today);
+      var row = el("button", "person ctr-row" + (l.st === "ended" ? " ended" : ""));
+      row.type = "button";
+      row.addEventListener("click", function () { ctrEditor(k, c); });
+      var m = el("span", "row-main");
+      m.appendChild(el("span", "row-title", k.t));
+      m.appendChild(el("span", "row-sub" + (l.st === "soon" ? " late" : ""), [l.title, l.sub].filter(Boolean).join(" · ")));
+      row.appendChild(m);
+      s.appendChild(row);
+    });
+    pane.appendChild(s);
+  }
+  // A row written without commit (the caller commits once for all).
+  function putRow(key, row) {
+    if (!data[key]) data[key] = [];
+    var list = data[key], prev = C.byId(list, row.id), next = Object.assign({}, row);
+    next.m = stamp(prev);
+    if (data.tombs[next.id] && data.tombs[next.id] >= next.m) next.m = data.tombs[next.id] + 1;
+    if (prev) list[list.indexOf(prev)] = next; else list.push(next);
+    return next;
+  }
+  // The contract and the follow-up that reminds of its end, in one write.
+  // The follow-up is an ordinary one (Agenda, Today, Calendar, reminders):
+  // moved with the end day while open, a new one when the end changes
+  // after it was done, removed when the end day is taken away.
+  function saveCtr(r, prev) {
+    var today = todayYmd(), cur = r.fup ? C.byId(data.fups, r.fup) : null;
+    if (r.fup && !cur) delete r.fup;
+    if (r.to && r.to >= today) {
+      var day = C.ctrRemindDay(r);
+      if (day < today) day = today;
+      var text = C.cleanText(t("ct.fup", { t: r.t, d: fmtDate(r.to) }), 300);
+      if (cur && !cur.done) {
+        if (cur.d !== day || cur.text !== text || cur.cust !== r.cust) putRow("fups", Object.assign({}, cur, { d: day, text: text, cust: r.cust }));
+      } else if (!cur || !prev || prev.to !== r.to || prev.rem !== r.rem) {
+        var f = putRow("fups", { id: C.newId(Date.now()), cust: r.cust, d: day, text: text });
+        r.fup = f.id;
+      }
+    } else if (!r.to && cur && !cur.done) {
+      tomb(cur.id);
+      delete r.fup;
+    }
+    putRow("ctr", r);
+    return commit();
+  }
+  function removeCtr(k) {
+    var f = k.fup ? C.byId(data.fups, k.fup) : null;
+    tomb(k.id);
+    if (f && !f.done) tomb(f.id); else f = null;
+    if (!commit()) return;
+    undoToast(t("toast.ctrDel"), function () {
+      delete data.tombs[k.id];
+      putRow("ctr", k);
+      if (f) { delete data.tombs[f.id]; putRow("fups", f); }
+      commit();
+    });
+  }
+  function openCtrFile(path) {
+    if (!diskApi()) { showToast(t("toast.noDisk")); return; }
+    openIn("files", { path: path });
+  }
+  function ctrEditor(k, c) {
+    var dlg = makeDialog("crm-ctr", true);
+    var x = k ? Object.assign({}, k) : { cust: c.id, t: "", rem: 30 };
+    dlg.appendChild(el("h2", "dlg-title", t(k ? "ct.edit" : "ct.new") + " · " + c.name));
+    var title = field(dlg, t("ct.t"), inp("text", x.t, 120, t("ct.tPh")));
+    var err = errorHint(dlg);
+    dlg.appendChild(err);
+    var row = el("div", "fld-row");
+    dlg.appendChild(row);
+    var from = field(row, t("ct.from"), inp("date", x.from || "", 10));
+    var to = field(row, t("ct.to"), inp("date", x.to || "", 10));
+    var row2 = el("div", "fld-row");
+    dlg.appendChild(row2);
+    var rems = [0, 7, 14, 30, 60, 90];
+    if (rems.indexOf(x.rem) < 0) rems.push(x.rem);
+    var rem = field(row2, t("ct.rem"), selectEl(rems.sort(function (a, b) { return a - b; }).map(function (n) {
+      return [String(n), n ? t("ct.remN", { n: n }) : t("ct.rem0")];
+    }), String(x.rem)));
+    var val = field(row2, t("ct.val", { c: data.prefs.cur }), inp("text", x.val ? (x.val / 100).toLocaleString(LOCALE) : "", 20));
+    val.inputMode = "decimal";
+    dlg.appendChild(el("p", "hint", t("ct.fupHint")));
+    var note = field(dlg, t("ct.note"), area(x.note || "", 2000));
+    // the file: picked here, written to the partner's folder only on Save
+    var pending = null, fileBox = el("div", "ctr-file");
+    function linkBtn(label, fn) {
+      var b = el("button", "link-btn", label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      fileBox.appendChild(b);
+    }
+    dlg.appendChild(el("span", "dlg-lbl", t("ct.file")));
+    dlg.appendChild(fileBox);
+    function drawFile() {
+      fileBox.innerHTML = "";
+      if (x.file) {
+        linkBtn(t("ct.openFile") + " · " + x.file.split("/").pop(), function () { dlg.close(); openCtrFile(x.file); });
+        linkBtn(t("ct.detach"), function () { delete x.file; drawFile(); });
+      } else if (pending) {
+        fileBox.appendChild(el("p", "hint", t("ct.pending", { n: fileName(pending) })));
+        linkBtn(t("ct.unpick"), function () { pending = null; drawFile(); });
+      } else if (diskApi()) {
+        linkBtn(t("ct.attach"), function () {
+          var host = dialogHost(), acc = ".pdf,application/pdf,image/*,.odt,.docx,.txt";
+          var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPick(acc);
+          Promise.resolve(pick).then(function (f) {
+            if (!f) return;
+            if (f.size > 20 * 1024 * 1024) { showToast(t("toast.fileBig")); return; }
+            pending = f;
+            drawFile();
+          }, function () {});
+        });
+      } else fileBox.appendChild(el("p", "hint", t("toast.noDisk")));
+    }
+    drawFile();
+
+    function save() {
+      var tt = C.cleanText(title.value, 120);
+      if (!tt) { err.textContent = t("ed.titleReq"); err.hidden = false; title.focus(); return; }
+      var cents = val.value.trim() ? C.parseMoney(val.value) : 0;
+      if (cents === null) { err.textContent = t("ed.valBad"); err.hidden = false; val.focus(); return; }
+      if (C.isYmd(from.value) && C.isYmd(to.value) && to.value < from.value) { err.textContent = t("ct.toBad"); err.hidden = false; to.focus(); return; }
+      var r = Object.assign({}, k || { id: C.newId(Date.now()), cust: c.id }, {
+        t: tt, from: C.isYmd(from.value) ? from.value : "", to: C.isYmd(to.value) ? to.value : "",
+        rem: +rem.value || 0, val: cents, note: C.cleanText(note.value, 2000, true)
+      });
+      ["from", "to", "val", "note"].forEach(function (f) { if (!r[f]) delete r[f]; });
+      if (x.file) r.file = x.file; else delete r.file;
+      dlg.close();
+      if (!pending) { saveCtr(r, k); return; }
+      var fs = diskApi(), dir = folderOf(c);
+      if (!fs) { showToast(t("toast.noDisk")); saveCtr(r, k); return; }
+      freePath(fs, dir, fileName(pending)).then(function (p) {
+        return fs.write(p, pending).then(function () { return p; });
+      }).then(function (p) {
+        r.file = p;
+        // the dialog was closed: re-read what is stored now before the write
+        var now = C.byId(data.ctr || [], r.id);
+        if (now && k && now.m !== k.m) r = Object.assign({}, now, { file: p });
+        if (saveCtr(r, k)) showToast(t("toast.fileSaved", { p: p.replace(/^\/internal\//, "") }));
+      }, function () { showToast(t("toast.noDisk")); saveCtr(r, k); });
+    }
+    actions(dlg, save, k ? function () { dlg.close(); removeCtr(k); } : null);
+    showDialog(dlg);
+    title.focus();
   }
 
   function whyText(w) { return w ? t("lk.why." + w) : ""; }
@@ -1303,7 +1592,7 @@
     var custDeals = data.deals.filter(function (d) { return d.cust === c.id; });
     var custFups = data.fups.filter(function (f) { return f.cust === c.id; });
     var openF = custFups.filter(function (f) { return !f.done; });
-    var subs = [["ov", t("sub.ov")], ["hist", t("sub.hist") + " (" + custActs.length + ")"],
+    var subs = [["ov", t("sub.ov")], ["hist", t("sub.hist") + " (" + histCount(c, custActs) + ")"],
                 ["deals", t("sub.deals") + " (" + custDeals.length + ")"],
                 ["fups", t("sub.fups") + " (" + openF.length + ")"]];
     var docs = docsFor(c);
@@ -1344,27 +1633,100 @@
     pane.appendChild(h);
   }
 
+  // ----- One timeline (partner card W3, crm/timeline.js) -----
+  var tlGroup = "", tlMore = 0;   // session only: the group shown, how many more pages
+  var TL_ICON = { won: "deal", lost: "deal", inv: "doc", cred: "doc", pay: "doc", bill: "doc", bpay: "doc",
+                  stmt: "doc", roy: "doc", bin: "doc", bout: "doc", po: "log", recv: "log", ship: "log",
+                  settle: "log", back: "log", work: "clock" };
+  function timelineOf(c) {
+    var TL = window.OrosCrmTimeline;
+    if (!TL) return null;
+    return TL.build({ data: data, cust: c, links: C.linksOf(data, c), tz: new Date().getTimezoneOffset(), day: todayYmd(),
+      inv: invData(), I: window.OrosInvoicesCore, alsoInv: invLinks(c), stock: stockData(), S: window.OrosStockCore,
+      ts: tsData(), pub: pubData(), bud: readForeign("oros-budget-data", function (raw) { return JSON.parse(raw); }) });
+  }
+  function tlLine(e) {
+    var bits = [t("tl." + e.k)];
+    if (e.n) bits.push(e.n);
+    if (typeof e.amt === "number" && (e.amt || e.k !== "stmt")) bits.push(e.cur ? curMoney(e.amt, e.cur) : money(e.amt));
+    if (e.q) bits.push(t("tl.pcs", { q: pieces(e.q) }));
+    if (e.ms) bits.push(t("ov.h", { n: (Math.round(e.ms / 360000) / 10).toLocaleString(LOCALE) }));
+    return bits.join(" · ");
+  }
   function renderHistory(pane, c, list) {
     addLine(pane, t("hist.add"), function () { logEditor(null, c.id); });
+    var all = tlCache && tlCache.id === c.id ? tlCache.all : timelineOf(c);
+    tlCache = null;
+    if (all) {
+      var TL = window.OrosCrmTimeline, groups = TL.GROUPS.filter(function (g) { return TL.filter(all, g).length; });
+      if (groups.length > 1) {
+        var chips = el("div", "chips");
+        [""].concat(groups).forEach(function (g) {
+          var b = el("button", "chip" + (tlGroup === g ? " on" : ""), t("tl.g." + (g || "all")));
+          b.type = "button";
+          b.setAttribute("aria-pressed", tlGroup === g ? "true" : "false");
+          b.addEventListener("click", function () { tlGroup = g; tlMore = 0; renderDetail(); });
+          chips.appendChild(b);
+        });
+        pane.appendChild(chips);
+      } else tlGroup = "";
+      var shown = TL.filter(all, tlGroup);
+      if (!shown.length) { pane.appendChild(el("p", "hint", t("hist.none"))); return; }
+      var box = el("div", "timeline"), limit = 150 * (tlMore + 1);
+      shown.slice(0, limit).forEach(function (e) {
+        if (e.k === "act") {
+          var a = C.byId(data.acts, e.act);
+          if (a) box.appendChild(actItem(a, c));
+          return;
+        }
+        var it = el("button", "tl-item");
+        it.type = "button";
+        it.style.textAlign = "left";
+        var ico = el("span", "tl-ico");
+        ico.innerHTML = UI[TL_ICON[e.k] || "log"];
+        it.appendChild(ico);
+        var main = el("span", "row-main");
+        main.appendChild(el("span", "tl-when", [fmtDate(e.day), t("tl.app." + (e.open ? e.open.app : "crm"))].join(" · ")));
+        main.appendChild(el("span", "tl-text", tlLine(e)));
+        if (e.text) main.appendChild(el("span", "tl-when", e.text));
+        if (e.from) main.appendChild(el("span", "tl-when", fmtDate(e.from) + " – " + fmtDate(e.day)));
+        it.appendChild(main);
+        it.addEventListener("click", function () {
+          if (e.deal) { var d = C.byId(data.deals, e.deal); if (d) dealEditor(d, c.id); return; }
+          if (e.open) openIn(e.open.app, e.open.target);
+        });
+        box.appendChild(it);
+      });
+      pane.appendChild(box);
+      if (shown.length > limit) addLine(pane, t("tl.more", { n: shown.length - limit }), function () { tlMore++; renderDetail(); });
+      return;
+    }
     if (!list.length) { pane.appendChild(el("p", "hint", t("hist.none"))); return; }
     var tl = el("div", "timeline");
-    list.forEach(function (a) {
-      var it = el("button", "tl-item");
-      it.type = "button";
-      it.style.textAlign = "left";
-      var ico = el("span", "tl-ico");
-      ico.innerHTML = UI[KIND_ICON[a.k]];
-      it.appendChild(ico);
-      var main = el("span", "row-main");
-      var dealRow = a.deal ? C.byId(data.deals, a.deal) : null;
-      var meta = [t("k." + a.k), fmtMs(a.at), a.who || "", dealRow ? dealRow.title : ""].filter(Boolean).join(" · ");
-      main.appendChild(el("span", "tl-when", meta));
-      if (a.text) main.appendChild(el("span", "tl-text", a.text));
-      it.appendChild(main);
-      it.addEventListener("click", function () { logEditor(a, c.id); });
-      tl.appendChild(it);
-    });
+    list.forEach(function (a) { tl.appendChild(actItem(a, c)); });
     pane.appendChild(tl);
+  }
+  var tlCache = null;   // one build per drawing: the tab's count, then the list
+  function histCount(c, acts) {
+    var all = timelineOf(c);
+    tlCache = { id: c.id, all: all };
+    return all ? all.length : acts.length;
+  }
+  function actItem(a, c) {
+    var it = el("button", "tl-item");
+    it.type = "button";
+    it.style.textAlign = "left";
+    var ico = el("span", "tl-ico");
+    ico.innerHTML = UI[KIND_ICON[a.k]];
+    it.appendChild(ico);
+    var main = el("span", "row-main");
+    var dealRow = a.deal ? C.byId(data.deals, a.deal) : null;
+    var meta = [t("k." + a.k), fmtMs(a.at), a.who || "", dealRow ? dealRow.title : ""].filter(Boolean).join(" · ");
+    main.appendChild(el("span", "tl-when", meta));
+    if (a.text) main.appendChild(el("span", "tl-text", a.text));
+    it.appendChild(main);
+    it.addEventListener("click", function () { logEditor(a, c.id); });
+    return it;
   }
 
   function dealRowEl(d, showCust) {
