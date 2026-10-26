@@ -3515,9 +3515,38 @@
     search.focus();
     acFetch(q);
   }
+  // Assistant's Directions card (AS-DO): { routeTo: { name, lat?, lon?,
+  // query? }, mode? car|bike|foot }. The route from the user's location
+  // to that point (popup "Route" does the same); only a query → the
+  // first place it finds (Photon, offline packs without network).
+  function routeToTarget(x, mode) {
+    if (!map || !x || typeof x !== "object" || Array.isArray(x) || document.querySelector("dialog[open]")) return;
+    var name = cleanLine(x.name, 120);
+    if (["car", "bike", "foot"].indexOf(mode) >= 0 && mode !== routeProfile) setRouteProfile(mode);
+    function go(lat, lon, nm, sub) { startRouteTo({ lat: lat, lon: lon, name: nm || name || t("route.ptmap"), sub: sub || "" }); }
+    var lat = x.lat, lon = x.lon;
+    if (typeof lat === "number" && typeof lon === "number" && isFinite(lat) && isFinite(lon) &&
+        lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) { go(lat, lon, name, ""); return; }
+    var q = cleanLine(x.query, 200);
+    if (!q) return;
+    function fromPacks(fallback) {
+      offlineFind(q, 1).then(function (oh) {
+        if (oh && oh.length) go(oh[0].lat, oh[0].lon, name || oh[0].name, oh[0].sub);
+        else showToast(fallback);
+      });
+    }
+    if (!navigator.onLine) { fromPacks(t("search.offline")); return; }
+    photonGet(q, 1, false).then(function (json) {
+      var f = json.features && json.features[0];
+      var h = f && f.geometry ? photonHit(f) : null;
+      if (!h || !isFinite(h.lat) || !isFinite(h.lon)) { showToast(t("search.empty")); return; }
+      go(h.lat, h.lon, name || (h.name !== "?" ? h.name : q), h.sub);
+    }).catch(function () { fromPacks(t("search.err")); });
+  }
   // { locate: true }: the single app's "My location" icon shortcut.
   window.__orosOpenAt = function (target) {
     if (target && target.asNew) asNewPlace(target.asNew);
+    else if (target && target.routeTo) routeToTarget(target.routeTo, target.mode);
     else if (target && target.locate === true && map) getUserLocation(function () {});
   };
 
@@ -3973,6 +4002,7 @@
   setTimeout(function () {
     var pt = mapsHost.pendingTarget;
     if (pt && pt.asNew) { mapsHost.pendingTarget = null; asNewPlace(pt.asNew); }
+    else if (pt && pt.routeTo) { mapsHost.pendingTarget = null; routeToTarget(pt.routeTo, pt.mode); }
     else if (pt && pt.locate === true && map) { mapsHost.pendingTarget = null; getUserLocation(function () {}); }
   }, 400);
 

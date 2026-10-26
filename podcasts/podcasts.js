@@ -2735,7 +2735,11 @@
     if (!H || !t || typeof t.show !== "string" || document.querySelector("dialog[open]")) return;
     if (!C.findShow(D(), t.show)) return;
     openShow(t.show);
-    if (typeof t.ep === "string" && epIndex[t.ep] && epIndex[t.ep].sid === t.show) notesDlg(t.ep);
+    if (typeof t.ep !== "string" || !epIndex[t.ep] || epIndex[t.ep].sid !== t.show) return;
+    // { show, ep, play: true }: the Assistant's Play card (AS-DO): the
+    // episode starts (or goes on), never paused by it.
+    if (t.play === true) { if (!H.getState().playing || H.getState().cur.id !== t.ep) playEp(t.ep); return; }
+    notesDlg(t.ep);
   }
 
   function boot() {

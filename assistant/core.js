@@ -14,6 +14,8 @@
 //      with textContent only, never HTML)
 //   9. System prompt
 //  10. Entry cards (propose_entry → an app's own prefill bridge)
+//  10b. Actions (do_action: a timer, an alarm, open, play, directions)
+//  10c. Change history (device-local, 30 days, Undo later)
 //  11. Conversation files (optional sync through Vault Drive)
 //  12. Automation cards (propose_automation → the app's editor,
 //      recipes/share.js; wave A3)
@@ -1705,6 +1707,52 @@
       required: ["links"]
     }
   };
+  // AS-DO (wave A6): one thing done in an app on the user's press.
+  var DO_KINDS = ["timer", "alarm", "open", "play", "directions"];
+  function doTool(kinds) {
+    var k = DO_KINDS.filter(function (x) { return kinds.indexOf(x) >= 0; });
+    return {
+      name: "do_action",
+      description: "Do one thing for the user in an orOS app when they press the card's button: " +
+        "timer (minutes and/or seconds, label?: starts a countdown in Time) · alarm (at HH:MM, label?, daily?: fills Time's alarm form; the user presses Add) · " +
+        "open (ref: an item from search_data or create_items, or app: an app's id) · " +
+        "play (ref: a Music track, a Radio station or a Podcasts episode found with search_data) · " +
+        "directions (to: an address or place name, or lat+lon; mode car|bike|foot: the route from the user's location in Maps). " +
+        "Nothing happens before the press, so say it is ready, never that it is done. One action per call.",
+      params: {
+        type: "object",
+        properties: {
+          kind: { type: "string", "enum": k },
+          minutes: { type: "number", description: "timer: minutes (with seconds, added)." },
+          seconds: { type: "number", description: "timer: seconds." },
+          label: { type: "string", description: "timer, alarm: a short name (\"Tea\")." },
+          at: { type: "string", description: "alarm: HH:MM, 24h." },
+          daily: { type: "boolean", description: "alarm: every day." },
+          ref: { type: "string", description: "open, play: the item's ref." },
+          app: { type: "string", description: "open: an app's id, to open the app itself." },
+          to: { type: "string", description: "directions: an address or a place's name." },
+          lat: { type: "number" }, lon: { type: "number" },
+          mode: { type: "string", "enum": ["car", "bike", "foot"] }
+        },
+        required: ["kind"]
+      }
+    };
+  }
+  // AS-HIST (wave A6): what the assistant changed on this device.
+  var TOOL_HISTORY = {
+    name: "change_history",
+    description: "What you (the assistant) added, changed or linked in the user's apps on this device in the last 30 days, newest first, " +
+      "and whether the user undid it. Use it for questions like \"what did you change yesterday?\". The user sees the list as a card " +
+      "with Undo next to each change that can still be undone; you never undo anything yourself.",
+    params: {
+      type: "object",
+      properties: {
+        from: { type: "string", description: "First day, YYYY-MM-DD (default: 30 days ago)." },
+        to: { type: "string", description: "Last day, YYYY-MM-DD (default: today)." },
+        app: { type: "string", description: "Only this app's id." }
+      }
+    }
+  };
   var TOOL_LINK = {
     name: "link_contact",
     description: "Link CRM customers to contacts in Contacts: the contact becomes one of the customer's people, shown live on the " +
@@ -2040,6 +2088,8 @@
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
     if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
+    if (opts.actions && opts.actions.length) out.push(doTool(opts.actions));
+    if (opts.history) out.push(TOOL_HISTORY);
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
     if (opts.cover) out.push(TOOL_COVER);
@@ -2342,6 +2392,16 @@
         (opts.creates.indexOf("travel_plan") >= 0 ? " Itinerary entries and packing items belong to a trip: give its ref as trip (search_data in travel first); a new trip itself is made in Travel." : "") +
         (opts.partnerLinks ? " When a CRM customer is the same partner as a Stock supplier or consignment shop, a Timesheet client, an Invoices client or a person on Publishing titles, link them with link_items (find both with search_data first) so CRM's card shows it all; never say they are linked because the names match. Calendar events have no link to a customer: a meeting or call to come with a customer is a CRM follow-up (create_items crm_followup), which Calendar shows." : "") +
         (opts.links ? " To link a CRM customer with a contact (the same person, or the company's contact person), call link_contact with both refs, or give contact when you create the customer; find both with search_data first, and create the contact first when it is missing. Never say they are linked by the same name or e-mail: only a link links them." : ""));
+    }
+    // AS-DO, AS-HIST (wave A6)
+    if (!opts.builtin && opts.actions && opts.actions.length) {
+      lines.push("When the user asks you to do something now (\"countdown 25 minutes\", \"wake me at 7\", \"play my jazz station\", \"open the invoice\", \"how do I get to Anna's\"), call do_action. " +
+        "For play and open, find the item first with search_data (music, radio, podcasts or the item's app). For directions to a person or customer, read their address from Contacts or CRM and give it as to. " +
+        "The user presses the card's button; never say it is started, set or playing.");
+    }
+    if (!opts.builtin && !opts.chatOnly && opts.history) {
+      lines.push("Questions about what you changed before (\"what did you change yesterday?\", \"undo what you added to my calendar\") are answered with change_history: it lists what was added, changed or linked on this device in the last 30 days. " +
+        "Tell it from the result, briefly; the user undoes something with Undo on the card. Changes from other devices or older than 30 days are not there.");
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
@@ -2939,6 +2999,161 @@
     return ENTRY_ORDER.filter(function (k) { return !has || has(ENTRY_KINDS[k]); });
   }
 
+  // ---------- 10b. Actions (do_action, AS-DO, wave A6) ----------
+  // One thing done in an app when the user presses the card's button,
+  // through what the app already takes: Time's command targets (a
+  // timer starts, an alarm fills the form: commands/core.js BR-CMD),
+  // a search hit opened as the menu search opens it (Music plays a
+  // track, Radio a station), Podcasts { show, ep, play }, Maps
+  // { routeTo, mode }. Nothing is written by the assistant.
+  // args = the model's input; opts = { has(appId) → installed,
+  // refOf(ref) → { app, target, title } | null }.
+  // → { ok, kind, app, call: { fn: "openAt" | "assistOpen", args }, view }
+  var PLAY_APPS = { music: 1, radio: 1, podcasts: 1 };
+  function hms(sec) {
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
+    function p2(n) { return (n < 10 ? "0" : "") + n; }
+    return (h ? h + ":" + p2(m) : String(m)) + ":" + p2(x);
+  }
+  function normAction(args, opts) {
+    opts = opts || {};
+    if (!isObj(args)) return bad("The arguments must be an object.");
+    var kind = String(args.kind || "");
+    if (DO_KINDS.indexOf(kind) < 0) return bad("Unknown kind. Use one of: " + DO_KINDS.join(", ") + ".");
+    var has = opts.has || function () { return true; };
+    var view = { fields: [] }, out = { ok: true, kind: kind, view: view };
+    if (kind === "timer" || kind === "alarm") {
+      if (!has("time")) return bad("The Time app is not installed.");
+      out.app = "time";
+      var lb = line(args.label, kind === "timer" ? 40 : 60);
+      if (kind === "timer") {
+        var mn = args.minutes == null || args.minutes === "" ? 0 : num(args.minutes);
+        var sc = args.seconds == null || args.seconds === "" ? 0 : num(args.seconds);
+        if (!(mn >= 0) || !(sc >= 0)) return bad("minutes and seconds must be numbers, 0 or more.");
+        var sec = Math.round(mn * 60 + sc);
+        if (sec < 1) return bad("timer needs minutes or seconds.");
+        if (sec > 360000) return bad("A timer runs at most 100 hours.");
+        out.call = { fn: "openAt", args: ["time", { timer: { sec: sec, label: lb } }] };
+        view.fields.push(["duration", hms(sec)]);
+      } else {
+        var at = typeof args.at === "string" ? args.at.trim() : "";
+        var am = /^(\d{1,2}):(\d{2})$/.exec(at);
+        if (!am || +am[1] > 23 || +am[2] > 59) return bad("alarm needs at as HH:MM (24h).");
+        at = (am[1].length < 2 ? "0" : "") + am[1] + ":" + am[2];
+        out.call = { fn: "openAt", args: ["time", { alarm: { at: at, label: lb, daily: args.daily === true } }] };
+        view.fields.push(["at", at]);
+        if (args.daily === true) view.fields.push(["daily", "yes"]);
+      }
+      if (lb) view.title = lb;
+      return out;
+    }
+    if (kind === "directions") {
+      if (!has("maps")) return bad("The Maps app is not installed.");
+      out.app = "maps";
+      var to = line(args.to, 200), rt = {};
+      var lat = num(args.lat), lon = num(args.lon);
+      var pt = isFinite(lat) && isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+      if ((args.lat != null || args.lon != null) && !pt) return bad("lat and lon must both be real coordinates.");
+      if (!pt && !to) return bad("directions needs to (an address or a place) or lat and lon.");
+      if (to) rt.name = to.slice(0, 120);
+      if (pt) { rt.lat = lat; rt.lon = lon; } else rt.query = to;
+      var tg = { routeTo: rt };
+      if (args.mode != null && args.mode !== "") {
+        if (["car", "bike", "foot"].indexOf(args.mode) < 0) return bad("mode is car, bike or foot.");
+        tg.mode = args.mode;
+        view.fields.push(["mode", args.mode]);
+      }
+      out.call = { fn: "openAt", args: ["maps", tg] };
+      view.title = to || (lat.toFixed(5) + ", " + lon.toFixed(5));
+      return out;
+    }
+    // open, play: a ref (or, for open, an app)
+    var ref = line(args.ref, 40).replace(/^oros:/, "");
+    if (kind === "open" && !ref) {
+      var app = line(args.app, 40);
+      if (!app) return bad("open needs ref (an item) or app (an app's id).");
+      if (!has(app)) return bad("There is no app " + app + " installed.");
+      out.app = app;
+      out.call = { fn: "openAt", args: [app, null] };
+      return out;
+    }
+    var r = ref && opts.refOf ? opts.refOf(ref) : null;
+    if (!r || typeof r.app !== "string") return bad(kind + " needs the ref of an item from search_data or create_items in this conversation.");
+    if (!has(r.app)) return bad("The " + r.app + " app is not installed.");
+    var target = r.target === undefined ? null : JSON.parse(JSON.stringify(r.target));
+    if (kind === "play") {
+      var ok = PLAY_APPS[r.app] && (r.app === "radio" ? typeof target === "string" && !!target :
+        r.app === "music" ? isObj(target) && typeof target.track === "string" :
+        isObj(target) && typeof target.show === "string" && typeof target.ep === "string");
+      if (!ok) return bad("play takes a Music track, a Radio station or a Podcasts episode (search_data in that app); open other items with open.");
+      if (r.app === "podcasts") target.play = true;
+    }
+    out.app = r.app;
+    out.call = { fn: "assistOpen", args: [r.app, target] };
+    view.title = line(r.title, 200);
+    return out;
+  }
+
+  // ---------- 10c. Change history (AS-HIST, wave A6) ----------
+  // Every add, change and link the user applied, kept on this device
+  // only (the Assistant's IndexedDB, never synced or exported) for 30
+  // days with what Undo needs: Undo works after the Assistant was left,
+  // through the same checks (nothing is undone when the record changed
+  // since). Entry: { id, at, app (the app's id), name (its shown name),
+  // kind: "change" | "add" | "link", act?, title?, items: [titles], n,
+  // undo, st: "done" | "undone", ut? }.
+  var HIST_DAYS = 30, HIST_MAX = 500, HIST_ITEMS = 50, HIST_SHOW = 50;
+  function histEntry(o) {
+    var items = (Array.isArray(o.items) ? o.items : []).map(function (x) { return line(x, 120); }).filter(Boolean);
+    var e = { id: String(o.id), at: Math.floor(o.at), app: line(o.app, 40), name: line(o.name, 60), kind: o.kind,
+              items: items.slice(0, HIST_ITEMS), n: typeof o.n === "number" ? o.n : items.length, undo: o.undo, st: "done" };
+    if (o.act) e.act = line(o.act, 20);
+    if (o.title) e.title = line(o.title, 200);
+    return e;
+  }
+  // → { keep: newest first, drop: [ids] }: older than 30 days, or past 500.
+  function histPrune(list, now) {
+    var cut = now - HIST_DAYS * 86400000, keep = [], drop = [];
+    (Array.isArray(list) ? list : []).slice().sort(function (a, b) { return (b && b.at || 0) - (a && a.at || 0); }).forEach(function (e) {
+      if (!isObj(e) || typeof e.id !== "string") return;
+      if (!(e.at > cut) || keep.length >= HIST_MAX) drop.push(e.id); else keep.push(e);
+    });
+    return { keep: keep, drop: drop };
+  }
+  function canUndo(e, now) { return isObj(e) && e.st === "done" && !!e.undo && e.at > now - HIST_DAYS * 86400000; }
+  function localDay(ms) { return ymd(ms); }
+  function localTime(ms) {
+    var d = new Date(ms);
+    return (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
+  }
+  // change_history's args → { ok, list: entries (newest first), more } |
+  // { ok: false, err }. allowed(appId): the apps the user still lets the
+  // assistant read (an app turned off since stays out).
+  function histQuery(list, args, now, allowed) {
+    var a = isObj(args) ? args : {};
+    var from = a.from ? realDate(a.from) : "", to = a.to ? realDate(a.to) : "";
+    if (a.from && !from) return bad("from must be a real date as YYYY-MM-DD.");
+    if (a.to && !to) return bad("to must be a real date as YYYY-MM-DD.");
+    if (from && to && from > to) return bad("from is after to.");
+    var app = line(a.app, 40);
+    var hits = histPrune(list, now).keep.filter(function (e) {
+      var d = localDay(e.at);
+      return (!from || d >= from) && (!to || d <= to) && (!app || e.app === app) && (!allowed || allowed(e.app));
+    });
+    return { ok: true, list: hits.slice(0, HIST_SHOW), more: Math.max(0, hits.length - HIST_SHOW) };
+  }
+  // What the model hears: no undo data, never more than the titles.
+  function histForModel(list, now) {
+    return list.map(function (e) {
+      var o = { when: localDay(e.at) + " " + localTime(e.at), app: e.app, what: e.kind === "change" ? (e.act || "update") : e.kind, items: e.items };
+      if (e.title && e.kind === "change") o.title = e.title;
+      if (e.n > e.items.length) o.more_items = e.n - e.items.length;
+      if (e.st === "undone") o.undone = true;
+      else o.can_undo = canUndo(e, now);
+      return o;
+    });
+  }
+
   // ---------- 11. Conversation files ----------
   // With "Sync conversations" on, each chat is also a file on the orOS
   // disk, CHAT_DIR/<id>.json, which Vault Drive carries (encrypted) to
@@ -3047,6 +3262,7 @@
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
     toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat,
     ATT_TYPES: ATT_TYPES, ATT_MAX: ATT_MAX, ATT_FILE: ATT_FILE, attRoom: attRoom, attBudget: attBudget, ATT_IMG: ATT_IMG, ATT_PDF: ATT_PDF, ATT_DOC: ATT_DOC, ATT_SEND: ATT_SEND,

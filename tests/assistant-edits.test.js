@@ -303,9 +303,14 @@ test("assistant.js: changes need the user's press, undo is never read from a sto
   const fn = src.slice(src.indexOf("function changeItem("), src.indexOf("function undoChange("));
   assert.ok(fn.indexOf("askChange(") > 0 && fn.indexOf("askChange(") < fn.indexOf("writeStore("));
   assert.match(fn, /if \(!ok\)/);
-  // undo comes from memory only
+  // undo comes from memory or this device's change log (AS-HIST,
+  // IndexedDB "log"), found by the card's id, never from the chat
   assert.match(src, /var undoMem = \{\};/);
-  assert.match(src.slice(src.indexOf("function undoChange("), src.indexOf("function chgValue(")), /undoMem\[ui\.u\]/);
+  assert.match(src.slice(src.indexOf("function undoChange("), src.indexOf("function chgValue(")), /undoCard\(c, r,/);
+  const byId = src.slice(src.indexOf("function undoById("), src.indexOf("function undoCard("));
+  assert.match(byId, /var e = hist\[id\], mem = undoMem\[id\] \|\| \(C\.canUndo\(e, Date\.now\(\)\) \? e\.undo : null\)/);
+  assert.doesNotMatch(src.slice(src.indexOf("function undoCard("), src.indexOf("function histRow(")), /ui\.undo|r\.undo/);
+  assert.match(src, /idbAll\("log"\)/);
   // no speech recognition: in Chrome it streams the audio to Google (removed 2026-10-14)
   assert.doesNotMatch(src, /SpeechRecognition|voiceOk|mic-btn/);
   const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
