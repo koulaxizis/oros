@@ -48,6 +48,7 @@
   var C = window.OrosAssistCore;
   var S = window.OrosAssistSummary;
   var E = window.OrosAssistEdits;
+  var N = window.OrosAssistCreate;
   var STORAGE_KEY = "oros-assistant-data";
   var PREFS_KEY   = "oros-assistant-prefs";
   var DB_NAME     = "oros-assistant";
@@ -241,7 +242,7 @@
       "share.always": "Always share from {apps} without asking",
       "share.yes": "Share ({n})", "share.no": "Don't share",
       "note.stopped": "Stopped.", "note.refused": "The assistant declined to answer this.",
-      "note.cut": "The answer was cut off because it was too long.",
+      "note.cut": "The answer was cut off: it was still too long after it went on 4 times. Write \"go on\" for the rest.",
       "note.rounds": "The assistant stopped after too many searches. Ask again more precisely.",
       "err.key": "{name} did not accept the key. Check it in Settings.",
       "err.credit": "Your {name} account has no credit left.",
@@ -356,6 +357,17 @@
       "chg.tickHint": "Untick a row to leave it as it is.", "chg.tick": "Change {f}",
       "f.nickname": "Nickname", "f.job": "Job title", "f.website": "Website", "f.taxoffice": "Tax office",
       "chg.sum": "Every one of the {n} items gets:", "chg.showAll": "Show all ({n} more)",
+      "cr.ask": "Add {n} to {app}?", "cr.askLink": "Link in {app}?",
+      "cr.text": "{name} asks to add these to {app}. Untick what should not be added: nothing is saved until you press Add.",
+      "cr.textLink": "{name} asks to link these customers with their contacts. Nothing changes until you press Link; Contacts stays as it is.",
+      "cr.tickHint": "Untick a row to leave it out.", "cr.tick": "Add {name}", "cr.tickLink": "Link {name}",
+      "cr.yes": "Add ({n})", "cr.no": "Don't add", "cr.yesLink": "Link", "cr.noLink": "Don't link",
+      "cr.dup": "Already there: {name}. Left out unless you tick it.", "cr.same": "Linked already.",
+      "cr.linkRow": "{cust} ↔ {name}",
+      "cr.done": "Added to {app} ({n})", "cr.linked": "Linked in {app} ({n})", "cr.declined": "Not added: you said no",
+      "cr.declinedLink": "Not linked: you said no", "cr.failed": "Not saved: {msg}",
+      "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
+      "f.people": "People",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
       "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
@@ -529,7 +541,7 @@
       "share.always": "Να μοιράζονται πάντα χωρίς ερώτηση από: {apps}",
       "share.yes": "Κοινοποίηση ({n})", "share.no": "Όχι",
       "note.stopped": "Διακόπηκε.", "note.refused": "Ο βοηθός αρνήθηκε να απαντήσει σε αυτό.",
-      "note.cut": "Η απάντηση κόπηκε γιατί ήταν πολύ μεγάλη.",
+      "note.cut": "Η απάντηση κόπηκε: ήταν ακόμα πολύ μεγάλη αφού συνέχισε 4 φορές. Γράψε «συνέχισε» για το υπόλοιπο.",
       "note.rounds": "Ο βοηθός σταμάτησε μετά από πολλές αναζητήσεις. Ρώτα ξανά πιο συγκεκριμένα.",
       "err.key": "Το {name} δεν δέχτηκε το κλειδί. Έλεγξέ το στις Ρυθμίσεις.",
       "err.credit": "Ο λογαριασμός σου στο {name} δεν έχει άλλη πίστωση.",
@@ -644,6 +656,17 @@
       "chg.tickHint": "Βγάλε το τικ από μια γραμμή για να μείνει όπως είναι.", "chg.tick": "Αλλαγή: {f}",
       "f.nickname": "Ψευδώνυμο", "f.job": "Ιδιότητα", "f.website": "Ιστότοπος", "f.taxoffice": "ΔΟΥ",
       "chg.sum": "Και τα {n} στοιχεία παίρνουν:", "chg.showAll": "Δείξε όλες ({n} ακόμη)",
+      "cr.ask": "Προσθήκη {n} ({app});", "cr.askLink": "Σύνδεση ({app});",
+      "cr.text": "Το {name} ζητά να προστεθούν αυτά ({app}). Βγάλε το τικ από ό,τι δεν θέλεις: τίποτα δεν αποθηκεύεται πριν πατήσεις Προσθήκη.",
+      "cr.textLink": "Το {name} ζητά να συνδεθούν αυτοί οι πελάτες με τις επαφές τους. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι Επαφές μένουν όπως είναι.",
+      "cr.tickHint": "Βγάλε το τικ από μια γραμμή για να μη γίνει.", "cr.tick": "Προσθήκη: {name}", "cr.tickLink": "Σύνδεση: {name}",
+      "cr.yes": "Προσθήκη ({n})", "cr.no": "Να μην προστεθούν", "cr.yesLink": "Σύνδεση", "cr.noLink": "Να μη συνδεθούν",
+      "cr.dup": "Υπάρχει ήδη: {name}. Δεν προστίθεται αν δεν βάλεις τικ.", "cr.same": "Ήδη συνδεδεμένοι.",
+      "cr.linkRow": "{cust} ↔ {name}",
+      "cr.done": "Προστέθηκαν ({app}): {n}", "cr.linked": "Συνδέθηκαν ({app}): {n}", "cr.declined": "Δεν προστέθηκαν: είπες όχι",
+      "cr.declinedLink": "Δεν συνδέθηκαν: είπες όχι", "cr.failed": "Δεν αποθηκεύτηκε: {msg}",
+      "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
+      "f.people": "Άνθρωποι",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
       "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
@@ -1031,6 +1054,8 @@
     return !!(keyCache[pid] && keyCache[pid].key);
   }
 
+  // Output ceilings Claude named for a model (a 400), for this session.
+  var outMax = {};
   // One streamed request → reducer result. onText(text) as it arrives.
   function callModel(pid, msgs, opts, signal, onText) {
     var p = C.PROVIDERS[pid];
@@ -1054,11 +1079,16 @@
             if (p.kind === "anthropic" && !(o && o.noThinking) && C.thinkingRefused(err)) {
               return send(Object.assign({}, o, { noThinking: true }));
             }
+            // A model with a lower output ceiling than we know: once more with it.
+            var lim = p.kind === "anthropic" && !(o && o.maxTokens) ? C.maxTokensRefused(err) : 0;
+            if (lim) { outMax[modelOf(pid)] = lim; return send(Object.assign({}, o, { maxTokens: lim })); }
             throw err;
           });
         });
       }
-      return send(opts || {});
+      var o0 = Object.assign({}, opts || {});
+      if (p.kind === "anthropic" && outMax[modelOf(pid)]) o0.maxTokens = outMax[modelOf(pid)];
+      return send(o0);
     }).then(function (res) {
       var red = C.makeReducer(pid);
       var sse = C.makeSSE(function (d) {
@@ -2097,12 +2127,14 @@
     var kinds = builtin ? [] : entryKinds();
     var sumIds = summaryIds(apps);
     var chgApps = builtin ? [] : changeApps(apps);
+    var crIds = builtin ? [] : createApps(apps).map(function (a) { return a.id; });
+    var lkOn = crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0;
     var rcApps = builtin ? [] : recipeApps();
     var nlOn = !builtin && !!installed().newsletter;
     var cvOn = !builtin && !!installed().layout;
     var wmode = webMode(pid);
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
-                                            changes: chgApps.length > 0, web: !!wmode && wmode !== "native",
+                                            changes: chgApps.length > 0, creates: crIds, links: lkOn, web: !!wmode && wmode !== "native",
                                             recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -2110,6 +2142,8 @@
       apps: apps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       entries: kinds,
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      creates: crIds,
+      links: lkOn,
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
@@ -2118,21 +2152,38 @@
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
     var web = wmode === "native";
-    var round = 0;
+    var round = 0, conts = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
+      // Carrying on a cut answer: the live view shows it whole.
+      var head = contHead(c.msgs, c.msgs.length);
+      var before = head >= 0 ? joinedText(c.msgs, head) : "";
+      busy.join = head;
+      if (head >= 0) { busy.live = before; renderMessages(); }
       return callModel(pid, withFiles(c.msgs), { system: system, tools: tools, web: web }, ctl && ctl.signal, function (txt) {
-        busy.live = txt;
+        busy.live = before + txt;
         scheduleLive();
       }).then(function (res) {
         addUsage(pid, res.usage);
         var m = { r: "asst", prov: pid, model: modelOf(pid), text: res.text, raw: res.raw };
         if (res.tools.length) m.tools = res.tools;
+        if (res.cut && !res.tools.length) m.cut = 1;
         c.msgs.push(m);
         if (res.refused) note("info", t("note.refused"));
-        if (res.cut) note("info", t("note.cut"));
         busy.live = "";
+        busy.join = -1;
+        // Cut at the output limit (with no complete tool call to run):
+        // a hidden "continue" goes, and the answer carries on as one.
+        if (m.cut) {
+          if (conts < C.CONT_ROUNDS && !C.PROVIDERS[pid].device) {
+            conts++;
+            c.msgs.push({ r: "user", cont: 1, text: C.CONT_TEXT });
+            saveChat(c);
+            return next();
+          }
+          note("info", t("note.cut"));
+        }
         saveChat(c);
         renderMessages();
         // A long web search pauses the turn on Anthropic's side: the same
@@ -2160,6 +2211,7 @@
       : next();
     first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
+        if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
         if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
       } else {
@@ -2268,6 +2320,8 @@
     if (call.name === "newsletter_check") return Promise.resolve(proposeNlCheck(c, call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
+    if (call.name === "create_items") return createItems(c, call.args, apps);
+    if (call.name === "link_contact") return linkContact(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
@@ -2599,6 +2653,8 @@
   // Apply, one write. Every item is checked again on Apply against
   // what the card showed; if any one changed meanwhile or no longer
   // fits, nothing is written. Undo takes all of them back, or none.
+  // An item that can't take the change stays off the card and is named
+  // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
   function changeMany(c, args, apps) {
     if (args.action !== "update") return Promise.resolve({ content: "Error: refs is only for update; change other things one item at a time with ref.", err: 1 });
@@ -2642,9 +2698,10 @@
       data = res.data;
       plans.push({ x: x, pl: pl });
     });
-    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length && bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
     if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
     var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
     return askChange(app.name, { many: many }, "update").then(function (ok) {
@@ -2684,27 +2741,35 @@
   // every row, so the user leaves out what should stay. Planned in a
   // row on the same data; on Apply each item is checked again against
   // what the card showed, and if one changed meanwhile nothing is
-  // written. Undo takes all of them back, or none.
+  // written. Undo takes all of them back, or none. An entry that can't
+  // be changed (a note too long, an unknown ref…) stays off the card and
+  // is named in the result; the others still go (CT-N2K).
   var LIST_MAX = 100;
+  // CT-N2K: entries that could not go on the card, for the model.
+  function badNote(bad) {
+    return bad.length ? " Not on the card, so not changed (" + bad.length + "): " + bad.join(" · ") + " Tell the user which ones and why; fix and send only these again, and never shorten the user's text unless they ask." : "";
+  }
   function changeList(c, args, apps) {
     if (args.action && args.action !== "update") return Promise.resolve({ content: "Error: changes is only for update; change other things one item at a time with ref.", err: 1 });
     if ((args.ref !== undefined && args.ref !== null && args.ref !== "") || Array.isArray(args.refs)) return Promise.resolve({ content: "Error: give ref, refs or changes, not more than one.", err: 1 });
     var list = args.changes.filter(function (x) { return x && typeof x === "object" && !Array.isArray(x); });
     if (!list.length) return Promise.resolve({ content: "Error: changes is empty.", err: 1 });
     if (list.length > LIST_MAX) return Promise.resolve({ content: "Error: at most " + LIST_MAX + " changes at a time.", err: 1 });
-    var chs = [], appId = "", seen = {};
+    var chs = [], appId = "", seen = {}, bad = [];
     for (var i = 0; i < list.length; i++) {
       var one = Object.assign({}, list[i], { action: "update" });
       var ch = E.normArgs(one);
-      if (!ch.ok) return Promise.resolve({ content: "Error: changes[" + i + "]: " + ch.err, err: 1 });
-      if (seen[ch.ref]) return Promise.resolve({ content: "Error: " + ch.ref + " is in changes twice; put all of its changes in one entry.", err: 1 });
+      var who = typeof list[i].ref === "string" && list[i].ref ? list[i].ref : "changes[" + i + "]";
+      if (!ch.ok) { bad.push(who + ": " + ch.err); continue; }
+      if (seen[ch.ref]) { bad.push(ch.ref + ": it is in changes twice; put all of its changes in one entry."); continue; }
       seen[ch.ref] = 1;
       var r = c.refs ? c.refs[ch.ref] : null;
-      if (!r) return Promise.resolve({ content: "Error: unknown ref " + ch.ref + ". Find the item with search_data or app_summary first.", err: 1 });
+      if (!r) { bad.push(ch.ref + ": unknown ref; find the item with search_data or app_summary first."); continue; }
       if (appId && r.app !== appId) return Promise.resolve({ content: "Error: changes must all be items of the same app.", err: 1 });
       appId = r.app;
       chs.push({ ch: ch, target: r.target });
     }
+    if (!chs.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix them and try again.", err: 1 });
     var app = null;
     changeApps(apps).forEach(function (a) { if (a.id === appId) app = a; });
     if (!app) {
@@ -2713,7 +2778,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], same = [];
     chs.forEach(function (x) {
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
       if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
@@ -2722,9 +2787,10 @@
       data = res.data;
       plans.push({ x: x, pl: pl });
     });
-    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix or leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length && bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix them and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
     if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
     var tick = plans.every(function (p) { return E.canTick(app.id, p.pl.rows); });
     var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
@@ -2943,6 +3009,281 @@
       card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("chg.undo"), "", function () { undoChange(c, r); }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // ---------- create_items, link_contact (assistant/create.js, AS-ADD) ----------
+  // New contacts and CRM customers, and a CRM customer linked to a
+  // contact. One card, a tick on every record (one that looks like a
+  // record already there starts unticked); nothing is written before
+  // Add / Link. The write is the app's own shape and stamps
+  // (create.js); CRM's copy then goes through its own norm(), as CRM's
+  // commit does. Undo is kept in memory only, like change_item's.
+  function createApps(apps) {
+    if (!N || !shell()) return [];
+    var have = installed();
+    return apps.filter(function (a) { return N.APP_IDS.indexOf(a.id) >= 0 && have[a.id]; });
+  }
+  function crmNorm(d) {
+    try { return window.OrosCrmCore && typeof window.OrosCrmCore.norm === "function" ? window.OrosCrmCore.norm(d) : d; } catch (e) { return d; }
+  }
+  function addRef(c, appId, id, title) {
+    c.refN = (c.refN || 0) + 1;
+    var ref = "r" + c.refN;
+    c.refs[ref] = { app: appId, target: N.targetOf(appId, id), title: title, id: id };
+    return ref;
+  }
+  function noCreate(apps, id) {
+    var readable = apps.some(function (a) { return a.id === id; });
+    return { content: readable || N.APP_IDS.indexOf(id) < 0
+      ? "Error: new records can be added only to: " + createApps(apps).map(function (a) { return a.id; }).join(", ") + "."
+      : "Error: the user does not let the assistant use this app.", err: 1 };
+  }
+  function createItems(c, args, apps) {
+    if (!N) return Promise.resolve({ content: "Error: adding records is not available.", err: 1 });
+    var nm = N.normItems(args);
+    if (!nm.ok) return Promise.resolve({ content: "Error: " + nm.err, err: 1 });
+    var app = createApps(apps).filter(function (a) { return a.id === nm.app; })[0];
+    if (!app) return Promise.resolve(noCreate(apps, nm.app));
+    var items = nm.items;
+    if (app.id === "crm") {
+      var ctApp = createApps(apps).filter(function (a) { return a.id === "contacts"; })[0];
+      var cts = null;
+      for (var i = 0; i < items.length; i++) {
+        if (!items[i].contact) continue;
+        var r = c.refs ? c.refs[items[i].contact] : null;
+        if (!r || r.app !== "contacts" || typeof r.target !== "string") return Promise.resolve({ content: "Error: items[" + i + "]: contact " + items[i].contact + " is not a contact's ref. Find the contact with search_data first.", err: 1 });
+        if (!ctApp) return Promise.resolve({ content: "Error: the user does not let the assistant use Contacts, so a customer can't be linked to a contact.", err: 1 });
+        if (!cts) cts = readStore(N.storageKey("contacts"));
+        var nmC = contactNameOf(cts, r.target);
+        if (!nmC) return Promise.resolve({ content: "Error: items[" + i + "]: that contact is no longer in Contacts.", err: 1 });
+        items[i].person = { c: r.target, n: nmC, role: items[i].role };
+      }
+    }
+    var key = N.storageKey(app.id);
+    return (app.id === "crm" ? crmCores() : Promise.resolve()).then(function () {
+      var pl = N.plan(app.id, readStore(key), items);
+      if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } };
+      var base = { k: "create", app: app.name, rows: pl.rows };
+      return askCreate(app.name, pl.rows, false).then(function (ok) {
+        if (!ok) {
+          base.st = "declined";
+          return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base };
+        }
+        var res = N.apply(app.id, readStore(key), items, Date.now(), ok.skip);
+        if (!res.ok) {
+          base.st = "failed";
+          base.msg = res.err;
+          return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base };
+        }
+        var d = app.id === "crm" ? crmNorm(res.data) : res.data;
+        if (!writeStore(key, d)) {
+          base.st = "failed";
+          base.msg = t("chg.storage");
+          return { content: "Error: the records could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base };
+        }
+        markAppDirty();
+        var added = res.made.map(function (m) { return { ref: addRef(c, app.id, m.id, m.title), name: m.title }; });
+        var left = [];
+        pl.rows.forEach(function (row, i) {
+          if (!ok.skip[i]) return;
+          var o = { name: row.title };
+          if (row.dup) { o.already = addRef(c, app.id, row.dup.id, row.dup.title); o.already_name = row.dup.title; }
+          left.push(o);
+        });
+        var uid = newId();
+        undoMem[uid] = { app: app.id, key: key, cr: res.undo };
+        base.st = "done";
+        base.u = uid;
+        base.added = res.made.map(function (m) { return m.i; });
+        return { content: JSON.stringify({ app: app.id, added: added, left_out: left,
+          note: "The user added " + added.length + " record(s) to " + app.id + ". They can undo it." +
+                (left.length ? " Left out by the user: " + left.length + "; those marked already are there with that ref (use change_item to add what is new)." : "") }), ui: base };
+      });
+    });
+  }
+  function contactNameOf(data, id) {
+    var list = data && Array.isArray(data.contacts) ? data.contacts : [];
+    var dead = {};
+    (Array.isArray(data && data.deleted) ? data.deleted : []).forEach(function (x) { if (x && typeof x.id === "string") dead[x.id] = Math.max(dead[x.id] || 0, x.mtime || 0); });
+    for (var i = 0; i < list.length; i++) {
+      var ct = list[i];
+      if (ct && ct.id === id && !(dead[id] !== undefined && !((ct.mtime || 0) > dead[id]))) return N.contactName(ct).slice(0, 80);
+    }
+    return "";
+  }
+  function linkContact(c, args, apps) {
+    if (!N) return Promise.resolve({ content: "Error: links are not available.", err: 1 });
+    var ca = createApps(apps), crm = ca.filter(function (a) { return a.id === "crm"; })[0];
+    if (!crm || !ca.some(function (a) { return a.id === "contacts"; })) return Promise.resolve({ content: "Error: linking needs CRM and Contacts, and the user lets the assistant use both.", err: 1 });
+    var list = args && Array.isArray(args.links) ? args.links : [];
+    if (!list.length) return Promise.resolve({ content: "Error: links is empty.", err: 1 });
+    if (list.length > N.MAX_LINKS) return Promise.resolve({ content: "Error: at most " + N.MAX_LINKS + " links at a time.", err: 1 });
+    var Ls = [];
+    for (var i = 0; i < list.length; i++) {
+      var x = list[i] && typeof list[i] === "object" ? list[i] : {};
+      var rc = c.refs ? c.refs[String(x.customer || "").replace(/^oros:/, "").trim()] : null;
+      var rt = c.refs ? c.refs[String(x.contact || "").replace(/^oros:/, "").trim()] : null;
+      if (!rc || rc.app !== "crm" || !rc.target || typeof rc.target.cust !== "string") return Promise.resolve({ content: "Error: links[" + i + "]: customer must be a CRM customer's ref from search_data or create_items.", err: 1 });
+      if (!rt || rt.app !== "contacts" || typeof rt.target !== "string") return Promise.resolve({ content: "Error: links[" + i + "]: contact must be a contact's ref from search_data or create_items.", err: 1 });
+      Ls.push({ cust: rc.target.cust, c: rt.target, role: typeof x.role === "string" ? x.role : "" });
+    }
+    var key = N.storageKey("crm"), ctKey = N.storageKey("contacts");
+    return crmCores().then(function () {
+      var pl = N.planLinks(readStore(key), readStore(ctKey), Ls);
+      if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: crm.name } };
+      if (pl.rows.every(function (r) { return r.same; })) return { content: JSON.stringify({ linked: 0, note: "They are linked already. Nothing changed." }) };
+      var rows = pl.rows.map(function (r) {
+        return { title: t("cr.linkRow", { cust: r.title, name: r.name }), fields: r.same ? [] : [["people", r.rows[0].a]], same: !!r.same };
+      });
+      var base = { k: "create", link: 1, app: crm.name, rows: rows };
+      return askCreate(crm.name, rows, true).then(function (ok) {
+        if (!ok) {
+          base.st = "declined";
+          return { content: JSON.stringify({ linked: 0, note: "The user did not link them. Nothing changed." }), ui: base };
+        }
+        var res = N.applyLinks(readStore(key), readStore(ctKey), Ls, Date.now(), ok.skip);
+        if (!res.ok) {
+          base.st = "failed";
+          base.msg = res.err;
+          return { content: "Error: " + res.err + " Nothing changed.", err: 1, ui: base };
+        }
+        if (!res.done.length) {
+          base.st = "declined";
+          return { content: JSON.stringify({ linked: 0, note: "The user left every link out. Nothing changed." }), ui: base };
+        }
+        if (!writeStore(key, crmNorm(res.data))) {
+          base.st = "failed";
+          base.msg = t("chg.storage");
+          return { content: "Error: the links could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
+        }
+        markAppDirty();
+        var uid = newId();
+        undoMem[uid] = { app: "crm", key: key, cr: res.undo };
+        base.st = "done";
+        base.u = uid;
+        base.added = res.done;
+        return { content: JSON.stringify({ linked: res.done.length, note: "The user linked " + res.done.length + " customer(s) with their contact. They can undo it." }), ui: base };
+      });
+    });
+  }
+  // The confirm card: one row per record, ticked unless it repeats one
+  // already there (or, for links, is linked already). → Promise<false |
+  // { skip: { index: 1 } }>
+  var CR_SHOWN = 10;
+  function crRow(host, row, cb) {
+    var box = el("div", "cr-row" + (row.dup || row.same ? " cr-dup" : ""));
+    var head = el("label", "cr-head");
+    if (cb) head.appendChild(cb);
+    head.appendChild(el("span", "entry-title", String(row.title || "")));
+    box.appendChild(head);
+    if (row.dup) box.appendChild(el("p", "dlg-hint", t("cr.dup", { name: String(row.dup.title || "") })));
+    if (row.same) box.appendChild(el("p", "dlg-hint", t("cr.same")));
+    var f = Array.isArray(row.fields) ? row.fields : [];
+    if (f.length) {
+      var tb = el("table", "cr-fields");
+      f.forEach(function (x) {
+        if (!Array.isArray(x) || typeof x[0] !== "string" || !/^[a-z]{1,12}$/.test(x[0])) return;
+        var tr = el("tr");
+        tr.appendChild(el("th", "", t("f." + x[0])));
+        tr.appendChild(el("td", "", crValue(x[0], x[1])));
+        tb.appendChild(tr);
+      });
+      box.appendChild(tb);
+    }
+    host.appendChild(box);
+  }
+  function crValue(f, v) {
+    if ((f === "kind" || f === "status") && STRINGS.en["cr.v." + v] !== undefined) return t("cr.v." + v);
+    return String(v == null ? "" : v);
+  }
+  function crList(host, rows, cbOf) {
+    var box = el("div", "chg-many");
+    function add(row, i) { crRow(box, row, cbOf ? cbOf(i, row) : null); }
+    rows.slice(0, CR_SHOWN).forEach(add);
+    host.appendChild(box);
+    if (rows.length > CR_SHOWN) {
+      var more = button(t("chg.showAll", { n: rows.length - CR_SHOWN }), "", function () {
+        more.remove();
+        rows.slice(CR_SHOWN).forEach(function (row, j) { add(row, CR_SHOWN + j); });
+      });
+      more.classList.add("chg-more");
+      host.appendChild(more);
+    }
+  }
+  function askCreate(appName, rows, link) {
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish(v) {
+        if (done) return;
+        done = true;
+        if (busy) { busy.consent = null; busy.card = null; }
+        renderMessages();
+        resolve(v);
+      }
+      var skip = {}, yes = null;
+      rows.forEach(function (row, i) { if (row.dup || row.same) skip[i] = 1; });
+      function left() { var n = 0; rows.forEach(function (r, i) { if (!skip[i]) n++; }); return n; }
+      function cbOf(i, row) {
+        var cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !skip[i];
+        cb.disabled = !!row.same;
+        cb.setAttribute("aria-label", t(link ? "cr.tickLink" : "cr.tick", { name: String(row.title || "") }));
+        cb.addEventListener("change", function () {
+          if (cb.checked) delete skip[i]; else skip[i] = 1;
+          if (yes) yes.disabled = !left();
+        });
+        return cb;
+      }
+      var card = el("section", "consent chg-card cr-card");
+      card.setAttribute("role", "group");
+      card.appendChild(el("h3", "", t(link ? "cr.askLink" : "cr.ask", { app: appName, n: rows.length })));
+      card.appendChild(el("p", "consent-text", t(link ? "cr.textLink" : "cr.text", { name: provName(curProv()), n: rows.length, app: appName })));
+      card.appendChild(el("p", "dlg-hint", t("cr.tickHint")));
+      crList(card, rows, cbOf);
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t(link ? "cr.noLink" : "cr.no"), "", function () { finish(false); }));
+      yes = button(t(link ? "cr.yesLink" : "cr.yes", { n: left() }), "primary", function () { finish({ skip: skip }); });
+      yes.disabled = !left();
+      acts.appendChild(yes);
+      card.appendChild(acts);
+      if (busy) { busy.consent = function () { finish(false); }; busy.card = card; }
+      renderMessages();
+      scrollEnd();
+      acts.firstChild.focus();
+    });
+  }
+  function undoCreate(c, r) {
+    var ui = r.ui, mem = undoMem[ui.u];
+    if (!mem || !N) return;
+    var res = N.undo(mem.app, readStore(mem.key), mem.cr, Date.now());
+    if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
+    if (!writeStore(mem.key, mem.app === "crm" ? crmNorm(res.data) : res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
+    markAppDirty();
+    delete undoMem[ui.u];
+    ui.st = "undone";
+    r.content = JSON.stringify({ added: 0, note: ui.link ? "The user linked them, then undid it. Nothing is linked now." : "The user added these, then undid it. They are not there any more." });
+    saveChat(c);
+    renderMessages();
+    showToast(t("chg.undone"));
+  }
+  // The card that stays in the conversation.
+  function drawCreate(host, r, c) {
+    var ui = r.ui, rows = Array.isArray(ui.rows) ? ui.rows.filter(function (x) { return x && typeof x === "object"; }) : [];
+    var made = Array.isArray(ui.added) ? ui.added : [];
+    var card = el("section", "entry-card chg-card cr-card");
+    var head = ui.st === "done" ? (ui.link ? "cr.linked" : "cr.done") : ui.st === "undone" ? "chg.undone" :
+               ui.st === "declined" ? (ui.link ? "cr.declinedLink" : "cr.declined") : "cr.failed";
+    card.appendChild(el("h3", "entry-head", t(head, { app: String(ui.app || ""), n: made.length, msg: String(ui.msg || "") })));
+    var shown = ui.st === "done" || ui.st === "undone" ? rows.filter(function (x, i) { return made.indexOf(i) >= 0; }) : rows;
+    crList(card, shown.map(function (x) { return { title: x.title, fields: x.fields }; }), null);
+    if (ui.st === "done" && ui.u && undoMem[ui.u]) {
+      card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("chg.undo"), "", function () { undoCreate(c, r); }));
       card.appendChild(acts);
     }
     host.appendChild(card);
@@ -3639,7 +3980,19 @@
       $("welcome").hidden = true;
     }
     if (chat && impSource(chat)) host.appendChild(el("p", "imp-note", t("imp.from", { s: IMP_NAME[impSource(chat)], d: fullDate(impAt(chat)) })));
-    (chat ? chat.msgs : []).forEach(function (m) { drawMsg(host, m, chat); });
+    var msgs = chat ? chat.msgs : [];
+    var stopAt = busy && busy.chat === chat && busy.join >= 0 ? busy.join : msgs.length;
+    for (var i = 0; i < stopAt; i++) {
+      var m = msgs[i];
+      // A cut answer and its continuations show as one answer.
+      if (m && m.r === "user" && m.cont) continue;
+      if (m && m.r === "asst" && contHead(msgs, i) >= 0 && contHead(msgs, i) !== i) continue;
+      if (m && m.r === "asst" && m.cut) {
+        drawMsg(host, Object.assign({}, m, { text: joinedText(msgs, i), raw: joinedRaw(msgs, i) }), chat);
+        continue;
+      }
+      drawMsg(host, m, chat);
+    }
     if (busy && busy.chat === chat) {
       if (busy.card) host.appendChild(busy.card);
       else {
@@ -3653,6 +4006,43 @@
       }
     }
     if (nearEnd) scrollEnd();
+  }
+
+  // Cut answers (m.cut) and their continuations: asst(cut) → user(cont)
+  // → asst(cut) → user(cont) → asst. contHead(msgs, i) → index of the
+  // chain's first answer when msgs[i] (or the slot i, while the next
+  // part is streaming) belongs to one, else -1.
+  function contHead(msgs, i) {
+    var j = i;
+    if (!(j < msgs.length && msgs[j] && msgs[j].r === "asst")) {
+      // slot after a "continue": the part being written
+      if (!(j - 1 >= 0 && msgs[j - 1] && msgs[j - 1].r === "user" && msgs[j - 1].cont)) return -1;
+      j = j - 2;
+      if (!(j >= 0 && msgs[j] && msgs[j].r === "asst" && msgs[j].cut)) return -1;
+    } else if (!msgs[j].cut && !(j >= 2 && msgs[j - 1] && msgs[j - 1].cont)) return -1;
+    while (j >= 2 && msgs[j - 1] && msgs[j - 1].r === "user" && msgs[j - 1].cont &&
+           msgs[j - 2] && msgs[j - 2].r === "asst" && msgs[j - 2].cut) j -= 2;
+    return j;
+  }
+  function chainEnd(msgs, h) {
+    var j = h;
+    while (msgs[j] && msgs[j].cut && msgs[j + 1] && msgs[j + 1].r === "user" && msgs[j + 1].cont &&
+           msgs[j + 2] && msgs[j + 2].r === "asst") j += 2;
+    return j;
+  }
+  function joinedText(msgs, h) {
+    var out = "", end = chainEnd(msgs, h);
+    for (var j = h; j <= end; j += 2) out += String(msgs[j] && msgs[j].text || "");
+    return out;
+  }
+  // Web sources of every part, for the one answer shown.
+  function joinedRaw(msgs, h) {
+    var end = chainEnd(msgs, h), blocks = [];
+    for (var j = h; j <= end; j += 2) {
+      var r = msgs[j] && msgs[j].raw;
+      if (r && Array.isArray(r.blocks)) blocks = blocks.concat(r.blocks);
+    }
+    return blocks.length ? { prov: "anthropic", blocks: blocks } : msgs[h].raw;
   }
 
   function drawMsg(host, m, c) {
@@ -3730,6 +4120,7 @@
         if (ui.k === "cover") { drawCover(host, r, c); return; }
         if (ui.k === "coverErr") return;
         if (ui.k === "change") { drawChange(host, r, c); return; }
+        if (ui.k === "create") { drawCreate(host, r, c); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");
         var ico = el("span", "tool-ico");

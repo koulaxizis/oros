@@ -75,6 +75,13 @@ Stell eine [Newsletter](app:newsletter)-Ausgabe im Chat zusammen: „füge das I
 ## Buchumschlag
 Hänge das Bild für die Vorderseite an (und dein Logo, wenn es auf den Umschlag soll) und bitte zum Beispiel: „richte den Umschlag von «Titel» von Autor ein, 240 Seiten". Die Karte zeigt die Angaben und die Bilder; `In Seitenlayout öffnen` speichert die Bilder unter Dateien › Bilder › Covers und öffnet das Fenster Buchumschlag von [Seitenlayout](app:layout) ausgefüllt, wo du alles prüfst und auf Erstellen tippst. Bilder aus einer früheren Sitzung werden nicht behalten; häng sie neu an oder wähle sie in Seitenlayout.
 
+## Neue Kontakte und CRM-Kunden
+Der Assistent kann Personen und Firmen direkt zu [Kontakte](app:contacts) und [CRM](app:crm) hinzufügen, viele auf einmal: „füge alle aus dieser Liste zu meinen Kontakten hinzu“, „mach Anna Autorin zur CRM-Kundin und verknüpfe sie mit ihrem Kontakt“. Er sucht sie zuerst und zeigt dann eine Karte mit jedem neuen Eintrag und einem Haken bei jedem.
+- `Hinzufügen` speichert die angehakten. `Nicht hinzufügen` lässt alles, wie es ist. Nichts wird gespeichert, bevor du es drückst.
+- Wer einem Eintrag gleicht, den du schon hast (gleiche E-Mail, Telefonnummer, Steuernummer oder gleicher Name), ist als `Schon da` markiert und beginnt ohne Haken; der Assistent aktualisiert dann diesen Eintrag, mit einer Karte `Vorher` und `Nachher`.
+- Ein CRM-Kunde kann mit einem Kontakt verknüpft werden: Der Kontakt wird eine der `Personen` des Kunden (live im CRM), und Kontakte zeigt den Kunden auf der Karte des Kontakts. Die Verknüpfung hat ihre eigene Karte mit `Verknüpfen`; Kontakte selbst ändert sich nicht. Fehlt der Kontakt, wird er zuerst hinzugefügt.
+- `Rückgängig` nimmt die neuen Einträge (oder Verknüpfungen) zurück, bis du den Assistenten verlässt, solange du sie in der App nicht geändert hast (ein Kunde mit einem Geschäft oder einer Gesprächsnotiz bleibt).
+
 ## Ändern, was du schon hast
 Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
@@ -211,4 +218,5 @@ Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des A
 - Er kann Einträge nur in den Apps ändern oder löschen, die unter `Ändern, was du schon hast` stehen, einen nach dem anderen, und er kann nichts versenden (keine E-Mail).
 - Rückgängig machen einer Änderung geht nur, bis du den Assistenten verlässt.
 - Ist eine App in einem anderen Browser-Tab offen, während du hier einen ihrer Einträge änderst, zeigt dieser Tab eventuell noch die alte Fassung, bis du ihn neu lädst.
+- Eine lange Antwort wird nicht abgeschnitten: Stoppt der Dienst an seiner Längengrenze, bittet der Assistent ihn weiterzuschreiben, bis zu 4 Mal, und du siehst eine Antwort. Nur eine sehr lange (oder das Modell im Browser, das wenig Platz hat) kann noch mit „Die Antwort wurde abgeschnitten“ enden; dann schreib `weiter`.
 - Manche Dienste lehnen Aufrufe aus einem Browser ab: `Verbindung testen` sagt es dir. Ein lokaler Server muss diese Seite erlauben; `Server` in den Einstellungen zeigt für jedes Programm, wie.

@@ -199,9 +199,9 @@
     });
     var bio = pick(p.biographies);
     var extra = extraLines(p);
-    var note = bio ? s(bio.value, 500) : "";
+    var note = bio ? s(bio.value, 2000) : "";
     if (extra.length) note = (note ? note + "\n\n" : "") + extra.join("\n");
-    c.note = note.slice(0, 500);
+    c.note = note.slice(0, 2000);
     // CT-NP: photos are not imported (Contacts keeps none)
     (p.memberships || []).forEach(function (m) {
       var rn = m && m.contactGroupMembership && m.contactGroupMembership.contactGroupResourceName;
@@ -251,7 +251,7 @@
       var e = ev("birthday", m[2], m[3], m[1], "");
       if (e) c.events.push(e);
     }
-    c.note = s(g.personalNotes, 500);
+    c.note = s(g.personalNotes, 2000);
     (g.categories || []).forEach(function (cat) {
       var n = s(cat, 40);
       if (n && c.cats.indexOf(n) === -1) c.cats.push(n);
