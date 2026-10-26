@@ -16,7 +16,7 @@
 | Part | Content |
 |---|---|
 | 0 | Working agreement + session-start protocol (read first) |
-| I | Mantra + standing rules R1–R37 |
+| I | Mantra + standing rules R1–R39 |
 | II | Core architecture (verified facts) |
 | III | App registry (status, keys, merge types) + device-local keys + file tree |
 | IV | Data models |
@@ -41,7 +41,7 @@
 - **Delivery mode.**
   - Default: surgical patches in the mandatory format (Part I §3).
   - Full files when Christos asks, or when a fix set is large (rule of thumb: ≥10 patch blocks or many functions). He prefers full files for big audits.
-  - Preserve the original line endings of every file (the Writer files are CRLF).
+  - Preserve the original line endings of every file. As of 2026-10-26 every file, this Bible and the Writer files included, is LF; check before patching.
 - **Every delivery ends with:**
   1. what changed and why;
   2. how it was verified, with honest counts;
@@ -69,7 +69,7 @@
 
 Offline first · Mobile first · No external dependencies · Full project manual export · Full project automatic export (where the platform allows it) · Full project auto-merge sync · **No guessing:** if unsure, ASK; if a file is missing, REQUEST it.
 
-"Full project snapshots" left the mantra on 2026-10-05 (Christos): snapshots are retired for good. Data safety = Dropbox sync + manual export + automatic export where feasible (Part V, Part IX).
+"Full project snapshots" left the mantra on 2026-10-05 (Christos): snapshots are retired for good. Data safety = cloud sync (Dropbox or WebDAV/Nextcloud, both owned by `sync.js`, R34) + manual export + automatic export where feasible (Part V, Part IX).
 
 ### 2. Standing rules
 
@@ -1802,7 +1802,7 @@ item    = { id, k: video|image|audio|title, tr: main|ov|tt|a1|a2, m, … }
   - `maybeAutoExport`: daily / weekly / monthly, checked at boot and on tab-visible, no timers. The body is captured live by `exportBodyNow()` (inside try/catch).
   - Files `orOS-backup-YYYY-MM-DD.json` (`writeBackupFile`). `wipeFolderMirror` also cleans legacy `orOS-snapshot-*.json`.
   - Permission-lapse detection with one-click Reconnect. `state.autoexport` travels in the shell slice.
-  - Firefox and mobile have no automatic local export (no File System Access API). Accepted (decision 2026-10-05): there the safety net is Dropbox sync + manual export.
+  - Firefox and mobile have no automatic local export (no File System Access API). Accepted (decision 2026-10-05): there the safety net is cloud sync (Dropbox or WebDAV/Nextcloud) + manual export.
 - **Manual export:** full DB, every parameter; import restores zero-loss (through `applyPayload`, merge-aware). **[log]** The shell buttons and Ctrl+Alt+Shift+X go through `shellSaveJson` / `shellPickJson` (R33).
 - **Close safety net:** on-close sync + `beforeunload` warning when dirty and online.
 - **Factory reset:** double confirm → cloud → folder → localStorage prefix sweep → OrosFS wipe → **[log]** Cache Storage `oros-map-tiles` → reload. Everything is tombstoned and seeds are reborn.
@@ -2462,12 +2462,12 @@ Decided by Chris 2026-10-16 23:35 (thread "Συνεργασία εφαρμογώ
 - Commit: `git add -u` (tracked files only: a NEW file must be in the manual commit), message `chore: sync orOS assets to v<version> (auto) [skip ci]`, plain `git push` (it fails if `main` moved meanwhile; the next push re-stamps).
 - Between the manual commit and the bot's commit the site may briefly serve the new `shell.js` with the old `CACHE_VERSION` and old stamps. Harmless: no worker update starts until the stamped `sw.js` is live.
 
-### `apps.json` [verified 2026-10-06]
+### `apps.json` [verified 2026-10-26]
 
-- `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 24 entries, all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
+- `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 136 entries on 2026-10-26 (24 on 2026-10-06), all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
 - Every `icon` exists in the shell's `ICONS`; every `id` has `app.<id>` in `translations.js`.
 - 128 entries since 1.98.00 (lyricsync 3.85.00 in Sound; household 3.48.00 in Lifestyle; together 3.45.00 in Personal; whiteboard 3.27.00 in Office; capture 3.21.00 in Image; flashcards 2.95.00 in Learning, a new category; mockups 2.51.00 in Creativity; converter 2.47.00 in Office; certificates 1.98.00 in Business; signature 1.77.00 in Business; newsletter 1.21.00 in Business; montage 1.10.00 in Video; library 1.08.00 in Personal; invoices 1.07.00 in Business; texttools 1.06.00 in Accessories; units 1.05.00 in Accessories; stock 1.04.00 in Business; crm 1.03.00 in Business; stickies 1.02.00 in Accessories; textcase 1.01.00 in Accessories; photolab 0.97.00 in Image, with pixel, wallpaper, trees, aura moved from Creativity; studio 0.96.00 in Sound; diary 0.86.00 in Personal; today 0.85.00 in System; aura 0.82.00 in Creativity; trees 0.78.00 in Creativity; ringtones 0.72.00 in Sound; labels 0.70.00 in Creativity; sky 0.68.00 in Accessories; typewriter 0.64.00 in Creativity; assistant 0.63.00 in System; museum 0.60.00 in Internet; oracle 0.53.00 in Fun; settings 0.50.00 in System, with a search provider; help 0.48.00 in System; passwords 0.46.00 in Security; memory 0.42.00, connect4 0.42.01, dots 0.42.02, tictactoe 0.42.03, simon 0.42.05, slider 0.43.01, lightsout 0.43.03, whack 0.45.01, snake 0.45.09, g2048 0.45.12, wordle 0.45.14; netizen 0.43.02, petworld 0.44.00 and wheel 0.45.10 in Fun; wallpaper 0.45.04 and names 0.45.15 in Creativity; mixer 0.45.06 in Sound; zen 0.45.13 in Personal; registered together in 0.47.00 (53): mindmap, timesheet, split, travel, chores, meals, layout, slides, pubdomain, qr, pixel, atelier, health, budget, water, fitness, petcare, baby, familytree, garage, plants, shelf, feeds, mail, scores, podcasts, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri, device). Categories (all capitalized since 2026-10-06; file order = menu order): Accessories (weather, time, sky, files, calculator, texttools, units, stickies, textcase) · Office (todo, kanban, mindmap, whiteboard, notes, calendar, contacts, storage, spreadsheet, writer, layout, slides, pubdomain, qr, converter) · Lifestyle (minimalism, split, travel, chores, household, meals) · Business (quote, timesheet, crm, stock, invoices, newsletter, signature, certificates) · Creativity (prompter, typewriter, labels, characters, names, atelier, mockups) · Image (photolab, capture, pixel, wallpaper, trees, aura) · Personal (mood, diary, habits, zen, health, budget, water, fitness, cycle, petcare, baby, familytree, together, garage, plants, shelf, library) · Internet (bookmarks, maps, feeds, museum, mail) · Fun (dice, wheel, oracle, netizen, petworld, scores) · Sound (radio, podcasts, music, mixer, ringtones, studio, lyricsync) · Video (television, montage) · Games (memory, connect4, dots, tictactoe, simon, slider, lightsout, whack, snake, g2048, wordle, spot, hexagon, chess, sudoku, tetris, minesweeper, mahjong, gomoku, bubble, checkers, mastermind, battleship, rps, hangman, flow, nonogram, breakout, reversi, mancala, pong, backgammon, wordsearch, solitaire, jigsaw, crossword, xeri) · Learning (flashcards) · Security (passwords) · System (device, assistant, help, today, settings).
-- The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Business, Creativity, Fun, Games, Image, Internet, Lifestyle, Office, Personal, Security, Sound, System, Video. EL: Ασφάλεια, Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Εικόνα, Επιχείρηση, Ήχος, Παιχνίδια, Προσωπικά, Σύστημα, Τρόπος Ζωής. Inside a category the file order is the menu order.
+- The menu does not depend on the spelling: it groups case-insensitively and sorts by the translated label (SH-B11). EN: Accessories, Business, Creativity, Fun, Games, Image, Internet, Learning, Lifestyle, Office, Personal, Security, Sound, System, Video. EL: Ασφάλεια, Βίντεο, Βοηθήματα, Γραφείο, Δημιουργικότητα, Διαδίκτυο, Διασκέδαση, Εικόνα, Επιχείρηση, Ήχος, Μάθηση, Παιχνίδια, Προσωπικά, Σύστημα, Τρόπος Ζωής. Inside a category the file order is the menu order.
 - Indentation is spaces only (seven tab-indented lines normalized 2026-10-06).
 - Optional `"search": "search.js"` (universal search provider, since 0.47.00: notes, contacts, todo, calendar, kanban, bookmarks, writer, files; since 0.52.00: mail, feeds, podcasts, radio, television, maps, quote, timesheet, split, budget, spreadsheet, storage, minimalism, travel, chores, meals, plants, shelf, familytree, garage, mood, cycle, health, baby, habits, fitness, petcare, mindmap, prompter, characters, layout, slides, atelier, scores, help; since 1.12.00: stickies) and `"searchOff": true` (provider starts switched off, opt-in). See Part VI "Universal search provider".
 
@@ -2555,7 +2555,7 @@ Since wave 50b (Chess) also the Lichess puzzle database ([database.lichess.org](
 - ☐ Perfect sync both directions
 - ☐ Tombstone resurrection across devices
 - ☐ Offline edits survive reconnect
-- ☐ Zero-loss export (manual + auto + snapshot)
+- ☐ Zero-loss export (manual + auto; snapshots are retired)
 - ☐ Offline-first
 - ☐ Mobile-first
 - ☐ Notifications converge
@@ -2566,7 +2566,7 @@ Since wave 50b (Chess) also the Lichess puzzle database ([database.lichess.org](
 
 1. Calendar integration (or a documented exemption).
 2. Unified notifications (transient for info; `emit()` for reminders; local for Undo).
-3. Dropbox sync (5-arg `registerSlice` + deterministic, canonical `mergeFn`).
+3. Cloud sync, Dropbox or WebDAV/Nextcloud (5-arg `registerSlice` + deterministic, canonical `mergeFn`).
 4. Automatic export (global; the folder export and the DB export ride the slice, no per-app code). This axis was called "Snapshots" before v0.38.25.
 5. Manual & auto export (shell DB export via the slice; app-level only for interop formats).
 
@@ -3153,6 +3153,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
 - ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
 - ⊗ **Maps follow-ups** (proposals 2026-10-08, `audits/maps-proposals-2026-10-08.md`; 0.43.00 delivered the fixes MX-1…MX-8 and the planner, stops, long-press menu, recents and coordinates). Not started: alternative routes (`alternatives=true`), avoid tolls / motorways (`exclude=`, check the demo server first), arrival clock time, lane hints, heading-up map rotation, "download this area" for offline (mind the OSM tile usage policy), share link / GPX export.
+- ⊗ **Part XII order (2026-10-26):** the format rule says oldest first, newest at the bottom, but parallel PRs insert near the 3.41.01 entry, so the 3.35–3.41 entries are shuffled and the 3.85–3.89 run is newest-first. Proposal: one Bible-only PR that sorts Part XII by date and version, merged when no other PR touching the Bible is open; then every PR appends at the very end. Waiting for a moment with no open Bible PRs.
 
 ### Audit queue (assistant-raised; verify, then fix)
 
@@ -3610,7 +3611,7 @@ Paste as the first message of a new chat:
 
 ```
 Continuing orOS work. OROS_BIBLE.md is the SINGLE SOURCE OF TRUTH — read
-Part 0 (working agreement), Part I (rules R1–R37) and Part X (open items)
+Part 0 (working agreement), Part I (rules R1–R39) and Part X (open items)
 before touching anything. Kernel LOCKED; five-axes audit doctrine active.
 Next task: <task>. Apps involved: <dirs>.
 I will paste any file you request — ask for CURRENT versions of every file
@@ -3627,7 +3628,7 @@ you will patch. Answer me in Greek; code and docs in English.
 - Ascending order: oldest first, the newest entry at the BOTTOM. New entries are appended at the end of this Part in the same response as the change.
 - Heading: `### YYYY-MM-DD — <component> <version/wave> — <title>`. Undated legacy entries keep an approximate date marked "≈".
 - Bullets, grouped as needed: **Changes** · **Fixes** · **Schema** · **Decisions** · **Files** · **Next**. Every fact that matters for future work stays (bugs fixed, schema fields, merge rules, decisions); prose is trimmed.
-- Version numbers appear only as historical records (R23: never proposed by the assistant).
+- Version numbers appear as historical records. The assistant proposes the next step (patch or whole version) and Christos decides (R23).
 - Code, selectors, keys and file names go in backticks (unfenced `$("…")` text has been mangled before).
 - An entry that merges several raw notes says so in its first line.
 
@@ -8369,3 +8370,9 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - Chris 2026-10-20 07:16 (failing log of the weekly sync PR #558 (run #298): precache 48.97 MB, limit 48.38 MB): null-jsfx main 15181dc synced (99 effects, 9 instruments; new: Bass, FM, Keys, Organ, Percussion, Pluck, Sampler, Synth, Clipper, De-Plosive, Draw EQ, Half Speed, Phase Align, Shaper, Slicer, Step FX, Tape Echo, Wah). Effect files leave the precache: sw.js serves `studio/nullfx/fx/<id>.js` from the kept `oros-nullfx` cache (copy of this release answers at once, an older one is refreshed online and serves offline), install moves the old shell's copies there; Studio fetches the effects its projects use while online (fx.js keepOffline). sync-nullfx.js precaches only runtime + fx/index.json; sync-nullfx.yml runs the precache budget check.
 - Files: `sw.js`, `studio/{fx.js,studio.js,nullfx/fx/*}`, `.github/scripts/sync-nullfx.js`, `.github/workflows/sync-nullfx.yml`, `tests/studio.test.js`, `help/topics/whatsnew.*.txt`, Bible.
   - Tests: full suite green, precache 43.6 MB. Chromium with the real SW and the server stopped: an effect opened once loads offline, a copy moved from an older shell loads offline, one never opened fails. Not tested: Studio playback offline on a real phone, warm-up with real synced projects.
+
+### 2026-10-26 — Bible housekeeping: stale rule range, line endings, cloud providers, apps.json — docs only, no APP_VERSION
+- Changes: Map and Part XI handoff template say R1–R39 (R38 and R39 were missing); Part 0 line endings note now says every file is LF (the CRLF remark was stale); Part I data-safety line, Part V Firefox/mobile safety net and five-axes axis 3 now say cloud sync, Dropbox or WebDAV/Nextcloud (dated Part IX decisions left as history); Checklist E drops the retired snapshots; Part III `apps.json` re-verified (136 entries, all `internal`, every `url` = `<id>/`) and the category lists gain Learning / Μάθηση; Part XII format rule matches R23 (the assistant proposes the version step, Christos decides).
+- Decisions: Part XII is not re-sorted now, because two open PRs (#627, #628) touch the Bible; logged as an open decision in Part X.
+- Files: `OROS_BIBLE.md` only.
+- Tests: every edit matched its text exactly once; counts and labels checked against `apps.json` and `translations.js`. No code changed, so no browser run.
