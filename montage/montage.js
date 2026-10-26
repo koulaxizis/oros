@@ -17,7 +17,8 @@
 //     them to the orOS disk for Vault Drive)
 //   - device-local (R10): oros-montage-prefs (zoom, export size, keep,
 //     speech language)
-// Deep link: __orosOpenAt("montage", { project } | { openFile: path | { token } })
+// Deep link: __orosOpenAt("montage", { project } | { openFile: path | { token } }
+//   | { lyrics: { name, srt, audio } } (Lyric Sync: a lyric video project))
 //   (an .orosmontage file opens as a new project, section 9b)
 // orOS file: .orosmontage save / open / unzipped folder (section 9b,
 //   package.js, ../bundle.js)
@@ -2396,6 +2397,7 @@
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.project === "string") { if (data.projects[target.project]) openProject(target.project); else showToast(t("toast.notFound")); return; }
+    if (target.lyrics && typeof target.lyrics === "object") { lyricsVideo(target.lyrics); return; }
     var f = target.openFile;
     if (f && typeof f === "object" && typeof f.token === "string") {
       var file = null;
@@ -2411,6 +2413,28 @@
         addOpenedFile(b instanceof File ? b : new File([b], name, { type: b.type || "" }));
       }, function () { showToast(t("err.fail")); });
     }
+  }
+  // Lyric Sync's "Lyric video": a new project with every line as a
+  // subtitle clip (the same as Open an SRT file) and the song from the
+  // orOS disk on a sound row, both from 0 s.
+  function lyricsVideo(o) {
+    var srt = typeof o.srt === "string" && o.srt.length <= SUB_MAX_BYTES ? o.srt : "";
+    var cues = srt ? C.parseSrt(srt) : [];
+    if (!cues.length) { showToast(t("sub.none")); return; }
+    var id = uid();
+    data = C.newProject(data, { name: String(o.name || "").replace(/[\u0000-\u001f]+/g, " ").slice(0, 120) || t("proj.untitled") }, Date.now(), id);
+    save();
+    openProject(id);
+    if (pid !== id) return;
+    if (commit(C.addSubtitles(data, pid, cues, Date.now(), cues.map(function () { return uid(); })))) showToast(t("sub.added", { n: cues.length }));
+    var F = fsApi(), a = o.audio;
+    if (!F || typeof a !== "string" || !/^\/internal\/[^\u0000]+$/.test(a) || /\/\.\.?(\/|$)/.test(a)) return;
+    F.read(a).then(function (b) {
+      if (pid !== id || !b) return;
+      var file = b instanceof File ? b : new File([b], a.split("/").pop(), { type: b.type || "" });
+      setTime(0);
+      importMany([file], function (info) { if (info.kind === "audio") placeSound(info); });
+    }, function () { showToast(t("err.fail")); });
   }
   // A file handed to Montage: an .orosmontage bundle (sniffed by its
   // first bytes, never its name) opens as a new project; anything else

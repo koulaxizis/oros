@@ -31,7 +31,7 @@
   var APP_ID = "lyricsync";
   var STORAGE_KEY = "oros-lyricsync-data";
   var DEVICE_KEY = "oros-lyricsync-device";
-  var C = window.LyricsyncCore, F = window.LyricsyncFormats;
+  var C = window.LyricsyncCore, F = window.LyricsyncFormats, ID3 = window.LyricsyncId3;
   var MAX_AUDIO = 400 * 1024 * 1024, MAX_TEXT_FILE = 4 * 1024 * 1024, MAX_UNDO = 300;
   var LYRIC_ACCEPT = ".lrc,.elrc,.srt,.vtt,.ttml,.dfxp,.xml,.ass,.ssa,.json,.txt";
   var MAX_WAVE = 80 * 1024 * 1024, SPANS = [4, 8, 16, 32, 64];
@@ -99,6 +99,16 @@
       "ex.elrc": "Enhanced LRC", "ex.elrcD": "LRC with a time for every word, for karaoke players.",
       "ex.ass": "ASS karaoke", "ex.assD": "Karaoke subtitles that fill word by word, for video tools (Aegisub, ffmpeg, VLC).",
       "ex.words": "{n} lines have a time for every word.", "ex.issues": "{n} things to check before you send it to a distributor.", "ex.check": "Check",
+      "x.music": "Lyrics for Music", "x.musicD": "Saves the .lrc file next to the song in your Music folder, so Music shows the lyrics as it plays (on every device that syncs).",
+      "x.mp3": "MP3 with the lyrics inside", "x.mp3D": "A copy of the song with the lyrics in its tags (USLT and synced SYLT), for phones, car stereos and players that read them. The song itself is not changed.",
+      "x.video": "Lyric video in Montage", "x.videoD": "Opens a new Montage project with the song and every line as a text clip, ready to style and export as a video.",
+      "x.saveHere": "Save", "x.make": "Make", "x.open": "Open",
+      "x.lrcSaved": "Saved next to the song. Music shows the lyrics now.", "x.lrcAsk": "There is already a lyrics file next to this song. Replace it?", "x.replace": "Replace",
+      "x.noFs": "The orOS disk is not available here.", "x.fail": "Could not save the file.",
+      "x.mp3Bad": "This song file's tags cannot be rewritten safely, so no copy was made.", "x.mp3Not": "Only MP3 songs can carry the lyrics inside.",
+      "x.videoNeed": "The song must be on the orOS disk (open it from Music or Files) to go to Montage.",
+      "audio.disk": "{name} (orOS disk)", "audio.diskMissing": "“{name}” is not on the orOS disk of this device yet. It comes with Vault Drive, or choose it again.",
+      "from.music": "From Music: {name}", "list.music": "song on the orOS disk", "open.bad": "Lyric Sync cannot open this file.",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -161,6 +171,16 @@
       "ex.elrc": "Enhanced LRC", "ex.elrcD": "LRC με χρόνο για κάθε λέξη, για players καραόκε.",
       "ex.ass": "ASS καραόκε", "ex.assD": "Υπότιτλοι καραόκε που γεμίζουν λέξη λέξη, για προγράμματα βίντεο (Aegisub, ffmpeg, VLC).",
       "ex.words": "{n} γραμμές έχουν χρόνο σε κάθε λέξη.", "ex.issues": "{n} σημεία για έλεγχο πριν το στείλεις σε διανομέα.", "ex.check": "Έλεγχος",
+      "x.music": "Στίχοι για τη Μουσική", "x.musicD": "Αποθηκεύει το αρχείο .lrc δίπλα στο τραγούδι στον φάκελο Μουσική, ώστε η Μουσική να δείχνει τους στίχους όσο παίζει (σε κάθε συσκευή που συγχρονίζεται).",
+      "x.mp3": "MP3 με τους στίχους μέσα", "x.mp3D": "Ένα αντίγραφο του τραγουδιού με τους στίχους στις ετικέτες του (USLT και συγχρονισμένο SYLT), για κινητά, ηχοσυστήματα αυτοκινήτου και players που τους διαβάζουν. Το ίδιο το τραγούδι δεν αλλάζει.",
+      "x.video": "Βίντεο στίχων στο Montage", "x.videoD": "Ανοίγει νέο έργο στο Montage με το τραγούδι και κάθε γραμμή ως κλιπ κειμένου, έτοιμο για εμφάνιση και εξαγωγή ως βίντεο.",
+      "x.saveHere": "Αποθήκευση", "x.make": "Δημιουργία", "x.open": "Άνοιγμα",
+      "x.lrcSaved": "Αποθηκεύτηκε δίπλα στο τραγούδι. Η Μουσική δείχνει τώρα τους στίχους.", "x.lrcAsk": "Υπάρχει ήδη αρχείο στίχων δίπλα σε αυτό το τραγούδι. Να αντικατασταθεί;", "x.replace": "Αντικατάσταση",
+      "x.noFs": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "x.fail": "Δεν ήταν δυνατή η αποθήκευση του αρχείου.",
+      "x.mp3Bad": "Οι ετικέτες αυτού του αρχείου δεν ξαναγράφονται με ασφάλεια, οπότε δεν φτιάχτηκε αντίγραφο.", "x.mp3Not": "Μόνο τα τραγούδια MP3 κρατούν τους στίχους μέσα τους.",
+      "x.videoNeed": "Το τραγούδι πρέπει να είναι στον δίσκο του orOS (άνοιξέ το από τη Μουσική ή τα Αρχεία) για να πάει στο Montage.",
+      "audio.disk": "{name} (δίσκος orOS)", "audio.diskMissing": "Το «{name}» δεν είναι ακόμα στον δίσκο του orOS σε αυτή τη συσκευή. Έρχεται με το Vault Drive, ή διάλεξέ το ξανά.",
+      "from.music": "Από τη Μουσική: {name}", "list.music": "τραγούδι στον δίσκο του orOS", "open.bad": "Ο Συγχρονισμός στίχων δεν μπορεί να ανοίξει αυτό το αρχείο.",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -339,7 +359,9 @@
     });
   }
   function saveFile(text, name, mime, ext) {
-    var blob = new Blob([text], { type: mime + ";charset=utf-8" });
+    return saveBlob(new Blob([text], { type: mime + ";charset=utf-8" }), name, mime, ext);
+  }
+  function saveBlob(blob, name, mime, ext) {
     var dlg = dialogHost();
     if (dlg && typeof dlg.saveFile === "function") {
       var acc = {}; acc[mime] = [ext];
@@ -371,6 +393,7 @@
   var undoStack = [], redoStack = [];
   var tlist = null;            // C.timed() of the open song, rebuilt on change
   var audioUrl = "", audioOk = false;
+  var audioBlob = null, audioDisk = false;   // the playing file; from the orOS disk (wave 3)
   var player = null;
   var lyricsTimer = 0;
   var wl = 0, wk = 0;          // Words mode: the next line and word to time
@@ -427,7 +450,8 @@
       open.type = "button";
       open.appendChild(el("span", "song-name", p.name || t("list.untitled")));
       var meta = [p.ar, t("list.count", { n: C.timedCount(p.ln), total: p.ln.length })];
-      if (p.au && !haveAudio[p.id]) meta.push(t("list.noAudio"));
+      if (p.src) meta.push(t("list.music"));
+      else if (p.au && !haveAudio[p.id]) meta.push(t("list.noAudio"));
       open.appendChild(el("span", "song-meta dim", meta.filter(Boolean).join(" · ")));
       open.addEventListener("click", function () { openSong(p.id); });
       var del = el("button", "chip del", t("list.del"));
@@ -493,10 +517,11 @@
   function stopAudio() {
     if (player) { player.pause(); player.removeAttribute("src"); try { player.load(); } catch (e) {} }
     if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = ""; }
-    audioOk = false;
+    audioOk = false; audioBlob = null; audioDisk = false;
   }
-  function useBlob(blob) {
+  function useBlob(blob, fromDisk) {
     stopAudio();
+    audioBlob = blob; audioDisk = !!fromDisk;
     audioUrl = URL.createObjectURL(blob);
     player.src = audioUrl;
     player.playbackRate = dev.speed;
@@ -521,9 +546,26 @@
     var id = cur.id;
     renderAudio();
     audioGet(id).then(function (rec) {
-      if (!cur || cur.id !== id || !rec || !rec.blob) { renderAudio(); return; }
-      useBlob(rec.blob);
+      if (!cur || cur.id !== id) return;
+      if (rec && rec.blob) { useBlob(rec.blob); return; }
+      if (cur.src) diskAudio(id, cur.src); else renderAudio();
     });
+  }
+  // A song on the orOS disk (from Music, Files or Studio): read from
+  // there each time, never copied into this app's storage.
+  function fsApi() {
+    try { return (window.parent && window.parent !== window && window.parent.orosFS) || window.orosFS || null; }
+    catch (e) { return window.orosFS || null; }
+  }
+  function diskAudio(id, src) {
+    var fs = fsApi();
+    if (!fs) { renderAudio(); return; }
+    Promise.resolve(fs.read(src)).then(function (b) {
+      if (!cur || cur.id !== id) return;
+      if (!b || !b.size || b.size > MAX_AUDIO) { renderAudio(); return; }
+      var file = b instanceof File ? b : new File([b], C.fileOf(src), { type: b.type || "" });
+      useBlob(file, true);
+    }, function () { if (cur && cur.id === id) renderAudio(); });
   }
   function attachAudio(file) {
     if (!cur || !file) return;
@@ -540,7 +582,9 @@
   function renderAudio() {
     if (!cur) return;
     var nm = $("audio-name");
-    if (audioOk) { nm.textContent = cur.au ? cur.au.n : ""; nm.classList.remove("warn"); }
+    if (audioOk && audioDisk) { nm.textContent = t("audio.disk", { name: C.fileOf(cur.src) }); nm.classList.remove("warn"); }
+    else if (audioOk) { nm.textContent = cur.au ? cur.au.n : ""; nm.classList.remove("warn"); }
+    else if (cur.src) { nm.textContent = t("audio.diskMissing", { name: C.fileOf(cur.src) }); nm.classList.add("warn"); }
     else if (cur.au) { nm.textContent = t("audio.missing", { name: cur.au.n }); nm.classList.add("warn"); }
     else { nm.textContent = t("audio.none"); nm.classList.remove("warn"); }
     $("audio-btn").textContent = audioOk ? t("btn.audioChange") : t("btn.audio");
@@ -1021,7 +1065,70 @@
       li.appendChild(b);
       ul.appendChild(li);
     });
+    // Wave 3: to Music, into the MP3, to Montage.
+    function extra(key, label, fn) {
+      var li = el("li", "ex-row ex-more");
+      var txt = el("div", "ex-txt");
+      txt.appendChild(el("strong", "", t("x." + key)));
+      txt.appendChild(el("span", "dim", t("x." + key + "D")));
+      var b = el("button", "chip pri", t(label));
+      b.type = "button";
+      b.disabled = !n;
+      b.addEventListener("click", fn);
+      li.appendChild(txt);
+      li.appendChild(b);
+      ul.appendChild(li);
+    }
+    if (cur.src) extra("music", "x.saveHere", saveNextToSong);
+    if (audioBlob && (/\.mp3$/i.test(audioBlob.name || (cur.au && cur.au.n) || cur.src || "") || /mpeg|mp3/i.test(audioBlob.type || ""))) extra("mp3", "x.make", makeMp3);
+    if (cur.src) extra("video", "x.open", toMontage);
     $("export-dlg").showModal();
+  }
+
+  // ---------- 12b. Other apps (wave 3) ----------
+  function shellOpen(app, target) {
+    try { var f = window.parent && window.parent !== window && window.parent.__orosOpenAt; if (typeof f === "function") { f(app, target); return true; } } catch (e) {}
+    return false;
+  }
+  // Enhanced LRC when words are timed (Music drops the word stamps and
+  // other players use them), else plain LRC.
+  function lrcText() { return C.wordCount(cur.ln) ? F.toElrc(cur) : F.toLrc(cur, false); }
+  function saveNextToSong() {
+    var fs = fsApi(), p = cur && C.lrcPath(cur.src);
+    if (!fs || !p) { toast(t("x.noFs")); return; }
+    var text = lrcText();
+    var write = function () {
+      Promise.resolve(fs.write(p, new Blob([text], { type: "text/plain;charset=utf-8" }))).then(function () { toast(t("x.lrcSaved")); }, function () { toast(t("x.fail")); });
+    };
+    // Re-read right before writing: an .lrc made elsewhere (or another
+    // device) is replaced only on a yes.
+    Promise.resolve(fs.read(p)).then(function (b) { return b && typeof b.text === "function" ? b.text() : null; }, function () { return null; }).then(function (old) {
+      if (old === null || old === text) { if (old !== text) write(); else toast(t("x.lrcSaved")); return; }
+      confirmDlg(t("x.lrcAsk"), t("x.replace"), write);
+    });
+  }
+  function makeMp3() {
+    var blob = audioBlob;
+    if (!blob || !ID3) return;
+    var lyrics = { text: C.toText(cur.ln), lg: cur.lg, lines: C.timed(cur.ln, cur.dur).filter(function (x) { return x.t; }).map(function (x) { return { s: x.s, t: x.t }; }) };
+    blob.slice(0, 10).arrayBuffer().then(function (ab) {
+      var h10 = new Uint8Array(ab);
+      if (!ID3.isMp3(h10, blob.name || (cur.au && cur.au.n) || "song.mp3", blob.type)) throw new Error("not");
+      var end = ID3.tagEnd(h10);
+      return blob.slice(0, Math.max(10, end)).arrayBuffer().then(function (hb) { return ID3.build(new Uint8Array(hb), lyrics); });
+    }).then(function (r) {
+      if (!r) { toast(t("x.mp3Bad")); return; }
+      var out = new Blob([r.tag, blob.slice(r.cut)], { type: "audio/mpeg" });
+      var name = fileTitle(cur) + ".mp3";
+      return saveBlob(out, name, "audio/mpeg", ".mp3").then(function (ok) { if (ok) toast(t("ex.saved", { name: name })); });
+    }).catch(function (e) { toast(t(e && e.message === "not" ? "x.mp3Not" : "x.fail")); });
+  }
+  function toMontage() {
+    if (!cur || !cur.src) { toast(t("x.videoNeed")); return; }
+    var srt = F.toSrt(cur);
+    if (!srt) return;
+    $("export-dlg").close();
+    shellOpen("montage", { lyrics: { name: cur.name || C.fileOf(cur.src), srt: srt, audio: cur.src } });
   }
 
   // ---------- 13. Wiring ----------
@@ -1224,20 +1331,60 @@
     window.addEventListener("pagehide", flushLyrics);
   }
 
-  // ---------- 14. Deep link: search hits open a song ----------
-  // target = { song: id }. Unknown ids are ignored.
+  // ---------- 14. Deep links ----------
+  // { song: id } (search hits); { musicPath, title?, artist?, album?,
+  // lyrics? } (Music's and Studio's "Sync lyrics": a song on the orOS
+  // disk, opened in the song made from it before, else a new one);
+  // { openFile: { token } } (a lyrics or song file from Files or the
+  // system's "Open with"). Anything else is ignored.
   window.__orosOpenAt = function (target) {
-    var id = target && typeof target.song === "string" ? target.song : "";
-    if (!id || !C.find(data, id)) return;
+    if (!target || typeof target !== "object") return;
     if (document.querySelector("dialog[open]")) return;
-    flushLyrics();
-    openSong(id);
+    if (typeof target.song === "string") {
+      if (!C.find(data, target.song)) return;
+      flushLyrics();
+      openSong(target.song);
+      return;
+    }
+    if (typeof target.musicPath === "string") { fromMusic(target); return; }
+    var f = target.openFile;
+    if (f && typeof f === "object" && typeof f.token === "string") {
+      var file = null;
+      try { file = window.parent.__orosTakeFile(f.token); } catch (e) {}
+      if (!file) { toast(t("open.bad")); return; }
+      if (cur) closeSong();
+      // A File from the shell window belongs to another realm: wrap it.
+      openAnyFile(new File([file], String(file.name || ""), { type: file.type || "" }));
+    }
   };
+  function fromMusic(tg) {
+    var src = C.diskPath(tg.musicPath);
+    if (!src) return;
+    flushLyrics();
+    var old = C.bySrc(data, src);
+    if (old) { if (!cur || cur.id !== old.id) openSong(old.id); return; }
+    var str = function (v, n) { return typeof v === "string" ? v.slice(0, n) : ""; };
+    var p = newSong(str(tg.title, 200) || baseName(C.fileOf(src)));
+    if (!p) return;
+    var next = Object.assign({}, p, { src: src, ar: str(tg.artist, 200), al: str(tg.album, 200), au: { n: C.fileOf(src), z: 0 } });
+    var text = str(tg.lyrics, 200000).trim();
+    if (text) {
+      var r = null;
+      try { r = F.parse(/^\s*\[\d{1,3}:\d/m.test(text) ? "lyrics.lrc" : "lyrics.txt", text); } catch (e) { r = null; }
+      if (r && r.lines && r.lines.length) {
+        next.ln = linesFrom(r);
+        if (r.dur) next.dur = r.dur;
+      }
+    }
+    if (!putProject(next)) return;
+    openSong(p.id, next.ln && next.ln.length ? "sync" : "lyrics");
+    toast(t("from.music", { name: C.fileOf(src) }));
+  }
   function takePending() {
     try {
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") {
-        var pending = p.__orosTakeTarget(APP_ID);
+        var pending = p.__orosTakeTarget("lyricsync");
         if (pending) window.__orosOpenAt(pending);
       }
     } catch (e) { /* standalone */ }
