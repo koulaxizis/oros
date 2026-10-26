@@ -82,6 +82,14 @@ The assistant can add people and companies straight to [Contacts](app:contacts) 
 - A CRM customer can be linked to a contact: the contact becomes one of the customer's `People` (shown live in CRM), and Contacts shows the customer on the contact's card. The link has its own card with `Link`; Contacts itself doesn't change. A missing contact is added first.
 - `Undo` takes the new records (or the links) back until you leave the Assistant, as long as you haven't changed them in the app (a customer that got a deal or a note of a call stays).
 
+## Tasks, events, expenses, notes, bookmarks and cards
+The assistant can also add straight to [To-Do](app:todo), [Calendar](app:calendar), [Budget](app:budget), [Notes](app:notes), [Bookmarks](app:bookmarks) and [Kanban](app:kanban), one item or many at once: "put the 12 deadlines from this PDF in my calendar", "add these receipts to my expenses", "make a task for each step of this plan in the Rome trip list", "save these five links in Reading". You get the same card with a tick on each item.
+- `Add` saves the ticked ones, in the app's own way, so they sync like anything you add there. Nothing is saved before you press it.
+- An item that looks like one you already have (the same open task in that list, an event with the same title on that day, an entry with the same amount on that day, a note with the same title, a card with the same title on that board) is marked `Already there` and starts unticked. A link you already have is never added twice.
+- Your own lists, notebooks, folders, boards, columns, labels and categories are used; the assistant doesn't invent new ones, except a To-Do list, which is made when no list has that name (the card says so). Without one, the item goes where the app puts new items: the open To-Do list, the first notebook, Unsorted, the first column of the first board, today for an expense.
+- Events are one-off (a repeating event is set in Calendar); an expense is in your main currency.
+- `Undo` takes them back until you leave the Assistant, as long as you haven't changed them in the app.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
