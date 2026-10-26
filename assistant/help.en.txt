@@ -108,6 +108,13 @@ Longer content opens in the app's own window, where you check it and save it you
 - [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
 - [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`.
 
+## Partners across apps
+When a CRM customer is the same partner as a supplier or consignment shop in [Stock](app:stock), a client in [Timesheet](app:timesheet) or [Invoices](app:invoices), or a person on your titles in [Publishing](app:publish), ask the assistant to link them ("supplier Beta Ltd in Stock is the customer Beta Print"). It is the same link as `+ Link` under `In other apps` on the customer in [CRM](app:crm), so the card then shows that partner's stock, hours, invoices or titles.
+- The customer and the record are the ones the assistant found; a consignment shop or a person on titles is found by name. Names that merely look alike are never linked on their own.
+- A record belongs to one partner: linking it to another moves it, and the card says from whom. You can also ask to remove a link.
+- Only CRM changes; the other apps stay as they are. Same card, ticks and `Undo` as above.
+- Calendar events have no link to a customer: a meeting or call to come with a customer is a follow-up in CRM, which Calendar shows.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
