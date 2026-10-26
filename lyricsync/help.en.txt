@@ -28,6 +28,11 @@ Under the play bar the song is drawn as a waveform with a mark at the start of e
 ## Check before you send
 `Check` lists what distributors usually refuse: lines with no time, lines that start before the line above, lines on screen for less than half a second or for 15 seconds or more, lines over 80 characters, labels and repeat marks such as [Chorus] or x2, and lines with only some words timed. Tap an item to go to its line.
 
+## Rough sync from the song
+`Rough sync` (Sync tab) listens to the song on this device with Whisper, the same speech model as Montage's automatic subtitles, and gives each line a rough start. Your words stay exactly as you wrote them; only the times are guessed. Then play the song and fix the lines by ear. It works best with clear vocals; set the language code in `Lyrics` for a better result.
+- The first time it downloads the speech model once (about 42 MB from Hugging Face). Montage uses the same copy, and Montage's subtitles dialog can remove it. The song itself is never sent anywhere.
+- It times only the lines without a time, unless you tick `Also move lines that already have a time`. `Undo` takes it all back.
+
 ## Fix a line
 Tap a line in the list to select it. Then:
 - Write its start time in the box (minutes:seconds, for example `1:02.50`), or move it with `−0.1`, `−0.01`, `+0.01` and `+0.1` seconds (keys [[,]] and [[.]], with [[Shift]] for 0.1 s).
@@ -43,7 +48,7 @@ Changing the words in the `Lyrics` tab keeps the times of the lines that did not
 - [[E]]: end line. [[,]] [[.]]: move the selected line by 0.01 s.
 
 ## Preview and export
-`Preview` shows the lines as they will appear in a player, with the current line large. `Export` saves the file you need:
+`Preview` shows the lines as they will appear in a player, with the current line large. `Full screen` makes it a karaoke screen: tap it or press [[Space]] to play and pause, [[Esc]] to leave. `Export` saves the file you need:
 - `LRC` for music players and LRCLIB; `Enhanced LRC` (shown when lines have word times) adds a time to every word for karaoke players.
 - `SRT` and `WebVTT` for video and the web.
 - `TTML` for Apple Music, iTunes, YouTube and distributors such as DistroKid, with word timing and singers when you have them.

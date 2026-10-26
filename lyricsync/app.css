@@ -292,6 +292,12 @@ textarea { min-height: 260px; resize: vertical; line-height: 1.6; }
 .st.now { font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1.25; }
 .st.now .sw { color: var(--text-dim); transition: color .08s; }
 .st.now .sw.sung { color: var(--accent); }
+/* Full screen karaoke (wave 4): tap or Space plays and pauses */
+#stage:fullscreen { background: var(--bg); color: var(--text); padding: 6vh 6vw; gap: 3vh; cursor: pointer; }
+#stage:fullscreen .st.dim { font-size: clamp(20px, 3.4vw, 44px); }
+#stage:fullscreen .st.now { font-size: clamp(30px, 6vw, 84px); }
+.check-row { display: flex; align-items: center; gap: 10px; min-height: 40px; margin: 6px 0; }
+.check-row input { width: 22px; height: 22px; flex: none; }
 
 /* ---------- Dialogs ---------- */
 dialog {
