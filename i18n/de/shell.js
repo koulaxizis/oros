@@ -31,6 +31,7 @@ orosPack("de", "shell", {
  "app.dice": "Würfel & Münze",
  "app.dots": "Käsekästchen",
  "app.familytree": "Stammbaum",
+ "app.lyricsync": "Liedtext-Sync",
  "app.publish": "Verlag",
  "app.together": "Zusammen",
  "app.household": "Haushalt",

@@ -439,6 +439,12 @@
    ]
   },
   {
+   "app": "lyricsync",
+   "files": [
+    "lyricsync/app.js"
+   ]
+  },
+  {
    "app": "mahjong",
    "files": [
     "mahjong/mahjong.js"
