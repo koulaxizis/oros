@@ -241,7 +241,7 @@
       "share.always": "Always share from {apps} without asking",
       "share.yes": "Share ({n})", "share.no": "Don't share",
       "note.stopped": "Stopped.", "note.refused": "The assistant declined to answer this.",
-      "note.cut": "The answer was cut off because it was too long.",
+      "note.cut": "The answer was cut off: it was still too long after it went on 4 times. Write \"go on\" for the rest.",
       "note.rounds": "The assistant stopped after too many searches. Ask again more precisely.",
       "err.key": "{name} did not accept the key. Check it in Settings.",
       "err.credit": "Your {name} account has no credit left.",
@@ -529,7 +529,7 @@
       "share.always": "Να μοιράζονται πάντα χωρίς ερώτηση από: {apps}",
       "share.yes": "Κοινοποίηση ({n})", "share.no": "Όχι",
       "note.stopped": "Διακόπηκε.", "note.refused": "Ο βοηθός αρνήθηκε να απαντήσει σε αυτό.",
-      "note.cut": "Η απάντηση κόπηκε γιατί ήταν πολύ μεγάλη.",
+      "note.cut": "Η απάντηση κόπηκε: ήταν ακόμα πολύ μεγάλη αφού συνέχισε 4 φορές. Γράψε «συνέχισε» για το υπόλοιπο.",
       "note.rounds": "Ο βοηθός σταμάτησε μετά από πολλές αναζητήσεις. Ρώτα ξανά πιο συγκεκριμένα.",
       "err.key": "Το {name} δεν δέχτηκε το κλειδί. Έλεγξέ το στις Ρυθμίσεις.",
       "err.credit": "Ο λογαριασμός σου στο {name} δεν έχει άλλη πίστωση.",
@@ -1031,6 +1031,8 @@
     return !!(keyCache[pid] && keyCache[pid].key);
   }
 
+  // Output ceilings Claude named for a model (a 400), for this session.
+  var outMax = {};
   // One streamed request → reducer result. onText(text) as it arrives.
   function callModel(pid, msgs, opts, signal, onText) {
     var p = C.PROVIDERS[pid];
@@ -1054,11 +1056,16 @@
             if (p.kind === "anthropic" && !(o && o.noThinking) && C.thinkingRefused(err)) {
               return send(Object.assign({}, o, { noThinking: true }));
             }
+            // A model with a lower output ceiling than we know: once more with it.
+            var lim = p.kind === "anthropic" && !(o && o.maxTokens) ? C.maxTokensRefused(err) : 0;
+            if (lim) { outMax[modelOf(pid)] = lim; return send(Object.assign({}, o, { maxTokens: lim })); }
             throw err;
           });
         });
       }
-      return send(opts || {});
+      var o0 = Object.assign({}, opts || {});
+      if (p.kind === "anthropic" && outMax[modelOf(pid)]) o0.maxTokens = outMax[modelOf(pid)];
+      return send(o0);
     }).then(function (res) {
       var red = C.makeReducer(pid);
       var sse = C.makeSSE(function (d) {
@@ -2118,21 +2125,38 @@
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
     var web = wmode === "native";
-    var round = 0;
+    var round = 0, conts = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
+      // Carrying on a cut answer: the live view shows it whole.
+      var head = contHead(c.msgs, c.msgs.length);
+      var before = head >= 0 ? joinedText(c.msgs, head) : "";
+      busy.join = head;
+      if (head >= 0) { busy.live = before; renderMessages(); }
       return callModel(pid, withFiles(c.msgs), { system: system, tools: tools, web: web }, ctl && ctl.signal, function (txt) {
-        busy.live = txt;
+        busy.live = before + txt;
         scheduleLive();
       }).then(function (res) {
         addUsage(pid, res.usage);
         var m = { r: "asst", prov: pid, model: modelOf(pid), text: res.text, raw: res.raw };
         if (res.tools.length) m.tools = res.tools;
+        if (res.cut && !res.tools.length) m.cut = 1;
         c.msgs.push(m);
         if (res.refused) note("info", t("note.refused"));
-        if (res.cut) note("info", t("note.cut"));
         busy.live = "";
+        busy.join = -1;
+        // Cut at the output limit (with no complete tool call to run):
+        // a hidden "continue" goes, and the answer carries on as one.
+        if (m.cut) {
+          if (conts < C.CONT_ROUNDS && !C.PROVIDERS[pid].device) {
+            conts++;
+            c.msgs.push({ r: "user", cont: 1, text: C.CONT_TEXT });
+            saveChat(c);
+            return next();
+          }
+          note("info", t("note.cut"));
+        }
         saveChat(c);
         renderMessages();
         // A long web search pauses the turn on Anthropic's side: the same
@@ -2160,6 +2184,7 @@
       : next();
     first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
+        if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
         if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
       } else {
@@ -3651,7 +3676,19 @@
       $("welcome").hidden = true;
     }
     if (chat && impSource(chat)) host.appendChild(el("p", "imp-note", t("imp.from", { s: IMP_NAME[impSource(chat)], d: fullDate(impAt(chat)) })));
-    (chat ? chat.msgs : []).forEach(function (m) { drawMsg(host, m, chat); });
+    var msgs = chat ? chat.msgs : [];
+    var stopAt = busy && busy.chat === chat && busy.join >= 0 ? busy.join : msgs.length;
+    for (var i = 0; i < stopAt; i++) {
+      var m = msgs[i];
+      // A cut answer and its continuations show as one answer.
+      if (m && m.r === "user" && m.cont) continue;
+      if (m && m.r === "asst" && contHead(msgs, i) >= 0 && contHead(msgs, i) !== i) continue;
+      if (m && m.r === "asst" && m.cut) {
+        drawMsg(host, Object.assign({}, m, { text: joinedText(msgs, i), raw: joinedRaw(msgs, i) }), chat);
+        continue;
+      }
+      drawMsg(host, m, chat);
+    }
     if (busy && busy.chat === chat) {
       if (busy.card) host.appendChild(busy.card);
       else {
@@ -3665,6 +3702,43 @@
       }
     }
     if (nearEnd) scrollEnd();
+  }
+
+  // Cut answers (m.cut) and their continuations: asst(cut) → user(cont)
+  // → asst(cut) → user(cont) → asst. contHead(msgs, i) → index of the
+  // chain's first answer when msgs[i] (or the slot i, while the next
+  // part is streaming) belongs to one, else -1.
+  function contHead(msgs, i) {
+    var j = i;
+    if (!(j < msgs.length && msgs[j] && msgs[j].r === "asst")) {
+      // slot after a "continue": the part being written
+      if (!(j - 1 >= 0 && msgs[j - 1] && msgs[j - 1].r === "user" && msgs[j - 1].cont)) return -1;
+      j = j - 2;
+      if (!(j >= 0 && msgs[j] && msgs[j].r === "asst" && msgs[j].cut)) return -1;
+    } else if (!msgs[j].cut && !(j >= 2 && msgs[j - 1] && msgs[j - 1].cont)) return -1;
+    while (j >= 2 && msgs[j - 1] && msgs[j - 1].r === "user" && msgs[j - 1].cont &&
+           msgs[j - 2] && msgs[j - 2].r === "asst" && msgs[j - 2].cut) j -= 2;
+    return j;
+  }
+  function chainEnd(msgs, h) {
+    var j = h;
+    while (msgs[j] && msgs[j].cut && msgs[j + 1] && msgs[j + 1].r === "user" && msgs[j + 1].cont &&
+           msgs[j + 2] && msgs[j + 2].r === "asst") j += 2;
+    return j;
+  }
+  function joinedText(msgs, h) {
+    var out = "", end = chainEnd(msgs, h);
+    for (var j = h; j <= end; j += 2) out += String(msgs[j] && msgs[j].text || "");
+    return out;
+  }
+  // Web sources of every part, for the one answer shown.
+  function joinedRaw(msgs, h) {
+    var end = chainEnd(msgs, h), blocks = [];
+    for (var j = h; j <= end; j += 2) {
+      var r = msgs[j] && msgs[j].raw;
+      if (r && Array.isArray(r.blocks)) blocks = blocks.concat(r.blocks);
+    }
+    return blocks.length ? { prov: "anthropic", blocks: blocks } : msgs[h].raw;
   }
 
   function drawMsg(host, m, c) {

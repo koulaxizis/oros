@@ -211,4 +211,5 @@ Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des A
 - Er kann Einträge nur in den Apps ändern oder löschen, die unter `Ändern, was du schon hast` stehen, einen nach dem anderen, und er kann nichts versenden (keine E-Mail).
 - Rückgängig machen einer Änderung geht nur, bis du den Assistenten verlässt.
 - Ist eine App in einem anderen Browser-Tab offen, während du hier einen ihrer Einträge änderst, zeigt dieser Tab eventuell noch die alte Fassung, bis du ihn neu lädst.
+- Eine lange Antwort wird nicht abgeschnitten: Stoppt der Dienst an seiner Längengrenze, bittet der Assistent ihn weiterzuschreiben, bis zu 4 Mal, und du siehst eine Antwort. Nur eine sehr lange (oder das Modell im Browser, das wenig Platz hat) kann noch mit „Die Antwort wurde abgeschnitten“ enden; dann schreib `weiter`.
 - Manche Dienste lehnen Aufrufe aus einem Browser ab: `Verbindung testen` sagt es dir. Ein lokaler Server muss diese Seite erlauben; `Server` in den Einstellungen zeigt für jedes Programm, wie.
