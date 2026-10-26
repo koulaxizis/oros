@@ -9,6 +9,8 @@ Below come three groups:
 - `Today`: what is due today. Rows with a time come first, in time order.
 - `Coming up`: the next three days, day by day.
 
+On a wide screen the small cards stand in two columns, and each column goes on right under its own cards, so a short card never leaves a gap. When more than three of your contacts celebrate a name day, they are one row ("5 contacts have their name day"); tap or click it to show or hide them.
+
 Tap or click a group's title to fold it. Tap or click a row to open it in its app, on that event, task, card, quote, contact, plant, pet, car, trip, recurring entry or day. A [Health](app:health) reminder opens a new reading of that kind, a [Workouts](app:fitness) session opens the Train tab and a [Habits](app:habits) row opens this week's habits, where you tick it. `Refresh` (the round arrow) builds the summary again.
 
 Tasks from [To-Do](app:todo) and [Plant Care](app:plants) also have a tick button, `Done (opens the app)`. It opens that app, which marks the task done itself: To-Do ticks it (untick it there to take it back) and Plant Care logs it, with `Undo` in its message.

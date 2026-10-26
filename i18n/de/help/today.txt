@@ -9,6 +9,8 @@ Darunter folgen drei Gruppen:
 - `Heute`: was heute fällig ist. Zeilen mit Uhrzeit kommen zuerst, nach Uhrzeit sortiert.
 - `Demnächst`: die nächsten drei Tage, Tag für Tag.
 
+Auf einem breiten Bildschirm stehen die kleinen Karten in zwei Spalten, und jede Spalte geht direkt unter ihren eigenen Karten weiter, sodass eine kurze Karte keine Lücke lässt. Haben mehr als drei deiner Kontakte Namenstag, werden sie zu einer Zeile („5 Kontakte haben Namenstag“); tippe oder klicke darauf, um sie ein- oder auszublenden.
+
 Tippe oder klicke auf den Titel einer Gruppe, um sie einzuklappen. Tippe oder klicke auf eine Zeile, um sie in ihrer App zu öffnen, beim jeweiligen Termin, bei der Aufgabe, Karte, dem Angebot, Kontakt, der Pflanze, dem Haustier, Auto, der Reise, dem wiederkehrenden Eintrag oder Tag. Eine Erinnerung aus [Gesundheit](app:health) öffnet eine neue Messung dieser Art, eine Einheit aus [Training](app:fitness) öffnet den Tab Training und eine Zeile aus [Gewohnheiten](app:habits) öffnet die Gewohnheiten dieser Woche, wo du sie abhakst. `Aktualisieren` (der runde Pfeil) baut die Übersicht neu auf.
 
 Aufgaben aus [Aufgaben](app:todo) und [Pflanzenpflege](app:plants) haben außerdem einen Haken-Button, `Erledigt (öffnet die App)`. Er öffnet die App, die die Aufgabe selbst als erledigt markiert: Aufgaben hakt sie ab (dort nimmst du den Haken wieder weg) und Pflanzenpflege trägt sie ein, mit `Rückgängig` in ihrer Meldung.
