@@ -151,7 +151,7 @@ test("contacts: hostile content is cut down (no photos, typed, capped, stamps cl
   assert.deepEqual(c.labelIds, ["L1"]);
   assert.deepEqual(c.relations, [{ with: "c2", type: "other" }]);
   assert.equal(c.starred, false);
-  assert.equal(c.note.length, 500);
+  assert.equal(c.note.length, 2000);
   assert.equal(c.keep, null);
   assert.equal(c.log[0].k, "note");
   assert.ok(c.log[0].m <= Date.now() + K.FUTURE);

@@ -175,7 +175,7 @@
     }
     var notes = rest.slice();
     fax.forEach(function (n) { notes.push("Fax: " + n); });
-    pc.note = notes.join("\n").slice(0, 500);
+    pc.note = notes.join("\n").slice(0, 2000);
     if (!pc.given && !pc.family && !pc.org) {
       pc.given = (pc.emails[0] && pc.emails[0].v.split("@")[0]) || (pc.phones[0] && pc.phones[0].v) || "";
       pc.given = pc.given.slice(0, 60);
@@ -238,7 +238,7 @@
     if (bd) pc.events.push(bd);
     // The note keeps its line breaks (other control chars dropped).
     if (typeof x.note === "string") {
-      pc.note = x.note.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim().slice(0, 500).trim();
+      pc.note = x.note.replace(/\r\n?/g, "\n").replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, "").trim().slice(0, 2000).trim();
     }
     return pc;
   }

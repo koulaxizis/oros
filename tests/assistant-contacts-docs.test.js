@@ -93,14 +93,24 @@ test("contacts: an address is added, or replaces the one of its type with addres
   assert.match(E.normArgs({ ref: "r1", action: "update", website: "not a site" }).err, /web address/);
 });
 
-test("contacts: note_add adds a line, never twice, within 500 characters", () => {
+test("contacts: note_add adds a line, never twice, within 2000 characters (CT-N2K)", () => {
   const { a } = run(data(), "c1", { ref: "r1", action: "update", note_add: "Tax no. 123456789" });
   assert.equal(find(a.data, "c1").note, "old\nTax no. 123456789");
   const again = E.plan("contacts", a.data, "c1", ok({ ref: "r1", action: "update", note_add: "Tax no. 123456789" }), NOW + 5);
   assert.match(again.err, /Nothing would change/);
-  const long = E.plan("contacts", data(), "c1", ok({ ref: "r1", action: "update", note_add: "x".repeat(499) }), NOW);
+  const bio = "b".repeat(1500);
+  const { a: a2 } = run(data(), "c1", { ref: "r1", action: "update", note_add: bio });
+  assert.equal(find(a2.data, "c1").note, "old\n" + bio);            // past the old 500, whole
+  const long = E.plan("contacts", data(), "c1", ok({ ref: "r1", action: "update", note_add: "x".repeat(1999) }), NOW);
   assert.equal(long.ok, false);
-  assert.match(long.err, /Contacts keeps 500/);
+  assert.match(long.err, /Contacts keeps 2000/);
+  // note (replace): whole up to 2000, refused past it, never cut
+  const { a: a3 } = run(data(), "c1", { ref: "r1", action: "update", note: "n".repeat(2000) });
+  assert.equal(find(a3.data, "c1").note.length, 2000);
+  const over = E.plan("contacts", data(), "c1", ok({ ref: "r1", action: "update", note: "n".repeat(2001) }), NOW);
+  assert.equal(over.ok, false);
+  assert.match(over.err, /2001 characters; Contacts keeps 2000.*nothing is cut/);
+  assert.equal(find(data(), "c1").note, "old");
   assert.match(E.normArgs({ ref: "r1", action: "update", note: "a", note_add: "b" }).err, /not both/);
 });
 
@@ -160,6 +170,40 @@ test("core: change_item offers changes with every field, and the people rule whe
   assert.match(pr, /look each one up first with search_data \(Contacts, and CRM/);
   const noFiles = C.systemPrompt({ lang: "en", now: NOW, apps: ["Contacts (contacts)"], entries: ["contact"], changes: ["contacts"] });
   assert.ok(!/look each person up/.test(noFiles));
+});
+
+test("propose_entry contact: a note up to 2000 goes whole, a longer one is refused, not cut (CT-N2K)", () => {
+  const src = fs.readFileSync(path.join(REPO, "assistant/core.js"), "utf8");
+  assert.match(src, /var nt = para\(a\.note, 5000\);\s*if \(nt\.length > 2000\) return \{ err:/);
+  assert.match(src, /whole note holds 2000 characters in Contacts/);
+});
+
+test("merge.js: a note an older device cut to 500 loses a tie to the whole note (CT-N2K)", () => {
+  const whole = "Bio. " + "word ".repeat(200);                 // 1,005 characters, a space at 501
+  const cut = whole.slice(0, 500);
+  const base = { id: "c1", given: "A", mtime: 10, fm: { note: 10 } };
+  const a = Object.assign({}, base, { note: whole }), b = Object.assign({}, base, { note: cut });
+  assert.equal(MG.mergeContact(a, b).note, whole);
+  assert.equal(MG.mergeContact(b, a).note, whole);
+  assert.equal(JSON.stringify(MG.mergeContact(a, b)), JSON.stringify(MG.mergeContact(b, a)));
+  // a real edit (newer stamp) still wins, even when it is the shorter note
+  const ed = Object.assign({}, base, { note: cut, fm: { note: 11 } });
+  assert.equal(MG.mergeContact(a, ed).note, cut);
+  // not a cut (other length or other text): the old tie rule
+  const x = Object.assign({}, base, { note: "zz" }), y = Object.assign({}, base, { note: "zz and more" });
+  assert.equal(MG.mergeContact(x, y).note, MG.mergeContact(y, x).note);
+});
+
+test("assistant.js: a changes entry that can't be changed stays off the card, the others go (CT-N2K)", () => {
+  const src = fs.readFileSync(path.join(REPO, "assistant/assistant.js"), "utf8");
+  const list = src.slice(src.indexOf("function changeList("), src.indexOf("function undoChange("));
+  assert.doesNotMatch(list, /return Promise\.resolve\(\{ content: "Error: changes\[" \+ i/);
+  assert.match(list, /if \(!ch\.ok\) \{ bad\.push/);
+  assert.match(list, /if \(!plans\.length && bad\.length\)/);
+  assert.match(list, /sameNote \+= badNote\(bad\)/);
+  assert.match(src, /never shorten the user's text unless they ask/);
+  const many = src.slice(src.indexOf("function changeMany("), src.indexOf("function changeList("));
+  assert.match(many, /if \(!plans\.length && bad\.length\)/);
 });
 
 // ---------- doctext.js ----------

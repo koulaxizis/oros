@@ -2624,6 +2624,8 @@
   // Apply, one write. Every item is checked again on Apply against
   // what the card showed; if any one changed meanwhile or no longer
   // fits, nothing is written. Undo takes all of them back, or none.
+  // An item that can't take the change stays off the card and is named
+  // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
   function changeMany(c, args, apps) {
     if (args.action !== "update") return Promise.resolve({ content: "Error: refs is only for update; change other things one item at a time with ref.", err: 1 });
@@ -2667,9 +2669,10 @@
       data = res.data;
       plans.push({ x: x, pl: pl });
     });
-    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length && bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
     if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
     var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
     return askChange(app.name, { many: many }, "update").then(function (ok) {
@@ -2709,27 +2712,35 @@
   // every row, so the user leaves out what should stay. Planned in a
   // row on the same data; on Apply each item is checked again against
   // what the card showed, and if one changed meanwhile nothing is
-  // written. Undo takes all of them back, or none.
+  // written. Undo takes all of them back, or none. An entry that can't
+  // be changed (a note too long, an unknown ref…) stays off the card and
+  // is named in the result; the others still go (CT-N2K).
   var LIST_MAX = 100;
+  // CT-N2K: entries that could not go on the card, for the model.
+  function badNote(bad) {
+    return bad.length ? " Not on the card, so not changed (" + bad.length + "): " + bad.join(" · ") + " Tell the user which ones and why; fix and send only these again, and never shorten the user's text unless they ask." : "";
+  }
   function changeList(c, args, apps) {
     if (args.action && args.action !== "update") return Promise.resolve({ content: "Error: changes is only for update; change other things one item at a time with ref.", err: 1 });
     if ((args.ref !== undefined && args.ref !== null && args.ref !== "") || Array.isArray(args.refs)) return Promise.resolve({ content: "Error: give ref, refs or changes, not more than one.", err: 1 });
     var list = args.changes.filter(function (x) { return x && typeof x === "object" && !Array.isArray(x); });
     if (!list.length) return Promise.resolve({ content: "Error: changes is empty.", err: 1 });
     if (list.length > LIST_MAX) return Promise.resolve({ content: "Error: at most " + LIST_MAX + " changes at a time.", err: 1 });
-    var chs = [], appId = "", seen = {};
+    var chs = [], appId = "", seen = {}, bad = [];
     for (var i = 0; i < list.length; i++) {
       var one = Object.assign({}, list[i], { action: "update" });
       var ch = E.normArgs(one);
-      if (!ch.ok) return Promise.resolve({ content: "Error: changes[" + i + "]: " + ch.err, err: 1 });
-      if (seen[ch.ref]) return Promise.resolve({ content: "Error: " + ch.ref + " is in changes twice; put all of its changes in one entry.", err: 1 });
+      var who = typeof list[i].ref === "string" && list[i].ref ? list[i].ref : "changes[" + i + "]";
+      if (!ch.ok) { bad.push(who + ": " + ch.err); continue; }
+      if (seen[ch.ref]) { bad.push(ch.ref + ": it is in changes twice; put all of its changes in one entry."); continue; }
       seen[ch.ref] = 1;
       var r = c.refs ? c.refs[ch.ref] : null;
-      if (!r) return Promise.resolve({ content: "Error: unknown ref " + ch.ref + ". Find the item with search_data or app_summary first.", err: 1 });
+      if (!r) { bad.push(ch.ref + ": unknown ref; find the item with search_data or app_summary first."); continue; }
       if (appId && r.app !== appId) return Promise.resolve({ content: "Error: changes must all be items of the same app.", err: 1 });
       appId = r.app;
       chs.push({ ch: ch, target: r.target });
     }
+    if (!chs.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix them and try again.", err: 1 });
     var app = null;
     changeApps(apps).forEach(function (a) { if (a.id === appId) app = a; });
     if (!app) {
@@ -2738,7 +2749,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], same = [];
     chs.forEach(function (x) {
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
       if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
@@ -2747,9 +2758,10 @@
       data = res.data;
       plans.push({ x: x, pl: pl });
     });
-    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix or leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length && bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix them and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
     if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
     var tick = plans.every(function (p) { return E.canTick(app.id, p.pl.rows); });
     var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
