@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.86.00
+- Assistant: it can now add contacts and CRM customers itself, many at once on one card where you tick what goes in ("add these five business cards to my contacts"). Someone who looks like a record you already have starts unticked, and the assistant updates that record instead. It can also link a CRM customer to a contact, so the contact shows on the customer's card and the customer in Contacts. Nothing is saved until you press Add or Link, and Undo takes it back.
+
 ## Version 3.85.02
 - Contacts: a contact's note now holds 2,000 characters (it was 500), enough for a bio or a full description. The Assistant never shortens a note on its own: if one is too long it says so. When it updates several contacts at once and one of them can't be changed, the others still go on the card for you to apply, and it tells you which one was left out and why.
 
