@@ -526,7 +526,6 @@ orosPack("de", "crm", {
  "tags.title": "Tags",
  "td.hours": "Nicht abgerechnete Stunden: {h} · {v}",
  "td.roy": "Zu zahlende Tantiemen: {v}",
- "td.settle": "Abrechnung fällig: {s}",
  "title": "CRM-Plattformen",
  "tl.app.budget": "Budget",
  "tl.app.crm": "CRM",

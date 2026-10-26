@@ -3758,6 +3758,16 @@
     };
   }
   function openConsign() { if (window.OrosStockConsign) window.OrosStockConsign.open(consApi()); }
+  // a consignment shop by its name (case and accents ignored, or the one
+  // whose name holds it); none or several: the shops list
+  function settleByName(name) {
+    function fold(x) { return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+    var k = fold(name), rows = window.OrosStockConsign ? C.consList(data) : [];
+    var hit = rows.filter(function (r) { return fold(r.wh.name) === k; });
+    if (!hit.length && k) hit = rows.filter(function (r) { return fold(r.wh.name).indexOf(k) >= 0; });
+    if (hit.length === 1) window.OrosStockConsign.settle(consApi(), hit[0].wh.id);
+    else openConsign();
+  }
 
   // ---------- 9. Supplier price lists (wave P10, pricelist.js) ----------
   // One write per Apply (setData: persist + render); the file is read
@@ -4075,6 +4085,10 @@
     if (target.view === "reorder") { setTab("order"); return; }
     if (target.view === "reports") { setTab("reports"); return; }
     if (target.view === "shop") { openShop(); return; }
+    if (target.view === "cons") { openConsign(); return; }
+    // the Assistant's "settlement" card (publisher wave P14): that shop's
+    // settlement opens; nothing is saved before the person saves it
+    if (target.asNew && typeof target.asNew === "object" && typeof target.asNew.settle === "string") { settleByName(target.asNew.settle); return; }
     if (typeof target.po === "string" && byId("pos", target.po)) {
       setTab("order");
       poSheet(target.po);

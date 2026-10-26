@@ -77,7 +77,7 @@ A shop that sells your goods and pays you for what sold (a bookshop, a gallery, 
 - When the shop tells you what is left, open the `Consignment` tile on the Products tab and choose `Settle…`. Type what is still on the shelf; the rest is recorded as sold at each product's sale price.
 - After `Record`, `Make the invoice` opens Invoices with the shop as client and the lines at its discount. The lines carry no product code, so Invoices doesn't take the stock out a second time.
 - Tick `Bring what is left back` to end the consignment: the rest moves back to the main warehouse.
-- The tile turns yellow when a settlement is due. Void the sale movement to undo a settlement.
+- The tile turns yellow when a settlement is due, and [Today](app:today) reminds you. Void the sale movement to undo a settlement.
 
 ## Reorder
 `Reorder` lists every product at or below its minimum, grouped by supplier, with a suggested quantity (the product's `Reorder qty`, or enough for twice the minimum, less what is already on order). For each supplier:

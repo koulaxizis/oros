@@ -390,7 +390,8 @@
       "icon": "publish",
       "url": "publish/",
       "type": "internal",
-      "search": "search.js"
+      "search": "search.js",
+      "today": ["core.js", "feed.js", "today.js"]
     },
     {
       "id": "prompter",

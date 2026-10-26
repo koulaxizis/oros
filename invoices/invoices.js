@@ -519,7 +519,9 @@
       f: { st: str(f.st), kind: str(f.kind), year: str(f.year) },
       dash: { range: RANGES.indexOf(d.range) >= 0 ? d.range : "thisYear",
               from: C.validDay(d.from) ? d.from : "", to: C.validDay(d.to) ? d.to : "", cur: str(d.cur) },
-      ser: {}
+      ser: {},
+      // the accountant's address for the month's pack (acctpack.js)
+      acct: typeof v.acct === "string" && v.acct.length <= 200 ? v.acct : ""
     };
     ["inv", "rcpt", "pro", "cred"].forEach(function (k) { if (typeof s[k] === "string") prefs.ser[k] = s[k]; });
   }
@@ -911,6 +913,8 @@
     $("sheet-docs").textContent = t("dash.sheet");
     $("sheet-docs").hidden = !sheetShell();
     $("csv-pays").textContent = t("dash.csvPays");
+    $("acct-pack").hidden = !window.OrosAcctPack || !window.OrosAcctPack.open;
+    if (window.OrosAcctPack && window.OrosAcctPack.STR) $("acct-pack").textContent = "🧾 " + acctText("ap.btn");
   }
 
   // ---------- 7. Editor ----------
@@ -3598,13 +3602,35 @@
     var name = "oros-invoices-" + (which === "pays" ? "payments-" : "") + k[0] + "_" + k[1] + ".csv";
     var text;
     if (which === "pays") {
-      text = C.paysCsv(data, k[0], k[1], [t("pay.date"), t("ed.num"), t("c.title"), t("pay.amt"), t("ed.cur"), t("pay.how"), t("pay.note")],
-                       howName, LANG);
+      text = C.paysCsv(data, k[0], k[1], paysHead(), howName, LANG);
     } else {
       text = C.docsCsv(data, k[0], k[1], docsHead(), kindName, statusName, LANG, today);
     }
     saveText(text, name, "text/csv", ".csv", "CSV");
   }
+  // ---------- The month for the accountant (acctpack.js, wave P11) ----------
+  function acctText(k) {
+    var S = window.OrosAcctPack.STR;
+    if (window.orosI18n && !S[LANG]) window.orosI18n.table(S, "invoices", LANG);
+    return (S[LANG] || S.en)[k] || S.en[k];
+  }
+  function openAcctPack() {
+    if (!window.OrosAcctPack || !window.OrosAcctPack.open || !window.OrosBundle) return;
+    window.OrosAcctPack.open({
+      lang: LANG, core: C, el: el, btn: btn, field: field, toast: showToast,
+      makeDialog: makeDialog, openDialog: openDialog, saveBlob: saveBlob, fs: orosFS,
+      data: function () { return data; }, today: todayKey,
+      prefs: function () { return prefs; }, setPref: function (k, v) { prefs[k] = v; savePrefs(); },
+      monthName: function (mk) {
+        try { return new Date(+mk.slice(0, 4), +mk.slice(5, 7) - 1, 1).toLocaleDateString(loc(), { month: "long", year: "numeric" }); }
+        catch (e) { return mk; }
+      },
+      fmtDay: function (k) { return C.fmtDay(k); },
+      docsHead: docsHead, paysHead: paysHead, kindName: kindName, statusName: statusName, howName: howName,
+      pdfBlob: pdfBlob, pdfName: pdfName
+    });
+  }
+  function paysHead() { return [t("pay.date"), t("ed.num"), t("c.title"), t("pay.amt"), t("ed.cur"), t("pay.how"), t("pay.note")]; }
   function docsHead() {
     return [t("ed.num"), t("ed.kind"), t("dash.range"), t("ed.date"), t("ed.due"), t("c.title"), t("c.afm"), t("ed.cur"),
             t("tot.net"), t("tot.vatAll"), t("tot.total"), t("ed.wht"), t("tot.pay"), t("tot.paid"), t("tot.bal"), t("vw.mark")];
@@ -4147,6 +4173,7 @@
     $("csv-docs").addEventListener("click", function () { exportCsv("docs"); });
     $("sheet-docs").addEventListener("click", openDocsInSheet);
     $("csv-pays").addEventListener("click", function () { exportCsv("pays"); });
+    $("acct-pack").addEventListener("click", openAcctPack);
     $("ed-form").addEventListener("submit", function (e) { e.preventDefault(); });
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) { shelter(); return; }

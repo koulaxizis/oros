@@ -58,6 +58,9 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 ## Dashboard
 `Dashboard` shows, for a `Period`, how much you `Invoiced` and `Collected`, what is `Outstanding` and `Overdue`, a bar per month, your top clients and the VAT per rate. Choose the `Currency` when you invoice in more than one. `Export documents (CSV)` and `Export payments (CSV)` save them for a spreadsheet or your accountant. Inside orOS, `Open in Spreadsheet` opens the documents of the period straight in a new sheet in [Spreadsheet](app:spreadsheet), with net, VAT and total as numbers and their totals at the bottom when the period has a single currency.
 
+### The month for your accountant
+`Pack for the accountant…` on the Dashboard makes one ZIP for a month (last month is picked): `summary.txt` with the month's totals, the documents' and payments' CSV, a PDF of every document issued here and, from the other apps on this device, [Budget](app:budget) entries with their receipt files, [Stock](app:stock) purchases and sales, and the month's orders of your WooCommerce shop (read when you make the pack; Settings › [Connected services](app:settings)). Untick what you don't want. The ZIP is saved in [Files](app:files) under Invoices/Accountant; then `E-mail to the accountant` opens [Mail](app:mail) with a message to the address you typed (kept on this device), the summary as text and the ZIP attached. Nothing is sent until you send it from Mail. A pack over 7 MB is too big for one e-mail: share it from Files instead.
+
 ## Calendar, Today and reminders
 - Unpaid invoices show in [Calendar](app:calendar) on their due date, under the `Invoices` chip; tapping one opens it here.
 - The [Today](app:today) summary lists invoices that are overdue or due in the next days, and recurring invoices ready to check.

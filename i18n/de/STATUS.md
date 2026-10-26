@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 34715 of 34724 (99%)
+- Strings: 34841 of 34864 (99%)
 - Help pages: 149 of 149 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 570 / 570 |
+| assistant | 100% | 576 / 576 |
 | atelier | 100% | 1362 / 1362 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -35,7 +35,7 @@ text is still written in the code. They switch over wave by wave
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 301 / 301 |
 | converter | 100% | 68 / 68 |
-| crm | 100% | 597 / 597 |
+| crm | 100% | 596 / 596 |
 | crossword | 100% | 170 / 170 |
 | cycle | 100% | 203 / 203 |
 | designkit | 100% | 174 / 174 |
@@ -62,7 +62,7 @@ text is still written in the code. They switch over wave by wave
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 59 / 59 |
 | household | 99% | 142 / 143 |
-| invoices | 100% | 557 / 557 |
+| invoices | 97% | 628 / 642 |
 | jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 273 / 273 |
 | labels | 100% | 88 / 88 |
@@ -103,7 +103,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 64 / 64 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 100% | 369 / 369 |
+| publish | 100% | 418 / 418 |
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
@@ -131,7 +131,7 @@ text is still written in the code. They switch over wave by wave
 | spot | 100% | 54 / 54 |
 | spreadsheet | 100% | 355 / 355 |
 | stickies | 100% | 124 / 124 |
-| stock | 100% | 693 / 693 |
+| stock | 100% | 694 / 694 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 382 / 382 |
 | sudoku | 100% | 139 / 139 |

@@ -215,7 +215,7 @@
       "entry.more": "+{n} more", "entry.gone": "{app} is not installed",
       "entry.contact": "New contact · {app}", "entry.customer": "New customer · {app}", "entry.card": "New card · {app}",
       "entry.habit": "New habit · {app}", "entry.workout": "Log a workout · {app}", "entry.car": "New entry · {app}",
-      "entry.plant": "New plant · {app}", "entry.pet_record": "New health record · {app}", "entry.media": "New title · {app}", "entry.book": "New book to publish · {app}",
+      "entry.plant": "New plant · {app}", "entry.pet_record": "New health record · {app}", "entry.media": "New title · {app}", "entry.book": "New book to publish · {app}", "entry.post": "Planned post · {app}", "entry.settlement": "Consignment settlement · {app}",
       "entry.place": "Place · {app}", "entry.shared_expense": "New shared expense · {app}",
       "entry.hint.place": "Opens {app} at this place; save it there if it is the right one.",
       "f.org": "Organisation", "f.phone": "Phone", "f.email": "E-mail", "f.address": "Address", "f.birthday": "Birthday",
@@ -224,7 +224,7 @@
       "f.activity": "Activity", "f.minutes": "Minutes", "f.distance": "Distance (km)", "f.vehicle": "Vehicle",
       "f.km": "Odometer (km)", "f.cost": "Cost", "f.shop": "Shop", "f.species": "Species", "f.room": "Room",
       "f.waterDays": "Water every (days)", "f.record": "Record", "f.pet": "Pet", "f.nextDue": "Next due", "f.vet": "Vet",
-      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN",
+      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
       "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
@@ -502,7 +502,7 @@
       "entry.more": "+{n} ακόμη", "entry.gone": "Δεν είναι εγκατεστημένο: {app}",
       "entry.contact": "Νέα επαφή · {app}", "entry.customer": "Νέος πελάτης · {app}", "entry.card": "Νέα κάρτα · {app}",
       "entry.habit": "Νέα συνήθεια · {app}", "entry.workout": "Καταγραφή προπόνησης · {app}", "entry.car": "Νέα καταχώρηση · {app}",
-      "entry.plant": "Νέο φυτό · {app}", "entry.pet_record": "Νέα εγγραφή υγείας · {app}", "entry.media": "Νέος τίτλος · {app}", "entry.book": "Νέο βιβλίο προς έκδοση · {app}",
+      "entry.plant": "Νέο φυτό · {app}", "entry.pet_record": "Νέα εγγραφή υγείας · {app}", "entry.media": "Νέος τίτλος · {app}", "entry.book": "Νέο βιβλίο προς έκδοση · {app}", "entry.post": "Σχεδιασμένη ανάρτηση · {app}", "entry.settlement": "Εκκαθάριση παρακαταθήκης · {app}",
       "entry.place": "Μέρος · {app}", "entry.shared_expense": "Νέο κοινό έξοδο · {app}",
       "entry.hint.place": "Ανοίγει: {app} σε αυτό το μέρος· αποθήκευσέ το εκεί αν είναι το σωστό.",
       "f.org": "Οργανισμός", "f.phone": "Τηλέφωνο", "f.email": "E-mail", "f.address": "Διεύθυνση", "f.birthday": "Γενέθλια",
@@ -511,7 +511,7 @@
       "f.activity": "Δραστηριότητα", "f.minutes": "Λεπτά", "f.distance": "Απόσταση (km)", "f.vehicle": "Όχημα",
       "f.km": "Χιλιόμετρα", "f.cost": "Κόστος", "f.shop": "Συνεργείο", "f.species": "Είδος φυτού", "f.room": "Δωμάτιο",
       "f.waterDays": "Πότισμα κάθε (μέρες)", "f.record": "Εγγραφή", "f.pet": "Κατοικίδιο", "f.nextDue": "Επόμενη φορά", "f.vet": "Κτηνίατρος",
-      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN",
+      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
       "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
@@ -2993,7 +2993,8 @@
         return S.timesheetMonth(core, d, a.month, Date.now());
       });
     }
-    var own = a.app === "todo" ? S.todoLists(readStore("oros-todo-data"), today) : null;
+    var own = a.app === "todo" ? S.todoLists(readStore("oros-todo-data"), today) :
+      a.app === "stock" ? S.stockMonth(readStore("oros-stock-data"), a.month, LANG) : null;
     // Calendar: its labels always; with a label or a month, those
     // events (every date) instead of what is coming.
     if (a.app === "calendar") {

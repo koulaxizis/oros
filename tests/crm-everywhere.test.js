@@ -1,6 +1,7 @@
 // Partner card W5: the partner outside CRM. The balance in Invoices
 // (OrosCrmCore.balance) as search and Contacts show it, CRM's Today
-// rows for linked partners (settlement due, royalties, unbilled hours),
+// rows for linked partners (royalties, unbilled hours; a settlement due
+// is Stock's own row),
 // received invoices to pay in Invoices' Today, and the Assistant's
 // "what is open with X?" summary (assistant/summary.js crmPartner).
 // Run: node --test tests/
@@ -79,7 +80,7 @@ test("search: a matching partner leads with its balance; contracts are found", (
   }
 });
 
-test("Today: settlement due, hours not billed and royalties of linked partners open the partner", () => {
+test("Today: hours not billed and royalties of linked partners open the partner; settlements are Stock's", () => {
   const P = R("crm/today.js");
   const store = { "oros-crm-data": crm(), "oros-stock-data": stock(), "oros-timesheet-data": tsRaw(),
     "oros-publish-data": { titles: [], stmts: [] } };
@@ -88,8 +89,7 @@ test("Today: settlement due, hours not billed and royalties of linked partners o
     const ctx = { today: TODAY, horizon: 3, now: NOW, lang: "en", readJSON: (k) => store[k] || null,
       readRaw: (k) => (store[k] ? JSON.stringify(store[k]) : null), addDays: C.addDays };
     const rows = P.collect(ctx);
-    const settle = rows.find((r) => r.id === "cons-wh00001");
-    assert.deepEqual(settle, { id: "cons-wh00001", due: "2026-03-01", title: "Settlement due: Shop", text: "Alpha Books", kind: "task", target: { cust: "cust001" } });
+    assert.equal(rows.some((r) => /^cons-/.test(r.id)), false, "Stock's Today lists the settlement itself");
     const hrs = rows.find((r) => r.id === "hrs-cust001");
     assert.equal(hrs.title, "Hours not billed: 2 h · €100");
     assert.equal(hrs.kind, "info");

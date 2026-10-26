@@ -1,6 +1,21 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.83.00
+- CRM: the partner card is complete. History is one timeline of everything with a partner across your apps; the Overview adds invoices your suppliers send you (new Received tab in Invoices), consignment settlements not invoiced yet with a button that fills in the invoice, Budget entries that name the partner, contracts that remind you before they end, the partner's folder in Files and buttons for the next step in Invoices, Stock, Work hours and Publishing. Outside CRM the menu search and Contacts show what is open with a partner, Today lists settlements due, royalties, unbilled hours and invoices to pay, and the Assistant answers "what is open with …?".
+
+## Version 3.82.00
+- Assistant: a helper for publishers. Ask for posts about a book («three posts for Night Sea: a week before, on the day, a week after») and get one card per post that opens Publishing's post window filled in; ask to settle with a consignment shop and Stock opens that shop's settlement; ask how much a book sold this month, in total and in each bookshop, and the Assistant reads it from Stock (with your permission to share the summary).
+
+## Version 3.81.00
+- Today: your publishing day at a glance. Posts on their day and hour, release-plan steps that are due or late, release days coming up, review copies to follow up and, in one line, manuscripts waiting too long for an answer, from Publishing; consignment shops due for a settlement, from Stock. Tap a line to open it.
+
+## Version 3.80.00
+- Publishing: plan your social posts. In the new Posts tab write a post once, with a picture (a title's cover or any picture) and a day, and pick the networks. On the day it shows as due here and in the Calendar; Copy and open opens Mastodon, Bluesky, X, Threads or LinkedIn with the text already in it (Facebook and Instagram: paste it). No accounts or keys in orOS, nothing is posted for you. A title's Send to other apps › Plan a post… starts one from the book.
+
+## Version 3.79.00
+- Invoices: the month for your accountant in one file. On the Dashboard, pick a month and get a ZIP with a summary, your documents and payments as CSV with their PDFs, Budget's entries and receipts, Stock's purchases and sales, and your shop's orders. It is saved in Files, and you can e-mail it from Mail with one tap.
+
 ## Version 3.78.00
 - CRM: an Overview tab, first on every record, with everything about the partner in one place: what they owe you and what you owe them (royalty statements not paid yet), what a consignment shop has on its shelf and when a settlement is due, open orders with a supplier, hours not billed yet, their titles and any advance still to earn back, and when you last spoke. `Open` takes you to that app. Nothing is stored: it is worked out from the other apps each time.
 

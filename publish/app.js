@@ -153,6 +153,17 @@
       "tpl.con.text": "PUBLISHING AGREEMENT (draft)\n\nDate: {date}\n\nBetween {imprint} (the Publisher) and {name} (the Author).\n\n1. The work. The Author grants the Publisher the right to publish “{title}” in these formats: {formats}.\n2. Royalties. The Publisher pays the Author {pct}% of {base} on every copy sold, with a statement at least once a year.\n3. Advance. On signing, the Publisher pays an advance of {adv}, recouped from the royalties.\n4. Term and territory: ______\n5. Delivery and approval of the manuscript: ______\n6. Rights return to the Author if the work stays out of print for ______\n\nThis draft is a starting point, not legal advice: have it checked before signing.\n\nFor the Publisher ______________          The Author ______________",
       "con.btn": "Contract in Writer", "con.doc": "Contract · {t} · {n}", "con.base.list": "the list price", "con.base.net": "the net receipts",
       "kit.btn": "Release kit in Atelier", "kit.lineOn": "Out {d}", "kit.lineNow": "Out now",
+      "tab.posts": "Posts", "post.add": "+ Post", "post.none": "Plan your posts once: text, picture and day. On the day Publishing shows them as due (and the Calendar lists them); you post them from each network's own page, the text already in it.",
+      "post.due": "Due now", "post.next": "Coming up", "post.done": "Posted", "post.dueN": "{n} posts to make", "post.title": "Post",
+      "post.d": "Day", "post.at": "Time (optional)", "post.ti": "About the title (optional)", "post.noTi": "(none)", "post.tx": "Text",
+      "post.start": "Start from the title", "post.nets": "Where", "post.img": "Picture", "post.imgNone": "No picture", "post.imgCov": "The title's cover",
+      "post.imgFile": "From Files…", "post.imgKeep": "The picture chosen before", "post.over": "{n} is over {net}'s {max} characters",
+      "post.len": "{n} characters", "post.go": "Copy and open {net}", "post.goHome": "Copy and open {net} (paste the text there)",
+      "post.noMast": "Set your Mastodon server in Settings to open it from here.", "post.copy": "Copy the text", "post.copyImg": "Copy the picture", "post.saveImg": "Save the picture",
+      "post.imgCopied": "Picture copied", "post.imgFail": "The picture could not be copied: save it instead.",
+      "post.mark": "Mark posted", "post.unmark": "Not posted yet", "post.del": "Delete", "post.deleted": "Post deleted", "post.need": "Write a text or choose a picture.",
+      "post.needDay": "Pick a day.", "post.saved": "Post planned", "post.link": "Plan a post…", "post.mast": "Your Mastodon server (e.g. mastodon.social)",
+      "net.mastodon": "Mastodon", "net.bluesky": "Bluesky", "net.x": "X", "net.threads": "Threads", "net.facebook": "Facebook", "net.linkedin": "LinkedIn", "net.instagram": "Instagram",
       "sec.rc": "Review copies and reviews", "rc.none": "Who got the book for review, and what they wrote. A reminder comes 3 weeks after a copy went out.",
       "rc.add": "+ Review copy", "rc.n": "Name", "rc.out": "Outlet (paper, blog, show)", "rc.email": "E-mail", "rc.d": "Sent",
       "rc.st": "Status", "rc.st.sent": "Sent", "rc.st.rev": "Reviewed", "rc.st.no": "No review",
@@ -296,6 +307,17 @@
       "tpl.con.text": "ΣΥΜΒΑΣΗ ΕΚΔΟΣΗΣ (σχέδιο)\n\nΗμερομηνία: {date}\n\nΜεταξύ {imprint} (ο Εκδότης) και {name} (ο Συγγραφέας).\n\n1. Το έργο. Ο Συγγραφέας παραχωρεί στον Εκδότη το δικαίωμα να εκδώσει το «{title}» στις εξής μορφές: {formats}.\n2. Δικαιώματα. Ο Εκδότης καταβάλλει στον Συγγραφέα {pct}% επί {base} για κάθε αντίτυπο που πωλείται, με εκκαθάριση τουλάχιστον μία φορά τον χρόνο.\n3. Προκαταβολή. Με την υπογραφή ο Εκδότης καταβάλλει προκαταβολή {adv}, που συμψηφίζεται με τα δικαιώματα.\n4. Διάρκεια και περιοχή: ______\n5. Παράδοση και έγκριση του χειρογράφου: ______\n6. Τα δικαιώματα επιστρέφουν στον Συγγραφέα αν το έργο μείνει εξαντλημένο για ______\n\nΤο σχέδιο αυτό είναι αφετηρία, όχι νομική συμβουλή: δώστε το για έλεγχο πριν την υπογραφή.\n\nΓια τον Εκδότη ______________          Ο Συγγραφέας ______________",
       "con.btn": "Συμβόλαιο στον Writer", "con.doc": "Συμβόλαιο · {t} · {n}", "con.base.list": "της τιμής καταλόγου", "con.base.net": "των καθαρών εισπράξεων",
       "kit.btn": "Πακέτο κυκλοφορίας στο Atelier", "kit.lineOn": "Κυκλοφορεί {d}", "kit.lineNow": "Κυκλοφορεί τώρα",
+      "tab.posts": "Αναρτήσεις", "post.add": "+ Ανάρτηση", "post.none": "Σχεδίασε τις αναρτήσεις σου μία φορά: κείμενο, εικόνα και ημέρα. Την ημέρα τους οι Εκδόσεις τις δείχνουν ως έτοιμες (και το Ημερολόγιο τις γράφει)· τις δημοσιεύεις από τη σελίδα κάθε δικτύου, με το κείμενο ήδη μέσα.",
+      "post.due": "Για τώρα", "post.next": "Επόμενες", "post.done": "Δημοσιεύτηκαν", "post.dueN": "{n} αναρτήσεις για δημοσίευση", "post.title": "Ανάρτηση",
+      "post.d": "Ημέρα", "post.at": "Ώρα (προαιρετικά)", "post.ti": "Για τον τίτλο (προαιρετικά)", "post.noTi": "(κανένας)", "post.tx": "Κείμενο",
+      "post.start": "Ξεκίνα από τον τίτλο", "post.nets": "Πού", "post.img": "Εικόνα", "post.imgNone": "Χωρίς εικόνα", "post.imgCov": "Το εξώφυλλο του τίτλου",
+      "post.imgFile": "Από τα Αρχεία…", "post.imgKeep": "Η εικόνα που διάλεξες πριν", "post.over": "{n} πάνω από τους {max} χαρακτήρες του {net}",
+      "post.len": "{n} χαρακτήρες", "post.go": "Αντιγραφή και άνοιγμα {net}", "post.goHome": "Αντιγραφή και άνοιγμα {net} (επικόλλησε το κείμενο εκεί)",
+      "post.noMast": "Όρισε τον διακομιστή σου στο Mastodon στις Ρυθμίσεις για να ανοίγει από εδώ.", "post.copy": "Αντιγραφή κειμένου", "post.copyImg": "Αντιγραφή εικόνας", "post.saveImg": "Αποθήκευση εικόνας",
+      "post.imgCopied": "Η εικόνα αντιγράφηκε", "post.imgFail": "Η εικόνα δεν αντιγράφηκε: αποθήκευσέ την.",
+      "post.mark": "Δημοσιεύτηκε", "post.unmark": "Δεν δημοσιεύτηκε ακόμα", "post.del": "Διαγραφή", "post.deleted": "Η ανάρτηση διαγράφηκε", "post.need": "Γράψε κείμενο ή διάλεξε εικόνα.",
+      "post.needDay": "Διάλεξε ημέρα.", "post.saved": "Η ανάρτηση σχεδιάστηκε", "post.link": "Σχεδίασε ανάρτηση…", "post.mast": "Ο διακομιστής σου στο Mastodon (π.χ. mastodon.social)",
+      "net.mastodon": "Mastodon", "net.bluesky": "Bluesky", "net.x": "X", "net.threads": "Threads", "net.facebook": "Facebook", "net.linkedin": "LinkedIn", "net.instagram": "Instagram",
       "sec.rc": "Αντίτυπα κριτικής και κριτικές", "rc.none": "Ποιος πήρε το βιβλίο για κριτική και τι έγραψε. Υπενθύμιση έρχεται 3 εβδομάδες μετά την αποστολή.",
       "rc.add": "+ Αντίτυπο κριτικής", "rc.n": "Όνομα", "rc.out": "Μέσο (εφημερίδα, blog, εκπομπή)", "rc.email": "E-mail", "rc.d": "Στάλθηκε",
       "rc.st": "Κατάσταση", "rc.st.sent": "Στάλθηκε", "rc.st.rev": "Έγραψε κριτική", "rc.st.no": "Χωρίς κριτική",
@@ -414,8 +436,8 @@
   // ---------- 2. Storage, prefs, sync slice ----------
   var data = C.empty();
   var prefs = { tab: "titles", sort: "rel", st: "" };
-  var view = { name: "list", id: "" };    // list | title | isbn | roy | subs
-  var TABS = ["titles", "isbn", "roy", "subs"];
+  var view = { name: "list", id: "" };    // list | title | isbn | roy | subs | posts
+  var TABS = ["titles", "isbn", "roy", "subs", "posts"];
 
   function load() {
     try { data = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
@@ -1318,6 +1340,17 @@
       });
       openAt("writer", { newDoc: C.pressRelease(x, rows, S, { imp: data.set.imp, rel: fmtDate(x.rel) }) });
     }));
+    // a planned post about this title (wave P12)
+    row.appendChild(button("📣 " + t("post.link"), "btn small", function () {
+      flushEdits();
+      var x = currentTitle();
+      if (!x) return;
+      setView({ name: "posts", id: "" });
+      prefs.tab = "posts";
+      savePrefs();
+      render();
+      postDialog(null, { ti: x.id, img: C.coverPath(x.cov) || "" });
+    }));
     // the release kit in Atelier (wave P9): post, story, banner, bookmark, poster
     row.appendChild(button("🎨 " + t("kit.btn"), "btn small", function () {
       flushEdits();
@@ -1729,6 +1762,249 @@
     a2.appendChild(button(t("btn.close"), "btn pri", function () { dlg.close(); }));
     dlg.appendChild(a2);
     showDialog(dlg);
+  }
+
+  // ---------- 6f. Posts (wave P12) ----------
+  // Social posts planned once (text, picture, day, networks). On the
+  // day they show as due here, in the Calendar and in Today; the
+  // person posts each one from the network's own "new post" page with
+  // the text already in it (C.postUrl), or copies it for Facebook and
+  // Instagram, which have no such page. No keys, nothing sent from
+  // orOS. A picture is a file on the orOS disk: a title's cover or one
+  // picked from Files (copied to Publishing/Posts).
+  var POST_DIR = "/internal/Publishing/Posts";
+  function nowHm() {
+    var d = new Date();
+    return todayYmd() + " " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+  }
+  function postLine(p) { return p.tx.replace(/\s+/g, " ").trim() || t("post.title"); }
+  function renderPosts() {
+    var sec = $("view-posts");
+    sec.textContent = "";
+    var hd = el("div", "ed-head");
+    var due = C.postsDue(data, nowHm()), dueIds = {};
+    due.forEach(function (p) { dueIds[p.id] = 1; });
+    hd.appendChild(el("p", due.length ? "warnbox" : "muted", due.length ? t("post.dueN", { n: due.length }) : ""));
+    hd.appendChild(button(t("post.add"), "btn pri", function () { postDialog(null, null); }));
+    sec.appendChild(hd);
+    var all = data.posts || [];
+    if (!all.length) { sec.appendChild(el("p", "muted", t("post.none"))); return; }
+    var next = all.filter(function (p) { return !p.done && !dueIds[p.id]; })
+      .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : (a.at < b.at ? -1 : a.at > b.at ? 1 : 0); });
+    var done = all.filter(function (p) { return p.done; })
+      .sort(function (a, b) { return a.done < b.done ? 1 : a.done > b.done ? -1 : 0; }).slice(0, 30);
+    [["post.due", due], ["post.next", next], ["post.done", done]].forEach(function (g) {
+      if (!g[1].length) return;
+      sec.appendChild(el("h3", "post-h", g[0] === "post.done" ? t(g[0]) : t(g[0]) + " (" + g[1].length + ")"));
+      g[1].forEach(function (p) {
+        var row = button("", "trow post-row" + (dueIds[p.id] ? " due" : ""), function () { postDialog(p.id); });
+        var body = el("div", "tmain");
+        body.appendChild(el("div", "tname", postLine(p)));
+        var tt = p.ti ? C.find(data, "titles", p.ti) : null;
+        var meta = [fmtDate(p.d) + (p.at ? " " + p.at : ""), tt ? tt.t : "", p.nets.map(function (n) { return t("net." + n); }).join(", ")].filter(Boolean);
+        body.appendChild(el("div", "tsub", meta.join(" · ")));
+        row.appendChild(body);
+        if (p.img) row.appendChild(el("span", "tside", "🖼"));
+        sec.appendChild(row);
+      });
+    });
+  }
+  // A text to start from: title, people, the release line, a quote.
+  function postStart(tt) {
+    var by = C.authors(tt), q = C.quotes(tt)[0];
+    var f = tt.fmts.filter(function (y) { return y.price > 0; })[0];
+    var lines = [tt.t + (by.length ? " · " + by.join(", ") : ""),
+      (tt.rel && tt.rel > todayYmd() ? t("kit.lineOn", { d: fmtDate(tt.rel) }) : t("kit.lineNow")) + (f ? " · " + money(f.price) : "")];
+    if (q && q.q) lines.push("", "“" + q.q + "”" + (q.n ? " (" + q.n + ")" : ""));
+    return lines.join("\n");
+  }
+  // id = an existing post, or null with pre = { ti } (from a title)
+  function postDialog(id, pre) {
+    var x = id ? C.find(data, "posts", id) : null;
+    if (id && !x) return;
+    var v = x || Object.assign({ d: todayYmd(), at: "", tx: "", img: "", nets: ["mastodon", "bluesky", "facebook", "instagram"], done: "" }, pre || {});
+    var dlg = el("dialog", "roy-dlg post-dlg");
+    dlg.appendChild(el("h3", "", x ? t("post.title") : t("post.add").replace(/^\+\s*/, "")));
+    var g = el("div", "grid");
+    var d = input("date", v.d);
+    var at = input("time", v.at);
+    g.appendChild(field(t("post.d"), d));
+    g.appendChild(field(t("post.at"), at));
+    var tis = [["", t("post.noTi")]].concat(data.titles.slice().sort(function (a, b) { return C.fold(a.t) < C.fold(b.t) ? -1 : 1; }).map(function (tt) { return [tt.id, tt.t]; }));
+    var ti = select(tis, v.ti && C.find(data, "titles", v.ti) ? v.ti : "");
+    var tf = field(t("post.ti"), ti);
+    tf.classList.add("wide");
+    g.appendChild(tf);
+    dlg.appendChild(g);
+    var tx = input("textarea", v.tx, { maxlength: "5000", rows: "6" });
+    var startB = button("✨ " + t("post.start"), "btn small", function () {
+      var tt = C.find(data, "titles", ti.value);
+      if (!tt) return;
+      tx.value = postStart(tt) + (tx.value.trim() ? "\n\n" + tx.value : "");
+      count();
+    });
+    var txf = field(t("post.tx"), tx);
+    dlg.appendChild(txf);
+    var cnt = el("p", "muted small post-cnt");
+    dlg.appendChild(cnt);
+    var sr = el("div", "send-row");
+    sr.appendChild(startB);
+    dlg.appendChild(sr);
+    // networks
+    dlg.appendChild(el("div", "fld-lbl", t("post.nets")));
+    var nb = el("div", "chips post-nets"), nets = {};
+    C.POST_NETS.forEach(function (n) {
+      nets[n] = v.nets.indexOf(n) >= 0;
+      var b = button(t("net." + n), "chip", function () { nets[n] = !nets[n]; b.setAttribute("aria-pressed", nets[n] ? "true" : "false"); count(); });
+      b.setAttribute("aria-pressed", nets[n] ? "true" : "false");
+      nb.appendChild(b);
+    });
+    dlg.appendChild(nb);
+    // picture
+    var imgPath = v.img, picked = null;
+    var opts = [["", t("post.imgNone")], ["cov", t("post.imgCov")], ["file", t("post.imgFile")]];
+    if (v.img) opts.splice(1, 0, ["keep", t("post.imgKeep")]);
+    var ims = select(opts, v.img ? "keep" : "");
+    dlg.appendChild(field(t("post.img"), ims));
+    var prev = el("div", "post-img");
+    dlg.appendChild(prev);
+    var prevUrl = "";
+    function showImg(blobOrPath) {
+      prev.textContent = "";
+      if (prevUrl) { URL.revokeObjectURL(prevUrl); prevUrl = ""; }
+      var fs = fsApi();
+      var get = typeof blobOrPath === "string" ? (fs ? Promise.resolve(fs.readBlob(blobOrPath)) : Promise.resolve(null)) : Promise.resolve(blobOrPath);
+      get.then(function (b) {
+        if (!b) return;
+        prevUrl = URL.createObjectURL(b);
+        var im = el("img");
+        im.alt = "";
+        im.src = prevUrl;
+        prev.appendChild(im);
+      }).catch(function () {});
+    }
+    function covPath() { var tt = C.find(data, "titles", ti.value); return tt ? C.coverPath(tt.cov) : null; }
+    ims.addEventListener("change", function () {
+      if (ims.value === "file") {
+        pickFile("image/*").then(function (f) {
+          if (!f || !/^image\/(jpeg|png|webp|gif)$/.test(f.type) || f.size > 15 * 1024 * 1024) { ims.value = imgPath ? "keep" : ""; return; }
+          picked = f;
+          showImg(f);
+        });
+        return;
+      }
+      picked = null;
+      if (ims.value === "cov") { var cp = covPath(); if (cp) showImg(cp); else prev.textContent = ""; }
+      else if (ims.value === "keep" && imgPath) showImg(imgPath);
+      else prev.textContent = "";
+    });
+    if (v.img) showImg(v.img);
+    function count() {
+      var n = C.postLen(tx.value), over = [];
+      C.POST_NETS.forEach(function (k) { if (nets[k] && n > C.POST_MAX[k]) over.push(t("post.over", { n: n, net: t("net." + k), max: C.POST_MAX[k] })); });
+      cnt.textContent = over.length ? over.join(" · ") : t("post.len", { n: n });
+      cnt.className = "muted small post-cnt" + (over.length ? " bad" : "");
+    }
+    tx.addEventListener("input", count);
+    count();
+    var err = el("p", "hint bad");
+    err.hidden = true;
+    dlg.appendChild(err);
+    // the stored picture path for what is chosen now (a picked file is copied to the disk first)
+    function storeImg(pid) {
+      if (ims.value === "keep") return Promise.resolve(imgPath);
+      if (ims.value === "cov") return Promise.resolve(covPath() || "");
+      if (ims.value === "file" && picked) {
+        var fs = fsApi(), ext = picked.type === "image/png" ? "png" : picked.type === "image/webp" ? "webp" : picked.type === "image/gif" ? "gif" : "jpg";
+        if (!fs) return Promise.resolve("");
+        var path = POST_DIR + "/" + pid + "-" + Date.now().toString(36) + "." + ext;
+        return Promise.resolve(fs.writeBlob(path, picked)).then(function () { return path; }, function () { return ""; });
+      }
+      return Promise.resolve("");
+    }
+    function rowNow(img, extra) {
+      return Object.assign({ id: x ? x.id : C.uid(), d: d.value, at: at.value || "", tx: tx.value, img: img,
+        nets: C.POST_NETS.filter(function (k) { return nets[k]; }), done: v.done || "", ti: ti.value || undefined }, extra || {});
+    }
+    function save(extra) {
+      if (!C.okYmd(d.value)) { err.textContent = t("post.needDay"); err.hidden = false; return Promise.resolve(null); }
+      var pid = x ? x.id : C.uid();
+      return storeImg(pid).then(function (img) {
+        var r = rowNow(img, Object.assign({ id: pid }, extra || {}));
+        if (!r.tx.trim() && !r.img) { err.textContent = t("post.need"); err.hidden = false; tx.focus(); return null; }
+        commit(C.put(data, "posts", r, Date.now()));
+        imgPath = r.img;
+        return r;
+      });
+    }
+    // posting: copy the text, open the network's page (a new tab)
+    var go = el("div", "send-row post-go");
+    function fillGo() {
+      go.textContent = "";
+      C.POST_NETS.forEach(function (n) {
+        if (!nets[n]) return;
+        var url = C.postUrl(n, tx.value, data.set.mast), home = C.POST_HOME[n] || "";
+        if (n === "mastodon" && !url) { go.appendChild(el("p", "muted small", t("post.noMast"))); return; }
+        go.appendChild(button("↗ " + t(url ? "post.go" : "post.goHome", { net: t("net." + n) }), "btn small", function () {
+          copyText(tx.value);
+          try { window.open(url || home, "_blank", "noopener"); } catch (e) {}
+        }));
+      });
+      go.appendChild(button("📋 " + t("post.copy"), "btn small", function () { copyText(tx.value); }));
+      if (imgPath || picked || ims.value === "cov") {
+        go.appendChild(button("🖼 " + t("post.copyImg"), "btn small", copyImg));
+        go.appendChild(button("💾 " + t("post.saveImg"), "btn small", saveImg));
+      }
+    }
+    function imgBlob() {
+      if (picked && ims.value === "file") return Promise.resolve(picked);
+      var path = ims.value === "cov" ? covPath() : imgPath, fs = fsApi();
+      return path && fs ? Promise.resolve(fs.readBlob(path)) : Promise.resolve(null);
+    }
+    // the clipboard takes PNG only: the picture is redrawn as PNG
+    function copyImg() {
+      imgBlob().then(function (b) {
+        if (!b || !window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) throw 0;
+        return createImageBitmap(b).then(function (bm) {
+          var cv = document.createElement("canvas");
+          cv.width = bm.width; cv.height = bm.height;
+          cv.getContext("2d").drawImage(bm, 0, 0);
+          return new Promise(function (res) { cv.toBlob(res, "image/png"); });
+        }).then(function (png) { return navigator.clipboard.write([new window.ClipboardItem({ "image/png": png })]); });
+      }).then(function () { toast(t("post.imgCopied")); }, function () { toast(t("post.imgFail")); });
+    }
+    function saveImg() {
+      imgBlob().then(function (b) {
+        if (!b) return;
+        var ext = /png/.test(b.type) ? "png" : /webp/.test(b.type) ? "webp" : /gif/.test(b.type) ? "gif" : "jpg";
+        saveBlob(b, safeName(postLine({ tx: tx.value }).slice(0, 40) || "post") + "." + ext, b.type || "image/jpeg", "." + ext);
+      });
+    }
+    nb.addEventListener("click", fillGo);
+    tx.addEventListener("change", fillGo);
+    ims.addEventListener("change", function () { setTimeout(fillGo, 0); });
+    fillGo();
+    dlg.appendChild(go);
+    var acts = el("div", "acts");
+    if (x) {
+      acts.appendChild(button(t("post.del"), "btn danger", function () {
+        dlg.close();
+        var keep = JSON.parse(JSON.stringify(x));
+        commit(C.remove(data, "posts", x.id, Date.now()));
+        toast(t("post.deleted"), t("btn.undo"), function () { commit(C.put(data, "posts", keep, Date.now())); });
+      }));
+    }
+    acts.appendChild(button(v.done ? t("post.unmark") : t("post.mark"), "btn", function () {
+      save({ done: v.done ? "" : todayYmd() }).then(function (r) { if (r) dlg.close(); });
+    }));
+    acts.appendChild(button(t("btn.cancel"), "btn", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.save"), "btn pri", function () {
+      save().then(function (r) { if (r) { dlg.close(); if (!x) toast(t("post.saved")); } });
+    }));
+    dlg.appendChild(acts);
+    dlg.addEventListener("close", function () { if (prevUrl) URL.revokeObjectURL(prevUrl); });
+    showDialog(dlg);
+    if (!x && pre && pre.ti && !v.tx) startB.click();
   }
 
   // ---------- 6d. Submissions + contract (wave P7) ----------
@@ -2250,6 +2526,8 @@
     dlg.appendChild(field(t("set.cur"), cur));
     var imp = input("text", data.set.imp, { maxlength: "120", autocomplete: "organization" });
     dlg.appendChild(field(t("set.imp"), imp, el("span", "hint", t("set.impHint"))));
+    var mast = input("text", data.set.mast || "", { maxlength: "100", autocomplete: "off", inputmode: "url", placeholder: "mastodon.social" });
+    dlg.appendChild(field(t("post.mast"), mast));
     var more = el("div", "send-row");
     more.appendChild(button(t("tpl.title") + "…", "btn small", function () { dlg.close(); tplDialog(); }));
     dlg.appendChild(more);
@@ -2260,6 +2538,7 @@
       var patch = {};
       if (cur.value !== data.set.cur) patch.cur = cur.value;
       if (imp.value.trim() !== data.set.imp) patch.imp = imp.value.trim();
+      if (mast.value.trim() !== (data.set.mast || "")) patch.mast = mast.value.trim();
       if (Object.keys(patch).length) { commit(C.setSet(data, patch, Date.now())); toast(t("set.done")); }
     }));
     dlg.appendChild(acts);
@@ -2300,10 +2579,12 @@
     $("view-isbn").hidden = view.name !== "isbn";
     $("view-roy").hidden = view.name !== "roy";
     $("view-subs").hidden = view.name !== "subs";
+    $("view-posts").hidden = view.name !== "posts";
     if (view.name === "list") renderList();
     else if (view.name === "title") renderEditor();
     else if (view.name === "roy") renderRoy();
     else if (view.name === "subs") renderSubs();
+    else if (view.name === "posts") renderPosts();
     else renderIsbn();
   }
 
@@ -2336,7 +2617,8 @@
     }
   });
 
-  // target = { title: id } | { view: "isbn" | "roy" | "subs" } |
+  // target = { title: id } | { view: "isbn" | "roy" | "subs" | "posts" } | { post: id } |
+  // { asNew: { post: 1, tx, d, at?, nets?, book? } } (the Assistant's post card) |
   // { submit: { n?, email?, t?, d?, note? } } (Mail, BR-PUB-SUB) | { isbn: "…" } (opens the
   // title that has it, else the register) | { new: { t|title, author?,
   // isbn?, rel?, plan? } } or { asNew: {…} } (the Assistant's card) asks
@@ -2345,6 +2627,13 @@
     if (!target || typeof target !== "object") return;
     if (typeof target.title === "string" && C.find(data, "titles", target.title)) { openTitle(target.title); return; }
     if (TABS.indexOf(target.view) > 0) { setView({ name: target.view, id: "" }); render(); return; }
+    // the Calendar's "Post" row (wave P12)
+    if (typeof target.post === "string") {
+      setView({ name: "posts", id: "" });
+      render();
+      if (C.find(data, "posts", target.post)) postDialog(target.post);
+      return;
+    }
     // BR-PUB-SUB: Mail's "Other apps" (wave P7): the form opens
     // filled in; nothing is saved before Save
     if (target.submit && typeof target.submit === "object") {
@@ -2360,6 +2649,20 @@
       if (uses.length) { openTitle(uses[0].title); return; }
       setView({ name: "isbn", id: "" });
       render();
+      return;
+    }
+    // the Assistant's "post" card (wave P14): the post dialog, filled in, nothing saved
+    if (target.asNew && typeof target.asNew === "object" && target.asNew.post === 1) {
+      var ap = target.asNew, bk = typeof ap.book === "string" ? C.fold(ap.book) : "";
+      var tt = bk ? data.titles.filter(function (x) { return C.fold(x.t) === bk; })[0] : null;
+      setView({ name: "posts", id: "" });
+      render();
+      var pre = { tx: typeof ap.tx === "string" ? ap.tx.slice(0, 5000) : "", d: C.okYmd(ap.d) ? ap.d : todayYmd(),
+        at: typeof ap.at === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(ap.at) ? ap.at : "" };
+      var nets = Array.isArray(ap.nets) ? ap.nets.filter(function (k) { return C.POST_NETS.indexOf(k) >= 0; }) : [];
+      if (nets.length) pre.nets = nets;
+      if (tt) { pre.ti = tt.id; if (C.coverPath(tt.cov)) pre.img = C.coverPath(tt.cov); }
+      postDialog(null, pre);
       return;
     }
     // { asNew } is the Assistant's propose_entry "book" card (wave P4): the same dialog

@@ -382,6 +382,7 @@
   {
    "app": "invoices",
    "files": [
+    "invoices/acctpack.js",
     "invoices/invoices.js",
     "invoices/mydata-ui.js",
     "invoices/package.js",
@@ -708,7 +709,8 @@
    "app": "publish",
    "files": [
     "publish/app.js",
-    "publish/feed.js"
+    "publish/feed.js",
+    "publish/today.js"
    ]
   },
   {

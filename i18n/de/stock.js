@@ -691,5 +691,6 @@ orosPack("de", "stock", {
  "pl.shopSale": "{n} blieben unverändert: ihr Angebotspreis liegt nicht unter dem neuen Preis. Ändere zuerst das Angebot im Shop.",
  "pl.acct": "Shop",
  "pl.offline": "Du bist offline.",
- "pl.err": "Der Shop war nicht erreichbar oder hat die Schlüssel abgelehnt. Prüfe ihn unter Einstellungen › Verbundene Dienste."
+ "pl.err": "Der Shop war nicht erreichbar oder hat die Schlüssel abgelehnt. Prüfe ihn unter Einstellungen › Verbundene Dienste.",
+ "cons": "Abrechnung mit {s}"
 });
