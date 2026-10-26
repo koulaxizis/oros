@@ -388,6 +388,26 @@
     if (kind === "pack") return { title: e.name, done: !!e.done, note: e.note || "" };
     return { title: e.title, date: e.day || "", start: e.t1 || "", end: e.t2 || "", location: e.place || "", note: e.note || "" };
   }
+  // mergeTravel's pruning: a new stamp can make an old tombstone go
+  // (older than the newest stamp by 180 days; a hidden ready
+  // template's stays), so it goes here too.
+  var TV_SEEDS = ["tpl-basic", "tpl-before", "tpl-beach", "tpl-city", "tpl-business", "tpl-hiking", "tpl-ski", "tpl-baby", "tpl-carryon", "tpl-road"];
+  function tvPrune(d) {
+    var newest = 0;
+    function seen(s) { if (typeof s === "number" && s > newest) newest = s; }
+    (d.trips || []).forEach(function (t) {
+      seen(tvLife(t));
+      ["pack", "plan", "docs", "spend", "jrnl"].forEach(function (k) { (t[k] || []).forEach(function (e) { seen(tvLife(e)); }); });
+    });
+    (d.tpls || []).forEach(function (t) { if (isObj(t)) seen(t.m); });
+    var tombs = isObj(d.tombs) ? d.tombs : {}, out = {};
+    Object.keys(tombs).forEach(function (id) { seen(tombs[id]); });
+    Object.keys(tombs).sort(cmpStr).forEach(function (id) {
+      if (tombs[id] < newest - 180 * 86400000 && TV_SEEDS.indexOf(id) < 0) return;
+      out[id] = tombs[id];
+    });
+    d.tombs = out;
+  }
   function tvPut(e, k, v, now) {
     if (same(e[k], v)) return;
     e[k] = v;
@@ -436,6 +456,7 @@
     }
     var after = tvView(h.kind, e);
     if (same(after, before)) return nothing("item");
+    tvPrune(d);
     return { ok: true, title: before.title, before: before, after: after, del: false,
              undo: { t: "set", app: "travel", target: clone(target), prev: prev, next: clone(e) } };
   }
@@ -443,6 +464,7 @@
     var h = tvFind(d, u.target);
     if (!h || !same(h.e, u.next)) return bad("It changed since; nothing was undone.");
     Object.keys(u.prev.f || {}).forEach(function (k) { if (!same(h.e[k], u.prev[k])) tvPut(h.e, k, clone(u.prev[k]), now); });
+    tvPrune(d);
     return { ok: true };
   }
 

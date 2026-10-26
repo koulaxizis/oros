@@ -1355,16 +1355,24 @@
       "book (title, by?, date?, isbn?: a title the user PUBLISHES, in Publishing; date = the release date, and the card offers the release plan counted back from it) · " +
       "post (text, date, start?, networks?, title?: one social post the user plans in Publishing's Posts and posts themselves on its day; title = the book it is about; " +
       "for a series of posts make one call per post, each on its own day, and keep each text within the shortest limit of its networks: bluesky 300, x 280, mastodon and threads 500) · " +
-      "settlement (shop: a consignment shop in Stock; opens its settlement, where the user counts what is left on the shop's shelf). " +
+      "settlement (shop: a consignment shop in Stock; opens its settlement, where the user counts what is left on the shop's shelf) · " +
+      "flashcards (title = the deck's topic, cards: study cards made from what the user gave, each {front, back, both?} or {cloze: a sentence with ==gaps==}; Flashcards shows them for the user to tick and save into a deck) · " +
+      "wiki_article (title, text: an article in Markdown, ## headings, **bold**, [[Other article]] links; opens in the Wiki's editor) · " +
+      "document (title, text: a Writer document, paragraphs split by blank lines; made when the user presses Open) · " +
+      "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                                          "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                                         "post", "settlement"] },
+                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
-        text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included." },
+        text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included. wiki_article, document: the whole text." },
+        cards: { type: "array", description: "flashcards: up to 500 cards.",
+                 items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" },
+                                                         both: { type: "boolean", description: "Also the reverse card (back → front)." },
+                                                         cloze: { type: "string", description: "Instead of front/back: a sentence with ==gaps==." } } } },
         items: { type: "array", description: "todo: the tasks.",
                  items: { type: "object", properties: { text: { type: "string" }, note: { type: "string" } }, required: ["text"] } },
         list_name: { type: "string", description: "todo: offer a new list with this name (optional)." },
@@ -1384,7 +1392,7 @@
         rows: { type: "array", description: "sheet: the table, first row = headings. Numbers as plain digits with a dot (12.5).",
                 items: { type: "array", items: { type: "string" } } },
         sum_columns: { type: "array", description: "sheet: 0-based columns that get a total row.", items: { type: "integer" } },
-        outline: { type: "string", description: "slides: '# Slide title' starts a slide, '- ' bullets (two spaces per level), '> ' speaker notes." },
+        outline: { type: "string", description: "slides: '# Slide title' starts a slide, '- ' bullets (two spaces per level), '> ' speaker notes. mind_map: one idea per line, two spaces per level." },
         url: { type: "string", description: "bookmark: an http(s) address." },
         name: { type: "string", description: "contact, customer: the person's full name." },
         org: { type: "string", description: "contact: company or organisation." },
@@ -1571,16 +1579,35 @@
     kanban: "kanban = cards on a Kanban board",
     crm_activity: "crm_activity = an entry in a CRM customer's history (a call, e-mail, meeting, message or note that happened)",
     crm_followup: "crm_followup = a CRM follow-up (something to do for a customer on a day)",
-    crm_deal: "crm_deal = a CRM deal (a sale or job in the pipeline)"
+    crm_deal: "crm_deal = a CRM deal (a sale or job in the pipeline)",
+    // AS-ADD5 (wave A4, assistant/additems2.js)
+    timesheet: "timesheet = time worked, in Timesheet",
+    meals: "meals = a recipe in Meal Planner",
+    travel_plan: "travel_plan = an entry in a trip's itinerary in Travel (a flight, stay, visit, meal…)",
+    travel_pack: "travel_pack = an item on a trip's packing list in Travel",
+    stickies: "stickies = a sticky note on the desktop, optionally with a reminder"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
     ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
-    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal"], { type: "string", description: "The task, event, note, bookmark, card, follow-up or deal title (budget: use note)." }],
+    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "timesheet", "meals", "travel_plan", "travel_pack"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry or packing item title (budget: use note; timesheet: what was done)." }],
+    ["trip", ["travel_plan", "travel_pack"], { type: "string", description: "travel_*: the trip's ref (from search_data, app travel), required." }],
+    ["project", ["timesheet"], { type: "string", description: "timesheet: the name of one of the user's projects." }],
+    ["task", ["timesheet"], { type: "string", description: "timesheet: the task within the project." }],
+    ["minutes", ["timesheet"], { type: "integer", description: "timesheet: how long, instead of end." }],
+    ["servings", ["meals"], { type: "integer", description: "meals: servings (default 4)." }],
+    ["prep_minutes", ["meals"], { type: "integer", description: "meals: preparation time in minutes." }],
+    ["cook_minutes", ["meals"], { type: "integer", description: "meals: cooking time in minutes." }],
+    ["ingredients", ["meals"], { type: "array", items: { type: "string" }, description: "meals: one ingredient per line as on a recipe, e.g. \"200 g flour, sifted\" (quantity, unit, name, then details after a comma)." }],
+    ["steps", ["meals"], { type: "array", items: { type: "string" }, description: "meals: the method, one step per entry." }],
+    ["type", ["travel_plan"], { type: "string", "enum": ["flight", "train", "bus", "ferry", "car", "rental", "stay", "ticket", "activity", "food", "other"], description: "travel_plan: what kind of entry (default activity)." }],
+    ["qty", ["travel_pack"], { type: "integer", description: "travel_pack: how many (default 1)." }],
+    ["group", ["travel_pack"], { type: "string", "enum": ["clothes", "toilet", "health", "tech", "docs", "baby", "gear", "food", "misc", "before"], description: "travel_pack: the list's group (before = to do before leaving; default misc)." }],
+    ["color", ["stickies"], { type: "string", "enum": ["yellow", "pink", "green", "blue", "orange", "lilac"], description: "stickies: the note's colour (default the user's)." }],
     ["customer", ["crm_activity", "crm_followup", "crm_deal"], { type: "string", description: "crm_*: the CRM customer's ref (from search_data or create_items), required." }],
     ["deal", ["crm_activity", "crm_followup"], { type: "string", description: "crm_activity, crm_followup: the ref of that customer's deal it is about, if any." }],
     ["channel", ["crm_activity"], { type: "string", "enum": ["call", "mail", "meet", "msg", "note"], description: "crm_activity: how it happened (default note)." }],
-    ["who", ["crm_activity"], { type: "string", description: "crm_activity: the person spoken with." }],
+    ["who", ["crm_activity", "travel_pack"], { type: "string", description: "crm_activity: the person spoken with. travel_pack: whose it is." }],
     ["stage", ["crm_deal"], { type: "string", description: "crm_deal: the pipeline stage's name, e.g. New, Proposal, Won (default the first stage)." }],
     ["probability", ["crm_deal"], { type: "integer", description: "crm_deal: chance to win, 0-100." }],
     ["reason", ["crm_deal"], { type: "string", description: "crm_deal with stage Lost: why it was lost." }],
@@ -1598,11 +1625,11 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar, crm_followup: the day (required); budget, crm_activity: the day (default today); crm_deal: the expected close." }],
-    ["end_date", ["calendar"], { type: "string", description: "calendar: last day of an event over several days." }],
-    ["start", ["calendar", "crm_activity", "crm_followup"], { type: "string", description: "calendar: start time HH:MM (24h); leave out for all day. crm_*: the time, if said." }],
-    ["end", ["calendar"], { type: "string", description: "calendar: end time HH:MM." }],
-    ["location", ["calendar"], { type: "string", description: "calendar: where." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity: the day (default today); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none)." }],
+    ["end_date", ["calendar", "travel_plan"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day." }],
+    ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet: when the work started (required); travel_plan: departure or start; stickies: the reminder's time." }],
+    ["end", ["calendar", "timesheet", "travel_plan"], { type: "string", description: "End time HH:MM (timesheet: on the same day; else give minutes)." }],
+    ["location", ["calendar", "travel_plan"], { type: "string", description: "calendar, travel_plan: where." }],
     ["reminder", ["calendar"], { type: "integer", "enum": [5, 15, 30, 60, 1440, 4320, 7200], description: "calendar: remind this many minutes before." }],
     ["list", ["todo"], { type: "string", description: "todo: the list's name (default the open list; a new list is made when none has the name)." }],
     ["priority", ["todo"], { type: "integer", "enum": [1, 2, 3, 4], description: "todo: 1 = P1, most urgent." }],
@@ -1610,15 +1637,15 @@
     ["entry", ["budget"], { type: "string", "enum": ["expense", "income"], description: "budget: expense (default) or income." }],
     ["amount", ["budget", "crm_deal"], { type: "number", description: "budget, crm_deal: the amount in the app's currency, e.g. 12.5." }],
     ["category", ["budget"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories." }],
-    ["text", ["notes"], { type: "string", description: "notes: the page's text (Markdown)." }],
+    ["text", ["notes", "stickies"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept)." }],
     ["notebook", ["notes"], { type: "string", description: "notes: an existing notebook's name (default the first)." }],
-    ["url", ["bookmarks"], { type: "string", description: "bookmarks: the http(s) address." }],
+    ["url", ["bookmarks", "meals"], { type: "string", description: "bookmarks: the http(s) address. meals: where the recipe comes from." }],
     ["folder", ["bookmarks"], { type: "string", description: "bookmarks: an existing folder's name (default Unsorted)." }],
     ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name (default the first)." }],
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
-    ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000). crm_activity: what happened or was said (required)." }],
+    ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals: tags, any)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
     ["status", ["crm"], { type: "string", "enum": ["lead", "active", "past"], description: "crm: lead (default), active customer, or past." }],
     ["tax_id", ["crm"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ)." }],
@@ -1641,7 +1668,7 @@
         "The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. " +
         "An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead. " +
         "The result gives a ref for every item made" + (people ? ": use a new contact's ref as contact of a CRM customer, or with link_contact" : "") + ". " +
-        "Lists, notebooks, folders, boards, columns, labels and categories must be the user's own (search_data or list_apps shows them); " +
+        "Lists, notebooks, folders, boards, columns, labels, categories and Timesheet projects must be the user's own (search_data or list_apps shows them); " +
         "only a To-Do list is made when none has the name. Give only what the user said or the documents show.",
       params: {
         type: "object",
@@ -2280,10 +2307,13 @@
     if (!opts.builtin && !opts.chatOnly && opts.creates && opts.creates.length) {
       var CR_WHAT = { contacts: "contacts", crm: "CRM customers or partners", todo: "To-Do tasks", calendar: "Calendar events",
                       budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards",
-                      crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals" };
+                      crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals",
+                      timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
+                      stickies: "sticky notes" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
         (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +
+        (opts.creates.indexOf("travel_plan") >= 0 ? " Itinerary entries and packing items belong to a trip: give its ref as trip (search_data in travel first); a new trip itself is made in Travel." : "") +
         (opts.links ? " To link a CRM customer with a contact (the same person, or the company's contact person), call link_contact with both refs, or give contact when you create the customer; find both with search_data first, and create the contact first when it is missing. Never say they are linked by the same name or e-mail: only a link links them." : ""));
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
@@ -2327,11 +2357,19 @@
     book: "publish",
     // publisher wave P14: a planned post (Publishing › Posts) and a
     // consignment settlement (Stock), both opened for the user to save
-    post: "publish", settlement: "stock"
+    post: "publish", settlement: "stock",
+    // AS-ADD5 (wave A4): longer content opens in the app's own "Send
+    // to…" receiver (send/core.js), where the user checks and saves it:
+    // Flashcards' card preview, Wiki's editor, a new Writer document
+    // (made on Open, as a note), Mind map's "Paste a list" box.
+    flashcards: "flashcards", wiki_article: "wiki", document: "writer", mind_map: "mindmap"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                      "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                     "post", "settlement"];
+                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map"];
+  // The receivers' own caps (flashcards/make.js, wiki/core.js MAX_TEXT,
+  // writer.js NEWDOC_MAX, mindmap.js paste box): longer is refused.
+  var A4_MAX = { cards: 500, field: 20000, wiki: 200000, doc: 500000, map: 20000 };
   // Invoices' currencies (invoices/core.js CURRENCIES, BR-INV-NEW).
   var INV_CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD", "AUD", "SEK", "NOK", "DKK",
                         "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "JPY"];
@@ -2526,6 +2564,51 @@
       var ls = ol.split("\n").filter(function (x) { return x.trim(); });
       view.list = ls.slice(0, 12);
       if (ls.length > 12) view.more = ls.length - 12;
+      return out;
+    }
+    if (kind === "flashcards") {
+      // One "front :: back" line per card (":::" also makes the reverse
+      // card); a cloze line keeps its ==gaps==. Flashcards' preview
+      // reads them back the same way (make.js).
+      var cs = Array.isArray(args.cards) ? args.cards : [];
+      if (!cs.length) return bad("flashcards needs cards.");
+      if (cs.length > A4_MAX.cards) return bad("At most " + A4_MAX.cards + " cards at a time.");
+      var ls2 = [];
+      for (var ci = 0; ci < cs.length; ci++) {
+        var cd = isObj(cs[ci]) ? cs[ci] : {}, w2 = "cards[" + ci + "]: ";
+        var fr = line(cd.front, A4_MAX.field + 1), bk = line(cd.back, A4_MAX.field + 1), cz = line(cd.cloze, A4_MAX.field + 1);
+        if (fr.length > A4_MAX.field || bk.length > A4_MAX.field || cz.length > A4_MAX.field) return bad(w2 + "a card's side keeps " + A4_MAX.field + " characters.");
+        if (cz) {
+          if (!/==(?=\S)[^\n]*?\S==/.test(cz)) return bad(w2 + "cloze needs at least one ==gap==.");
+          ls2.push(cz);
+          continue;
+        }
+        if (!fr || !bk) return bad(w2 + "a card needs front and back (or cloze).");
+        if (/:{2,}/.test(fr) || /:{2,}/.test(bk)) return bad(w2 + "a side can't hold \"::\".");
+        ls2.push(fr + (cd.both === true ? " ::: " : " :: ") + bk);
+      }
+      out.call = { fn: "openAt", args: [app, { make: { title: title, text: ls2.join("\n") } }] };
+      view.title = title;
+      view.fields.push(["cards", String(ls2.length)]);
+      view.list = ls2.slice(0, 8).map(function (x) { return x.replace(/ :{2,3} /, " → "); });
+      if (ls2.length > 8) view.more = ls2.length - 8;
+      return out;
+    }
+    if (kind === "wiki_article" || kind === "document" || kind === "mind_map") {
+      var cap = kind === "wiki_article" ? A4_MAX.wiki : kind === "document" ? A4_MAX.doc : A4_MAX.map;
+      var raw = kind === "mind_map" ? args.outline : args.text;
+      var tx = para(raw, cap + 1);
+      if (!tx) return bad(kind + (kind === "mind_map" ? " needs an outline." : " needs text."));
+      if (tx.length > cap) return bad(kind + ": " + (kind === "mind_map" ? "outline" : "text") + " has " + tx.length + " characters; it keeps " + cap + ". Make it shorter or split it.");
+      if (kind === "wiki_article") {
+        if (!title) return bad("wiki_article needs a title.");
+        out.call = { fn: "openAt", args: [app, { addArticle: { t: title, x: tx } }] };
+      } else if (kind === "document") out.call = { fn: "openAt", args: [app, { newDoc: { title: title.slice(0, 120), text: tx } }] };
+      else out.call = { fn: "openAt", args: [app, { pasteText: { text: (title ? title + "\n" + tx.split("\n").map(function (l) { return "  " + l; }).join("\n") : tx) } }] };
+      view.title = title;
+      var ls3 = tx.split("\n").filter(function (x) { return x.trim(); });
+      view.list = ls3.slice(0, 8);
+      if (ls3.length > 8) view.more = ls3.length - 8;
       return out;
     }
     if (kind === "bookmark") {

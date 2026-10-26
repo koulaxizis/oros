@@ -1300,10 +1300,26 @@
     return UNDO[appId](clone(data), u, now);
   }
   function storageKey(appId) { return has(APPS, appId) ? APPS[appId].key : ""; }
+  // Wave A4 (assistant/additems2.js): more apps register here, each
+  // { key, name, norm, plan, apply, undo }, with the same rules.
+  function extend(mods) {
+    Object.keys(mods).forEach(function (id) {
+      var m = mods[id];
+      APPS[id] = { key: m.key, name: m.name };
+      NORM[id] = m.norm; PLAN[id] = m.plan; APPLY[id] = m.apply; UNDO[id] = m.undo;
+      if (APP_IDS.indexOf(id) < 0) APP_IDS.push(id);
+    });
+  }
+  // Shared with additems2.js.
+  var helpers = {
+    has: has, isObj: isObj, clone: clone, one: one, para: para, cmpStr: cmpStr, bad: bad, stampAfter: stampAfter,
+    fold: fold, realDate: realDate, hm: hm, sortedObj: sortedObj, uid: uid, text1: text1, textN: textN, dateOf: dateOf,
+    names: names, pick: pick, missing: missing, preview: preview, money: money
+  };
 
   var api = {
     APP_IDS: APP_IDS, CRM_IDS: CRM_IDS, MAX_ITEMS: MAX_ITEMS, LIM: LIM, REMIND: REMIND, ACT_KINDS: ACT_KINDS,
-    normItems: normItems, plan: plan, apply: apply, undo: undo, storageKey: storageKey
+    normItems: normItems, plan: plan, apply: apply, undo: undo, storageKey: storageKey, extend: extend, helpers: helpers
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistAdd = api;
