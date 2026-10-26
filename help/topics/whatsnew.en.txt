@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.82.00
+- Assistant: a helper for publishers. Ask for posts about a book («three posts for Night Sea: a week before, on the day, a week after») and get one card per post that opens Publishing's post window filled in; ask to settle with a consignment shop and Stock opens that shop's settlement; ask how much a book sold this month, in total and in each bookshop, and the Assistant reads it from Stock (with your permission to share the summary).
+
 ## Version 3.81.00
 - Today: your publishing day at a glance. Posts on their day and hour, release-plan steps that are due or late, release days coming up, review copies to follow up and, in one line, manuscripts waiting too long for an answer, from Publishing; consignment shops due for a settlement, from Stock. Tap a line to open it.
 

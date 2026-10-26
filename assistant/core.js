@@ -1290,20 +1290,27 @@
       "media (title, media book|film|series|album|podcast|game, status want|now|done|dropped, by?, year?: Media Shelf, also books) · " +
       "place (title, lat+lon or query: Maps, the user saves it) · " +
       "shared_expense (group?, title?, amount?, paid_by?, date?, currency?, note?: Split) · " +
-      "book (title, by?, date?, isbn?: a title the user PUBLISHES, in Publishing; date = the release date, and the card offers the release plan counted back from it). " +
+      "book (title, by?, date?, isbn?: a title the user PUBLISHES, in Publishing; date = the release date, and the card offers the release plan counted back from it) · " +
+      "post (text, date, start?, networks?, title?: one social post the user plans in Publishing's Posts and posts themselves on its day; title = the book it is about; " +
+      "for a series of posts make one call per post, each on its own day, and keep each text within the shortest limit of its networks: bluesky 300, x 280, mastodon and threads 500) · " +
+      "settlement (shop: a consignment shop in Stock; opens its settlement, where the user counts what is left on the shop's shelf). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
-                                         "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book"] },
+                                         "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
+                                         "post", "settlement"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
-        text: { type: "string", description: "note: the note's text (plain text)." },
+        text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included." },
         items: { type: "array", description: "todo: the tasks.",
                  items: { type: "object", properties: { text: { type: "string" }, note: { type: "string" } }, required: ["text"] } },
         list_name: { type: "string", description: "todo: offer a new list with this name (optional)." },
         date: { type: "string", description: "YYYY-MM-DD." },
-        start: { type: "string", description: "event: start time HH:MM (24h)." },
+        start: { type: "string", description: "event: start time HH:MM (24h). post: the hour to post." },
+        networks: { type: "array", items: { type: "string", "enum": ["mastodon", "bluesky", "x", "threads", "facebook", "linkedin", "instagram"] },
+                    description: "post: where it goes (default: the user's usual ones)." },
+        shop: { type: "string", description: "settlement: the consignment shop's name as the user said it." },
         location: { type: "string" },
         note: { type: "string", description: "A short note (event, expense, income, quote, invoice)." },
         amount: { type: "number", description: "expense / income: the amount in currency units, e.g. 12.5." },
@@ -1370,7 +1377,8 @@
     name: "app_summary",
     description: "Totals and an overview of one app, worked out on the user's device: budget (income, " +
       "expenses and each category of a month), timesheet (hours and amounts per project of a month), " +
-      "todo (open, late and due-today tasks per list, and what is due next) and, for the other apps " +
+      "todo (open, late and due-today tasks per list, and what is due next), stock (what sold in a month, per product and " +
+      "per place: the user's own stock and each consignment shop or other warehouse; returns taken off) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
       "plants and more). Better than search_data for questions like 'how much did I spend on food " +
       "this month' or 'what is on this week'. calendar also lists the user's labels with how many events " +
@@ -1381,7 +1389,7 @@
       type: "object",
       properties: {
         app: { type: "string", description: "The app id (from list_apps)." },
-        month: { type: "string", description: "budget, timesheet: YYYY-MM (default: this month). calendar: list that month's events." },
+        month: { type: "string", description: "budget, timesheet, stock: YYYY-MM (default: this month). calendar: list that month's events." },
         label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." }
       },
@@ -2063,6 +2071,13 @@
     if (!opts.builtin && opts.cover) {
       lines.push("For a book cover (front, spine and back for print), call book_cover with the details the user gave and the attached pictures: the front picture and, when there is one, the publisher's logo. The user opens it in Layout and edits it there; never say it was made.");
     }
+    // publisher wave P14: posts for a book, sales per shop, settlements
+    if (!opts.builtin && opts.entries && opts.entries.indexOf("post") >= 0) {
+      lines.push("For social posts about a book the user publishes, look the title up first (search_data in publish: its people, release date, price, quotes from reviews) and write each post in the user's language, short, with the facts you found and never invented ones; one propose_entry post per post, spread over the days the user asked for (for a release, for example, a week before, the day itself and a week after). The user posts them from Publishing on their day.");
+    }
+    if (!opts.builtin && opts.entries && opts.entries.indexOf("settlement") >= 0) {
+      lines.push("For what a book sold, in total or in each bookshop, call app_summary with app stock and the month; consignment shops are places in its answer. To settle with a consignment shop, propose_entry settlement with the shop's name.");
+    }
     if (!opts.builtin && opts.newsletter) {
       lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. The user's own products (\"our latest release\", \"our new book\") come from their shop with shop_products, never from a web search; other people's products (other publishers, partners) go in a products block from pages you read, with their own links and only prices the page shows. Write in the language of the issue (the user's, unless they say otherwise). Give each block its section (top for the main story; news; products; promo for banners and offers; end for a closing note) so the issue keeps its order. The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. When the user says the issue is ready or asks to send it, call newsletter_check; sending is always the user's step in Newsletter.");
     }
@@ -2088,10 +2103,14 @@
     contact: "contacts", customer: "crm", card: "kanban", habit: "habits", workout: "fitness",
     car: "garage", plant: "plants", pet_record: "petcare", media: "shelf", place: "maps", shared_expense: "split",
     // publisher wave P4: a new title in Publishing, with its release plan
-    book: "publish"
+    book: "publish",
+    // publisher wave P14: a planned post (Publishing › Posts) and a
+    // consignment settlement (Stock), both opened for the user to save
+    post: "publish", settlement: "stock"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
-                     "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book"];
+                     "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
+                     "post", "settlement"];
   // Invoices' currencies (invoices/core.js CURRENCIES, BR-INV-NEW).
   var INV_CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD", "AUD", "SEK", "NOK", "DKK",
                         "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "JPY"];
@@ -2535,6 +2554,30 @@
       if (ib.err) return { err: ib.err };
       put(o, f, "isbn", ib.v, "isbn");
       return { o: o, f: f, title: t2 };
+    },
+    // Publishing's post dialog (wave P12): { post: 1, tx, d, at?, nets?, book? }
+    post: function (a) {
+      var tx = para(a.text, 5000);
+      if (!tx) return { err: "post needs a text." };
+      var d = realDate(a.date);
+      if (!d) return { err: "post needs a real date as YYYY-MM-DD." };
+      var o = { post: 1, tx: tx, d: d }, f = [["date", d]];
+      var at = typeof a.start === "string" ? a.start.trim() : "";
+      if (at) {
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(at)) return { err: "start must be HH:MM (24h)." };
+        o.at = at; f.push(["start", at]);
+      }
+      var NETS = ["mastodon", "bluesky", "x", "threads", "facebook", "linkedin", "instagram"], nets = [];
+      (Array.isArray(a.networks) ? a.networks : []).forEach(function (n) { if (NETS.indexOf(n) >= 0 && nets.indexOf(n) < 0) nets.push(n); });
+      if (nets.length) { o.nets = nets; f.push(["networks", nets.join(", ")]); }
+      put(o, f, "book", line(a.title, 200), "book");
+      return { o: o, f: f, title: "", text: tx };
+    },
+    // Stock's consignment settlement for the shop with this name
+    settlement: function (a) {
+      var sh = line(a.shop, 120) || line(a.title, 120);
+      if (!sh) return { err: "settlement needs the shop's name." };
+      return { o: { settle: sh }, f: [], title: sh };
     },
     shared_expense: function (a) {
       var o = {}, f = [], d = {};

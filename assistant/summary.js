@@ -19,6 +19,10 @@
 //                                 many events each has, and, with a
 //                                 label ("none" = no label) and/or a
 //                                 month, those events with every field
+//   stockMonth(raw, month, lang) Stock: what sold in one month, per
+//                                 product and per place (your own
+//                                 stock, each consignment shop or
+//                                 other warehouse), returns taken off
 //   agenda(rows, today, days)    any app with a Today provider
 //                                 (today/host.js agenda): what is late,
 //                                 today and in the next days
@@ -33,7 +37,7 @@
   var MAX_CATS = 40, MAX_PROJECTS = 40, MAX_LISTS = 40, MAX_ITEMS = 60,
       MAX_EVENTS = 200;   // calendarEvents (by label / month): as many as refs take
   // Apps with a summary of their own; any other app needs a Today provider.
-  var OWN = { budget: "month", timesheet: "month", todo: "lists" };
+  var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month" };
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -134,6 +138,58 @@
       return { kind: g.kind, name: g.name, total: money(g.total), entries: g.entries };
     });
     if (list.length > MAX_CATS) out.more_categories = list.length - MAX_CATS;
+    return out;
+  }
+
+  // ---------- Stock (publisher wave P14) ----------
+  // Sales of one month from Stock's movements: "out" sells, "ret" is a
+  // customer return; voided and deleted movements don't count. A
+  // movement's warehouse is the place (a consignment shop's settlement
+  // is an "out" in that shop). Quantities are kept in thousandths.
+  var MAX_PRODUCTS = 60;
+  function stockMonth(d, month, lang) {
+    lang = L[lang] ? lang : "en";
+    var out = { app: "stock", month: month, currency: "EUR", units: 0, amount: 0, sales: 0, products: [], places: [] };
+    if (!isObj(d)) return out;
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    function dead(x) { var ts = tombs[x.id]; return typeof ts === "number" && ts >= (Number(x.m) || 0); }
+    if (isObj(d.settings) && typeof d.settings.cur === "string" && /^[A-Z]{3}$/.test(d.settings.cur)) out.currency = d.settings.cur;
+    var items = {}, whs = {};
+    arr(d.items).forEach(function (it) { if (it && typeof it.id === "string" && !dead(it)) items[it.id] = it; });
+    arr(d.whs).forEach(function (w) { if (w && typeof w.id === "string" && !dead(w)) whs[w.id] = str(w.name, 60); });
+    function place(w) { return typeof w === "string" && w && w !== "whmain" ? whs[w] || "?" : L[lang].stMain; }
+    var prods = {}, places = {}, units = 0, amount = 0;
+    arr(d.moves).forEach(function (mv) {
+      if (!mv || typeof mv.id !== "string" || dead(mv) || mv.v) return;
+      if ((mv.t !== "out" && mv.t !== "ret") || typeof mv.d !== "string" || mv.d.slice(0, 7) !== month) return;
+      var pl = place(mv.w), any = false;
+      arr(mv.lines).forEach(function (l) {
+        if (!l || typeof l.q !== "number" || !isFinite(l.q) || !items[l.i]) return;
+        var q = mv.t === "out" ? Math.abs(l.q) : -Math.abs(l.q);
+        var a = typeof l.p === "number" && isFinite(l.p) ? q * l.p / 1000 : 0;
+        var it = items[l.i];
+        var g = prods[l.i] || (prods[l.i] = { name: str(it.name, 120), sku: str(it.sku, 40), q: 0, a: 0, at: {} });
+        g.q += q; g.a += a;
+        g.at[pl] = (g.at[pl] || 0) + q;
+        var P = places[pl] || (places[pl] = { q: 0, a: 0 });
+        P.q += q; P.a += a;
+        units += q; amount += a;
+        any = true;
+      });
+      if (any) out.sales++;
+    });
+    function u(q) { return Math.round(q) / 1000; }
+    out.units = u(units);
+    out.amount = money(amount);
+    var list = Object.keys(prods).map(function (k) { return prods[k]; }).filter(function (g) { return g.q !== 0 || g.a !== 0; });
+    list.sort(function (a, b) { return b.q - a.q || b.a - a.a || (a.name < b.name ? -1 : 1); });
+    out.products = list.slice(0, MAX_PRODUCTS).map(function (g) {
+      var o = { name: g.name, units: u(g.q), amount: money(g.a), places: Object.keys(g.at).sort().map(function (n) { return { name: n, units: u(g.at[n]) }; }) };
+      if (g.sku) o.sku = g.sku;
+      return o;
+    });
+    if (list.length > MAX_PRODUCTS) out.more_products = list.length - MAX_PRODUCTS;
+    out.places = Object.keys(places).sort().map(function (n) { return { name: n, units: u(places[n].q), amount: money(places[n].a) }; });
     return out;
   }
 
@@ -299,11 +355,11 @@
     en: { inc: "Income", exp: "Expenses", net: "Balance", ent: "entries", h: "h", bill: "billable",
           open: "open", done: "done", late: "late", today: "due today", none: "Nothing in this period.",
           run: "Running now", more: "+{n} more", uncat: "Uncategorized",
-          lbls: "Labels", lbl: "Label", nolbl: "No label" },
+          lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
-          lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα" }
+          lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -342,6 +398,15 @@
                  (l.due_today ? ", " + l.due_today + " " + w.today : ""));
       });
       more(s.more_lists);
+    } else if (s.app === "stock" && Array.isArray(s.products)) {
+      out.push(s.month + " · " + s.units + " " + w.stSold + " · " + amt(s.amount, s.currency));
+      if (s.places.length > 1) out.push(s.places.map(function (p) { return p.name + ": " + p.units; }).join(" · "));
+      s.products.forEach(function (p) {
+        out.push(p.name + ": " + p.units + " · " + amt(p.amount, s.currency) +
+                 (p.places.length > 1 ? " (" + p.places.map(function (x) { return x.name + " " + x.units; }).join(", ") + ")" : ""));
+      });
+      more(s.more_products);
+      if (!s.sales) out.push(w.none);
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -360,7 +425,7 @@
 
   var API = {
     VERSION: "1.0.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
-    normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth,
+    normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, calendarEvents: calendarEvents, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
