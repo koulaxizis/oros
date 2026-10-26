@@ -49,7 +49,8 @@ test("edits2: the eleven apps are offered, loaded lazily, and need their cores",
   assert.deepEqual(E.needs("chores"), [], "loaded here");
   assert.match(E.plan("chores", {}, { task: "x" }, ok({ action: "complete", date: "2026-09-20" })).err, /complete takes only ref/);
   assert.match(E.normArgs({ ref: "r1", action: "update", title: "x".repeat(301) }).err, /301 characters/);
-  assert.match(E.normArgs({ ref: "r1", action: "update", note: "x".repeat(1001) }).err, /1001 characters/);
+  // Notes arrive whole (CT-N2K); each app refuses a note past its own limit.
+  assert.equal(E.normArgs({ ref: "r1", action: "update", note: "x".repeat(1001) }).err, undefined);
 });
 
 // ---------- Notes ----------
@@ -227,6 +228,7 @@ test("travel: packed / unpacked, an itinerary entry, the trip's dates; one stamp
   const m = TV.mergeTravel(r.data, other).trips[0].pack[0];
   assert.deepEqual([m.name, m.done], ["Passports", true]);
   const pl = run("travel", d, { trip: "trip-rome", tab: "plan", item: "plan-flight" }, { action: "reschedule", date: "2026-10-02", start: "07:30" });
+  assert.match(run("travel", d, { trip: "trip-rome", tab: "plan", item: "plan-flight" }, { action: "update", note: "x".repeat(1001) }).err, /an itinerary note keeps 1000/);
   assert.deepEqual(pl.plan.rows, [{ f: "date", b: "2026-10-01", a: "2026-10-02" }, { f: "start", b: "09:00", a: "07:30" }]);
   const tr = run("travel", d, { trip: "trip-rome", tab: null, item: null }, { action: "reschedule", end_date: "2026-10-06" });
   assert.equal(tr.data.trips[0].end, "2026-10-06");
@@ -317,6 +319,7 @@ test("fitness: a workout's name and note; canonical; Undo", () => {
   const u = E.undo("fitness", r.data, r.undo, NOW + 1);
   assert.equal(u.ok, true, u.err);
   assert.equal(u.data.wo[0].n, "");
+  assert.match(run("fitness", d, "wo-1", { action: "update", note: "x".repeat(1001) }).err, /1001 characters; a workout's notes keeps 1000/);
 });
 
 // ---------- Library ----------
