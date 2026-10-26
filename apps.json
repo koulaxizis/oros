@@ -821,6 +821,15 @@
       "type": "internal"
     },
     {
+      "id": "lyricsync",
+      "name": "Lyric Sync",
+      "category": "Sound",
+      "icon": "lyricsync",
+      "url": "lyricsync/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "television",
       "name": "Television",
       "category": "Video",

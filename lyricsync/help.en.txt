@@ -1,0 +1,41 @@
+# Lyric Sync
+Lyric Sync times the words of a song to the music, line by line, the way distributors and streaming services want them. You tap along while the song plays, fix any line that came out early or late, check the result in a preview and save it as LRC, SRT, WebVTT, TTML, JSON or plain text. The song never leaves your device and you need no account.
+
+## Getting started
+- Press `New song`, then `Choose the song` to pick the audio file (MP3, M4A, WAV, FLAC, Ogg and more).
+- In the `Lyrics` tab, write or paste the words, one line per line. A blank line starts a new verse. Title, artist, album and language code go into the exported files.
+- `Open file` on the first screen starts a song from an audio file or from a lyrics file you already have (LRC, SRT, WebVTT, TTML, our JSON or text). You can also drop a file on the window.
+
+## Sync
+Open the `Sync` tab. The first press of the big button (or [[Space]]) starts the song. Then:
+- `Tap`: press once as each line starts. A line ends where the next one starts; `End line` (or [[E]]) marks a pause after the last line you timed, for an instrumental break.
+- `Hold`: hold the button (or [[Space]]) while each line is sung and let go when it ends, like DistroKid's lyric tool.
+The marked line (▸) is the next one to time, and the line playing now is lit. `Undo` (or [[Backspace]]) takes back the last step and `Redo` brings it back.
+
+For a fast song, set the speed to 75% or 50%: the pitch stays the same and the times are still right.
+
+## Fix a line
+Tap a line in the list to select it. Then:
+- Write its start time in the box (minutes:seconds, for example `1:02.50`), or move it with `−0.1`, `−0.01`, `+0.01` and `+0.1` seconds (keys [[,]] and [[.]], with [[Shift]] for 0.1 s).
+- `Play` plays the song from that line.
+- `Sync from here` jumps back a little and makes the next taps time this line and the ones after it again.
+- `Clear time` takes the time off the line.
+Changing the words in the `Lyrics` tab keeps the times of the lines that did not change.
+
+## Keys
+- [[Space]]: tap or hold (Sync), play or pause (Preview). [[P]]: play or pause.
+- [[←]] [[→]]: 2 seconds back or forward ([[Shift]]: 10 seconds). [[↑]] [[↓]]: select a line.
+- [[Ctrl+Z]] and [[Ctrl+Shift+Z]]: undo and redo.
+
+## Preview and export
+`Preview` shows the lines as they will appear in a player, with the current line large. `Export` saves the file you need:
+- `LRC` for music players, karaoke and LRCLIB.
+- `SRT` and `WebVTT` for video and the web.
+- `TTML` for Apple Music, iTunes, YouTube and distributors such as DistroKid.
+- `JSON (orOS)` keeps everything, to open it again later; `Text` is just the words.
+
+## Your data
+- The lyrics and their times are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted.
+- The song file stays only on the device where you chose it. On another device the song shows "song file not on this device" until you choose it there too.
+- `Delete` on the first screen removes the lyrics and times from all your devices; the song file itself is not touched.
+- The menu's search finds your songs by title, artist or words.

@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 34874 of 34897 (99%)
-- Help pages: 149 of 149 (100%)
+- Strings: 34971 of 34994 (99%)
+- Help pages: 150 of 150 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 576 / 576 |
+| assistant | 100% | 577 / 577 |
 | atelier | 100% | 1362 / 1362 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -70,6 +70,7 @@ text is still written in the code. They switch over wave by wave
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 51 / 51 |
 | links | 100% | 2 / 2 |
+| lyricsync | 100% | 92 / 92 |
 | mahjong | 100% | 69 / 69 |
 | mail | 100% | 496 / 496 |
 | mancala | 100% | 60 / 60 |
@@ -118,7 +119,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 525 / 525 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 903 / 903 |
+| shell | 100% | 904 / 904 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -142,7 +143,7 @@ text is still written in the code. They switch over wave by wave
 | tictactoe | 100% | 53 / 53 |
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 293 / 293 |
-| today | 100% | 88 / 88 |
+| today | 100% | 91 / 91 |
 | todo | 100% | 227 / 227 |
 | together | 100% | 303 / 303 |
 | travel | 100% | 555 / 555 |
