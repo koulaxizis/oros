@@ -242,7 +242,7 @@
       "share.always": "Always share from {apps} without asking",
       "share.yes": "Share ({n})", "share.no": "Don't share",
       "note.stopped": "Stopped.", "note.refused": "The assistant declined to answer this.",
-      "note.cut": "The answer was cut off because it was too long.",
+      "note.cut": "The answer was cut off: it was still too long after it went on 4 times. Write \"go on\" for the rest.",
       "note.rounds": "The assistant stopped after too many searches. Ask again more precisely.",
       "err.key": "{name} did not accept the key. Check it in Settings.",
       "err.credit": "Your {name} account has no credit left.",
@@ -541,7 +541,7 @@
       "share.always": "Να μοιράζονται πάντα χωρίς ερώτηση από: {apps}",
       "share.yes": "Κοινοποίηση ({n})", "share.no": "Όχι",
       "note.stopped": "Διακόπηκε.", "note.refused": "Ο βοηθός αρνήθηκε να απαντήσει σε αυτό.",
-      "note.cut": "Η απάντηση κόπηκε γιατί ήταν πολύ μεγάλη.",
+      "note.cut": "Η απάντηση κόπηκε: ήταν ακόμα πολύ μεγάλη αφού συνέχισε 4 φορές. Γράψε «συνέχισε» για το υπόλοιπο.",
       "note.rounds": "Ο βοηθός σταμάτησε μετά από πολλές αναζητήσεις. Ρώτα ξανά πιο συγκεκριμένα.",
       "err.key": "Το {name} δεν δέχτηκε το κλειδί. Έλεγξέ το στις Ρυθμίσεις.",
       "err.credit": "Ο λογαριασμός σου στο {name} δεν έχει άλλη πίστωση.",
@@ -1054,6 +1054,8 @@
     return !!(keyCache[pid] && keyCache[pid].key);
   }
 
+  // Output ceilings Claude named for a model (a 400), for this session.
+  var outMax = {};
   // One streamed request → reducer result. onText(text) as it arrives.
   function callModel(pid, msgs, opts, signal, onText) {
     var p = C.PROVIDERS[pid];
@@ -1077,11 +1079,16 @@
             if (p.kind === "anthropic" && !(o && o.noThinking) && C.thinkingRefused(err)) {
               return send(Object.assign({}, o, { noThinking: true }));
             }
+            // A model with a lower output ceiling than we know: once more with it.
+            var lim = p.kind === "anthropic" && !(o && o.maxTokens) ? C.maxTokensRefused(err) : 0;
+            if (lim) { outMax[modelOf(pid)] = lim; return send(Object.assign({}, o, { maxTokens: lim })); }
             throw err;
           });
         });
       }
-      return send(opts || {});
+      var o0 = Object.assign({}, opts || {});
+      if (p.kind === "anthropic" && outMax[modelOf(pid)]) o0.maxTokens = outMax[modelOf(pid)];
+      return send(o0);
     }).then(function (res) {
       var red = C.makeReducer(pid);
       var sse = C.makeSSE(function (d) {
@@ -2145,21 +2152,38 @@
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
     var web = wmode === "native";
-    var round = 0;
+    var round = 0, conts = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
+      // Carrying on a cut answer: the live view shows it whole.
+      var head = contHead(c.msgs, c.msgs.length);
+      var before = head >= 0 ? joinedText(c.msgs, head) : "";
+      busy.join = head;
+      if (head >= 0) { busy.live = before; renderMessages(); }
       return callModel(pid, withFiles(c.msgs), { system: system, tools: tools, web: web }, ctl && ctl.signal, function (txt) {
-        busy.live = txt;
+        busy.live = before + txt;
         scheduleLive();
       }).then(function (res) {
         addUsage(pid, res.usage);
         var m = { r: "asst", prov: pid, model: modelOf(pid), text: res.text, raw: res.raw };
         if (res.tools.length) m.tools = res.tools;
+        if (res.cut && !res.tools.length) m.cut = 1;
         c.msgs.push(m);
         if (res.refused) note("info", t("note.refused"));
-        if (res.cut) note("info", t("note.cut"));
         busy.live = "";
+        busy.join = -1;
+        // Cut at the output limit (with no complete tool call to run):
+        // a hidden "continue" goes, and the answer carries on as one.
+        if (m.cut) {
+          if (conts < C.CONT_ROUNDS && !C.PROVIDERS[pid].device) {
+            conts++;
+            c.msgs.push({ r: "user", cont: 1, text: C.CONT_TEXT });
+            saveChat(c);
+            return next();
+          }
+          note("info", t("note.cut"));
+        }
         saveChat(c);
         renderMessages();
         // A long web search pauses the turn on Anthropic's side: the same
@@ -2187,6 +2211,7 @@
       : next();
     first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
+        if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
         if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
       } else {
@@ -2628,6 +2653,8 @@
   // Apply, one write. Every item is checked again on Apply against
   // what the card showed; if any one changed meanwhile or no longer
   // fits, nothing is written. Undo takes all of them back, or none.
+  // An item that can't take the change stays off the card and is named
+  // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
   function changeMany(c, args, apps) {
     if (args.action !== "update") return Promise.resolve({ content: "Error: refs is only for update; change other things one item at a time with ref.", err: 1 });
@@ -2671,9 +2698,10 @@
       data = res.data;
       plans.push({ x: x, pl: pl });
     });
-    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length && bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
     if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
     var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
     return askChange(app.name, { many: many }, "update").then(function (ok) {
@@ -2713,27 +2741,35 @@
   // every row, so the user leaves out what should stay. Planned in a
   // row on the same data; on Apply each item is checked again against
   // what the card showed, and if one changed meanwhile nothing is
-  // written. Undo takes all of them back, or none.
+  // written. Undo takes all of them back, or none. An entry that can't
+  // be changed (a note too long, an unknown ref…) stays off the card and
+  // is named in the result; the others still go (CT-N2K).
   var LIST_MAX = 100;
+  // CT-N2K: entries that could not go on the card, for the model.
+  function badNote(bad) {
+    return bad.length ? " Not on the card, so not changed (" + bad.length + "): " + bad.join(" · ") + " Tell the user which ones and why; fix and send only these again, and never shorten the user's text unless they ask." : "";
+  }
   function changeList(c, args, apps) {
     if (args.action && args.action !== "update") return Promise.resolve({ content: "Error: changes is only for update; change other things one item at a time with ref.", err: 1 });
     if ((args.ref !== undefined && args.ref !== null && args.ref !== "") || Array.isArray(args.refs)) return Promise.resolve({ content: "Error: give ref, refs or changes, not more than one.", err: 1 });
     var list = args.changes.filter(function (x) { return x && typeof x === "object" && !Array.isArray(x); });
     if (!list.length) return Promise.resolve({ content: "Error: changes is empty.", err: 1 });
     if (list.length > LIST_MAX) return Promise.resolve({ content: "Error: at most " + LIST_MAX + " changes at a time.", err: 1 });
-    var chs = [], appId = "", seen = {};
+    var chs = [], appId = "", seen = {}, bad = [];
     for (var i = 0; i < list.length; i++) {
       var one = Object.assign({}, list[i], { action: "update" });
       var ch = E.normArgs(one);
-      if (!ch.ok) return Promise.resolve({ content: "Error: changes[" + i + "]: " + ch.err, err: 1 });
-      if (seen[ch.ref]) return Promise.resolve({ content: "Error: " + ch.ref + " is in changes twice; put all of its changes in one entry.", err: 1 });
+      var who = typeof list[i].ref === "string" && list[i].ref ? list[i].ref : "changes[" + i + "]";
+      if (!ch.ok) { bad.push(who + ": " + ch.err); continue; }
+      if (seen[ch.ref]) { bad.push(ch.ref + ": it is in changes twice; put all of its changes in one entry."); continue; }
       seen[ch.ref] = 1;
       var r = c.refs ? c.refs[ch.ref] : null;
-      if (!r) return Promise.resolve({ content: "Error: unknown ref " + ch.ref + ". Find the item with search_data or app_summary first.", err: 1 });
+      if (!r) { bad.push(ch.ref + ": unknown ref; find the item with search_data or app_summary first."); continue; }
       if (appId && r.app !== appId) return Promise.resolve({ content: "Error: changes must all be items of the same app.", err: 1 });
       appId = r.app;
       chs.push({ ch: ch, target: r.target });
     }
+    if (!chs.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix them and try again.", err: 1 });
     var app = null;
     changeApps(apps).forEach(function (a) { if (a.id === appId) app = a; });
     if (!app) {
@@ -2742,7 +2778,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], same = [];
     chs.forEach(function (x) {
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
       if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
@@ -2751,9 +2787,10 @@
       data = res.data;
       plans.push({ x: x, pl: pl });
     });
-    if (bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix or leave them out and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
+    if (!plans.length && bad.length) return Promise.resolve({ content: "Error: nothing was proposed, because these can't be changed: " + bad.join(" · ") + " Fix them and try again.", err: 1, ui: { k: "chgErr", app: app.name } });
     if (!plans.length) return Promise.resolve({ content: "Error: nothing would change: every item already looks like that.", err: 1 });
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
+    sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
     var tick = plans.every(function (p) { return E.canTick(app.id, p.pl.rows); });
     var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
@@ -3943,7 +3980,19 @@
       $("welcome").hidden = true;
     }
     if (chat && impSource(chat)) host.appendChild(el("p", "imp-note", t("imp.from", { s: IMP_NAME[impSource(chat)], d: fullDate(impAt(chat)) })));
-    (chat ? chat.msgs : []).forEach(function (m) { drawMsg(host, m, chat); });
+    var msgs = chat ? chat.msgs : [];
+    var stopAt = busy && busy.chat === chat && busy.join >= 0 ? busy.join : msgs.length;
+    for (var i = 0; i < stopAt; i++) {
+      var m = msgs[i];
+      // A cut answer and its continuations show as one answer.
+      if (m && m.r === "user" && m.cont) continue;
+      if (m && m.r === "asst" && contHead(msgs, i) >= 0 && contHead(msgs, i) !== i) continue;
+      if (m && m.r === "asst" && m.cut) {
+        drawMsg(host, Object.assign({}, m, { text: joinedText(msgs, i), raw: joinedRaw(msgs, i) }), chat);
+        continue;
+      }
+      drawMsg(host, m, chat);
+    }
     if (busy && busy.chat === chat) {
       if (busy.card) host.appendChild(busy.card);
       else {
@@ -3957,6 +4006,43 @@
       }
     }
     if (nearEnd) scrollEnd();
+  }
+
+  // Cut answers (m.cut) and their continuations: asst(cut) → user(cont)
+  // → asst(cut) → user(cont) → asst. contHead(msgs, i) → index of the
+  // chain's first answer when msgs[i] (or the slot i, while the next
+  // part is streaming) belongs to one, else -1.
+  function contHead(msgs, i) {
+    var j = i;
+    if (!(j < msgs.length && msgs[j] && msgs[j].r === "asst")) {
+      // slot after a "continue": the part being written
+      if (!(j - 1 >= 0 && msgs[j - 1] && msgs[j - 1].r === "user" && msgs[j - 1].cont)) return -1;
+      j = j - 2;
+      if (!(j >= 0 && msgs[j] && msgs[j].r === "asst" && msgs[j].cut)) return -1;
+    } else if (!msgs[j].cut && !(j >= 2 && msgs[j - 1] && msgs[j - 1].cont)) return -1;
+    while (j >= 2 && msgs[j - 1] && msgs[j - 1].r === "user" && msgs[j - 1].cont &&
+           msgs[j - 2] && msgs[j - 2].r === "asst" && msgs[j - 2].cut) j -= 2;
+    return j;
+  }
+  function chainEnd(msgs, h) {
+    var j = h;
+    while (msgs[j] && msgs[j].cut && msgs[j + 1] && msgs[j + 1].r === "user" && msgs[j + 1].cont &&
+           msgs[j + 2] && msgs[j + 2].r === "asst") j += 2;
+    return j;
+  }
+  function joinedText(msgs, h) {
+    var out = "", end = chainEnd(msgs, h);
+    for (var j = h; j <= end; j += 2) out += String(msgs[j] && msgs[j].text || "");
+    return out;
+  }
+  // Web sources of every part, for the one answer shown.
+  function joinedRaw(msgs, h) {
+    var end = chainEnd(msgs, h), blocks = [];
+    for (var j = h; j <= end; j += 2) {
+      var r = msgs[j] && msgs[j].raw;
+      if (r && Array.isArray(r.blocks)) blocks = blocks.concat(r.blocks);
+    }
+    return blocks.length ? { prov: "anthropic", blocks: blocks } : msgs[h].raw;
   }
 
   function drawMsg(host, m, c) {

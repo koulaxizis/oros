@@ -72,6 +72,9 @@
   };
   var APP_IDS = ["todo", "calendar", "budget", "bookmarks", "contacts", "crm", "kanban", "shelf", "habits", "plants"];
   // What each app's update may set (the tool's argument names).
+  // Notes arrive whole (up to NOTE_IN); each app refuses a note past
+  // its own limit instead of cutting it. Contacts: CT-N2K, 2,000.
+  var NOTE_IN = 5000, CT_NOTE = 2000;
   var SETTABLE = {
     todo:      { title: 1, date: 1, note: 1, label: 1, labels: 1, priority: 1 },
     calendar:  { title: 1, date: 1, start: 1, end: 1, location: 1, note: 1, label: 1, labels: 1 },
@@ -165,7 +168,7 @@
     });
     if (set.err) return bad(set.err);
     if (has(args, "location") && typeof args.location === "string") set.location = line(args.location, 150);
-    if (has(args, "note") && typeof args.note === "string") set.note = para(args.note, 1000);
+    if (has(args, "note") && typeof args.note === "string") set.note = para(args.note, NOTE_IN);
     if (has(args, "amount") && args.amount !== null && args.amount !== undefined && args.amount !== "") {
       var a = num(args.amount);
       if (!(a > 0)) return bad("amount must be a number greater than 0.");
@@ -226,7 +229,7 @@
     if (has(args, "tax_office") && typeof args.tax_office === "string") set.tax_office = line(args.tax_office, 60);
     if (has(args, "note_add") && typeof args.note_add === "string" && args.note_add.trim()) {
       if (has(set, "note")) return bad("give note (replaces) or note_add (adds), not both.");
-      set.note_add = para(args.note_add, 1000);
+      set.note_add = para(args.note_add, NOTE_IN);
     }
     if (has(args, "column") && args.column !== null && args.column !== undefined && args.column !== "") {
       var co = line(args.column, 120);
@@ -1061,12 +1064,15 @@
       if (!done) evs.push({ day: day, year: y, type: "birthday", label: "" });
       if (ctJ(evs) !== ctJ(c.events)) c.events = evs.sort(ctEvSort);
     }
-    if (has(s, "note")) c.note = s.note.slice(0, 500);
+    if (has(s, "note")) {
+      if (s.note.length > CT_NOTE) return back("The note is " + s.note.length + " characters; Contacts keeps " + CT_NOTE + ". Shorten it; nothing is cut for you.");
+      c.note = s.note;
+    }
     if (has(s, "note_add")) {
       var old = typeof c.note === "string" ? c.note.trim() : "", add = s.note_add.trim();
       if (old.indexOf(add) < 0) {
         var nn = old ? old + "\n" + add : add;
-        if (nn.length > 500) return back("The note would be " + nn.length + " characters; Contacts keeps 500. Shorten note_add (" + (500 - old.length - (old ? 1 : 0)) + " characters are free) or rewrite the whole note with note.");
+        if (nn.length > CT_NOTE) return back("The note would be " + nn.length + " characters; Contacts keeps " + CT_NOTE + ". Shorten note_add (" + Math.max(0, CT_NOTE - old.length - (old ? 1 : 0)) + " characters are free) or rewrite the whole note with note.");
         c.note = nn;
       }
     }
@@ -1840,9 +1846,13 @@
       }
       if (a.country && (!c.country || s.address_replace)) c.country = crmText(a.country, 60);
     }
-    if (has(s, "note")) c.note = crmText(s.note, 2000, true);
+    if (has(s, "note")) {
+      var nw = crmText(s.note, NOTE_IN, true);
+      if (nw.length > 2000) return bad("The note is " + nw.length + " characters; CRM keeps 2000. Shorten it; nothing is cut for you.");
+      c.note = nw;
+    }
     if (has(s, "note_add")) {
-      var on = crmText(c.note, 2000, true), add = crmText(s.note_add, 2000, true);
+      var on = crmText(c.note, 2000, true), add = crmText(s.note_add, NOTE_IN, true);
       if (on.indexOf(add) < 0) {
         var nn = on ? on + "\n" + add : add;
         if (nn.length > 2000) return bad("The note would be " + nn.length + " characters; CRM keeps 2000. Shorten note_add or rewrite the note with note.");

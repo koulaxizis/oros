@@ -115,7 +115,7 @@
       relations: rels,
       labelIds: lids,
       starred: c.starred === true,
-      note: text(c.note, 500),
+      note: text(c.note, 2000),
       avatar: typeof c.avatar === "string" && PX_RE.test(c.avatar) ? c.avatar : null,   // CT-NP: never a photo
       mtime: num(c.mtime)
     };

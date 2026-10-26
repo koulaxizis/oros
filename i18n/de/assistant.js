@@ -369,7 +369,7 @@ orosPack("de", "assistant", {
  "nolbl": "Ohne Label",
  "none": "Nichts in diesem Zeitraum.",
  "nopart": "Kein Partner namens „{q}“",
- "note.cut": "Die Antwort wurde abgeschnitten, weil sie zu lang war.",
+ "note.cut": "Die Antwort wurde abgeschnitten: Sie war auch nach 4 Fortsetzungen noch zu lang. Schreib „weiter“ für den Rest.",
  "note.refused": "Der Assistent hat es abgelehnt, darauf zu antworten.",
  "note.rounds": "Der Assistent hat nach zu vielen Suchen aufgehört. Frag noch einmal genauer.",
  "note.stopped": "Gestoppt.",

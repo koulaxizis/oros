@@ -39,7 +39,7 @@ test("create: arguments are checked, nothing guessed", () => {
   assert.equal(N.normItems({ app: "contacts", items: [] }).ok, false);
   assert.match(N.normItems({ app: "contacts", items: [{ phones: ["123"] }] }).err, /items\[0\].*name or an org/);
   assert.match(N.normItems({ app: "contacts", items: [{ name: "A B", emails: ["nope"] }] }).err, /not an e-mail/);
-  assert.match(N.normItems({ app: "contacts", items: [{ name: "A", note: "x".repeat(501) }] }).err, /501 characters; Contacts keeps 500/);
+  assert.match(N.normItems({ app: "contacts", items: [{ name: "A", note: "x".repeat(2001) }] }).err, /2001 characters; Contacts keeps 2000/);
   assert.match(N.normItems({ app: "contacts", items: [{ name: "A", emails: ["a@b.gr"] }, { name: "a", emails: ["A@b.gr"] }] }).err, /items\[0\] and items\[1\] are the same/);
   assert.match(N.normItems({ app: "crm", items: [{ name: "X", tax_id: "123456789" }] }).err, /check digit/);
   assert.equal(N.normItems({ app: "crm", items: [{ name: "X", tax_id: "EL094014201" }] }).ok, true);

@@ -1,0 +1,41 @@
+# Liedtext-Sync
+Liedtext-Sync stimmt die Worte eines Lieds Zeile für Zeile auf die Musik ab, so wie Vertriebe und Streamingdienste sie haben wollen. Du tippst mit, während das Lied läuft, korrigierst jede Zeile, die zu früh oder zu spät kam, prüfst das Ergebnis in der Vorschau und speicherst es als LRC, SRT, WebVTT, TTML, JSON oder reinen Text. Das Lied verlässt dein Gerät nie, und du brauchst kein Konto.
+
+## Erste Schritte
+- Tippe auf `Neues Lied` und dann auf `Lied auswählen`, um die Audiodatei zu wählen (MP3, M4A, WAV, FLAC, Ogg und mehr).
+- Schreibe oder füge im Tab `Liedtext` die Worte ein, eine Zeile pro Zeile. Eine Leerzeile beginnt eine neue Strophe. Titel, Interpret, Album und Sprachcode kommen in die exportierten Dateien.
+- `Datei öffnen` auf dem ersten Bildschirm beginnt ein Lied aus einer Audiodatei oder aus einer Liedtextdatei, die du schon hast (LRC, SRT, WebVTT, TTML, unser JSON oder Text). Du kannst eine Datei auch auf das Fenster ziehen.
+
+## Sync
+Öffne den Tab `Sync`. Der erste Druck auf die große Taste (oder [[Space]]) startet das Lied. Dann:
+- `Tippen`: tippe einmal, wenn jede Zeile beginnt. Eine Zeile endet, wo die nächste beginnt; `Zeilenende` (oder [[E]]) markiert eine Pause nach der zuletzt getimten Zeile, etwa für ein Instrumentalstück.
+- `Halten`: halte die Taste (oder [[Space]]), solange jede Zeile gesungen wird, und lass los, wenn sie endet, wie beim Liedtext-Werkzeug von DistroKid.
+Die markierte Zeile (▸) ist die nächste, die eine Zeit bekommt, und die Zeile, die gerade läuft, leuchtet. `Rückgängig` (oder [[Backspace]]) nimmt den letzten Schritt zurück, und `Wiederholen` bringt ihn zurück.
+
+Bei einem schnellen Lied stelle das Tempo auf 75 % oder 50 %: Die Tonhöhe bleibt gleich, und die Zeiten stimmen trotzdem.
+
+## Eine Zeile korrigieren
+Tippe auf eine Zeile in der Liste, um sie zu wählen. Dann:
+- Schreibe ihre Startzeit in das Feld (Minuten:Sekunden, zum Beispiel `1:02.50`) oder verschiebe sie mit `−0.1`, `−0.01`, `+0.01` und `+0.1` Sekunden (Tasten [[,]] und [[.]], mit [[Shift]] für 0,1 s).
+- `Abspielen` spielt das Lied ab dieser Zeile.
+- `Ab hier synchronisieren` springt ein Stück zurück, damit die nächsten Tipper diese Zeile und die folgenden neu timen.
+- `Zeit löschen` nimmt der Zeile ihre Zeit.
+Wenn du die Worte im Tab `Liedtext` änderst, behalten die unveränderten Zeilen ihre Zeiten.
+
+## Tasten
+- [[Space]]: tippen oder halten (Sync), abspielen oder pausieren (Vorschau). [[P]]: abspielen oder pausieren.
+- [[←]] [[→]]: 2 Sekunden zurück oder vor ([[Shift]]: 10 Sekunden). [[↑]] [[↓]]: eine Zeile wählen.
+- [[Ctrl+Z]] und [[Ctrl+Shift+Z]]: rückgängig und wiederholen.
+
+## Vorschau und Export
+Die `Vorschau` zeigt die Zeilen so, wie sie in einem Player erscheinen, mit der aktuellen Zeile groß. `Exportieren` speichert die Datei, die du brauchst:
+- `LRC` für Musikplayer, Karaoke und LRCLIB.
+- `SRT` und `WebVTT` für Video und das Web.
+- `TTML` für Apple Music, iTunes, YouTube und Vertriebe wie DistroKid.
+- `JSON (orOS)` behält alles, um es später wieder zu öffnen; `Text` enthält nur die Worte.
+
+## Deine Daten
+- Der Liedtext und seine Zeiten werden laufend gespeichert. Mit eingeschaltetem orOS-Sync in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte.
+- Die Lieddatei bleibt nur auf dem Gerät, auf dem du sie gewählt hast. Auf einem anderen Gerät zeigt das Lied „Lieddatei nicht auf diesem Gerät“, bis du sie auch dort wählst.
+- `Löschen` auf dem ersten Bildschirm entfernt Liedtext und Zeiten von allen deinen Geräten; die Lieddatei selbst wird nicht angerührt.
+- Die Suche im Menü findet deine Lieder nach Titel, Interpret oder Worten.

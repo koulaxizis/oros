@@ -47,7 +47,7 @@
   var APP_IDS = ["contacts", "crm"];
   var MAX_ITEMS = 100;
   var MAX_LINKS = 50;
-  var CT_NOTE = 500;          // contacts.js sanitizeContact
+  var CT_NOTE = 2000;         // contacts.js sanitizeContact (CT-N2K)
   var CRM_NOTE = 2000;        // crm/core.js normCust
   var CRM_PEOPLE = 20;        // crm/core.js LIMITS.people
   var CRM_CUST = 2000;        // crm/core.js LIMITS.cust

@@ -235,7 +235,7 @@
         } else if (m.f === "full") {
           full = full ? full + " " + v : v;
         } else if (m.f === "note") {
-          pc.note = cut(pc.note ? pc.note + "\n" + v : v, 500);
+          pc.note = cut(pc.note ? pc.note + "\n" + v : v, 2000);
         } else if (m.f === "email") {
           v.split(/[;,\s]+/).forEach(function (e) {
             e = cut(e, 120);

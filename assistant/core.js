@@ -173,7 +173,36 @@
   // Claude models that take the server-side refusal fallback.
   var FALLBACK_MODELS = { "claude-fable-5-1": 1, "claude-opus-5-5": 1, "claude-opus-5": 1, "claude-sonnet-5-5": 1 };
 
-  var MAX_TOKENS  = 32000;   // Anthropic needs one; a chat answer never comes close
+  // Claude needs max_tokens; each model gets its own real ceiling
+  // (streaming, so a big one is safe). Unknown names take MAX_TOKENS,
+  // and a 400 that names a lower ceiling retries once with it.
+  var MAX_TOKENS  = 64000;
+  var CLAUDE_OUT = [
+    [/^claude-3-(opus|sonnet|haiku)/, 4096],
+    [/^claude-3-5-/, 8192],
+    [/^claude-3-7-/, 64000],
+    [/^claude-opus-4($|-0|-1|-2025)/, 32000],
+    [/^claude-sonnet-4($|-0|-5|-2025)|^claude-(opus|haiku)-4-5/, 64000],
+    [/^claude-(fable|mythos|opus|sonnet|haiku)-/, 128000]
+  ];
+  function claudeMax(model) {
+    var m = String(model || "").replace(/^anthropic\./, "");
+    for (var i = 0; i < CLAUDE_OUT.length; i++) if (CLAUDE_OUT[i][0].test(m)) return CLAUDE_OUT[i][1];
+    return MAX_TOKENS;
+  }
+  // "max_tokens: 128000 > 64000, which is the maximum…" → 64000 (0: not that).
+  function maxTokensRefused(e) {
+    if (!e || e.status !== 400) return 0;
+    var msg = String(e.msg || "");
+    if (!/max_tokens/i.test(msg)) return 0;
+    var m = msg.match(/>\s*(\d{3,7})/) || msg.match(/maximum[^\d]{0,40}(\d{3,7})/i);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  // An answer cut at the output limit is carried on: a hidden user
+  // message asks the model to continue (no provider takes a prefilled
+  // answer any more), at most CONT_ROUNDS times per question.
+  var CONT_ROUNDS = 4;
+  var CONT_TEXT = "Your previous answer was cut off by the output length limit. Continue exactly where it stopped, in the same language and format: do not repeat anything and do not add an introduction.";
   var MAX_PERMS   = 300;
   var TOOL_ROUNDS = 6;       // model ↔ tool round trips per question
 
@@ -728,6 +757,7 @@
       if (m.r === "user") {
         var u = userOut(m, pid, sendable, conf);
         if (u.att.length) out.push({ r: "user", text: u.text, att: u.att });
+        else if (m.cont) out.push({ r: "user", text: CONT_TEXT, cont: 1 });
         else if (u.text) out.push({ r: "user", text: u.text });
       } else if (m.r === "asst") {
         var native = m.prov === pid && m.raw && m.raw.prov === pid && (web || !hasWebBlocks(m.raw));
@@ -765,7 +795,7 @@
     var hist = prepHistory(msgs, pid, !!opts.web && webCan(pid), conf);
     var tools = Array.isArray(opts.tools) ? opts.tools : [];
     var model = str(conf && conf.model, 200).trim();
-    if (p.kind === "anthropic") return anthropicReq(pid, conf, model, hist, opts.system || "", tools, !!opts.web && webCan(pid), !!opts.noThinking);
+    if (p.kind === "anthropic") return anthropicReq(pid, conf, model, hist, opts.system || "", tools, !!opts.web && webCan(pid), !!opts.noThinking, opts.maxTokens);
     if (p.kind === "gemini") return geminiReq(pid, conf, model, hist, opts.system || "", tools);
     return openaiReq(pid, conf, model, hist, opts.system || "", tools);
   }
@@ -846,9 +876,11 @@
     if (blocks.length) return blocks;
     return h.text ? String(h.text) : null;
   }
-  function anthropicReq(pid, conf, model, hist, system, tools, web, strip) {
+  function anthropicReq(pid, conf, model, hist, system, tools, web, strip, maxTok) {
     var messages = [], turn = -1;
-    hist.forEach(function (h, i) { if (h.r === "user") turn = i; });
+    // A "continue" message (cont) is not a new question: the cut answer
+    // before it keeps its thinking.
+    hist.forEach(function (h, i) { if (h.r === "user" && !h.cont) turn = i; });
     hist.forEach(function (h, i) {
       if (h.r === "user") messages.push({ role: "user", content: h.att ? anthropicUser(h) : h.text });
       else if (h.r === "asst") {
@@ -866,7 +898,7 @@
         }) });
       }
     });
-    var body = { model: model, max_tokens: MAX_TOKENS, stream: true, messages: messages };
+    var body = { model: model, max_tokens: maxTok > 0 ? maxTok : claudeMax(model), stream: true, messages: messages };
     if (system) body.system = system;
     if (tools.length) {
       body.tools = tools.map(function (t) {
@@ -1050,10 +1082,18 @@
         .map(function (b) { return b.text || ""; }).join("");
     }
     function result() {
-      var tools = [], clean = [];
+      var tools = [], clean = [], cut = stop === "max_tokens";
       blocks.forEach(function (b) {
         if (!b) return;
         if (b.type === "text" && !b.text) return;   // the API refuses empty text blocks
+        // Cut at the limit: a call whose input never ended, and thinking
+        // that never got its signature, can't go back (or run).
+        if (cut && b.type === "tool_use" && b._bad) return;
+        if (cut && b.type === "thinking" && !b.signature) return;
+        if (cut && b.type === "server_tool_use") {
+          var done = blocks.some(function (r) { return r && r.tool_use_id === b.id; });
+          if (!done) return;
+        }
         if (b.type === "tool_use") {
           tools.push({ id: String(b.id || ""), name: String(b.name || ""), args: b.input || {}, bad: !!b._bad });
           delete b._bad;
@@ -1062,7 +1102,7 @@
       });
       return {
         text: text(), tools: tools, raw: { prov: "anthropic", blocks: clean },
-        stop: stop, refused: stop === "refusal", cut: stop === "max_tokens", pause: stop === "pause_turn", usage: usage
+        stop: stop, refused: stop === "refusal", cut: cut, pause: stop === "pause_turn", usage: usage
       };
     }
     return { push: push, text: text, result: result };
@@ -1098,11 +1138,12 @@
       if (c.finish_reason) stop = c.finish_reason;
     }
     function result() {
-      var tools = [], tc = [];
+      var tools = [], tc = [], cut = stop === "length";
       calls.forEach(function (c, i) {
         if (!c || !c.name) return;
         var id = c.id || ("call_" + i);
         var pa = parseArgs(c.args);
+        if (cut && pa.bad) return;   // cut at the limit before its arguments ended
         tools.push({ id: id, name: c.name, args: pa.args, bad: pa.bad });
         tc.push({ id: id, type: "function", "function": { name: c.name, arguments: c.args || "{}" } });
       });
@@ -1110,7 +1151,7 @@
       if (tc.length) msg.tool_calls = tc;
       return {
         text: txt, tools: tools, raw: { prov: pid, msg: msg },
-        stop: stop, refused: stop === "content_filter", cut: stop === "length", usage: usage
+        stop: stop, refused: stop === "content_filter", cut: cut, usage: usage
       };
     }
     return { push: push, text: function () { return txt; }, result: result };
@@ -1478,7 +1519,7 @@
         address_replace: { type: "boolean", description: "contacts: true = address replaces the contact's address of the same type (or their only one) instead of adding." },
         tax_id: { type: "string", description: "crm: the customer's VAT / tax number (e.g. Greek ΑΦΜ)." },
         tax_office: { type: "string", description: "crm: the customer's tax office (e.g. Greek ΔΟΥ)." },
-        note_add: { type: "string", description: "contacts, crm: text to add to the note on a new line (the old note stays; the whole note holds 500 characters). Use instead of note." },
+        note_add: { type: "string", description: "contacts, crm: text to add to the note on a new line (the old note stays; the whole note holds 2000 characters in Contacts, 2000 in CRM). Use instead of note." },
         column: { type: "string", description: "kanban move: the name of the column to move the card to." },
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
@@ -1519,7 +1560,7 @@
                                             type: { type: "string", "enum": ["home", "work", "other"] } } },
                    birthday: { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." },
                    labels: { type: "array", items: { type: "string" }, description: "contacts: names of labels the user already has." },
-                   note: { type: "string", description: "A short note (Contacts keeps 500 characters, CRM 2000)." },
+                   note: { type: "string", description: "A short note (Contacts and CRM keep 2000 characters)." },
                    kind: { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." },
                    status: { type: "string", "enum": ["lead", "active", "past"], description: "crm: lead (default), active customer, or past." },
                    tax_id: { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ)." },
@@ -2479,7 +2520,8 @@
         else if (bm && realDate("2000-" + bm[1] + "-" + bm[2])) put(o, f, "birthday", bm[1] + "-" + bm[2], "birthday");
         else return { err: "birthday must be YYYY-MM-DD or MM-DD." };
       }
-      var nt = para(a.note, 500);
+      var nt = para(a.note, 5000);
+      if (nt.length > 2000) return { err: "note is " + nt.length + " characters; Contacts keeps 2000. Shorten it." };   // CT-N2K
       if (nt) o.note = nt;
       return { o: o, f: f, title: name || org, text: nt };
     },
@@ -2798,7 +2840,8 @@
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
-    TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, NEVER_APPS: NEVER_APPS,
+    TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
+    claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,
     prepHistory: prepHistory, buildRequest: buildRequest, thinkingRefused: thinkingRefused,

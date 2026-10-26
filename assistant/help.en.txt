@@ -218,4 +218,5 @@ Bring your history from another AI chat. In the Assistant's settings, under `Thi
 - It can change or delete items only in the apps listed under `Change what you already have`, one at a time, and it can't send anything (no email).
 - Undo of a change works only until you leave the Assistant.
 - If an app is open in another browser tab while you change one of its items here, that tab may still show the old version until you reload it.
+- A long answer is not cut off: when the service stops at its length limit, the assistant asks it to go on, up to 4 times, and you see one answer. Only a very long one (or the in-browser model, which has little room) can still end with "The answer was cut off"; then write `go on`.
 - Some services may refuse calls from a browser: `Test the connection` tells you. A local server must allow this site; `Server` in the settings shows how for each program.

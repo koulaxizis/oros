@@ -949,7 +949,10 @@
       })(),
       labelIds:  lids,
       starred:   c.starred === true,
-      note:      (typeof c.note === "string" ? c.note : "").slice(0, 500),
+      // CT-N2K: 2,000 characters (500 before 3.85). A device still on
+      // the old code keeps only the first 500 without restamping; merge.js
+      // then picks the longer note on a tie, so the full text comes back.
+      note:      (typeof c.note === "string" ? c.note : "").slice(0, 2000),
       avatar:    (typeof c.avatar === "string" && PX_RE.test(c.avatar)) ? c.avatar : null,   // CT-NP: photos are dropped
       mtime:     (typeof c.mtime === "number" && isFinite(c.mtime)) ? c.mtime : Date.now()
     };
@@ -3884,7 +3887,7 @@ document.addEventListener("keydown", function (e) {
           }
           break;
         }
-        case "NOTE": c.note = vcfUnesc(p.value).trim().slice(0, 500); break;
+        case "NOTE": c.note = vcfUnesc(p.value).trim().slice(0, 2000); break;
         case "PHOTO": break;   // CT-NP: photos are not kept
         case "X-OROS-AVATAR": {
           var av = p.value.trim();
@@ -4277,7 +4280,7 @@ document.addEventListener("keydown", function (e) {
       org: pick(CSV_H.org).slice(0, 80),
       jobTitle: pick(CSV_H.title).slice(0, 80),
       phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: pick(CSV_H.note).slice(0, 500),
+      events: [], cats: [], note: pick(CSV_H.note).slice(0, 2000),
       avatar: null, starred: false
     };
     // FN-style fallback: "Name" split when parts are missing.

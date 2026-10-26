@@ -144,7 +144,7 @@
             label: str(ev.label, 40)
           };
         }).filter(Boolean),
-        note: str(c.note, 500),
+        note: str(c.note, 2000),
         starred: c.starred === true,
         photo: null   // CT-NP: Contacts keeps no photos
       };
@@ -498,7 +498,7 @@
           label: str(ev.label, 40).trim()
         };
       }).filter(Boolean),
-      note: str(c.note, 500),
+      note: str(c.note, 2000),
       starred: c.starred === true
     };
     if (!(n.given || n.middle || n.family || n.nickname || n.org || n.phones.length || n.emails.length)) return null;
