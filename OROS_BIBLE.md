@@ -2653,6 +2653,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-10-26 · 3.85.01 Assistant: answers cut at the output limit go on (#621):** see AS-CONT (Chris 2026-10-26: "The answer was cut off because it was too long" must not happen): Claude `max_tokens` per model (`claudeMax`, 128K current models, was a flat 32K), a 400 naming a lower ceiling retried and remembered, a cut answer continued by a hidden `cont` user message up to `CONT_ROUNDS` 4 and shown as one answer; half tool calls and unsigned thinking of a cut answer dropped.
 - **2026-10-26 · 3.85.00 Lyric Sync wave 1: new app, line sync and exports (#620):** new app `lyricsync/` (Sound, after Studio; plan /mnt/project-files/lyricsync/plan.md, Chris approved all 4 waves 2026-10-26 with self-merge). Modeled on DistroKid's Lyric Potato (hold Space per line, TTML/SRT/LRC) without its account and server: Tap and Hold modes, speed 50-100 % with preservesPitch, undo/redo, start-time edit + nudge, Sync from here, verse breaks, preview; export LRC (empty stamp after an explicit end with a pause), SRT, WebVTT, TTML (div per verse, p per line, clock times, itunes:timing Line), JSON `oros-lyrics` v1, text; import the same (LRC offset/repeats/word stamps stripped, TTML clock/offset/frames). Slice `lyricsync` (LYRICSYNC v1, LWW per song); the audio stays on the device in IndexedDB `oros-lyricsync`.
 - **2026-10-26 · 3.84.03 Assistant: 30 attachments of 30 MB (#619):** see AS-ATT30: `ATT_MAX` 30, `ATT_FILE` 30 MB, per-provider request room `attRoom` (Claude 22 MB / 100 PDF pages / 100 files, OpenAI 30 MB, Gemini 13 MB, others 12 MB); what doesn't fit goes as device-read text; Claude PDFs page-counted with PDF.js before Send.
 - **2026-10-26 · 3.84.02 Today: masonry columns + folded name days (#618):** from 900 px each run of small widgets is two stacks filled by height (`OrosTodayLayout.stack`), so Coming up goes on under a short Overdue; more than 3 contacts with a name day are one row that shows / hides them (BR-TODAY-14).
@@ -8035,6 +8036,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - DRIVE-DL: Files › orOS Drive, when nothing is mirrored yet, shows "Get orOS Drive" under the intro, opening `/download/` (`?lang=el` in Greek) in a new tab.
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
+
+### 2026-10-26 — Assistant: answers cut at the output limit go on (#621) — 3.85.01
+- **Changes:** see AS-CONT and the Decisions entry.
+- **Files:** `assistant/{core.js,assistant.js,help.*.txt}`, `i18n/de/{assistant.js,help/assistant.txt}`, `tests/assistant-cont.test.js` (new), `shell.js` (APP_VERSION), `sw.js` (cache version), What's new, Bible.
+- **Tests:** full suite green; Chromium in the real shell, mocked Claude: answer cut twice shows as one bubble with thinking+text sent back on each continue; always-cut at 390 px EL with a 400 "128000 > 64000": retried at 64000 and kept, 4 continues then the note; no console errors. Not tested: real provider keys, real phone, Safari.
 
 ### 2026-10-26 — Lyric Sync wave 1: new app, line sync and exports (#620) — 3.85.00
 - **Changes:** see the Decisions entry.
