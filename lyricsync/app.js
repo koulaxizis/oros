@@ -109,6 +109,23 @@
       "x.videoNeed": "The song must be on the orOS disk (open it from Music or Files) to go to Montage.",
       "audio.disk": "{name} (orOS disk)", "audio.diskMissing": "“{name}” is not on the orOS disk of this device yet. It comes with Vault Drive, or choose it again.",
       "from.music": "From Music: {name}", "list.music": "song on the orOS disk", "open.bad": "Lyric Sync cannot open this file.",
+      "btn.auto": "Rough sync",
+      "btn.full": "Full screen",
+      "au.title": "Rough sync from the song",
+      "au.hint": "Lyric Sync listens to the song on this device (Whisper, the same as Montage's automatic subtitles) and gives each line a rough start. Your words stay as you wrote them. Then play the song and fix the lines by ear. It works best with clear vocals.",
+      "au.need": "The first time, it downloads the speech model once (about {mb} MB from Hugging Face, plus {rt} MB from orOS). Montage uses the same copy. The song is never sent anywhere.",
+      "au.ready": "The speech model is on this device. The song is never sent anywhere.",
+      "au.all": "Also move lines that already have a time",
+      "au.go": "Start",
+      "au.decoding": "Reading the song…",
+      "au.download": "Downloading the speech model… {p}%",
+      "au.listening": "Listening… {p}%",
+      "au.done": "{n} lines got a rough time. Play the song and fix them by ear.",
+      "au.none": "Nothing in the song matched the lyrics. Check the language code, or sync by tapping.",
+      "au.fail": "Could not listen to the song.",
+      "au.net": "Could not download the speech model. Check the connection and try again.",
+      "au.needText": "Write the lyrics first.",
+      "au.noRun": "Rough sync does not work in this browser.",
       "full": "This device is out of storage space. The change was not saved."
     },
     el: {
@@ -181,6 +198,23 @@
       "x.videoNeed": "Το τραγούδι πρέπει να είναι στον δίσκο του orOS (άνοιξέ το από τη Μουσική ή τα Αρχεία) για να πάει στο Montage.",
       "audio.disk": "{name} (δίσκος orOS)", "audio.diskMissing": "Το «{name}» δεν είναι ακόμα στον δίσκο του orOS σε αυτή τη συσκευή. Έρχεται με το Vault Drive, ή διάλεξέ το ξανά.",
       "from.music": "Από τη Μουσική: {name}", "list.music": "τραγούδι στον δίσκο του orOS", "open.bad": "Ο Συγχρονισμός στίχων δεν μπορεί να ανοίξει αυτό το αρχείο.",
+      "btn.auto": "Πρόχειρος συγχρονισμός",
+      "btn.full": "Πλήρης οθόνη",
+      "au.title": "Πρόχειρος συγχρονισμός από το τραγούδι",
+      "au.hint": "Ο Συγχρονισμός στίχων ακούει το τραγούδι σε αυτή τη συσκευή (Whisper, όπως οι αυτόματοι υπότιτλοι του Montage) και δίνει σε κάθε γραμμή έναν πρόχειρο χρόνο έναρξης. Τα λόγια σου μένουν όπως τα έγραψες. Μετά παίξε το τραγούδι και διόρθωσε τις γραμμές με το αυτί. Δουλεύει καλύτερα με καθαρή φωνή.",
+      "au.need": "Την πρώτη φορά κατεβάζει μία φορά το μοντέλο ομιλίας (περίπου {mb} MB από το Hugging Face, και {rt} MB από το orOS). Το Montage χρησιμοποιεί το ίδιο αντίγραφο. Το τραγούδι δεν στέλνεται πουθενά.",
+      "au.ready": "Το μοντέλο ομιλίας είναι σε αυτή τη συσκευή. Το τραγούδι δεν στέλνεται πουθενά.",
+      "au.all": "Μετακίνησε και τις γραμμές που έχουν ήδη χρόνο",
+      "au.go": "Έναρξη",
+      "au.decoding": "Διάβασμα του τραγουδιού…",
+      "au.download": "Λήψη του μοντέλου ομιλίας… {p}%",
+      "au.listening": "Ακρόαση… {p}%",
+      "au.done": "{n} γραμμές πήραν πρόχειρο χρόνο. Παίξε το τραγούδι και διόρθωσέ τες με το αυτί.",
+      "au.none": "Τίποτα στο τραγούδι δεν ταίριαξε με τους στίχους. Έλεγξε τον κωδικό γλώσσας ή συγχρόνισε πατώντας.",
+      "au.fail": "Δεν ήταν δυνατή η ακρόαση του τραγουδιού.",
+      "au.net": "Δεν ήταν δυνατή η λήψη του μοντέλου ομιλίας. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "au.needText": "Γράψε πρώτα τους στίχους.",
+      "au.noRun": "Ο πρόχειρος συγχρονισμός δεν λειτουργεί σε αυτόν τον browser.",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε."
     }
   };
@@ -976,6 +1010,94 @@
     toast(t("cal.done", { n: dev.lat }));
   }
 
+  // ---------- 11b. Rough sync from the song (wave 4) ----------
+  // Montage's Whisper (../montage/asr.js, model cached once for both
+  // apps) hears the song on this device; align.js lines the person's
+  // own lyrics up with it. One undoable change.
+  var MAX_AUTO_SEC = 900, autoStop = null;
+  function openAuto() {
+    if (!cur) return;
+    flushLyrics();
+    if (!cur.ln.length) { toast(t("au.needText")); return; }
+    if (!audioOk || !audioBlob) { toast(t("sync.needAudio")); return; }
+    var ASR = window.MontageASR;
+    if (!ASR || !window.LyricsyncAlign || !(window.OfflineAudioContext || window.AudioContext)) { toast(t("au.noRun")); return; }
+    $("au-need").textContent = t("au.need", { mb: ASR.MODEL_MB, rt: ASR.RUNTIME_MB });
+    ASR.ready().then(function (yes) { if (yes) $("au-need").textContent = t("au.ready"); }, function () {});
+    $("au-all").checked = false;
+    $("au-status").textContent = "";
+    $("au-go").disabled = false;
+    if (player && !player.paused) player.pause();
+    $("auto-dlg").showModal();
+  }
+  // The song as mono 16 kHz samples (Whisper's input), at most 15 min.
+  function samples16k(blob) {
+    var AC = window.AudioContext || window.webkitAudioContext, OAC = window.OfflineAudioContext;
+    return blob.arrayBuffer().then(function (ab) {
+      return new Promise(function (res, rej) {
+        var ac = new AC();
+        var done = function (f, v) { try { ac.close(); } catch (e) {} f(v); };
+        ac.decodeAudioData(ab, function (b) { done(res, b); }, function (e) { done(rej, e || new Error("decode")); });
+      });
+    }).then(function (buf) {
+      var sec = Math.min(buf.duration, MAX_AUTO_SEC);
+      if (!OAC) return window.LyricsyncAlign.to16k(buf, sec);
+      var oc = new OAC(1, Math.max(1, Math.ceil(sec * 16000)), 16000), src = oc.createBufferSource();
+      src.buffer = buf; src.connect(oc.destination); src.start(0);
+      return oc.startRendering().then(function (r) { return r.getChannelData(0); });
+    });
+  }
+  function runAuto() {
+    if (!cur || !audioBlob) return;
+    var id = cur.id, all = $("au-all").checked, blob = audioBlob, ASR = window.MontageASR;
+    var lg = String(cur.lg || "").toLowerCase().slice(0, 2), lang = /^[a-z]{2}$/.test(lg) ? lg : "auto";
+    var stop = false, ctl = typeof AbortController === "function" ? new AbortController() : null;
+    var status = function (txt) { $("au-status").textContent = txt; };
+    autoStop = function () { stop = true; if (ctl) ctl.abort(); autoStop = null; };
+    $("au-go").disabled = true;
+    status(t("au.decoding"));
+    samples16k(blob).then(function (samples) {
+      if (stop) throw new Error("stop");
+      return ASR.run(samples, {
+        lang: lang, cancelled: function () { return stop; }, signal: ctl ? ctl.signal : undefined,
+        progress: function (q, stage) { if (!stop) status(t(stage === "download" ? "au.download" : "au.listening", { p: Math.round(q * 100) })); }
+      });
+    }).then(function (r) {
+      if (stop || !cur || cur.id !== id) return;
+      autoStop = null;
+      var res = window.LyricsyncAlign.align(cur.ln, (r && r.cues) || []);
+      var lines = cur.ln, n = 0;
+      res.starts.forEach(function (ms, i) {
+        if (ms === null || (!all && lines[i].s !== null)) return;
+        // only untimed lines: a start must fit between the timed lines around it
+        if (!all) {
+          var a = C.prevTimed(lines, i), b = C.nextTimed(lines, i);
+          if ((a >= 0 && lines[a].s >= ms) || (b >= 0 && lines[b].s <= ms)) return;
+        }
+        lines = C.setStart(lines, i, ms);
+        n++;
+      });
+      $("auto-dlg").close();
+      if (!n) { toast(t("au.none")); return; }
+      setLines(lines);
+      cursor = C.nextUntimed(cur.ln, 0);
+      renderSync();
+      toast(t("au.done", { n: n }));
+    }, function (e) {
+      if (stop) return;
+      autoStop = null;
+      $("au-go").disabled = false;
+      status(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("au.net") : t("au.fail"));
+    });
+  }
+
+  // Preview as a karaoke screen: the stage fills the screen.
+  function fullScreen() {
+    var st = $("stage");
+    if (document.fullscreenElement) { document.exitFullscreen().catch(function () {}); return; }
+    if (st.requestFullscreen) st.requestFullscreen().catch(function () {});
+  }
+
   // ---------- 12. Import and export ----------
   function readLyricsFile(file) {
     if (file.size > MAX_TEXT_FILE) { toast(t("imp.big")); return Promise.resolve(null); }
@@ -1204,6 +1326,12 @@
     $("shift-yes").addEventListener("click", applyShift);
     $("shift-in").addEventListener("keydown", function (e) { if (e.code === "Enter" || e.code === "NumpadEnter") { e.preventDefault(); applyShift(); } });
     $("calib-btn").addEventListener("click", function () { renderCalib(); $("calib-dlg").showModal(); });
+    $("auto-btn").addEventListener("click", openAuto);
+    $("au-go").addEventListener("click", runAuto);
+    $("au-no").addEventListener("click", function () { if (autoStop) autoStop(); $("auto-dlg").close(); });
+    $("auto-dlg").addEventListener("close", function () { if (autoStop) autoStop(); });
+    $("full-btn").addEventListener("click", fullScreen);
+    $("stage").addEventListener("click", function () { if (document.fullscreenElement === $("stage")) togglePlay(); });
     $("calib-pad").addEventListener("pointerdown", function (e) { e.preventDefault(); calibPress(); });
     $("calib-pad").addEventListener("click", function (e) { if (e.detail === 0) calibPress(); });
     $("calib-dlg").addEventListener("keydown", function (e) { if (e.code === "Space") { e.preventDefault(); if (!e.repeat) calibPress(); } });

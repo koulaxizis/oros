@@ -28,6 +28,11 @@ Unter der Wiedergabeleiste ist das Lied als Wellenform gezeichnet, mit einer Mar
 ## Vor dem Senden prüfen
 `Prüfen` listet, was Vertriebe meist ablehnen: Zeilen ohne Zeit, Zeilen, die vor der Zeile darüber beginnen, Zeilen, die weniger als eine halbe Sekunde oder 15 Sekunden und länger zu sehen sind, Zeilen über 80 Zeichen, Bezeichnungen und Wiederholungszeichen wie [Refrain] oder x2 und Zeilen, in denen nur manche Wörter eine Zeit haben. Tippe auf einen Eintrag, um zu seiner Zeile zu gehen.
 
+## Grob aus dem Lied synchronisieren
+`Grob synchronisieren` (Tab Sync) hört das Lied auf diesem Gerät mit Whisper, demselben Sprachmodell wie die automatischen Untertitel in Montage, und gibt jeder Zeile einen groben Start. Deine Worte bleiben genau so, wie du sie geschrieben hast; nur die Zeiten werden geschätzt. Spiel das Lied danach ab und korrigiere die Zeilen nach Gehör. Am besten mit klarer Stimme; trag den Sprachcode unter `Liedtext` ein, dann wird es genauer.
+- Beim ersten Mal wird das Sprachmodell einmal geladen (etwa 42 MB von Hugging Face). Montage nutzt dieselbe Kopie, und der Untertitel-Dialog in Montage kann sie löschen. Das Lied selbst wird nirgendwohin gesendet.
+- Es setzt nur Zeilen ohne Zeit, außer du kreuzt `Auch Zeilen verschieben, die schon eine Zeit haben` an. `Rückgängig` nimmt alles zurück.
+
 ## Eine Zeile korrigieren
 Tippe auf eine Zeile in der Liste, um sie zu wählen. Dann:
 - Schreibe ihre Startzeit in das Feld (Minuten:Sekunden, zum Beispiel `1:02.50`) oder verschiebe sie mit `−0.1`, `−0.01`, `+0.01` und `+0.1` Sekunden (Tasten [[,]] und [[.]], mit [[Shift]] für 0,1 s).
@@ -43,7 +48,7 @@ Wenn du die Worte im Tab `Liedtext` änderst, behalten die unveränderten Zeilen
 - [[E]]: Zeilenende. [[,]] [[.]]: die gewählte Zeile um 0,01 s verschieben.
 
 ## Vorschau und Export
-Die `Vorschau` zeigt die Zeilen so, wie sie in einem Player erscheinen, mit der aktuellen Zeile groß. `Exportieren` speichert die Datei, die du brauchst:
+Die `Vorschau` zeigt die Zeilen so, wie sie in einem Player erscheinen, mit der aktuellen Zeile groß. `Vollbild` macht daraus einen Karaoke-Bildschirm: tippe darauf oder drück [[Space]] zum Abspielen und Pausieren, [[Esc]] zum Verlassen. `Exportieren` speichert die Datei, die du brauchst:
 - `LRC` für Musikplayer und LRCLIB; `Enhanced LRC` (erscheint, wenn Zeilen Wortzeiten haben) gibt jedem Wort eine Zeit für Karaoke-Player.
 - `SRT` und `WebVTT` für Video und das Web.
 - `TTML` für Apple Music, iTunes, YouTube und Vertriebe wie DistroKid, mit Wortzeiten und Sängern, wenn vorhanden.

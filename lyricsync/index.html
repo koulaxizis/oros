@@ -100,6 +100,7 @@
           <button type="button" id="check-btn" class="chip" data-i18n="btn.check">Check</button>
           <button type="button" id="shift-btn" class="chip" data-i18n="btn.shift">Shift all</button>
           <button type="button" id="calib-btn" class="chip" data-i18n="btn.calib">Tap delay</button>
+          <button type="button" id="auto-btn" class="chip" data-i18n="btn.auto">Rough sync</button>
         </div>
         <p id="mode-hint" class="hint"></p>
         <div id="word-strip" hidden></div>
@@ -128,6 +129,7 @@
 
       <!-- Preview -->
       <div id="p-preview" role="tabpanel" aria-labelledby="tab-preview" hidden>
+        <div class="row"><button type="button" id="full-btn" class="chip" data-i18n="btn.full">Full screen</button></div>
         <div id="stage" aria-live="off">
           <p id="st-prev" class="st dim"></p>
           <p id="st-now" class="st now"></p>
@@ -176,6 +178,18 @@
     </div>
   </dialog>
 
+  <dialog id="auto-dlg" aria-labelledby="auto-title">
+    <h2 id="auto-title" data-i18n="au.title">Rough sync from the song</h2>
+    <p class="hint" data-i18n="au.hint">Lyric Sync listens to the song on this device and gives each line a rough start.</p>
+    <p class="hint" id="au-need"></p>
+    <label class="check-row"><input type="checkbox" id="au-all"> <span data-i18n="au.all">Also move lines that already have a time</span></label>
+    <p id="au-status" class="calib-now" role="status"></p>
+    <div class="dlg-btns">
+      <button type="button" class="chip" id="au-no" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" class="chip pri" id="au-go" data-i18n="au.go">Start</button>
+    </div>
+  </dialog>
+
   <dialog id="confirm-dlg" aria-labelledby="confirm-msg">
     <p id="confirm-msg"></p>
     <div class="dlg-btns">
@@ -191,6 +205,8 @@
   <script src="formats.js?v=3.91.00"></script>
   <script src="wave.js?v=3.91.00"></script>
   <script src="id3.js?v=3.91.00"></script>
+  <script src="align.js"></script>
+  <script src="../montage/asr.js"></script>
   <script src="app.js?v=3.91.00"></script>
 
 </body>

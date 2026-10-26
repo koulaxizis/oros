@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.92.00
+- Lyric Sync: Rough sync. It listens to the song on your device (Whisper, the same speech model as Montage's automatic subtitles, downloaded once and shared) and gives each of your lines a rough start; your words stay as you wrote them, then you fix the times by ear. Undo takes it all back. Preview has Full screen, a karaoke screen you tap to play and pause.
+
 ## Version 3.91.00
 - Contacts and CRM stay in sync. A CRM customer of kind Person linked to a contact follows it both ways: change the name, phone, email, website, profession, address or country in either app and the other follows (the newer change wins; tax ID, notes and tags stay apart). A renamed company carries its linked people's company field along. Where the two already differed before, the customer page shows Different in Contacts, and nothing changes until you pick which one to keep.
 
