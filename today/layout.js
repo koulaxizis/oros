@@ -19,6 +19,11 @@
 //     line, Habits the habit rows, Upcoming events Calendar's events,
 //     To-dos the To-Do tasks — when those widgets are on the screen;
 //     otherwise the rows stay in the sections, as before.
+//   - fold(rows) (wave 49): more than FOLD_AT contacts with a name day
+//     in one list become one row that opens them all
+//   - stack(heights) (wave 49): the masonry on wide screens; each
+//     one-column widget, in order, goes to the shorter column, so a
+//     column goes on under its short card instead of leaving a gap
 // Exposed as window.OrosTodayLayout (module.exports in node).
 // ============================================================
 (function (root) {
@@ -214,11 +219,47 @@
     return out;
   }
 
+  // ---------- Name days folded (wave 49) ----------
+  // A contact's name day is Calendar's "nd:<contact>" row. A list with
+  // more than FOLD_AT of them → [{ row } | { fold: [rows] }], the fold
+  // at the place of the first one; the other rows keep their order.
+  var FOLD_AT = 3;
+  function isNameday(r) {
+    return !!r && r.app === "calendar" && typeof r.id === "string" && r.id.indexOf("nd:") === 0;
+  }
+  function fold(rows) {
+    rows = Array.isArray(rows) ? rows : [];
+    var names = rows.filter(isNameday), out = [], put = false;
+    if (names.length <= FOLD_AT) return rows.map(function (r) { return { row: r }; });
+    rows.forEach(function (r) {
+      if (!isNameday(r)) out.push({ row: r });
+      else if (!put) { put = true; out.push({ fold: names }); }
+    });
+    return out;
+  }
+
+  // ---------- Masonry (wave 49) ----------
+  // heights of a run of one-column widgets, in order → the column of
+  // each (0 left, 1 right): the shorter column so far, a tie to the
+  // left. The order inside each column stays the layout's order.
+  function stack(heights, n) {
+    n = n > 1 ? n : 2;
+    var sum = [], out = [];
+    for (var i = 0; i < n; i++) sum.push(0);
+    (Array.isArray(heights) ? heights : []).forEach(function (h) {
+      var c = 0;
+      for (var j = 1; j < n; j++) if (sum[j] < sum[c]) c = j;
+      out.push(c);
+      sum[c] += typeof h === "number" && h > 0 ? h : 0;
+    });
+    return out;
+  }
+
   var api = {
     VER: VER, WIDGETS: WIDGETS, ORDER: ORDER, DEFAULT: DEFAULT,
     defaults: defaults, norm: norm, parse: parse, isDefault: isDefault, ids: ids, hidden: hidden,
     move: move, moveId: moveId, reorder: reorder, add: add, remove: remove, setSize: setSize, nextSize: nextSize,
-    distribute: distribute
+    distribute: distribute, FOLD_AT: FOLD_AT, isNameday: isNameday, fold: fold, stack: stack
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosTodayLayout = api;

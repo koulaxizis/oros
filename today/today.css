@@ -300,6 +300,10 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 }
 .row .ask:hover { color: var(--accent); background: var(--accent-soft); }
 .row .ask svg { width: 18px; height: 18px; }
+.row.fold .chev { flex: none; align-self: center; display: inline-flex; color: var(--text-dim); transition: transform 0.15s; }
+.row.fold .open[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+.row.folded[hidden] { display: none; }
+.row.folded .open { padding-left: 24px; }
 .more { padding: 8px 12px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-dim); }
 
 /* ---------- 4. Settings dialog — centered (R32) ---------- */
@@ -364,9 +368,12 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
   #main { padding: 16px 20px 40px; }
   #cols > .w.kind-list.size-small:not(.edit-card) { grid-column: auto; }
   #cols > .w.size-small.edit-card { grid-column: auto; }
+  /* Masonry (wave 49, today.js flow): two stacks, no gaps */
+  .mason { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+  .mcol { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .group-head .chev { transition: none; }
+  .group-head .chev, .row.fold .chev { transition: none; }
   .edit-card.dragging { box-shadow: none; }
 }
 

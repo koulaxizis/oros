@@ -130,3 +130,27 @@ test("Today app: the layout stays on this device and is drawn with textContent o
   const html = fs.readFileSync(path.join(ROOT, "today/index.html"), "utf8");
   assert.ok(html.indexOf("layout.js") > 0 && html.indexOf("layout.js") < html.indexOf("today.js?"));
 });
+
+// Wave 49: name days folded, masonry on wide screens.
+test("fold: more than FOLD_AT contacts' name days become one row at the first one's place", () => {
+  const nd = (n) => ({ app: "calendar", id: "nd:c" + n, title: "N" + n });
+  const few = [nd(1), { app: "todo", id: "t1", title: "T" }, nd(2), nd(3)];
+  assert.deepEqual(L.fold(few).map((x) => x.row.title), ["N1", "T", "N2", "N3"]);
+  const many = [{ app: "calendar", id: "ev:1:2026-10-26", title: "E" }, nd(1), { app: "todo", id: "t1", title: "T" }, nd(2), nd(3), nd(4)];
+  const f = L.fold(many);
+  assert.equal(f.length, 3);
+  assert.equal(f[0].row.title, "E");
+  assert.deepEqual(f[1].fold.map((r) => r.title), ["N1", "N2", "N3", "N4"]);
+  assert.equal(f[2].row.title, "T");
+  assert.equal(L.isNameday({ app: "contacts", id: "nd:x" }), false);   // only Calendar's rows
+  assert.deepEqual(L.fold(null), []);
+});
+
+test("stack: each card to the shorter column, ties left, order kept", () => {
+  // Overdue (short), Today (tall), Coming up → under Overdue, not below Today
+  assert.deepEqual(L.stack([60, 900, 300]), [0, 1, 0]);
+  assert.deepEqual(L.stack([100, 100, 100, 100]), [0, 1, 0, 1]);
+  assert.deepEqual(L.stack([500, 50, 50, 50]), [0, 1, 1, 1]);
+  assert.deepEqual(L.stack([]), []);
+  assert.deepEqual(L.stack([NaN, -3, 10]), [0, 0, 0]);                 // no height counts as 0
+});

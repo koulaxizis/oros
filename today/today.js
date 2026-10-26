@@ -62,6 +62,7 @@
       overdue: "Overdue", today: "Today", soon: "Coming up", tomorrow: "Tomorrow",
       late1: "1 day late", lateN: "{n} days late", allDay: "all day",
       more: "and {n} more in {app}",
+      fold: "{n} contacts have their name day", foldShow: "show", foldHide: "hide",
       empty: "Nothing for today", emptySoon: "Nothing in the next days either.",
       emptyNext: "Have a look below at what is coming up.",
       off: "The daily summary is off. Turn it on in Settings (the gear button).",
@@ -107,6 +108,7 @@
       overdue: "Εκπρόθεσμα", today: "Σήμερα", soon: "Έρχονται", tomorrow: "Αύριο",
       late1: "1 μέρα καθυστέρηση", lateN: "{n} μέρες καθυστέρηση", allDay: "όλη μέρα",
       more: "και {n} ακόμα στο «{app}»",
+      fold: "Γιορτάζουν {n} επαφές", foldShow: "εμφάνιση", foldHide: "απόκρυψη",
       empty: "Τίποτα για σήμερα", emptySoon: "Ούτε τις επόμενες μέρες.",
       emptyNext: "Δες παρακάτω τι έρχεται.",
       off: "Η ημερήσια σύνοψη είναι κλειστή. Άνοιξέ τη από τις Ρυθμίσεις (το γρανάζι).",
@@ -291,13 +293,51 @@
     cols.id = "cols";
     layout.items.forEach(function (it, i) {
       var node = editing ? editCard(it, i) : widget(it, parts, res, !due && emptyAt === it.id, soon);
-      if (node) cols.appendChild(node);
+      if (!node) return;
+      node.setAttribute("data-i", String(i));
+      cols.appendChild(node);
     });
     if (!layout.items.length) cols.appendChild(el("div", "empty wide", t("noWidgets")));
     main.appendChild(cols);
     if (editing) main.appendChild(addPanel());
     paintClocks();
+    flow();
     main.scrollTop = keepScroll;
+  }
+
+  // Masonry (wave 49): from 900 px a run of one-column widgets is two
+  // stacks (layout.js stack), so Coming up goes on under a short
+  // Overdue instead of below a long Today. Narrower, and while
+  // customising, the widgets stay in the plain grid in their order.
+  var WIDE = window.matchMedia ? window.matchMedia("(min-width: 900px)") : null;
+  var GAP = 12;
+  function flow() {
+    var cols = $("cols");
+    if (!cols || editing) return;
+    var nodes = [].slice.call(cols.querySelectorAll(".w[data-i]"));
+    nodes.sort(function (a, b) { return +a.getAttribute("data-i") - +b.getAttribute("data-i"); });
+    if (!nodes.length) return;
+    cols.textContent = "";
+    nodes.forEach(function (n) { cols.appendChild(n); });
+    if (!WIDE || !WIDE.matches) return;
+    function one(n) { return n.classList.contains("size-small"); }
+    var hs = nodes.map(function (n) { return n.offsetHeight + GAP; });
+    for (var i = 0; i < nodes.length;) {
+      var j = i;
+      while (j < nodes.length && one(nodes[j])) j++;
+      if (j - i >= 2) {
+        var m = el("div", "mason"), c = [el("div", "mcol"), el("div", "mcol")];
+        cols.insertBefore(m, nodes[i]);
+        m.appendChild(c[0]);
+        m.appendChild(c[1]);
+        L.stack(hs.slice(i, j)).forEach(function (k, x) { c[k].appendChild(nodes[i + x]); });
+      }
+      i = j > i ? j : i + 1;
+    }
+  }
+  if (WIDE) {
+    if (WIDE.addEventListener) WIDE.addEventListener("change", flow);
+    else if (WIDE.addListener) WIDE.addListener(flow);
   }
 
   function shellOf(it) {
@@ -444,7 +484,11 @@
     parts.forEach(function (p) {
       if (p.head) body.appendChild(el("div", "day-head", p.head));
       var ul = el("ul", "rows");
-      p.rows.forEach(function (r) { ul.appendChild(rowEl(r, p.late, today)); });
+      var fkey = "fold:" + id + ":" + (p.day || (p.late ? "late" : "today"));
+      L.fold(p.rows).forEach(function (x) {
+        if (x.row) ul.appendChild(rowEl(x.row, p.late, today));
+        else foldEl(ul, x.fold, p.late, today, fkey);
+      });
       body.appendChild(ul);
       Object.keys(p.more || {}).forEach(function (app) {
         body.appendChild(el("div", "more", t("more", { n: p.more[app], app: appInfo(app).name })));
@@ -459,6 +503,42 @@
       saveUi();
     });
     return box;
+  }
+
+  // Many contacts with a name day (wave 49): one row that shows or
+  // hides them; open or closed is kept for the session like a group.
+  function foldEl(ul, rows, late, today, key) {
+    var open = ui[key] === true;
+    var li = el("li", "row fold");
+    var b = el("button", "open");
+    b.type = "button";
+    b.setAttribute("aria-expanded", open ? "true" : "false");
+    b.appendChild(iconFor("calendar"));
+    var tx = el("span", "txt");
+    tx.appendChild(el("span", "r-title", t("fold", { n: rows.length })));
+    var meta = el("span", "r-meta", appInfo("calendar").name + " · " + t(open ? "foldHide" : "foldShow"));
+    tx.appendChild(meta);
+    b.appendChild(tx);
+    var chev = el("span", "chev");
+    chev.innerHTML = SVG.chev;
+    b.appendChild(chev);
+    li.appendChild(b);
+    ul.appendChild(li);
+    var kids = rows.map(function (r) {
+      var n = rowEl(r, late, today);
+      n.className += " folded";
+      n.hidden = !open;
+      ul.appendChild(n);
+      return n;
+    });
+    b.addEventListener("click", function () {
+      var o = b.getAttribute("aria-expanded") !== "true";
+      b.setAttribute("aria-expanded", o ? "true" : "false");
+      meta.textContent = appInfo("calendar").name + " · " + t(o ? "foldHide" : "foldShow");
+      kids.forEach(function (n) { n.hidden = !o; });
+      ui[key] = o;
+      saveUi();
+    });
   }
 
   function rowEl(r, late, today) {
