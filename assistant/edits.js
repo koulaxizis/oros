@@ -97,7 +97,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "column", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "note"];
+  var VIEW_ORDER = ["title", "nickname", "column", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -107,6 +107,7 @@
   };
   var CAT_NAMES = ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"];
   var MAX_CENTS = 100000000000;
+  var PAY_HOWS = ["bank", "cash", "card", "iris", "paypal", "other"];   // invoices/core.js HOWS
   // CRM partner roles (crm/core.js ROLES) by the words the model knows.
   var ROLE_WORDS = { customer: "cust", cust: "cust", supplier: "sup", sup: "sup", shop: "shop", author: "auth", auth: "auth",
                      contributor: "auth", associate: "assoc", assoc: "assoc", partner: "assoc" };
@@ -160,6 +161,7 @@
     if (ACTIONS.indexOf(action) < 0) return bad("action must be one of: " + ACTIONS.join(", ") + ".");
     var set = {};
     if (has(args, "title") && args.title !== null && args.title !== undefined) {
+      if (typeof args.title === "string" && line(args.title, 100000).length > 300) return bad("title is " + line(args.title, 100000).length + " characters; the most is 300.");
       var ti = line(args.title, 300);
       if (!ti) return bad("title must not be empty.");
       set.title = ti;
@@ -178,6 +180,39 @@
     if (set.err) return bad(set.err);
     if (has(args, "location") && typeof args.location === "string") set.location = line(args.location, 150);
     if (has(args, "note") && typeof args.note === "string") set.note = para(args.note, NOTE_IN);
+    // Wave A3: a Notes page's text (replace) or a line added to it, and
+    // fields of the newer apps (checked against each app's own limits).
+    if (has(args, "text") && typeof args.text === "string") {
+      if (para(args.text, 1000000).length > 100000) return bad("text is too long; a Notes page holds 100000 characters.");
+      set.text = para(args.text, 100000);
+    }
+    if (has(args, "text_add") && typeof args.text_add === "string" && args.text_add.trim()) {
+      if (has(set, "text")) return bad("give text (replaces) or text_add (adds), not both.");
+      if (para(args.text_add, 1000000).length > 100000) return bad("text_add is too long; a Notes page holds 100000 characters.");
+      set.text_add = para(args.text_add, 100000);
+    }
+    if (has(args, "author") && typeof args.author === "string") set.author = line(args.author, 1000);
+    if (has(args, "how") && args.how !== null && args.how !== undefined && args.how !== "") {
+      if (PAY_HOWS.indexOf(args.how) < 0) return bad("how must be one of: " + PAY_HOWS.join(", ") + ".");
+      set.how = args.how;
+    }
+    if (has(args, "end_date") && args.end_date !== null && args.end_date !== undefined && args.end_date !== "") {
+      var ed = realDate(args.end_date);
+      if (!ed) return bad("end_date must be a real date as YYYY-MM-DD.");
+      set.end_date = ed;
+    }
+    if (has(args, "next") && args.next !== null && args.next !== undefined && args.next !== "") {
+      var nx = realDate(args.next);
+      if (!nx) return bad("next must be a real date as YYYY-MM-DD.");
+      set.next = nx;
+    }
+    ["servings", "km"].forEach(function (k) {
+      if (set.err || !has(args, k) || args[k] === null || args[k] === undefined || args[k] === "") return;
+      var v = typeof args[k] === "number" ? args[k] : Number(String(args[k]).replace(/[\s.](?=\d{3}\b)/g, ""));
+      if (!(v >= 0) || Math.round(v) !== v) set.err = k + " must be a whole number.";
+      else set[k] = v;
+    });
+    if (set.err) return bad(set.err);
     if (has(args, "amount") && args.amount !== null && args.amount !== undefined && args.amount !== "") {
       var a = num(args.amount);
       if (!(a > 0)) return bad("amount must be a number greater than 0.");
@@ -305,11 +340,13 @@
       return { ok: true, ref: ref, action: action, set: set };
     }
     if (set.column) return bad("column is only for move.");
-    if (action === "complete" || action === "reopen" || action === "delete") {
+    if (action === "complete" && keys.every(function (k) { return k === "amount" || k === "date" || k === "how"; }) && keys.length) {
+      // an invoice paid: the amount (default all that is owed), the day and how
+    } else if (action === "complete" || action === "reopen" || action === "delete") {
       if (keys.length) return bad(action + " takes only ref; leave out " + keys.join(", ") + ".");
     } else if (action === "reschedule") {
-      if (!set.date && !set.start && !set.end) return bad("reschedule needs a new date (and, for an event, start / end).");
-      var extra = keys.filter(function (k) { return k !== "date" && k !== "start" && k !== "end"; });
+      if (!set.date && !set.start && !set.end && !set.next && !set.end_date) return bad("reschedule needs a new date (and, for an event, start / end).");
+      var extra = keys.filter(function (k) { return k !== "date" && k !== "start" && k !== "end" && k !== "end_date" && k !== "next"; });
       if (extra.length) return bad("reschedule changes only date, start and end; use update for " + extra.join(", ") + ".");
     } else if (!keys.length) {
       return bad("update needs at least one field to change.");
@@ -2142,6 +2179,8 @@
     if (APPS[appId].actions.indexOf(ch.action) < 0) {
       return bad(appId + " takes: " + APPS[appId].actions.join(", ") + ".");
     }
+    if (ch.action === "complete" && Object.keys(ch.set).length && appId !== "invoices") return bad("complete takes only ref; leave out " + Object.keys(ch.set).join(", ") + ".");
+    if (!CHANGE[appId]) return bad("Changes to this app are not loaded yet.");
     var r = CHANGE[appId](clone(data) || {}, target, ch, now || 0);
     if (!r.ok) return r;
     return { ok: true, app: appId, title: r.title, before: r.before, after: r.after, del: r.del,
@@ -2153,6 +2192,8 @@
   function apply(appId, data, target, ch, now, expect) {
     if (!has(APPS, appId)) return bad("unknown app");
     if (APPS[appId].actions.indexOf(ch.action) < 0) return bad("not allowed");
+    if (ch.action === "complete" && Object.keys(ch.set).length && appId !== "invoices") return bad("complete takes only ref.");
+    if (!CHANGE[appId]) return bad("not loaded");
     var d = clone(data) || {};
     var r = CHANGE[appId](d, target, ch, now);
     if (!r.ok) return r;
@@ -2164,7 +2205,7 @@
   // u = apply().undo (kept in memory by the Assistant, never from a
   // stored conversation). → { ok, data } | { ok: false, err }
   function undo(appId, data, u, now) {
-    if (!has(APPS, appId) || !isObj(u) || u.app !== appId || (u.t !== "set" && u.t !== "del")) return bad("bad undo");
+    if (!has(APPS, appId) || !UNDO[appId] || !isObj(u) || u.app !== appId || (u.t !== "set" && u.t !== "del")) return bad("bad undo");
     var d = clone(data) || {};
     var r = UNDO[appId](d, u, now);
     if (!r.ok) return r;
@@ -2199,7 +2240,50 @@
     return (Array.isArray(ids) ? ids : []).filter(function (id) { return has(APPS, id); });
   }
 
+  // Wave A3: the apps whose changes are in assistant/edits2.js, loaded
+  // the first time one of their items is changed (with the app's own
+  // core, which keeps the stored copy in the app's canonical form).
+  // Known here so the tool and the prompt can offer them.
+  var LAZY = {
+    notes:     { key: "oros-notes-data",     actions: ["update"], src: [] },
+    timesheet: { key: "oros-timesheet-data", actions: ["reschedule", "update"], src: ["../timesheet/core.js"], g: "orosTimesheetCore" },
+    invoices:  { key: "oros-invoices-data",  actions: ["complete"], src: ["../invoices/core.js"], g: "OrosInvoicesCore" },
+    chores:    { key: "oros-chores-data",    actions: ["complete", "reopen", "update"], src: ["../chores/core.js"], g: "OrosChoresCore" },
+    meals:     { key: "oros-meals-data",     actions: ["update"], src: ["../meals/core.js"], g: "OrosMealsCore" },
+    travel:    { key: "oros-travel-data",    actions: ["complete", "reopen", "reschedule", "update"], src: [] },
+    split:     { key: "oros-split-data",     actions: ["update"], src: [] },
+    garage:    { key: "oros-garage-data",    actions: ["update"], src: ["../garage/core.js"], g: "OrosGarageCore" },
+    petcare:   { key: "oros-petcare-data",   actions: ["reschedule", "update"], src: ["../petcare/core.js"], g: "OrosPetcareCore" },
+    fitness:   { key: "oros-fitness-data",   actions: ["update"], src: [] },
+    library:   { key: "oros-library-data",   actions: ["complete", "reopen", "update"], src: ["../library/core.js"], g: "LibCore" }
+  };
+  Object.keys(LAZY).forEach(function (id) {
+    APPS[id] = { key: LAZY[id].key, actions: LAZY[id].actions };
+    APP_IDS.push(id);
+  });
+  // The scripts to load before changing an item of appId ([] = ready).
+  function needs(appId) {
+    if (!has(LAZY, appId)) return [];
+    var out = CHANGE[appId] ? [] : ["edits2.js"];
+    if (LAZY[appId].g && !(root && root.document && root[LAZY[appId].g])) out = out.concat(LAZY[appId].src);
+    return root && root.document ? out : [];
+  }
+  // edits2.js: { appId: { settable, change, undo, rowKeys? } }
+  function extend(mods) {
+    Object.keys(mods).forEach(function (id) {
+      if (!has(LAZY, id)) return;
+      var m = mods[id];
+      SETTABLE[id] = m.settable;
+      CHANGE[id] = m.change;
+      UNDO[id] = m.undo;
+      if (m.rowKeys) ROW_KEYS[id] = m.rowKeys;
+    });
+  }
+
   var api = {
+    needs: needs, extend: extend, LAZY_IDS: Object.keys(LAZY),
+    helpers: { has: has, isObj: isObj, clone: clone, line: line, para: para, cmpStr: cmpStr, realDate: realDate, hm: hm,
+               stampAfter: stampAfter, sortedObj: sortedObj, bad: bad, foldName: foldName, localDay: kbLocalDay },
     ACTIONS: ACTIONS, APP_IDS: APP_IDS, VIEW_ORDER: VIEW_ORDER, CAT_NAMES: CAT_NAMES,
     normArgs: normArgs, buildDiff: buildDiff, plan: plan, apply: apply, undo: undo,
     storageKey: storageKey, editableApps: editableApps, canTick: canTick, without: without,

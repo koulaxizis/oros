@@ -26,7 +26,9 @@ test("normArgs: ref, action and fields are checked before anything is looked up"
   assert.equal(E.normArgs({ ref: "r1", action: "explode" }).ok, false);
   assert.equal(ok({ ref: "oros:r12", action: "delete" }).ref, "r12");
   assert.equal(E.normArgs({ ref: "r1", action: "delete", title: "x" }).ok, false);    // delete takes nothing else
-  assert.equal(E.normArgs({ ref: "r1", action: "complete", date: "2026-10-20" }).ok, false);
+  // complete takes a day (and amount, how) only for an invoice paid (wave A3)
+  assert.match(E.plan("todo", {}, "x", ok({ ref: "r1", action: "complete", date: "2026-10-20" }), 1).err, /complete takes only ref/);
+  assert.equal(E.normArgs({ ref: "r1", action: "complete", title: "x" }).ok, false);
   assert.equal(E.normArgs({ ref: "r1", action: "reschedule" }).ok, false);
   assert.equal(E.normArgs({ ref: "r1", action: "reschedule", date: "2026-02-30" }).ok, false);
   assert.equal(E.normArgs({ ref: "r1", action: "reschedule", date: "2026-10-20", title: "x" }).ok, false);

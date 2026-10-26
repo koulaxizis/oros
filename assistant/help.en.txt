@@ -116,6 +116,17 @@ What it can change:
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
 - [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.
 - [Plant Care](app:plants): mark a plant watered today, rename it, change its notes.
+- [Notes](app:notes): rename a page, replace its text or add a paragraph at the end ("add day 2: Vatican to my Rome note"), change its labels.
+- [Timesheet](app:timesheet): change a time entry's title, day, start or end.
+- [Invoices](app:invoices): mark an issued invoice paid, in full or in part ("ACME paid 50 of invoice 12 by bank transfer yesterday"): it adds the payment, as `Add payment` does. Everything else is done in Invoices.
+- [Chore Wheel](app:chores): tick or untick today's chore (for the person the wheel gives it to), rename a chore.
+- [Meal Planner](app:meals): change a recipe's name, note or servings. The week's plan is changed in the app.
+- [Travel](app:travel): rename a trip or change its dates or notes; tick or untick a packing item; change a plan item's title, day, time or note.
+- [Split](app:split): change an expense's title, date or note, and its amount when one person paid it and it is split equally.
+- [Garage](app:garage): rename a vehicle, change its notes, or enter a new odometer reading (never lower than the last one).
+- [Pet Health Book](app:petcare): change a health record's day, next date or note.
+- [Workouts](app:fitness): change a workout's title or note.
+- [Library](app:library): mark a book read or not read, change its title, author or tags.
 
 Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, bookmarks with a saved copy, Kanban cards with files on the orOS disk or on an archived board, habits that count an amount, and deleting a habit or a plant (that removes its whole history). Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
