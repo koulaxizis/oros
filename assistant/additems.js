@@ -53,9 +53,14 @@
     budget:    { key: "oros-budget-data",    name: "Budget" },
     notes:     { key: "oros-notes-data",     name: "Notes" },
     bookmarks: { key: "oros-bookmarks-data", name: "Bookmarks" },
-    kanban:    { key: "oros-kanban-data",    name: "Kanban" }
+    kanban:    { key: "oros-kanban-data",    name: "Kanban" },
+    // Wave A2: CRM's history, follow-ups and deals (a customer's ref each)
+    crm_activity: { key: "oros-crm-data", name: "CRM" },
+    crm_followup: { key: "oros-crm-data", name: "CRM" },
+    crm_deal:     { key: "oros-crm-data", name: "CRM" }
   };
-  var APP_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban"];
+  var APP_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_activity", "crm_followup", "crm_deal"];
+  var CRM_IDS = ["crm_activity", "crm_followup", "crm_deal"];
   var MAX_ITEMS = 100;
   // The apps' own limits.
   var LIM = {
@@ -64,8 +69,13 @@
     bgNote: 140,                                                         // budget.js NOTE_LEN
     ntTitle: 200, ntText: 100000,
     bmTitle: 256, bmNote: 1024, bmTags: 12, bmTag: 32,                   // bookmarks.js sanitizeItem
-    kbText: 500, kbNote: 20000, kbSubs: 50, kbSub: 200                   // kanban/tools.js MAX
+    kbText: 500, kbNote: 20000, kbSubs: 50, kbSub: 200,                  // kanban/tools.js MAX
+    actText: 2000, actWho: 80, fupText: 300, dealTitle: 120, dealNote: 2000, dealWhy: 200   // crm/core.js normAct / normFup / normDeal
   };
+  var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];              // crm/core.js ACT_KINDS
+  var DEAL_STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
+  var CRM_VAL_MAX = 99999999999;
+  var CRM_LIMITS = { deals: 5000, acts: 20000, fups: 10000 };
   var REMIND = [5, 15, 30, 60, 1440, 4320, 7200];                       // calendar.js REMIND_PRESETS
   var MAX_CENTS = 100000000000;                                         // budget.js MAX_CENTS
   var BUDGET_CATS = {
@@ -335,7 +345,90 @@
     o.subtasks = r.v;
     return { o: o, key: fold(o.board) + "|" + fold(o.title) };
   }
-  var NORM = { todo: normTodo, calendar: normCal, budget: normBudget, notes: normNotes, bookmarks: normBookmark, kanban: normKanban };
+  // CRM records: customer = a CRM customer's ref (assistant.js turns it
+  // into o.cust before plan()), deal = a deal's ref (→ o.deal).
+  function crmRefs(x, w, o, dealOk) {
+    var cu = one(typeof x.customer === "string" ? x.customer : "").replace(/^oros:/, "");
+    if (!/^r\d{1,5}$/.test(cu)) return w + "customer must be the ref of a CRM customer (e.g. r4) from search_data or create_items.";
+    o.customer = cu;
+    o.deal = "";
+    if (dealOk && has(x, "deal") && x.deal) {
+      var dl = one(String(x.deal)).replace(/^oros:/, "");
+      if (!/^r\d{1,5}$/.test(dl)) return w + "deal must be the ref of a CRM deal from search_data or create_items.";
+      o.deal = dl;
+    }
+    return "";
+  }
+  function normAct(x, w) {
+    var o = {}, e = crmRefs(x, w, o, true);
+    if (e) return { err: e };
+    var k = has(x, "channel") && x.channel ? String(x.channel) : "note";
+    if (ACT_KINDS.indexOf(k) < 0) return { err: w + "channel must be one of: " + ACT_KINDS.join(", ") + "." };
+    o.k = k;
+    var r = textN(x, "note", LIM.actText, w, "an entry of a customer's history");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "note (what happened, what was said) is required." };
+    o.text = r.v;
+    r = dateOf(x, "date", w);
+    if (r.err) return r;
+    o.date = r.v;
+    o.time = "";
+    if (has(x, "start") && x.start) { o.time = hm(String(x.start)); if (!o.time) return { err: w + "start must be HH:MM (24h)." }; }
+    r = text1(x, "who", LIM.actWho, w, "CRM");
+    if (r.err) return r;
+    o.who = r.v;
+    return { o: o, key: o.customer + "|" + o.date + "|" + o.k + "|" + fold(o.text) };
+  }
+  function normFup(x, w) {
+    var o = {}, e = crmRefs(x, w, o, true);
+    if (e) return { err: e };
+    var r = text1(x, "title", LIM.fupText, w, "a follow-up");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "title (what to do) is required." };
+    o.text = r.v;
+    r = dateOf(x, "date", w);
+    if (r.err) return r;
+    if (!r.v) return { err: w + "date (when) is required." };
+    o.d = r.v;
+    o.t = "";
+    if (has(x, "start") && x.start) { o.t = hm(String(x.start)); if (!o.t) return { err: w + "start must be HH:MM (24h)." }; }
+    return { o: o, key: o.customer + "|" + o.d + "|" + fold(o.text) };
+  }
+  function normDeal(x, w) {
+    var o = {}, e = crmRefs(x, w, o, false);
+    if (e) return { err: e };
+    var r = text1(x, "title", LIM.dealTitle, w, "a deal's title");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "title is required." };
+    o.title = r.v;
+    o.val = 0;
+    if (has(x, "amount") && x.amount !== null && x.amount !== undefined && x.amount !== "") {
+      var a = typeof x.amount === "number" ? x.amount : (typeof x.amount === "string" && /^\s*\d+(\.\d+)?\s*$/.test(x.amount) ? parseFloat(x.amount) : NaN);
+      if (!(a >= 0) || !isFinite(a) || Math.round(a * 100) > CRM_VAL_MAX) return { err: w + "amount must be a number, e.g. 1500." };
+      o.val = Math.round(a * 100);
+    }
+    r = text1(x, "stage", 30, w, "a stage's name");
+    if (r.err) return r;
+    o.stage = r.v;
+    r = dateOf(x, "date", w);
+    if (r.err) return r;
+    o.close = r.v;
+    o.prob = null;
+    if (has(x, "probability") && x.probability !== null && x.probability !== undefined && x.probability !== "") {
+      var pb = +x.probability;
+      if (!(pb >= 0 && pb <= 100) || Math.round(pb) !== pb) return { err: w + "probability must be a whole number 0-100." };
+      o.prob = pb;
+    }
+    r = textN(x, "note", LIM.dealNote, w, "a deal's note");
+    if (r.err) return r;
+    o.note = r.v;
+    r = text1(x, "reason", LIM.dealWhy, w, "a lost deal's reason");
+    if (r.err) return r;
+    o.why = r.v;
+    return { o: o, key: o.customer + "|" + fold(o.title) };
+  }
+  var NORM = { todo: normTodo, calendar: normCal, budget: normBudget, notes: normNotes, bookmarks: normBookmark, kanban: normKanban,
+               crm_activity: normAct, crm_followup: normFup, crm_deal: normDeal };
 
   // args = the model's create_items input → { ok, app, items } | { ok: false, err }
   function normItems(args, ctx) {
@@ -986,10 +1079,209 @@
     return { ok: true, data: d };
   }
 
-  // ---------- 8. API ----------
+  // ---------- 8. CRM: history, follow-ups, deals (wave A2) ----------
+  // crm/core.js rows: whole-record LWW on m, tombs[id], lists sorted by
+  // id; the result goes through CRM's own norm() (ctx.crm), as CRM's
+  // commit does. A deal's value is in CRM's currency (prefs.cur).
+  var CRM_LIST = { crm_activity: "acts", crm_followup: "fups", crm_deal: "deals" };
+  function crmAlive(d, list, id) {
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    var hit = null;
+    (Array.isArray(d[list]) ? d[list] : []).forEach(function (x) {
+      if (isObj(x) && x.id === id && !(typeof tombs[id] === "number" && tombs[id] >= (x.m || 0))) hit = x;
+    });
+    return hit;
+  }
+  // CRM's built-in stage labels (crm/crm.js, i18n/de/crm.js "stage.*"),
+  // so "Πρόταση" or "proposal" finds the stage the board shows.
+  var STAGE_NAMES = {
+    "new": ["New", "Νέα", "Neu"], contact: ["Contacted", "Επικοινωνία", "Kontaktiert"],
+    proposal: ["Proposal", "Πρόταση", "Angebot"], nego: ["Negotiation", "Διαπραγμάτευση", "Verhandlung"],
+    won: ["Won", "Κερδήθηκε", "Gewonnen"], lost: ["Lost", "Χάθηκε", "Verloren"]
+  };
+  function stageShow(id, lang) {
+    var n = STAGE_NAMES[id];
+    return n ? n[lang === "el" ? 1 : lang === "de" ? 2 : 0] : id;
+  }
+  function crmStages(d, ctx) {
+    var C = ctx && ctx.crm, out = [], lang = ctx && ctx.lang;
+    var list = C && typeof C.stages === "function" ? C.stages(d) : ["new", "contact", "proposal", "nego"].map(function (id) { return { id: id, name: "", open: true }; });
+    list.forEach(function (st) {
+      out.push({ id: st.id, names: (st.name ? [st.name] : []).concat(STAGE_NAMES[st.id] || [], [st.id]), show: st.name || stageShow(st.id, lang) });
+    });
+    ["won", "lost"].forEach(function (id) { if (!out.some(function (x) { return x.id === id; })) out.push({ id: id, names: STAGE_NAMES[id].concat([id]), show: stageShow(id, lang) }); });
+    return out;
+  }
+  function localAt(ymd, time, now) {
+    var t = new Date(now);
+    if (!ymd) return Math.floor(now);
+    var p = ymd.split("-"), h = 12, mi = 0;
+    if (time) { h = +time.slice(0, 2); mi = +time.slice(3, 5); }
+    else {
+      var today = t.getFullYear() + "-" + (t.getMonth() < 9 ? "0" : "") + (t.getMonth() + 1) + "-" + (t.getDate() < 10 ? "0" : "") + t.getDate();
+      if (ymd === today) return Math.floor(now);
+    }
+    return new Date(+p[0], +p[1] - 1, +p[2], h, mi).getTime();
+  }
+  function crmResolve(appId, d, items, ctx) {
+    var out = [], stg = appId === "crm_deal" ? crmStages(d, ctx) : null;
+    for (var i = 0; i < items.length; i++) {
+      var o = items[i], w = "items[" + i + "]: ";
+      var cu = typeof o.cust === "string" ? crmAlive(d, "cust", o.cust) : null;
+      if (!cu) return { err: w + "that customer is no longer in CRM." };
+      var deal = null;
+      if (o.deal) {
+        deal = typeof o.dealId === "string" ? crmAlive(d, "deals", o.dealId) : null;
+        if (!deal) return { err: w + "that deal is no longer in CRM." };
+        if (deal.cust !== cu.id) return { err: w + "that deal is with another customer." };
+      }
+      var x = { cust: cu, deal: deal, dup: null };
+      if (appId === "crm_activity") {
+        d.acts.forEach(function (a) {
+          if (x.dup || !isObj(a) || a.cust !== cu.id || a.k !== o.k || fold(a.text) !== fold(o.text)) return;
+          x.dup = { id: a.id, title: preview(a.text, 80), target: { act: a.id } };
+        });
+      } else if (appId === "crm_followup") {
+        d.fups.forEach(function (f) {
+          if (!x.dup && isObj(f) && f.cust === cu.id && !f.done && f.d === o.d && fold(f.text) === fold(o.text)) x.dup = { id: f.id, title: f.text, target: { fup: f.id } };
+        });
+      } else {
+        var stage = "new", show = "new";
+        if (o.stage) {
+          var hs = pick(stg, o.stage);
+          if (!hs) return { err: w + missing("CRM", "stage", stg.map(function (z) { return { id: z.id, names: [z.show] }; }), [o.stage], "Pipeline") };
+          stage = hs.id; show = hs.show;
+        } else {
+          var first = stg.filter(function (z) { return z.id !== "won" && z.id !== "lost"; })[0];
+          if (first) { stage = first.id; show = first.show; }
+        }
+        x.stage = stage; x.stageShow = show;
+        d.deals.forEach(function (dl) {
+          if (!x.dup && isObj(dl) && dl.cust === cu.id && dl.stage !== "won" && dl.stage !== "lost" && fold(dl.title) === fold(o.title)) x.dup = { id: dl.id, title: dl.title, target: { deal: dl.id } };
+        });
+      }
+      out.push(x);
+    }
+    var list = CRM_LIST[appId], lim = CRM_LIMITS[list];
+    if ((Array.isArray(d[list]) ? d[list].length : 0) + items.length > lim) return { err: "CRM keeps " + lim + " of these; there is no room for " + items.length + " more." };
+    return { res: out };
+  }
+  function crmNeed(d) {
+    if (!isObj(d) || !Array.isArray(d.cust)) return bad("CRM has not been opened on this device yet. Ask the user to open CRM once.");
+    ["deals", "acts", "fups"].forEach(function (k) { if (!Array.isArray(d[k])) d[k] = []; });
+    if (!isObj(d.tombs)) d.tombs = {};
+    return null;
+  }
+  function crmPlanOf(appId) {
+    return function (d, items, ctx) {
+      d = clone(d);
+      var e = crmNeed(d);
+      if (e) return e;
+      var r = crmResolve(appId, d, items, ctx);
+      if (r.err) return bad(r.err);
+      var cur = isObj(d.prefs) && typeof d.prefs.cur === "string" ? d.prefs.cur : "EUR";
+      return { ok: true, rows: items.map(function (o, i) {
+        var x = r.res[i], f = [["customer", x.cust.name]];
+        if (appId === "crm_activity") {
+          f.push(["channel", o.k]);
+          if (o.date) f.push(["date", o.date + (o.time ? " " + o.time : "")]);
+          if (o.who) f.push(["who", o.who]);
+          if (x.deal) f.push(["deal", x.deal.title]);
+          return { title: preview(o.text, 120), fields: f, dup: x.dup };
+        }
+        if (appId === "crm_followup") {
+          f.push(["date", o.d + (o.t ? " " + o.t : "")]);
+          if (x.deal) f.push(["deal", x.deal.title]);
+          return { title: o.text, fields: f, dup: x.dup };
+        }
+        f.push(["stage", x.stageShow]);
+        if (o.val) f.push(["amount", money(o.val) + " " + cur]);
+        if (o.close) f.push(["close", o.close]);
+        if (o.prob !== null) f.push(["probability", o.prob + "%"]);
+        if (o.why && x.stage === "lost") f.push(["reason", o.why]);
+        if (o.note) f.push(["note", preview(o.note, 200)]);
+        return { title: o.title, fields: f, dup: x.dup };
+      }) };
+    };
+  }
+  function crmNewId(now, taken) {
+    for (var i = 0; i < 50; i++) {
+      var id = Math.floor(now).toString(36) + rnd(8).toLowerCase();
+      if (!taken[id]) { taken[id] = 1; return id; }
+    }
+    return Math.floor(now).toString(36) + rnd(16).toLowerCase();
+  }
+  function crmApplyOf(appId) {
+    return function (d, items, now, skip, ctx) {
+      var e = crmNeed(d);
+      if (e) return e;
+      var r = crmResolve(appId, d, items, ctx);
+      if (r.err) return bad(r.err);
+      var list = CRM_LIST[appId], taken = {}, made = [], undo = { app: appId, t: "new", items: [] };
+      ["cust", "deals", "acts", "fups"].forEach(function (k) { (Array.isArray(d[k]) ? d[k] : []).forEach(function (x) { if (isObj(x)) taken[x.id] = 1; }); });
+      Object.keys(d.tombs).forEach(function (id) { taken[id] = 1; });
+      items.forEach(function (o, i) {
+        if (skip && skip[i]) return;
+        var x = r.res[i], id = crmNewId(now, taken), m = stampAfter(now, d.tombs[id] || 0), row;
+        if (appId === "crm_activity") {
+          row = { id: id, m: m, cust: x.cust.id, k: o.k, at: localAt(o.date, o.time, now), text: o.text };
+          if (x.deal) row.deal = x.deal.id;
+          if (o.who) row.who = o.who;
+          made.push({ i: i, id: id, title: preview(o.text, 80), target: { act: id } });
+        } else if (appId === "crm_followup") {
+          row = { id: id, m: m, cust: x.cust.id, d: o.d, text: o.text };
+          if (o.t) row.t = o.t;
+          if (x.deal) row.deal = x.deal.id;
+          made.push({ i: i, id: id, title: o.text, target: { fup: id } });
+        } else {
+          row = { id: id, m: m, cust: x.cust.id, title: o.title, val: o.val, stage: x.stage };
+          if (o.prob !== null) row.prob = o.prob;
+          if (o.close) row.close = o.close;
+          if (x.stage === "won" || x.stage === "lost") row.cd = (ctx && realDate(ctx.today)) || "";
+          if (!row.cd) delete row.cd;
+          if (o.why && x.stage === "lost") row.why = o.why;
+          if (o.note) row.note = o.note;
+          row.ct = Math.floor(now);
+          made.push({ i: i, id: id, title: o.title, target: { deal: id } });
+        }
+        d[list].push(row);
+        undo.items.push({ id: id, m: m });
+      });
+      d[list].sort(function (a, b) { return cmpStr(String(a && a.id), String(b && b.id)); });
+      var C = ctx && ctx.crm;
+      return { ok: true, data: C && typeof C.norm === "function" ? C.norm(d) : d, made: made, undo: undo };
+    };
+  }
+  function crmUndoOf(appId) {
+    return function (d, u, now) {
+      if (!isObj(d) || !Array.isArray(d[CRM_LIST[appId]])) return bad("CRM has none of these.");
+      var list = CRM_LIST[appId], at = {};
+      d[list].forEach(function (x) { if (isObj(x)) at[x.id] = x; });
+      for (var i = 0; i < u.items.length; i++) {
+        var x = at[u.items[i].id];
+        if (!x) continue;
+        if (x.m !== u.items[i].m) return bad("A new record was changed since; nothing was undone.");
+        if (appId === "crm_deal" && ["acts", "fups", "ctr"].some(function (k) { return (Array.isArray(d[k]) ? d[k] : []).some(function (y) { return isObj(y) && y.deal === x.id; }); })) {
+          return bad("A new deal has history or follow-ups since; nothing was undone.");
+        }
+      }
+      if (!isObj(d.tombs)) d.tombs = {};
+      u.items.forEach(function (y) {
+        var x = at[y.id];
+        if (!x) return;
+        d[list].splice(d[list].indexOf(x), 1);
+        d.tombs[y.id] = stampAfter(now, Math.max(d.tombs[y.id] || 0, x.m || 0));
+      });
+      d.tombs = sortedObj(d.tombs);
+      return { ok: true, data: d };
+    };
+  }
+
+  // ---------- 9. API ----------
   var PLAN = { todo: tdPlan, calendar: calPlan, budget: bgPlan, notes: ntPlan, bookmarks: bmPlan, kanban: kbPlan };
   var APPLY = { todo: tdApply, calendar: calApply, budget: bgApply, notes: ntApply, bookmarks: bmApply, kanban: kbApply };
   var UNDO = { todo: tdUndo, calendar: calUndo, budget: bgUndo, notes: ntUndo, bookmarks: bmUndo, kanban: kbUndo };
+  CRM_IDS.forEach(function (id) { PLAN[id] = crmPlanOf(id); APPLY[id] = crmApplyOf(id); UNDO[id] = crmUndoOf(id); });
   // ctx = { today: the device's YYYY-MM-DD, lang, bm: OrosBookmarksCore }
   // → { ok, rows: [{ title, fields: [[field, value]], dup?, same?, hint? }] }
   function plan(appId, data, items, ctx) {
@@ -1010,7 +1302,7 @@
   function storageKey(appId) { return has(APPS, appId) ? APPS[appId].key : ""; }
 
   var api = {
-    APP_IDS: APP_IDS, MAX_ITEMS: MAX_ITEMS, LIM: LIM, REMIND: REMIND,
+    APP_IDS: APP_IDS, CRM_IDS: CRM_IDS, MAX_ITEMS: MAX_ITEMS, LIM: LIM, REMIND: REMIND, ACT_KINDS: ACT_KINDS,
     normItems: normItems, plan: plan, apply: apply, undo: undo, storageKey: storageKey
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
