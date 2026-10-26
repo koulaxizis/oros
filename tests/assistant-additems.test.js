@@ -343,10 +343,10 @@ test("tool and prompt: only the apps the user allows, with only their fields", (
   assert.ok(props.includes("amount") && props.includes("priority") && props.includes("list"));
   assert.ok(!props.includes("tax_id") && !props.includes("url") && !props.includes("board"));
   const all = core.toolsFor({ creates: ["contacts", "crm"].concat(A.APP_IDS) }).find((x) => x.name === "create_items");
-  assert.equal(all.params.properties.app.enum.length, 8);
+  assert.equal(all.params.properties.app.enum.length, 11);
   const p = core.systemPrompt({ data: true, creates: ["kanban"] });
   assert.match(p, /To add new Kanban cards, call create_items/);
   // assistant.js knows the same apps
   const src = fs.readFileSync(path.join(__dirname, "..", "assistant", "assistant.js"), "utf8");
-  assert.ok(src.includes('var ADD_IDS = ' + JSON.stringify(A.APP_IDS).replace(/,/g, ", ")));
+  assert.ok(src.includes('var ADD_IDS = ' + JSON.stringify(A.APP_IDS.filter((a) => A.CRM_IDS.indexOf(a) < 0)).replace(/,/g, ", ")));
 });

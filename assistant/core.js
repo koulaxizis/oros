@@ -1479,9 +1479,10 @@
       "contacts (update: title = name / nickname / org / job_title / phone, email, website = add one, or with " +
       "old_phone / old_email / old_website replace that one / address (address_replace: true replaces the address " +
       "of that type) / date = birthday / labels / note = replace the note / note_add = add a line to the note, delete) · " +
-      "crm (a customer only, update: title = name / nickname = alias / job_title / tax_id = VAT or tax number / tax_office / " +
-      "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add; bank " +
-      "details or a bio go in note_add) · " +
+      "crm (a customer, update: title = name / nickname = alias / job_title / tax_id = VAT or tax number / tax_office / " +
+      "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles; bank " +
+      "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
+      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
       "kanban (reschedule: date = due, update: title / date / note / labels, move: column, delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
@@ -1495,14 +1496,19 @@
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
-        start: { type: "string", description: "calendar: new start time HH:MM (24h)." },
+        start: { type: "string", description: "calendar, crm follow-up: new start time HH:MM (24h)." },
         end: { type: "string", description: "calendar: new end time HH:MM (24h)." },
         location: { type: "string", description: "calendar: new location." },
         label: { type: "string", description: "One label's name: calendar sets THE event's label; todo, kanban, contacts, bookmarks ADD it to the item's labels. \"none\" takes the label(s) off. Only labels the user has (search results show them); bookmarks tags are free words." },
         labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks: the item's whole new list of label names (replaces the old list; [] = none)." },
         priority: { type: "integer", description: "todo: 1 urgent, 2 high, 3 medium, 4 none." },
         note: { type: "string", description: "New note (replaces the old one; empty clears it)." },
-        amount: { type: "number", description: "budget: new amount in currency units, e.g. 12.5." },
+        amount: { type: "number", description: "budget, crm deal: new amount in currency units, e.g. 12.5." },
+        roles: { type: "array", items: { type: "string", "enum": ["customer", "supplier", "shop", "author", "associate"] },
+                 description: "crm customer: the whole new list of the partner's roles (replaces; shop = consignment shop, author = author / contributor)." },
+        stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },
+        probability: { type: "integer", description: "crm deal: chance to win, 0-100." },
+        reason: { type: "string", description: "crm deal at stage Lost: why it was lost." },
         org: { type: "string", description: "contacts: new organisation / company." },
         phone: { type: "string", description: "contacts: a phone number to add (the old ones stay)." },
         email: { type: "string", description: "contacts: an e-mail address to add (the old ones stay)." },
@@ -1533,6 +1539,7 @@
   // AS-ADD2 (wave A1, assistant/additems.js): the same tool adds to
   // To-Do, Calendar, Budget, Notes, Bookmarks and Kanban. The tool
   // lists only the apps the user lets it use, with only their fields.
+  // AS-ADD3 (wave A2): a CRM customer's history, follow-ups and deals.
   var CR_APPS = {
     contacts: "contacts = a person or company in Contacts",
     crm: "crm = a customer or partner in CRM",
@@ -1541,12 +1548,22 @@
     budget: "budget = expenses and income in Budget",
     notes: "notes = pages in Notes",
     bookmarks: "bookmarks = links in Bookmarks",
-    kanban: "kanban = cards on a Kanban board"
+    kanban: "kanban = cards on a Kanban board",
+    crm_activity: "crm_activity = an entry in a CRM customer's history (a call, e-mail, meeting, message or note that happened)",
+    crm_followup: "crm_followup = a CRM follow-up (something to do for a customer on a day)",
+    crm_deal: "crm_deal = a CRM deal (a sale or job in the pipeline)"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
     ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
-    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban"], { type: "string", description: "The task, event, note, bookmark or card title (budget: use note)." }],
+    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal"], { type: "string", description: "The task, event, note, bookmark, card, follow-up or deal title (budget: use note)." }],
+    ["customer", ["crm_activity", "crm_followup", "crm_deal"], { type: "string", description: "crm_*: the CRM customer's ref (from search_data or create_items), required." }],
+    ["deal", ["crm_activity", "crm_followup"], { type: "string", description: "crm_activity, crm_followup: the ref of that customer's deal it is about, if any." }],
+    ["channel", ["crm_activity"], { type: "string", "enum": ["call", "mail", "meet", "msg", "note"], description: "crm_activity: how it happened (default note)." }],
+    ["who", ["crm_activity"], { type: "string", description: "crm_activity: the person spoken with." }],
+    ["stage", ["crm_deal"], { type: "string", description: "crm_deal: the pipeline stage's name, e.g. New, Proposal, Won (default the first stage)." }],
+    ["probability", ["crm_deal"], { type: "integer", description: "crm_deal: chance to win, 0-100." }],
+    ["reason", ["crm_deal"], { type: "string", description: "crm_deal with stage Lost: why it was lost." }],
     ["org", ["contacts"], { type: "string", description: "contacts: company or organisation." }],
     ["job_title", ["contacts", "crm"], { type: "string", description: "Job title or role." }],
     ["nickname", ["contacts", "crm"], { type: "string", description: "contacts: nickname or pen name; crm: alias / brand name." }],
@@ -1561,9 +1578,9 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar: the day (required); budget: the day (default today)." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar, crm_followup: the day (required); budget, crm_activity: the day (default today); crm_deal: the expected close." }],
     ["end_date", ["calendar"], { type: "string", description: "calendar: last day of an event over several days." }],
-    ["start", ["calendar"], { type: "string", description: "calendar: start time HH:MM (24h); leave out for all day." }],
+    ["start", ["calendar", "crm_activity", "crm_followup"], { type: "string", description: "calendar: start time HH:MM (24h); leave out for all day. crm_*: the time, if said." }],
     ["end", ["calendar"], { type: "string", description: "calendar: end time HH:MM." }],
     ["location", ["calendar"], { type: "string", description: "calendar: where." }],
     ["reminder", ["calendar"], { type: "integer", "enum": [5, 15, 30, 60, 1440, 4320, 7200], description: "calendar: remind this many minutes before." }],
@@ -1571,7 +1588,7 @@
     ["priority", ["todo"], { type: "integer", "enum": [1, 2, 3, 4], description: "todo: 1 = P1, most urgent." }],
     ["subtasks", ["todo", "kanban"], { type: "array", items: { type: "string" }, description: "todo, kanban: steps of the task or card." }],
     ["entry", ["budget"], { type: "string", "enum": ["expense", "income"], description: "budget: expense (default) or income." }],
-    ["amount", ["budget"], { type: "number", description: "budget: the amount in the user's currency, e.g. 12.5." }],
+    ["amount", ["budget", "crm_deal"], { type: "number", description: "budget, crm_deal: the amount in the app's currency, e.g. 12.5." }],
     ["category", ["budget"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories." }],
     ["text", ["notes"], { type: "string", description: "notes: the page's text (Markdown)." }],
     ["notebook", ["notes"], { type: "string", description: "notes: an existing notebook's name (default the first)." }],
@@ -1581,7 +1598,7 @@
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
     ["status", ["crm"], { type: "string", "enum": ["lead", "active", "past"], description: "crm: lead (default), active customer, or past." }],
     ["tax_id", ["crm"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ)." }],
@@ -2242,9 +2259,11 @@
     // AS-ADD: new contacts and CRM customers, and links between them
     if (!opts.builtin && !opts.chatOnly && opts.creates && opts.creates.length) {
       var CR_WHAT = { contacts: "contacts", crm: "CRM customers or partners", todo: "To-Do tasks", calendar: "Calendar events",
-                      budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards" };
+                      budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards",
+                      crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
+        (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +
         (opts.links ? " To link a CRM customer with a contact (the same person, or the company's contact person), call link_contact with both refs, or give contact when you create the customer; find both with search_data first, and create the contact first when it is missing. Never say they are linked by the same name or e-mail: only a link links them." : ""));
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
