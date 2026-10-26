@@ -346,7 +346,39 @@
       "chg.before": "Before", "chg.after": "After", "chg.gone": "deleted",
       "chg.done": "Changed in {app}", "chg.deleted": "Deleted from {app}", "chg.declined": "Not changed: you said no",
       "chg.failed": "Not changed: {msg}", "chg.undone": "Undone", "chg.undo": "Undo",
-      "chg.undoFail": "Could not undo: {msg}", "chg.undoHint": "Undo works until you leave the Assistant.",
+      "chg.undoFail": "Could not undo: {msg}", "chg.undoHint": "You can undo it for 30 days, also later in Change history, while nothing was changed since.",
+      "hist.title": "Change history",
+      "hist.hint": "What the Assistant added, changed or linked on this device in the last 30 days. Undo works while nothing was changed since. Kept only on this device.",
+      "hist.none": "Nothing yet.",
+      "hist.elsewhere": "These changes were made on another device.",
+      "hist.clear": "Clear history",
+      "hist.clearText": "The list goes, and with it the way to undo these changes. Your data stays as it is.",
+      "hist.more": "and {n} more",
+      "hist.noMod": "that app's part of the Assistant could not be loaded",
+      "hist.noStickies": "Sticky Notes is not running in this orOS window",
+      "hist.k.add": "Added in {app}",
+      "hist.k.change": "Changed in {app}",
+      "hist.k.delete": "Deleted in {app}",
+      "hist.k.link": "Linked in {app}",
+      "do.timer": "Timer ({app})",
+      "do.alarm": "Alarm ({app})",
+      "do.open": "Open in {app}",
+      "do.play": "Play in {app}",
+      "do.directions": "Route in {app}",
+      "do.btn.timer": "Start",
+      "do.btn.alarm": "Set the alarm",
+      "do.btn.open": "Open",
+      "do.btn.play": "Play",
+      "do.btn.directions": "Show the route",
+      "do.f.duration": "Time",
+      "do.f.at": "At",
+      "do.f.daily": "Every day",
+      "do.f.mode": "Travel",
+      "do.mode.car": "Car",
+      "do.mode.bike": "Bike",
+      "do.mode.foot": "On foot",
+      "do.yes": "yes",
+      "do.hint": "Nothing happens until you press the button; then {app} opens.",
       "chg.err": "Could not prepare a change in {app}",
       "chg.storage": "it could not be saved (storage full?)",
       "chg.conflict": "the item changed meanwhile",
@@ -655,7 +687,39 @@
       "chg.before": "Πριν", "chg.after": "Μετά", "chg.gone": "διαγράφεται",
       "chg.done": "Άλλαξε: {app}", "chg.deleted": "Διαγράφηκε από: {app}", "chg.declined": "Δεν άλλαξε: είπες όχι",
       "chg.failed": "Δεν άλλαξε: {msg}", "chg.undone": "Αναιρέθηκε", "chg.undo": "Αναίρεση",
-      "chg.undoFail": "Δεν αναιρέθηκε: {msg}", "chg.undoHint": "Η αναίρεση ισχύει μέχρι να βγεις από τον Βοηθό.",
+      "chg.undoFail": "Δεν αναιρέθηκε: {msg}", "chg.undoHint": "Αναιρείται για 30 ημέρες, και αργότερα από το Ιστορικό αλλαγών, όσο δεν έχει αλλάξει κάτι από τότε.",
+      "hist.title": "Ιστορικό αλλαγών",
+      "hist.hint": "Ό,τι πρόσθεσε, άλλαξε ή συνέδεσε ο Βοηθός σε αυτή τη συσκευή τις τελευταίες 30 ημέρες. Η αναίρεση γίνεται όσο δεν έχει αλλάξει κάτι από τότε. Μένει μόνο σε αυτή τη συσκευή.",
+      "hist.none": "Τίποτα ακόμη.",
+      "hist.elsewhere": "Αυτές οι αλλαγές έγιναν σε άλλη συσκευή.",
+      "hist.clear": "Καθαρισμός ιστορικού",
+      "hist.clearText": "Η λίστα σβήνεται, και μαζί της η δυνατότητα αναίρεσης αυτών των αλλαγών. Τα δεδομένα σου μένουν όπως είναι.",
+      "hist.more": "και {n} ακόμη",
+      "hist.noMod": "δεν φορτώθηκε το κομμάτι του Βοηθού για αυτή την εφαρμογή",
+      "hist.noStickies": "οι Σημειώσεις δεν τρέχουν σε αυτό το παράθυρο του orOS",
+      "hist.k.add": "Προσθήκη: {app}",
+      "hist.k.change": "Αλλαγή: {app}",
+      "hist.k.delete": "Διαγραφή: {app}",
+      "hist.k.link": "Σύνδεση: {app}",
+      "do.timer": "Χρονόμετρο ({app})",
+      "do.alarm": "Ξυπνητήρι ({app})",
+      "do.open": "Άνοιγμα: {app}",
+      "do.play": "Αναπαραγωγή: {app}",
+      "do.directions": "Διαδρομή: {app}",
+      "do.btn.timer": "Έναρξη",
+      "do.btn.alarm": "Ρύθμιση ξυπνητηριού",
+      "do.btn.open": "Άνοιγμα",
+      "do.btn.play": "Αναπαραγωγή",
+      "do.btn.directions": "Δείξε τη διαδρομή",
+      "do.f.duration": "Χρόνος",
+      "do.f.at": "Στις",
+      "do.f.daily": "Κάθε μέρα",
+      "do.f.mode": "Μέσο",
+      "do.mode.car": "Αυτοκίνητο",
+      "do.mode.bike": "Ποδήλατο",
+      "do.mode.foot": "Με τα πόδια",
+      "do.yes": "ναι",
+      "do.hint": "Δεν γίνεται τίποτα μέχρι να πατήσεις το κουμπί· τότε ανοίγει: {app}.",
       "chg.err": "Δεν ετοιμάστηκε αλλαγή ({app})",
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
@@ -824,10 +888,11 @@
   function db() {
     if (!dbPromise) {
       dbPromise = new Promise(function (resolve, reject) {
-        var req = indexedDB.open(DB_NAME, 1);
+        // v2 (wave A6): "log", the change history (AS-HIST)
+        var req = indexedDB.open(DB_NAME, 2);
         req.onupgradeneeded = function () {
           var d = req.result;
-          ["keys", "creds", "chats"].forEach(function (n) {
+          ["keys", "creds", "chats", "log"].forEach(function (n) {
             if (!d.objectStoreNames.contains(n)) d.createObjectStore(n);
           });
         };
@@ -1047,6 +1112,12 @@
     var p = shell();
     if (!p || !e || !e.call) return false;
     try {
+      // do_action (AS-DO): a search hit opened as the menu search does
+      if (e.call.fn === "assistOpen") {
+        if (typeof p.orosAssistOpen !== "function") return false;
+        p.orosAssistOpen(e.call.args[0], JSON.parse(JSON.stringify(e.call.args[1])));
+        return true;
+      }
       if (e.call.fn === "openAt") {
         if (typeof p.__orosOpenAt !== "function") return false;
         p.__orosOpenAt(e.call.args[0], JSON.parse(JSON.stringify(e.call.args[1])));
@@ -2154,8 +2225,11 @@
     var nlOn = !builtin && !!installed().newsletter;
     var cvOn = !builtin && !!installed().layout;
     var wmode = webMode(pid);
+    var acts = builtin ? [] : actionKinds();
+    var hiOn = !builtin && !data.set.chat && apps.length > 0;
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native",
+                                            actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -2166,6 +2240,8 @@
       creates: crIds,
       links: lkOn,
       partnerLinks: plOn,
+      actions: acts,
+      history: hiOn,
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
@@ -2345,6 +2421,8 @@
     if (call.name === "create_items") return createItems(c, call.args, apps);
     if (call.name === "link_contact") return linkContact(c, call.args, apps);
     if (call.name === "link_items") return linkItems(c, call.args, apps);
+    if (call.name === "do_action") return Promise.resolve(doAction(c, call.args));
+    if (call.name === "change_history") return changeHistory(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
@@ -2677,7 +2755,7 @@
       }
       markAppDirty();
       var uid = newId();
-      undoMem[uid] = { app: app.id, key: key, undo: res.undo };
+      remember(uid, { app: app.id, key: key, undo: res.undo }, { kind: "change", app: app.id, name: app.name, act: ch.action, title: pl.title, items: [pl.title] });
       base.st = "done";
       base.u = uid;
       base.rows = res.rows;
@@ -2765,7 +2843,7 @@
       }
       markAppDirty();
       var uid = newId();
-      undoMem[uid] = { app: app.id, key: key, undos: undos };
+      remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: "update", title: base.title, items: plans.map(function (p) { return p.pl.title; }) });
       base.st = "done";
       base.u = uid;
       return { content: JSON.stringify({ refs: refs, applied: true, action: "update", items: plans.length, note: "The user applied the change to " + plans.length + " items. They can undo it." + sameNote }), ui: base };
@@ -2864,7 +2942,7 @@
       }
       markAppDirty();
       var uid = newId();
-      undoMem[uid] = { app: app.id, key: key, undos: undos };
+      remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: "update", title: t("chg.many", { n: shown.length }), items: shown.map(function (x) { return x.title; }) });
       base.st = "done";
       base.u = uid;
       base.many = shown;
@@ -2874,28 +2952,7 @@
     });
   }
   function undoChange(c, r) {
-    var ui = r.ui, mem = undoMem[ui.u];
-    if (!mem) return;
-    var res;
-    if (mem.undos) {
-      // Newest first, all or nothing.
-      var d = readStore(mem.key), now = Date.now();
-      res = { ok: true, data: d };
-      for (var i = mem.undos.length - 1; i >= 0 && res.ok; i--) {
-        res = E.undo(mem.app, d, mem.undos[i], now);
-        if (res.ok) d = res.data;
-      }
-    } else res = E.undo(mem.app, readStore(mem.key), mem.undo, Date.now());
-    if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
-    if (!writeStore(mem.key, res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
-    markAppDirty();
-    delete undoMem[ui.u];
-    ui.st = "undone";
-    // The model hears it with the next question (the result is history).
-    r.content = JSON.stringify({ applied: false, note: "The user applied this change, then undid it. Nothing is changed now." });
-    saveChat(c);
-    renderMessages();
-    showToast(t("chg.undone"));
+    undoCard(c, r, JSON.stringify({ applied: false, note: "The user applied this change, then undid it. Nothing is changed now." }));
   }
   // One value of the diff, as the user reads it.
   function chgValue(f, v) {
@@ -3034,17 +3091,17 @@
   }
   // The card that stays in the conversation.
   function drawChange(host, r, c) {
-    var ui = r.ui;
+    var ui = r.ui, st = cardState(ui);
     var rows = chgRows(ui.rows);
     var del = ui.act === "delete";
     var card = el("section", "entry-card chg-card");
-    var head = ui.st === "done" ? (del ? "chg.deleted" : "chg.done") :
-               ui.st === "undone" ? "chg.undone" : ui.st === "declined" ? "chg.declined" : "chg.failed";
+    var head = st === "done" ? (del ? "chg.deleted" : "chg.done") :
+               st === "undone" ? "chg.undone" : st === "declined" ? "chg.declined" : "chg.failed";
     card.appendChild(el("h3", "entry-head", t(head, { app: String(ui.app || ""), msg: String(ui.msg || "") })));
     if (ui.title) card.appendChild(el("p", "entry-title", String(ui.title)));
     if (ui.many) chgList(card, ui.many);
     else if (rows.length) card.appendChild(chgTable(rows, del));
-    if (ui.st === "done" && ui.u && undoMem[ui.u]) {
+    if (st === "done" && undoable(ui.u)) {
       card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("chg.undo"), "", function () { undoChange(c, r); }));
@@ -3252,7 +3309,7 @@
           left.push(o);
         });
         var uid = newId();
-        undoMem[uid] = { app: app.id, key: key, cr: res.undo, mod: M };
+        remember(uid, { app: app.id, key: key, cr: res.undo, mod: M }, { kind: "add", app: isCrm(app.id) ? "crm" : app.of || app.id, name: app.name, items: res.made.map(function (m) { return m.title; }) });
         base.st = "done";
         base.u = uid;
         base.added = res.made.map(function (m) { return m.i; });
@@ -3319,7 +3376,7 @@
         }
         markAppDirty();
         var uid = newId();
-        undoMem[uid] = { app: "crm", key: key, cr: res.undo };
+        remember(uid, { app: "crm", key: key, cr: res.undo }, { kind: "link", app: "crm", name: crm.name, items: res.done.map(function (i) { return rows[i] ? rows[i].title : ""; }) });
         base.st = "done";
         base.u = uid;
         base.added = res.done;
@@ -3382,7 +3439,7 @@
         }
         markAppDirty();
         var uid = newId();
-        undoMem[uid] = { app: "crm", key: key, lk: res.undo };
+        remember(uid, { app: "crm", key: key, lk: res.undo }, { kind: "link", app: "crm", name: crm.name, items: res.done.map(function (i) { return rows[i] ? rows[i].title : ""; }) });
         base.st = "done";
         base.u = uid;
         base.added = res.done;
@@ -3487,38 +3544,297 @@
     });
   }
   function undoCreate(c, r) {
-    var ui = r.ui, mem = undoMem[ui.u];
-    if (!mem || !N) return;
-    var res = mem.lk ? window.OrosAssistLinks.undo(window.OrosCrmCore, window.OrosCrmCore.norm(readStore(mem.key)), mem.lk, Date.now())
-                     : (mem.mod || N).undo(mem.app, addRead(mem.app, mem.key), mem.cr, Date.now());
-    if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
-    var sh = mem.app === "stickies" ? stickiesHost() : null;
-    if (mem.app === "stickies" ? !(sh && sh.removeAdded(res.ids)) : !writeStore(mem.key, isCrm(mem.app) ? crmNorm(res.data) : res.data)) {
-      showToast(t("chg.undoFail", { msg: t("chg.storage") }));
-      return;
-    }
-    markAppDirty();
-    delete undoMem[ui.u];
-    ui.st = "undone";
-    r.content = JSON.stringify({ added: 0, note: ui.link ? "The user linked them, then undid it. Nothing is linked now." : "The user added these, then undid it. They are not there any more." });
-    saveChat(c);
-    renderMessages();
-    showToast(t("chg.undone"));
+    undoCard(c, r, JSON.stringify({ added: 0, note: r.ui.link ? "The user linked them, then undid it. Nothing is linked now." : "The user added these, then undid it. They are not there any more." }));
   }
   // The card that stays in the conversation.
   function drawCreate(host, r, c) {
     var ui = r.ui, rows = Array.isArray(ui.rows) ? ui.rows.filter(function (x) { return x && typeof x === "object"; }) : [];
-    var made = Array.isArray(ui.added) ? ui.added : [];
+    var made = Array.isArray(ui.added) ? ui.added : [], st = cardState(ui);
     var card = el("section", "entry-card chg-card cr-card");
-    var head = ui.st === "done" ? (ui.link ? "cr.linked" : "cr.done") : ui.st === "undone" ? "chg.undone" :
-               ui.st === "declined" ? (ui.link ? "cr.declinedLink" : "cr.declined") : "cr.failed";
+    var head = st === "done" ? (ui.link ? "cr.linked" : "cr.done") : st === "undone" ? "chg.undone" :
+               st === "declined" ? (ui.link ? "cr.declinedLink" : "cr.declined") : "cr.failed";
     card.appendChild(el("h3", "entry-head", t(head, { app: String(ui.app || ""), n: made.length, msg: String(ui.msg || "") })));
-    var shown = ui.st === "done" || ui.st === "undone" ? rows.filter(function (x, i) { return made.indexOf(i) >= 0; }) : rows;
+    var shown = st === "done" || st === "undone" ? rows.filter(function (x, i) { return made.indexOf(i) >= 0; }) : rows;
     crList(card, shown.map(function (x) { return { title: x.title, fields: x.fields }; }), null);
-    if (ui.st === "done" && ui.u && undoMem[ui.u]) {
+    if (st === "done" && undoable(ui.u)) {
       card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("chg.undo"), "", function () { undoCreate(c, r); }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // ---------- change history (AS-HIST, wave A6) ----------
+  // Every add, change and link the user applied is kept on this device
+  // (IndexedDB "log", never synced or exported) for 30 days with what
+  // its Undo needs, so a card's Undo, the change_history card and the
+  // Change history dialog undo it after the Assistant was left too.
+  // Every module's undo refuses a record changed since, so a late Undo
+  // never takes away a newer change.
+  var hist = {}, histReady = null, undoBusy = {};
+  function histLoad() {
+    if (!histReady) {
+      histReady = idbAll("log").then(function (list) {
+        var pr = C.histPrune(list || [], Date.now());
+        hist = {};
+        pr.keep.forEach(function (e) { hist[e.id] = e; });
+        if (pr.drop.length) {
+          return idb("log", "readwrite", function (st) { pr.drop.forEach(function (id) { st.delete(id); }); }).catch(function () {});
+        }
+      }).catch(function () { hist = {}; });
+    }
+    return histReady;
+  }
+  function histList() {
+    return Object.keys(hist).map(function (k) { return hist[k]; }).sort(function (a, b) { return b.at - a.at; });
+  }
+  function histSave(e) {
+    hist[e.id] = e;
+    return idbPut("log", e.id, e).catch(function () {});
+  }
+  // undoMem for this visit, the log for later. mem.mod (a module) is
+  // kept as its name.
+  function remember(uid, mem, info) {
+    undoMem[uid] = mem;
+    var u = {};
+    Object.keys(mem).forEach(function (k) { if (k !== "mod") u[k] = mem[k]; });
+    if (mem.mod) u.via = mem.mod === N ? "create" : "add";
+    try { u = JSON.parse(JSON.stringify(u)); } catch (e) { return; }
+    histSave(C.histEntry({ id: uid, at: Date.now(), app: info.app, name: info.name, kind: info.kind, act: info.act,
+                           title: info.title, items: info.items, undo: u }));
+  }
+  function undoable(id) {
+    return !!id && (!!undoMem[id] || C.canUndo(hist[id], Date.now()));
+  }
+  // A card applied here and undone later (from the log) shows undone.
+  function cardState(ui) {
+    return ui.st === "done" && ui.u && hist[ui.u] && hist[ui.u].st === "undone" ? "undone" : ui.st;
+  }
+  function undoFail(msg) { return { ok: false, err: msg }; }
+  // mem → Promise<{ ok, err? }>: the app's own undo, its scripts loaded
+  // first (the Assistant may have been reopened since).
+  function runUndo(mem) {
+    var now = Date.now();
+    if (mem.undo || mem.undos) {
+      if (!E) return Promise.resolve(undoFail(t("hist.noMod")));
+      var need = typeof E.needs === "function" ? E.needs(mem.app) : [];
+      return need.reduce(function (p, src) { return p.then(function () { return loadOnce(src); }); }, Promise.resolve()).then(function () {
+        if (typeof E.needs === "function" && E.needs(mem.app).length) return undoFail(t("hist.noMod"));
+        var res;
+        if (mem.undos) {
+          // Newest first, all or nothing.
+          var d = readStore(mem.key);
+          res = { ok: true, data: d };
+          for (var i = mem.undos.length - 1; i >= 0 && res.ok; i--) {
+            res = E.undo(mem.app, d, mem.undos[i], now);
+            if (res.ok) d = res.data;
+          }
+        } else res = E.undo(mem.app, readStore(mem.key), mem.undo, now);
+        if (!res.ok) return res;
+        if (!writeStore(mem.key, res.data)) return undoFail(t("chg.storage"));
+        markAppDirty();
+        return { ok: true };
+      });
+    }
+    if (mem.lk) {
+      return crmCores().then(function () { return window.OrosAssistLinks ? true : loadOnce("links.js"); }).then(function () {
+        var L = window.OrosAssistLinks, CC = window.OrosCrmCore;
+        if (!L || !CC) return undoFail(t("hist.noMod"));
+        var res = L.undo(CC, CC.norm(readStore(mem.key)), mem.lk, now);
+        if (!res.ok) return res;
+        if (!writeStore(mem.key, res.data)) return undoFail(t("chg.storage"));
+        markAppDirty();
+        return { ok: true };
+      });
+    }
+    if (!mem.cr || !N) return Promise.resolve(undoFail(t("hist.noMod")));
+    return (isCrm(mem.app) ? crmCores() : Promise.resolve()).then(function () {
+      return mem.mod || (mem.via === "add" ? createMod(mem.app) : N);
+    }).then(function (M) {
+      if (!M) return undoFail(t("hist.noMod"));
+      if (mem.app === "stickies" && !stickiesHost()) return undoFail(t("hist.noStickies"));
+      var res = M.undo(mem.app, addRead(mem.app, mem.key), mem.cr, Date.now());
+      if (!res.ok) return res;
+      var sh = mem.app === "stickies" ? stickiesHost() : null;
+      if (mem.app === "stickies" ? !(sh && sh.removeAdded(res.ids)) : !writeStore(mem.key, isCrm(mem.app) ? crmNorm(res.data) : res.data)) {
+        return undoFail(t("chg.storage"));
+      }
+      markAppDirty();
+      return { ok: true };
+    });
+  }
+  // One entry undone (a card, the history card or the dialog) → Promise<bool>.
+  function undoById(id) {
+    var e = hist[id], mem = undoMem[id] || (C.canUndo(e, Date.now()) ? e.undo : null);
+    if (!mem || undoBusy[id]) return Promise.resolve(false);
+    undoBusy[id] = 1;
+    return runUndo(mem).catch(function () { return undoFail(t("hist.noMod")); }).then(function (res) {
+      delete undoBusy[id];
+      if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return false; }
+      delete undoMem[id];
+      if (e) {
+        var x = JSON.parse(JSON.stringify(e));
+        x.st = "undone";
+        x.ut = Date.now();
+        delete x.undo;               // nothing left to undo: the data goes
+        histSave(x);
+      }
+      showToast(t("chg.undone"));
+      return true;
+    });
+  }
+  function undoCard(c, r, note) {
+    var ui = r.ui;
+    undoById(ui.u).then(function (ok) {
+      if (!ok) return;
+      ui.st = "undone";
+      // The model hears it with the next question (the result is history).
+      r.content = note;
+      saveChat(c);
+      renderMessages();
+    });
+  }
+  // One entry as the user reads it: when, the app, what, the titles,
+  // and Undo while it can be undone.
+  function histRow(e, onUndo) {
+    var row = el("div", "hist-row");
+    var d = new Date(e.at);
+    var when = d.toLocaleDateString(LANG, { weekday: "short", day: "numeric", month: "short" }) + " " +
+               d.toLocaleTimeString(LANG, { hour: "2-digit", minute: "2-digit", hour12: false });
+    var what = e.kind === "change" && e.act === "delete" ? "hist.k.delete" : "hist.k." + e.kind;
+    row.appendChild(el("div", "hist-head", t(what, { app: e.name || e.app }) + " · " + when));
+    var items = Array.isArray(e.items) ? e.items : [];
+    var shown = items.slice(0, 5).join(", ") + (e.n > 5 ? " " + t("hist.more", { n: e.n - Math.min(5, items.length) }) : "");
+    if (shown) row.appendChild(el("div", "hist-items", shown));
+    if (e.st === "undone") row.appendChild(el("div", "hist-st", t("chg.undone")));
+    else if (C.canUndo(e, Date.now())) {
+      var b = button(t("chg.undo"), "", function () {
+        b.disabled = true;
+        undoById(e.id).then(function (ok) { if (ok) onUndo(); else b.disabled = false; });
+      });
+      row.appendChild(b);
+    }
+    return row;
+  }
+  // change_history (the model's question about earlier changes).
+  function changeHistory(c, args, apps) {
+    var ok = {};
+    apps.forEach(function (a) { ok[a.id] = 1; });
+    return histLoad().then(function () {
+      var q = C.histQuery(histList(), args, Date.now(), function (id) { return !!ok[id]; });
+      if (!q.ok) return { content: "Error: " + q.err, err: 1 };
+      var out = { changes: C.histForModel(q.list, Date.now()),
+                  note: "Only this device, the last 30 days, and only apps the user lets you read. The user sees them on a card with Undo." };
+      if (q.more) out.more = q.more;
+      return { content: JSON.stringify(out), ui: { k: "hist", ids: q.list.map(function (e) { return e.id; }) } };
+    });
+  }
+  function drawHist(host, r) {
+    var ids = Array.isArray(r.ui.ids) ? r.ui.ids : [];
+    var card = el("section", "entry-card hist-card");
+    card.appendChild(el("h3", "entry-head", t("hist.title")));
+    var list = ids.map(function (id) { return hist[id]; }).filter(Boolean);
+    if (!list.length) card.appendChild(el("p", "dlg-hint", t(ids.length ? "hist.elsewhere" : "hist.none")));
+    list.forEach(function (e) { card.appendChild(histRow(e, renderMessages)); });
+    host.appendChild(card);
+  }
+  // Conversations panel › Change history: the whole log, Clear.
+  function openHistory() {
+    histLoad().then(function () {
+      var dlg = makeDialog("as-hist");
+      dlg.appendChild(el("div", "dlg-title", t("hist.title")));
+      dlg.appendChild(el("p", "dlg-hint", t("hist.hint")));
+      var box = el("div", "hist-list");
+      function paint() {
+        box.textContent = "";
+        var list = histList();
+        if (!list.length) box.appendChild(el("p", "dlg-hint", t("hist.none")));
+        list.forEach(function (e) { box.appendChild(histRow(e, function () { paint(); renderMessages(); })); });
+        clr.disabled = !list.length;
+      }
+      dlg.appendChild(box);
+      var acts = el("div", "dlg-actions");
+      var clr = button(t("hist.clear"), "", function () {
+        confirmDialog(t("hist.clear"), t("hist.clearText"), t("hist.clear"), function () {
+          idbClear("log").catch(function () {}).then(function () {
+            hist = {};
+            undoMem = {};
+            renderMessages();
+            if (dlg.open) paint();
+          });
+        });
+      });
+      acts.appendChild(clr);
+      acts.appendChild(button(t("btn.close"), "primary", function () { dlg.close(); }));
+      dlg.appendChild(acts);
+      paint();
+      document.body.appendChild(dlg);
+      dlg.showModal();
+    });
+  }
+
+  // ---------- do_action (core.js 10b, AS-DO, wave A6) ----------
+  // One thing done in an app on the user's press. The ref's item is
+  // kept on the card (refs are this conversation's); the card is
+  // rebuilt with the same check every time it is drawn.
+  function actionKinds() {
+    var have = installed(), out = ["open"];
+    if (have.time) out.push("timer", "alarm");
+    if (have.music || have.radio || have.podcasts) out.push("play");
+    if (have.maps) out.push("directions");
+    return out;
+  }
+  function normDo(args, ref) {
+    var have = installed();
+    return C.normAction(args, { has: function (id) { return !!have[id]; },
+                                refOf: function (x) { return ref && ref.ref === x ? ref : null; } });
+  }
+  function doAction(c, args) {
+    var ref = args && typeof args.ref === "string" ? args.ref.replace(/^oros:/, "").trim() : "";
+    var r = ref && c.refs ? c.refs[ref] : null;
+    var snap = r ? { ref: ref, app: r.app, target: r.target === undefined ? null : JSON.parse(JSON.stringify(r.target)), title: r.title } : null;
+    var a = normDo(args, snap);
+    if (!a.ok) return { content: "Error: " + a.err, err: 1, ui: { k: "entryErr" } };
+    return {
+      content: "Shown to the user as a card with one button. Nothing happens before they press it.",
+      ui: { k: "do", args: JSON.parse(JSON.stringify(args)), ref: snap, st: "" }
+    };
+  }
+  function drawDo(host, r, c) {
+    var ui = r.ui, have = installed();
+    var a = normDo(ui.args, ui.ref);
+    if (!a.ok) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: (ui.ref && ui.ref.app) || "?" }))); return; }
+    var name = have[a.app] || a.app, v = a.view;
+    var card = el("section", "entry-card do-card");
+    card.appendChild(el("h3", "entry-head", t("do." + a.kind, { app: name })));
+    if (v.title) card.appendChild(el("p", "entry-title", v.title));
+    if (v.fields.length) {
+      var dl = el("dl", "entry-fields");
+      v.fields.forEach(function (f) {
+        dl.appendChild(el("dt", "", t("do.f." + f[0])));
+        dl.appendChild(el("dd", "", f[0] === "mode" ? t("do.mode." + f[1]) : f[0] === "daily" ? t("do.yes") : f[1]));
+      });
+      card.appendChild(dl);
+    }
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("do.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("do.btn." + a.kind), "primary", function () {
+        // Saved before the app opens (it takes this frame's place).
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          if (!runEntry(a)) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
       card.appendChild(acts);
     }
     host.appendChild(card);
@@ -4356,6 +4672,8 @@
         if (ui.k === "coverErr") return;
         if (ui.k === "change") { drawChange(host, r, c); return; }
         if (ui.k === "create") { drawCreate(host, r, c); return; }
+        if (ui.k === "do") { drawDo(host, r, c); return; }
+        if (ui.k === "hist") { drawHist(host, r); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");
         var ico = el("span", "tool-ico");
@@ -5693,6 +6011,7 @@
         b.title = t(x[2]);
       });
     $("side-new").textContent = t("btn.new");
+    $("side-hist").textContent = t("hist.title");
     $("side").setAttribute("aria-label", t("btn.chats"));
     $("wel-icon").innerHTML = ICON.spark;
     $("input").setAttribute("aria-label", t("ph.input"));
@@ -5704,6 +6023,7 @@
     $("scrim").addEventListener("click", function () { setSide(false); });
     $("new-btn").addEventListener("click", newChat);
     $("side-new").addEventListener("click", function () { setSide(false); newChat(); });
+    $("side-hist").addEventListener("click", function () { setSide(false); openHistory(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
     $("wel-brief").addEventListener("click", startBriefing);
@@ -5792,7 +6112,7 @@
       } catch (e) {}
     }
     var biP = curProv() === "browser" ? checkBuiltin() : curProv() === "webllm" ? wlCheck(modelOf("webllm")) : null;
-    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), biP]).then(function () {
+    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), biP, histLoad()]).then(function () {
       renderAll();
       scrollEnd();
       if (pending) openTarget(pending);

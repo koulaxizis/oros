@@ -80,7 +80,7 @@ Der Assistent kann Personen und Firmen direkt zu [Kontakte](app:contacts) und [C
 - `Hinzufügen` speichert die angehakten. `Nicht hinzufügen` lässt alles, wie es ist. Nichts wird gespeichert, bevor du es drückst.
 - Wer einem Eintrag gleicht, den du schon hast (gleiche E-Mail, Telefonnummer, Steuernummer oder gleicher Name), ist als `Schon da` markiert und beginnt ohne Haken; der Assistent aktualisiert dann diesen Eintrag, mit einer Karte `Vorher` und `Nachher`.
 - Ein CRM-Kunde kann mit einem Kontakt verknüpft werden: Der Kontakt wird eine der `Personen` des Kunden (live im CRM), und Kontakte zeigt den Kunden auf der Karte des Kontakts. Die Verknüpfung hat ihre eigene Karte mit `Verknüpfen`; Kontakte selbst ändert sich nicht. Fehlt der Kontakt, wird er zuerst hinzugefügt.
-- `Rückgängig` nimmt die neuen Einträge (oder Verknüpfungen) zurück, bis du den Assistenten verlässt, solange du sie in der App nicht geändert hast (ein Kunde mit einem Geschäft oder einer Gesprächsnotiz bleibt).
+- `Rückgängig` nimmt die neuen Einträge (oder Verknüpfungen) 30 Tage lang zurück (auch später im `Änderungsverlauf`), solange du sie in der App nicht geändert hast (ein Kunde mit einem Geschäft oder einer Gesprächsnotiz bleibt).
 
 ## Aufgaben, Termine, Ausgaben, Notizen, Lesezeichen und Karten
 Der Assistent kann auch direkt zu [To-Do](app:todo), [Kalender](app:calendar), [Budget](app:budget), [Notizen](app:notes), [Lesezeichen](app:bookmarks) und [Kanban](app:kanban) hinzufügen, einen Eintrag oder viele auf einmal: „trag die 12 Fristen aus diesem PDF in meinen Kalender ein“, „füg diese Belege zu meinen Ausgaben hinzu“, „mach für jeden Schritt dieses Plans eine Aufgabe in der Liste Romreise“, „speichere diese fünf Links unter Lesen“. Du bekommst dieselbe Karte mit einem Haken bei jedem Eintrag.
@@ -88,7 +88,7 @@ Der Assistent kann auch direkt zu [To-Do](app:todo), [Kalender](app:calendar), [
 - Ein Eintrag, der wie einer aussieht, den du schon hast (dieselbe offene Aufgabe in der Liste, ein Termin mit demselben Titel am selben Tag, eine Buchung mit demselben Betrag am selben Tag, eine Notiz mit demselben Titel, eine Karte mit demselben Titel auf dem Board), ist als `Schon da` markiert und startet ohne Haken. Ein Link, den du schon hast, kommt nie zweimal hinein.
 - Es werden deine eigenen Listen, Notizbücher, Ordner, Boards, Spalten, Labels und Kategorien verwendet; der Assistent erfindet keine neuen, außer einer To-Do-Liste, die angelegt wird, wenn keine Liste so heißt (die Karte sagt es). Ohne Angabe landet der Eintrag dort, wo die App neue Einträge hinlegt: in der offenen To-Do-Liste, im ersten Notizbuch, unter Unsortiert, in der ersten Spalte des ersten Boards, heute bei einer Ausgabe.
 - Termine sind einmalig (einen wiederkehrenden legst du im Kalender an); eine Ausgabe ist in deiner Hauptwährung.
-- `Rückgängig` nimmt sie zurück, bis du den Assistenten verlässt, solange du sie in der App nicht geändert hast.
+- `Rückgängig` nimmt sie 30 Tage lang zurück (auch später im `Änderungsverlauf`), solange du sie in der App nicht geändert hast.
 
 ## Verlauf, Wiedervorlagen und Deals eines Kunden
 In [CRM](app:crm) kann der Assistent einem Kunden, den er gefunden (oder gerade hinzugefügt) hat, auch etwas hinzufügen: einen Eintrag im Verlauf („trag mein Telefonat mit Alpha Books von heute ein: wir haben 200 Seiten vereinbart“), eine Wiedervorlage („erinnere mich, ihnen am Dienstag um 10:00 den Vertrag zu schicken“) oder einen Deal („ein neuer Deal mit Alpha, Lektorat der zweiten Auflage, 800 Euro, in Verhandlung“). Dieselbe Karte, dieselben Haken und `Rückgängig` wie oben.
@@ -115,10 +115,22 @@ Wenn ein CRM-Kunde derselbe Partner ist wie ein Lieferant oder Kommissionsgesch�
 - Nur das CRM ändert sich; die anderen Apps bleiben, wie sie sind. Dieselbe Karte, Häkchen und `Rückgängig` wie oben.
 - Kalendertermine haben keine Verknüpfung zu einem Kunden: Ein kommendes Treffen oder Telefonat mit einem Kunden ist eine Wiedervorlage im CRM, die der Kalender zeigt.
 
+## Timer, Wecker, Musik und Wege
+Bitte etwa „Countdown 25 Minuten“, „weck mich jeden Tag um 7:00“, „spiel meinen Jazzsender“, „spiel die neueste Folge meines Geschichtspodcasts“, „öffne die Rechnung für Alpha“ oder „wie komme ich zu Fuß zu Anna?“. Der Assistent zeigt eine Karte mit einem Knopf; nichts passiert, bevor du ihn drückst.
+- `Starten` startet den Timer in [Zeit](app:time) sofort. `Wecker stellen` öffnet das Weckerformular von Zeit ausgefüllt, und du drückst dort `Wecker hinzufügen`.
+- `Abspielen` spielt einen Titel aus [Musik](app:music), einen Sender aus [Radio](app:radio) oder eine Folge aus [Podcasts](app:podcasts), die der Assistent vorher gefunden hat.
+- `Route zeigen` öffnet [Karten](app:maps) mit der Route von deinem Standort zu dieser Adresse oder diesem Ort, mit Auto, Fahrrad oder zu Fuß. Für eine Person nimmt der Assistent die Adresse aus Kontakte oder dem CRM.
+- `Öffnen` öffnet einen gefundenen Eintrag oder eine App.
+
+## Änderungsverlauf
+Alles, was der Assistent für dich hinzugefügt, geändert oder verknüpft hat, bleibt 30 Tage auf diesem Gerät, unter `Änderungsverlauf` in der Liste der Unterhaltungen. Frag „was hast du gestern geändert?“, und der Assistent antwortet daraus, mit derselben Liste auf einer Karte.
+- `Rückgängig` neben einer Änderung nimmt sie zurück, auch nachdem du den Assistenten verlassen hast, solange seitdem nichts geändert wurde (in der App oder auf einem anderen Gerät). Sonst wird nichts rückgängig gemacht, und du erfährst, warum.
+- Der Verlauf bleibt nur auf diesem Gerät: Er wird nie synchronisiert, exportiert oder gesendet. Der Assistent sieht nur die Titel, und nur für Apps, die er lesen darf. `Verlauf leeren` löscht die Liste; deine Daten bleiben, wie sie sind.
+
 ## Ändern, was du schon hast
 Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
-- Nach einer Änderung sagt die Karte, was passiert ist, und hat `Rückgängig`. Rückgängig geht, bis du den Assistenten verlässt; danach änderst du es in der App selbst zurück.
+- Nach einer Änderung sagt die Karte, was passiert ist, und hat `Rückgängig`. Rückgängig geht 30 Tage lang, auch später im `Änderungsverlauf`, solange der Eintrag seitdem nicht geändert wurde.
 - Hat sich der Eintrag inzwischen geändert (zum Beispiel auf einem anderen Gerät), wird nichts geändert, und die Karte sagt es.
 - Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, bis zu 200 Einträge: oben, was jeder Eintrag bekommt, dann die ersten 10 (`Alle zeigen` bringt den Rest); ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
 - Verschiedene Änderungen an mehreren Einträgen (zum Beispiel die neuen Angaben von zehn Personen aus einer Liste) kommen ebenfalls als eine Karte, jeder Eintrag mit eigenem `Vorher` und `Nachher`. In Kontakte hat jede Zeile einen Haken: Nimm ihn weg bei allem, was bleiben soll, wie es ist.
@@ -260,7 +272,7 @@ Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des A
 ## Grenzen
 - Der Assistent braucht Internet, außer bei einem Modell in deinem eigenen Netzwerk, dem Modell im Browser (nach dem Download) oder dem eingebauten Browsermodell.
 - Er kann Einträge nur in den Apps ändern oder löschen, die unter `Ändern, was du schon hast` stehen, einen nach dem anderen, und er kann nichts versenden (keine E-Mail).
-- Rückgängig machen einer Änderung geht nur, bis du den Assistenten verlässt.
+- Rückgängig geht 30 Tage lang und nur auf dem Gerät, auf dem die Änderung gemacht wurde.
 - Ist eine App in einem anderen Browser-Tab offen, während du hier einen ihrer Einträge änderst, zeigt dieser Tab eventuell noch die alte Fassung, bis du ihn neu lädst.
 - Eine lange Antwort wird nicht abgeschnitten: Stoppt der Dienst an seiner Längengrenze, bittet der Assistent ihn weiterzuschreiben, bis zu 4 Mal, und du siehst eine Antwort. Nur eine sehr lange (oder das Modell im Browser, das wenig Platz hat) kann noch mit „Die Antwort wurde abgeschnitten“ enden; dann schreib `weiter`.
 - Manche Dienste lehnen Aufrufe aus einem Browser ab: `Verbindung testen` sagt es dir. Ein lokaler Server muss diese Seite erlauben; `Server` in den Einstellungen zeigt für jedes Programm, wie.

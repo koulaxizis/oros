@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.96.00
+- Assistant: it can now start a timer, set an alarm, play a song, a radio station or a podcast episode, open something in its app, and show you the way in Maps ("25 minute timer", "wake me at 7 every day", "how do I walk to Syntagma?"). Nothing happens until you press the card. New Change history (in the conversations list, or ask "what did you change today?"): everything the Assistant added, changed or linked on this device in the last 30 days, with Undo even after you leave the Assistant.
+
 ## Version 3.95.00
 - Assistant: it can now link a CRM customer to the same partner in your other apps: a supplier or consignment shop in Stock, a client in Timesheet or Invoices, or a person on your Publishing titles ("link Beta Print in CRM with the supplier in Stock"). The customer page then shows them together. As always you see a card first; nothing changes until you press it, and Undo takes it back.
 

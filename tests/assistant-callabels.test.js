@@ -180,7 +180,7 @@ test("assistant.js: refs go through one card, are checked again on Apply, and un
   assert.match(many, /refs must all be items of the same app/);
   assert.match(many, /E\.apply\(app\.id, d, p\.x\.target, p\.x\.ch, t2, p\.pl\.before\)/);
   assert.equal((many.match(/writeStore\(/g) || []).length, 1);
-  const undo = src.slice(src.indexOf("function undoChange("), src.indexOf("function chgValue("));
+  const undo = src.slice(src.indexOf("function runUndo("), src.indexOf("function undoById("));
   assert.match(undo, /mem\.undos\.length - 1; i >= 0 && res\.ok; i--/);
   assert.match(src, /if \(a\.app === "calendar"\) \{\s*own = S\.calendarEvents/);
 });

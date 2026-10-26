@@ -80,7 +80,7 @@ The assistant can add people and companies straight to [Contacts](app:contacts) 
 - `Add` saves the ticked ones. `Don't add` leaves everything as it is. Nothing is saved before you press it.
 - Someone who looks like a record you already have (same e-mail, phone, tax number or name) is marked `Already there` and starts unticked; the assistant then updates that record instead, with a `Before` and `After` card.
 - A CRM customer can be linked to a contact: the contact becomes one of the customer's `People` (shown live in CRM), and Contacts shows the customer on the contact's card. The link has its own card with `Link`; Contacts itself doesn't change. A missing contact is added first.
-- `Undo` takes the new records (or the links) back until you leave the Assistant, as long as you haven't changed them in the app (a customer that got a deal or a note of a call stays).
+- `Undo` takes the new records (or the links) back for 30 days (also later from `Change history`), as long as you haven't changed them in the app (a customer that got a deal or a note of a call stays).
 
 ## Tasks, events, expenses, notes, bookmarks and cards
 The assistant can also add straight to [To-Do](app:todo), [Calendar](app:calendar), [Budget](app:budget), [Notes](app:notes), [Bookmarks](app:bookmarks) and [Kanban](app:kanban), one item or many at once: "put the 12 deadlines from this PDF in my calendar", "add these receipts to my expenses", "make a task for each step of this plan in the Rome trip list", "save these five links in Reading". You get the same card with a tick on each item.
@@ -88,7 +88,7 @@ The assistant can also add straight to [To-Do](app:todo), [Calendar](app:calenda
 - An item that looks like one you already have (the same open task in that list, an event with the same title on that day, an entry with the same amount on that day, a note with the same title, a card with the same title on that board) is marked `Already there` and starts unticked. A link you already have is never added twice.
 - Your own lists, notebooks, folders, boards, columns, labels and categories are used; the assistant doesn't invent new ones, except a To-Do list, which is made when no list has that name (the card says so). Without one, the item goes where the app puts new items: the open To-Do list, the first notebook, Unsorted, the first column of the first board, today for an expense.
 - Events are one-off (a repeating event is set in Calendar); an expense is in your main currency.
-- `Undo` takes them back until you leave the Assistant, as long as you haven't changed them in the app.
+- `Undo` takes them back for 30 days (also later from `Change history`), as long as you haven't changed them in the app.
 
 ## A customer's history, follow-ups and deals
 In [CRM](app:crm) the assistant can also add to a customer it has found (or just added): an entry in their history ("log my call with Alpha Books today: we agreed on 200 pages"), a follow-up ("remind me to send them the contract on Tuesday at 10:00") or a deal ("a new deal with Alpha, second edition editing, 800 euros, in Negotiation"). Same card, ticks and `Undo` as above.
@@ -115,10 +115,22 @@ When a CRM customer is the same partner as a supplier or consignment shop in [St
 - Only CRM changes; the other apps stay as they are. Same card, ticks and `Undo` as above.
 - Calendar events have no link to a customer: a meeting or call to come with a customer is a follow-up in CRM, which Calendar shows.
 
+## Timers, alarms, music and directions
+Ask "countdown 25 minutes", "wake me at 7:00 every day", "play my jazz station", "play the latest episode of my history podcast", "open the invoice for Alpha" or "how do I get to Anna's on foot?". The assistant shows a card with one button; nothing happens until you press it.
+- `Start` starts the timer in [Time](app:time) at once. `Set the alarm` opens Time's alarm form filled in, and you press `Add alarm` there.
+- `Play` plays a track from [Music](app:music), a station from [Radio](app:radio) or an episode from [Podcasts](app:podcasts) that the assistant found first.
+- `Show the route` opens [Maps](app:maps) with the route from where you are to that address or place, by car, bike or on foot. For a person, the assistant takes the address from Contacts or CRM.
+- `Open` opens an item it found, or an app.
+
+## Change history
+Everything the assistant added, changed or linked for you is kept on this device for 30 days, under `Change history` in the conversations list. Ask "what did you change yesterday?" and the assistant answers from it, with the same list on a card.
+- `Undo` next to a change takes it back, also after you left the Assistant, as long as nothing was changed since (in the app or on another device). Otherwise nothing is undone and you are told why.
+- The history stays on this device only: it is never synced, exported or sent. The assistant sees only the titles, and only for apps you let it read. `Clear history` removes the list; your data stays as it is.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
-- After a change the card says what happened and has `Undo`. Undo works until you leave the Assistant; after that, change it back in the app itself.
+- After a change the card says what happened and has `Undo`. Undo works for 30 days, also later from `Change history`, as long as the item wasn't changed since.
 - If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
 - The same change to several items (for example "give every event without a label the label Work") comes as one card, up to 200 items: on top what every item gets, then the first 10 items (`Show all` lists the rest); one `Apply` changes them all, and `Undo` takes them all back.
 - Different changes to several items (for example the new details of ten people from a list) also come as one card, each item with its own `Before` and `After`. In Contacts every row has a tick: untick what should stay as it is.
@@ -260,7 +272,7 @@ Bring your history from another AI chat. In the Assistant's settings, under `Thi
 ## Limits
 - The assistant needs the internet, except a model on your own network, the in-browser model (after its download) or the built-in browser model.
 - It can change or delete items only in the apps listed under `Change what you already have`, one at a time, and it can't send anything (no email).
-- Undo of a change works only until you leave the Assistant.
+- Undo works for 30 days and only on the device where the change was made.
 - If an app is open in another browser tab while you change one of its items here, that tab may still show the old version until you reload it.
 - A long answer is not cut off: when the service stops at its length limit, the assistant asks it to go on, up to 4 times, and you see one answer. Only a very long one (or the in-browser model, which has little room) can still end with "The answer was cut off"; then write `go on`.
 - Some services may refuse calls from a browser: `Test the connection` tells you. A local server must allow this site; `Server` in the settings shows how for each program.

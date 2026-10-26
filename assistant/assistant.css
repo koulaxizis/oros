@@ -173,6 +173,32 @@ button:disabled { cursor: default; opacity: 0.4; }
   font-weight: 700;
 }
 .side-new:hover { border-color: var(--accent); background: var(--accent-soft); }
+/* Change history (AS-HIST): under the conversations */
+.side-hist {
+  display: block;
+  width: calc(100% - 20px);
+  margin: 6px 10px 0;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-size: 13px;
+}
+.side-hist:hover { border-color: var(--accent); background: var(--accent-soft); }
+.hist-list { max-height: min(60vh, 520px); overflow-y: auto; margin: 8px 0; }
+.hist-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.hist-row:first-child { border-top: 0; }
+.hist-head { flex: 1 1 100%; font-size: 13px; font-weight: 700; overflow-wrap: anywhere; }
+.hist-items { flex: 1 1 200px; min-width: 0; font-size: 13px; opacity: 0.85; overflow-wrap: anywhere; }
+.hist-st { font-size: 12px; opacity: 0.7; }
+.hist-row .dlg-btn { flex: 0 0 auto; margin-left: auto; min-height: 34px; padding: 0 14px; }
 .chat-row {
   display: flex;
   align-items: center;
