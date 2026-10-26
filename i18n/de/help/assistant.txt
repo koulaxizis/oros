@@ -108,6 +108,13 @@ Längere Inhalte öffnen sich im eigenen Fenster der App, wo du sie prüfst und 
 - [Karteikarten](app:flashcards): Lernkarten aus einem Kapitel, einer Wortliste oder deinen Notizen („mach 20 Karten aus diesem Kapitel“). Sie öffnen sich in `Karten erstellen`, wo du jede Karte abwählen oder ändern kannst und den Stapel wählst.
 - [Wiki](app:wiki): ein Artikel, geöffnet im Editor des Wikis. [Texteditor](app:writer): ein neues Dokument, das beim Drücken von `In Texteditor öffnen` entsteht. [Mindmap](app:mindmap): die Ideen einer Map, geöffnet in `Liste einfügen…`.
 
+## Partner über alle Apps
+Wenn ein CRM-Kunde derselbe Partner ist wie ein Lieferant oder Kommissionsgeschäft im [Bestand](app:stock), ein Kunde in der [Zeiterfassung](app:timesheet) oder in [Rechnungen](app:invoices) oder eine Person in deinen Titeln im [Verlag](app:publish), bitte den Assistenten, sie zu verknüpfen („der Lieferant Beta GmbH im Bestand ist der Kunde Druckerei Beta“). Es ist dieselbe Verknüpfung wie `+ Verknüpfen` unter `In anderen Apps` beim Kunden im [CRM](app:crm), also zeigt die Karte danach Lager, Stunden, Rechnungen oder Titel dieses Partners.
+- Kunde und Eintrag sind die, die der Assistent gefunden hat; ein Kommissionsgeschäft oder eine Person in Titeln wird über den Namen gefunden. Namen, die sich nur ähneln, werden nie von selbst verknüpft.
+- Ein Eintrag gehört zu einem Partner: Verknüpfst du ihn mit einem anderen, wechselt er, und die Karte sagt, von wem. Du kannst auch bitten, eine Verknüpfung zu entfernen.
+- Nur das CRM ändert sich; die anderen Apps bleiben, wie sie sind. Dieselbe Karte, Häkchen und `Rückgängig` wie oben.
+- Kalendertermine haben keine Verknüpfung zu einem Kunden: Ein kommendes Treffen oder Telefonat mit einem Kunden ist eine Wiedervorlage im CRM, die der Kalender zeigt.
+
 ## Ändern, was du schon hast
 Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.

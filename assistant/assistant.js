@@ -371,6 +371,8 @@
       "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
       "cr.v.expense": "Expense", "cr.v.income": "Income",
       "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
+      "cr.textLinkItems": "{name} asks to link these CRM partners with their records in other apps. Nothing changes until you press Link; the other apps stay as they are.",
+      "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles",
       "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
       "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
@@ -678,6 +680,8 @@
       "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
       "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
+      "cr.textLinkItems": "Το {name} ζητά να συνδεθούν αυτοί οι συνεργάτες του CRM με τις εγγραφές τους σε άλλες εφαρμογές. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι άλλες εφαρμογές μένουν όπως είναι.",
+      "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)",
       "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
       "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
@@ -2145,12 +2149,13 @@
     var chgApps = builtin ? [] : changeApps(apps);
     var crIds = builtin ? [] : createApps(apps).map(function (a) { return a.id; });
     var lkOn = crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0;
+    var plOn = !builtin && partnerLinksOn(crIds, apps);
     var rcApps = builtin ? [] : recipeApps();
     var nlOn = !builtin && !!installed().newsletter;
     var cvOn = !builtin && !!installed().layout;
     var wmode = webMode(pid);
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
-                                            changes: chgApps.length > 0, creates: crIds, links: lkOn, web: !!wmode && wmode !== "native",
+                                            changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native",
                                             recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -2160,6 +2165,7 @@
       changes: chgApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       creates: crIds,
       links: lkOn,
+      partnerLinks: plOn,
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
@@ -2338,6 +2344,7 @@
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "create_items") return createItems(c, call.args, apps);
     if (call.name === "link_contact") return linkContact(c, call.args, apps);
+    if (call.name === "link_items") return linkItems(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
@@ -3320,6 +3327,69 @@
       });
     });
   }
+  // ---------- link_items (assistant/links.js, AS-LINK, wave A5) ----------
+  // A CRM partner linked to a Stock supplier or consignment shop, a
+  // Timesheet client, an Invoices client or a person on Publishing
+  // titles: CRM's own pt rows, the other apps only read (and only the
+  // ones the user lets the assistant read).
+  var LINK_APPS = ["stock", "timesheet", "invoices", "publish"];
+  function partnerLinksOn(crIds, apps) {
+    return crIds.indexOf("crm") >= 0 && apps.some(function (a) { return LINK_APPS.indexOf(a.id) >= 0; });
+  }
+  function linkCands(apps) {
+    var p = shell() || {}, ok = {};
+    apps.forEach(function (a) { ok[a.id] = 1; });
+    function raw(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+    var SC = p.OrosStockCore || null, T = p.orosTimesheetCore || null, I = p.OrosInvoicesCore || null, src = {};
+    try { if (ok.stock && SC && raw("oros-stock-data")) src.stock = SC.merge(JSON.parse(raw("oros-stock-data")), null); } catch (e) {}
+    try { if (ok.timesheet && T && raw("oros-timesheet-data")) src.ts = T.parse(raw("oros-timesheet-data")); } catch (e) {}
+    try { if (ok.invoices && I && raw("oros-invoices-data")) src.inv = I.parse(raw("oros-invoices-data")); } catch (e) {}
+    if (ok.publish) src.pub = readStore("oros-publish-data");
+    return window.OrosCrmLinks.candidates(src, { stock: SC });
+  }
+  function linkItems(c, args, apps) {
+    var crm = createApps(apps).filter(function (a) { return a.id === "crm"; })[0];
+    if (!crm || !partnerLinksOn(["crm"], apps)) return Promise.resolve({ content: "Error: linking needs CRM and one of Stock, Timesheet, Invoices or Publishing, all allowed for the assistant.", err: 1 });
+    return crmCores().then(function () { return window.OrosAssistLinks ? true : loadOnce("links.js"); }).then(function () {
+      var L = window.OrosAssistLinks, C = window.OrosCrmCore;
+      if (!L || !C || !window.OrosCrmLinks) return { content: "Error: links are not available right now.", err: 1 };
+      var key = "oros-crm-data", data = C.norm(readStore(key));
+      var rs = L.resolve(args && Array.isArray(args.links) ? args.links : [], function (ref) { return c.refs ? c.refs[ref] || null : null; }, linkCands(apps), C, data);
+      if (rs.err) return { content: "Error: " + rs.err, err: 1, ui: { k: "chgErr", app: crm.name } };
+      var pl = L.plan(C, data, rs.links);
+      if (pl.rows.every(function (r) { return r.same; })) return { content: JSON.stringify({ linked: 0, note: "They are linked already. Nothing changed." }) };
+      var rows = pl.rows.map(function (r) {
+        var f = [["lk", t("lkk." + r.k)]];
+        if (r.from) f.push(["moves", r.from]);
+        if (r.unlink) f.push(["unlink", t("lk.unlinkYes")]);
+        return { title: t("cr.linkRow", { cust: r.cust, name: r.name }), fields: r.same ? [] : f, same: !!r.same };
+      });
+      var base = { k: "create", link: 1, app: crm.name, rows: rows };
+      return askCreate(crm.name, rows, "items").then(function (ok) {
+        if (!ok) {
+          base.st = "declined";
+          return { content: JSON.stringify({ linked: 0, note: "The user did not link them. Nothing changed." }), ui: base };
+        }
+        var res = L.apply(C, C.norm(readStore(key)), rs.links, Date.now(), ok.skip);
+        if (!res.done.length) {
+          base.st = "declined";
+          return { content: JSON.stringify({ linked: 0, note: "The user left every link out. Nothing changed." }), ui: base };
+        }
+        if (!writeStore(key, res.data)) {
+          base.st = "failed";
+          base.msg = t("chg.storage");
+          return { content: "Error: the links could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
+        }
+        markAppDirty();
+        var uid = newId();
+        undoMem[uid] = { app: "crm", key: key, lk: res.undo };
+        base.st = "done";
+        base.u = uid;
+        base.added = res.done;
+        return { content: JSON.stringify({ linked: res.done.length, note: "The user made " + res.done.length + " link change(s) in CRM. They can undo it." }), ui: base };
+      });
+    });
+  }
   // The confirm card: one row per record, ticked unless it repeats one
   // already there (or, for links, is linked already). → Promise<false |
   // { skip: { index: 1 } }>
@@ -3401,7 +3471,7 @@
       var card = el("section", "consent chg-card cr-card");
       card.setAttribute("role", "group");
       card.appendChild(el("h3", "", t(link ? "cr.askLink" : "cr.ask", { app: appName, n: rows.length })));
-      card.appendChild(el("p", "consent-text", t(link ? "cr.textLink" : "cr.text", { name: provName(curProv()), n: rows.length, app: appName })));
+      card.appendChild(el("p", "consent-text", t(link === "items" ? "cr.textLinkItems" : link ? "cr.textLink" : "cr.text", { name: provName(curProv()), n: rows.length, app: appName })));
       card.appendChild(el("p", "dlg-hint", t("cr.tickHint")));
       crList(card, rows, cbOf);
       var acts = el("div", "dlg-actions");
@@ -3419,7 +3489,8 @@
   function undoCreate(c, r) {
     var ui = r.ui, mem = undoMem[ui.u];
     if (!mem || !N) return;
-    var res = (mem.mod || N).undo(mem.app, addRead(mem.app, mem.key), mem.cr, Date.now());
+    var res = mem.lk ? window.OrosAssistLinks.undo(window.OrosCrmCore, window.OrosCrmCore.norm(readStore(mem.key)), mem.lk, Date.now())
+                     : (mem.mod || N).undo(mem.app, addRead(mem.app, mem.key), mem.cr, Date.now());
     if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
     var sh = mem.app === "stickies" ? stickiesHost() : null;
     if (mem.app === "stickies" ? !(sh && sh.removeAdded(res.ids)) : !writeStore(mem.key, isCrm(mem.app) ? crmNorm(res.data) : res.data)) {

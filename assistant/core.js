@@ -1680,6 +1680,31 @@
       }
     };
   }
+  // AS-LINK (wave A5, assistant/links.js): a CRM partner linked to a
+  // record of Stock, Timesheet, Invoices or Publishing, CRM's own link.
+  var TOOL_LINK_ITEMS = {
+    name: "link_items",
+    description: "Link CRM customers or partners to their records in other apps, as CRM's \"Linked in other apps\" does: a Stock supplier, " +
+      "a Stock consignment shop, a Timesheet client, an Invoices client, or a person on Publishing titles (e.g. \"supplier X in Stock is customer X\"). " +
+      "CRM then shows that record's stock, hours, invoices or titles on the partner's card. The other apps don't change. " +
+      "A record belongs to one partner: linking it to another moves it (the card says so). unlink: true removes a link. " +
+      "The customer and an item are refs from search_data (or create_items) in this conversation; a consignment shop or a Publishing person is given by name. " +
+      "The user sees the links on one card and must press Link.",
+    params: {
+      type: "object",
+      properties: {
+        links: { type: "array", description: "Up to 50 links.",
+                 items: { type: "object", properties: {
+                   customer: { type: "string", description: "The CRM customer's ref." },
+                   item: { type: "string", description: "The ref of a Stock supplier, a Timesheet client or an Invoices client." },
+                   shop: { type: "string", description: "Instead of item: the name of a consignment shop in Stock." },
+                   person: { type: "string", description: "Instead of item: a person's name as it is on Publishing titles." },
+                   unlink: { type: "boolean", description: "true removes this link instead." }
+                 }, required: ["customer"] } }
+      },
+      required: ["links"]
+    }
+  };
   var TOOL_LINK = {
     name: "link_contact",
     description: "Link CRM customers to contacts in Contacts: the contact becomes one of the customer's people, shown live on the " +
@@ -2014,6 +2039,7 @@
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
+    if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
     if (opts.cover) out.push(TOOL_COVER);
@@ -2314,6 +2340,7 @@
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
         (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +
         (opts.creates.indexOf("travel_plan") >= 0 ? " Itinerary entries and packing items belong to a trip: give its ref as trip (search_data in travel first); a new trip itself is made in Travel." : "") +
+        (opts.partnerLinks ? " When a CRM customer is the same partner as a Stock supplier or consignment shop, a Timesheet client, an Invoices client or a person on Publishing titles, link them with link_items (find both with search_data first) so CRM's card shows it all; never say they are linked because the names match. Calendar events have no link to a customer: a meeting or call to come with a customer is a CRM follow-up (create_items crm_followup), which Calendar shows." : "") +
         (opts.links ? " To link a CRM customer with a contact (the same person, or the company's contact person), call link_contact with both refs, or give contact when you create the customer; find both with search_data first, and create the contact first when it is missing. Never say they are linked by the same name or e-mail: only a link links them." : ""));
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
