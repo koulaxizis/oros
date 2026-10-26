@@ -4,7 +4,7 @@ Liedtext-Sync stimmt die Worte eines Lieds Zeile für Zeile auf die Musik ab, so
 ## Erste Schritte
 - Tippe auf `Neues Lied` und dann auf `Lied auswählen`, um die Audiodatei zu wählen (MP3, M4A, WAV, FLAC, Ogg und mehr).
 - Schreibe oder füge im Tab `Liedtext` die Worte ein, eine Zeile pro Zeile. Eine Leerzeile beginnt eine neue Strophe. Titel, Interpret, Album und Sprachcode kommen in die exportierten Dateien.
-- `Datei öffnen` auf dem ersten Bildschirm beginnt ein Lied aus einer Audiodatei oder aus einer Liedtextdatei, die du schon hast (LRC, SRT, WebVTT, TTML, unser JSON oder Text). Du kannst eine Datei auch auf das Fenster ziehen.
+- `Datei öffnen` auf dem ersten Bildschirm beginnt ein Lied aus einer Audiodatei oder aus einer Liedtextdatei, die du schon hast (LRC, Enhanced LRC, SRT, WebVTT, TTML, ASS, unser JSON oder Text). Du kannst eine Datei auch auf das Fenster ziehen.
 
 ## Sync
 Öffne den Tab `Sync`. Der erste Druck auf die große Taste (oder [[Space]]) startet das Lied. Dann:
@@ -13,6 +13,20 @@ Liedtext-Sync stimmt die Worte eines Lieds Zeile für Zeile auf die Musik ab, so
 Die markierte Zeile (▸) ist die nächste, die eine Zeit bekommt, und die Zeile, die gerade läuft, leuchtet. `Rückgängig` (oder [[Backspace]]) nimmt den letzten Schritt zurück, und `Wiederholen` bringt ihn zurück.
 
 Bei einem schnellen Lied stelle das Tempo auf 75 % oder 50 %: Die Tonhöhe bleibt gleich, und die Zeiten stimmen trotzdem.
+
+## Wort für Wort (Karaoke)
+Wähle `Wörter`. Die Zeile, die du gerade timest, steht über der Liste, mit einer Taste pro Wort; tippe auf die große Taste (oder [[Space]]), wenn jedes Wort beginnt. Das erste Wort beginnt auch die Zeile, und nach dem letzten Wort folgt die nächste Zeile. Tippe auf ein Wort, um ab diesem Wort neu zu timen, oder auf eine Zeile in der Liste, um zu ihr zu wechseln. Jede Zeile zeigt, wie viele ihrer Wörter eine Zeit haben; `Wortzeiten löschen` entfernt sie. Zeilen, in denen jedes Wort eine Zeit hat, füllen sich in der Vorschau und in den Karaoke-Exporten Wort für Wort.
+
+## Die Wellenform
+Unter der Wiedergabeleiste ist das Lied als Wellenform gezeichnet, mit einer Marke am Anfang jeder Zeile (und bei der gewählten Zeile an jedem Wort). Ziehe eine Marke, um sie zu verschieben; tippe irgendwo anders hin, um dorthin zu springen. `+` und `−` zoomen; `Zeile wiederholen` spielt die gewählte Zeile immer wieder, während du sie feinjustierst.
+
+## Tippverzögerung, Verschieben, Sänger
+- `Tippverzögerung` misst, wie spät du tippst: Tippe auf `Start` und dann auf die 8 Klicks. Die Verzögerung wird auf diesem Gerät von jedem Tipper abgezogen.
+- `Alles verschieben` verschiebt jede Zeit um dieselben Sekunden, etwa wenn eine andere Fassung des Lieds ein längeres Intro hat.
+- Für ein Duett schreibe die Namen der Sänger in den Tab `Liedtext` (mit Komma dazwischen). Dann hat eine gewählte Zeile ein Sänger-Menü, und TTML und ASS nennen den Sänger jeder Zeile.
+
+## Vor dem Senden prüfen
+`Prüfen` listet, was Vertriebe meist ablehnen: Zeilen ohne Zeit, Zeilen, die vor der Zeile darüber beginnen, Zeilen, die weniger als eine halbe Sekunde oder 15 Sekunden und länger zu sehen sind, Zeilen über 80 Zeichen, Bezeichnungen und Wiederholungszeichen wie [Refrain] oder x2 und Zeilen, in denen nur manche Wörter eine Zeit haben. Tippe auf einen Eintrag, um zu seiner Zeile zu gehen.
 
 ## Eine Zeile korrigieren
 Tippe auf eine Zeile in der Liste, um sie zu wählen. Dann:
@@ -26,12 +40,14 @@ Wenn du die Worte im Tab `Liedtext` änderst, behalten die unveränderten Zeilen
 - [[Space]]: tippen oder halten (Sync), abspielen oder pausieren (Vorschau). [[P]]: abspielen oder pausieren.
 - [[←]] [[→]]: 2 Sekunden zurück oder vor ([[Shift]]: 10 Sekunden). [[↑]] [[↓]]: eine Zeile wählen.
 - [[Ctrl+Z]] und [[Ctrl+Shift+Z]]: rückgängig und wiederholen.
+- [[E]]: Zeilenende. [[,]] [[.]]: die gewählte Zeile um 0,01 s verschieben.
 
 ## Vorschau und Export
 Die `Vorschau` zeigt die Zeilen so, wie sie in einem Player erscheinen, mit der aktuellen Zeile groß. `Exportieren` speichert die Datei, die du brauchst:
-- `LRC` für Musikplayer, Karaoke und LRCLIB.
+- `LRC` für Musikplayer und LRCLIB; `Enhanced LRC` (erscheint, wenn Zeilen Wortzeiten haben) gibt jedem Wort eine Zeit für Karaoke-Player.
 - `SRT` und `WebVTT` für Video und das Web.
-- `TTML` für Apple Music, iTunes, YouTube und Vertriebe wie DistroKid.
+- `TTML` für Apple Music, iTunes, YouTube und Vertriebe wie DistroKid, mit Wortzeiten und Sängern, wenn vorhanden.
+- `ASS-Karaoke` für Videowerkzeuge wie Aegisub, ffmpeg und VLC: Die Wörter füllen sich, während sie gesungen werden.
 - `JSON (orOS)` behält alles, um es später wieder zu öffnen; `Text` enthält nur die Worte.
 
 ## Deine Daten
