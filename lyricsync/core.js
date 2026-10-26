@@ -90,6 +90,8 @@
     }
     var out = { id: id, name: oneLine(raw.name, MAX_NAME), ar: oneLine(raw.ar, MAX_NAME), al: oneLine(raw.al, MAX_NAME),
              lg: oneLine(raw.lg, 20), dur: tm(raw.dur) || 0, au: au, ln: ln, mtime: ms(raw.mtime) };
+    var src = diskPath(raw.src);
+    if (src) out.src = src;
     if (Array.isArray(raw.vn)) {
       var vn = raw.vn.slice(0, 4).map(function (x) { return oneLine(x, 60); });
       while (vn.length && !vn[vn.length - 1]) vn.pop();
@@ -97,6 +99,23 @@
     }
     return out;
   }
+
+  // Wave 3: the song's file on the orOS disk ("/internal/Music/…"),
+  // so every device finds it through Vault Drive. Only a clean
+  // absolute path under /internal is kept.
+  function diskPath(v) {
+    if (typeof v !== "string" || v.length > 1024 || v.indexOf("/internal/") !== 0) return "";
+    if (/[\u0000-\u001f\\]/.test(v) || /\/\.{1,2}(\/|$)/.test(v) || /\/\//.test(v) || /\/$/.test(v)) return "";
+    return v;
+  }
+  // The lyrics file Music reads next to a song: same name, .lrc.
+  function lrcPath(src) {
+    src = diskPath(src);
+    if (!src) return "";
+    var slash = src.lastIndexOf("/"), dot = src.lastIndexOf(".");
+    return (dot > slash + 1 ? src.slice(0, dot) : src) + ".lrc";
+  }
+  function fileOf(src) { return String(src || "").split("/").pop(); }
 
   function newer(a, b) {
     if (a.mtime !== b.mtime) return a.mtime > b.mtime;
@@ -141,6 +160,13 @@
   function find(d, id) { return d.items.filter(function (p) { return p.id === id; })[0] || null; }
   // Newest first, for the list of songs.
   function live(d) { return d.items.slice().sort(function (a, b) { return b.mtime - a.mtime || byId(a, b); }); }
+
+  // The newest song made from this disk file, or null.
+  function bySrc(d, src) {
+    src = diskPath(src);
+    if (!src) return null;
+    return live(d).filter(function (p) { return p.src === src; })[0] || null;
+  }
 
   function put(d, p, now) {
     var c = cleanProject(Object.assign({}, p, { mtime: Math.max(ms(now), (p.mtime || 0) + 1) }));
@@ -426,7 +452,8 @@
     startAt: startAt, endAt: endAt, clearTime: clearTime, clearAll: clearAll, nudge: nudge, setStart: setStart, shiftAll: shiftAll,
     nextUntimed: nextUntimed, prevTimed: prevTimed, nextTimed: nextTimed, timedCount: timedCount,
     timed: timed, lineAt: lineAt, fmt: fmt, parseTime: parseTime,
-    words: words, wordAt: wordAt, moveMark: moveMark, clearWords: clearWords, wordsDone: wordsDone, wordCount: wordCount, issues: issues
+    words: words, wordAt: wordAt, moveMark: moveMark, clearWords: clearWords, wordsDone: wordsDone, wordCount: wordCount, issues: issues,
+    diskPath: diskPath, lrcPath: lrcPath, fileOf: fileOf, bySrc: bySrc
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else root.LyricsyncCore = API;

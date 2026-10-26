@@ -172,7 +172,13 @@
     { app: "signature", accept: { "application/x-oros-signature": [".orossignature"] } },
     { app: "newsletter", accept: { "application/x-oros-newsletter": [".orosnewsletter"] } },
     { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } },
-    { app: "flashcards", accept: { "application/x-oros-cards": [".oroscards"] } }
+    { app: "flashcards", accept: { "application/x-oros-cards": [".oroscards"] } },
+    { app: "lyricsync", accept: {
+      "application/x-lrc": [".lrc"],
+      "application/x-subrip": [".srt"],
+      "text/vtt": [".vtt"],
+      "application/ttml+xml": [".ttml"],
+      "text/x-ssa": [".ass", ".ssa"] } }
   ];
   var TEXT_MAX = 5 * 1024 * 1024;
 

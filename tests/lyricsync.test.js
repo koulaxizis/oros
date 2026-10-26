@@ -218,3 +218,95 @@ test("karaoke exports read back with their words and singers", () => {
   const q = C.cleanProject({ id: "b", ln: [{ id: "l", t: "a {b} c", s: 0, e: 1000 }], mtime: 1 });
   assert.match(F.toAss(q), /,,\{\\kf100\}a \(b\) c$/m);
 });
+
+// ---------- Wave 3: the orOS disk, the MP3 tag ----------
+const ID3 = require("../lyricsync/id3.js");
+const MC = require("../music/core.js").OrosMusicCore;
+
+test("a song's disk path is kept only when clean, and finds its song", () => {
+  assert.equal(C.diskPath("/internal/Music/Α/b.mp3"), "/internal/Music/Α/b.mp3");
+  ["/internal/Music/../x.mp3", "/internal//x", "/internal/Music/", "x/internal/a", "/internal/a\\b", "/internal/a\u0001", 5, null]
+    .forEach((v) => assert.equal(C.diskPath(v), "", String(v)));
+  assert.equal(C.diskPath("/internal/" + "a".repeat(1100)), "");
+  assert.equal(C.lrcPath("/internal/Music/Al/Song.name.mp3"), "/internal/Music/Al/Song.name.lrc");
+  assert.equal(C.lrcPath("/internal/Music/noext"), "/internal/Music/noext.lrc");
+  assert.equal(C.lrcPath("/etc/x.mp3"), "");
+  const p = C.cleanProject({ id: "s1", src: "/internal/Music/a.mp3", ln: [] });
+  assert.equal(p.src, "/internal/Music/a.mp3");
+  assert.equal(C.cleanProject({ id: "s2", src: "/internal/../a.mp3", ln: [] }).src, undefined);
+  let d = C.put(C.empty(), p, 10);
+  d = C.put(d, { id: "s3", ln: [] }, 20);
+  assert.equal(C.bySrc(d, "/internal/Music/a.mp3").id, "s1");
+  assert.equal(C.bySrc(d, "/internal/Music/b.mp3"), null);
+  // the path syncs: it survives merge and the canonical form
+  assert.equal(C.merge(d, C.empty()).items.filter((x) => x.id === "s1")[0].src, "/internal/Music/a.mp3");
+  assert.equal(C.serialize(C.merge(d, d)), C.serialize(d));
+});
+
+function mp3(tagFrames, major) {
+  // a tiny MPEG frame header after an optional ID3 tag
+  const audio = [0xff, 0xfb, 0x90, 0x64, 1, 2, 3, 4, 5, 6, 7, 8];
+  if (!tagFrames) return new Uint8Array(audio);
+  const body = [];
+  tagFrames.forEach(([id, bytes]) => {
+    const n = bytes.length;
+    const size = major === 4 ? [(n >> 21) & 127, (n >> 14) & 127, (n >> 7) & 127, n & 127] : [n >>> 24, (n >> 16) & 255, (n >> 8) & 255, n & 255];
+    body.push(...id.split("").map((c) => c.charCodeAt(0)), ...size, 0, 0, ...bytes);
+  });
+  body.push(0, 0, 0, 0);                                  // padding
+  const n = body.length;
+  return new Uint8Array([0x49, 0x44, 0x33, major, 0, 0, (n >> 21) & 127, (n >> 14) & 127, (n >> 7) & 127, n & 127, ...body, ...audio]);
+}
+function rebuilt(file, lyrics) {
+  const end = ID3.tagEnd(file.subarray(0, 10));
+  const r = ID3.build(file.subarray(0, Math.max(10, end)), lyrics);
+  if (!r) return null;
+  const out = new Uint8Array(r.tag.length + file.length - r.cut);
+  out.set(r.tag, 0);
+  out.set(file.subarray(r.cut), r.tag.length);
+  return out;
+}
+
+test("the MP3 copy carries the lyrics, keeps the other tags and the audio", () => {
+  const lyrics = { text: "Γεια σου\nHello", lg: "el", lines: [{ s: 1000, t: "Γεια σου" }, { s: 2500, t: "Hello" }] };
+  for (const major of [3, 4]) {
+    const title = major === 4 ? [3, ...Buffer.from("Τίτλος", "utf8")] : [0, ...Buffer.from("Title")];
+    const oldLy = [0, ...Buffer.from("eng"), 0, ...Buffer.from("old words")];
+    const file = mp3([["TIT2", title], ["USLT", oldLy]], major);
+    const out = rebuilt(file, lyrics);
+    assert.ok(out, "v2." + major);
+    assert.equal(out[3], major);
+    const tags = MC.readTags({ head: out, size: out.length, name: "a.mp3" });
+    assert.equal(tags.t, major === 4 ? "Τίτλος" : "Title");
+    assert.equal(tags.ly, "Γεια σου\nHello");                // the old USLT is replaced, not kept
+    const txt = Buffer.from(out).toString("latin1");
+    assert.equal(txt.split("USLT").length - 1, 1);
+    assert.equal(txt.split("SYLT").length - 1, 1);
+    // the audio is untouched
+    assert.deepEqual([...out.subarray(out.length - 12)], [0xff, 0xfb, 0x90, 0x64, 1, 2, 3, 4, 5, 6, 7, 8]);
+    // made again from the copy: same result
+    assert.deepEqual(rebuilt(out, lyrics), out);
+  }
+  // a file with no tag gets a v2.3 one
+  const bare = mp3(null);
+  assert.ok(ID3.isMp3(bare.subarray(0, 4), "x.bin", ""));
+  const out = rebuilt(bare, lyrics);
+  assert.equal(out[3], 3);
+  assert.equal(MC.readTags({ head: out, size: out.length, name: "a.mp3" }).ly, "Γεια σου\nHello");
+  assert.deepEqual([...out.subarray(out.length - 12)], [...bare]);
+});
+
+test("tags that cannot be rewritten safely make nothing", () => {
+  const lyrics = { text: "a", lines: [] };
+  const v22 = mp3([["TIT2", [0, 65]]], 3); v22[3] = 2;
+  assert.equal(ID3.build(v22, lyrics), null);
+  const unsync = mp3([["TIT2", [0, 65]]], 3); unsync[5] = 0x80;
+  assert.equal(ID3.build(unsync, lyrics), null);
+  const ext = mp3([["TIT2", [0, 65]]], 4); ext[5] = 0x40;
+  assert.equal(ID3.build(ext, lyrics), null);
+  const broken = mp3([["TIT2", [0, 65]]], 3); broken[14] = 0x7f;   // frame size past the tag
+  assert.equal(ID3.build(broken, lyrics), null);
+  assert.equal(ID3.isMp3(new Uint8Array([0x52, 0x49, 0x46, 0x46]), "a.wav", "audio/wav"), false);
+  assert.equal(ID3.lang3("el-GR"), "ell");
+  assert.equal(ID3.lang3(""), "und");
+});
