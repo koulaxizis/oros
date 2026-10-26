@@ -358,6 +358,8 @@ dialog.pc-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .sheet-list { display: flex; flex-direction: column; gap: 6px; }
 .sheet-btn { flex: none; text-align: left; display: flex; align-items: center; gap: 8px; }
 .sheet-btn svg { width: 16px; height: 16px; }
+.sheet-btn.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.rs-sec .row-title, .rs-sec .row-sub { white-space: normal; overflow-wrap: anywhere; }
 .confirm-msg { font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
 .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; align-items: end; }
 .seg { display: flex; gap: 4px; flex-wrap: wrap; }

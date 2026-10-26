@@ -53,7 +53,7 @@ Some apps can also work with accounts you already have elsewhere, but only after
 - [Stock](app:stock): your own WooCommerce shop.
 - [Invoices](app:invoices): your timologisi.online account, to send documents to myDATA.
 - [Newsletter](app:newsletter): your MailerLite, Mailchimp or Brevo account, to sync subscribers.
-- [CRM](app:crm): your HubSpot, Pipedrive, Invoice Ninja or Odoo account, read to bring customers and deals in.
+- [CRM](app:crm): your HubSpot, Pipedrive, Invoice Ninja or Odoo account, read to bring customers and deals in; your WooCommerce shop's Revenue Splitter, read on a partner's card and never stored.
 - [Budget](app:budget): your Stripe or Invoice Ninja account, read to bring payments in.
 - [To-Do](app:todo): your Todoist account (projects and tasks) or your GitHub account (the open issues assigned to you), read only.
 - [Kanban](app:kanban): your Trello account (a board) or your GitHub account (a repository's issues), read only.

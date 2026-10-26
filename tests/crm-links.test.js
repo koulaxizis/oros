@@ -21,12 +21,14 @@ function pt(id, extra) { return Object.assign({ id: id, m: 10 }, extra || {}); }
 test("roles: customer only stores nothing, others are kept in a fixed order", () => {
   const d = C.norm({ cust: [cust("aaaaaa1", "A"), cust("aaaaaa2", "B"), cust("aaaaaa3", "C")],
     pt: [pt("aaaaaa1", { roles: ["cust"] }), pt("aaaaaa2", { roles: ["assoc", "sup", "x"] }), pt("aaaaaa3", { roles: [] })] });
-  assert.deepEqual(d.pt, [{ id: "aaaaaa2", m: 10, roles: ["sup", "assoc"] }], "rows with nothing to say leave");
+  // a row with nothing to say stays as { id, m } (1.7): dropping it let
+  // another device's older roles or links come back
+  assert.deepEqual(d.pt, [{ id: "aaaaaa1", m: 10 }, { id: "aaaaaa2", m: 10, roles: ["sup", "assoc"] }, { id: "aaaaaa3", m: 10 }]);
   assert.deepEqual(C.rolesOf(d, d.cust[0]), ["cust"]);
   assert.equal(C.hasRole(d, d.cust[1], "cust"), false);
   assert.equal(C.hasRole(d, d.cust[1], "sup"), true);
   assert.deepEqual(C.rolesRow(d, "aaaaaa2", ["cust"]), { id: "aaaaaa2", m: 10 });
-  assert.deepEqual(C.rolesRow(d, "aaaaaa1", ["shop"]), { id: "aaaaaa1", roles: ["shop"] });
+  assert.deepEqual(C.rolesRow(d, "aaaaaa1", ["shop"]), { id: "aaaaaa1", m: 10, roles: ["shop"] });
 });
 
 test("data without partners keeps its bytes", () => {
