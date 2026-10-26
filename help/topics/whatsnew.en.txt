@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.85.00
+- New app Lyric Sync (Sound): time the words of a song to the music, like DistroKid's lyric tool but with more. Tap as each line starts, or hold while it is sung; slow the song down without changing its pitch; fix any line by typing its time or moving it by hundredths of a second; undo and redo; check the result in a preview. Export LRC, SRT, WebVTT, TTML (Apple Music, YouTube, distributors), JSON or text, and open those formats too. The song never leaves your device; the lyrics and times sync to your other devices.
+
 ## Version 3.84.03
 - Assistant: attach up to 30 files to one message, each up to 30 MB. Each AI service takes only so much in one request; a file past that goes as the text orOS reads from it on your device, and its chip says "text only".
 
