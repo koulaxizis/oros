@@ -1486,7 +1486,19 @@
       "kanban (reschedule: date = due, update: title / date / note / labels, move: column, delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
-      "plants (complete = watered today, update: title / note). Never guess a ref.",
+      "plants (complete = watered today, update: title / note) · " +
+      "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels) · " +
+      "timesheet (an entry, update or reschedule: title / date / start / end, in local time) · " +
+      "invoices (complete = the invoice was paid: amount = only a part, date = the day paid, how) · " +
+      "chores (complete / reopen = today's turn of the chore, update: title) · " +
+      "meals (a recipe, update: title / note / servings) · " +
+      "travel (a trip, update or reschedule: title / date = start / end_date / note; a packing item, complete = packed, reopen, update: title / note; " +
+      "an itinerary entry, update or reschedule: title / date / start / end / location / note) · " +
+      "split (an expense, update: title / date / note / amount) · " +
+      "garage (a vehicle, update: title / note / km = the odometer now) · " +
+      "petcare (a health record, update or reschedule: date / next = next dose or recheck / note) · " +
+      "fitness (a workout, update: title / note) · " +
+      "library (a book, complete = finished today, reopen, update: title / author / labels = tags). Never guess a ref.",
     params: {
       type: "object",
       properties: {
@@ -1502,8 +1514,16 @@
         label: { type: "string", description: "One label's name: calendar sets THE event's label; todo, kanban, contacts, bookmarks ADD it to the item's labels. \"none\" takes the label(s) off. Only labels the user has (search results show them); bookmarks tags are free words." },
         labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks: the item's whole new list of label names (replaces the old list; [] = none)." },
         priority: { type: "integer", description: "todo: 1 urgent, 2 high, 3 medium, 4 none." },
-        note: { type: "string", description: "New note (replaces the old one; empty clears it)." },
-        amount: { type: "number", description: "budget, crm deal: new amount in currency units, e.g. 12.5." },
+        note: { type: "string", description: "New note (replaces the old one; empty clears it; at most 1000 characters)." },
+        text: { type: "string", description: "notes: the page's whole new text (Markdown; replaces it)." },
+        text_add: { type: "string", description: "notes: a paragraph to add at the end of the page (the text stays)." },
+        author: { type: "string", description: "library: the book's author." },
+        how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
+        end_date: { type: "string", description: "travel: the trip's last day YYYY-MM-DD." },
+        next: { type: "string", description: "petcare: next dose or recheck YYYY-MM-DD." },
+        servings: { type: "integer", description: "meals: how many servings the recipe makes." },
+        km: { type: "integer", description: "garage: what the odometer shows now (km)." },
+        amount: { type: "number", description: "budget, crm deal, split: new amount in currency units, e.g. 12.5; invoices: the part that was paid (leave out when all of it was)." },
         roles: { type: "array", items: { type: "string", "enum": ["customer", "supplier", "shop", "author", "associate"] },
                  description: "crm customer: the whole new list of the partner's roles (replaces; shop = consignment shop, author = author / contributor)." },
         stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },

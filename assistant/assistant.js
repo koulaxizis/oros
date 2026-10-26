@@ -370,6 +370,7 @@
       "f.people": "People",
       "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
       "cr.v.expense": "Expense", "cr.v.income": "Income",
+      "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
       "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
@@ -675,6 +676,7 @@
       "f.people": "Άνθρωποι",
       "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
+      "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
       "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
@@ -2612,8 +2614,21 @@
     var api = syncApi();
     try { if (api && typeof api.markDirty === "function") api.markDirty(); } catch (e) {}
   }
+  // Wave A3: the changes of some apps (and their cores) load the first
+  // time one of their items is changed (assistant/edits2.js).
   function changeItem(c, args, apps) {
     if (!E) return Promise.resolve({ content: "Error: changes are not available.", err: 1 });
+    var a = args && typeof args === "object" ? args : {};
+    var first = Array.isArray(a.changes) && a.changes[0] ? a.changes[0].ref : Array.isArray(a.refs) ? a.refs[0] : a.ref;
+    var r0 = c.refs ? c.refs[String(first == null ? "" : first).replace(/^oros:/, "").trim()] : null;
+    var need = r0 && typeof E.needs === "function" ? E.needs(r0.app) : [];
+    if (!need.length) return changeItem0(c, args, apps);
+    return need.reduce(function (p, src) { return p.then(function () { return loadOnce(src); }); }, Promise.resolve()).then(function () {
+      if (E.needs(r0.app).length) return { content: "Error: changes to " + r0.app + " could not be loaded right now.", err: 1 };
+      return changeItem0(c, args, apps);
+    });
+  }
+  function changeItem0(c, args, apps) {
     if (args && Array.isArray(args.changes)) return changeList(c, args, apps);
     if (args && Array.isArray(args.refs)) return changeMany(c, args, apps);
     var ch = E.normArgs(args);
@@ -2879,6 +2894,7 @@
     if (f === "done") return v ? t("v.done") : t("v.open");
     if (f === "kind") return t("v." + v);
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
+    if (f === "status" && /^inv:/.test(v) && STRINGS.en["inv." + v.slice(4)] !== undefined) return t("inv." + v.slice(4));
     if (v === "" || v === undefined) return t("v.empty");
     if (f === "category" && /^cat:/.test(v)) return t(v.replace(/^cat:/, "cat."));
     if (f === "stage" && /^stg:/.test(v) && STRINGS.en["cr.v." + v.replace(":", ".")] !== undefined) return t("cr.v." + v.replace(":", "."));

@@ -116,6 +116,17 @@ Was er ändern kann:
 - [Medienregal](app:shelf): den Status eines Titels ändern (vorgemerkt, läuft gerade, fertig, abgebrochen), Name oder Notiz ändern, ihn löschen.
 - [Gewohnheiten](app:habits): eine Ja/Nein-Gewohnheit für heute abhaken oder den Haken entfernen, eine Gewohnheit umbenennen.
 - [Pflanzenpflege](app:plants): eine Pflanze als heute gegossen markieren, sie umbenennen, ihre Notizen ändern.
+- [Notizen](app:notes): eine Seite umbenennen, ihren Text ersetzen oder am Ende einen Absatz anfügen („füge der Notiz Rom Tag 2: Vatikan hinzu“), ihre Labels ändern.
+- [Zeiterfassung](app:timesheet): Titel, Tag, Beginn oder Ende eines Zeiteintrags ändern.
+- [Rechnungen](app:invoices): eine ausgestellte Rechnung ganz oder teilweise als bezahlt markieren („ACME hat gestern 50 von Rechnung 12 überwiesen“): die Zahlung wird hinzugefügt, wie mit `Zahlung erfassen`. Alles andere geschieht in Rechnungen.
+- [Hausarbeitsrad](app:chores): die heutige Aufgabe abhaken oder wieder öffnen (für die Person, der das Rad sie gibt), eine Aufgabe umbenennen.
+- [Essensplaner](app:meals): Name, Notiz oder Portionen eines Rezepts ändern. Der Wochenplan wird in der App geändert.
+- [Reisen](app:travel): eine Reise umbenennen oder ihre Daten oder Notizen ändern; etwas auf der Packliste abhaken oder wieder öffnen; Titel, Tag, Uhrzeit oder Notiz eines Programmpunkts ändern.
+- [Kosten teilen](app:split): Titel, Datum oder Notiz einer Ausgabe ändern, und ihren Betrag, wenn eine Person bezahlt hat und gleich geteilt wird.
+- [Garage](app:garage): ein Fahrzeug umbenennen, seine Notizen ändern oder einen neuen Kilometerstand eintragen (nie niedriger als der letzte).
+- [Tier-Gesundheitspass](app:petcare): Tag, nächstes Datum oder Notiz eines Gesundheitseintrags ändern.
+- [Training](app:fitness): Titel oder Notiz eines Trainings ändern.
+- [Bibliothek](app:library): ein Buch als gelesen oder ungelesen markieren, Titel, Autor oder Tags ändern.
 
 Manche Änderungen bleiben in der App, und der Assistent sagt das: das Abhaken einer wiederkehrenden Aufgabe (die App berechnet ihr nächstes Datum), das Verschieben oder Löschen eines wiederkehrenden Termins (du wählst dieses Mal oder die ganze Serie), wiederkehrende Budget-Einträge, Einträge mit Belegen oder in einer anderen Währung, Lesezeichen mit gespeicherter Kopie, Kanban-Karten mit Dateien auf der orOS-Disk oder auf einem archivierten Board, Gewohnheiten, die eine Menge zählen, und das Löschen einer Gewohnheit oder Pflanze (das entfernt ihren ganzen Verlauf). Nur das Ergebnis geht an den KI-Dienst zurück („übernommen“ oder „nicht übernommen“), nie, wie der Eintrag vorher aussah.
 
