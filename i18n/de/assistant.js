@@ -430,6 +430,7 @@ orosPack("de", "assistant", {
  "set.note.pollinations": "Nutze einen veröffentlichbaren Schlüssel (er beginnt mit pk_). Der kostenlose Tarif hat stündliche Limits.",
  "set.nt": "Dieses Modell kann keine Werkzeuge nutzen",
  "set.ntHint": "Für kleine Modelle, die keine Werkzeuge aufrufen können: orOS durchsucht dann vor jeder Nachricht selbst deine Daten (mit derselben Karte, die fragt, was geteilt wird) und sendet mit, was du erlaubst. Es kann keine Einträge vorbereiten oder etwas ändern.",
+ "set.permAll": "Alle Apps auf einmal:",
  "set.provider": "Assistent",
  "set.quick": "Desktop-Menü",
  "set.quickBtn": "Desktop-Menü bearbeiten…",

@@ -169,7 +169,7 @@ Markiere Text in einer beliebigen orOS-App und klicke ihn mit rechts an, für ei
 
 ## Datenschutz: was dein Gerät verlässt
 - Deine Nachrichten und die Ergebnisse, die du teilst, gehen nur an den gewählten Dienst, direkt aus deinem Browser. Kein orOS-Server ist dazwischen. Die Zeile über dem Nachrichtenfeld zeigt, wohin sie gehen.
-- Unter `Einstellungen` → `Deine Daten` wählst du pro App `Erst fragen`, `Immer teilen` oder `Nie`. Gesundheit, Stimmung, Zyklus, Baby und Budget stehen anfangs auf `Nie`. Mail und Passwörter werden nie angeboten.
+- Unter `Einstellungen` → `Deine Daten` wählst du pro App `Erst fragen`, `Immer teilen` oder `Nie`. Die drei Knöpfe unter `Alle Apps auf einmal` setzen alle Apps in einem Schritt; danach kannst du einzelne Apps weiter ändern. Gesundheit, Stimmung, Zyklus, Baby und Budget stehen anfangs auf `Nie`. Mail und Passwörter werden nie angeboten.
 - `Nur Chat` schaltet jede Suche aus: Der Assistent sieht dann nur, was du tippst.
 - Mit `Eingebautes Browsermodell` oder `Modell im Browser (WebLLM)` verlässt gar nichts das Gerät (WebLLM lädt sein Modell einmalig herunter).
 - Ein Foto oder PDF geht nur hinaus, wenn du es anhängst und `Senden` drückst, und nur an diesen Dienst.

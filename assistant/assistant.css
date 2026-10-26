@@ -567,6 +567,16 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
 }
+.perm-all {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  padding: 6px 0 8px;
+  border-bottom: 1px solid var(--border);
+}
+.perm-all-btns { display: flex; flex-wrap: wrap; gap: 6px; }
 .perm-name { font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
 .dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .dlg-btn {
