@@ -170,6 +170,20 @@
     return { log: log, logDel: del };
   }
 
+  // Equal field stamps. CT-N2K: a note of exactly 500 characters that
+  // is the start of the other one was cut by an older device (it kept
+  // 500), never edited, so the longer note wins; otherwise the larger
+  // JSON, as before.
+  var OLD_NOTE = 500;
+  function tieWin(f, a, b) {
+    var x = a[f], y = b[f];
+    if (f === "note" && typeof x === "string" && typeof y === "string") {
+      if (y.length === OLD_NOTE && x.length > OLD_NOTE && x.slice(0, OLD_NOTE) === y) return a;
+      if (x.length === OLD_NOTE && y.length > OLD_NOTE && y.slice(0, OLD_NOTE) === x) return b;
+    }
+    return J(x) >= J(y) ? a : b;
+  }
+
   // Two versions of ONE contact → one contact, field by field.
   // Symmetric and deterministic (no clock inside): merge(a, b) and
   // merge(b, a) give the same bytes, merge(a, a) is a.
@@ -188,7 +202,7 @@
       if (f === NEW_FIELDS[0]) out.mtime = Math.max(a.mtime || 0, b.mtime || 0);
       var sa = fieldStamp(a, f), sb = fieldStamp(b, f), w;
       if (sa !== sb) w = sa > sb ? a : b;
-      else w = J(a[f]) >= J(b[f]) ? a : b;            // tie → same pick on both devices
+      else w = tieWin(f, a, b);                         // tie → same pick on both devices
       if (has(w, f) && w[f] !== undefined) out[f] = clone(w[f]);
       var s = Math.max(sa, sb);
       if (withFm && s >= 0 && (has(out, f) || NEW_FIELDS.indexOf(f) === -1)) fm[f] = s;

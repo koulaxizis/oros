@@ -1478,7 +1478,7 @@
         address_replace: { type: "boolean", description: "contacts: true = address replaces the contact's address of the same type (or their only one) instead of adding." },
         tax_id: { type: "string", description: "crm: the customer's VAT / tax number (e.g. Greek ΑΦΜ)." },
         tax_office: { type: "string", description: "crm: the customer's tax office (e.g. Greek ΔΟΥ)." },
-        note_add: { type: "string", description: "contacts, crm: text to add to the note on a new line (the old note stays; the whole note holds 500 characters). Use instead of note." },
+        note_add: { type: "string", description: "contacts, crm: text to add to the note on a new line (the old note stays; the whole note holds 2000 characters in Contacts, 2000 in CRM). Use instead of note." },
         column: { type: "string", description: "kanban move: the name of the column to move the card to." },
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
@@ -2407,7 +2407,8 @@
         else if (bm && realDate("2000-" + bm[1] + "-" + bm[2])) put(o, f, "birthday", bm[1] + "-" + bm[2], "birthday");
         else return { err: "birthday must be YYYY-MM-DD or MM-DD." };
       }
-      var nt = para(a.note, 500);
+      var nt = para(a.note, 5000);
+      if (nt.length > 2000) return { err: "note is " + nt.length + " characters; Contacts keeps 2000. Shorten it." };   // CT-N2K
       if (nt) o.note = nt;
       return { o: o, f: f, title: name || org, text: nt };
     },

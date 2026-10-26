@@ -59,5 +59,6 @@ test("fromAsNew: only real birthdays", () => {
   assert.deepEqual(bd("17/03/1975"), []);
   assert.deepEqual(bd("--02-29"), [{ day: "02-29", year: null, type: "birthday", label: "" }]);
   assert.deepEqual(bd("03-17"), [{ day: "03-17", year: null, type: "birthday", label: "" }]);
-  assert.equal(CT.fromAsNew({ given: "a", note: "n".repeat(900) }).note.length, 500);
+  assert.equal(CT.fromAsNew({ given: "a", note: "n".repeat(900) }).note.length, 900);
+  assert.equal(CT.fromAsNew({ given: "a", note: "n".repeat(2500) }).note.length, 2000);
 });
