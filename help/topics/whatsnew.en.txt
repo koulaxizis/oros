@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.95.00
+- Assistant: it can now link a CRM customer to the same partner in your other apps: a supplier or consignment shop in Stock, a client in Timesheet or Invoices, or a person on your Publishing titles ("link Beta Print in CRM with the supplier in Stock"). The customer page then shows them together. As always you see a card first; nothing changes until you press it, and Undo takes it back.
+
 ## Version 3.94.00
 - Assistant: it can now add time worked to Timesheet, a recipe to Meal Planner, entries to a trip's itinerary or packing list in Travel, and sticky notes ("log 2 hours of layout today", "add the Colosseum on day 2 of Rome"). It can also prepare study cards, a Wiki article, a document or a mind map and open it in that app, where you check it and save it yourself. As always nothing is saved until you press it, and Undo takes it back.
 
