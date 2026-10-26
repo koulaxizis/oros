@@ -371,6 +371,7 @@
       "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
       "cr.v.expense": "Expense", "cr.v.income": "Income",
       "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
+      "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
       "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
@@ -677,6 +678,7 @@
       "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
       "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
+      "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
       "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
@@ -3057,6 +3059,8 @@
     var out = apps.filter(function (a) { return (N.APP_IDS.indexOf(a.id) >= 0 || ADD_IDS.indexOf(a.id) >= 0) && have[a.id]; });
     var crm = out.filter(function (a) { return a.id === "crm"; })[0];
     if (crm) CRM_ADD.forEach(function (id) { out.push({ id: id, name: crm.name, icon: crm.icon, of: "crm" }); });
+    var tv = apps.filter(function (a) { return a.id === "travel" && have[a.id]; })[0];
+    if (tv) TRAVEL_ADD.forEach(function (id) { out.push({ id: id, name: tv.name, icon: tv.icon, of: "travel" }); });
     return out;
   }
   // AS-ADD2 (wave A1): the everyday apps' new items are in
@@ -3066,6 +3070,14 @@
   // Wave A2 (AS-ADD3): a CRM customer's history, follow-ups and deals,
   // allowed whenever CRM is; refs from search_data or create_items.
   var CRM_ADD = ["crm_activity", "crm_followup", "crm_deal"];
+  // Wave A4 (AS-ADD5): time worked, recipes, sticky notes, and a trip's
+  // itinerary and packing list (virtual apps of Travel, a trip's ref
+  // each), in assistant/additems2.js with the app's own core.
+  var ADD2_IDS = ["timesheet", "meals", "stickies"];
+  var TRAVEL_ADD = ["travel_plan", "travel_pack"];
+  var ADD2_CORES = { timesheet: ["orosTimesheetCore", "../timesheet/core.js"], meals: ["OrosMealsCore", "../meals/core.js"],
+                     stickies: ["StickiesCore", "../stickies/core.js"] };
+  ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD);
   var addScripts = {};
   function loadOnce(src) {
     if (!addScripts[src]) {
@@ -3083,12 +3095,50 @@
     if (ADD_IDS.indexOf(appId) < 0 && CRM_ADD.indexOf(appId) < 0) return Promise.resolve(null);
     var need = [window.OrosAssistAdd ? null : "additems.js"];
     if (appId === "bookmarks" && !window.OrosBookmarksCore) need.push("../bookmarks/core.js");
+    var c2 = ADD2_CORES[appId], two = ADD2_IDS.indexOf(appId) >= 0 || TRAVEL_ADD.indexOf(appId) >= 0;
+    if (c2 && !window[c2[0]]) need.push(c2[1]);
     return Promise.all(need.filter(Boolean).map(loadOnce)).then(function () {
+      // additems2.js registers into additems.js, so it loads after it.
+      return two && window.OrosAssistAdd && !window.OrosAssistAdd2 ? loadOnce("additems2.js") : null;
+    }).then(function () {
       if (appId === "bookmarks" && !window.OrosBookmarksCore) return null;
+      if ((c2 && !window[c2[0]]) || (two && !window.OrosAssistAdd2)) return null;
       return window.OrosAssistAdd || null;
     });
   }
-  function createCtx() { return { today: ymdNow(), lang: LANG, bm: window.OrosBookmarksCore || null, crm: window.OrosCrmCore || null }; }
+  function createCtx() {
+    var sn = stickiesHost(), color = "";
+    try { color = sn && typeof sn.prefs === "function" ? sn.prefs().color : ""; } catch (e) { color = ""; }
+    return { today: ymdNow(), lang: LANG, bm: window.OrosBookmarksCore || null, crm: window.OrosCrmCore || null, stickyColor: color };
+  }
+  // Sticky Notes are written only by the shell's host (stickies/host.js):
+  // read through it (its unsaved typing included), added with
+  // addFromFile, taken back with removeAdded (tombstones).
+  function stickiesHost() {
+    var p = shell();
+    try { return p && p.orosStickies && typeof p.orosStickies.addFromFile === "function" ? p.orosStickies : null; } catch (e) { return null; }
+  }
+  function addRead(appId, key) {
+    if (appId !== "stickies") return readStore(key);
+    var h = stickiesHost();
+    try { return h ? h.data() : null; } catch (e) { return null; }
+  }
+  function addWrite(appId, key, d) {
+    if (appId !== "stickies") return writeStore(key, d);
+    var h = stickiesHost();
+    try { return !!(h && h.addFromFile(d)); } catch (e) { return false; }
+  }
+  // A trip's itinerary or packing items: the trip's ref, never a name.
+  function tripRefsOf(c, items) {
+    for (var i = 0; i < items.length; i++) {
+      var r = c.refs ? c.refs[String(items[i].trip).replace(/^oros:/, "").trim()] : null;
+      if (!r || r.app !== "travel" || !r.target || typeof r.target.trip !== "string" || r.target.tab) {
+        return "Error: items[" + i + "]: trip " + items[i].trip + " is not a trip's ref. Find the trip with search_data (app travel) first; a new trip is made in Travel.";
+      }
+      items[i].tripId = r.target.trip;
+    }
+    return "";
+  }
   function isCrm(id) { return id === "crm" || CRM_ADD.indexOf(id) >= 0; }
   function crmNorm(d) {
     try { return window.OrosCrmCore && typeof window.OrosCrmCore.norm === "function" ? window.OrosCrmCore.norm(d) : d; } catch (e) { return d; }
@@ -3144,8 +3194,8 @@
     var app = createApps(apps).filter(function (a) { return a.id === nm.app; })[0];
     if (!app) return Promise.resolve(noCreate(apps, nm.app));
     var items = nm.items;
-    if (app.of === "crm") {
-      var eR = crmRefsOf(c, items);
+    if (app.of === "crm" || app.of === "travel") {
+      var eR = app.of === "crm" ? crmRefsOf(c, items) : tripRefsOf(c, items);
       if (eR) return Promise.resolve({ content: eR, err: 1 });
     }
     if (app.id === "crm") {
@@ -3164,7 +3214,8 @@
     }
     var key = M.storageKey(app.id);
     return (isCrm(app.id) ? crmCores() : Promise.resolve()).then(function () {
-      var pl = M.plan(app.id, readStore(key), items, ctx);
+      if (app.id === "stickies" && !stickiesHost()) return { content: "Error: Sticky Notes is not running in this orOS window.", err: 1 };
+      var pl = M.plan(app.id, addRead(app.id, key), items, ctx);
       if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } };
       var base = { k: "create", app: app.name, rows: pl.rows };
       return askCreate(app.name, pl.rows, false).then(function (ok) {
@@ -3172,14 +3223,14 @@
           base.st = "declined";
           return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base };
         }
-        var res = M.apply(app.id, readStore(key), items, Date.now(), ok.skip, ctx);
+        var res = M.apply(app.id, addRead(app.id, key), items, Date.now(), ok.skip, ctx);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
           return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base };
         }
         var d = isCrm(app.id) ? crmNorm(res.data) : res.data;
-        if (!writeStore(key, d)) {
+        if (!addWrite(app.id, key, d)) {
           base.st = "failed";
           base.msg = t("chg.storage");
           return { content: "Error: the records could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base };
@@ -3300,6 +3351,9 @@
   function crValue(f, v) {
     if ((f === "kind" || f === "status") && STRINGS.en["cr.v." + v] !== undefined) return t("cr.v." + v);
     if (f === "channel" && STRINGS.en["cr.v.ch." + v] !== undefined) return t("cr.v.ch." + v);
+    // Wave A4: Travel's kinds and packing groups, sticky note colours
+    var A4V = { kind: "tv.k.", group: "tv.g.", color: "sn.c." };
+    if (A4V[f] && STRINGS.en[A4V[f] + v] !== undefined) return t(A4V[f] + v);
     if (f === "reminder" && typeof v === "number") {
       return v === 1440 ? t("cr.rem.d1") : v % 1440 === 0 ? t("cr.rem.d", { n: v / 1440 }) : v % 60 === 0 ? t("cr.rem.h", { n: v / 60 }) : t("cr.rem.m", { n: v });
     }
@@ -3365,9 +3419,13 @@
   function undoCreate(c, r) {
     var ui = r.ui, mem = undoMem[ui.u];
     if (!mem || !N) return;
-    var res = (mem.mod || N).undo(mem.app, readStore(mem.key), mem.cr, Date.now());
+    var res = (mem.mod || N).undo(mem.app, addRead(mem.app, mem.key), mem.cr, Date.now());
     if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
-    if (!writeStore(mem.key, isCrm(mem.app) ? crmNorm(res.data) : res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
+    var sh = mem.app === "stickies" ? stickiesHost() : null;
+    if (mem.app === "stickies" ? !(sh && sh.removeAdded(res.ids)) : !writeStore(mem.key, isCrm(mem.app) ? crmNorm(res.data) : res.data)) {
+      showToast(t("chg.undoFail", { msg: t("chg.storage") }));
+      return;
+    }
     markAppDirty();
     delete undoMem[ui.u];
     ui.st = "undone";
@@ -4362,7 +4420,7 @@
         t("entry." + ui.st, { app: name })));
     } else {
       var hint = e.kind === "slides" ? "entry.hint.slides" : e.kind === "place" ? "entry.hint.place" :
-                 (e.kind === "note" || e.kind === "sheet") ? "entry.hint.make" : "entry.hint.form";
+                 (e.kind === "note" || e.kind === "sheet" || e.kind === "document") ? "entry.hint.make" : "entry.hint.form";
       card.appendChild(el("p", "dlg-hint", t(hint, { app: name })));
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("entry.dismiss"), "", function () {

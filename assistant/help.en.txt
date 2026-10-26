@@ -97,6 +97,17 @@ In [CRM](app:crm) the assistant can also add to a customer it has found (or just
 - Something that looks like one already there (the same entry in their history, an open follow-up on the same day, an open deal with the same title) starts unticked.
 - `Undo` doesn't take back a deal that has history or follow-ups since.
 
+## Time worked, recipes, a trip's plan, sticky notes and study cards
+The assistant can add straight to more apps, with the same card, ticks and `Undo`:
+- [Timesheet](app:timesheet): time you worked, with its day, start and end (or how long), and one of your projects by name ("log 2 hours of layout for Glarolykoi this morning from 9"). A timer is started in Timesheet itself.
+- [Meal Planner](app:meals): a recipe, with servings, times, ingredients (read the way the app reads a pasted recipe, "200 g flour, sifted") and steps, for example from a photo of a cookbook page. It goes to your own recipes; one with the name of a recipe you already have starts unticked.
+- [Travel](app:travel): entries in a trip's itinerary (a flight, a stay, a ticket, a visit, with day, time and place) and items on its packing list. The trip is one the assistant found; a new trip is made in Travel.
+- [Sticky Notes](app:stickies): a note on the desktop, in a colour, and with a reminder at a day and time if you like. Sticky Notes keeps 60 notes on the desktop.
+
+Longer content opens in the app's own window, where you check it and save it yourself:
+- [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
+- [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`.
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.94.00
+- Assistant: it can now add time worked to Timesheet, a recipe to Meal Planner, entries to a trip's itinerary or packing list in Travel, and sticky notes ("log 2 hours of layout today", "add the Colosseum on day 2 of Rome"). It can also prepare study cards, a Wiki article, a document or a mind map and open it in that app, where you check it and save it yourself. As always nothing is saved until you press it, and Undo takes it back.
+
 ## Version 3.93.00
 - Assistant: it can now change things in eleven more apps: add to or rewrite a Notes page, fix a Timesheet entry, mark an invoice paid, tick a chore, edit a recipe, a trip, a packing item or an itinerary entry, an expense in Split, a vehicle in Garage, a pet's health record, a workout's notes and a Library book ("mark invoice 12 as paid", "add day 2 to my Rome note"). As always you see a card first; nothing is saved until you press it, and Undo takes it back.
 

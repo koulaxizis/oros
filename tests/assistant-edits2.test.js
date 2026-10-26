@@ -339,3 +339,10 @@ test("library: finished today / not finished, title, author, tags; canonical; Un
   assert.equal(u.ok, true, u.err);
   assert.equal(u.data.books[0].fin, undefined);
 });
+test("travel: a change that makes an old tombstone go prunes it as Travel's merge does", () => {
+  const d = tvData();
+  d.tombs = { "gone-item-1": NOW - 182 * 86400000 };
+  const r = run("travel", TV.mergeTravel(d, null), { trip: "trip-rome", tab: "pack", item: "item-pass" }, { action: "complete" });
+  assert.equal(r.data.tombs["gone-item-1"], undefined);
+  assert.equal(J(TV.mergeTravel(clone(r.data), null)), J(r.data));
+});

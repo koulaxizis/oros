@@ -97,6 +97,17 @@ In [CRM](app:crm) kann der Assistent einem Kunden, den er gefunden (oder gerade 
 - Was wie etwas schon Vorhandenes aussieht (derselbe Eintrag im Verlauf, eine offene Wiedervorlage am selben Tag, ein offener Deal mit demselben Titel), beginnt ohne Haken.
 - `Rückgängig` nimmt einen Deal nicht zurück, der inzwischen Verlauf oder Wiedervorlagen hat.
 
+## Arbeitszeit, Rezepte, Reiseplan, Haftnotizen und Lernkarten
+Der Assistent kann direkt auch in weitere Apps eintragen, mit derselben Karte, denselben Häkchen und `Rückgängig`:
+- [Zeiterfassung](app:timesheet): gearbeitete Zeit mit Tag, Beginn und Ende (oder Dauer) und einem deiner Projekte beim Namen („trag 2 Stunden Satz für Glarolykoi heute ab 9 ein“). Einen Timer startest du in der Zeiterfassung selbst.
+- [Essensplaner](app:meals): ein Rezept mit Portionen, Zeiten, Zutaten (so gelesen, wie die App ein eingefügtes Rezept liest, „200 g Mehl, gesiebt“) und Schritten, zum Beispiel vom Foto einer Kochbuchseite. Es kommt zu deinen eigenen Rezepten; eines mit dem Namen eines Rezepts, das du schon hast, startet ohne Häkchen.
+- [Reisen](app:travel): Einträge im Programm einer Reise (Flug, Unterkunft, Ticket, Besuch, mit Tag, Uhrzeit und Ort) und Dinge auf ihrer Packliste. Die Reise ist die, die der Assistent gefunden hat; eine neue Reise legst du in Reisen an.
+- [Haftnotizen](app:stickies): eine Notiz auf dem Desktop, in einer Farbe und auf Wunsch mit einer Erinnerung an einem Tag und zu einer Uhrzeit. Haftnotizen behält 60 Notizen auf dem Desktop.
+
+Längere Inhalte öffnen sich im eigenen Fenster der App, wo du sie prüfst und selbst speicherst:
+- [Karteikarten](app:flashcards): Lernkarten aus einem Kapitel, einer Wortliste oder deinen Notizen („mach 20 Karten aus diesem Kapitel“). Sie öffnen sich in `Karten erstellen`, wo du jede Karte abwählen oder ändern kannst und den Stapel wählst.
+- [Wiki](app:wiki): ein Artikel, geöffnet im Editor des Wikis. [Texteditor](app:writer): ein neues Dokument, das beim Drücken von `In Texteditor öffnen` entsteht. [Mindmap](app:mindmap): die Ideen einer Map, geöffnet in `Liste einfügen…`.
+
 ## Ändern, was du schon hast
 Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Verschieb den Zahnarzt auf Freitag um 10:00“, „Das Mittagessen war 14,50, nicht 12,50“ oder „Lösch das alte Lesezeichen über Züge“. Der Assistent findet den Eintrag zuerst mit einer Suche (du siehst und teilst ihn wie gewohnt) und zeigt dann eine Karte: was sich ändert, `Vorher` und `Nachher`, oder was gelöscht wird.
 - `Übernehmen` (oder `Löschen`) führt die Änderung aus. `Nicht ändern` lässt alles, wie es ist. Nichts ändert sich, bis du darauf drückst, auch bei Apps auf `Immer teilen`.
