@@ -695,3 +695,15 @@ body.as-mini #toolbar, body.as-mini #side, body.as-mini #scrim { display: none !
 .chg-table .chg-tick input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent, currentColor); }
 .chg-table tr.chg-off td, .chg-table tr.chg-off th { opacity: 0.45; }
 .chg-table tr.chg-off td.chg-tick { opacity: 1; }
+
+/* AS-ADD: new contacts / CRM customers and links, one row per record */
+.cr-row { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.cr-row:last-child { border-bottom: 0; }
+.cr-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cr-head input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--accent, currentColor); }
+.cr-head .entry-title { margin: 0; overflow-wrap: anywhere; min-width: 0; }
+.cr-row.cr-dup .dlg-hint { color: var(--text-dim); margin: 4px 0 0; }
+.cr-fields { border-collapse: collapse; font-size: 13px; width: 100%; margin-top: 4px; }
+.cr-fields th, .cr-fields td { padding: 2px 8px 2px 0; text-align: start; vertical-align: top; }
+.cr-fields th { color: var(--text-dim); font-weight: 700; white-space: nowrap; width: 1%; }
+.cr-fields td { overflow-wrap: anywhere; white-space: pre-line; }

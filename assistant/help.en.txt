@@ -75,6 +75,13 @@ Build a [Newsletter](app:newsletter) issue by chat: "add the interview from http
 ## Book cover
 Attach the front picture (and your logo, if you want it on the cover) and ask, for example: "set up the cover of «Title» by Author, 240 pages". The card lists the details and the pictures; `Open in Layout` saves the pictures to Files › Pictures › Covers and opens [Layout](app:layout)'s Book cover window filled in, where you check everything and press Create. Pictures you attached in an earlier session are not kept, so attach them again or pick them in Layout.
 
+## New contacts and CRM customers
+The assistant can add people and companies straight to [Contacts](app:contacts) and [CRM](app:crm), many at once: "add everyone from this list to my contacts", "make Ann Writer a CRM customer and link her to her contact". It looks them up first, then shows one card with every new record and a tick on each.
+- `Add` saves the ticked ones. `Don't add` leaves everything as it is. Nothing is saved before you press it.
+- Someone who looks like a record you already have (same e-mail, phone, tax number or name) is marked `Already there` and starts unticked; the assistant then updates that record instead, with a `Before` and `After` card.
+- A CRM customer can be linked to a contact: the contact becomes one of the customer's `People` (shown live in CRM), and Contacts shows the customer on the contact's card. The link has its own card with `Link`; Contacts itself doesn't change. A missing contact is added first.
+- `Undo` takes the new records (or the links) back until you leave the Assistant, as long as you haven't changed them in the app (a customer that got a deal or a note of a call stays).
+
 ## Change what you already have
 Ask, for example, "mark the plumber call as done", "move the dentist to Friday at 10:00", "the lunch was 14.50, not 12.50" or "delete the old bookmark about trains". The assistant first finds the item with a search (you see and share it as usual), then shows a card: what changes, `Before` and `After`, or what is deleted.
 - `Apply` (or `Delete`) makes the change. `Don't change` leaves everything as it is. Nothing changes until you press it, even for apps set to `Always share`.
@@ -88,7 +95,7 @@ What it can change:
 - [Calendar](app:calendar): move an event (day, start, end), rename it, change its place, label or note, delete it. It can also list your events by label, or the ones without a label ("which events have no label?"). New labels are made in Calendar.
 - [Budget](app:budget): change an entry's amount, date, category or note, delete it.
 - [Bookmarks](app:bookmarks): rename a bookmark, change its note or tags, delete it.
-- [Contacts](app:contacts): change a contact's name, nickname, organisation, job title, birthday, note or labels; add a phone number, e-mail, website or address (the old ones stay), or replace one that changed; add a line to the note; delete it. Attach a business card, a form, a list, a vCard or an e-mail signature and ask "update my contacts from this": the assistant looks everyone up first, proposes only what is new or different, and offers a new contact for anyone who isn't there.
+- [Contacts](app:contacts): change a contact's name, nickname, organisation, job title, birthday, note or labels; add a phone number, e-mail, website or address (the old ones stay), or replace one that changed; add a line to the note; delete it. Attach a business card, a form, a list, a vCard or an e-mail signature and ask "update my contacts from this": the assistant looks everyone up first, proposes only what is new or different, and adds anyone who isn't there on one card (see New contacts and CRM customers).
 - [CRM](app:crm): fill in a customer's VAT or tax number, tax office, job title, phone, e-mail, website or address, change its name or alias, add a line to its note (bank details or a bio go there). A phone, e-mail, website or address it already has is replaced only when you say it changed. Customers are deleted in CRM itself.
 - [Kanban](app:kanban): move a card to another column ("move the invoice card to Done"), change its due date, title, note or labels, delete it. A move runs the column's own automations, and the card shows what they change.
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
