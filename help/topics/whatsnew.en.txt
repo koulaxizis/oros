@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.85.02
+- Contacts: a contact's note now holds 2,000 characters (it was 500), enough for a bio or a full description. The Assistant never shortens a note on its own: if one is too long it says so. When it updates several contacts at once and one of them can't be changed, the others still go on the card for you to apply, and it tells you which one was left out and why.
+
 ## Version 3.85.01
 - Assistant: long answers are no longer cut off. Claude may now write as much as each model allows, and when any service stops at its length limit the Assistant asks it to go on, up to 4 times, so you get one whole answer.
 
