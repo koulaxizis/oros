@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — core.js (shared logic, v1.6.0)
+// orOS CRM — core.js (shared logic, v1.7.0)
 // One file holds the model, the merge and every derived number,
 // so the app, the universal search provider, the shell reminder,
 // the Calendar feed, the Today provider, Contacts and (later)
@@ -61,9 +61,18 @@
 //     rem, val?, note, file?, fup? }] (see normCtr).
 //   balance(data, c, I, inv, today) → { in, out: { CUR: { open, overdue } } }
 //     what a partner owes you / you owe them in Invoices (W5)
+//   Revenue Splitter beneficiaries (1.7, partner card W6): normRsl,
+//     rsOf(data, c) → { a, n: [name] } | null, rsRow(custId, a,
+//     names) → the rsl row to save; rsl?: [{ id = customer id, m, a?:
+//     Connected services account (a WooCommerce shop), n?: [the
+//     beneficiary's exact name in the shop's Revenue Splitter] }]. Its
+//     own list, like ctr, so a 1.6 device can't strip it (normLinks
+//     would drop an unknown "rs:" key from pt.ln). A row without n is
+//     kept: an unlink must not come back from another device's copy
+//     (the same holds for an emptied pt row since 1.7).
 // Data (synced slice "crm", key oros-crm-data):
 //   { ver: 1, cust, deals, acts, fups, tags, stg: [row…] each
-//     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), prefs: { pm, cur, forget }, wf?: web form,
+//     sorted by id, pt?: partners (1.5), ctr?: contracts (1.6), rsl?: Revenue Splitter links (1.7), prefs: { pm, cur, forget }, wf?: web form,
 //     tombs: { id: deletedAt } }
 // Nothing derived is stored (last contact, totals, "late"): two
 // devices can never disagree on it.
@@ -79,7 +88,7 @@
   var DAY_MS = 86400000;
   var TOMB_DAYS = 365;
   var VAL_MAX = 99999999999;          // cents: just under a billion
-  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000 };
+  var LIMITS = { cust: 2000, deals: 5000, acts: 20000, fups: 10000, tags: 50, stg: 20, people: 20, custTags: 10, openStages: 8, links: 30, pt: 2000, ctr: 5000, rsl: 2000, rsNames: 5 };
   var STAGES = ["new", "contact", "proposal", "nego", "won", "lost"];
   var OPEN_STAGES = ["new", "contact", "proposal", "nego"];      // the built-in open stages
   var STAGE_PROB = { "new": 10, contact: 25, proposal: 50, nego: 75, won: 100, lost: 0 };
@@ -87,7 +96,7 @@
   var ACT_KINDS = ["call", "mail", "meet", "msg", "note"];
   var CUST_ST = ["lead", "active", "past"];
   var CURRENCIES = ["EUR", "USD", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "CAD", "AUD", "JPY"];
-  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr"];
+  var LIST_KEYS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl"];
 
   // ---------- Small helpers ----------
   function isInt(n) { return typeof n === "number" && isFinite(n) && Math.floor(n) === n; }
@@ -283,6 +292,40 @@
     if (ln.length) o.ln = ln;
     return o;
   }
+  // Revenue Splitter (W6): names are the shop's exact strings (its
+  // splits match them exactly), so only trimmed and capped, never folded.
+  var ACCT_RE = /^[a-z0-9]{1,40}$/;
+  function rsNames(v) {
+    var out = [];
+    if (Array.isArray(v)) v.forEach(function (n) {
+      var x = cleanText(n, 120);
+      if (x && out.indexOf(x) < 0 && out.length < LIMITS.rsNames) out.push(x);
+    });
+    return out.sort(cmpStr);
+  }
+  function normRsl(x) {
+    if (!x || typeof x !== "object" || !ID_RE.test(x.id) || !stamp(x)) return null;
+    var o = { id: x.id, m: x.m };
+    var n = rsNames(x.n);
+    if (n.length) {
+      if (typeof x.a === "string" && ACCT_RE.test(x.a)) o.a = x.a;
+      o.n = n;
+    }
+    return o;
+  }
+  function rsOf(data, c) {
+    var r = c && data ? byId(data.rsl, c.id) : null;
+    return r && r.n ? { a: r.a || "", n: r.n.slice() } : null;
+  }
+  function rsRow(custId, a, names) {
+    var o = { id: custId, m: 0 };
+    var n = rsNames(names);
+    if (n.length) {
+      if (typeof a === "string" && ACCT_RE.test(a)) o.a = a;
+      o.n = n;
+    }
+    return o;
+  }
   function ptOf(data, custId) { return (data && byId(data.pt, custId)) || null; }
   function rolesOf(data, c) { var p = c && ptOf(data, c.id); return p && p.roles ? p.roles : ["cust"]; }
   function hasRole(data, c, r) { return rolesOf(data, c).indexOf(r) >= 0; }
@@ -467,7 +510,7 @@
     return out;
   }
 
-  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr };
+  var LISTS = { cust: normCust, deals: normDeal, acts: normAct, fups: normFup, tags: normTag, stg: normStg, pt: normPt, ctr: normCtr, rsl: normRsl };
 
   // The web form (crm/webform.js, relay /crm/f/<k>): one record, last
   // writer wins by m. { m, k, sec, priv (RSA-OAEP-256 private JWK),
@@ -555,12 +598,13 @@
       Object.keys(best[k]).sort(cmpStr).forEach(function (id) {
         var x = best[k][id];
         if (id in tombs && tombs[id] >= x.m) return;
-        if (k === "pt" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
-        if (k === "pt" && !x.roles && !x.ln) return;      // nothing left to say
+        // an emptied pt or rsl row stays: dropping it would let another
+        // device's older copy bring the link back
+        if (k === "pt" || k === "rsl" ? !aliveCust[x.id] : (k !== "cust" && k !== "tags" && k !== "stg" && !aliveCust[x.cust])) return;
         if (list.length >= LIMITS[k]) return;
         list.push(x);
       });
-      if ((k !== "pt" && k !== "ctr") || list.length) out[k] = list;
+      if ((k !== "pt" && k !== "ctr" && k !== "rsl") || list.length) out[k] = list;
       if (k === "cust") list.forEach(function (c) { aliveCust[c.id] = true; });
     });
     out.prefs = pb.pm > pa.pm || (pb.pm === pa.pm && canon(pb) > canon(pa)) ? pb : pa;
@@ -1074,7 +1118,7 @@
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
-    normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
+    normRsl: normRsl, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };
