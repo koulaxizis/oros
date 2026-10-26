@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.84.02
+- Today: on a wide screen the cards now flow in two columns with no gaps, so Coming up sits right under a short Overdue instead of below a long Today. When more than three of your contacts celebrate a name day, they fold into one row you can open.
+
 ## Version 3.84.01
 - Assistant: in Settings → Your data, the new "All apps at once" row sets every app to Ask first, Always share or Never in one tap. You can still change single apps after.
 
