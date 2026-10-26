@@ -443,6 +443,10 @@ button:disabled { cursor: default; opacity: 0.4; }
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  /* up to 30 files: the row scrolls instead of pushing the message box away */
+  max-height: min(30vh, 220px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .att-row[hidden] { display: none; }
 .att-chip {

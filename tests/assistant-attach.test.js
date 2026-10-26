@@ -42,7 +42,64 @@ test("attach: checkAtt codes", () => {
   assert.equal(C.checkAtt("anthropic", [], { type: "image/png", size: C.ATT_IMG + 1 }), "size");
   assert.equal(C.checkAtt("anthropic", [], { type: "application/pdf", size: C.ATT_PDF }), "");
   assert.equal(C.checkAtt("anthropic", [], { type: "application/pdf", size: C.ATT_PDF + 1 }), "size");
-  assert.equal(C.checkAtt("anthropic", [1, 2, 3], { type: "image/png", size: 10 }), "count");
+  assert.equal(C.checkAtt("anthropic", [1, 2, 3], { type: "image/png", size: 10 }), "");
+  assert.equal(C.checkAtt("anthropic", new Array(29), { type: "image/png", size: 10 }), "");
+  assert.equal(C.checkAtt("anthropic", new Array(30), { type: "image/png", size: 10 }), "count");
+});
+
+test("attach: 30 files of up to 30 MB a message", () => {
+  assert.equal(C.ATT_MAX, 30);
+  assert.equal(C.ATT_FILE, 30 * 1024 * 1024);
+  assert.equal(C.ATT_PDF, C.ATT_FILE);
+  assert.equal(C.ATT_DOC, C.ATT_FILE);
+  // Claude takes 5 MB a photo: photos are shrunk on the device to under it
+  assert.equal(C.ATT_IMG, 5 * 1024 * 1024);
+  // per request, under each provider's own limit (base64 is 4/3 bigger)
+  assert.ok(C.attRoom("anthropic").bytes * 4 / 3 < 32 * 1024 * 1024 * 0.95);
+  assert.equal(C.attRoom("anthropic").pages, 100);
+  assert.equal(C.attRoom("anthropic").n, 100);
+  assert.ok(C.attRoom("openai").bytes * 4 / 3 < 50 * 1024 * 1024);
+  assert.ok(C.attRoom("gemini").bytes * 4 / 3 < 20 * 1024 * 1024);
+  assert.equal(C.attRoom("mistral").bytes, C.ATT_SEND);
+  assert.equal(C.attRoom("mistral").pages, 0);
+});
+
+test("attach: a file past the request's room goes as the text read on the device", () => {
+  const MB = 1024 * 1024, b64 = (mb) => "A".repeat(Math.ceil(mb * MB * 4 / 3));
+  const p1 = { id: "apdf0011", name: "a.pdf", type: "application/pdf", size: 15 * MB, data: b64(15) };
+  const p2 = { id: "apdf0012", name: "b.pdf", type: "application/pdf", size: 15 * MB, data: b64(15), text: "Contract text" };
+  const p3 = { id: "apdf0013", name: "c.pdf", type: "application/pdf", size: 15 * MB, data: b64(15) };
+  let h = C.prepHistory([user("read", [p1, p2])], "anthropic");
+  assert.equal(h[0].att.length, 1);
+  assert.equal(h[0].att[0].name, "a.pdf");
+  assert.match(h[0].text, /^\[Text that orOS read on the device from the PDF “b\.pdf”[^]*Contract text[^]*\nread$/);
+  // without text read yet, the old note
+  h = C.prepHistory([user("read", [p1, p3])], "anthropic");
+  assert.match(h[0].text, /“c\.pdf” earlier; it was left out to keep the request small/);
+  // OpenAI has more room: both go
+  h = C.prepHistory([user("read", [p1, p2])], "openai");
+  assert.equal(h[0].att.length, 2);
+  // Claude's page limit: 100 pages a request, counted by the Assistant
+  const s1 = { id: "apdf0021", name: "s1.pdf", type: "application/pdf", size: 3, data: "QUJD", pages: 80 };
+  const s2 = { id: "apdf0022", name: "s2.pdf", type: "application/pdf", size: 3, data: "QUJD", pages: 30, text: "Second" };
+  const s3 = { id: "apdf0023", name: "s3.pdf", type: "application/pdf", size: 3, data: "QUJD", pages: 20 };
+  h = C.prepHistory([user("read", [s1, s2, s3])], "anthropic");
+  assert.deepEqual(h[0].att.map((a) => a.name), ["s1.pdf", "s3.pdf"]);
+  assert.match(h[0].text, /Second/);
+  // Gemini counts no pages
+  assert.equal(C.prepHistory([user("read", [s1, s2, s3])], "gemini")[0].att.length, 3);
+  // Claude: at most 100 files a request, newest first
+  const many = [];
+  for (let i = 0; i < 4; i++) {
+    const att = [];
+    for (let j = 0; j < 30; j++) att.push({ id: "aimg" + i + "x" + String(j).padStart(3, "0"), name: i + "-" + j + ".jpg", type: "image/jpeg", size: 3, data: "QUJD" });
+    many.push(user("m" + i, att));
+  }
+  h = C.prepHistory(many, "anthropic");
+  const sent = h.reduce((n, m) => n + (m.att ? m.att.length : 0), 0);
+  assert.equal(sent, 100);
+  assert.equal(h[h.length - 1].att.length, 30);
+  assert.equal(h[0].att.length, 10);
 });
 
 test("attach: normAtt keeps only the metadata, cleans the name", () => {
@@ -110,7 +167,7 @@ test("attach: data that is not base64, or a bad type, is never sent", () => {
 });
 
 test("attach: the request budget keeps the newest files", () => {
-  const big = "A".repeat(Math.ceil(C.ATT_SEND * 4 / 3 * 0.6));   // ~60% of the budget each
+  const big = "A".repeat(Math.ceil(C.attRoom("anthropic").bytes * 4 / 3 * 0.6));   // ~60% of the budget each
   const old = { id: "aold0001", name: "old.jpg", type: "image/jpeg", size: 1, data: big };
   const neu = { id: "anew0001", name: "new.jpg", type: "image/jpeg", size: 1, data: big };
   const h = C.prepHistory([user("first", [old]), { r: "asst", prov: "anthropic", text: "ok" }, user("second", [neu])], "anthropic");
