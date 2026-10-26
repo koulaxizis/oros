@@ -119,6 +119,39 @@
       "ov.work": "Work", "ov.workLine": "Not billed yet: {h} · {v}", "ov.workNone": "Everything billed", "ov.h": "{n} h",
       "ov.pub": "Publishing", "ov.titles": "Titles: {n}", "ov.royDue": "Royalties due: {v}", "ov.adv": "Advance still to earn back: {v}",
       "ov.rel": "Relationship", "ov.deals": "Open deals: {n} · {v}", "ov.open": "Open",
+      "rs.sec": "Revenue Splitter",
+      "rs.link": "Link beneficiary",
+      "rs.change": "Change",
+      "rs.refresh": "Refresh",
+      "rs.hint": "Is this partner a beneficiary in your shop's Revenue Splitter? Once linked, this card shows what is still to pay out, this year's sales of the titles and stock.",
+      "rs.reading": "Reading from {shop}…",
+      "rs.owed": "Still to pay out: {v}",
+      "rs.parts": "Sales share {s} · other income {i} · paid {p}",
+      "rs.year": "This year: {n} titles sold · beneficiary's share {v}",
+      "rs.noTitles": "None of the titles sold this year.",
+      "rs.sold": "sold {q}",
+      "rs.free": "free {n}",
+      "rs.share": "share {v} ({p}%)",
+      "rs.stock": "stock {n}",
+      "rs.out": "out of stock",
+      "rs.more": "And {n} more titles.",
+      "rs.missing": "No longer in the shop's Revenue Splitter: {names}",
+      "rs.src": "From {shop} as {names}, read just now. Not part of Money and not stored in orOS.",
+      "rs.err.notfound": "{shop} doesn't answer for Revenue Splitter: it needs Revenue Splitter 1.11 or newer.",
+      "rs.err.auth": "{shop} refused the key. Check it in Settings › Connected services (the key's user must be able to manage WooCommerce).",
+      "rs.err.keys": "This device doesn't have the key of {shop} yet. Enter it in Settings › Connected services.",
+      "rs.err.offline": "You're offline: Revenue Splitter shows when you're online.",
+      "rs.err.other": "Couldn't reach {shop}. Try Refresh later.",
+      "rs.pick": "Revenue Splitter: {name}",
+      "rs.pickHint": "The beneficiaries as they are named in the shop's splits. Tap a name to link or unlink it. Nothing changes in the shop.",
+      "rs.shop": "Shop",
+      "rs.why.name": "same name",
+      "rs.why.person": "a person of this record",
+      "rs.linked": "linked",
+      "rs.none": "The shop's Revenue Splitter has no beneficiaries yet.",
+      "rs.done": "Linked: {name}",
+      "rs.undone": "Unlinked: {name}",
+      "rs.max": "At most 5 names per partner.",
       "ac.bill": "+ Received invoice", "ac.order": "+ Order", "ac.settle": "Settlement", "ac.hours": "Hours", "ac.roy": "Royalties", "ac.folder": "Folder",
       "ct.sec": "Contracts", "ct.add": "+ Contract", "ct.none": "No contracts. Add one to keep its end day and be reminded in time.",
       "ct.new": "New contract", "ct.edit": "Contract", "ct.t": "Title", "ct.tPh": "Consignment agreement", "ct.from": "Starts", "ct.to": "Ends",
@@ -279,6 +312,39 @@
       "ov.work": "Εργασία", "ov.workLine": "Δεν έχουν χρεωθεί: {h} · {v}", "ov.workNone": "Όλα χρεωμένα", "ov.h": "{n} ώρ.",
       "ov.pub": "Εκδόσεις", "ov.titles": "Τίτλοι: {n}", "ov.royDue": "Δικαιώματα προς πληρωμή: {v}", "ov.adv": "Προκαταβολή που δεν έχει καλυφθεί: {v}",
       "ov.rel": "Σχέση", "ov.deals": "Ανοιχτές ευκαιρίες: {n} · {v}", "ov.open": "Άνοιγμα",
+      "rs.sec": "Revenue Splitter",
+      "rs.link": "Σύνδεση με δικαιούχο",
+      "rs.change": "Αλλαγή",
+      "rs.refresh": "Ανανέωση",
+      "rs.hint": "Είναι αυτός ο συνεργάτης δικαιούχος στο Revenue Splitter του καταστήματός σου; Με τη σύνδεση βλέπεις εδώ το υπόλοιπο προς πληρωμή, τις φετινές πωλήσεις των τίτλων και το στοκ.",
+      "rs.reading": "Ανάγνωση από {shop}…",
+      "rs.owed": "Υπόλοιπο προς πληρωμή: {v}",
+      "rs.parts": "Μερίδιο πωλήσεων {s} · άλλα έσοδα {i} · πληρώθηκαν {p}",
+      "rs.year": "Φέτος: {n} τίτλοι με πωλήσεις · μερίδιο δικαιούχου {v}",
+      "rs.noTitles": "Κανένας από τους τίτλους δεν πουλήθηκε φέτος.",
+      "rs.sold": "πωλήσεις {q}",
+      "rs.free": "δωρεάν {n}",
+      "rs.share": "μερίδιο {v} ({p}%)",
+      "rs.stock": "στοκ {n}",
+      "rs.out": "εξαντλημένο",
+      "rs.more": "Και {n} ακόμη τίτλοι.",
+      "rs.missing": "Δεν υπάρχουν πια στο Revenue Splitter του καταστήματος: {names}",
+      "rs.src": "Από {shop} ως {names}, μόλις διαβάστηκε. Δεν μπαίνει στα Χρήματα και δεν αποθηκεύεται στο orOS.",
+      "rs.err.notfound": "Το {shop} δεν απαντά για το Revenue Splitter: χρειάζεται Revenue Splitter 1.11 ή νεότερο.",
+      "rs.err.auth": "Το {shop} απέρριψε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες (ο χρήστης του κλειδιού πρέπει να διαχειρίζεται το WooCommerce).",
+      "rs.err.keys": "Αυτή η συσκευή δεν έχει ακόμα το κλειδί του {shop}. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "rs.err.offline": "Είσαι εκτός σύνδεσης: το Revenue Splitter φαίνεται όταν είσαι online.",
+      "rs.err.other": "Δεν ήταν δυνατή η σύνδεση με το {shop}. Δοκίμασε Ανανέωση αργότερα.",
+      "rs.pick": "Revenue Splitter: {name}",
+      "rs.pickHint": "Οι δικαιούχοι όπως είναι γραμμένοι στα splits του καταστήματος. Πάτα ένα όνομα για σύνδεση ή αποσύνδεση. Στο κατάστημα δεν αλλάζει τίποτα.",
+      "rs.shop": "Κατάστημα",
+      "rs.why.name": "ίδιο όνομα",
+      "rs.why.person": "άτομο αυτής της εγγραφής",
+      "rs.linked": "συνδεδεμένο",
+      "rs.none": "Το Revenue Splitter του καταστήματος δεν έχει ακόμα δικαιούχους.",
+      "rs.done": "Συνδέθηκε: {name}",
+      "rs.undone": "Αποσυνδέθηκε: {name}",
+      "rs.max": "Έως 5 ονόματα ανά συνεργάτη.",
       "ac.bill": "+ Λαμβανόμενο τιμολόγιο", "ac.order": "+ Παραγγελία", "ac.settle": "Εκκαθάριση", "ac.hours": "Ώρες", "ac.roy": "Δικαιώματα", "ac.folder": "Φάκελος",
       "ct.sec": "Συμβάσεις", "ct.add": "+ Σύμβαση", "ct.none": "Καμία σύμβαση. Πρόσθεσε μία για να κρατάς τη λήξη της και να σου θυμίζει εγκαίρως.",
       "ct.new": "Νέα σύμβαση", "ct.edit": "Σύμβαση", "ct.t": "Τίτλος", "ct.tPh": "Σύμβαση παρακαταθήκης", "ct.from": "Έναρξη", "ct.to": "Λήξη",
@@ -609,7 +675,7 @@
       fups: data.fups.filter(function (f) { return f.cust === c.id; }),
       ctr: (data.ctr || []).filter(function (k) { return k.cust === c.id; })
     };
-    var pt = C.ptOf(data, c.id);
+    var pt = C.ptOf(data, c.id), rsl = C.byId(data.rsl, c.id);
     tomb(c.id);
     if (prefs.sel === c.id) { prefs.sel = ""; savePrefs(); }
     if (!commit()) return;
@@ -624,6 +690,7 @@
         });
       });
       if (pt) { data.pt = (data.pt || []).filter(function (p) { return p.id !== c.id; }); data.pt.push(Object.assign({}, pt, { m: stamp(pt) })); }
+      if (rsl) { data.rsl = (data.rsl || []).filter(function (p) { return p.id !== c.id; }); data.rsl.push(Object.assign({}, rsl, { m: stamp(rsl) })); }
       prefs.sel = c.id;
       commit();
     });
@@ -968,17 +1035,211 @@
       if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
       if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
     }
+    renderRs(pane, c);
     if (x.budget.n) {
       var sbu = sec(t("ov.budget"), "budget", {});
       line(sbu, t("ov.budYear", { i: curMoney(x.budget.year.i, x.budget.cur), o: curMoney(x.budget.year.o, x.budget.cur) }),
         t("ov.budAll", { n: x.budget.n, i: curMoney(x.budget.all.i, x.budget.cur), o: curMoney(x.budget.all.o, x.budget.cur) }));
     }
-    if (!C.linksOf(data, c).length && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
+    if (!C.linksOf(data, c).length && !C.rsOf(data, c) && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
     renderContracts(pane, c);
     // the relationship itself
     var sr = sec(t("ov.rel"));
     line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));
     if (x.crm.deals) line(sr, t("ov.deals", { n: x.crm.deals, v: money(x.crm.val) }));
+  }
+
+  // ----- Revenue Splitter (partner card W6, crm/rs.js) -----
+  // The shop's Revenue Splitter is read when the card is drawn (kept 5
+  // minutes in memory, never stored) through Connected services; only
+  // the link, the beneficiary's exact name, is CRM data (core rsl). What
+  // is owed there shows on its own, never inside Money: royalties kept
+  // in Publishing for the same person would count twice.
+  var RS_TTL = 300000;
+  var rsCache = {};                               // account id → { at, p }
+  function shopLinks() {
+    try { var p = window.parent; return p && p !== window && p.orosLinks && typeof p.orosLinks.call === "function" ? p.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  function shops() {
+    var L = shopLinks();
+    if (!L) return [];
+    try { return L.list("woo"); } catch (e) { return []; }
+  }
+  function rsErr(code) { var e = new Error(code); e.code = code; return e; }
+  function rsRead(acctId, force) {
+    var RS = window.OrosCrmRs, L = shopLinks(), hit = rsCache[acctId];
+    if (hit && !force && Date.now() - hit.at < RS_TTL) return hit.p;
+    if (!RS || !L) return Promise.reject(rsErr("other"));
+    var p = Promise.resolve(L.call(acctId, [RS.REQ_BAL, RS.reqReport(todayYmd())])).then(function (res) {
+      var b = res && res[0], r = res && res[1], code = L.statusCode(b);
+      if (code) throw rsErr(code);
+      var bal = RS.parseBal(b.data);
+      if (!bal) throw rsErr("notfound");
+      return { bal: bal, rep: r && !L.statusCode(r) ? RS.parseRep(r.data) : null };
+    });
+    rsCache[acctId] = { at: Date.now(), p: p };
+    p.catch(function () { if (rsCache[acctId] && rsCache[acctId].p === p) delete rsCache[acctId]; });
+    return p;
+  }
+  function rsErrText(e, shop) {
+    var c = e && e.code;
+    if (c === "keys" || c === "auth" || c === "offline" || c === "notfound") return t("rs.err." + c, { shop: shop });
+    return t("rs.err.other", { shop: shop });
+  }
+  function rsShop(link, list) {
+    for (var i = 0; i < list.length; i++) if (link && list[i].id === link.a) return list[i];
+    return list[0] || null;
+  }
+  // names linked to other partners of the same shop
+  function rsTaken(custId, acctId) {
+    var out = [];
+    (data.rsl || []).forEach(function (r) {
+      if (r.id === custId || !r.n || !C.byId(data.cust, r.id)) return;
+      if ((r.a || "") && acctId && r.a !== acctId) return;
+      out = out.concat(r.n);
+    });
+    return out;
+  }
+  // the rsl row (one commit), after a tombstone like upsert
+  function saveRsl(custId, acctId, names) {
+    if (!data.rsl) data.rsl = [];
+    var prev = C.byId(data.rsl, custId), next = C.rsRow(custId, acctId, names);
+    next.m = stamp(prev);
+    if (data.tombs[custId] && data.tombs[custId] >= next.m) next.m = data.tombs[custId] + 1;
+    if (prev) data.rsl[data.rsl.indexOf(prev)] = next; else data.rsl.push(next);
+    return commit();
+  }
+  function renderRs(pane, c) {
+    var RS = window.OrosCrmRs, list = shops();
+    if (!RS || !list.length) return;
+    var link = C.rsOf(data, c), shop = rsShop(link, list);
+    var s = el("div", "sec rs-sec"), h = secHead(t("rs.sec"));
+    h.appendChild(el("span", "spacer"));
+    s.appendChild(h);
+    pane.appendChild(s);
+    function headBtn(label, fn) {
+      var b = el("button", "link-btn", label);
+      b.type = "button";
+      b.addEventListener("click", fn);
+      h.appendChild(b);
+    }
+    if (!link) {
+      headBtn(t("rs.link"), function () { rsPicker(c); });
+      s.appendChild(el("p", "hint", t("rs.hint")));
+      return;
+    }
+    var body = el("div", "");
+    s.appendChild(body);
+    function row(title, sub, late) {
+      var r = el("div", "person");
+      var m = el("div", "row-main");
+      m.appendChild(el("div", "row-title", title));
+      if (sub) m.appendChild(el("div", "row-sub" + (late ? " late" : ""), sub));
+      r.appendChild(m);
+      body.appendChild(r);
+    }
+    function load(force) {
+      body.innerHTML = "";
+      body.appendChild(el("p", "hint", t("rs.reading", { shop: shop.name })));
+      rsRead(shop.id, force).then(function (got) {
+        if (!body.isConnected) return;
+        body.innerHTML = "";
+        var x = RS.card(got.bal, got.rep, link.n), cur = x.cur || data.prefs.cur;
+        row(t("rs.owed", { v: curMoney(x.owed, cur) }), t("rs.parts", { s: curMoney(x.sales, cur), i: curMoney(x.income, cur), p: curMoney(x.payments, cur) }));
+        if (x.missing.length) body.appendChild(el("p", "hint late", t("rs.missing", { names: x.missing.join(", ") })));
+        if (got.rep) {
+          body.appendChild(el("p", "hint", x.titles.length ? t("rs.year", { n: x.titles.length, v: curMoney(x.share, cur) }) : t("rs.noTitles")));
+          x.titles.slice(0, 12).forEach(function (r) {
+            var bits = [t("rs.sold", { q: r.qty })];
+            if (r.free) bits.push(t("rs.free", { n: r.free }));
+            bits.push(t("rs.share", { v: curMoney(r.share, cur), p: r.pct.toLocaleString(LOCALE) }));
+            if (r.stock !== null) bits.push(r.stock > 0 ? t("rs.stock", { n: r.stock }) : t("rs.out"));
+            else if (r.status === "outofstock") bits.push(t("rs.out"));
+            row(r.title, bits.join(" · "), r.stock !== null ? r.stock <= 0 : r.status === "outofstock");
+          });
+          if (x.titles.length > 12) body.appendChild(el("p", "hint", t("rs.more", { n: x.titles.length - 12 })));
+        }
+        body.appendChild(el("p", "hint", t("rs.src", { shop: shop.name, names: link.n.join(", ") })));
+      }, function (e) {
+        if (!body.isConnected) return;
+        body.innerHTML = "";
+        body.appendChild(el("p", "hint", rsErrText(e, shop.name)));
+      });
+    }
+    headBtn(t("rs.refresh"), function () { load(true); });
+    headBtn(t("rs.change"), function () { rsPicker(c); });
+    load(false);
+  }
+  function rsPicker(c) {
+    var RS = window.OrosCrmRs, list = shops();
+    if (!RS || !list.length) return;
+    var link = C.rsOf(data, c), shop = rsShop(link, list);
+    var dlg = makeDialog("crm-rs", true);
+    dlg.appendChild(el("h2", "dlg-title", t("rs.pick", { name: c.name })));
+    dlg.appendChild(el("p", "hint", t("rs.pickHint")));
+    var shopSel = null;
+    if (list.length > 1) {
+      shopSel = selectEl(list.map(function (a) { return [a.id, a.name]; }), shop.id);
+      field(dlg, t("rs.shop"), shopSel);
+    }
+    var q = field(dlg, t("lk.q"), inp("search", "", 80));
+    var box = el("div", "sheet-list");
+    dlg.appendChild(box);
+    var got = null;
+    function mine() {
+      var cur = C.rsOf(data, c);
+      return cur && (cur.a || shop.id) === shop.id ? cur.n : [];
+    }
+    function toggle(name) {
+      var before = C.rsOf(data, c), names = mine().slice(), i = names.indexOf(name);
+      if (i >= 0) names.splice(i, 1);
+      else if (names.length >= 5) { showToast(t("rs.max")); return; }
+      else names.push(name);
+      if (!saveRsl(c.id, shop.id, names)) return;
+      undoToast(t(i >= 0 ? "rs.undone" : "rs.done", { name: name }), function () {
+        saveRsl(c.id, before ? before.a : "", before ? before.n : []);
+      });
+      draw();
+    }
+    function draw() {
+      box.innerHTML = "";
+      if (!got) return;
+      var have = mine(), words = C.fold(q.value.trim()).split(/\s+/).filter(Boolean);
+      var all = RS.suggest(got.bal, c, rsTaken(c.id, shop.id));
+      if (!all.length) { box.appendChild(el("p", "hint", t("rs.none"))); return; }
+      all.filter(function (r) {
+        var hay = C.fold(r.name);
+        return words.every(function (w) { return hay.indexOf(w) >= 0; });
+      }).slice(0, 100).forEach(function (r) {
+        var on = have.indexOf(r.name) >= 0;
+        var b = button("", "sheet-btn" + (on ? " on" : ""), function () { toggle(r.name); });
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        var m = el("span", "row-main");
+        m.appendChild(el("span", "row-title", r.name));
+        var bits = [on ? t("rs.linked") : "", r.why ? t("rs.why." + r.why) : ""];
+        m.appendChild(el("span", "row-sub", bits.filter(Boolean).join(" · ")));
+        b.appendChild(m);
+        box.appendChild(b);
+      });
+    }
+    function load() {
+      got = null;
+      box.innerHTML = "";
+      box.appendChild(el("p", "hint", t("rs.reading", { shop: shop.name })));
+      rsRead(shop.id, false).then(function (g) { got = g; draw(); }, function (e) {
+        box.innerHTML = "";
+        box.appendChild(el("p", "hint", rsErrText(e, shop.name)));
+      });
+    }
+    if (shopSel) shopSel.addEventListener("change", function () { shop = rsShop({ a: shopSel.value }, list); load(); });
+    q.addEventListener("input", draw);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("ed.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    showDialog(dlg);
+    load();
+    q.focus();
   }
 
   // ----- Actions, contracts and the partner folder (partner card W4) -----

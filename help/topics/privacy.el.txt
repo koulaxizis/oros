@@ -53,7 +53,7 @@
 - [Απόθεμα](app:stock): το δικό σου κατάστημα WooCommerce.
 - [Τιμολόγια](app:invoices): ο λογαριασμός σου στο timologisi.online, για αποστολή παραστατικών στο myDATA.
 - [Ενημερωτικό δελτίο](app:newsletter): ο λογαριασμός σου στο MailerLite, το Mailchimp ή το Brevo, για συγχρονισμό συνδρομητών.
-- [CRM](app:crm): ο λογαριασμός σου στο HubSpot, το Pipedrive, το Invoice Ninja ή το Odoo, που διαβάζεται για να έρθουν πελάτες και deals.
+- [CRM](app:crm): ο λογαριασμός σου στο HubSpot, το Pipedrive, το Invoice Ninja ή το Odoo, που διαβάζεται για να έρθουν πελάτες και deals· το Revenue Splitter του καταστήματός σου WooCommerce, που διαβάζεται στην καρτέλα ενός συνεργάτη και δεν αποθηκεύεται.
 - [Έσοδα & Έξοδα](app:budget): ο λογαριασμός σου στο Stripe ή το Invoice Ninja, που διαβάζεται για να έρθουν πληρωμές.
 - [To-Do](app:todo): ο λογαριασμός σου στο Todoist (projects και εργασίες) ή στο GitHub (τα ανοιχτά issues που σου έχουν ανατεθεί), μόνο για ανάγνωση.
 - [Kanban](app:kanban): ο λογαριασμός σου στο Trello (ένας πίνακας) ή στο GitHub (τα issues ενός αποθετηρίου), μόνο για ανάγνωση.

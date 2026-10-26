@@ -137,7 +137,15 @@ const CASES = [
   [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", dimensions: {} } }, "body"],
   [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", images: [{ src: "https://x/y.jpg" }] } }, "body"],
   [{ m: "POST", path: "/products", body: { name: "Book", status: "draft", description: "x".repeat(8001) } }, "body"],
-  [{ m: "POST", path: "/products/12", body: { name: "Book", status: "draft" } }, "path"]
+  [{ m: "POST", path: "/products/12", body: { name: "Book", status: "draft" } }, "path"],
+  // partner card W6: Revenue Splitter, read only, no names in the URL
+  [{ m: "GET", path: "/rs/balances" }, ""],
+  [{ m: "GET", path: "/rs/report?date_start=2026-01-01&date_end=2026-10-26" }, ""],
+  [{ m: "GET", path: "/rs/report" }, ""],
+  [{ m: "GET", path: "/rs/balances?name=Anna" }, "query"],
+  [{ m: "GET", path: "/rs/report?date_start=2026-1-1" }, "query"],
+  [{ m: "POST", path: "/rs/balances", body: { name: "x" } }, "path"],
+  [{ m: "GET", path: "/rs/ledger" }, "path"]
 ];
 test("checkReq (app) and checkExtReq (relay) agree on every case", () => {
   for (const [r, want] of CASES) {

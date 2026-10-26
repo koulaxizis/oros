@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.84.01
+- Assistant: in Settings → Your data, the new "All apps at once" row sets every app to Ask first, Always share or Never in one tap. You can still change single apps after.
+
+## Version 3.84.00
+- CRM: Revenue Splitter on the partner card. If your WooCommerce shop runs Noxpress Revenue Splitter 1.11 or newer, link a partner to their beneficiary name and the Overview shows what is still to pay out to them, this year's sales of their titles with their share, and each title's stock, read from the shop each time and never stored. It stays apart from Money, so nothing is counted twice. Also fixed: a link or role removed on one device could come back from another device.
+
 ## Version 3.83.00
 - CRM: the partner card is complete. History is one timeline of everything with a partner across your apps; the Overview adds invoices your suppliers send you (new Received tab in Invoices), consignment settlements not invoiced yet with a button that fills in the invoice, Budget entries that name the partner, contracts that remind you before they end, the partner's folder in Files and buttons for the next step in Invoices, Stock, Work hours and Publishing. Outside CRM the menu search and Contacts show what is open with a partner, Today lists settlements due, royalties, unbilled hours and invoices to pay, and the Assistant answers "what is open with …?".
 

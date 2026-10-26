@@ -53,7 +53,7 @@ Manche Apps können auch mit Konten arbeiten, die du schon anderswo hast, aber e
 - [Bestand](app:stock): dein eigener WooCommerce-Shop.
 - [Rechnungen](app:invoices): dein Konto bei timologisi.online, um Belege an myDATA zu senden.
 - [Newsletter](app:newsletter): dein Konto bei MailerLite, Mailchimp oder Brevo, um Abonnenten zu synchronisieren.
-- [CRM](app:crm): dein Konto bei HubSpot, Pipedrive, Invoice Ninja oder Odoo, gelesen, um Kunden und Deals zu übernehmen.
+- [CRM](app:crm): dein Konto bei HubSpot, Pipedrive, Invoice Ninja oder Odoo, gelesen, um Kunden und Deals zu übernehmen; der Revenue Splitter deines WooCommerce-Shops, gelesen auf der Karte eines Partners und nie gespeichert.
 - [Budget](app:budget): dein Konto bei Stripe oder Invoice Ninja, gelesen, um Zahlungen zu übernehmen.
 - [Aufgaben](app:todo): dein Todoist-Konto (Projekte und Aufgaben) oder dein GitHub-Konto (die offenen Issues, die dir zugewiesen sind), nur gelesen.
 - [Kanban](app:kanban): dein Trello-Konto (ein Board) oder dein GitHub-Konto (die Issues eines Repositorys), nur gelesen.

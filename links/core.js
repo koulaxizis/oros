@@ -553,7 +553,10 @@
       ["POST", /^\/orders\/[0-9]{1,12}\/notes$/, null, { note: "text", customer_note: "bool" }],
       // Newsletter wave E4: the shop's customers become subscribers
       ["GET", /^\/customers$/, q({ role: /^(all|customer)$/ }), null],
-      ["GET", /^\/data\/currencies\/current$/, null, null]
+      ["GET", /^\/data\/currencies\/current$/, null, null],
+      // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
+      ["GET", /^\/rs\/balances$/, null, null],
+      ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null]
     ],
     tol: [
       ["GET", /^\/GetCreditsBalance$/, null, null],

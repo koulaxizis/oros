@@ -288,6 +288,7 @@
       "set.data": "Your data", "set.chatOnly": "Chat only: the assistant can't search my orOS data",
       "set.dataHint": "When the assistant needs your data it searches these apps. “Ask first” shows you every result before it is shared.",
       "perm.ask": "Ask first", "perm.always": "Always share", "perm.never": "Never",
+      "set.permAll": "All apps at once:",
       "set.noApps": "Open orOS from its home screen to choose apps.",
       "set.sync": "Sync", "set.syncKeys": "Sync API keys to my other devices (end-to-end encrypted)",
       "set.syncHint": "Keys travel inside your encrypted orOS sync, sealed with your sync passphrase. Anyone who knows that passphrase can use them.",
@@ -575,6 +576,7 @@
       "set.data": "Τα δεδομένα σου", "set.chatOnly": "Μόνο συζήτηση: ο βοηθός δεν ψάχνει στα δεδομένα μου στο orOS",
       "set.dataHint": "Όταν ο βοηθός χρειάζεται τα δεδομένα σου, ψάχνει σε αυτές τις εφαρμογές. Το «Ρώτα πρώτα» σού δείχνει κάθε αποτέλεσμα πριν μοιραστεί.",
       "perm.ask": "Ρώτα πρώτα", "perm.always": "Πάντα", "perm.never": "Ποτέ",
+      "set.permAll": "Όλες οι εφαρμογές μαζί:",
       "set.noApps": "Άνοιξε το orOS από την αρχική του οθόνη για να διαλέξεις εφαρμογές.",
       "set.sync": "Συγχρονισμός", "set.syncKeys": "Συγχρονισμός κλειδιών API στις άλλες συσκευές μου (κρυπτογραφημένα)",
       "set.syncHint": "Τα κλειδιά ταξιδεύουν μέσα στο κρυπτογραφημένο sync του orOS, σφραγισμένα με το passphrase σου. Όποιος ξέρει το passphrase μπορεί να τα χρησιμοποιήσει.",
@@ -4438,6 +4440,21 @@
     list.appendChild(el("p", "dlg-hint", t("set.dataHint")));
     var apps = appList();
     if (!apps.length) list.appendChild(el("p", "dlg-hint", t("set.noApps")));
+    // One tap sets every app below; each app can still be changed after.
+    var sels = [];
+    if (apps.length > 1) {
+      var all = el("div", "perm-all");
+      all.appendChild(el("span", "perm-name", t("set.permAll")));
+      var allBtns = el("div", "perm-all-btns");
+      ["ask", "always", "never"].forEach(function (v) {
+        allBtns.appendChild(button(t("perm." + v), "small", function () {
+          apps.forEach(function (a) { if (a.perm !== v) { setPerm(a.id, v); a.perm = v; } });
+          sels.forEach(function (s) { s.value = v; });
+        }));
+      });
+      all.appendChild(allBtns);
+      list.appendChild(all);
+    }
     apps.forEach(function (a) {
       var r = el("div", "perm-row");
       var id = "as-perm-" + a.id;
@@ -4451,7 +4468,8 @@
         s.appendChild(o);
       });
       s.value = a.perm;
-      s.addEventListener("change", function () { setPerm(a.id, s.value); });
+      s.addEventListener("change", function () { setPerm(a.id, s.value); a.perm = s.value; });
+      sels.push(s);
       r.appendChild(l);
       r.appendChild(s);
       list.appendChild(r);
