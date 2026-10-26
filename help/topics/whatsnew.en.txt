@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.93.00
+- Assistant: it can now change things in eleven more apps: add to or rewrite a Notes page, fix a Timesheet entry, mark an invoice paid, tick a chore, edit a recipe, a trip, a packing item or an itinerary entry, an expense in Split, a vehicle in Garage, a pet's health record, a workout's notes and a Library book ("mark invoice 12 as paid", "add day 2 to my Rome note"). As always you see a card first; nothing is saved until you press it, and Undo takes it back.
+
 ## Version 3.92.00
 - Lyric Sync: Rough sync. It listens to the song on your device (Whisper, the same speech model as Montage's automatic subtitles, downloaded once and shared) and gives each of your lines a rough start; your words stay as you wrote them, then you fix the times by ear. Undo takes it all back. Preview has Full screen, a karaoke screen you tap to play and pause.
 
