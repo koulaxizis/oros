@@ -49,6 +49,7 @@ orosPack("de", "studio", {
  "btn.ringtone": "Klingelton machen",
  "btn.split": "Teilen",
  "btn.stop": "Stopp",
+ "btn.toLyrics": "Liedtext synchronisieren",
  "btn.toMusic": "Zu Musik hinzufügen",
  "btn.undo": "Rückgängig",
  "btn.up": "Nach oben",

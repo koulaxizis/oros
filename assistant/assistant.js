@@ -368,6 +368,12 @@
       "cr.declinedLink": "Not linked: you said no", "cr.failed": "Not saved: {msg}",
       "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
       "f.people": "People",
+      "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
+      "cr.v.expense": "Expense", "cr.v.income": "Income",
+      "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
+      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
+      "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
+      "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
       "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
@@ -667,6 +673,12 @@
       "cr.declinedLink": "Δεν συνδέθηκαν: είπες όχι", "cr.failed": "Δεν αποθηκεύτηκε: {msg}",
       "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
       "f.people": "Άνθρωποι",
+      "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
+      "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
+      "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
+      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
+      "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
+      "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
       "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
@@ -2869,6 +2881,8 @@
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (v === "" || v === undefined) return t("v.empty");
     if (f === "category" && /^cat:/.test(v)) return t(v.replace(/^cat:/, "cat."));
+    if (f === "stage" && /^stg:/.test(v) && STRINGS.en["cr.v." + v.replace(":", ".")] !== undefined) return t("cr.v." + v.replace(":", "."));
+    if (f === "roles") return String(v).split(",").map(function (r) { return STRINGS.en["cr.v.role." + r] !== undefined ? t("cr.v.role." + r) : r; }).join(", ");
     return String(v);
   }
   // tick(row) → a checkbox for the row (the confirm card, wave CF1) or null
@@ -3024,15 +3038,49 @@
   function createApps(apps) {
     if (!N || !shell()) return [];
     var have = installed();
-    return apps.filter(function (a) { return N.APP_IDS.indexOf(a.id) >= 0 && have[a.id]; });
+    var out = apps.filter(function (a) { return (N.APP_IDS.indexOf(a.id) >= 0 || ADD_IDS.indexOf(a.id) >= 0) && have[a.id]; });
+    var crm = out.filter(function (a) { return a.id === "crm"; })[0];
+    if (crm) CRM_ADD.forEach(function (id) { out.push({ id: id, name: crm.name, icon: crm.icon, of: "crm" }); });
+    return out;
   }
+  // AS-ADD2 (wave A1): the everyday apps' new items are in
+  // assistant/additems.js, loaded the first time (Bookmarks also needs
+  // its own core for addresses). Same API as create.js.
+  var ADD_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban"];
+  // Wave A2 (AS-ADD3): a CRM customer's history, follow-ups and deals,
+  // allowed whenever CRM is; refs from search_data or create_items.
+  var CRM_ADD = ["crm_activity", "crm_followup", "crm_deal"];
+  var addScripts = {};
+  function loadOnce(src) {
+    if (!addScripts[src]) {
+      addScripts[src] = new Promise(function (resolve) {
+        var sc = document.createElement("script");
+        sc.src = src;
+        sc.onload = sc.onerror = function () { resolve(); };
+        document.head.appendChild(sc);
+      });
+    }
+    return addScripts[src];
+  }
+  function createMod(appId) {
+    if (N.APP_IDS.indexOf(appId) >= 0) return Promise.resolve(N);
+    if (ADD_IDS.indexOf(appId) < 0 && CRM_ADD.indexOf(appId) < 0) return Promise.resolve(null);
+    var need = [window.OrosAssistAdd ? null : "additems.js"];
+    if (appId === "bookmarks" && !window.OrosBookmarksCore) need.push("../bookmarks/core.js");
+    return Promise.all(need.filter(Boolean).map(loadOnce)).then(function () {
+      if (appId === "bookmarks" && !window.OrosBookmarksCore) return null;
+      return window.OrosAssistAdd || null;
+    });
+  }
+  function createCtx() { return { today: ymdNow(), lang: LANG, bm: window.OrosBookmarksCore || null, crm: window.OrosCrmCore || null }; }
+  function isCrm(id) { return id === "crm" || CRM_ADD.indexOf(id) >= 0; }
   function crmNorm(d) {
     try { return window.OrosCrmCore && typeof window.OrosCrmCore.norm === "function" ? window.OrosCrmCore.norm(d) : d; } catch (e) { return d; }
   }
-  function addRef(c, appId, id, title) {
+  function addRef(c, appId, id, title, target) {
     c.refN = (c.refN || 0) + 1;
     var ref = "r" + c.refN;
-    c.refs[ref] = { app: appId, target: N.targetOf(appId, id), title: title, id: id };
+    c.refs[ref] = { app: appId, target: target || N.targetOf(appId, id), title: title, id: id };
     return ref;
   }
   function noCreate(apps, id) {
@@ -3043,11 +3091,47 @@
   }
   function createItems(c, args, apps) {
     if (!N) return Promise.resolve({ content: "Error: adding records is not available.", err: 1 });
-    var nm = N.normItems(args);
+    var appId = args && typeof args === "object" ? String(args.app || "") : "";
+    if (N.APP_IDS.indexOf(appId) < 0 && ADD_IDS.indexOf(appId) < 0 && CRM_ADD.indexOf(appId) < 0) {
+      return Promise.resolve({ content: "Error: app must be one of: " + N.APP_IDS.concat(ADD_IDS, CRM_ADD).join(", ") + ".", err: 1 });
+    }
+    if (!createApps(apps).some(function (a) { return a.id === appId; })) return Promise.resolve(noCreate(apps, appId));
+    return createMod(appId).then(function (M) {
+      if (!M) return { content: "Error: adding to " + appId + " is not available right now.", err: 1 };
+      return createWith(M, c, args, apps);
+    });
+  }
+  function createWith(M, c, args, apps) {
+    if (CRM_ADD.indexOf(M === N ? "" : String(args.app)) >= 0) return crmCores().then(function () { return createWith2(M, c, args, apps); });
+    return createWith2(M, c, args, apps);
+  }
+  // A CRM record's customer / deal: the ref of one CRM's own search
+  // (or create_items) gave, never a name.
+  function crmRefsOf(c, items) {
+    for (var i = 0; i < items.length; i++) {
+      var o = items[i], w = "Error: items[" + i + "]: ";
+      var rc = c.refs ? c.refs[o.customer] : null;
+      if (!rc || !isCrm(rc.app) || !rc.target || typeof rc.target.cust !== "string") return w + "customer " + o.customer + " is not a CRM customer's ref. Find the customer with search_data (app crm) or add it with create_items first.";
+      o.cust = rc.target.cust;
+      if (o.deal) {
+        var rd = c.refs ? c.refs[o.deal] : null;
+        if (!rd || !isCrm(rd.app) || !rd.target || typeof rd.target.deal !== "string") return w + "deal " + o.deal + " is not a CRM deal's ref. Find it with search_data (app crm) first.";
+        o.dealId = rd.target.deal;
+      }
+    }
+    return "";
+  }
+  function createWith2(M, c, args, apps) {
+    var ctx = createCtx();
+    var nm = M.normItems(args, ctx);
     if (!nm.ok) return Promise.resolve({ content: "Error: " + nm.err, err: 1 });
     var app = createApps(apps).filter(function (a) { return a.id === nm.app; })[0];
     if (!app) return Promise.resolve(noCreate(apps, nm.app));
     var items = nm.items;
+    if (app.of === "crm") {
+      var eR = crmRefsOf(c, items);
+      if (eR) return Promise.resolve({ content: eR, err: 1 });
+    }
     if (app.id === "crm") {
       var ctApp = createApps(apps).filter(function (a) { return a.id === "contacts"; })[0];
       var cts = null;
@@ -3062,9 +3146,9 @@
         items[i].person = { c: r.target, n: nmC, role: items[i].role };
       }
     }
-    var key = N.storageKey(app.id);
-    return (app.id === "crm" ? crmCores() : Promise.resolve()).then(function () {
-      var pl = N.plan(app.id, readStore(key), items);
+    var key = M.storageKey(app.id);
+    return (isCrm(app.id) ? crmCores() : Promise.resolve()).then(function () {
+      var pl = M.plan(app.id, readStore(key), items, ctx);
       if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } };
       var base = { k: "create", app: app.name, rows: pl.rows };
       return askCreate(app.name, pl.rows, false).then(function (ok) {
@@ -3072,29 +3156,29 @@
           base.st = "declined";
           return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base };
         }
-        var res = N.apply(app.id, readStore(key), items, Date.now(), ok.skip);
+        var res = M.apply(app.id, readStore(key), items, Date.now(), ok.skip, ctx);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
           return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base };
         }
-        var d = app.id === "crm" ? crmNorm(res.data) : res.data;
+        var d = isCrm(app.id) ? crmNorm(res.data) : res.data;
         if (!writeStore(key, d)) {
           base.st = "failed";
           base.msg = t("chg.storage");
           return { content: "Error: the records could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base };
         }
         markAppDirty();
-        var added = res.made.map(function (m) { return { ref: addRef(c, app.id, m.id, m.title), name: m.title }; });
+        var added = res.made.map(function (m) { return { ref: addRef(c, app.of || app.id, m.sid || m.id, m.title, m.target), name: m.title }; });
         var left = [];
         pl.rows.forEach(function (row, i) {
           if (!ok.skip[i]) return;
           var o = { name: row.title };
-          if (row.dup) { o.already = addRef(c, app.id, row.dup.id, row.dup.title); o.already_name = row.dup.title; }
+          if (row.dup) { o.already = addRef(c, app.of || app.id, row.dup.id, row.dup.title, row.dup.target); o.already_name = row.dup.title; }
           left.push(o);
         });
         var uid = newId();
-        undoMem[uid] = { app: app.id, key: key, cr: res.undo };
+        undoMem[uid] = { app: app.id, key: key, cr: res.undo, mod: M };
         base.st = "done";
         base.u = uid;
         base.added = res.made.map(function (m) { return m.i; });
@@ -3179,8 +3263,10 @@
     if (cb) head.appendChild(cb);
     head.appendChild(el("span", "entry-title", String(row.title || "")));
     box.appendChild(head);
-    if (row.dup) box.appendChild(el("p", "dlg-hint", t("cr.dup", { name: String(row.dup.title || "") })));
-    if (row.same) box.appendChild(el("p", "dlg-hint", t("cr.same")));
+    if (row.dup && row.same) box.appendChild(el("p", "dlg-hint", t("cr.sameAdd", { name: String(row.dup.title || "") })));
+    else if (row.dup) box.appendChild(el("p", "dlg-hint", t("cr.dup", { name: String(row.dup.title || "") })));
+    else if (row.same) box.appendChild(el("p", "dlg-hint", t("cr.same")));
+    if (row.hint && row.hint.k === "newList") box.appendChild(el("p", "dlg-hint", t("cr.newList", { name: String(row.hint.name || "") })));
     var f = Array.isArray(row.fields) ? row.fields : [];
     if (f.length) {
       var tb = el("table", "cr-fields");
@@ -3197,6 +3283,10 @@
   }
   function crValue(f, v) {
     if ((f === "kind" || f === "status") && STRINGS.en["cr.v." + v] !== undefined) return t("cr.v." + v);
+    if (f === "channel" && STRINGS.en["cr.v.ch." + v] !== undefined) return t("cr.v.ch." + v);
+    if (f === "reminder" && typeof v === "number") {
+      return v === 1440 ? t("cr.rem.d1") : v % 1440 === 0 ? t("cr.rem.d", { n: v / 1440 }) : v % 60 === 0 ? t("cr.rem.h", { n: v / 60 }) : t("cr.rem.m", { n: v });
+    }
     return String(v == null ? "" : v);
   }
   function crList(host, rows, cbOf) {
@@ -3259,9 +3349,9 @@
   function undoCreate(c, r) {
     var ui = r.ui, mem = undoMem[ui.u];
     if (!mem || !N) return;
-    var res = N.undo(mem.app, readStore(mem.key), mem.cr, Date.now());
+    var res = (mem.mod || N).undo(mem.app, readStore(mem.key), mem.cr, Date.now());
     if (!res.ok) { showToast(t("chg.undoFail", { msg: res.err })); return; }
-    if (!writeStore(mem.key, mem.app === "crm" ? crmNorm(res.data) : res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
+    if (!writeStore(mem.key, isCrm(mem.app) ? crmNorm(res.data) : res.data)) { showToast(t("chg.undoFail", { msg: t("chg.storage") })); return; }
     markAppDirty();
     delete undoMem[ui.u];
     ui.st = "undone";

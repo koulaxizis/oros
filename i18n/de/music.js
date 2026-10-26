@@ -131,6 +131,7 @@ orosPack("de", "music", {
  "m.deletePl": "Playlist löschen",
  "m.down": "Nach unten",
  "m.info": "Details",
+ "m.lyricsync": "Liedtext synchronisieren",
  "m.montage": "In Montage verwenden",
  "m.page": "Seite öffnen",
  "m.playNext": "Als Nächstes spielen",

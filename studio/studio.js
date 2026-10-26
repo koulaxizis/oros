@@ -167,7 +167,7 @@
       "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
       "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV.",
       "toast.exportFail": "The export did not finish",
-      "btn.toMusic": "Add to Music", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
+      "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
       "au.vol": "Volume", "au.pan": "Pan", "au.on": "Lane on", "au.delPt": "Delete point", "au.clear": "Clear lane",
@@ -296,7 +296,7 @@
       "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
       "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
-      "btn.toMusic": "Στη Μουσική", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
+      "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
       "au.vol": "Ένταση", "au.pan": "Pan", "au.on": "Λωρίδα ενεργή", "au.delPt": "Διαγραφή σημείου", "au.clear": "Καθαρισμός λωρίδας",
@@ -2549,6 +2549,7 @@
     $("export-status").textContent = "";
     exportBusy(false);
     $("export-music").hidden = !musicFs() || !shellHas();
+    $("export-lyrics").hidden = !musicFs() || !shellHas();
     $("export-ring").hidden = !shellHas();
     renderExportChips();
     showDlg("export-dlg");
@@ -2571,9 +2572,10 @@
     $("export-rate-sec").hidden = fmt === "opus";
     $("export-note").textContent = opusOk === false && prefs.fmt === "opus" ? t("export.noOpus") : fmt === "opus" ? t("export.opusRate") : fmt === "mp3" ? t("export.mp3Hint") : "";
   }
-  function exportBusy(on) { ["export-go", "export-music", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
+  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
   // dest "music": the file goes onto the orOS disk under /internal/Music
-  // and plays in Music; otherwise the save dialog, as always.
+  // and plays in Music ("lyrics": opens in Lyric Sync instead);
+  // otherwise the save dialog, as always.
   function doExport(dest) {
     var clips = projClips(), r = C.exportRange(proj, clips);
     if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
@@ -2615,7 +2617,7 @@
         exportBusy(false);
         $("export-status").textContent = "";
         hideDlg("export-dlg");
-        if (dest === "music") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext));
+        if (dest === "music" || dest === "lyrics") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext), dest === "lyrics" ? title : null);
         else saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
       };
       var broke = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
@@ -2662,7 +2664,9 @@
     };
     return next();
   }
-  function addToMusic(blob, name) {
+  // lyricsFor: a title → the mix opens in Lyric Sync (wave 3 of Lyric
+  // Sync) instead of Music, to time its lyrics.
+  function addToMusic(blob, name, lyricsFor) {
     var fs = musicFs();
     if (!fs) { showToast(t("toast.toMusicFail")); return; }
     Promise.resolve(fs.mkdir(MUSIC_DIR)).then(function () { return freeMusicPath(fs, name); }).then(function (p) {
@@ -2670,7 +2674,8 @@
       return Promise.resolve(fs.writeBlob(p, blob)).then(function () { return p; });
     }).then(function (p) {
       showToast(t("toast.toMusic"));
-      shellOpen("music", { playPath: p });
+      if (lyricsFor != null) shellOpen("lyricsync", { musicPath: p, title: String(lyricsFor).slice(0, 200) });
+      else shellOpen("music", { playPath: p });
     }, function () { showToast(t("toast.toMusicFail")); });
   }
   // The audible instrument notes of the export range (no drum kit) as
@@ -3515,6 +3520,7 @@
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
     $("export-go").addEventListener("click", function () { doExport("file"); });
     $("export-music").addEventListener("click", function () { doExport("music"); });
+    $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
     $("in-dev").addEventListener("change", function () { prefs.inDev = $("in-dev").value; savePrefs(); });

@@ -164,7 +164,7 @@
       "home.forYou": "Made for you", "kind.mix": "Mix", "mix.daily": "Daily mix", "mix.dailySub": "Songs you love and more, new every day",
       "mix.repeat": "On repeat", "mix.repeatSub": "What you play most this month", "mix.rewind": "Repeat rewind", "mix.rewindSub": "Old favourites you have not played for a while",
       "mix.radio": "Song radio", "mix.radioOf": "Radio: {s}", "mix.radioSub": "Songs like this one, from your music", "mix.empty": "Nothing here yet. Mixes are made from what you play on this device.",
-      "mix.save": "Save as playlist", "toast.mixSaved": "Saved as playlist “{n}”.", "m.radio": "Song radio", "m.montage": "Use in Montage", "m.shelf": "Add to Media Shelf",
+      "mix.save": "Save as playlist", "toast.mixSaved": "Saved as playlist “{n}”.", "m.radio": "Song radio", "m.montage": "Use in Montage", "m.lyricsync": "Sync lyrics", "m.shelf": "Add to Media Shelf",
       "m.cover": "Find cover online", "toast.montage": "The song is in Files › Music › Free music and its credit is copied: paste it into your video's credits.",
       "toast.montageFail": "Could not get the song.", "recap.title": "My year in music", "recap.titleY": "{y} in music", "recap.sub": "Made on this device from what you played here.",
       "recap.minutes": "minutes of music", "recap.plays": "plays", "recap.songs": "different songs", "recap.topSongs": "Top songs", "recap.topArtists": "Top artists",
@@ -302,7 +302,7 @@
       "home.forYou": "Φτιαγμένα για σένα", "kind.mix": "Μίξη", "mix.daily": "Μίξη της ημέρας", "mix.dailySub": "Τραγούδια που αγαπάς και άλλα, καινούρια κάθε μέρα",
       "mix.repeat": "Σε επανάληψη", "mix.repeatSub": "Ό,τι παίζεις περισσότερο αυτόν τον μήνα", "mix.rewind": "Πίσω στα παλιά", "mix.rewindSub": "Παλιά αγαπημένα που έχεις καιρό να ακούσεις",
       "mix.radio": "Ραδιόφωνο τραγουδιού", "mix.radioOf": "Ραδιόφωνο: {s}", "mix.radioSub": "Τραγούδια σαν αυτό, από τη μουσική σου", "mix.empty": "Τίποτα ακόμα. Οι μίξεις φτιάχνονται από ό,τι παίζεις σε αυτή τη συσκευή.",
-      "mix.save": "Αποθήκευση ως λίστα", "toast.mixSaved": "Αποθηκεύτηκε ως λίστα «{n}».", "m.radio": "Ραδιόφωνο τραγουδιού", "m.montage": "Χρήση στο Montage", "m.shelf": "Προσθήκη στο Media Shelf",
+      "mix.save": "Αποθήκευση ως λίστα", "toast.mixSaved": "Αποθηκεύτηκε ως λίστα «{n}».", "m.radio": "Ραδιόφωνο τραγουδιού", "m.montage": "Χρήση στο Montage", "m.lyricsync": "Συγχρονισμός στίχων", "m.shelf": "Προσθήκη στο Media Shelf",
       "m.cover": "Βρες εξώφυλλο online", "toast.montage": "Το τραγούδι είναι στα Αρχεία › Music › Free music και η αναφορά του αντιγράφηκε: επικόλλησέ τη στους τίτλους του βίντεό σου.",
       "toast.montageFail": "Δεν ήταν δυνατό να έρθει το τραγούδι.", "recap.title": "Η χρονιά μου στη μουσική", "recap.titleY": "Το {y} στη μουσική", "recap.sub": "Φτιαγμένο σε αυτή τη συσκευή από ό,τι έπαιξες εδώ.",
       "recap.minutes": "λεπτά μουσικής", "recap.plays": "αναπαραγωγές", "recap.songs": "διαφορετικά τραγούδια", "recap.topSongs": "Κορυφαία τραγούδια", "recap.topArtists": "Κορυφαίοι καλλιτέχνες",
@@ -1458,6 +1458,16 @@
     }).catch(function () { showToast(t("toast.montageFail")); });
   }
 
+  // Lyric Sync: time this song's lyrics. The song stays where it is;
+  // the lyrics it already has (the .lrc next to it, else its tags) go
+  // along, and Lyric Sync saves the .lrc back next to it.
+  function toLyricSync(r) {
+    if (!r || !r.p) return;
+    LIB.lrcFor(r.p).then(function (x) { return x || LIB.tagLyrics(r.p); }).catch(function () { return ""; }).then(function (ly) {
+      openApp("lyricsync", { musicPath: r.p, title: r.t || "", artist: r.a || "", album: r.al || "", lyrics: String(ly || "").slice(0, 200000) });
+    });
+  }
+
   // Paths in the queue follow renamed/moved files (same song key).
   function relinkQueue() {
     if (!H || typeof H.relink !== "function") return;
@@ -2232,6 +2242,7 @@
     if (ref) items.push([t("m.addPl"), function () { addToPlaylist([ref]); }]);
     if (item && MX) items.push([t("m.radio"), function () { songRadio(r); }]);
     if (!r._missing && montageOk(r)) items.push([t("m.montage"), function () { toMontage(r); }]);
+    if (!r._missing && r.p) items.push([t("m.lyricsync"), function () { toLyricSync(r); }]);
     var ak = r.p ? C.albumKey(r) : "";
     if (ak && !(view && view.kind === "album" && view.id === ak)) items.push([t("m.album"), function () { openView({ kind: "album", id: ak }); }]);
     var an = r.p ? (r.a || "") : "";

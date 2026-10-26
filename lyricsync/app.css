@@ -308,6 +308,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .55); }
 dialog h2 { font-size: 18px; margin-bottom: 4px; }
 #export-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
 .ex-row { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border); border-radius: 10px; }
+.ex-row.ex-more { border-style: dashed; }
 .ex-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: 13px; overflow-wrap: anywhere; }
 .ex-txt strong { font-size: 15px; }
 .dlg-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
