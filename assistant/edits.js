@@ -1907,8 +1907,32 @@
     var prev = h.c;
     c = crmOrder(c);
     d.cust[h.i] = c;
+    crmStampCs(d, prev, c);
     return { ok: true, title: before.title, before: before, after: after, del: false,
              undo: { t: "set", app: "crm", target: { cust: c.id }, prev: clone(prev), next: clone(c) } };
+  }
+  // CT-CRM (crm/contactsync.js): a customer synced with a contact
+  // keeps, per synced field, the value and stamp CRM agreed on in
+  // d.cs. A change made here takes the customer's new stamp there, the
+  // way the CRM app's own save does, so it reaches the contact (an
+  // unstamped value would read as a stale copy and be put back).
+  var CS_FIELDS = ["name", "phone", "email", "web", "job", "addr", "country"];
+  function crmStampCs(d, prev, c) {
+    if (!isObj(d) || !Array.isArray(d.cs)) return;
+    for (var i = 0; i < d.cs.length; i++) {
+      var row = d.cs[i];
+      if (!isObj(row) || row.id !== c.id || typeof row.c !== "string") continue;
+      var nr = null;
+      CS_FIELDS.forEach(function (k) {
+        var v = typeof c[k] === "string" ? c[k] : "";
+        if ((typeof prev[k] === "string" ? prev[k] : "") === v) return;
+        nr = nr || clone(row);
+        nr.f = isObj(nr.f) ? nr.f : {};
+        nr.f[k] = [v, c.m];
+      });
+      if (nr) { nr.m = Math.max((row.m || 0) + 1, c.m); d.cs[i] = nr; }
+      return;
+    }
   }
   function crmUndo(d, u, now) {
     if (u.t !== "set" || !isObj(u.prev) || !isObj(u.next)) return bad("bad undo");
@@ -1928,6 +1952,7 @@
     var c = clone(u.prev);
     c.m = stampAfter(now, h.c.m);
     d.cust[h.i] = crmOrder(c);
+    crmStampCs(d, h.c, d.cust[h.i]);
     return { ok: true };
   }
 

@@ -11,6 +11,8 @@ The list has a search field, a sort menu and filters: `Leads`, `Active`, `Past`,
 
 Under `People` tap `+ Person`. Pick someone `From Contacts` (their phone and email are read from [Contacts](app:contacts) and stay up to date), or write a name with a phone and email. `Add to Contacts` opens Contacts with that person filled in; it is saved there only when you press Save.
 
+A customer of kind `Person` linked to a contact is kept in sync with it both ways: change the name, phone, email, website, profession, address or country in either app and the other follows (the newer change wins; tax ID, notes and tags stay apart). When a company is renamed, its linked people whose company field still says the old name follow. If the two already differed before the link, the customer page shows `Different in Contacts`: nothing changes until you pick `Keep this` or `Keep the contact's`.
+
 ## History, follow-ups and the agenda
 `Log contact` records a call, email, meeting, message or note with its date and time, who you spoke to and the deal it was about. Pick `Next follow-up` to plan the next step in the same window.
 
