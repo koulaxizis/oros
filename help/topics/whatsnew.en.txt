@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.84.03
+- Assistant: attach up to 30 files to one message, each up to 30 MB. Each AI service takes only so much in one request; a file past that goes as the text orOS reads from it on your device, and its chip says "text only".
+
 ## Version 3.84.02
 - Today: on a wide screen the cards now flow in two columns with no gaps, so Coming up sits right under a short Overdue instead of below a long Today. When more than three of your contacts celebrate a name day, they fold into one row you can open.
 

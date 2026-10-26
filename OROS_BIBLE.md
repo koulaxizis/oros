@@ -2651,6 +2651,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-10-26 · 3.84.03 Assistant: 30 attachments of 30 MB (#619):** see AS-ATT30: `ATT_MAX` 30, `ATT_FILE` 30 MB, per-provider request room `attRoom` (Claude 22 MB / 100 PDF pages / 100 files, OpenAI 30 MB, Gemini 13 MB, others 12 MB); what doesn't fit goes as device-read text; Claude PDFs page-counted with PDF.js before Send.
 - **2026-10-26 · 3.84.02 Today: masonry columns + folded name days (#618):** from 900 px each run of small widgets is two stacks filled by height (`OrosTodayLayout.stack`), so Coming up goes on under a short Overdue; more than 3 contacts with a name day are one row that shows / hides them (BR-TODAY-14).
 - **2026-10-26 · 3.84.01 Assistant: all apps' sharing at once (#617):** Settings → Your data has an `All apps at once` row (shown with 2+ apps) with `Ask first` / `Always share` / `Never`; each app goes through `setPerm` like a single change (synced, m forward), the selects update in place and stay editable one by one. Mail and Passwords are still never offered (not in the list).
 - **2026-10-26 · 3.84.00 CRM partner card W6, Revenue Splitter (#616):** CRM core 1.7: `rsl` list (customer id → shop account + beneficiary names), emptied `pt`/`rsl` rows kept as `{ id, m }` so an unlink sticks across devices; Overview section from the read-only routes `wc/v3/rs/balances` and `wc/v3/rs/report` of Revenue Splitter 1.11 (noxpress PR #100), allowed in `links/core.js` and `relay/ext.js` (GET only, no query but the two dates); figures never stored and kept out of Money (Chris 2026-10-26). Assistant and Today do not read the shop.
@@ -8031,6 +8032,11 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - DRIVE-DL: Files › orOS Drive, when nothing is mirrored yet, shows "Get orOS Drive" under the intro, opening `/download/` (`?lang=el` in Greek) in a new tab.
 - Files: `download/index.html`, `files/{drive.js,files.css}`, `i18n/de/{files.js,STATUS.md}`, `tests/drive-android.test.js` (+1), What's new, Bible. The page's generator (`/mnt/project-files/hardware/download-page/gen_dl.py`) was not changed and no longer matches the page; edit the page directly.
   - Tests: full suite green. Chromium, local server, 360 px EL and 1200 px EN: both new cards render, no horizontal scroll, no console errors; release asset names checked against oros-drive v0.2.1 and oros-portable v0.2.0. Not tested: the Drive empty state in the real shell (needs an unlocked vault with no Drive folders; covered by the source test), installing orOS Drive on a real Windows PC with a real Dropbox, Safari.
+
+### 2026-10-26 — Assistant: up to 30 attachments of 30 MB each (#619) — 3.84.03
+- **Changes:** see AS-ATT30 (Chris 2026-10-26: 30 files and 30 MB per file).
+- **Files:** `assistant/{core.js,assistant.js,assistant.css,help.*.txt}`, `i18n/de/help/assistant.txt`, `tests/assistant-attach.test.js`, `shell.js` (APP_VERSION), What's new, Bible.
+- **Tests:** full suite green; Chromium, 360 px, mocked Claude: 31 MB PDF refused, 30 files in, 31st refused, 27 photos + 80-page PDF as files, 30-page PDF (page limit) and 25 MB PDF (bytes) as device text, chip row scrolls, no console errors. Not tested: real providers with large files, real phone, Safari.
 
 ### 2026-10-26 — Today: masonry columns on wide screens, folded name days (#618) — 3.84.02
 - **Changes:** see the Decisions entry and BR-TODAY-14 (Chris 2026-10-26: on desktop the two columns left big gaps).
