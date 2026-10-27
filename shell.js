@@ -386,6 +386,7 @@
     var dBtn = document.getElementById("bar-date");
     if (tBtn) tBtn.title = window.t("app.time");   // paintBarDate adds the date at fit level 6
     if (dBtn) dBtn.title = window.t("app.calendar");
+    if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -9214,6 +9215,17 @@
     try { return S.snapshot(); } catch (e) { return null; }
   }
 
+  // On-screen keyboard (osk.js): none on phones (snapshot null).
+  function settingsOskL() {
+    var O = window.orosOsk;
+    return (O && typeof O.snapshot === "function" && typeof O.set === "function") ? O : null;
+  }
+  function settingsOsk() {
+    var O = settingsOskL();
+    if (!O) return null;
+    try { return O.snapshot(); } catch (e) { return null; }
+  }
+
   // Menu apps (launcher.js 1.3.0): which apps the menu lists. Only
   // when the launcher offers it; an older bundle shows no section.
   function settingsMenuL() {
@@ -9315,6 +9327,7 @@
       install: !!state.deferredPrompt,
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
+      osk: settingsOsk(),
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
@@ -9359,6 +9372,11 @@
     if (/^seasonal:/.test(name)) {
       var SS = settingsSeasonalL();
       if (SS) SS.set(name.slice(9), value);
+      return;
+    }
+    if (/^osk:/.test(name)) {
+      var OK = settingsOskL();
+      if (OK) OK.set(name.slice(4), value);
       return;
     }
     if (/^menu:/.test(name)) {
@@ -9674,8 +9692,13 @@
   // its page, without text while it loaded, under the name of the app
   // in front (Chris 2026-10-18, BK-1). Back itself is section 10d.
   function frameGo(el, url) {
-    try { el.contentWindow.location.replace(new URL(url, document.baseURI).href); return; } catch (e) {}
+    try { el.contentWindow.location.replace(new URL(url, document.baseURI).href); oskWatch(el); return; } catch (e) {}
     el.src = url;
+    oskWatch(el);
+  }
+  // On-screen keyboard (osk.js): wire the new page as soon as it exists.
+  function oskWatch(el) {
+    if (window.orosOsk && window.orosOsk.watch) window.orosOsk.watch(el);
   }
 
   // ---------- 10b. Multitasking (experimental, off by default, wave M2) ----------
@@ -11596,6 +11619,16 @@
       desktop: document.getElementById("oros-desktop"),
       running: function () { return !!state.running; },
       lang: function () { return langBase(); },
+      changed: function () { settingsNotify(); }
+    });
+  }
+  // On-screen keyboard (osk.js, a shell component like seasonal.js):
+  // touch screens without a keyboard, never on phones. A single app
+  // has text fields too, so it gets one.
+  if (window.orosOsk) {
+    window.orosOsk.attach({
+      lang: function () { return state.lang; },   // "de" picks the German layout
+      toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); }
     });
   }

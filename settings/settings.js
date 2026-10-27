@@ -1105,6 +1105,8 @@
     });
     host.appendChild(c1);
 
+    if (s.osk) secOsk(host, s.osk);
+
     // Help translate (settings/translate.js, loaded on demand).
     if (window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; })) {
       var ct = card(t("tr.title"), "device");
@@ -1131,6 +1133,37 @@
       c2.appendChild(list);
     }
     host.appendChild(c2);
+  }
+
+  // On-screen keyboard (osk.js through the shell; never on phones,
+  // where the snapshot is null): when it shows, and its layouts.
+  function secOsk(host, o) {
+    var c = card(t("o.title"), "osk");
+    c.appendChild(segRow(t("o.mode"), segmented(o.modes.map(function (m) {
+      return { value: m, label: t("o.mode." + m) };
+    }), o.mode, "osk:mode", function (v) { set("osk:mode", v); }, t("o.mode")), { stack: true }));
+    c.appendChild(el("p", "hint", t("o.hint." + o.mode)));
+    if (!o.touch && o.mode === "off") c.appendChild(el("p", "hint", t("o.notouch")));
+    if (o.mode !== "off") {
+      var list = el("div", "checks");
+      var on = o.layouts.filter(function (l) { return l.on; }).length;
+      o.layouts.forEach(function (l) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = !!l.on;
+        cb.disabled = !!l.on && on === 1;          // one always stays on
+        cb.setAttribute("data-k", "osk:layout:" + l.id);
+        cb.addEventListener("change", function () { set("osk:layout:" + l.id, cb.checked); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, l.name));
+        list.appendChild(lab);
+      });
+      c.appendChild(row(t("o.layouts"), null, { stack: true }));
+      c.appendChild(list);
+      c.appendChild(el("p", "hint", t("o.layouts.hint")));
+    }
+    host.appendChild(c);
   }
 
   // ---------- 8b. Section: Opening files ----------

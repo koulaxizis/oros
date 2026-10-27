@@ -6,6 +6,15 @@ orOS spricht Englisch und Griechisch. Der Knopf `EL` / `EN` in der oberen Leiste
 
 Ist beim Wechsel eine App offen, öffnet sie sich in der neuen Sprache neu. Deine Daten bleiben unberührt.
 
+## Bildschirmtastatur
+Auf einem Touchscreen ohne eigene Tastatur (orOS USB auf einem Touch-Laptop oder Tablet-PC, ein Touch-PC, ein Kiosk) hat orOS eine eigene Tastatur unten auf dem Bildschirm. Sie schreibt in das Textfeld, in dem du bist, in orOS und in jeder App, und die App rückt nach oben, damit das Feld sichtbar bleibt. Auf Handys erscheint sie nie: Die haben ihre eigene.
+
+- Sie öffnet sich, wenn du mit dem Finger oder einem Stift auf ein Textfeld tippst. Ein Mausklick öffnet sie nicht, und solange du auf einer echten Tastatur schreibst, bleibt sie weg (ein echter Tastendruck schließt sie).
+- Die Tastatur-Schaltfläche in der oberen Leiste blendet sie jederzeit ein oder aus. Ohne Textfeld gehen ihre Tasten als Tastendrücke an die App, für Spiele.
+- `⇧` gibt einen Großbuchstaben; zweimal tippen für die Feststelltaste. `?123` und `=\<` zeigen Zahlen und Symbole, `abc` wieder die Buchstaben. `⌫` löscht (gedrückt halten löscht weiter), `↵` ist die Eingabetaste, die Pfeile bewegen den Cursor.
+- Die Taste neben `?123` (`EN`, `ΕΛ`, `DE`) wechselt zum nächsten Layout. Im Griechischen setzt `΄` den Akzent auf den nächsten Vokal (`΄` und dann `α` ergibt `ά`) und `⇧` `¨` das Trema (`ϊ`, `ϋ`).
+- In den `Einstellungen` unter `Sprache & Suche` legt `Bildschirmtastatur` fest, wann sie erscheint (`Wenn ich auf ein Textfeld tippe`, `Nur über ihre Schaltfläche` oder `Nie`) und welche Layouts sie hat: Englisch, Griechisch und Deutsch. Diese Einstellungen bleiben auf diesem Gerät.
+
 ## Helles oder dunkles Design
 Wähle in den `Einstellungen` unter `Darstellung` neben `Design` entweder `Dunkel` oder `Hell`. orOS startet im dunklen Modus.
 

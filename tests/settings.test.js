@@ -124,8 +124,15 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
       assert.match(n, /^seasonal:(on|motion|amount|xmas|easter|bday)$/, n);
       return;
     }
+    if (/^osk:/.test(n)) {                       // passed on to osk.js by prefix
+      assert.match(BRIDGE, /\/\^osk:\//);
+      assert.match(n, /^osk:mode$/, n);
+      return;
+    }
     assert.ok(BRIDGE.includes('case "' + n + '":'), "set " + n);
   });
+  // set("osk:layout:" + id) goes to osk.js by the same prefix
+  assert.match(APP, /set\("osk:layout:" \+ l\.id/);
   // set("search:<id>") is matched by prefix in the shell
   assert.match(APP, /set\("search:" \+ a\.id/);
   assert.match(BRIDGE, /\/\^search:\//);

@@ -6,6 +6,15 @@ orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to
 
 If an app is open when you switch, it reopens in the new language. Your data isn't touched.
 
+## On-screen keyboard
+On a touch screen without a keyboard of its own (orOS USB on a touch laptop or tablet PC, a touch PC, a kiosk) orOS has its own keyboard at the bottom of the screen. It types into the text field you are in, in the shell and in every app, and the app moves up so the field stays in sight. It never shows on phones: they have their own.
+
+- It opens when you tap a text field with a finger or a pen. A mouse click does not open it, and while you type on a real keyboard it stays away (a real key press closes it).
+- The keyboard button in the top bar shows or hides it at any time. With no text field in use, its keys go to the app as key presses, for games.
+- `⇧` gives one capital letter; tap it twice for Caps Lock. `?123` and `=\<` show numbers and symbols, `abc` the letters again. `⌫` deletes (hold it to keep deleting), `↵` is Enter, the arrows move the cursor.
+- The key next to `?123` (`EN`, `ΕΛ`, `DE`) goes to the next layout. In Greek, `΄` puts the accent on the next vowel (`΄` then `α` gives `ά`) and `⇧` `¨` the diaeresis (`ϊ`, `ϋ`).
+- In `Settings`, under `Language & search`, `On-screen keyboard` sets when it shows (`When I tap a text field`, `Only from its button` or `Never`) and which layouts it has: English, Greek and German. These choices stay on this device.
+
 ## Light or dark theme
 In `Settings`, under `Appearance`, choose `Dark` or `Light` next to `Theme`. orOS starts in dark mode.
 
