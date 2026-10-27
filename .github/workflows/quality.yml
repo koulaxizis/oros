@@ -59,6 +59,9 @@ jobs:
       - name: Every app with multitasking on (experimental switch)
         if: success() || failure()
         run: node .github/qa/multitask.js --shard ${{ matrix.shard }}/4 --out qa-mt-${{ matrix.shard }}.json
+      - name: On-screen keyboard on a touch screen
+        if: matrix.shard == 1 && (success() || failure())
+        run: node .github/qa/osk.js --out qa-osk-1.json
       - name: Precache size budget
         if: matrix.shard == 1 && (success() || failure())
         env:
