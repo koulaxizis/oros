@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.04.00
+- Invoices: `New` › `Import invoice PDFs` turns the PDFs you issued in Novus (timologisi.online) or elsewhere into recorded invoices: number, date, client (found by VAT number in Invoices and Customers), VAT, withholding and ΜΑΡΚ, with the PDF kept as the official file. You see a preview first; the same invoice is never added twice.
+- Invoices → Budget: a payment you record now goes to Budget by itself as income (setting `Payments go to Budget by themselves`, on). If you change or delete that entry in Budget, it stays as you left it.
+
 ## Version 4.03.01
 - Assistant: it now always opens on a new conversation, also the small window. Your earlier conversations are in the list; opening it with selected text, a share or a task works as before.
 
