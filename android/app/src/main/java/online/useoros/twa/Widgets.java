@@ -106,6 +106,25 @@ final class Widgets {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
+    /** orOS with the command bar open (shell.js "#quick", QW): the
+     *  "Add or search" widget and the Quick Settings tile. */
+    static Intent quickIntent(Context c) {
+        Uri u = Uri.parse(c.getString(R.string.launchUrl)).buildUpon().fragment("quick").build();
+        return new Intent(c, LauncherActivity.class).setAction(Intent.ACTION_VIEW).setData(u)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    }
+
+    static PendingIntent quickOpen(Context c) {
+        return PendingIntent.getActivity(c, "quick".hashCode(), quickIntent(c),
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    static RemoteViews quickBar(Context c) {
+        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_quickbar);
+        v.setOnClickPendingIntent(R.id.w_quickbar, quickOpen(c));
+        return v;
+    }
+
     private static void buttons(Context c, RemoteViews v) {
         v.setOnClickPendingIntent(R.id.w_ask, ask(c));
         v.setOnClickPendingIntent(R.id.w_cmd, open(c, "cmd"));

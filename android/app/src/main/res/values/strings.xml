@@ -37,4 +37,8 @@
         <item quantity="other">%d ticks wait for orOS to open</item>
     </plurals>
     <string name="health_missing">Health Connect is not available on this phone.</string>
+    <string name="widget_quickbar">orOS add or search</string>
+    <string name="widget_quickbar_desc">Add a task or search your orOS data</string>
+    <string name="widget_quickbar_hint">Add or search…</string>
+    <string name="tile_quick">orOS Quick</string>
 </resources>
