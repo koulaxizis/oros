@@ -24,7 +24,9 @@ function runSnippet(code, opts) {
     hash: opts.hash || "",
     replace: (u) => calls.push(u),
   };
-  vm.runInNewContext(code, { window: win, location, encodeURIComponent });
+  const store = opts.lock ? { "oros-lock": "{}" } : {};
+  const localStorage = { getItem: (k) => (k in store ? store[k] : null) };
+  vm.runInNewContext(code, { window: win, location, encodeURIComponent, localStorage });
   return calls;
 }
 
@@ -80,4 +82,12 @@ test("shell accepts only a query/fragment as app-at", () => {
 
 test("service worker does not cache one shell copy per direct link", () => {
   assert.match(read("sw.js"), /url\.search\.indexOf\("app-at="\) === -1/);
+});
+
+test("with the screen lock on, ?standalone no longer opens the bare page", () => {
+  const code = SNIP_RE.exec(read("notes/index.html"))[1];
+  assert.deepEqual(runSnippet(code, { search: "?standalone", lock: true }),
+    ["../?open=notes&app-at=" + encodeURIComponent("?standalone")]);
+  assert.deepEqual(runSnippet(code, { framed: true, search: "?standalone", lock: true }), []);
+  assert.deepEqual(runSnippet(code, { search: "?standalone" }), []);
 });

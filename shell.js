@@ -211,6 +211,7 @@
     device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     assistant: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
     today: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>',
+    lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>',
     settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
     connect4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="3"/><circle cx="7.5" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="15.5" r="1.8"/><circle cx="12" cy="10.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.8"/></svg>',
@@ -4245,6 +4246,22 @@
     setRow.appendChild(setBtn);
     menu.appendChild(setRow);
 
+    // Screen lock on: lock now (lock.js), right under Settings.
+    if (window.orosLock && window.orosLock.isOn()) {
+      var lockRow = document.createElement("div");
+      lockRow.className = "install-section";
+      var lockBtn = document.createElement("button");
+      lockBtn.className = "menu-item install-row";
+      lockBtn.innerHTML = '<span class="app-ico">' + ICONS.lock + '</span>' +
+                          '<span>' + escapeHtml(window.t("menu.lock")) + '</span>';
+      lockBtn.addEventListener("click", function () {
+        closeMenu();
+        window.orosLock.lock();
+      });
+      lockRow.appendChild(lockBtn);
+      menu.appendChild(lockRow);
+    }
+
     // Device Info row (Chris 2026-10-09): where people look when
     // something is wrong — space, sync state, missing browser features.
     var devRow = document.createElement("div");
@@ -6880,13 +6897,17 @@
     } catch (e) { return Promise.resolve(false); }
   }
 
-  function scFactoryReset(btn) {
+  // deviceOnly (screen lock, "Reset this device"): the same local
+  // wipe, but the cloud and the backup folder stay; `cloud` is then the
+  // last push of unsynced changes (lockDeviceReset).
+  function scFactoryReset(btn, deviceOnly) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = (window.orosSync && typeof window.orosSync.wipeEverything === "function")
+    var cloud = deviceOnly ? lockLastPush()
+      : (window.orosSync && typeof window.orosSync.wipeEverything === "function")
       ? Promise.race([
           window.orosSync.wipeEverything(),
           new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
@@ -6896,7 +6917,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
+    Promise.all([deviceOnly ? false : wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -6916,6 +6937,28 @@
       localStorage.setItem("oros-reset-db", "1");
       location.reload();
     });
+  }
+
+  // Screen lock (lock.js), "Reset this device": changes this device
+  // has not synced yet go up first when sync can (connected, unlocked,
+  // 15s cap), then the engine stops and the local wipe runs. The cloud
+  // and its backups stay: connecting sync again brings everything back.
+  function lockLastPush() {
+    var S = window.orosSync;
+    var push = Promise.resolve(null);
+    if (S && S.isConnected() && S.hasPassphrase() && S.isDirty()) {
+      push = Promise.race([
+        S.push().catch(function () { return null; }),
+        new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
+      ]);
+    }
+    return push.then(function () {
+      if (S && typeof S.suspendEngine === "function") S.suspendEngine();
+    }).catch(function () { return null; });
+  }
+  function lockDeviceReset() {
+    if (osResetting) return;
+    scFactoryReset({ disabled: false, textContent: "" }, true);
   }
 
   // STAGE 2 — called from the very top of this IIFE (function
@@ -9469,6 +9512,25 @@
     window.orosSync.onAutoSync(function (kind) { if (kind !== "start") settingsNotify(); });
   }
 
+  // Screen lock (lock.js, loaded before this file): the shell owns the
+  // device reset and the way back after the sync passphrase opened it
+  // (the lock is off then; Settings opens where a new one is set).
+  // The menu's "Lock orOS" row follows the switch.
+  if (window.orosLock && typeof window.orosLock.setHooks === "function") {
+    window.orosLock.setHooks({
+      reset: lockDeviceReset,
+      recovered: function () {
+        window.orosSettings.open("lock");
+        scToast("ok", window.t("lock.recovered"));
+      }
+    });
+    var lockWasOn = window.orosLock.isOn();
+    window.orosLock.onChange(function () {
+      var on = window.orosLock.isOn();
+      if (on !== lockWasOn) { lockWasOn = on; renderMenu(); }
+    });
+  }
+
   // ---------- 9b. Single apps (solo.js) ----------
   // "/?solo=<id>": this shell runs inside an installed single app
   // ("orOS Notes" …, /<id>/solo.html) and shows only that app. No
@@ -9547,7 +9609,8 @@
       ["solo.settings", function () { openAppById("settings"); }],
       ["solo.help", function () { openHelp(); }],
       ["solo.full", function () { window.open("/", "_blank", "noopener"); }]
-    ].forEach(function (it) {
+    ].concat(window.orosLock && window.orosLock.isOn()
+      ? [["menu.lock", function () { window.orosLock.lock(); }]] : []).forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("role", "menuitem");

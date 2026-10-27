@@ -1738,6 +1738,57 @@ body.solo-mode #ts-tray-chip { display: none !important; }
 }
 #solo-menu button:hover, #solo-menu button:focus-visible { background: var(--accent-soft); outline: none; }
 
+/* Screen lock (lock.js): a modal <dialog> over the whole shell. Opaque
+   on purpose: nothing of the apps behind it may show through. */
+dialog#oros-lock {
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 16px; border: 0; box-sizing: border-box; z-index: 2147483000;
+  display: flex; align-items: center; justify-content: center; overflow-y: auto;
+  background: var(--bg-desktop, var(--bg)); color: var(--text); font-family: inherit;
+}
+dialog#oros-lock:not([open]) { display: none; }
+dialog#oros-lock::backdrop { background: var(--bg-desktop, var(--bg)); }
+#oros-lock .lk-box {
+  width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: stretch;
+  gap: 12px; text-align: center;
+}
+#oros-lock .lk-clock { margin-bottom: 8px; }
+#oros-lock .lk-time { font-size: 56px; font-weight: 300; line-height: 1.05; font-variant-numeric: tabular-nums; }
+#oros-lock .lk-date { font-size: 15px; color: var(--text-dim); }
+#oros-lock .lk-ico { color: var(--accent); display: flex; justify-content: center; }
+#oros-lock .lk-title { margin: 0; font-size: 20px; font-weight: 600; }
+#oros-lock .lk-sub { margin: 0; font-size: 17px; font-weight: 600; }
+#oros-lock .lk-view, #oros-lock .lk-rec, #oros-lock .lk-reset { display: flex; flex-direction: column; gap: 10px; }
+#oros-lock .lk-reset { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+#oros-lock .lk-label { font-size: 14px; color: var(--text-dim); }
+#oros-lock .lk-input {
+  min-height: 48px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--panel-bg); color: var(--text); font: inherit; font-size: 20px;
+  text-align: center; letter-spacing: 0.15em; box-sizing: border-box; width: 100%;
+}
+#oros-lock .lk-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+#oros-lock .lk-btn {
+  min-height: 46px; padding: 10px 16px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--panel-bg); color: var(--text); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+#oros-lock .lk-primary { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+#oros-lock .lk-danger { color: var(--danger); border-color: var(--danger); background: transparent; }
+#oros-lock .lk-danger.lk-armed { background: var(--danger); color: #fff; }
+#oros-lock .lk-btn:disabled { opacity: 0.6; cursor: progress; }
+#oros-lock .lk-link {
+  align-self: center; min-height: 44px; padding: 8px 12px; border: 0; background: transparent;
+  color: var(--accent); font: inherit; font-size: 14px; cursor: pointer; text-decoration: underline;
+}
+#oros-lock .lk-btn:focus-visible, #oros-lock .lk-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#oros-lock .lk-hint { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text-dim); text-align: left; }
+#oros-lock .lk-msg { margin: 0; min-height: 1.4em; font-size: 14px; }
+#oros-lock .lk-err { color: var(--danger); }
+#oros-lock .lk-dim { color: var(--text-dim); }
+@media (max-height: 560px) {
+  #oros-lock .lk-time { font-size: 40px; }
+  #oros-lock .lk-ico { display: none; }
+}
+
 /* Authority guard: the HTML [hidden] attribute must always win over
    any author display rule (e.g. #wxc-ac in the wxcity dialog).
    Bible Part VII — applied to the shell itself, not just app

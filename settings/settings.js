@@ -24,6 +24,7 @@
 //   4b. Section: Menu (which apps the menu lists)
 //   5. Section: Notifications
 //   6. Section: Sync
+//  6b. Section: Screen lock (window.parent.orosLock)
 //   7. Section: Backups
 //   8. Section: Language & search
 //  8b. Section: Opening files
@@ -79,6 +80,7 @@
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
+    lock: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1" fill="currentColor"/></svg>',
     services: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
     eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
@@ -1032,6 +1034,158 @@
     return form;
   }
 
+  // ---------- 6b. Section: Screen lock ----------
+  // The lock lives in the shell (lock.js, window.parent.orosLock): it
+  // keeps only a slow hash on this device. The typed PIN / passphrase
+  // stays in `lk` until it is handed over, then it is cleared.
+  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", msg: null };
+
+  function lockApi() {
+    var p = parentWin();
+    try { var L = p && p.orosLock; return (L && L.v >= 1 && typeof L.snapshot === "function") ? L : null; }
+    catch (e) { return null; }
+  }
+  function lockClear() { lk.a = ""; lk.b = ""; lk.cur = ""; }
+  function lockMsg(kind, key, vars) { lk.msg = { kind: kind, key: key, vars: vars || null }; }
+  function lockResult(r, okKey) {
+    if (r && r.ok) {
+      lk.mode = null;
+      lockClear();
+      lockMsg("ok", okKey);
+    } else {
+      var code = (r && r.code) || "crypto";
+      lk.cur = "";
+      if (code === "wait") lockMsg("err", "l.msg.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
+      else lockMsg("err", "l.msg." + (/^(wrong|pin|short|long|storage|busy)$/.test(code) ? code : "crypto"));
+    }
+    render();
+  }
+
+  function lockField(key, label, kind) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-lk-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-lk-" + key;
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (kind === "pin") {
+      inp.inputMode = "numeric";
+      inp.maxLength = 12;
+      inp.setAttribute("pattern", "[0-9]*");
+    } else {
+      inp.maxLength = 256;
+    }
+    inp.value = lk[key];
+    inp.setAttribute("data-k", "lk-" + key);
+    inp.addEventListener("input", function () { lk[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+
+  // mode "on" / "change": kind + new secret twice (+ the current one).
+  // mode "off": the current one.
+  function lockForm(L, k) {
+    var form = el("form", "pass dav-form");
+    form.setAttribute("autocomplete", "off");
+    var curKind = k.kind || "pin";
+    if (lk.mode !== "on") form.appendChild(lockField("cur", t("l.current." + curKind), curKind));
+    if (lk.mode !== "off") {
+      var kr = row(t("l.kind"), null);
+      kr.appendChild(segmented([
+        { value: "pin", label: t("l.kind.pin") }, { value: "pass", label: t("l.kind.pass") }
+      ], lk.kind, "lk-kind", function (v) { lk.kind = v; lk.a = ""; lk.b = ""; lk.msg = null; render(); }, t("l.kind")));
+      form.appendChild(kr);
+      form.appendChild(lockField("a", t("l.new." + lk.kind), lk.kind));
+      form.appendChild(lockField("b", t("l.again"), lk.kind));
+    }
+    var go = el("button", "btn " + (lk.mode === "off" ? "danger" : "primary"),
+      t(lk.mode === "on" ? "l.turnOn" : lk.mode === "off" ? "l.turnOff" : "l.save"));
+    go.type = "submit";
+    go.setAttribute("data-k", "lk-go");
+    if (k.busy) go.disabled = true;
+    form.appendChild(actions(go, button(t("l.cancel"), "lk-cancel", function () {
+      lk.mode = null;
+      lk.msg = null;
+      lockClear();
+      render();
+    })));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (lockApi() !== L || L.snapshot().busy) return;
+      if (lk.mode !== "off") {
+        var why = L.core.secretProblem(lk.kind, lk.a);
+        if (why !== "ok") { lockMsg("err", "l.msg." + why); render(); return; }
+        if (lk.a !== lk.b) { lockMsg("err", "l.msg.mismatch"); lk.b = ""; render(); return; }
+      }
+      var mode = lk.mode, kind = lk.kind, a = lk.a, cur = lk.cur;
+      lockClear();
+      lockMsg("dim", "l.msg.working");
+      render();
+      var p = mode === "on" ? L.enable(kind, a) : mode === "off" ? L.disable(cur) : L.change(cur, kind, a);
+      p.then(function (r) { lockResult(r, mode === "on" ? "l.msg.on" : mode === "off" ? "l.msg.off" : "l.msg.changed"); },
+             function () { lockResult(null); });
+    });
+    return form;
+  }
+
+  function secLock(host) {
+    var L = lockApi();
+    var c1 = card(null);
+    c1.appendChild(el("p", "hint", t("l.intro")));
+    if (!L || !L.available()) {
+      c1.appendChild(el("p", "msg msg-err", t("l.na")));
+      host.appendChild(c1);
+      return;
+    }
+    var k = L.snapshot();
+    if (lk.mode === "on" && k.on) lk.mode = null;
+    if ((lk.mode === "change" || lk.mode === "off") && !k.on) lk.mode = null;
+    var sr = row(t("l.status"), null, { scope: "lock" });
+    sr.appendChild(el("div", "version", t(!k.on ? "l.status.off" : k.kind === "pass" ? "l.status.pass" : "l.status.pin")));
+    c1.appendChild(sr);
+    if (lk.mode) {
+      c1.appendChild(lockForm(L, k));
+    } else if (!k.on) {
+      c1.appendChild(actions(button(t("l.turnOn"), "lk-on", function () {
+        lk.mode = "on"; lk.kind = "pin"; lk.msg = null; lockClear(); render();
+        var f = $("f-lk-a"); if (f) f.focus();
+      }, "primary")));
+    } else {
+      c1.appendChild(actions(
+        button(t("l.lockNow"), "lk-now", function () { L.lock(); }, "primary"),
+        button(t("l.change"), "lk-change", function () {
+          lk.mode = "change"; lk.kind = k.kind || "pin"; lk.msg = null; lockClear(); render();
+          var f = $("f-lk-cur"); if (f) f.focus();
+        }),
+        button(t("l.turnOff"), "lk-off", function () {
+          lk.mode = "off"; lk.msg = null; lockClear(); render();
+          var f = $("f-lk-cur"); if (f) f.focus();
+        })));
+    }
+    if (lk.msg) c1.appendChild(el("p", "msg msg-" + lk.msg.kind, t(lk.msg.key, lk.msg.vars)));
+    host.appendChild(c1);
+
+    if (k.on) {
+      var c2 = card(t("l.when"));
+      c2.appendChild(el("p", "hint", t("l.start")));
+      c2.appendChild(row(t("l.idle"), select(k.idles.map(function (m) {
+        return { value: m, label: m ? t("l.idle.min", { n: m }) : t("l.idle.never") };
+      }), k.idle, "lk-idle", function (v) { L.option("idle", Number(v)); render(); }), { forId: "f-lk-idle" }));
+      c2.appendChild(row(t("l.hidden"), switchBtn(k.hidden, "lk-hidden", function (v) { L.option("hidden", v); render(); }, t("l.hidden")),
+        { hint: t("l.hidden.hint") }));
+      host.appendChild(c2);
+    }
+
+    var c3 = card(null);
+    c3.appendChild(el("p", "hint", t("l.honest")));
+    c3.appendChild(el("p", "hint", t("l.forgot")));
+    host.appendChild(c3);
+  }
+
   // ---------- 7. Section: Backups ----------
   function secBackup(host, s) {
     var b = s.backup;
@@ -1742,7 +1896,7 @@
   }
 
   var SECTION_FN = {
-    appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync,
+    appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem
   };
 
@@ -1898,11 +2052,14 @@
 
     var S = shell();
     if (S) unsubscribe = S.onChange(render);
+    var LkA = lockApi(), unLock = null;
+    if (LkA && typeof LkA.onChange === "function") unLock = LkA.onChange(function () { render(); });
     var Lk = links(), unLinks = null;
     if (Lk && typeof Lk.onChange === "function") unLinks = Lk.onChange(function () { render(); });
     window.addEventListener("pagehide", function () {
       if (unsubscribe) { try { unsubscribe(); } catch (e) {} unsubscribe = null; }
       if (unLinks) { try { unLinks(); } catch (e) {} unLinks = null; }
+      if (unLock) { try { unLock(); } catch (e) {} unLock = null; }
     });
     var mq = window.matchMedia(NARROW);
     var onMq = function () { render(); };

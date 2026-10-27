@@ -23,6 +23,7 @@
     ["notifications", "quiet"],
     ["sync", "dropbox"],
     ["sync", "passphrase"],
+    ["lock", "lock"],
     ["backup", "backups"],
     ["language", "language"],
     ["language", "menusearch"],
@@ -65,7 +66,9 @@
           "st.shortcuts": "Keyboard shortcuts",
           "st.shortcuts.words": "keys shortcut",
           "st.reset": "Factory reset",
-          "st.reset.words": "erase delete everything reset" },
+          "st.reset.words": "erase delete everything reset",
+          "st.lock": "Screen lock",
+          "st.lock.words": "lock pin passphrase screen idle away security" },
     el: { "st.theme": "Θέμα: σκοτεινό ή φωτεινό",
           "st.theme.words": "σκοτεινό φωτεινό λειτουργία νύχτα",
           "st.colour": "Χρώμα συστήματος",
@@ -99,14 +102,16 @@
           "st.shortcuts": "Συντομεύσεις πληκτρολογίου",
           "st.shortcuts.words": "πλήκτρα",
           "st.reset": "Επαναφορά εργοστασιακών",
-          "st.reset.words": "διαγραφή σβήσιμο όλα" }
+          "st.reset.words": "διαγραφή σβήσιμο όλα",
+          "st.lock": "Κλείδωμα οθόνης",
+          "st.lock.words": "κλείδωμα κλειδωμα pin φράση κωδικός οθόνη αδράνεια ασφάλεια lock" }
   };
 
 
   var SECTION_NAME = {
-    en: { appearance: "Appearance", menu: "Menu", notifications: "Notifications", sync: "Sync",
+    en: { appearance: "Appearance", menu: "Menu", notifications: "Notifications", sync: "Sync", lock: "Screen lock",
           backup: "Backups", language: "Language & search", files: "Opening files", system: "System" },
-    el: { appearance: "Εμφάνιση", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός",
+    el: { appearance: "Εμφάνιση", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός", lock: "Κλείδωμα οθόνης",
           backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Άνοιγμα αρχείων", system: "Σύστημα" }
   };
 
