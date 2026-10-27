@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 35379 of 35402 (99%)
+- Strings: 35461 of 35484 (99%)
 - Help pages: 150 of 150 (100%)
 - Shown in the language list: yes
 
@@ -31,7 +31,7 @@ text is still written in the code. They switch over wave by wave
 | checkers | 100% | 72 / 72 |
 | chess | 100% | 405 / 405 |
 | chores | 100% | 207 / 207 |
-| commands | English for now | 41 / 41 |
+| commands | English for now | 44 / 44 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 301 / 301 |
 | converter | 100% | 68 / 68 |
@@ -116,10 +116,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 300 / 300 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 607 / 607 |
+| settings | 100% | 684 / 684 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 950 / 950 |
+| shell | 100% | 952 / 952 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -162,3 +162,9 @@ text is still written in the code. They switch over wave by wave
 | writer | 100% | 377 / 377 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
+
+## Lines to fix
+
+These show English until fixed (usually the English text changed).
+
+- de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
