@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.07.00
+- Command bar and Quick window: change a few settings by typing them. `dark theme` / `light theme`, `quiet hours on` / `off` (your saved hours stay), `notifications off` / `on` (with a note that nothing shows or is kept while they are off) and `lock now` (only when the screen lock is set up). Press Enter on the row to do it.
+
 ## Version 4.06.01
 - Calendar: share all your events with no label with your household in one step: `Manage labels` › the `No label` row › the house icon. Give the shared calendar a name (for example `Home`); if the household cannot be reached, nothing changes.
 
