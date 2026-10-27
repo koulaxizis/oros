@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.02.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.06.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3592,6 +3592,12 @@
       return JSON.parse(JSON.stringify(groups || []));
     });
   };
+  // The Assistant's attached files (AS-ATT-MEM): base64, text read on
+  // the device and PDF page counts, kept here in memory while orOS is
+  // open, so an app opened from the Assistant (it takes the Assistant's
+  // frame) does not lose them. Never stored, synced or exported; gone
+  // when the tab closes. assistant.js owns what goes in.
+  window.orosAssistAtt = { mem: {}, text: {}, pages: {} };
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };
@@ -3772,6 +3778,23 @@
     cmdRemember(text);
     window.__orosOpenAt("todo", { addItems: { now: true, from: window.t("cmd.quick"), items: [{ text: text }] } });
   }
+  // "Today" rows of the empty Quick window: the Today summary
+  // (today/host.js, its own apps and switches), late tasks first, then
+  // today's rows; a row opens like a row of the Today app.
+  function cmdTodayRows() {
+    var T = window.orosToday;
+    if (!T || typeof T.build !== "function") return Promise.resolve(null);
+    return T.build().then(function (s) {
+      var g = s && s.groups || {}, out = [];
+      function add(r, late) {
+        out.push({ title: r.title, time: r.time, text: r.text, late: late, app: cmdAppName(r.app),
+                   open: function () { T.open(r.app, r.target); } });
+      }
+      (g.overdue || []).forEach(function (r) { add(r, true); });
+      (g.today || []).forEach(function (r) { add(r, false); });
+      return { rows: out, all: function () { openAppById("today"); } };
+    });
+  }
   function openCmdBar(text, opts) {
     if (SOLO) return;
     opts = opts || {};
@@ -3790,6 +3813,7 @@
         ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null,
         addTask: hasApp("todo") ? cmdAddTask : null,
         data: cmdData,
+        today: opts.today && hasApp("today") ? cmdTodayRows : null,
         full: !!opts.full,
         closed: opts.closed || null
       }, text);
@@ -3830,6 +3854,7 @@
     if (window.orosCmdBar && window.orosCmdBar.isOpen()) return;
     openCmdBar(w.text, {
       full: quickWin && !state.running,
+      today: true,
       closed: function (acted) {
         if (!quickWin || acted || state.running) return;
         try { window.close(); } catch (e) {}

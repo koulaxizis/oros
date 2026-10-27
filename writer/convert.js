@@ -1,7 +1,7 @@
 // ============================================================
 // orOS Writer — convert.js: other documents → .orosdoc (Converter)
 // OrosConvert.writer turns .docx .odt .rtf .html .htm .md .markdown
-// .txt into the same .orosdoc that Writer makes with Open, then
+// .txt .pdf into the same .orosdoc that Writer makes with Open, then
 // "Save as orOS file": the same parsers and the same bundle code
 // (writer/io.js, shared with writer.js), and the same steps between
 // them (a new document with Writer's defaults, the editor's
@@ -15,7 +15,7 @@
 (function (root) {
   "use strict";
 
-  var FROM = [".docx", ".odt", ".rtf", ".html", ".htm", ".md", ".markdown", ".txt"];
+  var FROM = [".docx", ".odt", ".rtf", ".html", ".htm", ".md", ".markdown", ".txt", ".pdf"];
   var MAX = 100 * 1024 * 1024;     // bigger files are refused ("toobig")
   var MIME = "application/x-oros-doc";
 
@@ -23,14 +23,16 @@
     en: {
       untitled: "Untitled",
       pictures: "{n} picture(s) in the file are not kept: Writer does not open pictures from DOCX or ODT files.",
-      rtf: "RTF: only the text is kept (no formatting, tables or pictures).",
+      rtf: "RTF: tables come as plain text and pictures are not kept.",
+      pdf: "PDF: the text, headings, bold and italic, alignment and lists are kept; pictures and tables are not. Check the result against the PDF.",
       linked: "{n} picture(s) are linked from the web and stay links: they are not stored in the file.",
       empty: "The file has no text."
     },
     el: {
       untitled: "Χωρίς τίτλο",
       pictures: "{n} εικόνα(-ες) του αρχείου δεν κρατιούνται: ο Επεξεργαστής δεν ανοίγει εικόνες από αρχεία DOCX ή ODT.",
-      rtf: "RTF: κρατιέται μόνο το κείμενο (χωρίς μορφοποίηση, πίνακες ή εικόνες).",
+      rtf: "RTF: οι πίνακες έρχονται ως απλό κείμενο και οι εικόνες δεν κρατιούνται.",
+      pdf: "PDF: κρατιούνται το κείμενο, οι επικεφαλίδες, τα έντονα και τα πλάγια, η στοίχιση και οι λίστες· οι εικόνες και οι πίνακες όχι. Έλεγξε το αποτέλεσμα με το PDF.",
       linked: "{n} εικόνα(-ες) είναι σύνδεσμοι στο διαδίκτυο και μένουν σύνδεσμοι: δεν αποθηκεύονται στο αρχείο.",
       empty: "Το αρχείο δεν έχει κείμενο."
     }
@@ -179,7 +181,14 @@
       var x = ext.slice(1);
       progress(0);
       var parse;
-      if (x === "docx" || x === "odt") {
+      if (x === "pdf") {
+        parse = readBuf(file).then(function (buf) {
+          progress(0.2);
+          if (!root.WriterPdfIn) throw new Error("pdfin.js is not loaded");
+          warnings.push(L.pdf);
+          return root.WriterPdfIn.open(buf);
+        });
+      } else if (x === "docx" || x === "odt") {
         parse = readBuf(file).then(function (buf) {
           progress(0.2);
           var pics = zipNames(buf).filter(function (n) {
@@ -218,7 +227,7 @@
   var api = {
     app: "writer", to: ".orosdoc", mime: MIME,
     from: FROM.slice(),
-    deps: ["bundle.js", "writer/track.js", "writer/io.js"],
+    deps: ["bundle.js", "writer/track.js", "writer/io.js", "writer/pdfin.js"],
     maxSize: MAX,
     convert: convert
   };

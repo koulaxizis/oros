@@ -639,6 +639,17 @@
       if (file.size > maxFor("")) { notice(T("big")); return; }
       chooser(file, c.ask, c.ext);
     },
+    // The Assistant's file card (WR-FMT): one file straight into the
+    // app named (no chooser); false when that app can't take it.
+    openIn: function (app, file) {
+      if (!file || typeof file.size !== "number") return false;
+      var ok = false;
+      for (var i = 0; i < HANDLERS.length; i++) if (HANDLERS[i].app === app) ok = true;
+      if (!ok) return false;
+      if (file.size > maxFor(app)) { notice(T("big")); return false; }
+      openWith(app, ownFile(file));
+      return true;
+    },
     // Settings → Opening files.
     supported: function () { return "launchQueue" in w; },
     installed: function () {

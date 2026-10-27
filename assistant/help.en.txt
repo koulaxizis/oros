@@ -106,7 +106,7 @@ The assistant can add straight to more apps, with the same card, ticks and `Undo
 
 Longer content opens in the app's own window, where you check it and save it yourself:
 - [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
-- [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`.
+- [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document the assistant writes, with headings, bold, italic, lists, numbering and alignment, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`.
 
 ## Partners across apps
 When a CRM customer is the same partner as a supplier or consignment shop in [Stock](app:stock), a client in [Timesheet](app:timesheet) or [Invoices](app:invoices), or a person on your titles in [Publishing](app:publish), ask the assistant to link them ("supplier Beta Ltd in Stock is the customer Beta Print"). It is the same link as `+ Link` under `In other apps` on the customer in [CRM](app:crm), so the card then shows that partner's stock, hours, invoices or titles.
@@ -171,7 +171,8 @@ Press the paper clip next to the message box to attach a photo, a PDF or a docum
 - For a local model with vision (llava, gemma3, qwen2.5-vl and others) tick `This model can see photos` in the settings: photos then go as pictures.
 - Documents are read on this device, always, and only their text goes to the service: Word (.docx, .doc), LibreOffice (.odt, .ods, .odp), Excel (.xlsx, .xls), PowerPoint (.pptx), RTF, e-books (.epub), web pages, vCards, e-mails (.eml), CSV, Markdown and plain text. Tables keep their columns, spreadsheets come sheet by sheet. Nothing in a document runs.
 - Photos in other formats (BMP, AVIF, SVG, and HEIC or TIFF where the browser can open them) are redrawn as JPEG or PNG first.
-- Files are not kept with the conversation and are never synced. After you leave the Assistant the conversation shows them as `not kept`, and they are not sent again. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
+- To bring a file you attached into Writer as it is, ask "open this contract in Writer" or "make these two PDFs Writer templates". The card `Attached file · Writer` opens the file itself in [Writer](app:writer) with its headings, bold, italic, alignment, lists and numbering, and every word as in the file (PDF, Word, LibreOffice, RTF, web page, Markdown or text). Writer asks whether to make a new document. The assistant does not retype it.
+- Files are kept only in this tab's memory while orOS is open, so they are still there when you come back from another app. They are never saved or synced. After you close orOS the conversation shows them as `not kept`, they are not sent again, and the assistant says so before it answers anything that needs them. Files cost tokens like text: a page of a PDF or a photo is roughly as much as a page of writing.
 
 ## Search the internet
 In `Settings` → `Internet`, `Let the assistant search the internet when an answer needs it` lets the assistant look things up on the web: opening hours, news, prices, a restaurant for your trip. It is off unless you switch it on, and it works with every AI service except the built-in browser model.
@@ -266,6 +267,7 @@ Bring your history from another AI chat. In the Assistant's settings, under `Thi
 
 ## Tips
 - `New chat` starts a fresh conversation; older ones are in the list on the left, or behind the menu button on a phone.
+- The Assistant always opens on a new conversation, also the small window. Opened with something to ask (selected text, a share, a task, the Briefing), it starts that new conversation with it. To go on with an earlier one, pick it in the list.
 - `Used this month` in Settings shows how many tokens this device has used per service.
 - If a service says the key or the model is wrong, open Settings and press `Load models` to check both.
 

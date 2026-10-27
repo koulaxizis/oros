@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — commands/bar.js (command bar, shell side, v1.2.0)
+// orOS — commands/bar.js (command bar, shell side, v1.3.0)
 // Loaded by shell.js on first use (with commands/core.js and
 // calendar/quickadd.js), never at boot. A small bar in the middle of
 // the screen, over whatever is open (Ctrl+K, Ctrl+Alt+Shift+K):
@@ -14,8 +14,11 @@
 //      search, only the apps switched on for search on this device;
 //   5. "Ask the Assistant: «…»" when the Assistant is installed.
 // An answer (calc, unit conversion) is a command row whose Enter copies.
-// With the field empty: the last commands run (device-local, newest
-// first); a click puts one back in the field to look at before Enter.
+// With the field empty: (1.3.0, Quick window: #quick, #quick-win) "Today": late tasks and
+// today's rows of the Today summary (its own apps and switches), at
+// most TODAY_MAX, then "All of today"; then the last commands run
+// (device-local, newest first); a click puts one back in the field to
+// look at before Enter.
 // Escape or a click outside closes it. The menu search field shows the
 // same command row (shell.js); this bar is the quick way in from an app.
 // Text only through textContent; the line is never run.
@@ -24,7 +27,9 @@
 //   appName(id), apps(q) → [{ id, name }], run(cmd, q), openApp(id),
 //   ask: null | function (q), history() → [line], forget(),
 //   addTask: null | function (q), data: null | function (q) →
-//   Promise<[{ app, title, snippet, open() }]>, closed(acted),
+//   Promise<[{ app, title, snippet, open() }]>, today: null |
+//   function () → Promise<null | { rows: [{ title, time, text, late,
+//   app, open() }], all() }>, closed(acted),
 //   full: true = fill the window (the Quick window) }
 // closed(true) after a row ran, closed(false) when dismissed.
 // ============================================================
@@ -35,11 +40,13 @@
     en: { label: "Command or search", ph: "Type a command or an app… e.g. dentist tomorrow 10",
           ask: "Ask the Assistant: «{q}»", none: "Nothing found. Try “buy milk” or “spent 12€ coffee”.",
           close: "Close", apps: "Apps", recent: "Recent commands", forget: "Clear the list",
-          task: "Add task: «{q}»", data: "In your data", busy: "Searching…" },
+          task: "Add task: «{q}»", data: "In your data", busy: "Searching…",
+          today: "Today", late: "Overdue", all: "All of today" },
     el: { label: "Εντολή ή αναζήτηση", ph: "Γράψε μια εντολή ή εφαρμογή… π.χ. οδοντίατρος αύριο 10",
           ask: "Ρώτα τον Βοηθό: «{q}»", none: "Δεν βρέθηκε τίποτα. Δοκίμασε «γάλα στη λίστα» ή «ξόδεψα 12€ καφές».",
           close: "Κλείσιμο", apps: "Εφαρμογές", recent: "Πρόσφατες εντολές", forget: "Καθαρισμός λίστας",
-          task: "Προσθήκη εργασίας: «{q}»", data: "Στα δεδομένα σου", busy: "Αναζήτηση…" }
+          task: "Προσθήκη εργασίας: «{q}»", data: "Στα δεδομένα σου", busy: "Αναζήτηση…",
+          today: "Σήμερα", late: "Εκπρόθεσμο", all: "Όλη η μέρα στο Σήμερα" }
   };
 
   var CSS = [
@@ -71,6 +78,7 @@
 
   var box = null;
   var DATA_MAX = 6;
+  var TODAY_MAX = 5;
 
   function style() {
     if (document.getElementById("oros-cmdbar-css")) return;
@@ -155,6 +163,11 @@
       rows = [];
       var q = input.value.trim();
       if (!q) {
+        if (host.today) {
+          var todayAt = el("div", "cb-data");
+          list.appendChild(todayAt);
+          fillToday(todayAt);
+        }
         var past = host.history ? host.history() : [];
         if (past.length) {
           list.appendChild(el("div", "cb-head", L.recent));
@@ -225,6 +238,31 @@
         if (!rows.length && !none) list.appendChild(el("p", "cb-none", L.none));
         pick(keep && rows.indexOf(keep) >= 0 ? rows.indexOf(keep) : 0);
       }, function () { clearTimeout(wait); if (my === token) at.textContent = ""; });
+    }
+
+    // "Today" rows: asked once per bar, painted again when the field
+    // is emptied; a line typed meanwhile drops the answer.
+    var todayP = null;
+    function fillToday(at) {
+      var my = ++token;
+      if (!todayP) {
+        try { todayP = host.today(); } catch (e) { todayP = null; }
+        if (!todayP || typeof todayP.then !== "function") { todayP = null; host.today = null; return; }
+      }
+      todayP.then(function (t) {
+        if (my !== token || !box || !at.isConnected) return;
+        var list2 = t && Array.isArray(t.rows) ? t.rows.slice(0, TODAY_MAX) : [];
+        if (!list2.length) return;
+        var keep = rows[sel];
+        at.appendChild(el("div", "cb-head", L.today));
+        list2.forEach(function (r) {
+          var detail = [r.late ? L.late : r.time ? String(r.time) : "", String(r.text || "")].filter(Boolean).join(" · ");
+          row("cb-hit", String(r.title || ""), detail, String(r.app || ""), function () { done(); r.open(); }, at);
+        });
+        if (typeof t.all === "function") row("cb-past", L.all, "", "", function () { done(); t.all(); }, at);
+        rows = Array.prototype.slice.call(list.querySelectorAll(".cb-row"));
+        pick(keep && rows.indexOf(keep) >= 0 ? rows.indexOf(keep) : 0);
+      }, function () {});
     }
 
     function done() { acted = true; close(); }

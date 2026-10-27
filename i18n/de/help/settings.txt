@@ -10,6 +10,8 @@ Auf dem Handy zeigen die Einstellungen zuerst die Liste der Bereiche. Tippe auf 
 
 Neben jeder Karte siehst du, wo sie gilt: `Alle Geräte` heißt, sie wandert mit der [Synchronisierung](help:t/sync) mit, `Dieses Gerät` heißt, sie bleibt nur auf diesem Gerät.
 
+Um eine Option schnell zu finden, tippe oben in der Liste in `Einstellungen durchsuchen`: ein Wort aus ihrem Namen oder ein verwandtes Wort (dunkel, Passwort, Tastatur, Klingelton…), auf Deutsch, Englisch oder Griechisch. Die Liste zeigt die passenden Bereiche und Optionen; wähle eine, und die Einstellungen öffnen sich dort, scrollen zur Option und heben sie kurz hervor. Braucht die Option zuerst etwas anderes (das Dock, die Sperre, die Synchronisierung), wird der Schalter hervorgehoben, der es einschaltet. `Escape` oder × leert die Suche.
+
 ## Die Bereiche
 - `Darstellung`: `Design` (`Dunkel` oder `Hell`), `Systemfarbe`, `Hintergrundbild`, `Saisonale Deko`, das `Dock`, wenn dein orOS eins hat, und das `Bildschirm-Haustier`. Siehe [Darstellung](help:t/appearance).
 - `Barrierefreiheit`: `Textgröße` (100% bis 150%), `Hoher Kontrast` (`Automatisch`, `An` oder `Aus`) und `Fokusrahmen immer zeigen`, für orOS und jede App, auf diesem Gerät. Siehe [Darstellung](help:t/appearance).
@@ -45,6 +47,7 @@ Auf einem Bildschirm mit mindestens 1024 Pixeln Breite kannst du zwei Apps neben
 
 ### Weitere Wege hinein
 - Tippe auf den Sync-Punkt in der oberen Leiste, solange die Synchronisierung nicht verbunden oder gesperrt ist: Die Einstellungen öffnen sich bei `Synchronisierung`.
+- Tippe den Namen einer Option in die Menüsuche: Das Ergebnis öffnet die Einstellungen bei dieser Option.
 - Das Fenster `Über orOS + Tastenkürzel` hat einen Knopf, der `System` öffnet, wo das Zurücksetzen auf Werkseinstellungen ist.
 
 ## Synchronisierung und Sicherung

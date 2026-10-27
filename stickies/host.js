@@ -694,7 +694,10 @@
     bar.appendChild(mb);
     node.appendChild(bar);
     wireDrag(bar, node, n.id);
-    node.addEventListener("pointerdown", function () { raise(n.id); });
+    node.addEventListener("pointerdown", function (e) {
+      if (editing && editing.id === n.id && e.target && e.target.closest && e.target.closest(".sn-bar button")) holdEdit();
+      raise(n.id);
+    });
     if (!p.fold) {
       var body = bodyFor(n);
       body.addEventListener("click", function () { startEdit(n.id, node, body); });
@@ -822,7 +825,7 @@
       clearTimeout(textTimer);
       textTimer = setTimeout(flushText, SAVE_MS);
     });
-    ta.addEventListener("blur", function () { setTimeout(function () { if (editing && editing.ta === ta && doc.activeElement !== ta) stopEdit(); }, 0); });
+    ta.addEventListener("blur", function () { setTimeout(function () { if (editing && editing.ta === ta && !editing.hold && doc.activeElement !== ta) stopEdit(); }, 0); });
     ta.addEventListener("keydown", function (e) {
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); stopEdit(); }
     });
@@ -835,8 +838,29 @@
     var n = C.find(cur(), editing.id);
     if (n && C.cleanText(editing.ta.value) !== n.text) commit(C.setText(cur(), editing.id, editing.ta.value, Date.now()));
   }
+  // A press on the note's own Fold / More button blurs the text box
+  // before the click arrives. Ending the edit there would redraw the
+  // note (the click is lost) and remove a still empty new note, so the
+  // button's click ends the edit itself; a press that never becomes a
+  // click (dragged off) ends it shortly after the pointer is let go.
+  function holdEdit() {
+    var ed = editing;
+    ed.hold = true;
+    function up() {
+      doc.removeEventListener("pointerup", up, true);
+      doc.removeEventListener("pointercancel", up, true);
+      setTimeout(function () {
+        if (editing !== ed || !ed.hold) return;
+        ed.hold = false;
+        if (doc.activeElement !== ed.ta) stopEdit();
+      }, 700);
+    }
+    doc.addEventListener("pointerup", up, true);
+    doc.addEventListener("pointercancel", up, true);
+  }
   // quiet: the layer is being torn down (no redraw).
-  function stopEdit(quiet) {
+  // keep: a Fold / More press ends the edit; an empty new note stays.
+  function stopEdit(quiet, keep) {
     if (!editing) return;
     var ed = editing;
     editing = null;
@@ -847,13 +871,14 @@
     }
     var id = ed.id, wasBlank = ed.blank;
     var n = C.find(cur(), id);
-    if (n && !n.text && wasBlank && !n.ring && !n.vanish) { commit(C.remove(cur(), id, Date.now())); return; }   // an empty new note goes away
+    if (n && !n.text && wasBlank && !keep && !n.ring && !n.vanish) { commit(C.remove(cur(), id, Date.now())); return; }   // an empty new note goes away
     if (!quiet) render();
   }
 
   function setFold(id, on) {
     var all = positions();
     if (!all[id]) return;
+    if (editing && editing.id === id) stopEdit(true, true);
     all[id].fold = !!on;
     savePositions();
     render();
@@ -996,9 +1021,10 @@
   function closeEditor() { if (sheet && sheet.dlg.open) sheet.dlg.close(); }
 
   function openEditor(id, focusText) {
-    var n = C.find(cur(), id);
+    if (!C.find(cur(), id)) return;
+    stopEdit(false, !!(editing && editing.id === id));   // the editor takes over an empty new note
+    var n = C.find(cur(), id);                           // read after stopEdit saved the typed text
     if (!n) return;
-    stopEdit();
     closeMenu();
     if (sheet) { sheet.dlg.close(); }
     injectCss();

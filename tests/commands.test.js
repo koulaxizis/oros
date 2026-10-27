@@ -231,3 +231,79 @@ test("K3 the Android widgets' command button opens the bar", () => {
   assert.match(read("android/app/src/main/res/values/strings.xml"), /name="widget_cmd">Command bar</);
   assert.match(read("android/app/src/main/res/values-el/strings.xml"), /name="widget_cmd">Γραμμή εντολών</);
 });
+
+// K4: answers about dates and clocks (no engine, no network).
+const NOW = Date.UTC(2026, 9, 27, 15, 16);   // Tue 27/10/2026 15:16 UTC, Athens +2 (winter time)
+const PD = (s) => C.parse(s, { today: "2026-10-27", apps: APPS2, now: NOW, offset: 120 });
+const copy = (s, lang) => { const c = C.call(PD(s), lang || "en"); return c && c.fn === "copy" ? c.args[0] : null; };
+
+test("dates: offsets from today, EN and EL", () => {
+  assert.deepEqual(PD("σε 45 μέρες").data, { q: "add", date: "2026-12-11", n: 45, unit: "d" });
+  assert.equal(copy("σε 45 μέρες"), "11/12/2026");
+  assert.equal(copy("in 3 weeks"), "17/11/2026");
+  assert.equal(copy("45 μέρες από σήμερα"), "11/12/2026");
+  assert.equal(copy("30 days ago"), "27/9/2026");
+  assert.equal(copy("πριν από 2 χρόνια"), "27/10/2024");
+  assert.equal(copy("today + 100"), "4/2/2027");
+  assert.equal(copy("σήμερα - 1"), "26/10/2026");
+  assert.equal(copy("σε 4 μήνες"), "27/2/2027");
+  // A month on from the 31st ends on the last day of a short month.
+  const jan31 = C.parse("in 1 month", { today: "2027-01-31", apps: APPS2 });
+  assert.equal(jan31.data.date, "2027-02-28");
+  assert.equal(C.parse("σε 1 μήνα", { today: "2028-01-31", apps: APPS2 }).data.date, "2028-02-29");
+  assert.deepEqual(C.describe(PD("σε 45 μέρες"), "el"), { verb: "Παρ 11/12/2026", detail: "σε 45 μέρες", hint: "Αντιγραφή" });
+  assert.deepEqual(C.describe(PD("30 days ago"), "en"), { verb: "Sun 27/9/2026", detail: "30 days ago", hint: "Copy" });
+  assert.equal(C.describe(PD("in 1 week"), "en").detail, "in 1 week");
+  assert.equal(PD("σε 0 μέρες"), null);
+});
+
+test("dates: days until, since and between", () => {
+  assert.equal(copy("μέρες ως 25/12"), "59");
+  assert.equal(copy("πόσες μέρες μέχρι τα Χριστούγεννα"), "59");
+  assert.equal(copy("days until christmas"), "59");
+  assert.equal(copy("μέρες ως 25 Δεκεμβρίου"), "59");
+  assert.equal(copy("days until dec 25 2027"), "424");
+  assert.equal(copy("πόσο μένει για την Πρωτοχρονιά"), "66");
+  // A day without a year that has passed: next year's (until), this year's (since).
+  assert.equal(PD("days until 1/3").data.date, "2027-03-01");
+  assert.equal(PD("μέρες από 1/3").data.date, "2026-03-01");
+  assert.equal(copy("days since 1/3/2020"), "2431");
+  assert.equal(copy("μέρες από 1/3 ως 15/4"), "45");
+  assert.equal(copy("days between 20/12 and 5/1"), "16");
+  assert.equal(PD("days until 29/2").data.date, "2028-02-29");
+  assert.deepEqual(C.describe(PD("μέρες ως 25/12"), "el"), { verb: "59 μέρες", detail: "ως Παρ 25/12/2026", hint: "Αντιγραφή" });
+  assert.equal(C.describe(PD("days until tomorrow"), "en").verb, "1 day");
+  assert.equal(PD("μέρες ως 31/2"), null);
+  assert.equal(PD("days until someday"), null);
+});
+
+test("dates: weekday and ISO week", () => {
+  assert.equal(copy("τι μέρα είναι 25/12", "el"), "Παρασκευή");
+  assert.equal(copy("τι μέρα έπεσε 28/10/1940", "el"), "Δευτέρα");
+  assert.equal(copy("what day is 1/1/2030"), "Tuesday");
+  assert.equal(copy("ποια εβδομάδα"), "44");
+  assert.equal(copy("week number 2027-01-01"), "53");
+  assert.equal(copy("week number 2026-01-01"), "1");
+  assert.deepEqual(C.describe(PD("ποια εβδομάδα"), "el"), { verb: "Εβδομάδα 44", detail: "Δευ 26/10 – Κυρ 1/11", hint: "Αντιγραφή" });
+});
+
+test("clock: the time in a place, with the difference from here", () => {
+  let r = PD("ώρα στη Νέα Υόρκη");
+  assert.deepEqual([r.kind, r.app, r.data.zone, r.data.at, r.data.diff], ["clock", "time", "America/New_York", "11:16", -360]);
+  assert.equal(copy("ώρα στη Νέα Υόρκη"), "11:16");
+  assert.deepEqual(C.describe(r, "el"), { verb: "11:16", detail: "Νέα Υόρκη · 6 ώρες πίσω", hint: "Αντιγραφή" });
+  assert.deepEqual(C.describe(PD("time in tokyo"), "en"), { verb: "00:16", detail: "Tokyo · 7 h ahead · Wed 28/10", hint: "Copy" });
+  assert.equal(C.describe(PD("ώρα στο Δελχί"), "el").detail, "Νέο Δελχί · 3,5 ώρες μπροστά");
+  assert.equal(C.describe(PD("τι ώρα είναι στην Αθήνα"), "en").detail, "Athens · same time as here");
+  assert.equal(C.describe(PD("ώρα στις Βρυξέλλες"), "el").detail, "Βρυξέλλες · 1 ώρα πίσω");
+  assert.equal(PD("london time").data.zone, "Europe/London");
+  assert.equal(PD("time in atlantis"), null);
+  assert.equal(PD("dinner time"), null);
+});
+
+test("dates and clocks leave other commands alone", () => {
+  assert.equal(PD("timer 10 min").kind, "timer");
+  assert.equal(PD("ξυπνητήρι σε 10 λεπτά").kind, "timer");
+  assert.equal(PD("12*3+4"), null);   // no calc engine given here
+  assert.equal(P("ραντεβού αύριο 10 οδοντίατρος").kind, "event");
+});
