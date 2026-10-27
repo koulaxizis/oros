@@ -2,14 +2,14 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-aBEoWV83aBTUCaVQmMfpwejB2oZx58OthsEzbFVn/ug='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-0Ocf1awmSvd+s7/P/eu1wiS/+yr+8/fzQbpX3o2eQcI='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
-  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=assistant" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=assistant" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <title>Assistant · orOS</title>
 
-  <link rel="stylesheet" href="assistant.css?v=3.96.00">
+  <link rel="stylesheet" href="assistant.css?v=3.98.00">
 
 </head>
 <body data-side="closed">
@@ -64,19 +64,19 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=3.96.00" data-app="assistant,recipes"></script>
-  <script src="../importkit.js?v=3.96.00"></script>
-  <script src="../atelier/zip.js?v=3.96.00"></script>
-  <script src="../recipes/core.js?v=3.96.00"></script>
-  <script src="../recipes/share.js?v=3.96.00"></script>
-  <script src="doctext.js?v=3.96.00"></script>
-  <script src="core.js?v=3.96.00"></script>
-  <script src="imgai.js?v=3.96.00"></script>
-  <script src="summary.js?v=3.96.00"></script>
-  <script src="edits.js?v=3.96.00"></script>
-  <script src="create.js?v=3.96.00"></script>
-  <script src="import.js?v=3.96.00"></script>
-  <script src="assistant.js?v=3.96.00"></script>
+  <script src="../i18n.js?v=3.98.00" data-app="assistant,recipes"></script>
+  <script src="../importkit.js?v=3.98.00"></script>
+  <script src="../atelier/zip.js?v=3.98.00"></script>
+  <script src="../recipes/core.js?v=3.98.00"></script>
+  <script src="../recipes/share.js?v=3.98.00"></script>
+  <script src="doctext.js?v=3.98.00"></script>
+  <script src="core.js?v=3.98.00"></script>
+  <script src="imgai.js?v=3.98.00"></script>
+  <script src="summary.js?v=3.98.00"></script>
+  <script src="edits.js?v=3.98.00"></script>
+  <script src="create.js?v=3.98.00"></script>
+  <script src="import.js?v=3.98.00"></script>
+  <script src="assistant.js?v=3.98.00"></script>
 
 </body>
 </html>

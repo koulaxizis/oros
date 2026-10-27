@@ -23,5 +23,18 @@
     <string name="widget_no_data">Open orOS once to fill this widget.</string>
     <string name="widget_stale">Open orOS to bring this up to date.</string>
     <string name="widget_more">+%d more</string>
+    <string name="widget_calendar">orOS Calendar</string>
+    <string name="widget_calendar_desc">Your next events of the coming two weeks</string>
+    <string name="widget_todo">orOS To-Do</string>
+    <string name="widget_todo_desc">Your next tasks: tick them right on the home screen</string>
+    <string name="widget_add_event">+ Event</string>
+    <string name="widget_no_events">No events in the next two weeks.</string>
+    <string name="widget_no_tasks">No tasks with a date. Enjoy.</string>
+    <string name="widget_tick">Tick: %s</string>
+    <string name="widget_ticked">Ticked: %s</string>
+    <plurals name="widget_ticks_wait">
+        <item quantity="one">%d tick waits for orOS to open</item>
+        <item quantity="other">%d ticks wait for orOS to open</item>
+    </plurals>
     <string name="health_missing">Health Connect is not available on this phone.</string>
 </resources>

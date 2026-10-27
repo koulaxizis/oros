@@ -430,3 +430,66 @@ test("contacts: an orOS id stored twice becomes one phone contact", () => {
   assert.match(require("fs").readFileSync(path.join(__dirname, "..", "android", "app", "src", "main", "java",
     "online", "useoros", "twa", "ContactsWriter.java"), "utf8"), /!done\.add\(id\)/);
 });
+
+test("agendaData: Calendar and To-Do widget rows in day and time order (v7)", () => {
+  const cal = [
+    { id: "ev:e2:2026-10-28", due: "2026-10-28", kind: "event", time: null, title: "All day", text: "", target: { ev: "e2", date: "2026-10-28" } },
+    { id: "ev:e1:2026-10-28", due: "2026-10-28", kind: "event", time: "09:00", title: "Dentist", text: "Main st", target: { ev: "e1", date: "2026-10-28" } },
+    { id: "hol:x:2026-10-28", due: "2026-10-28", kind: "info", time: null, title: "Holiday", text: "", target: { date: "2026-10-28" } },
+    { id: "names:2026-10-27", due: null, kind: "info", time: null, title: "Name day: Dimitris", text: "", target: { date: "2026-10-27" } },
+    { id: "ev:e3:2026-10-27", due: "2026-10-27", kind: "event", time: "18:30", title: "Gym", text: "", target: { ev: "e:bad", date: "2026-10-27" } }
+  ];
+  const todo = [
+    { id: "l1/t2", due: "2026-10-29", kind: "task", title: "Pay rent", text: "Home", done: { list: "l1", item: "t2" } },
+    { id: "l1/t1", due: "2026-10-20", kind: "task", title: "Late one", text: "Home", done: { list: "l1", item: "t1" } },
+    { id: "l1/t3", due: "2026-10-29", kind: "task", title: "Bad id", text: "Home", done: { list: "l1", item: "a/b" } }
+  ];
+  const blob = { lists: [{ id: "l1", items: [{ id: "t2", recurrence: { every: 1, unit: "month" } }, { id: "t1" }] }] };
+  assert.deepEqual(P.agendaData(cal, todo, blob), {
+    cal: [
+      { d: "2026-10-27", tm: "18:30", t: "Gym", s: "", o: "" },
+      { d: "2026-10-28", tm: "09:00", t: "Dentist", s: "Main st", o: "calendar:e1:2026-10-28" },
+      { d: "2026-10-28", tm: "", t: "All day", s: "", o: "calendar:e2:2026-10-28" },
+      { d: "2026-10-28", tm: "", t: "Holiday", s: "", o: "" }
+    ],
+    todo: [
+      { l: "l1", i: "t1", t: "Late one", s: "Home", d: "2026-10-20", r: 0 },
+      { l: "l1", i: "t2", t: "Pay rent", s: "Home", d: "2026-10-29", r: 1 }
+    ]
+  });
+  assert.deepEqual(P.agendaData(null, null, null), { cal: null, todo: null }, "a kind not asked for stays null");
+  const many = Array.from({ length: 50 }, (_, n) => ({ id: "ev:" + n, due: "2026-10-28", kind: "event", title: "E" + n, target: {} }));
+  assert.equal(P.agendaData(many, [], null).cal.length, 30, "at most 30 rows");
+});
+
+test("tickTask: a widget tick follows To-Do's stamps and never beats a newer change (v7)", () => {
+  const task = (o) => Object.assign({ id: "t1", text: "Milk", done: false, due: "2026-10-27",
+    fm: { text: 100, done: 100, due: 100, notes: 100, labels: 100, info: 100, recurrence: 100 }, mtime: 100 }, o);
+  const blob = (it, list) => ({ lists: [{ id: list || "l1", items: [it] }] });
+
+  let b = blob(task());
+  let r = P.tickTask(b, "l1", "t1", 500, 1000);
+  assert.equal(r.res, "done");
+  assert.equal(b.lists[0].items[0].done, true);
+  assert.equal(b.lists[0].items[0].fm.done, 1000, "only the done field is stamped");
+  assert.equal(b.lists[0].items[0].fm.text, 100);
+  assert.equal(b.lists[0].items[0].mtime, 1000);
+
+  b = blob(task({ mtime: 5000, fm: { text: 5000, done: 100, due: 100, notes: 100, labels: 100, info: 100, recurrence: 100 } }));
+  P.tickTask(b, "l1", "t1", 500, 1000);
+  assert.equal(b.lists[0].items[0].fm.done, 5001, "the stamp is never older than the task");
+
+  b = blob(task({ fm: { text: 100, done: 800, due: 100, notes: 100, labels: 100, info: 100, recurrence: 100 }, mtime: 800 }));
+  assert.equal(P.tickTask(b, "l1", "t1", 500, 1000).res, "newer", "unticked in To-Do after the widget tick: left alone");
+  assert.equal(b.lists[0].items[0].done, false);
+
+  b = blob(task({ fm: undefined, mtime: 300 }));
+  assert.equal(P.tickTask(b, "l1", "t1", 500, 1000).res, "done", "an older-code task is spelled out from mtime");
+  assert.deepEqual(b.lists[0].items[0].fm, { text: 300, done: 1000, due: 300, notes: 300, labels: 300, info: 300, recurrence: 300 });
+
+  assert.equal(P.tickTask(blob(task({ done: true })), "l1", "t1", 500, 1000).res, "already");
+  assert.equal(P.tickTask(blob(task({ recurrence: { every: 1, unit: "day" } })), "l1", "t1", 500, 1000).res, "repeats");
+  assert.equal(P.tickTask(blob(task()), "l1", "zz", 500, 1000).res, "gone");
+  assert.equal(P.tickTask(blob(task(), "l2"), "l1", "t1", 500, 1000).res, "done", "a task moved to another list is still found");
+  assert.equal(P.tickTask(null, "l1", "t1", 500, 1000).res, "gone");
+});

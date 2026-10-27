@@ -2,12 +2,12 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-wCYIGwRJ6YH1kBk5UDsFx3Ps8dObREUe8Xej7Y2tY8k='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-SCz+FnyIh/F0zgNEtoFopMom1BoAyBFTFjWF8UPHpqw='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
-  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=lyricsync" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=lyricsync" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Lyric Sync · orOS</title>
-  <link rel="stylesheet" href="app.css?v=3.96.00">
+  <link rel="stylesheet" href="app.css?v=3.98.00">
 </head>
 <body>
 
@@ -200,14 +200,14 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=3.96.00" data-app="lyricsync"></script>
-  <script src="core.js?v=3.96.00"></script>
-  <script src="formats.js?v=3.96.00"></script>
-  <script src="wave.js?v=3.96.00"></script>
-  <script src="id3.js?v=3.96.00"></script>
-  <script src="align.js?v=3.96.00"></script>
-  <script src="../montage/asr.js?v=3.96.00"></script>
-  <script src="app.js?v=3.96.00"></script>
+  <script src="../i18n.js?v=3.98.00" data-app="lyricsync"></script>
+  <script src="core.js?v=3.98.00"></script>
+  <script src="formats.js?v=3.98.00"></script>
+  <script src="wave.js?v=3.98.00"></script>
+  <script src="id3.js?v=3.98.00"></script>
+  <script src="align.js?v=3.98.00"></script>
+  <script src="../montage/asr.js?v=3.98.00"></script>
+  <script src="app.js?v=3.98.00"></script>
 
 </body>
 </html>

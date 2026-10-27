@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-+oD4BRuLVKpO6B61l5eRvFBU0EQxCa2cjtXBuiCOefw='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-HhIVMvTK+0mM5J94rXm23YxaG6hP06OK/mEqXv4dGdU='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
-  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=notes" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=notes" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Notes — orOS</title>
-  <link rel="stylesheet" href="notes.css?v=3.96.00">
+  <link rel="stylesheet" href="notes.css?v=3.98.00">
 </head>
 <body>
   <div id="notes-app">
@@ -44,20 +44,20 @@
     </main>
 
   </div>
-  <script src="../i18n.js?v=3.96.00" data-app="notes,links"></script>
-  <script src="../links/core.js?v=3.96.00"></script>
-  <script src="../links/notes.js?v=3.96.00"></script>
-  <script src="platforms.js?v=3.96.00"></script>
-  <script src="md.js?v=3.96.00"></script>
-  <script src="../atelier/zip.js?v=3.96.00"></script>
-  <script src="import.js?v=3.96.00"></script>
-  <script src="../bundle.js?v=3.96.00"></script>
-  <script src="package.js?v=3.96.00"></script>
-  <script src="../household/core.js?v=3.96.00"></script>
-  <script src="../household/whole.js?v=3.96.00"></script>
-  <script src="../household/share.js?v=3.96.00"></script>
-  <script src="../household/group.js?v=3.96.00"></script>
-  <script src="house.js?v=3.96.00"></script>
-  <script src="notes.js?v=3.96.00"></script>
+  <script src="../i18n.js?v=3.98.00" data-app="notes,links"></script>
+  <script src="../links/core.js?v=3.98.00"></script>
+  <script src="../links/notes.js?v=3.98.00"></script>
+  <script src="platforms.js?v=3.98.00"></script>
+  <script src="md.js?v=3.98.00"></script>
+  <script src="../atelier/zip.js?v=3.98.00"></script>
+  <script src="import.js?v=3.98.00"></script>
+  <script src="../bundle.js?v=3.98.00"></script>
+  <script src="package.js?v=3.98.00"></script>
+  <script src="../household/core.js?v=3.98.00"></script>
+  <script src="../household/whole.js?v=3.98.00"></script>
+  <script src="../household/share.js?v=3.98.00"></script>
+  <script src="../household/group.js?v=3.98.00"></script>
+  <script src="house.js?v=3.98.00"></script>
+  <script src="notes.js?v=3.98.00"></script>
 </body>
 </html>

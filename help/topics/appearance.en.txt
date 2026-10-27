@@ -94,7 +94,15 @@ The Dock is a bar of your favourite apps along the bottom of the desktop. Add an
 - `Hide automatically` tucks it away until you move the mouse to the bottom edge, or tap the small handle on a touch screen.
 - `Show over open apps` keeps it visible while an app is open. It is off until you turn it on, so apps get the whole screen.
 
+## Accessibility
+In `Settings` › `Accessibility`, for orOS and every app:
+- `Text size` makes text and everything around it larger: `100%`, `115%`, `130%` or `150%`. It works in every app, in Settings, in Help and in the menu, like zooming the page; the top bar and the desktop keep their size (the Dock has its own `Size`). On a narrow screen orOS goes only as far as every app still fits (at least 320 pixels across), and the card says so.
+- `High contrast` switches orOS and the apps to black and white with one strong colour, clear borders, underlined links and a plain desktop without a wallpaper. `Automatic` (the default) turns it on while your device asks for more contrast, for example with Windows high contrast; `On` and `Off` decide yourself. When Windows forces its own contrast colours, orOS follows them and marks chosen options with an outline.
+- `Always show the focus ring` draws a thick outline around whatever has the keyboard focus when you move with the [[Tab]] key, also in apps that show only a faint one.
+
+These three stay on this device: a phone and a large screen often need a different size.
+
 ## What follows you to other devices
 With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and the pinned weather city go to your other devices too.
 
-The seasonal decoration settings go too. The Dock and its settings, a decoration you are trying or kept, and `Hide for today` stay on this device.
+The seasonal decoration settings go too. The Dock and its settings, the accessibility options, a decoration you are trying or kept, and `Hide for today` stay on this device.
