@@ -94,6 +94,7 @@ function sandbox(opts) {
     SOLO: opts.solo || "",
     navigator: { deviceMemory: opts.mem },
     innerWidth: opts.width || 1280,
+    matchMedia: opts.fine === undefined ? undefined : () => ({ matches: !!opts.fine }),
     localStorage: { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) },
     document: {
       getElementById: (id) => (id === "oros-running" ? running : running.children.find((f) => f.id === id) || null),
@@ -107,7 +108,7 @@ function sandbox(opts) {
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(SHELL.slice(start, end) +
-    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt, mtOwns };" +
+    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt, mtOwns, mtOn };" +
     // the parts of openApp / returnToDesktop that touch frames
     "\nthis.open = function (app, at) { var prev = state.running; state.running = app; if (mtActive()) mtSwitch(prev, app, at); else document.getElementById('app-frame').src = app.url + (at || ''); };" +
     "\nthis.home = function () { var prev = state.running; state.running = null; if (!(mtActive() && mtLeave(prev))) document.getElementById('app-frame').src = 'about:blank'; };" +
@@ -464,4 +465,22 @@ test("shell MT-S1: side by side, one app writing the other's keys reloads the ot
   assert.deepEqual(todoFrame.loads, ["todo/"]);
   storageInShell(c, "oros-todo-data", "http://x/notes/index.html");
   assert.deepEqual(todoFrame.loads, ["todo/", "todo/"], "To-Do reads the new data");
+});
+
+// Out of the experiment (Chris 2026-10-27): on by default on computers,
+// off on phones and tablets; the person's own choice always wins.
+test("shell: multitasking is on by default on computers, off on phones; a choice is kept", () => {
+  assert.equal(sandbox({ fine: true, width: 1280 }).h.mtOn(), true, "desktop: fine pointer that hovers");
+  assert.equal(sandbox({ fine: false, width: 1280 }).h.mtOn(), false, "tablet / touch screen");
+  assert.equal(sandbox({ fine: true, width: 600 }).h.mtOn(), false, "narrow window");
+  assert.equal(sandbox({}).h.mtOn(), false, "no matchMedia: off");
+  assert.equal(sandbox({ fine: true, storage: { "oros-multitask": "0" } }).h.mtOn(), false, "turned off stays off");
+  assert.equal(sandbox({ fine: false, storage: { "oros-multitask": "1" } }).h.mtOn(), true, "turned on on a phone stays on");
+  assert.equal(sandbox({ fine: true, solo: "todo" }).h.mtActive(), false, "a single app never multitasks");
+  const c = sandbox({ fine: true, width: 1280 });
+  c.h.mtSetUser(false);
+  assert.equal(c.localStorage.getItem("oros-multitask"), "0");
+  assert.equal(c.h.mtOn(), false);
+  c.h.mtSetUser(true);
+  assert.equal(c.localStorage.getItem("oros-multitask"), "1");
 });

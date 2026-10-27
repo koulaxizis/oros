@@ -416,9 +416,9 @@
       "l.msg.storage": "This device's storage is full: nothing was saved.",
       "l.msg.crypto": "This browser couldn't do it. Try again.",
       "l.msg.busy": "Wait for the previous step to finish.",
-      "mt.title": "Multitasking", "mt.badge": "Experimental",
+      "mt.title": "Multitasking",
       "mt.on": "Keep apps open when you leave them",
-      "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. This is a test: if something misbehaves, turn it off.",
+      "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. On by default on computers, off on phones and tablets.",
       "mt.open": "Open in the background now: {n}"
     },
     el: {
@@ -807,9 +807,9 @@
       "l.msg.storage": "Ο χώρος της συσκευής γέμισε: δεν αποθηκεύτηκε τίποτα.",
       "l.msg.crypto": "Ο browser δεν τα κατάφερε. Δοκίμασε ξανά.",
       "l.msg.busy": "Περίμενε να τελειώσει το προηγούμενο βήμα.",
-      "mt.title": "Πολυεργασία", "mt.badge": "Δοκιμαστικό",
+      "mt.title": "Πολυεργασία",
       "mt.on": "Οι εφαρμογές μένουν ανοιχτές όταν φεύγεις",
-      "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Είναι δοκιμαστικό: αν κάτι δεν πάει καλά, κλείσε το.",
+      "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Ανοιχτή από default στους υπολογιστές, κλειστή σε κινητά και tablet.",
       "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}"
     }
   };

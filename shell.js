@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.99.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.00.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -9900,10 +9900,10 @@
     el.src = url;
   }
 
-  // ---------- 10b. Multitasking (experimental, off by default, wave M2) ----------
-  // Settings › System › "Multitasking (experimental)", per device
-  // (oros-multitask = "1", never synced; Chris 2026-10-17: experimental
-  // and off by default). When you leave an app it stays alive in a
+  // ---------- 10b. Multitasking (wave M2; out of the experiment 2026-10-27) ----------
+  // Settings › System › "Multitasking", per device
+  // (oros-multitask = "1" on / "0" off, never synced; unset = on on
+  // computers, off on phones and tablets: mtDefault). When you leave an app it stays alive in a
   // hidden frame and comes back as you left it, up to a number of
   // "slots" set by the device's memory (mtSlots; heavy apps take 2).
   // When the slots are full the app used longest ago closes. Off (or in
@@ -9938,8 +9938,22 @@
     if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
   }
 
+  // Out of the experiment (Chris 2026-10-27, after the load tests in
+  // /mnt/project-files/multitasking/load-2026-10-27.md): on by default on
+  // computers (a fine pointer that can hover, 768 px and wider), off on
+  // phones and tablets. The person's own choice ("1" / "0") always wins.
+  function mtDefault() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) &&
+        (window.innerWidth || 0) >= 768;
+    } catch (e) { return false; }
+  }
   function mtOn() {
-    try { return localStorage.getItem(MT_KEY) === "1"; } catch (e) { return false; }
+    var v = null;
+    try { v = localStorage.getItem(MT_KEY); } catch (e) { return false; }
+    if (v === "1") return true;
+    if (v === "0") return false;
+    return mtDefault();
   }
   function mtActive() { return !SOLO && mtOn(); }
   // Slots for a device: navigator.deviceMemory (GB, Chromium only,
@@ -10232,8 +10246,7 @@
   }
   function mtSetUser(on) {
     try {
-      if (on) localStorage.setItem(MT_KEY, "1");
-      else localStorage.removeItem(MT_KEY);
+      localStorage.setItem(MT_KEY, on ? "1" : "0");
     } catch (e) {}
     if (!on) mtDropAll();
     else mtChanged();

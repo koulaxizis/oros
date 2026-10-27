@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.00.00
+- Multitasking is no longer a test, and it is on by default on computers (phones and tablets keep it off). An app you leave stays open in the background and comes back exactly as you left it; the Open apps button or Ctrl+Alt+Shift+W switches between them, and on wide screens two apps go side by side. Turn it off or on in Settings › System › Multitasking. Also fixed: an app waiting in the background could undo a change another app had just made to its data (for example a task the Assistant added to To-Do), and Files now shows files saved by other apps when you come back.
+
 ## Version 3.99.00
 - Settings: new Screen lock section, off until you turn it on. orOS then asks for a PIN or a passphrase when it starts, after the idle time you choose (1 to 60 minutes) and, if you like, whenever you leave the page; `Lock now` and `Lock orOS` in the menu lock it at once. Apps keep running behind the lock. Forgot it? Your sync passphrase opens it, or as a last resort `Reset this device` erases only this device and keeps your cloud data. It protects the screen, not the disk: your data on the device is not encrypted by it. The PIN stays on this device and is never synced.
 
