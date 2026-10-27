@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.02.02
+- Sticky Notes: pressing Fold or More options on a new note no longer makes it disappear. Fold now folds the note, and More opens its options with everything you typed.
+
 ## Version 4.02.01
 - Calendar: Month, Week and Day now fill the whole window, on the computer and on the phone, like Proton or Google Calendar. Month shows the names of each day's events instead of dots (with the time on wider screens) and "+N" when more don't fit; Day has taller hours, and short events show their time and title on one line.
 
