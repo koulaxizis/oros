@@ -29,6 +29,7 @@
     ["files", "files"],
     ["system", "version"],
     ["system", "shortcuts"],
+    ["system", "multitask"],
     ["system", "reset"]
   ];
   var TOPIC_T = {
@@ -64,6 +65,8 @@
           "st.version.words": "update about install",
           "st.shortcuts": "Keyboard shortcuts",
           "st.shortcuts.words": "keys shortcut",
+          "st.multitask": "Multitasking: keep apps open",
+          "st.multitask.words": "multitasking windows switch apps side by side split background open",
           "st.reset": "Factory reset",
           "st.reset.words": "erase delete everything reset" },
     el: { "st.theme": "Θέμα: σκοτεινό ή φωτεινό",
@@ -98,6 +101,8 @@
           "st.version.words": "ενημέρωση σχετικά εγκατάσταση",
           "st.shortcuts": "Συντομεύσεις πληκτρολογίου",
           "st.shortcuts.words": "πλήκτρα",
+          "st.multitask": "Πολυεργασία: οι εφαρμογές μένουν ανοιχτές",
+          "st.multitask.words": "πολυεργασία παράθυρα εναλλαγή δίπλα δίπλα παρασκήνιο ανοιχτές",
           "st.reset": "Επαναφορά εργοστασιακών",
           "st.reset.words": "διαγραφή σβήσιμο όλα" }
   };

@@ -63,7 +63,8 @@ class FakeFrame {
     this.loads.push(u);
     if (u === "about:blank") { this._doc = null; return; }
     const events = [];
-    const win = { location: { href: "http://x/" + u }, Event: class { constructor(t) { this.type = t; } }, events };
+    const win = { location: { href: "http://x/" + u }, Event: class { constructor(t) { this.type = t; } }, events, on: {},
+      addEventListener(t, fn) { (this.on[t] = this.on[t] || []).push(fn); } };
     this._doc = { url: u, defaultView: win, querySelectorAll: () => [], dispatchEvent: (e) => events.push(e.type) };
     win.document = this._doc;
   }
@@ -83,8 +84,13 @@ function sandbox(opts) {
   const first = new FakeFrame();
   first.id = "app-frame";
   running.appendChild(first);
+  const on = {};
   const ctx = {
-    state: { running: null },
+    state: { running: null, apps: (opts.apps || []).map((id) => ({ id, type: "internal", url: id + "/" })) },
+    location: { href: "http://x/index.html", pathname: "/index.html" },
+    addEventListener: (t, fn) => { (on[t] = on[t] || []).push(fn); },
+    __on: on,
+    URL, setTimeout,
     SOLO: opts.solo || "",
     navigator: { deviceMemory: opts.mem },
     innerWidth: opts.width || 1280,
@@ -100,7 +106,7 @@ function sandbox(opts) {
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(SHELL.slice(start, end) +
-    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt };" +
+    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt, mtOwns };" +
     // the parts of openApp / returnToDesktop that touch frames
     "\nthis.open = function (app, at) { var prev = state.running; state.running = app; if (mtActive()) mtSwitch(prev, app, at); else document.getElementById('app-frame').src = app.url + (at || ''); };" +
     "\nthis.home = function () { var prev = state.running; state.running = null; if (!(mtActive() && mtLeave(prev))) document.getElementById('app-frame').src = 'about:blank'; };" +
@@ -401,4 +407,60 @@ test("qa writers.js: finds foreign writers, hosts and listeners", () => {
   const apps = ["a", "b", "c", "d"].map((id) => ({ id, url: id + "/" }));
   const v = Object.fromEntries(W.scan(files, apps).map((r) => [r.id, r.verdict]));
   assert.deepEqual(v, { a: "host", b: "listens", c: "check", d: "ok" });
+});
+
+// MT-S1: a write by another window must not be undone by a live app's
+// old copy (found 2026-10-27: a hidden To-Do saved over a task the
+// Assistant had just added).
+const storageIn = (frame, key) => (frame.contentWindow.on.storage || []).forEach((fn) => fn({ key }));
+const storageInShell = (c, key, url) => (c.__on.storage || []).forEach((fn) => fn({ key, url }));
+const tick = () => new Promise((r) => setTimeout(r, 5));
+
+test("shell MT-S1: another window writing a hidden app's keys closes that app; other keys and hosted apps do not", async () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, apps: ["todo", "notes", "music", "writer"] });
+  const h = c.h;
+  c.open(app("todo"));
+  const todoFrame = c.running.children[0];
+  c.open(app("music"));
+  const musicFrame = h.appFrameOf("music");
+  c.open(app("notes"));
+  storageIn(todoFrame, "oros-notes-data");
+  storageIn(musicFrame, "oros-music-data");     // its shell host: by design
+  await tick();
+  assert.equal(h.appLive("todo"), true);
+  assert.equal(h.appLive("music"), true);
+  storageIn(todoFrame, "oros-todo-data");
+  await tick();
+  assert.equal(h.appLive("todo"), false, "closed: it opens fresh next time");
+  assert.equal(todoFrame.parentNode, null);
+  c.open(app("todo"));
+  assert.notEqual(h.appFrameOf("todo"), todoFrame, "a new frame, a fresh read");
+});
+
+test("shell MT-S1: keys an app was seen writing count as its own", async () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, apps: ["atelier", "writer", "layout"] });
+  const h = c.h;
+  storageInShell(c, "oros-recipes", "http://x/atelier/index.html");
+  storageInShell(c, "oros-recipes", "http://x/layout/index.html");   // first writer keeps it
+  assert.equal(h.mtOwns("atelier", "oros-recipes"), true);
+  assert.equal(h.mtOwns("layout", "oros-recipes"), false);
+  assert.equal(h.mtOwns("writer", "oros-writer-docs"), true);
+  c.open(app("atelier"));
+  const f = c.running.children[0];
+  c.open(app("writer"));
+  storageIn(f, "oros-recipes");
+  await tick();
+  assert.equal(h.appLive("atelier"), false);
+});
+
+test("shell MT-S1: side by side, one app writing the other's keys reloads the other", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 1280, apps: ["todo", "notes"] });
+  const h = c.h;
+  c.open(app("todo"));
+  const todoFrame = c.running.children[0];
+  assert.equal(h.mtSideOpen(app("notes")), true);
+  storageInShell(c, "oros-notes-data", "http://x/notes/index.html");   // its own write
+  assert.deepEqual(todoFrame.loads, ["todo/"]);
+  storageInShell(c, "oros-todo-data", "http://x/notes/index.html");
+  assert.deepEqual(todoFrame.loads, ["todo/", "todo/"], "To-Do reads the new data");
 });

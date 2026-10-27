@@ -207,6 +207,8 @@ orosPack("de", "settings", {
  "st.menuapps.words": "ausblenden einblenden versteckt auswählen menü apps liste",
  "st.menusearch": "Menüsuche",
  "st.menusearch.words": "suche finden apps",
+ "st.multitask": "Multitasking: Apps bleiben offen",
+ "st.multitask.words": "multitasking fenster wechseln nebeneinander hintergrund offen",
  "st.notifs": "Benachrichtigungen",
  "st.notifs.words": "popup hinweis ton lautstärke position stil",
  "st.passphrase": "Passphrase für die Synchronisierung",
