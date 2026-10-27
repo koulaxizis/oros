@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — search.js (universal search core, v1.0.0)
+// orOS — search.js (universal search core, v1.1.0)
 // ------------------------------------------------------------
 // The shell's search over every app's own data. Pure logic, no
 // DOM: shell.js draws the results, this file finds and ranks them.
@@ -292,11 +292,30 @@
     return Promise.all(waits);
   }
 
+  // ---------- 8. One flat list (the Quick window, 1.1.0) ----------
+  // run()'s groups → [{ id, hit }]: the best hits of all apps, at most
+  // perApp from one app so one busy app does not fill the list;
+  // ties go to the newer hit, then to the app id.
+  function top(groups, max, perApp) {
+    max = max > 0 ? max : 6;
+    perApp = perApp > 0 ? perApp : 3;
+    var all = [];
+    (groups || []).forEach(function (g) {
+      if (!g || typeof g.id !== "string" || !Array.isArray(g.hits)) return;
+      g.hits.slice(0, perApp).forEach(function (h) { if (h) all.push({ id: g.id, hit: h }); });
+    });
+    all.sort(function (a, b) {
+      return (b.hit.score || 0) - (a.hit.score || 0) || (b.hit.when || 0) - (a.hit.when || 0) ||
+             (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    });
+    return all.slice(0, max);
+  }
+
   var api = {
     MIN_CHARS: MIN_CHARS, PER_APP_MAX: PER_APP_MAX, TIMEOUT_MS: TIMEOUT_MS,
     fold: fold, foldMap: foldMap, parseQuery: parseQuery, score: score,
     snippet: snippet, ranges: ranges, makeReader: makeReader,
-    cleanHit: cleanHit, run: run, load: load
+    cleanHit: cleanHit, run: run, load: load, top: top
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) {
