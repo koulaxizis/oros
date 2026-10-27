@@ -37,7 +37,8 @@ import java.util.Locale;
  * orOS stays closed a task whose day passed shows as late and an
  * event that is over leaves. "Quick add": three buttons. Every tap
  * opens orOS at /?phone-quick=<word> (today, cmd, task, water, note);
- * nothing is written here.
+ * nothing is written here. "Calendar" and "To-Do" (v7) are in
+ * AgendaWidgets; they share the hourly redraw below.
  */
 final class Widgets {
     static final String PREFS = "widget";
@@ -66,22 +67,30 @@ final class Widgets {
 
     static void clear(Context c) {
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply();
-        schedule(c, false);
+        update(c);
     }
 
-    /** Draws every Today widget again and arms the next redraw. */
+    /** Draws every Today, Calendar and To-Do widget again and arms the
+     *  next redraw while any of them is placed. */
     static void update(Context c) {
         AppWidgetManager m = AppWidgetManager.getInstance(c);
         int[] ids = m.getAppWidgetIds(new ComponentName(c, TodayWidget.class));
         for (int id : ids) m.updateAppWidget(id, today(c, m.getAppWidgetOptions(id)));
-        schedule(c, ids.length > 0);
+        boolean more = AgendaWidgets.update(c, m);
+        schedule(c, ids.length > 0 || more);
     }
 
     static PendingIntent open(Context c, String word) {
-        Uri u = Uri.parse(c.getString(R.string.launchUrl)).buildUpon().appendQueryParameter("phone-quick", word).build();
+        return link(c, "phone-quick", word);
+    }
+
+    /** orOS at /?<key>=<value> (phone-quick, phone-open, phone-done). */
+    static PendingIntent link(Context c, String key, String value) {
+        Uri u = Uri.parse(c.getString(R.string.launchUrl)).buildUpon().appendQueryParameter(key, value).build();
         Intent i = new Intent(c, LauncherActivity.class).setAction(Intent.ACTION_VIEW).setData(u)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return PendingIntent.getActivity(c, word.hashCode(), i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getActivity(c, (key + "=" + value).hashCode(), i,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     /** orOS with the Assistant's small window (quickmenu.js "#quick-ask",
@@ -246,15 +255,15 @@ final class Widgets {
         am.set(AlarmManager.RTC, next.getTimeInMillis(), pi);
     }
 
-    private static String ymd(long ms) {
+    static String ymd(long ms) {
         return new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date(ms));
     }
 
-    private static String hm(long ms) {
+    static String hm(long ms) {
         return new SimpleDateFormat("HH:mm", Locale.ROOT).format(new Date(ms));
     }
 
-    private static String weekday(String ymd) {
+    static String weekday(String ymd) {
         try {
             Date d = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).parse(ymd);
             return d == null ? ymd : new SimpleDateFormat("EEE", Locale.getDefault()).format(d);

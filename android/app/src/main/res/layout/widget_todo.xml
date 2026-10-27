@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "To-Do" widget (AgendaWidgets.todo fills it): a box per task
+     ticks it (a repeating task's box opens To-Do), the text opens its list. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/widget_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/widget_todo"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/w_text"
+            android:singleLine="true"
+            android:ellipsize="end" />
+        <TextView android:id="@+id/w_add_task" style="@style/WidgetHeadButton" android:text="@string/widget_add_task" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/w_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@color/w_sub"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingTop="2dp">
+        <LinearLayout android:id="@+id/w_trow0" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk0" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt0" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow1" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk1" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt1" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow2" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk2" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt2" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow3" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk3" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt3" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow4" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk4" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt4" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow5" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk5" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt5" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow6" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk6" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt6" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/w_trow7" style="@style/WidgetTaskRow" android:visibility="gone">
+            <ImageView android:id="@+id/w_tchk7" style="@style/WidgetCheck" android:src="@drawable/ic_widget_check_off" android:contentDescription="@string/widget_tick" />
+            <TextView android:id="@+id/w_ttxt7" style="@style/WidgetTaskText" />
+        </LinearLayout>
+        <TextView
+            android:id="@+id/w_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="2dp"
+            android:text="@string/widget_no_data"
+            android:textSize="13sp"
+            android:textColor="@color/w_sub" />
+    </LinearLayout>
+</LinearLayout>

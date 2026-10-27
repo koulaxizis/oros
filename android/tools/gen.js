@@ -386,6 +386,20 @@ ${aliases}
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info" />
         </receiver>
+        <!-- BR-PHONE v7: "Calendar" (next events) and "To-Do" (next tasks,
+             a box ticks one; the tick broadcast is the app's own). -->
+        <receiver android:name=".CalendarWidget" android:exported="false" android:label="@string/widget_calendar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_calendar_info" />
+        </receiver>
+        <receiver android:name=".TodoWidget" android:exported="false" android:label="@string/widget_todo">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_todo_info" />
+        </receiver>
 
         <!-- Quick Settings tile (quick access wave 4): opens the Assistant. -->
         <service android:name=".AskTile" android:exported="true" android:label="@string/tile_ask"
@@ -441,7 +455,7 @@ const REMOVE_PERMS = ["SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "READ_CO
   "health.READ_BLOOD_PRESSURE", "health.READ_BLOOD_GLUCOSE", "health.READ_OXYGEN_SATURATION"];
 const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"], ["activity", ".PermissionActivity"],
   ["receiver", ".ReminderReceiver"], ["activity", ".HealthPermissionActivity"], ["activity", ".HealthPrivacyActivity"],
-  ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["service", ".AskTile"],
+  ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"]];
 
 function soloApps() {
