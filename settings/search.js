@@ -4,38 +4,40 @@
 // "search"). Reads no storage: it answers from a fixed list of
 // settings, so typing "dark", "wallpaper" or "συνθηματικό" in the
 // menu finds the setting. Opens through the generic deep link:
-// target { section }.
+// target { section, item }: Settings opens the section and lights up
+// the setting (item = a settings/core.js FIND id).
 // ============================================================
 (function (root) {
   "use strict";
 
-  // [section, topic]: the topic's title is "st.<topic>" and the words
+  // [section, topic, item]: item names the setting the app lights up
+  // (settings/core.js FIND). The topic's title is "st.<topic>" and the words
   // that find it "st.<topic>.words", in the table below (German and
   // other languages from the "settings" pack).
   var TOPICS = [
-    ["appearance", "theme"],
-    ["appearance", "colour"],
-    ["appearance", "wallpaper"],
-    ["appearance", "seasonal"],
-    ["appearance", "pet"],
-    ["accessibility", "textsize"],
-    ["accessibility", "contrast"],
-    ["accessibility", "focus"],
-    ["menu", "menuapps"],
-    ["notifications", "notifs"],
-    ["notifications", "quiet"],
-    ["sync", "dropbox"],
-    ["sync", "passphrase"],
-    ["lock", "lock"],
-    ["backup", "backups"],
-    ["language", "language"],
-    ["language", "menusearch"],
-    ["language", "osk"],
-    ["files", "files"],
-    ["system", "version"],
-    ["system", "shortcuts"],
-    ["system", "multitask"],
-    ["system", "reset"]
+    ["appearance", "theme", "theme"],
+    ["appearance", "colour", "skin"],
+    ["appearance", "wallpaper", "wallpaper"],
+    ["appearance", "seasonal", "seasonal"],
+    ["appearance", "pet", "pet"],
+    ["accessibility", "textsize", "textsize"],
+    ["accessibility", "contrast", "contrast"],
+    ["accessibility", "focus", "focus"],
+    ["menu", "menuapps", "menuapps"],
+    ["notifications", "notifs", "notifs"],
+    ["notifications", "quiet", "quiet"],
+    ["sync", "dropbox", "connect"],
+    ["sync", "passphrase", "passphrase"],
+    ["lock", "lock", "lock"],
+    ["backup", "backups", "export"],
+    ["language", "language", "lang"],
+    ["language", "menusearch", "menusearch"],
+    ["language", "osk", "osk"],
+    ["files", "files", "files"],
+    ["system", "version", "version"],
+    ["system", "shortcuts", "shortcuts"],
+    ["system", "multitask", "multitask"],
+    ["system", "reset", "reset"]
   ];
   var TOPIC_T = {
     en: { "st.theme": "Theme: dark or light",
@@ -176,7 +178,7 @@
           id: "t" + i,
           title: L["st." + tp[1]] || TOPIC_T.en["st." + tp[1]],
           text: (L[tp[0]] || SECTION_NAME.en[tp[0]]) + " · " + words.join(" "),
-          target: { section: tp[0] }
+          target: { section: tp[0], item: tp[2] }
         };
       });
     }
