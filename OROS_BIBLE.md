@@ -8445,3 +8445,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** new rule R40 in Part I: a changelog entry goes at the very end of Part XII, after the last entry with a lower date and APP_VERSION, never newest-first; `tests/bible-order.test.js` enforces it. The Map and the Part XI handoff say R1–R40. Part X-B T7: the red "Workers Builds: oros-mail-relay" check now has its cause (preview builds of a Worker with Durable Objects are not supported by Cloudflare) and the fix (Chris clears "Enable Preview Builds" in the Cloudflare dashboard).
 - **Files:** `OROS_BIBLE.md`.
 - **Tests:** `node --test tests/*.test.js` green, the order test included. The relay diagnosis is from Cloudflare's docs (preview URLs and version uploads with Durable Objects), not from the build log, which only the dashboard shows.
+
+### 2026-10-27 — Order test names where a misplaced Part XII entry belongs — tests + docs only, no APP_VERSION
+- **Changes:** `tests/bible-order.test.js` now names the misplaced entry and where it belongs ("Move … just after … and before …", per R40), instead of only reporting the entry that follows it. The checks themselves are unchanged; a self-test covers the message with a newest-first insertion.
+- **Files:** `tests/bible-order.test.js`, `OROS_BIBLE.md`.
+- **Tests:** `node --test tests/*.test.js` green; by hand, a Bible copy with the last entry moved near the top of Part XII, and one with two versioned entries swapped, both fail with the right "Move …" line.
