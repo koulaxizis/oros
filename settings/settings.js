@@ -21,6 +21,7 @@
 //   2. Shell access
 //   3. Widgets
 //   4. Section: Appearance
+//   4a. Section: Accessibility
 //   4b. Section: Menu (which apps the menu lists)
 //   5. Section: Notifications
 //   6. Section: Sync
@@ -71,6 +72,7 @@
 
   var ICON = {
     appearance: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.8.7-1.5 1.5-1.5H16a5 5 0 0 0 5-5c0-4.4-4-7.8-9-7.8z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1" fill="currentColor"/></svg>',
+    accessibility: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.5"/><path d="M5 8l7 1.5L19 8M12 9.5V14M9 21l3-7 3 7"/></svg>',
     notifications: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
     sync: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 12 3.5 3.5 0 0 0 6 19z"/><rect x="9.5" y="13" width="5" height="4" rx="1"/><path d="M10.5 13v-1.2a1.5 1.5 0 0 1 3 0V13"/></svg>',
     backup: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>',
@@ -330,6 +332,35 @@
         { scope: "pet", hint: t("a.pet.hint") }));
       host.appendChild(c4);
     }
+  }
+
+  // ---------- 4a. Section: Accessibility ----------
+  // Text size, high contrast and the focus ring (shell.js 5e). All
+  // three stay on this device; older shells send no s.a11y.
+  function secAccessibility(host, s) {
+    var a = s.a11y;
+    if (!a) { host.appendChild(el("p", "hint card-note", t("noShell"))); return; }
+    var c1 = card(t("ac.size"), "a11y");
+    c1.appendChild(segmented(a.sizes.map(function (n) {
+      return { value: n, label: n + "%" };
+    }), a.size, "textSize", function (v) { set("textSize", v); }, t("ac.size")));
+    c1.appendChild(el("p", "hint", t("ac.size.hint")));
+    if (a.capped) c1.appendChild(el("p", "hint", t("ac.size.capped")));
+    host.appendChild(c1);
+
+    var c2 = card(t("ac.contrast"), "a11y");
+    c2.appendChild(segmented(["auto", "on", "off"].map(function (k) {
+      return { value: k, label: t("ac.contrast." + k) };
+    }), a.contrast, "contrast", function (v) { set("contrast", v); }, t("ac.contrast")));
+    c2.appendChild(el("p", "hint", t("ac.contrast.hint")));
+    if (a.contrast === "auto" && a.high) c2.appendChild(el("p", "hint", t("ac.contrast.now")));
+    if (a.forced) c2.appendChild(el("p", "hint", t("ac.forced")));
+    host.appendChild(c2);
+
+    var c3 = card(null);
+    c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
+      { scope: "a11y", hint: t("ac.focus.hint") }));
+    host.appendChild(c3);
   }
 
   // Seasonal decorations (seasonal.js through the shell): a main
@@ -1742,7 +1773,7 @@
   }
 
   var SECTION_FN = {
-    appearance: secAppearance, menu: secMenu, notifications: secNotifications, sync: secSync,
+    appearance: secAppearance, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem
   };
 

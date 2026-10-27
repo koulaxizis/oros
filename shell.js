@@ -5,7 +5,8 @@
 //   2. Preferences (skin, language, theme, wallpaper, auto-backup)
 //   3. Language apply
 //   4. Theme apply
-//   5. Skin apply · 5b. Wallpaper · 5c. Auto-backup scheduler ·
+//   5. Skin apply · 5b. Wallpaper · 5e. Accessibility ·
+//       5c. Auto-backup scheduler ·
 //       5d. Backup folder (File System Access API)
 //   6. Clock (24h) — hosts ALL throttled engine ticks (weather,
 //       alarms, calendar/mood/cycle/todo/quote scans, notifs sweep)
@@ -803,6 +804,159 @@
       }
     }
     return false;
+  }
+
+  // ---------- 5e. Accessibility (Settings › Accessibility) ----------
+  // Device-local (localStorage "oros-a11y", never synced): the right
+  // text size depends on the screen, and "automatic" contrast follows
+  // each device's own system setting. Three options:
+  //   size     100 | 115 | 130 | 150 (%): CSS zoom on every app frame
+  //            and on the menu's content. A zoomed frame lays its app
+  //            out like browser zoom (a narrower viewport, the same
+  //            pointer maths), so no app has to know. Capped so an app
+  //            keeps at least 320 CSS px across (WCAG 1.4.10 reflow).
+  //            The top bar and the desktop keep their size (the Dock
+  //            has its own Size).
+  //   contrast "auto" | "on" | "off": the high-contrast palette on the
+  //            shell root (style.css, data-oros-contrast). Apps copy it
+  //            with inheritPalette, which watchPalette re-runs when
+  //            data-skin is set again. "auto" = on while the system asks
+  //            for more contrast or forces its colours (Windows
+  //            high contrast).
+  //   focus    true: a strong ring on every keyboard focus, also where
+  //            an app hides its own.
+  // A11Y_CSS goes into the shell and into every same-origin app
+  // document (on load and on every change) and only acts through the
+  // data-oros-* attributes of that document's root, so nothing looks
+  // different until an option is on (forced colours excepted).
+  var A11Y_KEY = "oros-a11y";
+  var A11Y_SIZES = [100, 115, 130, 150];
+  var A11Y_MIN_W = 320;
+  var A11Y_CSS =
+    "html[data-oros-focus] :focus-visible, html[data-oros-contrast] :focus-visible {" +
+    " outline: 3px solid var(--accent, Highlight) !important; outline-offset: 2px !important; }\n" +
+    "html[data-oros-contrast] a[href] { text-decoration: underline !important; }\n" +
+    "html[data-oros-contrast] ::placeholder { color: var(--text-dim, GrayText) !important; opacity: 1 !important; }\n" +
+    "@media (forced-colors: active) {\n" +
+    " :focus-visible { outline: 3px solid Highlight !important; outline-offset: 2px !important; }\n" +
+    " [aria-checked=\"true\"], [aria-pressed=\"true\"], [aria-selected=\"true\"]," +
+    " [aria-current]:not([aria-current=\"false\"]) { outline: 2px solid Highlight; outline-offset: -2px; }\n" +
+    "}\n";
+  var a11y = a11yLoad();
+  var a11yWasHigh = null;
+
+  function a11yLoad() {
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(A11Y_KEY) || "null"); } catch (e) {}
+    v = (v && typeof v === "object") ? v : {};
+    return {
+      size: A11Y_SIZES.indexOf(v.size) !== -1 ? v.size : 100,
+      contrast: (v.contrast === "on" || v.contrast === "off") ? v.contrast : "auto",
+      focus: v.focus === true
+    };
+  }
+  function a11yMq(q) {
+    try { return !!(window.matchMedia && window.matchMedia(q).matches); } catch (e) { return false; }
+  }
+  function a11yHigh() {
+    if (a11y.contrast === "on") return true;
+    if (a11y.contrast === "off") return false;
+    return a11yMq("(prefers-contrast: more)") || a11yMq("(forced-colors: active)");
+  }
+  // The zoom in use: the chosen size, but never so large that an app
+  // is left with less than 320 CSS px across.
+  function a11yZoom() {
+    var z = a11y.size / 100, w = window.innerWidth || 0;
+    if (w > 0) z = Math.min(z, Math.max(1, w / A11Y_MIN_W));
+    return Math.round(z * 1000) / 1000;
+  }
+  function a11yAttr(el, name, value) {
+    if (value) el.setAttribute(name, value);
+    else el.removeAttribute(name);
+  }
+  function a11yMark(doc) {
+    var r = doc.documentElement;
+    if (!doc.getElementById("oros-a11y-css")) {
+      var s = doc.createElement("style");
+      s.id = "oros-a11y-css";
+      s.textContent = A11Y_CSS;
+      (doc.head || r).appendChild(s);
+    }
+    a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
+    a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
+  }
+  // One app frame. Chromium and WebKit scale a zoomed frame's page
+  // themselves; an engine that only grows the box (its page keeps the
+  // box's full width) gets the zoom on the page's own root instead.
+  function a11yFrame(f) {
+    var w, d;
+    try { w = f.contentWindow; d = f.contentDocument; } catch (e) { return; }   // not same-origin
+    if (!w || !d || !d.documentElement) return;
+    a11yMark(d);
+    var r = d.documentElement, z = a11yZoom();
+    if (r.hasAttribute("data-oros-zoom")) { r.style.removeProperty("zoom"); r.removeAttribute("data-oros-zoom"); }
+    if (z === 1) return;
+    var bw = f.getBoundingClientRect().width, iw = w.innerWidth;
+    if (bw > 0 && iw > 0 && Math.abs(bw / iw - 1) < 0.05) {
+      r.style.zoom = String(z);
+      r.setAttribute("data-oros-zoom", "1");
+    }
+  }
+  function a11yWireFrame(frame) {
+    frame.addEventListener("load", function () { a11yFrame(frame); });
+  }
+  function a11yApply() {
+    var root = document.documentElement, z = a11yZoom(), hi = a11yHigh();
+    a11yMark(document);
+    if (z !== 1) root.style.setProperty("--oros-zoom", String(z));
+    else root.style.removeProperty("--oros-zoom");
+    a11yAttr(root, "data-oros-zoom", z !== 1 ? "on" : null);
+    appFrames().forEach(a11yFrame);
+    // Open apps copy the palette again (their watchPalette observes
+    // data-skin; setting the same value still notifies).
+    if (a11yWasHigh !== null && hi !== a11yWasHigh) root.setAttribute("data-skin", state.skin);
+    a11yWasHigh = hi;
+  }
+  function a11ySetUser(name, value) {
+    if (name === "textSize") {
+      var n = Number(value);
+      if (A11Y_SIZES.indexOf(n) === -1 || n === a11y.size) return;
+      a11y.size = n;
+    } else if (name === "contrast") {
+      if (["auto", "on", "off"].indexOf(value) === -1 || value === a11y.contrast) return;
+      a11y.contrast = value;
+    } else if (name === "focusRing") {
+      if (!!value === a11y.focus) return;
+      a11y.focus = !!value;
+    } else return;
+    try { localStorage.setItem(A11Y_KEY, JSON.stringify(a11y)); }
+    catch (e) { scToast("err", window.t("a11y.savefail")); }
+    a11yApply();
+    settingsNotify();
+  }
+  function a11ySnapshot() {
+    return {
+      size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
+      high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
+      capped: a11yZoom() < a11y.size / 100
+    };
+  }
+  // The system's own contrast switch and a resize (the 320 px cap)
+  // apply at once.
+  function a11yWatch() {
+    ["(prefers-contrast: more)", "(forced-colors: active)"].forEach(function (q) {
+      var mq = window.matchMedia ? window.matchMedia(q) : null;
+      if (!mq) return;
+      var on = function () { a11yApply(); settingsNotify(); };
+      if (typeof mq.addEventListener === "function") mq.addEventListener("change", on);
+      else if (typeof mq.addListener === "function") mq.addListener(on);
+    });
+    var queued = false;
+    window.addEventListener("resize", function () {
+      if (queued || a11y.size === 100) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; a11yApply(); });
+    });
   }
 
   // ---------- 5c. Auto-backup scheduler (folder export) ----------
@@ -3655,6 +3809,7 @@
     });
   }
   appFrames().forEach(extWireFrame);
+  appFrames().forEach(a11yWireFrame);
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -9318,6 +9473,7 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      a11y: a11ySnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -9350,6 +9506,9 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "textSize":
+      case "contrast":
+      case "focusRing":    a11ySetUser(name, value); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -9782,6 +9941,7 @@
     document.getElementById("oros-running").appendChild(f);
     cmdWireFrame(f);
     extWireFrame(f);
+    a11yWireFrame(f);
     return f;
   }
   function mtDrop(el) {
@@ -11586,6 +11746,8 @@
   applySkin();
   applyWallpaper();
   applyTheme();
+  a11yApply();
+  a11yWatch();
   applyLang();
   langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):

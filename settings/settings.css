@@ -593,6 +593,12 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 @media (prefers-reduced-motion: reduce) {
   .switch, .switch .knob { transition: none; }
 }
+/* Forced colours (Windows high contrast) drop backgrounds: the knob
+   keeps a system colour so the switch still shows its state. */
+@media (forced-colors: active) {
+  .switch .knob { forced-color-adjust: none; background: CanvasText; }
+  .switch[aria-checked="true"] .knob { background: Highlight; }
+}
 
 /* ---------- Help translate (translate.js) ---------- */
 body.tr-open { overflow: hidden; }
