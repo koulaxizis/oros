@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.01.00
+- Multitasking is no longer a test, and it is on by default on computers (phones and tablets keep it off). An app you leave stays open in the background and comes back exactly as you left it; the Open apps button or Ctrl+Alt+Shift+W switches between them, and on wide screens two apps go side by side. Turn it off or on in Settings › System › Multitasking. Also fixed: an app waiting in the background could undo a change another app had just made to its data (for example a task the Assistant added to To-Do), and Files now shows files saved by other apps when you come back.
+
 ## Version 4.00.00
 - New on-screen keyboard for touch screens, in English, Greek (with accents) and German. On orOS USB and on Linux touch screens it opens by itself when you tap a text field with your finger and closes when you type on a real keyboard; on other touch screens it opens from the keyboard button in the top bar. It never shows on phones. Choose when it opens and which layouts it cycles through in Settings, Language & search.
 

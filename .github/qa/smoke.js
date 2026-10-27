@@ -121,8 +121,9 @@ async function newContext(browser, width, lang) {
   await ctx.route(/^https?:\/\/(?!127\.0\.0\.1[:/])/, (r) => r.abort("internetdisconnected"));
   await ctx.addInitScript(([lang, mt]) => {
     try {
-      // OROS_MULTITASK=1: the gate runs with the experimental switch on.
-      if (mt) localStorage.setItem("oros-multitask", "1");
+      // OROS_MULTITASK=1: the gate runs with multitasking on; otherwise
+      // off, also at desktop widths where it is on by default.
+      localStorage.setItem("oros-multitask", mt ? "1" : "0");
       localStorage.setItem("oros-lang", lang);
       localStorage.setItem("oros-tour-done", "1");
       sessionStorage.setItem("oros-skip-splash", "1");

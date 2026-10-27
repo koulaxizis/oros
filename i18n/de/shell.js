@@ -482,7 +482,7 @@ orosPack("de", "shell", {
  "mt.sw.justnow": "gerade eben",
  "mt.sw.keys": "↑ ↓ wählen · Enter öffnen · Entf schließen · Esc",
  "mt.sw.now": "Im Vordergrund",
- "mt.sw.off": "Multitasking ist aus, daher bleibt nur die App im Vordergrund offen. Schalte es unter Einstellungen › System ein (experimentell).",
+ "mt.sw.off": "Multitasking ist aus, daher bleibt nur die App im Vordergrund offen. Schalte es unter Einstellungen › System ein.",
  "mt.sw.settings": "Einstellungen öffnen",
  "mt.sw.split.beside": "{app} neben der App im Vordergrund öffnen",
  "mt.sw.split.pick": "App wählen, die neben {app} geöffnet wird",

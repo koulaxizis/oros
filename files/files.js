@@ -5143,6 +5143,14 @@
     initDropbox();
     initDrive();
 
+    // Multitasking (MT-S2): Files left open in the background lists the
+    // folder again when it comes back; another app may have saved there.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible" || selectMode || document.querySelector("dialog[open]")) return;
+      refresh();
+      ensureStorageBar();
+    });
+
     console.log("[orOS] files.js v" + APP_VER + " booted (backend: " +
       (FS().mode ? FS().mode() : "unknown") + ")");
 
