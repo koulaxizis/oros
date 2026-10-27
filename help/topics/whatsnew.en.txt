@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.98.00
+- Android app: two new home-screen widgets. `orOS Calendar` shows your events of the next two weeks, with a button for a new event; `orOS To-Do` shows your next tasks with a date, late ones first, and you tick them right on the home screen. A tick reaches orOS as soon as it runs, and then syncs like any change; a repeating task opens To-Do so it gets its next date. Long-press the home screen, Widgets, orOS.
+
 ## Version 3.97.00
 - Settings: new Accessibility section. `Text size` (100% to 150%) makes every app, Settings, Help and the menu larger; `High contrast` (Automatic, On or Off) switches orOS and the apps to black and white with one strong colour, and Automatic follows your device, for example Windows high contrast; `Always show the focus ring` marks clearly where the keyboard is. These stay on this device.
 
