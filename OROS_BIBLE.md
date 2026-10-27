@@ -2491,6 +2491,13 @@ Decided by Chris 2026-10-16 23:35 (thread "Συνεργασία εφαρμογώ
 - Commit: `git add -u` (tracked files only: a NEW file must be in the manual commit), message `chore: sync orOS assets to v<version> (auto) [skip ci]`, plain `git push` (it fails if `main` moved meanwhile; the next push re-stamps).
 - Between the manual commit and the bot's commit the site may briefly serve the new `shell.js` with the old `CACHE_VERSION` and old stamps. Harmless: no worker update starts until the stamped `sw.js` is live.
 
+### Workflow limits (CI hygiene) [2026-10-27]
+
+- **`timeout-minutes` on every job**, about three times the longest job time of the last runs (queue time not counted): `android.yml` build 45 (8–16 min), `bump-version.yml` bump 10 (≈15 s), `chess-puzzles.yml` pack 20 (1–5 min), `fdroid.yml` publish 15 (10 s–2 min), `sync-nullfx.yml` sync 15 (< 3 min), `tests.yml` sync 15 (≈2 min); `quality.yml` already had apps 30, new-apps 10. A job that grows past its limit gets a new limit in the same PR.
+- **`retention-days: 14`** on every `upload-artifact` step (`android.yml` `oros-drive-android`, `oros-android`, `oros-single-apps`; `quality.yml` `qa-report-*`). Nothing downloads these artifacts later: released APKs go through "Publish APKs" and F-Droid, not through artifacts.
+- **`tests.yml` concurrency:** group `tests-<ref>`; `cancel-in-progress` only for `pull_request`, so a newer push to a PR cancels the older run and a push to `main` always finishes.
+- **Decided NOT to do (Chris 2026-10-27):** no `cache: npm` / `npm ci` (no lockfiles); `quality.yml` new-apps keeps `fetch-depth: 0`; no `cancel-in-progress` in `android.yml` (main publishes android-apks, runs must finish in order).
+
 ### `apps.json` [verified 2026-10-26]
 
 - `{ "version": 1, "apps": [ { id, name, category, icon, url, type } ] }`, 136 entries on 2026-10-26 (24 on 2026-10-06), all `type: "internal"`, all `url` = `<id>/` (a directory URL, so no redirect is involved and each matches its precache entry).
