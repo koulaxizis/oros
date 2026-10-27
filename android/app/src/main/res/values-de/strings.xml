@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="perm_denied">orOS braucht diese Berechtigung, um deine orOS-Daten in den Apps des Telefons zu zeigen. Du kannst sie in den App-Einstellungen erlauben.</string>
+    <string name="channel_reminders">Erinnerungen</string>
+    <string name="channel_alarms">Wecker</string>
+    <string name="calendar_feeds_name">orOS-Feeds</string>
+    <string name="add_failed">orOS konnte nicht lesen, was geteilt wurde.</string>
+    <string name="widget_today">orOS Heute</string>
+    <string name="widget_today_desc">Deine nächsten Termine und Aufgaben, mit Schnell-Hinzufügen</string>
+    <string name="widget_quick">orOS Schnell hinzufügen</string>
+    <string name="widget_quick_desc">Der Assistent, ein Befehl, eine Aufgabe, ein Glas Wasser oder eine Notiz</string>
+    <string name="widget_ask">Den Assistenten fragen</string>
+    <string name="tile_ask">orOS Assistent</string>
+    <string name="widget_cmd">Befehlsleiste</string>
+    <string name="widget_add_task">+ Aufgabe</string>
+    <string name="widget_add_water">+ Wasser</string>
+    <string name="widget_add_note">+ Notiz</string>
+    <string name="widget_late">Überfällig</string>
+    <string name="widget_tomorrow">Morgen</string>
+    <string name="widget_nothing">Nichts fällig. Genieß den Tag.</string>
+    <string name="widget_no_data">Öffne orOS einmal, um dieses Widget zu füllen.</string>
+    <string name="widget_stale">Öffne orOS, um es zu aktualisieren.</string>
+    <string name="widget_more">+%d weitere</string>
+    <string name="widget_calendar">orOS Kalender</string>
+    <string name="widget_calendar_desc">Deine nächsten Termine der kommenden zwei Wochen</string>
+    <string name="widget_todo">orOS Aufgaben</string>
+    <string name="widget_todo_desc">Deine nächsten Aufgaben: direkt auf dem Startbildschirm abhaken</string>
+    <string name="widget_add_event">+ Termin</string>
+    <string name="widget_no_events">Keine Termine in den nächsten zwei Wochen.</string>
+    <string name="widget_no_tasks">Keine Aufgaben mit Datum. Genieß es.</string>
+    <string name="widget_tick">Abhaken: %s</string>
+    <string name="widget_ticked">Abgehakt: %s</string>
+    <plurals name="widget_ticks_wait">
+        <item quantity="one">%d Haken wartet, bis orOS öffnet</item>
+        <item quantity="other">%d Haken warten, bis orOS öffnet</item>
+    </plurals>
+    <string name="health_missing">Health Connect ist auf diesem Telefon nicht verfügbar.</string>
+</resources>

@@ -18,6 +18,9 @@
     ["appearance", "wallpaper"],
     ["appearance", "seasonal"],
     ["appearance", "pet"],
+    ["accessibility", "textsize"],
+    ["accessibility", "contrast"],
+    ["accessibility", "focus"],
     ["menu", "menuapps"],
     ["notifications", "notifs"],
     ["notifications", "quiet"],
@@ -43,6 +46,12 @@
           "st.seasonal.words": "christmas snow tree lights new year fireworks halloween pumpkin holiday festive easter carnival kites flag valentine epiphany may day",
           "st.pet": "Screen pet",
           "st.pet.words": "companion pet",
+          "st.textsize": "Text size",
+          "st.textsize.words": "bigger larger font zoom small text accessibility low vision",
+          "st.contrast": "High contrast",
+          "st.contrast.words": "contrast black white forced colors colours accessibility",
+          "st.focus": "Focus ring",
+          "st.focus.words": "keyboard tab outline focus accessibility",
           "st.menuapps": "Apps in the menu",
           "st.menuapps.words": "hide show hidden choose menu apps list",
           "st.notifs": "Notifications",
@@ -79,6 +88,12 @@
           "st.seasonal.words": "χριστούγεννα χιόνι δέντρο λαμπάκια καραβάκι πρωτοχρονιά πυροτεχνήματα halloween κολοκύθα γιορτές πάσχα απόκριες χαρταετοί σημαία θεοφάνια πρωτομαγιά βαλεντίνου",
           "st.pet": "Συντροφάκι",
           "st.pet.words": "κατοικίδιο σύντροφος",
+          "st.textsize": "Μέγεθος κειμένου",
+          "st.textsize.words": "μεγάλα γράμματα γραμματοσειρά μεγέθυνση ζουμ προσβασιμότητα όραση",
+          "st.contrast": "Υψηλή αντίθεση",
+          "st.contrast.words": "αντίθεση μαύρο άσπρο χρώματα προσβασιμότητα",
+          "st.focus": "Περίγραμμα εστίασης",
+          "st.focus.words": "πληκτρολόγιο tab περίγραμμα εστίαση προσβασιμότητα",
           "st.menuapps": "Εφαρμογές στο μενού",
           "st.menuapps.words": "απόκρυψη εμφάνιση κρυφές κρυμμένες επιλογή μενού λίστα",
           "st.notifs": "Ειδοποιήσεις",
@@ -109,9 +124,9 @@
 
 
   var SECTION_NAME = {
-    en: { appearance: "Appearance", menu: "Menu", notifications: "Notifications", sync: "Sync", lock: "Screen lock",
+    en: { appearance: "Appearance", accessibility: "Accessibility", menu: "Menu", notifications: "Notifications", sync: "Sync", lock: "Screen lock",
           backup: "Backups", language: "Language & search", files: "Opening files", system: "System" },
-    el: { appearance: "Εμφάνιση", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός", lock: "Κλείδωμα οθόνης",
+    el: { appearance: "Εμφάνιση", accessibility: "Προσβασιμότητα", menu: "Μενού", notifications: "Ειδοποιήσεις", sync: "Συγχρονισμός", lock: "Κλείδωμα οθόνης",
           backup: "Αντίγραφα ασφαλείας", language: "Γλώσσα και αναζήτηση", files: "Άνοιγμα αρχείων", system: "Σύστημα" }
   };
 

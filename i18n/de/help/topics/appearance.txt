@@ -85,7 +85,15 @@ Das Dock ist eine Leiste mit deinen Lieblings-Apps am unteren Rand des Desktops.
 - `Automatisch ausblenden` versteckt es, bis du die Maus an den unteren Rand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
 - `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
 
+## Barrierefreiheit
+In den `Einstellungen` › `Barrierefreiheit`, für orOS und jede App:
+- `Textgröße` macht den Text und alles drumherum größer: `100%`, `115%`, `130%` oder `150%`. Sie gilt in jeder App, in den Einstellungen, in der Hilfe und im Menü, wie ein Zoom der Seite; die obere Leiste und der Desktop behalten ihre Größe (das Dock hat seine eigene `Größe`). Auf einem schmalen Bildschirm vergrößert orOS nur so weit, dass jede App noch hineinpasst (mindestens 320 Pixel breit), und die Karte sagt es dir.
+- `Hoher Kontrast` stellt orOS und die Apps auf Schwarz und Weiß mit einer kräftigen Farbe um, mit klaren Rahmen, unterstrichenen Links und einem schlichten Desktop ohne Hintergrundbild. `Automatisch` (die Voreinstellung) schaltet ihn ein, solange dein Gerät mehr Kontrast verlangt, zum Beispiel mit dem hohen Kontrast von Windows; mit `An` und `Aus` entscheidest du selbst. Wenn Windows eigene Kontrastfarben erzwingt, folgt orOS ihnen und markiert gewählte Optionen mit einem Rahmen.
+- `Fokusrahmen immer zeigen` zeichnet einen dicken Rahmen um das, was den Tastaturfokus hat, wenn du dich mit der Taste [[Tab]] bewegst, auch in Apps, die nur einen blassen zeigen.
+
+Diese drei bleiben auf diesem Gerät: ein Handy und ein großer Bildschirm brauchen oft eine andere Größe.
+
 ## Was dir auf andere Geräte folgt
 Mit eingeschalteter [Synchronisierung](help:t/sync) gehen deine Sprache, dein Design, Skin, Hintergrundbild (auch `Eigenes`) und die angeheftete Wetterstadt auch auf deine anderen Geräte.
 
-Die Einstellungen der saisonalen Deko gehen ebenfalls mit. Das Dock und seine Einstellungen, eine Deko, die du ausprobierst oder behalten hast, und `Für heute ausblenden` bleiben auf diesem Gerät.
+Die Einstellungen der saisonalen Deko gehen ebenfalls mit. Das Dock und seine Einstellungen, die Optionen zur Barrierefreiheit, eine Deko, die du ausprobierst oder behalten hast, und `Für heute ausblenden` bleiben auf diesem Gerät.

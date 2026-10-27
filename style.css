@@ -1789,6 +1789,57 @@ dialog#oros-lock::backdrop { background: var(--bg-desktop, var(--bg)); }
   #oros-lock .lk-ico { display: none; }
 }
 
+/* ===== Accessibility (shell.js 5e, Settings › Accessibility) =====
+   High contrast: one palette for every skin, so the 16 skins need no
+   twins. Beats the skin blocks ((0,2,1) over (0,2,0)) and the :root
+   semantic tokens. Apps copy these values with inheritPalette.
+   Text size: --oros-zoom (set only above 100 %) zooms every app frame
+   and the menu's content; the menu grows with it, up to the screen. */
+html[data-oros-contrast="high"][data-theme="dark"] {
+  --bg:           #000000;
+  --bg-desktop:   #000000;
+  --bar-bg:       #000000;
+  --text:         #ffffff;
+  --text-dim:     #e2e2e2;
+  --accent:       #ffd23f;
+  --accent-hover: #ffe680;
+  --accent-soft:  rgba(255, 210, 63, 0.28);
+  --panel-bg:     #000000;
+  --border:       #c4c4c4;
+  --shadow:       rgba(0, 0, 0, 0.9);
+  --danger:       #ff8a8a;
+  --ok:           #8fe35a;
+  --warn:         #ffb36b;
+}
+html[data-oros-contrast="high"][data-theme="light"] {
+  --bg:           #ffffff;
+  --bg-desktop:   #ffffff;
+  --bar-bg:       #ffffff;
+  --text:         #000000;
+  --text-dim:     #1f1f1f;
+  --accent:       #0039a6;
+  --accent-hover: #002577;
+  --accent-soft:  rgba(0, 57, 166, 0.16);
+  --panel-bg:     #ffffff;
+  --border:       #3d3d3d;
+  --shadow:       rgba(0, 0, 0, 0.35);
+  --danger:       #a8001b;
+  --ok:           #1e6b00;
+  --warn:         #8a3d00;
+}
+/* No picture behind the icons: a plain background reads best. */
+html[data-oros-contrast="high"] #oros-desktop { background: var(--bg-desktop) !important; }
+html[data-oros-contrast="high"] #wp-live { display: none !important; }
+html[data-oros-contrast="high"] #oros-bar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+html[data-oros-contrast="high"] .menu-cat-count { background: transparent; color: var(--text); box-shadow: inset 0 0 0 1px var(--border); }
+
+html[data-oros-zoom] #oros-running > iframe { zoom: var(--oros-zoom, 1); }
+html[data-oros-zoom] #app-menu { width: min(calc(320px * var(--oros-zoom, 1)), calc(100vw - 24px)); }
+html[data-oros-zoom] #app-menu > * { zoom: var(--oros-zoom, 1); }
+@media (max-width: 480px) {
+  html[data-oros-zoom] #app-menu { width: auto; }
+}
+
 /* Authority guard: the HTML [hidden] attribute must always win over
    any author display rule (e.g. #wxc-ac in the wxcity dialog).
    Bible Part VII — applied to the shell itself, not just app

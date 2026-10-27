@@ -57,7 +57,7 @@ test("core: t() falls back and fills variables", () => {
 });
 
 test("core: sections and deep-link targets", () => {
-  assert.deepEqual(C.SECTIONS, ["appearance", "menu", "notifications", "sync", "lock", "backup", "language", "files", "solo", "services", "system"]);
+  assert.deepEqual(C.SECTIONS, ["appearance", "accessibility", "menu", "notifications", "sync", "lock", "backup", "language", "files", "solo", "services", "system"]);
   assert.equal(C.sectionOf({ section: "sync" }), "sync");
   assert.equal(C.sectionOf("backup"), "backup");
   [null, undefined, {}, { section: "nope" }, { section: 3 }, "__proto__", "constructor"]

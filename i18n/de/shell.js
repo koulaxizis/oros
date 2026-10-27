@@ -1,4 +1,5 @@
 orosPack("de", "shell", {
+ "a11y.savefail": "Die Einstellungen zur Barrierefreiheit konnten auf diesem Gerät nicht gespeichert werden: Der Speicher ist voll.",
  "alarm.dismiss": "Schließen",
  "alarm.snooze": "Schlummern {n} Min.",
  "alarm.title": "Wecker",

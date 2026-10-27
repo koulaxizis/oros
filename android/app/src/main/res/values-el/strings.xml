@@ -21,5 +21,18 @@
     <string name="widget_no_data">Άνοιξε το orOS μία φορά για να γεμίσει.</string>
     <string name="widget_stale">Άνοιξε το orOS για να ενημερωθεί.</string>
     <string name="widget_more">+%d ακόμα</string>
+    <string name="widget_calendar">orOS Ημερολόγιο</string>
+    <string name="widget_calendar_desc">Τα επόμενα γεγονότα σου για τις δύο επόμενες εβδομάδες</string>
+    <string name="widget_todo">orOS Εργασίες</string>
+    <string name="widget_todo_desc">Οι επόμενες εργασίες σου: τσέκαρέ τες από την αρχική οθόνη</string>
+    <string name="widget_add_event">+ Γεγονός</string>
+    <string name="widget_no_events">Κανένα γεγονός τις δύο επόμενες εβδομάδες.</string>
+    <string name="widget_no_tasks">Καμία εργασία με ημερομηνία. Απόλαυσέ το.</string>
+    <string name="widget_tick">Τσέκαρε: %s</string>
+    <string name="widget_ticked">Τσεκαρισμένη: %s</string>
+    <plurals name="widget_ticks_wait">
+        <item quantity="one">%d τσεκάρισμα περιμένει να ανοίξει το orOS</item>
+        <item quantity="other">%d τσεκαρίσματα περιμένουν να ανοίξει το orOS</item>
+    </plurals>
     <string name="health_missing">Το Health Connect δεν είναι διαθέσιμο σε αυτό το κινητό.</string>
 </resources>
