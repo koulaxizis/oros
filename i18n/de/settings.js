@@ -192,7 +192,7 @@ orosPack("de", "settings", {
  "so.apk.title": "Android-App herunterladen (APK)",
  "so.apps": "Verfügbare Einzel-Apps",
  "so.how": "So installierst du",
- "so.how.android": "Android: APK lädt die App selbst herunter; öffne die Datei und erlaube die Installation aus dieser Quelle. Das klappt immer, auch neben einem installierten orOS. Installieren öffnet die App stattdessen im Browser, wo Chrome „Installieren“ nur anbietet, wenn orOS nicht aus Chrome installiert ist. APK und Google-Play-Version nutzen verschiedene Signaturschlüssel: Zum Wechseln erst deinstallieren (die Synchronisierung bringt deine Daten zurück).",
+ "so.how.android": "Android: APK lädt die App selbst herunter; öffne die Datei und erlaube die Installation aus dieser Quelle. Das klappt immer, auch neben einem installierten orOS. Installieren öffnet die App stattdessen im Browser, wo Chrome „Installieren“ nur anbietet, wenn orOS nicht aus Chrome installiert ist.",
  "so.how.desktop": "Windows und Linux: Wähle im neuen Tab „Installieren“ in der Adressleiste von Chrome oder Edge. Die App erscheint dann im Startmenü oder in deiner App-Liste.",
  "so.how.iphone": "iPhone: In Safari Teilen › Zum Home-Bildschirm.",
  "so.intro": "Installiere eine orOS-App für sich allein. Sie bekommt ein eigenes Symbol und Fenster, öffnet direkt die App und funktioniert offline. Auf diesem Gerät teilt sie ihre Daten mit orOS. Auf einem anderen Gerät schalte darin die Synchronisierung ein (App-Menü › Sync und Cloud), um deiner verschlüsselten orOS-Cloud beizutreten.",
