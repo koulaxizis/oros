@@ -386,6 +386,7 @@
     "invoices/invoices.js",
     "invoices/mydata-ui.js",
     "invoices/package.js",
+    "invoices/pdfin.js",
     "invoices/search.js",
     "invoices/today.js"
    ]
