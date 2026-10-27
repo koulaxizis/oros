@@ -14,9 +14,16 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same PR cancels the older run; pushes to main always
+# finish.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # job takes about 2 min
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
