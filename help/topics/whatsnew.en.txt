@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.97.00
+- Settings: new Accessibility section. `Text size` (100% to 150%) makes every app, Settings, Help and the menu larger; `High contrast` (Automatic, On or Off) switches orOS and the apps to black and white with one strong colour, and Automatic follows your device, for example Windows high contrast; `Always show the focus ring` marks clearly where the keyboard is. These stay on this device.
+
 ## Version 3.96.01
 - Downloads page and Settings › Single apps: no more mentions of Google Play. orOS is not in any app store; Android apps come as APKs, kept up to date by F-Droid, Droid-ify or Obtainium.
 
