@@ -171,6 +171,24 @@ async function main() {
     ok(await pw.inputValue() === "as", "it types into the shadow root field: " + await pw.inputValue());
     const kb = await page.locator("#osk").boundingBox(), pb = await pw.boundingBox();
     ok(pb.y + pb.height <= kb.y, "the panel is lifted above the keyboard");
+    await special(page, "hide");
+    // The screen lock's PIN field: everything behind the modal dialog is
+    // inert, so the keyboard must come inside it.
+    const on = await page.evaluate(() => window.orosLock && window.orosLock.enable("pin", "2468").then((r) => r.ok && window.orosLock.lock()).then(() => true));
+    if (on) {
+      await page.waitForTimeout(400);
+      await page.locator("#oros-lock-input").tap(); await page.waitForTimeout(500);
+      if (!(await oskOpen(page))) await page.locator("#osk-btn").tap().catch(() => {});
+      ok(await oskOpen(page), "the lock screen's PIN field opens it");
+      ok(await page.evaluate(() => !!document.querySelector("dialog#oros-lock #osk")), "it sits inside the lock dialog");
+      await page.locator("#osk .osk-sym").first().tap(); await key(page, "2"); await key(page, "4");
+      ok(await page.locator("#oros-lock-input").inputValue() === "24", "it types the PIN: " + await page.locator("#oros-lock-input").inputValue());
+      await key(page, "6"); await key(page, "8"); await special(page, "enter");
+      await page.waitForTimeout(2500);
+      ok(await page.evaluate(() => !window.orosLock.isLocked()), "Enter on the keyboard unlocks");
+      await page.locator("#osk-btn").tap(); await page.waitForTimeout(200);
+      ok(await page.evaluate(() => { const o = document.getElementById("osk"); return o.parentNode === document.body && !o.closest("[inert]"); }), "after the unlock it is back in the page, not inert");
+    } else notes.push("screen lock not available: lock check skipped");
     await ctx.close();
 
     // ---- phone: nothing ----
@@ -186,6 +204,7 @@ async function main() {
   const report = { pass: notes, fail: fails };
   if (out) fs.writeFileSync(out, JSON.stringify(report, null, 2));
   for (const n of notes) console.log("ok   " + n);
+  for (const n of fails) console.log("FAIL " + n);
   console.log(fails.length ? "\n" + fails.length + " failed" : "\nall " + notes.length + " checks passed");
   process.exit(fails.length ? 1 : 0);
 }

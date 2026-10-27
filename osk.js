@@ -695,6 +695,9 @@
     try { modal = !!(dlg && dlg.matches(":modal")); } catch (e) { modal = false; }
     var want = modal ? dlg : doc.body;
     if (box.parentNode !== want) want.appendChild(box);
+    // A shell modal (the screen lock) makes every body child inert, us
+    // too while we were one; inside the dialog we must take taps again.
+    if (modal && box.hasAttribute("inert")) box.removeAttribute("inert");
     parked = modal ? dlg : null;
   }
   function place() {

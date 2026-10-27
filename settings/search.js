@@ -70,7 +70,7 @@
           "st.menusearch": "Menu search",
           "st.menusearch.words": "search find apps",
           "st.osk": "On-screen keyboard",
-          "st.osk.words": "keyboard virtual touch typing screen layout",
+          "st.osk.words": "keyboard virtual touch type keys screen layout",
           "st.files": "Opening files",
           "st.files.words": "open with default app file type handler docx xlsx",
           "st.version": "Version and updates",
