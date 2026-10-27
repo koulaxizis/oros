@@ -38,6 +38,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45   # job takes 8-16 min
     permissions:
       contents: write   # only the "Publish APKs" step uses it (main only)
     # One build per branch at a time, so two quick main pushes cannot
@@ -143,6 +144,7 @@ jobs:
           name: oros-drive-android
           path: oros-drive-src/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+          retention-days: 14
 
       # The orOS app itself (flavour "oros", online.useoros.twa).
       - uses: actions/upload-artifact@v4
@@ -152,6 +154,7 @@ jobs:
             android/app/build/outputs/apk/oros/**/*.apk
             android/app/build/outputs/bundle/orosRelease/*.aab
           if-no-files-found: error
+          retention-days: 14
 
       # Single apps for Google Play (wave 7, android/solo-apps.json):
       # one folder per app, e.g. apk/notes/release/app-notes-release.apk
@@ -165,6 +168,7 @@ jobs:
             !android/app/build/outputs/apk/oros/**
             !android/app/build/outputs/bundle/orosRelease/**
           if-no-files-found: error
+          retention-days: 14
 
       # Direct downloads for people who do not use a store (and until
       # the store listings exist). Only signed APKs, only from main.

@@ -225,7 +225,6 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   white-space: nowrap;
 }
 .scope-all { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
-.badge-exp { color: var(--warn, #b7791f); border-color: color-mix(in srgb, var(--warn, #b7791f) 45%, var(--border)); }
 
 /* ---------- 5. Controls ---------- */
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }

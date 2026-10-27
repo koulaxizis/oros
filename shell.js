@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.99.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.01.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -388,6 +388,7 @@
     var dBtn = document.getElementById("bar-date");
     if (tBtn) tBtn.title = window.t("app.time");   // paintBarDate adds the date at fit level 6
     if (dBtn) dBtn.title = window.t("app.calendar");
+    if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -9502,6 +9503,17 @@
     try { return S.snapshot(); } catch (e) { return null; }
   }
 
+  // On-screen keyboard (osk.js): none on phones (snapshot null).
+  function settingsOskL() {
+    var O = window.orosOsk;
+    return (O && typeof O.snapshot === "function" && typeof O.set === "function") ? O : null;
+  }
+  function settingsOsk() {
+    var O = settingsOskL();
+    if (!O) return null;
+    try { return O.snapshot(); } catch (e) { return null; }
+  }
+
   // Menu apps (launcher.js 1.3.0): which apps the menu lists. Only
   // when the launcher offers it; an older bundle shows no section.
   function settingsMenuL() {
@@ -9603,6 +9615,7 @@
       install: !!state.deferredPrompt,
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
+      osk: settingsOsk(),
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
@@ -9651,6 +9664,11 @@
     if (/^seasonal:/.test(name)) {
       var SS = settingsSeasonalL();
       if (SS) SS.set(name.slice(9), value);
+      return;
+    }
+    if (/^osk:/.test(name)) {
+      var OK = settingsOskL();
+      if (OK) OK.set(name.slice(4), value);
       return;
     }
     if (/^menu:/.test(name)) {
@@ -9986,14 +10004,19 @@
   // its page, without text while it loaded, under the name of the app
   // in front (Chris 2026-10-18, BK-1). Back itself is section 10d.
   function frameGo(el, url) {
-    try { el.contentWindow.location.replace(new URL(url, document.baseURI).href); return; } catch (e) {}
+    try { el.contentWindow.location.replace(new URL(url, document.baseURI).href); oskWatch(el); return; } catch (e) {}
     el.src = url;
+    oskWatch(el);
+  }
+  // On-screen keyboard (osk.js): wire the new page as soon as it exists.
+  function oskWatch(el) {
+    if (window.orosOsk && window.orosOsk.watch) window.orosOsk.watch(el);
   }
 
-  // ---------- 10b. Multitasking (experimental, off by default, wave M2) ----------
-  // Settings › System › "Multitasking (experimental)", per device
-  // (oros-multitask = "1", never synced; Chris 2026-10-17: experimental
-  // and off by default). When you leave an app it stays alive in a
+  // ---------- 10b. Multitasking (wave M2; out of the experiment 2026-10-27) ----------
+  // Settings › System › "Multitasking", per device
+  // (oros-multitask = "1" on / "0" off, never synced; unset = on on
+  // computers, off on phones and tablets: mtDefault). When you leave an app it stays alive in a
   // hidden frame and comes back as you left it, up to a number of
   // "slots" set by the device's memory (mtSlots; heavy apps take 2).
   // When the slots are full the app used longest ago closes. Off (or in
@@ -10028,8 +10051,22 @@
     if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
   }
 
+  // Out of the experiment (Chris 2026-10-27, after the load tests in
+  // /mnt/project-files/multitasking/load-2026-10-27.md): on by default on
+  // computers (a fine pointer that can hover, 768 px and wider), off on
+  // phones and tablets. The person's own choice ("1" / "0") always wins.
+  function mtDefault() {
+    try {
+      return !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) &&
+        (window.innerWidth || 0) >= 768;
+    } catch (e) { return false; }
+  }
   function mtOn() {
-    try { return localStorage.getItem(MT_KEY) === "1"; } catch (e) { return false; }
+    var v = null;
+    try { v = localStorage.getItem(MT_KEY); } catch (e) { return false; }
+    if (v === "1") return true;
+    if (v === "0") return false;
+    return mtDefault();
   }
   function mtActive() { return !SOLO && mtOn(); }
   // Slots for a device: navigator.deviceMemory (GB, Chromium only,
@@ -10101,15 +10138,78 @@
     try { frameGo(el, "about:blank"); } catch (e) {}
     if (el.parentNode) el.parentNode.removeChild(el);
   }
+
+  // Stale copy guard (MT-S1, 2026-10-27). A live app holds its data in
+  // memory; when another document (the Assistant, the shell's bridges
+  // and household mirrors, the app beside) writes one of the app's
+  // keys, that copy is old and its next save would undo the write.
+  // Such a write closes the hidden app (it opens fresh next time) and
+  // reloads the app beside or in front in side by side. An app's keys:
+  // "oros-<id>-..." and every key it was seen writing itself. Apps that
+  // are screens over their own shell host follow its change events and
+  // are left alone.
+  var MT_HOSTED = { music: 1, podcasts: 1, today: 1, stickies: 1, newsletter: 1 };
+  var mtKeyOwner = {};       // key → id of the app seen writing it
+  function mtOwns(id, key) {
+    if (!key || MT_HOSTED[id]) return false;
+    return key.indexOf("oros-" + id + "-") === 0 || mtKeyOwner[key] === id;
+  }
+  // The app of a document URL of this orOS ("…/todo/index.html" → "todo").
+  function mtAppOfUrl(u) {
+    var base = location.pathname.replace(/[^\/]*$/, ""), p;
+    try { p = new URL(u, location.href).pathname; } catch (e) { return null; }
+    if (p.indexOf(base) !== 0) return null;
+    var dir = p.slice(base.length).split("/")[0];
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].url === dir + "/") return state.apps[i].id;
+    return null;
+  }
+  // Hidden apps: a write by any other document (the shell included)
+  // fires "storage" in the app's own window, never one of its own.
+  function mtGuard(el, app) {
+    var w;
+    try { w = el.contentWindow; } catch (e) { return; }
+    if (!w || w.__orosMtGuard) return;
+    try {
+      w.__orosMtGuard = true;
+      w.addEventListener("storage", function (e) {
+        if (el.getAttribute("data-oros-app") !== app.id || !mtOwns(app.id, e.key)) return;
+        setTimeout(function () {
+          var r = mtFind(app.id);
+          if (!r || r.el !== el) return;
+          mtTake(app.id);
+          mtDrop(el);
+          mtChanged();
+        }, 0);
+      });
+    } catch (e2) {}
+  }
+  // The shell's own window hears the writes of every app frame: it
+  // learns who writes what, and in side by side reloads the other app
+  // when one writes the other's keys.
+  window.addEventListener("storage", function (e) {
+    if (!e.key || !mtActive()) return;
+    var by = mtAppOfUrl(e.url || "");
+    if (!by) return;
+    if (!mtKeyOwner[e.key] && e.key.indexOf("oros-" + by + "-") !== 0) mtKeyOwner[e.key] = by;
+    if (!mt.side || !state.running) return;
+    var pair = [{ app: state.running, el: document.getElementById("app-frame") }, mt.side];
+    pair.forEach(function (x) {
+      if (x.el && x.app.id !== by && mtOwns(x.app.id, e.key)) frameGo(x.el, x.app.url);
+    });
+  });
   // The front frame steps back: hidden, paused, still live.
   function mtHide(el, app) {
     el.removeAttribute("id");
     el.style.display = "none";
     el.setAttribute("data-oros-app", app.id);
     mtVis(el, true);
+    mtGuard(el, app);
     if (!el.__mtLoadHook) {      // still booting: hide it again once loaded
       el.__mtLoadHook = true;
-      el.addEventListener("load", function () { if (el.hasAttribute("data-oros-app")) mtVis(el, true); });
+      el.addEventListener("load", function () {
+        var r = el.getAttribute("data-oros-app");
+        if (r) { mtVis(el, true); mtGuard(el, mtFind(r) ? mtFind(r).app : app); }
+      });
     }
     mt.hidden.push({ app: app, el: el, at: Date.now() });
   }
@@ -10259,8 +10359,7 @@
   }
   function mtSetUser(on) {
     try {
-      if (on) localStorage.setItem(MT_KEY, "1");
-      else localStorage.removeItem(MT_KEY);
+      localStorage.setItem(MT_KEY, on ? "1" : "0");
     } catch (e) {}
     if (!on) mtDropAll();
     else mtChanged();
@@ -11911,6 +12010,16 @@
       desktop: document.getElementById("oros-desktop"),
       running: function () { return !!state.running; },
       lang: function () { return langBase(); },
+      changed: function () { settingsNotify(); }
+    });
+  }
+  // On-screen keyboard (osk.js, a shell component like seasonal.js):
+  // touch screens without a keyboard, never on phones. A single app
+  // has text fields too, so it gets one.
+  if (window.orosOsk) {
+    window.orosOsk.attach({
+      lang: function () { return state.lang; },   // "de" picks the German layout
+      toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); }
     });
   }

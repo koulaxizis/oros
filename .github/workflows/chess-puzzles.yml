@@ -23,6 +23,7 @@ concurrency:
 jobs:
   pack:
     runs-on: ubuntu-latest
+    timeout-minutes: 20   # job takes 1-5 min
     steps:
       - uses: actions/checkout@v4
         with:
