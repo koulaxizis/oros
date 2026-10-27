@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.06.01
+- Calendar: share all your events with no label with your household in one step: `Manage labels` › the `No label` row › the house icon. Give the shared calendar a name (for example `Home`); if the household cannot be reached, nothing changes.
+
 ## Version 4.06.00
 - Writer opens PDF files and keeps their formatting: headings, bold and italic, alignment, numbered and bulleted lists, paragraphs joined again across lines and pages, without the repeated headers, footers and page numbers. A scan without text says so and points to Scanner & PDF.
 - Writer keeps more from Word, OpenDocument, RTF and Markdown files: alignment, paragraph styles and list numbering (start numbers, nested and resumed lists). RTF files no longer come in as plain text. In Markdown, `{.center}`, `{.right}` or `{.justify}` after a paragraph sets its alignment.
