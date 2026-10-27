@@ -2141,6 +2141,15 @@ Read input values + scrollTop BEFORE `innerHTML=""`, rebuild, then restore.
 - **History (K2):** device-local `oros-cmd-history` (R10, never synced): the last 12 lines that ran a command, newest first, de-duplicated; the bar lists them while its field is empty (a click puts the line back in the field, Enter runs it) with "Clear the list".
 - **Safety:** the text is never run; rows are built with `textContent`.
 
+### Quick window (QW): the command bar from outside orOS
+- **What (Chris 2026-10-27, plan `/mnt/project-files/quick-tray/plan.md`):** add a task or search your data from the desktop tray, the phone's home screen or Quick Settings, in the command bar (BR-CMD). Not an app tile; shell + To-Do + Android + the oros-portable launcher.
+- **Bar (commands/bar.js 1.2.0):** rows in order: the command (when the line is one); the app whose name is the whole line (folded, equal); "Add task: «…»" when the line is no command and To-Do is installed (≤ 300 chars); the other matching apps; "In your data" (up to 6 hits, ≤ 3 per app, `orosSearch.top` in search.js 1.1.0); "Ask the Assistant". Data rows come async (a newer line or a closed bar drops an older answer), text only. `host.closed(acted)` tells the shell whether a row ran.
+- **Data rows follow the user's search switches (Chris 2026-10-27):** `cmdData` searches only `searchApps()` with `searchEnabled(id)` (device-local `oros-search-prefs` + apps.json `searchOff`), the same switches as the menu search; hits open with `openSearchHit`.
+- **Add task = one writer:** `cmdAddTask` → `__orosOpenAt("todo", { addItems: { now: true, from, items: [{ text }] } })`. To-Do (`addItemNow`) writes it at once (the Enter is the confirmation, like Water's sip) at the top of `list` if it exists, else the open list; text already open there → a note, nothing written; toast with Undo (tombstone). `now` is honoured only for exactly one item and no `newList`; every other BR-TD-ADD payload still opens the dialog.
+- **Two windows (SY-W1):** To-Do listens to `storage` on `oros-todo-data` and merges what another window wrote (`sliceSet(mergeTodoStates(sliceGet(), other), { merged: true })`), so a To-Do open in the main window never saves over a task the Quick window added.
+- **Entry points:** `#quick[=text]` opens the bar at boot (manifest shortcut "Add or search", first of Android's four icon shortcuts; Android `QuickTile` "orOS Quick" and `QuickBarWidget` "Add or search" via `Widgets.quickIntent`, both left out of single apps). `#quick-win[=text]` = the desktop tray's window (oros-portable launcher, `--app=http://localhost:47800/#quick-win`): the bar fills the window (`cb-full`) and Escape with nothing run calls `window.close()`; a row that ran leaves its app open. The fragment leaves the address bar at once; text cleaned (control chars → space, ≤ 300). Behind the screen lock the bar waits for the unlock. Not in single apps (SOLO).
+- Tests `tests/quick.test.js`; help `help/topics/menu.*.txt` "Quick window".
+
 ### Cross-app "new entry" bridge: Maps → Calendar (BR-W8) [log]
 
 Rule ids are kept as recorded.

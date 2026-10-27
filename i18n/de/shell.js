@@ -159,6 +159,7 @@ orosPack("de", "shell", {
  "category.video": "Video",
  "cmd.copied": "Kopiert: {text}",
  "cmd.loadfail": "Die Befehlsleiste wurde nicht geladen. Prüfe die Verbindung und versuche es erneut.",
+ "cmd.quick": "Schnellfenster",
  "cr.anthropic-openai": "KI-Chat deiner Wahl (Assistent)",
  "cr.ccmixter": "Remixe und Instrumentals (Musik)",
  "cr.chess-com": "Schach › Online-Konten: deine Wertungen, deine Partien und die Tagesaufgabe",

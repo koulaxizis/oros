@@ -35,4 +35,8 @@
         <item quantity="other">%d τσεκαρίσματα περιμένουν να ανοίξει το orOS</item>
     </plurals>
     <string name="health_missing">Το Health Connect δεν είναι διαθέσιμο σε αυτό το κινητό.</string>
+    <string name="widget_quickbar">orOS προσθήκη ή αναζήτηση</string>
+    <string name="widget_quickbar_desc">Πρόσθεσε εργασία ή ψάξε στα δεδομένα του orOS</string>
+    <string name="widget_quickbar_hint">Πρόσθεσε ή ψάξε…</string>
+    <string name="tile_quick">orOS Γρήγορα</string>
 </resources>

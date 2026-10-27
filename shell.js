@@ -3113,6 +3113,7 @@
         if (window.orosPhone && window.orosPhone.ready) window.orosPhone.ready();
         // "#quick-ask" from outside orOS (quickmenu.js, AS-OUT).
         if (window.orosQuick && window.orosQuick.ready && !SOLO) window.orosQuick.ready();
+        quickReady();
       })
       .catch(function () {
         state.apps = [];
@@ -3738,8 +3739,41 @@
     hits.sort(function (x, y) { return x.at - y.at || x.name.localeCompare(y.name); });
     return hits;
   }
-  function openCmdBar(text) {
+  // "In your data" rows of the bar (Quick window): the universal
+  // search over the apps switched on for search on this device (the
+  // menu's "Search in" switches and Settings, searchEnabled), at most
+  // 6 hits, opened like a menu hit.
+  function cmdData(q) {
+    var S = window.orosSearch;
+    if (!S || S.parseQuery(q).join("").length < S.MIN_CHARS) return Promise.resolve([]);
+    var apps = searchApps().filter(function (a) { return searchEnabled(a.id); });
+    if (!apps.length) return Promise.resolve([]);
+    var allow = {};
+    apps.forEach(function (a) { allow[a.id] = true; });
+    if (!searchReader) searchReader = S.makeReader(localStorage);
+    return S.load(apps, APP_VERSION).then(function () {
+      return S.run(window.orosSearchProviders, q, {
+        lang: langBase(), code: state.lang, readJSON: searchReader,
+        enabled: function (id) { return !!allow[id] && searchEnabled(id); }
+      });
+    }).then(function (groups) {
+      return S.top(groups, 6, 3).map(function (x) {
+        return { app: cmdAppName(x.id), title: x.hit.title, snippet: x.hit.snippet || "",
+                 open: function () { openSearchHit(x.id, x.hit); } };
+      });
+    });
+  }
+  // "Add task" (Quick window): one task, written by To-Do itself at
+  // once ({ now: true }: the Enter is the confirmation), with Undo.
+  function cmdAddTask(q) {
+    var text = String(q || "").replace(/\s+/g, " ").trim().slice(0, 300);
+    if (!text) return;
+    cmdRemember(text);
+    window.__orosOpenAt("todo", { addItems: { now: true, from: window.t("cmd.quick"), items: [{ text: text }] } });
+  }
+  function openCmdBar(text, opts) {
     if (SOLO) return;
+    opts = opts || {};
     cmdModule().then(function () {
       closeMenu();
       window.orosCmdBar.open({
@@ -3752,7 +3786,11 @@
         openApp: openAppById,
         history: cmdHistory,
         forget: cmdForget,
-        ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null
+        ask: hasApp("assistant") ? function (q) { openAssistant(q); } : null,
+        addTask: hasApp("todo") ? cmdAddTask : null,
+        data: cmdData,
+        full: !!opts.full,
+        closed: opts.closed || null
       }, text);
     }, function () {
       notifySys("dim", window.t("cmd.loadfail"));
@@ -3760,6 +3798,55 @@
   }
   // The Android widget's command button (phone.js, ?phone-quick=cmd).
   window.__orosOpenCmdBar = function () { openCmdBar(); };
+
+  // Quick window (QW, 4.x): "#quick[=text]" opens the bar at once (the
+  // manifest shortcut, the phone's shortcut, tile and widget);
+  // "#quick-win[=text]" is the desktop tray's own small window
+  // (oros-portable): the bar fills the window, and dismissing it
+  // (Escape, nothing run) closes the window. A row that ran leaves its
+  // app open there. The fragment never reaches a server and leaves the
+  // address bar at once. Behind the screen lock it waits for the unlock.
+  var quickWant = null, quickAppsIn = false, quickWin = false;
+  function quickTakeHash() {
+    var h = "";
+    try { h = String(window.location.hash || ""); } catch (e) { return null; }
+    var m = /^#quick(-win)?(?:=([\s\S]*))?$/.exec(h);
+    if (!m) return null;
+    try { window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search); } catch (e) {}
+    var t = "";
+    try { t = decodeURIComponent((m[2] || "").replace(/\+/g, " ")); } catch (e) { t = ""; }
+    t = t.replace(/[\u0000-\u001f\u007f\u2028\u2029]/g, " ").replace(/\s+/g, " ").trim().slice(0, 300);
+    return { win: !!m[1], text: t };
+  }
+  function quickLaunch(w) {
+    if (SOLO) return;
+    var L = window.orosLock;
+    if (L && L.isLocked && L.isLocked()) {
+      var off = L.onChange(function () { if (!L.isLocked()) { off(); quickLaunch(w); } });
+      return;
+    }
+    if (w.win) quickWin = true;
+    if (window.orosCmdBar && window.orosCmdBar.isOpen()) return;
+    openCmdBar(w.text, {
+      full: quickWin && !state.running,
+      closed: function (acted) {
+        if (!quickWin || acted || state.running) return;
+        try { window.close(); } catch (e) {}
+      }
+    });
+  }
+  quickWant = quickTakeHash();
+  window.addEventListener("hashchange", function () {
+    var w = quickTakeHash();
+    if (!w) return;
+    if (quickAppsIn) quickLaunch(w); else quickWant = w;
+  });
+  function quickReady() {
+    quickAppsIn = true;
+    var w = quickWant;
+    quickWant = null;
+    if (w) quickLaunch(w);
+  }
   // Ctrl+K (Cmd+K on a Mac), from the desktop or from inside an app.
   function cmdIsCtrlK(e) {
     return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.code === "KeyK";
