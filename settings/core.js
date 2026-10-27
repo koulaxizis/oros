@@ -23,6 +23,92 @@
     multitask: "device", a11y: "device", lock: "device", osk: "device"
   };
 
+  // Search settings: one row per setting, in page order.
+  //   [id, section, label, card, alt, need]
+  // label  the string key of the setting's own label, heading or button
+  //        (the app finds it on the page by that text and lights it up);
+  // card   the card heading shown in the path ("Section › Card"), or null;
+  // alt    another label to light up when the first is not on the page
+  //        right now (the Dock is off, sync is not connected…);
+  // need   what this device must have for the row to be offered at all
+  //        (the app decides: "dock", "phone", "app:weather"…), or null.
+  // "w.<id>" holds the other words that find it, in every language.
+  var FIND = [
+    ["theme", "appearance", "a.theme"],
+    ["skin", "appearance", "a.skin"],
+    ["wallpaper", "appearance", "a.wallpaper"],
+    ["seasonal", "appearance", "z.on", "z.title", null, "seasonal"],
+    ["seasonal-motion", "appearance", "z.motion", "z.title", "z.on", "seasonal"],
+    ["seasonal-amount", "appearance", "z.amount", "z.title", "z.on", "seasonal"],
+    ["xmas", "appearance", "z.xmas", "z.title", "z.on", "seasonal"],
+    ["easter", "appearance", "z.easter", "z.title", "z.on", "seasonal"],
+    ["dock", "appearance", "k.on", "k.dock", null, "dock"],
+    ["dock-size", "appearance", "k.size", "k.dock", "k.on", "dock"],
+    ["dock-style", "appearance", "k.style", "k.dock", "k.on", "dock"],
+    ["dock-hover", "appearance", "k.hover", "k.dock", "k.on", "dock"],
+    ["dock-magnify", "appearance", "k.magnify", "k.dock", "k.on", "dock"],
+    ["dock-autohide", "appearance", "k.autohide", "k.dock", "k.on", "dock"],
+    ["dock-over", "appearance", "k.over", "k.dock", "k.on", "dock"],
+    ["pet", "appearance", "a.pet"],
+    ["textsize", "accessibility", "ac.size"],
+    ["contrast", "accessibility", "ac.contrast"],
+    ["focus", "accessibility", "ac.focus"],
+    ["menuapps", "menu", "m.apps"],
+    ["profiles", "menu", "m.profiles", "m.apps", "m.apps"],
+    ["notifs", "notifications", "n.enabled"],
+    ["notif-test", "notifications", "n.test"],
+    ["phone-reminders", "notifications", "n.phone", null, null, "phone"],
+    ["push", "notifications", "n.push", null, null, "push"],
+    ["notif-position", "notifications", "n.position"],
+    ["notif-style", "notifications", "n.style"],
+    ["notif-sound", "notifications", "n.sound"],
+    ["notif-volume", "notifications", "n.volume"],
+    ["notif-duration", "notifications", "n.duration"],
+    ["quiet", "notifications", "n.quiet"],
+    ["notif-apps", "notifications", "n.apps"],
+    ["connect", "sync", "y.connect"],
+    ["webdav", "sync", "y.dav", null, "y.move.dav"],
+    ["sync-pull", "sync", "y.pull", null, "y.connect"],
+    ["sync-push", "sync", "y.push", null, "y.connect"],
+    ["sync-interval", "sync", "y.interval", null, "y.connect"],
+    ["passphrase", "sync", "y.changePass", null, "y.connect"],
+    ["forget", "sync", "y.forget", null, "y.forgetVault"],
+    ["disconnect", "sync", "y.disconnect", null, "y.connect"],
+    ["cloud-backups", "sync", "y.backups", null, "y.connect"],
+    ["lock", "lock", "l.status"],
+    ["lock-now", "lock", "l.lockNow", null, "l.turnOn"],
+    ["lock-change", "lock", "l.change", null, "l.turnOn"],
+    ["lock-idle", "lock", "l.idle", "l.when", "l.turnOn"],
+    ["lock-hidden", "lock", "l.hidden", "l.when", "l.turnOn"],
+    ["autobackup", "backup", "b.auto"],
+    ["backup-folder", "backup", "b.folder"],
+    ["export", "backup", "b.export"],
+    ["import", "backup", "b.import"],
+    ["lang", "language", "l.lang"],
+    ["osk", "language", "o.mode", "o.title", null, "osk"],
+    ["osk-layouts", "language", "o.layouts", "o.title", "o.mode", "osk"],
+    ["translate", "language", "tr.title", null, null, "translate"],
+    ["menusearch", "language", "l.search"],
+    ["files", "files", "f.status"],
+    ["files-apps", "files", "f.apps"],
+    ["files-default", "files", "f.how"],
+    ["solo", "solo", "so.apps"],
+    ["solo-updates", "solo", "so.upd"],
+    ["services", "services", "v.add"],
+    ["hc", "services", "v.hc", null, null, "phone"],
+    ["version", "system", "x.version"],
+    ["updates", "system", "x.updates"],
+    ["install", "system", "x.install", null, null, "install"],
+    ["device", "system", "x.device", "x.more", null, "app:device"],
+    ["about", "system", "x.about", "x.more"],
+    ["sharelinks", "system", "x.sharelinks", "x.more"],
+    ["weather", "system", "x.weather", "x.more", null, "app:weather"],
+    ["wallgen", "system", "x.wallgen", "x.more", null, "app:wallpaper"],
+    ["shortcuts", "system", "x.shortcuts"],
+    ["multitask", "system", "mt.on", "mt.title", null, "multitask"],
+    ["reset", "system", "x.reset"]
+  ];
+
   var POSITIONS = ["top-left", "top", "top-right", "right",
                    "bottom-right", "bottom", "bottom-left", "left"];
   var STYLES = ["oros", "dunst", "plasma", "gnome"];
@@ -430,7 +516,86 @@
       "mt.title": "Multitasking",
       "mt.on": "Keep apps open when you leave them",
       "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. On by default on computers, off on phones and tablets.",
-      "mt.open": "Open in the background now: {n}"
+      "mt.open": "Open in the background now: {n}",
+
+      // Search settings (FIND below): the words that also find each one
+      "find": "Search settings",
+      "find.clear": "Clear the search",
+      "find.none": "No setting matches “{q}”.",
+      "find.results": "Search results",
+      "w.theme": "dark light mode night day",
+      "w.skin": "colour color accent palette skin",
+      "w.wallpaper": "background desktop picture image",
+      "w.seasonal": "christmas snow holiday festive decorations halloween easter",
+      "w.seasonal-motion": "animation moving still reduce motion",
+      "w.seasonal-amount": "how much more less",
+      "w.xmas": "christmas tree boat",
+      "w.easter": "orthodox western date",
+      "w.dock": "taskbar bar favourites favorites shelf",
+      "w.dock-size": "dock small medium large icons",
+      "w.dock-style": "dock glass look appearance",
+      "w.dock-hover": "dock mouse effect animation",
+      "w.dock-magnify": "dock zoom bigger",
+      "w.dock-autohide": "dock hide auto",
+      "w.dock-over": "dock above apps on top",
+      "w.pet": "companion pet cat animal",
+      "w.textsize": "bigger larger font zoom text accessibility low vision",
+      "w.contrast": "black white accessibility forced colors colours",
+      "w.focus": "keyboard tab outline accessibility",
+      "w.menuapps": "hide show hidden apps list start",
+      "w.profiles": "profile work home set",
+      "w.notifs": "alerts pop-up toast on off",
+      "w.notif-test": "try check",
+      "w.notif-position": "where corner top bottom",
+      "w.notif-style": "look design",
+      "w.notif-sound": "ringtone ring tone melody chime bell",
+      "w.notif-volume": "loud quiet sound level",
+      "w.notif-duration": "time seconds how long",
+      "w.quiet": "silent night do not disturb mute",
+      "w.notif-apps": "per app allow block",
+      "w.phone-reminders": "android alarms reminders phone",
+      "w.push": "web push closed background reminders",
+      "w.connect": "dropbox cloud sync devices encrypted",
+      "w.webdav": "nextcloud own server cloud",
+      "w.sync-interval": "auto automatic every minutes how often",
+      "w.sync-pull": "download get cloud",
+      "w.sync-push": "upload send cloud",
+      "w.passphrase": "password sync key change",
+      "w.forget": "remove passphrase this device",
+      "w.disconnect": "sign out log out dropbox",
+      "w.cloud-backups": "restore history old version",
+      "w.lock": "pin password screen security privacy",
+      "w.lock-now": "lock screen",
+      "w.lock-change": "new pin password",
+      "w.lock-idle": "timeout idle minutes away",
+      "w.lock-hidden": "leave tab switch away",
+      "w.autobackup": "daily weekly monthly export schedule",
+      "w.backup-folder": "folder disk save location",
+      "w.export": "save download backup file",
+      "w.import": "restore load backup file",
+      "w.lang": "english greek german deutsch",
+      "w.osk": "virtual keyboard touch typing",
+      "w.osk-layouts": "keyboard languages greek english",
+      "w.translate": "translation language help contribute",
+      "w.menusearch": "search find apps data",
+      "w.files": "open with file types handler",
+      "w.files-apps": "docx xlsx pdf which app",
+      "w.files-default": "default windows linux android",
+      "w.solo": "install single app pwa apk android",
+      "w.solo-updates": "f-droid obtainium updates repository",
+      "w.services": "woocommerce shopify api keys integrations connect",
+      "w.hc": "health steps sleep android",
+      "w.version": "about number release",
+      "w.updates": "update new version refresh",
+      "w.install": "pwa app desktop icon",
+      "w.device": "storage browser hardware",
+      "w.about": "credits licences licenses info",
+      "w.sharelinks": "share links shared",
+      "w.weather": "taskbar temperature forecast",
+      "w.wallgen": "make wallpaper generator create",
+      "w.shortcuts": "keys keyboard hotkeys ctrl",
+      "w.multitask": "windows keep open background switch apps",
+      "w.reset": "erase delete everything factory wipe"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -832,7 +997,85 @@
       "mt.title": "Πολυεργασία",
       "mt.on": "Οι εφαρμογές μένουν ανοιχτές όταν φεύγεις",
       "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Ανοιχτή από default στους υπολογιστές, κλειστή σε κινητά και tablet.",
-      "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}"
+      "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}",
+
+      "find": "Αναζήτηση ρυθμίσεων",
+      "find.clear": "Καθαρισμός αναζήτησης",
+      "find.none": "Καμία ρύθμιση δεν ταιριάζει με «{q}».",
+      "find.results": "Αποτελέσματα αναζήτησης",
+      "w.theme": "σκοτεινό φωτεινό λειτουργία νύχτα μέρα σκούρο ανοιχτό",
+      "w.skin": "χρώμα χρώματα παλέτα απόχρωση",
+      "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
+      "w.seasonal": "χριστούγεννα χιόνι γιορτές στολισμός διακόσμηση πάσχα απόκριες",
+      "w.seasonal-motion": "κίνηση κινούμενα ακίνητα",
+      "w.seasonal-amount": "πόσα περισσότερα λιγότερα ποσότητα",
+      "w.xmas": "χριστούγεννα δέντρο καραβάκι",
+      "w.easter": "πάσχα ορθόδοξο καθολικό ημερομηνία",
+      "w.dock": "μπάρα γραμμή εργασιών αγαπημένα ράφι",
+      "w.dock-size": "dock μικρό μεσαίο μεγάλο εικονίδια μέγεθος",
+      "w.dock-style": "dock γυαλί εμφάνιση στυλ",
+      "w.dock-hover": "dock ποντίκι εφέ",
+      "w.dock-magnify": "dock μεγέθυνση ζουμ",
+      "w.dock-autohide": "dock απόκρυψη αυτόματα κρύψε",
+      "w.dock-over": "dock πάνω από εφαρμογές",
+      "w.pet": "κατοικίδιο σύντροφος συντροφάκι ζωάκι",
+      "w.textsize": "μεγάλα γράμματα γραμματοσειρά μεγέθυνση ζουμ προσβασιμότητα όραση",
+      "w.contrast": "αντίθεση μαύρο άσπρο προσβασιμότητα",
+      "w.focus": "πληκτρολόγιο tab περίγραμμα εστίαση προσβασιμότητα",
+      "w.menuapps": "απόκρυψη εμφάνιση κρυφές εφαρμογές λίστα",
+      "w.profiles": "προφίλ δουλειά σπίτι",
+      "w.notifs": "ειδοποιήσεις αναδυόμενα ενεργές",
+      "w.notif-test": "δοκιμή έλεγχος",
+      "w.notif-position": "θέση γωνία πάνω κάτω",
+      "w.notif-style": "εμφάνιση στυλ",
+      "w.notif-sound": "ήχος μελωδία κουδούνι ringtone",
+      "w.notif-volume": "ένταση δυνατά σιγά ήχος",
+      "w.notif-duration": "διάρκεια χρόνος δευτερόλεπτα",
+      "w.quiet": "σίγαση νύχτα μην ενοχλείτε ησυχία",
+      "w.notif-apps": "ανά εφαρμογή επιτρέπω",
+      "w.phone-reminders": "android ξυπνητήρια υπενθυμίσεις κινητό",
+      "w.push": "web push κλειστό παρασκήνιο υπενθυμίσεις",
+      "w.connect": "dropbox cloud σύννεφο συγχρονισμός συσκευές κρυπτογράφηση",
+      "w.webdav": "nextcloud δικός μου διακομιστής cloud",
+      "w.sync-interval": "αυτόματα κάθε λεπτά συχνότητα",
+      "w.sync-pull": "λήψη κατέβασμα cloud",
+      "w.sync-push": "αποστολή ανέβασμα cloud",
+      "w.passphrase": "κωδικός συνθηματικό αλλαγή κλειδί",
+      "w.forget": "ξέχασε συνθηματικό συσκευή",
+      "w.disconnect": "αποσύνδεση έξοδος dropbox",
+      "w.cloud-backups": "επαναφορά ιστορικό παλιά έκδοση",
+      "w.lock": "pin κωδικός οθόνη ασφάλεια ιδιωτικότητα κλείδωμα",
+      "w.lock-now": "κλείδωσε οθόνη",
+      "w.lock-change": "νέο pin κωδικός",
+      "w.lock-idle": "αδράνεια λεπτά",
+      "w.lock-hidden": "φεύγω καρτέλα",
+      "w.autobackup": "ημερήσιο εβδομαδιαίο μηνιαίο αυτόματο εξαγωγή",
+      "w.backup-folder": "φάκελος δίσκος αποθήκευση",
+      "w.export": "αποθήκευση λήψη αρχείο αντίγραφο",
+      "w.import": "επαναφορά φόρτωση αρχείο αντίγραφο",
+      "w.lang": "αγγλικά ελληνικά γερμανικά english",
+      "w.osk": "εικονικό πληκτρολόγιο οθόνης αφή",
+      "w.osk-layouts": "πληκτρολόγιο διατάξεις γλώσσες",
+      "w.translate": "μετάφραση γλώσσα βοήθεια",
+      "w.menusearch": "αναζήτηση εύρεση εφαρμογές δεδομένα",
+      "w.files": "άνοιγμα με αρχεία τύποι",
+      "w.files-apps": "docx xlsx pdf ποια εφαρμογή",
+      "w.files-default": "προεπιλογή windows linux android",
+      "w.solo": "εγκατάσταση μεμονωμένη εφαρμογή apk android",
+      "w.solo-updates": "f-droid obtainium ενημερώσεις αποθετήριο",
+      "w.services": "woocommerce shopify api κλειδιά συνδέσεις υπηρεσίες",
+      "w.hc": "υγεία βήματα ύπνος android",
+      "w.version": "έκδοση αριθμός",
+      "w.updates": "ενημέρωση νέα έκδοση",
+      "w.install": "εγκατάσταση εφαρμογή εικονίδιο",
+      "w.device": "συσκευή αποθηκευτικός χώρος browser",
+      "w.about": "πληροφορίες άδειες ευχαριστίες",
+      "w.sharelinks": "κοινοποίηση σύνδεσμοι κοινόχρηστοι",
+      "w.weather": "καιρός θερμοκρασία μπάρα",
+      "w.wallgen": "δημιουργία ταπετσαρίας φόντο",
+      "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl",
+      "w.multitask": "πολυεργασία παράθυρα ανοιχτές παρασκήνιο",
+      "w.reset": "διαγραφή σβήσιμο όλα εργοστασιακή"
     }
   };
 
@@ -901,6 +1144,46 @@
     }).sort(function (x, y) { return cmp(x.name, y.name); });
   }
 
+  // A FIND row by id (a deep link's { item }), else null.
+  function findItem(id) {
+    for (var i = 0; i < FIND.length; i++) if (FIND[i][0] === id) return FIND[i];
+    return null;
+  }
+
+  // Search settings: the sections and settings whose name, path or
+  // words (this language's, then English and Greek, so either finds
+  // it) hold every word typed. `ok(need)` says whether this device has
+  // what a row needs. Best first: the name starts with the query, then
+  // a name that holds it, then the rest, each in page order.
+  // → [{ id, section, item: id | null, title, path }]
+  function findSettings(lang, query, ok) {
+    var q = fold(String(query || "").trim()).replace(/\s+/g, " ");
+    if (!q) return [];
+    var words = q.split(" ");
+    var out = [];
+    function add(id, section, item, titleKey, path, wordsKey, order) {
+      var title = t(lang, titleKey);
+      var en = STRINGS.en, el = STRINGS.el;
+      var hay = fold([title, path, en[titleKey], el[titleKey],
+        wordsKey ? t(lang, wordsKey) : "", wordsKey ? en[wordsKey] : "", wordsKey ? el[wordsKey] : ""].join(" "));
+      for (var i = 0; i < words.length; i++) if (hay.indexOf(words[i]) === -1) return;
+      var ft = fold(title);
+      var rank = ft.indexOf(q) === 0 ? 0 : ft.indexOf(q) !== -1 ? 1 : 2;
+      out.push({ id: id, section: section, item: item, title: title, path: path, rank: rank, order: order });
+    }
+    SECTIONS.forEach(function (sec, i) {
+      add("s:" + sec, sec, null, "s." + sec, t(lang, "d." + sec), null, i * 100);
+    });
+    FIND.forEach(function (f, i) {
+      if (f[5] && !(ok && ok(f[5]))) return;
+      var path = t(lang, "s." + f[1]);
+      if (f[3] && t(lang, f[3]) !== t(lang, f[2])) path += " › " + t(lang, f[3]);
+      add(f[0], f[1], f[0], f[2], path, "w." + f[0], SECTIONS.indexOf(f[1]) * 100 + 1 + i);
+    });
+    out.sort(function (a, b) { return a.rank - b.rank || a.order - b.order; });
+    return out.map(function (r) { return { id: r.id, section: r.section, item: r.item, title: r.title, path: r.path }; });
+  }
+
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
   function hourLabel(h) { return pad2(h) + ":00"; }
 
@@ -929,11 +1212,12 @@
   }
 
   var api = {
-    SECTIONS: SECTIONS, SCOPE: SCOPE, STRINGS: STRINGS,
+    SECTIONS: SECTIONS, SCOPE: SCOPE, STRINGS: STRINGS, FIND: FIND,
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
-    intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups
+    intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups,
+    findItem: findItem, findSettings: findSettings
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.SettingsCore = api;

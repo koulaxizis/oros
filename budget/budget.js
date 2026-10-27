@@ -2859,6 +2859,37 @@
     return made.length;
   }
 
+  // Linked entries (budget/links.js, BR-B3): income another app keeps
+  // here for you (Invoices payments). Read-only on the source's data;
+  // fixed ids and the source's m, so every device writes the same.
+  var SOURCES = [
+    { src: "invoices", key: "oros-invoices-data", rows: function (o) { return window.OrosBudgetLinks.invoiceRows(o, cur()); } }
+  ];
+  function linkSources() {
+    if (!window.OrosBudgetLinks) return 0;
+    var n = 0;
+    SOURCES.forEach(function (s) {
+      var o = null;
+      try { o = JSON.parse(localStorage.getItem(s.key) || "null"); } catch (e) { o = null; }
+      if (!o || typeof o !== "object") return;
+      var p = window.OrosBudgetLinks.plan(data, s.src, s.rows(o));
+      p.put.forEach(function (x) {
+        var tx = normTx(x);
+        if (!tx) return;
+        var i = data.tx.findIndex(function (y) { return y.id === tx.id; });
+        if (i >= 0) data.tx[i] = tx; else data.tx.push(tx);
+        n++;
+      });
+      p.drop.forEach(function (x) {
+        data.tx = data.tx.filter(function (y) { return y.id !== x.id; });
+        data.tombs["tx:" + x.id] = Math.max(data.tombs["tx:" + x.id] || 0, x.m);
+        n++;
+      });
+    });
+    if (n) commit();
+    return n;
+  }
+
   // Categories manager
   // Accounts: list with today's balance, new account, transfer.
   function accountsDialog() {
@@ -3834,6 +3865,7 @@
     }
     if (JSON.stringify(data) === before) return;
     materialize(false);   // a recurring entry from another device: its due days (same ids everywhere)
+    linkSources();
     renderAll();
   }
 
@@ -3914,7 +3946,16 @@
       renderAll();
     };
     setInterval(tick, 60000);
-    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") tick(); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState !== "visible") return;
+      tick();
+      if (linkSources()) renderAll();
+    });
+    // A source app (Invoices) saved on this device while Budget is open
+    window.addEventListener("storage", function (e) {
+      if (!e.key || !SOURCES.some(function (s) { return s.key === e.key; })) return;
+      if (linkSources() && !document.querySelector("dialog[open]")) renderAll();
+    });
     wireKeyboard();
   }
 
@@ -4012,6 +4053,7 @@
     inheritPalette();
     watchPalette();
     materialize(true);
+    linkSources();
     renderAll();
     if (usesFx()) refreshFx(false);
     takeStagedNew();

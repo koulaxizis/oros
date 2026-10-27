@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.3.0)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.3.1)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -44,6 +44,9 @@
 //     for selected text, the Android tile and widget). A fragment never
 //     reaches the server; it leaves the address bar at once, and the
 //     window opens once the app list is in (orosQuick.ready()).
+//   • 1.3.1: "Open in the Assistant" names the conversation
+//     ({ chat: id }), since the full Assistant now always opens on a
+//     new one (AS-FRESH).
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -65,7 +68,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.3.1";
   var DATA_KEY = "oros-quick-menu";
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
@@ -773,8 +776,8 @@
   // The same Assistant (assistant/index.html?mini=1) in a small panel
   // over the desktop or an app: Ctrl+Alt+Shift+Q, or the desktop
   // menu. "Open in the Assistant" closes it and opens the full app on
-  // the same conversation (the Assistant keeps the open one in its
-  // device prefs). The frame is removed on close, so there is never a
+  // the same conversation ({ chat: id }; without one the full app
+  // starts a new conversation, AS-FRESH). The frame is removed on close, so there is never a
   // second live Assistant; opening the full app closes the panel.
   var panel = null, pending = null;
   var IC_EXPAND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>';
@@ -825,8 +828,10 @@
     head.appendChild(headBtn(IC_EXPAND, tr("miniFull"), function () {
       var a = miniApi();
       if (a && a.busy()) { toast(tr("miniBusy")); return; }
+      var id = "";
+      try { id = a ? String(a.chatId() || "") : ""; } catch (e) {}
       closeMini();
-      openAt("assistant", null);
+      openAt("assistant", id ? { chat: id } : null);
     }));
     head.appendChild(headBtn(IC_X, tr("close"), function () { closeMini(); }));
     panel.appendChild(head);

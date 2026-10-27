@@ -10,6 +10,8 @@ On a phone, Settings first shows the list of sections. Tap one to open it, and `
 
 Next to each card you'll see where it applies: `All devices` means it travels with [sync](help:t/sync), `This device` means it stays on this device only.
 
+To find one option quickly, type in `Search settings` at the top of the list: a word from its name or a related word (dark, password, keyboard, ringtone…) in English or Greek. The list shows the matching sections and options; pick one and Settings opens there, scrolls to the option and lights it up for a moment. If the option needs something switched on first (the Dock, the lock, sync), the switch that turns it on lights up instead. `Escape` or × clears the search.
+
 ## The sections
 - `Appearance`: `Theme` (`Dark` or `Light`), `System colour`, `Wallpaper`, `Seasonal decorations`, the `Dock` when your orOS has one, and the `Screen pet`. See [Appearance](help:t/appearance).
 - `Accessibility`: `Text size` (100% to 150%), `High contrast` (`Automatic`, `On` or `Off`) and `Always show the focus ring`, for orOS and every app, on this device. See [Appearance](help:t/appearance).
@@ -45,6 +47,7 @@ On a screen at least 1024 pixels wide you can put two apps side by side. In the 
 
 ### Other ways in
 - Tap the sync dot in the top bar while sync isn't connected or is locked: Settings opens at `Sync`.
+- Type the name of an option in the menu search: the result opens Settings at that option.
 - The `About orOS + shortcuts` window has a button that opens `System`, where the factory reset is.
 
 ## Sync and backup
