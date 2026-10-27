@@ -83,6 +83,8 @@ The Calendar reads a subscribed calendar when you open it (if it's been more tha
 ## Share a calendar with your household
 Once you're in a household (the [Household](app:household) app), a label can become a calendar you share. In `Manage labels`, tap the house icon next to the label and press `Share`. Its events leave your own calendar and go to the household: everyone there sees them with the label's colour and can add, change, move and delete them from their own orOS. Shared calendars are listed under `Shared with a household`, where a new name or colour changes it for everyone. A small circle with initials on an event shows who in the household changed it last.
 
+Events with no label can go too: in `Manage labels`, the `No label` row has a house icon when you're in a household. Give the new calendar a name (for example `Home`) and press `Share`: all your events with no label go into it and it is shared like any other label. A single event can also go on its own: open it and pick the shared calendar as its label.
+
 Reminders stay yours: each person picks their own in the event's `Reminder`, and orOS reminds you even when the Calendar is closed. The events are encrypted on your devices before they leave, and they don't go into your own sync copy or your .oroscal file (an .ics export and `Send calendar to someone` include them). `Stop sharing` takes the calendar out of the household for everyone and leaves you an own copy with its events; `Delete` leaves you none. Either way, the others can bring it back from [Household](app:household) for 30 days.
 
 ## Share free times

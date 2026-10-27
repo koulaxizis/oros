@@ -10,6 +10,7 @@
 // bookkeeping.
 //   project(label, events) → { m: { t, c }, items: { id: fields } }
 //   build(view, docId, rem) → { label, events } (rem: { event id: minutes })
+//   loose(events, labels) → own events with no label of theirs
 //   copyOf(view, docId, now) → { label, events }: an own calendar
 //                          "lbc-<document id>" with the same event ids
 //   collect(H, rem, labels) → every shared event this device can see
@@ -103,6 +104,14 @@
   }
   function isShared(id) { return typeof id === "string" && id.indexOf(PREFIX) === 0; }
   function docOf(id) { return isShared(id) ? id.slice(PREFIX.length) : ""; }
+  // The person's own events with no label, or with a label that is not
+  // among theirs (the "No label" chip): what "share the events with no
+  // label" takes. Shared events never count.
+  function loose(events, labels) {
+    var own = {};
+    (labels || []).forEach(function (l) { if (l && l.id) own[l.id] = 1; });
+    return (events || []).filter(function (e) { return e && !isShared(e.labelId) && !own[e.labelId]; });
+  }
 
   function readRem(ls) {
     try {
@@ -152,7 +161,7 @@
   }
 
   var api = { PREFIX: PREFIX, COPY: COPY, REM_KEY: REM_KEY, MIRROR_KEY: MIRROR_KEY, FIELDS: FIELDS, ID_RE: ID_RE,
-              project: project, build: build, copyOf: copyOf, isShared: isShared, docOf: docOf,
+              project: project, build: build, copyOf: copyOf, isShared: isShared, docOf: docOf, loose: loose,
               readRem: readRem, collect: collect, mirror: mirror, bootShell: bootShell };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) {
