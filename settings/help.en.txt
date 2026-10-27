@@ -3,7 +3,7 @@ Settings gathers the options of orOS itself in one place: how it looks, notifica
 
 ## Getting started
 1. Open the menu and choose `Settings`, at the bottom under the apps. You'll also find it in the `System` category.
-2. Pick a section on the left: `Appearance`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search`, `Opening files`, `Connected services` or `System`.
+2. Pick a section on the left: `Appearance`, `Accessibility`, `Menu`, `Notifications`, `Sync`, `Backups`, `Language & search`, `Opening files`, `Connected services` or `System`.
 3. Change what you like. Every change applies at once; there is no save button.
 
 On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
@@ -12,6 +12,7 @@ Next to each card you'll see where it applies: `All devices` means it travels wi
 
 ## The sections
 - `Appearance`: `Theme` (`Dark` or `Light`), `System colour`, `Wallpaper`, `Seasonal decorations`, the `Dock` when your orOS has one, and the `Screen pet`. See [Appearance](help:t/appearance).
+- `Accessibility`: `Text size` (100% to 150%), `High contrast` (`Automatic`, `On` or `Off`) and `Always show the focus ring`, for orOS and every app, on this device. See [Appearance](help:t/appearance).
 - `Menu`: which apps the menu lists. Untick an app to hide it, or use `Hide all`, `Show all` and `Choose a profile` (Home, Work, School…); `Find an app` narrows the list. Hidden apps still open from the menu search, links, the desktop and the Dock. See [The menu](help:t/menu).
 - `Notifications`: the `Notifications` switch, `Send a test`, `Notifications with orOS closed` (optional, per device), position, style, sound, `Quiet hours` and `Which apps may notify`. See [Notifications](help:t/notifications).
 - `Sync`: `Connect to Dropbox` or `Use WebDAV / Nextcloud` (with `Sign in with Nextcloud` and `Through the orOS relay`), your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically` and `Disconnect`. See [Sync across devices](help:t/sync).
@@ -33,7 +34,7 @@ On a screen at least 1024 pixels wide you can put two apps side by side. In the 
 - The `About orOS + shortcuts` window has a button that opens `System`, where the factory reset is.
 
 ## Sync and backup
-Settings stores nothing of its own. Every option is saved by orOS in the same place as before, so your choices sync and back up exactly as they always did. Theme, colour, wallpaper, the apps the menu shows, screen pet, notifications, sync interval, automatic backup and language go to all your devices. The backup folder, your remembered passphrase, the menu search choices and the Dock stay on this device.
+Settings stores nothing of its own. Every option is saved by orOS in the same place as before, so your choices sync and back up exactly as they always did. Theme, colour, wallpaper, the apps the menu shows, screen pet, notifications, sync interval, automatic backup and language go to all your devices. The backup folder, your remembered passphrase, the menu search choices, the Dock and the accessibility options stay on this device.
 
 ### Connected services and your keys
 The keys of a connected service never go into your synced data in clear. Each device keeps them sealed with its own key; a new device asks for them once. With `Use these keys on all my devices` on, they also travel inside your encrypted sync, sealed with your sync passphrase. The account itself (name, address) syncs to all your devices. `Disconnect` removes it and its keys everywhere.

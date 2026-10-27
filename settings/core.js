@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "menu", "notifications", "sync", "backup", "language", "files", "solo", "services", "system"];
+  var SECTIONS = ["appearance", "accessibility", "menu", "notifications", "sync", "backup", "language", "files", "solo", "services", "system"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -20,7 +20,7 @@
     theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device"
+    multitask: "device", a11y: "device"
   };
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -48,6 +48,19 @@
       "d.backup": "Backup files and the backup folder",
       "d.language": "Language and what the menu search looks in",
       "d.system": "Version, shortcuts, about, factory reset",
+      "s.accessibility": "Accessibility",
+      "d.accessibility": "Text size, high contrast, focus ring",
+
+      "ac.size": "Text size",
+      "ac.size.hint": "Makes the text and everything around it larger in every app, Settings, Help and the menu. The top bar and the desktop keep their size; the Dock has its own size under Appearance.",
+      "ac.size.capped": "This screen is narrow, so orOS makes the text only as large as it can while every app still fits.",
+      "ac.contrast": "High contrast",
+      "ac.contrast.auto": "Automatic", "ac.contrast.on": "On", "ac.contrast.off": "Off",
+      "ac.contrast.hint": "Black and white with one strong colour, clear borders and underlined links, in orOS and every app. Automatic turns it on while your device asks for more contrast, for example with Windows high contrast.",
+      "ac.contrast.now": "Automatic: on now, because your device asks for more contrast.",
+      "ac.forced": "Your device is using its own high-contrast colours. orOS follows them and marks the chosen options with an outline.",
+      "ac.focus": "Always show the focus ring",
+      "ac.focus.hint": "A thick outline around whatever has the keyboard focus (the Tab key), in orOS and every app, also where an app shows only a faint one.",
 
       "a.theme": "Theme", "a.dark": "Dark", "a.light": "Light",
       "a.skin": "System colour", "a.wallpaper": "Wallpaper",
@@ -382,6 +395,19 @@
       "d.backup": "Αρχεία αντιγράφων και φάκελος αντιγράφων",
       "d.language": "Γλώσσα και πού ψάχνει η αναζήτηση του μενού",
       "d.system": "Έκδοση, συντομεύσεις, σχετικά, επαναφορά",
+      "s.accessibility": "Προσβασιμότητα",
+      "d.accessibility": "Μέγεθος κειμένου, υψηλή αντίθεση, περίγραμμα εστίασης",
+
+      "ac.size": "Μέγεθος κειμένου",
+      "ac.size.hint": "Μεγαλώνει το κείμενο και ό,τι είναι γύρω του σε κάθε εφαρμογή, στις Ρυθμίσεις, στη Βοήθεια και στο μενού. Η πάνω μπάρα και η επιφάνεια εργασίας κρατούν το μέγεθός τους· το Dock έχει δικό του μέγεθος στην Εμφάνιση.",
+      "ac.size.capped": "Η οθόνη είναι στενή, γι' αυτό το orOS μεγαλώνει το κείμενο μόνο όσο χωράει ακόμη κάθε εφαρμογή.",
+      "ac.contrast": "Υψηλή αντίθεση",
+      "ac.contrast.auto": "Αυτόματα", "ac.contrast.on": "Ενεργή", "ac.contrast.off": "Ανενεργή",
+      "ac.contrast.hint": "Μαύρο και άσπρο με ένα έντονο χρώμα, καθαρά περιγράμματα και υπογραμμισμένοι σύνδεσμοι, στο orOS και σε κάθε εφαρμογή. Με το «Αυτόματα» ανάβει όσο η συσκευή σου ζητά περισσότερη αντίθεση, για παράδειγμα με την υψηλή αντίθεση των Windows.",
+      "ac.contrast.now": "Αυτόματα: ενεργή τώρα, επειδή η συσκευή σου ζητά περισσότερη αντίθεση.",
+      "ac.forced": "Η συσκευή σου χρησιμοποιεί τα δικά της χρώματα υψηλής αντίθεσης. Το orOS τα ακολουθεί και σημειώνει με περίγραμμα ό,τι έχεις επιλέξει.",
+      "ac.focus": "Πάντα ορατό περίγραμμα εστίασης",
+      "ac.focus.hint": "Ένα χοντρό περίγραμμα γύρω από ό,τι έχει την εστίαση του πληκτρολογίου (πλήκτρο Tab), στο orOS και σε κάθε εφαρμογή, και εκεί όπου μια εφαρμογή δείχνει μόνο ένα αχνό.",
 
       "a.theme": "Θέμα", "a.dark": "Σκοτεινό", "a.light": "Φωτεινό",
       "a.skin": "Χρώμα συστήματος", "a.wallpaper": "Ταπετσαρία",
