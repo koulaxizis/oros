@@ -3603,7 +3603,7 @@ Started 2026-10-15 (Chris: "note similar issues in the Bible for future troubles
 
 ### T7. CI and GitHub
 
-**Symptom:** A red "Workers Builds: oros-mail-relay" check appears on every PR; on main it is skipped. **Cause:** Cloudflare's Workers Builds makes a preview build for each non-production branch, and the relay uses Durable Objects (REMOTE, PUSH, HOUSE, with `migrations`): Cloudflare generates no preview URLs for a Worker with Durable Objects and does not accept a version upload that changes a Durable Object class lifecycle, so every preview build fails (diagnosis from the docs, 2026-10-27; the build log itself is only in the Cloudflare dashboard). Production deploys from main are not affected. **Fix:** Chris, in the Cloudflare dashboard: Workers & Pages › oros-mail-relay › Settings › Build › Branch control › clear "Enable Preview Builds". Until then, ignore it for merge decisions. **Ref:** oros-mail-app memory; 2026-10-27 changelog.
+**Symptom:** A red "Workers Builds: oros-mail-relay" check appears on every PR; on main it is skipped. **Cause:** Cloudflare's Workers Builds makes a preview build for each non-production branch, and the relay uses Durable Objects (REMOTE, PUSH, HOUSE, with `migrations`): Cloudflare generates no preview URLs for a Worker with Durable Objects and does not accept a version upload that changes a Durable Object class lifecycle, so every preview build fails (diagnosis from the docs, 2026-10-27; the build log itself is only in the Cloudflare dashboard). Production deploys from main are not affected. **Fix (applied 2026-10-27):** Chris cleared "Enable Preview Builds" in the Cloudflare dashboard (Workers & Pages › oros-mail-relay › Settings › Build › Branch control). Since then PR commits get no "Workers Builds" check at all (checked on #637 at 7cebcdf and on #643 at 7ff0da4 and b53af7b); production deploys from main continue. If the red check comes back, check that setting first. **Ref:** oros-mail-app memory; 2026-10-27 changelog.
 
 **Symptom:** The sync-nullfx workflow can't open its PR. **Cause:** Actions isn't allowed to create PRs. **Fix:** Settings › Actions › General › "Allow GitHub Actions to create and approve pull requests", or open the PR by hand from `auto/nullfx-sync`. **Ref:** #311.
 
@@ -8479,3 +8479,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Changes:** `tests/bible-order.test.js` now names the misplaced entry and where it belongs ("Move … just after … and before …", per R40), instead of only reporting the entry that follows it. The checks themselves are unchanged; a self-test covers the message with a newest-first insertion.
 - **Files:** `tests/bible-order.test.js`, `OROS_BIBLE.md`.
 - **Tests:** `node --test tests/*.test.js` green; by hand, a Bible copy with the last entry moved near the top of Part XII, and one with two versioned entries swapped, both fail with the right "Move …" line.
+
+### 2026-10-27 — Relay preview builds turned off (Part X-B T7) — docs only, no APP_VERSION
+- **Changes:** Chris turned off "Enable Preview Builds" for oros-mail-relay in Cloudflare, so the red "Workers Builds: oros-mail-relay" check no longer appears on PRs. Part X-B T7 now records the fix as applied and what to check if it returns.
+- **Files:** `OROS_BIBLE.md`.
+- **Tests:** `node --test tests/*.test.js` green. Checked on GitHub: the PR commits after the change (#637 at 7cebcdf, #643 at 7ff0da4 and b53af7b) carry no Workers Builds check; the earlier #637 commit 254fdbf still had the failing one.
