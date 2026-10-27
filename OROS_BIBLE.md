@@ -8427,14 +8427,12 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Files:** `OROS_BIBLE.md`, `tests/bible-order.test.js`.
 - **Verification:** before/after line multiset identical apart from that one blank line; head of the Bible (Parts 0–XI) byte-identical; `node --test tests/*.test.js` green.
 
-<<<<<<< HEAD
-### 2026-10-27 — Bible: rule R40 (Part XII order); relay preview-build cause — docs only, no APP_VERSION
-- **Changes:** new rule R40 in Part I: a changelog entry goes at the very end of Part XII, after the last entry with a lower date and APP_VERSION, never newest-first; `tests/bible-order.test.js` enforces it. The Map and the Part XI handoff say R1–R40. Part X-B T7: the red "Workers Builds: oros-mail-relay" check now has its cause (preview builds of a Worker with Durable Objects are not supported by Cloudflare) and the fix (Chris clears "Enable Preview Builds" in the Cloudflare dashboard).
-- **Files:** `OROS_BIBLE.md`.
-- **Tests:** `node --test tests/*.test.js` green, the order test included. The relay diagnosis is from Cloudflare's docs (preview URLs and version uploads with Durable Objects), not from the build log, which only the dashboard shows.
-=======
 ### 2026-10-27 — Downloads and Settings: no Google Play (#636) — 3.96.01
 - **Changes:** the download page no longer says single apps come to Google Play first, and the download page and Settings › Single apps no longer warn about Play Store signing keys (EN/EL/DE). Follows the no-app-stores decision of 2026-10-17: Android ships as APKs through the F-Droid repository (F-Droid, Droid-ify, Obtainium). Older What's new entries stay as history.
 - **Files:** `download/index.html`, `settings/core.js`, `i18n/de/settings.js`, `shell.js` (APP_VERSION), `sw.js` (cache version), What's new, Bible.
 - **Tests:** full suite green; Chromium at 360 px, EN and EL: the download page shows no Google Play or Play Store text, APK links remain, no horizontal scroll, no console errors. Not tested: a real phone, Safari.
->>>>>>> origin/main
+
+### 2026-10-27 — Bible: rule R40 (Part XII order); relay preview-build cause — docs only, no APP_VERSION
+- **Changes:** new rule R40 in Part I: a changelog entry goes at the very end of Part XII, after the last entry with a lower date and APP_VERSION, never newest-first; `tests/bible-order.test.js` enforces it. The Map and the Part XI handoff say R1–R40. Part X-B T7: the red "Workers Builds: oros-mail-relay" check now has its cause (preview builds of a Worker with Durable Objects are not supported by Cloudflare) and the fix (Chris clears "Enable Preview Builds" in the Cloudflare dashboard).
+- **Files:** `OROS_BIBLE.md`.
+- **Tests:** `node --test tests/*.test.js` green, the order test included. The relay diagnosis is from Cloudflare's docs (preview URLs and version uploads with Durable Objects), not from the build log, which only the dashboard shows.
