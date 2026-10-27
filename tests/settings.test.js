@@ -57,7 +57,7 @@ test("core: t() falls back and fills variables", () => {
 });
 
 test("core: sections and deep-link targets", () => {
-  assert.deepEqual(C.SECTIONS, ["appearance", "accessibility", "menu", "notifications", "sync", "backup", "language", "files", "solo", "services", "system"]);
+  assert.deepEqual(C.SECTIONS, ["appearance", "accessibility", "menu", "notifications", "sync", "lock", "backup", "language", "files", "solo", "services", "system"]);
   assert.equal(C.sectionOf({ section: "sync" }), "sync");
   assert.equal(C.sectionOf("backup"), "backup");
   [null, undefined, {}, { section: "nope" }, { section: 3 }, "__proto__", "constructor"]
@@ -103,6 +103,8 @@ test("search provider: every topic opens a real section, in both languages", asy
   assert.deepEqual((await find("συνθηματικο", "el")).slice(0, 1), ["sync"]);
   assert.deepEqual((await find("password", "el")).slice(0, 1), ["sync"]);   // English word, Greek UI
   assert.ok((await find("backup", "en")).includes("backup"));
+  assert.deepEqual((await find("pin", "en")).slice(0, 1), ["lock"]);
+  assert.deepEqual((await find("κλείδωμα", "el")).slice(0, 1), ["lock"]);
   assert.deepEqual(await find("zzqx", "en"), []);
 });
 
