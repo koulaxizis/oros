@@ -8425,3 +8425,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Tests:** new `tests/bible-order.test.js`: every entry has a date, and dates and APP_VERSIONs never go back. Checked both ways: it passes on the sorted file and fails when the 3.85.00 entry is moved after 3.85.01.
 - **Files:** `OROS_BIBLE.md`, `tests/bible-order.test.js`.
 - **Verification:** before/after line multiset identical apart from that one blank line; head of the Bible (Parts 0–XI) byte-identical; `node --test tests/*.test.js` green.
+
+### 2026-10-27 — Downloads and Settings: no Google Play (#PR) — 3.96.01
+- **Changes:** the download page no longer says single apps come to Google Play first, and the download page and Settings › Single apps no longer warn about Play Store signing keys (EN/EL/DE). Follows the no-app-stores decision of 2026-10-17: Android ships as APKs through the F-Droid repository (F-Droid, Droid-ify, Obtainium). Older What's new entries stay as history.
+- **Files:** `download/index.html`, `settings/core.js`, `i18n/de/settings.js`, `shell.js` (APP_VERSION), `sw.js` (cache version), What's new, Bible.
+- **Tests:** full suite green; Chromium at 360 px, EN and EL: the download page shows no Google Play or Play Store text, APK links remain, no horizontal scroll, no console errors. Not tested: a real phone, Safari.
