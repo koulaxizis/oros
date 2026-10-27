@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.03.00
+- Settings: new `Search settings` field at the top of the list. Type a word from an option's name or a related word (dark, password, ringtone…) and pick a result: Settings opens there, scrolls to the option and lights it up for a moment. If the option needs something switched on first (the Dock, the lock, sync), the switch that turns it on lights up. Options found from the menu search now open at the option itself too.
+
 ## Version 4.02.02
 - Sticky Notes: pressing Fold or More options on a new note no longer makes it disappear. Fold now folds the note, and More opens its options with everything you typed.
 

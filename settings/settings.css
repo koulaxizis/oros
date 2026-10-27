@@ -177,6 +177,50 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 .chev { flex: 0 0 auto; display: inline-flex; color: var(--text-dim); }
 #nav .chev { display: none; }
 
+/* Search settings: the field at the top of the list, its results in
+   place of the sections, and the setting it lands on, lit up a moment */
+.find { position: relative; margin: 0 2px 10px; }
+.find-in {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 40px 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+.find-in:focus { border-color: var(--accent); outline: none; }
+.find-in::-webkit-search-cancel-button { display: none; }
+.find-x {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-dim);
+}
+.find-x:hover { color: var(--text); background: var(--accent-soft); }
+.find-none { margin: 8px 10px; font-size: 13px; color: var(--text-dim); overflow-wrap: anywhere; }
+.nav-item.find-row .nav-name { font-weight: 700; }
+.page-body .find-hit {
+  border-radius: 10px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  background: var(--accent-soft);
+  animation: find-glow 1.2s ease-out 2;
+}
+@keyframes find-glow { 50% { outline-color: transparent; } }
+@media (prefers-reduced-motion: reduce) { .page-body .find-hit { animation: none; } }
+@media (forced-colors: active) { .page-body .find-hit { outline-color: Highlight; } }
+
 /* ---------- 4. Cards, rows, scope badges ---------- */
 .card {
   background: var(--panel-bg);

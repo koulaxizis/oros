@@ -32,6 +32,7 @@
 //  8c. Section: Connected services (window.parent.orosLinks)
 //   9. Section: System
 //  10. Navigation + render
+//  10b. Search settings
 //  11. Keyboard (Contract Β) + palette
 //  12. Wiring & boot
 // ============================================================
@@ -87,7 +88,8 @@
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
     eye: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.1 3.9M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>',
-    plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+    plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+    close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
   // ---------- 2. Shell access ----------
@@ -1963,8 +1965,9 @@
   };
 
   function renderNav(s) {
-    var nav = $("nav");
+    var nav = $("nav-list");
     nav.innerHTML = "";
+    if (findQ.trim()) { renderFind(nav, s); return; }
     var shown = current || (narrow() ? null : "appearance");
     C.SECTIONS.forEach(function (id) {
       var b = el("button", "nav-item" + (id === shown ? " on" : ""));
@@ -2000,7 +2003,7 @@
       body.className = "no-shell";
       page.innerHTML = "";
       page.appendChild(el("p", "hint card-note", t("noShell")));
-      $("nav").innerHTML = "";
+      $("nav-list").innerHTML = "";
       return;
     }
     var shown = current || (narrow() ? null : "appearance");
@@ -2029,6 +2032,7 @@
       page.appendChild(inner);
     }
     page.scrollTop = top;
+    if (lit && Date.now() < lit.until) lightUp(false);
 
     if (keepKey) {
       var again = document.querySelector('[data-k="' + keepKey.replace(/[\x22\\]/g, "") + '"]');
@@ -2037,6 +2041,152 @@
         if (caret) { try { again.setSelectionRange(caret[0], caret[1]); } catch (e) {} }
       }
     }
+  }
+
+  // ---------- 10b. Search settings ----------
+  // A field at the top of the list (core.js FIND, findSettings): the
+  // sections and settings that match, in place of the section list.
+  // A pick opens the section, scrolls to the setting, lights it up for
+  // a moment and focuses its control. The query lives in memory only.
+  var findQ = "";
+  var lit = null;            // { row: FIND row, until: ms } being lit up
+  var litTimer = null;
+
+  // What a FIND row needs from this device (core.js FIND, "need").
+  function findOk(s, need) {
+    if (need.indexOf("app:") === 0) return (s.apps || []).indexOf(need.slice(4)) !== -1;
+    if (need === "phone") return !!phone();
+    if (need === "push") return !!webPush() && !phone();
+    if (need === "translate") return !!(window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; }));
+    return !!s[need];
+  }
+
+  function renderFind(nav, s) {
+    var hits = C.findSettings(LANG, findQ, function (need) { return findOk(s, need); });
+    if (!hits.length) {
+      var none = el("p", "find-none", t("find.none", { q: findQ.trim() }));
+      none.setAttribute("role", "status");
+      nav.appendChild(none);
+      return;
+    }
+    hits.forEach(function (h) {
+      var b = el("button", "nav-item find-row");
+      b.type = "button";
+      b.setAttribute("data-k", "find:" + h.id);
+      var id = h.section, ic = el("span", "nav-ico");
+      ic.innerHTML = ICON[id];                           // static icon
+      b.appendChild(ic);
+      var tx = el("span", "nav-txt");
+      tx.appendChild(el("span", "nav-name", h.title));
+      tx.appendChild(el("span", "nav-desc", h.path));
+      b.appendChild(tx);
+      var ch = el("span", "chev");
+      ch.innerHTML = ICON.chevron;                       // static icon
+      b.appendChild(ch);
+      b.addEventListener("click", function () { findPick(h); });
+      b.addEventListener("keydown", function (e) {
+        var to = e.key === "ArrowDown" ? b.nextElementSibling : e.key === "ArrowUp" ? (b.previousElementSibling || $("f-find")) : null;
+        if (to) { e.preventDefault(); to.focus(); }
+      });
+      nav.appendChild(b);
+    });
+  }
+
+  function findPick(h) {
+    current = h.section;
+    armed.key = null;
+    saveUi();
+    clearTimeout(litTimer);
+    var row = h.item ? C.findItem(h.item) : null;
+    lit = row ? { row: row, until: Date.now() + 2600 } : null;
+    if (lit) litTimer = setTimeout(function () {
+      lit = null;
+      var on = document.querySelectorAll(".find-hit");
+      for (var i = 0; i < on.length; i++) on[i].classList.remove("find-hit");
+    }, 2600);
+    render();
+    $("page").scrollTop = 0;
+    if (!lit || !lightUp(true)) {
+      var hd = $("page-title");
+      if (hd) hd.focus();
+    }
+  }
+
+  // The element on the page that shows a label: a card heading, a row
+  // label, a button or a link row, matched by its text.
+  function labelEl(key) {
+    var txt = t(key);
+    var all = $("page").querySelectorAll(".card-head h3, .row-label, .btn, .link-row > span");
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].textContent.trim() !== txt) continue;
+      var n = all[i];
+      if (n.classList.contains("row-label")) return n.closest(".row") || n;
+      if (n.tagName === "H3") return n.closest(".card") || n;
+      if (n.parentNode && n.parentNode.classList && n.parentNode.classList.contains("link-row")) return n.parentNode;
+      return n;
+    }
+    return null;
+  }
+
+  // Light up the setting being found (its label, else the alt label);
+  // on the pick itself also scroll to it and focus its control (or the
+  // setting itself when it has none). False when it is not on the page.
+  function lightUp(first) {
+    var row = lit.row;
+    var box = labelEl(row[2]) || (row[4] ? labelEl(row[4]) : null);
+    if (!box) return false;
+    box.classList.add("find-hit");
+    if (!first) return true;
+    try { box.scrollIntoView({ block: "center" }); } catch (e) { box.scrollIntoView(); }
+    var ctl = box.tagName === "BUTTON" ? box
+      : box.querySelector("button, select, input[type=checkbox], input[type=range]");
+    if (!ctl) { ctl = box; box.tabIndex = -1; }
+    try { ctl.focus({ preventScroll: true }); } catch (e) { ctl.focus(); }
+    return true;
+  }
+
+  function findSet(v) {
+    findQ = v;
+    var f = $("f-find");
+    if (f.value !== v) f.value = v;
+    $("find-x").hidden = !v;
+    renderNav(snap() || {});
+  }
+
+  function buildFind() {
+    var nav = $("nav");
+    var box = el("div", "find");
+    box.setAttribute("role", "search");
+    var inp = el("input", "find-in");
+    inp.type = "search";
+    inp.id = "f-find";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.placeholder = t("find");
+    inp.setAttribute("aria-label", t("find"));
+    inp.setAttribute("aria-controls", "nav-list");
+    inp.addEventListener("input", function () { findSet(inp.value); });
+    inp.addEventListener("keydown", function (e) {
+      var first = $("nav-list").querySelector(".find-row");
+      if (e.key === "Escape" && inp.value) { e.preventDefault(); e.stopPropagation(); findSet(""); return; }
+      if (e.key === "Enter" && first && !e.isComposing) { e.preventDefault(); first.click(); return; }
+      if (e.key === "ArrowDown" && first) { e.preventDefault(); first.focus(); }
+    });
+    var x = el("button", "find-x");
+    x.type = "button";
+    x.id = "find-x";
+    x.hidden = true;
+    x.setAttribute("aria-label", t("find.clear"));
+    x.title = t("find.clear");
+    x.innerHTML = ICON.close;                          // static icon
+    x.addEventListener("click", function () { findSet(""); inp.focus(); });
+    box.appendChild(inp);
+    box.appendChild(x);
+    nav.appendChild(box);
+    var list = el("div");
+    list.id = "nav-list";
+    list.setAttribute("aria-live", "polite");
+    nav.appendChild(list);
   }
 
   // ---------- 11. Keyboard (Contract Β) + palette ----------
@@ -2094,6 +2244,7 @@
     back.title = t("back");
     back.addEventListener("click", function () { go(null); });
 
+    buildFind();
     inheritPalette();
     watchPalette();
     wireKeyboard();
@@ -2107,9 +2258,13 @@
     } catch (e) {}
     current = C.sectionOf(target) || loadUi();
     try { if (!target && sessionStorage.getItem(TR_KEY) === "1") { current = "language"; setTimeout(openTranslate, 0); } } catch (e) {}
+    // { section, item }: item = a FIND row id, lit up like a search pick.
     window.__orosOpenAt = function (tg) {
       var id = C.sectionOf(tg);
-      if (id) go(id, true);
+      if (!id) return;
+      var it = tg && typeof tg === "object" && typeof tg.item === "string" ? C.findItem(tg.item) : null;
+      if (it && it[1] === id) findPick({ section: id, item: it[0] });
+      else go(id, true);
     };
 
     var S = shell();
@@ -2130,7 +2285,9 @@
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible") render();
     });
-    render();
+    var startItem = target && typeof target === "object" && typeof target.item === "string" ? C.findItem(target.item) : null;
+    if (startItem && startItem[1] === current) findPick({ section: current, item: startItem[0] });
+    else render();
   }
 
   boot();
