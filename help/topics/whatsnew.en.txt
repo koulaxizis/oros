@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.96.01
+- Downloads page and Settings › Single apps: no more mentions of Google Play. orOS is not in any app store; Android apps come as APKs, kept up to date by F-Droid, Droid-ify or Obtainium.
+
 ## Version 3.96.00
 - Assistant: it can now start a timer, set an alarm, play a song, a radio station or a podcast episode, open something in its app, and show you the way in Maps ("25 minute timer", "wake me at 7 every day", "how do I walk to Syntagma?"). Nothing happens until you press the card. New Change history (in the conversations list, or ask "what did you change today?"): everything the Assistant added, changed or linked on this device in the last 30 days, with Undo even after you leave the Assistant.
 
