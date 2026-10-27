@@ -31,6 +31,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # job takes under 3 min
     steps:
       - uses: actions/checkout@v4
         with:

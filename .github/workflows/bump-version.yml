@@ -33,6 +33,7 @@ permissions:
 jobs:
   bump:
     runs-on: ubuntu-latest
+    timeout-minutes: 10   # job takes about 15 s
     steps:
       # Loop guard (belt+braces on top of GitHub's native [skip ci]):
       # our own stamp commits must never re-trigger this workflow.
