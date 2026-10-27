@@ -30,6 +30,16 @@ A receipt is usually paid at once: leave `Paid now` ticked when you issue it.
 - A `Credit note` corrects an invoice you issued: choose it under `Corrects`.
 - A recorded invoice (`Record an invoice issued elsewhere`) keeps the number, net and VAT amounts and the ΜΑΡΚ of an invoice issued in myDATA or by your provider. `Attach` keeps its official PDF on the orOS disk, under Invoices. Payments and statuses work as for any invoice.
 
+## Import invoice PDFs (Novus / timologisi.online)
+If you issue invoices in Novus (timologisi.online) or with another provider, you don't need to type them again: `New` › `Import invoice PDFs` and pick one or more PDFs (or drag the PDFs onto Invoices). Only the text of each PDF is read; nothing in the file is ever run.
+- For each PDF you see the number, client, date, payable amount and due date. Tick what you want and press `Import`. Nothing is saved before that.
+- Each invoice becomes a `Record an invoice issued elsewhere` with its net amount, VAT, withholding (the PDF's deductions), ΜΑΡΚ and its lines in the notes. The PDF itself is kept as the official file in the Invoices folder.
+- The client is found by ΑΦΜ. If there is none, a new client is made from the PDF, linked to the [CRM](app:crm) partner with the same ΑΦΜ.
+- The due date is the invoice date plus the payment days in `Settings` (30 by default). An invoice paid in cash or by card comes in already paid.
+- A PDF you already imported (same ΜΑΡΚ) shows as `Already here` and never comes in twice, not even on another device.
+- An invoice another business issued to you becomes a `Received invoice`. To tell the two apart, put your ΑΦΜ in `Settings`.
+- A ⚠ means the PDF's amounts do not agree with each other: that invoice is not ticked for you, check it first. A PDF that could not be read (a scan, for example) or a credit note opens with `Record by hand`, with what was found already filled in.
+
 ## Received invoices
 The `Received` tab keeps the invoices your suppliers send you, so you see what you owe, to whom and by when. `New` › `Record a received invoice` (or `+ Received invoice` in the tab) asks for the supplier, their ΑΦΜ, the invoice number, its date, the pay-by date and the net and VAT amounts. If you use [CRM](help:a/crm), pick the supplier's record under `Partner in CRM`: the invoice then shows on that partner's card (a received invoice without a partner shows on the card whose ΑΦΜ matches). Open one to add a payment, mark it paid, edit or delete it. Received invoices never count in your revenue, VAT, the dashboard or myDATA: they only keep track of what you owe. One still to pay shows in [Today](app:today) from a few days before its pay-by date.
 
@@ -67,7 +77,8 @@ On `Clients`, add a `New client` with name, profession, ΑΦΜ, ΔΟΥ, address,
 - orOS reminds you once a day when invoices are overdue or due within two days, and again when there are more; tapping the reminder opens the first one. See [Notifications](help:t/notifications).
 
 ## Budget, Quote, Timesheet and CRM
-- Next to each payment, `Add to Budget` opens [Budget](app:budget) with the payment filled in as freelance income; check it and save it there. It shows when the payment is in Budget's currency, and remembers that you sent it.
+- Every payment you record goes to [Budget](app:budget) by itself as freelance income (with its partner and the invoice number): the payment shows `In Budget (automatic)`. It appears the next time Budget opens on a device where you also use Invoices. Change the amount or date here and Budget follows; delete the payment and its income goes too. What you change or delete in Budget stays as you left it. Turn it off in `Settings` › `Payments go to Budget by themselves`; payments recorded before stay as they were.
+- With that setting off (and for older payments), next to each payment, `Add to Budget` opens [Budget](app:budget) with the payment filled in as freelance income; check it and save it there. It shows when the payment is in Budget's currency, and remembers that you sent it.
 - `Make invoice` on an accepted [Quote](app:quote), and `Create invoice` in a [Timesheet](app:timesheet) report, open a new invoice here with the client and the lines filled in.
 - On `Clients`, `From CRM` brings in customers from [CRM](app:crm); each one stays linked, so CRM can show its invoices.
 - On an issued invoice or receipt whose lines have a product code, `Take out of stock` opens a sale in [Stock](app:stock) with those products and prices; a credit note offers `Back into stock` for a customer return. Nothing changes in Stock until you save there. The button shows only once you use Stock.

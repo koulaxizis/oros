@@ -1,6 +1,23 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.05.00
+- Command bar (Ctrl+K and the Quick window): answers about dates and clocks, copied with Enter like a sum. Try `in 45 days`, `30 days ago`, `days until 25/12`, `days since 1/3/2020`, `what day is 1/1/2030`, `week number` or `time in Tokyo` (about 50 cities, with how far ahead or behind they are). No network needed.
+- Quick window: opened from the phone or the tray with nothing typed, it now shows `Today`: your overdue tasks and what is on today, from the Today summary (up to five), with `All of today` to see the rest.
+
+## Version 4.04.00
+- Invoices: `New` › `Import invoice PDFs` turns the PDFs you issued in Novus (timologisi.online) or elsewhere into recorded invoices: number, date, client (found by VAT number in Invoices and Customers), VAT, withholding and ΜΑΡΚ, with the PDF kept as the official file. You see a preview first; the same invoice is never added twice.
+- Invoices → Budget: a payment you record now goes to Budget by itself as income (setting `Payments go to Budget by themselves`, on). If you change or delete that entry in Budget, it stays as you left it.
+
+## Version 4.03.01
+- Assistant: it now always opens on a new conversation, also the small window. Your earlier conversations are in the list; opening it with selected text, a share or a task works as before.
+
+## Version 4.03.00
+- Settings: new `Search settings` field at the top of the list. Type a word from an option's name or a related word (dark, password, ringtone…) and pick a result: Settings opens there, scrolls to the option and lights it up for a moment. If the option needs something switched on first (the Dock, the lock, sync), the switch that turns it on lights up. Options found from the menu search now open at the option itself too.
+
+## Version 4.02.02
+- Sticky Notes: pressing Fold or More options on a new note no longer makes it disappear. Fold now folds the note, and More opens its options with everything you typed.
+
 ## Version 4.02.01
 - Calendar: Month, Week and Day now fill the whole window, on the computer and on the phone, like Proton or Google Calendar. Month shows the names of each day's events instead of dots (with the time on wider screens) and "+N" when more don't fit; Day has taller hours, and short events show their time and title on one line.
 

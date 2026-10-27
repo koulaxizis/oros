@@ -97,3 +97,21 @@ test("QW manifest shortcut and the Android tile and widget open #quick", () => {
     }
   }
 });
+
+test("QW the empty Quick window shows Today: the summary's own rows, read only", () => {
+  const bar = read("commands/bar.js");
+  assert.match(bar, /var TODAY_MAX = 5;/);
+  assert.match(bar, /if \(host\.today\) \{/);
+  for (const k of ["today", "late", "all"]) {
+    assert.match(bar, new RegExp(k + ': "'), k);
+    assert.match(read("i18n/de/commands.js"), new RegExp('"' + k + '": "'), "de " + k);
+  }
+  const sh = read("shell.js");
+  // only in the Quick window (#quick, #quick-win), only with the Today app installed
+  assert.match(sh, /today: opts\.today && hasApp\("today"\) \? cmdTodayRows : null/);
+  const fn = sh.slice(sh.indexOf("function cmdTodayRows()"), sh.indexOf("function openCmdBar("));
+  assert.ok(fn.length > 100);
+  assert.match(fn, /T\.build\(\)/);
+  assert.match(fn, /T\.open\(r\.app, r\.target\)/);
+  assert.doesNotMatch(fn, /setItem|localStorage/);
+});

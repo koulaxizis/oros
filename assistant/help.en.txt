@@ -267,6 +267,7 @@ Bring your history from another AI chat. In the Assistant's settings, under `Thi
 
 ## Tips
 - `New chat` starts a fresh conversation; older ones are in the list on the left, or behind the menu button on a phone.
+- The Assistant always opens on a new conversation, also the small window. Opened with something to ask (selected text, a share, a task, the Briefing), it starts that new conversation with it. To go on with an earlier one, pick it in the list.
 - `Used this month` in Settings shows how many tokens this device has used per service.
 - If a service says the key or the model is wrong, open Settings and press `Load models` to check both.
 

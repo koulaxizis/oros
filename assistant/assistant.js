@@ -16,8 +16,8 @@
 //     model, permissions per app, "chat only", key-sync switch and,
 //     only when that switch is on, the API keys sealed with the sync
 //     passphrase (core.js section 2)
-//   - device-local (R10): oros-assistant-prefs (open chat, keep
-//     history, token counts per month); IndexedDB "oros-assistant":
+//   - device-local (R10): oros-assistant-prefs (open chat, cleared
+//     on every opening: AS-FRESH; keep history, token counts per month); IndexedDB "oros-assistant":
 //     non-extractable device key, API keys sealed with it,
 //     conversations. Never exported.
 //   - optional (switch "cs" in the slice): every conversation also as
@@ -6172,10 +6172,15 @@
   // puts the text in the message box, ready to send. Nothing is sent
   // by itself, unless { send: 1 } (a desktop-menu task set to "Send
   // on tap"). { brief: 1 } (Today's Briefing button, the user's own
-  // tap) starts a briefing, with its card for "Ask first" apps. A
-  // dialog open or an answer running → ignored.
+  // tap) starts a briefing, with its card for "Ask first" apps.
+  // { chat: id } (the mini window's "Open in the Assistant") shows that
+  // stored conversation. A dialog open or an answer running → ignored.
   function openTarget(tg) {
     if (tg && tg.brief === 1 && !busy && !document.querySelector("dialog[open]")) { startBriefing(); return true; }
+    if (tg && typeof tg.chat === "string" && !busy && !document.querySelector("dialog[open]")) {
+      for (var i = 0; i < chats.length; i++) if (chats[i].id === tg.chat) { openChat(tg.chat); return true; }
+      return false;
+    }
     if (!tg || typeof tg.ask !== "string" || busy || document.querySelector("dialog[open]")) return false;
     var text = tg.ask.replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, " ").slice(0, MAX_INPUT);
     if (!text.trim()) return false;
@@ -6202,9 +6207,12 @@
     setSide(false);
     renderAll();
     var pending = null;
+    // AS-FRESH: every opening starts a new conversation; the old ones stay
+    // in the list. What it was opened with (#quick-ask text, selected
+    // text, a share, a task, { chat }) comes after, through openTarget.
+    prefs.open = "";
     if (MINI) {
       document.body.classList.add("as-mini");
-      prefs.open = "";      // the mini window starts a new conversation
       try {
         var q = shell() && shell().orosQuick;
         if (q && typeof q.takeMini === "function") pending = q.takeMini();
