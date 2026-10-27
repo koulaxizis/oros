@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.02.00
+- Quick window: add a task or search your data from anywhere. In the command bar (Ctrl+K) a line that is no command becomes "Add task", and Enter puts it straight into To-Do with Undo; below it, "In your data" shows up to six results from the apps you search in (your search settings decide which). On the phone, the orOS icon's long press "Add or search", a Quick Settings tile and a small widget open the same window (new Android app). On a computer with the installed orOS, a tray icon opens it with one click (orOS for Windows and Linux 0.3.0).
+
 ## Version 4.01.00
 - Multitasking is no longer a test, and it is on by default on computers (phones and tablets keep it off). An app you leave stays open in the background and comes back exactly as you left it; the Open apps button or Ctrl+Alt+Shift+W switches between them, and on wide screens two apps go side by side. Turn it off or on in Settings › System › Multitasking. Also fixed: an app waiting in the background could undo a change another app had just made to its data (for example a task the Assistant added to To-Do), and Files now shows files saved by other apps when you come back.
 

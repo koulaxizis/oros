@@ -46,6 +46,16 @@ In the bar, before you type, your last commands are listed; tap one to use it ag
 
 The same commands work in a small bar over any app: press [[Ctrl+K]] (in Notes and Wiki, [[Ctrl+Alt+Shift+K]]). In the orOS Android app, the magnifier button of the home-screen widgets opens the same bar. Anything that is not a command is a normal search, and with the [Assistant](app:assistant) installed the last row asks it. Commands are understood on your device; nothing is sent anywhere.
 
+### Quick window: add a task or search from anywhere
+In the bar, a line that is not a command shows `Add task: «…»` first: press [[Enter]] and [To-Do](app:todo) adds it at once to the list that is open there, with `Undo` for a few seconds. When an app's name is the whole line, opening that app comes first. Under the apps, `In your data` shows up to six matches from your apps, the same as the menu search, and only from the apps you have switched on for search on this device.
+
+You can open the bar without opening orOS first:
+- **Phone (orOS Android app):** long-press the orOS icon and choose `Add or search`, add the `orOS add or search` widget to the home screen, or add the `orOS Quick` tile to Quick Settings.
+- **Installed web app (Android, Windows, Linux):** right-click or long-press the orOS icon and choose `Add or search`.
+- **Windows and Linux (orOS installed with Setup.exe, AppImage or .deb):** the orOS icon in the system tray opens a small window with the bar. [[Ctrl+Alt+Shift+Space]] opens it on Windows. The tray menu can start orOS with the computer; it is off until you turn it on.
+
+Escape in the small tray window closes it. Nothing you type there leaves your device; the screen lock still asks first.
+
 ## Choose which apps the menu shows
 Too many apps? Hide the ones you don't use. Open [Settings](app:settings) and choose `Menu`:
 - Untick an app to hide it, tick it again to bring it back. `Find an app` narrows the list.

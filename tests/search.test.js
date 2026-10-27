@@ -252,3 +252,19 @@ test("apps.json: every search provider file exists", () => {
     assert.ok(fs.existsSync(path.join(root, a.id, a.search)), a.id + "/" + a.search);
   });
 });
+
+// The Quick window's flat list (search.js 1.1.0 top()).
+test("top: best hits first, at most perApp per app, ties by newer then id", () => {
+  const groups = [
+    { id: "notes", best: 9, hits: [{ title: "a", score: 9, when: 1 }, { title: "b", score: 8, when: 1 },
+                                  { title: "c", score: 7, when: 1 }, { title: "d", score: 7, when: 1 }] },
+    { id: "todo", best: 8, hits: [{ title: "t", score: 8, when: 5 }] },
+    { id: "calendar", best: 8, hits: [{ title: "e", score: 8, when: 5 }] },
+    null, { id: 3 }
+  ];
+  const out = S.top(groups, 6, 3);
+  assert.deepEqual(out.map((x) => x.id + ":" + x.hit.title),
+    ["notes:a", "calendar:e", "todo:t", "notes:b", "notes:c"]);
+  assert.equal(S.top(groups, 2).length, 2);
+  assert.deepEqual(S.top(null), []);
+});
