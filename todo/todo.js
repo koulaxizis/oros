@@ -4260,7 +4260,8 @@
   //     newList: "Rome",         // optional: offer a new list with this name
   //     from: "Meal Planner",    // optional: who is sending (shown only)
   //     items: [{ text, note }]  // 1..ADD_MAX
-  //   } })
+  //     now: true                // optional (Quick window, QW): one item,
+  //   } })                       //   no newList → added at once, with Undo
   // To-Do opens a dialog with the items ticked and writes NOTHING until
   // the user presses Add (prefill, not data: BR-W8-6). The sender never
   // touches oros-todo-data, so the slice keeps one writer. Items whose
@@ -4311,6 +4312,7 @@
   function openAddItems(raw) {
     var p = readAddPayload(raw);
     if (!p) return;
+    if (raw.now === true && p.items.length === 1 && !p.newList) { addItemNow(p); return; }
     var stale = document.getElementById("todo-add");
     if (stale) stale.remove();
     var NEW = "\u0000new";
@@ -4434,6 +4436,53 @@
     dlg.showModal();
     setTimeout(function () { go.focus(); }, 50);
   }
+
+  // { now: true } (the Quick window, one task): the Enter in the bar is
+  // the confirmation, so the task goes in at once, top of the chosen
+  // list (else the open list), with Undo. Already open there → only a
+  // note, nothing written.
+  function addItemNow(p) {
+    var it = p.items[0], list = listById(p.list) || activeList();
+    if (!list) return;
+    if (openKeysOf(list)[normalize(it.text)]) {
+      showToast(it.text + " · " + addT("dup"), false);
+      setActiveList(list.id); renderAll();
+      return;
+    }
+    var now = Date.now(), item = newItemObj(it.text, null);
+    item.notes = it.note;
+    stampItemNewest(item, now);
+    list.items.unshift(item);
+    list.items.forEach(function (x, i) { x.pos = i; });
+    list.om = now;
+    setActiveList(list.id);
+    searchQuery = "";
+    activeFilters = [];
+    save(); renderAll();
+    undoSnapshot = null;
+    undoFn = function () {
+      var hit = findItem(item.id);
+      if (!hit) return;
+      tombstone(item.id);
+      hit.list.items.splice(hit.list.items.indexOf(hit.item), 1);
+      hit.list.items.forEach(function (x, i) { x.pos = i; });
+      hit.list.om = Date.now();
+      save(); renderAll();
+    };
+    undoViewList = view.activeList;
+    showToast(addT("added", { n: 1, list: list.name }), true);
+  }
+
+  // Another window of this orOS (the Quick window, a second tab, a
+  // single app) wrote the tasks: merge them in, so this window's next
+  // save never drops what the other one added (SY-W1).
+  window.addEventListener("storage", function (e) {
+    if (e.key !== STORAGE_KEY || !e.newValue || e.newValue === lastSaved) return;
+    var other;
+    try { other = migrate(JSON.parse(e.newValue)); } catch (err) { return; }
+    if (!other || !Array.isArray(other.lists) || !other.lists.length) return;
+    sliceSet(mergeTodoStates(sliceGet(), other), { merged: true });
+  });
 
   wire();
   registerSync();

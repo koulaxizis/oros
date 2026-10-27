@@ -386,6 +386,13 @@ ${aliases}
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quick_info" />
         </receiver>
+        <!-- Quick window (QW): "Add or search", one bar that opens the command bar. -->
+        <receiver android:name=".QuickBarWidget" android:exported="false" android:label="@string/widget_quickbar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_quickbar_info" />
+        </receiver>
         <!-- BR-PHONE v7: "Calendar" (next events) and "To-Do" (next tasks,
              a box ticks one; the tick broadcast is the app's own). -->
         <receiver android:name=".CalendarWidget" android:exported="false" android:label="@string/widget_calendar">
@@ -404,6 +411,12 @@ ${aliases}
         <!-- Quick Settings tile (quick access wave 4): opens the Assistant. -->
         <service android:name=".AskTile" android:exported="true" android:label="@string/tile_ask"
             android:icon="@drawable/ic_tile_ask" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service android:name=".QuickTile" android:exported="true" android:label="@string/tile_quick"
+            android:icon="@drawable/ic_tile_quick" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
@@ -455,7 +468,7 @@ const REMOVE_PERMS = ["SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "READ_CO
   "health.READ_BLOOD_PRESSURE", "health.READ_BLOOD_GLUCOSE", "health.READ_OXYGEN_SATURATION"];
 const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"], ["activity", ".PermissionActivity"],
   ["receiver", ".ReminderReceiver"], ["activity", ".HealthPermissionActivity"], ["activity", ".HealthPrivacyActivity"],
-  ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"],
+  ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".QuickBarWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"], ["service", ".QuickTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"]];
 
 function soloApps() {

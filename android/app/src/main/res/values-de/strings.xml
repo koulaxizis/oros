@@ -35,4 +35,8 @@
         <item quantity="other">%d Haken warten, bis orOS öffnet</item>
     </plurals>
     <string name="health_missing">Health Connect ist auf diesem Telefon nicht verfügbar.</string>
+    <string name="widget_quickbar">orOS hinzufügen oder suchen</string>
+    <string name="widget_quickbar_desc">Eine Aufgabe hinzufügen oder in deinen orOS-Daten suchen</string>
+    <string name="widget_quickbar_hint">Hinzufügen oder suchen…</string>
+    <string name="tile_quick">orOS Schnell</string>
 </resources>

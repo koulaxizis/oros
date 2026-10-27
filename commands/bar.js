@@ -1,12 +1,18 @@
 // ============================================================
-// orOS — commands/bar.js (command bar, shell side, v1.1.0)
+// orOS — commands/bar.js (command bar, shell side, v1.2.0)
 // Loaded by shell.js on first use (with commands/core.js and
 // calendar/quickadd.js), never at boot. A small bar in the middle of
 // the screen, over whatever is open (Ctrl+K, Ctrl+Alt+Shift+K):
 //   1. the command, when the line is one ("New event · Sun 18/10 ·
 //      10:00 · Dentist → Calendar"); Enter runs it;
-//   2. the apps whose name matches; Enter opens the first;
-//   3. "Ask the Assistant: «…»" when the Assistant is installed.
+//   2. (1.2.0, Quick window) "Add task: «…»" when the line is no
+//      command and To-Do is installed; Enter adds it at once (To-Do
+//      writes it and offers Undo). An app whose name is the whole line
+//      comes before it;
+//   3. the apps whose name matches; Enter opens the first;
+//   4. (1.2.0) "In your data": up to DATA_MAX hits of the universal
+//      search, only the apps switched on for search on this device;
+//   5. "Ask the Assistant: «…»" when the Assistant is installed.
 // An answer (calc, unit conversion) is a command row whose Enter copies.
 // With the field empty: the last commands run (device-local, newest
 // first); a click puts one back in the field to look at before Enter.
@@ -16,7 +22,11 @@
 // window.orosCmdBar.open(host, text?)  host = {
 //   lang(), parse(q) → cmd|null, describe(cmd) → {verb, detail},
 //   appName(id), apps(q) → [{ id, name }], run(cmd, q), openApp(id),
-//   ask: null | function (q), history() → [line], forget() }
+//   ask: null | function (q), history() → [line], forget(),
+//   addTask: null | function (q), data: null | function (q) →
+//   Promise<[{ app, title, snippet, open() }]>, closed(acted),
+//   full: true = fill the window (the Quick window) }
+// closed(true) after a row ran, closed(false) when dismissed.
 // ============================================================
 (function () {
   "use strict";
@@ -24,10 +34,12 @@
   var STR = {
     en: { label: "Command or search", ph: "Type a command or an app… e.g. dentist tomorrow 10",
           ask: "Ask the Assistant: «{q}»", none: "Nothing found. Try “buy milk” or “spent 12€ coffee”.",
-          close: "Close", apps: "Apps", recent: "Recent commands", forget: "Clear the list" },
+          close: "Close", apps: "Apps", recent: "Recent commands", forget: "Clear the list",
+          task: "Add task: «{q}»", data: "In your data", busy: "Searching…" },
     el: { label: "Εντολή ή αναζήτηση", ph: "Γράψε μια εντολή ή εφαρμογή… π.χ. οδοντίατρος αύριο 10",
           ask: "Ρώτα τον Βοηθό: «{q}»", none: "Δεν βρέθηκε τίποτα. Δοκίμασε «γάλα στη λίστα» ή «ξόδεψα 12€ καφές».",
-          close: "Κλείσιμο", apps: "Εφαρμογές", recent: "Πρόσφατες εντολές", forget: "Καθαρισμός λίστας" }
+          close: "Κλείσιμο", apps: "Εφαρμογές", recent: "Πρόσφατες εντολές", forget: "Καθαρισμός λίστας",
+          task: "Προσθήκη εργασίας: «{q}»", data: "Στα δεδομένα σου", busy: "Αναζήτηση…" }
   };
 
   var CSS = [
@@ -51,10 +63,14 @@
     "#oros-cmdbar .cb-past .cb-verb{font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
     "#oros-cmdbar .cb-forget .cb-verb{font-weight:400;font-size:13px;color:var(--text-dim)}",
     "#oros-cmdbar .cb-cmd .cb-verb{overflow-wrap:anywhere}",
+    "#oros-cmdbar .cb-hit .cb-verb{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+    "#oros-cmdbar.cb-full{padding:0;background:var(--panel-bg)}",
+    "#oros-cmdbar.cb-full .cb-card{width:100%;max-height:100%;height:100%;border:none;border-radius:0;box-shadow:none}",
     "@media (max-width:480px){#oros-cmdbar{padding-top:8px}}"
   ].join("");
 
   var box = null;
+  var DATA_MAX = 6;
 
   function style() {
     if (document.getElementById("oros-cmdbar-css")) return;
@@ -77,9 +93,11 @@
     // en / el here; another language from the "commands" pack (the shell loads it).
     var I = window.orosI18n, code = I ? I.lang() : host.lang();
     var L = (code === "en" || code === "el") ? STR[code] : I && I.known(code) ? I.table(STR, "commands", code) : STR.en;
+    Object.keys(STR.en).forEach(function (k) { if (!L[k]) L[k] = STR.en[k]; });   // a pack older than 1.2.0
     var prevFocus = document.activeElement;
     box = el("div");
     box.id = "oros-cmdbar";
+    if (host.full) box.className = "cb-full";   // the Quick window: the bar is the whole page
     var card = el("div", "cb-card");
     card.setAttribute("role", "dialog");
     card.setAttribute("aria-modal", "true");
@@ -101,9 +119,9 @@
     card.appendChild(list);
     box.appendChild(card);
 
-    var rows = [], sel = 0;
+    var rows = [], sel = 0, token = 0, acted = false;
 
-    function row(cls, verb, detail, app, fn) {
+    function row(cls, verb, detail, app, fn, at) {
       var b = el("button", "cb-row" + (cls ? " " + cls : ""));
       b.type = "button";
       b.tabIndex = -1;
@@ -116,9 +134,13 @@
       if (app) b.appendChild(el("span", "cb-app", app));
       b.addEventListener("click", function (e) { e.stopPropagation(); fn(); });
       b.addEventListener("mousemove", function () { pick(rows.indexOf(b)); });
-      rows.push(b);
-      list.appendChild(b);
+      (at || list).appendChild(b);
+      rows = Array.prototype.slice.call(list.querySelectorAll(".cb-row"));
+      return b;
     }
+    function short(q) { return q.length > 60 ? q.slice(0, 59) + "…" : q; }
+    // i18n-inline-ok: Greek folding (final ς = σ) is matching data, not UI text
+    function fold(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/ς/g, "σ").trim(); }
 
     function pick(i) {
       if (!rows.length) { input.removeAttribute("aria-activedescendant"); return; }
@@ -148,25 +170,73 @@
       if (cmd) {
         var d = host.describe(cmd);
         row("cb-cmd", d.verb + (cmd.kind === "open" ? " " + host.appName(cmd.app) : ""), d.detail,
-            cmd.kind === "open" ? "" : d.hint || "→ " + host.appName(cmd.app), function () { close(); host.run(cmd, q); });
+            cmd.kind === "open" ? "" : d.hint || "→ " + host.appName(cmd.app), function () { done(); host.run(cmd, q); });
       }
       var apps = host.apps(q).slice(0, 6);
-      if (apps.length) {
+      var exact = apps.length && fold(apps[0].name) === fold(q);
+      function appRows() {
+        if (!apps.length) return;
         list.appendChild(el("div", "cb-head", L.apps));
-        apps.forEach(function (a) { row("", a.name, "", "", function () { close(); host.openApp(a.id); }); });
+        apps.forEach(function (a) { row("", a.name, "", "", function () { done(); host.openApp(a.id); }); });
       }
-      if (host.ask) row("cb-ask", L.ask.replace("{q}", q.length > 60 ? q.slice(0, 59) + "…" : q), "", "",
-                        function () { close(); host.ask(q); });
-      if (!rows.length) list.appendChild(el("p", "cb-none", L.none));
+      if (exact) appRows();
+      if (!cmd && host.addTask && q.length <= 300) {
+        row("cb-cmd cb-task", L.task.replace("{q}", short(q)), "", "", function () { done(); host.addTask(q); });
+      }
+      if (!exact) appRows();
+      var dataAt = null;
+      if (host.data) {
+        dataAt = el("div", "cb-data");
+        list.appendChild(dataAt);
+        fillData(q, dataAt);
+      }
+      if (host.ask) row("cb-ask", L.ask.replace("{q}", short(q)), "", "",
+                        function () { done(); host.ask(q); });
+      if (!rows.length && !dataAt) list.appendChild(el("p", "cb-none", L.none));
       pick(0);
     }
 
+    // The data rows come later (providers load on the first search);
+    // a newer line, or a closed bar, drops an older answer.
+    function fillData(q, at) {
+      var my = ++token;
+      var p;
+      try { p = host.data(q); } catch (e) { p = null; }
+      if (!p || typeof p.then !== "function") return;
+      var wait = setTimeout(function () {
+        if (my === token && box && !at.firstChild) at.appendChild(el("div", "cb-head", L.busy));
+      }, 300);
+      p.then(function (hits) {
+        clearTimeout(wait);
+        if (my !== token || !box || !at.isConnected) return;
+        at.textContent = "";
+        hits = Array.isArray(hits) ? hits.slice(0, DATA_MAX) : [];
+        var keep = rows[sel];
+        rows = Array.prototype.slice.call(list.querySelectorAll(".cb-row"));
+        if (hits.length) {
+          at.appendChild(el("div", "cb-head", L.data));
+          hits.forEach(function (h) {
+            row("cb-hit", String(h.title || ""), String(h.snippet || ""), String(h.app || ""),
+                function () { done(); h.open(); }, at);
+          });
+        }
+        var none = list.querySelector(".cb-none");
+        if (none && rows.length) none.parentNode.removeChild(none);
+        if (!rows.length && !none) list.appendChild(el("p", "cb-none", L.none));
+        pick(keep && rows.indexOf(keep) >= 0 ? rows.indexOf(keep) : 0);
+      }, function () { clearTimeout(wait); if (my === token) at.textContent = ""; });
+    }
+
+    function done() { acted = true; close(); }
+
     function close() {
       if (!box) return;
+      token++;
       window.removeEventListener("keydown", onKey, true);
       if (box.parentNode) box.parentNode.removeChild(box);
       box = null;
       try { if (prevFocus && prevFocus.focus && document.contains(prevFocus)) prevFocus.focus(); } catch (e) {}
+      if (host.closed) { try { host.closed(acted); } catch (e) {} }
     }
 
     function onKey(e) {
