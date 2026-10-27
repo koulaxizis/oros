@@ -20,7 +20,7 @@
     theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device", a11y: "device", lock: "device"
+    multitask: "device", a11y: "device", lock: "device", osk: "device"
   };
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -46,7 +46,7 @@
       "d.notifications": "Pop-ups, sound, quiet hours, per app",
       "d.sync": "Encrypted sync through Dropbox",
       "d.backup": "Backup files and the backup folder",
-      "d.language": "Language and what the menu search looks in",
+      "d.language": "Language, on-screen keyboard and what the menu search looks in",
       "d.system": "Version, shortcuts, about, factory reset",
       "s.accessibility": "Accessibility",
       "d.accessibility": "Text size, high contrast, focus ring",
@@ -219,6 +219,17 @@
       "tr.clear": "Clear my lines",
       "tr.clear.confirm": "Press again to clear",
       "tr.send.hint": "To send your translation: download the file, then on GitHub choose Upload files in the language folder and propose the change. Every translation is checked before it goes into orOS.",
+      "o.title": "On-screen keyboard",
+      "o.mode": "Show it",
+      "o.mode.auto": "When I tap a text field",
+      "o.mode.button": "Only from its button",
+      "o.mode.off": "Never",
+      "o.hint.auto": "It opens when you tap a text field with a finger or a pen, and stays away while you type on a real keyboard. The keyboard button in the top bar shows or hides it at any time.",
+      "o.hint.button": "The keyboard button in the top bar shows or hides it.",
+      "o.hint.off": "No on-screen keyboard and no button in the top bar.",
+      "o.notouch": "This device has no touch screen, so the keyboard is off until you choose otherwise.",
+      "o.layouts": "Layouts",
+      "o.layouts.hint": "The key next to ?123 goes to the next layout. One always stays on.",
       "l.search.hint": "The search field at the top of the menu also finds text inside these apps.",
       "l.search.none": "No app offers search yet.",
 
@@ -416,9 +427,9 @@
       "l.msg.storage": "This device's storage is full: nothing was saved.",
       "l.msg.crypto": "This browser couldn't do it. Try again.",
       "l.msg.busy": "Wait for the previous step to finish.",
-      "mt.title": "Multitasking", "mt.badge": "Experimental",
+      "mt.title": "Multitasking",
       "mt.on": "Keep apps open when you leave them",
-      "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. This is a test: if something misbehaves, turn it off.",
+      "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. On by default on computers, off on phones and tablets.",
       "mt.open": "Open in the background now: {n}"
     },
     el: {
@@ -437,7 +448,7 @@
       "d.notifications": "Αναδυόμενα, ήχος, ώρες ησυχίας, ανά εφαρμογή",
       "d.sync": "Κρυπτογραφημένος συγχρονισμός μέσω Dropbox",
       "d.backup": "Αρχεία αντιγράφων και φάκελος αντιγράφων",
-      "d.language": "Γλώσσα και πού ψάχνει η αναζήτηση του μενού",
+      "d.language": "Γλώσσα, πληκτρολόγιο οθόνης και πού ψάχνει η αναζήτηση του μενού",
       "d.system": "Έκδοση, συντομεύσεις, σχετικά, επαναφορά",
       "s.accessibility": "Προσβασιμότητα",
       "d.accessibility": "Μέγεθος κειμένου, υψηλή αντίθεση, περίγραμμα εστίασης",
@@ -610,6 +621,17 @@
       "tr.clear": "Σβήσε τις γραμμές μου",
       "tr.clear.confirm": "Πάτα ξανά για να σβηστούν",
       "tr.send.hint": "Για να στείλεις τη μετάφραση: κατέβασε το αρχείο και μετά στο GitHub διάλεξε Upload files στον φάκελο της γλώσσας και πρότεινε την αλλαγή. Κάθε μετάφραση ελέγχεται πριν μπει στο orOS.",
+      "o.title": "Πληκτρολόγιο οθόνης",
+      "o.mode": "Πότε εμφανίζεται",
+      "o.mode.auto": "Όταν πατάω σε πεδίο κειμένου",
+      "o.mode.button": "Μόνο από το κουμπί του",
+      "o.mode.off": "Ποτέ",
+      "o.hint.auto": "Ανοίγει όταν πατάς σε πεδίο κειμένου με το δάχτυλο ή με γραφίδα, και δεν εμφανίζεται όσο γράφεις σε κανονικό πληκτρολόγιο. Το κουμπί με το πληκτρολόγιο στην πάνω μπάρα το ανοίγει ή το κλείνει όποτε θέλεις.",
+      "o.hint.button": "Το κουμπί με το πληκτρολόγιο στην πάνω μπάρα το ανοίγει ή το κλείνει.",
+      "o.hint.off": "Χωρίς πληκτρολόγιο οθόνης και χωρίς κουμπί στην πάνω μπάρα.",
+      "o.notouch": "Αυτή η συσκευή δεν έχει οθόνη αφής, γι' αυτό το πληκτρολόγιο μένει κλειστό αν δεν διαλέξεις κάτι άλλο.",
+      "o.layouts": "Διατάξεις",
+      "o.layouts.hint": "Το πλήκτρο δίπλα στο ?123 περνά στην επόμενη διάταξη. Μία μένει πάντα ενεργή.",
       "l.search.hint": "Το πεδίο αναζήτησης στην κορυφή του μενού βρίσκει και κείμενο μέσα σε αυτές τις εφαρμογές.",
       "l.search.none": "Καμία εφαρμογή δεν προσφέρει ακόμα αναζήτηση.",
 
@@ -807,9 +829,9 @@
       "l.msg.storage": "Ο χώρος της συσκευής γέμισε: δεν αποθηκεύτηκε τίποτα.",
       "l.msg.crypto": "Ο browser δεν τα κατάφερε. Δοκίμασε ξανά.",
       "l.msg.busy": "Περίμενε να τελειώσει το προηγούμενο βήμα.",
-      "mt.title": "Πολυεργασία", "mt.badge": "Δοκιμαστικό",
+      "mt.title": "Πολυεργασία",
       "mt.on": "Οι εφαρμογές μένουν ανοιχτές όταν φεύγεις",
-      "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Είναι δοκιμαστικό: αν κάτι δεν πάει καλά, κλείσε το.",
+      "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Ανοιχτή από default στους υπολογιστές, κλειστή σε κινητά και tablet.",
       "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}"
     }
   };
