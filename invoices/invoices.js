@@ -143,6 +143,7 @@
       "set.profsHint": "Another business? Each profile has its own details, logo, bank lines, terms and footer; pick it on each document. Give it its own numbering series below (Profile) to keep separate numbers.",
       "set.delBiz": "Delete this profile", "set.main": "Main", "set.serProf": "Profile", "set.serAny": "Any", "set.editing": "Editing", "toast.bizDel": "Profile deleted",
       "set.qr": "Payment QR code on EUR PDFs (from the first IBAN)",
+      "set.ab": "Payments go to Budget by themselves (as income)", "pay.autoBud": "In Budget (automatic)",
       "set.paylink": "Pay online link", "set.paylinkHint": "Your own Stripe Payment Link (https://buy.stripe.com/…) or another https payment page. It goes on the PDF as a link and a QR code. orOS never needs a payment key.",
       "set.paylinkBad": "The pay online link must be a full https:// address.",
       "rc.fits": "Business client in another EU country ({c}): reverse charge?", "rc.services": "Services, 0 % VAT", "rc.goods": "Goods, 0 % VAT",
@@ -301,6 +302,7 @@
       "set.profsHint": "Κι άλλη επιχείρηση; Κάθε προφίλ έχει δικά του στοιχεία, λογότυπο, τράπεζες, όρους και υποσέλιδο· το διαλέγεις σε κάθε παραστατικό. Δώσε του δική του σειρά αρίθμησης πιο κάτω (Προφίλ) για χωριστή αρίθμηση.",
       "set.delBiz": "Διαγραφή προφίλ", "set.main": "Κύριο", "set.serProf": "Προφίλ", "set.serAny": "Όλα", "set.editing": "Επεξεργασία", "toast.bizDel": "Το προφίλ διαγράφηκε",
       "set.qr": "QR πληρωμής στα PDF σε ευρώ (από το πρώτο IBAN)",
+      "set.ab": "Οι πληρωμές μπαίνουν μόνες τους στον Προϋπολογισμό (ως έσοδο)", "pay.autoBud": "Στον Προϋπολογισμό (αυτόματα)",
       "set.paylink": "Σύνδεσμος online πληρωμής", "set.paylinkHint": "Το δικό σου Stripe Payment Link (https://buy.stripe.com/…) ή άλλη σελίδα πληρωμής https. Μπαίνει στο PDF ως σύνδεσμος και QR. Το orOS δεν χρειάζεται ποτέ κλειδί πληρωμών.",
       "set.paylinkBad": "Ο σύνδεσμος online πληρωμής πρέπει να είναι πλήρης διεύθυνση https://.",
       "rc.fits": "Επιχείρηση-πελάτης σε άλλη χώρα της ΕΕ ({c}): αντίστροφη επιβάρυνση;", "rc.services": "Υπηρεσίες, ΦΠΑ 0 %", "rc.goods": "Αγαθά, ΦΠΑ 0 %",
@@ -555,8 +557,14 @@
     replaceIn(data[listName], copy);
   }
 
+  // "Payments go to Budget by themselves" (BR-B3, on unless turned off):
+  // a payment made while it is on carries ab = 1, and Budget (links.js)
+  // keeps one income entry for it, on every device; the payment's own
+  // later changes follow it there.
+  function autoBudget() { return data.prof.ab !== 0; }
   function addPayment(docId, amt, date, how, note) {
     var p = { id: C.newId(), doc: docId, date: date, amt: amt, how: how, note: note || "", m: stamp(0) };
+    if (autoBudget()) p.ab = 1;   // BR-B3: Budget turns it into income by itself
     data.pays.push(p);
     saveNow();
     return p;
@@ -1730,7 +1738,9 @@
         b.appendChild(el("span", "pay-a", money(p.amt, d.cur)));
         b.addEventListener("click", function () { paymentDialog(d, p); });
         li.appendChild(b);
-        if (p.amt > 0 && budgetFor(d.cur)) {
+        if (p.amt > 0 && p.ab === 1 && !p.bud && budgetFor(d.cur)) {
+          li.appendChild(el("span", "mini-btn bud on", "\u2713 " + t("pay.autoBud")));
+        } else if (p.amt > 0 && budgetFor(d.cur)) {
           var bb = el("button", "mini-btn bud" + (p.bud ? " on" : ""), p.bud ? "\u2713 " + t("pay.inBudget") : t("pay.toBudget"));
           bb.type = "button";
           bb.addEventListener("click", function () { sendToBudget(d, p); });
@@ -2763,6 +2773,13 @@
     qrl.appendChild(f.qr);
     qrl.appendChild(el("span", "", t("set.qr")));
     card.appendChild(qrl);
+    var abl = el("label", "check");   // BR-B3: Budget makes the income entry
+    f.ab = el("input");
+    f.ab.type = "checkbox";
+    f.ab.checked = data.prof.ab !== 0;
+    abl.appendChild(f.ab);
+    abl.appendChild(el("span", "", t("set.ab")));
+    card.appendChild(abl);
     card = defs.parentNode;
     f.terms = area(p.terms, 2, C.LIM.terms);
     card.appendChild(field(t("set.terms"), f.terms));
@@ -2805,6 +2822,7 @@
       x.vat = C.round(vat, 2); x.wht = C.round(wht, 2); x.days = days; x.plang = f.plang.value;
       x.terms = f.terms.value; x.footer = f.footer.value;
       if (f.qr.checked) delete x.qr; else x.qr = 0;
+      if (f.ab.checked) delete x.ab; else x.ab = 0;
       if (pl) x.paylink = pl; else delete x.paylink;
       x.m = stamp(x.m);
       data.prof = C.normProf(x);
@@ -3680,7 +3698,11 @@
         if (od && !od.del) return;
         r.doc.m = stamp(od ? od.m : 0);
         replaceIn(data.docs, C.normDoc(r.doc));
-        if (r.pay && !C.anyId(data.pays, r.pay.id)) { r.pay.m = stamp(0); replaceIn(data.pays, r.pay); }
+        if (r.pay && !C.anyId(data.pays, r.pay.id)) {
+          r.pay.m = stamp(0);
+          if (autoBudget()) r.pay.ab = 1;
+          replaceIn(data.pays, r.pay);
+        }
         n++;
       } else if (r.bill) {
         var ob = C.anyId(billList(), r.bill.id);

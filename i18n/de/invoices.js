@@ -391,6 +391,8 @@ orosPack("de", "invoices", {
  "set.profs": "Unternehmensprofile",
  "set.profsHint": "Noch ein Unternehmen? Jedes Profil hat eigene Daten, Logo, Bankzeilen, Bedingungen und Fußzeile; wähle es auf jedem Dokument. Gib ihm unten einen eigenen Nummernkreis (Profil), damit die Nummern getrennt bleiben.",
  "set.qr": "Zahlungs-QR-Code auf EUR-PDFs (aus der ersten IBAN)",
+ "set.ab": "Zahlungen kommen von selbst ins Budget (als Einnahme)",
+ "pay.autoBud": "Im Budget (automatisch)",
  "set.restore": "Aus Sicherung wiederherstellen",
  "set.restoreHint": "Wiederherstellen führt mit deinen Daten zusammen: Nichts wird ersetzt oder geht verloren.",
  "set.sample": "Nächste: {n}",
