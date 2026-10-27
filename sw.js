@@ -755,6 +755,7 @@ var PRECACHE_URLS = [
   "writer/writer.css",
   "writer/writer.js",
   "writer/io.js",
+  "writer/pdfin.js",
   "writer/convert.js",
   "layout/",
   "layout/index.html",

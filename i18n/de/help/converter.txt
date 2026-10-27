@@ -9,7 +9,7 @@ Wandle viele Dokumente und Tabellen auf einmal in orOS-Dateien um. Ein Word- ode
 5. `Öffnen` in einer fertigen Zeile öffnet die neue Datei in ihrer App.
 
 ## Was umgewandelt wird
-- Dokumente → `.orosdoc` (Texteditor): .docx, .odt, .rtf, .html, .htm, .md, .markdown und .txt.
+- Dokumente → `.orosdoc` (Texteditor): .docx, .odt, .rtf, .html, .htm, .md, .markdown, .txt und .pdf (der Text des PDFs, mit Überschriften, Fett, Kursiv, Ausrichtung und Listen).
 - Tabellen → `.orossheet` (Tabelle): .xlsx, .xls, .ods und .csv.
 - Anki-Kartenpakete → `.oroscards` (Karteikarten): .apkg und .colpkg, mit ihren Bildern, Tönen und dem Lernverlauf.
 Weitere Dateiarten (Folien, Designs, Mindmaps, Boards) kommen in späteren Versionen.

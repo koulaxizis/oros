@@ -214,8 +214,74 @@
   }
 
   /* ----- RTF ----- */
+  /* ----- RTF → HTML: bold, italic, underline, strike, superscript,
+     alignment, headings (style names / outline levels), lists (list
+     table, or the list text Word writes before each item). Tables
+     come as text, one row per paragraph. Pictures and objects are
+     skipped (never run). ----- */
+  // the group that starts at raw[i] ('{') → its end index (the '}')
+  function ioRtfGroupEnd(raw, i) {
+    let depth = 0;
+    for (let k = i; k < raw.length; k++) {
+      const c = raw[k];
+      if (c === '\\') { k++; continue; }
+      if (c === '{') depth++;
+      else if (c === '}' && --depth === 0) return k;
+    }
+    return raw.length - 1;
+  }
+  // the direct sub-groups of a group's text
+  function ioRtfKids(s) {
+    const out = [];
+    for (let k = 1; k < s.length - 1; k++) {
+      if (s[k] === '\\') { k++; continue; }
+      if (s[k] === '{') { const e = ioRtfGroupEnd(s, k); out.push(s.slice(k, e + 1)); k = e; }
+    }
+    return out;
+  }
+  function ioRtfDest(raw, word) {
+    const m = new RegExp('\\{\\s*(?:\\\\\\*\\s*)?\\\\' + word + '(?![a-zA-Z])').exec(raw);
+    return m ? raw.slice(m.index, ioRtfGroupEnd(raw, m.index) + 1) : '';
+  }
+  // \stylesheet → s number → { name, outline }
+  function ioRtfStyles(raw) {
+    const map = {};
+    ioRtfKids(ioRtfDest(raw, 'stylesheet')).forEach(g => {
+      const m = /\\s(\d+)(?![a-zA-Z\d])/.exec(g);
+      if (!m || /^\{\s*\\\*\s*\\cs/.test(g)) return;
+      const ol = /\\outlinelevel(\d+)/.exec(g);
+      const name = g.slice(1, -1).replace(/\{[^{}]*\}/g, '').replace(/\\[a-zA-Z]+-?\d* ?/g, '').replace(/[{}]/g, '').split(';')[0].trim();
+      map[m[1]] = { name: name, outline: ol ? +ol[1] : -1 };
+    });
+    return map;
+  }
+  // \listtable + \listoverridetable → ls number → [ { nfc, start } per level ]
+  function ioRtfLists(raw) {
+    const byId = {}, map = {};
+    ioRtfKids(ioRtfDest(raw, 'listtable')).forEach(g => {
+      const kids = ioRtfKids(g);
+      const levels = kids.filter(k => /^\{\s*\\listlevel/.test(k)).map(k => {
+        const nfc = /\\levelnfc(\d+)/.exec(k), st = /\\levelstartat(\d+)/.exec(k);
+        return { nfc: nfc ? +nfc[1] : 0, start: st ? +st[1] : 1 };
+      });
+      // the list's own \listid, outside its levels
+      let own = g;
+      kids.forEach(k => { own = own.replace(k, ''); });
+      const id = /\\listid(-?\d+)/.exec(own);
+      if (id) byId[id[1]] = levels;
+    });
+    ioRtfKids(ioRtfDest(raw, 'listoverridetable')).forEach(g => {
+      const id = /\\listid(-?\d+)/.exec(g), ls = /\\ls(\d+)/.exec(g);
+      if (id && ls && byId[id[1]]) map[ls[1]] = byId[id[1]];
+    });
+    return map;
+  }
+  const IO_RTF_NFC = { 1: 'upper-roman', 2: 'lower-roman', 3: 'upper-alpha', 4: 'lower-alpha' };
+
   function ioParseRtf(raw) {
-    const SKIP = /^(fonttbl|colortbl|stylesheet|info|pict|listtable|listoverridetable|themedata|colorschememapping|latentstyles|datastore|generator|header|headerl|headerr|headerf|footer|footerl|footerr|footerf|object|rsidtbl|xmlnstbl|mmathPr|filetbl|revtbl)$/;
+    raw = String(raw || '');
+    const SKIP = /^(fonttbl|colortbl|stylesheet|info|pict|listtable|listoverridetable|themedata|colorschememapping|latentstyles|datastore|generator|header|headerl|headerr|headerf|footer|footerl|footerr|footerf|object|rsidtbl|xmlnstbl|mmathPr|filetbl|revtbl|footnote|annotation|shp|shppict|nonshppict|fldinst|bkmkstart|bkmkend)$/;
+    const styles = ioRtfStyles(raw), lists = ioRtfLists(raw);
     const cpg = (raw.match(/\\ansicpg(\d+)/) || [])[1] || '1252';
     let dec = null;
     try { dec = new TextDecoder('windows-' + cpg); } catch (e) { dec = null; }
@@ -223,46 +289,77 @@
       if (dec) { try { return dec.decode(new Uint8Array([b])); } catch (e) {} }
       return String.fromCharCode(b);
     };
-    let uc = 1;                                 // \ucN: fallback chars after \uN
-    let out = '', i = 0, depth = 0, skipDepth = -1;
+    const paras = [];
+    let fmt = { b: false, i: false, u: false, s: false, sup: false };
+    let para = { align: '', s: -1, ls: 0, ilvl: 0, outline: -1 };
+    let segs = [], marker = null;           // marker: the list text, while it is read
+    let uc = 1, i = 0;
+    const stack = [];                       // { fmt, skip, mark }
+    let skip = false, mark = false;
+    const put = t => {
+      if (!t) return;
+      if (mark) { marker += t; return; }
+      const last = segs[segs.length - 1];
+      if (last && !last.br && last.b === fmt.b && last.i === fmt.i && last.u === fmt.u && last.s === fmt.s && last.sup === fmt.sup) last.t += t;
+      else segs.push(Object.assign({ t: t }, fmt));
+    };
+    const endPara = () => {
+      paras.push({ p: Object.assign({}, para), segs: segs, marker: marker });
+      segs = []; marker = null;
+    };
     while (i < raw.length) {
       const ch = raw[i];
       if (ch === '{') {
-        depth++;
-        if (skipDepth === -1) {
+        stack.push({ fmt: Object.assign({}, fmt), skip: skip, mark: mark });
+        if (!skip) {
           const head = /^\{\s*(\\\*)?\s*\\([a-zA-Z]+)/.exec(raw.slice(i, i + 48));
-          if (head && (head[1] || SKIP.test(head[2]))) skipDepth = depth;
+          if (head && head[2] === 'listtext' || head && head[2] === 'pntext') { mark = true; marker = ''; }
+          else if (head && (head[1] || SKIP.test(head[2]))) skip = true;
         }
         i++; continue;
       }
       if (ch === '}') {
-        if (skipDepth === depth) skipDepth = -1;
-        depth--;
+        const st = stack.pop();
+        if (st) { fmt = st.fmt; skip = st.skip; mark = st.mark; }
         i++; continue;
       }
-      if (skipDepth !== -1) { i++; continue; }
+      if (skip) { if (ch === '\\') i++; i++; continue; }
       if (ch === '\\') {
         const cw = /^\\([a-zA-Z]+)(-?\d+)? ?/.exec(raw.slice(i, i + 40));
         if (cw) {
-          const w = cw[1], num = cw[2];
+          const w = cw[1], num = cw[2], n = num === undefined ? null : parseInt(num, 10);
           i += cw[0].length;
-          if (w === 'par' || w === 'sect' || w === 'page') out += '\n\n';
-          else if (w === 'line') out += '\n';
-          else if (w === 'tab') out += '\t';
-          else if (w === 'cell') out += '\t';
-          else if (w === 'row') out += '\n';
-          else if (w === 'emdash') out += '\u2014';
-          else if (w === 'endash') out += '\u2013';
-          else if (w === 'bullet') out += '\u2022';
-          else if (w === 'lquote') out += '\u2018';
-          else if (w === 'rquote') out += '\u2019';
-          else if (w === 'ldblquote') out += '\u201C';
-          else if (w === 'rdblquote') out += '\u201D';
-          else if (w === 'uc' && num !== undefined) uc = Math.max(0, parseInt(num, 10) || 0);
-          else if (w === 'u' && num !== undefined) {
-            let n = parseInt(num, 10);
-            if (n < 0) n += 65536;
-            out += String.fromCharCode(n);
+          if (w === 'par' || w === 'sect' || w === 'page' || w === 'row') { if (!mark) endPara(); }
+          else if (w === 'line') { if (!mark) segs.push({ br: true }); }
+          else if (w === 'tab' || w === 'cell') put('\t');
+          else if (w === 'pard') para = { align: '', s: -1, ls: 0, ilvl: 0, outline: -1 };
+          else if (w === 'plain') fmt = { b: false, i: false, u: false, s: false, sup: false };
+          else if (w === 'b') fmt.b = n !== 0;
+          else if (w === 'i') fmt.i = n !== 0;
+          else if (w === 'ulnone') fmt.u = false;
+          else if (/^ul/.test(w) && !/^ulc$/.test(w)) fmt.u = n !== 0;
+          else if (w === 'strike' || w === 'striked') fmt.s = n !== 0;
+          else if (w === 'super') fmt.sup = true;
+          else if (w === 'up') fmt.sup = n !== 0;
+          else if (w === 'nosupersub') fmt.sup = false;
+          else if (w === 'ql') para.align = '';
+          else if (w === 'qc') para.align = 'center';
+          else if (w === 'qr') para.align = 'right';
+          else if (w === 'qj' || w === 'qd') para.align = 'justify';
+          else if (w === 's' && n !== null) para.s = n;
+          else if (w === 'ls' && n !== null) para.ls = n;
+          else if (w === 'ilvl' && n !== null) para.ilvl = Math.min(8, Math.max(0, n));
+          else if (w === 'outlinelevel' && n !== null) para.outline = n;
+          else if (w === 'emdash') put('—');
+          else if (w === 'endash') put('–');
+          else if (w === 'bullet') put('•');
+          else if (w === 'lquote') put('‘');
+          else if (w === 'rquote') put('’');
+          else if (w === 'ldblquote') put('“');
+          else if (w === 'rdblquote') put('”');
+          else if (w === 'uc' && n !== null) uc = Math.max(0, n);
+          else if (w === 'u' && n !== null) {
+            put(String.fromCharCode(n < 0 ? n + 65536 : n));
             // swallow the fallback characters (\'hh or plain) Word writes after \uN
             for (let k = 0; k < uc && i < raw.length; k++) {
               if (/^\\'[0-9a-fA-F]{2}/.test(raw.slice(i, i + 4))) i += 4;
@@ -272,19 +369,80 @@
           continue;
         }
         const hex = /^\\'([0-9a-fA-F]{2})/.exec(raw.slice(i, i + 4));
-        if (hex) {
-          out += byteChar(parseInt(hex[1], 16));
-          i += 4; continue;
-        }
-        if (/^\\[{}\\]/.test(raw.slice(i, i + 2))) { out += raw[i + 1]; i += 2; continue; }
-        if (raw[i + 1] === '~') { out += '\u00A0'; i += 2; continue; }
-        if (raw[i + 1] === '-' || raw[i + 1] === '_') { i += 2; continue; }
-        i++; continue;
+        if (hex) { put(byteChar(parseInt(hex[1], 16))); i += 4; continue; }
+        if (/^\\[{}\\]/.test(raw.slice(i, i + 2))) { put(raw[i + 1]); i += 2; continue; }
+        if (raw[i + 1] === '~') { put(' '); i += 2; continue; }
+        i += 2; continue;
       }
       if (ch === '\r' || ch === '\n') { i++; continue; }   // raw newlines are not text in RTF
-      out += ch; i++;
+      put(ch); i++;
     }
-    return out;
+    if (segs.some(s => s.br || s.t.trim())) endPara();
+
+    const inline = sg => {
+      const out = sg.map(s => {
+        if (s.br) return '<br>';
+        let h = esc(s.t).replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
+        if (!s.t.trim()) return h;
+        if (s.s)   h = '<del>' + h + '</del>';
+        if (s.u)   h = '<u>' + h + '</u>';
+        if (s.i)   h = '<em>' + h + '</em>';
+        if (s.b)   h = '<strong>' + h + '</strong>';
+        if (s.sup) h = '<sup>' + h + '</sup>';
+        return h;
+      }).join('');
+      return out.replace(/^(?:\s|&nbsp;)+|(?:\s|&nbsp;)+$/g, '');
+    };
+    // pure (no DOM): Node reads RTF too
+    let html = '', title = '';
+    const stackL = [];   // open lists: { tag, ilvl, key }
+    const closeTo = n => { while (stackL.length > n) html += '</li></' + stackL.pop().tag + '>'; };
+    const counts = {};
+    paras.forEach(pa => {
+      const p = pa.p, body = inline(pa.segs);
+      if (!body && !pa.marker) { closeTo(0); return; }
+      if (!title) title = body.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim().slice(0, 80);
+      const st = styles[p.s] || { name: '', outline: -1 };
+      const al = p.align ? ' style="text-align:' + p.align + '"' : '';
+      // a list item: the list table says how, else the list text
+      let kind = null;
+      const lv = p.ls && lists[p.ls] ? lists[p.ls][p.ilvl] || lists[p.ls][0] : null;
+      if (lv) kind = lv.nfc === 23 || lv.nfc === 255 ? { tag: 'ul', type: '', start: 1 } : { tag: 'ol', type: IO_RTF_NFC[lv.nfc] || '', start: lv.start };
+      else if (pa.marker !== null && pa.marker.trim()) {
+        const mt = pa.marker.trim().replace(/[.)]$/, '');
+        kind = /^\d+$/.test(mt) ? { tag: 'ol', type: '', start: parseInt(mt, 10), fixed: true } : { tag: 'ul', type: '', start: 1 };
+      }
+      if (!kind) {
+        closeTo(0);
+        const m = /^heading\s*(\d)/i.exec(st.name);
+        let lvl = m ? +m[1] : 0;
+        const ol = p.outline >= 0 ? p.outline : st.outline;
+        if (!lvl && ol >= 0 && ol <= 5) lvl = ol + 1;
+        if (!lvl && /^title$/i.test(st.name)) lvl = 1;
+        // a heading is bold already: its bold is not repeated
+        html += lvl >= 1 && lvl <= 6
+          ? '<h' + lvl + al + '>' + inline(pa.segs.map(g => g.br ? g : Object.assign({}, g, { b: false }))) + '</h' + lvl + '>'
+          : '<p' + al + '>' + body + '</p>';
+        return;
+      }
+      // numbering goes on after a break in the same list
+      const key = String(p.ls || 'm');
+      const c = counts[key] || (counts[key] = []);
+      c[p.ilvl] = kind.fixed || c[p.ilvl] === undefined ? kind.start : c[p.ilvl] + 1;
+      c.length = p.ilvl + 1;
+      while (stackL.length && stackL[stackL.length - 1].ilvl > p.ilvl) closeTo(stackL.length - 1);
+      let top = stackL[stackL.length - 1];
+      if (top && top.ilvl === p.ilvl && (top.tag !== kind.tag || top.key !== key)) { closeTo(stackL.length - 1); top = stackL[stackL.length - 1]; }
+      if (top && top.ilvl === p.ilvl) html += '</li>';
+      else {
+        html += '<' + kind.tag + (kind.tag === 'ol' && c[p.ilvl] !== 1 ? ' start="' + c[p.ilvl] + '"' : '') +
+          (kind.type ? ' style="list-style-type:' + kind.type + '"' : '') + '>';
+        stackL.push({ tag: kind.tag, ilvl: p.ilvl, key: key });
+      }
+      html += '<li' + al + '>' + body;
+    });
+    closeTo(0);
+    return { title: title, html: html, footnotes: [], comments: [] };
   }
 
   /* ----- Sanitizer (all imports) — runs in an INERT document: no
@@ -337,13 +495,27 @@
     s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
       (m, label, href) => '<a href="' + u(href) +
         '" target="_blank" rel="noopener noreferrer">' + label + '</a>');
+    s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
     s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/__([^_]+)__/g, '<strong>$1</strong>');
     s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    // _italic_, outside the tags made above (a link's address may hold "_")
+    s = s.split(/(<[^>]*>)/).map((x, k) => k % 2 ? x : x.replace(/(^|[^\w])_([^_]+)_(?![\w])/g, '$1<em>$2</em>')).join('');
     s = s.replace(/~~([^~]+)~~/g, '<del>$1</del>');
     s = s.replace(/\[\^(\d+)\]/g, '<sup class="fn-ref" data-mdfn="$1">$1</sup>');
     return s;
   }
+
+  // A block may end with an alignment mark, as in Pandoc: "{.center}",
+  // "{.right}", "{.justify}" or "{.left}" → [text, ' style="…"' or '']
+  const IO_MD_ALIGN_RE = /\s*\{\s*\.(center|centre|right|justify|left)\s*\}\s*$/i;
+  function ioMdAlign(s) {
+    const m = IO_MD_ALIGN_RE.exec(s);
+    if (!m) return [s, ''];
+    const a = m[1].toLowerCase();
+    return [s.slice(0, m.index), a === 'left' ? '' : ' style="text-align:' + (a === 'centre' ? 'center' : a) + '"'];
+  }
+  const IO_MD_ITEM_RE = /^(\s*)([-*+]|(\d{1,9})[.)])\s+(.*)$/;
 
   function ioParseMd(text, footnoteDefs) {
     const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
@@ -353,14 +525,20 @@
       let html = '', para = [], i = from;
       const flush = () => {
         if (para.length) {
-          html += '<p>' + ioMdInline(para.join(' ')) + '</p>';
+          const a = ioMdAlign(para.join(' '));
+          html += '<p' + a[1] + '>' + ioMdInline(a[0]) + '</p>';
           para = [];
         }
       };
       while (i <= to) {
         const L = lines[i];
-        const h = L.match(/^(#{1,4})\s+(.*)$/);
-        if (h) { flush(); html += '<h' + h[1].length + '>' + ioMdInline(h[2]) + '</h' + h[1].length + '>'; i++; continue; }
+        const h = L.match(/^(#{1,6})\s+(.*)$/);
+        if (h) {
+          flush();
+          const a = ioMdAlign(h[2].replace(/\s+#+\s*$/, ''));
+          html += '<h' + h[1].length + a[1] + '>' + ioMdInline(a[0]) + '</h' + h[1].length + '>';
+          i++; continue;
+        }
         if (/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(L)) { flush(); html += '<hr>'; i++; continue; }
         if (/^\s*```/.test(L)) {
           flush(); i++;
@@ -377,15 +555,35 @@
           html += '<blockquote>' + blockFromLines(buf) + '</blockquote>';
           continue;
         }
-        if (/^\s*[-*+]\s+/.test(L) || /^\s*\d+\.\s+/.test(L)) {
+        if (IO_MD_ITEM_RE.test(L)) {
+          // items, nested by indent; an indented line goes on the item
+          // above; numbered lists keep their first number
           flush();
-          const ordered = /^\s*\d+\./.test(L);
-          html += ordered ? '<ol>' : '<ul>';
-          while (i <= to && (/^\s*[-*+]\s+/.test(lines[i]) || /^\s*\d+\.\s+/.test(lines[i]))) {
-            html += '<li>' + ioMdInline(lines[i].replace(/^\s*(?:[-*+]|\d+\.)\s+/, '')) + '</li>';
-            i++;
+          const items = [];
+          while (i <= to) {
+            const m = IO_MD_ITEM_RE.exec(lines[i]);
+            if (m) {
+              items.push({ ind: m[1].replace(/\t/g, '    ').length, tag: m[3] ? 'ol' : 'ul', n: m[3] ? parseInt(m[3], 10) : 1, t: m[4] });
+              i++;
+            } else if (items.length && /^\s{2,}\S/.test(lines[i])) {
+              items[items.length - 1].t += ' ' + lines[i].trim();
+              i++;
+            } else break;
           }
-          html += ordered ? '</ol>' : '</ul>';
+          const stack = [];
+          items.forEach(it => {
+            while (stack.length && stack[stack.length - 1].ind > it.ind + 1) html += '</li></' + stack.pop().tag + '>';
+            let top = stack[stack.length - 1];
+            if (top && Math.abs(top.ind - it.ind) <= 1 && top.tag !== it.tag) { html += '</li></' + stack.pop().tag + '>'; top = stack[stack.length - 1]; }
+            if (top && Math.abs(top.ind - it.ind) <= 1) html += '</li>';
+            else {
+              html += '<' + it.tag + (it.tag === 'ol' && it.n !== 1 ? ' start="' + it.n + '"' : '') + '>';
+              stack.push({ ind: it.ind, tag: it.tag });
+            }
+            const a = ioMdAlign(it.t);
+            html += '<li' + a[1] + '>' + ioMdInline(a[0]);
+          });
+          while (stack.length) html += '</li></' + stack.pop().tag + '>';
           continue;
         }
         if (/^\s*\|.*\|\s*$/.test(L)) {
@@ -421,7 +619,7 @@
       let html = '';
       // simple: paragraphs only inside quotes (nesting rare in practice)
       html = buf.map(l => l.trim()).filter(Boolean)
-        .map(l => '<p>' + ioMdInline(l) + '</p>').join('');
+        .map(l => { const a = ioMdAlign(l); return '<p' + a[1] + '>' + ioMdInline(a[0]) + '</p>'; }).join('');
       return html;
     }
 
@@ -441,7 +639,7 @@
       footnotes.push({ id: nid, text: txt });
     });
 
-    const firstH = wrap.querySelector('h1,h2,h3,h4,p');
+    const firstH = wrap.querySelector('h1,h2,h3,h4,h5,h6,p');
     const title = firstH ? firstH.textContent.trim().slice(0, 80) : '';
     return { title: title, html: wrap.innerHTML, footnotes: footnotes, comments: [] };
   }
@@ -514,10 +712,7 @@
 
     if (ext === 'txt')  return Object.assign({ kind: 'doc' }, ioParseTxt(text));
     if (ext === 'html' || ext === 'htm') return Object.assign({ kind: 'doc' }, ioParseHtml(text));
-    if (ext === 'rtf') {
-      const txt = ioParseRtf(text);
-      return Object.assign({ kind: 'doc' }, ioParseTxt(txt));
-    }
+    if (ext === 'rtf') return Object.assign({ kind: 'doc' }, ioParseRtf(text));
     if (ext === 'md' || ext === 'markdown') {
       // peel footnote definitions first ([^n]: text)
       const defs = {};
@@ -596,16 +791,26 @@
   // buf: the file's ArrayBuffer
   function ioParseZipBuf(buf, ext) {
     const isDocx = ext === 'docx';
+    const text = e => e ? new TextDecoder().decode(e.data) : '';
     return ioReadZip(buf)
       .then(entries => {
         const f = entries.find(e => e.name === (isDocx ? 'word/document.xml' : 'content.xml'));
         if (!f) throw new Error(isDocx ? 'not a docx package' : 'not an odt package');
-        const dom = new DOMParser().parseFromString(
-          new TextDecoder().decode(f.data), 'application/xml');
+        const dom = new DOMParser().parseFromString(text(f), 'application/xml');
         if (dom.getElementsByTagName('parsererror').length) throw new Error('xml parse error');
-        if (!isDocx) return ioParseOdtXml(dom);
+        if (!isDocx) {
+          // named styles (styles.xml) under the document's own ones
+          const st = entries.find(e => e.name === 'styles.xml');
+          let sdom = null;
+          if (st) {
+            sdom = new DOMParser().parseFromString(text(st), 'application/xml');
+            if (sdom.getElementsByTagName('parsererror').length) sdom = null;
+          }
+          return ioParseOdtXml(dom, sdom);
+        }
         const num = entries.find(e => e.name === 'word/numbering.xml');
-        return ioParseDocxXml(dom, ioDxNumbering(num ? new TextDecoder().decode(num.data) : ''));
+        const sty = entries.find(e => e.name === 'word/styles.xml');
+        return ioParseDocxXml(dom, ioDxNumbering(text(num)), ioDxStyles(text(sty)));
       })
       .then(res => Object.assign({ kind: 'doc' }, res));
   }
@@ -616,50 +821,113 @@
   function ioDxAttr(el, name) {
     return el.getAttributeNS(IO_NS_W, name) || el.getAttribute('w:' + name) || '';
   }
+  function ioDxKid(el, name) {
+    return el ? Array.from(el.children).find(c => c.localName === name) || null : null;
+  }
 
   const IO_DX_WRAP = /^(hyperlink|ins|moveTo|smartTag|sdt|sdtContent|fldSimple|customXml|bdo|dir)$/;
+  // w:jc → text-align ('' = left, the default)
+  const IO_DX_JC = { center: 'center', right: 'right', end: 'right', both: 'justify', distribute: 'justify',
+                     lowKashida: 'justify', mediumKashida: 'justify', highKashida: 'justify', thaiDistribute: 'justify' };
 
-  function ioDxRuns(node) {
+  // run properties that matter here: { b, i, u, s, sup } (true / false,
+  // or missing = not set at this level)
+  function ioDxRpr(rPr) {
+    const out = {};
+    if (!rPr) return out;
+    const on = pr => !/^(0|false|none|off)$/i.test(ioDxAttr(pr, 'val'));
+    Array.from(rPr.children).forEach(pr => {
+      const pl = pr.localName;
+      if (pl === 'b') out.b = on(pr);
+      if (pl === 'i') out.i = on(pr);
+      if (pl === 'u') out.u = on(pr);
+      if (pl === 'strike' || pl === 'dstrike') out.s = on(pr);
+      if (pl === 'vertAlign') out.sup = ioDxAttr(pr, 'val') === 'superscript';
+    });
+    return out;
+  }
+
+  // word/styles.xml → { p: { id → {…} }, c: { id → {…} }, def: the
+  // default paragraph style's id }; each style
+  // { name, based, outline (0-based, or -1), jc, rpr, num: { numId, ilvl } | null }
+  function ioDxStyles(xmlText) {
+    const res = { p: {}, c: {}, def: '' };
+    if (!xmlText) return res;
+    const dom = new DOMParser().parseFromString(xmlText, 'application/xml');
+    if (dom.getElementsByTagName('parsererror').length) return res;
+    Array.from(dom.getElementsByTagNameNS(IO_NS_W, 'style')).forEach(s => {
+      const id = ioDxAttr(s, 'styleId'), type = ioDxAttr(s, 'type');
+      if (!id || (type !== 'paragraph' && type !== 'character')) return;
+      if (type === 'paragraph' && /^(1|true|on)$/i.test(ioDxAttr(s, 'default'))) res.def = id;
+      const nm = ioDxKid(s, 'name'), bo = ioDxKid(s, 'basedOn'), pPr = ioDxKid(s, 'pPr');
+      const ol = ioDxKid(pPr, 'outlineLvl'), jc = ioDxKid(pPr, 'jc'), numPr = ioDxKid(pPr, 'numPr');
+      let num = null;
+      if (numPr) {
+        const ni = ioDxKid(numPr, 'numId'), il = ioDxKid(numPr, 'ilvl');
+        num = { numId: ni ? ioDxAttr(ni, 'val') : '', ilvl: il ? parseInt(ioDxAttr(il, 'val'), 10) || 0 : 0 };
+      }
+      (type === 'paragraph' ? res.p : res.c)[id] = {
+        name: nm ? ioDxAttr(nm, 'val') : '', based: bo ? ioDxAttr(bo, 'val') : '',
+        outline: ol ? parseInt(ioDxAttr(ol, 'val'), 10) : -1,
+        jc: jc ? ioDxAttr(jc, 'val') : '', rpr: ioDxRpr(ioDxKid(s, 'rPr')), num: num
+      };
+    });
+    return res;
+  }
+  // one style with what it inherits (basedOn chain, ≤ 10 steps)
+  function ioDxStyle(map, id) {
+    const out = { name: '', outline: -1, jc: '', rpr: {}, num: null };
+    const chain = [];
+    for (let k = 0; id && map[id] && k < 10 && chain.indexOf(id) === -1; k++) { chain.push(id); id = map[id].based; }
+    chain.reverse().forEach(cid => {
+      const s = map[cid];
+      out.name = s.name || out.name;
+      if (s.outline >= 0) out.outline = s.outline;
+      if (s.jc) out.jc = s.jc;
+      if (s.num) out.num = s.num;
+      Object.assign(out.rpr, s.rpr);
+    });
+    out.id = chain.length ? chain[chain.length - 1] : '';
+    return out;
+  }
+
+  function ioDxRuns(node, base, styles) {
     let out = '';
+    base = base || {};
     Array.from(node.childNodes).forEach(n => {
       if (n.nodeType !== 1) return;
       const ln = n.localName;
       if (ln === 'r') {
-        let b = false, i = false, u = false, strike = false, sup = false, txt = '';
-        const on = pr => !/^(0|false|none|off)$/i.test(ioDxAttr(pr, 'val'));
+        let txt = '';
+        const f = Object.assign({}, base);
         Array.from(n.children).forEach(c => {
           const cl = c.localName;
           if (cl === 'rPr') {
-            Array.from(c.children).forEach(pr => {
-              const pl = pr.localName;
-              if (pl === 'b') b = on(pr);
-              if (pl === 'i') i = on(pr);
-              if (pl === 'u') u = on(pr);
-              if (pl === 'strike' || pl === 'dstrike') strike = on(pr);
-              if (pl === 'vertAlign' && ioDxAttr(pr, 'val') === 'superscript') sup = true;
-            });
+            const rs = ioDxKid(c, 'rStyle');
+            if (rs && styles) Object.assign(f, ioDxStyle(styles.c, ioDxAttr(rs, 'val')).rpr);
+            Object.assign(f, ioDxRpr(c));
           } else if (cl === 't' || cl === 'delText') txt += c.textContent;
           else if (cl === 'tab') txt += '\t';
           else if (cl === 'br' || cl === 'cr') txt += '\n';
-          else if (cl === 'noBreakHyphen') txt += '\u2011';
+          else if (cl === 'noBreakHyphen') txt += '‑';
         });
         if (!txt) return;
         let h = esc(txt).replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
-        if (strike) h = '<del>' + h + '</del>';
-        if (u)      h = '<u>' + h + '</u>';
-        if (i)      h = '<em>' + h + '</em>';
-        if (b)      h = '<strong>' + h + '</strong>';
-        if (sup)    h = '<sup>' + h + '</sup>';
+        if (f.s)   h = '<del>' + h + '</del>';
+        if (f.u)   h = '<u>' + h + '</u>';
+        if (f.i)   h = '<em>' + h + '</em>';
+        if (f.b)   h = '<strong>' + h + '</strong>';
+        if (f.sup) h = '<sup>' + h + '</sup>';
         out += h;
       } else if ((ln === 'ins' || ln === 'del') && root.WriterTrack) {
         // tracked changes (wave 22) → <ins class="tc"> / <del class="tc">
-        const inner = ioDxRuns(n);
+        const inner = ioDxRuns(n, base, styles);
         if (!inner) return;
         const c = root.WriterTrack.cleanAttrs(ioDxAttr(n, 'author'), root.WriterTrack.parseDocxDate(ioDxAttr(n, 'date')), '');
         out += '<' + ln + ' class="tc" data-tc="tc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7) +
           '" data-au="' + escAttr(c.au) + '" data-ts="' + c.ts + '">' + inner + '</' + ln + '>';
       } else if (IO_DX_WRAP.test(ln)) {
-        out += ioDxRuns(n);
+        out += ioDxRuns(n, base, styles);
       } else if (ln === 'br') {
         out += '<br>';
       }
@@ -668,74 +936,110 @@
     return out;
   }
 
-  function ioDxPara(p, inList) {
-    let style = '';
-    Array.from(p.children).forEach(c => {
-      if (c.localName === 'pPr') {
-        Array.from(c.children).forEach(pp => {
-          if (pp.localName === 'pStyle') style = ioDxAttr(pp, 'val');
-        });
-      }
-    });
-    const inner = ioDxRuns(p);
-    if (inList) return inner;
-    const m = /^heading\s*(\d)/i.exec(style);
-    if (m && +m[1] >= 1 && +m[1] <= 4) return '<h' + m[1] + '>' + inner + '</h' + m[1] + '>';
-    if (/^title$/i.test(style)) return '<h1>' + inner + '</h1>';
-    if (/quote/i.test(style)) return '<blockquote>' + inner + '</blockquote>';
-    return '<p>' + inner + '</p>';
+  // a paragraph's style (styles.xml), alignment and outline level
+  function ioDxParaInfo(p, styles) {
+    const pPr = ioDxKid(p, 'pPr'), ps = ioDxKid(pPr, 'pStyle');
+    const id = ps ? ioDxAttr(ps, 'val') : '';
+    const st = styles ? ioDxStyle(styles.p, id || styles.def) : { name: '', outline: -1, jc: '', rpr: {}, num: null };
+    const jc = ioDxKid(pPr, 'jc'), ol = ioDxKid(pPr, 'outlineLvl');
+    return {
+      id: id, st: st,
+      align: IO_DX_JC[jc ? ioDxAttr(jc, 'val') : st.jc] || '',
+      outline: ol ? parseInt(ioDxAttr(ol, 'val'), 10) : st.outline
+    };
   }
 
+  function ioDxPara(p, inList, styles) {
+    const info = ioDxParaInfo(p, styles);
+    if (inList) return ioDxRuns(p, info.st.rpr, styles);
+    const sa = info.align ? ' style="text-align:' + info.align + '"' : '';
+    // headings by style name ("heading 1" also in a Greek Word, whose
+    // style ids are "1", "2"…), outline level, or Title
+    const name = info.st.name || info.id;
+    const m = /^heading\s*(\d)/i.exec(name) || /^heading\s*(\d)/i.exec(info.id);
+    let lvl = m ? +m[1] : 0;
+    if (!lvl && info.outline >= 0 && info.outline <= 3) lvl = info.outline + 1;
+    if (!lvl && (/^title$/i.test(name) || /^title$/i.test(info.id))) lvl = 1;
+    // a heading is bold already: the style's own bold is not repeated
+    const inner = ioDxRuns(p, lvl ? Object.assign({}, info.st.rpr, { b: false }) : info.st.rpr, styles);
+    if (lvl >= 1 && lvl <= 6) return '<h' + lvl + sa + '>' + inner + '</h' + lvl + '>';
+    if (/quote/i.test(name) || /quote/i.test(info.id)) return '<blockquote' + sa + '>' + inner + '</blockquote>';
+    return '<p' + sa + '>' + inner + '</p>';
+  }
+
+  // word/numbering.xml → numId → { ilvl → { fmt, start } }
   function ioDxNumbering(xmlText) {
     const map = {};
     if (!xmlText) return map;
     const dom = new DOMParser().parseFromString(xmlText, 'application/xml');
     if (dom.getElementsByTagName('parsererror').length) return map;
     const abs = {};
+    const lvlOf = l => {
+      const f = ioDxKid(l, 'numFmt'), s = ioDxKid(l, 'start');
+      return { fmt: f ? ioDxAttr(f, 'val') : 'bullet', start: s ? parseInt(ioDxAttr(s, 'val'), 10) || 0 : 1 };
+    };
     Array.from(dom.getElementsByTagNameNS(IO_NS_W, 'abstractNum')).forEach(a => {
       const lv = {};
-      Array.from(a.getElementsByTagNameNS(IO_NS_W, 'lvl')).forEach(l => {
-        const f = l.getElementsByTagNameNS(IO_NS_W, 'numFmt')[0];
-        lv[ioDxAttr(l, 'ilvl')] = f ? ioDxAttr(f, 'val') : 'bullet';
-      });
+      Array.from(a.getElementsByTagNameNS(IO_NS_W, 'lvl')).forEach(l => { lv[ioDxAttr(l, 'ilvl')] = lvlOf(l); });
       abs[ioDxAttr(a, 'abstractNumId')] = lv;
     });
     Array.from(dom.getElementsByTagNameNS(IO_NS_W, 'num')).forEach(n => {
-      const an = n.getElementsByTagNameNS(IO_NS_W, 'abstractNumId')[0];
-      map[ioDxAttr(n, 'numId')] = (an && abs[ioDxAttr(an, 'val')]) || {};
+      const an = ioDxKid(n, 'abstractNumId');
+      const lv = Object.assign({}, (an && abs[ioDxAttr(an, 'val')]) || {});
+      // <w:lvlOverride w:ilvl="0"><w:startOverride w:val="5"/> (or a whole <w:lvl>)
+      Array.from(n.children).forEach(o => {
+        if (o.localName !== 'lvlOverride') return;
+        const il = ioDxAttr(o, 'ilvl'), so = ioDxKid(o, 'startOverride'), l = ioDxKid(o, 'lvl');
+        if (l) lv[il] = lvlOf(l);
+        if (so) lv[il] = Object.assign({}, lv[il] || { fmt: 'decimal' }, { start: parseInt(ioDxAttr(so, 'val'), 10) || 0 });
+      });
+      map[ioDxAttr(n, 'numId')] = lv;
     });
     return map;
   }
 
-  function ioDxNumInfo(p) {
-    const pPr = Array.from(p.children).find(c => c.localName === 'pPr');
+  function ioDxNumInfo(p, styles) {
+    const pPr = ioDxKid(p, 'pPr');
     if (!pPr) return null;
-    const numPr = Array.from(pPr.children).find(c => c.localName === 'numPr');
-    if (!numPr) {
-      // style-defined lists ("List Bullet 2", "List Number") carry their
-      // numbering in styles.xml, not in the paragraph
-      const ps = Array.from(pPr.children).find(c => c.localName === 'pStyle');
-      const m = ps && /^List\s?(Bullet|Number)\s?(\d)?$/i.exec(ioDxAttr(ps, 'val'));
-      if (!m) return null;
-      return { ilvl: m[2] ? Math.max(0, +m[2] - 1) : 0, numId: '__style',
-               fmt: /bullet/i.test(m[1]) ? 'bullet' : 'decimal' };
-    }
+    const numPr = ioDxKid(pPr, 'numPr');
     let ilvl = 0, numId = '';
-    Array.from(numPr.children).forEach(c => {
-      if (c.localName === 'ilvl') ilvl = parseInt(ioDxAttr(c, 'val'), 10) || 0;
-      if (c.localName === 'numId') numId = ioDxAttr(c, 'val');
-    });
-    if (!numId || numId === '0') return null;
-    return { ilvl: Math.min(8, Math.max(0, ilvl)), numId: numId };
+    if (numPr) {
+      Array.from(numPr.children).forEach(c => {
+        if (c.localName === 'ilvl') ilvl = parseInt(ioDxAttr(c, 'val'), 10) || 0;
+        if (c.localName === 'numId') numId = ioDxAttr(c, 'val');
+      });
+      if (!numId || numId === '0') return null;
+      return { ilvl: Math.min(8, Math.max(0, ilvl)), numId: numId };
+    }
+    // numbering that comes with the paragraph's style (styles.xml)
+    const ps = ioDxKid(pPr, 'pStyle'), id = ps ? ioDxAttr(ps, 'val') : '';
+    if (styles && id) {
+      const st = ioDxStyle(styles.p, id);
+      if (st.num && st.num.numId && st.num.numId !== '0') return { ilvl: Math.min(8, Math.max(0, st.num.ilvl)), numId: st.num.numId };
+    }
+    // style-defined lists ("List Bullet 2", "List Number") with no
+    // styles.xml to say how
+    const m = /^List\s?(Bullet|Number)\s?(\d)?$/i.exec(id);
+    if (!m) return null;
+    return { ilvl: m[2] ? Math.max(0, +m[2] - 1) : 0, numId: '__style',
+             fmt: /bullet/i.test(m[1]) ? 'bullet' : 'decimal' };
   }
 
-  function ioParseDocxXml(dom, numbering) {
+  // Word number format → [tag, list-style-type]
+  function ioDxListKind(fmt) {
+    if (fmt === 'bullet' || fmt === 'none') return ['UL', ''];
+    return ['OL', { lowerLetter: 'lower-alpha', upperLetter: 'upper-alpha', lowerRoman: 'lower-roman',
+      upperRoman: 'upper-roman' }[fmt] || ''];
+  }
+
+  function ioParseDocxXml(dom, numbering, styles) {
     numbering = numbering || {};
     const body = dom.getElementsByTagNameNS(IO_NS_W, 'body')[0];
     if (!body) throw new Error('docx: no body');
     const box = ioInertDiv();
     const d = box.ownerDocument;
     let stack = [];   // open lists: [{ list, ilvl, lastLi }]
+    const counts = {};   // numId → [count per level]: numbering goes on after a break
 
     function emitTable(tbl) {
       let html = '<table style="border-collapse:collapse;width:100%;">';
@@ -746,7 +1050,7 @@
           if (tc.localName !== 'tc') return;
           let cells = '';
           Array.from(tc.children).forEach(tcp => {
-            if (tcp.localName === 'p') cells += ioDxPara(tcp, false);
+            if (tcp.localName === 'p') cells += ioDxPara(tcp, false, styles);
           });
           html += '<td style="border:1px solid var(--border);padding:6px 10px;">' + cells + '</td>';
         });
@@ -756,22 +1060,30 @@
     }
 
     function emitPara(p) {
-      const info = ioDxNumInfo(p);
-      if (!info) { stack = []; box.insertAdjacentHTML('beforeend', ioDxPara(p, false)); return; }
-      const fmt = info.fmt ||
-        (numbering[info.numId] && numbering[info.numId][String(info.ilvl)]) || 'bullet';
-      const tag = (fmt === 'bullet' || fmt === 'none') ? 'UL' : 'OL';
+      const info = ioDxNumInfo(p, styles);
+      if (!info) { stack = []; box.insertAdjacentHTML('beforeend', ioDxPara(p, false, styles)); return; }
+      const lv = numbering[info.numId] && numbering[info.numId][String(info.ilvl)];
+      const fmt = info.fmt || (lv && lv.fmt) || 'bullet';
+      const kind = ioDxListKind(fmt), tag = kind[0];
+      const c = counts[info.numId] || (counts[info.numId] = []);
+      const start = lv && typeof lv.start === 'number' ? lv.start : 1;
+      c[info.ilvl] = (c[info.ilvl] === undefined ? start : c[info.ilvl] + 1);
+      c.length = info.ilvl + 1;   // a deeper level starts again under a new item
       while (stack.length && stack[stack.length - 1].ilvl > info.ilvl) stack.pop();
       let top = stack[stack.length - 1];
-      if (top && top.ilvl === info.ilvl && top.list.nodeName !== tag) { stack.pop(); top = stack[stack.length - 1]; }
+      if (top && top.ilvl === info.ilvl && (top.list.nodeName !== tag || top.numId !== info.numId)) { stack.pop(); top = stack[stack.length - 1]; }
       if (!top || top.ilvl < info.ilvl) {
         const list = d.createElement(tag);
+        if (tag === 'OL' && c[info.ilvl] !== 1) list.setAttribute('start', String(c[info.ilvl]));
+        if (kind[1]) list.setAttribute('style', 'list-style-type:' + kind[1]);
         if (top && top.lastLi) top.lastLi.appendChild(list); else box.appendChild(list);
-        top = { list: list, ilvl: info.ilvl, lastLi: null };
+        top = { list: list, ilvl: info.ilvl, lastLi: null, numId: info.numId };
         stack.push(top);
       }
       const li = d.createElement('li');
-      li.innerHTML = ioDxPara(p, true);
+      const al = ioDxParaInfo(p, styles).align;
+      if (al) li.setAttribute('style', 'text-align:' + al);
+      li.innerHTML = ioDxPara(p, true, styles);
       top.list.appendChild(li);
       top.lastLi = li;
     }
@@ -786,12 +1098,12 @@
       });
     })(body);
 
-    const first = box.querySelector('h1,h2,h3,h4,p,li');
+    const first = box.querySelector('h1,h2,h3,h4,h5,h6,p,li');
     return { title: first ? first.textContent.trim().slice(0, 80) : '',
              html: box.innerHTML, footnotes: [], comments: [] };
   }
 
-  /* ----- ODT: content.xml → HTML ----- */
+  /* ----- ODT: content.xml (+ styles.xml) → HTML ----- */
   const IO_NS_TEXT = 'urn:oasis:names:tc:opendocument:xmlns:text:1.0';
 
   function ioOdAttr(el, local) {
@@ -799,26 +1111,68 @@
     for (const a of Array.from(el.attributes)) if (a.localName === local) return a.value;
     return '';
   }
+  const IO_OD_ALIGN = { center: 'center', end: 'right', right: 'right', justify: 'justify' };
+  const IO_OD_FMT = { a: 'lower-alpha', A: 'upper-alpha', i: 'lower-roman', I: 'upper-roman' };
 
-  function ioOdStyles(dom) {
-    const map = {};
-    Array.from(dom.getElementsByTagNameNS('*', 'style')).forEach(st => {
-      if (st.localName !== 'style') return;
-      const name = ioOdAttr(st, 'name');
-      if (!name) return;
-      const tp = Array.from(st.children).find(c => c.localName === 'text-properties');
-      if (!tp) return;
-      const ul = ioOdAttr(tp, 'text-underline-style');
-      const lt = ioOdAttr(tp, 'text-line-through-style');
-      map[name] = {
-        b: /^(bold|[6-9]00)$/.test(ioOdAttr(tp, 'font-weight')),
-        i: /^(italic|oblique)$/.test(ioOdAttr(tp, 'font-style')),
-        u: !!ul && ul !== 'none',
-        s: !!lt && lt !== 'none',
-        sup: /^super/.test(ioOdAttr(tp, 'text-position'))
-      };
+  // styles.xml then content.xml (its automatic styles win) →
+  // { s: { name → { parent, align, f: {b,i,u,s,sup}, list } },
+  //   l: { list style name → { level → { num, type, start } } } }
+  function ioOdStyles(dom, sdom) {
+    const res = { s: {}, l: {} };
+    [sdom, dom].forEach(d => {
+      if (!d) return;
+      Array.from(d.getElementsByTagNameNS('*', 'style')).forEach(st => {
+        if (st.localName !== 'style') return;
+        const name = ioOdAttr(st, 'name');
+        if (!name) return;
+        const tp = Array.from(st.children).find(c => c.localName === 'text-properties');
+        const pp = Array.from(st.children).find(c => c.localName === 'paragraph-properties');
+        const f = {};
+        if (tp) {
+          const fw = ioOdAttr(tp, 'font-weight'), fs = ioOdAttr(tp, 'font-style');
+          const ul = ioOdAttr(tp, 'text-underline-style'), lt = ioOdAttr(tp, 'text-line-through-style');
+          const pos = ioOdAttr(tp, 'text-position');
+          if (fw) f.b = /^(bold|[6-9]00)$/.test(fw);
+          if (fs) f.i = /^(italic|oblique)$/.test(fs);
+          if (ul) f.u = ul !== 'none';
+          if (lt) f.s = lt !== 'none';
+          if (pos) f.sup = /^super/.test(pos);
+        }
+        const ta = pp ? ioOdAttr(pp, 'text-align') : '';
+        res.s[name] = { parent: ioOdAttr(st, 'parent-style-name'), f: f,
+          align: ta ? (IO_OD_ALIGN[ta] || 'left') : '', list: ioOdAttr(st, 'list-style-name') };
+      });
+      Array.from(d.getElementsByTagNameNS('*', 'list-style')).forEach(ls => {
+        const name = ioOdAttr(ls, 'name');
+        if (!name) return;
+        const lv = {};
+        Array.from(ls.children).forEach(c => {
+          const n = parseInt(ioOdAttr(c, 'level'), 10) || 1;
+          if (c.localName === 'list-level-style-number') {
+            lv[n] = { num: true, type: IO_OD_FMT[ioOdAttr(c, 'num-format')] || '',
+                      start: parseInt(ioOdAttr(c, 'start-value'), 10) || 1 };
+            // num-format="" (no number shown) is a plain list
+            if (Array.from(c.attributes).some(a => a.localName === 'num-format' && a.value === '')) lv[n].num = false;
+          } else if (c.localName === 'list-level-style-bullet' || c.localName === 'list-level-style-image') {
+            lv[n] = { num: false, type: '', start: 1 };
+          }
+        });
+        res.l[name] = lv;
+      });
     });
-    return map;
+    return res;
+  }
+  // a style with what it inherits: { f, align, list }
+  function ioOdStyle(styles, name) {
+    const out = { f: {}, align: '', list: '' }, chain = [];
+    for (let k = 0; name && styles.s[name] && k < 10 && chain.indexOf(name) === -1; k++) { chain.push(name); name = styles.s[name].parent; }
+    chain.reverse().forEach(n => {
+      const s = styles.s[n];
+      Object.assign(out.f, s.f);
+      if (s.align) out.align = s.align === 'left' ? '' : s.align;
+      if (s.list) out.list = s.list;
+    });
+    return out;
   }
 
   function ioOdWrap(html, f) {
@@ -832,7 +1186,6 @@
   }
 
   function ioOdInline(el, styles) {
-    styles = styles || {};
     let out = '';
     Array.from(el.childNodes).forEach(n => {
       if (n.nodeType === 3) { out += esc(n.nodeValue); return; }
@@ -841,7 +1194,7 @@
       if (ln === 'line-break') out += '<br>';
       else if (ln === 'tab') out += ' ';
       else if (ln === 's') out += ' '.repeat(Math.max(1, parseInt(ioOdAttr(n, 'c'), 10) || 1));
-      else if (ln === 'span') out += ioOdWrap(ioOdInline(n, styles), styles[ioOdAttr(n, 'style-name')]);
+      else if (ln === 'span') out += ioOdWrap(ioOdInline(n, styles), styles ? ioOdStyle(styles, ioOdAttr(n, 'style-name')).f : null);
       else if (ln === 'a') out += ioOdInline(n, styles);
       else if (ln === 'note' || ln === 'annotation' || ln === 'bookmark' ||
                ln === 'bookmark-start' || ln === 'bookmark-end' || ln === 'soft-page-break') { /* skip */ }
@@ -850,64 +1203,92 @@
     return out;
   }
 
-  function ioParseOdtXml(dom) {
-    let root = null;
+  function ioParseOdtXml(dom, sdom) {
+    let body = null;
     Array.from(dom.getElementsByTagNameNS('*', 'text')).forEach(el => {
-      if (!root && el.localName === 'text') root = el;   // office:text
+      if (!body && el.localName === 'text') body = el;   // office:text
     });
-    if (!root) throw new Error('odt: no body');
-    const styles = ioOdStyles(dom);
-    const para = el => ioOdWrap(ioOdInline(el, styles), styles[ioOdAttr(el, 'style-name')]);
+    if (!body) throw new Error('odt: no body');
+    const styles = ioOdStyles(dom, sdom);
+    const pst = el => ioOdStyle(styles, ioOdAttr(el, 'style-name'));
+    // a heading is bold already: the style's own bold is not repeated
+    const inner = (el, noBold) => {
+      const f = Object.assign({}, pst(el).f);
+      if (noBold) f.b = false;
+      return ioOdWrap(ioOdInline(el, styles), f);
+    };
+    const sa = el => { const a = pst(el).align; return a ? ' style="text-align:' + a + '"' : ''; };
+    const counts = {};   // list style name → items numbered so far (level 1)
     let html = '';
-    (function walk(container) {
-    Array.from(container.children).forEach(ch => {
-      const ln = ch.localName;
-      if (ln === 'section') { walk(ch); return; }
-      if (ln === 'h') {
-        const lvl = parseInt(
-          ch.getAttributeNS(IO_NS_TEXT, 'outline-level') ||
-          ch.getAttribute('text:outline-level') || '1', 10) || 1;
-        const l = Math.min(4, Math.max(1, lvl));
-        html += '<h' + l + '>' + ioOdInline(ch, styles) + '</h' + l + '>';
-      } else if (ln === 'p') {
-        html += '<p>' + para(ch) + '</p>';
-      } else if (ln === 'list') {
-        // direct list-items only; nested text:list recurses (the old
-        // getElementsByTagNameNS walk flattened every level into one)
-        html += (function odList(list) {
-          let h = '<ul>';
-          Array.from(list.children).forEach(li => {
-            if (li.localName !== 'list-item') return;
-            let inner = '';
-            Array.from(li.children).forEach(c => {
-              if (c.localName === 'p' || c.localName === 'h') inner += para(c);
-              else if (c.localName === 'list') inner += odList(c);
-            });
-            h += '<li>' + inner + '</li>';
-          });
-          return h + '</ul>';
-        })(ch);
-      } else if (ln === 'table') {
-        html += '<table style="border-collapse:collapse;width:100%;">';
-        Array.from(ch.getElementsByTagNameNS('*', 'table-row')).forEach(tr => {
-          html += '<tr>';
-          Array.from(tr.children).forEach(tc => {
-            if (tc.localName !== 'table-cell') return;
-            let cells = '';
-            Array.from(tc.getElementsByTagNameNS(IO_NS_TEXT, 'p')).forEach(tp => {
-              cells += '<p>' + para(tp) + '</p>';
-            });
-            html += '<td style="border:1px solid var(--border);padding:6px 10px;">' + cells + '</td>';
-          });
-          html += '</tr>';
-        });
-        html += '</table>';
+    function odList(list, level, lsName) {
+      lsName = ioOdAttr(list, 'style-name') || lsName;
+      if (!lsName) {
+        // a list without a style takes it from its first paragraph's style
+        const fp = list.getElementsByTagNameNS(IO_NS_TEXT, 'p')[0];
+        if (fp) lsName = pst(fp).list;
       }
-    });
-    })(root);
+      const lv = (styles.l[lsName] || {})[level] || { num: false, type: '', start: 1 };
+      const tag = lv.num ? 'ol' : 'ul';
+      const key = lsName + '|' + level;
+      const goOn = level === 1 && (ioOdAttr(list, 'continue-numbering') === 'true' || !!ioOdAttr(list, 'continue-list'));
+      let n = goOn && counts[key] ? counts[key] : lv.start - 1;
+      let h = '';
+      Array.from(list.children).forEach(li => {
+        if (li.localName !== 'list-item' && li.localName !== 'list-header') return;
+        const sv = parseInt(ioOdAttr(li, 'start-value'), 10);
+        if (sv > 0) n = sv - 1;
+        if (!h) {
+          h = '<' + tag + (lv.num && n + 1 !== 1 ? ' start="' + (n + 1) + '"' : '') +
+            (lv.type ? ' style="list-style-type:' + lv.type + '"' : '') + '>';
+        }
+        n++;
+        let inn = '', st = '';
+        Array.from(li.children).forEach(c => {
+          if (c.localName === 'p' || c.localName === 'h') {
+            inn += (inn && !/<\/[ou]l>$/.test(inn) ? '<br>' : '') + inner(c, false);
+            if (!st) st = sa(c);
+          } else if (c.localName === 'list') inn += odList(c, level + 1, lsName);
+        });
+        h += '<li' + st + '>' + inn + '</li>';
+      });
+      if (level === 1) counts[key] = n;
+      return h ? h + '</' + tag + '>' : '';
+    }
+    (function walk(container) {
+      Array.from(container.children).forEach(ch => {
+        const ln = ch.localName;
+        if (ln === 'section') { walk(ch); return; }
+        if (ln === 'h') {
+          const lvl = parseInt(
+            ch.getAttributeNS(IO_NS_TEXT, 'outline-level') ||
+            ch.getAttribute('text:outline-level') || '1', 10) || 1;
+          const l = Math.min(6, Math.max(1, lvl));
+          html += '<h' + l + sa(ch) + '>' + inner(ch, true) + '</h' + l + '>';
+        } else if (ln === 'p') {
+          html += '<p' + sa(ch) + '>' + inner(ch, false) + '</p>';
+        } else if (ln === 'list') {
+          html += odList(ch, 1, '');
+        } else if (ln === 'table') {
+          html += '<table style="border-collapse:collapse;width:100%;">';
+          Array.from(ch.getElementsByTagNameNS('*', 'table-row')).forEach(tr => {
+            html += '<tr>';
+            Array.from(tr.children).forEach(tc => {
+              if (tc.localName !== 'table-cell') return;
+              let cells = '';
+              Array.from(tc.getElementsByTagNameNS(IO_NS_TEXT, 'p')).forEach(tp => {
+                cells += '<p' + sa(tp) + '>' + inner(tp, false) + '</p>';
+              });
+              html += '<td style="border:1px solid var(--border);padding:6px 10px;">' + cells + '</td>';
+            });
+            html += '</tr>';
+          });
+          html += '</table>';
+        }
+      });
+    })(body);
     const wrap = ioInertDiv();
     wrap.innerHTML = html;
-    const first = wrap.querySelector('h1,h2,h3,h4,p');
+    const first = wrap.querySelector('h1,h2,h3,h4,h5,h6,p');
     return { title: first ? first.textContent.trim().slice(0, 80) : '',
              html: html, footnotes: [], comments: [] };
   }
