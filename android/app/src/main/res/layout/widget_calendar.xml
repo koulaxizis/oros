@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The "Calendar" widget (AgendaWidgets.calendar fills it). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@drawable/widget_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/widget_calendar"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/w_text"
+            android:singleLine="true"
+            android:ellipsize="end" />
+        <TextView
+            android:id="@+id/w_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="6dp"
+            android:textSize="13sp"
+            android:textColor="@color/w_sub"
+            android:singleLine="true" />
+        <TextView android:id="@+id/w_add_event" style="@style/WidgetHeadButton" android:text="@string/widget_add_event" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/w_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:textColor="@color/w_sub"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingTop="4dp">
+        <TextView android:id="@+id/w_row0" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row1" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row2" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row3" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row4" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row5" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row6" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView android:id="@+id/w_row7" style="@style/WidgetRow" android:visibility="gone" />
+        <TextView
+            android:id="@+id/w_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="2dp"
+            android:text="@string/widget_no_data"
+            android:textSize="13sp"
+            android:textColor="@color/w_sub" />
+    </LinearLayout>
+</LinearLayout>

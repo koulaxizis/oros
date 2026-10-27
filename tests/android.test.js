@@ -129,3 +129,28 @@ test("android: the Assistant tile and widget button open #quick-ask (AS-OUT)", (
   assert.ok(first.includes("/#quick-ask"), "the Ask shortcut reaches Android's four");
   assert.ok(out["res/xml/shortcuts.xml"].includes('android:data="https://useoros.online/#quick-ask"'));
 });
+
+test("android: Calendar and To-Do widgets (BR-PHONE v7) are the orOS app's own, home screen only", () => {
+  const main = path.join(ROOT, "android", "app", "src", "main");
+  const res = (f) => fs.readFileSync(path.join(main, "res", f), "utf8");
+  const java = (f) => fs.readFileSync(path.join(main, "java", "online", "useoros", "twa", f), "utf8");
+  for (const w of ["CalendarWidget", "TodoWidget"]) {
+    assert.match(xml, new RegExp('<receiver android:name="\\.' + w + '" android:exported="false"'), w + " not exported");
+  }
+  const { REMOVE_NODES } = require(path.join(ROOT, "android", "tools", "gen.js"));
+  for (const w of [".CalendarWidget", ".TodoWidget"]) assert.ok(REMOVE_NODES.some(([t, n]) => t === "receiver" && n === w), w + " not in single apps");
+  for (const k of ["calendar", "todo"]) {
+    const info = res("xml/widget_" + k + "_info.xml");
+    assert.match(info, /android:widgetCategory="home_screen"/, "nothing on the lock screen");
+    assert.ok(!/keyguard/.test(info));
+  }
+  // Every widget string in English, Greek and German.
+  const names = (s) => (s.match(/name="(widget_[a-z_]+)"/g) || []).sort();
+  const en = names(res("values/strings.xml"));
+  for (const v of ["values-el", "values-de"]) assert.deepEqual(names(res(v + "/strings.xml")), en, v);
+  // The tick goes only through the app's own broadcast; a repeating task opens To-Do.
+  const ag = java("AgendaWidgets.java");
+  assert.match(ag, /new Intent\(c, TodoWidget\.class\)\.setAction\(ACTION_TICK\)/);
+  assert.match(ag, /"phone-done"/);
+  assert.match(java("PhoneBridge.java"), /AgendaWidgets\.taken\(app, refs\)/);
+});

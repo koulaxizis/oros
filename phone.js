@@ -38,14 +38,20 @@
 //               {t:"seen", v}                  (v3: orOS on screen)
 //               {t:"today", seq, data}         (v4: home-screen widget,
 //                 see widgetData; only while the phone has a widget)
+//               {t:"agenda", seq, cal, todo}   (v7: Calendar and To-Do
+//                 widgets, see agendaData; only while the phone has one)
+//               {t:"applied", what:"ticks", refs} (v7: widget ticks taken)
 //               {t:"health", seq, since, water, workouts}  (v5: Health
 //                 Connect, see healthOut)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
-//                widgets, health, drive, app}  (drive: the orOS Drive
-//                app is installed, DRIVE-APP)
+//                widgets, wcal, wtodo, health, drive, app}  (drive: the
+//                orOS Drive app is installed, DRIVE-APP; widgets, wcal,
+//                wtodo: Today, Calendar and To-Do widgets placed)
 //               {t:"health-in", steps, water, workouts}  (v5: what other
 //                 apps put in Health Connect, see healthIn)
 //               {t:"changes", what, items}   (v2: edits made on the phone)
+//               {t:"ticks", items:[{ref, l, i, at}]}  (v7: tasks ticked
+//                 on the To-Do widget, sent until answered; see tickTask)
 //               {t:"done", what, seq, added, updated, removed}
 //               {t:"error", what, seq, msg}
 // Exposes window.orosPhone and, under Node, module.exports.
@@ -705,6 +711,90 @@
     return { day: typeof today === "string" ? today : "", info: info ? str(info.title, 120) : "", rows: rows };
   }
 
+  // Calendar and To-Do widgets (v7): the same provider rows Today and
+  // the Assistant read (orosToday.agenda), in a small plain form.
+  //   cal  [{d, tm, t, s, o}]  day, time ("" = all day), title, place,
+  //        o = the event's deep link ("calendar:<id>:<day>"), "" for a
+  //        holiday or name day (opens the Calendar)
+  //   todo [{l, i, t, s, d, r}] list id, task id, text, list name, due,
+  //        r = 1 when the task repeats: the widget's tick then opens
+  //        To-Do, which works out the next date itself
+  // Rows in day and time order (all day after the timed ones), late
+  // tasks first; at most AGENDA_ROWS each. A null input stays null.
+  var AGENDA_ROWS = 30, CAL_DAYS = 14, TODO_DAYS = 31, ID_RE = /^[A-Za-z0-9_.-]{1,80}$/;
+  function agendaData(cal, todo, todoBlob) {
+    function sorted(rows) {
+      return (rows || []).filter(function (r) { return r && typeof r.due === "string" && str(r.title, 120); })
+        .map(function (r, n) { return { r: r, n: n }; })
+        .sort(function (a, b) {
+          if (a.r.due !== b.r.due) return a.r.due < b.r.due ? -1 : 1;
+          var x = a.r.time || "~", y = b.r.time || "~";
+          return x !== y ? (x < y ? -1 : 1) : a.n - b.n;
+        }).map(function (x) { return x.r; });
+    }
+    var out = { cal: null, todo: null };
+    if (cal) {
+      out.cal = sorted(cal).filter(function (r) { return r.kind === "event" || /^hol:/.test(r.id || ""); })
+        .slice(0, AGENDA_ROWS).map(function (r) {
+          var tg = r.target || {}, ev = typeof tg.ev === "string" && ID_RE.test(tg.ev) && /^\d{4}-\d{2}-\d{2}$/.test(tg.date || "");
+          return { d: r.due, tm: r.time || "", t: str(r.title, 120), s: str(r.text, 80),
+                   o: ev ? "calendar:" + tg.ev + ":" + tg.date : "" };
+        });
+    }
+    if (todo) {
+      var rec = {};
+      ((todoBlob && Array.isArray(todoBlob.lists)) ? todoBlob.lists : []).forEach(function (l) {
+        (l && Array.isArray(l.items) ? l.items : []).forEach(function (it) { if (it && it.recurrence) rec[l.id + "/" + it.id] = 1; });
+      });
+      out.todo = [];
+      sorted(todo).forEach(function (r) {
+        var dn = r.done || {};
+        if (out.todo.length >= AGENDA_ROWS || !ID_RE.test(dn.list || "") || !ID_RE.test(dn.item || "")) return;
+        out.todo.push({ l: dn.list, i: dn.item, t: str(r.title, 120), s: str(r.text, 60), d: r.due,
+                        r: rec[dn.list + "/" + dn.item] ? 1 : 0 });
+      });
+    }
+    return out;
+  }
+
+  // A tick from the To-Do widget (v7), made at `at` while orOS may have
+  // been closed. The tick follows To-Do's own stamps (todo.js setDone,
+  // TD-3: the "done" field only, stamped never older than the task),
+  // and never wins over a change made after it: a task changed in
+  // To-Do since (its "done" stamp newer than the tick) is left alone.
+  // A repeating task is left to To-Do (the widget opens it for those).
+  // → { blob, res: "done"|"gone"|"already"|"newer"|"repeats" }
+  var TODO_FIELDS = ["text", "done", "due", "notes", "labels", "info", "recurrence"], TODO_XF = ["prio", "subs", "so", "list"];
+  function tickTask(blob, listId, itemId, at, now) {
+    // In the list it was in, else wherever it moved since.
+    var it = null, lists = (blob && Array.isArray(blob.lists)) ? blob.lists : [];
+    [true, false].forEach(function (same) {
+      lists.forEach(function (l) {
+        if (it || !l || !Array.isArray(l.items) || (same && l.id !== listId)) return;
+        l.items.forEach(function (x) { if (!it && x && x.id === itemId) it = x; });
+      });
+    });
+    if (!it) return { blob: blob, res: "gone" };
+    if (it.done) return { blob: blob, res: "already" };
+    if (it.recurrence) return { blob: blob, res: "repeats" };
+    var fm = it.fm && typeof it.fm === "object" ? it.fm : null, mx = 0;
+    if (fm) {
+      TODO_FIELDS.forEach(function (f) { if (typeof fm[f] === "number" && fm[f] > mx) mx = fm[f]; });
+      TODO_XF.forEach(function (f) { var w = it.xf && it.xf[f]; if (typeof w === "number" && w > mx) mx = w; });
+    }
+    var oldCode = !fm || (it.mtime || 0) > mx;   // todo.js touchedByOldCode: mtime speaks for every field
+    function stamp(f) { return oldCode ? (it.mtime || 0) : (typeof fm[f] === "number" ? fm[f] : 0); }
+    if (stamp("done") > at) return { blob: blob, res: "newer" };
+    var nf = {};
+    TODO_FIELDS.forEach(function (f) { nf[f] = stamp(f); });
+    var t = Math.max(now, (it.mtime || 0) + 1);
+    nf.done = t;
+    it.done = true;
+    it.fm = nf;
+    it.mtime = t;
+    return { blob: blob, res: "done" };
+  }
+
   // Health Connect (v5): orOS Water and Workouts go to the phone's
   // Health Connect, and steps, water and workouts that other apps put
   // there come back. HEALTH_DAYS back from now, both ways. Rows that
@@ -838,7 +928,7 @@
   var api = { contactRows: contactRows, eventRows: eventRows, feedRows: feedRows, rrule: rrule, hash: fnv,
               applyCalendarChanges: applyCalendarChanges, eventIn: eventIn,
               applyContactChanges: applyContactChanges, splitTaken: splitTaken, takenKey: takenKey,
-              reminderRows: reminderRows, widgetData: widgetData,
+              reminderRows: reminderRows, widgetData: widgetData, agendaData: agendaData, tickTask: tickTask,
               healthOut: healthOut, healthIn: healthIn };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root || !root.document || !root.addEventListener) return;
@@ -854,24 +944,33 @@
   // (the shell's notification deep links, e.g. "todo:<list>").
   // The home-screen widget (v4) opens /?phone-quick=<word>: one of
   // QUICK below, nothing else. "cmd" (K3) opens the shell's command
-  // bar (BR-CMD) instead of an app.
+  // bar (BR-CMD) instead of an app, "event" a new Calendar event today.
+  // A tick on the To-Do widget of a repeating task opens
+  // /?phone-done=<list>/<item>: To-Do ticks it with its own tick, as
+  // Today's "Done" does (v7).
   var QUICK = {
     today: ["today", null],
+    calendar: ["calendar", null],
+    todo: ["todo", null],
+    event: ["", "event"],
     cmd: ["", null],
     task: ["todo", { quickAdd: true }],
     water: ["water", { sip: "glass" }],
     note: ["notes", { newPage: true }]
   };
-  var phoneAdd = null, phoneOpen = null, phoneQuick = null;
+  var phoneAdd = null, phoneOpen = null, phoneQuick = null, phoneDone = null;
   try {
     var qs = new URLSearchParams(root.location.search);
-    if (qs.has("phone-add") || qs.has("phone-open") || qs.has("phone-quick")) {
+    if (qs.has("phone-add") || qs.has("phone-open") || qs.has("phone-quick") || qs.has("phone-done")) {
+      var pd = String(qs.get("phone-done") || "").split("/");
+      if (pd.length === 2 && ID_RE.test(pd[0]) && ID_RE.test(pd[1])) phoneDone = { list: pd[0], item: pd[1] };
       try { if (qs.has("phone-add")) phoneAdd = JSON.parse(qs.get("phone-add")); } catch (e) {}
       if (qs.has("phone-open")) phoneOpen = str(qs.get("phone-open"), 200);
       if (Object.prototype.hasOwnProperty.call(QUICK, qs.get("phone-quick"))) phoneQuick = QUICK[qs.get("phone-quick")];
       qs.delete("phone-add");
       qs.delete("phone-open");
       qs.delete("phone-quick");
+      qs.delete("phone-done");
       var rest = qs.toString();
       root.history.replaceState(null, "", root.location.pathname + (rest ? "?" + rest : "") + root.location.hash);
     }
@@ -931,7 +1030,7 @@
     }
     if (send({ t: kind, seq: ++seq, items: items })) lastSent[kind] = key;
   }
-  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); pushHealth(force); }
+  function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); pushAgenda(force); pushHealth(force); }
 
   // Health Connect (v5): the last 30 days of Water and Workouts, sent
   // when they changed and every 15 minutes while orOS is on screen;
@@ -1017,6 +1116,69 @@
       if (!force && lastSent.today === key) return;
       if (send({ t: "today", seq: ++seq, data: data })) lastSent.today = key;
     }, function () { todayBusy = false; });
+  }
+
+  // Calendar and To-Do widgets (v7): only while the phone has one,
+  // like the Today widget (at most once a minute unless forced, only
+  // when the rows changed). Each kind is read only when its widget is
+  // placed; the other one goes as null and the app keeps what it had.
+  var agendaAt = 0, agendaBusy = false;
+  function pushAgenda(force) {
+    var T = root.orosToday, now = Date.now();
+    if (!port || !appState || !(appState.wcal > 0 || appState.wtodo > 0) || agendaBusy) return;
+    if (!T || typeof T.agenda !== "function") return;
+    if (!force && now - agendaAt < 60000) return;
+    agendaAt = now;
+    agendaBusy = true;
+    var wantCal = appState.wcal > 0, wantTodo = appState.wtodo > 0;
+    function rows(on, id, days) { return on ? T.agenda(id, days).then(null, function () { return []; }) : Promise.resolve(null); }
+    Promise.all([rows(wantCal, "calendar", CAL_DAYS), rows(wantTodo, "todo", TODO_DAYS)]).then(function (r) {
+      agendaBusy = false;
+      var blob = null;
+      try { if (wantTodo) blob = JSON.parse(localStorage.getItem("oros-todo-data") || "null"); } catch (e) {}
+      var data = agendaData(r[0], r[1], blob), key = fnv(JSON.stringify(data));
+      if (!force && lastSent.agenda === key) return;
+      if (send({ t: "agenda", seq: ++seq, cal: data.cal, todo: data.todo })) lastSent.agenda = key;
+    }, function () { agendaBusy = false; });
+  }
+
+  // Ticks from the To-Do widget (v7). The app sends them again on
+  // every new channel until they are answered, so each is applied at
+  // most once (tickTask leaves a done task alone). To-Do open in a
+  // frame holds its data in memory: the tick then goes to it, through
+  // the same { done } Today's "Done" uses; closed, the tick is written
+  // to its stored copy, which sync pushes like any local change.
+  function todoFrame() {
+    var out = null;
+    Array.prototype.forEach.call(document.querySelectorAll("iframe"), function (f) {
+      try {
+        if (!out && f.contentWindow && /\/todo\//.test(f.contentWindow.location.pathname) &&
+            typeof f.contentWindow.__orosOpenAt === "function") out = f.contentWindow;
+      } catch (e) {}
+    });
+    return out;
+  }
+  function takeTicks(items) {
+    var refs = [], blob = null, wrote = false, now = Date.now(), frame = todoFrame();
+    try { blob = JSON.parse(localStorage.getItem("oros-todo-data") || "null"); } catch (e) { return; }
+    items.slice(0, 200).forEach(function (x) {
+      if (!x || typeof x.ref !== "string" || x.ref.length > 200) return;
+      refs.push(x.ref);
+      if (typeof x.l !== "string" || typeof x.i !== "string" || !ID_RE.test(x.l) || !ID_RE.test(x.i)) return;
+      var at = typeof x.at === "number" && x.at > 0 ? Math.min(x.at, now) : now;
+      if (frame) {
+        try { frame.__orosOpenAt({ done: { list: x.l, item: x.i } }); } catch (e) {}
+        return;
+      }
+      var r = tickTask(blob, x.l, x.i, at, now);
+      if (r.res === "done") wrote = true;
+    });
+    if (wrote) {
+      try { localStorage.setItem("oros-todo-data", JSON.stringify(blob)); } catch (e) { return; }
+      try { if (root.orosSync && root.orosSync.markDirty) root.orosSync.markDirty(); } catch (e) {}
+    }
+    send({ t: "applied", what: "ticks", refs: refs });
+    if (wrote || frame) { setTimeout(function () { pushAgenda(true); pushToday(true); pushReminders(false); }, frame ? 1500 : 0); }
   }
 
   // Reminders (v3): the next 48 hours, worked out here from the
@@ -1111,6 +1273,8 @@
         reminders: m.reminders === "granted" ? "granted" : (m.reminders === "denied" ? "denied" : (m.reminders === "ask" ? "ask" : "")),
         exact: m.exact === true,
         widgets: Math.max(0, Math.min(50, m.widgets | 0)),
+        wcal: Math.max(0, Math.min(50, m.wcal | 0)),
+        wtodo: Math.max(0, Math.min(50, m.wtodo | 0)),
         health: ["granted", "some", "ask", "denied", "update", "unavailable"].indexOf(m.health) >= 0 ? m.health : "",
         drive: m.drive === true,
         app: typeof m.app === "string" ? m.app.slice(0, 20) : ""
@@ -1119,6 +1283,8 @@
       pushAll(true);
     } else if (m.t === "health-in") {
       takeHealth(m);
+    } else if (m.t === "ticks" && Array.isArray(m.items)) {
+      takeTicks(m.items);
     } else if (m.t === "changes" && (m.what === "calendar" || m.what === "contacts") && Array.isArray(m.items)) {
       takeChanges(m.what, m.items);
     } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar" || m.what === "reminders" || m.what === "health")) {
@@ -1210,7 +1376,7 @@
         if (!document.hidden) { pushAll(false); send({ t: "state" }); }
         // leaving: the widget gets the latest, and so do the reminders
         // (a timer or alarm set in the last 15 s must reach the app)
-        else { todayAt = 0; pushToday(false); pushReminders(false); }
+        else { todayAt = 0; agendaAt = 0; pushToday(false); pushAgenda(false); pushReminders(false); }
       });
     }
   });
@@ -1221,8 +1387,12 @@
       var o = phoneOpen; phoneOpen = null;
       if (o && root.orosNotifs && typeof root.orosNotifs.openLink === "function") root.orosNotifs.openLink(o);
       var q = phoneQuick; phoneQuick = null;
-      if (q && !q[0]) { if (typeof root.__orosOpenCmdBar === "function") root.__orosOpenCmdBar(); }
+      if (q && !q[0] && q[1] === "event") {
+        if (typeof root.__orosOpenCalendarNew === "function") root.__orosOpenCalendarNew({ date: ymdLocal(Date.now()) });
+      } else if (q && !q[0]) { if (typeof root.__orosOpenCmdBar === "function") root.__orosOpenCmdBar(); }
       else if (q && typeof root.__orosOpenAt === "function") root.__orosOpenAt(q[0], q[1]);
+      var dn = phoneDone; phoneDone = null;
+      if (dn && typeof root.__orosOpenAt === "function") root.__orosOpenAt("todo", { done: dn });
     },
     // The same reminder rows, for Web Push (webpush.js): a longer
     // horizon, rung by the browser's push service instead of the app.
