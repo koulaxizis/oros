@@ -146,3 +146,17 @@ test("the shell's readers see the shared events next to the own ones", () => {
   assert.equal(evs.length, 1);
   assert.equal(OCC.eventsOn({ events: evs }, "2026-11-02").length, 1);
 });
+
+test("the events with no label: own ones only, also those of a label gone from here", () => {
+  const labels = [LABEL, { id: "lbl-w", name: "Work", color: "#7aa2f7" }];
+  const evs = [ev("a", "Mine", { labelId: null }), ev("b", "Home"), ev("c", "Work", { labelId: "lbl-w" }),
+               ev("d", "Gone label", { labelId: "lbl-gone" }), ev("e", "Shared", { labelId: H.PREFIX + "D1" }),
+               ev("f", "Empty", { labelId: "" })];
+  assert.deepEqual(H.loose(evs, labels).map((e) => e.id), ["a", "d", "f"]);
+  assert.deepEqual(H.loose([], labels), []);
+  assert.deepEqual(H.loose(evs, null).map((e) => e.id), ["a", "b", "c", "d", "f"]);
+  // what calendar.js then does: the loose events get a new label and are shared as it
+  const loose = H.loose(evs, labels).map((e) => Object.assign({}, e, { labelId: "lbl-new" }));
+  const p = H.project({ name: "Home", color: "#9ece6a" }, loose);
+  assert.deepEqual(Object.keys(p.items).sort(), ["a", "d", "f"]);
+});

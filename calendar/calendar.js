@@ -248,6 +248,11 @@
       "hh.share.text": "Everyone in the household will see and edit the events of “{n}”. Reminders stay yours.",
       "hh.stop.text": "“{n}” leaves {hh} for everyone, and you keep your own copy. The others can bring it back from Household for 30 days.",
       "hh.del.text": "“{n}” leaves {hh} for everyone, and you keep no copy. The others can bring it back from Household for 30 days.",
+      "hh.loose": "Share the events with no label",
+      "hh.loose.n": "Events: {c}",
+      "hh.loose.text": "Your {c} events with no label go into a new calendar with this name, shared with the household: everyone there sees and edits them. Reminders stay yours. Stop sharing gives them back to you as a label.",
+      "hh.loose.name": "Name of the shared calendar",
+      "hh.loose.def": "Home",
       "hh.shared": "Shared with {hh}",
       "hh.stopped": "Sharing stopped. Your own copy is in your labels.",
       "hh.deleted": "Shared calendar deleted",
@@ -496,6 +501,11 @@
       "hh.share.text": "Όλοι στο νοικοκυριό θα βλέπουν και θα αλλάζουν τα συμβάντα της ετικέτας «{n}». Οι υπενθυμίσεις μένουν δικές σου.",
       "hh.stop.text": "Η «{n}» φεύγει από το «{hh}» για όλους και εσύ κρατάς δικό σου αντίγραφο. Οι άλλοι μπορούν να τη φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
       "hh.del.text": "Η «{n}» φεύγει από το «{hh}» για όλους και εσύ δεν κρατάς αντίγραφο. Οι άλλοι μπορούν να τη φέρουν πίσω από το Νοικοκυριό για 30 ημέρες.",
+      "hh.loose": "Μοιράσου τα συμβάντα χωρίς ετικέτα",
+      "hh.loose.n": "Συμβάντα: {c}",
+      "hh.loose.text": "Τα {c} συμβάντα σου χωρίς ετικέτα μπαίνουν σε ένα νέο ημερολόγιο με αυτό το όνομα, κοινό με το νοικοκυριό: όλοι εκεί τα βλέπουν και τα αλλάζουν. Οι υπενθυμίσεις μένουν δικές σου. Με τη διακοπή της κοινής χρήσης σού επιστρέφονται ως ετικέτα.",
+      "hh.loose.name": "Όνομα του κοινού ημερολογίου",
+      "hh.loose.def": "Σπίτι",
       "hh.shared": "Κοινό με «{hh}»",
       "hh.stopped": "Η κοινή χρήση σταμάτησε. Το αντίγραφό σου είναι στις ετικέτες σου.",
       "hh.deleted": "Το κοινό ημερολόγιο διαγράφηκε",
@@ -5545,6 +5555,7 @@ function transientNote(title, body) {
       row.appendChild(pal);   // color palette (toggled by the dot button)
       list.appendChild(row);
     });
+    hhLooseRow(list);
     hhLblRows(list);
     // Feed labels — visible but IMMUTABLE: born from FEED_LABELS,
     // never from state.labels, so no rename/delete/color controls.
@@ -5593,6 +5604,28 @@ function transientNote(title, body) {
   function hhLabelOf(id) {
     for (var i = 0; i < hhLabels.length; i++) if (hhLabels[i].id === id) return hhLabels[i];
     return null;
+  }
+  // The person's own events with no label (or a label gone from here):
+  // the house icon puts them into a new label and shares that.
+  function hhLoose() { return HHc ? HHc.loose(state.events, state.labels) : []; }
+  function hhLooseRow(list) {
+    var h = hhApi(), n = hhLoose().length;
+    if (!h || !h.list().length || !n) return;
+    var row = document.createElement("div");
+    row.className = "lbl-row nolbl";
+    var nm = document.createElement("span");
+    nm.className = "lbl-feed-name";
+    nm.textContent = t("lbl.none") + " · " + t("hh.loose.n").replace("{c}", n);
+    row.appendChild(nm);
+    var sh = document.createElement("button");
+    sh.type = "button";
+    sh.className = "btn lbl-hh";
+    sh.innerHTML = HH_SVG;
+    sh.title = t("hh.loose");
+    sh.setAttribute("aria-label", t("hh.loose"));
+    sh.addEventListener("click", function () { hhOpen("loose", null); });
+    row.appendChild(sh);
+    list.appendChild(row);
   }
   function hhLblRows(list) {
     var h = hhApi();
@@ -5692,11 +5725,17 @@ function transientNote(title, body) {
   function hhOpen(mode, lid) {
     var h = hhApi();
     if (!h) return;
-    var l = labelById(lid);
-    if (!l) return;
+    var loose = mode === "loose", l = loose ? null : labelById(lid);
+    if (!loose && !l) return;
+    if (loose && !hhLoose().length) return;
     hhMode = mode; hhFor = lid;
-    $("hh-dlg-title").textContent = t(mode === "share" ? "hh.share" : (mode === "stop" ? "hh.stop" : "hh.del"));
-    $("hh-dlg-text").textContent = t("hh." + mode + ".text").replace("{n}", lblName(l)).replace("{hh}", (hhInfo[lid] || {}).hh || "");
+    $("hh-dlg-title").textContent = t(loose ? "hh.loose" : (mode === "share" ? "hh.share" : (mode === "stop" ? "hh.stop" : "hh.del")));
+    $("hh-dlg-text").textContent = loose ? t("hh.loose.text").replace("{c}", hhLoose().length)
+      : t("hh." + mode + ".text").replace("{n}", lblName(l)).replace("{hh}", (hhInfo[lid] || {}).hh || "");
+    var nmIn = $("hh-dlg-name");
+    nmIn.hidden = !loose;
+    if (loose) nmIn.value = t("hh.loose.def");
+    if (loose) mode = "share";      // the same household picker and button
     var sel = $("hh-dlg-box"), hhs = h.list();
     sel.textContent = "";
     hhs.forEach(function (x) {
@@ -5712,8 +5751,24 @@ function transientNote(title, body) {
     go.className = "btn " + (mode === "del" ? "danger" : "prim");
     go.disabled = mode === "share" && !hhs.length;
     $("hh-dlg").showModal();
+    if (loose) { nmIn.focus(); nmIn.select(); }
   }
-  function hhShare(lid, box) {
+  // "No label" → a new label holding those events, shared as any
+  // other. Should the household not take it, the events go back to no
+  // label and the new label is dropped (nothing was saved meanwhile).
+  function hhShareLoose(name, box) {
+    var evs = hhLoose();
+    if (!evs.length) { $("hh-dlg").close(); return; }
+    var now = Date.now(), lid = "lbl-" + uid();
+    var was = evs.map(function (e) { return { e: e, l: e.labelId, m: e.mtime }; });
+    state.labels.push({ id: lid, name: name.slice(0, 40) || t("hh.loose.def"), color: nextFreeColor(), mtime: now });
+    evs.forEach(function (e) { e.labelId = lid; e.mtime = Math.max(now, e.mtime || 0); });
+    hhShare(lid, box, function () {
+      state.labels = state.labels.filter(function (x) { return x.id !== lid; });
+      was.forEach(function (w) { w.e.labelId = w.l; w.e.mtime = w.m; });
+    });
+  }
+  function hhShare(lid, box, undo) {
     var h = hhApi(), l = null;
     state.labels.forEach(function (x) { if (x.id === lid) l = x; });
     if (!h || !l) return;
@@ -5746,6 +5801,7 @@ function transientNote(title, body) {
       renderLblList(); renderChips(); renderAll(); renderDay();
       transientNote(t("hh.shared").replace("{hh}", hh));
     }, function () {
+      if (undo) undo();
       $("hh-dlg-go").disabled = false;
       transientNote(t("hh.fail"));
     });
@@ -5768,7 +5824,8 @@ function transientNote(title, body) {
   }
   if ($("hh-dlg")) {
     $("hh-dlg-go").addEventListener("click", function () {
-      if (hhMode === "share") hhShare(hhFor, $("hh-dlg-box").value);
+      if (hhMode === "loose") hhShareLoose($("hh-dlg-name").value.trim(), $("hh-dlg-box").value);
+      else if (hhMode === "share") hhShare(hhFor, $("hh-dlg-box").value);
       else if (hhMode === "stop") hhStop(hhFor, false);
       else if (hhMode === "del") hhStop(hhFor, true);
     });
