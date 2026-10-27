@@ -16,7 +16,7 @@
 | Part | Content |
 |---|---|
 | 0 | Working agreement + session-start protocol (read first) |
-| I | Mantra + standing rules R1–R39 |
+| I | Mantra + standing rules R1–R40 |
 | II | Core architecture (verified facts) |
 | III | App registry (status, keys, merge types) + device-local keys + file tree |
 | IV | Data models |
@@ -116,6 +116,7 @@ Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is re
 | R37 | **Host idiom.** Injected code follows the host file's idiom (ES5 in ES5 files; arrows/`const` only where the file already uses them). No computed object keys (`{[k]: v}`) anywhere: build the object with bracket assignment. This is not a mandate to rewrite existing internals. |
 | R38 | **The guide stays current.** Every PR that adds an app, or changes what a user sees or does in an app, updates `<app>/help.en.txt` and `<app>/help.el.txt` in the same PR (format: Part II "Help app"). A shell-level change updates the matching page in `help/topics/`. A new global shortcut is added to `help/topics/shortcuts.*.txt`. `tests/help.test.js` enforces coverage, EN/EL outline parity, links and shortcuts. Since 0.54.00 every release commit also adds a short user-facing line to the top section of `help/topics/whatsnew.{en,el}.txt` (same heading outline in EN and EL; a new section per minor version). |
 | R39 | **designkit fields live in `ext`.** From model level 2 (wave L0) every new field of a designkit document (Layout, Atelier and the apps that build on them) goes inside the entity's extension bag `ext`, normalized by its own wave and then kept verbatim by `normX`. Never a new top-level key of an entity and never a new key in Atelier's `ax`: a device without the new code would strip it on a plain sync (Part IX, 2026-10-17 K1). A change that `ext` cannot carry raises `MODEL_LEVEL` and stamps `setup.ext.mv`. |
+| R40 | **Part XII stays in order.** A changelog entry goes at the very end of Part XII, after the last entry with a lower date and APP_VERSION; dates and APP_VERSIONs never go back. When a parallel PR with a higher version merged first, put yours just before it (never at the top of the Part, never newest-first). `tests/bible-order.test.js` enforces it in CI (2026-10-27). |
 
 **Quality gates**
 
@@ -3579,7 +3580,7 @@ Started 2026-10-15 (Chris: "note similar issues in the Bible for future troubles
 
 ### T7. CI and GitHub
 
-**Symptom:** A red "Cloudflare oros-mail-relay" check appears on PRs. **Cause:** a Workers Builds check outside our repo's CI. **Fix:** ignore it for merge decisions. **Ref:** oros-mail-app memory.
+**Symptom:** A red "Workers Builds: oros-mail-relay" check appears on every PR; on main it is skipped. **Cause:** Cloudflare's Workers Builds makes a preview build for each non-production branch, and the relay uses Durable Objects (REMOTE, PUSH, HOUSE, with `migrations`): Cloudflare generates no preview URLs for a Worker with Durable Objects and does not accept a version upload that changes a Durable Object class lifecycle, so every preview build fails (diagnosis from the docs, 2026-10-27; the build log itself is only in the Cloudflare dashboard). Production deploys from main are not affected. **Fix:** Chris, in the Cloudflare dashboard: Workers & Pages › oros-mail-relay › Settings › Build › Branch control › clear "Enable Preview Builds". Until then, ignore it for merge decisions. **Ref:** oros-mail-app memory; 2026-10-27 changelog.
 
 **Symptom:** The sync-nullfx workflow can't open its PR. **Cause:** Actions isn't allowed to create PRs. **Fix:** Settings › Actions › General › "Allow GitHub Actions to create and approve pull requests", or open the PR by hand from `auto/nullfx-sync`. **Ref:** #311.
 
@@ -3623,7 +3624,7 @@ Paste as the first message of a new chat:
 
 ```
 Continuing orOS work. OROS_BIBLE.md is the SINGLE SOURCE OF TRUTH — read
-Part 0 (working agreement), Part I (rules R1–R39) and Part X (open items)
+Part 0 (working agreement), Part I (rules R1–R40) and Part X (open items)
 before touching anything. Kernel LOCKED; five-axes audit doctrine active.
 Next task: <task>. Apps involved: <dirs>.
 I will paste any file you request — ask for CURRENT versions of every file
@@ -8425,3 +8426,8 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 - **Tests:** new `tests/bible-order.test.js`: every entry has a date, and dates and APP_VERSIONs never go back. Checked both ways: it passes on the sorted file and fails when the 3.85.00 entry is moved after 3.85.01.
 - **Files:** `OROS_BIBLE.md`, `tests/bible-order.test.js`.
 - **Verification:** before/after line multiset identical apart from that one blank line; head of the Bible (Parts 0–XI) byte-identical; `node --test tests/*.test.js` green.
+
+### 2026-10-27 — Bible: rule R40 (Part XII order); relay preview-build cause — docs only, no APP_VERSION
+- **Changes:** new rule R40 in Part I: a changelog entry goes at the very end of Part XII, after the last entry with a lower date and APP_VERSION, never newest-first; `tests/bible-order.test.js` enforces it. The Map and the Part XI handoff say R1–R40. Part X-B T7: the red "Workers Builds: oros-mail-relay" check now has its cause (preview builds of a Worker with Durable Objects are not supported by Cloudflare) and the fix (Chris clears "Enable Preview Builds" in the Cloudflare dashboard).
+- **Files:** `OROS_BIBLE.md`.
+- **Tests:** `node --test tests/*.test.js` green, the order test included. The relay diagnosis is from Cloudflare's docs (preview URLs and version uploads with Durable Objects), not from the build log, which only the dashboard shows.
