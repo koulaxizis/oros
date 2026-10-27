@@ -3370,16 +3370,31 @@ function transientNote(title, body) {
       btn.appendChild(num);
       wxDates.push([cellDate, btn]);
 
-      var dots = document.createElement("span");
-      dots.className = "ev-dot-row";
-      var dayEvents = eventsOn(cellDate).slice(0, 6);
+      // Event names, Proton / Google style; fitMonth() keeps as many
+      // as the cell has room for and puts "+N" in place of the rest.
+      var evs = document.createElement("span");
+      evs.className = "cal-evs";
+      var dayEvents = eventsOn(cellDate);
       for (var j = 0; j < dayEvents.length; j++) {
-        var dot = document.createElement("span");
-        dot.className = "ev-dot" + (dayEvents[j].start ? " timed" : "");
-        dot.style.background = labelColor(dayEvents[j].labelId);
-        dots.appendChild(dot);
+        var de = dayEvents[j], dsp = spanInfo(de, cellDate);
+        var pill = document.createElement("span");
+        pill.className = "cal-ev";
+        pill.style.borderLeftColor = labelColor(de.labelId);
+        if (de.start && !(dsp && dsp.idx > 1)) {
+          var pt = document.createElement("span");
+          pt.className = "cal-ev-t";
+          pt.textContent = de.start;
+          pill.appendChild(pt);
+        }
+        pill.appendChild(document.createTextNode(
+          (dsp && dsp.idx > 1 ? "…" : "") + (de.title || t("ev.untitled"))));
+        evs.appendChild(pill);
       }
-      btn.appendChild(dots);
+      var more = document.createElement("span");
+      more.className = "cal-more";
+      more.hidden = true;
+      evs.appendChild(more);
+      btn.appendChild(evs);
 
       (function (cd) {
         btn.addEventListener("click", function () { selectDay(cd); });
@@ -3499,7 +3514,7 @@ function transientNote(title, body) {
      on top; timed rows as blocks on a 24-hour grid, side by side when
      they overlap; a line at the current time on today. A tap on an
      empty hour starts a new event there. */
-  var DV_HOUR = 48;                 // px per hour
+  var DV_HOUR = 60;                 // px per hour
   var dvScrolledFor = null;         // the day the grid was last scrolled for
   function hmMin(s) { var p = String(s).split(":"); return (+p[0]) * 60 + (+p[1]); }
   function fmtMin(m) { return pad(Math.floor(m / 60) % 24) + ":" + pad(m % 60); }
@@ -3591,7 +3606,8 @@ function transientNote(title, body) {
       var e = x.e;
       var b = document.createElement("button");
       b.type = "button";
-      b.className = "dv-ev";
+      // Under 45 minutes: time and title share one line.
+      b.className = "dv-ev" + (x.en - x.s < 45 ? " short" : "");
       b.style.top = (x.s * DV_HOUR / 60) + "px";
       b.style.height = Math.max(18, (x.en - x.s) * DV_HOUR / 60 - 2) + "px";
       b.style.left = (100 * x.col / x.cols) + "%";
@@ -3934,7 +3950,63 @@ function transientNote(title, body) {
     else if (curView === "day") { renderDayView(); }
     else if (curView === "year") { renderYear(); }
     else if (curView === "agenda") { renderAgenda(); }
+    fillHeight();
     phonePublish();
+  }
+
+  /* ---------- 4c2. Fill the window (Proton / Google style) ----------
+     Month, Week and Day take the window's height under the bars and
+     stop where the selected day's title is still in sight; the month
+     cells then show as many event names as fit. FILL_MIN keeps a
+     usable grid in a very short window (the page scrolls instead). */
+  var FILL_MIN = 300;
+  function fillHeight() {
+    var main = $("cmain");
+    var el = curView === "month" ? $("cal-grid") :
+      curView === "week" ? $("week-grid") :
+      curView === "day" ? $("day-view") : null;
+    if (!main || !el || el.hidden) return;
+    var mr = main.getBoundingClientRect(), er = el.getBoundingClientRect();
+    var title = $("day-title");
+    var peek = title ? Math.max(0, title.getBoundingClientRect().bottom - er.bottom) + 8 : 0;
+    var top = er.top - mr.top + main.scrollTop;
+    var h = Math.max(FILL_MIN, Math.floor(main.clientHeight - top - peek));
+    if (main.style.getPropertyValue("--fill-h") !== h + "px") main.style.setProperty("--fill-h", h + "px");
+    if (curView === "month") fitMonth();
+  }
+
+  function fitMonth() {
+    var boxes = $("cal-grid").querySelectorAll(".cal-evs"), i, j, items;
+    // Show everything first, then measure every cell, then hide.
+    for (i = 0; i < boxes.length; i++) {
+      items = boxes[i].querySelectorAll(".cal-ev");
+      for (j = 0; j < items.length; j++) items[j].hidden = false;
+      boxes[i].lastChild.hidden = true;
+    }
+    var fits = [];
+    for (i = 0; i < boxes.length; i++) {
+      var first = boxes[i].querySelector(".cal-ev");
+      fits.push(first ? Math.floor((boxes[i].clientHeight + 2) / (first.offsetHeight + 2)) : 0);
+    }
+    for (i = 0; i < boxes.length; i++) {
+      items = boxes[i].querySelectorAll(".cal-ev");
+      if (fits[i] >= items.length) continue;
+      var show = Math.max(0, fits[i] - 1);
+      for (j = show; j < items.length; j++) items[j].hidden = true;
+      boxes[i].lastChild.textContent = "+" + (items.length - show);
+      boxes[i].lastChild.hidden = false;
+    }
+  }
+  if (window.ResizeObserver) {
+    var fillQueued = false;
+    var fillRo = new ResizeObserver(function () {
+      if (fillQueued) return;
+      fillQueued = true;
+      requestAnimationFrame(function () { fillQueued = false; fillHeight(); });
+    });
+    ["cmain", "cal-top", "view-bar", "lbl-bar"].forEach(function (id) { if ($(id)) fillRo.observe($(id)); });
+  } else {
+    window.addEventListener("resize", fillHeight);
   }
 
   // View switcher + search wiring (guarded — stale HTML cannot crash)
