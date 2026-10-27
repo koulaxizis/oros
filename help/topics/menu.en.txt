@@ -56,6 +56,8 @@ You can open the bar without opening orOS first:
 - **Installed web app (Android, Windows, Linux):** right-click or long-press the orOS icon and choose `Add or search`.
 - **Windows and Linux (orOS installed with Setup.exe, AppImage or .deb):** the orOS icon in the system tray opens a small window with the bar. [[Ctrl+Alt+Shift+Space]] opens it on Windows. The tray menu can start orOS with the computer; it is off until you turn it on.
 
+When you open the Quick window from outside orOS (the phone or the tray) with nothing typed, `Today` shows your overdue tasks and what is on today, from the [Today](app:today) summary and the apps it covers (up to five), with `All of today` to open the full summary.
+
 Escape in the small tray window closes it. Nothing you type there leaves your device; the screen lock still asks first.
 
 ## Choose which apps the menu shows
