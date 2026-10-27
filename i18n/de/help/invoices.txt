@@ -30,6 +30,16 @@ Eine Quittung wird meist sofort bezahlt: Lass beim Ausstellen `Jetzt bezahlt` an
 - Eine `Gutschrift` korrigiert eine Rechnung, die du ausgestellt hast: Wähle sie unter `Korrigiert`.
 - Eine erfasste Rechnung (`Anderswo ausgestellte Rechnung erfassen`) speichert Nummer, Netto- und MwSt.-Beträge und die ΜΑΡΚ einer Rechnung, die in myDATA oder bei deinem Anbieter ausgestellt wurde. `Anhängen` legt ihr offizielles PDF auf der orOS-Disk ab, unter Invoices. Zahlungen und Status funktionieren wie bei jeder Rechnung.
 
+## Rechnungs-PDFs importieren (Novus / timologisi.online)
+Wenn du Rechnungen in Novus (timologisi.online) oder bei einem anderen Anbieter ausstellst, musst du sie nicht noch einmal abtippen: `Neu` › `Rechnungs-PDFs importieren` und eine oder mehrere PDFs wählen (oder die PDFs auf Rechnungen ziehen). Von jeder PDF wird nur der Text gelesen; nichts aus der Datei wird je ausgeführt.
+- Zu jeder PDF siehst du Nummer, Kunde, Datum, Zahlbetrag und Fälligkeit. Hake an, was du willst, und tippe auf `Importieren`. Vorher wird nichts gespeichert.
+- Jede Rechnung wird zu einer `Anderswo ausgestellte Rechnung erfassen` mit Netto, USt., Quellensteuer (die Abzüge der PDF), ΜΑΡΚ und den Positionen in den Notizen. Die PDF selbst bleibt als offizielle Datei im Ordner Invoices.
+- Der Kunde wird über die Steuernummer (ΑΦΜ) gefunden. Gibt es ihn nicht, wird ein neuer Kunde aus der PDF angelegt, verknüpft mit dem Partner im [CRM](app:crm) mit derselben ΑΦΜ.
+- Fällig ist die Rechnung am Rechnungsdatum plus den Zahlungstagen in den `Einstellungen` (standardmäßig 30). Eine bar oder mit Karte bezahlte Rechnung kommt schon bezahlt an.
+- Eine PDF, die du schon importiert hast (gleiche ΜΑΡΚ), steht als `Schon vorhanden` da und kommt nie doppelt, auch nicht auf einem anderen Gerät.
+- Eine Rechnung, die ein anderes Unternehmen an dich ausgestellt hat, wird zur `Eingangsrechnung`. Damit das erkannt wird, trage deine ΑΦΜ in den `Einstellungen` ein.
+- Ein ⚠ heißt, dass die Beträge der PDF nicht zueinander passen: diese Rechnung wird nicht für dich angehakt, prüfe sie zuerst. Eine PDF, die nicht gelesen werden konnte (zum Beispiel ein Scan), oder eine Gutschrift öffnest du mit `Von Hand erfassen`, mit allem, was gefunden wurde, schon ausgefüllt.
+
 ## Eingangsrechnungen
 Der Tab `Eingang` sammelt die Rechnungen, die dir deine Lieferanten schicken: so siehst du, was du wem bis wann schuldest. `Neu` › `Eingangsrechnung erfassen` (oder `+ Eingangsrechnung` im Tab) fragt nach dem Lieferanten, seiner Steuernummer (ΑΦΜ), der Rechnungsnummer, dem Datum, dem Zahlungsziel und den Beträgen netto und USt. Wenn du [CRM](help:a/crm) nutzt, wähle unter `Partner im CRM` den Eintrag des Lieferanten: die Rechnung erscheint dann auf der Karte dieses Partners (eine Eingangsrechnung ohne Partner erscheint auf der Karte mit derselben Steuernummer). Öffne sie, um eine Zahlung zu erfassen, sie als bezahlt zu markieren, sie zu bearbeiten oder zu löschen. Eingangsrechnungen zählen nie zu deinen Einnahmen, zur USt., zur Übersicht oder zu myDATA: sie halten nur fest, was du schuldest. Eine noch offene erscheint ein paar Tage vor dem Zahlungsziel in [Heute](app:today).
 

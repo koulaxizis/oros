@@ -2377,6 +2377,9 @@
     item(t("new.pro"), t("new.proHint"), function () { newDoc("pro"); });
     item(t("new.cred"), t("new.credHint"), function () { newDoc("cred"); });
     item(t("new.ext"), t("new.extHint"), function () { newDoc("ext"); });
+    if (window.OrosInvoicesPdfIn && window.OrosInvoicesPdfIn.importFiles) {
+      item(pdfInText("pi.new"), pdfInText("pi.newHint"), pickPdfs);
+    }
     item(t("new.bill"), t("new.billHint"), function () { billDialog(null); });
     var tpls = liveList("tpls");
     if (tpls.length) item(t("new.tpl"), t("new.tplHint", { n: tpls.length }), templatePicker);
@@ -3630,6 +3633,106 @@
       pdfBlob: pdfBlob, pdfName: pdfName
     });
   }
+  // ---------- Import invoice PDFs (pdfin.js: Novus / timologisi.online and others) ----------
+  function pdfInText(k) { return window.OrosInvoicesPdfIn.text({ lang: LANG }, k); }
+  function pdfInApi() {
+    return {
+      lang: LANG, core: C, el: el, btn: btn, toast: showToast, makeDialog: makeDialog, openDialog: openDialog,
+      fs: orosFS, data: function () { return data; }, money: money, howName: howName,
+      loadCrm: function (done) {   // CRM partners, to link a new client by its ΑΦΜ (BR-CRM-INV)
+        var raw = readOther("oros-crm-data", "cust");
+        if (!raw) { done([]); return; }
+        loadCrmCore(function (K) {
+          var out = [];
+          try { if (K && K.customersForBilling) out = K.customersForBilling(K.norm(raw)); } catch (e) { out = []; }
+          done(out || []);
+        });
+      },
+      put: putImported, byHand: importByHand
+    };
+  }
+  function pickPdfs() {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = ".pdf,application/pdf";
+    inp.multiple = true;
+    inp.style.display = "none";
+    inp.addEventListener("change", function () {
+      var files = inp.files ? Array.prototype.slice.call(inp.files) : [];
+      inp.remove();
+      if (files.length) window.OrosInvoicesPdfIn.importFiles(pdfInApi(), files);
+    });
+    inp.addEventListener("cancel", function () { inp.remove(); });
+    document.body.appendChild(inp);
+    inp.click();
+  }
+  // One save for the whole import: new clients, records (with their
+  // payment when the PDF says cash / card) and received invoices.
+  function putImported(rows) {
+    var n = 0;
+    rows.forEach(function (r) {
+      if (r.client) {
+        var oc = C.anyId(data.clients, r.client.id);
+        if (!oc || oc.del) { r.client.m = stamp(oc ? oc.m : 0); replaceIn(data.clients, r.client); }
+      }
+      if (r.doc) {
+        var od = C.anyId(data.docs, r.doc.id);
+        if (od && !od.del) return;
+        r.doc.m = stamp(od ? od.m : 0);
+        replaceIn(data.docs, C.normDoc(r.doc));
+        if (r.pay && !C.anyId(data.pays, r.pay.id)) { r.pay.m = stamp(0); replaceIn(data.pays, r.pay); }
+        n++;
+      } else if (r.bill) {
+        var ob = C.anyId(billList(), r.bill.id);
+        if (ob && !ob.del) return;
+        r.bill.m = stamp(ob ? ob.m : 0);
+        replaceIn(billList(), r.bill);
+        n++;
+      }
+    });
+    if (!n) return;
+    saveNow();
+    renderAll();
+    var one = rows.filter(function (r) { return r.doc; });
+    setTab(one.length || !rows.some(function (r) { return r.bill; }) ? "docs" : "bills");
+  }
+  // A PDF that could not be read (or a credit note): the record editor,
+  // with what was found filled in and the PDF attached.
+  function importByHand(p, file) {
+    var go = function (path) {
+      newDoc("ext", function (x) {
+        if (path) x.file = path;
+        if (!p) return;
+        x.num = C.cleanText(p.num, C.LIM.num);
+        if (C.validDay(p.date)) { x.date = p.date; x.due = data.prof.days ? C.addDays(p.date, data.prof.days) : ""; }
+        x.mark = C.cleanText(p.mark, C.LIM.mark);
+        if (isFinite(p.net)) x.xnet = p.net;
+        if (isFinite(p.vat)) x.xvat = p.vat;
+        var cl = C.matchClient(data, { afm: p.party.afm, name: p.party.name });
+        if (cl) { x.cli = cl.id; x.c = C.partyOfClient(cl); x.crm = cl.crm || ""; }
+      });
+      ed.dirty = true;
+      shelter();
+    };
+    var fs = orosFS();
+    if (!fs || !file) { go(""); return; }
+    var path = "/internal/Invoices/" + (String(file.name || "invoice").replace(/\.pdf$/i, "")
+      .replace(/[\\\/:*?\x22<>|\u0000-\u001f.]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "invoice") + ".pdf";
+    fs.write(path, file).then(function () { go(path); }, function () { go(""); });
+  }
+  // PDFs dropped on the app are imported the same way
+  document.addEventListener("dragover", function (e) {
+    if (!window.OrosInvoicesPdfIn || !e.dataTransfer || Array.prototype.indexOf.call(e.dataTransfer.types || [], "Files") < 0) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  });
+  document.addEventListener("drop", function (e) {
+    if (!window.OrosInvoicesPdfIn || !e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    if (document.querySelector("dialog[open]") || (view === "edit" && ed && ed.dirty)) return;
+    window.OrosInvoicesPdfIn.importFiles(pdfInApi(), e.dataTransfer.files);
+  });
+
   function paysHead() { return [t("pay.date"), t("ed.num"), t("c.title"), t("pay.amt"), t("ed.cur"), t("pay.how"), t("pay.note")]; }
   function docsHead() {
     return [t("ed.num"), t("ed.kind"), t("dash.range"), t("ed.date"), t("ed.due"), t("c.title"), t("c.afm"), t("ed.cur"),
