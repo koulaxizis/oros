@@ -315,7 +315,7 @@ const STRINGS = {
     'io.json.desc': 'Complete slice — all tabs, settings, templates, autocorrect.',
     'io.busy': 'Preparing…',
     'io.pickFile': 'Choose a file',
-    'io.pickFileSub': 'Supported: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.pickFileSub': 'Supported: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD, PDF',
     'io.impOpts': 'How to import?',
     'io.impNew': 'New tab (recommended)',
     'io.impNew.d': 'Everything lands in a fresh document.',
@@ -325,6 +325,7 @@ const STRINGS = {
     'io.impReplace.d': 'Dupes current first into Version History.',
     'io.imported': 'Imported',
     'io.importfailed': 'Could not parse this file',
+    'io.pdfNoText': 'This PDF has no text to take (a scan?). Open it in Library, or make it searchable first in Scanner & PDF.',
     'io.pickFolder': 'Open an unzipped .orosdoc folder…',
     'io.gdocs': 'From Google Docs…',
     'io.gdocsWait': 'Sign in to Google, then pick one document.',
@@ -332,7 +333,7 @@ const STRINGS = {
     'io.dbConfirm': 'Merge this Writer backup? Its documents, templates and settings come back; documents that exist only here are kept.',
     'io.dbKept': 'Backup merged. {n} document(s) differed: the newer text is kept, the other copy is in Version history.',
     'io.ddTitle': 'Drop to open',
-    'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD, PDF',
     'io.metaLabel': 'Riding along:',
     'io.naming': 'Exports take document title, falls back to untitled.',
     'io.pickFirst': 'Pick a file first',
@@ -673,7 +674,7 @@ const STRINGS = {
     'io.json.desc': 'Πλήρες slice — όλα τα tabs, ρυθμίσεις, πρότυπα, διορθώσεις.',
     'io.busy': 'Προετοιμασία…',
     'io.pickFile': 'Επιλογή αρχείου',
-    'io.pickFileSub': 'Υποστηρίζονται: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.pickFileSub': 'Υποστηρίζονται: OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD, PDF',
     'io.impOpts': 'Πώς να γίνει η εισαγωγή;',
     'io.impNew': 'Νέο tab (συνιστάται)',
     'io.impNew.d': 'Όλα καταλήγουν σε νέο έγγραφο.',
@@ -683,6 +684,7 @@ const STRINGS = {
     'io.impReplace.d': 'Το τρέχον αποθηκεύεται πρώτα στο Ιστορικό εκδόσεων.',
     'io.imported': 'Εισήχθη',
     'io.importfailed': 'Δεν ήταν δυνατή η ανάγνωση του αρχείου',
+    'io.pdfNoText': 'Αυτό το PDF δεν έχει κείμενο να πάρω (σάρωση;). Άνοιξέ το στη Βιβλιοθήκη ή κάν’ το πρώτα αναζητήσιμο στον Σαρωτή & PDF.',
     'io.pickFolder': 'Άνοιγμα αποσυμπιεσμένου φακέλου .orosdoc…',
     'io.gdocs': 'Από το Google Docs…',
     'io.gdocsWait': 'Συνδέσου στη Google και διάλεξε ένα έγγραφο.',
@@ -690,7 +692,7 @@ const STRINGS = {
     'io.dbConfirm': 'Συγχώνευση αυτού του αντιγράφου ασφαλείας; Τα έγγραφα, τα πρότυπα και οι ρυθμίσεις του επανέρχονται· όσα έγγραφα υπάρχουν μόνο εδώ διατηρούνται.',
     'io.dbKept': 'Το αντίγραφο συγχωνεύτηκε. {n} έγγραφα διέφεραν: κρατήθηκε το νεότερο κείμενο και το άλλο αντίγραφο μπήκε στο Ιστορικό εκδόσεων.',
     'io.ddTitle': 'Άφησε το αρχείο για άνοιγμα',
-    'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD',
+    'io.ddSub': 'OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD, PDF',
     'io.metaLabel': 'Συνοδεύουν:',
     'io.naming': 'Η εξαγωγή παίρνει τον τίτλο του εγγράφου, αλλιώς «Χωρίς τίτλο».',
     'io.pickFirst': 'Επίλεξε πρώτα ένα αρχείο',
@@ -2283,6 +2285,9 @@ function bindShortcuts() {
 // system's "Open with" (shell fileopen.js), taken once from the shell.
 // { newDoc: { title?, text } }: Typewriter's "Send to Writer", a NEW
 // document from plain text (paragraphs split on blank lines).
+// { newDoc: { title?, text, md: true } }: the Assistant's document card
+// (WR-FMT): the text is Markdown, read like an imported .md file
+// (headings, bold, italic, lists, {.center} / {.right} / {.justify}).
 // { newDoc: { title?, rows } }: "Send to an app" with a table
 // (Spreadsheet, BR-SEND): a NEW document holding that table, row 1 as
 // the heading row; every cell is plain text.
@@ -2315,8 +2320,13 @@ function openSearchTarget(t) {
   if (t && t.newDoc && typeof t.newDoc === 'object' && typeof t.newDoc.text === 'string') {
     const text = t.newDoc.text.slice(0, NEWDOC_MAX);
     if (!text.trim()) return;
-    const p = ioParseTxt(text);
     const title = typeof t.newDoc.title === 'string' ? t.newDoc.title.replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+    if (t.newDoc.md === true) {
+      const md = WriterIO.parseTextOf(text, 'md');
+      ioApplyImport(Object.assign(md, { title: title || md.title }), 'new');
+      return;
+    }
+    const p = ioParseTxt(text);
     createDoc({ title: title || p.title, html: p.html });
     return;
   }
@@ -7108,7 +7118,6 @@ function ioBuildPdf(doc, html) {
 /* ===== SECTION 24: WAVE 5 — IMPORT (parsers + dialog + apply) ===== */
 
 /* ----- RTF parser (scanner, unicode-aware, lossy formatting) ----- */
-function ioParseRtf(raw) { return WriterIO.parseRtf(raw); }
 
 /* ----- Sanitizer (all imports) — runs in an INERT document: no
    browsing context → no image loads, no handlers fire while parsing.
@@ -7134,6 +7143,7 @@ function ioParseOrosObj(obj) { return WriterIO.parseOrosObj(obj); }
 function ioParseFile(file) {
   const extTop = (file.name.split('.').pop() || '').toLowerCase();
   if (extTop === 'docx' || extTop === 'odt') return ioParseZipDoc(file, extTop);
+  if (extTop === 'pdf') return ioParsePdf(file);
   if (extTop === 'orosdoc' && window.OrosBundle) {
     return file.slice(0, 4).arrayBuffer().then(head => {
       if (OrosBundle.sniff(new Uint8Array(head)) === null) return ioParseText(file);
@@ -7368,7 +7378,7 @@ function openImportDialog(prefile) {
   pick.className = 'file-pick-btn';
   pick.style.marginTop = '8px';
   pick.innerHTML = ICONS.import + ' ' + esc(t('io.pickFile')) +
-    '<input type="file" accept=".orosdoc,.docx,.odt,.rtf,.html,.htm,.txt,.md,.markdown,.json">';
+    '<input type="file" accept=".orosdoc,.docx,.odt,.rtf,.html,.htm,.txt,.md,.markdown,.json,.pdf">';
   const inp = pick.querySelector('input');
   body.appendChild(pick);
 
@@ -7457,7 +7467,7 @@ function openImportDialog(prefile) {
         pick.style.display = '';
         folder.style.display = '';
         inp.value = '';
-        showToast(err && err.code === 'newer' ? t('io.newer') : t('io.importfailed'));
+        showToast(err && err.code === 'newer' ? t('io.newer') : err && err.code === 'notext' ? t('io.pdfNoText') : t('io.importfailed'));
       });
   }
 
@@ -7474,7 +7484,7 @@ function openImportDialog(prefile) {
     if (!host) return;
     e.preventDefault();
     e.stopPropagation();
-    host.openFile('.orosdoc,.docx,.odt,.rtf,.html,.htm,.txt,.md,.markdown,.json')
+    host.openFile('.orosdoc,.docx,.odt,.rtf,.html,.htm,.txt,.md,.markdown,.json,.pdf')
       .then(function (file) {
         if (file) ioPickDropped(file);   // cancel → silent exit
       });
@@ -7537,12 +7547,11 @@ function openImportDialog(prefile) {
 //
 // No libraries: the ZIP central directory is walked by hand and
 // deflated entries expand via the native DecompressionStream
-// ('deflate-raw'). DOCX → word/document.xml, ODT → content.xml.
-// Formatting import is deliberately conservative: headings,
-// bold/italic/underline/strike/superscript, tables, line breaks.
-// Word list numbering lives in numbering.xml — imported as plain
-// paragraphs for now (possible future wave). Known conservative
-// read: w:b w:val="0" inside a run is ignored (rare in practice).
+// ('deflate-raw'). DOCX → word/document.xml (+ styles.xml,
+// numbering.xml), ODT → content.xml (+ styles.xml). Kept: headings
+// (style or outline level), bold/italic/underline/strike/superscript,
+// alignment, numbered and bulleted lists with their start, tables,
+// line breaks (WR-FMT, io.js).
 
 /* ----- Entry point for DOCX / ODT (ZIP reader + parsers: io.js) ----- */
 function ioParseZipDoc(file, ext) {
@@ -7555,6 +7564,12 @@ function ioParseZipDoc(file, ext) {
         fr.readAsArrayBuffer(file);
       }));
   return readAb.then(buf => WriterIO.parseZipBuf(buf, ext));
+}
+
+/* ----- Entry point for PDF (text layer → paragraphs: pdfin.js) ----- */
+function ioParsePdf(file) {
+  if (!window.WriterPdfIn) return Promise.reject(new Error('pdfin.js is not loaded'));
+  return file.arrayBuffer().then(buf => WriterPdfIn.open(buf));
 }
 
 /* ----- DRAG & DROP (overlay rides on .rich-wrapper — the
@@ -7609,7 +7624,7 @@ function ioWireDragDrop() {
 // fileopen.js): known types go through the full import dialog.
 function ioOpenFile(f) {
   const ext = (f.name.split('.').pop() || '').toLowerCase();
-  if (['orosdoc','json','docx','odt','rtf','html','htm','txt','md','markdown']
+  if (['orosdoc','json','docx','odt','rtf','html','htm','txt','md','markdown','pdf']
       .indexOf(ext) === -1) {
     showToast(t('io.importfailed'));
     return;

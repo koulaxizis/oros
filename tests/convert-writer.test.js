@@ -28,7 +28,7 @@ test("contract: OrosConvert.writer shape, deps on disk, loading boots nothing", 
   assert.equal(CV.to, ".orosdoc");
   assert.equal(CV.mime, "application/x-oros-doc");
   assert.equal(CV.mime, B.TYPES[".orosdoc"].mime);
-  assert.deepEqual(CV.from, [".docx", ".odt", ".rtf", ".html", ".htm", ".md", ".markdown", ".txt"]);
+  assert.deepEqual(CV.from, [".docx", ".odt", ".rtf", ".html", ".htm", ".md", ".markdown", ".txt", ".pdf"]);
   assert.equal(typeof CV.convert, "function");
   CV.deps.forEach((d) => assert.ok(fs.existsSync(path.join(ROOT, d)), d));
   assert.ok(CV.deps.indexOf("writer/track.js") < CV.deps.indexOf("writer/io.js"));
@@ -43,7 +43,7 @@ test("contract: OrosConvert.writer shape, deps on disk, loading boots nothing", 
 });
 
 test("errors: unsupported, toobig, bad", async () => {
-  const e1 = await CV.convert({ name: "a.pdf", size: 10 }).catch((e) => e);
+  const e1 = await CV.convert({ name: "a.doc", size: 10 }).catch((e) => e);
   assert.equal(e1.code, "unsupported");
   const e2 = await CV.convert({ name: "orosdoc.orosdoc", size: 10 }).catch((e) => e);
   assert.equal(e2.code, "unsupported", "an .orosdoc needs no converting");
@@ -82,7 +82,7 @@ test("io.js without a DOM: RTF, TXT and the JSON .orosdoc parse", () => {
   const r = IO.parseTextOf("{\\rtf1\\ansi\\ansicpg1253{\\fonttbl{\\f0 Arial;}}Hello \\b bold\\b0\\par Caf\\'e9 \\u915?\\u949?\\par}", "rtf");
   assert.equal(r.kind, "doc");
   assert.equal(r.title, "Hello bold");
-  assert.equal(r.html, "<p>Hello bold</p><p>Cafι Γε</p>", "\\ansicpg1253: byte 0xE9 is ι");
+  assert.equal(r.html, "<p>Hello <strong>bold</strong></p><p>Cafι Γε</p>", "\\ansicpg1253: byte 0xE9 is ι");
   const t = IO.parseTextOf("Title\n\nBody & more", "txt");
   assert.deepEqual([t.title, t.html], ["Title", "<p>Title</p><p>Body &amp; more</p>"]);
   const o = IO.parseTextOf(JSON.stringify({ orosWriter: true, doc: { title: "T", html: "<p>x</p>", tags: ["a"] } }), "orosdoc");
@@ -179,9 +179,83 @@ function chromium() {
   try {
     const exe = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
     const pw = require("/opt/node22/lib/node_modules/playwright");
-    return fs.existsSync(exe) ? { pw, exe } : null;
+    if (fs.existsSync(exe)) return { pw, exe };
+    const own = pw.chromium.executablePath();
+    return own && fs.existsSync(own) ? { pw, exe: own } : null;
   } catch (e) { return null; }
 }
+
+// A one-page PDF in Helvetica / Helvetica-Bold: lines [font, size, x, y (from the top), text]
+function pdf(lines) {
+  const esc = (t) => t.replace(/[\\()]/g, (c) => "\\" + c);
+  const stream = lines.map(([f, size, x, y, t]) => "BT /" + f + " " + size + " Tf " + x + " " + (842 - y) + " Td (" + esc(t) + ") Tj ET").join("\n");
+  const objs = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+    "<< /Length " + stream.length + " >>\nstream\n" + stream + "\nendstream"
+  ];
+  let out = "%PDF-1.4\n";
+  const offs = objs.map((o, i) => { const at = out.length; out += (i + 1) + " 0 obj\n" + o + "\nendobj\n"; return at; });
+  const xref = out.length;
+  out += "xref\n0 " + (objs.length + 1) + "\n0000000000 65535 f \n" + offs.map((o) => String(o).padStart(10, "0") + " 00000 n \n").join("");
+  out += "trailer\n<< /Size " + (objs.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n";
+  return Buffer.from(out, "latin1");
+}
+const PDF = pdf([
+  ["F2", 22, 72, 80, "Agreement"],
+  ["F1", 11, 72, 120, "The parties agree to the "], ["F2", 11, 199, 120, "terms"], ["F1", 11, 231, 120, " below."],
+  ["F1", 11, 72, 150, "1. First term."],
+  ["F1", 11, 72, 166, "2. Second term."],
+  ["F1", 9, 290, 810, "1"]
+]);
+// A DOCX from a Greek Word: style ids "1" / "a" with English names in styles.xml
+const DOCX_EL = zip([
+  ["[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>'],
+  ["word/styles.xml", '<?xml version="1.0"?><w:styles ' + 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"' + '>' +
+    '<w:style w:type="paragraph" w:default="1" w:styleId="a"><w:name w:val="Normal"/><w:pPr><w:jc w:val="both"/></w:pPr></w:style>' +
+    '<w:style w:type="paragraph" w:styleId="1"><w:name w:val="heading 1"/><w:basedOn w:val="a"/><w:rPr><w:b/></w:rPr></w:style>' +
+    '<w:style w:type="character" w:styleId="Strong1"><w:name w:val="Strong"/><w:rPr><w:b/></w:rPr></w:style></w:styles>', true],
+  ["word/numbering.xml", '<?xml version="1.0"?><w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    '<w:abstractNum w:abstractNumId="0"><w:lvl w:ilvl="0"><w:start w:val="3"/><w:numFmt w:val="lowerLetter"/></w:lvl></w:abstractNum>' +
+    '<w:num w:numId="7"><w:abstractNumId w:val="0"/></w:num></w:numbering>', true],
+  ["word/document.xml", '<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' +
+    '<w:p><w:pPr><w:pStyle w:val="1"/><w:jc w:val="center"/></w:pPr><w:r><w:t>Σύμβαση</w:t></w:r></w:p>' +
+    '<w:p><w:r><w:t xml:space="preserve">Κείμενο </w:t></w:r><w:r><w:rPr><w:rStyle w:val="Strong1"/></w:rPr><w:t>έντονο</w:t></w:r></w:p>' +
+    '<w:p><w:pPr><w:jc w:val="right"/></w:pPr><w:r><w:t>Δεξιά</w:t></w:r></w:p>' +
+    '<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="7"/></w:numPr><w:jc w:val="left"/></w:pPr><w:r><w:t>γ</w:t></w:r></w:p>' +
+    '<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:t>μέση</w:t></w:r></w:p>' +
+    '<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="7"/></w:numPr><w:jc w:val="left"/></w:pPr><w:r><w:t>δ</w:t></w:r></w:p>' +
+    '</w:body></w:document>', true]
+]);
+const ODT_NUM = zip([
+  ["mimetype", "application/vnd.oasis.opendocument.text"],
+  ["styles.xml", '<?xml version="1.0"?><office:document-styles xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" ' +
+    'xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" ' +
+    'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"><office:styles>' +
+    '<style:style style:name="Title" style:family="paragraph"><style:paragraph-properties fo:text-align="center"/></style:style>' +
+    '<text:list-style style:name="Numbering_20_123"><text:list-level-style-number text:level="1" style:num-format="1"/></text:list-style>' +
+    '</office:styles></office:document-styles>', true],
+  ["content.xml", '<?xml version="1.0" encoding="UTF-8"?><office:document-content xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" ' +
+    'xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" ' +
+    'xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"><office:automatic-styles>' +
+    '<style:style style:name="P1" style:family="paragraph" style:parent-style-name="Title"><style:text-properties fo:font-weight="bold"/></style:style>' +
+    '<style:style style:name="P2" style:family="paragraph"><style:paragraph-properties fo:text-align="justify"/></style:style>' +
+    '</office:automatic-styles><office:body><office:text>' +
+    '<text:p text:style-name="P1">Centred</text:p><text:p text:style-name="P2">Justified</text:p>' +
+    '<text:list text:style-name="Numbering_20_123"><text:list-item><text:p>one</text:p></text:list-item><text:list-item><text:p>two</text:p></text:list-item></text:list>' +
+    '<text:p>between</text:p>' +
+    '<text:list text:style-name="Numbering_20_123" text:continue-numbering="true"><text:list-item><text:p>three</text:p></text:list-item></text:list>' +
+    '</office:text></office:body></office:document-content>', true]
+]);
+const RTF_LIST = "{\\rtf1\\ansi{\\stylesheet{\\s0 Normal;}{\\s1\\outlinelevel0 heading 1;}}" +
+  "{\\*\\listtable{\\list\\listtemplateid1{\\listlevel\\levelnfc4\\levelstartat1{\\leveltext\\'02\\'00.;}}\\listid5}}" +
+  "{\\*\\listoverridetable{\\listoverride\\listid5\\ls1}}" +
+  "\\pard\\s1\\qc Title\\par\\pard\\qj Body \\i it\\i0\\par" +
+  "\\pard\\ls1\\ilvl0{\\listtext a.\\tab}One\\par\\pard\\ls1\\ilvl0{\\listtext b.\\tab}Two\\par" +
+  "\\pard{\\pntext 1.\\tab}Old style\\par}";
 const CH = chromium();
 
 test("Chromium: every format converts, reads back as Writer's bundle", { skip: CH ? false : "Playwright / Chromium not installed", timeout: 90000 }, async () => {
@@ -206,7 +280,9 @@ test("Chromium: every format converts, reads back as Writer's bundle", { skip: C
     const inputs = [
       ["Report.docx", DOCX], ["Odt file.odt", ODT], ["Notes.md", Buffer.from(MD)], ["Page.htm", Buffer.from(HTML)],
       ["plain.txt", Buffer.from("Short\n\nΚείμενο & more")], ["old.rtf", Buffer.from("{\\rtf1\\ansi Hello \\b there\\b0\\par}")],
-      ["empty.txt", Buffer.from("")], ["broken.docx", Buffer.from("not a zip")]
+      ["empty.txt", Buffer.from("")], ["broken.docx", Buffer.from("not a zip")],
+      ["Agreement.pdf", PDF], ["greek.docx", DOCX_EL], ["numbers.odt", ODT_NUM], ["list.rtf", Buffer.from(RTF_LIST)],
+      ["scan.pdf", pdf([])]
     ];
     const out = await page.evaluate(async (inputs) => {
       const res = {};
@@ -260,10 +336,29 @@ test("Chromium: every format converts, reads back as Writer's bundle", { skip: C
 
     assert.equal(out["plain.txt"].content.doc.html, "<p>Short</p><p>Κείμενο &amp; more</p>");
     assert.equal(out["plain.txt"].meta.language, "el");
-    assert.equal(out["old.rtf"].content.doc.html, "<p>Hello there</p>");
-    assert.match(out["old.rtf"].warnings[0], /^RTF/);
+    assert.equal(out["old.rtf"].content.doc.html, "<p>Hello <strong>there</strong></p>");
+    assert.match(out["old.rtf"].warnings[0], /^RTF: tables/);
     assert.deepEqual(out["empty.txt"].warnings, ["The file has no text."]);
     assert.equal(out["broken.docx"].code, "bad");
+    const pd = out["Agreement.pdf"];
+    assert.equal(pd.name, "Agreement.orosdoc");
+    assert.equal(pd.content.doc.title, "Agreement");
+    assert.equal(pd.content.doc.html, "<h1>Agreement</h1><p>The parties agree to the <strong>terms</strong> below.</p><ol><li>First term.</li><li>Second term.</li></ol>",
+      "the page number is left out");
+    assert.match(pd.warnings[0], /^PDF:/);
+    assert.equal(out["scan.pdf"].code, "bad", "no text layer");
+
+    assert.equal(out["greek.docx"].content.doc.html,
+      '<h1 style="text-align:center">Σύμβαση</h1><p style="text-align:justify">Κείμενο <strong>έντονο</strong></p>' +
+      '<p style="text-align:right">Δεξιά</p><ol start="3" style="list-style-type:lower-alpha"><li>γ</li></ol><p>μέση</p>' +
+      '<ol start="4" style="list-style-type:lower-alpha"><li>δ</li></ol>');
+    assert.equal(out["numbers.odt"].content.doc.html,
+      '<p style="text-align:center"><strong>Centred</strong></p><p style="text-align:justify">Justified</p>' +
+      '<ol><li>one</li><li>two</li></ol><p>between</p><ol start="3"><li>three</li></ol>');
+    assert.equal(out["list.rtf"].content.doc.html,
+      '<h1 style="text-align:center">Title</h1><p style="text-align:justify">Body <em>it</em></p>' +
+      '<ol style="list-style-type:lower-alpha"><li>One</li><li>Two</li></ol><ol><li>Old style</li></ol>');
+
     Object.keys(out).forEach((k) => assert.deepEqual(out[k].problems || [], [], k + ": bundle reads clean"));
     assert.deepEqual(errors, []);
   } finally {

@@ -50,7 +50,7 @@ Schreib einfach los; alles speichert sich von selbst.
 ## Importieren und exportieren
 - `Exportieren` speichert das Dokument als reinen Text, Markdown, HTML, RTF, Word (.docx), PDF oder als orOS-Texteditor-Datei (.orosdoc, die Bilder, Fußnoten, Kommentare und Metadaten behält). Eine .orosdoc ist eine offene ZIP-Datei: Entpacke sie und du findest `content.json` (das Dokument), `media` (seine Bilder) und `preview/document.html`, das sich in jedem Browser öffnet. `Datenbank (JSON)` speichert alle deine Dokumente, Vorlagen und Einstellungen.
 - Das PDF behält Überschriften, fett, kursiv, unterstrichen, durchgestrichen, Links, Ausrichtung, Listen, Zitate, Code, Tabellen und Bilder und nutzt Papierformat, Ränder, Kopf- und Fußzeile aus den `Seiteneinstellungen`, mit Seitenzahlen.
-- `Importieren` öffnet OROSDOC-, DOCX-, ODT-, RTF-, HTML-, TXT- und MD-Dateien. Du wählst `Neuer Tab (empfohlen)`, `An aktuelles anhängen` oder `Aktuelles ersetzen`. Du kannst eine Datei auch auf den Texteditor ziehen. `Entpackten .orosdoc-Ordner öffnen…` holt eine entpackte .orosdoc zurück, auch wenn du darin ein Bild geändert hast.
+- `Importieren` öffnet OROSDOC-, DOCX-, ODT-, RTF-, HTML-, TXT-, MD- und PDF-Dateien, mit ihren Überschriften, Fett, Kursiv, Unterstreichung, Ausrichtung, Listen und Nummerierung (eine nummerierte Liste zählt dort weiter, wo sie aufgehört hat, in 1, a, A, i oder α). Du wählst `Neuer Tab (empfohlen)`, `An aktuelles anhängen` oder `Aktuelles ersetzen`. Du kannst eine Datei auch auf den Texteditor ziehen. `Entpackten .orosdoc-Ordner öffnen…` holt eine entpackte .orosdoc zurück, auch wenn du darin ein Bild geändert hast.
 - `Aus Google Docs…` im selben Dialog meldet dich bei Google an, lässt dich ein Dokument in Google Drive wählen (ein Google-Dokument oder dort eine DOCX-, ODT-, RTF-, TXT-, MD- oder HTML-Datei) und holt es auf dieselbe Weise herein; ein Google-Dokument kommt als DOCX. orOS sieht nur diese Datei, und die Anmeldung endet gleich danach.
 - In [Schreibmaschine](app:typewriter) öffnet `An Texteditor senden` eine Seite hier als neues Dokument.
 - Eine `Datenbank (JSON)`-Datei zu importieren führt sie zusammen. Dokumente, die es nur hier gibt, bleiben erhalten, und wenn ein Dokument abweicht, kommt der ältere Text in den `Versionsverlauf`.
@@ -72,7 +72,8 @@ Mit der [orOS-Synchronisierung](help:t/sync) erreichen deine Dokumente (Text, Fu
 
 ## Grenzen
 - Ändern zwei Geräte den Text desselben Dokuments vor dem Synchronisieren, gewinnt der neuere Text.
-- Der RTF-Import übernimmt nur den Text.
+- Ein PDF enthält keine Absätze oder Formatvorlagen, also leitet der Texteditor sie aus der Seite ab: größere Buchstaben werden Überschriften, eine kurze Zeile ganz in Fett eine kleinere Überschrift, und Zeilen bis zum Rand ein Absatz. Wiederholte Kopf- und Fußzeilen und Seitenzahlen bleiben weg. Bilder und Tabellen aus einem PDF kommen nicht mit, und ein gescanntes PDF (Bilder von Seiten, ohne Text) lässt sich nicht öffnen: Mach es zuerst in [Scanner & PDF](app:scanpdf) durchsuchbar. Vergleiche das Ergebnis mit dem PDF.
+- Tabellen aus RTF und PDF kommen als reiner Text.
 - Tabellenwerkzeuge (Zeilen und Spalten hinzufügen oder löschen, die Kopfzeile) lassen sich nicht mit Rückgängig zurücknehmen.
 - Der Satzfokus braucht einen aktuellen Browser; ältere heben stattdessen den ganzen Absatz hervor.
 - In einem PDF werden fette und kursive Buchstaben außerhalb des lateinischen und griechischen Alphabets (zum Beispiel Kyrillisch) in der normalen Schrift gezeichnet, fett mit verstärkter Linie; verbundene Tabellenzellen werden als einzelne Zellen gezeichnet; ein Bild von einer anderen Website erscheint eventuell nur als Platzhalter.

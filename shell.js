@@ -3591,6 +3591,12 @@
       return JSON.parse(JSON.stringify(groups || []));
     });
   };
+  // The Assistant's attached files (AS-ATT-MEM): base64, text read on
+  // the device and PDF page counts, kept here in memory while orOS is
+  // open, so an app opened from the Assistant (it takes the Assistant's
+  // frame) does not lose them. Never stored, synced or exported; gone
+  // when the tab closes. assistant.js owns what goes in.
+  window.orosAssistAtt = { mem: {}, text: {}, pages: {} };
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };

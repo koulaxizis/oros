@@ -142,11 +142,11 @@
       "att.what": "A photo, a PDF or a document (Word, LibreOffice, Excel, PowerPoint, RTF, e-book, web page, vCard, e-mail, text): a receipt, a business card, a form, a list. Up to {n} per message.",
       "att.docs": "Documents are read on this device: only their text goes to {name}, never the file.",
       "att.whatImg": "A photo (JPEG, PNG, WebP, GIF): a receipt, a business card, a poster. Up to {n} per message.",
-      "att.hint": "The file goes only to {name}, only when you press Send. Large photos are made smaller first. Files are not kept with the conversation: once you leave the Assistant they can't be sent again.",
+      "att.hint": "The file goes only to {name}, only when you press Send. Large photos are made smaller first. Files are kept only in this tab's memory while orOS is open: they are never saved or synced, and are gone when you close orOS.",
       "att.device": "From this device…", "att.disk": "From the orOS disk…", "att.diskTitle": "Photos, PDFs and documents on the orOS disk",
       "att.up": "Up one folder", "att.loading": "Loading…", "att.empty": "No photos, PDFs or documents here.", "att.reading": "Reading the file…",
       "att.goes": "Goes to {name} when you send · {size}", "att.remove": "Remove {name}",
-      "att.gone": "not kept", "att.goneTip": "The file was only kept while the Assistant was open; it is not sent again.",
+      "att.gone": "not kept", "att.goneTip": "The file was only kept while orOS was open; it is not sent again.",
       "att.err.none": "{name} can't read files here. Claude, ChatGPT, Gemini, Mistral and OpenRouter can.",
       "att.err.type": "That kind of file can't be read here. Photos, PDFs and documents (Word, LibreOffice, Excel, PowerPoint, RTF, e-books, web pages, vCards, e-mails, text) can.",
       "att.err.photo": "This device can't open that kind of photo. Save it as JPEG or PNG and attach it again.",
@@ -200,6 +200,8 @@
       "entry.quote": "New quote · {app}", "entry.sheet": "New sheet · {app}",
       "entry.slides": "New presentation · {app}", "entry.bookmark": "New bookmark · {app}", "entry.note": "New note · {app}",
       "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
+      "file.head": "Attached file · {app}", "file.hint": "{app} opens the file as it is, with its formatting, and asks whether to make a new document.",
+      "file.gone": "The file is no longer here: attach it again to open it.",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
       "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text", "nl.checkHead": "Ready to send? · {app}", "nl.checkHint": "Opens the issue's check in {app}: what is missing, and when all is well, the send screen. You press Send there.", "nl.checkOpen": "Open the check",
       "nl.k.products": "Products", "nl.k.shop_products": "From your shop", "nl.shopN": "the newest {n}, read from the shop when added", "nl.shopQ": "the newest {n} named \u201c{q}\u201d, read from the shop when added",
@@ -483,11 +485,11 @@
       "att.what": "Μια φωτογραφία, ένα PDF ή ένα έγγραφο (Word, LibreOffice, Excel, PowerPoint, RTF, e-book, ιστοσελίδα, vCard, email, κείμενο): απόδειξη, κάρτα επαγγελματία, φόρμα, λίστα. Έως {n} ανά μήνυμα.",
       "att.docs": "Τα έγγραφα διαβάζονται σε αυτή τη συσκευή: στο {name} πηγαίνει μόνο το κείμενό τους, ποτέ το αρχείο.",
       "att.whatImg": "Μια φωτογραφία (JPEG, PNG, WebP, GIF): απόδειξη, κάρτα επαγγελματία, αφίσα. Έως {n} ανά μήνυμα.",
-      "att.hint": "Το αρχείο πηγαίνει μόνο στο {name}, μόνο όταν πατήσεις Αποστολή. Οι μεγάλες φωτογραφίες μικραίνουν πρώτα. Τα αρχεία δεν κρατιούνται με τη συζήτηση: όταν βγεις από τον Βοηθό δεν ξαναστέλνονται.",
+      "att.hint": "Το αρχείο πηγαίνει μόνο στο {name}, μόνο όταν πατήσεις Αποστολή. Οι μεγάλες φωτογραφίες μικραίνουν πρώτα. Τα αρχεία μένουν μόνο στη μνήμη αυτής της καρτέλας όσο είναι ανοιχτό το orOS: δεν αποθηκεύονται ούτε συγχρονίζονται, και χάνονται όταν κλείσεις το orOS.",
       "att.device": "Από αυτή τη συσκευή…", "att.disk": "Από τον δίσκο του orOS…", "att.diskTitle": "Φωτογραφίες, PDF και έγγραφα στον δίσκο του orOS",
       "att.up": "Έναν φάκελο πάνω", "att.loading": "Φόρτωση…", "att.empty": "Δεν υπάρχουν φωτογραφίες, PDF ή έγγραφα εδώ.", "att.reading": "Διαβάζεται το αρχείο…",
       "att.goes": "Πηγαίνει στο {name} με την αποστολή · {size}", "att.remove": "Αφαίρεση: {name}",
-      "att.gone": "δεν κρατήθηκε", "att.goneTip": "Το αρχείο κρατήθηκε μόνο όσο ήταν ανοιχτός ο Βοηθός· δεν ξαναστέλνεται.",
+      "att.gone": "δεν κρατήθηκε", "att.goneTip": "Το αρχείο κρατήθηκε μόνο όσο ήταν ανοιχτό το orOS· δεν ξαναστέλνεται.",
       "att.err.none": "Το {name} δεν διαβάζει αρχεία εδώ. Το κάνουν τα Claude, ChatGPT, Gemini, Mistral και OpenRouter.",
       "att.err.type": "Αυτό το είδος αρχείου δεν διαβάζεται εδώ. Διαβάζονται φωτογραφίες, PDF και έγγραφα (Word, LibreOffice, Excel, PowerPoint, RTF, e-book, ιστοσελίδες, vCard, email, κείμενο).",
       "att.err.photo": "Αυτή η συσκευή δεν ανοίγει αυτό το είδος φωτογραφίας. Αποθήκευσέ τη ως JPEG ή PNG και επισύναψέ τη ξανά.",
@@ -541,6 +543,8 @@
       "entry.quote": "Νέα προσφορά · {app}", "entry.sheet": "Νέο φύλλο · {app}",
       "entry.slides": "Νέα παρουσίαση · {app}", "entry.bookmark": "Νέος σελιδοδείκτης · {app}", "entry.note": "Νέα σημείωση · {app}",
       "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
+      "file.head": "Συνημμένο αρχείο · {app}", "file.hint": "Ανοίγει στην εφαρμογή {app} όπως είναι, με τη μορφοποίησή του, και θα ερωτηθείς αν θα γίνει νέο έγγραφο.",
+      "file.gone": "Το αρχείο δεν είναι πια εδώ: επισύναψέ το ξανά για να ανοίξει.",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
       "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο", "nl.checkHead": "Έτοιμο για αποστολή; · {app}", "nl.checkHint": "Ανοίγει τον έλεγχο του τεύχους ({app}): τι λείπει και, όταν όλα είναι εντάξει, την οθόνη αποστολής. Το Αποστολή το πατάς εσύ εκεί.", "nl.checkOpen": "Άνοιγμα ελέγχου",
       "nl.k.products": "Προϊόντα", "nl.k.shop_products": "Από το κατάστημά σου", "nl.shopN": "τα {n} νεότερα, από το κατάστημα τη στιγμή της προσθήκης", "nl.shopQ": "τα {n} νεότερα με «{q}», από το κατάστημα τη στιγμή της προσθήκης",
@@ -1637,7 +1641,20 @@
   // the Assistant is open and goes to the provider only with the user's
   // own Send (core.js section 3b). Never stored, synced or exported.
   var pending = [];        // [{ id, name, type, size }] for the next message
-  var attMem = {};         // id → base64, this session only
+  // The files themselves live in the shell window's memory (shell.js
+  // orosAssistAtt, AS-ATT-MEM) while orOS is open, so an app opened from
+  // a card (it takes this frame's place) does not lose them; never
+  // stored or synced, gone when the tab closes. A frame without the
+  // shell keeps them itself.
+  var attStore = (function () {
+    try {
+      var p = shell(), st = p && p.orosAssistAtt;
+      if (st && st.mem && st.text && st.pages) return st;
+    } catch (e) {}
+    return { mem: {}, text: {}, pages: {} };
+  })();
+  var attMem = attStore.mem;   // id → base64
+  var ATT_KEEP = 400 * 1024 * 1024;   // base64 characters kept in all; the oldest go first
   var attOrig = {};        // id → the photo as picked (full size, for a book cover), this session only
   var ORIG_MAX = 40 * 1024 * 1024;
   var attBusy = 0;         // files being read
@@ -1768,6 +1785,7 @@
         attMem[a.id] = b64;
         if (C.attKind(type) === "img" && blob.size <= ORIG_MAX) attOrig[a.id] = blob;
         pending.push(a);
+        attTrim();
       });
     }).catch(function (e) {
       showToast(e && e.shown ? e.shown : t("att.err.read"));
@@ -1779,6 +1797,18 @@
   function addFiles(list) {
     var files = Array.prototype.slice.call(list || []);
     return files.reduce(function (p, f) { return p.then(function () { return addBlob(f.name, f); }); }, Promise.resolve());
+  }
+  // Past ATT_KEEP the oldest files (not the ones waiting to go) are
+  // dropped; their chips then say "not kept".
+  function attTrim() {
+    var ids = Object.keys(attMem), total = 0, wait = {};
+    pending.forEach(function (a) { wait[a.id] = 1; });
+    ids.forEach(function (id) { total += attMem[id].length; });
+    for (var i = 0; i < ids.length && total > ATT_KEEP; i++) {
+      if (wait[ids[i]]) continue;
+      total -= attMem[ids[i]].length;
+      delete attMem[ids[i]]; delete attText[ids[i]]; delete attPages[ids[i]]; delete attOrig[ids[i]];
+    }
   }
   function removeAtt(id) {
     pending = pending.filter(function (a) { return a.id !== id; });
@@ -1933,12 +1963,12 @@
   // Tesseract (English + Greek), both from orOS's own vendor/ folder.
   // Only that text goes out (core.js attTextBlock); it stays in memory
   // like the file. A PDF without a text layer is read page by page.
-  var attText = {};        // id → text read on the device ("" = none found)
+  var attText = attStore.text;    // id → text read on the device ("" = none found)
   var PDF_SRC = "../vendor/pdfjs/pdf.min.js", PDF_WORKER = "../vendor/pdfjs/pdf.worker.min.js";
   var OCR_BASE = "../vendor/tesseract/";
   var READ_PAGES = 40, OCR_PAGES = 5;
   var pdfjsP = null, ocrP = null, ocrW = null;
-  var attPages = {};       // id → a PDF's page count (0 = couldn't count), for a service with a page limit
+  var attPages = attStore.pages;  // id → a PDF's page count (0 = couldn't count), for a service with a page limit
   function needsText(a) {
     if (typeof attText[a.id] === "string" || !attMem[a.id]) return false;
     var caps = C.attCaps(curProv(), provConf(curProv()));
@@ -2227,10 +2257,11 @@
     var wmode = webMode(pid);
     var acts = builtin ? [] : actionKinds();
     var hiOn = !builtin && !data.set.chat && apps.length > 0;
+    var fileOn = !builtin && !!installed().writer;
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -2246,6 +2277,7 @@
       newsletter: nlOn,
       cover: cvOn,
       files: builtin ? "" : "pdf",
+      openFile: fileOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
@@ -2412,6 +2444,7 @@
     }
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
+    if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
@@ -2497,6 +2530,39 @@
       content: "Shown to the user as a card. They will open it in the app and save it themselves, or dismiss it. It is not saved yet.",
       ui: { k: "entry", args: JSON.parse(JSON.stringify(args)), st: "" }
     };
+  }
+
+  // open_file (WR-FMT): an attached file, opened as it is in Writer's
+  // Open. The conversation's files, newest first, with whether this tab
+  // still has them; the card's button hands the file to the shell.
+  function chatFiles(c) {
+    var out = [], seen = {};
+    (c && Array.isArray(c.msgs) ? c.msgs : []).slice().reverse().forEach(function (m) {
+      if (!m || m.r !== "user" || !Array.isArray(m.att)) return;
+      m.att.forEach(function (raw) {
+        var a = C.normAtt(raw);
+        if (!a || seen[a.id]) return;
+        seen[a.id] = 1;
+        out.push({ id: a.id, name: a.name, type: a.type, size: a.size, kept: !!attMem[a.id] });
+      });
+    });
+    return out;
+  }
+  function proposeOpenFile(c, args) {
+    if (!installed().writer) return { content: "Error: Writer is not installed.", err: 1, ui: { k: "fileErr" } };
+    var f = C.normOpenFile(args, chatFiles(c));
+    if (!f.ok) return { content: "Error: " + f.err, err: 1, ui: { k: "fileErr" } };
+    return {
+      content: "Shown to the user as a card. They will open \u201c" + f.name + "\u201d in Writer themselves (Writer asks whether to make a new document), or dismiss it. Nothing is open yet.",
+      ui: { k: "file", app: f.app, id: f.id, name: f.name, st: "" }
+    };
+  }
+  function runOpenFile(ui) {
+    var p = shell(), b64 = attMem[ui.id];
+    if (!b64 || !p || !p.orosFileOpen || typeof p.orosFileOpen.openIn !== "function") return false;
+    try {
+      return p.orosFileOpen.openIn(ui.app, new File([b64Bytes(b64)], String(ui.name || "file"))) !== false;
+    } catch (e) { return false; }
   }
 
   // propose_automation (wave A3, recipes/share.js): checked now
@@ -4663,6 +4729,8 @@
         var ui = r.ui || {};
         if (ui.k === "entry") { drawEntry(host, r, c); return; }
         if (ui.k === "entryErr") return;
+        if (ui.k === "file") { drawFile(host, r, c); return; }
+        if (ui.k === "fileErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
@@ -4822,6 +4890,42 @@
         ui.st = "opened";
         saveChat(c).then(function () {
           if (!runEntry(e)) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // A file card (open_file): the name and app come from the stored
+  // result; the file itself only from this tab's memory.
+  function drawFile(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!C.OPEN_FILE_APPS[ui.app] || !have[ui.app]) {
+      host.appendChild(el("div", "tool-line", t("entry.gone", { app: have[ui.app] || ui.app || "?" })));
+      return;
+    }
+    var name = have[ui.app];
+    var card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("file.head", { app: name })));
+    card.appendChild(el("p", "entry-title", String(ui.name || "")));
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else if (!attMem[ui.id]) {
+      card.appendChild(el("p", "entry-state err", t("file.gone")));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("file.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("entry.open", { app: name }), "primary", function () {
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          if (!runOpenFile(ui)) { ui.st = "failed"; saveChat(c); }
           renderMessages();
         });
       }));

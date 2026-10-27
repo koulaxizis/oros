@@ -50,7 +50,7 @@ Just start typing; everything saves by itself.
 ## Import and export
 - `Export` saves the document as plain text, Markdown, HTML, RTF, Word (.docx), PDF or an orOS Writer file (.orosdoc, which keeps pictures, footnotes, comments and metadata). An .orosdoc is an open ZIP file: unzip it and you find `content.json` (the document), `media` (its pictures) and `preview/document.html`, which opens in any browser. `Database (JSON)` saves all your documents, templates and settings.
 - The PDF keeps headings, bold, italic, underline, strikethrough, links, alignment, lists, quotes, code, tables and images, and uses the paper size, margins, header and footer from `Page settings`, with page numbers.
-- `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT and MD files. You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer. `Open an unzipped .orosdoc folder…` brings back a .orosdoc that was unzipped, even after you changed a picture in it.
+- `Import` opens OROSDOC, DOCX, ODT, RTF, HTML, TXT, MD and PDF files, with their headings, bold, italic, underline, alignment, lists and numbering (a numbered list goes on from where it stopped, in 1, a, A, i or α). You choose `New tab (recommended)`, `Append to current` or `Replace current`. You can also drop a file onto Writer. `Open an unzipped .orosdoc folder…` brings back a .orosdoc that was unzipped, even after you changed a picture in it.
 - `From Google Docs…` in the same dialog signs in to Google, lets you pick one document in Google Drive (a Google Doc, or a DOCX, ODT, RTF, TXT, MD or HTML file there) and brings it in the same way; a Google Doc comes as DOCX. orOS sees only that file, and the sign-in ends right after.
 - From [Typewriter](app:typewriter), `Send to Writer` opens a page here as a new document.
 - Importing a `Database (JSON)` file merges it. Documents that exist only here are kept, and if a document differs, the older text goes into `Version history`.
@@ -72,7 +72,8 @@ With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versio
 
 ## Limits
 - If two devices change the text of the same document before syncing, the newer text wins.
-- RTF import brings in text only.
+- A PDF has no paragraphs or styles inside, so Writer works them out from the page: bigger letters become headings, a short line all in bold a smaller heading, and lines that reach the edge one paragraph. Repeated page headers, footers and page numbers are left out. Pictures and tables in a PDF are not brought in, and a scanned PDF (pictures of pages, no text) can't be opened: make it searchable first in [Scanner & PDF](app:scanpdf). Check the result against the PDF.
+- RTF and PDF tables come as plain text.
 - Table tools (adding or deleting rows and columns, the header row) can't be undone with Undo.
 - Sentence focus needs a recent browser; older ones light the whole paragraph instead.
 - In a PDF, bold and italic letters outside Latin and Greek (for example Cyrillic) are drawn in the regular font, with bold thickened; merged table cells are drawn as single cells; an image from another website may be shown only as a placeholder.

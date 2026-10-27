@@ -153,7 +153,9 @@ test("attach: browser model and a file without data get a note, never the file",
   const b = C.browserPrompts([user("hi", [withData(IMG)])], "");
   assert.match(b.prompt, /can't read images here\.\]\nhi$/);
   const h = C.prepHistory([user("again", [IMG])], "anthropic");
-  assert.deepEqual(h, [{ r: "user", text: "[The user attached “receipt.jpg” here earlier; the file is no longer available, so it was not sent again.]\nagain" }]);
+  assert.deepEqual(h, [{ r: "user", text: "[The user attached “receipt.jpg” here earlier and you read it then, but the file is no longer available, so it was not sent again: " +
+    "you cannot read, check or quote it now. What you wrote about it earlier stands. If the user asks for something that needs the file again, " +
+    "say at the start of your reply that it is no longer available and ask them to attach it again.]\nagain" }]);
   const r = C.buildRequest("anthropic", conf, [user("again", [IMG])], {});
   assert.equal(typeof r.body.messages[0].content, "string");
 });

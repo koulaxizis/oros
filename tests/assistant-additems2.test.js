@@ -258,7 +258,7 @@ test("propose_entry wiki_article, document, mind_map: the receivers' targets; lo
   assert.deepEqual(w.call, { fn: "openAt", args: ["wiki", { addArticle: { t: "Olive trees", x: "## Care\nWater **little**." } }] });
   assert.match(entry({ kind: "wiki_article", text: "x" }).err, /needs a title/);
   const d = entry({ kind: "document", title: "Letter", text: "Dear Ann,\n\nThanks." });
-  assert.deepEqual(d.call.args, ["writer", { newDoc: { title: "Letter", text: "Dear Ann,\n\nThanks." } }]);
+  assert.deepEqual(d.call.args, ["writer", { newDoc: { title: "Letter", text: "Dear Ann,\n\nThanks.", md: true } }]);
   assert.match(entry({ kind: "document", title: "x", text: "a".repeat(500001) }).err, /keeps 500000/);
   const m = entry({ kind: "mind_map", title: "Book launch", outline: "Posts\n  Mastodon\nPress" });
   assert.deepEqual(m.call.args, ["mindmap", { pasteText: { text: "Book launch\n  Posts\n    Mastodon\n  Press" } }]);
