@@ -8523,6 +8523,6 @@ Live TV through iptv-org, `hls.js` vendored, sync slice `oros-television-data`. 
 
 ### 2026-10-27 — CI hygiene: job timeouts, artifact retention, tests.yml concurrency (#644) — CI only, no APP_VERSION
 - **Changes:** `timeout-minutes` on the six jobs that had none (android build 45, bump-version bump 10, chess-puzzles pack 20, fdroid publish 15, sync-nullfx sync 15, tests sync 15; about three times the longest recent job time); `retention-days: 14` on the four `upload-artifact` steps (android `oros-drive-android`, `oros-android`, `oros-single-apps`; quality `qa-report-*`); `tests.yml` top-level concurrency `tests-<ref>`, cancelling an older run only on `pull_request`. Part VIII "Workflow limits".
-- **Decisions (Chris 2026-10-27):** CI Optimizer items only; no `cache: npm` / `npm ci`, `fetch-depth: 0` stays in quality new-apps, no `cancel-in-progress` in android.yml.
+- **Decisions (Chris 2026-10-27):** CI Optimizer items only; artifacts kept 14 days, no version bump (CI only); no `cache: npm` / `npm ci`, `fetch-depth: 0` stays in quality new-apps, no `cancel-in-progress` in android.yml.
 - **Files:** `.github/workflows/{android,bump-version,chess-puzzles,fdroid,quality,sync-nullfx,tests}.yml`, Bible.
 - **Tests:** all workflow files parse as YAML; `node --test tests/*.test.js` green; CI on the PR. Not tested: a job actually hitting its timeout, artifact expiry.
