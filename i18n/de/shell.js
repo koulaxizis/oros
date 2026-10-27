@@ -193,6 +193,7 @@ orosPack("de", "shell", {
  "cr.cage": "Zeigt orOS auf dem Live-USB im Vollbild",
  "cr.go": "Die Sprache des orOS-Portable-Starters, der Systemtaste des Live-USB und von orOS Drive",
  "cr.drive-modules": "orOS Drive: Symbol im Infobereich, Ordnerüberwachung, das Laufwerk als Ordner, Speicherung der Passphrase (THIRD-PARTY-NOTICES.txt in jedem Download)",
+ "cr.tray-modules": "orOS für Windows und Linux: das Symbol im Infobereich, das das Schnellfenster öffnet (Ordner LICENSES in jedem Download)",
  "cr.inno-setup": "Die Windows-Installer von orOS und orOS Drive",
  "cr.appimage": "Das Linux-AppImage von orOS",
  "cr.android-browser-helper": "Nur in der Android-App: öffnet orOS im Vollbild",
