@@ -307,3 +307,29 @@ test("dates and clocks leave other commands alone", () => {
   assert.equal(PD("12*3+4"), null);   // no calc engine given here
   assert.equal(P("ραντεβού αύριο 10 οδοντίατρος").kind, "event");
 });
+
+// K5: settings by words (theme, lock, notifications, quiet hours).
+test("settings by words: EN and EL, the lock only when it is on", () => {
+  const APPS3 = APPS2.concat([{ id: "settings", names: ["Settings"] }]);
+  const PS = (s, lockOn) => C.parse(s, { today: TODAY, apps: APPS3, lockOn: lockOn === true });
+  assert.equal(C.parse("σκοτεινό θέμα", { today: TODAY, apps: APPS2 }), null);   // Settings missing: no setting
+  const dd = (s, lockOn) => { const r = PS(s, lockOn); return r ? [r.kind, r.data.name, r.data.value] : null; };
+  assert.deepEqual(dd("σκοτεινό θέμα"), ["setting", "theme", "dark"]);
+  assert.deepEqual(dd("Dark mode"), ["setting", "theme", "dark"]);
+  assert.deepEqual(dd("φωτεινό θέμα"), ["setting", "theme", "light"]);
+  assert.deepEqual(dd("use light theme"), ["setting", "theme", "light"]);
+  assert.deepEqual(dd("μην ενοχλείτε"), ["setting", "notifs", false]);
+  assert.deepEqual(dd("do not disturb"), ["setting", "notifs", false]);
+  assert.deepEqual(dd("ειδοποιήσεις on"), ["setting", "notifs", true]);
+  assert.deepEqual(dd("ώρες ησυχίας on"), ["setting", "quiet", true]);
+  assert.deepEqual(dd("quiet hours off"), ["setting", "quiet", false]);
+  assert.deepEqual(dd("κλείδωμα", true), ["setting", "lock", true]);
+  assert.equal(PS("κλείδωμα"), null);          // no screen lock set up: a search
+  assert.equal(PS("dark chocolate"), null);
+  assert.deepEqual(C.call(PS("σκοτεινό θέμα"), "el"), { fn: "setting", args: ["theme", "dark"] });
+  assert.equal(C.call({ kind: "setting", data: { name: "theme", value: "blue" } }, "en"), null);
+  assert.equal(C.call({ kind: "setting", data: { name: "wipe", value: true } }, "en"), null);
+  assert.deepEqual(C.describe(PS("μην ενοχλείτε"), "el"),
+    { verb: "Ειδοποιήσεις κλειστές", detail: "Δεν εμφανίζεται ούτε κρατιέται τίποτα μέχρι να τις ανοίξεις ξανά" });
+  assert.equal(C.describe(PS("lock", true), "en").verb, "Lock orOS now");
+});

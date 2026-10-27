@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — commands/core.js (command bar, pure core, v1.2.0)
+// orOS — commands/core.js (command bar, pure core, v1.3.0)
 // One line of plain words (English and Greek, mixed freely) → one
 // action in an orOS app, on the device, without AI:
 //   "ραντεβού αύριο 10 οδοντίατρος" · "dentist fri 9:30"   → Calendar
@@ -17,6 +17,7 @@
 //   "στείλε … στο writer" · "send … to mail"                → BR-SEND receiver
 //   "12*3+4" · "√2" · "5 μίλια σε χλμ" · "100 usd to eur"   → an answer (copy)
 //   "σε 45 μέρες" · "days until 25/12" · "ώρα στο Τόκιο"     → an answer (copy, K4)
+//   "σκοτεινό θέμα" · "κλείδωμα" · "μην ενοχλείτε"          → a setting (K5)
 // Anything else → null (the caller searches as usual).
 //
 // parse(text, opts) → null | { kind, app, data }
@@ -28,7 +29,7 @@
 //            optional: without it, its kind is never returned.
 //   kind  event | todo | expense | income | note | water | open |
 //         timer | alarm | card | habit | newhabit | send | calc | convert |
-//         date | clock
+//         date | clock | setting
 //   data  the fields of that kind, already clean and capped:
 //     event   { date, title, start, end, dateEnd, location, recur }
 //     todo    { list: "tdl-groceries" | "", items: [{ text }] }
@@ -42,6 +43,7 @@
 //     calc / convert  { text: "12*3+4 = 40", answer: "40" }
 //     date    { q: add | until | since | between | weekday | week, date, from?, n?, unit? }
 //     clock   { zone, en, el, at: "HH:MM", diff (min vs here), day, here }
+//     setting { name: theme | lock | notifs | quiet, value }
 // call(cmd, lang) → { fn, args } the bridge the shell calls:
 //   __orosOpenCalendarNew (BR-W8), __orosOpenAt("todo", {addItems})
 //   (BR-TD-ADD), __orosOpenBudgetNew (BR-B1), __orosOpenAt("notes",
@@ -57,6 +59,9 @@
 //   K4: date / clock → { fn: "copy", args: [the date, the number of
 //   days, the weekday, the week or "HH:MM"] }. opts.now (ms) and
 //   opts.offset (minutes east of UTC here) fix the clock in tests.
+//   K5: setting → { fn: "setting", args: [name, value] } (the shell
+//   applies it through the same setters as Settings); "lock" only when
+//   opts.lockOn is true.
 // describe(cmd, lang) → { verb, detail, hint? } for the preview row
 //   (hint replaces "→ app" when set).
 // The text is never run and never becomes HTML. No DOM, no storage.
@@ -65,7 +70,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.2.0";
+  var VER = "1.3.0";
   var MAX_IN = 300;              // longer lines are searches, not commands
   var MAX_TITLE = 200;
   var MAX_ITEM = 300;
@@ -684,6 +689,34 @@
     var at = Date.UTC(v.year, v.month - 1, v.day, v.hour % 24, v.minute);
     return Math.round((at - Math.floor(ms / 60000) * 60000) / 60000);
   }
+  // ---------- K5: settings by words (Chris 2026-10-27) ----------
+  // "σκοτεινό θέμα" · "light mode" → theme; "κλείδωμα" · "lock" → lock
+  // now (only when the screen lock is on: opts.lockOn); "μην ενοχλείτε"
+  // · "do not disturb" → notifications off, "ειδοποιήσεις on" → on;
+  // "ώρες ησυχίας on/off" · "quiet hours on/off". Words are folded
+  // (final ς = σ). Every one is an existing switch in Settings.
+  var SET_ON = "(?:on|ανοιχτεσ|ανοιχτα|ανοιχτο|ενεργεσ|ενεργο|ναι)";
+  var SET_OFF = "(?:off|κλειστεσ|κλειστα|κλειστο|ανενεργεσ|οχι)";
+  var SETTINGS = [
+    [/^(?:(?:βαλε |αλλαξε σε )?(?:σκοτεινο|σκουρο|νυχτερινο) (?:θεμα|φοντο|mode)|σκοτεινο|dark(?: mode| theme)?|(?:switch to |use )dark(?: mode| theme)?)$/, "theme", "dark"],
+    [/^(?:(?:βαλε |αλλαξε σε )?(?:φωτεινο|ανοιχτοχρωμο|ανοιχτο) (?:θεμα|φοντο|mode)|φωτεινο|light(?: mode| theme)?|(?:switch to |use )light(?: mode| theme)?)$/, "theme", "light"],
+    [/^(?:κλειδωμα(?: οθονησ| τωρα)?|κλειδωσε(?: το oros| την οθονη| τωρα)?|lock(?: (?:the )?screen| oros| now)?)$/, "lock", true],
+    [/^(?:μην ενοχλειτε|μη με ενοχλεισ|χωρισ ειδοποιησεισ|do not disturb|dnd|(?:turn )?notifications off|(?:κλεισε|σταματα) τισ ειδοποιησεισ)$/, "notifs", false],
+    [new RegExp("^(?:ειδοποιησεισ " + SET_OFF + ")$"), "notifs", false],
+    [new RegExp("^(?:(?:turn )?notifications on|ανοιξε τισ ειδοποιησεισ|ειδοποιησεισ " + SET_ON + ")$"), "notifs", true],
+    [new RegExp("^(?:(?:ωρεσ ησυχιασ|quiet hours) " + SET_ON + "|(?:ανοιξε|ενεργοποιησε) τισ ωρεσ ησυχιασ|(?:turn on|enable) quiet hours)$"), "quiet", true],
+    [new RegExp("^(?:(?:ωρεσ ησυχιασ|quiet hours) " + SET_OFF + "|(?:κλεισε|απενεργοποιησε) τισ ωρεσ ησυχιασ|(?:turn off|disable) quiet hours)$"), "quiet", false]
+  ];
+  function parseSetting(f, o) {
+    var g = f.replace(/[.!]+$/, "").trim();
+    for (var i = 0; i < SETTINGS.length; i++) {
+      if (!SETTINGS[i][0].test(g)) continue;
+      if (SETTINGS[i][1] === "lock" && o.lockOn !== true) return null;
+      return { kind: "setting", app: "settings", data: { name: SETTINGS[i][1], value: SETTINGS[i][2] } };
+    }
+    return null;
+  }
+
   function parseClock(f, o) {
     var m = /^(?:τι\s+)?ωρα(?:\s+ειναι)?\s+(?:στη|στην|στο|στον|στα|στισ|στουσ|σε|για)\s+(.+)$/.exec(f) ||
             /^(?:what\s+)?time(?:\s+is\s+it)?\s+in\s+(.+)$/.exec(f) ||
@@ -731,6 +764,7 @@
       function () { return parseTodo(t, f); },
       function () { return parseList(t, f); },
       function () { return lead(f, W.event) >= 0 ? parseEvent(t, f, today, o.cal, true) : null; },
+      function () { return parseSetting(f, o); },
       function () { return parseDate(f, today); },
       function () { return parseClock(f, o); },
       // "100 usd σε eur": a conversion, not a 100 € expense.
@@ -816,6 +850,11 @@
       case "calc":
       case "convert":
         return typeof d.answer === "string" && d.answer ? { fn: "copy", args: [d.answer.slice(0, 200)] } : null;
+      case "setting": {
+        var ok = (d.name === "theme" && (d.value === "dark" || d.value === "light")) || (d.name === "lock" && d.value === true) ||
+                 ((d.name === "notifs" || d.name === "quiet") && typeof d.value === "boolean");
+        return ok ? { fn: "setting", args: [d.name, d.value] } : null;
+      }
       case "date":
       case "clock": {
         var a = answer(cmd, strings(lang));
@@ -848,6 +887,10 @@
           y1: "1 year", yN: "{n} years", after: "in {d}", ago: "{d} ago", until: "until {date}", since: "since {date}",
           week: "Week {n}", same: "same time as here", behind: "{h} h behind", behind1: "1 hour behind",
           ahead: "{h} h ahead", ahead1: "1 hour ahead",
+          "set.dark": "Dark theme", "set.light": "Light theme", "set.lock": "Lock orOS now",
+          "set.notifs.off": "Notifications off", "set.notifs.on": "Notifications on",
+          "set.notifs.note": "Nothing pops up or is saved until you turn them on again",
+          "set.quiet.on": "Quiet hours on", "set.quiet.off": "Quiet hours off",
           "cat.o-eat": "Eating out", "cat.o-groc": "Groceries", "cat.o-trans": "Transport", "cat.o-bills": "Bills",
           "cat.o-home": "Rent & home", "cat.o-health": "Health", "cat.o-fun": "Entertainment", "cat.o-cloth": "Clothing",
           "cat.o-gift": "Gifts", "cat.o-other": "Other", "cat.i-salary": "Salary", "cat.i-free": "Freelance",
@@ -863,6 +906,10 @@
           y1: "1 χρόνος", yN: "{n} χρόνια", after: "σε {d}", ago: "πριν από {d}", until: "ως {date}", since: "από {date}",
           week: "Εβδομάδα {n}", same: "ίδια ώρα με εδώ", behind: "{h} ώρες πίσω", behind1: "1 ώρα πίσω",
           ahead: "{h} ώρες μπροστά", ahead1: "1 ώρα μπροστά",
+          "set.dark": "Σκοτεινό θέμα", "set.light": "Φωτεινό θέμα", "set.lock": "Κλείδωμα του orOS τώρα",
+          "set.notifs.off": "Ειδοποιήσεις κλειστές", "set.notifs.on": "Ειδοποιήσεις ανοιχτές",
+          "set.notifs.note": "Δεν εμφανίζεται ούτε κρατιέται τίποτα μέχρι να τις ανοίξεις ξανά",
+          "set.quiet.on": "Ώρες ησυχίας ανοιχτές", "set.quiet.off": "Ώρες ησυχίας κλειστές",
           "cat.o-eat": "Φαγητό έξω", "cat.o-groc": "Σούπερ μάρκετ", "cat.o-trans": "Μεταφορές", "cat.o-bills": "Λογαριασμοί",
           "cat.o-home": "Ενοίκιο & σπίτι", "cat.o-health": "Υγεία", "cat.o-fun": "Ψυχαγωγία", "cat.o-cloth": "Ρούχα",
           "cat.o-gift": "Δώρα", "cat.o-other": "Άλλα", "cat.i-salary": "Μισθός", "cat.i-free": "Ελεύθερο επάγγελμα",
@@ -961,6 +1008,10 @@
       case "send": return { verb: S.send, detail: d.text.length > 80 ? d.text.slice(0, 79) + "…" : d.text };
       case "calc":
       case "convert": return { verb: d.text, detail: "", hint: S.copy };
+      case "setting": {
+        var k = d.name === "theme" ? "set." + d.value : d.name === "lock" ? "set.lock" : "set." + d.name + (d.value ? ".on" : ".off");
+        return { verb: S[k] || "", detail: d.name === "notifs" && !d.value ? S["set.notifs.note"] : "" };
+      }
       case "date":
       case "clock": return describeDate(cmd, S, lg);
     }

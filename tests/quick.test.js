@@ -115,3 +115,18 @@ test("QW the empty Quick window shows Today: the summary's own rows, read only",
   assert.match(fn, /T\.open\(r\.app, r\.target\)/);
   assert.doesNotMatch(fn, /setItem|localStorage/);
 });
+
+test("K5 a setting by words goes through Settings' own setters", () => {
+  const sh = read("shell.js");
+  assert.match(sh, /lockOn: !!\(window\.orosLock && window\.orosLock\.isOn\(\)\)/);
+  const fn = sh.slice(sh.indexOf("function cmdSetting("), sh.indexOf("function cmdMatchApps("));
+  assert.ok(fn.length > 100);
+  assert.match(fn, /setThemeUser\(value\)/);
+  assert.match(fn, /window\.orosLock\.lock\(\)/);
+  assert.match(fn, /N\.setSetting\("enabled", !!value\)/);
+  assert.match(fn, /N\.setSetting\("quietHours", next\)/);
+  assert.doesNotMatch(fn, /localStorage/);
+  for (const k of ["set.dark", "set.light", "set.lock", "set.notifs.off", "set.notifs.on", "set.notifs.note", "set.quiet.on", "set.quiet.off"]) {
+    assert.match(read("i18n/de/commands.js"), new RegExp('"' + k.replace(/\./g, "\\.") + '": "'), "de " + k);
+  }
+});
