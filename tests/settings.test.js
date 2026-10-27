@@ -241,3 +241,67 @@ test("services picker: every platform has a group, a monogram and a colour", () 
   // the old native platform list is gone
   assert.doesNotMatch(APP, /select\(plats/);
 });
+
+// Search settings (core.js FIND / findSettings, the field in the app).
+test("find: every row names a known section and real labels, with words", () => {
+  const ids = new Set();
+  C.FIND.forEach((f) => {
+    assert.ok(!ids.has(f[0]), "duplicate id " + f[0]);
+    ids.add(f[0]);
+    assert.ok(C.isSection(f[1]), f[0] + " section");
+    [f[2], f[3], f[4]].forEach((k) => { if (k) assert.ok(C.STRINGS.en[k] && C.STRINGS.el[k], f[0] + " label " + k); });
+    assert.ok(C.STRINGS.en["w." + f[0]] && C.STRINGS.el["w." + f[0]], f[0] + " words");
+    if (f[5]) assert.match(f[5], /^(app:[a-z]+|dock|seasonal|phone|push|osk|translate|install|multitask)$/, f[0] + " need");
+  });
+  // every need the core can name is answered by the app
+  assert.match(APP, /function findOk\(s, need\)/);
+  assert.equal(C.findItem("textsize")[1], "accessibility");
+  assert.equal(C.findItem("nope"), null);
+});
+
+test("find: matches labels, words in any of en/el, accents and case aside", () => {
+  const all = () => true;
+  const first = (lang, q) => (C.findSettings(lang, q, all)[0] || {}).id;
+  assert.equal(first("en", "dark"), "theme");
+  assert.equal(first("el", "ΣΚΟΤΕΙΝΟ"), "theme");
+  assert.equal(first("en", "σκοτεινό"), "theme");          // Greek words in English UI
+  assert.equal(first("el", "wallpaper"), "wallpaper");      // English words in Greek UI
+  assert.equal(first("en", "quiet"), "quiet");
+  assert.equal(first("en", "text size"), "textsize");
+  assert.equal(first("el", "μεγεθος κειμενου"), "textsize");
+  assert.equal(first("en", "sync"), "s:sync");              // a section by its name
+  assert.deepEqual(C.findSettings("en", "   ", all), []);
+  assert.deepEqual(C.findSettings("en", "zzqqxx", all), []);
+  // every word must match somewhere
+  assert.ok(C.findSettings("en", "notification sound", all).some((h) => h.id === "notif-sound"));
+  assert.ok(!C.findSettings("en", "dock zzqq", all).length);
+  // a name that starts with the query comes before words-only matches
+  const r = C.findSettings("en", "lock", all).map((h) => h.id);
+  assert.equal(r[0], "lock");
+  assert.ok(r.indexOf("lock-now") < r.indexOf("s:lock"));          // "Lock now" before "Screen lock"
+  // rows this device lacks are left out
+  assert.ok(C.findSettings("en", "dock", () => false).every((h) => !/^dock/.test(h.id)));
+  assert.ok(C.findSettings("en", "dock", all).some((h) => h.id === "dock-size"));
+  // results carry title and path as text, item only for settings
+  const h = C.findSettings("en", "dock size", all)[0];
+  assert.deepEqual(h, { id: "dock-size", section: "appearance", item: "dock-size", title: "Size", path: "Appearance › Dock" });
+});
+
+test("find: German pack has the search strings", () => {
+  const src = fs.readFileSync(path.join(ROOT, "i18n", "de", "settings.js"), "utf8");
+  const pack = JSON.parse(/^orosPack\("de", "settings", (\{[\s\S]*\})\);\s*$/.exec(src)[1]);
+  ["find", "find.clear", "find.none", "find.results"].concat(C.FIND.map((f) => "w." + f[0]))
+    .forEach((k) => assert.ok(pack[k] && pack[k].trim(), "de " + k));
+});
+
+test("find: the menu search's topics land on a setting of their section", () => {
+  P.topics.forEach((tp) => {
+    const row = C.findItem(tp[2]);
+    assert.ok(row && row[1] === tp[0], tp.join(" "));
+  });
+  const hit = P.search({ lang: "en", code: "en" })[0];
+  assert.deepEqual(hit.target, { section: "appearance", item: "theme" });
+  // the app reads { item } from a deep link, checked against FIND
+  assert.match(APP, /C\.findItem\(tg\.item\)/);
+  assert.match(APP, /C\.findItem\(target\.item\)/);
+});

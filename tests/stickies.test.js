@@ -399,3 +399,13 @@ test("host: melody chimes read Ringtone Composer read-only; sends are prefill on
   assert.ok(/__orosOpenAt\("todo", \{ addItems:/.test(h) && /__orosOpenAt\("notes", \{ add:/.test(h));
   assert.ok(!/oros-todo-data|oros-notes/.test(h), "never touches To-Do or Notes data");
 });
+
+test("host: Fold / More on a note being typed in keep it (the press does not end the edit first)", () => {
+  const h = read("stickies/host.js");
+  assert.ok(/closest\("\.sn-bar button"\)\) holdEdit\(\)/.test(h), "a press on the note's own button holds the edit");
+  assert.ok(/!editing\.hold && doc\.activeElement !== ta\) stopEdit\(\)/.test(h), "the text box's blur waits for the click");
+  assert.ok(/wasBlank && !keep &&/.test(h), "an empty new note is removed only when the edit really ends");
+  assert.ok(/if \(editing && editing\.id === id\) stopEdit\(true, true\);/.test(h), "Fold ends the edit and keeps the note");
+  const oe = h.slice(h.indexOf("function openEditor("), h.indexOf("function openEditor(") + 600);
+  assert.ok(oe.indexOf("stopEdit(false,") < oe.indexOf("var n = C.find(cur(), id);"), "More reads the note after the typed text was saved");
+});
