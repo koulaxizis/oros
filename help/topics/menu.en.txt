@@ -41,6 +41,8 @@ Type what you want to do, in English or Greek, and the first row of the search s
 - `habit reading done`: ticks today in [Habits](app:habits) (tap the day again to undo). `new habit running` opens a new habit.
 - `send hello world to writer`: hands the text or link to that app, like `Send to an app`.
 - `12*3+4`, `√2`, `5 miles to km`, `100 usd to eur`: the answer appears in the row. Press [[Enter]] to copy it.
+- `in 45 days`, `30 days ago`, `days until 25/12`, `days since 1/3/2020`, `what day is 1/1/2030`, `week number`: date answers, copied the same way.
+- `time in Tokyo`, `New York time`: the time there now and how far ahead or behind it is.
 
 In the bar, before you type, your last commands are listed; tap one to use it again. This list stays on this device only, and `Clear the list` empties it.
 

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — commands/core.js (command bar, pure core, v1.0.0)
+// orOS — commands/core.js (command bar, pure core, v1.2.0)
 // One line of plain words (English and Greek, mixed freely) → one
 // action in an orOS app, on the device, without AI:
 //   "ραντεβού αύριο 10 οδοντίατρος" · "dentist fri 9:30"   → Calendar
@@ -16,6 +16,7 @@
 //   "νέα συνήθεια …" · "new habit …"                        → Habits (form)
 //   "στείλε … στο writer" · "send … to mail"                → BR-SEND receiver
 //   "12*3+4" · "√2" · "5 μίλια σε χλμ" · "100 usd to eur"   → an answer (copy)
+//   "σε 45 μέρες" · "days until 25/12" · "ώρα στο Τόκιο"     → an answer (copy, K4)
 // Anything else → null (the caller searches as usual).
 //
 // parse(text, opts) → null | { kind, app, data }
@@ -26,7 +27,8 @@
 //            send: OrosSendCore (send/core.js) }; every engine is
 //            optional: without it, its kind is never returned.
 //   kind  event | todo | expense | income | note | water | open |
-//         timer | alarm | card | habit | newhabit | send | calc | convert
+//         timer | alarm | card | habit | newhabit | send | calc | convert |
+//         date | clock
 //   data  the fields of that kind, already clean and capped:
 //     event   { date, title, start, end, dateEnd, location, recur }
 //     todo    { list: "tdl-groceries" | "", items: [{ text }] }
@@ -38,6 +40,8 @@
 //     card    { title }                habit / newhabit   { name }
 //     send    { to, kind: "text" | "link", text }
 //     calc / convert  { text: "12*3+4 = 40", answer: "40" }
+//     date    { q: add | until | since | between | weekday | week, date, from?, n?, unit? }
+//     clock   { zone, en, el, at: "HH:MM", diff (min vs here), day, here }
 // call(cmd, lang) → { fn, args } the bridge the shell calls:
 //   __orosOpenCalendarNew (BR-W8), __orosOpenAt("todo", {addItems})
 //   (BR-TD-ADD), __orosOpenBudgetNew (BR-B1), __orosOpenAt("notes",
@@ -50,6 +54,9 @@
 //   from undo in the app, like Water); {alarm} fills Time's alarm
 //   form, {asNew} the Kanban / Habits forms; send → the BR-SEND
 //   receiver's own target; calc / convert → { fn: "copy", args: [answer] }.
+//   K4: date / clock → { fn: "copy", args: [the date, the number of
+//   days, the weekday, the week or "HH:MM"] }. opts.now (ms) and
+//   opts.offset (minutes east of UTC here) fix the clock in tests.
 // describe(cmd, lang) → { verb, detail, hint? } for the preview row
 //   (hint replaces "→ app" when set).
 // The text is never run and never becomes HTML. No DOM, no storage.
@@ -58,7 +65,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var MAX_IN = 300;              // longer lines are searches, not commands
   var MAX_TITLE = 200;
   var MAX_ITEM = 300;
@@ -469,6 +476,232 @@
                      answer: U.formatNumber(r.v, 6, "en", false) + " " + b.sym } };
   }
 
+  // ---------- K4: answers about dates and clocks (no engine, no network) ----------
+  // "σε 45 μέρες" · "in 3 weeks" · "30 days ago" · "today + 100"
+  //   → date { q: "add", date, n, unit }
+  // "μέρες ως 25/12" · "days until christmas" · "days since 1/3/2020"
+  //   → date { q: "until" | "since", date, from: today }
+  // "μέρες από 1/3 ως 15/4" · "days between 1/3 and 15/4" → date { q: "between", from, date }
+  // "τι μέρα είναι 25/12" · "what day is 1/1/2030" → date { q: "weekday", date }
+  // "ποια εβδομάδα" · "week number 25/12" → date { q: "week", date }
+  // "ώρα στη Νέα Υόρκη" · "time in tokyo" → clock { zone, place, at, diff }
+  // Dates: D/M[/Y], D.M[.Y], YYYY-MM-DD, "25 Δεκεμβρίου", "dec 25",
+  // today / tomorrow / yesterday, Christmas, New Year. A day without a
+  // year is the next one (until), the last one (since) or this year's.
+  var UNIT = "(ημερεσ|ημερα|μερεσ|μερα|days|day|εβδομαδεσ|εβδομαδα|weeks|week|μηνεσ|μηνασ|μηνα|months|month|χρονια|χρονο|ετη|ετοσ|years|year)";
+  function unitOf(w) {
+    if (/^(?:ημερ|μερ|day)/.test(w)) return "d";
+    if (/^(?:εβδομ|week)/.test(w)) return "w";
+    if (/^(?:μην|month)/.test(w)) return "m";
+    return "y";
+  }
+  var MONTHS = [["ιαν", "jan"], ["φεβ", "feb"], ["μαρ", "mar"], ["απρ", "apr"], ["μαι", "may"], ["ιουν", "jun"],
+                ["ιουλ", "jul"], ["αυγ", "aug"], ["σεπ", "sep"], ["οκτ", "oct"], ["νοε", "nov"], ["δεκ", "dec"]];
+  function monthOf(w) {
+    for (var i = 0; i < MONTHS.length; i++) {
+      if (w.indexOf(MONTHS[i][0]) === 0 || w.indexOf(MONTHS[i][1]) === 0) return i + 1;
+    }
+    return 0;
+  }
+  function ymd(y, m, d) {
+    if (y < 1 || y > 9999 || m < 1 || m > 12 || d < 1 || d > 31) return null;
+    var t = new Date(Date.UTC(y, m - 1, d));
+    t.setUTCFullYear(y);
+    if (t.getUTCMonth() !== m - 1 || t.getUTCDate() !== d) return null;   // 31/2 is no day
+    return fromDayNum(Math.round(t.getTime() / 86400000));
+  }
+  function year2(y) { return y < 100 ? 2000 + y : y; }
+  // One day in folded text → { day, y: true when the year was given } | null.
+  function dayOf(s, today) {
+    s = s.replace(/^(?:η|την|τη|στισ|το|τισ|on|the)\s+/, "").trim();
+    var t = dayNum(today), m;
+    if (/^(?:σημερα|today)$/.test(s)) return { day: today, y: true };
+    if (/^(?:αυριο|tomorrow)$/.test(s)) return { day: fromDayNum(t + 1), y: true };
+    if (/^(?:χθεσ|yesterday)$/.test(s)) return { day: fromDayNum(t - 1), y: true };
+    if (/^(?:τα\s+)?(?:χριστουγεννα|christmas)$/.test(s)) return { day: today.slice(0, 4) + "-12-25", y: false };
+    if (/^(?:η\s+|την\s+)?(?:πρωτοχρονια|new year(?:'s day)?)$/.test(s)) return { day: today.slice(0, 4) + "-01-01", y: false };
+    if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s))) {
+      var iso = ymd(+m[1], +m[2], +m[3]);
+      return iso ? { day: iso, y: true } : null;
+    }
+    var yy = +today.slice(0, 4), d = 0, mo = 0, y = 0;
+    if ((m = /^(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{4}|\d{2}))?$/.exec(s))) { d = +m[1]; mo = +m[2]; y = m[3] ? year2(+m[3]) : 0; }
+    else if ((m = /^(\d{1,2})\s+([a-zα-ω]{3,})\.?(?:\s+(\d{4}))?$/.exec(s)) && monthOf(m[2])) { d = +m[1]; mo = monthOf(m[2]); y = m[3] ? +m[3] : 0; }
+    else if ((m = /^([a-z]{3,})\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{4}))?$/.exec(s)) && monthOf(m[1])) { d = +m[2]; mo = monthOf(m[1]); y = m[3] ? +m[3] : 0; }
+    else return null;
+    var day = ymd(y || yy, mo, d);
+    if (!day && !y && mo === 2 && d === 29) day = ymd(yy + ((4 - yy % 4) % 4 || 4), 2, 29);
+    return day ? { day: day, y: !!y } : null;
+  }
+  // A day without its year: the next one from today, or the last one.
+  function nextDay(x, today) {
+    if (x.y || x.day >= today) return x.day;
+    var p = x.day.split("-");
+    return ymd(+p[0] + 1, +p[1], +p[2]) || x.day;
+  }
+  function lastDay(x, today) {
+    if (x.y || x.day <= today) return x.day;
+    var p = x.day.split("-");
+    return ymd(+p[0] - 1, +p[1], +p[2]) || x.day;
+  }
+  // today + n units; months and years end on the last day of a short month.
+  function addUnits(today, n, u) {
+    if (u === "d" || u === "w") return fromDayNum(dayNum(today) + n * (u === "w" ? 7 : 1));
+    var p = today.split("-"), y = +p[0], m = +p[1] - 1 + (u === "m" ? n : n * 12), d = +p[2];
+    y += Math.floor(m / 12); m = ((m % 12) + 12) % 12;
+    var last = new Date(Date.UTC(2000, m + 1, 0)).getUTCDate();
+    if (m === 1) last = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 29 : 28;
+    return ymd(y, m + 1, Math.min(d, last));
+  }
+  var DAYS = "(?:ημερεσ|μερεσ|days)";
+  function parseDate(f, today) {
+    var m, n, day;
+    // Offsets from today.
+    if ((m = new RegExp("^(?:σε|in|μετα απο|μετα|after)\\s+(\\d{1,5})\\s+" + UNIT + "(?:\\s+(?:απο σημερα|απο τωρα|from (?:now|today)))?$").exec(f)) ||
+        (m = new RegExp("^(\\d{1,5})\\s+" + UNIT + "\\s+(?:απο σημερα|απο τωρα|from (?:now|today)|later|αργοτερα)$").exec(f))) {
+      n = +m[1];
+      if (!n) return null;
+      day = addUnits(today, n, unitOf(m[2]));
+      return day ? { kind: "date", app: "calendar", data: { q: "add", date: day, n: n, unit: unitOf(m[2]) } } : null;
+    }
+    if ((m = new RegExp("^(?:πριν(?: απο)?|before)\\s+(\\d{1,5})\\s+" + UNIT + "$").exec(f)) ||
+        (m = new RegExp("^(\\d{1,5})\\s+" + UNIT + "\\s+(?:πριν|ago|before)$").exec(f))) {
+      n = +m[1];
+      if (!n) return null;
+      day = addUnits(today, -n, unitOf(m[2]));
+      return day ? { kind: "date", app: "calendar", data: { q: "add", date: day, n: -n, unit: unitOf(m[2]) } } : null;
+    }
+    if ((m = new RegExp("^(?:σημερα|today)\\s*([+\\-−])\\s*(\\d{1,5})(?:\\s*" + UNIT + ")?$").exec(f))) {
+      n = +m[2] * (m[1] === "+" ? 1 : -1);
+      if (!n) return null;
+      var u = m[3] ? unitOf(m[3]) : "d";
+      day = addUnits(today, n, u);
+      return day ? { kind: "date", app: "calendar", data: { q: "add", date: day, n: n, unit: u } } : null;
+    }
+    // Days between two days.
+    if ((m = new RegExp("^(?:ποσεσ\\s+|how many\\s+)?" + DAYS + "\\s+(?:απο|απ|μεταξυ|αναμεσα σε|from|between)\\s+(.+?)\\s+(?:ωσ|εωσ|μεχρι|και|to|until|till|and)\\s+(.+)$").exec(f))) {
+      var a = dayOf(m[1], today), b = dayOf(m[2], today);
+      if (a && b) {
+        var to = b.day;
+        if (!b.y && to < a.day) { var q = to.split("-"); to = ymd(+q[0] + 1, +q[1], +q[2]) || to; }
+        return { kind: "date", app: "calendar", data: { q: "between", from: a.day, date: to } };
+      }
+    }
+    // Days until / since one day.
+    if ((m = new RegExp("^(?:ποσεσ\\s+|how many\\s+)?" + DAYS + "\\s+(?:ωσ|εωσ|μεχρι|για|until|till|to|before|left until)\\s+(.+)$").exec(f)) ||
+        (m = /^(?:ποσο\s+μενει|ποσεσ\s+μερεσ\s+μενουν)\s+(?:ωσ|μεχρι|για)\s+(.+)$/.exec(f))) {
+      var x = dayOf(m[1], today);
+      if (x) return { kind: "date", app: "calendar", data: { q: "until", from: today, date: nextDay(x, today) } };
+    }
+    if ((m = new RegExp("^(?:ποσεσ\\s+|how many\\s+)?" + DAYS + "\\s+(?:απο|απ|since)\\s+(.+)$").exec(f))) {
+      var z = dayOf(m[1], today);
+      if (z) return { kind: "date", app: "calendar", data: { q: "since", from: today, date: lastDay(z, today) } };
+    }
+    // The weekday of a day.
+    if ((m = /^(?:τι|ποια)\s+μερα\s+(?:ειναι|ηταν|θα ειναι|πεφτει|επεσε|εχουμε)\s+(.+)$/.exec(f)) ||
+        (m = /^(?:what|which)\s+(?:week)?day\s+(?:is|was|will be|is it on|was it on|falls on)\s+(.+)$/.exec(f))) {
+      var w = dayOf(m[1], today);
+      if (w) return { kind: "date", app: "calendar", data: { q: "weekday", date: w.day } };
+    }
+    // The ISO week number.
+    if ((m = /^(?:(?:ποια|τι)\s+εβδομαδα(?:\s+(?:ειναι|εχουμε|του ετουσ))?|αριθμοσ εβδομαδασ|(?:what|which)\s+week(?:\s+is it)?|week number|week no\.?)(?:\s+(.+))?$/.exec(f))) {
+      var k = m[1] ? dayOf(m[1], today) : { day: today };
+      if (k) return { kind: "date", app: "calendar", data: { q: "week", date: k.day } };
+    }
+    return null;
+  }
+  // ISO 8601 week: the week of the Thursday of its Monday-to-Sunday.
+  function isoWeek(s) {
+    var n = dayNum(s), wd = ((n % 7) + 7 + 3) % 7;          // 0 = Monday
+    var thu = n - wd + 3, y = new Date(thu * 86400000).getUTCFullYear();
+    return { week: Math.floor((thu - dayNum(y + "-01-01")) / 7) + 1, mon: fromDayNum(n - wd), sun: fromDayNum(n - wd + 6) };
+  }
+
+  // Places for the clock: folded names (EN, EL) → [IANA zone, English, Greek].
+  var PLACES = [
+    ["athens|αθηνα|θεσσαλονικη|thessaloniki|greece|ελλαδα", "Europe/Athens", "Athens", "Αθήνα"],
+    ["nicosia|λευκωσια|cyprus|κυπρο|κυπροσ|limassol|λεμεσο|λεμεσοσ", "Asia/Nicosia", "Nicosia", "Λευκωσία"],
+    ["london|λονδινο|uk|αγγλια|england", "Europe/London", "London", "Λονδίνο"],
+    ["dublin|δουβλινο|ireland|ιρλανδια", "Europe/Dublin", "Dublin", "Δουβλίνο"],
+    ["lisbon|λισαβονα|portugal|πορτογαλια", "Europe/Lisbon", "Lisbon", "Λισαβόνα"],
+    ["paris|παρισι|france|γαλλια", "Europe/Paris", "Paris", "Παρίσι"],
+    ["berlin|βερολινο|munich|μοναχο|germany|γερμανια", "Europe/Berlin", "Berlin", "Βερολίνο"],
+    ["rome|ρωμη|milan|μιλανο|italy|ιταλια", "Europe/Rome", "Rome", "Ρώμη"],
+    ["madrid|μαδριτη|barcelona|βαρκελωνη|spain|ισπανια", "Europe/Madrid", "Madrid", "Μαδρίτη"],
+    ["amsterdam|αμστερνταμ|netherlands|ολλανδια", "Europe/Amsterdam", "Amsterdam", "Άμστερνταμ"],
+    ["brussels|βρυξελλεσ|belgium|βελγιο", "Europe/Brussels", "Brussels", "Βρυξέλλες"],
+    ["vienna|βιεννη|austria|αυστρια", "Europe/Vienna", "Vienna", "Βιέννη"],
+    ["zurich|ζυριχη|geneva|γενευη|switzerland|ελβετια", "Europe/Zurich", "Zurich", "Ζυρίχη"],
+    ["stockholm|στοκχολμη|sweden|σουηδια", "Europe/Stockholm", "Stockholm", "Στοκχόλμη"],
+    ["oslo|οσλο|norway|νορβηγια", "Europe/Oslo", "Oslo", "Όσλο"],
+    ["copenhagen|κοπεγχαγη|denmark|δανια", "Europe/Copenhagen", "Copenhagen", "Κοπεγχάγη"],
+    ["helsinki|ελσινκι|finland|φινλανδια", "Europe/Helsinki", "Helsinki", "Ελσίνκι"],
+    ["warsaw|βαρσοβια|poland|πολωνια", "Europe/Warsaw", "Warsaw", "Βαρσοβία"],
+    ["prague|πραγα|czechia|τσεχια", "Europe/Prague", "Prague", "Πράγα"],
+    ["budapest|βουδαπεστη|hungary|ουγγαρια", "Europe/Budapest", "Budapest", "Βουδαπέστη"],
+    ["bucharest|βουκουρεστι|romania|ρουμανια", "Europe/Bucharest", "Bucharest", "Βουκουρέστι"],
+    ["sofia|σοφια|bulgaria|βουλγαρια", "Europe/Sofia", "Sofia", "Σόφια"],
+    ["belgrade|βελιγραδι|serbia|σερβια", "Europe/Belgrade", "Belgrade", "Βελιγράδι"],
+    ["istanbul|ιστανμπουλ|κωνσταντινουπολη|turkey|τουρκια|ankara|αγκυρα", "Europe/Istanbul", "Istanbul", "Κωνσταντινούπολη"],
+    ["kyiv|kiev|κιεβο|ukraine|ουκρανια", "Europe/Kyiv", "Kyiv", "Κίεβο"],
+    ["moscow|μοσχα|russia|ρωσια", "Europe/Moscow", "Moscow", "Μόσχα"],
+    ["tel aviv|τελ αβιβ|jerusalem|ιερουσαλημ|israel|ισραηλ", "Asia/Jerusalem", "Tel Aviv", "Τελ Αβίβ"],
+    ["cairo|καιρο|egypt|αιγυπτο|αιγυπτοσ", "Africa/Cairo", "Cairo", "Κάιρο"],
+    ["johannesburg|γιοχανεσμπουργκ|cape town|κειπ ταουν|south africa|νοτια αφρικη", "Africa/Johannesburg", "Johannesburg", "Γιοχάνεσμπουργκ"],
+    ["dubai|ντουμπαι|abu dhabi|αμπου νταμπι|uae", "Asia/Dubai", "Dubai", "Ντουμπάι"],
+    ["delhi|new delhi|δελχι|νεο δελχι|mumbai|μουμπαι|india|ινδια", "Asia/Kolkata", "New Delhi", "Νέο Δελχί"],
+    ["bangkok|μπανγκοκ|thailand|ταιλανδη", "Asia/Bangkok", "Bangkok", "Μπανγκόκ"],
+    ["singapore|σιγκαπουρη", "Asia/Singapore", "Singapore", "Σιγκαπούρη"],
+    ["hong kong|χονγκ κονγκ", "Asia/Hong_Kong", "Hong Kong", "Χονγκ Κονγκ"],
+    ["beijing|πεκινο|shanghai|σαγκαη|china|κινα", "Asia/Shanghai", "Beijing", "Πεκίνο"],
+    ["seoul|σεουλ|korea|κορεα", "Asia/Seoul", "Seoul", "Σεούλ"],
+    ["tokyo|τοκιο|japan|ιαπωνια", "Asia/Tokyo", "Tokyo", "Τόκιο"],
+    ["sydney|σιδνει|australia|αυστραλια", "Australia/Sydney", "Sydney", "Σίδνεϊ"],
+    ["melbourne|μελβουρνη", "Australia/Melbourne", "Melbourne", "Μελβούρνη"],
+    ["auckland|οκλαντ|new zealand|νεα ζηλανδια", "Pacific/Auckland", "Auckland", "Όκλαντ"],
+    ["new york|νεα υορκη|ny|nyc|boston|βοστωνη|washington|ουασιγκτον|miami|μαιαμι", "America/New_York", "New York", "Νέα Υόρκη"],
+    ["toronto|τοροντο|montreal|μοντρεαλ", "America/Toronto", "Toronto", "Τορόντο"],
+    ["chicago|σικαγο", "America/Chicago", "Chicago", "Σικάγο"],
+    ["denver|ντενβερ", "America/Denver", "Denver", "Ντένβερ"],
+    ["los angeles|λοσ αντζελεσ|la|san francisco|σαν φρανσισκο|seattle|σιατλ|vancouver|βανκουβερ", "America/Los_Angeles", "Los Angeles", "Λος Άντζελες"],
+    ["mexico city|πολη του μεξικου|mexico|μεξικο", "America/Mexico_City", "Mexico City", "Πόλη του Μεξικού"],
+    ["sao paulo|σαο παολο|rio|ριο|brazil|βραζιλια", "America/Sao_Paulo", "São Paulo", "Σάο Πάολο"],
+    ["buenos aires|μπουενοσ αιρεσ|argentina|αργεντινη", "America/Argentina/Buenos_Aires", "Buenos Aires", "Μπουένος Άιρες"],
+    ["utc|gmt", "UTC", "UTC", "UTC"]
+  ];
+  function placeOf(s) {
+    for (var i = 0; i < PLACES.length; i++) {
+      if (("|" + PLACES[i][0] + "|").indexOf("|" + s + "|") >= 0) return PLACES[i];
+    }
+    return null;
+  }
+  // Minutes east of UTC of a zone at a moment (Intl, no table of rules).
+  function zoneOffset(zone, ms) {
+    var parts = new Intl.DateTimeFormat("en-US", { timeZone: zone, hourCycle: "h23", year: "numeric", month: "2-digit",
+      day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(ms));
+    var v = {};
+    parts.forEach(function (p) { v[p.type] = +p.value; });
+    var at = Date.UTC(v.year, v.month - 1, v.day, v.hour % 24, v.minute);
+    return Math.round((at - Math.floor(ms / 60000) * 60000) / 60000);
+  }
+  function parseClock(f, o) {
+    var m = /^(?:τι\s+)?ωρα(?:\s+ειναι)?\s+(?:στη|στην|στο|στον|στα|στισ|στουσ|σε|για)\s+(.+)$/.exec(f) ||
+            /^(?:what\s+)?time(?:\s+is\s+it)?\s+in\s+(.+)$/.exec(f) ||
+            /^(.+?)\s+(?:ωρα|time)$/.exec(f);
+    if (!m) return null;
+    var pl = placeOf(m[1].replace(/^(?:the)\s+/, "").replace(/[?;]+$/, "").trim());
+    if (!pl || typeof Intl === "undefined") return null;
+    var now = typeof o.now === "number" ? o.now : Date.now();
+    var off = zoneOffset(pl[1], now);
+    var here = typeof o.offset === "number" ? o.offset : -new Date(now).getTimezoneOffset();
+    var t = new Date(now + off * 60000);
+    var hh = t.getUTCHours(), mm = t.getUTCMinutes();
+    var localDay = fromDayNum(Math.floor((now + here * 60000) / 86400000));
+    return { kind: "clock", app: "time",
+             data: { zone: pl[1], en: pl[2], el: pl[3], at: (hh < 10 ? "0" : "") + hh + ":" + (mm < 10 ? "0" : "") + mm,
+                     diff: off - here, day: fromDayNum(Math.floor(t.getTime() / 86400000)), here: localDay } };
+  }
+
   function has(apps, id) {
     if (!Array.isArray(apps)) return true;    // no list given: assume yes (tests)
     for (var i = 0; i < apps.length; i++) if (apps[i] && apps[i].id === id) return true;
@@ -498,6 +731,8 @@
       function () { return parseTodo(t, f); },
       function () { return parseList(t, f); },
       function () { return lead(f, W.event) >= 0 ? parseEvent(t, f, today, o.cal, true) : null; },
+      function () { return parseDate(f, today); },
+      function () { return parseClock(f, o); },
       // "100 usd σε eur": a conversion, not a 100 € expense.
       function () { return /\s(?:to|σε|in|into)\s|→|=/.test(f) ? parseConvert(t, o.units, o.rates, lang) : null; },
       function () { return parseBareMoney(t, f, today); },
@@ -581,6 +816,11 @@
       case "calc":
       case "convert":
         return typeof d.answer === "string" && d.answer ? { fn: "copy", args: [d.answer.slice(0, 200)] } : null;
+      case "date":
+      case "clock": {
+        var a = answer(cmd, strings(lang));
+        return a ? { fn: "copy", args: [a] } : null;
+      }
     }
     return null;
   }
@@ -603,6 +843,11 @@
           timer: "Start a timer", alarm: "New alarm", daily: "every day", card: "New Kanban card", habit: "Tick a habit",
           newhabit: "New habit", send: "Send", copy: "Copy", allDay: "all day", from: "Command bar",
           wd: "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
+          wdl: "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday",
+          d1: "1 day", dN: "{n} days", w1: "1 week", wN: "{n} weeks", m1: "1 month", mN: "{n} months",
+          y1: "1 year", yN: "{n} years", after: "in {d}", ago: "{d} ago", until: "until {date}", since: "since {date}",
+          week: "Week {n}", same: "same time as here", behind: "{h} h behind", behind1: "1 hour behind",
+          ahead: "{h} h ahead", ahead1: "1 hour ahead",
           "cat.o-eat": "Eating out", "cat.o-groc": "Groceries", "cat.o-trans": "Transport", "cat.o-bills": "Bills",
           "cat.o-home": "Rent & home", "cat.o-health": "Health", "cat.o-fun": "Entertainment", "cat.o-cloth": "Clothing",
           "cat.o-gift": "Gifts", "cat.o-other": "Other", "cat.i-salary": "Salary", "cat.i-free": "Freelance",
@@ -613,6 +858,11 @@
           habit: "Τσεκάρισμα συνήθειας", newhabit: "Νέα συνήθεια", send: "Αποστολή", copy: "Αντιγραφή",
           allDay: "όλη μέρα", from: "Γραμμή εντολών",
           wd: "Κυρ,Δευ,Τρί,Τετ,Πέμ,Παρ,Σάβ",
+          wdl: "Κυριακή,Δευτέρα,Τρίτη,Τετάρτη,Πέμπτη,Παρασκευή,Σάββατο",
+          d1: "1 μέρα", dN: "{n} μέρες", w1: "1 εβδομάδα", wN: "{n} εβδομάδες", m1: "1 μήνας", mN: "{n} μήνες",
+          y1: "1 χρόνος", yN: "{n} χρόνια", after: "σε {d}", ago: "πριν από {d}", until: "ως {date}", since: "από {date}",
+          week: "Εβδομάδα {n}", same: "ίδια ώρα με εδώ", behind: "{h} ώρες πίσω", behind1: "1 ώρα πίσω",
+          ahead: "{h} ώρες μπροστά", ahead1: "1 ώρα μπροστά",
           "cat.o-eat": "Φαγητό έξω", "cat.o-groc": "Σούπερ μάρκετ", "cat.o-trans": "Μεταφορές", "cat.o-bills": "Λογαριασμοί",
           "cat.o-home": "Ενοίκιο & σπίτι", "cat.o-health": "Υγεία", "cat.o-fun": "Ψυχαγωγία", "cat.o-cloth": "Ρούχα",
           "cat.o-gift": "Δώρα", "cat.o-other": "Άλλα", "cat.i-salary": "Μισθός", "cat.i-free": "Ελεύθερο επάγγελμα",
@@ -638,6 +888,55 @@
     var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60;
     return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x;
   }
+  function dayYear(s, S) { return okDay(s) ? dayText(s, S) + "/" + (+s.slice(0, 4)) : ""; }
+  function plain(s) { var p = s.split("-"); return (+p[2]) + "/" + (+p[1]) + "/" + (+p[0]); }
+  function fill(t, k, v) { return String(t).replace("{" + k + "}", v); }
+  function amount(n, u, S) { var a = Math.abs(n); return a === 1 ? S[u + "1"] : fill(S[u + "N"], "n", a); }
+  function spanDays(d) {
+    if (!okDay(d.date) || !okDay(d.from)) return null;
+    var n = dayNum(d.date) - dayNum(d.from);
+    return d.q === "since" ? -n : d.q === "between" ? Math.abs(n) : n;
+  }
+  // The copied text of a date / clock answer (plain, no weekday).
+  function answer(cmd, S) {
+    var d = cmd.data;
+    if (cmd.kind === "clock") return /^\d{2}:\d{2}$/.test(d.at || "") ? d.at : null;
+    if (!okDay(d.date)) return null;
+    switch (d.q) {
+      case "add": return plain(d.date);
+      case "until": case "since": case "between": { var n = spanDays(d); return n == null ? null : String(n); }
+      case "weekday": return S.wdl.split(",")[((dayNum(d.date) % 7) + 7 + 4) % 7] || null;
+      case "week": return String(isoWeek(d.date).week);
+    }
+    return null;
+  }
+  function hours(min, lang) {
+    var h = Math.abs(min) / 60, t = String(Math.round(h * 100) / 100);
+    return lang === "en" ? t : t.replace(".", ",");
+  }
+  function describeDate(cmd, S, lang) {
+    var d = cmd.data, a = answer(cmd, S);
+    if (a == null) return { verb: "", detail: "" };
+    if (cmd.kind === "clock") {
+      var diff = d.diff | 0, rel = !diff ? S.same : fill(diff < 0 ? (diff === -60 ? S.behind1 : S.behind) : (diff === 60 ? S.ahead1 : S.ahead), "h", hours(diff, lang));
+      return { verb: a, detail: [lang === "el" ? d.el : d.en, rel, d.day !== d.here ? dayText(d.day, S) : ""].filter(Boolean).join(" · "), hint: S.copy };
+    }
+    switch (d.q) {
+      case "add":
+        return { verb: dayYear(d.date, S), detail: fill(d.n < 0 ? S.ago : S.after, "d", amount(d.n, d.unit, S)), hint: S.copy };
+      case "until": case "since":
+        return { verb: amount(+a, "d", S), detail: fill(d.q === "until" ? S.until : S.since, "date", dayYear(d.date, S)), hint: S.copy };
+      case "between":
+        return { verb: amount(+a, "d", S), detail: dayYear(d.from, S) + " – " + dayYear(d.date, S), hint: S.copy };
+      case "weekday":
+        return { verb: a, detail: plain(d.date), hint: S.copy };
+      case "week": {
+        var w = isoWeek(d.date);
+        return { verb: fill(S.week, "n", w.week), detail: dayText(w.mon, S) + " – " + dayText(w.sun, S), hint: S.copy };
+      }
+    }
+    return { verb: "", detail: "" };
+  }
   function describe(cmd, lang) {
     var S = strings(lang), d = cmd && cmd.data || {}, lg = lang;
     switch (cmd && cmd.kind) {
@@ -662,6 +961,8 @@
       case "send": return { verb: S.send, detail: d.text.length > 80 ? d.text.slice(0, 79) + "…" : d.text };
       case "calc":
       case "convert": return { verb: d.text, detail: "", hint: S.copy };
+      case "date":
+      case "clock": return describeDate(cmd, S, lg);
     }
     return { verb: "", detail: "" };
   }
