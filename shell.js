@@ -5,7 +5,8 @@
 //   2. Preferences (skin, language, theme, wallpaper, auto-backup)
 //   3. Language apply
 //   4. Theme apply
-//   5. Skin apply · 5b. Wallpaper · 5c. Auto-backup scheduler ·
+//   5. Skin apply · 5b. Wallpaper · 5e. Accessibility ·
+//       5c. Auto-backup scheduler ·
 //       5d. Backup folder (File System Access API)
 //   6. Clock (24h) — hosts ALL throttled engine ticks (weather,
 //       alarms, calendar/mood/cycle/todo/quote scans, notifs sweep)
@@ -32,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "3.96.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "3.99.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -211,6 +212,7 @@
     device: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     assistant: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M13 7.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>',
     today: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="M8.5 15l2.3 2.3 4.7-4.6"/></svg>',
+    lock: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>',
     settings: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     memory: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="8.5" height="16" rx="2"/><rect x="13" y="4" width="8.5" height="16" rx="2"/><circle cx="6.75" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="17.25" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>',
     connect4: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="3.5" width="19" height="17" rx="3"/><circle cx="7.5" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="15.5" r="1.8"/><circle cx="12" cy="10.5" r="1.8" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1.8"/></svg>',
@@ -803,6 +805,159 @@
       }
     }
     return false;
+  }
+
+  // ---------- 5e. Accessibility (Settings › Accessibility) ----------
+  // Device-local (localStorage "oros-a11y", never synced): the right
+  // text size depends on the screen, and "automatic" contrast follows
+  // each device's own system setting. Three options:
+  //   size     100 | 115 | 130 | 150 (%): CSS zoom on every app frame
+  //            and on the menu's content. A zoomed frame lays its app
+  //            out like browser zoom (a narrower viewport, the same
+  //            pointer maths), so no app has to know. Capped so an app
+  //            keeps at least 320 CSS px across (WCAG 1.4.10 reflow).
+  //            The top bar and the desktop keep their size (the Dock
+  //            has its own Size).
+  //   contrast "auto" | "on" | "off": the high-contrast palette on the
+  //            shell root (style.css, data-oros-contrast). Apps copy it
+  //            with inheritPalette, which watchPalette re-runs when
+  //            data-skin is set again. "auto" = on while the system asks
+  //            for more contrast or forces its colours (Windows
+  //            high contrast).
+  //   focus    true: a strong ring on every keyboard focus, also where
+  //            an app hides its own.
+  // A11Y_CSS goes into the shell and into every same-origin app
+  // document (on load and on every change) and only acts through the
+  // data-oros-* attributes of that document's root, so nothing looks
+  // different until an option is on (forced colours excepted).
+  var A11Y_KEY = "oros-a11y";
+  var A11Y_SIZES = [100, 115, 130, 150];
+  var A11Y_MIN_W = 320;
+  var A11Y_CSS =
+    "html[data-oros-focus] :focus-visible, html[data-oros-contrast] :focus-visible {" +
+    " outline: 3px solid var(--accent, Highlight) !important; outline-offset: 2px !important; }\n" +
+    "html[data-oros-contrast] a[href] { text-decoration: underline !important; }\n" +
+    "html[data-oros-contrast] ::placeholder { color: var(--text-dim, GrayText) !important; opacity: 1 !important; }\n" +
+    "@media (forced-colors: active) {\n" +
+    " :focus-visible { outline: 3px solid Highlight !important; outline-offset: 2px !important; }\n" +
+    " [aria-checked=\"true\"], [aria-pressed=\"true\"], [aria-selected=\"true\"]," +
+    " [aria-current]:not([aria-current=\"false\"]) { outline: 2px solid Highlight; outline-offset: -2px; }\n" +
+    "}\n";
+  var a11y = a11yLoad();
+  var a11yWasHigh = null;
+
+  function a11yLoad() {
+    var v = null;
+    try { v = JSON.parse(localStorage.getItem(A11Y_KEY) || "null"); } catch (e) {}
+    v = (v && typeof v === "object") ? v : {};
+    return {
+      size: A11Y_SIZES.indexOf(v.size) !== -1 ? v.size : 100,
+      contrast: (v.contrast === "on" || v.contrast === "off") ? v.contrast : "auto",
+      focus: v.focus === true
+    };
+  }
+  function a11yMq(q) {
+    try { return !!(window.matchMedia && window.matchMedia(q).matches); } catch (e) { return false; }
+  }
+  function a11yHigh() {
+    if (a11y.contrast === "on") return true;
+    if (a11y.contrast === "off") return false;
+    return a11yMq("(prefers-contrast: more)") || a11yMq("(forced-colors: active)");
+  }
+  // The zoom in use: the chosen size, but never so large that an app
+  // is left with less than 320 CSS px across.
+  function a11yZoom() {
+    var z = a11y.size / 100, w = window.innerWidth || 0;
+    if (w > 0) z = Math.min(z, Math.max(1, w / A11Y_MIN_W));
+    return Math.round(z * 1000) / 1000;
+  }
+  function a11yAttr(el, name, value) {
+    if (value) el.setAttribute(name, value);
+    else el.removeAttribute(name);
+  }
+  function a11yMark(doc) {
+    var r = doc.documentElement;
+    if (!doc.getElementById("oros-a11y-css")) {
+      var s = doc.createElement("style");
+      s.id = "oros-a11y-css";
+      s.textContent = A11Y_CSS;
+      (doc.head || r).appendChild(s);
+    }
+    a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
+    a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
+  }
+  // One app frame. Chromium and WebKit scale a zoomed frame's page
+  // themselves; an engine that only grows the box (its page keeps the
+  // box's full width) gets the zoom on the page's own root instead.
+  function a11yFrame(f) {
+    var w, d;
+    try { w = f.contentWindow; d = f.contentDocument; } catch (e) { return; }   // not same-origin
+    if (!w || !d || !d.documentElement) return;
+    a11yMark(d);
+    var r = d.documentElement, z = a11yZoom();
+    if (r.hasAttribute("data-oros-zoom")) { r.style.removeProperty("zoom"); r.removeAttribute("data-oros-zoom"); }
+    if (z === 1) return;
+    var bw = f.getBoundingClientRect().width, iw = w.innerWidth;
+    if (bw > 0 && iw > 0 && Math.abs(bw / iw - 1) < 0.05) {
+      r.style.zoom = String(z);
+      r.setAttribute("data-oros-zoom", "1");
+    }
+  }
+  function a11yWireFrame(frame) {
+    frame.addEventListener("load", function () { a11yFrame(frame); });
+  }
+  function a11yApply() {
+    var root = document.documentElement, z = a11yZoom(), hi = a11yHigh();
+    a11yMark(document);
+    if (z !== 1) root.style.setProperty("--oros-zoom", String(z));
+    else root.style.removeProperty("--oros-zoom");
+    a11yAttr(root, "data-oros-zoom", z !== 1 ? "on" : null);
+    appFrames().forEach(a11yFrame);
+    // Open apps copy the palette again (their watchPalette observes
+    // data-skin; setting the same value still notifies).
+    if (a11yWasHigh !== null && hi !== a11yWasHigh) root.setAttribute("data-skin", state.skin);
+    a11yWasHigh = hi;
+  }
+  function a11ySetUser(name, value) {
+    if (name === "textSize") {
+      var n = Number(value);
+      if (A11Y_SIZES.indexOf(n) === -1 || n === a11y.size) return;
+      a11y.size = n;
+    } else if (name === "contrast") {
+      if (["auto", "on", "off"].indexOf(value) === -1 || value === a11y.contrast) return;
+      a11y.contrast = value;
+    } else if (name === "focusRing") {
+      if (!!value === a11y.focus) return;
+      a11y.focus = !!value;
+    } else return;
+    try { localStorage.setItem(A11Y_KEY, JSON.stringify(a11y)); }
+    catch (e) { scToast("err", window.t("a11y.savefail")); }
+    a11yApply();
+    settingsNotify();
+  }
+  function a11ySnapshot() {
+    return {
+      size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
+      high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
+      capped: a11yZoom() < a11y.size / 100
+    };
+  }
+  // The system's own contrast switch and a resize (the 320 px cap)
+  // apply at once.
+  function a11yWatch() {
+    ["(prefers-contrast: more)", "(forced-colors: active)"].forEach(function (q) {
+      var mq = window.matchMedia ? window.matchMedia(q) : null;
+      if (!mq) return;
+      var on = function () { a11yApply(); settingsNotify(); };
+      if (typeof mq.addEventListener === "function") mq.addEventListener("change", on);
+      else if (typeof mq.addListener === "function") mq.addListener(on);
+    });
+    var queued = false;
+    window.addEventListener("resize", function () {
+      if (queued || a11y.size === 100) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; a11yApply(); });
+    });
   }
 
   // ---------- 5c. Auto-backup scheduler (folder export) ----------
@@ -3655,6 +3810,7 @@
     });
   }
   appFrames().forEach(extWireFrame);
+  appFrames().forEach(a11yWireFrame);
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.
@@ -4244,6 +4400,22 @@
     });
     setRow.appendChild(setBtn);
     menu.appendChild(setRow);
+
+    // Screen lock on: lock now (lock.js), right under Settings.
+    if (window.orosLock && window.orosLock.isOn()) {
+      var lockRow = document.createElement("div");
+      lockRow.className = "install-section";
+      var lockBtn = document.createElement("button");
+      lockBtn.className = "menu-item install-row";
+      lockBtn.innerHTML = '<span class="app-ico">' + ICONS.lock + '</span>' +
+                          '<span>' + escapeHtml(window.t("menu.lock")) + '</span>';
+      lockBtn.addEventListener("click", function () {
+        closeMenu();
+        window.orosLock.lock();
+      });
+      lockRow.appendChild(lockBtn);
+      menu.appendChild(lockRow);
+    }
 
     // Device Info row (Chris 2026-10-09): where people look when
     // something is wrong — space, sync state, missing browser features.
@@ -6880,13 +7052,17 @@
     } catch (e) { return Promise.resolve(false); }
   }
 
-  function scFactoryReset(btn) {
+  // deviceOnly (screen lock, "Reset this device"): the same local
+  // wipe, but the cloud and the backup folder stay; `cloud` is then the
+  // last push of unsynced changes (lockDeviceReset).
+  function scFactoryReset(btn, deviceOnly) {
     btn.disabled = true;
     btn.textContent = window.t("sc.reset.working");
 
     // Cloud wipe (15s cap — a hanging network can never freeze the
     // reset; wipeEverything suspends the engine synchronously at call).
-    var cloud = (window.orosSync && typeof window.orosSync.wipeEverything === "function")
+    var cloud = deviceOnly ? lockLastPush()
+      : (window.orosSync && typeof window.orosSync.wipeEverything === "function")
       ? Promise.race([
           window.orosSync.wipeEverything(),
           new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
@@ -6896,7 +7072,7 @@
     // Folder wipe FIRST — it needs the oros-fs handle, which the
     // upcoming local sweep would orphan. OrosFS wipe rides along —
     // independent storage, best-effort like the rest.
-    Promise.all([wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
+    Promise.all([deviceOnly ? false : wipeFolderMirror(), wipeOrosFS(), wipeMapTiles(), wipeMontageMedia(), wipeMapPacks(), cloud]).then(function () {
       function sweep(storage) {
         var doomed = [];
         for (var i = 0; i < storage.length; i++) {
@@ -6916,6 +7092,28 @@
       localStorage.setItem("oros-reset-db", "1");
       location.reload();
     });
+  }
+
+  // Screen lock (lock.js), "Reset this device": changes this device
+  // has not synced yet go up first when sync can (connected, unlocked,
+  // 15s cap), then the engine stops and the local wipe runs. The cloud
+  // and its backups stay: connecting sync again brings everything back.
+  function lockLastPush() {
+    var S = window.orosSync;
+    var push = Promise.resolve(null);
+    if (S && S.isConnected() && S.hasPassphrase() && S.isDirty()) {
+      push = Promise.race([
+        S.push().catch(function () { return null; }),
+        new Promise(function (res) { setTimeout(function () { res(null); }, 15000); })
+      ]);
+    }
+    return push.then(function () {
+      if (S && typeof S.suspendEngine === "function") S.suspendEngine();
+    }).catch(function () { return null; });
+  }
+  function lockDeviceReset() {
+    if (osResetting) return;
+    scFactoryReset({ disabled: false, textContent: "" }, true);
   }
 
   // STAGE 2 — called from the very top of this IIFE (function
@@ -9318,6 +9516,7 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      a11y: a11ySnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       shortcuts: SC_DEFS.map(function (d) {
@@ -9350,6 +9549,9 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "textSize":
+      case "contrast":
+      case "focusRing":    a11ySetUser(name, value); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -9469,6 +9671,25 @@
     window.orosSync.onAutoSync(function (kind) { if (kind !== "start") settingsNotify(); });
   }
 
+  // Screen lock (lock.js, loaded before this file): the shell owns the
+  // device reset and the way back after the sync passphrase opened it
+  // (the lock is off then; Settings opens where a new one is set).
+  // The menu's "Lock orOS" row follows the switch.
+  if (window.orosLock && typeof window.orosLock.setHooks === "function") {
+    window.orosLock.setHooks({
+      reset: lockDeviceReset,
+      recovered: function () {
+        window.orosSettings.open("lock");
+        scToast("ok", window.t("lock.recovered"));
+      }
+    });
+    var lockWasOn = window.orosLock.isOn();
+    window.orosLock.onChange(function () {
+      var on = window.orosLock.isOn();
+      if (on !== lockWasOn) { lockWasOn = on; renderMenu(); }
+    });
+  }
+
   // ---------- 9b. Single apps (solo.js) ----------
   // "/?solo=<id>": this shell runs inside an installed single app
   // ("orOS Notes" …, /<id>/solo.html) and shows only that app. No
@@ -9547,7 +9768,8 @@
       ["solo.settings", function () { openAppById("settings"); }],
       ["solo.help", function () { openHelp(); }],
       ["solo.full", function () { window.open("/", "_blank", "noopener"); }]
-    ].forEach(function (it) {
+    ].concat(window.orosLock && window.orosLock.isOn()
+      ? [["menu.lock", function () { window.orosLock.lock(); }]] : []).forEach(function (it) {
       var b = document.createElement("button");
       b.type = "button";
       b.setAttribute("role", "menuitem");
@@ -9782,6 +10004,7 @@
     document.getElementById("oros-running").appendChild(f);
     cmdWireFrame(f);
     extWireFrame(f);
+    a11yWireFrame(f);
     return f;
   }
   function mtDrop(el) {
@@ -11649,6 +11872,8 @@
   applySkin();
   applyWallpaper();
   applyTheme();
+  a11yApply();
+  a11yWatch();
   applyLang();
   langKeepOffline();
   // Seasonal decorations (seasonal.js, a shell component like pet.js):

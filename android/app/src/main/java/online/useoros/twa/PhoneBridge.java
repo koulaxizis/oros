@@ -39,7 +39,9 @@ import java.util.concurrent.Executors;
  * them into the "orOS" account. v2: edits made on the phone in that
  * account go back to the page as {t:"changes"}. v3: reminders
  * (Reminders). v4: the Today summary for the home-screen widget
- * (Widgets). v5: Health Connect (HealthBridge).
+ * (Widgets). v5: Health Connect (HealthBridge). v7: the Calendar and
+ * To-Do widgets, and tasks ticked on the To-Do widget back to the
+ * page as {t:"ticks"} (AgendaWidgets).
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -234,7 +236,10 @@ public class PhoneBridge {
                 channelReady = true;
                 // The first message hands the page its port (phone.js).
                 // state() asks Health Connect: off the main thread.
-                io.execute(() -> send(state()));
+                io.execute(() -> {
+                    send(state());
+                    sendTicksNow();
+                });
             });
         }
 
@@ -245,6 +250,25 @@ public class PhoneBridge {
                     + message.substring(0, Math.min(120, message.length())));
             if (message.length() > MAX_MESSAGE) return;
             io.execute(() -> handle(message));
+        }
+    }
+
+    /** Tasks ticked on the To-Do widget (v7): sent on every channel
+     *  until the page answers {t:"applied", what:"ticks"}. */
+    void sendTicks() {
+        io.execute(this::sendTicksNow);
+    }
+
+    private void sendTicksNow() {
+        JSONArray items = AgendaWidgets.pending(app);
+        if (items.length() == 0) return;
+        try {
+            JSONObject o = new JSONObject();
+            o.put("t", "ticks");
+            o.put("items", items);
+            diag("widget ticks sent: " + items.length());
+            send(o);
+        } catch (JSONException ignored) {
         }
     }
 
@@ -284,6 +308,8 @@ public class PhoneBridge {
             o.put("reminders", Reminders.permission(app));
             o.put("exact", Reminders.exact(app));
             o.put("widgets", Widgets.count(app));
+            o.put("wcal", AgendaWidgets.count(app, CalendarWidget.class));
+            o.put("wtodo", AgendaWidgets.count(app, TodoWidget.class));
             o.put("health", HealthBridge.status(app));
             o.put("drive", hasDrive(app));
             o.put("app", BuildConfig.VERSION_NAME);
@@ -340,6 +366,7 @@ public class PhoneBridge {
                 case "state":
                     send(state());
                     sendChanges();
+                    sendTicksNow();
                     return;
                 case "seen":
                     seenVisible = m.optBoolean("v");
@@ -363,6 +390,12 @@ public class PhoneBridge {
                     diag("widget rows: " + (data.optJSONArray("rows") == null ? 0 : data.optJSONArray("rows").length()));
                     return;
                 }
+                case "agenda": {
+                    AgendaWidgets.save(app, m);
+                    diag("widget agenda: " + (m.optJSONArray("cal") == null ? "-" : m.optJSONArray("cal").length())
+                            + " events, " + (m.optJSONArray("todo") == null ? "-" : m.optJSONArray("todo").length()) + " tasks");
+                    return;
+                }
                 case "health": {
                     if (!HealthBridge.available(app)) throw new IllegalStateException("no Health Connect");
                     JSONObject in = HealthBridge.sync(app, m);
@@ -381,6 +414,12 @@ public class PhoneBridge {
                 case "applied": {
                     String w = m.optString("what");
                     JSONArray refs = m.optJSONArray("refs");
+                    if ("ticks".equals(w)) {
+                        AgendaWidgets.taken(app, refs);
+                        Widgets.update(app);
+                        diag("widget ticks taken: " + (refs == null ? 0 : refs.length()));
+                        return;
+                    }
                     for (int i = 0; refs != null && i < refs.length(); i++) inFlight.remove(w + ":" + refs.optString(i));
                     if ("calendar".equals(w) && granted(CALENDAR_PERMS)) {
                         new CalendarWriter(app).ack(refs);

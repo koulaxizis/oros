@@ -14,6 +14,9 @@ In the orOS Android app, [Contacts](app:contacts) and [Calendar](app:calendar) c
 
 >! Clearing this site's data in your browser settings deletes your orOS data on this device. Make sure you have a backup or sync first.
 
+### Screen lock
+On a computer other people use, turn on `Screen lock` in [Settings](app:settings): orOS then asks for a PIN or a passphrase when it starts and after the idle time you choose. It keeps people away from the screen; it does not encrypt your data on the device, so someone who can read the disk or open the browser's developer tools can still get to it.
+
 ## Encrypted sync
 Sync is optional and uses your own Dropbox account. orOS only works in its own app folder there.
 

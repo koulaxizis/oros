@@ -14,6 +14,9 @@ In der Android-App von orOS können [Kontakte](app:contacts) und [Kalender](app:
 
 >! Wenn du die Daten dieser Website in den Browsereinstellungen löschst, sind deine orOS-Daten auf diesem Gerät weg. Sorge vorher für eine Sicherung oder die Synchronisierung.
 
+### Bildschirmsperre
+Auf einem Computer, den auch andere nutzen, schalte in den [Einstellungen](app:settings) die `Bildschirmsperre` ein: orOS fragt dann beim Start und nach der gewählten Leerlaufzeit nach einer PIN oder einem Kennwort. Sie hält andere vom Bildschirm fern; deine Daten auf dem Gerät verschlüsselt sie nicht, wer also den Datenträger lesen oder die Entwicklertools des Browsers öffnen kann, kommt trotzdem an sie heran.
+
 ## Verschlüsselte Synchronisierung
 Die Synchronisierung ist freiwillig und nutzt dein eigenes Dropbox-Konto. orOS arbeitet dort nur in seinem eigenen App-Ordner.
 

@@ -101,6 +101,7 @@ function sandbox(opts) {
     },
     cmdWireFrame: () => {},
     extWireFrame: () => {},
+    a11yWireFrame: () => {},
     Date, Array, Object,
   };
   ctx.window = ctx;

@@ -1,6 +1,18 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 3.99.00
+- Settings: new Screen lock section, off until you turn it on. orOS then asks for a PIN or a passphrase when it starts, after the idle time you choose (1 to 60 minutes) and, if you like, whenever you leave the page; `Lock now` and `Lock orOS` in the menu lock it at once. Apps keep running behind the lock. Forgot it? Your sync passphrase opens it, or as a last resort `Reset this device` erases only this device and keeps your cloud data. It protects the screen, not the disk: your data on the device is not encrypted by it. The PIN stays on this device and is never synced.
+
+## Version 3.98.00
+- Android app: two new home-screen widgets. `orOS Calendar` shows your events of the next two weeks, with a button for a new event; `orOS To-Do` shows your next tasks with a date, late ones first, and you tick them right on the home screen. A tick reaches orOS as soon as it runs, and then syncs like any change; a repeating task opens To-Do so it gets its next date. Long-press the home screen, Widgets, orOS.
+
+## Version 3.97.00
+- Settings: new Accessibility section. `Text size` (100% to 150%) makes every app, Settings, Help and the menu larger; `High contrast` (Automatic, On or Off) switches orOS and the apps to black and white with one strong colour, and Automatic follows your device, for example Windows high contrast; `Always show the focus ring` marks clearly where the keyboard is. These stay on this device.
+
+## Version 3.96.01
+- Downloads page and Settings › Single apps: no more mentions of Google Play. orOS is not in any app store; Android apps come as APKs, kept up to date by F-Droid, Droid-ify or Obtainium.
+
 ## Version 3.96.00
 - Assistant: it can now start a timer, set an alarm, play a song, a radio station or a podcast episode, open something in its app, and show you the way in Maps ("25 minute timer", "wake me at 7 every day", "how do I walk to Syntagma?"). Nothing happens until you press the card. New Change history (in the conversations list, or ask "what did you change today?"): everything the Assistant added, changed or linked on this device in the last 30 days, with Undo even after you leave the Assistant.
 

@@ -3661,6 +3661,29 @@
     return !!localStorage.getItem(VAULT_KEY);
   }
 
+  // Screen lock (lock.js): "Forgot your PIN?" asks for the sync
+  // passphrase. → true / false, or null when it cannot be told here
+  // (not connected, offline, empty cloud). This device's copy first
+  // (in memory, else the device vault); otherwise the cloud blob is
+  // downloaded and decrypted with `pw` and NOTHING is applied. The
+  // session passphrase is never changed by a check.
+  function checkPassphrase(pw) {
+    if (typeof pw !== "string" || !pw) return Promise.resolve(false);
+    if (passphrase !== null) return Promise.resolve(pw === passphrase);
+    return unsealPassphrase().catch(function () { return null; }).then(function (known) {
+      if (known) return pw === known;
+      if (!isConnected()) return null;
+      return provider.blobGet().then(function (cloud) {
+        if (!cloud || !cloud.text) return null;           // an empty cloud proves nothing
+        return withPass(pw, function () { return decryptBlob(cloud.text); })
+          .then(function () { return true; }, function (err) {
+            var name = (err && err.name) || "", msg = (err && err.message) || "";
+            return (name === "OperationError" || /OperationError/.test(msg)) ? false : null;
+          });
+      });
+    }).catch(function () { return null; });
+  }
+
   function clearDevice() {
     passphrase = null;
     return clearVault();
@@ -3770,6 +3793,7 @@
     forgetPassphrase:  function () { passphrase = null; },   // session only
     clearDevice:       clearDevice,      // forget + wipe device vault
     hasDeviceVault:    hasDeviceVault,
+    checkPassphrase:   checkPassphrase,  // (pw) → true | false | null (lock.js)
 
     // App integration
     registerSlice:     registerSlice,    // (name, get, set, storageKey?, merge?)

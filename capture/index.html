@@ -2,12 +2,12 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-hobsSdr2Up7cXIw7jZNl0uQ9NRfV/M4N6BoomYGDQb0='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-J7N+ukNChW9IAGplPTjub9GAsqQMcmv8iUwufBGu/Tc='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
-  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=capture" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=capture" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Screen Capture · orOS</title>
-  <link rel="stylesheet" href="app.css?v=3.96.00">
+  <link rel="stylesheet" href="app.css?v=3.99.00">
 </head>
 <body>
 
@@ -93,9 +93,9 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=3.96.00" data-app="capture"></script>
-  <script src="core.js?v=3.96.00"></script>
-  <script src="app.js?v=3.96.00"></script>
+  <script src="../i18n.js?v=3.99.00" data-app="capture"></script>
+  <script src="core.js?v=3.99.00"></script>
+  <script src="app.js?v=3.99.00"></script>
 
 </body>
 </html>
