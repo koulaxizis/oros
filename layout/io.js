@@ -781,8 +781,11 @@
           .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "").split("\n")
           .map(function (s) { return s.replace(/\s+$/, ""); }).filter(function (s) { return s.trim(); });
         if (!lines.length) { LY.toast(t("txt.fail")); return; }
-        placeParas(lines.map(function (s) { return { ps: "ps-body", runs: [{ t: s }] }; }), null);
-        LY.toast(t("txt.done"));
+        // the body style of the document's Word mapping (LY-WD), if any
+        var wm = LY.doc.setup.ext && LY.doc.setup.ext.wmap, ps = wm && M.find(LY.doc.pstyles, wm.p) ? wm.p : "ps-body";
+        var fx = houseFix(lines.map(function (s) { return { ps: ps, runs: [{ t: s }] }; }));
+        placeParas(fx.paras, null);
+        LY.toast(t("txt.done") + fx.note);
       });
     }).then(null, function () { LY.toast(t("txt.fail")); });
   }
@@ -796,11 +799,20 @@
         var n = W.counts(list);
         if (!Object.keys(n).length) { LY.toast(t("txt.fail")); return; }
         mapDlg(W, n, function (map) {
-          placeParas(W.paras(list, map), map);
-          LY.toast(t("wd.done", { n: list.length }));
+          var fx = houseFix(W.paras(list, map));
+          placeParas(fx.paras, map);
+          LY.toast(t("wd.done", { n: list.length }) + fx.note);
         });
       });
     });
+  }
+  // a document made from a house style (LY-HS) fixes quotes, dashes,
+  // ellipses and spaces as its rules say; words never change
+  function houseFix(paras) {
+    var H = window.LY_HOUSE, h = H && H.houseOf(LY.doc);
+    if (!h) return { paras: paras, note: "" };
+    var r = H.fixText(paras, h.rules), n = r.n.quotes + r.n.dash + r.n.ellipsis + r.n.spaces;
+    return { paras: r.paras, note: n ? " · " + t("hs.fixed", { n: n }) : "" };
   }
   // one row per kind of paragraph the file has: its paragraph style
   function mapDlg(W, n, go) {

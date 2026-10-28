@@ -567,3 +567,8 @@ body.inframe #cv { cursor: text; }
 .rc-add select { width: 100%; }
 .rc-sum { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
 .rc-will .hint { margin: 2px 0; }
+
+/* House style (LY-HS) */
+.hs-works { max-height: 40vh; overflow-y: auto; margin: 8px 0; }
+.hs-rule { display: flex; align-items: center; gap: 8px; }
+.hs-rule > .chk, .hs-rule > .hint { flex: 1 1 auto; margin: 2px 0; }
