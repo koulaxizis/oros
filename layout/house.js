@@ -193,6 +193,7 @@
     // the master most body pages use
     var ms = mode(seq.filter(function (q) { return q.ps === body && q.at >= 0; }).map(function (q) { return pages[q.at].ms || ""; }));
     res.bodyMaster = ms ? ms.v : "";
+    res.pics = picStudy(doc, pgIdx, bodyChars);
     return res;
   }
   // Page numbers (LY-IN): the frames of only page-number fields, on
@@ -219,6 +220,27 @@
     Object.keys(out.geo).forEach(function (sd) { out.geo[sd] = out.geo[sd].g; });
     return out;
   }
+  // Pictures (LY-IN): the large ones (a sixth of the page or more) on
+  // the pages, where they are (a page of their own, or with running
+  // text), how large (the full page, else the text width) and where a
+  // caption is (a short text frame right below or above).
+  function picStudy(doc, pgIdx, bodyChars) {
+    var u = doc.setup, out = [];
+    doc.items.forEach(function (it) {
+      if (it.t !== "img" || pgIdx[it.pg] === undefined || it.w * it.h < u.w * u.h / 6) return;
+      var cap = "none";
+      doc.items.forEach(function (c) {
+        if (c.t !== "text" || c.pg !== it.pg) return;
+        var st = M.find(doc.stories, c.story), t = st ? st.paras.map(textOf).join(" ").trim() : "";
+        if (!t || t.length > 300 || c.x + c.w < it.x || c.x > it.x + it.w) return;
+        if (c.y >= it.y + it.h - 2 && c.y <= it.y + it.h + 40) cap = "below";
+        else if (c.y + c.h <= it.y + 2 && c.y + c.h >= it.y - 40 && cap === "none") cap = "above";
+      });
+      out.push({ at: (bodyChars[pgIdx[it.pg]] || 0) > 200 ? "before" : "page", size: it.w >= u.w * 0.98 ? "page" : "text", cap: cap });
+    });
+    return out;
+  }
+
   // Where a page number sits: foot or head, centre, outer or inner
   // edge (of the right-hand page) → "footC", "headOut"…
   function pnAt(geo, setup) {
@@ -388,6 +410,12 @@
       Object.keys(s.seps).forEach(function (k) { seps[k] = (seps[k] || 0) + s.seps[k]; });
     });
     if (at) d.setup.ext.house.pn = { at: at, hide: opens && shown < opens / 2 ? 1 : 0 };
+    var pics = [];
+    S.forEach(function (s) { pics = pics.concat(s.pics); });
+    if (pics.length) {
+      d.setup.ext.house.pics = {};
+      ["at", "size", "cap"].forEach(function (k) { d.setup.ext.house.pics[k] = mode(pics.map(function (x) { return x[k]; })).v; });
+    }
     var sep = Object.keys(seps).sort(function (a, b) { return seps[b] - seps[a] || (a < b ? -1 : 1); })[0];
     if (sep) d.setup.ext.house.sep = sep.slice(0, 20);
     d.setup.ext.wmap = wmapOf(ro);

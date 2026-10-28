@@ -154,5 +154,5 @@ test("wiring: More › Automatic layout and Update contents; autolay.js loads af
   assert.match(pn, /t\("more\.auto"\), fn: function \(\) \{ LY\.house\.auto\(\); \}/);
   assert.match(pn, /t\("more\.toc"\), disabled: !LY\.house\.hasToc\(doc\)/);
   // the manuscript is read by the same reader as Place text
-  assert.match(fs.readFileSync(path.join(ROOT, "layout/houseui.js"), "utf8"), /LY\.io\.readDoc\(file\)/);
+  assert.match(fs.readFileSync(path.join(ROOT, "layout/houseui.js"), "utf8"), /LY\.io\.readDoc\(file\b/);
 });

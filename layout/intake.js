@@ -51,6 +51,11 @@
     { id: "pnHide", g: "page", v: ["s", "hide", "show"] },
     { id: "toc", g: "page", v: ["s", "start", "end", "none"] },
     { id: "tocParts", g: "page", v: ["s", "parts", "chap"], when: "parts" },
+    { id: "picAt", g: "pics", v: ["s", "page", "before", "each", "out"], when: "pics" },
+    { id: "picSize", g: "pics", v: ["s", "text", "page"], when: "pics" },
+    { id: "cap", g: "pics", v: ["s", "below", "above", "none"], when: "pics" },
+    { id: "capSrc", g: "pics", v: ["s", "file", "typed"], when: "pics" },
+    { id: "grey", g: "pics", v: ["s", "yes"], when: "pics" },
     { id: "hyph", g: "text", v: ["s", "on", "off"] },
     { id: "widows", g: "text", v: ["s", "on", "off"] },
     { id: "fix", g: "text", v: ["s", "on", "off"] }
@@ -58,7 +63,11 @@
   // where a section of the manuscript goes
   var AT = ["s", "front", "back", "out"];
   // the parts of a book a typography answer sets
-  var PARTS = ["body", "title", "part", "toc", "colophon", "thanks", "links", "ded"];
+  var PARTS = ["body", "title", "part", "toc", "colophon", "thanks", "links", "ded", "cap"];
+  // where one picture goes (the "each" answer, sheet.pics[k].at)
+  var PIC_AT = ["s", "page", "before", "out"];
+  // a paragraph right after a picture that reads as its caption
+  var CAP_RE = /^(φωτ|εικ|photo|fig|abb|bild|πηγη|source|quelle)/;
   var LOOK = ["fam", "size", "lead", "align", "b", "i", "caps", "track"];
   var SIZES = { "120x190": [120, 190], "140x210": [140, 210], "148x210": [148, 210], "170x240": [170, 240] };
 
@@ -100,6 +109,7 @@
       var v = src[k];
       if (ok[k] && ok[k].indexOf(v) >= 0) a[k] = v;
       else if (k === "pnStart" && v !== "" && isFinite(Number(v))) a[k] = Math.max(0, Math.min(9999, Math.floor(Number(v))));
+      else if (k === "extraAt" && /^(end|after\d{1,4})$/.test(v)) a[k] = v;
       else if (k === "marg" && v && typeof v === "object") {
         var m = {};
         ["t", "b", "i", "o"].forEach(function (e) { var n = Number(v[e]); if (v[e] !== "" && v[e] !== null && isFinite(n) && n >= 0 && n < 200) m[e] = n; });
@@ -121,6 +131,15 @@
     });
     var out = { v: 1, a: a, ty: ty, drop: (Array.isArray(sheet.drop) ? sheet.drop : []).filter(function (id) { return typeof id === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(id); }).slice(0, 64) };
     ["ded", "motto"].forEach(function (k) { if (typeof sheet[k] === "string") out[k] = sheet[k].replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").slice(0, 2000); });
+    // one entry per picture, in order (the manuscript's, then the others)
+    if (Array.isArray(sheet.pics)) {
+      out.pics = sheet.pics.slice(0, 500).map(function (x) {
+        var o = {};
+        if (x && PIC_AT.indexOf(x.at) > 0) o.at = x.at;
+        if (x && typeof x.cap === "string") o.cap = x.cap.replace(/[\u0000-\u001F]/g, " ").trim().slice(0, 300);
+        return o;
+      });
+    }
     return out;
   }
   function isPart(p) { var t = fold(textOf(p)); return head(p) && t.length <= 40 && PART_RE.test(t); }
@@ -158,10 +177,12 @@
   }
   function info(house, list, cut) {
     var h = H.houseOf(house) || { roles: {}, rules: [] }, ro = h.roles || {};
-    var out = { parts: 0, seps: 0, sepText: "", sections: {}, ded: "", motto: "", titles: 0, pages: [], colophon: false, series: {} };
+    var out = { parts: 0, seps: 0, sepText: "", sections: {}, ded: "", motto: "", titles: 0, pages: [], colophon: false, series: {}, pics: 0, chapters: [] };
     var sepN = {};
     (list || []).forEach(function (p) {
       if (head(p)) out.titles++;
+      if (head(p) && !sectionOf(p)) out.chapters.push(textOf(p).trim().slice(0, 80));
+      if (p.pics) out.pics += p.pics.length;
       if (isPart(p)) out.parts++;
       var t = textOf(p).trim();
       if (!head(p) && H.isSep(t)) { out.seps++; sepN[t] = (sepN[t] || 0) + 1; }
@@ -211,7 +232,9 @@
     s.hyph = bodyR && bodyR.hyph ? "on" : "off";
     s.widows = bodyR && (bodyR.orph || 1) > 1 ? "on" : "off";
     s.fix = h.rules.some(function (r) { return r.on && r.a && r.a.k === "fix"; }) ? "on" : "off";
-    s.ty = { body: body, title: looksOf(house, ro.title) };
+    s.ty = { body: body, title: looksOf(house, ro.title), cap: looksOf(house, ro.note) };
+    var hp = h.pics || {};
+    s.picAt = hp.at || "page"; s.picSize = hp.size || "text"; s.cap = hp.cap || "below"; s.capSrc = "para"; s.grey = "no";
     if (toc) { var e = toc.paras.filter(function (p) { return /\d\s*$/.test(textOf(p)); })[0]; if (e) s.ty.toc = looksOf(house, e.ps); }
     var col = colophon(house)[0];
     if (col) s.ty.colophon = looksOf(house, col.paras[0].ps);
@@ -226,12 +249,46 @@
   function ans(sheet, id) { var v = sheet && sheet.a && sheet.a[id]; return v === undefined || v === null || v === "" ? "s" : v; }
 
   // ---------- 2. The manuscript ----------
+  // The pictures out of the list (wordin { role "img" } entries, with
+  // a, nm, iw, ih once imported): each goes with the paragraph after it
+  // (p.pics: indexes); a short paragraph right after it that reads as a
+  // caption (all italic, centred, or "Photo…", "Φωτ…") is its caption
+  // candidate. → { list, pics: [{ src, alt, a, nm, iw, ih, cap }] }
+  function pictures(list) {
+    var out = [], pics = [], wait = [];
+    (list || []).forEach(function (p) {
+      if (p.role === "img") {
+        wait.push(pics.length);
+        pics.push({ src: String(p.src || ""), alt: String(p.alt || ""), a: p.a || "", nm: p.nm || "", iw: p.iw || 0, ih: p.ih || 0 });
+        return;
+      }
+      if (!wait.length || !p.runs.length) { out.push(p); return; }
+      var q = {};
+      Object.keys(p).forEach(function (k) { q[k] = p[k]; });
+      q.pics = (p.pics || []).concat(wait);
+      var t = textOf(p).trim();
+      var italic = p.runs.every(function (r) { return r.i || !String(r.t).trim(); });
+      if (!head(p) && t.length <= 300 && (italic || p.role === "center" || CAP_RE.test(fold(t)))) {
+        wait.forEach(function (k) { pics[k].cap = t; });
+        q.capOf = 1;
+      }
+      wait = [];
+      out.push(q);
+    });
+    // pictures at the very end go with the last paragraph
+    if (wait.length) {
+      for (var i = out.length - 1; i >= 0; i--) if (out[i].runs.length) { out[i] = copyP(out[i]); out[i].pics = (out[i].pics || []).concat(wait); break; }
+    }
+    return { list: out, pics: pics };
+  }
+  function copyP(p) { var q = {}; Object.keys(p).forEach(function (k) { q[k] = p[k]; }); return q; }
   // → { list, moved: n, dropped: n }
   function mark(list, sheet, inf) {
     sheet = clean(sheet);
     var B = blocks(list || []), keep = [], front = [], back = [], dropped = 0, moved = 0;
     var parts = ans(sheet, "parts"), start = ans(sheet, "start"), sep = ans(sheet, "sep");
     var run = start === "run" || (start === "s" && !!inf && inf.series.start === "run");
+    var capPara = ans(sheet, "capSrc") === "s" && ans(sheet, "cap") !== "none";
     var sepTxt = sep === "s" ? (inf && inf.series.sep) || "" : sep;
     var firstChapter = -1;
     B.forEach(function (b, k) { if (firstChapter < 0 && !b.key && head(list[b.from])) firstChapter = k; });
@@ -241,6 +298,8 @@
       var paras = list.slice(b.from, b.to + 1).map(function (p, i) {
         var o = { role: p.role, runs: p.runs };
         if (p.guessed) o.guessed = 1;
+        if (p.pics) o.pics = p.pics;
+        if (p.capOf && capPara) o.capOf = 1;
         if (i === 0 && b.part && parts !== "chap") { o.ps = "ps-hspart"; afterPart = true; return o; }
         if (i === 0 && head(p) && afterPart) { if (run) o.ps = "ps-hsopen"; afterPart = false; }
         if (i > 0 && ps) o.ps = ps;
@@ -262,7 +321,19 @@
     var at0 = 0;
     for (var i = 0; i < keep.length; i++) { if (head(keep[i]) && !sectionOf(keep[i])) { at0 = i; break; } at0 = i + 1; }
     var out = keep.slice(0, at0).concat(front, keep.slice(at0), back);
-    return { list: out, moved: moved, dropped: dropped };
+    // a caption paragraph leaves the text; its pictures go with the next one
+    var carry = [], caps = 0;
+    out = out.filter(function (p, i) {
+      if (carry.length && !p.capOf) { p.pics = (p.pics || []).concat(carry); carry = []; }
+      if (!p.capOf) return true;
+      carry = carry.concat(p.pics || []);
+      caps++;
+      if (i === out.length - 1) {
+        for (var k = i - 1; k >= 0; k--) if (!out[k].capOf) { out[k].pics = (out[k].pics || []).concat(carry); break; }
+      }
+      return false;
+    });
+    return { list: out, moved: moved, dropped: dropped, caps: caps };
   }
 
   // ---------- 3. The house style with the answers ----------
@@ -351,6 +422,7 @@
     var d = copy(house), h = d.setup.ext.house, ro = h.roles, u = d.setup;
     var A = function (id) { return ans(sheet, id); };
     var book = { v: 1, a: copy(sheet.a), ty: copy(sheet.ty), drop: sheet.drop.slice() };
+    if (sheet.pics) book.pics = copy(sheet.pics);
     if (typeof house.id === "string") book.house = house.id;
     var body = ro.body || "ps-base", title = ro.title || body;
     // pages left out
@@ -393,6 +465,10 @@
     }
     if (inf.seps) derive(d, "ps-hssep", body, N.sep, { align: "c", fi: 0, sb: 0, sa: 0, ext: { hyph: 0 } }, now);
     if (inf.sections.thanks) derive(d, "ps-hsthanks", body, N.thanks, {}, now);
+    if (inf.pics || (opts.extra || 0) > 0) {
+      var cr = T.resolvePs(T.byId(d.pstyles), ro.note || body);
+      derive(d, "ps-hscap", ro.note || body, N.cap, { align: "c", i: 1, fi: 0, li: 0, ri: 0, sb: 0, sa: 0, size: Math.max(7, Math.min(cr.size, T.resolvePs(T.byId(d.pstyles), body).size - 2)), ext: { hyph: 0, brk: "any" } }, now);
+    }
     if (inf.sections.links) derive(d, "ps-hslinks", body, N.links, { fi: 0, align: "l", ext: { hyph: 0 } }, now);
     // contents: where, or none; made when the house has none
     var toc = tocStory(d), ta = A("toc");
@@ -479,7 +555,7 @@
     }
     // typography per part
     var ty = book.ty, sets = {
-      body: [body, ro.first], title: [title], part: ["ps-hspart"], toc: ["ps-hstoc"], thanks: ["ps-hsthanks"], links: ["ps-hslinks"], ded: ["ps-hsded"],
+      body: [body, ro.first], title: [title], part: ["ps-hspart"], toc: ["ps-hstoc"], thanks: ["ps-hsthanks"], links: ["ps-hslinks"], ded: ["ps-hsded"], cap: ["ps-hscap"],
       colophon: Object.keys(colMap).map(function (k) { return colMap[k]; })
     };
     PARTS.forEach(function (k) {
@@ -503,7 +579,8 @@
   }
 
   // ---------- 4. After the flow ----------
-  // → pages that got the master without page numbers
+  // → pages that got the master without page numbers (also the pages of
+  // pictures, ext.pic)
   function finish(d, L) {
     var book = d.setup.ext && d.setup.ext.book, ms = book && book.openMs;
     if (!ms || !M.find(d.masters, ms)) return 0;
@@ -513,20 +590,22 @@
     M.pagesInOrder(d).forEach(function (pg) {
       if (!pg.ext || pg.ext.hs !== "body") return;
       var here = [];
-      d.items.filter(function (it) { return it.pg === pg.id && it.t === "text"; }).sort(function (a, b) { return a.y - b.y || a.x - b.x; }).forEach(function (it) {
+      var cap = function (it) { var st = M.find(d.stories, it.story); return !!st && st.paras.length === 1 && st.paras[0].ps === "ps-hscap"; };
+      d.items.filter(function (it) { return it.pg === pg.id && it.t === "text" && !cap(it); }).sort(function (a, b) { return a.y - b.y || a.x - b.x; }).forEach(function (it) {
         ((L.frames[it.id] || {}).lines || []).forEach(function (ln) { here.push({ st: it.story, p: ln.p }); });
       });
       // the page's first line starts a title (not one carried over)
       var f = here[0], st = f && M.find(d.stories, f.st);
       var opensHere = !!st && !seen[f.st + "|" + f.p] && !!opens[(st.paras[f.p] || {}).ps];
       here.forEach(function (x) { seen[x.st + "|" + x.p] = 1; });
-      if (!here.length || opensHere) { pg.ms = ms; n++; }
+      if (!here.length || opensHere || pg.ext.pic) { pg.ms = ms; n++; }
     });
     return n;
   }
 
   var api = {
     QUESTIONS: QUESTIONS, AT: AT, PARTS: PARTS, LOOK: LOOK, SIZES: SIZES, SECTION_KEYS: SECTION_KEYS,
+    PIC_AT: PIC_AT, pictures: pictures, ans: ans,
     info: info, defaults: defaults, clean: clean, atKey: atKey, mark: mark, prepare: prepare, finish: finish, sectionOf: sectionOf, isPart: isPart
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

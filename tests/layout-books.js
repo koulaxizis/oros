@@ -51,6 +51,15 @@ function book(name, chapters, bodySize, opt) {
     frame(page(), "st-toc", 1);
   }
   for (let c = 0; c < chapters; c++) {
+    // opt.photo: a picture page (text width, a caption below) facing
+    // the second chapter's opening
+    if (opt.photo && c === 1) {
+      if (pages.length % 2 === 0) page();
+      const p = page(), w = mb.w, h = w * 0.75;
+      d.items.push({ id: M.newId("it"), m: 1, t: "img", pg: p.id, x: mb.x, y: mb.y + 40, w, h, a: "a".repeat(64) + ".jpg", iw: 800, ih: 600, fit: "fit", z: 2 });
+      d.stories.push({ id: "st-cap" + c, m: 1, paras: [{ ps: "ps-nt", runs: [{ t: "The harbour, early." }] }] });
+      d.items.push({ id: M.newId("it"), m: 1, t: "text", pg: p.id, x: mb.x, y: mb.y + 40 + h + 6, w, h: 30, story: "st-cap" + c, seq: 1, z: 3 });
+    }
     if (pages.length % 2 === 1) page();   // the next page is odd
     const sid = "st-c" + c;
     const paras = [{ ps: "ps-tt", runs: [{ t: "Chapter " + (c + 1) }] }, { ps: "ps-tf", runs: [{ t: words(60, c) }] }];

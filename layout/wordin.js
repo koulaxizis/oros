@@ -15,7 +15,9 @@
 // and the document's mapping (setup.ext.wmap: role → paragraph style
 // id, kept with the document) gives its style. Empty paragraphs stay
 // empty paragraphs. Pictures, tables' layout and footnotes are not
-// placed (a table's cells become paragraphs).
+// placed (a table's cells become paragraphs); with parse(html,
+// { pics: 1 }) each picture is an entry { role: "img", runs: [], src,
+// alt } where it stood (the book intake, LY-IN).
 // Pure: parse(html) and paras(list, map) run under Node; the reading
 // of files is in layout/io.js.
 // Exposes LY_WORDIN (browser) or module.exports (Node tests).
@@ -45,7 +47,8 @@
   }
 
   // Writer's HTML → [{ role, runs: [{ t, b, i, u }] }]
-  function parse(html) {
+  function parse(html, opts) {
+    var pics = !!(opts && opts.pics);
     var out = [], cur = null, blocks = [], fmt = { b: 0, i: 0, u: 0 }, inl = [], sups = [], skip = 0;
     var re = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>|([^<]+)/g, m;
     function roleOf() {
@@ -106,6 +109,12 @@
         } else if (!/\/\s*$/.test(a)) blocks.push({ tag: tag, center: /text-align\s*:\s*center/i.test(attr(a, "style")) });
         continue;
       }
+      if (tag === "img" && pics && !close) {
+        flush();
+        if (blocks.length) blocks[blocks.length - 1].had = 1;
+        if (out.length < MAX_PARAS) out.push({ role: "img", runs: [], src: attr(a, "src"), alt: decode(attr(a, "alt")).trim().slice(0, 300) });
+        continue;
+      }
       if (tag === "br") { open(); cur.runs.push({ t: "\n", b: fmt.b, i: fmt.i, u: fmt.u }); continue; }
       // a footnote's mark, a comment's or picture's own content: left out
       if (tag === "sup") {
@@ -127,6 +136,7 @@
     // the first paragraph after a heading, an empty line or the start
     var after = true;
     out.forEach(function (p) {
+      if (p.role === "img") return;
       if (p.role === "p" && p.runs.length && after) p.role = "p1";
       after = /^h/.test(p.role) || !p.runs.length;
     });
