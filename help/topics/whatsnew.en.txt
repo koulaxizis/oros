@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.19.00
+- Layout: book typesetting in paragraph styles. `Hyphenate Greek` breaks Greek words at their syllables (on in new documents), `Keep with next` keeps a heading with its text, two settings stop single lines being left at a column's foot or top, and `Start` begins a chapter on a new page or an odd page.
+
 ## Version 4.18.00
 - Layout: a rebuilt print PDF can keep its articles in one piece. Before `Rebuild a print PDF (with its pictures)…` starts, choose `Text frames`: `Per page`, as before, or `Going on across pages`, where an article's text runs from frame to frame over the pages so a correction flows on. The Assistant does the same when you ask for it.
 

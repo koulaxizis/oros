@@ -27,7 +27,11 @@
 //     threaded frames (columns, insets, text wrap exclusions,
 //     alignment incl. justify, first-line / left / right indents,
 //     space before / after, bullets, tracking, vertical alignment,
-//     page-number fields), with an overset flag.
+//     page-number fields), with an overset flag; book typesetting
+//     from the paragraph style's ext (LY-BK): Greek hyphenation
+//     (hyph), lines kept together at a column break (orph at the
+//     start, wid at the end), keep with next (kwn) and a paragraph
+//     that starts a new column, page or odd page (brk).
 // Units: points (1/72 in) everywhere; y grows downwards; a line's
 // y is its baseline.
 // Exposes window.orosDK.text (browser) or module.exports (Node).
@@ -546,8 +550,26 @@
     chain.forEach(function (s) {
       PS_KEYS.forEach(function (k) { if (s[k] !== undefined && s[k] !== null) out[k] = s[k]; });
       famOf(s, out);
+      bookOf(s, out);
     });
     return out;
+  }
+  // Book typesetting (LY-BK), in the paragraph style's ext and
+  // inherited like the rest: hyph 1 / 0 Greek hyphenation; orph, wid
+  // (1-9) the fewest lines of a paragraph left at the foot of a
+  // column and carried to the next; kwn 1 / 0 keep with the next
+  // paragraph; brk "col" | "page" | "odd" where the paragraph starts.
+  var BRK = { col: 1, page: 1, odd: 1 };
+  function bookOf(s, out) {
+    var x = s.ext;
+    if (!x) return;
+    if (x.hyph !== undefined) out.hyph = x.hyph ? 1 : 0;
+    if (x.kwn !== undefined) out.kwn = x.kwn ? 1 : 0;
+    ["orph", "wid"].forEach(function (k) {
+      var v = Math.floor(Number(x[k]));
+      if (x[k] !== undefined) out[k] = isFinite(v) ? Math.max(1, Math.min(9, v)) : 1;
+    });
+    if (x.brk !== undefined) out.brk = BRK[x.brk] ? x.brk : "";
   }
   // A family of the document (ext.fam: "fs_…" Fontsource, "uf_…" a
   // font file of the user's) goes with the style's own `font`, which
@@ -594,7 +616,66 @@
   // Line advance: explicit leading, or "auto" = 120% of the size.
   function leadOf(ps, size) { return ps.lead > 0 ? Math.max(ps.lead, 1) : size * 1.2; }
 
-  // ---------- 5. Tokens ----------
+  // ---------- 5. Greek hyphenation ----------
+  // The school rules: a consonant between vowels goes with the next
+  // vowel; of two or more, the group goes on to the next syllable when
+  // a Greek word can start with its first two letters, else the first
+  // stays (άν-θρω-πος, α-στρά-φτω, Αγ-γλί-α is not split: vowels
+  // stay together unless the second has a dialytika). Two letters at
+  // least on each side. Words with anything but Greek letters are
+  // left alone.
+  // i18n-inline-ok: Greek letters (hyphenation data, no UI text)
+  var GR_VOW = "αεηιουωάέήίόύώϊϋΐΰ", GR_DIA = "ϊϋΐΰ", GR_LET = /^[\u0386\u0388-\u03CE]+$/;
+  // i18n-inline-ok: Greek consonant pairs a word can start with
+  var GR_ONSET = " βγ βδ βλ βρ γδ γκ γλ γν γρ δρ θλ θν θρ κλ κν κρ κτ μν μπ ντ πλ πν πρ πτ σβ σγ σθ σκ σλ σμ σν σπ στ σφ σχ τζ τμ τρ τσ φθ φλ φρ φτ χθ χλ χν χρ χτ ";
+  var HY_MIN = 2;
+  // word → offsets where it may break (a "-" then shows)
+  function hyphenGreek(word) {
+    var w = word.toLowerCase(), out = [];
+    if (w.length < 2 * HY_MIN || !GR_LET.test(word)) return out;
+    var vow = function (k) { return GR_VOW.indexOf(w[k]) !== -1; };
+    var k = 0;
+    while (k < w.length && !vow(k)) k++;
+    while (k < w.length) {
+      // the end of this vowel group
+      var e = k + 1;
+      while (e < w.length && vow(e) && GR_DIA.indexOf(w[e]) === -1) e++;
+      if (e >= w.length) break;
+      if (vow(e)) { out.push(e); k = e; continue; }
+      // consonants up to the next vowel
+      var c = e;
+      while (c < w.length && !vow(c)) c++;
+      if (c >= w.length) break;
+      var n = c - e, at;
+      if (n === 1) at = e;
+      else at = GR_ONSET.indexOf(" " + w.substr(e, 2) + " ") !== -1 ? e : e + 1;
+      out.push(at);
+      k = c;
+    }
+    return out.filter(function (o) { return o >= HY_MIN && w.length - o >= HY_MIN; });
+  }
+  // A word token's break points as tokens (one-part words; the "h"
+  // tokens take no character: auto 1).
+  var EDGE = /^([^\u0386\u0388-\u03CE]*)([\u0386\u0388-\u03CE]+)([^\u0386\u0388-\u03CE]*)$/;
+  function hyphenate(toks) {
+    var out = [];
+    toks.forEach(function (tk) {
+      var p = tk.k === "w" && tk.parts.length === 1 ? tk.parts[0] : null;
+      var m = p && p.t !== null && p.t.length === p.n ? EDGE.exec(p.t) : null;
+      var at = m ? hyphenGreek(m[2]).map(function (o) { return o + m[1].length; }) : [];
+      if (!at.length) { out.push(tk); return; }
+      var from = 0;
+      at.concat([p.t.length]).forEach(function (o, k) {
+        if (k) out.push({ k: "h", a: p.a, o: p.o + from, hy: 1, auto: 1 });
+        out.push({ k: "w", parts: [{ t: p.t.slice(from, o), a: p.a, o: p.o + from, n: o - from }] });
+        from = o;
+      });
+    });
+    out.len = toks.len;
+    return out;
+  }
+
+  // ---------- 6. Tokens ----------
   // A paragraph becomes a list of tokens:
   //   { k:"w", parts:[{t, a}] }  a word (several styled parts when a
   //                               style changes mid-word)
@@ -653,7 +734,7 @@
     });
     flush();
     toks.len = base;
-    return toks;
+    return ps.hyph ? hyphenate(toks) : toks;
   }
 
   function partText(p, ctx) {
@@ -700,7 +781,7 @@
     return pieces;
   }
 
-  // ---------- 6. Exclusions (text wrap) ----------
+  // ---------- 7. Exclusions (text wrap) ----------
   // ex = { x, y, w, h, shape: "box"|"ell" } in frame coordinates,
   // offset already applied. Returns the blocked x-interval for the
   // band [y0, y1], or null.
@@ -733,7 +814,7 @@
     return segs.filter(function (s) { return s[1] - s[0] >= minW; });
   }
 
-  // ---------- 7. Layout ----------
+  // ---------- 8. Layout ----------
   // frames: ordered chain, each
   //   { id, w, h, cols, gut, inset, valign: "t"|"c"|"b", excl: [],
   //     ctx: { pageLabel, pageCount } }
@@ -772,19 +853,27 @@
     }
     geom = colGeom(); y = geom.top;
 
+    // book typesetting (LY-BK): the page of the last line placed,
+    // and how many lines of the paragraph went into each column
+    var lastPg = null, segs = [], segKey = -1;
     var paras = story.paras || [];
     for (var pi = 0; pi < paras.length; pi++) {
       if (fi >= frames.length) { out.overset = true; break; }
       var para = paras[pi];
       var ps = resolvePs(psMap, para.ps);
-      var toks = tokenize(para, ps, csMap);
-      curPi = pi; curLen = toks.len;
-      if (ps.bul) {
-        var bA = runAttrs(ps, {}, {});
-        toks.unshift({ k: "bul", a: bA });
+      curPi = pi;
+      if (ps.brk && !startAt(ps.brk)) { out.overset = true; break; }
+      var S = snap(), got = place(para, ps, {});
+      // lines kept together at a column break: the paragraph moves on
+      // whole, or the column before it gives lines to the next
+      var fix = got && keepFix(got, ps, S.colTop);
+      if (fix) { restore(S); got = fix.first ? nextCol() && place(para, ps, {}) : place(para, ps, fix); }
+      // keep with next: the next paragraph's first lines must fit after it
+      if (got && ps.kwn && !S.colTop && pi + 1 < paras.length && !roomFor(paras[pi + 1])) {
+        restore(S);
+        got = nextCol() && place(para, ps, {});
       }
-      var ok = layoutPara(toks, ps, pi === 0);
-      if (!ok) { out.overset = true; break; }
+      if (!got) { out.overset = true; break; }
       out.placedParas = pi + 1;
     }
 
@@ -805,9 +894,56 @@
     });
     return out;
 
+    function snap() {
+      var n = {};
+      frames.forEach(function (f) { n[f.id] = out.frames[f.id].lines.length; });
+      return { fi: fi, col: col, y: y, colTop: colTop, geom: geom, lastPg: lastPg, n: n };
+    }
+    function restore(S) {
+      fi = S.fi; col = S.col; y = S.y; colTop = S.colTop; geom = S.geom; lastPg = S.lastPg;
+      frames.forEach(function (f) { out.frames[f.id].lines.length = S.n[f.id]; });
+    }
+    function pageOf() { return (frames[fi].ctx || {}).pg; }
+    function oddPage() { var no = (frames[fi].ctx || {}).no; return typeof no !== "number" || Math.abs(no) % 2 === 1; }
+    // the paragraph starts in a new column, on a new page, or on an
+    // odd (right-hand) page; false = no frame is left
+    function startAt(brk) {
+      if (brk === "col") return colTop || nextCol();
+      while ((lastPg !== null && pageOf() === lastPg) || (brk === "odd" && !oddPage())) if (!nextCol()) return false;
+      return true;
+    }
+    // a paragraph laid out → the lines per column it took, or null
+    // (no frame left); opt.breakAt: lines in its first column
+    function place(para, ps, opt) {
+      var toks = tokenize(para, ps, csMap);
+      curLen = toks.len;
+      if (ps.bul) toks.unshift({ k: "bul", a: runAttrs(ps, {}, {}) });
+      segs = []; segKey = -1;
+      return layoutPara(toks, ps, opt) ? segs : null;
+    }
+    // orph / wid broken → { first: 1 } (all to the next column) or
+    // { breakAt: n } (n lines stay), else null
+    function keepFix(got, ps, atTop) {
+      if (got.length < 2) return null;
+      var o = ps.orph || 1, w = ps.wid || 1, last = got[got.length - 1];
+      if (got[0] < o) return atTop ? null : { first: 1 };
+      if (last >= w || got.length > 2) return null;
+      var keep = got[0] - (w - last);
+      if (keep >= o) return { breakAt: keep };
+      return atTop ? null : { first: 1 };
+    }
+    // room in this column for the first lines (its orph) of a paragraph
+    function roomFor(next) {
+      var nps = resolvePs(psMap, next.ps);
+      if (nps.brk) return true;
+      var key = fontKey(nps.font, nps.b, nps.i), lead = leadOf(nps, nps.size);
+      var base = y + nps.sb + lead + lead * ((nps.orph || 1) - 1);
+      return base + descent(key, nps.size) <= geom.bottom + 0.01;
+    }
+
     // --- one paragraph; false = ran out of frames ---
-    function layoutPara(toks, ps, first) {
-      var ti = 0, firstLine = true;
+    function layoutPara(toks, ps, opt) {
+      var ti = 0, firstLine = true, done = 0;
       if (!colTop) y += ps.sb;          // ignored at the top of a column
       var hangBul = null;
       if (toks.length && toks[0].k === "bul") {
@@ -820,6 +956,7 @@
       }
       var empty = toks.length === 0;
       while (ti < toks.length || empty) {
+        if (opt.breakAt && done === opt.breakAt) { if (!nextCol()) return false; opt.breakAt = 0; }
         // line metrics guess: paragraph size, refined by the line's
         // biggest size after a first fill
         var maxSize = ps.size;
@@ -839,6 +976,7 @@
           ti = placed.next;
           commit(placed);
           firstLine = false;
+          done++;
           break;
         }
         if (empty) break;
@@ -948,7 +1086,11 @@
           });
         });
         if (hyph && hyph.hy && items.length) {
-          line.runs.push({ x: x, y: base, t: "-", key: hyph.a.key, size: hyph.a.size, color: hyph.a.color, u: hyph.a.u ? 1 : 0, track: hyph.a.track || 0, w: hyW, p: curPi, o: hyph.o, n: 1, f: 0 });
+          var hr = { x: x, y: base, t: "-", key: hyph.a.key, size: hyph.a.size, color: hyph.a.color, u: hyph.a.u ? 1 : 0, track: hyph.a.track || 0, w: hyW, p: curPi, o: hyph.o, n: 1, f: 0 };
+          // an automatic break takes no character: no offsets, so the
+          // caret never stops on its hyphen
+          if (hyph.auto) { delete hr.o; delete hr.n; }
+          line.runs.push(hr);
         }
         if (si === 0) line.aw = avail;
         if (broke || ti >= toks.length) break;
@@ -970,6 +1112,10 @@
       delete line.maxSize; delete line.next; delete line.base;
       out.frames[geom.f.id].lines.push(line);
       y = line.y; colTop = false;
+      lastPg = pageOf() || null;
+      var key = fi * 64 + col;
+      if (key !== segKey) { segs.push(0); segKey = key; }
+      segs[segs.length - 1]++;
     }
   }
 
@@ -993,7 +1139,7 @@
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
-    layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText
+    layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.text = api; }

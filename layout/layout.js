@@ -143,7 +143,7 @@
       "sty.name": "Name", "sty.base": "Based on", "sty.baseNone": "[None]", "sty.font": "Font", "sty.size": "Size (pt)",
       "sty.lead": "Leading (pt)", "sty.auto": "Auto", "sty.align": "Alignment",
       "sty.al": "Left", "sty.ac": "Centre", "sty.ar": "Right", "sty.aj": "Justify",
-      "sty.b": "Bold", "sty.i": "Italic", "sty.u": "Underline", "sty.caps": "All caps", "sty.bul": "Bullet", "sty.kern": "Kerning",
+      "sty.b": "Bold", "sty.i": "Italic", "sty.u": "Underline", "sty.caps": "All caps", "sty.bul": "Bullet", "sty.kern": "Kerning", "sty.book": "Book typesetting", "sty.hyph": "Hyphenate Greek", "sty.kwn": "Keep with next", "sty.orph": "Fewest lines before a column break", "sty.wid": "Fewest lines after a column break", "sty.brk": "Start", "sty.brkAny": "Anywhere", "sty.brkCol": "In the next column", "sty.brkPage": "On a new page", "sty.brkOdd": "On an odd page",
       "sty.sb": "Space before", "sty.sa": "Space after", "sty.fi": "First-line indent", "sty.li": "Left indent", "sty.ri": "Right indent",
       "sty.track": "Tracking (1/1000 em)", "sty.color": "Colour", "sty.inherit": "As base",
       "font.sans": "Noto Sans", "font.serif": "Noto Serif", "font.mono": "Noto Sans Mono",
@@ -345,7 +345,7 @@
       "sty.name": "Όνομα", "sty.base": "Βασίζεται σε", "sty.baseNone": "[Κανένα]", "sty.font": "Γραμματοσειρά", "sty.size": "Μέγεθος (pt)",
       "sty.lead": "Διάστιχο (pt)", "sty.auto": "Αυτόματο", "sty.align": "Στοίχιση",
       "sty.al": "Αριστερά", "sty.ac": "Κέντρο", "sty.ar": "Δεξιά", "sty.aj": "Πλήρης",
-      "sty.b": "Έντονα", "sty.i": "Πλάγια", "sty.u": "Υπογράμμιση", "sty.caps": "Κεφαλαία", "sty.bul": "Κουκκίδα", "sty.kern": "Kerning",
+      "sty.b": "Έντονα", "sty.i": "Πλάγια", "sty.u": "Υπογράμμιση", "sty.caps": "Κεφαλαία", "sty.bul": "Κουκκίδα", "sty.kern": "Kerning", "sty.book": "Στοιχειοθεσία βιβλίου", "sty.hyph": "Συλλαβισμός", "sty.kwn": "Μαζί με την επόμενη", "sty.orph": "Ελάχιστες γραμμές πριν την αλλαγή στήλης", "sty.wid": "Ελάχιστες γραμμές μετά την αλλαγή στήλης", "sty.brk": "Αρχή", "sty.brkAny": "Οπουδήποτε", "sty.brkCol": "Στην επόμενη στήλη", "sty.brkPage": "Σε νέα σελίδα", "sty.brkOdd": "Σε μονή σελίδα",
       "sty.sb": "Διάστημα πριν", "sty.sa": "Διάστημα μετά", "sty.fi": "Εσοχή πρώτης γραμμής", "sty.li": "Εσοχή αριστερά", "sty.ri": "Εσοχή δεξιά",
       "sty.track": "Αραίωση (1/1000 em)", "sty.color": "Χρώμα", "sty.inherit": "Όπως η βάση",
       "font.sans": "Noto Sans", "font.serif": "Noto Serif", "font.mono": "Noto Sans Mono",
@@ -920,13 +920,19 @@
     save();
     openDoc(d.id);
   }
-  // a new document kerns (LY-KERN); older ones keep their line breaks
+  // a new document kerns (LY-KERN) and hyphenates Greek (LY-BK);
+  // older ones keep their line breaks
+  function hyphOn(d) {
+    var base = M.find(d.pstyles, "ps-base");
+    if (base) { base.ext = base.ext || {}; base.ext.hyph = 1; }
+    return d;
+  }
   function createDoc(opts) {
     var d = M.newDoc(opts, now()), base = M.find(d.pstyles, "ps-base");
     if (base) base.ext = { kern: 1 };
-    addDoc(d);
+    addDoc(hyphOn(d));
   }
-  LY.createDoc = createDoc; LY.addDoc = addDoc;
+  LY.createDoc = createDoc; LY.addDoc = addDoc; LY.hyphOn = hyphOn;
 
   function openDoc(id) {
     var d = findDoc(id);

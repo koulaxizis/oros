@@ -76,7 +76,7 @@
   //     overset: { storyId: true }, pageOf: { pageId: index } }
   function computeLayout(doc) {
     var pages = M.pagesInOrder(doc), idx = {}, info = {}, first = M.firstNumber(doc);
-    pages.forEach(function (p, i) { idx[p.id] = i; info[p.id] = { side: M.sideOf(doc, i), label: String(i + first) }; });
+    pages.forEach(function (p, i) { idx[p.id] = i; info[p.id] = { side: M.sideOf(doc, i), label: String(i + first), no: i + first }; });
     var styles = { ps: doc.pstyles, cs: doc.cstyles };
     var masterIds = {};
     doc.masters.forEach(function (m) { masterIds[m.id] = 1; });
@@ -127,7 +127,7 @@
         var pi = info[f.pg], pg = M.find(doc.pages, f.pg);
         var owners = [f.pg];
         if (pg && pg.ms) owners.push(pg.ms);
-        return geom(f, { pageLabel: pi.label, pageCount: pages.length }, exclFor(f, owners, pi.side, f.pg));
+        return geom(f, { pageLabel: pi.label, pageCount: pages.length, pg: f.pg, no: pi.no }, exclFor(f, owners, pi.side, f.pg));
       });
       var res = T.layoutChain(st || { paras: [] }, g, styles);
       Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
@@ -147,7 +147,7 @@
         var st = M.story(doc, sid);
         var frames = per[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
         var g = frames.map(function (f) {
-          return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length }, exclFor(f, [p.ms, p.id], side, p.id));
+          return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length, pg: p.id, no: info[p.id].no }, exclFor(f, [p.ms, p.id], side, p.id));
         });
         var res = T.layoutChain(st || { paras: [] }, g, styles);
         Object.keys(res.frames).forEach(function (fid) { res0[fid] = res.frames[fid]; });
