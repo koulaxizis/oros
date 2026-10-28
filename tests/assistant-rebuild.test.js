@@ -58,10 +58,11 @@ test("rebuild_in_layout: offered with Layout; the prompt says when and never to 
   assert.ok(names({ rebuild: true }).includes("rebuild_in_layout"));
   assert.ok(!names({}).includes("rebuild_in_layout"));
   const tool = C.toolsFor({ rebuild: true }).find((t) => t.name === "rebuild_in_layout");
-  assert.deepEqual(tool.params.required, ["pdf"]);
+  assert.equal(tool.params.required, undefined, "pdf, or sla for a Scribus file");
+  assert.equal(tool.params.properties.sla.type, "string");
   assert.equal(tool.params.properties.sources.type, "array");
   const sp = C.systemPrompt({ lang: "en", now: Date.now(), apps: ["Layout (layout)"], files: "pdf", rebuild: true });
-  assert.match(sp, /call rebuild_in_layout\. Never retype a printed document/);
+  assert.match(sp, /call rebuild_in_layout; a Scribus file .* Never retype a printed document/);
   assert.match(sp, /say honestly what came out the same and what did not/);
   assert.match(sp, /do_action open with app layout and page/);
   assert.doesNotMatch(C.systemPrompt({ lang: "en", now: Date.now(), apps: [], files: "pdf" }), /rebuild_in_layout/);
@@ -88,6 +89,26 @@ test("rebuild_in_layout: refusals the model can act on", () => {
   assert.match(C.normRebuild({ pdf: "issue 4", folder: "/etc" }, FILES).err, /folder must be a folder on the orOS disk/);
   assert.match(C.normRebuild({ pdf: "issue 4", folder: "/internal/../x" }, FILES).err, /folder must be/);
   assert.match(C.normRebuild({ pdf: "/internal/a.txt" }, []).err, /pdf must be a PDF/);
+});
+
+test("rebuild_in_layout: a Scribus file, with its print PDF and pictures or alone", () => {
+  const F2 = FILES.concat([{ id: "b1", name: "Book.sla", type: "", size: 900000, kept: true }, { id: "b2", name: "Book.sla.gz", type: "", size: 90000, kept: false }]);
+  const r = C.normRebuild({ sla: "Book.sla", pdf: "Issue 4 print.pdf" }, F2);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.sla, { id: "b1", name: "Book.sla" });
+  assert.deepEqual(r.pdf, { id: "a8", name: "Issue 4 print.pdf" });
+  assert.deepEqual(r.src, [{ id: "a9", name: "notes.txt" }, { id: "a7", name: "cover.jpg" }]);
+  const alone = C.normRebuild({ sla: "/internal/Books/Book.sla" }, []);
+  assert.deepEqual([alone.ok, alone.pdf, alone.sla], [true, null, { path: "/internal/Books/Book.sla", name: "Book.sla" }]);
+  assert.match(C.normRebuild({ sla: "cover.jpg" }, F2).err, /is not a Scribus \(\.sla\) file/);
+  assert.match(C.normRebuild({ sla: "Book.sla.gz" }, F2).err, /no longer available/);
+  assert.match(C.normRebuild({ sla: "Book.sla", pdf: "cover.jpg" }, F2).err, /is not a PDF/);
+  // its report: counts only
+  assert.deepEqual(C.rebuildReport({ sla: 1, pages: 90, items: 110, skipped: 2, placed: 5, missing: 1, fit: { lines: 300, matched: 300, checked: 280, inPlace: 279 }, text: "secret" }),
+    { kind: "sla", pages: 90, objects: 110, picturesPlaced: 5, picturesMissing: 1, simplified: 2, lines: 280, inPlace: 279, percent: 99.6, pdfMatched: true });
+  assert.deepEqual(C.rebuildReport({ sla: 1, pages: 1, items: 1, placed: 0, missing: 0, fit: null }), { kind: "sla", pages: 1, objects: 1, picturesPlaced: 0, picturesMissing: 0, simplified: 0 });
+  const sp = C.systemPrompt({ lang: "en", now: Date.now(), apps: ["Layout (layout)"], files: "pdf", rebuild: true });
+  assert.match(sp, /a Scribus file \(\.sla\) opens in Layout through rebuild_in_layout with sla/);
 });
 
 test("rebuild report: only numbers and font names reach the model", () => {
@@ -146,10 +167,13 @@ test("the wiring: Layout takes the rebuild and a page, the report goes back to t
   const as = read("assistant/assistant.js");
   assert.match(as, /p\.__orosOpenAt\("layout", \{ rebuild: \{ pdf: pdf, src: src, folder: ui\.folder \|\| "", key: ui\.key, chat: c\.id \} \}\)/);
   assert.match(as, /r\.content = "Layout rebuilt the PDF on the device as a new document, now open in Layout\. Report: " \+ JSON\.stringify\(ui\.rep\);/);
+  assert.match(as, /if \(sla\) p\.__orosOpenAt\("layout", \{ rebuild: \{ sla: sla, pdf: pdf, src: src, folder: ui\.folder \|\| "", key: ui\.key, chat: c\.id \} \}\);/);
+  assert.match(ly, /return LY\.io\.openSla\(sla, files\.concat\(r\[2\]\)\.filter\(LY\.io\.isPicture\), pdf \|\| null\)\.then\(function \(rep\) \{ back\(rep \|\| \{ failed: 1 \}\); \}\);/);
   // every new string in English, Greek and German
   const de = read("i18n/de/assistant.js");
   ["att.dev", "att.devHint", "att.devOnly", "att.devTip", "att.dev.size", "att.dev.count", "att.dev.total", "rb.head", "rb.src", "rb.noSrc",
-   "rb.folder", "rb.hint", "rb.go", "rb.working", "rb.failed", "rb.lines", "rb.pics", "rb.styles", "rb.check", "rb.next", "do.f.page"].forEach((k) => {
+   "rb.folder", "rb.hint", "rb.go", "rb.working", "rb.failed", "rb.lines", "rb.pics", "rb.styles", "rb.check", "rb.next", "do.f.page",
+   "rb.slaHead", "rb.slaPdf", "rb.slaSrc", "rb.slaHint", "rb.slaGo", "rb.slaWorking", "rb.slaFailed", "rb.slaPages", "rb.slaPics", "rb.slaLines"].forEach((k) => {
     assert.equal(as.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
   });

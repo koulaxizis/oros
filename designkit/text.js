@@ -599,6 +599,11 @@
   //   { k:"w", parts:[{t, a}] }  a word (several styled parts when a
   //                               style changes mid-word)
   //   { k:"s", a }               one space
+  //   { k:"h", a, hy }           a break opportunity inside a word:
+  //                               a soft hyphen (U+00AD, hy 1: a "-"
+  //                               shows when the line breaks there) or
+  //                               a zero-width space (U+200B, hy 0);
+  //                               nothing shows otherwise
   //   { k:"br" }                 forced line break (Shift+Enter)
   // Fields ({ f:"pn" } page number, { f:"pc" } page count) are
   // parts with t === null, resolved when placed.
@@ -638,6 +643,9 @@
         } else if (ch === " " || ch === "\t") {
           if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
           flush(); toks.push({ k: "s", a: a, o: base + i });
+        } else if (ch === "\u00AD" || ch === "\u200B") {
+          if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
+          flush(); toks.push({ k: "h", a: a, o: base + i, hy: ch === "\u00AD" ? 1 : 0 });
         } else { if (!buf) b0 = i; buf += ch; }
       }
       if (buf) part(buf, a, base + b0, buf.length);
@@ -877,17 +885,17 @@
       var broke = false;
       for (var si = 0; si < segs.length; si++) {
         var sx0 = segs[si][0], sx1 = segs[si][1], avail = sx1 - sx0;
-        var items = [], w = 0, spaces = 0, pendingSp = [];
+        var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0;
         while (ti < toks.length) {
           var tk = toks[ti];
           if (tk.k === "br") { ti++; broke = true; break; }
-          if (tk.k === "s") {
+          if (tk.k === "s" || tk.k === "h") {
             if (items.length) pendingSp.push(tk);
             ti++;
             continue;
           }
-          var spW = 0;
-          pendingSp.forEach(function (s) { spW += measure(s.a.key, " ", s.a.size, s.a.track); });
+          var spW = 0, nsp = 0;
+          pendingSp.forEach(function (s) { if (s.k === "s") { spW += measure(s.a.key, " ", s.a.size, s.a.track); nsp++; } });
           var ww = wordWidth(tk, ctx);
           if (w + spW + ww > avail + 0.001) {
             if (!items.length) {
@@ -896,17 +904,28 @@
               if (ww <= fullW + 0.001 && avail < fullW - 0.001) break;
               var pieces = splitWord(tk, avail, ctx);
               if (pieces.length > 1) { toks.splice.apply(toks, [ti, 1].concat(pieces)); continue; }
-              items.push({ tok: tk, w: ww, sp: [] }); w += ww; ti++;
+              items.push({ tok: tk, w: ww, sp: [], spW: 0, nsp: 0, ti: ti }); w += ww; ti++;
+              break;
             }
+            // a break inside a word: its hyphen must fit too, else the
+            // line ends one break earlier
+            hyph = breakHyph(pendingSp);
+            while (hyph && items.length > 1) {
+              if (w + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0) <= avail + 0.001) break;
+              var last = items.pop();
+              w -= last.w + last.spW; spaces -= last.nsp; ti = last.ti;
+              hyph = breakHyph(last.sp);
+            }
+            hyW = hyph && hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0;
             break;
           }
-          items.push({ tok: tk, w: ww, sp: pendingSp, spW: spW });
-          spaces += pendingSp.length;
+          items.push({ tok: tk, w: ww, sp: pendingSp, spW: spW, nsp: nsp, ti: ti });
+          spaces += nsp;
           w += spW + ww; pendingSp = [];
           ti++;
         }
         // alignment within the segment
-        var align = ps.align, extra = avail - w, gapAdd = 0, x = sx0;
+        var align = ps.align, extra = avail - w - hyW, gapAdd = 0, x = sx0;
         // justify every segment except the paragraph's end and a
         // forced break
         var justifyHere = align === "j" && !broke && ti < toks.length;
@@ -919,7 +938,7 @@
           line.maxSize = Math.max(line.maxSize, bul.a.size);
         }
         items.forEach(function (it, k) {
-          if (k > 0) x += (it.spW || 0) + gapAdd * it.sp.length;
+          if (k > 0) x += (it.spW || 0) + gapAdd * (it.nsp || 0);
           it.tok.parts.forEach(function (p) {
             var txt = partText(p, ctx), pw = partWidth(p, ctx);
             line.runs.push({ x: x, y: base, t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
@@ -928,6 +947,10 @@
             x += pw;
           });
         });
+        if (hyph && hyph.hy && items.length) {
+          line.runs.push({ x: x, y: base, t: "-", key: hyph.a.key, size: hyph.a.size, color: hyph.a.color, u: hyph.a.u ? 1 : 0, track: hyph.a.track || 0, w: hyW, p: curPi, o: hyph.o, n: 1, f: 0 });
+        }
+        if (si === 0) line.aw = avail;
         if (broke || ti >= toks.length) break;
       }
       if (!line.maxSize) line.maxSize = ps.size;
@@ -936,6 +959,13 @@
       return line;
     }
 
+    // the break before the next word, when it is inside a word (only
+    // break opportunities, no space, since the last word)
+    function breakHyph(sp) {
+      if (!sp.length) return null;
+      for (var k = 0; k < sp.length; k++) if (sp[k].k === "s") return null;
+      return sp[sp.length - 1];
+    }
     function commit(line) {
       delete line.maxSize; delete line.next; delete line.base;
       out.frames[geom.f.id].lines.push(line);
