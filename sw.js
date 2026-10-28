@@ -784,6 +784,8 @@ var PRECACHE_URLS = [
   "layout/rebuild.js",
   "layout/wordin.js",
   "layout/io.js",
+  "layout/house.js",
+  "layout/houseui.js",
   "designkit/assets.js",
   "designkit/fx.js",
   "designkit/blend.js",

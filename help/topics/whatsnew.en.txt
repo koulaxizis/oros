@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.21.00
+- Layout: `House style…` learns the style of a series from two or three earlier books and keeps it as a template with a rules sheet: rules found in the books, the Greek typographic rules (hyphenation, widows and orphans, « » quotes, dialogue dashes, ellipses) and your own. Text placed into a document with these rules gets its quotes and dashes fixed; words never change.
+
 ## Version 4.20.00
 - Layout: `Place text or a document` in the `More` menu now brings in Word (.docx), OpenDocument (.odt), RTF, HTML and Markdown files with their headings, bold and italic. Choose once which paragraph style each kind of paragraph takes (Heading 1, the first paragraph after a heading, quotations, lists); the document remembers it.
 
