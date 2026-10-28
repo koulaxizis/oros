@@ -86,9 +86,9 @@ test("uniform() returns to one scale; names compare loosely", () => {
 
 test("wiring: open with pictures or the folder, Find pictures, every edit of the fit or scale goes back to one scale", () => {
   const io = read("layout/io.js");
-  assert.match(io, /if \(sla && !list\.some\(function \(f\) \{ return f\.name === "content\.json"; \}\)\) return importSla\(sla, list\.filter\(isPicture\)\);/);
-  assert.match(io, /var first = importSla\(sla\[0\], pics\);/);
-  assert.match(io, /"sla\.done", \{ p: res\.stats\.pages, n: res\.stats\.items \}\), "", pics\);/);
+  assert.match(io, /if \(sla && !list\.some\(function \(f\) \{ return f\.name === "content\.json"; \}\)\) return importSla\(sla, list\.filter\(isPicture\), list\.filter\(isPdf\)\[0\]\);/);
+  assert.match(io, /var first = importSla\(sla\[0\], pics, pdf\);/);
+  assert.match(io, /"sla\.done", \{ p: res\.stats\.pages, n: res\.stats\.items \}\) \+ fitMsg, "", pics\);/);
   assert.match(io, /LY\.toast\(parts\.join\(" "\), t\("sla\.find"\), relinkPick\);/);
   assert.match(io, /it\.ix = 0; it\.iy = 0; it\.isc = 1; LY\.R\.uniform\(it\);/);
   const pn = read("layout/panels.js");

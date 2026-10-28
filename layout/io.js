@@ -256,7 +256,7 @@
       if (!files) return;
       // a Scribus "Collect for output" folder: the .sla and its pictures
       var list = Array.prototype.slice.call(files), sla = list.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); })[0];
-      if (sla && !list.some(function (f) { return f.name === "content.json"; })) return importSla(sla, list.filter(isPicture));
+      if (sla && !list.some(function (f) { return f.name === "content.json"; })) return importSla(sla, list.filter(isPicture), list.filter(isPdf)[0]);
       return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle, bundleFail);
     }).then(null, function () { LY.toast(t("imp.bad")); });
   }
@@ -267,6 +267,7 @@
   // files picked together open one after another.
   var OPEN_ACCEPT = ".oroslayout,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml,image/*,.jpg,.jpeg,.png,.gif,.webp,.tif,.tiff";
   function isSvg(f) { return /\.svg$/i.test(f.name || "") || f.type === "image/svg+xml"; }
+  function isPdf(f) { return /\.pdf$/i.test(f.name || "") || f.type === "application/pdf"; }
   function isPicture(f) { return /\.(jpe?g|png|gif|webp|bmp|tiff?)$/i.test(f.name || "") || /^image\/(jpeg|png|gif|webp|bmp|tiff)$/.test(f.type || ""); }
   function importPackage() {
     var dlg = LY.dialogHost();
@@ -280,12 +281,13 @@
       files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
       if (!files.length) return;
       if (files.every(isSvg)) return importSvg(files);
-      // a Scribus file picked with pictures: they are its linked pictures
+      // a Scribus file picked with pictures: they are its linked
+      // pictures; with a PDF: its print PDF, for the line breaks
       var sla = files.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); });
       if (sla.length === 1 && files.length > 1) {
-        var pics = files.filter(isPicture);
-        files = files.filter(function (f) { return f !== sla[0] && pics.indexOf(f) < 0; });
-        var first = importSla(sla[0], pics);
+        var pics = files.filter(isPicture), pdf = files.filter(isPdf)[0];
+        files = files.filter(function (f) { return f !== sla[0] && f !== pdf && pics.indexOf(f) < 0; });
+        var first = importSla(sla[0], pics, pdf);
         files.forEach(function (f) { first = Promise.resolve(first).then(function () { return openFile(f); }); });
         return first;
       }
@@ -357,8 +359,9 @@
   // that keep the file name.
   var FOREIGN_MAX = 100 * 1024 * 1024;
   function baseName(f, ext) { return String(f.name || "").replace(ext, "").slice(0, 120); }
-  // pics: the pictures picked with the file (its linked pictures, by name)
-  function importSla(f, pics) {
+  // pics: the pictures picked with the file (its linked pictures, by
+  // name); pdf: its print PDF, whose line breaks the text takes
+  function importSla(f, pics, pdf) {
     if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
     LY.toast(t("sla.working"));
     // a compressed .sla.gz is unpacked first (gzip magic, not the name)
@@ -370,8 +373,8 @@
       if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
       try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
-      return useSrcFonts(res.doc).then(function () {
-        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }), "", pics);
+      return useSrcFonts(res.doc).then(function () { return pdf ? fitToPdf(res.doc, pdf) : ""; }).then(function (fitMsg) {
+        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }) + fitMsg, "", pics);
       });
     }).then(null, function () { LY.toast(t("sla.bad")); });
   }
@@ -448,6 +451,20 @@
       reportDlg(res.report, opts && opts.chat);
       return res.report;
     }, function (e) { rebuilding = false; throw e; });
+  }
+  // The line breaks of a document's own print PDF (Scribus import):
+  // → Promise of a sentence for the message ("" when there is no PDF
+  // text to go by).
+  function fitToPdf(doc, pdf) {
+    var RB = window.LY_REBUILD;
+    if (!RB || pdf.size > REBUILD_MAX) return Promise.resolve("");
+    LY.toast(t("sla.fitting"));
+    return pdf.arrayBuffer().then(function (buf) { return RB.pdfText(buf); }).then(function (txt) {
+      if (!txt) return " " + t("sla.fitBad");
+      var rep = RB.matchPdf(doc, txt.pages, { fitName: t("sla.fitStyle"), lang: LY.BASE === "el" ? "el" : "en", now: LY.now() });
+      if (!rep.matched) return " " + t("sla.fitBad");
+      return " " + t("sla.fit", { n: rep.inPlace, t: rep.checked });
+    }).then(null, function () { return " " + t("sla.fitBad"); });
   }
   // Font names from a PDF or another program's file → the same families
   // on the orOS disk or at Fontsource, loaded (LY-FONT); a family that

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.14.00
+- Layout: line breaks as in the print PDF. Rebuild a print PDF, or open a Scribus file together with its print PDF, and every line breaks where it did: words hyphenated at a line end keep a soft hyphen there, and a line that would break elsewhere gets a `Line fit` character style with a little tracking. Soft hyphens in imported text now hyphenate instead of showing.
+
 ## Version 4.13.00
 - Layout: open a Scribus file together with its pictures, or the folder Scribus makes with Collect for Output, and linked pictures come in placed as Scribus placed them, stretched ones included. Pictures still missing can be found later from the message after opening.
 
