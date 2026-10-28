@@ -785,6 +785,7 @@ var PRECACHE_URLS = [
   "layout/wordin.js",
   "layout/io.js",
   "layout/house.js",
+  "layout/autolay.js",
   "layout/houseui.js",
   "designkit/assets.js",
   "designkit/fx.js",

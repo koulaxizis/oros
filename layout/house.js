@@ -274,6 +274,7 @@
     });
     d.pages = kept;
     d.rec = [];
+    var marks = markFields(d, rep);
     // the house: roles of the work, rules from the works and the Greek set
     var rules = worksRules(S).map(function (r) { r.src = "works"; return r; })
       .concat(GREEK.map(function (r) { return { code: r.code, a: JSON.parse(JSON.stringify(r.a)), src: "greek" }; }));
@@ -284,8 +285,62 @@
     d.setup.ext.wmap = wmapOf(ro);
     apply(d);
     d = M.normDoc(d);
-    var report = { works: S.length, skipped: docs.length - S.length, pages: d.pages.length, front: rep.front.length, back: rep.back.length, roles: Object.keys(ro).length, rules: rules.length, from: rep.doc.name || "" };
+    var report = { works: S.length, skipped: docs.length - S.length, pages: d.pages.length, front: rep.front.length, back: rep.back.length, toc: marks.toc, isbn: marks.isbn, title: marks.title, roles: Object.keys(ro).length, rules: rules.length, from: rep.doc.name || "" };
     return { doc: d, report: report };
+  }
+
+  // The front and back matter of the template: its contents (a story
+  // whose paragraphs end in page numbers, ext.hs "toc"), the ISBN and
+  // the book's title (the largest text on the first front page) become
+  // fields {isbn} and {title} that the automatic layout fills (LY-AUTO).
+  var TOC_LINE = /(\t|\s{2,}|\.{3,}|\u2026+|\s)\d{1,4}\s*$/;
+  var ISBN = /97[89](?:[-\u2010-\u2013 ]?\d){10}/g;
+  function markFields(d, rep) {
+    var out = { toc: false, isbn: 0, title: false }, front = {};
+    rep.front.forEach(function (id) { front[id] = 1; });
+    var onPage = {};
+    d.items.forEach(function (it) { if (it.t === "text" && !M.find(d.masters, it.pg)) onPage[it.story] = onPage[it.story] || it.pg; });
+    d.stories.forEach(function (st) {
+      if (!onPage[st.id]) return;
+      var lines = st.paras.filter(function (p) { return textOf(p).trim(); });
+      if (lines.length >= 3 && lines.filter(function (p) { return TOC_LINE.test(textOf(p)); }).length >= lines.length * 0.6) {
+        st.ext = st.ext || {};
+        st.ext.hs = "toc";
+        out.toc = true;
+        return;
+      }
+      st.paras.forEach(function (p) {
+        (p.runs || []).forEach(function (r) {
+          if (typeof r.t === "string") r.t = r.t.replace(ISBN, function () { out.isbn++; return "{isbn}"; });
+        });
+      });
+    });
+    // the title: the largest text on the first front page that has text
+    var psMap = T.byId(d.pstyles), csMap = T.byId(d.cstyles), best = null;
+    M.pagesInOrder(d).some(function (pg) {
+      if (!front[pg.id]) return false;
+      d.items.forEach(function (it) {
+        if (it.t !== "text" || it.pg !== pg.id) return;
+        var st = M.find(d.stories, it.story);
+        if (!st || (st.ext && st.ext.hs)) return;
+        st.paras.forEach(function (p) {
+          if (!textOf(p).trim() || /\{isbn\}/.test(textOf(p))) return;
+          var lk = {}, a = rep.looks[lookOf(p, psMap, csMap, lk)] || lk[Object.keys(lk)[0]];
+          if (!best || a.a.size > best.size) best = { size: a.a.size, p: p };
+        });
+      });
+      return !!best;
+    });
+    if (best) {
+      var r0 = null;
+      best.p.runs.some(function (r) { if (!r.f && String(r.t || "").trim()) { r0 = r; return true; } return false; });
+      var keep = {};
+      Object.keys(r0).forEach(function (k) { if (k !== "t") keep[k] = r0[k]; });
+      keep.t = "{title}";
+      best.p.runs = [keep];
+      out.title = true;
+    }
+    return out;
   }
 
   // Each role gets a paragraph style of its own look: the style itself
