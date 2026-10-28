@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.23.00
+- Assistant: it learns a house style from earlier books in Layout, lays out a new book from its manuscript in that style and adds your own house rules, each from a card you press; Layout does the work on your device and the Assistant gets only the report's numbers.
+
 ## Version 4.22.00
 - Layout: `Automatic layout…` makes a first layout of a new book from a manuscript in a house style: front and back matter with the book's details filled in, the text on as many pages as it needs, titles where the rules say, the contents, and a report of what to check. `Update contents` follows later changes.
 

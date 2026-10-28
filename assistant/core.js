@@ -2256,6 +2256,118 @@
     return o;
   }
 
+  // House style in Layout (AS-HS, Layout LY-HS / LY-AUTO): learn a house
+  // style from earlier books that are Layout documents, lay out a new
+  // book from a manuscript in it, or add a rule of the user's own. The
+  // user presses the card's button; Layout does it on the device and its
+  // report (numbers only, never the book's text) comes back into the
+  // result, the same way as rebuild_in_layout.
+  var HS_DOCS = 40, HS_NAME = 120, HS_RULE = 400, HS_META = 200;
+  var HS_TEXT = /\.(docx|odt|rtf|html?|txt|md|markdown)$/i;
+  var HS_FIELDS = ["title", "subtitle", "author", "isbn", "year", "publisher"];
+  var HS_DOES = ["titlePage", "titleOdd", "kwn", "firstFlush", "hyphOff"];
+  var TOOL_HS_LEARN = {
+    name: "learn_house_style",
+    description: "Learn a house style in Layout from earlier books of a series that are Layout documents (rebuilt from print PDFs or opened from Scribus files): " +
+      "which paragraph style is the body, the titles, the first paragraph, quotes and notes, how titles open a chapter, the front and back pages, " +
+      "and the Greek typesetting rules. The result is a new Layout document, the house style, with a rules sheet. Give the documents' names as the user " +
+      "calls them; Layout finds them on the device. The user gets a card and presses Learn; the report is added to this tool's result.",
+    params: {
+      type: "object",
+      properties: {
+        documents: { type: "array", items: { type: "string" }, description: "Names of the Layout documents to learn from (one or more books of the same series)." },
+        name: { type: "string", description: "A name for the house style, e.g. the series' name." }
+      },
+      required: ["documents"]
+    }
+  };
+  var TOOL_HS_BOOK = {
+    name: "layout_book",
+    description: "Lay out a new book in Layout from a manuscript (Word .docx, .odt, .rtf, .html, .md or .txt the user attached, or a path on the orOS disk under /internal/) " +
+      "in a house style learned with learn_house_style: titles on the pages the house style opens them on, the first paragraph after a title, quotes and dashes " +
+      "fixed by the Greek rules (no word changes), the front and back pages with the title, author, ISBN and year filled in, and the contents. " +
+      "Layout does it on the device; you never get the manuscript. The user gets a card and presses Lay out; the report (pages, titles, " +
+      "fixes, pages to check) is added to this tool's result.",
+    params: {
+      type: "object",
+      properties: {
+        manuscript: { type: "string", description: "The attached manuscript's name, or its path on the orOS disk (/internal/…)." },
+        house: { type: "string", description: "The house style's name. Leave out when the user has one house style." },
+        title: { type: "string" }, subtitle: { type: "string" }, author: { type: "string" },
+        isbn: { type: "string" }, year: { type: "string" }, publisher: { type: "string" },
+        keep_front: { type: "boolean", description: "true to keep the manuscript's own front matter (title page, dedication) before the first chapter. Leave out to use the house style's front pages instead." }
+      },
+      required: ["manuscript"]
+    }
+  };
+  var TOOL_HS_RULE = {
+    name: "add_house_rule",
+    description: "Add a rule of the user's own to a house style in Layout, in their words, e.g. \"Poems are set in italics\". When the rule is one Layout can apply itself, " +
+      "give does: titlePage (each title starts a new page), titleOdd (each title starts on an odd page), kwn (a title keeps with the next lines), " +
+      "firstFlush (the first paragraph after a title has no indent), hyphOff (no hyphenation in the body). Otherwise leave does out and the rule stays on the sheet " +
+      "as a check for the user. The user gets a card and presses Add.",
+    params: {
+      type: "object",
+      properties: {
+        rule: { type: "string", description: "The rule in the user's words." },
+        does: { type: "string", "enum": HS_DOES.slice(), description: "What Layout applies for it, when it is one of these." },
+        house: { type: "string", description: "The house style's name. Leave out when the user has one house style." }
+      },
+      required: ["rule"]
+    }
+  };
+  function hsStr(v, max) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : ""; }
+  // name ("learn_house_style" | "layout_book" | "add_house_rule"), args,
+  // files (chatFiles) → { ok, op: "learn", docs, name } | { ok, op: "book",
+  // doc: { id | path, name }, house, meta, keepFront } | { ok, op: "rule",
+  // text, does, house } | { ok: false, err }
+  function normHouse(name, args, files) {
+    args = isObj(args) ? args : {};
+    var house = hsStr(args.house, HS_NAME);
+    if (name === "learn_house_style") {
+      var seen = {}, docs = [];
+      (Array.isArray(args.documents) ? args.documents : []).forEach(function (d) {
+        var s = hsStr(d, HS_NAME);
+        if (s && !seen[s.toLowerCase()] && docs.length < HS_DOCS) { seen[s.toLowerCase()] = 1; docs.push(s); }
+      });
+      if (!docs.length) return { ok: false, err: "documents is empty: give the names of the Layout documents (earlier books) to learn from." };
+      return { ok: true, op: "learn", docs: docs, name: hsStr(args.name, HS_NAME) };
+    }
+    if (name === "layout_book") {
+      var got = rbFile(Array.isArray(files) ? files : [], args.manuscript, "manuscript", HS_TEXT, "manuscript (.docx, .odt, .rtf, .html, .md or .txt)");
+      if (got.err) return { ok: false, err: got.err };
+      var meta = {};
+      HS_FIELDS.forEach(function (k) { var v = hsStr(args[k], HS_META); if (v) meta[k] = v; });
+      return { ok: true, op: "book", doc: got.f, house: house, meta: meta, keepFront: args.keep_front === true };
+    }
+    if (name === "add_house_rule") {
+      var text = hsStr(args.rule, HS_RULE);
+      if (!text) return { ok: false, err: "rule is empty: give the rule in the user's words." };
+      if (args.does != null && args.does !== "" && HS_DOES.indexOf(args.does) === -1) return { ok: false, err: "does must be one of " + HS_DOES.join(", ") + ", or left out." };
+      return { ok: true, op: "rule", text: text, does: HS_DOES.indexOf(args.does) >= 0 ? args.does : "", house: house };
+    }
+    return { ok: false, err: "unknown tool." };
+  }
+  // Layout's report → the numbers the model gets (no text of the book)
+  function houseReport(op, rep) {
+    if (!isObj(rep)) return null;
+    var n = function (v) { v = Math.floor(Number(v)); return isFinite(v) && v >= 0 ? v : 0; };
+    if (rep.failed) return { failed: true, why: hsStr(rep.why, 20) || "failed", missing: (Array.isArray(rep.missing) ? rep.missing : []).slice(0, HS_DOCS).map(function (s) { return hsStr(s, HS_NAME); }) };
+    if (op === "learn") {
+      return { works: n(rep.works), frontPages: n(rep.front), backPages: n(rep.back), roles: n(rep.roles), rulesFromWorks: n(rep.rules),
+        missing: (Array.isArray(rep.missing) ? rep.missing : []).slice(0, HS_DOCS).map(function (s) { return hsStr(s, HS_NAME); }) };
+    }
+    if (op === "rule") return { added: true, changes: n(rep.changes) };
+    var fx = isObj(rep.fixes) ? rep.fixes : {};
+    var o = { pages: n(rep.pages), bodyPages: n(rep.body), titles: n(rep.titles), titlesGuessed: n(rep.guessed), emptyLinesDropped: n(rep.dropped),
+      manuscriptFrontLeftOut: n(rep.front), fixes: { quotes: n(fx.quotes), dashes: n(fx.dash), ellipses: n(fx.ellipsis), spaces: n(fx.spaces) },
+      fieldsFilled: n(rep.fields), contentsEntries: rep.toc >= 0 ? n(rep.toc) : null, picturesLeftOut: n(rep.pictures) };
+    var ns = isObj(rep.noStyle) ? Object.keys(rep.noStyle).filter(function (k) { return /^[a-z0-9]{1,8}$/.test(k); }) : [];
+    if (ns.length) o.rolesWithoutStyle = ns.slice(0, 10);
+    o.pagesToCheck = (Array.isArray(rep.check) ? rep.check : []).filter(isObj).slice(0, 60).map(function (x) { return { page: n(x.page), why: hsStr(x.why, 20) }; });
+    return o;
+  }
+
   // The tools phase 1 offered (searching only); kept for the tests.
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
   // opts = { data: the user lets it search, summary: at least one
@@ -2263,7 +2375,8 @@
   // is installed, changes: at least one readable app takes changes,
   // recipes: the installed apps with automations, creates: the app ids
   // create_items may add to, links: CRM and Contacts are both readable,
-  // openFile: Writer is installed, for open_file)
+  // openFile: Writer is installed, for open_file; rebuild, house: Layout
+  // is installed, for rebuild_in_layout and the house style tools)
   function toolsFor(opts) {
     opts = opts || {};
     var out = [];
@@ -2272,6 +2385,7 @@
     if (opts.entries) out.push(TOOL_ENTRY);
     if (opts.openFile) out.push(TOOL_OPEN_FILE);
     if (opts.rebuild) out.push(TOOL_REBUILD);
+    if (opts.house) out.push(TOOL_HS_LEARN, TOOL_HS_BOOK, TOOL_HS_RULE);
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
@@ -2553,6 +2667,7 @@
       if (opts.rebuild) lines.push("When the user wants a printed book, magazine or brochure back in Layout (from its print PDF, with or without its original pictures and texts), call rebuild_in_layout; a Scribus file (.sla) opens in Layout through rebuild_in_layout with sla, with its pictures and, when attached, its print PDF as pdf; an Affinity file (.af) goes in sources next to its print PDF. Never retype a printed document or rebuild it by hand with other tools. When its result has the report, say honestly what came out the same and what did not (lines in place, pictures from originals, fonts replaced, pages to check); afterwards, changes to the document go through propose_automation for Layout (styles by name, find and replace, margins, masters, export), and do_action open with app layout and page opens a page to check. Files marked as staying on the device can only be handed to an app: you cannot read them.");
       if (opts.openFile) lines.push("To bring a document the user attached into Writer as it is (its formatting, headings, alignment, lists, numbering and every word), call open_file with its name, one call per file. Never retype an attached document into propose_entry document: that loses its formatting and may change words. propose_entry document is for text you write yourself, in Markdown.");
     }
+    if (opts.house) lines.push("For books of a series in Layout: learn_house_style learns the series' house style from earlier books that are Layout documents (rebuild them first with rebuild_in_layout when the user has only print PDFs or Scribus files); layout_book lays out a new book from its manuscript in that house style; add_house_rule adds a rule of the user's own. Give layout_book the title; Layout fills the author, ISBN and year from the Publishing app's title of that name, so ask for them only when the user has no such title there. When a report comes back, say honestly what came out (pages, titles, titles that were guessed, quotes and dashes fixed, pages to check); words are never changed, only quotes, dashes, ellipses and spaces.");
     var canChange = !opts.builtin && !opts.chatOnly && opts.apps && opts.apps.length && opts.changes && opts.changes.length;
     if (opts.files && canChange && opts.changes.some(function (a) { return /^(contacts|crm)$|\((contacts|crm)\)$/.test(a); })) {
       lines.push("When a file or message holds details of people or companies (a form, a list, business cards, a vCard, a signature), look each one up first with search_data (Contacts, and CRM for customers and partners). Someone already there gets change_item with only what is new or different (changes: one entry per person, when there are several); add phones, e-mails and websites, and replace one (old_phone…) only when the file says it changed; never drop details they have. Someone not there gets " + (opts.creates && opts.creates.length ? "create_items (all of them in one call per app)" : "propose_entry") + ". Tax numbers and tax office go to the CRM customer (tax_id, tax_office) when there is one; bank details or a bio, which have no field, go in note_add, briefly, only if the user wants them there.");
@@ -3479,6 +3594,7 @@
     normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
+    normHouse: normHouse, houseReport: houseReport, HS_DOES: HS_DOES, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

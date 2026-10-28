@@ -232,6 +232,29 @@
       "rb.slaPages": "{p} pages, {n} objects.",
       "rb.slaPics": "{n} pictures placed, {m} still missing.",
       "rb.slaLines": "{n} of {t} lines break as in the PDF ({p} %).",
+      "hs.head.learn": "Learn a house style · {app}",
+      "hs.head.book": "Lay out a book · {app}",
+      "hs.head.rule": "Add a house rule · {app}",
+      "hs.docs": "From: {list}.",
+      "hs.in": "In the house style {h}.",
+      "hs.inOnly": "In your house style.",
+      "hs.hint.learn": "Layout learns the styles, how chapters open, the front and back pages and the Greek rules from these books on this device, and keeps the house style as a new document with a rules sheet.",
+      "hs.hint.book": "Layout reads the manuscript on this device and makes a new book in the house style. Quotes, dashes, ellipses and spaces are fixed; no word is changed. Nothing is sent to the AI service.",
+      "hs.hint.rule": "The rule goes on the house style's sheet, where you can turn it off or remove it.",
+      "hs.go.learn": "Learn",
+      "hs.go.book": "Lay out",
+      "hs.go.rule": "Add",
+      "hs.working": "{app} is doing it on this device…",
+      "hs.failed": "{app} could not do it. Nothing was made.",
+      "hs.noHouse": "{app} has no house style by that name. Learn one first.",
+      "hs.noDocs": "{app} found none of these documents.",
+      "hs.missing": "Not found: {list}.",
+      "hs.repLearn": "Learned from {n} books: {f} front and {b} back pages, {r} paragraph roles, {k} rules from the books.",
+      "hs.repBook": "{p} pages, {t} titles ({g} of them guessed).",
+      "hs.repFixes": "Fixed: {q} quotes, {d} dashes, {e} ellipses, {s} spaces.",
+      "hs.repRule": "The rule is on the sheet ({n} style settings changed).",
+      "hs.check": "Pages to check: {p}.",
+      "hs.next": "The document is open in Layout.",
       "do.f.page": "Page",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
       "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text", "nl.checkHead": "Ready to send? · {app}", "nl.checkHint": "Opens the issue's check in {app}: what is missing, and when all is well, the send screen. You press Send there.", "nl.checkOpen": "Open the check",
@@ -606,6 +629,29 @@
       "rb.slaPages": "{p} σελίδες, {n} αντικείμενα.",
       "rb.slaPics": "{n} εικόνες στη θέση τους, {m} λείπουν ακόμα.",
       "rb.slaLines": "{n} από {t} γραμμές σπάνε όπως στο PDF ({p} %).",
+      "hs.head.learn": "Εκμάθηση ύφους έκδοσης · {app}",
+      "hs.head.book": "Σελιδοποίηση βιβλίου · {app}",
+      "hs.head.rule": "Νέος κανόνας ύφους · {app}",
+      "hs.docs": "Από: {list}.",
+      "hs.in": "Στο ύφος έκδοσης {h}.",
+      "hs.inOnly": "Στο ύφος έκδοσής σου.",
+      "hs.hint.learn": "Η Σελιδοποίηση μαθαίνει από αυτά τα βιβλία, σε αυτή τη συσκευή, τα στυλ, πώς ανοίγουν τα κεφάλαια, τις σελίδες στην αρχή και στο τέλος και τους ελληνικούς κανόνες, και κρατά το ύφος ως νέο έγγραφο με φύλλο κανόνων.",
+      "hs.hint.book": "Η Σελιδοποίηση διαβάζει το χειρόγραφο σε αυτή τη συσκευή και φτιάχνει νέο βιβλίο στο ύφος της έκδοσης. Διορθώνονται εισαγωγικά, παύλες, αποσιωπητικά και κενά· καμία λέξη δεν αλλάζει. Τίποτα δεν στέλνεται στην υπηρεσία AI.",
+      "hs.hint.rule": "Ο κανόνας μπαίνει στο φύλλο του ύφους, όπου μπορείς να τον απενεργοποιήσεις ή να τον αφαιρέσεις.",
+      "hs.go.learn": "Εκμάθηση",
+      "hs.go.book": "Σελιδοποίηση",
+      "hs.go.rule": "Προσθήκη",
+      "hs.working": "Η {app} το κάνει σε αυτή τη συσκευή…",
+      "hs.failed": "Η {app} δεν μπόρεσε να το κάνει. Δεν φτιάχτηκε τίποτα.",
+      "hs.noHouse": "Η {app} δεν έχει ύφος έκδοσης με αυτό το όνομα. Μάθε πρώτα ένα.",
+      "hs.noDocs": "Η {app} δεν βρήκε κανένα από αυτά τα έγγραφα.",
+      "hs.missing": "Δεν βρέθηκαν: {list}.",
+      "hs.repLearn": "Από {n} βιβλία: {f} σελίδες στην αρχή και {b} στο τέλος, {r} ρόλοι παραγράφων, {k} κανόνες από τα βιβλία.",
+      "hs.repBook": "{p} σελίδες, {t} τίτλοι ({g} από αυτούς μαντεμένοι).",
+      "hs.repFixes": "Διορθώθηκαν: {q} εισαγωγικά, {d} παύλες, {e} αποσιωπητικά, {s} κενά.",
+      "hs.repRule": "Ο κανόνας είναι στο φύλλο ({n} ρυθμίσεις στυλ άλλαξαν).",
+      "hs.check": "Σελίδες για έλεγχο: {p}.",
+      "hs.next": "Το έγγραφο είναι ανοιχτό στη Σελιδοποίηση.",
       "do.f.page": "Σελίδα",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
       "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο", "nl.checkHead": "Έτοιμο για αποστολή; · {app}", "nl.checkHint": "Ανοίγει τον έλεγχο του τεύχους ({app}): τι λείπει και, όταν όλα είναι εντάξει, την οθόνη αποστολής. Το Αποστολή το πατάς εσύ εκεί.", "nl.checkOpen": "Άνοιγμα ελέγχου",
@@ -2374,7 +2420,7 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn, rebuild: rbOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn, rebuild: rbOn, house: rbOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -2392,6 +2438,7 @@
       files: builtin ? "" : "pdf",
       openFile: fileOn,
       rebuild: rbOn,
+      house: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
@@ -2560,6 +2607,7 @@
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
+    if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
@@ -2745,13 +2793,60 @@
     saveChat(c).then(function () { delete attRb[key]; }, function () {});
     return true;
   }
+  // learn_house_style, layout_book, add_house_rule (AS-HS): checked now;
+  // the card's button hands the request to Layout (the manuscript as a
+  // one-shot token or a disk path), which does it on the device and
+  // leaves its report in the shell under the card's key, as a rebuild.
+  function proposeHouse(c, name, args) {
+    if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "houseErr" } };
+    var h = C.normHouse(name, args, chatFiles(c));
+    if (!h.ok) return { content: "Error: " + h.err, err: 1, ui: { k: "houseErr" } };
+    var inH = h.house ? " in the house style \u201c" + h.house + "\u201d" : "";
+    var what = h.op === "learn" ? "learning a house style from " + h.docs.length + " Layout document(s)"
+      : h.op === "book" ? "laying out \u201c" + h.doc.name + "\u201d" + inH : "adding the rule" + inH;
+    var ui = { k: "house", op: h.op, house: h.house, key: attId(), st: "" };
+    if (h.op === "learn") { ui.docs = h.docs; ui.name = h.name; }
+    else if (h.op === "book") { ui.doc = h.doc; ui.meta = h.meta; ui.keepFront = h.keepFront ? 1 : 0; }
+    else { ui.text = h.text; ui.does = h.does; }
+    return { content: "Shown to the user as a card: " + what + ". Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
+  }
+  function runHouse(ui, c) {
+    var p = shell(), FO = p && p.orosFileOpen;
+    if (!p || typeof p.__orosOpenAt !== "function") return false;
+    var rq = { op: ui.op, house: ui.house || "", key: ui.key, chat: c.id };
+    if (ui.op === "learn") { rq.docs = ui.docs || []; rq.name = ui.name || ""; }
+    else if (ui.op === "rule") { rq.text = ui.text; rq.does = ui.does || ""; }
+    else {
+      if (ui.doc.path) rq.doc = { path: ui.doc.path };
+      else {
+        var f = attFile(ui.doc.id, ui.doc.name), tok = f && FO && typeof FO.hand === "function" ? FO.hand(f) : "";
+        if (!tok) return false;
+        rq.doc = { token: tok, name: ui.doc.name };
+      }
+      rq.meta = ui.meta || {};
+      rq.keepFront = ui.keepFront === 1 ? 1 : 0;
+    }
+    try { p.__orosOpenAt("layout", { house: rq }); return true; } catch (e) { return false; }
+  }
+  function takeHouse(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    ui.rep = C.houseReport(ui.op, rep);
+    ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
+    r.content = ui.st === "failed" ? "The user pressed the button, but Layout could not do it. Nothing was made. Report: " + JSON.stringify(ui.rep)
+      : ui.op === "rule" ? "Layout added the rule to the house style's sheet. Report: " + JSON.stringify(ui.rep)
+      : "Layout made it on the device as a new document, now open in Layout. Report: " + JSON.stringify(ui.rep);
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
+
   // Only while this frame is alive: an app opened from a card may take
   // its place, and the report then waits for the next opening.
   function onRb() {
     if (!chat) return;
     var hit = false;
     chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && r.ui.k === "rebuild" && takeRebuilt(r, chat)) hit = true; });
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)))) hit = true; });
     });
     if (hit) renderMessages();
   }
@@ -4926,6 +5021,8 @@
         if (ui.k === "fileErr") return;
         if (ui.k === "rebuild") { drawRebuild(host, r, c); return; }
         if (ui.k === "rebuildErr") return;
+        if (ui.k === "house") { drawHouse(host, r, c); return; }
+        if (ui.k === "houseErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
@@ -5175,6 +5272,67 @@
         // Saved before Layout opens (it may take this frame's place).
         saveChat(c).then(function () {
           if (!runRebuild(ui, c)) { ui.st = "failed"; r.content = "The files could not be handed to Layout. Nothing was made."; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // A house style card (AS-HS): what Layout will do; after the press,
+  // its report.
+  function drawHouse(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
+    takeHouse(r, c);
+    var name = have.layout, op = ui.op === "learn" || ui.op === "rule" ? ui.op : "book";
+    var card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("hs.head." + op, { app: name })));
+    if (op === "learn") {
+      if (ui.name) card.appendChild(el("p", "entry-title", ui.name));
+      card.appendChild(el("p", "dlg-hint", t("hs.docs", { list: (ui.docs || []).join(", ") })));
+    } else {
+      card.appendChild(el("p", "entry-title", op === "rule" ? ui.text : ui.doc && ui.doc.name || ""));
+      var meta = ui.meta || {}, vals = Object.keys(meta).map(function (k) { return meta[k]; });
+      card.appendChild(el("p", "dlg-hint", (ui.house ? t("hs.in", { h: ui.house }) : t("hs.inOnly")) + (vals.length ? " " + vals.join(" · ") : "")));
+    }
+    var rp = ui.rep;
+    if (ui.st === "done" && rp) {
+      var ul = el("ul", "entry-list"), lines = [];
+      if (op === "learn") {
+        lines.push(t("hs.repLearn", { n: rp.works, f: rp.frontPages, b: rp.backPages, r: rp.roles, k: rp.rulesFromWorks }));
+        if (rp.missing && rp.missing.length) lines.push(t("hs.missing", { list: rp.missing.join(", ") }));
+      } else if (op === "rule") lines.push(t("hs.repRule", { n: rp.changes }));
+      else {
+        lines.push(t("hs.repBook", { p: rp.pages, t: rp.titles, g: rp.titlesGuessed }));
+        lines.push(t("hs.repFixes", { q: rp.fixes.quotes, d: rp.fixes.dashes, e: rp.fixes.ellipses, s: rp.fixes.spaces }));
+        if (rp.pagesToCheck.length) lines.push(t("hs.check", { p: rp.pagesToCheck.map(function (x) { return x.page; }).slice(0, 20).join(", ") }));
+      }
+      lines.forEach(function (x) { ul.appendChild(el("li", "", x)); });
+      card.appendChild(ul);
+      card.appendChild(el("p", "dlg-hint", t("hs.next")));
+    } else if (ui.st === "opened") {
+      card.appendChild(el("p", "entry-state", t("hs.working", { app: name })));
+    } else if (ui.st === "failed") {
+      var why = rp && rp.why === "noHouse" ? "hs.noHouse" : rp && rp.why === "noDocs" ? "hs.noDocs" : "hs.failed";
+      card.appendChild(el("p", "entry-state err", t(why, { app: name })));
+    } else if (ui.st) {
+      card.appendChild(el("p", "entry-state", t("entry." + ui.st, { app: name })));
+    } else {
+      if (op === "book" && !ui.doc.path && !attMem[ui.doc.id] && !attBlob[ui.doc.id]) { card.appendChild(el("p", "entry-state err", t("file.gone"))); host.appendChild(card); return; }
+      card.appendChild(el("p", "dlg-hint", t("hs.hint." + op)));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("hs.go." + op), "primary", function () {
+        ui.st = "opened";
+        // Saved before Layout opens (it may take this frame's place).
+        saveChat(c).then(function () {
+          if (!runHouse(ui, c)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
           renderMessages();
         });
       }));
