@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.08.00
+- Command bar and Quick window: small tools. `password 16` (or `new password`) makes a strong password, `roll 2 dice` (also `2d6` or `d20`) rolls dice, `flip a coin` gives heads or tails and `random 1-100` picks a number. Each comes from your device's secure random source and Enter copies it. A password is not repeated in the note and is never kept in the recent commands.
+
 ## Version 4.07.00
 - Command bar and Quick window: change a few settings by typing them. `dark theme` / `light theme`, `quiet hours on` / `off` (your saved hours stay), `notifications off` / `on` (with a note that nothing shows or is kept while they are off) and `lock now` (only when the screen lock is set up). Press Enter on the row to do it.
 
