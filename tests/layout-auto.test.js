@@ -89,6 +89,39 @@ test("build: a new book in the house style, titles on odd pages, contents and fi
   assert.equal(letters(body.paras.map(text).join("")), letters(list.map(text).join("")));
 });
 
+test("house: a colophon all in one size: the quoted line is the title, quotes kept; no quoted line, no guess", () => {
+  const colophon = (lines) => {
+    const b = book("Ένα", 2, 11);
+    b.stories.find((st) => st.id === "st-front").paras = lines.map((t) => ({ ps: "ps-nt", runs: [{ t }] }));
+    return M.normDoc(b);
+  };
+  const front = (res) => res.doc.stories.find((st) => st.paras.some((p) => text(p) === "Ο συγγραφέας")).paras.map(text);
+  const a = H.learn([colophon(["Ο συγγραφέας", "«Ένα»", "Εκδόσεις"])], { now: 5 });
+  assert.equal(a.report.title, true);
+  assert.deepEqual(front(a), ["Ο συγγραφέας", "«{title}»", "Εκδόσεις"]);
+  const b = H.learn([colophon(["Ο συγγραφέας", "Ένα", "Εκδόσεις"])], { now: 5 });
+  assert.equal(b.report.title, false);
+  assert.deepEqual(front(b), ["Ο συγγραφέας", "Ένα", "Εκδόσεις"]);
+});
+
+test("structure: short opening paragraphs are the book, not front matter; a line of stars is never a title", () => {
+  const short = "<p>" + words(12, 1) + "</p>";
+  const html = "<p><b>ΜΕΡΟΣ ΠΡΩΤΟ</b></p>" + short + short + short + "<p></p><p></p><p></p><p style=\"text-align:center\">***</p>" + short +
+    "<p></p><p><b>ΜΕΡΟΣ ΔΕΥΤΕΡΟ</b></p><p>" + words(60, 2) + "</p>";
+  const s = A.structure(W.parse(html));
+  assert.equal(s.front, 0);
+  assert.deepEqual(s.list.filter((p) => /^h/.test(p.role)).map(text), ["ΜΕΡΟΣ ΠΡΩΤΟ", "ΜΕΡΟΣ ΔΕΥΤΕΡΟ"]);
+  assert.equal(s.list.filter((p) => p.role === "center").length, 1);
+  // a title page and a dedication before the first title still go
+  const t = A.structure(W.parse("<p><b>Τίτλος</b></p><p>Για τη Μαρία</p><p></p><p><b>Πρώτο</b></p><p>" + words(60, 3) + "</p>"));
+  assert.equal(t.front, 2);
+  assert.equal(text(t.list[0]), "Πρώτο");
+  // running text before the first title is never left out
+  const u = A.structure(W.parse("<p>" + words(90, 4) + "</p><p></p><p><b>Πρώτο</b></p><p>" + words(60, 3) + "</p>"));
+  assert.equal(u.front, 0);
+  assert.deepEqual(u.list.map((p) => p.role), ["p1", "h1", "p1"]);
+});
+
 test("structure: titles guessed only from short bold lines after an empty one; empty lines by titles go", () => {
   const s = A.structure(W.parse("<p><b>Τίτλος</b></p><p>κείμενο</p><p></p><p></p><p>πιο κάτω</p><p></p><p><b>Όχι τίτλος γιατί είναι στο τέλος</b></p>"));
   assert.deepEqual(s.list.map((p) => p.role), ["h1", "p1", "p", "p1", "p", "p1"]);

@@ -390,8 +390,11 @@
           var prev = bl[k - 1], cls = lineClass(l, effA(l)), gap = prev ? l.y - prev.y : 0;
           var pcls = prev ? lineClass(prev, effA(prev)) : null;
           var wi = wrapImgAt(l), startsAfterImg = wi && l.x0 >= wi.x + wi.w - 1;
+          // a step of the book's own pitch at body size is the next line
+          // of the paragraph, also with open leading (11/18)
+          var bookStep = prev && Math.abs(prev.size - meas.body) < 0.05 && Math.abs(gap - meas.pitch) <= 1;
           var newPara = !g || Math.abs(l.size - prev.size) > 0.05 || l.spans[0].fam !== prev.spans[0].fam ||
-            gap > Math.max(g.pitch || 0, prev.size * 1.25) * 1.18 + 0.5;
+            (gap > Math.max(g.pitch || 0, prev.size * 1.25) * 1.18 + 0.5 && !bookStep);
           if (!newPara) {
             var hyph = LETTER_HYPHEN.test(prev.text) && LOWER.test(l.text);
             var prevEnded = !hyph && !(pcls === "full" || pcls === "fulli") && !(wrapImgAt(prev) && Math.abs(prev.x1 - FA.r) < 1.6);
@@ -733,14 +736,23 @@
   }
   // the box of the pixels a transparent picture really paints
   function inkBox(cv) {
-    var x = cv.getContext("2d", { willReadFrequently: true }), d = x.getImageData(0, 0, cv.width, cv.height).data;
-    var x0 = cv.width, y0 = cv.height, x1 = -1, y1 = -1, alpha = false;
-    for (var yy = 0; yy < cv.height; yy++) for (var xx = 0; xx < cv.width; xx++) {
-      var a = d[(yy * cv.width + xx) * 4 + 3];
-      if (a < 255) alpha = true;
+    var x = cv.getContext("2d", { willReadFrequently: true });
+    return inkOf(x.getImageData(0, 0, cv.width, cv.height).data, cv.width, cv.height);
+  }
+  // RGBA pixels → [x0, y0, x1, y1], or null for an opaque picture. A soft
+  // edge alone (Affinity exports photos with one: under 1% of the pixels
+  // see-through, none of them clear) is opaque, so the photo can be
+  // matched to its original and stays a JPEG
+  function inkOf(d, w, h) {
+    var x0 = w, y0 = h, x1 = -1, y1 = -1, part = 0, clear = false;
+    for (var yy = 0; yy < h; yy++) for (var xx = 0; xx < w; xx++) {
+      var a = d[(yy * w + xx) * 4 + 3];
+      if (a < 255) part++;
       if (a > 24) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+      else clear = true;
     }
-    return alpha && x1 >= 0 ? [x0, y0, x1 + 1, y1 + 1] : null;
+    if (!part || x1 < 0 || (!clear && part < w * h / 100)) return null;
+    return [x0, y0, x1 + 1, y1 + 1];
   }
 
   // the page drawn at scale k (filter: which operators) → { ctx, data, w, h }
@@ -1052,7 +1064,7 @@
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, open: open, pdfText: pdfText, matchPdf: matchPdf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, open: open, pdfText: pdfText, matchPdf: matchPdf, inkOf: inkOf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);

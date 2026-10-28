@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.23.01
+- Layout: tested on a real book of a series. Rebuild a print PDF keeps paragraphs whole also with open line spacing and places your original photos when the PDF gave them a soft edge; a house style no longer takes the first chapter for front matter; the automatic layout never leaves out the start of a manuscript and never takes a line of stars for a title.
+
 ## Version 4.23.00
 - Assistant: it learns a house style from earlier books in Layout, lays out a new book from its manuscript in that style and adds your own house rules, each from a card you press; Layout does the work on your device and the Assistant gets only the report's numbers.
 
