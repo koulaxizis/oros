@@ -153,7 +153,8 @@ test("Layout automation: change a style by name; fields left at 0 or \"\" stay",
   const d = M.normDoc(M.newDoc({ name: "Book", pages: 2 }, 1000));
   d.pstyles.push({ id: "ps-rb1", m: 1000, name: "Body text", base: "ps-base", font: "serif", size: 10, lead: 15, align: "j", track: -40 });
   const st = RC.normStep({ op: "style", name: "body TEXT", size: 10.5, lead: 14 }, S.CATALOG);
-  assert.deepEqual(st, { op: "style", name: "body TEXT", size: 10.5, lead: 14, font: "", align: "", track: 0 });
+  assert.deepEqual(st, { op: "style", name: "body TEXT", size: 10.5, lead: 14, font: "", align: "", track: 0,
+    bold: "", ital: "", caps: "", sb: -1, sa: -1, fi: -1, brk: "", hyph: "" });
   assert.equal(S.apply(d, st, 2000), 1);
   const ps = d.pstyles.find((p) => p.id === "ps-rb1");
   assert.deepEqual([ps.size, ps.lead, ps.align, ps.font, ps.track], [10.5, 14, "j", "serif", -40]);

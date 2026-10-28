@@ -1805,10 +1805,12 @@
   // them in the app's editor; they save it and press Run themselves.
   // Every field any step takes is listed, so strict providers
   // (Gemini) keep them; recipes/share.js says which step takes which.
-  var RC_STR = ["find", "repl", "from", "to", "flt", "what", "fmt", "ms", "on", "id", "ratio", "mode", "text", "c", "pos", "q", "u", "p", "name", "font", "align"];
+  var RC_STR = ["find", "repl", "from", "to", "flt", "what", "fmt", "ms", "on", "id", "ratio", "mode", "text", "c", "pos", "q", "u", "p", "name", "font", "align",
+                "bold", "ital", "caps", "brk", "hyph", "at", "pages"];
   var RC_NUM = ["pct", "scale", "dpi", "t", "b", "i", "o", "bright", "contrast", "sat", "warmth", "tint", "fade", "sepia", "vignette",
-                "r", "amt", "v", "size", "opacity", "lead", "track"];
-  var RC_BOOL = ["cs", "word", "copies", "stop", "bleed", "marks", "spreads", "mono", "up"];
+                "r", "amt", "v", "size", "opacity", "lead", "track",
+                "sb", "sa", "fi", "n", "page", "first", "last", "mm"];
+  var RC_BOOL = ["cs", "word", "copies", "stop", "bleed", "marks", "spreads", "mono", "up", "flow"];
   function recipeTool(apps) {
     var props = { op: { type: "string", description: "The step's name (see the list above)." } };
     RC_STR.forEach(function (k) { props[k] = { type: "string" }; });

@@ -37,6 +37,7 @@
   var POS = ["tl", "t", "tr", "l", "c", "r", "bl", "b", "br"];
   var TEXT = { find: { t: "str", max: 500, req: 1 }, repl: { t: "str", max: 2000 }, cs: { t: "bool" }, word: { t: "bool" } };
   var MM = { t: "num", lo: 0, hi: 500, def: 15, req: 1 };
+  var PAGES = { t: "str", max: 60 }, ONOFF = { t: "enum", v: ["", "on", "off"], def: "" }, PT = { t: "num", lo: -1, hi: 1000, def: -1 };
   function slider(lo) { return { t: "int", lo: lo, hi: 100, def: 0 }; }
   var CATALOGS = {
     atelier: {
@@ -56,9 +57,18 @@
       text: { kind: "doc", args: TEXT },
       pstyle: { kind: "doc", args: { from: { t: "str", max: 80 }, to: { t: "str", max: 80, req: 1 } } },
       style: { kind: "doc", args: { name: { t: "str", max: 80, req: 1 }, size: { t: "num", lo: 0, hi: 400, def: 0 }, lead: { t: "num", lo: 0, hi: 500, def: 0 },
-        font: { t: "enum", v: ["", "serif", "sans", "mono"], def: "" }, align: { t: "enum", v: ["", "l", "c", "r", "j"], def: "" }, track: { t: "num", lo: -500, hi: 2000, def: 0 } } },
+        font: { t: "enum", v: ["", "serif", "sans", "mono"], def: "" }, align: { t: "enum", v: ["", "l", "c", "r", "j"], def: "" }, track: { t: "num", lo: -500, hi: 2000, def: 0 },
+        bold: ONOFF, ital: ONOFF, caps: ONOFF, sb: PT, sa: PT, fi: PT, brk: { t: "enum", v: ["", "any", "col", "page", "odd", "even"], def: "" }, hyph: ONOFF } },
       master: { kind: "doc", args: { ms: { t: "str", max: 80 }, on: { t: "enum", v: ["all", "odd", "even"], def: "all" } } },
       margins: { kind: "doc", args: { t: MM, b: MM, i: MM, o: MM } },
+      pages: { kind: "doc", args: { n: { t: "int", lo: 1, hi: 500, def: 1, req: 1 }, at: { t: "enum", v: ["end", "before", "after"], def: "end" },
+        page: { t: "int", lo: 0, hi: 9999, def: 0 }, flow: { t: "bool", def: 1 } } },
+      delpages: { kind: "doc", args: { first: { t: "int", lo: 1, hi: 9999, def: 1, req: 1 }, last: { t: "int", lo: 0, hi: 9999, def: 0 } } },
+      numbering: { kind: "doc", args: { mode: { t: "enum", v: ["set", "shift"], def: "set" }, n: { t: "int", lo: -9999, hi: 9999, def: 1, req: 1 } } },
+      bleed: { kind: "doc", args: { mm: { t: "num", lo: 0, hi: 25, def: 3, req: 1 } } },
+      fit: { kind: "doc", args: {} },
+      grey: { kind: "async", args: { pages: PAGES } },
+      imgfit: { kind: "doc", args: { mode: { t: "enum", v: ["fit", "fill"], def: "fit" }, pages: PAGES } },
       preflight: { kind: "check", args: { stop: { t: "bool", def: 1 } } },
       export: { kind: "out", args: { bleed: { t: "bool", def: 0 }, marks: { t: "bool", def: 0 }, spreads: { t: "bool", def: 0 }, q: { t: "enum", v: ["print", "screen"], def: "print" } } }
     },
@@ -95,9 +105,16 @@
     layout: { what: "Layout (print documents: magazines, books, brochures). A run works on the open document or on every document.", ops: {
       text: "find and replace in every story: find, repl, cs (match case), word (whole words)",
       pstyle: "paragraphs in style `from` (\"\" = any) get style `to`; styles by name, e.g. Body, Heading 1",
-      style: "change the paragraph style `name` itself (by name, e.g. Body text): size and lead in pt (0 = unchanged), font serif|sans|mono, align l|c|r|j (\"\" = unchanged), track in 1/1000 em (0 = unchanged)",
+      style: "change the paragraph style `name` itself (by name, e.g. Body text): size and lead in pt (0 = unchanged), font serif|sans|mono, align l|c|r|j (\"\" = unchanged), track in 1/1000 em (0 = unchanged), bold, ital, caps (bold, italic, capitals) on|off (\"\" = unchanged), sb, sa (space before, after) and fi (first-line indent) in pt (-1 = unchanged), brk where it starts any|col|page|odd|even (\"\" = unchanged), hyph Greek hyphenation on|off",
       master: "pages `on` all|odd|even get master `ms` (by name, \"\" = none)",
       margins: "page margins in mm: t (top), b (bottom), i (inside), o (outside), each 0-500, all four needed",
+      pages: "add n pages (1-500) at the end, or before / after page `page` (its position, 1 = the first page); flow true = text that does not fit runs on into them",
+      delpages: "remove the pages from position `first` to `last` (0 = only `first`) with everything on them",
+      numbering: "page numbers: mode set = the first page gets number n; shift = every number moves by n (e.g. 2 = two later)",
+      bleed: "the bleed in mm (0-25)",
+      fit: "text that does not fit runs on into as many new pages as it needs (no fields)",
+      grey: "make the pictures on `pages` black and white, on the device: pages \"\" (all), odd, even or positions like 3-10,12",
+      imgfit: "the pictures on `pages` (as for grey): mode fit (the whole picture) | fill (the frame filled)",
       preflight: "count the problems; stop true = a document with errors is not exported",
       export: "a PDF of each document: q print (300 ppi) | screen (150 ppi), bleed, marks (crop marks), spreads (true/false)"
     } },
@@ -253,6 +270,8 @@
       "sh.op.atelier.cutout": "Remove photo backgrounds", "sh.op.atelier.resize": "New sizes", "sh.op.atelier.export": "Download",
       "sh.op.layout.text": "Find and replace text", "sh.op.layout.pstyle": "Paragraph style", "sh.op.layout.style": "Change a style", "sh.op.layout.master": "Master on pages",
       "sh.op.layout.margins": "Page margins", "sh.op.layout.preflight": "Preflight check", "sh.op.layout.export": "Export PDF",
+      "sh.op.layout.pages": "Add pages", "sh.op.layout.delpages": "Remove pages", "sh.op.layout.numbering": "Page numbers",
+      "sh.op.layout.bleed": "Bleed", "sh.op.layout.fit": "Fit the text", "sh.op.layout.grey": "Black and white pictures", "sh.op.layout.imgfit": "Pictures in their frames",
       "sh.op.photolab.tone": "Tone", "sh.op.photolab.look": "Look", "sh.op.photolab.gray": "Black and white",
       "sh.op.photolab.blur": "Blur", "sh.op.photolab.sharpen": "Sharpen", "sh.op.photolab.noise": "Grain",
       "sh.op.photolab.crop": "Crop to a ratio", "sh.op.photolab.resize": "Resize", "sh.op.photolab.watermark": "Watermark",
@@ -263,6 +282,15 @@
       "sh.stop": "stop before export on errors", "sh.on.all": "all pages", "sh.on.odd": "odd pages", "sh.on.even": "even pages",
       "sh.q.print": "print (300 ppi)", "sh.q.screen": "screen (150 ppi)", "sh.bleed": "bleed", "sh.marks": "crop marks", "sh.spreads": "spreads",
       "sh.margins": "top {t}, bottom {b}, inside {i}, outside {o} mm",
+      "sh.at.end": "at the end", "sh.at.before": "before page {p}", "sh.at.after": "after page {p}", "sh.flow": "the text runs on",
+      "sh.pagesN": "{n} pages", "sh.pages1": "1 page", "sh.pageRange": "pages {a}-{b}", "sh.pageOne": "page {a}",
+      "sh.num.set": "the first page is {n}", "sh.num.shift": "numbers move by {n}", "sh.mm": "{n} mm",
+      "sh.pg.all": "all pages", "sh.pg.odd": "odd pages", "sh.pg.even": "even pages", "sh.pg.list": "pages {p}",
+      "sh.fit.fit": "the whole picture", "sh.fit.fill": "the frame filled",
+      "sh.st.bold": "bold", "sh.st.ital": "italic", "sh.st.caps": "capitals", "sh.st.off": "no {w}",
+      "sh.st.sb": "space before {n} pt", "sh.st.sa": "space after {n} pt", "sh.st.fi": "first-line indent {n} pt",
+      "sh.brk.any": "starts anywhere", "sh.brk.col": "starts a column", "sh.brk.page": "starts a page", "sh.brk.odd": "starts an odd page", "sh.brk.even": "starts an even page",
+      "sh.hyph.on": "hyphenation", "sh.hyph.off": "no hyphenation",
       "sh.lead": "leading {n} pt", "sh.track": "tracking {n}", "sh.al.l": "left", "sh.al.c": "centred", "sh.al.r": "right", "sh.al.j": "justified",
       "sh.f.bright": "brightness", "sh.f.contrast": "contrast", "sh.f.sat": "saturation", "sh.f.warmth": "warmth", "sh.f.tint": "tint",
       "sh.f.fade": "fade", "sh.f.sepia": "sepia", "sh.f.vignette": "vignette",
@@ -289,6 +317,8 @@
       "sh.op.atelier.cutout": "Αφαίρεση φόντου φωτογραφιών", "sh.op.atelier.resize": "Νέα μεγέθη", "sh.op.atelier.export": "Λήψη",
       "sh.op.layout.text": "Εύρεση και αντικατάσταση κειμένου", "sh.op.layout.pstyle": "Στυλ παραγράφου", "sh.op.layout.style": "Αλλαγή στυλ", "sh.op.layout.master": "Master στις σελίδες",
       "sh.op.layout.margins": "Περιθώρια σελίδας", "sh.op.layout.preflight": "Έλεγχος preflight", "sh.op.layout.export": "Εξαγωγή PDF",
+      "sh.op.layout.pages": "Προσθήκη σελίδων", "sh.op.layout.delpages": "Αφαίρεση σελίδων", "sh.op.layout.numbering": "Αρίθμηση σελίδων",
+      "sh.op.layout.bleed": "Bleed", "sh.op.layout.fit": "Να χωρέσει το κείμενο", "sh.op.layout.grey": "Ασπρόμαυρες εικόνες", "sh.op.layout.imgfit": "Εικόνες στα πλαίσιά τους",
       "sh.op.photolab.tone": "Τόνος", "sh.op.photolab.look": "Εμφάνιση", "sh.op.photolab.gray": "Ασπρόμαυρο",
       "sh.op.photolab.blur": "Θόλωμα", "sh.op.photolab.sharpen": "Όξυνση", "sh.op.photolab.noise": "Κόκκος",
       "sh.op.photolab.crop": "Περικοπή σε αναλογία", "sh.op.photolab.resize": "Αλλαγή μεγέθους", "sh.op.photolab.watermark": "Υδατογράφημα",
@@ -299,6 +329,15 @@
       "sh.stop": "διακοπή πριν την εξαγωγή αν υπάρχουν λάθη", "sh.on.all": "όλες οι σελίδες", "sh.on.odd": "μονές σελίδες", "sh.on.even": "ζυγές σελίδες",
       "sh.q.print": "εκτύπωση (300 ppi)", "sh.q.screen": "οθόνη (150 ppi)", "sh.bleed": "bleed", "sh.marks": "σημάδια κοπής", "sh.spreads": "δισέλιδα",
       "sh.margins": "πάνω {t}, κάτω {b}, μέσα {i}, έξω {o} mm",
+      "sh.at.end": "στο τέλος", "sh.at.before": "πριν τη σελίδα {p}", "sh.at.after": "μετά τη σελίδα {p}", "sh.flow": "το κείμενο συνεχίζει",
+      "sh.pagesN": "{n} σελίδες", "sh.pages1": "1 σελίδα", "sh.pageRange": "σελίδες {a}-{b}", "sh.pageOne": "σελίδα {a}",
+      "sh.num.set": "η πρώτη σελίδα είναι η {n}", "sh.num.shift": "οι αριθμοί μετακινούνται κατά {n}", "sh.mm": "{n} mm",
+      "sh.pg.all": "όλες οι σελίδες", "sh.pg.odd": "μονές σελίδες", "sh.pg.even": "ζυγές σελίδες", "sh.pg.list": "σελίδες {p}",
+      "sh.fit.fit": "ολόκληρη η εικόνα", "sh.fit.fill": "γεμάτο πλαίσιο",
+      "sh.st.bold": "έντονα", "sh.st.ital": "πλάγια", "sh.st.caps": "κεφαλαία", "sh.st.off": "χωρίς {w}",
+      "sh.st.sb": "κενό πριν {n} pt", "sh.st.sa": "κενό μετά {n} pt", "sh.st.fi": "εσοχή πρώτης γραμμής {n} pt",
+      "sh.brk.any": "ξεκινά οπουδήποτε", "sh.brk.col": "ξεκινά στήλη", "sh.brk.page": "ξεκινά σελίδα", "sh.brk.odd": "ξεκινά σε μονή σελίδα", "sh.brk.even": "ξεκινά σε ζυγή σελίδα",
+      "sh.hyph.on": "συλλαβισμός", "sh.hyph.off": "χωρίς συλλαβισμό",
       "sh.lead": "διάστιχο {n} pt", "sh.track": "αραίωση {n}", "sh.al.l": "αριστερά", "sh.al.c": "στο κέντρο", "sh.al.r": "δεξιά", "sh.al.j": "πλήρης στοίχιση",
       "sh.f.bright": "φωτεινότητα", "sh.f.contrast": "αντίθεση", "sh.f.sat": "κορεσμός", "sh.f.warmth": "θερμότητα", "sh.f.tint": "απόχρωση",
       "sh.f.fade": "ξεθώριασμα", "sh.f.sepia": "σέπια", "sh.f.vignette": "βινιέτα",
@@ -335,6 +374,11 @@
   }
   function sizeText(z) { return z.w + " × " + z.h + " " + z.u; }
   function flags(st, keys) { return keys.filter(function (k) { return st[k]; }).map(function (k) { return u("sh." + k); }); }
+  function pagesText(p) {
+    var s = String(p || "").replace(/\s+/g, "").toLowerCase();
+    if (!s || s === "all") return u("sh.pg.all");
+    return s === "odd" || s === "even" ? u("sh.pg." + s) : u("sh.pg.list", { p: s.replace(/,/g, ", ") });
+  }
   // A clean step (catalog-checked) → { name, detail }.
   function words(app, st) {
     var name = u("sh.op." + app + "." + st.op);
@@ -356,9 +400,25 @@
       case "layout.style":
         parts = [st.size ? st.size + " pt" : "", st.lead ? u("sh.lead", { n: st.lead }) : "", st.font ? fontName(st.font) : "",
           st.align ? u("sh.al." + st.align) : "", st.track ? u("sh.track", { n: st.track }) : ""].filter(Boolean);
+        ["bold", "ital", "caps"].forEach(function (k) {
+          if (st[k] === "on") parts.push(u("sh.st." + k));
+          else if (st[k] === "off") parts.push(u("sh.st.off", { w: u("sh.st." + k) }));
+        });
+        ["sb", "sa", "fi"].forEach(function (k) { if (st[k] >= 0) parts.push(u("sh.st." + k, { n: st[k] })); });
+        if (st.brk) parts.push(u("sh.brk." + st.brk));
+        if (st.hyph) parts.push(u("sh.hyph." + st.hyph));
         d = st.name + (parts.length ? ": " + parts.join(", ") : "");
         break;
       case "layout.margins": d = u("sh.margins", { t: st.t, b: st.b, i: st.i, o: st.o }); break;
+      case "layout.pages":
+        d = [st.n === 1 ? u("sh.pages1") : u("sh.pagesN", { n: st.n }), st.at === "end" || !st.page ? u("sh.at.end") : u("sh.at." + st.at, { p: st.page })]
+          .concat(st.flow ? [u("sh.flow")] : []).join(" · ");
+        break;
+      case "layout.delpages": d = st.last && st.last !== st.first ? u("sh.pageRange", { a: Math.min(st.first, st.last), b: Math.max(st.first, st.last) }) : u("sh.pageOne", { a: st.first }); break;
+      case "layout.numbering": d = st.mode === "shift" ? u("sh.num.shift", { n: (st.n > 0 ? "+" : "") + st.n }) : u("sh.num.set", { n: st.n }); break;
+      case "layout.bleed": d = u("sh.mm", { n: st.mm }); break;
+      case "layout.grey": d = pagesText(st.pages); break;
+      case "layout.imgfit": d = u("sh.fit." + st.mode) + " · " + pagesText(st.pages); break;
       case "layout.preflight": d = st.stop ? u("sh.stop") : ""; break;
       case "layout.export": d = [u("sh.q." + st.q)].concat(flags(st, ["bleed", "marks", "spreads"])).join(", "); break;
       case "photolab.tone":
