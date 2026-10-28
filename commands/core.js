@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — commands/core.js (command bar, pure core, v1.3.0)
+// orOS — commands/core.js (command bar, pure core, v1.4.0)
 // One line of plain words (English and Greek, mixed freely) → one
 // action in an orOS app, on the device, without AI:
 //   "ραντεβού αύριο 10 οδοντίατρος" · "dentist fri 9:30"   → Calendar
@@ -18,6 +18,7 @@
 //   "12*3+4" · "√2" · "5 μίλια σε χλμ" · "100 usd to eur"   → an answer (copy)
 //   "σε 45 μέρες" · "days until 25/12" · "ώρα στο Τόκιο"     → an answer (copy, K4)
 //   "σκοτεινό θέμα" · "κλείδωμα" · "μην ενοχλείτε"          → a setting (K5)
+//   "κωδικός 16" · "ρίξε 2 ζάρια" · "κορόνα γράμματα" · "random 1-100" → a draw (copy, K6)
 // Anything else → null (the caller searches as usual).
 //
 // parse(text, opts) → null | { kind, app, data }
@@ -25,11 +26,12 @@
 //            cal: OrosCalQuick (calendar/quickadd.js), lang: "en" | "el",
 //            calc: CalcCore (calculator/core.js), units: UnitsCore
 //            (units/core.js), rates: UnitsCore.storedRates(…) | null,
-//            send: OrosSendCore (send/core.js) }; every engine is
+//            send: OrosSendCore (send/core.js), pw: PwCore
+//            (passwords/pwcore.js) }; every engine is
 //            optional: without it, its kind is never returned.
 //   kind  event | todo | expense | income | note | water | open |
 //         timer | alarm | card | habit | newhabit | send | calc | convert |
-//         date | clock | setting
+//         date | clock | setting | random
 //   data  the fields of that kind, already clean and capped:
 //     event   { date, title, start, end, dateEnd, location, recur }
 //     todo    { list: "tdl-groceries" | "", items: [{ text }] }
@@ -44,6 +46,8 @@
 //     date    { q: add | until | since | between | weekday | week, date, from?, n?, unit? }
 //     clock   { zone, en, el, at: "HH:MM", diff (min vs here), day, here }
 //     setting { name: theme | lock | notifs | quiet, value }
+//     random  { t: "pass", text, n } | { t: "dice", n, sides, rolls, sum } |
+//             { t: "coin", side: "heads" | "tails" } | { t: "num", a, b, v }
 // call(cmd, lang) → { fn, args } the bridge the shell calls:
 //   __orosOpenCalendarNew (BR-W8), __orosOpenAt("todo", {addItems})
 //   (BR-TD-ADD), __orosOpenBudgetNew (BR-B1), __orosOpenAt("notes",
@@ -62,6 +66,11 @@
 //   K5: setting → { fn: "setting", args: [name, value] } (the shell
 //   applies it through the same setters as Settings); "lock" only when
 //   opts.lockOn is true.
+//   K6: random → { fn: "copy", args: [the draw, secret] }; secret is
+//   true for a password (the shell's note then leaves it out). Every
+//   draw comes from crypto.getRandomValues (never Math.random), drawn
+//   once per parse, so the row shows what Enter copies. opts.rand
+//   (n → 0..n-1) fixes the dice, the coin and the number in tests.
 // describe(cmd, lang) → { verb, detail, hint? } for the preview row
 //   (hint replaces "→ app" when set).
 // The text is never run and never becomes HTML. No DOM, no storage.
@@ -70,7 +79,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var MAX_IN = 300;              // longer lines are searches, not commands
   var MAX_TITLE = 200;
   var MAX_ITEM = 300;
@@ -717,6 +726,109 @@
     return null;
   }
 
+  // ---------- K6: small tools (Chris 2026-10-28) ----------
+  // "κωδικός 16" · "new password" → a password (Passwords' own engine,
+  // all four kinds of character, 8 to 128); "ρίξε 2 ζάρια" · "roll a
+  // die" · "2d6" → dice (1 to 20, 2 to 1000 sides); "κορόνα γράμματα" ·
+  // "flip a coin" → heads or tails; "τυχαίος 1-100" · "random number
+  // between 1 and 6" · "random number" (1–100) → a whole number. A
+  // bare app word ("ζάρια", "κωδικοί") stays the app.
+  var TWO32 = 4294967296;
+  function cryptoRand(n) {
+    var cr = (typeof globalThis !== "undefined" && globalThis.crypto) || (root && root.crypto) || null;
+    if (!cr || typeof cr.getRandomValues !== "function") return -1;
+    var limit = TWO32 - (TWO32 % n), a = new Uint32Array(1);
+    do { cr.getRandomValues(a); } while (a[0] >= limit);
+    return a[0] % n;
+  }
+  function draw(o, n) {
+    if (n === 1) return 0;
+    var r = typeof o.rand === "function" ? o.rand(n) : cryptoRand(n);
+    return typeof r === "number" && Math.floor(r) === r && r >= 0 && r < n ? r : -1;
+  }
+  var PW_CORE = null;
+  function pwCore(o) {
+    if (o.pw && typeof o.pw.genPassword === "function") return o.pw;
+    if (PW_CORE) return PW_CORE;
+    if (root && root.PwCore) return (PW_CORE = root.PwCore);
+    if (typeof require === "function") { try { PW_CORE = require("../passwords/pwcore.js"); } catch (e) {} }
+    return PW_CORE;
+  }
+  var COUNT = { "ενα": 1, "δυο": 2, "δυο": 2, "τρια": 3, "a": 1, "one": 1, "two": 2, "three": 3 };
+  var PW_RE = [
+    /^(?:κωδικοσ|συνθηματικο|password)\s+(\d{1,3})(?:\s+(?:χαρακτηρων|χαρακτηρεσ|chars?|characters))?$/,
+    /^(?:νεοσ|τυχαιοσ|δυνατοσ|φτιαξε(?: εναν)?|new|random|strong|generate(?: a)?|make(?: a)?)\s+(?:κωδικο|κωδικοσ|συνθηματικο|password)(?:\s+(\d{1,3})(?:\s+(?:χαρακτηρων|chars?|characters))?)?$/
+  ];
+  var DICE_RE = [
+    /^(?:ριξε|roll)\s+(?:(\d{1,2}|ενα|δυο|τρια|a|one|two|three)\s+)?(?:(?:το|τα|the)\s+)?(ζαρι|ζαρια|die|dice)$/,
+    /^(\d{1,2})\s+(ζαρι|ζαρια|dice)$/
+  ];
+  var COIN_RE = /^(?:κορ[οω]να\s+(?:η\s+)?γραμματα|(?:στριψε|ριξε)\s+(?:ενα\s+)?(?:νομισμα|κερμα)|heads\s+or\s+tails|(?:flip|toss)\s+(?:a\s+)?coin|coin\s+(?:flip|toss))$/;
+  var NUM_HEAD = "(?:τυχαιοσ(?:\\s+αριθμοσ)?|διαλεξε\\s+(?:εναν\\s+)?αριθμο|random\\s+number|random|pick\\s+a\\s+number)";
+  var NUM_RANGE = new RegExp("^" + NUM_HEAD + "\\s+(?:απο\\s+|from\\s+|between\\s+)?(-?\\d{1,10})\\s*(?:-|–|\\.\\.|\\s(?:ως|εωσ|μεχρι|και|to|and)\\s)\\s*(-?\\d{1,10})$");
+  var NUM_TOP = new RegExp("^" + NUM_HEAD + "\\s+(\\d{1,10})$");
+  var NUM_BARE = /^(?:τυχαιοσ\s+αριθμοσ|random\s+number|pick\s+a\s+number|διαλεξε\s+(?:εναν\s+)?αριθμο)$/;
+  var NUM_MAX = 1e9;
+  function parseRandom(f, o) {
+    var g = f.replace(/[.!?;]+$/, "").trim(), m, i;
+    for (i = 0; i < PW_RE.length; i++) {
+      if (!(m = PW_RE[i].exec(g))) continue;
+      var n = m[1] ? +m[1] : 20, P = pwCore(o);
+      if (n < 8 || n > 128 || !P) return null;
+      var pw;
+      try { pw = P.genPassword({ length: n, lower: true, upper: true, digits: true, symbols: true }).value; } catch (e) { return null; }
+      return typeof pw === "string" && pw.length === n ? { kind: "random", app: "passwords", data: { t: "pass", text: pw, n: n } } : null;
+    }
+    for (i = 0; i < DICE_RE.length; i++) {
+      if (!(m = DICE_RE[i].exec(g))) continue;
+      var k = m[1] ? (COUNT[m[1]] || +m[1]) : (m[2] === "ζαρια" || m[2] === "dice" ? 2 : 1);
+      return dice(o, k, 6);
+    }
+    if ((m = /^(\d{1,2})?d(\d{1,4})$/.exec(g))) return dice(o, m[1] ? +m[1] : 1, +m[2]);
+    if (COIN_RE.test(g)) {
+      var c = draw(o, 2);
+      return c < 0 ? null : { kind: "random", app: "dice", data: { t: "coin", side: c ? "tails" : "heads" } };
+    }
+    var a = 1, b = 100;
+    if ((m = NUM_RANGE.exec(g))) { a = +m[1]; b = +m[2]; }
+    else if ((m = NUM_TOP.exec(g))) b = +m[1];
+    else if (!NUM_BARE.test(g)) return null;
+    if (a > b) { var x = a; a = b; b = x; }
+    if (Math.abs(a) > NUM_MAX || Math.abs(b) > NUM_MAX || a === b) return null;
+    var v = draw(o, b - a + 1);
+    return v < 0 ? null : { kind: "random", app: "dice", data: { t: "num", a: a, b: b, v: a + v } };
+  }
+  function dice(o, n, sides) {
+    if (n < 1 || n > 20 || sides < 2 || sides > 1000) return null;
+    var rolls = [], sum = 0;
+    for (var i = 0; i < n; i++) {
+      var r = draw(o, sides);
+      if (r < 0) return null;
+      rolls.push(r + 1); sum += r + 1;
+    }
+    return { kind: "random", app: "dice", data: { t: "dice", n: n, sides: sides, rolls: rolls, sum: sum } };
+  }
+  // The copied text of a draw.
+  function drawText(d, S) {
+    switch (d.t) {
+      case "pass": return typeof d.text === "string" && /^[\x21-\x7e]{8,128}$/.test(d.text) ? d.text : null;
+      case "dice": {
+        if (!Array.isArray(d.rolls) || !d.rolls.length || d.rolls.length > 20) return null;
+        var sum = 0;
+        for (var i = 0; i < d.rolls.length; i++) {
+          var r = d.rolls[i];
+          if (typeof r !== "number" || Math.floor(r) !== r || r < 1 || r > (d.sides | 0)) return null;
+          sum += r;
+        }
+        return d.rolls.length === 1 ? String(sum) : d.rolls.join(" + ") + " = " + sum;
+      }
+      case "coin": return d.side === "heads" || d.side === "tails" ? S["rnd." + d.side] : null;
+      case "num":
+        return typeof d.v === "number" && Math.floor(d.v) === d.v && d.v >= d.a && d.v <= d.b ? String(d.v) : null;
+    }
+    return null;
+  }
+
   function parseClock(f, o) {
     var m = /^(?:τι\s+)?ωρα(?:\s+ειναι)?\s+(?:στη|στην|στο|στον|στα|στισ|στουσ|σε|για)\s+(.+)$/.exec(f) ||
             /^(?:what\s+)?time(?:\s+is\s+it)?\s+in\s+(.+)$/.exec(f) ||
@@ -758,6 +870,7 @@
       function () { return parseCard(t, f); },
       function () { return parseHabit(t, f); },
       function () { return WATER.test(f) ? { kind: "water", app: "water", data: {} } : null; },
+      function () { return parseRandom(f, o); },
       function () { return parseMoney(t, f, today, "spent", false); },
       function () { return parseMoney(t, f, today, "earned", true); },
       function () { return parseNote(t, f); },
@@ -855,6 +968,10 @@
                  ((d.name === "notifs" || d.name === "quiet") && typeof d.value === "boolean");
         return ok ? { fn: "setting", args: [d.name, d.value] } : null;
       }
+      case "random": {
+        var rt = drawText(d, strings(lang));
+        return rt ? { fn: "copy", args: [rt, d.t === "pass"] } : null;
+      }
       case "date":
       case "clock": {
         var a = answer(cmd, strings(lang));
@@ -891,6 +1008,8 @@
           "set.notifs.off": "Notifications off", "set.notifs.on": "Notifications on",
           "set.notifs.note": "Nothing pops up or is saved until you turn them on again",
           "set.quiet.on": "Quiet hours on", "set.quiet.off": "Quiet hours off",
+          "rnd.pass": "Password · {n} characters", "rnd.die": "One die (1–{s})", "rnd.dice": "{n} dice (1–{s})",
+          "rnd.coin": "Coin flip", "rnd.heads": "Heads", "rnd.tails": "Tails", "rnd.num": "Random number {a}–{b}",
           "cat.o-eat": "Eating out", "cat.o-groc": "Groceries", "cat.o-trans": "Transport", "cat.o-bills": "Bills",
           "cat.o-home": "Rent & home", "cat.o-health": "Health", "cat.o-fun": "Entertainment", "cat.o-cloth": "Clothing",
           "cat.o-gift": "Gifts", "cat.o-other": "Other", "cat.i-salary": "Salary", "cat.i-free": "Freelance",
@@ -910,6 +1029,8 @@
           "set.notifs.off": "Ειδοποιήσεις κλειστές", "set.notifs.on": "Ειδοποιήσεις ανοιχτές",
           "set.notifs.note": "Δεν εμφανίζεται ούτε κρατιέται τίποτα μέχρι να τις ανοίξεις ξανά",
           "set.quiet.on": "Ώρες ησυχίας ανοιχτές", "set.quiet.off": "Ώρες ησυχίας κλειστές",
+          "rnd.pass": "Κωδικός · {n} χαρακτήρες", "rnd.die": "Ένα ζάρι (1–{s})", "rnd.dice": "{n} ζάρια (1–{s})",
+          "rnd.coin": "Κορόνα γράμματα", "rnd.heads": "Κορόνα", "rnd.tails": "Γράμματα", "rnd.num": "Τυχαίος αριθμός {a}–{b}",
           "cat.o-eat": "Φαγητό έξω", "cat.o-groc": "Σούπερ μάρκετ", "cat.o-trans": "Μεταφορές", "cat.o-bills": "Λογαριασμοί",
           "cat.o-home": "Ενοίκιο & σπίτι", "cat.o-health": "Υγεία", "cat.o-fun": "Ψυχαγωγία", "cat.o-cloth": "Ρούχα",
           "cat.o-gift": "Δώρα", "cat.o-other": "Άλλα", "cat.i-salary": "Μισθός", "cat.i-free": "Ελεύθερο επάγγελμα",
@@ -1011,6 +1132,14 @@
       case "setting": {
         var k = d.name === "theme" ? "set." + d.value : d.name === "lock" ? "set.lock" : "set." + d.name + (d.value ? ".on" : ".off");
         return { verb: S[k] || "", detail: d.name === "notifs" && !d.value ? S["set.notifs.note"] : "" };
+      }
+      case "random": {
+        var rv = drawText(d, S);
+        if (rv == null) return { verb: "", detail: "" };
+        var rd = d.t === "pass" ? fill(S["rnd.pass"], "n", d.n) : d.t === "coin" ? S["rnd.coin"] :
+                 d.t === "num" ? fill(fill(S["rnd.num"], "a", d.a), "b", d.b) :
+                 fill(fill(d.n === 1 ? S["rnd.die"] : S["rnd.dice"], "n", d.n), "s", d.sides);
+        return { verb: rv, detail: rd, hint: S.copy };
       }
       case "date":
       case "clock": return describeDate(cmd, S, lg);

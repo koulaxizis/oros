@@ -130,3 +130,20 @@ test("K5 a setting by words goes through Settings' own setters", () => {
     assert.match(read("i18n/de/commands.js"), new RegExp('"' + k.replace(/\./g, "\\.") + '": "'), "de " + k);
   }
 });
+
+test("K6 a password is copied without repeating it in the note", () => {
+  const sh = read("shell.js");
+  assert.match(sh, /opt\("passwords\/pwcore\.js"\)/);
+  assert.match(sh, /pw: window\.PwCore/);
+  const fn = sh.slice(sh.indexOf("function cmdRun("), sh.indexOf("function cmdSetting("));
+  assert.match(fn, /secret = c\.args\[1\] === true/);
+  assert.match(fn, /secret \? tr\("cmd\.copiedSecret"\)/);
+  assert.match(fn, /secret \? tr\("cmd\.copyFailed"\) : txt/);
+  for (const f of ["translations.js", "i18n/de/shell.js"]) {
+    assert.match(read(f), /"cmd\.copiedSecret":/, f);
+    assert.match(read(f), /"cmd\.copyFailed":/, f);
+  }
+  for (const k of ["rnd.pass", "rnd.die", "rnd.dice", "rnd.coin", "rnd.heads", "rnd.tails", "rnd.num"]) {
+    assert.match(read("i18n/de/commands.js"), new RegExp('"' + k.replace(/\./g, "\\.") + '": "'), "de " + k);
+  }
+});

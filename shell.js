@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.07.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.08.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3637,7 +3637,7 @@
   var cmdLoad = null;
   function cmdModule() {
     if (window.OrosCommands && window.orosCmdBar && window.OrosCalQuick && window.CalcCore && window.UnitsCore &&
-        window.OrosSendCore) return Promise.resolve(window.OrosCommands);
+        window.OrosSendCore && window.PwCore) return Promise.resolve(window.OrosCommands);
     if (!cmdLoad) {
       var load = function (src) {
         return new Promise(function (resolve, reject) {
@@ -3656,7 +3656,8 @@
         window.orosCmdBar ? null : load("commands/bar.js"),
         window.CalcCore ? null : opt("calculator/core.js"),
         window.UnitsCore ? null : opt("units/core.js"),
-        window.OrosSendCore ? null : opt("send/core.js")
+        window.OrosSendCore ? null : opt("send/core.js"),
+        window.PwCore ? null : opt("passwords/pwcore.js")
       ]).then(function () {
         if (!window.OrosCommands || !window.orosCmdBar) throw new Error("commands missing");
         return window.OrosCommands;
@@ -3699,7 +3700,7 @@
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
                         calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
-                        lockOn: !!(window.orosLock && window.orosLock.isOn()) });
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()), pw: window.PwCore });
   }
   function cmdHistory() {
     try {
@@ -3723,10 +3724,12 @@
     closeMenu();
     if (c.fn === "openAppById") { openAppById(c.args[0]); return; }
     if (c.fn === "copy") {
-      var txt = String(c.args[0]);
-      var done = function () { notifySys("dim", tr("cmd.copied", { text: txt })); };
-      try { navigator.clipboard.writeText(txt).then(done, function () { notifySys("dim", txt); }); }
-      catch (e) { notifySys("dim", txt); }
+      // K6: a password is never repeated in the note.
+      var txt = String(c.args[0]), secret = c.args[1] === true;
+      var done = function () { notifySys("dim", secret ? tr("cmd.copiedSecret") : tr("cmd.copied", { text: txt })); };
+      var fail = function () { notifySys("dim", secret ? tr("cmd.copyFailed") : txt); };
+      try { navigator.clipboard.writeText(txt).then(done, fail); }
+      catch (e) { fail(); }
       return;
     }
     if (c.fn === "setting") { cmdSetting(c.args[0], c.args[1], C.describe(cmd, state.lang).verb); return; }
