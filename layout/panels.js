@@ -783,6 +783,18 @@
           g2.appendChild(field(t(d[1]) + " (pt)", optNum(st, d[0], -1000, 1000)));
         });
         body.appendChild(g2);
+        // book typesetting (LY-BK), in ext
+        body.appendChild(el("span", "fld-lbl", t("sty.book")));
+        var bk = el("div", "pn-row wrap");
+        bk.appendChild(triState(t("sty.hyph"), st.ext, "hyph"));
+        bk.appendChild(triState(t("sty.kwn"), st.ext, "kwn"));
+        body.appendChild(bk);
+        var g3 = el("div", "grid2");
+        g3.appendChild(field(t("sty.orph"), optNum(st.ext, "orph", 1, 9)));
+        g3.appendChild(field(t("sty.wid"), optNum(st.ext, "wid", 1, 9)));
+        g3.appendChild(field(t("sty.brk"), select([["", t("sty.inherit")], ["any", t("sty.brkAny")], ["col", t("sty.brkCol")], ["page", t("sty.brkPage")], ["odd", t("sty.brkOdd")]],
+          st.ext.brk || "", function (v) { if (v) st.ext.brk = v; else delete st.ext.brk; })));
+        body.appendChild(g3);
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
       var colWrap = el("div");
@@ -1131,7 +1143,7 @@
       act.appendChild(btn(t("btn.create"), function () {
         var nmv = name.value.trim() || t("doc.untitled");
         close();
-        if (pick) LY.addDoc(TP.build(pick, { lang: lang, now: LY.now(), name: nmv }));
+        if (pick) LY.addDoc(LY.hyphOn(TP.build(pick, { lang: lang, now: LY.now(), name: nmv })));
         else { s.name = nmv; LY.createDoc(s); }
       }, "primary"));
       body.appendChild(act);
