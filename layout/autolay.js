@@ -85,7 +85,9 @@
       var asTitle = /^(p|p1|center)$/.test(p.role) && short &&
         ((bold && (empties || !i)) || (p.role === "center" && empties >= 3));
       if (asTitle) {
+        var was = p;
         p = { role: "h1", runs: p.runs.map(function (r) { var o = { t: r.t }; if (r.i) o.i = 1; if (r.u) o.u = 1; return o; }), guessed: 1 };
+        if (was.pics) p.pics = was.pics;
         guessed++;
       }
       out.push(p);
@@ -234,6 +236,210 @@
     return entries.length;
   }
 
+  // ---------- 5b. Pictures (LY-IN) ----------
+  // Each picture goes where the sheet says: "page" a page of its own
+  // before the page its paragraph is on (a chapter opening on a right-
+  // or left-hand page keeps its side: an empty page before it takes the
+  // picture, else an empty page and the picture's page go in), "before"
+  // at the top of that page with the text below it (wrap), "out" not at
+  // all. picSize "text" fits the text area, "page" fills the page to the
+  // bleed. A caption (ps-hscap) goes below or above. Pictures from
+  // outside the manuscript (extra) go after chapter n ("after<n>") or
+  // after the text ("end"), each on a page of its own. Then body pages
+  // are added until the text fits again.
+  var CAP_H = 3;   // lines a caption frame is made for
+  function bodyPages(d) { return M.pagesInOrder(d).filter(function (p) { return p.ext && p.ext.hs === "body"; }); }
+  function insertPages(d, before, pages) {
+    var order = M.pagesInOrder(d), at = before ? order.indexOf(before) : order.length;
+    if (at < 0) at = order.length;
+    order.splice.apply(order, [at, 0].concat(pages));
+    order.forEach(function (p, i) { p.pos = (i + 1) * 1024; });
+    d.pages = order;
+  }
+  function capText(pic, k, sheet) {
+    var src = I.ans(sheet, "capSrc"), own = sheet.pics && sheet.pics[k] && sheet.pics[k].cap;
+    if (src === "typed") return own || "";
+    if (src === "file") return own || String(pic.alt || pic.nm || "").replace(/\.[a-z0-9]{2,5}$/i, "").slice(0, 300);
+    return own || pic.cap || "";
+  }
+  function addCap(d, pg, box, text, where, now, wrap) {
+    var ps = M.find(d.pstyles, "ps-hscap") ? "ps-hscap" : "ps-base", r = T.resolvePs(T.byId(d.pstyles), ps);
+    var h = (r.lead > 0 ? r.lead : r.size * 1.2) * CAP_H + 2, sid = M.newId("st");
+    d.stories.push({ id: sid, m: now, paras: [{ ps: ps, runs: [{ t: text }] }] });
+    var it = { id: M.newId("it"), m: now, t: "text", pg: pg.id, x: box.x, y: where === "above" ? box.y - h - 4 : box.y + box.h + 4, w: box.w, h: h, story: sid, seq: 1, z: 3, va: where === "above" ? "b" : "t" };
+    if (wrap) { it.wrap = "box"; it.wo = 6; }
+    d.items.push(it);
+    return h + 4;
+  }
+  function addImg(d, pg, pic, box, now, wrap) {
+    var it = { id: M.newId("it"), m: now, t: "img", pg: pg.id, x: box.x, y: box.y, w: box.w, h: box.h, a: pic.a, nm: String(pic.nm || "").slice(0, 120), iw: pic.iw, ih: pic.ih, fit: "fit", z: 2 };
+    if (wrap) { it.wrap = "box"; it.wo = 8; }
+    d.items.push(it);
+  }
+  // a picture on a page of its own
+  function picPage(d, pg, pic, text, sheet, side, now) {
+    var u = d.setup, m = M.margins(d, side), full = I.ans(sheet, "picSize") === "page" || (I.ans(sheet, "picSize") === "s" && (H.houseOf(d).pics || {}).size === "page");
+    var where = capWhere(d, sheet), capH = text && where !== "none" ? (function () { var r = T.resolvePs(T.byId(d.pstyles), M.find(d.pstyles, "ps-hscap") ? "ps-hscap" : "ps-base"); return (r.lead > 0 ? r.lead : r.size * 1.2) * CAP_H + 6; })() : 0;
+    var box;
+    if (full) {
+      var b = u.bleed || 0;
+      box = { x: -b, y: -b, w: u.w + 2 * b, h: u.h + 2 * b };
+    } else {
+      var aw = u.w - m.l - m.r, ah = u.h - m.t - m.b - capH, k = Math.min(aw / pic.iw, ah / pic.ih);
+      var w = pic.iw * k, h = pic.ih * k;
+      box = { x: m.l + (aw - w) / 2, y: m.t + (where === "above" ? capH : 0) + (ah - h) / 2, w: w, h: h };
+    }
+    addImg(d, pg, pic, box, now, false);
+    if (capH) {
+      var cb = full ? { x: m.l, y: u.h - m.b - capH, w: u.w - m.l - m.r, h: 0 } : box;
+      addCap(d, pg, full ? { x: cb.x, y: cb.y - 4, w: cb.w, h: 0 } : cb, text, full ? "below" : where, now, false);
+    }
+  }
+  function capWhere(d, sheet) {
+    var c = I.ans(sheet, "cap");
+    return c === "s" ? ((H.houseOf(d).pics || {}).cap || "below") : c;
+  }
+  // the first line of paragraph pi of the story → { pg, top, ps }
+  function lineOf(d, L, sid, pi) {
+    var hit = null;
+    M.chain(d, sid).some(function (f) {
+      var lines = (L.frames[f.id] || { lines: [] }).lines;
+      for (var k = 0; k < lines.length; k++) if (lines[k].p === pi) { hit = { pg: M.find(d.pages, f.pg), top: k === 0 }; return true; }
+      return false;
+    });
+    return hit;
+  }
+  // the paragraph whose first line opens a page (else null)
+  function firstOn(d, L, sid, pg) {
+    var f = M.chain(d, sid).filter(function (x) { return x.pg === pg.id; })[0];
+    var ln = f && (L.frames[f.id] || { lines: [] }).lines[0];
+    if (!ln) return null;
+    var before = false;
+    M.chain(d, sid).some(function (x) {
+      if (x === f) return true;
+      if ((L.frames[x.id] || { lines: [] }).lines.some(function (l) { return l.p === ln.p; })) before = true;
+      return false;
+    });
+    return before ? null : ln.p;
+  }
+  // add body pages (frames chained) after the last body page until the story fits
+  function grow(d, sid, now) {
+    for (var pass = 0; pass < MAX_PASSES; pass++) {
+      var L = R.computeLayout(d);
+      if (!L.overset[sid]) return { doc: d, L: L, overset: false };
+      var ch = M.chain(d, sid), last = ch[ch.length - 1], body = bodyPages(d);
+      var lastPg = body[body.length - 1], order = M.pagesInOrder(d), add = Math.max(2, Math.ceil(body.length * 0.05));
+      var ms = (body.filter(function (p) { return !p.ext.pic; }).pop() || lastPg).ms;
+      if (order.length + add > M.MAX_PAGES) break;
+      var after = order[order.indexOf(lastPg) + 1] || null, pages = [];
+      for (var i = 0; i < add; i++) pages.push({ id: M.newId("pg"), m: now, pos: 0, ms: ms, ext: { hs: "body" } });
+      insertPages(d, after, pages);
+      var o2 = M.pagesInOrder(d);
+      pages.forEach(function (p, k) {
+        var f = frameFor(d, p, o2.indexOf(p));
+        f.story = sid; f.seq = (last ? last.seq : 0) + (k + 1) * 1024; f.m = now;
+        d.items.push(f);
+      });
+      d = M.normDoc(d);
+    }
+    var L2 = R.computeLayout(d);
+    return { doc: d, L: L2, overset: !!L2.overset[sid] };
+  }
+  // the body pages after the last one with text go (pages added to fit)
+  function trimEnd(d, sid) {
+    var L = R.computeLayout(d), body = bodyPages(d), gone = {};
+    for (var i = body.length - 1; i > 0; i--) {
+      var p = body[i];
+      if (p.ext.pic || d.items.some(function (it) { return it.pg === p.id && (it.t !== "text" || it.story !== sid || (L.frames[it.id] || { lines: [] }).lines.length); })) break;
+      gone[p.id] = 1;
+    }
+    if (!Object.keys(gone).length) return d;
+    d.pages = d.pages.filter(function (p) { return !gone[p.id]; });
+    d.items = d.items.filter(function (it) { return !gone[it.pg]; });
+    return M.normDoc(d);
+  }
+  function placePics(d, sid, picsAt, pics, extra, sheet, now) {
+    var placed = 0, out = 0, at = I.ans(sheet, "picAt"), series = H.houseOf(d).pics || {};
+    if (at === "s") at = series.at || "page";
+    var modeOf = function (k) {
+      var own = at === "each" && sheet.pics && sheet.pics[k] && sheet.pics[k].at;
+      var m = own && own !== "s" ? own : at === "each" ? series.at || "page" : at;
+      return m;
+    };
+    // anchors in reading order; extra pictures before chapter n + 1 or at the end
+    var jobs = Object.keys(picsAt).map(Number).sort(function (a, b) { return a - b; }).map(function (pi) { return { pi: pi, ks: picsAt[pi] }; });
+    var ex = I.ans(sheet, "extraAt"), nW = pics.length;
+    if (extra.length) {
+      var st = M.find(d.stories, sid), h = H.houseOf(d), heads = {}, titles = [];
+      [h.roles.title, "ps-hspart", "ps-hsopen"].forEach(function (id) { if (id) heads[id] = 1; });
+      st.paras.forEach(function (p, i) { if (heads[p.ps]) titles.push(i); });
+      var n = /^after(\d+)$/.exec(ex), ti = n ? +n[1] + 1 : -1;
+      var ks = extra.map(function (x, k) { return nW + k; });
+      if (ti > 0 && ti < titles.length) jobs.push({ pi: titles[ti], ks: ks, page: 1 });
+      else jobs.push({ end: 1, ks: ks, page: 1 });
+      jobs.sort(function (a, b) { return (a.end ? 1e9 : a.pi) - (b.end ? 1e9 : b.pi); });
+    }
+    var all = pics.concat(extra);
+    jobs.forEach(function (job) {
+      // the text must fit before pictures go after it
+      if (job.end) d = trimEnd(grow(d, sid, now).doc, sid);
+      var L = R.computeLayout(d), hit = job.end ? null : lineOf(d, L, sid, job.pi);
+      if (!job.end && !hit) { out += job.ks.length; return; }
+      var own = [], topOff = 0;
+      job.ks.forEach(function (k) {
+        var pic = all[k], mode = job.page ? "page" : modeOf(k);
+        if (!pic || !pic.a || !pic.iw || !pic.ih || mode === "out") { out++; return; }
+        var text = capText(pic, k, sheet);
+        if (mode !== "before") { own.push({ pic: pic, text: text }); return; }
+        // at the top of the paragraph's page, the text below it
+        var idx = M.pagesInOrder(d).indexOf(hit.pg), side = d.setup.facing ? M.sideOf(d, idx) : "R", m = M.margins(d, side), u = d.setup;
+        var aw = u.w - m.l - m.r, ah = (u.h - m.t - m.b) * 0.6, kk = Math.min(aw / pic.iw, ah / pic.ih), w = pic.iw * kk, hh = pic.ih * kk;
+        var where = capWhere(d, sheet), y0 = m.t + topOff;
+        var box = { x: m.l + (aw - w) / 2, y: y0, w: w, h: hh };
+        if (text && where === "above") { var ch0 = addCap(d, hit.pg, { x: m.l, y: y0, w: aw, h: -4 }, text, "below", now, true); box.y += ch0; topOff += ch0; }
+        addImg(d, hit.pg, pic, box, now, true);
+        topOff += hh + 8;
+        if (text && where === "below") topOff += addCap(d, hit.pg, { x: m.l, y: box.y, w: aw, h: hh }, text, "below", now, true);
+        placed++;
+      });
+      if (!own.length) { d = M.normDoc(d); return; }
+      // pages of their own: before the paragraph's page, or after the text
+      var o = M.pagesInOrder(d), body = bodyPages(d), lastText = null;
+      if (job.end) body.forEach(function (p) { if (d.items.some(function (it) { return it.pg === p.id && it.story === sid && (L.frames[it.id] || { lines: [] }).lines.length; })) lastText = p; });
+      var anchor = job.end ? o[o.indexOf(lastText || body[body.length - 1]) + 1] || null : hit.pg;
+      var ai = anchor ? o.indexOf(anchor) : o.length, prev = ai > 0 ? o[ai - 1] : null;
+      var newPage = function () { return { id: M.newId("pg"), m: now, pos: 0, ms: (anchor || prev || {}).ms || "", ext: { hs: "body", pic: 1 } }; };
+      // a chapter opening on a right- or left-hand page keeps its side
+      // (the paragraph that opens the anchor's page starts on one): an
+      // empty page right before it takes the last picture, and an empty
+      // page fills an odd count
+      var opener = job.end ? null : firstOn(d, L, sid, anchor);
+      var stp = opener !== null && T.resolvePs(T.byId(d.pstyles), M.find(d.stories, sid).paras[opener].ps);
+      var keepSide = !!stp && (stp.brk === "odd" || stp.brk === "even") && !!d.setup.facing;
+      var prevEmpty = keepSide && prev && prev.ext && prev.ext.hs === "body" && !prev.ext.pic &&
+        !d.items.some(function (it) { return it.pg === prev.id && it.t === "text" && (L.frames[it.id] || { lines: [] }).lines.length; });
+      var slots = [], add = [];
+      own.forEach(function () { var p = newPage(); slots.push(p); add.push(p); });
+      if (prevEmpty) {
+        add.pop(); slots.pop();
+        d.items = d.items.filter(function (it) { return !(it.pg === prev.id && it.story === sid); });
+        prev.ext.pic = 1;
+        slots.push(prev);
+      }
+      if (keepSide && add.length % 2) { var blank = newPage(); delete blank.ext.pic; add.unshift(blank); }
+      if (add.length) insertPages(d, prevEmpty ? prev : anchor, add);
+      var o2 = M.pagesInOrder(d);
+      own.forEach(function (x, k) {
+        var ti = o2.indexOf(slots[k]);
+        picPage(d, slots[k], x.pic, x.text, sheet, d.setup.facing ? M.sideOf(d, ti) : "R", now);
+        placed++;
+      });
+      d = M.normDoc(d);
+    });
+    var g = grow(d, sid, now);
+    return { doc: g.overset ? g.doc : trimEnd(g.doc, sid), placed: placed, out: out, overset: g.overset };
+  }
+
   // ---------- Build ----------
   // house: a house style document; list: wordin paragraphs; meta: the
   // book's details; opts { now, name, pictures (found in the file),
@@ -244,7 +450,9 @@
     meta = meta || {};
     if (!H.houseOf(house)) return null;
     var now = opts.now || 1;
-    var s = structure(list || [], opts), mk = null;
+    // pictures (wordin "img" entries) go with the paragraph after them
+    var px = I ? I.pictures(list || []) : { list: list || [], pics: [] };
+    var s = structure(px.list, opts), mk = null;
     // the book sheet: the manuscript's parts and sections, the house
     // style with the answers
     if (opts.sheet && I) {
@@ -252,7 +460,7 @@
       mk = I.mark(s.list, opts.sheet, inf);
       s.list = mk.list;
       firstAgain(s.list);
-      house = I.prepare(house, opts.sheet, inf, { now: now, names: opts.names, tocHead: opts.tocHead });
+      house = I.prepare(house, opts.sheet, inf, { now: now, names: opts.names, tocHead: opts.tocHead, extra: (opts.extra || []).length });
     }
     var h = H.houseOf(house);
     var d = M.copyDoc(house, now);
@@ -261,6 +469,8 @@
     var map = H.wmapOf(h.roles), have = {};
     d.pstyles.forEach(function (x) { have[x.id] = 1; });
     var noStyle = {};
+    var picsAt = {};
+    s.list.forEach(function (p, i) { if (p.pics && p.pics.length) picsAt[i] = p.pics; });
     var paras = s.list.map(function (p) {
       if (p.ps && have[p.ps]) return { ps: p.ps, runs: p.runs };
       var id = map[p.role];
@@ -274,7 +484,13 @@
     d = M.normDoc(d);
     var fl = flow(d, st.id, now);
     d = fl.doc;
-    var L = fl.L, n = toc(d, L), bare = I ? I.finish(d, L) : 0;
+    var L = fl.L, pr = null;
+    // the pictures, as the sheet says (LY-IN)
+    if (mk && (px.pics.length || (opts.extra || []).length)) {
+      pr = placePics(d, st.id, picsAt, px.pics, opts.extra || [], I.clean(opts.sheet), now);
+      d = pr.doc; L = R.computeLayout(d);
+    }
+    var n = toc(d, L), bare = I ? I.finish(d, L) : 0;
     if (n >= 0 || bare) { d = M.normDoc(d); L = R.computeLayout(d); }
     // pages to check: stories overset here that were not already in
     // the house style (the contents too long, a field filled with a
@@ -291,7 +507,8 @@
       pages: d.pages.length, body: fl.pages, titles: titles, guessed: s.guessed, dropped: s.dropped, front: s.front, fixes: fx.n,
       fields: filled, toc: n, noStyle: noStyle, pictures: opts.pictures || 0, check: check
     };
-    if (mk) { report.sheet = 1; report.moved = mk.moved; report.left = mk.dropped; report.bare = bare; }
+    if (mk) { report.sheet = 1; report.moved = mk.moved; report.left = mk.dropped; report.bare = bare; report.caps = mk.caps; }
+    if (pr) { report.pictures = pr.out; report.placed = pr.placed; report.overset = pr.overset; }
     return { doc: d, report: report };
   }
 

@@ -252,3 +252,134 @@ test("build without a sheet: unchanged by the intake", () => {
   assert.ok(!res.doc.stories.some((s) => s.paras.some((p) => /μητέρα/.test(text(p)))));
   assert.ok(res.doc.stories.some((s) => s.paras.some((p) => text(p) === "Ευχαριστίες")));
 });
+
+// ---------- pictures (wave Q2) ----------
+const HEX = (c) => c.repeat(64) + ".jpg";
+// a manuscript with pictures: one before the second chapter's text with
+// an italic caption after it, one inside the third chapter
+function picManuscript() {
+  let html = "";
+  for (let c = 0; c < 4; c++) {
+    html += "<h1>Κεφάλαιο " + (c + 1) + "</h1>";
+    if (c === 1) html += "<p><img src=\"data:image/jpeg;base64,AAAA\" alt=\"harbour.jpg\"></p><p><em>Το λιμάνι, νωρίς.</em></p>";
+    html += "<p>" + words(80, c) + "</p>";
+    for (let k = 0; k < 4; k++) {
+      html += "<p>" + words(90, c + k) + "</p>";
+      if (c === 2 && k === 1) html += "<p><img src=\"data:image/png;base64,BBBB\" alt=\"\"></p>";
+    }
+  }
+  const list = W.parse(html, { pics: 1 });
+  let k = 0;
+  list.forEach((p) => { if (p.role === "img") { p.a = HEX(k ? "b" : "a"); p.nm = k ? "two.png" : "harbour.jpg"; p.iw = 800; p.ih = 600; k++; } });
+  return list;
+}
+const imgs = (d) => d.items.filter((it) => it.t === "img");
+const pageNo = (d, id) => M.pagesInOrder(d).findIndex((p) => p.id === id) + M.firstNumber(d);
+
+test("wordin: pictures stay where they were only when asked, and leave no empty paragraph", () => {
+  const html = "<p>Ένα</p><p><img src=\"data:image/png;base64,AA\" alt=\"Φάρος\"></p><p>Δύο</p>";
+  assert.deepEqual(W.parse(html).map((p) => p.role), ["p1", "p", "p1"]);   // as before: the picture's paragraph, empty
+  const l = W.parse(html, { pics: 1 });
+  assert.deepEqual(l.map((p) => p.role), ["p1", "img", "p"]);
+  assert.equal(l[1].alt, "Φάρος");
+  assert.equal(l[1].src, "data:image/png;base64,AA");
+});
+
+test("pictures: each goes with the paragraph after it; an italic short line after it is its caption", () => {
+  const px = I.pictures(picManuscript());
+  assert.equal(px.pics.length, 2);
+  assert.equal(px.pics[0].cap, "Το λιμάνι, νωρίς.");
+  assert.equal(px.pics[1].cap, undefined);
+  assert.ok(!px.list.some((p) => p.role === "img"));
+  const cap = px.list.find((p) => p.capOf);
+  assert.deepEqual(cap.pics, [0]);
+  // as the series (the caption from the paragraph): the caption leaves the text
+  const s = A.structure(px.list, {}), inf = I.info(house(), s.list, s.cut);
+  assert.equal(inf.pics, 2);
+  const mk = I.mark(s.list, { a: {} }, inf);
+  assert.equal(mk.caps, 1);
+  assert.ok(!mk.list.some((p) => p.runs.map((r) => r.t).join("") === "Το λιμάνι, νωρίς."));
+  assert.deepEqual(mk.list.filter((p) => p.pics).map((p) => p.pics), [[0], [1]]);
+  // the caption from the file name: the line stays text
+  assert.equal(I.mark(s.list, { a: { capSrc: "file" } }, inf).caps, 0);
+});
+
+test("house: learns where the series puts its pictures", () => {
+  const h = H.learn([book("Ένα", 3, 11, { isbn: true, toc: true, pn: true, photo: true }), book("Δύο", 3, 11, { isbn: true, toc: true, pn: true, photo: true })], { now: 5 });
+  assert.deepEqual(H.houseOf(h.doc).pics, { at: "page", size: "text", cap: "below" });
+});
+
+test("pictures on a page of their own: before the chapter, facing its right-hand opening, with the caption", () => {
+  const hs = house(), res = A.build(hs, picManuscript(), {}, { now: 9, sheet: { a: { picAt: "page" } } });
+  const d = res.doc, h = H.houseOf(d), one = imgs(d).find((it) => it.a === HEX("a")), two = imgs(d).find((it) => it.a === HEX("b"));
+  assert.equal(res.report.placed, 2);
+  assert.equal(res.report.overset, false);
+  const { body, at } = starts(d);
+  const ch2 = body.paras.findIndex((p) => text(p) === "Κεφάλαιο 2");
+  // the first picture on the even page right before chapter 2's odd opening
+  assert.equal(pageNo(d, one.pg) % 2, 0);
+  assert.equal(pageNo(d, one.pg) + 1, at[ch2].no);
+  assert.equal(at[ch2].no % 2, 1);
+  assert.ok(at[ch2].top);
+  // every chapter still opens on a right-hand page at the top
+  body.paras.forEach((p, i) => { if (p.ps === h.roles.title) { assert.equal(at[i].no % 2, 1, text(p)); assert.ok(at[i].top); } });
+  // the caption below it, in the caption style; no number on the picture's page
+  const cap = d.items.find((it) => it.t === "text" && it.pg === one.pg);
+  const cst = d.stories.find((s) => s.id === cap.story);
+  assert.equal(text(cst.paras[0]), "Το λιμάνι, νωρίς.");
+  assert.equal(cst.paras[0].ps, "ps-hscap");
+  assert.ok(cap.y > one.y + one.h);
+  assert.equal(M.pagesInOrder(d).find((p) => p.id === one.pg).ms, "ms-hsopen");
+  // within the text width, the picture's proportions
+  assert.ok(Math.abs(one.w / one.h - 800 / 600) < 0.01);
+  const m = M.margins(d, "L");
+  assert.ok(one.x >= m.l - 0.01 && one.x + one.w <= d.setup.w - m.r + 0.01);
+  // the second picture before the page its paragraph is on; no caption
+  assert.ok(!d.items.some((it) => it.t === "text" && it.pg === two.pg));
+  assert.ok(!body.paras.some((p) => text(p) === "Το λιμάνι, νωρίς."));
+});
+
+test("pictures before the text: at the top of the page, the title below; full-page pictures fill to the bleed", () => {
+  const hs = house();
+  let d = A.build(hs, picManuscript(), {}, { now: 9, sheet: { a: { picAt: "before", cap: "none" } } }).doc;
+  const { body, at } = starts(d), one = imgs(d).find((it) => it.a === HEX("a"));
+  const ch2 = body.paras.findIndex((p) => text(p) === "Κεφάλαιο 2");
+  assert.equal(pageNo(d, one.pg), at[ch2].no);
+  assert.equal(one.wrap, "box");
+  assert.ok(Math.abs(one.y - d.setup.mt) < 0.01);
+  const frame = d.items.find((it) => it.pg === one.pg && it.t === "text");
+  assert.ok(frame.y + at[ch2].y > one.y + one.h, "the title starts below the picture");
+  assert.equal(d.items.filter((it) => it.t === "text" && it.pg === one.pg).length, 1);
+  // full page
+  d = A.build(hs, picManuscript(), {}, { now: 9, sheet: { a: { picAt: "page", picSize: "page" } } }).doc;
+  const f = imgs(d)[0], b = d.setup.bleed;
+  assert.deepEqual([f.x, f.y, f.w, f.h].map((v) => Math.round(v * 100) / 100), [-b, -b, d.setup.w + 2 * b, d.setup.h + 2 * b].map((v) => Math.round(v * 100) / 100));
+});
+
+test("pictures one by one, and pictures from outside the manuscript", () => {
+  const hs = house(), extra = [{ a: HEX("c"), nm: "boat.jpg", iw: 600, ih: 800 }, { a: HEX("d"), nm: "net.jpg", iw: 800, ih: 800 }];
+  // the first left out, the second on a page; typed captions
+  let res = A.build(hs, picManuscript(), {}, { now: 9, sheet: { a: { picAt: "each", capSrc: "typed" }, pics: [{ at: "out" }, { at: "page", cap: "Δίχτυα" }, {}, { cap: "Βάρκα" }] }, extra });
+  let d = res.doc;
+  assert.equal(res.report.placed, 3);
+  assert.equal(res.report.pictures, 1);
+  assert.ok(!imgs(d).some((it) => it.a === HEX("a")));
+  const capOf = (it) => { const c = d.items.find((x) => x.t === "text" && x.pg === it.pg && x.story !== undefined && d.stories.find((s) => s.id === x.story).paras[0].ps === "ps-hscap"); return c ? text(d.stories.find((s) => s.id === c.story).paras[0]) : ""; };
+  assert.equal(capOf(imgs(d).find((it) => it.a === HEX("b"))), "Δίχτυα");
+  assert.equal(capOf(imgs(d).find((it) => it.a === HEX("d"))), "Βάρκα");
+  // outside pictures at the end: after the last text page, before the back matter
+  const order = M.pagesInOrder(d), boat = order.findIndex((p) => p.id === imgs(d).find((it) => it.a === HEX("c")).pg);
+  const { at } = starts(d);
+  assert.ok(boat > Math.max(...Object.values(at).map((x) => x.idx)));
+  assert.equal(order[order.length - 1].ext.hs, "back");
+  // after chapter 2: before chapter 3's opening, with its side kept
+  res = A.build(hs, picManuscript(), {}, { now: 9, sheet: { a: { extraAt: "after1" } }, extra });
+  d = res.doc;
+  const s2 = starts(d), ch3 = s2.body.paras.findIndex((p) => text(p) === "Κεφάλαιο 3");
+  const boatNo = pageNo(d, imgs(d).find((it) => it.a === HEX("c")).pg), netNo = pageNo(d, imgs(d).find((it) => it.a === HEX("d")).pg);
+  assert.equal(netNo + 1, s2.at[ch3].no);
+  assert.equal(boatNo + 1, netNo);
+  assert.equal(s2.at[ch3].no % 2, 1);
+  // the sheet keeps the answers, the pictures' own ones too
+  assert.equal(d.setup.ext.book.a.extraAt, "after1");
+});

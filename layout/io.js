@@ -53,6 +53,17 @@
       inp.click();
     });
   }
+  // → Promise of an array of Files (empty when none were picked)
+  function pickFiles(accept) {
+    var dlg = LY.dialogHost();
+    var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(accept) : new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.accept = accept; inp.multiple = true;
+      inp.addEventListener("change", function () { resolve(inp.files ? Array.prototype.slice.call(inp.files) : null); });
+      inp.click();
+    });
+    return pick.then(function (files) { return (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean); });
+  }
 
   // ---------- PDF ----------
   var jspdfP = null;
@@ -656,15 +667,7 @@
   // Later: pick the missing pictures; frames of the open document that
   // name them get them, placed as they were.
   function relinkPick() {
-    var dlg = LY.dialogHost();
-    var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles("image/*") : new Promise(function (resolve) {
-      var inp = document.createElement("input");
-      inp.type = "file"; inp.accept = "image/*"; inp.multiple = true;
-      inp.addEventListener("change", function () { resolve(inp.files ? Array.prototype.slice.call(inp.files) : null); });
-      inp.click();
-    });
-    return pick.then(function (files) {
-      files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
+    return pickFiles("image/*").then(function (files) {
       if (files.length) return relink(files);
     }).then(null, function () { LY.toast(t("img.fail")); });
   }
@@ -803,7 +806,9 @@
   // A text or document file → Promise of { list (wordin paragraphs with
   // roles), pictures (how many the file has; not placed) } or null.
   // Plain text: one paragraph per line, blank lines kept as empty ones.
-  function readDoc(f, ext) {
+  // opts.pics: the pictures as entries of the list (LY-IN)
+  function readDoc(f, ext, opts) {
+    var po = opts && opts.pics ? { pics: 1 } : null;
     ext = ext || (/\.([a-z]+)$/i.exec(f.name || "") || ["", "txt"])[1].toLowerCase();
     if (f.size > (ext === "txt" ? TXT_MAX : DOC_MAX)) return Promise.resolve(null);
     var zip = ext === "docx" || ext === "odt";
@@ -816,7 +821,7 @@
       }
       return Promise.resolve(zip ? IO.parseZipBuf(r[2], ext) : IO.parseTextOf(r[2], ext)).then(function (pl) {
         var html = String(pl && pl.html || "");
-        return { list: W.parse(html), pictures: (html.match(/<img\b/gi) || []).length };
+        return { list: W.parse(html, po), pictures: (html.match(/<img\b/gi) || []).length };
       });
     });
   }
@@ -880,6 +885,6 @@
     exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
-    saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
+    saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, loadJsPDF: loadJsPDF, fileName: fileName
   };
 })();

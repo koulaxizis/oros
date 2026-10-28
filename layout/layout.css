@@ -575,3 +575,8 @@ body.inframe #cv { cursor: text; }
 .in-part { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 6px 0; }
 .in-part > .fld-lbl { flex: 1 1 60%; }
 .in-part > .grid2 { flex: 1 1 100%; }
+.in-pics { display: flex; flex-direction: column; gap: 8px; margin: 6px 0; max-height: 50vh; overflow-y: auto; }
+.in-pic { display: flex; gap: 8px; align-items: flex-start; }
+.in-pic > img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 64px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; }
+.in-pic-f { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.in-pic-f > .fld-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -275,11 +275,11 @@
     var fail = function () { LY.toast(t("txt.fail")); if (done) done(null); };
     var A = window.LY_AUTO, m = {};
     Object.keys(meta).forEach(function (k) { if (String(meta[k] || "").trim()) m[k] = String(meta[k]).trim(); });
-    function make(r, sheet) {
+    function make(r, sheet, extra) {
       LY.flushStory && LY.flushStory();
       var res = A.build(house, r.list, m, {
         now: LY.now(), pictures: r.pictures, keepFront: keepFront, name: file.name.replace(/\.[a-z]+$/i, ""),
-        sheet: sheet, names: newNames(), tocHead: t("in.n.tocHead")
+        sheet: sheet, names: newNames(), tocHead: t("in.n.tocHead"), extra: extra
       });
       if (!res) { fail(); return; }
       LY.addDoc(res.doc);
@@ -287,21 +287,82 @@
       if (done) done(res.report);
     }
     if (!ask) LY.toast(t("au.working"));
-    LY.io.readDoc(file).then(function (r) {
+    LY.io.readDoc(file, null, ask && I ? { pics: 1 } : null).then(function (r) {
       if (!r || !r.list.some(function (p) { return p.runs.length; })) { fail(); return; }
       if (!ask || !I) { make(r, null); return; }
-      var s = A.structure(r.list, { keepFront: keepFront });
-      askDlg(house, I.info(house, s.list, s.cut), ask.sheet || I.defaults(house), function (sheet, keep) {
+      var px = I.pictures(r.list), s = A.structure(px.list, { keepFront: keepFront });
+      askDlg(house, I.info(house, s.list, s.cut), ask.sheet || I.defaults(house), px.pics, function (sheet, keep, files) {
         if (keep) keepAnswers(house, sheet);
         LY.toast(t("au.working"));
-        make(r, sheet);
+        var grey = I.ans(sheet, "grey") === "yes";
+        importPics(r.list, files, grey).then(function (extra) { make(r, sheet, extra); }).then(null, fail);
       });
     }).then(null, fail);
+  }
+  // The pictures into the disk (designkit/assets.js), greyscale when the
+  // sheet says so: the manuscript's (list "img" entries get a, nm, iw,
+  // ih) and the files picked besides it. One that cannot be read stays
+  // without an asset and the report counts it as left out.
+  // → Promise of the extra pictures [{ a, nm, iw, ih }]
+  function importPics(list, files, grey) {
+    var chain = Promise.resolve(), extra = [];
+    function one(blob, name) {
+      return (grey ? toGrey(blob) : Promise.resolve(blob)).then(function (b) {
+        try { b.name = name; } catch (e) { /* a File keeps its own name */ }
+        return LY.A.importFile(b);
+      }).then(function (res) { return { a: res.id, nm: String(name || res.name || "").slice(0, 120), iw: res.w, ih: res.h }; }, function () { return null; });
+    }
+    list.forEach(function (p) {
+      if (p.role !== "img") return;
+      var b = dataBlob(p.src);
+      if (!b) return;
+      chain = chain.then(function () { return one(b, p.alt || ""); }).then(function (r) { if (r) { p.a = r.a; p.nm = r.nm; p.iw = r.iw; p.ih = r.ih; } });
+    });
+    (files || []).forEach(function (f) {
+      chain = chain.then(function () { return one(f, f.name); }).then(function (r) { extra.push(r || { nm: String(f.name || "").slice(0, 120) }); });
+    });
+    return chain.then(function () { return extra; });
+  }
+  // a data: URL (as Writer's reader gives a document's pictures) → Blob
+  function dataBlob(src) {
+    var m = /^data:([a-z]+\/[a-z0-9.+-]+)?(;base64)?,(.*)$/i.exec(String(src || ""));
+    if (!m) return null;
+    try {
+      var raw = m[2] ? atob(m[3]) : decodeURIComponent(m[3]), u = new Uint8Array(raw.length);
+      for (var i = 0; i < raw.length; i++) u[i] = raw.charCodeAt(i);
+      return new Blob([u], { type: m[1] || "image/png" });
+    } catch (e) { return null; }
+  }
+  var GREY_SIDE = 4000;
+  // → Promise of a greyscale JPEG of the picture (white under clear parts)
+  function toGrey(blob) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var w = img.naturalWidth || 1200, h = img.naturalHeight || 1200, k = Math.min(1, GREY_SIDE / Math.max(w, h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+        var ctx = cv.getContext("2d");
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        var px = ctx.getImageData(0, 0, cv.width, cv.height), d = px.data;
+        for (var i = 0; i < d.length; i += 4) {
+          var y = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+          d[i] = d[i + 1] = d[i + 2] = y;
+        }
+        ctx.putImageData(px, 0, 0);
+        cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, "image/jpeg", 0.92);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
   }
   // the names of the styles a book sheet adds
   function newNames() {
     var n = {};
-    ["part", "open", "sep", "toc", "tocHead", "thanks", "links", "ded", "pn", "first", "colophon"].forEach(function (k) { n[k] = t("in.n." + k); });
+    ["part", "open", "sep", "toc", "tocHead", "thanks", "links", "ded", "pn", "first", "colophon", "cap"].forEach(function (k) { n[k] = t("in.n." + k); });
     return n;
   }
   // "keep as the series' rules": the answers (not the book's own pages,
@@ -354,20 +415,25 @@
     });
     return inp;
   }
-  function askDlg(house, inf, sheet0, go) {
-    var sheet = I.clean(sheet0), S = inf.series, a = sheet.a;
+  function askDlg(house, inf, sheet0, pics, go) {
+    var sheet = I.clean(sheet0), S = inf.series, a = sheet.a, files = [], urls = [];
+    var bye = function () { urls.forEach(function (u) { URL.revokeObjectURL(u); }); urls = []; };
     LY.openDialog(t("in.title"), function (body, close) {
       body.appendChild(el("p", "hint", t("in.hint", { n: inf.titles })));
       var quick = el("div", "pn-row");
-      quick.appendChild(LY.ui.btn(t("in.allSeries"), function () { close(); go(I.defaults(house), false); }));
+      quick.appendChild(LY.ui.btn(t("in.allSeries"), function () { bye(); close(); go(I.defaults(house), false, []); }));
       body.appendChild(quick);
       function group(key) { body.appendChild(el("h3", "pn-h", t("in.g." + key))); }
-      function ask(id) {
+      function ask(id) { askIn(id, body); }
+      function askIn(id, into, then) {
         var q = I.QUESTIONS.filter(function (x) { return x.id === id; })[0];
-        if (q.when && !inf[q.when]) return;
+        if (q.when && !inf[q.when] && !(q.when === "pics" && files.length)) return;
         var ser = seriesOf(id, S);
         var opts = q.v.map(function (v) { return [v, v === "s" ? t("in.series", { v: ser }) : optName(id, v)]; });
-        body.appendChild(LY.ui.field(t("in.q." + id), LY.ui.select(opts, a[id] || "s", function (v) { if (v === "s") delete a[id]; else a[id] = v; })));
+        into.appendChild(LY.ui.field(t("in.q." + id), LY.ui.select(opts, a[id] || "s", function (v) {
+          if (v === "s") delete a[id]; else a[id] = v;
+          if (then) then();
+        })));
       }
       // A. page and structure
       group("page");
@@ -416,6 +482,7 @@
       if (inf.sections.thanks) parts.push("thanks");
       if (inf.sections.links) parts.push("links");
       parts.push("ded");
+      if (inf.pics) parts.push("cap");
       var fonts = [["", t("in.asSeries")], ["serif", t("in.font.serif")], ["sans", t("in.font.sans")], ["mono", t("in.font.mono")]]
         .concat(LY.F.docFonts(house).map(function (e) { return [e.id, e.name]; }));
       parts.forEach(function (k) {
@@ -438,6 +505,63 @@
         row.appendChild(g);
         body.appendChild(row);
       });
+      // E. pictures: the manuscript's and others picked here
+      group("pics");
+      var pg = el("div");
+      body.appendChild(pg);
+      var each = !!(sheet.pics && sheet.pics.some(function (x) { return x.at || x.cap; }));
+      function picRow(k, src, name) {
+        var o = sheet.pics[k] = sheet.pics[k] || {}, row = el("div", "in-pic");
+        var im = el("img");
+        im.alt = ""; im.src = src;
+        row.appendChild(im);
+        var col = el("div", "in-pic-f");
+        col.appendChild(el("span", "fld-lbl", (k + 1) + ". " + (name || t("in.picN", { n: k + 1 }))));
+        if (k < pics.length && I.ans(sheet, "picAt") === "each") {
+          col.appendChild(LY.ui.select(I.PIC_AT.map(function (v) { return [v, v === "s" ? t("in.series", { v: seriesOf("picAt", S) }) : optName("picAt", v)]; }), o.at || "s", function (v) { if (v === "s") delete o.at; else o.at = v; }));
+        }
+        var cap = el("input", "inp");
+        cap.type = "text"; cap.maxLength = 300; cap.value = o.cap || ""; cap.placeholder = t("in.capPh");
+        cap.addEventListener("input", function () { if (cap.value.trim()) o.cap = cap.value; else delete o.cap; });
+        col.appendChild(cap);
+        row.appendChild(col);
+        return row;
+      }
+      function drawPics() {
+        pg.textContent = "";
+        sheet.pics = sheet.pics || [];
+        if (inf.pics) pg.appendChild(el("p", "hint", t("in.picsHint", { n: inf.pics })));
+        ["picAt", "picSize", "cap", "capSrc", "grey"].forEach(function (id) { askIn(id, pg, id === "picAt" || id === "capSrc" ? drawPics : null); });
+        // the other photos (a folder's section): where they go
+        var ex = el("div", "pn-row");
+        ex.appendChild(LY.ui.btn(t("in.extra"), function () {
+          LY.io.pickFiles("image/*").then(function (fs) {
+            fs.forEach(function (f) { if (files.length < 500 - pics.length) files.push(f); });
+            drawPics();
+          });
+        }));
+        if (files.length) ex.appendChild(el("span", "hint", t("in.extraN", { n: files.length })));
+        pg.appendChild(ex);
+        if (files.length) {
+          var at = [["end", t("in.extraAt.end")]].concat(inf.chapters.map(function (c, i) { return ["after" + i, t("in.extraAt.after", { t: c || i + 1 })]; }));
+          pg.appendChild(LY.ui.field(t("in.q.extraAt"), LY.ui.select(at, a.extraAt || "end", function (v) { a.extraAt = v; })));
+        }
+        var n = pics.length + files.length;
+        if (!n) return;
+        if (I.ans(sheet, "picAt") === "each" || I.ans(sheet, "capSrc") === "typed") each = true;
+        var tg = LY.ui.btn(t("in.eachPic", { n: n }), function () { each = !each; drawPics(); });
+        pg.appendChild(tg);
+        if (!each) return;
+        var ls = el("div", "in-pics");
+        pics.forEach(function (p, k) { ls.appendChild(picRow(k, /^data:image\//i.test(p.src) ? p.src : "", p.alt)); });
+        files.forEach(function (f, j) {
+          var u = URL.createObjectURL(f);
+          urls.push(u);
+          ls.appendChild(picRow(pics.length + j, u, f.name));
+        });
+        pg.appendChild(ls);
+      }
+      drawPics();
       // D. text
       group("text");
       ["hyph", "widows", "fix"].forEach(ask);
@@ -445,11 +569,18 @@
       body.appendChild(LY.ui.check(t("in.keep"), 0, function (v) { keep = v; }));
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
-      act.appendChild(LY.ui.btn(t("btn.cancel"), close));
+      act.appendChild(LY.ui.btn(t("btn.cancel"), function () { bye(); close(); }));
       act.appendChild(LY.ui.btn(t("au.go"), function () {
         Object.keys(sheet.ty).forEach(function (k) { if (!Object.keys(sheet.ty[k]).length) delete sheet.ty[k]; });
+        if (sheet.pics) {
+          sheet.pics = sheet.pics.slice(0, pics.length + files.length);
+          for (var k = 0; k < sheet.pics.length; k++) sheet.pics[k] = sheet.pics[k] || {};
+          if (!sheet.pics.some(function (x) { return x.at || x.cap; })) delete sheet.pics;
+        }
+        if (files.length && !a.extraAt) a.extraAt = "end";
+        bye();
         close();
-        go(sheet, keep);
+        go(sheet, keep, files);
       }, "primary"));
       body.appendChild(act);
     }, true);
@@ -476,7 +607,9 @@
       if (rep.dropped) p(t("au.repDropped", { n: rep.dropped }), "hint");
       var ns = Object.keys(rep.noStyle).map(function (k) { return t("wd." + k) + " (" + rep.noStyle[k] + ")"; });
       if (ns.length) p(t("au.repNoStyle", { list: ns.join(", ") }), "hint warn");
-      if (rep.pictures) p(t("au.repPics", { n: rep.pictures }), "hint warn");
+      if (rep.placed) p(t("au.repPlaced", { n: rep.placed }), "hint");
+      if (rep.pictures) p(t(rep.placed !== undefined ? "au.repPicsOut" : "au.repPics", { n: rep.pictures }), "hint warn");
+      if (rep.overset) p(t("au.repOverset"), "hint warn");
       if (rep.sheet) {
         if (rep.moved) p(t("au.repMoved", { n: rep.moved }), "hint");
         if (rep.left) p(t("au.repLeft", { n: rep.left }), "hint");
