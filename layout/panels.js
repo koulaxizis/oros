@@ -1321,6 +1321,8 @@
       { label: t("more.story"), disabled: !(it && it.t === "text"), fn: function () { LY.story.open(it.id); } },
       { label: t("more.text"), fn: function () { LY.io.importText(); } },
       { label: t("more.house"), fn: function () { LY.house.open(); } },
+      { label: t("more.auto"), fn: function () { LY.house.auto(); } },
+      { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },

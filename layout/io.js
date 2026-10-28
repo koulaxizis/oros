@@ -790,19 +790,33 @@
     }).then(null, function () { LY.toast(t("txt.fail")); });
   }
   function importDoc(f, ext) {
-    if (f.size > DOC_MAX) { LY.toast(t("txt.fail")); return; }
+    return readDoc(f, ext).then(function (r) {
+      var W = window.LY_WORDIN, n = r && W.counts(r.list);
+      if (!n || !Object.keys(n).length) { LY.toast(t("txt.fail")); return; }
+      mapDlg(W, n, function (map) {
+        var fx = houseFix(W.paras(r.list, map));
+        placeParas(fx.paras, map);
+        LY.toast(t("wd.done", { n: r.list.length }) + fx.note);
+      });
+    });
+  }
+  // A text or document file → Promise of { list (wordin paragraphs with
+  // roles), pictures (how many the file has; not placed) } or null.
+  // Plain text: one paragraph per line, blank lines kept as empty ones.
+  function readDoc(f, ext) {
+    ext = ext || (/\.([a-z]+)$/i.exec(f.name || "") || ["", "txt"])[1].toLowerCase();
+    if (f.size > (ext === "txt" ? TXT_MAX : DOC_MAX)) return Promise.resolve(null);
     var zip = ext === "docx" || ext === "odt";
     return Promise.all([script("../writer/io.js", "WriterIO"), script("wordin.js", "LY_WORDIN"), zip ? f.arrayBuffer() : f.text()]).then(function (r) {
       var IO = r[0], W = r[1];
+      if (ext === "txt") {
+        var esc = function (x) { return x.replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+        var html = String(r[2]).replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n").map(function (x) { return "<p>" + esc(x) + "</p>"; }).join("");
+        return { list: W.parse(html), pictures: 0 };
+      }
       return Promise.resolve(zip ? IO.parseZipBuf(r[2], ext) : IO.parseTextOf(r[2], ext)).then(function (pl) {
-        var list = W.parse(pl && pl.html);
-        var n = W.counts(list);
-        if (!Object.keys(n).length) { LY.toast(t("txt.fail")); return; }
-        mapDlg(W, n, function (map) {
-          var fx = houseFix(W.paras(list, map));
-          placeParas(fx.paras, map);
-          LY.toast(t("wd.done", { n: list.length }) + fx.note);
-        });
+        var html = String(pl && pl.html || "");
+        return { list: W.parse(html), pictures: (html.match(/<img\b/gi) || []).length };
       });
     });
   }
@@ -864,7 +878,7 @@
 
   LY.io = {
     exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
-    placeImage: placeImage, importText: importText, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
+    placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
   };
