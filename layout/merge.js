@@ -280,7 +280,10 @@
             var name = String(value(it.mf) || "").trim(), key = fileKey(name), im = key ? images[key] : null;
             if (im) {
               it.a = im.a; it.iw = im.iw; it.ih = im.ih; it.nm = im.nm || name;
-              if (it.fit === "custom") { it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
+              if (it.fit === "custom") {
+                it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
+                if (it.ext) { delete it.ext.iscy; if (!Object.keys(it.ext).length) delete it.ext; }
+              }
             } else {
               it.a = ""; it.nm = name;
               if (key) missing[key] = name;

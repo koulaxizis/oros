@@ -46,10 +46,12 @@
     return [cx + dx * c - dy * s - it.x, cy + dx * s + dy * c - it.y];
   }
 
-  // Where an image sits inside its frame (frame-local points).
+  // Where an image sits inside its frame (frame-local points). A
+  // custom placement may scale the height on its own (ext.iscy: a
+  // picture stretched by the program it came from, e.g. Scribus).
   function imageRect(it) {
     var iw = it.iw || 1, ih = it.ih || 1;
-    if (it.fit === "custom") return { x: it.ix, y: it.iy, w: iw * it.isc, h: ih * it.isc };
+    if (it.fit === "custom") return { x: it.ix, y: it.iy, w: iw * it.isc, h: ih * (it.ext && it.ext.iscy > 0 ? it.ext.iscy : it.isc) };
     var s = it.fit === "fit" ? Math.min(it.w / iw, it.h / ih) : Math.max(it.w / iw, it.h / ih);
     var w = iw * s, h = ih * s;
     return { x: (it.w - w) / 2, y: (it.h - h) / 2, w: w, h: h };
@@ -58,7 +60,13 @@
   function effectivePpi(it) {
     if (!it.iw) return 0;
     var r = imageRect(it);
-    return it.iw / (r.w / 72);
+    return Math.min(it.iw / (r.w / 72), (it.ih || it.iw) / (r.h / 72));
+  }
+  // Back to one scale for both sides (any edit of the fit or scale).
+  function uniform(it) {
+    if (!it.ext || it.ext.iscy === undefined) return;
+    delete it.ext.iscy;
+    if (!Object.keys(it.ext).length) delete it.ext;
   }
 
   // ---------- 2. Layout of a whole document ----------
@@ -312,12 +320,15 @@
         if (!r.t) return;
         ctx.font = r.size + "px " + T.cssStack(r.key);
         ctx.fillStyle = rgba(doc, r.color) || "#000";
-        if (r.track) {
-          var x = r.x;
+        if (r.track || r.kern) {
+          // letter by letter: tracking and pair kerning (LY-KERN) as layout measured them
+          var x = r.x, prev = "";
           for (var i = 0; i < r.t.length; i++) {
             var ch = r.t[i];
+            if (r.kern && prev) x += T.kernPair(r.key, prev, ch, r.size);
             ctx.fillText(ch, x, r.y);
             x += T.measure(r.key, ch, r.size, r.track);
+            prev = ch;
           }
         } else ctx.fillText(r.t, r.x, r.y);
         if (r.u) ctx.fillRect(r.x, r.y + r.size * 0.12, r.w, Math.max(0.3, r.size * 0.05));
@@ -433,7 +444,7 @@
   }
 
   var api = {
-    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, effectivePpi: effectivePpi,
+    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, effectivePpi: effectivePpi, uniform: uniform,
     computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };

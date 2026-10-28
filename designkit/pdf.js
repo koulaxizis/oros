@@ -47,15 +47,19 @@
     }
     return name;
   }
-  // A run's text in pieces that each one font file writes.
+  // A run's text in pieces that each one font file writes; with
+  // kerning (LY-KERN) a kerned pair also starts a piece, kern: the
+  // kerning in points before the piece.
   function pieces(run) {
-    var s = run.t, out = [], cur = null;
+    var s = run.t, out = [], cur = null, prev = "";
     for (var k = 0; k < s.length; k++) {
       var cp = s.codePointAt(k), ch = cp > 0xFFFF ? s.substr(k, 2) : s.charAt(k);
       if (cp > 0xFFFF) k++;
       var f = cp <= 32 && cur ? cur.f : faceFor(run.key, cp);
-      if (cur && cur.f[0] === f[0] && cur.f[1] === f[1]) cur.t += ch;
-      else { cur = { f: f, t: ch }; out.push(cur); }
+      var kn = run.kern && prev ? T.kernPair(run.key, prev, ch, run.size) : 0;
+      if (cur && !kn && cur.f[0] === f[0] && cur.f[1] === f[1]) cur.t += ch;
+      else { cur = { f: f, t: ch, kern: kn }; out.push(cur); }
+      prev = ch;
     }
     return out;
   }
@@ -180,6 +184,7 @@
           var opt = { baseline: "alphabetic" }, dx = 0;
           if (run.track) opt.charSpace = run.track * run.size / 1000;
           pieces(run).forEach(function (pc) {
+            dx += pc.kern;
             var name = fontOf(pdf, pc.f[0], pc.f[1]);
             if (!name) return;
             pdf.setFont(name, "normal");

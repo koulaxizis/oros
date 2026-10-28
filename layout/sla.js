@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — Scribus .sla import (v1.2.0)
+// orOS Layout — Scribus .sla import (v1.3.0)
 // Reads a Scribus document (1.4, 1.5, 1.6 XML) into a NEW Layout
 // document: pages, master pages, margins, columns, bleed, colours,
 // paragraph styles, text frames with their threads, images, shapes,
@@ -11,7 +11,9 @@
 // model's normalizers like any other document.
 //   - Images embedded in the file (Scribus "inline images") come back
 //     as data for io.js to store; linked images become empty image
-//     frames that keep the file name, ready for Place image.
+//     frames that keep the file name (`links`), filled by io.js from
+//     the pictures picked with the file. Each keeps how Scribus placed
+//     it (ext.place: scale, offset, fit or stretch).
 //   - Not imported (counted in stats.skipped): tables, text on a path
 //     (a plain text frame), mesh / pattern / diamond / conical fills
 //     (plain colour), LaTeX and other render frames, hyphenation
@@ -19,7 +21,8 @@
 //     outline.
 //   - Fonts: each style keeps the built-in family closest to its font
 //     and the font's own name in ext.srcFont; io.js then finds that
-//     family on the orOS disk or at Fontsource (LY-FONT).
+//     family on the orOS disk or at Fontsource (LY-FONT). Text kerns,
+//     as in Scribus (ext.kern on the base style, LY-KERN).
 //   - A compressed .sla.gz is unpacked by io.js before it comes here.
 // Exposes LY_SLA (browser) or module.exports (Node tests).
 // ============================================================
@@ -261,7 +264,8 @@
 
   // ---------- 4. Convert ----------
   // opts: { now, name }. Result: { doc, images: [{ item, name, data }],
-  // linked: n, stats: { pages, items, skipped } } or null.
+  // linked: n, links: [{ item, name }], stats: { pages, items,
+  // skipped } } or null.
   function convert(src, opts) {
     opts = opts || {};
     var now = opts.now || 1, tree = parseXml(String(src || ""));
@@ -353,6 +357,10 @@
       o.base = a.PARENT && styleId[a.PARENT] ? styleId[a.PARENT] : "ps-base";
       doc.pstyles.push(o);
     });
+    // Scribus kerns by default (LY-KERN)
+    var base0 = M.find(doc.pstyles, "ps-base");
+    base0.ext = base0.ext || {};
+    base0.ext.kern = 1;
     // paragraph with local overrides → a derived style, made once
     var derived = {};
     function paraStyle(a) {
@@ -391,7 +399,7 @@
     }
 
     // ---------- objects ----------
-    var images = [], linked = 0, byItemId = {}, items = [];
+    var images = [], linked = 0, links = [], byItemId = {}, items = [];
     function storyOf(node) {
       var host = find1(node, "StoryText") || node, paras = [], runs = [];
       var defA = (kids(host, "DefaultStyle")[0] || {}).a || {};
@@ -498,8 +506,14 @@
           it.t = "img";
           it.nm = String(a.PFILE || "").split(/[\\\/]/).pop().slice(0, 120);
           it.fit = a.SCALETYPE === "0" ? "fill" : "fit";
-          if (a.isInlineImage === "1" && a.ImageData) images.push({ item: it.id, name: it.nm || "image", data: a.ImageData, type: a.inlineImageExt || "", sx: num(a.LOCALSCX, 1), sy: num(a.LOCALSCY, 1), ix: num(a.LOCALX, 0), iy: num(a.LOCALY, 0), free: a.SCALETYPE === "0" });
-          else if (a.PFILE) linked++;
+          // how Scribus placed it, for io.js once the picture is there:
+          // [mode (0 own scale and offset, 1 fit keeping proportions,
+          // 2 stretched to the frame), x / y scale (pt per pixel),
+          // x / y offset (pixels)]
+          var mode = a.SCALETYPE === "0" ? 0 : a.RATIO === "0" ? 2 : 1;
+          it.ext = { place: [mode, num(a.LOCALSCX, 1), num(a.LOCALSCY, 1), num(a.LOCALX, 0), num(a.LOCALY, 0)] };
+          if (a.isInlineImage === "1" && a.ImageData) images.push({ item: it.id, name: it.nm || "image", data: a.ImageData, type: a.inlineImageExt || "" });
+          else if (a.PFILE) { linked++; links.push({ item: it.id, name: it.nm }); }
         } else {
           // shapes are polygons (6) whose FRTYPE says rectangle (0),
           // ellipse (1), rounded rectangle (2) or a free shape (3);
@@ -560,7 +574,7 @@
       doc.masters.push({ id: "ms-a", m: now, name: { en: "A-Master", el: "A-Master" }, pre: "A" });
     }
     var out = M.normDoc(doc);
-    return { doc: out, images: images, linked: linked, stats: stats };
+    return { doc: out, images: images, linked: linked, links: links, stats: stats };
   }
 
   // Scribus inline image data: base64 of qCompress (4-byte big-endian
@@ -600,7 +614,29 @@
     return pump().then(null, function () { return null; });
   }
 
-  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug };
+  // ---------- 5. Pictures found later ----------
+  // Linked picture names compare without case, accents written either
+  // way (NFC) or a folder in front.
+  function nameKey(n) { return String(n || "").split(/[\\\/]/).pop().normalize("NFC").toLowerCase().trim(); }
+  // Once its picture is there (it.iw, it.ih), an image frame takes the
+  // placement Scribus gave it (ext.place): its own scale and offset,
+  // fit, or stretched to the frame. A stretch scales the height on its
+  // own (ext.iscy, see designkit/render.js imageRect). Without
+  // ext.place nothing changes.
+  function placePicture(it) {
+    var p = it.ext && it.ext.place;
+    if (!Array.isArray(p) || !it.iw || !it.ih) return;
+    var sx = p[1] > 0 ? p[1] : 1, sy = p[2] > 0 ? p[2] : sx;
+    delete it.ext.iscy;
+    if (p[0] === 1) { it.fit = "fit"; return; }
+    it.fit = "custom";
+    if (p[0] === 2) { sx = it.w / it.iw; sy = it.h / it.ih; it.ix = 0; it.iy = 0; }
+    else { it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; }
+    it.isc = sx;
+    if (Math.abs(sy - sx) > 1e-9 * sx) it.ext.iscy = sy;
+  }
+
+  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_SLA = api;
 })(typeof window !== "undefined" ? window : this);

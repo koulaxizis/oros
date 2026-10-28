@@ -494,6 +494,9 @@
     var base = doc.pstyles.filter(function (s) { return s.id === "ps-base"; })[0];
     doc.pstyles = [base];
     if (list.length) { fontOf(base, list[0].fam); base.size = list[0].size; base.lead = list[0].lead; base.track = list[0].track; }
+    // the PDF's program kerned; a found font kerns the same (our Noto has no pairs)
+    base.ext = base.ext || {};
+    base.ext.kern = 1;
     var taken = {};
     list.forEach(function (s, k) {
       var nm = k === 0 ? N.body : s.size + "/" + Math.round(s.lead * 10) / 10 + " " + N.al[s.align] + (s.b ? " " + N.b : "") + (s.i ? " " + N.i : "") +

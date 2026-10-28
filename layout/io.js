@@ -254,6 +254,9 @@
   function importFolder() {
     window.OrosBundle.pickFolder().then(function (files) {
       if (!files) return;
+      // a Scribus "Collect for output" folder: the .sla and its pictures
+      var list = Array.prototype.slice.call(files), sla = list.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); })[0];
+      if (sla && !list.some(function (f) { return f.name === "content.json"; })) return importSla(sla, list.filter(isPicture));
       return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle, bundleFail);
     }).then(null, function () { LY.toast(t("imp.bad")); });
   }
@@ -262,8 +265,9 @@
   // .idml, a PDF or SVG pages (Affinity and others). Several SVG files
   // at once become one document, a page each (by file name); other
   // files picked together open one after another.
-  var OPEN_ACCEPT = ".oroslayout,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml";
+  var OPEN_ACCEPT = ".oroslayout,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml,image/*,.jpg,.jpeg,.png,.gif,.webp,.tif,.tiff";
   function isSvg(f) { return /\.svg$/i.test(f.name || "") || f.type === "image/svg+xml"; }
+  function isPicture(f) { return /\.(jpe?g|png|gif|webp|bmp|tiff?)$/i.test(f.name || "") || /^image\/(jpeg|png|gif|webp|bmp|tiff)$/.test(f.type || ""); }
   function importPackage() {
     var dlg = LY.dialogHost();
     var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(OPEN_ACCEPT) : new Promise(function (resolve) {
@@ -276,6 +280,15 @@
       files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
       if (!files.length) return;
       if (files.every(isSvg)) return importSvg(files);
+      // a Scribus file picked with pictures: they are its linked pictures
+      var sla = files.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); });
+      if (sla.length === 1 && files.length > 1) {
+        var pics = files.filter(isPicture);
+        files = files.filter(function (f) { return f !== sla[0] && pics.indexOf(f) < 0; });
+        var first = importSla(sla[0], pics);
+        files.forEach(function (f) { first = Promise.resolve(first).then(function () { return openFile(f); }); });
+        return first;
+      }
       var chain = Promise.resolve();
       files.forEach(function (f) { chain = chain.then(function () { return openFile(f); }); });
       return chain;
@@ -344,7 +357,8 @@
   // that keep the file name.
   var FOREIGN_MAX = 100 * 1024 * 1024;
   function baseName(f, ext) { return String(f.name || "").replace(ext, "").slice(0, 120); }
-  function importSla(f) {
+  // pics: the pictures picked with the file (its linked pictures, by name)
+  function importSla(f, pics) {
     if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
     LY.toast(t("sla.working"));
     // a compressed .sla.gz is unpacked first (gzip magic, not the name)
@@ -357,7 +371,7 @@
       try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
       return useSrcFonts(res.doc).then(function () {
-        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }));
+        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }), "", pics);
       });
     }).then(null, function () { LY.toast(t("sla.bad")); });
   }
@@ -541,27 +555,83 @@
       return addForeign(res, function (im) { return Promise.resolve(S.imageBlob(im)); }, t("svg.done", { p: res.stats.pages, n: res.stats.items }), "svg.skipped");
     }).then(null, function () { LY.toast(t("svg.bad")); });
   }
-  // res: { doc, images, linked, stats }; blobOf(image) → Promise of a
-  // Blob or null
-  function addForeign(res, blobOf, done, skipKey) {
-    var doc = res.doc, failed = 0, chain = Promise.resolve();
+  // res: { doc, images, linked, links?, stats }; blobOf(image) →
+  // Promise of a Blob or null; pics: Files for res.links, by name
+  function addForeign(res, blobOf, done, skipKey, pics) {
+    var doc = res.doc, failed = 0, found = 0, chain = Promise.resolve();
+    function put(itemId, blob) {
+      return A.importFile(blob).then(function (r) {
+        var it = M.find(doc.items, itemId);
+        if (!it) return;
+        it.a = r.id; it.iw = r.w; it.ih = r.h;
+        placeAs(it);
+      });
+    }
     res.images.forEach(function (im) {
       chain = chain.then(function () { return blobOf(im); }).then(function (blob) {
         if (!blob) { failed++; return; }
         blob.name = im.name;
-        return A.importFile(blob).then(function (r) {
-          var it = M.find(doc.items, im.item);
-          if (!it) return;
-          it.a = r.id; it.iw = r.w; it.ih = r.h;
-        });
+        return put(im.item, blob);
       }).then(null, function () { failed++; });
+    });
+    var byName = picsByName(pics);
+    (res.links || []).forEach(function (ln) {
+      var f = byName[nameKey(ln.name)];
+      if (!f) return;
+      chain = chain.then(function () { return put(ln.item, f); }).then(function () { found++; }, function () {});
     });
     return chain.then(function () {
       LY.addDoc(M.normDoc(doc));
-      var parts = [done];
-      if (res.linked + failed) parts.push(t("sla.linked", { n: res.linked + failed }));
+      var parts = [done], left = res.linked - found + failed;
+      if (left) parts.push(t("sla.linked", { n: left }));
       if (res.stats.skipped) parts.push(t(skipKey || "sla.skipped", { n: res.stats.skipped }));
-      LY.toast(parts.join(" "));
+      if (left && res.links) LY.toast(parts.join(" "), t("sla.find"), relinkPick);
+      else LY.toast(parts.join(" "));
+    });
+  }
+  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it) { window.LY_SLA.placePicture(it); };
+  function picsByName(pics) {
+    var out = {};
+    (pics || []).forEach(function (f) { var k = nameKey(f.name); if (k && !out[k]) out[k] = f; });
+    return out;
+  }
+  // Later: pick the missing pictures; frames of the open document that
+  // name them get them, placed as they were.
+  function relinkPick() {
+    var dlg = LY.dialogHost();
+    var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles("image/*") : new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.accept = "image/*"; inp.multiple = true;
+      inp.addEventListener("change", function () { resolve(inp.files ? Array.prototype.slice.call(inp.files) : null); });
+      inp.click();
+    });
+    return pick.then(function (files) {
+      files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
+      if (files.length) return relink(files);
+    }).then(null, function () { LY.toast(t("img.fail")); });
+  }
+  function relink(files) {
+    var doc = LY.doc, byName = picsByName(files), want = {}, chain = Promise.resolve(), got = {};
+    if (!doc) return Promise.resolve(0);
+    doc.items.forEach(function (it) { if (it.t === "img" && !it.a && it.nm && byName[nameKey(it.nm)]) want[nameKey(it.nm)] = byName[nameKey(it.nm)]; });
+    Object.keys(want).forEach(function (k) {
+      chain = chain.then(function () { return A.importFile(want[k]); }).then(function (r) { got[k] = r; }, function () {});
+    });
+    return chain.then(function () {
+      var n = 0;
+      LY.op(function (d) {
+        d.items.forEach(function (it) {
+          var r = it.t === "img" && !it.a && it.nm ? got[nameKey(it.nm)] : null;
+          if (!r) return;
+          it.a = r.id; it.iw = r.w; it.ih = r.h;
+          placeAs(it);
+          n++;
+        });
+        return n > 0;
+      });
+      var left = LY.doc.items.filter(function (it) { return it.t === "img" && !it.a && it.nm; }).length;
+      LY.toast(t("sla.relinked", { n: n }) + (left ? " " + t("sla.linked", { n: left }) : ""));
+      return n;
     });
   }
 
@@ -573,7 +643,7 @@
           var it = M.find(doc.items, itemId);
           if (!it || it.t !== "img") return false;
           it.a = res.id; it.nm = res.name; it.iw = res.w; it.ih = res.h;
-          it.ix = 0; it.iy = 0; it.isc = 1;
+          it.ix = 0; it.iy = 0; it.isc = 1; LY.R.uniform(it);
           if (it.fit === "custom") it.fit = "fill";
           M.touch(it, now);
         });
