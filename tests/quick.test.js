@@ -147,3 +147,28 @@ test("K6 a password is copied without repeating it in the note", () => {
     assert.match(read("i18n/de/commands.js"), new RegExp('"' + k.replace(/\./g, "\\.") + '": "'), "de " + k);
   }
 });
+
+test("QW-C the tray's small window centres itself at 640x460, only as its own top window", () => {
+  const sh = read("shell.js");
+  const src = sh.slice(sh.indexOf("function quickPlace()"), sh.indexOf("quickWant = quickTakeHash();"));
+  assert.ok(src.length > 100);
+  assert.match(sh, /quickWant = quickTakeHash\(\);\n  if \(quickWant && quickWant\.win\) quickPlace\(\);/);
+  const run = (win) => { new Function("window", src + "quickPlace();")(win); return win; };
+  const calls = [];
+  const w = { outerWidth: 945, outerHeight: 1055,
+    screen: { availLeft: 1920, availTop: 0, availWidth: 2560, availHeight: 1400 },
+    resizeTo: (a, b) => calls.push(["size", a, b]), moveTo: (a, b) => calls.push(["move", a, b]) };
+  w.top = w;
+  run(w);
+  assert.deepEqual(calls, [["size", 640, 460], ["move", 1920 + 960, 470]]);
+  // a frame never moves the window
+  calls.length = 0;
+  run(Object.assign({}, w, { top: {} }));
+  assert.deepEqual(calls, []);
+  // already the right size: only the move; a screen smaller than the window stays at its corner
+  calls.length = 0;
+  const s = Object.assign({}, w, { outerWidth: 640, outerHeight: 460, screen: { availWidth: 600, availHeight: 400 } });
+  s.top = s;
+  run(s);
+  assert.deepEqual(calls, [["move", 0, 0]]);
+});

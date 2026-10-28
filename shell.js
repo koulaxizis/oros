@@ -3890,7 +3890,23 @@
       }
     });
   }
+  // QW-C: the tray's small window sits in the middle of the screen at
+  // its own size. The desktop launcher asks for that size and place,
+  // but a browser that runs already (orOS open) ignores the request,
+  // and on Linux the launcher does not know the screen, so the page
+  // places its own window. Only a top window of its own (--app) can
+  // move; in a tab the calls do nothing.
+  function quickPlace() {
+    if (window.top !== window) return;
+    var W = 640, H = 460, s = window.screen;
+    try {
+      if (window.outerWidth !== W || window.outerHeight !== H) window.resizeTo(W, H);
+      window.moveTo((s.availLeft || 0) + Math.max(0, Math.round((s.availWidth - W) / 2)),
+        (s.availTop || 0) + Math.max(0, Math.round((s.availHeight - H) / 2)));
+    } catch (e) {}
+  }
   quickWant = quickTakeHash();
+  if (quickWant && quickWant.win) quickPlace();
   window.addEventListener("hashchange", function () {
     var w = quickTakeHash();
     if (!w) return;
