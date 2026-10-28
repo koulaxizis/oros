@@ -471,3 +471,72 @@ test("pictures: one in every chapter all go in, also after earlier ones pushed t
     assert.equal(r.report.overset, false, at);
   }
 });
+
+// ---------- Word's notes (LY-NT) ----------
+function noteManuscript() {
+  let html = "";
+  const notes = [];
+  for (let c = 0; c < 3; c++) {
+    html += "<h1>Κεφάλαιο " + (c + 1) + "</h1>";
+    for (let k = 0; k < 3; k++) {
+      const id = "fn" + c + k;
+      html += "<p>" + words(60, c + k) + '<sup class="fn-ref" data-fn="' + id + '">*</sup> ' + words(30, k) + "</p>";
+      notes.push({ id, text: "Σημείωση " + (c + 1) + "." + (k + 1) });
+    }
+  }
+  html += "<h1>Ευχαριστίες</h1><p>" + words(30, 1) + "</p>";
+  return { list: W.parse(html, { pics: 1, notes: 1 }), notes };
+}
+const sup = (p) => p.runs.filter((r) => r.ext && r.ext.sup).map((r) => r.t);
+
+test("Word's notes: marks are raised numbers, the notes after each chapter, numbered again", () => {
+  const ms = noteManuscript();
+  assert.equal(ms.list.filter((p) => p.runs.some((r) => r.fn)).length, 9);
+  assert.equal(I.info(house(), ms.list, []).notes, 9);
+  // without the option the marks are left out, as before
+  assert.ok(!W.parse('<p>A<sup class="fn-ref" data-fn="x">1</sup></p>')[0].runs.some((r) => r.fn));
+  const res = A.build(house(), ms.list, {}, { now: 9, sheet: { a: { fnAt: "chap" } }, notes: ms.notes, notesHead: "Σημειώσεις", names: { note: "Note", noteHead: "Notes heading" } });
+  const d = res.doc, body = starts(d).body, ps = body.paras;
+  assert.equal(res.report.notes, 9);
+  assert.equal(res.report.notesLeft, 0);
+  assert.ok(d.pstyles.find((s) => s.id === "ps-hsnote") && d.pstyles.find((s) => s.id === "ps-hsnotehead"));
+  const heads = ps.map((p, i) => [p, i]).filter(([p]) => p.ps === "ps-hsnotehead");
+  assert.equal(heads.length, 3);
+  heads.forEach(([p, i], c) => {
+    assert.equal(text(p), "Σημειώσεις");
+    assert.deepEqual(ps.slice(i + 1, i + 4).map(text), [1, 2, 3].map((k) => k + ". Σημείωση " + (c + 1) + "." + k));
+    // right before the next chapter (or the acknowledgements)
+    assert.ok(/^(Κεφάλαιο|Ευχαριστίες)/.test(text(ps[i + 4])), text(ps[i + 4]));
+  });
+  assert.deepEqual(ps.filter((p) => sup(p).length).map((p) => sup(p)[0]), ["1", "2", "3", "1", "2", "3", "1", "2", "3"]);
+  assert.ok(!ps.some((p) => p.runs.some((r) => r.t === "*")), "no marks left as text");
+  // the mark is smaller and raised in the layout; an older orOS keeps it
+  const L = R.computeLayout(d);
+  let seen = 0;
+  Object.keys(L.frames).forEach((id) => (L.frames[id].lines || []).forEach((ln) => {
+    const k = ln.runs.findIndex((r) => r.t === "1" && r.size < 9), w = ln.runs[0];
+    if (k > 0 && ps[ln.p] && sup(ps[ln.p]).length) { assert.ok(ln.runs[k].y < w.y && ln.runs[k].size < w.size); seen++; }
+  }));
+  assert.ok(seen > 0, "a raised mark was laid out");
+  const n = M.normDoc(JSON.parse(JSON.stringify(d)));
+  assert.ok(n.stories.find((s) => s.id === body.id).paras.some((p) => p.runs.some((r) => r.ext && r.ext.sup === 1)));
+});
+
+test("Word's notes: at the end of the book, a title of their own before the back sections; a mark without a note", () => {
+  const ms = noteManuscript();
+  ms.notes.pop();
+  const res = A.build(house(), ms.list, {}, { now: 9, sheet: { a: {} }, notes: ms.notes, notesHead: "Σημειώσεις" });
+  const d = res.doc, h = H.houseOf(d), ps = starts(d).body.paras;
+  assert.equal(res.report.notes, 8);
+  assert.equal(res.report.notesLeft, 1);
+  assert.equal(I.info(house(), ms.list, []).series.fnAt, "book");
+  const at = ps.findIndex((p) => text(p) === "Σημειώσεις");
+  assert.equal(ps[at].ps, h.roles.title, "set as a title: its own page, in the contents");
+  assert.deepEqual(ps.slice(at + 1, at + 9).map(text), ["1. Σημείωση 1.1", "2. Σημείωση 1.2", "3. Σημείωση 1.3", "4. Σημείωση 2.1", "5. Σημείωση 2.2", "6. Σημείωση 2.3", "7. Σημείωση 3.1", "8. Σημείωση 3.2"]);
+  assert.ok(ps.findIndex((p) => /Κεφάλαιο 3/.test(text(p))) < at);
+  assert.ok(!ps.some((p) => p.ps === "ps-hsnotehead"));
+  assert.deepEqual(ps.filter((p) => sup(p).length).map((p) => sup(p)[0]), ["1", "2", "3", "4", "5", "6", "7", "8"]);
+  // the question is asked only when the manuscript has notes
+  assert.equal(I.QUESTIONS.find((q) => q.id === "fnAt").when, "notes");
+  assert.equal(I.clean({ a: { fnAt: "page" } }).a.fnAt, undefined);
+});

@@ -837,9 +837,10 @@
   // A text or document file → Promise of { list (wordin paragraphs with
   // roles), pictures (how many the file has; not placed) } or null.
   // Plain text: one paragraph per line, blank lines kept as empty ones.
-  // opts.pics: the pictures as entries of the list (LY-IN)
+  // opts.pics: the pictures as entries of the list (LY-IN), and the
+  // footnotes' marks as runs with notes: [{ id, text }] (LY-NT)
   function readDoc(f, ext, opts) {
-    var po = opts && opts.pics ? { pics: 1 } : null;
+    var po = opts && opts.pics ? { pics: 1, notes: 1 } : null;
     ext = ext || (/\.([a-z]+)$/i.exec(f.name || "") || ["", "txt"])[1].toLowerCase();
     if (f.size > (ext === "txt" ? TXT_MAX : DOC_MAX)) return Promise.resolve(null);
     var zip = ext === "docx" || ext === "odt";
@@ -852,7 +853,7 @@
       }
       return Promise.resolve(zip ? IO.parseZipBuf(r[2], ext) : IO.parseTextOf(r[2], ext)).then(function (pl) {
         var html = String(pl && pl.html || "");
-        return { list: W.parse(html, po), pictures: (html.match(/<img\b/gi) || []).length };
+        return { list: W.parse(html, po), pictures: (html.match(/<img\b/gi) || []).length, notes: po && Array.isArray(pl.footnotes) ? pl.footnotes : [] };
       });
     });
   }

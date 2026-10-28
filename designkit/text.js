@@ -614,6 +614,9 @@
     if (run.b) a.b = 1;
     if (run.i) a.i = 1;
     if (run.u) a.u = 1;
+    // a note's mark (ext.sup, LY-NT): smaller and raised; an older
+    // orOS shows it at the text's size
+    if (run.ext && run.ext.sup) { a.rise = a.size * 0.33; a.size = a.size * 0.65; }
     if (cs.kern !== undefined ? cs.kern : ps.kern) a.kern = 1;
     a.key = fontKey(a.fam && FAMILIES[a.fam] ? a.fam : a.font, a.b, a.i);
     return a;
@@ -1098,7 +1101,7 @@
           if (k > 0) x += (it.spW || 0) + gapAdd * (it.nsp || 0);
           it.tok.parts.forEach(function (p) {
             var txt = partText(p, ctx), pw = partWidth(p, ctx);
-            line.runs.push({ x: x, y: base, t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
+            line.runs.push({ x: x, y: base - (p.a.rise || 0), t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
             if (p.a.kern) line.runs[line.runs.length - 1].kern = 1;
             if (p.a.size > line.maxSize) line.maxSize = p.a.size;
             x += pw;

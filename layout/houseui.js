@@ -281,7 +281,8 @@
       LY.flushStory && LY.flushStory();
       var res = A.build(house, r.list, m, {
         now: LY.now(), pictures: r.pictures, keepFront: keepFront, name: file.name.replace(/\.[a-z]+$/i, ""),
-        sheet: sheet, names: newNames(), tocHead: t("in.n.tocHead"), extra: extra
+        sheet: sheet, names: newNames(), tocHead: t("in.n.tocHead"), extra: extra,
+        notes: r.notes || [], notesHead: t("in.n.notesHead")
       });
       if (!res) { fail(); return; }
       if (ask && ask.missed) res.report.pictures = (res.report.pictures || 0) + ask.missed;
@@ -355,7 +356,7 @@
   // the names of the styles a book sheet adds
   function newNames() {
     var n = {};
-    ["part", "open", "sep", "toc", "tocHead", "thanks", "links", "ded", "pn", "rh", "rhL", "rhR", "first", "colophon", "cap"].forEach(function (k) { n[k] = t("in.n." + k); });
+    ["part", "open", "sep", "toc", "tocHead", "thanks", "links", "ded", "pn", "rh", "rhL", "rhR", "note", "noteHead", "first", "colophon", "cap"].forEach(function (k) { n[k] = t("in.n." + k); });
     return n;
   }
   // "keep as the series' rules": the answers (not the book's own pages,
@@ -564,7 +565,7 @@
       drawPics();
       // D. text
       group("text");
-      ["hyph", "widows", "fix"].forEach(ask);
+      ["fnAt", "hyph", "widows", "fix"].forEach(ask);
       var keep = 0;
       body.appendChild(LY.ui.check(t("in.keep"), 0, function (v) { keep = v; }));
       var act = el("div", "dlg-actions");
@@ -614,6 +615,8 @@
         if (rep.moved) p(t("au.repMoved", { n: rep.moved }), "hint");
         if (rep.left) p(t("au.repLeft", { n: rep.left }), "hint");
         if (rep.bare) p(t("au.repBare", { n: rep.bare }), "hint");
+        if (rep.notes) p(t("au.repNotes", { n: rep.notes }), "hint");
+        if (rep.notesLeft) p(t("au.repNotesLeft", { n: rep.notesLeft }), "hint warn");
       }
       if (rep.check.length) {
         p(t("au.repCheck"), "hint warn");

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.29.00
+- Layout and Writer: the footnotes and endnotes of a Word manuscript now come into the book as small raised numbers, with the notes at the end of each chapter or at the end of the book, as you answer in the book's questions. Writer also keeps a Word file's notes when it opens one.
+
 ## Version 4.28.00
 - Layout and Assistant: the book's questions now ask about running heads (none, title and chapter, author and title); the chapter in the head follows the text page by page and chapter openings have none. Photos can also go inside the running text, right below the paragraph they belong to. In the story editor § inserts the running-head field, and in a style you can mark the titles it follows.
 

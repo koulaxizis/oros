@@ -495,7 +495,8 @@
   // house: a house style document; list: wordin paragraphs; meta: the
   // book's details; opts { now, name, pictures (found in the file),
   // sheet (the book sheet, layout/intake.js), names (the new styles'
-  // names), tocHead (a new contents' heading) }
+  // names), tocHead (a new contents' heading), notes (Word's notes,
+  // [{ id, text }]), notesHead (their heading) }
   function build(house, list, meta, opts) {
     opts = opts || {};
     meta = meta || {};
@@ -503,13 +504,19 @@
     var now = opts.now || 1;
     // pictures (wordin "img" entries) go with the paragraph after them
     var px = I ? I.pictures(list || []) : { list: list || [], pics: [] };
-    var s = structure(px.list, opts), mk = null;
+    var s = structure(px.list, opts), mk = null, nt = null;
     // the book sheet: the manuscript's parts and sections, the house
     // style with the answers
     if (opts.sheet && I) {
       var inf = I.info(house, s.list, s.cut);
       mk = I.mark(s.list, opts.sheet, inf);
       s.list = mk.list;
+      // Word's notes (LY-NT): numbers in the text, the notes where the sheet says
+      if (inf.notes) {
+        var fa = I.ans(opts.sheet, "fnAt");
+        nt = I.notes(s.list, opts.notes || [], fa === "s" ? inf.series.fnAt : fa, opts.notesHead);
+        s.list = nt.list;
+      }
       firstAgain(s.list);
       house = I.prepare(house, opts.sheet, inf, { now: now, names: opts.names, tocHead: opts.tocHead, extra: (opts.extra || []).length });
     }
@@ -529,7 +536,9 @@
     var noStyle = {};
     var picsAt = {};
     s.list.forEach(function (p, i) { if (p.pics && p.pics.length) picsAt[i] = p.pics; });
+    // a note's mark left (no sheet) is not text
     var paras = s.list.map(function (p) {
+      if (p.runs.some(function (r) { return r.fn; })) p = { role: p.role, ps: p.ps, runs: p.runs.filter(function (r) { return !r.fn; }) };
       if (p.ps && have[p.ps]) return { ps: p.ps, runs: p.runs };
       var id = map[p.role];
       var own = { h1: "title", h2: "subtitle", p1: "first", center: "center", quote: "quote" }[p.role];
@@ -566,6 +575,7 @@
       fields: filled, toc: n, noStyle: noStyle, pictures: opts.pictures || 0, check: check
     };
     if (mk) { report.sheet = 1; report.moved = mk.moved; report.left = mk.dropped; report.bare = bare; report.caps = mk.caps; }
+    if (nt) { report.notes = nt.n; report.notesLeft = nt.left; }
     if (pr) { report.pictures = pr.out; report.placed = pr.placed; report.overset = pr.overset; }
     return { doc: d, report: report };
   }

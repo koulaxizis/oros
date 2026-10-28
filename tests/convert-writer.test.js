@@ -230,6 +230,21 @@ const DOCX_EL = zip([
     '<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="7"/></w:numPr><w:jc w:val="left"/></w:pPr><w:r><w:t>δ</w:t></w:r></w:p>' +
     '</w:body></w:document>', true]
 ]);
+// A DOCX with a footnote and an endnote (Word's separator notes left out)
+const WNS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+const DOCX_NOTES = zip([
+  ["[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>'],
+  ["word/footnotes.xml", '<?xml version="1.0"?><w:footnotes ' + WNS + '>' +
+    '<w:footnote w:type="separator" w:id="-1"><w:p><w:r><w:separator/></w:r></w:p></w:footnote>' +
+    '<w:footnote w:id="1"><w:p><w:r><w:footnoteRef/></w:r><w:r><w:t xml:space="preserve"> A first note.</w:t></w:r></w:p>' +
+    '<w:p><w:r><w:t>Its second line.</w:t></w:r></w:p></w:footnote></w:footnotes>', true],
+  ["word/endnotes.xml", '<?xml version="1.0"?><w:endnotes ' + WNS + '>' +
+    '<w:endnote w:id="1"><w:p><w:r><w:endnoteRef/></w:r><w:r><w:t>An end note.</w:t></w:r></w:p></w:endnote></w:endnotes>', true],
+  ["word/document.xml", '<?xml version="1.0" encoding="UTF-8"?><w:document ' + WNS + '><w:body>' +
+    '<w:p><w:r><w:t>Text</w:t></w:r><w:r><w:rPr><w:vertAlign w:val="superscript"/></w:rPr><w:footnoteReference w:id="1"/></w:r>' +
+    '<w:r><w:t xml:space="preserve"> and more</w:t></w:r><w:r><w:endnoteReference w:id="1"/></w:r><w:r><w:footnoteReference w:id="9"/></w:r><w:r><w:t>.</w:t></w:r></w:p>' +
+    '</w:body></w:document>', true]
+]);
 const ODT_NUM = zip([
   ["mimetype", "application/vnd.oasis.opendocument.text"],
   ["styles.xml", '<?xml version="1.0"?><office:document-styles xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" ' +
@@ -282,7 +297,7 @@ test("Chromium: every format converts, reads back as Writer's bundle", { skip: C
       ["plain.txt", Buffer.from("Short\n\nΚείμενο & more")], ["old.rtf", Buffer.from("{\\rtf1\\ansi Hello \\b there\\b0\\par}")],
       ["empty.txt", Buffer.from("")], ["broken.docx", Buffer.from("not a zip")],
       ["Agreement.pdf", PDF], ["greek.docx", DOCX_EL], ["numbers.odt", ODT_NUM], ["list.rtf", Buffer.from(RTF_LIST)],
-      ["scan.pdf", pdf([])]
+      ["scan.pdf", pdf([])], ["notes.docx", DOCX_NOTES]
     ];
     const out = await page.evaluate(async (inputs) => {
       const res = {};
@@ -352,6 +367,12 @@ test("Chromium: every format converts, reads back as Writer's bundle", { skip: C
       '<h1 style="text-align:center">Σύμβαση</h1><p style="text-align:justify">Κείμενο <strong>έντονο</strong></p>' +
       '<p style="text-align:right">Δεξιά</p><ol start="3" style="list-style-type:lower-alpha"><li>γ</li></ol><p>μέση</p>' +
       '<ol start="4" style="list-style-type:lower-alpha"><li>δ</li></ol>');
+    // Word's notes (LY-NT): a mark per note, the text in footnotes; a mark without a note is left out
+    const nd = out["notes.docx"].content.doc;
+    assert.match(nd.html, /^<p>Text<sup class="fn-ref" data-fn="(fn[a-z0-9]+)">[^<]*<\/sup> and more<sup class="fn-ref" data-fn="(fn[a-z0-9]+)">[^<]*<\/sup>\.<\/p>$/);
+    assert.deepEqual(nd.footnotes.map((f) => f.text), ["A first note.\nIts second line.", "An end note."]);
+    const ids = [...nd.html.matchAll(/data-fn="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(ids, nd.footnotes.map((f) => f.id));
     assert.equal(out["numbers.odt"].content.doc.html,
       '<p style="text-align:center"><strong>Centred</strong></p><p style="text-align:justify">Justified</p>' +
       '<ol><li>one</li><li>two</li></ol><p>between</p><ol start="3"><li>three</li></ol>');

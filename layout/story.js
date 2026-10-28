@@ -42,7 +42,7 @@
       var r = p.runs[i], n = runLen(r);
       if (off <= pos) return i;
       if (off < pos + n) {            // only text runs are longer than 1
-        if (r.ext && r.ext.fld) return i + 1;   // a running head is one piece: the boundary after it
+        if (r.ext && (r.ext.fld || r.ext.sup)) return i + 1;   // a running head or a note's mark is one piece: the boundary after it
         var a = withFmt({ t: r.t.slice(0, off - pos) }, keepOf(r));
         var b = withFmt({ t: r.t.slice(off - pos) }, keepOf(r));
         p.runs.splice(i, 1, a, b);
@@ -147,6 +147,13 @@
         node.setAttribute("data-t", r.t);
         node.title = t("story.sec");
         endsWithBr = false;
+      } else if (r.ext && r.ext.sup) {
+        // a note's mark (LY-NT): one piece, raised
+        node = el("sup", "sf", r.t);
+        node.contentEditable = "false";
+        node.setAttribute("data-f", "sup");
+        node.setAttribute("data-t", r.t);
+        endsWithBr = false;
       } else {
         node = document.createDocumentFragment();
         r.t.split("\n").forEach(function (part, k) {
@@ -249,6 +256,7 @@
         var f = node.getAttribute("data-f");
         if (f === "pn" || f === "pc") { add(withFmt({ f: f }, fmtFor(node.firstChild || node))); trailingBr = false; }
         if (f === "sec") { add(withFmt({ t: node.getAttribute("data-t") || " ", ext: { fld: "sec" } }, fmtFor(node.firstChild || node))); trailingBr = false; }
+        if (f === "sup" && node.getAttribute("data-t")) { add(withFmt({ t: node.getAttribute("data-t"), ext: { sup: 1 } }, fmtFor(node.firstChild || node))); trailingBr = false; }
         return;
       }
       var block = BLOCK[tag] && node !== ed;
@@ -288,7 +296,7 @@
           if (atom) {
             if (o === count) { found = { node: n, off: k }; return; }
             if (c.tagName === "BR" && !c.nextSibling && n === d) return;   // placeholder
-            var len = c.getAttribute("data-f") === "sec" ? (c.getAttribute("data-t") || "").length : 1;   // a running head counts its own text
+            var len = /^(sec|sup)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : 1;   // a running head or a note's mark counts its own text
             if (o < count + len) { found = { node: n, off: k + 1 }; return; }
             count += len;
           } else walk(c);

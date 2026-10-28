@@ -810,7 +810,10 @@
         }
         const num = entries.find(e => e.name === 'word/numbering.xml');
         const sty = entries.find(e => e.name === 'word/styles.xml');
-        return ioParseDocxXml(dom, ioDxNumbering(text(num)), ioDxStyles(text(sty)));
+        const styles = ioDxStyles(text(sty));
+        styles.notes = ioDxNotes(text(entries.find(e => e.name === 'word/footnotes.xml')),
+                                 text(entries.find(e => e.name === 'word/endnotes.xml')));
+        return ioParseDocxXml(dom, ioDxNumbering(text(num)), styles);
       })
       .then(res => Object.assign({ kind: 'doc' }, res));
   }
@@ -891,6 +894,32 @@
     return out;
   }
 
+  // word/footnotes.xml + word/endnotes.xml → { map: { "f1" | "e1" →
+  // plain text (paragraphs joined by a line break) }, out: [] (the
+  // payload's footnotes, in the order their marks appear), n }.
+  // Word's separator notes (w:type) are left out.
+  function ioDxNotes(fnXml, enXml) {
+    const res = { map: {}, out: [], n: 0 };
+    [[fnXml, 'footnote', 'f'], [enXml, 'endnote', 'e']].forEach(x => {
+      if (!x[0]) return;
+      const dom = new DOMParser().parseFromString(x[0], 'application/xml');
+      if (dom.getElementsByTagName('parsererror').length) return;
+      Array.from(dom.getElementsByTagNameNS(IO_NS_W, x[1])).forEach(fn => {
+        if (ioDxAttr(fn, 'type')) return;
+        const paras = Array.from(fn.getElementsByTagNameNS(IO_NS_W, 'p')).map(p => {
+          let t = '';
+          Array.from(p.getElementsByTagNameNS(IO_NS_W, '*')).forEach(c => {
+            if (c.localName === 't') t += c.textContent;
+            else if (c.localName === 'tab') t += ' ';
+          });
+          return t.replace(/\s+/g, ' ').trim();
+        }).filter(Boolean);
+        if (paras.length) res.map[x[2] + ioDxAttr(fn, 'id')] = paras.join('\n').slice(0, 20000);
+      });
+    });
+    return res;
+  }
+
   function ioDxRuns(node, base, styles) {
     let out = '';
     base = base || {};
@@ -898,7 +927,7 @@
       if (n.nodeType !== 1) return;
       const ln = n.localName;
       if (ln === 'r') {
-        let txt = '';
+        let txt = '', mark = '';
         const f = Object.assign({}, base);
         Array.from(n.children).forEach(c => {
           const cl = c.localName;
@@ -910,15 +939,23 @@
           else if (cl === 'tab') txt += '\t';
           else if (cl === 'br' || cl === 'cr') txt += '\n';
           else if (cl === 'noBreakHyphen') txt += '‑';
+          else if ((cl === 'footnoteReference' || cl === 'endnoteReference') && styles && styles.notes) {
+            // a note's mark → Writer's <sup class="fn-ref"> + a footnote
+            const nt = styles.notes, body = nt.map[cl.charAt(0) + ioDxAttr(c, 'id')];
+            if (body === undefined) return;
+            const id = 'fn' + Date.now().toString(36) + (++nt.n);
+            nt.out.push({ id: id, text: body });
+            mark += '<sup class="fn-ref" data-fn="' + id + '">' + nt.out.length + '</sup>';
+          }
         });
-        if (!txt) return;
+        if (!txt) { out += mark; return; }
         let h = esc(txt).replace(/\n/g, '<br>').replace(/\t/g, '&nbsp;&nbsp;&nbsp;&nbsp;');
         if (f.s)   h = '<del>' + h + '</del>';
         if (f.u)   h = '<u>' + h + '</u>';
         if (f.i)   h = '<em>' + h + '</em>';
         if (f.b)   h = '<strong>' + h + '</strong>';
         if (f.sup) h = '<sup>' + h + '</sup>';
-        out += h;
+        out += h + mark;
       } else if ((ln === 'ins' || ln === 'del') && root.WriterTrack) {
         // tracked changes (wave 22) → <ins class="tc"> / <del class="tc">
         const inner = ioDxRuns(n, base, styles);
@@ -1100,7 +1137,7 @@
 
     const first = box.querySelector('h1,h2,h3,h4,h5,h6,p,li');
     return { title: first ? first.textContent.trim().slice(0, 80) : '',
-             html: box.innerHTML, footnotes: [], comments: [] };
+             html: box.innerHTML, footnotes: styles && styles.notes ? styles.notes.out : [], comments: [] };
   }
 
   /* ----- ODT: content.xml (+ styles.xml) → HTML ----- */

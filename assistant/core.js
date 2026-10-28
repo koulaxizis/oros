@@ -2288,6 +2288,7 @@
     ["cap", ["below", "above", "none"], "captions below, above, or none"],
     ["capSrc", ["file", "typed"], "caption text from the photo's name, or typed by the user in Layout (left out: the paragraph after the photo)"],
     ["grey", ["yes"], "photos made black and white (only when the user says so)"],
+    ["fnAt", ["chap", "book"], "the manuscript's Word notes: at the end of each chapter, or at the end of the book"],
     ["hyph", ["on", "off"], "hyphenation"],
     ["widows", ["on", "off"], "widows and orphans (at least two lines)"],
     ["fix", ["on", "off"], "Greek quotes, dashes and ellipses fixed, or left as they are"]
