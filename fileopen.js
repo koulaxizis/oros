@@ -650,6 +650,11 @@
       openWith(app, ownFile(file));
       return true;
     },
+    // The Assistant's rebuild card (AS-RB): a file for an app's deep
+    // link, as a one-shot token the app takes with __orosTakeFile.
+    hand: function (file) {
+      return file && typeof file.size === "number" ? hold(ownFile(file)) : "";
+    },
     // Settings → Opening files.
     supported: function () { return "launchQueue" in w; },
     installed: function () {

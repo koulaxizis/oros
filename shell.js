@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.09.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.10.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3596,8 +3596,10 @@
   // the device and PDF page counts, kept here in memory while orOS is
   // open, so an app opened from the Assistant (it takes the Assistant's
   // frame) does not lose them. Never stored, synced or exported; gone
-  // when the tab closes. assistant.js owns what goes in.
-  window.orosAssistAtt = { mem: {}, text: {}, pages: {} };
+  // when the tab closes. assistant.js owns what goes in. blob: files
+  // for an app only (AS-DEV), as Files; rb: Layout's rebuild reports
+  // for the Assistant's cards (AS-RB, written by layout.js).
+  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: {} };
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };

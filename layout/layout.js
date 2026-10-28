@@ -179,7 +179,7 @@
       "exp.badRange": "That page range is not valid.", "exp.pkgDone": "Package saved", "exp.pkgNote": "One file with the document and its images, to back up or open on another device.",
       "imp.done": "Document opened", "imp.file": "A file (.oroslayout, .sla, .idml, .pdf, .svg)…", "imp.folder": "An unzipped package folder…", "imp.newer": "This file was made by a newer orOS. Update orOS to open it.", "pdf.start": "Opening the PDF…", "pdf.working": "Reading the PDF… page {n} of {t}", "pdf.bad": "This PDF could not be opened.", "pdf.done": "PDF opened: {p} pages, {n} text frames, {i} pictures. Drawings and backgrounds are one locked picture per page, behind everything.", "pdf.cut": "Only the first {n} of {t} pages were opened.",
       "imp.rebuild": "Rebuild a print PDF (with its pictures)…", "rb.noPdf": "Pick the PDF too: the print PDF, with its pictures and texts if you have them.", "rb.bad": "This PDF could not be rebuilt.", "rb.start": "Rebuilding the PDF with {n} original files…", "rb.working": "Rebuilding… page {n} of {t}", "rb.stopped": "Rebuilding stopped. Nothing was added.", "rb.done": "Rebuilt: {p} pages.",
-      "rb.title": "What the rebuild kept", "rb.lines": "{n} of {t} lines are where they were in the PDF ({p} %).", "rb.pics": "{n} pictures, {o} of them your original files (the rest come from the PDF).", "rb.styles": "{n} paragraph styles.", "rb.fonts": "Fonts replaced with orOS fonts, with tracking that keeps each line as wide: {f}.", "rb.numbers": "Page numbers start at {n}: they are kept as text, page by page.", "rb.off": "Pages where lines moved. Check them before you print:", "rb.offLine": "{n} lines",
+      "rb.title": "What the rebuild kept", "rb.lines": "{n} of {t} lines are where they were in the PDF ({p} %).", "rb.pics": "{n} pictures, {o} of them your original files (the rest come from the PDF).", "rb.styles": "{n} paragraph styles.", "rb.fonts": "Fonts replaced with orOS fonts, with tracking that keeps each line as wide: {f}.", "rb.numbers": "Page numbers start at {n}: they are kept as text, page by page.", "rb.off": "Pages where lines moved. Check them before you print:", "rb.offLine": "{n} lines", "rb.back": "Back to the Assistant", "rb.noPage": "This document has no page {n}.",
       "idml.working": "Reading the InDesign file…", "idml.bad": "This file could not be read as an InDesign (.idml) document.", "idml.done": "InDesign document imported: {p} pages, {n} objects.",
       "sla.working": "Reading the Scribus file…", "sla.bad": "This file could not be read as a Scribus document.", "sla.done": "Scribus document imported: {p} pages, {n} objects.", "sla.linked": "{n} images were not inside the file: put them back with Place image.", "sla.skipped": "{n} objects (tables, text on a path, mesh or pattern fills) became simple boxes, lost their special fill or were left out.", "svg.working": "Reading the SVG files…", "svg.bad": "These files could not be read as SVG pages.", "svg.done": "SVG imported: {p} pages, {n} objects.", "svg.skipped": "{n} things (pattern fills, text on a path and other effects) were left out or simplified.", "imp.bad": "This file is not a Layout package.", "imp.imgFail": "{n} images could not be restored.",
       "img.fail": "This file could not be read as an image.", "img.nofs": "The orOS disk is not available on this device.",
@@ -203,6 +203,16 @@
       "rc.op.text": "Find and replace text",
       "rc.op.pstyle": "Paragraph style",
       "rc.op.master": "Master on pages",
+      "rc.op.style": "Change a style",
+      "rc.f.style.name": "Style",
+      "rc.f.size": "Size (pt, 0 = as it is)",
+      "rc.f.lead": "Leading (pt, 0 = as it is)",
+      "rc.f.font": "Font",
+      "rc.f.align": "Alignment",
+      "rc.f.track": "Tracking (0 = as it is)",
+      "rc.e.font.": "As it is", "rc.e.font.serif": "Serif", "rc.e.font.sans": "Sans", "rc.e.font.mono": "Mono",
+      "rc.e.align.": "As it is", "rc.e.align.l": "Left", "rc.e.align.c": "Centre", "rc.e.align.r": "Right", "rc.e.align.j": "Justified",
+      "rc.n.style": "Changes the style itself, so every paragraph in it changes. Fields left at 0 or “As it is” stay as they are.",
       "rc.op.margins": "Page margins",
       "rc.op.preflight": "Preflight check",
       "rc.op.export": "Export PDF",
@@ -370,7 +380,7 @@
       "exp.badRange": "Αυτό το εύρος σελίδων δεν είναι σωστό.", "exp.pkgDone": "Το πακέτο αποθηκεύτηκε", "exp.pkgNote": "Ένα αρχείο με το έγγραφο και τις εικόνες του, για αντίγραφο ή για άνοιγμα σε άλλη συσκευή.",
       "imp.done": "Το έγγραφο άνοιξε", "imp.file": "Ένα αρχείο (.oroslayout, .sla, .idml, .pdf, .svg)…", "imp.folder": "Έναν φάκελο αποσυμπιεσμένου πακέτου…", "imp.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "pdf.start": "Ανοίγω το PDF…", "pdf.working": "Διαβάζω το PDF… σελίδα {n} από {t}", "pdf.bad": "Αυτό το PDF δεν άνοιξε.", "pdf.done": "Το PDF άνοιξε: {p} σελίδες, {n} πλαίσια κειμένου, {i} εικόνες. Σχέδια και φόντα είναι μία κλειδωμένη εικόνα ανά σελίδα, πίσω από όλα.", "pdf.cut": "Άνοιξαν μόνο οι πρώτες {n} από τις {t} σελίδες.",
       "imp.rebuild": "Αναδημιουργία PDF τυπογραφείου (με τις εικόνες του)…", "rb.noPdf": "Διάλεξε και το PDF: το PDF του τυπογραφείου, με τις εικόνες και τα κείμενά του αν τα έχεις.", "rb.bad": "Αυτό το PDF δεν αναδημιουργήθηκε.", "rb.start": "Αναδημιουργώ το PDF με {n} πρωτότυπα αρχεία…", "rb.working": "Αναδημιουργία… σελίδα {n} από {t}", "rb.stopped": "Η αναδημιουργία σταμάτησε. Δεν προστέθηκε τίποτα.", "rb.done": "Έτοιμο: {p} σελίδες.",
-      "rb.title": "Τι κράτησε η αναδημιουργία", "rb.lines": "{n} από {t} γραμμές είναι εκεί που ήταν στο PDF ({p} %).", "rb.pics": "{n} εικόνες, οι {o} από τα πρωτότυπα αρχεία σου (οι υπόλοιπες από το PDF).", "rb.styles": "{n} στυλ παραγράφου.", "rb.fonts": "Οι γραμματοσειρές έγιναν γραμματοσειρές του orOS, με αραίωση που κρατά κάθε γραμμή στο ίδιο πλάτος: {f}.", "rb.numbers": "Η αρίθμηση ξεκινά από το {n}: οι αριθμοί μένουν ως κείμενο, σελίδα σελίδα.", "rb.off": "Σελίδες όπου μετακινήθηκαν γραμμές. Έλεγξέ τες πριν τυπώσεις:", "rb.offLine": "{n} γραμμές",
+      "rb.title": "Τι κράτησε η αναδημιουργία", "rb.lines": "{n} από {t} γραμμές είναι εκεί που ήταν στο PDF ({p} %).", "rb.pics": "{n} εικόνες, οι {o} από τα πρωτότυπα αρχεία σου (οι υπόλοιπες από το PDF).", "rb.styles": "{n} στυλ παραγράφου.", "rb.fonts": "Οι γραμματοσειρές έγιναν γραμματοσειρές του orOS, με αραίωση που κρατά κάθε γραμμή στο ίδιο πλάτος: {f}.", "rb.numbers": "Η αρίθμηση ξεκινά από το {n}: οι αριθμοί μένουν ως κείμενο, σελίδα σελίδα.", "rb.off": "Σελίδες όπου μετακινήθηκαν γραμμές. Έλεγξέ τες πριν τυπώσεις:", "rb.offLine": "{n} γραμμές", "rb.back": "Πίσω στον Βοηθό", "rb.noPage": "Αυτό το έγγραφο δεν έχει σελίδα {n}.",
       "idml.working": "Διαβάζω το αρχείο InDesign…", "idml.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο InDesign (.idml).", "idml.done": "Εισαγωγή από InDesign: {p} σελίδες, {n} αντικείμενα.",
       "sla.working": "Διαβάζω το αρχείο Scribus…", "sla.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο Scribus.", "sla.done": "Εισαγωγή από Scribus: {p} σελίδες, {n} αντικείμενα.", "sla.linked": "{n} εικόνες δεν ήταν μέσα στο αρχείο: βάλ’ τες ξανά με «Τοποθέτηση εικόνας».", "sla.skipped": "{n} αντικείμενα (πίνακες, κείμενο σε διαδρομή, γεμίσματα πλέγματος ή μοτίβου) έγιναν απλά πλαίσια, έχασαν το ειδικό γέμισμά τους ή παραλείφθηκαν.", "svg.working": "Διαβάζω τα αρχεία SVG…", "svg.bad": "Αυτά τα αρχεία δεν διαβάζονται ως σελίδες SVG.", "svg.done": "Εισαγωγή SVG: {p} σελίδες, {n} αντικείμενα.", "svg.skipped": "{n} στοιχεία (γεμίσματα μοτίβου, κείμενο σε διαδρομή και άλλα εφέ) παραλείφθηκαν ή απλοποιήθηκαν.", "imp.bad": "Αυτό το αρχείο δεν είναι πακέτο της Σελιδοποίησης.", "imp.imgFail": "{n} εικόνες δεν επανήλθαν.",
       "img.fail": "Αυτό το αρχείο δεν διαβάζεται ως εικόνα.", "img.nofs": "Ο δίσκος του orOS δεν είναι διαθέσιμος σε αυτή τη συσκευή.",
@@ -394,6 +404,16 @@
       "rc.op.text": "Εύρεση και αντικατάσταση κειμένου",
       "rc.op.pstyle": "Στυλ παραγράφου",
       "rc.op.master": "Master στις σελίδες",
+      "rc.op.style": "Αλλαγή στυλ",
+      "rc.f.style.name": "Στυλ",
+      "rc.f.size": "Μέγεθος (pt, 0 = ως έχει)",
+      "rc.f.lead": "Διάστιχο (pt, 0 = ως έχει)",
+      "rc.f.font": "Γραμματοσειρά",
+      "rc.f.align": "Στοίχιση",
+      "rc.f.track": "Αραίωση (0 = ως έχει)",
+      "rc.e.font.": "Ως έχει", "rc.e.font.serif": "Serif", "rc.e.font.sans": "Sans", "rc.e.font.mono": "Mono",
+      "rc.e.align.": "Ως έχει", "rc.e.align.l": "Αριστερά", "rc.e.align.c": "Στο κέντρο", "rc.e.align.r": "Δεξιά", "rc.e.align.j": "Πλήρης",
+      "rc.n.style": "Αλλάζει το ίδιο το στυλ, οπότε αλλάζει κάθε παράγραφος που το έχει. Ό,τι μένει στο 0 ή «Ως έχει» δεν αλλάζει.",
       "rc.op.margins": "Περιθώρια σελίδας",
       "rc.op.preflight": "Έλεγχος preflight",
       "rc.op.export": "Εξαγωγή PDF",
@@ -1154,6 +1174,26 @@
       LY.io.openFile(f);
       return;
     }
+    // { rebuild: { pdf, src, folder, key, chat } } from the Assistant's
+    // card (AS-RB): the PDF and the originals as one-shot tokens
+    // ({ token, name }) or paths on the orOS disk (only under
+    // /internal/), plus a disk folder of originals; the report goes
+    // back to the Assistant under `key`.
+    if (tg && tg.rebuild && typeof tg.rebuild === "object") {
+      if (document.querySelector("dialog[open]")) return;
+      if (LY.doc) goHome();
+      rebuildFor(tg.rebuild);
+      return;
+    }
+    // { page: n } (the Assistant's do_action open): page n of the open
+    // document, counted from 1.
+    if (tg && typeof tg.page === "number") {
+      var order = LY.doc ? M.pagesInOrder(LY.doc) : [], pg = order[Math.floor(tg.page) - 1];
+      // after the editor has its size (it may have opened just now)
+      if (pg && LY.ed && LY.ed.scrollToPage) setTimeout(function () { if (LY.doc) LY.ed.scrollToPage(pg.id); }, 120);
+      else toast(t("rb.noPage", { n: Math.floor(tg.page) }));
+      return;
+    }
     // { newRecipe: { app, nm, steps } }: an automation drafted by the
     // Assistant or sent from another app (recipes/share.js) opens in
     // the editor; it is saved only on Save and runs only on Run.
@@ -1190,6 +1230,69 @@
     openDoc(id);
   }
   var PLACE_EXT = /\.(png|jpe?g|webp|gif)$/i;
+  var RB_SRC = /\.(jpe?g|png|webp|tiff?|gif|txt|md|markdown|html?)$/i, RB_FOLDER_MAX = 400;
+  function diskPath(v) {
+    return typeof v === "string" && v.indexOf("/internal/") === 0 && !/(^|\/)\.\.(\/|$)/.test(v) ? v.replace(/\/+$/, "") : "";
+  }
+  function diskFile(path) {
+    var fs = diskFs();
+    if (!fs || !diskPath(path)) return Promise.resolve(null);
+    return Promise.resolve(fs.read(path)).then(function (b) {
+      return b ? new File([b], path.split("/").pop(), { type: b.type || "" }) : null;
+    }, function () { return null; });
+  }
+  // the originals in a disk folder and its subfolders, in name order
+  function folderFiles(path) {
+    var fs = diskFs(), out = [];
+    if (!fs || !diskPath(path)) return Promise.resolve(out);
+    function walk(dir, depth) {
+      return Promise.resolve(fs.ls(dir)).then(function (list) {
+        var chain = Promise.resolve();
+        (list || []).forEach(function (e) {
+          chain = chain.then(function () {
+            if (out.length >= RB_FOLDER_MAX) return;
+            var full = dir + "/" + e.name;
+            if (e.dir) return depth < 3 ? walk(full, depth + 1) : null;
+            if (!RB_SRC.test(e.name)) return;
+            return diskFile(full).then(function (f) { if (f && out.length < RB_FOLDER_MAX) out.push(f); });
+          });
+        });
+        return chain;
+      }, function () {});
+    }
+    return walk(diskPath(path), 0).then(function () { return out; });
+  }
+  function rbTake(o) {
+    if (!o || typeof o !== "object") return Promise.resolve(null);
+    if (typeof o.token === "string") return Promise.resolve(takeOpenFile(o));
+    return diskFile(o.path);
+  }
+  function rebuildFor(rq) {
+    var key = typeof rq.key === "string" ? rq.key.slice(0, 80) : "";
+    var chat = typeof rq.chat === "string" ? rq.chat.slice(0, 80) : "";
+    function back(rep) {
+      if (!key) return;
+      try {
+        var st = window.parent && window.parent !== window ? window.parent.orosAssistAtt : null;
+        if (!st) return;
+        if (!st.rb) st.rb = {};
+        st.rb[key] = rep;
+        if (typeof st.onRb === "function") st.onRb(key);
+      } catch (e) {}
+    }
+    var src = Array.isArray(rq.src) ? rq.src.slice(0, 400) : [];
+    var files = [];
+    var chain = Promise.resolve();
+    src.forEach(function (o) { chain = chain.then(function () { return rbTake(o); }).then(function (f) { if (f) files.push(f); }); });
+    var pdfP = rbTake(rq.pdf);
+    return Promise.all([pdfP, chain, rq.folder ? folderFiles(rq.folder) : []]).then(function (r) {
+      var pdf = r[0];
+      if (!pdf) { toast(t("rb.noPdf")); back({ failed: 1 }); return; }
+      return LY.io.rebuild(pdf, files.concat(r[2]), { chat: chat }).then(function (rep) {
+        back(rep || { failed: 1 });
+      });
+    }).then(null, function () { toast(t("rb.bad")); back({ failed: 1 }); });
+  }
   function diskFs() {
     try { var p = window.parent; return p && p !== window && p.orosFS ? p.orosFS : null; }
     catch (e) { return null; }

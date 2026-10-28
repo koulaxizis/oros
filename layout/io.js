@@ -381,15 +381,18 @@
       if (!files.length) return;
       var pdf = files.filter(function (f) { return /\.pdf$/i.test(f.name || "") || f.type === "application/pdf"; })[0];
       if (!pdf) { LY.toast(t("rb.noPdf")); return; }
-      if (pdf.size > FOREIGN_MAX) { LY.toast(t("pdf.bad")); return; }
       return rebuild(pdf, files.filter(function (f) { return f !== pdf; }));
     }).then(null, function () { rebuilding = false; LY.toast(t("rb.bad")); });
   }
-  // also for the Assistant: pdf (a File), sources (Files) → Promise of
-  // the report, or null
-  function rebuild(pdf, sources) {
+  // also for the Assistant: pdf (a File), sources (Files), opts
+  // { chat: the Assistant's conversation, for "Back to the Assistant" }
+  // → Promise of the report, or null. A print PDF may be big (pictures
+  // at 300 ppi): up to REBUILD_MAX.
+  var REBUILD_MAX = 1024 * 1024 * 1024;
+  function rebuild(pdf, sources, opts) {
     var RB = window.LY_REBUILD;
     if (!RB || rebuilding) return Promise.resolve(null);
+    if (pdf.size > REBUILD_MAX) { LY.toast(t("rb.bad")); return Promise.resolve(null); }
     rebuilding = true;
     var stop = false;
     LY.toast(t("rb.start", { n: sources.length }), t("btn.cancel"), function () { stop = true; });
@@ -403,11 +406,11 @@
       if (!res) { LY.toast(t("rb.bad")); return null; }
       LY.addDoc(res.doc);
       LY.toast(t("rb.done", { p: res.report.pages }));
-      reportDlg(res.report);
+      reportDlg(res.report, opts && opts.chat);
       return res.report;
     }, function (e) { rebuilding = false; throw e; });
   }
-  function reportDlg(rep) {
+  function reportDlg(rep, chat) {
     var c = rep.check || { lines: 0, inPlace: 0 };
     var pct = c.lines ? Math.floor(c.inPlace / c.lines * 1000) / 10 : 100;
     var fmt = function (v) { return LY.BASE === "el" ? String(v).replace(".", ",") : String(v); };
@@ -440,6 +443,15 @@
       ok.type = "button";
       ok.addEventListener("click", close);
       act.appendChild(el("span", "spacer"));
+      if (chat) {
+        var bk = el("button", "btn", t("rb.back"));
+        bk.type = "button";
+        bk.addEventListener("click", function () {
+          close();
+          try { window.parent.__orosOpenAt("assistant", { chat: chat }); } catch (e) {}
+        });
+        act.appendChild(bk);
+      }
       act.appendChild(ok);
       body.appendChild(act);
     }, true);

@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.10.00
+- Assistant: `For an app only…` in the paper clip menu attaches up to 200 files of any kind, up to 1 GB each (2 GB in all, 500 MB on a phone), that stay on your device and are never sent to the AI service. The Assistant sees only their names and can hand them to an app.
+- Assistant: ask it to rebuild a print PDF in Layout. Layout makes the document on your device and shows its report, `Back to the Assistant` returns to the conversation, and the Assistant can then change a style or show you a page.
+- Layout: a new automation step, `Change a style`, sets the size, leading, font, alignment or tracking of a paragraph style by its name.
+
 ## Version 4.09.00
 - Layout: `Open file` › `Rebuild a print PDF (with its pictures)…` turns the PDF of a printed book or magazine back into an editable document, with every line where it was: page size, bleed, facing pages, margins and paragraph styles come from the PDF, and your original pictures replace the PDF's copies when you pick them too. A report shows how many lines are in place and which pages to check.
 - Layout: opening a PDF from InDesign (and other programs that tag their content) now gives the right pictures their own frames; before, a picture could stay in the locked background picture or a drawing could go missing from it.
