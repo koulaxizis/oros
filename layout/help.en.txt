@@ -18,7 +18,7 @@ Drag from a ruler to add a guide, and drag a guide back onto the ruler to remove
 ### Text
 Double-click a text frame, select it and press [[Enter]], or click it with the `Text frame (T)` tool, and type straight into it: the caret, the selection and the reflow follow the frame through its columns, its threads and its rotation. A new text frame is ready for typing at once. Drag or [[Shift]]+arrows select, a double click picks a word and a triple click a paragraph; [[Enter]] starts a paragraph, [[Shift+Enter]] breaks the line and [[Esc]] finishes. Paragraph and character styles in the `Styles` panel apply to the selection.
 
-`Edit text` (right-click menu or `Properties`) opens the `Story Editor` with the whole story in one place, where you can also insert the page number or count.
+`Edit text` (right-click menu or `Properties`) opens the `Story Editor` with the whole story in one place, where you can also insert the page number or count. Numbering starts at 1; to start at another number (a book whose page 1 is a cover), set `First page number` in `Document setup…`.
 
 If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a new frame` and then tap or click another frame or an empty spot, or `Autoflow: add pages until it fits`. `Import text (.txt)…` in the `More` menu brings in a text file.
 
@@ -75,7 +75,7 @@ The fonts a Scribus file names are looked for by name, first among your font fil
 - Made in Affinity? Pick the document's `.af` file with the PDF (experimental). Its original pictures, full size, are placed instead of the PDF's copies, its words join hyphenated line ends, and the report names its styles and fonts. Only the content is read from it; the page layout always comes from the PDF.
 - The page size, bleed, facing pages, margins and paragraph styles are read from the PDF. The text becomes text frames, one story per page, with a `Body text` style and others named after their size.
 - A picture that matches one of your originals uses the original file; the rest come from the PDF. Drawings, textures and pictures under a mask or blend become one locked picture per page, behind everything.
-- Each of your PDF's fonts is looked for by name among your font files and the free fonts: one that is found is used as it is. The others are replaced with orOS fonts, with tracking that keeps each line as wide. For the closest result, add the book's fonts with `Add a font file…` before you rebuild. Page numbers become their own text frames.
+- Each of your PDF's fonts is looked for by name among your font files and the free fonts: one that is found is used as it is. The others are replaced with orOS fonts, with tracking that keeps each line as wide. For the closest result, add the book's fonts with `Add a font file…` before you rebuild. Page numbers become their own text frames with a page-number field, numbered from the PDF's first number (`Document setup` › `First page number`), so they follow when you add or move pages.
 - Every line breaks where it did in the PDF. A word hyphenated at a line end gets a soft hyphen there (it shows a hyphen only when the line breaks there), and a line that would break elsewhere gets a `Line fit` character style with a little more or less tracking, the way you would fit a line by hand.
 - At the end a report says how many lines are where they were, which pictures are originals, and lists the pages where lines moved: press a page to go there and check it before you print.
 - The [Assistant](app:assistant) can do the same: attach the PDF with `For an app only…` and ask it to rebuild it in Layout. The report then has `Back to the Assistant`, and the Assistant can change styles for you through an automation and show you a page.
@@ -98,7 +98,7 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 
 ## Limits
 - A PDF opens up to 300 pages; its text keeps its place and look, not its original styles or threads.
-- A rebuild reads up to 400 pages. Page numbers stay text, and stories are not threaded across pages.
+- A rebuild reads up to 400 pages. Stories are not threaded across pages.
 - A document can have up to 999 pages and 5,000 objects.
 - Data merge reads up to 1,000 rows (5 MB) and makes a PDF only: the merged cards are not kept as a document, and the CSV file is not saved with it. A text frame does not grow to fit a long value: the preview and the final message say when text does not fit.
 - `Several per sheet` uses one page per card (no backs) and cuts each card at its edge, so bleed is not printed.

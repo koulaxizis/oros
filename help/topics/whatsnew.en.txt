@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.17.00
+- Layout: a first page number. `Document setup…` › `First page number` makes page-number fields count from another number, such as 3 for a book whose first pages are a cover. A rebuilt print PDF now gets real page-number fields that count from the PDF's own first number, so they follow when you add or move pages.
+
 ## Version 4.16.00
 - Layout: Affinity files help a rebuild (experimental). Pick the document's .af file with its print PDF in `Rebuild a print PDF (with its pictures)…`: the original pictures stored in it are placed full size instead of the PDF's copies, its words join hyphenated line ends, and the report lists its styles and fonts. The Assistant takes an attached .af the same way.
 

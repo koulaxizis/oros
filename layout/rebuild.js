@@ -234,6 +234,10 @@
       mt: 0, mb: 0, mi: A0.l, mo: Math.max(0, W - A0.r), cols: 1, gut: 12, preset: "custom" }, now);
     var pages = M.pagesInOrder(doc);
     doc.pages.forEach(function (p) { p.ms = ""; });
+    // page numbers that follow the pages become page-number fields
+    // from the PDF's first number (LY-PN); others stay text
+    var nOff = meas.numberOffset !== null && meas.numberOffset + 1 >= 0 && meas.numberOffset + 1 <= 9999 ? meas.numberOffset : null;
+    if (nOff) { doc.setup.ext = doc.setup.ext || {}; doc.setup.ext.pnStart = nOff + 1; }
     var stories = [], items = [], allParas = [], z = 0;
     var report = { pages: pagesIn.length, facing: meas.facing, body: meas.body, pitch: meas.pitch, numberStart: meas.numberOffset === null ? null : meas.numberOffset + 1,
                    pictures: 0, originals: 0, fonts: [], check: null, framesOff: [] };
@@ -306,7 +310,8 @@
       lines = lines.filter(function (l) { return pn.indexOf(l) < 0; });
       pn.forEach(function (l) {
         var sid = M.newId("st"), s0 = l.spans[0];
-        stories.push({ id: sid, m: now, paras: [{ ps: { pn: 1, size: l.size, fam: s0.fam, b: s0.b ? 1 : 0, i: s0.i ? 1 : 0, track: trackOf(s0), color: swatch(s0.color) }, runs: [{ t: l.text.trim() }] }] });
+        stories.push({ id: sid, m: now, paras: [{ ps: { pn: 1, size: l.size, fam: s0.fam, b: s0.b ? 1 : 0, i: s0.i ? 1 : 0, track: trackOf(s0), color: swatch(s0.color) },
+          runs: [nOff !== null && +l.text.trim() === pi + 1 + nOff ? { f: "pn" } : { t: l.text.trim() }] }] });
         var cx = (l.x0 + l.x1) / 2, asc = T.ascent(keyOf(s0.fam, s0.b, s0.i), l.size);
         items.push({ id: M.newId("it"), m: now, t: "text", pg: page.id, x: r3(cx - 30), y: r3(l.y - asc), w: 60, h: r3(l.size * 2), story: sid, seq: 1, z: 9000 });
       });
@@ -544,7 +549,7 @@
           doc.pstyles.push(fontOf({ id: id, m: now, name: ps.size + "/" + r3(ps.lead) + " ↻", base: "ps-base", size: r3(ps.size), lead: r3(ps.lead), align: ps.align, b: ps.b, i: ps.i, track: ps.track, color: ps.color, fi: 0, sb: 0, sa: 0 }, ps.fam));
         }
         return { ps: id, runs: p.runs.map(function (r) {
-          var o = { t: r.t };
+          var o = r.f ? { f: r.f } : { t: r.t };
           if (r.b) o.b = 1;
           if (r.i) o.i = 1;
           if (r.size || r.sw) o.cs = cstyle(r.size, r.sw);

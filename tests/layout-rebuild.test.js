@@ -102,6 +102,10 @@ test("rebuild: a book comes back with its measures, styles, page numbers and eve
   const pn = d.pstyles.find((s) => s.id === "ps-rbpn");
   assert.ok(pn && pn.size === 7 && pn.i === 1);
   assert.equal(d.stories.filter((st) => st.paras[0].ps === "ps-rbpn").length, 4);
+  // ... as page-number fields from the PDF's first number (LY-PN)
+  assert.ok(d.stories.filter((st) => st.paras[0].ps === "ps-rbpn").every((st) => st.paras[0].runs.length === 1 && st.paras[0].runs[0].f === "pn"));
+  assert.equal(d.setup.ext.pnStart, 5);
+  assert.equal(M.firstNumber(d), 5);
   // the body style is the commonest one and named so; the first-line indent is a style of its own
   const body = d.pstyles.find((s) => s.name === "Body text");
   assert.ok(body);
