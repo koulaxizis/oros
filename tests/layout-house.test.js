@@ -31,6 +31,23 @@ test("study: roles from use, titles on new odd pages, front and back matter", ()
   assert.equal(s.back.length, 1);
 });
 
+test("study: a title set apart only by its spacing is a title; front matter ends where running text begins", () => {
+  // a rebuilt PDF gives the first title its own style for its spacing
+  const a = book("One", 3, 11);
+  a.pstyles.push({ id: "ps-tt2", m: 1, name: "Story title +30", base: "ps-tt", sb: 30 });
+  a.stories.find((st) => st.id === "st-c0").paras[0].ps = "ps-tt2";
+  const s = H.study(M.normDoc(a));
+  assert.equal(s.looks[s.roles.title].ps, "ps-tt");
+  assert.equal(s.open.length, 3);
+  assert.equal(s.front.length, 2);
+  // a first chapter with no title at all: the front matter still ends at its text
+  const b = book("Two", 3, 11);
+  b.stories.find((st) => st.id === "st-c0").paras.shift();
+  const t = H.study(M.normDoc(b));
+  assert.equal(t.open.length, 2);
+  assert.equal(t.front.length, 2);
+});
+
 test("learn: a house style document with the works' rules and the Greek set, applied", () => {
   const a = book("One", 3, 11), b = book("Two", 2, 11), c = book("Three", 2, 10.5);
   const res = H.learn([a, b, c], { now: 5, name: "Prose" });

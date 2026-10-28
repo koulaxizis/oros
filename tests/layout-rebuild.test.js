@@ -40,11 +40,11 @@ test("rebuild: a title beside a date on its baseline is two lines; spaced letter
 });
 
 // A small book laid out by Layout, read back as a PDF would give it.
-function book() {
+function book(lead) {
   const doc = M.newDoc({ name: "Book", w: 420, h: 595, unit: "mm", bleed: 8.5, facing: 1, pages: 4, mt: 50, mb: 60, mi: 57, mo: 40, preset: "custom" }, 1);
   const pages = M.pagesInOrder(doc);
   doc.pages.forEach((p) => { p.ms = ""; });
-  doc.pstyles.push({ id: "ps-tbody", m: 1, name: "Body", base: "ps-base", font: "serif", size: 10, lead: 15, align: "j", fi: 12 });
+  doc.pstyles.push({ id: "ps-tbody", m: 1, name: "Body", base: "ps-base", font: "serif", size: 10, lead: lead || 15, align: "j", fi: 12 });
   doc.pstyles.push({ id: "ps-tfirst", m: 1, name: "First", base: "ps-tbody", fi: 0 });
   doc.pstyles.push({ id: "ps-thead", m: 1, name: "Head", base: "ps-base", font: "serif", size: 16, lead: 20, align: "c", b: 1 });
   doc.pstyles.push({ id: "ps-tnum", m: 1, name: "Num", base: "ps-base", font: "serif", size: 7, lead: 8, align: "c", i: 1 });
@@ -128,6 +128,31 @@ test("rebuild: a book comes back with its measures, styles, page numbers and eve
   assert.equal(rep.check.extra, 0);
   // the document is one Layout normalizes to itself
   assert.deepEqual(M.normDoc(JSON.parse(JSON.stringify(d))), d);
+});
+
+test("rebuild: open leading (10/18): the lines of a paragraph stay one paragraph", () => {
+  const res = RB.build(asPdf(book(18)), { now: 5, name: "Book", lang: "en" });
+  const d = res.doc, story = (pg) => d.stories.find((st) => st.id === d.items.find((it) => it.t === "text" && it.pg === pg && it.h > 100).story);
+  const full = story(M.pagesInOrder(d)[0].id).paras.filter((p) => p.runs.some((r) => r.t && r.t.trim()));
+  // the title and the three paragraphs, not one paragraph per line
+  assert.equal(full.length, 4, full.map((p) => p.runs.map((r) => r.t).join("").slice(0, 30)).join(" | "));
+  assert.equal(d.pstyles.find((s) => s.name === "Body text").lead, 18);
+  assert.equal(res.report.check.moved, 0, JSON.stringify(res.report.framesOff));
+});
+
+test("rebuild: a soft edge alone does not make a photo transparent; clear corners and cut-outs do", () => {
+  const px = (w, h, alpha) => { const d = new Uint8ClampedArray(w * h * 4); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) d[(y * w + x) * 4 + 3] = alpha(x, y); return d; };
+  const edge = (x, y, w, h) => (x === 0 || y === 0 || x === w - 1 || y === h - 1) && (x === 0 || x === w - 1) && (y === 0 || y === h - 1);
+  // Affinity: a photo whose four corner pixels are half see-through
+  assert.equal(RB.inkOf(px(100, 80, (x, y) => (edge(x, y, 100, 80) ? 70 : 255)), 100, 80), null);
+  assert.equal(RB.inkOf(px(10, 10, () => 255), 10, 10), null);
+  // rounded corners that are clear stay transparent
+  assert.deepEqual(RB.inkOf(px(100, 80, (x, y) => (edge(x, y, 100, 80) ? 0 : 255)), 100, 80), [0, 0, 100, 80]);
+  // a cut-out: the box of what it paints
+  assert.deepEqual(RB.inkOf(px(20, 20, (x, y) => (x >= 5 && x < 15 && y >= 2 && y < 12 ? 255 : 0)), 20, 20), [5, 2, 15, 12]);
+  // see-through all over (a watermark) is not opaque
+  assert.deepEqual(RB.inkOf(px(10, 10, () => 128), 10, 10), [0, 0, 10, 10]);
+  assert.equal(RB.inkOf(px(10, 10, () => 0), 10, 10), null);
 });
 
 test("rebuild: Greek style names; a hyphen at a line end joins a word the text knows", () => {

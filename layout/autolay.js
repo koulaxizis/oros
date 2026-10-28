@@ -39,7 +39,7 @@
     title: ["title", "τίτλος"], subtitle: ["subtitle", "υπότιτλος"], author: ["author", "συγγραφέας"],
     isbn: ["isbn"], year: ["year", "έτος"], publisher: ["publisher", "εκδότης"]
   };
-  var MAX_PASSES = 12, GUESS_LEN = 80;
+  var MAX_PASSES = 12, GUESS_LEN = 80, FRONT_MAX = 40;
   var TOC_TAIL = /(\t|\s{2,}|\.{3,}|…+|\s)(\d{1,4})\s*$/;
 
   function textOf(p) { return (p.runs || []).map(function (r) { return r.t || ""; }).join(""); }
@@ -70,8 +70,8 @@
   // marks a title only by its look: a short line all in bold after an
   // empty one, or a short centred line after three or more empty ones
   // (pushed to a new page by hand). The manuscript's own front matter
-  // (everything before the first title whose next paragraph is long
-  // text) is left out unless opts.keepFront: the house's is used.
+  // (the few short lines before the first title that running text
+  // follows) is left out unless opts.keepFront: the house's is used.
   function structure(list, opts) {
     opts = opts || {};
     var out = [], guessed = 0, dropped = 0, front = 0;
@@ -79,7 +79,9 @@
       var t = textOf(p).trim(), empties = 0;
       for (var k = i - 1; k >= 0 && !list[k].runs.length; k--) empties++;
       var bold = p.runs.length && p.runs.every(function (r) { return r.b || !String(r.t).trim(); });
-      var short = t && t.length <= GUESS_LEN && i < list.length - 1;
+      // a line of stars or dots between scenes is never a title
+      var words = t.toUpperCase() !== t.toLowerCase() || /\d/.test(t);
+      var short = t && words && t.length <= GUESS_LEN && i < list.length - 1;
       var asTitle = /^(p|p1|center)$/.test(p.role) && short &&
         ((bold && (empties || !i)) || (p.role === "center" && empties >= 3));
       if (asTitle) {
@@ -92,14 +94,17 @@
       var start = -1;
       out.some(function (p, i) {
         if (!/^h/.test(p.role)) return false;
-        for (var k = i + 1; k < out.length; k++) {
-          if (!out[k].runs.length) continue;
-          if (/^h/.test(out[k].role)) return false;
-          if (textOf(out[k]).length > 200) { start = i; return true; }
-          break;
+        // running text up to the next title (short paragraphs count too)
+        for (var k = i + 1, chars = 0; k < out.length && !/^h/.test(out[k].role); k++) {
+          chars += textOf(out[k]).length;
+          if (chars > 200) { start = i; return true; }
         }
         return false;
       });
+      // front matter is a few short lines; running text before the first
+      // title is the book's own and stays
+      var before = out.slice(0, Math.max(0, start)).filter(function (p) { return p.runs.length; });
+      if (before.length > FRONT_MAX || before.some(function (p) { return textOf(p).length > 400; })) start = -1;
       if (start > 0) {
         out.slice(0, start).forEach(function (p) { if (p.guessed) guessed--; if (p.runs.length) front++; });
         out = out.slice(start);

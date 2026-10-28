@@ -40,7 +40,7 @@
   } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; }
 
   var ROLES = ["body", "first", "title", "subtitle", "center", "quote", "note"];
-  var MAX_EDGE = 16;
+  var MAX_EDGE = 16, FULL_PAGE = 400;
   // the book settings a "style" rule may set (LY-BK) and fi
   var SETS = { hyph: 1, orph: 1, wid: 1, kwn: 1, brk: 1, fi: 1 };
 
@@ -127,15 +127,27 @@
     });
     var res = { doc: doc, setup: doc.setup, use: use, looks: looks, roles: roles(looks, use, seq) };
     // where the titles start
-    var title = res.roles.title;
-    res.open = seq.filter(function (q) { return title && q.ps === title && !q.empty && q.at >= 0; })
+    // a title set apart only by its spacing (a rebuilt PDF gives each
+    // spacing its own style) is a title too
+    var title = res.roles.title, ta = title && looks[title].a;
+    var asTitle = function (k) {
+      var a = looks[k].a;
+      return k === title || (!!ta && r1(a.size) === r1(ta.size) && a.b === ta.b && a.i === ta.i && (a.fam || a.font) === (ta.fam || ta.font) && a.align === ta.align);
+    };
+    res.open = seq.filter(function (q) { return title && !q.empty && q.at >= 0 && asTitle(q.ps); })
       .map(function (q) { return { no: q.at + first, top: q.top, sink: q.y - doc.setup.mt }; });
     // front matter: the pages before the first title; back matter:
     // the pages after the last body paragraph
     var body = res.roles.body;
     var firstTitle = res.open.length ? res.open[0].no - first : -1;
-    var lastBody = -1;
-    seq.forEach(function (q) { if (q.ps === body && !q.empty && q.at > lastBody) lastBody = q.at; });
+    var lastBody = -1, bodyChars = {};
+    seq.forEach(function (q) {
+      if (q.ps !== body || q.empty) return;
+      if (q.at > lastBody) lastBody = q.at;
+      bodyChars[q.at] = (bodyChars[q.at] || 0) + q.len;
+    });
+    // nor past the first page of running text
+    for (var bp = 0; bp < pages.length && firstTitle > 0; bp++) if (bodyChars[bp] >= FULL_PAGE) { firstTitle = Math.min(firstTitle, bp); break; }
     res.front = firstTitle > 0 ? pages.slice(0, Math.min(firstTitle, MAX_EDGE)).map(function (p) { return p.id; }) : [];
     res.back = lastBody >= 0 && lastBody < pages.length - 1 ? pages.slice(Math.max(lastBody + 1, pages.length - MAX_EDGE)).map(function (p) { return p.id; }) : [];
     // the master most body pages use
@@ -291,10 +303,12 @@
 
   // The front and back matter of the template: its contents (a story
   // whose paragraphs end in page numbers, ext.hs "toc"), the ISBN and
-  // the book's title (the largest text on the first front page) become
+  // the book's title (the largest text on the first front page, see
+  // below) become
   // fields {isbn} and {title} that the automatic layout fills (LY-AUTO).
   var TOC_LINE = /(\t|\s{2,}|\.{3,}|\u2026+|\s)\d{1,4}\s*$/;
   var ISBN = /97[89](?:[-\u2010-\u2013 ]?\d){10}/g;
+  var QUOTED = /^(\u00ab[^\u00ab\u00bb]+\u00bb|\u201c[^\u201c\u201d]+\u201d)$/;
   function markFields(d, rep) {
     var out = { toc: false, isbn: 0, title: false }, front = {};
     rep.front.forEach(function (id) { front[id] = 1; });
@@ -315,10 +329,13 @@
         });
       });
     });
-    // the title: the largest text on the first front page that has text
+    // the title: the largest text on the first front page that has text;
+    // where all of it is one size (a colophon), the line that is only a
+    // quoted name («…»); else none, the old title is not guessed
     var psMap = T.byId(d.pstyles), csMap = T.byId(d.cstyles), best = null;
     M.pagesInOrder(d).some(function (pg) {
       if (!front[pg.id]) return false;
+      var cands = [];
       d.items.forEach(function (it) {
         if (it.t !== "text" || it.pg !== pg.id) return;
         var st = M.find(d.stories, it.story);
@@ -326,17 +343,22 @@
         st.paras.forEach(function (p) {
           if (!textOf(p).trim() || /\{isbn\}/.test(textOf(p))) return;
           var lk = {}, a = rep.looks[lookOf(p, psMap, csMap, lk)] || lk[Object.keys(lk)[0]];
-          if (!best || a.a.size > best.size) best = { size: a.a.size, p: p };
+          cands.push({ size: a.a.size, p: p });
         });
       });
-      return !!best;
+      if (!cands.length) return false;
+      cands.sort(function (a, b) { return b.size - a.size; });
+      if (cands.length === 1 || cands[0].size > cands[1].size + 0.05) best = cands[0];
+      else best = cands.filter(function (c) { return QUOTED.test(textOf(c.p).trim()); })[0] || null;
+      return true;
     });
     if (best) {
       var r0 = null;
       best.p.runs.some(function (r) { if (!r.f && String(r.t || "").trim()) { r0 = r; return true; } return false; });
       var keep = {};
       Object.keys(r0).forEach(function (k) { if (k !== "t") keep[k] = r0[k]; });
-      keep.t = "{title}";
+      var tt = textOf(best.p).trim();
+      keep.t = QUOTED.test(tt) ? tt.charAt(0) + "{title}" + tt.charAt(tt.length - 1) : "{title}";
       best.p.runs = [keep];
       out.title = true;
     }
