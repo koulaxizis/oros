@@ -77,15 +77,24 @@
       body.appendChild(act);
     });
   }
-  function learn(works, name) {
+  function learn(works, name, done, chat) {
     LY.flushStory && LY.flushStory();
     var res = null;
     try { res = H.learn(works, { now: LY.now(), name: name, names: roleNames() }); } catch (e) { res = null; }
-    if (!res) { LY.toast(t("hs.none")); return; }
+    if (!res) { LY.toast(t("hs.none")); if (done) done(null); return; }
     LY.addDoc(res.doc);
-    reportDlg(res.report);
+    reportDlg(res.report, chat);
+    if (done) done(res.report);
   }
-  function reportDlg(rep) {
+  // back to the conversation a card came from (AS-HS)
+  function backBtn(act, chat, close) {
+    if (!chat) return;
+    act.appendChild(LY.ui.btn(t("rb.back"), function () {
+      close();
+      try { window.parent.__orosOpenAt("assistant", { chat: chat }); } catch (e) {}
+    }));
+  }
+  function reportDlg(rep, chat) {
     var h = H.houseOf(LY.doc);
     LY.openDialog(t("hs.done"), function (body, close) {
       var p = function (txt, cls) { body.appendChild(el("p", cls || "", txt)); };
@@ -101,6 +110,7 @@
       if (rep.skipped) p(t("hs.repSkipped", { n: rep.skipped }), "hint");
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
+      backBtn(act, chat, close);
       act.appendChild(LY.ui.btn(t("btn.ok"), close));
       act.appendChild(LY.ui.btn(t("hs.sheet"), function () { close(); sheetDlg(); }, "primary"));
       body.appendChild(act);
@@ -186,6 +196,7 @@
       doc.m = now;
     });
     LY.toast(t("hs.saved", { n: n }));
+    return n;
   }
 
   // ---------- Automatic layout (LY-AUTO) ----------
@@ -254,20 +265,22 @@
       body.appendChild(act);
     });
   }
-  function build(house, file, meta, keepFront) {
+  function build(house, file, meta, keepFront, done, chat) {
+    var fail = function () { LY.toast(t("txt.fail")); if (done) done(null); };
     var A = window.LY_AUTO, m = {};
     Object.keys(meta).forEach(function (k) { if (String(meta[k] || "").trim()) m[k] = String(meta[k]).trim(); });
     LY.toast(t("au.working"));
     LY.io.readDoc(file).then(function (r) {
-      if (!r || !r.list.some(function (p) { return p.runs.length; })) { LY.toast(t("txt.fail")); return; }
+      if (!r || !r.list.some(function (p) { return p.runs.length; })) { fail(); return; }
       LY.flushStory && LY.flushStory();
       var res = A.build(house, r.list, m, { now: LY.now(), pictures: r.pictures, keepFront: keepFront, name: file.name.replace(/\.[a-z]+$/i, "") });
-      if (!res) { LY.toast(t("txt.fail")); return; }
+      if (!res) { fail(); return; }
       LY.addDoc(res.doc);
-      autoReport(res.report);
-    }).then(null, function () { LY.toast(t("txt.fail")); });
+      autoReport(res.report, chat);
+      if (done) done(res.report);
+    }).then(null, fail);
   }
-  function autoReport(rep) {
+  function autoReport(rep, chat) {
     LY.openDialog(t("au.done"), function (body, close) {
       var p = function (txt, cls) { body.appendChild(el("p", cls || "", txt)); };
       p(t("au.repPages", { n: rep.pages, b: rep.body }));
@@ -298,6 +311,7 @@
       }
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
+      backBtn(act, chat, close);
       act.appendChild(LY.ui.btn(t("btn.close"), close, "primary"));
       body.appendChild(act);
     });
@@ -319,5 +333,61 @@
     LY.toast(n < 0 ? t("au.noToc") : t("au.tocDone", { n: n }));
   }
 
-  LY.house = { open: open, auto: autoDlg, hasToc: hasToc, updateToc: updateToc };
+  // ---------- From the Assistant (AS-HS) ----------
+  // rq: { op: "learn", docs, name } | { op: "book", house, meta,
+  // keepFront } with file | { op: "rule", text, does, house }; done gets
+  // the report for the Assistant's card, or { failed, why }.
+  function byName(list, want) {
+    var w = String(want || "").replace(/\s+/g, " ").trim().toLocaleLowerCase(), newest = function (a, b) { return (b.m || 0) - (a.m || 0); };
+    if (!w) return null;
+    var hit = list.filter(function (d) { return LY.docTitle(d).toLocaleLowerCase() === w; });
+    if (!hit.length) hit = list.filter(function (d) { return LY.docTitle(d).toLocaleLowerCase().indexOf(w) >= 0; });
+    return hit.sort(newest)[0] || null;
+  }
+  function houseNamed(name) {
+    var houses = LY.data().docs.filter(function (d) { return H.houseOf(d) && !M.needsNewer(d); });
+    if (name) return byName(houses, name);
+    return houses.sort(function (a, b) { return (b.m || 0) - (a.m || 0); })[0] || null;
+  }
+  function run(rq, file, done) {
+    var chat = typeof rq.chat === "string" ? rq.chat.slice(0, 80) : "";
+    var fail = function (why, more) { var o = { failed: 1, why: why }; if (more) o.missing = more; done(o); };
+    if (rq.op === "learn") {
+      var docs = LY.data().docs.filter(function (d) { return !H.houseOf(d) && !M.needsNewer(d); }), works = [], missing = [];
+      (Array.isArray(rq.docs) ? rq.docs : []).slice(0, 40).forEach(function (n) {
+        var d = byName(docs, n);
+        if (d && works.indexOf(d) < 0) works.push(d); else if (!d) missing.push(String(n).slice(0, 120));
+      });
+      if (!works.length) { LY.toast(t("hs.none")); fail("noDocs", missing); return; }
+      learn(works, String(rq.name || "").trim().slice(0, 120) || t("hs.defName"), function (rep) {
+        if (!rep) { fail("learn"); return; }
+        var h = H.houseOf(LY.doc);
+        done({ works: rep.works, front: rep.front, back: rep.back, roles: rep.roles, rules: h ? h.rules.filter(function (r) { return r.src === "works"; }).length : 0, missing: missing });
+      }, chat);
+      return;
+    }
+    var house = houseNamed(typeof rq.house === "string" ? rq.house : "");
+    if (!house) { LY.toast(rq.house ? t("hs.noNamed", { n: String(rq.house).slice(0, 120) }) : t("au.noHouse")); fail("noHouse"); return; }
+    if (rq.op === "rule") {
+      var text = String(rq.text || "").trim().slice(0, MAX_OWN);
+      if (!text) { fail("rule"); return; }
+      LY.openDoc(house.id);
+      var h = JSON.parse(JSON.stringify(H.houseOf(house)));
+      var a = OWN_ACTS.filter(function (x) { return x[0] && x[0] === rq.does; })[0], n = 1;
+      h.rules.forEach(function (r) { var k = parseInt(String(r.id).slice(1), 10); if (k >= n) n = k + 1; });
+      h.rules.push({ id: "r" + n, src: "own", on: 1, t: text, a: a ? { k: "style", role: a[1], set: a[2] } : { k: "check" } });
+      done({ changes: save(h, []) });
+      sheetDlg();
+      return;
+    }
+    // the book's details: what the Assistant gave, the rest from the
+    // Publishing app's title of that name
+    var meta = {}, given = rq.meta && typeof rq.meta === "object" ? rq.meta : {};
+    ["title", "subtitle", "author", "isbn", "year", "publisher"].forEach(function (k) { if (typeof given[k] === "string" && given[k].trim()) meta[k] = given[k].trim().slice(0, 200); });
+    var pub = meta.title ? pubTitles().filter(function (x) { return x.title.trim().toLocaleLowerCase() === meta.title.toLocaleLowerCase(); })[0] : null;
+    if (pub) ["subtitle", "author", "isbn", "year"].forEach(function (k) { if (!meta[k] && pub[k]) meta[k] = pub[k]; });
+    build(house, file, meta, rq.keepFront === 1 ? 1 : 0, function (rep) { if (rep) done(rep); else fail("read"); }, chat);
+  }
+
+  LY.house = { open: open, auto: autoDlg, hasToc: hasToc, updateToc: updateToc, run: run };
 })();

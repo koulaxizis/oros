@@ -1609,7 +1609,9 @@
       $("master-banner").hidden = true; $("thread-banner").hidden = true;
       $("ed-preview").classList.remove("on");
       world = []; buildWorld(); relayout(); resize();
-      requestAnimationFrame(function () { resize(); ED.fit(allP()[0]); updateStatus(); });
+      // the document may be closed again before the next frame (a card from
+      // the Assistant goes home first)
+      requestAnimationFrame(function () { if (!LY.doc) return; resize(); ED.fit(allP()[0]); updateStatus(); });
     });
     LY.on("close", function () { ED.sel = []; world = []; });
     function changed() {

@@ -199,6 +199,7 @@
       "hs.defName": "House style",
       "hs.go": "Learn",
       "hs.none": "No text was found in these documents.",
+      "hs.noNamed": "There is no house style called “{n}”.",
       "hs.done": "House style ready",
       "hs.repWorks": "Learned from {n} works.",
       "hs.repPages": "Kept {f} front matter pages and {b} back matter pages, with an empty body page between them.",
@@ -498,6 +499,7 @@
       "hs.defName": "Ύφος έκδοσης",
       "hs.go": "Εκμάθηση",
       "hs.none": "Δεν βρέθηκε κείμενο σε αυτά τα έγγραφα.",
+      "hs.noNamed": "Δεν υπάρχει ύφος έκδοσης με το όνομα «{n}».",
       "hs.done": "Το ύφος είναι έτοιμο",
       "hs.repWorks": "Μαθεύτηκε από {n} έργα.",
       "hs.repPages": "Κρατήθηκαν {f} αρχικές και {b} τελικές σελίδες, με μια κενή σελίδα κειμένου ανάμεσα.",
@@ -1397,6 +1399,16 @@
       rebuildFor(tg.rebuild);
       return;
     }
+    // { house: { op, … key } } from the Assistant's house style cards
+    // (AS-HS): learn a house style from documents by name, lay out a
+    // manuscript (a one-shot token or a path under /internal/) in one,
+    // or add an own rule to one; the report goes back under `key`.
+    if (tg && tg.house && typeof tg.house === "object" && /^(learn|book|rule)$/.test(tg.house.op)) {
+      if (document.querySelector("dialog[open]")) return;
+      if (LY.doc) goHome();
+      houseFor(tg.house);
+      return;
+    }
     // { page: n } (the Assistant's do_action open): page n of the open
     // document, counted from 1.
     if (tg && typeof tg.page === "number") {
@@ -1479,10 +1491,10 @@
     if (typeof o.token === "string") return Promise.resolve(takeOpenFile(o));
     return diskFile(o.path);
   }
-  function rebuildFor(rq) {
+  // A report for the Assistant's card under its key (orosAssistAtt.rb)
+  function assistBack(rq) {
     var key = typeof rq.key === "string" ? rq.key.slice(0, 80) : "";
-    var chat = typeof rq.chat === "string" ? rq.chat.slice(0, 80) : "";
-    function back(rep) {
+    return function (rep) {
       if (!key) return;
       try {
         var st = window.parent && window.parent !== window ? window.parent.orosAssistAtt : null;
@@ -1491,7 +1503,11 @@
         st.rb[key] = rep;
         if (typeof st.onRb === "function") st.onRb(key);
       } catch (e) {}
-    }
+    };
+  }
+  function rebuildFor(rq) {
+    var chat = typeof rq.chat === "string" ? rq.chat.slice(0, 80) : "";
+    var back = assistBack(rq);
     var src = Array.isArray(rq.src) ? rq.src.slice(0, 400) : [];
     var files = [];
     var chain = Promise.resolve();
@@ -1508,6 +1524,14 @@
         back(rep || { failed: 1 });
       });
     }).then(null, function () { toast(t("rb.bad")); back({ failed: 1 }); });
+  }
+  function houseFor(rq) {
+    var back = assistBack(rq);
+    if (rq.op !== "book") { LY.house.run(rq, null, back); return; }
+    rbTake(rq.doc).then(function (f) {
+      if (!f) { toast(t("txt.fail")); back({ failed: 1, why: "read" }); return; }
+      LY.house.run(rq, f, back);
+    }, function () { toast(t("txt.fail")); back({ failed: 1, why: "read" }); });
   }
   function diskFs() {
     try { var p = window.parent; return p && p !== window && p.orosFS ? p.orosFS : null; }

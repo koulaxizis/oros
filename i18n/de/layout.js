@@ -474,6 +474,7 @@ orosPack("de", "layout", {
  "hs.defName": "Hausstil",
  "hs.go": "Lernen",
  "hs.none": "In diesen Dokumenten wurde kein Text gefunden.",
+ "hs.noNamed": "Es gibt keinen Hausstil namens „{n}“.",
  "hs.done": "Hausstil fertig",
  "hs.repWorks": "Aus {n} Werken gelernt.",
  "hs.repPages": "{f} Seiten Titelei und {b} Seiten am Ende behalten, mit einer leeren Textseite dazwischen.",
