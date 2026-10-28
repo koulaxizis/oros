@@ -429,11 +429,37 @@
       if (!files.length) return;
       var pdf = files.filter(function (f) { return /\.pdf$/i.test(f.name || "") || f.type === "application/pdf"; })[0];
       if (!pdf) { LY.toast(t("rb.noPdf")); return; }
-      return rebuild(pdf, files.filter(function (f) { return f !== pdf; }));
+      framesDlg(function (thread) {
+        rebuild(pdf, files.filter(function (f) { return f !== pdf; }), { thread: thread }).then(null, function () { LY.toast(t("rb.bad")); });
+      });
     }).then(null, function () { rebuilding = false; LY.toast(t("rb.bad")); });
   }
+  // Text frames per page (every line where it was, the default) or an
+  // article's frames going on from page to page (LY-THR); the choice
+  // is kept for the session.
+  var rbThread = false;
+  function framesDlg(go) {
+    var U = LY.ui;
+    LY.openDialog(t("rb.frames"), function (body, close) {
+      var wrap = el("div"), hint = el("p", "hint");
+      function draw() {
+        wrap.innerHTML = "";
+        wrap.appendChild(U.seg([["page", t("rb.perPage")], ["thread", t("rb.thread")]], rbThread ? "thread" : "page", function (v) { rbThread = v === "thread"; draw(); }));
+        hint.textContent = t(rbThread ? "rb.threadHint" : "rb.perPageHint");
+      }
+      draw();
+      body.appendChild(wrap);
+      body.appendChild(hint);
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(U.btn(t("btn.cancel"), close));
+      act.appendChild(U.btn(t("rb.go"), function () { close(); go(rbThread); }, "primary"));
+      body.appendChild(act);
+    });
+  }
   // also for the Assistant: pdf (a File), sources (Files), opts
-  // { chat: the Assistant's conversation, for "Back to the Assistant" }
+  // { chat: the Assistant's conversation, for "Back to the Assistant",
+  // thread: frames that go on from page to page }
   // → Promise of the report, or null. A print PDF may be big (pictures
   // at 300 ppi): up to REBUILD_MAX.
   var REBUILD_MAX = 1024 * 1024 * 1024;
@@ -445,7 +471,7 @@
     var stop = false;
     LY.toast(t("rb.start", { n: sources.length }), t("btn.cancel"), function () { stop = true; });
     return pdf.arrayBuffer().then(function (buf) {
-      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
+      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, thread: !!(opts && opts.thread), cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
         LY.toast(t("rb.working", { n: k, t: n }), t("btn.cancel"), function () { stop = true; });
       });
     }).then(function (res) {
@@ -517,6 +543,7 @@
       p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
       p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
       p(t("rb.styles", { n: rep.styles }));
+      if (rep.threads) p(t("rb.threads", { n: rep.threads.stories, f: rep.threads.frames }), "hint");
       if (rep.af && rep.af.failed) p(t("rb.afBad"), "hint");
       else if (rep.af) {
         p(t("rb.af", { n: rep.af.pictures }), "hint");

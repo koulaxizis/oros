@@ -158,3 +158,78 @@ test("rebuild: rotated text (a spine) is its own turned frame", () => {
   assert.deepEqual([bg.x, bg.y, bg.w, bg.h, bg.lock], [-14, -14, 884, 623, 1]);
   assert.equal(d.setup.facing, 0);
 });
+
+// An article whose text goes on over three pages (one story through
+// three frames), then a new chapter under its heading on page 4.
+function article() {
+  const doc = M.newDoc({ name: "Article", w: 420, h: 595, unit: "mm", bleed: 0, facing: 1, pages: 4, mt: 50, mb: 60, mi: 57, mo: 40, preset: "custom" }, 1);
+  const pages = M.pagesInOrder(doc);
+  doc.pages.forEach((p) => { p.ms = ""; });
+  doc.pstyles.push({ id: "ps-tbody", m: 1, name: "Body", base: "ps-base", font: "serif", size: 10, lead: 15, align: "j", fi: 12 });
+  doc.pstyles.push({ id: "ps-tfirst", m: 1, name: "First", base: "ps-tbody", fi: 0 });
+  doc.pstyles.push({ id: "ps-thead", m: 1, name: "Head", base: "ps-base", font: "serif", size: 16, lead: 20, align: "c", b: 1 });
+  const words = "the sea was quiet that night and the gulls slept on the old pier while the town lights went out one by one along the shore".split(" ");
+  const text = (n, k) => { const a = []; for (let i = 0; i < n; i++) a.push(words[(i * 7 + k * 3) % words.length]); const s = a.join(" "); return s[0].toUpperCase() + s.slice(1) + "."; };
+  const paras = [{ ps: "ps-tfirst", runs: [{ t: text(70, 0) }] }];
+  for (let k = 1; k < 12; k++) paras.push({ ps: "ps-tbody", runs: [{ t: text(80 + k * 9, k) }] });
+  doc.stories.push({ id: "st-a", m: 1, paras });
+  pages.slice(0, 3).forEach((p, i) => {
+    doc.items.push({ id: "it-a" + i, m: 1, t: "text", pg: p.id, x: i % 2 === 0 ? 57 : 40, y: 50, w: 323, h: 470, story: "st-a", seq: i + 1, z: 10 });
+  });
+  doc.stories.push({ id: "st-h", m: 1, paras: [{ ps: "ps-thead", runs: [{ t: "Chapter Two" }] }] });
+  doc.items.push({ id: "it-h", m: 1, t: "text", pg: pages[3].id, x: 40, y: 50, w: 323, h: 30, story: "st-h", seq: 1, z: 10 });
+  doc.stories.push({ id: "st-b", m: 1, paras: [{ ps: "ps-tfirst", runs: [{ t: text(120, 5) }] }] });
+  doc.items.push({ id: "it-b", m: 1, t: "text", pg: pages[3].id, x: 40, y: 95, w: 323, h: 425, story: "st-b", seq: 1, z: 10 });
+  return M.normDoc(doc);
+}
+const storyText = (d, sid) => M.story(d, sid).paras.map((p) => p.runs.map((r) => r.t || "").join("").replace(/[­​]/g, ""));
+
+test("rebuild: frames per page by default; with thread, an article goes on across pages (LY-THR)", () => {
+  const src = asPdf(article());
+  const per = RB.build(src, { now: 5, lang: "en" });
+  assert.equal(per.report.threads, undefined);
+  assert.ok(per.doc.items.filter((it) => it.t === "text").every((it) => M.chain(per.doc, it.story).length === 1));
+  const res = RB.build(asPdf(article()), { now: 5, lang: "en", thread: true });
+  const d = res.doc, rep = res.report;
+  assert.deepEqual(rep.threads, { stories: 1, frames: 2 });
+  const order = M.pagesInOrder(d);
+  const body = (pi) => d.items.filter((it) => it.t === "text" && it.pg === order[pi].id).sort((a, b) => b.h - a.h)[0];
+  const ch = M.chain(d, body(0).story);
+  assert.deepEqual(ch.map((f) => order.findIndex((p) => p.id === f.pg)), [0, 1, 2]);
+  assert.deepEqual(ch.map((f) => f.seq), [1, 2, 3]);
+  // a paragraph cut by the page is one paragraph again
+  const want = M.story(article(), "st-a").paras.map((p) => p.runs[0].t);
+  const got = storyText(d, ch[0].story).filter((t) => t);
+  // (the last one goes on past page 3, where the PDF stops)
+  assert.deepEqual(got.slice(0, -1), want.slice(0, got.length - 1));
+  assert.equal(want[got.length - 1].indexOf(got[got.length - 1]), 0);
+  assert.ok(got.length > 6, "paragraphs: " + got.length);
+  // the new chapter under its heading is a story of its own
+  assert.equal(M.chain(d, body(3).story).length, 1);
+  // a frame that goes on is as tall as its lines; every line lands where it was
+  const perOrder = M.pagesInOrder(per.doc), perH = (pi) => Math.max.apply(null, per.doc.items.filter((it) => it.t === "text" && it.pg === perOrder[pi].id).map((it) => it.h));
+  assert.ok(ch[0].h < perH(0) - 30 && ch[1].h < perH(1) - 30, "h " + ch[0].h + " " + perH(0));
+  assert.equal(ch[2].h, perH(2));
+  assert.equal(rep.check.moved, 0, JSON.stringify(rep.framesOff));
+  assert.equal(rep.check.extra, 0);
+  assert.deepEqual(M.normDoc(JSON.parse(JSON.stringify(d))), d);
+});
+
+test("rebuild: with thread, a page that breaks after a full stop keeps two paragraphs", () => {
+  const src = asPdf(article());
+  // page 1 ends a sentence on a full line, page 2 starts a new one
+  const p1 = src.pages[0].spans, p2 = src.pages[1].spans;
+  const lastY = Math.max.apply(null, p1.map((s) => s.y)), lastSp = p1.filter((s) => s.y === lastY).pop();
+  lastSp.t = lastSp.t.slice(0, -1) + ".";
+  const firstY = Math.min.apply(null, p2.map((s) => s.y)), firstSp = p2.filter((s) => s.y === firstY)[0];
+  firstSp.t = firstSp.t[0].toUpperCase() + firstSp.t.slice(1);
+  const res = RB.build(src, { now: 5, lang: "en", thread: true });
+  const d = res.doc, order = M.pagesInOrder(d);
+  const fr = d.items.filter((it) => it.t === "text" && it.pg === order[0].id).sort((a, b) => b.h - a.h)[0];
+  const ch = M.chain(d, fr.story);
+  assert.equal(ch.length, 3);
+  const paras = storyText(d, fr.story).filter((t) => t);
+  assert.ok(paras.some((t) => /\.$/.test(t) && t.slice(-lastSp.t.length) === lastSp.t), "page 1's last words end a paragraph");
+  assert.ok(paras.some((t) => t.indexOf(firstSp.t) === 0), "page 2's first words start one");
+  assert.equal(res.report.check.moved, 0, JSON.stringify(res.report.framesOff));
+});

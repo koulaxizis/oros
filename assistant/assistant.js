@@ -2702,8 +2702,8 @@
     }
     return {
       content: "Shown to the user as a card: \u201c" + r.pdf.name + "\u201d with " + r.src.length + " original file(s)" + (r.folder ? " and the folder " + r.folder : "") +
-        ". Layout rebuilds it on the device when they press Rebuild; nothing is made yet. The report will be added here when Layout is done.",
-      ui: { k: "rebuild", key: attId(), pdf: r.pdf, src: r.src, folder: r.folder, st: "" }
+        ". Layout rebuilds it on the device when they press Rebuild" + (r.thread ? ", with each article's frames going on across pages" : "") + "; nothing is made yet. The report will be added here when Layout is done.",
+      ui: { k: "rebuild", key: attId(), pdf: r.pdf, src: r.src, folder: r.folder, thread: r.thread ? 1 : 0, st: "" }
     };
   }
   function runRebuild(ui, c) {
@@ -2719,7 +2719,7 @@
     var src = (ui.src || []).map(give).filter(Boolean);
     try {
       if (sla) p.__orosOpenAt("layout", { rebuild: { sla: sla, pdf: pdf, src: src, folder: ui.folder || "", key: ui.key, chat: c.id } });
-      else p.__orosOpenAt("layout", { rebuild: { pdf: pdf, src: src, folder: ui.folder || "", key: ui.key, chat: c.id } });
+      else p.__orosOpenAt("layout", { rebuild: { pdf: pdf, src: src, folder: ui.folder || "", thread: ui.thread === 1 ? 1 : 0, key: ui.key, chat: c.id } });
       return true;
     } catch (e) { return false; }
   }

@@ -61,6 +61,7 @@ test("rebuild_in_layout: offered with Layout; the prompt says when and never to 
   assert.equal(tool.params.required, undefined, "pdf, or sla for a Scribus file");
   assert.equal(tool.params.properties.sla.type, "string");
   assert.equal(tool.params.properties.sources.type, "array");
+  assert.equal(tool.params.properties.thread.type, "boolean");
   const sp = C.systemPrompt({ lang: "en", now: Date.now(), apps: ["Layout (layout)"], files: "pdf", rebuild: true });
   assert.match(sp, /call rebuild_in_layout; a Scribus file .* Never retype a printed document/);
   assert.match(sp, /say honestly what came out the same and what did not/);
@@ -74,6 +75,9 @@ test("rebuild_in_layout: the PDF by name, every attached picture and text by def
   assert.deepEqual(r.pdf, { id: "a8", name: "Issue 4 print.pdf" });
   assert.deepEqual(r.src, [{ id: "a9", name: "notes.txt" }, { id: "a7", name: "cover.jpg" }, { id: "a6", name: "issue.af" }], "kept pictures, texts and the .af (LY-AF), not a file that is gone");
   assert.equal(r.folder, "");
+  assert.equal(r.thread, false, "frames per page unless asked (LY-THR)");
+  assert.equal(C.normRebuild({ pdf: "issue 4", thread: true }, FILES).thread, true);
+  assert.equal(C.normRebuild({ pdf: "issue 4", thread: "yes" }, FILES).thread, false);
   const named = C.normRebuild({ pdf: "Issue 4 print.pdf", sources: ["cover.jpg"], folder: "/internal/Pictures/Issue 4/" }, FILES);
   assert.deepEqual(named.src, [{ id: "a7", name: "cover.jpg" }]);
   assert.equal(named.folder, "/internal/Pictures/Issue 4");
@@ -130,6 +134,8 @@ test("rebuild report: only numbers and font names reach the model", () => {
   assert.deepEqual(C.rebuildReport({ check: {}, af: { pictures: 14, styles: ["Body", "secret"], fonts: ["F"], problems: [] } }).affinity, { read: true, pictures: 14, styles: 2 });
   assert.deepEqual(C.rebuildReport({ check: {}, af: { failed: 1 } }).affinity, { read: false });
   assert.equal(C.rebuildReport({ check: {} }).percent, 100);
+  assert.deepEqual(C.rebuildReport({ check: {}, threads: { stories: 16, frames: 28 } }).threaded, { articles: 16, frames: 28 });
+  assert.equal(C.rebuildReport({ check: {} }).threaded, undefined);
 });
 
 test("do_action open: a page of the open Layout document", () => {
@@ -170,7 +176,8 @@ test("the wiring: Layout takes the rebuild and a page, the report goes back to t
   assert.match(read("layout/io.js"), /window\.parent\.__orosOpenAt\("assistant", \{ chat: chat \}\)/);
   assert.match(read("fileopen.js"), /hand: function \(file\) \{\n\s+return file && typeof file\.size === "number" \? hold\(ownFile\(file\)\) : "";/);
   const as = read("assistant/assistant.js");
-  assert.match(as, /p\.__orosOpenAt\("layout", \{ rebuild: \{ pdf: pdf, src: src, folder: ui\.folder \|\| "", key: ui\.key, chat: c\.id \} \}\)/);
+  assert.match(as, /p\.__orosOpenAt\("layout", \{ rebuild: \{ pdf: pdf, src: src, folder: ui\.folder \|\| "", thread: ui\.thread === 1 \? 1 : 0, key: ui\.key, chat: c\.id \} \}\)/);
+  assert.match(ly, /LY\.io\.rebuild\(pdf, files\.concat\(r\[2\]\), \{ chat: chat, thread: rq\.thread === 1 \}\)/);
   assert.match(as, /r\.content = "Layout rebuilt the PDF on the device as a new document, now open in Layout\. Report: " \+ JSON\.stringify\(ui\.rep\);/);
   assert.match(as, /if \(sla\) p\.__orosOpenAt\("layout", \{ rebuild: \{ sla: sla, pdf: pdf, src: src, folder: ui\.folder \|\| "", key: ui\.key, chat: c\.id \} \}\);/);
   assert.match(ly, /return LY\.io\.openSla\(sla, files\.concat\(r\[2\]\)\.filter\(LY\.io\.isPicture\), pdf \|\| null\)\.then\(function \(rep\) \{ back\(rep \|\| \{ failed: 1 \}\); \}\);/);
