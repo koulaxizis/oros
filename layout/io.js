@@ -256,7 +256,7 @@
       if (!files) return;
       // a Scribus "Collect for output" folder: the .sla and its pictures
       var list = Array.prototype.slice.call(files), sla = list.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); })[0];
-      if (sla && !list.some(function (f) { return f.name === "content.json"; })) return importSla(sla, list.filter(isPicture));
+      if (sla && !list.some(function (f) { return f.name === "content.json"; })) return importSla(sla, list.filter(isPicture), list.filter(isPdf)[0]);
       return window.OrosBundle.readFolder(files, { mime: BUNDLE_MIME }).then(fromBundle, bundleFail);
     }).then(null, function () { LY.toast(t("imp.bad")); });
   }
@@ -267,6 +267,7 @@
   // files picked together open one after another.
   var OPEN_ACCEPT = ".oroslayout,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml,image/*,.jpg,.jpeg,.png,.gif,.webp,.tif,.tiff";
   function isSvg(f) { return /\.svg$/i.test(f.name || "") || f.type === "image/svg+xml"; }
+  function isPdf(f) { return /\.pdf$/i.test(f.name || "") || f.type === "application/pdf"; }
   function isPicture(f) { return /\.(jpe?g|png|gif|webp|bmp|tiff?)$/i.test(f.name || "") || /^image\/(jpeg|png|gif|webp|bmp|tiff)$/.test(f.type || ""); }
   function importPackage() {
     var dlg = LY.dialogHost();
@@ -280,12 +281,13 @@
       files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
       if (!files.length) return;
       if (files.every(isSvg)) return importSvg(files);
-      // a Scribus file picked with pictures: they are its linked pictures
+      // a Scribus file picked with pictures: they are its linked
+      // pictures; with a PDF: its print PDF, for the line breaks
       var sla = files.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); });
       if (sla.length === 1 && files.length > 1) {
-        var pics = files.filter(isPicture);
-        files = files.filter(function (f) { return f !== sla[0] && pics.indexOf(f) < 0; });
-        var first = importSla(sla[0], pics);
+        var pics = files.filter(isPicture), pdf = files.filter(isPdf)[0];
+        files = files.filter(function (f) { return f !== sla[0] && f !== pdf && pics.indexOf(f) < 0; });
+        var first = importSla(sla[0], pics, pdf);
         files.forEach(function (f) { first = Promise.resolve(first).then(function () { return openFile(f); }); });
         return first;
       }
@@ -357,9 +359,12 @@
   // that keep the file name.
   var FOREIGN_MAX = 100 * 1024 * 1024;
   function baseName(f, ext) { return String(f.name || "").replace(ext, "").slice(0, 120); }
-  // pics: the pictures picked with the file (its linked pictures, by name)
-  function importSla(f, pics) {
-    if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
+  // pics: the pictures picked with the file (its linked pictures, by
+  // name); pdf: its print PDF, whose line breaks the text takes.
+  // → Promise of a report (the Assistant's card) or null:
+  // { sla: 1, pages, items, skipped, placed, missing, fit }
+  function importSla(f, pics, pdf) {
+    if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return Promise.resolve(null); }
     LY.toast(t("sla.working"));
     // a compressed .sla.gz is unpacked first (gzip magic, not the name)
     return f.arrayBuffer().then(function (buf) {
@@ -370,10 +375,14 @@
       if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
       try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
-      return useSrcFonts(res.doc).then(function () {
-        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }), "", pics);
+      var fit = null;
+      return useSrcFonts(res.doc).then(function () { return pdf ? fitToPdf(res.doc, pdf) : { msg: "" }; }).then(function (fr) {
+        fit = fr.rep || null;
+        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }) + fr.msg, "", pics);
+      }).then(function (pl) {
+        return { sla: 1, pages: res.stats.pages, items: res.stats.items, skipped: res.stats.skipped, placed: pl.placed, missing: pl.missing, fit: fit };
       });
-    }).then(null, function () { LY.toast(t("sla.bad")); });
+    }).then(null, function () { LY.toast(t("sla.bad")); return null; });
   }
   function importIdml(f) {
     if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return; }
@@ -448,6 +457,20 @@
       reportDlg(res.report, opts && opts.chat);
       return res.report;
     }, function (e) { rebuilding = false; throw e; });
+  }
+  // The line breaks of a document's own print PDF (Scribus import):
+  // → Promise of { msg: a sentence for the message, rep: matchPdf's
+  // report or null }.
+  function fitToPdf(doc, pdf) {
+    var RB = window.LY_REBUILD, bad = { msg: " " + t("sla.fitBad"), rep: null };
+    if (!RB || pdf.size > REBUILD_MAX) return Promise.resolve(bad);
+    LY.toast(t("sla.fitting"));
+    return pdf.arrayBuffer().then(function (buf) { return RB.pdfText(buf); }).then(function (txt) {
+      if (!txt) return bad;
+      var rep = RB.matchPdf(doc, txt.pages, { fitName: t("sla.fitStyle"), lang: LY.BASE === "el" ? "el" : "en", now: LY.now() });
+      if (!rep.matched) return { msg: bad.msg, rep: rep };
+      return { msg: " " + t("sla.fit", { n: rep.inPlace, t: rep.checked }), rep: rep };
+    }).then(null, function () { return bad; });
   }
   // Font names from a PDF or another program's file → the same families
   // on the orOS disk or at Fontsource, loaded (LY-FONT); a family that
@@ -556,7 +579,8 @@
     }).then(null, function () { LY.toast(t("svg.bad")); });
   }
   // res: { doc, images, linked, links?, stats }; blobOf(image) →
-  // Promise of a Blob or null; pics: Files for res.links, by name
+  // Promise of a Blob or null; pics: Files for res.links, by name.
+  // → Promise of { placed: linked pictures found, missing }
   function addForeign(res, blobOf, done, skipKey, pics) {
     var doc = res.doc, failed = 0, found = 0, chain = Promise.resolve();
     function put(itemId, blob) {
@@ -587,6 +611,7 @@
       if (res.stats.skipped) parts.push(t(skipKey || "sla.skipped", { n: res.stats.skipped }));
       if (left && res.links) LY.toast(parts.join(" "), t("sla.find"), relinkPick);
       else LY.toast(parts.join(" "));
+      return { placed: found, missing: left };
     });
   }
   var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it) { window.LY_SLA.placePicture(it); };
@@ -734,7 +759,7 @@
 
   LY.io = {
     exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
-    placeImage: placeImage, importText: importText, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
+    placeImage: placeImage, importText: importText, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
   };

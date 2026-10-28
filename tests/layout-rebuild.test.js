@@ -135,9 +135,10 @@ test("rebuild: Greek style names; a hyphen at a line end joins a word the text k
   ] }] };
   const res = RB.build(src, { now: 5, lang: "el" });
   const all = res.doc.stories.map((st) => st.paras.map((p) => p.runs.map((r) => r.t).join("")).join("¶")).join("|");
-  assert.ok(/θάλασσα και/.test(all), all);
-  // a word the text does not know keeps its hyphen, and its line break
-  assert.ok(/μοντέλο-\nηθοποιός/.test(all), all);
+  // the word is whole, with a soft hyphen where the line broke
+  assert.ok(/θάλασ\u00ADσα και/.test(all), all);
+  // a word the text does not know keeps its hyphen and may break after it
+  assert.ok(/μοντέλο-\u200Bηθοποιός/.test(all), all);
   assert.ok(res.doc.pstyles.some((p) => p.name === "Σώμα κειμένου"));
 });
 

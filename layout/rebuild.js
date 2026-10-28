@@ -34,10 +34,10 @@
 (function (root) {
   "use strict";
 
-  var M, T, R, PI;
+  var M, T, R, PI, LF;
   if (typeof module !== "undefined" && module.exports) {
-    M = require("../designkit/model.js"); T = require("../designkit/text.js"); R = require("../designkit/render.js"); PI = require("./pdfin.js");
-  } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; PI = root.LY_PDFIN; }
+    M = require("../designkit/model.js"); T = require("../designkit/text.js"); R = require("../designkit/render.js"); PI = require("./pdfin.js"); LF = require("./linefit.js");
+  } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; PI = root.LY_PDFIN; LF = root.LY_LINEFIT; }
 
   var MAX_PAGES = 400, MAX_SOURCES = 400;
   // Our fonts set justified lines a little wider than the natural
@@ -192,8 +192,8 @@
   //   registered and loaded in designkit/text.js) }
   // → { doc, report }
   var NAMES = {
-    en: { body: "Body text", pn: "Page number", al: { j: "justified", l: "left", c: "centre", r: "right" }, b: "bold", i: "italic", fi: "indent", sb: "above" },
-    el: { body: "Σώμα κειμένου", pn: "Αριθμός σελίδας",
+    en: { body: "Body text", pn: "Page number", fit: "Line fit", al: { j: "justified", l: "left", c: "centre", r: "right" }, b: "bold", i: "italic", fi: "indent", sb: "above" },
+    el: { body: "Σώμα κειμένου", pn: "Αριθμός σελίδας", fit: "Ταίριασμα γραμμής",
           al: { j: "πλήρης", l: "αριστερά", c: "κέντρο", r: "δεξιά" },
           b: "έντονα", i: "πλάγια", fi: "εσοχή", sb: "πάνω" }
   };
@@ -255,8 +255,10 @@
       return id;
     }
 
+    // br: where the 2nd, 3rd… lines start (character offsets), for
+    // the line fitting (layout/linefit.js)
     function para(lines, A, align, sb) {
-      var first = lines[0], runs = [];
+      var first = lines[0], runs = [], br = [], len = 0;
       lines.forEach(function (l, li) {
         l.spans.forEach(function (s, si) {
           var t = s.t;
@@ -264,12 +266,16 @@
           if (li > 0 && si === 0) {
             var prev = runs[runs.length - 1];
             var m = prev && WORD_END.exec(prev.t), w2 = WORD_START.exec(t);
-            if (m && w2 && LOWER.test(w2[0]) && words[(m[1] + w2[0]).toLowerCase()]) prev.t = prev.t.slice(0, -1);
-            // a compound split at its own hyphen: Layout breaks only at spaces, so keep the break
-            else if (prev && LETTER_HYPHEN.test(prev.t)) t = "\n" + t;
+            // a word hyphenated at the line end: one word with a soft
+            // hyphen, so it breaks there again
+            if (m && w2 && LOWER.test(w2[0]) && words[(m[1] + w2[0]).toLowerCase()]) prev.t = prev.t.slice(0, -1) + "\u00AD";
+            // a compound split at its own hyphen: it may break after it
+            else if (prev && LETTER_HYPHEN.test(prev.t)) t = "\u200B" + t;
             else if (!(prev && /-$/.test(prev.t))) t = " " + t;
+            br.push(len + (/^[ \u200B]/.test(t) ? 1 : 0));
           }
           runs.push({ t: t, b: s.b ? 1 : 0, i: s.i ? 1 : 0, size: s.size, sw: swatch(s.color), font: s.font, fam: s.fam });
+          len += t.length;
         });
       });
       var s0 = first.spans[0];
@@ -278,7 +284,7 @@
       return {
         size: size, fam: s0.fam, font: s0.font, track: first.track !== undefined ? first.track : trackOf(s0), color: col, lead: 0, align: align, sb: r3(Math.max(0, sb)),
         fi: align === "j" || align === "l" ? r3(Math.max(0, first.x0 - A.l)) : 0,
-        b: allB ? 1 : 0, i: allI ? 1 : 0,
+        b: allB ? 1 : 0, i: allI ? 1 : 0, br: br,
         runs: runs.map(function (r) {
           var o = { t: r.t };
           if (r.b && !allB) o.b = 1;
@@ -408,7 +414,7 @@
         paras.forEach(function (p) {
           if (p.lead > 0 && p.sb >= p.lead - 1.5) {
             var n = Math.floor((p.sb + 1.5) / p.lead);
-            for (var e = 0; e < n; e++) outParas.push(copy(p, { sb: 0, runs: [] }));
+            for (var e = 0; e < n; e++) outParas.push(copy(p, { sb: 0, runs: [], br: [] }));
             p.sb = r3(Math.max(0, p.sb - n * p.lead));
           }
           outParas.push(p);
@@ -520,9 +526,11 @@
       csBy[key] = id;
       return id;
     }
+    var fitTargets = [];
     stories.forEach(function (st) {
-      st.paras = st.paras.map(function (p) {
+      st.paras = st.paras.map(function (p, pi) {
         var ps = p.ps, id;
+        if (ps.br && ps.br.length) fitTargets.push({ sid: st.id, p: pi, br: ps.br });
         if (ps.pn) {
           if (!pnStyle) {
             pnStyle = fontOf({ id: "ps-rbpn", m: now, name: N.pn, base: "ps-base", size: ps.size, lead: r3(ps.size * 1.2), align: "c", b: ps.b, i: ps.i, track: ps.track, color: ps.color, fi: 0, sb: 0, sa: 0 }, ps.fam);
@@ -552,6 +560,8 @@
     var used = Object.keys(famUsed).map(function (id) { return famUsed[id]; });
     if (used.length) { doc.setup.ext = doc.setup.ext || {}; doc.setup.ext.fonts = used; }
     var nd = M.normDoc(doc);
+    // lines that break elsewhere get a tracking of their own
+    report.fit = LF.fit(nd, fitTargets, { name: N.fit, lang: opts.lang === "el" ? "el" : "en", now: now });
 
     // ---------- 6. Check: does every line land where it was? ----------
     var L = R.computeLayout(nd), total = 0, moved = 0, extra = 0;
@@ -780,22 +790,8 @@
               return pics.length ? draw(page, sc, bgOnly) : d;
             }).then(function (d) {
               bare = d;
-              var spans = [];
-              text.items.forEach(function (it) {
-                if (typeof it.str !== "string" || !it.str) return;
-                var m = lib.Util.transform(vp1.transform, it.transform);
-                var size = Math.hypot(m[2], m[3]), rot = Math.atan2(m[1], m[0]) * 180 / Math.PI;
-                if (!(size > 0)) return;
-                var f = PI.fontOf(page, it.fontName), fn = fontName(page, it.fontName);
-                var str = it.str.replace(/[\u0000-\u001f\u007f\u00ad\ufeff]/g, ""), lead = /^\s*/.exec(str)[0].length, trail = /\s*$/.exec(str)[0].length;
-                if (!str.trim()) return;
-                var spW = T.measure(keyOf(f.fam, f.b, f.i), " ", size, 0), wv = it.width || 0;
-                var ax = { c: Math.cos(rot * Math.PI / 180), s: Math.sin(rot * Math.PI / 180) };
-                var x0 = m[4] + lead * spW * ax.c, y0 = m[5] + lead * spW * ax.s;
-                var box = [Math.min(m[4], m[4] + wv * ax.c) * sc, (Math.min(m[5], m[5] + wv * ax.s) - size * 0.85) * sc, Math.max(m[4], m[4] + wv * ax.c) * sc, (Math.max(m[5], m[5] + wv * ax.s) + size * 0.2) * sc];
-                spans.push({ t: str.replace(/\s+/g, " "), x: r3(x0 - trim.x), y: r3(y0 - trim.y), x1: r3(m[4] + Math.max(0, wv - trail * spW) - trim.x), w: wv,
-                  size: Math.round(size * 100) / 100, rot: Math.abs(rot) < 0.5 ? 0 : Math.round(rot * 100) / 100, fam: f.fam, b: f.b, i: f.i, font: fn,
-                  color: textColour(full, under, cw, ch, box) });
+              var spans = spansOf(lib, page, text, vp1, trim, function (box) {
+                return textColour(full, under, cw, ch, box.map(function (v) { return v * sc; }));
               });
               // drawings inside the bleed: one picture behind everything,
               // drawn again at print resolution when there is one
@@ -860,13 +856,107 @@
       });
     }).then(null, function (e) { if (e && e.message === "cancelled") return { cancelled: true }; return null; });
   }
+  // The text pieces of a page in trim-box points (y down);
+  // colour(box) gives a piece's colour from its box in viewport points.
+  function spansOf(lib, page, text, vp1, trim, colour) {
+    var spans = [];
+    text.items.forEach(function (it) {
+      if (typeof it.str !== "string" || !it.str) return;
+      var m = lib.Util.transform(vp1.transform, it.transform);
+      var size = Math.hypot(m[2], m[3]), rot = Math.atan2(m[1], m[0]) * 180 / Math.PI;
+      if (!(size > 0)) return;
+      var f = PI.fontOf(page, it.fontName), fn = fontName(page, it.fontName);
+      var str = it.str.replace(/[\u0000-\u001f\u007f\u00ad\ufeff]/g, ""), lead = /^\s*/.exec(str)[0].length, trail = /\s*$/.exec(str)[0].length;
+      if (!str.trim()) return;
+      var spW = T.measure(keyOf(f.fam, f.b, f.i), " ", size, 0), wv = it.width || 0;
+      var ax = { c: Math.cos(rot * Math.PI / 180), s: Math.sin(rot * Math.PI / 180) };
+      var x0 = m[4] + lead * spW * ax.c, y0 = m[5] + lead * spW * ax.s;
+      var box = [Math.min(m[4], m[4] + wv * ax.c), Math.min(m[5], m[5] + wv * ax.s) - size * 0.85, Math.max(m[4], m[4] + wv * ax.c), Math.max(m[5], m[5] + wv * ax.s) + size * 0.2];
+      spans.push({ t: str.replace(/\s+/g, " "), x: r3(x0 - trim.x), y: r3(y0 - trim.y), x1: r3(m[4] + Math.max(0, wv - trail * spW) - trim.x), w: wv,
+        size: Math.round(size * 100) / 100, rot: Math.abs(rot) < 0.5 ? 0 : Math.round(rot * 100) / 100, fam: f.fam, b: f.b, i: f.i, font: fn,
+        color: colour ? colour(box) : null });
+    });
+    return spans;
+  }
+  // Only the text of a PDF (no pictures, no drawing): → Promise of
+  // { pages: [{ spans }] } or null; for lining up another program's
+  // file with its own print PDF (matchPdf).
+  function pdfText(buf, opts) {
+    opts = opts || {};
+    var bytes = new Uint8Array(buf);
+    return Promise.all([pageBoxes(bytes.slice()), PI.loadLib()]).then(function (r) {
+      var boxes = r[0], lib = r[1];
+      lib.GlobalWorkerOptions.workerSrc = "../vendor/pdfjs/pdf.worker.min.js";
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise.then(function (pdf) {
+        var n = Math.min(pdf.numPages, MAX_PAGES), pages = [], chain = Promise.resolve();
+        for (var k = 1; k <= n; k++) (function (k) {
+          chain = chain.then(function () {
+            if (opts.cancelled && opts.cancelled()) throw new Error("cancelled");
+            return pdf.getPage(k);
+          }).then(function (page) {
+            var vp1 = page.getViewport({ scale: 1 }), view = page.view;
+            var bx = boxes && boxes[k - 1] && !boxes[k - 1].rot ? boxes[k - 1] : null;
+            var trim = bx ? { x: bx.trim[0] - view[0], y: view[3] - (bx.trim[1] + bx.trim[3]) } : { x: 0, y: 0 };
+            return page.getTextContent().then(function (text) {
+              pages.push({ spans: spansOf(lib, page, text, vp1, trim, null) });
+              page.cleanup();
+              if (opts.progress) opts.progress(k, n);
+            });
+          });
+        })(k);
+        return chain.then(function () { pdf.destroy(); return { pages: pages }; }, function (e) { pdf.destroy(); throw e; });
+      });
+    }).then(null, function () { return null; });
+  }
+
+  // ---------- 8. Another program's file + its print PDF ----------
+  // doc (normalized, e.g. a Scribus import) and the PDF's pages
+  // ({ spans }, pdfText): each text frame takes the PDF's lines inside
+  // it (by column), the story's lines are lined up with them
+  // (linefit.align) and fitted. Changes doc in place.
+  // → { lines, matched, inPlace, fitted, styles }
+  function matchPdf(doc, pages, opts) {
+    opts = opts || {};
+    var order = M.pagesInOrder(doc), pgIdx = {}, taken = {}, targets = [], rep = { lines: 0, matched: 0 };
+    order.forEach(function (p, i) { pgIdx[p.id] = i; });
+    var done = {};
+    doc.items.forEach(function (it0) {
+      if (it0.t !== "text" || !it0.story || done[it0.story]) return;
+      done[it0.story] = 1;
+      var texts = [];
+      M.chain(doc, it0.story).forEach(function (f) {
+        var pi = pgIdx[f.pg], P = pi === undefined ? null : pages[pi];
+        if (!P || Math.abs(f.rot || 0) >= 0.5) return;
+        var cols = Math.max(1, f.cols || 1), ins = Math.max(0, f.inset || 0), gut = Math.max(0, f.gut || 0);
+        var cw = Math.max(1, (f.w - 2 * ins - gut * (cols - 1)) / cols), byCol = [];
+        for (var c = 0; c < cols; c++) byCol.push([]);
+        (P.spans || []).forEach(function (s, si) {
+          var key = pi + ":" + si;
+          if (taken[key] || Math.abs(s.rot || 0) >= 0.5) return;
+          if (s.y <= f.y || s.y > f.y + f.h + s.size * 0.3 || s.x < f.x - 2 || s.x >= f.x + f.w) return;
+          var col = Math.max(0, Math.min(cols - 1, Math.floor((s.x - f.x - ins + gut / 2) / (cw + gut))));
+          byCol[col].push(s);
+          taken[key] = 1;
+        });
+        byCol.forEach(function (sp) { toLines(sp).forEach(function (l) { texts.push(l.text); }); });
+      });
+      if (!texts.length) return;
+      var a = LF.align(doc, it0.story, texts);
+      rep.lines += a.total; rep.matched += a.matched;
+      a.targets.forEach(function (tg) { targets.push(tg); });
+    });
+    var st = LF.fit(doc, targets, { name: opts.fitName, lang: opts.lang, now: opts.now });
+    rep.inPlace = st.inPlace; rep.checked = st.lines; rep.fitted = st.fitted; rep.styles = st.styles;
+    return rep;
+  }
+
   function fontName(page, name) {
     var f = null;
     try { f = page.commonObjs.has(name) ? page.commonObjs.get(name) : null; } catch (e) { f = null; }
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, open: open, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, open: open, pdfText: pdfText, matchPdf: matchPdf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);
