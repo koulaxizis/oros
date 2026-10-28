@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.13.00
+- Layout: open a Scribus file together with its pictures, or the folder Scribus makes with Collect for Output, and linked pictures come in placed as Scribus placed them, stretched ones included. Pictures still missing can be found later from the message after opening.
+
 ## Version 4.12.00
 - Layout: kerning. A style's `Kerning` uses the font's own spacing between letter pairs, the same on screen and in the PDF. It is on for new documents, rebuilt PDFs and opened Scribus files; older documents are unchanged until you turn it on.
 

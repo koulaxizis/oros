@@ -403,7 +403,7 @@
     s.appendChild(btn(it.a ? t("props.replace") : t("props.place"), function () { LY.io.placeImage(it.id); }, "primary block"));
     if (it.a) {
       s.appendChild(seg([["fit", t("props.fit")], ["fill", t("props.fillf")]], it.fit === "custom" ? "" : it.fit, function (v) {
-        editSel(function (x) { if (x.t !== "img") return false; x.fit = v; });
+        editSel(function (x) { if (x.t !== "img") return false; x.fit = v; R.uniform(x); });
       }));
       var r = R.imageRect(it);
       var sc = it.iw ? r.w / it.iw : 1;
@@ -414,7 +414,7 @@
           if (x.t !== "img") return false;
           var cur = R.imageRect(x), k = Math.max(0.1, v) / 100;
           var cx = cur.x + cur.w / 2, cy = cur.y + cur.h / 2;
-          x.fit = "custom"; x.isc = k;
+          x.fit = "custom"; x.isc = k; R.uniform(x);
           x.ix = cx - x.iw * k / 2; x.iy = cy - x.ih * k / 2;
         });
       }, { unit: "raw", min: 0.1, max: 100000, step: 5 })));

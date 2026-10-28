@@ -132,7 +132,7 @@
       it.seq = props.seq || 1024; it.cols = props.cols || 1; it.gut = props.gut === undefined ? 12 : props.gut;
       it.ins = 0; it.va = "t";
     }
-    if (it.t === "img") { it.a = ""; it.nm = ""; it.iw = 0; it.ih = 0; it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
+    if (it.t === "img") { it.a = ""; it.nm = ""; it.iw = 0; it.ih = 0; it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; R.uniform(it); }
     doc.items.push(it);
     return it;
   }
@@ -1103,7 +1103,10 @@
       it.x = cx - nwid / 2; it.y = cy - nhgt / 2; it.w = nwid; it.h = nhgt;
       if (it.t === "img" && it.fit === "custom" && o.w) {
         var k = nwid / o.w;
-        if (keep) { it.isc = o.isc * k; it.ix = o.ix * k; it.iy = o.iy * k; }
+        if (keep) {
+          it.isc = o.isc * k; it.ix = o.ix * k; it.iy = o.iy * k;
+          if (o.ext && o.ext.iscy > 0) it.ext.iscy = o.ext.iscy * k;
+        }
       }
     });
   }
