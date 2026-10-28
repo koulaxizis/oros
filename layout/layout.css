@@ -334,6 +334,16 @@ body.panel-closed #side { display: none; }
 .sty-row.on .sty-name { color: var(--accent); font-weight: 700; }
 .sw-row { width: 100%; background: transparent; border: none; text-align: left; }
 .sw-row:hover { background: var(--accent-soft); }
+/* Fonts dialog (fontpick.js) */
+.fp-list { max-height: 40vh; overflow-y: auto; margin: 6px 0; }
+.fp-row {
+  display: flex; align-items: baseline; gap: 8px; width: 100%;
+  min-height: 40px; padding: 6px 8px; border-radius: 7px;
+  background: transparent; border: none; color: inherit; text-align: left; cursor: pointer;
+}
+.fp-row:hover, .fp-row:focus-visible { background: var(--accent-soft); }
+.fp-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fp-sub { flex: 0 0 auto; font-size: 12px; color: var(--text-dim); }
 .sw-chip { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0; }
 .sw-name { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sw-val { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }

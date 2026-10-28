@@ -704,7 +704,7 @@
     nb.type = "button";
     if (kind === "ps") {
       var rs = T.resolvePs(T.byId(LY.doc.pstyles), st.id);
-      nb.style.fontFamily = T.cssFamily(T.fontKey(rs.font, rs.b, rs.i));
+      nb.style.fontFamily = T.cssStack(T.fontKey(rs.fam && T.fontFile(rs.fam + "-r") ? rs.fam : rs.font, rs.b, rs.i));
     }
     nb.disabled = !open;
     nb.addEventListener("click", function () { if (kind === "ps") LY.story.applyPs(st.id); else LY.story.applyCs(st.id); });
@@ -715,11 +715,12 @@
     return r;
   }
 
-  // Paragraph (kind "ps") or character ("cs") style editor.
-  function styleDlg(kind, id) {
+  // Paragraph (kind "ps") or character ("cs") style editor. `draft`:
+  // the unsaved style when the dialog comes back from the Fonts dialog.
+  function styleDlg(kind, id, draft) {
     var doc = LY.doc, coll = kind === "ps" ? "pstyles" : "cstyles";
     var src = id ? M.find(doc[coll], id) : null;
-    var st = src ? JSON.parse(JSON.stringify(src)) : { id: M.newId(kind === "ps" ? "ps" : "cs"), name: "", base: kind === "ps" ? "ps-base" : undefined };
+    var st = draft || (src ? JSON.parse(JSON.stringify(src)) : { id: M.newId(kind === "ps" ? "ps" : "cs"), name: "", base: kind === "ps" ? "ps-base" : undefined });
     var isNew = !src;
     LY.openDialog(t(isNew ? "styles.new" : "styles.edit"), function (body, close) {
       var name = el("input", "inp"); name.type = "text"; name.maxLength = 60; name.value = LY.label(st.name);
@@ -729,7 +730,34 @@
       body.appendChild(field(t("sty.base"), baseSel));
       var inheritOpt = ["", t("sty.inherit")];
       var g = el("div", "grid2");
-      g.appendChild(field(t("sty.font"), select([inheritOpt, ["sans", t("font.sans")], ["serif", t("font.serif")], ["mono", t("font.mono")]], st.font || "", function (v) { st.font = v || undefined; })));
+      var fam = st.ext && st.ext.fam && T.FAM_RE.test(st.ext.fam) ? st.ext.fam : "";
+      var fontOpts = [inheritOpt, ["sans", t("font.sans")], ["serif", t("font.serif")], ["mono", t("font.mono")]];
+      LY.F.docFonts(doc).forEach(function (e) { fontOpts.push(["fam:" + e.id, e.name]); });
+      if (fam && !fontOpts.some(function (o) { return o[0] === "fam:" + fam; })) fontOpts.push(["fam:" + fam, fam]);
+      fontOpts.push(["__more", t("fp.more")]);
+      g.appendChild(field(t("sty.font"), select(fontOpts, fam ? "fam:" + fam : st.font || "", function (v) {
+        if (v === "__more") {
+          st.name = name.value;
+          close();
+          LY.fonts.pick(function (e) {
+            LY.fonts.add(e);
+            st.font = e.fb;
+            st.ext = st.ext || {};
+            st.ext.fam = e.id;
+            styleDlg(kind, id, st);
+          }, function () { styleDlg(kind, id, st); });
+          return;
+        }
+        if (v.indexOf("fam:") === 0) {
+          var en = LY.F.docFonts(LY.doc).filter(function (x) { return x.id === v.slice(4); })[0];
+          st.ext = st.ext || {};
+          st.ext.fam = v.slice(4);
+          if (en) st.font = en.fb;
+          return;
+        }
+        st.font = v || undefined;
+        if (st.ext) { delete st.ext.fam; if (!Object.keys(st.ext).length) delete st.ext; }
+      })));
       g.appendChild(field(t("sty.size"), optNum(st, "size", 1, 1296)));
       if (kind === "ps") g.appendChild(field(t("sty.lead") + " (0 = " + t("sty.auto") + ")", optNum(st, "lead", 0, 1500)));
       g.appendChild(field(t("sty.track"), optNum(st, "track", -500, 2000)));

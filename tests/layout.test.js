@@ -167,7 +167,7 @@ test("pdf: a vector PDF with embedded fonts, bleed boxes and spreads", () => {
   const sp = P.build(d, { spreads: true }, { jsPDF });
   assert.equal(sp.getNumberOfPages(), 2, "1 | 2-3");
   assert.ok(Math.abs(sp.internal.pageSize.getWidth() - 2 * d.setup.w) < 0.5);
-  assert.ok(P.fontsUsed(d, R.computeLayout(d), M.pagesInOrder(d)).includes("serif-r"), "only the fonts in use are embedded");
+  assert.ok(pdf.orosFonts["serif-r"] && !pdf.orosFonts["mono-r"], "only the fonts in use are embedded");
 });
 
 test("typesetting: Greek all caps drop the tonos, keep the dialytika", () => {

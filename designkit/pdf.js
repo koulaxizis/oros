@@ -1,7 +1,9 @@
 // ============================================================
 // orOS designkit — pdf.js (v1.1.0)
 // Vector PDF export with jsPDF (vendor/jspdf.umd.min.js): text as
-// real, selectable text in the embedded Noto fonts, placed glyph run
+// real, selectable text in the embedded fonts (Noto, or a family the
+// document names: every subset file of it, each character written in
+// the file that has it, else in the built-in stand-in), placed glyph run
 // by glyph run from the SAME layout the screen draws (render.js),
 // shapes as paths (free paths too, even-odd or non-zero), linear and
 // radial gradients as PDF shadings (stop opacity is left out), images cropped to their frames, CMYK swatches as
@@ -21,18 +23,41 @@
 
   function f4(n) { return (Math.round(n * 10000) / 10000).toString(); }
 
-  // Fonts used by the laid-out runs of the chosen pages.
-  function fontsUsed(doc, L, pages) {
-    var keys = {};
-    function scan(lines) { (lines || []).forEach(function (ln) { ln.runs.forEach(function (r) { keys[r.key] = 1; }); }); }
-    var ids = {};
-    pages.forEach(function (p) { ids[p.id] = 1; });
-    doc.items.forEach(function (it) { if (it.t === "text" && ids[it.pg] && L.frames[it.id]) scan(L.frames[it.id].lines); });
-    pages.forEach(function (p) {
-      var mf = L.master[p.id] || {};
-      Object.keys(mf).forEach(function (k) { scan(mf[k].lines); });
-    });
-    return Object.keys(keys).sort();
+  // The font file that writes a character: [key, part index].
+  function faceFor(key, cp) {
+    var parts = T.faceParts(key), i;
+    for (i = 0; i < parts.length; i++) if (parts[i].map[cp] !== undefined) return [key, i];
+    var fb = T.fallbackKey(key);
+    if (fb === key) return [key, 0];
+    var fp = T.faceParts(fb);
+    for (i = 0; i < fp.length; i++) if (fp[i].map[cp] !== undefined) return [fb, i];
+    return [fb, 0];
+  }
+  // The jsPDF font of a face file, embedded the first time it is used.
+  function fontOf(pdf, key, i) {
+    var have = pdf.orosFonts = pdf.orosFonts || {};
+    var name = key + (i ? "~" + i : "");
+    if (!have[name]) {
+      var part = T.faceParts(key)[i];
+      if (!part) return null;
+      var file = T.FAMILIES[key.split("-")[0]].urls ? "f-" + name.replace(/~/g, "_") + ".ttf" : T.fontFile(key).replace(".ttf", "-" + key + ".ttf");
+      pdf.addFileToVFS(file, part.b64());
+      pdf.addFont(file, name, "normal", "Identity-H");
+      have[name] = 1;
+    }
+    return name;
+  }
+  // A run's text in pieces that each one font file writes.
+  function pieces(run) {
+    var s = run.t, out = [], cur = null;
+    for (var k = 0; k < s.length; k++) {
+      var cp = s.codePointAt(k), ch = cp > 0xFFFF ? s.substr(k, 2) : s.charAt(k);
+      if (cp > 0xFFFF) k++;
+      var f = cp <= 32 && cur ? cur.f : faceFor(run.key, cp);
+      if (cur && cur.f[0] === f[0] && cur.f[1] === f[1]) cur.t += ch;
+      else { cur = { f: f, t: ch }; out.push(cur); }
+    }
+    return out;
   }
 
   function setColor(pdf, doc, id, kind) {
@@ -151,12 +176,17 @@
       lines.forEach(function (ln) {
         ln.runs.forEach(function (run) {
           if (!run.t) return;
-          pdf.setFont(run.key, "normal");
-          pdf.setFontSize(run.size);
           if (!setColor(pdf, doc, run.color, "text")) pdf.setTextColor(0, 0, 0);
-          var opt = { baseline: "alphabetic" };
+          var opt = { baseline: "alphabetic" }, dx = 0;
           if (run.track) opt.charSpace = run.track * run.size / 1000;
-          pdf.text(run.t, x + run.x, y + run.y, opt);
+          pieces(run).forEach(function (pc) {
+            var name = fontOf(pdf, pc.f[0], pc.f[1]);
+            if (!name) return;
+            pdf.setFont(name, "normal");
+            pdf.setFontSize(run.size);
+            pdf.text(pc.t, x + run.x + dx, y + run.y, opt);
+            dx += T.measure(run.key, pc.t, run.size, run.track);
+          });
           if (run.u) {
             if (!setColor(pdf, doc, run.color, "fill")) pdf.setFillColor(0, 0, 0);
             pdf.rect(x + run.x, y + run.y + run.size * 0.12, run.w, Math.max(0.3, run.size * 0.05), "F");
@@ -215,31 +245,14 @@
 
     var b = opts.bleed || opts.marks ? s.bleed : 0;
     var slug = opts.marks ? SLUG : 0;
-    var used = [];
-    groups.forEach(function (g) { used = used.concat(g); });
-    var fonts = fontsUsed(doc, L, used);
 
     var pdf = deps.pdf || null, gstates = pdf ? (pdf.orosGstates = pdf.orosGstates || {}) : {};
-    function addFonts() {
-      var have = pdf.orosFonts = pdf.orosFonts || {};
-      fonts.forEach(function (k) {
-        if (have[k]) return;
-        var b64 = T.fontBase64(k);
-        if (!b64) return;
-        have[k] = 1;
-        var file = T.fontFile(k).replace(".ttf", "-" + k + ".ttf");
-        pdf.addFileToVFS(file, b64);
-        pdf.addFont(file, k, "normal", "Identity-H");
-      });
-    }
-    if (pdf) addFonts();
     groups.forEach(function (g) {
       var W = s.w * g.length + 2 * (b + slug), H = s.h + 2 * (b + slug);
       var orient = W > H ? "l" : "p";
       if (!pdf) {
         pdf = new JsPDF({ unit: "pt", format: [W, H], orientation: orient, compress: true });
         pdf.orosGstates = gstates;
-        addFonts();
         pdf.setProperties({ title: opts.title || doc.name, creator: "orOS Layout" });
       } else pdf.addPage([W, H], orient);
       var info = pdf.internal.getCurrentPageInfo().pageContext;
@@ -285,7 +298,7 @@
     };
   }
 
-  var api = { build: build, fontsUsed: fontsUsed, imageCrop: imageCrop, SLUG: SLUG };
+  var api = { build: build, imageCrop: imageCrop, SLUG: SLUG };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.pdf = api; }
 })(typeof window !== "undefined" ? window : this);

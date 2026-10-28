@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — Scribus .sla import (v1.1.0)
+// orOS Layout — Scribus .sla import (v1.2.0)
 // Reads a Scribus document (1.4, 1.5, 1.6 XML) into a NEW Layout
 // document: pages, master pages, margins, columns, bleed, colours,
 // paragraph styles, text frames with their threads, images, shapes,
@@ -17,6 +17,9 @@
 //     (plain colour), LaTeX and other render frames, hyphenation
 //     settings. Image and text frames keep their box, not a free
 //     outline.
+//   - Fonts: each style keeps the built-in family closest to its font
+//     and the font's own name in ext.srcFont; io.js then finds that
+//     family on the orOS disk or at Fontsource (LY-FONT).
 //   - A compressed .sla.gz is unpacked by io.js before it comes here.
 // Exposes LY_SLA (browser) or module.exports (Node tests).
 // ============================================================
@@ -110,6 +113,10 @@
     var fam = MONO.test(name) ? "mono" : /sans/i.test(name) ? "sans" : SERIF.test(name) ? "serif" : "sans";
     return { font: fam, b: /bold|black|heavy|semibold|demi|extrabold/i.test(name) ? 1 : 0, i: /italic|oblique/i.test(name) ? 1 : 0 };
   }
+  // the family part of a font name ("Constantia Bold Italic" → "constantia")
+  function famName(name) {
+    return String(name || "").toLowerCase().replace(/\b(regular|bold|italic|oblique|black|heavy|semibold|semi|demi|extrabold|extra|light|medium|book|roman)\b/g, "").replace(/[^a-z0-9]+/g, "");
+  }
   function slug(s, pre, used) {
     var b = String(s || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "").slice(0, 16) || "x";
     var id = pre + "-" + b, n = 2;
@@ -165,7 +172,8 @@
   // Scribus paragraph attributes → Layout paragraph style keys.
   function psProps(a, colour) {
     var o = {};
-    if (a.FONT !== undefined) { var f = fontOf(a.FONT); o.font = f.font; o.b = f.b; o.i = f.i; }
+    // ext.srcFont: the font's own name, for Layout to find the family (LY-FONT)
+    if (a.FONT !== undefined) { var f = fontOf(a.FONT); o.font = f.font; o.b = f.b; o.i = f.i; o.ext = { srcFont: String(a.FONT).slice(0, 60) }; }
     if (a.FONTSIZE !== undefined) o.size = num(a.FONTSIZE, 11);
     if (a.LINESP !== undefined || a.LINESPMode !== undefined) o.lead = a.LINESPMode === "1" ? 0 : num(a.LINESP, 0);
     if (a.ALIGN !== undefined) o.align = ALIGN[parseInt(a.ALIGN, 10)] || "l";
@@ -397,7 +405,7 @@
           var o = { t: r.t }, ra = r.a, cs = {};
           if (ra.FONT !== undefined) {
             var f = fontOf(ra.FONT);
-            if (f.font !== sf.font) cs.font = f.font;
+            if (famName(ra.FONT) !== famName(sty.FONT)) { cs.font = f.font; cs.ext = { srcFont: String(ra.FONT).slice(0, 60) }; }
             if (f.b !== sf.b) o.b = f.b;
             if (f.i !== sf.i) o.i = f.i;
           }

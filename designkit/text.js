@@ -16,9 +16,11 @@
 //     unicode-range. A character none of them has is measured and
 //     drawn with the family's fallback (sans), so screen and layout
 //     agree before, while and after the font arrives. A missing
-//     bold / italic uses the regular face. PDF output (pdf.js) only
-//     embeds the first subset of such a font; Layout does not offer
-//     them.
+//     bold / italic uses the regular face. A style names one in
+//     ext.fam ("fs_…" Fontsource, "uf_…" a font file of the user's;
+//     designkit/fonts.js registers them), its `font` stays the
+//     built-in stand-in. pdf.js embeds every subset file and writes
+//     each character in the file that has it.
 //   - layoutChain(): paragraphs + styles → lines in a chain of
 //     threaded frames (columns, insets, text wrap exclusions,
 //     alignment incl. justify, first-line / left / right indents,
@@ -40,6 +42,8 @@
     mono:  { name: "Noto Sans Mono", r: "NotoSansMono-Regular.ttf", b: "NotoSansMono-Bold.ttf", i: "NotoSansMono-Regular.ttf", bi: "NotoSansMono-Bold.ttf" }
   };
   var FAMILY_IDS = ["sans", "serif", "mono"];
+  // ids of extra families a document may name (designkit/fonts.js)
+  var FAM_RE = /^(fs|uf)_[a-z0-9]+(_[a-z0-9]+)*$/;
 
   function variant(b, i) { return b ? (i ? "bi" : "b") : (i ? "i" : "r"); }
   // "serif-bi" — also the canvas family name ("dk-serif-bi") and the
@@ -55,6 +59,12 @@
     return f ? f[p[1]] : null;
   }
   function cssFamily(key) { return "dk-" + key; }
+  // The built-in face an extra family's key stands in with (the key
+  // itself for a built-in family).
+  function fallbackKey(key) {
+    var p = key.split("-"), f = FAMILIES[p[0]];
+    return f && f.urls ? (f.fallback || "sans") + "-" + p[1] : key;
+  }
   // What to draw with: an extra family falls back to its fallback
   // family's face (same variant), as metrics do.
   function cssStack(key) {
@@ -369,14 +379,30 @@
     while (cur && !seen[cur.id] && chain.length < 16) { seen[cur.id] = 1; chain.unshift(cur); cur = cur.base ? psMap[cur.base] : null; }
     var out = {};
     PS_KEYS.forEach(function (k) { out[k] = DEFAULT_PS[k]; });
-    chain.forEach(function (s) { PS_KEYS.forEach(function (k) { if (s[k] !== undefined && s[k] !== null) out[k] = s[k]; }); });
+    out.fam = "";
+    chain.forEach(function (s) {
+      PS_KEYS.forEach(function (k) { if (s[k] !== undefined && s[k] !== null) out[k] = s[k]; });
+      famOf(s, out);
+    });
     return out;
+  }
+  // A family of the document (ext.fam: "fs_…" Fontsource, "uf_…" a
+  // font file of the user's) goes with the style's own `font`, which
+  // stays the built-in stand-in: a style that sets only `font` clears
+  // a family it inherited.
+  function famOf(s, out) {
+    var f = s.ext && s.ext.fam;
+    if (typeof f === "string" && FAM_RE.test(f)) out.fam = f;
+    else if (s.font !== undefined && s.font !== null) out.fam = "";
   }
   function resolveCs(csMap, id) {
     var chain = [], seen = {}, cur = csMap[id];
     while (cur && !seen[cur.id] && chain.length < 16) { seen[cur.id] = 1; chain.unshift(cur); cur = cur.base ? csMap[cur.base] : null; }
     var out = {};
-    chain.forEach(function (s) { CS_KEYS.forEach(function (k) { if (s[k] !== undefined && s[k] !== null) out[k] = s[k]; }); });
+    chain.forEach(function (s) {
+      CS_KEYS.forEach(function (k) { if (s[k] !== undefined && s[k] !== null) out[k] = s[k]; });
+      famOf(s, out);
+    });
     return out;
   }
 
@@ -384,8 +410,9 @@
   // Local run flags b / i / u toggle on top of the styles (so "bold"
   // inside a bold heading stays bold, like a word processor).
   function runAttrs(ps, cs, run) {
+    var own = cs.font !== undefined || cs.fam !== undefined;
     var a = {
-      font: cs.font || ps.font, size: cs.size || ps.size,
+      font: own ? cs.font || ps.font : ps.font, fam: own ? cs.fam || "" : ps.fam || "", size: cs.size || ps.size,
       b: cs.b !== undefined ? cs.b : ps.b, i: cs.i !== undefined ? cs.i : ps.i,
       u: cs.u !== undefined ? cs.u : ps.u,
       track: cs.track !== undefined ? cs.track : ps.track,
@@ -394,7 +421,7 @@
     if (run.b) a.b = 1;
     if (run.i) a.i = 1;
     if (run.u) a.u = 1;
-    a.key = fontKey(a.font, a.b, a.i);
+    a.key = fontKey(a.fam && FAMILIES[a.fam] ? a.fam : a.font, a.b, a.i);
     return a;
   }
 
@@ -764,7 +791,7 @@
 
   var api = {
     FAMILIES: FAMILIES, FAMILY_IDS: FAMILY_IDS, DEFAULT_PS: DEFAULT_PS, PS_KEYS: PS_KEYS, CS_KEYS: CS_KEYS,
-    fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, cssStack: cssStack, allKeys: allKeys,
+    fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, cssStack: cssStack, fallbackKey: fallbackKey, allKeys: allKeys, FAM_RE: FAM_RE,
     registerFamily: registerFamily, setFetcher: setFetcher, generation: generation, unicodeRange: unicodeRange,
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,

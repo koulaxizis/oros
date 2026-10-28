@@ -264,8 +264,25 @@
   var raf = 0;
   ED.render = function () { if (!raf) raf = requestAnimationFrame(draw); };
 
+  // The families the document names (designkit/fonts.js): fetched in
+  // the background (their built-in stand-ins meanwhile), the pages
+  // laid out again when one lands. A face that could not be fetched
+  // is tried again a minute later or when the device is back online.
+  var fontTry = {};
+  function useFonts(doc) {
+    var now = Date.now();
+    var keys = LY.F.register(doc).filter(function (k) { return !T.isLoaded(k) && !(fontTry[k] > now); });
+    if (!keys.length) return;
+    keys.forEach(function (k) { fontTry[k] = now + 60000; });
+    T.load(keys).then(function () {
+      if (keys.some(T.isLoaded) && LY.doc) { relayout(); ED.render(); }
+    });
+  }
+  window.addEventListener("online", function () { fontTry = {}; if (LY.doc) useFonts(LY.doc); });
+
   function relayout() {
     if (!LY.doc) return;
+    useFonts(LY.doc);
     // while typing in a frame, its unsaved text flows live
     var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
     ED.L = R.computeLayout(doc);
