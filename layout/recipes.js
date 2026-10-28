@@ -7,6 +7,9 @@
 //   others are edited as copies and put back (LY.putDoc); the toast's
 //   Undo takes every changed document back to how it was
 //   (LY.restoreDoc: fresh stamps, so it syncs like any edit);
+// - "grey" first makes black and white copies of the pictures it
+//   would change (on the disk, LY.io.greyBlob), then edits like the
+//   rest;
 // - steps run in order on a working copy; preflight with "stop" keeps
 //   a document with errors from being exported;
 // - one PDF is saved with the usual Save dialog; several go to Files,
@@ -75,7 +78,9 @@
     return st;
   }
 
-  function enumLabel(op, key, v) { return t("rc.e." + key + "." + v); }
+  var ONOFF = { bold: 1, ital: 1, caps: 1, hyph: 1 };
+  function enumLabel(op, key, v) { return t("rc.e." + (ONOFF[key] ? "onoff" : key) + "." + v); }
+  function pagesText(p) { return p ? String(p) : t("rc.e.on.all"); }
   function describe(st) {
     switch (st.op) {
       case "text": return "“" + st.find + "” → “" + (st.repl || "") + "”";
@@ -83,6 +88,12 @@
       case "style": return pickName(st.name, "pstyles") + (st.size ? " · " + st.size + " pt" : "");
       case "master": return (st.ms ? pickName(st.ms, "masters") : t("rc.noMaster")) + " · " + enumLabel("master", "on", st.on);
       case "margins": return [st.t, st.b, st.i, st.o].join(" / ") + " mm";
+      case "pages": return "+" + st.n + " · " + (st.at === "end" || !st.page ? enumLabel("pages", "at", "end") : enumLabel("pages", "at", st.at) + " " + st.page);
+      case "delpages": return st.last && st.last !== st.first ? Math.min(st.first, st.last) + "–" + Math.max(st.first, st.last) : String(st.first);
+      case "numbering": return enumLabel("numbering", "mode", st.mode) + " " + st.n;
+      case "bleed": return st.mm + " mm";
+      case "grey": return pagesText(st.pages);
+      case "imgfit": return enumLabel("imgfit", "mode", st.mode) + " · " + pagesText(st.pages);
       case "preflight": return st.stop ? t("rc.f.stop") : "";
       case "export": return enumLabel("export", "q", st.q);
     }
@@ -124,6 +135,32 @@
     return name;
   }
 
+  // ---------- Black and white (async) ----------
+  // The pictures the "grey" steps would change (found on a trial copy,
+  // so pages added or removed before them count) get a greyscale copy
+  // on the disk: → Promise of { grey: { asset id: copy id } }. A picture
+  // that cannot be read keeps its colour.
+  function greyCopies(doc, steps, ctl) {
+    var ctx = { grey: {} }, ids = [];
+    if (!steps.some(function (s) { return s.op === "grey"; })) return Promise.resolve(ctx);
+    var trial = JSON.parse(JSON.stringify(doc)), nw = LY.now();
+    steps.forEach(function (st) {
+      if (st.op === "grey") S.greyAssets(trial, st).forEach(function (a) { if (ids.indexOf(a) < 0) ids.push(a); });
+      else if (C[st.op].kind === "doc") S.apply(trial, st, nw);
+    });
+    var chain = Promise.resolve();
+    ids.forEach(function (a) {
+      chain = chain.then(function () {
+        if (ctl.signal.aborted) return;
+        return LY.A.blob(a).then(function (b) {
+          if (!b) return;
+          return LY.io.greyBlob(b, false).then(function (g) { return LY.A.importFile(g); }).then(function (res) { ctx.grey[a] = res.id; });
+        }).then(null, function () {});
+      });
+    });
+    return chain.then(function () { return ctx; });
+  }
+
   // ---------- Run ----------
   function run(steps, target, ctl) {
     LY.flushStory && LY.flushStory();
@@ -131,7 +168,8 @@
     var list = listFor(target).map(function (d) { return d.id; });
     var many = list.length > 1, fs = many ? diskFs() : null, taken = {};
     var snaps = [], edits = 0, touched = 0, pdfs = 0, held = 0, saved = [], pfE = 0, pfW = 0, pfRun = false;
-    var editSteps = steps.filter(function (s) { return C[s.op].kind === "doc"; });
+    // "grey" is an edit too, once its black and white copies are made
+    var editSteps = steps.filter(function (s) { return C[s.op].kind === "doc" || s.op === "grey"; });
     var chain = Promise.resolve();
     if (fs && steps.some(function (s) { return s.op === "export"; })) {
       chain = Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null)
@@ -144,42 +182,47 @@
         var cur = LY.findDoc(id);
         if (!cur) return;
         ctl.status(t("rc.doing", { i: i + 1, n: list.length, name: title(cur) }));
-        var snap = JSON.parse(JSON.stringify(cur)), work = JSON.parse(JSON.stringify(cur));
-        var n = 0, bad = false, kept = false, out = Promise.resolve(), nw = LY.now();
-        steps.forEach(function (st) {
-          var kind = C[st.op].kind;
-          if (kind === "doc") { n += S.apply(work, st, nw); return; }
-          if (kind === "check") {
-            var pf = S.problems(M.normDoc(JSON.parse(JSON.stringify(work))), LY.R, LY.A.isMissing);
-            pfRun = true; pfE += pf.err; pfW += pf.warn;
-            if (st.stop && pf.err) bad = true;
-            return;
-          }
-          if (st.op === "export") {
-            if (bad) { if (!kept) held++; kept = true; return; }   // counted once per document
-            var copy = M.normDoc(JSON.parse(JSON.stringify(work)));
-            out = out.then(function () {
-              if (ctl.signal.aborted) return;
-              return pdfOf(copy, st).then(function (blob) {
-                if (!many) return LY.io.saveBlob(blob, LY.io.fileName(copy, ".pdf"), "application/pdf", "PDF", ".pdf").then(function (ok) { if (ok) pdfs++; });
-                var base = LY.io.fileName(copy, "");
-                if (!fs) return LY.io.saveBlob(blob, base + ".pdf", "application/pdf", "PDF", ".pdf").then(function (ok) { if (ok) pdfs++; });
-                var file = uniq(base, taken);
-                return fs.write(FOLDER + "/" + file, blob).then(function () { pdfs++; saved.push(file); });
-              });
-            });
-          }
-        });
-        // the edits first (an export reflects them either way)
-        if (n) {
-          var done = cur === LY.doc
-            ? LY.op(function (w, now) { var k = 0; editSteps.forEach(function (st) { k += S.apply(w, st, now); }); return k ? undefined : false; })
-            : LY.putDoc(work);
-          if (done) { snaps.push(snap); edits += n; touched++; }
-        }
-        return out;
+        return greyCopies(cur, steps, ctl).then(function (ctx) { return one(cur, ctx); });
       });
     });
+    function one(cur, ctx) {
+      cur = LY.findDoc(cur.id);   // it may have changed while the copies were made
+      if (ctl.signal.aborted || !cur) return;
+      var snap = JSON.parse(JSON.stringify(cur)), work = JSON.parse(JSON.stringify(cur));
+      var n = 0, bad = false, kept = false, out = Promise.resolve(), nw = LY.now();
+      steps.forEach(function (st) {
+        var kind = C[st.op].kind;
+        if (kind === "doc" || st.op === "grey") { n += S.apply(work, st, nw, ctx); return; }
+        if (kind === "check") {
+          var pf = S.problems(M.normDoc(JSON.parse(JSON.stringify(work))), LY.R, LY.A.isMissing);
+          pfRun = true; pfE += pf.err; pfW += pf.warn;
+          if (st.stop && pf.err) bad = true;
+          return;
+        }
+        if (st.op === "export") {
+          if (bad) { if (!kept) held++; kept = true; return; }   // counted once per document
+          var copy = M.normDoc(JSON.parse(JSON.stringify(work)));
+          out = out.then(function () {
+            if (ctl.signal.aborted) return;
+            return pdfOf(copy, st).then(function (blob) {
+              if (!many) return LY.io.saveBlob(blob, LY.io.fileName(copy, ".pdf"), "application/pdf", "PDF", ".pdf").then(function (ok) { if (ok) pdfs++; });
+              var base = LY.io.fileName(copy, "");
+              if (!fs) return LY.io.saveBlob(blob, base + ".pdf", "application/pdf", "PDF", ".pdf").then(function (ok) { if (ok) pdfs++; });
+              var file = uniq(base, taken);
+              return fs.write(FOLDER + "/" + file, blob).then(function () { pdfs++; saved.push(file); });
+            });
+          });
+        }
+      });
+      // the edits first (an export reflects them either way)
+      if (n) {
+        var done = cur === LY.doc
+          ? LY.op(function (w, now) { var k = 0; editSteps.forEach(function (st) { k += S.apply(w, st, now, ctx); }); return k ? undefined : false; })
+          : LY.putDoc(work);
+        if (done) { snaps.push(snap); edits += n; touched++; }
+      }
+      return out;
+    }
     return chain.then(function () {
       if (!LY.doc) LY.renderHome();
       var msg = [];

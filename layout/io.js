@@ -65,6 +65,37 @@
     return pick.then(function (files) { return (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean); });
   }
 
+  // → Promise of a greyscale copy of a picture (luminance 0.299 R +
+  // 0.587 G + 0.114 B, at most 4000 px a side). white: clear parts
+  // become white and the copy is a JPEG; else a picture with clear
+  // parts stays a PNG with them.
+  var GREY_SIDE = 4000;
+  function greyBlob(blob, white) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(blob), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        var w = img.naturalWidth || 1200, h = img.naturalHeight || 1200, k = Math.min(1, GREY_SIDE / Math.max(w, h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
+        var ctx = cv.getContext("2d");
+        if (white) { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height); }
+        ctx.drawImage(img, 0, 0, cv.width, cv.height);
+        var px = ctx.getImageData(0, 0, cv.width, cv.height), d = px.data, clear = false;
+        for (var i = 0; i < d.length; i += 4) {
+          var y = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+          d[i] = d[i + 1] = d[i + 2] = y;
+          if (d[i + 3] < 255) clear = true;
+        }
+        ctx.putImageData(px, 0, 0);
+        var png = !white && clear;
+        cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, png ? "image/png" : "image/jpeg", 0.92);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
+      img.src = url;
+    });
+  }
+
   // ---------- PDF ----------
   var jspdfP = null;
   function loadJsPDF() {
@@ -885,6 +916,6 @@
     exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
-    saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, loadJsPDF: loadJsPDF, fileName: fileName
+    saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
   };
 })();

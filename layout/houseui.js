@@ -315,7 +315,7 @@
   function importPics(list, files, grey) {
     var chain = Promise.resolve(), extra = [];
     function one(blob, name) {
-      return (grey ? toGrey(blob) : Promise.resolve(blob)).then(function (b) {
+      return (grey ? LY.io.greyBlob(blob, true) : Promise.resolve(blob)).then(function (b) {
         try { b.name = name; } catch (e) { /* a File keeps its own name */ }
         return LY.A.importFile(b);
       }).then(function (res) { return { a: res.id, nm: String(name || res.name || "").slice(0, 120), iw: res.w, ih: res.h }; }, function () { return null; });
@@ -340,32 +340,6 @@
       for (var i = 0; i < raw.length; i++) u[i] = raw.charCodeAt(i);
       return new Blob([u], { type: m[1] || "image/png" });
     } catch (e) { return null; }
-  }
-  var GREY_SIDE = 4000;
-  // → Promise of a greyscale JPEG of the picture (white under clear parts)
-  function toGrey(blob) {
-    return new Promise(function (resolve, reject) {
-      var url = URL.createObjectURL(blob), img = new Image();
-      img.onload = function () {
-        URL.revokeObjectURL(url);
-        var w = img.naturalWidth || 1200, h = img.naturalHeight || 1200, k = Math.min(1, GREY_SIDE / Math.max(w, h));
-        var cv = document.createElement("canvas");
-        cv.width = Math.max(1, Math.round(w * k)); cv.height = Math.max(1, Math.round(h * k));
-        var ctx = cv.getContext("2d");
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, cv.width, cv.height);
-        ctx.drawImage(img, 0, 0, cv.width, cv.height);
-        var px = ctx.getImageData(0, 0, cv.width, cv.height), d = px.data;
-        for (var i = 0; i < d.length; i += 4) {
-          var y = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
-          d[i] = d[i + 1] = d[i + 2] = y;
-        }
-        ctx.putImageData(px, 0, 0);
-        cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, "image/jpeg", 0.92);
-      };
-      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("decode")); };
-      img.src = url;
-    });
   }
   // the series' answers with the Assistant's on top (LY-IN)
   function overSheet(base, over) {

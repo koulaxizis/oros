@@ -139,3 +139,108 @@ test("resolve: id first, then any language's name", () => {
   assert.equal(S.resolve(d.masters, "  a-master ").id, "ms-a");
   assert.equal(S.resolve(d.masters, ""), null);
 });
+
+// ---------- Q5: the Layout command catalog (pages, numbering, bleed,
+// fit, pictures, more of a style) ----------
+const IMG = "a".repeat(64) + ".jpg", IMG2 = "b".repeat(64) + ".png";
+function longDoc(paras) {
+  const d = M.newDoc({ name: "Book", pages: 2, facing: 1 }, 1000);
+  const pg = M.pagesInOrder(d);
+  const words = "Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore. ".repeat(6);
+  d.stories.push({ id: "st-l", m: 1000, paras: Array.from({ length: paras }, () => ({ ps: "ps-body", runs: [{ t: words }] })) });
+  d.items.push({ id: "it-l", m: 1000, t: "text", pg: pg[0].id, x: 40, y: 40, w: 300, h: 400, story: "st-l", seq: 1024, z: 1 });
+  d.items.push({ id: "it-p1", m: 1000, t: "img", pg: pg[0].id, x: 40, y: 500, w: 100, h: 80, a: IMG, fit: "fill", z: 2 });
+  d.items.push({ id: "it-p2", m: 1000, t: "img", pg: pg[1].id, x: 40, y: 40, w: 100, h: 80, a: IMG2, fit: "fill", z: 2 });
+  return M.normDoc(d);
+}
+function overset(d) { return !!R.computeLayout(M.normDoc(JSON.parse(JSON.stringify(d)))).overset["st-l"]; }
+
+test("Q5 style: bold, italic, capitals, spaces, indent, where it starts, hyphenation; -1 and \"\" leave them", () => {
+  const d = doc();
+  assert.equal(run(d, { op: "style", name: "ps-body", bold: "on", caps: "on", sb: 6, fi: 12, brk: "page", hyph: "on" }), 1);
+  const ps = d.pstyles.find((p) => p.id === "ps-body");
+  assert.equal(ps.b, 1); assert.equal(ps.caps, 1); assert.equal(ps.sb, 6); assert.equal(ps.fi, 12);
+  assert.equal(ps.ext.brk, "page"); assert.equal(ps.ext.hyph, 1);
+  assert.equal(ps.i, undefined, "italic left as it was");
+  assert.equal(run(d, { op: "style", name: "ps-body", bold: "on", caps: "on", sb: 6, fi: 12, brk: "page", hyph: "on" }, 3000), 0, "twice changes nothing more");
+  assert.equal(run(d, { op: "style", name: "ps-body", bold: "off", brk: "any", hyph: "off" }, 3000), 1);
+  assert.equal(ps.b, 0); assert.equal(ps.ext.brk, ""); assert.equal(ps.ext.hyph, 0); assert.equal(ps.sb, 6, "-1 leaves it");
+  assert.equal(C.normStep({ op: "style", name: "ps-body", brk: "nowhere" }, S.CATALOG).brk, "", "an unknown value is dropped");
+});
+
+test("Q5 pages: at the end, before / after a page, text runs on into them", () => {
+  const d = longDoc(12);
+  const ids = M.pagesInOrder(d).map((p) => p.id);
+  assert.equal(run(d, { op: "pages", n: 2, flow: false }), 2);
+  assert.equal(M.pagesInOrder(d).length, 4);
+  assert.deepEqual(M.pagesInOrder(d).slice(0, 2).map((p) => p.id), ids, "added at the end");
+  assert.equal(run(d, { op: "pages", n: 1, at: "before", page: 1, flow: false }), 1);
+  assert.notEqual(M.pagesInOrder(d)[0].id, ids[0], "a new first page");
+  assert.equal(run(d, { op: "pages", n: 1, at: "after", page: 2, flow: false }), 1);
+  assert.deepEqual(M.pagesInOrder(d).slice(1, 4).map((p) => ids.indexOf(p.id)), [0, -1, 1], "after the second page (the old first)");
+  assert.equal(M.pagesInOrder(d).length, 6);
+  // flow: the overflowing story runs on into the new pages
+  const e = longDoc(12);
+  assert.ok(overset(e));
+  const before = e.items.filter((it) => it.story === "st-l").length;
+  assert.equal(run(e, { op: "pages", n: 3 }), 3);
+  assert.equal(e.items.filter((it) => it.story === "st-l").length, before + 3, "a frame on each new page");
+  const L = R.computeLayout(M.normDoc(JSON.parse(JSON.stringify(e))));
+  const ch = M.chain(e, "st-l");
+  assert.ok((L.frames[ch[1].id].lines || []).length > 0, "the text runs on");
+});
+
+test("Q5 fit: as many pages as the text needs, none left empty; delpages with tombstones", () => {
+  const d = longDoc(30);
+  assert.ok(overset(d));
+  const added = run(d, { op: "fit" });
+  assert.ok(added > 0);
+  assert.ok(!overset(d), "everything fits");
+  const L = R.computeLayout(M.normDoc(JSON.parse(JSON.stringify(d))));
+  const frames = M.chain(d, "st-l");
+  assert.ok((L.frames[frames[frames.length - 1].id].lines || []).length > 0, "the last frame is not empty");
+  assert.equal(run(d, { op: "fit" }, 3000), 0, "twice changes nothing more");
+  // delpages: the pages and what is on them go, as tombstones
+  const n0 = M.pagesInOrder(d).length, gone = M.pagesInOrder(d)[1];
+  const onIt = d.items.filter((it) => it.pg === gone.id).map((it) => it.id);
+  assert.equal(run(d, { op: "delpages", first: 2 }, 4000), 1);
+  assert.equal(M.pagesInOrder(d).length, n0 - 1);
+  assert.ok(d.tombs[gone.id] >= 4000);
+  onIt.forEach((id) => { assert.ok(d.tombs[id] >= 4000); assert.ok(!d.items.some((it) => it.id === id)); });
+  assert.deepEqual(M.pagesInOrder(d).map((p) => p.pos), M.pagesInOrder(d).map((p, i) => (i + 1) * 1024));
+  assert.equal(run(d, { op: "delpages", first: 1, last: 9999 }, 5000), 0, "a document keeps one page");
+  assert.equal(run(d, { op: "delpages", first: 900 }, 5000), 0, "past the end: nothing");
+  assert.equal(C.normStep({ op: "delpages" }, S.CATALOG), null, "first is required");
+});
+
+test("Q5 numbering and bleed", () => {
+  const d = doc();
+  assert.equal(M.firstNumber(d), 1);
+  assert.equal(run(d, { op: "numbering", n: 5 }), 1);
+  assert.equal(M.firstNumber(d), 5);
+  assert.equal(run(d, { op: "numbering", mode: "shift", n: -2 }), 1);
+  assert.equal(M.firstNumber(d), 3);
+  assert.equal(run(d, { op: "numbering", n: 3 }), 0);
+  assert.equal(run(d, { op: "bleed", mm: 5 }), 1);
+  assert.ok(Math.abs(d.setup.bleed - 5 * MM) < 0.01);
+  assert.equal(run(d, { op: "bleed", mm: 5 }), 0);
+});
+
+test("Q5 pictures: pages as all / odd / even / positions, fit or fill, black and white copies", () => {
+  assert.ok(S.pageTest("")(7) && S.pageTest("odd")(3) && !S.pageTest("odd")(2) && S.pageTest("even")(2));
+  const r = S.pageTest(" 3-5, 9 ");
+  assert.deepEqual([2, 3, 5, 6, 9].map(r), [false, true, true, false, true]);
+  assert.equal(S.pageTest("first page"), null);
+  const d = longDoc(1);
+  assert.equal(run(d, { op: "imgfit", mode: "fit", pages: "2" }), 1);
+  assert.equal(d.items.find((it) => it.id === "it-p2").fit, "fit");
+  assert.equal(d.items.find((it) => it.id === "it-p1").fit, "fill");
+  assert.equal(run(d, { op: "imgfit", mode: "fit", pages: "nonsense" }), 0);
+  assert.deepEqual(S.greyAssets(d, { pages: "odd" }), [IMG]);
+  assert.deepEqual(S.greyAssets(d, { pages: "" }).sort(), [IMG, IMG2]);
+  const G = "c".repeat(64) + ".jpg";
+  assert.equal(S.apply(d, { op: "grey", pages: "" }, 2000, { grey: { [IMG]: G } }), 1, "only pictures with a copy change");
+  assert.equal(d.items.find((it) => it.id === "it-p1").a, G);
+  assert.equal(d.items.find((it) => it.id === "it-p2").a, IMG2);
+  assert.equal(S.apply(d, { op: "grey", pages: "" }, 2000), 0, "no copies, no change");
+});
