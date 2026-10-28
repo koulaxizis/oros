@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 4.16.00
 - Layout: Affinity files help a rebuild (experimental). Pick the document's .af file with its print PDF in `Rebuild a print PDF (with its pictures)…`: the original pictures stored in it are placed full size instead of the PDF's copies, its words join hyphenated line ends, and the report lists its styles and fonts. The Assistant takes an attached .af the same way.
 
+## Version 4.15.01
+- Desktop app: the small "Add or search" window from the tray opens in the middle of the screen at its own size, also when orOS is already open, and the main orOS window opens maximised (with the next release of the desktop app). The Windows setup can also install orOS Drive, whose tray icon is now a gold tile so it is not mistaken for orOS.
+
 ## Version 4.15.00
 - Assistant: it opens Scribus files in Layout. Attach a .sla with `For an app only…`, with its pictures and its print PDF if you have them, and ask it to open it in Layout: the card `Open in Layout` makes the document, and the Assistant hears how many pictures were placed and how many lines match the PDF.
 
