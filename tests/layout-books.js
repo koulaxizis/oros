@@ -59,7 +59,17 @@ function book(name, chapters, bodySize, opt) {
     paras.push({ ps: "ps-tb", runs: [{ t: words(50, c + 3) }] });
     if (c === chapters - 1) paras.push({ ps: "ps-nt", runs: [{ t: "A small note." }] });
     d.stories.push({ id: sid, m: 1, paras });
-    for (let k = 0; k < 3; k++) frame(page(), sid, k + 1);
+    for (let k = 0; k < 3; k++) {
+      const p = page();
+      frame(p, sid, k + 1);
+      // opt.pn: page numbers page by page (as a rebuilt print PDF has
+      // them) at the foot, centred, not on the page a chapter opens
+      if (opt.pn && k) {
+        const ns = M.newId("st");
+        d.stories.push({ id: ns, m: 1, paras: [{ ps: "ps-nt", runs: [{ f: "pn" }] }] });
+        d.items.push({ id: M.newId("it"), m: 1, t: "text", pg: p.id, x: d.setup.w / 2 - 30, y: d.setup.h - 30, w: 60, h: 16, story: ns, seq: 1, z: 9000 });
+      }
+    }
   }
   page();   // a colophon page at the back
   d.stories.push({ id: "st-back", m: 1, paras: [{ ps: "ps-nt", runs: [{ t: "Printed somewhere." }] }] });

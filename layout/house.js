@@ -71,6 +71,45 @@
     return best === null ? null : { v: JSON.parse(best), n: n[best], all: n };
   }
   function textOf(p) { return (p.runs || []).map(function (r) { return r.t || ""; }).join(""); }
+  // a scene break: a short line of stars, dots or an ornament, no words
+  var SEP_RE = /^[*\u00b7\u2022~#\u2042\u2731\u2736\u273b\u2726\u2766\u25c6\u25c7\u2756\u00a7_.\-\u2013\u2014\s]{1,20}$/;
+  function isSep(t) { t = String(t || "").trim(); return !!t && SEP_RE.test(t); }
+  // a story that is only page-number fields (LY-PN)
+  function pnOnly(st) {
+    var n = 0, ok = !!st;
+    (st ? st.paras : []).forEach(function (p) {
+      (p.runs || []).forEach(function (r) {
+        if (r.f === "pn") n++;
+        else if (r.f || String(r.t || "").trim()) ok = false;
+      });
+    });
+    return ok && n > 0;
+  }
+  // the page-number frames of an owner (page or master)
+  function pnItems(d, owner) {
+    return d.items.filter(function (it) { return it.t === "text" && it.pg === owner && pnOnly(M.find(d.stories, it.story)); });
+  }
+  // A copy of a master (its items and their stories) under a new id;
+  // keep(item) false leaves an item out. → the new master's id.
+  function cloneMaster(d, fromId, toId, name, pre, now, keep) {
+    var from = fromId && M.find(d.masters, fromId);
+    d.masters = d.masters.filter(function (x) { return x.id !== toId; });
+    d.masters.push({ id: toId, m: stamp(now), name: name, pre: pre });
+    var add = [], sts = [];
+    d.items.forEach(function (it) {
+      if (!from || it.pg !== from.id || (keep && !keep(it))) return;
+      var c = JSON.parse(JSON.stringify(it));
+      c.id = M.newId("it"); c.pg = toId; c.m = stamp(now);
+      if (c.t === "text") {
+        var st = M.find(d.stories, it.story);
+        if (st) { var sc = JSON.parse(JSON.stringify(st)); sc.id = M.newId("st"); sc.m = stamp(now); sts.push(sc); c.story = sc.id; }
+      }
+      add.push(c);
+    });
+    d.items = d.items.concat(add);
+    d.stories = d.stories.concat(sts);
+    return toId;
+  }
 
   // ---------- 1. One work: how its styles are used ----------
   // A paragraph's look: its paragraph style with the character style of
@@ -96,7 +135,7 @@
   function study(doc) {
     var psMap = T.byId(doc.pstyles), csMap = T.byId(doc.cstyles), use = {}, seq = [], looks = {};
     var L = R.computeLayout(doc), pages = M.pagesInOrder(doc), first = M.firstNumber(doc);
-    var pgIdx = {}, pageTop = {}, starts = {};
+    var pgIdx = {}, pageTop = {}, starts = {}, seps = {};
     pages.forEach(function (p, i) { pgIdx[p.id] = i; });
     // where each paragraph starts (page, top of its first line), and
     // the highest line on each page
@@ -122,10 +161,11 @@
         var lk = lookOf(p, psMap, csMap, looks);
         var u = use[lk] = use[lk] || { n: 0, chars: 0, short: 0 };
         if (t.trim()) { u.n++; u.chars += t.length; if (t.length <= 120) u.short++; }
+        if (isSep(t)) seps[t.trim()] = (seps[t.trim()] || 0) + 1;
         seq.push({ ps: lk, empty: !t.trim(), len: t.length, at: s ? pgIdx[s.pg] : -1, top: !!s && s.y <= pageTop[s.pg] + 0.5, y: s ? s.y : 0 });
       });
     });
-    var res = { doc: doc, setup: doc.setup, use: use, looks: looks, roles: roles(looks, use, seq) };
+    var res = { doc: doc, setup: doc.setup, use: use, looks: looks, roles: roles(looks, use, seq), seps: seps, pn: pnStudy(doc, pages) };
     // where the titles start
     // a title set apart only by its spacing (a rebuilt PDF gives each
     // spacing its own style) is a title too
@@ -135,7 +175,7 @@
       return k === title || (!!ta && r1(a.size) === r1(ta.size) && a.b === ta.b && a.i === ta.i && (a.fam || a.font) === (ta.fam || ta.font) && a.align === ta.align);
     };
     res.open = seq.filter(function (q) { return title && !q.empty && q.at >= 0 && asTitle(q.ps); })
-      .map(function (q) { return { no: q.at + first, top: q.top, sink: q.y - doc.setup.mt }; });
+      .map(function (q) { return { no: q.at + first, top: q.top, sink: q.y - doc.setup.mt, pn: !!res.pn.on[q.at] }; });
     // front matter: the pages before the first title; back matter:
     // the pages after the last body paragraph
     var body = res.roles.body;
@@ -155,6 +195,40 @@
     res.bodyMaster = ms ? ms.v : "";
     return res;
   }
+  // Page numbers (LY-IN): the frames of only page-number fields, on
+  // the pages or on their masters → { on: { page index: 1 }, geo: {
+  // side ("L" / "R" / ""): { x, y, w, h, ps } }, master: 1 when the
+  // masters carry them }
+  function pnStudy(doc, pages) {
+    var out = { on: {}, geo: {}, master: 0 }, seen = {};
+    pages.forEach(function (pg, i) {
+      var side = doc.setup.facing ? M.sideOf(doc, i) : "";
+      var own = pnItems(doc, pg.id), ms = M.masterItems(doc, pg, side || undefined).filter(function (it) { return it.t === "text" && pnOnly(M.find(doc.stories, it.story)); });
+      if (ms.length) out.master = 1;
+      own.concat(ms).forEach(function (it) {
+        out.on[i] = 1;
+        var st = M.find(doc.stories, it.story), k = side + "|" + Math.round(it.x) + "|" + Math.round(it.y);
+        seen[k] = seen[k] || { n: 0, side: side, g: { x: it.x, y: it.y, w: it.w, h: it.h, ps: st.paras[0].ps } };
+        seen[k].n++;
+      });
+    });
+    Object.keys(seen).forEach(function (k) {
+      var e = seen[k], have = out.geo[e.side];
+      if (!have || e.n > have.n) out.geo[e.side] = { n: e.n, g: e.g };
+    });
+    Object.keys(out.geo).forEach(function (sd) { out.geo[sd] = out.geo[sd].g; });
+    return out;
+  }
+  // Where a page number sits: foot or head, centre, outer or inner
+  // edge (of the right-hand page) → "footC", "headOut"…
+  function pnAt(geo, setup) {
+    var g = geo.R || geo[""] || geo.L;
+    if (!g) return "";
+    var cx = g.x + g.w / 2, foot = g.y + g.h / 2 > setup.h / 2;
+    var outer = g === geo.L ? cx < setup.w / 2 : cx > setup.w / 2;
+    return (foot ? "foot" : "head") + (Math.abs(cx - setup.w / 2) < setup.w * 0.08 ? "C" : outer ? "Out" : "In");
+  }
+
   // Roles from use: the body has the most characters; a title is
   // larger than the body (or bold where the body is not), short, and
   // the most used of those; and so on.
@@ -279,6 +353,18 @@
     var lastFront = -1;
     kept.forEach(function (p, i) { if (side[p.id] === "front") lastFront = i; });
     var bodyPage = { id: M.newId("pg"), m: d.m, pos: 0, ms: rep.bodyMaster || (order[0] && order[0].ms) || "", ext: { hs: "body" } };
+    // page numbers set page by page (a rebuilt print PDF) go onto a
+    // master of the body pages' own, so every new page has them
+    if (!rep.pn.master && Object.keys(rep.pn.geo).length) {
+      bodyPage.ms = cloneMaster(d, bodyPage.ms, "ms-hsbody", { en: "B-Master", el: "B-Master" }, "B", opts.now);
+      Object.keys(rep.pn.geo).forEach(function (sd) {
+        var g = rep.pn.geo[sd], sid = M.newId("st");
+        d.stories.push({ id: sid, m: stamp(opts.now), paras: [{ ps: g.ps, runs: [{ f: "pn" }] }] });
+        var it = { id: M.newId("it"), m: stamp(opts.now), t: "text", pg: "ms-hsbody", x: g.x, y: g.y, w: g.w, h: g.h, story: sid, seq: 1, z: 9000 };
+        if (sd) it.side = sd;
+        d.items.push(it);
+      });
+    }
     kept.splice(lastFront + 1, 0, bodyPage);
     kept.forEach(function (p, i) {
       p.pos = i + 1;
@@ -294,6 +380,16 @@
     d.setup.ext = d.setup.ext || {};
     var ro = styleRoles(d, rep, opts.names || {}, opts.now);
     d.setup.ext.house = { v: 1, from: S.length, roles: ro, rules: rules };
+    // page numbers (where; hidden on the pages a title opens) and the
+    // scene break the works use, for the book sheet (LY-IN)
+    var at = pnAt(rep.pn.geo, rep.setup), opens = 0, shown = 0, seps = {};
+    S.forEach(function (s) {
+      s.open.forEach(function (o) { if (o.top) { opens++; if (o.pn) shown++; } });
+      Object.keys(s.seps).forEach(function (k) { seps[k] = (seps[k] || 0) + s.seps[k]; });
+    });
+    if (at) d.setup.ext.house.pn = { at: at, hide: opens && shown < opens / 2 ? 1 : 0 };
+    var sep = Object.keys(seps).sort(function (a, b) { return seps[b] - seps[a] || (a < b ? -1 : 1); })[0];
+    if (sep) d.setup.ext.house.sep = sep.slice(0, 20);
     d.setup.ext.wmap = wmapOf(ro);
     apply(d);
     d = M.normDoc(d);
@@ -487,7 +583,10 @@
     return { paras: out, n: n };
   }
 
-  var api = { ROLES: ROLES, GREEK: GREEK, study: study, learn: learn, apply: apply, fixText: fixText, houseOf: houseOf, wmapOf: wmapOf };
+  var api = {
+    ROLES: ROLES, GREEK: GREEK, study: study, learn: learn, apply: apply, fixText: fixText, houseOf: houseOf, wmapOf: wmapOf,
+    isSep: isSep, pnOnly: pnOnly, pnItems: pnItems, cloneMaster: cloneMaster, pnAt: pnAt
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_HOUSE = api;
 })(typeof window !== "undefined" ? window : this);

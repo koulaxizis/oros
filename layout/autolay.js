@@ -29,15 +29,15 @@
 (function (root) {
   "use strict";
 
-  var M, T, R, H;
+  var M, T, R, H, I;
   if (typeof module !== "undefined" && module.exports) {
-    M = require("../designkit/model.js"); T = require("../designkit/text.js"); R = require("../designkit/render.js"); H = require("./house.js");
-  } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; H = root.LY_HOUSE; }
+    M = require("../designkit/model.js"); T = require("../designkit/text.js"); R = require("../designkit/render.js"); H = require("./house.js"); I = require("./intake.js");
+  } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; H = root.LY_HOUSE; I = root.LY_INTAKE; }
 
   // i18n-inline-ok: the Greek names a template may give its fields, data
   var FIELDS = {
     title: ["title", "τίτλος"], subtitle: ["subtitle", "υπότιτλος"], author: ["author", "συγγραφέας"],
-    isbn: ["isbn"], year: ["year", "έτος"], publisher: ["publisher", "εκδότης"]
+    isbn: ["isbn"], year: ["year", "έτος"], publisher: ["publisher", "εκδότης"], editor: ["editor", "επιμέλεια"]
   };
   var MAX_PASSES = 12, GUESS_LEN = 80, FRONT_MAX = 40;
   var TOC_TAIL = /(\t|\s{2,}|\.{3,}|…+|\s)(\d{1,4})\s*$/;
@@ -74,7 +74,7 @@
   // follows) is left out unless opts.keepFront: the house's is used.
   function structure(list, opts) {
     opts = opts || {};
-    var out = [], guessed = 0, dropped = 0, front = 0;
+    var out = [], guessed = 0, dropped = 0, front = 0, cut = [];
     list.forEach(function (p, i) {
       var t = textOf(p).trim(), empties = 0;
       for (var k = i - 1; k >= 0 && !list[k].runs.length; k--) empties++;
@@ -106,7 +106,8 @@
       var before = out.slice(0, Math.max(0, start)).filter(function (p) { return p.runs.length; });
       if (before.length > FRONT_MAX || before.some(function (p) { return textOf(p).length > 400; })) start = -1;
       if (start > 0) {
-        out.slice(0, start).forEach(function (p) { if (p.guessed) guessed--; if (p.runs.length) front++; });
+        cut = out.slice(0, start);
+        cut.forEach(function (p) { if (p.guessed) guessed--; if (p.runs.length) front++; });
         out = out.slice(start);
       }
     }
@@ -122,12 +123,15 @@
     });
     // two empty paragraphs in a row: one
     keep = keep.filter(function (p, i) { if (p.runs.length || !i || keep[i - 1].runs.length) return true; dropped++; return false; });
-    // the first paragraph after a title, again
-    keep.forEach(function (p, i) {
-      if (p.role === "p1" && i && keep[i - 1].runs.length && !/^h/.test(keep[i - 1].role)) p.role = "p";
-      if (p.role === "p" && i && /^h/.test(keep[i - 1].role)) p.role = "p1";
+    firstAgain(keep);
+    return { list: keep, guessed: guessed, dropped: dropped, front: front, cut: cut };
+  }
+  // the first paragraph after a title, again
+  function firstAgain(list) {
+    list.forEach(function (p, i) {
+      if (p.role === "p1" && i && list[i - 1].runs.length && !/^h/.test(list[i - 1].role)) p.role = "p";
+      if (p.role === "p" && i && /^h/.test(list[i - 1].role)) p.role = "p1";
     });
-    return { list: keep, guessed: guessed, dropped: dropped, front: front };
   }
 
   // ---------- 4. Flow ----------
@@ -183,18 +187,22 @@
 
   // ---------- 5. Contents ----------
   // The contents story (ext.hs "toc") made again from the titles
-  // (paragraphs in the title style) and their pages. Its first entry
+  // (paragraphs in the title style, the styles of parts and of the
+  // chapter after a part, LY-IN) and their pages. Its first entry
   // gives the look: its paragraph style, the text between title and
   // number, its runs' attributes. → entries, or -1 when there is none.
   function toc(d, L) {
     var h = H.houseOf(d), title = h && h.roles && h.roles.title;
-    var st = null;
+    var st = null, heads = {}, book = d.setup.ext && d.setup.ext.book;
     d.stories.forEach(function (s) { if (s.ext && s.ext.hs === "toc") st = s; });
     if (!st || !title) return -1;
+    heads[title] = 1;
+    if (M.find(d.pstyles, "ps-hsopen")) heads["ps-hsopen"] = 1;
+    ((book && Array.isArray(book.partPs)) ? book.partPs : []).forEach(function (id) { heads[id] = 1; });
     L = L || R.computeLayout(d);
     var tpl = null;
     st.paras.some(function (p) { var m = TOC_TAIL.exec(textOf(p)); if (m) { tpl = { p: p, sep: m[1] }; return true; } return false; });
-    var heads = st.paras.filter(function (p) { return !TOC_TAIL.test(textOf(p)); });
+    var plain = st.paras.filter(function (p) { return !TOC_TAIL.test(textOf(p)); });
     // the heading of the contents ("Contents") stays above the entries
     var before = [];
     for (var i = 0; i < st.paras.length && !TOC_TAIL.test(textOf(st.paras[i])); i++) before.push(st.paras[i]);
@@ -209,12 +217,12 @@
         (L.frames[f.id] || { lines: [] }).lines.forEach(function (ln) { if (at[ln.p] === undefined) at[ln.p] = pgIdx[f.pg]; });
       });
       s.paras.forEach(function (p, k) {
-        if (p.ps !== title || !textOf(p).trim() || at[k] === undefined) return;
+        if (!heads[p.ps] || !textOf(p).trim() || at[k] === undefined) return;
         entries.push({ t: textOf(p).replace(/\s+/g, " ").trim(), no: at[k] + first, k: at[k] });
       });
     });
     entries.sort(function (a, b) { return a.k - b.k; });
-    var ps = tpl ? tpl.p.ps : (heads[0] && heads[0].ps) || "ps-base", sep = tpl ? tpl.sep : "\t";
+    var ps = tpl ? tpl.p.ps : (plain[0] && plain[0].ps) || "ps-base", sep = tpl ? tpl.sep : "\t";
     var attrs = {};
     if (tpl && tpl.p.runs[0]) Object.keys(tpl.p.runs[0]).forEach(function (k) { if (k !== "t" && k !== "f") attrs[k] = tpl.p.runs[0][k]; });
     st.paras = before.concat(entries.map(function (e) {
@@ -228,21 +236,33 @@
 
   // ---------- Build ----------
   // house: a house style document; list: wordin paragraphs; meta: the
-  // book's details; opts { now, name, pictures (found in the file) }
+  // book's details; opts { now, name, pictures (found in the file),
+  // sheet (the book sheet, layout/intake.js), names (the new styles'
+  // names), tocHead (a new contents' heading) }
   function build(house, list, meta, opts) {
     opts = opts || {};
     meta = meta || {};
-    var h = H.houseOf(house);
-    if (!h) return null;
+    if (!H.houseOf(house)) return null;
     var now = opts.now || 1;
+    var s = structure(list || [], opts), mk = null;
+    // the book sheet: the manuscript's parts and sections, the house
+    // style with the answers
+    if (opts.sheet && I) {
+      var inf = I.info(house, s.list, s.cut);
+      mk = I.mark(s.list, opts.sheet, inf);
+      s.list = mk.list;
+      firstAgain(s.list);
+      house = I.prepare(house, opts.sheet, inf, { now: now, names: opts.names, tocHead: opts.tocHead });
+    }
+    var h = H.houseOf(house);
     var d = M.copyDoc(house, now);
     d.name = String(meta.title || opts.name || d.name).slice(0, 120);
     var filled = fillFields(d, meta);
-    var s = structure(list || [], opts);
     var map = H.wmapOf(h.roles), have = {};
     d.pstyles.forEach(function (x) { have[x.id] = 1; });
     var noStyle = {};
     var paras = s.list.map(function (p) {
+      if (p.ps && have[p.ps]) return { ps: p.ps, runs: p.runs };
       var id = map[p.role];
       var own = { h1: "title", h2: "subtitle", p1: "first", center: "center", quote: "quote" }[p.role];
       if (own && !h.roles[own] && p.runs.length) noStyle[p.role] = (noStyle[p.role] || 0) + 1;
@@ -254,8 +274,8 @@
     d = M.normDoc(d);
     var fl = flow(d, st.id, now);
     d = fl.doc;
-    var L = fl.L, n = toc(d, L);
-    if (n >= 0) { d = M.normDoc(d); L = R.computeLayout(d); }
+    var L = fl.L, n = toc(d, L), bare = I ? I.finish(d, L) : 0;
+    if (n >= 0 || bare) { d = M.normDoc(d); L = R.computeLayout(d); }
     // pages to check: stories overset here that were not already in
     // the house style (the contents too long, a field filled with a
     // long title, the text longer than the pages allow)
@@ -266,11 +286,12 @@
       var ch = M.chain(d, sid), last = ch[ch.length - 1];
       if (last) check.push({ page: order.map(function (p) { return p.id; }).indexOf(last.pg) + 1, why: sid === st.id ? "overset" : "oversetOther", id: last.id });
     });
-    var titles = fx.paras.filter(function (p) { return p.ps === h.roles.title; }).length;
+    var titles = fx.paras.filter(function (p) { return p.ps === h.roles.title || p.ps === "ps-hsopen"; }).length;
     var report = {
       pages: d.pages.length, body: fl.pages, titles: titles, guessed: s.guessed, dropped: s.dropped, front: s.front, fixes: fx.n,
       fields: filled, toc: n, noStyle: noStyle, pictures: opts.pictures || 0, check: check
     };
+    if (mk) { report.sheet = 1; report.moved = mk.moved; report.left = mk.dropped; report.bare = bare; }
     return { doc: d, report: report };
   }
 

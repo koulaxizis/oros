@@ -558,8 +558,11 @@
   // inherited like the rest: hyph 1 / 0 Greek hyphenation; orph, wid
   // (1-9) the fewest lines of a paragraph left at the foot of a
   // column and carried to the next; kwn 1 / 0 keep with the next
-  // paragraph; brk "col" | "page" | "odd" where the paragraph starts.
-  var BRK = { col: 1, page: 1, odd: 1 };
+  // paragraph; brk "col" | "page" | "odd" | "even" where the paragraph
+  // starts; sink (pt, 0-600) how far below the top of a column it
+  // starts when it opens the column (a chapter's sunk opening; sb is
+  // the space everywhere else).
+  var BRK = { col: 1, page: 1, odd: 1, even: 1 };
   function bookOf(s, out) {
     var x = s.ext;
     if (!x) return;
@@ -570,6 +573,7 @@
       if (x[k] !== undefined) out[k] = isFinite(v) ? Math.max(1, Math.min(9, v)) : 1;
     });
     if (x.brk !== undefined) out.brk = BRK[x.brk] ? x.brk : "";
+    if (x.sink !== undefined) { var k = Number(x.sink); out.sink = isFinite(k) ? Math.max(0, Math.min(600, k)) : 0; }
   }
   // A family of the document (ext.fam: "fs_…" Fontsource, "uf_…" a
   // font file of the user's) goes with the style's own `font`, which
@@ -904,12 +908,13 @@
       frames.forEach(function (f) { out.frames[f.id].lines.length = S.n[f.id]; });
     }
     function pageOf() { return (frames[fi].ctx || {}).pg; }
-    function oddPage() { var no = (frames[fi].ctx || {}).no; return typeof no !== "number" || Math.abs(no) % 2 === 1; }
+    // 1 odd, 0 even, -1 a page without a number (any side will do)
+    function parity() { var no = (frames[fi].ctx || {}).no; return typeof no !== "number" ? -1 : Math.abs(no) % 2; }
     // the paragraph starts in a new column, on a new page, or on an
-    // odd (right-hand) page; false = no frame is left
+    // odd (right-hand) or even (left-hand) page; false = no frame is left
     function startAt(brk) {
       if (brk === "col") return colTop || nextCol();
-      while ((lastPg !== null && pageOf() === lastPg) || (brk === "odd" && !oddPage())) if (!nextCol()) return false;
+      while ((lastPg !== null && pageOf() === lastPg) || (brk === "odd" && parity() === 0) || (brk === "even" && parity() === 1)) if (!nextCol()) return false;
       return true;
     }
     // a paragraph laid out → the lines per column it took, or null
@@ -945,6 +950,7 @@
     function layoutPara(toks, ps, opt) {
       var ti = 0, firstLine = true, done = 0;
       if (!colTop) y += ps.sb;          // ignored at the top of a column
+      else if (ps.sink) y += ps.sink;   // where a sunk opening starts
       var hangBul = null;
       if (toks.length && toks[0].k === "bul") {
         hangBul = toks.shift();
