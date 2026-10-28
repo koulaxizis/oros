@@ -11,9 +11,11 @@
 //     paragraphs (alignment, first-line indent, space before, leading,
 //     empty lines kept as empty paragraphs), and paragraphs with the
 //     same look share one paragraph style;
-//   - our fonts replace the PDF's: each style gets the tracking that
-//     keeps its lines as wide as they were, so lines break where they
-//     did;
+//   - the PDF's fonts: the same family from the fonts on the orOS
+//     disk or from Fontsource when one has its name (opts.fonts, see
+//     open), with no tracking added; for the others our fonts stand in
+//     and each style gets the tracking that keeps its lines as wide as
+//     they were, so lines break where they did;
 //   - text beside a picture wraps around it; a caption beside the text
 //     is its own frame; page numbers are their own small frames;
 //   - every picture is its own frame; when one of the original files
@@ -156,7 +158,7 @@
 
   // ---------- 3. Tracking that keeps the PDF's widths ----------
   // Measured on lines that were not stretched by justification.
-  function tracks(pagesLines, meas, sideOf) {
+  function tracks(pagesLines, meas, sideOf, fonts) {
     var acc = {};
     pagesLines.forEach(function (ls, i) {
       var A = sideOf(i) === "L" ? meas.L : meas.R;
@@ -174,7 +176,7 @@
     Object.keys(acc).forEach(function (k) {
       var a = acc[k], tr = a.em ? Math.round((a.pdf - a.ours) / a.em * 1000) : 0;
       // the same font as ours: nothing to make up for
-      out[k] = /^noto/i.test(k) ? 0 : tr + TRACK_ADJ;
+      out[k] = /^noto/i.test(k) || fonts[k] ? 0 : tr + TRACK_ADJ;
     });
     return out;
   }
@@ -185,7 +187,9 @@
   //   nm, original }], bg: { a, iw, ih } | null }] }
   // opts: { now, name, lang: "el" | "en", words: { word: 1 } (spelt as
   //   in the originals: a hyphen at a line end is dropped when the word
-  //   without it is one of them or appears elsewhere in the PDF) }
+  //   without it is one of them or appears elsewhere in the PDF),
+  //   fonts: { PDF font name: { id, name, fb } } (families already
+  //   registered and loaded in designkit/text.js) }
   // → { doc, report }
   var NAMES = {
     en: { body: "Body text", pn: "Page number", al: { j: "justified", l: "left", c: "centre", r: "right" }, b: "bold", i: "italic", fi: "indent", sb: "above" },
@@ -200,10 +204,24 @@
     var now = opts.now || 1, W = src.w, H = src.h, N = NAMES[opts.lang === "el" ? "el" : "en"];
     var pagesIn = src.pages.slice(0, MAX_PAGES);
     if (!pagesIn.length) return null;
+    var FONTS = opts.fonts || {}, famUsed = {};
+    pagesIn.forEach(function (p) {
+      (p.spans || []).forEach(function (s) {
+        var e = s.font && FONTS[s.font];
+        if (e) { s.fam = e.id; famUsed[e.id] = e; }
+      });
+    });
+    // a style's font: a matched family by its id, ours as the stand-in
+    var fbOf = {};
+    Object.keys(famUsed).forEach(function (id) { fbOf[id] = famUsed[id].fb; });
+    function fontOf(st, fam) {
+      if (fbOf[fam]) { st.font = fbOf[fam]; st.ext = { fam: fam }; } else st.font = fam;
+      return st;
+    }
     var pagesLines = pagesIn.map(function (p) { return toLines(p.spans || []); });
     var meas = measure(pagesLines, W, H);
     var sideOf = function (i) { return meas.facing ? (i % 2 === 0 ? "R" : "L") : "R"; };
-    var TRACK = tracks(pagesLines, meas, sideOf);
+    var TRACK = tracks(pagesLines, meas, sideOf, FONTS);
     var trackOf = function (s) { var k = s.font || keyOf(s.fam, s.b, s.i); return TRACK[k] !== undefined ? TRACK[k] : 0; };
 
     // words for joining hyphenated line ends: the originals, else the PDF itself
@@ -475,7 +493,7 @@
     list.sort(function (a, b) { return b.n - a.n; });
     var base = doc.pstyles.filter(function (s) { return s.id === "ps-base"; })[0];
     doc.pstyles = [base];
-    if (list.length) { base.font = list[0].fam; base.size = list[0].size; base.lead = list[0].lead; base.track = list[0].track; }
+    if (list.length) { fontOf(base, list[0].fam); base.size = list[0].size; base.lead = list[0].lead; base.track = list[0].track; }
     var taken = {};
     list.forEach(function (s, k) {
       var nm = k === 0 ? N.body : s.size + "/" + Math.round(s.lead * 10) / 10 + " " + N.al[s.align] + (s.b ? " " + N.b : "") + (s.i ? " " + N.i : "") +
@@ -483,8 +501,8 @@
       while (taken[nm]) nm += "′";
       taken[nm] = 1;
       s.id = "ps-rb" + (k + 1).toString(36);
-      doc.pstyles.push({ id: s.id, m: now, name: nm, base: "ps-base", font: s.fam, size: s.size, lead: s.lead, align: s.align,
-        fi: s.fi, sb: s.sb, sa: 0, b: s.b, i: s.i, track: s.track, color: s.color });
+      doc.pstyles.push(fontOf({ id: s.id, m: now, name: nm, base: "ps-base", size: s.size, lead: s.lead, align: s.align,
+        fi: s.fi, sb: s.sb, sa: 0, b: s.b, i: s.i, track: s.track, color: s.color }, s.fam));
     });
     var pnStyle = null;
     doc.cstyles = [];
@@ -504,7 +522,7 @@
         var ps = p.ps, id;
         if (ps.pn) {
           if (!pnStyle) {
-            pnStyle = { id: "ps-rbpn", m: now, name: N.pn, base: "ps-base", font: ps.fam, size: ps.size, lead: r3(ps.size * 1.2), align: "c", b: ps.b, i: ps.i, track: ps.track, color: ps.color, fi: 0, sb: 0, sa: 0 };
+            pnStyle = fontOf({ id: "ps-rbpn", m: now, name: N.pn, base: "ps-base", size: ps.size, lead: r3(ps.size * 1.2), align: "c", b: ps.b, i: ps.i, track: ps.track, color: ps.color, fi: 0, sb: 0, sa: 0 }, ps.fam);
             doc.pstyles.push(pnStyle);
           }
           id = pnStyle.id;
@@ -512,7 +530,7 @@
         else {
           // rotated text: a style of its own
           id = "ps-rbt" + doc.pstyles.length.toString(36);
-          doc.pstyles.push({ id: id, m: now, name: ps.size + "/" + r3(ps.lead) + " ↻", base: "ps-base", font: ps.fam, size: r3(ps.size), lead: r3(ps.lead), align: ps.align, b: ps.b, i: ps.i, track: ps.track, color: ps.color, fi: 0, sb: 0, sa: 0 });
+          doc.pstyles.push(fontOf({ id: id, m: now, name: ps.size + "/" + r3(ps.lead) + " ↻", base: "ps-base", size: r3(ps.size), lead: r3(ps.lead), align: ps.align, b: ps.b, i: ps.i, track: ps.track, color: ps.color, fi: 0, sb: 0, sa: 0 }, ps.fam));
         }
         return { ps: id, runs: p.runs.map(function (r) {
           var o = { t: r.t };
@@ -528,6 +546,8 @@
     doc.setup.mb = Math.max(0, mode(bot0) || 0);
     doc.stories = stories;
     doc.items = items.slice(0, M.MAX_ITEMS);
+    var used = Object.keys(famUsed).map(function (id) { return famUsed[id]; });
+    if (used.length) { doc.setup.ext = doc.setup.ext || {}; doc.setup.ext.fonts = used; }
     var nd = M.normDoc(doc);
 
     // ---------- 6. Check: does every line land where it was? ----------
@@ -546,7 +566,7 @@
     });
     report.check = { lines: total, inPlace: total - moved, moved: moved, extra: extra, overset: Object.keys(L.overset || {}).length };
     report.styles = list.length;
-    report.fonts = Object.keys(TRACK).map(function (k) { return { font: k, track: TRACK[k] }; });
+    report.fonts = Object.keys(TRACK).map(function (k) { var o = { font: k, track: TRACK[k] }; if (FONTS[k]) o.as = FONTS[k].name; return o; });
     return { doc: nd, report: report };
   }
 
@@ -684,7 +704,8 @@
   }
 
   // buf: the PDF (ArrayBuffer); sources: Files (pictures; .txt / .md /
-  // .html for the words); opts: { now, name, lang, cancelled() };
+  // .html for the words); opts: { now, name, lang, cancelled(),
+  // matchFonts(names) → Promise of { name: entry } (build's opts.fonts) };
   // store(blob) → Promise of { id, w, h } (the asset store);
   // progress(done, total) → Promise of { doc, report } or null.
   function open(buf, sources, opts, store, progress) {
@@ -823,7 +844,12 @@
           });
         })(k);
         return chain.then(function () {
-          var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, words: words });
+          // the PDF's fonts by name, when the caller can find them (opts.matchFonts)
+          var names = {};
+          pages.forEach(function (p) { p.spans.forEach(function (s) { if (s.font) names[s.font] = 1; }); });
+          return opts.matchFonts ? opts.matchFonts(Object.keys(names)).then(null, function () { return {}; }) : {};
+        }).then(function (fonts) {
+          var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, words: words, fonts: fonts });
           if (out) { out.report.total = pdf.numPages; out.report.cut = pdf.numPages > n; out.report.sources = cands.length; }
           pdf.destroy();
           return out;

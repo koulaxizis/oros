@@ -310,7 +310,7 @@
     lines.forEach(function (ln) {
       ln.runs.forEach(function (r) {
         if (!r.t) return;
-        ctx.font = r.size + "px " + T.cssFamily(r.key);
+        ctx.font = r.size + "px " + T.cssStack(r.key);
         ctx.fillStyle = rgba(doc, r.color) || "#000";
         if (r.track) {
           var x = r.x;

@@ -2217,8 +2217,10 @@
     var o = { pages: n(rep.pages), lines: n(c.lines), inPlace: n(c.inPlace), pictures: n(rep.pictures), originals: n(rep.originals), styles: n(rep.styles) };
     o.percent = o.lines ? Math.floor(o.inPlace / o.lines * 1000) / 10 : 100;
     if (rep.numberStart !== null && rep.numberStart !== undefined && isFinite(Number(rep.numberStart))) o.firstPageNumber = Math.floor(Number(rep.numberStart));
-    o.fontsReplaced = (Array.isArray(rep.fonts) ? rep.fonts : []).filter(function (f) { return isObj(f) && typeof f.font === "string" && !/^noto/i.test(f.font); })
-      .slice(0, 20).map(function (f) { return str(f.font, 60); });
+    var fl = (Array.isArray(rep.fonts) ? rep.fonts : []).filter(function (f) { return isObj(f) && typeof f.font === "string"; });
+    o.fontsReplaced = fl.filter(function (f) { return !f.as && !/^noto/i.test(f.font); }).slice(0, 20).map(function (f) { return str(f.font, 60); });
+    var same = fl.filter(function (f) { return typeof f.as === "string"; }).slice(0, 20).map(function (f) { return str(f.font, 60); });
+    if (same.length) o.fontsSame = same;
     o.pagesToCheck = (Array.isArray(rep.framesOff) ? rep.framesOff : []).filter(isObj).slice(0, 60).map(function (x) {
       return { page: n(x.page), lines: Math.max(n(x.moved), Math.abs(n(x.got) - n(x.want))) };
     });

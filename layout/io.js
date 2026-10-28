@@ -18,7 +18,7 @@
 (function () {
   "use strict";
 
-  var LY = window.LY, M = LY.M, T = LY.T, P = LY.P, A = LY.A, t = LY.t;
+  var LY = window.LY, M = LY.M, T = LY.T, P = LY.P, A = LY.A, F = LY.F, t = LY.t;
   var ED = LY.ed, el = LY.el;
   var PKG_KIND = "oros-layout-package", PKG_VER = 1;
   var PKG_MAX = 300 * 1024 * 1024, TXT_MAX = 2 * 1024 * 1024;
@@ -190,6 +190,18 @@
     doc.items.forEach(function (it) { if (it.t === "img" && it.a) ids[it.a] = 1; });
     return Object.keys(ids).sort();
   }
+  // The font files of the user's families the styles use (LY-FONT):
+  // they travel in the package, so the document looks the same on a
+  // device that never had them.
+  function fontFiles(doc) {
+    var used = {}, out = {};
+    F.famsUsed(doc).forEach(function (id) { used[id] = 1; });
+    F.docFonts(doc).forEach(function (e) {
+      if (!used[e.id]) return;
+      ["r", "b", "i", "bi"].forEach(function (v) { if (e[v]) out[e[v]] = 1; });
+    });
+    return Object.keys(out).sort();
+  }
 
   // .oroslayout = an orOS bundle (bundle.js, docs/oros-bundle.md): a
   // ZIP with content.json (the package without its assets), media/<id>
@@ -213,6 +225,9 @@
     var media = {}, chain = Promise.resolve();
     assetIds(doc).forEach(function (id) {
       chain = chain.then(function () { return A.blob(id); }).then(function (b) { if (b) media[id] = b; });
+    });
+    fontFiles(doc).forEach(function (name) {
+      chain = chain.then(function () { return F.blob(name); }).then(function (b) { if (b) media[name] = b; });
     });
     chain.then(function () { return thumbOf(doc); }).then(function (thumb) {
       return window.OrosBundle.write({
@@ -298,7 +313,7 @@
       doc.id = M.newId("doc");
       doc.m = LY.now();
       var assets = pkg.assets && typeof pkg.assets === "object" ? pkg.assets : {};
-      var failed = 0, chain = Promise.resolve();
+      var failed = 0, fontsFailed = 0, chain = Promise.resolve();
       assetIds(doc).forEach(function (id) {
         var b64 = assets[id];
         if (!(typeof b64 === "string" || b64 instanceof Uint8Array) || !A.ID_RE.test(id)) { failed++; return; }
@@ -307,9 +322,17 @@
           return A.put(id, typeof b64 === "string" ? b64ToBlob(b64, type) : new Blob([b64], { type: type }));
         }).then(null, function () { failed++; });
       });
+      // a font missing from the package may already be on this disk
+      fontFiles(doc).forEach(function (name) {
+        var b = assets[name];
+        chain = chain.then(function () {
+          if (b instanceof Uint8Array || typeof b === "string") return F.put(name, typeof b === "string" ? b64ToBlob(b, "font/ttf") : new Blob([b], { type: "font/ttf" }));
+          return F.blob(name).then(function (have) { if (!have) throw new Error("nofont"); });
+        }).then(null, function () { fontsFailed++; });
+      });
       return chain.then(function () {
         LY.addDoc(doc);
-        LY.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
+        LY.toast(failed ? t("imp.imgFail", { n: failed }) : fontsFailed ? t("imp.fontFail", { n: fontsFailed }) : t("imp.done"));
       });
     }).then(null, function () { LY.toast(t("imp.bad")); });
   }
@@ -333,7 +356,9 @@
       if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
       try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
-      return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }));
+      return useSrcFonts(res.doc).then(function () {
+        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }));
+      });
     }).then(null, function () { LY.toast(t("sla.bad")); });
   }
   function importIdml(f) {
@@ -397,7 +422,7 @@
     var stop = false;
     LY.toast(t("rb.start", { n: sources.length }), t("btn.cancel"), function () { stop = true; });
     return pdf.arrayBuffer().then(function (buf) {
-      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, cancelled: function () { return stop; } }, A.importFile, function (k, n) {
+      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
         LY.toast(t("rb.working", { n: k, t: n }), t("btn.cancel"), function () { stop = true; });
       });
     }).then(function (res) {
@@ -410,6 +435,42 @@
       return res.report;
     }, function (e) { rebuilding = false; throw e; });
   }
+  // Font names from a PDF or another program's file → the same families
+  // on the orOS disk or at Fontsource, loaded (LY-FONT); a family that
+  // does not load is left out, so our fonts stand in for it.
+  function matchFonts(names) {
+    return F.library().then(function (lib) {
+      var out = {}, chain = Promise.resolve();
+      names.slice(0, 60).forEach(function (nm) {
+        chain = chain.then(function () { return F.match(nm, lib, { offline: navigator.onLine === false }); }).then(function (e) { if (e) out[nm] = e; });
+      });
+      return chain.then(function () {
+        var list = Object.keys(out).map(function (k) { return out[k]; });
+        var keys = F.register({ setup: { ext: { fonts: list } }, pstyles: list.map(function (e) { return { ext: { fam: e.id } }; }), cstyles: [] });
+        return T.load(keys).then(null, function () {}).then(function () {
+          Object.keys(out).forEach(function (k) { if (!T.isLoaded(out[k].id + "-r")) delete out[k]; });
+          return out;
+        });
+      });
+    });
+  }
+  // Styles that name their font (ext.srcFont, from another program's
+  // file) get that family when it is found; nothing changes otherwise.
+  function useSrcFonts(doc) {
+    var styles = doc.pstyles.concat(doc.cstyles), names = {};
+    styles.forEach(function (s) { if (s.ext && typeof s.ext.srcFont === "string") names[s.ext.srcFont] = 1; });
+    if (!Object.keys(names).length) return Promise.resolve();
+    return matchFonts(Object.keys(names)).then(function (found) {
+      var list = F.docFonts(doc);
+      styles.forEach(function (s) {
+        var e = s.ext && found[s.ext.srcFont];
+        if (!e) return;
+        s.ext.fam = e.id; s.font = e.fb;
+        list = F.withEntry(list, e);
+      });
+      if (list.length) { doc.setup.ext = doc.setup.ext || {}; doc.setup.ext.fonts = list; }
+    }, function () {});
+  }
   function reportDlg(rep, chat) {
     var c = rep.check || { lines: 0, inPlace: 0 };
     var pct = c.lines ? Math.floor(c.inPlace / c.lines * 1000) / 10 : 100;
@@ -419,7 +480,10 @@
       p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
       p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
       p(t("rb.styles", { n: rep.styles }));
-      var fonts = (rep.fonts || []).filter(function (f) { return f.font && !/^noto/i.test(f.font); }).map(function (f) { return f.font; });
+      var fonts = (rep.fonts || []).filter(function (f) { return f.font && !f.as && !/^noto/i.test(f.font); }).map(function (f) { return f.font; });
+      var same = {};
+      (rep.fonts || []).forEach(function (f) { if (f.as) same[f.as] = 1; });
+      if (Object.keys(same).length) p(t("rb.fontsSame", { f: Object.keys(same).join(", ") }), "hint");
       if (fonts.length) p(t("rb.fonts", { f: fonts.join(", ") }), "hint");
       if (rep.numberStart !== null && rep.numberStart !== 1) p(t("rb.numbers", { n: rep.numberStart }), "hint");
       if (rep.cut) p(t("pdf.cut", { n: rep.pages, t: rep.total }), "hint");

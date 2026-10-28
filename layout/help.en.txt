@@ -29,6 +29,7 @@ A picture sent from another app with `Send to…` (for example from [Files](app:
 ## Pages, masters, styles and colours
 - `Pages`: add, duplicate, delete and reorder pages, and manage `Masters`. Anything on a master appears on every page that uses it; `Edit master` opens it. To change master objects on one page only, use `Detach master objects here` (or right-click one for `Detach this master object`); `Reset to master` undoes it.
 - `Styles`: paragraph and character styles with font, size, leading, alignment, spacing and colour. A style can be `Based on` another.
+- More fonts: in a style's `Font` pick `Other fonts…`. `Free fonts` searches the open-licence Fontsource collection (tick `Only fonts with Greek` for Greek text); `Add a font file…` takes your own TTF, OTF or WOFF and keeps it in Files › Fonts, where it syncs like any file. A font is downloaded once, then works offline; it is embedded in the PDF, and a package (`.oroslayout`) carries your own font files. Fonts with PostScript (CFF) outlines, WOFF2 files and fonts whose licence forbids embedding cannot be added yet. Until a font is on the device, Noto stands in.
 - `Colours`: your `Swatches`, in RGB or CMYK. CMYK looks approximate on screen, but the PDF gets the exact values.
 
 ## Preflight and export
@@ -66,13 +67,13 @@ Steps you set once and run again and again, on the open document or on all docum
 - PDF files, for example from Affinity Publisher: the text becomes editable frames, every picture becomes its own image frame, and drawings and backgrounds become one locked picture per page behind everything.
 - SVG files, for example from Affinity Publisher or Designer (File, Export, SVG; leave text as text, not curves): shapes, gradients, text and embedded pictures. Pick several SVG files at once to get one document with a page per file, in file-name order.
 
-Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables, text on a path and mesh or pattern fills become simple boxes or plain colours; the message after opening says how many.
+The fonts a Scribus file names are looked for by name, first among your font files, then among the free fonts; a style whose font is not found keeps the closest Noto font. Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables, text on a path and mesh or pattern fills become simple boxes or plain colours; the message after opening says how many.
 
 ## Rebuild a printed book or magazine
 `Open file` › `Rebuild a print PDF (with its pictures)…` turns the PDF you sent to the printer back into a Layout document you can edit, with every line where it was. Pick the PDF and, if you have them, the original pictures and the text (.txt, .md or .html) in the same go.
 - The page size, bleed, facing pages, margins and paragraph styles are read from the PDF. The text becomes text frames, one story per page, with a `Body text` style and others named after their size.
 - A picture that matches one of your originals uses the original file; the rest come from the PDF. Drawings, textures and pictures under a mask or blend become one locked picture per page, behind everything.
-- Your PDF's fonts are replaced with orOS fonts, with tracking that keeps each line as wide. Page numbers become their own text frames.
+- Each of your PDF's fonts is looked for by name among your font files and the free fonts: one that is found is used as it is. The others are replaced with orOS fonts, with tracking that keeps each line as wide. For the closest result, add the book's fonts with `Add a font file…` before you rebuild. Page numbers become their own text frames.
 - At the end a report says how many lines are where they were, which pictures are originals, and lists the pages where lines moved: press a page to go there and check it before you print.
 - The [Assistant](app:assistant) can do the same: attach the PDF with `For an app only…` and ask it to rebuild it in Layout. The report then has `Back to the Assistant`, and the Assistant can change styles for you through an automation and show you a page.
 
