@@ -523,7 +523,7 @@ orosPack("de", "assistant", {
  "rb.next": "Das Dokument ist in Layout. Sag mir, was ich ändern soll, zum Beispiel die Größe des Fließtexts oder ein Format.",
  "rb.noSrc": "Ohne Originaldateien: Die Bilder kommen aus dem PDF.",
  "rb.pics": "{n} Bilder, davon {o} aus deinen Originaldateien.",
- "rb.src": "Mit {n} Originaldateien (Bilder und Texte).",
+ "rb.src": "Mit {n} Originaldateien (Bilder, Texte, Affinity-Datei).",
  "rb.styles": "{n} Absatzformate.",
  "rb.working": "{app} stellt es auf diesem Gerät wieder her…",
  "rb.slaFailed": "{app} konnte diese Scribus-Datei nicht öffnen. Es wurde nichts erstellt.",

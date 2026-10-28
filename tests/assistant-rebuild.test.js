@@ -72,7 +72,7 @@ test("rebuild_in_layout: the PDF by name, every attached picture and text by def
   const r = C.normRebuild({ pdf: "issue 4" }, FILES);
   assert.equal(r.ok, true);
   assert.deepEqual(r.pdf, { id: "a8", name: "Issue 4 print.pdf" });
-  assert.deepEqual(r.src, [{ id: "a9", name: "notes.txt" }, { id: "a7", name: "cover.jpg" }], "kept pictures and texts, not the .af or a file that is gone");
+  assert.deepEqual(r.src, [{ id: "a9", name: "notes.txt" }, { id: "a7", name: "cover.jpg" }, { id: "a6", name: "issue.af" }], "kept pictures, texts and the .af (LY-AF), not a file that is gone");
   assert.equal(r.folder, "");
   const named = C.normRebuild({ pdf: "Issue 4 print.pdf", sources: ["cover.jpg"], folder: "/internal/Pictures/Issue 4/" }, FILES);
   assert.deepEqual(named.src, [{ id: "a7", name: "cover.jpg" }]);
@@ -85,7 +85,8 @@ test("rebuild_in_layout: refusals the model can act on", () => {
   assert.match(C.normRebuild({ pdf: "cover.jpg" }, FILES).err, /is not a PDF/);
   assert.match(C.normRebuild({ pdf: "x.pdf" }, FILES).err, /no attached file is called “x\.pdf”\. Attached: notes\.txt/);
   assert.match(C.normRebuild({}, []).err, /pdf is empty.*attached no file/);
-  assert.match(C.normRebuild({ pdf: "issue 4", sources: ["old.png", "issue.af"] }, FILES).err, /not attached pictures or texts.*old\.png, issue\.af/);
+  assert.match(C.normRebuild({ pdf: "issue 4", sources: ["old.png", "notes.txt", "Contract.pdf"] }, FILES).err, /not attached pictures, texts or \.af files.*old\.png, Contract\.pdf/);
+  assert.deepEqual(C.normRebuild({ pdf: "issue 4", sources: ["issue.af"] }, FILES).src, [{ id: "a6", name: "issue.af" }]);
   assert.match(C.normRebuild({ pdf: "issue 4", folder: "/etc" }, FILES).err, /folder must be a folder on the orOS disk/);
   assert.match(C.normRebuild({ pdf: "issue 4", folder: "/internal/../x" }, FILES).err, /folder must be/);
   assert.match(C.normRebuild({ pdf: "/internal/a.txt" }, []).err, /pdf must be a PDF/);
@@ -109,6 +110,7 @@ test("rebuild_in_layout: a Scribus file, with its print PDF and pictures or alon
   assert.deepEqual(C.rebuildReport({ sla: 1, pages: 1, items: 1, placed: 0, missing: 0, fit: null }), { kind: "sla", pages: 1, objects: 1, picturesPlaced: 0, picturesMissing: 0, simplified: 0 });
   const sp = C.systemPrompt({ lang: "en", now: Date.now(), apps: ["Layout (layout)"], files: "pdf", rebuild: true });
   assert.match(sp, /a Scribus file \(\.sla\) opens in Layout through rebuild_in_layout with sla/);
+  assert.match(sp, /an Affinity file \(\.af\) goes in sources next to its print PDF/);
 });
 
 test("rebuild report: only numbers and font names reach the model", () => {
@@ -124,6 +126,9 @@ test("rebuild report: only numbers and font names reach the model", () => {
     fontsReplaced: ["FreeSerif"], pagesToCheck: [{ page: 8, lines: 3 }, { page: 17, lines: 1 }], pdfPages: 102
   });
   assert.equal(C.rebuildReport(null), null);
+  // the Affinity file's part: counts only, never its style or font names
+  assert.deepEqual(C.rebuildReport({ check: {}, af: { pictures: 14, styles: ["Body", "secret"], fonts: ["F"], problems: [] } }).affinity, { read: true, pictures: 14, styles: 2 });
+  assert.deepEqual(C.rebuildReport({ check: {}, af: { failed: 1 } }).affinity, { read: false });
   assert.equal(C.rebuildReport({ check: {} }).percent, 100);
 });
 

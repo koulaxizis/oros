@@ -72,6 +72,7 @@ The fonts a Scribus file names are looked for by name, first among your font fil
 
 ## Rebuild a printed book or magazine
 `Open file` › `Rebuild a print PDF (with its pictures)…` turns the PDF you sent to the printer back into a Layout document you can edit, with every line where it was. Pick the PDF and, if you have them, the original pictures and the text (.txt, .md or .html) in the same go.
+- Made in Affinity? Pick the document's `.af` file with the PDF (experimental). Its original pictures, full size, are placed instead of the PDF's copies, its words join hyphenated line ends, and the report names its styles and fonts. Only the content is read from it; the page layout always comes from the PDF.
 - The page size, bleed, facing pages, margins and paragraph styles are read from the PDF. The text becomes text frames, one story per page, with a `Body text` style and others named after their size.
 - A picture that matches one of your originals uses the original file; the rest come from the PDF. Drawings, textures and pictures under a mask or blend become one locked picture per page, behind everything.
 - Each of your PDF's fonts is looked for by name among your font files and the free fonts: one that is found is used as it is. The others are replaced with orOS fonts, with tracking that keeps each line as wide. For the closest result, add the book's fonts with `Add a font file…` before you rebuild. Page numbers become their own text frames.

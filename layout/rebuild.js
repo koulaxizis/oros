@@ -583,18 +583,23 @@
     return { doc: nd, report: report };
   }
 
-  // ---------- 7. Browser: PDF.js + pdf-lib ----------
-  var PDFLIB = "../vendor/pdf-lib/pdf-lib.min.js";
-  function loadPdfLib() {
-    if (root.PDFLib) return Promise.resolve(root.PDFLib);
+  // ---------- 7. Browser: PDF.js + pdf-lib, the .af reader ----------
+  var PDFLIB = "../vendor/pdf-lib/pdf-lib.min.js", MAX_AF = 1024 * 1024 * 1024;
+  function script(src, name) {
+    if (root[name]) return Promise.resolve(root[name]);
     return new Promise(function (res, rej) {
       var s = document.createElement("script");
-      s.src = PDFLIB;
-      s.onload = function () { if (root.PDFLib) res(root.PDFLib); else rej(new Error("pdf-lib")); };
-      s.onerror = function () { rej(new Error("pdf-lib")); };
+      s.src = src;
+      s.onload = function () { if (root[name]) res(root[name]); else rej(new Error(name)); };
+      s.onerror = function () { rej(new Error(name)); };
       document.head.appendChild(s);
     });
   }
+  // layout/afread.js and vendor/fzstd (MIT), loaded on first use
+  function loadAf() {
+    return script("../vendor/fzstd/fzstd.umd.js", "fzstd").then(function () { return script("afread.js", "LY_AF"); });
+  }
+  function loadPdfLib() { return script(PDFLIB, "PDFLib"); }
   // per page { media, trim, bleed } in PDF user space ([x, y, w, h]);
   // null when pdf-lib cannot read the file (the page is then the PDF's own)
   function pageBoxes(bytes) {
@@ -723,16 +728,33 @@
   // progress(done, total) → Promise of { doc, report } or null.
   function open(buf, sources, opts, store, progress) {
     opts = opts || {};
-    var cands = [], words = {};
+    var cands = [], words = {}, af = null;
     sources = (sources || []).slice(0, MAX_SOURCES);
     var prep = Promise.resolve();
+    function addCand(f) {
+      return decode(f).then(function (img) {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (w && h) cands.push({ file: f, w: w, h: h, ar: w / h, th: thumb(img, w, h) });
+      }, function () {});
+    }
     sources.forEach(function (f) {
       prep = prep.then(function () {
-        if (/^image\//.test(f.type || "") || /\.(jpe?g|png|webp|gif|bmp|tiff?)$/i.test(f.name || "")) {
-          return decode(f).then(function (img) {
-            var w = img.naturalWidth, h = img.naturalHeight;
-            if (w && h) cands.push({ file: f, w: w, h: h, ar: w / h, th: thumb(img, w, h) });
-          }, function () {});
+        if (/^image\//.test(f.type || "") || /\.(jpe?g|png|webp|gif|bmp|tiff?)$/i.test(f.name || "")) return addCand(f);
+        // the Affinity file of the same document (LY-AF): its own
+        // pictures, its words, and its fonts and style names for the report
+        if (/\.af$/i.test(f.name || "") && f.size <= MAX_AF && !af) {
+          return loadAf().then(function (AF) {
+            return f.arrayBuffer().then(function (buf) { return AF.read(new Uint8Array(buf), { zstd: root.fzstd }); });
+          }).then(function (r) {
+            if (!r) { af = { failed: 1 }; return; }
+            af = { pictures: r.pictures.length, styles: r.styles.slice(0, 60), fonts: r.fonts.slice(0, 30), problems: r.problems };
+            r.text.forEach(function (s) { (s.match(WORDS) || []).forEach(function (w) { words[w] = 1; }); });
+            var chain = Promise.resolve();
+            r.pictures.forEach(function (p) {
+              chain = chain.then(function () { var b = new Blob([p.bytes], { type: p.type }); b.name = p.name; return addCand(b); });
+            });
+            return chain;
+          }, function () { af = { failed: 1 }; });
         }
         if (/\.(txt|md|html?)$/i.test(f.name || "") && f.size < 20e6) {
           return f.text().then(function (s) { (s.match(WORDS) || []).forEach(function (w) { words[w] = 1; }); });
@@ -849,7 +871,7 @@
           return opts.matchFonts ? opts.matchFonts(Object.keys(names)).then(null, function () { return {}; }) : {};
         }).then(function (fonts) {
           var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, words: words, fonts: fonts });
-          if (out) { out.report.total = pdf.numPages; out.report.cut = pdf.numPages > n; out.report.sources = cands.length; }
+          if (out) { out.report.total = pdf.numPages; out.report.cut = pdf.numPages > n; out.report.sources = cands.length; if (af) out.report.af = af; }
           pdf.destroy();
           return out;
         }, function (e) { pdf.destroy(); throw e; });

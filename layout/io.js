@@ -413,7 +413,7 @@
   // Rebuild a print PDF: the PDF (its trim box) and, picked with it,
   // the original pictures and texts → a NEW document that looks like
   // the PDF, then the report of what landed where it was.
-  var REBUILD_ACCEPT = ".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp,.tif,.tiff,.txt,.md,.html,.htm";
+  var REBUILD_ACCEPT = ".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp,.tif,.tiff,.txt,.md,.html,.htm,.af";
   var rebuilding = false;
   function rebuildPdf() {
     var RB = window.LY_REBUILD, dlg = LY.dialogHost();
@@ -517,6 +517,12 @@
       p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
       p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
       p(t("rb.styles", { n: rep.styles }));
+      if (rep.af && rep.af.failed) p(t("rb.afBad"), "hint");
+      else if (rep.af) {
+        p(t("rb.af", { n: rep.af.pictures }), "hint");
+        if (rep.af.styles.length) p(t("rb.afStyles", { s: rep.af.styles.join(", ") }), "hint");
+        if (rep.af.fonts.length) p(t("rb.afFonts", { f: rep.af.fonts.join(", ") }), "hint");
+      }
       var fonts = (rep.fonts || []).filter(function (f) { return f.font && !f.as && !/^noto/i.test(f.font); }).map(function (f) { return f.font; });
       var same = {};
       (rep.fonts || []).forEach(function (f) { if (f.as) same[f.as] = 1; });

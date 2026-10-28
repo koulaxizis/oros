@@ -178,7 +178,7 @@ orosPack("de", "shell", {
  "cr.frequencywords": "Auswahl von Alltagswörtern (Λεξούλα, Galgenmännchen)",
  "cr.fsrs-ts": "Das Verfahren, das die Karten plant (Karteikarten, eigene Neufassung, gegen ts-fsrs geprüft)",
  "cr.funkwhale": "Föderierte Musikbibliotheken (Musik)",
- "cr.fzstd": "Anki-Stapel im neuen Format lesen (Karteikarten)",
+ "cr.fzstd": "Anki-Stapel im neuen Format (Karteikarten) und Affinity-Dateien (Layout) lesen",
  "cr.g.data": "Wortlisten und Daten",
  "cr.g.fonts": "Schriften und Symbole",
  "cr.g.libs": "Bibliotheken (in orOS enthalten, laufen auf deinem Gerät)",
