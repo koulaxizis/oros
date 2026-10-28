@@ -2266,6 +2266,32 @@
   var HS_TEXT = /\.(docx|odt|rtf|html?|txt|md|markdown)$/i;
   var HS_FIELDS = ["title", "subtitle", "author", "isbn", "year", "publisher"];
   var HS_DOES = ["titlePage", "titleOdd", "kwn", "firstFlush", "hyphOff"];
+  // The book's questions (LY-IN, Layout's layout/intake.js QUESTIONS, in
+  // the same order and with the same values; "as in the series" is an
+  // answer left out). The model words them; Layout applies them.
+  var BOOK_Q = [
+    ["size", ["120x190", "140x210", "148x210", "170x240"], "page size in mm"],
+    ["start", ["odd", "even", "page", "run"], "where a chapter starts: a right-hand page, a left-hand page, a new page, or right after the previous one"],
+    ["parts", ["own", "chap"], "parts (Part One…): on a page of their own, or set like chapters"],
+    ["sink", ["top", "third"], "a chapter title at the top of the page or a third down"],
+    ["first", ["flush", "indent"], "a chapter's first paragraph without or with an indent"],
+    ["sep", ["keep", "***", "* * *", "\u2042", "blank"], "scene breaks: as in the manuscript, or this mark, or an empty line"],
+    ["pn", ["footC", "footOut", "headOut", "headC", "none"], "page numbers: foot centre, foot outer edge, head outer edge, head centre, none"],
+    ["pnHide", ["hide", "show"], "page numbers hidden or shown where a chapter opens and on empty pages"],
+    ["toc", ["start", "end", "none"], "the contents at the start, at the end, or none"],
+    ["tocParts", ["parts", "chap"], "the contents with the parts, or the chapters only"],
+    ["picAt", ["page", "before", "each", "out"], "photos: on a page of their own before the page they belong to, at the top of that page with the text below, chosen for each photo in Layout, or left out"],
+    ["picSize", ["text", "page"], "photos within the margins, or the whole page to the bleed"],
+    ["cap", ["below", "above", "none"], "captions below, above, or none"],
+    ["capSrc", ["file", "typed"], "caption text from the photo's name, or typed by the user in Layout (left out: the paragraph after the photo)"],
+    ["grey", ["yes"], "photos made black and white (only when the user says so)"],
+    ["hyph", ["on", "off"], "hyphenation"],
+    ["widows", ["on", "off"], "widows and orphans (at least two lines)"],
+    ["fix", ["on", "off"], "Greek quotes, dashes and ellipses fixed, or left as they are"]
+  ];
+  var BOOK_SECTIONS = ["prologue", "thanks", "notes", "bio", "links"], BOOK_AT = ["front", "back", "out"];
+  var BOOK_PARTS = ["body", "title", "part", "toc", "colophon", "thanks", "links", "ded", "cap"];
+  var BOOK_PICS = /\.(jpe?g|png|webp|gif)$/i, BOOK_PICS_MAX = 300;
   var TOOL_HS_LEARN = {
     name: "learn_house_style",
     description: "Learn a house style in Layout from earlier books of a series that are Layout documents (rebuilt from print PDFs or opened from Scribus files): " +
@@ -2295,7 +2321,16 @@
         house: { type: "string", description: "The house style's name. Leave out when the user has one house style." },
         title: { type: "string" }, subtitle: { type: "string" }, author: { type: "string" },
         isbn: { type: "string" }, year: { type: "string" }, publisher: { type: "string" },
-        keep_front: { type: "boolean", description: "true to keep the manuscript's own front matter (title page, dedication) before the first chapter. Leave out to use the house style's front pages instead." }
+        keep_front: { type: "boolean", description: "true to keep the manuscript's own front matter (title page, dedication) before the first chapter. Leave out to use the house style's front pages instead." },
+        answers: { type: "object", description: "The book's questions: only the answers that differ from the series (left out = as in the series).", properties: bookQProps() },
+        margins: { type: "object", description: "Margins in mm that differ from the series.", properties: { top: { type: "number" }, bottom: { type: "number" }, inside: { type: "number" }, outside: { type: "number" } } },
+        first_page_number: { type: "integer", description: "The first page number, when it differs from the series." },
+        sections: { type: "object", description: "Where a section of the manuscript goes (found by its title): front (before the first chapter), back (after the last), out (left out).", properties: bookSecProps() },
+        typography: { type: "object", description: "Per part of the book, only what differs from the series.", properties: bookTyProps() },
+        dedication: { type: "string", description: "A dedication on a right-hand page of its own (empty string: none, even if the manuscript has one)." },
+        motto: { type: "string", description: "A motto on a right-hand page of its own." },
+        photos: { type: "array", items: { type: "string" }, description: "Attached photos (names) or /internal/ paths that are not in the manuscript, to place as their own section." },
+        photos_after: { type: "integer", description: "Put those photos after the n-th title of the manuscript (counting part titles); left out: at the end of the book." }
       },
       required: ["manuscript"]
     }
@@ -2316,11 +2351,90 @@
       required: ["rule"]
     }
   };
+  function bookQProps() {
+    var o = {};
+    BOOK_Q.forEach(function (q) { o[q[0]] = { type: "string", "enum": q[1].slice(), description: q[2] }; });
+    return o;
+  }
+  function bookSecProps() {
+    var o = {};
+    BOOK_SECTIONS.forEach(function (k) { o[k] = { type: "string", "enum": BOOK_AT.slice() }; });
+    return o;
+  }
+  function bookTyProps() {
+    var look = { type: "object", properties: {
+      font: { type: "string", "enum": ["serif", "sans", "mono"] }, size: { type: "number", description: "pt" }, leading: { type: "number", description: "pt" },
+      align: { type: "string", "enum": ["left", "centre", "right", "justified"] }, bold: { type: "boolean" }, italic: { type: "boolean" },
+      caps: { type: "boolean" }, tracking: { type: "number", description: "1/1000 em" } } };
+    var o = {};
+    BOOK_PARTS.forEach(function (k) { o[k] = look; });
+    return o;
+  }
+  var ALIGN = { left: "l", centre: "c", center: "c", right: "r", justified: "j" };
+  function numIn(v, min, max) { v = Number(v); return typeof v === "number" && isFinite(v) && v >= min && v <= max ? Math.round(v * 10) / 10 : null; }
+  // the book's answers (layout_book) → Layout's book sheet { v, a, ty,
+  // ded, motto } (LY-IN) or { err }; nothing given → null
+  function bookSheet(args, nPhotos) {
+    var a = {}, ty = {}, ans = isObj(args.answers) ? args.answers : {}, bad = [];
+    BOOK_Q.forEach(function (q) {
+      var v = ans[q[0]];
+      if (v == null || v === "") return;
+      if (q[1].indexOf(v) < 0) bad.push(q[0] + " (one of " + q[1].join(", ") + ")"); else a[q[0]] = v;
+    });
+    Object.keys(ans).forEach(function (k) { if (!BOOK_Q.some(function (q) { return q[0] === k; })) bad.push(k + " (not a question)"); });
+    if (bad.length) return { err: "answers: " + bad.slice(0, 8).join("; ") + ". Leave out what is as in the series." };
+    if (isObj(args.margins)) {
+      var m = {};
+      [["top", "t"], ["bottom", "b"], ["inside", "i"], ["outside", "o"]].forEach(function (x) { var n = numIn(args.margins[x[0]], 0, 199); if (n !== null) m[x[1]] = n; });
+      if (Object.keys(m).length) a.marg = m;
+    }
+    if (args.first_page_number != null) {
+      var pn = numIn(args.first_page_number, 0, 9999);
+      if (pn === null) return { err: "first_page_number must be a number from 0 to 9999." };
+      a.pnStart = Math.floor(pn);
+    }
+    if (isObj(args.sections)) {
+      var sb = [];
+      Object.keys(args.sections).forEach(function (k) {
+        var v = args.sections[k];
+        if (BOOK_SECTIONS.indexOf(k) < 0 || BOOK_AT.indexOf(v) < 0) sb.push(k);
+        else a["at" + k.charAt(0).toUpperCase() + k.slice(1)] = v;
+      });
+      if (sb.length) return { err: "sections: " + sb.join(", ") + " must be one of " + BOOK_SECTIONS.join(", ") + " with front, back or out." };
+    }
+    if (isObj(args.typography)) {
+      Object.keys(args.typography).forEach(function (k) {
+        var l = args.typography[k], o = {};
+        if (BOOK_PARTS.indexOf(k) < 0 || !isObj(l)) return;
+        if (/^(serif|sans|mono)$/.test(l.font)) o.fam = l.font;
+        var n = numIn(l.size, 4, 200); if (n !== null) o.size = n;
+        n = numIn(l.leading, 0, 400); if (n !== null) o.lead = n;
+        if (ALIGN[l.align]) o.align = ALIGN[l.align];
+        ["bold", "italic", "caps"].forEach(function (x) { if (typeof l[x] === "boolean") o[x === "bold" ? "b" : x === "italic" ? "i" : "caps"] = l[x] ? 1 : 0; });
+        n = numIn(l.tracking, -200, 1000); if (n !== null) o.track = n;
+        if (Object.keys(o).length) ty[k] = o;
+      });
+    }
+    if (args.photos_after != null && args.photos_after !== "") {
+      var pa = numIn(args.photos_after, 1, 9999);
+      if (pa === null) return { err: "photos_after must be the number of a title, from 1." };
+      a.extraAt = "after" + (Math.floor(pa) - 1);
+    } else if (nPhotos) a.extraAt = "end";
+    var out = { v: 1, a: a, ty: ty, drop: [] };
+    ["dedication", "motto"].forEach(function (k) { if (typeof args[k] === "string") out[k === "dedication" ? "ded" : k] = args[k].replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim().slice(0, 2000); });
+    return Object.keys(a).length || Object.keys(ty).length || out.ded !== undefined || out.motto !== undefined ? out : null;
+  }
   function hsStr(v, max) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : ""; }
   // name ("learn_house_style" | "layout_book" | "add_house_rule"), args,
   // files (chatFiles) → { ok, op: "learn", docs, name } | { ok, op: "book",
   // doc: { id | path, name }, house, meta, keepFront } | { ok, op: "rule",
   // text, does, house } | { ok: false, err }
+  // an attached picture whose name has no picture extension (a pasted
+  // photo) still counts by its type
+  function imgFile(list, v) {
+    var f = findFile(list, v);
+    return f && f.kept && /^image\/(jpeg|png|webp|gif)$/.test(f.type || "") ? { id: f.id, name: f.name } : null;
+  }
   function normHouse(name, args, files) {
     args = isObj(args) ? args : {};
     var house = hsStr(args.house, HS_NAME);
@@ -2338,7 +2452,21 @@
       if (got.err) return { ok: false, err: got.err };
       var meta = {};
       HS_FIELDS.forEach(function (k) { var v = hsStr(args[k], HS_META); if (v) meta[k] = v; });
-      return { ok: true, op: "book", doc: got.f, house: house, meta: meta, keepFront: args.keep_front === true };
+      // the photos besides the manuscript
+      var photos = [], seenP = {}, list = Array.isArray(files) ? files : [];
+      if (args.photos != null && !Array.isArray(args.photos)) return { ok: false, err: "photos must be a list of attached photo names or /internal/ paths." };
+      for (var i = 0; i < (args.photos || []).length && photos.length < BOOK_PICS_MAX; i++) {
+        var pf = rbFile(list, args.photos[i], "photos", BOOK_PICS, "photo (.jpg, .png, .webp or .gif)");
+        if (pf.err && !(pf.f = imgFile(list, args.photos[i]))) return { ok: false, err: pf.err };
+        var pk = pf.f.path || pf.f.id;
+        if (!seenP[pk]) { seenP[pk] = 1; photos.push(pf.f); }
+      }
+      var sheet = bookSheet(args, photos.length);
+      if (sheet && sheet.err) return { ok: false, err: sheet.err };
+      var r = { ok: true, op: "book", doc: got.f, house: house, meta: meta, keepFront: args.keep_front === true };
+      if (sheet) r.sheet = sheet;
+      if (photos.length) r.photos = photos;
+      return r;
     }
     if (name === "add_house_rule") {
       var text = hsStr(args.rule, HS_RULE);
@@ -2362,6 +2490,9 @@
     var o = { pages: n(rep.pages), bodyPages: n(rep.body), titles: n(rep.titles), titlesGuessed: n(rep.guessed), emptyLinesDropped: n(rep.dropped),
       manuscriptFrontLeftOut: n(rep.front), fixes: { quotes: n(fx.quotes), dashes: n(fx.dash), ellipses: n(fx.ellipsis), spaces: n(fx.spaces) },
       fieldsFilled: n(rep.fields), contentsEntries: rep.toc >= 0 ? n(rep.toc) : null, picturesLeftOut: n(rep.pictures) };
+    if (rep.placed !== undefined) o.photosPlaced = n(rep.placed);
+    if (rep.overset) o.textDoesNotFit = true;
+    if (rep.sheet) { o.sectionsMoved = n(rep.moved); o.sectionsLeftOut = n(rep.left); }
     var ns = isObj(rep.noStyle) ? Object.keys(rep.noStyle).filter(function (k) { return /^[a-z0-9]{1,8}$/.test(k); }) : [];
     if (ns.length) o.rolesWithoutStyle = ns.slice(0, 10);
     o.pagesToCheck = (Array.isArray(rep.check) ? rep.check : []).filter(isObj).slice(0, 60).map(function (x) { return { page: n(x.page), why: hsStr(x.why, 20) }; });
@@ -2667,7 +2798,7 @@
       if (opts.rebuild) lines.push("When the user wants a printed book, magazine or brochure back in Layout (from its print PDF, with or without its original pictures and texts), call rebuild_in_layout; a Scribus file (.sla) opens in Layout through rebuild_in_layout with sla, with its pictures and, when attached, its print PDF as pdf; an Affinity file (.af) goes in sources next to its print PDF. Never retype a printed document or rebuild it by hand with other tools. When its result has the report, say honestly what came out the same and what did not (lines in place, pictures from originals, fonts replaced, pages to check); afterwards, changes to the document go through propose_automation for Layout (styles by name, find and replace, margins, masters, export), and do_action open with app layout and page opens a page to check. Files marked as staying on the device can only be handed to an app: you cannot read them.");
       if (opts.openFile) lines.push("To bring a document the user attached into Writer as it is (its formatting, headings, alignment, lists, numbering and every word), call open_file with its name, one call per file. Never retype an attached document into propose_entry document: that loses its formatting and may change words. propose_entry document is for text you write yourself, in Markdown.");
     }
-    if (opts.house) lines.push("For books of a series in Layout: learn_house_style learns the series' house style from earlier books that are Layout documents (rebuild them first with rebuild_in_layout when the user has only print PDFs or Scribus files); layout_book lays out a new book from its manuscript in that house style; add_house_rule adds a rule of the user's own. Give layout_book the title; Layout fills the author, ISBN and year from the Publishing app's title of that name, so ask for them only when the user has no such title there. When a report comes back, say honestly what came out (pages, titles, titles that were guessed, quotes and dashes fixed, pages to check); words are never changed, only quotes, dashes, ellipses and spaces.");
+    if (opts.house) lines.push("For books of a series in Layout: learn_house_style learns the series' house style from earlier books that are Layout documents (rebuild them first with rebuild_in_layout when the user has only print PDFs or Scribus files); layout_book lays out a new book from its manuscript in that house style; add_house_rule adds a rule of the user's own. Give layout_book the title; Layout fills the author, ISBN and year from the Publishing app's title of that name, so ask for them only when the user has no such title there. Before layout_book, ask the book's questions in one short message instead of laying it out at once: is everything as in the series, or does something differ (page size and margins, where chapters start, parts, chapter titles and first paragraphs, scene breaks, page numbers, contents, sections such as acknowledgements, dedication and motto, the type of each part, hyphenation and widows, and, when there are photos, where they go, their size, captions and black and white)? Ask only about what the material has; put only the answers that differ into layout_book (answers, margins, sections, typography…), never guess one, and pass attached photos that are not in the manuscript as photos. The card also offers the user every question in Layout. When a report comes back, say honestly what came out (pages, titles, titles that were guessed, quotes and dashes fixed, photos placed or left out, text that does not fit, pages to check); words are never changed, only quotes, dashes, ellipses and spaces.");
     var canChange = !opts.builtin && !opts.chatOnly && opts.apps && opts.apps.length && opts.changes && opts.changes.length;
     if (opts.files && canChange && opts.changes.some(function (a) { return /^(contacts|crm)$|\((contacts|crm)\)$/.test(a); })) {
       lines.push("When a file or message holds details of people or companies (a form, a list, business cards, a vCard, a signature), look each one up first with search_data (Contacts, and CRM for customers and partners). Someone already there gets change_item with only what is new or different (changes: one entry per person, when there are several); add phones, e-mails and websites, and replace one (old_phone…) only when the file says it changed; never drop details they have. Someone not there gets " + (opts.creates && opts.creates.length ? "create_items (all of them in one call per app)" : "propose_entry") + ". Tax numbers and tax office go to the CRM customer (tax_id, tax_office) when there is one; bank details or a bio, which have no field, go in note_add, briefly, only if the user wants them there.");
@@ -3594,7 +3725,7 @@
     normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, HS_DOES: HS_DOES, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

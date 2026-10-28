@@ -270,7 +270,9 @@
       body.appendChild(act);
     });
   }
-  // ask: { sheet } → the book's questions first (LY-IN)
+  // ask: { sheet, quiet, files, missed } → the book's questions (LY-IN):
+  // the dialog first, or (quiet: the Assistant's answers) straight on;
+  // files: photos besides the manuscript, missed: photos not received
   function build(house, file, meta, keepFront, done, chat, ask) {
     var fail = function () { LY.toast(t("txt.fail")); if (done) done(null); };
     var A = window.LY_AUTO, m = {};
@@ -282,6 +284,7 @@
         sheet: sheet, names: newNames(), tocHead: t("in.n.tocHead"), extra: extra
       });
       if (!res) { fail(); return; }
+      if (ask && ask.missed) res.report.pictures = (res.report.pictures || 0) + ask.missed;
       LY.addDoc(res.doc);
       autoReport(res.report, chat);
       if (done) done(res.report);
@@ -291,12 +294,17 @@
       if (!r || !r.list.some(function (p) { return p.runs.length; })) { fail(); return; }
       if (!ask || !I) { make(r, null); return; }
       var px = I.pictures(r.list), s = A.structure(px.list, { keepFront: keepFront });
-      askDlg(house, I.info(house, s.list, s.cut), ask.sheet || I.defaults(house), px.pics, function (sheet, keep, files) {
+      var go = function (sheet, keep, files) {
         if (keep) keepAnswers(house, sheet);
         LY.toast(t("au.working"));
         var grey = I.ans(sheet, "grey") === "yes";
         importPics(r.list, files, grey).then(function (extra) { make(r, sheet, extra); }).then(null, fail);
-      });
+      };
+      var sheet0 = ask.sheet || I.defaults(house), files = (ask.files || []).slice(0, 500);
+      if (!ask.quiet) { askDlg(house, I.info(house, s.list, s.cut), sheet0, px.pics, go, files, function () { if (done) done(null, "cancel"); }); return; }
+      sheet0 = I.clean(sheet0);
+      if (files.length && !sheet0.a.extraAt) sheet0.a.extraAt = "end";
+      go(sheet0, false, files);
     }).then(null, fail);
   }
   // The pictures into the disk (designkit/assets.js), greyscale when the
@@ -359,6 +367,17 @@
       img.src = url;
     });
   }
+  // the series' answers with the Assistant's on top (LY-IN)
+  function overSheet(base, over) {
+    var b = I.clean(base), o = I.clean(over);
+    Object.keys(o.a).forEach(function (k) { b.a[k] = o.a[k]; });
+    Object.keys(o.ty).forEach(function (k) {
+      b.ty[k] = b.ty[k] || {};
+      Object.keys(o.ty[k]).forEach(function (x) { b.ty[k][x] = o.ty[k][x]; });
+    });
+    ["ded", "motto"].forEach(function (k) { if (typeof o[k] === "string") b[k] = o[k]; });
+    return b;
+  }
   // the names of the styles a book sheet adds
   function newNames() {
     var n = {};
@@ -415,13 +434,20 @@
     });
     return inp;
   }
-  function askDlg(house, inf, sheet0, pics, go) {
-    var sheet = I.clean(sheet0), S = inf.series, a = sheet.a, files = [], urls = [];
+  // cancel: called when the dialog closes without a layout
+  function askDlg(house, inf, sheet0, pics, go, files0, cancel) {
+    var sheet = I.clean(sheet0), S = inf.series, a = sheet.a, files = (files0 || []).slice(), urls = [];
     var bye = function () { urls.forEach(function (u) { URL.revokeObjectURL(u); }); urls = []; };
     LY.openDialog(t("in.title"), function (body, close) {
+      var dlg = body.parentNode, went = false;
+      dlg.addEventListener("close", function gone() {
+        dlg.removeEventListener("close", gone);
+        bye();
+        if (!went && cancel) cancel();
+      });
       body.appendChild(el("p", "hint", t("in.hint", { n: inf.titles })));
       var quick = el("div", "pn-row");
-      quick.appendChild(LY.ui.btn(t("in.allSeries"), function () { bye(); close(); go(I.defaults(house), false, []); }));
+      quick.appendChild(LY.ui.btn(t("in.allSeries"), function () { went = true; close(); go(I.defaults(house), false, files); }));
       body.appendChild(quick);
       function group(key) { body.appendChild(el("h3", "pn-h", t("in.g." + key))); }
       function ask(id) { askIn(id, body); }
@@ -569,7 +595,7 @@
       body.appendChild(LY.ui.check(t("in.keep"), 0, function (v) { keep = v; }));
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
-      act.appendChild(LY.ui.btn(t("btn.cancel"), function () { bye(); close(); }));
+      act.appendChild(LY.ui.btn(t("btn.cancel"), close));
       act.appendChild(LY.ui.btn(t("au.go"), function () {
         Object.keys(sheet.ty).forEach(function (k) { if (!Object.keys(sheet.ty[k]).length) delete sheet.ty[k]; });
         if (sheet.pics) {
@@ -578,7 +604,7 @@
           if (!sheet.pics.some(function (x) { return x.at || x.cap; })) delete sheet.pics;
         }
         if (files.length && !a.extraAt) a.extraAt = "end";
-        bye();
+        went = true;
         close();
         go(sheet, keep, files);
       }, "primary"));
@@ -669,7 +695,9 @@
     if (name) return byName(houses, name);
     return houses.sort(function (a, b) { return (b.m || 0) - (a.m || 0); })[0] || null;
   }
-  function run(rq, file, done) {
+  // photos, missed: the photos besides the manuscript the card handed
+  // over (Files), and how many of them could not be taken
+  function run(rq, file, done, photos, missed) {
     var chat = typeof rq.chat === "string" ? rq.chat.slice(0, 80) : "";
     var fail = function (why, more) { var o = { failed: 1, why: why }; if (more) o.missing = more; done(o); };
     if (rq.op === "learn") {
@@ -706,7 +734,10 @@
     ["title", "subtitle", "author", "isbn", "year", "publisher"].forEach(function (k) { if (typeof given[k] === "string" && given[k].trim()) meta[k] = given[k].trim().slice(0, 200); });
     var pub = meta.title ? pubTitles().filter(function (x) { return x.title.trim().toLocaleLowerCase() === meta.title.toLocaleLowerCase(); })[0] : null;
     if (pub) ["subtitle", "author", "isbn", "year"].forEach(function (k) { if (!meta[k] && pub[k]) meta[k] = pub[k]; });
-    build(house, file, meta, rq.keepFront === 1 ? 1 : 0, function (rep) { if (rep) done(rep); else fail("read"); }, chat);
+    // the book's questions (LY-IN): the Assistant's answers over the
+    // series'; "All the questions…" shows them first
+    var ask = I ? { sheet: overSheet(I.defaults(house), rq.sheet), quiet: rq.all !== 1, files: Array.isArray(photos) ? photos : [], missed: missed > 0 ? missed : 0 } : null;
+    build(house, file, meta, rq.keepFront === 1 ? 1 : 0, function (rep, why) { if (rep) done(rep); else fail(why || "read"); }, chat, ask);
   }
 
   LY.house = { open: open, auto: function () { autoDlg(); }, hasToc: hasToc, updateToc: updateToc, run: run, hasSheet: hasSheet, sheet: sheetAgain };

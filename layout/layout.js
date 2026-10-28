@@ -1848,9 +1848,16 @@
   function houseFor(rq) {
     var back = assistBack(rq);
     if (rq.op !== "book") { LY.house.run(rq, null, back); return; }
-    rbTake(rq.doc).then(function (f) {
+    // the photos besides the manuscript (LY-IN): one that cannot be
+    // taken is left out and the report counts it
+    var photos = [], missed = 0, chain = Promise.resolve();
+    (Array.isArray(rq.photos) ? rq.photos.slice(0, 500) : []).forEach(function (o) {
+      chain = chain.then(function () { return rbTake(o); }).then(function (f) { if (f) photos.push(f); else missed++; }, function () { missed++; });
+    });
+    Promise.all([rbTake(rq.doc), chain]).then(function (r) {
+      var f = r[0];
       if (!f) { toast(t("txt.fail")); back({ failed: 1, why: "read" }); return; }
-      LY.house.run(rq, f, back);
+      LY.house.run(rq, f, back, photos, missed);
     }, function () { toast(t("txt.fail")); back({ failed: 1, why: "read" }); });
   }
   function diskFs() {
