@@ -18,6 +18,10 @@
 //     they were, so lines break where they did;
 //   - text beside a picture wraps around it; a caption beside the text
 //     is its own frame; page numbers are their own small frames;
+//   - frames are per page, so every line stays where it was; with
+//     opts.thread an article's body frames that go on from one to the
+//     next become one story along the pages (easier to edit; a line
+//     that moves then moves the lines after it);
 //   - every picture is its own frame; when one of the original files
 //     shows the same picture it is placed instead of the PDF's copy;
 //     transparent ornaments keep their transparency;
@@ -45,6 +49,8 @@
   // of an em less keeps 99 % of the lines of a 102-page book in place
   // (−12 to −20 were tried; −18 moved the fewest).
   var TRACK_ADJ = -18;
+  // a sentence that ends (Greek ";" too), closing quotes or brackets after it
+  var END = /[.;\u037E!?…:]["»”’)]*\s*$/;
   var LETTER_HYPHEN = new RegExp("\\p{L}-$", "u"), WORD_END = new RegExp("(\\p{L}+)-$", "u");
   var WORD_START = new RegExp("^\\p{L}+", "u"), LOWER = new RegExp("^\\p{Ll}", "u"), WORDS = new RegExp("[\\p{L}\\p{N}]+", "gu");
 
@@ -242,6 +248,8 @@
     var report = { pages: pagesIn.length, facing: meas.facing, body: meas.body, pitch: meas.pitch, numberStart: meas.numberOffset === null ? null : meas.numberOffset + 1,
                    pictures: 0, originals: 0, fonts: [], check: null, framesOff: [] };
     var frameLines = [];
+    // body frames (for threading) and the display type above them, per page
+    var bodyFr = [], displayFr = [];
 
     // colours → swatches
     var sw = {}, used = {};
@@ -259,6 +267,18 @@
       return id;
     }
 
+    // the text of a line that goes on from prev (the run before it) →
+    // that text with what joins them (prev may change)
+    function join(prev, t) {
+      var m = prev && WORD_END.exec(prev.t), w2 = WORD_START.exec(t);
+      // a word hyphenated at the line end: one word with a soft
+      // hyphen, so it breaks there again
+      if (m && w2 && LOWER.test(w2[0]) && words[(m[1] + w2[0]).toLowerCase()]) prev.t = prev.t.slice(0, -1) + "\u00AD";
+      // a compound split at its own hyphen: it may break after it
+      else if (prev && LETTER_HYPHEN.test(prev.t)) t = "\u200B" + t;
+      else if (!(prev && /-$/.test(prev.t))) t = " " + t;
+      return t;
+    }
     // br: where the 2nd, 3rd… lines start (character offsets), for
     // the line fitting (layout/linefit.js)
     function para(lines, A, align, sb) {
@@ -268,14 +288,7 @@
           var t = s.t;
           if (si === l.spans.length - 1) t = t.replace(/\s+$/, "");
           if (li > 0 && si === 0) {
-            var prev = runs[runs.length - 1];
-            var m = prev && WORD_END.exec(prev.t), w2 = WORD_START.exec(t);
-            // a word hyphenated at the line end: one word with a soft
-            // hyphen, so it breaks there again
-            if (m && w2 && LOWER.test(w2[0]) && words[(m[1] + w2[0]).toLowerCase()]) prev.t = prev.t.slice(0, -1) + "\u00AD";
-            // a compound split at its own hyphen: it may break after it
-            else if (prev && LETTER_HYPHEN.test(prev.t)) t = "\u200B" + t;
-            else if (!(prev && /-$/.test(prev.t))) t = " " + t;
+            t = join(runs[runs.length - 1], t);
             br.push(len + (/^[ \u200B]/.test(t) ? 1 : 0));
           }
           runs.push({ t: t, b: s.b ? 1 : 0, i: s.i ? 1 : 0, size: s.size, sw: swatch(s.color), font: s.font, fam: s.fam });
@@ -445,6 +458,14 @@
         if (Math.abs(bl[0].size - meas.body) < 0.05 && bl.wrapGap === undefined) { top0.push(Math.round(top)); bot0.push(Math.round(H - bottom)); }
         items.push(fr);
         frameLines.push({ page: pi + 1, id: fr.id, base: bl.map(function (l) { return r3(l.y); }) });
+        if (!opts.thread) return;
+        if (!display && !capOf && bl.wrapGap === undefined && bl.every(function (l) { return Math.abs(l.size - meas.body) < 0.05; })) {
+          var lp = outParas[outParas.length - 1];
+          bodyFr.push({ pi: pi, fr: fr, st: stories[stories.length - 1], x0: FA.l, x1: FA.r, y0: bl[0].y,
+            first: lineClass(bl[0], effA(bl[0])), last: lineClass(last, effA(last)),
+            // just its lines: the next one goes on in the next frame
+            h: r3(last.y + T.descent(k0, last.size) + lp.lead / 2 - top) });
+        } else if (bl[0].size > meas.body + 0.05) displayFr.push({ pi: pi, x0: bx0, x1: bx1, y1: last.y });
       });
       // rotated text (a spine, a side note): a frame per block, turned
       var turned = (P.spans || []).filter(function (s) { return Math.abs(s.rot || 0) >= 0.5 && s.t; }).map(function (s) {
@@ -480,6 +501,54 @@
         if (im.original) report.originals++;
       });
     });
+
+    if (opts.thread) report.threads = thread();
+
+    // ---------- 4b. Threads (opts.thread) ----------
+    // A body frame whose last line runs to the column's end goes on in
+    // the next body frame (reading order: page, column, top down) when
+    // that one starts at the column's edge without an indent, with the
+    // same measure and type and no heading above it: the frames become
+    // one story, the split paragraph one paragraph. A frame that goes
+    // on is just as tall as its lines.
+    function thread() {
+      var ov = function (a, b) { return Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0) > 0; };
+      bodyFr.sort(function (a, b) { return a.pi - b.pi || (ov(a, b) ? a.y0 - b.y0 : a.x0 - b.x0); });
+      var chains = 0, linked = 0;
+      for (var k = 1; k < bodyFr.length; k++) {
+        var A = bodyFr[k - 1], B = bodyFr[k];
+        var pa = A.st.paras[A.st.paras.length - 1].ps, pb = B.st.paras[0].ps;
+        if (B.pi - A.pi > 2 || !(A.last === "full" || A.last === "fulli") || !(B.first === "full" || B.first === "l") ||
+            Math.abs((A.x1 - A.x0) - (B.x1 - B.x0)) > 1.5 || !pb.runs.length || !pa.runs.length ||
+            pa.size !== pb.size || pa.fam !== pb.fam || pa.font !== pb.font || pa.b !== pb.b || pa.i !== pb.i || pa.color !== pb.color || Math.abs(pa.lead - pb.lead) > 0.5 ||
+            displayFr.some(function (d) { return d.pi === B.pi && ov(d, B) && d.y1 < B.y0 && B.y0 - d.y1 < meas.pitch * 8; })) continue;
+        // one paragraph when A's last line stops mid-sentence or B's
+        // starts in lower case; else (a page that breaks after a full
+        // stop) the paragraphs stay two, as they were on their pages
+        var lastRun = pa.runs[pa.runs.length - 1], r0 = pb.runs[0];
+        if (!END.test(lastRun.t) || LOWER.test(r0.t.replace(/^[\s"«“‘(]+/, ""))) {
+          var len = 0;
+          pa.runs.forEach(function (r) { len += r.t.length; });
+          var t0 = r0.t, t1 = join(lastRun, t0.replace(/^\s+/, "")), d = t1.length - t0.length;
+          r0.t = t1;
+          pa.br = pa.br.concat([len + (/^[ \u200B]/.test(t1) ? 1 : 0)], pb.br.map(function (o) { return o + len + d; }));
+          pa.runs = pa.runs.concat(pb.runs);
+          pa.one = false;
+          if (pb.align === "j") pa.align = "j";
+          A.st.paras[A.st.paras.length - 1].runs = pa.runs;
+          A.st.paras = A.st.paras.concat(B.st.paras.slice(1));
+          allParas.splice(allParas.indexOf(pb), 1);
+        } else A.st.paras = A.st.paras.concat(B.st.paras);
+        stories.splice(stories.indexOf(B.st), 1);
+        if (A.fr.seq === 1) chains++;
+        A.fr.h = A.h;
+        B.fr.story = A.st.id;
+        B.fr.seq = A.fr.seq + 1;
+        B.st = A.st;
+        linked++;
+      }
+      return { stories: chains, frames: linked };
+    }
 
     // ---------- 5. Paragraph styles ----------
     // snap a measured value to the commonest value near it (typed spaces, rounding)
@@ -727,7 +796,7 @@
   }
 
   // buf: the PDF (ArrayBuffer); sources: Files (pictures; .txt / .md /
-  // .html for the words); opts: { now, name, lang, cancelled(),
+  // .html for the words); opts: { now, name, lang, thread, cancelled(),
   // matchFonts(names) → Promise of { name: entry } (build's opts.fonts) };
   // store(blob) → Promise of { id, w, h } (the asset store);
   // progress(done, total) → Promise of { doc, report } or null.
@@ -875,7 +944,7 @@
           pages.forEach(function (p) { p.spans.forEach(function (s) { if (s.font) names[s.font] = 1; }); });
           return opts.matchFonts ? opts.matchFonts(Object.keys(names)).then(null, function () { return {}; }) : {};
         }).then(function (fonts) {
-          var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, words: words, fonts: fonts });
+          var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, words: words, fonts: fonts, thread: !!opts.thread });
           if (out) { out.report.total = pdf.numPages; out.report.cut = pdf.numPages > n; out.report.sources = cands.length; if (af) out.report.af = af; }
           pdf.destroy();
           return out;

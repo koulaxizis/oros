@@ -2158,7 +2158,8 @@
         pdf: { type: "string", description: "The attached PDF's name, or its path on the orOS disk (/internal/…). With sla: that file's print PDF, optional." },
         sla: { type: "string", description: "A Scribus file (.sla or .sla.gz) to open instead of rebuilding a PDF: the attached file's name, or its path on the orOS disk (/internal/…)." },
         sources: { type: "array", items: { type: "string" }, description: "Names of attached original pictures and texts (.txt, .md, .html), and the document's Affinity file (.af). Leave out to use every attached picture, text and .af file." },
-        folder: { type: "string", description: "A folder on the orOS disk (/internal/…) with the original pictures and texts, when the user names one." }
+        folder: { type: "string", description: "A folder on the orOS disk (/internal/…) with the original pictures and texts, when the user names one." },
+        thread: { type: "boolean", description: "true when the user wants each article's text to go on from page to page (one story through its frames, easier to edit; a line that comes out longer moves the lines after it). Leave out for frames per page, where every line stays exactly where it was." }
       }
     }
   };
@@ -2175,7 +2176,7 @@
   }
   // args, files (chatFiles: [{ id, name, type, size, kept }], newest
   // first) → { ok, pdf: { id | path, name } | null, sla: … | null,
-  // src: [{ id, name }], folder } | { ok: false, err }. A PDF is
+  // src: [{ id, name }], folder, thread } | { ok: false, err }. A PDF is
   // needed unless a Scribus file (sla) is given.
   var IS_PDF = /\.pdf$/i, IS_SLA = /\.sla(\.gz)?$/i;
   function rbFile(list, v, key, re, kind) {
@@ -2225,7 +2226,7 @@
       folder = diskPath(args.folder);
       if (!folder) return { ok: false, err: "folder must be a folder on the orOS disk, starting with /internal/." };
     }
-    return { ok: true, pdf: pdf, sla: sla, src: src, folder: folder };
+    return { ok: true, pdf: pdf, sla: sla, src: src, folder: folder, thread: args.thread === true && !sla };
   }
   // Layout's report → the few numbers the model gets (no text of the document)
   function rebuildReport(rep) {
@@ -2249,6 +2250,7 @@
       return { page: n(x.page), lines: Math.max(n(x.moved), Math.abs(n(x.got) - n(x.want))) };
     });
     if (rep.cut) o.cutAt = n(rep.pages);
+    if (isObj(rep.threads)) o.threaded = { articles: n(rep.threads.stories), frames: n(rep.threads.frames) };
     if (isObj(rep.af)) o.affinity = rep.af.failed ? { read: false } : { read: true, pictures: n(rep.af.pictures), styles: n((rep.af.styles || []).length) };
     if (rep.total) o.pdfPages = n(rep.total);
     return o;

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.18.00
+- Layout: a rebuilt print PDF can keep its articles in one piece. Before `Rebuild a print PDF (with its pictures)…` starts, choose `Text frames`: `Per page`, as before, or `Going on across pages`, where an article's text runs from frame to frame over the pages so a correction flows on. The Assistant does the same when you ask for it.
+
 ## Version 4.17.00
 - Layout: a first page number. `Document setup…` › `First page number` makes page-number fields count from another number, such as 3 for a book whose first pages are a cover. A rebuilt print PDF now gets real page-number fields that count from the PDF's own first number, so they follow when you add or move pages.
 
