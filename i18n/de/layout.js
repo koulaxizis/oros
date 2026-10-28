@@ -508,5 +508,20 @@ orosPack("de", "layout", {
  "cov.p.u90": "Ungestrichen 90 g/m²",
  "cov.pickPic": "Bild wählen…",
  "cov.spineHint": "Buchrücken: {mm} mm. Geschätzt aus Seitenzahl und Papier; trag den Wert der Druckerei ein, um ihn zu ersetzen.",
- "cov.title": "Buchumschlag"
+ "cov.title": "Buchumschlag",
+ "imp.rebuild": "Druck-PDF wiederherstellen (mit seinen Bildern)…",
+ "rb.noPdf": "Wähle auch das PDF: das Druck-PDF, dazu seine Bilder und Texte, wenn du sie hast.",
+ "rb.bad": "Dieses PDF konnte nicht wiederhergestellt werden.",
+ "rb.start": "Das PDF wird mit {n} Originaldateien wiederhergestellt…",
+ "rb.working": "Wiederherstellung… Seite {n} von {t}",
+ "rb.stopped": "Wiederherstellung abgebrochen. Nichts wurde hinzugefügt.",
+ "rb.done": "Fertig: {p} Seiten.",
+ "rb.title": "Was die Wiederherstellung behalten hat",
+ "rb.lines": "{n} von {t} Zeilen stehen dort, wo sie im PDF standen ({p} %).",
+ "rb.pics": "{n} Bilder, davon {o} deine Originaldateien (die übrigen stammen aus dem PDF).",
+ "rb.styles": "{n} Absatzformate.",
+ "rb.fonts": "Schriften durch orOS-Schriften ersetzt, mit einer Laufweite, die jede Zeile gleich breit hält: {f}.",
+ "rb.numbers": "Die Seitenzahlen beginnen bei {n}: Sie bleiben Text, Seite für Seite.",
+ "rb.off": "Seiten, auf denen Zeilen verrutscht sind. Prüfe sie vor dem Druck:",
+ "rb.offLine": "{n} Zeilen"
 });

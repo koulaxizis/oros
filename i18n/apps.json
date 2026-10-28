@@ -416,6 +416,7 @@
    "files": [
     "layout/layout.js",
     "layout/pdfin.js",
+    "layout/rebuild.js",
     "layout/search.js"
    ]
   },

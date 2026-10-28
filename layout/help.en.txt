@@ -68,6 +68,14 @@ Steps you set once and run again and again, on the open document or on all docum
 
 Images that were only linked come in as empty frames with their file name; put them back with `Place image…`. Tables, text on a path and mesh or pattern fills become simple boxes or plain colours; the message after opening says how many.
 
+## Rebuild a printed book or magazine
+`Open file` › `Rebuild a print PDF (with its pictures)…` turns the PDF you sent to the printer back into a Layout document you can edit, with every line where it was. Pick the PDF and, if you have them, the original pictures and the text (.txt, .md or .html) in the same go.
+- The page size, bleed, facing pages, margins and paragraph styles are read from the PDF. The text becomes text frames, one story per page, with a `Body text` style and others named after their size.
+- A picture that matches one of your originals uses the original file; the rest come from the PDF. Drawings, textures and pictures under a mask or blend become one locked picture per page, behind everything.
+- Your PDF's fonts are replaced with orOS fonts, with tracking that keeps each line as wide. Page numbers become their own text frames.
+- At the end a report says how many lines are where they were, which pictures are originals, and lists the pages where lines moved: press a page to go there and check it before you print.
+
+
 ## Sync and backup
 Your documents sync between your devices through [orOS sync](help:t/sync). Images are stored on the orOS disk and sync as separate files, so on another device a picture may show `Syncing…` for a while. The open document and zoom stay on each device. For a full copy with images, save a package; see also [backup](help:t/backup).
 
@@ -85,6 +93,7 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 
 ## Limits
 - A PDF opens up to 300 pages; its text keeps its place and look, not its original styles or threads.
+- A rebuild reads up to 400 pages. Page numbers stay text, and stories are not threaded across pages.
 - A document can have up to 999 pages and 5,000 objects.
 - Data merge reads up to 1,000 rows (5 MB) and makes a PDF only: the merged cards are not kept as a document, and the CSV file is not saved with it. A text frame does not grow to fit a long value: the preview and the final message say when text does not fit.
 - `Several per sheet` uses one page per card (no backs) and cuts each card at its edge, so bleed is not printed.
