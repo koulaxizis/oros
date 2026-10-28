@@ -6,9 +6,11 @@
 //     below, a FontFace for canvas drawing, and jsPDF (base64).
 //   - metrics come from the font's own tables (cmap + hmtx), never
 //     from canvas.measureText, so a line breaks at the same place on
-//     screen, in a PDF and in Node tests. The subsets carry no
-//     kerning or ligature features and canvas draws with
-//     fontKerning "none", so the drawn advances match.
+//     screen, in a PDF and in Node tests. Canvas draws with
+//     fontKerning "none"; pair kerning (LY-KERN: GPOS "kern" pairs or
+//     the old kern table; the Noto subsets have none) is read here and
+//     applied by the style's ext.kern, in layout, on screen and in the
+//     PDF alike. No ligatures.
 //   - extra families (registerFamily): fonts fetched from URLs on
 //     demand (Atelier: Fontsource). A variant may come as several
 //     subset files (Latin, Greek…): metrics look a character up in
@@ -156,7 +158,141 @@
         for (var cc = sc; cc <= ec && cc - sc < 65536; cc++) map[cc] = sg + (cc - sc);
       }
     }
-    return { upm: upm, asc: asc, desc: -desc, gap: gap, cap: cap, adv: adv, map: map };
+    return { upm: upm, asc: asc, desc: -desc, gap: gap, cap: cap, adv: adv, map: map, kern: parseKern(dv, tables) };
+  }
+
+  // Pair kerning (LY-KERN): the GPOS "kern" feature's pair adjustments
+  // (lookup type 2, also inside type 9 extensions; formats 1 and 2,
+  // the first value's x advance) for the left character's script, else
+  // the old "kern" table (format 0). → function (left glyph, right
+  // glyph, script) → font units, or null. Lookups are read on first use.
+  // A damaged table means no kerning, never an error.
+  function parseKern(dv, tables) {
+    try { return gposKern(dv, tables.GPOS) || kernTable(dv, tables.kern); } catch (e) { return null; }
+  }
+  function coverage(dv, o) {
+    var fmt = dv.getUint16(o), n = dv.getUint16(o + 2), cov = {}, k, g;
+    if (fmt === 1) for (k = 0; k < n; k++) cov[dv.getUint16(o + 4 + k * 2)] = k;
+    else if (fmt === 2) {
+      for (k = 0; k < n; k++) {
+        var r = o + 4 + k * 6, st = dv.getUint16(r), en = dv.getUint16(r + 2), idx = dv.getUint16(r + 4);
+        for (g = st; g <= en; g++) cov[g] = idx + g - st;
+      }
+    }
+    return cov;
+  }
+  function classDef(dv, o) {
+    var fmt = dv.getUint16(o), cls = {}, k, g;
+    if (fmt === 1) {
+      var st = dv.getUint16(o + 2), n = dv.getUint16(o + 4);
+      for (k = 0; k < n; k++) cls[st + k] = dv.getUint16(o + 6 + k * 2);
+    } else if (fmt === 2) {
+      var nr = dv.getUint16(o + 2);
+      for (k = 0; k < nr; k++) {
+        var r = o + 4 + k * 6, a = dv.getUint16(r), b = dv.getUint16(r + 2), c = dv.getUint16(r + 4);
+        for (g = a; g <= b; g++) cls[g] = c;
+      }
+    }
+    return cls;
+  }
+  function bits(v) { var n = 0; while (v) { n += v & 1; v >>= 1; } return n; }
+  // the x advance inside a value record of this format (0 when absent)
+  function xAdv(dv, o, fmt) { return fmt & 4 ? dv.getInt16(o + 2 * bits(fmt & 3)) : 0; }
+  function tag4(dv, o) { return String.fromCharCode(dv.getUint8(o), dv.getUint8(o + 1), dv.getUint8(o + 2), dv.getUint8(o + 3)); }
+  function gposKern(dv, base) {
+    if (base === undefined) return null;
+    var sl = base + dv.getUint16(base + 4), fl = base + dv.getUint16(base + 6), ll = base + dv.getUint16(base + 8);
+    // the kern feature's lookups, per script (the default language)
+    var nf = dv.getUint16(fl), kernOf = {}, k, j;
+    for (k = 0; k < nf; k++) {
+      var fr = fl + 2 + k * 6;
+      if (tag4(dv, fr) !== "kern") continue;
+      var fo = fl + dv.getUint16(fr + 4), nl = dv.getUint16(fo + 2), list = [];
+      for (j = 0; j < nl; j++) list.push(dv.getUint16(fo + 4 + j * 2));
+      kernOf[k] = list;
+    }
+    var byScript = {}, all = {}, ns = dv.getUint16(sl);
+    for (k = 0; k < ns; k++) {
+      var sr = sl + 2 + k * 6, so0 = sl + dv.getUint16(sr + 4), dl = dv.getUint16(so0);
+      if (!dl) continue;
+      var ls = so0 + dl, nfi = dv.getUint16(ls + 4), want = {};
+      for (j = 0; j < nfi; j++) (kernOf[dv.getUint16(ls + 6 + j * 2)] || []).forEach(function (li) { want[li] = all[li] = 1; });
+      byScript[tag4(dv, sr)] = want;
+    }
+    Object.keys(kernOf).forEach(function (fi) { kernOf[fi].forEach(function (li) { all[li] = 1; }); });
+    var cache = {};
+    function lookup(li) {
+      if (cache[li] !== undefined) return cache[li];
+      var lo = ll + dv.getUint16(ll + 2 + li * 2), type = dv.getUint16(lo), nsub = dv.getUint16(lo + 4), subs = [];
+      for (var s = 0; s < nsub; s++) {
+        var so = lo + dv.getUint16(lo + 6 + s * 2), t = type;
+        if (t === 9) { t = dv.getUint16(so + 2); so += dv.getUint32(so + 4); }
+        if (t !== 2) continue;
+        var fmt = dv.getUint16(so), cov = coverage(dv, so + dv.getUint16(so + 2));
+        var f1 = dv.getUint16(so + 4), f2 = dv.getUint16(so + 6), rec = 2 * (bits(f1) + bits(f2));
+        if (fmt === 1) {
+          var pairs = {}, nset = dv.getUint16(so + 8);
+          Object.keys(cov).forEach(function (g) {
+            var i = cov[g];
+            if (i >= nset) return;
+            var ps = so + dv.getUint16(so + 10 + i * 2), np = dv.getUint16(ps), row = {};
+            for (var q = 0; q < np; q++) {
+              var pr = ps + 2 + q * (2 + rec);
+              row[dv.getUint16(pr)] = xAdv(dv, pr + 2, f1);
+            }
+            pairs[g] = row;
+          });
+          subs.push({ cov: cov, pairs: pairs });
+        } else if (fmt === 2) {
+          var c1 = classDef(dv, so + dv.getUint16(so + 8)), c2 = classDef(dv, so + dv.getUint16(so + 10));
+          var n1 = dv.getUint16(so + 12), n2 = dv.getUint16(so + 14), vals = new Int16Array(n1 * n2);
+          for (var a = 0; a < n1; a++) for (var b = 0; b < n2; b++) vals[a * n2 + b] = xAdv(dv, so + 16 + (a * n2 + b) * rec, f1);
+          subs.push({ cov: cov, c1: c1, c2: c2, n2: n2, vals: vals });
+        }
+      }
+      return (cache[li] = subs);
+    }
+    var sets = {};
+    function setFor(script) {
+      if (sets[script]) return sets[script];
+      var w = byScript[script] || byScript.DFLT || all;
+      return (sets[script] = Object.keys(w).map(Number).sort(function (a, b) { return a - b; }).map(lookup));
+    }
+    if (!Object.keys(all).length) return null;
+    // script: "latn", "grek", "cyrl"… (the left character's)
+    return function (l, r, script) {
+      var lookups = setFor(script || "latn"), v = 0;
+      for (var i = 0; i < lookups.length; i++) {
+        var subs = lookups[i];
+        for (var s = 0; s < subs.length; s++) {
+          var st = subs[s];
+          if (st.cov[l] === undefined) continue;
+          if (st.pairs) { var row = st.pairs[l]; if (!row || row[r] === undefined) continue; v += row[r]; break; }
+          var a = st.c1[l] || 0, b = st.c2[r] || 0;
+          if (a * st.n2 + b < st.vals.length) v += st.vals[a * st.n2 + b];
+          break;
+        }
+      }
+      return v;
+    };
+  }
+  function kernTable(dv, o) {
+    if (o === undefined || dv.getUint16(o) !== 0) return null;
+    var n = dv.getUint16(o + 2), pairs = {}, any = false, so = o + 4;
+    for (var t = 0; t < n; t++) {
+      var len = dv.getUint16(so + 2), cov = dv.getUint16(so + 4);
+      // format 0, horizontal, kerning values (not minimum, not cross-stream)
+      if ((cov >> 8) === 0 && (cov & 7) === 1) {
+        var np = dv.getUint16(so + 6);
+        for (var k = 0; k < np; k++) {
+          var pr = so + 14 + k * 6;
+          pairs[dv.getUint16(pr) * 65536 + dv.getUint16(pr + 2)] = dv.getInt16(pr + 4);
+          any = true;
+        }
+      }
+      so += len;
+    }
+    return any ? function (l, r) { return pairs[l * 65536 + r] || 0; } : null;
   }
 
   // ---------- 3. Font registry ----------
@@ -187,7 +323,8 @@
         Object.keys(p.m.map).forEach(function (cp) { if (map[cp] === undefined) map[cp] = off + p.m.map[cp]; });
         off += p.m.adv.length;
       });
-      m = { upm: m.upm, asc: m.asc, desc: m.desc, gap: m.gap, cap: m.cap, adv: adv, map: map };
+      m = { upm: m.upm, asc: m.asc, desc: m.desc, gap: m.gap, cap: m.cap, adv: adv, map: map,
+            kp: parts.map(function (p) { return p.m; }) };   // each file's own glyph ids, for kerning
     }
     var f = FAMILIES[key.split("-")[0]];
     if (f && f.urls) m.fb = (f.fallback || "sans") + "-" + key.split("-")[1];
@@ -337,20 +474,46 @@
 
   // Width of a string in points. track = 1/1000 em added after
   // every character (InDesign's tracking unit).
-  function measure(key, str, size, track) {
+  // kern: add the font's pair kerning (LY-KERN) between neighbours.
+  function measure(key, str, size, track, kern) {
     var m = metrics(key);
     if (!m) return str.length * size * 0.5;
     var fb = m.fb ? metrics(m.fb) : null;
-    var w = 0, n = 0;
+    var w = 0, n = 0, prev = -1;
     for (var i = 0; i < str.length; i++) {
       var cp = str.codePointAt(i);
       if (cp > 0xFFFF) i++;
       var gid = m.map[cp];
       if (gid === undefined && fb && fb !== m && fb.map[cp] !== undefined) w += (fb.adv[fb.map[cp]] || 0) / fb.upm;
       else w += (m.adv[gid || 0] || 0) / m.upm;
+      if (kern && prev >= 0) w += kernEm(m, prev, cp);
+      prev = cp;
       n++;
     }
     return w * size + (track ? n * track * size / 1000 : 0);
+  }
+  // Pair kerning in em between two characters, when one file of the
+  // face has both (a character drawn by the fallback is not kerned).
+  function kernEm(m, a, b) {
+    var ps = m.kp || [m];
+    for (var i = 0; i < ps.length; i++) {
+      var p = ps[i], ga = p.map[a];
+      if (ga === undefined) continue;
+      var gb = p.map[b];
+      return gb !== undefined && p.kern ? p.kern(ga, gb, scriptOf(a)) / p.upm : 0;
+    }
+    return 0;
+  }
+  // The OpenType script of a character, for its kerning lookups.
+  function scriptOf(cp) {
+    if ((cp >= 0x370 && cp <= 0x3FF) || (cp >= 0x1F00 && cp <= 0x1FFF)) return "grek";
+    if (cp >= 0x400 && cp <= 0x52F) return "cyrl";
+    return "latn";
+  }
+  // The kerning in points between two characters (strings) of a face.
+  function kernPair(key, a, b, size) {
+    var m = metrics(key);
+    return m ? kernEm(m, a.codePointAt(0), b.codePointAt(0)) * size : 0;
   }
 
   function ascent(key, size) { var m = metrics(key); return m ? m.asc * size / m.upm : size * 0.8; }
@@ -389,11 +552,13 @@
   // A family of the document (ext.fam: "fs_…" Fontsource, "uf_…" a
   // font file of the user's) goes with the style's own `font`, which
   // stays the built-in stand-in: a style that sets only `font` clears
-  // a family it inherited.
+  // a family it inherited. ext.kern (1 / 0) turns the font's pair
+  // kerning on or off for the style and the styles based on it.
   function famOf(s, out) {
     var f = s.ext && s.ext.fam;
     if (typeof f === "string" && FAM_RE.test(f)) out.fam = f;
     else if (s.font !== undefined && s.font !== null) out.fam = "";
+    if (s.ext && s.ext.kern !== undefined) out.kern = s.ext.kern ? 1 : 0;
   }
   function resolveCs(csMap, id) {
     var chain = [], seen = {}, cur = csMap[id];
@@ -421,6 +586,7 @@
     if (run.b) a.b = 1;
     if (run.i) a.i = 1;
     if (run.u) a.u = 1;
+    if (cs.kern !== undefined ? cs.kern : ps.kern) a.kern = 1;
     a.key = fontKey(a.fam && FAMILIES[a.fam] ? a.fam : a.font, a.b, a.i);
     return a;
   }
@@ -488,7 +654,7 @@
     if (p.f === "pc") return String(ctx.pageCount || "#");
     return "";
   }
-  function partWidth(p, ctx) { return measure(p.a.key, partText(p, ctx), p.a.size, p.a.track); }
+  function partWidth(p, ctx) { return measure(p.a.key, partText(p, ctx), p.a.size, p.a.track, p.a.kern); }
   function wordWidth(w, ctx) {
     var s = 0;
     for (var i = 0; i < w.parts.length; i++) s += partWidth(w.parts[i], ctx);
@@ -757,6 +923,7 @@
           it.tok.parts.forEach(function (p) {
             var txt = partText(p, ctx), pw = partWidth(p, ctx);
             line.runs.push({ x: x, y: base, t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
+            if (p.a.kern) line.runs[line.runs.length - 1].kern = 1;
             if (p.a.size > line.maxSize) line.maxSize = p.a.size;
             x += pw;
           });
@@ -791,7 +958,7 @@
 
   var api = {
     FAMILIES: FAMILIES, FAMILY_IDS: FAMILY_IDS, DEFAULT_PS: DEFAULT_PS, PS_KEYS: PS_KEYS, CS_KEYS: CS_KEYS,
-    fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, cssStack: cssStack, fallbackKey: fallbackKey, allKeys: allKeys, FAM_RE: FAM_RE,
+    fontKey: fontKey, fontFile: fontFile, cssFamily: cssFamily, cssStack: cssStack, fallbackKey: fallbackKey, allKeys: allKeys, FAM_RE: FAM_RE, kernPair: kernPair,
     registerFamily: registerFamily, setFetcher: setFetcher, generation: generation, unicodeRange: unicodeRange,
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,

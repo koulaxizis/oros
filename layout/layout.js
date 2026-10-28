@@ -143,7 +143,7 @@
       "sty.name": "Name", "sty.base": "Based on", "sty.baseNone": "[None]", "sty.font": "Font", "sty.size": "Size (pt)",
       "sty.lead": "Leading (pt)", "sty.auto": "Auto", "sty.align": "Alignment",
       "sty.al": "Left", "sty.ac": "Centre", "sty.ar": "Right", "sty.aj": "Justify",
-      "sty.b": "Bold", "sty.i": "Italic", "sty.u": "Underline", "sty.caps": "All caps", "sty.bul": "Bullet",
+      "sty.b": "Bold", "sty.i": "Italic", "sty.u": "Underline", "sty.caps": "All caps", "sty.bul": "Bullet", "sty.kern": "Kerning",
       "sty.sb": "Space before", "sty.sa": "Space after", "sty.fi": "First-line indent", "sty.li": "Left indent", "sty.ri": "Right indent",
       "sty.track": "Tracking (1/1000 em)", "sty.color": "Colour", "sty.inherit": "As base",
       "font.sans": "Noto Sans", "font.serif": "Noto Serif", "font.mono": "Noto Sans Mono",
@@ -345,7 +345,7 @@
       "sty.name": "Όνομα", "sty.base": "Βασίζεται σε", "sty.baseNone": "[Κανένα]", "sty.font": "Γραμματοσειρά", "sty.size": "Μέγεθος (pt)",
       "sty.lead": "Διάστιχο (pt)", "sty.auto": "Αυτόματο", "sty.align": "Στοίχιση",
       "sty.al": "Αριστερά", "sty.ac": "Κέντρο", "sty.ar": "Δεξιά", "sty.aj": "Πλήρης",
-      "sty.b": "Έντονα", "sty.i": "Πλάγια", "sty.u": "Υπογράμμιση", "sty.caps": "Κεφαλαία", "sty.bul": "Κουκκίδα",
+      "sty.b": "Έντονα", "sty.i": "Πλάγια", "sty.u": "Υπογράμμιση", "sty.caps": "Κεφαλαία", "sty.bul": "Κουκκίδα", "sty.kern": "Kerning",
       "sty.sb": "Διάστημα πριν", "sty.sa": "Διάστημα μετά", "sty.fi": "Εσοχή πρώτης γραμμής", "sty.li": "Εσοχή αριστερά", "sty.ri": "Εσοχή δεξιά",
       "sty.track": "Αραίωση (1/1000 em)", "sty.color": "Χρώμα", "sty.inherit": "Όπως η βάση",
       "font.sans": "Noto Sans", "font.serif": "Noto Serif", "font.mono": "Noto Sans Mono",
@@ -920,7 +920,12 @@
     save();
     openDoc(d.id);
   }
-  function createDoc(opts) { addDoc(M.newDoc(opts, now())); }
+  // a new document kerns (LY-KERN); older ones keep their line breaks
+  function createDoc(opts) {
+    var d = M.newDoc(opts, now()), base = M.find(d.pstyles, "ps-base");
+    if (base) base.ext = { kern: 1 };
+    addDoc(d);
+  }
   LY.createDoc = createDoc; LY.addDoc = addDoc;
 
   function openDoc(id) {

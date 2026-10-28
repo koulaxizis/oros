@@ -19,7 +19,8 @@
 //     outline.
 //   - Fonts: each style keeps the built-in family closest to its font
 //     and the font's own name in ext.srcFont; io.js then finds that
-//     family on the orOS disk or at Fontsource (LY-FONT).
+//     family on the orOS disk or at Fontsource (LY-FONT). Text kerns,
+//     as in Scribus (ext.kern on the base style, LY-KERN).
 //   - A compressed .sla.gz is unpacked by io.js before it comes here.
 // Exposes LY_SLA (browser) or module.exports (Node tests).
 // ============================================================
@@ -353,6 +354,10 @@
       o.base = a.PARENT && styleId[a.PARENT] ? styleId[a.PARENT] : "ps-base";
       doc.pstyles.push(o);
     });
+    // Scribus kerns by default (LY-KERN)
+    var base0 = M.find(doc.pstyles, "ps-base");
+    base0.ext = base0.ext || {};
+    base0.ext.kern = 1;
     // paragraph with local overrides → a derived style, made once
     var derived = {};
     function paraStyle(a) {

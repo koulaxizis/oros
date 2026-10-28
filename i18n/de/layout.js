@@ -383,6 +383,7 @@ orosPack("de", "layout", {
  "sty.fi": "Einzug erste Zeile",
  "sty.font": "Schrift",
  "sty.i": "Kursiv",
+ "sty.kern": "Unterschneidung",
  "sty.inherit": "Wie Basis",
  "sty.lead": "Zeilenabstand (pt)",
  "sty.li": "Einzug links",

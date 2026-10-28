@@ -766,6 +766,8 @@
       ["b", "i", "u", "caps"].concat(kind === "ps" ? ["bul"] : []).forEach(function (k) {
         flags.appendChild(triState(t("sty." + k), st, k));
       });
+      st.ext = st.ext || {};   // an empty ext is dropped when the style is saved
+      flags.appendChild(triState(t("sty.kern"), st.ext, "kern"));
       body.appendChild(flags);
       if (kind === "ps") {
         body.appendChild(el("span", "fld-lbl", t("sty.align")));

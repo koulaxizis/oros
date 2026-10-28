@@ -34,7 +34,7 @@
   function xIn(r, k) {
     if (k <= 0) return r.x;
     if (r.f || k >= r.n) return r.x + r.w;
-    return r.x + T.measure(r.key, r.t.slice(0, k), r.size, r.track);
+    return r.x + T.measure(r.key, r.t.slice(0, k), r.size, r.track, r.kern);
   }
   // x of offset o on a line (o0 ≤ o ≤ o1)
   function xOf(ln, o) {

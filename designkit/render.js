@@ -312,12 +312,15 @@
         if (!r.t) return;
         ctx.font = r.size + "px " + T.cssStack(r.key);
         ctx.fillStyle = rgba(doc, r.color) || "#000";
-        if (r.track) {
-          var x = r.x;
+        if (r.track || r.kern) {
+          // letter by letter: tracking and pair kerning (LY-KERN) as layout measured them
+          var x = r.x, prev = "";
           for (var i = 0; i < r.t.length; i++) {
             var ch = r.t[i];
+            if (r.kern && prev) x += T.kernPair(r.key, prev, ch, r.size);
             ctx.fillText(ch, x, r.y);
             x += T.measure(r.key, ch, r.size, r.track);
+            prev = ch;
           }
         } else ctx.fillText(r.t, r.x, r.y);
         if (r.u) ctx.fillRect(r.x, r.y + r.size * 0.12, r.w, Math.max(0.3, r.size * 0.05));
