@@ -61,14 +61,16 @@ test("propose_entry document: Markdown to Writer, the card shows words without m
 
 test("the files live in the shell's memory, never in storage; Writer reads Markdown and takes files", () => {
   const sh = read("shell.js");
-  assert.match(sh, /window\.orosAssistAtt = \{ mem: \{\}, text: \{\}, pages: \{\} \};/);
+  assert.match(sh, /window\.orosAssistAtt = \{ mem: \{\}, text: \{\}, pages: \{\}, blob: \{\}, rb: \{\} \};/);
   const as = read("assistant/assistant.js");
   assert.match(as, /var attMem = attStore\.mem;/);
   assert.match(as, /var attText = attStore\.text;/);
   assert.match(as, /var attPages = attStore\.pages;/);
   // nothing of a file goes to storage
-  assert.doesNotMatch(as, /(localStorage|indexedDB|sessionStorage)[^\n]*attMem/);
-  assert.match(as, /orosFileOpen\.openIn\(ui\.app, new File\(\[b64Bytes\(b64\)\]/);
+  assert.doesNotMatch(as, /(localStorage|indexedDB|sessionStorage)[^\n]*(attMem|attBlob)/);
+  assert.match(as, /var attBlob = attStore\.blob \|\| \(attStore\.blob = \{\}\);/);
+  assert.match(as, /return attMem\[id\] \? new File\(\[b64Bytes\(attMem\[id\]\)\], String\(name \|\| "file"\)\) : null;/);
+  assert.match(as, /p\.orosFileOpen\.openIn\(ui\.app, f\)/);
   assert.match(read("fileopen.js"), /openIn: function \(app, file\) \{/);
   const w = read("writer/writer.js");
   assert.match(w, /if \(t\.newDoc\.md === true\) \{\n\s+const md = WriterIO\.parseTextOf\(text, 'md'\);/);

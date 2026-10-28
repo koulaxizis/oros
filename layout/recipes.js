@@ -46,6 +46,7 @@
   }
   function choices(op, key, st) {
     if (op === "pstyle" && key === "to") return withCurrent(pool("pstyles"), st.to);
+    if (op === "style" && key === "name") return withCurrent(pool("pstyles"), st.name);
     if (op === "pstyle" && key === "from") return [["", t("rc.anyStyle")]].concat(withCurrent(pool("pstyles"), st.from));
     if (op === "master" && key === "ms") return [["", t("rc.noMaster")]].concat(withCurrent(pool("masters"), st.ms));
     return null;
@@ -64,6 +65,7 @@
       st[k] = a.def !== undefined ? a.def : a.t === "bool" ? 0 : "";
     });
     if (op === "pstyle") { var p = pool("pstyles"); st.to = p.length ? p[0][0] : ""; }
+    if (op === "style") { var q = pool("pstyles"); st.name = q.length ? q[0][0] : ""; }
     if (op === "margins" && LY.doc) {
       var s0 = LY.doc.setup;
       ["t", "b", "i", "o"].forEach(function (k, i) {
@@ -78,6 +80,7 @@
     switch (st.op) {
       case "text": return "“" + st.find + "” → “" + (st.repl || "") + "”";
       case "pstyle": return (st.from ? pickName(st.from, "pstyles") : t("rc.anyStyle")) + " → " + pickName(st.to, "pstyles");
+      case "style": return pickName(st.name, "pstyles") + (st.size ? " · " + st.size + " pt" : "");
       case "master": return (st.ms ? pickName(st.ms, "masters") : t("rc.noMaster")) + " · " + enumLabel("master", "on", st.on);
       case "margins": return [st.t, st.b, st.i, st.o].join(" / ") + " mm";
       case "preflight": return st.stop ? t("rc.f.stop") : "";

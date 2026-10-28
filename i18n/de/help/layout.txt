@@ -52,7 +52,7 @@ Erstelle viele Namenskarten, Etiketten, Namensschilder oder Urkunden aus einem E
 
 ## Automationen
 Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Dokument oder in allen Dokumenten. Kein Code: du wählst die Schritte aus einer Liste.
-- `Mehr` › `Automationen…` (oder `Automationen` auf dem Startbildschirm) zeigt sie. `Neue Automation`, gib ihr einen Namen, dann `Schritt hinzufügen`: `Text suchen und ersetzen` (mit `Groß-/Kleinschreibung beachten` und `Nur ganze Wörter`), `Absatzformat` (Absätze in einem Format, oder alle, erhalten ein anderes), `Musterseite zuweisen` (alle, ungerade oder gerade Seiten), `Seitenränder` in mm, `Preflight-Prüfung` und `PDF exportieren` (Anschnitt, Schnittmarken, Doppelseiten, Bilder für Druck oder Bildschirm). Mit ↑ und ↓ verschiebst du Schritte.
+- `Mehr` › `Automationen…` (oder `Automationen` auf dem Startbildschirm) zeigt sie. `Neue Automation`, gib ihr einen Namen, dann `Schritt hinzufügen`: `Text suchen und ersetzen` (mit `Groß-/Kleinschreibung beachten` und `Nur ganze Wörter`), `Absatzformat` (Absätze in einem Format, oder alle, erhalten ein anderes), `Musterseite zuweisen` (alle, ungerade oder gerade Seiten), `Seitenränder` in mm, `Format ändern` (Größe, Zeilenabstand, Schrift, Ausrichtung oder Laufweite eines Absatzformats, nach seinem Namen), `Preflight-Prüfung` und `PDF exportieren` (Anschnitt, Schnittmarken, Doppelseiten, Bilder für Druck oder Bildschirm). Mit ↑ und ↓ verschiebst du Schritte.
 - `Ausführen` zeigt die Schritte und fragt `Ausführen für`: `Dieses Dokument` oder `Alle Dokumente`. Das geöffnete Dokument ändert sich in einem Schritt, den du rückgängig machen kannst; für die anderen stellt `Rückgängig` in der folgenden Meldung alle Dokumente wieder her.
 - Formate und Musterseiten werden über den Namen gefunden, so passt eine Automation zu jedem Dokument mit einem Format dieses Namens. Ein Dokument ohne es bleibt, wie es ist.
 - Mit `Dokumente mit Fehlern nicht exportieren` wird ein Dokument mit Preflight-Fehlern nicht exportiert. Ein PDF wird mit dem üblichen Speichern-Dialog gesichert; mehrere landen in Dateien, im Ordner `Layout`, ohne ältere zu überschreiben.
@@ -74,6 +74,7 @@ Nur verknüpfte Bilder kommen als leere Rahmen mit ihrem Dateinamen; setz sie mi
 - Ein Bild, das zu einem deiner Originale passt, nutzt die Originaldatei; die übrigen kommen aus dem PDF. Zeichnungen, Texturen und Bilder unter einer Maske oder Füllmethode werden ein gesperrtes Bild pro Seite hinter allem.
 - Die Schriften des PDFs werden durch orOS-Schriften ersetzt, mit einer Laufweite, die jede Zeile gleich breit hält. Seitenzahlen werden eigene Textrahmen.
 - Am Ende sagt ein Bericht, wie viele Zeilen an ihrem Platz sind und welche Bilder Originale sind, und listet die Seiten, auf denen Zeilen verrutscht sind: Tippe auf eine Seite, um hinzugehen und sie vor dem Druck zu prüfen.
+- Der [Assistent](app:assistant) kann das auch: Hänge das PDF mit `Nur für eine App…` an und bitte ihn, es in Layout wiederherzustellen. Der Bericht hat dann `Zurück zum Assistenten`, und der Assistent kann Formate für dich per Automation ändern und dir eine Seite zeigen.
 
 
 ## Synchronisierung und Sicherung

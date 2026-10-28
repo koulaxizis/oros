@@ -202,6 +202,27 @@
       "entry.open": "Open in {app}", "entry.dismiss": "Dismiss",
       "file.head": "Attached file · {app}", "file.hint": "{app} opens the file as it is, with its formatting, and asks whether to make a new document.",
       "file.gone": "The file is no longer here: attach it again to open it.",
+      "att.dev": "For an app only…",
+      "att.devHint": "For an app only: up to {n} files of any kind, {max} each, {total} in all. They stay on this device and are never sent to the AI service; the Assistant can hand them to an app, for example to rebuild a print PDF in Layout.",
+      "att.devOnly": "stays here",
+      "att.devTip": "Stays on this device and is not sent to the AI service; the Assistant can hand it to an app.",
+      "att.dev.size": "{name} is larger than {max}.",
+      "att.dev.count": "At most {n} files for an app go with one message.",
+      "att.dev.total": "Files for an app can take {max} in all on this device: remove some first.",
+      "rb.head": "Rebuild in {app}",
+      "rb.src": "With {n} original files (pictures and texts).",
+      "rb.noSrc": "Without original files: pictures come from the PDF.",
+      "rb.folder": "Also the originals in {f}.",
+      "rb.hint": "Layout makes a new document on this device, with every line where it was, and shows a report. Nothing is sent to the AI service.",
+      "rb.go": "Rebuild",
+      "rb.working": "{app} is rebuilding it on this device…",
+      "rb.failed": "{app} could not rebuild this PDF. Nothing was made.",
+      "rb.lines": "{n} of {t} lines are where they were ({p} %).",
+      "rb.pics": "{n} pictures, {o} of them from your original files.",
+      "rb.styles": "{n} paragraph styles.",
+      "rb.check": "Pages to check: {p}.",
+      "rb.next": "The document is in Layout. Tell me what to change, for example the body size or a style.",
+      "do.f.page": "Page",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
       "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text", "nl.checkHead": "Ready to send? · {app}", "nl.checkHint": "Opens the issue's check in {app}: what is missing, and when all is well, the send screen. You press Send there.", "nl.checkOpen": "Open the check",
       "nl.k.products": "Products", "nl.k.shop_products": "From your shop", "nl.shopN": "the newest {n}, read from the shop when added", "nl.shopQ": "the newest {n} named \u201c{q}\u201d, read from the shop when added",
@@ -545,6 +566,27 @@
       "entry.open": "Άνοιγμα: {app}", "entry.dismiss": "Απόρριψη",
       "file.head": "Συνημμένο αρχείο · {app}", "file.hint": "Ανοίγει στην εφαρμογή {app} όπως είναι, με τη μορφοποίησή του, και θα ερωτηθείς αν θα γίνει νέο έγγραφο.",
       "file.gone": "Το αρχείο δεν είναι πια εδώ: επισύναψέ το ξανά για να ανοίξει.",
+      "att.dev": "Μόνο για εφαρμογή…",
+      "att.devHint": "Μόνο για εφαρμογή: έως {n} αρχεία κάθε είδους, έως {max} το καθένα, {total} συνολικά. Μένουν σε αυτή τη συσκευή και δεν στέλνονται ποτέ στην υπηρεσία AI· ο Βοηθός μπορεί να τα δώσει σε μια εφαρμογή, π.χ. για να ξαναφτιάξει ένα PDF τυπογραφείου στη Σελιδοποίηση.",
+      "att.devOnly": "μένει εδώ",
+      "att.devTip": "Μένει σε αυτή τη συσκευή και δεν στέλνεται στην υπηρεσία AI· ο Βοηθός μπορεί να το δώσει σε μια εφαρμογή.",
+      "att.dev.size": "Το {name} είναι μεγαλύτερο από {max}.",
+      "att.dev.count": "Με ένα μήνυμα πάνε έως {n} αρχεία για εφαρμογή.",
+      "att.dev.total": "Τα αρχεία για εφαρμογή χωρούν έως {max} συνολικά σε αυτή τη συσκευή: βγάλε πρώτα κάποια.",
+      "rb.head": "Αναδημιουργία στη {app}",
+      "rb.src": "Με {n} πρωτότυπα αρχεία (εικόνες και κείμενα).",
+      "rb.noSrc": "Χωρίς πρωτότυπα αρχεία: οι εικόνες έρχονται από το PDF.",
+      "rb.folder": "Και τα πρωτότυπα στο {f}.",
+      "rb.hint": "Η Σελιδοποίηση φτιάχνει ένα νέο έγγραφο σε αυτή τη συσκευή, με κάθε γραμμή στη θέση της, και δείχνει μια αναφορά. Τίποτα δεν στέλνεται στην υπηρεσία AI.",
+      "rb.go": "Αναδημιουργία",
+      "rb.working": "Η {app} το ξαναφτιάχνει σε αυτή τη συσκευή…",
+      "rb.failed": "Η {app} δεν μπόρεσε να ξαναφτιάξει αυτό το PDF. Δεν φτιάχτηκε τίποτα.",
+      "rb.lines": "{n} από {t} γραμμές είναι εκεί που ήταν ({p} %).",
+      "rb.pics": "{n} εικόνες, οι {o} από τα πρωτότυπα αρχεία σου.",
+      "rb.styles": "{n} στυλ παραγράφου.",
+      "rb.check": "Σελίδες για έλεγχο: {p}.",
+      "rb.next": "Το έγγραφο είναι στη Σελιδοποίηση. Πες μου τι να αλλάξω, π.χ. το μέγεθος του σώματος ή ένα στυλ.",
+      "do.f.page": "Σελίδα",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
       "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο", "nl.checkHead": "Έτοιμο για αποστολή; · {app}", "nl.checkHint": "Ανοίγει τον έλεγχο του τεύχους ({app}): τι λείπει και, όταν όλα είναι εντάξει, την οθόνη αποστολής. Το Αποστολή το πατάς εσύ εκεί.", "nl.checkOpen": "Άνοιγμα ελέγχου",
       "nl.k.products": "Προϊόντα", "nl.k.shop_products": "Από το κατάστημά σου", "nl.shopN": "τα {n} νεότερα, από το κατάστημα τη στιγμή της προσθήκης", "nl.shopQ": "τα {n} νεότερα με «{q}», από το κατάστημα τη στιγμή της προσθήκης",
@@ -1654,6 +1696,11 @@
     return { mem: {}, text: {}, pages: {} };
   })();
   var attMem = attStore.mem;   // id → base64
+  // AS-DEV: files for an app only (a rebuild in Layout, Writer's Open)
+  // stay as they are, in the shell's memory too, and never go to the
+  // provider; Layout's rebuild reports come back here (AS-RB).
+  var attBlob = attStore.blob || (attStore.blob = {});   // id → File
+  var attRb = attStore.rb || (attStore.rb = {});         // "<chat>:<call>" → Layout's report
   var ATT_KEEP = 400 * 1024 * 1024;   // base64 characters kept in all; the oldest go first
   var attOrig = {};        // id → the photo as picked (full size, for a book cover), this session only
   var ORIG_MAX = 40 * 1024 * 1024;
@@ -1766,14 +1813,15 @@
   function addBlob(name, blob) {
     var pid = curProv(), type = typeOf(name, blob && blob.type), other = otherPhoto(type);
     if (blob && blob.size > C.ATT_FILE) { showToast(t("att.err.size", { size: fmtSize(blob.size), max: fmtSize(C.ATT_FILE) })); return Promise.resolve(); }
-    var pre = C.checkAtt(pid, pending.concat(new Array(attBusy)), { type: other ? "image/jpeg" : type, size: other || C.attKind(type) === "img" ? 1 : blob.size });
+    var toAi = pending.filter(function (a) { return !a.dev; });
+    var pre = C.checkAtt(pid, toAi.concat(new Array(attBusy)), { type: other ? "image/jpeg" : type, size: other || C.attKind(type) === "img" ? 1 : blob.size });
     if (pre) { showToast(pre === "size" ? sizeErr(blob.size, type) : attErr(pre)); return Promise.resolve(); }
     attBusy++;
     renderAtt();
     var prep = other ? redraw(blob, type).then(function (r) { return shrink(r.blob, r.type); }, function () { throw { shown: t("att.err.photo") }; })
              : C.attKind(type) === "img" ? shrink(blob, type) : Promise.resolve({ blob: blob, type: type });
     return prep.then(function (r) {
-      var code = C.checkAtt(pid, pending, { type: r.type, size: r.blob.size });
+      var code = C.checkAtt(pid, pending.filter(function (a) { return !a.dev; }), { type: r.type, size: r.blob.size });
       if (code) {
         throw { shown: code === "size" ? sizeErr(r.blob.size, r.type) : attErr(code) };
       }
@@ -1794,6 +1842,38 @@
       renderAtt();
     });
   }
+  // AS-DEV: a file for an app only, as it is (C.checkDev limits).
+  function isPhone() {
+    try { return window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(hover: hover)").matches; } catch (e) { return false; }
+  }
+  function devKept() {
+    var n = 0;
+    Object.keys(attBlob).forEach(function (id) { n += attBlob[id] && attBlob[id].size || 0; });
+    return n;
+  }
+  // A File made in this frame dies with it (an app opened from a card
+  // takes the frame's place): kept as a copy made in the shell window.
+  function ownFile(f, name) {
+    var p = shell();
+    try { return new (p && p.File ? p.File : File)([f], name, { type: f.type || "", lastModified: f.lastModified || Date.now() }); }
+    catch (e) { return f; }
+  }
+  function addDev(list) {
+    var files = Array.prototype.slice.call(list || []), shown = "";
+    files.forEach(function (f) {
+      var code = C.checkDev(pending.filter(function (a) { return a.dev; }), devKept(), f, isPhone());
+      if (code) {
+        if (!shown) shown = t("att.dev." + code, { name: f.name, max: fmtSize(code === "size" ? C.DEV_FILE : isPhone() ? C.DEV_PHONE : C.DEV_TOTAL), n: C.DEV_MAX });
+        return;
+      }
+      var a = C.normAtt({ id: attId(), name: String(f.name || "file").replace(/[\\/]/g, "_"), type: f.type || "", size: f.size, dev: 1 });
+      if (!a) return;
+      attBlob[a.id] = ownFile(f, a.name);
+      pending.push(a);
+    });
+    if (shown) showToast(shown);
+    renderAtt();
+  }
   function addFiles(list) {
     var files = Array.prototype.slice.call(list || []);
     return files.reduce(function (p, f) { return p.then(function () { return addBlob(f.name, f); }); }, Promise.resolve());
@@ -1813,13 +1893,14 @@
   function removeAtt(id) {
     pending = pending.filter(function (a) { return a.id !== id; });
     delete attMem[id];
+    delete attBlob[id];
     delete attOrig[id];
     delete attText[id];
     delete attPages[id];
     renderAtt();
   }
   function clearPending(keepData) {
-    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attOrig[a.id]; delete attText[a.id]; delete attPages[a.id]; });
+    if (!keepData) pending.forEach(function (a) { delete attMem[a.id]; delete attBlob[a.id]; delete attOrig[a.id]; delete attText[a.id]; delete attPages[a.id]; });
     pending = [];
     renderAtt();
   }
@@ -1836,11 +1917,12 @@
     row.hidden = false;
     var total = 0;
     pending.forEach(function (a) {
-      total += a.size;
-      var chip = el("span", "att-chip");
+      if (!a.dev) total += a.size;
+      var chip = el("span", "att-chip" + (a.dev ? " dev" : ""));
       var ic = el("span", "att-ic"); ic.innerHTML = ICON.file; chip.appendChild(ic);
       chip.appendChild(el("span", "att-name", a.name));
-      chip.appendChild(el("span", "att-size", fmtSize(a.size) + (attLocal(a) ? " · " + t("att.textOnly") : "")));
+      chip.appendChild(el("span", "att-size", fmtSize(a.size) + (a.dev ? " · " + t("att.devOnly") : attLocal(a) ? " · " + t("att.textOnly") : "")));
+      if (a.dev) chip.title = t("att.devTip");
       var x = el("button", "att-x"); x.type = "button"; x.innerHTML = ICON.x;
       x.setAttribute("aria-label", t("att.remove", { name: a.name })); x.title = t("att.remove", { name: a.name });
       x.addEventListener("click", function () { removeAtt(a.id); });
@@ -1848,8 +1930,8 @@
       row.appendChild(chip);
     });
     if (attBusy) row.appendChild(el("span", "att-chip busy", attReadPct >= 0 ? t("att.readingText", { p: attReadPct }) : t("att.reading")));
-    if (pending.length) {
-      var local = pending.some(attLocal);
+    if (pending.some(function (a) { return !a.dev; })) {
+      var local = pending.some(function (a) { return !a.dev && attLocal(a); });
       row.appendChild(el("span", "att-goes", t(local ? "att.goesText" : "att.goes", { name: provName(curProv()), size: fmtSize(total) })));
     }
   }
@@ -1862,13 +1944,23 @@
     dlg.appendChild(el("p", "dlg-hint", t("att.hint", { name: provName(curProv()) })));
     if (!caps.img || !caps.pdf) dlg.appendChild(el("p", "dlg-hint", t(!caps.img && !caps.pdf ? "att.localBoth" : !caps.pdf ? "att.localPdf" : "att.localImg", { name: provName(curProv()) })));
     if (DT) dlg.appendChild(el("p", "dlg-hint", t("att.docs", { name: provName(curProv()) })));
+    dlg.appendChild(el("p", "dlg-hint", t("att.devHint", { n: C.DEV_MAX, max: fmtSize(C.DEV_FILE), total: fmtSize(isPhone() ? C.DEV_PHONE : C.DEV_TOTAL) })));
     caps = { img: true, pdf: true };
     var acts = el("div", "dlg-actions att-acts");
     acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
     var fs = diskFS();
     if (fs) acts.appendChild(button(t("att.disk"), "", function () { dlg.close(); diskPicker(fs); }));
+    acts.appendChild(button(t("att.dev"), "", function () {
+      var inp = $("att-file");
+      inp.accept = "";
+      inp.value = "";
+      inp.dataset.dev = "1";
+      dlg.close();
+      inp.click();
+    }));
     acts.appendChild(button(t("att.device"), "primary", function () {
       var inp = $("att-file");
+      inp.dataset.dev = "";
       inp.accept = attAccept();
       inp.value = "";
       dlg.close();
@@ -2160,7 +2252,7 @@
       savePrefs();
     }
     var um = { r: "user", text: text };
-    if (pending.length) um.att = pending.map(function (a) { return { id: a.id, name: a.name, type: a.type, size: a.size }; });
+    if (pending.length) um.att = pending.map(function (a) { var o = { id: a.id, name: a.name, type: a.type, size: a.size }; if (a.dev) o.dev = 1; return o; });
     chat.msgs.push(um);
     clearPending(true);
     box.value = "";
@@ -2258,10 +2350,11 @@
     var acts = builtin ? [] : actionKinds();
     var hiOn = !builtin && !data.set.chat && apps.length > 0;
     var fileOn = !builtin && !!installed().writer;
+    var rbOn = !builtin && !!installed().layout;
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn, rebuild: rbOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -2278,6 +2371,7 @@
       cover: cvOn,
       files: builtin ? "" : "pdf",
       openFile: fileOn,
+      rebuild: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
@@ -2445,6 +2539,7 @@
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
+    if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
@@ -2543,7 +2638,7 @@
         var a = C.normAtt(raw);
         if (!a || seen[a.id]) return;
         seen[a.id] = 1;
-        out.push({ id: a.id, name: a.name, type: a.type, size: a.size, kept: !!attMem[a.id] });
+        out.push({ id: a.id, name: a.name, type: a.type, size: a.size, kept: !!(attMem[a.id] || attBlob[a.id]) });
       });
     });
     return out;
@@ -2557,13 +2652,78 @@
       ui: { k: "file", app: f.app, id: f.id, name: f.name, st: "" }
     };
   }
+  function attFile(id, name) {
+    if (attBlob[id]) return attBlob[id];
+    return attMem[id] ? new File([b64Bytes(attMem[id])], String(name || "file")) : null;
+  }
   function runOpenFile(ui) {
-    var p = shell(), b64 = attMem[ui.id];
-    if (!b64 || !p || !p.orosFileOpen || typeof p.orosFileOpen.openIn !== "function") return false;
+    var p = shell(), f = attFile(ui.id, ui.name);
+    if (!f || !p || !p.orosFileOpen || typeof p.orosFileOpen.openIn !== "function") return false;
     try {
-      return p.orosFileOpen.openIn(ui.app, new File([b64Bytes(b64)], String(ui.name || "file"))) !== false;
+      return p.orosFileOpen.openIn(ui.app, f) !== false;
     } catch (e) { return false; }
   }
+
+  // rebuild_in_layout (AS-RB): checked now against the conversation's
+  // files; the card's button hands the PDF and the originals to Layout
+  // (one-shot tokens, or disk paths), which rebuilds on the device and
+  // leaves its report in the shell (orosAssistAtt.rb[key]). The report
+  // then replaces this result's content, so the model hears it next.
+  function proposeRebuild(c, args) {
+    if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "rebuildErr" } };
+    var r = C.normRebuild(args, chatFiles(c));
+    if (!r.ok) return { content: "Error: " + r.err, err: 1, ui: { k: "rebuildErr" } };
+    return {
+      content: "Shown to the user as a card: \u201c" + r.pdf.name + "\u201d with " + r.src.length + " original file(s)" + (r.folder ? " and the folder " + r.folder : "") +
+        ". Layout rebuilds it on the device when they press Rebuild; nothing is made yet. The report will be added here when Layout is done.",
+      ui: { k: "rebuild", key: attId(), pdf: r.pdf, src: r.src, folder: r.folder, st: "" }
+    };
+  }
+  function runRebuild(ui, c) {
+    var p = shell(), FO = p && p.orosFileOpen;
+    if (!p || typeof p.__orosOpenAt !== "function" || !FO || typeof FO.hand !== "function") return false;
+    function give(o) {
+      if (o.path) return { path: o.path };
+      var f = attFile(o.id, o.name), tok = f ? FO.hand(f) : "";
+      return tok ? { token: tok, name: o.name } : null;
+    }
+    var pdf = give(ui.pdf);
+    if (!pdf) return false;
+    var src = (ui.src || []).map(give).filter(Boolean);
+    try {
+      p.__orosOpenAt("layout", { rebuild: { pdf: pdf, src: src, folder: ui.folder || "", key: ui.key, chat: c.id } });
+      return true;
+    } catch (e) { return false; }
+  }
+  // Layout's report, once it is in: the card shows it and the model
+  // gets it as this tool's result (only numbers and font names).
+  function takeRebuilt(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    if (rep.failed) {
+      ui.st = "failed";
+      r.content = "The user pressed Rebuild, but Layout could not rebuild the PDF (it may be damaged, too big, or not a print PDF). Nothing was made.";
+    } else {
+      ui.rep = C.rebuildReport(rep);
+      ui.st = "done";
+      r.content = "Layout rebuilt the PDF on the device as a new document, now open in Layout. Report: " + JSON.stringify(ui.rep);
+    }
+    // the report stays in the shell until this conversation is saved with it
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
+  // Only while this frame is alive: an app opened from a card may take
+  // its place, and the report then waits for the next opening.
+  function onRb() {
+    if (!chat) return;
+    var hit = false;
+    chat.msgs.forEach(function (m) {
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && r.ui.k === "rebuild" && takeRebuilt(r, chat)) hit = true; });
+    });
+    if (hit) renderMessages();
+  }
+  attStore.onRb = onRb;
+  window.addEventListener("pagehide", function () { if (attStore.onRb === onRb) attStore.onRb = null; });
 
   // propose_automation (wave A3, recipes/share.js): checked now
   // against the app's steps (the model hears what to fix), shown as a
@@ -4670,11 +4830,11 @@
         m.att.forEach(function (raw) {
           var a = C.normAtt(raw);
           if (!a) return;
-          var kept = !!attMem[a.id];
-          var chip = el("span", "att-chip" + (kept ? "" : " gone"));
+          var kept = !!(attMem[a.id] || attBlob[a.id]);
+          var chip = el("span", "att-chip" + (kept ? "" : " gone") + (a.dev ? " dev" : ""));
           var ic = el("span", "att-ic"); ic.innerHTML = ICON.file; chip.appendChild(ic);
           chip.appendChild(el("span", "att-name", a.name));
-          chip.appendChild(el("span", "att-size", kept ? fmtSize(a.size) : t("att.gone")));
+          chip.appendChild(el("span", "att-size", kept ? fmtSize(a.size) + (a.dev ? " · " + t("att.devOnly") : "") : t("att.gone")));
           if (!kept) chip.title = t("att.goneTip");
           files.appendChild(chip);
         });
@@ -4731,6 +4891,8 @@
         if (ui.k === "entryErr") return;
         if (ui.k === "file") { drawFile(host, r, c); return; }
         if (ui.k === "fileErr") return;
+        if (ui.k === "rebuild") { drawRebuild(host, r, c); return; }
+        if (ui.k === "rebuildErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
@@ -4912,7 +5074,7 @@
     card.appendChild(el("p", "entry-title", String(ui.name || "")));
     if (ui.st) {
       card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
-    } else if (!attMem[ui.id]) {
+    } else if (!attMem[ui.id] && !attBlob[ui.id]) {
       card.appendChild(el("p", "entry-state err", t("file.gone")));
     } else {
       card.appendChild(el("p", "dlg-hint", t("file.hint", { app: name })));
@@ -4926,6 +5088,52 @@
         ui.st = "opened";
         saveChat(c).then(function () {
           if (!runOpenFile(ui)) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // A rebuild card (rebuild_in_layout): the PDF and how many originals;
+  // after the press, Layout's report.
+  function drawRebuild(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
+    takeRebuilt(r, c);
+    var name = have.layout, fmtPct = function (v) { return LANG === "el" ? String(v).replace(".", ",") : String(v); };
+    var card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("rb.head", { app: name })));
+    card.appendChild(el("p", "entry-title", String(ui.pdf && ui.pdf.name || "")));
+    var srcN = (ui.src || []).length;
+    card.appendChild(el("p", "dlg-hint", (srcN ? t("rb.src", { n: srcN }) : t("rb.noSrc")) + (ui.folder ? " " + t("rb.folder", { f: ui.folder }) : "")));
+    if (ui.st === "done" && ui.rep) {
+      var rp = ui.rep, ul = el("ul", "entry-list");
+      [t("rb.lines", { n: rp.inPlace, t: rp.lines, p: fmtPct(rp.percent) }), t("rb.pics", { n: rp.pictures, o: rp.originals }), t("rb.styles", { n: rp.styles })]
+        .concat(rp.pagesToCheck && rp.pagesToCheck.length ? [t("rb.check", { p: rp.pagesToCheck.map(function (x) { return x.page; }).slice(0, 20).join(", ") })] : [])
+        .forEach(function (s) { ul.appendChild(el("li", "", s)); });
+      card.appendChild(ul);
+      card.appendChild(el("p", "dlg-hint", t("rb.next")));
+    } else if (ui.st === "opened") {
+      card.appendChild(el("p", "entry-state", t("rb.working", { app: name })));
+    } else if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t(ui.st === "failed" ? "rb.failed" : "entry." + ui.st, { app: name })));
+    } else {
+      var gone = [ui.pdf].concat(ui.src || []).some(function (o) { return o && !o.path && !attMem[o.id] && !attBlob[o.id]; });
+      if (gone) { card.appendChild(el("p", "entry-state err", t("file.gone"))); host.appendChild(card); return; }
+      card.appendChild(el("p", "dlg-hint", t("rb.hint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("rb.go"), "primary", function () {
+        ui.st = "opened";
+        // Saved before Layout opens (it may take this frame's place).
+        saveChat(c).then(function () {
+          if (!runRebuild(ui, c)) { ui.st = "failed"; r.content = "The files could not be handed to Layout. Nothing was made."; saveChat(c); }
           renderMessages();
         });
       }));
@@ -6133,7 +6341,10 @@
     $("wel-brief").addEventListener("click", startBriefing);
     $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     $("att-btn").addEventListener("click", attachDialog);
-    $("att-file").addEventListener("change", function (e) { addFiles(e.target.files); e.target.value = ""; });
+    $("att-file").addEventListener("change", function (e) {
+      if (e.target.dataset.dev === "1") addDev(e.target.files); else addFiles(e.target.files);
+      e.target.value = "";
+    });
     var box = $("input");
     box.addEventListener("input", autosize);
     // A photo pasted or dropped into the box is attached like a picked one.

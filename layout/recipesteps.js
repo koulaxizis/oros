@@ -6,6 +6,9 @@
 //             whole words only); a match may span several runs: the
 //             replacement takes the first run's formatting
 //   pstyle    paragraphs in style `from` ("" = any) get style `to`
+//   style     the paragraph style `name` itself changes: size and
+//             leading in pt, font family, alignment, tracking; 0 / ""
+//             leaves a field as it is (AS-RB: "make the body 10.5 pt")
 //   master    pages (all / odd / even page numbers) get master `ms`
 //             ("" = none)
 //             styles and masters are named by id or by name (any
@@ -33,12 +36,14 @@
   var CATALOG = {
     text: { kind: "doc", args: { find: { t: "str", max: 500, req: 1 }, repl: { t: "str", max: 2000 }, cs: { t: "bool" }, word: { t: "bool" } } },
     pstyle: { kind: "doc", args: { from: ID, to: { t: "str", max: 80, req: 1 } } },
+    style: { kind: "doc", args: { name: { t: "str", max: 80, req: 1 }, size: { t: "num", lo: 0, hi: 400, def: 0 }, lead: { t: "num", lo: 0, hi: 500, def: 0 },
+      font: { t: "enum", v: ["", "serif", "sans", "mono"], def: "" }, align: { t: "enum", v: ["", "l", "c", "r", "j"], def: "" }, track: { t: "num", lo: -500, hi: 2000, def: 0 } } },
     master: { kind: "doc", args: { ms: ID, on: { t: "enum", v: ["all", "odd", "even"], def: "all" } } },
     margins: { kind: "doc", args: { t: MM, b: MM, i: MM, o: MM } },
     preflight: { kind: "check", args: { stop: { t: "bool", def: 1 } } },
     export: { kind: "out", args: { bleed: { t: "bool", def: 0 }, marks: { t: "bool", def: 0 }, spreads: { t: "bool", def: 0 }, q: { t: "enum", v: ["print", "screen"], def: "print" } } }
   };
-  var ORDER = ["text", "pstyle", "master", "margins", "preflight", "export"];
+  var ORDER = ["text", "pstyle", "style", "master", "margins", "preflight", "export"];
 
   function esc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
   function finder(st) {
@@ -121,6 +126,17 @@
           });
           if (k) { touchStory(s, now); n += k; }
         });
+        break;
+      case "style":
+        var ps = resolve(doc.pstyles, st.name), set = {};
+        if (!ps) return 0;
+        if (st.size) set.size = st.size;
+        if (st.lead) set.lead = st.lead;
+        if (st.font) set.font = st.font;
+        if (st.align) set.align = st.align;
+        if (st.track) set.track = st.track;
+        Object.keys(set).forEach(function (k) { if (ps[k] !== set[k]) { ps[k] = set[k]; n = 1; } });
+        if (n) M.touch(ps, now);
         break;
       case "master":
         var ms = st.ms ? resolve(doc.masters, st.ms) : null, msId = ms ? ms.id : "";

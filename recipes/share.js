@@ -55,6 +55,8 @@
     layout: {
       text: { kind: "doc", args: TEXT },
       pstyle: { kind: "doc", args: { from: { t: "str", max: 80 }, to: { t: "str", max: 80, req: 1 } } },
+      style: { kind: "doc", args: { name: { t: "str", max: 80, req: 1 }, size: { t: "num", lo: 0, hi: 400, def: 0 }, lead: { t: "num", lo: 0, hi: 500, def: 0 },
+        font: { t: "enum", v: ["", "serif", "sans", "mono"], def: "" }, align: { t: "enum", v: ["", "l", "c", "r", "j"], def: "" }, track: { t: "num", lo: -500, hi: 2000, def: 0 } } },
       master: { kind: "doc", args: { ms: { t: "str", max: 80 }, on: { t: "enum", v: ["all", "odd", "even"], def: "all" } } },
       margins: { kind: "doc", args: { t: MM, b: MM, i: MM, o: MM } },
       preflight: { kind: "check", args: { stop: { t: "bool", def: 1 } } },
@@ -93,6 +95,7 @@
     layout: { what: "Layout (print documents: magazines, books, brochures). A run works on the open document or on every document.", ops: {
       text: "find and replace in every story: find, repl, cs (match case), word (whole words)",
       pstyle: "paragraphs in style `from` (\"\" = any) get style `to`; styles by name, e.g. Body, Heading 1",
+      style: "change the paragraph style `name` itself (by name, e.g. Body text): size and lead in pt (0 = unchanged), font serif|sans|mono, align l|c|r|j (\"\" = unchanged), track in 1/1000 em (0 = unchanged)",
       master: "pages `on` all|odd|even get master `ms` (by name, \"\" = none)",
       margins: "page margins in mm: t (top), b (bottom), i (inside), o (outside), each 0-500, all four needed",
       preflight: "count the problems; stop true = a document with errors is not exported",
@@ -248,7 +251,7 @@
       "sh.op.atelier.text": "Replace text", "sh.op.atelier.color": "Replace colour", "sh.op.atelier.font": "Change font",
       "sh.op.atelier.size": "Resize text", "sh.op.atelier.filter": "Photo filter", "sh.op.atelier.center": "Centre on the page",
       "sh.op.atelier.cutout": "Remove photo backgrounds", "sh.op.atelier.resize": "New sizes", "sh.op.atelier.export": "Download",
-      "sh.op.layout.text": "Find and replace text", "sh.op.layout.pstyle": "Paragraph style", "sh.op.layout.master": "Master on pages",
+      "sh.op.layout.text": "Find and replace text", "sh.op.layout.pstyle": "Paragraph style", "sh.op.layout.style": "Change a style", "sh.op.layout.master": "Master on pages",
       "sh.op.layout.margins": "Page margins", "sh.op.layout.preflight": "Preflight check", "sh.op.layout.export": "Export PDF",
       "sh.op.photolab.tone": "Tone", "sh.op.photolab.look": "Look", "sh.op.photolab.gray": "Black and white",
       "sh.op.photolab.blur": "Blur", "sh.op.photolab.sharpen": "Sharpen", "sh.op.photolab.noise": "Grain",
@@ -260,6 +263,7 @@
       "sh.stop": "stop before export on errors", "sh.on.all": "all pages", "sh.on.odd": "odd pages", "sh.on.even": "even pages",
       "sh.q.print": "print (300 ppi)", "sh.q.screen": "screen (150 ppi)", "sh.bleed": "bleed", "sh.marks": "crop marks", "sh.spreads": "spreads",
       "sh.margins": "top {t}, bottom {b}, inside {i}, outside {o} mm",
+      "sh.lead": "leading {n} pt", "sh.track": "tracking {n}", "sh.al.l": "left", "sh.al.c": "centred", "sh.al.r": "right", "sh.al.j": "justified",
       "sh.f.bright": "brightness", "sh.f.contrast": "contrast", "sh.f.sat": "saturation", "sh.f.warmth": "warmth", "sh.f.tint": "tint",
       "sh.f.fade": "fade", "sh.f.sepia": "sepia", "sh.f.vignette": "vignette",
       "sh.mode.long": "long side", "sh.mode.w": "width", "sh.mode.h": "height", "sh.mode.pct": "percent",
@@ -283,7 +287,7 @@
       "sh.op.atelier.text": "Αντικατάσταση κειμένου", "sh.op.atelier.color": "Αντικατάσταση χρώματος", "sh.op.atelier.font": "Αλλαγή γραμματοσειράς",
       "sh.op.atelier.size": "Μέγεθος κειμένου", "sh.op.atelier.filter": "Φίλτρο φωτογραφιών", "sh.op.atelier.center": "Κεντράρισμα στη σελίδα",
       "sh.op.atelier.cutout": "Αφαίρεση φόντου φωτογραφιών", "sh.op.atelier.resize": "Νέα μεγέθη", "sh.op.atelier.export": "Λήψη",
-      "sh.op.layout.text": "Εύρεση και αντικατάσταση κειμένου", "sh.op.layout.pstyle": "Στυλ παραγράφου", "sh.op.layout.master": "Master στις σελίδες",
+      "sh.op.layout.text": "Εύρεση και αντικατάσταση κειμένου", "sh.op.layout.pstyle": "Στυλ παραγράφου", "sh.op.layout.style": "Αλλαγή στυλ", "sh.op.layout.master": "Master στις σελίδες",
       "sh.op.layout.margins": "Περιθώρια σελίδας", "sh.op.layout.preflight": "Έλεγχος preflight", "sh.op.layout.export": "Εξαγωγή PDF",
       "sh.op.photolab.tone": "Τόνος", "sh.op.photolab.look": "Εμφάνιση", "sh.op.photolab.gray": "Ασπρόμαυρο",
       "sh.op.photolab.blur": "Θόλωμα", "sh.op.photolab.sharpen": "Όξυνση", "sh.op.photolab.noise": "Κόκκος",
@@ -295,6 +299,7 @@
       "sh.stop": "διακοπή πριν την εξαγωγή αν υπάρχουν λάθη", "sh.on.all": "όλες οι σελίδες", "sh.on.odd": "μονές σελίδες", "sh.on.even": "ζυγές σελίδες",
       "sh.q.print": "εκτύπωση (300 ppi)", "sh.q.screen": "οθόνη (150 ppi)", "sh.bleed": "bleed", "sh.marks": "σημάδια κοπής", "sh.spreads": "δισέλιδα",
       "sh.margins": "πάνω {t}, κάτω {b}, μέσα {i}, έξω {o} mm",
+      "sh.lead": "διάστιχο {n} pt", "sh.track": "αραίωση {n}", "sh.al.l": "αριστερά", "sh.al.c": "στο κέντρο", "sh.al.r": "δεξιά", "sh.al.j": "πλήρης στοίχιση",
       "sh.f.bright": "φωτεινότητα", "sh.f.contrast": "αντίθεση", "sh.f.sat": "κορεσμός", "sh.f.warmth": "θερμότητα", "sh.f.tint": "απόχρωση",
       "sh.f.fade": "ξεθώριασμα", "sh.f.sepia": "σέπια", "sh.f.vignette": "βινιέτα",
       "sh.mode.long": "μεγάλη πλευρά", "sh.mode.w": "πλάτος", "sh.mode.h": "ύψος", "sh.mode.pct": "ποσοστό",
@@ -348,6 +353,11 @@
       case "atelier.export": d = st.fmt === "pdf" ? "PDF " + st.dpi + " dpi" : st.fmt.toUpperCase() + " ×" + st.scale; break;
       case "layout.pstyle": d = (st.from || u("sh.anyStyle")) + " → " + st.to; break;
       case "layout.master": d = (st.ms || u("sh.noMaster")) + " · " + u("sh.on." + st.on); break;
+      case "layout.style":
+        parts = [st.size ? st.size + " pt" : "", st.lead ? u("sh.lead", { n: st.lead }) : "", st.font ? fontName(st.font) : "",
+          st.align ? u("sh.al." + st.align) : "", st.track ? u("sh.track", { n: st.track }) : ""].filter(Boolean);
+        d = st.name + (parts.length ? ": " + parts.join(", ") : "");
+        break;
       case "layout.margins": d = u("sh.margins", { t: st.t, b: st.b, i: st.i, o: st.o }); break;
       case "layout.preflight": d = st.stop ? u("sh.stop") : ""; break;
       case "layout.export": d = [u("sh.q." + st.q)].concat(flags(st, ["bleed", "marks", "spreads"])).join(", "); break;
