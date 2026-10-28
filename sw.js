@@ -780,6 +780,7 @@ var PRECACHE_URLS = [
   "layout/idml.js",
   "layout/pdfin.js",
   "layout/linefit.js",
+  "layout/afread.js",
   "layout/rebuild.js",
   "layout/io.js",
   "designkit/assets.js",
