@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.06.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.07.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3698,7 +3698,8 @@
     var U = window.UnitsCore, rates = null;
     if (U) { try { rates = U.storedRates(JSON.parse(localStorage.getItem(U.RATES_KEY))); } catch (e) { rates = null; } }
     return C.parse(q, { today: cmdToday(), apps: cmdApps(), cal: window.OrosCalQuick, lang: langBase(),
-                        calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore });
+                        calc: window.CalcCore, units: U, rates: rates, send: window.OrosSendCore,
+                        lockOn: !!(window.orosLock && window.orosLock.isOn()) });
   }
   function cmdHistory() {
     try {
@@ -3728,8 +3729,31 @@
       catch (e) { notifySys("dim", txt); }
       return;
     }
+    if (c.fn === "setting") { cmdSetting(c.args[0], c.args[1], C.describe(cmd, state.lang).verb); return; }
     var f = window[c.fn];
     if (typeof f === "function") f.apply(window, c.args);
+  }
+  // K5: a setting by words, through the same setters as Settings. The
+  // note comes first: with notifications off it would not show.
+  function cmdSetting(name, value, text) {
+    var N = window.orosNotifs;
+    if (name === "theme") { setThemeUser(value); notifySys("dim", text); return; }
+    if (name === "lock") { if (window.orosLock && window.orosLock.isOn()) window.orosLock.lock(); return; }
+    if (!N || typeof N.setSetting !== "function") return;
+    if (name === "notifs") {
+      if (!value) notifySys("dim", text);
+      N.setSetting("enabled", !!value);
+      if (value) notifySys("dim", text);
+      return;
+    }
+    if (name === "quiet") {
+      var qh = N.getSetting("quietHours", {}) || {};
+      var next = {};
+      Object.keys(qh).forEach(function (k) { next[k] = qh[k]; });
+      next.enabled = !!value;
+      N.setSetting("quietHours", next);
+      notifySys("dim", text);
+    }
   }
   function cmdMatchApps(q) {
     var fq = menuFold(q.trim());
