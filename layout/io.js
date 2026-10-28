@@ -360,9 +360,11 @@
   var FOREIGN_MAX = 100 * 1024 * 1024;
   function baseName(f, ext) { return String(f.name || "").replace(ext, "").slice(0, 120); }
   // pics: the pictures picked with the file (its linked pictures, by
-  // name); pdf: its print PDF, whose line breaks the text takes
+  // name); pdf: its print PDF, whose line breaks the text takes.
+  // → Promise of a report (the Assistant's card) or null:
+  // { sla: 1, pages, items, skipped, placed, missing, fit }
   function importSla(f, pics, pdf) {
-    if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return; }
+    if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return Promise.resolve(null); }
     LY.toast(t("sla.working"));
     // a compressed .sla.gz is unpacked first (gzip magic, not the name)
     return f.arrayBuffer().then(function (buf) {
@@ -373,10 +375,14 @@
       if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
       try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
-      return useSrcFonts(res.doc).then(function () { return pdf ? fitToPdf(res.doc, pdf) : ""; }).then(function (fitMsg) {
-        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }) + fitMsg, "", pics);
+      var fit = null;
+      return useSrcFonts(res.doc).then(function () { return pdf ? fitToPdf(res.doc, pdf) : { msg: "" }; }).then(function (fr) {
+        fit = fr.rep || null;
+        return addForeign(res, window.LY_SLA.inlineImage, t("sla.done", { p: res.stats.pages, n: res.stats.items }) + fr.msg, "", pics);
+      }).then(function (pl) {
+        return { sla: 1, pages: res.stats.pages, items: res.stats.items, skipped: res.stats.skipped, placed: pl.placed, missing: pl.missing, fit: fit };
       });
-    }).then(null, function () { LY.toast(t("sla.bad")); });
+    }).then(null, function () { LY.toast(t("sla.bad")); return null; });
   }
   function importIdml(f) {
     if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return; }
@@ -453,18 +459,18 @@
     }, function (e) { rebuilding = false; throw e; });
   }
   // The line breaks of a document's own print PDF (Scribus import):
-  // → Promise of a sentence for the message ("" when there is no PDF
-  // text to go by).
+  // → Promise of { msg: a sentence for the message, rep: matchPdf's
+  // report or null }.
   function fitToPdf(doc, pdf) {
-    var RB = window.LY_REBUILD;
-    if (!RB || pdf.size > REBUILD_MAX) return Promise.resolve("");
+    var RB = window.LY_REBUILD, bad = { msg: " " + t("sla.fitBad"), rep: null };
+    if (!RB || pdf.size > REBUILD_MAX) return Promise.resolve(bad);
     LY.toast(t("sla.fitting"));
     return pdf.arrayBuffer().then(function (buf) { return RB.pdfText(buf); }).then(function (txt) {
-      if (!txt) return " " + t("sla.fitBad");
+      if (!txt) return bad;
       var rep = RB.matchPdf(doc, txt.pages, { fitName: t("sla.fitStyle"), lang: LY.BASE === "el" ? "el" : "en", now: LY.now() });
-      if (!rep.matched) return " " + t("sla.fitBad");
-      return " " + t("sla.fit", { n: rep.inPlace, t: rep.checked });
-    }).then(null, function () { return " " + t("sla.fitBad"); });
+      if (!rep.matched) return { msg: bad.msg, rep: rep };
+      return { msg: " " + t("sla.fit", { n: rep.inPlace, t: rep.checked }), rep: rep };
+    }).then(null, function () { return bad; });
   }
   // Font names from a PDF or another program's file → the same families
   // on the orOS disk or at Fontsource, loaded (LY-FONT); a family that
@@ -573,7 +579,8 @@
     }).then(null, function () { LY.toast(t("svg.bad")); });
   }
   // res: { doc, images, linked, links?, stats }; blobOf(image) →
-  // Promise of a Blob or null; pics: Files for res.links, by name
+  // Promise of a Blob or null; pics: Files for res.links, by name.
+  // → Promise of { placed: linked pictures found, missing }
   function addForeign(res, blobOf, done, skipKey, pics) {
     var doc = res.doc, failed = 0, found = 0, chain = Promise.resolve();
     function put(itemId, blob) {
@@ -604,6 +611,7 @@
       if (res.stats.skipped) parts.push(t(skipKey || "sla.skipped", { n: res.stats.skipped }));
       if (left && res.links) LY.toast(parts.join(" "), t("sla.find"), relinkPick);
       else LY.toast(parts.join(" "));
+      return { placed: found, missing: left };
     });
   }
   var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it) { window.LY_SLA.placePicture(it); };
@@ -751,7 +759,7 @@
 
   LY.io = {
     exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
-    placeImage: placeImage, importText: importText, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
+    placeImage: placeImage, importText: importText, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
   };

@@ -222,6 +222,16 @@
       "rb.styles": "{n} paragraph styles.",
       "rb.check": "Pages to check: {p}.",
       "rb.next": "The document is in Layout. Tell me what to change, for example the body size or a style.",
+      "rb.slaHead": "Open in {app}",
+      "rb.slaPdf": "With its print PDF {f}: lines break where they did.",
+      "rb.slaSrc": "With {n} pictures.",
+      "rb.slaHint": "Layout makes a new document from the Scribus file on this device, with its pictures placed as they were. Nothing is sent to the AI service.",
+      "rb.slaGo": "Open",
+      "rb.slaWorking": "{app} is opening it on this device…",
+      "rb.slaFailed": "{app} could not open this Scribus file. Nothing was made.",
+      "rb.slaPages": "{p} pages, {n} objects.",
+      "rb.slaPics": "{n} pictures placed, {m} still missing.",
+      "rb.slaLines": "{n} of {t} lines break as in the PDF ({p} %).",
       "do.f.page": "Page",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
       "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text", "nl.checkHead": "Ready to send? · {app}", "nl.checkHint": "Opens the issue's check in {app}: what is missing, and when all is well, the send screen. You press Send there.", "nl.checkOpen": "Open the check",
@@ -586,6 +596,16 @@
       "rb.styles": "{n} στυλ παραγράφου.",
       "rb.check": "Σελίδες για έλεγχο: {p}.",
       "rb.next": "Το έγγραφο είναι στη Σελιδοποίηση. Πες μου τι να αλλάξω, π.χ. το μέγεθος του σώματος ή ένα στυλ.",
+      "rb.slaHead": "Άνοιγμα στη {app}",
+      "rb.slaPdf": "Με το PDF τυπογραφείου {f}: οι γραμμές σπάνε όπως σε αυτό.",
+      "rb.slaSrc": "Με {n} εικόνες.",
+      "rb.slaHint": "Η Σελιδοποίηση φτιάχνει ένα νέο έγγραφο από το αρχείο Scribus σε αυτή τη συσκευή, με τις εικόνες εκεί που ήταν. Τίποτα δεν στέλνεται στην υπηρεσία AI.",
+      "rb.slaGo": "Άνοιγμα",
+      "rb.slaWorking": "Η {app} το ανοίγει σε αυτή τη συσκευή…",
+      "rb.slaFailed": "Η {app} δεν μπόρεσε να ανοίξει αυτό το αρχείο Scribus. Δεν φτιάχτηκε τίποτα.",
+      "rb.slaPages": "{p} σελίδες, {n} αντικείμενα.",
+      "rb.slaPics": "{n} εικόνες στη θέση τους, {m} λείπουν ακόμα.",
+      "rb.slaLines": "{n} από {t} γραμμές σπάνε όπως στο PDF ({p} %).",
       "do.f.page": "Σελίδα",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
       "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο", "nl.checkHead": "Έτοιμο για αποστολή; · {app}", "nl.checkHint": "Ανοίγει τον έλεγχο του τεύχους ({app}): τι λείπει και, όταν όλα είναι εντάξει, την οθόνη αποστολής. Το Αποστολή το πατάς εσύ εκεί.", "nl.checkOpen": "Άνοιγμα ελέγχου",
@@ -2673,6 +2693,13 @@
     if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "rebuildErr" } };
     var r = C.normRebuild(args, chatFiles(c));
     if (!r.ok) return { content: "Error: " + r.err, err: 1, ui: { k: "rebuildErr" } };
+    if (r.sla) {
+      return {
+        content: "Shown to the user as a card: the Scribus file \u201c" + r.sla.name + "\u201d" + (r.pdf ? " with its print PDF \u201c" + r.pdf.name + "\u201d" : "") + ", " + r.src.length + " picture(s)" +
+          (r.folder ? " and the folder " + r.folder : "") + ". Layout opens it on the device when they press Open; nothing is made yet. The report will be added here when Layout is done.",
+        ui: { k: "rebuild", key: attId(), sla: r.sla, pdf: r.pdf, src: r.src, folder: r.folder, st: "" }
+      };
+    }
     return {
       content: "Shown to the user as a card: \u201c" + r.pdf.name + "\u201d with " + r.src.length + " original file(s)" + (r.folder ? " and the folder " + r.folder : "") +
         ". Layout rebuilds it on the device when they press Rebuild; nothing is made yet. The report will be added here when Layout is done.",
@@ -2687,11 +2714,12 @@
       var f = attFile(o.id, o.name), tok = f ? FO.hand(f) : "";
       return tok ? { token: tok, name: o.name } : null;
     }
-    var pdf = give(ui.pdf);
-    if (!pdf) return false;
+    var pdf = ui.pdf ? give(ui.pdf) : null, sla = ui.sla ? give(ui.sla) : null;
+    if (ui.sla ? !sla || (ui.pdf && !pdf) : !pdf) return false;
     var src = (ui.src || []).map(give).filter(Boolean);
     try {
-      p.__orosOpenAt("layout", { rebuild: { pdf: pdf, src: src, folder: ui.folder || "", key: ui.key, chat: c.id } });
+      if (sla) p.__orosOpenAt("layout", { rebuild: { sla: sla, pdf: pdf, src: src, folder: ui.folder || "", key: ui.key, chat: c.id } });
+      else p.__orosOpenAt("layout", { rebuild: { pdf: pdf, src: src, folder: ui.folder || "", key: ui.key, chat: c.id } });
       return true;
     } catch (e) { return false; }
   }
@@ -2702,7 +2730,12 @@
     if (!rep || ui.st !== "opened") return false;
     if (rep.failed) {
       ui.st = "failed";
-      r.content = "The user pressed Rebuild, but Layout could not rebuild the PDF (it may be damaged, too big, or not a print PDF). Nothing was made.";
+      r.content = ui.sla ? "The user pressed Open, but Layout could not open the Scribus file (it may be damaged or too big). Nothing was made."
+        : "The user pressed Rebuild, but Layout could not rebuild the PDF (it may be damaged, too big, or not a print PDF). Nothing was made.";
+    } else if (ui.sla) {
+      ui.rep = C.rebuildReport(rep);
+      ui.st = "done";
+      r.content = "Layout opened the Scribus file on the device as a new document, now open in Layout. Report: " + JSON.stringify(ui.rep);
     } else {
       ui.rep = C.rebuildReport(rep);
       ui.st = "done";
@@ -5103,12 +5136,20 @@
     if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
     takeRebuilt(r, c);
     var name = have.layout, fmtPct = function (v) { return LANG === "el" ? String(v).replace(".", ",") : String(v); };
-    var card = el("section", "entry-card");
-    card.appendChild(el("h3", "entry-head", t("rb.head", { app: name })));
-    card.appendChild(el("p", "entry-title", String(ui.pdf && ui.pdf.name || "")));
+    var card = el("section", "entry-card"), sla = !!ui.sla;
+    card.appendChild(el("h3", "entry-head", t(sla ? "rb.slaHead" : "rb.head", { app: name })));
+    card.appendChild(el("p", "entry-title", String((sla ? ui.sla : ui.pdf) && (sla ? ui.sla : ui.pdf).name || "")));
     var srcN = (ui.src || []).length;
-    card.appendChild(el("p", "dlg-hint", (srcN ? t("rb.src", { n: srcN }) : t("rb.noSrc")) + (ui.folder ? " " + t("rb.folder", { f: ui.folder }) : "")));
-    if (ui.st === "done" && ui.rep) {
+    if (sla) card.appendChild(el("p", "dlg-hint", [ui.pdf ? t("rb.slaPdf", { f: ui.pdf.name }) : "", srcN ? t("rb.slaSrc", { n: srcN }) : "", ui.folder ? t("rb.folder", { f: ui.folder }) : ""].filter(Boolean).join(" ")));
+    else card.appendChild(el("p", "dlg-hint", (srcN ? t("rb.src", { n: srcN }) : t("rb.noSrc")) + (ui.folder ? " " + t("rb.folder", { f: ui.folder }) : "")));
+    if (ui.st === "done" && ui.rep && ui.rep.kind === "sla") {
+      var sr = ui.rep, sl = el("ul", "entry-list");
+      [t("rb.slaPages", { p: sr.pages, n: sr.objects }), t("rb.slaPics", { n: sr.picturesPlaced, m: sr.picturesMissing })]
+        .concat(sr.lines ? [t("rb.slaLines", { n: sr.inPlace, t: sr.lines, p: fmtPct(sr.percent) })] : [])
+        .forEach(function (x) { sl.appendChild(el("li", "", x)); });
+      card.appendChild(sl);
+      card.appendChild(el("p", "dlg-hint", t("rb.next")));
+    } else if (ui.st === "done" && ui.rep) {
       var rp = ui.rep, ul = el("ul", "entry-list");
       [t("rb.lines", { n: rp.inPlace, t: rp.lines, p: fmtPct(rp.percent) }), t("rb.pics", { n: rp.pictures, o: rp.originals }), t("rb.styles", { n: rp.styles })]
         .concat(rp.pagesToCheck && rp.pagesToCheck.length ? [t("rb.check", { p: rp.pagesToCheck.map(function (x) { return x.page; }).slice(0, 20).join(", ") })] : [])
@@ -5116,20 +5157,20 @@
       card.appendChild(ul);
       card.appendChild(el("p", "dlg-hint", t("rb.next")));
     } else if (ui.st === "opened") {
-      card.appendChild(el("p", "entry-state", t("rb.working", { app: name })));
+      card.appendChild(el("p", "entry-state", t(sla ? "rb.slaWorking" : "rb.working", { app: name })));
     } else if (ui.st) {
-      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t(ui.st === "failed" ? "rb.failed" : "entry." + ui.st, { app: name })));
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t(ui.st === "failed" ? (sla ? "rb.slaFailed" : "rb.failed") : "entry." + ui.st, { app: name })));
     } else {
-      var gone = [ui.pdf].concat(ui.src || []).some(function (o) { return o && !o.path && !attMem[o.id] && !attBlob[o.id]; });
+      var gone = [ui.sla, ui.pdf].concat(ui.src || []).some(function (o) { return o && !o.path && !attMem[o.id] && !attBlob[o.id]; });
       if (gone) { card.appendChild(el("p", "entry-state err", t("file.gone"))); host.appendChild(card); return; }
-      card.appendChild(el("p", "dlg-hint", t("rb.hint")));
+      card.appendChild(el("p", "dlg-hint", t(sla ? "rb.slaHint" : "rb.hint")));
       var acts = el("div", "dlg-actions");
       acts.appendChild(button(t("entry.dismiss"), "", function () {
         ui.st = "dismissed";
         saveChat(c);
         renderMessages();
       }));
-      acts.appendChild(button(t("rb.go"), "primary", function () {
+      acts.appendChild(button(t(sla ? "rb.slaGo" : "rb.go"), "primary", function () {
         ui.st = "opened";
         // Saved before Layout opens (it may take this frame's place).
         saveChat(c).then(function () {

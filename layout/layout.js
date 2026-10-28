@@ -1186,7 +1186,9 @@
     // card (AS-RB): the PDF and the originals as one-shot tokens
     // ({ token, name }) or paths on the orOS disk (only under
     // /internal/), plus a disk folder of originals; the report goes
-    // back to the Assistant under `key`.
+    // back to the Assistant under `key`. With `sla` (a Scribus file,
+    // the same way) that file opens instead, with its pictures and,
+    // when pdf is there, its print PDF's line breaks.
     if (tg && tg.rebuild && typeof tg.rebuild === "object") {
       if (document.querySelector("dialog[open]")) return;
       if (LY.doc) goHome();
@@ -1292,9 +1294,13 @@
     var files = [];
     var chain = Promise.resolve();
     src.forEach(function (o) { chain = chain.then(function () { return rbTake(o); }).then(function (f) { if (f) files.push(f); }); });
-    var pdfP = rbTake(rq.pdf);
-    return Promise.all([pdfP, chain, rq.folder ? folderFiles(rq.folder) : []]).then(function (r) {
-      var pdf = r[0];
+    var pdfP = rbTake(rq.pdf), slaP = rq.sla ? rbTake(rq.sla) : Promise.resolve(null);
+    return Promise.all([pdfP, chain, rq.folder ? folderFiles(rq.folder) : [], slaP]).then(function (r) {
+      var pdf = r[0], sla = r[3];
+      if (rq.sla) {
+        if (!sla) { toast(t("sla.bad")); back({ failed: 1 }); return; }
+        return LY.io.openSla(sla, files.concat(r[2]).filter(LY.io.isPicture), pdf || null).then(function (rep) { back(rep || { failed: 1 }); });
+      }
       if (!pdf) { toast(t("rb.noPdf")); back({ failed: 1 }); return; }
       return LY.io.rebuild(pdf, files.concat(r[2]), { chat: chat }).then(function (rep) {
         back(rep || { failed: 1 });
