@@ -383,3 +383,91 @@ test("pictures one by one, and pictures from outside the manuscript", () => {
   // the sheet keeps the answers, the pictures' own ones too
   assert.equal(d.setup.ext.book.a.extraAt, "after1");
 });
+
+// ---------- Q4: pictures in the flow, running heads (LY-RH) ----------
+test("pictures in the text: where their paragraph starts, across the text width, the text going on below", () => {
+  const hs = house(), res = A.build(hs, picManuscript(), {}, { now: 9, sheet: { a: { picAt: "flow", cap: "none" } } });
+  const d = res.doc;
+  assert.equal(res.report.placed, 2);
+  assert.equal(res.report.overset, false);
+  const { body, at, L } = starts(d), two = imgs(d).find((it) => it.a === HEX("b"));
+  const frame = d.items.find((it) => it.pg === two.pg && it.t === "text" && it.story === body.id);
+  assert.ok(frame, "on a page of the running text");
+  assert.equal(two.wrap, "box");
+  assert.equal(two.fit, "fit");
+  assert.ok(Math.abs(two.x - frame.x) < 0.01 && Math.abs(two.w - frame.w) < 0.01, "the frame spans the text, no text beside it");
+  // text above it on its page ends before it; the next paragraph starts below it
+  const lines = (L.frames[frame.id] || { lines: [] }).lines;
+  const above = lines.filter((ln) => frame.y + ln.y < two.y), below = lines.filter((ln) => frame.y + ln.y > two.y + two.h);
+  assert.ok(above.length > 0, "inside the page's text, after the paragraph before it");
+  assert.ok(lines.every((ln) => frame.y + ln.y + ln.d < two.y - 1 || frame.y + ln.y > two.y + two.h), "no line through the picture");
+  assert.ok(below.length > 0 || above.length > 0);
+  // the paragraph it belongs to starts after the last line above it
+  if (above.length) {
+    const last = above[above.length - 1], next = lines[lines.indexOf(last) + 1];
+    if (next) assert.ok(frame.y + next.y > two.y + two.h, "the text goes on below the picture");
+  }
+  // every chapter still opens at the top of a right-hand page
+  const h = H.houseOf(d);
+  body.paras.forEach((p, i) => { if (p.ps === h.roles.title) { assert.equal(at[i].no % 2, 1, text(p)); assert.ok(at[i].top); } });
+  assert.ok(I.PIC_AT.includes("flow") && I.QUESTIONS.find((q) => q.id === "picAt").v.includes("flow"));
+});
+
+test("running heads: the book's title left, the chapter's right, none on chapter openings; author and title; none", () => {
+  const hs = house();
+  let res = A.build(hs, manuscript(), { title: "Το βιβλίο", author: "Α. Β." }, { now: 9, sheet: { a: { rh: "titleChap", pn: "footC" } }, names: { rh: "Running head", rhL: "RH L", rhR: "RH R" } });
+  let d = res.doc;
+  const h = H.houseOf(d), heads = d.items.filter((it) => it.ext && it.ext.rh);
+  assert.equal(heads.length, 2);
+  assert.deepEqual(heads.map((it) => it.side).sort(), ["L", "R"]);
+  const ms = heads[0].pg;
+  assert.ok(heads.every((it) => it.pg === ms && it.y + it.h <= M.margins(d, it.side).t + 0.01), "in the head margin");
+  const st = (it) => d.stories.find((s) => s.id === it.story);
+  const left = heads.find((it) => it.side === "L"), right = heads.find((it) => it.side === "R");
+  assert.equal(text(st(left).paras[0]), "Το βιβλίο");
+  assert.equal(st(right).paras[0].runs[0].ext.fld, "sec");
+  assert.equal(d.pstyles.find((s) => s.id === h.roles.title).ext.sec, 1);
+  // what a right-hand page of chapter 2 shows: its chapter, on the
+  // left-hand pages the book's title; never on an opening page
+  const L = R.computeLayout(d), order = M.pagesInOrder(d), { body, at } = starts(d);
+  const ch2 = body.paras.findIndex((p) => text(p) === "Κεφάλαιο 2"), ch3 = body.paras.findIndex((p) => text(p) === "Κεφάλαιο 3");
+  const shows = (idx, it) => ((L.master[order[idx].id] || {})[it.id] || { lines: [] }).lines.map((ln) => ln.runs.map((r) => r.t).join("")).join("");   // words only, spaces are not runs
+  let seenR = 0, seenL = 0;
+  for (let i = at[ch2].idx + 1; i < at[ch3].idx; i++) {
+    if (order[i].ms !== ms) continue;
+    if (M.sideOf(d, i) === "R") { assert.equal(shows(i, right), "Κεφάλαιο 2"); seenR++; }   // the field is one piece
+    else { assert.equal(shows(i, left), "Τοβιβλίο"); seenL++; }
+  }
+  assert.ok(seenR + seenL > 0, "chapter 2 has pages after its opening");
+  assert.notEqual(order[at[ch2].idx].ms, ms, "the opening page has no running head");
+  assert.ok(!d.items.some((it) => it.pg === order[at[ch2].idx].ms && it.ext && it.ext.rh));
+  // an older orOS keeps the run's text (and its ext) through normalising
+  const n = M.normDoc(JSON.parse(JSON.stringify(d)));
+  assert.deepEqual(n.stories.find((s) => s.id === right.story).paras[0].runs[0], { t: "Το βιβλίο", ext: { fld: "sec" } });
+  // author and title; a detail the book does not give stays empty
+  d = A.build(hs, manuscript(), { title: "Το βιβλίο" }, { now: 9, sheet: { a: { rh: "authorTitle" } } }).doc;
+  const hd = d.items.filter((it) => it.ext && it.ext.rh), tx = (side) => text(d.stories.find((s) => s.id === hd.find((it) => it.side === side).story).paras[0] || { runs: [] });
+  assert.equal(tx("L"), "");
+  assert.equal(tx("R"), "Το βιβλίο");
+  // none: no heads; as in the series: the series' (none here)
+  d = A.build(hs, manuscript(), {}, { now: 9, sheet: { a: { rh: "none" } } }).doc;
+  assert.ok(!d.items.some((it) => it.ext && it.ext.rh));
+  assert.equal(I.info(hs, manuscript(), []).series.rh, "none");
+});
+
+test("pictures: one in every chapter all go in, also after earlier ones pushed the text on", () => {
+  let html = "";
+  for (let c = 0; c < 4; c++) {
+    html += "<h1>Κεφάλαιο " + (c + 1) + "</h1><p>" + words(80, c) + "</p>";
+    for (let k = 0; k < 4; k++) { html += "<p>" + words(90, c + k) + "</p>"; if (k === 1) html += "<p><img src=\"data:image/png;base64,AAAA\" alt=\"p.jpg\"></p>"; }
+  }
+  for (const at of ["flow", "before", "page"]) {
+    const list = W.parse(html, { pics: 1 });
+    let k = 0;
+    list.forEach((p) => { if (p.role === "img") { p.a = HEX("abcd"[k]); p.iw = 800; p.ih = 500; k++; } });
+    const r = A.build(house(), list, {}, { now: 9, sheet: { a: { picAt: at } } });
+    assert.equal(r.report.placed, 4, at);
+    assert.equal(r.report.pictures, 0, at);
+    assert.equal(r.report.overset, false, at);
+  }
+});

@@ -355,7 +355,7 @@
   // the names of the styles a book sheet adds
   function newNames() {
     var n = {};
-    ["part", "open", "sep", "toc", "tocHead", "thanks", "links", "ded", "pn", "first", "colophon", "cap"].forEach(function (k) { n[k] = t("in.n." + k); });
+    ["part", "open", "sep", "toc", "tocHead", "thanks", "links", "ded", "pn", "rh", "rhL", "rhR", "first", "colophon", "cap"].forEach(function (k) { n[k] = t("in.n." + k); });
     return n;
   }
   // "keep as the series' rules": the answers (not the book's own pages,
@@ -449,7 +449,7 @@
       body.appendChild(mg);
       ["start", "parts", "sink", "first", "sep", "pn", "pnHide"].forEach(ask);
       body.appendChild(LY.ui.field(t("in.q.pnStart"), numIn(a.pnStart, S.pnStart, function (v) { if (v === undefined) delete a.pnStart; else a.pnStart = Math.floor(v); }, 0, 9999)));
-      ["toc", "tocParts"].forEach(ask);
+      ["rh", "toc", "tocParts"].forEach(ask);
       // B. front and back pages; the manuscript's sections
       group("front");
       if (inf.pages.length) {

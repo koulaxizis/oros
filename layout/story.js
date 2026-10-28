@@ -30,6 +30,8 @@
   function runLen(r) { return r.f ? 1 : r.t.length; }
   function paraLen(p) { var n = 0; p.runs.forEach(function (r) { n += runLen(r); }); return n; }
   function fmtOf(r) { var o = {}; if (r.cs) o.cs = r.cs; if (r.b) o.b = 1; if (r.i) o.i = 1; if (r.u) o.u = 1; return o; }
+  // a split run keeps its ext (R39) on both halves
+  function keepOf(r) { var o = fmtOf(r); if (r.ext) o.ext = JSON.parse(JSON.stringify(r.ext)); return o; }
   function withFmt(o, fmt) { Object.keys(fmt).forEach(function (k) { o[k] = fmt[k]; }); return o; }
 
   // Make sure a run boundary sits at offset `off`; returns the index
@@ -40,8 +42,9 @@
       var r = p.runs[i], n = runLen(r);
       if (off <= pos) return i;
       if (off < pos + n) {            // only text runs are longer than 1
-        var a = withFmt({ t: r.t.slice(0, off - pos) }, fmtOf(r));
-        var b = withFmt({ t: r.t.slice(off - pos) }, fmtOf(r));
+        if (r.ext && r.ext.fld) return i + 1;   // a running head is one piece: the boundary after it
+        var a = withFmt({ t: r.t.slice(0, off - pos) }, keepOf(r));
+        var b = withFmt({ t: r.t.slice(off - pos) }, keepOf(r));
         p.runs.splice(i, 1, a, b);
         return i + 1;
       }
@@ -136,6 +139,14 @@
         node.setAttribute("data-f", r.f);
         node.title = t(r.f === "pn" ? "story.pn" : "story.pc");
         endsWithBr = false;
+      } else if (r.ext && r.ext.fld === "sec") {
+        // a running head (LY-RH): one piece, its own text kept
+        node = el("span", "sf", r.t);
+        node.contentEditable = "false";
+        node.setAttribute("data-f", "sec");
+        node.setAttribute("data-t", r.t);
+        node.title = t("story.sec");
+        endsWithBr = false;
       } else {
         node = document.createDocumentFragment();
         r.t.split("\n").forEach(function (part, k) {
@@ -220,7 +231,7 @@
     function add(run) {
       ensure();
       var last = cur.runs[cur.runs.length - 1];
-      if (last && !last.f && !run.f && last.cs === run.cs && last.b === run.b && last.i === run.i && last.u === run.u) last.t += run.t;
+      if (last && !last.f && !run.f && !last.ext && !run.ext && last.cs === run.cs && last.b === run.b && last.i === run.i && last.u === run.u) last.t += run.t;
       else cur.runs.push(run);
       curLen += runLen(run);
     }
@@ -237,6 +248,7 @@
       if (node.hasAttribute("data-f")) {
         var f = node.getAttribute("data-f");
         if (f === "pn" || f === "pc") { add(withFmt({ f: f }, fmtFor(node.firstChild || node))); trailingBr = false; }
+        if (f === "sec") { add(withFmt({ t: node.getAttribute("data-t") || " ", ext: { fld: "sec" } }, fmtFor(node.firstChild || node))); trailingBr = false; }
         return;
       }
       var block = BLOCK[tag] && node !== ed;
@@ -276,7 +288,9 @@
           if (atom) {
             if (o === count) { found = { node: n, off: k }; return; }
             if (c.tagName === "BR" && !c.nextSibling && n === d) return;   // placeholder
-            count += 1;
+            var len = c.getAttribute("data-f") === "sec" ? (c.getAttribute("data-t") || "").length : 1;   // a running head counts its own text
+            if (o < count + len) { found = { node: n, off: k + 1 }; return; }
+            count += len;
           } else walk(c);
         }
       }
@@ -485,6 +499,22 @@
     pc.addEventListener("mousedown", function (e) { e.preventDefault(); });
     pc.addEventListener("click", function () { insertField("pc"); });
     tools.appendChild(pc);
+    // a running head (LY-RH): the page's chapter title, on a master
+    var sec = el("button", "icon-btn sf-btn", "§");
+    sec.type = "button"; sec.title = t("story.sec"); sec.setAttribute("aria-label", t("story.sec"));
+    sec.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    sec.addEventListener("click", insertSec);
+    tools.appendChild(sec);
+  }
+  function insertSec() {
+    var fb = String(LY.doc.name || "").trim().slice(0, 120) || "§";
+    modelEdit(function (paras, a, b) {
+      deleteRange(paras, a, b);
+      var p = paras[a.p], i = cut(p, a.o);
+      p.runs.splice(i, 0, withFmt({ t: fb, ext: { fld: "sec" } }, fmtAt(paras, a)));
+      var c = { p: a.p, o: a.o + fb.length };
+      return { a: c, b: c };
+    });
   }
 
   // Paragraph style under the caret (style list + panel highlight).

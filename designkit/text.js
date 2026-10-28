@@ -561,7 +561,8 @@
   // paragraph; brk "col" | "page" | "odd" | "even" where the paragraph
   // starts; sink (pt, 0-600) how far below the top of a column it
   // starts when it opens the column (a chapter's sunk opening; sb is
-  // the space everywhere else).
+  // the space everywhere else); sec 1 / 0 its paragraphs are the
+  // titles a running head shows (LY-RH).
   var BRK = { col: 1, page: 1, odd: 1, even: 1 };
   function bookOf(s, out) {
     var x = s.ext;
@@ -574,6 +575,7 @@
     });
     if (x.brk !== undefined) out.brk = BRK[x.brk] ? x.brk : "";
     if (x.sink !== undefined) { var k = Number(x.sink); out.sink = isFinite(k) ? Math.max(0, Math.min(600, k)) : 0; }
+    if (x.sec !== undefined) out.sec = x.sec ? 1 : 0;
   }
   // A family of the document (ext.fam: "fs_…" Fontsource, "uf_…" a
   // font file of the user's) goes with the style's own `font`, which
@@ -718,6 +720,15 @@
         base += 1;
         return;
       }
+      // a running head (ext.fld "sec", LY-RH): the page's chapter title;
+      // its own text is what shows where there is none (a master being
+      // edited, an older orOS). Its characters keep their offsets.
+      if (run.ext && run.ext.fld === "sec" && typeof run.t === "string") {
+        if (!word) word = { k: "w", parts: [] };
+        word.parts.push({ t: null, f: "sec", fb: run.t, a: a, o: base, n: run.t.length });
+        base += run.t.length;
+        return;
+      }
       var s = String(run.t || "");
       var buf = "", b0 = 0;
       for (var i = 0; i < s.length; i++) {
@@ -745,6 +756,7 @@
     if (p.t !== null) return p.t;
     if (p.f === "pn") return String(ctx.pageLabel || "#");
     if (p.f === "pc") return String(ctx.pageCount || "#");
+    if (p.f === "sec") return caseOf(p.a, typeof ctx.sec === "string" ? ctx.sec : p.fb || "");
     return "";
   }
   function partWidth(p, ctx) { return measure(p.a.key, partText(p, ctx), p.a.size, p.a.track, p.a.kern); }
@@ -765,7 +777,7 @@
     w.parts.forEach(function (p) {
       var txt = partText(p, ctx), buf = "", b0 = 0;
       function push() {
-        var o = p.f ? p.o : p.o + Math.min(b0, p.n), n = p.f ? 1 : Math.max(0, Math.min(buf.length, p.n - Math.min(b0, p.n)));
+        var o = p.f ? p.o : p.o + Math.min(b0, p.n), n = p.f ? p.n : Math.max(0, Math.min(buf.length, p.n - Math.min(b0, p.n)));
         cur.parts.push({ t: buf, a: p.a, o: o, n: n });
       }
       for (var i = 0; i < txt.length; i++) {
@@ -821,7 +833,8 @@
   // ---------- 8. Layout ----------
   // frames: ordered chain, each
   //   { id, w, h, cols, gut, inset, valign: "t"|"c"|"b", excl: [],
-  //     ctx: { pageLabel, pageCount } }
+  //     ctx: { pageLabel, pageCount, sec (the page's running head
+  //     text, LY-RH) } }
   // story: { paras: [{ ps, runs: [...] }] }
   // styles: { ps: [..], cs: [..] }
   // Result:
