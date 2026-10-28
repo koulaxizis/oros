@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.24.00
+- Layout: before an automatic layout, Layout asks how the book is to be set, each answer starting as the series has it: page size and margins, where chapters start (now also on a left-hand page), parts on a page of their own, sunk chapter titles, scene breaks, page numbers and where they are hidden, the contents, which front and back pages to keep, where acknowledgements and other sections go, a dedication and a motto, the typography of each part, hyphenation and widows. The answers stay in the book as its `Book sheet…`; a house style now also learns where the series puts its page numbers and its scene break.
+
 ## Version 4.23.01
 - Layout: tested on a real book of a series. Rebuild a print PDF keeps paragraphs whole also with open line spacing and places your original photos when the PDF gave them a soft edge; a house style no longer takes the first chapter for front matter; the automatic layout never leaves out the start of a manuscript and never takes a line of stars for a title.
 

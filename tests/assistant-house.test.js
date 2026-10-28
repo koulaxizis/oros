@@ -87,7 +87,7 @@ test("the wiring: the card hands the request to Layout, which runs it and report
   assert.match(ly, /if \(tg && tg\.house && typeof tg\.house === "object" && \/\^\(learn\|book\|rule\)\$\/\.test\(tg\.house\.op\)\)/);
   assert.match(ly, /LY\.house\.run\(rq, f, back\)/);
   const hu = read("layout/houseui.js");
-  assert.match(hu, /LY\.house = \{ open: open, auto: autoDlg, hasToc: hasToc, updateToc: updateToc, run: run \};/);
+  assert.match(hu, /LY\.house = \{ open: open, auto: function \(\) \{ autoDlg\(\); \}, hasToc: hasToc, updateToc: updateToc, run: run, hasSheet: hasSheet, sheet: sheetAgain \};/);
   // the reports lead back to the conversation the card came from
   assert.equal(hu.split("backBtn(act, chat, close);").length - 1, 2);
   // the details the Assistant left out come from the Publishing app's title

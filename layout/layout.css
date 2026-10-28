@@ -572,3 +572,6 @@ body.inframe #cv { cursor: text; }
 .hs-works { max-height: 40vh; overflow-y: auto; margin: 8px 0; }
 .hs-rule { display: flex; align-items: center; gap: 8px; }
 .hs-rule > .chk, .hs-rule > .hint { flex: 1 1 auto; margin: 2px 0; }
+.in-part { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 6px 0; }
+.in-part > .fld-lbl { flex: 1 1 60%; }
+.in-part > .grid2 { flex: 1 1 100%; }

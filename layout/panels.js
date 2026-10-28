@@ -792,8 +792,9 @@
         var g3 = el("div", "grid2");
         g3.appendChild(field(t("sty.orph"), optNum(st.ext, "orph", 1, 9)));
         g3.appendChild(field(t("sty.wid"), optNum(st.ext, "wid", 1, 9)));
-        g3.appendChild(field(t("sty.brk"), select([["", t("sty.inherit")], ["any", t("sty.brkAny")], ["col", t("sty.brkCol")], ["page", t("sty.brkPage")], ["odd", t("sty.brkOdd")]],
+        g3.appendChild(field(t("sty.brk"), select([["", t("sty.inherit")], ["any", t("sty.brkAny")], ["col", t("sty.brkCol")], ["page", t("sty.brkPage")], ["odd", t("sty.brkOdd")], ["even", t("sty.brkEven")]],
           st.ext.brk || "", function (v) { if (v) st.ext.brk = v; else delete st.ext.brk; })));
+        g3.appendChild(field(t("sty.sink") + " (pt)", optNum(st.ext, "sink", 0, 600)));
         body.appendChild(g3);
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
@@ -1323,6 +1324,7 @@
       { label: t("more.house"), fn: function () { LY.house.open(); } },
       { label: t("more.auto"), fn: function () { LY.house.auto(); } },
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
+      { label: t("more.sheet"), disabled: !LY.house.hasSheet(doc), fn: function () { LY.house.sheet(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
