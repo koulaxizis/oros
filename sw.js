@@ -782,6 +782,7 @@ var PRECACHE_URLS = [
   "layout/linefit.js",
   "layout/afread.js",
   "layout/rebuild.js",
+  "layout/wordin.js",
   "layout/io.js",
   "designkit/assets.js",
   "designkit/fx.js",

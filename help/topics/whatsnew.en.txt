@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.20.00
+- Layout: `Place text or a document` in the `More` menu now brings in Word (.docx), OpenDocument (.odt), RTF, HTML and Markdown files with their headings, bold and italic. Choose once which paragraph style each kind of paragraph takes (Heading 1, the first paragraph after a heading, quotations, lists); the document remembers it.
+
 ## Version 4.19.00
 - Layout: book typesetting in paragraph styles. `Hyphenate Greek` breaks Greek words at their syllables (on in new documents), `Keep with next` keeps a heading with its text, two settings stop single lines being left at a column's foot or top, and `Start` begins a chapter on a new page or an odd page.
 
