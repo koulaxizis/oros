@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.26.00
+- Assistant: before it lays out a book it asks what differs from the series and passes only those answers to Layout; the card lists them, `Lay out` goes straight on and `All the questions…` opens every question in Layout with the answers filled in. Photos attached in the conversation go in as their own section.
+
 ## Version 4.25.00
 - Layout: the book's questions now cover photos: a .docx's photos are placed with the paragraph they belong to, on a page of their own or at the top of the page, within the margins or to the bleed, with captions from the paragraph after them, their name or typed, optionally in black and white; photos besides the manuscript go at the end or after a chapter. A house style learns where its series puts photos.
 

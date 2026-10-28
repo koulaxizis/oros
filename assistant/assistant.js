@@ -246,6 +246,7 @@
       "hs.go.rule": "Add",
       "hs.working": "{app} is doing it on this device…",
       "hs.failed": "{app} could not do it. Nothing was made.",
+      "hs.cancel": "The questions were closed without a layout. Nothing was made.",
       "hs.noHouse": "{app} has no house style by that name. Learn one first.",
       "hs.noDocs": "{app} found none of these documents.",
       "hs.missing": "Not found: {list}.",
@@ -255,6 +256,116 @@
       "hs.repRule": "The rule is on the sheet ({n} style settings changed).",
       "hs.check": "Pages to check: {p}.",
       "hs.next": "The document is open in Layout.",
+      "lb.q.size": "Page size",
+      "lb.q.start": "Where each new chapter starts",
+      "lb.start.odd": "On a right-hand page",
+      "lb.start.even": "On a left-hand page",
+      "lb.start.page": "On a new page, wherever it falls",
+      "lb.start.run": "Right after the previous one",
+      "lb.q.parts": "The parts (Part One…)",
+      "lb.parts.own": "On a page of their own",
+      "lb.parts.chap": "Like the chapters",
+      "lb.q.sink": "How low a chapter title starts",
+      "lb.sink.top": "At the top of the page",
+      "lb.sink.third": "A third of the way down",
+      "lb.q.first": "The first paragraph of a chapter",
+      "lb.first.flush": "Without an indent",
+      "lb.first.indent": "With an indent",
+      "lb.q.sep": "Scene breaks",
+      "lb.sep.keep": "As in the manuscript",
+      "lb.sep.stars": "***",
+      "lb.sep.spaced": "* * *",
+      "lb.sep.aster": "⁂",
+      "lb.sep.blank": "An empty line",
+      "lb.q.pn": "Page numbers",
+      "lb.pn.footC": "At the foot, centred",
+      "lb.pn.footOut": "At the foot, outer edge",
+      "lb.pn.headOut": "At the head, outer edge",
+      "lb.pn.headC": "At the head, centred",
+      "lb.pn.none": "None",
+      "lb.q.pnHide": "Page numbers on chapter openings and empty pages",
+      "lb.pnHide.hide": "Hidden",
+      "lb.pnHide.show": "Shown",
+      "lb.q.toc": "Contents",
+      "lb.toc.start": "At the start",
+      "lb.toc.end": "At the end",
+      "lb.toc.none": "None",
+      "lb.q.tocParts": "In the contents",
+      "lb.tocParts.parts": "Parts and chapters",
+      "lb.tocParts.chap": "Chapters only",
+      "lb.q.picAt": "Where the photos go",
+      "lb.picAt.page": "On a page of their own, before the page they belong to",
+      "lb.picAt.before": "At the top of the page, the text below them",
+      "lb.picAt.each": "I choose for each photo",
+      "lb.picAt.out": "Leave them out",
+      "lb.q.picSize": "Photo size",
+      "lb.picSize.text": "Within the margins",
+      "lb.picSize.page": "The whole page, to the bleed",
+      "lb.q.cap": "Captions",
+      "lb.cap.below": "Below the photo",
+      "lb.cap.above": "Above the photo",
+      "lb.cap.none": "No captions",
+      "lb.q.capSrc": "Caption text",
+      "lb.capSrc.file": "The photo's name",
+      "lb.capSrc.typed": "I type them",
+      "lb.q.grey": "Colour",
+      "lb.grey.yes": "Black and white",
+      "lb.q.hyph": "Hyphenation",
+      "lb.hyph.on": "On",
+      "lb.hyph.off": "Off",
+      "lb.q.widows": "Widows and orphans (at least two lines)",
+      "lb.widows.on": "On",
+      "lb.widows.off": "Off",
+      "lb.q.fix": "Quotes, dashes and ellipses",
+      "lb.fix.on": "Greek «», — and …",
+      "lb.fix.off": "As they are",
+      "lb.q.marg": "Margins (empty: as in the series)",
+      "lb.q.pnStart": "Number of the first page",
+      "lb.q.ded": "Dedication (on a right-hand page of its own)",
+      "lb.q.motto": "Motto (on a right-hand page of its own)",
+      "lb.marg.t": "Top",
+      "lb.marg.b": "Bottom",
+      "lb.marg.i": "Inside",
+      "lb.marg.o": "Outside",
+      "lb.sec.prologue": "Prologue",
+      "lb.sec.thanks": "Acknowledgements",
+      "lb.sec.notes": "Notes",
+      "lb.sec.bio": "About the author",
+      "lb.sec.links": "Links",
+      "lb.at.front": "Before the first chapter",
+      "lb.at.back": "After the last chapter",
+      "lb.at.out": "Leave it out",
+      "lb.part.body": "Body text",
+      "lb.part.title": "Chapter titles",
+      "lb.part.part": "Part titles",
+      "lb.part.toc": "Contents",
+      "lb.part.colophon": "Publisher's page",
+      "lb.part.thanks": "Acknowledgements",
+      "lb.part.links": "Links",
+      "lb.part.ded": "Dedication and motto",
+      "lb.part.cap": "Captions",
+      "lb.font.serif": "Serif",
+      "lb.font.sans": "Sans",
+      "lb.font.mono": "Mono",
+      "lb.align.l": "left",
+      "lb.align.c": "centred",
+      "lb.align.r": "right",
+      "lb.align.j": "justified",
+      "lb.sty.b": "Bold",
+      "lb.sty.i": "Italic",
+      "lb.sty.caps": "All caps",
+      "lb.track": "Tracking (1/1000 em)",
+      "lb.none": "None",
+      "lb.differ": "What differs from the series:",
+      "lb.allSeries": "Everything as in the series.",
+      "lb.rest": "Everything else as in the series.",
+      "lb.photos": "{n} photos besides the manuscript,",
+      "lb.photosEnd": "at the end of the book.",
+      "lb.photosAfter": "after title {n}.",
+      "hs.all": "All the questions…",
+      "hs.repPhotos": "{n} photos placed.",
+      "hs.repPhotosOut": "{n} photos left out.",
+      "hs.repOverset": "The text does not fit yet: add pages in Layout.",
       "do.f.page": "Page",
       "nl.head": "For a newsletter issue · {app}", "nl.hint": "Opens {app}: you pick the draft these blocks go into, or a new one. Nothing is added or sent before that.",
       "nl.k.heading": "Heading", "nl.k.text": "Text", "nl.k.quote": "Quote", "nl.k.button": "Button", "nl.k.list": "List", "nl.k.divider": "Divider", "nl.k.spacer": "Space", "nl.k.image": "Picture", "nl.k.picture_text": "Picture and text", "nl.checkHead": "Ready to send? · {app}", "nl.checkHint": "Opens the issue's check in {app}: what is missing, and when all is well, the send screen. You press Send there.", "nl.checkOpen": "Open the check",
@@ -643,6 +754,7 @@
       "hs.go.rule": "Προσθήκη",
       "hs.working": "Η {app} το κάνει σε αυτή τη συσκευή…",
       "hs.failed": "Η {app} δεν μπόρεσε να το κάνει. Δεν φτιάχτηκε τίποτα.",
+      "hs.cancel": "Οι ερωτήσεις έκλεισαν χωρίς σελιδοποίηση. Δεν φτιάχτηκε τίποτα.",
       "hs.noHouse": "Η {app} δεν έχει ύφος έκδοσης με αυτό το όνομα. Μάθε πρώτα ένα.",
       "hs.noDocs": "Η {app} δεν βρήκε κανένα από αυτά τα έγγραφα.",
       "hs.missing": "Δεν βρέθηκαν: {list}.",
@@ -652,6 +764,116 @@
       "hs.repRule": "Ο κανόνας είναι στο φύλλο ({n} ρυθμίσεις στυλ άλλαξαν).",
       "hs.check": "Σελίδες για έλεγχο: {p}.",
       "hs.next": "Το έγγραφο είναι ανοιχτό στη Σελιδοποίηση.",
+      "lb.q.size": "Μέγεθος σελίδας",
+      "lb.q.start": "Πού ξεκινά κάθε νέο κεφάλαιο",
+      "lb.start.odd": "Σε δεξιά σελίδα",
+      "lb.start.even": "Σε αριστερή σελίδα",
+      "lb.start.page": "Σε νέα σελίδα, όπου πέσει",
+      "lb.start.run": "Αμέσως μετά το προηγούμενο",
+      "lb.q.parts": "Τα μέρη (Μέρος πρώτο…)",
+      "lb.parts.own": "Σε δική τους σελίδα",
+      "lb.parts.chap": "Όπως τα κεφάλαια",
+      "lb.q.sink": "Πόσο χαμηλά ξεκινά ο τίτλος κεφαλαίου",
+      "lb.sink.top": "Στην κορυφή της σελίδας",
+      "lb.sink.third": "Στο ένα τρίτο της σελίδας",
+      "lb.q.first": "Η πρώτη παράγραφος του κεφαλαίου",
+      "lb.first.flush": "Χωρίς εσοχή",
+      "lb.first.indent": "Με εσοχή",
+      "lb.q.sep": "Αλλαγή σκηνής",
+      "lb.sep.keep": "Όπως στο χειρόγραφο",
+      "lb.sep.stars": "***",
+      "lb.sep.spaced": "* * *",
+      "lb.sep.aster": "⁂",
+      "lb.sep.blank": "Κενή γραμμή",
+      "lb.q.pn": "Αριθμοί σελίδας",
+      "lb.pn.footC": "Κάτω, στο κέντρο",
+      "lb.pn.footOut": "Κάτω, στην εξωτερική άκρη",
+      "lb.pn.headOut": "Πάνω, στην εξωτερική άκρη",
+      "lb.pn.headC": "Πάνω, στο κέντρο",
+      "lb.pn.none": "Χωρίς αριθμούς",
+      "lb.q.pnHide": "Αριθμοί στις αρχές κεφαλαίων και στις κενές σελίδες",
+      "lb.pnHide.hide": "Κρυφοί",
+      "lb.pnHide.show": "Φαίνονται",
+      "lb.q.toc": "Περιεχόμενα",
+      "lb.toc.start": "Στην αρχή",
+      "lb.toc.end": "Στο τέλος",
+      "lb.toc.none": "Χωρίς περιεχόμενα",
+      "lb.q.tocParts": "Στα περιεχόμενα",
+      "lb.tocParts.parts": "Μέρη και κεφάλαια",
+      "lb.tocParts.chap": "Μόνο κεφάλαια",
+      "lb.q.picAt": "Πού μπαίνουν οι φωτογραφίες",
+      "lb.picAt.page": "Σε δική τους σελίδα, πριν από τη σελίδα όπου ανήκουν",
+      "lb.picAt.before": "Στην κορυφή της σελίδας, με το κείμενο από κάτω",
+      "lb.picAt.each": "Διαλέγω για κάθε φωτογραφία",
+      "lb.picAt.out": "Να μη μπουν",
+      "lb.q.picSize": "Μέγεθος φωτογραφίας",
+      "lb.picSize.text": "Μέσα στα περιθώρια",
+      "lb.picSize.page": "Όλη η σελίδα, ως το ξάκρισμα",
+      "lb.q.cap": "Λεζάντες",
+      "lb.cap.below": "Κάτω από τη φωτογραφία",
+      "lb.cap.above": "Πάνω από τη φωτογραφία",
+      "lb.cap.none": "Χωρίς λεζάντες",
+      "lb.q.capSrc": "Κείμενο λεζάντας",
+      "lb.capSrc.file": "Το όνομα της φωτογραφίας",
+      "lb.capSrc.typed": "Τις γράφω εγώ",
+      "lb.q.grey": "Χρώμα",
+      "lb.grey.yes": "Ασπρόμαυρες",
+      "lb.q.hyph": "Συλλαβισμός",
+      "lb.hyph.on": "Ναι",
+      "lb.hyph.off": "Όχι",
+      "lb.q.widows": "Χήρες και ορφανές (τουλάχιστον δύο γραμμές)",
+      "lb.widows.on": "Ναι",
+      "lb.widows.off": "Όχι",
+      "lb.q.fix": "Εισαγωγικά, παύλες και αποσιωπητικά",
+      "lb.fix.on": "Ελληνικά «», — και …",
+      "lb.fix.off": "Όπως είναι",
+      "lb.q.marg": "Περιθώρια (κενό: όπως στη σειρά)",
+      "lb.q.pnStart": "Αριθμός της πρώτης σελίδας",
+      "lb.q.ded": "Αφιέρωση (σε δική της δεξιά σελίδα)",
+      "lb.q.motto": "Μότο (σε δική του δεξιά σελίδα)",
+      "lb.marg.t": "Πάνω",
+      "lb.marg.b": "Κάτω",
+      "lb.marg.i": "Μέσα",
+      "lb.marg.o": "Έξω",
+      "lb.sec.prologue": "Πρόλογος",
+      "lb.sec.thanks": "Ευχαριστίες",
+      "lb.sec.notes": "Σημειώσεις",
+      "lb.sec.bio": "Βιογραφικό",
+      "lb.sec.links": "Σύνδεσμοι",
+      "lb.at.front": "Πριν το πρώτο κεφάλαιο",
+      "lb.at.back": "Μετά το τελευταίο κεφάλαιο",
+      "lb.at.out": "Να μη μπει",
+      "lb.part.body": "Κυρίως κείμενο",
+      "lb.part.title": "Τίτλοι κεφαλαίων",
+      "lb.part.part": "Τίτλοι μερών",
+      "lb.part.toc": "Περιεχόμενα",
+      "lb.part.colophon": "Σελίδα εκδότη",
+      "lb.part.thanks": "Ευχαριστίες",
+      "lb.part.links": "Σύνδεσμοι",
+      "lb.part.ded": "Αφιέρωση και μότο",
+      "lb.part.cap": "Λεζάντες",
+      "lb.font.serif": "Serif",
+      "lb.font.sans": "Sans",
+      "lb.font.mono": "Mono",
+      "lb.align.l": "αριστερή",
+      "lb.align.c": "στο κέντρο",
+      "lb.align.r": "δεξιά",
+      "lb.align.j": "πλήρης",
+      "lb.sty.b": "Έντονα",
+      "lb.sty.i": "Πλάγια",
+      "lb.sty.caps": "Κεφαλαία",
+      "lb.track": "Αραίωση (1/1000 em)",
+      "lb.none": "Καμία",
+      "lb.differ": "Τι διαφέρει από τη σειρά:",
+      "lb.allSeries": "Όλα όπως στη σειρά.",
+      "lb.rest": "Όλα τα υπόλοιπα όπως στη σειρά.",
+      "lb.photos": "{n} φωτογραφίες εκτός χειρογράφου,",
+      "lb.photosEnd": "στο τέλος του βιβλίου.",
+      "lb.photosAfter": "μετά τον τίτλο {n}.",
+      "hs.all": "Όλες οι ερωτήσεις…",
+      "hs.repPhotos": "Μπήκαν {n} φωτογραφίες.",
+      "hs.repPhotosOut": "{n} φωτογραφίες δεν μπήκαν.",
+      "hs.repOverset": "Το κείμενο δεν χωράει ακόμη: πρόσθεσε σελίδες στη Σελιδοποίηση.",
       "do.f.page": "Σελίδα",
       "nl.head": "Για τεύχος · {app}", "nl.hint": "Ανοίγει ({app}): διαλέγεις το πρόχειρο όπου θα μπουν αυτά τα blocks ή νέο. Τίποτα δεν προστίθεται ούτε στέλνεται πριν από αυτό.",
       "nl.k.heading": "Επικεφαλίδα", "nl.k.text": "Κείμενο", "nl.k.quote": "Παράθεση", "nl.k.button": "Κουμπί", "nl.k.list": "Λίστα", "nl.k.divider": "Διαχωριστικό", "nl.k.spacer": "Κενό", "nl.k.image": "Εικόνα", "nl.k.picture_text": "Εικόνα και κείμενο", "nl.checkHead": "Έτοιμο για αποστολή; · {app}", "nl.checkHint": "Ανοίγει τον έλεγχο του τεύχους ({app}): τι λείπει και, όταν όλα είναι εντάξει, την οθόνη αποστολής. Το Αποστολή το πατάς εσύ εκεί.", "nl.checkOpen": "Άνοιγμα ελέγχου",
@@ -2806,11 +3028,16 @@
       : h.op === "book" ? "laying out \u201c" + h.doc.name + "\u201d" + inH : "adding the rule" + inH;
     var ui = { k: "house", op: h.op, house: h.house, key: attId(), st: "" };
     if (h.op === "learn") { ui.docs = h.docs; ui.name = h.name; }
-    else if (h.op === "book") { ui.doc = h.doc; ui.meta = h.meta; ui.keepFront = h.keepFront ? 1 : 0; }
+    else if (h.op === "book") {
+      ui.doc = h.doc; ui.meta = h.meta; ui.keepFront = h.keepFront ? 1 : 0;
+      if (h.sheet) ui.sheet = h.sheet;
+      if (h.photos) ui.photos = h.photos;
+    }
     else { ui.text = h.text; ui.does = h.does; }
     return { content: "Shown to the user as a card: " + what + ". Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
   }
-  function runHouse(ui, c) {
+  // all: the user pressed "All the questions…" (Layout shows them first)
+  function runHouse(ui, c, all) {
     var p = shell(), FO = p && p.orosFileOpen;
     if (!p || typeof p.__orosOpenAt !== "function") return false;
     var rq = { op: ui.op, house: ui.house || "", key: ui.key, chat: c.id };
@@ -2825,6 +3052,16 @@
       }
       rq.meta = ui.meta || {};
       rq.keepFront = ui.keepFront === 1 ? 1 : 0;
+      if (ui.sheet) rq.sheet = ui.sheet;
+      if (all) rq.all = 1;
+      if (ui.photos) {
+        rq.photos = [];
+        for (var i = 0; i < ui.photos.length; i++) {
+          var o = ui.photos[i], pf = o.path ? null : attFile(o.id, o.name), pt = o.path ? "" : pf && FO && typeof FO.hand === "function" ? FO.hand(pf) : "";
+          if (o.path) rq.photos.push({ path: o.path });
+          else if (pt) rq.photos.push({ token: pt, name: o.name });
+        }
+      }
     }
     try { p.__orosOpenAt("layout", { house: rq }); return true; } catch (e) { return false; }
   }
@@ -2833,7 +3070,8 @@
     if (!rep || ui.st !== "opened") return false;
     ui.rep = C.houseReport(ui.op, rep);
     ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
-    r.content = ui.st === "failed" ? "The user pressed the button, but Layout could not do it. Nothing was made. Report: " + JSON.stringify(ui.rep)
+    r.content = ui.st === "failed" && ui.rep && ui.rep.why === "cancel" ? "The user closed Layout's questions without laying out the book. Nothing was made."
+      : ui.st === "failed" ? "The user pressed the button, but Layout could not do it. Nothing was made. Report: " + JSON.stringify(ui.rep)
       : ui.op === "rule" ? "Layout added the rule to the house style's sheet. Report: " + JSON.stringify(ui.rep)
       : "Layout made it on the device as a new document, now open in Layout. Report: " + JSON.stringify(ui.rep);
     saveChat(c).then(function () { delete attRb[key]; }, function () {});
@@ -5282,6 +5520,47 @@
 
   // A house style card (AS-HS): what Layout will do; after the press,
   // its report.
+  // The book's answers on a layout_book card, in Layout's words (lb.*):
+  // each one that differs from the series, then "the rest as in the
+  // series", then the photos besides the manuscript
+  function bookAnswers(ui) {
+    var sh = ui.sheet || {}, a = sh.a || {}, ty = sh.ty || {}, ul = el("ul", "entry-list"), n = 0;
+    var li = function (txt) { ul.appendChild(el("li", "", txt)); n++; };
+    var num = function (v) { return LANG === "en" ? String(v) : String(v).replace(".", ","); };
+    var mm = function (v) { return num(v) + " mm"; };
+    var lab = function (k) { return t(k).replace(/\s*\([^)]*\)$/, ""); };
+    var SEP = { "***": "stars", "* * *": "spaced", "\u2042": "aster" };
+    C.BOOK_Q.forEach(function (q) {
+      var v = a[q[0]];
+      if (v === undefined) return;
+      li(lab("lb.q." + q[0]) + ": " + (q[0] === "size" ? v.replace("x", " \u00d7 ") + " mm" : t("lb." + q[0] + "." + (SEP[v] || v))));
+    });
+    if (a.marg) li(lab("lb.q.marg") + ": " + ["t", "b", "i", "o"].filter(function (k) { return a.marg[k] !== undefined; }).map(function (k) { return t("lb.marg." + k) + " " + mm(a.marg[k]); }).join(", "));
+    if (a.pnStart !== undefined) li(lab("lb.q.pnStart") + ": " + a.pnStart);
+    C.BOOK_SECTIONS.forEach(function (k) {
+      var v = a["at" + k.charAt(0).toUpperCase() + k.slice(1)];
+      if (v) li(t("lb.sec." + k) + ": " + t("lb.at." + v));
+    });
+    C.BOOK_PARTS.forEach(function (k) {
+      var l = ty[k];
+      if (!l) return;
+      var bits = [];
+      if (l.fam) bits.push(t("lb.font." + l.fam));
+      if (l.size || l.lead) bits.push((l.size ? num(l.size) : "\u2013") + "/" + (l.lead ? num(l.lead) : "\u2013") + " pt");
+      if (l.align) bits.push(t("lb.align." + l.align));
+      ["b", "i", "caps"].forEach(function (x) { if (l[x] !== undefined) bits.push((l[x] ? "" : "\u2212") + t("lb.sty." + x)); });
+      if (l.track !== undefined) bits.push(lab("lb.track") + " " + num(l.track));
+      li(t("lb.part." + k) + ": " + bits.join(" \u00b7 "));
+    });
+    if (typeof sh.ded === "string") li(lab("lb.q.ded") + ": " + (sh.ded || t("lb.none")));
+    if (typeof sh.motto === "string") li(lab("lb.q.motto") + ": " + (sh.motto || t("lb.none")));
+    var ph = (ui.photos || []).length;
+    if (ph) li(t("lb.photos", { n: ph }) + " " + (a.extraAt && a.extraAt !== "end" ? t("lb.photosAfter", { n: +a.extraAt.slice(5) + 1 }) : t("lb.photosEnd")));
+    var box = el("div");
+    box.appendChild(el("p", "dlg-hint", t(n ? "lb.differ" : "lb.allSeries")));
+    if (n) { box.appendChild(ul); box.appendChild(el("p", "dlg-hint", t("lb.rest"))); }
+    return box;
+  }
   function drawHouse(host, r, c) {
     var ui = r.ui, have = installed();
     if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
@@ -5296,6 +5575,7 @@
       card.appendChild(el("p", "entry-title", op === "rule" ? ui.text : ui.doc && ui.doc.name || ""));
       var meta = ui.meta || {}, vals = Object.keys(meta).map(function (k) { return meta[k]; });
       card.appendChild(el("p", "dlg-hint", (ui.house ? t("hs.in", { h: ui.house }) : t("hs.inOnly")) + (vals.length ? " " + vals.join(" · ") : "")));
+      if (op === "book") card.appendChild(bookAnswers(ui));
     }
     var rp = ui.rep;
     if (ui.st === "done" && rp) {
@@ -5307,6 +5587,9 @@
       else {
         lines.push(t("hs.repBook", { p: rp.pages, t: rp.titles, g: rp.titlesGuessed }));
         lines.push(t("hs.repFixes", { q: rp.fixes.quotes, d: rp.fixes.dashes, e: rp.fixes.ellipses, s: rp.fixes.spaces }));
+        if (rp.photosPlaced) lines.push(t("hs.repPhotos", { n: rp.photosPlaced }));
+        if (rp.picturesLeftOut) lines.push(t("hs.repPhotosOut", { n: rp.picturesLeftOut }));
+        if (rp.textDoesNotFit) lines.push(t("hs.repOverset"));
         if (rp.pagesToCheck.length) lines.push(t("hs.check", { p: rp.pagesToCheck.map(function (x) { return x.page; }).slice(0, 20).join(", ") }));
       }
       lines.forEach(function (x) { ul.appendChild(el("li", "", x)); });
@@ -5315,7 +5598,7 @@
     } else if (ui.st === "opened") {
       card.appendChild(el("p", "entry-state", t("hs.working", { app: name })));
     } else if (ui.st === "failed") {
-      var why = rp && rp.why === "noHouse" ? "hs.noHouse" : rp && rp.why === "noDocs" ? "hs.noDocs" : "hs.failed";
+      var why = rp && rp.why === "noHouse" ? "hs.noHouse" : rp && rp.why === "noDocs" ? "hs.noDocs" : rp && rp.why === "cancel" ? "hs.cancel" : "hs.failed";
       card.appendChild(el("p", "entry-state err", t(why, { app: name })));
     } else if (ui.st) {
       card.appendChild(el("p", "entry-state", t("entry." + ui.st, { app: name })));
@@ -5328,14 +5611,16 @@
         saveChat(c);
         renderMessages();
       }));
-      acts.appendChild(button(t("hs.go." + op), "primary", function () {
+      var go = function (all) {
         ui.st = "opened";
         // Saved before Layout opens (it may take this frame's place).
         saveChat(c).then(function () {
-          if (!runHouse(ui, c)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
+          if (!runHouse(ui, c, all)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
           renderMessages();
         });
-      }));
+      };
+      if (op === "book") acts.appendChild(button(t("hs.all"), "", function () { go(true); }));
+      acts.appendChild(button(t("hs.go." + op), "primary", function () { go(false); }));
       card.appendChild(acts);
     }
     host.appendChild(card);

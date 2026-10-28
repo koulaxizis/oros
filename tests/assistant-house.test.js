@@ -85,7 +85,7 @@ test("the wiring: the card hands the request to Layout, which runs it and report
   assert.match(as, /rebuild: rbOn, house: rbOn \}\)/);
   const ly = read("layout/layout.js");
   assert.match(ly, /if \(tg && tg\.house && typeof tg\.house === "object" && \/\^\(learn\|book\|rule\)\$\/\.test\(tg\.house\.op\)\)/);
-  assert.match(ly, /LY\.house\.run\(rq, f, back\)/);
+  assert.match(ly, /LY\.house\.run\(rq, f, back, photos, missed\)/);
   const hu = read("layout/houseui.js");
   assert.match(hu, /LY\.house = \{ open: open, auto: function \(\) \{ autoDlg\(\); \}, hasToc: hasToc, updateToc: updateToc, run: run, hasSheet: hasSheet, sheet: sheetAgain \};/);
   // the reports lead back to the conversation the card came from
@@ -103,4 +103,75 @@ test("the wiring: the card hands the request to Layout, which runs it and report
     assert.equal(as.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
   });
+});
+
+// wave Q3 (LY-IN): the book's questions through the Assistant
+test("layout_book: the book's answers become Layout's book sheet; wrong ones are refusals the model can act on", () => {
+  const files = FILES.concat([{ id: "p1", name: "photo one.jpg", type: "image/jpeg", size: 10, kept: true }, { id: "p2", name: "pasted", type: "image/png", size: 10, kept: true }]);
+  const r = C.normHouse("layout_book", {
+    manuscript: "Manuscript.docx", answers: { start: "even", sep: "\u2042", grey: "yes" }, margins: { top: 20, outside: "x", inside: 500 },
+    first_page_number: 7.6, sections: { thanks: "back" }, typography: { body: { font: "serif", size: 11.5, leading: 15, align: "justified", italic: false }, nope: { size: 9 } },
+    dedication: " To M. ", photos: ["photo one.jpg", "pasted", "photo one.jpg"], photos_after: 3
+  }, files);
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.sheet, {
+    v: 1, drop: [], ded: "To M.",
+    a: { start: "even", sep: "\u2042", grey: "yes", marg: { t: 20 }, pnStart: 7, atThanks: "back", extraAt: "after2" },
+    ty: { body: { fam: "serif", size: 11.5, lead: 15, align: "j", i: 0 } }
+  });
+  assert.deepEqual(r.photos, [{ id: "p1", name: "photo one.jpg" }, { id: "p2", name: "pasted" }]);
+  // photos and nothing else: they go at the end
+  assert.deepEqual(C.normHouse("layout_book", { manuscript: "Manuscript.docx", photos: ["/internal/Pics/a.png"] }, FILES).sheet.a, { extraAt: "end" });
+  assert.deepEqual(C.normHouse("layout_book", { manuscript: "Manuscript.docx", photos: ["/internal/Pics/a.png"] }, FILES).photos, [{ path: "/internal/Pics/a.png", name: "a.png" }]);
+  // nothing given: no sheet (everything as in the series)
+  assert.equal(C.normHouse("layout_book", { manuscript: "Manuscript.docx", answers: {} }, FILES).sheet, undefined);
+  assert.match(C.normHouse("layout_book", { manuscript: "Manuscript.docx", answers: { start: "left" } }, FILES).err, /answers: start \(one of odd, even, page, run\)/);
+  assert.match(C.normHouse("layout_book", { manuscript: "Manuscript.docx", answers: { colour: "red" } }, FILES).err, /colour \(not a question\)/);
+  assert.match(C.normHouse("layout_book", { manuscript: "Manuscript.docx", sections: { thanks: "middle" } }, FILES).err, /sections: thanks/);
+  assert.match(C.normHouse("layout_book", { manuscript: "Manuscript.docx", photos: ["Manuscript.docx"] }, FILES).err, /is not a photo/);
+  assert.match(C.normHouse("layout_book", { manuscript: "Manuscript.docx", photos: "a.jpg" }, FILES).err, /photos must be a list/);
+  assert.match(C.normHouse("layout_book", { manuscript: "Manuscript.docx", photos_after: 0 }, FILES).err, /photos_after must be/);
+  // the schema offers the same answers
+  const props = C.toolsFor({ house: true })[1].params.properties;
+  assert.deepEqual(Object.keys(props.answers.properties), C.BOOK_Q.map((q) => q[0]));
+  assert.deepEqual(props.answers.properties.start.enum, ["odd", "even", "page", "run"]);
+  assert.match(C.systemPrompt({ lang: "en", now: Date.now(), apps: ["Layout (layout)"], house: true }), /Before layout_book, ask the book's questions .* only the answers that differ/);
+});
+
+test("the questions are Layout's: same ids and values, same sections and parts", () => {
+  global.window = global.window || {};
+  const I = require("../layout/intake.js");
+  assert.deepEqual(C.BOOK_Q.map((q) => [q[0], q[1]]), I.QUESTIONS.map((q) => [q.id, q.v.filter((v) => v !== "s")]));
+  assert.deepEqual(C.BOOK_PARTS, I.PARTS);
+  const ly = read("layout/intake.js");
+  C.BOOK_SECTIONS.forEach((k) => assert.ok(new RegExp('"' + k + '"').test(/SECTION_KEYS = \[([^\]]*)\]/.exec(ly)[1]), k));
+});
+
+test("the report adds photos and text that does not fit; the card shows the answers in Layout's words", () => {
+  const o = C.houseReport("book", { pages: 10, check: [], placed: 3, pictures: 1, overset: true, sheet: { a: {} }, moved: 1, left: 2 });
+  assert.equal(o.photosPlaced, 3);
+  assert.equal(o.picturesLeftOut, 1);
+  assert.equal(o.textDoesNotFit, true);
+  assert.equal(o.sectionsMoved, 1);
+  assert.equal(o.sectionsLeftOut, 2);
+  assert.equal(C.houseReport("book", { check: [] }).photosPlaced, undefined);
+  const as = read("assistant/assistant.js"), de = read("i18n/de/assistant.js");
+  assert.match(as, /if \(op === "book"\) acts\.appendChild\(button\(t\("hs\.all"\), "", function \(\) \{ go\(true\); \}\)\);/);
+  assert.match(as, /if \(all\) rq\.all = 1;/);
+  const keys = ["hs.all", "hs.cancel", "hs.repPhotos", "hs.repPhotosOut", "hs.repOverset", "lb.differ", "lb.allSeries", "lb.rest", "lb.photos", "lb.photosEnd", "lb.photosAfter",
+    "lb.q.marg", "lb.q.pnStart", "lb.q.ded", "lb.q.motto", "lb.track", "lb.none"];
+  C.BOOK_Q.forEach((q) => { keys.push("lb.q." + q[0]); if (q[0] !== "size") q[1].forEach((v) => keys.push("lb." + q[0] + "." + ({ "***": "stars", "* * *": "spaced", "\u2042": "aster" }[v] || v))); });
+  C.BOOK_SECTIONS.forEach((k) => keys.push("lb.sec." + k));
+  C.BOOK_PARTS.forEach((k) => keys.push("lb.part." + k));
+  ["front", "back", "out"].forEach((k) => keys.push("lb.at." + k));
+  ["serif", "sans", "mono"].forEach((k) => keys.push("lb.font." + k));
+  ["l", "c", "r", "j"].forEach((k) => keys.push("lb.align." + k));
+  ["b", "i", "caps"].forEach((k) => keys.push("lb.sty." + k));
+  keys.forEach((k) => {
+    assert.equal(as.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+  // Layout: the Assistant's answers over the series', the questions shown on "All the questions…"
+  const hu = read("layout/houseui.js");
+  assert.match(hu, /sheet: overSheet\(I\.defaults\(house\), rq\.sheet\), quiet: rq\.all !== 1/);
 });
