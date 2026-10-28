@@ -18,7 +18,7 @@ Zieh aus einem Lineal, um eine Hilfslinie anzulegen, und zieh sie zurück aufs L
 ### Text
 Doppelklicke auf einen Textrahmen, wähle ihn aus und drück [[Enter]] oder klick ihn mit dem Werkzeug `Textrahmen (T)` an, und tippe direkt hinein: Cursor, Auswahl und Umbruch folgen dem Rahmen durch seine Spalten, Verkettungen und seine Drehung. Ein neuer Textrahmen ist sofort zum Tippen bereit. Ziehen oder [[Shift]]+Pfeiltasten wählen aus, ein Doppelklick wählt ein Wort und ein Dreifachklick einen Absatz; [[Enter]] beginnt einen Absatz, [[Shift+Enter]] bricht die Zeile um und [[Esc]] beendet. Absatz- und Zeichenformate im Bereich `Formate` gelten für die Auswahl.
 
-`Text bearbeiten` (Rechtsklickmenü oder `Eigenschaften`) öffnet den `Textmodus` mit dem ganzen Text an einem Ort. Dort kannst du auch die Seitennummer oder die Seitenzahl einfügen.
+`Text bearbeiten` (Rechtsklickmenü oder `Eigenschaften`) öffnet den `Textmodus` mit dem ganzen Text an einem Ort. Dort kannst du auch die Seitennummer oder die Seitenzahl einfügen. Die Zählung beginnt bei 1; soll sie bei einer anderen Zahl beginnen (ein Buch, dessen Seite 1 der Umschlag ist), setz `Erste Seitenzahl` unter `Dokument einrichten…`.
 
 Passt der Text nicht, zeigt die Statusleiste `Übersatztext`. Nimm `In neuem Rahmen fortsetzen` und tippe oder klicke dann auf einen anderen Rahmen oder eine leere Stelle, oder nimm `Autom. Textfluss: Seiten anfügen, bis er passt`. `Text importieren (.txt)…` im Menü `Mehr` holt eine Textdatei herein.
 
@@ -75,7 +75,7 @@ Die Schriften, die eine Scribus-Datei nennt, werden nach Namen gesucht, erst unt
 - Mit Affinity gesetzt? Wähle die `.af`-Datei des Dokuments mit dem PDF (experimentell). Ihre Originalbilder in voller Größe ersetzen die Kopien aus dem PDF, ihre Wörter fügen getrennte Zeilenenden zusammen, und der Bericht nennt ihre Formate und Schriften. Gelesen wird nur der Inhalt; das Seitenlayout kommt immer aus dem PDF.
 - Seitenformat, Beschnitt, Doppelseiten, Ränder und Absatzformate werden aus dem PDF gelesen. Der Text wird zu Textrahmen, ein Text pro Seite, mit einem Format `Body text` und weiteren, die nach ihrer Größe heißen.
 - Ein Bild, das zu einem deiner Originale passt, nutzt die Originaldatei; die übrigen kommen aus dem PDF. Zeichnungen, Texturen und Bilder unter einer Maske oder Füllmethode werden ein gesperrtes Bild pro Seite hinter allem.
-- Jede Schrift des PDFs wird nach Namen unter deinen Schriftdateien und den freien Schriften gesucht: Eine gefundene wird unverändert genutzt. Die übrigen werden durch orOS-Schriften ersetzt, mit einer Laufweite, die jede Zeile gleich breit hält. Für das genaueste Ergebnis füge die Schriften des Buchs vor der Wiederherstellung mit `Schriftdatei hinzufügen…` hinzu. Seitenzahlen werden eigene Textrahmen.
+- Jede Schrift des PDFs wird nach Namen unter deinen Schriftdateien und den freien Schriften gesucht: Eine gefundene wird unverändert genutzt. Die übrigen werden durch orOS-Schriften ersetzt, mit einer Laufweite, die jede Zeile gleich breit hält. Für das genaueste Ergebnis füge die Schriften des Buchs vor der Wiederherstellung mit `Schriftdatei hinzufügen…` hinzu. Seitenzahlen werden eigene Textrahmen mit einem Seitenzahlfeld, gezählt ab der ersten Zahl des PDFs (`Dokument einrichten` › `Erste Seitenzahl`), sodass sie mitgehen, wenn du Seiten hinzufügst oder verschiebst.
 - Jede Zeile bricht dort um, wo sie es im PDF tat. Ein am Zeilenende getrenntes Wort bekommt dort einen weichen Trennstrich (er erscheint nur, wenn die Zeile dort umbricht), und eine Zeile, die anders umbrechen würde, bekommt ein Zeichenformat `Zeilenausgleich` mit etwas mehr oder weniger Laufweite, so wie du eine Zeile von Hand ausgleichen würdest.
 - Am Ende sagt ein Bericht, wie viele Zeilen an ihrem Platz sind und welche Bilder Originale sind, und listet die Seiten, auf denen Zeilen verrutscht sind: Tippe auf eine Seite, um hinzugehen und sie vor dem Druck zu prüfen.
 - Der [Assistent](app:assistant) kann das auch: Hänge das PDF mit `Nur für eine App…` an und bitte ihn, es in Layout wiederherzustellen. Der Bericht hat dann `Zurück zum Assistenten`, und der Assistent kann Formate für dich per Automation ändern und dir eine Seite zeigen.
@@ -98,7 +98,7 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 
 ## Grenzen
 - Ein PDF öffnet bis zu 300 Seiten; sein Text behält Platz und Aussehen, nicht aber seine ursprünglichen Formate oder Verkettungen.
-- Eine Wiederherstellung liest bis zu 400 Seiten. Seitenzahlen bleiben Text, und Texte sind nicht über Seiten hinweg verkettet.
+- Eine Wiederherstellung liest bis zu 400 Seiten. Texte sind nicht über Seiten hinweg verkettet.
 - Ein Dokument kann bis zu 999 Seiten und 5.000 Objekte haben.
 - Die Datenzusammenführung liest bis zu 1.000 Zeilen (5 MB) und erstellt nur ein PDF: Die zusammengeführten Karten werden nicht als Dokument behalten, und die CSV-Datei wird nicht mitgespeichert. Ein Textrahmen wächst nicht mit einem langen Wert: Vorschau und Abschlussmeldung sagen, wenn Text nicht passt.
 - `Mehrere pro Bogen` nutzt eine Seite pro Karte (keine Rückseiten) und schneidet jede Karte an ihrer Kante, daher wird kein Beschnitt gedruckt.

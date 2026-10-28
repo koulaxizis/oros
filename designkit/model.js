@@ -207,6 +207,13 @@
     }, s, X_MAX_SETUP);
   }
 
+  // The number of the first page (setup.ext.pnStart, LY-PN; 1 when
+  // unset): page-number fields show it plus the page's position.
+  function firstNumber(doc) {
+    var x = doc && doc.setup && doc.setup.ext, v = x ? Math.floor(Number(x.pnStart)) : 1;
+    return isFinite(v) && v >= 0 && v <= 9999 ? v : 1;
+  }
+
   function normPage(p) {
     if (!p || !isId(p.id)) return null;
     return withX({ id: p.id, m: stamp(p.m), pos: num(p.pos, -1e12, 1e12, 0), ms: isId(p.ms) ? p.ms : "" }, p);
@@ -730,7 +737,7 @@
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
-    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, spreads: spreads, margins: margins,
+    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstNumber: firstNumber, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })

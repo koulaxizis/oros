@@ -1063,6 +1063,17 @@
     g4.appendChild(field(t("new.cols"), cols));
     g4.appendChild(lenInput("gut", el("span", "", t("new.gut"))));
     g4.appendChild(lenInput("bleed", el("span", "", t("new.bleed"))));
+    // the first page's number (LY-PN): 1 is the default and is not stored
+    var pn0 = el("input", "inp num"); pn0.type = "number"; pn0.min = 0; pn0.max = 9999; pn0.value = M.firstNumber({ setup: s });
+    pn0.addEventListener("change", function () {
+      var v = Math.max(0, Math.min(9999, parseInt(pn0.value, 10)));
+      if (!isFinite(v)) v = 1;
+      pn0.value = v;
+      s.ext = s.ext || {};
+      if (v === 1) delete s.ext.pnStart; else s.ext.pnStart = v;
+      if (!Object.keys(s.ext).length) delete s.ext;
+    });
+    g4.appendChild(field(t("new.pnStart"), pn0));
     body.appendChild(g4);
   }
 
