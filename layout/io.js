@@ -751,43 +751,103 @@
   }
 
   // ---------- Text ----------
-  // Plain text: one paragraph per line (blank lines dropped), into the
-  // selected text frame's story (appended), or a new frame filling
-  // the current page's margins.
+  // Plain text: one paragraph per line (blank lines dropped). A Word,
+  // OpenDocument, RTF, HTML or Markdown file: read by Writer's own
+  // reader (writer/io.js) and given paragraph styles through the
+  // document's mapping (layout/wordin.js, LY-WD), chosen in a dialog.
+  // Either goes into the selected text frame's story (appended), or a
+  // new frame filling the current page's margins.
+  var TEXT_ACCEPT = ".txt,.md,.markdown,.docx,.odt,.rtf,.html,.htm,text/plain";
+  var DOC_MAX = 64 * 1024 * 1024;
+  function script(src, name) {
+    if (window[name]) return Promise.resolve(window[name]);
+    return new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.onload = function () { if (window[name]) res(window[name]); else rej(new Error(name)); };
+      s.onerror = function () { rej(new Error(name)); };
+      document.head.appendChild(s);
+    });
+  }
   function importText() {
     if (!LY.doc) return;
-    pickFile(".txt,.md,text/plain").then(function (f) {
+    pickFile(TEXT_ACCEPT).then(function (f) {
       if (!f) return;
+      var ext = (/\.([a-z]+)$/i.exec(f.name || "") || ["", "txt"])[1].toLowerCase();
+      if (ext !== "txt") return importDoc(f, ext);
       if (f.size > TXT_MAX) { LY.toast(t("txt.fail")); return; }
       return f.text().then(function (txt) {
-        var lines = String(txt).replace(/^﻿/, "").replace(/\r\n?/g, "\n").replace(/\t/g, " ")
+        var lines = String(txt).replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").replace(/\t/g, " ")
           .replace(/[\u0000-\u0008\u000b-\u001f\u007f]/g, "").split("\n")
           .map(function (s) { return s.replace(/\s+$/, ""); }).filter(function (s) { return s.trim(); });
         if (!lines.length) { LY.toast(t("txt.fail")); return; }
-        LY.flushStory && LY.flushStory();
-        var sel = ED.selItems().filter(function (it) { return it.t === "text"; });
-        var target = sel.length === 1 ? sel[0] : null, made = null;
-        LY.op(function (doc, now) {
-          var paras = lines.map(function (s) { return { ps: "ps-body", runs: [{ t: s }] }; });
-          if (target) {
-            var st = M.story(doc, target.story);
-            if (!st) return false;
-            st.h = [st.m].concat(st.h || []);
-            st.paras = T.hasText(st) ? st.paras.concat(paras) : paras;
-            M.touch(st, now);
-            return;
-          }
-          var P0 = ED.curP();
-          if (!P0) return false;
-          var mb = ED.marginBox(doc, P0.side);
-          var st2 = ED.newStory(doc, now, paras);
-          made = ED.addItem(doc, { t: "text", pg: P0.id, side: P0.master ? P0.side : "", x: mb.x, y: mb.y, w: mb.w, h: mb.h, story: st2.id, cols: doc.setup.cols, gut: doc.setup.gut }, now);
-          if (!made) return false;
-        });
-        if (made) ED.select([made.id]);
+        placeParas(lines.map(function (s) { return { ps: "ps-body", runs: [{ t: s }] }; }), null);
         LY.toast(t("txt.done"));
       });
     }).then(null, function () { LY.toast(t("txt.fail")); });
+  }
+  function importDoc(f, ext) {
+    if (f.size > DOC_MAX) { LY.toast(t("txt.fail")); return; }
+    var zip = ext === "docx" || ext === "odt";
+    return Promise.all([script("../writer/io.js", "WriterIO"), script("wordin.js", "LY_WORDIN"), zip ? f.arrayBuffer() : f.text()]).then(function (r) {
+      var IO = r[0], W = r[1];
+      return Promise.resolve(zip ? IO.parseZipBuf(r[2], ext) : IO.parseTextOf(r[2], ext)).then(function (pl) {
+        var list = W.parse(pl && pl.html);
+        var n = W.counts(list);
+        if (!Object.keys(n).length) { LY.toast(t("txt.fail")); return; }
+        mapDlg(W, n, function (map) {
+          placeParas(W.paras(list, map), map);
+          LY.toast(t("wd.done", { n: list.length }));
+        });
+      });
+    });
+  }
+  // one row per kind of paragraph the file has: its paragraph style
+  function mapDlg(W, n, go) {
+    var doc = LY.doc, map = W.mapOf(doc);
+    var opts = doc.pstyles.map(function (s) { return [s.id, LY.label(s.name) || s.id]; });
+    LY.openDialog(t("wd.title"), function (body, close) {
+      body.appendChild(el("p", "hint", t("wd.hint")));
+      W.ROLES.forEach(function (r) {
+        if (!n[r]) return;
+        body.appendChild(LY.ui.field(t("wd." + r) + " (" + n[r] + ")", LY.ui.select(opts, map[r], function (v) { map[r] = v; })));
+      });
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(LY.ui.btn(t("btn.cancel"), close));
+      act.appendChild(LY.ui.btn(t("wd.go"), function () { close(); go(map); }, "primary"));
+      body.appendChild(act);
+    });
+  }
+  // paragraphs into the selected text frame or a new one; map: the
+  // mapping to keep with the document (setup.ext.wmap), or null
+  function placeParas(paras, map) {
+    LY.flushStory && LY.flushStory();
+    var sel = ED.selItems().filter(function (it) { return it.t === "text"; });
+    var target = sel.length === 1 ? sel[0] : null, made = null;
+    LY.op(function (doc, now) {
+      var x = doc.setup.ext || {};
+      if (map && JSON.stringify(x.wmap) !== JSON.stringify(map)) {
+        x.wmap = map;
+        doc.setup.ext = x;
+        doc.m = now;
+      }
+      if (target) {
+        var st = M.story(doc, target.story);
+        if (!st) return false;
+        st.h = [st.m].concat(st.h || []);
+        st.paras = T.hasText(st) ? st.paras.concat(paras) : paras;
+        M.touch(st, now);
+        return;
+      }
+      var P0 = ED.curP();
+      if (!P0) return false;
+      var mb = ED.marginBox(doc, P0.side);
+      var st2 = ED.newStory(doc, now, paras);
+      made = ED.addItem(doc, { t: "text", pg: P0.id, side: P0.master ? P0.side : "", x: mb.x, y: mb.y, w: mb.w, h: mb.h, story: st2.id, cols: doc.setup.cols, gut: doc.setup.gut }, now);
+      if (!made) return false;
+    });
+    if (made) ED.select([made.id]);
   }
 
   LY.io = {

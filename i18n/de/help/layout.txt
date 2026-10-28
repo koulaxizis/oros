@@ -20,7 +20,7 @@ Doppelklicke auf einen Textrahmen, wähle ihn aus und drück [[Enter]] oder klic
 
 `Text bearbeiten` (Rechtsklickmenü oder `Eigenschaften`) öffnet den `Textmodus` mit dem ganzen Text an einem Ort. Dort kannst du auch die Seitennummer oder die Seitenzahl einfügen. Die Zählung beginnt bei 1; soll sie bei einer anderen Zahl beginnen (ein Buch, dessen Seite 1 der Umschlag ist), setz `Erste Seitenzahl` unter `Dokument einrichten…`.
 
-Passt der Text nicht, zeigt die Statusleiste `Übersatztext`. Nimm `In neuem Rahmen fortsetzen` und tippe oder klicke dann auf einen anderen Rahmen oder eine leere Stelle, oder nimm `Autom. Textfluss: Seiten anfügen, bis er passt`. `Text importieren (.txt)…` im Menü `Mehr` holt eine Textdatei herein.
+Passt der Text nicht, zeigt die Statusleiste `Übersatztext`. Nimm `In neuem Rahmen fortsetzen` und tippe oder klicke dann auf einen anderen Rahmen oder eine leere Stelle, oder nimm `Autom. Textfluss: Seiten anfügen, bis er passt`. `Text oder Dokument platzieren (Word, .odt, .txt)…` im Menü `Mehr` holt eine Textdatei herein, oder eine Word- (.docx), OpenDocument- (.odt), RTF-, HTML- oder Markdown-Datei mit ihren Überschriften, Fett- und Kursivstellen: Du wählst einmal, welches Absatzformat jede Art von Absatz bekommt (Überschrift 1, der erste Absatz nach einer Überschrift, Zitate usw.), und das Dokument behält diese Wahl für die nächste Datei.
 
 ### Bilder
 Doppelklicke auf einen Bildrahmen oder nimm `Bild platzieren…`, um ein Bild zu wählen. Wähle `Einpassen` oder `Füllen` und passe die `Skalierung` an; der Bereich warnt, wenn die Auflösung für den Druck zu gering ist. Mit `Textumfluss` fließt Text um einen Rahmen herum.

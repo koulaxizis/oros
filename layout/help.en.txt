@@ -20,7 +20,7 @@ Double-click a text frame, select it and press [[Enter]], or click it with the `
 
 `Edit text` (right-click menu or `Properties`) opens the `Story Editor` with the whole story in one place, where you can also insert the page number or count. Numbering starts at 1; to start at another number (a book whose page 1 is a cover), set `First page number` in `Document setup…`.
 
-If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a new frame` and then tap or click another frame or an empty spot, or `Autoflow: add pages until it fits`. `Import text (.txt)…` in the `More` menu brings in a text file.
+If the text doesn't fit, the status bar shows `Overset text`. Use `Continue in a new frame` and then tap or click another frame or an empty spot, or `Autoflow: add pages until it fits`. `Place text or a document (Word, .odt, .txt)…` in the `More` menu brings in a text file, or a Word (.docx), OpenDocument (.odt), RTF, HTML or Markdown file with its headings, bold and italic: you choose once which paragraph style each kind of paragraph takes (Heading 1, the first paragraph after a heading, quotations and so on), and the document keeps that choice for the next file.
 
 ### Images
 Double-click an image frame, or use `Place image…`, to choose a picture. Pick `Fit` or `Fill` and adjust `Scale`; the panel warns when the resolution is low for print. `Text wrap` lets text flow around a frame.
