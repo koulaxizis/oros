@@ -331,6 +331,17 @@
     x.putImageData(out, 0, 0);
     return c;
   }
+  // The operator list the page was drawn from: render() filters by its
+  // indices, and getOperatorList() builds another list (marked content
+  // and the like) whose indices can differ. PDF.js keeps the drawn one
+  // per rendering intent; the other list is the fallback.
+  function drawnOps(page, ops) {
+    var found = null;
+    try {
+      page._intentStates.forEach(function (v) { if (v && v.renderTasks && v.operatorList && v.operatorList.fnArray && v.operatorList.lastChunk) found = v.operatorList; });
+    } catch (e) { found = null; }
+    return found || ops;
+  }
   function getObj(page, id) {
     try {
       if (page.objs.has(id)) return page.objs.get(id);
@@ -375,6 +386,7 @@
               text = r[0]; ops = r[1];
               return page.render({ canvasContext: xA, viewport: vp, background: "#ffffff" }).promise;
             }).then(function () {
+              ops = drawnOps(page, ops);
               // the pictures large enough to be worth their own frame
               pics = imagePaints(lib, ops).map(function (p) {
                 var pl = placement(mulM(vp1.transform, p.m));
@@ -437,7 +449,9 @@
     }).then(null, function () { return null; });
   }
 
-  var api = { toLines: toLines, toBlocks: toBlocks, buildDoc: buildDoc, open: open, placement: placement, mulM: mulM, MAX_PAGES: MAX_PAGES };
+  // (the browser helpers are shared with layout/rebuild.js)
+  var api = { toLines: toLines, toBlocks: toBlocks, buildDoc: buildDoc, open: open, placement: placement, mulM: mulM, MAX_PAGES: MAX_PAGES,
+              loadLib: loadLib, fontOf: fontOf, imagePaints: imagePaints, imageCanvas: imageCanvas, getObj: getObj, blank: blank, drawnOps: drawnOps };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_PDFIN = api;
 })(typeof window !== "undefined" ? window : this);

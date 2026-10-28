@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 35461 of 35484 (99%)
+- Strings: 35525 of 35555 (99%)
 - Help pages: 150 of 150 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 729 / 729 |
+| assistant | 100% | 732 / 732 |
 | atelier | 100% | 1362 / 1362 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -23,7 +23,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 53 / 53 |
 | budget | 100% | 556 / 556 |
 | calculator | 100% | 165 / 165 |
-| calendar | 97% | 390 / 398 |
+| calendar | 98% | 395 / 403 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
@@ -31,7 +31,7 @@ text is still written in the code. They switch over wave by wave
 | checkers | 100% | 72 / 72 |
 | chess | 100% | 405 / 405 |
 | chores | 100% | 207 / 207 |
-| commands | English for now | 44 / 44 |
+| commands | English for now | 81 / 81 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 301 / 301 |
 | converter | 100% | 68 / 68 |
@@ -66,7 +66,7 @@ text is still written in the code. They switch over wave by wave
 | jigsaw | 100% | 85 / 85 |
 | kanban | 100% | 273 / 273 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 510 / 510 |
+| layout | 98% | 525 / 532 |
 | library | 100% | 323 / 323 |
 | lightsout | 100% | 51 / 51 |
 | links | 100% | 2 / 2 |
@@ -119,7 +119,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 100% | 684 / 684 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 952 / 952 |
+| shell | 100% | 954 / 954 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -159,7 +159,7 @@ text is still written in the code. They switch over wave by wave
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 76 / 76 |
 | wordsearch | 100% | 111 / 111 |
-| writer | 100% | 377 / 377 |
+| writer | 100% | 379 / 379 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

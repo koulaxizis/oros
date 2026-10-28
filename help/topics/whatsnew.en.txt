@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.09.00
+- Layout: `Open file` › `Rebuild a print PDF (with its pictures)…` turns the PDF of a printed book or magazine back into an editable document, with every line where it was: page size, bleed, facing pages, margins and paragraph styles come from the PDF, and your original pictures replace the PDF's copies when you pick them too. A report shows how many lines are in place and which pages to check.
+- Layout: opening a PDF from InDesign (and other programs that tag their content) now gives the right pictures their own frames; before, a picture could stay in the locked background picture or a drawing could go missing from it.
+
 ## Version 4.08.00
 - Command bar and Quick window: small tools. `password 16` (or `new password`) makes a strong password, `roll 2 dice` (also `2d6` or `d20`) rolls dice, `flip a coin` gives heads or tails and `random 1-100` picks a number. Each comes from your device's secure random source and Enter copies it. A password is not repeated in the note and is never kept in the recent commands.
 

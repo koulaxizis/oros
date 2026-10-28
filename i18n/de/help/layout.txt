@@ -68,6 +68,14 @@ Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Do
 
 Nur verknüpfte Bilder kommen als leere Rahmen mit ihrem Dateinamen; setz sie mit `Bild platzieren…` wieder ein. Tabellen, Text auf Pfad und Gitter- oder Musterfüllungen werden einfache Rahmen oder Vollfarben; die Meldung nach dem Öffnen sagt, wie viele.
 
+## Ein gedrucktes Buch oder Magazin wiederherstellen
+`Datei öffnen` › `Druck-PDF wiederherstellen (mit seinen Bildern)…` macht aus dem PDF, das du an die Druckerei geschickt hast, wieder ein bearbeitbares Layout-Dokument, mit jeder Zeile an ihrem Platz. Wähle das PDF und, wenn du sie hast, die Originalbilder und den Text (.txt, .md oder .html) gleich mit.
+- Seitenformat, Beschnitt, Doppelseiten, Ränder und Absatzformate werden aus dem PDF gelesen. Der Text wird zu Textrahmen, ein Text pro Seite, mit einem Format `Body text` und weiteren, die nach ihrer Größe heißen.
+- Ein Bild, das zu einem deiner Originale passt, nutzt die Originaldatei; die übrigen kommen aus dem PDF. Zeichnungen, Texturen und Bilder unter einer Maske oder Füllmethode werden ein gesperrtes Bild pro Seite hinter allem.
+- Die Schriften des PDFs werden durch orOS-Schriften ersetzt, mit einer Laufweite, die jede Zeile gleich breit hält. Seitenzahlen werden eigene Textrahmen.
+- Am Ende sagt ein Bericht, wie viele Zeilen an ihrem Platz sind und welche Bilder Originale sind, und listet die Seiten, auf denen Zeilen verrutscht sind: Tippe auf eine Seite, um hinzugehen und sie vor dem Druck zu prüfen.
+
+
 ## Synchronisierung und Sicherung
 Deine Dokumente werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Bilder liegen im orOS-Speicher und werden als eigene Dateien synchronisiert, daher kann ein Bild auf einem anderen Gerät eine Weile `Wird synchronisiert…` zeigen. Das offene Dokument und der Zoom bleiben auf jedem Gerät. Für eine vollständige Kopie mit Bildern speicherst du ein Paket; siehe auch [Sicherung](help:t/backup).
 
@@ -85,6 +93,7 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 
 ## Grenzen
 - Ein PDF öffnet bis zu 300 Seiten; sein Text behält Platz und Aussehen, nicht aber seine ursprünglichen Formate oder Verkettungen.
+- Eine Wiederherstellung liest bis zu 400 Seiten. Seitenzahlen bleiben Text, und Texte sind nicht über Seiten hinweg verkettet.
 - Ein Dokument kann bis zu 999 Seiten und 5.000 Objekte haben.
 - Die Datenzusammenführung liest bis zu 1.000 Zeilen (5 MB) und erstellt nur ein PDF: Die zusammengeführten Karten werden nicht als Dokument behalten, und die CSV-Datei wird nicht mitgespeichert. Ein Textrahmen wächst nicht mit einem langen Wert: Vorschau und Abschlussmeldung sagen, wenn Text nicht passt.
 - `Mehrere pro Bogen` nutzt eine Seite pro Karte (keine Rückseiten) und schneidet jede Karte an ihrer Kante, daher wird kein Beschnitt gedruckt.

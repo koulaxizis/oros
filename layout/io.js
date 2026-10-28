@@ -10,6 +10,8 @@
 //     checked against its hash and decoded before it is stored.
 //   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
 //   - Scribus .sla / .sla.gz import (layout/sla.js) into a new document.
+//   - Rebuild a print PDF with its original pictures (layout/rebuild.js)
+//     and show what landed where it was.
 //   - Place image, import plain text, a picture sent from another app.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -17,7 +19,7 @@
   "use strict";
 
   var LY = window.LY, M = LY.M, T = LY.T, P = LY.P, A = LY.A, t = LY.t;
-  var ED = LY.ed;
+  var ED = LY.ed, el = LY.el;
   var PKG_KIND = "oros-layout-package", PKG_VER = 1;
   var PKG_MAX = 300 * 1024 * 1024, TXT_MAX = 2 * 1024 * 1024;
 
@@ -360,6 +362,88 @@
       LY.toast(msg);
     }).then(null, function () { LY.toast(t("pdf.bad")); });
   }
+  // Rebuild a print PDF: the PDF (its trim box) and, picked with it,
+  // the original pictures and texts → a NEW document that looks like
+  // the PDF, then the report of what landed where it was.
+  var REBUILD_ACCEPT = ".pdf,application/pdf,image/*,.jpg,.jpeg,.png,.webp,.tif,.tiff,.txt,.md,.html,.htm";
+  var rebuilding = false;
+  function rebuildPdf() {
+    var RB = window.LY_REBUILD, dlg = LY.dialogHost();
+    if (!RB || rebuilding) return;
+    var pick = dlg && typeof dlg.openFiles === "function" ? dlg.openFiles(REBUILD_ACCEPT) : new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.accept = REBUILD_ACCEPT; inp.multiple = true;
+      inp.addEventListener("change", function () { resolve(inp.files ? Array.prototype.slice.call(inp.files) : null); });
+      inp.click();
+    });
+    return pick.then(function (files) {
+      files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
+      if (!files.length) return;
+      var pdf = files.filter(function (f) { return /\.pdf$/i.test(f.name || "") || f.type === "application/pdf"; })[0];
+      if (!pdf) { LY.toast(t("rb.noPdf")); return; }
+      if (pdf.size > FOREIGN_MAX) { LY.toast(t("pdf.bad")); return; }
+      return rebuild(pdf, files.filter(function (f) { return f !== pdf; }));
+    }).then(null, function () { rebuilding = false; LY.toast(t("rb.bad")); });
+  }
+  // also for the Assistant: pdf (a File), sources (Files) → Promise of
+  // the report, or null
+  function rebuild(pdf, sources) {
+    var RB = window.LY_REBUILD;
+    if (!RB || rebuilding) return Promise.resolve(null);
+    rebuilding = true;
+    var stop = false;
+    LY.toast(t("rb.start", { n: sources.length }), t("btn.cancel"), function () { stop = true; });
+    return pdf.arrayBuffer().then(function (buf) {
+      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, cancelled: function () { return stop; } }, A.importFile, function (k, n) {
+        LY.toast(t("rb.working", { n: k, t: n }), t("btn.cancel"), function () { stop = true; });
+      });
+    }).then(function (res) {
+      rebuilding = false;
+      if (res && res.cancelled) { LY.toast(t("rb.stopped")); return null; }
+      if (!res) { LY.toast(t("rb.bad")); return null; }
+      LY.addDoc(res.doc);
+      LY.toast(t("rb.done", { p: res.report.pages }));
+      reportDlg(res.report);
+      return res.report;
+    }, function (e) { rebuilding = false; throw e; });
+  }
+  function reportDlg(rep) {
+    var c = rep.check || { lines: 0, inPlace: 0 };
+    var pct = c.lines ? Math.floor(c.inPlace / c.lines * 1000) / 10 : 100;
+    var fmt = function (v) { return LY.BASE === "el" ? String(v).replace(".", ",") : String(v); };
+    LY.openDialog(t("rb.title"), function (body, close) {
+      var p = function (txt, cls) { body.appendChild(el("p", cls || "", txt)); };
+      p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
+      p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
+      p(t("rb.styles", { n: rep.styles }));
+      var fonts = (rep.fonts || []).filter(function (f) { return f.font && !/^noto/i.test(f.font); }).map(function (f) { return f.font; });
+      if (fonts.length) p(t("rb.fonts", { f: fonts.join(", ") }), "hint");
+      if (rep.numberStart !== null && rep.numberStart !== 1) p(t("rb.numbers", { n: rep.numberStart }), "hint");
+      if (rep.cut) p(t("pdf.cut", { n: rep.pages, t: rep.total }), "hint");
+      var off = (rep.framesOff || []).slice(0, 200);
+      if (off.length) {
+        p(t("rb.off"), "hint");
+        var ul = el("ul", "pf-list"), order = M.pagesInOrder(LY.doc);
+        off.forEach(function (x) {
+          var pg = order[x.page - 1], li = el("li"), b = el("button", "pf-item warn");
+          if (!pg) return;
+          b.type = "button";
+          b.appendChild(el("span", "pf-dot"));
+          b.appendChild(el("span", "", t("pf.page", { n: x.page }) + " · " + t("rb.offLine", { n: Math.max(x.moved, Math.abs(x.got - x.want)) })));
+          b.addEventListener("click", function () { close(); ED.gotoItem(x.id); });
+          li.appendChild(b);
+          ul.appendChild(li);
+        });
+        body.appendChild(ul);
+      }
+      var act = el("div", "dlg-actions"), ok = el("button", "btn primary", t("btn.close"));
+      ok.type = "button";
+      ok.addEventListener("click", close);
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(ok);
+      body.appendChild(act);
+    }, true);
+  }
   // SVG pages (Affinity: File › Export › SVG, text not as curves)
   function importSvg(files) {
     var S = window.LY_SVGIN;
@@ -504,7 +588,7 @@
 
   LY.io = {
     exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
-    placeImage: placeImage, importText: importText, placeFromBlob: placeFromBlob,
+    placeImage: placeImage, importText: importText, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, loadJsPDF: loadJsPDF, fileName: fileName
   };
