@@ -17,7 +17,8 @@
 // empty paragraphs. Pictures, tables' layout and footnotes are not
 // placed (a table's cells become paragraphs); with parse(html,
 // { pics: 1 }) each picture is an entry { role: "img", runs: [], src,
-// alt } where it stood (the book intake, LY-IN).
+// alt } where it stood (the book intake, LY-IN), and with { notes: 1 }
+// each footnote's mark is a run { t: "*", fn: its Writer id } (LY-NT).
 // Pure: parse(html) and paras(list, map) run under Node; the reading
 // of files is in layout/io.js.
 // Exposes LY_WORDIN (browser) or module.exports (Node tests).
@@ -48,7 +49,7 @@
 
   // Writer's HTML → [{ role, runs: [{ t, b, i, u }] }]
   function parse(html, opts) {
-    var pics = !!(opts && opts.pics);
+    var pics = !!(opts && opts.pics), notes = !!(opts && opts.notes);
     var out = [], cur = null, blocks = [], fmt = { b: 0, i: 0, u: 0 }, inl = [], sups = [], skip = 0;
     var re = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>|([^<]+)/g, m;
     function roleOf() {
@@ -72,15 +73,17 @@
       cur.runs.forEach(function (r) {
         var t = r.t.replace(/[ \t\u00A0]+/g, " ");
         var last = runs[runs.length - 1];
-        if (last && last.b === r.b && last.i === r.i && last.u === r.u) last.t += t;
+        if (r.fn) runs.push({ t: "*", fn: r.fn });
+        else if (last && !last.fn && last.b === r.b && last.i === r.i && last.u === r.u) last.t += t;
         else runs.push({ t: t, b: r.b, i: r.i, u: r.u });
       });
       if (runs.length) {
-        runs[0].t = runs[0].t.replace(/^[ \n]+/, "");
-        runs[runs.length - 1].t = runs[runs.length - 1].t.replace(/[ \n]+$/, "");
+        if (!runs[0].fn) runs[0].t = runs[0].t.replace(/^[ \n]+/, "");
+        if (!runs[runs.length - 1].fn) runs[runs.length - 1].t = runs[runs.length - 1].t.replace(/[ \n]+$/, "");
       }
       runs = runs.filter(function (r) { return r.t; }).map(function (r) {
         var o = { t: r.t };
+        if (r.fn) o.fn = r.fn;
         if (r.b) o.b = 1;
         if (r.i) o.i = 1;
         if (r.u) o.u = 1;
@@ -120,6 +123,7 @@
       if (tag === "sup") {
         var fn = close ? sups.pop() : /fn-ref/.test(attr(a, "class"));
         if (!close) sups.push(fn);
+        if (fn && !close && notes && attr(a, "data-fn")) { open(); cur.runs.push({ t: "*", fn: attr(a, "data-fn") }); }
         if (fn) skip = Math.max(0, skip + (close ? -1 : 1));
         continue;
       }

@@ -788,6 +788,7 @@
         var bk = el("div", "pn-row wrap");
         bk.appendChild(triState(t("sty.hyph"), st.ext, "hyph"));
         bk.appendChild(triState(t("sty.kwn"), st.ext, "kwn"));
+        bk.appendChild(triState(t("sty.sec"), st.ext, "sec"));
         body.appendChild(bk);
         var g3 = el("div", "grid2");
         g3.appendChild(field(t("sty.orph"), optNum(st.ext, "orph", 1, 9)));

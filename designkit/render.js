@@ -134,6 +134,11 @@
       if (res.overset) out.overset[sid] = true;
     });
 
+    // running heads (LY-RH): each page's chapter title, the first one
+    // that opens on the page, else the last one before it ("" before
+    // any); a title is a paragraph whose style has ext.sec
+    var secOf = runningHeads(doc, pages, out.frames, styles);
+
     // master stories, once per page that shows them
     pages.forEach(function (p) {
       if (!p.ms || !masterIds[p.ms]) return;
@@ -147,13 +152,42 @@
         var st = M.story(doc, sid);
         var frames = per[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
         var g = frames.map(function (f) {
-          return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length, pg: p.id, no: info[p.id].no }, exclFor(f, [p.ms, p.id], side, p.id));
+          return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length, pg: p.id, no: info[p.id].no, sec: secOf[p.id] }, exclFor(f, [p.ms, p.id], side, p.id));
         });
         var res = T.layoutChain(st || { paras: [] }, g, styles);
         Object.keys(res.frames).forEach(function (fid) { res0[fid] = res.frames[fid]; });
         if (res.overset) out.overset[sid] = true;
       });
       out.master[p.id] = res0;
+    });
+    return out;
+  }
+
+  function runningHeads(doc, pages, frames, styles) {
+    var isSec = {}, psMap = T.byId(styles.ps), out = {}, cur = "", any = false;
+    doc.pstyles.forEach(function (s) { if (T.resolvePs(psMap, s.id).sec) { isSec[s.id] = 1; any = true; } });
+    if (!any) return out;
+    var onPage = {}, stories = {}, seen = {};
+    doc.items.forEach(function (it) {
+      if (it.t === "text" && frames[it.id]) (onPage[it.pg] = onPage[it.pg] || []).push(it);
+    });
+    doc.stories.forEach(function (st) { stories[st.id] = st; });
+    pages.forEach(function (p) {
+      var first = null;
+      (onPage[p.id] || []).sort(function (a, b) { return a.y - b.y || a.x - b.x; }).forEach(function (f) {
+        var st = stories[f.story];
+        if (!st) return;
+        frames[f.id].lines.forEach(function (ln) {
+          var para = st.paras[ln.p];
+          if (!para || !isSec[para.ps] || seen[f.story + ":" + ln.p]) return;
+          seen[f.story + ":" + ln.p] = 1;
+          var tx = (para.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join("").replace(/\s+/g, " ").trim().slice(0, 200);
+          if (!tx) return;
+          if (first === null) first = tx;
+          cur = tx;
+        });
+      });
+      out[p.id] = first !== null ? first : cur;
     });
     return out;
   }

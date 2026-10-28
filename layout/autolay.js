@@ -309,6 +309,32 @@
     });
     return hit;
   }
+  // the frame and line where paragraph pi of the story starts →
+  // { f, k (its line index), prev (the line before, k > 0), pg, nextPg
+  // (the page of the next frame in the thread) }
+  function lineAt(d, L, sid, pi) {
+    var ch = M.chain(d, sid), hit = null;
+    ch.some(function (f, i) {
+      var lines = (L.frames[f.id] || { lines: [] }).lines;
+      for (var k = 0; k < lines.length; k++) {
+        if (lines[k].p !== pi) continue;
+        var nx = ch[i + 1];
+        hit = { f: f, k: k, prev: k > 0 ? lines[k - 1] : null, pg: M.find(d.pages, f.pg), nextPg: nx ? M.find(d.pages, nx.pg) : null };
+        return true;
+      }
+      return false;
+    });
+    return hit;
+  }
+  // a picture's size across width aw, at most 60% of the text height
+  function fitIn(d, pic, aw) {
+    var m = M.margins(d, "R"), ah = (d.setup.h - m.t - m.b) * 0.6, k = Math.min(aw / pic.iw, ah / pic.ih);
+    return { w: pic.iw * k, h: pic.ih * k };
+  }
+  function capHeight(d) {
+    var r = T.resolvePs(T.byId(d.pstyles), M.find(d.pstyles, "ps-hscap") ? "ps-hscap" : "ps-base");
+    return (r.lead > 0 ? r.lead : r.size * 1.2) * CAP_H + 2;
+  }
   // the paragraph whose first line opens a page (else null)
   function firstOn(d, L, sid, pg) {
     var f = M.chain(d, sid).filter(function (x) { return x.pg === pg.id; })[0];
@@ -384,23 +410,48 @@
       // the text must fit before pictures go after it
       if (job.end) d = trimEnd(grow(d, sid, now).doc, sid);
       var L = R.computeLayout(d), hit = job.end ? null : lineOf(d, L, sid, job.pi);
+      // pictures placed before push the text on: pages for it first
+      if (!job.end && !hit && L.overset[sid]) { d = grow(d, sid, now).doc; L = R.computeLayout(d); hit = lineOf(d, L, sid, job.pi); }
       if (!job.end && !hit) { out += job.ks.length; return; }
-      var own = [], topOff = 0;
+      var own = [], topOff = {}, flowAt = null;
+      // a picture across the text width from y0 on page pg, the text
+      // wrapped below it → the height it takes
+      var putAt = function (pg, y0, pic, text) {
+        var idx = M.pagesInOrder(d).indexOf(pg), side = d.setup.facing ? M.sideOf(d, idx) : "R", m = M.margins(d, side);
+        var aw = d.setup.w - m.l - m.r, sz = fitIn(d, pic, aw), used = 0;
+        var where = capWhere(d, sheet), box = { x: m.l, y: y0, w: aw, h: sz.h };   // the frame across the text (no text beside it), the picture fitted in it
+        if (text && where === "above") { var ch0 = addCap(d, pg, { x: m.l, y: y0, w: aw, h: -4 }, text, "below", now, true); box.y += ch0; used += ch0; }
+        addImg(d, pg, pic, box, now, true);
+        used += sz.h + 8;
+        if (text && where === "below") used += addCap(d, pg, { x: m.l, y: box.y, w: aw, h: sz.h }, text, "below", now, true);
+        placed++;
+        return used;
+      };
+      var atTop = function (pg, pic, text) {
+        var m = M.margins(d, d.setup.facing ? M.sideOf(d, M.pagesInOrder(d).indexOf(pg)) : "R");
+        topOff[pg.id] = (topOff[pg.id] || 0) + putAt(pg, m.t + (topOff[pg.id] || 0), pic, text);
+      };
       job.ks.forEach(function (k) {
         var pic = all[k], mode = job.page ? "page" : modeOf(k);
         if (!pic || !pic.a || !pic.iw || !pic.ih || mode === "out") { out++; return; }
         var text = capText(pic, k, sheet);
-        if (mode !== "before") { own.push({ pic: pic, text: text }); return; }
-        // at the top of the paragraph's page, the text below it
-        var idx = M.pagesInOrder(d).indexOf(hit.pg), side = d.setup.facing ? M.sideOf(d, idx) : "R", m = M.margins(d, side), u = d.setup;
-        var aw = u.w - m.l - m.r, ah = (u.h - m.t - m.b) * 0.6, kk = Math.min(aw / pic.iw, ah / pic.ih), w = pic.iw * kk, hh = pic.ih * kk;
-        var where = capWhere(d, sheet), y0 = m.t + topOff;
-        var box = { x: m.l + (aw - w) / 2, y: y0, w: w, h: hh };
-        if (text && where === "above") { var ch0 = addCap(d, hit.pg, { x: m.l, y: y0, w: aw, h: -4 }, text, "below", now, true); box.y += ch0; topOff += ch0; }
-        addImg(d, hit.pg, pic, box, now, true);
-        topOff += hh + 8;
-        if (text && where === "below") topOff += addCap(d, hit.pg, { x: m.l, y: box.y, w: aw, h: hh }, text, "below", now, true);
-        placed++;
+        if (mode === "before") { atTop(hit.pg, pic, text); return; }   // at the top of the paragraph's page, the text below it
+        if (mode !== "flow") { own.push({ pic: pic, text: text }); return; }
+        // in the text, right where its paragraph starts (LY-IN Q4): the
+        // paragraph and what follows wrap below it; a picture that no
+        // longer fits on that page goes to the top of the next one
+        var at = flowAt || lineAt(d, L, sid, job.pi);
+        if (!at) { out++; return; }
+        var aw = at.f.w, sz = fitIn(d, pic, aw), capH = text && capWhere(d, sheet) !== "none" ? capHeight(d) + 4 : 0;
+        var y0 = flowAt ? flowAt.y : at.f.y + (at.k > 0 ? at.prev.y + at.prev.d + 10 : 0);
+        if (at.k === 0 || y0 + sz.h + capH > at.f.y + at.f.h) {
+          var next = at.k === 0 ? at.pg : at.nextPg;
+          if (!next) { own.push({ pic: pic, text: text }); return; }
+          atTop(next, pic, text);
+          return;
+        }
+        var used = putAt(at.pg, y0, pic, text);
+        flowAt = { f: at.f, k: at.k, prev: at.prev, pg: at.pg, nextPg: at.nextPg, y: y0 + used };
       });
       if (!own.length) { d = M.normDoc(d); return; }
       // pages of their own: before the paragraph's page, or after the text
@@ -444,7 +495,8 @@
   // house: a house style document; list: wordin paragraphs; meta: the
   // book's details; opts { now, name, pictures (found in the file),
   // sheet (the book sheet, layout/intake.js), names (the new styles'
-  // names), tocHead (a new contents' heading) }
+  // names), tocHead (a new contents' heading), notes (Word's notes,
+  // [{ id, text }]), notesHead (their heading) }
   function build(house, list, meta, opts) {
     opts = opts || {};
     meta = meta || {};
@@ -452,13 +504,19 @@
     var now = opts.now || 1;
     // pictures (wordin "img" entries) go with the paragraph after them
     var px = I ? I.pictures(list || []) : { list: list || [], pics: [] };
-    var s = structure(px.list, opts), mk = null;
+    var s = structure(px.list, opts), mk = null, nt = null;
     // the book sheet: the manuscript's parts and sections, the house
     // style with the answers
     if (opts.sheet && I) {
       var inf = I.info(house, s.list, s.cut);
       mk = I.mark(s.list, opts.sheet, inf);
       s.list = mk.list;
+      // Word's notes (LY-NT): numbers in the text, the notes where the sheet says
+      if (inf.notes) {
+        var fa = I.ans(opts.sheet, "fnAt");
+        nt = I.notes(s.list, opts.notes || [], fa === "s" ? inf.series.fnAt : fa, opts.notesHead);
+        s.list = nt.list;
+      }
       firstAgain(s.list);
       house = I.prepare(house, opts.sheet, inf, { now: now, names: opts.names, tocHead: opts.tocHead, extra: (opts.extra || []).length });
     }
@@ -466,12 +524,21 @@
     var d = M.copyDoc(house, now);
     d.name = String(meta.title || opts.name || d.name).slice(0, 120);
     var filled = fillFields(d, meta);
+    // a running head whose detail the book does not give stays empty
+    // (LY-RH), never "{author}"
+    d.items.forEach(function (it) {
+      if (!it.ext || !it.ext.rh) return;
+      var st = M.find(d.stories, it.story);
+      if (st) st.paras.forEach(function (p) { p.runs.forEach(function (r) { if (typeof r.t === "string") r.t = r.t.replace(/\{[^{}\s]{2,12}\}/g, "").trim() || (r.ext && r.ext.fld ? " " : ""); }); });
+    });
     var map = H.wmapOf(h.roles), have = {};
     d.pstyles.forEach(function (x) { have[x.id] = 1; });
     var noStyle = {};
     var picsAt = {};
     s.list.forEach(function (p, i) { if (p.pics && p.pics.length) picsAt[i] = p.pics; });
+    // a note's mark left (no sheet) is not text
     var paras = s.list.map(function (p) {
+      if (p.runs.some(function (r) { return r.fn; })) p = { role: p.role, ps: p.ps, runs: p.runs.filter(function (r) { return !r.fn; }) };
       if (p.ps && have[p.ps]) return { ps: p.ps, runs: p.runs };
       var id = map[p.role];
       var own = { h1: "title", h2: "subtitle", p1: "first", center: "center", quote: "quote" }[p.role];
@@ -508,6 +575,7 @@
       fields: filled, toc: n, noStyle: noStyle, pictures: opts.pictures || 0, check: check
     };
     if (mk) { report.sheet = 1; report.moved = mk.moved; report.left = mk.dropped; report.bare = bare; report.caps = mk.caps; }
+    if (nt) { report.notes = nt.n; report.notesLeft = nt.left; }
     if (pr) { report.pictures = pr.out; report.placed = pr.placed; report.overset = pr.overset; }
     return { doc: d, report: report };
   }

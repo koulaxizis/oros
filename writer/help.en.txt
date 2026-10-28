@@ -36,7 +36,7 @@ Just start typing; everything saves by itself.
 - The result can be `One PDF`, `A PDF for each record (ZIP)` or `One new document`, with a page break between records. From Contacts you can use FullName, FirstName, LastName, Company, JobTitle, Email, Phone, Address, City, PostalCode, Country and Birthday. Greek names such as {{Όνομα}} or {{Πόλη}} also work.
 
 ## Notes, comments and structure
-- `Footnotes`: tap `Add footnote` to place a numbered note at the cursor and type it in the side panel.
+- `Footnotes`: tap `Add footnote` to place a numbered note at the cursor and type it in the side panel. The footnotes and endnotes of a Word file you open come in as footnotes.
 - `Comments`: select some text, then `Add comment`. A comment must stay inside one paragraph.
 - `Table of contents` lists your headings. Tap one to jump to it, or `Insert inline` to put a contents list into the text.
 - `Document metadata` holds `Title`, `Author`, `Tags` and `Category`.

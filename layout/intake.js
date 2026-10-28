@@ -20,6 +20,8 @@
 //   - defaults(house) → a sheet with the series' saved answers.
 //   - mark(list, sheet, inf) → the list with its parts, scene breaks
 //     and sections set (p.ps) and moved; dedication and motto out.
+//   - notes(list, notes, mode, head) → Word's notes as raised numbers,
+//     their text after each chapter or once for the book (LY-NT).
 //   - prepare(house, sheet, inf, opts) → a copy of the house style
 //     with the answers applied (page size, margins, chapter starts,
 //     sunk titles, first paragraphs, page numbers, contents, pages
@@ -49,13 +51,15 @@
     { id: "sep", g: "page", v: ["s", "keep", "***", "* * *", "⁂", "blank"], when: "seps" },
     { id: "pn", g: "page", v: ["s", "footC", "footOut", "headOut", "headC", "none"] },
     { id: "pnHide", g: "page", v: ["s", "hide", "show"] },
+    { id: "rh", g: "page", v: ["s", "none", "titleChap", "authorTitle"] },
     { id: "toc", g: "page", v: ["s", "start", "end", "none"] },
     { id: "tocParts", g: "page", v: ["s", "parts", "chap"], when: "parts" },
-    { id: "picAt", g: "pics", v: ["s", "page", "before", "each", "out"], when: "pics" },
+    { id: "picAt", g: "pics", v: ["s", "page", "before", "flow", "each", "out"], when: "pics" },
     { id: "picSize", g: "pics", v: ["s", "text", "page"], when: "pics" },
     { id: "cap", g: "pics", v: ["s", "below", "above", "none"], when: "pics" },
     { id: "capSrc", g: "pics", v: ["s", "file", "typed"], when: "pics" },
     { id: "grey", g: "pics", v: ["s", "yes"], when: "pics" },
+    { id: "fnAt", g: "text", v: ["s", "chap", "book"], when: "notes" },
     { id: "hyph", g: "text", v: ["s", "on", "off"] },
     { id: "widows", g: "text", v: ["s", "on", "off"] },
     { id: "fix", g: "text", v: ["s", "on", "off"] }
@@ -65,7 +69,7 @@
   // the parts of a book a typography answer sets
   var PARTS = ["body", "title", "part", "toc", "colophon", "thanks", "links", "ded", "cap"];
   // where one picture goes (the "each" answer, sheet.pics[k].at)
-  var PIC_AT = ["s", "page", "before", "out"];
+  var PIC_AT = ["s", "page", "before", "flow", "out"];
   // a paragraph right after a picture that reads as its caption
   var CAP_RE = /^(φωτ|εικ|photo|fig|abb|bild|πηγη|source|quelle)/;
   var LOOK = ["fam", "size", "lead", "align", "b", "i", "caps", "track"];
@@ -177,12 +181,13 @@
   }
   function info(house, list, cut) {
     var h = H.houseOf(house) || { roles: {}, rules: [] }, ro = h.roles || {};
-    var out = { parts: 0, seps: 0, sepText: "", sections: {}, ded: "", motto: "", titles: 0, pages: [], colophon: false, series: {}, pics: 0, chapters: [] };
+    var out = { parts: 0, seps: 0, sepText: "", sections: {}, ded: "", motto: "", titles: 0, pages: [], colophon: false, series: {}, pics: 0, chapters: [], notes: 0 };
     var sepN = {};
     (list || []).forEach(function (p) {
       if (head(p)) out.titles++;
       if (head(p) && !sectionOf(p)) out.chapters.push(textOf(p).trim().slice(0, 80));
       if (p.pics) out.pics += p.pics.length;
+      (p.runs || []).forEach(function (r) { if (r.fn) out.notes++; });
       if (isPart(p)) out.parts++;
       var t = textOf(p).trim();
       if (!head(p) && H.isSep(t)) { out.seps++; sepN[t] = (sepN[t] || 0) + 1; }
@@ -226,10 +231,13 @@
     s.pn = pnOn.length ? (h.pn && h.pn.at) || "footC" : "none";
     s.pnHide = h.pn && h.pn.hide ? "hide" : "show";
     s.pnStart = first;
+    var heads = bp && bp.ms ? rhItems(house, bp.ms) : [];
+    s.rh = !heads.length ? "none" : heads.some(function (it) { return hasSec(M.find(house.stories, it.story)); }) ? "titleChap" : "own";
     var tocAt = "none";
     out.pages.forEach(function (p) { if (p.toc) tocAt = p.side === "front" ? "start" : "end"; });
     s.toc = tocAt;
     s.hyph = bodyR && bodyR.hyph ? "on" : "off";
+    s.fnAt = "book";
     s.widows = bodyR && (bodyR.orph || 1) > 1 ? "on" : "off";
     s.fix = h.rules.some(function (r) { return r.on && r.a && r.a.k === "fix"; }) ? "on" : "off";
     s.ty = { body: body, title: looksOf(house, ro.title), cap: looksOf(house, ro.note) };
@@ -336,6 +344,60 @@
     return { list: out, moved: moved, dropped: dropped, caps: caps };
   }
 
+  // ---------- 2b. Word's notes (LY-NT) ----------
+  // The marks (wordin runs { t, fn }) become numbers raised above the
+  // line ({ t: "1", ext: { sup: 1 } }) and the notes' text goes, as
+  // the sheet says, after each chapter ("chap": a heading in
+  // ps-hsnotehead and one paragraph per note in ps-hsnote, numbered
+  // again in every chapter) or once for the book ("book": a title of
+  // its own, after the last chapter and before the back sections).
+  // A mark whose note has no text is left out.
+  // given: [{ id, text }] (Writer's footnotes); headText: the heading
+  // → { list, n (notes placed), left (marks without a note) }
+  function notes(list, given, mode, headText) {
+    var map = {}, out = [], pend = [], num = 0, total = 0, left = 0;
+    (given || []).forEach(function (x) { if (x && typeof x.id === "string") map[x.id] = String(x.text || "").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim(); });
+    var top = 9;
+    (list || []).forEach(function (p) { if (head(p)) top = Math.min(top, +p.role.charAt(1) || 9); });
+    var ends = function (p) { return head(p) && (+p.role.charAt(1) || 9) <= top; };
+    var headTxt = String(headText || "Notes").slice(0, 80);
+    function block() {
+      if (!pend.length) return;
+      out.push({ role: "p", ps: "ps-hsnotehead", runs: [{ t: headTxt }] });
+      pend.forEach(function (x) { out.push({ role: "p", ps: "ps-hsnote", runs: [{ t: x.n + ". " + x.t }] }); });
+      pend = [];
+      num = 0;
+    }
+    var all = [];
+    (list || []).forEach(function (p) {
+      if (mode === "chap" && ends(p)) block();
+      if (!(p.runs || []).some(function (r) { return r.fn; })) { out.push(p); return; }
+      var q = copyP(p);
+      q.runs = [];
+      p.runs.forEach(function (r) {
+        if (!r.fn) { q.runs.push(r); return; }
+        var t = map[r.fn];
+        if (!t) { left++; return; }
+        num++; total++;
+        var x = { n: num, t: t };
+        if (mode === "chap") pend.push(x); else all.push(x);
+        q.runs.push({ t: String(num), ext: { sup: 1 } });
+      });
+      out.push(q);
+    });
+    if (mode === "chap") block();
+    else if (all.length) {
+      // after the last chapter, before the sections that follow it
+      var last = -1, at = out.length;
+      out.forEach(function (p, i) { if (ends(p) && !sectionOf(p)) last = i; });
+      for (var i = last + 1; i < out.length; i++) if (ends(out[i]) && sectionOf(out[i])) { at = i; break; }
+      var add = [{ role: "h" + (top < 9 ? top : 1), runs: [{ t: headTxt }] }];
+      all.forEach(function (x) { add.push({ role: "p", ps: "ps-hsnote", runs: [{ t: x.n + ". " + x.t }] }); });
+      out = out.slice(0, at).concat(add, out.slice(at));
+    }
+    return { list: out, n: total, left: left };
+  }
+
   // ---------- 3. The house style with the answers ----------
   function ps(d, id) { return M.find(d.pstyles, id); }
   function extOf(s) { s.ext = s.ext || {}; return s.ext; }
@@ -414,7 +476,41 @@
     return { x: x, y: Math.max(0, y), w: w, h: h };
   }
 
-  // opts { now, names: { part, open, sep, toc, tocHead, thanks, links, ded, pn }, tocHead (text) }
+  // ---------- Running heads (LY-RH) ----------
+  // A master's running heads: its text frames above the top margin that
+  // are not page numbers alone (ours carry ext.rh)
+  function rhItems(d, ms) {
+    return d.items.filter(function (it) {
+      if (it.t !== "text" || it.pg !== ms) return false;
+      if (it.ext && it.ext.rh) return true;
+      var m = M.margins(d, it.side || "R");
+      return it.y + it.h <= m.t + 1 && !H.pnOnly(M.find(d.stories, it.story));
+    });
+  }
+  function hasSec(st) {
+    return !!st && st.paras.some(function (p) { return (p.runs || []).some(function (r) { return r.ext && r.ext.fld === "sec"; }); });
+  }
+  // the heads of a facing book: titleChap the book's title on the left,
+  // the chapter's on the right; authorTitle the author left, the title
+  // right ({title} and {author} are filled from the book's details).
+  // Kept clear of page numbers at the head.
+  function addHeads(d, ms, mode, pnAt, ps, now, N) {
+    var u = d.setup, r = T.resolvePs(T.byId(d.pstyles), ps), hgt = Math.round((r.lead > 0 ? r.lead : r.size * 1.2) + 4);
+    var text = mode === "authorTitle" ? { L: [{ t: "{author}" }], R: [{ t: "{title}" }] } : { L: [{ t: "{title}" }], R: [{ t: "{title}", ext: { fld: "sec" } }] };
+    (u.facing ? ["L", "R"] : ["R"]).forEach(function (sd) {
+      var m = M.margins(d, sd), x = m.l, w = u.w - m.l - m.r, al = "c";
+      if (pnAt === "headC") { w = w / 2 - 36; al = sd === "L" ? "l" : "r"; if (sd === "R") x = u.w - m.r - w; }
+      else if (pnAt === "headOut" || pnAt === "headIn") { x += 36; w -= 72; }
+      var sid = M.newId("st");
+      var own = al === "c" ? ps : derive(d, "ps-hsrh" + al, ps, al === "l" ? N.rhL : N.rhR, { align: al }, now).id;
+      d.stories.push({ id: sid, m: stamp(now), paras: [{ ps: own, runs: copy(text[u.facing ? sd : "R"]) }] });
+      var it = { id: M.newId("it"), m: stamp(now), t: "text", pg: ms, x: x, y: Math.max(0, m.t / 2 - hgt / 2), w: Math.max(20, w), h: hgt, story: sid, seq: 1, z: 9000, va: "c", ext: { rh: 1 } };
+      if (u.facing) it.side = sd;
+      d.items.push(it);
+    });
+  }
+
+  // opts { now, names: { part, open, sep, toc, tocHead, thanks, links, ded, pn, rh, rhL, rhR, note, noteHead }, tocHead (text) }
   function prepare(house, sheet, inf, opts) {
     opts = opts || {};
     var now = opts.now, N = opts.names || {};
@@ -470,6 +566,12 @@
       derive(d, "ps-hscap", ro.note || body, N.cap, { align: "c", i: 1, fi: 0, li: 0, ri: 0, sb: 0, sa: 0, size: Math.max(7, Math.min(cr.size, T.resolvePs(T.byId(d.pstyles), body).size - 2)), ext: { hyph: 0, brk: "any" } }, now);
     }
     if (inf.sections.links) derive(d, "ps-hslinks", body, N.links, { fi: 0, align: "l", ext: { hyph: 0 } }, now);
+    // Word's notes (LY-NT): a heading after the chapter and the notes, smaller
+    if (inf.notes) {
+      var br = T.resolvePs(T.byId(d.pstyles), body);
+      derive(d, "ps-hsnotehead", body, N.noteHead, { b: 1, fi: 0, li: 0, align: "l", sb: Math.max(br.size, 12), sa: 4, ext: { kwn: 1, brk: "any", hyph: 0 } }, now);
+      derive(d, "ps-hsnote", body, N.note, { fi: 0, sb: 0, sa: 2, size: Math.max(7, br.size - 1.5), lead: br.lead > 0 ? Math.max(8, br.lead - 2) : 0, ext: { brk: "any" } }, now);
+    }
     // contents: where, or none; made when the house has none
     var toc = tocStory(d), ta = A("toc");
     if (toc && ta === "none") {
@@ -548,10 +650,35 @@
       }
     }
     if (sheet.a.pnStart !== undefined) { u.ext = u.ext || {}; u.ext.pnStart = sheet.a.pnStart; }
-    // no numbers where a title opens and on empty pages: a master without them
+    // running heads on the body pages (LY-RH)
+    var ra = A("rh");
+    if (bp && ra !== "s") {
+      if (!bp.ms || d.pages.some(function (p) { return p !== bp && p.ms === bp.ms; })) {
+        bp.ms = H.cloneMaster(d, bp.ms, "ms-hsbody" + (bp.ms === "ms-hsbody" ? "2" : ""), { en: "B-Master", el: "B-Master" }, "B", now);
+      }
+      var old = {};
+      rhItems(d, bp.ms).forEach(function (it) { old[it.id] = 1; old[it.story] = 1; });
+      d.items = d.items.filter(function (it) { return !old[it.id]; });
+      d.stories = d.stories.filter(function (st) { return !old[st.id]; });
+      if (ra !== "none") {
+        var brh = T.resolvePs(T.byId(d.pstyles), body), rhSize = Math.max(6, Math.round(brh.size * 0.85 * 2) / 2);
+        var rhPs = derive(d, "ps-hsrh", body, N.rh, { align: "c", fi: 0, li: 0, ri: 0, sb: 0, sa: 0, size: rhSize, lead: Math.round(rhSize * 1.2 * 2) / 2, ext: { hyph: 0, brk: "any", sec: 0 } }, now).id;
+        var pnAt = pa !== "s" ? pa : (h.pn && h.pn.at) || "footC";
+        addHeads(d, bp.ms, ra, pnAt, rhPs, now, N);
+        // the chapter titles are what the right-hand head shows
+        if (ra === "titleChap" && ps(d, title)) extOf(ps(d, title)).sec = 1;
+      }
+    }
+    // no numbers where a title opens and on empty pages, and never a
+    // running head there: a master without them
     var hide = A("pnHide") === "hide" || (A("pnHide") === "s" && h.pn && h.pn.hide);
-    if (hide && bp && bp.ms && H.pnItems(d, bp.ms).length) {
-      book.openMs = H.cloneMaster(d, bp.ms, "ms-hsopen", { en: "C-Master", el: "C-Master" }, "C", now, function (it) { return !(it.t === "text" && H.pnOnly(M.find(d.stories, it.story))); });
+    var heads = bp && bp.ms ? rhItems(d, bp.ms) : [];
+    if (bp && bp.ms && ((hide && H.pnItems(d, bp.ms).length) || heads.length)) {
+      var noHead = {};
+      heads.forEach(function (it) { noHead[it.id] = 1; });
+      book.openMs = H.cloneMaster(d, bp.ms, "ms-hsopen", { en: "C-Master", el: "C-Master" }, "C", now, function (it) {
+        return !noHead[it.id] && !(hide && it.t === "text" && H.pnOnly(M.find(d.stories, it.story)));
+      });
     }
     // typography per part
     var ty = book.ty, sets = {
@@ -605,7 +732,7 @@
 
   var api = {
     QUESTIONS: QUESTIONS, AT: AT, PARTS: PARTS, LOOK: LOOK, SIZES: SIZES, SECTION_KEYS: SECTION_KEYS,
-    PIC_AT: PIC_AT, pictures: pictures, ans: ans,
+    PIC_AT: PIC_AT, pictures: pictures, notes: notes, ans: ans,
     info: info, defaults: defaults, clean: clean, atKey: atKey, mark: mark, prepare: prepare, finish: finish, sectionOf: sectionOf, isPart: isPart
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

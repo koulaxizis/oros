@@ -36,7 +36,7 @@ Schreib einfach los; alles speichert sich von selbst.
 - Das Ergebnis kann `Ein PDF`, `Ein PDF pro Datensatz (ZIP)` oder `Ein neues Dokument` sein, mit einem Seitenumbruch zwischen den Datensätzen. Aus Kontakte kannst du FullName, FirstName, LastName, Company, JobTitle, Email, Phone, Address, City, PostalCode, Country und Birthday verwenden. Griechische Namen wie {{Όνομα}} oder {{Πόλη}} funktionieren auch.
 
 ## Notizen, Kommentare und Gliederung
-- `Fußnoten`: Tippe auf `Fußnote hinzufügen`, um an der Cursorstelle eine nummerierte Anmerkung zu setzen, und schreib sie in der Seitenleiste.
+- `Fußnoten`: Tippe auf `Fußnote hinzufügen`, um an der Cursorstelle eine nummerierte Anmerkung zu setzen, und schreib sie in der Seitenleiste. Die Fuß- und Endnoten einer geöffneten Word-Datei kommen als Fußnoten herein.
 - `Kommentare`: Markiere etwas Text, dann `Kommentar hinzufügen`. Ein Kommentar muss in einem Absatz bleiben.
 - `Inhaltsverzeichnis` listet deine Überschriften auf. Tippe auf eine, um dorthin zu springen, oder auf `In den Text einfügen`, um ein Inhaltsverzeichnis in den Text zu setzen.
 - `Dokument-Metadaten` enthält `Titel`, `Autor`, `Tags` und `Kategorie`.
