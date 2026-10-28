@@ -158,6 +158,8 @@ orosPack("de", "shell", {
  "category.system": "System",
  "category.video": "Video",
  "cmd.copied": "Kopiert: {text}",
+ "cmd.copiedSecret": "Passwort kopiert. Füge es dort ein, wo du es brauchst.",
+ "cmd.copyFailed": "Kopieren ging nicht. Versuche es noch einmal.",
  "cmd.loadfail": "Die Befehlsleiste wurde nicht geladen. Prüfe die Verbindung und versuche es erneut.",
  "cmd.quick": "Schnellfenster",
  "cr.anthropic-openai": "KI-Chat deiner Wahl (Assistent)",

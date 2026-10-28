@@ -333,3 +333,80 @@ test("settings by words: EN and EL, the lock only when it is on", () => {
     { verb: "Ειδοποιήσεις κλειστές", detail: "Δεν εμφανίζεται ούτε κρατιέται τίποτα μέχρι να τις ανοίξεις ξανά" });
   assert.equal(C.describe(PS("lock", true), "en").verb, "Lock orOS now");
 });
+
+// K6: small tools (password, dice, coin, a random number).
+test("small tools: passwords, dice, coin and numbers, drawn once and copied", () => {
+  const APPS4 = APPS2.concat([{ id: "dice", names: ["Dice & Coin"] }, { id: "passwords", names: ["Passwords"] }]);
+  let seq = [];
+  const rand = (n) => { const v = seq.length ? seq.shift() : 0; return v % n; };
+  const PR = (s, r) => C.parse(s, { today: TODAY, apps: APPS4, lang: "el", rand: r === undefined ? rand : r });
+  // Password: Passwords' own engine, all four kinds, 8 to 128.
+  const pw = PR("κωδικός 16");
+  assert.equal(pw.kind, "random");
+  assert.equal(pw.app, "passwords");
+  assert.equal(pw.data.text.length, 16);
+  assert.match(pw.data.text, /[a-z]/); assert.match(pw.data.text, /[A-Z]/); assert.match(pw.data.text, /\d/);
+  assert.match(pw.data.text, /[^A-Za-z0-9]/);
+  assert.deepEqual(C.call(pw, "el"), { fn: "copy", args: [pw.data.text, true] });
+  assert.deepEqual(C.describe(pw, "en"), { verb: pw.data.text, detail: "Password · 16 characters", hint: "Copy" });
+  assert.equal(PR("new password").data.n, 20);
+  assert.equal(PR("τυχαίος κωδικός 32").data.text.length, 32);
+  assert.equal(PR("password 24 chars").data.n, 24);
+  assert.notEqual(PR("κωδικός 16").data.text, PR("κωδικός 16").data.text);
+  for (const s of ["κωδικός 4", "κωδικός 200", "κωδικός wifi", "password", "κωδικοί", "Κωδικοί"]) {
+    const r = PR(s);
+    assert.ok(!r || r.kind !== "random", s);
+  }
+  assert.equal(C.parse("κωδικός 16", { today: TODAY, apps: APPS2 }), null);   // Passwords missing
+  // Dice.
+  seq = [3, 5];
+  let d = PR("ρίξε 2 ζάρια");
+  assert.deepEqual(d.data, { t: "dice", n: 2, sides: 6, rolls: [4, 6], sum: 10 });
+  assert.deepEqual(C.call(d, "el"), { fn: "copy", args: ["4 + 6 = 10", false] });
+  assert.deepEqual(C.describe(d, "el"), { verb: "4 + 6 = 10", detail: "2 ζάρια (1–6)", hint: "Αντιγραφή" });
+  seq = [2];
+  d = PR("roll a die");
+  assert.deepEqual([d.data.rolls, C.call(d, "en").args[0], C.describe(d, "en").detail], [[3], "3", "One die (1–6)"]);
+  assert.equal(PR("ρίξε ζάρια").data.n, 2);
+  assert.equal(PR("ρίξε το ζάρι").data.n, 1);
+  assert.equal(PR("roll the dice").data.n, 2);
+  assert.equal(PR("3 ζάρια").data.n, 3);
+  seq = [19];
+  d = PR("d20");
+  assert.deepEqual([d.data.n, d.data.sides, d.data.rolls], [1, 20, [20]]);
+  assert.equal(PR("2d6").data.n, 2);
+  assert.equal(PR("21 ζάρια"), null);
+  assert.equal(PR("d1"), null);
+  assert.equal(PR("ζάρια"), null);              // the app's word stays the app
+  // Coin.
+  seq = [0];
+  const c = PR("κορόνα γράμματα");
+  assert.deepEqual(c.data, { t: "coin", side: "heads" });
+  assert.deepEqual(C.call(c, "el").args, ["Κορόνα", false]);
+  assert.equal(C.call(c, "en").args[0], "Heads");
+  seq = [1];
+  assert.equal(PR("Κορώνα ή γράμματα;").data.side, "tails");
+  for (const s of ["flip a coin", "heads or tails", "στρίψε νόμισμα", "coin flip"]) assert.equal(PR(s).data.t, "coin", s);
+  // A number.
+  seq = [41];
+  let n = PR("τυχαίος 1-100");
+  assert.deepEqual(n.data, { t: "num", a: 1, b: 100, v: 42 });
+  assert.deepEqual(C.describe(n, "el"), { verb: "42", detail: "Τυχαίος αριθμός 1–100", hint: "Αντιγραφή" });
+  seq = [0];
+  assert.deepEqual(PR("random number between 6 and 1").data, { t: "num", a: 1, b: 6, v: 1 });
+  assert.deepEqual([PR("τυχαίος αριθμός από 5 έως 10").data.a, PR("random 50").data.b, PR("random number").data.b], [5, 50, 100]);
+  assert.equal(PR("τυχαίος 5-5"), null);
+  assert.equal(PR("random 1-99999999999"), null);
+  assert.equal(PR("random"), null);
+  // No source of randomness: nothing (never Math.random).
+  assert.equal(PR("flip a coin", () => -1), null);
+  // The call is built again from the data, never trusted.
+  assert.equal(C.call({ kind: "random", data: { t: "dice", sides: 6, rolls: [7] } }, "en"), null);
+  assert.equal(C.call({ kind: "random", data: { t: "num", a: 1, b: 6, v: 9 } }, "en"), null);
+  assert.equal(C.call({ kind: "random", data: { t: "pass", text: "short" } }, "en"), null);
+  assert.equal(C.call({ kind: "random", data: { t: "pass", text: "<script>alert(1)</script> x" } }, "en"), null);
+  // No clash with the commands already there.
+  assert.equal(P2("12*3+4").kind, "calc");
+  assert.equal(P2("ξόδεψα 12€ καφές").kind, "expense");
+  assert.equal(P("ραντεβού αύριο 10 οδοντίατρος").kind, "event");
+});
