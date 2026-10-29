@@ -104,6 +104,9 @@ Die Reiter unten sind deine Blätter.
 - Doppelklicke einen Reiter oder halte ihn auf einem Touchscreen gedrückt, um ihn umzubenennen.
 - Tippe auf ✕ an einem Reiter und innerhalb von 3 Sekunden noch einmal auf ✕, um das Blatt zu löschen. Das letzte Blatt kann nicht gelöscht werden.
 
+## Der Assistent
+Bitte den Assistenten, deine Blätter mit Worten zu ändern, etwa „2026 statt 2025“, „die erste Zeile fett“, „nach Preis sortieren“, „zwei Zeilen über Zeile 5 einfügen“ oder „die erste Zeile fixieren“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet das Blatt. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt die Zellen wieder her, solange sie seitdem nicht geändert wurden. In der Hilfe des Assistenten steht alles, was er kann.
+
 ## Synchronisierung und Sicherung
 Mit der [orOS-Synchronisierung](help:t/sync) erreichen deine Blätter, Zellen, Formatierung (mit Füllungen, Rahmen und verbundenen Zellen), Spaltenbreiten, Zeilenhöhen, fixierten Bereiche, Diagramme und Regeln der bedingten Formatierung deine anderen Geräte. Text und Formatierung derselben Zelle werden getrennt zusammengeführt, sodass ein auf einem Gerät getippter Wert und auf einem anderen gesetztes Fett beide erhalten bleiben. Jedes Diagramm und jede Regel synchronisiert sich einzeln: Ein auf einem Gerät hinzugefügtes Diagramm und eine auf einem anderen hinzugefügte Regel bleiben beide.
 

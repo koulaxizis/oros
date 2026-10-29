@@ -195,6 +195,12 @@ Ask, for example, "2026 instead of 2025 in my open document", "make the headings
 - With Track changes on, the assistant's changes are not marked as tracked changes.
 - `Undo` on the card (or in `Change history`) puts every document back as it was before, as long as it wasn't changed since.
 
+## Sheets in Spreadsheet
+Ask, for example, "2026 instead of 2025 in my sheet", "make the first row bold with a blue fill", "show column B in euros", "add a column C with twice the price", "sort by price", "insert two rows above row 5", "make column A wider" or "freeze the first row". The assistant reads the sheet (with your permission for [Spreadsheet](app:spreadsheet)): its cells, formulas, what they show and their formats. Then it shows a card with the changes and how many things each sheet gets.
+- `Apply` makes the changes in Spreadsheet on this device and opens the sheet. The change is also one step of Spreadsheet's own Undo.
+- What it can change: values and formulas (one formula for a range is filled like the fill handle); find and replace in values (formulas stay as they are); clearing cells, or only their values, format, fill or borders; bold, italic, underline, alignment, text colour, fill, number format, wrap and borders; column widths and row heights; inserting and deleting rows and columns (formulas, charts and rules follow); sorting with a heading row; merging and unmerging cells; frozen rows and columns; and the sheet's name. It works on the open sheet, a sheet by its name or all sheets.
+- `Undo` on the card (or in `Change history`) puts every cell and sheet back as it was before, as long as they weren't changed since.
+
 ## Photos, PDFs and documents
 Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 30 files go with one message, each up to 30 MB.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.

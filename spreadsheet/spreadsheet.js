@@ -144,7 +144,11 @@ var STRINGS = {
     "ch.ttl": "Title", "ch.xl": "Horizontal axis title", "ch.yl": "Vertical axis title", "ch.lg": "Legend",
     "ch.cols": "Colours", "ch.col": "Colour of series", "ch.reset": "Default colours",
     "ch.saved": "Saved {f}", "ch.file": "chart", "ch.err": "Could not make the image",
-    "rg.mode": "Select a range…", "rg.tap": "Tap the last cell of the range"
+    "rg.mode": "Select a range…", "rg.tap": "Tap the last cell of the range",
+    "as.done": "The Assistant changed {n} things in {d} sheets.", "as.done1": "The Assistant changed {n} things in the sheet.",
+    "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+    "as.undone": "The Assistant's change was undone.", "as.changed": "These cells were changed since, so the Assistant's change was not undone.",
+    "as.gone": "There is nothing left to undo."
   },
   el: {
     "title": "Λογιστικά φύλλα",
@@ -248,7 +252,11 @@ var STRINGS = {
     "ch.ttl": "Τίτλος", "ch.xl": "Τίτλος οριζόντιου άξονα", "ch.yl": "Τίτλος κατακόρυφου άξονα", "ch.lg": "Υπόμνημα",
     "ch.cols": "Χρώματα", "ch.col": "Χρώμα σειράς", "ch.reset": "Προεπιλεγμένα χρώματα",
     "ch.saved": "Αποθηκεύτηκε: {f}", "ch.file": "γράφημα", "ch.err": "Δεν ήταν δυνατή η δημιουργία της εικόνας",
-    "rg.mode": "Επιλογή περιοχής…", "rg.tap": "Πάτησε το τελευταίο κελί της περιοχής"
+    "rg.mode": "Επιλογή περιοχής…", "rg.tap": "Πάτησε το τελευταίο κελί της περιοχής",
+    "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} φύλλα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο φύλλο.",
+    "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+    "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Τα κελιά άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+    "as.gone": "Δεν έμεινε κάτι για αναίρεση."
   }
 };
 
@@ -5376,6 +5384,7 @@ function openTarget(tg) {
   if (!tg || typeof tg !== "object") return;
   // { newBlank: true }: the single app's "New sheet" icon shortcut.
   if (tg.newBlank === true) { if (editing) commitEdit(0, 0); addSheet(); return; }
+  if (tg.edit || tg.editUndo) { assistRun(tg); return; }
   if (tg.openFile) openSharedFile(tg.openFile);
   else if (tg.newSheet) sheetFromTable(tg.newSheet);
   else openSearchTarget(tg);
@@ -5396,6 +5405,47 @@ function openSharedFile(o) {
   else if (/\.csv$/.test(nm)) csvImport(f);
 }
 window.__orosOpenAt = openTarget;
+/* AS-EDIT (wave SS1): the Assistant's changes (commands.js, assist.js,
+   loaded on the first request) write through these */
+window.SheetAssistHost = {
+  t: t, toast: notifyTransient, undoToast: notifyUndo, lang: function () { return LANG; }, now: now,
+  state: function () { return state; }, getSheet: getSheetById, activeId: function () { return actSID; }, switchTo: switchTo,
+  flush: function () { if (editing) commitEdit(0, 0); closePops(); },
+  rawSet: rawSet, rawDel: rawDel, canonF: canonF, applyObj: applyObj, push: pushUndo,
+  done: function () {
+    if (!getActiveSheet() || !getSheetById(actSID)) actSID = state.sheets[0].id;
+    invalidateEval(); resetDisp(); markDirty(); queueSave();
+    buildGrid(); renderTabs(); renderGrid(); renderSelection();
+  }
+};
+var assistP = null;
+function assistLoad() {
+  if (window.SheetAssist) return Promise.resolve(window.SheetAssist);
+  if (!assistP) {
+    var v = (document.querySelector('script[src*="spreadsheet.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+    var load = function (f) {
+      return new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = f + (m ? "?v=" + m[1] : "");
+        s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+        document.head.appendChild(s);
+      });
+    };
+    assistP = (window.orosRecipes ? Promise.resolve() : load("../recipes/core.js"))
+      .then(function () { return load("commands.js"); }).then(function () { return load("assist.js"); }).then(function () {
+        if (!window.SheetAssist) throw new Error("assist");
+        return window.SheetAssist;
+      });
+    assistP.catch(function () { assistP = null; });
+  }
+  return assistP;
+}
+/* { edit: { key, chat, docs, steps } } | { editUndo: { key, tok } } */
+function assistRun(tg) {
+  assistLoad().then(function (A) {
+    if (tg.edit) A.edit(tg.edit); else A.undo(tg.editUndo);
+  }, function () { notifyTransient(t("as.bad")); });
+}
 function takeTarget() {
   var tg = null;
   try {
