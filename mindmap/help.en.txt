@@ -68,6 +68,9 @@ Every import makes a new map and opens it; your other maps are not touched. The 
 - **Text** (.txt): one idea per line, with tabs or spaces for the levels. You can also paste such a list with `Paste a list…`.
 - **OPML** (.opml): the outline export of most outliners.
 
+## The Assistant
+Ask the Assistant to change your maps in words, such as "add five ideas for the launch under Marketing", "make the main branches bold", "move Ads under Budget", "sort the ideas under Budget A-Z", "put a boundary called Q1 around Marketing" or "show it as an org chart". It shows the changes on a card first; `Apply` makes them here and opens the map. `Undo` on the message here, or on the Assistant's card, puts the map back as long as it wasn't changed since. See the Assistant's help for everything it can do.
+
 ## Keyboard shortcuts
 - [[Tab]] adds a child, [[Enter]] adds a sibling, [[F2]] or simply typing edits the selected node.
 - [[Delete]] deletes the branch, [[Space]] folds or unfolds it, the arrow keys move around the map.

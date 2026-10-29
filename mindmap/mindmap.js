@@ -113,6 +113,10 @@
       "toast.undo": "Undo", "toast.deleted": "Deleted “{name}”", "toast.deletedN": "Deleted “{name}” and {n} more",
       "toast.mapDeleted": "Map “{name}” deleted", "toast.root": "The centre can't be deleted. Delete the map from Your maps.",
       "toast.save": "Couldn't save: storage is full. Free up space (Files, Notes or images).",
+      "as.done": "The Assistant changed {n} things in {d} maps.", "as.done1": "The Assistant changed {n} things in the map.",
+      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.undone": "The Assistant's change was undone.", "as.changed": "The map was changed since, so the Assistant's change was not undone.",
+      "as.gone": "There is nothing left to undo.",
       "toast.exported": "Exported", "toast.saved": "Saved to Files", "toast.noFiles": "Files is not available",
       "toast.copied": "Copied", "toast.copyFail": "Couldn't copy: your browser blocked the clipboard",
       "toast.pngBig": "Too big for PNG: export SVG instead", "toast.nothing": "Nothing to undo", "toast.noRedo": "Nothing to redo",
@@ -210,6 +214,10 @@
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε το «{name}»", "toast.deletedN": "Διαγράφηκε το «{name}» και {n} ακόμα",
       "toast.mapDeleted": "Ο χάρτης «{name}» διαγράφηκε", "toast.root": "Το κέντρο δεν διαγράφεται. Διάγραψε τον χάρτη από τους χάρτες σου.",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε. Ελευθέρωσε χώρο (Αρχεία, Σημειώσεις ή εικόνες).",
+      "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} χάρτες.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στον χάρτη.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Ο χάρτης άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+      "as.gone": "Δεν έμεινε κάτι για αναίρεση.",
       "toast.exported": "Η εξαγωγή έγινε", "toast.saved": "Αποθηκεύτηκε στα Αρχεία", "toast.noFiles": "Τα Αρχεία δεν είναι διαθέσιμα",
       "toast.copied": "Αντιγράφηκε", "toast.copyFail": "Η αντιγραφή απέτυχε: ο browser μπλόκαρε το πρόχειρο",
       "toast.pngBig": "Πολύ μεγάλο για PNG: κάνε εξαγωγή σε SVG", "toast.nothing": "Δεν υπάρχει κάτι για αναίρεση", "toast.noRedo": "Δεν υπάρχει κάτι για επανάληψη",
@@ -289,9 +297,11 @@
   function label(n, max) { return n ? (M.title((n.emoji ? n.emoji + " " : "") + n.text, max || 60) || t("empty.node")) : "?"; }
 
   // BOOT MARKER
+  var SCRIPT_V = "";
   (function () {
     var m = ((document.currentScript && document.currentScript.src) || "")
       .match(/[?&]v=([^&#]+)/);
+    SCRIPT_V = m ? m[1] : "";
     document.documentElement.lang = LANG;
     console.log("mindmap.js v" + (m ? m[1] : "?") + " boot");
   })();
@@ -3574,6 +3584,8 @@
   // { openFile: { token } }: a file from the system's "Open with"
   // (shell fileopen.js), taken once, then the Import path.
   function openSearchTarget(t) {
+    // the Assistant's changes (assist.js)
+    if (t && (t.edit || t.editUndo)) { assistRun(t); return; }
     // Single app (solo.js): { newMap: true } → the New map dialog;
     // { pasteText: { text } } → the paste dialog filled with a share
     // (a new map only when the person presses Add).
@@ -3609,6 +3621,62 @@
       var ta = $("outline").querySelector('textarea[data-id="' + CSS.escape(id) + '"]');
       if (ta) ta.scrollIntoView({ block: "center" });
     }
+  }
+  // The Assistant's changes (AS-EDIT, assist.js), loaded on the first
+  // request with commands.js.
+  var ROW_KIND = { maps: "m", nodes: "n", links: "l", pos: "p", imgs: "i", styles: "s", frames: "f", layouts: "v" };
+  window.MindmapAssistHost = {
+    t: t, toast: showToast, undoToast: undoToast, newId: newId,
+    data: function () { return canonical(); },
+    pid: function () { return prefs.map || ""; },
+    busy: function () { return !!editing || !!drop; },
+    open: function (id) { if (MAPS[id]) openMap(id); },
+    // next = the whole data; withUndo = the open map changed (one step
+    // of Mind map's own Undo: every row of the map, before and after).
+    set: function (next, withUndo) {
+      var mid = prefs.map;
+      if (withUndo && mid) {
+        begin("");
+        [canonical(), next].forEach(function (d) {
+          Object.keys(ROW_KIND).forEach(function (key) {
+            (d[key] || []).forEach(function (x) { if ((key === "maps" ? x.id : x.map) === mid) touch(ROW_KIND[key] + ":" + x.id); });
+          });
+        });
+      }
+      adopt(next);
+      if (sel && !NODES[sel]) sel = null;
+      if (selLink && !LINKS[selLink]) selLink = null;
+      if (selFrame && !FRAMES[selFrame]) selFrame = null;
+      if (tx) commit();
+      else { saveNow(); refresh(); }
+    }
+  };
+  var assistP = null;
+  function assistLoad() {
+    if (window.MindmapAssist) return Promise.resolve(window.MindmapAssist);
+    if (!assistP) {
+      var load = function (f) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + (SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "");
+          s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      assistP = (window.orosRecipes ? Promise.resolve() : load("../recipes/core.js"))
+        .then(function () { return load("commands.js"); }).then(function () { return load("assist.js"); }).then(function () {
+          if (!window.MindmapAssist) throw new Error("assist");
+          return window.MindmapAssist;
+        });
+      assistP.catch(function () { assistP = null; });
+    }
+    return assistP;
+  }
+  // { edit: { key, chat, docs, steps } } | { editUndo: { key, tok } }
+  function assistRun(tg) {
+    assistLoad().then(function (A) {
+      if (tg.edit) A.edit(tg.edit); else A.undo(tg.editUndo);
+    }, function () { showToast(t("as.bad")); });
   }
   window.__orosOpenAt = openSearchTarget;
 

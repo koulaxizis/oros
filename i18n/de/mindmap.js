@@ -1,4 +1,11 @@
 orosPack("de", "mindmap", {
+ "as.bad": "Die Anfrage des Assistenten konnte nicht gelesen werden. Nichts wurde geändert.",
+ "as.changed": "Die Map wurde inzwischen geändert, deshalb wurde die Änderung des Assistenten nicht rückgängig gemacht.",
+ "as.done": "Der Assistent hat {n} Dinge in {d} Maps geändert.",
+ "as.done0": "Es war nichts zu ändern.",
+ "as.done1": "Der Assistent hat {n} Dinge in der Map geändert.",
+ "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
+ "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
  "app.name": "Mindmap",
  "border.auto": "Automatisch",
  "border.dashed": "Gestrichelt",

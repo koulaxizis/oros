@@ -270,8 +270,8 @@ test("wiring: the Assistant reads Whiteboard, and the card speaks of objects in 
     assert.ok(has(k), "EN + EL " + k);
     assert.ok(de.includes('"' + k + '":'), "DE " + k);
   });
-  assert.match(as, /\|ends\|dash\)\$\/\.test\(k\)\) return edT\(app, "ed\.v\."/, "the card names these values");
-  assert.match(as, /if \(k === "fill" && app === "whiteboard"\) return edT\(app, "ed\.v\.fill\." \+ v\);/, "a shape's fill reads as a word");
+  assert.match(as, /\|ends\|dash[a-z|]*\)\$\/\.test\(k\)\) return edT\(app, "ed\.v\."/, "the card names these values");
+  assert.match(as, /if \(\(k === "fill" && \/\^\(whiteboard\|mindmap\)\$\/\.test\(app\)\)/, "a shape's fill reads as a word");
 });
 
 test("the catalog runs where the Assistant loads it (browser globals, no Node)", () => {
