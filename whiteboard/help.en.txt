@@ -49,6 +49,9 @@ Whiteboard is an endless board for ideas: sticky notes, text, shapes, arrows tha
 - `More` › `Bring in a mind map…` lays out one of your maps from Mind map as sticky notes joined by arrows, each main branch in its own colour (up to 250 ideas). The mind map itself does not change.
 - A selected frame has `Open in Atelier` in its bar: the frame becomes a picture and a new design in Atelier, to finish as a poster, a post or slides.
 
+## The Assistant
+Ask the Assistant to change your boards in words, such as "add three notes with ideas for the launch", "make every note in the Ideas frame green", "connect Launch to Budget with a dashed arrow", "lay the notes out in a grid of 4 columns" or "2026 instead of 2025 on the whole board". It shows the changes on a card first; `Apply` makes them here and opens the board. `Undo` on the message here, or on the Assistant's card, puts the board back as long as it wasn't changed since. See the Assistant's help for everything it can do.
+
 ## Your data
 - Everything stays on this device and is saved as you go. Pictures are made smaller (at most 1024 pixels) so the boards stay light.
 - With orOS sync switched on in [Settings](app:settings), your boards follow you to your other devices, encrypted. Each object syncs on its own, so edits to different objects on two devices both stay; for the same object the newer edit wins.

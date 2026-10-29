@@ -470,6 +470,8 @@ var PRECACHE_URLS = [
   "whiteboard/kit.js",
   "whiteboard/app.js",
   "whiteboard/search.js",
+  "whiteboard/commands.js",
+  "whiteboard/assist.js",
   "whiteboard/help.en.txt",
   "whiteboard/help.el.txt",
   "kanban/search.js",

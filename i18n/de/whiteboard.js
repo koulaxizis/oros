@@ -1,5 +1,12 @@
 orosPack("de", "whiteboard", {
  "app.name": "Whiteboard",
+ "as.bad": "Die Anfrage des Assistenten konnte nicht gelesen werden. Nichts wurde geändert.",
+ "as.changed": "Das Board wurde inzwischen geändert, deshalb wurde die Änderung des Assistenten nicht rückgängig gemacht.",
+ "as.done": "Der Assistent hat {n} Dinge auf {d} Boards geändert.",
+ "as.done0": "Es war nichts zu ändern.",
+ "as.done1": "Der Assistent hat {n} Dinge auf dem Board geändert.",
+ "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
+ "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
  "at.done": "In Atelier als neues Design geöffnet",
  "at.fail": "Der Rahmen konnte nicht an Atelier gehen.",
  "at.making": "Das Bild wird erstellt…",

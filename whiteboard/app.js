@@ -74,6 +74,10 @@
       "toast.picBudget": "The pictures on your boards have reached their limit. Remove a picture first.",
       "toast.undo": "Undo", "toast.deleted": "Deleted", "toast.nothingUndo": "Nothing to undo", "toast.nothingRedo": "Nothing to redo",
       "toast.limit": "This board is full (2000 items). Start a new board.",
+      "as.done": "The Assistant changed {n} things on {d} boards.", "as.done1": "The Assistant changed {n} things on the board.",
+      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.undone": "The Assistant's change was undone.", "as.changed": "The board was changed since, so the Assistant's change was not undone.",
+      "as.gone": "There is nothing left to undo.",
       "full": "This device is out of storage space. The change was not saved.",
       "drop": "Drop pictures here",
       "btn.more": "More",
@@ -146,6 +150,10 @@
       "toast.picBudget": "Οι εικόνες στους πίνακές σου έφτασαν το όριο. Αφαίρεσε πρώτα μια εικόνα.",
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε", "toast.nothingUndo": "Δεν υπάρχει κάτι για αναίρεση", "toast.nothingRedo": "Δεν υπάρχει κάτι για επανάληψη",
       "toast.limit": "Ο πίνακας γέμισε (2000 στοιχεία). Ξεκίνα νέο πίνακα.",
+      "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} πίνακες.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στον πίνακα.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Ο πίνακας άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+      "as.gone": "Δεν έμεινε κάτι για αναίρεση.",
       "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Η αλλαγή δεν αποθηκεύτηκε.",
       "drop": "Άφησε εδώ τις εικόνες",
       "btn.more": "Περισσότερα",
@@ -2140,7 +2148,9 @@
 
   // ---------- 16. Deep link: search hits and other apps ----------
   // target = { board, obj? }. Unknown ids are ignored.
+  // { edit } / { editUndo }: the Assistant's changes (assist.js).
   window.__orosOpenAt = function (target) {
+    if (target && (target.edit || target.editUndo)) { assistRun(target); return; }
     if (!target || typeof target.board !== "string" || !C.board(data, target.board)) return;
     if (editing || document.querySelector("dialog[open]")) return;
     if (target.board !== board) openBoard(target.board);
@@ -2150,6 +2160,58 @@
       setTimeout(function () { reveal(target.obj, true); announce(); render(); }, 0);
     }
   };
+
+  // The Assistant's changes (AS-EDIT, assist.js), loaded on the first
+  // request with commands.js.
+  window.WhiteboardAssistHost = {
+    t: t, toast: function (msg) { toast(msg); }, undoToast: toast,
+    data: function () { return data; },
+    pid: function () { return board; },
+    busy: function () { return !!gesture || !!editing; },
+    open: function (id) { if (C.board(data, id)) openBoard(id); },
+    // next = the whole data; withUndo = the open board changed (one
+    // step of the board's own Undo).
+    set: function (next, withUndo) {
+      var step = null;
+      if (withUndo && board) {
+        var was = {}, now = {}, before = {}, after = {};
+        objs().forEach(function (o) { was[o.id] = o; });
+        C.objsOf(next, board).forEach(function (o) { now[o.id] = o; });
+        Object.keys(was).concat(Object.keys(now)).forEach(function (id) {
+          var a = was[id] || null, b = now[id] || null;
+          if (JSON.stringify(a) === JSON.stringify(b) || Object.prototype.hasOwnProperty.call(before, id)) return;
+          before[id] = a ? clone(a) : null;
+          after[id] = b ? clone(b) : null;
+        });
+        if (Object.keys(before).length) step = { before: before, after: after };
+      }
+      if (!save(next)) return;
+      if (step) {
+        var h = H();
+        h.u.push(step);
+        if (h.u.length > 100) h.u.shift();
+        h.r = [];
+      }
+      if (board && !C.board(data, board)) openBoard(firstBoard());
+      sel = sel.filter(function (id) { return !!objById(id); });
+      updateButtons();
+      render();
+    }
+  };
+  function assistLoad() {
+    if (window.WhiteboardAssist) return Promise.resolve(window.WhiteboardAssist);
+    return (window.orosRecipes ? Promise.resolve() : loadScript("../recipes/core.js"))
+      .then(function () { return loadScript("commands.js"); }).then(function () { return loadScript("assist.js"); }).then(function () {
+        if (!window.WhiteboardAssist) throw new Error("assist");
+        return window.WhiteboardAssist;
+      });
+  }
+  // { edit: { key, chat, docs, steps } } | { editUndo: { key, tok } }
+  function assistRun(tg) {
+    assistLoad().then(function (A) {
+      if (tg.edit) A.edit(tg.edit); else A.undo(tg.editUndo);
+    }, function () { toast(t("as.bad")); });
+  }
 
   function takePending() {
     try {
