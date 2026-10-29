@@ -31,6 +31,17 @@ test("rebuild: pieces on one baseline join into a line; a gap is a word space", 
   assert.equal(RB.toLines([span("Hel", 50, 100, 10), span("lo", 50 + T.measure("serif-r", "Hel", 10, 0), 100, 10)])[0].text, "Hello");
 });
 
+test("rebuild: a list's bullet, set smaller and a little higher, starts its item's line", () => {
+  const item = span("Gold rings", 62, 100, 9);
+  const ls = RB.toLines([span("\u25CF", 50, 99.2, 5), item, span("Silver", 62, 111, 9)]);
+  assert.equal(ls.length, 2);
+  assert.equal(ls[0].text, "\u25CF Gold rings");
+  assert.equal(ls[0].y, 100);
+  assert.equal(ls[0].size, 9);
+  // a big title beside small type stays two lines
+  assert.equal(RB.toLines([span("A", 50, 100, 5), span("Title", 62, 100, 12)]).length, 2);
+});
+
 test("rebuild: a title beside a date on its baseline is two lines; spaced letters become tracking", () => {
   const ls = RB.toLines([span("TITLE", 50, 100, 34), span("2026", 200, 100, 16)]);
   assert.equal(ls.length, 2);
