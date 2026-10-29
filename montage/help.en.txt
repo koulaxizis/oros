@@ -99,6 +99,9 @@ In `Project settings` you can switch on `Sync this project's media`. Montage the
 - [[+]] / [[-]]: zoom the timeline.
 - [[Esc]]: deselect or close a window.
 
+## The Assistant
+Ask the Assistant to change your video projects in words, such as "2026 instead of 2025 in the titles", "make the titles bigger and yellow", "play the first clip twice as fast", "a black and white look for every video", "a wipe between all clips", "add a title card at the end saying Thank you" or "make it 9:16". It shows the changes on a card first; `Apply` makes them here and opens the project. `Undo` on the message here, or on the Assistant's card, puts the project back as long as it wasn't changed since. See the Assistant's help for everything it can do.
+
 ## Tips
 > The preview and the export use the same picture recipe, so what you see while editing is what you get in the file.
 

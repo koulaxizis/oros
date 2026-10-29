@@ -99,6 +99,9 @@ In den `Projekteinstellungen` kannst du `Medien dieses Projekts synchronisieren`
 - [[+]] / [[-]]: die Zeitleiste zoomen.
 - [[Esc]]: Auswahl aufheben oder ein Fenster schließen.
 
+## Der Assistent
+Bitte den Assistenten, deine Videoprojekte mit Worten zu ändern, etwa „2026 statt 2025 in den Titeln“, „die Titel größer und gelb“, „den ersten Clip doppelt so schnell“, „Schwarzweiß für jedes Video“, „Wischen zwischen allen Clips“, „am Ende eine Titelkarte mit Danke“ oder „mach es 9:16“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet das Projekt. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt das Projekt wieder her, solange es seitdem nicht geändert wurde. In der Hilfe des Assistenten steht alles, was er kann.
+
 ## Tipps
 > Vorschau und Export nutzen dasselbe Bildrezept, also bekommst du in der Datei, was du beim Bearbeiten siehst.
 

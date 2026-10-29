@@ -199,7 +199,11 @@
       "nr.hint": "Takes steady background noise (fans, traffic, hum, wind) out of this clip's sound, on this device. Montage makes a cleaned copy of the sound and keeps it like your other media; the original stays as it is.",
       "nr.go": "Reduce noise", "nr.on": "Noise is reduced on this clip.", "nr.off": "Back to the original sound",
       "nr.working": "Cleaning the sound… {p}%", "nr.done": "Noise reduced", "nr.fail": "Could not clean this sound.",
-      "rel.today": "today", "rel.yesterday": "yesterday"
+      "rel.today": "today", "rel.yesterday": "yesterday",
+      "as.done": "The Assistant changed {n} things in {d} projects.", "as.done1": "The Assistant changed {n} things in the project.",
+      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.undone": "The Assistant's change was undone.", "as.changed": "The project was changed since, so the Assistant's change was not undone.",
+      "as.gone": "There is nothing left to undo."
     },
     el: {
       "aria.tools": "Εργαλεία",
@@ -343,7 +347,11 @@
       "nr.hint": "Βγάζει τον σταθερό θόρυβο του φόντου (ανεμιστήρες, κίνηση, βουητό, αέρα) από τον ήχο του clip, σε αυτή τη συσκευή. Το Μοντάζ φτιάχνει ένα καθαρό αντίγραφο του ήχου και το κρατά όπως τα άλλα πολυμέσα σου· το πρωτότυπο μένει όπως είναι.",
       "nr.go": "Μείωση θορύβου", "nr.on": "Ο θόρυβος έχει μειωθεί σε αυτό το clip.", "nr.off": "Πίσω στον αρχικό ήχο",
       "nr.working": "Καθαρίζω τον ήχο… {p}%", "nr.done": "Ο θόρυβος μειώθηκε", "nr.fail": "Δεν καθάρισε αυτός ο ήχος.",
-      "rel.today": "σήμερα", "rel.yesterday": "χθες"
+      "rel.today": "σήμερα", "rel.yesterday": "χθες",
+      "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έργα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έργο.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Το έργο άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+      "as.gone": "Δεν έμεινε κάτι για αναίρεση."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "montage", LANG);
@@ -423,6 +431,12 @@
     } catch (e) {}
   }
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
+  // The open project, for the Assistant (prefs.open, this device only).
+  function noteOpen(id) {
+    if ((prefs.open || null) === id) return;
+    if (id) prefs.open = id; else delete prefs.open;
+    savePrefs();
+  }
 
   var pid = null, sel = null;
   var undoStack = [], redoStack = [];
@@ -472,6 +486,7 @@
     closeDialog();
     if (player) { player.dispose(); player = null; }
     view = "home"; pid = null; sel = null; undoStack = []; redoStack = [];
+    noteOpen(null);
     picking = null; $("stage-wrap").classList.remove("picking");
     $("home").hidden = false; $("editor").hidden = true;
     ["back-btn", "undo-btn", "redo-btn", "proj-btn", "export-btn"].forEach(function (k) { $(k).hidden = true; });
@@ -572,6 +587,7 @@
     if (!data.projects[id]) { showToast(t("toast.notFound")); showHome(); return; }
     closeDialog();
     pid = id; sel = null; undoStack = []; redoStack = []; tNow = 0;
+    noteOpen(id);
     view = "editor";
     $("home").hidden = true; $("editor").hidden = false;
     ["back-btn", "undo-btn", "redo-btn", "proj-btn", "export-btn"].forEach(function (k) { $(k).hidden = false; });
@@ -2396,6 +2412,7 @@
   // one named after the file).
   function openTarget(target) {
     if (!target || typeof target !== "object") return;
+    if (target.edit || target.editUndo) { assistRun(target); return; }
     if (typeof target.project === "string") { if (data.projects[target.project]) openProject(target.project); else showToast(t("toast.notFound")); return; }
     if (target.lyrics && typeof target.lyrics === "object") { lyricsVideo(target.lyrics); return; }
     var f = target.openFile;
@@ -2413,6 +2430,51 @@
         addOpenedFile(b instanceof File ? b : new File([b], name, { type: b.type || "" }));
       }, function () { showToast(t("err.fail")); });
     }
+  }
+  // The Assistant's changes (AS-EDIT, assist.js), loaded on the first
+  // request with commands.js.
+  window.MontageAssistHost = {
+    t: t, uid: uid, toast: showToast, undoToast: undoToast,
+    data: function () { return data; },
+    pid: function () { return pid; },
+    open: function (id) { if (data.projects[id]) openProject(id); },
+    // next = the whole data; withUndo = the open project changed (one
+    // step of Montage's own Undo).
+    set: function (next, withUndo) {
+      if (withUndo) pushUndo();
+      data = next;
+      save();
+      if (sel && cur() && !cur().items[sel]) sel = null;
+      if (view === "editor") refreshEditor(); else renderHome();
+    }
+  };
+  var assistP = null;
+  function assistLoad() {
+    if (window.MontageAssist) return Promise.resolve(window.MontageAssist);
+    if (!assistP) {
+      var v = (document.querySelector('script[src*="montage.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      var load = function (f) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + (m ? "?v=" + m[1] : "");
+          s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      assistP = (window.orosRecipes ? Promise.resolve() : load("../recipes/core.js"))
+        .then(function () { return load("commands.js"); }).then(function () { return load("assist.js"); }).then(function () {
+          if (!window.MontageAssist) throw new Error("assist");
+          return window.MontageAssist;
+        });
+      assistP.catch(function () { assistP = null; });
+    }
+    return assistP;
+  }
+  // { edit: { key, chat, docs, steps } } | { editUndo: { key, tok } }
+  function assistRun(tg) {
+    assistLoad().then(function (A) {
+      if (tg.edit) A.edit(tg.edit); else A.undo(tg.editUndo);
+    }, function () { showToast(t("as.bad")); });
   }
   // Lyric Sync's "Lyric video": a new project with every line as a
   // subtitle clip (the same as Open an SRT file) and the song from the

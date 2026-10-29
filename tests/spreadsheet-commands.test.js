@@ -287,7 +287,7 @@ test("wiring: the Assistant reads Spreadsheet, and the card speaks of sheets and
     assert.ok(has(k), "EN + EL " + k);
     assert.ok(de.includes('"' + k + '":'), "DE " + k);
   });
-  assert.match(as, /\|part\|numfmt\|wrap\|border\|head\|each\)\$\/\.test\(k\)\) return t\("ed\.v\."/, "the card names these values");
+  assert.match(as, /\|part\|numfmt\|wrap\|border\|head\|each\|[a-z|]*\)\$\/\.test\(k\)\) return edT\(app, "ed\.v\."/, "the card names these values");
 });
 
 test("the catalog runs where the Assistant loads it (browser globals, no Node)", () => {
