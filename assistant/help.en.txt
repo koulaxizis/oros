@@ -180,6 +180,13 @@ Ask, for example, "make my open photo black and white", "write Winter instead of
 - A locked layer changes only when the assistant names it on purpose, and its pixels never.
 - `Undo` on the card (or in `Change history`) puts every picture back as it was before, as long as it wasn't changed since.
 
+## Presentations in Slides
+Ask, for example, "2026 instead of 2025 in my open presentation", "make every title red and bold", "copy slide 3", "fade between all slides", "use the ocean theme and number the slides" or "add a Questions slide at the end". The assistant reads the presentation (with your permission for [Slides](app:slides)) and shows a card with the changes and how many things each presentation gets.
+- `Apply` makes the changes in Slides on this device and opens the presentation; in the open presentation they are one step of its own Undo.
+- What it can change: find and replace in texts, tables and speaker notes; texts (new text, font, size, colour, bold, italic, underline, alignment); fills and outlines; pictures (fit, rounded corners, description); position, size, rotation, opacity, alignment, order and lock; entrance animations; new texts, shapes and lines; slides (add, copy, remove, move, layout, transition, hide, background colour, speaker notes); the theme, the slide shape (16:9 or 4:3), the footer, slide numbers and the date; the presentation's name. It works on the open presentation, a presentation by name or all of them.
+- A locked object is moved or removed only when the assistant names it on purpose.
+- `Undo` on the card (or in `Change history`) puts every presentation back as it was before, as long as it wasn't changed since.
+
 ## Photos, PDFs and documents
 Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 30 files go with one message, each up to 30 MB.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.
