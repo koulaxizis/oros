@@ -62,12 +62,17 @@
   function hasBlur(ax) {
     return FX.textPasses(ax.tfx, ax.size || AX.TEXT_DEF.size, ax.fc || "#000000").some(function (p) { return p.blur > 0; });
   }
+  // runs in an own font (ext.runs fam): the font file is never handed out
+  function ownRuns(it) {
+    var r = AX.runsOf(it);
+    return !!r && r.some(function (x) { return x.fam !== undefined && AX.famOf({ ext: { fam: x.fam } }); });
+  }
   function kindOf(it) {
     var ax = it && it.ax;
     if (!ax || it.hide || ax.tg) return "";
     if (ax.k === "text") {
       if (!ax.tx || !ax.tx.trim()) return "";
-      if (AX.famOf(it)) return "raster";
+      if (AX.famOf(it) || ownRuns(it)) return "raster";
       return hasBlur(ax) ? "textfx" : "text";
     }
     if (ax.k === "shape") return ax.g || ax.fc || (ax.sc && it.sw > 0) ? "vector" : "";
@@ -120,7 +125,11 @@
     }
     doc.items.forEach(function (it) {
       if (!it.ax || !want[it.pg] || it.hide) return;
-      if (it.ax.k === "text") { if (!AX.famOf(it)) add(AX.fontKeyOf(it.ax)); }
+      if (it.ax.k === "text") {
+        if (AX.famOf(it) || ownRuns(it)) return;
+        add(AX.fontKeyOf(it.ax));
+        if (AX.runsOf(it)) AX.textLayout(it).lines.forEach(function (ln) { ln.runs.forEach(function (r) { if (r.key) add(r.key); }); });
+      }
       else if (it.ax.k === "table") { add(AX.fontKeyOf({ font: it.ax.font })); add(AX.fontKeyOf({ font: it.ax.font, b: 1 })); }
     });
     return Object.keys(keys).sort();
@@ -139,12 +148,21 @@
   function dashAt(it, sw) { return it.dash ? at("stroke-dasharray", n2(sw * 3) + " " + n2(sw * 2)) : ""; }
 
   function gradientOf(P, it, g) {
+    var own = AX.gradOf(it), gid = P.id("g");
+    var stops = (own ? own.st : [[0, g.a], [1, g.b]]).map(function (x) {
+      return '<stop offset="' + n2(x[0]) + '"' + at("stop-color", colour(x[1], "#000000")) + "/>";
+    }).join("");
+    if (own && own.r) {
+      var ox = own.c[0] * it.w, oy = own.c[1] * it.h;
+      var R = Math.max(Math.hypot(ox, oy), Math.hypot(it.w - ox, oy), Math.hypot(ox, it.h - oy), Math.hypot(it.w - ox, it.h - oy));
+      P.defs.push('<radialGradient id="' + gid + '" gradientUnits="userSpaceOnUse" cx="' + n2(ox) + '" cy="' + n2(oy) + '" r="' + n2(Math.max(R, 0.01)) + '">' + stops + "</radialGradient>");
+      return "url(#" + gid + ")";
+    }
     var a = rad(g.ang - 90), cx = it.w / 2, cy = it.h / 2;
     var len = Math.abs(it.w * Math.cos(a)) / 2 + Math.abs(it.h * Math.sin(a)) / 2;
-    var dx = Math.cos(a) * len, dy = Math.sin(a) * len, gid = P.id("g");
+    var dx = Math.cos(a) * len, dy = Math.sin(a) * len;
     P.defs.push('<linearGradient id="' + gid + '" gradientUnits="userSpaceOnUse" x1="' + n2(cx - dx) + '" y1="' + n2(cy - dy) +
-      '" x2="' + n2(cx + dx) + '" y2="' + n2(cy + dy) + '"><stop offset="0"' + at("stop-color", colour(g.a, "#000000")) +
-      '/><stop offset="1"' + at("stop-color", colour(g.b, "#000000")) + "/></linearGradient>");
+      '" x2="' + n2(cx + dx) + '" y2="' + n2(cy + dy) + '">' + stops + "</linearGradient>");
     return "url(#" + gid + ")";
   }
 
