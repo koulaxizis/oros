@@ -66,6 +66,7 @@ Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Do
 - Mit `Dokumente mit Fehlern nicht exportieren` wird ein Dokument mit Preflight-Fehlern nicht exportiert. Ein PDF wird mit dem üblichen Speichern-Dialog gesichert; mehrere landen in Dateien, im Ordner `Layout`, ohne ältere zu überschreiben.
 - Automationen werden mit deinen anderen Geräten synchronisiert, zusammen mit denen von Atelier und Photo Lab.
 - `Teilen` speichert eine Automation als `.orosrecipe`-Datei, die du an alle mit orOS schicken kannst; `Importieren` in der Liste liest sie wieder ein. Die Datei enthält nur die Schritte, nie Code: Sie wird beim Einlesen geprüft und öffnet sich im Editor, wo du sie ansiehst und auf `Speichern` tippst. Eine Datei für eine andere App bietet an, sie dort zu öffnen.
+- Der [Assistent](app:assistant) kann diese Änderungen auch für dich machen: bitte zum Beispiel „füge 8 Seiten hinzu und nummeriere ab 5“ oder „mach die Bilder auf den Seiten 3-10 schwarzweiß“. Seine Karte zeigt die Änderungen; `Anwenden` öffnet Seitenlayout, das sie auf diesem Gerät vornimmt, und `Rückgängig` (auf der Karte oder in der Meldung hier) setzt jedes Dokument zurück, solange es seitdem nicht geändert wurde.
 
 ## Arbeit aus anderen Programmen holen
 `Datei öffnen` auf der Startseite öffnet als neues Dokument auch:

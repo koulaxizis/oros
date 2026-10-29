@@ -168,6 +168,11 @@ Ask, for example, "make the photos black and white in my summer poster", "change
 - It can also animate (entrances, seconds per page, transitions), add texts, shapes, icons and lines, apply your brand kit (its fonts and colours), make copies in new sizes ("make it a story too"), make the files for you to save (PNG, JPG or PDF) and make a whole new design from your description ("a poster for our concert on 12 May"). New designs and copies are new designs in Atelier; `Undo` removes them again.
 - `Undo` on the card (or in `Change history`) puts every design back as it was before, as long as it wasn't changed since.
 
+## Documents in Layout
+The same card changes your print documents in [Layout](app:layout). Ask, for example, "start every chapter on a right-hand page", "make the body text 11 pt with hyphenation", "add 8 pages after page 40 and let the text run on", "number the pages from 5", "3 mm bleed" or "make the pictures on the odd pages black and white".
+- What it can change: find and replace text, a paragraph style (size, leading, font, alignment, letter spacing, bold, italic, capitals, space before and after, first-line indent, where it starts, hyphenation), paragraphs from one style to another, masters on pages, margins, pages (add, remove), fitting text that does not fit onto new pages, page numbers, bleed, pictures (black and white, whole or filling the frame) and the document's name. It works on the open document, a document by name or all your documents.
+- `Apply` opens Layout, which makes the changes on this device; black and white makes copies of the pictures and keeps the colour ones. `Undo` puts every document back, as long as it wasn't changed since.
+
 ## Photos, PDFs and documents
 Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 30 files go with one message, each up to 30 MB.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.

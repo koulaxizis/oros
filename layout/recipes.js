@@ -249,6 +249,8 @@
     targets: targets, preview: preview, run: run
   });
   LY.recipes = panel;
+  // the black and white copies, also for the Assistant's changes (assist.js)
+  LY.recipeGrey = greyCopies;
 
   var b = document.getElementById("btn-recipes");
   if (b) b.addEventListener("click", function () { panel.open(); });
