@@ -2574,8 +2574,8 @@
         type: "object",
         properties: {
           app: { type: "string", "enum": apps.slice().sort() },
-          designs: { type: "string", "enum": ["open", "named"], description: "open (the one open in the app, the default) or named." },
-          name: { type: "string", description: "designs named: the document's name." }
+          designs: { type: "string", "enum": ["open", "named", "style"], description: "open (the one open in the app, the default) or named. Atelier only: style reads the user's own style (fonts by role, sizes, colours, alignment of their designs, worked out on their device) for one kind of design named in `name` (square, 4:5, 9:16, 16:9, A portrait, bookmark, banner) or, without a name, every kind; use it before making a new design in their style." },
+          name: { type: "string", description: "designs named: the document's name; designs style: the kind of design." }
         },
         required: ["app"]
       }
@@ -2600,7 +2600,7 @@
     var a = isObj(args) ? args : {}, app = String(a.app || "");
     if (!cats || !cats[app] || !EDIT_APP[app]) return bad("app must be one of: " + Object.keys(cats || {}).join(", ") + ".");
     var designs = a.designs === undefined || a.designs === "" ? "open" : String(a.designs);
-    if (designs !== "open" && designs !== "named") return bad("designs must be open or named.");
+    if (designs !== "open" && designs !== "named" && !(designs === "style" && app === "atelier")) return bad("designs must be open or named" + (app === "atelier" ? " (or style)" : "") + ".");
     var name = squash(a.name || "").slice(0, 120);
     if (designs === "named" && !name) return bad("give the " + EDIT_APP[app].noun + "'s name.");
     return { ok: true, app: app, designs: designs, name: name };
