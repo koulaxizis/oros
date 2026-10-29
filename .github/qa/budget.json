@@ -5,12 +5,12 @@
   },
   "apps": {
     "assistant": {
-      "bytes": 952371,
-      "ms": 162
+      "bytes": 1059297,
+      "ms": 205
     },
     "atelier": {
-      "bytes": 2404343,
-      "ms": 368
+      "bytes": 2462541,
+      "ms": 507
     },
     "aura": {
       "bytes": 94591,
@@ -457,8 +457,8 @@
       "ms": 54
     },
     "today": {
-      "bytes": 268340,
-      "ms": 61
+      "bytes": 327545,
+      "ms": 83
     },
     "todo": {
       "bytes": 482092,
