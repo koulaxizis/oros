@@ -1,6 +1,6 @@
 // ============================================================
 // orOS Atelier — commands.js: what the Assistant may change in a
-// design (AS-EDIT, wave AC1, v1.0.0)
+// design (AS-EDIT, waves AC1 + AC2, v1.1.0)
 // A fixed catalog of commands, in the step format of the automations
 // (recipes/core.js specs): the Assistant never writes code or raw
 // data, it sends { op, …fields } that check() accepts. The same file
@@ -23,8 +23,15 @@
 // nothing more.
 // apply(doc, step, env) edits a copy of a design in place and returns
 // how many elements, pages or settings changed. env: { now, newId,
-// normItem, textHeight, addBackground, notes[] }; without the helpers
-// (the Assistant's preview) it still counts.
+// normItem, textHeight, addBackground, addItem, findIcon, relaid,
+// newDesign, brand, notes[] }; without the helpers (the Assistant's
+// preview) it still counts.
+// Wave AC2: animation (animate, pagetime), new elements (add), the
+// brand kit (brand), new sizes (resize: the design itself, or copies
+// that the commands after it change), files (export) and a new design
+// from scratch (create, first command, designs "new"). Atelier runs
+// resize with copies, export and create itself (assist.js): copies
+// and new designs count as made, Undo removes them.
 // Pure: no DOM. Exposes window.AtelierCommands (browser) or module.exports.
 // ============================================================
 (function (root) {
@@ -41,6 +48,10 @@
   var ADJ = ["bright", "contrast", "sat", "warmth", "tint", "fade", "sepia", "vignette", "blur", "sharpen"];
   var POS = ["tl", "t", "tr", "l", "c", "r", "bl", "b", "br"];
   var WHAT = ["", "text", "photo", "video", "shape", "icon", "line", "table", "chart", "bg"];
+  var ANIMS = ["fade", "rise", "pop", "wipe", "type"], TRANSITIONS = ["none", "fade", "slide", "push", "zoom"];
+  var DUR_DEF = 5, PTR_DEF = "fade";
+  var ADD_KINDS = ["text", "shape", "icon", "line"];
+  var SIZE = { t: "obj", f: { w: { t: "num", lo: 1, hi: 20000, req: 1 }, h: { t: "num", lo: 1, hi: 20000, req: 1 }, u: { t: "enum", v: ["px", "mm"], def: "px" } } };
   var TEXT_DEF = { font: "sans", size: 48, lh: 120, al: "l" }, TABLE_SIZE = 24, RD_DEF = 30, MAX_PAGES = 999;
   var PT_PER = { mm: 72 / 25.4, in: 72, pt: 1 };
 
@@ -85,12 +96,22 @@
     movepage: { kind: "doc", args: { page: { t: "int", lo: 1, hi: 9999, def: 1, req: 1 }, dest: { t: "int", lo: 1, hi: 9999, def: 1, req: 1 } } },
     bg: { kind: "doc", args: { pages: SEL.pages, fill: { t: "color" }, grad: { t: "color" }, ang: int(-360, 360) } },
     bleed: { kind: "doc", args: { mm: { t: "num", lo: 0, hi: 25, def: 3, req: 1 } } },
-    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } },
+    animate: { kind: "doc", args: sel({ anim: oneOf(["", "none"].concat(ANIMS)) }) },
+    pagetime: { kind: "doc", args: { pages: SEL.pages, secs: int(1, 60), trans: oneOf([""].concat(TRANSITIONS)) } },
+    add: { kind: "doc", args: { what: { t: "enum", v: ADD_KINDS, def: "text", req: 1 }, page: { t: "int", lo: 1, hi: 9999, def: 1 }, text: { t: "str", max: 5000 },
+      x: num(-20000, 20000), y: num(-20000, 20000), w: num(0.5, 20000), h: num(0.5, 20000), font: { t: "font" }, size: num(2, 2000), c: { t: "color" },
+      align: oneOf(["", "l", "c", "r", "j"]), bold: ONOFF, fill: { t: "color" }, shape: oneOf([""].concat(SHAPES)), icon: { t: "str", max: 60 }, anim: oneOf(["", "none"].concat(ANIMS)) } },
+    brand: { kind: "doc", args: { fonts: { t: "bool", def: 1 }, palette: { t: "bool", def: 1 } } },
+    resize: { kind: "size", args: { sizes: { t: "list", of: SIZE, min: 1, max: 12 }, copies: { t: "bool", def: 1 } } },
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["png", "jpg", "pdf"], def: "png" }, scale: { t: "enum", v: [1, 2, 3], def: 1 }, dpi: { t: "enum", v: [150, 300], def: 300 } } },
+    create: { kind: "new", args: { title: { t: "str", max: 120 }, w: { t: "num", lo: 1, hi: 20000, def: 1080, req: 1 }, h: { t: "num", lo: 1, hi: 20000, def: 1080, req: 1 },
+      u: { t: "enum", v: ["px", "mm"], def: "px" }, n: { t: "int", lo: 1, hi: 100, def: 1 }, fill: { t: "color" } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
   // Commands that pick elements: the ones that remove need a pick.
-  function picks(op) { return !!(CATALOG[op] && CATALOG[op].args.what); }
+  function picks(op) { return !!(CATALOG[op] && CATALOG[op].args.ids); }
 
   // What each command does, for the model (English, short). Every op
   // and field is named here (a test checks it).
@@ -111,7 +132,14 @@
     "movepage: page `page` moves to position `dest`",
     "bg: the page background of `pages`: fill colour, grad (gradient end), ang",
     "bleed: the bleed in mm (print designs only)",
-    "rename: the design's name becomes `title`"
+    "rename: the design's name becomes `title`",
+    "animate: the entrance animation of the picked elements (for video, GIF and the preview): anim " + ANIMS.join("|") + " (type: texts only) or none",
+    "pagetime: for `pages`, secs (how long each page shows in a video, 1-60) and trans (the transition to it: " + TRANSITIONS.join("|") + ")",
+    "add: a new element on page `page` (1 = first): what text (needs text; font, size, c, align l|c|r|j, bold) | shape (shape, fill) | icon (icon = a word for it, like heart, phone, star; c) | line (c); x, y, w, h in the design's unit (left out: centred, a sensible size); anim",
+    "brand: use the user's brand kit: fonts (titles get the heading font, the rest the body font) and palette (the design's main colours become the kit's colours, white and black stay); false skips one",
+    "resize: new sizes: sizes [{w, h, u px|mm}] (1-12); copies true (the default) keeps the design and makes a copy per size, and the commands after it change the copies; copies false changes the design itself to the first size",
+    "export: download the designs as files: fmt png|jpg|pdf, scale 1|2|3 (png, jpg), dpi 150|300 (pdf); the user saves them",
+    "create: a new design (only as the first command, with designs new): title, w, h, u px|mm, n pages (1-100), fill (background colour); the commands after it fill it in (add, bg, pagetime…)"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -157,6 +185,11 @@
     if (raw.op === "remove" && !given(st.ids) && !given(st.pages) && !given(st.what) && !given(st.has)) return { err: "remove: pick the elements with ids, what, has or pages" };
     if (raw.op === "align" && !st.edge && !st.dist) return { err: "align: give edge or dist" };
     if (raw.op === "bg" && !st.fill && !st.grad) return { err: "bg: give fill or grad" };
+    if (raw.op === "animate" && !st.anim) return { err: "animate: give anim" };
+    if (raw.op === "pagetime" && st.secs === null && !st.trans) return { err: "pagetime: give secs or trans" };
+    if (raw.op === "add" && st.what === "text" && !given(st.text)) return { err: "add: a text needs text" };
+    if (raw.op === "add" && st.what === "icon" && !given(st.icon)) return { err: "add: an icon needs icon (a word for it)" };
+    if (raw.op === "brand" && !st.fonts && !st.palette) return { err: "brand: fonts and palette are both false" };
     return { step: st };
   }
   function wrap(op) { var c = {}; c[op] = CATALOG[op]; return c; }
@@ -171,6 +204,7 @@
       else steps.push(r.step);
     });
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
+    if (steps.some(function (st, i) { return st.op === "create" && i > 0; })) return { ok: false, err: "create can only be the first command" };
     return { ok: true, steps: steps };
   }
 
@@ -253,10 +287,7 @@
         if (k !== "text" && k !== "table") break;
         if (st.font) {
           setOpt(ax, "font", st.font, k === "table" ? TEXT_DEF.font : undefined);
-          if (it.ext && it.ext.fam !== undefined) {           // an own font (ax.js ext.fam) gives way
-            delete it.ext.fam;
-            if (!Object.keys(it.ext).length) delete it.ext;
-          }
+          dropOwnFont(it);
         }
         if (st.size !== null) setOpt(ax, "size", st.size, k === "table" ? TABLE_SIZE : undefined);
         if (st.c) ax.fc = st.c;
@@ -343,6 +374,11 @@
         if (st.opacity !== null) it.op = st.opacity;
         break;
       }
+      case "animate":
+        if (ax.bg) break;
+        if (st.anim === "none") delete ax.an;
+        else if (st.anim !== "type" || k === "text") ax.an = st.anim;
+        break;
       case "arrange":
         if (st.lock) { if (st.lock === "on") it.lock = 1; else it.lock = 0; }
         if (st.hide) { if (st.hide === "on") it.hide = 1; else it.hide = 0; }
@@ -489,6 +525,31 @@
         });
         return n;
       }
+      case "pagetime": {
+        var on = pageSet(st.pages, pages.length) || {};
+        pages.forEach(function (p, i) {
+          if (!on[i]) return;
+          var b = bgOf(doc, p.id);
+          if (!b) { b = addBackground(doc, p.id, "#ffffff", env); if (!b) return; }
+          var was = JSON.stringify(b);
+          if (st.secs !== null) setOpt(b.ax, "dur", st.secs, DUR_DEF);
+          if (st.trans) setOpt(b.ax, "ptr", st.trans, PTR_DEF);
+          if (JSON.stringify(b) !== was) { stamp(b, nw); n++; }
+        });
+        return n;
+      }
+      case "add": return addCmd(doc, st, env);
+      case "brand": return brandCmd(doc, st, env);
+      case "resize": {
+        if (st.copies) return st.sizes.length;
+        if (!env.relaid) return 1;
+        var z = ptSize(st.sizes[0]), r = env.relaid(doc, z.w, z.h, z.unit);
+        doc.setup = r.setup; doc.items = r.items;
+        stamp(doc, nw);
+        doc.items.forEach(function (it) { stamp(it, nw); });
+        return 1;
+      }
+      case "export": case "create": return 0;
       case "bleed": {
         if (!doc.setup || doc.setup.unit !== "mm") { note(env, "screenBleed"); return 0; }
         var v = r2(st.mm * PT_PER.mm);
@@ -504,6 +565,101 @@
         return 1;
     }
     return 0;
+  }
+
+  // A size of resize / create in points, and the design unit.
+  function ptSize(z) { var mm = z.u === "mm"; return { w: r2(mm ? z.w * PT_PER.mm : z.w), h: r2(mm ? z.h * PT_PER.mm : z.h), unit: mm ? "mm" : "pt" }; }
+
+  // add: one new element; left-out sizes and positions are sensible.
+  function addCmd(doc, st, env) {
+    var pages = pagesOf(doc);
+    if (!pages.length) return 0;
+    var pg = pages[Math.min(pages.length, st.page || 1) - 1], W = doc.setup.w, H = doc.setup.h, k = st.what;
+    var w = st.w !== null ? toPt(doc, st.w) : k === "text" ? W * 0.8 : k === "line" ? W * 0.5 : Math.min(W, H) * (k === "icon" ? 0.15 : 0.3);
+    var h = st.h !== null ? toPt(doc, st.h) : k === "line" ? 0 : k === "text" ? (st.size || TEXT_DEF.size) * 1.3 : w;
+    var spec = { k: k, x: r2(st.x !== null ? toPt(doc, st.x) : (W - w) / 2), y: r2(st.y !== null ? toPt(doc, st.y) : (H - h) / 2), w: r2(w), h: r2(h) };
+    if (k === "text") {
+      spec.tx = st.text; spec.font = st.font || TEXT_DEF.font; spec.size = st.size || TEXT_DEF.size;
+      if (st.c) spec.fc = st.c;
+      if (st.align) spec.al = st.align;
+      if (st.bold === "on") spec.b = 1;
+    } else if (k === "shape") {
+      spec.shp = st.shape || "rect"; spec.fc = st.fill || st.c || "#cccccc";
+    } else {
+      if (k === "icon") spec.ico = env.findIcon ? env.findIcon(st.icon) : "star";
+      spec.sc = st.c || st.fill || "#000000";
+    }
+    if (st.anim && st.anim !== "none" && !(st.anim === "type" && k !== "text")) spec.an = st.anim;
+    if (env.addItem) return env.addItem(doc, pg.id, spec, env.now) ? 1 : 0;
+    var it = { id: newId(env, "it"), m: env.now, t: k === "line" ? "line" : "rect", pg: pg.id, x: spec.x, y: spec.y, w: spec.w, h: spec.h, z: 1, ax: {} };
+    Object.keys(spec).forEach(function (f) { if (["x", "y", "w", "h"].indexOf(f) < 0) it.ax[f] = spec[f]; });
+    doc.items.push(it);
+    return 1;
+  }
+
+  // brand: the brand kit's fonts and colours (env.brand: the kit).
+  var KEEP_COLORS = { "#ffffff": 1, "#000000": 1 };
+  // a font set by a command replaces an own font (ax.js ext.fam)
+  function dropOwnFont(it) {
+    if (!it.ext || it.ext.fam === undefined) return;
+    delete it.ext.fam;
+    if (!Object.keys(it.ext).length) delete it.ext;
+  }
+
+  function brandCmd(doc, st, env) {
+    var kit = env.brand;
+    if (!kit) { note(env, "noBrand"); return 0; }
+    var fonts = kit.fonts || {}, cols = (kit.colors || []).map(function (x) { return lc(x.c); }).filter(Boolean);
+    var before = {};
+    doc.items.forEach(function (it) { before[it.id] = JSON.stringify(it); });
+    if (st.fonts && (fonts.h || fonts.t)) {
+      var texts = doc.items.filter(function (it) { return it.ax && it.ax.k === "text"; });
+      var max = Math.max.apply(null, [0].concat(texts.map(function (it) { return it.ax.size || TEXT_DEF.size; })));
+      texts.forEach(function (it) {
+        var sz = it.ax.size || TEXT_DEF.size, slot = sz >= max * 0.75 ? (fonts.h ? "h" : "t") : sz >= max * 0.5 && fonts.s ? "s" : fonts.t ? "t" : "";
+        var f = slot && fonts[slot];
+        if (!f || !f.f) return;
+        setOpt(it.ax, "font", f.f, undefined);
+        dropOwnFont(it);
+        if (f.b) it.ax.b = 1; else delete it.ax.b;
+      });
+    } else if (st.fonts) note(env, "noBrandFonts");
+    if (st.palette && cols.length) {
+      var count = {}, seen = function (c) { c = lc(c); if (c && !KEEP_COLORS[c]) count[c] = (count[c] || 0) + 1; };
+      doc.items.forEach(function (it) {
+        var ax = it.ax || {};
+        seen(ax.fc); seen(ax.sc);
+        if (ax.g) { seen(ax.g.a); seen(ax.g.b); }
+      });
+      var used = Object.keys(count).sort(function (a, b) { return count[b] - count[a] || (a < b ? -1 : 1); }), map = {};
+      used.slice(0, cols.length).forEach(function (c, i) { map[c] = cols[i]; });
+      doc.items.forEach(function (it) {
+        var ax = it.ax || {};
+        ["fc", "sc"].forEach(function (f) { if (map[lc(ax[f])]) ax[f] = map[lc(ax[f])]; });
+        if (ax.g) ["a", "b"].forEach(function (f) { if (map[lc(ax.g[f])]) ax.g[f] = map[lc(ax.g[f])]; });
+      });
+    } else if (st.palette) note(env, "noBrandColors");
+    var n = 0;
+    doc.items.forEach(function (it) {
+      if (JSON.stringify(it) === before[it.id]) return;
+      if (it.ax.k === "text" && env.textHeight) it.h = env.textHeight(it);
+      stamp(it, env.now);
+      n++;
+    });
+    return n;
+  }
+
+  // create: a new design (Atelier: env.newDesign = AX.newDesign).
+  function makeNew(st, env) {
+    var z = ptSize({ w: st.w, h: st.h, u: st.u }), name = st.title || "";
+    if (env.newDesign) return env.newDesign({ name: name, w: z.w, h: z.h, unit: z.unit, pages: st.n || 1, bg: st.fill || "#ffffff" });
+    var d = { id: "doc-new", m: env.now || 1, name: name, setup: { w: z.w, h: z.h, unit: z.unit, bleed: 0 }, pages: [], items: [], tombs: {} };
+    for (var i = 0; i < (st.n || 1); i++) {
+      var p = { id: "pg-new" + i, m: d.m, pos: (i + 1) * 1024, ms: "" };
+      d.pages.push(p);
+      addBackground(d, p.id, st.fill || "#ffffff", env);
+    }
+    return d;
   }
 
   // One command on a copy of a design → how many things changed.
@@ -551,6 +707,7 @@
   function norm(s) { return String(s || "").toLowerCase().replace(/\s+/g, " ").trim(); }
   function targets(data, folders, open, designs, name) {
     var docs = data && Array.isArray(data.docs) ? data.docs : [];
+    if (designs === "new") return { ok: true, docs: [{ id: "", name: String(name || "") }], fresh: 1 };
     if (!docs.length) return { ok: false, err: "the user has no designs in Atelier yet" };
     var list = [];
     if (designs === "all") list = docs.slice();
@@ -580,20 +737,34 @@
   }
   // What a list of commands would change, on copies: { n, d, per[{id,
   // name, n}], cut (photos for background removal), notes[] }
-  function preview(data, ids, steps) {
-    var docs = data && Array.isArray(data.docs) ? data.docs : [], out = { n: 0, d: 0, per: [], cut: 0, notes: [] };
-    ids.forEach(function (id) {
-      var src = null;
-      docs.forEach(function (d) { if (d.id === id) src = d; });
-      if (!src) return;
-      var w = JSON.parse(JSON.stringify(src)), k = 0, env = { now: 1, notes: out.notes };
-      steps.forEach(function (st) {
-        if (CATALOG[st.op].kind === "async") { out.cut += apply(w, st, env); return; }
+  // ctx: { brand } (the brand kit, for brand). made: copies and new
+  // designs; files: designs exported.
+  function preview(data, ids, steps, ctx) {
+    var docs = data && Array.isArray(data.docs) ? data.docs : [], out = { n: 0, d: 0, per: [], cut: 0, made: 0, files: 0, notes: [] };
+    function run(w, list, name, id) {
+      var k = 0, env = { now: 1, notes: out.notes, brand: ctx && ctx.brand || null };
+      list.forEach(function (st) {
+        var kind = CATALOG[st.op].kind;
+        if (kind === "async") { out.cut += apply(w, st, env); return; }
+        if (kind === "out") { out.files++; return; }
+        if (kind === "size" && st.copies) { out.made += st.sizes.length; return; }
         k += apply(w, st, env);
       });
       out.n += k;
       if (k) out.d++;
-      out.per.push({ id: id, name: src.name || "", n: k });
+      out.per.push({ id: id, name: name, n: k });
+    }
+    if (steps.length && steps[0].op === "create") {
+      var nd = makeNew(steps[0], { now: 1, notes: out.notes });
+      out.made++;
+      run(nd, steps.slice(1), steps[0].title || "", "");
+      return out;
+    }
+    ids.forEach(function (id) {
+      var src = null;
+      docs.forEach(function (d) { if (d.id === id) src = d; });
+      if (!src) return;
+      run(JSON.parse(JSON.stringify(src)), steps, src.name || "", id);
     });
     return out;
   }
@@ -610,6 +781,8 @@
       if (b) {
         if (b.ax.k === "photo") pg.background = "photo " + (b.nm || "");
         else pg.background = b.ax.g ? "gradient " + b.ax.g.a + " → " + b.ax.g.b : b.ax.fc || "";
+        if (b.ax.dur) pg.secs = b.ax.dur;
+        if (b.ax.ptr) pg.transition = b.ax.ptr;
       }
       doc.items.filter(function (it) { return it.pg === p.id && it.ax && !it.ax.bg; }).sort(function (a, b2) { return a.z - b2.z; }).forEach(function (it) {
         if (n >= OUT_ITEMS) { cut = true; return; }
@@ -652,7 +825,9 @@
 
   var api = {
     CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, FILTERS: FILTERS, SHAPES: SHAPES, EFFECTS: EFFECTS, ADJ: ADJ, WHAT: WHAT, POS: POS,
-    check: check, pageSet: pageSet, pick: pick, apply: apply, targets: targets, preview: preview, outline: outline, picks: picks
+    ANIMS: ANIMS, TRANSITIONS: TRANSITIONS,
+    check: check, pageSet: pageSet, pick: pick, apply: apply, targets: targets, preview: preview, outline: outline, picks: picks,
+    makeNew: makeNew, ptSize: ptSize
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierCommands = api;
