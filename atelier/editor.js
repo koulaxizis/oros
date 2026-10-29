@@ -782,7 +782,7 @@
       it.ax.tx = v;
       // a new text box grows with what is typed (up to the page)
       if (growId === id && !it.ax.cv) {
-        var nw = Math.min(d.setup.w * 0.9, Math.max(it.w, AX.textWidth(it.ax)));
+        var nw = Math.min(d.setup.w * 0.9, Math.max(it.w, AX.textWidth(it.ax, it)));
         if (nw > it.w) { it.x -= (nw - it.w) / 2; it.w = nw; }
       }
     });
@@ -796,10 +796,10 @@
       var it = find(ED.editId);
       if (!it) { ED.editId = null; ta.hidden = true; return; }
       var ax = it.ax, z = ED.zoom;
-      var key = AX.fontKeyOf(ax), size = ax.size || 48;
+      var key = AX.fontKeyOf(ax, it), size = ax.size || 48;
       var p = toScreen(it.x, it.y);
       ta.style.left = p.x + "px"; ta.style.top = p.y + "px";
-      var w = ax.cv ? Math.max(it.w, AX.textWidth(ax)) : it.w;
+      var w = ax.cv ? Math.max(it.w, AX.textWidth(ax, it)) : it.w;
       ta.style.width = (w * z + 2) + "px";
       ta.style.height = Math.max(it.h, size * (ax.lh || 120) / 100) * z + "px";
       ta.style.transform = it.rot ? "rotate(" + it.rot + "deg)" : "";

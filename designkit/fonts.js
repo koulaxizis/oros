@@ -144,11 +144,14 @@
 
   // Can this file be kept? → { ok, err, info }; err: "size" | "type" |
   // "outlines" (PostScript) | "restricted" (licence forbids embedding).
-  function check(buf) {
+  // opts.cff: PostScript outlines are fine (Atelier keeps the fonts a
+  // Canva PowerPoint brought and draws their text as a picture in a
+  // PDF; Layout never asks, so its library stays TrueType only).
+  function check(buf, opts) {
     if (!buf || buf.byteLength > MAX) return { ok: false, err: "size" };
     var nfo;
     try { T.parseTTF(buf); nfo = info(buf); } catch (e) { return { ok: false, err: "type" }; }
-    if (!nfo.glyf) return { ok: false, err: "outlines", info: nfo };
+    if (!nfo.glyf && !(opts && opts.cff)) return { ok: false, err: "outlines", info: nfo };
     if ((nfo.fsType & 0x000F) === 0x0002) return { ok: false, err: "restricted", info: nfo };
     if (!nfo.family) return { ok: false, err: "type" };
     return { ok: true, err: "", info: nfo };
@@ -308,31 +311,33 @@
   }
   // A file the user picked → kept on the disk (once: the name is its
   // hash). Promise of { file, family, sub, b, i, fb } or { err }.
-  function importFile(file) {
+  // opts: as check().
+  function importFile(file, opts) {
     var F = fs();
     if (!F) return Promise.resolve({ err: "disk" });
     if (!file || file.size > MAX * 2) return Promise.resolve({ err: "size" });
     return file.arrayBuffer().then(local).then(unwoff).then(function (buf) {
       if (!buf) return { err: "type" };
-      var c = check(buf);
+      var c = check(buf, opts);
       if (!c.ok) return { err: c.err };
       return sha256(buf).then(function (h) {
         var name = h + ".ttf", path = FOLDER + "/" + name;
         var rec = { file: name, family: c.info.family, sub: c.info.sub, b: c.info.b, i: c.info.i, fb: c.info.fb };
         return F.stat(path).then(function () { return null; }, function () {
           return F.mkdir(FOLDER).then(null, function () {}).then(function () { return F.write(path, new Blob([buf], { type: "font/ttf" })); });
-        }).then(function () { known[name] = rec; return rec; });
+        }).then(function () { if (c.info.glyf) known[name] = rec; return rec; });   // library() lists TrueType only
       });
     }, function () { return { err: "type" }; });
   }
   // A font file from a package: checked against its name (the hash).
-  function put(name, blob) {
+  // opts: as check().
+  function put(name, blob, opts) {
     var F = fs();
     if (!F || !FILE_RE.test(name || "")) return Promise.reject(new Error("badid"));
     return blob.arrayBuffer().then(local).then(function (ab) {
       return sha256(ab).then(function (h) {
         if (h + ".ttf" !== name) throw new Error("hash");
-        if (!check(ab).ok) throw new Error("font");
+        if (!check(ab, opts).ok) throw new Error("font");
         var path = FOLDER + "/" + name;
         return F.stat(path).then(function () { return null; }, function () {
           return F.mkdir(FOLDER).then(null, function () {}).then(function () { return F.write(path, new Blob([ab], { type: "font/ttf" })); });

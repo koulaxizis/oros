@@ -15,7 +15,8 @@
 //   shp    shape id (fx.SHAPES): the shape of a shape, the mask of a
 //          photo; rd = roundness 0..100 (rounded / bubble; default 30)
 //   ico    icon id (library/icons.js), drawn with sc
-//   text:  tx, font (sans|serif|mono|fs_<fontsource id>), size (pt), b, i, u, caps, al l|c|r|j,
+//   text:  tx, font (sans|serif|mono|fs_<fontsource id>; with ext.fam the
+//          stand-in), size (pt), b, i, u, caps, al l|c|r|j,
 //          lh (line height %), tr (tracking 1/1000 em),
 //          tfx (fx.normTextFx, omitted when "none"), cv (curve)
 //   photo: adj (fx.normAdjust, omitted at identity), flt (preset id),
@@ -46,6 +47,17 @@
 //            nearer end's shape, so the file still opens.
 //   ext.bl   { g, a, b, n, i }: this shape is step i of n of blend g
 //            between items a and b (re-made by Blend › Update)
+// Since wave AC3 (own fonts, Canva PowerPoint fonts):
+//   ext.fam  on a text item: "uf_<16 hex>", a font file of the user's
+//            on the orOS disk (designkit/fonts.js), drawn instead of
+//            ax.font, which stays the stand-in (older copies and a
+//            device without the file draw it). The design lists the
+//            files in setup.ext.fonts [{ id, name, fb, r, b, i, bi }]
+//            as a Layout document does; useDocFonts() registers them.
+//   ext.kern 1 on a text item: the font's pair kerning (LY-KERN,
+//            designkit/text.js) in layout and drawing, as Canva sets
+//            text (the PowerPoint import sets it; older copies lay the
+//            text out without it).
 // Since wave C2 (morph, atelier/morph.js):
 //   ext.mph  1 on a page background: the page morphs in from the page
 //            before it; ptr stays what older copies show instead
@@ -103,7 +115,57 @@
     var urls = MEDIA && MEDIA.fontsourceUrls ? MEDIA.fontsourceUrls(fsSlug(id)) : null;
     if (urls) T.registerFamily(id, { name: name || fsName(id), urls: urls, fallback: "sans" });
   }
-  function fontName(id) { ensureFont(id); var f = T.FAMILIES[id]; return f ? f.name : fsName(id); }
+  function fontName(id) {
+    ensureFont(id);
+    var f = T.FAMILIES[id];
+    return f ? f.name : UF_FONT.test(id) ? "Font" : fsName(id);
+  }
+  // Own fonts (ext.fam, see the header): only a family this device
+  // registered from the design's list counts, else the stand-in.
+  var UF_FONT = /^uf_[0-9a-f]{16}$/, FILE_RE = /^[0-9a-f]{64}\.ttf$/, FB = ["sans", "serif", "mono"];
+  function famOf(it) {
+    var f = it && it.ext && it.ext.fam;
+    return typeof f === "string" && UF_FONT.test(f) && T.FAMILIES[f] && T.FAMILIES[f].urls ? f : "";
+  }
+  function fontOf(it) { return famOf(it) || (it && it.ax && it.ax.font) || TEXT_DEF.font; }
+  // Sets an item's font (in place): an own font goes to ext.fam with
+  // ax.font kept as the stand-in; any other font clears ext.fam. Every
+  // font change goes through here.
+  function setFont(it, id) {
+    if (!it || !it.ax) return;
+    if (UF_FONT.test(id || "")) {
+      if (it.ax.k === "text") { it.ext = it.ext || {}; it.ext.fam = id; }   // tables keep ax.font
+      return;
+    }
+    it.ax.font = id;
+    if (it.ext && it.ext.fam !== undefined) {
+      delete it.ext.fam;
+      if (!Object.keys(it.ext).length) delete it.ext;
+    }
+  }
+  // The design's own font files: [{ id, name, fb, r, b, i, bi }] (valid
+  // entries only).
+  function docFonts(doc) {
+    var x = doc && doc.setup && doc.setup.ext, out = [];
+    (x && Array.isArray(x.fonts) ? x.fonts : []).forEach(function (e) {
+      if (!e || !UF_FONT.test(e.id) || !FILE_RE.test(e.r || "")) return;
+      var o = { id: e.id, name: String(e.name || "").replace(/[\u0000-\u001F]/g, "").slice(0, 60) || e.id, fb: FB.indexOf(e.fb) >= 0 ? e.fb : "sans", r: e.r };
+      ["b", "i", "bi"].forEach(function (v) { if (FILE_RE.test(e[v] || "")) o[v] = e[v]; });
+      out.push(o);
+    });
+    return out;
+  }
+  // Registers them with designkit/text.js ("asset:<file>": the fetcher
+  // reads /internal/Fonts). Returns how many it knew.
+  function useDocFonts(doc) {
+    var list = docFonts(doc);
+    list.forEach(function (e) {
+      var urls = {};
+      ["r", "b", "i", "bi"].forEach(function (v) { urls[v] = e[v] ? ["asset:" + e[v]] : []; });
+      T.registerFamily(e.id, { name: e.name, urls: urls, fallback: e.fb });
+    });
+    return list.length;
+  }
   function col(v) { return FX.normColor(v); }
   function text(v) {
     return typeof v === "string"
@@ -268,9 +330,10 @@
     }
     var ax = {};
     Object.keys(spec).forEach(function (key) {
-      if (["x", "y", "w", "h", "rot", "op", "sw", "z", "lock", "a", "nm", "iw", "ih", "fit", "ix", "iy", "isc"].indexOf(key) < 0) ax[key] = spec[key];
+      if (["x", "y", "w", "h", "rot", "op", "sw", "z", "lock", "a", "nm", "iw", "ih", "fit", "ix", "iy", "isc", "ext"].indexOf(key) < 0) ax[key] = spec[key];
     });
     it.ax = ax;
+    if (spec.ext && typeof spec.ext === "object") it.ext = spec.ext;
     var n = M.normItem(it);
     if (!n || !n.ax) return null;
     if (n.ax.k === "text") n.h = textHeight(n);
@@ -291,12 +354,13 @@
 
   // ---------- 3. Text ----------
   var PS_ID = "ps-ax";
-  function textStyle(ax) {
+  function textStyle(ax, it) {
     return {
-      id: PS_ID, m: 1, name: "ax", font: ax.font || TEXT_DEF.font, size: ax.size || TEXT_DEF.size,
+      id: PS_ID, m: 1, name: "ax", font: (it && famOf(it)) || ax.font || TEXT_DEF.font, size: ax.size || TEXT_DEF.size,
       lead: (ax.size || TEXT_DEF.size) * (ax.lh || TEXT_DEF.lh) / 100, align: ax.al || TEXT_DEF.al,
       b: ax.b ? 1 : 0, i: ax.i ? 1 : 0, u: ax.u ? 1 : 0, caps: ax.caps ? 1 : 0,
-      track: ax.tr || 0, color: "", sb: 0, sa: 0, fi: 0, li: 0, ri: 0, bul: 0
+      track: ax.tr || 0, color: "", sb: 0, sa: 0, fi: 0, li: 0, ri: 0, bul: 0,
+      ext: it && it.ext && it.ext.kern === 1 ? { kern: 1 } : undefined
     };
   }
   function storyOf(ax) {
@@ -307,14 +371,19 @@
       })
     };
   }
-  function fontKeyOf(ax) { ensureFont(ax.font); return T.fontKey(ax.font || TEXT_DEF.font, ax.b, ax.i); }
+  // it: the item, for its own font (ext.fam); without it, ax.font.
+  function fontKeyOf(ax, it) {
+    var f = (it && famOf(it)) || ax.font;
+    ensureFont(f);
+    return T.fontKey(f || TEXT_DEF.font, ax.b, ax.i);
+  }
 
   // Lines of a text item (frame-local points, y = baseline), laid out
   // by designkit/text.js in a frame as wide as the box and as tall as
   // the text needs. Returns { lines, h }.
   function textLayout(it) {
     var ax = it.ax || {};
-    var ps = textStyle(ax);
+    var ps = textStyle(ax, it);
     var res = T.layoutChain(storyOf(ax), [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {} }], { ps: [ps], cs: [] });
     var lines = res.frames.f.lines;
     var lead = ps.lead;
@@ -327,7 +396,7 @@
   // size } with x/y relative to the box centre (y = baseline).
   function curveLayout(it) {
     var ax = it.ax || {};
-    var key = fontKeyOf(ax), size = ax.size || TEXT_DEF.size;
+    var key = fontKeyOf(ax, it), size = ax.size || TEXT_DEF.size;
     var s = (ax.tx || "").replace(/\n+/g, " ");
     if (ax.caps) s = s.toLocaleUpperCase();
     var chars = Array.from(s), x = 0, list = [];
@@ -359,13 +428,15 @@
   }
 
   // Natural width of a line of text (new text boxes, "fit width").
-  function textWidth(ax) {
-    var key = fontKeyOf(ax), size = ax.size || TEXT_DEF.size, w = 0;
+  // it (optional): the item, for its own font and kerning; exact:
+  // the widest line as measured, without the margin.
+  function textWidth(ax, it, exact) {
+    var key = fontKeyOf(ax, it), size = ax.size || TEXT_DEF.size, w = 0, kern = !!(it && it.ext && it.ext.kern === 1);
     (ax.tx || "").split("\n").forEach(function (line) {
       if (ax.caps) line = line.toLocaleUpperCase();
-      w = Math.max(w, T.measure(key, line, size, ax.tr || 0));
+      w = Math.max(w, T.measure(key, line, size, ax.tr || 0, kern));
     });
-    return Math.ceil(w + size * 0.1);
+    return exact ? w : Math.ceil(w + size * 0.1);
   }
 
   // ---------- 3b. Tables ----------
@@ -583,7 +654,7 @@
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
     textWidth: textWidth, fontKeyOf: fontKeyOf, tableLayout: tableLayout, TABLE_SIZE: TABLE_SIZE, OB: OB, isExtraFont: isExtraFont, ensureFont: ensureFont,
-    fontName: fontName, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
+    fontName: fontName, famOf: famOf, fontOf: fontOf, setFont: setFont, docFonts: docFonts, useDocFonts: useDocFonts, isOwnFont: function (id) { return UF_FONT.test(id || ""); }, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierAX = api;
