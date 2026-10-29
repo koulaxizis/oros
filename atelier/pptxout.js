@@ -146,11 +146,18 @@
     return "<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l=\"0\" t=\"0\" r=\"r\" b=\"b\"/>" +
       "<a:pathLst><a:path w=\"" + pw + "\" h=\"" + ph + "\">" + d + "</a:path></a:pathLst></a:custGeom>";
   }
-  function fillXml(ax, op) {
+  // it: the item, for a gradient's own stops and shape (ax.js gradOf)
+  function fillXml(ax, op, it) {
     if (ax.g) {
       var ang = (((ax.g.ang - 90) % 360) + 360) % 360;      // pptx.js reads ang + 90
-      return "<a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\">" + colour(ax.g.a, op) + "</a:gs>" +
-        "<a:gs pos=\"100000\">" + colour(ax.g.b, op) + "</a:gs></a:gsLst><a:lin ang=\"" + int(ang * 60000) + "\" scaled=\"0\"/></a:gradFill>";
+      var own = it && AX.gradOf(it), st = own ? own.st : [[0, ax.g.a], [1, ax.g.b]];
+      var how = own && own.r
+        ? "<a:path path=\"circle\"><a:fillToRect l=\"" + int(own.c[0] * 100000) + "\" t=\"" + int(own.c[1] * 100000) +
+          "\" r=\"" + int((1 - own.c[0]) * 100000) + "\" b=\"" + int((1 - own.c[1]) * 100000) + "\"/></a:path>"
+        : "<a:lin ang=\"" + int(ang * 60000) + "\" scaled=\"0\"/>";
+      return "<a:gradFill rotWithShape=\"1\"><a:gsLst>" + st.map(function (x) {
+        return "<a:gs pos=\"" + int(x[0] * 100000) + "\">" + colour(x[1], op) + "</a:gs>";
+      }).join("") + "</a:gsLst>" + how + "</a:gradFill>";
     }
     if (ax.fc) return solid(ax.fc, op);
     return "<a:noFill/>";
@@ -169,7 +176,7 @@
   function shapeXml(it, id, k) {
     var ax = it.ax, op = opOf(it);
     return "<p:sp>" + nv("Sp", id, "Shape " + id, "<p:cNvSpPr/>") + "<p:spPr>" +
-      xfrm(k, it.x, it.y, it.w, it.h, it.rot) + geom(ax.shp, ax.rd, it.w, it.h, k, AX.pthOf(it) ? AX.shapeCmds(it) : null) + fillXml(ax, op) +
+      xfrm(k, it.x, it.y, it.w, it.h, it.rot) + geom(ax.shp, ax.rd, it.w, it.h, k, AX.pthOf(it) ? AX.shapeCmds(it) : null) + fillXml(ax, op, it) +
       lineXml(ax.sc, it.sw, it.dash, op, k) + "</p:spPr></p:sp>";
   }
   var ALIGN = { l: "l", c: "ctr", r: "r", j: "just" };
@@ -293,7 +300,7 @@
         var kind = kindOf(it), ax = it.ax, id = nid++;
         if (!kind) return;
         if (ax.bg && ax.k === "shape" && kind === "shape") {
-          bgXml = "<p:bg><p:bgPr>" + fillXml(ax, opOf(it)) + "<a:effectLst/></p:bgPr></p:bg>";
+          bgXml = "<p:bg><p:bgPr>" + fillXml(ax, opOf(it), it) + "<a:effectLst/></p:bgPr></p:bg>";
           out.native++;
           return;
         }

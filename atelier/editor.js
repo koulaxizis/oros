@@ -779,6 +779,7 @@
     var v = $("tx-edit").value.slice(0, AX.MAX_TX);
     AT.beginGesture();
     AT.editItems([id], function (it, d) {
+      AX.editRuns(it, it.ax.tx || "", v);
       it.ax.tx = v;
       // a new text box grows with what is typed (up to the page)
       if (growId === id && !it.ax.cv) {
