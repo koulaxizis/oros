@@ -134,14 +134,21 @@
   function setFont(it, id) {
     if (!it || !it.ax) return;
     if (UF_FONT.test(id || "")) {
-      if (it.ax.k === "text") { it.ext = it.ext || {}; it.ext.fam = id; }   // tables keep ax.font
+      if (it.ax.k === "text") { it.ext = it.ext || {}; it.ext.fam = id; dropRunFonts(it); }   // tables keep ax.font
       return;
     }
     it.ax.font = id;
-    if (it.ext && it.ext.fam !== undefined) {
-      delete it.ext.fam;
-      if (!Object.keys(it.ext).length) delete it.ext;
+    if (it.ext && it.ext.fam !== undefined) delete it.ext.fam;
+    dropRunFonts(it);
+  }
+  // a font chosen for the whole text replaces the runs' own fonts
+  function dropRunFonts(it) {
+    if (!it.ext) return;
+    if (Array.isArray(it.ext.runs)) {
+      it.ext.runs.forEach(function (r) { if (r) delete r.fam; });
+      if (it.ext.runs.every(function (r) { return !r || (r.b === undefined && r.i === undefined); })) delete it.ext.runs;
     }
+    if (!Object.keys(it.ext).length) delete it.ext;
   }
   // The design's own font files: [{ id, name, fb, r, b, i, bi }] (valid
   // entries only).
@@ -363,13 +370,80 @@
       ext: it && it.ext && it.ext.kern === 1 ? { kern: 1 } : undefined
     };
   }
-  function storyOf(ax) {
-    var src = ax.tx || "";
-    return {
-      id: "st-ax", paras: src.split("\n").map(function (line) {
-        return { ps: PS_ID, runs: line ? [{ t: line }] : [] };
-      })
-    };
+  // it: the item, for its runs (ext.runs) → character styles in cs
+  function storyOf(ax, it, cs) {
+    var src = ax.tx || "", runs = runsOf(it);
+    if (!runs) {
+      return {
+        id: "st-ax", paras: src.split("\n").map(function (line) {
+          return { ps: PS_ID, runs: line ? [{ t: line }] : [] };
+        })
+      };
+    }
+    var paras = [{ ps: PS_ID, runs: [] }], at = 0;
+    runs.forEach(function (r, ri) {
+      var id = "cs-" + ri, st = { id: id, m: 1, name: id };
+      if (r.b !== undefined) st.b = r.b;
+      if (r.i !== undefined) st.i = r.i;
+      if (r.fam !== undefined && famOf({ ext: { fam: r.fam } })) { st.font = ax.font || TEXT_DEF.font; st.ext = { fam: r.fam }; }
+      if (cs) cs.push(st);
+      src.slice(at, at + r.n).split("\n").forEach(function (part, k) {
+        if (k) paras.push({ ps: PS_ID, runs: [] });
+        if (part) paras[paras.length - 1].runs.push({ t: part, cs: id });
+      });
+      at += r.n;
+    });
+    return { id: "st-ax", paras: paras };
+  }
+  // Runs of one text item in other looks (ext.runs, AC3b): [{ n, b?,
+  // i?, fam? }] over ax.tx in order; they count only when their lengths
+  // add up to the text (an edit that changes the text drops them).
+  function runsOf(it) {
+    var r = it && it.ext && it.ext.runs, n = 0;
+    if (!Array.isArray(r) || !r.length || r.length > MAX_RUNS) return null;
+    for (var i = 0; i < r.length; i++) {
+      if (!r[i] || !(r[i].n >= 1) || r[i].n % 1) return null;
+      n += r[i].n;
+    }
+    return n === ((it.ax && it.ax.tx) || "").length ? r : null;
+  }
+  var MAX_RUNS = 400;
+  // A gradient's own stops and shape (ext.gs, AC3b) over ax.g, which
+  // stays the two-colour stand-in: { st: [[pos 0..1, "#rrggbb"], …]
+  // (2-10, in order), r: 1 for radial, c: [x, y] its centre as parts
+  // of the box }. It counts only while its end colours are ax.g's, so a
+  // gradient changed anywhere else in Atelier shows as changed.
+  // Returns it checked, or null.
+  var HEX6 = /^#[0-9a-f]{6}$/;
+  function gradOf(it) {
+    var g = it && it.ext && it.ext.gs, sa = it && it.ax && it.ax.g;
+    if (!g || !sa || !Array.isArray(g.st) || g.st.length < 2 || g.st.length > 10) return null;
+    if (String(g.st[0][1]).toLowerCase() !== String(sa.a).toLowerCase() || String(g.st[g.st.length - 1][1]).toLowerCase() !== String(sa.b).toLowerCase()) return null;
+    for (var i = 0; i < g.st.length; i++) {
+      var x = g.st[i];
+      if (!Array.isArray(x) || !(x[0] >= 0 && x[0] <= 1) || !HEX6.test(x[1]) || (i && x[0] < g.st[i - 1][0])) return null;
+    }
+    var c = Array.isArray(g.c) && g.c[0] >= 0 && g.c[0] <= 1 && g.c[1] >= 0 && g.c[1] <= 1 ? g.c : [0.5, 0.5];
+    return { st: g.st, r: g.r === 1 ? 1 : 0, c: c };
+  }
+  // Keeps an item's runs in step with an edit of its text: the changed
+  // stretch is cut from the runs it covered and what was typed joins
+  // the run it was typed in.
+  function editRuns(it, before, after) {
+    if (!runsOf(it) || before === after) return;
+    var p = 0, q = 0;
+    while (p < before.length && p < after.length && before[p] === after[p]) p++;
+    while (q < before.length - p && q < after.length - p && before[before.length - 1 - q] === after[after.length - 1 - q]) q++;
+    var d0 = p, d1 = before.length - q, ins = after.length - p - q, at = 0, put = false;
+    it.ext.runs.forEach(function (r) {
+      var a = at, b = at + r.n;
+      at = b;
+      r.n -= Math.max(0, Math.min(b, d1) - Math.max(a, d0));
+      if (!put && p <= b) { r.n += ins; put = true; }
+    });
+    it.ext.runs = it.ext.runs.filter(function (r) { return r.n > 0; });
+    if (!it.ext.runs.length) delete it.ext.runs;
+    if (!Object.keys(it.ext).length) delete it.ext;
   }
   // it: the item, for its own font (ext.fam); without it, ax.font.
   function fontKeyOf(ax, it) {
@@ -384,7 +458,8 @@
   function textLayout(it) {
     var ax = it.ax || {};
     var ps = textStyle(ax, it);
-    var res = T.layoutChain(storyOf(ax), [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {} }], { ps: [ps], cs: [] });
+    var cs = [], story = storyOf(ax, it, cs);
+    var res = T.layoutChain(story, [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {} }], { ps: [ps], cs: cs });
     var lines = res.frames.f.lines;
     var lead = ps.lead;
     var h = lines.length ? lines[lines.length - 1].y + Math.max(lines[lines.length - 1].d, lead * 0.25) : lead;
@@ -431,6 +506,15 @@
   // it (optional): the item, for its own font and kerning; exact:
   // the widest line as measured, without the margin.
   function textWidth(ax, it, exact) {
+    if (runsOf(it)) {                              // runs in other looks: laid out, left aligned, unbroken
+      var left = {}, wr = 0;
+      Object.keys(ax).forEach(function (k) { left[k] = ax[k]; });
+      left.al = "l";
+      textLayout({ ax: left, ext: it.ext, w: 1e6 }).lines.forEach(function (ln) {
+        ln.runs.forEach(function (rn) { if (rn.t) wr = Math.max(wr, rn.x + rn.w); });
+      });
+      return exact ? wr : Math.ceil(wr + (ax.size || TEXT_DEF.size) * 0.1);
+    }
     var key = fontKeyOf(ax, it), size = ax.size || TEXT_DEF.size, w = 0, kern = !!(it && it.ext && it.ext.kern === 1);
     (ax.tx || "").split("\n").forEach(function (line) {
       if (ax.caps) line = line.toLocaleUpperCase();
@@ -654,7 +738,7 @@
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
     textWidth: textWidth, fontKeyOf: fontKeyOf, tableLayout: tableLayout, TABLE_SIZE: TABLE_SIZE, OB: OB, isExtraFont: isExtraFont, ensureFont: ensureFont,
-    fontName: fontName, famOf: famOf, fontOf: fontOf, setFont: setFont, docFonts: docFonts, useDocFonts: useDocFonts, isOwnFont: function (id) { return UF_FONT.test(id || ""); }, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
+    fontName: fontName, famOf: famOf, fontOf: fontOf, setFont: setFont, dropRunFonts: dropRunFonts, runsOf: runsOf, editRuns: editRuns, gradOf: gradOf, docFonts: docFonts, useDocFonts: useDocFonts, isOwnFont: function (id) { return UF_FONT.test(id || ""); }, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierAX = api;

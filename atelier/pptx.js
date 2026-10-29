@@ -19,12 +19,13 @@
 // its stand-in.
 // What maps: text boxes (each run of paragraphs in one look becomes a
 // text item, stacked baseline to baseline in the box; inside a
-// paragraph the first run's look counts: font
+// paragraph, pieces in another weight, slant or typeface become runs
+// (ext.runs, ax.js), otherwise the first run's look counts: font
 // by name → its Fontsource family, or sans/serif/mono for system and
 // Canva-only fonts; size incl. autofit, bold,
 // italic, underline, caps, colour, alignment, line and letter
 // spacing, top/middle/bottom anchor), preset shapes Atelier also
-// has (fill, gradient, outline), other shapes and custom geometry
+// has (fill, gradient: radial and more stops as ext.gs, outline), other shapes and custom geometry
 // as a picture (an SVG drawn once, never executed: it goes through
 // <img>), pictures (crop, flips, round/ellipse mask, transparency),
 // lines and arrows, groups (flattened), slide/layout/master
@@ -221,7 +222,20 @@
       if (!stops.length) return null;
       var lin = kid(gf, "a:lin"), ang = lin ? numA(lin, "ang", 0) / 60000 : 90;
       if (stops.length === 1) return { fc: stops[0].c.c, a: stops[0].c.a };
-      return { g: { a: stops[0].c.c, b: stops[stops.length - 1].c.c, ang: Math.round(((ang + 90) % 360 + 360) % 360) } };
+      var out = { g: { a: stops[0].c.c, b: stops[stops.length - 1].c.c, ang: Math.round(((ang + 90) % 360 + 360) % 360) } };
+      // more stops, or a radial gradient: its own stops over the stand-in (ax.js gradOf)
+      var circ = path(gf, ["a:path"]), ftr = circ && kid(circ, "a:fillToRect");
+      var radial = circ && (circ.a.path === "circle" || circ.a.path === "rect" || circ.a.path === "shape");
+      if (stops.length > 2 || radial) {
+        out.gs = { st: stops.slice(0, 10).map(function (x) { return [Math.round(Math.max(0, Math.min(1, x.pos / 100000)) * 1000) / 1000, x.c.c]; }) };
+        if (radial) {
+          var fl = ftr ? numA(ftr, "l", 50000) : 50000, fr = ftr ? numA(ftr, "r", 50000) : 50000;
+          var ft = ftr ? numA(ftr, "t", 50000) : 50000, fb = ftr ? numA(ftr, "b", 50000) : 50000;
+          var c01 = function (v) { return Math.round(Math.max(0, Math.min(1, v)) * 1000) / 1000; };
+          out.gs.r = 1; out.gs.c = [c01((fl + 100000 - fr) / 200000), c01((ft + 100000 - fb) / 200000)];
+        }
+      }
+      return out;
     }
     var bf = kid(pr, "a:blipFill");
     if (bf) return { blip: bf };
@@ -344,38 +358,77 @@
     var lnRed = autofit ? numA(autofit, "lnSpcReduction", 0) / 100000 : 0;
     var blocks = [], cur = null;
     kids(txBody, "a:p").forEach(function (p) {
-      var s = "", first = null, endRp = kid(p, "a:endParaRPr");
+      // a line: its text and its pieces with their run properties
+      var ln = { s: "", segs: [] }, first = null;
       p.c.forEach(function (r) {
         if (r.n === "a:r" || r.n === "a:fld") {
-          var t = kid(r, "a:t"), str = t ? t.t : "";
-          s += str;
-          if (str.trim() && !first) first = kid(r, "a:rPr") || { n: "a:rPr", a: {}, c: [] };
-        } else if (r.n === "a:br") s += "\n";
+          var t = kid(r, "a:t"), str = t ? t.t : "", rp = kid(r, "a:rPr") || { n: "a:rPr", a: {}, c: [] };
+          ln.s += str;
+          if (str) ln.segs.push({ t: str, rp: rp });
+          if (str.trim() && !first) first = rp;
+        } else if (r.n === "a:br") { ln.s += "\n"; ln.segs.push({ t: "\n", rp: null }); }
       });
       if (!first) {                                // blank paragraph
-        if (cur) cur.lines.push(s);
-        else blocks.push(cur = { lines: [s], st: null, gapRp: endRp });
+        if (cur) cur.lines.push(ln);
+        else blocks.push(cur = { lines: [ln], st: null });
         return;
       }
       var st = styleOf(first, p, lst, ctx, scale, lnRed);
-      if (cur && !cur.st) { cur.st = st; cur.lines.push(s); return; }
-      if (cur && sameStyle(cur.st, st)) { cur.lines.push(s); return; }
+      ln.p = p;
+      if (cur && !cur.st) { cur.st = st; cur.lines.push(ln); return; }
+      if (cur && sameStyle(cur.st, st)) { cur.lines.push(ln); return; }
       var gap = 0;
       if (cur) {                                   // blank lines that close the block above
-        while (cur.lines.length && !cur.lines[cur.lines.length - 1].trim()) { cur.lines.pop(); gap += cur.st.size * cur.st.lh / 100; }
+        while (cur.lines.length && !cur.lines[cur.lines.length - 1].s.trim()) { cur.lines.pop(); gap += cur.st.size * cur.st.lh / 100; }
       }
-      blocks.push(cur = { lines: [s], st: st, gap: Math.round(gap * 100) / 100 });
+      blocks.push(cur = { lines: [ln], st: st, gap: Math.round(gap * 100) / 100 });
     });
     var out = [];
     blocks.forEach(function (b) {
       if (!b.st) return;
-      var tx = b.lines.join("\n").replace(/\s+$/, "");
+      var tx = b.lines.map(function (l) { return l.s; }).join("\n").replace(/\s+$/, "");
       if (!tx.trim()) return;
       var o = assign(b.st, { tx: tx });
+      var runs = runsIn(b, tx.length, lst, ctx, scale, lnRed);
+      if (runs) o.runs = runs;
       if (out.length && b.gap) o.gap = b.gap;
       out.push(o);
     });
     return out.length ? out : null;
+  }
+  // Pieces of a block in another weight, slant or typeface than the
+  // block (bold words in running text): [{ n, b, i, face }] over the
+  // block's text, or null when every piece has the block's look. A
+  // piece in another size or colour keeps the block's look.
+  function runsIn(b, len, lst, ctx, scale, lnRed) {
+    var base = b.st, list = [], other = false;
+    function push(n, k) {
+      var last = list[list.length - 1];
+      if (last && last.k === k.k) last.n += n; else list.push({ n: n, k: k.k, b: k.b, i: k.i, face: k.face });
+    }
+    var plain = { k: "", b: base.b, i: base.i, face: base.face };
+    b.lines.forEach(function (ln, li) {
+      if (li) push(1, plain);                      // the paragraph break
+      ln.segs.forEach(function (sg) {
+        var k = plain;
+        if (sg.rp && sg.t.trim()) {
+          var st = styleOf(sg.rp, ln.p || b.lines[0].p, lst, ctx, scale, lnRed);
+          if (st.size === base.size && st.fc === base.fc && st.op === base.op && (st.b !== base.b || st.i !== base.i || st.face !== base.face)) {
+            k = { k: st.b + "|" + st.i + "|" + st.face, b: st.b, i: st.i, face: st.face };
+            other = true;
+          }
+        }
+        push(sg.t.length, k);
+      });
+    });
+    if (!other) return null;
+    var out = [], at = 0;
+    list.forEach(function (r) {                    // cut to the trimmed text
+      var n = Math.min(r.n, len - at);
+      if (n > 0) out.push(r.k ? { n: n, b: r.b, i: r.i, face: r.face } : { n: n });
+      at += n;
+    });
+    return out.length > 1 && out.length <= 400 ? out : null;
   }
   function styleOf(rp, p, lst, ctx, scale, lnRed) {
     var ra = rp.a || {};
@@ -595,7 +648,7 @@
         else out.skipped++;
       } else if (shp && !box.flh && !box.flv || shp === "rect" || shp === "circle" || shp === "rounded") {
         var s = { k: "shape", shp: shp, x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
-        if (fill && fill.g) s.g = fill.g;
+        if (fill && fill.g) { s.g = fill.g; if (fill.gs) s.gs = fill.gs; }
         else if (fill && fill.fc) { s.fc = fill.fc; if (fill.a < 1) s.op = Math.round(fill.a * 100); }
         if (line) { s.sc = line.c.c; s.sw = Math.max(0.5, line.w); }
         if (shp === "rounded") {
@@ -611,7 +664,7 @@
           // a preset Atelier lacks: its bounding box keeps the colour
           var r = { k: "shape", shp: "rect", x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
           if (fill && fill.fc) r.fc = fill.fc;
-          else if (fill && fill.g) r.g = fill.g;
+          else if (fill && fill.g) { r.g = fill.g; if (fill.gs) r.gs = fill.gs; }
           out.items.push(r);
           out.approx++;
         } else {
@@ -639,7 +692,7 @@
       if (ts) {
         var bb = bodyBox(txBody, box), tb = ptBox(bb);
         // a rotated box keeps one item (its first style): the stack is laid out upright
-        if (tb.rot) ts = [assign(ts[0], { tx: ts.map(function (q) { return q.tx; }).join("\n") })];
+        if (tb.rot && ts.length > 1) { ts = [assign(ts[0], { tx: ts.map(function (q) { return q.tx; }).join("\n") })]; delete ts[0].runs; }
         var stk = ts.length > 1 ? (out.stacks = (out.stacks || 0) + 1) : 0;
         ts.forEach(function (t, ti) {
           t.k = "text"; t.x = tb.x; t.y = tb.y; t.w = tb.w; t.boxH = tb.h; t.rot = tb.rot;
@@ -836,7 +889,7 @@
       var bg = AX.background(d, pg.id), z = 1;
       if (P.bg && bg) {
         if (P.bg.fc) bg.ax.fc = P.bg.fc;
-        else if (P.bg.g) bg.ax.g = P.bg.g;
+        else if (P.bg.g) { bg.ax.g = P.bg.g; if (P.bg.gs) { bg.ext = bg.ext || {}; bg.ext.gs = P.bg.gs; } }
         else if (P.bg.img) {
           var A0 = assets[P.bg.img];
           if (A0) AX.addItem(d, pg.id, { k: "photo", a: A0.id, iw: A0.w, ih: A0.h, x: 0, y: 0, w: plan.w, h: plan.h, fit: "fill", lock: 1, z: z++ }, now);
@@ -847,7 +900,7 @@
       P.items.forEach(function (s) {
         var spec = {}, img = null;
         Object.keys(s).forEach(function (k) {
-          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap"].indexOf(k) < 0) spec[k] = s[k];
+          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap", "runs", "gs"].indexOf(k) < 0) spec[k] = s[k];
         });
         if (spec.op !== undefined && !(spec.op < 100)) delete spec.op;
         if (s.k === "photo") {
@@ -868,8 +921,19 @@
         spec.z = z++;
         if (s.k === "text" && AX.isExtraFont(spec.font)) AX.ensureFont(spec.font, s.fontName);
         var of = s.k === "text" && s.face && Object.prototype.hasOwnProperty.call(fonts, s.face) ? fonts[s.face] : null;
+        if (s.gs) spec.ext = { gs: s.gs };
         if (s.k === "text") spec.ext = { kern: 1 };                 // Canva kerns its text
         if (of && AX.isOwnFont(of.id)) { spec.ext.fam = of.id; own[of.id] = of; }
+        if (s.runs) spec.ext.runs = s.runs.map(function (r) {   // pieces in another weight, slant or typeface
+          var o = { n: r.n };
+          if (r.face === undefined) return o;
+          if (r.b !== s.b) o.b = r.b;
+          if (r.i !== s.i) o.i = r.i;
+          var rf = r.face !== s.face && Object.prototype.hasOwnProperty.call(fonts, r.face) ? fonts[r.face] : null;
+          if (rf && AX.isOwnFont(rf.id)) { o.fam = rf.id; own[rf.id] = rf; }
+          return o;
+        });
+        if (spec.ext && spec.ext.runs && spec.ext.runs.every(function (r) { return Object.keys(r).length === 1; })) delete spec.ext.runs;
         var it = AX.addItem(d, pg.id, spec, now);
         if (it && s.k === "text") fitLines(it, s);
         if (it && s.stk) {                          // one box, several styles: stack the items

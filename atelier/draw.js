@@ -60,7 +60,7 @@
 
   // Text layout per (item size + text fields).
   function textLines(it) {
-    var key = T.generation() + "|" + it.w + "|" + JSON.stringify(it.ax);
+    var key = T.generation() + "|" + it.w + "|" + JSON.stringify(it.ax) + (it.ext ? "|" + JSON.stringify(it.ext) : "");
     var v = textCache.get(key);
     if (v) return v;
     return textCache.set(key, it.ax.cv ? { curve: AX.curveLayout(it) } : AX.textLayout(it));
@@ -68,11 +68,19 @@
 
   // ---------- Fills ----------
   function gradient(ctx, it, g) {
-    var a = rad(g.ang - 90), cx = it.w / 2, cy = it.h / 2;
-    var len = Math.abs(it.w * Math.cos(a)) / 2 + Math.abs(it.h * Math.sin(a)) / 2;
-    var dx = Math.cos(a) * len, dy = Math.sin(a) * len;
-    var gr = ctx.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
-    gr.addColorStop(0, g.a); gr.addColorStop(1, g.b);
+    var own = AX.gradOf(it), gr;
+    if (own && own.r) {                            // radial: to the farthest corner
+      var ox = own.c[0] * it.w, oy = own.c[1] * it.h;
+      var R = Math.max(Math.hypot(ox, oy), Math.hypot(it.w - ox, oy), Math.hypot(ox, it.h - oy), Math.hypot(it.w - ox, it.h - oy));
+      gr = ctx.createRadialGradient(ox, oy, 0, ox, oy, Math.max(R, 0.01));
+    } else {
+      var a = rad(g.ang - 90), cx = it.w / 2, cy = it.h / 2;
+      var len = Math.abs(it.w * Math.cos(a)) / 2 + Math.abs(it.h * Math.sin(a)) / 2;
+      var dx = Math.cos(a) * len, dy = Math.sin(a) * len;
+      gr = ctx.createLinearGradient(cx - dx, cy - dy, cx + dx, cy + dy);
+    }
+    if (own) own.st.forEach(function (x) { gr.addColorStop(x[0], x[1]); });
+    else { gr.addColorStop(0, g.a); gr.addColorStop(1, g.b); }
     return gr;
   }
 
@@ -508,7 +516,10 @@
     }
     doc.items.forEach(function (it) {
       if (!it.ax) return;
-      if (it.ax.k === "text") add(AX.fontKeyOf(it.ax, it));
+      if (it.ax.k === "text") {
+        add(AX.fontKeyOf(it.ax, it));
+        if (AX.runsOf(it)) AX.textLayout(it).lines.forEach(function (ln) { ln.runs.forEach(function (r) { if (r.key) add(r.key); }); });
+      }
       else if (it.ax.k === "table") { add(AX.fontKeyOf({ font: it.ax.font })); add(AX.fontKeyOf({ font: it.ax.font, b: 1 })); }
     });
     return Object.keys(keys);
