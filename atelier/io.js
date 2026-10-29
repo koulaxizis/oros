@@ -481,7 +481,7 @@
   // A picture or clip from a package: base64 (older JSON packages) or bytes (bundles)
   function isAsset(v) { return typeof v === "string" || v instanceof Uint8Array; }
   function assetBlob(v, type) { return typeof v === "string" ? b64ToBlob(v, type) : new Blob([v], { type: type }); }
-  function bundleFail(e) { AT.toast(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
+  function bundleFail(e) { say(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
   // A bundle (or an unzipped bundle folder) → the package object the
   // JSON reader takes, with the media bytes as its assets.
   function fromBundle(r) {
@@ -519,7 +519,7 @@
   function importPackageObj(pkg) {
     return Promise.resolve().then(function () {
       var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER && pkg.doc && typeof pkg.doc === "object" ? M.normDoc(pkg.doc) : null;
-      if (!doc || !doc.pages.length) { AT.toast(t("imp.bad")); return; }
+      if (!doc || !doc.pages.length) { say(t("imp.bad")); return; }
       // a NEW design: never overwrites or resurrects another one
       doc.id = M.newId("doc");
       var nw = AT.now();
@@ -550,8 +550,8 @@
         chain = chain.then(function () { return DKF.put(name, assetBlob(b, "font/ttf"), { cff: true }); }).then(null, function () {});
       });
       return chain.then(function () {
-        AT.addDoc(M.normDoc(doc));
-        AT.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
+        AT.addDoc(M.normDoc(doc), batching);
+        say(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
       });
     });
   }
@@ -631,9 +631,9 @@
           return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
         }).then(function () {
           var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts);
-          AT.addDoc(r.doc);
+          AT.addDoc(r.doc, batching);
           var lost = plan.skipped + r.missing;
-          if (!quiet) AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
+          if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
           return quiet ? { lost: lost, id: r.doc.id } : lost;
         });
       });
@@ -648,29 +648,184 @@
       var d = AX.newDesign({ name: String(f.name || "").replace(/\.[a-z0-9]+$/i, "").slice(0, 120), w: res.w, h: res.h, unit: "px" }, nw);
       var pg = M.pagesInOrder(d)[0];
       AX.addItem(d, pg.id, { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", x: 0, y: 0, w: res.w, h: res.h, fit: "fill" }, nw);
-      AT.addDoc(M.normDoc(d));
-      AT.toast(t("imp.done"));
+      AT.addDoc(M.normDoc(d), batching);
+      say(t("imp.done"));
     });
   }
 
   // Home › Import: .orosdesign, .pptx or a picture
   function importAny() {
-    pickFile(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg")
-      .then(importAnyFile).then(null, importFail);
+    pickFiles(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg,.zip,application/zip")
+      .then(importMany).then(null, importFail);
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
   function importAnyFile(f) {
     if (!f) return;
-    if (f.size > PKG_MAX) { AT.toast(t("imp.bad")); return; }
+    if (f.size > PKG_MAX) { say(t("imp.bad")); return; }
     var nm = String(f.name || "").toLowerCase();
     var run = /\.pptx$/.test(nm) ? importPptxFile
       : /^image\//.test(f.type || "") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm) ? importImageFile
       : importPackageFile;
-    AT.toast(t("imp.working"));
+    say(t("imp.working"));
     return run(f);
   }
   function importFail(e) { AT.toast(e && e.message === "nofs" ? t("img.nofs") : t("imp.bad")); }
   function openFile(f) { return Promise.resolve(importAnyFile(f)).then(null, importFail); }
+
+  // ---------- Many files at once (AC5) ----------
+  // Home › Import › From files takes one or more files, and a .zip of
+  // packages (.orosdesign, .pptx inside; e.g. a folder zipped on the
+  // computer). Home › Import › From a folder in Files takes every
+  // package in a folder of the orOS disk and its subfolders. One after
+  // another, each a new design as with one file; Home stays open and
+  // one toast tells how many came in and how many could not.
+  var batching = false;
+  function say(msg) { if (!batching) AT.toast(msg); }
+  var ZIP_MAX = 1024 * 1024 * 1024, BATCH_MAX = 500, DEPTH_MAX = 4;
+  var PKG_RE = /\.(orosdesign|pptx)$/i;
+  function pickFiles(accept) {
+    var dlg = AT.dialogHost();
+    if (dlg && typeof dlg.openFiles === "function") return dlg.openFiles(accept);
+    return new Promise(function (resolve) {
+      var inp = document.createElement("input");
+      inp.type = "file"; inp.accept = accept; inp.multiple = true;
+      inp.addEventListener("change", function () { resolve(inp.files ? [].slice.call(inp.files) : null); });
+      inp.click();
+    });
+  }
+  function docCount() { return ((AT.data() || {}).docs || []).length; }
+  // files: File objects, or { name, get() → Promise<Blob> } for the disk
+  function importMany(files) {
+    files = (files || []).filter(Boolean);
+    if (!files.length) return Promise.resolve();
+    if (files.length === 1 && files[0] instanceof Blob && !/\.zip$/i.test(files[0].name || "")) return openFile(files[0]);
+    var ok = 0, bad = 0, n = 0;
+    function one(f) {
+      if (n >= BATCH_MAX) { bad++; return Promise.resolve(); }
+      n++;
+      var before = docCount();
+      return Promise.resolve().then(function () { return importAnyFile(f); })
+        .then(null, function (e) { if (e && e.message === "nofs") throw e; })
+        .then(function () { if (docCount() > before) ok++; else bad++; });
+    }
+    function zipOf(f) {
+      if (f.size > ZIP_MAX) { bad++; return; }
+      return f.arrayBuffer().then(function (ab) {
+        var zip = window.AtelierZip.open(new Uint8Array(ab)), chain = Promise.resolve();
+        zip.names.filter(function (nm) { return PKG_RE.test(nm) && !/(^|\/)(__MACOSX\/|\.)/.test(nm); }).sort().forEach(function (nm) {
+          chain = chain.then(function () { return zip.bytes(nm, PKG_MAX); }).then(function (b) {
+            if (!b) { bad++; return; }
+            return one(new File([b], nm.split("/").pop()));
+          }, function () { bad++; });
+        });
+        return chain;
+      });
+    }
+    batching = true;
+    AT.toast(t("imp.working"));
+    var chain = Promise.resolve();
+    files.forEach(function (f) {
+      chain = chain.then(function () {
+        return Promise.resolve(f instanceof Blob ? f : f.get()).then(function (file) {
+          if (!file) { bad++; return; }
+          if (/\.zip$/i.test(file.name || "")) return zipOf(file);
+          return one(file);
+        }).then(null, function (e) { if (e && e.message === "nofs") throw e; bad++; });
+      });
+    });
+    return chain.then(function () {
+      batching = false;
+      if (AT.doc) AT.goHome(); else AT.renderHome();
+      AT.toast(bad ? t("imp.manyBad", { n: ok, bad: bad }) : t("imp.many", { n: ok }));
+    }, function (e) {
+      batching = false;
+      AT.renderHome();
+      importFail(e);
+    });
+  }
+  // Home › Import › From a folder in Files: a small browser of the
+  // orOS disk's folders; "Import" takes this folder and its subfolders.
+  function diskFs() {
+    try { return (window.parent && window.parent.orosFS) || window.orosFS || null; }
+    catch (e) { return window.orosFS || null; }
+  }
+  var ROOT = "/internal";
+  function lsOf(fs, path) {
+    return Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null).then(function () { return fs.ls(path); })
+      .then(function (en) { return (en || []).filter(function (e) { return e && typeof e.name === "string" && e.name.charAt(0) !== "."; }); }, function () { return []; });
+  }
+  // every package under path (subfolders to DEPTH_MAX), sorted by path
+  function packagesIn(fs, path) {
+    var out = [];
+    function walk(p, depth) {
+      return lsOf(fs, p).then(function (en) {
+        var chain = Promise.resolve();
+        en.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }).forEach(function (e) {
+          var q = p + "/" + e.name;
+          if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash") chain = chain.then(function () { return walk(q, depth + 1); }); }
+          else if (PKG_RE.test(e.name) && out.length < BATCH_MAX) out.push(q);
+        });
+        return chain;
+      });
+    }
+    return walk(path, 0).then(function () { return out; });
+  }
+  function importDisk() {
+    var fs = diskFs();
+    if (!fs) { AT.toast(t("img.nofs")); return; }
+    var cwd = ROOT, gen = 0;
+    AT.openDialog(t("imp.diskTitle"), function (body, close) {
+      var bar = el("div", "pn-row");
+      var up = el("button", "btn small", t("imp.diskUp")); up.type = "button";
+      var where = el("span", "hint");
+      bar.appendChild(up); bar.appendChild(where);
+      var list = el("div", "imp-dirs");
+      var found = el("p", "hint");
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.cancel")); c.type = "button";
+      var o = el("button", "btn primary", t("imp.diskGo")); o.type = "button";
+      act.appendChild(c); act.appendChild(o);
+      body.appendChild(bar); body.appendChild(list); body.appendChild(found); body.appendChild(act);
+      var paths = [];
+      c.addEventListener("click", close);
+      up.addEventListener("click", function () { if (cwd !== ROOT) go(cwd.replace(/\/[^\/]+$/, "") || ROOT); });
+      o.addEventListener("click", function () {
+        if (!paths.length) return;
+        close();
+        importMany(paths.map(function (p) {
+          return { name: p, get: function () {
+            return fs.read(p).then(function (b) { return b ? new File([b], p.split("/").pop()) : null; });
+          } };
+        }));
+      });
+      function go(path) {
+        cwd = path;
+        var my = ++gen;
+        up.disabled = path === ROOT;
+        where.textContent = path === ROOT ? "/" : path.slice(ROOT.length);
+        list.textContent = "";
+        found.textContent = t("imp.diskLooking");
+        o.disabled = true;
+        lsOf(fs, path).then(function (en) {
+          if (my !== gen) return;
+          en.filter(function (e) { return e.dir && !(path === ROOT && e.name === "Trash"); })
+            .sort(function (a, b) { return a.name < b.name ? -1 : 1; })
+            .forEach(function (e) {
+              var b = el("button", "btn small block", "📁 " + e.name); b.type = "button";
+              b.addEventListener("click", function () { go(path + "/" + e.name); });
+              list.appendChild(b);
+            });
+          return packagesIn(fs, path);
+        }).then(function (ps) {
+          if (my !== gen || !ps) return;
+          paths = ps;
+          o.disabled = !ps.length;
+          found.textContent = ps.length ? t("imp.diskFound", { n: ps.length }) : t("imp.diskNone");
+        });
+      }
+      go(ROOT);
+    }, true);
+  }
 
   // ---------- Images ----------
   function placePhoto(res) {
@@ -940,7 +1095,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
     renderFiles: renderFiles, relaid: relaid,
     sendTo: sendTo, canSend: canSend

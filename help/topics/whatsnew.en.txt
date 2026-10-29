@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.47.00
+- Atelier: import many designs at once. Home › Import › From files now takes several files together, or one .zip full of designs; From a folder in Files brings in every design (.orosdesign, .pptx) in a folder of your orOS disk and the folders inside it. Home stays open and one message says how many came in.
+
 ## Version 4.46.00
 - Assistant and Mind Map: ask the Assistant to change your maps ("add five ideas under Marketing", "make the main branches bold", "move Ads under Budget", "sort A-Z", "a boundary around Marketing", "show it as an org chart"). It reads the map, shows the changes on a card, and Mind Map makes them on this device when you press Apply. Undo on the card puts the map back.
 
