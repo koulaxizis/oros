@@ -10,6 +10,7 @@ const zlib = require("node:zlib");
 const Z = require("../atelier/zip.js");
 const P = require("../atelier/pptx.js");
 const M = require("../designkit/model.js");
+const AX = require("../atelier/ax.js");
 const J = (x) => JSON.stringify(x);
 
 // ---- a minimal zip writer (stored or deflated entries) ----
@@ -141,7 +142,11 @@ test("pptx: slides map to text, shapes, pictures, groups, lines, custom geometry
     const by = (k) => p1.items.filter((i) => i.k === k);
 
     const t = by("text")[0];
-    assert.equal(t.tx, "Γεια & χαρά\nsecond");
+    assert.equal(t.tx, "Γεια & χαρά");
+    // the second paragraph has another style: a second item stacked under the first
+    const t2 = by("text")[1];
+    assert.equal(t2.tx, "second"); assert.equal(t2.size, 18); assert.equal(t2.b, 0); assert.equal(t2.al, "l");
+    assert.ok(t.stk && t2.stk === t.stk && t.si === 0 && t2.si === 1);
     assert.equal(t.font, "fs_playfair_display"); assert.equal(t.size, 36); assert.equal(t.b, 1); assert.equal(t.caps, 1);
     assert.equal(t.al, "c"); assert.equal(t.lh, 180); assert.equal(t.tr, 100);
     assert.equal(t.fc, "#800000", "accent1 at lumMod 50%");
@@ -190,7 +195,10 @@ test("pptx: the built design is a new, canonical Atelier document", async () => 
   assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
   assert.ok(d.items.every((i) => i.ax && i.m === 5000));
   const t = d.items.find((i) => i.ax.k === "text" && /Γεια/.test(i.ax.tx));
-  assert.ok(Math.abs(t.y + t.h / 2 - (103.6 + 292.8 / 2)) < 0.6, "middle anchor keeps the text centred in its box");
+  const t2 = d.items.find((i) => i.ax.k === "text" && i.ax.tx === "second");
+  const base = (it, last) => { const L = AX.textLayout(it).lines; return it.y + L[last ? L.length - 1 : 0].y; };
+  assert.ok(Math.abs(base(t2) - base(t, true) - 18 * 1.2) < 0.02, "baseline to baseline at the second paragraph's spacing");
+  assert.ok(Math.abs((t.y + t2.y + t2.h) / 2 - (103.6 + 292.8 / 2)) < 0.6, "middle anchor keeps the stack centred in its box");
   const pic = d.items.find((i) => i.ax.k === "photo" && i.a.startsWith("a"));
   assert.equal(pic.fit, "custom");
   assert.ok(Math.abs(pic.isc - 400 / 0.8 / 800) < 1e-6 && Math.abs(pic.ix + 0.1 * 500) < 0.01);
