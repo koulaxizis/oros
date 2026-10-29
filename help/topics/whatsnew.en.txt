@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.38.01
+- Layout: Rebuild a print PDF sets lines on their baselines also when the PDF's font was found on your disk (before, every line could sit a few points low), keeps a list's bullet with its item, and reads books of up to 999 pages (before: 400).
+
 ## Version 4.38.00
 - Studio: the effects of NULL JSFX 2.7. New: Studio EQ (eight bands, mid/side), Spectral Ducker (makes room for a vocal), Reference (compare your mix with a track at the same loudness), Tuner, VU Meter, Crossfeed for headphones and De-Clip. The existing effects get the 2.7 upgrades (True Peak, Delta, Mid/Side, A/B and undo in their interfaces). From now on every new NULL JSFX release reaches Studio within a day.
 
