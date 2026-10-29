@@ -195,6 +195,34 @@
       });
     }));
     body.appendChild(s3);
+
+    // My style: what the designs here have in common (style.js)
+    var s4 = sec(t("br.style")), prof = styleNow(), kinds = Object.keys(prof.kinds);
+    var kind = AT.doc && prof.kinds[ST.kindOf(AT.doc.setup.w, AT.doc.setup.h)] ? ST.kindOf(AT.doc.setup.w, AT.doc.setup.h)
+      : kinds.sort(function (a, b) { return prof.kinds[b].n - prof.kinds[a].n; })[0];
+    if (!kind) s4.appendChild(el("p", "hint", t("br.styleNone")));
+    else {
+      var e = prof.kinds[kind];
+      s4.appendChild(el("p", "hint", t("br.styleOf", { kind: t("br.kind." + kind), n: e.n })));
+      ST.ROLES.forEach(function (role) {
+        var f = e.fonts[role] && e.fonts[role][0];
+        if (!f) return;
+        var r = el("div", "br-font");
+        r.appendChild(el("span", "br-slot", t("br.slot." + { title: "h", subtitle: "s", body: "t" }[role])));
+        r.appendChild(el("span", "br-font-btn", (f.name || AX.fontName(f.id)) + (e.sizes[role] ? " \u00b7 " + Math.round(e.sizes[role] * 10) / 10 + "%" : "")));
+        s4.appendChild(r);
+      });
+      var sg = el("div", "swp");
+      e.colours.concat(e.backgrounds.filter(function (c) { return e.colours.indexOf(c) < 0; })).forEach(function (c) {
+        var b = el("button", "sw");
+        b.type = "button"; b.style.background = c; b.title = c; b.setAttribute("aria-label", c);
+        b.addEventListener("click", function () { change(BK.addColor(B, c, AT.now())); });
+        sg.appendChild(b);
+      });
+      s4.appendChild(sg);
+      s4.appendChild(el("p", "hint", t("br.styleHint")));
+    }
+    body.appendChild(s4);
   }
   AT.registerView("brand", view);
 
@@ -207,4 +235,29 @@
   AT.on("open", loadFonts);
 
   AT.brand = { colors: colors, font: font, get: function () { return BK.norm(B); } };
+
+  // ---------- My style (style.js, AC4) ----------
+  // Worked out from the library on this device, kept in localStorage
+  // for the Assistant (which reads it with Atelier's read permission);
+  // worked out again a little after the designs change.
+  var ST = window.AtelierStyle, STYLE_KEY = "oros-atelier-style", styleSig = "", styleP = null, styleTimer = null;
+  function sigOf(docs) { var m = 0; docs.forEach(function (d) { m = Math.max(m, AT.M.maxM(d)); }); return docs.length + ":" + m; }
+  function styleNow() {
+    var docs = (AT.data() || {}).docs || [], sig = sigOf(docs);
+    if (styleP && sig === styleSig) return styleP;
+    docs.forEach(function (d) { AX.useDocFonts(d); });
+    styleP = ST.profile(docs, AT.now(), function (id) { return AX.fontName(id); });
+    styleSig = sig;
+    try { localStorage.setItem(STYLE_KEY, JSON.stringify(styleP)); } catch (e) {}
+    return styleP;
+  }
+  function styleLater() { clearTimeout(styleTimer); styleTimer = setTimeout(styleNow, 3000); }
+  AT.on("open", styleLater);
+  AT.on("change", styleLater);
+  AT.style = {
+    profile: styleNow,
+    look: function (doc, role) {
+      return doc && doc.setup ? ST.look(styleNow(), ST.kindOf(doc.setup.w, doc.setup.h), role, Math.min(doc.setup.w, doc.setup.h)) : null;
+    }
+  };
 })();

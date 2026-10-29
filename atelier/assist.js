@@ -135,6 +135,8 @@
       textHeight: function (it) { return AX.textHeight(M.normItem(it) || it); },
       addBackground: AX.addBackground, addItem: AX.addItem, findIcon: findIcon,
       relaid: AT.io && AT.io.relaid, brand: brandKit(),
+      // new texts the command leaves unstyled take My style (style.js)
+      look: function (doc, role) { return AT.style ? AT.style.look(doc, role) : null; },
       newDesign: function (o) { return AX.newDesign(o, AT.now()); }
     };
   }

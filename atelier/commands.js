@@ -579,8 +579,12 @@
     var h = st.h !== null ? toPt(doc, st.h) : k === "line" ? 0 : k === "text" ? (st.size || TEXT_DEF.size) * 1.3 : w;
     var spec = { k: k, x: r2(st.x !== null ? toPt(doc, st.x) : (W - w) / 2), y: r2(st.y !== null ? toPt(doc, st.y) : (H - h) / 2), w: r2(w), h: r2(h) };
     if (k === "text") {
-      spec.tx = st.text; spec.font = st.font || TEXT_DEF.font; spec.size = st.size || TEXT_DEF.size;
+      // what the command leaves out comes from My style (env.look, Atelier only)
+      var lk = env.look ? env.look(doc, String(st.text || "").length <= 40 ? "title" : "body") : null;
+      spec.tx = st.text; spec.font = st.font || (lk && lk.font) || TEXT_DEF.font; spec.size = st.size || (lk && lk.size) || TEXT_DEF.size;
+      if (!st.font && lk && lk.fam) spec.ext = { fam: lk.fam };
       if (st.c) spec.fc = st.c;
+      else if (lk && lk.fc) spec.fc = lk.fc;
       if (st.align) spec.al = st.align;
       if (st.bold === "on") spec.b = 1;
     } else if (k === "shape") {
@@ -589,10 +593,15 @@
       if (k === "icon") spec.ico = env.findIcon ? env.findIcon(st.icon) : "star";
       spec.sc = st.c || st.fill || "#000000";
     }
+    if (k === "text" && st.h === null && spec.size !== (st.size || TEXT_DEF.size)) {   // the style's size: the box follows
+      spec.h = r2(spec.size * 1.3);
+      if (st.y === null) spec.y = r2((H - spec.h) / 2);
+    }
     if (st.anim && st.anim !== "none" && !(st.anim === "type" && k !== "text")) spec.an = st.anim;
     if (env.addItem) return env.addItem(doc, pg.id, spec, env.now) ? 1 : 0;
     var it = { id: newId(env, "it"), m: env.now, t: k === "line" ? "line" : "rect", pg: pg.id, x: spec.x, y: spec.y, w: spec.w, h: spec.h, z: 1, ax: {} };
-    Object.keys(spec).forEach(function (f) { if (["x", "y", "w", "h"].indexOf(f) < 0) it.ax[f] = spec[f]; });
+    Object.keys(spec).forEach(function (f) { if (["x", "y", "w", "h", "ext"].indexOf(f) < 0) it.ax[f] = spec[f]; });
+    if (spec.ext) it.ext = spec.ext;
     doc.items.push(it);
     return 1;
   }
@@ -776,9 +785,24 @@
   var OUT_ITEMS = 300, OUT_TEXT = 300;
   function unitOf(doc) { return doc.setup && doc.setup.unit === "mm" ? "mm" : "px"; }
   function inUnit(doc, v) { return r2(v / (PT_PER[doc.setup && doc.setup.unit] || 1)); }
-  function outline(doc) {
+  // My style (atelier/style.js, AC4): the kind of a page shape (a copy
+  // of style.js kindOf, kept equal by a test) and the summary of the
+  // person's designs of that kind, from the stored profile.
+  function styleKind(w, h) {
+    var r = w > 0 && h > 0 ? w / h : 1;
+    return r < 0.42 ? "bookmark" : r < 0.6 ? "9:16" : r < 0.72 ? "A portrait" : r < 0.88 ? "4:5" : r < 1.15 ? "square" : r < 1.9 ? "16:9" : "banner";
+  }
+  function styleOf(profile, kind) {
+    var e = profile && profile.kinds && Object.prototype.hasOwnProperty.call(profile.kinds, kind) ? profile.kinds[kind] : null;
+    return e && e.sum && typeof e.sum === "object" ? e.sum : null;
+  }
+
+  // style: the stored My style profile (optional)
+  function outline(doc, style) {
     var pages = pagesOf(doc), n = 0, cut = false;
     var o = { name: doc.name || "", size: inUnit(doc, doc.setup.w) + " × " + inUnit(doc, doc.setup.h) + " " + unitOf(doc), pages: [] };
+    var my = styleOf(style, styleKind(doc.setup.w, doc.setup.h));
+    if (my) o.style = my;
     if (unitOf(doc) === "mm") o.bleed_mm = r2((doc.setup.bleed || 0) / PT_PER.mm);
     pages.forEach(function (p, i) {
       var pg = { page: i + 1, elements: [] }, b = bgOf(doc, p.id);
@@ -831,7 +855,7 @@
     CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, FILTERS: FILTERS, SHAPES: SHAPES, EFFECTS: EFFECTS, ADJ: ADJ, WHAT: WHAT, POS: POS,
     ANIMS: ANIMS, TRANSITIONS: TRANSITIONS,
     check: check, pageSet: pageSet, pick: pick, apply: apply, targets: targets, preview: preview, outline: outline, picks: picks,
-    makeNew: makeNew, ptSize: ptSize
+    makeNew: makeNew, ptSize: ptSize, styleKind: styleKind, styleOf: styleOf
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierCommands = api;
