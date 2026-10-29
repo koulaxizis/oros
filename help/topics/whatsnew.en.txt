@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.46.00
+- Assistant and Mind Map: ask the Assistant to change your maps ("add five ideas under Marketing", "make the main branches bold", "move Ads under Budget", "sort A-Z", "a boundary around Marketing", "show it as an org chart"). It reads the map, shows the changes on a card, and Mind Map makes them on this device when you press Apply. Undo on the card puts the map back.
+
 ## Version 4.45.00
 - Assistant and Whiteboard: ask the Assistant to change your boards ("add three notes with ideas", "make the notes in the Ideas frame green", "connect Launch to Budget with an arrow", "a grid of 4 columns", "2026 instead of 2025"). It reads the board, shows the changes on a card, and Whiteboard makes them on this device when you press Apply. Undo on the card puts the board back.
 

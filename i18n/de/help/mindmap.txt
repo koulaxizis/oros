@@ -68,6 +68,9 @@ Jeder Import macht eine neue Mindmap und öffnet sie; deine anderen Mindmaps ble
 - **Text** (.txt): eine Idee pro Zeile, mit Tabs oder Leerzeichen für die Ebenen. So eine Liste kannst du auch mit `Liste einfügen…` einfügen.
 - **OPML** (.opml): der Gliederungs-Export der meisten Outliner.
 
+## Der Assistent
+Bitte den Assistenten, deine Maps mit Worten zu ändern, etwa „fünf Ideen für den Start unter Marketing“, „die Hauptzweige fett“, „Anzeigen unter Budget verschieben“, „die Ideen unter Budget A-Z sortieren“, „einen Rahmen Q1 um Marketing“ oder „als Organigramm zeigen“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet die Map. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt die Map wieder her, solange sie seitdem nicht geändert wurde. In der Hilfe des Assistenten steht alles, was er kann.
+
 ## Tastenkürzel
 - [[Tab]] fügt ein Kind hinzu, [[Enter]] ein Geschwister, [[F2]] oder einfach Lostippen bearbeitet den ausgewählten Knoten.
 - [[Delete]] löscht den Zweig, [[Space]] klappt ihn ein oder aus, die Pfeiltasten bewegen dich in der Mindmap.
