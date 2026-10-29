@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.36.00
+- Atelier: Canva designs brought over as PowerPoint keep bold or italic words inside a sentence and Canva's round and many-colour gradients. Typing in such a text keeps each word's look.
+
 ## Version 4.35.01
 - Layout: a Scribus file opened together with its print PDF now takes the PDF's line breaks also when the PDF's text has lost its accents (as with some Greek fonts) or the PDF leaves out the file's first pages, such as the covers.
 
