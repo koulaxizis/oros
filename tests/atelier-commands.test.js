@@ -67,7 +67,7 @@ test("the copies of the lists match designkit and Atelier", () => {
 test("one field name has one JSON type in every catalog the Assistant declares", () => {
   const type = (s) => s.t === "num" || s.t === "int" ? "number" : s.t === "bool" ? "boolean" : s.t === "enum" ? (typeof s.v[0] === "number" ? "number" : "string") : s.t === "list" ? "array" : "string";
   const seen = {};
-  const cats = [CMD.CATALOG, require(path.join(ROOT, "photolab/commands.js")).CATALOG, require(path.join(ROOT, "slides/commands.js")).CATALOG, require(path.join(ROOT, "writer/commands.js")).CATALOG, require(path.join(ROOT, "spreadsheet/commands.js")).CATALOG, require(path.join(ROOT, "montage/commands.js")).CATALOG].concat(Object.keys(SH.CATALOGS).map((a) => SH.CATALOGS[a]));
+  const cats = [CMD.CATALOG, require(path.join(ROOT, "photolab/commands.js")).CATALOG, require(path.join(ROOT, "slides/commands.js")).CATALOG, require(path.join(ROOT, "writer/commands.js")).CATALOG, require(path.join(ROOT, "spreadsheet/commands.js")).CATALOG, require(path.join(ROOT, "montage/commands.js")).CATALOG, require(path.join(ROOT, "studio/commands.js")).CATALOG].concat(Object.keys(SH.CATALOGS).map((a) => SH.CATALOGS[a]));
   cats.forEach((cat) => Object.keys(cat).forEach((op) => Object.keys(cat[op].args || {}).forEach((k) => {
     const ty = type(cat[op].args[k]);
     // recipes' q is already two types (layout print/screen, photolab quality), described on the tool

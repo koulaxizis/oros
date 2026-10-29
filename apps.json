@@ -819,6 +819,7 @@
       "category": "Sound",
       "icon": "studio",
       "url": "studio/",
+      "search": "search.js",
       "type": "internal"
     },
     {

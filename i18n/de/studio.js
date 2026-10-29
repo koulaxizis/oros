@@ -1,5 +1,12 @@
 orosPack("de", "studio", {
  "app.name": "Studio",
+ "as.bad": "Die Anfrage des Assistenten konnte nicht gelesen werden. Nichts wurde geändert.",
+ "as.changed": "Das Projekt wurde inzwischen geändert, deshalb wurde die Änderung des Assistenten nicht rückgängig gemacht.",
+ "as.done": "Der Assistent hat {n} Dinge in {d} Projekten geändert.",
+ "as.done0": "Es war nichts zu ändern.",
+ "as.done1": "Der Assistent hat {n} Dinge im Projekt geändert.",
+ "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
+ "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
  "au.auto": "automatisiert",
  "au.btn": "A",
  "au.clear": "Automationsspur leeren",

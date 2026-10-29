@@ -206,7 +206,11 @@
       "lp.hint": "Drag a loop onto a track, or press + to add it at the playhead. Loops play at the project's tempo.",
       "lp.none": "No loop matches.", "lp.added": "{name} added to {track}",
       "dr.kick": "Kick", "dr.snare": "Snare", "dr.rim": "Rim", "dr.clap": "Clap", "dr.hat": "Hi-hat", "dr.pedal": "Pedal hi-hat", "dr.ohat": "Open hi-hat",
-      "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Cowbell", "dr.tom1": "Low tom", "dr.tom2": "Mid tom", "dr.tom3": "High tom"
+      "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Cowbell", "dr.tom1": "Low tom", "dr.tom2": "Mid tom", "dr.tom3": "High tom",
+      "as.done": "The Assistant changed {n} things in {d} projects.", "as.done1": "The Assistant changed {n} things in the project.",
+      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.undone": "The Assistant's change was undone.", "as.changed": "The project was changed since, so the Assistant's change was not undone.",
+      "as.gone": "There is nothing left to undo."
     },
     el: {
       "app.name": "Studio", "proj.untitled": "Έργο χωρίς όνομα", "proj.default": "Έργο {n}",
@@ -335,7 +339,11 @@
       "lp.hint": "Σύρε ένα loop σε ένα κανάλι ή πάτα + για να μπει στη θέση αναπαραγωγής. Τα loops παίζουν στο τέμπο του έργου.",
       "lp.none": "Κανένα loop δεν ταιριάζει.", "lp.added": "Το {name} μπήκε στο {track}",
       "dr.kick": "Μπότα", "dr.snare": "Ταμπούρο", "dr.rim": "Στεφάνι", "dr.clap": "Παλαμάκια", "dr.hat": "Hi-hat", "dr.pedal": "Hi-hat πεντάλ", "dr.ohat": "Ανοιχτό hi-hat",
-      "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Κουδούνα", "dr.tom1": "Χαμηλό tom", "dr.tom2": "Μεσαίο tom", "dr.tom3": "Ψηλό tom"
+      "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Κουδούνα", "dr.tom1": "Χαμηλό tom", "dr.tom2": "Μεσαίο tom", "dr.tom3": "Ψηλό tom",
+      "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έργα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έργο.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Το έργο άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+      "as.gone": "Δεν έμεινε κάτι για αναίρεση."
     }
   };
 
@@ -2949,9 +2957,68 @@
   }
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;
+    if (tg.edit || tg.editUndo) { assistRun(tg); return; }
+    // a search hit (search.js)
+    if (typeof tg.project === "string") { var hit = C.find(data, "projects", tg.project); if (hit) openProject(hit); return; }
     if (tg.openFile) openFileTarget(tg.openFile);
   }
   window.__orosOpenAt = openTarget;
+
+  // The Assistant's changes (AS-EDIT, assist.js), loaded on the first
+  // request with commands.js.
+  window.StudioAssistHost = {
+    t: t, toast: showToast, undoToast: undoToast,
+    data: function () { flush(); return data; },
+    pid: function () { return proj ? proj.id : ""; },
+    busy: function () { return recording || !!(drag || rdrag || adrag) || !!(Roll && Roll.busy()); },
+    open: function (id) { var p = C.find(data, "projects", id); if (p) openProject(p); },
+    // next = the whole data; withUndo = the open project changed (one
+    // step of Studio's own Undo).
+    set: function (next, withUndo) {
+      if (withUndo) {
+        undoStack.push(snapshot());
+        if (undoStack.length > MAX_UNDO) undoStack.shift();
+        redoStack = [];
+      }
+      data = next;
+      if (proj) proj = C.find(data, "projects", proj.id);
+      if (!proj) { openProject(null); save(); return; }
+      fixSelection();
+      save();
+      renderAll();
+      FX.render();
+      replayIfPlaying();
+      if ($("proj-dlg").open) renderProjects();
+      if ($("track-dlg").open) renderTrackDlg();
+    }
+  };
+  var assistP = null;
+  function assistLoad() {
+    if (window.StudioAssist) return Promise.resolve(window.StudioAssist);
+    if (!assistP) {
+      var load = function (f) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + "?v=" + VER;
+          s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      assistP = (window.orosRecipes ? Promise.resolve() : load("../recipes/core.js"))
+        .then(function () { return load("commands.js"); }).then(function () { return load("assist.js"); }).then(function () {
+          if (!window.StudioAssist) throw new Error("assist");
+          return window.StudioAssist;
+        });
+      assistP.catch(function () { assistP = null; });
+    }
+    return assistP;
+  }
+  // { edit: { key, chat, docs, steps } } | { editUndo: { key, tok } }
+  function assistRun(tg) {
+    assistLoad().then(function (A) {
+      if (tg.edit) A.edit(tg.edit); else A.undo(tg.editUndo);
+    }, function () { showToast(t("as.bad")); });
+  }
 
   // ---------- Clip actions ----------
   function selectedClip() {
