@@ -122,7 +122,8 @@
   };
   // tempo, playing, position (s), beat position, ts num/denom
   Effect.prototype.setTime = function (t) {
-    if (t.playing && !this.playing) this.mustInit = true; // REAPER re-runs @init at transport start
+    // REAPER re-runs @init at transport start, unless @init set ext_noinit
+    if (t.playing && !this.playing && !this.inst.getHost("ext_noinit")) this.mustInit = true;
     this.playing = !!t.playing;
     this.inst.setHost("tempo", t.tempo || 120);
     this.inst.setHost("play_state", t.playing ? 1 : 0);
