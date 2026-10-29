@@ -168,6 +168,11 @@ Ask, for example, "make the photos black and white in my summer poster", "change
 - It can also animate (entrances, seconds per page, transitions), add texts, shapes, icons and lines, apply your brand kit (its fonts and colours), make copies in new sizes ("make it a story too"), make the files for you to save (PNG, JPG or PDF) and make a whole new design from your description ("a poster for our concert on 12 May"). New designs and copies are new designs in Atelier; `Undo` removes them again.
 - `Undo` on the card (or in `Change history`) puts every design back as it was before, as long as it wasn't changed since.
 
+## Documents in Layout
+The same card changes your print documents in [Layout](app:layout). Ask, for example, "start every chapter on a right-hand page", "make the body text 11 pt with hyphenation", "add 8 pages after page 40 and let the text run on", "number the pages from 5", "3 mm bleed" or "make the pictures on the odd pages black and white".
+- What it can change: find and replace text, a paragraph style (size, leading, font, alignment, letter spacing, bold, italic, capitals, space before and after, first-line indent, where it starts, hyphenation), paragraphs from one style to another, masters on pages, margins, pages (add, remove), fitting text that does not fit onto new pages, page numbers, bleed, pictures (black and white, whole or filling the frame) and the document's name. It works on the open document, a document by name or all your documents.
+- `Apply` opens Layout, which makes the changes on this device; black and white makes copies of the pictures and keeps the colour ones. `Undo` puts every document back, as long as it wasn't changed since.
+
 ## Pictures in Photo Lab
 Ask, for example, "make my open photo black and white", "write Winter instead of Summer on the beach picture", "make all my pictures 1200 pixels on the long side", "crop it square and add my name at the bottom right" or "give the title a shadow". The assistant reads the picture's layers (with your permission for [Photo Lab](app:photolab)) and shows a card with the changes and how many things each picture gets.
 - `Apply` opens Photo Lab, which opens each picture in turn, makes the changes as its own commands and saves it; `Stop` in Photo Lab ends it early.

@@ -421,6 +421,15 @@
       "ed.shp.rtriangle": "right triangle", "ed.shp.diamond": "diamond", "ed.shp.pentagon": "pentagon", "ed.shp.hexagon": "hexagon", "ed.shp.octagon": "octagon",
       "ed.shp.star": "star", "ed.shp.burst": "badge", "ed.shp.heart": "heart", "ed.shp.cross": "cross", "ed.shp.arrow": "arrow", "ed.shp.chevron": "chevron", "ed.shp.parallelogram": "parallelogram",
       "ed.shp.trapezoid": "trapezoid", "ed.shp.arch": "arch", "ed.shp.drop": "drop", "ed.shp.shield": "shield", "ed.shp.bubble": "speech bubble",
+      "ed.op.text": "Find and replace", "ed.op.pstyle": "Paragraph style", "ed.op.style": "Change a style", "ed.op.master": "Master page", "ed.op.margins": "Margins (mm)",
+      "ed.op.fit": "Fit the text", "ed.op.numbering": "Page numbers", "ed.op.grey": "Pictures in black and white", "ed.op.imgfit": "Fit pictures", "ed.f.name": "style",
+      "ed.f.lead": "leading", "ed.f.sb": "space before", "ed.f.sa": "space after", "ed.f.fi": "first line indent", "ed.f.brk": "starts", "ed.f.hyph": "hyphenation",
+      "ed.f.ms": "master", "ed.f.on": "on", "ed.f.t": "top", "ed.f.b": "bottom", "ed.f.i": "inside", "ed.f.o": "outside", "ed.f.flow": "text runs on", "ed.f.mode": "how",
+      "ed.f.numbering.n": "number", "ed.v.font.serif": "serif", "ed.v.font.sans": "sans serif", "ed.v.font.mono": "monospaced", "ed.v.brk.any": "anywhere",
+      "ed.v.brk.col": "in a new column", "ed.v.brk.page": "on a new page", "ed.v.brk.odd": "on a right page", "ed.v.brk.even": "on a left page", "ed.v.hyph.on": "on",
+      "ed.v.hyph.off": "off", "ed.v.on.all": "all pages", "ed.v.on.odd": "right pages", "ed.v.on.even": "left pages", "ed.v.mode.set": "start at",
+      "ed.v.mode.shift": "move by", "ed.v.mode.fit": "whole picture", "ed.v.mode.fill": "fill the frame",
+      "ed.note.fitLater": "Layout fits the text when it makes the changes.",
       "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
       "rc.file": "Save as file", "rc.saved": "Saved {name}. Send it to anyone with orOS.",
       "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
@@ -979,6 +988,16 @@
       "ed.shp.hexagon": "εξάγωνο", "ed.shp.octagon": "οκτάγωνο", "ed.shp.star": "αστέρι", "ed.shp.burst": "σήμα", "ed.shp.heart": "καρδιά", "ed.shp.cross": "σταυρός",
       "ed.shp.arrow": "βέλος", "ed.shp.chevron": "σιρίτι", "ed.shp.parallelogram": "παραλληλόγραμμο", "ed.shp.trapezoid": "τραπέζιο", "ed.shp.arch": "αψίδα", "ed.shp.drop": "σταγόνα",
       "ed.shp.shield": "ασπίδα", "ed.shp.bubble": "συννεφάκι",
+      "ed.op.text": "Εύρεση και αντικατάσταση", "ed.op.pstyle": "Στυλ παραγράφου", "ed.op.style": "Αλλαγή στυλ", "ed.op.master": "Πρότυπη σελίδα",
+      "ed.op.margins": "Περιθώρια (mm)", "ed.op.fit": "Χωράει το κείμενο", "ed.op.numbering": "Αρίθμηση σελίδων", "ed.op.grey": "Ασπρόμαυρες εικόνες",
+      "ed.op.imgfit": "Προσαρμογή εικόνων", "ed.f.name": "στυλ", "ed.f.lead": "διάστιχο", "ed.f.sb": "κενό πριν", "ed.f.sa": "κενό μετά", "ed.f.fi": "εσοχή πρώτης γραμμής",
+      "ed.f.brk": "ξεκινά", "ed.f.hyph": "συλλαβισμός", "ed.f.ms": "πρότυπη", "ed.f.on": "σε", "ed.f.t": "πάνω", "ed.f.b": "κάτω", "ed.f.i": "εσωτερικό",
+      "ed.f.o": "εξωτερικό", "ed.f.flow": "συνέχεια κειμένου", "ed.f.mode": "πώς", "ed.f.numbering.n": "αριθμός", "ed.v.font.serif": "με πατούρες",
+      "ed.v.font.sans": "χωρίς πατούρες", "ed.v.font.mono": "σταθερού πλάτους", "ed.v.brk.any": "οπουδήποτε", "ed.v.brk.col": "σε νέα στήλη",
+      "ed.v.brk.page": "σε νέα σελίδα", "ed.v.brk.odd": "σε δεξιά σελίδα", "ed.v.brk.even": "σε αριστερή σελίδα", "ed.v.hyph.on": "ναι", "ed.v.hyph.off": "όχι",
+      "ed.v.on.all": "όλες οι σελίδες", "ed.v.on.odd": "δεξιές σελίδες", "ed.v.on.even": "αριστερές σελίδες", "ed.v.mode.set": "ξεκινά από",
+      "ed.v.mode.shift": "μετακίνηση κατά", "ed.v.mode.fit": "ολόκληρη η εικόνα", "ed.v.mode.fill": "γεμίζει το πλαίσιο",
+      "ed.note.fitLater": "Η Σελιδοποίηση χωράει το κείμενο όταν κάνει τις αλλαγές.",
       "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
       "rc.file": "Αποθήκευση ως αρχείο", "rc.saved": "Αποθηκεύτηκε το {name}. Στείλ' το σε όποιον έχει orOS.",
       "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
@@ -3206,8 +3225,11 @@
   // Photo Lab (disk): its synced slice is only the project index; each
   // project's doc.json is read from the orOS disk (editLoad) before the
   // card counts, and kept here while it is unchanged (doc.m).
-  var EDIT_SRC = { atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand" },
-                   photolab: { mod: "PhotoLabCommands", data: "oros-photolab-data", prefs: "oros-photolab-prefs", disk: 1 } };
+  var EDIT_SRC = {
+    atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand" },
+    layout: { mod: "LayoutCommands", data: "oros-layout-data", folders: "", prefs: "oros-layout-prefs" },   // Layout has no folders
+    photolab: { mod: "PhotoLabCommands", data: "oros-photolab-data", prefs: "oros-photolab-prefs", disk: 1 }
+  };
   var EDIT_CONFIRM = 50, edLoading = {};            // more changes than this (or a removal) ask once more
   function editCats(apps) {
     var have = installed(), ok = {}, out = {};
@@ -3316,8 +3338,8 @@
   }
   // One command in the user's words: its name, then what it picks and sets.
   function edVal(k, v) {
-    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|mono|up)$/.test(k)) return "";
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans|dir|mode|kind)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|flow|mono|up)$/.test(k)) return "";
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind)$/.test(k)) return t("ed.v." + k + "." + v);
     if (k === "id") return edName("ed.flt.", v);
     if (k === "blend") return edName("ed.bl.", v);
     if (k === "deg") return v + "°";
@@ -3326,7 +3348,7 @@
     if (k === "flt") return edName("ed.flt.", v);
     if (k === "effect") return edName("ed.fx.", v);
     if (k === "shape") return edName("ed.shp.", v);
-    if (k === "font") return String(v).replace(/^fs_/, "").replace(/_/g, " ");
+    if (k === "font") return edName("ed.v.font.", String(v).replace(/^fs_/, "").replace(/_/g, " "));
     if (k === "ids") return t("ed.nIds", { n: String(v).split(/[\s,]+/).filter(Boolean).length });
     if (/^(has|find|repl|text|title)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
     return String(v);
@@ -3341,9 +3363,11 @@
     Object.keys(args).forEach(function (k) {
       var v = st[k], spec = args[k];
       if (v === null || v === undefined || v === "" || (spec.t === "bool" && !v) || (spec.def !== undefined && spec.def !== null && v === spec.def && !spec.req && spec.t !== "bool")) return;
-      // add's kind, resize's sizes and values that name themselves (dir, mode, a look's id, an adjustment's kind) read without a label
-      if ((st.op === "add" && k === "what") || /^(sizes|dir|mode|id|kind)$/.test(k)) { parts.push(k === "what" ? t("ed.v.add." + v) : edVal(k, v)); return; }
-      var val = edVal(k, v), lbl = t("ed.f." + (st.op === "create" && k === "n" ? "pages" : k));
+      // add's kind, resize's sizes and values that name themselves (dir, a look's id, an adjustment's kind; Photo Lab's resize mode) read without a label
+      if ((st.op === "add" && k === "what") || /^(sizes|dir|id|kind)$/.test(k) || (k === "mode" && app === "photolab")) { parts.push(k === "what" ? t("ed.v.add." + v) : edVal(k, v)); return; }
+      // a field one command names its own way (numbering n): ed.f.<op>.<field>
+      var val = edVal(k, v), lbl = t("ed.f." + st.op + "." + k);
+      if (lbl === "ed.f." + st.op + "." + k) lbl = t("ed.f." + (st.op === "create" && k === "n" ? "pages" : k));
       parts.push(val ? lbl + " " + val : lbl);
     });
     // find “a” → “b” reads as one phrase
