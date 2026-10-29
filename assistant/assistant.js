@@ -403,6 +403,7 @@
       "ed.f.h": "height", "ed.f.dx": "move right", "ed.f.dy": "move down", "ed.f.pct": "scale %", "ed.f.rot": "rotation", "ed.f.opacity": "opacity", "ed.f.pos": "place",
       "ed.f.gap": "gap", "ed.f.edge": "edge", "ed.f.dist": "spread", "ed.f.rel": "against", "ed.f.order": "order", "ed.f.lock": "lock", "ed.f.hide": "hide", "ed.f.n": "how many",
       "ed.f.at": "where", "ed.f.page": "page", "ed.f.dup": "as copies", "ed.f.first": "from page", "ed.f.last": "to page", "ed.f.dest": "to position", "ed.f.mm": "mm",
+      "ed.op.animate": "Animation", "ed.op.pagetime": "Page timing", "ed.op.add": "Add", "ed.op.brand": "Brand kit", "ed.op.resize": "New sizes", "ed.op.export": "Download", "ed.op.create": "New design", "ed.f.anim": "entrance", "ed.f.secs": "seconds per page", "ed.f.trans": "transition", "ed.f.icon": "icon", "ed.f.fonts": "fonts", "ed.f.palette": "colours", "ed.f.sizes": "sizes", "ed.f.copies": "as copies", "ed.f.fmt": "as", "ed.f.scale": "scale", "ed.f.dpi": "dpi", "ed.f.u": "unit", "ed.v.anim.none": "none", "ed.v.anim.fade": "fade in", "ed.v.anim.rise": "rise", "ed.v.anim.pop": "pop", "ed.v.anim.wipe": "wipe", "ed.v.anim.type": "typewriter", "ed.v.trans.none": "none", "ed.v.trans.fade": "fade", "ed.v.trans.slide": "slide", "ed.v.trans.push": "push", "ed.v.trans.zoom": "zoom", "ed.v.add.text": "a text", "ed.v.add.shape": "a shape", "ed.v.add.icon": "an icon", "ed.v.add.line": "a line", "ed.willMake": "Makes {n} new designs.", "ed.willFiles": "Makes files of {n} designs for you to save.", "ed.madeDone": "New designs: {n}.", "ed.filesDone": "Files: {n}.", "ed.note.noBrand": "There is no brand kit yet (Atelier › Brand kit).", "ed.note.noBrandFonts": "The brand kit has no fonts.", "ed.note.noBrandColors": "The brand kit has no colours.",
       "ed.f.title": "name", "ed.v.what.text": "texts", "ed.v.what.photo": "photos", "ed.v.what.video": "videos", "ed.v.what.shape": "shapes", "ed.v.what.icon": "icons",
       "ed.v.what.line": "lines", "ed.v.what.table": "tables", "ed.v.what.chart": "charts", "ed.v.what.bg": "page backgrounds", "ed.v.pos.tl": "top left", "ed.v.pos.t": "top",
       "ed.v.pos.tr": "top right", "ed.v.pos.l": "left", "ed.v.pos.c": "centre", "ed.v.pos.r": "right", "ed.v.pos.bl": "bottom left", "ed.v.pos.b": "bottom", "ed.v.pos.br": "bottom right",
@@ -957,6 +958,7 @@
       "ed.f.w": "πλάτος", "ed.f.h": "ύψος", "ed.f.dx": "δεξιά κατά", "ed.f.dy": "κάτω κατά", "ed.f.pct": "κλίμακα %", "ed.f.rot": "περιστροφή", "ed.f.opacity": "αδιαφάνεια",
       "ed.f.pos": "θέση", "ed.f.gap": "απόσταση", "ed.f.edge": "άκρη", "ed.f.dist": "κατανομή", "ed.f.rel": "ως προς", "ed.f.order": "σειρά", "ed.f.lock": "κλείδωμα",
       "ed.f.hide": "απόκρυψη", "ed.f.n": "πόσες", "ed.f.at": "πού", "ed.f.page": "σελίδα", "ed.f.dup": "ως αντίγραφα", "ed.f.first": "από τη σελίδα", "ed.f.last": "έως τη σελίδα",
+      "ed.op.animate": "Κίνηση", "ed.op.pagetime": "Χρόνος σελίδων", "ed.op.add": "Προσθήκη", "ed.op.brand": "Brand kit", "ed.op.resize": "Νέα μεγέθη", "ed.op.export": "Λήψη", "ed.op.create": "Νέο σχέδιο", "ed.f.anim": "είσοδος", "ed.f.secs": "δευτερόλεπτα ανά σελίδα", "ed.f.trans": "μετάβαση", "ed.f.icon": "εικονίδιο", "ed.f.fonts": "γραμματοσειρές", "ed.f.palette": "χρώματα", "ed.f.sizes": "μεγέθη", "ed.f.copies": "ως αντίγραφα", "ed.f.fmt": "ως", "ed.f.scale": "κλίμακα", "ed.f.dpi": "dpi", "ed.f.u": "μονάδα", "ed.v.anim.none": "καμία", "ed.v.anim.fade": "σταδιακή εμφάνιση", "ed.v.anim.rise": "άνοδος", "ed.v.anim.pop": "αναπήδηση", "ed.v.anim.wipe": "σάρωση", "ed.v.anim.type": "γραφομηχανή", "ed.v.trans.none": "καμία", "ed.v.trans.fade": "σβήσιμο", "ed.v.trans.slide": "ολίσθηση", "ed.v.trans.push": "ώθηση", "ed.v.trans.zoom": "ζουμ", "ed.v.add.text": "κείμενο", "ed.v.add.shape": "σχήμα", "ed.v.add.icon": "εικονίδιο", "ed.v.add.line": "γραμμή", "ed.willMake": "Φτιάχνει {n} νέα σχέδια.", "ed.willFiles": "Φτιάχνει αρχεία από {n} σχέδια για να τα αποθηκεύσεις.", "ed.madeDone": "Νέα σχέδια: {n}.", "ed.filesDone": "Αρχεία: {n}.", "ed.note.noBrand": "Δεν υπάρχει ακόμη brand kit (Ατελιέ › Brand kit).", "ed.note.noBrandFonts": "Το brand kit δεν έχει γραμματοσειρές.", "ed.note.noBrandColors": "Το brand kit δεν έχει χρώματα.",
       "ed.f.dest": "στη θέση", "ed.f.mm": "mm", "ed.f.title": "όνομα", "ed.v.what.text": "κείμενα", "ed.v.what.photo": "φωτογραφίες", "ed.v.what.video": "βίντεο",
       "ed.v.what.shape": "σχήματα", "ed.v.what.icon": "εικονίδια", "ed.v.what.line": "γραμμές", "ed.v.what.table": "πίνακες", "ed.v.what.chart": "γραφήματα", "ed.v.what.bg": "φόντα σελίδων",
       "ed.v.pos.tl": "πάνω αριστερά", "ed.v.pos.t": "πάνω", "ed.v.pos.tr": "πάνω δεξιά", "ed.v.pos.l": "αριστερά", "ed.v.pos.c": "κέντρο", "ed.v.pos.r": "δεξιά",
@@ -3199,7 +3201,7 @@
   // the card's key (orosAssistAtt.rb, as AS-RB) with an undo token;
   // Undo (card, change history) asks the app ({ editUndo }), which
   // refuses when a document changed since.
-  var EDIT_SRC = { atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs" } };
+  var EDIT_SRC = { atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand" } };
   var EDIT_CONFIRM = 50;            // more changes than this (or a removal) ask once more
   function editCats(apps) {
     var have = installed(), ok = {}, out = {};
@@ -3212,7 +3214,9 @@
   }
   function editSource(app) {
     var s = EDIT_SRC[app], prefs = readStore(s.prefs);
-    return { data: readStore(s.data), folders: readStore(s.folders), open: prefs && typeof prefs.doc === "string" ? prefs.doc : "" };
+    var kit = s.brand ? readStore(s.brand) : null;
+    if (kit && !((kit.colors && kit.colors.length) || (kit.fonts && Object.keys(kit.fonts).length))) kit = null;
+    return { data: readStore(s.data), folders: readStore(s.folders), open: prefs && typeof prefs.doc === "string" ? prefs.doc : "", brand: kit };
   }
   function appOf(apps, id) { var o = null; (apps || []).forEach(function (a) { if (a.id === id) o = a; }); return o; }
   function readInApp(c, args, apps) {
@@ -3239,25 +3243,29 @@
     var mod = cats[n.app], src = editSource(n.app);
     var tg = mod.targets(src.data, src.folders, src.open, n.designs, n.name);
     if (!tg.ok) return tg;
-    return { ok: true, app: n.app, designs: n.designs, docs: tg.docs, steps: n.steps, pv: mod.preview(src.data, tg.docs.map(function (d) { return d.id; }), n.steps) };
+    return { ok: true, app: n.app, designs: n.designs, docs: tg.docs, steps: n.steps, pv: mod.preview(src.data, tg.docs.map(function (d) { return d.id; }), n.steps, { brand: src.brand }) };
   }
   function proposeEdit(c, args, apps) {
     var p = editPlan(args, apps);
     if (!p.ok) return { content: "Error: " + p.err, err: 1, ui: { k: "editErr" } };
-    if (!p.pv.n && !p.pv.cut) {
+    if (!p.pv.n && !p.pv.cut && !p.pv.made && !p.pv.files) {
       return { content: "Error: nothing in " + p.docs.map(function (d) { return JSON.stringify(d.name); }).join(", ") + " matches these commands, so nothing would change" +
         (p.pv.notes.length ? " (" + p.pv.notes.join(", ") + ")" : "") + ". Check the element ids and fields with read_in_app.", err: 1, ui: { k: "editErr" } };
     }
     var out = { shown_as_card: true, designs: p.docs.slice(0, 20).map(function (d) { return d.name; }), will_change: p.pv.n, in_designs: p.pv.d,
                 note: "Nothing is changed before the user presses Apply on the card; the result is added here then." };
     if (p.pv.cut) out.photos_for_background_removal = p.pv.cut;
+    if (p.pv.made) out.new_designs = p.pv.made;
+    if (p.pv.files) out.designs_to_download = p.pv.files;
     if (p.pv.notes.length) out.notes = p.pv.notes;
     return { content: JSON.stringify(out), ui: { k: "edit", args: JSON.parse(JSON.stringify(args)), key: attId(), st: "" } };
   }
   // One command in the user's words: its name, then what it picks and sets.
   function edVal(k, v) {
-    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup)$/.test(k)) return "";
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette)$/.test(k)) return "";
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (k === "sizes") return (Array.isArray(v) ? v : []).map(function (z) { return Math.round(z.w) + " × " + Math.round(z.h) + " " + (z.u || "px"); }).join(", ");
+    if (k === "fmt") return String(v).toUpperCase();
     if (k === "flt") return edName("ed.flt.", v);
     if (k === "effect") return edName("ed.fx.", v);
     if (k === "shape") return edName("ed.shp.", v);
@@ -3273,8 +3281,10 @@
     Object.keys(args).forEach(function (k) {
       var v = st[k], spec = args[k];
       if (v === null || v === undefined || v === "" || (spec.t === "bool" && !v) || (spec.def !== undefined && spec.def !== null && v === spec.def && !spec.req && spec.t !== "bool")) return;
-      var val = edVal(k, v);
-      parts.push(val ? t("ed.f." + k) + " " + val : t("ed.f." + k));
+      // add's kind and resize's sizes read without their label
+      if ((st.op === "add" && k === "what") || k === "sizes") { parts.push(k === "what" ? t("ed.v.add." + v) : edVal(k, v)); return; }
+      var val = edVal(k, v), lbl = t("ed.f." + (st.op === "create" && k === "n" ? "pages" : k));
+      parts.push(val ? lbl + " " + val : lbl);
     });
     // find “a” → “b” reads as one phrase
     return { name: t("ed.op." + st.op), detail: parts.join(" · ").replace(" · " + t("ed.f.repl") + " ", " " + t("ed.f.repl") + " ") };
@@ -3298,11 +3308,13 @@
       r.content = "The user pressed Apply, but " + name + " could not apply the commands (" + String(rep.why || "error") + "). Nothing was changed.";
     } else {
       ui.st = "done";
-      ui.rep = { n: +rep.n || 0, d: +rep.d || 0, cut: +rep.cut || 0, notes: Array.isArray(rep.notes) ? rep.notes.slice(0, 10).map(String) : [],
+      ui.rep = { n: +rep.n || 0, d: +rep.d || 0, cut: +rep.cut || 0, made: +rep.made || 0, files: +rep.files || 0, notes: Array.isArray(rep.notes) ? rep.notes.slice(0, 10).map(String) : [],
                  per: Array.isArray(rep.per) ? rep.per.slice(0, 50).map(function (x) { return { name: String(x && x.name || "").slice(0, 120), n: +(x && x.n) || 0 }; }) : [] };
       if (rep.stopped) ui.rep.stopped = 1;
       var out = { applied: true, changed: ui.rep.n, designs: ui.rep.per };
       if (ui.rep.cut) out.backgrounds_removed = ui.rep.cut;
+      if (ui.rep.made) out.new_designs = ui.rep.made;
+      if (ui.rep.files) out.files_for_the_user = ui.rep.files;
       if (ui.rep.notes.length) out.notes = ui.rep.notes;
       if (rep.stopped) out.stopped_by_user = true;
       r.content = name + " applied the commands on the device. " + JSON.stringify(out);
@@ -3361,9 +3373,11 @@
     }
     if (st === "done" && ui.rep) {
       var rp = ui.rep, ul = el("ul", "entry-list");
-      ul.appendChild(el("li", "", rp.d === 1 ? t("ed.did1", { n: rp.n }) : t("ed.did", { n: rp.n, d: rp.d })));
+      if (rp.n || (!rp.made && !rp.files)) ul.appendChild(el("li", "", rp.d === 1 ? t("ed.did1", { n: rp.n }) : t("ed.did", { n: rp.n, d: rp.d })));
       rp.per.slice(0, 8).forEach(function (x) { ul.appendChild(el("li", "", t("ed.per", { name: x.name || t("ed.untitled"), n: x.n }))); });
       if (rp.cut) ul.appendChild(el("li", "", t("ed.cutDone", { n: rp.cut })));
+      if (rp.made) ul.appendChild(el("li", "", t("ed.madeDone", { n: rp.made })));
+      if (rp.files) ul.appendChild(el("li", "", t("ed.filesDone", { n: rp.files })));
       rp.notes.forEach(function (k) { ul.appendChild(el("li", "", t("ed.note." + k))); });
       card.appendChild(ul);
       if (rp.stopped) card.appendChild(el("p", "entry-state", t("ed.stopped")));
@@ -3396,6 +3410,8 @@
       var will = el("ul", "entry-list");
       if (p.pv.n) will.appendChild(el("li", "", p.pv.d === 1 ? t("ed.will1", { n: p.pv.n }) : t("ed.will", { n: p.pv.n, d: p.pv.d })));
       if (p.pv.cut) will.appendChild(el("li", "", t("ed.willCut", { n: p.pv.cut })));
+      if (p.pv.made) will.appendChild(el("li", "", t("ed.willMake", { n: p.pv.made })));
+      if (p.pv.files) will.appendChild(el("li", "", t("ed.willFiles", { n: p.pv.files })));
       p.pv.notes.forEach(function (k) { will.appendChild(el("li", "", t("ed.note." + k))); });
       card.appendChild(will);
       card.appendChild(el("p", "dlg-hint", t("ed.hint", { app: name })));
