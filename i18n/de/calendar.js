@@ -234,6 +234,7 @@ orosPack("de", "calendar", {
  "mm.oopen": "orOS-Datei öffnen…",
  "mm.osave": "orOS-Datei (.oroscal)",
  "mm.print": "Drucken…",
+ "mm.names": "Terminnamen in der Monatsansicht",
  "mm.send": "Kalender an jemanden senden…",
  "mm.subs": "Kalender abonnieren…",
  "mon.gen": "Januar … Dezember",

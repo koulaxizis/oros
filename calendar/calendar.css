@@ -335,6 +335,21 @@ body {
 }
 .cal-more { font-weight: 800; color: var(--text-dim); padding: 0 4px; }
 .cal-ev[hidden], .cal-more[hidden] { display: none; }
+/* Default month cells: one dot per event in its label colour */
+.ev-dot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: auto;
+  padding-top: 3px;
+}
+.ev-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.ev-dot.timed { border-radius: 1px; }
 
 /* Desktop: distinctly rectangular cells. Audit #1: full-width —
    no max-width cap; the grid fills the whole viewport like every
@@ -342,6 +357,7 @@ body {
 @media (min-width: 700px) {
   .cal-cell { min-height: 84px; }
   .cal-cell .cal-num { font-size: 13.5px; }
+  .ev-dot { width: 6px; height: 6px; }
 }
 /* Narrow cells: no times, smaller names */
 @media (max-width: 699.98px) {
@@ -1512,6 +1528,13 @@ dialog { margin: auto; }
   cursor: pointer;
 }
 .more-menu button:hover, .more-menu button:focus-visible { background: var(--accent-soft); color: var(--accent); }
+.more-menu button[role="menuitemcheckbox"] { display: flex; align-items: center; gap: 8px; }
+.more-menu button[role="menuitemcheckbox"]::before {
+  content: ""; flex: none; width: 16px; height: 16px; box-sizing: border-box;
+  border: 2px solid var(--text-dim); border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1;
+}
+.more-menu button[aria-checked="true"]::before { content: "✓"; border-color: var(--accent); background: var(--accent); color: var(--bg); font-weight: 800; }
 .sec-head > span.sec-btns {
   display: flex;
   gap: 6px;
