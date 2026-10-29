@@ -112,9 +112,10 @@ test("fit: a run with its own character style keeps it under the fit style", () 
 // PDF (set at another tracking, hyphenated): the file takes the PDF's
 // line breaks.
 const RB = require(path.join(ROOT, "layout/rebuild.js"));
-function twoPages(track, soft) {
+function twoPages(track, soft, lead) {
+  lead = lead || 0;
   const words = "ο γλάρος πετούσε πάνω από την ακροθαλασσιά ενώ η πόλη κοιμόταν ήσυχα και τα φώτα έσβηναν ένα ένα στην παραλία".split(" ");
-  const d = M.newDoc({ name: "S", pages: 2 }, 1), pg = M.pagesInOrder(d);
+  const d = M.newDoc({ name: "S", pages: 2 + lead }, 1), pg = M.pagesInOrder(d).slice(lead);
   d.pstyles.push({ id: "ps-b", m: 1, name: "B", base: "ps-base", font: "serif", size: 10, lead: 14, align: "j", track });
   const paras = [];
   for (let p = 0; p < 8; p++) {
@@ -153,6 +154,32 @@ test("matchPdf: another program's file takes its print PDF's line breaks, hyphen
   const again = pdfOf(d);
   const lineTexts = (pp) => pp.map((p) => RB.toLines(p.spans).map((l) => l.text));
   assert.deepEqual(lineTexts(again).map((x) => x.length), lineTexts(pdf).map((x) => x.length));
+});
+
+test("matchPdf: a PDF whose text comes out without accents still lines up", () => {
+  // (Greek fonts with the tonos as a glyph of its own: "καλά" reads "καλα")
+  const bare = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const pdf = pdfOf(twoPages(30, true)).map((p) => ({ spans: p.spans.map((s) => Object.assign({}, s, { t: bare(s.t) })) }));
+  assert.ok(pdf[0].spans.every((s) => s.t === bare(s.t)) && pdf[0].spans.some((s) => /[α-ω]/.test(s.t)));
+  const d = twoPages(0, false), before = d.stories[0].paras.map((p) => p.runs.map((r) => r.t).join(""));
+  const rep = RB.matchPdf(d, pdf, { fitName: "Line fit", lang: "en", now: 2 });
+  assert.equal(rep.matched, rep.lines);
+  assert.equal(rep.inPlace, rep.checked, JSON.stringify(rep));
+  // the story keeps its accents
+  const after = d.stories[0].paras.map((p) => p.runs.map((r) => r.t).join(""));
+  assert.deepEqual(after.map((t) => t.replace(/­/g, "")), before);
+});
+
+test("matchPdf: a print PDF without the file's first pages (covers) still lines up", () => {
+  const pdf = pdfOf(twoPages(30, false));
+  const d = twoPages(0, false, 3);
+  assert.equal(M.pagesInOrder(d).length, pdf.length + 3);
+  const rep = RB.matchPdf(d, pdf, { fitName: "Line fit", lang: "en", now: 2 });
+  assert.equal(rep.shift, 3);
+  assert.equal(rep.matched, rep.lines);
+  assert.equal(rep.inPlace, rep.checked, JSON.stringify(rep));
+  // pages that line up need no shift
+  assert.equal(RB.pageShift(twoPages(0, false), M.pagesInOrder(twoPages(0, false)), pdf), 0);
 });
 
 test("matchPdf: a PDF of other text changes nothing", () => {
