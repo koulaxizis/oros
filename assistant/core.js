@@ -2514,7 +2514,19 @@
     if (spec.t === "num" || spec.t === "int") return "number";
     if (spec.t === "bool") return "boolean";
     if (spec.t === "enum") return typeof spec.v[0] === "number" ? "number" : "string";
+    if (spec.t === "list") return "array";
     return "string";
+  }
+  // A field's JSON schema: lists of objects (Atelier's resize sizes)
+  // name their fields, so strict providers keep them.
+  function specSchema(spec) {
+    var o = { type: specType(spec) };
+    if (spec.t === "list" && spec.of && spec.of.f) {
+      var props = {}, req = [];
+      Object.keys(spec.of.f).forEach(function (k) { props[k] = specSchema(spec.of.f[k]); if (spec.of.f[k].req) req.push(k); });
+      o.items = { type: "object", properties: props, required: req };
+    }
+    return o;
   }
   function editFields(cats) {
     var props = { op: { type: "string", description: "The command's name (see the list above)." } };
@@ -2522,7 +2534,7 @@
       var cat = cats[app] && cats[app].CATALOG;
       Object.keys(cat || {}).forEach(function (op) {
         var args = cat[op].args || {};
-        Object.keys(args).forEach(function (k) { if (!props[k]) props[k] = { type: specType(args[k]) }; });
+        Object.keys(args).forEach(function (k) { if (!props[k]) props[k] = specSchema(args[k]); });
       });
     });
     return props;
@@ -2535,7 +2547,8 @@
     return {
       name: "edit_in_app",
       description: "Change anything in the user's documents of an app on their instruction: texts, fonts, sizes, colours, photos (filters, black and white, adjustments, masks, background removal), " +
-        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names. Read the document first with read_in_app to know its elements and their ids. " +
+        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download; " +
+        "or make a new design from the user's description (designs new, create first, then add, bg, pagetime…). Read the document first with read_in_app to know its elements and their ids. " +
         "The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back. " +
         "Use only these commands and fields (any other is refused and the reason comes back). " + EDIT_SEL + "\n" +
         apps.map(function (a) { return cats[a].GUIDE; }).join("\n"),
@@ -2543,7 +2556,7 @@
         type: "object",
         properties: {
           app: { type: "string", "enum": apps },
-          designs: { type: "string", "enum": ["open", "named", "folder", "all"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the folder `name`), all." },
+          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the folder `name`), all, or new (a new design: the first command is create)." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } }
         },
@@ -2572,12 +2585,14 @@
     var a = isObj(args) ? args : {}, app = String(a.app || ""), mod = cats && cats[app];
     if (!mod || !EDIT_APP[app]) return bad("app must be one of: " + Object.keys(cats || {}).join(", ") + ".");
     var designs = a.designs === undefined || a.designs === "" ? "open" : String(a.designs);
-    if (["open", "named", "folder", "all"].indexOf(designs) < 0) return bad("designs must be open, named, folder or all.");
+    if (["open", "named", "folder", "all", "new"].indexOf(designs) < 0) return bad("designs must be open, named, folder, all or new.");
     var name = squash(a.name || "").slice(0, 120);
     if ((designs === "named" || designs === "folder") && !name) return bad("give the " + (designs === "folder" ? "folder's" : EDIT_APP[app].noun + "'s") + " name.");
     var chk = mod.check(a.steps);
     if (!chk.ok) return bad(chk.err);
-    if (designs !== "named" && designs !== "open" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
+    if (chk.steps[0].op === "create") { designs = "new"; name = chk.steps[0].title || name; }
+    else if (designs === "new") return bad("designs new needs create as the first command.");
+    if (designs !== "named" && designs !== "open" && designs !== "new" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
     return { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
   }
   function normReadApp(args, cats) {

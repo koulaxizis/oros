@@ -59,6 +59,9 @@ test("the copies of the lists match designkit and Atelier", () => {
   assert.deepEqual(CMD.SHAPES, FX.SHAPES.map((s) => s.id));
   assert.deepEqual(CMD.EFFECTS, FX.TEXT_FX.map((f) => f.id));
   assert.deepEqual(CMD.ADJ, Object.keys(FX.normAdjust({})));
+  const ax = read("atelier/ax.js");
+  assert.equal(J(CMD.ANIMS), J(JSON.parse(/var ANIMS = (\[[^\]]*\])/.exec(ax)[1])));
+  assert.equal(J(CMD.TRANSITIONS), J(JSON.parse(/var TRANSITIONS = (\[[^\]]*\])/.exec(ax)[1])));
 });
 
 test("one field name has one JSON type in every catalog the Assistant declares", () => {
@@ -332,8 +335,8 @@ test("wiring: Atelier applies and undoes through assist.js; the Assistant's card
   const core = read("atelier/core.js"), as = read("atelier/assist.js"), idx = read("atelier/index.html");
   assert.match(core, /tg\.edit \|\| tg\.editUndo/);
   assert.match(as, /var chk = C\.check\(rq && rq\.steps\)/, "Atelier checks the commands again");
-  assert.match(as, /AT\.putDoc\(work\)/);
-  assert.match(as, /AT\.restoreDoc\(s\.id, s\.before\)/);
+  assert.match(as, /AT\.putDoc\(o\.w\)/);
+  assert.match(as, /if \(s\.made\) AT\.dropDoc\(s\.id\); else AT\.restoreDoc\(s\.id, s\.before\)/, "Undo removes copies and new designs, restores the rest");
   assert.match(as, /fp\(d\) !== s\.fp/, "a design changed since is not undone");
   assert.match(as, /indexedDB\.open\(DB, 1\)/);
   assert.ok(idx.indexOf("commands.js") > idx.indexOf("../recipes/core.js") && idx.indexOf("assist.js") > idx.indexOf("recipes.js"));
@@ -346,4 +349,115 @@ test("wiring: Atelier applies and undoes through assist.js; the Assistant's card
   assert.ok(read("assistant/index.html").indexOf("../atelier/commands.js") > 0);
   const sw = read("sw.js");
   assert.ok(sw.indexOf('"atelier/commands.js"') > 0 && sw.indexOf('"atelier/assist.js"') > 0);
+});
+
+// ---------- wave AC2 ----------
+test("AC2 check: animation, page timing, new elements, brand kit and create need what they need", () => {
+  assert.match(CMD.check([{ op: "animate", what: "text" }]).err, /animate: give anim/);
+  assert.match(CMD.check([{ op: "pagetime" }]).err, /pagetime: give secs or trans/);
+  assert.match(CMD.check([{ op: "add", what: "text" }]).err, /a text needs text/);
+  assert.match(CMD.check([{ op: "add", what: "icon" }]).err, /icon needs icon/);
+  assert.match(CMD.check([{ op: "brand", fonts: false, palette: false }]).err, /both false/);
+  assert.match(CMD.check([{ op: "rename", title: "x" }, { op: "create", w: 100, h: 100 }]).err, /create can only be the first/);
+  assert.match(CMD.check([{ op: "resize", sizes: [] }]).err, /resize/);
+  assert.ok(CMD.check([{ op: "resize", sizes: [{ w: 1080, h: 1920 }, { w: 210, h: 297, u: "mm" }] }]).ok);
+  assert.ok(!CMD.picks("add") && !CMD.picks("pagetime") && CMD.picks("animate"), "add picks nothing");
+});
+
+test("AC2 animate and pagetime: entrances on elements, seconds and transitions on page backgrounds", () => {
+  const { d, ids } = poster();
+  let r = run(d, [{ op: "animate", what: "text", anim: "rise" }]);
+  assert.equal(r.n, 2);
+  assert.equal(item(r.doc, ids.title).ax.an, "rise");
+  r = run(r.doc, [{ op: "animate", ids: ids.photo + "," + ids.title, anim: "type" }]);
+  assert.equal(item(r.doc, ids.photo).ax.an, undefined, "type is for texts only");
+  assert.equal(item(r.doc, ids.title).ax.an, "type");
+  r = run(r.doc, [{ op: "animate", what: "text", anim: "none" }]);
+  assert.equal(item(r.doc, ids.title).ax.an, undefined);
+  r = run(d, [{ op: "pagetime", secs: 3, trans: "slide" }]);
+  assert.equal(r.n, 2);
+  const bgs = r.doc.items.filter((it) => it.ax && it.ax.bg);
+  assert.ok(bgs.every((b) => b.ax.dur === 3 && b.ax.ptr === "slide"));
+  assert.equal(run(r.doc, [{ op: "pagetime", secs: 3, trans: "slide" }]).n, 0, "the same again changes nothing");
+  const o = CMD.outline(r.doc);
+  assert.equal(o.pages[0].secs, 3);
+  assert.equal(o.pages[0].transition, "slide");
+});
+
+test("AC2 add: a text, a shape, an icon and a line, centred and sized when left out", () => {
+  const { d, p2 } = poster();
+  const e = Object.assign(env(), { addItem: AX.addItem, findIcon: (w) => (w === "heart" ? "heart" : "star") });
+  const w = clone(d);
+  const n = steps([{ op: "add", what: "text", text: "Opening day", size: 60, c: "#112233", align: "c", bold: "on", anim: "rise" },
+    { op: "add", what: "shape", shape: "circle", fill: "#00ff00", page: 2, x: 10, y: 20, w: 100 },
+    { op: "add", what: "icon", icon: "heart", c: "#ff0000" },
+    { op: "add", what: "line" }]).reduce((k, st) => k + CMD.apply(w, st, e), 0);
+  assert.equal(n, 4);
+  const doc = M.normDoc(w), added = doc.items.filter((it) => !d.items.some((x) => x.id === it.id));
+  assert.equal(added.length, 4);
+  const tx = added.find((it) => it.ax.k === "text");
+  assert.equal(tx.ax.tx, "Opening day");
+  assert.equal(tx.ax.size, 60);
+  assert.equal(tx.ax.an, "rise");
+  assert.equal(tx.ax.b, 1);
+  assert.ok(Math.abs(tx.x - (doc.setup.w - tx.w) / 2) < 1, "centred");
+  const sh = added.find((it) => it.ax.k === "shape");
+  assert.equal(sh.pg, p2);
+  assert.equal(sh.ax.shp, "circle");
+  assert.deepEqual([sh.x, sh.y, sh.w, sh.h], [10, 20, 100, 100]);
+  assert.equal(added.find((it) => it.ax.k === "icon").ax.ico, "heart");
+});
+
+test("AC2 brand: titles get the heading font, the rest the body font; the main colours become the kit's", () => {
+  const { d, ids } = poster();
+  const kit = { fonts: { h: { f: "serif", b: 1 }, t: { f: "mono", b: 0 } }, colors: [{ c: "#0055AA" }] };
+  const notes = [];
+  const w = clone(d);
+  const n = CMD.apply(w, steps([{ op: "brand" }])[0], Object.assign(env(notes), { brand: kit }));
+  assert.ok(n >= 3);
+  assert.equal(item(w, ids.title).ax.font, "serif");
+  assert.equal(item(w, ids.title).ax.b, 1);
+  assert.equal(item(w, ids.body).ax.font, "mono");
+  assert.equal(item(w, ids.shape).ax.fc, "#0055aa", "the most used colour (red) becomes the kit's first");
+  assert.equal(item(w, ids.logo).ax.sc, "#0055aa");
+  const none = [];
+  assert.equal(CMD.apply(clone(d), steps([{ op: "brand" }])[0], env(none)), 0);
+  assert.deepEqual(none, ["noBrand"]);
+});
+
+test("AC2 resize, export and create: copies, files and new designs are counted apart from changes", () => {
+  const { d } = poster();
+  const data = { docs: [d] };
+  let pv = CMD.preview(data, [d.id], steps([{ op: "resize", sizes: [{ w: 1080, h: 1920 }, { w: 1200, h: 628 }] }, { op: "export", fmt: "pdf" }]));
+  assert.deepEqual([pv.n, pv.made, pv.files], [0, 2, 1]);
+  const w = clone(d);
+  const relaid = (doc, ww, hh, unit) => ({ setup: Object.assign({}, doc.setup, { w: ww, h: hh, unit }), items: doc.items });
+  assert.equal(CMD.apply(w, steps([{ op: "resize", sizes: [{ w: 210, h: 297, u: "mm" }], copies: false }])[0], Object.assign(env(), { relaid })), 1);
+  assert.equal(w.setup.unit, "mm");
+  assert.ok(Math.abs(w.setup.w - 595.28) < 0.01);
+  pv = CMD.preview(data, [""], steps([{ op: "create", title: "Bakery opening", w: 1080, h: 1350, n: 2, fill: "#fff0e0" },
+    { op: "add", what: "text", text: "Grand opening", page: 1 }, { op: "pagetime", secs: 4 }]));
+  assert.equal(pv.made, 1);
+  assert.equal(pv.n, 3);
+  assert.equal(pv.per[0].name, "Bakery opening");
+  const nd = CMD.makeNew(steps([{ op: "create", title: "A4", w: 210, h: 297, u: "mm", n: 3 }])[0], env());
+  assert.equal(nd.pages.length, 3);
+  assert.equal(nd.setup.unit, "mm");
+  assert.deepEqual(CMD.targets({ docs: [] }, null, "", "new", "A4"), { ok: true, docs: [{ id: "", name: "A4" }], fresh: 1 });
+});
+
+test("AC2 Assistant: designs new goes with create; sizes is an array of objects in the schema", () => {
+  const cats = { atelier: CMD };
+  const n = C.normEdit({ app: "atelier", steps: [{ op: "create", title: "Menu", w: 210, h: 297, u: "mm" }, { op: "add", what: "text", text: "Menu" }] }, cats);
+  assert.equal(n.designs, "new");
+  assert.equal(n.name, "Menu");
+  assert.match(C.normEdit({ app: "atelier", designs: "new", steps: [{ op: "rename", title: "x" }] }, cats).err, /designs new needs create/);
+  const props = C.editTool(cats).params.properties;
+  assert.ok(props.designs.enum.includes("new"));
+  const sizes = props.steps.items.properties.sizes;
+  assert.equal(sizes.type, "array");
+  assert.deepEqual(Object.keys(sizes.items.properties), ["w", "h", "u"]);
+  assert.deepEqual(sizes.items.required, ["w", "h"]);
+  assert.equal(props.steps.items.properties.scale.type, "number");
+  assert.equal(props.steps.items.properties.anim.type, "string");
 });
