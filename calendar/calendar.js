@@ -589,6 +589,7 @@
       "mm.free": "Share free times…",
       "mm.print": "Print…",
       "mm.names": "Event names in Month",
+      "mm.names.short": "Names",
       "qa.btn": "Quick add",
       "qa.title": "Quick add",
       "qa.ph": "e.g. Coffee with Nikos Thursday 6pm at Syntagma",
@@ -657,6 +658,7 @@
       "mm.free": "Κοινοποίηση ελεύθερων ωρών…",
       "mm.print": "Εκτύπωση…",
       "mm.names": "Ονόματα συμβάντων στον Μήνα",
+      "mm.names.short": "Ονόματα",
       "qa.btn": "Γρήγορη προσθήκη",
       "qa.title": "Γρήγορη προσθήκη",
       "qa.ph": "π.χ. Καφές με Νίκο Πέμπτη 6μμ στο Σύνταγμα",
@@ -3935,6 +3937,7 @@ function transientNote(title, body) {
     var agenda = curView === "agenda" && !searching;
     $("cal-wd").hidden = !month;
     $("cal-grid").hidden = !month;
+    if ($("vw-names")) $("vw-names").hidden = !month;
     $("week-grid").hidden = !week;
     if ($("day-view")) $("day-view").hidden = !(curView === "day" && !searching);
     if ($("year-grid")) $("year-grid").hidden = !(curView === "year" && !searching);
@@ -4017,8 +4020,8 @@ function transientNote(title, body) {
     renderAll();
   }
   function syncNamesItem() {
-    var b = $("mm-names");
-    if (b) b.setAttribute("aria-checked", monthNames ? "true" : "false");
+    var b = $("vw-names");
+    if (b) b.setAttribute("aria-pressed", monthNames ? "true" : "false");
   }
 
   function fitMonth() {
@@ -4056,6 +4059,11 @@ function transientNote(title, body) {
   }
 
   // View switcher + search wiring (guarded — stale HTML cannot crash)
+  if ($("vw-names")) {
+    syncNamesItem();
+    $("vw-names").title = t("mm.names");
+    $("vw-names").addEventListener("click", function () { setMonthNames(!monthNames); });
+  }
   VIEWS.forEach(function (k) {
     var b = $("vw-" + k);
     if (b) b.addEventListener("click", function () { setSearch(""); setView(k); });
@@ -7428,14 +7436,6 @@ function transientNote(title, body) {
     $("mm-send").hidden = !shareApi();
     $("mm-send").addEventListener("click", function () { setMore(false); openScal(); });
     $("mm-print").addEventListener("click", function () { setMore(false); doPrint(); });
-    if ($("mm-names")) {
-      syncNamesItem();
-      $("mm-names").addEventListener("click", function () {
-        setMore(false);
-        if (curView !== "month") { setSearch(""); setView("month"); }
-        setMonthNames(!monthNames);
-      });
-    }
   }
 
   /* ---------- 8. Boot ---------- */

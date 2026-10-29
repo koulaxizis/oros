@@ -7,7 +7,7 @@ Calendar opens on the current month with today selected. Tap or click a day to s
 Switch between `Day`, `Week`, `Month`, `Year` and `Agenda` with the buttons under the title:
 - `Day` shows one day as an hour grid, with all-day events in a strip at the top and a line at the current time. Tap or click an empty hour to add an event at that time.
 - `Week` shows seven days side by side.
-- `Month` fills the window and shows a coloured dot for each event (up to six a day), in its label's colour. To see the event names instead, Google Calendar style, turn on `More` › `Event names in Month` (this device only; press it again to go back to dots). With names, the time shows on wider screens and `+N` says how many more a day has than fit. Tap a day to see all its events below the grid.
+- `Month` fills the window and shows a coloured dot for each event (up to six a day), in its label's colour. To see the event names instead, Google Calendar style, press the `Names` button next to the views (Month only, this device only; press it again to go back to dots). With names, the time shows on wider screens and `+N` says how many more a day has than fit. Tap a day to see all its events below the grid.
 - `Year` shows the 12 months small, with a dot under days that have events. Tap a day to open it in `Day`, or a month's name to open that month.
 - `Agenda` lists what's coming in the next 30 days; `Show more` adds more days.
 

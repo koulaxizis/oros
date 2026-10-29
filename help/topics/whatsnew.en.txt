@@ -2,7 +2,7 @@
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
 ## Version 4.47.01
-- Calendar: the Month view shows coloured dots for events again, as before, while keeping the taller cells. If you prefer the event names, Google Calendar style, turn on More › Event names in Month (this device only).
+- Calendar: the Month view shows coloured dots for events again, as before, while keeping the taller cells. If you prefer the event names, Google Calendar style, press the new Names button next to the views (this device only).
 
 ## Version 4.47.00
 - Atelier: import many designs at once. Home › Import › From files now takes several files together, or one .zip full of designs; From a folder in Files brings in every design (.orosdesign, .pptx) in a folder of your orOS disk and the folders inside it. Home stays open and one message says how many came in.
