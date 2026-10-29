@@ -251,7 +251,10 @@
 
   // ---------- The PDF's lines → line starts in the story ----------
   var HY_END = /[-\u2010\u2011\u00AD]$/, BLANK = /[\s\u00AD\u200B]/;
-  function norm(t) { return String(t).normalize("NFKC"); }
+  // compared without accents: some PDFs (Greek fonts whose tonos is a
+  // glyph of its own) give "καλα" for "καλά" when their text is read
+  var MARKS = /[\u0300-\u036F\u0384\u0385]/g;
+  function norm(t) { return String(t).normalize("NFKC").normalize("NFD").replace(MARKS, ""); }
   function align(doc, sid, texts) {
     var st = M.find(doc.stories, sid), out = { targets: [], matched: 0, total: (texts || []).length };
     if (!st) return out;
@@ -263,7 +266,7 @@
         if (r.f) { S.push("\uFFFC"); at.push({ p: p, o: o, f: 1 }); o++; return; }
         var t = String(r.t || "");
         for (var i = 0; i < t.length; i++) {
-          if (!BLANK.test(t[i])) norm(t[i]).split("").forEach(function (c) { S.push(c); at.push({ p: p, o: o + i }); });
+          if (!BLANK.test(t[i])) norm(t[i]).split("").forEach(function (c) { if (!BLANK.test(c)) { S.push(c); at.push({ p: p, o: o + i }); } });
         }
         o += t.length;
       });
@@ -342,7 +345,7 @@
     });
   }
 
-  var api = { fit: fit, breaks: breaks, align: align, plan: plan, lineWidth: lineWidth, chars: chars };
+  var api = { fit: fit, breaks: breaks, align: align, key: norm, plan: plan, lineWidth: lineWidth, chars: chars };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_LINEFIT = api;
 })(typeof window !== "undefined" ? window : this);
