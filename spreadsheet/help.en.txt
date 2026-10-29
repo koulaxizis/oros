@@ -104,6 +104,9 @@ The tabs at the bottom are your sheets.
 - Double-click a tab, or long-press it on a touch screen, to rename it.
 - Tap ✕ on a tab, then ✕ again within 3 seconds, to delete the sheet. The last sheet can't be deleted.
 
+## The Assistant
+Ask the Assistant to change your sheets in words, such as "2026 instead of 2025", "make the first row bold", "sort by price", "insert two rows above row 5" or "freeze the first row". It shows the changes on a card first; `Apply` makes them here and opens the sheet. `Undo` on the message here, or on the Assistant's card, puts the cells back as long as they weren't changed since. See the Assistant's help for everything it can do.
+
 ## Sync and backup
 With [orOS sync](help:t/sync), your sheets, cells, formatting (with fills, borders and merged cells), column widths, row heights, frozen panes, charts and conditional formatting rules reach your other devices. Text and formatting in the same cell are merged separately, so a value typed on one device and bold set on another both survive. Each chart and each rule syncs on its own: a chart added on one device and a rule added on another both stay.
 

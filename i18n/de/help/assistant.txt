@@ -195,6 +195,12 @@ Bitte zum Beispiel um „2026 statt 2025 im offenen Dokument“, „die Übersch
 - Wenn „Änderungen verfolgen“ an ist, werden die Änderungen des Assistenten nicht als verfolgte Änderungen markiert.
 - `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jedes Dokument wieder her, solange es seitdem nicht geändert wurde.
 
+## Blätter in Tabelle
+Bitte zum Beispiel um „2026 statt 2025 in meinem Blatt“, „die erste Zeile fett mit blauer Füllung“, „Spalte B in Euro“, „in Spalte C den doppelten Preis“, „nach Preis sortieren“, „zwei Zeilen über Zeile 5 einfügen“, „Spalte A breiter“ oder „die erste Zeile fixieren“. Der Assistent liest das Blatt (mit deiner Erlaubnis für [Tabelle](app:spreadsheet)): Zellen, Formeln, was sie zeigen, und ihr Format. Dann zeigt er eine Karte mit den Änderungen und wie viele Dinge sich in jedem Blatt ändern.
+- `Anwenden` macht die Änderungen in Tabelle auf diesem Gerät und öffnet das Blatt. Die Änderung ist auch ein Schritt des eigenen Rückgängig von Tabelle.
+- Was er ändern kann: Werte und Formeln (eine Formel für einen Bereich wird wie mit dem Ausfüllkästchen ausgefüllt); Suchen und Ersetzen in Werten (Formeln bleiben, wie sie sind); Zellen leeren, oder nur ihre Werte, ihr Format, ihre Füllung oder ihre Rahmen; fett, kursiv, unterstrichen, Ausrichtung, Textfarbe, Füllung, Zahlenformat, Textumbruch und Rahmen; Spaltenbreiten und Zeilenhöhen; Zeilen und Spalten einfügen und löschen (Formeln, Diagramme und Regeln folgen); Sortieren mit Kopfzeile; Zellen verbinden und trennen; fixierte Zeilen und Spalten; und den Namen des Blatts. Er arbeitet am offenen Blatt, an einem Blatt nach Namen oder an allen Blättern.
+- `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jede Zelle und jedes Blatt wieder her, solange sie seitdem nicht geändert wurden.
+
 ## Fotos, PDFs und Dokumente
 Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto, ein PDF oder ein Dokument anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 30 Dateien gehen mit einer Nachricht, jede bis zu 30 MB.
 - Frag zum Beispiel „Füge diesen Beleg zu meinen Ausgaben hinzu“, „Speichere diese Visitenkarte als Kontakt“, „Trag das Konzert von diesem Plakat in meinen Kalender ein“ oder „Fass diesen Vertrag in einer Notiz zusammen“. Der Assistent liest die Datei und bereitet die Eintragskarte vor, die du wie gewohnt prüfst und speicherst.

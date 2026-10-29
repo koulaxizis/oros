@@ -2509,7 +2509,7 @@
   // Atelier atelier/commands.js) }. Every field any command takes is
   // declared once with one JSON type (a test checks that no name has
   // two types across the apps), so strict providers keep them.
-  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" }, writer: { what: "documents", noun: "document" } };
+  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" }, writer: { what: "documents", noun: "document" }, spreadsheet: { what: "sheets", noun: "sheet" } };
   function specType(spec) {
     if (spec.t === "num" || spec.t === "int") return "number";
     if (spec.t === "bool") return "boolean";
@@ -2542,13 +2542,13 @@
   var EDIT_SEL = "In Atelier, elements are picked with ids (element ids from read_in_app, comma separated), pages (\"\" all, odd, even, first, last or positions like 2-4,6; 1 = the first page), " +
     "what (\"\" every element but page backgrounds, or text, photo, video, shape, icon, line, table, chart, bg) and has (words in the text or a photo's file name); " +
     "a locked element is moved or removed only when named by id. Lengths are in the design's own unit (px, or mm for print). Leave a field out to keep it as it is. " +
-    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands). In Writer paragraphs are picked with paras, what and has (see the Writer commands).";
+    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands). In Writer paragraphs are picked with paras, what and has (see the Writer commands). In Spreadsheet the documents are sheets and cells are picked with range in A1 notation (see the Spreadsheet commands).";
   function editTool(cats) {
     var apps = Object.keys(cats || {}).filter(function (a) { return EDIT_APP[a]; }).sort();
     return {
       name: "edit_in_app",
       description: "Change anything in the user's documents of an app on their instruction: texts, fonts, sizes, colours, photos (filters, black and white, adjustments, masks, background removal), " +
-        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download; " +
+        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download, cell values, formulas, cell formats, rows and columns, sorting; " +
         "or make a new design from the user's description (designs new, create first, then add, bg, pagetime…). Read the document first with read_in_app to know its elements and their ids. " +
         "The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back. " +
         "Use only these commands and fields (any other is refused and the reason comes back). " + EDIT_SEL + "\n" +
@@ -2557,7 +2557,7 @@
         type: "object",
         properties: {
           app: { type: "string", "enum": apps },
-          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts: open, named or all." },
+          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets: open, named or all." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } }
         },
@@ -2568,7 +2568,7 @@
   function readAppTool(apps) {
     return {
       name: "read_in_app",
-      description: "Read one of the user's documents in an app (for Atelier a design: its size, pages and every element with its id, kind, position, size, text, font, colours and filter; for Photo Lab a picture: its size and layers with their ids, kinds, names, positions, texts and styles; for Slides a presentation: its theme, footer and per slide the layout, notes and every object with its id, kind, position, size and text; for Writer a document: its details, page setup, header, footer, footnotes and every paragraph with its number, kind, alignment and text). " +
+      description: "Read one of the user's documents in an app (for Atelier a design: its size, pages and every element with its id, kind, position, size, text, font, colours and filter; for Photo Lab a picture: its size and layers with their ids, kinds, names, positions, texts and styles; for Slides a presentation: its theme, footer and per slide the layout, notes and every object with its id, kind, position, size and text; for Writer a document: its details, page setup, header, footer, footnotes and every paragraph with its number, kind, alignment and text; for Spreadsheet a sheet: its size, frozen panes, column widths, merged cells, charts and every cell in use with its value or formula, what a formula shows, and its format). " +
         "Call it before edit_in_app to pick elements by id. Positions and sizes are in the document's unit.",
       params: {
         type: "object",

@@ -2002,6 +2002,8 @@ var PRECACHE_URLS = [
   "slides/remote.js",
   "spreadsheet/functions.js",
   "spreadsheet/sheetkit.js",
+  "spreadsheet/commands.js",
+  "spreadsheet/assist.js",
   "stock/pos-core.js",
   "stock/pos.js",
   "storage/core.js",

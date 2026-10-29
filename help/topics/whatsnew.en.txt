@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.42.00
+- Assistant and Spreadsheet: ask the Assistant to change your sheets ("2026 instead of 2025", "make the first row bold", "show column B in euros", "sort by price", "insert two rows above row 5", "freeze the first row"). It reads the sheet, shows the changes on a card, and Spreadsheet makes them on this device when you press Apply. Undo on the card puts every cell back.
+
 ## Version 4.41.00
 - Assistant: it reads "My style" from Atelier, the look of your own designs for each kind of design, so you can ask for "a new post in my style". It asks before it shares your style, as for any design.
 
