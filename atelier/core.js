@@ -108,7 +108,7 @@
       "fn.browse": "Show all", "fn.loading": "Getting the font…", "fn.fail": "The font could not be fetched.",
       "fn.offline": "You are offline: only fonts already on this device can be used.",
       "fn.hint": "Free fonts with open licences. A font is downloaded the first time you use it and then works offline on this device. Letters a font lacks show in Sans.",
-      "imp.file": "From a file (.pptx, picture, package)…", "imp.folder": "From an unzipped package folder…", "imp.canva": "From your Canva account…",
+      "imp.file": "From files (.pptx, pictures, packages or a .zip of them)…", "imp.disk": "From a folder in Files…", "imp.diskTitle": "Import a folder from Files", "imp.diskUp": "Up", "imp.diskGo": "Import", "imp.diskLooking": "Looking for designs…", "imp.diskFound": "{n} designs (.orosdesign, .pptx) here and in the folders inside.", "imp.diskNone": "No designs (.orosdesign, .pptx) here or in the folders inside.", "imp.many": "{n} designs imported", "imp.manyBad": "{n} designs imported; {bad} files could not be opened", "imp.folder": "From an unzipped package folder…", "imp.canva": "From your Canva account…",
       "home.select": "Select", "home.picked": "{n} selected", "home.fromCanva": "From Canva ({n})", "home.delSel": "Delete ({n})",
       "home.delAsk": "Delete {n} designs?", "home.delOk": "Delete", "home.deleted": "{n} designs deleted.",
       "del.one": "Delete “{name}”?", "del.files": "Also delete the files nothing else uses (pictures, videos, sounds): {n}",
@@ -328,7 +328,7 @@
       "fn.browse": "Δείξε όλες", "fn.loading": "Κατεβάζω τη γραμματοσειρά…", "fn.fail": "Η γραμματοσειρά δεν μπόρεσε να κατέβει.",
       "fn.offline": "Είσαι εκτός σύνδεσης: μπορείς να χρησιμοποιήσεις μόνο όσες γραμματοσειρές έχει ήδη η συσκευή.",
       "fn.hint": "Δωρεάν γραμματοσειρές με ανοιχτές άδειες. Μια γραμματοσειρά κατεβαίνει την πρώτη φορά που τη χρησιμοποιείς και μετά δουλεύει χωρίς σύνδεση σε αυτή τη συσκευή. Όσα γράμματα δεν έχει φαίνονται σε Sans.",
-      "imp.file": "Από αρχείο (.pptx, εικόνα, πακέτο)…", "imp.folder": "Από φάκελο αποσυμπιεσμένου πακέτου…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
+      "imp.file": "Από αρχεία (.pptx, εικόνες, πακέτα ή ένα .zip τους)…", "imp.disk": "Από φάκελο στα Αρχεία…", "imp.diskTitle": "Εισαγωγή φακέλου από τα Αρχεία", "imp.diskUp": "Πάνω", "imp.diskGo": "Εισαγωγή", "imp.diskLooking": "Αναζήτηση σχεδίων…", "imp.diskFound": "{n} σχέδια (.orosdesign, .pptx) εδώ και στους φακέλους μέσα.", "imp.diskNone": "Κανένα σχέδιο (.orosdesign, .pptx) εδώ ή στους φακέλους μέσα.", "imp.many": "Εισήχθησαν {n} σχέδια", "imp.manyBad": "Εισήχθησαν {n} σχέδια· {bad} αρχεία δεν άνοιξαν", "imp.folder": "Από φάκελο αποσυμπιεσμένου πακέτου…", "imp.canva": "Από τον λογαριασμό σου στο Canva…",
       "home.select": "Επιλογή", "home.picked": "{n} επιλεγμένα", "home.fromCanva": "Από το Canva ({n})", "home.delSel": "Διαγραφή ({n})",
       "home.delAsk": "Να διαγραφούν {n} σχέδια;", "home.delOk": "Διαγραφή", "home.deleted": "Διαγράφηκαν {n} σχέδια.",
       "del.one": "Να διαγραφεί το «{name}»;", "del.files": "Διαγραφή και των αρχείων που δεν χρησιμοποιεί τίποτε άλλο (εικόνες, βίντεο, ήχοι): {n}",
@@ -1356,12 +1356,13 @@
   }
   AT.dropDoc = dropDoc;
 
-  function addDoc(d) {
+  // stay: added without opening it (several files at once, io.js)
+  function addDoc(d, stay) {
     if (AT.folders) AT.folders.created(d.id);
     data.docs.push(d);
     data = M.normData(data);
     save();
-    openDoc(d.id);
+    if (!stay) openDoc(d.id);
   }
   function createDoc(opts) { addDoc(AX.newDesign(opts, now())); }
   // several new designs at once (the release kit, kit.js): into folder
@@ -1647,6 +1648,7 @@
     $("btn-import").addEventListener("click", function () {
       var items = [
         { label: t("imp.file"), fn: AT.io.importAny },
+        { label: t("imp.disk"), fn: AT.io.importDisk },
         { label: t("imp.folder"), fn: AT.io.importFolder }
       ];
       if (AT.canva) items.push({ label: t("imp.canva"), fn: AT.canva.open });
