@@ -405,6 +405,7 @@
       "ed.f.at": "where", "ed.f.page": "page", "ed.f.dup": "as copies", "ed.f.first": "from page", "ed.f.last": "to page", "ed.f.dest": "to position", "ed.f.mm": "mm",
       "ed.op.animate": "Animation", "ed.op.pagetime": "Page timing", "ed.op.add": "Add", "ed.op.brand": "Brand kit", "ed.op.resize": "New sizes", "ed.op.export": "Download", "ed.op.create": "New design", "ed.f.anim": "entrance", "ed.f.secs": "seconds per page", "ed.f.trans": "transition", "ed.f.icon": "icon", "ed.f.fonts": "fonts", "ed.f.palette": "colours", "ed.f.sizes": "sizes", "ed.f.copies": "as copies", "ed.f.fmt": "as", "ed.f.scale": "scale", "ed.f.dpi": "dpi", "ed.f.u": "unit", "ed.v.anim.none": "none", "ed.v.anim.fade": "fade in", "ed.v.anim.rise": "rise", "ed.v.anim.pop": "pop", "ed.v.anim.wipe": "wipe", "ed.v.anim.type": "typewriter", "ed.v.trans.none": "none", "ed.v.trans.fade": "fade", "ed.v.trans.slide": "slide", "ed.v.trans.push": "push", "ed.v.trans.zoom": "zoom", "ed.v.add.text": "a text", "ed.v.add.shape": "a shape", "ed.v.add.icon": "an icon", "ed.v.add.line": "a line", "ed.willMake": "Makes {n} new designs.", "ed.willFiles": "Makes files of {n} designs for you to save.", "ed.madeDone": "New designs: {n}.", "ed.filesDone": "Files: {n}.", "ed.note.noBrand": "There is no brand kit yet (Atelier › Brand kit).", "ed.note.noBrandFonts": "The brand kit has no fonts.", "ed.note.noBrandColors": "The brand kit has no colours.",
       "ed.counting": "Counting what changes…", "ed.will.photolab": "Changes {n} things in {d} pictures.", "ed.did.photolab": "Changed {n} things in {d} pictures.", "ed.willFiles.photolab": "Pictures to save in Pictures: {n}.", "ed.filesDone.photolab": "Saved in Pictures: {n}.", "ed.sureDel.photolab": "This removes layers. Undo on the card brings them back.", "ed.op.resize.photolab": "Image size", "ed.op.export.photolab": "Save to Pictures", "ed.op.add.photolab": "New layer", "ed.op.tone": "Tone", "ed.op.look": "Look", "ed.op.gray": "Black and white", "ed.op.blur": "Blur", "ed.op.sharpen": "Sharpen", "ed.op.noise": "Grain", "ed.op.adjlayer": "Adjustment layer", "ed.op.layer": "Layer", "ed.op.dup": "Duplicate", "ed.op.style": "Layer style", "ed.op.watermark": "Watermark", "ed.op.crop": "Crop", "ed.op.canvas": "Canvas size", "ed.op.rotate": "Rotate", "ed.op.flip": "Flip", "ed.f.r": "radius", "ed.f.amt": "amount", "ed.f.mono": "grey", "ed.f.hue": "hue", "ed.f.light": "lightness", "ed.f.dens": "density", "ed.f.levels": "levels", "ed.f.blend": "blend", "ed.f.quality": "quality", "ed.f.deg": "by", "ed.f.v": "to", "ed.f.up": "may get larger", "ed.f.ratio": "ratio", "ed.v.dir.h": "left to right", "ed.v.dir.v": "top to bottom", "ed.v.mode.long": "long side", "ed.v.mode.w": "width", "ed.v.mode.h": "height", "ed.v.mode.pct": "percent", "ed.v.kind.gray": "black and white", "ed.v.kind.invert": "invert", "ed.v.kind.bc": "brightness and contrast", "ed.v.kind.hsl": "hue and saturation", "ed.v.kind.photo": "photo filter", "ed.v.kind.posterize": "posterize", "ed.v.what.adj": "adjustment layers", "ed.fx.glow": "outer glow", "ed.fx.inner": "inner glow", "ed.fx.stroke": "stroke", "ed.fx.overlay": "colour overlay", "ed.bl.normal": "normal", "ed.bl.multiply": "multiply", "ed.bl.screen": "screen", "ed.bl.overlay": "overlay", "ed.bl.darken": "darken", "ed.bl.lighten": "lighten", "ed.bl.dodge": "colour dodge", "ed.bl.burn": "colour burn", "ed.bl.hard": "hard light", "ed.bl.soft": "soft light", "ed.bl.difference": "difference", "ed.bl.exclusion": "exclusion", "ed.bl.hue": "hue", "ed.bl.saturation": "saturation", "ed.bl.color": "colour", "ed.bl.luminosity": "luminosity", "ed.note.noPhoto": "Some pictures have no visible, unlocked photo layer to change.", "ed.note.noLayers": "No layer matched in some pictures.", "ed.note.maxLayers": "A picture already has 100 layers.", "ed.note.lastLayer": "A picture's last layer stays.", "ed.note.openFail": "A picture could not be opened.",
+      "ed.will.slides": "Changes {n} things in {d} presentations.", "ed.did.slides": "Changed {n} things in {d} presentations.", "ed.sureDel.slides": "This removes objects or slides. Undo on the card brings them back.", "ed.op.pages.slides": "Add slides", "ed.op.delpages.slides": "Remove slides", "ed.op.movepage.slides": "Move slide", "ed.op.bg.slides": "Slide background", "ed.op.photo.slides": "Pictures", "ed.op.arrange.slides": "Order and lock", "ed.op.slide": "Slide settings", "ed.op.notes": "Speaker notes", "ed.op.deck": "Presentation", "ed.f.ids.slides": "objects:", "ed.f.pages.slides": "slides", "ed.f.page.slides": "slide", "ed.f.first.slides": "from slide", "ed.f.last.slides": "to slide", "ed.f.secs.slides": "seconds", "ed.f.valign": "vertical", "ed.f.alt": "description", "ed.f.side": "from", "ed.f.start": "starts", "ed.f.layout": "layout", "ed.f.append": "after the notes there", "ed.f.theme": "theme", "ed.f.aspect": "shape", "ed.f.footer": "footer", "ed.f.num": "slide numbers", "ed.f.date": "date", "ed.v.valign.t": "top", "ed.v.valign.m": "middle", "ed.v.valign.b": "bottom", "ed.v.side.b": "the bottom", "ed.v.side.l": "the left", "ed.v.side.r": "the right", "ed.v.side.t": "the top", "ed.v.start.c": "on click", "ed.v.start.w": "with the previous", "ed.v.start.a": "after the previous", "ed.v.anim.appear": "appear", "ed.v.anim.fly": "fly in", "ed.v.anim.zoom": "zoom", "ed.v.trans.wipe": "wipe", "ed.v.what.title": "titles", "ed.v.pages.all": "all", "ed.v.pages.odd": "odd", "ed.v.pages.even": "even", "ed.v.pages.first": "first", "ed.v.pages.last": "last", "ed.v.num.on": "on", "ed.v.num.off": "off", "ed.v.date.on": "on", "ed.v.date.off": "off", "ed.v.layout.title": "Title", "ed.v.layout.content": "Title and content", "ed.v.layout.section": "Section header", "ed.v.layout.two": "Two columns", "ed.v.layout.compare": "Comparison", "ed.v.layout.imgtext": "Picture and text", "ed.v.layout.photo": "Full picture", "ed.v.layout.quote": "Quote", "ed.v.layout.blank": "Blank", "ed.v.theme.light": "Light", "ed.v.theme.dark": "Dark", "ed.v.theme.ocean": "Ocean", "ed.v.theme.forest": "Forest", "ed.v.theme.sunset": "Sunset", "ed.v.theme.paper": "Paper", "ed.v.theme.tech": "Terminal", "ed.v.theme.bold": "Bold", "ed.note.noObjects": "No object matched in some presentations.", "ed.note.maxSlides": "Some slides were not added: a presentation holds at most 300 slides.", "ed.note.lastSlide": "Not every slide can be removed: one stays.",
       "ed.f.title": "name", "ed.v.what.text": "texts", "ed.v.what.photo": "photos", "ed.v.what.video": "videos", "ed.v.what.shape": "shapes", "ed.v.what.icon": "icons",
       "ed.v.what.line": "lines", "ed.v.what.table": "tables", "ed.v.what.chart": "charts", "ed.v.what.bg": "page backgrounds", "ed.v.pos.tl": "top left", "ed.v.pos.t": "top",
       "ed.v.pos.tr": "top right", "ed.v.pos.l": "left", "ed.v.pos.c": "centre", "ed.v.pos.r": "right", "ed.v.pos.bl": "bottom left", "ed.v.pos.b": "bottom", "ed.v.pos.br": "bottom right",
@@ -970,6 +971,7 @@
       "ed.f.hide": "απόκρυψη", "ed.f.n": "πόσες", "ed.f.at": "πού", "ed.f.page": "σελίδα", "ed.f.dup": "ως αντίγραφα", "ed.f.first": "από τη σελίδα", "ed.f.last": "έως τη σελίδα",
       "ed.op.animate": "Κίνηση", "ed.op.pagetime": "Χρόνος σελίδων", "ed.op.add": "Προσθήκη", "ed.op.brand": "Brand kit", "ed.op.resize": "Νέα μεγέθη", "ed.op.export": "Λήψη", "ed.op.create": "Νέο σχέδιο", "ed.f.anim": "είσοδος", "ed.f.secs": "δευτερόλεπτα ανά σελίδα", "ed.f.trans": "μετάβαση", "ed.f.icon": "εικονίδιο", "ed.f.fonts": "γραμματοσειρές", "ed.f.palette": "χρώματα", "ed.f.sizes": "μεγέθη", "ed.f.copies": "ως αντίγραφα", "ed.f.fmt": "ως", "ed.f.scale": "κλίμακα", "ed.f.dpi": "dpi", "ed.f.u": "μονάδα", "ed.v.anim.none": "καμία", "ed.v.anim.fade": "σταδιακή εμφάνιση", "ed.v.anim.rise": "άνοδος", "ed.v.anim.pop": "αναπήδηση", "ed.v.anim.wipe": "σάρωση", "ed.v.anim.type": "γραφομηχανή", "ed.v.trans.none": "καμία", "ed.v.trans.fade": "σβήσιμο", "ed.v.trans.slide": "ολίσθηση", "ed.v.trans.push": "ώθηση", "ed.v.trans.zoom": "ζουμ", "ed.v.add.text": "κείμενο", "ed.v.add.shape": "σχήμα", "ed.v.add.icon": "εικονίδιο", "ed.v.add.line": "γραμμή", "ed.willMake": "Φτιάχνει {n} νέα σχέδια.", "ed.willFiles": "Φτιάχνει αρχεία από {n} σχέδια για να τα αποθηκεύσεις.", "ed.madeDone": "Νέα σχέδια: {n}.", "ed.filesDone": "Αρχεία: {n}.", "ed.note.noBrand": "Δεν υπάρχει ακόμη brand kit (Ατελιέ › Brand kit).", "ed.note.noBrandFonts": "Το brand kit δεν έχει γραμματοσειρές.", "ed.note.noBrandColors": "Το brand kit δεν έχει χρώματα.",
       "ed.counting": "Μετριέται τι αλλάζει…", "ed.will.photolab": "Αλλάζουν {n} στοιχεία σε {d} εικόνες.", "ed.did.photolab": "Άλλαξαν {n} στοιχεία σε {d} εικόνες.", "ed.willFiles.photolab": "Εικόνες για αποθήκευση στις Εικόνες: {n}.", "ed.filesDone.photolab": "Αποθηκεύτηκαν στις Εικόνες: {n}.", "ed.sureDel.photolab": "Αφαιρούνται στρώσεις. Η Αναίρεση στην κάρτα τις επαναφέρει.", "ed.op.resize.photolab": "Μέγεθος εικόνας", "ed.op.export.photolab": "Αποθήκευση στις Εικόνες", "ed.op.add.photolab": "Νέα στρώση", "ed.op.tone": "Τόνος", "ed.op.look": "Ύφος", "ed.op.gray": "Ασπρόμαυρο", "ed.op.blur": "Θόλωμα", "ed.op.sharpen": "Όξυνση", "ed.op.noise": "Κόκκος", "ed.op.adjlayer": "Στρώση ρύθμισης", "ed.op.layer": "Στρώση", "ed.op.dup": "Διπλότυπο", "ed.op.style": "Στυλ στρώσης", "ed.op.watermark": "Υδατογράφημα", "ed.op.crop": "Περικοπή", "ed.op.canvas": "Μέγεθος καμβά", "ed.op.rotate": "Περιστροφή", "ed.op.flip": "Αναστροφή", "ed.f.r": "ακτίνα", "ed.f.amt": "ποσότητα", "ed.f.mono": "γκρι", "ed.f.hue": "απόχρωση", "ed.f.light": "φωτεινότητα", "ed.f.dens": "πυκνότητα", "ed.f.levels": "επίπεδα", "ed.f.blend": "ανάμειξη", "ed.f.quality": "ποιότητα", "ed.f.deg": "κατά", "ed.f.v": "σε", "ed.f.up": "μπορεί να μεγαλώσει", "ed.f.ratio": "αναλογία", "ed.v.dir.h": "αριστερά-δεξιά", "ed.v.dir.v": "πάνω-κάτω", "ed.v.mode.long": "μεγάλη πλευρά", "ed.v.mode.w": "πλάτος", "ed.v.mode.h": "ύψος", "ed.v.mode.pct": "ποσοστό", "ed.v.kind.gray": "ασπρόμαυρο", "ed.v.kind.invert": "αντιστροφή", "ed.v.kind.bc": "φωτεινότητα και αντίθεση", "ed.v.kind.hsl": "απόχρωση και κορεσμός", "ed.v.kind.photo": "φίλτρο φωτογραφίας", "ed.v.kind.posterize": "αφίσα", "ed.v.what.adj": "στρώσεις ρύθμισης", "ed.fx.glow": "εξωτερική λάμψη", "ed.fx.inner": "εσωτερική λάμψη", "ed.fx.stroke": "περίγραμμα", "ed.fx.overlay": "επικάλυψη χρώματος", "ed.bl.normal": "κανονική", "ed.bl.multiply": "πολλαπλασιασμός", "ed.bl.screen": "οθόνη", "ed.bl.overlay": "επικάλυψη", "ed.bl.darken": "σκούρεμα", "ed.bl.lighten": "φωτισμός", "ed.bl.dodge": "αποφυγή χρώματος", "ed.bl.burn": "κάψιμο χρώματος", "ed.bl.hard": "σκληρό φως", "ed.bl.soft": "απαλό φως", "ed.bl.difference": "διαφορά", "ed.bl.exclusion": "αποκλεισμός", "ed.bl.hue": "απόχρωση", "ed.bl.saturation": "κορεσμός", "ed.bl.color": "χρώμα", "ed.bl.luminosity": "φωτεινότητα", "ed.note.noPhoto": "Κάποιες εικόνες δεν έχουν ορατή, ξεκλείδωτη στρώση φωτογραφίας για αλλαγή.", "ed.note.noLayers": "Σε κάποιες εικόνες δεν ταίριαξε καμία στρώση.", "ed.note.maxLayers": "Μια εικόνα έχει ήδη 100 στρώσεις.", "ed.note.lastLayer": "Η τελευταία στρώση μιας εικόνας μένει.", "ed.note.openFail": "Μια εικόνα δεν άνοιξε.",
+      "ed.will.slides": "Αλλάζουν {n} στοιχεία σε {d} παρουσιάσεις.", "ed.did.slides": "Άλλαξαν {n} στοιχεία σε {d} παρουσιάσεις.", "ed.sureDel.slides": "Αφαιρούνται αντικείμενα ή διαφάνειες. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.pages.slides": "Προσθήκη διαφανειών", "ed.op.delpages.slides": "Αφαίρεση διαφανειών", "ed.op.movepage.slides": "Μετακίνηση διαφάνειας", "ed.op.bg.slides": "Φόντο διαφάνειας", "ed.op.photo.slides": "Εικόνες", "ed.op.arrange.slides": "Σειρά και κλείδωμα", "ed.op.slide": "Ρυθμίσεις διαφανειών", "ed.op.notes": "Σημειώσεις ομιλητή", "ed.op.deck": "Παρουσίαση", "ed.f.ids.slides": "αντικείμενα:", "ed.f.pages.slides": "διαφάνειες", "ed.f.page.slides": "διαφάνεια", "ed.f.first.slides": "από τη διαφάνεια", "ed.f.last.slides": "έως τη διαφάνεια", "ed.f.secs.slides": "δευτερόλεπτα", "ed.f.valign": "κάθετα", "ed.f.alt": "περιγραφή", "ed.f.side": "από", "ed.f.start": "ξεκινά", "ed.f.layout": "διάταξη", "ed.f.append": "μετά τις σημειώσεις που υπάρχουν", "ed.f.theme": "θέμα", "ed.f.aspect": "σχήμα", "ed.f.footer": "υποσέλιδο", "ed.f.num": "αριθμοί διαφανειών", "ed.f.date": "ημερομηνία", "ed.v.valign.t": "πάνω", "ed.v.valign.m": "στη μέση", "ed.v.valign.b": "κάτω", "ed.v.side.b": "κάτω", "ed.v.side.l": "αριστερά", "ed.v.side.r": "δεξιά", "ed.v.side.t": "πάνω", "ed.v.start.c": "με κλικ", "ed.v.start.w": "μαζί με το προηγούμενο", "ed.v.start.a": "μετά το προηγούμενο", "ed.v.anim.appear": "εμφάνιση", "ed.v.anim.fly": "πέταγμα", "ed.v.anim.zoom": "μεγέθυνση", "ed.v.trans.wipe": "σάρωση", "ed.v.what.title": "τίτλους", "ed.v.pages.all": "όλες", "ed.v.pages.odd": "μονές", "ed.v.pages.even": "ζυγές", "ed.v.pages.first": "πρώτη", "ed.v.pages.last": "τελευταία", "ed.v.num.on": "ναι", "ed.v.num.off": "όχι", "ed.v.date.on": "ναι", "ed.v.date.off": "όχι", "ed.v.layout.title": "Τίτλος", "ed.v.layout.content": "Τίτλος και περιεχόμενο", "ed.v.layout.section": "Ενότητα", "ed.v.layout.two": "Δύο στήλες", "ed.v.layout.compare": "Σύγκριση", "ed.v.layout.imgtext": "Εικόνα και κείμενο", "ed.v.layout.photo": "Εικόνα σε όλη τη διαφάνεια", "ed.v.layout.quote": "Παράθεση", "ed.v.layout.blank": "Κενή", "ed.v.theme.light": "Φωτεινό", "ed.v.theme.dark": "Σκοτεινό", "ed.v.theme.ocean": "Ωκεανός", "ed.v.theme.forest": "Δάσος", "ed.v.theme.sunset": "Ηλιοβασίλεμα", "ed.v.theme.paper": "Χαρτί", "ed.v.theme.tech": "Τερματικό", "ed.v.theme.bold": "Έντονο", "ed.note.noObjects": "Σε κάποιες παρουσιάσεις δεν ταίριαξε κανένα αντικείμενο.", "ed.note.maxSlides": "Κάποιες διαφάνειες δεν προστέθηκαν: μια παρουσίαση έχει έως 300 διαφάνειες.", "ed.note.lastSlide": "Δεν αφαιρούνται όλες οι διαφάνειες: μία μένει.",
       "ed.f.dest": "στη θέση", "ed.f.mm": "mm", "ed.f.title": "όνομα", "ed.v.what.text": "κείμενα", "ed.v.what.photo": "φωτογραφίες", "ed.v.what.video": "βίντεο",
       "ed.v.what.shape": "σχήματα", "ed.v.what.icon": "εικονίδια", "ed.v.what.line": "γραμμές", "ed.v.what.table": "πίνακες", "ed.v.what.chart": "γραφήματα", "ed.v.what.bg": "φόντα σελίδων",
       "ed.v.pos.tl": "πάνω αριστερά", "ed.v.pos.t": "πάνω", "ed.v.pos.tr": "πάνω δεξιά", "ed.v.pos.l": "αριστερά", "ed.v.pos.c": "κέντρο", "ed.v.pos.r": "δεξιά",
@@ -2731,7 +2733,14 @@
     });
   }
 
+  // A catalog too big for the Assistant's first open (Slides needs its
+  // core.js) is loaded before the first turn that may use it.
   function runTurn(c) {
+    var have = installed(), want = Object.keys(EDIT_LAZY).filter(function (id) { return have[id] && !window[EDIT_SRC[id].mod]; });
+    if (!want.length) { runTurnNow(c); return; }
+    editLoadMods(want).then(function () { runTurnNow(c); });
+  }
+  function runTurnNow(c) {
     var pid = curProv();
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
     busy = { abort: ctl, live: "", consent: null, chat: c };
@@ -3228,9 +3237,31 @@
   var EDIT_SRC = {
     atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand" },
     layout: { mod: "LayoutCommands", data: "oros-layout-data", folders: "", prefs: "oros-layout-prefs" },   // Layout has no folders
-    photolab: { mod: "PhotoLabCommands", data: "oros-photolab-data", prefs: "oros-photolab-prefs", disk: 1 }
+    photolab: { mod: "PhotoLabCommands", data: "oros-photolab-data", prefs: "oros-photolab-prefs", disk: 1 },
+    // Slides: one store for every presentation; the catalog lists them
+    // (view) and the open one is prefs.deck
+    slides: { mod: "SlidesCommands", data: "oros-slides-data", prefs: "oros-slides-prefs", open: "deck", view: 1 }
   };
   var EDIT_CONFIRM = 50, edLoading = {};            // more changes than this (or a removal) ask once more
+  var EDIT_LAZY = { slides: ["../slides/core.js", "../slides/commands.js"] }, lazyP = {};
+  // Loads the catalogs of these apps (in order, once) → Promise (never rejects).
+  function editLoadMods(ids) {
+    var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+    function load(f) {
+      return new Promise(function (ok) {
+        var s = document.createElement("script");
+        s.src = f + (m ? "?v=" + m[1] : "");
+        s.onload = ok; s.onerror = ok;
+        document.head.appendChild(s);
+      });
+    }
+    return Promise.all(ids.map(function (id) {
+      if (!lazyP[id]) {
+        lazyP[id] = EDIT_LAZY[id].reduce(function (p, f) { return p.then(function () { return load(f); }); }, Promise.resolve());
+      }
+      return lazyP[id];
+    }));
+  }
   function editCats(apps) {
     var have = installed(), ok = {}, out = {};
     (apps || []).forEach(function (a) { ok[a.id] = 1; });
@@ -3244,7 +3275,8 @@
     var s = EDIT_SRC[app], prefs = readStore(s.prefs);
     var kit = s.brand ? readStore(s.brand) : null;
     if (kit && !((kit.colors && kit.colors.length) || (kit.fonts && Object.keys(kit.fonts).length))) kit = null;
-    var open = prefs && typeof prefs.doc === "string" ? prefs.doc : "";
+    var open = prefs && typeof prefs[s.open || "doc"] === "string" ? prefs[s.open || "doc"] : "";
+    if (s.view) { var v = window[s.mod].view(readStore(s.data)); return { data: v, full: v, folders: null, open: open, brand: null }; }
     if (!s.disk) { var d = readStore(s.data); return { data: d, full: d, folders: readStore(s.folders), open: open, brand: kit }; }
     // index entries for picking, the loaded doc records for counting
     var idx = readStore(s.data), list = idx && Array.isArray(idx.projects) ? idx.projects.filter(function (e) { return e && typeof e.id === "string"; }) : [];
@@ -3339,7 +3371,7 @@
   // One command in the user's words: its name, then what it picks and sets.
   function edVal(k, v) {
     if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|flow|mono|up)$/.test(k)) return "";
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date)$/.test(k)) return t("ed.v." + k + "." + v);
     if (k === "id") return edName("ed.flt.", v);
     if (k === "blend") return edName("ed.bl.", v);
     if (k === "deg") return v + "°";
@@ -3350,7 +3382,9 @@
     if (k === "shape") return edName("ed.shp.", v);
     if (k === "font") return edName("ed.v.font.", String(v).replace(/^fs_/, "").replace(/_/g, " "));
     if (k === "ids") return t("ed.nIds", { n: String(v).split(/[\s,]+/).filter(Boolean).length });
-    if (/^(has|find|repl|text|title)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
+    if (k === "pages" && /^(all|odd|even|first|last)$/.test(v)) return t("ed.v.pages." + v);
+    if (k === "secs" && v < 1) return String(v).replace(".", LANG === "en" ? "." : ",");
+    if (/^(has|find|repl|text|title|footer|alt)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
     return String(v);
   }
   // A card string with an app's own wording when it has one
@@ -3366,8 +3400,9 @@
       // add's kind, resize's sizes and values that name themselves (dir, a look's id, an adjustment's kind; Photo Lab's resize mode) read without a label
       if ((st.op === "add" && k === "what") || /^(sizes|dir|id|kind)$/.test(k) || (k === "mode" && app === "photolab")) { parts.push(k === "what" ? t("ed.v.add." + v) : edVal(k, v)); return; }
       // a field one command names its own way (numbering n): ed.f.<op>.<field>
+      // and a field an app names its own way (Slides: pages are slides): ed.f.<field>.<app>
       var val = edVal(k, v), lbl = t("ed.f." + st.op + "." + k);
-      if (lbl === "ed.f." + st.op + "." + k) lbl = t("ed.f." + (st.op === "create" && k === "n" ? "pages" : k));
+      if (lbl === "ed.f." + st.op + "." + k) lbl = edT(app, "ed.f." + (st.op === "create" && k === "n" ? "pages" : k));
       parts.push(val ? lbl + " " + val : lbl);
     });
     // find “a” → “b” reads as one phrase
@@ -3439,6 +3474,8 @@
   function drawEdit(host, r, c) {
     var ui = r.ui, have = installed(), app = ui.args && String(ui.args.app || "");
     var mod = EDIT_SRC[app] ? window[EDIT_SRC[app].mod] : null, name = have[app] || app;
+    // a card of an app whose catalog loads on first use: drawn again once it is in
+    if (have[app] && !mod && EDIT_LAZY[app] && !lazyP[app]) { editLoadMods([app]).then(function () { if (window[EDIT_SRC[app].mod]) renderAll(); }); return; }
     if (!have[app] || !mod) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: name }))); return; }
     takeEdited(r, c);
     var st = cardState(ui);

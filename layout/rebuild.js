@@ -43,7 +43,7 @@
     M = require("../designkit/model.js"); T = require("../designkit/text.js"); R = require("../designkit/render.js"); PI = require("./pdfin.js"); LF = require("./linefit.js");
   } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; PI = root.LY_PDFIN; LF = root.LY_LINEFIT; }
 
-  // as many pages as a Layout document may have (a 516-page novel was cut at 400 before 4.35.02)
+  // as many pages as a Layout document may have (a 516-page novel was cut at 400 before 4.38.01)
   var MAX_PAGES = M.MAX_PAGES, MAX_SOURCES = 400;
   // Our fonts set justified lines a little wider than the natural
   // widths measured on the PDF's ragged lines predict: 18 thousandths

@@ -59,6 +59,9 @@ Präsentationen werden mit der orOS-Synchronisierung synchronisiert. Bilder lieg
 - Bilder kommen nur mit, wenn sie in der Datei stecken (in der `.odp` oder als Daten ins Markdown geschrieben). Folien lädt keine Bilder aus dem Web und liest keine anderen Dateien; ihre Adressen kommen in die Notizen.
 - Zuerst siehst du, was die Datei enthält und was draußen bleibt; `Öffnen` erstellt eine neue Präsentation, und `Rückgängig` in der Meldung nimmt sie wieder weg. An deinen vorhandenen Präsentationen ändert sich nichts.
 
+## Der Assistent
+Bitte den Assistenten, deine Präsentationen mit Worten zu ändern, etwa „2026 statt 2025“, „mach alle Titel rot“, „kopiere Folie 3“ oder „nimm das Design Ozean“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` nimmt sie hier vor und öffnet die Präsentation, als ein Schritt ihres Rückgängig. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt die Präsentationen wieder her, solange sie seitdem nicht geändert wurden. In der Hilfe des Assistenten steht alles, was er kann.
+
 ## Tastenkürzel
 - [[Ctrl+Z]] / [[Ctrl+Y]]: rückgängig / wiederholen
 - [[Ctrl+M]]: neue Folie

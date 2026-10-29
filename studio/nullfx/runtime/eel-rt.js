@@ -5,7 +5,7 @@
   "use strict";
 
   var CLOSE = 0.00001;
-  var MEM_MAX = 8388608;        // REAPER's default: 128 blocks of 65536 slots
+  var MEM_MAX = 8388608;        // REAPER's default: 128 blocks of 65536 slots (options:maxmem raises it)
   var BLOCK = 65536;
   var MIN_NORMAL = 2.2250738585072014e-308;
 
@@ -63,30 +63,31 @@
       var c = int32(n);
       return c < 1 ? 0 : c > 1048576 ? 1048576 : c;
     },
-    memory: function () { return new Memory(); },
+    memory: function (max) { return new Memory(max); },
     strings: function (literals) { return new Strings(literals); }
   };
 
   // ---------------------------------------------------------------- memory -----------
-  // Like EEL2: 128 blocks of 65536 slots, each allocated on first write, so an effect that
-  // keeps a buffer at index 4,000,000 does not cost 32 MB.
-  function Memory() {
+  // Like EEL2: 128 blocks of 65536 slots (up to 512 with options:maxmem), each allocated on
+  // first write, so an effect that keeps a buffer at index 4,000,000 does not cost 32 MB.
+  function Memory(max) {
+    this.max = max || MEM_MAX; // slots, a whole number of blocks (eel2js rounds options:maxmem like EEL2)
     this.b = [new Float64Array(BLOCK)]; // block 0 always exists: generated code reads it directly (M0)
     this.scratch = 0; // out-of-range reads and writes share this slot, as in EEL2
   }
   // read with the 0.00001 already added
   Memory.prototype.rc = function (x) {
-    if (x > -1 && x < MEM_MAX) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
+    if (x > -1 && x < this.max) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
     return this.scratch;
   };
   Memory.prototype.i = function (x) {
     x += CLOSE;
-    if (x > -1 && x < MEM_MAX) return x | 0;
+    if (x > -1 && x < this.max) return x | 0;
     return -1;
   };
   Memory.prototype.r = function (x) {
     x += CLOSE;
-    if (x > -1 && x < MEM_MAX) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
+    if (x > -1 && x < this.max) { var i = x | 0, blk = this.b[i >> 16]; return blk ? blk[i & 65535] : 0; }
     return this.scratch;
   };
   Memory.prototype.g = function (i) {
@@ -115,8 +116,8 @@
   Memory.prototype.set = function (dest, value, len) {
     var d = int32(dest + 0.0001), n = int32(len + 0.0001); // EEL2 rounds these by +0.0001
     if (d < 0) { n += d; d = 0; }
-    if (d >= MEM_MAX) return dest;
-    if (d + n > MEM_MAX) n = MEM_MAX - d;
+    if (d >= this.max) return dest;
+    if (d + n > this.max) n = this.max - d;
     if (n < 1) return dest;
     this.each(d, n, value !== 0, function (blk, o, c) { if (blk) blk.fill(value, o, o + c); });
     return dest;
@@ -133,8 +134,8 @@
     var d = int32(dest + 0.0001), s = int32(src + 0.0001), n = int32(len + 0.0001);
     if (d < 0) { s -= d; n += d; d = 0; }
     if (s < 0) { d -= s; n += s; s = 0; }
-    if (d + n > MEM_MAX) n = MEM_MAX - d;
-    if (s + n > MEM_MAX) n = MEM_MAX - s;
+    if (d + n > this.max) n = this.max - d;
+    if (s + n > this.max) n = this.max - s;
     if (n <= 0 || d === s) return dest;
     this.write(d, this.read(s, n)); // memmove semantics
     return dest;
@@ -156,7 +157,7 @@
   // a writable view of len slots at offs inside one block (FFT); null when it would cross
   Memory.prototype.span = function (offs, len) {
     var d = int32(offs + 0.0001);
-    if (d < 0 || d + len > MEM_MAX || (d >> 16) !== ((d + len - 1) >> 16)) return null;
+    if (d < 0 || d + len > this.max || (d >> 16) !== ((d + len - 1) >> 16)) return null;
     return this.block(d >> 16).subarray(d & 65535, (d & 65535) + len);
   };
 
@@ -304,16 +305,50 @@
     return d;
   };
   Strings.prototype.from = function (d, s, offs) { return this.substr(d, s, offs); };
-  Strings.prototype.getchar = function (s, idx) {
+  // str_getchar / str_setchar with a type ('c', 's', 'i', 'f', 'd', 'u' before it for unsigned,
+  // upper case for big endian), like eel_getchar_flag in WDL's eel_strings.h
+  function charType(type) {
+    var t = int32(type), uns = false, big = false, up = function (c) { return c >= 97 && c <= 122 ? c - 32 : c; };
+    if (up((t >> 8) & 255) === 85) uns = true;
+    else if (t > 255 && up(t & 255) === 85) { uns = true; t >>= 8; }
+    t &= 255;
+    if (t >= 65 && t <= 90) big = true; else t -= 32;
+    var size = t === 70 ? 4 : t === 68 ? 8 : t === 83 ? 2 : t === 73 ? 4 : 1;
+    return { size: size, float: t === 70 || t === 68, uns: uns, big: big };
+  }
+  var cbuf = new DataView(new ArrayBuffer(8));
+  function cint(v, bits, uns) {
+    v = Math.trunc(v); if (!isFinite(v)) v = 0;
+    var m = Math.pow(2, bits); v = ((v % m) + m) % m;
+    return !uns && v >= m / 2 ? v - m : v;
+  }
+  Strings.prototype.getchar = function (s, idx, type) {
     var str = this.get(s), i = int32(idx);
     if (i < 0) i += str.length;
-    return i >= 0 && i < str.length ? str.charCodeAt(i) & 255 : 0;
+    if (arguments.length < 3) return i >= 0 && i < str.length ? str.charCodeAt(i) & 255 : 0;
+    var ct = charType(type), le = !ct.big;
+    if (i < 0 || i > str.length - ct.size) return 0;
+    for (var k = 0; k < ct.size; k++) cbuf.setUint8(k, str.charCodeAt(i + k) & 255);
+    if (ct.float) return ct.size === 8 ? cbuf.getFloat64(0, le) : cbuf.getFloat32(0, le);
+    if (ct.size === 4) return ct.uns ? cbuf.getUint32(0, le) : cbuf.getInt32(0, le);
+    if (ct.size === 2) return ct.uns ? cbuf.getUint16(0, le) : cbuf.getInt16(0, le);
+    return ct.uns ? cbuf.getUint8(0) : cbuf.getInt8(0);
   };
-  Strings.prototype.setchar = function (s, idx, ch) {
+  Strings.prototype.setchar = function (s, idx, ch, type) {
     var str = this.get(s), i = int32(idx);
     if (i < 0) i += str.length;
     if (i < 0 || i > str.length) return s;
-    this.put(s, str.slice(0, i) + String.fromCharCode(int32(ch) & 255) + str.slice(i + 1));
+    if (arguments.length < 4) {
+      this.put(s, str.slice(0, i) + String.fromCharCode(int32(ch) & 255) + str.slice(i + 1));
+      return s;
+    }
+    var ct = charType(type), le = !ct.big, out = "";
+    if (ct.float) { if (ct.size === 8) cbuf.setFloat64(0, ch, le); else cbuf.setFloat32(0, ch, le); }
+    else if (ct.size === 4) cbuf.setUint32(0, cint(ch, 32, true), le);
+    else if (ct.size === 2) cbuf.setUint16(0, cint(ch, 16, true), le);
+    else cbuf.setUint8(0, cint(ch, 8, true));
+    for (var k = 0; k < ct.size; k++) out += String.fromCharCode(cbuf.getUint8(k));
+    this.put(s, str.slice(0, i) + out + str.slice(i + ct.size));
     return s;
   };
   Strings.prototype.setlen = function (s, n) {

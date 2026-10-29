@@ -302,3 +302,73 @@ test("pptx: a design past PowerPoint's largest slide gets its own page back", as
   const small = await P.parse(Z.open(deckOf(bg + text, E(4000), E(2592))), "Small");
   assert.equal(small.h, 2592);
 });
+
+test("pptx: bold words and other typefaces inside a paragraph become runs (ext.runs)", async () => {
+  const r = (face, b, t) => `<a:r><a:rPr lang="el-GR" sz="3200"${b ? ' b="1"' : ""}><a:solidFill><a:srgbClr val="000000"/></a:solidFill><a:latin typeface="${face}"/></a:rPr><a:t>${t}</a:t></a:r>`;
+  const red = `<a:r><a:rPr lang="el-GR" sz="3200"><a:solidFill><a:srgbClr val="FF0000"/></a:solidFill><a:latin typeface="Caudex"/></a:rPr><a:t> red</a:t></a:r>`;
+  const paras = `<a:p>${r("Caudex", 0, "Get ")}${r("Caudex Bold", 0, "40%")}${r("Caudex", 0, " off")}${red}</a:p><a:p>${r("Caudex", 0, "now ")}${r("Caudex", 1, "here")}</a:p>`;
+  const plan = await P.parse(Z.open(deckOf(box(0, paras))), "Canva");
+  const t = plan.pages[0].items.find((i) => i.k === "text");
+  assert.equal(t.tx, "Get 40% off red\nnow here");
+  assert.deepEqual(t.runs, [{ n: 4 }, { n: 3, b: 1, i: 0, face: "Caudex Bold" }, { n: 13 }, { n: 4, b: 1, i: 0, face: "Caudex" }],
+    "another size or colour keeps the box's look; the paragraph break belongs to the plain run");
+  const BOLD = "uf_" + "2b".repeat(8);
+  AX.useDocFonts({ setup: { ext: { fonts: [ownEntry(), { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" }] } } });
+  T.register(OWN + "-r", SERIF.slice().buffer); T.register(BOLD + "-r", noto("NotoSerif-Bold.ttf").buffer);
+  const d = P.build(plan, {}, 1, { Caudex: ownEntry(), "Caudex Bold": { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" } }).doc;
+  assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
+  const it = d.items.find((i) => i.ax.k === "text");
+  assert.deepEqual(it.ext.runs, [{ n: 4 }, { n: 3, b: 1, fam: BOLD }, { n: 13 }, { n: 4, b: 1 }]);
+  assert.deepEqual(d.setup.ext.fonts.map((f) => f.id).sort(), [BOLD, OWN].sort(), "a run's own font is in the design's list");
+  const keys = [];
+  AX.textLayout(it).lines.forEach((ln) => ln.runs.forEach((x) => { if (x.t.trim()) keys.push(x.t + "=" + x.key); }));
+  assert.ok(keys.includes("40%=" + BOLD + "-b") && keys.includes("Get=" + OWN + "-r") && keys.includes("here=" + OWN + "-b"), keys.join(" "));
+  assert.ok(AX.textWidth(it.ax, it, true) > T.measure(OWN + "-r", "Get 40% off red", 32), "the bold run is wider");
+  assert.equal(WEB.kindOf(Object.assign({ id: "w", t: "rect", pg: "p" }, it, { ext: { runs: it.ext.runs } })), "raster", "a run in an own font: a picture on a web page");
+  // the text no longer matches the runs: they are not used
+  assert.equal(AX.runsOf({ ax: { tx: "short" }, ext: it.ext }), null);
+});
+
+test("ext.runs: edits keep them in step, a font for the whole text replaces theirs", () => {
+  const it = { ax: { k: "text", tx: "ab CD ef" }, ext: { runs: [{ n: 3 }, { n: 2, b: 1, fam: OWN }, { n: 3 }] } };
+  const ed = (v) => { AX.editRuns(it, it.ax.tx, v); it.ax.tx = v; return it.ext && it.ext.runs && it.ext.runs.map((r) => r.n); };
+  assert.deepEqual(ed("ab CDX ef"), [3, 3, 3], "typed at the end of the bold run: bold");
+  assert.deepEqual(ed("Zab CDX ef"), [4, 3, 3]);
+  assert.deepEqual(ed("Zab ef"), [4, 2], "the bold run deleted");
+  it.ax.tx = "ab CD ef"; it.ext = { runs: [{ n: 3 }, { n: 2, b: 1, fam: OWN }, { n: 3 }], kern: 1 };
+  AX.setFont(it, "serif");
+  assert.deepEqual(it.ext, { runs: [{ n: 3 }, { n: 2, b: 1 }, { n: 3 }], kern: 1 }, "bold stays, the run's font goes");
+  it.ext.runs[1] = { n: 2, fam: OWN };
+  AX.setFont(it, "sans");
+  assert.deepEqual(it.ext, { kern: 1 }, "runs with nothing left are dropped");
+});
+
+test("pptx: radial and multi-stop gradients keep their stops (ext.gs over the ax.g stand-in)", async () => {
+  const gs = (pts) => pts.map(([p, c]) => `<a:gs pos="${p}"><a:srgbClr val="${c}"/></a:gs>`).join("");
+  const radial = sp(`<p:spPr>${xfrm(0, 0, 400, 200)}<a:prstGeom prst="rect"/><a:gradFill rotWithShape="true"><a:gsLst>${gs([[0, "0B6DC2"], [50000, "138EFF"], [100000, "A2D2FF"]])}</a:gsLst><a:path path="circle"><a:fillToRect l="0" r="100000" t="0" b="100000"/></a:path></a:gradFill></p:spPr>`);
+  const three = sp(`<p:spPr>${xfrm(0, 300, 400, 200)}<a:prstGeom prst="rect"/><a:gradFill><a:gsLst>${gs([[100000, "0000FF"], [0, "FF0000"], [30000, "00FF00"]])}</a:gsLst><a:lin ang="0"/></a:gradFill></p:spPr>`);
+  const two = sp(`<p:spPr>${xfrm(0, 600, 400, 200)}<a:prstGeom prst="rect"/><a:gradFill><a:gsLst>${gs([[0, "FF0000"], [100000, "0000FF"]])}</a:gsLst><a:lin ang="0"/></a:gradFill></p:spPr>`);
+  const plan = await P.parse(Z.open(deckOf(radial + three + two)), "Canva");
+  const [r, t, w] = plan.pages[0].items;
+  assert.deepEqual(r.g, { a: "#0b6dc2", b: "#a2d2ff", ang: 180 });
+  assert.deepEqual(r.gs, { st: [[0, "#0b6dc2"], [0.5, "#138eff"], [1, "#a2d2ff"]], r: 1, c: [0, 0] }, "centred on the top-left corner");
+  assert.deepEqual(t.gs, { st: [[0, "#ff0000"], [0.3, "#00ff00"], [1, "#0000ff"]] }, "stops in order");
+  assert.equal(w.gs, undefined, "two stops, linear: ax.g alone");
+  const d = P.build(plan, {}, 1).doc;
+  assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
+  const it = d.items.find((i) => i.ax.g && i.ext && i.ext.gs && i.ext.gs.r);
+  assert.deepEqual(AX.gradOf(it), { st: r.gs.st, r: 1, c: [0, 0] });
+  // a gradient changed elsewhere in Atelier (the stand-in's colours) leaves the stops out
+  const moved = JSON.parse(J(it)); moved.ax.g.b = "#ffffff";
+  assert.equal(AX.gradOf(moved), null);
+  assert.equal(AX.gradOf({ ax: { g: { a: "#000000", b: "#ffffff" } }, ext: { gs: { st: [[0.5, "#000000"], [0.2, "#ffffff"]] } } }), null, "stops out of order");
+  assert.equal(AX.gradOf({ ax: { g: { a: "#000000", b: "#ffffff" } }, ext: { gs: { st: [[0, "#000000"], [1, "red"]] } } }), null);
+  // a web page and PowerPoint write every stop; PowerPoint comes back the same
+  const web = WEB.build(d, {}, {}), page = web.files.find((f) => f.name === "index.html");
+  const h = typeof page.data === "string" ? page.data : Buffer.from(page.data).toString("utf8");
+  assert.match(h, /<radialGradient [^>]*><stop offset="0"[^>]*\/><stop offset="0.5"[^>]*\/><stop offset="1"/);
+  const PX = require(path.join(ROOT, "atelier/pptxout.js"));
+  const back = await P.parse(Z.open(PX.build(d, {}).bytes), "back");
+  const g2 = back.pages[0].items.filter((i) => i.gs);
+  assert.deepEqual(g2.map((i) => i.gs), [r.gs, t.gs]);
+});

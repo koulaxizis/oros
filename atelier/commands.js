@@ -601,8 +601,12 @@
   var KEEP_COLORS = { "#ffffff": 1, "#000000": 1 };
   // a font set by a command replaces an own font (ax.js ext.fam)
   function dropOwnFont(it) {
-    if (!it.ext || it.ext.fam === undefined) return;
+    if (!it.ext) return;
     delete it.ext.fam;
+    if (Array.isArray(it.ext.runs)) {                    // and the runs' own fonts (ext.runs)
+      it.ext.runs.forEach(function (r) { if (r) delete r.fam; });
+      if (it.ext.runs.every(function (r) { return !r || (r.b === undefined && r.i === undefined); })) delete it.ext.runs;
+    }
     if (!Object.keys(it.ext).length) delete it.ext;
   }
 
