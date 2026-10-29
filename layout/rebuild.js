@@ -43,7 +43,8 @@
     M = require("../designkit/model.js"); T = require("../designkit/text.js"); R = require("../designkit/render.js"); PI = require("./pdfin.js"); LF = require("./linefit.js");
   } else { M = root.orosDK.model; T = root.orosDK.text; R = root.orosDK.render; PI = root.LY_PDFIN; LF = root.LY_LINEFIT; }
 
-  var MAX_PAGES = 400, MAX_SOURCES = 400;
+  // as many pages as a Layout document may have (a 516-page novel was cut at 400 before 4.35.02)
+  var MAX_PAGES = M.MAX_PAGES, MAX_SOURCES = 400;
   // Our fonts set justified lines a little wider than the natural
   // widths measured on the PDF's ragged lines predict: 18 thousandths
   // of an em less keeps 99 % of the lines of a 102-page book in place
@@ -77,11 +78,14 @@
       var ln = null;
       for (var k = lines.length - 1; k >= 0; k--) {
         var l = lines[k];
-        // (much bigger or smaller type on the same baseline is another line: a title beside a date)
+        // (much bigger or smaller type on the same baseline is another line: a title beside a date;
+        // not a list's bullet, often set smaller than its item)
+        var bul = isMarker(l);
         if (Math.abs(l.y - s.y) < 0.35 * s.size && s.x >= l.x1 - 2 && s.x <= l.x1 + 4 * s.size &&
-            Math.max(s.size, l.size) < 1.6 * Math.min(s.size, l.size)) { ln = l; break; }
+            (bul || Math.max(s.size, l.size) < 1.6 * Math.min(s.size, l.size))) { ln = l; break; }
       }
       if (!ln) { ln = { y: s.y, x0: s.x, x1: s.x, spans: [], size: s.size }; lines.push(ln); }
+      else if (isMarker(ln)) ln.y = s.y;   // the item's baseline, not its bullet's
       if (ln.spans.length) {
         var last = ln.spans[ln.spans.length - 1];
         // a gap between two pieces of text is a word space (PDF.js gives
@@ -106,6 +110,9 @@
     });
     return lines.filter(function (l) { return l.text.trim(); });
   }
+  // a line that is only a list's bullet so far
+  var MARKER = /^[\u2022\u25CF\u25AA\u25A0\u25E6\u25CB\u2023\u2043\u27A2\u25BA\u2713\u2714\u00B7\uF0B7\uF0A7\uF0D8]$/;
+  function isMarker(l) { return l.spans.length === 1 && MARKER.test(l.spans[0].t.trim()); }
   function copy(o, extra) {
     var c = {};
     Object.keys(o).forEach(function (k) { c[k] = o[k]; });
@@ -224,6 +231,9 @@
       if (fbOf[fam]) { st.font = fbOf[fam]; st.ext = { fam: fam }; } else st.font = fam;
       return st;
     }
+    // text.js sets lines with the stand-in's ascent and descent (a
+    // matched family only draws them), so frames are placed with them too
+    function lineKey(fam, b, i) { return keyOf(fbOf[fam] || fam, b, i); }
     var pagesLines = pagesIn.map(function (p) { return toLines(p.spans || []); });
     var meas = measure(pagesLines, W, H);
     var sideOf = function (i) { return meas.facing ? (i % 2 === 0 ? "R" : "L") : "R"; };
@@ -325,7 +335,7 @@
         var sid = M.newId("st"), s0 = l.spans[0];
         stories.push({ id: sid, m: now, paras: [{ ps: { pn: 1, size: l.size, fam: s0.fam, b: s0.b ? 1 : 0, i: s0.i ? 1 : 0, track: trackOf(s0), color: swatch(s0.color) },
           runs: [nOff !== null && +l.text.trim() === pi + 1 + nOff ? { f: "pn" } : { t: l.text.trim() }] }] });
-        var cx = (l.x0 + l.x1) / 2, asc = T.ascent(keyOf(s0.fam, s0.b, s0.i), l.size);
+        var cx = (l.x0 + l.x1) / 2, asc = T.ascent(lineKey(s0.fam, s0.b, s0.i), l.size);
         items.push({ id: M.newId("it"), m: now, t: "text", pg: page.id, x: r3(cx - 30), y: r3(l.y - asc), w: 60, h: r3(l.size * 2), story: sid, seq: 1, z: 9000 });
       });
       // pictures (+ wrap when lines run beside them)
@@ -442,7 +452,7 @@
         });
         outParas.forEach(function (p) { allParas.push(p); });
         // frame box: first baseline − our ascent; to the last baseline + descent
-        var f0 = outParas[0], k0 = keyOf(f0.fam, f0.b, f0.i);
+        var f0 = outParas[0], k0 = lineKey(f0.fam, f0.b, f0.i);
         var top = bl[0].y - T.ascent(k0, f0.size), last = bl[bl.length - 1];
         var bottom = last.y + T.descent(k0, last.size) + 2;
         var sid = M.newId("st");
@@ -483,7 +493,7 @@
         paras.forEach(function (p) { allParas.push(p.ps); });
         var sid = M.newId("st");
         stories.push({ id: sid, m: now, paras: paras });
-        var asc = T.ascent(keyOf(l0.runs[0].fam, 0, 0), b.size);
+        var asc = T.ascent(lineKey(l0.runs[0].fam, 0, 0), b.size);
         var w = b.a1 - b.a0 + b.size, h = (b.lines[b.lines.length - 1].c - l0.c) + asc + b.size * 0.6;
         var ax = { c: Math.cos(b.rot * Math.PI / 180), s: Math.sin(b.rot * Math.PI / 180) };
         var cA = b.a0 + w / 2 - b.size / 2, cC = l0.c - asc + h / 2;

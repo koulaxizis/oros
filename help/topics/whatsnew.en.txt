@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.35.02
+- Layout: Rebuild a print PDF sets lines on their baselines also when the PDF's font was found on your disk (before, every line could sit a few points low), keeps a list's bullet with its item, and reads books of up to 999 pages (before: 400).
+
 ## Version 4.35.01
 - Layout: a Scribus file opened together with its print PDF now takes the PDF's line breaks also when the PDF's text has lost its accents (as with some Greek fonts) or the PDF leaves out the file's first pages, such as the covers.
 

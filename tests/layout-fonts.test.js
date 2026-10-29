@@ -201,6 +201,21 @@ test("rebuild: a PDF font found by name keeps its family, with no tracking added
   assert.deepEqual(rep.fontsReplaced, ["Other-Book"]);
 });
 
+// A matched family whose ascent is not the stand-in's: Layout sets lines
+// with the stand-in's ascent, so the frames must be placed with it too
+test("rebuild: lines in a matched family with another ascent land on their baselines", () => {
+  T.registerFamily("fs_tall", { name: "Tall", urls: { r: ["t"] }, fallback: "serif" });
+  T.register("fs_tall-r", patched(SERIF, (dv, tb) => { dv.setInt16(tb.hhea.off + 4, 1400); }));
+  assert.ok(T.ascent("fs_tall-r", 10) - T.ascent("serif-r", 10) > 3);
+  const sp = (t, y) => ({ t, x: 50, x1: 50 + T.measure("serif-r", t, 10, 0), y, size: 10, fam: "serif", b: 0, i: 0, font: "Tall-Regular", color: null, rot: 0 });
+  const lines = ["the quiet sea at night", "and the gulls asleep", "on the old pier", "while lights go out"];
+  const src = { w: 420, h: 595, bleed: 0, pages: [{ spans: lines.map((t, k) => sp(t, 100 + 14 * k)), imgs: [], bg: null }] };
+  const res = RB.build(src, { now: 5, lang: "en", fonts: { "Tall-Regular": { id: "fs_tall", name: "Tall", fb: "serif" } } });
+  assert.ok(res.doc.pstyles.some((s) => s.ext && s.ext.fam === "fs_tall"));
+  assert.ok(res.report.check.lines >= 4);
+  assert.equal(res.report.check.moved, 0, JSON.stringify(res.report.framesOff));
+});
+
 test("Scribus: styles keep their font's own name; a run in another family gets a character style", () => {
   const sla = `<?xml version="1.0" encoding="UTF-8"?>
 <SCRIBUSUTF8NEW Version="1.5.8"><DOCUMENT ANZPAGES="1" PAGEWIDTH="400" PAGEHEIGHT="600" BORDERLEFT="40" BORDERRIGHT="40" BORDERTOP="40" BORDERBOTTOM="40" BOOK="0" UNITS="1">
