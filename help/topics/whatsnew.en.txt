@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.41.00
+- Assistant: it reads "My style" from Atelier, the look of your own designs for each kind of design, so you can ask for "a new post in my style". It asks before it shares your style, as for any design.
+
 ## Version 4.40.00
 - Assistant and Writer: ask the Assistant to change your documents ("2026 instead of 2025", "make the headings centred", "turn the list into a numbered list", "put each chapter on a new page", "set the paper to A5"). It reads the document, shows the changes on a card, and Writer makes them on this device when you press Apply. Undo on the card puts every document back.
 

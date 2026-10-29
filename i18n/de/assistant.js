@@ -1352,6 +1352,7 @@ orosPack("de", "assistant", {
  "ed.note.noObjects": "In manchen Präsentationen passte kein Objekt.",
  "ed.note.maxSlides": "Manche Folien wurden nicht hinzugefügt: Eine Präsentation hat höchstens 300 Folien.",
  "ed.note.lastSlide": "Nicht jede Folie lässt sich entfernen: eine bleibt.",
+ "ed.myStyle": "Mein Stil",
  "ed.will.writer": "Ändert {n} Dinge in {d} Dokumenten.",
  "ed.did.writer": "{n} Dinge in {d} Dokumenten geändert.",
  "ed.sureDel.writer": "Das entfernt Absätze. Rückgängig auf der Karte holt sie zurück.",
