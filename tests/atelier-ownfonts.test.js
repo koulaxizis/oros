@@ -251,3 +251,54 @@ test("kerning: layout and the PDF place pairs the same way", () => {
   assert.ok(r0.every((r) => r.kern === 1), "runs carry the kerning to the drawing");
   assert.ok(!AX.textLayout(plain).lines[0].runs.some((r) => r.kern));
 });
+
+// ---- AC3b: one box with paragraphs in different styles; designs past
+// PowerPoint's largest slide ----
+function deckOf(body, cx, cy) {
+  return makeZip({
+    "[Content_Types].xml": "<Types/>",
+    "ppt/presentation.xml": `<p:presentation ${NS}><p:sldIdLst><p:sldId id="256" r:id="rId1"/></p:sldIdLst><p:sldSz cx="${cx || E(1000)}" cy="${cy || E(1000)}"/></p:presentation>`,
+    "ppt/_rels/presentation.xml.rels": rels([["rId1", "slide", "slides/slide1.xml"]]),
+    "ppt/media/image1.png": Buffer.from([137, 80, 78, 71]),
+    "ppt/slides/slide1.xml": `<?xml version="1.0" encoding="UTF-8"?><p:sld ${NS}><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>${body}</p:spTree></p:cSld></p:sld>`,
+    "ppt/slides/_rels/slide1.xml.rels": rels([["rIdImg", "image", "../media/image1.png"]])
+  });
+}
+const para = (pts, r) => `<a:p><a:pPr algn="ctr"><a:lnSpc><a:spcPts val="${pts}"/></a:lnSpc></a:pPr>${r || ""}</a:p>`;
+const runSz = (sz, col, t) => `<a:r><a:rPr lang="el-GR" sz="${sz}"><a:solidFill><a:srgbClr val="${col}"/></a:solidFill><a:latin typeface="Noto Serif"/></a:rPr><a:t>${t}</a:t></a:r>`;
+const box = (rot, paras) => `<p:sp><p:nvSpPr><p:cNvPr id="7" name="TextBox 7"/><p:cNvSpPr txBox="true"/><p:nvPr/></p:nvSpPr><p:spPr>${xfrm(100, 100, 600, 300, rot ? ` rot="${rot * 60000}"` : "")}<a:prstGeom prst="rect"/></p:spPr><p:txBody><a:bodyPr lIns="0" tIns="0" rIns="0" bIns="0" anchor="t"/>${paras}</p:txBody></p:sp>`;
+
+test("pptx: paragraphs in other styles become items stacked baseline to baseline, blank lines between them kept", async () => {
+  const paras = para(4000, runSz(3200, "FFFFFF", "Title")) + para(4000, runSz(3200, "FFFFFF", "Title 2")) + para(2000, "") +
+    para(2000, runSz(1600, "BCBBBA", "Author")) + para(2000, runSz(1600, "BCBBBA", "Author 2"));
+  const plan = await P.parse(Z.open(deckOf(box(0, paras))), "Canva");
+  const ts = plan.pages[0].items.filter((i) => i.k === "text");
+  assert.deepEqual(ts.map((t) => t.tx), ["Title\nTitle 2", "Author\nAuthor 2"]);
+  assert.equal(ts[1].gap, 40, "the blank paragraph is the block above's line (32 pt at 125%)");
+  assert.ok(ts[0].stk && ts[1].stk === ts[0].stk);
+  const d = P.build(plan, {}, 1).doc;
+  const [a, b] = d.items.filter((i) => i.ax.k === "text").sort((p, q) => p.z - q.z);
+  const L = (it) => AX.textLayout(it).lines;
+  assert.equal(a.y, 100, "a top-anchored stack starts at the box");
+  const last = a.y + L(a)[L(a).length - 1].y, first = b.y + L(b)[0].y;
+  assert.ok(Math.abs(first - last - (40 + 20)) < 0.02, "the blank line, then one line at the second block's spacing");
+  assert.equal(b.ax.fc, "#bcbbba"); assert.equal(b.ax.size, 16);
+  // a rotated box stays one item in its first style
+  const rot = await P.parse(Z.open(deckOf(box(90, paras))), "Canva");
+  const rt = rot.pages[0].items.filter((i) => i.k === "text");
+  assert.equal(rt.length, 1); assert.equal(rt[0].tx, "Title\nTitle 2\nAuthor\nAuthor 2"); assert.equal(rt[0].stk, undefined);
+});
+
+test("pptx: a design past PowerPoint's largest slide gets its own page back", async () => {
+  // Canva: a 2:1 design 5184 pt wide on a 4025 × 2592 pt slide, scaled to its width and centred
+  const H = 4025 / 2, top = (2592 - H) / 2;
+  const bg = sp(`<p:spPr>${xfrm(0, top, 4025, H)}${rect}<a:blipFill><a:blip r:embed="rIdImg"/><a:stretch><a:fillRect/></a:stretch></a:blipFill></p:spPr>`);
+  const text = box(0, para(4000, runSz(3200, "000000", "Hi")));
+  const plan = await P.parse(Z.open(deckOf(bg + text, 51117500, 32918400)), "Banner");
+  assert.equal(plan.w, 4025); assert.ok(Math.abs(plan.h - H) < 0.01);
+  const t = plan.pages[0].items.find((i) => i.k === "text");
+  assert.ok(Math.abs(t.y - (100 - top)) < 0.01, "everything moves with the page");
+  // a slide below the limit is left as it is
+  const small = await P.parse(Z.open(deckOf(bg + text, E(4000), E(2592))), "Small");
+  assert.equal(small.h, 2592);
+});

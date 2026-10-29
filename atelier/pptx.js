@@ -17,7 +17,9 @@
 // (designkit/fonts.js) and build() gives the text that names it the
 // font as ext.fam (ax.js), with the Fontsource / built-in match as
 // its stand-in.
-// What maps: text boxes (first run's look for the whole box: font
+// What maps: text boxes (each run of paragraphs in one look becomes a
+// text item, stacked baseline to baseline in the box; inside a
+// paragraph the first run's look counts: font
 // by name → its Fontsource family, or sans/serif/mono for system and
 // Canva-only fonts; size incl. autofit, bold,
 // italic, underline, caps, colour, alignment, line and letter
@@ -29,6 +31,8 @@
 // background (colour, gradient, picture), theme colours with
 // lumMod/lumOff/tint/shade. Not mapped (counted in plan.skipped):
 // charts, tables, media, SmartArt, OLE objects.
+// A Canva design past PowerPoint's largest slide (56 in) comes scaled
+// into that slide and centred; unbox() gives it its own page back.
 // The XML is read by a small tolerant parser below: no DTDs, no
 // external entities, nothing in the file can fetch or run anything.
 // Exposes window.AtelierPPTX (browser) or module.exports.
@@ -329,49 +333,76 @@
   }
   var ALIGN = { l: "l", ctr: "c", r: "r", just: "j", dist: "j" };
 
+  // A text box → blocks of paragraphs that share one style (Atelier text
+  // is single-style, so a box whose paragraphs differ becomes a stack of
+  // items). Blank paragraphs stay in their block; blank ones before a
+  // style change become the next block's gap (points).
   function textOf(txBody, ctx) {
-    var paras = kids(txBody, "a:p"), lines = [], first = null, firstP = null, maxSz = 0;
-    paras.forEach(function (p) {
-      var s = "";
+    var lst = ctx.lst || {};                       // inherited defaults (placeholder / master)
+    var autofit = path(txBody, ["a:bodyPr", "a:normAutofit"]);
+    var scale = autofit ? numA(autofit, "fontScale", 100000) / 100000 : 1;
+    var lnRed = autofit ? numA(autofit, "lnSpcReduction", 0) / 100000 : 0;
+    var blocks = [], cur = null;
+    kids(txBody, "a:p").forEach(function (p) {
+      var s = "", first = null, endRp = kid(p, "a:endParaRPr");
       p.c.forEach(function (r) {
         if (r.n === "a:r" || r.n === "a:fld") {
           var t = kid(r, "a:t"), str = t ? t.t : "";
           s += str;
-          var rp = kid(r, "a:rPr");
-          if (str.trim() && !first) { first = rp || { n: "a:rPr", a: {}, c: [] }; firstP = p; }
-          if (rp) maxSz = Math.max(maxSz, numA(rp, "sz", 0));
+          if (str.trim() && !first) first = kid(r, "a:rPr") || { n: "a:rPr", a: {}, c: [] };
         } else if (r.n === "a:br") s += "\n";
       });
-      lines.push(s);
+      if (!first) {                                // blank paragraph
+        if (cur) cur.lines.push(s);
+        else blocks.push(cur = { lines: [s], st: null, gapRp: endRp });
+        return;
+      }
+      var st = styleOf(first, p, lst, ctx, scale, lnRed);
+      if (cur && !cur.st) { cur.st = st; cur.lines.push(s); return; }
+      if (cur && sameStyle(cur.st, st)) { cur.lines.push(s); return; }
+      var gap = 0;
+      if (cur) {                                   // blank lines that close the block above
+        while (cur.lines.length && !cur.lines[cur.lines.length - 1].trim()) { cur.lines.pop(); gap += cur.st.size * cur.st.lh / 100; }
+      }
+      blocks.push(cur = { lines: [s], st: st, gap: Math.round(gap * 100) / 100 });
     });
-    var tx = lines.join("\n").replace(/\s+$/, "");
-    if (!tx.trim()) return null;
-    var lst = ctx.lst || {};                       // inherited defaults (placeholder / master)
-    var rp = first || {};
+    var out = [];
+    blocks.forEach(function (b) {
+      if (!b.st) return;
+      var tx = b.lines.join("\n").replace(/\s+$/, "");
+      if (!tx.trim()) return;
+      var o = assign(b.st, { tx: tx });
+      if (out.length && b.gap) o.gap = b.gap;
+      out.push(o);
+    });
+    return out.length ? out : null;
+  }
+  function styleOf(rp, p, lst, ctx, scale, lnRed) {
     var ra = rp.a || {};
     var sz = numA(rp, "sz", 0) || lst.sz || 1800;
     var latin = kid(rp, "a:latin"), font = latin && latin.a.typeface || lst.font || "";
     if (/^\+m[nj]-/.test(font)) font = ctx.themeFont;
     var col = colourIn(kid(rp, "a:solidFill"), ctx.theme) || lst.colour || { c: "#000000", a: 1 };
-    var pPr = kid(firstP, "a:pPr"), algn = pPr && pPr.a.algn || lst.algn || "l";
+    var pPr = kid(p, "a:pPr"), algn = pPr && pPr.a.algn || lst.algn || "l";
     var lnPct = 100, sp = path(pPr, ["a:lnSpc", "a:spcPct"]), sPts = path(pPr, ["a:lnSpc", "a:spcPts"]);
     if (sp) lnPct = numA(sp, "val", 100000) / 1000;
-    var autofit = path(txBody, ["a:bodyPr", "a:normAutofit"]);
-    var scale = autofit ? numA(autofit, "fontScale", 100000) / 100000 : 1;
-    var lnRed = autofit ? numA(autofit, "lnSpcReduction", 0) / 100000 : 0;
     var size = Math.max(2, Math.round(sz / 100 * scale * 100) / 100);
     var spc = numA(rp, "spc", 0) / 100;            // points
     var ff = fontFor(font);
     var bold = ra.b !== undefined ? ra.b === "1" || ra.b === "true" : !!lst.b || !!ff.b;
     var ital = ra.i !== undefined ? ra.i === "1" || ra.i === "true" : !!lst.i || !!ff.i;
     return {
-      tx: tx, font: ff.font, fontName: ff.name, face: String(font || "").trim(), size: size,
+      font: ff.font, fontName: ff.name, face: String(font || "").trim(), size: size,
       b: bold ? 1 : 0, i: ital ? 1 : 0, u: ra.u && ra.u !== "none" ? 1 : 0, caps: ra.cap === "all" ? 1 : 0,
       al: ALIGN[algn] || "l",
       // exact spacing (what Canva writes): points → % of the size
       lh: Math.round(Math.max(70, Math.min(300, sPts ? numA(sPts, "val", 0) / sz * 100 : 120 * lnPct / 100 * (1 - lnRed)))),
       tr: spc ? Math.round(spc / size * 1000) : 0, fc: col.c, op: col.a
     };
+  }
+  var STYLE_KEYS = ["font", "face", "size", "b", "i", "u", "caps", "al", "lh", "tr", "fc", "op"];
+  function sameStyle(a, b) {
+    return STYLE_KEYS.every(function (k) { return a[k] === b[k]; });
   }
   function bodyBox(txBody, box) {
     var bp = kid(txBody, "a:bodyPr") || { a: {} };
@@ -604,13 +635,19 @@
         Object.keys(o).forEach(function (key2) { lst[key2] = o[key2]; });
       });
       if (!lst.sz && k && ctx.titleSz && /title/i.test(k.type)) lst.sz = ctx.titleSz;
-      var t = textOf(txBody, { theme: ctx.theme, lst: lst, themeFont: ctx.themeFont });
-      if (t) {
+      var ts = textOf(txBody, { theme: ctx.theme, lst: lst, themeFont: ctx.themeFont });
+      if (ts) {
         var bb = bodyBox(txBody, box), tb = ptBox(bb);
-        t.k = "text"; t.x = tb.x; t.y = tb.y; t.w = tb.w; t.boxH = tb.h; t.rot = tb.rot;
-        t.anchor = bb.anchor;
-        if (t.op >= 1) delete t.op; else t.op = Math.round(t.op * 100);
-        out.items.push(t);
+        // a rotated box keeps one item (its first style): the stack is laid out upright
+        if (tb.rot) ts = [assign(ts[0], { tx: ts.map(function (q) { return q.tx; }).join("\n") })];
+        var stk = ts.length > 1 ? (out.stacks = (out.stacks || 0) + 1) : 0;
+        ts.forEach(function (t, ti) {
+          t.k = "text"; t.x = tb.x; t.y = tb.y; t.w = tb.w; t.boxH = tb.h; t.rot = tb.rot;
+          t.anchor = bb.anchor;
+          if (stk) { t.stk = stk; t.si = ti; }
+          if (t.op >= 1) delete t.op; else t.op = Math.round(t.op * 100);
+          out.items.push(t);
+        });
       }
     }
   }
@@ -650,12 +687,13 @@
   function parse(zip, name) {
     var L = loader(zip);
     var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, svgs: {}, fonts: [], skipped: 0, approx: 0 };
-    var presP = "ppt/presentation.xml";
+    var presP = "ppt/presentation.xml", capped = false;
     return L.xml(presP).then(function (pres) {
       if (!pres) throw new Error("pptx");
       var p = kid(pres, "p:presentation");
       var sz = kid(p, "p:sldSz");
       if (sz) { plan.w = pt(numA(sz, "cx", 12192000)); plan.h = pt(numA(sz, "cy", 6858000)); }
+      capped = !!sz && Math.max(numA(sz, "cx", 0), numA(sz, "cy", 0)) >= CAP_EMU;
       var ids = kids(kid(p, "p:sldIdLst"), "p:sldId").map(function (s) { return s.a["r:id"]; }).slice(0, MAX_SLIDES);
       return L.rels(presP).then(function (prels) {
         plan.fonts = embeddedFonts(p, prels);
@@ -674,8 +712,32 @@
       });
     }).then(function () {
       if (!plan.pages.length) throw new Error("pptx");
+      if (capped) unbox(plan);
       return plan;
     });
+  }
+
+  // A Canva design larger than PowerPoint's largest slide (56 in) comes
+  // as a slide of that size with the design scaled into it and centred.
+  // The widest full-bleed element that the margins centre (the design's
+  // background) gives the design's own page.
+  var CAP_EMU = 51117500;
+  function unbox(plan) {
+    var W = plan.w, H = plan.h, band = null;
+    plan.pages.forEach(function (P) {
+      P.items.forEach(function (s) {
+        if (s.rot || s.k === "text" || !(s.w > 0 && s.h > 0)) return;
+        var b = null;
+        if (s.x <= 1 && s.x + s.w >= W - 1 && s.h < H - 2 && Math.abs(s.y - (H - s.y - s.h)) < 2) b = { x: 0, y: s.y, w: W, h: s.h };
+        else if (s.y <= 1 && s.y + s.h >= H - 1 && s.w < W - 2 && Math.abs(s.x - (W - s.x - s.w)) < 2) b = { x: s.x, y: 0, w: s.w, h: H };
+        if (b && (!band || b.w * b.h > band.w * band.h)) band = b;
+      });
+    });
+    if (!band) return;
+    plan.pages.forEach(function (P) {
+      P.items.forEach(function (s) { s.x -= band.x; s.y -= band.y; });
+    });
+    plan.w = Math.round(band.w * 100) / 100; plan.h = Math.round(band.h * 100) / 100;
   }
 
   // <p:embeddedFontLst>: [{ name, r, b, i, bi }] (zip paths)
@@ -781,10 +843,11 @@
           else missing++;
         }
       }
+      var stacks = {};
       P.items.forEach(function (s) {
         var spec = {}, img = null;
         Object.keys(s).forEach(function (k) {
-          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face"].indexOf(k) < 0) spec[k] = s[k];
+          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap"].indexOf(k) < 0) spec[k] = s[k];
         });
         if (spec.op !== undefined && !(spec.op < 100)) delete spec.op;
         if (s.k === "photo") {
@@ -809,11 +872,15 @@
         if (of && AX.isOwnFont(of.id)) { spec.ext.fam = of.id; own[of.id] = of; }
         var it = AX.addItem(d, pg.id, spec, now);
         if (it && s.k === "text") fitLines(it, s);
-        if (it && s.k === "text") {
-          if (s.anchor === "ctr") it.y = s.y + (s.boxH - it.h) / 2;
-          else if (s.anchor === "b") it.y = s.y + s.boxH - it.h;
-        }
+        if (it && s.stk) {                          // one box, several styles: stack the items
+          var st = stacks[s.stk] = stacks[s.stk] || { s: s, its: [] }, prev = st.its[st.its.length - 1];
+          // baseline to baseline as PowerPoint sets them: the last line above,
+          // the blank lines between, then one line at this item's spacing
+          if (prev) it.y = prev.y + lastBase(prev) + (s.gap || 0) + (it.ax.size || AX.TEXT_DEF.size) * (it.ax.lh || AX.TEXT_DEF.lh) / 100 - firstBase(it);
+          st.its.push(it);
+        } else if (it && s.k === "text") anchorTo([it], s);
       });
+      Object.keys(stacks).forEach(function (k) { anchorTo(stacks[k].its, stacks[k].s); });
     });
     var list = Object.keys(own).map(function (k) { return own[k]; });
     if (list.length) {
@@ -821,6 +888,16 @@
       d.setup.ext.fonts = list;
     }
     return { doc: M.normDoc(d), missing: missing };
+  }
+
+  function lastBase(it) { var L = AX.textLayout(it).lines; return L.length ? L[L.length - 1].y : 0; }
+  function firstBase(it) { var L = AX.textLayout(it).lines; return L.length ? L[0].y : 0; }
+
+  // text inside its box by the box's anchor (items: one box's stack, top to bottom)
+  function anchorTo(its, s) {
+    var top = its[0].y, h = its[its.length - 1].y + its[its.length - 1].h - top;
+    var dy = s.anchor === "ctr" ? s.y + (s.boxH - h) / 2 - top : s.anchor === "b" ? s.y + s.boxH - h - top : 0;
+    if (dy) its.forEach(function (it) { it.y += dy; });
   }
 
   // A text box sized to its text (Canva's are): when this device's
