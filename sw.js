@@ -1981,6 +1981,8 @@ var PRECACHE_URLS = [
   "photolab/search.js",
   "photolab/commands.js",
   "photolab/assist.js",
+  "slides/commands.js",
+  "slides/assist.js",
   "photolab/raw.js",
   "photolab/subject.js",
   "plants/identify.js",
