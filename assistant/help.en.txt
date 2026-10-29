@@ -187,6 +187,13 @@ Ask, for example, "2026 instead of 2025 in my open presentation", "make every ti
 - A locked object is moved or removed only when the assistant names it on purpose.
 - `Undo` on the card (or in `Change history`) puts every presentation back as it was before, as long as it wasn't changed since.
 
+## Documents in Writer
+Ask, for example, "2026 instead of 2025 in my open document", "make the headings centred", "turn the list into a numbered list", "put each chapter on a new page", "add a summary at the start" or "set the paper to A5 with 20 mm margins". The assistant reads the document (with your permission for [Writer](app:writer)) and shows a card with the changes and how many things each document gets.
+- `Apply` makes the changes in Writer on this device and opens the document.
+- What it can change: find and replace (also in the header, footer and footnotes); the text of paragraphs; bold, italic, underline and strikethrough, for whole paragraphs or only some words; alignment; paragraph kinds (paragraph, headings 1 to 4, quote, code, bulleted and numbered lists); page breaks before paragraphs; new paragraphs at the start, the end or next to a paragraph; removing paragraphs; paper size, margins, header and footer; author, tags, category, spelling language and title. It works on the open document, a document by its title or all of them.
+- With Track changes on, the assistant's changes are not marked as tracked changes.
+- `Undo` on the card (or in `Change history`) puts every document back as it was before, as long as it wasn't changed since.
+
 ## Photos, PDFs and documents
 Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 30 files go with one message, each up to 30 MB.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.

@@ -55,6 +55,9 @@ Schreib einfach los; alles speichert sich von selbst.
 - In [Schreibmaschine](app:typewriter) öffnet `An Texteditor senden` eine Seite hier als neues Dokument.
 - Eine `Datenbank (JSON)`-Datei zu importieren führt sie zusammen. Dokumente, die es nur hier gibt, bleiben erhalten, und wenn ein Dokument abweicht, kommt der ältere Text in den `Versionsverlauf`.
 
+## Der Assistent
+Bitte den Assistenten, deine Dokumente mit Worten zu ändern, etwa „2026 statt 2025“, „die Überschriften zentrieren“, „die Liste nummerieren“ oder „Papier A5“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet das Dokument. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt die Dokumente wieder her, solange sie seitdem nicht geändert wurden. In der Hilfe des Assistenten steht alles, was er kann.
+
 ## Synchronisierung und Sicherung
 Mit der [orOS-Synchronisierung](help:t/sync) erreichen deine Dokumente (Text, Fußnoten, Kommentare, Versionen, Ziele, Seiteneinstellungen, verfolgte Änderungen, Rechtschreibsprache), Vorlagen, Autokorrektur-Regeln, dein Rechtschreib-Wörterbuch und deine Einstellungen deine anderen Geräte. Welche Tabs offen sind, bleibt auf jedem Gerät. Ein Dokument zu löschen entfernt es überall. Siehe auch [Sicherung](help:t/backup).
 

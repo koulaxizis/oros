@@ -353,6 +353,13 @@ const STRINGS = {
     'docs.words': '{n} words',
     'doc.restored': 'Document restored',
     'wx.undo': 'Undo',
+    'as.done': 'The Assistant changed {n} things in {d} documents.',
+    'as.done1': 'The Assistant changed {n} things in the document.',
+    'as.done0': 'Nothing needed changing.',
+    'as.bad': "The Assistant's request could not be read. Nothing was changed.",
+    'as.undone': "The Assistant's change was undone.",
+    'as.changed': "These documents were changed since, so the Assistant's change was not undone.",
+    'as.gone': 'There is nothing left to undo.',
     'wx.ok': 'OK',
     'wx.delete': 'Delete',
     'wx.confirm': 'Confirm',
@@ -712,6 +719,13 @@ const STRINGS = {
     'docs.words': '{n} λέξεις',
     'doc.restored': 'Το έγγραφο επανήλθε',
     'wx.undo': 'Αναίρεση',
+    'as.done': 'Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έγγραφα.',
+    'as.done1': 'Ο Βοηθός άλλαξε {n} στοιχεία στο έγγραφο.',
+    'as.done0': 'Δεν χρειάστηκε καμία αλλαγή.',
+    'as.bad': 'Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.',
+    'as.undone': 'Η αλλαγή του Βοηθού αναιρέθηκε.',
+    'as.changed': "Τα έγγραφα άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+    'as.gone': 'Δεν έμεινε κάτι για αναίρεση.',
     'wx.ok': 'OK',
     'wx.delete': 'Διαγραφή',
     'wx.confirm': 'Επιβεβαίωση',
@@ -2309,6 +2323,14 @@ function tableDocHtml(rows) {
   return n ? '<table style="border-collapse:collapse;width:100%;margin:1em 0">' + out + '</table><p><br></p>' : '';
 }
 function openSearchTarget(t) {
+  if (t && t.edit && typeof t.edit === 'object') {
+    assistLoad().then(a => a.edit(t.edit), assistFailed);
+    return;
+  }
+  if (t && t.editUndo && typeof t.editUndo === 'object') {
+    assistLoad().then(a => a.undo(t.editUndo), assistFailed);
+    return;
+  }
   if (t && t.newBlank === true) { createDoc({}); return; }
   if (t && t.newDoc && typeof t.newDoc === 'object' && Array.isArray(t.newDoc.rows)) {
     const html = tableDocHtml(t.newDoc.rows);
@@ -2346,6 +2368,36 @@ function takeOpenFile(o) {
   } catch (e) { return null; }
 }
 window.__orosOpenAt = openSearchTarget;
+
+// AS-EDIT (wave WR1): the Assistant's changes ({ edit } / { editUndo }
+// above) are made by assist.js with commands.js, loaded on the first
+// request; this is what they may use of Writer.
+window.WriterAssistHost = {
+  t: t, toast: showToast, undoToast: undoToast, sanitize: html => WriterIO.sanitizeHtml(html),
+  getDoc: getDoc, activeId: () => state.activeTab, flushSave: flushSave, scheduleSave: scheduleSave,
+  stampDoc: stampDoc, renderEditor: renderEditor, renderTabs: renderTabs, activateTab: activateTab
+};
+let assistP = null;
+function assistFailed() { showToast(t('as.bad')); }
+function assistLoad() {
+  if (window.WriterAssist) return Promise.resolve(window.WriterAssist);
+  if (!assistP) {
+    const v = (document.querySelector('script[src*="writer.js?v="]') || {}).src || '', m = v.match(/[?&]v=([^&#]+)/);
+    const load = f => new Promise((ok, fail) => {
+      const s = document.createElement('script');
+      s.src = f + (m ? '?v=' + m[1] : '');
+      s.onload = ok; s.onerror = () => fail(new Error(f));
+      document.head.appendChild(s);
+    });
+    assistP = (window.orosRecipes ? Promise.resolve() : load('../recipes/core.js'))
+      .then(() => load('commands.js')).then(() => load('assist.js')).then(() => {
+        if (!window.WriterAssist) throw new Error('assist');
+        return window.WriterAssist;
+      });
+    assistP.catch(() => { assistP = null; });
+  }
+  return assistP;
+}
 
 function boot() {
   try {

@@ -246,7 +246,7 @@ test("wiring: the Assistant reads Slides, and the card speaks of presentations a
   const html = read("assistant/index.html");
   assert.ok(!html.includes("../slides/"), "loaded on first use, not on the first open");
   const as = read("assistant/assistant.js");
-  assert.match(as, /EDIT_LAZY = \{ slides: \["\.\.\/slides\/core\.js", "\.\.\/slides\/commands\.js"\] \}/);
+  assert.match(as, /EDIT_LAZY = \{ slides: \["\.\.\/slides\/core\.js", "\.\.\/slides\/commands\.js"\]/);
   assert.match(as, /slides: \{ mod: "SlidesCommands", data: "oros-slides-data", prefs: "oros-slides-prefs", open: "deck", view: 1 \}/);
   assert.equal(C.EDIT_APP ? C.EDIT_APP.slides.noun : "presentation", "presentation");
   const de = read("i18n/de/assistant.js");
