@@ -22,6 +22,8 @@
 // asked (Atelier "Edit picture"): "Done" sends the result back as
 // __orosOpenAt(app, { editedPicture: { key, path, w, h } }).
 // { newRecipe: { app, nm, steps } } opens a drafted automation (A3).
+// { edit: { key, chat, docs, steps } } and { editUndo: { key, tok } }:
+// the Assistant's commands and their Undo (assist.js, AS-EDIT).
 // An .orosphoto handed over the same ways opens as a new project
 // (io.js openPictureFile sniffs it).
 // ============================================================
@@ -126,7 +128,7 @@
   // ---------- Prefs (device-local) ----------
   function dflt() {
     return {
-      tool: "brush", fg: "#000000", bg: "#ffffff", panel: "layers", panelOpen: !phone,
+      tool: "brush", fg: "#000000", bg: "#ffffff", panel: "layers", panelOpen: !phone, doc: "",
       brush: { size: 20, hard: 80, opacity: 100, flow: 100, lockAlpha: false },
       eraser: { size: 30, hard: 80, opacity: 100, flow: 100 },
       clone: { size: 40, hard: 60, opacity: 100, flow: 100 },
@@ -428,6 +430,8 @@
   }
   PL.showEditor = function () {
     document.body.classList.add("editing");
+    // the open project, for the Assistant ("the open picture")
+    if (st.doc && PL.prefs.doc !== st.doc.id) { PL.prefs.doc = st.doc.id; PL.savePrefs(); }
     PL.view.resize(); PL.view.fit();
     PL.tools.enter(st.tool);
     PL.emit("layers"); PL.emit("history"); PL.emit("doc"); PL.emit("tool"); PL.emit("dirty");
@@ -535,7 +539,10 @@
     PL.tools.cancel();
     if (PL.tools.transforming()) PL.tools.endTransform(true);
     return PL.saveNow().then(function () {
-      if (!quiet) { st.doc = null; st.surfaces = {}; st.sel = null; st.hist.clear(); document.body.classList.remove("editing"); PL.home.render(); }
+      if (!quiet) {
+        st.doc = null; st.surfaces = {}; st.sel = null; st.hist.clear(); document.body.classList.remove("editing"); PL.home.render();
+        PL.prefs.doc = ""; PL.savePrefs();
+      }
       return true;
     });
   };
@@ -577,6 +584,10 @@
       });
     }).catch(function () { PL.toast(PL.t("msg.saveFail")); });
   };
+
+  // A project's doc.json was written outside the editor (the
+  // Assistant's Undo, assist.js): its index entry follows.
+  PL.putIndex = function (doc) { setIndex(C.upsertEntry(index, doc), true); };
 
   // ---------- Index storage + sync slice ----------
   function loadIndex() {
@@ -661,6 +672,20 @@
       if (PL.recipes && PL.recipes.draft) PL.recipes.draft(target.newRecipe);
       return;
     }
+    // The Assistant's commands and their Undo (assist.js, AS-EDIT),
+    // loaded on the first one.
+    if (target.edit || target.editUndo) {
+      assist().then(function (A) { if (target.edit) A.edit(target.edit); else A.undo(target.editUndo); }, function () {
+        PL.toast(PL.t("msg.failed"));
+        // the card hears it (as assist.js reports), so it does not wait
+        var rq = target.edit || target.editUndo;
+        try {
+          var at = window.parent.orosAssistAtt;
+          if (at && rq && typeof rq.key === "string" && rq.key) { at.rb = at.rb || {}; at.rb[rq.key.slice(0, 80)] = { failed: 1, why: "error" }; if (typeof at.onRb === "function") at.onRb(rq.key); }
+        } catch (e) {}
+      });
+      return;
+    }
     if (typeof target.id === "string" && C.ID_RE.test(target.id)) { PL.openProject(target.id); return; }
     var f = target.openFile;
     if (f && typeof f === "object" && typeof f.token === "string") {
@@ -673,6 +698,27 @@
     if (typeof f === "string") PL.io.openDiskPath(f, C.normBack(target.back));
   }
   window.__orosOpenAt = function (target) { openTarget(target); };
+  var assistP = null;
+  function assist() {
+    if (PL.assist) return Promise.resolve(PL.assist);
+    if (!assistP) {
+      var v = (document.querySelector('script[src*="app.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      function load(f) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + (m ? "?v=" + m[1] : "");
+          s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      }
+      assistP = load("commands.js").then(function () { return load("assist.js"); }).then(function () {
+        if (!PL.assist) throw new Error("assist");
+        return PL.assist;
+      });
+      assistP.catch(function () { assistP = null; });
+    }
+    return assistP;
+  }
 
   // ---------- Boot ----------
   PL.boot = function () {
