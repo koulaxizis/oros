@@ -1713,6 +1713,13 @@
       if (AT.recipes && AT.recipes.draft) AT.recipes.draft(tg.newRecipe);
       return;
     }
+    // { edit: { key, chat, docs, steps } } / { editUndo: { key, tok } }:
+    // the Assistant's commands after the user pressed Apply on its card
+    // (assist.js, AS-EDIT), and their Undo
+    if (tg && (tg.edit || tg.editUndo)) {
+      if (AT.assist) { if (tg.edit) AT.assist.edit(tg.edit); else AT.assist.undo(tg.editUndo); }
+      return;
+    }
     // { releaseKit: { title, sub, author, line, price, imprint, quote,
     // img } }: Publishing's release kit (kit.js, wave P9); asks first
     if (tg && tg.releaseKit) {

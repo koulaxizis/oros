@@ -2504,6 +2504,92 @@
   }
 
   // The tools phase 1 offered (searching only); kept for the tests.
+  // AS-EDIT (wave AC1): change anything in an app's documents with a
+  // fixed list of commands. cats: { app: its commands module (for
+  // Atelier atelier/commands.js) }. Every field any command takes is
+  // declared once with one JSON type (a test checks that no name has
+  // two types across the apps), so strict providers keep them.
+  var EDIT_APP = { atelier: { what: "designs", noun: "design" } };
+  function specType(spec) {
+    if (spec.t === "num" || spec.t === "int") return "number";
+    if (spec.t === "bool") return "boolean";
+    if (spec.t === "enum") return typeof spec.v[0] === "number" ? "number" : "string";
+    return "string";
+  }
+  function editFields(cats) {
+    var props = { op: { type: "string", description: "The command's name (see the list above)." } };
+    Object.keys(cats || {}).sort().forEach(function (app) {
+      var cat = cats[app] && cats[app].CATALOG;
+      Object.keys(cat || {}).forEach(function (op) {
+        var args = cat[op].args || {};
+        Object.keys(args).forEach(function (k) { if (!props[k]) props[k] = { type: specType(args[k]) }; });
+      });
+    });
+    return props;
+  }
+  var EDIT_SEL = "Elements are picked with ids (element ids from read_in_app, comma separated), pages (\"\" all, odd, even, first, last or positions like 2-4,6; 1 = the first page), " +
+    "what (\"\" every element but page backgrounds, or text, photo, video, shape, icon, line, table, chart, bg) and has (words in the text or a photo's file name); " +
+    "a locked element is moved or removed only when named by id. Lengths are in the design's own unit (px, or mm for print). Leave a field out to keep it as it is.";
+  function editTool(cats) {
+    var apps = Object.keys(cats || {}).filter(function (a) { return EDIT_APP[a]; }).sort();
+    return {
+      name: "edit_in_app",
+      description: "Change anything in the user's documents of an app on their instruction: texts, fonts, sizes, colours, photos (filters, black and white, adjustments, masks, background removal), " +
+        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names. Read the document first with read_in_app to know its elements and their ids. " +
+        "The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back. " +
+        "Use only these commands and fields (any other is refused and the reason comes back). " + EDIT_SEL + "\n" +
+        apps.map(function (a) { return cats[a].GUIDE; }).join("\n"),
+      params: {
+        type: "object",
+        properties: {
+          app: { type: "string", "enum": apps },
+          designs: { type: "string", "enum": ["open", "named", "folder", "all"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the folder `name`), all." },
+          name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
+          steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } }
+        },
+        required: ["app", "steps"]
+      }
+    };
+  }
+  function readAppTool(apps) {
+    return {
+      name: "read_in_app",
+      description: "Read one of the user's documents in an app (for Atelier a design): its size, pages and every element with its id, kind, position, size, text, font, colours and filter. " +
+        "Call it before edit_in_app to pick elements by id. Positions and sizes are in the document's unit.",
+      params: {
+        type: "object",
+        properties: {
+          app: { type: "string", "enum": apps.slice().sort() },
+          designs: { type: "string", "enum": ["open", "named"], description: "open (the one open in the app, the default) or named." },
+          name: { type: "string", description: "designs named: the document's name." }
+        },
+        required: ["app"]
+      }
+    };
+  }
+  // edit_in_app's arguments → { ok, app, designs, name, steps } | { ok: false, err }
+  function normEdit(args, cats) {
+    var a = isObj(args) ? args : {}, app = String(a.app || ""), mod = cats && cats[app];
+    if (!mod || !EDIT_APP[app]) return bad("app must be one of: " + Object.keys(cats || {}).join(", ") + ".");
+    var designs = a.designs === undefined || a.designs === "" ? "open" : String(a.designs);
+    if (["open", "named", "folder", "all"].indexOf(designs) < 0) return bad("designs must be open, named, folder or all.");
+    var name = squash(a.name || "").slice(0, 120);
+    if ((designs === "named" || designs === "folder") && !name) return bad("give the " + (designs === "folder" ? "folder's" : EDIT_APP[app].noun + "'s") + " name.");
+    var chk = mod.check(a.steps);
+    if (!chk.ok) return bad(chk.err);
+    if (designs !== "named" && designs !== "open" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
+    return { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
+  }
+  function normReadApp(args, cats) {
+    var a = isObj(args) ? args : {}, app = String(a.app || "");
+    if (!cats || !cats[app] || !EDIT_APP[app]) return bad("app must be one of: " + Object.keys(cats || {}).join(", ") + ".");
+    var designs = a.designs === undefined || a.designs === "" ? "open" : String(a.designs);
+    if (designs !== "open" && designs !== "named") return bad("designs must be open or named.");
+    var name = squash(a.name || "").slice(0, 120);
+    if (designs === "named" && !name) return bad("give the " + EDIT_APP[app].noun + "'s name.");
+    return { ok: true, app: app, designs: designs, name: name };
+  }
+
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
   // opts = { data: the user lets it search, summary: at least one
   // readable app has a summary, entries: at least one entry kind's app
@@ -2527,6 +2613,7 @@
     if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
     if (opts.actions && opts.actions.length) out.push(doTool(opts.actions));
     if (opts.history) out.push(TOOL_HISTORY);
+    if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
     if (opts.cover) out.push(TOOL_COVER);
@@ -2843,6 +2930,10 @@
     if (!opts.builtin && !opts.chatOnly && opts.history) {
       lines.push("Questions about what you changed before (\"what did you change yesterday?\", \"undo what you added to my calendar\") are answered with change_history: it lists what was added, changed or linked on this device in the last 30 days. " +
         "Tell it from the result, briefly; the user undoes something with Undo on the card. Changes from other devices or older than 30 days are not there.");
+    }
+    if (!opts.builtin && opts.edits && opts.edits.length) {
+      lines.push("To change anything in the user's documents in " + opts.edits.join(", ") + " (texts, fonts, colours, photos, positions, layers, pages, backgrounds, bleed), read the document with read_in_app and change it with edit_in_app; never give the user manual steps for what a command does. " +
+        "The user presses Apply on the card, so never say it is changed before the result says so; after it, say what changed in a sentence. A command that does not exist cannot be done: say so plainly. Use propose_automation only when the user wants steps to run again later.");
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
@@ -3726,7 +3817,8 @@
     KEY_IDS: KEY_IDS, SEARCH_IDS: SEARCH_IDS, SEARCH_N: SEARCH_N, PAGE_MAX: PAGE_MAX, webAny: webAny, webSrc: webSrc,
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pageAllowed: pageAllowed, webResult: webResult,
     BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
-    normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
+normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: readAppTool, EDIT_APP: EDIT_APP,
+        normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
     normHouse: normHouse, houseReport: houseReport, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,

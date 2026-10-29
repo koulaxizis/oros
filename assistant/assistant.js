@@ -382,6 +382,43 @@
       "cv.f.title": "Title", "cv.f.sub": "Subtitle", "cv.f.author": "Author", "cv.f.imprint": "Publisher", "cv.f.isbn": "ISBN", "cv.f.price": "Price",
       "cv.f.pages": "Pages", "cv.f.trim": "Size", "cv.f.blurb": "Back cover", "cv.front": "Front picture", "cv.logo": "Logo",
       "cv.gone": "{name}: no longer here, pick it in {app}", "cv.none": "none, pick one in {app}",
+      "ed.head": "Change in {app}", "ed.untitled": "Untitled", "ed.apply": "Apply", "ed.hint": "{app} makes these changes on this device when you press Apply. Undo takes them all back.",
+      "ed.will": "Changes {n} things in {d} designs.", "ed.will1": "Changes {n} things.", "ed.willCut": "Removes the background of {n} photos on this device.",
+      "ed.did": "Changed {n} things in {d} designs.", "ed.did1": "Changed {n} things.", "ed.per": "{name}: {n}", "ed.cutDone": "Backgrounds removed: {n}.", "ed.stopped": "Stopped before the end. What was done stays.",
+      "ed.working": "{app} is making the changes…", "ed.failed": "{app} could not make these changes. Nothing was changed.", "ed.stale": "These changes no longer fit what is in {app}. Ask again.",
+      "ed.sure": "Apply the changes?", "ed.sureDel": "This removes elements or pages. Undo on the card brings them back.", "ed.sureMany": "This changes {n} things. Undo on the card brings them all back.",
+      "ed.undoWait": "No answer came back. Open the app and try again.", "ed.undoChanged": "Not undone: it was changed in {app} since.", "ed.undoGone": "There is nothing left to undo in {app}.",
+      "ed.nIds": "{n} picked", "ed.note.maxPages": "Some pages were not added: a design holds at most 999 pages.", "ed.note.lastPage": "Not every page can be removed: one stays.",
+      "ed.note.photoBg": "Pages with a photo as their background keep it.", "ed.note.screenBleed": "Bleed is for print designs (in mm) only.", "ed.note.locked": "Locked elements were left as they are.",
+      "ed.note.noCut": "Background removal is not available on this device.", "ed.op.replace": "Replace text", "ed.op.settext": "New text", "ed.op.textstyle": "Text style",
+      "ed.op.recolor": "Replace colour", "ed.op.colors": "Colours", "ed.op.photo": "Photos", "ed.op.cutout": "Remove backgrounds", "ed.op.place": "Position and size",
+      "ed.op.align": "Align", "ed.op.arrange": "Layers", "ed.op.remove": "Remove", "ed.op.pages": "Add pages", "ed.op.delpages": "Remove pages", "ed.op.movepage": "Move page",
+      "ed.op.bg": "Page background", "ed.op.bleed": "Bleed", "ed.op.rename": "Rename", "ed.f.ids": "elements:", "ed.f.pages": "pages", "ed.f.what": "on", "ed.f.has": "with",
+      "ed.f.find": "find", "ed.f.repl": "→", "ed.f.cs": "match case", "ed.f.word": "whole words", "ed.f.text": "text", "ed.f.font": "font", "ed.f.size": "size",
+      "ed.f.c": "colour", "ed.f.bold": "bold", "ed.f.ital": "italic", "ed.f.under": "underline", "ed.f.caps": "capitals", "ed.f.align": "alignment", "ed.f.lh": "line height %",
+      "ed.f.track": "letter spacing", "ed.f.effect": "effect", "ed.f.curve": "curve", "ed.f.from": "from", "ed.f.to": "to", "ed.f.fill": "fill", "ed.f.grad": "gradient to",
+      "ed.f.ang": "angle", "ed.f.stroke": "outline", "ed.f.sw": "outline width", "ed.f.flt": "filter", "ed.f.bright": "brightness", "ed.f.contrast": "contrast",
+      "ed.f.sat": "saturation", "ed.f.warmth": "warmth", "ed.f.tint": "tint", "ed.f.fade": "fade", "ed.f.sepia": "sepia", "ed.f.vignette": "vignette", "ed.f.blur": "blur",
+      "ed.f.sharpen": "sharpen", "ed.f.fit": "fit", "ed.f.shape": "shape", "ed.f.round": "corners", "ed.f.flip": "flip", "ed.f.x": "x", "ed.f.y": "y", "ed.f.w": "width",
+      "ed.f.h": "height", "ed.f.dx": "move right", "ed.f.dy": "move down", "ed.f.pct": "scale %", "ed.f.rot": "rotation", "ed.f.opacity": "opacity", "ed.f.pos": "place",
+      "ed.f.gap": "gap", "ed.f.edge": "edge", "ed.f.dist": "spread", "ed.f.rel": "against", "ed.f.order": "order", "ed.f.lock": "lock", "ed.f.hide": "hide", "ed.f.n": "how many",
+      "ed.f.at": "where", "ed.f.page": "page", "ed.f.dup": "as copies", "ed.f.first": "from page", "ed.f.last": "to page", "ed.f.dest": "to position", "ed.f.mm": "mm",
+      "ed.f.title": "name", "ed.v.what.text": "texts", "ed.v.what.photo": "photos", "ed.v.what.video": "videos", "ed.v.what.shape": "shapes", "ed.v.what.icon": "icons",
+      "ed.v.what.line": "lines", "ed.v.what.table": "tables", "ed.v.what.chart": "charts", "ed.v.what.bg": "page backgrounds", "ed.v.pos.tl": "top left", "ed.v.pos.t": "top",
+      "ed.v.pos.tr": "top right", "ed.v.pos.l": "left", "ed.v.pos.c": "centre", "ed.v.pos.r": "right", "ed.v.pos.bl": "bottom left", "ed.v.pos.b": "bottom", "ed.v.pos.br": "bottom right",
+      "ed.v.edge.l": "left", "ed.v.edge.c": "centre", "ed.v.edge.r": "right", "ed.v.edge.t": "top", "ed.v.edge.m": "middle", "ed.v.edge.b": "bottom", "ed.v.dist.h": "across",
+      "ed.v.dist.v": "down", "ed.v.rel.sel": "each other", "ed.v.rel.page": "the page", "ed.v.order.front": "to the front", "ed.v.order.back": "to the back", "ed.v.order.forward": "one up",
+      "ed.v.order.backward": "one down", "ed.v.flip.h": "horizontally", "ed.v.flip.v": "vertically", "ed.v.flip.none": "none", "ed.v.fit.fit": "whole photo", "ed.v.fit.fill": "fill the frame",
+      "ed.v.at.end": "at the end", "ed.v.at.before": "before", "ed.v.at.after": "after", "ed.v.align.l": "left", "ed.v.align.c": "centre", "ed.v.align.r": "right",
+      "ed.v.align.j": "justified", "ed.v.bold.on": "on", "ed.v.bold.off": "off", "ed.v.ital.on": "on", "ed.v.ital.off": "off", "ed.v.under.on": "on", "ed.v.under.off": "off",
+      "ed.v.caps.on": "on", "ed.v.caps.off": "off", "ed.v.lock.on": "on", "ed.v.lock.off": "off", "ed.v.hide.on": "on", "ed.v.hide.off": "off", "ed.flt.none": "original",
+      "ed.flt.vivid": "vivid", "ed.flt.warm": "warm", "ed.flt.cool": "cool", "ed.flt.aegean": "Aegean", "ed.flt.summer": "summer", "ed.flt.mono": "black and white",
+      "ed.flt.noir": "noir", "ed.flt.sepia": "sepia", "ed.flt.vintage": "vintage", "ed.flt.faded": "faded", "ed.flt.drama": "drama", "ed.flt.soft": "soft", "ed.fx.none": "none",
+      "ed.fx.shadow": "shadow", "ed.fx.lift": "lift", "ed.fx.hollow": "hollow", "ed.fx.outline": "outline", "ed.fx.splice": "splice", "ed.fx.echo": "echo", "ed.fx.glitch": "glitch",
+      "ed.fx.neon": "neon", "ed.fx.background": "background", "ed.shp.rect": "square", "ed.shp.rounded": "rounded", "ed.shp.circle": "circle", "ed.shp.triangle": "triangle",
+      "ed.shp.rtriangle": "right triangle", "ed.shp.diamond": "diamond", "ed.shp.pentagon": "pentagon", "ed.shp.hexagon": "hexagon", "ed.shp.octagon": "octagon",
+      "ed.shp.star": "star", "ed.shp.burst": "badge", "ed.shp.heart": "heart", "ed.shp.cross": "cross", "ed.shp.arrow": "arrow", "ed.shp.chevron": "chevron", "ed.shp.parallelogram": "parallelogram",
+      "ed.shp.trapezoid": "trapezoid", "ed.shp.arch": "arch", "ed.shp.drop": "drop", "ed.shp.shield": "shield", "ed.shp.bubble": "speech bubble",
       "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
       "rc.file": "Save as file", "rc.saved": "Saved {name}. Send it to anyone with orOS.",
       "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
@@ -898,6 +935,46 @@
       "cv.f.title": "Τίτλος", "cv.f.sub": "Υπότιτλος", "cv.f.author": "Συγγραφέας", "cv.f.imprint": "Εκδότης", "cv.f.isbn": "ISBN", "cv.f.price": "Τιμή",
       "cv.f.pages": "Σελίδες", "cv.f.trim": "Διάσταση", "cv.f.blurb": "Οπισθόφυλλο", "cv.front": "Εικόνα εξωφύλλου", "cv.logo": "Λογότυπο",
       "cv.gone": "{name}: δεν είναι πια εδώ, διάλεξέ την ({app})", "cv.none": "καμία, διάλεξε μία ({app})",
+      "ed.head": "Αλλαγή: {app}", "ed.untitled": "Χωρίς τίτλο", "ed.apply": "Εφαρμογή", "ed.hint": "Οι αλλαγές γίνονται σε αυτή τη συσκευή ({app}) μόλις πατήσεις Εφαρμογή. Η Αναίρεση τις παίρνει όλες πίσω.",
+      "ed.will": "Αλλάζουν {n} στοιχεία σε {d} σχέδια.", "ed.will1": "Αλλάζουν {n} στοιχεία.", "ed.willCut": "Αφαιρείται το φόντο από {n} φωτογραφίες σε αυτή τη συσκευή.",
+      "ed.did": "Άλλαξαν {n} στοιχεία σε {d} σχέδια.", "ed.did1": "Άλλαξαν {n} στοιχεία.", "ed.per": "{name}: {n}", "ed.cutDone": "Αφαιρέθηκαν φόντα: {n}.", "ed.stopped": "Διακόπηκε πριν το τέλος. Ό,τι έγινε μένει.",
+      "ed.working": "Γίνονται οι αλλαγές ({app})…", "ed.failed": "Οι αλλαγές δεν έγιναν ({app}). Δεν άλλαξε τίποτα.", "ed.stale": "Οι αλλαγές δεν ταιριάζουν πια με ό,τι υπάρχει ({app}). Ζήτησέ τες ξανά.",
+      "ed.sure": "Να γίνουν οι αλλαγές;", "ed.sureDel": "Αφαιρούνται στοιχεία ή σελίδες. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.sureMany": "Αλλάζουν {n} στοιχεία. Η Αναίρεση στην κάρτα τα επαναφέρει όλα.",
+      "ed.undoWait": "Δεν ήρθε απάντηση. Άνοιξε την εφαρμογή και δοκίμασε ξανά.", "ed.undoChanged": "Δεν αναιρέθηκε: άλλαξε στο μεταξύ ({app}).", "ed.undoGone": "Δεν έμεινε κάτι για αναίρεση ({app}).",
+      "ed.nIds": "{n} επιλεγμένα", "ed.note.maxPages": "Κάποιες σελίδες δεν προστέθηκαν: ένα σχέδιο έχει έως 999 σελίδες.", "ed.note.lastPage": "Δεν αφαιρούνται όλες οι σελίδες: μία μένει.",
+      "ed.note.photoBg": "Οι σελίδες με φωτογραφία για φόντο την κρατούν.", "ed.note.screenBleed": "Το bleed υπάρχει μόνο σε σχέδια για εκτύπωση (σε mm).", "ed.note.locked": "Τα κλειδωμένα στοιχεία έμειναν όπως ήταν.",
+      "ed.note.noCut": "Η αφαίρεση φόντου δεν είναι διαθέσιμη σε αυτή τη συσκευή.", "ed.op.replace": "Αντικατάσταση κειμένου", "ed.op.settext": "Νέο κείμενο",
+      "ed.op.textstyle": "Μορφή κειμένου", "ed.op.recolor": "Αντικατάσταση χρώματος", "ed.op.colors": "Χρώματα", "ed.op.photo": "Φωτογραφίες", "ed.op.cutout": "Αφαίρεση φόντου",
+      "ed.op.place": "Θέση και μέγεθος", "ed.op.align": "Στοίχιση", "ed.op.arrange": "Επίπεδα", "ed.op.remove": "Αφαίρεση", "ed.op.pages": "Προσθήκη σελίδων",
+      "ed.op.delpages": "Αφαίρεση σελίδων", "ed.op.movepage": "Μετακίνηση σελίδας", "ed.op.bg": "Φόντο σελίδας", "ed.op.bleed": "Bleed", "ed.op.rename": "Μετονομασία",
+      "ed.f.ids": "στοιχεία:", "ed.f.pages": "σελίδες", "ed.f.what": "σε", "ed.f.has": "με", "ed.f.find": "εύρεση", "ed.f.repl": "→", "ed.f.cs": "ίδια πεζά/κεφαλαία",
+      "ed.f.word": "ολόκληρες λέξεις", "ed.f.text": "κείμενο", "ed.f.font": "γραμματοσειρά", "ed.f.size": "μέγεθος", "ed.f.c": "χρώμα", "ed.f.bold": "έντονα",
+      "ed.f.ital": "πλάγια", "ed.f.under": "υπογράμμιση", "ed.f.caps": "κεφαλαία", "ed.f.align": "στοίχιση", "ed.f.lh": "διάστιχο %", "ed.f.track": "απόσταση γραμμάτων",
+      "ed.f.effect": "εφέ", "ed.f.curve": "καμπύλη", "ed.f.from": "από", "ed.f.to": "σε", "ed.f.fill": "γέμισμα", "ed.f.grad": "διαβάθμιση προς", "ed.f.ang": "γωνία",
+      "ed.f.stroke": "περίγραμμα", "ed.f.sw": "πάχος περιγράμματος", "ed.f.flt": "φίλτρο", "ed.f.bright": "φωτεινότητα", "ed.f.contrast": "αντίθεση", "ed.f.sat": "κορεσμός",
+      "ed.f.warmth": "θερμότητα", "ed.f.tint": "απόχρωση", "ed.f.fade": "ξεθώριασμα", "ed.f.sepia": "σέπια", "ed.f.vignette": "βινιέτα", "ed.f.blur": "θόλωμα",
+      "ed.f.sharpen": "όξυνση", "ed.f.fit": "προσαρμογή", "ed.f.shape": "σχήμα", "ed.f.round": "γωνίες", "ed.f.flip": "αναστροφή", "ed.f.x": "x", "ed.f.y": "y",
+      "ed.f.w": "πλάτος", "ed.f.h": "ύψος", "ed.f.dx": "δεξιά κατά", "ed.f.dy": "κάτω κατά", "ed.f.pct": "κλίμακα %", "ed.f.rot": "περιστροφή", "ed.f.opacity": "αδιαφάνεια",
+      "ed.f.pos": "θέση", "ed.f.gap": "απόσταση", "ed.f.edge": "άκρη", "ed.f.dist": "κατανομή", "ed.f.rel": "ως προς", "ed.f.order": "σειρά", "ed.f.lock": "κλείδωμα",
+      "ed.f.hide": "απόκρυψη", "ed.f.n": "πόσες", "ed.f.at": "πού", "ed.f.page": "σελίδα", "ed.f.dup": "ως αντίγραφα", "ed.f.first": "από τη σελίδα", "ed.f.last": "έως τη σελίδα",
+      "ed.f.dest": "στη θέση", "ed.f.mm": "mm", "ed.f.title": "όνομα", "ed.v.what.text": "κείμενα", "ed.v.what.photo": "φωτογραφίες", "ed.v.what.video": "βίντεο",
+      "ed.v.what.shape": "σχήματα", "ed.v.what.icon": "εικονίδια", "ed.v.what.line": "γραμμές", "ed.v.what.table": "πίνακες", "ed.v.what.chart": "γραφήματα", "ed.v.what.bg": "φόντα σελίδων",
+      "ed.v.pos.tl": "πάνω αριστερά", "ed.v.pos.t": "πάνω", "ed.v.pos.tr": "πάνω δεξιά", "ed.v.pos.l": "αριστερά", "ed.v.pos.c": "κέντρο", "ed.v.pos.r": "δεξιά",
+      "ed.v.pos.bl": "κάτω αριστερά", "ed.v.pos.b": "κάτω", "ed.v.pos.br": "κάτω δεξιά", "ed.v.edge.l": "αριστερά", "ed.v.edge.c": "κέντρο", "ed.v.edge.r": "δεξιά",
+      "ed.v.edge.t": "πάνω", "ed.v.edge.m": "μέση", "ed.v.edge.b": "κάτω", "ed.v.dist.h": "οριζόντια", "ed.v.dist.v": "κάθετα", "ed.v.rel.sel": "μεταξύ τους",
+      "ed.v.rel.page": "τη σελίδα", "ed.v.order.front": "μπροστά από όλα", "ed.v.order.back": "πίσω από όλα", "ed.v.order.forward": "ένα πάνω", "ed.v.order.backward": "ένα κάτω",
+      "ed.v.flip.h": "οριζόντια", "ed.v.flip.v": "κάθετα", "ed.v.flip.none": "καμία", "ed.v.fit.fit": "ολόκληρη η φωτογραφία", "ed.v.fit.fill": "γεμίζει το πλαίσιο",
+      "ed.v.at.end": "στο τέλος", "ed.v.at.before": "πριν", "ed.v.at.after": "μετά", "ed.v.align.l": "αριστερά", "ed.v.align.c": "κέντρο", "ed.v.align.r": "δεξιά",
+      "ed.v.align.j": "πλήρης", "ed.v.bold.on": "ναι", "ed.v.bold.off": "όχι", "ed.v.ital.on": "ναι", "ed.v.ital.off": "όχι", "ed.v.under.on": "ναι", "ed.v.under.off": "όχι",
+      "ed.v.caps.on": "ναι", "ed.v.caps.off": "όχι", "ed.v.lock.on": "ναι", "ed.v.lock.off": "όχι", "ed.v.hide.on": "ναι", "ed.v.hide.off": "όχι", "ed.flt.none": "πρωτότυπο",
+      "ed.flt.vivid": "ζωντανό", "ed.flt.warm": "ζεστό", "ed.flt.cool": "δροσερό", "ed.flt.aegean": "Αιγαίο", "ed.flt.summer": "καλοκαίρι", "ed.flt.mono": "ασπρόμαυρο",
+      "ed.flt.noir": "νουάρ", "ed.flt.sepia": "σέπια", "ed.flt.vintage": "ρετρό", "ed.flt.faded": "ξεθωριασμένο", "ed.flt.drama": "δραματικό", "ed.flt.soft": "απαλό",
+      "ed.fx.none": "κανένα", "ed.fx.shadow": "σκιά", "ed.fx.lift": "ανύψωση", "ed.fx.hollow": "κούφιο", "ed.fx.outline": "περίγραμμα", "ed.fx.splice": "μετατόπιση",
+      "ed.fx.echo": "ηχώ", "ed.fx.glitch": "glitch", "ed.fx.neon": "νέον", "ed.fx.background": "φόντο", "ed.shp.rect": "τετράγωνο", "ed.shp.rounded": "στρογγυλεμένο",
+      "ed.shp.circle": "κύκλος", "ed.shp.triangle": "τρίγωνο", "ed.shp.rtriangle": "ορθογώνιο τρίγωνο", "ed.shp.diamond": "ρόμβος", "ed.shp.pentagon": "πεντάγωνο",
+      "ed.shp.hexagon": "εξάγωνο", "ed.shp.octagon": "οκτάγωνο", "ed.shp.star": "αστέρι", "ed.shp.burst": "σήμα", "ed.shp.heart": "καρδιά", "ed.shp.cross": "σταυρός",
+      "ed.shp.arrow": "βέλος", "ed.shp.chevron": "σιρίτι", "ed.shp.parallelogram": "παραλληλόγραμμο", "ed.shp.trapezoid": "τραπέζιο", "ed.shp.arch": "αψίδα", "ed.shp.drop": "σταγόνα",
+      "ed.shp.shield": "ασπίδα", "ed.shp.bubble": "συννεφάκι",
       "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
       "rc.file": "Αποθήκευση ως αρχείο", "rc.saved": "Αποθηκεύτηκε το {name}. Στείλ' το σε όποιον έχει orOS.",
       "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
@@ -2655,10 +2732,11 @@
     var hiOn = !builtin && !data.set.chat && apps.length > 0;
     var fileOn = !builtin && !!installed().writer;
     var rbOn = !builtin && !!installed().layout;
+    var edCats = builtin || data.set.chat ? {} : editCats(apps);
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn, rebuild: rbOn, house: rbOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -2671,6 +2749,7 @@
       actions: acts,
       history: hiOn,
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      edits: Object.keys(edCats).map(function (id) { return installed()[id] + " (" + id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
       files: builtin ? "" : "pdf",
@@ -2847,6 +2926,8 @@
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
+    if (call.name === "read_in_app") return readInApp(c, call.args, apps);
+    if (call.name === "edit_in_app") return Promise.resolve(proposeEdit(c, call.args, apps));
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
     if (call.name === "newsletter_check") return Promise.resolve(proposeNlCheck(c, call.args));
@@ -3097,15 +3178,253 @@
   // Only while this frame is alive: an app opened from a card may take
   // its place, and the report then waits for the next opening.
   function onRb() {
+    takeUndoAnswers();
     if (!chat) return;
     var hit = false;
     chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)))) hit = true; });
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
     });
     if (hit) renderMessages();
   }
   attStore.onRb = onRb;
   window.addEventListener("pagehide", function () { if (attStore.onRb === onRb) attStore.onRb = null; });
+
+  // ---------- read_in_app / edit_in_app (AS-EDIT, wave AC1) ----------
+  // Anything in an app's documents changes through the app's fixed
+  // commands (for Atelier atelier/commands.js). The card shows the
+  // commands in words and how many things they change, counted here on
+  // copies of the stored documents; nothing is written before Apply.
+  // Apply hands the commands to the app (__orosOpenAt(app, { edit })),
+  // which checks them again, applies them and leaves its report under
+  // the card's key (orosAssistAtt.rb, as AS-RB) with an undo token;
+  // Undo (card, change history) asks the app ({ editUndo }), which
+  // refuses when a document changed since.
+  var EDIT_SRC = { atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs" } };
+  var EDIT_CONFIRM = 50;            // more changes than this (or a removal) ask once more
+  function editCats(apps) {
+    var have = installed(), ok = {}, out = {};
+    (apps || []).forEach(function (a) { ok[a.id] = 1; });
+    Object.keys(EDIT_SRC).forEach(function (id) {
+      var mod = window[EDIT_SRC[id].mod];
+      if (have[id] && ok[id] && mod) out[id] = mod;
+    });
+    return out;
+  }
+  function editSource(app) {
+    var s = EDIT_SRC[app], prefs = readStore(s.prefs);
+    return { data: readStore(s.data), folders: readStore(s.folders), open: prefs && typeof prefs.doc === "string" ? prefs.doc : "" };
+  }
+  function appOf(apps, id) { var o = null; (apps || []).forEach(function (a) { if (a.id === id) o = a; }); return o; }
+  function readInApp(c, args, apps) {
+    var cats = editCats(apps), n = C.normReadApp(args, cats);
+    if (!n.ok) return Promise.resolve({ content: "Error: " + n.err, err: 1, ui: { k: "editErr" } });
+    var mod = cats[n.app], src = editSource(n.app), app = appOf(apps, n.app);
+    var tg = mod.targets(src.data, src.folders, src.open, n.designs, n.name);
+    if (!tg.ok) return Promise.resolve({ content: "Error: " + tg.err, err: 1, ui: { k: "editErr" } });
+    var doc = null;
+    (src.data.docs || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
+    var o = mod.outline(doc), text = JSON.stringify(o);
+    var title = doc.name || t("ed.untitled");
+    var okP = app.perm === "always" ? Promise.resolve(true) : askRead(title, app.name, text);
+    return okP.then(function (ok) {
+      if (!ok) return { content: JSON.stringify({ note: "The user chose not to share this " + C.EDIT_APP[n.app].noun + "." }), ui: { k: "readNo", title: title } };
+      return { content: JSON.stringify({ app: n.app, design: o }), ui: { k: "read", title: title } };
+    });
+  }
+  // The stored arguments → { ok, app, docs, steps, pv } (checked again
+  // and counted again whenever the card is drawn before Apply).
+  function editPlan(args, apps) {
+    var cats = editCats(apps), n = C.normEdit(args, cats);
+    if (!n.ok) return n;
+    var mod = cats[n.app], src = editSource(n.app);
+    var tg = mod.targets(src.data, src.folders, src.open, n.designs, n.name);
+    if (!tg.ok) return tg;
+    return { ok: true, app: n.app, designs: n.designs, docs: tg.docs, steps: n.steps, pv: mod.preview(src.data, tg.docs.map(function (d) { return d.id; }), n.steps) };
+  }
+  function proposeEdit(c, args, apps) {
+    var p = editPlan(args, apps);
+    if (!p.ok) return { content: "Error: " + p.err, err: 1, ui: { k: "editErr" } };
+    if (!p.pv.n && !p.pv.cut) {
+      return { content: "Error: nothing in " + p.docs.map(function (d) { return JSON.stringify(d.name); }).join(", ") + " matches these commands, so nothing would change" +
+        (p.pv.notes.length ? " (" + p.pv.notes.join(", ") + ")" : "") + ". Check the element ids and fields with read_in_app.", err: 1, ui: { k: "editErr" } };
+    }
+    var out = { shown_as_card: true, designs: p.docs.slice(0, 20).map(function (d) { return d.name; }), will_change: p.pv.n, in_designs: p.pv.d,
+                note: "Nothing is changed before the user presses Apply on the card; the result is added here then." };
+    if (p.pv.cut) out.photos_for_background_removal = p.pv.cut;
+    if (p.pv.notes.length) out.notes = p.pv.notes;
+    return { content: JSON.stringify(out), ui: { k: "edit", args: JSON.parse(JSON.stringify(args)), key: attId(), st: "" } };
+  }
+  // One command in the user's words: its name, then what it picks and sets.
+  function edVal(k, v) {
+    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup)$/.test(k)) return "";
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (k === "flt") return edName("ed.flt.", v);
+    if (k === "effect") return edName("ed.fx.", v);
+    if (k === "shape") return edName("ed.shp.", v);
+    if (k === "font") return String(v).replace(/^fs_/, "").replace(/_/g, " ");
+    if (k === "ids") return t("ed.nIds", { n: String(v).split(/[\s,]+/).filter(Boolean).length });
+    if (/^(has|find|repl|text|title)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
+    return String(v);
+  }
+  function edQuote(s) { return LANG === "el" ? "\u00ab" + s + "\u00bb" : LANG === "de" ? "\u201e" + s + "\u201c" : "\u201c" + s + "\u201d"; }
+  function edName(pre, v) { var s = t(pre + v); return s === pre + v ? String(v) : s; }
+  function editWords(st, mod) {
+    var args = mod.CATALOG[st.op].args, parts = [];
+    Object.keys(args).forEach(function (k) {
+      var v = st[k], spec = args[k];
+      if (v === null || v === undefined || v === "" || (spec.t === "bool" && !v) || (spec.def !== undefined && spec.def !== null && v === spec.def && !spec.req && spec.t !== "bool")) return;
+      var val = edVal(k, v);
+      parts.push(val ? t("ed.f." + k) + " " + val : t("ed.f." + k));
+    });
+    // find “a” → “b” reads as one phrase
+    return { name: t("ed.op." + st.op), detail: parts.join(" · ").replace(" · " + t("ed.f.repl") + " ", " " + t("ed.f.repl") + " ") };
+  }
+  function runEdit(ui, c, p) {
+    var sh = shell();
+    if (!sh || typeof sh.__orosOpenAt !== "function") return false;
+    try {
+      sh.__orosOpenAt(p.app, { edit: { key: ui.key, chat: c.id, docs: p.docs.map(function (d) { return d.id; }), steps: p.steps } });
+      return true;
+    } catch (e) { return false; }
+  }
+  // The app's report, once it is in: the card shows it, the model hears
+  // the numbers, and the change goes to the change history with Undo.
+  function takeEdited(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    var app = ui.args && String(ui.args.app || ""), name = installed()[app] || app;
+    if (rep.failed || !rep.ok) {
+      ui.st = "failed";
+      r.content = "The user pressed Apply, but " + name + " could not apply the commands (" + String(rep.why || "error") + "). Nothing was changed.";
+    } else {
+      ui.st = "done";
+      ui.rep = { n: +rep.n || 0, d: +rep.d || 0, cut: +rep.cut || 0, notes: Array.isArray(rep.notes) ? rep.notes.slice(0, 10).map(String) : [],
+                 per: Array.isArray(rep.per) ? rep.per.slice(0, 50).map(function (x) { return { name: String(x && x.name || "").slice(0, 120), n: +(x && x.n) || 0 }; }) : [] };
+      if (rep.stopped) ui.rep.stopped = 1;
+      var out = { applied: true, changed: ui.rep.n, designs: ui.rep.per };
+      if (ui.rep.cut) out.backgrounds_removed = ui.rep.cut;
+      if (ui.rep.notes.length) out.notes = ui.rep.notes;
+      if (rep.stopped) out.stopped_by_user = true;
+      r.content = name + " applied the commands on the device. " + JSON.stringify(out);
+      if (typeof rep.tok === "string" && rep.tok) {
+        var uid = attId();
+        ui.u = uid;
+        remember(uid, { edit: { app: app, tok: rep.tok } }, { app: app, name: name, kind: "change", act: "edit",
+          items: ui.rep.per.map(function (x) { return x.name || t("ed.untitled"); }), n: ui.rep.per.length });
+      }
+    }
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
+  // Undo through the app → Promise<{ ok, err? }>. An app that opens in
+  // this frame's place answers into the shell; the log entry is marked
+  // undone when the answer is read (here, or at the next opening).
+  var rbWait = {};
+  function editUndo(mem) {
+    var sh = shell(), key = "u" + attId();
+    if (!sh || typeof sh.__orosOpenAt !== "function" || !EDIT_SRC[mem.app]) return Promise.resolve(undoFail(t("hist.noMod")));
+    return new Promise(function (resolve) {
+      var timer = setTimeout(function () { delete rbWait[key]; resolve(undoFail(t("ed.undoWait"))); }, 60000);
+      rbWait[key] = function (rep) {
+        clearTimeout(timer);
+        delete rbWait[key];
+        if (rep && (rep.ok || rep.why === "undone")) resolve({ ok: true });
+        else resolve(undoFail(t(rep && rep.why === "changed" ? "ed.undoChanged" : "ed.undoGone", { app: installed()[mem.app] || mem.app })));
+      };
+      try { sh.__orosOpenAt(mem.app, { editUndo: { key: key, tok: mem.tok } }); }
+      catch (e) { clearTimeout(timer); delete rbWait[key]; resolve(undoFail(t("hist.noMod"))); }
+    });
+  }
+  function takeUndoAnswers() {
+    Object.keys(rbWait).forEach(function (key) {
+      if (attRb[key]) { var rep = attRb[key]; delete attRb[key]; rbWait[key](rep); }
+    });
+  }
+  function drawEdit(host, r, c) {
+    var ui = r.ui, have = installed(), app = ui.args && String(ui.args.app || "");
+    var mod = EDIT_SRC[app] ? window[EDIT_SRC[app].mod] : null, name = have[app] || app;
+    if (!have[app] || !mod) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: name }))); return; }
+    takeEdited(r, c);
+    var st = cardState(ui);
+    var chk = mod.check(ui.args.steps);
+    var card = el("section", "entry-card ed-card");
+    card.appendChild(el("h3", "entry-head", t("ed.head", { app: name })));
+    if (chk.ok) {
+      var ol = el("ol", "entry-list rc-steps");
+      chk.steps.forEach(function (s) {
+        var w = editWords(s, mod), li = el("li");
+        li.appendChild(el("b", "", w.name));
+        if (w.detail) li.appendChild(document.createTextNode(" " + w.detail));
+        ol.appendChild(li);
+      });
+      card.appendChild(ol);
+    }
+    if (st === "done" && ui.rep) {
+      var rp = ui.rep, ul = el("ul", "entry-list");
+      ul.appendChild(el("li", "", rp.d === 1 ? t("ed.did1", { n: rp.n }) : t("ed.did", { n: rp.n, d: rp.d })));
+      rp.per.slice(0, 8).forEach(function (x) { ul.appendChild(el("li", "", t("ed.per", { name: x.name || t("ed.untitled"), n: x.n }))); });
+      if (rp.cut) ul.appendChild(el("li", "", t("ed.cutDone", { n: rp.cut })));
+      rp.notes.forEach(function (k) { ul.appendChild(el("li", "", t("ed.note." + k))); });
+      card.appendChild(ul);
+      if (rp.stopped) card.appendChild(el("p", "entry-state", t("ed.stopped")));
+      if (undoable(ui.u)) {
+        var acts0 = el("div", "dlg-actions");
+        var ub = button(t("chg.undo"), "", function () {
+          ub.disabled = true;
+          undoById(ui.u).then(function (ok) {
+            if (!ok) { ub.disabled = false; return; }
+            ui.st = "undone";
+            r.content = "The user undid this change.";
+            saveChat(c);
+            renderMessages();
+          });
+        });
+        acts0.appendChild(ub);
+        card.appendChild(acts0);
+      }
+    } else if (st === "undone") {
+      card.appendChild(el("p", "entry-state", t("chg.undone")));
+    } else if (st === "opened") {
+      card.appendChild(el("p", "entry-state", t("ed.working", { app: name })));
+    } else if (st) {
+      card.appendChild(el("p", "entry-state" + (st === "failed" ? " err" : ""), t(st === "failed" ? "ed.failed" : "entry." + st, { app: name })));
+    } else {
+      var p = editPlan(ui.args, readableApps());
+      if (!p.ok) { card.appendChild(el("p", "entry-state err", t("ed.stale", { app: name }))); host.appendChild(card); return; }
+      var names = p.docs.slice(0, 6).map(function (d) { return d.name || t("ed.untitled"); }).join(", ") + (p.docs.length > 6 ? " " + t("hist.more", { n: p.docs.length - 6 }) : "");
+      card.appendChild(el("p", "entry-title", names));
+      var will = el("ul", "entry-list");
+      if (p.pv.n) will.appendChild(el("li", "", p.pv.d === 1 ? t("ed.will1", { n: p.pv.n }) : t("ed.will", { n: p.pv.n, d: p.pv.d })));
+      if (p.pv.cut) will.appendChild(el("li", "", t("ed.willCut", { n: p.pv.cut })));
+      p.pv.notes.forEach(function (k) { will.appendChild(el("li", "", t("ed.note." + k))); });
+      card.appendChild(will);
+      card.appendChild(el("p", "dlg-hint", t("ed.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        r.content = "The user dismissed the card. Nothing was changed.";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("ed.apply"), "primary", function () {
+        var p2 = editPlan(ui.args, readableApps());
+        if (!p2.ok) { renderMessages(); return; }
+        function go() {
+          ui.st = "opened";
+          // saved before the app opens (it may take this frame's place)
+          saveChat(c).then(function () {
+            if (!runEdit(ui, c, p2)) { ui.st = "failed"; r.content = "The commands could not be handed to " + name + ". Nothing was changed."; saveChat(c); }
+            renderMessages();
+          });
+        }
+        var removes = p2.steps.some(function (s) { return s.op === "remove" || s.op === "delpages"; });
+        if (removes || p2.pv.n > EDIT_CONFIRM) confirmDialog(t("ed.sure"), t(removes ? "ed.sureDel" : "ed.sureMany", { n: p2.pv.n }), t("ed.apply"), go);
+        else go();
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
 
   // propose_automation (wave A3, recipes/share.js): checked now
   // against the app's steps (the model hears what to fix), shown as a
@@ -4224,6 +4543,7 @@
   // first (the Assistant may have been reopened since).
   function runUndo(mem) {
     var now = Date.now();
+    if (mem.edit) return editUndo(mem.edit);
     if (mem.undo || mem.undos) {
       if (!E) return Promise.resolve(undoFail(t("hist.noMod")));
       var need = typeof E.needs === "function" ? E.needs(mem.app) : [];
@@ -5279,6 +5599,8 @@
         if (ui.k === "houseErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
+        if (ui.k === "edit") { drawEdit(host, r, c); return; }
+        if (ui.k === "editErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
         if (ui.k === "nlCheck") { drawNlCheck(host, r, c); return; }
         if (ui.k === "nlErr") return;

@@ -160,6 +160,13 @@ What it can change:
 
 Some changes stay in the app, and the assistant says so: ticking a repeating task (the app works out its next date), moving or deleting a repeating event (you choose this time or the whole series), recurring Budget entries, entries with receipts or typed in another currency, bookmarks with a saved copy, Kanban cards with files on the orOS disk or on an archived board, habits that count an amount, and deleting a habit or a plant (that removes its whole history). Only the result goes back to the AI service ("applied" or "not applied"), never what the item looked like before.
 
+## Designs in Atelier
+Ask, for example, "make the photos black and white in my summer poster", "change Friday to Saturday in all my flyers", "make every title blue and 10% bigger", "add two pages after page 3" or "remove the old logo". The assistant first reads the design (with your permission for [Atelier](app:atelier), as for other apps), then shows a card with the changes in plain words and how many things each design gets.
+- `Apply` opens Atelier, which makes the changes on this device; a design you have open shows them at once. `Dismiss` leaves everything as it is. Removing things, or more than 50 changes, asks once more.
+- What it can change: texts (find and replace, new text, font, size, colour, bold, italic, alignment, line and letter spacing, effects), colours (fill, gradient, outline, one colour everywhere), photos (filters, black and white, light, contrast, colour, blur, masks, rounded corners, flip, fit, background removal), positions, sizes, rotation, alignment, layers, locking and hiding, removing things, pages (add, copy, remove, move, background), bleed for print, and the design's name. It works on the open design, a design by name, a folder or all your designs.
+- A locked element moves or goes only when the assistant names it on purpose.
+- `Undo` on the card (or in `Change history`) puts every design back as it was before, as long as it wasn't changed since.
+
 ## Photos, PDFs and documents
 Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 30 files go with one message, each up to 30 MB.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.

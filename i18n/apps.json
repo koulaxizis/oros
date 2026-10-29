@@ -12,6 +12,7 @@
    "app": "atelier",
    "files": [
     "atelier/ai.js",
+    "atelier/assist.js",
     "atelier/bulk.js",
     "atelier/collage.js",
     "atelier/core.js",
