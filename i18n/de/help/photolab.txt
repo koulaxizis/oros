@@ -77,6 +77,9 @@ Schritte, die du einmal festlegst und immer wieder ausführst, im geöffneten Bi
 ## Ein Bild aus dem Atelier bearbeiten
 Wenn das Atelier ein Bild zum Bearbeiten hierher schickt, erscheint oben eine Taste `Fertig`. Sie speichert das Ergebnis als neues Bild und schickt es zurück ans Atelier; das Projekt bleibt auch im Fotolabor für spätere Änderungen.
 
+## Der Assistent
+Bitte den Assistenten, deine Bilder mit Worten zu ändern, etwa „mach es schwarzweiß“, „schneide es quadratisch zu“ oder „mach alle meine Bilder 1200 Pixel breit“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` öffnet die Bilder hier nacheinander, nimmt jede Änderung als einen Schritt im `Verlauf` vor und speichert sie. `Rückgängig` auf der Meldung hier oder auf der Karte des Assistenten stellt die Bilder wieder her, solange sie seitdem nicht geändert wurden. Die Hilfe des Assistenten nennt alles, was er kann.
+
 ## Photoshop- und OpenRaster-Dateien
 - Photoshop-Dateien (`.psd`) und OpenRaster-Dateien (`.ora`, aus GIMP, Krita und MyPaint) öffnen sich mit ihren Ebenen: Namen, Positionen, Deckkraft, Füllmethoden und Sichtbarkeit.
 - Gruppen werden in die Ebenenliste aufgelöst (eine ausgeblendete Gruppe blendet ihre Ebenen aus), und Ebenenmasken werden in die Pixel der Ebenen eingerechnet. Text, Smartobjekte und Effekte kommen als die Pixel an, die die Datei für sie gespeichert hat.

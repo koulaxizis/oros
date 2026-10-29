@@ -404,6 +404,7 @@
       "ed.f.gap": "gap", "ed.f.edge": "edge", "ed.f.dist": "spread", "ed.f.rel": "against", "ed.f.order": "order", "ed.f.lock": "lock", "ed.f.hide": "hide", "ed.f.n": "how many",
       "ed.f.at": "where", "ed.f.page": "page", "ed.f.dup": "as copies", "ed.f.first": "from page", "ed.f.last": "to page", "ed.f.dest": "to position", "ed.f.mm": "mm",
       "ed.op.animate": "Animation", "ed.op.pagetime": "Page timing", "ed.op.add": "Add", "ed.op.brand": "Brand kit", "ed.op.resize": "New sizes", "ed.op.export": "Download", "ed.op.create": "New design", "ed.f.anim": "entrance", "ed.f.secs": "seconds per page", "ed.f.trans": "transition", "ed.f.icon": "icon", "ed.f.fonts": "fonts", "ed.f.palette": "colours", "ed.f.sizes": "sizes", "ed.f.copies": "as copies", "ed.f.fmt": "as", "ed.f.scale": "scale", "ed.f.dpi": "dpi", "ed.f.u": "unit", "ed.v.anim.none": "none", "ed.v.anim.fade": "fade in", "ed.v.anim.rise": "rise", "ed.v.anim.pop": "pop", "ed.v.anim.wipe": "wipe", "ed.v.anim.type": "typewriter", "ed.v.trans.none": "none", "ed.v.trans.fade": "fade", "ed.v.trans.slide": "slide", "ed.v.trans.push": "push", "ed.v.trans.zoom": "zoom", "ed.v.add.text": "a text", "ed.v.add.shape": "a shape", "ed.v.add.icon": "an icon", "ed.v.add.line": "a line", "ed.willMake": "Makes {n} new designs.", "ed.willFiles": "Makes files of {n} designs for you to save.", "ed.madeDone": "New designs: {n}.", "ed.filesDone": "Files: {n}.", "ed.note.noBrand": "There is no brand kit yet (Atelier › Brand kit).", "ed.note.noBrandFonts": "The brand kit has no fonts.", "ed.note.noBrandColors": "The brand kit has no colours.",
+      "ed.counting": "Counting what changes…", "ed.will.photolab": "Changes {n} things in {d} pictures.", "ed.did.photolab": "Changed {n} things in {d} pictures.", "ed.willFiles.photolab": "Pictures to save in Pictures: {n}.", "ed.filesDone.photolab": "Saved in Pictures: {n}.", "ed.sureDel.photolab": "This removes layers. Undo on the card brings them back.", "ed.op.resize.photolab": "Image size", "ed.op.export.photolab": "Save to Pictures", "ed.op.add.photolab": "New layer", "ed.op.tone": "Tone", "ed.op.look": "Look", "ed.op.gray": "Black and white", "ed.op.blur": "Blur", "ed.op.sharpen": "Sharpen", "ed.op.noise": "Grain", "ed.op.adjlayer": "Adjustment layer", "ed.op.layer": "Layer", "ed.op.dup": "Duplicate", "ed.op.style": "Layer style", "ed.op.watermark": "Watermark", "ed.op.crop": "Crop", "ed.op.canvas": "Canvas size", "ed.op.rotate": "Rotate", "ed.op.flip": "Flip", "ed.f.r": "radius", "ed.f.amt": "amount", "ed.f.mono": "grey", "ed.f.hue": "hue", "ed.f.light": "lightness", "ed.f.dens": "density", "ed.f.levels": "levels", "ed.f.blend": "blend", "ed.f.quality": "quality", "ed.f.deg": "by", "ed.f.v": "to", "ed.f.up": "may get larger", "ed.f.ratio": "ratio", "ed.v.dir.h": "left to right", "ed.v.dir.v": "top to bottom", "ed.v.mode.long": "long side", "ed.v.mode.w": "width", "ed.v.mode.h": "height", "ed.v.mode.pct": "percent", "ed.v.kind.gray": "black and white", "ed.v.kind.invert": "invert", "ed.v.kind.bc": "brightness and contrast", "ed.v.kind.hsl": "hue and saturation", "ed.v.kind.photo": "photo filter", "ed.v.kind.posterize": "posterize", "ed.v.what.adj": "adjustment layers", "ed.fx.glow": "outer glow", "ed.fx.inner": "inner glow", "ed.fx.stroke": "stroke", "ed.fx.overlay": "colour overlay", "ed.bl.normal": "normal", "ed.bl.multiply": "multiply", "ed.bl.screen": "screen", "ed.bl.overlay": "overlay", "ed.bl.darken": "darken", "ed.bl.lighten": "lighten", "ed.bl.dodge": "colour dodge", "ed.bl.burn": "colour burn", "ed.bl.hard": "hard light", "ed.bl.soft": "soft light", "ed.bl.difference": "difference", "ed.bl.exclusion": "exclusion", "ed.bl.hue": "hue", "ed.bl.saturation": "saturation", "ed.bl.color": "colour", "ed.bl.luminosity": "luminosity", "ed.note.noPhoto": "Some pictures have no visible, unlocked photo layer to change.", "ed.note.noLayers": "No layer matched in some pictures.", "ed.note.maxLayers": "A picture already has 100 layers.", "ed.note.lastLayer": "A picture's last layer stays.", "ed.note.openFail": "A picture could not be opened.",
       "ed.f.title": "name", "ed.v.what.text": "texts", "ed.v.what.photo": "photos", "ed.v.what.video": "videos", "ed.v.what.shape": "shapes", "ed.v.what.icon": "icons",
       "ed.v.what.line": "lines", "ed.v.what.table": "tables", "ed.v.what.chart": "charts", "ed.v.what.bg": "page backgrounds", "ed.v.pos.tl": "top left", "ed.v.pos.t": "top",
       "ed.v.pos.tr": "top right", "ed.v.pos.l": "left", "ed.v.pos.c": "centre", "ed.v.pos.r": "right", "ed.v.pos.bl": "bottom left", "ed.v.pos.b": "bottom", "ed.v.pos.br": "bottom right",
@@ -959,6 +960,7 @@
       "ed.f.pos": "θέση", "ed.f.gap": "απόσταση", "ed.f.edge": "άκρη", "ed.f.dist": "κατανομή", "ed.f.rel": "ως προς", "ed.f.order": "σειρά", "ed.f.lock": "κλείδωμα",
       "ed.f.hide": "απόκρυψη", "ed.f.n": "πόσες", "ed.f.at": "πού", "ed.f.page": "σελίδα", "ed.f.dup": "ως αντίγραφα", "ed.f.first": "από τη σελίδα", "ed.f.last": "έως τη σελίδα",
       "ed.op.animate": "Κίνηση", "ed.op.pagetime": "Χρόνος σελίδων", "ed.op.add": "Προσθήκη", "ed.op.brand": "Brand kit", "ed.op.resize": "Νέα μεγέθη", "ed.op.export": "Λήψη", "ed.op.create": "Νέο σχέδιο", "ed.f.anim": "είσοδος", "ed.f.secs": "δευτερόλεπτα ανά σελίδα", "ed.f.trans": "μετάβαση", "ed.f.icon": "εικονίδιο", "ed.f.fonts": "γραμματοσειρές", "ed.f.palette": "χρώματα", "ed.f.sizes": "μεγέθη", "ed.f.copies": "ως αντίγραφα", "ed.f.fmt": "ως", "ed.f.scale": "κλίμακα", "ed.f.dpi": "dpi", "ed.f.u": "μονάδα", "ed.v.anim.none": "καμία", "ed.v.anim.fade": "σταδιακή εμφάνιση", "ed.v.anim.rise": "άνοδος", "ed.v.anim.pop": "αναπήδηση", "ed.v.anim.wipe": "σάρωση", "ed.v.anim.type": "γραφομηχανή", "ed.v.trans.none": "καμία", "ed.v.trans.fade": "σβήσιμο", "ed.v.trans.slide": "ολίσθηση", "ed.v.trans.push": "ώθηση", "ed.v.trans.zoom": "ζουμ", "ed.v.add.text": "κείμενο", "ed.v.add.shape": "σχήμα", "ed.v.add.icon": "εικονίδιο", "ed.v.add.line": "γραμμή", "ed.willMake": "Φτιάχνει {n} νέα σχέδια.", "ed.willFiles": "Φτιάχνει αρχεία από {n} σχέδια για να τα αποθηκεύσεις.", "ed.madeDone": "Νέα σχέδια: {n}.", "ed.filesDone": "Αρχεία: {n}.", "ed.note.noBrand": "Δεν υπάρχει ακόμη brand kit (Ατελιέ › Brand kit).", "ed.note.noBrandFonts": "Το brand kit δεν έχει γραμματοσειρές.", "ed.note.noBrandColors": "Το brand kit δεν έχει χρώματα.",
+      "ed.counting": "Μετριέται τι αλλάζει…", "ed.will.photolab": "Αλλάζουν {n} στοιχεία σε {d} εικόνες.", "ed.did.photolab": "Άλλαξαν {n} στοιχεία σε {d} εικόνες.", "ed.willFiles.photolab": "Εικόνες για αποθήκευση στις Εικόνες: {n}.", "ed.filesDone.photolab": "Αποθηκεύτηκαν στις Εικόνες: {n}.", "ed.sureDel.photolab": "Αφαιρούνται στρώσεις. Η Αναίρεση στην κάρτα τις επαναφέρει.", "ed.op.resize.photolab": "Μέγεθος εικόνας", "ed.op.export.photolab": "Αποθήκευση στις Εικόνες", "ed.op.add.photolab": "Νέα στρώση", "ed.op.tone": "Τόνος", "ed.op.look": "Ύφος", "ed.op.gray": "Ασπρόμαυρο", "ed.op.blur": "Θόλωμα", "ed.op.sharpen": "Όξυνση", "ed.op.noise": "Κόκκος", "ed.op.adjlayer": "Στρώση ρύθμισης", "ed.op.layer": "Στρώση", "ed.op.dup": "Διπλότυπο", "ed.op.style": "Στυλ στρώσης", "ed.op.watermark": "Υδατογράφημα", "ed.op.crop": "Περικοπή", "ed.op.canvas": "Μέγεθος καμβά", "ed.op.rotate": "Περιστροφή", "ed.op.flip": "Αναστροφή", "ed.f.r": "ακτίνα", "ed.f.amt": "ποσότητα", "ed.f.mono": "γκρι", "ed.f.hue": "απόχρωση", "ed.f.light": "φωτεινότητα", "ed.f.dens": "πυκνότητα", "ed.f.levels": "επίπεδα", "ed.f.blend": "ανάμειξη", "ed.f.quality": "ποιότητα", "ed.f.deg": "κατά", "ed.f.v": "σε", "ed.f.up": "μπορεί να μεγαλώσει", "ed.f.ratio": "αναλογία", "ed.v.dir.h": "αριστερά-δεξιά", "ed.v.dir.v": "πάνω-κάτω", "ed.v.mode.long": "μεγάλη πλευρά", "ed.v.mode.w": "πλάτος", "ed.v.mode.h": "ύψος", "ed.v.mode.pct": "ποσοστό", "ed.v.kind.gray": "ασπρόμαυρο", "ed.v.kind.invert": "αντιστροφή", "ed.v.kind.bc": "φωτεινότητα και αντίθεση", "ed.v.kind.hsl": "απόχρωση και κορεσμός", "ed.v.kind.photo": "φίλτρο φωτογραφίας", "ed.v.kind.posterize": "αφίσα", "ed.v.what.adj": "στρώσεις ρύθμισης", "ed.fx.glow": "εξωτερική λάμψη", "ed.fx.inner": "εσωτερική λάμψη", "ed.fx.stroke": "περίγραμμα", "ed.fx.overlay": "επικάλυψη χρώματος", "ed.bl.normal": "κανονική", "ed.bl.multiply": "πολλαπλασιασμός", "ed.bl.screen": "οθόνη", "ed.bl.overlay": "επικάλυψη", "ed.bl.darken": "σκούρεμα", "ed.bl.lighten": "φωτισμός", "ed.bl.dodge": "αποφυγή χρώματος", "ed.bl.burn": "κάψιμο χρώματος", "ed.bl.hard": "σκληρό φως", "ed.bl.soft": "απαλό φως", "ed.bl.difference": "διαφορά", "ed.bl.exclusion": "αποκλεισμός", "ed.bl.hue": "απόχρωση", "ed.bl.saturation": "κορεσμός", "ed.bl.color": "χρώμα", "ed.bl.luminosity": "φωτεινότητα", "ed.note.noPhoto": "Κάποιες εικόνες δεν έχουν ορατή, ξεκλείδωτη στρώση φωτογραφίας για αλλαγή.", "ed.note.noLayers": "Σε κάποιες εικόνες δεν ταίριαξε καμία στρώση.", "ed.note.maxLayers": "Μια εικόνα έχει ήδη 100 στρώσεις.", "ed.note.lastLayer": "Η τελευταία στρώση μιας εικόνας μένει.", "ed.note.openFail": "Μια εικόνα δεν άνοιξε.",
       "ed.f.dest": "στη θέση", "ed.f.mm": "mm", "ed.f.title": "όνομα", "ed.v.what.text": "κείμενα", "ed.v.what.photo": "φωτογραφίες", "ed.v.what.video": "βίντεο",
       "ed.v.what.shape": "σχήματα", "ed.v.what.icon": "εικονίδια", "ed.v.what.line": "γραμμές", "ed.v.what.table": "πίνακες", "ed.v.what.chart": "γραφήματα", "ed.v.what.bg": "φόντα σελίδων",
       "ed.v.pos.tl": "πάνω αριστερά", "ed.v.pos.t": "πάνω", "ed.v.pos.tr": "πάνω δεξιά", "ed.v.pos.l": "αριστερά", "ed.v.pos.c": "κέντρο", "ed.v.pos.r": "δεξιά",
@@ -2929,7 +2931,7 @@
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "read_in_app") return readInApp(c, call.args, apps);
-    if (call.name === "edit_in_app") return Promise.resolve(proposeEdit(c, call.args, apps));
+    if (call.name === "edit_in_app") return proposeEdit(c, call.args, apps);
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
     if (call.name === "newsletter_check") return Promise.resolve(proposeNlCheck(c, call.args));
@@ -3201,8 +3203,12 @@
   // the card's key (orosAssistAtt.rb, as AS-RB) with an undo token;
   // Undo (card, change history) asks the app ({ editUndo }), which
   // refuses when a document changed since.
-  var EDIT_SRC = { atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand" } };
-  var EDIT_CONFIRM = 50;            // more changes than this (or a removal) ask once more
+  // Photo Lab (disk): its synced slice is only the project index; each
+  // project's doc.json is read from the orOS disk (editLoad) before the
+  // card counts, and kept here while it is unchanged (doc.m).
+  var EDIT_SRC = { atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand" },
+                   photolab: { mod: "PhotoLabCommands", data: "oros-photolab-data", prefs: "oros-photolab-prefs", disk: 1 } };
+  var EDIT_CONFIRM = 50, edLoading = {};            // more changes than this (or a removal) ask once more
   function editCats(apps) {
     var have = installed(), ok = {}, out = {};
     (apps || []).forEach(function (a) { ok[a.id] = 1; });
@@ -3216,17 +3222,58 @@
     var s = EDIT_SRC[app], prefs = readStore(s.prefs);
     var kit = s.brand ? readStore(s.brand) : null;
     if (kit && !((kit.colors && kit.colors.length) || (kit.fonts && Object.keys(kit.fonts).length))) kit = null;
-    return { data: readStore(s.data), folders: readStore(s.folders), open: prefs && typeof prefs.doc === "string" ? prefs.doc : "", brand: kit };
+    var open = prefs && typeof prefs.doc === "string" ? prefs.doc : "";
+    if (!s.disk) { var d = readStore(s.data); return { data: d, full: d, folders: readStore(s.folders), open: open, brand: kit }; }
+    // index entries for picking, the loaded doc records for counting
+    var idx = readStore(s.data), list = idx && Array.isArray(idx.projects) ? idx.projects.filter(function (e) { return e && typeof e.id === "string"; }) : [];
+    var full = [], missing = [];
+    list.forEach(function (e) { var c = diskDocs[app + "/" + e.id]; if (c && c.m === e.m) full.push(c.doc); else missing.push(e.id); });
+    return { data: { docs: list }, full: { docs: full }, missing: missing, folders: null, open: open, brand: null };
+  }
+  var diskDocs = {}, DISK_MAX = 2 * 1024 * 1024;
+  // Reads the doc.json of the given projects that are not loaded yet
+  // (at most 200 at a time) → Promise (never rejects).
+  function editLoad(app, ids) {
+    var s = EDIT_SRC[app], sh = shell(), fs = null, mod = window[s && s.mod];
+    try { fs = sh && sh.orosFS; } catch (e) { fs = null; }
+    if (!s || !s.disk || !fs || !mod || !mod.docPath) return Promise.resolve();
+    var idx = readStore(s.data), ms = {};
+    ((idx && idx.projects) || []).forEach(function (e) { if (e && typeof e.id === "string") ms[e.id] = e.m; });
+    var chain = Promise.resolve();
+    ids.filter(function (id) { var c = diskDocs[app + "/" + id]; return ms[id] !== undefined && !(c && c.m === ms[id]); }).slice(0, 200).forEach(function (id) {
+      chain = chain.then(function () {
+        return fs.read(mod.docPath(id)).then(function (b) {
+          if (b && typeof b.size === "number" && b.size > DISK_MAX) return;
+          return (b && typeof b.text === "function" ? b.text() : Promise.resolve(String(b || ""))).then(function (txt) {
+            var doc = JSON.parse(txt);
+            if (doc && doc.id === id && Array.isArray(doc.layers)) diskDocs[app + "/" + id] = { m: ms[id], doc: doc };
+          });
+        }).catch(function () {});
+      });
+    });
+    return chain;
+  }
+  // The documents a call may touch, loaded first for a disk app.
+  function editLoadFor(app, args) {
+    var s = EDIT_SRC[app];
+    if (!s || !s.disk) return Promise.resolve();
+    var src = editSource(app), mod = window[s.mod], a = args && typeof args === "object" ? args : {};
+    var tg = mod.targets(src.data, src.folders, src.open, a.designs || "open", a.name || "");
+    return tg.ok ? editLoad(app, tg.docs.map(function (d) { return d.id; })) : Promise.resolve();
   }
   function appOf(apps, id) { var o = null; (apps || []).forEach(function (a) { if (a.id === id) o = a; }); return o; }
   function readInApp(c, args, apps) {
     var cats = editCats(apps), n = C.normReadApp(args, cats);
     if (!n.ok) return Promise.resolve({ content: "Error: " + n.err, err: 1, ui: { k: "editErr" } });
+    return editLoadFor(n.app, n).then(function () { return readInAppNow(c, n, cats, apps); });
+  }
+  function readInAppNow(c, n, cats, apps) {
     var mod = cats[n.app], src = editSource(n.app), app = appOf(apps, n.app);
     var tg = mod.targets(src.data, src.folders, src.open, n.designs, n.name);
     if (!tg.ok) return Promise.resolve({ content: "Error: " + tg.err, err: 1, ui: { k: "editErr" } });
     var doc = null;
-    (src.data.docs || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
+    ((src.full && src.full.docs) || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
+    if (!doc) return Promise.resolve({ content: "Error: the " + C.EDIT_APP[n.app].noun + " could not be read from this device's disk yet (it may still be syncing).", err: 1, ui: { k: "editErr" } });
     var o = mod.outline(doc), text = JSON.stringify(o);
     var title = doc.name || t("ed.untitled");
     var okP = app.perm === "always" ? Promise.resolve(true) : askRead(title, app.name, text);
@@ -3243,11 +3290,18 @@
     var mod = cats[n.app], src = editSource(n.app);
     var tg = mod.targets(src.data, src.folders, src.open, n.designs, n.name);
     if (!tg.ok) return tg;
-    return { ok: true, app: n.app, designs: n.designs, docs: tg.docs, steps: n.steps, pv: mod.preview(src.data, tg.docs.map(function (d) { return d.id; }), n.steps, { brand: src.brand }) };
+    var ids = tg.docs.map(function (d) { return d.id; });
+    return { ok: true, app: n.app, designs: n.designs, docs: tg.docs, steps: n.steps, pv: mod.preview(src.full, ids, n.steps, { brand: src.brand }),
+             wait: (src.missing || []).filter(function (id) { return ids.indexOf(id) >= 0; }) };
   }
   function proposeEdit(c, args, apps) {
+    var app = args && typeof args === "object" ? String(args.app || "") : "";
+    return editLoadFor(app, args).then(function () { return proposeEditNow(c, args, apps); });
+  }
+  function proposeEditNow(c, args, apps) {
     var p = editPlan(args, apps);
     if (!p.ok) return { content: "Error: " + p.err, err: 1, ui: { k: "editErr" } };
+    if (p.wait.length && p.wait.length === p.docs.length) return { content: "Error: these " + C.EDIT_APP[p.app].what + " could not be read from this device's disk yet (they may still be syncing). Nothing was changed.", err: 1, ui: { k: "editErr" } };
     if (!p.pv.n && !p.pv.cut && !p.pv.made && !p.pv.files) {
       return { content: "Error: nothing in " + p.docs.map(function (d) { return JSON.stringify(d.name); }).join(", ") + " matches these commands, so nothing would change" +
         (p.pv.notes.length ? " (" + p.pv.notes.join(", ") + ")" : "") + ". Check the element ids and fields with read_in_app.", err: 1, ui: { k: "editErr" } };
@@ -3262,8 +3316,11 @@
   }
   // One command in the user's words: its name, then what it picks and sets.
   function edVal(k, v) {
-    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette)$/.test(k)) return "";
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|mono|up)$/.test(k)) return "";
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|caps|lock|hide|anim|trans|dir|mode|kind)$/.test(k)) return t("ed.v." + k + "." + v);
+    if (k === "id") return edName("ed.flt.", v);
+    if (k === "blend") return edName("ed.bl.", v);
+    if (k === "deg") return v + "°";
     if (k === "sizes") return (Array.isArray(v) ? v : []).map(function (z) { return Math.round(z.w) + " × " + Math.round(z.h) + " " + (z.u || "px"); }).join(", ");
     if (k === "fmt") return String(v).toUpperCase();
     if (k === "flt") return edName("ed.flt.", v);
@@ -3274,20 +3331,23 @@
     if (/^(has|find|repl|text|title)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
     return String(v);
   }
+  // A card string with an app's own wording when it has one
+  // (ed.will.photolab says pictures, not designs).
+  function edT(app, k, p) { var s = t(k + "." + app, p); return s === k + "." + app ? t(k, p) : s; }
   function edQuote(s) { return LANG === "el" ? "\u00ab" + s + "\u00bb" : LANG === "de" ? "\u201e" + s + "\u201c" : "\u201c" + s + "\u201d"; }
   function edName(pre, v) { var s = t(pre + v); return s === pre + v ? String(v) : s; }
-  function editWords(st, mod) {
+  function editWords(st, mod, app) {
     var args = mod.CATALOG[st.op].args, parts = [];
     Object.keys(args).forEach(function (k) {
       var v = st[k], spec = args[k];
       if (v === null || v === undefined || v === "" || (spec.t === "bool" && !v) || (spec.def !== undefined && spec.def !== null && v === spec.def && !spec.req && spec.t !== "bool")) return;
-      // add's kind and resize's sizes read without their label
-      if ((st.op === "add" && k === "what") || k === "sizes") { parts.push(k === "what" ? t("ed.v.add." + v) : edVal(k, v)); return; }
+      // add's kind, resize's sizes and values that name themselves (dir, mode, a look's id, an adjustment's kind) read without a label
+      if ((st.op === "add" && k === "what") || /^(sizes|dir|mode|id|kind)$/.test(k)) { parts.push(k === "what" ? t("ed.v.add." + v) : edVal(k, v)); return; }
       var val = edVal(k, v), lbl = t("ed.f." + (st.op === "create" && k === "n" ? "pages" : k));
       parts.push(val ? lbl + " " + val : lbl);
     });
     // find “a” → “b” reads as one phrase
-    return { name: t("ed.op." + st.op), detail: parts.join(" · ").replace(" · " + t("ed.f.repl") + " ", " " + t("ed.f.repl") + " ") };
+    return { name: edT(app, "ed.op." + st.op), detail: parts.join(" · ").replace(" · " + t("ed.f.repl") + " ", " " + t("ed.f.repl") + " ") };
   }
   function runEdit(ui, c, p) {
     var sh = shell();
@@ -3364,7 +3424,7 @@
     if (chk.ok) {
       var ol = el("ol", "entry-list rc-steps");
       chk.steps.forEach(function (s) {
-        var w = editWords(s, mod), li = el("li");
+        var w = editWords(s, mod, app), li = el("li");
         li.appendChild(el("b", "", w.name));
         if (w.detail) li.appendChild(document.createTextNode(" " + w.detail));
         ol.appendChild(li);
@@ -3373,11 +3433,11 @@
     }
     if (st === "done" && ui.rep) {
       var rp = ui.rep, ul = el("ul", "entry-list");
-      if (rp.n || (!rp.made && !rp.files)) ul.appendChild(el("li", "", rp.d === 1 ? t("ed.did1", { n: rp.n }) : t("ed.did", { n: rp.n, d: rp.d })));
+      if (rp.n || (!rp.made && !rp.files)) ul.appendChild(el("li", "", rp.d === 1 ? t("ed.did1", { n: rp.n }) : edT(app, "ed.did", { n: rp.n, d: rp.d })));
       rp.per.slice(0, 8).forEach(function (x) { ul.appendChild(el("li", "", t("ed.per", { name: x.name || t("ed.untitled"), n: x.n }))); });
       if (rp.cut) ul.appendChild(el("li", "", t("ed.cutDone", { n: rp.cut })));
       if (rp.made) ul.appendChild(el("li", "", t("ed.madeDone", { n: rp.made })));
-      if (rp.files) ul.appendChild(el("li", "", t("ed.filesDone", { n: rp.files })));
+      if (rp.files) ul.appendChild(el("li", "", edT(app, "ed.filesDone", { n: rp.files })));
       rp.notes.forEach(function (k) { ul.appendChild(el("li", "", t("ed.note." + k))); });
       card.appendChild(ul);
       if (rp.stopped) card.appendChild(el("p", "entry-state", t("ed.stopped")));
@@ -3408,10 +3468,15 @@
       var names = p.docs.slice(0, 6).map(function (d) { return d.name || t("ed.untitled"); }).join(", ") + (p.docs.length > 6 ? " " + t("hist.more", { n: p.docs.length - 6 }) : "");
       card.appendChild(el("p", "entry-title", names));
       var will = el("ul", "entry-list");
-      if (p.pv.n) will.appendChild(el("li", "", p.pv.d === 1 ? t("ed.will1", { n: p.pv.n }) : t("ed.will", { n: p.pv.n, d: p.pv.d })));
+      // a disk app's documents still loading: counted again once read
+      if (p.wait.length && edLoading[ui.key] !== 2) {
+        will.appendChild(el("li", "", t("ed.counting")));
+        if (!edLoading[ui.key]) { edLoading[ui.key] = 1; editLoad(app, p.wait).then(function () { edLoading[ui.key] = 2; renderMessages(); }); }
+      }
+      if (p.pv.n) will.appendChild(el("li", "", p.pv.d === 1 ? t("ed.will1", { n: p.pv.n }) : edT(app, "ed.will", { n: p.pv.n, d: p.pv.d })));
       if (p.pv.cut) will.appendChild(el("li", "", t("ed.willCut", { n: p.pv.cut })));
       if (p.pv.made) will.appendChild(el("li", "", t("ed.willMake", { n: p.pv.made })));
-      if (p.pv.files) will.appendChild(el("li", "", t("ed.willFiles", { n: p.pv.files })));
+      if (p.pv.files) will.appendChild(el("li", "", edT(app, "ed.willFiles", { n: p.pv.files })));
       p.pv.notes.forEach(function (k) { will.appendChild(el("li", "", t("ed.note." + k))); });
       card.appendChild(will);
       card.appendChild(el("p", "dlg-hint", t("ed.hint", { app: name })));
@@ -3434,7 +3499,7 @@
           });
         }
         var removes = p2.steps.some(function (s) { return s.op === "remove" || s.op === "delpages"; });
-        if (removes || p2.pv.n > EDIT_CONFIRM) confirmDialog(t("ed.sure"), t(removes ? "ed.sureDel" : "ed.sureMany", { n: p2.pv.n }), t("ed.apply"), go);
+        if (removes || p2.pv.n > EDIT_CONFIRM) confirmDialog(t("ed.sure"), removes ? edT(app, "ed.sureDel") : t("ed.sureMany", { n: p2.pv.n }), t("ed.apply"), go);
         else go();
       }));
       card.appendChild(acts);

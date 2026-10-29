@@ -353,7 +353,7 @@
       if (turns === 2) return { x: W - (x + w), y: Hh - (y + h) };
       return { x: y, y: W - (x + w) };
     }
-    eachRaster(t("step.rotate"), function (c) {
+    return eachRaster(t("step.rotate"), function (c) {
       return Promise.resolve(R.rot90(c.img, turns));
     }, function (c) { return mapRect(c.x, c.y, c.img.w, c.img.h); }, function (L) {
       var b = view().layerBounds(L), p = mapRect(b.x, b.y, b.w, b.h);
@@ -372,7 +372,7 @@
   }
   function flipImage(horiz) {
     var d = st.doc;
-    eachRaster(t("step.flip"), function (c) {
+    return eachRaster(t("step.flip"), function (c) {
       return Promise.resolve(R.flip(c.img, horiz));
     }, function (c) {
       return horiz ? { x: d.w - (c.x + c.img.w), y: c.y } : { x: c.x, y: d.h - (c.y + c.img.h) };
@@ -387,17 +387,17 @@
   function rotateAny(deg) {
     var d = st.doc;
     deg = Number(deg) || 0;
-    if (!deg) return;
-    if (deg % 90 === 0) { rotateImage(((deg / 90) % 4 + 4) % 4); return; }
+    if (!deg) return Promise.resolve();
+    if (deg % 90 === 0) return rotateImage(((deg / 90) % 4 + 4) % 4);
     var rad = deg * Math.PI / 180, co = Math.cos(rad), si = Math.sin(rad);
     var nw = Math.ceil(Math.abs(d.w * co) + Math.abs(d.h * si) - 1e-9), nh = Math.ceil(Math.abs(d.w * si) + Math.abs(d.h * co) - 1e-9);
     var fit = C.normSize(nw, nh);
-    if (!fit) { PL.toast(t("msg.badSize")); return; }
+    if (!fit) { PL.toast(t("msg.badSize")); return Promise.resolve(); }
     function mapPt(x, y) {                      // around the old centre, into the new canvas
       var dx = x - d.w / 2, dy = y - d.h / 2;
       return { x: nw / 2 + dx * co - dy * si, y: nh / 2 + dx * si + dy * co };
     }
-    eachRaster(t("step.rotate"), function (c) {
+    return eachRaster(t("step.rotate"), function (c) {
       return PL.job("rotate", { img: c.img, deg: deg });
     }, function (c, img) {
       var ctr = mapPt(c.x + c.img.w / 2, c.y + c.img.h / 2);

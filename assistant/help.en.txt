@@ -168,6 +168,13 @@ Ask, for example, "make the photos black and white in my summer poster", "change
 - It can also animate (entrances, seconds per page, transitions), add texts, shapes, icons and lines, apply your brand kit (its fonts and colours), make copies in new sizes ("make it a story too"), make the files for you to save (PNG, JPG or PDF) and make a whole new design from your description ("a poster for our concert on 12 May"). New designs and copies are new designs in Atelier; `Undo` removes them again.
 - `Undo` on the card (or in `Change history`) puts every design back as it was before, as long as it wasn't changed since.
 
+## Pictures in Photo Lab
+Ask, for example, "make my open photo black and white", "write Winter instead of Summer on the beach picture", "make all my pictures 1200 pixels on the long side", "crop it square and add my name at the bottom right" or "give the title a shadow". The assistant reads the picture's layers (with your permission for [Photo Lab](app:photolab)) and shows a card with the changes and how many things each picture gets.
+- `Apply` opens Photo Lab, which opens each picture in turn, makes the changes as its own commands and saves it; `Stop` in Photo Lab ends it early.
+- What it can change: the photo layers' tone, looks, black and white, blur, sharpening and grain; adjustment layers (black and white, invert, brightness and contrast, hue and saturation, photo filter, posterize); layers (opacity, blend mode, hide, lock, name, order, position, duplicate, remove); texts (find and replace, new text, font, size, colour, alignment, bold, italic, line height); layer styles (shadow, glow, stroke, colour overlay); new text and shape layers; a watermark; crop, canvas size, image size, rotate and flip; the picture's name; and a copy saved in `Pictures`. It works on the open picture, a picture by name or all your pictures.
+- A locked layer changes only when the assistant names it on purpose, and its pixels never.
+- `Undo` on the card (or in `Change history`) puts every picture back as it was before, as long as it wasn't changed since.
+
 ## Photos, PDFs and documents
 Press the paper clip next to the message box to attach a photo, a PDF or a document, `From this device…` or `From the orOS disk…`. You can also paste a photo or drop it on the message box. Up to 30 files go with one message, each up to 30 MB.
 - Ask, for example, "add this receipt to my expenses", "save this business card as a contact", "put this poster's concert in my calendar" or "summarise this contract in a note". The assistant reads the file and prepares the entry card, which you check and save as usual.
