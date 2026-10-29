@@ -66,6 +66,7 @@ Steps you set once and run again and again, on the open document or on all docum
 - With `Do not export a document with errors`, a document whose preflight finds errors is not exported. One PDF is saved with the usual Save dialog; several go to Files, in the `Layout` folder, without overwriting older ones.
 - Automations sync with your other devices, together with those of Atelier and Photo Lab.
 - `Share` saves an automation as a `.orosrecipe` file to send to anyone with orOS; `Import` in the list reads one back. The file holds only the steps, never code: it is checked when it is read and opens in the editor, where you look at it and press `Save`. A file made for another app offers to open it there.
+- The [Assistant](app:assistant) can also make these changes for you: ask, for example, "add 8 pages and number them from 5" or "make the pictures on pages 3-10 black and white". Its card lists the changes; `Apply` opens Layout, which makes them on this device, and `Undo` (on the card or on the message here) puts every document back as long as it was not changed since.
 
 ## Bring work from other programs
 `Open file` on the home screen also opens, as a new document:

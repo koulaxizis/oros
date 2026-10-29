@@ -534,6 +534,10 @@
       "rc.pdfs": "{n} PDFs saved in Files › Layout.",
       "rc.pdfs1": "1 PDF saved in Files › Layout.",
       "rc.undone": "Documents are back as they were.",
+      "as.done": "The Assistant changed {n} things in {d} documents.", "as.done1": "The Assistant changed {n} things in the document.",
+      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.undone": "The Assistant's change was undone.", "as.changed": "These documents were changed since, so the Assistant's change was not undone.",
+      "as.gone": "There is nothing left to undo.",
       "rc.op.pages": "Add pages",
       "rc.op.delpages": "Remove pages",
       "rc.op.numbering": "Page numbers",
@@ -1057,6 +1061,10 @@
       "rc.pdfs": "{n} PDF αποθηκεύτηκαν στα Αρχεία › Layout.",
       "rc.pdfs1": "1 PDF αποθηκεύτηκε στα Αρχεία › Layout.",
       "rc.undone": "Τα έγγραφα γύρισαν όπως ήταν.",
+      "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έγγραφα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έγγραφο.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Τα έγγραφα άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+      "as.gone": "Δεν έμεινε κάτι για αναίρεση.",
       "rc.op.pages": "Προσθήκη σελίδων",
       "rc.op.delpages": "Αφαίρεση σελίδων",
       "rc.op.numbering": "Αρίθμηση σελίδων",
@@ -1869,6 +1877,13 @@
     // the editor; it is saved only on Save and runs only on Run.
     if (tg && tg.newRecipe) {
       if (LY.recipes && LY.recipes.draft) LY.recipes.draft(tg.newRecipe);
+      return;
+    }
+    // { edit: { key, chat, docs, steps } } / { editUndo: { key, tok } }:
+    // the Assistant's commands after the user pressed Apply on its card
+    // (assist.js, AS-EDIT), and their Undo
+    if (tg && (tg.edit || tg.editUndo)) {
+      if (LY.assist) { if (tg.edit) LY.assist.edit(tg.edit); else LY.assist.undo(tg.editUndo); }
       return;
     }
     // { cover: { title, author, …, img } }: the Book cover dialog,
