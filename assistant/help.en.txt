@@ -165,6 +165,7 @@ Ask, for example, "make the photos black and white in my summer poster", "change
 - `Apply` opens Atelier, which makes the changes on this device; a design you have open shows them at once. `Dismiss` leaves everything as it is. Removing things, or more than 50 changes, asks once more.
 - What it can change: texts (find and replace, new text, font, size, colour, bold, italic, alignment, line and letter spacing, effects), colours (fill, gradient, outline, one colour everywhere), photos (filters, black and white, light, contrast, colour, blur, masks, rounded corners, flip, fit, background removal), positions, sizes, rotation, alignment, layers, locking and hiding, removing things, pages (add, copy, remove, move, background), bleed for print, and the design's name. It works on the open design, a design by name, a folder or all your designs.
 - A locked element moves or goes only when the assistant names it on purpose.
+- It can also animate (entrances, seconds per page, transitions), add texts, shapes, icons and lines, apply your brand kit (its fonts and colours), make copies in new sizes ("make it a story too"), make the files for you to save (PNG, JPG or PDF) and make a whole new design from your description ("a poster for our concert on 12 May"). New designs and copies are new designs in Atelier; `Undo` removes them again.
 - `Undo` on the card (or in `Change history`) puts every design back as it was before, as long as it wasn't changed since.
 
 ## Documents in Layout
