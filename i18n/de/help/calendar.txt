@@ -7,6 +7,7 @@ Der Kalender öffnet sich im aktuellen Monat, mit heute ausgewählt. Tippe oder 
 Wechsle mit den Knöpfen unter dem Titel zwischen `Tag`, `Woche`, `Monat`, `Jahr` und `Agenda`:
 - `Tag` zeigt einen Tag als Stundenraster, mit ganztägigen Terminen in einem Streifen oben und einer Linie bei der aktuellen Uhrzeit. Tippe oder klicke auf eine leere Stunde, um einen Termin zu dieser Zeit hinzuzufügen.
 - `Woche` zeigt sieben Tage nebeneinander.
+- `Monat` füllt das Fenster und zeigt für jeden Termin einen farbigen Punkt (bis zu sechs pro Tag) in der Farbe seines Labels. Um stattdessen die Terminnamen zu sehen, wie im Google Kalender, drücke den Knopf `Namen` neben den Ansichten (nur im Monat, nur auf diesem Gerät; nochmals drücken bringt die Punkte zurück). Mit Namen erscheint auf breiteren Bildschirmen die Uhrzeit, und `+N` sagt, wie viele weitere ein Tag hat, als hineinpassen. Tippe auf einen Tag, um alle seine Termine unter dem Raster zu sehen.
 - `Jahr` zeigt die 12 Monate klein, mit einem Punkt unter Tagen mit Terminen. Tippe auf einen Tag, um ihn in `Tag` zu öffnen, oder auf den Namen eines Monats, um diesen Monat zu öffnen.
 - `Agenda` listet, was in den nächsten 30 Tagen ansteht; `Mehr anzeigen` fügt weitere Tage hinzu.
 

@@ -588,6 +588,8 @@
       "mm.subs": "Subscribe to a calendar…",
       "mm.free": "Share free times…",
       "mm.print": "Print…",
+      "mm.names": "Event names in Month",
+      "mm.names.short": "Names",
       "qa.btn": "Quick add",
       "qa.title": "Quick add",
       "qa.ph": "e.g. Coffee with Nikos Thursday 6pm at Syntagma",
@@ -655,6 +657,8 @@
       "mm.subs": "Συνδρομή σε ημερολόγιο…",
       "mm.free": "Κοινοποίηση ελεύθερων ωρών…",
       "mm.print": "Εκτύπωση…",
+      "mm.names": "Ονόματα συμβάντων στον Μήνα",
+      "mm.names.short": "Ονόματα",
       "qa.btn": "Γρήγορη προσθήκη",
       "qa.title": "Γρήγορη προσθήκη",
       "qa.ph": "π.χ. Καφές με Νίκο Πέμπτη 6μμ στο Σύνταγμα",
@@ -3380,12 +3384,25 @@ function transientNote(title, body) {
       btn.appendChild(num);
       wxDates.push([cellDate, btn]);
 
-      // Event names, Proton / Google style; fitMonth() keeps as many
-      // as the cell has room for and puts "+N" in place of the rest.
+      var dayEvents = eventsOn(cellDate);
+      if (!monthNames) {
+        // Default: one dot per event (up to 6) in its label colour.
+        var dots = document.createElement("span");
+        dots.className = "ev-dot-row";
+        for (var k = 0; k < dayEvents.length && k < 6; k++) {
+          var dot = document.createElement("span");
+          dot.className = "ev-dot" + (dayEvents[k].start ? " timed" : "");
+          dot.style.background = labelColor(dayEvents[k].labelId);
+          dots.appendChild(dot);
+        }
+        btn.appendChild(dots);
+      }
+      // Opt-in (More › Event names in Month), Google style;
+      // fitMonth() keeps as many as the cell has room for and puts
+      // "+N" in place of the rest.
       var evs = document.createElement("span");
       evs.className = "cal-evs";
-      var dayEvents = eventsOn(cellDate);
-      for (var j = 0; j < dayEvents.length; j++) {
+      for (var j = 0; monthNames && j < dayEvents.length; j++) {
         var de = dayEvents[j], dsp = spanInfo(de, cellDate);
         var pill = document.createElement("span");
         pill.className = "cal-ev";
@@ -3400,11 +3417,13 @@ function transientNote(title, body) {
           (dsp && dsp.idx > 1 ? "…" : "") + (de.title || t("ev.untitled"))));
         evs.appendChild(pill);
       }
-      var more = document.createElement("span");
-      more.className = "cal-more";
-      more.hidden = true;
-      evs.appendChild(more);
-      btn.appendChild(evs);
+      if (monthNames) {
+        var more = document.createElement("span");
+        more.className = "cal-more";
+        more.hidden = true;
+        evs.appendChild(more);
+        btn.appendChild(evs);
+      }
 
       (function (cd) {
         btn.addEventListener("click", function () { selectDay(cd); });
@@ -3918,6 +3937,7 @@ function transientNote(title, body) {
     var agenda = curView === "agenda" && !searching;
     $("cal-wd").hidden = !month;
     $("cal-grid").hidden = !month;
+    if ($("vw-names")) $("vw-names").hidden = !month;
     $("week-grid").hidden = !week;
     if ($("day-view")) $("day-view").hidden = !(curView === "day" && !searching);
     if ($("year-grid")) $("year-grid").hidden = !(curView === "year" && !searching);
@@ -3982,7 +4002,26 @@ function transientNote(title, body) {
     var top = er.top - mr.top + main.scrollTop;
     var h = Math.max(FILL_MIN, Math.floor(main.clientHeight - top - peek));
     if (main.style.getPropertyValue("--fill-h") !== h + "px") main.style.setProperty("--fill-h", h + "px");
-    if (curView === "month") fitMonth();
+    if (curView === "month" && monthNames) fitMonth();
+  }
+
+  // Month cells: coloured dots (default) or event names. Device-local
+  // view choice (R10), never synced.
+  var NAMES_KEY = "oros-cal-month-names";
+  var monthNames = false;
+  try { monthNames = localStorage.getItem(NAMES_KEY) === "1"; } catch (e) {}
+  function setMonthNames(on) {
+    monthNames = !!on;
+    try {
+      if (monthNames) localStorage.setItem(NAMES_KEY, "1");
+      else localStorage.removeItem(NAMES_KEY);
+    } catch (e) {}
+    syncNamesItem();
+    renderAll();
+  }
+  function syncNamesItem() {
+    var b = $("vw-names");
+    if (b) b.setAttribute("aria-pressed", monthNames ? "true" : "false");
   }
 
   function fitMonth() {
@@ -4020,6 +4059,11 @@ function transientNote(title, body) {
   }
 
   // View switcher + search wiring (guarded — stale HTML cannot crash)
+  if ($("vw-names")) {
+    syncNamesItem();
+    $("vw-names").title = t("mm.names");
+    $("vw-names").addEventListener("click", function () { setMonthNames(!monthNames); });
+  }
   VIEWS.forEach(function (k) {
     var b = $("vw-" + k);
     if (b) b.addEventListener("click", function () { setSearch(""); setView(k); });
