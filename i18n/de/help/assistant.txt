@@ -180,6 +180,13 @@ Bitte zum Beispiel „mach mein offenes Foto schwarzweiß“, „schreib Winter 
 - Eine gesperrte Ebene ändert sich nur, wenn der Assistent sie gezielt nennt, ihre Pixel nie.
 - `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jedes Bild wieder her, solange es seitdem nicht geändert wurde.
 
+## Präsentationen in Folien
+Bitte zum Beispiel „2026 statt 2025 in meiner offenen Präsentation“, „mach alle Titel rot und fett“, „kopiere Folie 3“, „Überblenden zwischen allen Folien“, „nimm das Design Ozean und nummeriere die Folien“ oder „füge am Ende eine Folie für Fragen hinzu“. Der Assistent liest die Präsentation (mit deiner Erlaubnis für [Folien](app:slides)) und zeigt eine Karte mit den Änderungen und wie viele Dinge sich in jeder Präsentation ändern.
+- `Anwenden` nimmt die Änderungen in Folien auf diesem Gerät vor und öffnet die Präsentation; in der offenen Präsentation sind sie ein Schritt ihres eigenen Rückgängig.
+- Was er ändern kann: Suchen und Ersetzen in Texten, Tabellen und Sprechernotizen; Texte (neuer Text, Schrift, Größe, Farbe, fett, kursiv, unterstrichen, Ausrichtung); Füllungen und Konturen; Bilder (Einpassen, runde Ecken, Beschreibung); Position, Größe, Drehung, Deckkraft, Ausrichtung, Reihenfolge und Sperre; Eingangsanimationen; neue Texte, Formen und Linien; Folien (hinzufügen, kopieren, entfernen, verschieben, Layout, Übergang, ausblenden, Hintergrundfarbe, Sprechernotizen); das Design, das Folienformat (16:9 oder 4:3), die Fußzeile, Foliennummern und das Datum; den Namen der Präsentation. Er arbeitet mit der offenen Präsentation, einer Präsentation nach Namen oder allen.
+- Ein gesperrtes Objekt wird nur verschoben oder entfernt, wenn der Assistent es gezielt nennt.
+- `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jede Präsentation wieder her, solange sie seitdem nicht geändert wurde.
+
 ## Fotos, PDFs und Dokumente
 Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto, ein PDF oder ein Dokument anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 30 Dateien gehen mit einer Nachricht, jede bis zu 30 MB.
 - Frag zum Beispiel „Füge diesen Beleg zu meinen Ausgaben hinzu“, „Speichere diese Visitenkarte als Kontakt“, „Trag das Konzert von diesem Plakat in meinen Kalender ein“ oder „Fass diesen Vertrag in einer Notiz zusammen“. Der Assistent liest die Datei und bereitet die Eintragskarte vor, die du wie gewohnt prüfst und speicherst.

@@ -2509,7 +2509,7 @@
   // Atelier atelier/commands.js) }. Every field any command takes is
   // declared once with one JSON type (a test checks that no name has
   // two types across the apps), so strict providers keep them.
-  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" } };
+  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" } };
   function specType(spec) {
     if (spec.t === "num" || spec.t === "int") return "number";
     if (spec.t === "bool") return "boolean";
@@ -2541,7 +2541,8 @@
   }
   var EDIT_SEL = "In Atelier, elements are picked with ids (element ids from read_in_app, comma separated), pages (\"\" all, odd, even, first, last or positions like 2-4,6; 1 = the first page), " +
     "what (\"\" every element but page backgrounds, or text, photo, video, shape, icon, line, table, chart, bg) and has (words in the text or a photo's file name); " +
-    "a locked element is moved or removed only when named by id. Lengths are in the design's own unit (px, or mm for print). Leave a field out to keep it as it is.";
+    "a locked element is moved or removed only when named by id. Lengths are in the design's own unit (px, or mm for print). Leave a field out to keep it as it is. " +
+    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands).";
   function editTool(cats) {
     var apps = Object.keys(cats || {}).filter(function (a) { return EDIT_APP[a]; }).sort();
     return {
@@ -2556,7 +2557,7 @@
         type: "object",
         properties: {
           app: { type: "string", "enum": apps },
-          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects): open, named or all." },
+          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations: open, named or all." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } }
         },
@@ -2567,7 +2568,7 @@
   function readAppTool(apps) {
     return {
       name: "read_in_app",
-      description: "Read one of the user's documents in an app (for Atelier a design: its size, pages and every element with its id, kind, position, size, text, font, colours and filter; for Photo Lab a picture: its size and layers with their ids, kinds, names, positions, texts and styles). " +
+      description: "Read one of the user's documents in an app (for Atelier a design: its size, pages and every element with its id, kind, position, size, text, font, colours and filter; for Photo Lab a picture: its size and layers with their ids, kinds, names, positions, texts and styles; for Slides a presentation: its theme, footer and per slide the layout, notes and every object with its id, kind, position, size and text). " +
         "Call it before edit_in_app to pick elements by id. Positions and sizes are in the document's unit.",
       params: {
         type: "object",
