@@ -1659,6 +1659,8 @@ var PRECACHE_URLS = [
   "montage/montage.js",
   "montage/package.js",
   "montage/search.js",
+  "montage/commands.js",
+  "montage/assist.js",
   "capture/",
   "capture/index.html",
   "capture/app.css",
