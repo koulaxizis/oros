@@ -167,6 +167,11 @@ Bitte zum Beispiel „mach die Fotos in meinem Sommerplakat schwarzweiß“, „
 - Ein gesperrtes Element wird nur verschoben oder entfernt, wenn der Assistent es gezielt nennt.
 - `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jedes Design wieder her, solange es seitdem nicht geändert wurde.
 
+## Dokumente in Seitenlayout
+Dieselbe Karte ändert auch deine Druckdokumente in [Seitenlayout](app:layout). Bitte zum Beispiel „jedes Kapitel beginnt auf einer rechten Seite“, „der Fließtext in 11 pt mit Silbentrennung“, „füge nach Seite 40 acht Seiten ein und lass den Text weiterlaufen“, „Seitenzahlen ab 5“, „3 mm Anschnitt“ oder „die Bilder auf den ungeraden Seiten schwarzweiß“.
+- Was er ändern kann: Text suchen und ersetzen, ein Absatzformat (Größe, Zeilenabstand, Schrift, Ausrichtung, Laufweite, fett, kursiv, Großbuchstaben, Abstand davor und danach, Einzug der ersten Zeile, wo er beginnt, Silbentrennung), Absätze von einem Format in ein anderes, Musterseiten, Ränder, Seiten (hinzufügen, entfernen), Text, der nicht passt, auf neue Seiten, Seitenzahlen, Anschnitt, Bilder (schwarzweiß, ganz oder rahmenfüllend) und den Namen des Dokuments. Er arbeitet im geöffneten Dokument, in einem Dokument mit Namen oder in allen deinen Dokumenten.
+- `Anwenden` öffnet Seitenlayout, das die Änderungen auf diesem Gerät vornimmt; schwarzweiß macht Kopien der Bilder und behält die farbigen. `Rückgängig` setzt jedes Dokument zurück, solange es seitdem nicht geändert wurde.
+
 ## Fotos, PDFs und Dokumente
 Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto, ein PDF oder ein Dokument anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 30 Dateien gehen mit einer Nachricht, jede bis zu 30 MB.
 - Frag zum Beispiel „Füge diesen Beleg zu meinen Ausgaben hinzu“, „Speichere diese Visitenkarte als Kontakt“, „Trag das Konzert von diesem Plakat in meinen Kalender ein“ oder „Fass diesen Vertrag in einer Notiz zusammen“. Der Assistent liest die Datei und bereitet die Eintragskarte vor, die du wie gewohnt prüfst und speicherst.

@@ -2509,7 +2509,7 @@
   // Atelier atelier/commands.js) }. Every field any command takes is
   // declared once with one JSON type (a test checks that no name has
   // two types across the apps), so strict providers keep them.
-  var EDIT_APP = { atelier: { what: "designs", noun: "design" } };
+  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" } };
   function specType(spec) {
     if (spec.t === "num" || spec.t === "int") return "number";
     if (spec.t === "bool") return "boolean";

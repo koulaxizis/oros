@@ -1948,6 +1948,8 @@ var PRECACHE_URLS = [
   "layout/cover.js",
   "layout/recipesteps.js",
   "layout/recipes.js",
+  "layout/commands.js",
+  "layout/assist.js",
   "library/catalog.js",
   "library/opds.js",
   "mail/feed.js",
