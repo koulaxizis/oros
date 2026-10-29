@@ -77,6 +77,9 @@ Steps you set once and run again and again, on the open picture or on many photo
 ## Editing a picture from Atelier
 When Atelier sends a picture here to edit, a `Done` button appears at the top. It saves the result as a new picture and sends it back to Atelier; the project also stays in Photo Lab for later changes.
 
+## The Assistant
+Ask the Assistant to change your pictures in words, such as "make it black and white", "crop it square" or "make all my pictures 1200 pixels wide". It shows the changes on a card first; `Apply` opens the pictures here one after the other, makes each change as one step of `History` and saves them. `Undo` on the message here, or on the Assistant's card, puts the pictures back as long as they weren't changed since. See the Assistant's help for everything it can do.
+
 ## Photoshop and OpenRaster files
 - Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
 - Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.

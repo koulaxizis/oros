@@ -459,6 +459,7 @@
       "category": "Image",
       "icon": "photolab",
       "url": "photolab/",
+      "search": "search.js",
       "type": "internal"
     },
     {

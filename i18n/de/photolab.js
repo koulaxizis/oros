@@ -765,5 +765,19 @@ orosPack("de", "photolab", {
  "rc.wmLayer": "Wasserzeichen",
  "batch.adjRecipe": "Automation: {name}",
  "batch.adjRecipeHint": "Schritte: {steps}.",
- "batch.rcGone": "Diese Automation gibt es nicht mehr."
+ "batch.rcGone": "Diese Automation gibt es nicht mehr.",
+ "as.step": "Assistent",
+ "as.stop": "Stopp",
+ "as.working": "Der Assistent ändert {n} Bilder…",
+ "as.working1": "Der Assistent ändert das Bild…",
+ "as.doing": "Bild {i} von {n}: {name}",
+ "as.done": "Der Assistent hat {n} Dinge in {d} Bildern geändert.",
+ "as.done1": "Der Assistent hat {n} Dinge im Bild geändert.",
+ "as.done0": "Es musste nichts geändert werden.",
+ "as.bad": "Die Anfrage des Assistenten ließ sich nicht lesen. Es wurde nichts geändert.",
+ "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
+ "as.changed": "Diese Bilder wurden seitdem geändert, deshalb wurde die Änderung des Assistenten nicht rückgängig gemacht.",
+ "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
+ "as.stopped": "Gestoppt. Was erledigt ist, bleibt (Rückgängig holt es zurück).",
+ "as.files": "{n} Bilder wurden in Bilder gespeichert."
 });
