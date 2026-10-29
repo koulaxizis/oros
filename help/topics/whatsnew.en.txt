@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.30.00
+- Assistant and Atelier: ask the Assistant to change your designs ("make the photos black and white", "change Friday to Saturday in all my flyers", "add two pages after page 3"). It reads the design, shows the changes and how many things each design gets on a card, and Atelier makes them on this device when you press Apply. Undo puts every design back.
+
 ## Version 4.29.00
 - Layout and Writer: the footnotes and endnotes of a Word manuscript now come into the book as small raised numbers, with the notes at the end of each chapter or at the end of the book, as you answer in the book's questions. Writer also keeps a Word file's notes when it opens one.
 

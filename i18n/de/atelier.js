@@ -1360,5 +1360,17 @@ orosPack("de", "atelier", {
  "kit.story": "Story",
  "kit.banner": "Website-Banner",
  "kit.bookmark": "Lesezeichen",
- "kit.poster": "Plakat A3"
+ "kit.poster": "Plakat A3",
+ "as.working": "Der Assistent ändert {n} Designs…",
+ "as.working1": "Der Assistent ändert das Design…",
+ "as.cutting": "Hintergrund {i} von {n}…",
+ "as.stop": "Anhalten",
+ "as.done": "Der Assistent hat {n} Dinge in {d} Designs geändert.",
+ "as.done1": "Der Assistent hat {n} Dinge im Design geändert.",
+ "as.done0": "Nichts musste geändert werden.",
+ "as.bad": "Die Anfrage des Assistenten war nicht lesbar. Nichts wurde geändert.",
+ "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
+ "as.changed": "Diese Designs wurden seitdem geändert, daher wurde die Änderung des Assistenten nicht rückgängig gemacht.",
+ "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
+ "as.stopped": "Angehalten. Was getan ist, bleibt (Rückgängig holt es zurück)."
 });

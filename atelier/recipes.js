@@ -788,5 +788,5 @@
     return true;
   }
 
-  AT.recipes = { open: open, record: record, draft: draft, recording: function () { return !!rec; } };
+  AT.recipes = { open: open, record: record, draft: draft, recording: function () { return !!rec; }, cutOne: cutOne };
 })();

@@ -1350,6 +1350,8 @@ var PRECACHE_URLS = [
   "recipes/share.js",
   "atelier/recipesteps.js",
   "atelier/recipes.js",
+  "atelier/commands.js",
+  "atelier/assist.js",
   "atelier/clips.js",
   "atelier/video.js",
   "atelier/gif.js",

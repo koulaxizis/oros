@@ -118,7 +118,7 @@ test("assistant.js: the log is device-local, every write is remembered, Undo thr
   assert.match(src, /\["keys", "creds", "chats", "log"\]/);
   // every undoMem write goes through remember()
   assert.equal((src.match(/undoMem\[uid\] = /g) || []).length, 1);
-  assert.equal((src.match(/remember\(uid, \{/g) || []).length, 6);
+  assert.equal((src.match(/remember\(uid, \{/g) || []).length, 7);
   // the log never goes into the synced slice or the conversation files
   const sync = src.slice(src.indexOf("// ---------- 7b."), src.indexOf("// ---------- 8."));
   assert.doesNotMatch(sync, /"log"|histList/);
