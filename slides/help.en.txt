@@ -59,6 +59,9 @@ Presentations sync with orOS sync. Pictures are stored once as files on the orOS
 - Pictures come in only when they are inside the file (in the `.odp`, or written into the Markdown as data). Slides does not download pictures from the web or read other files; their addresses go into the speaker notes.
 - First you see what the file holds and what stays out; `Open` makes a new presentation and `Undo` on the message takes it away again. Nothing you already have changes.
 
+## The Assistant
+Ask the Assistant to change your presentations in words, such as "2026 instead of 2025", "make every title red", "copy slide 3" or "use the ocean theme". It shows the changes on a card first; `Apply` makes them here and opens the presentation, as one step of its Undo. `Undo` on the message here, or on the Assistant's card, puts the presentations back as long as they weren't changed since. See the Assistant's help for everything it can do.
+
 ## Keyboard shortcuts
 - [[Ctrl+Z]] / [[Ctrl+Y]]: undo / redo
 - [[Ctrl+M]]: new slide

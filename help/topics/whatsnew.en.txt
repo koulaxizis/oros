@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.36.00
+- Assistant and Slides: ask the Assistant to change your presentations ("2026 instead of 2025", "make every title red", "copy slide 3", "fade between all slides", "use the ocean theme"). It reads the presentation, shows the changes on a card, and Slides makes them on this device when you press Apply, as one step of its Undo. Undo on the card puts every presentation back.
+
 ## Version 4.35.00
 - Assistant and Photo Lab: ask the Assistant to change your pictures ("make it black and white", "write Winter instead of Summer", "crop all my pictures square", "give the title a shadow"). It reads the picture's layers, shows the changes on a card, and Photo Lab makes them on this device when you press Apply, one step each in its History. Undo puts every picture back. Photo Lab's pictures now also show up in the search.
 

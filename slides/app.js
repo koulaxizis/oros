@@ -211,7 +211,11 @@
       "keys.title": "Keyboard shortcuts",
       "keys.rows": "Ctrl+Z / Ctrl+Y|Undo / redo\nEnter or double click|Edit the text of a box (or a table, a chart)\nEsc|Stop editing, clear the selection\nDelete|Delete the selection\nCtrl+D|Duplicate\nCtrl+C / Ctrl+V|Copy / paste objects\nCtrl+G / Ctrl+Shift+G|Group / ungroup\nArrows (Shift: ×10)|Move the selection\nPage Up / Page Down|Previous / next slide\nCtrl+M|New slide\nF5|Present from the start\nShift+F5|Present from this slide\nTab / Shift+Tab (text)|Bullet level",
       "btn.cancel": "Cancel", "btn.ok": "OK", "btn.create": "Create", "btn.save": "Save", "btn.close": "Close",
-      "btn.delete": "Delete", "btn.undo": "Undo", "btn.apply": "Apply", "btn.done": "Done"
+      "btn.delete": "Delete", "btn.undo": "Undo", "btn.apply": "Apply", "btn.done": "Done",
+      "as.done": "The Assistant changed {n} things in {d} presentations.", "as.done1": "The Assistant changed {n} things in the presentation.",
+      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.undone": "The Assistant's change was undone.", "as.changed": "These presentations were changed since, so the Assistant's change was not undone.",
+      "as.gone": "There is nothing left to undo."
     },
     el: {
       "aria.strip": "Διαφάνειες",
@@ -355,7 +359,11 @@
       "keys.title": "Συντομεύσεις πληκτρολογίου",
       "keys.rows": "Ctrl+Z / Ctrl+Y|Αναίρεση / επανάληψη\nEnter ή διπλό κλικ|Επεξεργασία κειμένου πλαισίου (ή πίνακα, γραφήματος)\nEsc|Τέλος επεξεργασίας, καμία επιλογή\nDelete|Διαγραφή επιλογής\nCtrl+D|Διπλασιασμός\nCtrl+C / Ctrl+V|Αντιγραφή / επικόλληση αντικειμένων\nCtrl+G / Ctrl+Shift+G|Ομαδοποίηση / κατάργηση ομάδας\nΒελάκια (Shift: ×10)|Μετακίνηση επιλογής\nPage Up / Page Down|Προηγούμενη / επόμενη διαφάνεια\nCtrl+M|Νέα διαφάνεια\nF5|Προβολή από την αρχή\nShift+F5|Προβολή από αυτή τη διαφάνεια\nTab / Shift+Tab (κείμενο)|Επίπεδο κουκκίδας",
       "btn.cancel": "Άκυρο", "btn.ok": "OK", "btn.create": "Δημιουργία", "btn.save": "Αποθήκευση", "btn.close": "Κλείσιμο",
-      "btn.delete": "Διαγραφή", "btn.undo": "Αναίρεση", "btn.apply": "Εφαρμογή", "btn.done": "Τέλος"
+      "btn.delete": "Διαγραφή", "btn.undo": "Αναίρεση", "btn.apply": "Εφαρμογή", "btn.done": "Τέλος",
+      "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} παρουσιάσεις.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στην παρουσίαση.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Οι παρουσιάσεις άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
+      "as.gone": "Δεν έμεινε κάτι για αναίρεση."
     }
   };
   if (window.orosI18n) {
@@ -592,8 +600,8 @@
   SL.now = now;
 
   // The open deck: { deck, slides, items } (what undo restores).
-  function snapshot() {
-    var id = SL.deck, slides = C.deckSlides(data, id), items = [];
+  function snapshot(deckId) {
+    var id = deckId || SL.deck, slides = C.deckSlides(data, id), items = [];
     slides.forEach(function (s) { items = items.concat(C.slideItems(data, s.id)); });
     return JSON.stringify({ deck: data.decks[id], slides: slides, items: items });
   }
@@ -653,9 +661,10 @@
     Object.keys(it).forEach(function (k) { if (k !== "m" && k !== "b") o[k] = it[k]; });
     return JSON.stringify(o);
   }
-  // Make the open deck look like a snapshot, with fresh stamps.
-  function applyState(snap) {
-    var target = JSON.parse(snap), t0 = now(), id = SL.deck;
+  // Make a deck (the open one by default) look like a snapshot, with
+  // fresh stamps.
+  function applyState(snap, deckId) {
+    var target = JSON.parse(snap), t0 = now(), id = deckId || SL.deck;
     var deck = data.decks[id];
     if (!deck) return;
     if (!same(deck, target.deck, DECK_KEYS)) {
@@ -713,6 +722,19 @@
     undoStack.push(snapshot());
     applyState(snap);
     commit();
+  };
+  // The Assistant's changes (assist.js): a deck's state as JSON, and
+  // writing one back as new edits. The open deck gets an undo step.
+  SL.deckState = function (deckId) { return data.decks[deckId] ? snapshot(deckId) : null; };
+  SL.putDeck = function (deckId, snap) {
+    if (!data.decks[deckId]) return false;
+    emit("flush");
+    var before = snapshot(deckId);
+    applyState(snap, deckId);
+    if (snapshot(deckId) === before) return false;
+    if (deckId === SL.deck) pushUndo(before);
+    if (deckId === SL.deck) commit(); else save();
+    return true;
   };
   SL.canUndo = function () { return undoStack.length > 0; };
   SL.canRedo = function () { return redoStack.length > 0; };
@@ -1193,10 +1215,46 @@
       SL.dlg.newDeck();
       return;
     }
+    // The Assistant's commands and their Undo (assist.js, AS-EDIT),
+    // loaded on the first one.
+    if (tg && typeof tg === "object" && (tg.edit || tg.editUndo)) {
+      if (!searchReady) { searchLater = tg; return; }
+      assist().then(function (A) { if (tg.edit) A.edit(tg.edit); else A.undo(tg.editUndo); }, function () {
+        toast(t("as.bad"));
+        // the card hears it (as assist.js reports), so it does not wait
+        var rq = tg.edit || tg.editUndo;
+        try {
+          var at = window.parent.orosAssistAtt;
+          if (at && rq && typeof rq.key === "string" && rq.key) { at.rb = at.rb || {}; at.rb[rq.key.slice(0, 80)] = { failed: 1, why: "error" }; if (typeof at.onRb === "function") at.onRb(rq.key); }
+        } catch (e) {}
+      });
+      return;
+    }
     if (tg && typeof tg === "object" && typeof tg.outline === "string") {
       if (!searchReady) { searchLater = tg; return; }
       openOutline(tg);
     } else openSearchTarget(tg);
+  }
+  var assistP = null;
+  function assist() {
+    if (SL.assist) return Promise.resolve(SL.assist);
+    if (!assistP) {
+      var v = (document.querySelector('script[src*="app.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      var load = function (f) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + (m ? "?v=" + m[1] : "");
+          s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      assistP = (window.orosRecipes ? Promise.resolve() : load("../recipes/core.js")).then(function () { return load("commands.js"); }).then(function () { return load("assist.js"); }).then(function () {
+        if (!SL.assist) throw new Error("assist");
+        return SL.assist;
+      });
+      assistP.catch(function () { assistP = null; });
+    }
+    return assistP;
   }
   function takeOpenFile(o) {
     try {
