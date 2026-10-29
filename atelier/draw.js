@@ -178,12 +178,15 @@
   function paintRun(ctx, r, mode, dx, dy) {
     ctx.font = r.size + "px " + T.cssStack(r.key);
     var draw = mode === "stroke" ? ctx.strokeText.bind(ctx) : ctx.fillText.bind(ctx);
-    if (r.track) {
-      var x = r.x;
+    if (r.track || r.kern) {
+      // letter by letter: tracking and pair kerning as layout measured them
+      var x = r.x, prev = "";
       for (var i = 0; i < r.t.length; i++) {
         var ch = r.t[i];
+        if (r.kern && prev) x += T.kernPair(r.key, prev, ch, r.size);
         draw(ch, x + dx, r.y + dy);
         x += T.measure(r.key, ch, r.size, r.track);
+        prev = ch;
       }
     } else draw(r.t, r.x + dx, r.y + dy);
     if (r.u && mode === "fill") ctx.fillRect(r.x + dx, r.y + dy + r.size * 0.12, r.w, Math.max(0.3, r.size * 0.05));
@@ -235,7 +238,7 @@
     if (it.tw !== undefined) lay = firstChars(lay, it.tw);
     var fill = ax.fc || "#000000";
     var passes = FX.textPasses(ax.tfx, ax.size || AX.TEXT_DEF.size, fill);
-    var key = AX.fontKeyOf(ax), size = ax.size || AX.TEXT_DEF.size;
+    var key = AX.fontKeyOf(ax, it), size = ax.size || AX.TEXT_DEF.size;
     var asc = T.ascent(key, size), desc = T.descent(key, size);
     ctx.textBaseline = "alphabetic";
     ctx.textAlign = "left";
@@ -492,17 +495,20 @@
     return cv;
   }
 
-  // Fonts a design uses (loaded before drawing / export).
+  // Fonts a design uses (loaded before drawing / export); its own
+  // font files are registered first.
   function fontKeys(doc) {
     var keys = { "sans-r": 1 };
+    AX.useDocFonts(doc);
     function add(k) {
       var m = k.split("-");
       keys[k] = 1;
       if (AX.isExtraFont(m[0])) keys["sans-" + m[1]] = 1;     // what it falls back to
+      else if (AX.isOwnFont(m[0])) keys[T.fallbackKey(k)] = 1;
     }
     doc.items.forEach(function (it) {
       if (!it.ax) return;
-      if (it.ax.k === "text") add(AX.fontKeyOf(it.ax));
+      if (it.ax.k === "text") add(AX.fontKeyOf(it.ax, it));
       else if (it.ax.k === "table") { add(AX.fontKeyOf({ font: it.ax.font })); add(AX.fontKeyOf({ font: it.ax.font, b: 1 })); }
     });
     return Object.keys(keys);

@@ -444,6 +444,12 @@
       return toBlob(renderForExport(doc, pg, 512 / Math.max(doc.setup.w, doc.setup.h), false), "image/png");
     }).then(null, function () { return null; });
   }
+  var DKF = window.orosDK.fonts;
+  function ownFontFiles(doc) {
+    var out = {};
+    AX.docFonts(doc).forEach(function (e) { ["r", "b", "i", "bi"].forEach(function (v) { if (e[v]) out[e[v]] = 1; }); });
+    return Object.keys(out);
+  }
   function exportPackage(doc) {
     if (!doc) return;
     if (doc === AT.doc) ED.exitText();
@@ -455,6 +461,10 @@
     // videos and sounds travel the same way (video.js checks them back in)
     if (AT.video) AX.clipIds(doc).forEach(function (id) {
       chain = chain.then(function () { return AT.video.blob(id); }).then(function (b) { if (b) media[id] = b; });
+    });
+    // and the design's own font files (<sha256>.ttf, as Layout's packages)
+    ownFontFiles(doc).forEach(function (name) {
+      chain = chain.then(function () { return DKF ? DKF.blob(name) : null; }).then(function (b) { if (b) media[name] = b; });
     });
     chain.then(function () { return thumbOf(doc); }).then(function (thumb) {
       return window.OrosBundle.write({
@@ -532,6 +542,13 @@
           return AT.video.put(id, assetBlob(b64, window.AtelierClips.mimeOf(id)));
         }).then(null, function () { failed++; });
       });
+      // own fonts: kept on this disk (a font the package lacks may be
+      // here already; else its text shows in the stand-in)
+      if (DKF) ownFontFiles(doc).forEach(function (name) {
+        var b = assets[name];
+        if (!isAsset(b)) return;
+        chain = chain.then(function () { return DKF.put(name, assetBlob(b, "font/ttf"), { cff: true }); }).then(null, function () {});
+      });
       return chain.then(function () {
         AT.addDoc(M.normDoc(doc));
         AT.toast(failed ? t("imp.imgFail", { n: failed }) : t("imp.done"));
@@ -546,7 +563,40 @@
   var PPTX_MEDIA_MAX = 60 * 1024 * 1024;
   var MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", bmp: "image/bmp", webp: "image/webp", svg: "image/svg+xml" };
   // quiet: no toast (Canva account import counts for itself); → elements lost
+  // The fonts the file carries → kept on the orOS disk as own fonts
+  // (designkit/fonts.js; PostScript outlines too: the PDF draws their
+  // text as a picture) and registered: { typeface: { id, name, fb, r,
+  // b, i, bi } }. A font that cannot be read or kept is left out (its
+  // text keeps the stand-in).
+  var FONT_MAX = 16 * 1024 * 1024;
+  function ownFonts(zip, plan) {
+    var DKF = window.orosDK.fonts, out = {}, chain = Promise.resolve();
+    if (!DKF || !plan.fonts || !plan.fonts.length) return Promise.resolve(out);
+    plan.fonts.forEach(function (e) {
+      var files = {};
+      ["r", "b", "i", "bi"].forEach(function (v) {
+        if (!e[v]) return;
+        chain = chain.then(function () { return zip.bytes(e[v], FONT_MAX); }).then(function (b) {
+          var ttf = b && window.AtelierPPTX.eot(b);
+          if (!ttf) return null;
+          return DKF.importFile(new File([ttf], "font.ttf", { type: "font/ttf" }), { cff: true });
+        }).then(function (rec) { if (rec && rec.file) files[v] = rec; }, function () {});
+      });
+      chain = chain.then(function () {
+        var r = files.r || files.b || files.i || files.bi;
+        if (!r) return;
+        var ent = { id: DKF.ufIdOf(r.file), name: e.name, fb: r.fb === "serif" || r.fb === "mono" ? r.fb : "sans", r: r.file };
+        ["b", "i", "bi"].forEach(function (v) { if (files[v]) ent[v] = files[v].file; });
+        out[e.name] = ent;
+      });
+    });
+    return chain.then(function () {
+      AX.useDocFonts({ setup: { ext: { fonts: Object.keys(out).map(function (k) { return out[k]; }) } } });
+      return out;
+    });
+  }
   function importPptxFile(f, quiet) {
+    var fonts = {};
     return f.arrayBuffer().then(function (ab) {
       var zip = window.AtelierZip.open(new Uint8Array(ab));
       var name = String(f.name || "").replace(/\.pptx$/i, "").slice(0, 120);
@@ -565,18 +615,22 @@
             return A.importFile(new File([plan.svgs[k]], "shape.svg", { type: "image/svg+xml" }));
           }).then(function (res) { assets[k] = res; }, function (e) { if (e && e.message === "nofs") throw e; failed++; });
         });
-        return chain.then(function () {
+        return chain.then(function () { return ownFonts(zip, plan); }).then(function (own) {
+          fonts = own;
           // the design's fonts first, so text boxes get their real size
           // (at most a few seconds; a font that does not come shows in Sans)
           var keys = [];
-          window.AtelierPPTX.planFonts(plan).forEach(function (f) {
+          Object.keys(own).forEach(function (n) {
+            ["r", "b", "i", "bi"].forEach(function (v) { keys.push(own[n].id + "-" + v); });
+          });
+          if (navigator.onLine !== false) window.AtelierPPTX.planFonts(plan, own).forEach(function (f) {
             AX.ensureFont(f.id, f.name);
             ["r", "b", "i", "bi"].forEach(function (v) { keys.push(f.id + "-" + v); });
           });
-          if (!keys.length || navigator.onLine === false) return;
+          if (!keys.length) return;
           return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
         }).then(function () {
-          var r = window.AtelierPPTX.build(plan, assets, AT.now());
+          var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts);
           AT.addDoc(r.doc);
           var lost = plan.skipped + r.missing;
           if (!quiet) AT.toast(lost ? t("imp.partial", { n: lost }) : t("imp.done"));

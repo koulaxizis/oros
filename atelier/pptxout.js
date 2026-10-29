@@ -177,7 +177,7 @@
     var ax = it.ax, size = (ax.size || AX.TEXT_DEF.size) * k, op = opOf(it);
     var lh = ax.lh || AX.TEXT_DEF.lh;                         // pptx.js reads lh = 120 × pct
     var greek = /[Ͱ-Ͽἀ-῿]/.test(ax.tx);
-    var face = esc(AX.fontName(ax.font || AX.TEXT_DEF.font));
+    var face = esc(AX.fontName(AX.fontOf(it)));
     var eff = "";
     if (ax.tfx && (ax.tfx.type === "shadow" || ax.tfx.type === "lift")) {
       var f = FX.normTextFx(ax.tfx), lift = f.type === "lift";

@@ -39,11 +39,15 @@
   // ---------- 1. Fonts ----------
   // The face that draws a character of a run: [faceKey, partIndex],
   // or null when no font of the design has it (then the element is a
-  // picture). An extra family falls back to its sans variant, as the
+  // picture; so is text in a PostScript-outline font, which jsPDF
+  // cannot embed: an OTF that came inside a Canva PowerPoint). An extra family falls back to its sans variant, as the
   // canvas and the metrics do.
   function faceFor(key, cp) {
     var parts = T.faceParts(key);
-    for (var i = 0; i < parts.length; i++) if (parts[i].map[cp] !== undefined) return [key, i];
+    for (var i = 0; i < parts.length; i++) {
+      if (parts[i].map[cp] === undefined) continue;
+      return parts[i].cff ? null : [key, i];
+    }
     var v = key.split("-")[1] || "r", fb = "sans-" + v;
     if (fb !== key) {
       var fp = T.faceParts(fb);
@@ -164,16 +168,20 @@
     // A run as one or more text pieces (each in the face that has
     // its characters), at x, y (baseline) in page points.
     function run(r, x, y, mode, extra) {
-      var s = r.t, segs = [], cur = null;
+      var s = r.t, segs = [], cur = null, prev = "";
       for (var k = 0; k < s.length; k++) {
         var cp = s.codePointAt(k), ch = cp > 0xFFFF ? s.substr(k, 2) : s.charAt(k);
         if (cp > 0xFFFF) k++;
         var f = faceFor(r.key, cp) || (cur ? cur.f : faceFor(r.key, 32)) || [r.key, 0];
-        if (cur && cur.f[0] === f[0] && cur.f[1] === f[1]) cur.t += ch;
-        else { cur = { f: f, t: ch }; segs.push(cur); }
+        // pair kerning: a kerned pair starts a piece, moved by the kerning
+        var kn = r.kern && prev ? T.kernPair(r.key, prev, ch, r.size) : 0;
+        if (cur && !kn && cur.f[0] === f[0] && cur.f[1] === f[1]) cur.t += ch;
+        else { cur = { f: f, t: ch, kn: kn }; segs.push(cur); }
+        prev = ch;
       }
       var dx = 0;
       segs.forEach(function (sg) {
+        dx += sg.kn || 0;
         pdf.setFont(font(sg.f[0], sg.f[1]), "normal");
         pdf.setFontSize(r.size);
         var o = { baseline: "alphabetic" };
@@ -231,7 +239,7 @@
   function drawText(pdf, W, it, opacity) {
     var ax = it.ax, size = ax.size || AX.TEXT_DEF.size;
     var passes = FX.textPasses(ax.tfx, size, ax.fc || "#000000").filter(function (p) { return !(p.blur > 0); });
-    var key = AX.fontKeyOf(ax), asc = T.ascent(key, size), desc = T.descent(key, size);
+    var key = AX.fontKeyOf(ax, it), asc = T.ascent(key, size), desc = T.descent(key, size);
     var curve = ax.cv ? AX.curveLayout(it) : null, lay = curve ? null : AX.textLayout(it);
     passes.forEach(function (p) {
       pdf.saveGraphicsState();

@@ -3,6 +3,10 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 ## Version 4.33.00
 - Assistant and Layout: ask the Assistant to change your print documents ("start every chapter on a right-hand page", "add 8 pages and number them from 5", "make the pictures black and white"). It reads the document, shows the changes on a card, and Layout makes them on this device when you press Apply. Undo puts every document back.
+
+## Version 4.32.00
+- Atelier: Canva designs brought over as PowerPoint now look much closer to the original. The fonts Canva puts inside the file come over and are kept in orOS (Fonts folder), photos keep their crop, transparency and mirroring, text keeps Canva's letter pairs (kerning), exact line spacing and its lines.
+
 ## Version 4.31.00
 - Assistant and Atelier: the Assistant can now also animate your designs (entrances, seconds per page, transitions), add texts, shapes, icons and lines, apply your brand kit, make copies in new sizes, make the files for you to save, and make a whole new design from your description. Undo removes new designs and copies again.
 

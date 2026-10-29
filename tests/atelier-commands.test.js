@@ -413,7 +413,9 @@ test("AC2 brand: titles get the heading font, the rest the body font; the main c
   const kit = { fonts: { h: { f: "serif", b: 1 }, t: { f: "mono", b: 0 } }, colors: [{ c: "#0055AA" }] };
   const notes = [];
   const w = clone(d);
+  item(w, ids.title).ext = { fam: "uf_0123456789abcdef", kern: 1 };   // an own font (AC3) gives way to the kit's
   const n = CMD.apply(w, steps([{ op: "brand" }])[0], Object.assign(env(notes), { brand: kit }));
+  assert.deepEqual(item(w, ids.title).ext, { kern: 1 });
   assert.ok(n >= 3);
   assert.equal(item(w, ids.title).ax.font, "serif");
   assert.equal(item(w, ids.title).ax.b, 1);

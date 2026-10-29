@@ -285,7 +285,10 @@
         break;
       case "textstyle":
         if (k !== "text" && k !== "table") break;
-        if (st.font) setOpt(ax, "font", st.font, k === "table" ? TEXT_DEF.font : undefined);
+        if (st.font) {
+          setOpt(ax, "font", st.font, k === "table" ? TEXT_DEF.font : undefined);
+          dropOwnFont(it);
+        }
         if (st.size !== null) setOpt(ax, "size", st.size, k === "table" ? TABLE_SIZE : undefined);
         if (st.c) ax.fc = st.c;
         if (st.align) {
@@ -596,6 +599,13 @@
 
   // brand: the brand kit's fonts and colours (env.brand: the kit).
   var KEEP_COLORS = { "#ffffff": 1, "#000000": 1 };
+  // a font set by a command replaces an own font (ax.js ext.fam)
+  function dropOwnFont(it) {
+    if (!it.ext || it.ext.fam === undefined) return;
+    delete it.ext.fam;
+    if (!Object.keys(it.ext).length) delete it.ext;
+  }
+
   function brandCmd(doc, st, env) {
     var kit = env.brand;
     if (!kit) { note(env, "noBrand"); return 0; }
@@ -610,6 +620,7 @@
         var f = slot && fonts[slot];
         if (!f || !f.f) return;
         setOpt(it.ax, "font", f.f, undefined);
+        dropOwnFont(it);
         if (f.b) it.ax.b = 1; else delete it.ax.b;
       });
     } else if (st.fonts) note(env, "noBrandFonts");
@@ -784,7 +795,7 @@
         var tx = textOf(it);
         if (ax.k === "text" || ax.k === "table") {
           e.text = tx.length > OUT_TEXT ? tx.slice(0, OUT_TEXT) + "…" : tx;
-          e.font = ax.font || TEXT_DEF.font;
+          e.font = (it.ext && typeof it.ext.fam === "string" && it.ext.fam) || ax.font || TEXT_DEF.font;
           e.size = ax.size || (ax.k === "table" ? TABLE_SIZE : TEXT_DEF.size);
           if (ax.fc) e.color = ax.fc;
           if (ax.b) e.bold = true;

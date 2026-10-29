@@ -29,7 +29,10 @@
     if (typeof caches === "undefined") return;
     caches.open(CACHE).then(function (c) { return c.put(url, res); }).then(null, function () {});
   }
+  // "asset:<file>": an own font on the orOS disk (designkit/fonts.js)
+  var DKF = window.orosDK && window.orosDK.fonts;
   T.setFetcher(function (url) {
+    if (url.indexOf("asset:") === 0) return DKF ? DKF.fetcher(url) : Promise.resolve(null);
     return cached(url).then(function (hit) {
       if (hit) return hit.status === 204 ? null : hit.arrayBuffer();
       return fetch(url, { credentials: "omit", referrerPolicy: "no-referrer", mode: "cors" }).then(function (r) {
@@ -77,7 +80,7 @@
     if (!list.length) { AT.toast(t("fn.pick")); return; }
     AX.ensureFont(id, name);
     var keys = keysFor(id, list);
-    var extra = AX.isExtraFont(id);
+    var extra = AX.isExtraFont(id) || AX.isOwnFont(id);
     if (extra && !keys.every(T.isLoaded)) {
       if (navigator.onLine === false) { AT.toast(t("fn.offline")); return; }
       busy = id; AT.renderDrawer();
@@ -87,8 +90,8 @@
       busy = "";
       var mine = keys.filter(function (k) { return k.split("-")[0] === id; });
       if (extra && !mine.every(T.isLoaded)) { AT.toast(t("fn.fail")); AT.renderDrawer(); return; }
-      AT.editItems(list.map(function (it) { return it.id; }), function (it) { it.ax.font = id; });
-      if (extra) remember(id, name);
+      AT.editItems(list.map(function (it) { return it.id; }), function (it) { AX.setFont(it, id); });
+      if (AX.isExtraFont(id)) remember(id, name);
       AT.emit("fonts");
       AT.renderDrawer();
     }, function () { busy = ""; AT.toast(t("fn.fail")); AT.renderDrawer(); });
@@ -142,12 +145,16 @@
 
   function view(body) {
     var list = textSel();
-    var cur = list.length ? list[0].ax.font || "sans" : "";
+    var cur = list.length ? AX.fontOf(list[0]) : "";
     if (!list.length) body.appendChild(el("p", "hint", t("fn.pick")));
 
     // in this design + built in + yours
     var used = {};
-    (AT.doc ? AT.doc.items : []).forEach(function (it) { if (it.ax && (it.ax.k === "text" || it.ax.k === "table") && AX.isExtraFont(it.ax.font)) used[it.ax.font] = 1; });
+    (AT.doc ? AT.doc.items : []).forEach(function (it) {
+      if (!it.ax || (it.ax.k !== "text" && it.ax.k !== "table")) return;
+      var f = AX.fontOf(it);
+      if (AX.isExtraFont(f) || AX.isOwnFont(f)) used[f] = 1;
+    });
     var s1 = sec(t("fn.mine"));
     var shown = {};
     BUILTIN.forEach(function (id) { shown[id] = 1; s1.appendChild(row(id, T.FAMILIES[id].name, cur, t("fn.offlineOk"))); });
