@@ -13,7 +13,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 26032
+   "bytes": 33642
   },
   {
    "id": "chorus_one",
@@ -27,7 +27,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 27703
+   "bytes": 35337
   },
   {
    "id": "crunch",
@@ -41,7 +41,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 25355
+   "bytes": 33000
   },
   {
    "id": "dj_filter",
@@ -55,7 +55,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 34495
+   "bytes": 42110
   },
   {
    "id": "doubler",
@@ -69,7 +69,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 26375
+   "bytes": 33995
   },
   {
    "id": "driver",
@@ -83,7 +83,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 25529
+   "bytes": 33161
   },
   {
    "id": "exciter",
@@ -97,7 +97,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 26756
+   "bytes": 34345
   },
   {
    "id": "formant_shift",
@@ -111,7 +111,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 30086
+   "bytes": 37775
   },
   {
    "id": "grit",
@@ -125,7 +125,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 25078
+   "bytes": 32714
   },
   {
    "id": "louder",
@@ -139,7 +139,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 27386
+   "bytes": 35031
   },
   {
    "id": "mono_maker",
@@ -153,7 +153,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 26992
+   "bytes": 34599
   },
   {
    "id": "phatter",
@@ -167,7 +167,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 25935
+   "bytes": 33543
   },
   {
    "id": "pressure",
@@ -181,7 +181,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 27526
+   "bytes": 35164
   },
   {
    "id": "pumper",
@@ -195,7 +195,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 25307
+   "bytes": 32954
   },
   {
    "id": "riser",
@@ -209,7 +209,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 30408
+   "bytes": 38002
   },
   {
    "id": "snappy",
@@ -223,7 +223,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 27179
+   "bytes": 34790
   },
   {
    "id": "spread",
@@ -237,7 +237,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 26230
+   "bytes": 33812
   },
   {
    "id": "stretch",
@@ -251,7 +251,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 27810
+   "bytes": 35444
   },
   {
    "id": "sweeper",
@@ -265,7 +265,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 27075
+   "bytes": 34709
   },
   {
    "id": "tilt",
@@ -279,7 +279,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 26031
+   "bytes": 33629
   },
   {
    "id": "wetter",
@@ -293,7 +293,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 1,
-   "bytes": 34423
+   "bytes": 42072
   },
   {
    "id": "auto_pan",
@@ -307,7 +307,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 42449
+   "bytes": 50184
   },
   {
    "id": "auto_leveler",
@@ -321,7 +321,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 33188
+   "bytes": 40877
   },
   {
    "id": "band_splitter",
@@ -335,7 +335,7 @@
    "ins": 8,
    "outs": 8,
    "sliders": 6,
-   "bytes": 58244
+   "bytes": 66003
   },
   {
    "id": "breath_control",
@@ -349,7 +349,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 32862
+   "bytes": 40532
   },
   {
    "id": "cabinet_simulator",
@@ -363,7 +363,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 85100
+   "bytes": 93011
   },
   {
    "id": "channel_utility",
@@ -377,7 +377,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 45249
+   "bytes": 53141
   },
   {
    "id": "chorus",
@@ -391,7 +391,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 50973
+   "bytes": 58815
   },
   {
    "id": "click_repair",
@@ -404,8 +404,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 2,
-   "bytes": 31951
+   "sliders": 3,
+   "bytes": 47635
   },
   {
    "id": "clipper",
@@ -418,8 +418,36 @@
    ],
    "ins": 2,
    "outs": 2,
+   "sliders": 8,
+   "bytes": 65310
+  },
+  {
+   "id": "crossfeed",
+   "name": "Crossfeed",
+   "category": "Essentials",
+   "tags": "crossfeed headphones bs2b bauer speakers room head shadow itd monitoring mixing fatigue gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
    "sliders": 7,
-   "bytes": 56268
+   "bytes": 55063
+  },
+  {
+   "id": "de_clip",
+   "name": "De-Clip",
+   "category": "Essentials",
+   "tags": "de-clip declip clipping repair restoration reconstruct peaks overload distortion gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 44017
   },
   {
    "id": "de_hum",
@@ -433,7 +461,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 44334
+   "bytes": 52019
   },
   {
    "id": "de_plosive",
@@ -447,7 +475,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 45884
+   "bytes": 53503
   },
   {
    "id": "deesser",
@@ -461,7 +489,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 43921
+   "bytes": 51683
   },
   {
    "id": "delay",
@@ -475,7 +503,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 66973
+   "bytes": 74927
   },
   {
    "id": "disperser",
@@ -489,7 +517,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 40217
+   "bytes": 47910
   },
   {
    "id": "draw_eq",
@@ -503,7 +531,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 13,
-   "bytes": 73494
+   "bytes": 81463
   },
   {
    "id": "dynamic_eq",
@@ -516,8 +544,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 19,
-   "bytes": 56707
+   "sliders": 21,
+   "bytes": 69697
   },
   {
    "id": "dynamics",
@@ -526,12 +554,12 @@
    "tags": "dynamics compressor expander gain reduction ratio threshold knee sidechain parallel bus fet opto upward gui",
    "gfx": [
     480,
-    380
+    408
    ],
    "ins": 4,
    "outs": 2,
-   "sliders": 11,
-   "bytes": 57859
+   "sliders": 13,
+   "bytes": 71629
   },
   {
    "id": "envelope_follower",
@@ -545,7 +573,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 41883
+   "bytes": 49717
   },
   {
    "id": "filter",
@@ -559,7 +587,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 55934
+   "bytes": 63843
   },
   {
    "id": "flanger",
@@ -573,7 +601,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 47075
+   "bytes": 54838
   },
   {
    "id": "gate",
@@ -587,7 +615,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 10,
-   "bytes": 51287
+   "bytes": 59100
   },
   {
    "id": "limiter",
@@ -596,12 +624,12 @@
    "tags": "limiter ceiling clipper brickwall peak protection mastering gui",
    "gfx": [
     480,
-    294
+    380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 39359
+   "sliders": 7,
+   "bytes": 54610
   },
   {
    "id": "maximizer",
@@ -610,12 +638,12 @@
    "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
    "gfx": [
     480,
-    380
+    408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 71825
+   "sliders": 14,
+   "bytes": 91597
   },
   {
    "id": "mid_side_matrix",
@@ -629,7 +657,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 32019
+   "bytes": 39710
   },
   {
    "id": "multiband_compressor",
@@ -642,8 +670,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 23,
-   "bytes": 63444
+   "sliders": 25,
+   "bytes": 74948
   },
   {
    "id": "noise_generator",
@@ -657,7 +685,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 46135
+   "bytes": 53985
   },
   {
    "id": "octaver",
@@ -671,7 +699,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 38773
+   "bytes": 46531
   },
   {
    "id": "panner",
@@ -685,7 +713,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 39559
+   "bytes": 47252
   },
   {
    "id": "parametric_eq",
@@ -699,7 +727,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 83451
+   "bytes": 91691
   },
   {
    "id": "phase_align",
@@ -713,7 +741,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 8,
-   "bytes": 49811
+   "bytes": 57631
   },
   {
    "id": "phaser",
@@ -727,7 +755,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 49553
+   "bytes": 57398
   },
   {
    "id": "pitch_shifter",
@@ -741,7 +769,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 33961
+   "bytes": 41628
   },
   {
    "id": "reverb",
@@ -755,7 +783,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 75877
+   "bytes": 83775
   },
   {
    "id": "ring_mod",
@@ -769,7 +797,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 30172
+   "bytes": 37854
   },
   {
    "id": "saturation",
@@ -782,8 +810,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 59773
+   "sliders": 9,
+   "bytes": 69972
   },
   {
    "id": "shaper",
@@ -797,7 +825,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 24,
-   "bytes": 86174
+   "bytes": 94332
   },
   {
    "id": "sidechain_ducker",
@@ -811,7 +839,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 7,
-   "bytes": 37147
+   "bytes": 44923
   },
   {
    "id": "stereo_width",
@@ -825,7 +853,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 32034
+   "bytes": 39696
+  },
+  {
+   "id": "studio_eq",
+   "name": "Studio EQ",
+   "category": "Essentials",
+   "tags": "equalizer eq parametric linear phase mid side mixing mastering essentials gui",
+   "gfx": [
+    480,
+    468
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 51,
+   "bytes": 143129
   },
   {
    "id": "tape",
@@ -838,8 +880,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 10,
-   "bytes": 60227
+   "sliders": 11,
+   "bytes": 82610
   },
   {
    "id": "tape_echo",
@@ -853,7 +895,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 61265
+   "bytes": 69264
   },
   {
    "id": "transient_shaper",
@@ -867,7 +909,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 50445
+   "bytes": 58250
   },
   {
    "id": "tremolo",
@@ -881,7 +923,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 44167
+   "bytes": 51918
   },
   {
    "id": "vibrato",
@@ -895,7 +937,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 31589
+   "bytes": 39233
   },
   {
    "id": "volume_shaper",
@@ -909,7 +951,7 @@
    "ins": 4,
    "outs": 2,
    "sliders": 8,
-   "bytes": 48644
+   "bytes": 56476
   },
   {
    "id": "wah",
@@ -923,7 +965,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 46166
+   "bytes": 53988
   },
   {
    "id": "amp_simulator",
@@ -937,7 +979,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 79467
+   "bytes": 87439
+  },
+  {
+   "id": "bass_management",
+   "name": "Bass Management",
+   "category": "Advanced",
+   "tags": "surround bass management crossover subwoofer lfe redirect 5.1 7.1 7.1.4 atmos bed monitoring linkwitz riley gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 12,
+   "outs": 12,
+   "sliders": 7,
+   "bytes": 55134
   },
   {
    "id": "comb_filter",
@@ -951,7 +1007,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 34864
+   "bytes": 42520
   },
   {
    "id": "convolution",
@@ -965,7 +1021,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 51863
+   "bytes": 63279
+  },
+  {
+   "id": "downmix_check",
+   "name": "Downmix Check",
+   "category": "Advanced",
+   "tags": "surround downmix fold down check 5.1 7.1 7.1.4 atmos bed lo ro stereo mono solo itu bs775 monitoring post production gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 12,
+   "outs": 12,
+   "sliders": 8,
+   "bytes": 55813
   },
   {
    "id": "formant_filter",
@@ -979,7 +1049,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 36587
+   "bytes": 44298
   },
   {
    "id": "frequency_shifter",
@@ -993,7 +1063,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 35533
+   "bytes": 43114
   },
   {
    "id": "glitch_fx",
@@ -1007,7 +1077,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 15,
-   "bytes": 61601
+   "bytes": 69672
   },
   {
    "id": "granular_delay",
@@ -1021,7 +1091,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 39796
+   "bytes": 47585
   },
   {
    "id": "half_speed",
@@ -1035,7 +1105,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 38280
+   "bytes": 46039
   },
   {
    "id": "harmonizer",
@@ -1049,7 +1119,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 72842
+   "bytes": 80758
   },
   {
    "id": "kick_shaper",
@@ -1063,7 +1133,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 39929
+   "bytes": 47552
   },
   {
    "id": "ladder_filter",
@@ -1076,8 +1146,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 38098
+   "sliders": 6,
+   "bytes": 60216
   },
   {
    "id": "loudness_meter",
@@ -1091,7 +1161,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 45540
+   "bytes": 53299
+  },
+  {
+   "id": "multichannel_loudness",
+   "name": "Multichannel Loudness",
+   "category": "Advanced",
+   "tags": "loudness meter lufs lra true peak surround 5.1 7.1 7.1.4 atmos bed multichannel ebu r128 itu bs1770 atsc a85 metering post production gui",
+   "gfx": [
+    600,
+    414
+   ],
+   "ins": 12,
+   "outs": 12,
+   "sliders": 5,
+   "bytes": 58040
   },
   {
    "id": "noise_reduction",
@@ -1105,7 +1189,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 55035
+   "bytes": 62929
   },
   {
    "id": "ott",
@@ -1119,7 +1203,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 43641
+   "bytes": 51322
   },
   {
    "id": "pitch_correction",
@@ -1133,7 +1217,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 67033
+   "bytes": 74920
+  },
+  {
+   "id": "reference",
+   "name": "Reference",
+   "category": "Advanced",
+   "tags": "reference track a/b compare level match loudness lufs mixing mastering meter analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 50050
   },
   {
    "id": "resonance_suppressor",
@@ -1147,7 +1245,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 10,
-   "bytes": 55824
+   "bytes": 63756
   },
   {
    "id": "resonator",
@@ -1161,7 +1259,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 46941
+   "bytes": 54777
   },
   {
    "id": "reverser",
@@ -1175,7 +1273,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 37537
+   "bytes": 45298
   },
   {
    "id": "robotizer",
@@ -1189,7 +1287,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 4,
-   "bytes": 35800
+   "bytes": 43489
   },
   {
    "id": "rotary_speaker",
@@ -1203,7 +1301,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 38358
+   "bytes": 46096
   },
   {
    "id": "shimmer_reverb",
@@ -1217,7 +1315,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 39339
+   "bytes": 47076
   },
   {
    "id": "slicer",
@@ -1231,7 +1329,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 49671
+   "bytes": 57624
+  },
+  {
+   "id": "spectral_ducker",
+   "name": "Spectral Ducker",
+   "category": "Advanced",
+   "tags": "sidechain spectral ducking ducker trackspacer vocal space mix eq advanced gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 4,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 58875
   },
   {
    "id": "spectral_freeze",
@@ -1245,7 +1357,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 40085
+   "bytes": 47781
   },
   {
    "id": "spectrum_analyzer",
@@ -1259,7 +1371,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 7,
-   "bytes": 41789
+   "bytes": 49514
   },
   {
    "id": "spring_reverb",
@@ -1273,7 +1385,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 6,
-   "bytes": 34574
+   "bytes": 42293
   },
   {
    "id": "step_fx",
@@ -1287,7 +1399,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 25,
-   "bytes": 72477
+   "bytes": 80627
   },
   {
    "id": "stereo_scope",
@@ -1301,7 +1413,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 42431
+   "bytes": 50118
   },
   {
    "id": "sub_bloom",
@@ -1315,7 +1427,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 50538
+   "bytes": 58174
+  },
+  {
+   "id": "surround_panner",
+   "name": "Surround Panner",
+   "category": "Advanced",
+   "tags": "surround panner 5.1 7.1 7.1.4 atmos bed immersive vbap azimuth elevation spread lfe post production film music gui",
+   "gfx": [
+    480,
+    460
+   ],
+   "ins": 2,
+   "outs": 12,
+   "sliders": 8,
+   "bytes": 67104
   },
   {
    "id": "tape_stop",
@@ -1329,7 +1455,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 3,
-   "bytes": 33595
+   "bytes": 41272
   },
   {
    "id": "trance_gate",
@@ -1343,7 +1469,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 24,
-   "bytes": 67729
+   "bytes": 75878
+  },
+  {
+   "id": "tuner",
+   "name": "Tuner",
+   "category": "Advanced",
+   "tags": "tuner chromatic strobe pitch guitar bass vocals intonation a4 baroque 432 meter analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 48390
   },
   {
    "id": "vinyl_age",
@@ -1357,7 +1497,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 59093
+   "bytes": 67037
   },
   {
    "id": "vocoder",
@@ -1371,7 +1511,21 @@
    "ins": 2,
    "outs": 2,
    "sliders": 9,
-   "bytes": 43412
+   "bytes": 51225
+  },
+  {
+   "id": "vu_meter",
+   "name": "VU Meter",
+   "category": "Advanced",
+   "tags": "vu meter ppm k-system k-14 k-20 level metering analog needle ballistics gain staging analyzer gui",
+   "gfx": [
+    480,
+    334
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 45745
   },
   {
    "id": "warped_delay",
@@ -1385,7 +1539,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 8,
-   "bytes": 39997
+   "bytes": 47741
   }
  ],
  "instruments": [
@@ -1401,21 +1555,21 @@
    "ins": 0,
    "outs": 2,
    "sliders": 19,
-   "bytes": 81940
+   "bytes": 90015
   },
   {
    "id": "drum_machine",
    "name": "Drum Machine",
    "category": "Instruments",
-   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability generator multi-out gui",
+   "tags": "instrument drum machine drums beat sequencer synth 808 909 kick snare hats midi probability chance song mode generator multi-out gui",
    "gfx": [
     640,
-    580
+    614
    ],
    "ins": 0,
    "outs": 8,
-   "sliders": 63,
-   "bytes": 183205
+   "sliders": 64,
+   "bytes": 204536
   },
   {
    "id": "fm",
@@ -1429,7 +1583,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 37,
-   "bytes": 227929
+   "bytes": 237054
   },
   {
    "id": "keys",
@@ -1443,7 +1597,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 12,
-   "bytes": 86786
+   "bytes": 94765
   },
   {
    "id": "organ",
@@ -1457,7 +1611,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 20,
-   "bytes": 91923
+   "bytes": 99994
   },
   {
    "id": "percussion",
@@ -1471,7 +1625,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 52,
-   "bytes": 160748
+   "bytes": 169497
   },
   {
    "id": "pluck",
@@ -1485,7 +1639,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 12,
-   "bytes": 94132
+   "bytes": 102037
   },
   {
    "id": "sampler",
@@ -1499,7 +1653,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 21,
-   "bytes": 95603
+   "bytes": 103654
   },
   {
    "id": "synth",
@@ -1513,7 +1667,7 @@
    "ins": 0,
    "outs": 2,
    "sliders": 45,
-   "bytes": 219175
+   "bytes": 228663
   }
  ],
  "midi": [
@@ -1529,7 +1683,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 24,
-   "bytes": 95450
+   "bytes": 103562
   },
   {
    "id": "chords",
@@ -1543,7 +1697,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 11,
-   "bytes": 83895
+   "bytes": 91739
   },
   {
    "id": "humanize",
@@ -1557,7 +1711,35 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 50235
+   "bytes": 58001
+  },
+  {
+   "id": "midi_lfo",
+   "name": "MIDI LFO",
+   "category": "MIDI",
+   "tags": "midi lfo modulation cc pitch bend channel pressure tempo sync sine triangle saw square random sample and hold automation gui",
+   "gfx": [
+    480,
+    342
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 12,
+   "bytes": 61291
+  },
+  {
+   "id": "midi_utility",
+   "name": "MIDI Utility",
+   "category": "MIDI",
+   "tags": "midi utility transpose velocity curve channel split key range velocity range filter cc pitch bend aftertouch program change gui",
+   "gfx": [
+    480,
+    342
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 75083
   },
   {
    "id": "riff",
@@ -1571,7 +1753,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 12,
-   "bytes": 63619
+   "bytes": 71422
   },
   {
    "id": "scale",
@@ -1585,7 +1767,7 @@
    "ins": 2,
    "outs": 2,
    "sliders": 5,
-   "bytes": 59484
+   "bytes": 67255
   }
  ]
 }
