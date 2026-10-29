@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.38.00
+- Studio: the effects of NULL JSFX 2.7. New: Studio EQ (eight bands, mid/side), Spectral Ducker (makes room for a vocal), Reference (compare your mix with a track at the same loudness), Tuner, VU Meter, Crossfeed for headphones and De-Clip. The existing effects get the 2.7 upgrades (True Peak, Delta, Mid/Side, A/B and undo in their interfaces). From now on every new NULL JSFX release reaches Studio within a day.
+
 ## Version 4.37.00
 - Assistant and Slides: ask the Assistant to change your presentations ("2026 instead of 2025", "make every title red", "copy slide 3", "fade between all slides", "use the ocean theme"). It reads the presentation, shows the changes on a card, and Slides makes them on this device when you press Apply, as one step of its Undo. Undo on the card puts every presentation back.
 
