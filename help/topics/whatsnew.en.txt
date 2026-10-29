@@ -1,9 +1,6 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 4.31.00
-- Atelier: Canva designs brought over as PowerPoint now look much closer to the original. The fonts Canva puts inside the file come over and are kept in orOS (Fonts folder), photos keep their crop, transparency and mirroring, text keeps Canva's letter pairs (kerning), exact line spacing and its lines.
-
 ## Version 4.30.00
 - Assistant and Atelier: ask the Assistant to change your designs ("make the photos black and white", "change Friday to Saturday in all my flyers", "add two pages after page 3"). It reads the design, shows the changes and how many things each design gets on a card, and Atelier makes them on this device when you press Apply. Undo puts every design back.
 
