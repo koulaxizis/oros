@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.44.00
+- Assistant and Studio: ask the Assistant to change your songs ("turn the vocals down 3 dB", "mute the drums", "move the chorus to bar 9", "transpose the keys up 2 semitones", "add a bass track", "tempo 96", "loop bars 5 to 8"). It reads the project, shows the changes on a card, and Studio makes them on this device when you press Apply. Undo on the card puts the project back.
+
 ## Version 4.43.00
 - Assistant and Montage: ask the Assistant to change your video projects ("2026 instead of 2025 in the titles", "make the titles bigger and yellow", "play the first clip twice as fast", "a wipe between all clips", "add a title card at the end", "make it 9:16"). It reads the project, shows the changes on a card, and Montage makes them on this device when you press Apply. Undo on the card puts the project back.
 

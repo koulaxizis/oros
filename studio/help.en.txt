@@ -123,6 +123,9 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - [[+]] and [[-]] zoom, [[Ctrl+Z]] undo, [[Ctrl+Y]] redo.
 - On the ruler, the arrow keys move the playhead by a beat, and by a bar with [[Shift]].
 
+## The Assistant
+Ask the Assistant to change your songs in words, such as "turn the vocals down 3 dB and pan them a little left", "mute the drums", "move the chorus clip to bar 9", "fade the last clip out over 4 seconds", "transpose the keys up 2 semitones", "add a bass track", "set the tempo to 96" or "loop bars 5 to 8". It shows the changes on a card first; `Apply` makes them here and opens the project. `Undo` on the message here, or on the Assistant's card, puts the project back as long as it wasn't changed since. See the Assistant's help for everything it can do.
+
 ## Tips
 > Use headphones when you record, so the click and the other tracks do not end up in the take.
 - Browsers cannot use ASIO drivers. Your sound card works through the system's own driver, with a little more delay than in a desktop studio app.

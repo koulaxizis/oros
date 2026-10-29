@@ -123,6 +123,9 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - [[+]] und [[-]] zoomen, [[Ctrl+Z]] Rückgängig, [[Ctrl+Y]] Wiederholen.
 - Auf dem Lineal verschieben die Pfeiltasten den Abspielkopf um einen Schlag, mit [[Shift]] um einen Takt.
 
+## Der Assistent
+Bitte den Assistenten, deine Songs mit Worten zu ändern, etwa „den Gesang 3 dB leiser und etwas nach links“, „das Schlagzeug stumm“, „den Refrain-Clip auf Takt 9“, „den letzten Clip über 4 Sekunden ausblenden“, „die Keys 2 Halbtöne höher“, „eine Bassspur hinzufügen“, „Tempo 96“ oder „Takte 5 bis 8 als Schleife“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet das Projekt. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt das Projekt wieder her, solange es seitdem nicht geändert wurde. In der Hilfe des Assistenten steht alles, was er kann.
+
 ## Tipps
 > Nimm mit Kopfhörern auf, damit Klick und andere Spuren nicht im Take landen.
 - Browser können keine ASIO-Treiber nutzen. Deine Soundkarte läuft über den eigenen Treiber des Systems, mit etwas mehr Verzögerung als in einer Desktop-Studio-App.
