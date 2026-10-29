@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.39.00
+- Atelier and Assistant: Atelier now learns your style from your own designs (fonts for titles and text, sizes, colours), separately for posts, stories, slides, covers and the rest, on this device only. You find it in the Brand kit panel as "My style". When the Assistant adds a text and you don't say which font, size or colour, it uses your style.
+
 ## Version 4.38.01
 - Layout: Rebuild a print PDF sets lines on their baselines also when the PDF's font was found on your disk (before, every line could sit a few points low), keeps a list's bullet with its item, and reads books of up to 999 pages (before: 400).
 
