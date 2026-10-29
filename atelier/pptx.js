@@ -6,9 +6,17 @@
 //     { w, h, name, pages:[{ bg, items:[…] }], media:{path:true},
 //       svgs:{key:svg}, skipped }
 //     sizes in points (1 EMU = 1/12700 pt), x/y/w/h/rot per item.
-//   build(plan, assets, now) → { doc, missing }: a NEW Atelier design;
-//     assets maps media paths and svg keys to imported images
-//     { id, w, h } (io.js stores them with designkit/assets.js).
+//   build(plan, assets, now, fonts) → { doc, missing }: a NEW Atelier
+//     design; assets maps media paths and svg keys to imported images
+//     { id, w, h } (io.js stores them with designkit/assets.js); fonts
+//     maps a typeface name to its own-font entry (below).
+// Fonts the file carries (Canva embeds every font it uses, each weight
+// as a family of its own: "Montserrat Bold"): plan.fonts = [{ name, r,
+// b, i, bi }] (zip paths of ppt/fonts/*.fntdata, Embedded OpenType);
+// eot() unpacks one to its TTF/OTF, io.js keeps it on the orOS disk
+// (designkit/fonts.js) and build() gives the text that names it the
+// font as ext.fam (ax.js), with the Fontsource / built-in match as
+// its stand-in.
 // What maps: text boxes (first run's look for the whole box: font
 // by name → its Fontsource family, or sans/serif/mono for system and
 // Canva-only fonts; size incl. autofit, bold,
@@ -346,7 +354,7 @@
     if (/^\+m[nj]-/.test(font)) font = ctx.themeFont;
     var col = colourIn(kid(rp, "a:solidFill"), ctx.theme) || lst.colour || { c: "#000000", a: 1 };
     var pPr = kid(firstP, "a:pPr"), algn = pPr && pPr.a.algn || lst.algn || "l";
-    var lnPct = 100, sp = path(pPr, ["a:lnSpc", "a:spcPct"]);
+    var lnPct = 100, sp = path(pPr, ["a:lnSpc", "a:spcPct"]), sPts = path(pPr, ["a:lnSpc", "a:spcPts"]);
     if (sp) lnPct = numA(sp, "val", 100000) / 1000;
     var autofit = path(txBody, ["a:bodyPr", "a:normAutofit"]);
     var scale = autofit ? numA(autofit, "fontScale", 100000) / 100000 : 1;
@@ -357,9 +365,11 @@
     var bold = ra.b !== undefined ? ra.b === "1" || ra.b === "true" : !!lst.b || !!ff.b;
     var ital = ra.i !== undefined ? ra.i === "1" || ra.i === "true" : !!lst.i || !!ff.i;
     return {
-      tx: tx, font: ff.font, fontName: ff.name, size: size,
+      tx: tx, font: ff.font, fontName: ff.name, face: String(font || "").trim(), size: size,
       b: bold ? 1 : 0, i: ital ? 1 : 0, u: ra.u && ra.u !== "none" ? 1 : 0, caps: ra.cap === "all" ? 1 : 0,
-      al: ALIGN[algn] || "l", lh: Math.round(Math.max(70, Math.min(300, 120 * lnPct / 100 * (1 - lnRed)))),
+      al: ALIGN[algn] || "l",
+      // exact spacing (what Canva writes): points → % of the size
+      lh: Math.round(Math.max(70, Math.min(300, sPts ? numA(sPts, "val", 0) / sz * 100 : 120 * lnPct / 100 * (1 - lnRed)))),
       tr: spc ? Math.round(spc / size * 1000) : 0, fc: col.c, op: col.a
     };
   }
@@ -450,6 +460,40 @@
     if (n.n === "p:graphicFrame" || n.n === "mc:AlternateContent" || n.n === "p:contentPart") { out.skipped++; return; }
   }
 
+  // How a picture sits in its box: srcRect (the part of the picture
+  // used) stretched over the box inset by fillRect (Canva writes the
+  // crop there, as negative insets) → crop fractions of the box as
+  // build() reads them (negative = the picture is smaller), or null.
+  function insets(n) {
+    return n ? { l: numA(n, "l", 0) / 100000, t: numA(n, "t", 0) / 100000, r: numA(n, "r", 0) / 100000, b: numA(n, "b", 0) / 100000 } : { l: 0, t: 0, r: 0, b: 0 };
+  }
+  function cropOf(blipFill) {
+    var s = insets(kid(blipFill, "a:srcRect")), f = insets(path(blipFill, ["a:stretch", "a:fillRect"]));
+    if (!s.l && !s.t && !s.r && !s.b && !f.l && !f.t && !f.r && !f.b) return null;
+    var fw = 1 - f.l - f.r, fh = 1 - f.t - f.b, sw = 1 - s.l - s.r, sh = 1 - s.t - s.b;
+    if (fw < 0.001 || fh < 0.001 || sw < 0.001 || sh < 0.001) return null;
+    var W = fw / sw, H = fh / sh, x = f.l - s.l * W, y = f.t - s.t * H;   // the whole picture, in box widths / heights
+    var l = -x / W, t = -y / H;
+    function r6(v) { return Math.round(v * 1e6) / 1e6 || 0; }
+    return { l: r6(l), t: r6(t), r: r6(1 - 1 / W - l), b: r6(1 - 1 / H - t) };
+  }
+  // A picture element (p:pic, or a shape filled with a picture: what
+  // Canva writes for every photo) → plan item, or null.
+  function photoItem(blipFill, box, shp, ctx, out) {
+    var blip = kid(blipFill, "a:blip");
+    var rel = blip && ctx.rels[blip.a["r:embed"]];
+    if (!rel || !/^ppt\/media\//.test(rel.target) || !/\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(rel.target)) return null;
+    var it = ptBox(box);
+    it.k = "photo"; it.img = rel.target; it.crop = cropOf(blipFill);
+    if (shp && shp !== "rect") it.shp = shp;
+    if (box.flh) it.flh = 1;
+    if (box.flv) it.flv = 1;
+    var am = kid(blip, "a:alphaModFix");
+    if (am) it.op = Math.round(numA(am, "amt", 100000) / 1000);
+    out.media[rel.target] = true;
+    return it;
+  }
+
   function picture(n, tf, ctx, out) {
     var spPr = kid(n, "p:spPr");
     var box = boxOf(kid(spPr, "a:xfrm"), tf);
@@ -457,21 +501,9 @@
       var k = phKey(n);
       box = k && phBox(phLookup(ctx.phTrees, k), tf);
     }
-    var blipFill = kid(n, "p:blipFill");
-    var blip = kid(blipFill, "a:blip");
-    var rel = blip && ctx.rels[blip.a["r:embed"]];
-    if (!box || !rel || !/^ppt\/media\//.test(rel.target) || !/\.(png|jpe?g|gif|bmp|webp|svg)$/i.test(rel.target)) { out.skipped++; return; }
-    var src = kid(blipFill, "a:srcRect"), crop = null;
-    if (src) crop = { l: numA(src, "l", 0) / 100000, t: numA(src, "t", 0) / 100000, r: numA(src, "r", 0) / 100000, b: numA(src, "b", 0) / 100000 };
-    var am = kid(blip, "a:alphaModFix");
     var prst = path(spPr, ["a:prstGeom"]), shp = prst ? PRST[prst.a.prst] || "" : "";
-    var it = ptBox(box);
-    it.k = "photo"; it.img = rel.target; it.crop = crop;
-    if (shp && shp !== "rect") it.shp = shp;
-    if (box.flh) it.flh = 1;
-    if (box.flv) it.flv = 1;
-    if (am) it.op = Math.round(numA(am, "amt", 100000) / 1000);
-    out.media[rel.target] = true;
+    var it = box && photoItem(kid(n, "p:blipFill"), box, shp, ctx, out);
+    if (!it) { out.skipped++; return; }
     out.items.push(it);
   }
 
@@ -527,13 +559,9 @@
     if (visible) {
       var shp = PRST[prstId];
       if (fill && fill.blip) {
-        var bl = kid(fill.blip, "a:blip"), rel = bl && ctx.rels[bl.a["r:embed"]];
-        if (rel && /^ppt\/media\//.test(rel.target)) {
-          var ph2 = { k: "photo", x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot, img: rel.target, crop: null };
-          if (shp && shp !== "rect") ph2.shp = shp;
-          out.media[rel.target] = true;
-          out.items.push(ph2);
-        } else out.skipped++;
+        var ph2 = photoItem(fill.blip, box, shp, ctx, out);
+        if (ph2) out.items.push(ph2);
+        else out.skipped++;
       } else if (shp && !box.flh && !box.flv || shp === "rect" || shp === "circle" || shp === "rounded") {
         var s = { k: "shape", shp: shp, x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
         if (fill && fill.g) s.g = fill.g;
@@ -621,7 +649,7 @@
   // zip: atelier/zip.js reader. → Promise<plan>
   function parse(zip, name) {
     var L = loader(zip);
-    var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, svgs: {}, skipped: 0, approx: 0 };
+    var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, svgs: {}, fonts: [], skipped: 0, approx: 0 };
     var presP = "ppt/presentation.xml";
     return L.xml(presP).then(function (pres) {
       if (!pres) throw new Error("pptx");
@@ -630,6 +658,7 @@
       if (sz) { plan.w = pt(numA(sz, "cx", 12192000)); plan.h = pt(numA(sz, "cy", 6858000)); }
       var ids = kids(kid(p, "p:sldIdLst"), "p:sldId").map(function (s) { return s.a["r:id"]; }).slice(0, MAX_SLIDES);
       return L.rels(presP).then(function (prels) {
+        plan.fonts = embeddedFonts(p, prels);
         var themeRel = Object.keys(prels).map(function (k) { return prels[k]; }).filter(function (r) { return r.type === "theme"; })[0];
         var masterTheme = themeRel ? themeRel.target : "ppt/theme/theme1.xml";
         return L.xml(masterTheme).then(function (th) {
@@ -647,6 +676,42 @@
       if (!plan.pages.length) throw new Error("pptx");
       return plan;
     });
+  }
+
+  // <p:embeddedFontLst>: [{ name, r, b, i, bi }] (zip paths)
+  var MAX_FONTS = 60;
+  function embeddedFonts(pres, prels) {
+    var out = [], seen = {};
+    kids(kid(pres, "p:embeddedFontLst"), "p:embeddedFont").forEach(function (ef) {
+      var f = kid(ef, "p:font"), name = f && String(f.a.typeface || "").replace(/[\u0000-\u001f]/g, "").trim().slice(0, 60);
+      if (!name || seen[name] || out.length >= MAX_FONTS) return;
+      var e = { name: name };
+      [["r", "p:regular"], ["b", "p:bold"], ["i", "p:italic"], ["bi", "p:boldItalic"]].forEach(function (v) {
+        var n = kid(ef, v[1]), r = n && prels[n.a["r:id"]];
+        if (r && /^ppt\/fonts\/[^/]+$/.test(r.target)) e[v[0]] = r.target;
+      });
+      if (!e.r) e.r = e.b || e.i || e.bi;
+      if (e.r) { seen[name] = 1; out.push(e); }
+    });
+    return out;
+  }
+  // Embedded OpenType (.fntdata) → the TrueType / OpenType file it
+  // wraps (Uint8Array), or null (MicroType Express compression is not
+  // read; XOR obfuscation is undone). A plain font file passes through.
+  function eot(bytes) {
+    if (!bytes || bytes.length < 82) return null;
+    function sfnt(b) {
+      var t = (b[0] << 24 | b[1] << 16 | b[2] << 8 | b[3]) >>> 0;
+      return t === 0x00010000 || t === 0x4F54544F || t === 0x74727565;
+    }
+    if (sfnt(bytes)) return bytes;
+    var dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    var size = dv.getUint32(0, true), len = dv.getUint32(4, true), ver = dv.getUint32(8, true), flags = dv.getUint32(12, true);
+    if (dv.getUint16(34, true) !== 0x504C || [0x00010000, 0x00020001, 0x00020002].indexOf(ver) < 0) return null;
+    if (size > bytes.length || len > size || len < 12 || (flags & 0x4)) return null;
+    var out = bytes.slice(size - len, size);
+    if (flags & 0x10000000) for (var i = 0; i < out.length; i++) out[i] ^= 0x50;
+    return sfnt(out) ? out : null;
   }
 
   function slide(L, sp, theme, plan) {
@@ -698,7 +763,9 @@
   // ---------- 7. Build the design ----------
   // assets: { mediaPath|svgKey: { id, w, h } } (missing → item skipped)
   // → { doc, missing }
-  function build(plan, assets, now) {
+  function build(plan, assets, now, fonts) {
+    fonts = fonts || {};
+    var own = {};
     var d = AX.newDesign({ name: plan.name, w: plan.w, h: plan.h, unit: "px", pages: plan.pages.length }, now);
     var pages = M.pagesInOrder(d), missing = 0;
     plan.pages.forEach(function (P, pi) {
@@ -717,7 +784,7 @@
       P.items.forEach(function (s) {
         var spec = {}, img = null;
         Object.keys(s).forEach(function (k) {
-          if (["img", "crop", "svg", "boxH", "anchor", "fontName"].indexOf(k) < 0) spec[k] = s[k];
+          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face"].indexOf(k) < 0) spec[k] = s[k];
         });
         if (spec.op !== undefined && !(spec.op < 100)) delete spec.op;
         if (s.k === "photo") {
@@ -737,28 +804,55 @@
         }
         spec.z = z++;
         if (s.k === "text" && AX.isExtraFont(spec.font)) AX.ensureFont(spec.font, s.fontName);
+        var of = s.k === "text" && s.face && Object.prototype.hasOwnProperty.call(fonts, s.face) ? fonts[s.face] : null;
+        if (s.k === "text") spec.ext = { kern: 1 };                 // Canva kerns its text
+        if (of && AX.isOwnFont(of.id)) { spec.ext.fam = of.id; own[of.id] = of; }
         var it = AX.addItem(d, pg.id, spec, now);
+        if (it && s.k === "text") fitLines(it, s);
         if (it && s.k === "text") {
           if (s.anchor === "ctr") it.y = s.y + (s.boxH - it.h) / 2;
           else if (s.anchor === "b") it.y = s.y + s.boxH - it.h;
         }
       });
     });
+    var list = Object.keys(own).map(function (k) { return own[k]; });
+    if (list.length) {
+      d.setup.ext = d.setup.ext || {};
+      d.setup.ext.fonts = list;
+    }
     return { doc: M.normDoc(d), missing: missing };
   }
 
-  // the Fontsource families a plan uses: [{ id, name }]
-  function planFonts(plan) {
+  // A text box sized to its text (Canva's are): when this device's
+  // measure of a line runs a little past the box (other metrics, the
+  // tracking after the last letter), the box grows to the line's width
+  // around its alignment instead of breaking the line.
+  var FIT_SLACK = 1.08;
+  function fitLines(it, s) {
+    var ax = it.ax, paras = (ax.tx || "").split("\n").length;
+    if (ax.cv || AX.textLayout(it).lines.length <= paras) return;
+    var nat = AX.textWidth(ax, it, true) + 0.5;
+    if (!(nat > it.w) || nat > it.w * FIT_SLACK) return;
+    var grow = nat - it.w;
+    it.x -= ax.al === "c" ? grow / 2 : ax.al === "r" ? grow : 0;
+    it.w = Math.round(nat * 100) / 100;
+    it.h = AX.textHeight(it);
+  }
+
+  // the Fontsource families a plan uses: [{ id, name }] (skip: typeface
+  // names the design brings its own file of)
+  function planFonts(plan, skip) {
     var seen = {}, out = [];
     plan.pages.forEach(function (P) {
       P.items.forEach(function (s) {
+        if (skip && s.face && skip[s.face]) return;
         if (s.k === "text" && AX.isExtraFont(s.font) && !seen[s.font]) { seen[s.font] = 1; out.push({ id: s.font, name: s.fontName }); }
       });
     });
     return out;
   }
 
-  var api = { parse: parse, build: build, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, EMU: EMU };
+  var api = { parse: parse, build: build, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);

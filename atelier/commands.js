@@ -251,7 +251,13 @@
         break;
       case "textstyle":
         if (k !== "text" && k !== "table") break;
-        if (st.font) setOpt(ax, "font", st.font, k === "table" ? TEXT_DEF.font : undefined);
+        if (st.font) {
+          setOpt(ax, "font", st.font, k === "table" ? TEXT_DEF.font : undefined);
+          if (it.ext && it.ext.fam !== undefined) {           // an own font (ax.js ext.fam) gives way
+            delete it.ext.fam;
+            if (!Object.keys(it.ext).length) delete it.ext;
+          }
+        }
         if (st.size !== null) setOpt(ax, "size", st.size, k === "table" ? TABLE_SIZE : undefined);
         if (st.c) ax.fc = st.c;
         if (st.align) {
@@ -616,7 +622,7 @@
         var tx = textOf(it);
         if (ax.k === "text" || ax.k === "table") {
           e.text = tx.length > OUT_TEXT ? tx.slice(0, OUT_TEXT) + "…" : tx;
-          e.font = ax.font || TEXT_DEF.font;
+          e.font = (it.ext && typeof it.ext.fam === "string" && it.ext.fam) || ax.font || TEXT_DEF.font;
           e.size = ax.size || (ax.k === "table" ? TABLE_SIZE : TEXT_DEF.size);
           if (ax.fc) e.color = ax.fc;
           if (ax.b) e.bold = true;

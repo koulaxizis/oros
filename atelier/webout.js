@@ -56,7 +56,9 @@
   // ---------- 1. What goes how ----------
   // "text" (real text) | "textfx" (real text over a picture of its
   // blurred passes) | "vector" | "photo" (picture cut to its shape) |
-  // "raster" (the element as a picture) | "" (nothing to draw).
+  // "raster" (the element as a picture) | "" (nothing to draw). Text in
+  // an own font (ext.fam) is a picture: a web page would hand out the
+  // font file, which its licence may not allow.
   function hasBlur(ax) {
     return FX.textPasses(ax.tfx, ax.size || AX.TEXT_DEF.size, ax.fc || "#000000").some(function (p) { return p.blur > 0; });
   }
@@ -65,6 +67,7 @@
     if (!ax || it.hide || ax.tg) return "";
     if (ax.k === "text") {
       if (!ax.tx || !ax.tx.trim()) return "";
+      if (AX.famOf(it)) return "raster";
       return hasBlur(ax) ? "textfx" : "text";
     }
     if (ax.k === "shape") return ax.g || ax.fc || (ax.sc && it.sw > 0) ? "vector" : "";
@@ -73,7 +76,7 @@
     return "raster";                     // charts
   }
   function padOf(it, kind) {
-    if (kind !== "textfx") return 0;
+    if (kind !== "textfx" && !(kind === "raster" && it.ax.k === "text")) return 0;
     var ax = it.ax, p = FX.fxPad(ax.tfx, ax.size || AX.TEXT_DEF.size), s = (ax.size || AX.TEXT_DEF.size) * 0.3;
     return Math.ceil(Math.max(p.l, p.t, p.r, p.b) + s);
   }
@@ -117,7 +120,7 @@
     }
     doc.items.forEach(function (it) {
       if (!it.ax || !want[it.pg] || it.hide) return;
-      if (it.ax.k === "text") add(AX.fontKeyOf(it.ax));
+      if (it.ax.k === "text") { if (!AX.famOf(it)) add(AX.fontKeyOf(it.ax)); }
       else if (it.ax.k === "table") { add(AX.fontKeyOf({ font: it.ax.font })); add(AX.fontKeyOf({ font: it.ax.font, b: 1 })); }
     });
     return Object.keys(keys).sort();
@@ -189,6 +192,16 @@
     if (r.key && r.key !== key) s += at("font-family", stack(r.key));
     if (r.size && r.size !== size) s += at("font-size", n2(r.size));
     if (r.track) s += at("letter-spacing", n2(r.track * (r.size || size) / 1000));
+    if (r.kern) {
+      // pair kerning as layout measured it: a shift before each letter
+      var ks = [], prev = "", any = false;
+      Array.from(r.t).forEach(function (ch) {
+        var k = prev ? T.kernPair(r.key, prev, ch, r.size || size) : 0;
+        if (k) any = true;
+        ks.push(n2(k)); prev = ch;
+      });
+      if (any) s += at("dx", ks.join(" "));
+    }
     return s + ">" + esc(r.t + (tail || "")) + "</tspan>";
   }
   // Paint attributes of a text pass.

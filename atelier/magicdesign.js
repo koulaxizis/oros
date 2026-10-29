@@ -179,7 +179,7 @@
       it.ax.tx = idea.texts[i];
       if (brand) {
         var f = brand.fonts[i === 0 ? "h" : s.role === "subheading" ? "s" : "t"] || brand.fonts.t || brand.fonts.h;
-        if (f) { it.ax.font = f.f; if (f.b) it.ax.b = 1; }
+        if (f) { AX.setFont(it, f.f); if (f.b) it.ax.b = 1; }
       }
       var n = M.normItem(it);
       if (n) it.h = AX.textHeight(n);

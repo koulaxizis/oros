@@ -85,7 +85,7 @@
           if (ax.tb) ["ac", "bf", "cf"].forEach(function (f) { if (lc(ax.tb[f]) === st.from) ax.tb[f] = st.to; });
           break;
         case "font":
-          if ((k === "text" || k === "table") && (!st.from || (ax.font || "sans") === st.from)) ax.font = st.to;
+          if ((k === "text" || k === "table") && (!st.from || AX.fontOf(it) === st.from)) AX.setFont(it, st.to);
           break;
         case "size":
           if (k === "text" || k === "table") {

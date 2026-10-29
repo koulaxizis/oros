@@ -443,9 +443,14 @@
 
   // The files of a loaded face (a Fontsource face can be several
   // subset files): [{ map: { codepoint: glyph }, b64(), bytes(),
-  // range }]. A PDF embeds each file as its own font (Atelier's
+  // range, cff }] (cff: PostScript outlines, "OTTO", which jsPDF
+  // cannot embed). A PDF embeds each file as its own font (Atelier's
   // vector PDF); a web page lists each as an @font-face with its
   // unicode-range ("" when the face is one file).
+  function isCff(buf) {
+    var b = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+    return b.length === 4 && b[0] === 0x4F && b[1] === 0x54 && b[2] === 0x54 && b[3] === 0x4F;
+  }
   function faceParts(key) {
     var f = fonts[key];
     if (!f) return [];
@@ -454,6 +459,7 @@
       return {
         map: p.m ? p.m.map : f.m.map,
         range: many && p.m ? unicodeRange(p.m) : "",
+        cff: isCff(p.buf),
         bytes: function () { return new Uint8Array(p.buf.slice(0)); },
         b64: function () {
           if (p.b64) return p.b64;
