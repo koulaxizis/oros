@@ -2031,6 +2031,8 @@ var PRECACHE_URLS = [
   "writer/spell-worker.js",
   "writer/spell.js",
   "writer/track.js",
+  "writer/commands.js",
+  "writer/assist.js",
   "vendor/jspdf.umd.min.js",
   "vendor/xlsx.full.min.js",
   "vendor/hls.light.min.js",

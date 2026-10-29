@@ -187,6 +187,13 @@ Bitte zum Beispiel „2026 statt 2025 in meiner offenen Präsentation“, „mac
 - Ein gesperrtes Objekt wird nur verschoben oder entfernt, wenn der Assistent es gezielt nennt.
 - `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jede Präsentation wieder her, solange sie seitdem nicht geändert wurde.
 
+## Dokumente im Texteditor
+Bitte zum Beispiel um „2026 statt 2025 im offenen Dokument“, „die Überschriften zentrieren“, „die Liste nummerieren“, „jedes Kapitel auf eine neue Seite“, „am Anfang eine Zusammenfassung einfügen“ oder „Papier A5 mit 20 mm Rändern“. Der Assistent liest das Dokument (mit deiner Erlaubnis für den [Texteditor](app:writer)) und zeigt eine Karte mit den Änderungen und wie viele Dinge sich in jedem Dokument ändern.
+- `Anwenden` macht die Änderungen im Texteditor auf diesem Gerät und öffnet das Dokument.
+- Was er ändern kann: Suchen und Ersetzen (auch in Kopfzeile, Fußzeile und Fußnoten); den Text von Absätzen; fett, kursiv, unterstrichen und durchgestrichen, für ganze Absätze oder nur einige Wörter; Ausrichtung; die Absatzart (Absatz, Überschriften 1 bis 4, Zitat, Code, Aufzählungen und nummerierte Listen); Seitenumbrüche vor Absätzen; neue Absätze am Anfang, am Ende oder neben einem Absatz; Absätze entfernen; Papierformat, Ränder, Kopf- und Fußzeile; Autor, Schlagwörter, Kategorie, Rechtschreibsprache und Titel. Er arbeitet am offenen Dokument, an einem Dokument nach Titel oder an allen.
+- Wenn „Änderungen verfolgen“ an ist, werden die Änderungen des Assistenten nicht als verfolgte Änderungen markiert.
+- `Rückgängig` auf der Karte (oder im `Änderungsverlauf`) stellt jedes Dokument wieder her, solange es seitdem nicht geändert wurde.
+
 ## Fotos, PDFs und Dokumente
 Drücke die Büroklammer neben dem Nachrichtenfeld, um ein Foto, ein PDF oder ein Dokument anzuhängen, `Von diesem Gerät…` oder `Von der orOS-Disk…`. Du kannst ein Foto auch einfügen oder auf das Nachrichtenfeld ziehen. Bis zu 30 Dateien gehen mit einer Nachricht, jede bis zu 30 MB.
 - Frag zum Beispiel „Füge diesen Beleg zu meinen Ausgaben hinzu“, „Speichere diese Visitenkarte als Kontakt“, „Trag das Konzert von diesem Plakat in meinen Kalender ein“ oder „Fass diesen Vertrag in einer Notiz zusammen“. Der Assistent liest die Datei und bereitet die Eintragskarte vor, die du wie gewohnt prüfst und speicherst.

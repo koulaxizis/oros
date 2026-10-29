@@ -55,6 +55,9 @@ Just start typing; everything saves by itself.
 - From [Typewriter](app:typewriter), `Send to Writer` opens a page here as a new document.
 - Importing a `Database (JSON)` file merges it. Documents that exist only here are kept, and if a document differs, the older text goes into `Version history`.
 
+## The Assistant
+Ask the Assistant to change your documents in words, such as "2026 instead of 2025", "make the headings centred", "turn the list into a numbered list" or "set the paper to A5". It shows the changes on a card first; `Apply` makes them here and opens the document. `Undo` on the message here, or on the Assistant's card, puts the documents back as long as they weren't changed since. See the Assistant's help for everything it can do.
+
 ## Sync and backup
 With [orOS sync](help:t/sync), your documents (text, footnotes, comments, versions, goals, page settings, tracked changes, spelling language), templates, auto-correction rules, your spelling dictionary and settings reach your other devices. Which tabs are open stays on each device. Deleting a document removes it everywhere. See also [Backup](help:t/backup).
 
