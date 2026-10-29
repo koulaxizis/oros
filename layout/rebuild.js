@@ -1026,7 +1026,9 @@
   function matchPdf(doc, pages, opts) {
     opts = opts || {};
     var order = M.pagesInOrder(doc), pgIdx = {}, taken = {}, targets = [], rep = { lines: 0, matched: 0 };
-    order.forEach(function (p, i) { pgIdx[p.id] = i; });
+    var shift = pages.length === order.length ? 0 : pageShift(doc, order, pages);
+    order.forEach(function (p, i) { pgIdx[p.id] = i - shift; });
+    if (shift) rep.shift = shift;
     var done = {};
     doc.items.forEach(function (it0) {
       if (it0.t !== "text" || !it0.story || done[it0.story]) return;
@@ -1058,13 +1060,50 @@
     return rep;
   }
 
+  // A print PDF often leaves out pages the file has (covers, a blank
+  // before the text) or has pages it has not: the shift (PDF page = our
+  // page − shift) under which the most words of our pages are on the
+  // PDF's, or 0 when no shift is clearly better.
+  var SHIFT_MAX = 8;
+  function pageWords(texts) {
+    var set = {};
+    texts.forEach(function (t) { (LF.key(t).toLowerCase().match(WORDS) || []).forEach(function (w) { if (w.length >= 4) set[w] = 1; }); });
+    return set;
+  }
+  function pageShift(doc, order, pages) {
+    var L = R.computeLayout(doc), ours = order.map(function (p) {
+      var texts = [];
+      doc.items.forEach(function (it) {
+        if (it.pg !== p.id || it.t !== "text" || !L.frames[it.id]) return;
+        L.frames[it.id].lines.forEach(function (ln) { ln.runs.forEach(function (r) { texts.push(String(r.t || "")); }); });
+      });
+      return pageWords(texts);
+    });
+    var theirs = pages.map(function (P) { return pageWords((P.spans || []).map(function (s) { return s.t; })); });
+    function score(d) {
+      var n = 0;
+      ours.forEach(function (w, i) {
+        var o = theirs[i - d];
+        if (o) Object.keys(w).forEach(function (k) { if (o[k]) n++; });
+      });
+      return n;
+    }
+    var best = 0, at0 = score(0), top = at0;
+    for (var d = -SHIFT_MAX; d <= SHIFT_MAX; d++) {
+      if (!d) continue;
+      var s = score(d);
+      if (s > top) { top = s; best = d; }
+    }
+    return best && top >= 8 && top > at0 * 1.5 ? best : 0;
+  }
+
   function fontName(page, name) {
     var f = null;
     try { f = page.commonObjs.has(name) ? page.commonObjs.get(name) : null; } catch (e) { f = null; }
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, open: open, pdfText: pdfText, matchPdf: matchPdf, inkOf: inkOf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);
