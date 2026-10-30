@@ -170,6 +170,25 @@
     </form>
   </dialog>
   
+  <!-- Label dialog: rename / recolour / delete an existing label (pencil in the card's label list and in the filter) -->
+  <dialog id="dlg-lbl">
+    <form method="dialog" id="lbl-form" autocomplete="off">
+      <h3 data-i18n="lbl.edit">Edit label</h3>
+
+      <label for="lbl-name" data-i18n="col.name">Name</label>
+      <input id="lbl-name" type="text" required maxlength="24">
+
+      <label data-i18n="lbl.color">Colour</label>
+      <div id="lbl-swatches"></div>
+
+      <menu>
+        <button type="button" id="lbl-delete" class="danger" data-i18n="filter.del">Delete label</button>
+        <span class="spacer"></span>
+        <button type="submit" data-i18n="save">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
     <!-- Board rename dialog (dblclick on selector or Manage dialog pencil) -->
   <dialog id="dlg-board">
     <form method="dialog" id="board-form" autocomplete="off">
