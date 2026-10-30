@@ -330,6 +330,26 @@
       host.appendChild(c5);
     }
 
+    // Desktop widgets (widgets.js through the shell; none in a single app)
+    if (s.widgets) {
+      var cw = card(t("g.title"), "widgets");
+      cw.appendChild(el("p", "hint", t("g.hint")));
+      var wl = el("div", "checks");
+      s.widgets.list.forEach(function (w) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = !!w.on;
+        cb.setAttribute("data-k", "widgets:" + w.id);
+        cb.addEventListener("change", function () { set("widgets:" + w.id, cb.checked); });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, w.name));
+        wl.appendChild(lab);
+      });
+      cw.appendChild(wl);
+      host.appendChild(cw);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),

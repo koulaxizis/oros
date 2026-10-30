@@ -224,6 +224,7 @@ var PRECACHE_URLS = [
   "./seasonal.js",
   "./osk.js",
   "./qsettings.js",
+  "./widgets.js",
   "./fileopen.js",
   "./phone.js",
   "./webpush.js",

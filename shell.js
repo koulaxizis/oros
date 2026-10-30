@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.53.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.54.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -390,6 +390,7 @@
     if (dBtn) dBtn.title = window.t("app.calendar");
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
+    if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -7623,7 +7624,7 @@
   var wxBusy = false;   // in-flight guard — never stack parallel fetches
 
   function wxFetch(force) {
-    if (!wxTrayOn() || !navigator.onLine) return;
+    if ((!wxTrayOn() && !wgWantsWeather()) || !navigator.onLine) return;
     var w = wxLoc();
     if (!w) return;
     // The cache belongs to another place → drop it and the throttle
@@ -9700,6 +9701,7 @@
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
       osk: settingsOsk(),
+      widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
@@ -9748,6 +9750,10 @@
     if (/^seasonal:/.test(name)) {
       var SS = settingsSeasonalL();
       if (SS) SS.set(name.slice(9), value);
+      return;
+    }
+    if (/^widgets:/.test(name)) {        // widgets.js: "widgets:<kind>" on/off
+      if (window.orosWidgets) window.orosWidgets.set(name.slice(8), !!value);
       return;
     }
     if (/^osk:/.test(name)) {
@@ -12148,6 +12154,18 @@
     return out;
   }
 
+  // Desktop widgets (widgets.js): the weather card reads the tray's
+  // cache, so the shell keeps fetching while that card is shown.
+  function wgWantsWeather() {
+    return !!(window.orosWidgets && window.orosWidgets.wants && window.orosWidgets.wants("weather"));
+  }
+  function wgWeather() {
+    if (!navigator.onLine) return { off: true };
+    var loc = wxLoc(), c = wxCacheFor(loc);
+    if (!loc || !c || !c.at || (Date.now() - c.at) > WX_STALE_MS || typeof c.temp !== "number") return null;
+    return { temp: c.temp, icon: wxIconFor(c.code), place: loc.label || "", at: c.at };
+  }
+
   // Quick settings (qsettings.js, a shell component like osk.js): the
   // GNOME-style status button and panel at the right of the bar. A
   // single app has the bar too, so it gets one.
@@ -12177,6 +12195,37 @@
       },
       a11y: { get: a11ySnapshot, set: a11ySetUser },
       media: qsMedia
+    });
+  }
+  // Desktop widgets (widgets.js, a shell component like launcher.js):
+  // clock, calendar, Today, weather, playing, sync on the desktop. A
+  // single app has no desktop, so it gets none.
+  if (window.orosWidgets && !SOLO) {
+    window.orosWidgets.attach({
+      desktop: document.getElementById("oros-desktop"),
+      lang: function () { return state.lang; },
+      phone: function () {
+        try {
+          return !window.matchMedia("(hover: hover) and (pointer: fine)").matches &&
+            Math.min(screen.width || 0, screen.height || 0) < 600;
+        } catch (e) { return false; }
+      },
+      running: function () { return !!state.running; },
+      open: function (id) { openAppById(id); },
+      openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      weather: wgWeather,
+      media: qsMedia,
+      settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
+      sync: {
+        state: function () {
+          var dot = document.getElementById("sync-dot");
+          return dot ? dot.getAttribute("data-state") || "off" : "off";
+        },
+        now: function () { syncNowFromDot(); }
+      },
+      toast: function (msg) { scToast("err", msg); },
+      changed: function () { settingsNotify(); wxFetch(false); }
     });
   }
   loadApps();

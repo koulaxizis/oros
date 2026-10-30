@@ -13,6 +13,14 @@ The button at the right end of the top bar (the network and power symbols) opens
 
 On a narrow screen, when the top bar is full, the language button moves into Quick settings.
 
+## Desktop widgets
+Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a month; tap a day to open it in the Calendar), `Today` (what is late and what is due today, from the [Today](app:today) summary; tap a line to open it), `Weather` (the place of the top-bar weather), `Playing` (Play / Pause for music, podcasts, radio or the Sound Mixer) and `Sync` (its state and Sync now).
+
+- On a computer they sit in a column at the right of the desktop; on a phone or a narrow window, in a row at the top that scrolls sideways.
+- Right-click an empty spot of the desktop and choose `Widgets…` to tick the cards you want and set their order. `Settings`, under `Appearance`, has the same ticks.
+- Right-click a card (long press on a touch screen) or use its `⋯` button to move it up or down or remove it. With a mouse you can also drag a card by its title.
+- A computer starts with Clock, Calendar, Today and Weather; a phone starts with none. Your choice stays on this device.
+
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
 

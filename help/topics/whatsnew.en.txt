@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.54.00
+- Desktop widgets: Clock, Calendar, Today, Weather, Playing and Sync as cards on the desktop, in a column at the right on a computer and a row at the top on a phone. Right-click the desktop and choose Widgets… to pick them and set their order, or use Settings › Appearance. A computer starts with Clock, Calendar, Today and Weather.
+
 ## Version 4.53.00
 - Quick settings, as on a Linux desktop: the button at the right end of the top bar (network and power symbols, the battery on a laptop, a crossed bell during Do Not Disturb) opens a panel with the language, Settings, Lock and Restart orOS at the top, then one-tap buttons for Sync (sync now), Dark style, Do Not Disturb (for one hour, until 8 in the morning or until you turn it off), Large text, High contrast and the On-screen keyboard, and Play / Pause for the music, podcast, radio or Sound Mixer that plays. Also with Ctrl+Alt+Shift+M. On orOS USB the same panel has volume, brightness, Wi-Fi, Bluetooth, and restarting or shutting down the computer.
 

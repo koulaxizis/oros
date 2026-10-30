@@ -13,6 +13,14 @@ Die Schaltfläche am rechten Ende der oberen Leiste (die Symbole für Netzwerk u
 
 Auf einem schmalen Bildschirm, wenn die obere Leiste voll ist, wandert die Sprachschaltfläche in die Schnelleinstellungen.
 
+## Desktop-Widgets
+Karten auf dem Desktop, die deinen Tag auf einen Blick zeigen: `Uhr`, `Kalender` (ein Monat; tippe auf einen Tag, um ihn im Kalender zu öffnen), `Heute` (was überfällig und was heute fällig ist, aus der Zusammenfassung [Heute](app:today); tippe auf eine Zeile, um sie zu öffnen), `Wetter` (der Ort des Wetters in der oberen Leiste), `Wird abgespielt` (Wiedergabe / Pause für Musik, Podcasts, Radio oder den Sound Mixer) und `Synchronisierung` (ihr Zustand und Jetzt synchronisieren).
+
+- Auf einem Computer stehen sie in einer Spalte rechts auf dem Desktop; auf einem Handy oder in einem schmalen Fenster in einer Reihe oben, die seitlich scrollt.
+- Klicke mit der rechten Maustaste auf eine freie Stelle des Desktops und wähle `Widgets…`, um die gewünschten Karten anzuhaken und ihre Reihenfolge festzulegen. Die `Einstellungen` haben unter `Darstellung` dieselben Haken.
+- Klicke mit der rechten Maustaste auf eine Karte (lange drücken auf einem Touchscreen) oder nutze ihre Schaltfläche `⋯`, um sie nach oben oder unten zu verschieben oder zu entfernen. Mit der Maus kannst du eine Karte auch an ihrem Titel ziehen.
+- Ein Computer beginnt mit Uhr, Kalender, Heute und Wetter; ein Handy mit keiner. Deine Wahl bleibt auf diesem Gerät.
+
 ## Sprache
 orOS spricht Englisch und Griechisch. Der Knopf `EL` / `EN` in der oberen Leiste wechselt zur anderen Sprache, ebenso [[Ctrl+Alt+Shift+L]].
 
