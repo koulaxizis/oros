@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.56.00
+- Layout: every document is now a file in Files › Layout, so documents as large as a whole book fit, sync with your other devices like any file and go into backups with the orOS disk. The first start moves your documents there and keeps a rescue copy in Files › Rescue for 30 days. Double-click a document's file in Files to open it.
+
 ## Version 4.55.01
 - Atelier: importing several files at once now works inside orOS. Picking many .orosdesign, .pptx or picture files together no longer ends with "This file can't be opened"; all of them come in and one message tells how many.
 

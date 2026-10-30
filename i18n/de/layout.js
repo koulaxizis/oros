@@ -454,7 +454,11 @@ orosPack("de", "layout", {
  "toast.gone": "Dieses Dokument wurde auf einem anderen Gerät gelöscht.",
  "toast.locked": "Dieses Objekt ist gesperrt.",
  "toast.maxItems": "Ein Dokument kann höchstens {n} Objekte haben.",
+
  "toast.save": "Speicher voll: Die letzten Änderungen konnten auf diesem Gerät nicht gespeichert werden.",
+ "toast.diskSave": "Die letzten Änderungen konnten noch nicht in Dateien › Layout geschrieben werden. Sie bleiben hier und werden bei der nächsten Änderung geschrieben.",
+ "toast.diskRead": "Dateien in Dateien › Layout, die nicht gelesen werden konnten: {n}. Sie bleiben, wie sie sind.",
+ "toast.diskOff": "Die orOS-Festplatte kann gerade nicht gelesen werden: Die Dokumente bleiben bis zum nächsten Start in diesem Browser.",
  "tool.ell": "Ellipse (E)",
  "tool.hand": "Hand (H)",
  "tool.image": "Bildrahmen (F)",

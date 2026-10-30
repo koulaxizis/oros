@@ -4,7 +4,7 @@ Layout is a page-design app for print: flyers, newsletters, posters, cards and b
 ## Getting started
 Press `New document` and choose a `Page size` (such as A4, `Business card` or `Custom`), `Orientation`, `Pages`, `Margins`, `Columns` and `Bleed`. Tick `Facing pages (spreads)` for a booklet. You can change all this later in `Document setup…`. Under `Start from`, pick `Blank` or one of 7 ready templates, such as a flyer or a newsletter.
 
-Your documents appear as cards on the home screen, where you can search, rename, duplicate or delete them (with undo right after).
+Your documents appear as cards on the home screen, where you can search, rename, duplicate or delete them (with undo right after). Each document is also a file in Files › Layout, so it takes as much room as a book needs, is synced with your other devices like every file, and goes into backups with the orOS disk. Double-click such a file in Files to open the document; a deleted document goes to the Trash in Files. If the same document was changed on two devices at once, Layout puts both versions together, so no change is lost.
 
 ## Place things on the page
 Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)` or `Line (L)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.

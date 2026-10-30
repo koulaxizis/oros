@@ -804,6 +804,7 @@ var PRECACHE_URLS = [
   "designkit/blend.js",
   "designkit/media.js",
   "designkit/model.js",
+  "designkit/docstore.js",
   "designkit/pdf.js",
   "designkit/render.js",
   "designkit/show.js",
