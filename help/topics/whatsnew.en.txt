@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.52.01
+- Studio: the effects credit now names the author of NULL JSFX: Christos Koulaxizis.
+
 ## Version 4.52.00
 - Studio: use your own VST3 and CLAP plugins, the ones you bought too, on a Windows computer with orOS Bridge, a small free program. In a track's settings, Plugin on this computer pairs with it once by a code, lists your plugins and opens a plugin's window; Freeze to audio plays the track through the plugin into a new audio track that plays everywhere.
 
