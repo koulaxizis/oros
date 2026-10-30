@@ -201,7 +201,8 @@ test("the Assistant: Layout in edit_in_app and read_in_app, its words for the ca
   assert.match(C.normEdit({ app: "layout", steps: [{ op: "remove", what: "photo" }] }, cats).err, /unknown command/);
   assert.equal(C.EDIT_APP.layout.what, "documents");
   const a = read("assistant/assistant.js");
-  assert.match(a, /layout: \{ mod: "LayoutCommands", data: "oros-layout-data", folders: "", prefs: "oros-layout-prefs" \}/);
+  // LY-DISK: the documents are files; the index lists them, the old store is the fallback
+  assert.match(a, /layout: \{ mod: "LayoutCommands", data: "oros-layout-index", legacy: "oros-layout-data", list: "docs", pkg: 1, max: 64 \* 1024 \* 1024, folders: "", prefs: "oros-layout-prefs", disk: 1 \}/);
   const de = read("i18n/de/assistant.js");
   const words = [];
   CMD.ORDER.forEach((op) => {
