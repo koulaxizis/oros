@@ -102,7 +102,13 @@
       if (!(cp > 31 && cp < 0x110000) || (cp >= 0xd800 && cp <= 0xdfff) || cp === 127) return all;
       return String.fromCodePoint(cp);
     });
-    return C.oneLine(s, max || 200);
+    max = max || 200;
+    s = C.oneLine(s, 5000);
+    if (s.length <= max) return s;
+    // cut at a word, not inside one, and say that it goes on
+    var cut = s.slice(0, max - 1), sp = cut.lastIndexOf(" ");
+    if (sp > max * 0.6) cut = cut.slice(0, sp);
+    return cut.replace(/[\s,.;:\u2013\u2014-]+$/, "") + "\u2026";
   }
   // "12.50" / 12.5 → 1250; -1 when it is not money
   function cents(v) {
@@ -361,8 +367,11 @@
   }
   // pick(block, done): choose products for a product block; done(items,
   // sh, acct) gets the new block items (pictures copied), or nothing.
-  function pick(b, done) {
+  // cancel() runs when the picker closes without adding anything
+  function pick(b, done, cancel) {
     var dlg = A.makeDialog("nl-shop", t("shop.title"), true);
+    var added = false;
+    if (cancel) dlg.addEventListener("close", function () { if (!added) cancel(); });
     if (!links()) { noShop(dlg, t("shop.noShell")); return; }
     var accts = accounts();
     if (!accts.length) { noShop(dlg, t("shop.none")); return; }
@@ -501,6 +510,7 @@
       var items = order.map(function (id) { return toItem(chosen[id]); }).filter(Boolean);
       copyPics(a, items, function (i, n) { msg.textContent = t("shop.copying", { n: i + "/" + n }); }).then(function (fails) {
         busy = false;
+        added = true;
         dlg.close();
         done(items, a.p, a.id);
         if (fails) A.toast(t("shop.imgFail", { n: fails }));

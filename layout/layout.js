@@ -179,7 +179,7 @@
       "exp.quality": "Images", "exp.print": "Print (300 ppi)", "exp.screen": "Screen (150 ppi)",
       "exp.go": "Export PDF", "exp.working": "Building the PDF…", "exp.done": "PDF saved", "exp.fail": "The PDF could not be built.",
       "exp.badRange": "That page range is not valid.", "exp.pkgDone": "Package saved", "exp.pkgNote": "One file with the document and its images, to back up or open on another device.",
-      "imp.done": "Document opened", "imp.file": "A file (.oroslayout, .sla with its pictures and PDF, .idml, .pdf, .svg)…", "imp.folder": "A folder: unzipped package or Scribus output…", "imp.newer": "This file was made by a newer orOS. Update orOS to open it.", "pdf.start": "Opening the PDF…", "pdf.working": "Reading the PDF… page {n} of {t}", "pdf.bad": "This PDF could not be opened.", "pdf.done": "PDF opened: {p} pages, {n} text frames, {i} pictures. Drawings and backgrounds are one locked picture per page, behind everything.", "pdf.cut": "Only the first {n} of {t} pages were opened.",
+      "imp.done": "Document opened", "imp.file": "Files (.oroslayout or a .zip of them, .sla with its pictures and PDF, .idml, .pdf, .svg)…", "imp.disk": "A folder in Files (all its packages)…", "imp.diskTitle": "Open a folder from Files", "imp.diskUp": "Up", "imp.diskGo": "Open", "imp.diskLooking": "Looking for documents…", "imp.diskFound": "Documents (.oroslayout) here and in the folders inside: {n}", "imp.diskNone": "No documents (.oroslayout) here or in the folders inside.", "imp.manyWorking": "Opening the documents…", "imp.many": "Documents opened: {n}", "imp.manyBad": "Documents opened: {n}. Files that could not be opened: {bad}", "imp.full": "Storage is full. Documents opened: {n}; the rest did not fit. Delete documents you no longer need, then open the rest.", "imp.folder": "A folder: unzipped package or Scribus output…", "imp.newer": "This file was made by a newer orOS. Update orOS to open it.", "pdf.start": "Opening the PDF…", "pdf.working": "Reading the PDF… page {n} of {t}", "pdf.bad": "This PDF could not be opened.", "pdf.done": "PDF opened: {p} pages, {n} text frames, {i} pictures. Drawings and backgrounds are one locked picture per page, behind everything.", "pdf.cut": "Only the first {n} of {t} pages were opened.",
       "imp.rebuild": "Rebuild a print PDF (with its pictures)…", "rb.noPdf": "Pick the PDF too: the print PDF, with its pictures and texts if you have them.", "rb.bad": "This PDF could not be rebuilt.", "rb.start": "Rebuilding the PDF with {n} original files…", "rb.working": "Rebuilding… page {n} of {t}", "rb.stopped": "Rebuilding stopped. Nothing was added.", "rb.done": "Rebuilt: {p} pages.",
       "rb.title": "What the rebuild kept", "rb.lines": "{n} of {t} lines are where they were in the PDF ({p} %).", "rb.pics": "{n} pictures, {o} of them your original files (the rest come from the PDF).", "rb.styles": "{n} paragraph styles.", "rb.frames": "Text frames", "rb.perPage": "Per page", "rb.thread": "Going on across pages", "rb.perPageHint": "Every page keeps its own text frames, so every line stays exactly where it was in the PDF.", "rb.threadHint": "An article's text goes on from frame to frame across the pages, so edits flow on. If one line comes out longer, the lines after it move too.", "rb.go": "Rebuild", "rb.threads": "{n} articles go on across pages, through {f} more frames.", "rb.af": "From the Affinity file: {n} original pictures and its words, for the hyphenated line ends.", "rb.afStyles": "Its styles: {s}.", "rb.afFonts": "Its fonts: {f}.", "rb.afBad": "The Affinity file could not be read, so the rebuild used the PDF alone.", "rb.fonts": "Fonts replaced with orOS fonts, with tracking that keeps each line as wide: {f}.", "rb.fontsSame": "The PDF's own fonts, from your font files or free fonts: {f}.", "rb.numbers": "Page numbers start at {n}: they are page-number fields, so they follow when pages move. Change the first number in Document setup.", "rb.off": "Pages where lines moved. Check them before you print:", "rb.offLine": "{n} lines", "rb.back": "Back to the Assistant", "rb.noPage": "This document has no page {n}.",
       "idml.working": "Reading the InDesign file…", "idml.bad": "This file could not be read as an InDesign (.idml) document.", "idml.done": "InDesign document imported: {p} pages, {n} objects.",
@@ -706,7 +706,7 @@
       "exp.quality": "Εικόνες", "exp.print": "Εκτύπωση (300 ppi)", "exp.screen": "Οθόνη (150 ppi)",
       "exp.go": "Εξαγωγή PDF", "exp.working": "Φτιάχνω το PDF…", "exp.done": "Το PDF αποθηκεύτηκε", "exp.fail": "Το PDF δεν μπόρεσε να φτιαχτεί.",
       "exp.badRange": "Αυτό το εύρος σελίδων δεν είναι σωστό.", "exp.pkgDone": "Το πακέτο αποθηκεύτηκε", "exp.pkgNote": "Ένα αρχείο με το έγγραφο και τις εικόνες του, για αντίγραφο ή για άνοιγμα σε άλλη συσκευή.",
-      "imp.done": "Το έγγραφο άνοιξε", "imp.file": "Ένα αρχείο (.oroslayout, .sla με τις εικόνες και το PDF του, .idml, .pdf, .svg)…", "imp.folder": "Έναν φάκελο: αποσυμπιεσμένο πακέτο ή έξοδο του Scribus…", "imp.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "pdf.start": "Ανοίγω το PDF…", "pdf.working": "Διαβάζω το PDF… σελίδα {n} από {t}", "pdf.bad": "Αυτό το PDF δεν άνοιξε.", "pdf.done": "Το PDF άνοιξε: {p} σελίδες, {n} πλαίσια κειμένου, {i} εικόνες. Σχέδια και φόντα είναι μία κλειδωμένη εικόνα ανά σελίδα, πίσω από όλα.", "pdf.cut": "Άνοιξαν μόνο οι πρώτες {n} από τις {t} σελίδες.",
+      "imp.done": "Το έγγραφο άνοιξε", "imp.file": "Αρχεία (.oroslayout ή ένα .zip με αυτά, .sla με τις εικόνες και το PDF του, .idml, .pdf, .svg)…", "imp.disk": "Έναν φάκελο στα Αρχεία (όλα τα πακέτα του)…", "imp.diskTitle": "Άνοιγμα φακέλου από τα Αρχεία", "imp.diskUp": "Πάνω", "imp.diskGo": "Άνοιγμα", "imp.diskLooking": "Ψάχνω για έγγραφα…", "imp.diskFound": "Έγγραφα (.oroslayout) εδώ και στους φακέλους μέσα: {n}", "imp.diskNone": "Κανένα έγγραφο (.oroslayout) εδώ ή στους φακέλους μέσα.", "imp.manyWorking": "Ανοίγω τα έγγραφα…", "imp.many": "Έγγραφα που άνοιξαν: {n}", "imp.manyBad": "Έγγραφα που άνοιξαν: {n}. Αρχεία που δεν άνοιξαν: {bad}", "imp.full": "Ο χώρος γέμισε. Έγγραφα που άνοιξαν: {n}· τα υπόλοιπα δεν χωρούν. Σβήσε όσα δεν χρειάζεσαι και άνοιξε τα υπόλοιπα.", "imp.folder": "Έναν φάκελο: αποσυμπιεσμένο πακέτο ή έξοδο του Scribus…", "imp.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "pdf.start": "Ανοίγω το PDF…", "pdf.working": "Διαβάζω το PDF… σελίδα {n} από {t}", "pdf.bad": "Αυτό το PDF δεν άνοιξε.", "pdf.done": "Το PDF άνοιξε: {p} σελίδες, {n} πλαίσια κειμένου, {i} εικόνες. Σχέδια και φόντα είναι μία κλειδωμένη εικόνα ανά σελίδα, πίσω από όλα.", "pdf.cut": "Άνοιξαν μόνο οι πρώτες {n} από τις {t} σελίδες.",
       "imp.rebuild": "Αναδημιουργία PDF τυπογραφείου (με τις εικόνες του)…", "rb.noPdf": "Διάλεξε και το PDF: το PDF του τυπογραφείου, με τις εικόνες και τα κείμενά του αν τα έχεις.", "rb.bad": "Αυτό το PDF δεν αναδημιουργήθηκε.", "rb.start": "Αναδημιουργώ το PDF με {n} πρωτότυπα αρχεία…", "rb.working": "Αναδημιουργία… σελίδα {n} από {t}", "rb.stopped": "Η αναδημιουργία σταμάτησε. Δεν προστέθηκε τίποτα.", "rb.done": "Έτοιμο: {p} σελίδες.",
       "rb.title": "Τι κράτησε η αναδημιουργία", "rb.lines": "{n} από {t} γραμμές είναι εκεί που ήταν στο PDF ({p} %).", "rb.pics": "{n} εικόνες, οι {o} από τα πρωτότυπα αρχεία σου (οι υπόλοιπες από το PDF).", "rb.styles": "{n} στυλ παραγράφου.", "rb.frames": "Πλαίσια κειμένου", "rb.perPage": "Ανά σελίδα", "rb.thread": "Συνεχίζουν στις σελίδες", "rb.perPageHint": "Κάθε σελίδα κρατά τα δικά της πλαίσια, οπότε κάθε γραμμή μένει ακριβώς εκεί που ήταν στο PDF.", "rb.threadHint": "Το κείμενο κάθε άρθρου συνεχίζει από πλαίσιο σε πλαίσιο στις επόμενες σελίδες, έτσι οι διορθώσεις ρέουν. Αν μια γραμμή βγει μεγαλύτερη, μετακινούνται και όσες ακολουθούν.", "rb.go": "Αναδημιουργία", "rb.threads": "{n} άρθρα συνεχίζουν από σελίδα σε σελίδα, μέσα από {f} ακόμη πλαίσια.", "rb.af": "Από το αρχείο του Affinity: {n} πρωτότυπες εικόνες και οι λέξεις του, για τις λέξεις που κόβονται στο τέλος της γραμμής.", "rb.afStyles": "Τα στυλ του: {s}.", "rb.afFonts": "Οι γραμματοσειρές του: {f}.", "rb.afBad": "Το αρχείο του Affinity δεν διαβάστηκε, οπότε η αναδημιουργία έγινε μόνο από το PDF.", "rb.fonts": "Οι γραμματοσειρές έγιναν γραμματοσειρές του orOS, με αραίωση που κρατά κάθε γραμμή στο ίδιο πλάτος: {f}.", "rb.fontsSame": "Οι ίδιες γραμματοσειρές με το PDF, από τα αρχεία σου ή τις ελεύθερες γραμματοσειρές: {f}.", "rb.numbers": "Η αρίθμηση ξεκινά από το {n}: οι αριθμοί είναι πεδία αριθμού σελίδας και ακολουθούν όταν μετακινούνται σελίδες. Τον πρώτο αριθμό τον αλλάζεις στις Ρυθμίσεις εγγράφου.", "rb.off": "Σελίδες όπου μετακινήθηκαν γραμμές. Έλεγξέ τες πριν τυπώσεις:", "rb.offLine": "{n} γραμμές", "rb.back": "Πίσω στον Βοηθό", "rb.noPage": "Αυτό το έγγραφο δεν έχει σελίδα {n}.",
       "idml.working": "Διαβάζω το αρχείο InDesign…", "idml.bad": "Αυτό το αρχείο δεν διαβάζεται ως έγγραφο InDesign (.idml).", "idml.done": "Εισαγωγή από InDesign: {p} σελίδες, {n} αντικείμενα.",
@@ -1572,6 +1572,23 @@
     save();
     openDoc(d.id);
   }
+  // a document from a batch import (io.js importMany): kept only when it
+  // fits in storage now (R30); → false, and taken back, when it does not
+  function addDocQuiet(d) {
+    data.docs.push(d);
+    data = M.normData(data);
+    clearTimeout(saveTimer); saveTimer = null;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) {
+      data.docs = data.docs.filter(function (x) { return x.id !== d.id; });
+      data = M.normData(data);
+      save();
+      return false;
+    }
+    if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    return true;
+  }
   // a new document kerns (LY-KERN) and hyphenates Greek (LY-BK);
   // older ones keep their line breaks
   function hyphOn(d) {
@@ -1584,7 +1601,7 @@
     if (base) base.ext = { kern: 1 };
     addDoc(hyphOn(d));
   }
-  LY.createDoc = createDoc; LY.addDoc = addDoc; LY.hyphOn = hyphOn;
+  LY.createDoc = createDoc; LY.addDoc = addDoc; LY.addDocQuiet = addDocQuiet; LY.hyphOn = hyphOn;
 
   function openDoc(id) {
     var d = findDoc(id);
@@ -1776,6 +1793,7 @@
     $("btn-import").addEventListener("click", function () {
       LY.menu($("btn-import"), [
         { label: t("imp.file"), fn: function () { LY.io.importPackage(); } },
+        { label: t("imp.disk"), fn: function () { LY.io.importDisk(); } },
         { label: t("imp.folder"), fn: function () { LY.io.importFolder(); } },
         { label: t("imp.rebuild"), fn: function () { LY.io.rebuildPdf(); } }
       ]);

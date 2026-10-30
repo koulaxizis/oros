@@ -580,3 +580,4 @@ body.inframe #cv { cursor: text; }
 .in-pic > img { width: 64px; height: 64px; object-fit: contain; flex: 0 0 64px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; }
 .in-pic-f { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0; }
 .in-pic-f > .fld-lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imp-dirs { max-height: 40vh; overflow: auto; margin-top: 6px; }
