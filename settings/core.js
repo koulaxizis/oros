@@ -20,7 +20,7 @@
     theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device", a11y: "device", lock: "device", osk: "device"
+    multitask: "device", a11y: "device", lock: "device", osk: "device", widgets: "device"
   };
 
   // Search settings: one row per setting, in page order.
@@ -42,6 +42,7 @@
     ["seasonal-amount", "appearance", "z.amount", "z.title", "z.on", "seasonal"],
     ["xmas", "appearance", "z.xmas", "z.title", "z.on", "seasonal"],
     ["easter", "appearance", "z.easter", "z.title", "z.on", "seasonal"],
+    ["widgets", "appearance", "g.title", null, null, "widgets"],
     ["dock", "appearance", "k.on", "k.dock", null, "dock"],
     ["dock-size", "appearance", "k.size", "k.dock", "k.on", "dock"],
     ["dock-style", "appearance", "k.style", "k.dock", "k.on", "dock"],
@@ -575,6 +576,9 @@
       "w.import": "restore load backup file",
       "w.lang": "english greek german deutsch",
       "w.osk": "virtual keyboard touch typing",
+      "w.widgets": "widgets clock calendar today weather desktop cards",
+      "g.title": "Desktop widgets",
+      "g.hint": "Cards on the desktop, on this device only. To change their order, drag a card by its title, or right-click it (long press on a touch screen).",
       "w.osk-layouts": "keyboard languages greek english",
       "w.translate": "translation language help contribute",
       "w.menusearch": "search find apps data",
@@ -1055,6 +1059,9 @@
       "w.import": "επαναφορά φόρτωση αρχείο αντίγραφο",
       "w.lang": "αγγλικά ελληνικά γερμανικά english",
       "w.osk": "εικονικό πληκτρολόγιο οθόνης αφή",
+      "w.widgets": "widgets γραφικά στοιχεία ρολόι ημερολόγιο σήμερα καιρός επιφάνεια κάρτες",
+      "g.title": "Widgets επιφάνειας εργασίας",
+      "g.hint": "Κάρτες στην επιφάνεια εργασίας, μόνο σε αυτή τη συσκευή. Για να αλλάξεις τη σειρά τους, σύρε μια κάρτα από τον τίτλο της ή κάνε δεξί κλικ πάνω της (παρατεταμένο πάτημα σε οθόνη αφής).",
       "w.osk-layouts": "πληκτρολόγιο διατάξεις γλώσσες",
       "w.translate": "μετάφραση γλώσσα βοήθεια",
       "w.menusearch": "αναζήτηση εύρεση εφαρμογές δεδομένα",

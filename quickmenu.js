@@ -535,7 +535,7 @@
   }
 
   // An empty spot of the desktop: not an icon, a note, the pet, a field…
-  var SKIP = ".ld-ic, #ld-dock, .sn-note, .sn-card, .sn-addcard, #sn-add, #pet-layer, #pet-hud, " +
+  var SKIP = ".ld-ic, #ld-dock, .sn-note, .sn-card, .sn-addcard, #sn-add, #pet-layer, #pet-hud, #wg-col, " +
              "input, textarea, select, button, a, [contenteditable], .qm-menu";
   function emptySpot(t) {
     if (!t || !t.closest || !host || !host.desktop) return false;
