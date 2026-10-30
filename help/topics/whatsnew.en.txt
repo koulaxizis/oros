@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.54.01
+- Newsletter: pressing Cancel in the product picker no longer leaves an empty Products block behind, and long product texts from your shop now end at a whole word with ….
+
+
 ## Version 4.54.00
 - Desktop widgets: Clock, Calendar, Today, Weather, Playing and Sync as cards on the desktop, in a column at the right on a computer and a row at the top on a phone. Right-click the desktop and choose Widgets… to pick them and set their order, or use Settings › Appearance. A computer starts with Clock, Calendar, Today and Weather.
 

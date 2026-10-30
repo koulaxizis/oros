@@ -1143,7 +1143,7 @@
     put("issues", x);
     renderBlocks(x, $("blocks"));
     if ((b.k === "img" || b.k === "imgtxt" || b.k === "gallery") && !(C.picRefs(b)[0] || {}).f) pickImage(x, at);
-    else if (b.k === "prod" && !b.items.length && Sh) shopPick(x, at);
+    else if (b.k === "prod" && !b.items.length && Sh) shopPick(x, at, true);
     else focusBlock(at);
   }
   // The other block kinds and the saved blocks (wave E3)
@@ -3194,9 +3194,18 @@
     var cx = side(x), b = cx && cx.blocks[i];
     return C.issue(data, x.id) && b && b.k === "prod" ? b : null;
   }
-  function shopPick(x, i) {
+  // fresh: the block was just added for this pick, so closing the
+  // picker without products takes the empty block away again
+  function shopPick(x, i, fresh) {
     var b = liveProd(x, i);
     if (!b || !Sh) return;
+    var cancel = fresh ? function () {
+      var cur = liveProd(x, i);
+      if (cur !== b || cur.items.length) return;
+      side(x).blocks.splice(i, 1);
+      put("issues", x);
+      if (view === "edit") renderBlocks(x, $("blocks"));
+    } : null;
     Sh.pick(b, function (items, sh, acct) {
       var cur = liveProd(x, i);
       if (!cur || !items.length) return;
@@ -3206,7 +3215,7 @@
       cur.sh = sh; cur.acct = acct; cur.at = Date.now();
       put("issues", x);
       if (view === "edit") renderBlocks(x, $("blocks"));
-    });
+    }, cancel);
   }
   function shopRefresh(x, i) {
     var b = liveProd(x, i);
