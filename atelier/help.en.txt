@@ -121,7 +121,7 @@ A file opens as a new design:
 - `More` › `Credits` lists the work by others your design uses.
 
 ## Sync and backup
-Designs sync with orOS sync. Uploaded images are stored once on the orOS disk and sync with Vault Drive like your other files; on another device a photo may show `Syncing…` until it arrives.
+Each design is also a file in Files › Atelier: it syncs with your other devices like every file and goes into backups with the orOS disk. Double-click such a file in Files to open the design; a deleted design goes to the Trash in Files. If the same design was changed on two devices at once, Atelier puts both versions together, so no change is lost. Uploaded images are stored once on the orOS disk and sync with Vault Drive like your other files; on another device a photo may show `Syncing…` until it arrives.
 - **Folders:** the row above your designs shows `All` and your folders; `+ New folder` makes one. To put designs in a folder, tap `Select`, pick them and tap `Move`, or use a design's `⋯` › `Move to folder…`. A design you make while a folder is open goes into it. The `⋯` next to the open folder renames or deletes it; deleting a folder keeps its designs. Folders sync to your other devices.
 - To delete several designs at once, tap `Select` above `Your designs`, pick them (or `Select all`, or `From Canva` for every design a Canva import made) and tap `Delete`. `Undo` in the message brings them all back.
 - When a design you delete has pictures, videos or sounds that nothing else uses, `Delete` first asks, with a box to delete those files too (off by default). Files another design, Slides or Layout still uses are always kept; deleted files cannot be brought back.
