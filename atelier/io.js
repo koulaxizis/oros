@@ -502,6 +502,8 @@
       return f.text().then(function (txt) {
         var pkg = null;
         try { pkg = JSON.parse(txt); } catch (e) {}
+        // a design's own file in Files › Atelier opens that design (AT-DISK)
+        if (!batching && AT.openStored && AT.openStored(f.name, pkg)) return;
         return importPackageObj(pkg);
       });
     });
@@ -693,7 +695,7 @@
       inp.click();
     });
   }
-  function docCount() { return ((AT.data() || {}).docs || []).length; }
+  function docIds() { return ((AT.data() || {}).docs || []).map(function (d) { return d.id; }); }
   // A picked file comes from the shell's window when its file dialog
   // (dialogs.js) is used, so a type check against this frame's Blob is
   // false for it: tell a file from a disk entry by what it can do.
@@ -703,14 +705,24 @@
     files = (files || []).filter(Boolean);
     if (!files.length) return Promise.resolve();
     if (files.length === 1 && isFile(files[0]) && !/\.zip$/i.test(files[0].name || "")) return openFile(files[0]);
-    var ok = 0, bad = 0, n = 0;
+    var ok = 0, bad = 0, n = 0, full = false;
+    // a design counts once it is stored (AT.keepStored: on the disk
+    // written and read back, else in localStorage); a full storage
+    // stops the batch and keeps what fit
     function one(f) {
-      if (n >= BATCH_MAX) { bad++; return Promise.resolve(); }
+      if (n >= BATCH_MAX || full) { bad++; return Promise.resolve(); }
       n++;
-      var before = docCount();
+      var before = docIds();
       return Promise.resolve().then(function () { return importAnyFile(f); })
         .then(null, function (e) { if (e && e.message === "nofs") throw e; })
-        .then(function () { if (docCount() > before) ok++; else bad++; });
+        .then(function () {
+          var added = docIds().filter(function (id) { return before.indexOf(id) < 0; });
+          if (!added.length) { bad++; return; }
+          return AT.keepStored(added).then(function (kept) {
+            if (kept.length) ok++;
+            else { bad++; full = true; }
+          });
+        });
     }
     function zipOf(f) {
       if (f.size > ZIP_MAX) { bad++; return; }
@@ -766,7 +778,8 @@
         var chain = Promise.resolve();
         en.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }).forEach(function (e) {
           var q = p + "/" + e.name;
-          if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash") chain = chain.then(function () { return walk(q, depth + 1); }); }
+          // the Trash, and Atelier's own designs (AT-DISK), are not imported
+          if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash" && q !== AT.DISK_DIR) chain = chain.then(function () { return walk(q, depth + 1); }); }
           else if (PKG_RE.test(e.name) && out.length < BATCH_MAX) out.push(q);
         });
         return chain;
@@ -812,7 +825,7 @@
         o.disabled = true;
         lsOf(fs, path).then(function (en) {
           if (my !== gen) return;
-          en.filter(function (e) { return e.dir && !(path === ROOT && e.name === "Trash"); })
+          en.filter(function (e) { return e.dir && !(path === ROOT && e.name === "Trash") && path + "/" + e.name !== AT.DISK_DIR; })
             .sort(function (a, b) { return a.name < b.name ? -1 : 1; })
             .forEach(function (e) {
               var b = el("button", "btn small block", "📁 " + e.name); b.type = "button";

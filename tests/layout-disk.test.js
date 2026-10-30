@@ -292,10 +292,10 @@ test("Layout wiring: disk at boot, saves, pulls, Vault changes, own files open, 
   assert.deepEqual(hits, [{ id: "doc-a", title: "Book", text: "words", when: 5, target: { doc: "doc-a" } }]);
   const as = read("assistant/assistant.js");
   assert.match(as, /layout: \{ mod: "LayoutCommands", data: "oros-layout-index", legacy: "oros-layout-data", list: "docs", pkg: 1/);
-  // Atelier offers no picture as unused while documents live on the disk
+  // Atelier's "not used" check reads Layout's files on the disk too
+  // (AT-DISK; the behaviour is tested in tests/atelier-disk.test.js)
   const pn = read("atelier/panels.js");
-  assert.match(pn, /function usedFiles\(\) \{\s*if \(DOCS_ON_DISK\) return null;/);
-  assert.match(pn, /if \(!fsApi\(\) \|\| DOCS_ON_DISK\) return null;/);
+  assert.match(pn, /var DOC_DIRS = \["\/internal\/Layout", "\/internal\/Atelier", "\/internal\/Rescue"\];/);
   ["toast.diskSave", "toast.diskRead", "toast.diskOff"].forEach((k) => {
     assert.equal(ly.split('"' + k + '":').length - 1, 2, "EN+EL " + k);
     assert.ok(read("i18n/de/layout.js").includes('"' + k + '"'), "DE " + k);

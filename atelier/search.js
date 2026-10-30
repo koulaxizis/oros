@@ -1,7 +1,10 @@
 // ============================================================
 // orOS Atelier — universal search provider (v1.0.0)
 // Loaded by the shell on the first menu search (apps.json
-// "search"). Read-only: reads oros-atelier-data, never writes.
+// "search"). Read-only: reads oros-atelier-index (the designs on the
+// orOS disk, AT-DISK: name and the first 1000 characters of the text
+// boxes) or, on a device where Atelier has not used the disk yet,
+// oros-atelier-data; never writes.
 // One hit per design (its name; the words of its text boxes —
 // items with ax.k "text", in page order — and of any designkit
 // stories as text). The date is the last edit (the newest entity
@@ -12,7 +15,7 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var KEY = "oros-atelier-data";
+  var KEY = "oros-atelier-data", INDEX = "oros-atelier-index";
   var COLLS = ["pages", "masters", "items", "stories", "pstyles", "cstyles", "swatches", "guides", "rec"];
 
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -44,9 +47,18 @@
 
   var PROVIDER = {
     id: "atelier",
-    keys: [KEY],
+    keys: [INDEX, KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var ix = ctx.readJSON(INDEX), out = [];
+      if (ix && Array.isArray(ix.docs)) {
+        ix.docs.forEach(function (e) {
+          if (!e || typeof e.id !== "string") return;
+          var name = typeof e.name === "string" ? e.name.trim() : "";
+          out.push({ id: e.id, title: name || texts(ctx.lang)["doc.untitled"], text: typeof e.tx === "string" ? e.tx : "", when: Number(e.m) || 0, target: { doc: e.id } });
+        });
+        return out;
+      }
+      var d = ctx.readJSON(KEY);
       if (!d || !Array.isArray(d.docs)) return out;
       var dt = d.dt && typeof d.dt === "object" ? d.dt : {};
       d.docs.forEach(function (doc) {
