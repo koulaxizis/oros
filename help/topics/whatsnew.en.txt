@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.48.00
+- Studio: write down where a sound comes from. Select an audio clip and press Sound info: title, who made it, the licence (CC0, CC BY, CC BY-SA, public domain, your own, other) and a link. Export then lists the credits of the song's sounds, ready to copy or save as text.
+
 ## Version 4.47.03
 - Kanban: change the name or colour of a label you already have. Tap the pencil next to it in Add / manage labels (in a card) or in Filter by label. Every card that carries the label changes with it, and the label can be deleted from there too.
 
