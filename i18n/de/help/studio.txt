@@ -81,6 +81,13 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 - `Freie Klänge` (in `Spur hinzufügen`) listet 34 einzelne Klänge desselben Orchesters in drei Gruppen: Trommeln, Becken und Gong, kleines Schlagwerk. `Anhören` spielt einen; `Hinzufügen` legt ihn als Clip auf eine Audiospur an der Abspielposition, mit bereits ausgefüllter Lizenzkarte (CC0).
 - Eine aufgenommene Note klingt so lange wie ihre Aufnahme: Ein sehr langer Ton bei Streichern oder Bläsern klingt nach etwa acht Sekunden aus.
 
+## Eigene Plugins (VST3, CLAP)
+- Auf einem Windows-Computer kann Studio die dort installierten VST3- und CLAP-Plugins nutzen, auch gekaufte, über orOS Bridge: ein kleines kostenloses Programm (MIT) von github.com/koulaxizis/oros-bridge. Es läuft nur auf deinem Computer, und nur orOS kann mit ihm sprechen.
+- Tippe in den Einstellungen einer Spur auf `Plugin auf diesem Computer`. Beim ersten Mal zeigt orOS Bridge einen sechsstelligen Code; gib ihn einmal in Studio ein, dann bleibt dieser Browser gekoppelt.
+- Wähle ein Plugin: Auf einer Instrumentenspur spielt ein Instrument-Plugin die Noten der Spur und ein Effekt-Plugin bearbeitet ihren Klang; auf einer Audiospur wählst du einen Effekt. `Sein Fenster zeigen` öffnet das eigene Fenster des Plugins auf dem Computer, um seinen Klang einzustellen. `Plugins suchen` durchsucht die üblichen Ordner erneut, wenn du neue installiert hast.
+- `Als Audio einfrieren` spielt die Spur durch das Plugin in eine neue Audiospur, mit derselben Lautstärke, demselben Panorama und denselben Effekten, und schaltet das Original stumm. Das ist ein Schritt, den `Rückgängig` zurücknimmt. Die Einstellungen des Plugins bleiben bei der neuen Spur, sodass ein späteres `Als Audio einfrieren` dort vom selben Klang ausgeht.
+- Die eingefrorene Spur ist gewöhnliches Audio: Sie spielt, wird exportiert und synchronisiert sich auf jedem Gerät, auch ohne den Computer. Eine Spur mit einem NULL-Instrument kann noch nicht durch ein Plugin laufen.
+
 ## Pianorolle
 - Wähle einen MIDI-Clip aus und drück `Noten bearbeiten` in der Leiste unten, doppelklicke den Clip oder drück [[E]]. Auf dem Handy füllt die Rolle den Bildschirm.
 - `Zeichnen`: Tippe oder klicke, um eine Note hinzuzufügen, und zieh beim Hinzufügen, um sie länger zu machen. `Auswählen`: Zieh einen Rahmen um Noten oder tippe sie an; mit [[Shift]] kommen sie zur Auswahl hinzu.

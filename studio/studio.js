@@ -197,6 +197,7 @@
       "fs.title": "Free sounds", "fs.hint": "Single sounds (drums, cymbals, small percussion) from VSCO 2 CE, CC0: free for any use, no credit needed. Add one and it becomes an audio clip at the playhead.",
       "fs.play": "Listen", "fs.stop": "Stop", "fs.add": "Add", "fs.loading": "Loading the list…", "fs.none": "The list could not be downloaded. Try again when online.",
       "fs.fail": "{name} could not be downloaded.",
+      "br.btn": "Plugin on this computer", "br.title": "Your plugins (VST3, CLAP)", "br.offHint": "orOS Bridge is a small free program for Windows that lets Studio use the VST3 and CLAP plugins on this computer, the ones you bought too. Install it, start it, then press Connect.", "br.get": "Get orOS Bridge", "br.connect": "Connect", "br.connecting": "Connecting to orOS Bridge…", "br.pairHint": "orOS Bridge now shows a 6-digit code. Type it here once; this browser remembers the pairing.", "br.code": "Code from orOS Bridge", "br.pair": "Pair", "br.badCode": "Wrong code. orOS Bridge shows a new one.", "br.plugin": "Plugin", "br.instruments": "Instruments (play the notes)", "br.effects": "Effects (process the sound)", "br.scan": "Look for plugins", "br.scanning": "Looking for plugins… this can take a minute.", "br.none": "No plugins found. Install VST3 or CLAP plugins in their usual folders and press Look for plugins.", "br.window": "Show its window", "br.freeze": "Freeze to audio", "br.hint": "Set the sound in the plugin's window, then Freeze: the track plays through the plugin into a new audio track and the original is muted.", "br.again": "Frozen through {name}. Freeze again to replace the audio with the plugin's current sound.", "br.opening": "Opening {name}…", "br.rendering": "Rendering through the plugin… {n}%", "br.done": "Frozen: {name}", "br.fail": "The plugin could not render. Nothing was changed.", "br.lost": "orOS Bridge closed. Start it again and press Connect.", "br.nx": "A track with a NULL instrument cannot go through a plugin yet.", "br.empty": "This track has nothing to play.", "br.gone": "The track this one was frozen from has been deleted.",
       "smp.group": "{cat} (download)", "smp.cat.Keys": "Keys", "smp.cat.Strings": "Strings", "smp.cat.Woodwinds": "Woodwinds",
       "smp.cat.Brass": "Brass", "smp.cat.Percussion": "Percussion", "smp.loading": "Downloading {name}…", "smp.step": "Downloading {name}: {n} of {total}",
       "smp.ready": "{name} is ready", "smp.fail": "{name} could not be downloaded. The built-in sound plays until it can.",
@@ -353,6 +354,7 @@
       "fs.title": "Ελεύθεροι ήχοι", "fs.hint": "Μεμονωμένοι ήχοι (τύμπανα, πιατίνια, μικρά κρουστά) από το VSCO 2 CE, CC0: ελεύθεροι για κάθε χρήση, χωρίς αναφορά. Πρόσθεσε έναν και γίνεται κλιπ ήχου στη θέση αναπαραγωγής.",
       "fs.play": "Άκουσε", "fs.stop": "Διακοπή", "fs.add": "Προσθήκη", "fs.loading": "Φόρτωση της λίστας…", "fs.none": "Δεν ήταν δυνατή η λήψη της λίστας. Δοκίμασε ξανά με σύνδεση.",
       "fs.fail": "Δεν ήταν δυνατή η λήψη του {name}.",
+      "br.btn": "Plugin σε αυτόν τον υπολογιστή", "br.title": "Τα plugins σου (VST3, CLAP)", "br.offHint": "Το orOS Bridge είναι ένα μικρό δωρεάν πρόγραμμα για Windows που επιτρέπει στο Studio να χρησιμοποιεί τα VST3 και CLAP plugins αυτού του υπολογιστή, και όσα έχεις αγοράσει. Εγκατάστησέ το, άνοιξέ το και πάτησε Σύνδεση.", "br.get": "Κατέβασε το orOS Bridge", "br.connect": "Σύνδεση", "br.connecting": "Σύνδεση με το orOS Bridge…", "br.pairHint": "Το orOS Bridge δείχνει τώρα έναν εξαψήφιο κωδικό. Πληκτρολόγησέ τον εδώ μία φορά· αυτός ο browser θυμάται τη σύζευξη.", "br.code": "Κωδικός από το orOS Bridge", "br.pair": "Σύζευξη", "br.badCode": "Λάθος κωδικός. Το orOS Bridge δείχνει νέο.", "br.plugin": "Plugin", "br.instruments": "Όργανα (παίζουν τις νότες)", "br.effects": "Εφέ (επεξεργάζονται τον ήχο)", "br.scan": "Αναζήτηση plugins", "br.scanning": "Αναζήτηση plugins… μπορεί να πάρει ένα λεπτό.", "br.none": "Δεν βρέθηκαν plugins. Εγκατάστησε VST3 ή CLAP plugins στους συνηθισμένους φακέλους και πάτησε Αναζήτηση plugins.", "br.window": "Δείξε το παράθυρό του", "br.freeze": "Πάγωμα σε ήχο", "br.hint": "Ρύθμισε τον ήχο στο παράθυρο του plugin και πάτησε Πάγωμα: το κανάλι παίζει μέσα από το plugin σε νέο κανάλι ήχου και το αρχικό σιγάζει.", "br.again": "Παγωμένο μέσα από το {name}. Πάγωσέ το ξανά για να αντικατασταθεί ο ήχος με τον τωρινό ήχο του plugin.", "br.opening": "Άνοιγμα του {name}…", "br.rendering": "Απόδοση μέσα από το plugin… {n}%", "br.done": "Παγώθηκε: {name}", "br.fail": "Το plugin δεν μπόρεσε να αποδώσει τον ήχο. Δεν άλλαξε τίποτα.", "br.lost": "Το orOS Bridge έκλεισε. Άνοιξέ το ξανά και πάτησε Σύνδεση.", "br.nx": "Ένα κανάλι με όργανο NULL δεν μπορεί ακόμη να περάσει από plugin.", "br.empty": "Αυτό το κανάλι δεν έχει τίποτα να παίξει.", "br.gone": "Το κανάλι από το οποίο παγώθηκε αυτό έχει διαγραφεί.",
       "smp.group": "{cat} (λήψη)", "smp.cat.Keys": "Πλήκτρα", "smp.cat.Strings": "Έγχορδα", "smp.cat.Woodwinds": "Ξύλινα πνευστά",
       "smp.cat.Brass": "Χάλκινα πνευστά", "smp.cat.Percussion": "Κρουστά", "smp.loading": "Λήψη: {name}…", "smp.step": "Λήψη {name}: {n} από {total}",
       "smp.ready": "Το {name} είναι έτοιμο", "smp.fail": "Δεν ήταν δυνατή η λήψη του {name}. Παίζει ο ενσωματωμένος ήχος μέχρι να γίνει.",
@@ -2874,6 +2876,227 @@
       });
     });
   }
+  // ---------- 9c. Plugins on this computer (orOS Bridge) ----------
+  // The person's own VST3 and CLAP plugins, hosted by orOS Bridge on
+  // this computer (bridge.js). A track is "frozen" through one: its
+  // dry sound (clips and notes, before effects, fader and pan) or, for
+  // an instrument plugin, its notes as MIDI, rendered offline at 48 kHz
+  // into a new audio track; the original is muted, all one undo step.
+  // The frozen track keeps br {id, name, st, from}: the plugin, its
+  // state on the disk (st) and the track it came from, so it can be
+  // frozen again with the same sound.
+  var BRG = window.StudioBridge, BR_RATE = 48000, BR_BLOCK = 4096, BR_TAIL = 2, BR_MAX_TAIL = 10;
+  var BR_DIR = "/internal/Studio/bridge";
+  var brTrack = "", brOpen = null, brList = [], brBusy = false, brEditors = false;
+  function brTr() { return C.find(data, "tracks", brTrack); }
+  // the track whose sound goes through the plugin
+  function brSource(tr) { return tr && tr.br ? C.find(data, "tracks", tr.br.from) : tr; }
+  function brStatus(text) { $("br-status").textContent = text || ""; }
+  function brShow(which) {
+    ["off", "pair", "on"].forEach(function (k) { $("br-" + k).hidden = k !== which; });
+    brSetBusy(brBusy);
+  }
+  function brSetBusy(on) {
+    brBusy = on;
+    ["br-connect", "br-pair-go", "br-scan", "br-window", "br-freeze", "br-plugin"].forEach(function (id) { $(id).disabled = on; });
+    if (!on) $("br-window").hidden = !brEditors;
+  }
+  function brClose() {
+    if (brOpen) { BRG.close(brOpen.h); brOpen = null; }
+  }
+  function openBridge(tid) {
+    if (!BRG) return;
+    brTrack = tid;
+    brStatus(t("br.connecting"));
+    brShow("");
+    showDlg("br-dlg");
+    brConnect();
+  }
+  function brConnect() {
+    brSetBusy(true);
+    BRG.connect().then(function (r) {
+      brSetBusy(false);
+      if (r === "pair") {
+        $("br-code").value = "";
+        brShow("pair");
+        brStatus("");
+        return BRG.pair().then(function () { $("br-code").focus(); });
+      }
+      brShow("on");
+      return brLoad(false);
+    }).then(null, function () { brSetBusy(false); brShow("off"); brStatus(""); });
+  }
+  function brSendCode() {
+    var code = $("br-code").value.replace(/\D/g, "");
+    if (code.length !== 6) { brStatus(t("br.badCode")); return; }
+    brSetBusy(true);
+    BRG.sendCode(code).then(function () {
+      brSetBusy(false);
+      brShow("on");
+      return brLoad(false);
+    }, function () {
+      brSetBusy(false);
+      brStatus(t("br.badCode"));
+      return BRG.pair().then(null, function () {});
+    });
+  }
+  // fills the plugin list (a scan when asked, or when nothing is known yet)
+  function brLoad(scan) {
+    brSetBusy(true);
+    if (scan) brStatus(t("br.scanning"));
+    return (scan ? BRG.scan() : BRG.list()).then(function (list) {
+      if (!list.length && !scan) return brLoad(true);
+      brList = list;
+      brSetBusy(false);
+      brFill();
+    }, function () { brSetBusy(false); brStatus(t("br.lost")); });
+  }
+  function brFill() {
+    var tr = brTr(), src = brSource(tr), sel = $("br-plugin"), inst = isInst(src);
+    sel.innerHTML = "";
+    var want = tr && tr.br ? tr.br.id : (brOpen ? brOpen.id : "");
+    [["br.instruments", true], ["br.effects", false]].forEach(function (g) {
+      if (g[1] && !inst) return;                 // an audio track has no notes to play
+      var items = brList.filter(function (p) { return p.instrument === g[1]; });
+      if (!items.length) return;
+      var og = document.createElement("optgroup");
+      og.label = t(g[0]);
+      items.forEach(function (p) {
+        var o = el("option", "", p.name + (p.vendor ? " · " + p.vendor : "") + " (" + (p.format === "clap" ? "CLAP" : "VST3") + ")");
+        o.value = p.id;
+        og.appendChild(o);
+      });
+      sel.appendChild(og);
+    });
+    if (want && brList.some(function (p) { return p.id === want; })) sel.value = want;
+    var any = sel.querySelectorAll("option").length > 0;
+    $("br-window").disabled = $("br-freeze").disabled = !any;
+    brStatus(any ? (tr && tr.br ? t("br.again", { name: tr.br.name }) : t("br.hint")) : t("br.none"));
+  }
+  function brPicked() { var id = $("br-plugin").value; return brList.filter(function (p) { return p.id === id; })[0] || null; }
+  // the picked plugin, open on the bridge (with the frozen track's sound when it is the same plugin)
+  function brEnsure() {
+    var p = brPicked(), tr = brTr();
+    if (!p) return Promise.reject(new Error("none"));
+    if (brOpen && brOpen.id === p.id) return Promise.resolve(brOpen);
+    brClose();
+    brStatus(t("br.opening", { name: p.name }));
+    return BRG.open(p.id, BR_RATE, BR_BLOCK).then(function (j) {
+      brOpen = { id: p.id, name: p.name, h: j.h, instrument: j.instrument === true || p.instrument, latency: j.latency | 0 };
+      var fs = fsApi(), st = tr && tr.br && tr.br.id === p.id ? tr.br.st : "";
+      if (!st || !fs) return brOpen;
+      return Promise.resolve(fs.readBlob(st)).then(function (b) { return b.text(); })
+        .then(function (b64) { return BRG.setState(brOpen.h, b64.trim()); })
+        .then(function () { return brOpen; }, function () { return brOpen; });   // a lost state: the plugin's own sound
+    }).then(function (o) { brStatus(""); return o; });
+  }
+  function brWindow() {
+    brSetBusy(true);
+    brEnsure().then(function (o) { return BRG.editor(o.h); }).then(function () { brSetBusy(false); },
+      function () { brSetBusy(false); brStatus(t("br.fail")); });
+  }
+  // The source track's dry sound, from 0 to its end: [L, R] Float32Arrays
+  function brDry(src, end) {
+    var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) return Promise.reject(new Error("noaudio"));
+    var len = Math.ceil(end * BR_RATE), oc = new OAC(2, len, BR_RATE), sp = smpOf(src);
+    return (sp ? SND.ensure(audio() || oc, [sp]) : Promise.resolve()).then(function () {
+      var out = oc.createGain();
+      out.connect(oc.destination);
+      clipsOf(src.id).forEach(function (c) { if (!C.isMidi(c)) scheduleClip(oc, c, 0, end, 0, out, null); });
+      var n = { id: src.id, nx: false, input: out, inst: instOf(src), smp: sp };
+      passNotes(0, end).forEach(function (q) { if (q.t === src.id) scheduleNote(oc, q, 0, 0, n, null); });
+      var p = oc.startRendering();
+      if (!p || typeof p.then !== "function") p = new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
+      return p;
+    }).then(function (b) { return [b.getChannelData(0), b.getChannelData(1)]; });
+  }
+  // the source track's notes as MIDI (channel 1), note-offs first on a shared frame
+  function brEvents(src, end) {
+    var ev = [];
+    passNotes(0, end).forEach(function (q) {
+      var v = Math.min(127, Math.round(q.v * q.g));
+      if (q.t !== src.id || v < 1) return;
+      var on = Math.round(q.at * BR_RATE), off = Math.max(on + 1, Math.round(q.end * BR_RATE));
+      ev.push([on, 0x90, q.p, v], [off, 0x80, q.p, 0]);
+    });
+    return ev.sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; });
+  }
+  // frames after `keep` that are below -100 dB are cut
+  function brTrim(chans, keep) {
+    var n = chans[0].length;
+    while (n > keep && chans.every(function (c) { return Math.abs(c[n - 1]) < 1e-5; })) n--;
+    return chans.map(function (c) { return c.subarray(0, n); });
+  }
+  function brFreeze() {
+    var tr = brTr(), src = brSource(tr), fs = fsApi(), a = audio();
+    if (!tr || !proj) return;
+    if (!src) { brStatus(t("br.gone")); return; }
+    if (!fs) { brStatus(t("toast.noDisk")); return; }
+    if (nxOf(src)) { brStatus(t("br.nx")); return; }
+    var clips = clipsOf(src.id), end = clips.reduce(function (m, c) { return Math.max(m, C.clipEnd(c)); }, 0);
+    if (end < C.MIN_LEN) { brStatus(t("br.empty")); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && !buffers[c.s]; })) { brStatus(t("toast.missing")); return; }
+    if (!a) { brStatus(t("toast.noAudio")); return; }
+    var o, len = Math.ceil(end * BR_RATE), plugin;
+    brSetBusy(true);
+    brEnsure().then(function (x) {
+      o = x; plugin = { id: o.id, name: o.name };
+      return BRG.info(o.h);
+    }).then(function (inf) {
+      var tail = inf.tail > 0 ? Math.min(inf.tail, BR_MAX_TAIL * BR_RATE) : BR_TAIL * BR_RATE;
+      o.latency = inf.latency | 0;
+      return BRG.reset(o.h).then(function () { return o.instrument ? [] : brDry(src, end); }).then(function (input) {
+        brStatus(t("br.rendering", { n: 0 }));
+        return BRG.renderAll(o.h, input, o.instrument ? brEvents(src, end) : [], len + tail, o.latency, BR_BLOCK,
+          function (x) { brStatus(t("br.rendering", { n: Math.floor(x * 100) })); });
+      });
+    }).then(function (outs) {
+      if (!outs.length) throw new Error("silent");
+      var chans = brTrim([outs[0], outs[1] || outs[0]], len);
+      return BRG.state(o.h).then(function (st) { return brKeep(tr, src, plugin, chans, st); });
+    }).then(function (name) {
+      brSetBusy(false);
+      brStatus("");
+      hideDlg("br-dlg");
+      showToast(t("br.done", { name: name }));
+    }, function (e) {
+      brSetBusy(false);
+      brStatus(e && e.message === "noaudio" ? t("toast.noAudio") : t("br.fail"));
+    });
+  }
+  // The render becomes a source on the disk and a clip at 0: on the
+  // frozen track again, or on a new track after the source (muted then).
+  function brKeep(tr, src, plugin, chans, st) {
+    var fs = fsApi(), a = audio(), before = snapshot();
+    var buf = a.createBuffer(2, chans[0].length, BR_RATE);
+    buf.getChannelData(0).set(chans[0]); buf.getChannelData(1).set(chans[1]);
+    var dest = tr.br ? tr : null, name = C.clipLine(src.name + " · " + plugin.name, C.MAX_NAME);
+    if (!dest && tracks().length >= C.MAX_TRACKS) throw new Error("full");
+    var blob = new Blob([C.wavBytes(chans, BR_RATE, 24)], { type: "audio/wav" });
+    return addSource(name + ".wav", "wav", blob, buf, null).then(function (s) {
+      var mix = {};
+      if (!dest) {                               // a new track hears what the source's fader and effects did
+        dest = addTrack(name);
+        if (!dest) throw new Error("full");
+        mix = { vol: src.vol, pan: src.pan, fx: src.fx, auto: src.auto };
+        put("tracks", Object.assign({}, src, { mute: true }));
+      }
+      var path = BR_DIR + "/" + dest.id + ".txt";
+      return Promise.resolve(fs.mkdir ? fs.mkdir(BR_DIR) : null).then(function () {
+        return st ? fs.writeBlob(path, new Blob([st], { type: "text/plain" })) : null;
+      }).then(function () {
+        clipsOf(dest.id).forEach(function (c) { remove("clips", c.id); });
+        put("tracks", C.normTrack(Object.assign({}, C.find(data, "tracks", dest.id), mix,
+          { br: { id: plugin.id, name: plugin.name, st: st ? path : "", from: src.id } })));
+        put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: dest.id, s: s.id, at: 0, off: 0, len: buf.duration }));
+        selTrack = dest.id;
+        undoStack.push(before); redoStack = [];
+        changed();
+        return name;
+      });
+    });
+  }
   function openSmpList() {
     showDlg("smp-dlg");
     renderSmpList();
@@ -3917,6 +4140,23 @@
     $("fs-close").addEventListener("click", function () { fsStop(); hideDlg("fs-dlg"); });
     $("fs-dlg").addEventListener("close", fsStop);
     $("add-free").addEventListener("click", function () { hideDlg("add-dlg"); openFreeSounds(); });
+    $("track-br").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); openBridge(id); });
+    $("br-connect").addEventListener("click", brConnect);
+    $("br-pair-go").addEventListener("click", brSendCode);
+    $("br-code").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); brSendCode(); } });
+    $("br-scan").addEventListener("click", function () { brLoad(true); });
+    $("br-plugin").addEventListener("change", function () { brClose(); });
+    $("br-window").addEventListener("click", brWindow);
+    $("br-freeze").addEventListener("click", brFreeze);
+    $("br-close").addEventListener("click", function () { hideDlg("br-dlg"); });
+    $("br-dlg").addEventListener("close", brClose);
+    if (BRG) BRG.on(function (ev) {
+      if (ev.event === "hello") { brEditors = ev.editors === true; if (!brBusy) $("br-window").hidden = !brEditors; }
+      else if (ev.event === "closed") {
+        brOpen = null;
+        if ($("br-dlg").open) { brSetBusy(false); brShow("off"); brStatus(t("br.lost")); }
+      }
+    });
     $("track-newclip").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); newMidiClip(id, playhead); });
     $("track-midi").addEventListener("click", function () { exportTrackMidi(dlgTrack); });
     $("notes-btn").addEventListener("click", function () { if (selClip) openRoll(selClip); });
