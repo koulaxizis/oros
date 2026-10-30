@@ -12,6 +12,8 @@
 //   - Scribus .sla / .sla.gz import (layout/sla.js) into a new document.
 //   - Rebuild a print PDF with its original pictures (layout/rebuild.js)
 //     and show what landed where it was.
+//   - Many packages at once: picked together, a .zip of them (read a
+//     piece at a time, layout/zipin.js) or a folder in Files.
 //   - Place image, import plain text, a picture sent from another app.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -282,7 +284,7 @@
       return saveBlob(new Blob([bytes], { type: BUNDLE_MIME }), fileName(doc, ".oroslayout"), BUNDLE_MIME, "orOS Layout", ".oroslayout");
     }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
   }
-  function bundleFail(e) { LY.toast(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
+  function bundleFail(e) { say(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
   function fromBundle(r) {
     var pkg = r && r.content && typeof r.content === "object" ? r.content : null;
     if (pkg) {
@@ -307,7 +309,7 @@
   // .idml, a PDF or SVG pages (Affinity and others). Several SVG files
   // at once become one document, a page each (by file name); other
   // files picked together open one after another.
-  var OPEN_ACCEPT = ".oroslayout,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml,image/*,.jpg,.jpeg,.png,.gif,.webp,.tif,.tiff";
+  var OPEN_ACCEPT = ".oroslayout,.zip,application/zip,.sla,.gz,.idml,.pdf,.svg,application/json,.json,application/xml,text/xml,application/vnd.adobe.indesign-idml-package,application/pdf,image/svg+xml,image/*,.jpg,.jpeg,.png,.gif,.webp,.tif,.tiff";
   function isSvg(f) { return /\.svg$/i.test(f.name || "") || f.type === "image/svg+xml"; }
   function isPdf(f) { return /\.pdf$/i.test(f.name || "") || f.type === "application/pdf"; }
   function isPicture(f) { return /\.(jpe?g|png|gif|webp|bmp|tiff?)$/i.test(f.name || "") || /^image\/(jpeg|png|gif|webp|bmp|tiff)$/.test(f.type || ""); }
@@ -323,6 +325,7 @@
       files = (Array.isArray(files) ? files : files ? [files] : []).filter(Boolean);
       if (!files.length) return;
       if (files.every(isSvg)) return importSvg(files);
+      if (files.every(isPkgOrZip) && (files.length > 1 || isZip(files[0]))) return importMany(files);
       // a Scribus file picked with pictures: they are its linked
       // pictures; with a PDF: its print PDF, for the line breaks
       var sla = files.filter(function (f) { return /\.sla(\.gz)?$/i.test(f.name || ""); });
@@ -346,7 +349,7 @@
       if (/\.idml$/i.test(f.name || "")) return importIdml(f);
       if (/\.pdf$/i.test(f.name || "") || f.type === "application/pdf") return importPdf(f);
       if (isSvg(f)) return importSvg([f]);
-      if (f.size > PKG_MAX) { LY.toast(t("imp.bad")); return; }
+      if (f.size > PKG_MAX) { say(t("imp.bad")); return; }
       return f.slice(0, 4).arrayBuffer().then(function (head) {
         if (window.OrosBundle.sniff(new Uint8Array(head)) !== null) {
           return f.arrayBuffer().then(function (ab) {
@@ -359,13 +362,13 @@
           return openPackage(pkg);
         });
       });
-    }).then(null, function () { LY.toast(t("imp.bad")); });
+    }).then(null, function () { say(t("imp.bad")); });
   }
   // pkg.assets: base64 (older JSON packages) or bytes (bundles)
   function openPackage(pkg) {
     return Promise.resolve().then(function () {
       var doc = pkg && pkg.kind === PKG_KIND && pkg.ver === PKG_VER ? M.normDoc(pkg.doc) : null;
-      if (!doc) { LY.toast(t("imp.bad")); return; }
+      if (!doc) { say(t("imp.bad")); return; }
       // a NEW document: never overwrites or resurrects another one
       doc.id = M.newId("doc");
       doc.m = LY.now();
@@ -388,10 +391,165 @@
         }).then(null, function () { fontsFailed++; });
       });
       return chain.then(function () {
+        if (batch) { batch.add(doc, failed, fontsFailed); return; }
         LY.addDoc(doc);
         LY.toast(failed ? t("imp.imgFail", { n: failed }) : fontsFailed ? t("imp.fontFail", { n: fontsFailed }) : t("imp.done"));
       });
-    }).then(null, function () { LY.toast(t("imp.bad")); });
+    }).then(null, function () { say(t("imp.bad")); });
+  }
+
+  // ---------- Many packages at once ----------
+  // Home › Open › A file takes several .oroslayout files and .zip files
+  // of them (e.g. a folder zipped on the computer); Home › Open › A
+  // folder in Files takes every package in a folder of the orOS disk
+  // and its subfolders. One after another, each a new document as with
+  // one file; Home stays open and one toast tells how many came in.
+  // Documents live in the shared localStorage (R30): the first one that
+  // does not fit is taken back and the rest are not opened, so nothing
+  // is shown that a reload would lose.
+  var batch = null;
+  function say(msg) { if (!batch) LY.toast(msg); }
+  var BATCH_MAX = 500, DEPTH_MAX = 4, PKG_RE = /\.oroslayout$/i;
+  function isZip(f) { return /\.zip$/i.test(f.name || "") || f.type === "application/zip"; }
+  function isPkgOrZip(f) { return PKG_RE.test(f.name || "") || isZip(f); }
+  function byName(a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }
+  // files: Files, or { name, get() → Promise<File|null> } (the disk).
+  // → Promise of { ok, bad, full, imgFail }
+  function importMany(files) {
+    files = (files || []).filter(Boolean);
+    if (!files.length || batch) return Promise.resolve(null);
+    var res = { ok: 0, bad: 0, full: 0, imgFail: 0 }, n = 0;
+    batch = {
+      add: function (doc, failed) {
+        if (res.full) return;
+        if (!LY.addDocQuiet(doc)) { res.full = 1; return; }
+        res.ok++;
+        if (failed) res.imgFail++;
+      }
+    };
+    function one(f) {
+      if (res.full) return;
+      if (n >= BATCH_MAX) { res.bad++; return; }
+      n++;
+      var before = res.ok;
+      return openFile(f).then(function () { if (res.ok === before && !res.full) res.bad++; });
+    }
+    function zipOf(f) {
+      return window.LY_ZIPIN.list(f).then(function (entries) {
+        var chain = Promise.resolve();
+        entries.filter(function (e) { return PKG_RE.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name); }).sort(byName).forEach(function (e) {
+          chain = chain.then(function () {
+            if (res.full) return;
+            return e.get(PKG_MAX).then(function (b) { return one(new File([b], e.name.split("/").pop())); }, function () { res.bad++; });
+          });
+        });
+        return chain;
+      }, function () { res.bad++; });
+    }
+    LY.toast(t("imp.manyWorking"));
+    var chain = Promise.resolve();
+    files.forEach(function (f) {
+      chain = chain.then(function () {
+        if (res.full) return;
+        // a picked File may come from the shell's window (orosDialog), where
+        // a Blob check by class fails across windows: tell a file by what it can do
+        return Promise.resolve(typeof f.arrayBuffer === "function" ? f : f.get()).then(function (file) {
+          if (!file) { res.bad++; return; }
+          return isZip(file) ? zipOf(file) : one(file);
+        }).then(null, function () { res.bad++; });
+      });
+    });
+    return chain.then(function () {
+      batch = null;
+      if (LY.doc) LY.goHome(); else LY.renderHome();
+      LY.toast(res.full ? t("imp.full", { n: res.ok }) : res.bad ? t("imp.manyBad", { n: res.ok, bad: res.bad }) : t("imp.many", { n: res.ok }));
+      return res;
+    });
+  }
+
+  // Home › Open › A folder in Files: a small browser of the orOS disk's
+  // folders; "Open" takes this folder and its subfolders.
+  function diskFs() {
+    try { return (window.parent && window.parent.orosFS) || window.orosFS || null; }
+    catch (e) { return window.orosFS || null; }
+  }
+  var ROOT = "/internal";
+  function lsOf(fs, path) {
+    return Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null).then(function () { return fs.ls(path); })
+      .then(function (en) { return (en || []).filter(function (e) { return e && typeof e.name === "string" && e.name.charAt(0) !== "."; }); }, function () { return []; });
+  }
+  // every package under path (subfolders to DEPTH_MAX), sorted by path
+  function packagesIn(fs, path) {
+    var out = [];
+    function walk(p, depth) {
+      return lsOf(fs, p).then(function (en) {
+        var chain = Promise.resolve();
+        en.sort(byName).forEach(function (e) {
+          var q = p + "/" + e.name;
+          if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash") chain = chain.then(function () { return walk(q, depth + 1); }); }
+          else if (PKG_RE.test(e.name) && out.length < BATCH_MAX) out.push(q);
+        });
+        return chain;
+      });
+    }
+    return walk(path, 0).then(function () { return out; });
+  }
+  function diskItems(fs, paths) {
+    return paths.map(function (p) {
+      return { name: p, get: function () {
+        return fs.read(p).then(function (b) { return b ? new File([b], p.split("/").pop()) : null; });
+      } };
+    });
+  }
+  function importDisk() {
+    var fs = diskFs();
+    if (!fs) { LY.toast(t("img.nofs")); return; }
+    var cwd = ROOT, gen = 0;
+    LY.openDialog(t("imp.diskTitle"), function (body, close) {
+      var bar = el("div", "pn-row");
+      var up = el("button", "btn small", t("imp.diskUp")); up.type = "button";
+      var where = el("span", "hint");
+      bar.appendChild(up); bar.appendChild(where);
+      var list = el("div", "imp-dirs");
+      var found = el("p", "hint");
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.cancel")); c.type = "button";
+      var o = el("button", "btn primary", t("imp.diskGo")); o.type = "button";
+      act.appendChild(c); act.appendChild(o);
+      body.appendChild(bar); body.appendChild(list); body.appendChild(found); body.appendChild(act);
+      var paths = [];
+      c.addEventListener("click", close);
+      up.addEventListener("click", function () { if (cwd !== ROOT) go(cwd.replace(/\/[^\/]+$/, "") || ROOT); });
+      o.addEventListener("click", function () {
+        if (!paths.length) return;
+        close();
+        importMany(diskItems(fs, paths));
+      });
+      function go(path) {
+        cwd = path;
+        var my = ++gen;
+        up.disabled = path === ROOT;
+        where.textContent = path === ROOT ? "/" : path.slice(ROOT.length);
+        list.textContent = "";
+        found.textContent = t("imp.diskLooking");
+        o.disabled = true;
+        lsOf(fs, path).then(function (en) {
+          if (my !== gen) return;
+          en.filter(function (e) { return e.dir && !(path === ROOT && e.name === "Trash"); }).sort(byName).forEach(function (e) {
+            var b = el("button", "btn small block", "\ud83d\udcc1 " + e.name); b.type = "button";
+            b.addEventListener("click", function () { go(path + "/" + e.name); });
+            list.appendChild(b);
+          });
+          return packagesIn(fs, path);
+        }).then(function (ps) {
+          if (my !== gen || !ps) return;
+          paths = ps;
+          o.disabled = !ps.length;
+          found.textContent = ps.length ? t("imp.diskFound", { n: ps.length }) : t("imp.diskNone");
+        });
+      }
+      go(ROOT);
+    }, true);
   }
 
   // ---------- Images ----------
@@ -914,7 +1072,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile,
+    exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
