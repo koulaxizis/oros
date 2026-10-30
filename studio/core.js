@@ -69,6 +69,7 @@
   var DEFAULT      = { bpm: 120, sig: 4 };
   var MAX_FX       = 8;            // effects in one chain
   var FX_ID_RE     = /^[a-z0-9_]{1,40}$/;
+  var BR_ID_RE     = /^(vst3|clap):[\x21-\x7e]{1,200}$/;   // a plugin on orOS Bridge (bridge.js)
   var MAX_FX_STATE = 4096;         // numbers a plugin's own state may hold (fx item .st)
   var FXU_RE       = /^f[a-z0-9]{6,20}$/;
   var SLIDER_RE    = /^[1-9][0-9]?$/;  // slider1 .. slider64
@@ -287,6 +288,13 @@
     if (typeof x.smp === "string" && SMP_RE.test(x.smp)) t.smp = x.smp;
     var auto = normAuto(x.auto, t.fx);
     if (auto.length) t.auto = auto;
+    // br: frozen through a plugin on orOS Bridge: the plugin, its state
+    // on the disk and the track it was frozen from (studio.js 9c)
+    var br = x.br;
+    if (br && typeof br === "object" && typeof br.id === "string" && BR_ID_RE.test(br.id) && okId(br.from, "t")) {
+      t.br = { id: br.id, name: clipLine(br.name, 80), st: "", from: br.from };
+      if (typeof br.st === "string" && PATH_RE.test(br.st) && br.st.indexOf("/..") < 0) t.br.st = br.st;
+    }
     return t;
   }
   // A source's licence card; null when there is none.

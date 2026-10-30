@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.52.00
+- Studio: use your own VST3 and CLAP plugins, the ones you bought too, on a Windows computer with orOS Bridge, a small free program. In a track's settings, Plugin on this computer pairs with it once by a code, lists your plugins and opens a plugin's window; Freeze to audio plays the track through the plugin into a new audio track that plays everywhere.
+
 ## Version 4.51.00
 - Studio: a grand piano (Salamander Grand Piano by Alexander Holm, CC BY 3.0: name the author when you publish) and orchestral percussion join the recorded instruments. Import SFZ instrument brings your own sampled instruments from a folder onto the orOS disk, and Instruments on this device shows what is downloaded, with Remove. Free sounds (in Add a track) offers 34 single drums, cymbals and small percussion sounds (CC0) to add as clips.
 

@@ -11,7 +11,8 @@
 //               make a blob URL).
 //   connect-src 'self' https: wss: + localhost: integrations talk to
 //               each user's OWN server (Invoice Ninja, Odoo, SearXNG,
-//               Ollama on localhost, WebDAV), so no host list.
+//               Ollama on localhost, WebDAV), so no host list;
+//               ws://127.0.0.1: orOS Bridge (Studio, the person's own plugins).
 //   object-src 'none', base-uri 'self', form-action 'self'.
 // A page that loads files/gmedia.js (the one-time Google Drive / Photos
 // import, approved) may also load https://apis.google.com (Picker).
@@ -73,7 +74,7 @@ function policyFor(html) {
     "img-src 'self' https: data: blob:",
     "media-src 'self' https: data: blob:",
     "font-src 'self' https: data:",
-    "connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*",
+    "connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*",
     "worker-src 'self' blob:",
     "frame-src 'self' https: blob: data:",
     "manifest-src 'self'",

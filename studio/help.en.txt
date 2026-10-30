@@ -81,6 +81,13 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - `Free sounds` (in `Add a track`) lists 34 single sounds from the same orchestra, in three groups: drums, cymbals and gong, small percussion. `Listen` plays one; `Add` puts it on an audio track at the playhead as a clip, with its licence card (CC0) already filled in.
 - A recorded note lasts as long as its recording: a very long held note on strings or winds fades out after about eight seconds.
 
+## Your own plugins (VST3, CLAP)
+- On a Windows computer Studio can use the VST3 and CLAP plugins installed there, the ones you bought too, through orOS Bridge: a small free program (MIT) from github.com/koulaxizis/oros-bridge. It runs only on your computer and only orOS can talk to it.
+- In a track's settings press `Plugin on this computer`. The first time, orOS Bridge shows a 6-digit code; type it in Studio once and this browser stays paired.
+- Pick a plugin: on an instrument track an instrument plugin plays the track's notes, an effect plugin processes its sound; on an audio track you pick an effect. `Show its window` opens the plugin's own window on the computer, to set its sound. `Look for plugins` searches the usual folders again after you install new ones.
+- `Freeze to audio` plays the track through the plugin into a new audio track, with the same volume, pan and effects, and mutes the original. It is one step that `Undo` takes back. The plugin's settings are kept with the new track, so `Freeze to audio` on it later starts from the same sound.
+- The frozen track is ordinary audio: it plays, exports and syncs on every device, also without the computer. A track with a NULL instrument cannot go through a plugin yet.
+
 ## Piano roll
 - Select a MIDI clip and press `Edit notes` in the bar at the bottom, or double-click the clip, or press [[E]]. On a phone the roll fills the screen.
 - `Draw`: tap or click to add a note, and drag while adding to make it longer. `Select`: drag a box around notes, or tap them; with [[Shift]] they are added to the selection.

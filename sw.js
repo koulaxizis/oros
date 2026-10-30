@@ -2025,6 +2025,7 @@ var PRECACHE_URLS = [
   "studio/fxchain.worklet.js",
   "studio/loops.js",
   "studio/midi.js",
+  "studio/bridge.js",
   "studio/sfz.js",
   "studio/sounds.js",
   "studio/notes.js",

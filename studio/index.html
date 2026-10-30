@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-6mkX9r97YdYC2RvlUva+KrcOLGIhPadWI/O2aDFFrkE='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-6mkX9r97YdYC2RvlUva+KrcOLGIhPadWI/O2aDFFrkE='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=studio" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -206,6 +206,37 @@
   </dialog>
 
   <!-- Track -->
+  <dialog id="br-dlg" aria-labelledby="br-title">
+    <h2 id="br-title" data-i18n="br.title">Your plugins (VST3, CLAP)</h2>
+    <div id="br-off" hidden>
+      <p class="hint small" data-i18n="br.offHint"></p>
+      <p class="small"><a href="https://useoros.online/download/#bridge" target="_blank" rel="noopener" data-i18n="br.get">Get orOS Bridge</a></p>
+      <div class="dlg-actions">
+        <button type="button" id="br-connect" class="chip primary" data-i18n="br.connect">Connect</button>
+      </div>
+    </div>
+    <div id="br-pair" hidden>
+      <p class="hint small" data-i18n="br.pairHint"></p>
+      <label class="field" for="br-code" data-i18n="br.code">Code</label>
+      <input type="text" id="br-code" inputmode="numeric" maxlength="7" autocomplete="off">
+      <div class="dlg-actions">
+        <button type="button" id="br-pair-go" class="chip primary" data-i18n="br.pair">Pair</button>
+      </div>
+    </div>
+    <div id="br-on" hidden>
+      <label class="field" for="br-plugin" data-i18n="br.plugin">Plugin</label>
+      <select id="br-plugin"></select>
+      <div class="dlg-actions spread">
+        <button type="button" id="br-scan" class="chip" data-i18n="br.scan">Look for plugins</button>
+        <button type="button" id="br-window" class="chip" data-i18n="br.window">Show its window</button>
+        <button type="button" id="br-freeze" class="chip primary" data-i18n="br.freeze">Freeze to audio</button>
+      </div>
+    </div>
+    <p id="br-status" class="hint small" role="status"></p>
+    <div class="dlg-actions">
+      <button type="button" id="br-close" class="chip" data-i18n="btn.close">Close</button>
+    </div>
+  </dialog>
   <dialog id="track-dlg" aria-labelledby="track-title">
     <div class="dlg-head">
       <h2 id="track-title"></h2>
@@ -216,6 +247,7 @@
       <button type="button" id="track-rename" class="chip" data-i18n="btn.rename">Rename</button>
       <button type="button" id="track-fx" class="chip" aria-haspopup="dialog" data-i18n="fx.open">Effects</button>
       <button type="button" id="track-auto" class="chip" data-i18n="au.show">Automation</button>
+      <button type="button" id="track-br" class="chip" aria-haspopup="dialog" data-i18n="br.btn">Plugin on this computer</button>
     </div>
     <div id="track-inst-sec" hidden>
       <label class="field" for="track-inst" data-i18n="mi.inst">Instrument</label>
