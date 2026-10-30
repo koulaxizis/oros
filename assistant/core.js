@@ -3719,20 +3719,34 @@
   // ---------- 11. Conversation files ----------
   // With "Sync conversations" on, each chat is also a file on the orOS
   // disk, CHAT_DIR/<id>.json, which Vault Drive carries (encrypted) to
-  // the user's other devices. A deleted chat leaves a small tombstone
-  // file { id, m, del: 1 }, so a missing file never means "deleted"
-  // (a missing file is written again). Newer m wins; when both sides
-  // went on from the same start (two devices continued one chat), the
-  // older one is kept as a copy with a fixed id, the same on every
-  // device.
+  // the user's other devices. A missing file never means "deleted" (a
+  // missing file is written again). A deleted chat's file is removed
+  // and its id goes into ONE list, GONE_FILE { kind, gone: { id: m } }
+  // (AS-DEL, 4.47.x): a chat deleted at m and not changed since is
+  // deleted on every device. Before AS-DEL a deleted chat left a
+  // tombstone file { id, m, del: 1 } per chat, which stayed in Files
+  // for good; one is still written (r: 1, at: written) only when a
+  // device that does not read the list writes a deleted chat back, and
+  // removed TOMB_KEEP after. Newer m wins; when both sides went on from
+  // the same start (two devices continued one chat), the older one is
+  // kept as a copy with a fixed id, the same on every device.
   var CHAT_DIR = "/internal/Assistant/Chats";
+  var GONE_FILE = CHAT_DIR + "/deleted-chats.json";
+  var GONE_KIND = "oros-assistant-deleted";
+  var GONE_DAYS = 400;                   // a device away longer may bring a deleted chat back
+  var GONE_MAX = 5000;
+  var TOMB_KEEP = 30 * 86400000;
   var CHAT_ID = /^c[a-z0-9]{6,40}$/;
   function chatId(id) { return typeof id === "string" && CHAT_ID.test(id) ? id : ""; }
   function chatPath(id) { return chatId(id) ? CHAT_DIR + "/" + id + ".json" : null; }
   function normChat(x) {
     if (!isObj(x) || !chatId(x.id)) return null;
     var m = stamp(x.m);
-    if (x.del) return { id: x.id, m: m, del: 1 };
+    if (x.del) {
+      var tb = { id: x.id, m: m, del: 1 };
+      if (x.r) { tb.r = 1; tb.at = stamp(x.at); }
+      return tb;
+    }
     if (!Array.isArray(x.msgs)) return null;
     return {
       id: x.id, m: m, title: str(x.title, 200),
@@ -3748,10 +3762,20 @@
   function parseChatFile(text) {
     try { return normChat(JSON.parse(text)); } catch (e) { return null; }
   }
+  // What a message SAID, without what changes on it later: a card's
+  // state (ui.st "done", "undone"…) and the tool result text that goes
+  // with it. Comparing whole messages made every card answered between
+  // two writes of a chat look like a fork, and each one left an extra
+  // "<id>x…" copy of the chat (AS-DEL).
+  function msgSig(m) {
+    if (!isObj(m)) return "";
+    var ids = function (l) { return Array.isArray(l) ? l.map(function (x) { return isObj(x) ? String(x.id || "") : ""; }) : []; };
+    return JSON.stringify([m.r || "", m.text || "", m.cont ? 1 : 0, ids(m.tools), ids(m.results), ids(m.att)]);
+  }
   function isPrefix(a, b) {   // a's messages start b's
     if (a.msgs.length > b.msgs.length) return false;
     for (var i = 0; i < a.msgs.length; i++) {
-      if (JSON.stringify(a.msgs[i]) !== JSON.stringify(b.msgs[i])) return false;
+      if (msgSig(a.msgs[i]) !== msgSig(b.msgs[i])) return false;
     }
     return true;
   }
@@ -3764,16 +3788,70 @@
     var win = better(a, b), lose = win === a ? b : a;
     if (win.del || lose.del) return { chat: win, copy: null };
     if (isPrefix(lose, win) || isPrefix(win, lose)) {
-      // One continues the other: the longer history, stamped the newer.
+      // One continues the other: the longer history, stamped the newer;
+      // the messages both have as the newer side left them.
       var longer = win.msgs.length >= lose.msgs.length ? win : lose;
       if (longer === win) return { chat: win, copy: null };
-      var c = JSON.parse(JSON.stringify(longer));
-      c.m = win.m;
+      var c = JSON.parse(JSON.stringify(win));
+      c.msgs = c.msgs.concat(JSON.parse(JSON.stringify(lose.msgs.slice(win.msgs.length))));
+      var refs = JSON.parse(JSON.stringify(lose.refs));
+      Object.keys(win.refs).forEach(function (k) { refs[k] = c.refs[k]; });
+      c.refs = refs;
+      c.refN = Math.max(win.refN, lose.refN);
       return { chat: c, copy: null };
     }
     var cp = JSON.parse(JSON.stringify(lose));
     cp.id = (lose.id + "x" + lose.m.toString(36)).slice(0, 41);
     return { chat: win, copy: cp };
+  }
+
+  // The list of deleted chats: { id: m }, ids checked, newest GONE_MAX
+  // kept, none older than GONE_DAYS.
+  function normGone(x, now) {
+    var out = {}, cut = (stamp(now) || Date.now()) - GONE_DAYS * 86400000;
+    if (!isObj(x)) return out;
+    var ids = Object.keys(x).filter(function (id) { return chatId(id) && stamp(x[id]) > cut; });
+    ids.sort(function (a, b) { return stamp(x[b]) - stamp(x[a]) || (a < b ? -1 : 1); });
+    ids.slice(0, GONE_MAX).forEach(function (id) { out[id] = stamp(x[id]); });
+    return out;
+  }
+  function mergeGone(a, b, now) {
+    a = isObj(a) ? a : {};
+    b = isObj(b) ? b : {};
+    var all = {};
+    [a, b].forEach(function (g) {
+      Object.keys(g).forEach(function (id) {
+        var m = stamp(g[id]);
+        if (m > (all[id] || 0)) all[id] = m;
+      });
+    });
+    return normGone(all, now);
+  }
+  // → { id: m } or null (not the list)
+  function parseGoneFile(text) {
+    try {
+      var x = JSON.parse(text);
+      return isObj(x) && x.kind === GONE_KIND && isObj(x.gone) ? normGone(x.gone, Date.now()) : null;
+    } catch (e) { return null; }
+  }
+  function goneFile(g) {   // the same list gives the same text (no rewrite)
+    var out = {};
+    Object.keys(g).sort().forEach(function (id) { out[id] = g[id]; });
+    return JSON.stringify({ kind: GONE_KIND, gone: out });
+  }
+  // A chat's state against the list: deleted at m and not changed since.
+  function goneWins(c, g) {
+    return !!(c && isObj(g) && stamp(g[c.id]) && stamp(g[c.id]) >= c.m);
+  }
+  // A copy left by the old merge (msgSig) that says nothing its chat
+  // does not: "<parent id>x…", every message also at the start of the
+  // parent. → true when it can go without losing a word.
+  function spareCopy(copy, parent) {
+    copy = normChat(copy);
+    parent = normChat(parent);
+    if (!copy || !parent || copy.del || parent.del) return false;
+    if (copy.id.indexOf(parent.id + "x") !== 0) return false;
+    return isPrefix(copy, parent);
   }
 
   // ---------- 12. Automation cards (wave A3) ----------
@@ -3826,7 +3904,9 @@
     toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
-    normChat: normChat, mergeChat: mergeChat,
+    normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,
+    GONE_FILE: GONE_FILE, GONE_DAYS: GONE_DAYS, GONE_MAX: GONE_MAX, TOMB_KEEP: TOMB_KEEP,
+    normGone: normGone, mergeGone: mergeGone, parseGoneFile: parseGoneFile, goneFile: goneFile, goneWins: goneWins, spareCopy: spareCopy,
     ATT_TYPES: ATT_TYPES, ATT_MAX: ATT_MAX, ATT_FILE: ATT_FILE, attRoom: attRoom, attBudget: attBudget, ATT_IMG: ATT_IMG, ATT_PDF: ATT_PDF, ATT_DOC: ATT_DOC, ATT_SEND: ATT_SEND,
     ATT_TEXT: ATT_TEXT, ATT_TEXT_DOC: ATT_TEXT_DOC, attLimit: attLimit, attCaps: attCaps, attKind: attKind, normAtt: normAtt, checkAtt: checkAtt,
     WEB_USES: WEB_USES, webCan: webCan, webTool: webTool, webSources: webSources,

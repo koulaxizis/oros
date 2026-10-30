@@ -475,6 +475,63 @@ test("conversation merge: symmetric (fuzz)", () => {
   }
 });
 
+test("AS-DEL: card state changes are not a fork; the newer side's messages are kept", () => {
+  const card = (st, content) => ({ r: "tool", results: [{ id: "t1", name: "edit_items", content, ui: { st } }] });
+  const asst = { r: "asst", text: "ok", tools: [{ id: "t1", name: "edit_items" }] };
+  const older = { id: "cabc12345", m: 5, title: "T", msgs: [{ r: "user", text: "a" }, asst, card("done", "Done.")] };
+  const newer = { id: "cabc12345", m: 8, title: "T", msgs: [{ r: "user", text: "a" }, asst, card("undone", "The user undid this change.")] };
+  const r = A.mergeChat(older, newer);
+  assert.equal(r.copy, null);
+  assert.equal(r.chat.msgs[2].results[0].ui.st, "undone");
+  // The newer, shorter side keeps its card state; the longer side's tail comes along.
+  const longOld = { ...older, msgs: older.msgs.concat([{ r: "user", text: "b" }]), refs: { r1: { app: "notes" } }, refN: 1 };
+  const shortNew = { ...newer, refs: {}, refN: 0 };
+  const r2 = A.mergeChat(longOld, shortNew);
+  assert.equal(r2.copy, null);
+  assert.equal(r2.chat.m, 8);
+  assert.equal(r2.chat.msgs.length, 4);
+  assert.equal(r2.chat.msgs[2].results[0].ui.st, "undone");
+  assert.equal(r2.chat.msgs[3].text, "b");
+  assert.deepEqual(r2.chat.refs, { r1: { app: "notes" } });
+  assert.deepEqual(r2, A.mergeChat(shortNew, longOld));
+  // Different words are still a fork.
+  const other = { ...newer, msgs: [{ r: "user", text: "a" }, { r: "asst", text: "no" }] };
+  assert.ok(A.mergeChat(older, other).copy);
+});
+
+test("AS-DEL: the list of deleted chats", () => {
+  const now = 1e12, day = 86400000;
+  const g = A.mergeGone({ cabc12345: now - 3 * day, "../x": now, cdef12345: now - (A.GONE_DAYS + 1) * day }, { cabc12345: now - day, cfff12345: now }, now);
+  assert.deepEqual(g, { cabc12345: now - day, cfff12345: now });
+  const text = A.goneFile(g);
+  assert.equal(text, A.goneFile({ cfff12345: now, cabc12345: now - day }));   // same list, same text
+  assert.equal(A.parseChatFile(text), null);                                 // never read as a chat
+  assert.equal(A.parseGoneFile(A.chatFile({ id: "cabc12345", m: 1, msgs: [] })), null);
+  assert.equal(A.parseGoneFile("{"), null);
+  assert.equal(A.GONE_FILE, "/internal/Assistant/Chats/deleted-chats.json");
+  // deleted, unless changed after the deletion
+  assert.equal(A.goneWins({ id: "cabc12345", m: now - 2 * day }, g), true);
+  assert.equal(A.goneWins({ id: "cabc12345", m: now }, g), false);
+  assert.equal(A.goneWins({ id: "c99912345", m: 1 }, g), false);
+  const many = {};
+  for (let i = 0; i < A.GONE_MAX + 10; i++) many["c" + String(100000 + i)] = now - i;
+  const kept = A.normGone(many, now);
+  assert.equal(Object.keys(kept).length, A.GONE_MAX);
+  assert.ok(kept.c100000 && !kept["c" + String(100000 + A.GONE_MAX)]);
+  // tombstones written for an older orOS keep their marks
+  assert.deepEqual(A.parseChatFile(JSON.stringify({ id: "cabc12345", m: 9, del: 1, r: 1, at: 7 })), { id: "cabc12345", m: 9, del: 1, r: 1, at: 7 });
+});
+
+test("AS-DEL: a copy that says nothing its chat does not is spare", () => {
+  const u = (t) => ({ r: "user", text: t });
+  const parent = { id: "cmvp6ky8zc03e8a04", m: 9, title: "T", msgs: [u("a"), u("b"), u("c")] };
+  const copy = { id: "cmvp6ky8zc03e8a04xmvpdrg1c", m: 5, title: "T", msgs: [u("a"), { r: "user", text: "b", ui: { st: "done" } }] };
+  assert.equal(A.spareCopy(copy, parent), true);
+  assert.equal(A.spareCopy({ ...copy, msgs: [u("a"), u("z")] }, parent), false);   // a real fork stays
+  assert.equal(A.spareCopy({ ...copy, id: "cother1234x1" }, parent), false);
+  assert.equal(A.spareCopy(parent, copy), false);
+});
+
 // ---------- static checks ----------
 test("assistant.js: innerHTML only for its own icons; no eval; keys never in localStorage", () => {
   const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
