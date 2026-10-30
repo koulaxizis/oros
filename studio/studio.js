@@ -124,6 +124,14 @@
       "toast.maxClips": "A project has up to {n} clips", "toast.maxProjects": "You have {n} projects, the most there can be",
       "toast.noClip": "Select a clip first", "toast.noSplit": "Put the playhead inside the clip to split it",
       "toast.clipDeleted": "Clip deleted", "toast.trackDeleted": "Track deleted", "toast.projDeleted": "Project deleted",
+      "lic.btn": "Sound info", "lic.title": "Where this sound comes from", "lic.hint": "Write down who made the sound and under which licence, so the song can name them. It stays with the sound on every device.",
+      "lic.f.title": "Title", "lic.f.by": "Made by", "lic.f.k": "Licence", "lic.f.url": "Link (page of the sound or its licence)", "lic.none": "Not set",
+      "lic.cc0": "CC0 (no rights reserved)", "lic.by": "CC BY (name the author)", "lic.by-sa": "CC BY-SA (name the author, share alike)",
+      "lic.pd": "Public domain", "lic.own": "My own sound", "lic.other": "Other (follow its own terms)",
+      "lic.badUrl": "The link must start with http:// or https://", "lic.saved": "Sound info saved",
+      "cr.sec": "Credits", "cr.hint": "This song uses sounds whose licences ask for the author to be named. Put this text where you publish it.",
+      "cr.hintAll": "Where the song's sounds come from:", "cr.copy": "Copy", "cr.save": "Save as text", "cr.copied": "Credits copied",
+      "cr.head": "Sounds in “{name}”:", "cr.line": "“{title}”", "cr.by": "by {by}", "cr.lic": "licence: {lic}",
       "toast.undo": "Undo", "toast.file": "Saved", "toast.missing": "Some audio is not on this device yet",
       "oros.sec": "orOS file", "oros.save": "Save as orOS file (.orosstudio)", "oros.open": "Open orOS file…",
       "oros.folder": "Unzipped orOS folder…", "oros.hint": "One file with the whole project: tracks, clips, notes, effects, automation and the audio.",
@@ -257,6 +265,14 @@
       "toast.maxClips": "Ένα έργο έχει έως {n} clips", "toast.maxProjects": "Έχεις {n} έργα, όσα χωράνε",
       "toast.noClip": "Διάλεξε πρώτα ένα clip", "toast.noSplit": "Βάλε τον δείκτη μέσα στο clip για να το κόψεις",
       "toast.clipDeleted": "Το clip διαγράφηκε", "toast.trackDeleted": "Το κανάλι διαγράφηκε", "toast.projDeleted": "Το έργο διαγράφηκε",
+      "lic.btn": "Στοιχεία ήχου", "lic.title": "Από πού είναι αυτός ο ήχος", "lic.hint": "Γράψε ποιος έφτιαξε τον ήχο και με ποια άδεια, ώστε το τραγούδι να τον αναφέρει. Τα στοιχεία μένουν με τον ήχο σε κάθε συσκευή.",
+      "lic.f.title": "Τίτλος", "lic.f.by": "Δημιουργός", "lic.f.k": "Άδεια", "lic.f.url": "Σύνδεσμος (σελίδα του ήχου ή της άδειας)", "lic.none": "Δεν έχει οριστεί",
+      "lic.cc0": "CC0 (χωρίς δικαιώματα)", "lic.by": "CC BY (αναφορά δημιουργού)", "lic.by-sa": "CC BY-SA (αναφορά δημιουργού, ίδια άδεια)",
+      "lic.pd": "Κοινό κτήμα", "lic.own": "Δικός μου ήχος", "lic.other": "Άλλη (ισχύουν οι δικοί της όροι)",
+      "lic.badUrl": "Ο σύνδεσμος πρέπει να αρχίζει με http:// ή https://", "lic.saved": "Τα στοιχεία του ήχου αποθηκεύτηκαν",
+      "cr.sec": "Αναφορές", "cr.hint": "Το τραγούδι έχει ήχους που η άδειά τους ζητά να αναφέρεται ο δημιουργός. Βάλε αυτό το κείμενο εκεί που θα το δημοσιεύσεις.",
+      "cr.hintAll": "Από πού είναι οι ήχοι του τραγουδιού:", "cr.copy": "Αντιγραφή", "cr.save": "Αποθήκευση ως κείμενο", "cr.copied": "Οι αναφορές αντιγράφηκαν",
+      "cr.head": "Ήχοι στο «{name}»:", "cr.line": "«{title}»", "cr.by": "από {by}", "cr.lic": "άδεια: {lic}",
       "toast.undo": "Αναίρεση", "toast.file": "Αποθηκεύτηκε", "toast.missing": "Κάποιος ήχος δεν έχει φτάσει ακόμη σε αυτή τη συσκευή",
       "oros.sec": "Αρχείο orOS", "oros.save": "Αποθήκευση ως αρχείο orOS (.orosstudio)", "oros.open": "Άνοιγμα αρχείου orOS…",
       "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…", "oros.hint": "Ένα αρχείο με όλο το έργο: κανάλια, clips, νότες, εφέ, αυτοματισμούς και τον ήχο.",
@@ -1134,6 +1150,7 @@
     var midi = C.isMidi(c);
     $("clip-name").textContent = clipName(c);
     $("notes-btn").hidden = !midi;
+    $("lic-btn").hidden = midi;
     $("fi-field").hidden = midi;
     $("fo-field").hidden = midi;
     var gi = $("gain-in"), fi = $("fi-in"), fo = $("fo-in");
@@ -2560,6 +2577,7 @@
     $("export-lyrics").hidden = !musicFs() || !shellHas();
     $("export-ring").hidden = !shellHas();
     renderExportChips();
+    renderCredits();
     showDlg("export-dlg");
     if (opusOk === null) E.opusSupported().then(function (ok) { opusOk = ok; if ($("export-dlg").open) renderExportChips(); });
   }
@@ -2579,6 +2597,66 @@
     $("export-kbps-sec").hidden = fmt === "wav";
     $("export-rate-sec").hidden = fmt === "opus";
     $("export-note").textContent = opusOk === false && prefs.fmt === "opus" ? t("export.noOpus") : fmt === "opus" ? t("export.opusRate") : fmt === "mp3" ? t("export.mp3Hint") : "";
+  }
+  // ---------- 9a. Where the sounds come from (source.lic) ----------
+  var licSrc = null;               // id of the source the dialog edits
+  function licName(k) { return k ? t("lic." + k) : t("lic.none"); }
+  function openLic() {
+    var c = selClip ? C.find(data, "clips", selClip) : null, src = c && !C.isMidi(c) ? sourceOf(c.s) : null;
+    if (!src) return;
+    licSrc = src.id;
+    var l = src.lic || {}, sel = $("lic-k");
+    sel.innerHTML = "";
+    [""].concat(C.LICENCES).forEach(function (k) { var o = el("option", "", licName(k)); o.value = k; sel.appendChild(o); });
+    sel.value = l.k || "";
+    $("lic-name").value = l.title || src.name.replace(/\.[a-z0-9]{1,5}$/i, "");
+    $("lic-by").value = l.by || "";
+    $("lic-url").value = l.url || "";
+    $("lic-err").textContent = "";
+    showDlg("lic-dlg");
+  }
+  function saveLic() {
+    var src = licSrc ? sourceOf(licSrc) : null;
+    if (!src) { hideDlg("lic-dlg"); return; }
+    var url = $("lic-url").value.trim();
+    if (url && !/^https?:\/\//i.test(url)) { $("lic-err").textContent = t("lic.badUrl"); return; }
+    var k = $("lic-k").value, lic = k ? C.normLic({ k: k, by: $("lic-by").value, title: $("lic-name").value, url: url }) : null;
+    var next = Object.assign({}, src);
+    delete next.lic;
+    if (lic) next.lic = lic;
+    hideDlg("lic-dlg");
+    if (JSON.stringify(next) === JSON.stringify(src)) return;
+    edit(function () { put("sources", C.normSource(next)); });
+    showToast(t("lic.saved"));
+  }
+  // The credits text of the open project ("" when no sound has a card).
+  function creditsText(list) {
+    if (!list.length) return "";
+    var lines = [t("cr.head", { name: (proj && proj.name) || t("proj.untitled") })];
+    list.forEach(function (x) {
+      var parts = [t("cr.line", { title: x.lic.title || x.name })];
+      if (x.lic.by) parts.push(t("cr.by", { by: x.lic.by }));
+      parts.push(t("cr.lic", { lic: licName(x.lic.k) }));
+      lines.push("- " + parts.join(", ") + (x.lic.url ? " " + x.lic.url : ""));
+    });
+    return lines.join("\n");
+  }
+  function renderCredits() {
+    var list = proj ? C.credits(data, proj.id) : [], txt = creditsText(list);
+    $("export-cr-sec").hidden = !txt;
+    $("export-cr").value = txt;
+    $("export-cr-hint").textContent = list.some(function (x) { return x.credit; }) ? t("cr.hint") : t("cr.hintAll");
+  }
+  function copyCredits() {
+    var txt = $("export-cr").value, done = function () { showToast(t("cr.copied")); };
+    var fallback = function () { var a = $("export-cr"); a.focus(); a.select(); try { if (document.execCommand("copy")) done(); } catch (e) {} };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fallback);
+    else fallback();
+  }
+  function saveCredits() {
+    var txt = $("export-cr").value;
+    if (!txt) return;
+    saveBlob(new Blob([txt + "\n"], { type: "text/plain" }), C.fileName(((proj && proj.name) || t("proj.untitled")) + " " + t("cr.sec"), "txt"), "text/plain", t("cr.sec"), ".txt");
   }
   function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
   // dest "music": the file goes onto the orOS disk under /internal/Music
@@ -3586,6 +3664,11 @@
     $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
     $("export-go").addEventListener("click", function () { doExport("file"); });
+    $("export-cr-copy").addEventListener("click", copyCredits);
+    $("export-cr-save").addEventListener("click", saveCredits);
+    $("lic-btn").addEventListener("click", openLic);
+    $("lic-cancel").addEventListener("click", function () { hideDlg("lic-dlg"); });
+    $("lic-form").addEventListener("submit", function (e) { e.preventDefault(); saveLic(); });
     $("export-music").addEventListener("click", function () { doExport("music"); });
     $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);

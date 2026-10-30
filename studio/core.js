@@ -37,7 +37,11 @@
 // (`off` is where the clip's window begins, as for audio), vel 1..127;
 // at most 2000 notes, in time order. A note plays when its start is
 // inside the window; it is cut at the clip's end.
-// New fields (sc, auto, inst, MIDI clips) are written only when set, so
+// lic (optional, on sources, Studio v1.7.0): where a sound comes from and
+// how it may be used: { k, by?, title?, url? }, k = one of LICENCES
+// (cc0, by, by-sa, pd, own, other), by = author, url = its page (http or
+// https only). Kept with the source so a song can list its credits.
+// New fields (sc, auto, inst, MIDI clips, lic) are written only when set, so
 // projects made before them keep the very same bytes.
 // The audio itself is never in this slice: it lives on the disk and
 // travels with Vault Drive.
@@ -75,6 +79,9 @@
   var INST_RE      = /^[a-z0-9_]{1,20}$/;
   var MAX_NOTES    = 2000;         // notes in one MIDI clip
   var MIN_NOTE     = 0.005;        // shortest note (seconds)
+  var LICENCES     = ["cc0", "by", "by-sa", "pd", "own", "other"];
+  var CREDIT_LICS  = { by: true, "by-sa": true, other: true };   // must be credited
+  var URL_RE       = /^https?:\/\/[^\s<>"]{1,300}$/i;
 
   function isNum(n) { return typeof n === "number" && isFinite(n); }
   function isInt(n) { return isNum(n) && Math.floor(n) === n; }
@@ -278,16 +285,43 @@
     if (auto.length) t.auto = auto;
     return t;
   }
+  // A source's licence card; null when there is none.
+  function normLic(x) {
+    if (!x || typeof x !== "object" || LICENCES.indexOf(x.k) < 0) return null;
+    var o = { k: x.k }, by = clipLine(x.by, 80), title = clipLine(x.title, 120);
+    if (by) o.by = by;
+    if (title) o.title = title;
+    if (typeof x.url === "string" && URL_RE.test(x.url.trim())) o.url = x.url.trim();
+    return o;
+  }
   function normSource(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "s") || !okM(x.m) || !okId(x.p, "p")) return null;
     if (typeof x.path !== "string" || !PATH_RE.test(x.path) || x.path.indexOf("/..") >= 0) return null;
-    return {
+    var o = {
       id: x.id, m: x.m, p: x.p,
       name: clipLine(x.name, 80),
       path: x.path,
       dur: num(x.dur, 0, MAX_SEC, 0, 6),
       ch: x.ch === 1 ? 1 : 2
     };
+    var lic = normLic(x.lic);
+    if (lic) o.lic = lic;
+    return o;
+  }
+  // The sounds a project's clips play that carry a licence card, in the
+  // order they first play: [{ id, name, lic, credit }], credit = true when
+  // the licence asks for the author to be named.
+  function credits(dat, pid) {
+    var seen = {}, out = [];
+    ofProject(dat, "clips", pid).filter(function (c) { return !isMidi(c); })
+      .sort(function (x, y) { return x.at - y.at || cmpStr(x.id, y.id); })
+      .forEach(function (c) {
+        if (seen[c.s]) return;
+        seen[c.s] = true;
+        var s = find(dat, "sources", c.s);
+        if (s && s.lic) out.push({ id: s.id, name: s.name, lic: s.lic, credit: !!CREDIT_LICS[s.lic.k] });
+      });
+    return out;
   }
   // Notes of a MIDI clip: [pitch, start, len, vel], in time order.
   function cmpNote(a, b) { return a[1] - b[1] || a[0] - b[0] || a[2] - b[2] || a[3] - b[3]; }
@@ -697,7 +731,8 @@
     normAuto: normAuto, autoValueAt: autoValueAt, autoEvents: autoEvents, activeLane: activeLane, setLane: setLane,
     keysOf: keysOf, keyLoops: keyLoops, keyPlan: keyPlan,
     MAX_NOTES: MAX_NOTES, MIN_NOTE: MIN_NOTE, INST_RE: INST_RE, cmpNote: cmpNote, normNotes: normNotes,
-    isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes, toRtttl: toRtttl
+    isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes, toRtttl: toRtttl,
+    LICENCES: LICENCES, normLic: normLic, credits: credits
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioCore = api;

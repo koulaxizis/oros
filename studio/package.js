@@ -11,7 +11,7 @@
 //       project { id, name, bpm, sig, vol, loop { on, a, b }, fx },
 //       tracks  [{ id, name, color, vol, pan, mute, solo, ord, fx,
 //                  inst?, auto? }],
-//       sources [{ id, name, dur, ch, media }],
+//       sources [{ id, name, dur, ch, media, lic? }],
 //       clips   [{ id, t, s?, at, off, len, gain, fi, fo, name?, n? }] }
 //     fx = the NULL JSFX chain as core.js keeps it ({ u, id, on, s,
 //     sc? }), except that file sliders (Convolution's IR) are
@@ -93,7 +93,9 @@
         return x;
       }),
       sources: sources.map(function (s) {
-        return { id: s.id, name: s.name, dur: s.dur, ch: s.ch, media: srcKeys[s.id] || "" };
+        var o = { id: s.id, name: s.name, dur: s.dur, ch: s.ch, media: srcKeys[s.id] || "" };
+        if (s.lic) o.lic = s.lic;
+        return o;
       }),
       clips: clips.map(function (c) {
         var x = { id: c.id, t: c.t };
@@ -214,7 +216,7 @@
       var id = newId("s"), key = okKey(s.media) ? s.media : "";
       var name = str(s.name, 80) || "audio";
       var path = C.sourcePath(id, name, extOfKey(key || name));
-      var x = C.normSource({ id: id, m: now, p: pid, name: name, path: path, dur: s.dur, ch: s.ch });
+      var x = C.normSource({ id: id, m: now, p: pid, name: name, path: path, dur: s.dur, ch: s.ch, lic: s.lic });
       if (!x) return;
       smap[s.id] = id;
       sources.push(x);

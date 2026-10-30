@@ -84,6 +84,7 @@
     <button type="button" id="dupclip-btn" class="chip" data-i18n="btn.dupClip">Duplicate</button>
     <button type="button" id="delclip-btn" class="chip danger" data-i18n="btn.delClip">Delete</button>
     <button type="button" id="notes-btn" class="chip primary" aria-haspopup="dialog" data-i18n="mi.editNotes" hidden>Edit notes</button>
+    <button type="button" id="lic-btn" class="chip" aria-haspopup="dialog" data-i18n="lic.btn" hidden>Sound info</button>
     <label class="cb-field"><span data-i18n="f.gain">Gain</span>
       <input type="range" id="gain-in" min="-24" max="12" step="0.5"><output id="gain-out"></output></label>
     <label class="cb-field" id="fi-field"><span data-i18n="f.fadeIn">Fade in</span>
@@ -156,6 +157,27 @@
       <input type="text" id="name-in" maxlength="40" autocomplete="off">
       <div class="dlg-actions">
         <button type="button" id="name-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" class="chip primary" data-i18n="btn.ok">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Where a sound comes from (source.lic) -->
+  <dialog id="lic-dlg" aria-labelledby="lic-title">
+    <form id="lic-form" method="dialog" novalidate>
+      <h2 id="lic-title" data-i18n="lic.title">Where this sound comes from</h2>
+      <p class="hint small" data-i18n="lic.hint"></p>
+      <label class="field" for="lic-name" data-i18n="lic.f.title">Title</label>
+      <input type="text" id="lic-name" maxlength="120" autocomplete="off">
+      <label class="field" for="lic-by" data-i18n="lic.f.by">Made by</label>
+      <input type="text" id="lic-by" maxlength="80" autocomplete="off">
+      <label class="field" for="lic-k" data-i18n="lic.f.k">Licence</label>
+      <select id="lic-k"></select>
+      <label class="field" for="lic-url" data-i18n="lic.f.url">Link</label>
+      <input type="url" id="lic-url" maxlength="300" autocomplete="off" inputmode="url" placeholder="https://">
+      <p id="lic-err" class="hint small" aria-live="polite"></p>
+      <div class="dlg-actions">
+        <button type="button" id="lic-cancel" class="chip" data-i18n="btn.cancel">Cancel</button>
         <button type="submit" class="chip primary" data-i18n="btn.ok">OK</button>
       </div>
     </form>
@@ -282,6 +304,16 @@
       <div id="export-rate" class="chips" role="radiogroup" data-i18n-aria="sec.rate"></div>
     </div>
     <p id="export-note" class="hint small"></p>
+    <div id="export-cr-sec" hidden>
+      <h3 data-i18n="cr.sec">Credits</h3>
+      <p id="export-cr-hint" class="hint small"></p>
+      <label for="export-cr" class="sr-only" data-i18n="cr.sec">Credits</label>
+      <textarea id="export-cr" class="cr-text" rows="4" readonly></textarea>
+      <div class="dlg-actions spread">
+        <button type="button" id="export-cr-copy" class="chip" data-i18n="cr.copy">Copy</button>
+        <button type="button" id="export-cr-save" class="chip" data-i18n="cr.save">Save as text</button>
+      </div>
+    </div>
     <p id="export-status" class="hint" aria-live="polite"></p>
     <div class="dlg-actions">
       <button type="button" id="export-ring" class="chip" data-i18n="btn.ringtone" hidden>Make a ringtone</button>

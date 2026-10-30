@@ -86,6 +86,12 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - Drag a loop by its handle onto a track, or press `+` to add it at the playhead. It lands on the selected instrument track when it fits (drums on a drum track, bass and keys on a pitched one), otherwise on a new instrument track.
 - A loop becomes an ordinary MIDI clip: edit its notes, change its sound or repeat it with `Duplicate`. It follows the project's tempo.
 
+## Sound info and credits
+- Select an audio clip and press `Sound info` to write down where its sound comes from: its title, who made it, the licence and a link to its page. Every clip that plays the same sound shares the card, and it follows the sound to your other devices and into the .orosstudio file.
+- Licences: `CC0` and `Public domain` ask nothing; `CC BY` asks you to name the author; `CC BY-SA` also asks that what you make from it carries the same licence; `Other` means follow the terms of the place you got it from. `My own sound` is for your own recordings.
+- `Export` lists the sounds of the song that have a card under `Credits`. `Copy` puts the text on the clipboard and `Save as text` saves it as a .txt file, ready to paste where you publish the song.
+>! Studio only keeps what you write. Check a sound's licence where you downloaded it before you publish a song with it.
+
 ## Remote control
 Control Studio's mixer and transport from a tablet or phone while the sound plays on the PC.
 1. On the PC, open the settings (the three dots at the top) and press `Connect a tablet or phone`, then `Show a code`. Studio shows a 6-digit code and a QR code.
