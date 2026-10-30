@@ -350,6 +350,7 @@ orosPack("de", "shell", {
  "cr.trello-api": "Verbundene Dienste: Boards importieren (Kanban)",
  "cr.u2-net": "Das Modell zum Entfernen des Hintergrunds (Atelier)",
  "cr.usda-fooddata": "Nährwerte gängiger Lebensmittel (Essensplaner)",
+ "cr.vsco": "21 aufgenommene Instrumente, beim ersten Gebrauch heruntergeladen (Studio)",
  "cr.web-push": "Optionale Benachrichtigungen bei geschlossenem orOS, auf dem Gerät verschlüsselt (Einstellungen › Benachrichtigungen)",
  "cr.webllm": "Offene Modelle, die im Browser laufen (Assistent); Gewichte von huggingface.co/mlc-ai unter der Lizenz des jeweiligen Modells",
  "cr.wger": "Übungsbilder (Training)",

@@ -77,6 +77,7 @@
   var MAX_PTS      = 256;          // points in one lane
   var LANE_RE      = /^(vol|pan|fx\.f[a-z0-9]{6,20}\.[1-9][0-9]?)$/;
   var INST_RE      = /^[a-z0-9_]{1,20}$/;
+  var SMP_RE       = /^[a-z0-9][a-z0-9-]{0,39}$/;    // a sample instrument (studio/sounds.js pack id)
   var MAX_NOTES    = 2000;         // notes in one MIDI clip
   var MIN_NOTE     = 0.005;        // shortest note (seconds)
   var LICENCES     = ["cc0", "by", "by-sa", "pd", "own", "other"];
@@ -281,6 +282,9 @@
       fx: normFx(x.fx)
     };
     if (typeof x.inst === "string" && INST_RE.test(x.inst)) t.inst = x.inst;
+    // smp: the pack that plays the notes; inst stays the built-in sound of
+    // the same kind, which an older Studio (and a pack that cannot load) plays
+    if (typeof x.smp === "string" && SMP_RE.test(x.smp)) t.smp = x.smp;
     var auto = normAuto(x.auto, t.fx);
     if (auto.length) t.auto = auto;
     return t;
@@ -730,7 +734,7 @@
     MAX_LANES: MAX_LANES, MAX_PTS: MAX_PTS, laneRange: laneRange, fxLaneKey: fxLaneKey, laneFx: laneFx,
     normAuto: normAuto, autoValueAt: autoValueAt, autoEvents: autoEvents, activeLane: activeLane, setLane: setLane,
     keysOf: keysOf, keyLoops: keyLoops, keyPlan: keyPlan,
-    MAX_NOTES: MAX_NOTES, MIN_NOTE: MIN_NOTE, INST_RE: INST_RE, cmpNote: cmpNote, normNotes: normNotes,
+    MAX_NOTES: MAX_NOTES, MIN_NOTE: MIN_NOTE, INST_RE: INST_RE, SMP_RE: SMP_RE, cmpNote: cmpNote, normNotes: normNotes,
     isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes, toRtttl: toRtttl,
     LICENCES: LICENCES, normLic: normLic, credits: credits
   };

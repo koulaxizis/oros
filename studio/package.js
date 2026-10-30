@@ -89,6 +89,7 @@
         var x = { id: t.id, name: t.name, color: t.color, vol: t.vol, pan: t.pan, mute: !!t.mute, solo: !!t.solo,
                   ord: t.ord, fx: packFx(t.fx, fxKeys) };
         if (t.inst) x.inst = t.inst;
+        if (t.smp) x.smp = t.smp;
         if (t.auto && t.auto.length) x.auto = JSON.parse(JSON.stringify(t.auto));
         return x;
       }),
@@ -206,7 +207,7 @@
         return l;
       }).filter(Boolean) : undefined;
       var x = C.normTrack({ id: id, m: now, p: pid, name: t.name, color: t.color, vol: t.vol, pan: t.pan, mute: t.mute, solo: t.solo,
-                            ord: t.ord, fx: fx, inst: t.inst, auto: auto });
+                            ord: t.ord, fx: fx, inst: t.inst, smp: t.smp, auto: auto });
       if (x) tracks.push(x);
     });
 
