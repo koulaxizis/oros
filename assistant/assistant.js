@@ -3250,7 +3250,9 @@
   // project's doc.json is read from the orOS disk (editLoad) before the
   // card counts, and kept here while it is unchanged (doc.m).
   var EDIT_SRC = {
-    atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand", style: "oros-atelier-style" },
+    // Atelier (AT-DISK): as Layout, each design a package file on the
+    // orOS disk listed in the index; its folders and brand kit stay slices
+    atelier: { mod: "AtelierCommands", data: "oros-atelier-index", legacy: "oros-atelier-data", list: "docs", pkg: 1, max: 64 * 1024 * 1024, folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand", style: "oros-atelier-style", disk: 1 },
     // Layout (LY-DISK): each document is a package file on the orOS
     // disk; the index lists them with their paths (pkg: the file is
     // { kind, ver, doc }). A device where Layout has not used the disk
@@ -3316,11 +3318,12 @@
     if (!s.disk) { var d = readStore(s.data); return { data: d, full: d, folders: readStore(s.folders), open: open, brand: kit }; }
     // index entries for picking, the loaded doc records for counting
     var idx = readStore(s.data);
-    if (!idx && s.legacy) { var lg = readStore(s.legacy); return { data: lg, full: lg, folders: null, open: open, brand: kit }; }
+    var fold = s.folders ? readStore(s.folders) : null;
+    if (!idx && s.legacy) { var lg = readStore(s.legacy); return { data: lg, full: lg, folders: fold, open: open, brand: kit }; }
     var list = idx && Array.isArray(idx[s.list || "projects"]) ? idx[s.list || "projects"].filter(function (e) { return e && typeof e.id === "string"; }) : [];
     var full = [], missing = [];
     list.forEach(function (e) { var c = diskDocs[app + "/" + e.id]; if (c && c.m === e.m) full.push(c.doc); else missing.push(e.id); });
-    return { data: { docs: list }, full: { docs: full }, missing: missing, folders: null, open: open, brand: null };
+    return { data: { docs: list }, full: { docs: full }, missing: missing, folders: fold, open: open, brand: kit };
   }
   var diskDocs = {}, DISK_MAX = 2 * 1024 * 1024;
   // Reads the doc.json of the given projects that are not loaded yet

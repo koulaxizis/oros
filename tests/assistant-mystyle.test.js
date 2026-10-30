@@ -35,7 +35,7 @@ test("the kinds the tool names are the kinds Atelier works out", () => {
 
 test("wiring: the outline gets the stored profile, and the style is read with Atelier's permission", () => {
   const as = read("assistant/assistant.js");
-  assert.match(as, /brand: "oros-atelier-brand", style: "oros-atelier-style" \}/);
+  assert.match(as, /brand: "oros-atelier-brand", style: "oros-atelier-style", disk: 1 \}/);
   assert.match(as, /mod\.outline\(doc, EDIT_SRC\[n\.app\]\.style \? readStore\(EDIT_SRC\[n\.app\]\.style\) : null\)/);
   assert.match(as, /if \(n\.designs === "style"\) return readStyle\(n, cats, apps\);/);
   assert.match(as, /app\.perm === "always" \? Promise\.resolve\(true\) : askRead\(title, app\.name, text\)/);

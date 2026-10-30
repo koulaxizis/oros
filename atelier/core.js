@@ -15,12 +15,19 @@
 //                background, colour, effects, filters…) + context bar
 //   io.js        PNG / JPG / PDF export, .orosdesign packages, uploads
 // Data:
+//   - designs: one file each in /internal/Atelier ("<name> · <id>
+//     .orosdesign", a JSON package), synced per file by Vault Drive
+//     (designkit/docstore.js, AT-DISK, section 3b); without the orOS
+//     disk they stay in oros-atelier-data as before
 //   - synced slice "atelier" (oros-atelier-data): designkit model v1
-//     with Atelier extras on items (`ax`, see ax.js)
+//     with Atelier extras on items (`ax`, see ax.js); with the disk
+//     only the old devices' copy (merged in, never grown)
 //   - images: /internal/Assets/<sha256>.<ext> on the orOS disk,
 //     synced per file by Vault Drive (designkit/assets.js, R30)
 //   - device-local (R10): oros-atelier-prefs ({ doc }),
-//     oros-atelier-data-broken (rescue copy)
+//     oros-atelier-data-broken (rescue copy), oros-atelier-index (the
+//     designs' list for search and the Assistant), oros-atelier-open
+//     (the open design, merged back at the next start)
 //   - undo history: memory only
 // ============================================================
 (function () {
@@ -37,6 +44,8 @@
   var UNDO_MAX    = 100;
   var DOC_WARN    = 300 * 1024;
   AT.STORAGE_KEY = STORAGE_KEY;
+  var INDEX_KEY = "oros-atelier-index", OPEN_KEY = "oros-atelier-open", DISK_DIR = "/internal/Atelier";
+  AT.INDEX_KEY = INDEX_KEY; AT.OPEN_KEY = OPEN_KEY; AT.DISK_DIR = DISK_DIR;
 
   // ---------- 1. i18n ----------
   // orosI18n (../i18n.js): the full language code, a pack language included.
@@ -234,6 +243,9 @@
       "btn.apply": "Apply", "btn.reset": "Reset", "btn.save": "Save",
       "toast.deleted": "Deleted", "toast.docDeleted": "Design deleted",
       "toast.save": "Storage is full: recent changes could not be saved on this device.",
+      "toast.diskSave": "Recent changes could not be written to Files › Atelier yet. They are kept here and written at the next change.",
+      "toast.diskRead": "Files that could not be read in Files › Atelier: {n}. They stay as they are.",
+      "toast.diskOff": "The orOS disk cannot be read right now: designs are kept in this browser until the next start.",
       "toast.big": "This design is getting large ({n} KB). Large designs fill the storage every app shares.",
       "toast.locked": "This element is locked.", "toast.gone": "This design was deleted on another device.",
       "toast.fontFail": "The fonts could not be loaded.", "toast.maxItems": "A design can have at most {n} elements.",
@@ -454,6 +466,9 @@
       "btn.apply": "Εφαρμογή", "btn.reset": "Επαναφορά", "btn.save": "Αποθήκευση",
       "toast.deleted": "Διαγράφηκε", "toast.docDeleted": "Το σχέδιο διαγράφηκε",
       "toast.save": "Ο χώρος γέμισε: οι τελευταίες αλλαγές δεν αποθηκεύτηκαν σε αυτή τη συσκευή.",
+      "toast.diskSave": "Οι τελευταίες αλλαγές δεν γράφτηκαν ακόμη στα Αρχεία › Atelier. Κρατιούνται εδώ και γράφονται με την επόμενη αλλαγή.",
+      "toast.diskRead": "Αρχεία που δεν διαβάστηκαν στα Αρχεία › Atelier: {n}. Μένουν όπως είναι.",
+      "toast.diskOff": "Ο δίσκος του orOS δεν διαβάζεται τώρα: τα σχέδια μένουν σε αυτόν τον browser μέχρι την επόμενη εκκίνηση.",
       "toast.big": "Το σχέδιο μεγαλώνει ({n} KB). Τα μεγάλα σχέδια γεμίζουν τον χώρο που μοιράζονται όλες οι εφαρμογές.",
       "toast.locked": "Αυτό το στοιχείο είναι κλειδωμένο.", "toast.gone": "Αυτό το σχέδιο διαγράφηκε σε άλλη συσκευή.",
       "toast.fontFail": "Οι γραμματοσειρές δεν φόρτωσαν.", "toast.maxItems": "Ένα σχέδιο έχει το πολύ {n} στοιχεία.",
@@ -731,16 +746,129 @@
   }
   AT.savePrefs = savePrefs;
 
+  // ---------- 3b. Designs on the orOS disk (AT-DISK) ----------
+  // With the orOS disk, every design is a file in Files › Atelier
+  // (designkit/docstore.js, as Layout's LY-DISK): loaded at boot,
+  // written when it changes, synced by Vault Drive like any file.
+  // oros-atelier-data stays as the old slice for devices that still run
+  // an older orOS (merged in, never grown). Without the disk (a page
+  // opened on its own) everything stays in localStorage as before.
+  var disk = null, diskStore = null, diskReady = false, diskPulls = [], diskFailShown = false;
+  function diskFs() {
+    try { return (window.parent && window.parent !== window && window.parent.orosFS) || null; }
+    catch (e) { return null; }
+  }
+  // the words of its text boxes, in page order (≤ 1000), for search
+  function boxTextOf(d) {
+    var pos = {}, n = 0, out = [];
+    (d.pages || []).forEach(function (p) { pos[p.id] = p.pos || 0; });
+    (d.items || []).filter(function (it) {
+      return it.ax && it.ax.k === "text" && typeof it.ax.tx === "string" && pos[it.pg] !== undefined;
+    }).sort(function (a, b) {
+      return pos[a.pg] - pos[b.pg] || (a.y || 0) - (b.y || 0) || (a.x || 0) - (b.x || 0);
+    }).some(function (it) { out.push(it.ax.tx); n += it.ax.tx.length; return n >= 1000; });
+    return out.join(" ").replace(/\s+/g, " ").trim().slice(0, 1000);
+  }
+  function startDisk() {
+    var fs = diskFs();
+    if (!fs || !window.orosDocStore || !window.OrosFilesCore) return null;
+    var store = diskStore = window.orosDocStore.create({ dir: DISK_DIR, ext: ".orosdesign", kind: "oros-atelier-package", ver: 1, fs: fs, M: M, core: window.OrosFilesCore });
+    return window.orosDocStore.open({
+      store: store, M: M, fs: fs, ls: window.localStorage, rescue: "atelier-data",
+      keys: { legacy: STORAGE_KEY, index: INDEX_KEY, open: OPEN_KEY },
+      entry: function (d) { return { tx: boxTextOf(d) }; }
+    });
+  }
+  function diskSaved(res) {
+    if (res && res.failed && !diskFailShown) { diskFailShown = true; toast(t("toast.diskSave")); }
+    if (res && !res.failed) diskFailShown = false;
+    return res;
+  }
+  // after a pull or a disk change: the designs that changed
+  function diskApply(next, changed) {
+    if (!changed.length) return;
+    var openId = AT.doc ? AT.doc.id : null;
+    data = next;
+    disk.save(data).then(diskSaved);
+    if (openId) {
+      var d = findDoc(openId);
+      if (!d) { toast(t("toast.gone")); goHome(); return; }
+      var was = AT.doc;
+      AT.doc = d;
+      if (changed.indexOf(openId) >= 0 && JSON.stringify(d) !== JSON.stringify(was)) emit("remote");
+    } else renderHome();
+  }
+  var rescanning = false, rescanAgain = false;
+  function diskRescan() {
+    if (!disk || !diskReady) return;
+    if (rescanning) { rescanAgain = true; return; }
+    rescanning = true;
+    var openBefore = AT.doc ? JSON.stringify(AT.doc) : null;
+    disk.rescan(data).then(function (r) {
+      rescanning = false;
+      // an edit made while the files were read is merged, never lost
+      var now2 = r.data;
+      if (AT.doc && JSON.stringify(AT.doc) !== openBefore) now2 = M.mergeData(now2, { docs: [AT.doc], dt: {} });
+      diskApply(now2, r.changed);
+      if (rescanAgain) { rescanAgain = false; diskRescan(); }
+    }, function () { rescanning = false; });
+  }
+  function watchVault() {
+    var v = null;
+    try { v = window.parent && window.parent !== window ? window.parent.orosVault : null; } catch (e) { v = null; }
+    if (!v || typeof v.onStatus !== "function") return;
+    var off = v.onStatus(function (kind, detail) {
+      if (kind === "stats" && detail && (detail.downloaded > 0 || detail.deleted > 0 || detail.conflicts > 0)) diskRescan();
+    });
+    window.addEventListener("pagehide", function () { if (typeof off === "function") off(); });
+  }
+  // A design's own file opened from Files (or "Open with"): that
+  // design opens, it is not imported again as a copy.
+  AT.openStored = function (name, pkg) {
+    var p = disk && diskStore ? diskStore.parse(name) : null;
+    if (!p || p.conflict || !pkg || !pkg.doc || pkg.doc.id !== p.id || !findDoc(p.id)) return false;
+    openDoc(p.id);
+    return true;
+  };
+  AT.onDisk = function () { return !!disk; };
+  // → Promise: the designs from the disk (or the local copy)
+  function loadDisk() {
+    disk = startDisk();
+    if (!disk) return Promise.resolve();
+    return disk.load().then(function (res) {
+      data = res.data;
+      diskReady = true;
+      diskSaved({ failed: res.writeFailed });
+      if (res.failed) toast(t("toast.diskRead", { n: res.failed }));
+      diskPulls.splice(0).forEach(function (inc) { var r = disk.absorb(data, inc); diskApply(r.data, r.changed); });
+      watchVault();
+      disk.sweepRescue();
+    }, function () {
+      // the disk cannot be read now: this session works as before, in
+      // localStorage; the next start reads the disk again
+      disk = null;
+      toast(t("toast.diskOff"));
+    });
+  }
+
   var saveTimer = null, saveFailShown = false, bigWarned = {};
   function saveNow() {
     clearTimeout(saveTimer); saveTimer = null;
+    if (disk) {
+      if (diskReady) disk.save(data, AT.doc).then(diskSaved);
+      if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+      return true;
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       saveFailShown = false;
     } catch (e) {
       if (!saveFailShown) { saveFailShown = true; toast(t("toast.save")); }   // R30
+      if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+      return false;
     }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    return true;
   }
   function save() {
     clearTimeout(saveTimer);
@@ -1203,14 +1331,22 @@
     if (!ids.length) return;
     var title = t("home.delAsk", { n: ids.length });
     var go = function (files) { pick = null; removeDocs(ids, files); };
-    if (!askFiles(ids, title, go)) AT.confirm(title, t("home.delOk"), function () { go(null); });
+    askFiles(ids, title, go, function () { AT.confirm(title, t("home.delOk"), function () { go(null); }); });
   }
 
   // Designs whose pictures, videos or sounds nothing else uses ask
-  // first, with an opt-in box to delete those files too. false: none.
-  function askFiles(ids, title, done) {
-    var files = AT.filesOnlyIn ? AT.filesOnlyIn(ids) : null;
-    if (!files || !files.length) return false;
+  // first, with an opt-in box to delete those files too; otherwise()
+  // when there are none (or it cannot be told within 15 s: the check
+  // reads the documents on the orOS disk, AT-DISK)
+  function askFiles(ids, title, done, otherwise) {
+    var p = AT.filesOnlyIn ? AT.filesOnlyIn(ids) : null;
+    Promise.race([Promise.resolve(p), new Promise(function (r) { setTimeout(function () { r(null); }, 15000); })])
+      .then(null, function () { return null; }).then(function (files) {
+        if (!files || !files.length) { otherwise(); return; }
+        filesDialog(files, title, done);
+      });
+  }
+  function filesDialog(files, title, done) {
     AT.openDialog(title, function (body, close) {
       var row = el("label", "chk-row");
       var cb = el("input"); cb.type = "checkbox";
@@ -1226,7 +1362,6 @@
       act.appendChild(c); act.appendChild(o);
       body.appendChild(act);
     });
-    return true;
   }
 
   // tombstones the designs; undo brings them all back, unless their
@@ -1244,7 +1379,7 @@
     renderHome();
     if (files) {
       AT.flush();
-      AT.dropFiles(files).then(function (n) { toast(t("del.done", { n: n })); });
+      AT.dropFiles(files, ids).then(function (n) { toast(t("del.done", { n: n })); });
       return;
     }
     toast(ids.length > 1 ? t("home.deleted", { n: ids.length }) : t("toast.docDeleted"), t("btn.undo"), function () {
@@ -1339,7 +1474,7 @@
     var d = findDoc(id);
     if (!d) return;
     var go = function (files) { removeDocs([id], files); };
-    if (!askFiles([id], t("del.one", { name: docTitle(d) }), go)) go(null);
+    askFiles([id], t("del.one", { name: docTitle(d) }), go, function () { go(null); });
   }
 
   // removes a design without asking or offering undo (a Canva
@@ -1376,6 +1511,32 @@
     if (AT.doc) goHome(); else renderHome();
   }
   AT.createDoc = createDoc; AT.addDoc = addDoc; AT.addDocs = addDocs;
+  // The designs with these ids are kept once stored: on the disk written
+  // and read back, else in localStorage. Those that could not be stored
+  // leave data again (an import batch counts only what is kept).
+  // → Promise of the ids kept
+  AT.keepStored = function (ids) {
+    ids = (ids || []).filter(function (id) { return findDoc(id); });
+    if (!ids.length) return Promise.resolve([]);
+    function drop(lost) {
+      if (!lost.length) return;
+      data.docs = data.docs.filter(function (d) { return lost.indexOf(d.id) < 0; });
+      data = M.normData(data);
+    }
+    if (disk) {
+      if (!diskReady) return Promise.resolve(ids);
+      return disk.persist(data, true).then(function () {
+        var lost = ids.filter(function (id) { return !disk.pathOf(id); });
+        drop(lost);
+        disk.writeIndex(data);
+        return ids.filter(function (id) { return lost.indexOf(id) < 0; });
+      });
+    }
+    if (saveNow()) return Promise.resolve(ids);
+    drop(ids);
+    saveNow();
+    return Promise.resolve([]);
+  };
 
   function openDoc(id) {
     var d = findDoc(id);
@@ -1609,10 +1770,17 @@
     api.registerSlice("atelier", sliceGet, sliceSet, STORAGE_KEY, M.mergeData);
   }
 
-  function sliceGet() { return M.normData(data); }   // canonical copy (R26)
+  function sliceGet() { return disk ? disk.sliceGet(data) : M.normData(data); }   // canonical copy (R26)
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.docs)) return;
+    if (disk) {
+      // R6: a pull never marks dirty (the files are Vault's)
+      if (!diskReady) { diskPulls.push(incoming); return; }
+      var r = disk.absorb(data, incoming);
+      diskApply(r.data, r.changed);
+      return;
+    }
     var before = JSON.stringify(data);
     var openId = AT.doc ? AT.doc.id : null;
     var openBefore = AT.doc ? JSON.stringify(AT.doc) : null;
@@ -1680,7 +1848,7 @@
     watchPalette();
     wireHome();
     emit("boot");
-    T.load(T.allKeys()).then(function () {
+    loadDisk().then(function () { return T.load(T.allKeys()); }).then(function () {
       $("loading").hidden = true;
       if (AT.prefs.doc && findDoc(AT.prefs.doc)) openDoc(AT.prefs.doc);
       else renderHome();

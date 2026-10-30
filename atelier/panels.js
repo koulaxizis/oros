@@ -382,21 +382,93 @@
   // the disk's, Vault's and sync's own records name every file (their
   // queues, manifests, last-synced copies): they are not designs
   var BOOKKEEPING = /^oros-(vault|fs|sync)(-|$)/;
-  // Layout keeps its documents as files on the orOS disk (LY-DISK), and
-  // they name pictures here too: until this check reads those files,
-  // no file counts as unused (null: cannot tell, nothing is deletable).
-  var DOCS_ON_DISK = true;
-  function usedFiles() {
-    if (DOCS_ON_DISK) return null;
-    var CL = window.AtelierClips, used = {};
+  // Layout and Atelier keep their documents as files on the orOS disk
+  // (LY-DISK, AT-DISK): those name pictures too, and so do their rescue
+  // copies and anything of theirs in the Trash (a document put back
+  // from the Trash keeps its pictures). A file that cannot be read, or
+  // is too big to read, means "cannot tell": nothing is deletable.
+  var DOC_DIRS = ["/internal/Layout", "/internal/Atelier", "/internal/Rescue"];
+  var DOC_FILE = /\.(oroslayout|orosdesign|json)$/i, DOC_MAX = 64 * 1024 * 1024, DOC_DEPTH = 3;
+  var DOC_ID = / · ([a-z]{1,4}-[a-z0-9]{1,24})(?: \(conflict [^)\/]{1,40}\))?\.(?:orosdesign|oroslayout)$/;
+  function trashDir() { var C = window.OrosFilesCore; return C && C.TRASH ? C.TRASH : "/internal/.trash"; }
+  // every document file under the folders above and the Trash → paths
+  function docFiles(F) {
+    var out = [];
+    function walk(dir, depth, inTrash) {
+      return within(F.ls(dir), 20000).then(null, function (e) {
+        if (e && e.code === "ENOENT") return [];
+        throw e;
+      }).then(function (en) {
+        var chain = Promise.resolve();
+        (en || []).forEach(function (e) {
+          if (!e || typeof e.name !== "string") return;
+          var p = dir + "/" + e.name;
+          if (e.dir) { if (depth < DOC_DEPTH) chain = chain.then(function () { return walk(p, depth + 1, inTrash); }); }
+          // in the Trash's own folder only the items' folders count (the
+          // .json beside them is the Trash's record)
+          else if (DOC_FILE.test(e.name) && !(inTrash && depth === 0)) out.push(p);
+        });
+        return chain;
+      });
+    }
+    return DOC_DIRS.concat([trashDir()]).reduce(function (p, d) {
+      return p.then(function () { return walk(d, 0, d === trashDir()); });
+    }, Promise.resolve()).then(function () { return out; });
+  }
+  // the ids the document files name, into used; skip: ids of designs
+  // whose own files do not count (being deleted here), mem: designs
+  // already counted from memory → Promise of used, or null
+  function diskUsed(F, used, skip, mem) {
+    var CL = window.AtelierClips;
+    return docFiles(F).then(function (paths) {
+      return paths.reduce(function (p, path) {
+        return p.then(function (ok) {
+          if (!ok) return false;
+          var m = DOC_ID.exec(path), id = m && m[1];
+          if (id && skip.indexOf(id) >= 0 && /\.orosdesign$/i.test(path)) return true;
+          if (id && mem[id] && path.indexOf(AT.DISK_DIR + "/") === 0) return true;
+          return within(F.read(path), 20000).then(function (b) {
+            if (b && typeof b.size === "number" && b.size > DOC_MAX) return false;
+            return Promise.resolve(b && typeof b.text === "function" ? b.text() : String(b || "")).then(function (txt) {
+              // a rescue copy of a whole store: without the designs being deleted
+              if (skip.length && /\.json$/i.test(path)) {
+                var o = null;
+                try { o = JSON.parse(txt); } catch (e) { o = null; }
+                if (o && Array.isArray(o.docs)) {
+                  o.docs = o.docs.filter(function (d) { return !(d && skip.indexOf(d.id) >= 0); });
+                  txt = JSON.stringify(o);
+                }
+              }
+              CL.idsIn(txt, used);
+              return true;
+            });
+          }, function (e) { return !!(e && e.code === "ENOENT"); });
+        });
+      }, Promise.resolve(true));
+    }).then(function (ok) { return ok ? used : null; }, function () { return null; });
+  }
+  // → Promise of { id: 1 } for every file something on this device
+  // names (null: cannot tell, nothing is deletable). skip: designs
+  // being deleted (neither they nor their files count).
+  function usedFiles(skip) {
+    skip = skip || [];
+    var CL = window.AtelierClips, used = {}, data = AT.data(), mem = {};
+    var mine = { }; mine[AT.INDEX_KEY] = 1; mine[AT.OPEN_KEY] = 1;
+    if (skip.length) mine[AT.STORAGE_KEY] = 1;   // as in memory, without the designs being deleted
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (!BOOKKEEPING.test(k)) CL.idsIn(localStorage.getItem(k), used);
+        if (!BOOKKEEPING.test(k) && !mine[k]) CL.idsIn(localStorage.getItem(k), used);
       }
-    } catch (e) { return null; }           // cannot tell: nothing is deletable
-    CL.idsIn(JSON.stringify(AT.data()), used);
-    return used;
+    } catch (e) { return Promise.resolve(null); }   // cannot tell: nothing is deletable
+    Object.keys(data).forEach(function (k) { if (k !== "docs") CL.idsIn(JSON.stringify(data[k]), used); });
+    data.docs.forEach(function (d) {
+      if (skip.indexOf(d.id) >= 0) return;
+      mem[d.id] = 1;
+      CL.idsIn(JSON.stringify(d), used);
+    });
+    var F = fsApi();
+    return F ? diskUsed(F, used, skip, mem) : Promise.resolve(used);
   }
   // a promise that gives up after ms (a stuck disk call must not
   // leave the window waiting for ever)
@@ -466,7 +538,7 @@
       }
       function load() {
         if (!F) { ui.err = t("fm.nofs"); ui.files = []; render(); return; }
-        var used = usedFiles();
+        var used = null, usedP = usedFiles().then(function (u) { used = u; });
         ui.done = 0; ui.total = 0;
         within(F.ls(A.FOLDER), 20000).then(null, function (e) {
           if (e && e.code === "ENOENT") return [];
@@ -488,7 +560,7 @@
             })).then(function () { ui.done = out.length; progress(); return next(); });
           }
           return next();
-        }).then(function (files) {
+        }).then(function (files) { return usedP.then(function () { return files; }); }).then(function (files) {
           // biggest first: that is what frees space
           files.sort(function (a, b) { return b.size - a.size || (a.id < b.id ? -1 : 1); });
           ui.files = files;
@@ -508,19 +580,23 @@
       // in-use check too, in case a design changed meanwhile)
       function removeFiles(ids) {
         AT.openDialog(t("fm.title"), function (b2) { body = b2; }, true);
-        var used = usedFiles() || {}, gone = 0;
-        ids = ids.filter(function (id) { return !used[id]; });
+        var gone = 0;
         ui.busy = true; ui.pick = {};
         render();
-        ids.reduce(function (p, id) {
-          return p.then(function () {
-            return F.rm(A.FOLDER + "/" + id).then(function () {
-              gone++;
-              delete upThumbs[id];
-              sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
-            }, function () {});
-          });
-        }, Promise.resolve()).then(function () {
+        usedFiles().then(function (used) {
+          // cannot tell now: nothing goes
+          return used ? ids.filter(function (id) { return !used[id]; }) : [];
+        }).then(function (list) {
+          return list.reduce(function (p, id) {
+            return p.then(function () {
+              return F.rm(A.FOLDER + "/" + id).then(function () {
+                gone++;
+                delete upThumbs[id];
+                sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
+              }, function () {});
+            });
+          }, Promise.resolve());
+        }).then(function () {
           ui.busy = false; ui.files = null;
           AT.toast(t("fm.done", { n: gone }));
           load();
@@ -533,38 +609,37 @@
   }
   AT.manageFiles = manageFiles;
 
-  // Files the given designs name and nothing else saved in this
-  // browser does (other designs, Slides, Layout): offered for deletion
-  // with those designs. null: cannot tell, so none is offered.
+  // Files the given designs name and nothing else on this device does
+  // (other designs, Slides, Layout's files, the Trash): offered for
+  // deletion with those designs. → Promise of ids; null: cannot tell,
+  // so none is offered.
   AT.filesOnlyIn = function (docIds) {
-    var CL = window.AtelierClips, mine = {}, used = {}, data = AT.data();
-    if (!fsApi() || DOCS_ON_DISK) return null;
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k !== AT.STORAGE_KEY && !BOOKKEEPING.test(k)) CL.idsIn(localStorage.getItem(k), used);
-      }
-    } catch (e) { return null; }
-    Object.keys(data).forEach(function (k) { if (k !== "docs") CL.idsIn(JSON.stringify(data[k]), used); });
-    data.docs.forEach(function (d) { CL.idsIn(JSON.stringify(d), docIds.indexOf(d.id) >= 0 ? mine : used); });
-    return Object.keys(mine).filter(function (id) { return !used[id] && CL.isFileId(id); });
+    var CL = window.AtelierClips, mine = {};
+    if (!fsApi()) return Promise.resolve(null);
+    AT.data().docs.forEach(function (d) { if (docIds.indexOf(d.id) >= 0) CL.idsIn(JSON.stringify(d), mine); });
+    return usedFiles(docIds).then(function (used) {
+      return used ? Object.keys(mine).filter(function (id) { return !used[id] && CL.isFileId(id); }) : null;
+    });
   };
-  // deletes them one by one after the designs are gone, checking
-  // again that nothing uses them; resolves with how many went
-  AT.dropFiles = function (ids) {
-    var F = fsApi(), used = usedFiles(), gone = 0;
-    if (!F || !used) return Promise.resolve(0);
-    return ids.filter(function (id) { return !used[id]; }).reduce(function (p, id) {
-      return p.then(function () {
-        return F.rm(A.FOLDER + "/" + id).then(function () {
-          gone++;
-          delete upThumbs[id];
-          sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
-        }, function () {});
+  // deletes them one by one after the designs (docIds) are gone,
+  // checking again that nothing uses them; resolves with how many went
+  AT.dropFiles = function (ids, docIds) {
+    var F = fsApi(), gone = 0;
+    if (!F) return Promise.resolve(0);
+    return usedFiles(docIds).then(function (used) {
+      if (!used) return 0;
+      return ids.filter(function (id) { return !used[id]; }).reduce(function (p, id) {
+        return p.then(function () {
+          return F.rm(A.FOLDER + "/" + id).then(function () {
+            gone++;
+            delete upThumbs[id];
+            sessionUploads = sessionUploads.filter(function (x) { return x !== id; });
+          }, function () {});
+        });
+      }, Promise.resolve()).then(function () {
+        if (view === "uploads") renderDrawer();
+        return gone;
       });
-    }, Promise.resolve()).then(function () {
-      if (view === "uploads") renderDrawer();
-      return gone;
     });
   };
 
