@@ -483,15 +483,19 @@
     return Promise.resolve(typeof fs.ready === "function" ? fs.ready() : null).then(function () { return fs.ls(path); })
       .then(function (en) { return (en || []).filter(function (e) { return e && typeof e.name === "string" && e.name.charAt(0) !== "."; }); }, function () { return []; });
   }
+  // Layout's own document files (LY-DISK) and the Trash are never
+  // imported again as copies.
+  var SKIP_DIRS = [ROOT + "/Trash", ROOT + "/Layout"];
   // every package under path (subfolders to DEPTH_MAX), sorted by path
   function packagesIn(fs, path) {
     var out = [];
     function walk(p, depth) {
+      if (SKIP_DIRS.indexOf(p) >= 0) return Promise.resolve();
       return lsOf(fs, p).then(function (en) {
         var chain = Promise.resolve();
         en.sort(byName).forEach(function (e) {
           var q = p + "/" + e.name;
-          if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash") chain = chain.then(function () { return walk(q, depth + 1); }); }
+          if (e.dir) { if (depth < DEPTH_MAX && SKIP_DIRS.indexOf(q) < 0) chain = chain.then(function () { return walk(q, depth + 1); }); }
           else if (PKG_RE.test(e.name) && out.length < BATCH_MAX) out.push(q);
         });
         return chain;
