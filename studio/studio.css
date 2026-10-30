@@ -53,7 +53,7 @@ body {
 
 button { font-family: inherit; color: inherit; cursor: pointer; }
 ul { list-style: none; }
-select, input[type="number"], input[type="text"] {
+select, input[type="number"], input[type="text"], input[type="url"], textarea {
   font: inherit;
   font-size: 13px;
   color: var(--text);
@@ -410,7 +410,8 @@ dialog {
 dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 dialog h2 { font-size: 15px; }
 dialog h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); margin: 16px 0 8px; }
-dialog select, dialog input[type="text"] { width: 100%; }
+dialog select, dialog input[type="text"], dialog input[type="url"] { width: 100%; }
+.cr-text { width: 100%; box-sizing: border-box; resize: vertical; font: inherit; font-size: 13px; line-height: 1.4; }
 dialog input[type="range"] { width: 100%; min-height: 32px; }
 .dlg-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }

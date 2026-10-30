@@ -86,6 +86,12 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 - Zieh einen Loop an seinem Griff auf eine Spur oder drück `+`, um ihn am Abspielkopf einzufügen. Er landet auf der ausgewählten Instrumentenspur, wenn er passt (Drums auf einer Schlagzeugspur, Bass und Keys auf einer mit Tonhöhen), sonst auf einer neuen Instrumentenspur.
 - Ein Loop wird ein normaler MIDI-Clip: Bearbeite seine Noten, ändere seinen Klang oder wiederhole ihn mit `Duplizieren`. Er folgt dem Tempo des Projekts.
 
+## Klanginfo und Quellenangaben
+- Wähle einen Audioclip und drücke `Klanginfo`, um festzuhalten, woher sein Klang stammt: Titel, Urheber, Lizenz und ein Link zu seiner Seite. Alle Clips, die denselben Klang spielen, teilen sich die Karte; sie folgt dem Klang auf deine anderen Geräte und in die .orosstudio-Datei.
+- Lizenzen: `CC0` und `Gemeinfrei` verlangen nichts; `CC BY` verlangt, dass du den Urheber nennst; `CC BY-SA` verlangt zusätzlich, dass, was du daraus machst, dieselbe Lizenz trägt; `Andere` heißt: Es gelten die Bedingungen der Stelle, von der du ihn hast. `Mein eigener Klang` ist für deine eigenen Aufnahmen.
+- `Exportieren` zeigt unter `Quellenangaben` die Klänge des Songs, die eine Karte haben. `Kopieren` legt den Text in die Zwischenablage, `Als Text speichern` speichert ihn als .txt-Datei, bereit für die Stelle, an der du den Song veröffentlichst.
+>! Studio speichert nur, was du einträgst. Prüfe die Lizenz eines Klangs dort, wo du ihn heruntergeladen hast, bevor du einen Song damit veröffentlichst.
+
 ## Fernsteuerung
 Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während der Ton am PC spielt.
 1. Öffne am PC die Einstellungen (die drei Punkte oben) und drück `Tablet oder Handy verbinden`, dann `Code anzeigen`. Studio zeigt einen 6-stelligen Code und einen QR-Code.
