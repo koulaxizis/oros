@@ -119,7 +119,9 @@ test("limits: files per batch, folder depth; only packages from a zip or a folde
   // instanceof Blob is false there, so a file is told by its methods
   assert.match(io, /typeof f\.arrayBuffer === "function" \? f : f\.get\(\)/);
   assert.doesNotMatch(io, /instanceof (Blob|File)\b/);
-  assert.match(io, /q !== ROOT \+ "\/Trash"/);
+  assert.match(io, /SKIP_DIRS = \[ROOT \+ "\/Trash", ROOT \+ "\/Layout"\]/);
+  assert.match(io, /SKIP_DIRS\.indexOf\(q\) < 0/);
+  assert.match(io, /if \(SKIP_DIRS\.indexOf\(p\) >= 0\) return Promise\.resolve\(\);/);
 });
 
 test("strings EN/EL/DE", () => {

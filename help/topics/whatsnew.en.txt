@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.56.01
+- Layout: Open file › A folder in Files no longer brings in copies of your own documents. It skips the Layout folder, where every document already is, as well as the Trash.
+
 ## Version 4.56.00
 - Layout: every document is now a file in Files › Layout, so documents as large as a whole book fit, sync with your other devices like any file and go into backups with the orOS disk. The first start moves your documents there and keeps a rescue copy in Files › Rescue for 30 days. Double-click a document's file in Files to open it.
 
