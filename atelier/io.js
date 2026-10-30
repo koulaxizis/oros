@@ -694,11 +694,15 @@
     });
   }
   function docCount() { return ((AT.data() || {}).docs || []).length; }
+  // A picked file comes from the shell's window when its file dialog
+  // (dialogs.js) is used, so a type check against this frame's Blob is
+  // false for it: tell a file from a disk entry by what it can do.
+  function isFile(f) { return !!f && typeof f.arrayBuffer === "function" && typeof f.slice === "function"; }
   // files: File objects, or { name, get() → Promise<Blob> } for the disk
   function importMany(files) {
     files = (files || []).filter(Boolean);
     if (!files.length) return Promise.resolve();
-    if (files.length === 1 && files[0] instanceof Blob && !/\.zip$/i.test(files[0].name || "")) return openFile(files[0]);
+    if (files.length === 1 && isFile(files[0]) && !/\.zip$/i.test(files[0].name || "")) return openFile(files[0]);
     var ok = 0, bad = 0, n = 0;
     function one(f) {
       if (n >= BATCH_MAX) { bad++; return Promise.resolve(); }
@@ -726,7 +730,7 @@
     var chain = Promise.resolve();
     files.forEach(function (f) {
       chain = chain.then(function () {
-        return Promise.resolve(f instanceof Blob ? f : f.get()).then(function (file) {
+        return Promise.resolve().then(function () { return isFile(f) ? f : f.get(); }).then(function (file) {
           if (!file) { bad++; return; }
           if (/\.zip$/i.test(file.name || "")) return zipOf(file);
           return one(file);
