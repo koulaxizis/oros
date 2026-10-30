@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.47.02
+- Assistant: a conversation you delete no longer leaves its file behind in Files › Assistant › Chats (with "Sync conversations" on). The file goes, and one small list, deleted-chats.json, tells your other devices to delete it too. The files earlier deletions left there, and the extra copies of a conversation ("…x….json") that only repeated it, go away by themselves the next time the Assistant opens. Nothing you still have is deleted.
+
 ## Version 4.47.01
 - Calendar: the Month view shows coloured dots for events again, as before, while keeping the taller cells. If you prefer the event names, Google Calendar style, press the new Names button next to the views (this device only).
 

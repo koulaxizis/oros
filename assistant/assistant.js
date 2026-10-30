@@ -1277,7 +1277,7 @@
 
   // ---------- 2. Data + prefs ----------
   var data = C.emptyData();
-  var prefs = { open: "", keep: 1, usage: {}, sealOk: {} };
+  var prefs = { open: "", keep: 1, usage: {}, sealOk: {}, gone: {}, clr: {} };
 
   function load() {
     try {
@@ -1303,6 +1303,8 @@
         prefs.keep = p.keep === 0 ? 0 : 1;
         if (p.usage && typeof p.usage === "object") prefs.usage = p.usage;
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
+        prefs.gone = C.normGone(p.gone, Date.now());
+        if (p.clr && typeof p.clr === "object") prefs.clr = p.clr;
       }
     } catch (e) {}
   }
@@ -2027,18 +2029,19 @@
     dlg.showModal();
     go.focus();
   }
-  // With chat sync on, a conversation imported, then undone (its file
-  // a tombstone) and imported again must be newer than that tombstone.
+  // With chat sync on, a conversation imported, then undone (in the
+  // list of deleted chats, or a tombstone file) and imported again must
+  // be newer than that deletion.
   function tombstones(ids) {
     var fs = fsApi(), out = {};
     if (!chatSyncOn() || !ids.length) return Promise.resolve(out);
     var want = {};
-    ids.forEach(function (id) { want[id + ".json"] = id; });
+    ids.forEach(function (id) { want[id + ".json"] = id; if (prefs.gone[id]) out[id] = prefs.gone[id]; });
     return Promise.resolve(fs.ls(C.CHAT_DIR)).catch(function () { return []; }).then(function (list) {
       var reads = (list || []).filter(function (en) { return en && !en.dir && want[en.name]; }).map(function (en) {
         return Promise.resolve(fs.readText(C.CHAT_DIR + "/" + en.name)).then(function (text) {
           var ch = C.parseChatFile(text);
-          if (ch) out[ch.id] = ch.m;
+          if (ch && ch.m > (out[ch.id] || 0)) out[ch.id] = ch.m;
         }, function () {});
       });
       return Promise.all(reads).then(function () { return out; });
@@ -5368,10 +5371,13 @@
   // Switch data.cs.on (synced, so every device follows it). Each chat
   // is written to C.CHAT_DIR/<id>.json on the orOS disk; Vault Drive
   // uploads, downloads and encrypts the files like any other file. A
-  // deleted chat leaves a tombstone file, so a missing file is never
-  // read as "deleted", only written again. reconcile() folds the
-  // folder into this device's chats (core.js mergeChat) and writes
-  // back only what differs, so two devices settle without ping-pong.
+  // missing file is never read as "deleted", only written again. A
+  // deleted chat's file is removed and its id goes into the list of
+  // deleted chats (C.GONE_FILE, also kept in prefs.gone), so every
+  // device drops it and no file stays behind (AS-DEL). reconcile()
+  // folds the folder into this device's chats (core.js mergeChat) and
+  // writes back only what differs, so two devices settle without
+  // ping-pong.
   var fileQ = {}, fileTimer = 0, reconciling = null, reconcileAgain = false, vaultUnsub = null;
   function fsApi() {
     try {
@@ -5414,10 +5420,16 @@
       });
     }, Promise.resolve());
   }
+  // With sync off a deletion is this device's only: the file stays and
+  // a later "on" brings the chat back from it, as before.
   function dropChatFile(id) {
     delete fileQ[id];
-    if (!chatSyncOn()) return;
-    writeFile(id, JSON.stringify({ id: id, m: Date.now(), del: 1 }));
+    if (!chatSyncOn() || !C.chatPath(id)) return;
+    var g = {};
+    g[id] = Date.now();
+    prefs.gone = C.mergeGone(prefs.gone, g, g[id]);
+    savePrefs();
+    scheduleReconcile();                       // removes the file, writes the list
   }
   function setChatSync(on) {
     var cur = data.cs || { m: 0, on: 0 };
@@ -5435,12 +5447,15 @@
     if (reconciling) { reconcileAgain = true; return reconciling; }
     var fs = fsApi();
     reconciling = Promise.resolve(fs.ls(C.CHAT_DIR)).catch(function () { return []; }).then(function (list) {
-      var files = {};
+      var files = {}, lists = [];
       var reads = (list || []).filter(function (en) {
         return en && !en.dir && /\.json$/i.test(String(en.name || "")) && String(en.name).length < 120;
       }).map(function (en) {
         var path = C.CHAT_DIR + "/" + en.name;
         return Promise.resolve(fs.readText(path)).then(function (text) {
+          var g = C.parseGoneFile(text);
+          // the list, or a conflict copy of it ("deleted-chats (conflict …).json")
+          if (g) { lists.push({ path: path, gone: g, text: text }); return; }
           var ch = C.parseChatFile(text);
           if (!ch) return;
           var f = files[ch.id] || (files[ch.id] = { exact: null, text: null, others: [] });
@@ -5448,13 +5463,32 @@
           else f.others.push({ path: path, chat: ch });
         }, function () {});
       });
-      return Promise.all(reads).then(function () { return files; });
-    }).then(function (files) {
-      var byId = {}, changed = false, work = [];
+      return Promise.all(reads).then(function () { return { files: files, lists: lists }; });
+    }).then(function (got) {
+      var files = got.files, now = Date.now();
+      var gone = C.normGone(prefs.gone, now), listText = null;
+      got.lists.forEach(function (l) {
+        gone = C.mergeGone(gone, l.gone, now);
+        if (l.path === C.GONE_FILE) listText = l.text;
+      });
+      // File work is collected per path and done at the end, so a
+      // later decision on a path replaces an earlier one (a chat
+      // written back and then found to be a spare copy is only removed).
+      var byId = {}, changed = false, work = [], clr = {}, ops = {};
       chats.forEach(function (c) { byId[c.id] = c; });
       var ids = Object.keys(byId);
       Object.keys(files).forEach(function (id) { if (!byId[id]) ids.push(id); });
       var copies = [];
+      function rmFile(path) { if (path) ops[path] = null; }
+      function putFile(id, text) { var path = C.chatPath(id); if (path && text) ops[path] = text; }
+      function dropLocal(id) {
+        if (!byId[id]) return;
+        chats = chats.filter(function (x) { return x.id !== id; });
+        if (chat && chat.id === id) { chat = null; prefs.open = ""; savePrefs(); }
+        work.push(idbDel("chats", id).catch(function () {}));
+        delete byId[id];
+        changed = true;
+      }
       ids.forEach(function (id) {
         if (busy && busy.chat && busy.chat.id === id) return;   // answering in it: next time
         var f = files[id] || { exact: null, text: null, others: [] };
@@ -5469,43 +5503,85 @@
         if (res.copy) copies.push(res.copy);
         var keep = res.chat;
         if (!keep) return;
-        var text = keep.del ? JSON.stringify({ id: keep.id, m: keep.m, del: 1 }) : C.chatFile(keep);
+        if (!keep.del && C.goneWins(keep, gone)) keep = { id: id, m: gone[id], del: 1 };
         if (keep.del) {
-          if (byId[id]) {
-            chats = chats.filter(function (x) { return x.id !== id; });
-            if (chat && chat.id === id) { chat = null; prefs.open = ""; savePrefs(); }
-            work.push(idbDel("chats", id).catch(function () {}));
-            changed = true;
-          }
-        } else if (!local || C.chatFile(local) !== text) {
+          // Deleted: into the list, off this device, and no file left.
+          // A chat file that comes back after this device removed it
+          // (clr) was written by a device that does not read the list
+          // (an older orOS): it gets a tombstone, which it does read,
+          // kept TOMB_KEEP.
+          if (!gone[id] || keep.m > gone[id]) gone[id] = keep.m;
+          dropLocal(id);
+          var live = (f.exact && !f.exact.del) || f.others.some(function (o) { return !o.chat.del; });
+          var tomb = f.exact && f.exact.del && f.exact.r ? f.exact : null;
+          if (live && prefs.clr[id]) putFile(id, JSON.stringify({ id: id, m: keep.m, del: 1, r: 1, at: now }));
+          else if (tomb && now - tomb.at < C.TOMB_KEEP) { /* kept a while for that device */ }
+          else if (f.exact) { rmFile(C.chatPath(id)); clr[id] = 1; }
+          f.others.forEach(function (o) { rmFile(o.path); });
+          return;
+        }
+        var text = C.chatFile(keep);
+        if (!local || C.chatFile(local) !== text) {
           var target = byId[id];
           if (target) {
             Object.keys(keep).forEach(function (k) { target[k] = keep[k]; });
           } else {
             target = keep;
             chats.push(target);
+            byId[id] = target;
           }
           work.push(idbPut("chats", id, target).catch(function () {}));
           changed = true;
         }
-        if (f.text !== text) work.push(writeFile(id, text));
-        f.others.forEach(function (o) { work.push(Promise.resolve(fs.rm(o.path)).catch(function () {})); });
+        if (f.text !== text) putFile(id, text);
+        f.others.forEach(function (o) { rmFile(o.path); });
       });
       copies.forEach(function (cp) {
-        if (findChat(cp.id) || files[cp.id]) return;
+        if (findChat(cp.id) || files[cp.id] || C.goneWins(cp, gone)) return;
         chats.push(cp);
+        byId[cp.id] = cp;
         work.push(idbPut("chats", cp.id, cp).catch(function () {}));
-        work.push(writeFile(cp.id, C.chatFile(cp)));
+        putFile(cp.id, C.chatFile(cp));
         changed = true;
+      });
+      // Copies the old merge made of a chat that already holds every
+      // word of them (C.msgSig): deleted like any chat, on every device.
+      chats.slice().forEach(function (cp) {
+        if (cp.id.indexOf("x") < 0 || (busy && busy.chat === cp)) return;
+        var parent = null;
+        chats.forEach(function (p) { if (p !== cp && C.spareCopy(cp, p)) parent = p; });
+        if (!parent) return;
+        gone[cp.id] = Math.max(cp.m, gone[cp.id] || 0);
+        dropLocal(cp.id);
+        if (files[cp.id]) { rmFile(C.chatPath(cp.id)); clr[cp.id] = 1; }
+        else delete ops[C.chatPath(cp.id)];
       });
       chats.sort(function (a, b) { return b.m - a.m; });
       if (chats.length > MAX_CHATS) {
         chats.slice(MAX_CHATS).forEach(function (old) {
           work.push(idbDel("chats", old.id).catch(function () {}));
-          dropChatFile(old.id);
+          gone[old.id] = Math.max(now, old.m);
+          if (files[old.id]) { rmFile(C.chatPath(old.id)); clr[old.id] = 1; }
+          else delete ops[C.chatPath(old.id)];
         });
         chats = chats.slice(0, MAX_CHATS);
       }
+      // The list: one file, written only when it says something new;
+      // its conflict copies are folded in above and removed.
+      gone = C.normGone(gone, now);
+      prefs.gone = gone;
+      Object.keys(prefs.clr).forEach(function (id) { if (gone[id]) clr[id] = 1; });
+      prefs.clr = clr;
+      savePrefs();
+      var next = C.goneFile(gone);
+      if (listText !== next && (Object.keys(gone).length || listText !== null)) {
+        ops[C.GONE_FILE] = next;
+      }
+      got.lists.forEach(function (l) { if (l.path !== C.GONE_FILE) rmFile(l.path); });
+      Object.keys(ops).forEach(function (path) {
+        var op = ops[path] === null ? fs.rm(path) : fs.writeText(path, ops[path]);
+        work.push(Promise.resolve(op).catch(function () {}));
+      });
       if (changed) renderAll();
       return Promise.all(work);
     }).catch(function () {}).then(function () {
