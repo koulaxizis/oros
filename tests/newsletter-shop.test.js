@@ -210,3 +210,16 @@ test("E4: a Shopify customer export brings only those who accept e-mail marketin
   // a plain CSV stays with the old reader
   assert.equal(I2.kindOfCsv("email,name\na@b.gr,A\n"), "");
 });
+
+test("E4: long shop texts are cut at a word and end with an ellipsis (live test 2026-10-30)", () => {
+  const long = "Ride over any terrain with a board that bends where you need it. ".repeat(8);
+  const out = Sh.plain(long, 300);
+  assert.ok(out.length <= 300);
+  assert.ok(out.endsWith("…"));
+  assert.match(out, /[a-z]…$/);
+  assert.ok(long.startsWith(out.slice(0, -1)));
+  assert.ok(/ (it|need|board|terrain|where|bends|with|a|you|over|any|Ride|that)…$/.test(out) || / [A-Za-z]+…$/.test(out));
+  assert.equal(Sh.plain("Short text.", 300), "Short text.");
+  // one long word is still cut, not dropped
+  assert.equal(Sh.plain("x".repeat(400), 10), "x".repeat(9) + "…");
+});
