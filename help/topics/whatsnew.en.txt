@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.50.00
+- Studio: 21 recorded instruments for instrument tracks: upright piano, pipe organ, string sections, harp, woodwinds, brass, glockenspiel, marimba, xylophone, timpani and tubular bells, from VS Chamber Orchestra: Community Edition (CC0, free for anything). Pick one under Instrument in the track's settings: Studio downloads it the first time (0.1 to 4.5 MB) and keeps it for offline use.
+
 ## Version 4.49.00
 - Studio: 32 Airwindows effects (free, MIT, by Chris Johnson) in the effect list next to NULL JSFX: reverbs like Galactic and Chamber, tape and tube warmth, compressors, clippers, consoles and stereo width. Open a track's effects and pick the Airwindows group.
 

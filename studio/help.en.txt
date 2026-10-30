@@ -71,6 +71,13 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - `Import audio` also takes MIDI files (.mid, .midi, type 0 and 1). A file with one part goes into the selected instrument track; otherwise each part gets its own new track, with a sound picked from its General MIDI program (channel 10 becomes the drum kit). An empty project takes the file's tempo.
 - `Export MIDI` saves a standard MIDI file: in the piano roll for one clip (type 0), in the track's settings for the whole track (type 1, with the project's tempo and bars).
 
+## Sampled instruments
+- Besides the built-in sounds, `Instrument` (in the track's settings, or the sound list of the keyboard panel) offers 21 recorded instruments in groups marked `(download)`: upright piano, pipe organ, violin, viola and cello sections, contrabass, pizzicato violins, harp, flute, oboe, clarinet, bassoon, French horn, trumpet, trombone, tuba, glockenspiel, marimba, xylophone, timpani and tubular bells.
+- They come from VS Chamber Orchestra: Community Edition by Versilian Studios, under CC0 (free for anything, no credit needed). Studio downloads an instrument the first time a track uses it (0.1 to 4.5 MB) and keeps it on this device, so afterwards it also plays offline. Until it is here the track plays its built-in sound.
+- The keys, a MIDI keyboard, the piano roll and every export play the instrument. An export waits until every instrument of the song is downloaded.
+- `Export` lists the instruments the song uses under `Credits`.
+- A recorded note lasts as long as its recording: a very long held note on strings or winds fades out after about eight seconds.
+
 ## Piano roll
 - Select a MIDI clip and press `Edit notes` in the bar at the bottom, or double-click the clip, or press [[E]]. On a phone the roll fills the screen.
 - `Draw`: tap or click to add a note, and drag while adding to make it longer. `Select`: drag a box around notes, or tap them; with [[Shift]] they are added to the selection.

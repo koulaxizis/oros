@@ -36,6 +36,10 @@ var LANG_CACHE = "oros-lang-packs";
 // that was opened once keeps working offline. A copy from an older
 // release is refreshed while online and only used as an offline fallback.
 var NULLFX_CACHE = "oros-nullfx";
+// Studio's instrument packs (koulaxizis/oros-sounds on GitHub Pages, cross-origin,
+// so this SW never answers for them): studio/sounds.js keeps every file it
+// downloaded here, and the cache outlives releases like the effect files.
+var SOUNDS_CACHE = "oros-sounds";
 // The page an app frame gets offline before it was saved (fetch,
 // below). "sw.offline" is also in translations.js, so a pack language
 // reads it from its shell pack.
@@ -2021,6 +2025,8 @@ var PRECACHE_URLS = [
   "studio/fxchain.worklet.js",
   "studio/loops.js",
   "studio/midi.js",
+  "studio/sfz.js",
+  "studio/sounds.js",
   "studio/notes.js",
   "studio/roll.js",
   "television/core.js",
@@ -2193,7 +2199,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, "oros-television-api", SHARE_INBOX];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup

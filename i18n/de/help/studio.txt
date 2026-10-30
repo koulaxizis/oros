@@ -71,6 +71,13 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 - `Audio importieren` nimmt auch MIDI-Dateien an (.mid, .midi, Typ 0 und 1). Eine Datei mit einem Part kommt in die ausgewählte Instrumentenspur; sonst bekommt jeder Part eine eigene neue Spur, mit einem Klang nach seinem General-MIDI-Programm (Kanal 10 wird zum Schlagzeug). Ein leeres Projekt übernimmt das Tempo der Datei.
 - `MIDI exportieren` speichert eine Standard-MIDI-Datei: in der Pianorolle für einen Clip (Typ 0), in den Spureinstellungen für die ganze Spur (Typ 1, mit Tempo und Takten des Projekts).
 
+## Aufgenommene Instrumente
+- Neben den eingebauten Klängen bietet `Instrument` (in den Spureinstellungen oder in der Klangliste des Tastenfelds) 21 aufgenommene Instrumente in Gruppen mit `(Download)`: Klavier, Pfeifenorgel, Violinen, Bratschen und Celli, Kontrabass, Violinen pizzicato, Harfe, Flöte, Oboe, Klarinette, Fagott, Horn, Trompete, Posaune, Tuba, Glockenspiel, Marimba, Xylofon, Pauken und Röhrenglocken.
+- Sie stammen aus VS Chamber Orchestra: Community Edition von Versilian Studios, unter CC0 (frei für alles, keine Nennung nötig). Studio lädt ein Instrument herunter, wenn eine Spur es zum ersten Mal verwendet (0,1 bis 4,5 MB), und behält es auf diesem Gerät, danach spielt es auch offline. Bis dahin spielt die Spur ihren eingebauten Klang.
+- Die Tasten, ein MIDI-Keyboard, die Pianorolle und jeder Export spielen das Instrument. Ein Export wartet, bis alle Instrumente des Songs heruntergeladen sind.
+- `Exportieren` listet die Instrumente des Songs unter `Quellenangaben`.
+- Eine aufgenommene Note klingt so lange wie ihre Aufnahme: Ein sehr langer Ton bei Streichern oder Bläsern klingt nach etwa acht Sekunden aus.
+
 ## Pianorolle
 - Wähle einen MIDI-Clip aus und drück `Noten bearbeiten` in der Leiste unten, doppelklicke den Clip oder drück [[E]]. Auf dem Handy füllt die Rolle den Bildschirm.
 - `Zeichnen`: Tippe oder klicke, um eine Note hinzuzufügen, und zieh beim Hinzufügen, um sie länger zu machen. `Auswählen`: Zieh einen Rahmen um Noten oder tippe sie an; mit [[Shift]] kommen sie zur Auswahl hinzu.

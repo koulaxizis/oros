@@ -194,6 +194,11 @@
       "tk.inst": "Instrument track", "tk.instHint": "Notes you can edit, played by a built-in instrument.", "tk.loops": "Browse loops",
       "mi.inst": "Instrument", "mi.track": "Instrument track: {inst}", "mi.newClip": "New clip", "mi.editNotes": "Edit notes",
       "mi.exportMidi": "Export MIDI", "mi.importMidi": "Import MIDI", "mi.clip": "MIDI clip", "mi.target": "Plays {name}",
+      "smp.group": "{cat} (download)", "smp.cat.Keys": "Keys", "smp.cat.Strings": "Strings", "smp.cat.Woodwinds": "Woodwinds",
+      "smp.cat.Brass": "Brass", "smp.cat.Percussion": "Percussion", "smp.loading": "Downloading {name}…", "smp.step": "Downloading {name}: {n} of {total}",
+      "smp.ready": "{name} is ready", "smp.fail": "{name} could not be downloaded. The built-in sound plays until it can.",
+      "smp.exportFail": "An instrument could not be downloaded, so the song was not exported. Try again when online.",
+      "smp.credit": "{name} (instrument)",
       "mi.recMidi": "Recording notes on {name}", "mi.recSaved": "{n} notes recorded on {name}",
       "mi.imported": "Imported {n} notes from {name}", "mi.badMidi": "{name} is not a MIDI file Studio can read",
       "mi.noNotes": "{name} has no notes", "mi.notesN": "{n} notes", "mi.dbl": "Double-click or double-tap an empty spot to add a clip",
@@ -335,6 +340,11 @@
       "tk.inst": "Κανάλι οργάνου", "tk.instHint": "Νότες που διορθώνεις, παιγμένες από ένα ενσωματωμένο όργανο.", "tk.loops": "Περιήγηση στα loops",
       "mi.inst": "Όργανο", "mi.track": "Κανάλι οργάνου: {inst}", "mi.newClip": "Νέο κλιπ", "mi.editNotes": "Επεξεργασία νοτών",
       "mi.exportMidi": "Εξαγωγή MIDI", "mi.importMidi": "Εισαγωγή MIDI", "mi.clip": "Κλιπ MIDI", "mi.target": "Παίζει το {name}",
+      "smp.group": "{cat} (λήψη)", "smp.cat.Keys": "Πλήκτρα", "smp.cat.Strings": "Έγχορδα", "smp.cat.Woodwinds": "Ξύλινα πνευστά",
+      "smp.cat.Brass": "Χάλκινα πνευστά", "smp.cat.Percussion": "Κρουστά", "smp.loading": "Λήψη: {name}…", "smp.step": "Λήψη {name}: {n} από {total}",
+      "smp.ready": "Το {name} είναι έτοιμο", "smp.fail": "Δεν ήταν δυνατή η λήψη του {name}. Παίζει ο ενσωματωμένος ήχος μέχρι να γίνει.",
+      "smp.exportFail": "Δεν ήταν δυνατή η λήψη ενός οργάνου, οπότε το τραγούδι δεν εξήχθη. Δοκίμασε ξανά με σύνδεση.",
+      "smp.credit": "{name} (όργανο)",
       "mi.recMidi": "Ηχογραφούνται νότες στο {name}", "mi.recSaved": "Γράφτηκαν {n} νότες στο {name}",
       "mi.imported": "Εισήχθησαν {n} νότες από το {name}", "mi.badMidi": "Το {name} δεν είναι αρχείο MIDI που διαβάζει το Studio",
       "mi.noNotes": "Το {name} δεν έχει νότες", "mi.notesN": "{n} νότες", "mi.dbl": "Διπλό κλικ ή διπλό πάτημα σε κενό σημείο για νέο κλιπ",
@@ -724,16 +734,40 @@
   function isInst(tr) { return !!tr && (!!tr.inst || clipsOf(tr.id).some(C.isMidi)); }
   function instOf(tr) { return (tr && tr.inst) || "piano"; }
   function instName(tr) {
-    var x = nxOf(tr), i = instOf(tr);
+    var x = nxOf(tr), i = instOf(tr), sp = smpOf(tr);
     if (x) return "NULL " + FX.nameOf(x.id);
+    if (sp) return SND.find(sp) ? packName(SND.find(sp)) : sp;
     return window.StudioMidi.PRESETS[i] ? t("snd." + i) : i;
+  }
+  // A sample instrument (sounds.js, from oros-sounds) plays the notes when
+  // the track names one in smp and no NULL instrument comes first; until
+  // it is downloaded, and in an older Studio, the built-in inst plays.
+  var SND = window.StudioSounds, SFZ = window.StudioSfz;
+  function packName(e) { return (e.names && e.names[LANG]) || e.name; }
+  function packCat(k) { var x = t("smp.cat." + k); return x === "smp.cat." + k ? k : x; }
+  function smpOf(tr) { return tr && tr.smp && !nxOf(tr) ? tr.smp : ""; }
+  function projSmps() { return tracks().map(smpOf).filter(Boolean); }
+  var smpTold = {};
+  // download what the project's tracks play; then `after` (e.g. play again)
+  // (`retry`: also the ones that failed before, e.g. on Play)
+  function loadSmps(a, ids, after, retry) {
+    var miss = ids.filter(function (id) { return !SND.get(id) && (retry || SND.state(id) !== "bad"); });
+    if (!miss.length) return;
+    var names = function (id) { var e = SND.find(id); return e ? packName(e) : id; };
+    miss.forEach(function (id) { if (SND.state(id) !== "loading") live(t("smp.loading", { name: names(id) })); });
+    SND.ensure(a, miss, function (id, n, total) { if (n === total || n % 8 === 0) live(t("smp.step", { name: names(id), n: n, total: total })); }).then(function () {
+      miss.forEach(function (id) { showToast(t("smp.ready", { name: names(id) })); });
+      if (after) after();
+    }, function () {
+      miss.forEach(function (id) { if (!SND.get(id) && !smpTold[id]) { smpTold[id] = 1; showToast(t("smp.fail", { name: names(id) })); } });
+    });
   }
   // A NULL JSFX instrument (fx.js) plays the track's notes instead of a
   // built-in sound: it is the first item of the track's chain. The
   // track keeps a built-in sound of the same kind in inst, which an
   // older Studio (and the piano roll's drum names) go by.
   function nxOf(tr) { return tr && FX ? FX.instrumentOf(tr.fx) : null; }
-  function soundOf(tr) { var x = nxOf(tr); return x ? "nx:" + x.id : instOf(tr); }
+  function soundOf(tr) { var x = nxOf(tr); return x ? "nx:" + x.id : smpOf(tr) ? "sm:" + tr.smp : instOf(tr); }
   function nxKind(id) {
     var e = (FX.instruments() || []).filter(function (x) { return x.id === id; })[0];
     return e && /\bdrum/.test(e.tags || "") ? "drums" : "piano";
@@ -743,12 +777,27 @@
     sel.innerHTML = "";
     M.ORDER.forEach(function (id) { var o = el("option", "", t("snd." + id)); o.value = id; sel.appendChild(o); });
     var list = FX ? FX.instruments() : [];
-    if (!list.length) return;
-    var g = el("optgroup", "");
-    g.label = "NULL JSFX";
-    list.forEach(function (e) { var o = el("option", "", "NULL " + e.name); o.value = "nx:" + e.id; g.appendChild(o); });
-    sel.appendChild(g);
+    if (list.length) {
+      var g = el("optgroup", "");
+      g.label = "NULL JSFX";
+      list.forEach(function (e) { var o = el("option", "", "NULL " + e.name); o.value = "nx:" + e.id; g.appendChild(o); });
+      sel.appendChild(g);
+    }
+    var groups = {};
+    SND.list().slice().sort(function (x, y) { return packName(x).localeCompare(packName(y), LANG); }).forEach(function (e) {
+      var k = e.category || "Instruments";
+      if (!groups[k]) { groups[k] = el("optgroup", ""); groups[k].label = t("smp.group", { cat: packCat(k) }); sel.appendChild(groups[k]); }
+      var o = el("option", "", packName(e)); o.value = "sm:" + e.id; groups[k].appendChild(o);
+    });
   }
+  // a <select>'s value for track `tr` (or the keys' own sound `snd`)
+  function soundValue(sel, tr, snd) {
+    var v = tr ? soundOf(tr) : snd;
+    if (sel.querySelector('option[value="' + v + '"]')) return v;
+    v = tr ? instOf(tr) : snd;
+    return M.PRESETS[v] ? v : "piano";
+  }
+  function soundCount() { return M.ORDER.length + (FX ? FX.instruments().length : 0) + SND.list().length; }
   // fields for a track that takes sound `v` (a built-in id or "nx:<id>"), or null (no room)
   function soundFields(tr, v) {
     var m = /^nx:([a-z0-9_]{1,40})$/.exec(v || "");
@@ -756,12 +805,23 @@
       if (!FX.isInstrument(m[1])) return null;
       var fx = FX.withInstrument(tr.fx, m[1]);
       if (!fx) { showToast(t("fx.max", { n: C.MAX_FX })); return null; }
-      return { fx: fx, inst: nxKind(m[1]) };
+      return { fx: fx, inst: nxKind(m[1]), smp: undefined };
+    }
+    var sm = /^sm:([a-z0-9][a-z0-9-]{0,39})$/.exec(v || "");
+    if (sm) {
+      var e = SND.find(sm[1]);
+      if (!e) return null;
+      return { smp: e.id, inst: e.kind, fx: FX.withInstrument(tr.fx, null) };
     }
     if (!M.PRESETS[v]) return null;
-    return { inst: v, fx: FX.withInstrument(tr.fx, null) };
+    return { inst: v, smp: undefined, fx: FX.withInstrument(tr.fx, null) };
   }
-  function setSound(tr, v) { var f = soundFields(tr, v); if (f) setTrack(tr.id, f); }
+  function setSound(tr, v) {
+    var f = soundFields(tr, v);
+    if (!f) return;
+    setTrack(tr.id, f);
+    if (f.smp) { var a = audio(); if (a) loadSmps(a, [f.smp], function () { replayIfPlaying(); syncKb(); }, true); }
+  }
 
   // ---------- 4. Audio files: disk, decoding, peaks ----------
   var buffers = {};      // source id → AudioBuffer
@@ -1596,7 +1656,7 @@
       // not a DelayNode: Chromium drops a DelayNode's tail once its source has ended
       // nx: a NULL instrument in the chain plays the notes (as MIDI), else the built-in sound
       nodes[tr.id] = { id: tr.id, gain: g, pan: pn, tap: tap, ag: ag, chain: chain, input: chain || tap, meter: meter,
-                       shift: shift, late: max / sr, inst: instOf(tr), nx: !!(chain && nxOf(tr)) };
+                       shift: shift, late: max / sr, inst: instOf(tr), nx: !!(chain && nxOf(tr)), smp: smpOf(tr) };
     });
     wireKeys(trs, nodes);
     return max;
@@ -1727,7 +1787,8 @@
     var at = when + (q.at - from), dur = q.end - q.at, now = a.currentTime;
     if (at < now) { dur -= now - at; at = now; }
     if (dur <= 0.002) return;
-    var h = M.playNote(a, n.input, n.inst, q.p, q.v, at, dur, q.g);
+    var si = n.smp ? SND.get(n.smp) : null;
+    var h = si ? SFZ.playNote(a, n.input, si, q.p, q.v, at, dur, q.g) : M.playNote(a, n.input, n.inst, q.p, q.v, at, dur, q.g);
     if (list) list.push(h);
   }
   // a note as MIDI for a NULL instrument (channel 10, the drums' channel):
@@ -1768,6 +1829,11 @@
       FX.ensure(a, chains).then(function () {
         if (playing && !recording && proj && proj.id === pid) replayIfPlaying();
       }, function () { fxFail = true; showToast(t("toast.noFx")); });
+    }
+    var smps = projSmps();
+    if (!SND.isReady(smps)) {
+      var pid2 = proj.id;                         // the built-in sound plays until the instrument is here
+      loadSmps(a, smps, function () { if (playing && !recording && proj && proj.id === pid2) replayIfPlaying(); }, true);
     }
     var lat = buildTracks(a, masterGain, trackNodes, false);
     lat += routeMaster(a, masterGain, analyser, false, trackNodes);
@@ -2037,7 +2103,7 @@
   // takes the notes into a MIDI clip; on an audio track, with the panel
   // open, Record takes the synth as audio.
   var M = window.StudioMidi;
-  var synth = null, synthOut = null, midiAcc = null, held = {};
+  var synth = null, synthOut = null, midiAcc = null, held = {}, sLive = null;
   function synthBus(a) {
     if (!synthOut) {
       synthOut = a.createGain();
@@ -2060,8 +2126,11 @@
   function syncKb() {
     var tr = kbTarget(), snd = kbSound(), sel = $("kb-snd");
     if (synth && synth.preset !== M.PRESETS[snd] && M.PRESETS[snd]) { synth.allOff(); held = {}; synth.setPreset(snd); }
-    if (sel && FX && sel.querySelectorAll("option").length !== M.ORDER.length + FX.instruments().length) fillSounds(sel);
-    if (sel && document.activeElement !== sel) sel.value = nxOf(tr) ? soundOf(tr) : M.PRESETS[snd] ? snd : "piano";
+    var sp = smpOf(tr);
+    if (sLive && (!sp || sLive.inst !== SND.get(sp))) { sLive.allOff(); sLive = null; held = {}; }
+    if (sp && !SND.get(sp) && actx) loadSmps(actx, [sp], syncKb);
+    if (sel && FX && sel.querySelectorAll("option").length !== soundCount()) fillSounds(sel);
+    if (sel && document.activeElement !== sel) sel.value = soundValue(sel, tr, snd);
     var tl = $("kb-target");
     if (tl) { tl.hidden = !tr; tl.textContent = tr ? t("mi.target", { name: tr.name }) : ""; }
   }
@@ -2116,7 +2185,7 @@
     midiRec = null;
     recording = false;
     stopNodes();
-    if (synth) { synth.allOff(); held = {}; renderKeys(); }
+    if (synth || sLive) { kbAllOff(); renderKeys(); }
     renderPlayState();
     var tr = C.find(data, "tracks", r.tid);
     if (!r.notes.length) { showToast(t("toast.recEmpty")); renderAll(); return; }
@@ -2131,6 +2200,14 @@
     showToast(t("mi.recSaved", { n: r.notes.length, name: tr.name }));
   }
   function getSynth() { var a = audio(); if (!a) return null; resume(); synthBus(a); return synth; }
+  // what the keys play: the target track's sample instrument once it is here, else the synth
+  function kbPlayer() {
+    var sp = smpOf(kbTarget()), si = sp ? SND.get(sp) : null, sy = getSynth();
+    if (!si || !sy) return sy;
+    if (!sLive || sLive.inst !== si) { if (sLive) sLive.allOff(); sLive = new SFZ.Live(actx, synthOut, si); }
+    return sLive;
+  }
+  function kbAllOff() { if (synth) synth.allOff(); if (sLive) sLive.allOff(); held = {}; }
   function keysOpen() { return !$("keys").hidden; }
   function toggleKeys() {
     var k = $("keys"), open = k.hidden;
@@ -2138,7 +2215,7 @@
     $("keys-btn").classList.toggle("on", open);
     $("keys-btn").setAttribute("aria-pressed", open ? "true" : "false");
     if (open) { renderKeys(); getSynth(); syncKb(); }
-    else if (synth) { synth.allOff(); held = {}; }
+    else kbAllOff();
     renderLanes();
   }
   function renderKeys() {
@@ -2170,17 +2247,17 @@
   function play1(n, vel) {
     var nt = nxKeys();
     if (nt) nxNote(nt, 0x99, n, vel);
-    else { var sy = getSynth(); if (!sy) return; sy.noteOn(n, vel); }
+    else { var sy = kbPlayer(); if (!sy) return; sy.noteOn(n, vel); }
     lightKey(n, true); recEvent("on", n, vel);
   }
   function stop1(n) {
     var nt = nxKeys();
     if (nt) nxNote(nt, 0x89, n, 0);
-    else if (synth) synth.noteOff(n);
+    else { if (synth) synth.noteOff(n); if (sLive) sLive.noteOff(n); }
     lightKey(n, false); recEvent("off", n, 0);
   }
   function onMidi(e) {
-    var m = M.parse(e.data), sy = m && getSynth();
+    var m = M.parse(e.data), sy = m && kbPlayer();
     if (!sy) return;
     var nt = nxKeys();
     if (nt && (m.type === "on" || m.type === "off")) nxNote(nt, m.type === "on" ? 0x99 : 0x89, m.note, m.type === "on" ? m.vel : 0);
@@ -2222,8 +2299,8 @@
     $("kb-close").addEventListener("click", toggleKeys);
     $("kb-oct-dn").innerHTML = ICON.minus; setLabel($("kb-oct-dn"), t("kb.octDown"));
     $("kb-oct-up").innerHTML = ICON.plus; setLabel($("kb-oct-up"), t("kb.octUp"));
-    $("kb-oct-dn").addEventListener("click", function () { if (synth) synth.allOff(); held = {}; prefs.oct = Math.max(-2, prefs.oct - 1); savePrefs(); renderKeys(); });
-    $("kb-oct-up").addEventListener("click", function () { if (synth) synth.allOff(); held = {}; prefs.oct = Math.min(2, prefs.oct + 1); savePrefs(); renderKeys(); });
+    $("kb-oct-dn").addEventListener("click", function () { kbAllOff(); prefs.oct = Math.max(-2, prefs.oct - 1); savePrefs(); renderKeys(); });
+    $("kb-oct-up").addEventListener("click", function () { kbAllOff(); prefs.oct = Math.min(2, prefs.oct + 1); savePrefs(); renderKeys(); });
     var snd = $("kb-snd");
     fillSounds(snd);
     snd.value = prefs.snd;
@@ -2232,7 +2309,8 @@
       if (tr) { setSound(tr, snd.value); renderTrackDlgIfOpen(); }   // the sound of an instrument track is its instrument
       else if (M.PRESETS[snd.value]) { prefs.snd = snd.value; savePrefs(); }
       else { snd.value = prefs.snd; return; }                        // a NULL instrument needs an instrument track
-      if (synth) { synth.allOff(); held = {}; if (M.PRESETS[snd.value]) synth.setPreset(snd.value); }
+      kbAllOff();
+      if (synth && M.PRESETS[snd.value]) synth.setPreset(snd.value);
       syncKb();
     });
     var sv = $("kb-vol");
@@ -2336,6 +2414,8 @@
     resume();
     var tr = tid ? C.find(data, "tracks", tid) : null;
     if (nxOf(tr)) { nxNote(tr, 0x99, p, v); nxNote(tr, 0x89, p, 0, 0.28); return; }
+    var si = smpOf(tr) ? SND.get(tr.smp) : null;
+    if (si) { SFZ.playNote(a, synthBus(a), si, p, v, a.currentTime + 0.005, 0.28, 1); return; }
     M.playNote(a, synthBus(a), inst, p, v, a.currentTime + 0.005, 0.28, 1);
   }
   // one MIDI message to a track's NULL instrument, now or `later` seconds from now (preview chain)
@@ -2641,8 +2721,23 @@
     });
     return lines.join("\n");
   }
+  // the sample instruments the song's tracks play, as credit lines
+  function smpCredits() {
+    var seen = {}, out = [];
+    projSmps().forEach(function (id) {
+      var e = SND.find(id);
+      if (!e || seen[id]) return;
+      seen[id] = 1;
+      var k = ["cc0", "by", "by-sa", "pd"].indexOf(e.lic) >= 0 ? e.lic : "other";
+      var lic = { k: k, title: t("smp.credit", { name: packName(e) }) };
+      if (e.by) lic.by = e.by;
+      if (e.url) lic.url = e.url;
+      out.push({ id: id, name: e.name, lic: lic, credit: k !== "cc0" && k !== "pd" });
+    });
+    return out;
+  }
   function renderCredits() {
-    var list = proj ? C.credits(data, proj.id) : [], txt = creditsText(list);
+    var list = proj ? C.credits(data, proj.id).concat(smpCredits()) : [], txt = creditsText(list);
     $("export-cr-sec").hidden = !txt;
     $("export-cr").value = txt;
     $("export-cr-hint").textContent = list.some(function (x) { return x.credit; }) ? t("cr.hint") : t("cr.hintAll");
@@ -2679,6 +2774,9 @@
       skip = trLat + FX.chainLatency(proj.fx, rate);
       oc = new OAC(2, len + skip, rate);
       return FX.ensure(oc, chains);
+    }).then(function () {
+      // every instrument is downloaded first: an export never falls back to the built-in sound
+      return SND.ensure(audio() || oc, projSmps()).then(null, function (e) { showToast(t("smp.exportFail")); throw e; });
     }).then(function () {
       var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol);
       var nodes = {}, notes = passNotes(r.a, r.b);
@@ -3263,8 +3361,8 @@
     $("track-inst-sec").hidden = !inst;
     $("track-midi-row").hidden = !inst;
     if (inst) {
-      if (is.querySelectorAll("option").length !== M.ORDER.length + FX.instruments().length) fillSounds(is);
-      is.value = nxOf(tr) ? soundOf(tr) : M.PRESETS[instOf(tr)] ? instOf(tr) : "piano";
+      if (is.querySelectorAll("option").length !== soundCount()) fillSounds(is);
+      is.value = soundValue(is, tr);
       $("track-midi").disabled = !clipsOf(tr.id).some(C.isMidi);
     }
     var trs = tracks();
@@ -3689,7 +3787,7 @@
       flush();
       if (recording) stopRecording();
       stopNodes();
-      if (synth) synth.allOff();
+      kbAllOff();
       if (FX) FX.dropPreview();
       if (Roll) Roll.stopPreview();
       if (vaultUnsub) { try { vaultUnsub(); } catch (e) {} vaultUnsub = null; }
@@ -3802,6 +3900,8 @@
     } catch (e) {}
     // the catalog also names the NULL instruments the tracks play
     FX.loadCatalog().then(function () { if (proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } keepFxOffline(); }, function () {});
+    // the instrument packs (oros-sounds): their names and the sound lists
+    SND.catalog().then(function (l) { if (l.length && proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } });
   }
   // every effect the projects use, kept for offline use (fx.js keepOffline)
   function keepFxOffline() {
