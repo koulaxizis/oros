@@ -7,6 +7,12 @@
 //     translated ahead of time from its JSFX; nothing is evaluated.
 //     .github/workflows/sync-nullfx.yml opens a PR when null-jsfx
 //     changes (weekly or on demand); never edit these files by hand.
+//   - airfx/: Airwindows effects (https://www.airwindows.com, MIT, Chris
+//     Johnson), translated ahead of time from their C++ by
+//     .github/airfx/build.js into files with the same interface (ids
+//     "aw_<name>", category "Airwindows", plain controls, no GFX). They
+//     run in the same chains through the same runtime; each is null-tested
+//     against the compiled original. Never edit these files by hand.
 //   - Audio: one AudioWorklet node per chain, Studio's own processor
 //     "studio-fx-chain" (fxchain.worklet.js: the same messages as NULL
 //     JSFX's null-fx-chain, plus key inputs for sidechain effects and
@@ -34,6 +40,9 @@
   "use strict";
 
   var BASE = "nullfx/";
+  var AWBASE = "airfx/";
+  // the folder an effect's file is in
+  function baseOf(id) { return /^aw_/.test(id) ? AWBASE : BASE; }
   var PEEK_MS = 33;
 
   window.StudioFX = function (host) {
@@ -53,12 +62,18 @@
     function loadCatalog() {
       if (catalog) return Promise.resolve(catalog);
       if (!catalogP) {
+        // Airwindows' list is optional: without it NULL JSFX still works
+        var aw = fetch(AWBASE + "fx/index.json?v=" + host.version).then(function (r) { return r.ok ? r.json() : null; })
+          .catch(function () { return null; });
         catalogP = fetch(BASE + "fx/index.json?v=" + host.version).then(function (r) {
           if (!r.ok) throw new Error("index");
-          return r.json();
-        }).then(function (j) {
+          return Promise.all([r.json(), aw]);
+        }).then(function (both) {
+          var j = both[0], awList = both[1] && Array.isArray(both[1].effects) ? both[1].effects : [];
+          awList = awList.filter(function (e) { return /^aw_/.test(e.id) && e.category === "Airwindows"; });
           // stereo effects, and those with a stereo key input (Sidechain Ducker)
-          catalog = (j.effects || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && (e.ins <= 2 || e.ins === 4) && e.outs === 2; });
+          catalog = (j.effects || []).filter(function (e) { return !/^aw_/.test(e.id); }).concat(awList)
+            .filter(function (e) { return C.FX_ID_RE.test(e.id) && (e.ins <= 2 || e.ins === 4) && e.outs === 2; });
           instCat = (j.instruments || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && e.ins === 0 && e.outs === 2; });
           return catalog;
         }, function (e) { catalogP = null; throw e; });
@@ -90,7 +105,7 @@
       if (!pageP[id]) {
         pageP[id] = new Promise(function (res, rej) {
           var s = document.createElement("script");
-          s.src = BASE + "fx/" + id + ".js?v=" + host.version;
+          s.src = baseOf(id) + "fx/" + id + ".js?v=" + host.version;
           s.onload = function () { if (fxMeta(id)) res(fxMeta(id)); else rej(new Error("fx")); };
           s.onerror = function () { delete pageP[id]; rej(new Error("fx")); };
           document.head.appendChild(s);
@@ -114,7 +129,7 @@
       (function next() {
         var id = keepQ.shift();
         if (!id) { keeping = false; return; }
-        fetch(BASE + "fx/" + id + ".js", { priority: "low" }).then(function (r) { return r.ok ? r.blob() : null; })
+        fetch(baseOf(id) + "fx/" + id + ".js", { priority: "low" }).then(function (r) { return r.ok ? r.blob() : null; })
           .catch(function () { delete kept[id]; }).then(next);
       })();
     }
@@ -155,7 +170,10 @@
       if (!list.length) return Promise.resolve();
       var NN = window.NULLFXNode;
       if (!NN || !ctx.audioWorklet) return Promise.reject(new Error("noworklet"));
-      return Promise.all([NN.load(ctx, BASE, list).then(function () { return ownProc(ctx); })]
+      // NULL JSFX first: its load() brings the runtime both kinds of effect run on
+      var nul = list.filter(function (id) { return baseOf(id) === BASE; }), awIds = list.filter(function (id) { return baseOf(id) === AWBASE; });
+      return Promise.all([NN.load(ctx, BASE, nul).then(function () { return awIds.length ? NN.load(ctx, AWBASE, awIds) : null; })
+        .then(function () { return ownProc(ctx); })]
         .concat(list.map(needPage))
         .concat(Object.keys(paths).map(fileBuf)));
     }
@@ -722,7 +740,7 @@
       host2.innerHTML = "";
       if (!catalog) { host2.appendChild(el("p", "hint small", t("clip.loading"))); return; }
       var q = query.trim().toLowerCase(), any = false;
-      ["One Slider", "Essentials", "Advanced"].forEach(function (cat) {
+      ["One Slider", "Essentials", "Advanced", "Airwindows"].forEach(function (cat) {
         var list = catalog.filter(function (e) {
           return e.category === cat && (!q || (e.name + " " + (e.tags || "")).toLowerCase().indexOf(q) >= 0);
         });

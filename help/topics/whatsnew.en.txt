@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.49.00
+- Studio: 32 Airwindows effects (free, MIT, by Chris Johnson) in the effect list next to NULL JSFX: reverbs like Galactic and Chamber, tape and tube warmth, compressors, clippers, consoles and stereo width. Open a track's effects and pick the Airwindows group.
+
 ## Version 4.48.00
 - Studio: write down where a sound comes from. Select an audio clip and press Sound info: title, who made it, the licence (CC0, CC BY, CC BY-SA, public domain, your own, other) and a link. Export then lists the credits of the song's sounds, ready to copy or save as text.
 
