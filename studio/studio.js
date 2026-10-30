@@ -2885,7 +2885,7 @@
   // The frozen track keeps br {id, name, st, from}: the plugin, its
   // state on the disk (st) and the track it came from, so it can be
   // frozen again with the same sound.
-  var BRG = window.StudioBridge, BR_RATE = 48000, BR_BLOCK = 4096, BR_TAIL = 2, BR_MAX_TAIL = 10;
+  var BRG = null, BR_RATE = 48000, BR_BLOCK = 4096, BR_TAIL = 2, BR_MAX_TAIL = 10;
   var BR_DIR = "/internal/Studio/bridge";
   var brTrack = "", brOpen = null, brList = [], brBusy = false, brEditors = false;
   function brTr() { return C.find(data, "tracks", brTrack); }
@@ -2902,15 +2902,37 @@
     if (!on) $("br-window").hidden = !brEditors;
   }
   function brClose() {
-    if (brOpen) { BRG.close(brOpen.h); brOpen = null; }
+    if (brOpen && BRG) { BRG.close(brOpen.h); brOpen = null; }
+  }
+  // bridge.js is loaded the first time the dialog opens (first-open budget)
+  var brP = null;
+  function brLib() {
+    if (BRG) return Promise.resolve(BRG);
+    if (!brP) {
+      brP = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = "bridge.js?v=" + VER;
+        s.onload = function () { if (window.StudioBridge) ok(window.StudioBridge); else fail(new Error("bridge")); };
+        s.onerror = function () { fail(new Error("bridge")); };
+        document.head.appendChild(s);
+      }).then(function (b) { BRG = b; BRG.on(brEvent); return b; });
+      brP.catch(function () { brP = null; });
+    }
+    return brP;
+  }
+  function brEvent(ev) {
+    if (ev.event === "hello") { brEditors = ev.editors === true; if (!brBusy) $("br-window").hidden = !brEditors; }
+    else if (ev.event === "closed") {
+      brOpen = null;
+      if ($("br-dlg").open) { brSetBusy(false); brShow("off"); brStatus(t("br.lost")); }
+    }
   }
   function openBridge(tid) {
-    if (!BRG) return;
     brTrack = tid;
     brStatus(t("br.connecting"));
     brShow("");
     showDlg("br-dlg");
-    brConnect();
+    brLib().then(brConnect, function () { brShow("off"); brStatus(t("br.lost")); });
   }
   function brConnect() {
     brSetBusy(true);
@@ -4141,7 +4163,7 @@
     $("fs-dlg").addEventListener("close", fsStop);
     $("add-free").addEventListener("click", function () { hideDlg("add-dlg"); openFreeSounds(); });
     $("track-br").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); openBridge(id); });
-    $("br-connect").addEventListener("click", brConnect);
+    $("br-connect").addEventListener("click", function () { brLib().then(brConnect, function () { brStatus(t("br.lost")); }); });
     $("br-pair-go").addEventListener("click", brSendCode);
     $("br-code").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); brSendCode(); } });
     $("br-scan").addEventListener("click", function () { brLoad(true); });
@@ -4150,13 +4172,6 @@
     $("br-freeze").addEventListener("click", brFreeze);
     $("br-close").addEventListener("click", function () { hideDlg("br-dlg"); });
     $("br-dlg").addEventListener("close", brClose);
-    if (BRG) BRG.on(function (ev) {
-      if (ev.event === "hello") { brEditors = ev.editors === true; if (!brBusy) $("br-window").hidden = !brEditors; }
-      else if (ev.event === "closed") {
-        brOpen = null;
-        if ($("br-dlg").open) { brSetBusy(false); brShow("off"); brStatus(t("br.lost")); }
-      }
-    });
     $("track-newclip").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); newMidiClip(id, playhead); });
     $("track-midi").addEventListener("click", function () { exportTrackMidi(dlgTrack); });
     $("notes-btn").addEventListener("click", function () { if (selClip) openRoll(selClip); });
