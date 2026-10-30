@@ -248,7 +248,30 @@
     updateBadge();
   }
 
+  // Do Not Disturb (Quick settings, qsettings.js): device-local
+  // "oros-dnd" = "on" (until turned off) or the ms it ends at. While it
+  // holds, notifications go to the panel without a toast or a sound,
+  // exactly as in quiet hours. An ended or unreadable value is off.
+  const DND_KEY = 'oros-dnd';
+  function getDnd(now) {
+    let raw = null;
+    try { raw = localStorage.getItem(DND_KEY); } catch (e) {}
+    if (raw === 'on') return { on: true, until: 0 };
+    const n = Number(raw);
+    if (raw && isFinite(n) && n > (now || Date.now())) return { on: true, until: n };
+    return { on: false, until: 0 };
+  }
+  function setDnd(v) {
+    try {
+      if (v === 'on' || v === true) localStorage.setItem(DND_KEY, 'on');
+      else if (typeof v === 'number' && isFinite(v) && v > Date.now()) localStorage.setItem(DND_KEY, String(Math.floor(v)));
+      else localStorage.removeItem(DND_KEY);
+    } catch (e) {}
+    updateBadge();
+  }
+
   function isQuietHour(now) {
+    if (getDnd(now).on) return true;
     const qh = getSetting('quietHours', {});
     if (!qh.enabled) return false;
     
@@ -1228,6 +1251,9 @@
     openNotificationPanel,
     closeNotificationPanel,
     updateBadge,
+    // Do Not Disturb (Quick settings): { on, until } (until 0 = until off)
+    dnd: () => getDnd(Date.now()),
+    setDnd,
     
     // Direct access (for debugging)
     getState: () => state,

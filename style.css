@@ -1688,6 +1688,7 @@ body {
 #oros-bar.bar-tight #bar-date { padding-left: 4px; padding-right: 4px; }
 #oros-bar.bar-nolabel #btn-menu-label { display: none; }
 #oros-bar.bar-nodate #bar-date { display: none; }
+#oros-bar.bar-nolang #btn-lang { display: none; }   /* fit level 7: Quick settings carries it */
 
 /* ============================================================
    Wave 3 (Calendar) — recurrence, reminders, drag & drop

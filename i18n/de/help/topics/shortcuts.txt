@@ -20,6 +20,7 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - [[Ctrl+Alt+Shift+K]]: `Befehlsleiste (auch Ctrl+K)`
 - [[Ctrl+Alt+Shift+W]]: `Zwischen offenen Apps wechseln (Multitasking)`
 - [[Ctrl+Alt+Shift+Q]]: `Den Assistenten in einem kleinen Fenster fragen`
+- [[Ctrl+Alt+Shift+M]]: `Schnelleinstellungen`
 
 ## Was jedes Kürzel macht
 ### Synchronisierung und Sicherung

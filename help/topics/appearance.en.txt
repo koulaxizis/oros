@@ -1,6 +1,18 @@
 # Appearance
 Make orOS look the way you like: language, light or dark theme, colour skin, wallpaper, seasonal decorations, a screen pet and the weather in the top bar. Most of these are in the [Settings](app:settings) app, under `Appearance`: open the menu and choose `Settings`. The top-bar weather is set in the Weather app.
 
+## Quick settings
+The button at the right end of the top bar (the network and power symbols) opens Quick settings, as on a Linux desktop. [[Ctrl+Alt+Shift+M]] opens it too.
+
+- The round buttons at the top: the battery (on a laptop or phone running on it), the language, `Settings`, `Lock orOS` (when the screen lock is on) and the power button with `Restart orOS`. On orOS USB the power button also restarts or shuts down the computer.
+- `Network` shows whether you are online. `Sync` shows its state; tap it to sync now, or the arrow for the sync settings.
+- `Dark style`, `Large text`, `High contrast` and `On-screen keyboard` switch on and off with one tap. Settings has the full choices for each.
+- `Do Not Disturb` keeps notifications quiet: they still arrive in the bell's list, without a pop-up or a sound. The arrow sets it `For one hour`, `Until 8 in the morning` or `Until you turn it off`. It is set on this device only, and the top-bar button shows a crossed bell while it is on.
+- `Playing` lists the music, podcast, radio station or Sound Mixer mix that plays, with Play / Pause; tap its name to open the app.
+- On orOS USB, the panel also has the volume and brightness, Wi-Fi and Bluetooth.
+
+On a narrow screen, when the top bar is full, the language button moves into Quick settings.
+
 ## Language
 orOS speaks English and Greek. The `EL` / `EN` button in the top bar switches to the other language, and so does [[Ctrl+Alt+Shift+L]].
 
