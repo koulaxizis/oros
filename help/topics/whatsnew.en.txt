@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.55.00
+- Layout: open many documents at once. Pick several .oroslayout files together, a .zip of them, or Open file › A folder in Files to bring in every package in a folder of the orOS disk and its subfolders. Home stays open and one message tells how many came in.
+
 ## Version 4.54.00
 - Desktop widgets: Clock, Calendar, Today, Weather, Playing and Sync as cards on the desktop, in a column at the right on a computer and a row at the top on a phone. Right-click the desktop and choose Widgets… to pick them and set their order, or use Settings › Appearance. A computer starts with Clock, Calendar, Today and Weather.
 
