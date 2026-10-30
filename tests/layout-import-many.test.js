@@ -115,6 +115,10 @@ test("limits: files per batch, folder depth; only packages from a zip or a folde
   assert.match(io, /BATCH_MAX = 500, DEPTH_MAX = 4, PKG_RE = \/\\\.oroslayout\$\/i/);
   assert.match(io, /__MACOSX/);
   assert.match(io, /e\.get\(PKG_MAX\)/);
+  // Files picked through the shell's orosDialog come from another window:
+  // instanceof Blob is false there, so a file is told by its methods
+  assert.match(io, /typeof f\.arrayBuffer === "function" \? f : f\.get\(\)/);
+  assert.doesNotMatch(io, /instanceof (Blob|File)\b/);
   assert.match(io, /q !== ROOT \+ "\/Trash"/);
 });
 

@@ -451,7 +451,9 @@
     files.forEach(function (f) {
       chain = chain.then(function () {
         if (res.full) return;
-        return Promise.resolve(f instanceof Blob ? f : f.get()).then(function (file) {
+        // a picked File may come from the shell's window (orosDialog), where
+        // a Blob check by class fails across windows: tell a file by what it can do
+        return Promise.resolve(typeof f.arrayBuffer === "function" ? f : f.get()).then(function (file) {
           if (!file) { res.bad++; return; }
           return isZip(file) ? zipOf(file) : one(file);
         }).then(null, function () { res.bad++; });
