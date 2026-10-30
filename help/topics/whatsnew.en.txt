@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.51.00
+- Studio: a grand piano (Salamander Grand Piano by Alexander Holm, CC BY 3.0: name the author when you publish) and orchestral percussion join the recorded instruments. Import SFZ instrument brings your own sampled instruments from a folder onto the orOS disk, and Instruments on this device shows what is downloaded, with Remove. Free sounds (in Add a track) offers 34 single drums, cymbals and small percussion sounds (CC0) to add as clips.
+
 ## Version 4.50.00
 - Studio: 21 recorded instruments for instrument tracks: upright piano, pipe organ, string sections, harp, woodwinds, brass, glockenspiel, marimba, xylophone, timpani and tubular bells, from VS Chamber Orchestra: Community Edition (CC0, free for anything). Pick one under Instrument in the track's settings: Studio downloads it the first time (0.1 to 4.5 MB) and keeps it for offline use.
 

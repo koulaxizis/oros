@@ -189,6 +189,7 @@ orosPack("de", "shell", {
  "cr.g.dist": "orOS außerhalb des Browsers (Portable, Installer, Live-USB, Android, orOS Drive)",
  "cr.g.ideas": "Ideen aus anderen freien Apps (kein Code von ihnen verwendet)",
  "cr.lic.ideas": "GPL-3.0-App; orOS hat nur die Idee übernommen, von Grund auf neu geschrieben",
+ "cr.salamander": "Der Flügel, verkleinert und beim ersten Gebrauch heruntergeladen (Studio)",
  "cr.since-us": "Zusammen: eure gemeinsame Zeit zählen, Meilensteine und Momente",
  "cr.ungoogled-chromium": "Der Browser in orOS Portable (vollständige Ausgabe) und in den Installern für Windows und Linux",
  "cr.chromium": "Die Browser-Engine von orOS Portable, den Installern und dem Live-USB",

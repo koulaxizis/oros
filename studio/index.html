@@ -183,6 +183,28 @@
     </form>
   </dialog>
 
+  <dialog id="smp-dlg" aria-labelledby="smp-title">
+    <h2 id="smp-title" data-i18n="smp.list">Instruments on this device</h2>
+    <p class="hint small" data-i18n="smp.listHint"></p>
+    <ul id="smp-items" class="smp-items"></ul>
+    <p id="smp-none" class="hint small" data-i18n="smp.none" hidden></p>
+    <p id="smp-user-note" class="hint small" data-i18n="smp.userNote" hidden></p>
+    <div class="dlg-actions">
+      <button type="button" id="smp-close" class="chip primary" data-i18n="btn.close">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Free single sounds from koulaxizis/oros-sounds (samples/) -->
+  <dialog id="fs-dlg" aria-labelledby="fs-title">
+    <h2 id="fs-title" data-i18n="fs.title">Free sounds</h2>
+    <p class="hint small" data-i18n="fs.hint"></p>
+    <div id="fs-groups" class="fs-groups"></div>
+    <p id="fs-status" class="hint small" role="status"></p>
+    <div class="dlg-actions">
+      <button type="button" id="fs-close" class="chip primary" data-i18n="btn.close">Close</button>
+    </div>
+  </dialog>
+
   <!-- Track -->
   <dialog id="track-dlg" aria-labelledby="track-title">
     <div class="dlg-head">
@@ -198,6 +220,11 @@
     <div id="track-inst-sec" hidden>
       <label class="field" for="track-inst" data-i18n="mi.inst">Instrument</label>
       <select id="track-inst"></select>
+      <div class="dlg-actions spread">
+        <button type="button" id="track-sfz" class="chip" data-i18n="smp.import">Import SFZ instrument</button>
+        <button type="button" id="track-smps" class="chip" data-i18n="smp.list">Instruments on this device</button>
+      </div>
+      <input type="file" id="sfz-file" multiple webkitdirectory hidden>
     </div>
     <div id="track-midi-row" class="dlg-actions spread" hidden>
       <button type="button" id="track-newclip" class="chip" data-i18n="mi.newClip">New clip</button>
@@ -231,6 +258,7 @@
     <div id="add-insts" class="chips"></div>
     <div class="dlg-actions spread">
       <button type="button" id="add-loops" class="link-btn" data-i18n="tk.loops">Browse loops</button>
+      <button type="button" id="add-free" class="link-btn" data-i18n="fs.title">Free sounds</button>
     </div>
   </dialog>
 

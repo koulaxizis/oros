@@ -194,11 +194,21 @@
       "tk.inst": "Instrument track", "tk.instHint": "Notes you can edit, played by a built-in instrument.", "tk.loops": "Browse loops",
       "mi.inst": "Instrument", "mi.track": "Instrument track: {inst}", "mi.newClip": "New clip", "mi.editNotes": "Edit notes",
       "mi.exportMidi": "Export MIDI", "mi.importMidi": "Import MIDI", "mi.clip": "MIDI clip", "mi.target": "Plays {name}",
+      "fs.title": "Free sounds", "fs.hint": "Single sounds (drums, cymbals, small percussion) from VSCO 2 CE, CC0: free for any use, no credit needed. Add one and it becomes an audio clip at the playhead.",
+      "fs.play": "Listen", "fs.stop": "Stop", "fs.add": "Add", "fs.loading": "Loading the list…", "fs.none": "The list could not be downloaded. Try again when online.",
+      "fs.fail": "{name} could not be downloaded.",
       "smp.group": "{cat} (download)", "smp.cat.Keys": "Keys", "smp.cat.Strings": "Strings", "smp.cat.Woodwinds": "Woodwinds",
       "smp.cat.Brass": "Brass", "smp.cat.Percussion": "Percussion", "smp.loading": "Downloading {name}…", "smp.step": "Downloading {name}: {n} of {total}",
       "smp.ready": "{name} is ready", "smp.fail": "{name} could not be downloaded. The built-in sound plays until it can.",
       "smp.exportFail": "An instrument could not be downloaded, so the song was not exported. Try again when online.",
       "smp.credit": "{name} (instrument)",
+      "smp.import": "Import SFZ instrument", "smp.list": "Instruments on this device", "smp.mine": "Imported",
+      "smp.listHint": "Downloaded instruments stay on this device for offline use. Remove one to free space: it downloads again when a track needs it.",
+      "smp.none": "No instrument has been downloaded yet.", "smp.remove": "Remove", "smp.removed": "{name} removed from this device",
+      "smp.size": "{mb} MB", "smp.imported": "Imported {name}: {n} samples", "smp.skipped": "Left out, not found or not readable: {n}",
+      "smp.noSfz": "Choose a folder (or files) with an .sfz file and its samples.", "smp.bad": "This .sfz has no sample Studio can play.",
+      "smp.tooBig": "This instrument is larger than {mb} MB.", "smp.noDisk": "Importing an instrument needs the orOS disk (open Studio inside orOS).",
+      "smp.importing": "Importing {name}…", "smp.importFail": "The instrument could not be imported.", "smp.userNote": "Imported instruments are on the orOS disk in Studio/instruments and sync like your audio files.",
       "mi.recMidi": "Recording notes on {name}", "mi.recSaved": "{n} notes recorded on {name}",
       "mi.imported": "Imported {n} notes from {name}", "mi.badMidi": "{name} is not a MIDI file Studio can read",
       "mi.noNotes": "{name} has no notes", "mi.notesN": "{n} notes", "mi.dbl": "Double-click or double-tap an empty spot to add a clip",
@@ -340,11 +350,21 @@
       "tk.inst": "Κανάλι οργάνου", "tk.instHint": "Νότες που διορθώνεις, παιγμένες από ένα ενσωματωμένο όργανο.", "tk.loops": "Περιήγηση στα loops",
       "mi.inst": "Όργανο", "mi.track": "Κανάλι οργάνου: {inst}", "mi.newClip": "Νέο κλιπ", "mi.editNotes": "Επεξεργασία νοτών",
       "mi.exportMidi": "Εξαγωγή MIDI", "mi.importMidi": "Εισαγωγή MIDI", "mi.clip": "Κλιπ MIDI", "mi.target": "Παίζει το {name}",
+      "fs.title": "Ελεύθεροι ήχοι", "fs.hint": "Μεμονωμένοι ήχοι (τύμπανα, πιατίνια, μικρά κρουστά) από το VSCO 2 CE, CC0: ελεύθεροι για κάθε χρήση, χωρίς αναφορά. Πρόσθεσε έναν και γίνεται κλιπ ήχου στη θέση αναπαραγωγής.",
+      "fs.play": "Άκουσε", "fs.stop": "Διακοπή", "fs.add": "Προσθήκη", "fs.loading": "Φόρτωση της λίστας…", "fs.none": "Δεν ήταν δυνατή η λήψη της λίστας. Δοκίμασε ξανά με σύνδεση.",
+      "fs.fail": "Δεν ήταν δυνατή η λήψη του {name}.",
       "smp.group": "{cat} (λήψη)", "smp.cat.Keys": "Πλήκτρα", "smp.cat.Strings": "Έγχορδα", "smp.cat.Woodwinds": "Ξύλινα πνευστά",
       "smp.cat.Brass": "Χάλκινα πνευστά", "smp.cat.Percussion": "Κρουστά", "smp.loading": "Λήψη: {name}…", "smp.step": "Λήψη {name}: {n} από {total}",
       "smp.ready": "Το {name} είναι έτοιμο", "smp.fail": "Δεν ήταν δυνατή η λήψη του {name}. Παίζει ο ενσωματωμένος ήχος μέχρι να γίνει.",
       "smp.exportFail": "Δεν ήταν δυνατή η λήψη ενός οργάνου, οπότε το τραγούδι δεν εξήχθη. Δοκίμασε ξανά με σύνδεση.",
       "smp.credit": "{name} (όργανο)",
+      "smp.import": "Εισαγωγή οργάνου SFZ", "smp.list": "Όργανα σε αυτή τη συσκευή", "smp.mine": "Εισηγμένα",
+      "smp.listHint": "Τα όργανα που κατέβηκαν μένουν σε αυτή τη συσκευή για χρήση χωρίς σύνδεση. Αφαίρεσε ένα για να ελευθερώσεις χώρο: θα ξανακατέβει όταν το χρειαστεί ένα κανάλι.",
+      "smp.none": "Δεν έχει κατέβει ακόμη κανένα όργανο.", "smp.remove": "Αφαίρεση", "smp.removed": "Το {name} αφαιρέθηκε από αυτή τη συσκευή",
+      "smp.size": "{mb} MB", "smp.imported": "Εισαγωγή {name}: {n} δείγματα", "smp.skipped": "Παραλείφθηκαν, δεν βρέθηκαν ή δεν διαβάστηκαν: {n}",
+      "smp.noSfz": "Διάλεξε έναν φάκελο (ή αρχεία) με ένα αρχείο .sfz και τα δείγματά του.", "smp.bad": "Αυτό το .sfz δεν έχει δείγμα που μπορεί να παίξει το Studio.",
+      "smp.tooBig": "Αυτό το όργανο είναι μεγαλύτερο από {mb} MB.", "smp.noDisk": "Η εισαγωγή οργάνου χρειάζεται τον δίσκο του orOS (άνοιξε το Studio μέσα στο orOS).",
+      "smp.importing": "Εισαγωγή {name}…", "smp.importFail": "Δεν ήταν δυνατή η εισαγωγή του οργάνου.", "smp.userNote": "Τα εισηγμένα όργανα είναι στον δίσκο του orOS, στο Studio/instruments, και συγχρονίζονται όπως τα αρχεία ήχου σου.",
       "mi.recMidi": "Ηχογραφούνται νότες στο {name}", "mi.recSaved": "Γράφτηκαν {n} νότες στο {name}",
       "mi.imported": "Εισήχθησαν {n} νότες από το {name}", "mi.badMidi": "Το {name} δεν είναι αρχείο MIDI που διαβάζει το Studio",
       "mi.noNotes": "Το {name} δεν έχει νότες", "mi.notesN": "{n} νότες", "mi.dbl": "Διπλό κλικ ή διπλό πάτημα σε κενό σημείο για νέο κλιπ",
@@ -789,6 +809,13 @@
       if (!groups[k]) { groups[k] = el("optgroup", ""); groups[k].label = t("smp.group", { cat: packCat(k) }); sel.appendChild(groups[k]); }
       var o = el("option", "", packName(e)); o.value = "sm:" + e.id; groups[k].appendChild(o);
     });
+    var mine = SND.users();
+    if (mine.length) {
+      var gm = el("optgroup", "");
+      gm.label = t("smp.mine");
+      mine.forEach(function (e) { var o = el("option", "", e.name); o.value = "sm:" + e.id; gm.appendChild(o); });
+      sel.appendChild(gm);
+    }
   }
   // a <select>'s value for track `tr` (or the keys' own sound `snd`)
   function soundValue(sel, tr, snd) {
@@ -797,7 +824,7 @@
     v = tr ? instOf(tr) : snd;
     return M.PRESETS[v] ? v : "piano";
   }
-  function soundCount() { return M.ORDER.length + (FX ? FX.instruments().length : 0) + SND.list().length; }
+  function soundCount() { return M.ORDER.length + (FX ? FX.instruments().length : 0) + SND.list().length + SND.users().length; }
   // fields for a track that takes sound `v` (a built-in id or "nx:<id>"), or null (no room)
   function soundFields(tr, v) {
     var m = /^nx:([a-z0-9_]{1,40})$/.exec(v || "");
@@ -894,6 +921,7 @@
     try {
       vaultUnsub = v.onStatus(function (kind) {
         if (kind !== "done" || !proj) return;
+        SND.scan().then(function () { renderTrackDlgIfOpen(); });
         var again = C.ofProject(data, "sources", proj.id).some(function (s) { return state[s.id] === "missing"; });
         if (again) {
           C.ofProject(data, "sources", proj.id).forEach(function (s) { if (state[s.id] === "missing") delete state[s.id]; });
@@ -903,12 +931,13 @@
     } catch (e) {}
   }
   // Write a new audio file to the disk and make it a source.
-  function addSource(name, ext, blob, buf) {
+  // lic: the sound's licence card, when it is known (free sounds)
+  function addSource(name, ext, blob, buf, lic) {
     var fs = fsApi();
     if (!fs) return Promise.reject(new Error("nodisk"));
     var id = C.newId("s", Math.random), path = C.sourcePath(id, name, ext);
     return Promise.resolve(fs.writeBlob(path, blob)).then(function () {
-      var src = C.normSource({ id: id, m: 0, p: proj.id, name: name, path: path, dur: buf.duration, ch: buf.numberOfChannels > 1 ? 2 : 1 });
+      var src = C.normSource({ id: id, m: 0, p: proj.id, name: name, path: path, dur: buf.duration, ch: buf.numberOfChannels > 1 ? 2 : 1, lic: lic });
       put("sources", src);
       keepBuffer(id, buf);
       return C.find(data, "sources", id);
@@ -2610,11 +2639,12 @@
     Promise.resolve(p).then(function (files) { if (files && files.length) routeFiles(files); });
   }
   // audio files become clips on audio tracks, .mid files on instrument tracks (importMidi)
-  function importFiles(files) {
+  // lics: licence cards by index (free sounds), optional
+  function importFiles(files, lics) {
     if (!fsApi() && files.some(function (f) { return !isMidiFile(f); })) { showToast(t("toast.noDisk")); return Promise.resolve(); }
     if (!ensureProject()) return Promise.resolve();
     var before = snapshot(), any = false;
-    return files.reduce(function (p, f) {
+    return files.reduce(function (p, f, fi) {
       return p.then(function () {
         if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); return; }
         if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
@@ -2627,7 +2657,7 @@
             tr = tracks().length < C.MAX_TRACKS ? addTrack(C.clipLine(f.name.replace(/\.[^.]+$/, ""), C.MAX_NAME)) : tr;
           }
           if (!tr) { showToast(t("toast.maxTracks", { n: C.MAX_TRACKS })); return; }
-          return addSource(f.name, C.extOf(f.name, f.type), f, buf).then(function (src) {
+          return addSource(f.name, C.extOf(f.name, f.type), f, buf, lics && lics[fi]).then(function (src) {
             put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, s: src.id, at: playhead, off: 0, len: buf.duration }));
             any = true;
             showToast(t("toast.imported", { name: f.name }));
@@ -2721,6 +2751,134 @@
     });
     return lines.join("\n");
   }
+  // ---------- 9b. Sample instruments: import an SFZ folder, the list on this device ----------
+  var SFZ_MAX_MB = 200, SFZ_MAX_FILES = 2000;
+  var SFZ_EXT = /\.(wav|flac|mp3|ogg|oga|m4a)$/i;
+  // the import of the files of an <input> (a folder, or picked files) for track `tid`
+  function importSfz(fileList, tid) {
+    var fs = fsApi();
+    if (!fs) { showToast(t("smp.noDisk")); return; }
+    var files = Array.prototype.slice.call(fileList || []);
+    var rel = function (f) { return String(f.webkitRelativePath || f.name).replace(/\\/g, "/"); };
+    var sfzs = files.filter(function (f) { return /\.sfz$/i.test(f.name); }).sort(function (a, b) { return rel(a).length - rel(b).length || rel(a).localeCompare(rel(b)); });
+    if (!sfzs.length) { showToast(t("smp.noSfz")); return; }
+    var main = sfzs[0], base = rel(main).replace(/[^/]*$/, ""), name = main.name.replace(/\.sfz$/i, "").slice(0, 60);
+    // a sample path from the .sfz (relative to its folder) → the picked file, case-insensitively
+    var byPath = {};
+    files.forEach(function (f) { byPath[rel(f).toLowerCase()] = f; byPath[f.name.toLowerCase()] = byPath[f.name.toLowerCase()] || f; });
+    var find = function (p) {
+      var full = SFZ.samplePath(base + p);
+      return (full && byPath[full.toLowerCase()]) || byPath[String(p).split("/").pop().toLowerCase()] || null;
+    };
+    live(t("smp.importing", { name: name }));
+    main.text().then(function (text) {
+      var parsed = SFZ.parse(text), names = SFZ.samples(parsed.regions), rename = {}, out = [], skipped = 0, bytes = 0;
+      names.forEach(function (p) {
+        var f = find(p);
+        if (!f || !SFZ_EXT.test(f.name) || out.length >= SFZ_MAX_FILES) { skipped++; return; }
+        var n = "s" + String(out.length + 1).padStart(4, "0") + f.name.match(SFZ_EXT)[0].toLowerCase();
+        rename[p] = n; bytes += f.size;
+        out.push({ name: n, blob: f });
+      });
+      var regions = parsed.regions.filter(function (r) { return rename[r.sample]; });
+      if (!regions.length) { showToast(t("smp.bad")); return null; }
+      if (bytes > SFZ_MAX_MB * 1e6) { showToast(t("smp.tooBig", { mb: SFZ_MAX_MB })); return null; }
+      var tr = C.find(data, "tracks", tid), kind = tr ? instOf(tr) : "piano";
+      var sfz = SFZ.write(regions, rename, [name + " (imported into orOS Studio from " + main.name + ")"]);
+      return SND.save(name, kind, sfz, out).then(function (e) {
+        var msg = t("smp.imported", { name: e.name, n: out.length }) + (skipped ? ". " + t("smp.skipped", { n: skipped }) : "");
+        var tr2 = C.find(data, "tracks", tid), f = tr2 ? soundFields(tr2, "sm:" + e.id) : null, a = audio();
+        if (f) setTrack(tr2.id, f);
+        renderTrackDlgIfOpen();
+        // the import's own message last (after "ready"), with what was left out
+        if (f && a) loadSmps(a, [e.id], function () { showToast(msg); replayIfPlaying(); syncKb(); }, true);
+        else showToast(msg);
+      });
+    }).then(null, function () { showToast(t("smp.importFail")); });
+  }
+  function renderSmpList() {
+    var ul = $("smp-items");
+    ul.innerHTML = "";
+    var packs = SND.list();
+    Promise.all(packs.map(function (e) { return SND.kept(e.id).then(function (k) { return k ? e : null; }); })).then(function (kept) {
+      kept = kept.filter(Boolean);
+      kept.forEach(function (e) {
+        var li = el("li", "smp-item"), nm = el("span", "smp-name", packName(e)), sz = el("span", "hint small", t("smp.size", { mb: (e.bytes / 1e6).toFixed(1) }));
+        var b = el("button", "chip", t("smp.remove"));
+        b.type = "button";
+        b.addEventListener("click", function () {
+          SND.forget(e.id).then(function () { showToast(t("smp.removed", { name: packName(e) })); renderSmpList(); });
+        });
+        li.appendChild(nm); li.appendChild(sz); li.appendChild(b);
+        ul.appendChild(li);
+      });
+      SND.users().forEach(function (e) {
+        var li = el("li", "smp-item");
+        li.appendChild(el("span", "smp-name", e.name));
+        li.appendChild(el("span", "hint small", t("smp.mine") + " · " + t("smp.size", { mb: (e.bytes / 1e6).toFixed(1) })));
+        ul.appendChild(li);
+      });
+      $("smp-none").hidden = kept.length + SND.users().length > 0;
+      $("smp-user-note").hidden = !SND.users().length;
+    });
+  }
+  // Free sounds: single sounds from oros-sounds, added as audio clips with their licence card
+  var fsAudio = null, fsBtn = null;
+  function fsStop() {
+    if (fsAudio) { fsAudio.pause(); URL.revokeObjectURL(fsAudio.src); fsAudio = null; }
+    if (fsBtn) { fsBtn.textContent = t("fs.play"); fsBtn = null; }
+  }
+  function fsName(x) { return (x.names && x.names[LANG]) || x.name; }
+  function fsPlay(x, b) {
+    var again = fsBtn === b;
+    fsStop();
+    if (again) return;
+    fsBtn = b; b.textContent = t("fs.stop");
+    SND.sampleBlob(x).then(function (blob) {
+      if (fsBtn !== b) return;
+      fsAudio = new Audio(URL.createObjectURL(blob));
+      fsAudio.addEventListener("ended", function () { if (fsBtn === b) fsStop(); });
+      return fsAudio.play();
+    }).then(null, function () { if (fsBtn === b) fsStop(); showToast(t("fs.fail", { name: fsName(x) })); });
+  }
+  function fsAdd(x) {
+    var name = fsName(x);
+    busy(t("busy.import", { name: name }));
+    SND.sampleBlob(x).then(function (blob) {
+      busy(null);
+      var f = new File([blob], C.clipLine(name, C.MAX_NAME - 4) + ".mp3", { type: "audio/mpeg" });
+      return importFiles([f], [{ k: x.lic, by: x.by, title: x.name, url: x.url }]);
+    }, function () { busy(null); showToast(t("fs.fail", { name: name })); });
+  }
+  function openFreeSounds() {
+    var host = $("fs-groups");
+    host.innerHTML = "";
+    $("fs-status").textContent = t("fs.loading");
+    showDlg("fs-dlg");
+    SND.samples().then(function (groups) {
+      $("fs-status").textContent = groups.length ? "" : t("fs.none");
+      groups.forEach(function (g) {
+        host.appendChild(el("h3", "", (g.names && g.names[LANG]) || g.name));
+        var ul = el("ul", "smp-items");
+        g.items.forEach(function (x) {
+          var li = el("li", "smp-item"), p = el("button", "chip", t("fs.play")), ad = el("button", "chip", t("fs.add"));
+          p.type = ad.type = "button";
+          p.addEventListener("click", function () { fsPlay(x, p); });
+          ad.addEventListener("click", function () { fsStop(); hideDlg("fs-dlg"); fsAdd(x); });
+          li.appendChild(el("span", "smp-name", fsName(x)));
+          li.appendChild(el("span", "hint small", x.dur.toFixed(1).replace(".", LANG === "en" ? "." : ",") + " s"));
+          li.appendChild(p); li.appendChild(ad);
+          ul.appendChild(li);
+        });
+        host.appendChild(ul);
+      });
+    });
+  }
+  function openSmpList() {
+    showDlg("smp-dlg");
+    renderSmpList();
+  }
+
   // the sample instruments the song's tracks play, as credit lines
   function smpCredits() {
     var seen = {}, out = [];
@@ -3752,6 +3910,13 @@
       if (tr) setSound(tr, $("track-inst").value);
       renderTrackDlg();
     });
+    $("track-sfz").addEventListener("click", function () { var f = $("sfz-file"); f.value = ""; f.click(); });
+    $("sfz-file").addEventListener("change", function () { importSfz($("sfz-file").files, dlgTrack); });
+    $("track-smps").addEventListener("click", openSmpList);
+    $("smp-close").addEventListener("click", function () { hideDlg("smp-dlg"); });
+    $("fs-close").addEventListener("click", function () { fsStop(); hideDlg("fs-dlg"); });
+    $("fs-dlg").addEventListener("close", fsStop);
+    $("add-free").addEventListener("click", function () { hideDlg("add-dlg"); openFreeSounds(); });
     $("track-newclip").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); newMidiClip(id, playhead); });
     $("track-midi").addEventListener("click", function () { exportTrackMidi(dlgTrack); });
     $("notes-btn").addEventListener("click", function () { if (selClip) openRoll(selClip); });
@@ -3902,6 +4067,8 @@
     FX.loadCatalog().then(function () { if (proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } keepFxOffline(); }, function () {});
     // the instrument packs (oros-sounds): their names and the sound lists
     SND.catalog().then(function (l) { if (l.length && proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } });
+    SND.useDisk(fsApi);
+    SND.scan().then(function (l) { if (l.length && proj) { renderRows(); syncKb(); renderTrackDlgIfOpen(); } });
   }
   // every effect the projects use, kept for offline use (fx.js keepOffline)
   function keepFxOffline() {
