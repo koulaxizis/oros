@@ -12,7 +12,7 @@ A new board comes with three columns: To Do, Doing and Done.
 The `Card` dialog saves as you type. It has:
 - `Text` and `Notes`.
 - `Due`: a date. The card shows `Today`, `Tomorrow` or `Overdue` when it's close or late.
-- `Labels`: tap `Add / manage labels` to pick labels or create a new one with a colour.
+- `Labels`: tap `Add / manage labels` to pick labels or create a new one with a colour. The pencil next to a label opens `Edit label`: change its name or colour, or delete it. Every card that carries it changes with it.
 - `Subtasks`: a checklist. The card shows how many are done, for example 2/5.
 - `Extra info`: your own fields, each with a `Field` name and a `Value`.
 - `Column`: moves the card to another column, which is handy on a phone.
@@ -56,7 +56,7 @@ The view button next to `Filter by label` opens `View and board options`. The vi
 
 ## Search and filter
 - `Search…` shows only cards whose text, notes, due date, extra info, lane, attachment names or label names match.
-- `Filter by label` shows only cards that carry any of the labels you pick. You can also delete a label from there; it is removed from every card.
+- `Filter by label` shows only cards that carry any of the labels you pick. From there the pencil edits a label (name and colour) and the cross deletes it; a deleted label is removed from every card.
 
 ## Sync and backup
 With [orOS sync](help:t/sync), all your boards, columns, cards and labels, plus archive state, colours, WIP limits, rules and templates, reach your other devices. Changes to different parts of the same card on two devices are both kept: for example, a move on your phone and a text edit on your laptop. Which board is open, the view and swimlanes stay on this device, and your search and filter are not synced.

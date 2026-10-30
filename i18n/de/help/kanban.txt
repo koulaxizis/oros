@@ -12,7 +12,7 @@ Ein neues Board hat drei Spalten: Zu erledigen, In Arbeit und Erledigt.
 Der Dialog `Karte` speichert, während du tippst. Er hat:
 - `Text` und `Notizen`.
 - `Fällig`: ein Datum. Die Karte zeigt `Heute`, `Morgen` oder `Überfällig`, wenn es nah ist oder vorbei.
-- `Labels`: Tippe auf `Labels hinzufügen / verwalten`, um Labels zu wählen oder ein neues mit Farbe anzulegen.
+- `Labels`: Tippe auf `Labels hinzufügen / verwalten`, um Labels zu wählen oder ein neues mit Farbe anzulegen. Der Stift neben einem Label öffnet `Label bearbeiten`: Name oder Farbe ändern oder das Label löschen. Jede Karte mit diesem Label ändert sich mit.
 - `Unteraufgaben`: eine Checkliste. Die Karte zeigt, wie viele erledigt sind, zum Beispiel 2/5.
 - `Weitere Infos`: eigene Felder, jedes mit einem Namen (`Feld`) und einem `Wert`.
 - `Spalte`: verschiebt die Karte in eine andere Spalte, praktisch auf dem Handy.
@@ -56,7 +56,7 @@ Der Ansichtsknopf neben `Nach Label filtern` öffnet `Ansicht und Board-Optionen
 
 ## Suchen und filtern
 - `Suche…` zeigt nur Karten, deren Text, Notizen, Fälligkeit, weitere Infos, Bahn, Anhangnamen oder Labelnamen passen.
-- `Nach Label filtern` zeigt nur Karten mit einem der gewählten Labels. Dort kannst du ein Label auch löschen; es wird aus allen Karten entfernt.
+- `Nach Label filtern` zeigt nur Karten mit einem der gewählten Labels. Dort bearbeitet der Stift ein Label (Name und Farbe) und das Kreuz löscht es; ein gelöschtes Label wird aus allen Karten entfernt.
 
 ## Synchronisierung und Sicherung
 Mit der [orOS-Synchronisierung](help:t/sync) kommen alle deine Boards, Spalten, Karten und Labels, dazu Archivstatus, Farben, WIP-Limits, Regeln und Vorlagen, auf deine anderen Geräte. Änderungen an verschiedenen Teilen derselben Karte auf zwei Geräten bleiben beide erhalten: zum Beispiel ein Verschieben auf dem Handy und eine Textänderung am Laptop. Welches Board offen ist, die Ansicht und die Swimlanes bleiben auf diesem Gerät, Suche und Filter werden nicht synchronisiert.

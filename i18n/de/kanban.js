@@ -162,6 +162,8 @@ orosPack("de", "kanban", {
  "labels.chipRemove": "Zum Entfernen klicken",
  "labels.newph": "Neues Label…",
  "labels.none": "Noch keine Labels – leg unten eines an.",
+ "lbl.color": "Farbe",
+ "lbl.edit": "Label bearbeiten",
  "lanes.hint": "Kartenzeilen quer über die Spalten. Zieh eine Karte in eine andere Zeile, um ihr Label oder ihre Bahn zu ändern.",
  "lanes.label": "Nach Label",
  "lanes.lane": "Nach Bahn",

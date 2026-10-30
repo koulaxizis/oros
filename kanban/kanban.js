@@ -101,6 +101,8 @@
       "labels.newph":     "New label…",
       "labels.add":       "Add",
       "labels.none":      "No labels yet — create one below.",
+      "lbl.edit":         "Edit label",
+      "lbl.color":        "Colour",
       "card.subtasks":    "Subtasks",
       "card.subph":       "New subtask…",
       "card.add":         "Add",
@@ -331,6 +333,8 @@
       "labels.newph":     "Νέα ετικέτα…",
       "labels.add":       "Προσθήκη",
       "labels.none":      "Δεν υπάρχουν ετικέτες — δημιούργησε από κάτω.",
+      "lbl.edit":         "Επεξεργασία ετικέτας",
+      "lbl.color":        "Χρώμα",
       "card.subtasks":    "Υπο-εργασίες",
       "card.subph":       "Νέα υπο-εργασία…",
       "card.add":         "Προσθήκη",
@@ -2588,6 +2592,8 @@
 
     var card = editingCard();
     board.labels.forEach(function (label) {
+      var row = document.createElement("div");
+      row.className = "lbl-row";
       var item = document.createElement("button");
       item.type = "button";
       item.className = "lbl-item";
@@ -2617,9 +2623,93 @@
         renderLblPicker();
       });
 
-      list.appendChild(item);
+      row.appendChild(item);
+      row.appendChild(labelEditBtn(label.id));
+      list.appendChild(row);
     });
   }
+
+  // --- Edit an existing label: name + colour (LWW on the label, like a
+  // column header). Cards hold the label's id, so every card, lane,
+  // rule and the Overdue rule (label.auto) follow without touching them.
+  var editingLabelId = null;
+  var editSwatch = null;
+
+  function labelEditBtn(labelId) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "fl-edit";
+    b.setAttribute("aria-label", t("lbl.edit"));
+    b.title = t("lbl.edit");
+    b.innerHTML = ICNS.pencil;
+    b.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      openLabelDialog(labelId);
+    });
+    return b;
+  }
+
+  function openLabelDialog(labelId) {
+    var label = labelById(labelId);
+    if (!label) return;
+    editingLabelId = labelId;
+    editSwatch = label.color || FALLBACK_COLOR;
+    $("lbl-name").value = label.name;
+    renderEditSwatches();
+    $("dlg-lbl").showModal();
+    setTimeout(function () { $("lbl-name").focus(); $("lbl-name").select(); }, 50);
+  }
+
+  function renderEditSwatches() {
+    var host = $("lbl-swatches");
+    host.innerHTML = "";
+    SWATCH_COLORS.forEach(function (c) {
+      var sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "lbl-swatch" + (editSwatch === c ? " sel" : "");
+      sw.style.background = c;
+      sw.addEventListener("click", function () {
+        editSwatch = c;
+        renderEditSwatches();
+      });
+      host.appendChild(sw);
+    });
+  }
+
+  function refreshLabelViews() {
+    save(); scheduleRender();
+    if (!$("filter-pop").hidden) renderFilterPop();
+    if (!$("c-lbl-picker").hidden) renderLblPicker();
+    var card = editingCard();
+    if (card) renderCardLabels(card);
+  }
+
+  // Commit on any way of closing (Save, Esc, backdrop), like the column
+  // dialog; a close with nothing changed does not stamp the label.
+  $("dlg-lbl").addEventListener("close", function () {
+    if (editingLabelId === null) return;
+    var label = labelById(editingLabelId);
+    editingLabelId = null;
+    if (!label) return;                 // deleted meanwhile (here or by a pull)
+    var changed = false;
+    var name = $("lbl-name").value.trim().slice(0, 24);
+    if (name && name !== label.name) { label.name = name; changed = true; }
+    if (editSwatch && editSwatch !== (label.color || FALLBACK_COLOR)) { label.color = editSwatch; changed = true; }
+    if (!changed) return;
+    touch(label);
+    refreshLabelViews();
+  });
+
+  $("lbl-delete").addEventListener("click", function () {
+    var id = editingLabelId;
+    if (id === null) return;
+    confirmDialog("confirm.lbldel", function () {
+      editingLabelId = null;
+      $("dlg-lbl").close();
+      deleteLabel(id);
+      refreshLabelViews();
+    });
+  });
 
   function renderLblSwatches() {
     var host = $("c-lbl-swatches");
@@ -3402,6 +3492,8 @@
       name.className = "fl-name";
       name.textContent = label.name;
       item.appendChild(name);
+
+      item.appendChild(labelEditBtn(label.id));
 
       var del = document.createElement("button");
       del.type = "button";
