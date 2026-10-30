@@ -789,3 +789,16 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
   .pr-note::after { width: 10px; }
   .lp-grip { flex-basis: 36px; height: 44px; }
 }
+/* Instruments on this device */
+.smp-items { list-style: none; margin: 8px 0; padding: 0; max-height: 50vh; overflow-y: auto; }
+.smp-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.smp-item .smp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fs-groups { max-height: 55vh; overflow-y: auto; }
+.fs-groups h3 { margin: 12px 0 4px; }
+.fs-groups .smp-name { white-space: normal; }
+@media (max-width: 480px) {
+  .fs-groups .smp-item { flex-wrap: wrap; }
+  .fs-groups .smp-name { flex-basis: 100%; }
+  .fs-groups .smp-item .hint { margin-right: auto; }
+}
+.fs-groups .smp-items { max-height: none; overflow: visible; }

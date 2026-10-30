@@ -208,3 +208,105 @@ test("wiring: scripts, offline cache, sound lists, playback, export and credits"
     assert.equal((js.match(new RegExp('"' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k + " in EN and EL");
   });
 });
+
+test("write: an imported instrument's .sfz reads back the same, with the samples renamed", () => {
+  const src = "<global> ampeg_release=0.6 <group> seq_length=2 <region> sample=Piano/C 4.wav key=c4 seq_position=2 loop_mode=loop_continuous loop_start=10 loop_end=900 group=1 off_by=2 tune=5 pan=-20 amp_veltrack=40\n<region> sample=rel.wav lokey=10 hikey=20 trigger=release ampeg_sustain=50 ampeg_decay=0.3";
+  const a = S.parse(src);
+  const txt = S.write(a.regions, { "Piano/C 4.wav": "s0001.wav", "rel.wav": "s0002.wav" }, ["Imported\nnot a header"]);
+  assert.match(txt, /^\/\/ Imported not a header\n/);
+  const b = S.parse(txt);
+  assert.deepEqual(b.warnings, []);
+  assert.deepEqual(b.regions.map((r) => r.sample), ["s0001.wav", "s0002.wav"]);
+  const strip = (l) => l.map((r) => Object.assign({}, r, { sample: "" }));
+  assert.deepEqual(strip(b.regions), strip(a.regions));
+});
+
+test("sounds.js: imported instruments on the disk (scan, save, play from the disk)", async () => {
+  const src = read("studio/sounds.js");
+  const files = {};
+  const blob = (s) => ({ size: s.length, text: () => Promise.resolve(s), arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)) });
+  const fsx = {
+    ls: (dir) => Promise.resolve(Array.from(new Set(Object.keys(files).filter((k) => k.startsWith(dir)).map((k) => k.slice(dir.length).split("/")[0]))).map((n) => ({ name: n, dir: true }))),
+    readText: (p) => (p in files ? Promise.resolve(files[p].s) : Promise.reject({ code: "ENOENT" })),
+    readBlob: (p) => Promise.resolve(p in files ? blob(files[p].s) : null),
+    writeBlob: (p, b) => { files[p] = { s: "bin", size: b.size }; return Promise.resolve(); },
+    writeText: (p, s) => { files[p] = { s }; return Promise.resolve(); }
+  };
+  const root = { caches: null, StudioSfz: S };
+  new Function("window", "fetch", src)(root, () => Promise.reject(new Error("offline")));
+  const SND = root.StudioSounds;
+  SND.useDisk(() => fsx);
+  assert.deepEqual(await SND.scan(), []);
+  files["/internal/Studio/instruments/not-ours/info.json"] = { s: "{}" };
+  const e = await SND.save("My Rhodes", "epiano", "<region> sample=s0001.wav\n", [{ name: "s0001.wav", blob: { size: 1234 } }]);
+  assert.match(e.id, /^u-[a-z0-9]{8}$/);
+  assert.equal(e.name, "My Rhodes");
+  assert.equal(e.kind, "epiano");
+  assert.equal(e.bytes, 1234);
+  assert.ok(files["/internal/Studio/instruments/" + e.id + "/s0001.wav"]);
+  assert.deepEqual(SND.users().map((u) => u.id), [e.id], "only u-xxxxxxxx folders count");
+  assert.equal(SND.find(e.id).user, true);
+  const ctx = { decodeAudioData: (ab, ok) => ok({ length: 10, duration: 1, sampleRate: 44100, numberOfChannels: 1, getChannelData: () => new Float32Array(10) }) };
+  await SND.ensure(ctx, [e.id]);
+  assert.ok(SND.get(e.id), "played from the disk, offline");
+  assert.equal(SND.get(e.id).regions[0].sample, "s0001.wav");
+});
+
+test("wiring: import an SFZ folder, the list on this device", () => {
+  const html = read("studio/index.html"), js = read("studio/studio.js");
+  ["track-sfz", "track-smps", "sfz-file", "smp-dlg", "smp-items", "smp-none", "smp-user-note", "smp-close"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  assert.match(html, /<input type="file" id="sfz-file" multiple webkitdirectory hidden>/);
+  assert.match(js, /SND\.useDisk\(fsApi\)/);
+  assert.match(js, /SFZ\.write\(regions, rename,/);
+  assert.match(js, /var SFZ_MAX_MB = 200, SFZ_MAX_FILES = 2000;/);
+  assert.match(js, /SND\.forget\(e\.id\)/);
+  assert.ok(!/innerHTML = [^"]/.test(js.slice(js.indexOf("function renderSmpList"), js.indexOf("function openSmpList"))), "names go in as text");
+  ["smp.import", "smp.list", "smp.mine", "smp.listHint", "smp.none", "smp.remove", "smp.removed", "smp.imported", "smp.skipped", "smp.noSfz",
+   "smp.bad", "smp.tooBig", "smp.noDisk", "smp.importing", "smp.importFail", "smp.userNote", "smp.cat.Keys"].forEach((k) => {
+    assert.equal((js.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " in EN and EL");
+  });
+});
+
+test("sounds.js: the free sounds list is cleaned, a sound's file is kept in oros-sounds", async () => {
+  const src = read("studio/sounds.js");
+  const kept = {};
+  const root = {
+    caches: { open: () => Promise.resolve({ match: (u) => Promise.resolve(kept[u] || null), put: (u, r) => { kept[u] = r; return Promise.resolve(); }, keys: () => Promise.resolve([]) }) }
+  };
+  const index = { version: 1, groups: [
+    { id: "drums", name: "Drums", names: { el: "Τύμπανα" }, items: [
+      { id: "snare-hit", name: "Snare hit", names: { el: "Ταμπούρο" }, file: "drums/snare-hit.mp3", bytes: 2000, dur: 1.2, lic: "cc0", by: "Versilian Studios", url: "https://github.com/sgossner/VSCO-2-CE" },
+      { id: "elsewhere", name: "x", file: "../x.mp3", bytes: 10 },
+      { id: "huge", name: "x", file: "drums/huge.mp3", bytes: 1e9 },
+      { id: "odd", name: "x", file: "drums/odd.mp3", bytes: 10, url: "javascript:x" }
+    ] },
+    { id: "../bad", name: "x", items: [{ id: "a", file: "../bad/a.mp3", bytes: 1 }] },
+    { id: "empty", name: "x", items: [{ id: "a", file: "other/a.mp3", bytes: 1 }] }
+  ] };
+  const res = (body) => ({ ok: true, json: () => Promise.resolve(body), blob: () => Promise.resolve("blob"), clone() { return this; } });
+  const fetched = [];
+  const fetch = (u) => { fetched.push(u); return Promise.resolve(res(index)); };
+  new Function("window", "fetch", src)(root, fetch);
+  const SND = root.StudioSounds;
+  const groups = await SND.samples();
+  assert.deepEqual(groups.map((g) => g.id), ["drums"]);
+  assert.deepEqual(groups[0].items.map((x) => x.id), ["snare-hit", "odd"]);
+  assert.equal(groups[0].items[1].url, "");
+  assert.equal(groups[0].names.el, "Τύμπανα");
+  assert.equal(fetched[0], "https://koulaxizis.github.io/oros-sounds/samples/index.json");
+  assert.equal(await SND.sampleBlob(groups[0].items[0]), "blob");
+  assert.equal(fetched[1], "https://koulaxizis.github.io/oros-sounds/samples/drums/snare-hit.mp3");
+  assert.ok(kept[fetched[1]], "the sound is kept for offline");
+});
+
+test("wiring: free sounds become clips with their licence card", () => {
+  const html = read("studio/index.html"), js = read("studio/studio.js"), de = read("i18n/de/studio.js");
+  ["add-free", "fs-dlg", "fs-groups", "fs-status", "fs-close"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  assert.match(js, /importFiles\(\[f\], \[\{ k: x\.lic, by: x\.by, title: x\.name, url: x\.url \}\]\)/);
+  assert.match(js, /addSource\(f\.name, C\.extOf\(f\.name, f\.type\), f, buf, lics && lics\[fi\]\)/);
+  assert.ok(!/innerHTML = [^"]/.test(js.slice(js.indexOf("function openFreeSounds"), js.indexOf("function openSmpList"))), "names go in as text");
+  ["fs.title", "fs.hint", "fs.play", "fs.stop", "fs.add", "fs.loading", "fs.none", "fs.fail"].forEach((k) => {
+    assert.equal((js.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+});

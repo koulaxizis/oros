@@ -151,6 +151,26 @@
     return { regions: regions, warnings: warnings };
   }
 
+  // regions → .sfz text again (the opcodes Studio plays, defaults left
+  // out); rename: { old sample path: new name } for an imported copy
+  function write(regions, rename, head) {
+    var lines = (head || []).map(function (h) { return "// " + String(h).replace(/[\r\n]+/g, " "); });
+    regions.forEach(function (r) {
+      var o = ["sample=" + ((rename && rename[r.sample]) || r.sample), "lokey=" + r.lokey, "hikey=" + r.hikey, "pitch_keycenter=" + r.center,
+        "lovel=" + r.lovel, "hivel=" + r.hivel];
+      var add = function (k, v, d) { if (v !== d && v != null) o.push(k + "=" + v); };
+      add("volume", r.volume, 0); add("pan", r.pan, 0); add("tune", r.tune, 0); add("pitch_keytrack", r.keytrack, 100);
+      add("amp_veltrack", r.veltrack, 100); add("offset", r.offset, 0); add("ampeg_delay", r.delay, 0); add("ampeg_attack", r.attack, 0);
+      add("ampeg_hold", r.hold, 0); add("ampeg_decay", r.decay, 0); add("ampeg_sustain", Math.round(r.sustain * 1000) / 10, 100);
+      add("ampeg_release", r.release, 0.001);
+      if (r.loop) { o.push("loop_mode=" + r.loop); if (r.loop !== "one_shot") o.push("loop_start=" + r.loopStart, "loop_end=" + r.loopEnd); }
+      add("trigger", r.trigger, "attack"); add("seq_length", r.seqLength, 1); add("seq_position", r.seqPos, 1);
+      add("lorand", r.lorand, 0); add("hirand", r.hirand, 1); add("group", r.group, undefined); add("off_by", r.offBy, undefined);
+      lines.push("<region> " + o.join(" "));
+    });
+    return lines.join("\n") + "\n";
+  }
+
   // the sample files an instrument needs, in order, once each
   function samples(regions) {
     var seen = {}, out = [];
@@ -351,7 +371,7 @@
   };
 
   var api = {
-    parse: parse, note: note, samplePath: samplePath, samples: samples, pick: pick, lead: lead, velAmp: velAmp,
+    parse: parse, write: write, note: note, samplePath: samplePath, samples: samples, pick: pick, lead: lead, velAmp: velAmp,
     Instrument: Instrument, playNote: playNote, Live: Live, MAX_REGIONS: MAX_REGIONS, MAX_VOICES: MAX_VOICES
   };
   if (typeof module === "object" && module.exports) module.exports = api;

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.50.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.51.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6583,7 +6583,10 @@
           k: "cr.airwindows" },
         { name: "VS Chamber Orchestra: Community Edition", url: "https://github.com/sgossner/VSCO-2-CE",
           by: "Versilian Studios", lic: "CC0 1.0",
-          k: "cr.vsco" }
+          k: "cr.vsco" },
+        { name: "Salamander Grand Piano V3", url: "https://archive.org/details/SalamanderGrandPianoV3",
+          by: "Alexander Holm", lic: "CC BY 3.0",
+          k: "cr.salamander" }
       ]
     },
     {

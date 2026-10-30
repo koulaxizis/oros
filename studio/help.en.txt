@@ -72,10 +72,13 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - `Export MIDI` saves a standard MIDI file: in the piano roll for one clip (type 0), in the track's settings for the whole track (type 1, with the project's tempo and bars).
 
 ## Sampled instruments
-- Besides the built-in sounds, `Instrument` (in the track's settings, or the sound list of the keyboard panel) offers 21 recorded instruments in groups marked `(download)`: upright piano, pipe organ, violin, viola and cello sections, contrabass, pizzicato violins, harp, flute, oboe, clarinet, bassoon, French horn, trumpet, trombone, tuba, glockenspiel, marimba, xylophone, timpani and tubular bells.
+- Besides the built-in sounds, `Instrument` (in the track's settings, or the sound list of the keyboard panel) offers a grand piano and 22 recorded instruments in groups marked `(download)`: upright piano, pipe organ, violin, viola and cello sections, contrabass, pizzicato violins, harp, flute, oboe, clarinet, bassoon, French horn, trumpet, trombone, tuba, glockenspiel, marimba, xylophone, timpani, tubular bells and orchestral percussion (bass drum, snares, cymbals, gong, tambourine, triangle and more, on the drum keys of a drum track).
 - They come from VS Chamber Orchestra: Community Edition by Versilian Studios, under CC0 (free for anything, no credit needed). Studio downloads an instrument the first time a track uses it (0.1 to 4.5 MB) and keeps it on this device, so afterwards it also plays offline. Until it is here the track plays its built-in sound.
 - The keys, a MIDI keyboard, the piano roll and every export play the instrument. An export waits until every instrument of the song is downloaded.
-- `Export` lists the instruments the song uses under `Credits`.
+- `Grand Piano` is the Salamander Grand Piano by Alexander Holm (a Yamaha C5, 10 MB), under CC BY 3.0: when you publish a song with it, name the author. `Export` lists the instruments the song uses under `Credits`, with that line ready to copy.
+- `Instruments on this device` (under `Instrument`) lists what was downloaded, with its size; `Remove` frees the space, and the instrument downloads again when a track needs it.
+- `Import SFZ instrument` takes a folder with an .sfz file and its samples (WAV, FLAC, MP3, OGG; up to 200 MB). Studio copies them onto the orOS disk (Studio/instruments), where they sync to your other devices like audio files, and the track plays it. Studio plays the common SFZ settings (key and velocity ranges, tuning, volume, envelope, loops, round robin, release samples); others are left out. Check the instrument's licence before you publish with it.
+- `Free sounds` (in `Add a track`) lists 34 single sounds from the same orchestra, in three groups: drums, cymbals and gong, small percussion. `Listen` plays one; `Add` puts it on an audio track at the playhead as a clip, with its licence card (CC0) already filled in.
 - A recorded note lasts as long as its recording: a very long held note on strings or winds fades out after about eight seconds.
 
 ## Piano roll
