@@ -4,7 +4,7 @@ Seitenlayout ist eine App für die Gestaltung von Druckseiten: Flyer, Newsletter
 ## Erste Schritte
 Tippe auf `Neues Dokument` und wähle ein `Seitenformat` (etwa A4, `Visitenkarte` oder `Eigenes`), `Ausrichtung`, `Seiten`, `Ränder`, `Spalten` und `Beschnitt`. Für eine Broschüre hakst du `Doppelseiten` an. Das alles kannst du später unter `Dokument einrichten…` ändern. Unter `Beginnen mit` wählst du `Leer` oder eine von 7 fertigen Vorlagen, etwa einen Flyer oder einen Newsletter.
 
-Deine Dokumente erscheinen als Karten auf der Startseite. Dort kannst du sie suchen, umbenennen, duplizieren oder löschen (gleich danach rückgängig zu machen).
+Deine Dokumente erscheinen als Karten auf der Startseite. Dort kannst du sie suchen, umbenennen, duplizieren oder löschen (gleich danach rückgängig zu machen). Jedes Dokument ist auch eine Datei in Dateien › Layout: Es darf so groß sein wie ein ganzes Buch, wird wie jede Datei mit deinen anderen Geräten synchronisiert und kommt mit der orOS-Festplatte in die Sicherungen. Ein Doppelklick auf die Datei in Dateien öffnet das Dokument; ein gelöschtes Dokument landet im Papierkorb von Dateien. Wurde dasselbe Dokument auf zwei Geräten zugleich geändert, führt Seitenlayout beide Fassungen zusammen, damit keine Änderung verloren geht.
 
 ## Dinge auf der Seite platzieren
 Wähle links ein Werkzeug und zieh auf der Seite: `Textrahmen (T)`, `Bildrahmen (F)`, `Rechteck (R)`, `Ellipse (E)` oder `Linie (L)`. `Auswahl (V)` verschiebt Objekte und ändert ihre Größe; `Hand (H)` verschiebt die Ansicht.

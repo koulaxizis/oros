@@ -382,7 +382,12 @@
   // the disk's, Vault's and sync's own records name every file (their
   // queues, manifests, last-synced copies): they are not designs
   var BOOKKEEPING = /^oros-(vault|fs|sync)(-|$)/;
+  // Layout keeps its documents as files on the orOS disk (LY-DISK), and
+  // they name pictures here too: until this check reads those files,
+  // no file counts as unused (null: cannot tell, nothing is deletable).
+  var DOCS_ON_DISK = true;
   function usedFiles() {
+    if (DOCS_ON_DISK) return null;
     var CL = window.AtelierClips, used = {};
     try {
       for (var i = 0; i < localStorage.length; i++) {
@@ -533,7 +538,7 @@
   // with those designs. null: cannot tell, so none is offered.
   AT.filesOnlyIn = function (docIds) {
     var CL = window.AtelierClips, mine = {}, used = {}, data = AT.data();
-    if (!fsApi()) return null;
+    if (!fsApi() || DOCS_ON_DISK) return null;
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);

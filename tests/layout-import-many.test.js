@@ -102,10 +102,10 @@ test("Open › A file takes several packages or a .zip; A folder in Files is on 
 
 test("in a batch no document opens, only the last toast shows, and a full storage stops it", () => {
   assert.match(io, /function say\(msg\) \{ if \(!batch\) LY\.toast\(msg\); \}/);
-  assert.match(io, /if \(batch\) \{ batch\.add\(doc, failed, fontsFailed\); return; \}/);
+  assert.match(io, /if \(batch\) return batch\.add\(doc, failed, fontsFailed\);/);
   const paths = io.slice(io.indexOf("function openFile"), io.indexOf("// ---------- Many packages at once"));
   assert.equal((paths.match(/LY\.toast\(/g) || []).length, 1, "only the single-file success toast; failures use say()");
-  assert.match(io, /if \(!LY\.addDocQuiet\(doc\)\) \{ res\.full = 1; return; \}/);
+  assert.match(io, /return Promise\.resolve\(LY\.addDocQuiet\(doc\)\)\.then\(function \(ok\) \{\s*if \(!ok\) \{ res\.full = 1; return; \}/);
   // addDocQuiet: the document is taken back when it does not fit
   assert.match(ly, /function addDocQuiet\(d\) \{[\s\S]*?localStorage\.setItem\(STORAGE_KEY[\s\S]*?catch \(e\) \{\s*data\.docs = data\.docs\.filter\([\s\S]*?return false;/);
   assert.match(ly, /LY\.addDocQuiet = addDocQuiet/);

@@ -359,6 +359,7 @@
         return f.text().then(function (txt) {
           var pkg = null;
           try { pkg = JSON.parse(txt); } catch (e) {}
+          if (!batch && LY.openStored && LY.openStored(f.name, pkg)) return;
           return openPackage(pkg);
         });
       });
@@ -391,7 +392,7 @@
         }).then(null, function () { fontsFailed++; });
       });
       return chain.then(function () {
-        if (batch) { batch.add(doc, failed, fontsFailed); return; }
+        if (batch) return batch.add(doc, failed, fontsFailed);
         LY.addDoc(doc);
         LY.toast(failed ? t("imp.imgFail", { n: failed }) : fontsFailed ? t("imp.fontFail", { n: fontsFailed }) : t("imp.done"));
       });
@@ -420,11 +421,15 @@
     if (!files.length || batch) return Promise.resolve(null);
     var res = { ok: 0, bad: 0, full: 0, imgFail: 0 }, n = 0;
     batch = {
+      // a document counts once it is stored (on the disk: written and
+      // read back; else in localStorage)
       add: function (doc, failed) {
         if (res.full) return;
-        if (!LY.addDocQuiet(doc)) { res.full = 1; return; }
-        res.ok++;
-        if (failed) res.imgFail++;
+        return Promise.resolve(LY.addDocQuiet(doc)).then(function (ok) {
+          if (!ok) { res.full = 1; return; }
+          res.ok++;
+          if (failed) res.imgFail++;
+        });
       }
     };
     function one(f) {

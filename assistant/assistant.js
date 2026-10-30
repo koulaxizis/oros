@@ -3251,7 +3251,11 @@
   // card counts, and kept here while it is unchanged (doc.m).
   var EDIT_SRC = {
     atelier: { mod: "AtelierCommands", data: "oros-atelier-data", folders: "oros-atelier-folders", prefs: "oros-atelier-prefs", brand: "oros-atelier-brand", style: "oros-atelier-style" },
-    layout: { mod: "LayoutCommands", data: "oros-layout-data", folders: "", prefs: "oros-layout-prefs" },   // Layout has no folders
+    // Layout (LY-DISK): each document is a package file on the orOS
+    // disk; the index lists them with their paths (pkg: the file is
+    // { kind, ver, doc }). A device where Layout has not used the disk
+    // yet still has every document in the old store (legacy).
+    layout: { mod: "LayoutCommands", data: "oros-layout-index", legacy: "oros-layout-data", list: "docs", pkg: 1, max: 64 * 1024 * 1024, folders: "", prefs: "oros-layout-prefs", disk: 1 },   // Layout has no folders
     photolab: { mod: "PhotoLabCommands", data: "oros-photolab-data", prefs: "oros-photolab-prefs", disk: 1 },
     // Slides: one store for every presentation; the catalog lists them
     // (view) and the open one is prefs.deck
@@ -3311,7 +3315,9 @@
     if (s.view) { var v = window[s.mod].view(readStore(s.data)); return { data: v, full: v, folders: null, open: open, brand: null }; }
     if (!s.disk) { var d = readStore(s.data); return { data: d, full: d, folders: readStore(s.folders), open: open, brand: kit }; }
     // index entries for picking, the loaded doc records for counting
-    var idx = readStore(s.data), list = idx && Array.isArray(idx.projects) ? idx.projects.filter(function (e) { return e && typeof e.id === "string"; }) : [];
+    var idx = readStore(s.data);
+    if (!idx && s.legacy) { var lg = readStore(s.legacy); return { data: lg, full: lg, folders: null, open: open, brand: kit }; }
+    var list = idx && Array.isArray(idx[s.list || "projects"]) ? idx[s.list || "projects"].filter(function (e) { return e && typeof e.id === "string"; }) : [];
     var full = [], missing = [];
     list.forEach(function (e) { var c = diskDocs[app + "/" + e.id]; if (c && c.m === e.m) full.push(c.doc); else missing.push(e.id); });
     return { data: { docs: list }, full: { docs: full }, missing: missing, folders: null, open: open, brand: null };
@@ -3322,17 +3328,22 @@
   function editLoad(app, ids) {
     var s = EDIT_SRC[app], sh = shell(), fs = null, mod = window[s && s.mod];
     try { fs = sh && sh.orosFS; } catch (e) { fs = null; }
-    if (!s || !s.disk || !fs || !mod || !mod.docPath) return Promise.resolve();
-    var idx = readStore(s.data), ms = {};
-    ((idx && idx.projects) || []).forEach(function (e) { if (e && typeof e.id === "string") ms[e.id] = e.m; });
+    if (!s || !s.disk || !fs || !mod || !(mod.docPath || s.pkg)) return Promise.resolve();
+    var idx = readStore(s.data), ms = {}, paths = {};
+    ((idx && idx[s.list || "projects"]) || []).forEach(function (e) {
+      if (e && typeof e.id === "string") { ms[e.id] = e.m; if (typeof e.path === "string") paths[e.id] = e.path; }
+    });
     var chain = Promise.resolve();
     ids.filter(function (id) { var c = diskDocs[app + "/" + id]; return ms[id] !== undefined && !(c && c.m === ms[id]); }).slice(0, 200).forEach(function (id) {
       chain = chain.then(function () {
-        return fs.read(mod.docPath(id)).then(function (b) {
-          if (b && typeof b.size === "number" && b.size > DISK_MAX) return;
+        var path = paths[id] || (mod.docPath ? mod.docPath(id) : "");
+        if (!path) return;
+        return fs.read(path).then(function (b) {
+          if (b && typeof b.size === "number" && b.size > (s.max || DISK_MAX)) return;
           return (b && typeof b.text === "function" ? b.text() : Promise.resolve(String(b || ""))).then(function (txt) {
             var doc = JSON.parse(txt);
-            if (doc && doc.id === id && Array.isArray(doc.layers)) diskDocs[app + "/" + id] = { m: ms[id], doc: doc };
+            if (s.pkg) doc = doc && doc.doc;
+            if (doc && doc.id === id && Array.isArray(s.pkg ? doc.pages : doc.layers)) diskDocs[app + "/" + id] = { m: ms[id], doc: doc };
           });
         }).catch(function () {});
       });

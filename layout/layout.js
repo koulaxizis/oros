@@ -14,8 +14,16 @@
 //   story.js   the Story Editor
 //   io.js      PDF export, packages, images, text import
 // Data:
+//   - documents: one file each in /internal/Layout ("<name> · <id>
+//     .oroslayout", a JSON package), synced per file by Vault Drive
+//     (designkit/docstore.js, LY-DISK, section 3b); without the orOS
+//     disk they stay in oros-layout-data as before
 //   - synced slice "layout" (oros-layout-data): LAYOUT v1, see
-//     designkit/model.js (per-entity LWW + tombstones, canonical)
+//     designkit/model.js (per-entity LWW + tombstones, canonical); with
+//     the disk only the old devices' copy (merged in, never grown)
+//   - device-local: oros-layout-index (the documents' list for search
+//     and the Assistant), oros-layout-open (the open document, merged
+//     back at the next start)
 //   - images: /internal/Assets/<sha256>.<ext> on the orOS disk,
 //     synced per file by Vault Drive (designkit/assets.js)
 //   - device-local (R10): oros-layout-prefs ({ doc, zoom }),
@@ -468,7 +476,7 @@
       "story.chars": "{n} characters", "story.overset": "· overset", "story.none": "Select a text frame first.",
       "rec.title": "Recovered text", "rec.note": "Edited on two devices at the same time: the other version is kept here.",
       "rec.copy": "Copy", "rec.copied": "Copied", "rec.del": "Discard",
-      "toast.deleted": "Deleted", "toast.docDeleted": "Document deleted", "toast.save": "Storage is full: recent changes could not be saved on this device.",
+      "toast.deleted": "Deleted", "toast.docDeleted": "Document deleted", "toast.save": "Storage is full: recent changes could not be saved on this device.", "toast.diskSave": "Recent changes could not be written to Files › Layout yet. They are kept here and written at the next change.", "toast.diskRead": "Files that could not be read in Files › Layout: {n}. They stay as they are.", "toast.diskOff": "The orOS disk cannot be read right now: documents are kept in this browser until the next start.",
       "toast.big": "This document is getting large ({n} KB). Large documents fill the storage every app shares.",
       "toast.locked": "This object is locked.", "toast.gone": "This document was deleted on another device.",
       "toast.fontFail": "The fonts could not be loaded.", "toast.maxItems": "A document can have at most {n} objects.",
@@ -995,7 +1003,7 @@
       "story.chars": "{n} χαρακτήρες", "story.overset": "· περισσεύει", "story.none": "Διάλεξε πρώτα ένα πλαίσιο κειμένου.",
       "rec.title": "Ανακτημένο κείμενο", "rec.note": "Άλλαξε σε δύο συσκευές ταυτόχρονα: η άλλη εκδοχή φυλάγεται εδώ.",
       "rec.copy": "Αντιγραφή", "rec.copied": "Αντιγράφηκε", "rec.del": "Απόρριψη",
-      "toast.deleted": "Διαγράφηκε", "toast.docDeleted": "Το έγγραφο διαγράφηκε", "toast.save": "Ο χώρος γέμισε: οι τελευταίες αλλαγές δεν αποθηκεύτηκαν σε αυτή τη συσκευή.",
+      "toast.deleted": "Διαγράφηκε", "toast.docDeleted": "Το έγγραφο διαγράφηκε", "toast.save": "Ο χώρος γέμισε: οι τελευταίες αλλαγές δεν αποθηκεύτηκαν σε αυτή τη συσκευή.", "toast.diskSave": "Οι τελευταίες αλλαγές δεν γράφτηκαν ακόμη στα Αρχεία › Layout. Κρατιούνται εδώ και γράφονται με την επόμενη αλλαγή.", "toast.diskRead": "Αρχεία που δεν διαβάστηκαν στα Αρχεία › Layout: {n}. Μένουν όπως είναι.", "toast.diskOff": "Ο δίσκος του orOS δεν διαβάζεται τώρα: τα έγγραφα μένουν σε αυτόν τον browser μέχρι την επόμενη εκκίνηση.",
       "toast.big": "Το έγγραφο μεγαλώνει ({n} KB). Τα μεγάλα έγγραφα γεμίζουν τον χώρο που μοιράζονται όλες οι εφαρμογές.",
       "toast.locked": "Αυτό το αντικείμενο είναι κλειδωμένο.", "toast.gone": "Αυτό το έγγραφο διαγράφηκε σε άλλη συσκευή.",
       "toast.fontFail": "Οι γραμματοσειρές δεν φόρτωσαν.", "toast.maxItems": "Ένα έγγραφο έχει το πολύ {n} αντικείμενα.",
@@ -1271,9 +1279,120 @@
   }
   LY.savePrefs = savePrefs;
 
+  // ---------- 3b. Documents on the orOS disk (LY-DISK) ----------
+  // With the orOS disk, every document is a file in Files › Layout
+  // (designkit/docstore.js): loaded at boot, written when it changes,
+  // synced by Vault Drive like any file. oros-layout-data stays as the
+  // old slice for devices that still run an older orOS (merged in, never
+  // grown). Without the disk (a page opened on its own) everything stays
+  // in localStorage as before.
+  var INDEX_KEY = "oros-layout-index", OPEN_KEY = "oros-layout-open", DISK_DIR = "/internal/Layout";
+  var disk = null, diskStore = null, diskReady = false, diskPulls = [], diskFailShown = false;
+  function diskFs() {
+    try { return (window.parent && window.parent !== window && window.parent.orosFS) || null; }
+    catch (e) { return null; }
+  }
+  function storyTextOf(d) {
+    var parts = [], n = 0;
+    (d.stories || []).some(function (st) {
+      (st.paras || []).forEach(function (p) {
+        (p.runs || []).forEach(function (r) { if (typeof r.t === "string" && n < 1000) { parts.push(r.t); n += r.t.length; } });
+        parts.push(" ");
+      });
+      return n >= 1000;
+    });
+    return parts.join("").replace(/\s+/g, " ").trim().slice(0, 1000);
+  }
+  function startDisk() {
+    var fs = diskFs();
+    if (!fs || !window.orosDocStore || !window.OrosFilesCore) return null;
+    var store = diskStore = window.orosDocStore.create({ dir: DISK_DIR, ext: ".oroslayout", kind: "oros-layout-package", ver: 1, fs: fs, M: M, core: window.OrosFilesCore });
+    return window.orosDocStore.open({
+      store: store, M: M, fs: fs, ls: window.localStorage, rescue: "layout-data",
+      keys: { legacy: STORAGE_KEY, index: INDEX_KEY, open: OPEN_KEY },
+      entry: function (d) { return { tx: storyTextOf(d) }; }
+    });
+  }
+  function diskSaved(res) {
+    if (res && res.failed && !diskFailShown) { diskFailShown = true; toast(t("toast.diskSave")); }
+    if (res && !res.failed) diskFailShown = false;
+    return res;
+  }
+  // after a pull or a disk change: the documents that changed
+  function diskApply(next, changed) {
+    if (!changed.length) return;
+    var openId = LY.doc ? LY.doc.id : null;
+    data = next;
+    disk.save(data).then(diskSaved);
+    if (openId) {
+      var d = findDoc(openId);
+      if (!d) { toast(t("toast.gone")); goHome(); return; }
+      var was = LY.doc;
+      LY.doc = d;
+      if (changed.indexOf(openId) >= 0 && JSON.stringify(d) !== JSON.stringify(was)) emit("remote");
+    } else renderHome();
+  }
+  var rescanning = false, rescanAgain = false;
+  function diskRescan() {
+    if (!disk || !diskReady) return;
+    if (rescanning) { rescanAgain = true; return; }
+    rescanning = true;
+    LY.flushStory && LY.flushStory();
+    var openBefore = LY.doc ? JSON.stringify(LY.doc) : null;
+    disk.rescan(data).then(function (r) {
+      rescanning = false;
+      // an edit made while the files were read is merged, never lost
+      var now2 = r.data;
+      if (LY.doc && JSON.stringify(LY.doc) !== openBefore) now2 = M.mergeData(now2, { docs: [LY.doc], dt: {} });
+      diskApply(now2, r.changed);
+      if (rescanAgain) { rescanAgain = false; diskRescan(); }
+    }, function () { rescanning = false; });
+  }
+  function watchVault() {
+    var v = null;
+    try { v = window.parent && window.parent !== window ? window.parent.orosVault : null; } catch (e) { v = null; }
+    if (!v || typeof v.onStatus !== "function") return;
+    var off = v.onStatus(function (kind, detail) {
+      if (kind === "stats" && detail && (detail.downloaded > 0 || detail.deleted > 0 || detail.conflicts > 0)) diskRescan();
+    });
+    window.addEventListener("pagehide", function () { if (typeof off === "function") off(); });
+  }
+  // A document's own file opened from Files (or "Open with"): that
+  // document opens, it is not imported again as a copy.
+  LY.openStored = function (name, pkg) {
+    var p = disk && diskStore ? diskStore.parse(name) : null;
+    if (!p || p.conflict || !pkg || !pkg.doc || pkg.doc.id !== p.id || !findDoc(p.id)) return false;
+    openDoc(p.id);
+    return true;
+  };
+  // → Promise: the documents from the disk (or the local copy)
+  function loadDisk() {
+    disk = startDisk();
+    if (!disk) return Promise.resolve();
+    return disk.load().then(function (res) {
+      data = res.data;
+      diskReady = true;
+      diskSaved({ failed: res.writeFailed });
+      if (res.failed) toast(t("toast.diskRead", { n: res.failed }));
+      diskPulls.splice(0).forEach(function (inc) { var r = disk.absorb(data, inc); diskApply(r.data, r.changed); });
+      watchVault();
+      disk.sweepRescue();
+    }, function () {
+      // the disk cannot be read now: this session works as before, in
+      // localStorage; the next start reads the disk again
+      disk = null;
+      toast(t("toast.diskOff"));
+    });
+  }
+
   var saveTimer = null, saveFailShown = false, bigWarned = {};
   function saveNow() {
     clearTimeout(saveTimer); saveTimer = null;
+    if (disk) {
+      if (diskReady) disk.save(data, LY.doc).then(diskSaved);
+      if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+      return;
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       saveFailShown = false;
@@ -1578,6 +1697,15 @@
     data.docs.push(d);
     data = M.normData(data);
     clearTimeout(saveTimer); saveTimer = null;
+    if (disk) {
+      // kept once its file is written (and read back)
+      return disk.persist(data, true).then(function () {
+        if (disk.pathOf(d.id)) { disk.writeIndex(data); return true; }
+        data.docs = data.docs.filter(function (x) { return x.id !== d.id; });
+        data = M.normData(data);
+        return false;
+      });
+    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch (e) {
@@ -1753,10 +1881,17 @@
     api.registerSlice("layout", sliceGet, sliceSet, STORAGE_KEY, M.mergeData);
   }
 
-  function sliceGet() { return M.normData(data); }   // canonical copy (R26)
+  function sliceGet() { return disk ? disk.sliceGet(data) : M.normData(data); }   // canonical copy (R26)
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.docs)) return;
+    if (disk) {
+      // R6: a pull never marks dirty (the files are Vault's)
+      if (!diskReady) { diskPulls.push(incoming); return; }
+      var r = disk.absorb(data, incoming);
+      diskApply(r.data, r.changed);
+      return;
+    }
     var before = JSON.stringify(data);
     var openId = LY.doc ? LY.doc.id : null;
     var openBefore = LY.doc ? JSON.stringify(LY.doc) : null;
@@ -1824,7 +1959,7 @@
     watchPalette();
     wireHome();
     emit("boot");
-    T.load(T.allKeys()).then(function () {
+    loadDisk().then(function () { return T.load(T.allKeys()); }).then(function () {
       $("loading").hidden = true;
       if (LY.prefs.doc && findDoc(LY.prefs.doc)) openDoc(LY.prefs.doc);
       else renderHome();

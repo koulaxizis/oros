@@ -1,9 +1,11 @@
 // ============================================================
 // orOS Layout — universal search provider (v1.0.0)
 // Loaded by the shell on the first menu search (apps.json
-// "search"). Read-only: reads oros-layout-data, never writes.
-// One hit per document (its name; the text of all its stories, in
-// story order, as text). The date is the last edit (the newest
+// "search"). Read-only: reads oros-layout-index (the documents on the
+// orOS disk, LY-DISK: name and the first 1000 characters of text) or,
+// on a device where Layout has not used the disk yet, oros-layout-data;
+// never writes. One hit per document (its name; the text of all its
+// stories, in story order, as text). The date is the last edit (the newest
 // entity stamp, like designkit maxM()). Skipped: documents covered
 // by their doc tombstone (dt[id] >= newest stamp, as mergeData) and
 // stories covered by an entity tombstone (doc.tombs[id] >= m).
@@ -11,7 +13,7 @@
 // ============================================================
 (function (root) {
   "use strict";
-  var KEY = "oros-layout-data";
+  var KEY = "oros-layout-data", INDEX = "oros-layout-index";
   var COLLS = ["pages", "masters", "items", "stories", "pstyles", "cstyles", "swatches", "guides", "rec"];
 
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -44,9 +46,18 @@
 
   var PROVIDER = {
     id: "layout",
-    keys: [KEY],
+    keys: [INDEX, KEY],
     search: function (ctx) {
-      var d = ctx.readJSON(KEY), out = [];
+      var ix = ctx.readJSON(INDEX), out = [];
+      if (ix && Array.isArray(ix.docs)) {
+        ix.docs.forEach(function (e) {
+          if (!e || typeof e.id !== "string") return;
+          var name = typeof e.name === "string" ? e.name.trim() : "";
+          out.push({ id: e.id, title: name || untitled(ctx.lang), text: typeof e.tx === "string" ? e.tx : "", when: Number(e.m) || 0, target: { doc: e.id } });
+        });
+        return out;
+      }
+      var d = ctx.readJSON(KEY);
       if (!d || !Array.isArray(d.docs)) return out;
       var dt = d.dt && typeof d.dt === "object" ? d.dt : {};
       d.docs.forEach(function (doc) {
