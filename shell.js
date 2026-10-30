@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.48.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.49.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -6577,7 +6577,10 @@
           k: "cr.whisper-tiny" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
-          k: "cr.null-jsfx" }
+          k: "cr.null-jsfx" },
+        { name: "Airwindows", url: "https://www.airwindows.com",
+          by: "Chris Johnson", lic: "MIT",
+          k: "cr.airwindows" }
       ]
     },
     {

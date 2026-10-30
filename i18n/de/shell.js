@@ -162,6 +162,7 @@ orosPack("de", "shell", {
  "cmd.copyFailed": "Kopieren ging nicht. Versuche es noch einmal.",
  "cmd.loadfail": "Die Befehlsleiste wurde nicht geladen. Prüfe die Verbindung und versuche es erneut.",
  "cmd.quick": "Schnellfenster",
+ "cr.airwindows": "32 Effekte, aus ihrem C++ übersetzt (Studio)",
  "cr.anthropic-openai": "KI-Chat deiner Wahl (Assistent)",
  "cr.ccmixter": "Remixe und Instrumentals (Musik)",
  "cr.chess-com": "Schach › Online-Konten: deine Wertungen, deine Partien und die Tagesaufgabe",

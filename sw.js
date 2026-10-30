@@ -1537,6 +1537,7 @@ var PRECACHE_URLS = [
   "studio/nullfx/runtime/null-node.js",
   "studio/nullfx/runtime/null-worklet.js",
   "studio/nullfx/fx/index.json",
+  "studio/airfx/fx/index.json",
   "lyricsync/",
   "lyricsync/index.html",
   "lyricsync/app.css",
@@ -2234,7 +2235,8 @@ self.addEventListener("activate", function (event) {
 });
 
 // ---------- Studio effects (NULLFX_CACHE) ----------
-var NULLFX_RE = /\/studio\/nullfx\/fx\/[a-z0-9_]+\.js$/;
+// Airwindows effects (studio/airfx/fx/aw_<name>.js) are kept the same way.
+var NULLFX_RE = /\/studio\/(nullfx|airfx)\/fx\/[a-z0-9_]+\.js$/;
 // Releases before NULLFX_CACHE precached every effect: the newest
 // previous shell's copies move here (no X-Oros-Release, so they are
 // refreshed while online), so effects that worked offline still do.

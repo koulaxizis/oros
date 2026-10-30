@@ -34,6 +34,7 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - Convolution can use your own impulse response: set `Source` to `IR File` and choose a WAV file (up to 20 MB). It is kept in the `Studio/fx` folder and syncs like the rest of the audio.
 - Some effects need a moment to look ahead. Studio delays the other tracks to match, so everything stays in time, also in the export.
 - The effects are [NULL JSFX](https://nulljsfx.tech) (MIT License), running in the browser.
+- The `Airwindows` group adds 32 effects by Chris Johnson ([airwindows.com](https://www.airwindows.com), MIT License): reverbs (Galactic, Verbity2, Chamber, PocketVerbs), tape and saturation (ToTape6, IronOxide5, Tube2, Density2 and more), compressors, limiters and clippers, EQ and filters, console emulation (Channel9, Console7) and stereo width. They have no interface of their own: every control is a slider from 0 to 1, as in the originals, and `Dry/Wet` (where there is one) mixes the effect with the dry sound. Each one was translated from its original code and sounds the same.
 
 ## Sidechain
 - `Sidechain Ducker` turns a track down while another track plays: the classic pumping pad under a kick, or music that makes room for a voice.
