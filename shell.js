@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.52.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.53.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -389,6 +389,7 @@
     if (tBtn) tBtn.title = window.t("app.time");   // paintBarDate adds the date at fit level 6
     if (dBtn) dBtn.title = window.t("app.calendar");
     if (window.orosOsk) window.orosOsk.refresh();   // on-screen keyboard labels
+    if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     // The sync button and the app frame are labelled once at injection /
     // open time; a language toggle (or a boot before the language is
     // known) must relabel them too, or screen readers hear English.
@@ -1201,11 +1202,13 @@
   // that fits, measured on the real bar:
   //   0 full date · 1 no year · 2 tighter paddings/gaps ·
   //   3 no weekday · 4 numeric dd/mm · 5 menu label hidden (icon
-  //   stays) · 6 date hidden (the time button's tooltip carries it).
+  //   stays) · 6 date hidden (the time button's tooltip carries it) ·
+  //   7 language button hidden, only when Quick settings (qsettings.js)
+  //   is in the bar: its panel has the same language button.
   // Re-run by a ResizeObserver on the bar (a chip appears, the text
   // changes width, rotation), never per tick.
   var barFit = 0;
-  var BAR_FIT_MAX = 6;
+  var BAR_FIT_MAX = 7;
 
   function barDateStr(now, lvl) {
     var loc = window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB");
@@ -1226,7 +1229,7 @@
     var txt = barDateStr(now, barFit);
     if (dBtn.textContent !== txt) dBtn.textContent = txt;
     var tt = window.t("app.time") +
-      (barFit >= BAR_FIT_MAX ? " · " + barDateStr(now, 0) : "");
+      (barFit >= 6 ? " · " + barDateStr(now, 0) : "");
     if (tBtn.title !== tt) tBtn.title = tt;
   }
 
@@ -1236,6 +1239,7 @@
     bar.classList.toggle("bar-tight", lvl >= 2);
     bar.classList.toggle("bar-nolabel", lvl >= 5);
     bar.classList.toggle("bar-nodate", lvl >= 6);
+    bar.classList.toggle("bar-nolang", lvl >= 7);
     paintBarDate(new Date());
   }
 
@@ -1249,7 +1253,7 @@
       var cs = getComputedStyle(bar);
       var avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       var need = left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4;
-      if (need <= avail || lvl >= BAR_FIT_MAX) return;
+      if (need <= avail || lvl >= (document.getElementById("qs-btn") ? BAR_FIT_MAX : 6)) return;
     }
   }
 
@@ -7333,7 +7337,8 @@
     { key: "n", label: "sc.desc.stickies",   fn: scNewSticky },
     { key: "k", label: "sc.desc.cmdbar",     fn: function() { openCmdBar(); } },
     { key: "w", label: "sc.desc.switcher",   fn: function() { mtSwitcher(); } },
-    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } }
+    { key: "q", label: "sc.desc.quickask",   fn: function() { if (window.orosQuick) window.orosQuick.mini(); else openAssistant(); } },
+    { key: "m", label: "sc.desc.qs",         fn: function() { if (window.orosQS) window.orosQS.toggle(); } }
   ];
 
   // Public contract consumed by iframe apps (same-origin, so this
@@ -12100,6 +12105,78 @@
       lang: function () { return state.lang; },   // "de" picks the German layout
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); }
+    });
+  }
+  // Quick settings: the sounds that play in the shell (their hosts
+  // live on this window, so they go on after their app closes). One
+  // row each, with Play / Pause and the app. A host that is missing or
+  // has nothing loaded gives no row.
+  function qsMedia() {
+    var out = [];
+    var label = function (id) { var k = "app." + id, v = window.t(k); return v === k ? id : v; };
+    var mu = window.__orosMusicHost;
+    if (mu && typeof mu.getState === "function") {
+      var ms = mu.getState();
+      if (ms && ms.cur) out.push({ id: "music", name: label("music"), playing: !!ms.playing,
+        title: (ms.cur.t || "") + (ms.cur.a ? " · " + ms.cur.a : ""),
+        toggle: function () { mu.toggle(); }, open: function () { openAppById("music"); } });
+    }
+    var pc = window.__orosPodcastsHost;
+    if (pc && typeof pc.getState === "function") {
+      var ps = pc.getState();
+      if (ps && ps.cur) out.push({ id: "podcasts", name: label("podcasts"), playing: !!ps.playing,
+        title: (ps.cur.title || "") + (ps.cur.show ? " · " + ps.cur.show : ""),
+        toggle: function () { pc.toggle(); }, open: function () { openAppById("podcasts"); } });
+    }
+    var rx = window.__orosRadioHost;
+    if (rx && rx.audio && rx.api && typeof rx.api.getState === "function") {
+      var rs = null;
+      try { rs = rx.api.getState(); } catch (e) {}
+      if (rs && rs.current && rs.current.name) {
+        var on = !rx.audio.paused;
+        out.push({ id: "radio", name: label("radio"), playing: on, title: rs.current.name,
+          toggle: function () { if (!rx.audio.paused) rxTrayStop(); else rxTrayPlay(); },
+          open: function () { openAppById("radio"); } });
+      }
+    }
+    var mx = mxHost();
+    if (mx) {
+      var xs = mx.state();
+      if (xs && xs.active) out.push({ id: "mixer", name: label("mixer"), playing: !!xs.playing, title: xs.label || "",
+        toggle: function () { mx.toggle(); }, open: function () { openAppById("mixer"); } });
+    }
+    return out;
+  }
+
+  // Quick settings (qsettings.js, a shell component like osk.js): the
+  // GNOME-style status button and panel at the right of the bar. A
+  // single app has the bar too, so it gets one.
+  if (window.orosQS) {
+    window.orosQS.attach({
+      lang: function () { return state.lang; },
+      langNext: function () {
+        var c = langNext();
+        return { short: c.toUpperCase(), label: window.t("lang.tooltip") };
+      },
+      langToggle: function () { scToggleLang(); },
+      settings: function (section) {
+        if (section && window.orosSettings) window.orosSettings.open(section);
+        else openAppById("settings");
+      },
+      restart: function () { location.reload(); },
+      sync: {
+        state: function () {
+          var dot = document.getElementById("sync-dot");
+          return dot ? dot.getAttribute("data-state") || "off" : "off";
+        },
+        now: function () { syncNowFromDot(); }
+      },
+      theme: {
+        get: function () { return state.theme; },
+        set: function (v) { setThemeUser(v); }
+      },
+      a11y: { get: a11ySnapshot, set: a11ySetUser },
+      media: qsMedia
     });
   }
   loadApps();

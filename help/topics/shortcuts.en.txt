@@ -20,6 +20,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+K]]: `Command bar (also Ctrl+K)`
 - [[Ctrl+Alt+Shift+W]]: `Switch between open apps (multitasking)`
 - [[Ctrl+Alt+Shift+Q]]: `Ask the Assistant in a small window`
+- [[Ctrl+Alt+Shift+M]]: `Quick settings`
 
 ## What each one does
 ### Sync and backup

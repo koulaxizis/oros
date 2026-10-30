@@ -1,6 +1,18 @@
 # Darstellung
 Gestalte orOS so, wie es dir gefällt: Sprache, helles oder dunkles Design, Farbskin, Hintergrundbild, saisonale Deko, ein Bildschirm-Haustier und das Wetter in der oberen Leiste. Das meiste davon findest du in der App [Einstellungen](app:settings) unter `Darstellung`: Öffne das Menü und wähle `Einstellungen`. Das Wetter in der oberen Leiste stellst du in der Wetter-App ein.
 
+## Schnelleinstellungen
+Die Schaltfläche am rechten Ende der oberen Leiste (die Symbole für Netzwerk und Ein/Aus) öffnet die Schnelleinstellungen, wie auf einem Linux-Desktop. [[Ctrl+Alt+Shift+M]] öffnet sie ebenfalls.
+
+- Die runden Schaltflächen oben: der Akku (auf einem Laptop oder Handy im Akkubetrieb), die Sprache, `Einstellungen`, `orOS sperren` (wenn die Bildschirmsperre an ist) und die Ein/Aus-Schaltfläche mit `orOS neu starten`. Auf orOS USB startet sie auch den Computer neu oder schaltet ihn aus.
+- `Netzwerk` zeigt, ob du online bist. `Synchronisierung` zeigt ihren Zustand; tippe darauf, um jetzt zu synchronisieren, oder auf den Pfeil für die Synchronisierungseinstellungen.
+- `Dunkler Stil`, `Große Schrift`, `Hoher Kontrast` und `Bildschirmtastatur` schalten sich mit einem Tippen ein und aus. Alle Möglichkeiten dazu stehen in den Einstellungen.
+- `Nicht stören` hält Benachrichtigungen still: Sie kommen weiter in die Liste der Glocke, ohne Einblendung und ohne Ton. Der Pfeil stellt es `Für eine Stunde`, `Bis 8 Uhr morgens` oder `Bis du es ausschaltest` ein. Es gilt nur auf diesem Gerät, und die Schaltfläche in der Leiste zeigt dann eine durchgestrichene Glocke.
+- `Wird abgespielt` zeigt Musik, Podcast, Radiosender oder Mix des Sound Mixers, die gerade laufen, mit Wiedergabe / Pause; tippe auf den Namen, um die App zu öffnen.
+- Auf orOS USB hat das Feld außerdem Lautstärke und Helligkeit, WLAN und Bluetooth.
+
+Auf einem schmalen Bildschirm, wenn die obere Leiste voll ist, wandert die Sprachschaltfläche in die Schnelleinstellungen.
+
 ## Sprache
 orOS spricht Englisch und Griechisch. Der Knopf `EL` / `EN` in der oberen Leiste wechselt zur anderen Sprache, ebenso [[Ctrl+Alt+Shift+L]].
 
