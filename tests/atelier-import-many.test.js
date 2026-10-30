@@ -50,3 +50,15 @@ test("strings EN/EL/DE", () => {
     assert.ok(de.includes('"' + k + '"'), "DE " + k);
   });
 });
+
+test("files picked through the shell's dialog (another window's File) are files, not disk entries", () => {
+  // dialogs.js runs in the shell window: its File objects fail this
+  // frame's "instanceof Blob", which once sent every picked file to
+  // f.get() and ended the batch with "can't be opened" (4.55.00 fix)
+  const many = io.slice(io.indexOf("// ---------- Many files at once"), io.indexOf("// Home › Import › From a folder in Files"));
+  assert.doesNotMatch(many, /instanceof (Blob|File)/);
+  assert.match(many, /function isFile\(f\) \{ return !!f && typeof f\.arrayBuffer === "function" && typeof f\.slice === "function"; \}/);
+  assert.match(many, /files\.length === 1 && isFile\(files\[0\]\)/);
+  // a sync throw from get() stays inside the per-file catch
+  assert.match(many, /return Promise\.resolve\(\)\.then\(function \(\) \{ return isFile\(f\) \? f : f\.get\(\); \}\)/);
+});
