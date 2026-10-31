@@ -115,6 +115,7 @@ On the orOS USB stick, and on a computer where orOS is installed from it, `This 
 - When you plug in a USB stick, a notification says so; `Open` shows it here. Nothing opens by itself.
 - The bin button at the top is the Trash of this computer, separate from the orOS Trash. `Put back` returns an item to its folder; `Delete for good` and `Empty the Trash` free the space.
 - To bring files into orOS, choose `Copy to the orOS disk…`. To take files out, select them on the orOS disk and choose `Send to This computer…` (right-click menu or the selection bar). Names that are taken get " (2)"; nothing is overwritten.
+- Every orOS app opens and saves straight on this computer: `Open…` and `Save…` show this computer's folders and disks (Windows disks only for opening). Saving a file you opened from here replaces it in place; if it changed on the computer since you opened it, orOS offers to save your version as a copy and never overwrites the other one. Replacing any other file asks first.
 > Files on this computer are never synced. Only what you copy to the orOS disk joins orOS sync. On a stick without a persistence partition the home folder is emptied when the computer shuts down.
 
 ## Sync and backup

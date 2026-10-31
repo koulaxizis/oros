@@ -215,6 +215,7 @@ var PRECACHE_URLS = [
   "./sync.js",
   "./fs.js",
   "./dialogs.js",
+  "./pcdialog.js",
   "./notifications.js",
   "./pet.css",
   "./pet.js",
