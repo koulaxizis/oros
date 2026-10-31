@@ -99,6 +99,10 @@
       "nav.mute":            "Mute voice",
       "nav.muted":           "Voice muted",
       "nav.unmute":          "Unmute voice",
+      "nav.headup.go":       "Turn the map with me",
+      "nav.northup.go":      "North up",
+      "nav.headup.on":       "The map turns with your direction",
+      "nav.northup.on":      "North is up",
       "nav.rerouting":      "Recalculating route…",
       "nav.arrived":         "You have arrived",
       "nav.gpslost":         "Waiting for GPS signal…",
@@ -195,6 +199,8 @@
       "share.track":        "Save to My tracks",
       "share.track.ok":     "Saved to My tracks",
       "share.track.no":     "Could not save the track",
+      "share.gpx":          "Download GPX",
+      "share.gpx.no":       "Could not save the GPX file",
       "share.close":        "Close"
     },
     el: {
@@ -260,6 +266,10 @@
       "nav.mute":            "Σίγαση φωνής",
       "nav.muted":           "Η φωνή σιώπασε",
       "nav.unmute":          "Ενεργοποίηση φωνής",
+      "nav.headup.go":       "Ο χάρτης να γυρίζει μαζί μου",
+      "nav.northup.go":      "Βορράς πάνω",
+      "nav.headup.on":       "Ο χάρτης γυρίζει με την κατεύθυνσή σου",
+      "nav.northup.on":      "Ο βορράς είναι πάνω",
       "nav.rerouting":       "Επανυπολογισμός διαδρομής…",
       "nav.arrived":         "Έφτασες στον προορισμό",
       "nav.gpslost":         "Αναμονή σήματος GPS…",
@@ -355,6 +365,8 @@
       "share.track":        "Αποθήκευση στις διαδρομές μου",
       "share.track.ok":     "Αποθηκεύτηκε στις διαδρομές μου",
       "share.track.no":     "Η αποθήκευση της διαδρομής απέτυχε",
+      "share.gpx":          "Λήψη GPX",
+      "share.gpx.no":       "Η αποθήκευση του αρχείου GPX απέτυχε",
       "share.close":        "Κλείσιμο"
     }
   };
@@ -1164,7 +1176,7 @@
   };
   var RC = window.OrosMapsRoute;     // route-core.js (wave 6)
   var TC = window.OrosMapsTools;     // tools-core.js (wave 10A)
-  var ROUTE_PREFS_KEY = "oros-maps-route-prefs";   // device-local { avoid }
+  var ROUTE_PREFS_KEY = "oros-maps-route-prefs";   // device-local { avoid, headUp }
   var routeAlts = [];           // OSRM routes of the last request (alternatives)
   var routeAltIdx = 0;          // the one in use
   var altLines = [];            // grey lines of the others (tap = switch)
@@ -1396,16 +1408,26 @@
 
   // The "avoid" choice is the device's own (never synced): what one
   // phone avoids says nothing about another trip.
-  function readAvoid() {
+  // Heading-up (headUp) is the device's own too: a phone on the
+  // dashboard and a desktop planning a trip want different maps.
+  function readRoutePrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(ROUTE_PREFS_KEY) || "{}");
-      return p && RC.AVOID.indexOf(p.avoid) >= 0 ? p.avoid : "";
-    } catch (e) { return ""; }
+      return p && typeof p === "object" ? p : {};
+    } catch (e) { return {}; }
   }
-  function writeAvoid(v) {
-    try { localStorage.setItem(ROUTE_PREFS_KEY, JSON.stringify({ avoid: RC.AVOID.indexOf(v) >= 0 ? v : "" })); }
+  function writeRoutePrefs(patch) {
+    var p = readRoutePrefs();
+    var out = { avoid: RC.AVOID.indexOf(p.avoid) >= 0 ? p.avoid : "", headUp: p.headUp === true };
+    Object.keys(patch).forEach(function (k) { out[k] = patch[k]; });
+    try { localStorage.setItem(ROUTE_PREFS_KEY, JSON.stringify(out)); }
     catch (e) { /* full storage: a preference, not data */ }
   }
+  function readAvoid() {
+    var p = readRoutePrefs();
+    return RC.AVOID.indexOf(p.avoid) >= 0 ? p.avoid : "";
+  }
+  function writeAvoid(v) { writeRoutePrefs({ avoid: RC.AVOID.indexOf(v) >= 0 ? v : "" }); }
 
   //   plain = true → no "avoid" (the server refused it once)
   function fetchRoute(my, silent, done, plain) {
@@ -2057,8 +2079,27 @@
       link: RC.orosRouteLink(mapsBase(), pts, routeProfile, toName),
       geo: RC.geoUri(routeTo.lat, routeTo.lon, toName),
       osm: RC.osmDirUrl(pts[0], pts[pts.length - 1], routeProfile),
-      track: function () { saveRouteAsTrack(title, pts); }
+      track: function () { saveRouteAsTrack(title, pts); },
+      gpx: function () { downloadRouteGpx(title, pts); }
     });
+  }
+
+  // "Download GPX": the same track as "Save to My tracks", written as
+  // a .gpx file through the shell's save dialog (for a GPS device,
+  // OsmAnd, or a friend), without storing anything in orOS.
+  function dialogHost() {
+    try { return window.orosDialog || (window.parent && window.parent.orosDialog) || null; }
+    catch (e) { return window.orosDialog || null; }
+  }
+  function downloadRouteGpx(name, pts) {
+    var T = window.OrosMapsTracks, dlg = dialogHost();
+    var tr = T && RC.routeTrack(routeCoords, name, pts);
+    if (!tr || !dlg || typeof dlg.saveFile !== "function") { showToast(t("share.gpx.no")); return; }
+    var file = (tr.name.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80) || "route") + ".gpx";
+    var blob = new Blob([T.writeGpx(tr)], { type: "application/gpx+xml" });
+    Promise.resolve(dlg.saveFile({ blob: blob, filename: file, mime: "application/gpx+xml",
+      types: [{ description: "GPX", accept: { "application/gpx+xml": [".gpx"] } }] }))
+      .catch(function () { showToast(t("share.gpx.no")); });
   }
 
   // "Save to My tracks": the route goes through the tracks module's
@@ -2139,6 +2180,7 @@
     if (o.geo) link("share-geo", t("share.geo"), o.geo, "_top");
     if (o.osm) link("share-osm", t("share.osm"), o.osm, "_blank");
     if (o.track) btn("share-track", t("share.track"), function () { d.close(); o.track(); });
+    if (o.gpx) btn("share-gpx", t("share.gpx"), function () { d.close(); o.gpx(); });
     d.appendChild(list);
 
     var close = document.createElement("button");
@@ -2742,6 +2784,7 @@
   function setNavFollow(on) {
     navFollow = on;
     $("nav-recenter").hidden = on || !navActive;
+    applyMapTurn();
   }
   function navRecenter() {
     setNavFollow(true);
@@ -2778,6 +2821,124 @@
     if (!a) return;
     a.classList.toggle("nohead", navHeading === null);
     if (navHeading !== null) a.style.transform = "rotate(" + Math.round(navHeading) + "deg)";
+    turnMapTo(navHeading);
+  }
+
+  // Heading-up (2026-10-31): while navigating and following, the map
+  // can turn so the direction of travel points up. Leaflet does not
+  // rotate, so the #map element itself is turned with CSS: it becomes
+  // a square as wide as the screen's diagonal (it covers the screen at
+  // any angle), centred, and rotated by -heading. The arrow inside it
+  // keeps rotate(heading), so on screen it points up, and pins turn
+  // back around their tip (--unturn) to stay upright. Taps are mapped
+  // back through the rotation (mouseEventToContainerPoint), the
+  // Leaflet controls (zoom, attribution) move to an unturned layer
+  // above the map, and any pan, pinch or zoom by the person stops
+  // following, which turns the map back to north. Off by default, a
+  // device-local choice (route prefs headUp).
+  var navHeadUp = readRoutePrefs().headUp === true;
+  var mapTurned = false, mapTurnDeg = 0, mapTurnSide = 0, mapCtlHost = null;
+  var HEADUP_STEP = 4;          // degrees of heading change worth a turn
+  function headUpLive() { return navActive && navFollow && navHeadUp; }
+  function mapEl() { return map.getContainer(); }
+  function placeTurnedMap() {
+    var b = RC.turnBox(document.body.clientWidth, document.body.clientHeight);
+    var el = mapEl();
+    mapTurnSide = b.side;
+    el.style.width = b.side + "px";
+    el.style.height = b.side + "px";
+    el.style.left = b.left + "px";
+    el.style.top = b.top + "px";
+  }
+  function moveMapControls(out) {
+    var el = mapEl();
+    if (out) {
+      if (!mapCtlHost) {
+        mapCtlHost = document.createElement("div");
+        mapCtlHost.id = "map-ctl-host";
+        mapCtlHost.className = "leaflet-container";
+        mapCtlHost.addEventListener("click", function (e) {
+          if (navActive && navFollow && e.target.closest && e.target.closest(".leaflet-control-zoom")) setNavFollow(false);
+        });
+      }
+      el.parentNode.insertBefore(mapCtlHost, el.nextSibling);
+      var cc = el.querySelector(":scope > .leaflet-control-container");
+      if (cc) mapCtlHost.appendChild(cc);
+    } else if (mapCtlHost) {
+      var c2 = mapCtlHost.querySelector(".leaflet-control-container");
+      if (c2) el.appendChild(c2);
+      if (mapCtlHost.parentNode) mapCtlHost.parentNode.removeChild(mapCtlHost);
+    }
+  }
+  function applyMapTurn() {
+    if (!map) return;
+    var el = mapEl();
+    if (headUpLive() && !mapTurned) {
+      mapTurned = true;
+      el.classList.add("turned");
+      placeTurnedMap();
+      moveMapControls(true);
+      map.invalidateSize({ animate: false });
+      mapTurnDeg = RC.mapTurn(0, navHeading, 0);
+      el.style.transform = "rotate(" + mapTurnDeg + "deg)";
+      el.style.setProperty("--unturn", (-mapTurnDeg) + "deg");
+    } else if (!headUpLive() && mapTurned) {
+      mapTurned = false;
+      mapTurnDeg = 0;
+      el.classList.remove("turned");
+      el.style.width = el.style.height = el.style.left = el.style.top = "";
+      el.style.transform = "";
+      el.style.removeProperty("--unturn");
+      moveMapControls(false);
+      map.invalidateSize({ animate: false });
+    }
+    paintHeadUpBtn();
+  }
+  function turnMapTo(heading) {
+    if (!mapTurned) return;
+    var next = RC.mapTurn(mapTurnDeg, heading, HEADUP_STEP);
+    if (next === mapTurnDeg) return;
+    mapTurnDeg = next;
+    mapEl().style.transform = "rotate(" + mapTurnDeg + "deg)";
+    mapEl().style.setProperty("--unturn", (-mapTurnDeg) + "deg");
+    paintHeadUpBtn();
+  }
+  function paintHeadUpBtn() {
+    var b = $("nav-north");
+    if (!b) return;
+    b.classList.toggle("on", navHeadUp);
+    b.setAttribute("aria-pressed", navHeadUp ? "true" : "false");
+    var tip = t(navHeadUp ? "nav.northup.go" : "nav.headup.go");
+    b.setAttribute("title", tip);
+    b.setAttribute("aria-label", tip);
+    // The needle shows where north is on screen.
+    var n = b.querySelector("svg");
+    if (n) n.style.transform = mapTurned ? "rotate(" + mapTurnDeg + "deg)" : "";
+  }
+  function toggleHeadUp() {
+    navHeadUp = !navHeadUp;
+    writeRoutePrefs({ headUp: navHeadUp });
+    showToast(t(navHeadUp ? "nav.headup.on" : "nav.northup.on"));
+    if (navHeadUp && !navFollow) navRecenter();
+    else applyMapTurn();
+  }
+  // Taps, long-presses and pinches on a turned map: the point under
+  // the finger, turned back into the map's own (unturned) frame.
+  function hookTurnedPointer() {
+    var plain = map.mouseEventToContainerPoint;
+    map.mouseEventToContainerPoint = function (e) {
+      if (!mapTurned) return plain.call(map, e);
+      var r = mapEl().getBoundingClientRect();
+      var x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+      var a = -mapTurnDeg * Math.PI / 180;
+      return L.point(x * Math.cos(a) - y * Math.sin(a) + mapTurnSide / 2,
+                     x * Math.sin(a) + y * Math.cos(a) + mapTurnSide / 2);
+    };
+    window.addEventListener("resize", function () {
+      if (!mapTurned) return;
+      placeTurnedMap();
+      map.invalidateSize({ animate: false });
+    });
   }
 
   // Screen Wake Lock: without it the phone dims and locks mid-route,
@@ -2866,6 +3027,7 @@
 
   function stopNavigation() {
     navActive = false;
+    applyMapTurn();
     paintAltLines();
     document.body.classList.remove("nav");
     $("nav-hud").hidden = true;
@@ -3716,6 +3878,9 @@
     });
     map.on("dblclick", function () { if (navActive && navFollow) setNavFollow(false); });
     $("nav-recenter").addEventListener("click", navRecenter);
+    $("nav-north").addEventListener("click", toggleHeadUp);
+    hookTurnedPointer();
+    paintHeadUpBtn();
 
     // Route profiles + clear
     $("rp-car").addEventListener("click", function () { setRouteProfile("car"); });

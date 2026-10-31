@@ -70,7 +70,7 @@ test("lookups keep the 2-D shape of ranges", () => {
   assert.equal(f('=XLOOKUP("apricot",A2:A6,C2:C6)'), 3);
   assert.equal(f('=XLOOKUP("kiwi",A2:A6,C2:C6,"none")'), "none");
   assert.equal(f('=XLOOKUP("pear",A2:A6,B2:B6,,0,-1)'), 1);   // search from the end
-  assert.equal(f('=VLOOKUP(6,{1},1)'), "#ERROR!");             // array constants: not supported
+  assert.equal(f('=VLOOKUP(6,{1},1)'), 1);                    // array constants (wave 4, 2026-10-31)
   // approximate match in sorted data
   Object.keys(cells).forEach((k) => delete cells[k]);
   [[0, "F"], [50, "D"], [70, "B"], [90, "A"]].forEach((row, r) => { cells["s1|" + r + "|0"] = String(row[0]); cells["s1|" + r + "|1"] = row[1]; });

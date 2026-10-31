@@ -60,7 +60,10 @@ class BinDropbox {
         else if (mode && mode[".tag"] === "update") conflict = !cur || cur.rev !== mode.update;
         if (conflict) return response(409, { error_summary: "path/conflict/file/.." });
         const rev = "r" + (++this.rev);
-        this.files.set(arg.path, { data: await bodyBytes(opts.body), rev });
+        const data = await bodyBytes(opts.body);
+        // Like Dropbox: the same bytes again keep the stored time (VD-GC).
+        const at = cur && cur.data.equals(data) ? cur.at : Date.now();
+        this.files.set(arg.path, { data, rev, at });
         this.log.push({ device, op: "upload", path: arg.path });
         return response(200, { rev });
       }
@@ -72,7 +75,9 @@ class BinDropbox {
       }
       if (ep === "files/delete_v2") { this.files.delete(args.path); return response(200, {}); }
       if (ep === "files/list_folder") {
-        return response(200, { entries: [...this.files.keys()].map((p) => ({ path_lower: p.toLowerCase() })), has_more: false });
+        return response(200, { entries: [...this.files].map(([p, f]) => ({
+          ".tag": "file", path_lower: p.toLowerCase(), size: f.data.length, server_modified: new Date(f.at).toISOString()
+        })), has_more: false });
       }
       return response(409, { error_summary: "unhandled/" + ep });
     };
@@ -80,6 +85,11 @@ class BinDropbox {
   downloads(device, prefix) {
     return this.log.filter((e) => e.op === "download" && e.device === device && e.path.startsWith(prefix || "")).length;
   }
+  // VD-GC tests: every stored file becomes `ms` older; keys under the vault.
+  age(ms) { for (const f of this.files.values()) f.at -= ms; }
+  vaultKeys() { return [...this.files.keys()].filter((k) => k.startsWith("/vault/")).map((k) => k.slice(7)).sort(); }
+  putRaw(key, data, at) { this.files.set("/vault/" + key, { data: Buffer.from(data), rev: "r" + (++this.rev), at: at || Date.now() }); }
+  drop(key) { this.files.delete("/vault/" + key); }
 }
 
 // ---------- In-memory disk (the orosFS surface vault.js uses) ----------

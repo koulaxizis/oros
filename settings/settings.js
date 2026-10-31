@@ -1001,6 +1001,7 @@
       host.appendChild(c2);
 
       if (y.canRestore) host.appendChild(backupsCard(y));
+      if (y.canClean) host.appendChild(cleanCard(y));
 
       var c3 = card(null);
       c3.appendChild(actions(
@@ -1011,6 +1012,68 @@
         }, "danger")));
       host.appendChild(c3);
     }
+  }
+
+  // VD-GC: unused copies in the cloud. Check changes nothing; the
+  // clean-up runs only on a second tap, and only on what Check found.
+  function bytesLabel(n) {
+    n = +n || 0;
+    if (n < 1048576) return Math.max(n ? 1 : 0, Math.round(n / 1024)) + " KB";
+    if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+    return (n / 1073741824).toFixed(2) + " GB";
+  }
+  function cleanCard(y) {
+    var c = card(t("y.clean"));
+    var days = y.cleanDays || 30;
+    c.appendChild(el("p", "hint", t("y.clean.hint", { days: days })));
+    var k = y.clean || {}, u = k.usage, r = k.result;
+    if (r) {
+      var done = el("div", "msg msg-ok", t("y.clean.done", { n: r.removed, size: bytesLabel(r.bytes) }));
+      done.setAttribute("role", "status");
+      c.appendChild(done);
+      if (r.healed) c.appendChild(el("div", "hint", t("y.clean.healed", { n: r.healed })));
+      if (r.stopped) c.appendChild(el("div", "msg msg-dim", t("y.clean.stopped")));
+      if (r.lost && r.lost.length) {
+        c.appendChild(el("div", "msg msg-err", t("y.clean.lost", { list: r.lost.join(", ") })));
+      }
+    }
+    if (k.code) {
+      var code = k.code.replace(/^clean-/, "");
+      var key = code === "no-manifest" || code === "mismatch" ? "y.clean.hold." + code : "y.clean.err." + code;
+      c.appendChild(el("div", "msg msg-err", t(key)));
+    } else if (k.err) {
+      c.appendChild(el("div", "msg msg-err", k.err));
+    }
+    if (k.busy === "check") c.appendChild(el("div", "hint", t("y.clean.checking")));
+    if (u && k.busy !== "check") {
+      c.appendChild(el("div", "hint", t("y.clean.used", { n: u.files, size: bytesLabel(u.fileBytes) })));
+      c.appendChild(el("div", "hint", t("y.clean.unused", { n: u.unused, size: bytesLabel(u.unusedBytes) })));
+      if (u.missing) c.appendChild(el("div", "hint", t("y.clean.missing", { n: u.missing })));
+      if (u.hold) {
+        c.appendChild(el("div", "msg msg-err", t("y.clean.hold." + (u.hold === "no-manifest" ? "no-manifest" : "mismatch"))));
+      } else if (u.free > 0) {
+        c.appendChild(el("div", "hint", t("y.clean.free", { n: u.free, size: bytesLabel(u.freeBytes) })));
+        if (u.unused > u.free) c.appendChild(el("div", "hint", t("y.clean.young", { days: days })));
+      } else {
+        c.appendChild(el("div", "hint", t(u.unused ? "y.clean.young" : "y.clean.none", { days: days })));
+      }
+    }
+    var btns = [];
+    if (k.busy === "clean") {
+      var w = button(t("y.clean.running"), "y.clean.run", function () {});
+      w.disabled = true;
+      btns.push(w);
+    } else {
+      var chk = button(t("y.clean.check"), "y.clean.check", function () { act("sync.clean.check"); });
+      if (k.busy) chk.disabled = true;
+      btns.push(chk);
+      if (u && !u.hold && u.free > 0 && !k.busy) {
+        btns.push(confirmBtn(t("y.clean.run", { size: bytesLabel(u.freeBytes) }),
+          t("y.clean.run.confirm", { n: u.free }), "y.clean.run", function () { act("sync.clean.run"); }, "danger"));
+      }
+    }
+    c.appendChild(actions.apply(null, btns));
+    return c;
   }
 
   // A43: the cloud's daily backups, newest first, each with Restore
@@ -1264,12 +1327,22 @@
     }
 
     var c2 = card(null);
+    // BK-E: the switch only asks; the shell's passphrase dialog turns
+    // it on once the key is stored.
+    c2.appendChild(row(t("b.enc"), switchBtn(!!b.encrypt, "b.enc", function (v) { act("backup.encrypt", v); }, t("b.enc")),
+      { scope: "backupenc", hint: t("b.enc.hint") }));
+    if (b.encLost) {
+      c2.appendChild(el("div", "hint warn", t("b.enc.lost")));
+      c2.appendChild(actions(button(t("b.enc.set"), "b.enc.set", function () { act("backup.encryptPass"); }, "primary")));
+    } else if (b.encrypt) {
+      c2.appendChild(actions(button(t("b.enc.change"), "b.enc.change", function () { act("backup.encryptPass"); })));
+    }
     c2.appendChild(actions(
       button(t("b.export"), "b.export", function () { act("backup.export"); }, "primary"),
       button(t("b.import"), "b.import", function () { act("backup.import"); }),
       b.folderSupported && b.folder && b.autoexport !== "off"
         ? button(t("b.now"), "b.now", function () { act("backup.now"); }) : null));
-    c2.appendChild(el("p", "hint", t("b.hint")));
+    c2.appendChild(el("p", "hint", t(b.encrypt ? "b.hint.enc" : "b.hint")));
     host.appendChild(c2);
   }
 
@@ -1946,6 +2019,8 @@
       host.appendChild(pcc);
     }
 
+    host.appendChild(reportCard());
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));
@@ -1960,6 +2035,102 @@
     host.appendChild(c4);
   }
   var resetting = false;
+
+  // "Report a problem": settings/report.js builds one text file (no user
+  // data); the person reads it here before it is saved. Under the orOS
+  // launcher with the System extension (USB, Portable, desktop apps) the
+  // extension adds the computer's own logs and saves one file in
+  // Downloads (event "oros-report" → "oros-report-done", string details).
+  var rep = { busy: false, text: "", name: "", msg: null };
+  function sysReport() {
+    var p = parentWin();
+    try { return !!(p && p.document.documentElement.getAttribute("data-oros-report") === "1"); }
+    catch (e) { return false; }
+  }
+  function reportMake() {
+    var R = window.SettingsReport;
+    if (!R || rep.busy) return;
+    rep.busy = true; rep.msg = null; render();
+    R.gather(parentWin() || window, snap() || {}).then(function (ctx) {
+      rep.text = R.build(ctx);
+      rep.name = R.fileName(ctx.now);
+    }, function () {
+      rep.msg = { cls: "msg-err", text: t("x.report.fail") };
+    }).then(function () { rep.busy = false; render(); });
+  }
+  function reportSave() {
+    var p = parentWin(), D = null;
+    try { D = p && p.orosDialog; } catch (e) {}
+    var done = function (r) {
+      if (r && r.ok) rep.msg = { cls: "msg-ok", text: t("x.report.saved", { f: rep.name }) };
+      render();
+    };
+    if (D && typeof D.saveFile === "function") {
+      D.saveFile({ text: rep.text, filename: rep.name, mime: "text/plain" }).then(done, function () {
+        rep.msg = { cls: "msg-err", text: t("x.report.fail") }; render();
+      });
+      return;
+    }
+    // Standalone run (no shell): a plain download.
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([rep.text], { type: "text/plain" }));
+      a.download = rep.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      done({ ok: true });
+    } catch (e) { rep.msg = { cls: "msg-err", text: t("x.report.fail") }; render(); }
+  }
+  function reportSaveSys() {
+    var p = parentWin();
+    if (!p || rep.busy) return;
+    rep.busy = true; rep.msg = { cls: "msg-dim", text: t("x.report.sysWorking") }; render();
+    var doc = p.document, timer = 0;
+    function finish(r) {
+      doc.removeEventListener("oros-report-done", onDone);
+      clearTimeout(timer);
+      rep.busy = false;
+      rep.msg = r && r.ok
+        ? { cls: "msg-ok", text: t("x.report.sysSaved", { f: String(r.file || "") }) }
+        : { cls: "msg-err", text: t("x.report.sysFail", { e: String((r && r.error) || "timeout") }) };
+      render();
+    }
+    function onDone(ev) {
+      var r = null;
+      try { r = JSON.parse(String(ev.detail)); } catch (e) {}
+      finish(r);
+    }
+    doc.addEventListener("oros-report-done", onDone);
+    timer = setTimeout(function () { finish(null); }, 90000);
+    doc.dispatchEvent(new p.CustomEvent("oros-report", { detail: JSON.stringify({ text: rep.text }) }));
+  }
+  function reportCard() {
+    var c = card(t("x.report"));
+    c.appendChild(el("p", "hint", t("x.report.hint")));
+    if (!rep.text) {
+      c.appendChild(actions(button(rep.busy ? t("x.report.making") : t("x.report.make"), "x.report", reportMake, "primary")));
+    } else {
+      c.appendChild(el("p", "hint", t("x.report.check")));
+      var pre = el("pre", "report-text", rep.text);
+      pre.tabIndex = 0;
+      pre.setAttribute("aria-label", t("x.report"));
+      c.appendChild(pre);
+      var sys = sysReport();
+      c.appendChild(actions(
+        sys ? button(t("x.report.saveSys"), "x.report.sys", reportSaveSys, "primary") : null,
+        button(t("x.report.save"), "x.report.save", reportSave, sys ? "" : "primary"),
+        button(t("x.report.again"), "x.report.again", function () { rep.text = ""; rep.msg = null; reportMake(); }),
+        confirmBtn(t("x.report.clear"), t("x.report.clearConfirm"), "x.report.clear", function () {
+          var p = parentWin();
+          try { if (p && p.orosDiag) p.orosDiag.clear(); } catch (e) {}
+          rep.text = ""; rep.msg = { cls: "msg-dim", text: t("x.report.cleared") }; render();
+        })
+      ));
+      if (sys) c.appendChild(el("p", "hint", t("x.report.sysHint")));
+    }
+    if (rep.msg) c.appendChild(el("p", "msg " + rep.msg.cls, rep.msg.text));
+    return c;
+  }
 
   // ---------- 10. Navigation + render ----------
   var current = null;        // open section id, or null = the list (narrow)

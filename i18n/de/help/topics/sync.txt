@@ -87,5 +87,10 @@ In `Einstellungen` unter `Synchronisierung` holt `Aus der Cloud holen` die neues
 - [[Ctrl+Alt+Shift+P]] in die Cloud senden
 - [[Ctrl+Alt+Shift+R]] Dropbox verbinden oder neu verbinden
 
+## Unbenutzte Dateien in der Cloud
+Dateien, die du in [Dateien](app:files) löschst oder ersetzt, lassen ihre alten verschlüsselten Kopien in deiner Cloud zurück. Niemand kann sie lesen, aber sie belegen Platz. In `Einstellungen` unter `Synchronisierung` zeigt `Unbenutzte Dateien in der Cloud` › `Prüfen`, wie viele es sind und wie viel Platz sie belegen; dabei ändert sich nichts. `Aufräumen` (zweimal tippen) entfernt danach nur Kopien, die keine Datei mehr verwendet und die vor mindestens 30 Tagen gespeichert wurden. Auf deinen Geräten ändert sich nichts.
+
+Damit deine Dateien sicher bleiben, entfernt es nichts, wenn die Cloud keine Dateiliste hat, wenn Kopien deiner Dateien fehlen oder ohne deinen Vault-Schlüssel, und es hält an, wenn ein anderes Gerät inzwischen deine Dateien ändert (prüfe erneut, um fortzufahren). orOS räumt nie von selbst auf. Die App orOS Drive folgt denselben Regeln.
+
 ## Ein zweites Gerät hinzufügen
 Öffne orOS auf dem anderen Gerät, öffne `Einstellungen`, tippe auf `Mit Dropbox verbinden`, melde dich beim **selben** Dropbox-Konto an und tippe **dieselbe** Passphrase ein. Deine Daten kommen herunter und werden mit dem zusammengeführt, was schon da ist. Etwas hat nicht geklappt? Sieh unter [Fehlerbehebung](help:t/troubleshooting) nach.

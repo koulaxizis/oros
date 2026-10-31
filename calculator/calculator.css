@@ -93,6 +93,15 @@ html, body {
   cursor: pointer;
   transition: color .15s, border-color .15s, background .15s;
   user-select: none;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+/* A short label on phones: the long Greek one wrapped onto two lines
+   at 360px and squeezed the title (Greek 360px list, 2026-10-16). */
+#troll-toggle .troll-short { display: none; }
+@media (max-width: 420px) {
+  #troll-toggle .troll-long { display: none; }
+  #troll-toggle .troll-short { display: inline; }
 }
 #troll-toggle:hover { color: var(--text); }
 #troll-toggle .troll-label { font-weight: 600; }
