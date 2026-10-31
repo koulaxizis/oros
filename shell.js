@@ -8342,9 +8342,17 @@
       }
     } catch (e) { /* no audio — visual toast stands alone */ }
   }
-  // The voice of a kitchen timer's alarm; every other alarm beeps.
+  // The voice of a kitchen timer's alarm; every other alarm beeps,
+  // unless the Time app's "Sound" box is off ("" = silent: overlay
+  // only). Before 4.66.01 that box had no effect inside orOS.
   function alarmSoundOf(a) {
-    if (!a || !alarmIsTimer(a.id)) return "beep";
+    if (!a || !alarmIsTimer(a.id)) {
+      try {
+        var td = JSON.parse(localStorage.getItem("oros-time-data"));
+        if (td && td.sound === false) return "";
+      } catch (e) {}
+      return "beep";
+    }
     try {
       var list = JSON.parse(localStorage.getItem("oros-time-timers"));
       for (var i = 0; Array.isArray(list) && i < list.length; i++) {
@@ -8458,9 +8466,11 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmVoice(voice);
-    // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
-    alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
+    if (voice) {
+      alarmVoice(voice);
+      // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
+      alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
+    }
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
