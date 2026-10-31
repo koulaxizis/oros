@@ -1489,6 +1489,7 @@ var PRECACHE_URLS = [
   "vendor/pdf-lib/pdf-lib.min.js",
   "vendor/pdf-lib/fontkit.umd.min.js",
   "google-import.js",
+  "davkit.js",
   "enrich.js",
   "enrichui.js",
   "atelier/pptx.js",
