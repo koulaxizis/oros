@@ -49,6 +49,8 @@ orosPack("de", "bookmarks", {
  "ctx.delete": "Löschen",
  "ctx.edit": "Bearbeiten",
  "ctx.move": "Verschieben nach…",
+ "ctx.up": "Nach oben",
+ "ctx.down": "Nach unten",
  "ctx.open": "Öffnen",
  "ctx.open_maps": "In Karten öffnen",
  "ctx.sendApp": "An eine App senden…",

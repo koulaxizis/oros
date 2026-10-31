@@ -123,6 +123,7 @@ orosPack("de", "calculator", {
  "calc.send.title": "Ergebnis an eine andere App senden",
  "calc.title": "Rechner",
  "calc.troll": "Troll-Modus",
+ "calc.troll.s": "Troll",
  "calc.troll.off": "Aus",
  "calc.troll.on": "An",
  "calc.undo": "Rückgängig gemacht.",

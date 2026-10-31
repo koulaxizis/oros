@@ -15,7 +15,7 @@ Just start typing; everything saves by itself.
 - With the cursor in a table, a strip of table tools appears under the toolbar: `Row above`, `Row below`, `Column left`, `Column right`, `Delete row`, `Delete column`, `Header row` and `Delete table`.
 - Pasted images, such as screenshots, are shrunk to save space.
 - `Find and replace` (or [[Ctrl+F]]) has `Match case`, `Whole word`, a format filter (for example `Bold only`), `Replace` and `Replace all`. Undo takes a replacement back; right after `Replace all`, one Undo takes back all of it.
-- In `Settings`, `Smart typography` turns -- into a dash, ... into an ellipsis and straight quotes into curly ones. `Auto-correction rules` replaces text such as (c) with © when you press space. You can add your own rules.
+- In `Settings`, `Smart typography` turns -- into a dash, ... into an ellipsis and straight quotes into curly ones. `Auto-correction rules` replaces text such as (c) with © when you press space. You can add your own rules. `Typewriter sound while typing` (off at first) plays a soft key click as you type and a carriage return on Enter.
 
 ## Focus and statistics
 - `View` (the eye button) has `Focus mode`: the tabs and toolbars hide and all the text dims except the paragraph you are in, or the sentence with `Focus on the sentence`. Leave it with the round × button, [[Esc]] or [[Ctrl+Alt+F]].
