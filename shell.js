@@ -3379,6 +3379,8 @@
     get("roots").then(function (r) {
       if (!r || !r.home) return;
       document.documentElement.setAttribute("data-oros-computer-files", "1");
+      // Wave 4: open and save dialogs work in this computer's folders.
+      if (window.orosPcDialog) window.orosPcDialog.enable();
       poll();
     }, function () {});
   })();
