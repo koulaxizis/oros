@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.70.00
+- Writer: Word (.docx) export now keeps real numbered and bulleted lists (start numbers, a, i, α, nested), alignment and pictures at the size you see them, with captions, so the file opens in Word or LibreOffice looking the same and comes back into Writer the same. Word files with pictures now open with their pictures. PDF, RTF and text exports number lists the same way (3., c., iii., γ)).
+
 ## Version 4.69.00
 - Writer can sound like a typewriter: in Writer's `Settings`, turn on `Typewriter sound while typing` for a soft click on every key and a carriage return on Enter. It is off unless you turn it on.
 - Files can make and open ZIP archives in [This computer](help:a/files) too, on the orOS Portable and the Live USB: `Compress to ZIP` on a file or folder, `Extract here` on a .zip.
