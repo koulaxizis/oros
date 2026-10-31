@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.61.01
+- Atelier: a .zip of designs is now read one design at a time, the way Layout reads a .zip of books, so a large zip no longer has to fit in memory and the 1 GB limit is gone.
+
 ## Version 4.61.00
 - orOS USB: every app opens and saves straight on this computer. `Open…` and `Save…` show the computer's folders and disks; a file you opened is saved back in place, and if it changed on the computer meanwhile, your version is kept as a copy instead of overwriting it.
 
