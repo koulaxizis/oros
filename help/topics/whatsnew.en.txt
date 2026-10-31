@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.71.00
+- Free up cloud space: in [Settings](help:a/settings) › Sync, `Unused files in the cloud` › `Check` shows how much room old encrypted copies of deleted or replaced files take, and `Clean up` removes the ones no file uses that are at least 30 days old. It runs only when you ask, never by itself, and stops at anything unexpected. See [Sync across devices](help:t/sync).
+
 ## Version 4.70.00
 - Writer: Word (.docx) export now keeps real numbered and bulleted lists (start numbers, a, i, α, nested), alignment and pictures at the size you see them, with captions, so the file opens in Word or LibreOffice looking the same and comes back into Writer the same. Word files with pictures now open with their pictures. PDF, RTF and text exports number lists the same way (3., c., iii., γ)).
 
