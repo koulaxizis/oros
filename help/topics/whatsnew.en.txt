@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.73.00
+- Spreadsheet knows over 200 functions: new lookups (XMATCH, OFFSET, INDIRECT), loan and investment functions (IPMT, PPMT, RATE, IRR, XIRR), TEXTBEFORE and TEXTAFTER, week numbers, your own weekend for working days, and lists in braces such as {1,2,3}. See [Spreadsheet](help:a/spreadsheet).
+
 ## Version 4.72.00
 - Maps: during navigation the compass button turns the map with you, so the road ahead is always up; tap it again for north up. A route's `Share` now also offers `Download GPX`. See [Maps](help:a/maps).
 
