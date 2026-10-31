@@ -5719,15 +5719,41 @@ function ioNormalizeBlocks(container) { return WriterIO.normalizeBlocks(containe
 
 /* Shared list flattener for every exporter: [{depth, ordered, marker,
    body}] — body = the <li> WITHOUT its nested lists (no duplication). */
+// An item's number as the list shows it (start and list-style-type,
+// WR-FMT): 3, c, iii, γ … ; n = the plain number (Markdown keeps that).
+function ioListLabel(listEl, n) {
+  const st = String((listEl.style && listEl.style.listStyleType) || '').toLowerCase();
+  const ty = listEl.getAttribute('type') || '';
+  const kind = st || { a: 'lower-alpha', A: 'upper-alpha', i: 'lower-roman', I: 'upper-roman' }[ty] || 'decimal';
+  const alpha = (k, abc) => { let s = ''; for (; k > 0; k = Math.floor((k - 1) / abc.length)) s = abc[(k - 1) % abc.length] + s; return s; };
+  const roman = k => {
+    if (k <= 0 || k >= 4000) return String(k);
+    let s = '';
+    [[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']]
+      .forEach(([v, r]) => { while (k >= v) { s += r; k -= v; } });
+    return s;
+  };
+  switch (kind) {
+    case 'lower-alpha': case 'lower-latin': return alpha(n, 'abcdefghijklmnopqrstuvwxyz') + '.';
+    case 'upper-alpha': case 'upper-latin': return alpha(n, 'abcdefghijklmnopqrstuvwxyz').toUpperCase() + '.';
+    case 'lower-roman': return roman(n) + '.';
+    case 'upper-roman': return roman(n).toUpperCase() + '.';
+    case 'lower-greek': return alpha(n, '\u03b1\u03b2\u03b3\u03b4\u03b5\u03b6\u03b7\u03b8\u03b9\u03ba\u03bb\u03bc\u03bd\u03be\u03bf\u03c0\u03c1\u03c3\u03c4\u03c5\u03c6\u03c7\u03c8\u03c9') + ')';
+    default: return n + '.';
+  }
+}
+
 function ioListItems(listEl, depth, out) {
   out = out || [];
-  let n = 1;
+  const s0 = parseInt(listEl.getAttribute('start'), 10);
+  let n = isFinite(s0) && s0 >= 0 ? s0 : 1;
   Array.from(listEl.children).forEach(li => {
     if (li.nodeName !== 'LI') return;
     const ordered = listEl.nodeName === 'OL';
     const body = li.cloneNode(true);
     Array.from(body.children).forEach(c => { if (/^(UL|OL)$/.test(c.nodeName)) c.remove(); });
-    out.push({ depth: depth, ordered: ordered, marker: ordered ? (n++) + '.' : '\u2022', body: body });
+    out.push({ depth: depth, ordered: ordered, n: ordered ? n : 0,
+               marker: ordered ? ioListLabel(listEl, n++) : '\u2022', body: body });
     Array.from(li.children).forEach(c => {
       if (/^(UL|OL)$/.test(c.nodeName)) ioListItems(c, depth + 1, out);
     });
@@ -5770,9 +5796,12 @@ function ioWalkText(n) {
         let depth = 0, p = ch.parentElement;
         while (p && p !== n) { if (/^(UL|OL)$/.test(p.nodeName)) depth++; p = p.parentElement; }
         const par = ch.parentElement;
-        const marker = (par && par.nodeName === 'OL')
-          ? (Array.from(par.children).filter(x => x.nodeName === 'LI').indexOf(ch) + 1) + '. '
-          : '- ';
+        let marker = '- ';
+        if (par && par.nodeName === 'OL') {
+          const s0 = parseInt(par.getAttribute('start'), 10);
+          marker = ioListLabel(par, (isFinite(s0) && s0 >= 0 ? s0 : 1) +
+            Array.from(par.children).filter(x => x.nodeName === 'LI').indexOf(ch)) + ' ';
+        }
         nl();
         out += '  '.repeat(Math.max(0, depth - 1)) + marker;
         walk(ch);
@@ -5850,7 +5879,7 @@ function ioInlineMd(node) {
 function ioListMd(listEl, ordered, depth) {
   // 3-space indent per level: valid under both "- " and "1. " parents
   return ioListItems(listEl, depth).map(it =>
-    '   '.repeat(it.depth) + (it.ordered ? it.marker + ' ' : '- ') +
+    '   '.repeat(it.depth) + (it.ordered ? it.n + '. ' : '- ') +
     ioInlineMd(it.body).replace(/\s*\n\s*/g, ' ').trim()
   ).join('\n') + '\n';
 }
@@ -6361,241 +6390,48 @@ function ioZipStore(files) {   // files: [{name, data:Uint8Array}]
 
 function ioEncStr(s) { return new TextEncoder().encode(s); }
 
-/* ----- OOXML: runs (inline formatting) ----- */
-function dxRun(text, pr) {
-  let rPr = '';
-  if (pr.b)      rPr += '<w:b/>';
-  if (pr.i)      rPr += '<w:i/>';
-  if (pr.u)      rPr += '<w:u w:val="single"/>';
-  if (pr.strike) rPr += '<w:strike/>';
-  if (pr.sup)    rPr += '<w:vertAlign w:val="superscript"/>';
-  const tag = pr.del ? 'w:delText' : 'w:t';     // text of a tracked deletion
-  return '<w:r>' + (rPr ? '<w:rPr>' + rPr + '</w:rPr>' : '') +
-         '<' + tag + ' xml:space="preserve">' +
-         esc(String(text).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')) +
-         '</' + tag + '></w:r>';
-}
-
-let dxTcN = 0;   // w:id of tracked changes, unique per file
-function dxRuns(node, pr) {
-  let out = '';
-  Array.from(node.childNodes).forEach(ch => {
-    if (ch.nodeType === 3) {
-      out += dxRun(ch.nodeValue.replace(/[\r\n\t]+/g, ' '), pr);
-      return;
-    }
-    // tracked change (wave 22) → <w:ins> / <w:del> around its runs
-    if ((ch.nodeName === 'INS' || ch.nodeName === 'DEL') && ch.classList.contains('tc') &&
-        window.WriterTrack && !pr.tc) {
-      const kind = ch.nodeName === 'DEL' ? 'del' : 'ins';
-      out += WriterTrack.docxOpen(kind, ++dxTcN, ch.getAttribute('data-au'), ch.getAttribute('data-ts')) +
-             dxRuns(ch, Object.assign({}, pr, { tc: true, del: kind === 'del' })) +
-             WriterTrack.docxClose(kind);
-      return;
-    }
-    if (ch.nodeName === 'BR') { out += '<w:r><w:br/></w:r>'; return; }
-    if (ch.nodeName === 'IMG') {
-      const alt = ch.getAttribute('alt') || '';
-      out += dxRun(alt ? '[image: ' + alt + ']' : '[image]', pr);
-      return;
-    }
-    const map = { STRONG: 'b', B: 'b', EM: 'i', I: 'i', U: 'u',
-                  DEL: 'strike', S: 'strike', STRIKE: 'strike', SUP: 'sup' };
-    if (map[ch.nodeName]) out += dxRuns(ch, Object.assign({}, pr, _obj(map[ch.nodeName])));
-    else out += dxRuns(ch, pr);
-  });
-  return out;
-}
-
-function dxPara(runsXml, opts) {
-  opts = opts || {};
-  let pPr = '';
-  if (opts.style) pPr += '<w:pStyle w:val="' + opts.style + '"/>';
-  if (opts.ind)   pPr += '<w:ind w:left="' + opts.ind + '" w:hanging="284"/>';
-  if (opts.jc)    pPr += '<w:jc w:val="' + opts.jc + '"/>';
-  if (opts.border) pPr += '<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="auto"/></w:pBdr>';
-  return runsXml || pPr
-    ? '<w:p>' + (pPr ? '<w:pPr>' + pPr + '</w:pPr>' : '') + (runsXml || '') + '</w:p>'
-    : '<w:p/>';
-}
-
-/* ----- OOXML: blocks ----- */
-function dxBlocks(node) {
-  let out = '';
-  Array.from(node.childNodes).forEach(ch => {
-    if (ch.nodeType === 3) {
-      const txt = ch.nodeValue.trim();
-      if (txt) out += dxPara(dxRun(txt, {}));
-      return;
-    }
-    if (ch.nodeType !== 1) return;
-    if (ch.classList && ch.classList.contains('page-break-marker')) {
-      out += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>'; return;
-    }
-    if (ch.classList && ch.classList.contains('toc-inline')) return;
-    switch (ch.nodeName) {
-      case 'H1': out += dxPara(dxRuns(ch, {}), { style: 'Heading1' }); break;
-      case 'H2': out += dxPara(dxRuns(ch, {}), { style: 'Heading2' }); break;
-      case 'H3': out += dxPara(dxRuns(ch, {}), { style: 'Heading3' }); break;
-      case 'H4': out += dxPara(dxRuns(ch, {}), { style: 'Heading4' }); break;
-      case 'P': out += dxPara(dxRuns(ch, {})); break;
-      case 'BLOCKQUOTE': out += dxPara(dxRuns(ch, {}), { style: 'Quote' }); break;
-      case 'PRE':
-        ch.textContent.split('\n').forEach(line =>
-          out += dxPara(dxRun(line, {}), { style: 'Code' }));
-        break;
-      case 'HR': out += dxPara('', { border: true }); break;
-      case 'UL': case 'OL': {
-        ioListItems(ch, 0).forEach(it => {
-          out += dxPara(dxRun(it.marker + ' ', {}) + dxRuns(it.body, {}),
-                        { ind: 567 * (it.depth + 1) });
-        });
-        break;
-      }
-      case 'TABLE': {
-        const rows = Array.from(ch.querySelectorAll('tr'));
-        if (!rows.length) break;
-        const cols = rows[0].children.length || 1;
-        out += '<w:tbl><w:tblPr><w:tblBorders>' +
-          '<w:top w:val="single" w:sz="4" w:color="auto"/>' +
-          '<w:left w:val="single" w:sz="4" w:color="auto"/>' +
-          '<w:bottom w:val="single" w:sz="4" w:color="auto"/>' +
-          '<w:right w:val="single" w:sz="4" w:color="auto"/>' +
-          '<w:insideH w:val="single" w:sz="4" w:color="auto"/>' +
-          '<w:insideV w:val="single" w:sz="4" w:color="auto"/>' +
-          '</w:tblBorders><w:tblW w:w="5000" w:type="pct"/></w:tblPr>' +
-          '<w:tblGrid>' + Array(cols).fill('<w:gridCol/>').join('') + '</w:tblGrid>';
-        rows.forEach(tr => {
-          out += '<w:tr>';
-          Array.from(tr.children).forEach(tc => {
-            out += '<w:tc><w:tcPr><w:tcW w:w="0" w:type="auto"/></w:tcPr>' +
-                   dxPara(dxRuns(tc, {})) + '</w:tc>';
-          });
-          out += '</w:tr>';
-        });
-        out += '</w:tbl>';
-        break;
-      }
-      case 'FIGURE': {
-        const cap = ch.querySelector('figcaption');
-        out += dxPara(dxRuns(ch.querySelector('img') || ch, {}), { jc: 'center' });
-        if (cap) out += dxPara(dxRuns(cap, {}), { jc: 'center' });
-        break;
-      }
-      default: out += dxBlocks(ch);
-    }
-  });
-  return out;
-}
-
-/* ----- Package assembly ----- */
+/* ----- Package assembly (OOXML: writer/docxout.js, DOCX v2) ----- */
 function ioExportDocx(doc) {
   flushSave();
   showToast(t('io.busy'));
+  const D = window.WriterDocxOut;
   setTimeout(() => {
     const c = ioExportClone({ keepTracked: true });   // tracked changes → w:ins / w:del
     c.querySelectorAll('mark.cmt-mark').forEach(ioUnwrap);
-    const pg = ioPageSizeMm(doc);
-
-    dxTcN = 0;
-    let body = dxBlocks(c);
 
     // Footnotes / comments appendix
     const app = [];
     if ((doc.footnotes || []).length) {
-      app.push(dxPara(dxRun(t('io.notes'), { b: true }), { style: 'Heading2' }));
+      app.push(D.para(D.run(t('io.notes'), { b: true }), { style: 'Heading2' }));
       const seen = new Set();
       c.querySelectorAll('sup.fn-ref').forEach(ref => {
         const id = ref.getAttribute('data-fn');
         if (!id || seen.has(id)) return;
         seen.add(id);
         const e = doc.footnotes.find(f => f.id === id);
-        if (e) app.push(dxPara(dxRun('[' + ref.textContent + '] ', { super: false }) +
-                               dxRun(e.text || '', {})));
+        if (e) app.push(D.para(D.run('[' + ref.textContent + '] ', {}) + D.run(e.text || '', {})));
       });
     }
     if ((doc.comments || []).length) {
-      app.push(dxPara(dxRun(t('io.comments'), { b: true }), { style: 'Heading2' }));
+      app.push(D.para(D.run(t('io.comments'), { b: true }), { style: 'Heading2' }));
       doc.comments.forEach(cm => {
-        app.push(dxPara(
-          dxRun('\u201C' + (cm.quote || '') + '\u201D', { i: true }) +
-          dxRun(' \u2014 ' + (cm.text || ''), {})));
+        app.push(D.para(
+          D.run('\u201C' + (cm.quote || '') + '\u201D', { i: true }) +
+          D.run(' \u2014 ' + (cm.text || ''), {})));
       });
     }
-    if (app.length) body += '<w:p><w:r><w:br w:type="page"/></w:r></w:p>' + app.join('');
 
-    const sectPr =
-      '<w:sectPr><w:pgSz w:w="' + ioMmToTwips(pg.w) + '" w:h="' + ioMmToTwips(pg.h) + '"/>' +
-      '<w:pgMar w:top="' + ioMmToTwips(doc.margins.top) +
-      '" w:right="' + ioMmToTwips(doc.margins.right) +
-      '" w:bottom="' + ioMmToTwips(doc.margins.bottom) +
-      '" w:left="' + ioMmToTwips(doc.margins.left) +
-      '" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr>';
-
-    const CT = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
-      '<Default Extension="xml" ContentType="application/xml"/>' +
-      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
-      '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
-      '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
-      '</Types>';
-
-    const RELS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
-      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
-      '</Relationships>';
-
-    const STYLE = function (id, name, sz, b) {
-      return '<w:style w:type="paragraph" w:styleId="' + id + '">' +
-        '<w:name w:val="' + name + '"/><w:basedOn w:val="Normal"/>' +
-        '<w:pPr><w:keepNext/><w:outlineLvl w:val="' +
-        (id === 'Heading1' ? 0 : id === 'Heading2' ? 1 : id === 'Heading3' ? 2 : 3) + '"/></w:pPr>' +
-        '<w:rPr>' + (b ? '<w:b/>' : '') + '<w:sz w:val="' + sz + '"/></w:rPr></w:style>';
-    };
-
-    const STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-      '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-      '<w:docDefaults><w:rPrDefault><w:rPr>' +
-      '<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/></w:rPr>' +
-      '</w:rPrDefault></w:docDefaults>' +
-      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>' +
-      STYLE('Heading1', 'heading 1', '40', true) +
-      STYLE('Heading2', 'heading 2', '32', true) +
-      STYLE('Heading3', 'heading 3', '27', true) +
-      STYLE('Heading4', 'heading 4', '24', true) +
-      '<w:style w:type="paragraph" w:styleId="Quote"><w:name w:val="quote"/>' +
-      '<w:pPr><w:ind w:left="567"/></w:pPr><w:rPr><w:i/></w:rPr></w:style>' +
-      '<w:style w:type="paragraph" w:styleId="Code"><w:name w:val="Code"/>' +
-      '<w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="20"/></w:rPr></w:style>' +
-      '</w:styles>';
-
-    const CORE = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-      '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"' +
-      ' xmlns:dc="http://purl.org/dc/elements/1.1/"' +
-      ' xmlns:dcterms="http://purl.org/dc/terms/"' +
-      ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
-      '<dc:title>' + esc(doc.title || t('tab.untitled')) + '</dc:title>' +
-      (doc.author ? '<dc:creator>' + esc(doc.author) + '</dc:creator>' : '') +
-      (doc.category ? '<dc:subject>' + esc(doc.category) + '</dc:subject>' : '') +
-      (doc.tags && doc.tags.length ? '<cp:keywords>' + esc(doc.tags.join(', ')) + '</cp:keywords>' : '') +
-      '</cp:coreProperties>';
-
-    const DOC = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-      '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-      '<w:body>' + body + sectPr + '</w:body></w:document>';
-
-    const zip = ioZipStore([
-      { name: '[Content_Types].xml', data: ioEncStr(CT) },
-      { name: '_rels/.rels',         data: ioEncStr(RELS) },
-      { name: 'docProps/core.xml',   data: ioEncStr(CORE) },
-      { name: 'word/styles.xml',      data: ioEncStr(STYLES) },
-      { name: 'word/document.xml',   data: ioEncStr(DOC) }
-    ]);
-
-    downloadBlob(zip, ioBaseName(doc) + '.docx',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    D.build(c, {
+      title: doc.title || t('tab.untitled'), author: doc.author, category: doc.category, tags: doc.tags,
+      page: ioPageSizeMm(doc), margins: doc.margins, appendix: app.join(''),
+      track: window.WriterTrack || null
+    })
+      .then(files => downloadBlob(ioZipStore(files), ioBaseName(doc) + '.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'))
+      .catch(err => {
+        console.error('[orOS] writer DOCX export failed:', err);
+        showToast(t('io.exportfailed'));
+      });
   }, 30);
 }
 
@@ -6922,7 +6758,10 @@ function ioBuildPdf(doc, html) {
           writeRuns([{ text: alt ? '[' + alt + ']' : '[▣]', i: true }], { x: x, w: maxW, fs: 9.5, color: '#777777', align: align, after: 0 });
           return;
         }
-        const box = WC.fitBox(d.w, d.h, maxW, BOTTOM - MT);
+        // the size it is shown at (style / attribute width in px), else natural
+        const pxOf = v => { const m = /^\s*([\d.]+)\s*(px)?\s*$/i.exec(String(v || '')); return m ? parseFloat(m[1]) : 0; };
+        const sw = pxOf(el.style && el.style.width) || pxOf(el.getAttribute('width'));
+        const box = sw ? WC.fitBox(sw, sw * d.h / d.w, maxW, BOTTOM - MT) : WC.fitBox(d.w, d.h, maxW, BOTTOM - MT);
         need(box.h);
         const ix = x + (align === 'center' ? (maxW - box.w) / 2 : align === 'right' ? maxW - box.w : 0);
         try { pdf.addImage(d.data, d.fmt, ix, y, box.w, box.h, undefined, 'FAST'); }

@@ -2203,6 +2203,15 @@ Chris 2026-10-27: "Πρέπει να μπορούν να εισαχθούν στ
 - **Markdown** (`io.js`): headings to h6, `***x***`, `_x_`, nested lists by indent with `start`, lazy continuation lines, and a trailing `{.center}` / `{.right}` / `{.justify}` / `{.left}` (also `{.centre}`) for alignment.
 - Writer's Open, drag and drop, the converter (`writer/convert.js`, `converter/registry.js` `from` + `.pdf`, warnings for PDF and RTF) and the Assistant (AS-OPENFILE) all use the same code. Tests `tests/writer-pdfin.test.js`, `tests/convert-writer.test.js` (real PDF.js in Chromium, LibreOffice-made fixtures).
 
+### Writer export with formatting (WR-DOCX2, 2026-10-31) [Writer]
+
+Improvement item 9 (Chris 2026-10-31 16:24 "Ναι"): DOCX v2, PDF v2, Word lists, round-trip tests. Closes the old backlog line "DOCX v2 / PDF v2 / numbering.xml".
+
+- **Word writer** `writer/docxout.js` (`WriterDocxOut`, loaded after io.js; writer.js keeps only the appendix and the ZIP): `build(root, o)` → Promise of the package parts. One `w:num` + `w:abstractNum` per top-level list (9 levels, each level's format and start from the first list met at that depth; `start` attribute → `w:start`; list-style-type / `type` → decimal, lowerLetter, upperLetter, lowerRoman, upperRoman, bullet; lower-greek → `w:numFmt custom "α, β, γ, ..."` inside `mc:AlternateContent` (Word 2010+), fallback lowerLetter); list paragraphs `ListParagraph` + `w:numPr`. Alignment → `w:jc` on headings, paragraphs, list items, quotes, cells. Pictures → `word/media/imageN.(png|jpg|gif)` (one part per distinct src), relationship in `word/_rels/document.xml.rels`, an inline `wp:inline` drawing at the shown size (style / attribute width in px, else natural ≤ 1600 px; 9525 EMU per px; never wider than the text column); PNG/JPEG/GIF data URLs as they are, anything else redrawn as PNG; a picture that can't be read stays "[image]". A figure → centred picture paragraph + `Caption` paragraph. Element order follows the OOXML schema (checked with the skills' `validate.py`: all validations pass). No external relationships.
+- **Word reader** (`io.js`): pictures from `word/_rels/document.xml.rels` (image relationships inside the package only; `TargetMode="External"` never followed; PNG/JPEG/GIF/WebP, ≤ 15 MB each, ≤ 60 MB in all) for `w:drawing`, `w:pict` and run-level `mc:AlternateContent` → `<img>` with the drawn width; a picture paragraph followed by a `Caption` paragraph → `<figure>` + `<figcaption>`; the caption's and headings' own style italic/bold not repeated; custom number format "α…" → lower-greek.
+- **Other exports**: `ioListLabel` (writer.js) numbers PDF, RTF and TXT lists with their start and type (3., c., iii., γ)); Markdown keeps plain numbers. PDF pictures take their shown width. PDF v2 itself (Noto Sans Bold / Italic / Bold Italic / Mono, pictures, links) was already in #609; this closes its backlog line.
+- **Round trip**: `tests/writer-docxout.test.js` (Chromium): headings, alignment, bold/italic/underline/strike, lists (start, letters, Roman, Greek, nesting), pictures, a figure with caption, a quote and a table go out and come back the same, and a second round changes nothing. Checked by hand: LibreOffice 24.2 opens the file as written and its own re-save imports back the same except α lists (LibreOffice turns them into 1, 2).
+
 ### Dismissable menus (per-instance listeners)
 
 - Never leave `{once:true}` document listeners behind for a reusable menu: a stale one closes the NEXT menu instantly ("works every other time").
@@ -2834,6 +2843,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-10-31 · Writer export with formatting (WR-DOCX2):** see WR-DOCX2 (Part VI). Chris approved improvement item 9 (2026-10-31 16:24). Decided: (1) the Word writer moves to its own file `writer/docxout.js` so the round trip runs in tests; (2) α lists go out as Word's custom format with a lowerLetter fallback (Word shows α, LibreOffice 1, 2); (3) footnotes and comments stay an appendix in .docx (real Word notes not in this item).
 - **2026-10-31 · 4.61.00 Open and save on This computer (PC-DIALOG, wave 4 of 4):** Chris's continuous-flow approval (06:59, "Ναι σε όλα") covers wave 4. Decided: on orOS USB the apps' open and save dialogs are orOS windows over the computer's folders, not the browser's picker, so orOS reads like a full OS; apps change nothing (they already call `parent.orosDialog`). Safety: a file is replaced in place only when it was opened from that path and the computer still has the same version (`ifmtime`); otherwise orOS asks or saves a copy, never overwrites silently. Windows disks stay read-only (wave 2). Next: a separate proposal for Portable on Windows/Linux.
 - **2026-10-31 · 4.64.00 orOS Portable as a standalone orOS (wave 6 of 7, orOS side):** Chris (10:07) wanted Portable to stand as its own OS inside Windows/Linux "as if booted"; proposal https://claude.ai/artifact/7urKiGFfBXqMRZoLqxAbsn approved whole (10:29, "Ναι σε όλα", plus: a window on request, not only full screen). Decided: (1) the System extension of oros-usb runs in Portable's bundled browser and the launcher is its native host (sound, screen, power with confirmation, Exit orOS, full screen or window, Internet window, Wi-Fi in orOS, Bluetooth opens the host's settings); (2) This computer: Portable asks once per computer, the desktop apps are on by default, both have a switch; (3) Windows C: whole and writable, its own folders and hidden/system files hidden; delete = Windows Recycle Bin plus a button that opens it; (4) open/save through pcdialog as on USB; (5) lite edition gets only This computer; macOS out of scope. Wave 7: Chris publishes the launcher release (0.4.0).
 - **2026-10-31 · 4.60.00 This computer in Files (PC-FILES, wave 3 of 4):** Chris (06:28) wanted orOS installed on a disk to work as a full OS and to read and write everything "naturally"; he rejected Thunar and approved the Files plan (decision card 06:37, "Ναι σε όλα" 06:59; plan https://claude.ai/artifact/UQ2cWWhBxoj58C88mb4X5Z). Decided: (1) the computer's own files are a place in Files, like Dropbox and orOS Drive, never part of the orOS disk and never synced; only a copy to the orOS disk joins sync; (2) the launcher (oros-portable #14) serves them, only to orOS's page (cookie + header + Origin), and only on orOS USB (oros-usb #12); (3) Windows disks read-only, USB sticks and other disks writable, decided on the USB side; (4) home folders keep English names on disk and are translated in Files; (5) the computer's own freedesktop Trash, separate from orOS's; (6) a plugged-in stick brings a notification with "Open", nothing opens by itself; (7) System › Disks stays and its "Open" opens Files; (8) wave 4 (next): apps open and save files of this computer in place; orOS Portable on Windows/Linux is a separate proposal later.
@@ -3512,7 +3522,6 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - **Mobile gap:** link/image/table insert exists only in Quick Format (Alt+right-click). Add a touch path (long-press 450ms or a toolbar button).
 - **Known limits:**
   - RTF and PDF import: tables come as text, pictures are not kept (WR-FMT).
-  - PDF bold/italic needs NotoSans Bold/Italic vendored + precached.
   - Find-and-replace edits are outside the native undo stack.
   - Ctrl+Alt+W/T app shortcuts coincide with AltGr on Windows layouts (consider moving).
 - **[log] File dialogs:** Writer was migrated in Wave 2 (7 patches, Part XII). Not re-run through the §F harness in this revision.
@@ -3563,7 +3572,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
   - **[log]** Notifications: "+N more" counter; slide-in for a new toast
   - **[log]** Contacts: `.vcf` payload in the mobile share sheet
   - **[log]** Kanban importers: Brisqi, KanbanFlow, Taiga (real samples first)
-  - **[log]** Writer: DOCX v2 (real image parts), PDF v2 (NotoSans-Bold), Word `numbering.xml` lists
+  - ~~**[log]** Writer: DOCX v2 (real image parts), PDF v2 (NotoSans-Bold), Word `numbering.xml` lists~~ → done 2026-10-31 (WR-DOCX2)
   - **[log]** Files: single tap enters a folder on mobile; Size/Date columns
   - **[log]** `dialogs.js`: filtered native open picker
 - **Shell page:** ~~a Content-Security-Policy `<meta>` per document~~ → done 2026-10-17, quality gate Q6 (Part VIII §G) · Open Graph + canonical tags for link previews (needs a real screenshot asset).
@@ -4380,7 +4389,7 @@ Wave 1 (creation of `dialogs.js`) has no entry of its own. This entry merges fiv
   - A first `files.js` patch draft used an ES6 computed-key literal → corrected to bracket assignment before delivery (R37).
 - **Known notes:** `bookmarks.js` `exportNetscape()` fires its success toast right after dispatching the download in standalone mode (intended: "dispatched" is the honesty level `dialogs.js` itself uses). The idiom rule covers injected code, not existing internals.
 - **Status:** CLOSED. "All 25 audited applications + shell + fs.js are migrated or certified zero-touch" (count as stated in the closing note).
-- **Next (not committed):** Wave 3 info-modal line in `shell.js` fed by `orosDialog.mode()` ("Native file dialogs" / "Standard downloads"); a filtered native open picker (`types` to `showOpenFilePicker`, a core change); DOCX v2 with real image parts; PDF v2 with NotoSans-Bold; Word-style `numbering.xml` list import in Writer.
+- **Next (not committed):** Wave 3 info-modal line in `shell.js` fed by `orosDialog.mode()` ("Native file dialogs" / "Standard downloads"); a filtered native open picker (`types` to `showOpenFilePicker`, a core change); ~~DOCX v2 with real image parts; PDF v2 with NotoSans-Bold; Word-style `numbering.xml` list import in Writer~~ (done: WR-FMT 2026-10-27, WR-DOCX2 2026-10-31).
 
 ### ≈2026-10-05 — Television v0.1.1 — Wave 1 completion (post-audit)
 
