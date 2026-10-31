@@ -295,6 +295,13 @@
       t.br = { id: br.id, name: clipLine(br.name, 80), st: "", from: br.from };
       if (typeof br.st === "string" && PATH_RE.test(br.st) && br.st.indexOf("/..") < 0) t.br.st = br.st;
     }
+    // lv: recorded dry through a plugin live on the inputs (orOS Bridge 0.5.0):
+    // the plugin and its sound on the disk, which a freeze starts from
+    var lv = x.lv;
+    if (lv && typeof lv === "object" && typeof lv.id === "string" && BR_ID_RE.test(lv.id)) {
+      t.lv = { id: lv.id, name: clipLine(lv.name, 80), st: "" };
+      if (typeof lv.st === "string" && PATH_RE.test(lv.st) && lv.st.indexOf("/..") < 0) t.lv.st = lv.st;
+    }
     return t;
   }
   // A source's licence card; null when there is none.

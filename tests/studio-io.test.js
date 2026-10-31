@@ -47,6 +47,7 @@ function fakeBridge() {
       if (m.op === "audioOpen") { this.rec = m.record; return ok({ sr: 44100, period: 256, inputs: 4, outputs: 2, latency: LAT, record: m.record }); }
       if (m.op === "audioPlay") { play = Array.from({ length: m.channels }, () => new Float32Array(m.frames)); return ok(); }
       if (m.op === "audioStart") return ok();
+      if (m.op === "liveOpen") return ok({ h: 9, latency: 32, monitor: 32 + LAT, inputs: 2, outputs: 2, editor: true, on: m.on, record: m.record || "dry" });
       if (m.op === "audioStop") {
         const n = (play && play[0] ? play[0].length : 0) + LAT + 10;
         take = this.rec.map((ch) => {
@@ -157,4 +158,58 @@ test("ASIO: one card records and plays, the logo wherever ASIO is offered", () =
   const dl = read("download/index.html");
   assert.equal(dl.split('src="../help/asio-compatible.svg"').length - 1, 2, "EN and EL bridge cards");
   assert.equal(dl.split("releases/latest/download/oros-bridge-windows-x64.zip").length - 1, 2);
+});
+
+// ---- a plugin live on the inputs (orOS Bridge 0.5.0) ----
+test("bridge.js: liveOpen, liveSet and liveClose reach the bridge as they are", async () => {
+  const f = fakeBridge(), B = load(f);
+  await B.connect();
+  await B.audioOpen({ backend: "wasapi", record: [0, 1] });
+  const j = await B.liveOpen({ plugin: "clap:amp", inputs: [0, 1], out: 0, gain: 0.8, on: true, record: "wet", state: "AAAA" });
+  assert.deepEqual([j.h, j.latency, j.monitor], [9, 32, 32 + f.LAT]);
+  const sent = f.seen.find((m) => m.op === "liveOpen");
+  assert.deepEqual([sent.plugin, sent.inputs, sent.out, sent.gain, sent.on, sent.record, sent.state], ["clap:amp", [0, 1], 0, 0.8, true, "wet", "AAAA"]);
+  await B.liveSet({ gain: 1.5 });
+  assert.equal(f.seen.find((m) => m.op === "liveSet").gain, 1.5);
+  await B.liveClose();
+  assert.ok(f.seen.some((m) => m.op === "liveClose"));
+});
+
+test("live plugin: settings, the take path, the track keeps the plugin, EN/EL/DE and the help", () => {
+  const html = read("studio/index.html"), js = read("studio/studio.js"), de = read("i18n/de/studio.js");
+  ["io-fx-sec", "io-fx", "io-fx-on", "io-fx-gain", "io-fx-gout", "io-fx-wet", "io-fx-win"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  // the check and the take both put the plugin live on the open card, wet only for a take
+  assert.match(js, /return ioLiveOpen\(ioChannels\(dev \? dev\.channels : 2\), false, /);
+  assert.match(js, /return ioLiveOpen\(ioRec\.record, wet, tr\)/);
+  // its sound is kept before the card closes, and both waits for a closing card
+  assert.match(js, /return ioLiveDone\(\)\.then\(function \(st\) \{ if \(r\.live && st\) r\.live\.b64 = st\.b64; return chans; \}\);/);
+  assert.match(js, /ioClosing = ioLiveDone\(\)\.then\(function \(\) \{ return BRG\.audioClose\(\); \}\)/);
+  assert.equal(js.split("Promise.resolve(ioClosing)").length - 1, 2);
+  // a wet take is moved back by the plugin's latency; a dry one keeps the plugin on the track
+  assert.match(js, /x\.set\(d\.subarray\(Math\.min\(d\.length, r\.live\.latency\)\)\);/);
+  assert.match(js, /if \(i === 0 && r\.live && !r\.live\.wet && !dest\.br\) return ioKeepLive\(dest, r\.live\)/);
+  assert.match(js, /var want = tr && tr\.br \? tr\.br\.id : tr && tr\.lv \? tr\.lv\.id :/, "the freeze picks the track's live plugin");
+  // a plugin too slow or broken is said once
+  assert.match(js, /lv\.slow \? t\("io\.fxSlow"/);
+  // prefs: plugin id checked, level 0..200 %
+  assert.match(js, /gain: isFinite\(gain\) \? clamp\(gain, 0, 200\) : 100, wet: fx\.wet === true/);
+  ["io.fx", "io.fxNone", "io.fxHint", "io.fxGain", "io.fxRec", "io.fxDry", "io.fxWet", "io.fxTesting", "io.fxOld", "io.fxFail", "io.fxSlow", "io.fxFailed", "io.fxWinFirst"].forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+  // the bridge runs on Linux too
+  assert.ok(!/small free program for Windows that/.test(js) && !/πρόγραμμα για Windows που/.test(js) && !/Programm für Windows,/.test(de));
+  [["studio/help.en.txt", "`Listen through a plugin`"], ["studio/help.el.txt", "`Ακρόαση μέσα από plugin`"], ["i18n/de/help/studio.txt", "`Über ein Plugin hören`"]].forEach(([f, k]) => {
+    assert.equal(read(f).split(k).length - 1, 2, f);
+  });
+});
+
+test("core: track.lv (recorded through a live plugin) is checked", () => {
+  const C = require(path.join(ROOT, "studio", "core.js"));
+  const base = { id: "tabcdef12", m: 1, p: "pabcdef12", name: "Guitar" };
+  const ok = C.normTrack(Object.assign({}, base, { lv: { id: "clap:com.amp", name: "Amp", st: "/internal/Studio/bridge/tabcdef12.live.txt" } }));
+  assert.deepEqual(ok.lv, { id: "clap:com.amp", name: "Amp", st: "/internal/Studio/bridge/tabcdef12.live.txt" });
+  assert.equal(C.normTrack(Object.assign({}, base, { lv: { id: "vst2:x" } })).lv, undefined);
+  assert.equal(C.normTrack(Object.assign({}, base, { lv: { id: "clap:x", st: "/internal/Studio/../Music/a" } })).lv.st, "");
+  assert.equal(C.normTrack(base).lv, undefined);
 });

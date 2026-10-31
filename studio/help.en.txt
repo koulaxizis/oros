@@ -61,6 +61,7 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - `Check the inputs` shows a meter for each input of the card, so you can see where your microphone or guitar comes in.
 - Press record as usual. Studio first prepares the song from the playhead (a moment for a long song), then the card plays it and records at the same time, so the take stays in step even when the computer is busy. Listen through your card's direct monitoring.
 - The take lands where it was played, minus the delay the bridge measures for the card; if it still lands late, raise `Recording offset`.
+- `Listen through a plugin` (orOS Bridge 0.5.0 or newer): pick one of your effects (an amp for a guitar, a reverb for a voice) and you hear the inputs through it while you play and record, with only the card's buffers and the plugin's own delay in between. `Check the inputs` opens the card with the plugin, so you can set its sound in `Show its window`. A take records the inputs as they come and the track keeps the plugin with that sound: freeze it later in `Plugin on this computer`. Or choose `A take records` › `The plugin's sound`. Use headphones, and turn the card's direct monitoring off.
 
 [asio-logo]
 
@@ -173,7 +174,7 @@ Ask the Assistant to change your songs in words, such as "turn the vocals down 3
 ## Limits
 - Up to 50 projects, 8 tracks and 500 clips per project, one hour per project.
 - An imported file can be up to 100 MB, and a take up to 30 minutes.
-- Through orOS Bridge you hear the song through the card but not your own input (use the card's direct monitoring), and the click stops two minutes after the end of the song. With ASIO only one Studio tab at a time can use the card.
+- Through orOS Bridge you hear the song through the card but not your own input, unless you pick `Listen through a plugin` (or use the card's direct monitoring), and the click stops two minutes after the end of the song. With ASIO only one Studio tab at a time can use the card.
 - One remote at a time, and pairing needs internet on both devices.
 - A MIDI clip has up to 2000 notes. The instruments are simple built-in synths and a synthesized drum kit; there are no sampled instruments or soundfonts.
 - While you play the keyboard live, you hear the sound without the track's effects; the recorded clip plays with them. The synth recorded as audio is also dry until the take plays. Only Sidechain Ducker takes a key input.

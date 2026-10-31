@@ -13,7 +13,8 @@
 //     several blocks in flight, the plugin's delay cut and its tail kept.
 //   - the sound card (bridge 0.3.0): devices(), audioOpen(o), play(chans, out)
 //     (the sound sent ahead), start(), stop(), take(frames, n), audioClose();
-//     events "levels" {peaks, running, pos} and "audioError".
+//     events "levels" {peaks, running, pos, live?} and "audioError".
+//   - a plugin live on the inputs (bridge 0.5.0): liveOpen(o), liveSet(o), liveClose()
 // Loaded before studio.js (window.StudioBridge).
 // ============================================================
 (function (root) {
@@ -197,6 +198,11 @@
       }
     });
   }
+  // a plugin live on the card's inputs (bridge 0.5.0): o {plugin, inputs, out, gain, on, record: "dry"|"wet", state}
+  // → {h, latency, monitor, inputs, outputs, editor}; liveSet {gain, on}
+  function liveOpen(o) { return cmd(Object.assign({ op: "liveOpen" }, o), 60000); }
+  function liveSet(o) { return cmd(Object.assign({ op: "liveSet" }, o), 5000); }
+  function liveClose() { return cmd({ op: "liveClose" }, 10000).then(null, function () {}); }
   function start() { return cmd({ op: "audioStart" }, 10000); }
   function stop() { return cmd({ op: "audioStop" }, 20000); }
   // the whole take: n channels of `frames` → Float32Array per channel
@@ -223,7 +229,8 @@
     PORT: PORT, ID_RE: ID_RE, connect: connect, pair: pair, sendCode: sendCode, list: list, scan: scan,
     open: open, close: close, editor: editor, state: state, setState: setState, info: info, reset: reset,
     render: render, renderAll: renderAll, on: on,
-    devices: devices, audioOpen: audioOpen, audioClose: audioClose, play: play, start: start, stop: stop, take: take, connected: function () { return !!ws && ws.readyState === 1 && authed; },
+    devices: devices, audioOpen: audioOpen, audioClose: audioClose, play: play, start: start, stop: stop, take: take,
+    liveOpen: liveOpen, liveSet: liveSet, liveClose: liveClose, connected: function () { return !!ws && ws.readyState === 1 && authed; },
     forget: function () { keepToken(""); if (ws) ws.close(); }
   };
 })(typeof window !== "undefined" ? window : this);
