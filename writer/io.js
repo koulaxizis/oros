@@ -811,11 +811,57 @@
         const num = entries.find(e => e.name === 'word/numbering.xml');
         const sty = entries.find(e => e.name === 'word/styles.xml');
         const styles = ioDxStyles(text(sty));
+        styles.img = ioDxPictures(text(entries.find(e => e.name === 'word/_rels/document.xml.rels')), entries);
         styles.notes = ioDxNotes(text(entries.find(e => e.name === 'word/footnotes.xml')),
                                  text(entries.find(e => e.name === 'word/endnotes.xml')));
         return ioParseDocxXml(dom, ioDxNumbering(text(num)), styles);
       })
       .then(res => Object.assign({ kind: 'doc' }, res));
+  }
+
+  /* ----- DOCX: pictures (word/_rels/document.xml.rels → word/media/…) ----- */
+  // rId → data: URL of every picture the document points to inside the
+  // package (PNG, JPEG, GIF, WebP; ≤ 15 MB each, ≤ 60 MB in all).
+  // External targets (TargetMode="External") are never fetched.
+  const IO_DX_IMG_TYPES = { png: 'png', jpg: 'jpeg', jpeg: 'jpeg', jpe: 'jpeg', gif: 'gif', webp: 'webp' };
+  function ioDxPictures(relsText, entries) {
+    const out = {};
+    if (!relsText) return out;
+    const dom = new DOMParser().parseFromString(relsText, 'application/xml');
+    if (dom.getElementsByTagName('parsererror').length) return out;
+    let total = 0;
+    Array.from(dom.getElementsByTagName('Relationship')).forEach(r => {
+      if (!/\/image$/.test(r.getAttribute('Type') || '') || /^external$/i.test(r.getAttribute('TargetMode') || '')) return;
+      let target = String(r.getAttribute('Target') || '');
+      target = target.charAt(0) === '/' ? target.slice(1) : 'word/' + target;
+      const parts = [];
+      target.split('/').forEach(x => { if (x === '..') parts.pop(); else if (x && x !== '.') parts.push(x); });
+      const name = parts.join('/');
+      const type = IO_DX_IMG_TYPES[(name.split('.').pop() || '').toLowerCase()];
+      const e = type && entries.find(en => en.name === name);
+      if (!e || !e.data.length || e.data.length > 15 * 1024 * 1024 || total + e.data.length > 60 * 1024 * 1024) return;
+      total += e.data.length;
+      out[r.getAttribute('Id')] = 'data:image/' + type + ';base64,' + ioBytesB64(e.data);
+    });
+    return out;
+  }
+  // <w:drawing> (a:blip r:embed) or old <w:pict> (v:imagedata r:id) →
+  // <img> at the size the document shows it (EMU / 9525 = px)
+  const IO_NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  function ioDxPicture(el, styles) {
+    const img = styles && styles.img;
+    if (!img) return '';
+    const blip = el.getElementsByTagNameNS('*', 'blip')[0] || el.getElementsByTagNameNS('*', 'imagedata')[0];
+    if (!blip) return '';
+    const rid = blip.getAttributeNS(IO_NS_R, 'embed') || blip.getAttributeNS(IO_NS_R, 'id') ||
+                blip.getAttribute('r:embed') || blip.getAttribute('r:id') || '';
+    const src = Object.prototype.hasOwnProperty.call(img, rid) ? img[rid] : '';
+    if (!src) return '';
+    const ext = el.getElementsByTagNameNS('*', 'extent')[0];
+    const pr = el.getElementsByTagNameNS('*', 'docPr')[0];
+    const w = ext ? Math.round((parseInt(ext.getAttribute('cx'), 10) || 0) / 9525) : 0;
+    const alt = pr ? (pr.getAttribute('descr') || '') : '';
+    return '<img src="' + src + '" alt="' + escAttr(alt) + '" style="' + (w > 0 ? 'width:' + Math.min(w, 4000) + 'px;' : '') + 'max-width:100%">';
   }
 
   /* ----- DOCX: word/document.xml → HTML ----- */
@@ -939,6 +985,7 @@
           else if (cl === 'tab') txt += '\t';
           else if (cl === 'br' || cl === 'cr') txt += '\n';
           else if (cl === 'noBreakHyphen') txt += '‑';
+          else if (cl === 'drawing' || cl === 'pict' || cl === 'AlternateContent') mark += ioDxPicture(c, styles);
           else if ((cl === 'footnoteReference' || cl === 'endnoteReference') && styles && styles.notes) {
             // a note's mark → Writer's <sup class="fn-ref"> + a footnote
             const nt = styles.notes, body = nt.map[cl.charAt(0) + ioDxAttr(c, 'id')];
@@ -998,8 +1045,11 @@
     if (!lvl && info.outline >= 0 && info.outline <= 3) lvl = info.outline + 1;
     if (!lvl && (/^title$/i.test(name) || /^title$/i.test(info.id))) lvl = 1;
     // a heading is bold already: the style's own bold is not repeated
-    const inner = ioDxRuns(p, lvl ? Object.assign({}, info.st.rpr, { b: false }) : info.st.rpr, styles);
+    // (nor a caption's own italic: Writer draws a caption so)
+    const cap = /^caption$/i.test(name) || /^caption$/i.test(info.id);
+    const inner = ioDxRuns(p, lvl ? Object.assign({}, info.st.rpr, { b: false }) : cap ? Object.assign({}, info.st.rpr, { i: false }) : info.st.rpr, styles);
     if (lvl >= 1 && lvl <= 6) return '<h' + lvl + sa + '>' + inner + '</h' + lvl + '>';
+    if (cap) return '<p data-cap="1"' + sa + '>' + inner + '</p>';
     if (/quote/i.test(name) || /quote/i.test(info.id)) return '<blockquote' + sa + '>' + inner + '</blockquote>';
     return '<p' + sa + '>' + inner + '</p>';
   }
@@ -1012,8 +1062,14 @@
     if (dom.getElementsByTagName('parsererror').length) return map;
     const abs = {};
     const lvlOf = l => {
-      const f = ioDxKid(l, 'numFmt'), s = ioDxKid(l, 'start');
-      return { fmt: f ? ioDxAttr(f, 'val') : 'bullet', start: s ? parseInt(ioDxAttr(s, 'val'), 10) || 0 : 1 };
+      let f = ioDxKid(l, 'numFmt');
+      // Word 2010+ custom formats sit in <mc:AlternateContent><mc:Choice>
+      const alt = !f && ioDxKid(l, 'AlternateContent');
+      if (alt) f = ioDxKid(ioDxKid(alt, 'Choice'), 'numFmt') || ioDxKid(ioDxKid(alt, 'Fallback'), 'numFmt');
+      let fmt = f ? ioDxAttr(f, 'val') : 'bullet';
+      if (fmt === 'custom') fmt = /^\u03b1/.test(ioDxAttr(f, 'format')) ? 'lowerGreek' : 'decimal';
+      const s = ioDxKid(l, 'start');
+      return { fmt: fmt, start: s ? parseInt(ioDxAttr(s, 'val'), 10) || 0 : 1 };
     };
     Array.from(dom.getElementsByTagNameNS(IO_NS_W, 'abstractNum')).forEach(a => {
       const lv = {};
@@ -1066,7 +1122,7 @@
   function ioDxListKind(fmt) {
     if (fmt === 'bullet' || fmt === 'none') return ['UL', ''];
     return ['OL', { lowerLetter: 'lower-alpha', upperLetter: 'upper-alpha', lowerRoman: 'lower-roman',
-      upperRoman: 'upper-roman' }[fmt] || ''];
+      upperRoman: 'upper-roman', lowerGreek: 'lower-greek' }[fmt] || ''];
   }
 
   function ioParseDocxXml(dom, numbering, styles) {
@@ -1134,6 +1190,23 @@
         // sectPr, bookmarks, deletions … skipped
       });
     })(body);
+
+    // a picture alone in its paragraph + a Caption paragraph → Writer's
+    // <figure> with its <figcaption>; any other caption stays a paragraph
+    Array.from(box.querySelectorAll('p[data-cap]')).forEach(c => {
+      c.removeAttribute('data-cap');
+      const prev = c.previousElementSibling;
+      if (!prev || prev.nodeName !== 'P' || prev.children.length !== 1 || prev.firstElementChild.nodeName !== 'IMG' || prev.textContent.trim()) return;
+      const fig = d.createElement('figure');
+      fig.setAttribute('style', 'margin:1em 0;text-align:center');
+      fig.appendChild(prev.firstElementChild);
+      const fc = d.createElement('figcaption');
+      fc.setAttribute('style', 'font-size:0.85em;color:var(--text-dim)');
+      fc.innerHTML = c.innerHTML;
+      fig.appendChild(fc);
+      prev.replaceWith(fig);
+      c.remove();
+    });
 
     const first = box.querySelector('h1,h2,h3,h4,h5,h6,p,li');
     return { title: first ? first.textContent.trim().slice(0, 80) : '',

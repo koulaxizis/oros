@@ -11,6 +11,7 @@ Pick a clock style under the big clock: `Digital`, `Analog`, `Binary`, `Flip` or
 - Tap a quick chip (`+ Athens`, `+ London`, `+ New York`, `+ Tokyo`), or `Add` and type a city or a time zone, in English or Greek (accents don't matter). More than 500 cities are built in, plus every time zone your browser knows. Tap a result to add it.
 - Each row shows the time there and how it compares with yours, for example "Today, +3 h" or "Tomorrow, −7 h".
 - Double-click a name to change it (`Change zone`). The × deletes it (`Delete zone`). A row is one time zone: picking another city in the same zone renames the row.
+- At the bottom of Time, `Show` next to `Time zone converter` lines up your time and every world clock place in one row.
 
 ## Meeting planner
 
@@ -35,7 +36,7 @@ It uses the top-bar weather city: the city pinned in [Weather](help:a/weather), 
 - **`Stopwatch`**: `Start` and `Stop`, `Lap` while it runs, `Reset` when it's stopped. Laps are listed newest first with the lap time and the total, and the fastest and slowest are marked. `Copy laps` copies them as text and `Save CSV` saves them for a spreadsheet. The stopwatch keeps counting when you close Time or orOS, and its laps stay.
 - **`Pomodoro`**: set `Work` and `Break` minutes and tap `Start`. When a `Focus` leg ends, a `Break` is ready to start, and so on. The counter shows how many sessions you've finished. `Reset` goes back to `Focus`. With `Log focus in Timesheet` set to a project (or `No project`), each `Focus` leg is added to [Timesheet](app:timesheet) as the task "Pomodoro", even if you close Time; stopping early logs the minutes you focused. The choice stays on this device.
 
-When an alarm, a timer or a Pomodoro leg ends, orOS shows a box with `Snooze 9m` and `Dismiss` and plays a sound (a timer plays its own). It stops by itself after 30 seconds and also lands in your [notifications](help:t/notifications). It rings in any app, not only in Time. In the orOS app for Android, with reminders through the app turned on, alarms and timers also ring while orOS is closed (see [notifications](help:t/notifications)).
+When an alarm, a timer or a Pomodoro leg ends, orOS shows a box with `Snooze 9m` and `Dismiss` and plays a sound (a timer plays its own). With `Sound` unticked under the alarms, alarms and Pomodoro legs show the box without a sound; a timer still plays its own. It stops by itself after 30 seconds and also lands in your [notifications](help:t/notifications). It rings in any app, not only in Time. In the orOS app for Android, with reminders through the app turned on, alarms and timers also ring while orOS is closed (see [notifications](help:t/notifications)).
 
 ## Stage timer for conferences
 

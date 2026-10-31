@@ -121,7 +121,7 @@
       "ms": 75
     },
     "files": {
-      "bytes": 435416,
+      "bytes": 522628,
       "ms": 52
     },
     "fitness": {
@@ -197,8 +197,8 @@
       "ms": 69
     },
     "lightsout": {
-      "bytes": 54321,
-      "ms": 53
+      "bytes": 65216,
+      "ms": 57
     },
     "mahjong": {
       "bytes": 74867,
@@ -377,12 +377,12 @@
       "ms": 37
     },
     "sky": {
-      "bytes": 119089,
-      "ms": 45
+      "bytes": 143617,
+      "ms": 64
     },
     "slider": {
-      "bytes": 48651,
-      "ms": 41
+      "bytes": 59540,
+      "ms": 58
     },
     "slides": {
       "bytes": 1461191,
@@ -493,8 +493,8 @@
       "ms": 64
     },
     "whack": {
-      "bytes": 54396,
-      "ms": 43
+      "bytes": 65296,
+      "ms": 53
     },
     "wheel": {
       "bytes": 74481,
