@@ -144,7 +144,8 @@ var STRINGS = {
     "ch.ttl": "Title", "ch.xl": "Horizontal axis title", "ch.yl": "Vertical axis title", "ch.lg": "Legend",
     "ch.cols": "Colours", "ch.col": "Colour of series", "ch.reset": "Default colours",
     "ch.saved": "Saved {f}", "ch.file": "chart", "ch.err": "Could not make the image",
-    "rg.mode": "Select a range…", "rg.tap": "Tap the last cell of the range",
+    "rg.mode": "Extend selection", "rg.tap": "Tap cells or headers: the selection grows to them", "rg.off": "Stop extending the selection",
+    "rg.chip": "Extending", "rg.x": "Stop extending", "rg.ha": "Drag to change the selection",
     "cf.k.fx": "Formula is true", "cf.k.ic": "Icon set", "cf.fx": "Formula", "cf.fx.ph": "=$B2>100",
     "cf.fx.hint": "Write it for the first cell of the range; it moves with each cell like a copied formula.",
     "cf.ic.ar": "Arrows", "cf.ic.dt": "Traffic lights",
@@ -267,7 +268,8 @@ var STRINGS = {
     "ch.ttl": "Τίτλος", "ch.xl": "Τίτλος οριζόντιου άξονα", "ch.yl": "Τίτλος κατακόρυφου άξονα", "ch.lg": "Υπόμνημα",
     "ch.cols": "Χρώματα", "ch.col": "Χρώμα σειράς", "ch.reset": "Προεπιλεγμένα χρώματα",
     "ch.saved": "Αποθηκεύτηκε: {f}", "ch.file": "γράφημα", "ch.err": "Δεν ήταν δυνατή η δημιουργία της εικόνας",
-    "rg.mode": "Επιλογή περιοχής…", "rg.tap": "Πάτησε το τελευταίο κελί της περιοχής",
+    "rg.mode": "Επέκταση επιλογής", "rg.tap": "Πάτα κελιά ή επικεφαλίδες: η επιλογή μεγαλώνει ως εκεί", "rg.off": "Τέλος επέκτασης επιλογής",
+    "rg.chip": "Επέκταση", "rg.x": "Τέλος επέκτασης", "rg.ha": "Σύρε για να αλλάξεις την επιλογή",
     "cf.k.fx": "Ο τύπος είναι αληθής", "cf.k.ic": "Σύνολο εικονιδίων", "cf.fx": "Τύπος", "cf.fx.ph": "=$B2>100",
     "cf.fx.hint": "Γράψ' τον για το πρώτο κελί της περιοχής· μετακινείται με κάθε κελί όπως ένας τύπος που αντιγράφεις.",
     "cf.ic.ar": "Βέλη", "cf.ic.dt": "Φανάρια",
@@ -1655,6 +1657,7 @@ function renderSelection() {
 
 function beginEdit(initialText) {
   if (editing) return;
+  if (RANGE_MODE) setRangeMode(false);
   collapseSel(); /* typing replaces the range — single-cell edit */
   ensureVisible(selR, selC);
   var td = cellRefs[selR] && cellRefs[selR][selC];
@@ -2505,7 +2508,7 @@ function openSheetMenu(anchor) {
   }
   function sep() { var d = document.createElement("div"); d.className = "msep"; m.appendChild(d); }
   var fzr = normFz(sh.fz, sh) || { r: 0, c: 0 };
-  item(t("rg.mode"), function () { RANGE_MODE = true; notifyTransient(t("rg.tap")); });
+  item(RANGE_MODE ? t("rg.off") : t("rg.mode"), function () { setRangeMode(!RANGE_MODE); });
   sep();
   if (sendApi()) { item(t("menu.sendApp"), sendSelection); sep(); }
   if (selR > 0 && selR + 1 <= FZ_MAX_R) item(t("fz.rows").replace("{n}", selR + 1), function () { setFreeze(selR + 1, fzr.c); });
@@ -4094,7 +4097,125 @@ function commitColW() {
 
 /* ---------- fill handle ---------- */
 var fillH = null, fillDrag = null, RANGE_MODE = false;
+
+/* ---------- range selection on touch (Spreadsheet wave 4.4) ----------
+   Two round handles on the selection's top-left and bottom-right
+   corners: drag one and the opposite corner stays. A whole-column
+   selection keeps its rows (only columns change), a whole-row one its
+   columns. "Extend selection" (sheet menu) is a mode, shown as a chip
+   in the status bar: each tap on a cell or a header grows the selection
+   to it, until the chip, Esc or editing ends it. Mouse use is as before. */
+var LASTPTR = "", rgA = null, rgB = null, rgDrag = null;
+function touchUi() {
+  if (LASTPTR) return LASTPTR !== "mouse";
+  try { return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); } catch (e) { return false; }
+}
+function cellBox(r, c) {
+  var m = mergeAt(r, c);
+  var td = cellRefs[r] && cellRefs[r][c];
+  if (m && (!td || td.style.display === "none")) { td = cellRefs[m.r] && cellRefs[m.r][m.c]; }
+  if (!td || td.style.display === "none") return null;
+  return td.getBoundingClientRect();
+}
+function placeRangeHandles() {
+  if (!rgA) return;
+  var sh = getActiveSheet();
+  var hide = !touchUi() || editing || CHSEL || fillDrag || !sh;
+  var wrap = $("grid-wrap"), wr = wrap.getBoundingClientRect();
+  function put(el, r, c, corner) {
+    var b = !hide && cellBox(r, c);
+    if (!b) { el.hidden = true; return; }
+    var x = corner ? b.right : b.left, y = corner ? b.bottom : b.top;
+    /* off the visible grid (under the headers or the frozen panes) */
+    if (x < wr.left + ROWHEADW - 2 || x > wr.right + 2 || y < wr.top + HEADH - 2 || y > wr.bottom + 2) { el.hidden = true; return; }
+    el.hidden = false;
+    el.style.left = (x - wr.left + wrap.scrollLeft - wrap.clientLeft) + "px";
+    el.style.top = (y - wr.top + wrap.scrollTop - wrap.clientTop) + "px";
+  }
+  put(rgA, selTop(), selLeft(), false);
+  put(rgB, selBottom(), selRight(), true);
+}
+/* the corner that moves: for a whole-column selection only its column,
+   for a whole-row one only its row */
+function rgMove(x, y) {
+  if (!rgDrag) return;
+  rgDrag.x = x; rgDrag.y = y;
+  var p = cellFromPoint(x, y);
+  if (!p) return;
+  var q = KIT.handleMove(rgDrag.g, p);
+  if (q.r !== selR || q.c !== selC) { selR = q.r; selC = q.c; renderSelection(); }
+}
+function rgAuto() {
+  if (!rgDrag) return;
+  var wrap = $("grid-wrap"), br = wrap.getBoundingClientRect(), dx = 0, dy = 0;
+  if (rgDrag.y > br.bottom - 28) dy = 18; else if (rgDrag.y < br.top + HEADH + FRH + 8) dy = -18;
+  if (rgDrag.x > br.right - 28) dx = 18; else if (rgDrag.x < br.left + ROWHEADW + 8) dx = -18;
+  if (dx || dy) { wrap.scrollTop += dy; wrap.scrollLeft += dx; renderWindow(false); rgMove(rgDrag.x, rgDrag.y); }
+  rgDrag.raf = (window.requestAnimationFrame || setTimeout)(rgAuto);
+}
+function initRangeHandles() {
+  var wrap = $("grid-wrap");
+  function mk(end) {
+    var el = document.createElement("div");
+    el.className = "rg-h rg-" + end;
+    el.hidden = true;
+    el.title = t("rg.ha");
+    el.setAttribute("aria-hidden", "true");
+    wrap.appendChild(el);
+    el.addEventListener("pointerdown", function (e) {
+      if (e.button && e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      if (editing) commitEdit(0, 0);
+      var sh = getActiveSheet();
+      /* the opposite corner becomes the anchor, this one the moving end */
+      var g = KIT.handleGrab({ t: selTop(), b: selBottom(), l: selLeft(), r: selRight() }, end, sh.rows, sh.cols);
+      selAR = g.ar; selAC = g.ac; selR = g.r; selC = g.c;
+      try { el.setPointerCapture(e.pointerId); } catch (er) {}
+      rgDrag = { end: end, x: e.clientX, y: e.clientY, g: g };
+      el.classList.add("on");
+      rgDrag.raf = (window.requestAnimationFrame || setTimeout)(rgAuto);
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (!rgDrag) return;
+      e.preventDefault();
+      rgMove(e.clientX, e.clientY);
+    });
+    function stop() {
+      if (!rgDrag) return;
+      (window.cancelAnimationFrame || clearTimeout)(rgDrag.raf);
+      rgDrag = null;
+      el.classList.remove("on");
+      renderSelection();
+    }
+    el.addEventListener("pointerup", stop);
+    el.addEventListener("pointercancel", stop);
+    el.addEventListener("click", function (e) { e.stopPropagation(); });
+    return el;
+  }
+  rgA = mk("a"); rgB = mk("b");
+}
+/* the extend mode and its chip in the status bar */
+function setRangeMode(on) {
+  RANGE_MODE = !!on;
+  var chip = $("st-ext");
+  if (!chip && on) {
+    chip = document.createElement("button");
+    chip.type = "button"; chip.id = "st-ext";
+    chip.addEventListener("click", function (e) { e.stopPropagation(); setRangeMode(false); });
+    document.body.appendChild(chip);
+  }
+  if (chip) {
+    chip.hidden = !on;
+    /* floats just above the sheet tabs, so the status bar keeps its room */
+    var tabs = $("stabs"), top = tabs ? tabs.getBoundingClientRect().top : window.innerHeight;
+    chip.style.bottom = Math.max(8, window.innerHeight - top + 8) + "px";
+    chip.textContent = t("rg.chip") + " \u2715";
+    chip.title = t("rg.x"); chip.setAttribute("aria-label", t("rg.x"));
+  }
+  if (on) notifyTransient(t("rg.tap"));
+}
 function placeFillHandle() {
+  placeRangeHandles();
   if (!fillH) return;
   var hide = editing || CHSEL || selBottom() - selTop() > 5000;
   var r = selBottom(), c = selRight(), m = !hide && mergeAt(r, c);
@@ -4103,8 +4224,11 @@ function placeFillHandle() {
   if (!td || td.style.display === "none") { fillH.hidden = true; return; }
   var wrap = $("grid-wrap"), wr = wrap.getBoundingClientRect(), tr = td.getBoundingClientRect();
   fillH.hidden = false;
-  fillH.style.left = (tr.right - wr.left + wrap.scrollLeft - wrap.clientLeft - 5) + "px";
-  fillH.style.top = (tr.bottom - wr.top + wrap.scrollTop - wrap.clientTop - 5) + "px";
+  /* touch: the corner carries a range handle, so the fill handle sits
+     just outside it, diagonally (it never covers the selected cells) */
+  var off = touchUi() ? 16 - 7 : -5;
+  fillH.style.left = (tr.right - wr.left + wrap.scrollLeft - wrap.clientLeft + off) + "px";
+  fillH.style.top = (tr.bottom - wr.top + wrap.scrollTop - wrap.clientTop + off) + "px";
 }
 function cellFromPoint(x, y) {
   var els = document.elementsFromPoint ? document.elementsFromPoint(x, y) : [document.elementFromPoint(x, y)];
@@ -5325,6 +5449,7 @@ function wire() {
 
   $("grid").addEventListener("pointerdown", function (e) {
     ptrType = e.pointerType || "mouse";
+    if (ptrType !== LASTPTR) { LASTPTR = ptrType; placeFillHandle(); }
   }, true);
 
   /* a header click selects the whole column / row (corner = all) */
@@ -5366,15 +5491,15 @@ function wire() {
         return;
       }
       mdSelected = (ptrType === "mouse");
-      headerSelect(pos, e.shiftKey);
+      headerSelect(pos, e.shiftKey || RANGE_MODE);
       return;
     }
     var r = pos.r, c = pos.c;
     tapWasSelected = (r === selR && c === selC && !editing);
     mdSelected = (ptrType === "mouse");
     if (editing) commitEdit(0, 0); /* then KEEP selecting the clicked cell */
-    if (RANGE_MODE && mdSelected) {
-      RANGE_MODE = false;
+    if (RANGE_MODE) {                     /* extend mode: grows, stays on (touch too:
+                                             the click after this must not collapse it) */
       selR = r; selC = c;
       renderSelection();
       return;
@@ -5445,11 +5570,10 @@ function wire() {
     if (CHSEL) selectChart(null);
     var pos = gridPos(e.target);
     if (!pos) return;
-    if (pos.td === undefined) { if (editing) commitEdit(0, 0); headerSelect(pos, false); return; }
+    if (pos.td === undefined) { if (editing) commitEdit(0, 0); headerSelect(pos, RANGE_MODE); return; }
     var r = pos.r, c = pos.c;
     if (editing) commitEdit(0, 0);
-    if (RANGE_MODE) {
-      RANGE_MODE = false;
+    if (RANGE_MODE) {                     /* extend mode: grows, stays on */
       selR = r; selC = c;
       renderSelection();
       return;
@@ -5521,7 +5645,7 @@ function wire() {
       if (e.cancelable) e.preventDefault();      /* no click after it */
       ignoreClickUntil = Date.now() + 450;
       if (d.moved) { if (d.k === "c") { commitColW(); } else commitRowH(d.i, d.v); }
-      else { if (editing) commitEdit(0, 0); headerSelect(d.pos, false); }
+      else { if (editing) commitEdit(0, 0); headerSelect(d.pos, RANGE_MODE); }
       return;
     }
     if (lp.on) {
@@ -5543,7 +5667,7 @@ function wire() {
     if (editing) return;
     var k = e.key;
     if (CHSEL) selectChart(null);
-    if (RANGE_MODE && k === "Escape") { RANGE_MODE = false; return; }
+    if (RANGE_MODE && k === "Escape") { setRangeMode(false); return; }
     if (k === "ArrowUp") { e.preventDefault(); navigate(-1, 0, e.shiftKey); }
     else if (k === "ArrowDown") { e.preventDefault(); navigate(1, 0, e.shiftKey); }
     else if (k === "ArrowLeft") { e.preventDefault(); navigate(0, -1, e.shiftKey); }
@@ -5971,6 +6095,7 @@ function boot() {
   injectIcons();
   initCharts();
   initFillHandle();
+  initRangeHandles();
   wire();
   registerSync();
   inheritPalette();

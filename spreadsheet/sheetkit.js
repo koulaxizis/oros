@@ -1228,6 +1228,23 @@ function fitText(s, w, measure) {
 /* the page footer: "Page {n} of {t}" from the language's pattern */
 function pageLabel(pat, n, t) { return String(pat).replace("{n}", n).replace("{t}", t); }
 
+/* ---------- range handles on touch (wave 4.4) ----------
+   Grabbing a corner of the selection g {t, b, l, r} on a sheet of
+   rows x cols: the opposite corner becomes the anchor (ar, ac), the
+   grabbed one the moving end (r, c). A whole-column selection keeps its
+   rows (lockR), a whole-row one its columns (lockC). */
+function handleGrab(g, end, rows, cols) {
+  var fullCols = g.t === 0 && g.b === rows - 1, fullRows = g.l === 0 && g.r === cols - 1;
+  var o = end === "a" ? { ar: g.b, ac: g.r, r: g.t, c: g.l } : { ar: g.t, ac: g.l, r: g.b, c: g.r };
+  o.lockR = fullCols && !fullRows;
+  o.lockC = fullRows && !fullCols;
+  return o;
+}
+/* where the moving end goes for the cell p {r, c} under the finger */
+function handleMove(o, p) {
+  return { r: o.lockR ? o.r : p.r, c: o.lockC ? o.c : p.c };
+}
+
 var API = {
   MAX_ROWS: MAX_ROWS, MAX_COLS: MAX_COLS, MAX_POINTS: MAX_POINTS, MAX_SERIES: MAX_SERIES,
   colName: colName, colFromName: colFromName, esc: esc, hex: hex, mix: mix, inkOn: inkOn, rgba: rgba, luminance: luminance,
@@ -1240,6 +1257,7 @@ var API = {
   SERIES: SERIES,
   BOOK_KIND: BOOK_KIND, bookContent: bookContent, bookWorkbook: bookWorkbook, importBook: importBook,
   sheetCSV: sheetCSV, csvName: csvName, nameKey: nameKey,
+  handleGrab: handleGrab, handleMove: handleMove,
   PAPER: PAPER, PX_PT: PX_PT, normPrint: normPrint, printPages: printPages, fitText: fitText, pageLabel: pageLabel
 };
 root.OrosSheetKit = API;
