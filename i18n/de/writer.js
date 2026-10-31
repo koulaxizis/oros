@@ -208,6 +208,7 @@ orosPack("de", "writer", {
  "rv.track": "Änderungen verfolgen",
  "save.quota": "Speicher voll — neue Änderungen konnten auf diesem Gerät nicht gespeichert werden. Exportiere oder entferne große Bilder.",
  "set.spell": "Rechtschreibung prüfen (Englisch und Griechisch)",
+ "set.keySound": "Schreibmaschinengeräusch beim Tippen",
  "set.spellNote": "Die Wörterbücher werden einmal geladen, wenn sie zum ersten Mal gebraucht werden (etwa 0,2 MB für Englisch, 2,1 MB für Griechisch), und funktionieren dann offline.",
  "sp.add": "Zu meinem Wörterbuch hinzufügen",
  "sp.added": "„{w}“ zu deinem Wörterbuch hinzugefügt",

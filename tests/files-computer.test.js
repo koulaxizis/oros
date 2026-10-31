@@ -313,3 +313,20 @@ test("shell: asks once per computer, falls back for an older launcher, Settings 
   const pcd = fs.readFileSync(path.join(ROOT, "pcdialog.js"), "utf8");
   assert.match(pcd, /disable: function/);
 });
+
+// ---------- ZIP in This computer (2026-10-31) ----------
+test("This computer offers Compress to ZIP and Extract here through Files' own ZIP code", () => {
+  const files = fs.readFileSync(path.join(__dirname, "..", "files", "files.js"), "utf8");
+  const pc = fs.readFileSync(path.join(__dirname, "..", "files", "computer.js"), "utf8");
+  // Files hands its ZIP functions to the computer place, which passes its own io.
+  assert.match(files, /zipCreate: zipCreate,\s*zipExtract: zipExtract/);
+  assert.match(files, /function zipCreate\(paths, io\)/);
+  assert.match(files, /function zipExtract\(path, io\)/);
+  assert.ok(!/FS\(\)\.(read|write|mkdir|stat)\(/.test(files.slice(files.indexOf("function zipCollect"), files.indexOf("function renderZipPreview"))),
+    "the ZIP code reads and writes only through io");
+  assert.match(pc, /ctx\.zipCreate\(\[r\.path\], ZIP_IO\)/);
+  assert.match(pc, /ctx\.zipExtract\(r\.path, ZIP_IO\)/);
+  for (const k of ["c.zip", "c.extract"]) {
+    assert.equal((pc.match(new RegExp('"' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k + " in EN and EL");
+  }
+});

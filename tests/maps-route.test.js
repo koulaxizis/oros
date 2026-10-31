@@ -160,3 +160,39 @@ test("maps.js: guidance speaks only with an explicit local voice", () => {
   assert.match(src, /RC\.localVoice\(/);
   assert.doesNotMatch(src, /SpeechRecognition/);
 });
+
+// Heading-up navigation (route-core 1.2.0)
+test("mapTurn: map turned by -heading, short way round, jitter ignored", () => {
+  assert.equal(R.mapTurn(0, 90), -90);
+  assert.equal(R.mapTurn(0, 0), 0);
+  assert.equal(R.mapTurn(undefined, 45), -45);
+  // 350° → 10°: from -350 the short way is 20° further, not 340° back
+  assert.equal(R.mapTurn(-350, 10), -370);
+  assert.equal(R.mapTurn(-10, 350), 10);
+  // keeps turning the same way after many turns (no 360° spin)
+  assert.equal(R.mapTurn(720, 0), 720);
+  assert.equal(R.mapTurn(720, 30), 690);
+  // under minStep: unchanged; no heading: unchanged
+  assert.equal(R.mapTurn(-90, 92, 3), -90);
+  assert.equal(R.mapTurn(-90, 95, 3), -95);
+  assert.equal(R.mapTurn(-90, null), -90);
+  assert.equal(R.mapTurn(-90, NaN), -90);
+  assert.equal(Math.abs(R.mapTurn(-90, -90) + 90), 180);   // exactly opposite: either way
+});
+
+test("turnBox: square that covers the screen at any angle, centred", () => {
+  const b = R.turnBox(360, 640);
+  assert.equal(b.side, 735);              // √(360² + 640²) = 734.3 → 735
+  assert.equal(b.left, Math.floor((360 - 735) / 2));
+  assert.equal(b.top, Math.floor((640 - 735) / 2));
+  for (const deg of [0, 17, 45, 90, 133]) {
+    const a = deg * Math.PI / 180, half = b.side / 2;
+    // every screen corner, turned into the map's frame, stays inside it
+    for (const [x, y] of [[-180, -320], [180, -320], [-180, 320], [180, 320]]) {
+      const rx = x * Math.cos(a) - y * Math.sin(a), ry = x * Math.sin(a) + y * Math.cos(a);
+      assert.ok(Math.abs(rx) <= half && Math.abs(ry) <= half, deg + "°");
+    }
+  }
+  assert.deepEqual(R.turnBox(0, 0), { side: 0, left: 0, top: 0 });
+  assert.deepEqual(R.turnBox("x", -5), { side: 0, left: 0, top: 0 });
+});

@@ -578,6 +578,7 @@ dialog#zone-dlg h3 {
 .oro-toast .sn-btn:hover { filter: brightness(1.15); }
 
 /* ---------- Converter ---------- */
+.conv-row[hidden] { display: none; }
 .conv-row {
   display: flex;
   flex-wrap: wrap;

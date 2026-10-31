@@ -1,6 +1,37 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.74.00
+- New app: [Typing Tutor](help:a/typing) teaches you to type with all ten fingers without looking at the keys, on Greek, English (US) and German keyboards. Short lessons add two keys at a time, a coloured keyboard shows which finger to use, and speed tests and statistics show your progress on all your devices. Find it in the menu under Learning.
+
+## Version 4.73.01
+- orOS starts faster, above all on phones and slow connections: the first visit now loads its files side by side instead of one after another, and the welcome screen goes as soon as the desktop is ready. On a slow 4G phone the first open went from about 28 to about 8 seconds, and an ordinary open from 2.3 to 1.6 seconds.
+
+## Version 4.73.00
+- Spreadsheet knows over 200 functions: new lookups (XMATCH, OFFSET, INDIRECT), loan and investment functions (IPMT, PPMT, RATE, IRR, XIRR), TEXTBEFORE and TEXTAFTER, week numbers, your own weekend for working days, and lists in braces such as {1,2,3}. See [Spreadsheet](help:a/spreadsheet).
+
+## Version 4.72.00
+- Maps: during navigation the compass button turns the map with you, so the road ahead is always up; tap it again for north up. A route's `Share` now also offers `Download GPX`. See [Maps](help:a/maps).
+
+## Version 4.71.00
+- Free up cloud space: in [Settings](help:a/settings) › Sync, `Unused files in the cloud` › `Check` shows how much room old encrypted copies of deleted or replaced files take, and `Clean up` removes the ones no file uses that are at least 30 days old. It runs only when you ask, never by itself, and stops at anything unexpected. See [Sync across devices](help:t/sync).
+
+## Version 4.70.00
+- Writer: Word (.docx) export now keeps real numbered and bulleted lists (start numbers, a, i, α, nested), alignment and pictures at the size you see them, with captions, so the file opens in Word or LibreOffice looking the same and comes back into Writer the same. Word files with pictures now open with their pictures. PDF, RTF and text exports number lists the same way (3., c., iii., γ)).
+
+## Version 4.69.00
+- Writer can sound like a typewriter: in Writer's `Settings`, turn on `Typewriter sound while typing` for a soft click on every key and a carriage return on Enter. It is off unless you turn it on.
+- Files can make and open ZIP archives in [This computer](help:a/files) too, on the orOS Portable and the Live USB: `Compress to ZIP` on a file or folder, `Extract here` on a .zip.
+- Notes: deleting a page that has sub-pages now moves them up one level instead of hiding them. Bookmarks: with `Manual` sort, the menu of a bookmark has `Move up` and `Move down`.
+- Time: the `Sound` box now also silences alarms that ring while orOS is open, and the converter's Show button stays visible when the converter is hidden.
+- Greek: Photo Lab says «επίπεδα» instead of «layers» (and «Στάθμες» for Levels), and fewer English words appear elsewhere. Slides, Habits, Timesheet, Invoices, CRM, Calculator and Water fit better on narrow phones in Greek.
+
+## Version 4.68.00
+- Backup files can be encrypted. In [Settings](help:a/settings) › Backups, turn on `Encrypt backup files` and choose a passphrase of at least 10 characters: from then on the exported file, `Back up now` and the automatic folder backups are locked with it (AES-256), and importing one asks for it. It is off unless you turn it on, plain backup files still import, and the passphrase is never stored. Write it down: without it nobody can open these files. See [Backup and restore](help:t/backup).
+
+## Version 4.67.01
+- A link to useoros.online, the download page, the privacy policy or Help now shows a preview card when you paste it into a chat or a post: the title, a short description and a picture of orOS.
+
 ## Version 4.67.00
 - Settings › System › `Report a problem`: one text file to send to whoever helps you when something goes wrong. It holds the orOS version, your browser and device, how sync and backups are set up and the last errors orOS noticed, never your notes, files, names, passwords or keys, and you read all of it before you save it. On the orOS USB stick and in orOS Portable it can also carry the computer's own logs.
 

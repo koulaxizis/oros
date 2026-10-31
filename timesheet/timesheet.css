@@ -407,6 +407,12 @@ table.rep .num { text-align: right; white-space: nowrap; }
 table.rep td.num small { display: block; font-size: 11px; color: var(--text-dim); }
 table.rep .r-name { font-weight: 700; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 table.rep .r-name .dot { margin-right: 8px; }
+/* Greek 360px list (2026-10-16): a long project name pushed the hours
+   and amount off the screen. On phones the name wraps instead. */
+@media (max-width: 480px) {
+  table.rep .r-name { white-space: normal; overflow-wrap: anywhere; max-width: none; }
+  table.rep th, table.rep td { padding: 8px 5px; }
+}
 table.rep tfoot th, table.rep tfoot td { font-weight: 900; border-bottom: none; }
 .rep-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .rep-acts .wide-btn { flex: 1 1 200px; }

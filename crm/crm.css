@@ -309,7 +309,9 @@ button.row:hover, .row.click:hover { border-color: var(--accent); }
 .stg-row .icon-btn:disabled { opacity: .35; cursor: default; }
 .stg-hidden { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .stg-hidden .dlg-lbl { flex-basis: 100%; }
-.ag-row .row { min-height: 52px; }
+/* min-width 0: the row shrinks next to its check button, so long names
+   end with "…" instead of pushing it past the screen (Greek 360px list). */
+.ag-row .row { min-height: 52px; flex: 1 1 auto; width: auto; min-width: 0; }
 .check {
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
   border: 2px solid var(--text-dim); background: transparent;

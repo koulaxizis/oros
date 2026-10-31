@@ -312,6 +312,14 @@
       "type": "internal"
     },
     {
+      "id": "typing",
+      "name": "Typing Tutor",
+      "category": "Learning",
+      "icon": "typing",
+      "url": "typing/",
+      "type": "internal"
+    },
+    {
       "id": "quote",
       "name": "Quote",
       "category": "Business",

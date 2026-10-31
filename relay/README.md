@@ -666,12 +666,12 @@ stored.
   that is not behind Cloudflare's proxy (`allow_custom_ports`, on since
   compatibility date 2024-09-02); a server behind the proxy only on the
   proxy's own ports.
-- Methods `GET HEAD PUT DELETE MKCOL PROPFIND COPY MOVE`; `POST` only to
+- Methods `GET HEAD PUT DELETE MKCOL PROPFIND REPORT COPY MOVE`; `POST` only to
   a path ending in `/index.php/login/v2` or `/index.php/login/v2/poll`
   (Nextcloud Login Flow v2, answer capped at 64 KB, 10 a minute per IP).
 - Request headers: exactly `Authorization, Content-Type, Content-Length,
   Depth, Destination, Overwrite, If-Match, If-None-Match,
-  OCS-APIRequest`; everything else (cookies, `Origin`, `Referer`,
+  OCS-APIRequest, Prefer, Brief`; everything else (cookies, `Origin`, `Referer`,
   `CF-*`, `X-Forwarded-*`) is dropped. `Destination` must be on the
   target's own origin.
 - Answer headers: only `Content-Type, Content-Length, ETag,
@@ -690,6 +690,16 @@ stored.
 - Its own rate limit: about 600 requests a minute per IP (a sync round
   lists folders one by one), timeout 60 s until the server answers
   (`PUT` 5 min).
+
+CalDAV / CardDAV (since 2026-10-31): Calendar, Contacts and To-Do sync
+with the user's own CalDAV / CardDAV server (Nextcloud, Radicale,
+Baïkal, mailbox.org, Fastmail, iCloud) goes through the same `/dav`,
+also only when the user turns it on. It adds the method `REPORT`
+(sync-collection, calendar-multiget, addressbook-multiget; body capped
+at 64 KB like `PROPFIND`) and the request headers `Prefer` and `Brief`.
+This data is **not** end-to-end encrypted: events, contacts and tasks
+pass through in plain form, and like everything else here they are
+never logged or stored.
 
 Tests: `tests/dav-relay.test.js`.
 

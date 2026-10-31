@@ -235,3 +235,39 @@ test("the relay never writes Authorization anywhere", async () => {
   assert.ok(!logs.some((l) => /c2VjcmV0/.test(l)));
   assert.deepEqual(logs, []);
 });
+
+test("CalDAV / CardDAV: REPORT passes with its body and Depth / Prefer / Brief; a body over 64 KB is refused", async () => {
+  const xml = '<?xml version="1.0"?><d:sync-collection xmlns:d="DAV:"><d:sync-token/><d:sync-level>1</d:sync-level>' +
+    "<d:prop><d:getetag/></d:prop></d:sync-collection>";
+  const target = "https://dav.example.com/calendars/u/home/";
+  const rep = await call({ method: "REPORT", target,
+    headers: { Depth: "1", "Content-Type": "application/xml; charset=utf-8", Prefer: "return=minimal", Brief: "t" }, body: xml,
+    upstream: () => new Response("<d:multistatus/>", { status: 207, headers: { "Content-Type": "application/xml" } }) });
+  assert.equal(rep.res.status, 207);
+  assert.equal(await rep.res.text(), "<d:multistatus/>");
+  assert.equal(rep.seen[0].url, target);
+  assert.equal(rep.seen[0].init.method, "REPORT");
+  assert.equal(Buffer.from(rep.seen[0].init.body).toString(), xml);
+  const h = rep.seen[0].init.headers;
+  assert.equal(h.get("Depth"), "1");
+  assert.equal(h.get("Prefer"), "return=minimal");
+  assert.equal(h.get("Brief"), "t");
+  assert.equal(h.get("Content-Length"), null, "the length is the relay's own");
+
+  const big = await call({ method: "REPORT", target, body: "x".repeat(65 * 1024) });
+  assert.equal(big.res.status, 413);
+  assert.equal(big.res.headers.get("X-Oros-Error"), "too-big");
+  assert.equal(big.seen.length, 0);
+
+  const pre = await call({ method: "OPTIONS" });
+  assert.ok(pre.res.headers.get("Access-Control-Allow-Methods").split(", ").indexOf("REPORT") >= 0);
+  const allow = pre.res.headers.get("Access-Control-Allow-Headers").split(", ");
+  assert.ok(allow.indexOf("Prefer") >= 0 && allow.indexOf("Brief") >= 0);
+
+  const put = await call({ method: "PUT", target: target + "e1.ics", headers: { "Content-Length": "5", "If-None-Match": "*",
+    "Content-Type": "text/calendar; charset=utf-8" }, body: Buffer.from("BEGIN"), duplex: "half",
+    upstream: () => new Response(null, { status: 201, headers: { ETag: '"c1"' } }) });
+  assert.equal(put.res.status, 201);
+  assert.equal(put.res.headers.get("ETag"), '"c1"');
+  assert.equal(put.seen[0].init.headers.get("If-None-Match"), "*");
+});
