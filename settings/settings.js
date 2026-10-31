@@ -1012,6 +1012,133 @@
         }, "danger")));
       host.appendChild(c3);
     }
+    host.appendChild(caldavCard());
+  }
+
+  // ---------- 6a-2. Calendars and contacts (CalDAV / CardDAV, wave 2) ----------
+  // The account lives in davkit.js (window.OrosDav, loaded by this
+  // page): device-local, the app password never leaves this device
+  // except to the person's own server (and through the relay only when
+  // they turn it on). Nothing is saved before the server has passed
+  // the probe.
+  var cd = { open: false, url: "", user: "", pass: "", relay: false, busy: false, msg: null };
+  var CD_ERRS = ["url", "auth", "unreachable", "notdav", "none", "readonly", "conditions", "etag", "moved", "relay-target", "too-big"];
+
+  function cdApi() { return window.OrosDav && window.OrosDav.v >= 1 ? window.OrosDav : null; }
+  function cdErr(e) {
+    var code = String((e && e.message) || "").replace(/^cd-/, "");
+    return { kind: "err", key: CD_ERRS.indexOf(code) >= 0 ? "cd.err." + code : "cd.err.other" };
+  }
+  function cdInput(key, label, type, ph, auto) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-cd-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-cd-" + key;
+    inp.type = type;
+    inp.autocomplete = auto;
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (ph) inp.placeholder = ph;
+    inp.maxLength = key === "url" ? 500 : 200;
+    inp.value = cd[key];
+    inp.setAttribute("data-k", "cd-" + key);
+    inp.addEventListener("input", function () { cd[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function cdKind(c) {
+    if (c.kind === "card") return t("cd.kind.card");
+    var ev = c.comps.indexOf("VEVENT") >= 0, td = c.comps.indexOf("VTODO") >= 0;
+    return t(ev && td ? "cd.kind.both" : ev ? "cd.kind.cal" : "cd.kind.todo");
+  }
+  function cdForm(D) {
+    var form = el("form", "pass dav-form");
+    form.setAttribute("autocomplete", "off");
+    form.appendChild(cdInput("url", t("cd.url"), "url", t("cd.url.ph"), "url"));
+    form.appendChild(cdInput("user", t("cd.user"), "text", "", "username"));
+    form.appendChild(cdInput("pass", t("cd.pass"), "password", "", "current-password"));
+    var rl = el("label", "check");
+    var rc = el("input");
+    rc.type = "checkbox";
+    rc.setAttribute("data-k", "cd-relay");
+    rc.checked = cd.relay;
+    rc.addEventListener("change", function () { cd.relay = rc.checked; });
+    rl.appendChild(rc);
+    rl.appendChild(el("span", null, t("cd.relay")));
+    form.appendChild(rl);
+    form.appendChild(el("div", "hint", t("cd.relay.hint")));
+    var go = el("button", "btn primary", t(cd.busy ? "cd.working" : "cd.go"));
+    go.type = "submit";
+    go.setAttribute("data-k", "cd.go");
+    if (cd.busy) go.disabled = true;
+    form.appendChild(actions(go, button(t("cd.cancel"), "cd.cancel", function () {
+      cd.open = false; cd.pass = ""; cd.msg = null; render();
+    })));
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (cd.busy) return;
+      var pass = cd.pass;
+      cd.pass = "";
+      cd.busy = true;
+      cd.msg = { kind: "dim", key: "cd.working" };
+      render();
+      D.connect({ url: cd.url, user: cd.user, relay: cd.relay }, pass).then(function () {
+        cd.busy = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
+      }, function (e) {
+        cd.busy = false; cd.msg = cdErr(e); render();
+      });
+    });
+    return form;
+  }
+  function caldavCard() {
+    var D = cdApi();
+    var c = card(t("cd.title"), "caldav");
+    c.appendChild(el("p", "hint", t("cd.hint")));
+    if (!D) { c.appendChild(el("p", "msg msg-err", t("cd.err.other"))); return c; }
+    var a = D.load();
+    if (!a) {
+      if (cd.open) c.appendChild(cdForm(D));
+      else c.appendChild(actions(button(t("cd.connect"), "cd.connect", function () {
+        cd.open = true; cd.msg = null; render();
+        var f = $("f-cd-url"); if (f) f.focus();
+      }, "primary")));
+    } else {
+      var host = a.conf.url;
+      try { host = new URL(a.conf.url).host; } catch (e) {}
+      var st = el("div", "status status-on");
+      st.appendChild(el("span", "dot"));
+      var tx = el("div", "status-txt");
+      tx.appendChild(el("div", "status-main", t("cd.on", { host: host, user: a.conf.user })));
+      if (a.conf.relay) tx.appendChild(el("div", "hint", t("cd.via.relay")));
+      st.appendChild(tx);
+      c.appendChild(st);
+      c.appendChild(el("div", "row-label", t("cd.found")));
+      if (!a.cols.length) c.appendChild(el("p", "hint", t("cd.none")));
+      var ul = el("ul", "cd-cols");
+      a.cols.forEach(function (col) {
+        var li = el("li", "hint");
+        li.textContent = (col.name || t("cd.noname")) + " \u00b7 " + cdKind(col) + (col.readOnly ? " \u00b7 " + t("cd.ro") : "");
+        ul.appendChild(li);
+      });
+      c.appendChild(ul);
+      c.appendChild(el("p", "hint", t("cd.next")));
+      var chk = button(t(cd.busy ? "cd.working" : "cd.refresh"), "cd.refresh", function () {
+        cd.busy = true; cd.msg = null; render();
+        D.refresh().then(function () { cd.busy = false; render(); }, function (e) { cd.busy = false; cd.msg = cdErr(e); render(); });
+      });
+      if (cd.busy) chk.disabled = true;
+      c.appendChild(actions(chk, confirmBtn(t("cd.disconnect"), t("cd.disconnect.confirm"), "cd.disconnect", function () {
+        D.disconnect(); cd.msg = null; render();
+      }, "danger")));
+    }
+    if (cd.msg) {
+      var m = el("p", "msg msg-" + cd.msg.kind, t(cd.msg.key));
+      m.setAttribute("role", "status");
+      c.appendChild(m);
+    }
+    return c;
   }
 
   // VD-GC: unused copies in the cloud. Check changes nothing; the
