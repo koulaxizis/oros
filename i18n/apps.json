@@ -636,6 +636,12 @@
    ]
   },
   {
+   "app": "pad",
+   "files": [
+    "pad/app.js"
+   ]
+  },
+  {
    "app": "passwords",
    "files": [
     "passwords/passwords.js",

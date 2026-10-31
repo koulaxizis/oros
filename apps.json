@@ -82,6 +82,14 @@
       "type": "internal"
     },
     {
+      "id": "pad",
+      "name": "Pad",
+      "category": "Accessories",
+      "icon": "pad",
+      "url": "pad/",
+      "type": "internal"
+    },
+    {
       "id": "todo",
       "name": "To-Do",
       "category": "Office",
