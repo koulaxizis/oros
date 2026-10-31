@@ -14,13 +14,14 @@
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
   // skin, wallpaper, syncInterval, autoexport ride in the shell slice;
   // the pet switch in the pet slice; notifications in the notifs slice;
-  // search switches, backup folder and passphrase stay on the device.
+  // search switches, backup folder and passphrase, backup encryption
+  // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
     theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", osk: "device", widgets: "device"
+    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", osk: "device", widgets: "device", backupenc: "device"
   };
 
   // Search settings: one row per setting, in page order.
@@ -85,6 +86,7 @@
     ["backup-folder", "backup", "b.folder"],
     ["export", "backup", "b.export"],
     ["import", "backup", "b.import"],
+    ["backup-encrypt", "backup", "b.enc"],
     ["lang", "language", "l.lang"],
     ["osk", "language", "o.mode", "o.title", null, "osk"],
     ["osk-layouts", "language", "o.layouts", "o.title", "o.mode", "osk"],
@@ -279,6 +281,12 @@
       "b.noFolder": "This browser cannot save to a folder by itself. Export a backup file now and then.",
       "b.now": "Back up now", "b.export": "Export backup file", "b.import": "Import backup file",
       "b.hint": "A backup file is NOT encrypted. Keep it somewhere safe.",
+      "b.hint.enc": "Backup files are encrypted. Keep the backup passphrase safe: without it nobody can open them, orOS included.",
+      "b.enc": "Encrypt backup files",
+      "b.enc.hint": "Export, Back up now and the folder backups are locked with a passphrase of their own (AES-256). Importing asks for it. Files made without it still import.",
+      "b.enc.change": "Change passphrase",
+      "b.enc.lost": "This device no longer has the key (its site data was cleared). Set the passphrase again; until then no backup file is written.",
+      "b.enc.set": "Set passphrase",
 
       "l.lang": "Language", "l.search": "Menu search looks in",
       "l.lang.partial": "This language is partly translated: what is not translated yet shows in English.",
@@ -578,6 +586,7 @@
       "w.backup-folder": "folder disk save location",
       "w.export": "save download backup file",
       "w.import": "restore load backup file",
+      "w.backup-encrypt": "encrypt encryption password passphrase lock secure private",
       "w.lang": "english greek german deutsch",
       "w.osk": "virtual keyboard touch typing",
       "w.widgets": "widgets clock calendar today weather desktop cards",
@@ -767,6 +776,12 @@
       "b.noFolder": "Αυτός ο browser δεν μπορεί να γράφει μόνος του σε φάκελο. Κάνε πού και πού εξαγωγή αρχείου.",
       "b.now": "Αντίγραφο τώρα", "b.export": "Εξαγωγή αρχείου αντιγράφου", "b.import": "Εισαγωγή αρχείου αντιγράφου",
       "b.hint": "Το αρχείο αντιγράφου ΔΕΝ είναι κρυπτογραφημένο. Φύλαξέ το σε ασφαλές μέρος.",
+      "b.hint.enc": "Τα αρχεία αντιγράφων είναι κρυπτογραφημένα. Φύλαξε τον κωδικό αντιγράφων: χωρίς αυτόν κανείς δεν τα ανοίγει, ούτε το orOS.",
+      "b.enc": "Κρυπτογράφηση αρχείων αντιγράφου",
+      "b.enc.hint": "Η εξαγωγή, το «Αντίγραφο τώρα» και τα αντίγραφα στον φάκελο κλειδώνουν με δικό τους κωδικό (AES-256). Η εισαγωγή τον ζητά. Αρχεία χωρίς κωδικό εισάγονται κανονικά.",
+      "b.enc.change": "Αλλαγή κωδικού",
+      "b.enc.lost": "Αυτή η συσκευή δεν έχει πια το κλειδί (σβήστηκαν τα δεδομένα του ιστότοπου). Όρισε ξανά τον κωδικό· μέχρι τότε δεν γράφεται αρχείο αντιγράφου.",
+      "b.enc.set": "Ορισμός κωδικού",
 
       "l.lang": "Γλώσσα", "l.search": "Η αναζήτηση του μενού ψάχνει σε",
       "l.lang.partial": "Η γλώσσα έχει μεταφραστεί εν μέρει: ό,τι δεν έχει μεταφραστεί ακόμα εμφανίζεται στα αγγλικά.",
@@ -1065,6 +1080,7 @@
       "w.backup-folder": "φάκελος δίσκος αποθήκευση",
       "w.export": "αποθήκευση λήψη αρχείο αντίγραφο",
       "w.import": "επαναφορά φόρτωση αρχείο αντίγραφο",
+      "w.backup-encrypt": "κρυπτογράφηση κωδικός συνθηματικό κλείδωμα ασφάλεια ιδιωτικό",
       "w.lang": "αγγλικά ελληνικά γερμανικά english",
       "w.osk": "εικονικό πληκτρολόγιο οθόνης αφή",
       "w.widgets": "widgets γραφικά στοιχεία ρολόι ημερολόγιο σήμερα καιρός επιφάνεια κάρτες",

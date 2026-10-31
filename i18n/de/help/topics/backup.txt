@@ -8,7 +8,22 @@ Eine Sicherung ist eine einzige Datei mit all deinen orOS-Daten: jede App, deine
 
 Du kannst auch [[Ctrl+Alt+Shift+X]] drücken (`Datenbank exportieren`). Der Export funktioniert offline und braucht kein Dropbox.
 
->! Eine Sicherungsdatei ist **nicht verschlüsselt**. Wer sie öffnet, kann deine Daten lesen. Bewahre sie sicher auf, wie die `Einstellungen` dich erinnern: `Eine Sicherungsdatei ist NICHT verschlüsselt. Bewahre sie sicher auf.`
+>! Solange du die Verschlüsselung (unten) nicht einschaltest, ist eine Sicherungsdatei **nicht verschlüsselt**: Wer sie öffnet, kann deine Daten lesen. Bewahre sie sicher auf, wie die `Einstellungen` dich erinnern: `Eine Sicherungsdatei ist NICHT verschlüsselt. Bewahre sie sicher auf.`
+
+## Sicherungsdateien verschlüsseln
+Die Verschlüsselung ist aus, bis du sie einschaltest. Ist sie an, wird jede Sicherungsdatei mit einer eigenen Passphrase verschlossen (AES-256, so stark wie die Synchronisierung), sodass ein verlorener USB-Stick oder ein geteilter Ordner nichts preisgibt.
+
+1. Schalte in den `Einstellungen` unter `Sicherungen` `Sicherungsdateien verschlüsseln` ein.
+2. Gib zweimal eine Passphrase mit mindestens 10 Zeichen ein und tippe auf `Verschlüsseln`.
+
+Ab dann werden `Sicherungsdatei exportieren`, `Jetzt sichern` und die automatischen Ordner-Sicherungen verschlüsselt. `Passphrase ändern` legt eine neue für die nächsten Dateien fest; ältere Dateien behalten die Passphrase, mit der sie erstellt wurden. Schaltest du den Schalter aus, entstehen wieder einfache Dateien.
+
+>! Schreib die Sicherungs-Passphrase auf. Ohne sie kann niemand diese Dateien öffnen, auch orOS nicht. Sie ist getrennt von deiner Sync-Passphrase.
+
+Gut zu wissen:
+- Die Passphrase selbst wird nicht gespeichert. Dieses Gerät behält nur einen daraus erzeugten Schlüssel, damit die geplanten Sicherungen ohne Nachfrage laufen. Schalter und Schlüssel bleiben auf diesem Gerät; schalte sie auf jedem Gerät ein, von dem du sicherst.
+- Werden die Websitedaten dieses Geräts gelöscht, ist der Schlüssel weg: Die `Einstellungen` bitten dich, die `Passphrase festlegen` erneut, und bis dahin wird keine Sicherungsdatei geschrieben.
+
 
 ## Automatische Sicherungen in einen Ordner
 In Chrome, Edge und ähnlichen Browsern auf einem Computer kann orOS Sicherungen in einen Ordner deiner Wahl schreiben. Diese Optionen erscheinen nicht in Firefox, Safari oder auf Handys, weil diese Browser nicht in einen Ordner schreiben können. Dort exportierst du ab und zu von Hand.
@@ -29,6 +44,8 @@ Siehst du `Schalte zuerst die automatische Sicherung ein` oder `Wähle zuerst ei
 1. Öffne die `Einstellungen`, geh zu `Sicherungen` und tippe auf `Sicherungsdatei importieren`.
 2. Wähle eine orOS-Sicherungsdatei.
 3. Du siehst `Daten importiert` mit der Zahl der aktualisierten Bereiche.
+
+Eine verschlüsselte Sicherungsdatei fragt zuerst nach ihrer Passphrase (`Verschlüsselte Sicherungsdatei`). Eine falsche zeigt `Falsche Passphrase für diese Sicherungsdatei`, und nichts ändert sich. Einfache Sicherungsdateien, auch alle aus der Zeit vor der Verschlüsselung, werden wie immer importiert.
 
 Der Import löscht orOS nicht vorher. Wo eine App zusammenführen kann, wird die Sicherung mit dem kombiniert, was schon da ist, und Dateien aus der Sicherung kommen zur App Dateien dazu, ohne deine zu löschen. Ist die Synchronisierung an, gehen die wiederhergestellten Daten danach auch auf deine anderen Geräte.
 
