@@ -338,6 +338,36 @@
   function ymd(ts) { var d = new Date(ts); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function hhmm(ts) { var d = new Date(ts); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
 
+  // "Remind me" (Calendar axis, BR-W8): a programme that has not
+  // started yet becomes a New event prefill for the Calendar, with a
+  // reminder from the Calendar's own presets (15 min before, or 5 when
+  // it starts sooner). Started or broken programmes give null. The
+  // Calendar saves nothing until the person presses Save.
+  var CAL_REMIND = [15, 5];
+  function calPayload(p, chName, now) {
+    if (!p || typeof p.s !== "number" || !isFinite(p.s) || p.s <= now) return null;
+    var title = String(p.t || "").trim().slice(0, 80);
+    if (!title) return null;
+    var o = { date: ymd(p.s), start: hhmm(p.s), title: title };
+    if (typeof p.e === "number" && isFinite(p.e) && p.e > p.s) {
+      o.end = hhmm(p.e);
+      if (ymd(p.e) !== o.date) {
+        // past midnight: the end day too, unless it ends exactly at 00:00
+        if (o.end === "00:00") o.end = "23:59";
+        else o.dateEnd = ymd(p.e);
+      }
+    }
+    var ch = String(chName || "").trim().slice(0, 150);
+    if (ch) o.location = ch;
+    var note = [p.st, p.c].filter(Boolean).join(" · ");
+    if (p.d) note = note ? note + "\n" + p.d : String(p.d);
+    if (note) o.note = String(note).slice(0, 500);
+    for (var i = 0; i < CAL_REMIND.length; i++) {
+      if (p.s - CAL_REMIND[i] * 60000 > now) { o.remindMin = CAL_REMIND[i]; break; }
+    }
+    return o;
+  }
+
   // Programmes of one channel placed on a [from, to) timeline.
   function layoutRow(progs, from, to, pxPerMin) {
     var out = [];
@@ -450,7 +480,7 @@
     hash: hash, httpUrl: httpUrl, safeLogo: safeLogo,
     parseM3U: parseM3U, parseXMLTV: parseXMLTV, xmltvTime: xmltvTime, decodeText: decodeText,
     epgKey: epgKey, nameKey: nameKey, buildIndex: buildIndex, lookup: lookup,
-    nowNext: nowNext, dayRange: dayRange, ymd: ymd, hhmm: hhmm, layoutRow: layoutRow, windowGuide: windowGuide,
+    nowNext: nowNext, dayRange: dayRange, ymd: ymd, hhmm: hhmm, layoutRow: layoutRow, windowGuide: windowGuide, calPayload: calPayload,
     sourceId: sourceId, normSources: normSources, mergeSources: mergeSources, liveSources: liveSources,
     nameFromUrl: nameFromUrl, gunzipIfNeeded: gunzipIfNeeded
   };

@@ -128,7 +128,10 @@ var STRINGS = {
     "guide.capped":   "Showing the first {n} channels — search to narrow.",
     "epg.now":        "Now",
     "epg.next":       "Next",
-    "prog.watch":     "Watch"
+    "prog.watch":     "Watch",
+    "prog.remind":    "Remind me",
+    "prog.remind.hint": "Add to the Calendar with a reminder",
+    "prog.remind.sent": "Check the details and press Save in the Calendar"
   },
   el: {
     "tab.browse":     "Περιήγηση",
@@ -211,7 +214,10 @@ var STRINGS = {
     "guide.capped":   "Εμφανίζονται τα πρώτα {n} κανάλια — ψάξε για να περιορίσεις.",
     "epg.now":        "Τώρα",
     "epg.next":       "Μετά",
-    "prog.watch":     "Παρακολούθηση"
+    "prog.watch":     "Παρακολούθηση",
+    "prog.remind":    "Υπενθύμιση",
+    "prog.remind.hint": "Πρόσθεσε στο Ημερολόγιο με υπενθύμιση",
+    "prog.remind.sent": "Έλεγξε τα στοιχεία και πάτα Αποθήκευση στο Ημερολόγιο"
   }
 };
 
@@ -1486,12 +1492,16 @@ function guideMessage(box, text, withAction){
 
 /* --- programme details --- */
 
-var progCh = null;
+var progCh = null, progCal = null;
 
 function openProg(ch, p){
   var dlg = $("#tv-prog");
   if(!dlg) return;
   progCh = ch;
+  // "Remind me" only for a programme that has not started yet
+  progCal = C.calPayload(p, ch && ch.name, Date.now());
+  var cb = $("#tvpg-cal");
+  if(cb) cb.hidden = !progCal;
   $("#tvpg-title").textContent = p.t || "";
   var when = C.hhmm(p.s) + "–" + C.hhmm(p.e) + " · " + (ch.name || "");
   $("#tvpg-when").textContent = when;
@@ -1514,6 +1524,29 @@ function setupProgDialog(){
     dlg.close();
     if(progCh) playChannel(progCh);
   });
+  var cb = $("#tvpg-cal");
+  if(cb) cb.addEventListener("click", function(){
+    var p = progCal;
+    dlg.close();
+    if(p) sendToCalendar(p);
+  });
+}
+
+// Calendar axis (BR-W8): the programme goes to the Calendar's New event
+// window, prefilled with a reminder. Nothing is saved until Save there.
+function sendToCalendar(p){
+  var sent = false;
+  try {
+    if(window.parent && window.parent !== window &&
+       typeof window.parent.__orosOpenCalendarNew === "function"){
+      window.parent.__orosOpenCalendarNew(p);
+      sent = true;
+    }
+  } catch(e){}
+  if(!sent){
+    window.open("../calendar/?new=" + encodeURIComponent(JSON.stringify(p)), "_blank", "noopener,noreferrer");
+  }
+  transientNote(t("prog.remind.sent"));
 }
 
 /* --- groups filter --- */
@@ -2673,7 +2706,7 @@ function applyI18n(){
     "#tvs-epg-h": "src.epg.h", "#tvs-epg-hint": "src.epg.hint",
     "#tvs-pl-add": "src.add", "#tvs-epg-add": "src.add",
     "#tvs-pl-file": "src.file", "#tvs-epg-file": "src.file",
-    "#tvs-refresh": "src.refreshAll", "#tvpg-watch": "prog.watch"
+    "#tvs-refresh": "src.refreshAll", "#tvpg-watch": "prog.watch", "#tvpg-cal": "prog.remind"
   };
   Object.keys(txt).forEach(function(sel){ var el = $(sel); if(el) el.textContent = t(txt[sel]); });
   ["#tvs-pl-url", "#tvs-epg-url"].forEach(function(sel){
@@ -2684,6 +2717,7 @@ function applyI18n(){
   var eu = $("#tvs-epg-url"); if(eu) eu.setAttribute("aria-label", t("src.epg.h"));
   var mg = $("#tv-manage"); if(mg){ mg.title = t("manage"); mg.setAttribute("aria-label", t("manage")); }
   var gs = $("#tv-group"); if(gs) gs.setAttribute("aria-label", t("filter.group"));
+  var pc = $("#tvpg-cal"); if(pc) pc.title = t("prog.remind.hint");
   ["#tvs-close", "#tvpg-close"].forEach(function(sel){
     var b = $(sel);
     if(b){
