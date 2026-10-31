@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.78.00
+- Spreadsheet: area charts, stacked columns, bars and areas, a line over columns and trend lines; conditional formatting with a formula (=$B2>100) or icon sets; and iterative calculation for circular references (sheet menu › Calculation…). See [Spreadsheet](help:a/spreadsheet).
+
 ## Version 4.77.00
 - Television: in the `Guide`, a programme that has not started yet now has `Remind me`. It opens a new [Calendar](help:a/calendar) event with the time, the channel and a reminder 15 minutes before; press `Save` to keep it. See [Television](help:a/television).
 
