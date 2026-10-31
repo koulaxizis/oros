@@ -1,0 +1,45 @@
+# Zehnfingerschreiben
+Lerne, mit allen zehn Fingern zu tippen, ohne auf die Tasten zu schauen. Kurze Lektionen bringen jeweils zwei Tasten dazu, beginnend mit der Grundreihe, für griechische, englische (US) und deutsche Tastaturen. Ein paar Minuten am Tag reichen.
+
+## Erste Schritte
+1. Wähle oben deine Tastatur: `Ελληνικά`, `English (US)` oder `Deutsch`. Stell die Tastatur deines Computers auf dieselbe Sprache (Windows: Win+Leertaste, Linux: Super+Leertaste, Android mit Tastatur: Strg+Leertaste).
+2. Drück `Lektion 1 starten` oder eine beliebige Lektion in der Liste.
+3. Leg die Finger auf die Grundreihe: den linken Zeigefinger auf F, den rechten auf J. Beide Tasten haben eine kleine fühlbare Erhebung.
+4. Tippe den Text, den du siehst. Der nächste Buchstabe ist unterstrichen, und die Taste auf der Bildschirmtastatur und der passende Finger leuchten auf.
+5. Am Ende siehst du dein Tempo, deine Genauigkeit und die Sterne, die du verdient hast.
+
+## Die Bildschirmtastatur
+- Jede Farbe gehört zu einem Finger. Alle Tasten derselben Farbe tippt dieser Finger, und beide Daumen teilen sich die Leertaste.
+- Unter der Tastatur zeigen die zwei Hände, welcher Finger als Nächstes dran ist.
+- Für einen Großbuchstaben leuchtet auch die Umschalttaste der anderen Hand auf.
+- Für einen griechischen Buchstaben mit Tonos (ά, έ, ή…) drückst du zuerst die Taste mit ΄ (rechts neben Λ) und dann den Buchstaben. Umschalt und dieselbe Taste geben das Trema (ϊ, ϋ).
+- `Tastenhilfe` in den Einstellungen: `Wenn ich zögere` zeigt die Taste nur, wenn du wartest oder einen Fehler machst, `Immer` zeigt sie jedes Mal, `Nie` blendet die Tastatur aus, damit du aus dem Gedächtnis tippst.
+
+## Lektionen und Sterne
+- Die Lektionen gehen Reihe für Reihe: Grundreihe, obere Reihe, untere Reihe, dann Großbuchstaben, Umlaute, Zahlen und Zeichen. Jede Gruppe endet mit einer Wiederholung.
+- Sterne: einer, wenn du mit 90 % Genauigkeit oder mehr fertig wirst, zwei für 95 % und 15 Wörter pro Minute, drei für 98 % und 25 Wörter pro Minute.
+- `Weiter` öffnet immer die erste Lektion ohne Stern. Du kannst jede Lektion jederzeit öffnen.
+- `Fehler` in den Einstellungen: `Warten, bis es stimmt` wartet auf die richtige Taste (am besten zum Lernen), `Weiter, Rücktaste korrigiert` geht weiter und lässt dich zurückgehen.
+
+## Tempotest
+- Der `Tempotest` gibt dir 1, 2 oder 5 Minuten mit gängigen Wörtern.
+- Das Tempo zählt Wörter pro Minute (WpM): fünf Zeichen zählen als ein Wort. Die Genauigkeit ist der Anteil der richtigen Tastendrücke.
+- Dein bestes Ergebnis für jede Länge steht in der `Statistik`.
+
+## Statistik
+- Die `Statistik` (die Diagrammtaste oben) zeigt die heutige Übung, die Tage in Folge, deine Gesamtzeit und dein Tempo der letzten 7 Tage.
+- Die Balken zeigen deine Minuten an jedem der letzten 14 Tage.
+- `Deine Tasten` färbt jede Taste danach, wie oft sie schiefgeht: Grün ist gut, Rot braucht Übung. Die Liste darunter nennt die Tasten, an denen du arbeiten solltest.
+
+## Einstellungen
+- Das `Tagesziel` legt die Minuten für den Ring auf dem ersten Bildschirm fest.
+- Die `Textgröße` macht den Lektionstext kleiner oder größer.
+- `Tastentöne` und `Bildschirmtastatur verwenden` gelten nur auf diesem Gerät.
+- `Fortschritt zurücksetzen` löscht alle Lektionen, Statistiken und Bestleistungen auf allen deinen Geräten.
+
+## Auf dem Handy
+Zehnfingerschreiben braucht eine echte Tastatur. Mit angeschlossener Tastatur (Bluetooth oder USB) bleibt die Handytastatur verborgen, und die Lektion funktioniert wie am Computer. Ohne Tastatur kannst du mit `Bildschirmtastatur verwenden` die Buchstaben üben, aber nicht das Zehnfingersystem.
+
+## Deine Daten
+- Fortschritt, Statistik und Einstellungen werden laufend gespeichert. Mit der orOS-Synchronisierung in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte. Übung auf zwei Geräten am selben Tag wird zusammengezählt.
+- Was du in einer Lektion tippst, wird nicht gespeichert, nur die Zahlen (Tempo, Genauigkeit, welche Tasten schiefgingen).

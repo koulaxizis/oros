@@ -1041,6 +1041,13 @@
    ]
   },
   {
+   "app": "typing",
+   "files": [
+    "typing/app.js",
+    "typing/layouts.js"
+   ]
+  },
+  {
    "app": "units",
    "files": [
     "units/core.js",
