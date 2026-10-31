@@ -2272,7 +2272,7 @@ Read input values + scrollTop BEFORE `innerHTML=""`, rebuild, then restore.
 
 Rule ids are kept as recorded.
 
-- **BR-W8-1 · Contract.** `window.parent.__orosOpenCalendarNew({ date, title?, location?, start?, note? })`. `date` is mandatory `"YYYY-MM-DD"` (strict regex guard in `shell.js`); `start` is 24h `"HH:MM"`. The rest are optional strings, truncated by the receiver (location 150, note 500). The receiver (`__orosCalendarNew` in calendar.js) also reads `end`, `dateEnd` and, since Calendar wave 8, `allDay: true` and `recur` (normalised with `normRecur`); the Calendar's own quick add and "Copy to my calendar" use these.
+- **BR-W8-1 · Contract.** `window.parent.__orosOpenCalendarNew({ date, title?, location?, start?, note? })`. `date` is mandatory `"YYYY-MM-DD"` (strict regex guard in `shell.js`); `start` is 24h `"HH:MM"`. The rest are optional strings, truncated by the receiver (location 150, note 500). The receiver (`__orosCalendarNew` in calendar.js) also reads `end`, `dateEnd` and, since Calendar wave 8, `allDay: true` and `recur` (normalised with `normRecur`); the Calendar's own quick add and "Copy to my calendar" use these. Since 2026-10-31 also `remindMin` (BR-W8-10).
 - **BR-W8-2 · Staging key.** sessionStorage `oros-cal-new`, NOT `oros-cal-pending` (reserved for event deep links). Device-local, never synced, never exported. The original note's remark about the factory reset contradicts itself (A10).
 - **BR-W8-3 · One receiver.** `window.__orosCalendarNew` is defined inside `calendar.js` and has exactly two entries: a live push from the shell (`state.running === "calendar"`) and boot-time consumption of the staged payload (250 ms delay). Any new entry path goes through it.
 - **BR-W8-4 · One-shot take.** Read, then remove. A stale app bundle without the receiver ignores the payload; nothing breaks.
@@ -2281,6 +2281,7 @@ Rule ids are kept as recorded.
 - **BR-W8-7 · Reverse direction.** Calendar locations are clickable in Day (`.ev-loc`), Week (`.wk-ev-loc`) and Search (`.res-loc`), each with `evt.stopPropagation()`, all through the single `openInMaps()` → `window.parent.__orosOpenMapsQuery(query, label)`. A new view extends `openInMaps()`; it does not add a fourth path.
 - **BR-W8-8 · Availability.** "Send to Calendar" is gated by `routeTo && lastSteps.length`. Since Maps Dose 1 the button is still JS-appended at `wire()` time, has id `route-cal`, sits before `#nav-start` and is styled by `maps.css`.
 - **BR-W8-9 · Payload.** Title "Route to {dest}" / «Διαδρομή προς {προορισμός}» (from `maps.js`'s own `LANG`, not `window.t`); location = destination name; start = current local time; note = distance · duration · transport mode.
+- **BR-W8-10 · Television "Remind me" (2026-10-31).** The programme details dialog (Guide tab) shows `Remind me` / «Υπενθύμιση» only for a programme that has not started yet. `orosTvCore.calPayload(p, channelName, now)` (pure, `tests/television.test.js`) builds `{ date, start, end?, dateEnd?, title ≤ 80, location = channel ≤ 150, note = subtitle · category + description ≤ 500, remindMin? }`; a programme past midnight gets `dateEnd`, one ending exactly at 00:00 ends at 23:59 on its own day. `remindMin` is 15, or 5 when the programme starts within 15 minutes, or absent within 5. The receiver `__orosCalendarNew` now also reads `remindMin` (only a value of the Calendar's `REMIND_PRESETS`, else ignored) and sets the reminder select; it stays a prefill (BR-W8-6), and the saved event's reminder fires through the shell's existing `calRemTick` (`rem:<evId>:<ymd>`). Standalone Television opens `../calendar/?new=` (BR-W8-5).
 
 ### Cross-app "new entry" bridge: any app → Budget (BR-B1)
 
@@ -3238,7 +3239,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 
 - **2026-10-05 · Christos (answers during the full-suite audit)**
   - **Snapshots are abolished completely.** What stays: Dropbox sync, manual export, automatic export where it is feasible. The mantra line "Full project snapshots" is removed; no replacement subsystem will be built.
-  - **Television is on hold:** it has several problems and will be examined when the audit reaches it. Its open items (A11, Calendar axis, sync check) wait until then.
+  - **Television is on hold:** it has several problems and will be examined when the audit reaches it. Its open items (A11, sync check) wait until then; the Calendar axis was settled on 2026-10-31 (`Remind me`, BR-W8).
   - **Notifications dead code:** removal approved (`TOAST_POSITIONS`, `getPositionStyles()`, the unused `position` local), to be done when `notifications.js` is on the table and only if still unused.
 
 - **2026-10-05 · Bible (delegated: "this file is yours, handle it as you wish")**
@@ -3295,7 +3296,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 
 ### Doctrinal exemptions
 
-- **Calendar-axis exempt** (non-time-bound): Bookmarks, Files, Characters, Storage, Spreadsheet, Dice, Screen Pet, Minimalism, Radio, Calculator, Writer. Maps is NOT exempt (it integrates through BR-W8). Television: not recorded (Part X).
+- **Calendar-axis exempt** (non-time-bound): Bookmarks, Files, Characters, Storage, Spreadsheet, Dice, Screen Pet, Minimalism, Radio, Calculator, Writer. Maps is NOT exempt (it integrates through BR-W8). Television is NOT exempt either (2026-10-31: `Remind me` in the programme details goes through BR-W8).
 - **Notifications-exempt / transient-only** (Dice pattern): Dice & Coin, Screen Pet, Minimalism (shell-side detector), Radio, Calculator, Writer, Maps. Television is NOT exempt (it emits stream-failure notifications).
 - **Palette G3 exemption:** Calculator (independent playful skins; Screen Pet precedent).
 - **Screen Pet** is not an `apps.json` app (shell component; device-local toggle oros-pet-enabled).
@@ -3414,7 +3415,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - ⊗ **R31:** which rule is it? The Television v0.1.1 note cites "R32 centered dialogs"; nothing in this file defines R31. Until answered the number stays reserved.
 - ⊗ **Greek wording (suggestions, not applied):** `alarm.title` «Ειδοποίηση» for "Alarm" (the same overlay serves timers); `sync.err.auth` «— επανασύνδεση» → «— συνδέσου ξανά»; English terms left in Greek strings (`sc.info.cap` "Offline-first", "tracking"; "API key" in the service lines; "cloud", "browser").
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
-- ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
+- ~~**Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.~~ → decided 2026-10-31 (Chris): not exempt; the programme details' `Remind me` sends a programme to the Calendar through BR-W8 (Part VI).
 - ⊗ **Studio free sounds (2026-10-30, Part IX):** wave 1 Sound info and credits (4.48.00) and wave 2 Airwindows effects (4.49.00, Studio only; removed again in 4.58.00 for our own NULL JSFX effects) done; wave 3a sampled instruments (4.50.00) and wave 3b (Salamander, orchestral percussion, SFZ import, the list on this device, Free sounds as clips, 4.51.00) done. Wave 4 (orOS Bridge 0.1.0, koulaxizis/oros-bridge #1, and Studio `Freeze to audio`, 4.52.00) done. Next: the Assistant's `addtrack` taking a pack; a signed Windows release of the bridge (Chris publishes); live playback through the bridge only if freezing proves too slow. Not tested yet: the bridge with real commercial plugins and their windows on Windows (CI builds and runs the protocol test on Windows with our own test VST3/CLAP plugins). Not tested yet: a pack downloaded from koulaxizis.github.io in a real browser (the build container cannot reach github.io; Pages deployed 2026-10-30 11:41). Freesound deferred (API terms grey area); ask Chris before bringing it back.
 - ⊗ **Maps follow-ups** (proposals 2026-10-08, `audits/maps-proposals-2026-10-08.md`; 0.43.00 delivered the fixes MX-1…MX-8 and the planner, stops, long-press menu, recents and coordinates). Not started: alternative routes (`alternatives=true`), avoid tolls / motorways (`exclude=`, check the demo server first), arrival clock time, lane hints, heading-up map rotation, "download this area" for offline (mind the OSM tile usage policy), share link / GPX export.
 - ~~**Part XII order (2026-10-26):** parallel PRs inserted their entries near the top of a newest-first run, so 98 entries were out of order.~~ → done 2026-10-27: Part XII sorted by date and APP_VERSION; `tests/bible-order.test.js` now fails any PR that puts an entry out of order.
