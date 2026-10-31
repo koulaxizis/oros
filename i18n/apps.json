@@ -636,6 +636,12 @@
    ]
   },
   {
+   "app": "pad",
+   "files": [
+    "pad/app.js"
+   ]
+  },
+  {
    "app": "passwords",
    "files": [
     "passwords/passwords.js",
@@ -1038,6 +1044,13 @@
    "app": "typewriter",
    "files": [
     "typewriter/typewriter.js"
+   ]
+  },
+  {
+   "app": "typing",
+   "files": [
+    "typing/app.js",
+    "typing/layouts.js"
    ]
   },
   {

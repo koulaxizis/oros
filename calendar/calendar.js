@@ -6621,6 +6621,11 @@ function transientNote(title, body) {
         var rr = OCC.normRecur(p.recur, p.date);
         if (rr) setRepeatUi(rr, p.date);
       }
+      // Television "Remind me": a reminder from the Calendar's own
+      // presets (anything else is ignored); still only a prefill.
+      if (typeof p.remindMin === "number" && REMIND_PRESETS.indexOf(p.remindMin) !== -1 && $("ev-remind")) {
+        $("ev-remind").value = String(p.remindMin);
+      }
     }, 60);
   }
   window.__calNewEvent = __orosCalendarNew;
