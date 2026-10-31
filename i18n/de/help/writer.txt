@@ -15,7 +15,7 @@ Schreib einfach los; alles speichert sich von selbst.
 - Steht der Cursor in einer Tabelle, erscheint unter der Symbolleiste eine Leiste mit Tabellenwerkzeugen: `Zeile oberhalb`, `Zeile unterhalb`, `Spalte links`, `Spalte rechts`, `Zeile löschen`, `Spalte löschen`, `Kopfzeile` und `Tabelle löschen`.
 - Eingefügte Bilder, etwa Bildschirmfotos, werden verkleinert, um Platz zu sparen.
 - `Suchen und ersetzen` (oder [[Ctrl+F]]) bietet `Groß-/Kleinschreibung`, `Ganzes Wort`, einen Formatfilter (zum Beispiel `Nur fett`), `Ersetzen` und `Alle ersetzen`. Rückgängig nimmt eine Ersetzung zurück; direkt nach `Alle ersetzen` nimmt ein einziges Rückgängig alles zurück.
-- In den `Einstellungen` macht `Intelligente Typografie` aus -- einen Gedankenstrich, aus ... eine Ellipse und aus geraden Anführungszeichen typografische. `Autokorrektur-Regeln` ersetzt Text wie (c) durch ©, wenn du die Leertaste drückst. Du kannst eigene Regeln hinzufügen.
+- In den `Einstellungen` macht `Intelligente Typografie` aus -- einen Gedankenstrich, aus ... eine Ellipse und aus geraden Anführungszeichen typografische. `Autokorrektur-Regeln` ersetzt Text wie (c) durch ©, wenn du die Leertaste drückst. Du kannst eigene Regeln hinzufügen. `Schreibmaschinengeräusch beim Tippen` (anfangs aus) spielt bei jeder Taste ein leises Klicken und beim Enter einen Wagenrücklauf.
 
 ## Fokus und Statistik
 - `Ansicht` (die Augen-Taste) hat den `Fokusmodus`: Tabs und Symbolleisten verschwinden, und der ganze Text wird blasser außer dem Absatz, in dem du bist, oder dem Satz mit `Fokus auf den Satz`. Beende ihn mit der runden ×-Taste, [[Esc]] oder [[Ctrl+Alt+F]].

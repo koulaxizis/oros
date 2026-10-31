@@ -1557,7 +1557,7 @@ Multitasking (several live app frames), per device (Chris 2026-10-17; plan `/mnt
           track?: true } ],               // wave 22; absent = off
                                           // SORTED BY id (R26)
   tabOrder[],      // COMPAT ONLY = alive doc ids sorted; NOT the open tabs
-  settings{smartTypography,spell?,_mtime}, autocorrect{rules[{find,repl,def}],mtime}|null,
+  settings{smartTypography,spell?,typewriterSound (default false: a soft Web Audio key click per typed or deleted character and a carriage return on Enter, never on paste or IME; made on the spot like Typewriter, no files),_mtime}, autocorrect{rules[{find,repl,def}],mtime}|null,
   templates[{id,name,desc,html,mtime}] (sorted, tombstoned ones filtered),
   tplTombs[{id,ts}] (deduped max-ts, sorted), seeded,
   userDict?: { word: ±stamp } }   // wave 22; absent when empty
@@ -3521,7 +3521,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 
 - Help phase 2: guide pages for every app still in `PENDING` (tests/help.test.js), in batches by category.
 - Help phase 3: first-run shell tour (auto once for new users, replayable from Help) + "What's new" page with a one-time post-update toast.
-- Findings while writing the guide: ~~Time converter Show/Hide button sits inside the section it hides~~ (fixed 2026-10-31: the head always shows, only the row hides); ~~Time "Sound" checkbox has no effect inside orOS~~ (fixed: the shell's alarm reads it, `alarmSoundOf`); ~~Notes: deleting a page with sub-pages may hide them~~ (confirmed and fixed: they move up one level, `touchStruct`, the dialog says so); Writer typewriter-sound setting has no UI (and no sound code either: `settings.typewriterSound` is stored and never read; Chris chose 2026-10-31 to build it: an opt-in soft key click in Writer settings, off by default, in its own PR); ~~`vendor/xlsx.full.min.js` not precached~~ (it is, sw.js PRECACHE_URLS; the finding was stale); ~~Bookmarks "Manual" sort has no way to reorder~~ (fixed: `Move up` / `Move down` in the row menu, `moveInOrder`).
+- Findings while writing the guide: ~~Time converter Show/Hide button sits inside the section it hides~~ (fixed 2026-10-31: the head always shows, only the row hides); ~~Time "Sound" checkbox has no effect inside orOS~~ (fixed: the shell's alarm reads it, `alarmSoundOf`); ~~Notes: deleting a page with sub-pages may hide them~~ (confirmed and fixed: they move up one level, `touchStruct`, the dialog says so); ~~Writer typewriter-sound setting has no UI and no sound code~~ (built 2026-10-31 at Chris's pick: `Settings › Typewriter sound while typing`, off by default); ~~`vendor/xlsx.full.min.js` not precached~~ (it is, sw.js PRECACHE_URLS; the finding was stale); ~~Bookmarks "Manual" sort has no way to reorder~~ (fixed: `Move up` / `Move down` in the row menu, `moveInOrder`).
 
 - Screen Pet smoke test (retroactive energy after a simulated 2-day absence, identity merge rename, drag-vs-click threshold, EL/EN speech + HUD, HUD minimize persistence).
 - Mood deep audit (highest priority — deepest model), then Weather revisit, then a Kanban/Contacts/Notes pattern sweep (use A5/A6).

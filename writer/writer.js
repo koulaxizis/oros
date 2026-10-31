@@ -419,6 +419,7 @@ const STRINGS = {
     'sp.added': '“{w}” added to your dictionary',
     'sp.failed': 'The spelling dictionary could not be loaded, so the browser’s own spelling check is used for now.',
     'set.spell': 'Check spelling (English and Greek)',
+    'set.keySound': 'Typewriter sound while typing',
     'set.spellNote': 'The dictionaries download once, when first needed (about 0.2 MB for English, 2.1 MB for Greek), and then work offline.',
     'ud.title': 'My dictionary',
     'ud.note': 'Words you added are never marked as mistakes, on all your devices.',
@@ -785,6 +786,7 @@ const STRINGS = {
     'sp.added': 'Η λέξη «{w}» προστέθηκε στο λεξικό σου',
     'sp.failed': 'Το λεξικό ορθογραφίας δεν φορτώθηκε, οπότε προς το παρόν γίνεται ο έλεγχος του προγράμματος περιήγησης.',
     'set.spell': 'Ορθογραφικός έλεγχος (ελληνικά και αγγλικά)',
+    'set.keySound': 'Ήχος γραφομηχανής όταν γράφεις',
     'set.spellNote': 'Τα λεξικά κατεβαίνουν μία φορά, όταν χρειαστούν πρώτη φορά (περίπου 2,1 MB τα ελληνικά, 0,2 MB τα αγγλικά), και μετά λειτουργούν χωρίς σύνδεση.',
     'ud.title': 'Το λεξικό μου',
     'ud.note': 'Οι λέξεις που πρόσθεσες δεν σημειώνονται ποτέ ως λάθος, σε όλες τις συσκευές σου.',
@@ -2182,6 +2184,15 @@ function wireEvents() {
     smartTransformLastInsert();
   });
 
+  // Typewriter sound (off by default): a soft click per typed or deleted
+  // character, a carriage return on Enter. Never on paste, drop or IME.
+  EL.editor.addEventListener('input', (e) => {
+    if (!state.settings.typewriterSound || e.isComposing) return;
+    const k = e.inputType || '';
+    if (k === 'insertParagraph' || k === 'insertLineBreak') keySound('return');
+    else if (k === 'insertText' || k.indexOf('deleteContent') === 0) keySound('key');
+  });
+
   // Auto-correction: check the word just typed when Space is pressed
   EL.editor.addEventListener('keydown', (e) => {
     if (e.key === ' ' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing) {
@@ -3085,6 +3096,10 @@ function openSettingsDialog() {
         ${t('tt.smartTypography')}
       </label>
       <label class="full" style="text-align:left;display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="set-keysound" ${state.settings.typewriterSound ? 'checked' : ''}>
+        ${esc(t('set.keySound'))}
+      </label>
+      <label class="full" style="text-align:left;display:flex;align-items:center;gap:8px;">
         <input type="checkbox" id="set-spell" ${spellOn() ? 'checked' : ''}>
         ${esc(t('set.spell'))}
       </label>
@@ -3114,6 +3129,51 @@ function openSettingsDialog() {
     state.settings._mtime = Date.now();
     scheduleSave();
   });
+  dlg.querySelector('#set-keysound').addEventListener('change', (e) => {
+    state.settings.typewriterSound = e.target.checked;
+    state.settings._mtime = Date.now();
+    scheduleSave();
+    if (e.target.checked) keySound('key');   // a sample, and the user gesture that unlocks audio
+  });
+}
+
+/* ----- TYPEWRITER SOUND (Web Audio, made on the spot, like Typewriter) ----- */
+let ksCtx = null, ksNoise = null;
+function keySound(kind) {
+  try {
+    if (!ksCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ksCtx = new AC();
+      ksNoise = ksCtx.createBuffer(1, Math.floor(ksCtx.sampleRate * 0.3), ksCtx.sampleRate);
+      const d = ksNoise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const a = ksCtx;
+    if (a.state === 'suspended') a.resume();
+    const noise = (at, dur, freq, q, vol) => {
+      const src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain();
+      src.buffer = ksNoise; bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = q;
+      g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      src.connect(bp); bp.connect(g); g.connect(a.destination);
+      src.start(at, Math.random() * 0.2, dur + 0.02);
+    };
+    const tone = (at, freq, dur, vol) => {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = 'triangle'; o.frequency.value = freq;
+      g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g); g.connect(a.destination); o.start(at); o.stop(at + dur + 0.02);
+    };
+    const at = a.currentTime;
+    if (kind === 'return') {
+      for (let i = 0; i < 5; i++) noise(at + i * 0.03, 0.018, 3000, 2, 0.08);
+      noise(at + 0.18, 0.06, 600, 0.8, 0.2);
+    } else {
+      // Softer than Typewriter's key: this is a word processor, not a toy.
+      noise(at, 0.03, 2400 + Math.random() * 1200, 1.4, 0.14);
+      tone(at, 110 + Math.random() * 30, 0.04, 0.08);
+    }
+  } catch (e) { /* no audio: stay silent */ }
 }
 
 /* ----- QUICK FORMAT MENU (Alt+Right-click) ----- */
