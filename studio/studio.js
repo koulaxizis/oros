@@ -111,7 +111,7 @@
       "out.hint": "This browser always plays through the system output.",
       "sec.latency": "Recording offset", "f.latency": "Move new takes earlier by",
       "lat.hint": "If takes land late against the click, raise this until they line up. The output delay the browser reports is already taken off.",
-      "io.mode": "Record and play through", "io.browser": "This browser", "io.bridge": "orOS Bridge (your sound card)", "io.hint": "orOS Bridge opens your sound card itself (Windows Audio, ASIO®, JACK, PipeWire or ALSA): each take records the inputs you pick, in step with what you hear. Listen through your card's own monitoring, or through a plugin (below). The recording offset below is added on top.", "io.be": "Sound system", "io.in": "Record from the card", "io.ch": "Inputs", "io.out": "Listen through the card", "io.ex": "Sharing", "io.shared": "Shared with other programs", "io.excl": "Exclusive (lowest delay, other programs go quiet)", "io.test": "Check the inputs", "io.refresh": "Look again", "io.noBridge": "orOS Bridge is not running. Start it on this computer, then press Connect.", "io.looking": "Looking for sound cards…", "io.old": "This orOS Bridge cannot open sound cards yet. Get version 0.3.0 or newer.", "io.notRunning": "{name} (not running)", "io.nIn": "{n} channels", "io.one": "Input {n}", "io.pair": "Inputs {a} + {b} (stereo)", "io.all": "Every input, each on its own track ({n})", "io.ready": "Ready: Record now goes through {name}.", "io.none": "No sound card found. Is it plugged in? Press Look again.", "io.testing": "The card is open at {sr} Hz, about {ms} ms there and back. Play or sing to see the meters.", "io.openFail": "The sound card could not be opened. {why}", "io.prep": "Preparing the song for the sound card…", "io.pairFirst": "Pair orOS Bridge first: Settings › Record and play through.", "io.lost": "The computer could not keep up: {n} s of the take are missing.", "io.fx": "Listen through a plugin", "io.fxNone": "No plugin (the card's own monitoring)", "io.fxHint": "You hear the inputs through this plugin while you play and record, on outputs 1 and 2 of the card. Use headphones: a microphone near speakers howls. Turn your card's own direct monitoring off, or you hear yourself twice.", "io.fxGain": "Plugin level", "io.fxRec": "A take records", "io.fxDry": "The inputs as they come (the plugin stays on the track)", "io.fxWet": "The plugin's sound", "io.fxTesting": "The card is open at {sr} Hz. You hear the inputs through {name}, about {ms} ms from input to ears. Play or sing and set the sound in its window.", "io.fxOld": "This orOS Bridge cannot run a plugin on an input yet. Get version 0.5.0 or newer.", "io.fxFail": "{name} could not run on the input. The take goes on without it.", "io.fxSlow": "{name} could not keep up with the sound card and was switched off. Try a larger buffer in the card's settings.", "io.fxFailed": "{name} stopped working and was switched off.", "io.fxWinFirst": "Press Check the inputs first: the plugin opens with the card.",
+      "io.mode": "Record and play through", "io.browser": "This browser", "io.bridge": "orOS Bridge (your sound card)", "io.hint": "orOS Bridge opens your sound card itself (Windows Audio, ASIO®, JACK, PipeWire or ALSA): each take records the inputs you pick, in step with what you hear. Listen through your card's own monitoring, or through a plugin (below). The recording offset below is added on top.", "io.be": "Sound system", "io.in": "Record from the card", "io.ch": "Inputs", "io.out": "Listen through the card", "io.ex": "Sharing", "io.shared": "Shared with other programs", "io.excl": "Exclusive (lowest delay, other programs go quiet)", "io.test": "Check the inputs", "io.refresh": "Look again", "io.noBridge": "orOS Bridge is not running. Start it on this computer, then press Connect.", "io.looking": "Looking for sound cards…", "io.old": "This orOS Bridge cannot open sound cards yet. Get version 0.3.0 or newer.", "io.notRunning": "{name} (not running)", "io.nIn": "{n} channels", "io.one": "Input {n}", "io.pair": "Inputs {a} + {b} (stereo)", "io.all": "Every input, each on its own track ({n})", "io.ready": "Ready: Record now goes through {name}.", "io.none": "No sound card found. Is it plugged in? Press Look again.", "io.testing": "The card is open at {sr} Hz, about {ms} ms there and back. Play or sing to see the meters.", "io.openFail": "The sound card could not be opened. {why}", "io.prep": "Preparing the song for the sound card…", "io.pairFirst": "Pair orOS Bridge first: Settings › Record and play through.", "io.lost": "The computer could not keep up: {n} s of the take are missing.", "io.fx": "Listen through a plugin", "io.fxNone": "No plugin (the card's own monitoring)", "io.fxHint": "You hear the inputs through this plugin while you play and record, on outputs 1 and 2 of the card. Use headphones: a microphone near speakers howls. Turn your card's own direct monitoring off, or you hear yourself twice.", "io.fxGain": "Plugin level", "io.fxRec": "A take records", "io.fxDry": "The inputs as they come (the plugin stays on the track)", "io.fxWet": "The plugin's sound", "io.fxTesting": "The card is open at {sr} Hz. You hear the inputs through {name}, about {ms} ms from input to ears. Play or sing and set the sound in its window.", "io.fxOld": "This orOS Bridge cannot run a plugin on an input yet. Get version 0.5.0 or newer.", "io.fxFail": "{name} could not run on the input. The take goes on without it.", "io.fxSlow": "{name} could not keep up with the sound card and was switched off. Try a larger buffer in the card's settings.", "io.fxFailed": "{name} stopped working and was switched off.", "io.fxWinFirst": "Press Check the inputs first: the plugin opens with the card.", "io.midi": "MIDI keyboard", "io.noKeys": "No MIDI keyboard found", "io.fxInstHint": "Play your MIDI keyboard: orOS Bridge reads it itself and the instrument sounds on outputs 1 and 2 of the card. Record on an instrument track: the take keeps the notes you played, and the track keeps the instrument, ready to freeze.", "io.fxInstTesting": "The card is open at {sr} Hz. Play your keyboard: {name} answers in about {ms} ms. Set its sound in its window.", "io.fxNoKeys": "Choose the MIDI keyboard that plays {name}: Settings › Listen through a plugin.",
       "sec.metro": "Click", "f.metroVol": "Click volume",
       "disk.vault": "Audio files are kept on the orOS disk (Studio/audio) and Vault Drive carries them to your other devices.",
       "disk.local": "Audio files are kept on the orOS disk (Studio/audio), on this device. Turn on sync and Vault Drive to have them on your other devices too.",
@@ -269,7 +269,7 @@
       "out.hint": "Αυτός ο browser παίζει πάντα από την έξοδο του συστήματος.",
       "sec.latency": "Διόρθωση ηχογράφησης", "f.latency": "Μετακίνησε τις νέες λήψεις νωρίτερα κατά",
       "lat.hint": "Αν οι λήψεις πέφτουν αργά σε σχέση με τον μετρονόμο, ανέβασέ το μέχρι να συμπέσουν. Η καθυστέρηση εξόδου που δηλώνει ο browser αφαιρείται ήδη.",
-      "io.mode": "Ηχογράφηση και ακρόαση μέσω", "io.browser": "Αυτού του browser", "io.bridge": "orOS Bridge (η κάρτα ήχου σου)", "io.hint": "Το orOS Bridge ανοίγει το ίδιο την κάρτα ήχου σου (Windows Audio, ASIO®, JACK, PipeWire ή ALSA): κάθε λήψη γράφει τις εισόδους που διαλέγεις, σε συγχρονισμό με αυτό που ακούς. Άκου από την παρακολούθηση της ίδιας της κάρτας ή μέσα από ένα plugin (πιο κάτω). Η διόρθωση ηχογράφησης πιο κάτω προστίθεται επιπλέον.", "io.be": "Σύστημα ήχου", "io.in": "Ηχογράφηση από την κάρτα", "io.ch": "Είσοδοι", "io.out": "Ακρόαση από την κάρτα", "io.ex": "Κοινή χρήση", "io.shared": "Κοινή με άλλα προγράμματα", "io.excl": "Αποκλειστική (η μικρότερη καθυστέρηση, τα άλλα προγράμματα σωπαίνουν)", "io.test": "Έλεγχος εισόδων", "io.refresh": "Ψάξε ξανά", "io.noBridge": "Το orOS Bridge δεν τρέχει. Άνοιξέ το σε αυτόν τον υπολογιστή και πάτα Σύνδεση.", "io.looking": "Αναζήτηση καρτών ήχου…", "io.old": "Αυτό το orOS Bridge δεν ανοίγει ακόμη κάρτες ήχου. Πάρε την έκδοση 0.3.0 ή νεότερη.", "io.notRunning": "{name} (δεν τρέχει)", "io.nIn": "{n} κανάλια", "io.one": "Είσοδος {n}", "io.pair": "Είσοδοι {a} + {b} (στέρεο)", "io.all": "Κάθε είσοδος σε δικό της κανάλι ({n})", "io.ready": "Έτοιμο: η Ηχογράφηση περνά τώρα από το {name}.", "io.none": "Δεν βρέθηκε κάρτα ήχου. Είναι συνδεδεμένη; Πάτα Ψάξε ξανά.", "io.testing": "Η κάρτα είναι ανοιχτή στα {sr} Hz, περίπου {ms} ms πήγαινε-έλα. Παίξε ή τραγούδησε για να δεις τους μετρητές.", "io.openFail": "Η κάρτα ήχου δεν άνοιξε. {why}", "io.prep": "Ετοιμάζεται το τραγούδι για την κάρτα ήχου…", "io.pairFirst": "Σύνδεσε πρώτα το orOS Bridge: Ρυθμίσεις › Ηχογράφηση και ακρόαση μέσω.", "io.lost": "Ο υπολογιστής δεν πρόλαβε: λείπουν {n} s από τη λήψη.", "io.fx": "Ακρόαση μέσα από plugin", "io.fxNone": "Χωρίς plugin (η παρακολούθηση της ίδιας της κάρτας)", "io.fxHint": "Ακούς τις εισόδους μέσα από αυτό το plugin όσο παίζεις και ηχογραφείς, στις εξόδους 1 και 2 της κάρτας. Φόρεσε ακουστικά: ένα μικρόφωνο κοντά σε ηχεία σφυρίζει. Κλείσε την άμεση παρακολούθηση της κάρτας, αλλιώς θα ακούς τον εαυτό σου δύο φορές.", "io.fxGain": "Ένταση του plugin", "io.fxRec": "Μια λήψη γράφει", "io.fxDry": "Τις εισόδους όπως έρχονται (το plugin μένει στο κανάλι)", "io.fxWet": "Τον ήχο του plugin", "io.fxTesting": "Η κάρτα είναι ανοιχτή στα {sr} Hz. Ακούς τις εισόδους μέσα από το {name}, περίπου {ms} ms από την είσοδο ως τα αυτιά σου. Παίξε ή τραγούδησε και ρύθμισε τον ήχο στο παράθυρό του.", "io.fxOld": "Αυτό το orOS Bridge δεν τρέχει ακόμη plugin σε είσοδο. Πάρε την έκδοση 0.5.0 ή νεότερη.", "io.fxFail": "Το {name} δεν μπόρεσε να τρέξει στην είσοδο. Η λήψη συνεχίζει χωρίς αυτό.", "io.fxSlow": "Το {name} δεν πρόλαβε την κάρτα ήχου και σταμάτησε. Δοκίμασε μεγαλύτερο buffer στις ρυθμίσεις της κάρτας.", "io.fxFailed": "Το {name} σταμάτησε να λειτουργεί και απενεργοποιήθηκε.", "io.fxWinFirst": "Πάτα πρώτα Έλεγχος εισόδων: το plugin ανοίγει μαζί με την κάρτα.",
+      "io.mode": "Ηχογράφηση και ακρόαση μέσω", "io.browser": "Αυτού του browser", "io.bridge": "orOS Bridge (η κάρτα ήχου σου)", "io.hint": "Το orOS Bridge ανοίγει το ίδιο την κάρτα ήχου σου (Windows Audio, ASIO®, JACK, PipeWire ή ALSA): κάθε λήψη γράφει τις εισόδους που διαλέγεις, σε συγχρονισμό με αυτό που ακούς. Άκου από την παρακολούθηση της ίδιας της κάρτας ή μέσα από ένα plugin (πιο κάτω). Η διόρθωση ηχογράφησης πιο κάτω προστίθεται επιπλέον.", "io.be": "Σύστημα ήχου", "io.in": "Ηχογράφηση από την κάρτα", "io.ch": "Είσοδοι", "io.out": "Ακρόαση από την κάρτα", "io.ex": "Κοινή χρήση", "io.shared": "Κοινή με άλλα προγράμματα", "io.excl": "Αποκλειστική (η μικρότερη καθυστέρηση, τα άλλα προγράμματα σωπαίνουν)", "io.test": "Έλεγχος εισόδων", "io.refresh": "Ψάξε ξανά", "io.noBridge": "Το orOS Bridge δεν τρέχει. Άνοιξέ το σε αυτόν τον υπολογιστή και πάτα Σύνδεση.", "io.looking": "Αναζήτηση καρτών ήχου…", "io.old": "Αυτό το orOS Bridge δεν ανοίγει ακόμη κάρτες ήχου. Πάρε την έκδοση 0.3.0 ή νεότερη.", "io.notRunning": "{name} (δεν τρέχει)", "io.nIn": "{n} κανάλια", "io.one": "Είσοδος {n}", "io.pair": "Είσοδοι {a} + {b} (στέρεο)", "io.all": "Κάθε είσοδος σε δικό της κανάλι ({n})", "io.ready": "Έτοιμο: η Ηχογράφηση περνά τώρα από το {name}.", "io.none": "Δεν βρέθηκε κάρτα ήχου. Είναι συνδεδεμένη; Πάτα Ψάξε ξανά.", "io.testing": "Η κάρτα είναι ανοιχτή στα {sr} Hz, περίπου {ms} ms πήγαινε-έλα. Παίξε ή τραγούδησε για να δεις τους μετρητές.", "io.openFail": "Η κάρτα ήχου δεν άνοιξε. {why}", "io.prep": "Ετοιμάζεται το τραγούδι για την κάρτα ήχου…", "io.pairFirst": "Σύνδεσε πρώτα το orOS Bridge: Ρυθμίσεις › Ηχογράφηση και ακρόαση μέσω.", "io.lost": "Ο υπολογιστής δεν πρόλαβε: λείπουν {n} s από τη λήψη.", "io.fx": "Ακρόαση μέσα από plugin", "io.fxNone": "Χωρίς plugin (η παρακολούθηση της ίδιας της κάρτας)", "io.fxHint": "Ακούς τις εισόδους μέσα από αυτό το plugin όσο παίζεις και ηχογραφείς, στις εξόδους 1 και 2 της κάρτας. Φόρεσε ακουστικά: ένα μικρόφωνο κοντά σε ηχεία σφυρίζει. Κλείσε την άμεση παρακολούθηση της κάρτας, αλλιώς θα ακούς τον εαυτό σου δύο φορές.", "io.fxGain": "Ένταση του plugin", "io.fxRec": "Μια λήψη γράφει", "io.fxDry": "Τις εισόδους όπως έρχονται (το plugin μένει στο κανάλι)", "io.fxWet": "Τον ήχο του plugin", "io.fxTesting": "Η κάρτα είναι ανοιχτή στα {sr} Hz. Ακούς τις εισόδους μέσα από το {name}, περίπου {ms} ms από την είσοδο ως τα αυτιά σου. Παίξε ή τραγούδησε και ρύθμισε τον ήχο στο παράθυρό του.", "io.fxOld": "Αυτό το orOS Bridge δεν τρέχει ακόμη plugin σε είσοδο. Πάρε την έκδοση 0.5.0 ή νεότερη.", "io.fxFail": "Το {name} δεν μπόρεσε να τρέξει στην είσοδο. Η λήψη συνεχίζει χωρίς αυτό.", "io.fxSlow": "Το {name} δεν πρόλαβε την κάρτα ήχου και σταμάτησε. Δοκίμασε μεγαλύτερο buffer στις ρυθμίσεις της κάρτας.", "io.fxFailed": "Το {name} σταμάτησε να λειτουργεί και απενεργοποιήθηκε.", "io.fxWinFirst": "Πάτα πρώτα Έλεγχος εισόδων: το plugin ανοίγει μαζί με την κάρτα.", "io.midi": "Πληκτρολόγιο MIDI", "io.noKeys": "Δεν βρέθηκε πληκτρολόγιο MIDI", "io.fxInstHint": "Παίξε στο πληκτρολόγιο MIDI σου: το orOS Bridge το διαβάζει το ίδιο και το όργανο ακούγεται στις εξόδους 1 και 2 της κάρτας. Ηχογράφησε σε κανάλι οργάνου: η λήψη κρατά τις νότες που έπαιξες και το κανάλι κρατά το όργανο, έτοιμο για πάγωμα.", "io.fxInstTesting": "Η κάρτα είναι ανοιχτή στα {sr} Hz. Παίξε στο πληκτρολόγιο: το {name} απαντά σε περίπου {ms} ms. Ρύθμισε τον ήχο του στο παράθυρό του.", "io.fxNoKeys": "Διάλεξε το πληκτρολόγιο MIDI που παίζει το {name}: Ρυθμίσεις › Ακρόαση μέσα από plugin.",
       "sec.metro": "Μετρονόμος", "f.metroVol": "Ένταση μετρονόμου",
       "disk.vault": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio) και το Vault Drive τα μεταφέρει στις άλλες συσκευές σου.",
       "disk.local": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio), σε αυτή τη συσκευή. Άνοιξε το sync και το Vault Drive για να τα έχεις και στις άλλες συσκευές σου.",
@@ -517,7 +517,7 @@
     return { on: o.on === true, be: /^[a-z0-9]{1,20}$/.test(o.be) ? o.be : "", inp: str(o.inp, 300), out: str(o.out, 300),
              ex: o.ex === true, ch: typeof o.ch === "string" && /^(all|\d{1,2}(\+\d{1,2})?)$/.test(o.ch) ? o.ch : "1",
              fx: { id: typeof fx.id === "string" && /^(vst3|clap):[\x21-\x7e]{1,200}$/.test(fx.id) ? fx.id : "", name: str(fx.name, 80),
-                   gain: isFinite(gain) ? clamp(gain, 0, 200) : 100, wet: fx.wet === true } };
+                   gain: isFinite(gain) ? clamp(gain, 0, 200) : 100, wet: fx.wet === true, inst: fx.inst === true, midi: str(fx.midi, 200) } };
   }
   function loadPrefs() {
     var p = null;
@@ -2039,7 +2039,11 @@
   function startRecording() {
     if (recording) { stopRecording(); return; }
     var target = proj && (C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack));
-    if (target && target.p === proj.id && isInst(target)) { startMidiRec(target); return; }
+    if (target && target.p === proj.id && isInst(target)) {
+      // a plugin instrument live from the keyboard the bridge reads: the take is its notes
+      if (ioOn() && prefs.io.fx.id && prefs.io.fx.inst) { prefs.arm = target.id; savePrefs(); startIoRec(target); return; }
+      startMidiRec(target); return;
+    }
     if (ioOn() && !keysOpen()) {
       if (!ensureProject()) return;
       var it = C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack);
@@ -2165,7 +2169,7 @@
   var ioDevs = [], ioTest = false;
   // the plugin live on the inputs: its effects list, the open one {h, id, latency, monitor},
   // its last state (base64, this session) and the closing of the card in progress
-  var ioFxList = [], ioLive = null, ioFxSt = { id: "", b64: "" }, ioClosing = null, ioFxWarned = false;
+  var ioFxList = [], ioLive = null, ioFxSt = { id: "", b64: "" }, ioClosing = null, ioFxWarned = false, ioMidiList = [];
   function ioOn() { return prefs.io.on === true; }
   function ioBackend() { return ioDevs.filter(function (b) { return b.id === prefs.io.be; })[0] || null; }
   function ioInDev() {
@@ -2225,26 +2229,45 @@
       }
       ioShow("on");
       ioFill();
-      // the effects the bridge knows, for "Listen through a plugin"
-      return BRG.list().then(function (pl) { ioFxList = pl.filter(function (x) { return !x.instrument; }); ioFxFill(); }, function () {});
+      // the plugins the bridge knows and the keyboards it reads, for "Listen through a plugin"
+      return BRG.list().then(function (pl) {
+        ioFxList = pl;
+        return BRG.midiDevices().then(function (m) { ioMidiList = m; }, function () { ioMidiList = []; });
+      }).then(ioFxFill, function () {});
     }, function () { ioShow("off"); ioStatus(t("io.old")); });
   }
   function ioFxFill() {
-    var sel = $("io-fx"), fx = prefs.io.fx;
+    var sel = $("io-fx"), fx = prefs.io.fx, ms = $("io-midi");
     sel.innerHTML = "";
     opt(sel, "", t("io.fxNone"));
-    ioFxList.forEach(function (x) { opt(sel, x.id, x.name + (x.vendor ? " · " + x.vendor : "") + " (" + (x.format === "clap" ? "CLAP" : "VST3") + ")"); });
+    [["br.effects", false], ["br.instruments", true]].forEach(function (g) {
+      var items = ioFxList.filter(function (x) { return x.instrument === g[1]; });
+      if (!items.length) return;
+      var og = document.createElement("optgroup");
+      og.label = t(g[0]);
+      items.forEach(function (x) { opt(og, x.id, x.name + (x.vendor ? " · " + x.vendor : "") + " (" + (x.format === "clap" ? "CLAP" : "VST3") + ")"); });
+      sel.appendChild(og);
+    });
     sel.value = fx.id;
     if (sel.value !== fx.id) sel.value = "";
     $("io-fx-sec").hidden = !ioFxList.length;
     $("io-fx-on").hidden = !sel.value;
+    // an instrument plays from a keyboard the bridge reads; its take keeps the notes
+    $("io-fx-hint").textContent = t(fx.inst ? "io.fxInstHint" : "io.fxHint");
+    $("io-midi-sec").hidden = !fx.inst;
+    $("io-fx-wet-sec").hidden = fx.inst;
+    ms.innerHTML = "";
+    if (!ioMidiList.length) opt(ms, "", t("io.noKeys"));
+    ioMidiList.forEach(function (n) { opt(ms, n, n); });
+    if (ioMidiList.indexOf(fx.midi) < 0 && ioMidiList.length) { fx.midi = ioMidiList[0]; savePrefs(); }   // the first keyboard until one is chosen
+    ms.value = fx.midi;
     $("io-fx-gain").value = String(fx.gain);
     $("io-fx-gout").textContent = fx.gain + "%";
     $("io-fx-wet").value = fx.wet ? "1" : "";
   }
   function ioFxPick() {
     var id = $("io-fx").value, x = ioFxList.filter(function (p) { return p.id === id; })[0];
-    prefs.io.fx = Object.assign({}, prefs.io.fx, { id: x ? x.id : "", name: x ? C.clipLine(x.name, 80) : "" });
+    prefs.io.fx = Object.assign({}, prefs.io.fx, { id: x ? x.id : "", name: x ? C.clipLine(x.name, 80) : "", inst: !!(x && x.instrument) });
     savePrefs();
     ioTestOff();
     ioFxFill();
@@ -2257,14 +2280,16 @@
     var fx = prefs.io.fx;
     ioLive = null;
     ioFxWarned = false;
-    if (!fx.id || !inputs.length) return Promise.resolve(null);
+    if (!fx.id || (!fx.inst && !inputs.length)) return Promise.resolve(null);
+    if (fx.inst && !fx.midi) { showToast(t("io.fxNoKeys", { name: fx.name })); return Promise.resolve(null); }
     return ioTrackState(tr, fx.id).then(function (st) {
       if (!st && ioFxSt.id === fx.id) st = ioFxSt.b64;
-      var o = { plugin: fx.id, inputs: inputs.slice(0, 2), out: 0, gain: fx.gain / 100, on: true, record: wet ? "wet" : "dry" };
+      var o = { plugin: fx.id, inputs: fx.inst ? [] : inputs.slice(0, 2), out: 0, gain: fx.gain / 100, on: true, record: wet && !fx.inst ? "wet" : "dry" };
+      if (fx.inst) o.midi = fx.midi;
       if (st) o.state = st;
       return BRG.liveOpen(o);
     }).then(function (j) {
-      ioLive = { h: j.h, id: fx.id, name: fx.name, latency: Math.max(0, j.latency | 0), monitor: j.monitor | 0 };
+      ioLive = { h: j.h, id: fx.id, name: fx.name, latency: Math.max(0, j.latency | 0), monitor: j.monitor | 0, inst: fx.inst };
       return ioLive;
     }, function (e) {
       showToast(e && /unknown op/.test(e.message || "") ? t("io.fxOld") : t("io.fxFail", { name: fx.name }));
@@ -2350,7 +2375,7 @@
     }).then(function (lv) {
       if (!ioTest || !j) return;
       ioMeters(j.inputs | 0);
-      ioStatus(lv ? t("io.fxTesting", { sr: j.sr, ms: Math.round(lv.monitor / j.sr * 1000), name: lv.name })
+      ioStatus(lv ? t(lv.inst ? "io.fxInstTesting" : "io.fxTesting", { sr: j.sr, ms: Math.round(lv.monitor / j.sr * 1000), name: lv.name })
         : t("io.testing", { sr: j.sr, ms: Math.round((j.latency | 0) / j.sr * 1000) }));
     }, function (e) { ioTestOff(); ioStatus(t("io.openFail", { why: (e && e.message) || "" })); });
   }
@@ -2430,12 +2455,16 @@
       ioDevs = list;
       var bk = ioBackend(), dev = ioInDev();
       if (!bk || !bk.ok) throw new Error("nocard");
-      ioRec.record = ioChannels(dev ? dev.channels : 2);
+      ioRec.inst = isInst(tr);
+      ioRec.record = ioRec.inst ? [] : ioChannels(dev ? dev.channels : 2);
       return BRG.audioOpen({ backend: bk.id, input: prefs.io.inp, output: ioOutName(), exclusive: prefs.io.ex, record: ioRec.record });
     }).then(function (x) {
       var wet = prefs.io.fx.wet;
       return ioLiveOpen(ioRec.record, wet, tr).then(function (lv) {
-        if (lv && ioRec) ioRec.live = { id: lv.id, name: lv.name, latency: lv.latency, wet: wet, inputs: ioRec.record.slice(0, 2) };
+        if (lv && ioRec) ioRec.live = { id: lv.id, name: lv.name, latency: lv.latency, wet: wet && !lv.inst, inputs: ioRec.record.slice(0, 2), inst: lv.inst };
+        if (ioRec && ioRec.inst && !(lv && lv.inst)) throw new Error("nolive");   // nothing else would record
+        // a note comes in about half the round trip after the sound it was played to
+        if (ioRec) ioRec.midiLat = (x.latency | 0) / 2 / x.sr;
         return x;
       });
     }).then(function (x) {
@@ -2471,7 +2500,7 @@
     }).then(null, function (e) {
       var m = e && e.message;
       ioFail(m === "pair" ? t("io.pairFirst") : m === "nocard" ? t("io.none") : m === "nobridge" || m === "closed" ? t("io.noBridge")
-        : t("io.openFail", { why: m || "" }));
+        : m === "nolive" ? t("io.fxFail", { name: prefs.io.fx.name }) : t("io.openFail", { why: m || "" }));
     });
   }
   function stopIoRec() {
@@ -2483,7 +2512,9 @@
     var lost = 0;
     BRG.stop().then(function (s) {
       lost = s.lost | 0;
-      return BRG.take(s.frames | 0, r.record.length);
+      r.frames = s.frames | 0;
+      if (!r.live || !r.live.inst) return BRG.take(s.frames | 0, r.record.length);
+      return BRG.midiTake().then(function (ev) { r.midi = ev; return []; });
     }).then(function (chans) {
       return ioLiveDone().then(function (st) { if (r.live && st) r.live.b64 = st.b64; return chans; });
     }).then(function (chans) {
@@ -2498,6 +2529,7 @@
   }
   // the take onto its track(s): a pair as one stereo clip, every input as one track each
   function ioKeep(r, chans) {
+    if (r.live && r.live.inst) return ioKeepNotes(r);
     var a = audio(), tr = C.find(data, "tracks", r.tid);
     busy(null);
     if (!chans.length || !chans[0].length) { showToast(t("toast.recEmpty")); renderAll(); return; }
@@ -2545,6 +2577,41 @@
     });
   }
 
+  // The notes a live instrument got, as Studio notes [note, start s, length s, velocity]:
+  // sustain (CC 64) holds released notes, notes still held end with the take
+  function ioNotes(ev, sr, lat, endSec) {
+    var open = {}, held = {}, sus = false, out = [];
+    function end(n, t) {
+      var o = open[n];
+      delete open[n]; delete held[n];
+      if (!o || out.length >= C.MAX_NOTES) return;
+      out.push([n, o[0], Math.max(C.MIN_NOTE, t - o[0]), o[1]]);
+    }
+    ev.forEach(function (e) {
+      var at = Math.max(0, e[0] / sr - lat), k = e[1] & 0xf0, n = e[2] & 127, v = e[3] & 127;
+      if (k === 0x90 && v > 0) { if (open[n]) end(n, at); delete held[n]; open[n] = [at, v]; }
+      else if (k === 0x80 || k === 0x90) { if (!open[n]) return; if (sus) held[n] = 1; else end(n, at); }
+      else if (k === 0xb0 && n === 64) { sus = v >= 64; if (!sus) Object.keys(held).forEach(function (x) { end(+x, at); }); }
+    });
+    Object.keys(open).forEach(function (n) { end(+n, Math.max(endSec, open[n][0] + C.MIN_NOTE)); });
+    return out.sort(function (a, b) { return a[1] - b[1] || a[0] - b[0]; });
+  }
+  // a live instrument's take: its notes as a MIDI clip on the instrument track, which keeps the plugin
+  function ioKeepNotes(r) {
+    var tr = C.find(data, "tracks", r.tid), endSec = (r.frames || 0) / r.sr;
+    busy(null);
+    var notes = ioNotes(r.midi || [], r.sr, r.midiLat || 0, endSec);
+    if (!notes.length) { showToast(t("toast.recEmpty")); renderAll(); return; }
+    if (!tr || !proj || tr.p !== proj.id) { showToast(t("toast.recFail")); renderAll(); return; }
+    if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); renderAll(); return; }
+    var before = snapshot(), len = Math.max(endSec, N.notesEnd(notes), C.MIN_LEN);
+    put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, at: r.from, off: 0, len: len, n: notes }));
+    return (tr.br ? Promise.resolve() : ioKeepLive(tr, r.live)).then(function () {
+      undoStack.push(before); redoStack = [];
+      changed();
+      showToast(t("mi.recSaved", { n: notes.length, name: tr.name }));
+    });
+  }
   function ioKeepLive(dest, lv) {
     var fs = fsApi(), path = BR_DIR + "/" + dest.id + ".live.txt";
     var put1 = function (st) {
@@ -2717,6 +2784,7 @@
     lightKey(n, false); recEvent("off", n, 0);
   }
   function onMidi(e) {
+    if (ioLive && ioLive.inst) return;          // orOS Bridge plays this keyboard's notes itself
     var m = M.parse(e.data), sy = m && kbPlayer();
     if (!sy) return;
     var nt = nxKeys();
@@ -4642,6 +4710,7 @@
     $("io-test").addEventListener("click", ioTestToggle);
     $("io-fx").addEventListener("change", ioFxPick);
     $("io-fx-win").addEventListener("click", ioFxWindow);
+    $("io-midi").addEventListener("change", function () { prefs.io.fx.midi = $("io-midi").value; savePrefs(); ioTestOff(); });
     $("io-fx-wet").addEventListener("change", function () { prefs.io.fx.wet = $("io-fx-wet").value === "1"; savePrefs(); });
     $("io-fx-gain").addEventListener("input", function () {
       prefs.io.fx.gain = clamp(parseInt($("io-fx-gain").value, 10) || 0, 0, 200);

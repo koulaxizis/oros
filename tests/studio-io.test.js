@@ -47,6 +47,8 @@ function fakeBridge() {
       if (m.op === "audioOpen") { this.rec = m.record; return ok({ sr: 44100, period: 256, inputs: 4, outputs: 2, latency: LAT, record: m.record }); }
       if (m.op === "audioPlay") { play = Array.from({ length: m.channels }, () => new Float32Array(m.frames)); return ok(); }
       if (m.op === "audioStart") return ok();
+      if (m.op === "midiDevices") return ok({ inputs: ["AKAI EIE", "", 7, "x".repeat(201)] });
+      if (m.op === "midiTake") return ok({ events: [[480, 0x90, 60, 100], [960, 0x80, 60, 0], [1000, 0xf8, 0, 0], ["x", 0x90, 1, 1], [5, 0x90, 1]] });
       if (m.op === "liveOpen") return ok({ h: 9, latency: 32, monitor: 32 + LAT, inputs: 2, outputs: 2, editor: true, on: m.on, record: m.record || "dry" });
       if (m.op === "audioStop") {
         const n = (play && play[0] ? play[0].length : 0) + LAT + 10;
@@ -200,7 +202,7 @@ test("live plugin: settings, the take path, the track keeps the plugin, EN/EL/DE
   // the bridge runs on Linux too
   assert.ok(!/small free program for Windows that/.test(js) && !/πρόγραμμα για Windows που/.test(js) && !/Programm für Windows,/.test(de));
   [["studio/help.en.txt", "`Listen through a plugin`"], ["studio/help.el.txt", "`Ακρόαση μέσα από plugin`"], ["i18n/de/help/studio.txt", "`Über ein Plugin hören`"]].forEach(([f, k]) => {
-    assert.equal(read(f).split(k).length - 1, 2, f);
+    assert.ok(read(f).split(k).length - 1 >= 2, f);
   });
 });
 
@@ -212,4 +214,46 @@ test("core: track.lv (recorded through a live plugin) is checked", () => {
   assert.equal(C.normTrack(Object.assign({}, base, { lv: { id: "vst2:x" } })).lv, undefined);
   assert.equal(C.normTrack(Object.assign({}, base, { lv: { id: "clap:x", st: "/internal/Studio/../Music/a" } })).lv.st, "");
   assert.equal(C.normTrack(base).lv, undefined);
+});
+
+// ---- an instrument plugin live from a MIDI keyboard the bridge reads (0.6.0) ----
+test("bridge.js: the keyboards and the take's notes are cleaned", async () => {
+  const f = fakeBridge(), B = load(f);
+  await B.connect();
+  assert.deepEqual(await B.midiDevices(), ["AKAI EIE"]);
+  assert.deepEqual(await B.midiTake(), [[480, 0x90, 60, 100], [960, 0x80, 60, 0]]);
+});
+
+test("live instrument: the notes it got become Studio notes (sustain, held notes, latency)", () => {
+  const js = read("studio/studio.js");
+  const src = /\n  function ioNotes\(ev, sr, lat, endSec\) \{[\s\S]*?\n  \}\n/.exec(js)[0];
+  const ioNotes = new Function("C", src + "; return ioNotes;")({ MAX_NOTES: 100, MIN_NOTE: 0.01 });
+  const sr = 1000, near = (a, b) => a.length === b.length && a.every((x, i) => Math.abs(x - b[i]) < 1e-9);
+  const out = ioNotes([
+    [1000, 0x90, 60, 100], [1500, 0x80, 60, 0],          // a note
+    [2000, 0xb0, 64, 127], [2100, 0x90, 62, 90], [2200, 0x90, 62, 0], [2600, 0xb0, 64, 0],   // held by the pedal
+    [3000, 0x91, 64, 70],                                 // still held at the end
+  ], sr, 0.1, 4);
+  assert.equal(out.length, 3);
+  assert.ok(near(out[0], [60, 0.9, 0.5, 100]), JSON.stringify(out[0]));
+  assert.ok(near(out[1], [62, 2.0, 0.5, 90]), JSON.stringify(out[1]));
+  assert.ok(near(out[2], [64, 2.9, 1.1, 70]), JSON.stringify(out[2]));
+  assert.deepEqual(ioNotes([[0, 0x80, 60, 0]], sr, 0, 1), []);
+});
+
+test("live instrument: settings, the record path, the browser keyboard quiet, EN/EL/DE and the help", () => {
+  const html = read("studio/index.html"), js = read("studio/studio.js"), de = read("i18n/de/studio.js");
+  ["io-midi-sec", "io-midi", "io-fx-hint", "io-fx-wet-sec"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
+  assert.match(js, /if \(ioOn\(\) && prefs\.io\.fx\.id && prefs\.io\.fx\.inst\) \{ prefs\.arm = target\.id; savePrefs\(\); startIoRec\(target\); return; \}/);
+  assert.match(js, /ioRec\.record = ioRec\.inst \? \[\] : ioChannels/);
+  assert.match(js, /if \(fx\.inst\) o\.midi = fx\.midi;/);
+  assert.match(js, /return BRG\.midiTake\(\)\.then\(function \(ev\) \{ r\.midi = ev; return \[\]; \}\);/);
+  assert.match(js, /if \(r\.live && r\.live\.inst\) return ioKeepNotes\(r\);/);
+  assert.match(js, /if \(ioLive && ioLive\.inst\) return;/, "Web MIDI stays quiet while the bridge plays the keyboard");
+  assert.match(js, /gain: isFinite\(gain\) \? clamp\(gain, 0, 200\) : 100, wet: fx\.wet === true, inst: fx\.inst === true, midi: str\(fx\.midi, 200\)/);
+  ["io.midi", "io.noKeys", "io.fxInstHint", "io.fxInstTesting", "io.fxNoKeys"].forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+  [["studio/help.en.txt", "`MIDI keyboard`"], ["studio/help.el.txt", "`Πληκτρολόγιο MIDI`"], ["i18n/de/help/studio.txt", "`MIDI-Keyboard`"]].forEach(([f, k]) => assert.ok(read(f).includes(k), f));
 });

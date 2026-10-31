@@ -14,7 +14,8 @@
 //   - the sound card (bridge 0.3.0): devices(), audioOpen(o), play(chans, out)
 //     (the sound sent ahead), start(), stop(), take(frames, n), audioClose();
 //     events "levels" {peaks, running, pos, live?} and "audioError".
-//   - a plugin live on the inputs (bridge 0.5.0): liveOpen(o), liveSet(o), liveClose()
+//   - a plugin live on the inputs (bridge 0.5.0): liveOpen(o), liveSet(o), liveClose();
+//     an instrument from a MIDI keyboard the bridge reads (0.6.0): midiDevices(), liveOpen({midi}), midiTake()
 // Loaded before studio.js (window.StudioBridge).
 // ============================================================
 (function (root) {
@@ -203,6 +204,19 @@
   function liveOpen(o) { return cmd(Object.assign({ op: "liveOpen" }, o), 60000); }
   function liveSet(o) { return cmd(Object.assign({ op: "liveSet" }, o), 5000); }
   function liveClose() { return cmd({ op: "liveClose" }, 10000).then(null, function () {}); }
+  // MIDI keyboards the bridge reads itself (bridge 0.6.0): names; the notes the live plugin got in the last take
+  function midiDevices() {
+    return cmd({ op: "midiDevices" }, 10000).then(function (j) {
+      return (j.inputs || []).filter(function (n) { return typeof n === "string" && n.length > 0 && n.length <= 200; });
+    });
+  }
+  function midiTake() {
+    return cmd({ op: "midiTake" }, 20000).then(function (j) {
+      return (j.events || []).filter(function (e) {
+        return Array.isArray(e) && e.length === 4 && e.every(function (x) { return typeof x === "number" && x >= 0 && isFinite(x); }) && e[1] >= 0x80 && e[1] < 0xf0;
+      });
+    });
+  }
   function start() { return cmd({ op: "audioStart" }, 10000); }
   function stop() { return cmd({ op: "audioStop" }, 20000); }
   // the whole take: n channels of `frames` → Float32Array per channel
@@ -230,7 +244,7 @@
     open: open, close: close, editor: editor, state: state, setState: setState, info: info, reset: reset,
     render: render, renderAll: renderAll, on: on,
     devices: devices, audioOpen: audioOpen, audioClose: audioClose, play: play, start: start, stop: stop, take: take,
-    liveOpen: liveOpen, liveSet: liveSet, liveClose: liveClose, connected: function () { return !!ws && ws.readyState === 1 && authed; },
+    liveOpen: liveOpen, liveSet: liveSet, liveClose: liveClose, midiDevices: midiDevices, midiTake: midiTake, connected: function () { return !!ws && ws.readyState === 1 && authed; },
     forget: function () { keepToken(""); if (ws) ws.close(); }
   };
 })(typeof window !== "undefined" ? window : this);
