@@ -28,8 +28,6 @@ concurrency:
 
 jobs:
   apps:
-    # Pinned: ubuntu-latest is moving to 26.04, where Playwright 1.56 cannot
-    # install Chromium ("does not support chromium on ubuntu26.04-x64").
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
