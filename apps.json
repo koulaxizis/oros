@@ -82,6 +82,14 @@
       "type": "internal"
     },
     {
+      "id": "pad",
+      "name": "Pad",
+      "category": "Accessories",
+      "icon": "pad",
+      "url": "pad/",
+      "type": "internal"
+    },
+    {
       "id": "todo",
       "name": "To-Do",
       "category": "Office",
@@ -301,6 +309,14 @@
       "url": "flashcards/",
       "search": "search.js",
       "today": ["due.js", "today.js"],
+      "type": "internal"
+    },
+    {
+      "id": "typing",
+      "name": "Typing Tutor",
+      "category": "Learning",
+      "icon": "typing",
+      "url": "typing/",
       "type": "internal"
     },
     {

@@ -8,10 +8,18 @@
 // app password passes through on every request and is never logged or
 // stored.
 //
+// Since CalDAV / CardDAV wave 1 the same pass-through also carries
+// Calendar, Contacts and To-Do sync with the user's own CalDAV /
+// CardDAV server (REPORT: sync-collection, calendar-multiget,
+// addressbook-multiget). Unlike sync, that data is not end-to-end
+// encrypted: it passes through in plain form, is never logged or
+// stored, and the page uses the relay only when the user turns it on.
+//
 // Request:  <METHOD> /dav   X-Oros-Target: https://host[:port]/path
-//   METHOD = GET HEAD PUT DELETE MKCOL PROPFIND COPY MOVE, or POST to
+//   METHOD = GET HEAD PUT DELETE MKCOL PROPFIND REPORT COPY MOVE, or POST to
 //   …/index.php/login/v2 and …/index.php/login/v2/poll only (Nextcloud
-//   Login Flow v2; answer capped at 64 KB).
+//   Login Flow v2; answer capped at 64 KB). PROPFIND and REPORT bodies
+//   are capped at 64 KB (a multiget of 50 items is about 5 KB).
 // Answer:   the server's status, body and a short list of headers. A
 //   redirect is not followed and not answered as a redirect (the
 //   browser would follow it itself): 200 with X-Oros-Status (the 3xx)
@@ -24,7 +32,7 @@ import { validHost } from "./core.js";
 
 export const DAV_LIMITS = {
   putBytes: 95 * 1024 * 1024,     // under Cloudflare's 100 MB request body
-  loginBytes: 64 * 1024,          // a Login Flow v2 answer
+  loginBytes: 64 * 1024,          // a Login Flow v2 answer; a PROPFIND / REPORT body
   perMinute: 600,                 // requests per client IP (per isolate, best effort)
   loginPerMinute: 10,
   timeout: 60000,                 // ms until the server's headers arrive
@@ -32,9 +40,9 @@ export const DAV_LIMITS = {
 };
 
 const PORTS = { "": 1, "443": 1, "5006": 1, "8443": 1, "9443": 1 };
-const METHODS = { GET: 1, HEAD: 1, PUT: 1, DELETE: 1, MKCOL: 1, PROPFIND: 1, COPY: 1, MOVE: 1, POST: 1 };
+const METHODS = { GET: 1, HEAD: 1, PUT: 1, DELETE: 1, MKCOL: 1, PROPFIND: 1, REPORT: 1, COPY: 1, MOVE: 1, POST: 1 };
 const REQ_HEADERS = ["Authorization", "Content-Type", "Content-Length", "Depth", "Destination",
-                     "Overwrite", "If-Match", "If-None-Match", "OCS-APIRequest"];
+                     "Overwrite", "If-Match", "If-None-Match", "OCS-APIRequest", "Prefer", "Brief"];
 const RES_HEADERS = ["Content-Type", "Content-Length", "ETag", "Last-Modified", "DAV", "OC-ETag", "OC-FileId"];
 const LOGIN_RE = /\/index\.php\/login\/v2(\/poll)?$/;
 
@@ -138,7 +146,7 @@ async function forward(request, okOrigin, ip, now, fetchFn) {
     if (+len > DAV_LIMITS.putBytes) return refuse(413, "too-big", okOrigin);
     init.body = request.body;
     init.duplex = "half";
-  } else if (method === "PROPFIND" || method === "POST") {
+  } else if (method === "PROPFIND" || method === "REPORT" || method === "POST") {
     const body = await readCapped(request, DAV_LIMITS.loginBytes);
     if (body === null) return refuse(413, "too-big", okOrigin);
     if (body.length) init.body = body;

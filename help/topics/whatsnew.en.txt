@@ -1,6 +1,21 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.77.00
+- Television: in the `Guide`, a programme that has not started yet now has `Remind me`. It opens a new [Calendar](help:a/calendar) event with the time, the channel and a reminder 15 minutes before; press `Save` to keep it. See [Television](help:a/television).
+
+## Version 4.76.00
+- [Passwords](help:a/passwords) imports more: exports with a password from Bitwarden ("Password protected"), Aegis and 2FAS now open with that password, on your device only. New: Keeper, RoboForm, Zoho Vault and the KeePass XML export.
+
+## Version 4.75.00
+- New app: [Pad](help:a/pad), an editor for plain text and code in Accessories. Tabs that stay open until you close them, colours for over 30 languages (EEL2 for JSFX too), find and replace with regular expressions, go to line, and the file's own encoding and line endings kept, old Greek Windows-1253 and ISO-8859-7 files included. Open and save on the orOS disk or on this device; a file that changed on another device is never overwritten.
+
+## Version 4.74.00
+- New app: [Typing Tutor](help:a/typing) teaches you to type with all ten fingers without looking at the keys, on Greek, English (US) and German keyboards. Short lessons add two keys at a time, a coloured keyboard shows which finger to use, and speed tests and statistics show your progress on all your devices. Find it in the menu under Learning.
+
+## Version 4.73.01
+- orOS starts faster, above all on phones and slow connections: the first visit now loads its files side by side instead of one after another, and the welcome screen goes as soon as the desktop is ready. On a slow 4G phone the first open went from about 28 to about 8 seconds, and an ordinary open from 2.3 to 1.6 seconds.
+
 ## Version 4.73.00
 - Spreadsheet knows over 200 functions: new lookups (XMATCH, OFFSET, INDIRECT), loan and investment functions (IPMT, PPMT, RATE, IRR, XIRR), TEXTBEFORE and TEXTAFTER, week numbers, your own weekend for working days, and lists in braces such as {1,2,3}. See [Spreadsheet](help:a/spreadsheet).
 
