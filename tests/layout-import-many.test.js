@@ -1,5 +1,5 @@
 // Layout: many packages at once (layout/io.js importMany / importDisk,
-// layout/zipin.js): several .oroslayout files or a .zip of them from
+// designkit/zipin.js): several .oroslayout files or a .zip of them from
 // Home › Open › A file, every package in a folder of the orOS disk from
 // Home › Open › A folder in Files; Home stays open, one toast at the
 // end, and the first document that does not fit in storage stops the
@@ -18,7 +18,7 @@ const zlib = require("zlib");
 const ROOT = path.join(__dirname, "..");
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 const io = read("layout/io.js"), ly = read("layout/layout.js"), de = read("i18n/de/layout.js");
-const Z = require(path.join(ROOT, "layout/zipin.js"));
+const Z = require(path.join(ROOT, "designkit/zipin.js"));
 
 // a minimal zip writer: [{ name, data: Buffer, deflate }]
 function crc32(buf) {
@@ -96,8 +96,10 @@ test("Open › A file takes several packages or a .zip; A folder in Files is on 
   assert.match(io, /if \(files\.every\(isPkgOrZip\) && \(files\.length > 1 \|\| isZip\(files\[0\]\)\)\) return importMany\(files\);/);
   assert.match(ly, /\{ label: t\("imp\.disk"\), fn: function \(\) \{ LY\.io\.importDisk\(\); \} \}/);
   assert.match(io, /importMany: importMany, importDisk: importDisk, packagesIn: packagesIn/);
-  assert.match(read("layout/index.html"), /<script src="zipin\.js\?v=[\d.]+"><\/script>/);
-  assert.ok(read("sw.js").includes('"layout/zipin.js"'), "zipin.js is precached");
+  assert.match(read("layout/index.html"), /<script src="\.\.\/designkit\/zipin\.js\?v=[\d.]+"><\/script>/);
+  assert.match(io, /window\.orosZipIn\.list\(f\)/);
+  assert.ok(read("sw.js").includes('"designkit/zipin.js"'), "zipin.js is precached");
+  assert.ok(!fs.existsSync(path.join(ROOT, "layout/zipin.js")), "one shared reader (wave 3)");
 });
 
 test("in a batch no document opens, only the last toast shows, and a full storage stops it", () => {

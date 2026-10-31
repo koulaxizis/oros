@@ -683,7 +683,7 @@
   // one toast tells how many came in and how many could not.
   var batching = false;
   function say(msg) { if (!batching) AT.toast(msg); }
-  var ZIP_MAX = 1024 * 1024 * 1024, BATCH_MAX = 500, DEPTH_MAX = 4;
+  var BATCH_MAX = 500, DEPTH_MAX = 4;
   var PKG_RE = /\.(orosdesign|pptx)$/i;
   function pickFiles(accept) {
     var dlg = AT.dialogHost();
@@ -724,18 +724,19 @@
           });
         });
     }
+    // a zip is read piece by piece (designkit/zipin.js): only its
+    // directory and one package at a time are in memory
     function zipOf(f) {
-      if (f.size > ZIP_MAX) { bad++; return; }
-      return f.arrayBuffer().then(function (ab) {
-        var zip = window.AtelierZip.open(new Uint8Array(ab)), chain = Promise.resolve();
-        zip.names.filter(function (nm) { return PKG_RE.test(nm) && !/(^|\/)(__MACOSX\/|\.)/.test(nm); }).sort().forEach(function (nm) {
-          chain = chain.then(function () { return zip.bytes(nm, PKG_MAX); }).then(function (b) {
-            if (!b) { bad++; return; }
-            return one(new File([b], nm.split("/").pop()));
-          }, function () { bad++; });
-        });
+      return window.orosZipIn.list(f).then(function (entries) {
+        var chain = Promise.resolve();
+        entries.filter(function (e) { return PKG_RE.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name); })
+          .sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }).forEach(function (e) {
+            chain = chain.then(function () { return e.get(PKG_MAX); }).then(function (b) {
+              return one(new File([b], e.name.split("/").pop()));
+            }, function () { bad++; });
+          });
         return chain;
-      });
+      }, function () { bad++; });
     }
     batching = true;
     AT.toast(t("imp.working"));
