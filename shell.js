@@ -1527,6 +1527,7 @@
       tickSafe("waterCheckTick", waterCheckTickThrottled); // Water: behind-the-pace reminder (60s throttle)
       tickSafe("habitsCheckTick", habitsCheckTickThrottled); // Habits: per-habit reminder time (60s throttle)
       tickSafe("flashcardsCheckTick", flashcardsCheckTickThrottled); // Flashcards: daily study reminder (60s throttle)
+      tickSafe("typingCheckTick", typingCheckTickThrottled); // Typing Tutor: daily practice reminder (60s throttle)
       tickSafe("plantsCheckTick", plantsCheckTickThrottled); // Plant Care: daily watering reminder (60s throttle)
       tickSafe("travelCheckTick", travelCheckTickThrottled); // Travel: evening before + before departures (60s throttle)
       tickSafe("namedayCheckTick", namedayCheckTickThrottled); // Calendar: contacts' name days, morning notice (60s throttle)
@@ -2706,6 +2707,32 @@
     if (!due) return;
     var txt = D.reminderText(due.n, state.lang);
     N.emit({ ns: "flashcards", key: due.key, type: "reminder", title: txt.title, body: txt.body, deepLink: "system:open:flashcards" });
+  }
+
+  // Typing Tutor — daily practice reminder (Typing Tutor wave 2, OFF by
+  // default: the app's Settings turn it on, per device, device-local
+  // oros-typing-rem {on, at}). typing/due.js (loaded by index.html, the
+  // SAME file Today and Habits run) reads the synced oros-typing-data
+  // and says when: from the chosen time on, once a day (key
+  // "practice-<ymd>"), while today's minutes are under the daily goal.
+  var typingLastTick = 0;
+  function typingCheckTickThrottled() {
+    var now = Date.now();
+    if (now - typingLastTick < 60000) return;
+    typingLastTick = now;
+    typingCheckTick();
+  }
+  function typingCheckTick() {
+    var D = window.TypingDue, N = window.orosNotifs;
+    if (!D || typeof D.reminderDue !== "function") return;   // stale bundle: silent
+    if (!(N && typeof N.emit === "function")) return;
+    var rem, raw;
+    try { rem = localStorage.getItem(D.REM_KEY); raw = localStorage.getItem(D.KEY); } catch (e) { return; }
+    if (!rem) return;                                        // never switched on
+    var due = D.reminderDue(D.read(raw), rem, Date.now());
+    if (!due) return;
+    var txt = D.reminderText(due.n, due.g, state.lang);
+    N.emit({ ns: "typing", key: due.key, type: "reminder", title: txt.title, body: txt.body, deepLink: "system:open:typing" });
   }
 
   // Timesheet (Wave 3) — the shell reads "oros-timesheet-data" with
