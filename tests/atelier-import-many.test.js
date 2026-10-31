@@ -37,8 +37,8 @@ test("in a batch no design opens and no toast but the last one", () => {
   assert.match(io, /function say\(msg\) \{ if \(!batching\) AT\.toast\(msg\); \}/);
 });
 
-test("limits: zip size, files per batch, folder depth; only packages from a zip or a folder; Trash skipped", () => {
-  assert.match(io, /ZIP_MAX = 1024 \* 1024 \* 1024, BATCH_MAX = 500, DEPTH_MAX = 4/);
+test("limits: files per batch, folder depth; only packages from a zip or a folder; Trash skipped", () => {
+  assert.match(io, /var BATCH_MAX = 500, DEPTH_MAX = 4;/);
   assert.match(io, /PKG_RE = \/\\\.\(orosdesign\|pptx\)\$\/i/);
   assert.match(io, /__MACOSX/);
   assert.match(io, /q !== ROOT \+ "\/Trash"/);
@@ -61,4 +61,13 @@ test("files picked through the shell's dialog (another window's File) are files,
   assert.match(many, /files\.length === 1 && isFile\(files\[0\]\)/);
   // a sync throw from get() stays inside the per-file catch
   assert.match(many, /return Promise\.resolve\(\)\.then\(function \(\) \{ return isFile\(f\) \? f : f\.get\(\); \}\)/);
+});
+
+test("a .zip is read piece by piece with the shared designkit/zipin.js (wave 3)", () => {
+  const zipOf = io.slice(io.indexOf("function zipOf(f)"), io.indexOf("batching = true;"));
+  assert.match(zipOf, /window\.orosZipIn\.list\(f\)/);
+  assert.match(zipOf, /e\.get\(PKG_MAX\)/);
+  assert.doesNotMatch(zipOf, /arrayBuffer|AtelierZip/, "the whole zip is never loaded");
+  const html = read("atelier/index.html");
+  assert.ok(html.indexOf("../designkit/zipin.js") > 0 && html.indexOf("../designkit/zipin.js") < html.indexOf('src="io.js'));
 });

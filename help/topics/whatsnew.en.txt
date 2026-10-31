@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.60.01
+- Atelier: a .zip of designs is now read one design at a time, the way Layout reads a .zip of books, so a large zip no longer has to fit in memory and the 1 GB limit is gone.
+
 ## Version 4.60.00
 - Files on orOS USB: `This computer` shows the computer's own folders (Documents, Downloads, Pictures…) and its disks. Open and eject USB sticks, preview, rename, use the computer's Trash, copy files to the orOS disk, and send files from the orOS disk to the computer. A plugged-in stick brings a notification with `Open`. Windows disks open read-only, and nothing on the computer is synced.
 
