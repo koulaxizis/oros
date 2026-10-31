@@ -715,3 +715,6 @@ body.tr-open { overflow: hidden; }
   .tr-foot { padding-left: 12px; padding-right: 12px; }
   .tr-foot .btn { flex: 1 1 calc(50% - 4px); }
 }
+
+/* Report a problem: the whole file, read before it is saved */
+.report-text { margin: 8px 0 0; max-height: 320px; overflow: auto; padding: 10px; border: 1px solid var(--border); border-radius: 10px; font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); background: var(--bg, transparent); }
