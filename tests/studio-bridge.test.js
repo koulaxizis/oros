@@ -184,6 +184,7 @@ test("wiring: the track dialog, the bridge dialog, the lazy script, the service 
   assert.ok(html.includes('href="https://useoros.online/download/#bridge"'));
   const dl = read("download/index.html");
   assert.equal(dl.split("releases/latest/download/oros-bridge-windows-x64.exe").length - 1, 2, "EN and EL download buttons");
+  assert.equal(dl.split("releases/latest/download/oros-bridge-linux-x64.tar.gz").length - 1, 2, "EN and EL Linux download buttons (Bridge 0.3.0)");
   assert.ok(sw.includes('"studio/bridge.js"'));
   assert.ok(csp.includes("ws://127.0.0.1:*"));
   assert.ok(html.includes("ws://127.0.0.1:*"), "the CSP was written");
