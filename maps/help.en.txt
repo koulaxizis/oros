@@ -46,6 +46,7 @@ The route bar shows distance and travel time (an estimate without live traffic),
 - By car, `Avoid` in `Directions` skips `Tolls`, `Motorways` or `Ferries`, one at a time. If the server can't, you get the normal route and a message. The choice stays on this device.
 - `Share` (in the route bar, in `Directions`, on a place, or on a long-press) gives you a link that opens the place or the route in orOS Maps, `Open in another app` (a `geo:` link: on Android it offers OsmAnd, Organic Maps and others), `Open on OpenStreetMap`, `Copy coordinates` for a place, and `Send…` where the device can share.
 - `Save to My tracks` keeps the route as a track (with the start, stops and destination as waypoints), so you can export it as GPX or follow it later.
+- `Download GPX` saves the route as a .gpx file (for a GPS device, another maps app or a friend) without keeping it in orOS.
 
 ## Public transport
 
@@ -66,6 +67,7 @@ Coverage depends on open timetables. In Greece it includes Thessaloniki city bus
 `Start navigation` follows your GPS position and speaks each turn in the orOS language. If you're more than about 150 m from the start, the route is recalculated from where you are. Leave the route and it's recalculated automatically (when you're online).
 
 - Move the map and it stops following you. `Recenter` brings it back.
+- The compass button turns the map with you, so the road ahead is always up (`Turn the map with me`); tap it again for `North up`. Moving the map turns it back to north until you tap `Recenter`. This device remembers your choice.
 - `Mute voice` silences the instructions.
 - The instructions are spoken only with a voice installed on your device, never with a browser's online voice (such as Chrome's "Google …" voices), which would send them to its server. If your device has no voice for the orOS language, a note says so and you follow the screen; you can add a voice in your system's speech settings.
 - By car, a speed limit sign appears next to your speed when OpenStreetMap knows the limit of the road you're on. It shows the number as written on the road (a square sign for mph) and turns red when you go more than 5 km/h over it. No sign means the limit isn't known; always follow the real road signs.

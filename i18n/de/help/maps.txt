@@ -46,6 +46,7 @@ Die Routenleiste zeigt Distanz und Fahrzeit (eine Schätzung ohne Live-Verkehr),
 - Mit dem Auto lässt `Vermeiden` in der `Wegbeschreibung` `Maut`, `Autobahnen` oder `Fähren` aus, jeweils eins davon. Kann der Server das nicht, bekommst du die normale Route und eine Meldung. Die Wahl bleibt auf diesem Gerät.
 - `Teilen` (in der Routenleiste, in der `Wegbeschreibung`, an einem Ort oder nach langem Drücken) gibt dir einen Link, der den Ort oder die Route in orOS Karten öffnet, `In anderer App öffnen` (ein `geo:`-Link: unter Android bietet er OsmAnd, Organic Maps und andere an), `Auf OpenStreetMap öffnen`, `Koordinaten kopieren` für einen Ort und `Senden…`, wo das Gerät teilen kann.
 - `In Meine Strecken speichern` behält die Route als Strecke (mit Start, Zwischenstopps und Ziel als Wegpunkten), damit du sie als GPX exportieren oder ihr später folgen kannst.
+- `GPX herunterladen` speichert die Route als .gpx-Datei (für ein GPS-Gerät, eine andere Karten-App oder Freunde), ohne sie in orOS zu behalten.
 
 ## Öffentlicher Verkehr
 
@@ -66,6 +67,7 @@ Die Abdeckung hängt von offenen Fahrplänen ab. In Griechenland gehören die St
 `Navigation starten` folgt deiner GPS-Position und sagt jede Abbiegung in der Sprache von orOS an. Bist du mehr als etwa 150 m vom Start entfernt, wird die Route ab deinem Standort neu berechnet. Verlässt du die Route, wird sie automatisch neu berechnet (wenn du online bist).
 
 - Verschiebst du die Karte, folgt sie dir nicht mehr. `Zentrieren` holt sie zurück.
+- Die Kompass-Taste dreht die Karte mit dir, sodass die Straße vor dir immer oben ist (`Karte mit mir drehen`); tippe erneut für `Norden oben`. Verschiebst du die Karte, zeigt sie wieder nach Norden, bis du auf `Zentrieren` tippst. Dieses Gerät merkt sich deine Wahl.
 - `Sprache stumm` schaltet die Ansagen stumm.
 - Die Ansagen werden nur mit einer Stimme gesprochen, die auf deinem Gerät installiert ist, nie mit einer Online-Stimme des Browsers (wie den „Google …“-Stimmen von Chrome), die sie an ihren Server schicken würde. Hat dein Gerät keine Stimme für die Sprache von orOS, sagt ein Hinweis das und du folgst dem Bildschirm; in den Spracheinstellungen deines Systems kannst du eine Stimme hinzufügen.
 - Mit dem Auto erscheint neben deinem Tempo ein Tempolimit-Schild, wenn OpenStreetMap das Limit deiner Straße kennt. Es zeigt die Zahl so, wie sie auf der Straße steht (ein eckiges Schild für mph), und wird rot, wenn du mehr als 5 km/h darüber fährst. Kein Schild heißt, das Limit ist unbekannt; folge immer den echten Verkehrsschildern.

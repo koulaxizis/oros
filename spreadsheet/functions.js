@@ -200,7 +200,7 @@ function cmpVals(a, b) {
 }
 
 /* ===== tokenizer ===== */
-var T = { NUM: 1, STR: 2, OP: 3, REF: 4, FUNC: 5, SEP: 6, LP: 7, RP: 8, ERR: 9, BOOL: 10, NAME: 11, BAD: 12 };
+var T = { NUM: 1, STR: 2, OP: 3, REF: 4, FUNC: 5, SEP: 6, LP: 7, RP: 8, ERR: 9, BOOL: 10, NAME: 11, BAD: 12, LB: 13, RB: 14 };
 var OPS2 = { "<>": 1, "<=": 1, ">=": 1 };
 var OPS1 = { "+": 1, "-": 1, "*": 1, "/": 1, "^": 1, "&": 1, "=": 1, "<": 1, ">": 1, "%": 1 };
 var ERR_LIT = /^#(DIV\/0!|N\/A|NAME\?|NUM!|REF!|VALUE!|NULL!)/i;
@@ -247,6 +247,8 @@ function tokenize(formula) {
     if (OPS2[two]) { out.push({ t: T.OP, v: two, s: st, e: i + 2 }); i += 2; continue; }
     if (OPS1[ch]) { out.push({ t: T.OP, v: ch, s: st, e: i + 1 }); i++; continue; }
     if (ch === "(") { out.push({ t: T.LP, v: ch, s: st, e: i + 1 }); i++; continue; }
+    if (ch === "{") { out.push({ t: T.LB, v: ch, s: st, e: i + 1 }); i++; continue; }
+    if (ch === "}") { out.push({ t: T.RB, v: ch, s: st, e: i + 1 }); i++; continue; }
     if (ch === ")") { out.push({ t: T.RP, v: ch, s: st, e: i + 1 }); i++; continue; }
     if (ch === "," || ch === ";") { out.push({ t: T.SEP, v: ch, s: st, e: i + 1 }); i++; continue; }
 
@@ -326,6 +328,7 @@ function parse(formula) {
       case T.NAME: return { k: "v", v: ERR.NAME };
       case T.REF: return { k: "ref", ref: x.ref };
       case T.LP: { var e = expr(); if (!tk[i] || tk[i].t !== T.RP) bad(); i++; return e; }
+      case T.LB: return arrayConst();
       case T.FUNC: {
         if (!tk[i] || tk[i].t !== T.LP) bad();
         i++;
@@ -346,6 +349,26 @@ function parse(formula) {
       }
     }
     bad();
+  }
+  /* {1,2;3,4}: a comma moves to the next column, a semicolon to the
+     next row; items are numbers (a leading minus allowed), texts,
+     TRUE/FALSE or error literals */
+  function arrayConst() {
+    var rows = [[]];
+    for (;;) {
+      var x = tk[i++], neg = false;
+      if (x && x.t === T.OP && (x.v === "-" || x.v === "+")) { neg = x.v === "-"; x = tk[i++]; if (!x || x.t !== T.NUM) bad(); }
+      if (!x || [T.NUM, T.STR, T.BOOL, T.ERR].indexOf(x.t) < 0) bad();
+      rows[rows.length - 1].push(neg ? -x.v : x.v);
+      var y = tk[i++];
+      if (!y) bad();
+      if (y.t === T.RB) break;
+      if (y.t !== T.SEP) bad();
+      if (y.v === ";") rows.push([]);
+    }
+    var w = rows[0].length, vals = [];
+    for (var k = 0; k < rows.length; k++) { if (rows[k].length !== w) bad(); vals = vals.concat(rows[k]); }
+    return { k: "arr", v: vals, rows: rows.length, cols: w };
   }
   function postfix() {
     var a = primary();
@@ -1142,6 +1165,678 @@ def("NPV", 2, INF, function (a) {
   return s;
 });
 
+/* ===== Wave 4 (2026-10-31): more maths, statistics, dates, text,
+   finance and lookup functions ===== */
+
+/* ---- maths ---- */
+function gcd2(x, y) { while (y) { var t = x % y; x = y; y = t; } return x; }
+function wholeNums(a) {
+  return numbers(a).map(function (n) { if (n < 0) fail(ERR.NUM); return Math.floor(n); });
+}
+def("GCD", 1, INF, function (a) { var n = wholeNums(a), g = 0; for (var i = 0; i < n.length; i++) g = gcd2(g, n[i]); return g; });
+def("LCM", 1, INF, function (a) {
+  var n = wholeNums(a), l = 1;
+  for (var i = 0; i < n.length; i++) {
+    if (n[i] === 0) return 0;
+    l = l / gcd2(l, n[i]) * n[i];
+    if (l > 9007199254740991) fail(ERR.NUM);
+  }
+  return l;
+});
+def("FACT", 1, 1, function (a) {
+  var n = Math.floor(toNum(a[0])), r = 1;
+  if (n < 0 || n > 170) fail(ERR.NUM);
+  for (var i = 2; i <= n; i++) r *= i;
+  return r;
+});
+def("COMBIN", 2, 2, function (a) {
+  var n = Math.floor(toNum(a[0])), k = Math.floor(toNum(a[1])), r = 1;
+  if (n < 0 || k < 0 || k > n) fail(ERR.NUM);
+  k = Math.min(k, n - k);
+  for (var i = 1; i <= k; i++) r = r * (n - k + i) / i;
+  return Math.round(r);
+});
+def("PERMUT", 2, 2, function (a) {
+  var n = Math.floor(toNum(a[0])), k = Math.floor(toNum(a[1])), r = 1;
+  if (n < 0 || k < 0 || k > n) fail(ERR.NUM);
+  for (var i = 0; i < k; i++) r *= n - i;
+  return r;
+});
+def("MROUND", 2, 2, function (a) {
+  var n = toNum(a[0]), m = toNum(a[1]);
+  if (m === 0) return 0;
+  if (n * m < 0) fail(ERR.NUM);
+  return Number((roundHalfAway(n / m, 0) * m).toPrecision(15));
+});
+def("EVEN", 1, 1, function (a) {
+  var n = toNum(a[0]), s = n < 0 ? -1 : 1;
+  return s * Math.ceil(Number((Math.abs(n) / 2).toPrecision(15))) * 2;
+});
+def("ODD", 1, 1, function (a) {
+  var n = toNum(a[0]), s = n < 0 ? -1 : 1, v = Math.ceil(Number(Math.abs(n).toPrecision(15)));
+  if (v % 2 === 0) v++;
+  return s * v;
+});
+def("QUOTIENT", 2, 2, function (a) {
+  var n = toNum(a[0]), d = toNum(a[1]);
+  if (d === 0) fail(ERR.DIV0);
+  return Math.trunc(n / d);
+});
+function math1(f, check) {
+  return function (a) {
+    var n = toNum(a[0]);
+    if (check && !check(n)) fail(ERR.NUM);
+    var r = f(n);
+    if (!isFinite(r) || isNaN(r)) fail(ERR.NUM);
+    return r;
+  };
+}
+def("SIN", 1, 1, math1(Math.sin));
+def("COS", 1, 1, math1(Math.cos));
+def("TAN", 1, 1, math1(Math.tan));
+def("ASIN", 1, 1, math1(Math.asin, function (n) { return n >= -1 && n <= 1; }));
+def("ACOS", 1, 1, math1(Math.acos, function (n) { return n >= -1 && n <= 1; }));
+def("ATAN", 1, 1, math1(Math.atan));
+def("SINH", 1, 1, math1(Math.sinh));
+def("COSH", 1, 1, math1(Math.cosh));
+def("TANH", 1, 1, math1(Math.tanh));
+def("RADIANS", 1, 1, math1(function (n) { return n * Math.PI / 180; }));
+def("DEGREES", 1, 1, math1(function (n) { return n * 180 / Math.PI; }));
+def("ATAN2", 2, 2, function (a) {      /* Excel's order: x first, then y */
+  var x = toNum(a[0]), y = toNum(a[1]);
+  if (x === 0 && y === 0) fail(ERR.DIV0);
+  return Math.atan2(y, x);
+});
+def("CEILING.MATH", 1, 3, function (a) {
+  var n = toNum(a[0]), s = Math.abs(toNum(argOr(a, 1, 1))), away = toNum(argOr(a, 2, 0)) !== 0;
+  if (s === 0) return 0;
+  var q = Number((n / s).toPrecision(15));
+  return (n < 0 && away ? Math.floor(q) : Math.ceil(q)) * s;
+});
+def("FLOOR.MATH", 1, 3, function (a) {
+  var n = toNum(a[0]), s = Math.abs(toNum(argOr(a, 1, 1))), away = toNum(argOr(a, 2, 0)) !== 0;
+  if (s === 0) return 0;
+  var q = Number((n / s).toPrecision(15));
+  return (n < 0 && away ? Math.ceil(q) : Math.floor(q)) * s;
+});
+var SUBTOTAL_FN = { 1: "AVERAGE", 2: "COUNT", 3: "COUNTA", 4: "MAX", 5: "MIN", 6: "PRODUCT",
+                    7: "STDEV", 8: "STDEVP", 9: "SUM", 10: "VAR", 11: "VARP" };
+def("SUBTOTAL", 2, INF, function (a, cx) {
+  var k = toInt(a[0]);
+  if (k > 100) k -= 100;
+  var name = SUBTOTAL_FN[k];
+  if (!name) fail(ERR.VALUE);
+  return F[name].f(a.slice(1), cx);
+});
+
+/* ---- statistics ---- */
+/* AVERAGEA-style: in ranges text counts as 0 and TRUE as 1 */
+function numbersA(args) {
+  var out = [];
+  eachVal(args, function (v, inRange) {
+    if (isErr(v)) fail(v);
+    if (typeof v === "number") out.push(v);
+    else if (typeof v === "boolean") out.push(v ? 1 : 0);
+    else if (inRange) { if (v !== null && v !== undefined) out.push(0); }
+    else if (v !== null) out.push(toNum(v));
+  });
+  return out;
+}
+def("AVERAGEA", 1, INF, function (a) { var n = numbersA(a); if (!n.length) fail(ERR.DIV0); return sum(n) / n.length; });
+def("MAXA", 1, INF, function (a) { var n = numbersA(a); return n.length ? Math.max.apply(null, n) : 0; });
+def("MINA", 1, INF, function (a) { var n = numbersA(a); return n.length ? Math.min.apply(null, n) : 0; });
+def("GEOMEAN", 1, INF, function (a) {
+  var n = numbers(a), s = 0;
+  if (!n.length) fail(ERR.NUM);
+  for (var i = 0; i < n.length; i++) { if (n[i] <= 0) fail(ERR.NUM); s += Math.log(n[i]); }
+  return Math.exp(s / n.length);
+});
+def("HARMEAN", 1, INF, function (a) {
+  var n = numbers(a), s = 0;
+  if (!n.length) fail(ERR.NUM);
+  for (var i = 0; i < n.length; i++) { if (n[i] <= 0) fail(ERR.NUM); s += 1 / n[i]; }
+  return n.length / s;
+});
+/* two ranges of the same size -> the positions where both hold numbers */
+function numPairs(ys, xs) {
+  ys = arr2(ys); xs = arr2(xs);
+  if (ys.length !== xs.length) fail(ERR.NA);
+  var X = [], Y = [];
+  for (var i = 0; i < ys.length; i++) {
+    if (isErr(ys[i])) fail(ys[i]);
+    if (isErr(xs[i])) fail(xs[i]);
+    if (typeof ys[i] === "number" && typeof xs[i] === "number") { Y.push(ys[i]); X.push(xs[i]); }
+  }
+  return { x: X, y: Y };
+}
+function linFit(ys, xs) {
+  var p = numPairs(ys, xs), n = p.x.length;
+  if (n < 2) fail(ERR.DIV0);
+  var mx = sum(p.x) / n, my = sum(p.y) / n, sxy = 0, sxx = 0, syy = 0;
+  for (var i = 0; i < n; i++) {
+    var dx = p.x[i] - mx, dy = p.y[i] - my;
+    sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
+  }
+  return { mx: mx, my: my, sxy: sxy, sxx: sxx, syy: syy };
+}
+def("CORREL PEARSON", 2, 2, function (a) {
+  var s = linFit(a[0], a[1]);
+  if (s.sxx === 0 || s.syy === 0) fail(ERR.DIV0);
+  return s.sxy / Math.sqrt(s.sxx * s.syy);
+});
+def("RSQ", 2, 2, function (a) {
+  var s = linFit(a[0], a[1]);
+  if (s.sxx === 0 || s.syy === 0) fail(ERR.DIV0);
+  return s.sxy * s.sxy / (s.sxx * s.syy);
+});
+def("SLOPE", 2, 2, function (a) { var s = linFit(a[0], a[1]); if (s.sxx === 0) fail(ERR.DIV0); return s.sxy / s.sxx; });
+def("INTERCEPT", 2, 2, function (a) { var s = linFit(a[0], a[1]); if (s.sxx === 0) fail(ERR.DIV0); return s.my - s.sxy / s.sxx * s.mx; });
+def("FORECAST FORECAST.LINEAR", 3, 3, function (a) {
+  var x = toNum(scalar(a[0])), s = linFit(a[1], a[2]);
+  if (s.sxx === 0) fail(ERR.DIV0);
+  var b = s.sxy / s.sxx;
+  return s.my - b * s.mx + b * x;
+});
+/* standard normal distribution (W. J. Cody's / Hart's double-precision
+   approximation as given by G. West, 2005) and its inverse (P. J. Acklam,
+   refined with one Halley step) */
+function normCdf(z) {
+  var x = Math.abs(z), c;
+  if (x > 37) c = 0;
+  else {
+    var e = Math.exp(-x * x / 2), b;
+    if (x < 7.07106781186547) {
+      b = 3.52624965998911e-2 * x + 0.700383064443688;
+      b = b * x + 6.37396220353165; b = b * x + 33.912866078383;
+      b = b * x + 112.079291497871; b = b * x + 221.213596169931;
+      b = b * x + 220.206867912376;
+      c = e * b;
+      b = 8.83883476483184e-2 * x + 1.75566716318264;
+      b = b * x + 16.064177579207; b = b * x + 86.7807322029461;
+      b = b * x + 296.564248779674; b = b * x + 637.333633378831;
+      b = b * x + 793.826512519948; b = b * x + 440.413735824752;
+      c = c / b;
+    } else {
+      b = x + 0.65; b = x + 4 / b; b = x + 3 / b; b = x + 2 / b; b = x + 1 / b;
+      c = e / b / 2.506628274631;
+    }
+  }
+  return z > 0 ? 1 - c : c;
+}
+function normPdf(z) { return Math.exp(-z * z / 2) / 2.5066282746310002; }
+function normInv(p) {
+  if (!(p > 0 && p < 1)) fail(ERR.NUM);
+  var A = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  var B = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+  var C = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  var D = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+  var lo = 0.02425, q, r, x;
+  if (p < lo) {
+    q = Math.sqrt(-2 * Math.log(p));
+    x = (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1);
+  } else if (p <= 1 - lo) {
+    q = p - 0.5; r = q * q;
+    x = (((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5]) * q / (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r + 1);
+  } else {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    x = -(((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1);
+  }
+  var e = normCdf(x) - p, u = e * 2.5066282746310002 * Math.exp(x * x / 2);
+  return x - u / (1 + x * u / 2);
+}
+def("NORM.S.DIST", 2, 2, function (a) { var z = toNum(a[0]); return toBool(a[1]) ? normCdf(z) : normPdf(z); });
+def("NORM.DIST NORMDIST", 4, 4, function (a) {
+  var x = toNum(a[0]), m = toNum(a[1]), sd = toNum(a[2]);
+  if (sd <= 0) fail(ERR.NUM);
+  var z = (x - m) / sd;
+  return toBool(a[3]) ? normCdf(z) : normPdf(z) / sd;
+});
+def("NORM.S.INV NORMSINV", 1, 1, function (a) { return normInv(toNum(a[0])); });
+def("NORM.INV NORMINV", 3, 3, function (a) {
+  var sd = toNum(a[2]);
+  if (sd <= 0) fail(ERR.NUM);
+  return toNum(a[1]) + sd * normInv(toNum(a[0]));
+});
+def("STANDARDIZE", 3, 3, function (a) {
+  var sd = toNum(a[2]);
+  if (sd <= 0) fail(ERR.NUM);
+  return (toNum(a[0]) - toNum(a[1])) / sd;
+});
+
+/* ---- dates ---- */
+function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+def("WEEKNUM", 1, 2, function (a) {
+  var d = Math.floor(toNum(a[0])), t = toInt(argOr(a, 1, 1));
+  if (d < 0) fail(ERR.NUM);
+  if (t === 21) return F.ISOWEEKNUM.f([d]);
+  var START = { 1: 0, 2: 1, 11: 1, 12: 2, 13: 3, 14: 4, 15: 5, 16: 6, 17: 0 };
+  if (START[t] === undefined) fail(ERR.NUM);
+  var jan1 = serialOf(partsOf(d).y, 1, 1), off = (partsOf(jan1).wd - START[t] + 7) % 7;
+  return Math.floor((d - jan1 + off) / 7) + 1;
+});
+def("ISOWEEKNUM", 1, 1, function (a) {
+  var d = Math.floor(toNum(a[0]));
+  if (d < 0) fail(ERR.NUM);
+  var thu = d - (partsOf(d).wd + 6) % 7 + 3;
+  return Math.floor((thu - serialOf(partsOf(thu).y, 1, 1)) / 7) + 1;
+});
+function lastOfFeb(p) { return p.m === 2 && p.d === daysInMonth(p.y, 2); }
+function days360(s, e, euro, yf) {
+  var p = partsOf(s), q = partsOf(e), d1 = p.d, d2 = q.d, m2 = q.m, y2 = q.y;
+  if (euro) {
+    if (d1 === 31) d1 = 30;
+    if (d2 === 31) d2 = 30;
+  } else if (yf) {                       /* YEARFRAC basis 0 (NASD) */
+    if (lastOfFeb(p) && lastOfFeb(q)) d2 = 30;
+    if (lastOfFeb(p)) d1 = 30;
+    if (d2 === 31 && d1 >= 30) d2 = 30;
+    if (d1 === 31) d1 = 30;
+  } else {                               /* DAYS360 US method */
+    if (d1 === 31 || lastOfFeb(p)) d1 = 30;
+    if (d2 === 31) { if (d1 < 30) { d2 = 1; m2++; } else d2 = 30; }
+  }
+  return (y2 - p.y) * 360 + (m2 - p.m) * 30 + (d2 - d1);
+}
+def("DAYS360", 2, 3, function (a) {
+  var s = Math.floor(toNum(a[0])), e = Math.floor(toNum(a[1]));
+  if (s < 0 || e < 0) fail(ERR.NUM);
+  return days360(s, e, toBool(argOr(a, 2, false)), false);
+});
+def("YEARFRAC", 2, 3, function (a) {
+  var s = Math.floor(toNum(a[0])), e = Math.floor(toNum(a[1])), b = toInt(argOr(a, 2, 0));
+  if (s < 0 || e < 0 || b < 0 || b > 4) fail(ERR.NUM);
+  if (s > e) { var t = s; s = e; e = t; }
+  if (b === 0) return days360(s, e, false, true) / 360;
+  if (b === 4) return days360(s, e, true, false) / 360;
+  if (b === 2) return (e - s) / 360;
+  if (b === 3) return (e - s) / 365;
+  var p = partsOf(s), q = partsOf(e), den;
+  if (p.y === q.y) den = isLeap(p.y) ? 366 : 365;
+  else if (q.y === p.y + 1 && (p.m > q.m || (p.m === q.m && p.d >= q.d))) {
+    den = (isLeap(p.y) && s <= serialOf(p.y, 2, 29)) || (isLeap(q.y) && e >= serialOf(q.y, 2, 29)) ? 366 : 365;
+  } else den = (serialOf(q.y + 1, 1, 1) - serialOf(p.y, 1, 1)) / (q.y - p.y + 1);
+  return (e - s) / den;
+});
+def("TIMEVALUE", 1, 1, function (a) {
+  var v = scalar(a[0]);
+  if (isErr(v)) return v;
+  var s = toStr(v).trim(), m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}(?:\.\d+)?))?\s*(am|pm|πμ|μμ|π\.μ\.|μ\.μ\.)?$/i);
+  if (m) {
+    var h = +m[1], ap = (m[4] || "").toLowerCase().replace(/\./g, "");
+    if (ap && (h < 1 || h > 12)) fail(ERR.VALUE);
+    if (ap === "pm" || ap === "μμ") h = h % 12 + 12; else if (ap) h = h % 12;
+    var t = (h * 3600 + (+m[2]) * 60 + (m[3] ? +m[3] : 0)) / 86400;
+    return t - Math.floor(t);
+  }
+  var d = parseDate(s);
+  if (d === null) fail(ERR.VALUE);
+  return d - Math.floor(d);
+});
+/* weekend argument of the .INTL functions -> {wd: true} (0 = Sunday) */
+function weekendMask(v) {
+  v = v === undefined ? 1 : scalar(v);
+  if (isErr(v)) fail(v);
+  var w = {}, k;
+  if (typeof v === "string" && !/^\d+$/.test(v)) fail(ERR.VALUE);
+  if (typeof v === "string" && v.length === 7) {
+    if (!/^[01]{7}$/.test(v) || v === "1111111") fail(ERR.VALUE);
+    for (k = 0; k < 7; k++) if (v.charAt(k) === "1") w[(k + 1) % 7] = true;
+    return w;
+  }
+  var n = toInt(v);
+  if (n >= 1 && n <= 7) { w[(n + 5) % 7] = true; w[(n + 6) % 7] = true; return w; }
+  if (n >= 11 && n <= 17) { w[n - 11] = true; return w; }
+  fail(ERR.NUM);
+}
+def("NETWORKDAYS.INTL", 2, 4, function (a) {
+  var s = Math.floor(toNum(a[0])), e = Math.floor(toNum(a[1])), w = weekendMask(a[2]), h = holidaySet(a[3]), sign = 1;
+  if (s > e) { var t = s; s = e; e = t; sign = -1; }
+  if (e - s > 400000) fail(ERR.NUM);
+  var n = 0;
+  for (var d = s; d <= e; d++) if (!w[partsOf(d).wd] && !h[d]) n++;
+  return sign * n;
+});
+def("WORKDAY.INTL", 2, 4, function (a) {
+  var d = Math.floor(toNum(a[0])), k = toInt(a[1]), w = weekendMask(a[2]), h = holidaySet(a[3]), step = k < 0 ? -1 : 1;
+  if (Math.abs(k) > 100000) fail(ERR.NUM);
+  while (k !== 0) {
+    d += step;
+    if (!w[partsOf(d).wd] && !h[d]) k -= step;
+  }
+  return d;
+});
+
+/* ---- text ---- */
+/* TEXTBEFORE / TEXTAFTER: the instance-th delimiter (from the end when
+   negative), any of several delimiters, case-blind with match_mode 1,
+   the ends of the text count as delimiters with match_end 1 */
+function textCut(a, after) {
+  var s = toStr(a[0]), inst = toInt(argOr(a, 2, 1)), ci = toInt(argOr(a, 3, 0)) === 1, mEnd = toInt(argOr(a, 4, 0)) === 1;
+  var dl = [];
+  eachVal([a[1]], function (v) { if (isErr(v)) fail(v); dl.push(toStr(v)); });
+  if (!dl.length) fail(ERR.VALUE);
+  if (inst === 0 || Math.abs(inst) > s.length + 1) fail(ERR.VALUE);
+  var hay = ci ? s.toLowerCase() : s, occ = [], i = 0;
+  if (dl.indexOf("") >= 0) occ = inst > 0 ? [{ s: 0, e: 0 }] : [{ s: s.length, e: s.length }];
+  else {
+    while (i <= hay.length) {
+      var best = null;
+      for (var k = 0; k < dl.length; k++) {
+        var d = ci ? dl[k].toLowerCase() : dl[k];
+        if (hay.substr(i, d.length) === d && (!best || d.length > best)) best = d.length;
+      }
+      if (best) { occ.push({ s: i, e: i + best }); i += best; } else i++;
+    }
+    if (mEnd) { if (inst > 0) occ.push({ s: s.length, e: s.length }); else occ.unshift({ s: 0, e: 0 }); }
+  }
+  var o = inst > 0 ? occ[inst - 1] : occ[occ.length + inst];
+  if (!o) { if (a[5] !== undefined) return scalar(a[5]); fail(ERR.NA); }
+  return after ? s.slice(o.e) : s.slice(0, o.s);
+}
+def("TEXTBEFORE", 2, 6, function (a) { return textCut(a, false); });
+def("TEXTAFTER", 2, 6, function (a) { return textCut(a, true); });
+def("CLEAN", 1, 1, function (a) { return toStr(a[0]).replace(/[\x00-\x1f]/g, ""); });
+def("UNICHAR", 1, 1, function (a) {
+  var n = toInt(a[0]);
+  if (n < 1 || n > 0x10FFFF || (n >= 0xD800 && n <= 0xDFFF)) fail(ERR.VALUE);
+  return String.fromCodePoint(n);
+});
+def("UNICODE", 1, 1, function (a) { var s = toStr(a[0]); if (!s) fail(ERR.VALUE); return s.codePointAt(0); });
+def("NUMBERVALUE", 1, 3, function (a, cx) {
+  var el = cx && cx.lang === "el";
+  var dec = a[1] === undefined ? (el ? "," : ".") : toStr(a[1]).charAt(0);
+  var grp = a[2] === undefined ? (el ? "." : ",") : toStr(a[2]).charAt(0);
+  if (!dec || dec === grp) fail(ERR.VALUE);
+  var s = toStr(a[0]).replace(/\s+/g, ""), pct = 0;
+  if (s === "") return 0;
+  while (s.charAt(s.length - 1) === "%") { pct++; s = s.slice(0, -1); }
+  var di = s.indexOf(dec);
+  if (di >= 0 && s.indexOf(dec, di + 1) >= 0) fail(ERR.VALUE);
+  var ip = di >= 0 ? s.slice(0, di) : s, fp = di >= 0 ? s.slice(di + 1) : "";
+  if (grp) {
+    if (fp.indexOf(grp) >= 0) fail(ERR.VALUE);
+    ip = ip.split(grp).join("");
+  }
+  var t = ip + (di >= 0 ? "." + fp : "");
+  if (!NUM_RE.test(t)) fail(ERR.VALUE);
+  return parseFloat(t) / Math.pow(100, pct);
+});
+def("FIXED", 1, 3, function (a) {
+  var n = toNum(a[0]), d = toInt(argOr(a, 1, 2)), plain = toBool(argOr(a, 2, false));
+  if (d > 127) fail(ERR.VALUE);
+  var x = roundHalfAway(n, d), str = Math.abs(x).toFixed(Math.max(0, d)), parts = str.split(".");
+  var ip = plain ? parts[0] : groupThousands(parts[0]);
+  return (x < 0 ? "-" : "") + ip + (parts[1] ? "." + parts[1] : "");
+});
+def("T", 1, 1, function (a) { var v = scalar(a[0]); if (isErr(v)) return v; return typeof v === "string" ? v : ""; });
+def("N", 1, 1, function (a) {
+  var v = scalar(a[0]);
+  if (isErr(v)) return v;
+  if (typeof v === "number") return v;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  return 0;
+});
+F.T.raw = F.N.raw = true;
+
+/* ---- finance ---- */
+function pmtOf(r, n, pv, fv, t) {
+  if (n === 0) fail(ERR.NUM);
+  if (r === 0) return -(pv + fv) / n;
+  var q = Math.pow(1 + r, n);
+  return -(r * (fv + pv * q)) / ((1 + r * t) * (q - 1));
+}
+function fvOf(r, n, pmt, pv, t) {
+  if (r === 0) return -(pv + pmt * n);
+  var q = Math.pow(1 + r, n);
+  return -(pv * q + pmt * (1 + r * t) * (q - 1) / r);
+}
+function ipmtOf(r, per, n, pv, fv, t) {
+  if (per < 1 || per > n) fail(ERR.NUM);
+  var pmt = pmtOf(r, n, pv, fv, t), ip;
+  if (per === 1) ip = t === 1 ? 0 : -pv;
+  else ip = t === 1 ? fvOf(r, per - 2, pmt, pv, 1) - pmt : fvOf(r, per - 1, pmt, pv, 0);
+  return ip * r;
+}
+function typeArg(v) { var t = toNum(v === undefined ? 0 : v); if (t !== 0 && t !== 1) fail(ERR.NUM); return t; }
+def("IPMT", 4, 6, function (a) {
+  return ipmtOf(toNum(a[0]), toNum(a[1]), toNum(a[2]), toNum(a[3]), toNum(argOr(a, 4, 0)), toNum(argOr(a, 5, 0)) ? 1 : 0);
+});
+def("PPMT", 4, 6, function (a) {
+  var r = toNum(a[0]), per = toNum(a[1]), n = toNum(a[2]), pv = toNum(a[3]), fv = toNum(argOr(a, 4, 0)), t = toNum(argOr(a, 5, 0)) ? 1 : 0;
+  return pmtOf(r, n, pv, fv, t) - ipmtOf(r, per, n, pv, fv, t);
+});
+function cumulative(a, principal) {
+  var r = toNum(a[0]), n = toNum(a[1]), pv = toNum(a[2]), st = toInt(a[3]), en = toInt(a[4]), t = typeArg(a[5]);
+  if (r <= 0 || n <= 0 || pv <= 0 || st < 1 || en < st || en > n) fail(ERR.NUM);
+  var s = 0, pmt = pmtOf(r, n, pv, 0, t);
+  for (var p = st; p <= en; p++) {
+    var ip = ipmtOf(r, p, n, pv, 0, t);
+    s += principal ? pmt - ip : ip;
+  }
+  return s;
+}
+def("CUMIPMT", 6, 6, function (a) { return cumulative(a, false); });
+def("CUMPRINC", 6, 6, function (a) { return cumulative(a, true); });
+/* Newton's method with a numeric slope; null when it does not settle */
+function solve(f, guess) {
+  var x = guess, h, fx, d;
+  for (var i = 0; i < 100; i++) {
+    fx = f(x);
+    if (!isFinite(fx)) return null;
+    if (Math.abs(fx) < 1e-10) return x;
+    h = Math.max(1e-7, Math.abs(x) * 1e-7);
+    d = (f(x + h) - fx) / h;
+    if (!d || !isFinite(d)) return null;
+    var nx = x - fx / d;
+    if (nx <= -1) nx = (x - 1) / 2;
+    if (Math.abs(nx - x) < 1e-12) return nx;
+    x = nx;
+  }
+  return Math.abs(f(x)) < 1e-6 ? x : null;
+}
+def("RATE", 3, 6, function (a) {
+  var n = toNum(a[0]), pmt = toNum(a[1]), pv = toNum(a[2]), fv = toNum(argOr(a, 3, 0)), t = toNum(argOr(a, 4, 0)) ? 1 : 0;
+  var g = toNum(argOr(a, 5, 0.1));
+  if (n <= 0) fail(ERR.NUM);
+  var r = solve(function (x) {
+    if (Math.abs(x) < 1e-12) return pv + pmt * n + fv;
+    var q = Math.pow(1 + x, n);
+    return pv * q + pmt * (1 + x * t) * (q - 1) / x + fv;
+  }, g);
+  if (r === null) fail(ERR.NUM);
+  return r;
+});
+function cashFlows(v) {
+  var out = [];
+  eachVal([v], function (x, inR) {
+    if (isErr(x)) fail(x);
+    if (typeof x === "number") out.push(x);
+    else if (!inR && x !== null) out.push(toNum(x));
+  });
+  return out;
+}
+function bothSigns(c) {
+  var pos = false, neg = false;
+  for (var i = 0; i < c.length; i++) { if (c[i] > 0) pos = true; if (c[i] < 0) neg = true; }
+  if (!pos || !neg) fail(ERR.NUM);
+}
+def("IRR", 1, 2, function (a) {
+  var c = cashFlows(a[0]);
+  bothSigns(c);
+  var r = solve(function (x) {
+    var s = 0;
+    for (var i = 0; i < c.length; i++) s += c[i] / Math.pow(1 + x, i);
+    return s;
+  }, toNum(argOr(a, 1, 0.1)));
+  if (r === null) fail(ERR.NUM);
+  return r;
+});
+function datedFlows(vs, ds) {
+  var v = arr2(vs), d = arr2(ds), out = { v: [], d: [] };
+  if (v.length !== d.length) fail(ERR.NUM);
+  for (var i = 0; i < v.length; i++) {
+    if (isErr(v[i])) fail(v[i]);
+    if (isErr(d[i])) fail(d[i]);
+    var dd = Math.floor(toNum(d[i]));
+    if (dd < 0) fail(ERR.NUM);
+    out.v.push(toNum(v[i])); out.d.push(dd);
+  }
+  if (!out.v.length) fail(ERR.NUM);
+  for (i = 1; i < out.d.length; i++) if (out.d[i] < out.d[0]) fail(ERR.NUM);
+  return out;
+}
+function xnpv(r, f) {
+  var s = 0;
+  for (var i = 0; i < f.v.length; i++) s += f.v[i] / Math.pow(1 + r, (f.d[i] - f.d[0]) / 365);
+  return s;
+}
+def("XNPV", 3, 3, function (a) {
+  var r = toNum(a[0]);
+  if (r <= -1) fail(ERR.NUM);
+  return xnpv(r, datedFlows(a[1], a[2]));
+});
+def("XIRR", 2, 3, function (a) {
+  var f = datedFlows(a[0], a[1]);
+  bothSigns(f.v);
+  var r = solve(function (x) { return xnpv(x, f); }, toNum(argOr(a, 2, 0.1)));
+  if (r === null) fail(ERR.NUM);
+  return r;
+});
+def("MIRR", 3, 3, function (a) {
+  var c = cashFlows(a[0]), fr = toNum(a[1]), rr = toNum(a[2]), n = c.length, pos = 0, neg = 0;
+  if (n < 2) fail(ERR.DIV0);
+  for (var i = 0; i < n; i++) {
+    if (c[i] > 0) pos += c[i] / Math.pow(1 + rr, i);
+    else neg += c[i] / Math.pow(1 + fr, i);
+  }
+  if (pos === 0 || neg === 0) fail(ERR.DIV0);
+  return Math.pow(-pos * Math.pow(1 + rr, n - 1) / neg, 1 / (n - 1)) - 1;
+});
+def("SLN", 3, 3, function (a) {
+  var l = toNum(a[2]);
+  if (l === 0) fail(ERR.DIV0);
+  return (toNum(a[0]) - toNum(a[1])) / l;
+});
+def("SYD", 4, 4, function (a) {
+  var c = toNum(a[0]), s = toNum(a[1]), l = toNum(a[2]), p = toNum(a[3]);
+  if (l <= 0 || p <= 0 || p > l) fail(ERR.NUM);
+  return (c - s) * (l - p + 1) * 2 / (l * (l + 1));
+});
+def("DDB", 4, 5, function (a) {
+  var c = toNum(a[0]), s = toNum(a[1]), l = toNum(a[2]), p = toNum(a[3]), f = toNum(argOr(a, 4, 2));
+  if (c < 0 || s < 0 || l <= 0 || p <= 0 || p > l || f <= 0) fail(ERR.NUM);
+  var acc = 0, dep = 0;
+  for (var i = 1; i <= Math.ceil(p); i++) {
+    dep = Math.max(0, Math.min((c - acc) * f / l, c - s - acc));
+    acc += dep;
+  }
+  return dep;
+});
+def("DB", 4, 5, function (a) {
+  var c = toNum(a[0]), s = toNum(a[1]), l = toNum(a[2]), p = toInt(a[3]), m = toInt(argOr(a, 4, 12));
+  if (c < 0 || s < 0 || l <= 0 || p <= 0 || m < 1 || m > 12 || p > l + (m < 12 ? 1 : 0)) fail(ERR.NUM);
+  if (c === 0) return 0;
+  var rate = roundHalfAway(1 - Math.pow(s / c, 1 / l), 3), acc = c * rate * m / 12, dep = acc;
+  if (p === 1) return dep;
+  for (var i = 2; i <= p; i++) {
+    dep = i === l + 1 ? (c - acc) * rate * (12 - m) / 12 : (c - acc) * rate;
+    acc += dep;
+  }
+  return dep;
+});
+def("EFFECT", 2, 2, function (a) {
+  var r = toNum(a[0]), p = Math.trunc(toNum(a[1]));
+  if (r <= 0 || p < 1) fail(ERR.NUM);
+  return Math.pow(1 + r / p, p) - 1;
+});
+def("NOMINAL", 2, 2, function (a) {
+  var r = toNum(a[0]), p = Math.trunc(toNum(a[1]));
+  if (r <= 0 || p < 1) fail(ERR.NUM);
+  return p * (Math.pow(1 + r, 1 / p) - 1);
+});
+
+/* ---- lookup ---- */
+def("XMATCH", 2, 4, function (a) {
+  var mode = toInt(argOr(a, 2, 0)), dir = toInt(argOr(a, 3, 1));
+  if ([-1, 0, 1, 2].indexOf(mode) < 0) fail(ERR.VALUE);
+  var i = lookupPos(a[0], vector(a[1]), mode === -1 ? 1 : mode === 1 ? -1 : mode, dir < 0 ? -1 : 1);
+  if (i < 0) fail(ERR.NA);
+  return i + 1;
+});
+def("LOOKUP", 2, 3, function (a) {
+  var lk = arr2(a[1]), d = dims(lk), res;
+  if (a[2] === undefined && d.rows > 1 && d.cols > 1) {
+    if (d.cols > d.rows) { res = rowOf(lk, d.rows - 1); lk = rowOf(lk, 0); }
+    else { res = colOf(lk, d.cols - 1); lk = colOf(lk, 0); }
+  } else res = a[2] === undefined ? lk : vector(a[2]);
+  var i = lookupPos(a[0], vector(lk), 1, 1);
+  if (i < 0 || i >= res.length) fail(ERR.NA);
+  var v = res[i];
+  return v === undefined ? null : v;
+});
+function sheetPrefix(name) {
+  if (name === "") return "";
+  return /^[A-Za-z_][A-Za-z0-9_.]*$/.test(name) && !CELL_RE.test(name) ? name + "!" : "'" + name.replace(/'/g, "''") + "'!";
+}
+def("ADDRESS", 2, 5, function (a) {
+  var r = toInt(a[0]), c = toInt(a[1]), abs = toInt(argOr(a, 2, 1)), a1 = toBool(argOr(a, 3, true));
+  if (r < 1 || c < 1 || r > MAX_ROWS || c > 16384 || abs < 1 || abs > 4) fail(ERR.VALUE);
+  var pre = a[4] === undefined ? "" : sheetPrefix(toStr(a[4]));
+  var ar = abs === 1 || abs === 2, ac = abs === 1 || abs === 3;
+  if (!a1) return pre + (ar ? "R" + r : "R[" + r + "]") + (ac ? "C" + c : "C[" + c + "]");
+  return pre + (ac ? "$" : "") + colName(c - 1) + (ar ? "$" : "") + r;
+});
+/* OFFSET and INDIRECT build a reference; they get the engine (eng) */
+function refBase(node, cx, ev, eng) {
+  if (node.k === "ref") {
+    var ref = node.ref, sid = ref.sheet === null ? cx.sid : eng.ctx.sheetId(ref.sheet);
+    if (sid === null || sid === undefined) fail(ERR.REF);
+    var b = ref.b || ref.a;
+    var r1 = Math.max(ref.a.r, b.r);
+    if (ref.cols) {
+      var ext = eng.ctx.extent ? eng.ctx.extent(sid) : null;
+      r1 = Math.max(0, Math.min(r1, (ext && ext.rows ? ext.rows : 1) - 1));
+    }
+    return { sid: sid, r: Math.min(ref.a.r, b.r), c: Math.min(ref.a.c, b.c),
+             h: r1 - Math.min(ref.a.r, b.r) + 1, w: Math.abs(b.c - ref.a.c) + 1 };
+  }
+  var v = ev(node);
+  if (isErr(v)) fail(v);
+  if (isArr(v) && v.r0 !== undefined) { var d = dims(v); return { sid: v.sid, r: v.r0, c: v.c0, h: d.rows, w: d.cols }; }
+  fail(ERR.VALUE);
+}
+function argInt(node, ev, d) {
+  if (!node || node.k === "empty") return d;
+  var v = scalar(ev(node));
+  if (isErr(v)) fail(v);
+  return toInt(v);
+}
+lazy("OFFSET", 3, 5, function (n, cx, ev, eng) {
+  var b = refBase(n[0], cx, ev, eng);
+  var r = b.r + argInt(n[1], ev, 0), c = b.c + argInt(n[2], ev, 0);
+  var h = argInt(n[3], ev, b.h), w = argInt(n[4], ev, b.w);
+  if (h === 0 || w === 0) return ERR.REF;
+  if (h < 0) { r += h + 1; h = -h; }
+  if (w < 0) { c += w + 1; w = -w; }
+  if (r < 0 || c < 0 || r + h > MAX_ROWS || c + w > MAX_COLS) return ERR.REF;
+  return eng.box(b.sid, r, c, r + h - 1, c + w - 1, cx);
+});
+lazy("INDIRECT", 1, 2, function (n, cx, ev, eng) {
+  var v = scalar(ev(n[0]));
+  if (isErr(v)) return v;
+  if (n[1] && n[1].k !== "empty" && !toBool(scalar(ev(n[1])))) return ERR.REF;   /* R1C1: not supported */
+  var tk = tokenize("=" + toStr(v).trim());
+  if (tk.length !== 1 || tk[0].t !== T.REF) return ERR.REF;
+  var ref = tk[0].ref, sid = ref.sheet === null ? cx.sid : eng.ctx.sheetId(ref.sheet);
+  if (sid === null || sid === undefined) return ERR.REF;
+  var b = ref.b || ref.a, r1 = Math.max(ref.a.r, b.r);
+  if (ref.cols) {
+    var ext = eng.ctx.extent ? eng.ctx.extent(sid) : null;
+    r1 = Math.min(r1, (ext && ext.rows ? ext.rows : 1) - 1);
+  }
+  return eng.box(sid, Math.min(ref.a.r, b.r), Math.min(ref.a.c, b.c), r1, Math.max(ref.a.c, b.c), cx);
+});
+
 /* a function result handed on: ranges stay, blanks stay blank */
 function valueOf(v) { return v; }
 
@@ -1236,6 +1931,10 @@ Engine.prototype.area = function (ref, cx) {
     var ext = this.ctx.extent ? this.ctx.extent(sid) : { rows: 0 };
     r1 = Math.min(r1, (ext && ext.rows ? ext.rows : 0) - 1);
   }
+  return this.box(sid, r0, c0, r1, c1, cx);
+};
+/* the values of a block of cells of sheet sid, as a range array */
+Engine.prototype.box = function (sid, r0, c0, r1, c1, cx) {
   var rows = Math.max(0, r1 - r0 + 1), cols = c1 - c0 + 1;
   if (rows * cols > MAX_CELLS) fail(ERR.NUM);
   var vals = [];
@@ -1288,6 +1987,7 @@ Engine.prototype.ev = function (n, cx) {
   var self = this;
   switch (n.k) {
     case "v": return n.v;
+    case "arr": return mkArr(n.v.slice(), n.rows, n.cols);
     case "empty": return undefined;
     case "ref": {
       if (!n.ref.b && !n.ref.cols) {
@@ -1304,7 +2004,7 @@ Engine.prototype.ev = function (n, cx) {
       var name = n.name, args = n.args, lz = L[name];
       if (lz) {
         if (args.length < lz.min || args.length > lz.max) return ERR.VALUE;
-        try { return lz.f(args, cx, function (x) { return x.k === "empty" ? undefined : self.ev(x, cx); }); }
+        try { return lz.f(args, cx, function (x) { return x.k === "empty" ? undefined : self.ev(x, cx); }, self); }
         catch (e) { if (e instanceof Fx) return e.fx; throw e; }
       }
       var fd = F[name];
@@ -1425,7 +2125,7 @@ function display(v, lang) {
   return String(v);
 }
 /* formulas Excel shows as a date by itself */
-var DATE_FN = /^=\s*(TODAY|DATE|EDATE|EOMONTH|DATEVALUE|WORKDAY)\s*\(/i;
+var DATE_FN = /^=\s*(TODAY|DATE|EDATE|EOMONTH|DATEVALUE|WORKDAY(?:\.INTL)?)\s*\(/i;
 var DATETIME_FN = /^=\s*NOW\s*\(/i;
 function autoDate(raw) { return DATETIME_FN.test(raw) ? "dt" : (DATE_FN.test(raw) ? "d" : null); }
 
@@ -1479,7 +2179,45 @@ var HELP = {
     NPER: "Number of payment periods", NPV: "Net present value of cash flows",
     SUMSQ: "Sum of the squares", STDEVP: "Standard deviation of a population", VARP: "Variance of a population",
     CONCATENATE: "Joins texts", AVG: "Average of numbers", ISERR: "Whether the value is an error other than #N/A",
-    ISNONTEXT: "Whether the value is not text", TRUE: "The value TRUE", FALSE: "The value FALSE"
+    ISNONTEXT: "Whether the value is not text", TRUE: "The value TRUE", FALSE: "The value FALSE",
+    GCD: "Greatest common divisor", LCM: "Least common multiple", FACT: "Factorial (5! = 120)",
+    COMBIN: "Number of ways to choose k items", PERMUT: "Number of ordered ways to pick k items",
+    MROUND: "Rounds to the nearest multiple", EVEN: "Rounds up to an even number", ODD: "Rounds up to an odd number",
+    QUOTIENT: "Whole part of a division", SIN: "Sine (radians)", COS: "Cosine (radians)", TAN: "Tangent (radians)",
+    ASIN: "Arcsine in radians", ACOS: "Arccosine in radians", ATAN: "Arctangent in radians", ATAN2: "Angle of the point x, y in radians",
+    SINH: "Hyperbolic sine", COSH: "Hyperbolic cosine", TANH: "Hyperbolic tangent",
+    RADIANS: "Degrees to radians", DEGREES: "Radians to degrees",
+    "CEILING.MATH": "Rounds up to a multiple (negatives toward or away from zero)",
+    "FLOOR.MATH": "Rounds down to a multiple (negatives toward or away from zero)",
+    SUBTOTAL: "SUM, AVERAGE, COUNT and others by number (9 = SUM)",
+    AVERAGEA: "Average where text counts as 0 and TRUE as 1", MAXA: "Largest value, text as 0", MINA: "Smallest value, text as 0",
+    GEOMEAN: "Geometric mean", HARMEAN: "Harmonic mean", CORREL: "Correlation of two ranges", PEARSON: "Correlation of two ranges",
+    RSQ: "Square of the correlation (R²)", SLOPE: "Slope of the trend line", INTERCEPT: "Where the trend line crosses the y axis",
+    FORECAST: "A value on the trend line", "FORECAST.LINEAR": "A value on the trend line",
+    "NORM.DIST": "Normal distribution", NORMDIST: "Normal distribution", "NORM.S.DIST": "Standard normal distribution",
+    "NORM.INV": "Inverse of the normal distribution", NORMINV: "Inverse of the normal distribution",
+    "NORM.S.INV": "Inverse of the standard normal distribution", NORMSINV: "Inverse of the standard normal distribution",
+    STANDARDIZE: "How many standard deviations from the mean",
+    WEEKNUM: "Week number of the year", ISOWEEKNUM: "ISO week number of the year", YEARFRAC: "Fraction of a year between two dates",
+    DAYS360: "Days between two dates in a 360-day year", TIMEVALUE: "Time written as text as a fraction of a day",
+    "NETWORKDAYS.INTL": "Working days between two dates, with your own weekend",
+    "WORKDAY.INTL": "Date some working days away, with your own weekend",
+    TEXTBEFORE: "Text before a delimiter", TEXTAFTER: "Text after a delimiter", CLEAN: "Removes non-printing characters",
+    UNICHAR: "Character of a Unicode number", UNICODE: "Unicode number of the first character",
+    NUMBERVALUE: "Text as a number with chosen separators", FIXED: "Number as text with fixed decimals",
+    T: "The text, or empty when it is not text", N: "The value as a number",
+    IPMT: "Interest part of a loan payment", PPMT: "Principal part of a loan payment",
+    CUMIPMT: "Interest paid between two periods", CUMPRINC: "Principal paid between two periods",
+    RATE: "Interest rate per period of a loan or investment", IRR: "Internal rate of return",
+    XNPV: "Net present value of dated cash flows", XIRR: "Internal rate of return of dated cash flows",
+    MIRR: "Modified internal rate of return", SLN: "Straight-line depreciation per period",
+    SYD: "Sum-of-years' digits depreciation", DDB: "Double-declining balance depreciation",
+    DB: "Fixed-declining balance depreciation", EFFECT: "Effective annual interest rate", NOMINAL: "Nominal annual interest rate",
+    XMATCH: "Position of a value, exact by default", LOOKUP: "Finds a value in a sorted list and returns the matching item",
+    ADDRESS: "A cell address as text", OFFSET: "A range some rows and columns away from another",
+    INDIRECT: "The range named by a text such as \"B2\" or \"Sheet2!A1:A9\"",
+    "MODE.SNGL": "Most frequent value", "PERCENTILE.INC": "The k-th percentile", "QUARTILE.INC": "A quartile of the data",
+    "RANK.EQ": "Rank of a number in a list", "VAR.S": "Variance of a sample"
   },
   el: {
     SUM: "Άθροισμα αριθμών", AVERAGE: "Μέσος όρος αριθμών", MIN: "Ο μικρότερος αριθμός", MAX: "Ο μεγαλύτερος αριθμός",
@@ -1529,7 +2267,45 @@ var HELP = {
     NPER: "Πλήθος περιόδων πληρωμής", NPV: "Καθαρή παρούσα αξία ταμειακών ροών",
     SUMSQ: "Άθροισμα των τετραγώνων", STDEVP: "Τυπική απόκλιση πληθυσμού", VARP: "Διακύμανση πληθυσμού",
     CONCATENATE: "Ενώνει κείμενα", AVG: "Μέσος όρος αριθμών", ISERR: "Αν η τιμή είναι σφάλμα εκτός από #N/A",
-    ISNONTEXT: "Αν η τιμή δεν είναι κείμενο", TRUE: "Η τιμή TRUE (αληθές)", FALSE: "Η τιμή FALSE (ψευδές)"
+    ISNONTEXT: "Αν η τιμή δεν είναι κείμενο", TRUE: "Η τιμή TRUE (αληθές)", FALSE: "Η τιμή FALSE (ψευδές)",
+    GCD: "Μέγιστος κοινός διαιρέτης", LCM: "Ελάχιστο κοινό πολλαπλάσιο", FACT: "Παραγοντικό (5! = 120)",
+    COMBIN: "Πλήθος συνδυασμών k στοιχείων", PERMUT: "Πλήθος διατάξεων k στοιχείων",
+    MROUND: "Στρογγυλοποίηση στο κοντινότερο πολλαπλάσιο", EVEN: "Στρογγυλοποίηση προς τα πάνω σε άρτιο", ODD: "Στρογγυλοποίηση προς τα πάνω σε περιττό",
+    QUOTIENT: "Το ακέραιο μέρος μιας διαίρεσης", SIN: "Ημίτονο (ακτίνια)", COS: "Συνημίτονο (ακτίνια)", TAN: "Εφαπτομένη (ακτίνια)",
+    ASIN: "Τόξο ημιτόνου σε ακτίνια", ACOS: "Τόξο συνημιτόνου σε ακτίνια", ATAN: "Τόξο εφαπτομένης σε ακτίνια", ATAN2: "Η γωνία του σημείου x, y σε ακτίνια",
+    SINH: "Υπερβολικό ημίτονο", COSH: "Υπερβολικό συνημίτονο", TANH: "Υπερβολική εφαπτομένη",
+    RADIANS: "Μοίρες σε ακτίνια", DEGREES: "Ακτίνια σε μοίρες",
+    "CEILING.MATH": "Στρογγυλοποίηση προς τα πάνω σε πολλαπλάσιο (αρνητικοί προς ή μακριά από το μηδέν)",
+    "FLOOR.MATH": "Στρογγυλοποίηση προς τα κάτω σε πολλαπλάσιο (αρνητικοί προς ή μακριά από το μηδέν)",
+    SUBTOTAL: "SUM, AVERAGE, COUNT και άλλες με αριθμό (9 = SUM)",
+    AVERAGEA: "Μέσος όρος όπου το κείμενο μετρά 0 και το TRUE 1", MAXA: "Η μεγαλύτερη τιμή, κείμενο ως 0", MINA: "Η μικρότερη τιμή, κείμενο ως 0",
+    GEOMEAN: "Γεωμετρικός μέσος", HARMEAN: "Αρμονικός μέσος", CORREL: "Συσχέτιση δύο περιοχών", PEARSON: "Συσχέτιση δύο περιοχών",
+    RSQ: "Το τετράγωνο της συσχέτισης (R²)", SLOPE: "Η κλίση της γραμμής τάσης", INTERCEPT: "Πού τέμνει η γραμμή τάσης τον άξονα y",
+    FORECAST: "Μια τιμή πάνω στη γραμμή τάσης", "FORECAST.LINEAR": "Μια τιμή πάνω στη γραμμή τάσης",
+    "NORM.DIST": "Κανονική κατανομή", NORMDIST: "Κανονική κατανομή", "NORM.S.DIST": "Τυπική κανονική κατανομή",
+    "NORM.INV": "Αντίστροφη της κανονικής κατανομής", NORMINV: "Αντίστροφη της κανονικής κατανομής",
+    "NORM.S.INV": "Αντίστροφη της τυπικής κανονικής κατανομής", NORMSINV: "Αντίστροφη της τυπικής κανονικής κατανομής",
+    STANDARDIZE: "Πόσες τυπικές αποκλίσεις από τον μέσο όρο",
+    WEEKNUM: "Ο αριθμός εβδομάδας του έτους", ISOWEEKNUM: "Ο αριθμός εβδομάδας ISO του έτους", YEARFRAC: "Το κλάσμα του έτους ανάμεσα σε δύο ημερομηνίες",
+    DAYS360: "Ημέρες ανάμεσα σε δύο ημερομηνίες σε έτος 360 ημερών", TIMEVALUE: "Ώρα γραμμένη ως κείμενο σε κλάσμα της ημέρας",
+    "NETWORKDAYS.INTL": "Εργάσιμες ημέρες ανάμεσα σε δύο ημερομηνίες, με δικό σου Σαββατοκύριακο",
+    "WORKDAY.INTL": "Ημερομηνία κάποιες εργάσιμες μετά, με δικό σου Σαββατοκύριακο",
+    TEXTBEFORE: "Το κείμενο πριν από ένα διαχωριστικό", TEXTAFTER: "Το κείμενο μετά από ένα διαχωριστικό", CLEAN: "Αφαιρεί τους μη εκτυπώσιμους χαρακτήρες",
+    UNICHAR: "Ο χαρακτήρας ενός αριθμού Unicode", UNICODE: "Ο αριθμός Unicode του πρώτου χαρακτήρα",
+    NUMBERVALUE: "Κείμενο σε αριθμό με διαχωριστικά της επιλογής σου", FIXED: "Αριθμός ως κείμενο με σταθερά δεκαδικά",
+    T: "Το κείμενο, ή κενό όταν δεν είναι κείμενο", N: "Η τιμή ως αριθμός",
+    IPMT: "Το μέρος τόκου μιας δόσης δανείου", PPMT: "Το μέρος κεφαλαίου μιας δόσης δανείου",
+    CUMIPMT: "Οι τόκοι που πληρώθηκαν ανάμεσα σε δύο περιόδους", CUMPRINC: "Το κεφάλαιο που πληρώθηκε ανάμεσα σε δύο περιόδους",
+    RATE: "Το επιτόκιο ανά περίοδο δανείου ή επένδυσης", IRR: "Εσωτερικός βαθμός απόδοσης",
+    XNPV: "Καθαρή παρούσα αξία χρονολογημένων ταμειακών ροών", XIRR: "Εσωτερικός βαθμός απόδοσης χρονολογημένων ροών",
+    MIRR: "Τροποποιημένος εσωτερικός βαθμός απόδοσης", SLN: "Σταθερή απόσβεση ανά περίοδο",
+    SYD: "Απόσβεση αθροίσματος ψηφίων ετών", DDB: "Απόσβεση διπλά φθίνοντος υπολοίπου",
+    DB: "Απόσβεση σταθερά φθίνοντος υπολοίπου", EFFECT: "Πραγματικό ετήσιο επιτόκιο", NOMINAL: "Ονομαστικό ετήσιο επιτόκιο",
+    XMATCH: "Η θέση μιας τιμής, ακριβής από προεπιλογή", LOOKUP: "Βρίσκει τιμή σε ταξινομημένη λίστα και δίνει το αντίστοιχο στοιχείο",
+    ADDRESS: "Η διεύθυνση ενός κελιού ως κείμενο", OFFSET: "Περιοχή κάποιες γραμμές και στήλες μακριά από μια άλλη",
+    INDIRECT: "Η περιοχή που γράφει ένα κείμενο όπως \"B2\" ή \"Φύλλο2!A1:A9\"",
+    "MODE.SNGL": "Η συχνότερη τιμή", "PERCENTILE.INC": "Το k-οστό εκατοστημόριο", "QUARTILE.INC": "Τεταρτημόριο των δεδομένων",
+    "RANK.EQ": "Η θέση ενός αριθμού σε λίστα", "VAR.S": "Διακύμανση δείγματος"
   }
 };
 /* a pack language (i18n.js, browser only): HELP[code] = English + the pack */
@@ -1541,7 +2317,17 @@ var SIG = {
   HLOOKUP: "value; table; row; [approx]", XLOOKUP: "value; lookup; return; [if_none]; [mode]; [search]",
   INDEX: "range; row; [col]", MATCH: "value; range; [type]", IF: "test; then; [else]", IFERROR: "value; fallback",
   TEXT: "value; \"0.00\"", DATE: "year; month; day", DATEDIF: "start; end; \"Y|M|D\"", PMT: "rate; nper; pv; [fv]; [type]",
-  ROUND: "number; digits", LEFT: "text; [n]", MID: "text; start; n", SUBSTITUTE: "text; old; new; [n]", TEXTJOIN: "sep; skip_empty; text…"
+  ROUND: "number; digits", LEFT: "text; [n]", MID: "text; start; n", SUBSTITUTE: "text; old; new; [n]", TEXTJOIN: "sep; skip_empty; text…",
+  XMATCH: "value; range; [mode]; [search]", LOOKUP: "value; lookup; [result]", OFFSET: "ref; rows; cols; [height]; [width]",
+  INDIRECT: "\"A1\"", ADDRESS: "row; col; [abs]; [a1]; [sheet]", SUBTOTAL: "9; range…",
+  TEXTBEFORE: "text; delimiter; [n]; [any_case]; [end]; [if_none]", TEXTAFTER: "text; delimiter; [n]; [any_case]; [end]; [if_none]",
+  NUMBERVALUE: "text; [decimal]; [group]", FIXED: "number; [decimals]; [no_commas]", WEEKNUM: "date; [type]",
+  YEARFRAC: "start; end; [basis]", "NETWORKDAYS.INTL": "start; end; [weekend]; [holidays]", "WORKDAY.INTL": "start; days; [weekend]; [holidays]",
+  IPMT: "rate; per; nper; pv; [fv]; [type]", PPMT: "rate; per; nper; pv; [fv]; [type]", RATE: "nper; pmt; pv; [fv]; [type]; [guess]",
+  IRR: "values; [guess]", XNPV: "rate; values; dates", XIRR: "values; dates; [guess]", MIRR: "values; finance_rate; reinvest_rate",
+  CUMIPMT: "rate; nper; pv; start; end; type", CUMPRINC: "rate; nper; pv; start; end; type", DDB: "cost; salvage; life; period; [factor]",
+  DB: "cost; salvage; life; period; [month]", "NORM.DIST": "x; mean; sd; cumulative", "NORM.INV": "p; mean; sd",
+  FORECAST: "x; known_y; known_x", SLOPE: "known_y; known_x", CORREL: "range1; range2"
 };
 function names() {
   var out = Object.keys(F).concat(Object.keys(L));

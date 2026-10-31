@@ -125,7 +125,7 @@ const DAV_UPLOADS = "https://dav.test/remote.php/dav/uploads/u";
 const DAV_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev/dav";
 // Bytes as stored; .text for the sync tests, .data for the vault tests.
 class DavFile {
-  constructor(data, rev) { this.data = data; this.rev = rev; }
+  constructor(data, rev) { this.data = data; this.rev = rev; this.at = Date.now(); }
   get text() { return this.data.toString("utf8"); }
 }
 async function davBytes(b) {
@@ -328,7 +328,8 @@ class FakeWebDAV {
     const resp = (href, dir, f) => "<d:response><d:href>" + encodeURI(href) + (dir ? "/" : "") + "</d:href>" +
       "<d:propstat><d:prop><d:resourcetype>" + (dir ? "<d:collection/>" : "") + "</d:resourcetype>" +
       (f ? "<d:getcontentlength>" + f.data.length + "</d:getcontentlength>" +
-           "<d:getetag>" + f.rev + "</d:getetag>" : "") +
+           "<d:getetag>" + f.rev + "</d:getetag>" +
+           "<d:getlastmodified>" + new Date(f.at).toUTCString() + "</d:getlastmodified>" : "") +
       "</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>";
     let out = '<?xml version="1.0"?><d:multistatus xmlns:d="DAV:">';
     if (p === null) out += resp("/remote.php/dav/files/u", true);
@@ -355,6 +356,11 @@ class FakeWebDAV {
     return this.log.filter((e) => e.op === "download" && e.device === device &&
       e.path.startsWith(prefix || "") && e.status === 200 && !e.head).length;
   }
+  // VD-GC tests: every stored file becomes `ms` older; keys under the vault.
+  age(ms) { for (const f of this.files.values()) f.at -= ms; }
+  vaultKeys() { return [...this.files.keys()].filter((k) => k.startsWith("/vault/")).map((k) => k.slice(7)).sort(); }
+  putRaw(key, data, at) { this.put("/vault/" + key, Buffer.from(data)); this.files.get("/vault/" + key).at = at || Date.now(); }
+  drop(key) { this.files.delete("/vault/" + key); }
 }
 
 function textResponse(status, text, headers) {

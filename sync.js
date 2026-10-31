@@ -596,6 +596,9 @@
   //     (null = object missing — never an error).
   //   storage.deleteObject(key) → Promise<true> (gone = success).
   //   storage.listPrefix(prefix) → Promise<string[]> (relative keys).
+  //   storage.listInfo(prefix) → Promise<[{ key, size, modified }]>
+  //     (files only; modified = ms when the provider stored the
+  //     content, 0 = unknown). VD-GC uses it.
   //   storage.getRevision(key) → Promise<string|null>.
   // Chunked uploads LIVE INSIDE the adapter (upload sessions);
   // callers always pass ONE whole Blob. Content is expected to be
@@ -725,7 +728,9 @@
       .then(function (meta) { return meta ? (meta.rev || "") : null; });
   }
 
-  function adapterList(prefix) {
+  // info: true = [{ key, size, modified (ms since 1970, 0 = unknown) }]
+  // for the files only (VD-GC), else the keys as before.
+  function adapterList(prefix, info) {
     var base = adapterPath(prefix || "");
     var out = [];
     function page(cursor) {
@@ -742,7 +747,11 @@
           (listing.entries || []).forEach(function (e) {
             if (!e.path_lower) return;
             if (e.path_lower.indexOf(base) === 0 && e.path_lower !== base + "/") {
-              out.push(e.path_lower.slice(ADAPTER_ROOT.length + 1));
+              var k = e.path_lower.slice(ADAPTER_ROOT.length + 1);
+              if (!info) out.push(k);
+              else if (e[".tag"] === "file") {
+                out.push({ key: k, size: +e.size || 0, modified: Date.parse(e.server_modified || "") || 0 });
+              }
             }
           });
           if (listing.has_more && listing.cursor) return page(listing.cursor);
@@ -794,6 +803,10 @@
     },
 
     listPrefix: function (prefix) { return adapterList(prefix); },
+
+    // VD-GC: server_modified is when Dropbox stored this content.
+    // Uploading the very same bytes again does not change it.
+    listInfo: function (prefix) { return adapterList(prefix, true); },
 
     getRevision: function (key) { return adapterRevision(key); }
   };
@@ -1335,6 +1348,26 @@
 
   function davKey(key) { return DAV_ROOT + "/" + String(key).replace(/^\/+/, ""); }
 
+  // Every object key under `prefix` (folders walked one level at a
+  // time: many servers refuse Depth: infinity). info: true = files as
+  // { key, size, modified (ms, 0 = unknown) }.
+  function davList(prefix, info) {
+    var out = [];
+    function walk(rel) {
+      return davChildren(rel).then(function (list) {
+        return (list || []).reduce(function (chain, e) {
+          return chain.then(function () {
+            if (e.dir) return walk(e.rel);
+            var k = e.rel.slice(DAV_ROOT.length + 1);
+            if (k.indexOf(prefix || "") !== 0) return;
+            out.push(info ? { key: k, size: e.size, modified: Date.parse(e.modified || "") || 0 } : k);
+          });
+        }, Promise.resolve());
+      });
+    }
+    return walk(DAV_ROOT).then(function () { return out; });
+  }
+
   var davStorage = {
     putObject: function (key, blob, knownRev) {
       var rel = davKey(key);
@@ -1357,21 +1390,9 @@
     deleteObject: function (key) { return davDelete(davKey(key), false); },
     // Every object key under `prefix` (folders walked one level at a
     // time: many servers refuse Depth: infinity).
-    listPrefix: function (prefix) {
-      var out = [];
-      function walk(rel) {
-        return davChildren(rel).then(function (list) {
-          return (list || []).reduce(function (chain, e) {
-            return chain.then(function () {
-              if (e.dir) return walk(e.rel);
-              var k = e.rel.slice(DAV_ROOT.length + 1);
-              if (k.indexOf(prefix || "") === 0) out.push(k);
-            });
-          }, Promise.resolve());
-        });
-      }
-      return walk(DAV_ROOT).then(function () { return out; });
-    },
+    listPrefix: function (prefix) { return davList(prefix, false); },
+    // VD-GC: getlastmodified (an object without one is never old).
+    listInfo: function (prefix) { return davList(prefix, true); },
     getRevision: function (key) {
       return davReq("HEAD", davKey(key)).then(function (res) {
         if (res.status === 404) return null;
@@ -1481,7 +1502,7 @@
   var PROVIDER_KEY = "oros-sync-provider";
   var CLOUD_ID_KEY = "oros-sync-cloud-id";
   var VAULT_CLOUD_KEYS = ["oros-vault-manifest", "oros-vault-rev", "oros-vault-absent-at",
-                          "oros-vault-seeded", "oros-vault-conflicts"];
+                          "oros-vault-seeded", "oros-vault-conflicts", "oros-vault-sent"];
   var PROVIDERS = { dropbox: dropboxProvider, webdav: webdavProvider };
 
   function pickProvider() {
@@ -1534,6 +1555,12 @@
     },
     listPrefix: function (prefix) {
       return adapterEnsureConnected().then(function () { return provider.storage.listPrefix(prefix); });
+    },
+    listInfo: function (prefix) {
+      return adapterEnsureConnected().then(function () {
+        if (typeof provider.storage.listInfo !== "function") throw new Error("clean-unsupported");
+        return provider.storage.listInfo(prefix);
+      });
     },
     getRevision: function (key) {
       return adapterEnsureConnected().then(function () { return provider.storage.getRevision(key); });

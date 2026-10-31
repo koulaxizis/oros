@@ -18,21 +18,26 @@ Start a cell with = to make a formula, for example =A1*2 or =SUM(B2:B10).
 - When you copy and paste a formula, its references move with it, as in other spreadsheets ($ parts stay).
 
 ## Functions
-Over 100 functions work as in Excel and Google Sheets. Tap ƒx next to the formula bar for the full list with a line on each; while you type =SU… a short list appears: use the arrow keys and [[Tab]], or tap a name.
+Over 200 functions work as in Excel and Google Sheets. Tap ƒx next to the formula bar for the full list with a line on each; while you type =SU… a short list appears: use the arrow keys and [[Tab]], or tap a name.
 
 - Totals and conditions: SUM, AVERAGE, COUNT, COUNTA, COUNTBLANK, SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, MAXIFS, MINIFS, SUMPRODUCT.
 - Conditions are written like ">5", "<>paid", "a*" (* any text, ? one character) or a cell.
-- Lookups: VLOOKUP, HLOOKUP, XLOOKUP, INDEX, MATCH, CHOOSE.
+- Lookups: VLOOKUP, HLOOKUP, XLOOKUP, XMATCH, LOOKUP, INDEX, MATCH, CHOOSE, OFFSET, INDIRECT, ADDRESS.
+- Fixed lists go in braces: {1,2,3} is a row, {1;2;3} a column, {1,2;3,4} two rows. For example =SUM({1,2,3}) or =XLOOKUP(A1;{"a","b"};{10,20}).
 - Logic and errors: IF, IFS, SWITCH, AND, OR, NOT, IFERROR, IFNA, ISBLANK, ISNUMBER, ISTEXT, ISERROR.
-- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, SUBSTITUTE, FIND, SEARCH, TEXT, VALUE, TEXTJOIN, CONCAT, REPT.
-- Maths and statistics: ROUND, ROUNDUP, ROUNDDOWN, INT, MOD, POWER, SQRT, PRODUCT, MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, PI, RAND, RANDBETWEEN.
-- Money: PMT, FV, PV, NPER, NPV.
+- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, CLEAN, SUBSTITUTE, FIND, SEARCH, TEXTBEFORE, TEXTAFTER, TEXT, FIXED, VALUE, NUMBERVALUE, TEXTJOIN, CONCAT, REPT, UNICODE, UNICHAR.
+- Maths: ROUND, ROUNDUP, ROUNDDOWN, MROUND, INT, MOD, QUOTIENT, POWER, SQRT, PRODUCT, GCD, LCM, FACT, COMBIN, PERMUT, EVEN, ODD, CEILING.MATH, FLOOR.MATH, SUBTOTAL, SIN, COS, TAN and the other angle functions, RADIANS, DEGREES, PI, RAND, RANDBETWEEN.
+- Statistics: MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, AVERAGEA, GEOMEAN, HARMEAN, CORREL, SLOPE, INTERCEPT, RSQ, FORECAST, NORM.DIST, NORM.INV, STANDARDIZE.
+- Money: PMT, IPMT, PPMT, CUMIPMT, CUMPRINC, FV, PV, NPER, RATE, NPV, XNPV, IRR, XIRR, MIRR, EFFECT, NOMINAL.
+- Depreciation: SLN, SYD, DB, DDB.
+- SUBTOTAL counts every row, including rows a filter hides.
 - TEXT(value; "0.00") writes a number as text in a pattern: 0, 0.00, #,##0, 0%, dd/mm/yyyy and so on.
 
 ## Dates
 Dates are day numbers, as in Excel: 1 is 31 December 1899, so subtracting two dates gives the days between them.
 
-- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DATEDIF, EDATE, EOMONTH, NETWORKDAYS and WORKDAY work with them.
+- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DAYS360, DATEDIF, YEARFRAC, EDATE, EOMONTH, WEEKNUM, ISOWEEKNUM, TIMEVALUE, NETWORKDAYS, WORKDAY, NETWORKDAYS.INTL and WORKDAY.INTL work with them.
+- NETWORKDAYS.INTL and WORKDAY.INTL take your own weekend: 1 is Saturday and Sunday, 7 is Friday and Saturday, 11 to 17 a single day (11 Sunday), or seven 0/1 digits from Monday to Sunday, such as "0000011".
 - A cell with =TODAY(), =DATE(…) and similar shows a date by itself. For other cells pick `date` in `Number format`: 2026-10-14 in English, 14/10/2026 in Greek.
 - A date you type, like 2026-10-14 or 14/10/2026, stays as you typed it (text). Date functions still read it (day first: 14/10/2026 is 14 October), and DATEVALUE turns it into a day number.
 
@@ -153,7 +158,7 @@ See also [Backup](help:t/backup).
 - Merged cells don't grow when you insert rows or columns inside them; the merge keeps its size.
 - Wrapped rows grow to fit when you turn wrapping on; a row whose text you change later keeps its height until you wrap it again or drag its edge.
 - While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.
-- Array formulas, {1,2} constants, named ranges and pivot tables are not supported. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
+- Array formulas that fill several cells (FILTER, SORT, UNIQUE), named ranges and pivot tables are not supported. INDIRECT reads A1 references only, not R1C1. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
 - Inserting or deleting rows moves cells: if another device edits the same cells before sync, its edit stays at the old place.
 - Undo history is cleared when sync brings in changes, and deleting a sheet has no Undo.
 - Excel and Calc files need a helper library; if it hasn't loaded yet, you may need an internet connection.

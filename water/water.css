@@ -457,7 +457,10 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .col { overflow: visible; }
   #day { padding: 12px 12px 8px; }
   #hist { border-left: none; border-top: 1px solid var(--border); padding: 4px 12px 32px; }
-  #toolbar { position: sticky; top: 0; z-index: 5; }
+  /* Opaque while sticky: --bar-bg is translucent and entries showed
+     through when scrolled (Greek 360px list, 2026-10-16). */
+  #toolbar { position: sticky; top: 0; z-index: 5;
+             background: linear-gradient(var(--bar-bg), var(--bar-bg)), var(--bg); }
 }
 @media (max-width: 480px) {
   #toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
