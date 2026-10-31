@@ -1156,7 +1156,10 @@
       t: t,
       pickFolder: pickFolderDialog,
       onDiskChanged: function () { forceStorageRecalc(); refresh(); },
-      markDirty: markDirty
+      markDirty: markDirty,
+      zipCreate: zipCreate,
+      zipExtract: zipExtract,
+      zipOpen: zipOpen
     });
   }
 
@@ -4748,15 +4751,35 @@
       .arrayBuffer().then(function (b) { return new Uint8Array(b); });
   }
 
+  // Where the ZIP functions read and write. The orOS disk by default;
+  // "This computer" (files/computer.js) passes its own (wave 2026-10-31:
+  // ZIP there too). stat → {dir,size,mtime}, list → [{name}], read →
+  // Blob, write(path, blob), mkdir(path), done(dst|null) after a change.
+  var DISK_IO = {
+    stat: function (p) { return FS().stat(p); },
+    list: function (p) { return fsList(p, true); },
+    read: function (p) { return FS().read(p); },
+    write: function (p, b) { return FS().write(p, b); },
+    mkdir: function (p) { return FS().mkdir(p); },
+    parent: function (p) { var q = parentOf(p); return q === "/" ? ROOT : q; },
+    done: function (dst) {
+      if (dst) recentsTouch(dst);
+      forceStorageRecalc();
+      markDirty();
+    },
+    refresh: function () { refresh(); },
+    error: null
+  };
+
   // Selected items → [{ rel, dir, path?, size?, mtime }] (folders whole).
-  function zipCollect(paths) {
+  function zipCollect(paths, io) {
     var list = [], total = 0, over = false, top = [];
     function add(path, rel) {
       if (over) return Promise.resolve();
-      return FS().stat(path).then(function (st) {
+      return io.stat(path).then(function (st) {
         if (st && st.dir) {
           list.push({ rel: rel + "/", dir: true, mtime: st.mtime || null });
-          return fsList(path).then(function (kids) {
+          return io.list(path).then(function (kids) {
             var chain = Promise.resolve();
             kids.forEach(function (k) {
               chain = chain.then(function () { return add(join(path, k.name), rel + "/" + k.name); });
@@ -4781,16 +4804,16 @@
     return chain.then(function () { return { list: list, over: over }; });
   }
 
-  function zipCreate(paths) {
+  function zipCreate(paths, io) {
+    io = io || DISK_IO;
     paths = (paths || []).filter(function (p) { return !CORE.isTrashPath(p); });
     if (!paths.length) return;
     if (zipBusy) { transientNote(t("zip.busy")); return; }
     zipBusy = true;
-    var parent = parentOf(paths[0]);
-    if (parent === "/") parent = ROOT;
+    var parent = io.parent(paths[0]);
     var canDeflate = deflateOk();
     setJob(tfmt("zip.working", { n: 0, t: "…" }));
-    zipCollect(paths).then(function (c) {
+    zipCollect(paths, io).then(function (c) {
       if (c.over) {
         transientNote(tfmt("zip.tooBig", { n: ZIP_MAX_FILES, mb: ZIP_MAX_MB }));
         return null;
@@ -4803,7 +4826,7 @@
             entries.push({ name: it.rel, size: 0, crc: 0, data: new Uint8Array(0), method: 0, date: it.mtime });
             return null;
           }
-          return FS().read(it.path).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
+          return io.read(it.path).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
             var raw = new Uint8Array(buf);
             var crc = CORE.crc32(raw);
             var squeeze = canDeflate && raw.length > 64 && !CORE.shouldStore(it.rel)
@@ -4823,34 +4846,33 @@
         var dirs = paths.map(function (p, i) {
           return c.list.some(function (it) { return it.dir && it.rel === baseName(p) + "/"; });
         });
-        return fsList(parent, true).then(function (list) {
+        return io.list(parent).then(function (list) {
           var names = list.map(function (e) { return e.name; });
           var name = uniqueName(CORE.zipNameFor(paths.map(baseName), dirs) || (t("zip.archive") + ".zip"), names);
           var dst = join(parent, name);
-          return FS().write(dst, new Blob(parts, { type: "application/zip" })).then(function () {
-            recentsTouch(dst);
+          return io.write(dst, new Blob(parts, { type: "application/zip" })).then(function () {
             transientNote(tfmt("zip.done", { name: name }));
-            forceStorageRecalc();
-            markDirty();
+            io.done(dst);
           });
         });
       });
-    }).catch(function () {
-      transientNote(t("zip.fail"));
+    }).catch(function (e) {
+      transientNote((io.error && io.error(e)) || t("zip.fail"));
     }).then(function () {
       zipBusy = false;
       setJob("");
-      refresh();
+      io.refresh();
     });
   }
 
   // Read a ZIP of the disk with atelier/zip.js (AtelierZip.open).
-  function zipOpen(path) {
+  function zipOpen(path, io) {
+    io = io || DISK_IO;
     var Z = window.AtelierZip;
     if (!Z || typeof Z.open !== "function") return Promise.reject(new Error("bad"));
-    return FS().stat(path).then(function (st) {
+    return io.stat(path).then(function (st) {
       if (st && st.size > ZIP_OPEN_MB * 1048576) throw new Error("big");
-      return FS().read(path);
+      return io.read(path);
     }).then(function (blob) {
       return blob.arrayBuffer();
     }).then(function (buf) {
@@ -4863,26 +4885,27 @@
   }
 
   // Into a new folder named after the ZIP, next to it.
-  function zipExtract(path) {
+  function zipExtract(path, io) {
+    io = io || DISK_IO;
     if (zipBusy) { transientNote(t("zip.busy")); return; }
     zipBusy = true;
-    var parent = parentOf(path);
+    var parent = io.parent(path);
     setJob(tfmt("zip.extracting", { n: 0, t: "…" }));
-    zipOpen(path).then(function (z) {
+    zipOpen(path, io).then(function (z) {
       var plan = CORE.extractPlan(z.names, z.size);
       if (plan.tooMany || plan.tooBig) { transientNote(tfmt("zip.tooBig", { n: 20000, mb: 1024 })); return null; }
       if (!plan.items.length) { transientNote(t("zip.empty")); return null; }
-      return fsList(parent, true).then(function (list) {
+      return io.list(parent).then(function (list) {
         var base = plan.top || baseName(path).replace(/\.zip$/i, "") || t("zip.archive");
         var folder = uniqueName(base, list.map(function (e) { return e.name; }));
         var dest = join(parent, folder);
         var cut = plan.top ? plan.top.length + 1 : 0;
-        return FS().mkdir(dest).then(function () {
+        return io.mkdir(dest).then(function () {
           var ok = 0, fail = 0, chain = Promise.resolve();
           plan.items.forEach(function (it) {
             chain = chain.then(function () {
               return z.bytes(it.name).then(function (b) {
-                return FS().write(dest + "/" + it.rel.slice(cut), new Blob([b || new Uint8Array(0)]));
+                return io.write(dest + "/" + it.rel.slice(cut), new Blob([b || new Uint8Array(0)]));
               }).then(function () { ok++; }, function () { fail++; }).then(function () {
                 setJob(tfmt("zip.extracting", { n: ok + fail, t: plan.items.length }));
               });
@@ -4891,17 +4914,16 @@
           return chain.then(function () {
             transientNote(tfmt("zip.extracted", { n: ok, name: folder }));
             if (fail) transientNote(tfmt("zip.partial", { n: fail }));
-            forceStorageRecalc();
-            markDirty();
+            io.done(null);
           });
         });
       });
     }).catch(function (e) {
-      transientNote(zipErrorText(e));
+      transientNote((e && (e.message === "big" || e.message === "bad")) || !io.error ? zipErrorText(e) : (io.error(e) || zipErrorText(e)));
     }).then(function () {
       zipBusy = false;
       setJob("");
-      refresh();
+      io.refresh();
     });
   }
 
