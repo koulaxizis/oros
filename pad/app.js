@@ -600,8 +600,7 @@
       wrap.dataset.id = tab.id;
       var b = el("button", "tab-name");
       b.type = "button";
-      b.setAttribute("role", "tab");
-      b.setAttribute("aria-selected", on ? "true" : "false");
+      if (on) b.setAttribute("aria-current", "true");
       b.title = whereText(tab);
       b.appendChild(el("span", "tab-dot"));
       b.appendChild(el("span", "tab-txt", tab.name));
