@@ -3299,6 +3299,7 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        splashDone();
         helpBtnRefresh();
         openFromLaunchParam();
         searchFromLaunchParam();
@@ -3314,8 +3315,18 @@
       .catch(function () {
         state.apps = [];
         renderMenu();
+        splashDone();
         helpBtnRefresh();
       });
+  }
+
+  // BOOT-S1: the desktop is drawn; the boot splash (index.html) may go
+  // once the page's scripts have all run. Two frames so the menu and
+  // the clock are painted before the splash fades.
+  function splashDone() {
+    var go = function () { try { if (window.__orosSplashDone) window.__orosSplashDone(); } catch (e) {} };
+    if (typeof requestAnimationFrame !== "function") return go();
+    requestAnimationFrame(function () { requestAnimationFrame(go); });
   }
 
   // Launch shortcuts (manifest "shortcuts", long-press on the app
