@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.68.00
+- Backup files can be encrypted. In [Settings](help:a/settings) › Backups, turn on `Encrypt backup files` and choose a passphrase of at least 10 characters: from then on the exported file, `Back up now` and the automatic folder backups are locked with it (AES-256), and importing one asks for it. It is off unless you turn it on, plain backup files still import, and the passphrase is never stored. Write it down: without it nobody can open these files. See [Backup and restore](help:t/backup).
+
+## Version 4.67.01
+- A link to useoros.online, the download page, the privacy policy or Help now shows a preview card when you paste it into a chat or a post: the title, a short description and a picture of orOS.
+
 ## Version 4.67.00
 - Settings › System › `Report a problem`: one text file to send to whoever helps you when something goes wrong. It holds the orOS version, your browser and device, how sync and backups are set up and the last errors orOS noticed, never your notes, files, names, passwords or keys, and you read all of it before you save it. On the orOS USB stick and in orOS Portable it can also carry the computer's own logs.
 

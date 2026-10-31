@@ -1264,12 +1264,22 @@
     }
 
     var c2 = card(null);
+    // BK-E: the switch only asks; the shell's passphrase dialog turns
+    // it on once the key is stored.
+    c2.appendChild(row(t("b.enc"), switchBtn(!!b.encrypt, "b.enc", function (v) { act("backup.encrypt", v); }, t("b.enc")),
+      { scope: "backupenc", hint: t("b.enc.hint") }));
+    if (b.encLost) {
+      c2.appendChild(el("div", "hint warn", t("b.enc.lost")));
+      c2.appendChild(actions(button(t("b.enc.set"), "b.enc.set", function () { act("backup.encryptPass"); }, "primary")));
+    } else if (b.encrypt) {
+      c2.appendChild(actions(button(t("b.enc.change"), "b.enc.change", function () { act("backup.encryptPass"); })));
+    }
     c2.appendChild(actions(
       button(t("b.export"), "b.export", function () { act("backup.export"); }, "primary"),
       button(t("b.import"), "b.import", function () { act("backup.import"); }),
       b.folderSupported && b.folder && b.autoexport !== "off"
         ? button(t("b.now"), "b.now", function () { act("backup.now"); }) : null));
-    c2.appendChild(el("p", "hint", t("b.hint")));
+    c2.appendChild(el("p", "hint", t(b.encrypt ? "b.hint.enc" : "b.hint")));
     host.appendChild(c2);
   }
 
