@@ -199,6 +199,8 @@ const STR = {
   "ctx.open_maps": "Open in Maps",
   "ctx.edit": "Edit",
   "ctx.move": "Move to…",
+  "ctx.up": "Move up",
+  "ctx.down": "Move down",
   "ctx.delete": "Delete",
     "time.just": "just now",
     "time.min": "{n} min ago",
@@ -404,6 +406,8 @@ const STR = {
     "ctx.open_maps": "Άνοιγμα στον χάρτη",
     "ctx.edit": "Επεξεργασία",
     "ctx.move": "Μετακίνηση σε…",
+    "ctx.up": "Μετακίνηση πάνω",
+    "ctx.down": "Μετακίνηση κάτω",
     "ctx.delete": "Διαγραφή",
     "time.just": "μόλις τώρα",
     "time.min": "πριν {n} λεπτά",
@@ -1882,6 +1886,29 @@ function swapFolders(aId, bId) {
   renderList();
 }
 
+/* Manual order: swap a bookmark with its neighbour in the folder.
+   Equal or missing positions are renumbered first (steps of 1000, the
+   same spacing as the pre-Wave 2 baseline). Both items get a new
+   `modified`, so the new order wins the merge on other devices. */
+function moveInOrder(id, dir) {
+  const it = state.items[id];
+  if (!it) return;
+  const ord = sortItems(itemsInFolder(uiActiveFolder));
+  const at = ord.indexOf(it), other = ord[at + dir];
+  if (at < 0 || !other) return;
+  const now = Date.now();
+  if (new Set(ord.map((x) => x.pos)).size !== ord.length || ord.some((x) => !Number.isFinite(x.pos))) {
+    ord.forEach((x, i) => { if (x.pos !== i * 1000) { x.pos = i * 1000; x.modified = now; } });
+  }
+  const tmp = it.pos;
+  it.pos = other.pos;
+  other.pos = tmp;
+  it.modified = now;
+  other.modified = now;
+  save();
+  renderList();
+}
+
 function loadSortPreference() {
   try {
     const m = localStorage.getItem("oros-bookmarks-sort");
@@ -2419,6 +2446,12 @@ function showCtxMenu(id, x, y) {
   row(t("chk.one"), () => runCheck([id]));
   if (it.chk && it.chk.s === "moved" && it.chk.to) row(t("chk.use"), () => useNewAddress(id));
   row(t("ctx.move"), () => openPicker("item", t("pick.item"), it.folderId, (fid) => moveItem(id, fid)));
+  /* Manual sort: move a bookmark one place up or down in its folder. */
+  if (uiSortMode === "manual" && !uiQuery.trim() && !uiTagFilters.size && !uiBadFilter) {
+    const ord = sortItems(itemsInFolder(uiActiveFolder)), at = ord.indexOf(it);
+    if (at > 0) row(t("ctx.up"), () => moveInOrder(id, -1));
+    if (at >= 0 && at < ord.length - 1) row(t("ctx.down"), () => moveInOrder(id, 1));
+  }
   const sep2 = document.createElement("div");
   sep2.className = "sep";
   m.appendChild(sep2);

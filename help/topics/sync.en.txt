@@ -87,5 +87,10 @@ In `Settings`, under `Sync`, `Get from cloud` fetches the latest data and `Send 
 - [[Ctrl+Alt+Shift+P]] push to the cloud
 - [[Ctrl+Alt+Shift+R]] connect or reconnect Dropbox
 
+## Unused files in the cloud
+Files you delete or replace in [Files](app:files) leave their old encrypted copies in your cloud. Nobody can read them, but they take space. In `Settings`, under `Sync`, `Unused files in the cloud` › `Check` shows how many there are and how much space they take; it changes nothing. `Clean up` (tap twice) then removes only copies that no file uses any more and that were stored at least 30 days ago. Nothing on your devices changes.
+
+To keep your files safe it removes nothing when the cloud has no list of files, when copies of files you have are missing, or without your vault key, and it stops when another device changes your files meanwhile (check again to go on). orOS never cleans up on its own. The orOS Drive app follows the same rules.
+
 ## Add a second device
 Open orOS on the other device, open `Settings`, tap `Connect to Dropbox`, sign in to the **same** Dropbox account and type the **same** passphrase. Your data comes down and merges with anything already there. Something went wrong? See [Troubleshooting](help:t/troubleshooting).

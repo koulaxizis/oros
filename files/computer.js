@@ -86,6 +86,8 @@
       "c.pick":        "Choose a folder",
       "c.failedSome":  "{n} could not be copied",
       "c.preview":     "Preview",
+      "c.zip":         "Compress to ZIP",
+      "c.extract":     "Extract here",
       "c.noPreview":   "No preview for this kind of file. Copy it to the orOS disk to open it in an app.",
       "c.close":       "Close",
       "c.trashEmpty":  "The Trash is empty",
@@ -168,6 +170,8 @@
       "c.pick":        "Διάλεξε φάκελο",
       "c.failedSome":  "{n} δεν αντιγράφηκαν",
       "c.preview":     "Προεπισκόπηση",
+      "c.zip":         "Συμπίεση σε ZIP",
+      "c.extract":     "Αποσυμπίεση εδώ",
       "c.noPreview":   "Δεν υπάρχει προεπισκόπηση για αυτό το είδος αρχείου. Αντίγραψέ το στον δίσκο του orOS για να το ανοίξεις σε εφαρμογή.",
       "c.close":       "Κλείσιμο",
       "c.trashEmpty":  "Ο Κάδος είναι άδειος",
@@ -591,6 +595,21 @@
     preview(r);
   }
 
+  // ZIP here works like on the orOS disk: Files' own zipCreate /
+  // zipExtract, reading and writing through the launcher's API.
+  var ZIP_IO = {
+    stat: function (p) { return api.stat(p); },
+    list: function (p) { return api.list(p); },
+    read: function (p) { return api.read(p).then(function (r) { return r.blob; }); },
+    write: function (p, b) { return api.write(p, b); },
+    mkdir: function (p) { return api.op({ op: "mkdir", path: p }); },
+    parent: function (p) { return C.parentOf(p); },
+    done: function () {},
+    refresh: function () { if (active && !trashMode) load(); },
+    error: function (e) { return e && e.code ? t(C.errKey(e.code), { m: e.message || "" }) : ""; }
+  };
+  function canZip() { return !!(ctx && ctx.zipCreate && ctx.zipExtract); }
+
   function actions(r) {
     var list = [
       { label: t("c.toDisk"), value: "disk" },
@@ -598,9 +617,15 @@
       { label: t(win ? "c.deleteW" : "c.delete"), value: "trash", cls: "danger" },
       { label: t("c.cancel"), value: null }
     ];
+    if (canZip()) {
+      list.splice(1, 0, { label: t("c.zip"), value: "zip" });
+      if (!r.dir && /\.zip$/i.test(r.name)) list.splice(1, 0, { label: t("c.extract"), value: "extract" });
+    }
     if (!r.dir) list.unshift({ label: t("c.preview"), value: "preview" });
     dialog(r.name, null, list, "cmp-acts").then(function (v) {
       if (v === "preview") preview(r);
+      else if (v === "zip") ctx.zipCreate([r.path], ZIP_IO);
+      else if (v === "extract") ctx.zipExtract(r.path, ZIP_IO);
       else if (v === "disk") copyToDisk([r]);
       else if (v === "rename") rename(r);
       else if (v === "trash") remove(r);

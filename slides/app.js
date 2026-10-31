@@ -72,7 +72,7 @@
     en: {
       "aria.strip": "Slides",
       "app.name": "Slides", "loading": "Loading fonts…",
-      "home.new": "New presentation", "home.import": "Open file", "home.search": "Search presentations",
+      "home.new": "New presentation", "home.import": "Open file", "home.new.s": "New", "home.import.s": "Open", "home.search": "Search presentations",
       "home.empty.title": "No presentations yet",
       "home.empty.sub": "Start from a theme or a ready template, write in the outline, present full screen.",
       "home.count": "{n} presentations", "home.count1": "1 presentation",
@@ -220,7 +220,7 @@
     el: {
       "aria.strip": "Διαφάνειες",
       "app.name": "Παρουσιάσεις", "loading": "Φόρτωση γραμματοσειρών…",
-      "home.new": "Νέα παρουσίαση", "home.import": "Άνοιγμα αρχείου", "home.search": "Αναζήτηση παρουσιάσεων",
+      "home.new": "Νέα παρουσίαση", "home.import": "Άνοιγμα αρχείου", "home.new.s": "Νέα", "home.import.s": "Άνοιγμα", "home.search": "Αναζήτηση παρουσιάσεων",
       "home.empty.title": "Καμία παρουσίαση ακόμη",
       "home.empty.sub": "Ξεκίνα από ένα θέμα ή ένα έτοιμο πρότυπο, γράψε στο περίγραμμα, παρουσίασε σε πλήρη οθόνη.",
       "home.count": "{n} παρουσιάσεις", "home.count1": "1 παρουσίαση",

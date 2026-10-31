@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.68.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.76.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -50,6 +50,7 @@
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
+    vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
     syncRestoring:   null,   // A43: name of the backup being restored
     syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
@@ -175,6 +176,7 @@
     qr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3M17 21h0"/></svg>',
     converter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8l-2.5-2.5"/><path d="M16 17H8l2.5 2.5"/></svg>',
     flashcards: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M17 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M12 8h4M12 12h4"/></svg>',
+    typing: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 16h6"/><path d="M9.5 13.2h1.5M13 13.2h1.5"/></svg>',
     scanpdf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
@@ -259,6 +261,7 @@
     texttools: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6V4h11v2"/><path d="M8.5 4v14"/><path d="M6 18h5"/><path d="M15 11h6"/><path d="M15 15h6"/><path d="M15 19h4"/></svg>',
     units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="13" width="20" height="8" rx="1.5"/><path d="M6 13v3M10 13v4M14 13v3M18 13v4"/><path d="M4 6h16"/><path d="M7 3L4 6l3 3"/><path d="M17 3l3 3-3 3"/></svg>',
     stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
+    pad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M10 13l-2 2 2 2M14 13l2 2-2 2"/></svg>',
     textcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L7.5 6 12 18"/><path d="M4.7 14h5.6"/><circle cx="17.5" cy="15" r="3"/><path d="M20.5 12v6"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
@@ -3299,6 +3302,7 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        splashDone();
         helpBtnRefresh();
         openFromLaunchParam();
         searchFromLaunchParam();
@@ -3314,8 +3318,18 @@
       .catch(function () {
         state.apps = [];
         renderMenu();
+        splashDone();
         helpBtnRefresh();
       });
+  }
+
+  // BOOT-S1: the desktop is drawn; the boot splash (index.html) may go
+  // once the page's scripts have all run. Two frames so the menu and
+  // the clock are painted before the splash fades.
+  function splashDone() {
+    var go = function () { try { if (window.__orosSplashDone) window.__orosSplashDone(); } catch (e) {} };
+    if (typeof requestAnimationFrame !== "function") return go();
+    requestAnimationFrame(function () { requestAnimationFrame(go); });
   }
 
   // Launch shortcuts (manifest "shortcuts", long-press on the app
@@ -6199,6 +6213,7 @@
       S.disconnect();
       state.syncUserEmail = null;
       state.syncBackups = null;
+      state.vaultClean = null;
       renderMenu();
       return;
     }
@@ -6208,9 +6223,42 @@
       syncDisconnecting = false;
       state.syncUserEmail = null;
       state.syncBackups = null;
+      state.vaultClean = null;
       state.syncAutoErr = null;
       setSyncMsg("ok", syncDisconnectKey(r));
     });
+  }
+  // VD-GC: Settings › Sync › Unused files in the cloud. Look first
+  // (usage: changes nothing), then clean up only on the person's tap.
+  var CLEAN_CODES = /^clean-(no-manifest|mismatch|moved|unsupported)$/;
+  function vaultCleanFail(err) {
+    var S = window.orosSync, msg = (err && err.message) || "";
+    var prev = state.vaultClean || {};
+    state.vaultClean = { busy: "", usage: null, result: prev.result || null,
+      code: CLEAN_CODES.test(msg) ? msg : "",
+      err: CLEAN_CODES.test(msg) ? null : window.t(S ? S.errorKey(err) : "sync.err.generic") };
+  }
+  function vaultCleanCheck() {
+    var V = window.orosVault;
+    if (!V || typeof V.usage !== "function" || (state.vaultClean && state.vaultClean.busy)) return;
+    state.vaultClean = { busy: "check", usage: null, result: (state.vaultClean && state.vaultClean.result) || null };
+    settingsNotify();
+    V.usage().then(function (u) {
+      state.vaultClean = { busy: "", usage: JSON.parse(JSON.stringify(u)), result: state.vaultClean.result };
+    }, vaultCleanFail).then(settingsNotify);
+  }
+  function vaultCleanRun() {
+    var V = window.orosVault;
+    var c = state.vaultClean;
+    if (!V || typeof V.cleanUp !== "function" || !c || c.busy || !c.usage || !(c.usage.free > 0)) return;
+    state.vaultClean = { busy: "clean", usage: c.usage, result: null };
+    settingsNotify();
+    V.cleanUp().then(function (r) {
+      state.vaultClean = { busy: "", usage: null, result: {
+        removed: +r.removed || 0, bytes: +r.bytes || 0, stopped: !!r.stopped,
+        healed: +r.healed || 0, lost: Array.prototype.slice.call(r.lost || []).map(String) } };
+      vaultCleanCheck();                                // fresh numbers
+    }, function (err) { vaultCleanFail(err); settingsNotify(); });
   }
   // A43: the cloud backups for Settings › Sync, and Restore.
   function syncBackupsLoad() {
@@ -6886,6 +6934,9 @@
         { name: "@pdf-lib/fontkit 1.1.1", url: "https://github.com/Hopding/fontkit",
           by: "Devon Govett, Andrew Dillon & contributors", lic: "MIT",
           k: "cr.pdf-lib-2" },
+        { name: "CodeMirror 6", url: "https://codemirror.net/",
+          by: "Marijn Haverbeke & contributors", lic: "MIT",
+          k: "cr.codemirror" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           k: "cr.three-js" },
@@ -7654,7 +7705,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-lyricsync", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-lyricsync", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -8547,9 +8598,17 @@
       }
     } catch (e) { /* no audio — visual toast stands alone */ }
   }
-  // The voice of a kitchen timer's alarm; every other alarm beeps.
+  // The voice of a kitchen timer's alarm; every other alarm beeps,
+  // unless the Time app's "Sound" box is off ("" = silent: overlay
+  // only). Before 4.66.01 that box had no effect inside orOS.
   function alarmSoundOf(a) {
-    if (!a || !alarmIsTimer(a.id)) return "beep";
+    if (!a || !alarmIsTimer(a.id)) {
+      try {
+        var td = JSON.parse(localStorage.getItem("oros-time-data"));
+        if (td && td.sound === false) return "";
+      } catch (e) {}
+      return "beep";
+    }
     try {
       var list = JSON.parse(localStorage.getItem("oros-time-timers"));
       for (var i = 0; Array.isArray(list) && i < list.length; i++) {
@@ -8663,9 +8722,11 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmVoice(voice);
-    // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
-    alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
+    if (voice) {
+      alarmVoice(voice);
+      // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
+      alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
+    }
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
@@ -10030,6 +10091,9 @@
           list: state.syncBackups.list.slice(),
           err: state.syncBackups.err || null
         } : null,
+        canClean: !!(window.orosVault && typeof window.orosVault.cleanUp === "function"),
+        clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
+        cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
         restoring: state.syncRestoring,
         oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
@@ -10162,6 +10226,8 @@
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
       case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.clean.check":  if (S && S.isConnected() && S.hasPassphrase()) vaultCleanCheck(); return;
+      case "sync.clean.run":    if (S && S.isConnected() && S.hasPassphrase()) vaultCleanRun(); return;
       case "sync.restore":
         if (S && S.isConnected() && S.hasPassphrase() && arg && typeof arg.name === "string") {
           syncRestore({ name: arg.name, old: typeof arg.old === "string" ? arg.old : "" });

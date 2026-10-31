@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-Pt2jqkxVOqeT7q5D75hDJXW8IVSfp062MlruoiN+ZDc='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=pad" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pad · orOS</title>
+  <link rel="stylesheet" href="app.css?v=4.76.00">
+</head>
+<body>
+
+  <header id="toolbar">
+    <button type="button" class="tb" id="btn-new"><span class="ico" data-ico="new"></span><span class="lbl" data-i18n="btn.new">New</span></button>
+    <button type="button" class="tb" id="btn-open"><span class="ico" data-ico="open"></span><span class="lbl" data-i18n="btn.open">Open</span></button>
+    <button type="button" class="tb" id="btn-save"><span class="ico" data-ico="save"></span><span class="lbl" data-i18n="btn.save">Save</span></button>
+    <button type="button" class="tb" id="btn-find"><span class="ico" data-ico="find"></span><span class="lbl" data-i18n="btn.find">Find</span></button>
+    <span class="grow"></span>
+    <button type="button" class="tb" id="btn-menu" aria-haspopup="menu" aria-expanded="false"><span class="ico" data-ico="menu"></span><span class="lbl" data-i18n="btn.more">More</span></button>
+  </header>
+
+  <div id="menu" role="menu" hidden></div>
+
+  <nav id="tabbar">
+    <div id="tabs" role="group" data-i18n-aria="aria.tabs"></div>
+    <button type="button" class="tab-add" id="btn-add" data-i18n-aria="btn.newTab"><span class="ico" data-ico="plus"></span></button>
+  </nav>
+
+  <main id="editor"></main>
+
+  <footer id="status">
+    <span id="st-pos" class="st"></span>
+    <button type="button" class="st" id="st-lang"></button>
+    <button type="button" class="st" id="st-indent"></button>
+    <button type="button" class="st" id="st-eol"></button>
+    <button type="button" class="st" id="st-enc"></button>
+    <span id="st-where" class="st where"></span>
+  </footer>
+
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js?v=4.76.00" data-app="pad"></script>
+  <script src="../vendor/codemirror/cm-core.min.js?v=4.76.00"></script>
+  <script src="core.js?v=4.76.00"></script>
+  <script src="eel2.js?v=4.76.00"></script>
+  <script src="app.js?v=4.76.00"></script>
+
+</body>
+</html>

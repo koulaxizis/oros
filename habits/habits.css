@@ -416,6 +416,12 @@ dialog h3 { margin: 0 0 12px; font-size: 14px; }
   }
   .wdot { width: 34px; height: 34px; }
   .plabel { min-width: 90px; font-size: 11px; }
+  /* Greek 360px list (2026-10-16): the bar was wider than the screen
+     and the period label was cut. The period row takes a second line. */
+  .top { flex-wrap: wrap; row-gap: 6px; }
+  .period { order: 10; flex: 1 1 100%; justify-content: center; }
+  .top > .spacer { display: none; }
+  #btn-set { margin-left: auto; }
   .icon-picker { grid-template-columns: repeat(6, 1fr); }
   /* Wave 2 — compact calendar on phones */
   .seg-btn { padding: 7px 9px; }

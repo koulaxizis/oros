@@ -21,13 +21,17 @@
 //     as track", with the start, stops and destination as waypoints.
 //   - localVoice(): the voice for spoken guidance, only one installed
 //     on this device (never a network voice that sends the text out).
+//   - Heading-up navigation (v1.2.0): mapTurn() the map's next CSS
+//     rotation, unwrapped so a 350° → 10° turn goes the short way;
+//     turnBox() the size of the square map that still fills the
+//     screen at any rotation.
 //
 // API: window.OrosMapsRoute (module.exports in Node).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var MAX_PTS = 5;                       // start + 3 stops + end
   var MAX_LANES = 16;
   var LABEL_MAX = 120;
@@ -231,8 +235,31 @@
     return best;
   }
 
+  // ---------- heading-up ----------
+  // The map is turned by -heading so the direction of travel points
+  // up. prev: the current rotation in degrees (any number, not wrapped:
+  // CSS animates the plain difference); heading: compass degrees.
+  // Returns the rotation closest to prev, or prev when heading is not
+  // a number or the change is under minStep (GPS heading jitter).
+  function mapTurn(prev, heading, minStep) {
+    var p = typeof prev === "number" && isFinite(prev) ? prev : 0;
+    if (typeof heading !== "number" || !isFinite(heading)) return p;
+    var want = -(((heading % 360) + 360) % 360);
+    var d = ((want - p) % 360 + 540) % 360 - 180;      // -180 … 180
+    if (Math.abs(d) < (minStep || 0)) return p;
+    return p + d;
+  }
+  // A square map side that covers a w × h screen at every rotation:
+  // the screen's diagonal, rounded up; offsets centre it on the screen.
+  function turnBox(w, h) {
+    w = Math.max(0, +w || 0); h = Math.max(0, +h || 0);
+    var side = Math.ceil(Math.sqrt(w * w + h * h));
+    return { side: side, left: Math.floor((w - side) / 2), top: Math.floor((h - side) / 2) };
+  }
+
   var API = {
     VER: VER, AVOID: AVOID, LINK_MODES: LINK_MODES, INDICATIONS: INDICATIONS, MAX_PTS: MAX_PTS,
+    mapTurn: mapTurn, turnBox: turnBox,
     avoidFor: avoidFor, routeUrl: routeUrl, alternatives: alternatives, clock: clock,
     lanesOf: lanesOf, cleanLanes: cleanLanes, laneShape: laneShape,
     geoUri: geoUri, osmPointUrl: osmPointUrl, osmDirUrl: osmDirUrl,
