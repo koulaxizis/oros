@@ -99,7 +99,8 @@
       "m.import": "Import", "m.export": "Export", "m.changePw": "Change master password",
       "m.newRk": "New recovery key", "m.settings": "Lock settings", "m.delete": "Delete vault", "m.lock": "Lock now",
       "imp.title": "Import passwords", "imp.text": "Bring your passwords and two-factor codes from another app. Entries already in your vault are skipped.",
-      "imp.sources": "Choose the export file of Bitwarden, KeePass (.kdbx), 1Password (.1pux or CSV), Proton Pass, LastPass, Dashlane, NordPass, Enpass, Apple Passwords, Chrome, Edge, Firefox or KeePassXC, or a backup of Aegis or 2FAS. Apart from KeePass, the file must not be encrypted.",
+      "imp.sources": "Choose the export file of Bitwarden, KeePass (.kdbx or XML), 1Password (.1pux or CSV), Proton Pass, LastPass, Dashlane, NordPass, Keeper, RoboForm, Zoho Vault, Enpass, Apple Passwords, Chrome, Edge, Firefox or KeePassXC, or a backup of Aegis or 2FAS. KeePass files, and Bitwarden, Aegis and 2FAS files with a password, open with their password; other files must not be encrypted.",
+      "imp.filePw": "Password of the export file",
       "imp.ga": "Google Authenticator",
       "imp.gaHint": "In Google Authenticator use Transfer accounts, then Export accounts. Choose a screenshot of each QR code, scan it with the camera, or paste its otpauth-migration:// link. Add the QR codes one after another, then import.",
       "imp.link": "Link of the QR code", "imp.read": "Read",
@@ -123,7 +124,8 @@
       "imp.go": "Import {n}", "imp.done": "{n} entries imported.",
       "imp.delete": "The file you imported is not encrypted. Delete it now.",
       "err.json": "This file is not valid JSON.", "err.format": "This file is not a known export.",
-      "err.encrypted": "This Bitwarden export is encrypted. Export again as “.json” (not encrypted), import it, then delete that file.",
+      "err.encrypted": "This Bitwarden export opens only in its own Bitwarden account. Export again as “.json (Encrypted)” with the type “Password protected”, or as “.json”, then import it.",
+      "err.wrongPw": "Wrong password.",
       "err.empty": "The file has no entries.", "err.notKdbx": "This is not a KeePass database.",
       "err.kdbxVersion": "This KeePass version is not supported (KDBX 3.1 and 4 are).",
       "err.wrongKey": "Wrong password or key file.", "err.twofish": "Twofish encryption is not supported. Change it to AES or ChaCha20 in KeePass, then import again.",
@@ -217,7 +219,8 @@
       "m.import": "Εισαγωγή", "m.export": "Εξαγωγή", "m.changePw": "Αλλαγή κύριου κωδικού",
       "m.newRk": "Νέο κλειδί ανάκτησης", "m.settings": "Ρυθμίσεις κλειδώματος", "m.delete": "Διαγραφή κρύπτης", "m.lock": "Κλείδωμα τώρα",
       "imp.title": "Εισαγωγή κωδικών", "imp.text": "Φέρε τους κωδικούς σου και τους κωδικούς δύο βημάτων από άλλη εφαρμογή. Όσες εγγραφές υπάρχουν ήδη παραλείπονται.",
-      "imp.sources": "Διάλεξε το αρχείο εξαγωγής από Bitwarden, KeePass (.kdbx), 1Password (.1pux ή CSV), Proton Pass, LastPass, Dashlane, NordPass, Enpass, Apple Passwords, Chrome, Edge, Firefox ή KeePassXC, ή ένα αντίγραφο ασφαλείας του Aegis ή του 2FAS. Εκτός από το KeePass, το αρχείο δεν πρέπει να είναι κρυπτογραφημένο.",
+      "imp.sources": "Διάλεξε το αρχείο εξαγωγής από Bitwarden, KeePass (.kdbx ή XML), 1Password (.1pux ή CSV), Proton Pass, LastPass, Dashlane, NordPass, Keeper, RoboForm, Zoho Vault, Enpass, Apple Passwords, Chrome, Edge, Firefox ή KeePassXC, ή ένα αντίγραφο ασφαλείας του Aegis ή του 2FAS. Τα αρχεία του KeePass, και τα αρχεία του Bitwarden, του Aegis και του 2FAS με κωδικό, ανοίγουν με τον κωδικό τους· τα άλλα αρχεία δεν πρέπει να είναι κρυπτογραφημένα.",
+      "imp.filePw": "Κωδικός του αρχείου εξαγωγής",
       "imp.ga": "Google Authenticator",
       "imp.gaHint": "Στο Google Authenticator πήγαινε στη Μεταφορά λογαριασμών και μετά στην Εξαγωγή λογαριασμών. Διάλεξε ένα στιγμιότυπο οθόνης κάθε κωδικού QR, σάρωσέ τον με την κάμερα ή επικόλλησε τον σύνδεσμο otpauth-migration://. Πρόσθεσε τους κωδικούς QR τον έναν μετά τον άλλον και μετά κάνε την εισαγωγή.",
       "imp.link": "Σύνδεσμος του κωδικού QR", "imp.read": "Ανάγνωση",
@@ -241,7 +244,8 @@
       "imp.go": "Εισαγωγή {n}", "imp.done": "Εισήχθησαν {n} εγγραφές.",
       "imp.delete": "Το αρχείο που εισήγαγες δεν είναι κρυπτογραφημένο. Διάγραψέ το τώρα.",
       "err.json": "Αυτό το αρχείο δεν είναι έγκυρο JSON.", "err.format": "Αυτό το αρχείο δεν είναι γνωστή εξαγωγή.",
-      "err.encrypted": "Αυτή η εξαγωγή του Bitwarden είναι κρυπτογραφημένη. Κάνε ξανά εξαγωγή ως «.json» (μη κρυπτογραφημένο), εισήγαγέ το και μετά διάγραψε το αρχείο.",
+      "err.encrypted": "Αυτή η εξαγωγή του Bitwarden ανοίγει μόνο στον δικό της λογαριασμό Bitwarden. Κάνε ξανά εξαγωγή ως «.json (Encrypted)» με τύπο «Password protected», ή ως «.json», και μετά εισήγαγέ την.",
+      "err.wrongPw": "Λάθος κωδικός.",
       "err.empty": "Το αρχείο δεν έχει εγγραφές.", "err.notKdbx": "Αυτό δεν είναι βάση δεδομένων KeePass.",
       "err.kdbxVersion": "Αυτή η έκδοση KeePass δεν υποστηρίζεται (υποστηρίζονται KDBX 3.1 και 4).",
       "err.wrongKey": "Λάθος κωδικός ή αρχείο κλειδιού.", "err.twofish": "Η κρυπτογράφηση Twofish δεν υποστηρίζεται. Άλλαξέ την σε AES ή ChaCha20 στο KeePass και ξανακάνε την εισαγωγή.",
@@ -358,7 +362,7 @@
   function errText(e) {
     var m = e && e.message;
     var map = { "json": "err.json", "format": "err.format", "encrypted": "err.encrypted", "empty": "err.empty",
-                "not-kdbx": "err.notKdbx", "kdbx-version": "err.kdbxVersion", "wrong-key": "err.wrongKey",
+                "not-kdbx": "err.notKdbx", "kdbx-version": "err.kdbxVersion", "wrong-key": "err.wrongKey", "wrong-password": "err.wrongPw",
                 "twofish": "err.twofish", "kdf-params": "err.kdfParams", "kdf-unknown": "err.kdfParams",
                 "bad-file": "err.badFile", "bad-xml": "err.badFile", "no-key": "err.noKey", "cipher-unknown": "err.badFile",
                 "storage-full": "err.storage", "no-wasm": "lock.noWasm", "no-argon2": "lock.noWasm",
@@ -1293,19 +1297,22 @@
   var SRC_NAMES = { proton: "Proton Pass", "1pux": "1Password (.1pux)", lastpass: "LastPass", dashlane: "Dashlane",
                     nordpass: "NordPass", enpass: "Enpass", apple: "Apple Passwords", aegis: "Aegis", "2fas": "2FAS",
                     gauth: "Google Authenticator", bitwarden: "Bitwarden", keepass: "KeePass", chrome: "Chrome / Edge",
-                    firefox: "Firefox", keepassxc: "KeePassXC" };
-  var IMPORT_ACCEPT = ".json,.csv,.zip,.1pux,.kdbx,.2fas,.txt,.pgp,.dash,application/json,text/csv,application/zip";
+                    firefox: "Firefox", keepassxc: "KeePassXC", keeper: "Keeper", roboform: "RoboForm",
+                    zoho: "Zoho Vault", keepassxml: "KeePass (XML)" };
+  var IMPORT_ACCEPT = ".json,.csv,.zip,.1pux,.kdbx,.xml,.2fas,.txt,.pgp,.dash,application/json,text/csv,application/zip";
   var IMPORT_MAX = 50 * 1024 * 1024;
   function importDialog() {
     var OI = window.OrosPasswordsImport, K = window.OrosImportKit;
     var d = dialog(t("imp.title"));
     d.body.appendChild(el("p", "hint", t("imp.text")));
     d.body.appendChild(el("p", "hint", t("imp.sources")));
-    // KeePass: its password and key file, shown once a .kdbx is chosen
+    // KeePass: its password and key file, shown once a .kdbx is chosen;
+    // an encrypted Bitwarden / Aegis / 2FAS file: its password only
     var kx = el("div", "pv-kx"); kx.hidden = true;
     var kpw = secretInput(null, "off");
-    kx.appendChild(labelled(t("imp.kdbxPw"), showable(kpw)));
-    var keyFile = null, kdbxBytes = null;
+    var kpwBox = labelled(t("imp.kdbxPw"), showable(kpw));
+    kx.appendChild(kpwBox);
+    var keyFile = null, kdbxBytes = null, locked = null;
     var kfRow = el("div", "pv-row");
     var kfName = el("span", "hint", t("imp.keyNone"));
     kfRow.appendChild(btn(t("imp.keyPick"), "act small", function () {
@@ -1315,7 +1322,8 @@
       });
     }));
     kfRow.appendChild(kfName);
-    kx.appendChild(el("span", "fld-label", t("imp.keyFile")));
+    var kfLabel = el("span", "fld-label", t("imp.keyFile"));
+    kx.appendChild(kfLabel);
     kx.appendChild(kfRow);
     d.body.appendChild(kx);
     // Google Authenticator "Transfer accounts" QR codes
@@ -1359,6 +1367,7 @@
     function forget() {
       if (kdbxBytes) { kdbxBytes.fill(0); kdbxBytes = null; }
       if (keyFile) { keyFile.fill(0); keyFile = null; }
+      locked = null;
       res = null;
     }
     d.onClose(forget);
@@ -1401,7 +1410,7 @@
       go.disabled = !total;
     }
     var go = d.actions(t("d.cancel"), t("imp.pick"), function (done) {
-      if (res && !kdbxBytes) {
+      if (res && !kdbxBytes && !locked) {
         var r = res, info = null, n = 0;
         save(function (s) {
           var o = OI.apply(s, r, { now: Date.now() });
@@ -1416,6 +1425,22 @@
           });
           else toast(msg);
         }, function () { done(false); });
+        return;
+      }
+      if (locked) {
+        status.textContent = t("imp.reading");
+        var lk = locked, pw = kpw.value;
+        go.disabled = true;
+        OI.unlock(lk, pw, Date.now()).then(function (r) {
+          kpw.value = ""; locked = null; status.textContent = "";
+          go.disabled = false;
+          take(r);
+          done(false);
+        }).catch(function (e) {
+          status.textContent = ""; go.disabled = false; err(errText(e)); done(false);
+          try { kpw.focus(); kpw.select(); } catch (x) {}
+        });
+        pw = null;
         return;
       }
       if (kdbxBytes) {
@@ -1438,8 +1463,12 @@
           return OI.parse(x);   // wipes the bytes once read (not a .kdbx)
         }).then(function (r) {
           status.textContent = "";
-          if (r && r.kdbx) {
-            res = null; kdbxBytes = x.bytes; x = null;
+          if (r && (r.kdbx || r.locked)) {
+            res = null;
+            if (r.kdbx) { kdbxBytes = x.bytes; locked = null; } else locked = r;
+            x = null;
+            kpwBox.firstChild.textContent = t(r.kdbx ? "imp.kdbxPw" : "imp.filePw");
+            kfLabel.hidden = kfRow.hidden = !r.kdbx;
             kx.hidden = false; qr.hidden = true;
             go.textContent = t("imp.open");
             done(false);
