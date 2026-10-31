@@ -360,8 +360,32 @@
       return { kind: "disk", path: l.path.slice(0, 1024), mtime: Number(l.mtime) || 0, size: Number(l.size) || 0,
         h: typeof l.h === "string" ? l.h.slice(0, 40) : "" };
     }
+    // This computer on orOS USB / Portable (pcdialog): an absolute path
+    // of the launcher's places (/home/…, /disks/…).
+    if (l.kind === "pc" && typeof l.path === "string" && /^\/[^\0]+$/.test(l.path) && l.path.split("/").indexOf("..") < 0 && l.path.length <= 4096) {
+      return { kind: "pc", path: l.path, mtime: Number(l.mtime) || 0, size: Number(l.size) || 0,
+        h: typeof l.h === "string" ? l.h.slice(0, 40) : "" };
+    }
+    // A file of this device kept by the browser (File System Access):
+    // the handle itself lives beside the tab (IndexedDB), never here.
+    if (l.kind === "fsa") {
+      return { kind: "fsa", mtime: Number(l.mtime) || 0, size: Number(l.size) || 0,
+        h: typeof l.h === "string" ? l.h.slice(0, 40) : "" };
+    }
     if (l.kind === "device") return { kind: "device" };
     return null;
+  }
+  // Same file? (recent list, "already open")
+  function sameLoc(a, b) {
+    return !!(a && b && a.kind === b.kind && (a.kind === "disk" || a.kind === "pc") && a.path === b.path);
+  }
+  // The recent list: disk and This computer files, newest first, no
+  // repeats, at most 20.
+  function addRecent(list, loc) {
+    var l = cleanLoc(loc);
+    var rest = (Array.isArray(list) ? list : []).filter(function (r) { return !sameLoc(r, l); });
+    if (!l || (l.kind !== "disk" && l.kind !== "pc")) return rest.slice(0, 20);
+    return [{ kind: l.kind, path: l.path }].concat(rest).slice(0, 20);
   }
   function cleanTab(raw) {
     if (!raw || typeof raw !== "object" || typeof raw.id !== "string" || !ID_RE.test(raw.id)) return null;
@@ -386,7 +410,12 @@
       return typeof id === "string" && ID_RE.test(id) && a.indexOf(id) === i;
     }).slice(0, 200) : [];
     var active = typeof s.active === "string" && order.indexOf(s.active) >= 0 ? s.active : (order[0] || "");
-    var recent = Array.isArray(s.recent) ? s.recent.map(cleanLoc).filter(function (l) { return l && l.kind === "disk"; }).slice(0, 20) : [];
+    var recent = [];
+    (Array.isArray(s.recent) ? s.recent : []).forEach(function (r) {
+      var l = cleanLoc(r);
+      if (l && (l.kind === "disk" || l.kind === "pc") && !recent.some(function (x) { return sameLoc(x, l); })) recent.push({ kind: l.kind, path: l.path });
+    });
+    recent = recent.slice(0, 20);
     return { order: order, active: active, recent: recent };
   }
 
@@ -422,7 +451,7 @@
     detectEncoding: detectEncoding, decode: decode, encode: encode, looksBinary: looksBinary,
     detectEol: detectEol, toLf: toLf, withEol: withEol, detectIndent: detectIndent,
     safeName: safeName, copyName: copyName, untitledName: untitledName,
-    cleanTab: cleanTab, cleanSession: cleanSession, cleanLoc: cleanLoc, hash: hash, hashBytes: hashBytes
+    cleanTab: cleanTab, cleanSession: cleanSession, cleanLoc: cleanLoc, sameLoc: sameLoc, addRecent: addRecent, hash: hash, hashBytes: hashBytes
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.PadCore = api;

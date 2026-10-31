@@ -29,8 +29,11 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 
 ## Where your files go
 - `orOS disk`: the file stays in orOS, in the folder you choose (`Documents` at first), and syncs to your other devices encrypted like every file on the disk. Files lists it too.
-- `This device`: a file on this computer or phone. Where the browser can, it asks where to save; otherwise the file goes to Downloads. On an orOS USB stick it is saved back on the computer itself.
-- If a file on the orOS disk changed somewhere else after you opened it (another device or another app), Pad does not overwrite it. It offers to save yours as a copy next to it, or to open the other version in a new tab, so nothing is lost.
+- `This device`: a file on this computer or phone. In Chrome and Edge on a computer, a file you open or save here is saved again in its own place by `Save`; the browser asks once whether Pad may change it. In other browsers `Save` asks where to save, or the file goes to Downloads.
+- `This computer` (orOS USB stick and orOS Portable): the computer's own folders and disks. `Save` writes the file back where it came from.
+- If a file changed somewhere else after you opened it (another device, another app or another program), Pad does not overwrite it. It offers to save yours as a copy next to it, or to open the other version in a new tab, so nothing is lost. This holds for the orOS disk, This computer and This device alike.
+- `Recent files…` in `More` (and the bottom of `Open`) lists the files you opened or saved lately on the orOS disk and This computer. `Clear the list` empties it.
+- In Files, `Open with…` on a code or text file opens it in Pad, and `Save` writes it back to the same file. Code files that you open with orOS from your computer's own file manager open in Pad as a copy: save them with `Save as…`.
 - Pad never runs a file: HTML or a script opens as text only. Tabs you have not saved are not synced; they stay on this device.
 
 ## View

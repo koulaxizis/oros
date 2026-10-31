@@ -24,6 +24,10 @@
 // the meantime is never overwritten: the person gets "Save as a copy"
 // instead. Any other replace asks first.
 //
+// Pad (wave 2) also reads and writes one path at a time through
+// opened / stat / list / read / write (no window), with the same
+// ifmtime rule.
+//
 // Device-local: oros-pcdialog-dir (the last folder). Strings pcd.*
 // in translations.js (EN, EL), i18n/de/shell.js (DE).
 // ============================================================
@@ -529,6 +533,24 @@
     origin: function (name) {
       var o = opened[String(name || "").toLowerCase()];
       return o ? o.path : null;
+    },
+    // Editors that save in place (Pad, PAD-CF): one path, no window.
+    // opened(name) -> { path, mtime } of the file just opened under that
+    // name. write() sends ifmtime, so the launcher refuses ("changed")
+    // a file whose time moved or that was removed since it was read;
+    // ifmtime 0 refuses an existing file unless replace is true.
+    // Errors carry .code (notfound, changed, exists, readonly, full, …).
+    opened: function (name) {
+      var o = opened[String(name || "").toLowerCase()];
+      return o ? { path: o.path, mtime: o.mtime } : null;
+    },
+    stat: function (path) { return call("GET", "stat", q(path)); },
+    list: function (dir) { return call("GET", "list", q(dir)); },
+    read: function (path) { return call("GET", "stat", q(path)).then(readFile); },
+    write: function (path, blob, ifmtime, replace) {
+      if (!isBlob(blob)) return Promise.reject(new Error("no file"));
+      var m = Math.max(0, Math.floor(Number(ifmtime) || 0));
+      return put(path, blob, !!replace || m > 0, m).then(function () { return call("GET", "stat", q(path)); });
     }
   };
 })(typeof window !== "undefined" ? window : null);
