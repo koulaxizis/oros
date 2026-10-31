@@ -54,6 +54,13 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - The take is saved as a WAV file and placed where it was played. If takes land late against the click, raise `Recording offset` in the settings.
 - In the settings (the three dots at the top) choose the input and, where the browser allows it, the output of your sound card.
 
+## Recording through your sound card (orOS Bridge)
+- A browser records through the system's shared mixer: one stereo input and some delay. With orOS Bridge (a small free program for Windows and Linux, github.com/koulaxizis/oros-bridge, version 0.3.0 or newer) Studio records through your sound card itself.
+- In the settings set `Record and play through` to `orOS Bridge`, type the 6-digit code it shows once, then pick the `Sound system` (Windows Audio, JACK, PipeWire / PulseAudio or ALSA), the card and the `Inputs`: one input, a stereo pair, or every input, each on its own track. On Windows, `Exclusive` gives the lowest delay while other programs go quiet.
+- `Check the inputs` shows a meter for each input of the card, so you can see where your microphone or guitar comes in.
+- Press record as usual. Studio first prepares the song from the playhead (a moment for a long song), then the card plays it and records at the same time, so the take stays in step even when the computer is busy. Listen through your card's direct monitoring.
+- The take lands where it was played, minus the delay the bridge measures for the card; if it still lands late, raise `Recording offset`.
+
 ## Keyboard and MIDI
 - `Keyboard` in the transport opens a piano keyboard with a built-in synth: piano, electric piano, organ, strings, lead and bass. Play it with the mouse or with your fingers, and slide along the keys for a glissando.
 - `Connect MIDI keyboard` asks the browser for MIDI and plays the synth from every connected keyboard, with velocity, the sustain pedal and pitch bend. Studio asks only when you press it, and reconnects by itself next time once you have allowed it.
@@ -163,6 +170,7 @@ Ask the Assistant to change your songs in words, such as "turn the vocals down 3
 ## Limits
 - Up to 50 projects, 8 tracks and 500 clips per project, one hour per project.
 - An imported file can be up to 100 MB, and a take up to 30 minutes.
+- Through orOS Bridge you hear the song through the card but not your own input (use the card's direct monitoring), and the click stops two minutes after the end of the song. ASIO comes later as a separate module.
 - One remote at a time, and pairing needs internet on both devices.
 - A MIDI clip has up to 2000 notes. The instruments are simple built-in synths and a synthesized drum kit; there are no sampled instruments or soundfonts.
 - While you play the keyboard live, you hear the sound without the track's effects; the recorded clip plays with them. The synth recorded as audio is also dry until the take plays. Only Sidechain Ducker takes a key input.

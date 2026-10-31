@@ -11,6 +11,9 @@
 //     editor(h), close(h)
 //   - renderAll(h, input, events, len, latency, block): a whole buffer through the plugin,
 //     several blocks in flight, the plugin's delay cut and its tail kept.
+//   - the sound card (bridge 0.3.0): devices(), audioOpen(o), play(chans, out)
+//     (the sound sent ahead), start(), stop(), take(frames, n), audioClose();
+//     events "levels" {peaks, running, pos} and "audioError".
 // Loaded before studio.js (window.StudioBridge).
 // ============================================================
 (function (root) {
@@ -18,7 +21,7 @@
 
   var PORT = 47621, URL_WS = "ws://127.0.0.1:" + PORT + "/", KEY = "oros-studio-bridge";
   var ID_RE = /^(vst3|clap):[\x21-\x7e]{1,200}$/;
-  var ws = null, next = 1, waits = {}, renders = {}, listeners = [], authed = false;
+  var ws = null, next = 1, waits = {}, renders = {}, listeners = [], authed = false, lastTake = null;
 
   function token() { try { return root.localStorage.getItem(KEY) || ""; } catch (e) { return ""; } }
   function keepToken(t) { try { if (t) root.localStorage.setItem(KEY, t); else root.localStorage.removeItem(KEY); } catch (e) {} }
@@ -36,6 +39,8 @@
   }
   function onMessage(m) {
     if (typeof m.data !== "string") {
+      var tag = String.fromCharCode.apply(null, new Uint8Array(m.data, 0, Math.min(4, m.data.byteLength)));
+      if (tag === "ORT1") { lastTake = m.data; return; }   // a take block; its answer follows
       var dv = new DataView(m.data), key = dv.getUint32(4, true) + ":" + dv.getUint32(8, true), r = renders[key];
       if (!r) return;
       delete renders[key];
@@ -161,10 +166,64 @@
     });
   }
 
+  // ---------- the sound card ----------
+  var BLOCK_FRAMES = 65536;
+  function cleanDevs(a) {
+    return (Array.isArray(a) ? a : []).filter(function (d) { return d && typeof d.name === "string" && d.name.length <= 300; }).map(function (d) {
+      return { name: d.name, channels: Math.max(1, Math.min(64, d.channels | 0)), def: d["default"] === true };
+    });
+  }
+  function devices() {
+    return cmd({ op: "audioDevices" }, 30000).then(function (j) {
+      return (j.backends || []).filter(function (b) { return b && /^[a-z0-9]{1,20}$/.test(b.id); }).map(function (b) {
+        return { id: b.id, label: String(b.label || b.id).slice(0, 60), exclusive: b.exclusive === true, ok: b.ok === true,
+                 inputs: cleanDevs(b.inputs), outputs: cleanDevs(b.outputs) };
+      });
+    });
+  }
+  // o: {backend, input, output, exclusive, record: [channels from 0]} → {sr, period, inputs, outputs, latency}
+  function audioOpen(o) { return cmd(Object.assign({ op: "audioOpen", period: 256 }, o), 30000); }
+  function audioClose() { return cmd({ op: "audioClose" }, 10000).then(null, function () {}); }
+  // the sound to play from the start, sent ahead: [L, R] (or [] for none)
+  function play(chans, out) {
+    var frames = chans.length ? chans[0].length : 0;
+    return cmd({ op: "audioPlay", frames: frames, channels: chans.length, out: out || 0 }, 30000).then(function () {
+      for (var at = 0; at < frames; at += BLOCK_FRAMES) {
+        var n = Math.min(BLOCK_FRAMES, frames - at), buf = new ArrayBuffer(16 + chans.length * n * 4), dv = new DataView(buf);
+        new Uint8Array(buf).set([79, 82, 80, 49], 0);   // "ORP1"
+        dv.setUint32(4, at, true); dv.setUint32(8, n, true); dv.setUint16(12, chans.length, true);
+        for (var c = 0; c < chans.length; c++) new Float32Array(buf, 16 + c * n * 4, n).set(chans[c].subarray(at, at + n));
+        ws.send(buf);
+      }
+    });
+  }
+  function start() { return cmd({ op: "audioStart" }, 10000); }
+  function stop() { return cmd({ op: "audioStop" }, 20000); }
+  // the whole take: n channels of `frames` → Float32Array per channel
+  function take(frames, n, onStep) {
+    var out = [];
+    for (var c = 0; c < n; c++) out.push(new Float32Array(frames));
+    function from(at) {
+      if (at >= frames) return Promise.resolve(out);
+      lastTake = null;
+      return cmd({ op: "takeRead", offset: at, frames: Math.min(BLOCK_FRAMES, frames - at) }, 30000).then(function (j) {
+        var b = lastTake, got = j.frames | 0;
+        if (!b || got <= 0) throw fail("take");
+        var dv = new DataView(b), nch = dv.getUint16(12, true), k = dv.getUint32(8, true);
+        if (k !== got || nch !== n || b.byteLength !== 16 + nch * k * 4) throw fail("take");
+        for (var c2 = 0; c2 < n; c2++) out[c2].set(new Float32Array(b.slice(16 + c2 * k * 4, 16 + (c2 + 1) * k * 4)), at);
+        if (onStep) onStep(Math.min(1, (at + got) / frames));
+        return from(at + got);
+      });
+    }
+    return from(0);
+  }
+
   root.StudioBridge = {
     PORT: PORT, ID_RE: ID_RE, connect: connect, pair: pair, sendCode: sendCode, list: list, scan: scan,
     open: open, close: close, editor: editor, state: state, setState: setState, info: info, reset: reset,
-    render: render, renderAll: renderAll, on: on, connected: function () { return !!ws && ws.readyState === 1 && authed; },
+    render: render, renderAll: renderAll, on: on,
+    devices: devices, audioOpen: audioOpen, audioClose: audioClose, play: play, start: start, stop: stop, take: take, connected: function () { return !!ws && ws.readyState === 1 && authed; },
     forget: function () { keepToken(""); if (ws) ws.close(); }
   };
 })(typeof window !== "undefined" ? window : this);
