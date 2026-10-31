@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.67.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.76.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -50,6 +50,7 @@
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
+    vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
     syncRestoring:   null,   // A43: name of the backup being restored
     syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
@@ -115,6 +116,7 @@
     // v0.12.1 — Folder backups (File System Access API, Chromium desktop)
   var FS_FOLDER_NAME_KEY = "oros-fs-folder-name"; // display name only
   var FS_LAPSED_KEY = "oros-fs-lapsed";            // permission lapsed flag
+  var BK_ENC_KEY = "oros-backup-enc";              // "1" = backup files are encrypted (BK-E, device-local)
 
   function findWallpaper(id) {
     for (var i = 0; i < WALLPAPERS.length; i++) {
@@ -174,6 +176,7 @@
     qr: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v1M14 20h1M18 18h3v3M17 21h0"/></svg>',
     converter: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h8l-2.5-2.5"/><path d="M16 17H8l2.5 2.5"/></svg>',
     flashcards: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M17 17v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2"/><path d="M12 8h4M12 12h4"/></svg>',
+    typing: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 16h6"/><path d="M9.5 13.2h1.5M13 13.2h1.5"/></svg>',
     scanpdf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     files: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
     pubdomain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M14.8 9.2a4 4 0 1 0 0 5.6"/><line x1="5" y1="5" x2="19" y2="19"/></svg>',
@@ -258,6 +261,7 @@
     texttools: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6V4h11v2"/><path d="M8.5 4v14"/><path d="M6 18h5"/><path d="M15 11h6"/><path d="M15 15h6"/><path d="M15 19h4"/></svg>',
     units: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="13" width="20" height="8" rx="1.5"/><path d="M6 13v3M10 13v4M14 13v3M18 13v4"/><path d="M4 6h16"/><path d="M7 3L4 6l3 3"/><path d="M17 3l3 3-3 3"/></svg>',
     stickies: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10l6-6V5a2 2 0 0 0-2-2z"/><path d="M15 21v-4a2 2 0 0 1 2-2h4"/><path d="M7 8h8"/><path d="M7 12h5"/></svg>',
+    pad: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M10 13l-2 2 2 2M14 13l2 2-2 2"/></svg>',
     textcase: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18L7.5 6 12 18"/><path d="M4.7 14h5.6"/><circle cx="17.5" cy="15" r="3"/><path d="M20.5 12v6"/></svg>',
     minimalism: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>',
     split: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="4"/><circle cx="17" cy="17" r="4"/><path d="M14 4h4a2 2 0 0 1 2 2v3"/><path d="M18 7l2 2 2-2"/><path d="M10 20H6a2 2 0 0 1-2-2v-3"/><path d="M6 17l-2-2-2 2"/></svg>',
@@ -1115,26 +1119,215 @@
           meta:  { ver: 1, exportedAt: body.at, source: body.source || "auto-export" }
         };
         var name = "orOS-backup-" + String(body.at).slice(0, 10) + ".json";
-        return handle.getFileHandle(name, { create: true })
-          .then(function (fh) { return fh.createWritable(); })
-          .then(function (stream) {
-            // SH-B5: write() is async. Close only after it settled, so
-            // a failed write rejects THIS chain instead of escaping as
-            // an unhandled rejection next to a "saved" message.
-            return stream.write(JSON.stringify(filePayload, null, 2))
-              .then(function () { return stream.close(); });
-          })
-          .then(function () {
-            setSyncMsg("ok", "sync.ok.fsfolder.saved");
-          });
+        // BK-E: sealed first. Encryption on without this device's key
+        // writes nothing (never a plain file the person turned off).
+        return bkSealIfOn(JSON.stringify(filePayload, null, 2)).then(function (text) {
+          return handle.getFileHandle(name, { create: true })
+            .then(function (fh) { return fh.createWritable(); })
+            .then(function (stream) {
+              // SH-B5: write() is async. Close only after it settled, so
+              // a failed write rejects THIS chain instead of escaping as
+              // an unhandled rejection next to a "saved" message.
+              return stream.write(text)
+                .then(function () { return stream.close(); });
+            });
+        }).then(function () {
+          setSyncMsg("ok", bkEncOn() ? "sync.ok.fsfolder.savedEnc" : "sync.ok.fsfolder.saved");
+        });
       });
-    }).catch(function () {
+    }).catch(function (e) {
+      if (e && e.message === "backup-nokey") { setSyncMsg("err", "sync.err.backupkey"); return; }
       // Best-effort — the sync engine data stays intact. SH-B5: forget
       // the schedule stamp, so the next boot / tab-visible check tries
       // again instead of waiting out a whole day/week/month.
-      try { localStorage.removeItem(AUTOEXPORT_LAST); } catch (e) {}
+      try { localStorage.removeItem(AUTOEXPORT_LAST); } catch (e2) {}
     });
 }
+
+  // ---------- 5d'. Encrypted backup files (BK-E) ----------
+  // Settings › Backups › "Encrypt backup files", off by default. The
+  // passphrase (at least MIN_PASS_LEN characters) is asked once; only
+  // the key derived from it (orosSync.backupKey, PBKDF2 600 000) is
+  // kept, non-extractable, in IndexedDB oros-fs "backup-key" next to
+  // the folder handle. The export, Back up now and the scheduled
+  // folder backups all seal with it; Import asks for the passphrase of
+  // a sealed file and still reads plain files. Device-local: the
+  // switch (oros-backup-enc) and the key never travel. Turning it off
+  // forgets the key. The factory reset removes both (oros-* sweep,
+  // oros-fs database).
+  var bkKey;   // undefined = not read yet, null = none, else { key, s, it }
+
+  function bkEncOn() {
+    try { return localStorage.getItem(BK_ENC_KEY) === "1"; } catch (e) { return false; }
+  }
+  function bkKeyLoad() {
+    if (bkKey !== undefined) return Promise.resolve(bkKey);
+    return openFsDb()
+      .then(function (db) { return idbFsGet(db, "backup-key"); })
+      .catch(function () { return null; })
+      .then(function (k) {
+        bkKey = (k && k.key && typeof k.s === "string" && typeof k.it === "number") ? k : null;
+        return bkKey;
+      });
+  }
+  function bkKeyStore(k) {
+    return openFsDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction("handles", "readwrite");
+        if (k) tx.objectStore("handles").put(k, "backup-key");
+        else tx.objectStore("handles").delete("backup-key");
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror    = function () { reject(tx.error); };
+      });
+    }).then(function () { bkKey = k || null; });
+  }
+  // Text of a backup file → the text to write (sealed when on).
+  function bkSealIfOn(text) {
+    if (!bkEncOn()) return Promise.resolve(text);
+    return bkKeyLoad().then(function (k) {
+      if (!k) throw new Error("backup-nokey");
+      return window.orosSync.sealBackup(text, k);
+    });
+  }
+  // Switch on (or a new passphrase): the dialog sets the key first,
+  // the switch follows only when the key is stored.
+  function bkEncTurnOn() {
+    showBackupPassDialog("set", function (pw) {
+      return window.orosSync.backupKey(pw).then(bkKeyStore).then(function () {
+        try { localStorage.setItem(BK_ENC_KEY, "1"); } catch (e) {}
+        setSyncMsg("ok", "sync.ok.backupenc");
+        renderMenu();
+        settingsNotify();
+      });
+    });
+  }
+  function bkEncTurnOff() {
+    try { localStorage.removeItem(BK_ENC_KEY); } catch (e) {}
+    bkKeyStore(null).catch(function () { bkKey = null; }).then(function () {
+      renderMenu();
+      settingsNotify();
+    });
+  }
+
+  // One dialog for both: "set" = new passphrase twice (switch on or
+  // change it), "open" = the passphrase of a sealed file being
+  // imported. run(pw) → Promise; its rejection "backup-pass" keeps the
+  // dialog open with "wrong passphrase", any other closes it and goes
+  // to handleSyncError. Cancel = nothing happens.
+  function showBackupPassDialog(mode, run) {
+    var stale = document.getElementById("bkpw-dialog");
+    if (stale) stale.remove();
+    var dlg = document.createElement("dialog");
+    dlg.id = "bkpw-dialog";
+    dlg.style.cssText =
+      "border:1px solid var(--border);border-radius:12px;" +
+      "background:var(--panel-bg);color:var(--text);padding:20px;" +
+      "width:min(360px,calc(100vw - 32px));";
+    var form = document.createElement("form");
+    form.noValidate = true;
+    function mkField(labelKey) {
+      var wrap = document.createElement("label");
+      wrap.style.cssText = "display:block;margin-bottom:12px;";
+      var head = document.createElement("div");
+      head.style.cssText = "font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:4px;";
+      head.textContent = window.t(labelKey);
+      wrap.appendChild(head);
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:6px;";
+      var input = document.createElement("input");
+      input.type = "password";
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      input.style.cssText =
+        "flex:1;min-width:0;padding:7px 10px;border:1px solid var(--border);" +
+        "border-radius:8px;background:var(--panel-bg);color:var(--text);" +
+        "font-size:13px;outline:none;";
+      var eye = document.createElement("button");
+      eye.type = "button";
+      eye.style.cssText =
+        "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+        "color:var(--text-dim);cursor:pointer;width:34px;display:flex;" +
+        "align-items:center;justify-content:center;";
+      eye.innerHTML = EYE_SVG;
+      eye.setAttribute("aria-label", window.t("sync.pass.show"));
+      eye.addEventListener("click", function () {
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        eye.innerHTML = show ? EYE_OFF_SVG : EYE_SVG;
+        input.focus();
+      });
+      row.appendChild(input);
+      row.appendChild(eye);
+      wrap.appendChild(row);
+      form.appendChild(wrap);
+      return input;
+    }
+    var title = document.createElement("h3");
+    title.style.cssText = "margin:0 0 6px;font-size:14px;";
+    title.textContent = window.t(mode === "set" ? "sync.bkenc.title" : "sync.bkopen.title");
+    form.appendChild(title);
+    var hint = document.createElement("div");
+    hint.style.cssText = "font-size:11.5px;line-height:1.5;color:var(--text-dim);margin-bottom:14px;";
+    hint.textContent = window.t(mode === "set" ? "sync.bkenc.hint" : "sync.bkopen.hint");
+    form.appendChild(hint);
+    var pw1 = mkField(mode === "set" ? "sync.bkenc.new" : "sync.bkopen.pass");
+    var pw2 = mode === "set" ? mkField("sync.bkenc.confirm") : null;
+    var errBox = document.createElement("div");
+    errBox.setAttribute("role", "alert");
+    errBox.style.cssText = "font-size:12px;color:var(--danger);min-height:18px;margin:2px 0 8px;";
+    form.appendChild(errBox);
+    var btnRow = document.createElement("div");
+    btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;";
+    var cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.style.cssText =
+      "border:1px solid var(--border);border-radius:8px;background:transparent;" +
+      "color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+    cancelBtn.textContent = window.t("wx.cancel");
+    cancelBtn.addEventListener("click", function () { dlg.close(); });
+    btnRow.appendChild(cancelBtn);
+    var okLabel = mode === "set" ? "sync.bkenc.ok" : "sync.bkopen.ok";
+    var okBtn = document.createElement("button");
+    okBtn.type = "submit";
+    okBtn.style.cssText =
+      "border:1px solid var(--accent);border-radius:8px;background:var(--accent);" +
+      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+    okBtn.textContent = window.t(okLabel);
+    btnRow.appendChild(okBtn);
+    form.appendChild(btnRow);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (okBtn.disabled) return;
+      errBox.textContent = "";
+      var pw = pw1.value;
+      if (!pw) { errBox.textContent = window.t("sync.err.nopass"); return; }
+      if (pw2) {
+        if (pw.length < MIN_PASS_LEN) { errBox.textContent = window.t("sync.err.shortpass"); return; }
+        if (pw !== pw2.value) { errBox.textContent = window.t("sync.changepw.mismatch"); return; }
+      }
+      okBtn.disabled = true;
+      okBtn.textContent = window.t("sync.bkenc.working");
+      Promise.resolve().then(function () { return run(pw); }).then(function () {
+        pw1.value = ""; if (pw2) pw2.value = "";
+        dlg.close();
+      }, function (err) {
+        okBtn.disabled = false;
+        okBtn.textContent = window.t(okLabel);
+        if (err && err.message === "backup-pass") {
+          errBox.textContent = window.t("sync.err.backuppass");
+          pw1.select();
+        } else {
+          dlg.close();
+          handleSyncError(err);
+        }
+      });
+    });
+    dlg.appendChild(form);
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    setTimeout(function () { pw1.focus(); }, 50);
+  }
 
   function chooseBackupFolder() {
     // MUST run inside the click handler (user activation required)
@@ -3109,6 +3302,7 @@
       .then(function (data) {
         state.apps = (data && Array.isArray(data.apps)) ? data.apps : [];
         renderMenu();
+        splashDone();
         helpBtnRefresh();
         openFromLaunchParam();
         searchFromLaunchParam();
@@ -3124,8 +3318,18 @@
       .catch(function () {
         state.apps = [];
         renderMenu();
+        splashDone();
         helpBtnRefresh();
       });
+  }
+
+  // BOOT-S1: the desktop is drawn; the boot splash (index.html) may go
+  // once the page's scripts have all run. Two frames so the menu and
+  // the clock are painted before the splash fades.
+  function splashDone() {
+    var go = function () { try { if (window.__orosSplashDone) window.__orosSplashDone(); } catch (e) {} };
+    if (typeof requestAnimationFrame !== "function") return go();
+    requestAnimationFrame(function () { requestAnimationFrame(go); });
   }
 
   // Launch shortcuts (manifest "shortcuts", long-press on the app
@@ -6009,6 +6213,7 @@
       S.disconnect();
       state.syncUserEmail = null;
       state.syncBackups = null;
+      state.vaultClean = null;
       renderMenu();
       return;
     }
@@ -6018,9 +6223,42 @@
       syncDisconnecting = false;
       state.syncUserEmail = null;
       state.syncBackups = null;
+      state.vaultClean = null;
       state.syncAutoErr = null;
       setSyncMsg("ok", syncDisconnectKey(r));
     });
+  }
+  // VD-GC: Settings › Sync › Unused files in the cloud. Look first
+  // (usage: changes nothing), then clean up only on the person's tap.
+  var CLEAN_CODES = /^clean-(no-manifest|mismatch|moved|unsupported)$/;
+  function vaultCleanFail(err) {
+    var S = window.orosSync, msg = (err && err.message) || "";
+    var prev = state.vaultClean || {};
+    state.vaultClean = { busy: "", usage: null, result: prev.result || null,
+      code: CLEAN_CODES.test(msg) ? msg : "",
+      err: CLEAN_CODES.test(msg) ? null : window.t(S ? S.errorKey(err) : "sync.err.generic") };
+  }
+  function vaultCleanCheck() {
+    var V = window.orosVault;
+    if (!V || typeof V.usage !== "function" || (state.vaultClean && state.vaultClean.busy)) return;
+    state.vaultClean = { busy: "check", usage: null, result: (state.vaultClean && state.vaultClean.result) || null };
+    settingsNotify();
+    V.usage().then(function (u) {
+      state.vaultClean = { busy: "", usage: JSON.parse(JSON.stringify(u)), result: state.vaultClean.result };
+    }, vaultCleanFail).then(settingsNotify);
+  }
+  function vaultCleanRun() {
+    var V = window.orosVault;
+    var c = state.vaultClean;
+    if (!V || typeof V.cleanUp !== "function" || !c || c.busy || !c.usage || !(c.usage.free > 0)) return;
+    state.vaultClean = { busy: "clean", usage: c.usage, result: null };
+    settingsNotify();
+    V.cleanUp().then(function (r) {
+      state.vaultClean = { busy: "", usage: null, result: {
+        removed: +r.removed || 0, bytes: +r.bytes || 0, stopped: !!r.stopped,
+        healed: +r.healed || 0, lost: Array.prototype.slice.call(r.lost || []).map(String) } };
+      vaultCleanCheck();                                // fresh numbers
+    }, function (err) { vaultCleanFail(err); settingsNotify(); });
   }
   // A43: the cloud backups for Settings › Sync, and Restore.
   function syncBackupsLoad() {
@@ -6103,23 +6341,35 @@
       if (!file) return;   // user cancelled — silent exit
       var reader = new FileReader();
       reader.onload = function () {
-        try {
-          var text = String(reader.result);
-          var n = window.orosSync.importData(text);
-          // FILES-V: the backup's disk is merged into the disk here
-          // (the engine no longer knows a "files-disk" slice).
-          fdImportDisk(text).then(function (files) {
-            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-              window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
-          }).catch(function () {
-            setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
-              window.t("sync.slices.applied") + ": " + n);
+        var text = String(reader.result);
+        // BK-E: a sealed file asks for its passphrase first; a plain
+        // file (every file before BK-E) goes straight in.
+        if (typeof window.orosSync.backupSealed === "function" && window.orosSync.backupSealed(text)) {
+          showBackupPassDialog("open", function (pw) {
+            return window.orosSync.openBackup(text, pw).then(applyBackupText);
           });
-        } catch (e) {
-          handleSyncError(e); }
+          return;
+        }
+        applyBackupText(text);
       };
       reader.readAsText(file);
     });
+  }
+  function applyBackupText(text) {
+    try {
+      var n = window.orosSync.importData(text);
+      // FILES-V: the backup's disk is merged into the disk here
+      // (the engine no longer knows a "files-disk" slice).
+      fdImportDisk(text).then(function (files) {
+        setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+          window.t("sync.slices.applied") + ": " + (n + (files > 0 ? 1 : 0)));
+      }).catch(function () {
+        setSyncMsgRaw("ok", window.t("sync.ok.import") + " — " +
+          window.t("sync.slices.applied") + ": " + n);
+      });
+    } catch (e) {
+      handleSyncError(e);
+    }
   }
 
     // v0.9 Part 4 — "passphrase changed on another device" dialog.
@@ -6462,11 +6712,14 @@
     // Same content as the menu export button.
     var exportJob;
     try { exportJob = fdExportJson(); } catch (e) { handleSyncError(e); return; }
-    exportJob.then(function (json) {
+    exportJob.then(bkSealIfOn).then(function (json) {
       shellSaveJson(
         "orOS-backup-" + new Date().toISOString().slice(0, 10) + ".json",
         json);
-    }).catch(handleSyncError);
+    }).catch(function (e) {
+      if (e && e.message === "backup-nokey") { setSyncMsg("err", "sync.err.backupkey"); return; }
+      handleSyncError(e);
+    });
   }
 
   function scCheckUpdates() {
@@ -6681,6 +6934,9 @@
         { name: "@pdf-lib/fontkit 1.1.1", url: "https://github.com/Hopding/fontkit",
           by: "Devon Govett, Andrew Dillon & contributors", lic: "MIT",
           k: "cr.pdf-lib-2" },
+        { name: "CodeMirror 6", url: "https://codemirror.net/",
+          by: "Marijn Haverbeke & contributors", lic: "MIT",
+          k: "cr.codemirror" },
         { name: "three.js r180", url: "https://threejs.org/",
           by: "three.js authors", lic: "MIT",
           k: "cr.three-js" },
@@ -7449,7 +7705,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-lyricsync", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-lyricsync", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -8342,9 +8598,17 @@
       }
     } catch (e) { /* no audio — visual toast stands alone */ }
   }
-  // The voice of a kitchen timer's alarm; every other alarm beeps.
+  // The voice of a kitchen timer's alarm; every other alarm beeps,
+  // unless the Time app's "Sound" box is off ("" = silent: overlay
+  // only). Before 4.66.01 that box had no effect inside orOS.
   function alarmSoundOf(a) {
-    if (!a || !alarmIsTimer(a.id)) return "beep";
+    if (!a || !alarmIsTimer(a.id)) {
+      try {
+        var td = JSON.parse(localStorage.getItem("oros-time-data"));
+        if (td && td.sound === false) return "";
+      } catch (e) {}
+      return "beep";
+    }
     try {
       var list = JSON.parse(localStorage.getItem("oros-time-timers"));
       for (var i = 0; Array.isArray(list) && i < list.length; i++) {
@@ -8458,9 +8722,11 @@
     el.appendChild(snoozeBtn);
     el.appendChild(btn);
     document.body.appendChild(el);
-    alarmVoice(voice);
-    // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
-    alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
+    if (voice) {
+      alarmVoice(voice);
+      // a melody (≤ 15 s) plays again after a pause, the pips every 1.5 s
+      alarmRing.timer = setInterval(function () { alarmVoice(voice); }, ALARM_RT.test(voice) ? 17000 : 1500);
+    }
     setTimeout(function () {
       if (document.getElementById("alarm-toast")) alarmStopRing();
     }, 30000);
@@ -9825,6 +10091,9 @@
           list: state.syncBackups.list.slice(),
           err: state.syncBackups.err || null
         } : null,
+        canClean: !!(window.orosVault && typeof window.orosVault.cleanUp === "function"),
+        clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
+        cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
         restoring: state.syncRestoring,
         oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
@@ -9834,7 +10103,11 @@
         folderSupported: fsSupported(),
         autoexport: state.autoexport,
         folder: folder || null,
-        lapsed: !!(folder && lapsed)
+        lapsed: !!(folder && lapsed),
+        encrypt: bkEncOn(),
+        // On, but the key is gone from this device (site data cleared):
+        // nothing is written until the passphrase is set again.
+        encLost: bkEncOn() && bkKey === null
       },
       search: searchApps().map(function (a) {
         var k = "app." + a.id, v = window.t(k);
@@ -9953,6 +10226,8 @@
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
       case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.clean.check":  if (S && S.isConnected() && S.hasPassphrase()) vaultCleanCheck(); return;
+      case "sync.clean.run":    if (S && S.isConnected() && S.hasPassphrase()) vaultCleanRun(); return;
       case "sync.restore":
         if (S && S.isConnected() && S.hasPassphrase() && arg && typeof arg.name === "string") {
           syncRestore({ name: arg.name, old: typeof arg.old === "string" ? arg.old : "" });
@@ -9967,6 +10242,8 @@
       case "backup.now":      scBackupNow(); return;
       case "backup.export":   scExportDb(); return;
       case "backup.import":   importBackupFile(); return;
+      case "backup.encrypt":  if (arg === true) bkEncTurnOn(); else if (arg === false) bkEncTurnOff(); return;
+      case "backup.encryptPass": bkEncTurnOn(); return;
       case "install":
         if (!state.deferredPrompt) return;
         state.deferredPrompt.prompt();
@@ -12403,6 +12680,8 @@
   // Auto-backup boot check — LAST, so exports capture the fully
   // initialized state (apps loaded, sync slices hydrated).
   setTimeout(function () { maybeAutoExport(false); }, 2000);
+  // BK-E: Settings shows "set the passphrase again" when the key is gone.
+  if (bkEncOn()) bkKeyLoad().then(function () { settingsNotify(); });
   
   // SH-B1: no boot timers for the reminder engines. The four that
   // lived here never ran anything: renderClock() above had already

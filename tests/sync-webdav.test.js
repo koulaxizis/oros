@@ -15,7 +15,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 for (const suite of ["sync-merge", "sync-loop", "sync-kdf", "sync-storage-full", "sync-silent-fail", "sync-restore",
-                     "sync-provider", "vault-ondemand", "passwords-vault"]) {
+                     "sync-provider", "vault-ondemand", "vault-clean", "passwords-vault"]) {
   test.describe("webdav: " + suite, () => { require("./" + suite + ".test.js"); });
 }
 

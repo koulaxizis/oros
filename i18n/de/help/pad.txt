@@ -1,0 +1,46 @@
+# Pad
+Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet eine Datei so, wie sie ist, lässt dich sie ändern und speichert sie dort zurück, woher sie kam, mit derselben Kodierung und denselben Zeilenenden, außer du änderst sie. Für Dokumente mit Formatierung nimm Writer, für schnelle Notizen Notizen.
+
+## Erste Schritte
+- `Neu` (oder `+` neben den Tabs) öffnet einen leeren Tab. `Öffnen` fragt, wo die Datei liegt: auf dem `orOS-Laufwerk` oder auf `Dieses Gerät`.
+- `Speichern` schreibt die Datei dorthin zurück, woher sie kam. Ein Tab, der noch nie gespeichert wurde, fragt zuerst, wo er sie ablegen soll. `Speichern unter…` in `Mehr` fragt immer.
+- Jede offene Datei hat ihren eigenen Tab. Ein Punkt auf einem Tab bedeutet Änderungen, die noch nicht gespeichert sind. Zieh einen Tab, um ihn zu verschieben; das × oder die mittlere Maustaste schließt ihn.
+- Deine Tabs, auch ungespeicherter Text, bleiben auf diesem Gerät: Schließ orOS, öffne Pad wieder, und alles ist da, wo du es gelassen hast.
+
+## Farben für Code
+- Pad färbt Code in vielen Sprachen: JavaScript und TypeScript, JSON, HTML, CSS, XML, PHP, Markdown, Python, Go, Rust, C und C++, Java, SQL, YAML, Shell, PowerShell, TOML, INI, Lua, Ruby, Perl, C#, Kotlin, Dart, Swift, R, Diff, Dockerfile, nginx und EEL2 für REAPER-JSFX-Effekte (NULL JSFX).
+- Die Sprache kommt aus dem Dateinamen (und aus der ersten Zeile, etwa `#!/bin/bash`). Die Sprachschaltfläche in der unteren Leiste ändert sie.
+- Zusammengehörige Klammern leuchten auf, und `Klammern und Anführungszeichen schließen` in `Mehr` setzt die schließende beim Tippen dazu. Die Pfeile neben den Zeilennummern klappen einen Block ein.
+
+## Suchen und ersetzen
+- `Suchen` (oder [[Ctrl+F]]) öffnet die Suchleiste über dem Text. `weiter` und `zurück` springen zwischen Treffern, `alle` wählt alle aus.
+- Kreuze `Groß/Klein`, `Regex` (reguläre Ausdrücke wie `^\s+$`) oder `ganzes Wort` an. Schreib den neuen Text in `Ersetzen`, dann `ersetzen` oder `alle ersetzen`. In einem regulären Ausdruck setzt `$1` im neuen Text die erste Gruppe wieder ein.
+- `Gehe zu Zeile…` (oder [[Ctrl+G]]) springt zu einer Zeile oder zu Zeile:Spalte.
+
+## Kodierung und Zeilenenden
+- Die untere Leiste zeigt Zeile und Spalte, die Sprache, die Einrückung, die Zeilenenden (LF oder CRLF) und die Kodierung. Jedes davon ist eine Schaltfläche.
+- Pad liest UTF-8 (mit oder ohne BOM), UTF-16 und die älteren Kodierungen, die griechische Dateien oft haben: Windows-1253 und ISO-8859-7, dazu Windows-1252 und ISO-8859-1. Wenn die Buchstaben falsch aussehen, öffne die Kodierung und wähle `Mit dieser Kodierung neu öffnen`.
+- `Mit dieser Kodierung speichern` schreibt die Datei in einer anderen Kodierung. Hat ein Zeichen in der alten Kodierung keinen Platz (etwa ein Emoji), sagt Pad, welches, und speichert nicht, damit die Datei nie beschädigt wird.
+- Die Zeilenenden bleiben, wie die Datei sie hatte. Eine Datei mit gemischten Enden bekommt beim Speichern eine Art, und Pad sagt es dir.
+
+## Einrückung
+- Pad erkennt, ob eine Datei Tabs oder Leerzeichen nutzt und wie breit. Die Einrückungsschaltfläche ändert das für neue Zeilen, und `Auch die ganze Datei ändern` macht alle Tabs am Zeilenanfang zu Leerzeichen oder umgekehrt.
+- [[Tab]] rückt ein, [[Shift+Tab]] nimmt die Einrückung zurück. Um den Text mit der Tastatur zu verlassen, drück [[Esc]] und dann [[Tab]].
+
+## Wohin deine Dateien gehen
+- `orOS-Laufwerk`: Die Datei bleibt in orOS, in dem Ordner, den du wählst (anfangs `Documents`), und wird verschlüsselt auf deine anderen Geräte synchronisiert wie jede Datei auf dem Laufwerk. Auch Dateien zeigt sie.
+- `Dieses Gerät`: eine Datei auf diesem Computer oder Handy. Wo der Browser es kann, fragt er, wo gespeichert wird; sonst landet die Datei in den Downloads. Auf einem orOS-USB-Stick wird sie auf dem Computer selbst zurückgespeichert.
+- Wenn eine Datei auf dem orOS-Laufwerk woanders geändert wurde, nachdem du sie geöffnet hast (auf einem anderen Gerät oder in einer anderen App), überschreibt Pad sie nicht. Es bietet an, deine als Kopie daneben zu speichern oder die andere Fassung in einem neuen Tab zu öffnen, damit nichts verloren geht.
+- Pad führt nie eine Datei aus: HTML oder ein Skript öffnet sich nur als Text. Tabs, die du nicht gespeichert hast, werden nicht synchronisiert; sie bleiben auf diesem Gerät.
+
+## Ansicht
+- In `Mehr`: `Zeilenumbruch`, `Zeilennummern`, `Leerzeichen und Tabs zeigen`, `Größere Schrift` und `Kleinere Schrift`. Diese Einstellungen bleiben auf diesem Gerät.
+- Sehr große Dateien (über 10 MB) öffnen sich als reiner Text, ohne Farben, damit Pad schnell bleibt. Dateien über 50 MB öffnen sich nicht.
+
+## Tastenkürzel
+- [[Ctrl+S]]: speichern. [[Ctrl+Shift+S]]: speichern unter.
+- [[Ctrl+O]]: öffnen.
+- [[Alt+N]]: neuer Tab. [[Alt+W]]: Tab schließen.
+- [[Alt+PageDown]] und [[Alt+PageUp]]: nächster und vorheriger Tab.
+- [[Ctrl+F]]: suchen und ersetzen. [[Ctrl+G]]: gehe zu Zeile.
+- [[Ctrl+Z]] und [[Ctrl+Y]]: rückgängig und wiederholen. [[Ctrl+D]]: den nächsten Treffer des ausgewählten Worts auswählen. [[Alt+↑]] und [[Alt+↓]]: Zeile verschieben. [[Ctrl+/]]: Zeile auskommentieren.

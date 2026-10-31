@@ -7,13 +7,13 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=maps" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Maps · orOS</title>
-  <link rel="stylesheet" href="../vendor/leaflet.css?v=4.67.00">
-  <link rel="stylesheet" href="maps.css?v=4.67.00">
+  <link rel="stylesheet" href="../vendor/leaflet.css?v=4.75.00">
+  <link rel="stylesheet" href="maps.css?v=4.75.00">
 </head>
 <body>
 
   <!-- Fullscreen map canvas -->
-  <div id="map"></div>
+  <div id="map-clip"><div id="map"></div></div>
 
   <!-- Search overlay (top-center, Photon autocomplete) -->
   <div id="search-wrap">
@@ -160,6 +160,9 @@
       <span id="nav-limit" hidden></span>
       <span id="nav-speed">—</span>
       <span id="nav-eta"></span>
+      <button id="nav-north" aria-pressed="false" aria-label="Turn the map with me" title="Turn the map with me">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l4 10h-8z" fill="currentColor"/><path d="M8 12h8l-4 10z"/></svg>
+      </button>
       <button id="nav-recenter" hidden aria-label="Recenter" data-i18n-title="nav.recenter" title="Recenter">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
       </button>
@@ -176,48 +179,48 @@
   <div id="toast" role="status"></div>
 
   <!-- Leaflet FIRST — maps.js depends on the global L -->
-  <script src="../i18n.js?v=4.67.00" data-app="maps"></script>
-  <script src="../vendor/leaflet.js?v=4.67.00"></script>
-  <script src="route-core.js?v=4.67.00"></script>
-  <script src="tools-core.js?v=4.67.00"></script>
-  <script src="maps.js?v=4.67.00"></script>
+  <script src="../i18n.js?v=4.75.00" data-app="maps"></script>
+  <script src="../vendor/leaflet.js?v=4.75.00"></script>
+  <script src="route-core.js?v=4.75.00"></script>
+  <script src="tools-core.js?v=4.75.00"></script>
+  <script src="maps.js?v=4.75.00"></script>
   <!-- OpenStreetMap: core (pure), sign-in + API, notes (Mapping mode) -->
-  <script src="osm.js?v=4.67.00"></script>
-  <script src="osm-api.js?v=4.67.00"></script>
-  <script src="notes.js?v=4.67.00"></script>
-  <script src="poi-core.js?v=4.67.00"></script>
-  <script src="everydoor-core.js?v=4.67.00"></script>
-  <script src="poi.js?v=4.67.00"></script>
-  <script src="entrances.js?v=4.67.00"></script>
-  <script src="tracks-core.js?v=4.67.00"></script>
-  <script src="tracks.js?v=4.67.00"></script>
-  <script src="heat-core.js?v=4.67.00"></script>
-  <script src="heat.js?v=4.67.00"></script>
-  <script src="quests-core.js?v=4.67.00"></script>
-  <script src="overlays-core.js?v=4.67.00"></script>
-  <script src="quests.js?v=4.67.00"></script>
-  <script src="transit-core.js?v=4.67.00"></script>
-  <script src="transit.js?v=4.67.00"></script>
-  <script src="tools.js?v=4.67.00"></script>
-  <script src="planner-core.js?v=4.67.00"></script>
-  <script src="planner.js?v=4.67.00"></script>
-  <script src="fav-core.js?v=4.67.00"></script>
-  <script src="fav.js?v=4.67.00"></script>
-  <script src="../household/core.js?v=4.67.00"></script>
-  <script src="hh-core.js?v=4.67.00"></script>
-  <script src="hh.js?v=4.67.00"></script>
+  <script src="osm.js?v=4.75.00"></script>
+  <script src="osm-api.js?v=4.75.00"></script>
+  <script src="notes.js?v=4.75.00"></script>
+  <script src="poi-core.js?v=4.75.00"></script>
+  <script src="everydoor-core.js?v=4.75.00"></script>
+  <script src="poi.js?v=4.75.00"></script>
+  <script src="entrances.js?v=4.75.00"></script>
+  <script src="tracks-core.js?v=4.75.00"></script>
+  <script src="tracks.js?v=4.75.00"></script>
+  <script src="heat-core.js?v=4.75.00"></script>
+  <script src="heat.js?v=4.75.00"></script>
+  <script src="quests-core.js?v=4.75.00"></script>
+  <script src="overlays-core.js?v=4.75.00"></script>
+  <script src="quests.js?v=4.75.00"></script>
+  <script src="transit-core.js?v=4.75.00"></script>
+  <script src="transit.js?v=4.75.00"></script>
+  <script src="tools.js?v=4.75.00"></script>
+  <script src="planner-core.js?v=4.75.00"></script>
+  <script src="planner.js?v=4.75.00"></script>
+  <script src="fav-core.js?v=4.75.00"></script>
+  <script src="fav.js?v=4.75.00"></script>
+  <script src="../household/core.js?v=4.75.00"></script>
+  <script src="hh-core.js?v=4.75.00"></script>
+  <script src="hh.js?v=4.75.00"></script>
   <!-- Import from another app: KMZ, Google Takeout / Timeline, TCX, FIT -->
-  <script src="../importkit.js?v=4.67.00"></script>
-  <script src="../atelier/zip.js?v=4.67.00"></script>
-  <script src="import.js?v=4.67.00"></script>
-  <script src="import-ui.js?v=4.67.00"></script>
+  <script src="../importkit.js?v=4.75.00"></script>
+  <script src="../atelier/zip.js?v=4.75.00"></script>
+  <script src="import.js?v=4.75.00"></script>
+  <script src="import-ui.js?v=4.75.00"></script>
   <!-- .orosmap: places and tracks as one orOS file (open format) -->
-  <script src="../bundle.js?v=4.67.00"></script>
-  <script src="package.js?v=4.67.00"></script>
-  <script src="package-ui.js?v=4.67.00"></script>
-  <script src="discover-core.js?v=4.67.00"></script>
-  <script src="discover.js?v=4.67.00"></script>
-  <script src="offline-core.js?v=4.67.00"></script>
-  <script src="offline.js?v=4.67.00"></script>
+  <script src="../bundle.js?v=4.75.00"></script>
+  <script src="package.js?v=4.75.00"></script>
+  <script src="package-ui.js?v=4.75.00"></script>
+  <script src="discover-core.js?v=4.75.00"></script>
+  <script src="discover.js?v=4.75.00"></script>
+  <script src="offline-core.js?v=4.75.00"></script>
+  <script src="offline.js?v=4.75.00"></script>
 </body>
 </html>

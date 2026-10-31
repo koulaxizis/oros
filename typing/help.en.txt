@@ -1,0 +1,45 @@
+# Typing Tutor
+Learn to type with all ten fingers without looking at the keys. Short lessons bring in two keys at a time, starting from the home row, for Greek, English (US) and German keyboards. A few minutes a day are enough.
+
+## Getting started
+1. Choose your keyboard at the top: `Ελληνικά`, `English (US)` or `Deutsch`. Switch your computer's keyboard to the same language (Windows: Win+Space, Linux: Super+Space, Android with a keyboard: Ctrl+Space).
+2. Press `Start lesson 1`, or any lesson in the list.
+3. Rest your fingers on the home row: the left index finger on F, the right one on J. Both keys have a small bump you can feel.
+4. Type the text you see. The letter to type next is underlined, and the key on the screen keyboard and the finger to use light up.
+5. At the end you see your speed, your accuracy and the stars you earned.
+
+## The screen keyboard
+- Each colour belongs to one finger. Every key of the same colour is typed with that finger, and both thumbs share the space bar.
+- Under the keyboard, the two hands show which finger to use next.
+- For a capital letter, the Shift key on the other hand lights up too.
+- For a Greek letter with a tonos (ά, έ, ή…), first press the key with ΄ (right of Λ), then the letter. Shift and the same key give the dialytika (ϊ, ϋ).
+- `Key hints` in the settings: `When I hesitate` lights the key only when you wait or make a mistake, `Always` lights it every time, `Never` hides the keyboard so you type from memory.
+
+## Lessons and stars
+- The lessons go row by row: the home row, the top row, the bottom row, then capitals, accents, numbers and signs. Each group ends with a review.
+- Stars: one star for finishing with 90% accuracy or more, two for 95% and 15 words per minute, three for 98% and 25 words per minute.
+- `Continue` always opens the first lesson without a star. You can open any lesson at any time.
+- `Mistakes` in the settings: `Stop until it is right` waits for the right key (best for learning), `Go on, Backspace fixes` moves on and lets you go back.
+
+## Speed test
+- `Speed test` gives you 1, 2 or 5 minutes of common words.
+- Speed is in words per minute: five characters count as one word. Accuracy is the share of right key presses.
+- Your best result for each length is kept in `Statistics`.
+
+## Statistics
+- `Statistics` (the chart button at the top) shows today's practice, the days in a row, your total time and your speed of the last 7 days.
+- The bars show your minutes on each of the last 14 days.
+- `Your keys` colours each key by how often it goes wrong: green is good, red needs practice. The list under it names the keys to work on.
+
+## Settings
+- `Daily goal` sets the minutes for the ring on the first screen.
+- `Text size` makes the lesson text smaller or larger.
+- `Key sounds` and `Use the screen keyboard` apply to this device only.
+- `Reset progress` clears every lesson, statistic and record on all your devices.
+
+## On a phone
+Touch typing needs a real keyboard. With a keyboard connected (Bluetooth or USB), the phone's own keyboard stays hidden and the lesson works as on a computer. Without one, `Use the screen keyboard` lets you practise the letters, but not the ten-finger method.
+
+## Your data
+- Your progress, statistics and settings are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted. Practice on two devices on the same day adds up.
+- What you type in a lesson is not kept, only the counts (speed, accuracy, which keys went wrong).

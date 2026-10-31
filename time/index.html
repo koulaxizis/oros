@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Time · orOS</title>
 
-  <link rel="stylesheet" href="time.css?v=4.67.00">
-  <link rel="stylesheet" href="stage-view.css?v=4.67.00">
+  <link rel="stylesheet" href="time.css?v=4.75.00">
+  <link rel="stylesheet" href="stage-view.css?v=4.75.00">
 
 </head>
 <body>
@@ -262,12 +262,12 @@
     </section>
 
     <!-- Converter mode toggle -->
-    <section class="sec" id="converter-section" hidden>
+    <section class="sec" id="converter-section">
       <div class="sec-head">
         <span data-i18n="conv.title"></span>
-        <button id="conv-toggle" type="button" class="mini"></button>
+        <button id="conv-toggle" type="button" class="mini" aria-controls="conv-display"></button>
       </div>
-      <div id="conv-display" class="conv-row"></div>
+      <div id="conv-display" class="conv-row" hidden></div>
     </section>
   </main>
 
@@ -513,20 +513,20 @@
   </dialog>
 
 
-  <script src="../i18n.js?v=4.67.00" data-app="time"></script>
-  <script src="../timesheet/core.js?v=4.67.00"></script>
-  <script src="cities.js?v=4.67.00"></script>
-  <script src="clock-core.js?v=4.67.00"></script>
-  <script src="time.js?v=4.67.00"></script>
-  <script src="astro.js?v=4.67.00"></script>
-  <script src="stage-core.js?v=4.67.00"></script>
-  <script src="stage-view.js?v=4.67.00"></script>
-  <script src="stage.js?v=4.67.00"></script>
-  <script src="../qr/qr-encode.js?v=4.67.00"></script>
-  <script src="../remote-link.js?v=4.67.00"></script>
-  <script src="stage-link.js?v=4.67.00"></script>
-  <script src="../calendar/occur.js?v=4.67.00"></script>
-  <script src="stage-tools.js?v=4.67.00"></script>
+  <script src="../i18n.js?v=4.75.00" data-app="time"></script>
+  <script src="../timesheet/core.js?v=4.75.00"></script>
+  <script src="cities.js?v=4.75.00"></script>
+  <script src="clock-core.js?v=4.75.00"></script>
+  <script src="time.js?v=4.75.00"></script>
+  <script src="astro.js?v=4.75.00"></script>
+  <script src="stage-core.js?v=4.75.00"></script>
+  <script src="stage-view.js?v=4.75.00"></script>
+  <script src="stage.js?v=4.75.00"></script>
+  <script src="../qr/qr-encode.js?v=4.75.00"></script>
+  <script src="../remote-link.js?v=4.75.00"></script>
+  <script src="stage-link.js?v=4.75.00"></script>
+  <script src="../calendar/occur.js?v=4.75.00"></script>
+  <script src="stage-tools.js?v=4.75.00"></script>
 
 </body>
 </html>

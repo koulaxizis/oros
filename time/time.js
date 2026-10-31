@@ -1876,7 +1876,9 @@
 
   /* ---------- 12. Converter ---------- */
   // Shows each zone + local device time side by side. Off by
-  // default (section stays hidden until toggled on).
+  // default: the section head with its Show/Hide button always shows,
+  // only the row is hidden. (Before 4.66.01 the whole section was
+  // hidden, button included, so the converter could not be opened.)
   var convOn = false;
   function convRender() {
     if (!convOn) return;
@@ -1905,7 +1907,8 @@
     cells.forEach(function (el) { host.appendChild(el); });
   }
   function convSync() {
-    $("converter-section").hidden = !convOn;
+    $("conv-display").hidden = !convOn;
+    $("conv-toggle").setAttribute("aria-expanded", convOn ? "true" : "false");
     $("conv-toggle").textContent = t(convOn ? "conv.toggle.hide" : "conv.toggle.show");
     if (convOn) convRender();
   }
