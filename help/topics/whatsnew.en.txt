@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.66.00
+- Studio: play your instrument plugins from a MIDI keyboard through orOS Bridge 0.6.0. Choose an instrument in `Listen through a plugin` and the keyboard it plays from: the bridge reads the keyboard itself, so the notes reach the instrument with only the sound card's delay. Recording an instrument track then keeps the notes you played as a MIDI clip, and the track keeps the instrument, ready to freeze.
+
 ## Version 4.65.00
 - Studio: hear yourself through one of your plugins while you play and record, with orOS Bridge 0.5.0. In Studio's settings, under `orOS Bridge`, choose an effect in `Listen through a plugin` (an amp for a guitar, a reverb for a voice): the inputs go through it on the computer with only a few milliseconds of delay. A take records your inputs as they come and the track keeps the plugin with its sound, ready to freeze; or choose to record the plugin's sound. Use headphones.
 
