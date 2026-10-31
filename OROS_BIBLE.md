@@ -3397,7 +3397,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ### Open decisions (Christos)
 
 - ~~#21 (To-Do) priority keywords~~ → already done: quick add reads `p1`…`p4` (To-Do help, "Quick dates and priority while typing"); closed 2026-10-31.
-- ⊗ #35 (Kanban) clean up unused keys + stale comment?
+- ~~#35 (Kanban) clean up unused keys + stale comment~~ → done 2026-10-31 (Chris: yes): `lanes.hint` and `import.oros` removed (EN/EL/DE), the Greek v0.6.0 header comment rewritten in English without a version.
 - ~~#19 (To-Do) undo-across-sync~~ → already done: Undo puts back only what the action removed, stamped newest (TD-1 in `todo/todo.js`), so it wins the merge; closed 2026-10-31.
 - ⊗ Radio DNS/blocking diagnosis: de1 mirror opens in a tab but fails from page context (suspected adblocker). Retest in incognito without extensions.
 - ⊗ Radio RX-N1..N5 cleanup candidates (favicon preloading, shadowing `isFavorite`, unused `wasOffline`, asymmetric polling, stop/kill switch).
