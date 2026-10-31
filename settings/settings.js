@@ -1327,12 +1327,22 @@
     }
 
     var c2 = card(null);
+    // BK-E: the switch only asks; the shell's passphrase dialog turns
+    // it on once the key is stored.
+    c2.appendChild(row(t("b.enc"), switchBtn(!!b.encrypt, "b.enc", function (v) { act("backup.encrypt", v); }, t("b.enc")),
+      { scope: "backupenc", hint: t("b.enc.hint") }));
+    if (b.encLost) {
+      c2.appendChild(el("div", "hint warn", t("b.enc.lost")));
+      c2.appendChild(actions(button(t("b.enc.set"), "b.enc.set", function () { act("backup.encryptPass"); }, "primary")));
+    } else if (b.encrypt) {
+      c2.appendChild(actions(button(t("b.enc.change"), "b.enc.change", function () { act("backup.encryptPass"); })));
+    }
     c2.appendChild(actions(
       button(t("b.export"), "b.export", function () { act("backup.export"); }, "primary"),
       button(t("b.import"), "b.import", function () { act("backup.import"); }),
       b.folderSupported && b.folder && b.autoexport !== "off"
         ? button(t("b.now"), "b.now", function () { act("backup.now"); }) : null));
-    c2.appendChild(el("p", "hint", t("b.hint")));
+    c2.appendChild(el("p", "hint", t(b.encrypt ? "b.hint.enc" : "b.hint")));
     host.appendChild(c2);
   }
 
@@ -2009,6 +2019,8 @@
       host.appendChild(pcc);
     }
 
+    host.appendChild(reportCard());
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));
@@ -2023,6 +2035,102 @@
     host.appendChild(c4);
   }
   var resetting = false;
+
+  // "Report a problem": settings/report.js builds one text file (no user
+  // data); the person reads it here before it is saved. Under the orOS
+  // launcher with the System extension (USB, Portable, desktop apps) the
+  // extension adds the computer's own logs and saves one file in
+  // Downloads (event "oros-report" → "oros-report-done", string details).
+  var rep = { busy: false, text: "", name: "", msg: null };
+  function sysReport() {
+    var p = parentWin();
+    try { return !!(p && p.document.documentElement.getAttribute("data-oros-report") === "1"); }
+    catch (e) { return false; }
+  }
+  function reportMake() {
+    var R = window.SettingsReport;
+    if (!R || rep.busy) return;
+    rep.busy = true; rep.msg = null; render();
+    R.gather(parentWin() || window, snap() || {}).then(function (ctx) {
+      rep.text = R.build(ctx);
+      rep.name = R.fileName(ctx.now);
+    }, function () {
+      rep.msg = { cls: "msg-err", text: t("x.report.fail") };
+    }).then(function () { rep.busy = false; render(); });
+  }
+  function reportSave() {
+    var p = parentWin(), D = null;
+    try { D = p && p.orosDialog; } catch (e) {}
+    var done = function (r) {
+      if (r && r.ok) rep.msg = { cls: "msg-ok", text: t("x.report.saved", { f: rep.name }) };
+      render();
+    };
+    if (D && typeof D.saveFile === "function") {
+      D.saveFile({ text: rep.text, filename: rep.name, mime: "text/plain" }).then(done, function () {
+        rep.msg = { cls: "msg-err", text: t("x.report.fail") }; render();
+      });
+      return;
+    }
+    // Standalone run (no shell): a plain download.
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([rep.text], { type: "text/plain" }));
+      a.download = rep.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      done({ ok: true });
+    } catch (e) { rep.msg = { cls: "msg-err", text: t("x.report.fail") }; render(); }
+  }
+  function reportSaveSys() {
+    var p = parentWin();
+    if (!p || rep.busy) return;
+    rep.busy = true; rep.msg = { cls: "msg-dim", text: t("x.report.sysWorking") }; render();
+    var doc = p.document, timer = 0;
+    function finish(r) {
+      doc.removeEventListener("oros-report-done", onDone);
+      clearTimeout(timer);
+      rep.busy = false;
+      rep.msg = r && r.ok
+        ? { cls: "msg-ok", text: t("x.report.sysSaved", { f: String(r.file || "") }) }
+        : { cls: "msg-err", text: t("x.report.sysFail", { e: String((r && r.error) || "timeout") }) };
+      render();
+    }
+    function onDone(ev) {
+      var r = null;
+      try { r = JSON.parse(String(ev.detail)); } catch (e) {}
+      finish(r);
+    }
+    doc.addEventListener("oros-report-done", onDone);
+    timer = setTimeout(function () { finish(null); }, 90000);
+    doc.dispatchEvent(new p.CustomEvent("oros-report", { detail: JSON.stringify({ text: rep.text }) }));
+  }
+  function reportCard() {
+    var c = card(t("x.report"));
+    c.appendChild(el("p", "hint", t("x.report.hint")));
+    if (!rep.text) {
+      c.appendChild(actions(button(rep.busy ? t("x.report.making") : t("x.report.make"), "x.report", reportMake, "primary")));
+    } else {
+      c.appendChild(el("p", "hint", t("x.report.check")));
+      var pre = el("pre", "report-text", rep.text);
+      pre.tabIndex = 0;
+      pre.setAttribute("aria-label", t("x.report"));
+      c.appendChild(pre);
+      var sys = sysReport();
+      c.appendChild(actions(
+        sys ? button(t("x.report.saveSys"), "x.report.sys", reportSaveSys, "primary") : null,
+        button(t("x.report.save"), "x.report.save", reportSave, sys ? "" : "primary"),
+        button(t("x.report.again"), "x.report.again", function () { rep.text = ""; rep.msg = null; reportMake(); }),
+        confirmBtn(t("x.report.clear"), t("x.report.clearConfirm"), "x.report.clear", function () {
+          var p = parentWin();
+          try { if (p && p.orosDiag) p.orosDiag.clear(); } catch (e) {}
+          rep.text = ""; rep.msg = { cls: "msg-dim", text: t("x.report.cleared") }; render();
+        })
+      ));
+      if (sys) c.appendChild(el("p", "hint", t("x.report.sysHint")));
+    }
+    if (rep.msg) c.appendChild(el("p", "msg " + rep.msg.cls, rep.msg.text));
+    return c;
+  }
 
   // ---------- 10. Navigation + render ----------
   var current = null;        // open section id, or null = the list (narrow)

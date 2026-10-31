@@ -1704,6 +1704,78 @@
     });
   }
 
+  // ---------- BK-E: encrypted backup files (Settings › Backups) ----------
+  // Optional, off by default (Chris, 2026-10-31). A backup file sealed
+  // with its own passphrase (at least 10 characters):
+  //   { "format": "oros-backup", "v": 1, "enc": { it, s, iv, ct } }
+  // AES-256-GCM; key = PBKDF2-SHA-256 of the passphrase with the
+  // 16-byte salt `s` and `it` rounds (600 000 for new keys); `ct` is
+  // the plain backup file's text (base64 fields). The shell derives the
+  // key ONCE when the passphrase is set and keeps it non-extractable on
+  // the device (IndexedDB oros-fs "backup-key"), so scheduled folder
+  // backups never need the passphrase itself. One salt per key; every
+  // file draws a fresh 96-bit IV. Plain backup files still import.
+  var BACKUP_FORMAT = "oros-backup";
+  var BACKUP_SEALED_RE = /^\s*\{\s*"format"\s*:\s*"oros-backup"/;
+
+  // (pw, salt?, it?) → { key, s, it }. No salt = a new random one.
+  function backupKey(pw, salt, it) {
+    if (typeof pw !== "string" || !pw) return Promise.reject(new Error("backup-pass"));
+    var rounds = it === undefined ? PBKDF2_ROUNDS : it;
+    if (typeof rounds !== "number" || rounds !== Math.floor(rounds) ||
+        rounds < PBKDF2_LEGACY || rounds > PBKDF2_MAX) {
+      return Promise.reject(new Error("bad backup file"));
+    }
+    var s = salt;
+    if (!s) { s = new Uint8Array(16); crypto.getRandomValues(s); }
+    return crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: s, iterations: rounds, hash: "SHA-256" },
+          base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+      })
+      .then(function (key) { return { key: key, s: b64encode(s), it: rounds }; });
+  }
+
+  // (text, { key, s, it }) → the sealed file's text.
+  function sealBackup(text, k) {
+    if (!k || !k.key || typeof k.s !== "string") return Promise.reject(new Error("backup-nokey"));
+    var iv = new Uint8Array(12); crypto.getRandomValues(iv);
+    return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, k.key, new TextEncoder().encode(String(text)))
+      .then(function (ct) {
+        return JSON.stringify({ format: BACKUP_FORMAT, v: 1,
+          enc: { it: k.it, s: k.s, iv: b64encode(iv.buffer), ct: b64encode(ct) } });
+      });
+  }
+
+  // The sealed part of a file's text, or null (a plain backup file).
+  // Only text that starts like a sealed file is parsed.
+  function backupSealed(text) {
+    if (typeof text !== "string" || !BACKUP_SEALED_RE.test(text.slice(0, 64))) return null;
+    var doc;
+    try { doc = JSON.parse(text); } catch (e) { return null; }
+    var e2 = doc && doc.format === BACKUP_FORMAT && doc.enc;
+    if (!e2 || doc.v !== 1 || typeof e2.s !== "string" || typeof e2.iv !== "string" ||
+        typeof e2.ct !== "string" || typeof e2.it !== "number") return null;
+    return e2;
+  }
+
+  // (text, pw) → the plain backup text. A wrong passphrase (or a
+  // changed file: GCM checks both) rejects with "backup-pass".
+  function openBackup(text, pw) {
+    var e = backupSealed(text);
+    if (!e) return Promise.reject(new Error("bad backup file"));
+    var salt, iv, ct;
+    try { salt = b64decode(e.s); iv = b64decode(e.iv); ct = b64decode(e.ct); }
+    catch (x) { return Promise.reject(new Error("bad backup file")); }
+    if (salt.length < 8 || iv.length !== 12) return Promise.reject(new Error("bad backup file"));
+    return backupKey(pw, salt, e.it).then(function (k) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, k.key, ct)
+        .then(function (plain) { return new TextDecoder().decode(plain); },
+              function () { throw new Error("backup-pass"); });
+    });
+  }
+
   // ---------- VD-KEY: re-wrapping the Vault Drive key ----------
   // Vault Drive content is encrypted with a random vault key; the
   // cloud keeps that key in /vault/key.json as { ver:1, wraps:[…] },
@@ -3813,6 +3885,12 @@
       markDirty();   // imported result must reach the cloud
       return applied;
     },
+
+    // BK-E: optional encrypted backup files (Settings › Backups).
+    backupKey:          backupKey,        // (pw, salt?, it?) → { key, s, it }
+    sealBackup:         sealBackup,       // (text, { key, s, it }) → sealed text
+    backupSealed:       backupSealed,     // (text) → enc part | null (plain file)
+    openBackup:         openBackup,       // (text, pw) → plain text; "backup-pass" on a wrong one
 
     // Passphrase / vault
     setPassphrase:      setPassphrase,    // (pw, remember?) — remember = seal to device

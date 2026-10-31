@@ -298,6 +298,12 @@ input.bad, textarea.bad { border-color: var(--danger); box-shadow: 0 0 0 3px rgb
 .amt { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .amt.neg { color: var(--danger); }
 .row-note { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+/* Greek 360px list (2026-10-16): the status chip took the room of the
+   number. On phones the chip goes to its own line when it must. */
+@media (max-width: 480px) {
+  .row-top { flex-wrap: wrap; row-gap: 3px; }
+  .row-no { max-width: 100%; }
+}
 .row-note.bad { color: var(--danger); font-weight: 700; }
 .chip {
   display: inline-block;
