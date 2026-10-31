@@ -802,3 +802,11 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
   .fs-groups .smp-item .hint { margin-right: auto; }
 }
 .fs-groups .smp-items { max-height: none; overflow: visible; }
+
+/* Inputs of the sound card through orOS Bridge: one meter per input */
+.io-meters { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin: 8px 0 4px; }
+.io-meters:empty { display: none; }
+.io-meter { display: flex; flex-direction: column; gap: 3px; font-size: 11px; min-width: 0; }
+.io-meter .io-bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+.io-meter .io-bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 80ms linear; }
+.io-meter.hot .io-bar > i { background: var(--rec); }

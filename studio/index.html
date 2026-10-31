@@ -397,6 +397,48 @@
     <select id="out-dev"></select>
     <p id="out-hint" class="hint small" data-i18n="out.hint" hidden>This browser always plays through the system output.</p>
     <button type="button" id="dev-refresh" class="link-btn" data-i18n="btn.devices">Show device names</button>
+    <label class="field" for="io-mode" data-i18n="io.mode">Record and play through</label>
+    <select id="io-mode">
+      <option value="" data-i18n="io.browser">This browser</option>
+      <option value="br" data-i18n="io.bridge">orOS Bridge (your sound card)</option>
+    </select>
+    <div id="io-sec" hidden>
+      <p class="hint small" data-i18n="io.hint"></p>
+      <div id="io-pair" hidden>
+        <label class="field" for="io-code" data-i18n="br.code">Code from orOS Bridge</label>
+        <input type="text" id="io-code" inputmode="numeric" maxlength="7" autocomplete="off">
+        <div class="dlg-actions">
+          <button type="button" id="io-pair-go" class="chip primary" data-i18n="br.pair">Pair</button>
+        </div>
+      </div>
+      <div id="io-on" hidden>
+        <label class="field" for="io-be" data-i18n="io.be">Sound system</label>
+        <select id="io-be"></select>
+        <label class="field" for="io-in" data-i18n="io.in">Record from the card</label>
+        <select id="io-in"></select>
+        <label class="field" for="io-ch" data-i18n="io.ch">Inputs</label>
+        <select id="io-ch"></select>
+        <label class="field" for="io-out" data-i18n="io.out">Listen through the card</label>
+        <select id="io-out"></select>
+        <div id="io-ex-sec">
+          <label class="field" for="io-ex" data-i18n="io.ex">Sharing</label>
+          <select id="io-ex">
+            <option value="" data-i18n="io.shared">Shared with other programs</option>
+            <option value="1" data-i18n="io.excl">Exclusive (lowest delay, other programs go quiet)</option>
+          </select>
+        </div>
+        <div id="io-meters" class="io-meters" aria-hidden="true"></div>
+        <div class="dlg-actions spread">
+          <button type="button" id="io-test" class="chip" aria-pressed="false" data-i18n="io.test">Check the inputs</button>
+          <button type="button" id="io-refresh" class="chip" data-i18n="io.refresh">Look again</button>
+        </div>
+      </div>
+      <p id="io-status" class="hint small" role="status"></p>
+      <div id="io-off" class="dlg-actions spread" hidden>
+        <a class="small" href="https://useoros.online/download/#bridge" target="_blank" rel="noopener" data-i18n="br.get">Get orOS Bridge</a>
+        <button type="button" id="io-connect" class="chip primary" data-i18n="br.connect">Connect</button>
+      </div>
+    </div>
     <h3 data-i18n="sec.latency">Recording offset</h3>
     <label class="field" for="lat-in"><span data-i18n="f.latency">Move new takes earlier by</span><output id="lat-out"></output></label>
     <input type="range" id="lat-in" min="0" max="300" step="1">

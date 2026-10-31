@@ -111,6 +111,7 @@
       "out.hint": "This browser always plays through the system output.",
       "sec.latency": "Recording offset", "f.latency": "Move new takes earlier by",
       "lat.hint": "If takes land late against the click, raise this until they line up. The output delay the browser reports is already taken off.",
+      "io.mode": "Record and play through", "io.browser": "This browser", "io.bridge": "orOS Bridge (your sound card)", "io.hint": "orOS Bridge opens your sound card itself (Windows Audio, JACK, PipeWire or ALSA): each take records the inputs you pick, in step with what you hear. Listen through your card's own monitoring. The recording offset below is added on top.", "io.be": "Sound system", "io.in": "Record from the card", "io.ch": "Inputs", "io.out": "Listen through the card", "io.ex": "Sharing", "io.shared": "Shared with other programs", "io.excl": "Exclusive (lowest delay, other programs go quiet)", "io.test": "Check the inputs", "io.refresh": "Look again", "io.noBridge": "orOS Bridge is not running. Start it on this computer, then press Connect.", "io.looking": "Looking for sound cards…", "io.old": "This orOS Bridge cannot open sound cards yet. Get version 0.3.0 or newer.", "io.notRunning": "{name} (not running)", "io.nIn": "{n} channels", "io.one": "Input {n}", "io.pair": "Inputs {a} + {b} (stereo)", "io.all": "Every input, each on its own track ({n})", "io.ready": "Ready: Record now goes through {name}.", "io.none": "No sound card found. Is it plugged in? Press Look again.", "io.testing": "The card is open at {sr} Hz, about {ms} ms there and back. Play or sing to see the meters.", "io.openFail": "The sound card could not be opened. {why}", "io.prep": "Preparing the song for the sound card…", "io.pairFirst": "Pair orOS Bridge first: Settings › Record and play through.", "io.lost": "The computer could not keep up: {n} s of the take are missing.",
       "sec.metro": "Click", "f.metroVol": "Click volume",
       "disk.vault": "Audio files are kept on the orOS disk (Studio/audio) and Vault Drive carries them to your other devices.",
       "disk.local": "Audio files are kept on the orOS disk (Studio/audio), on this device. Turn on sync and Vault Drive to have them on your other devices too.",
@@ -268,6 +269,7 @@
       "out.hint": "Αυτός ο browser παίζει πάντα από την έξοδο του συστήματος.",
       "sec.latency": "Διόρθωση ηχογράφησης", "f.latency": "Μετακίνησε τις νέες λήψεις νωρίτερα κατά",
       "lat.hint": "Αν οι λήψεις πέφτουν αργά σε σχέση με τον μετρονόμο, ανέβασέ το μέχρι να συμπέσουν. Η καθυστέρηση εξόδου που δηλώνει ο browser αφαιρείται ήδη.",
+      "io.mode": "Ηχογράφηση και ακρόαση μέσω", "io.browser": "Αυτού του browser", "io.bridge": "orOS Bridge (η κάρτα ήχου σου)", "io.hint": "Το orOS Bridge ανοίγει το ίδιο την κάρτα ήχου σου (Windows Audio, JACK, PipeWire ή ALSA): κάθε λήψη γράφει τις εισόδους που διαλέγεις, σε συγχρονισμό με αυτό που ακούς. Άκου από την παρακολούθηση της ίδιας της κάρτας. Η διόρθωση ηχογράφησης πιο κάτω προστίθεται επιπλέον.", "io.be": "Σύστημα ήχου", "io.in": "Ηχογράφηση από την κάρτα", "io.ch": "Είσοδοι", "io.out": "Ακρόαση από την κάρτα", "io.ex": "Κοινή χρήση", "io.shared": "Κοινή με άλλα προγράμματα", "io.excl": "Αποκλειστική (η μικρότερη καθυστέρηση, τα άλλα προγράμματα σωπαίνουν)", "io.test": "Έλεγχος εισόδων", "io.refresh": "Ψάξε ξανά", "io.noBridge": "Το orOS Bridge δεν τρέχει. Άνοιξέ το σε αυτόν τον υπολογιστή και πάτα Σύνδεση.", "io.looking": "Αναζήτηση καρτών ήχου…", "io.old": "Αυτό το orOS Bridge δεν ανοίγει ακόμη κάρτες ήχου. Πάρε την έκδοση 0.3.0 ή νεότερη.", "io.notRunning": "{name} (δεν τρέχει)", "io.nIn": "{n} κανάλια", "io.one": "Είσοδος {n}", "io.pair": "Είσοδοι {a} + {b} (στέρεο)", "io.all": "Κάθε είσοδος σε δικό της κανάλι ({n})", "io.ready": "Έτοιμο: η Ηχογράφηση περνά τώρα από το {name}.", "io.none": "Δεν βρέθηκε κάρτα ήχου. Είναι συνδεδεμένη; Πάτα Ψάξε ξανά.", "io.testing": "Η κάρτα είναι ανοιχτή στα {sr} Hz, περίπου {ms} ms πήγαινε-έλα. Παίξε ή τραγούδησε για να δεις τους μετρητές.", "io.openFail": "Η κάρτα ήχου δεν άνοιξε. {why}", "io.prep": "Ετοιμάζεται το τραγούδι για την κάρτα ήχου…", "io.pairFirst": "Σύνδεσε πρώτα το orOS Bridge: Ρυθμίσεις › Ηχογράφηση και ακρόαση μέσω.", "io.lost": "Ο υπολογιστής δεν πρόλαβε: λείπουν {n} s από τη λήψη.",
       "sec.metro": "Μετρονόμος", "f.metroVol": "Ένταση μετρονόμου",
       "disk.vault": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio) και το Vault Drive τα μεταφέρει στις άλλες συσκευές σου.",
       "disk.local": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio), σε αυτή τη συσκευή. Άνοιξε το sync και το Vault Drive για να τα έχεις και στις άλλες συσκευές σου.",
@@ -506,6 +508,13 @@
   }
   function flush() { if (saveTimer) save(); }
 
+  // the sound card through orOS Bridge (this device only, never synced)
+  function normIo(o) {
+    o = o && typeof o === "object" ? o : {};
+    var str = function (v, n) { return typeof v === "string" && v.length <= n ? v : ""; };
+    return { on: o.on === true, be: /^[a-z0-9]{1,20}$/.test(o.be) ? o.be : "", inp: str(o.inp, 300), out: str(o.out, 300),
+             ex: o.ex === true, ch: typeof o.ch === "string" && /^(all|\d{1,2}(\+\d{1,2})?)$/.test(o.ch) ? o.ch : "1" };
+  }
   function loadPrefs() {
     var p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
@@ -520,6 +529,7 @@
       inDev: typeof p.inDev === "string" ? p.inDev : "",
       outDev: typeof p.outDev === "string" ? p.outDev : "",
       lat: int(p.lat, 0, 300, 0),
+      io: normIo(p.io),
       arm: typeof p.arm === "string" ? p.arm : "",
       bits: p.bits === 16 ? 16 : 24,
       rate: p.rate === 44100 ? 44100 : 48000,
@@ -2026,6 +2036,15 @@
     if (recording) { stopRecording(); return; }
     var target = proj && (C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack));
     if (target && target.p === proj.id && isInst(target)) { startMidiRec(target); return; }
+    if (ioOn() && !keysOpen()) {
+      if (!ensureProject()) return;
+      var it = C.find(data, "tracks", prefs.arm) || C.find(data, "tracks", selTrack);
+      if (!it || it.p !== proj.id) { edit(function () { it = addTrack(); }); }
+      if (!it) return;
+      prefs.arm = it.id; savePrefs();
+      startIoRec(it);
+      return;
+    }
     var a = audio(), fromSynth = keysOpen();
     if (!a || !a.audioWorklet || (!fromSynth && !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia))) { showToast(t("toast.noRec")); return; }
     if (!ensureProject()) return;
@@ -2072,6 +2091,7 @@
   }
   function stopRecording() {
     if (recording && midiRec) { stopMidiRec(); return; }
+    if (recording && ioRec) { stopIoRec(); return; }
     if (!recording || !recMeta) return;
     var r = recMeta, a = actx, t0 = playing ? playing.t0 : 0, from = r.from;
     recording = false;
@@ -2122,6 +2142,297 @@
       showToast(t("toast.recSaved", { name: tr.name }));
     }, function (e) {
       busy(null);
+      showToast(e && e.message === "nodisk" ? t("toast.noDisk") : t("toast.recFail"));
+      renderAll();
+    });
+  }
+
+  // ---------- 8c. Recording through the sound card (orOS Bridge) ----------
+  // With Settings › "Record and play through" on orOS Bridge, the bridge
+  // opens the card itself (WASAPI, JACK, PipeWire/PulseAudio, ALSA). The
+  // song from the playhead is rendered first (renderMix, plus the click)
+  // at the card's own rate and sent ahead; the bridge plays it and records
+  // the chosen inputs in the same callback, so the take shares the card's
+  // clock with what was heard. A take lands at the playhead minus the
+  // bridge's round-trip estimate and the recording offset. "Every input"
+  // gives one new mono track per input; all takes are one undo step.
+  var IO_CLICK_TAIL = 120;       // seconds of click after the song's end
+  var ioRec = null;              // { from, sr, lat, tracks: [{tr, chans}], record, pos, timer }
+  var ioDevs = [], ioTest = false;
+  function ioOn() { return prefs.io.on === true; }
+  function ioBackend() { return ioDevs.filter(function (b) { return b.id === prefs.io.be; })[0] || null; }
+  function ioInDev() {
+    var b = ioBackend();
+    if (!b) return null;
+    return b.inputs.filter(function (d) { return d.name === prefs.io.inp; })[0] || b.inputs.filter(function (d) { return d.def; })[0] || b.inputs[0] || null;
+  }
+  // the input channels a take records (from 0): one, a pair, or every input
+  function ioChannels(n) {
+    var ch = prefs.io.ch, out = [], i;
+    if (ch === "all") { for (i = 0; i < Math.min(n, 32); i++) out.push(i); return out; }
+    var m = /^(\d+)(\+(\d+))?$/.exec(ch) || ["", "1"];
+    var a = Math.min(parseInt(m[1], 10), n) - 1;
+    out.push(Math.max(0, a));
+    if (m[3] && a + 1 < n) out.push(a + 1);
+    return out;
+  }
+  function ioStatus(text) { $("io-status").textContent = text || ""; }
+  function ioShow(which) {
+    $("io-pair").hidden = which !== "pair";
+    $("io-on").hidden = which !== "on";
+    $("io-off").hidden = which !== "off";
+  }
+  function renderIo() {
+    var on = ioOn();
+    $("io-mode").value = on ? "br" : "";
+    $("io-sec").hidden = !on;
+    ["in-dev", "dev-refresh"].forEach(function (id) { $(id).hidden = on; });
+    var lbl = document.querySelector('label[for="in-dev"]');
+    if (lbl) lbl.hidden = on;
+    if (!on) { ioTestOff(); return; }
+    ioStatus(t("br.connecting"));
+    ioShow("");
+    brLib().then(function () { return BRG.connect(); }).then(function (r) {
+      if (r === "pair") {
+        ioShow("pair"); ioStatus("");
+        $("io-code").value = "";
+        return BRG.pair();
+      }
+      return ioLoad();
+    }).then(null, function () { ioShow("off"); ioStatus(t("io.noBridge")); });
+  }
+  function ioSendCode() {
+    var code = $("io-code").value.replace(/\D/g, "");
+    if (code.length !== 6) { ioStatus(t("br.badCode")); return; }
+    BRG.sendCode(code).then(ioLoad, function () { ioStatus(t("br.badCode")); return BRG.pair().then(null, function () {}); });
+  }
+  function ioLoad() {
+    ioStatus(t("io.looking"));
+    return BRG.devices().then(function (list) {
+      ioDevs = list;
+      if (!ioBackend()) {
+        var first = list.filter(function (b) { return b.ok && b.inputs.length; })[0];
+        if (first) { prefs.io.be = first.id; savePrefs(); }
+      }
+      ioShow("on");
+      ioFill();
+    }, function () { ioShow("off"); ioStatus(t("io.old")); });
+  }
+  function opt(sel, value, text, disabled) {
+    var o = el("option", "", text);
+    o.value = value;
+    if (disabled) o.disabled = true;
+    sel.appendChild(o);
+  }
+  function ioFill() {
+    var be = $("io-be"), b;
+    be.innerHTML = "";
+    ioDevs.forEach(function (x) { opt(be, x.id, x.ok ? x.label : t("io.notRunning", { name: x.label }), !x.ok); });
+    be.value = prefs.io.be;
+    b = ioBackend();
+    [["io-in", "inputs", "inp"], ["io-out", "outputs", "out"]].forEach(function (k) {
+      var sel = $(k[0]);
+      sel.innerHTML = "";
+      opt(sel, "", t("dev.default"));
+      (b ? b[k[1]] : []).forEach(function (d) { opt(sel, d.name, d.name + (d.channels > 2 ? " · " + t("io.nIn", { n: d.channels }) : "")); });
+      sel.value = prefs.io[k[2]];
+      if (sel.value !== prefs.io[k[2]]) sel.value = "";
+    });
+    var dev = ioInDev(), n = dev ? dev.channels : 2, ch = $("io-ch"), i;
+    ch.innerHTML = "";
+    for (i = 1; i <= Math.min(n, 32); i++) opt(ch, String(i), t("io.one", { n: i }));
+    for (i = 1; i + 1 <= Math.min(n, 32); i += 2) opt(ch, i + "+" + (i + 1), t("io.pair", { a: i, b: i + 1 }));
+    if (n > 1) opt(ch, "all", t("io.all", { n: Math.min(n, 32) }));
+    ch.value = prefs.io.ch;
+    if (ch.value !== prefs.io.ch) { ch.value = "1"; }
+    $("io-ex-sec").hidden = !(b && b.exclusive);
+    $("io-ex").value = prefs.io.ex ? "1" : "";
+    $("io-test").disabled = !b || !b.ok;
+    ioStatus(b && b.ok ? t("io.ready", { name: b.label }) : t("io.none"));
+  }
+  function ioPick(key, value) {
+    prefs.io[key] = value;
+    if (key === "be") { prefs.io.inp = ""; prefs.io.out = ""; }
+    savePrefs();
+    ioTestOff();
+    ioFill();
+  }
+  // "Check the inputs": the card opens (nothing played) and the meters move
+  function ioTestToggle() {
+    if (ioTest) { ioTestOff(); return; }
+    var b = ioBackend();
+    if (!b || recording) return;
+    ioTest = true;
+    $("io-test").setAttribute("aria-pressed", "true");
+    $("io-test").classList.add("on");
+    BRG.audioOpen({ backend: b.id, input: prefs.io.inp, output: prefs.io.out, exclusive: prefs.io.ex, record: [] }).then(function (j) {
+      if (!ioTest) { BRG.audioClose(); return; }
+      ioMeters(j.inputs | 0);
+      ioStatus(t("io.testing", { sr: j.sr, ms: Math.round((j.latency | 0) / j.sr * 1000) }));
+    }, function (e) { ioTestOff(); ioStatus(t("io.openFail", { why: (e && e.message) || "" })); });
+  }
+  function ioTestOff() {
+    if (ioTest && BRG && !ioRec) BRG.audioClose();
+    ioTest = false;
+    var b = $("io-test");
+    if (b) { b.setAttribute("aria-pressed", "false"); b.classList.remove("on"); }
+    if (!ioRec) $("io-meters").innerHTML = "";
+  }
+  function ioMeters(n) {
+    var box = $("io-meters");
+    box.innerHTML = "";
+    for (var i = 0; i < Math.min(n, 32); i++) {
+      var m = el("div", "io-meter");
+      m.appendChild(el("span", "", t("io.one", { n: i + 1 })));
+      var bar = el("div", "io-bar");
+      bar.appendChild(document.createElement("i"));
+      m.appendChild(bar);
+      box.appendChild(m);
+    }
+  }
+  function ioLevels(ev) {
+    if (ioRec && typeof ev.pos === "number") ioRec.pos = ev.pos;
+    var ms = $("io-meters").children;
+    (ev.peaks || []).forEach(function (p, i) {
+      if (!ms[i]) return;
+      var db = p > 0 ? 20 * Math.log10(p) : -90, w = Math.max(0, Math.min(100, (db + 60) / 60 * 100));
+      ms[i].lastChild.firstChild.style.width = w + "%";
+      ms[i].classList.toggle("hot", p >= 0.99);
+    });
+  }
+  // the click as samples, added into [L, R] (the song starts at `from`)
+  function ioClick(chans, from, sr) {
+    var bs = C.beatSec(proj.bpm), len = chans[0].length, v = Math.pow(prefs.mvol / 100, 1.5) * 0.6;
+    var n = Math.round(0.06 * sr), att = Math.max(1, Math.round(0.002 * sr)), k = Math.ceil(from / bs - 1e-9);
+    for (; k * bs < from + len / sr; k++) {
+      var f0 = Math.round((k * bs - from) * sr), hz = k % proj.sig === 0 ? 1600 : 1000;
+      for (var i = 0; i < n && f0 + i < len; i++) {
+        var env = i < att ? v * i / att : v * Math.pow(0.0001 / v, Math.min(1, (i - att) / (0.048 * sr)));
+        var s = env * Math.sin(2 * Math.PI * hz * i / sr);
+        chans[0][f0 + i] += s; chans[1][f0 + i] += s;
+      }
+    }
+  }
+  function ioFail(msg) {
+    var r = ioRec;
+    ioRec = null;
+    recording = false;
+    if (r && r.timer) clearInterval(r.timer);
+    if (BRG) BRG.audioClose();
+    busy(null);
+    renderAll();
+    showToast(msg);
+  }
+  function startIoRec(tr) {
+    var b = ioBackend() || { id: prefs.io.be }, a = audio(), from = playhead, end = songLen();
+    if (!a) { showToast(t("toast.noAudio")); return; }
+    if (playing) { from = playhead = position(); stopNodes(); }
+    ioTestOff();
+    recording = true;                            // nothing can be edited while the take is prepared
+    ioRec = { from: from, sr: 0, lat: 0, tid: tr.id, record: [], pos: 0, timer: 0, ready: false };
+    renderPlayState();
+    busy(t("io.prep"));
+    if (projClips().some(function (c) { return !C.isMidi(c) && !buffers[c.s]; })) showToast(t("toast.missing"));
+    var j;
+    brLib().then(function () { return BRG.connect(); }).then(function (r) {
+      if (r === "pair") throw new Error("pair");
+      return BRG.devices();
+    }).then(function (list) {
+      ioDevs = list;
+      var bk = ioBackend(), dev = ioInDev();
+      if (!bk || !bk.ok) throw new Error("nocard");
+      ioRec.record = ioChannels(dev ? dev.channels : 2);
+      return BRG.audioOpen({ backend: bk.id, input: prefs.io.inp, output: prefs.io.out, exclusive: prefs.io.ex, record: ioRec.record });
+    }).then(function (x) {
+      j = x;
+      ioRec.sr = j.sr;
+      ioRec.lat = (j.latency | 0) / j.sr + prefs.lat / 1000;
+      var songSec = Math.max(0, end - from), sec = Math.min(MAX_REC_SEC, songSec + (prefs.metro ? IO_CLICK_TAIL : 0));
+      if (sec <= 0) return [];
+      var len = Math.ceil(sec * j.sr);
+      var mix = songSec > 0.01 ? renderMix({ a: from, b: end }, j.sr) : Promise.resolve([new Float32Array(0), new Float32Array(0)]);
+      return mix.then(function (m) {
+        if (m[0].length === len && !prefs.metro) return m;
+        var out = [new Float32Array(len), new Float32Array(len)];
+        out[0].set(m[0].subarray(0, len)); out[1].set(m[1].subarray(0, len));
+        if (prefs.metro) ioClick(out, from, j.sr);
+        return out;
+      });
+    }).then(function (chans) {
+      if (!ioRec) throw new Error("gone");
+      return BRG.play(chans, 0);
+    }).then(function () { return BRG.start(); }).then(function () {
+      if (!ioRec) return;
+      busy(null);
+      ioRec.ready = true;
+      ioRec.timer = setInterval(function () {
+        if (!ioRec) return;
+        playhead = ioRec.from + ioRec.pos / ioRec.sr;
+        renderPlayhead();
+        if (ioRec.pos / ioRec.sr > MAX_REC_SEC) { showToast(t("toast.recMax")); stopRecording(); }
+      }, 50);
+      renderAll();
+      live(t("live.recording"));
+    }).then(null, function (e) {
+      var m = e && e.message;
+      ioFail(m === "pair" ? t("io.pairFirst") : m === "nocard" ? t("io.none") : m === "nobridge" || m === "closed" ? t("io.noBridge")
+        : t("io.openFail", { why: m || "" }));
+    });
+  }
+  function stopIoRec() {
+    var r = ioRec;
+    if (!r || !r.ready) return;               // still preparing: it starts, then can be stopped
+    r.ready = false;
+    clearInterval(r.timer);
+    busy(t("busy.saveTake"));
+    var lost = 0;
+    BRG.stop().then(function (s) {
+      lost = s.lost | 0;
+      return BRG.take(s.frames | 0, r.record.length);
+    }).then(function (chans) {
+      BRG.audioClose();
+      ioRec = null;
+      recording = false;
+      playhead = r.from;
+      renderPlayState();
+      if (lost) showToast(t("io.lost", { n: (lost / r.sr).toFixed(2) }));
+      return ioKeep(r, chans);
+    }).then(null, function () { ioFail(t("toast.recFail")); });
+  }
+  // the take onto its track(s): a pair as one stereo clip, every input as one track each
+  function ioKeep(r, chans) {
+    var a = audio(), tr = C.find(data, "tracks", r.tid);
+    busy(null);
+    if (!chans.length || !chans[0].length) { showToast(t("toast.recEmpty")); renderAll(); return; }
+    if (!tr || !proj || tr.p !== proj.id || !a) { showToast(t("toast.recFail")); renderAll(); return; }
+    var at = r.from - r.lat, skip = 0;
+    if (at < 0) { skip = Math.min(chans[0].length - 1, Math.round(-at * r.sr)); at = 0; }
+    if (skip) chans = chans.map(function (d) { return d.subarray(skip); });
+    var groups = prefs.io.ch === "all" && chans.length > 1 ? chans.map(function (c) { return [c]; }) : [chans];
+    if (projClips().length + groups.length > C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); renderAll(); return; }
+    var before = snapshot(), stamp = new Date().toTimeString().slice(0, 5).replace(":", "."), saved = 0;
+    busy(t("busy.saveTake"));
+    var step = function (i) {
+      if (i >= groups.length) return Promise.resolve();
+      var g = groups[i], dest = i === 0 ? tr : addTrack(C.clipLine(tr.name + " · " + t("io.one", { n: r.record[i] + 1 }), C.MAX_NAME));
+      if (!dest) return Promise.resolve();          // no room for more tracks
+      var buf = a.createBuffer(g.length, g[0].length, r.sr);
+      g.forEach(function (d, k) { buf.copyToChannel(d, k); });
+      var name = (dest.name || "take") + " " + stamp;
+      return addSource(name, "wav", new Blob([C.wavBytes(g, r.sr, 24)], { type: "audio/wav" }), buf).then(function (src) {
+        put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: dest.id, s: src.id, at: at, off: 0, len: buf.duration }));
+        saved++;
+        return step(i + 1);
+      });
+    };
+    return step(0).then(function () {
+      busy(null);
+      if (saved) { undoStack.push(before); redoStack = []; }
+      changed();
+      showToast(t("toast.recSaved", { name: tr.name }));
+    }, function (e) {
+      busy(null);
+      if (saved) { undoStack.push(before); redoStack = []; changed(); }
       showToast(e && e.message === "nodisk" ? t("toast.noDisk") : t("toast.recFail"));
       renderAll();
     });
@@ -2922,7 +3233,10 @@
   }
   function brEvent(ev) {
     if (ev.event === "hello") { brEditors = ev.editors === true; if (!brBusy) $("br-window").hidden = !brEditors; }
+    else if (ev.event === "levels") ioLevels(ev);
     else if (ev.event === "closed") {
+      if (ioRec) ioFail(t("io.noBridge"));
+      ioTest = false;
       brOpen = null;
       if ($("br-dlg").open) { brSetBusy(false); brShow("off"); brStatus(t("br.lost")); }
     }
@@ -3156,29 +3470,20 @@
     if (!txt) return;
     saveBlob(new Blob([txt + "\n"], { type: "text/plain" }), C.fileName(((proj && proj.name) || t("proj.untitled")) + " " + t("cr.sec"), "txt"), "text/plain", t("cr.sec"), ".txt");
   }
-  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
-  // dest "music": the file goes onto the orOS disk under /internal/Music
-  // and plays in Music ("lyrics": opens in Lyric Sync instead);
-  // otherwise the save dialog, as always.
-  function doExport(dest) {
-    var clips = projClips(), r = C.exportRange(proj, clips);
-    if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
-    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+  // The song from r.a to r.b as it is heard (effects, master), at `rate`:
+  // → [L, R] Float32Arrays. The effects' delay is rendered too and cut
+  // from the start. Every instrument is downloaded first: a render never
+  // falls back to the built-in sound.
+  function renderMix(r, rate) {
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!OAC) { showToast(t("toast.noAudio")); return; }
-    var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
-    var rate = fmt === "opus" ? 48000 : prefs.rate, oc, chains = fxChains(), skip = 0, len = Math.ceil((r.b - r.a) * rate);
-    var fail = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
-    $("export-status").textContent = t("export.busy");
-    exportBusy(true);
-    // the effects' delay is rendered too and cut from the start
-    FX.preparePage(chains).then(function () {
+    if (!OAC) return Promise.reject(new Error("noaudio"));
+    var clips = projClips(), oc, chains = fxChains(), skip = 0, len = Math.ceil((r.b - r.a) * rate);
+    return FX.preparePage(chains).then(function () {
       var trLat = tracks().reduce(function (m, tr) { return Math.max(m, FX.chainLatency(tr.fx, rate)); }, 0);
       skip = trLat + FX.chainLatency(proj.fx, rate);
       oc = new OAC(2, len + skip, rate);
       return FX.ensure(oc, chains);
     }).then(function () {
-      // every instrument is downloaded first: an export never falls back to the built-in sound
       return SND.ensure(audio() || oc, projSmps()).then(null, function (e) { showToast(t("smp.exportFail")); throw e; });
     }).then(function () {
       var master = oc.createGain(); master.gain.value = C.dbToGain(proj.vol);
@@ -3196,10 +3501,26 @@
       var p = oc.startRendering();
       if (p && typeof p.then === "function") return p;
       return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
-    }).then(function (out) { done(out); }, fail);
+    }).then(function (out) { return [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)]; });
+  }
+  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
+  // dest "music": the file goes onto the orOS disk under /internal/Music
+  // and plays in Music ("lyrics": opens in Lyric Sync instead);
+  // otherwise the save dialog, as always.
+  function doExport(dest) {
+    var clips = projClips(), r = C.exportRange(proj, clips);
+    if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) { showToast(t("toast.noAudio")); return; }
+    var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
+    var rate = fmt === "opus" ? 48000 : prefs.rate;
+    var fail = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
+    $("export-status").textContent = t("export.busy");
+    exportBusy(true);
+    renderMix(r, rate).then(function (chans) { done(chans); }, fail);
     var title = proj.name || t("proj.untitled");
-    var done = function (out) {
-      var chans = [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)];
+    var done = function (chans) {
       var finish = function (bytes, mime, ext, desc) {
         exportBusy(false);
         $("export-status").textContent = "";
@@ -3776,6 +4097,7 @@
   // Settings
   function openMore() {
     renderDevices();
+    renderIo();
     $("lat-in").value = String(prefs.lat); $("lat-out").textContent = t("ms", { n: prefs.lat });
     $("mvol-in").value = String(prefs.mvol); $("mvol-out").textContent = prefs.mvol + "%";
     var v = vaultApi(), usable = false;
@@ -4191,6 +4513,18 @@
     $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
+    $("more-dlg").addEventListener("close", ioTestOff);
+    $("io-mode").addEventListener("change", function () { prefs.io.on = $("io-mode").value === "br"; savePrefs(); renderIo(); });
+    $("io-connect").addEventListener("click", renderIo);
+    $("io-refresh").addEventListener("click", function () { ioTestOff(); ioLoad(); });
+    $("io-pair-go").addEventListener("click", ioSendCode);
+    $("io-code").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); ioSendCode(); } });
+    $("io-be").addEventListener("change", function () { ioPick("be", $("io-be").value); });
+    $("io-in").addEventListener("change", function () { ioPick("inp", $("io-in").value); });
+    $("io-out").addEventListener("change", function () { ioPick("out", $("io-out").value); });
+    $("io-ch").addEventListener("change", function () { ioPick("ch", $("io-ch").value); });
+    $("io-ex").addEventListener("change", function () { ioPick("ex", $("io-ex").value === "1"); });
+    $("io-test").addEventListener("click", ioTestToggle);
     $("in-dev").addEventListener("change", function () { prefs.inDev = $("in-dev").value; savePrefs(); });
     $("out-dev").addEventListener("change", function () { prefs.outDev = $("out-dev").value; savePrefs(); applyOutput(); });
     $("dev-refresh").addEventListener("click", askDeviceNames);
