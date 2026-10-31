@@ -197,7 +197,7 @@ orosPack("de", "studio", {
  "io.ch": "Eingänge",
  "io.ex": "Teilen",
  "io.excl": "Exklusiv (geringste Verzögerung, andere Programme verstummen)",
- "io.hint": "orOS Bridge öffnet deine Soundkarte selbst (Windows Audio, JACK, PipeWire oder ALSA): Jeder Take nimmt die gewählten Eingänge auf, im Takt mit dem, was du hörst. Höre über das Monitoring deiner Karte. Der Aufnahmeversatz unten kommt noch dazu.",
+ "io.hint": "orOS Bridge öffnet deine Soundkarte selbst (Windows Audio, ASIO®, JACK, PipeWire oder ALSA): Jeder Take nimmt die gewählten Eingänge auf, im Takt mit dem, was du hörst. Höre über das Monitoring deiner Karte. Der Aufnahmeversatz unten kommt noch dazu.",
  "io.in": "Aufnehmen von der Karte",
  "io.looking": "Soundkarten werden gesucht…",
  "io.lost": "Der Computer kam nicht mit: {n} s des Takes fehlen.",

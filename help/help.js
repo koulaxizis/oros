@@ -207,6 +207,12 @@
         page.blocks.push({ t: m[1] === "##" ? "h2" : "h3", text: text, id: uniq(slugify(inlineText(text))) });
         return;
       }
+      // [asio-logo]: the ASIO Compatible Logo, which Steinberg's guidelines ask for on every page naming ASIO
+      if (line.trim() === "[asio-logo]") {
+        close();
+        page.blocks.push({ t: "asio", text: "ASIO is a registered trademark of Steinberg Media Technologies GmbH." });
+        return;
+      }
       if ((m = /^>(!?)\s?(.*)$/.exec(line))) {
         var kind = m[1] ? "warn" : "tip";
         if (cur && cur.t === kind) cur.text += " " + m[2].trim();
@@ -448,6 +454,14 @@
       } else if (b.t === "ul" || b.t === "ol") {
         n = el(b.t);
         b.items.forEach(function (it) { var li = el("li"); renderInline(li, it); n.appendChild(li); });
+      } else if (b.t === "asio") {
+        n = el("p", "trademark-logo");
+        var img = el("img");
+        img.src = "asio-compatible.svg";
+        img.alt = b.text;
+        img.width = 86;
+        img.height = 80;
+        n.appendChild(img);
       } else if (b.t === "tip" || b.t === "warn") {
         n = el("div", "note " + b.t);
         n.setAttribute("role", "note");

@@ -810,3 +810,6 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
 .io-meter .io-bar { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
 .io-meter .io-bar > i { display: block; height: 100%; width: 0; background: var(--accent); transition: width 80ms linear; }
 .io-meter.hot .io-bar > i { background: var(--rec); }
+/* the ASIO Compatible Logo, unaltered, on its own white */
+.io-asio { margin: 6px 0 2px; }
+.io-asio img { display: block; width: 72px; height: auto; background: #fff; }

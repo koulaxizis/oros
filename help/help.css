@@ -288,3 +288,7 @@ kbd {
 }
 
 [hidden] { display: none !important; }
+
+/* a trademark owner's logo shown as its guidelines ask ([asio-logo]): unaltered, on its own white */
+.trademark-logo { margin: 12px 0; }
+.trademark-logo img { display: block; width: 86px; height: auto; background: #fff; }

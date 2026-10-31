@@ -414,12 +414,15 @@
       <div id="io-on" hidden>
         <label class="field" for="io-be" data-i18n="io.be">Sound system</label>
         <select id="io-be"></select>
+        <p id="io-asio" class="io-asio" hidden><img src="../help/asio-compatible.svg" alt="ASIO is a registered trademark of Steinberg Media Technologies GmbH." width="86" height="80"></p>
         <label class="field" for="io-in" data-i18n="io.in">Record from the card</label>
         <select id="io-in"></select>
         <label class="field" for="io-ch" data-i18n="io.ch">Inputs</label>
         <select id="io-ch"></select>
-        <label class="field" for="io-out" data-i18n="io.out">Listen through the card</label>
-        <select id="io-out"></select>
+        <div id="io-out-sec">
+          <label class="field" for="io-out" data-i18n="io.out">Listen through the card</label>
+          <select id="io-out"></select>
+        </div>
         <div id="io-ex-sec">
           <label class="field" for="io-ex" data-i18n="io.ex">Sharing</label>
           <select id="io-ex">

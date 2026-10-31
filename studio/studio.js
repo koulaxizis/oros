@@ -111,7 +111,7 @@
       "out.hint": "This browser always plays through the system output.",
       "sec.latency": "Recording offset", "f.latency": "Move new takes earlier by",
       "lat.hint": "If takes land late against the click, raise this until they line up. The output delay the browser reports is already taken off.",
-      "io.mode": "Record and play through", "io.browser": "This browser", "io.bridge": "orOS Bridge (your sound card)", "io.hint": "orOS Bridge opens your sound card itself (Windows Audio, JACK, PipeWire or ALSA): each take records the inputs you pick, in step with what you hear. Listen through your card's own monitoring. The recording offset below is added on top.", "io.be": "Sound system", "io.in": "Record from the card", "io.ch": "Inputs", "io.out": "Listen through the card", "io.ex": "Sharing", "io.shared": "Shared with other programs", "io.excl": "Exclusive (lowest delay, other programs go quiet)", "io.test": "Check the inputs", "io.refresh": "Look again", "io.noBridge": "orOS Bridge is not running. Start it on this computer, then press Connect.", "io.looking": "Looking for sound cards…", "io.old": "This orOS Bridge cannot open sound cards yet. Get version 0.3.0 or newer.", "io.notRunning": "{name} (not running)", "io.nIn": "{n} channels", "io.one": "Input {n}", "io.pair": "Inputs {a} + {b} (stereo)", "io.all": "Every input, each on its own track ({n})", "io.ready": "Ready: Record now goes through {name}.", "io.none": "No sound card found. Is it plugged in? Press Look again.", "io.testing": "The card is open at {sr} Hz, about {ms} ms there and back. Play or sing to see the meters.", "io.openFail": "The sound card could not be opened. {why}", "io.prep": "Preparing the song for the sound card…", "io.pairFirst": "Pair orOS Bridge first: Settings › Record and play through.", "io.lost": "The computer could not keep up: {n} s of the take are missing.",
+      "io.mode": "Record and play through", "io.browser": "This browser", "io.bridge": "orOS Bridge (your sound card)", "io.hint": "orOS Bridge opens your sound card itself (Windows Audio, ASIO®, JACK, PipeWire or ALSA): each take records the inputs you pick, in step with what you hear. Listen through your card's own monitoring. The recording offset below is added on top.", "io.be": "Sound system", "io.in": "Record from the card", "io.ch": "Inputs", "io.out": "Listen through the card", "io.ex": "Sharing", "io.shared": "Shared with other programs", "io.excl": "Exclusive (lowest delay, other programs go quiet)", "io.test": "Check the inputs", "io.refresh": "Look again", "io.noBridge": "orOS Bridge is not running. Start it on this computer, then press Connect.", "io.looking": "Looking for sound cards…", "io.old": "This orOS Bridge cannot open sound cards yet. Get version 0.3.0 or newer.", "io.notRunning": "{name} (not running)", "io.nIn": "{n} channels", "io.one": "Input {n}", "io.pair": "Inputs {a} + {b} (stereo)", "io.all": "Every input, each on its own track ({n})", "io.ready": "Ready: Record now goes through {name}.", "io.none": "No sound card found. Is it plugged in? Press Look again.", "io.testing": "The card is open at {sr} Hz, about {ms} ms there and back. Play or sing to see the meters.", "io.openFail": "The sound card could not be opened. {why}", "io.prep": "Preparing the song for the sound card…", "io.pairFirst": "Pair orOS Bridge first: Settings › Record and play through.", "io.lost": "The computer could not keep up: {n} s of the take are missing.",
       "sec.metro": "Click", "f.metroVol": "Click volume",
       "disk.vault": "Audio files are kept on the orOS disk (Studio/audio) and Vault Drive carries them to your other devices.",
       "disk.local": "Audio files are kept on the orOS disk (Studio/audio), on this device. Turn on sync and Vault Drive to have them on your other devices too.",
@@ -269,7 +269,7 @@
       "out.hint": "Αυτός ο browser παίζει πάντα από την έξοδο του συστήματος.",
       "sec.latency": "Διόρθωση ηχογράφησης", "f.latency": "Μετακίνησε τις νέες λήψεις νωρίτερα κατά",
       "lat.hint": "Αν οι λήψεις πέφτουν αργά σε σχέση με τον μετρονόμο, ανέβασέ το μέχρι να συμπέσουν. Η καθυστέρηση εξόδου που δηλώνει ο browser αφαιρείται ήδη.",
-      "io.mode": "Ηχογράφηση και ακρόαση μέσω", "io.browser": "Αυτού του browser", "io.bridge": "orOS Bridge (η κάρτα ήχου σου)", "io.hint": "Το orOS Bridge ανοίγει το ίδιο την κάρτα ήχου σου (Windows Audio, JACK, PipeWire ή ALSA): κάθε λήψη γράφει τις εισόδους που διαλέγεις, σε συγχρονισμό με αυτό που ακούς. Άκου από την παρακολούθηση της ίδιας της κάρτας. Η διόρθωση ηχογράφησης πιο κάτω προστίθεται επιπλέον.", "io.be": "Σύστημα ήχου", "io.in": "Ηχογράφηση από την κάρτα", "io.ch": "Είσοδοι", "io.out": "Ακρόαση από την κάρτα", "io.ex": "Κοινή χρήση", "io.shared": "Κοινή με άλλα προγράμματα", "io.excl": "Αποκλειστική (η μικρότερη καθυστέρηση, τα άλλα προγράμματα σωπαίνουν)", "io.test": "Έλεγχος εισόδων", "io.refresh": "Ψάξε ξανά", "io.noBridge": "Το orOS Bridge δεν τρέχει. Άνοιξέ το σε αυτόν τον υπολογιστή και πάτα Σύνδεση.", "io.looking": "Αναζήτηση καρτών ήχου…", "io.old": "Αυτό το orOS Bridge δεν ανοίγει ακόμη κάρτες ήχου. Πάρε την έκδοση 0.3.0 ή νεότερη.", "io.notRunning": "{name} (δεν τρέχει)", "io.nIn": "{n} κανάλια", "io.one": "Είσοδος {n}", "io.pair": "Είσοδοι {a} + {b} (στέρεο)", "io.all": "Κάθε είσοδος σε δικό της κανάλι ({n})", "io.ready": "Έτοιμο: η Ηχογράφηση περνά τώρα από το {name}.", "io.none": "Δεν βρέθηκε κάρτα ήχου. Είναι συνδεδεμένη; Πάτα Ψάξε ξανά.", "io.testing": "Η κάρτα είναι ανοιχτή στα {sr} Hz, περίπου {ms} ms πήγαινε-έλα. Παίξε ή τραγούδησε για να δεις τους μετρητές.", "io.openFail": "Η κάρτα ήχου δεν άνοιξε. {why}", "io.prep": "Ετοιμάζεται το τραγούδι για την κάρτα ήχου…", "io.pairFirst": "Σύνδεσε πρώτα το orOS Bridge: Ρυθμίσεις › Ηχογράφηση και ακρόαση μέσω.", "io.lost": "Ο υπολογιστής δεν πρόλαβε: λείπουν {n} s από τη λήψη.",
+      "io.mode": "Ηχογράφηση και ακρόαση μέσω", "io.browser": "Αυτού του browser", "io.bridge": "orOS Bridge (η κάρτα ήχου σου)", "io.hint": "Το orOS Bridge ανοίγει το ίδιο την κάρτα ήχου σου (Windows Audio, ASIO®, JACK, PipeWire ή ALSA): κάθε λήψη γράφει τις εισόδους που διαλέγεις, σε συγχρονισμό με αυτό που ακούς. Άκου από την παρακολούθηση της ίδιας της κάρτας. Η διόρθωση ηχογράφησης πιο κάτω προστίθεται επιπλέον.", "io.be": "Σύστημα ήχου", "io.in": "Ηχογράφηση από την κάρτα", "io.ch": "Είσοδοι", "io.out": "Ακρόαση από την κάρτα", "io.ex": "Κοινή χρήση", "io.shared": "Κοινή με άλλα προγράμματα", "io.excl": "Αποκλειστική (η μικρότερη καθυστέρηση, τα άλλα προγράμματα σωπαίνουν)", "io.test": "Έλεγχος εισόδων", "io.refresh": "Ψάξε ξανά", "io.noBridge": "Το orOS Bridge δεν τρέχει. Άνοιξέ το σε αυτόν τον υπολογιστή και πάτα Σύνδεση.", "io.looking": "Αναζήτηση καρτών ήχου…", "io.old": "Αυτό το orOS Bridge δεν ανοίγει ακόμη κάρτες ήχου. Πάρε την έκδοση 0.3.0 ή νεότερη.", "io.notRunning": "{name} (δεν τρέχει)", "io.nIn": "{n} κανάλια", "io.one": "Είσοδος {n}", "io.pair": "Είσοδοι {a} + {b} (στέρεο)", "io.all": "Κάθε είσοδος σε δικό της κανάλι ({n})", "io.ready": "Έτοιμο: η Ηχογράφηση περνά τώρα από το {name}.", "io.none": "Δεν βρέθηκε κάρτα ήχου. Είναι συνδεδεμένη; Πάτα Ψάξε ξανά.", "io.testing": "Η κάρτα είναι ανοιχτή στα {sr} Hz, περίπου {ms} ms πήγαινε-έλα. Παίξε ή τραγούδησε για να δεις τους μετρητές.", "io.openFail": "Η κάρτα ήχου δεν άνοιξε. {why}", "io.prep": "Ετοιμάζεται το τραγούδι για την κάρτα ήχου…", "io.pairFirst": "Σύνδεσε πρώτα το orOS Bridge: Ρυθμίσεις › Ηχογράφηση και ακρόαση μέσω.", "io.lost": "Ο υπολογιστής δεν πρόλαβε: λείπουν {n} s από τη λήψη.",
       "sec.metro": "Μετρονόμος", "f.metroVol": "Ένταση μετρονόμου",
       "disk.vault": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio) και το Vault Drive τα μεταφέρει στις άλλες συσκευές σου.",
       "disk.local": "Τα αρχεία ήχου μένουν στον δίσκο του orOS (Studio/audio), σε αυτή τη συσκευή. Άνοιξε το sync και το Vault Drive για να τα έχεις και στις άλλες συσκευές σου.",
@@ -2176,6 +2176,8 @@
     if (m[3] && a + 1 < n) out.push(a + 1);
     return out;
   }
+  // ASIO has one driver for input and output: the card picked for recording also plays
+  function ioOutName() { return prefs.io.be === "asio" ? prefs.io.inp : prefs.io.out; }
   function ioStatus(text) { $("io-status").textContent = text || ""; }
   function ioShow(which) {
     $("io-pair").hidden = which !== "pair";
@@ -2246,6 +2248,9 @@
     ch.value = prefs.io.ch;
     if (ch.value !== prefs.io.ch) { ch.value = "1"; }
     $("io-ex-sec").hidden = !(b && b.exclusive);
+    $("io-out-sec").hidden = prefs.io.be === "asio";
+    // Steinberg's guidelines: the ASIO Compatible Logo in every dialog that offers ASIO
+    $("io-asio").hidden = !ioDevs.some(function (x) { return x.id === "asio"; });
     $("io-ex").value = prefs.io.ex ? "1" : "";
     $("io-test").disabled = !b || !b.ok;
     ioStatus(b && b.ok ? t("io.ready", { name: b.label }) : t("io.none"));
@@ -2265,7 +2270,7 @@
     ioTest = true;
     $("io-test").setAttribute("aria-pressed", "true");
     $("io-test").classList.add("on");
-    BRG.audioOpen({ backend: b.id, input: prefs.io.inp, output: prefs.io.out, exclusive: prefs.io.ex, record: [] }).then(function (j) {
+    BRG.audioOpen({ backend: b.id, input: prefs.io.inp, output: ioOutName(), exclusive: prefs.io.ex, record: [] }).then(function (j) {
       if (!ioTest) { BRG.audioClose(); return; }
       ioMeters(j.inputs | 0);
       ioStatus(t("io.testing", { sr: j.sr, ms: Math.round((j.latency | 0) / j.sr * 1000) }));
@@ -2342,7 +2347,7 @@
       var bk = ioBackend(), dev = ioInDev();
       if (!bk || !bk.ok) throw new Error("nocard");
       ioRec.record = ioChannels(dev ? dev.channels : 2);
-      return BRG.audioOpen({ backend: bk.id, input: prefs.io.inp, output: prefs.io.out, exclusive: prefs.io.ex, record: ioRec.record });
+      return BRG.audioOpen({ backend: bk.id, input: prefs.io.inp, output: ioOutName(), exclusive: prefs.io.ex, record: ioRec.record });
     }).then(function (x) {
       j = x;
       ioRec.sr = j.sr;

@@ -81,6 +81,22 @@ test("parser: title, headings, lists, notes, continuation, unique ids", () => {
   assert.equal(p.blocks[7].id, "συγχρονισμοσ-και-αντιγραφα");
 });
 
+test("parser: [asio-logo] is the ASIO Compatible Logo, on every help page that names ASIO", () => {
+  const p = H.parsePage(["# T", "- one", "", "[asio-logo]", "- two"].join("\n"));
+  assert.deepEqual(p.blocks.map((b) => b.t), ["ul", "asio", "ul"]);
+  assert.match(p.blocks[1].text, /ASIO is a registered trademark of Steinberg Media Technologies GmbH/);
+  const js = read("help/help.js");
+  assert.match(js, /img\.src = "asio-compatible\.svg";/);
+  assert.ok(fs.existsSync(path.join(ROOT, "help/asio-compatible.svg")));
+  assert.ok(read("sw.js").includes('"help/asio-compatible.svg"'));
+  // Steinberg's guidelines: a page that names ASIO shows the logo
+  const pages = ["help/topics", "i18n/de/help"].flatMap((d) => fs.readdirSync(path.join(ROOT, d)).filter((f) => f.endsWith(".txt")).map((f) => d + "/" + f))
+    .concat(fs.readdirSync(ROOT).flatMap((d) => ["en", "el"].map((l) => d + "/help." + l + ".txt")).filter((f) => fs.existsSync(path.join(ROOT, f))));
+  const naming = pages.filter((f) => /\bASIO\b/.test(read(f)));
+  assert.ok(naming.length >= 4, naming.join(", "));
+  naming.forEach((f) => assert.ok(/^\[asio-logo\]$/m.test(read(f)), f + " names ASIO without the logo"));
+});
+
 test("parser: inline markup; HTML stays text", () => {
   const tk = H.parseInline("Press [[Ctrl+Alt+Shift+H]] or **bold** `Save` [Sync](help:t/sync#passphrase) <script>x</script>");
   const kinds = tk.map((x) => x.t);
