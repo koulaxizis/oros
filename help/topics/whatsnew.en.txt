@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.69.00
+- Writer can sound like a typewriter: in Writer's `Settings`, turn on `Typewriter sound while typing` for a soft click on every key and a carriage return on Enter. It is off unless you turn it on.
+- Files can make and open ZIP archives in [This computer](help:a/files) too, on the orOS Portable and the Live USB: `Compress to ZIP` on a file or folder, `Extract here` on a .zip.
+- Notes: deleting a page that has sub-pages now moves them up one level instead of hiding them. Bookmarks: with `Manual` sort, the menu of a bookmark has `Move up` and `Move down`.
+- Time: the `Sound` box now also silences alarms that ring while orOS is open, and the converter's Show button stays visible when the converter is hidden.
+- Greek: Photo Lab says «επίπεδα» instead of «layers» (and «Στάθμες» for Levels), and fewer English words appear elsewhere. Slides, Habits, Timesheet, Invoices, CRM, Calculator and Water fit better on narrow phones in Greek.
+
 ## Version 4.68.00
 - Backup files can be encrypted. In [Settings](help:a/settings) › Backups, turn on `Encrypt backup files` and choose a passphrase of at least 10 characters: from then on the exported file, `Back up now` and the automatic folder backups are locked with it (AES-256), and importing one asks for it. It is off unless you turn it on, plain backup files still import, and the passphrase is never stored. Write it down: without it nobody can open these files. See [Backup and restore](help:t/backup).
 
