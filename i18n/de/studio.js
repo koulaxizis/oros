@@ -168,7 +168,7 @@ orosPack("de", "studio", {
  "fx.catInst": "Instrumente",
  "fx.chooseFile": "Datei wählen",
  "fx.controls": "Alle Regler",
- "fx.credit": "Effekte: NULL JSFX von Christos Koulaxizis (nulljsfx.tech) und Airwindows von Chris Johnson (airwindows.com), MIT-Lizenz.",
+ "fx.credit": "Effekte: NULL JSFX von Christos Koulaxizis (nulljsfx.tech), MIT-Lizenz.",
  "fx.empty": "Noch keine Effekte. Füge einen hinzu: Sie spielen der Reihe nach, von oben nach unten.",
  "fx.failed": "{name} wurde gestoppt und wird umgangen",
  "fx.gfx": "Oberfläche von {name}",

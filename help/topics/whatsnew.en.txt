@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.58.00
+- Studio: the Airwindows effects are gone. Studio's effects are NULL JSFX only, and new NULL JSFX effects (bus compressor, console, reverbs) will take their place.
+
 ## Version 4.57.01
 - Layout: Open file › A folder in Files no longer brings in copies of your own documents. It skips the Layout folder, where every document already is, as well as the Trash.
 
