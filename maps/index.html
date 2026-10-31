@@ -13,7 +13,7 @@
 <body>
 
   <!-- Fullscreen map canvas -->
-  <div id="map"></div>
+  <div id="map-clip"><div id="map"></div></div>
 
   <!-- Search overlay (top-center, Photon autocomplete) -->
   <div id="search-wrap">
@@ -160,6 +160,9 @@
       <span id="nav-limit" hidden></span>
       <span id="nav-speed">—</span>
       <span id="nav-eta"></span>
+      <button id="nav-north" aria-pressed="false" aria-label="Turn the map with me" title="Turn the map with me">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 2l4 10h-8z" fill="currentColor"/><path d="M8 12h8l-4 10z"/></svg>
+      </button>
       <button id="nav-recenter" hidden aria-label="Recenter" data-i18n-title="nav.recenter" title="Recenter">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>
       </button>
