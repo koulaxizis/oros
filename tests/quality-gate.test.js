@@ -172,3 +172,42 @@ test("first-open verdict: 20 % slack on bytes, time only warns", () => {
   assert.equal(BUD.checkApp("x", { bytes: 500, ms: 100 }, line).status, "shrunk");
   assert.equal(BUD.checkApp("x", { bytes: 500, ms: 100 }, undefined).status, "new");
 });
+
+const BOOT = require("../.github/qa/boot.js");
+
+test("start-up verdict: JS bytes and scripts fail at +10 %, warm time only warns at +50 %", () => {
+  const budget = { jsBytes: 1000, scripts: 10, warmMs: 1000 };
+  const warm = (bytes, scripts, ms) => ({ js: { bytes, scripts }, readyMs: ms });
+  assert.deepEqual(BOOT.checkBudget(warm(1100, 11, 1500), budget), { fails: [], warns: [] });
+  assert.equal(BOOT.checkBudget(warm(1101, 10, 900), budget).fails.length, 1, "bytes over");
+  assert.equal(BOOT.checkBudget(warm(900, 12, 900), budget).fails.length, 1, "scripts over");
+  const slow = BOOT.checkBudget(warm(900, 9, 1501), budget);
+  assert.equal(slow.fails.length, 0);
+  assert.equal(slow.warns.length, 1, "slow warm open only warns");
+  assert.deepEqual(BOOT.checkBudget(warm(5000, 50, 9000), null), { fails: [], warns: [] }, "no budget never fails");
+});
+
+test("start-up coverage counts the bytes that ran, innermost range wins, one line per script", () => {
+  const origin = "https://h";
+  const cov = BOOT.coverageOf([
+    { url: origin + "/a.js?v=1", functions: [
+      { ranges: [{ startOffset: 0, endOffset: 100, count: 1 }] },
+      { ranges: [{ startOffset: 10, endOffset: 50, count: 0 }, { startOffset: 20, endOffset: 30, count: 2 }] },
+    ] },
+    { url: origin + "/a.js?v=1", functions: [{ ranges: [{ startOffset: 0, endOffset: 100, count: 1 }] }] },
+    { url: "https://other/x.js", functions: [{ ranges: [{ startOffset: 0, endOffset: 5, count: 1 }] }] },
+  ], origin);
+  assert.deepEqual(cov, [{ src: "a.js", bytes: 100, used: 100, runs: 2 }]);
+  const one = BOOT.coverageOf([{ url: origin + "/b.js", functions: [
+    { ranges: [{ startOffset: 0, endOffset: 100, count: 1 }] },
+    { ranges: [{ startOffset: 10, endOffset: 50, count: 0 }, { startOffset: 20, endOffset: 30, count: 2 }] },
+  ] }], origin);
+  assert.equal(one[0].used, 70);
+});
+
+test("boot.json, once written, holds the start-up budget", () => {
+  const f = path.join(__dirname, "..", ".github/qa/boot.json");
+  if (!fs.existsSync(f)) return;
+  const b = JSON.parse(fs.readFileSync(f, "utf8"));
+  assert.ok(Number.isInteger(b.jsBytes) && b.jsBytes > 0 && Number.isInteger(b.scripts) && b.scripts > 0 && b.warmMs > 0);
+});
