@@ -73,7 +73,7 @@ Offline first · Mobile first · No external dependencies · Full project manual
 
 ### 2. Standing rules
 
-Rule numbers are stable; R2 and R13 are retired (never reuse numbers). R31 is reserved: a session note cites "R32 centered dialogs", but no text defines R31 (Part X, open decisions).
+Rule numbers are stable; R2, R13 and R31 are retired (never reuse numbers). R31 was never defined; Chris retired it on 2026-10-31.
 
 **Delivery & patching**
 
@@ -3401,7 +3401,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - ~~#19 (To-Do) undo-across-sync~~ → already done: Undo puts back only what the action removed, stamped newest (TD-1 in `todo/todo.js`), so it wins the merge; closed 2026-10-31.
 - ⊗ Radio DNS/blocking diagnosis: de1 mirror opens in a tab but fails from page context (suspected adblocker). Retest in incognito without extensions.
 - ⊗ Radio RX-N1..N5 cleanup candidates (favicon preloading, shadowing `isFavorite`, unused `wasOffline`, asymmetric polling, stop/kill switch).
-- ⊗ **R31:** which rule is it? The Television v0.1.1 note cites "R32 centered dialogs"; nothing in this file defines R31. Until answered the number stays reserved.
+- ~~**R31:** which rule is it?~~ → retired 2026-10-31 (Chris): never defined, the number is not reused (Part I).
 - ⊗ **Greek wording (suggestions, not applied):** `alarm.title` «Ειδοποίηση» for "Alarm" (the same overlay serves timers); `sync.err.auth` «— επανασύνδεση» → «— συνδέσου ξανά»; English terms left in Greek strings (`sc.info.cap` "Offline-first", "tracking"; "API key" in the service lines; "cloud", "browser").
 - ⊗ **File dialogs Wave 3** (approved as optional): Info-modal line "Native file dialogs" / "Standard downloads" from `orosDialog.mode()`.
 - ⊗ **Television** (on hold): Calendar axis exempt or not? Decide when the app is audited.
