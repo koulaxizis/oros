@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.78.01
+- The orOS logo is now in the same gold as the orOS skin, everywhere: the app icon, the browser add-on, the single apps and the link preview.
+
 ## Version 4.78.00
 - Spreadsheet: area charts, stacked columns, bars and areas, a line over columns and trend lines; conditional formatting with a formula (=$B2>100) or icon sets; and iterative calculation for circular references (sheet menu › Calculation…). See [Spreadsheet](help:a/spreadsheet).
 

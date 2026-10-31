@@ -3,8 +3,8 @@
 
 :root{
   --bg:#1e1c19; --bg-desktop:#14120d; --bar-bg:#232019;
-  --text:#e8e4dc; --text-dim:#9a948a; --accent:#c8a96e;
-  --accent-hover:#d9bd88; --accent-soft:rgba(200,169,110,.16);
+  --text:#e8e4dc; --text-dim:#9a948a; --accent:#d4af37;
+  --accent-hover:#ecc75f; --accent-soft:rgba(212,175,55,.16);
   --panel-bg:#26231c; --border:#3a362e; --shadow:0 8px 24px rgba(0,0,0,.45);
   --danger:#e06c75; --ok:#87cf3e; --warn:#e0a44c;
   --font-stack:"Nunito",-apple-system,"Segoe UI",Roboto,sans-serif;

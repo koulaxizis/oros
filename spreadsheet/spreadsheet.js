@@ -1857,7 +1857,7 @@ function clearFormat() {
 }
 
 /* SWATCHES — 8 preset colors from OS palette space */
-var SWATCHES = ["#c8a96e","#d9bd88","#87cf3e","#e0a44c",
+var SWATCHES = ["#d4af37","#ecc75f","#87cf3e","#e0a44c",
                 "#e06c75","#a78bfa","#7dd3fc","#e8e4dc"];
 
 function toggleSwatchPopover() {
@@ -3681,7 +3681,7 @@ function adjustObjs(sid, axis, at, n) {
 }
 
 /* ---------- cell format menu ---------- */
-var FILLS = ["#fde68a", "#fecaca", "#bbf7d0", "#bfdbfe", "#e9d5ff", "#fed7aa", "#c8a96e", "#5b8def", "#1baf7a", "#e34948"];
+var FILLS = ["#fde68a", "#fecaca", "#bbf7d0", "#bfdbfe", "#e9d5ff", "#fed7aa", "#d4af37", "#5b8def", "#1baf7a", "#e34948"];
 function fmtFill(bg) { return function (f) { if (bg) f.bg = bg; else delete f.bg; return { f: f }; }; }
 function fmtBorder(mode) {
   var T = selTop(), L = selLeft();
