@@ -757,6 +757,8 @@ var PRECACHE_URLS = [
   "files/dropbox-core.js",
   "files/dropbox.js",
   "files/drive.js",
+  "files/computer-core.js",
+  "files/computer.js",
   "files/gmedia.js",
   "files/dropbox-callback.html",
   "files/dropbox-callback.js",
@@ -2379,6 +2381,10 @@ self.addEventListener("fetch", function (event) {
   }
 
   if (url.origin !== self.location.origin) return;   // Dropbox & externals: untouched
+  // The computer's own files (orOS USB launcher, Files' "This computer",
+  // files/computer-core.js): live answers about the computer's disks.
+  // Never cached, never answered by the worker.
+  if (url.pathname.indexOf("/__oros/") === 0) return;
 
   // S1 FIX: apps.json is NETWORK-FIRST. It is fetched unversioned
   // (no ?v= stamp), so a cache-first exact match would freeze the
