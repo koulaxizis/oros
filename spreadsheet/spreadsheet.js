@@ -151,6 +151,14 @@ var STRINGS = {
     "ch.t.area": "Area", "ch.sk": "Stacked", "ch.cb": "Last series as a line", "ch.ln": "Trend line",
     "calc.open": "Calculation…", "calc.title": "Calculation", "calc.it": "Iterative calculation (allow circular references)",
     "calc.n": "Maximum iterations", "calc.d": "Maximum change",
+    "pr.open": "Print or save as PDF…", "pr.title": "Print and PDF", "pr.what": "Print", "pr.all": "The whole sheet",
+    "pr.sel": "The selection", "pr.paper": "Paper", "pr.or": "Orientation", "pr.p": "Portrait", "pr.l": "Landscape",
+    "pr.fit": "Size", "pr.fit.w": "Fit to the page width", "pr.fit.p": "Fit on one page", "pr.fit.n": "Actual size",
+    "pr.hr": "Repeat at the top of each page", "pr.hr.0": "No rows", "pr.hr.1": "Row 1", "pr.hr.n": "Rows 1 to {n}",
+    "pr.gl": "Gridlines", "pr.pn": "Page numbers", "pr.ch": "Charts", "pr.pdf": "Save PDF", "pr.print": "Print",
+    "pr.note": "Hidden (filtered) rows are left out. These settings stay on this device.",
+    "pr.page": "Page {n} of {t}", "pr.busy": "Making the PDF…", "pr.empty": "There is nothing to print on this sheet",
+    "pr.err": "The PDF could not be made",
     "calc.note": "Off: a formula that refers back to itself shows #CYC!. On: orOS repeats the calculation until no value changes by more than the maximum change.",
     "as.done": "The Assistant changed {n} things in {d} sheets.", "as.done1": "The Assistant changed {n} things in the sheet.",
     "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
@@ -266,6 +274,14 @@ var STRINGS = {
     "ch.t.area": "Περιοχή", "ch.sk": "Στοιβαγμένο", "ch.cb": "Η τελευταία σειρά ως γραμμή", "ch.ln": "Γραμμή τάσης",
     "calc.open": "Υπολογισμός…", "calc.title": "Υπολογισμός", "calc.it": "Επαναληπτικός υπολογισμός (επιτρέπει κυκλικές αναφορές)",
     "calc.n": "Μέγιστες επαναλήψεις", "calc.d": "Μέγιστη μεταβολή",
+    "pr.open": "Εκτύπωση ή αποθήκευση ως PDF…", "pr.title": "Εκτύπωση και PDF", "pr.what": "Εκτύπωση", "pr.all": "Όλο το φύλλο",
+    "pr.sel": "Η επιλογή", "pr.paper": "Χαρτί", "pr.or": "Προσανατολισμός", "pr.p": "Κατακόρυφος", "pr.l": "Οριζόντιος",
+    "pr.fit": "Μέγεθος", "pr.fit.w": "Προσαρμογή στο πλάτος της σελίδας", "pr.fit.p": "Προσαρμογή σε μία σελίδα", "pr.fit.n": "Πραγματικό μέγεθος",
+    "pr.hr": "Επανάληψη στην κορυφή κάθε σελίδας", "pr.hr.0": "Καμία γραμμή", "pr.hr.1": "Γραμμή 1", "pr.hr.n": "Γραμμές 1 έως {n}",
+    "pr.gl": "Γραμμές πλέγματος", "pr.pn": "Αριθμοί σελίδων", "pr.ch": "Γραφήματα", "pr.pdf": "Αποθήκευση PDF", "pr.print": "Εκτύπωση",
+    "pr.note": "Οι κρυφές (φιλτραρισμένες) γραμμές παραλείπονται. Οι ρυθμίσεις μένουν σε αυτή τη συσκευή.",
+    "pr.page": "Σελίδα {n} από {t}", "pr.busy": "Φτιάχνεται το PDF…", "pr.empty": "Δεν υπάρχει τίποτα για εκτύπωση σε αυτό το φύλλο",
+    "pr.err": "Το PDF δεν μπόρεσε να γίνει",
     "calc.note": "Κλειστό: ένας τύπος που αναφέρεται στον εαυτό του δείχνει #CYC!. Ανοιχτό: το orOS επαναλαμβάνει τον υπολογισμό ώσπου καμία τιμή να μην αλλάζει περισσότερο από τη μέγιστη μεταβολή.",
     "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} φύλλα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο φύλλο.",
     "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
@@ -2511,6 +2527,7 @@ function openSheetMenu(anchor) {
   item(t("add.cols").replace("{n}", 10), function () { addRowsCols("c", 10); }, sh.cols >= MAX_COLS);
   sep();
   item(t("calc.open"), openCalcDialog);
+  item(t("pr.open"), openPrintDialog);
   m.addEventListener("click", function (e) { e.stopPropagation(); });
   m.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { e.preventDefault(); closePops(); $("grid-wrap").focus(); }
@@ -3348,8 +3365,9 @@ function closeXlMenu() { if (xlMenu) { xlMenu.remove(); xlMenu = null; } }
 function toggleXlExportMenu(btn) {
   var items = [["xlsx", t("xl.xlsx")], ["ods", t("xl.ods")]];
   if (window.OrosBundle) items.push(["oros", t("bk.exp")]);
+  items.push(["pdf", t("pr.open")]);
   toggleXlMenu(btn, items.map(function (o) {
-    return [o[1], function () { if (o[0] === "oros") bookSave(); else xlExport(o[0]); }];
+    return [o[1], function () { if (o[0] === "oros") bookSave(); else if (o[0] === "pdf") openPrintDialog(); else xlExport(o[0]); }];
   }));
 }
 /* the import button: a file (Excel / Calc / orOS) or an unzipped
@@ -4688,6 +4706,375 @@ function initCharts() {
   wrap.insertBefore(chLayer, wrap.firstChild);
 }
 
+/* ===== SECTION 3j: PRINT · PDF (Spreadsheet wave 4.3) =====
+   The active sheet (its used area, or the selection) as a real PDF:
+   jsPDF + the Noto Sans fonts (both precached, loaded on first use),
+   text as selectable text, so Greek comes out right. The page plan is
+   KIT.printPages (pure, tested); this draws it: fills, data bars,
+   icons, borders, merged cells, gridlines, repeated heading rows,
+   charts (their SVG drawn to a picture) and "Page n of t". Print opens
+   the same PDF in the browser's print dialog. The settings stay on
+   this device (PR_KEY), nothing in the workbook changes.            */
+var PR_KEY = "oros-spreadsheet-print";   /* device-local, NEVER synced */
+var PR_FONT = { n: "NotoSans-Regular", b: "NotoSans-Bold", i: "NotoSans-Italic", bi: "NotoSans-BoldItalic" };
+var prLib = { loading: false, q: [], fonts: null };
+function prSettings() {
+  var o = {};
+  try { o = JSON.parse(localStorage.getItem(PR_KEY) || "{}") || {}; } catch (e) { o = {}; }
+  return KIT.normPrint(o);
+}
+function prKeep(x) { try { localStorage.setItem(PR_KEY, JSON.stringify(x)); } catch (e) {} }
+function prLoadLib(done) {
+  if (window.jspdf && window.jspdf.jsPDF) { done(true); return; }
+  prLib.q.push(done);
+  if (prLib.loading) return;
+  prLib.loading = true;
+  var s = document.createElement("script");
+  s.src = "../vendor/jspdf.umd.min.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+  s.onload = function () { prLib.loading = false; prLib.q.splice(0).forEach(function (cb) { cb(true); }); };
+  s.onerror = function () { prLib.loading = false; s.remove(); prLib.q.splice(0).forEach(function (cb) { cb(false); }); };
+  document.head.appendChild(s);
+}
+function prLoadFonts() {
+  if (prLib.fonts) return Promise.resolve(prLib.fonts);
+  function get(name) {
+    return fetch("../vendor/noto/" + name + ".ttf").then(function (r) { if (!r.ok) throw new Error("font"); return r.arrayBuffer(); })
+      .then(function (buf) {
+        var bytes = new Uint8Array(buf), bin = "";
+        for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+        return btoa(bin);
+      });
+  }
+  var keys = Object.keys(PR_FONT);
+  return Promise.all(keys.map(function (k) { return get(PR_FONT[k]); })).then(function (list) {
+    var out = {};
+    keys.forEach(function (k, i) { out[k] = list[i]; });
+    prLib.fonts = out;
+    return out;
+  });
+}
+/* the rows and columns to print: { rows: [r], cols: [c], head: [r] } or null */
+function prArea(x) {
+  var sh = getActiveSheet(), r0 = 0, r1 = -1, c0 = 0, c1 = -1, id;
+  if (x.sel && selIsRange()) { r0 = selTop(); r1 = selBottom(); c0 = selLeft(); c1 = selRight(); }
+  else {
+    var ext = sheetExtent(actSID);
+    r1 = ext.rows - 1; c1 = ext.cols - 1;
+    mergeMap().list.forEach(function (m) { r1 = Math.max(r1, m.r2); c1 = Math.max(c1, m.c2); });
+    if (x.ch) for (id in state.charts) {
+      var ch = state.charts[id];
+      if (ch.sid !== actSID) continue;
+      var e = prChartEnd(sh, ch);
+      r1 = Math.max(r1, e.r); c1 = Math.max(c1, e.c);
+    }
+  }
+  r1 = Math.min(r1, sh.rows - 1); c1 = Math.min(c1, sh.cols - 1);
+  if (r1 < r0 || c1 < c0) return null;
+  var head = [], rows = [], cols = [], r, c;
+  for (r = 0; r < Math.min(x.hr, sh.rows); r++) if (!(POS && POS[r] < 0)) head.push(r);
+  for (r = r0; r <= r1; r++) {
+    if (POS && r < POS.length && POS[r] < 0) continue;     /* filtered out */
+    if (x.hr && r < x.hr) continue;                        /* drawn as headings */
+    rows.push(r);
+  }
+  for (c = c0; c <= c1; c++) cols.push(c);
+  if (!rows.length && !head.length) return null;
+  return { rows: rows, cols: cols, head: head };
+}
+/* the last cell a chart covers */
+function prChartEnd(sh, ch) {
+  var c = ch.at.c, w = ch.at.x + ch.w, r = ch.at.r, h = ch.at.y + ch.h;
+  while (c < sh.cols - 1 && w > colW(sh, c)) { w -= colW(sh, c); c++; }
+  while (r < sh.rows - 1 && h > rowH(sh, r)) { h -= rowH(sh, r); r++; }
+  return { r: r, c: c };
+}
+/* the charts of the active sheet as PNG data URLs, light colours */
+function prCharts(x) {
+  if (!x.ch) return Promise.resolve([]);
+  var pal = { bg: "#ffffff", text: "#1f1d1a", dim: "#5f5a52", grid: "#d9d4ca", dark: false,
+    font: "Noto Sans, Nunito, -apple-system, Segoe UI, Roboto, sans-serif" };
+  var list = [], id;
+  for (id in state.charts) if (state.charts[id].sid === actSID) list.push(state.charts[id]);
+  return Promise.all(list.map(function (ch) {
+    return new Promise(function (res) {
+      var svgS = KIT.chartSVG(chartData(ch), chartOpts(ch, pal));
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var cv = document.createElement("canvas"), k = 3;
+          cv.width = ch.w * k; cv.height = ch.h * k;
+          var g = cv.getContext("2d");
+          g.fillStyle = "#ffffff"; g.fillRect(0, 0, cv.width, cv.height);
+          g.scale(k, k);
+          g.drawImage(img, 0, 0, ch.w, ch.h);
+          res({ ch: ch, png: cv.toDataURL("image/png") });
+        } catch (e) { res(null); }
+      };
+      img.onerror = function () { res(null); };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgS);
+    });
+  })).then(function (a) { return a.filter(Boolean); });
+}
+function prRgb(hex) {
+  var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ""));
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0];
+}
+function prFill(pdf, hex) { var c = prRgb(hex); pdf.setFillColor(c[0], c[1], c[2]); }
+function prDrawC(pdf, hex) { var c = prRgb(hex); pdf.setDrawColor(c[0], c[1], c[2]); }
+function prInk(pdf, hex) { var c = prRgb(hex); pdf.setTextColor(c[0], c[1], c[2]); }
+/* one icon of an icon-set rule as a shape (the font has no arrows) */
+function prIcon(pdf, ch, hex, x, y, s) {
+  prFill(pdf, hex);
+  var h = s / 2;
+  if (ch === "▲") pdf.triangle(x, y + h, x + s, y + h, x + h, y - h, "F");
+  else if (ch === "▼") pdf.triangle(x, y - h, x + s, y - h, x + h, y + h, "F");
+  else if (ch === "▶") pdf.triangle(x, y - h, x, y + h, x + s, y, "F");
+  else pdf.circle(x + h, y, h * 0.9, "F");
+}
+/* the whole PDF; resolves to { blob, pages } */
+function prBuild(x) {
+  freshEval();
+  var area = prArea(x);
+  if (!area) return Promise.reject(new Error("empty"));
+  return new Promise(function (res, rej) {
+    prLoadLib(function (ok) { if (ok) res(); else rej(new Error("lib")); });
+  }).then(function () {
+    return Promise.all([prLoadFonts(), prCharts(x)]);
+  }).then(function (got) { return prRender(x, area, got[0], got[1]); });
+}
+function prRender(x, area, fonts, charts) {
+  var sh = getActiveSheet(), PT = KIT.PX_PT, FOOT = 18;
+  var colWs = area.cols.map(function (c) { return colW(sh, c) * PT; });
+  var rowHs = area.rows.map(function (r) { return rowH(sh, r) * PT; });
+  var headHs = area.head.map(function (r) { return rowH(sh, r) * PT; });
+  var P = KIT.printPages({ pa: x.pa, or: x.or, fit: x.fit, colW: colWs, rowH: rowHs, headH: headHs, margin: 36, foot: x.pn ? FOOT : 0 });
+  var pdf = new window.jspdf.jsPDF({ unit: "pt", format: [P.w, P.h], orientation: x.or === "l" ? "landscape" : "portrait", compress: true });
+  Object.keys(PR_FONT).forEach(function (k) {
+    var file = PR_FONT[k] + ".ttf";
+    pdf.addFileToVFS(file, fonts[k]);
+    pdf.addFont(file, "NotoSans", k === "n" ? "normal" : k === "b" ? "bold" : k === "i" ? "italic" : "bolditalic");
+  });
+  pdf.setProperties({ title: displayName(sh), creator: "orOS Spreadsheet" });
+  var s = P.scale, total = P.pages.length, name = displayName(sh);
+  P.pages.forEach(function (pg, n) {
+    if (n) pdf.addPage([P.w, P.h], x.or === "l" ? "landscape" : "portrait");
+    var cols = area.cols.slice(pg.c[0], pg.c[1] + 1), cw = colWs.slice(pg.c[0], pg.c[1] + 1);
+    var body = pg.r ? area.rows.slice(pg.r[0], pg.r[1] + 1) : [];
+    var rows = area.head.concat(body), rh = rows.map(function (r) { return rowH(sh, r) * PT; });
+    var cx = [P.x0], ry = [P.y0], i;
+    for (i = 0; i < cw.length; i++) cx.push(cx[i] + cw[i] * s);
+    for (i = 0; i < rh.length; i++) ry.push(ry[i] + rh[i] * s);
+    prPage(pdf, sh, x, s, rows, cols, cx, ry);
+    prPageCharts(pdf, s, charts, rows, cols, cx, ry, !pg.r || pg.r[0] === 0 ? 0 : area.head.length);
+    if (x.pn) {
+      pdf.setFont("NotoSans", "normal"); pdf.setFontSize(8); prInk(pdf, "#5f5a52");
+      var lab = KIT.pageLabel(t("pr.page"), n + 1, total), yb = P.h - 36 + 4;
+      pdf.text(KIT.fitText(name, P.uw / 2 - 12, function (q) { return pdf.getTextWidth(q); }), P.x0, yb, { baseline: "top" });
+      pdf.text(lab, P.w - 36, yb, { baseline: "top", align: "right" });
+    }
+  });
+  return { blob: pdf.output("blob"), pages: total };
+}
+function prPage(pdf, sh, x, s, rows, cols, cx, ry) {
+  var nR = rows.length, nC = cols.length, i, j, fs = 9.75 * s, pad = 4.5 * s;
+  var colAt = {}, rowAt = {};
+  cols.forEach(function (c, j) { colAt[c] = j; });
+  rows.forEach(function (r, i) { rowAt[r] = i; });
+  var covered = {}, spans = {};
+  mergeMap().list.forEach(function (m) {
+    for (var r = m.r; r <= m.r2; r++) for (var c = m.c; c <= m.c2; c++) {
+      if (rowAt[r] === undefined || colAt[c] === undefined) continue;
+      if (r === m.r && c === m.c) continue;
+      covered[r + "," + c] = m;
+    }
+    if (rowAt[m.r] !== undefined && colAt[m.c] !== undefined) spans[m.r + "," + m.c] = m;
+  });
+  /* the box of a cell (a merge's top-left: the visible part of the merge) */
+  function box(i, j) {
+    var r = rows[i], c = cols[j], m = spans[r + "," + c], i2 = i, j2 = j;
+    if (m) {
+      while (i2 + 1 < nR && rows[i2 + 1] <= m.r2 && rows[i2 + 1] > r) i2++;
+      while (j2 + 1 < nC && cols[j2 + 1] <= m.c2) j2++;
+    }
+    return { x: cx[j], y: ry[i], w: cx[j2 + 1] - cx[j], h: ry[i2 + 1] - ry[i], j2: j2 };
+  }
+  var cells = [];
+  for (i = 0; i < nR; i++) for (j = 0; j < nC; j++) {
+    var r = rows[i], c = cols[j], key = r + "," + c;
+    var mc = covered[key];
+    if (mc && spans[mc.r + "," + mc.c]) continue;          /* drawn by its top-left */
+    var src = mc ? { r: mc.r, c: mc.c } : { r: r, c: c };
+    var cel = getCell(src.r, src.c), f = (cel && cel.f) || {}, cf = cfAt(src.r, src.c) || {};
+    var b = box(i, j), view = mc ? { s: "", k: "" } : cellView(r, c);
+    cells.push({ i: i, j: j, r: r, c: c, b: b, f: f, cf: cf, v: view, m: !!spans[key] || !!mc });
+  }
+  /* fills and data bars */
+  cells.forEach(function (q) {
+    var bg = q.cf.bg || q.f.bg;
+    if (bg) { prFill(pdf, bg); pdf.rect(q.b.x, q.b.y, q.b.w, q.b.h, "F"); }
+    if (q.cf.bar !== undefined) {
+      var bc = prRgb(q.cf.barCo), mix = function (v) { return Math.round(v * 0.55 + 255 * 0.45); };
+      pdf.setFillColor(mix(bc[0]), mix(bc[1]), mix(bc[2]));
+      pdf.rect(q.b.x, q.b.y + 0.5, q.b.w * Math.max(0, Math.min(1, q.cf.bar)), q.b.h - 1, "F");
+    }
+  });
+  /* gridlines: every cell edge but the inside of merges */
+  if (x.gl) {
+    pdf.setLineWidth(0.4); prDrawC(pdf, "#c8c3b8");
+    cells.forEach(function (q) {
+      pdf.line(q.b.x + q.b.w, q.b.y, q.b.x + q.b.w, q.b.y + q.b.h);
+      pdf.line(q.b.x, q.b.y + q.b.h, q.b.x + q.b.w, q.b.y + q.b.h);
+    });
+    pdf.line(cx[0], ry[0], cx[nC], ry[0]);
+    pdf.line(cx[0], ry[0], cx[0], ry[nR]);
+  }
+  /* text: left-aligned text runs on over empty cells to its right, like on screen in Excel */
+  var empty = {};
+  cells.forEach(function (q) { if (!q.v.s && !q.m) empty[q.i + "," + q.j] = 1; });
+  cells.forEach(function (q) {
+    var txt = q.v.s, f = q.f, cf = q.cf;
+    var bold = !!(f.b || cf.b), ital = !!f.i;
+    pdf.setFont("NotoSans", bold && ital ? "bolditalic" : bold ? "bold" : ital ? "italic" : "normal");
+    pdf.setFontSize(fs);
+    var bg = cf.bg || f.bg;
+    var ink = q.v.k === "err" ? "#c62828" : (cf.co || f.co || (bg ? KIT.inkOn(bg) : "#1f1d1a"));
+    var al = f.al || (q.v.k === "num" ? "r" : q.v.k === "bool" || q.v.k === "err" ? "c" : "l");
+    var x0 = q.b.x + pad, w = q.b.w - 2 * pad;
+    if (cf.ic) { prIcon(pdf, cf.ic, cf.icCo, x0, q.b.y + q.b.h / 2, fs * 0.7); x0 += fs; w -= fs; }
+    if (!txt || w <= 0) return;
+    prInk(pdf, ink);
+    var meas = function (z) { return pdf.getTextWidth(z); };
+    var va = f.va || "m", lh = fs * 1.2;
+    if (f.wr) {
+      var lines = pdf.splitTextToSize(txt, w), room = Math.max(1, Math.floor((q.b.h - 2 * s) / lh));
+      if (lines.length > room) { lines = lines.slice(0, room); lines[room - 1] = KIT.fitText(lines[room - 1] + "…", w, meas); }
+      var th = lines.length * lh, ty = va === "t" ? q.b.y + 2 * s : va === "b" ? q.b.y + q.b.h - 2 * s - th : q.b.y + (q.b.h - th) / 2;
+      lines.forEach(function (ln, k) { prText(pdf, ln, al, x0, w, ty + k * lh + lh / 2, f.u); });
+      return;
+    }
+    if (al === "l" && !q.m && q.v.k === "") {
+      for (var jj = q.b.j2 + 1; jj < nC && empty[q.i + "," + jj] && meas(txt) > w; jj++) w = cx[jj + 1] - x0 - pad;
+    }
+    var yy = va === "t" ? q.b.y + 2 * s + fs * 0.6 : va === "b" ? q.b.y + q.b.h - 2 * s - fs * 0.6 : q.b.y + q.b.h / 2;
+    var out = q.v.k === "num" && meas(txt) > w ? "#".repeat(Math.max(1, Math.floor(w / Math.max(1, meas("#"))))) : KIT.fitText(txt, w, meas);
+    prText(pdf, out, al, x0, w, yy, f.u);
+  });
+  /* borders on top */
+  pdf.setLineWidth(0.75);
+  cells.forEach(function (q) {
+    var bd = q.f.bd;
+    if (!bd) return;
+    var bg = q.cf.bg || q.f.bg;
+    prDrawC(pdf, bg ? KIT.inkOn(bg) : "#1f1d1a");
+    var X = q.b.x, Y = q.b.y, W = q.b.w, H = q.b.h;
+    if (bd.indexOf("t") >= 0) pdf.line(X, Y, X + W, Y);
+    if (bd.indexOf("b") >= 0) pdf.line(X, Y + H, X + W, Y + H);
+    if (bd.indexOf("l") >= 0) pdf.line(X, Y, X, Y + H);
+    if (bd.indexOf("r") >= 0) pdf.line(X + W, Y, X + W, Y + H);
+  });
+}
+function prText(pdf, s, al, x0, w, y, u) {
+  if (!s) return;
+  var tx = al === "r" ? x0 + w : al === "c" ? x0 + w / 2 : x0;
+  pdf.text(s, tx, y, { baseline: "middle", align: al === "r" ? "right" : al === "c" ? "center" : "left" });
+  if (u) {
+    var tw = pdf.getTextWidth(s), ux = al === "r" ? tx - tw : al === "c" ? tx - tw / 2 : tx, fsz = pdf.getFontSize();
+    pdf.setLineWidth(fsz / 18); pdf.setDrawColor(pdf.getTextColor());
+    pdf.line(ux, y + fsz * 0.45, ux + tw, y + fsz * 0.45);
+  }
+}
+/* charts whose anchor cell is on this page, at their place; a chart
+   that starts in a repeated heading row prints once, on the first page
+   of its columns (from: where on this page anchors may be looked for) */
+function prPageCharts(pdf, s, charts, rows, cols, cx, ry, from) {
+  var PT = KIT.PX_PT;
+  charts.forEach(function (o) {
+    var ch = o.ch, j = cols.indexOf(ch.at.c), i = rows.indexOf(ch.at.r, from);
+    if (j < 0 || i < 0) return;
+    pdf.addImage(o.png, "PNG", cx[j] + ch.at.x * PT * s, ry[i] + ch.at.y * PT * s, ch.w * PT * s, ch.h * PT * s, undefined, "FAST");
+  });
+}
+/* file name: the sheet's name, safe on every system */
+function prName() {
+  var n = displayName(getActiveSheet()).replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80);
+  return (n || "sheet") + ".pdf";
+}
+function prMake(x, then) {
+  notifyTransient(t("pr.busy"));
+  prBuild(x).then(then, function (e) {
+    notifyTransient(e && e.message === "empty" ? t("pr.empty") : t("pr.err"));
+    if (!(e && e.message === "empty")) console.error("[SS] PDF failed:", e);
+  });
+}
+/* Print: the PDF in a hidden frame, then the browser's print dialog;
+   where a frame cannot print a PDF, the PDF opens in a new tab */
+function prPrint(blob) {
+  var url = URL.createObjectURL(blob), old = $("ss-print");
+  if (old) old.remove();
+  var fr = document.createElement("iframe");
+  fr.id = "ss-print";
+  fr.setAttribute("aria-hidden", "true");
+  fr.tabIndex = -1;
+  fr.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+  fr.addEventListener("load", function () {
+    setTimeout(function () {
+      try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+      catch (e) { try { window.open(url, "_blank", "noopener"); } catch (e2) {} }
+    }, 250);
+  }, { once: true });
+  fr.src = url;
+  document.body.appendChild(fr);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10 * 60 * 1000);
+}
+function openPrintDialog() {
+  var x = prSettings();
+  if (!selIsRange()) x.sel = 0;
+  var pop = popShell(t("pr.title"), "print-dlg");
+  var what = mkSelect([["0", t("pr.all")], ["1", t("pr.sel")]], String(x.sel));
+  if (!selIsRange()) what.disabled = true;
+  field(pop, t("pr.what"), what);
+  var row1 = document.createElement("div");
+  row1.className = "pop-2";
+  pop.appendChild(row1);
+  var pa = mkSelect([["a4", "A4"], ["a3", "A3"], ["letter", "Letter"], ["legal", "Legal"]], x.pa);
+  var or = mkSelect([["p", t("pr.p")], ["l", t("pr.l")]], x.or);
+  field(row1, t("pr.paper"), pa); field(row1, t("pr.or"), or);
+  var fit = mkSelect([["w", t("pr.fit.w")], ["p", t("pr.fit.p")], ["n", t("pr.fit.n")]], x.fit);
+  field(pop, t("pr.fit"), fit);
+  var hrOpts = [["0", t("pr.hr.0")]];
+  for (var k = 1; k <= 5; k++) hrOpts.push([String(k), t(k === 1 ? "pr.hr.1" : "pr.hr.n").replace("{n}", k)]);
+  var hr = mkSelect(hrOpts, String(x.hr));
+  field(pop, t("pr.hr"), hr);
+  function chk(label, on) {
+    var b = document.createElement("input");
+    b.type = "checkbox"; b.checked = !!on;
+    field(pop, label, b).classList.add("pop-chk");
+    return b;
+  }
+  var gl = chk(t("pr.gl"), x.gl), pn = chk(t("pr.pn"), x.pn), chs = chk(t("pr.ch"), x.ch);
+  var note = document.createElement("div");
+  note.className = "pop-note"; note.textContent = t("pr.note");
+  pop.appendChild(note);
+  function read() {
+    return KIT.normPrint({ sel: what.value === "1" ? 1 : 0, pa: pa.value, or: or.value, fit: fit.value,
+      hr: parseInt(hr.value, 10), gl: gl.checked ? 1 : 0, pn: pn.checked ? 1 : 0, ch: chs.checked ? 1 : 0 });
+  }
+  var btns = document.createElement("div");
+  btns.className = "pop-btns";
+  btns.appendChild(mkBtn(t("flt.cancel"), "", closePops));
+  btns.appendChild(mkBtn(t("pr.print"), "", function () {
+    var y = read(); prKeep(y); closePops();
+    prMake(y, function (o) { prPrint(o.blob); });
+  }));
+  btns.appendChild(mkBtn(t("pr.pdf"), "primary", function () {
+    var y = read(); prKeep(y); closePops();
+    prMake(y, function (o) { saveBlob(o.blob, prName(), "application/pdf", "PDF"); });
+  }));
+  pop.appendChild(btns);
+  placePop(pop, { el: $("tb-fmt") });
+  try { what.focus({ preventScroll: true }); } catch (e) {}
+}
+
 /* ===== SECTION 4: SYNC SLICE + PALETTE + NOTIFICATIONS ===== */
 
 var syncApi = null;
@@ -5190,6 +5577,9 @@ function wire() {
     }
     else if ((e.ctrlKey || e.metaKey) && (k === "u" || k === "U")) {
       e.preventDefault(); applyFormatToSelection(fmtToggle("u"));
+    }
+    else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (k === "p" || k === "P")) {
+      e.preventDefault(); openPrintDialog();     /* the sheet, not the app's window */
     }
     else if (k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault(); beginEdit(k);
