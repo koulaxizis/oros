@@ -50,6 +50,7 @@
     syncUserEmail:   null,
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
+    vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
     syncRestoring:   null,   // A43: name of the backup being restored
     syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
@@ -6009,6 +6010,7 @@
       S.disconnect();
       state.syncUserEmail = null;
       state.syncBackups = null;
+      state.vaultClean = null;
       renderMenu();
       return;
     }
@@ -6018,9 +6020,42 @@
       syncDisconnecting = false;
       state.syncUserEmail = null;
       state.syncBackups = null;
+      state.vaultClean = null;
       state.syncAutoErr = null;
       setSyncMsg("ok", syncDisconnectKey(r));
     });
+  }
+  // VD-GC: Settings › Sync › Unused files in the cloud. Look first
+  // (usage: changes nothing), then clean up only on the person's tap.
+  var CLEAN_CODES = /^clean-(no-manifest|mismatch|moved|unsupported)$/;
+  function vaultCleanFail(err) {
+    var S = window.orosSync, msg = (err && err.message) || "";
+    var prev = state.vaultClean || {};
+    state.vaultClean = { busy: "", usage: null, result: prev.result || null,
+      code: CLEAN_CODES.test(msg) ? msg : "",
+      err: CLEAN_CODES.test(msg) ? null : window.t(S ? S.errorKey(err) : "sync.err.generic") };
+  }
+  function vaultCleanCheck() {
+    var V = window.orosVault;
+    if (!V || typeof V.usage !== "function" || (state.vaultClean && state.vaultClean.busy)) return;
+    state.vaultClean = { busy: "check", usage: null, result: (state.vaultClean && state.vaultClean.result) || null };
+    settingsNotify();
+    V.usage().then(function (u) {
+      state.vaultClean = { busy: "", usage: JSON.parse(JSON.stringify(u)), result: state.vaultClean.result };
+    }, vaultCleanFail).then(settingsNotify);
+  }
+  function vaultCleanRun() {
+    var V = window.orosVault;
+    var c = state.vaultClean;
+    if (!V || typeof V.cleanUp !== "function" || !c || c.busy || !c.usage || !(c.usage.free > 0)) return;
+    state.vaultClean = { busy: "clean", usage: c.usage, result: null };
+    settingsNotify();
+    V.cleanUp().then(function (r) {
+      state.vaultClean = { busy: "", usage: null, result: {
+        removed: +r.removed || 0, bytes: +r.bytes || 0, stopped: !!r.stopped,
+        healed: +r.healed || 0, lost: Array.prototype.slice.call(r.lost || []).map(String) } };
+      vaultCleanCheck();                                // fresh numbers
+    }, function (err) { vaultCleanFail(err); settingsNotify(); });
   }
   // A43: the cloud backups for Settings › Sync, and Restore.
   function syncBackupsLoad() {
@@ -9825,6 +9860,9 @@
           list: state.syncBackups.list.slice(),
           err: state.syncBackups.err || null
         } : null,
+        canClean: !!(window.orosVault && typeof window.orosVault.cleanUp === "function"),
+        clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
+        cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
         restoring: state.syncRestoring,
         oldPassFor: state.syncOldPassFor,
         msg: state.syncMsg ? { kind: state.syncMsg.kind, text: state.syncMsg.text }
@@ -9953,6 +9991,8 @@
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
       case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.clean.check":  if (S && S.isConnected() && S.hasPassphrase()) vaultCleanCheck(); return;
+      case "sync.clean.run":    if (S && S.isConnected() && S.hasPassphrase()) vaultCleanRun(); return;
       case "sync.restore":
         if (S && S.isConnected() && S.hasPassphrase() && arg && typeof arg.name === "string") {
           syncRestore({ name: arg.name, old: typeof arg.old === "string" ? arg.old : "" });
