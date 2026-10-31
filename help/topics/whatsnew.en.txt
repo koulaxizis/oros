@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.59.00
+- Studio: record through your sound card with orOS Bridge (Windows and Linux). In Studio's settings choose `Record and play through` › `orOS Bridge`, then the sound system (Windows Audio, JACK, PipeWire or ALSA), the card and the inputs: one, a stereo pair, or every input on its own track. `Check the inputs` shows a meter per input. Takes stay in step even on a busy computer. Needs orOS Bridge 0.3.0.
+
 ## Version 4.58.00
 - Studio: the Airwindows effects are gone. Studio's effects are NULL JSFX only, and new NULL JSFX effects (bus compressor, console, reverbs) will take their place.
 
