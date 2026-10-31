@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Passwords — import.js (more sources for Import, v1.0.0)
+// orOS Passwords — import.js (more sources for Import, v1.1.0)
 // Reads an export of another password manager or two-factor app and
 // turns it into vault entries (pmcore.js shape). Pure: no DOM, no
 // storage, no logging; pmapp.js runs the picker, the preview, the
@@ -20,6 +20,13 @@
 //   enpass     Enpass JSON (items with fields[label,type,value]).
 //   apple      Apple Passwords / iCloud Keychain CSV (Title,URL,
 //              Username,Password,Notes,OTPAuth).
+//   keeper     Keeper JSON ({ records }) or CSV (no header: Folder,
+//              Title, Login, Password, Website Address, Notes, Shared
+//              Folder, custom field pairs; "TFC:Keeper" = its 2FA).
+//   roboform   RoboForm CSV (Name,Url,MatchUrl,Login,Pwd,Note,Folder).
+//   zoho       Zoho Vault CSV (Password Name, Password URL, SecretData
+//              / CustomData as "name:value" lines, ChamberName).
+//   keepassxml KeePass 2 XML export (plain; read by kdbx.js readXml).
 //   aegis      Aegis plain JSON (db.entries); encrypted → error.
 //   2fas       2FAS backup (.2fas JSON: services); encrypted → error.
 //   gauth      Google Authenticator "Transfer accounts" QR:
@@ -37,6 +44,8 @@
 //     trashed, attachments, recycled, types: { login, note, … },
 //     batch?: { index, size, id }, plain: true (an unencrypted file) }
 //   or { kdbx: true } (pmapp asks for the KeePass password) or
+//   { locked: "bitwarden" | "aegis" | "2fas", data } (an export with a
+//   password: unlock(locked, password) → Promise<result>) or
 //   { error: "json" | "format" | "empty" | "encrypted" (Bitwarden) |
 //     "encrypted-proton" | "encrypted-aegis" | "encrypted-2fas" |
 //     "encrypted-dashlane" | "toobig" }.
@@ -64,6 +73,8 @@
   var NODE = typeof module !== "undefined" && module.exports && typeof require === "function";
   function kit() { return NODE ? require("../importkit.js") : root.OrosImportKit; }
   function core() { return NODE ? require("./pmcore.js") : root.PmCore; }
+  function kdbx() { return NODE ? require("./kdbx.js") : root.Kdbx; }
+  function vaultLib() { return NODE ? require("./pmcrypto.js") : root.PmVault; }
 
   var MAX_ITEMS = 10000;              // entries + codes read from one file
   var MAX_ENTRY = 50 * 1024 * 1024;   // inflated bytes per zip entry
@@ -244,7 +255,10 @@
   // ---------- Aegis, 2FAS ----------
   function fromAegis(j) {
     var h = j.header;
-    if ((isObj(h) && h.slots != null) || typeof j.db === "string") return { error: "encrypted-aegis" };
+    if ((isObj(h) && h.slots != null) || typeof j.db === "string") {
+      var pwSlot = typeof j.db === "string" && isObj(h) && isObj(h.params) && arr(h.slots).some(function (sl) { return isObj(sl) && sl.type === 1; });
+      return pwSlot ? { locked: "aegis", data: j } : { error: "encrypted-aegis" };
+    }
     var res = newResult("aegis");
     var groups = {};
     arr(j.db && j.db.groups).forEach(function (g) { if (g && g.uuid) groups[g.uuid] = s(g.name); });
@@ -261,7 +275,9 @@
   }
   function from2fas(j) {
     var list = arr(j.services);
-    if (!list.length && typeof j.servicesEncrypted === "string" && j.servicesEncrypted) return { error: "encrypted-2fas" };
+    if (!list.length && typeof j.servicesEncrypted === "string" && j.servicesEncrypted) {
+      return j.servicesEncrypted.split(":").length >= 3 ? { locked: "2fas", data: j } : { error: "encrypted-2fas" };
+    }
     var res = newResult("2fas");
     var groups = {};
     arr(j.groups).forEach(function (g) { if (g && g.id) groups[g.id] = s(g.name); });
@@ -440,6 +456,9 @@
     if (has(head, ["username", "username2", "title", "password", "url"])) return "dashlane";
     if (has(head, ["name", "url", "username", "password", "cardholdername", "folder"])) return "nordpass";
     if (has(head, ["title", "url", "username", "password", "otpauth"])) return "apple";
+    if (has(head, ["name", "url", "login", "pwd"])) return "roboform";
+    if ((has(head, ["passwordname"]) || has(head, ["secretname"])) && has(head, ["secretdata"])) return "zoho";
+    if (has(head, ["folder", "title", "login", "password", "websiteaddress"])) return "keeper";
     return null;
   }
   // a generic CSV: name the app it most likely came from
@@ -493,16 +512,309 @@
       } else if (kind === "apple") {
         e.title = g("title"); e.user = g("username"); e.pw = g("password"); e.notes = g("notes"); e.totp = g("otpauth");
         addUrl(e, g("url"));
+      } else if (kind === "roboform") {
+        e.title = g("name"); e.user = g("login"); e.pw = g("pwd"); e.notes = g("note");
+        addUrl(e, g("url", "matchurl"));
+        addTag(e, g("folder").replace(/^\/+|\/+$/g, ""));
+        if (!e.user && !e.pw && !e.urls.length && e.notes) type = "note";
+      } else if (kind === "zoho") {
+        e.title = g("passwordname", "secretname"); e.notes = g("notes", "description");
+        addUrl(e, g("passwordurl", "secreturl"));
+        e.fav = /^(1|true|yes)$/i.test(g("favorite").trim()) ? 1 : 0;
+        addTag(e, g("chambername", "foldername", "folder"));
+        g("tags").split(/[,;]/).forEach(function (t) { addTag(e, t); });
+        zohoData(e, g("secretdata")); zohoData(e, g("customdata"));
+        e.totp = e.totp || g("logintotp", "totp");
+        if (!e.user && !e.pw && !e.urls.length && e.notes) type = "note";
       }
       push(res, e, "", type);
     });
     return res;
   }
 
+  // Zoho Vault keeps the login in "SecretData" / "CustomData" as
+  // "name:value" lines (the first username / password line wins).
+  var ZOHO_USER = { username: 1, user: 1, login: 1, email: 1, "user name": 1 };
+  var ZOHO_PW = { password: 1, pass: 1, pwd: 1 };
+  function zohoData(e, text) {
+    s(text).split(/\r?\n/).forEach(function (ln) {
+      var at = ln.indexOf(":");
+      if (at <= 0) return;
+      var k = ln.slice(0, at).trim(), v = ln.slice(at + 1).trim(), kl = k.toLowerCase();
+      if (!k || !v || kl === "secrettype") return;
+      if (!e.user && ZOHO_USER[kl]) e.user = v;
+      else if (!e.pw && ZOHO_PW[kl]) e.pw = v;
+      else if (!e.totp && /^otpauth:\/\//i.test(v)) e.totp = v;
+      else addField(e, k, v, /pass|secret|pin|key/i.test(k));
+    });
+  }
+  // Keeper CSV: Folder, Title, Login, Password, Website Address,
+  // Notes, Shared Folder, then custom fields as name, value pairs
+  // ("TFC:Keeper" is its two-factor code). Keeper writes no header;
+  // a file with the header row reads the same columns.
+  function keeperRow(e, r) {
+    var c = function (i) { return r[i] !== undefined ? s(r[i]) : ""; };
+    addTag(e, c(0).replace(/\\/g, "/"));
+    e.title = c(1); e.user = c(2); e.pw = c(3); addUrl(e, c(4)); e.notes = c(5);
+    if (c(6)) addTag(e, c(6).replace(/\\/g, "/"));
+    for (var i = 7; i + 1 < r.length; i += 2) {
+      var k = c(i), v = c(i + 1);
+      if (!k || !v) continue;
+      if (!e.totp && (/^TFC:/i.test(k) || /^otpauth:\/\//i.test(v))) e.totp = v;
+      else addField(e, k, v, /pass|secret|pin|code/i.test(k));
+    }
+  }
+  function fromKeeperCsv(text, now) {
+    var rows = core().parseCsv(text), res = newResult("keeper");
+    if (rows.length && /^folder$/i.test(s(rows[0][0]).trim()) && /^title$/i.test(s(rows[0][1]).trim())) rows = rows.slice(1);
+    res.skipped += Math.max(0, rows.length - MAX_ITEMS);
+    rows.slice(0, MAX_ITEMS).forEach(function (r) {
+      if (r.length < 6) { res.skipped++; return; }
+      var e = blank(now);
+      keeperRow(e, r);
+      push(res, e, "", !e.user && !e.pw && !e.urls.length && e.notes ? "note" : "login");
+    });
+    return res.entries.length ? res : { error: res.skipped ? "format" : "empty" };
+  }
+  // Keeper JSON: { records: [{ title, login, password, login_url,
+  // notes, custom_fields: { name: value }, folders: [{ folder,
+  // shared_folder }] }] }
+  function fromKeeperJson(j, now) {
+    var res = newResult("keeper");
+    arr(j.records).forEach(function (rec) {
+      if (!isObj(rec)) { res.skipped++; return; }
+      var e = blank(now);
+      e.title = s(rec.title); e.user = s(rec.login); e.pw = s(rec.password); e.notes = s(rec.notes);
+      addUrl(e, rec.login_url);
+      arr(rec.folders).forEach(function (f) {
+        if (!isObj(f)) return;
+        addTag(e, [s(f.shared_folder), s(f.folder)].filter(Boolean).join("/").replace(/\\/g, "/"));
+      });
+      var cf = isObj(rec.custom_fields) ? rec.custom_fields : {};
+      Object.keys(cf).forEach(function (k) {
+        var v = cf[k];
+        if (Array.isArray(v)) v = v.length === 1 ? v[0] : "";
+        if (isObj(v) || Array.isArray(v)) return;
+        v = s(v);
+        if (!v) return;
+        if (!e.totp && (/^(TFC:|\$oneTimeCode)/i.test(k) || /^otpauth:\/\//i.test(v))) e.totp = v;
+        else addField(e, k.replace(/^\$[a-z]+:?/i, "") || k, v, /pass|secret|pin|code/i.test(k));
+      });
+      if (arr(rec.attachments).length) res.attachments += rec.attachments.length;
+      var ty = low(rec.$type);
+      push(res, e, s(rec.uid), ty === "encryptednotes" || (!e.user && !e.pw && !e.urls.length && e.notes) ? "note" :
+           ty === "bankcard" ? "card" : "login");
+    });
+    return res;
+  }
+
+  // ---------- encrypted exports (opened with the file's password) ----------
+  // Bitwarden "password protected" .json, Aegis encrypted vault, 2FAS
+  // backup with a password. parse() returns { locked: kind, data } and
+  // unlock(locked, password) decrypts in memory with WebCrypto (scrypt
+  // for Aegis is below, Argon2id for Bitwarden is the vendored
+  // hash-wasm). KDF settings come from the file, so they are bounded
+  // before anything is derived. Errors: no-key (empty password),
+  // wrong-password, kdf-params, bad-file, no-wasm / no-argon2.
+  function subtle() { return globalThis.crypto.subtle; }
+  function utf8b(str) { return new TextEncoder().encode(String(str)); }
+  function u8(x) { return new Uint8Array(x); }
+  function hexB(h) {
+    h = s(h);
+    if (!/^([0-9a-f]{2})*$/i.test(h)) return null;
+    var out = new Uint8Array(h.length / 2);
+    for (var i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16);
+    return out;
+  }
+  function cat(a, b) { var o = new Uint8Array(a.length + b.length); o.set(a); o.set(b, a.length); return o; }
+  function bad(code) { return new Error(code); }
+  function intIn(v, lo, hi) { return typeof v === "number" && Math.floor(v) === v && v >= lo && v <= hi; }
+  function pbkdf2(pw, salt, iter, bytes) {
+    return subtle().importKey("raw", pw, "PBKDF2", false, ["deriveBits"]).then(function (k) {
+      return subtle().deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: salt, iterations: iter }, k, bytes * 8);
+    }).then(u8);
+  }
+  function hmac(key, data) {
+    return subtle().importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (k) {
+      return subtle().sign("HMAC", k, data);
+    }).then(u8);
+  }
+  function gcmOpen(key, iv, data) {   // data = ciphertext + 16-byte tag
+    return subtle().importKey("raw", key, "AES-GCM", false, ["decrypt"]).then(function (k) {
+      return subtle().decrypt({ name: "AES-GCM", iv: iv, tagLength: 128 }, k, data);
+    }).then(u8, function () { throw bad("wrong-password"); });
+  }
+
+  // scrypt (RFC 7914), for Aegis. Salsa20/8 on little-endian words.
+  function R(a, b) { return (a << b) | (a >>> (32 - b)); }
+  function salsa8(B, x) {
+    var i;
+    for (i = 0; i < 16; i++) x[i] = B[i];
+    for (i = 0; i < 8; i += 2) {
+      x[4] ^= R(x[0] + x[12], 7); x[8] ^= R(x[4] + x[0], 9); x[12] ^= R(x[8] + x[4], 13); x[0] ^= R(x[12] + x[8], 18);
+      x[9] ^= R(x[5] + x[1], 7); x[13] ^= R(x[9] + x[5], 9); x[1] ^= R(x[13] + x[9], 13); x[5] ^= R(x[1] + x[13], 18);
+      x[14] ^= R(x[10] + x[6], 7); x[2] ^= R(x[14] + x[10], 9); x[6] ^= R(x[2] + x[14], 13); x[10] ^= R(x[6] + x[2], 18);
+      x[3] ^= R(x[15] + x[11], 7); x[7] ^= R(x[3] + x[15], 9); x[11] ^= R(x[7] + x[3], 13); x[15] ^= R(x[11] + x[7], 18);
+      x[1] ^= R(x[0] + x[3], 7); x[2] ^= R(x[1] + x[0], 9); x[3] ^= R(x[2] + x[1], 13); x[0] ^= R(x[3] + x[2], 18);
+      x[6] ^= R(x[5] + x[4], 7); x[7] ^= R(x[6] + x[5], 9); x[4] ^= R(x[7] + x[6], 13); x[5] ^= R(x[4] + x[7], 18);
+      x[11] ^= R(x[10] + x[9], 7); x[8] ^= R(x[11] + x[10], 9); x[9] ^= R(x[8] + x[11], 13); x[10] ^= R(x[9] + x[8], 18);
+      x[12] ^= R(x[15] + x[14], 7); x[13] ^= R(x[12] + x[15], 9); x[14] ^= R(x[13] + x[12], 13); x[15] ^= R(x[14] + x[13], 18);
+    }
+    for (i = 0; i < 16; i++) B[i] = (B[i] + x[i]) | 0;
+  }
+  function blockMix(B, Y, r, x) {   // B: 32r words, Y: scratch of 32r
+    var X = new Int32Array(16), i, j;
+    for (j = 0; j < 16; j++) X[j] = B[(2 * r - 1) * 16 + j];
+    for (i = 0; i < 2 * r; i++) {
+      for (j = 0; j < 16; j++) X[j] ^= B[i * 16 + j];
+      salsa8(X, x);
+      var at = ((i & 1) ? r + (i >> 1) : (i >> 1)) * 16;
+      for (j = 0; j < 16; j++) Y[at + j] = X[j];
+    }
+    B.set(Y);
+  }
+  function scrypt(pw, salt, N, r, p, dkLen) {
+    return pbkdf2(pw, salt, 1, p * 128 * r).then(function (Bb) {
+      var W = 32 * r, B = new Int32Array(p * W), dv = new DataView(Bb.buffer), i, k;
+      for (i = 0; i < B.length; i++) B[i] = dv.getInt32(i * 4, true);
+      var V = new Int32Array(W * N), Y = new Int32Array(W), x = new Int32Array(16);
+      for (k = 0; k < p; k++) {
+        var X = B.subarray(k * W, (k + 1) * W);
+        for (i = 0; i < N; i++) { V.set(X, i * W); blockMix(X, Y, r, x); }
+        for (i = 0; i < N; i++) {
+          var jj = (X[(2 * r - 1) * 16] & (N - 1)) * W;
+          for (var q = 0; q < W; q++) X[q] ^= V[jj + q];
+          blockMix(X, Y, r, x);
+        }
+      }
+      V.fill(0);
+      for (i = 0; i < B.length; i++) dv.setInt32(i * 4, B[i], true);
+      B.fill(0);
+      return pbkdf2(pw, Bb, 1, dkLen).then(function (dk) { Bb.fill(0); return dk; });
+    });
+  }
+
+  // Bitwarden EncString type 2: "2.iv|ct|mac" (AES-256-CBC + HMAC-SHA256)
+  function bwOpen(encStr, encKey, macKey) {
+    var m = /^2\.([^|]+)\|([^|]+)\|([^|]+)$/.exec(s(encStr));
+    if (!m) return Promise.reject(bad("bad-file"));
+    var iv = b64(m[1]), ct = b64(m[2]), mac = b64(m[3]);
+    if (!iv || iv.length !== 16 || !ct || !mac) return Promise.reject(bad("bad-file"));
+    return hmac(macKey, cat(iv, ct)).then(function (want) {
+      var diff = want.length ^ mac.length;
+      for (var i = 0; i < want.length && i < mac.length; i++) diff |= want[i] ^ mac[i];
+      if (diff) throw bad("wrong-password");
+      return subtle().importKey("raw", encKey, "AES-CBC", false, ["decrypt"]);
+    }).then(function (k) { return subtle().decrypt({ name: "AES-CBC", iv: iv }, k, ct); })
+      .then(function (b) { var out = u8(b), txt = utf8(out); out.fill(0); return txt; });
+  }
+  function bwKey(j, pw) {
+    var t = j.kdfType == null ? 0 : j.kdfType;
+    if (t === 0) {
+      if (!intIn(j.kdfIterations, 5000, 2000000)) return Promise.reject(bad("kdf-params"));
+      return pbkdf2(pw, utf8b(j.salt), j.kdfIterations, 32);
+    }
+    if (t === 1) {
+      if (!intIn(j.kdfIterations, 2, 10) || !intIn(j.kdfMemory, 16, 1024) || !intIn(j.kdfParallelism, 1, 16))
+        return Promise.reject(bad("kdf-params"));
+      return Promise.all([vaultLib().loadArgon2(), subtle().digest("SHA-256", utf8b(j.salt))]).then(function (x) {
+        return x[0].argon2id({ password: pw, salt: u8(x[1]), iterations: j.kdfIterations, parallelism: j.kdfParallelism,
+                               memorySize: j.kdfMemory * 1024, hashLength: 32, outputType: "binary" });
+      }).then(u8);
+    }
+    return Promise.reject(bad("kdf-params"));
+  }
+  function unlockBitwarden(j, pw, now) {
+    return bwKey(j, pw).then(function (key) {
+      // stretch: HKDF-Expand(key, "enc" / "mac", 32) = one HMAC block each
+      return Promise.all([hmac(key, cat(utf8b("enc"), new Uint8Array([1]))), hmac(key, cat(utf8b("mac"), new Uint8Array([1])))])
+        .then(function (k) { key.fill(0); return k; });
+    }).then(function (k) {
+      return bwOpen(j.encKeyValidation_DO_NOT_EDIT, k[0], k[1]).then(function () {
+        return bwOpen(j.data, k[0], k[1]);
+      }).then(function (txt) { k[0].fill(0); k[1].fill(0); return txt; },
+              function (e) { k[0].fill(0); k[1].fill(0); throw e; });
+    }).then(function (txt) {
+      var inner = kit().json(txt);
+      txt = null;
+      if (!isObj(inner) || inner.encrypted === true) throw bad("bad-file");
+      return fromJson(inner, now);
+    });
+  }
+  function unlockAegis(j, pw, now) {
+    var h = j.header, params = h.params, slots = arr(h.slots).filter(function (sl) { return isObj(sl) && sl.type === 1; });
+    var nonce = hexB(params.nonce), tag = hexB(params.tag), db = b64(j.db);
+    if (!nonce || !tag || tag.length !== 16 || !db) return Promise.reject(bad("bad-file"));
+    function trySlot(i) {
+      if (i >= slots.length) return Promise.reject(bad("wrong-password"));
+      var sl = slots[i], salt = hexB(sl.salt), key = hexB(sl.key), kp = isObj(sl.key_params) ? sl.key_params : {};
+      var kn = hexB(kp.nonce), kt = hexB(kp.tag);
+      // memory = 128 * r * N bytes: at most 256 MB
+      if (!intIn(sl.n, 2, 1 << 20) || (sl.n & (sl.n - 1)) || !intIn(sl.r, 1, 32) || !intIn(sl.p, 1, 16) ||
+          128 * sl.r * sl.n > 256 * 1024 * 1024) return Promise.reject(bad("kdf-params"));
+      if (!salt || !key || !kn || !kt || kt.length !== 16) return Promise.reject(bad("bad-file"));
+      return scrypt(pw, salt, sl.n, sl.r, sl.p, 32).then(function (dk) {
+        return gcmOpen(dk, kn, cat(key, kt)).then(function (mk) { dk.fill(0); return mk; },
+                                                  function (e) { dk.fill(0); throw e; });
+      }).catch(function (e) {
+        if (e && e.message === "wrong-password") return trySlot(i + 1);
+        throw e;
+      });
+    }
+    return trySlot(0).then(function (mk) {
+      return gcmOpen(mk, nonce, cat(db, tag)).then(function (b) { mk.fill(0); return b; },
+                                                   function () { mk.fill(0); throw bad("bad-file"); });
+    }).then(function (b) {
+      var inner = kit().json(utf8(b)); b.fill(0);
+      if (!isObj(inner)) throw bad("bad-file");
+      return fromAegis({ header: { slots: null, params: null }, db: inner });
+    });
+  }
+  function unlock2fas(j, pw, now) {
+    var parts = j.servicesEncrypted.split(":");
+    var data = b64(parts[0]), salt = b64(parts[1]), iv = b64(parts[2]);
+    if (!data || !salt || !iv || data.length < 17) return Promise.reject(bad("bad-file"));
+    return pbkdf2(pw, salt, 10000, 32).then(function (key) {
+      return gcmOpen(key, iv, data).then(function (b) { key.fill(0); return b; }, function (e) { key.fill(0); throw e; });
+    }).then(function (b) {
+      var list = kit().json(utf8(b)); b.fill(0);
+      if (!Array.isArray(list)) throw bad("bad-file");
+      return from2fas({ services: list, groups: j.groups });
+    });
+  }
+  // → Promise<result> (the same shape as parse); plain: false.
+  function unlock(locked, password, now) {
+    now = now || Date.now();
+    var j = locked && locked.data;
+    if (!isObj(j)) return Promise.reject(bad("bad-file"));
+    if (!s(password)) return Promise.reject(bad("no-key"));
+    var pw = utf8b(password), p;
+    try {
+      p = locked.locked === "bitwarden" ? unlockBitwarden(j, pw, now) :
+          locked.locked === "aegis" ? unlockAegis(j, pw, now) :
+          locked.locked === "2fas" ? unlock2fas(j, pw, now) : Promise.reject(bad("format"));
+    } catch (e) { p = Promise.reject(bad("bad-file")); }
+    return p.then(function (r) {
+      wipe(pw);
+      if (r && !r.error) r.plain = false;
+      return r;
+    }, function (e) {
+      wipe(pw);
+      throw bad(e && /^(no-key|wrong-password|kdf-params|bad-file|no-wasm|no-argon2|format)$/.test(e.message) ? e.message : "bad-file");
+    });
+  }
+
   // ---------- detection ----------
   function fromJson(j, now) {
     if (!isObj(j)) return { error: "format" };
-    if (j.encrypted === true && !isObj(j.vaults)) return { error: "encrypted" };   // Bitwarden, encrypted
+    if (j.encrypted === true && !isObj(j.vaults)) {
+      // Bitwarden: "password protected" opens with the file password;
+      // "account restricted" only inside that Bitwarden account.
+      if (j.passwordProtected === true && typeof j.data === "string" && typeof j.salt === "string" &&
+          typeof j.encKeyValidation_DO_NOT_EDIT === "string") return { locked: "bitwarden", data: j };
+      return { error: "encrypted" };
+    }
+    if (Array.isArray(j.records)) return fromKeeperJson(j, now);
     if (isObj(j.vaults) && !Array.isArray(j.items)) return fromProtonJson(j, now);
     if (j.db !== undefined && isObj(j.header)) return fromAegis(j);
     if (Array.isArray(j.services) || typeof j.servicesEncrypted === "string") return from2fas(j);
@@ -525,6 +837,10 @@
     if (/^-----BEGIN PGP/.test(head) || /\.pgp$/i.test(s(name))) return { error: "encrypted-proton" };
     if (/^otpauth-migration:\/\//i.test(head)) return fromMigration(t.trim());
     if (/^otpauth:\/\//i.test(head)) return /^otpauth:\/\/hotp\//i.test(head) ? { error: "hotp" } : fromOtpauth(t.trim());
+    if (/^<(\?xml|KeePassFile)/i.test(head)) {
+      try { return fromEntries("keepassxml", kdbx().readXml(t, { now: now })); }
+      catch (e) { return { error: e && e.message === "not-kdbx" ? "format" : "bad-file" }; }
+    }
     if (/^[\[{]/.test(head)) {
       var j = kit().json(t);
       return j === null ? { error: "json" } : fromJson(j, now);
@@ -532,8 +848,13 @@
     var tb = table(t);
     if (!tb || !tb.rows.length) return { error: "empty" };
     var kind = csvKind(tb.head);
+    if (kind === "keeper") return fromKeeperCsv(t, now);
     if (kind) return fromCsvKind(kind, tb, now);
     var r = core().fromCsv(t, now);
+    // Keeper writes no header: a CSV nothing else reads, of rows with
+    // at least its six columns (or named keeper*.csv)
+    if (r.error === "format" && (/keeper/i.test(s(name)) ||
+        core().parseCsv(t).every(function (row) { return row.length >= 6; }))) return fromKeeperCsv(t, now);
     return r.error ? r : fromEntries(csvLabel(tb.head), r);
   }
 
@@ -708,8 +1029,8 @@
   }
 
   var API = {
-    version: "1.0.0", MAX_ITEMS: MAX_ITEMS,
-    parse: parse, parseText: parseText, fromEntries: fromEntries, mergeResults: mergeResults,
+    version: "1.1.0", MAX_ITEMS: MAX_ITEMS,
+    parse: parse, parseText: parseText, unlock: unlock, scrypt: scrypt, fromEntries: fromEntries, mergeResults: mergeResults,
     apply: apply, undo: undo, hexId: hexId, pbFields: pbFields
   };
   if (NODE) module.exports = API;
