@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.77.00
+- Television: in the `Guide`, a programme that has not started yet now has `Remind me`. It opens a new [Calendar](help:a/calendar) event with the time, the channel and a reminder 15 minutes before; press `Save` to keep it. See [Television](help:a/television).
+
 ## Version 4.76.00
 - [Passwords](help:a/passwords) imports more: exports with a password from Bitwarden ("Password protected"), Aegis and 2FAS now open with that password, on your device only. New: Keeper, RoboForm, Zoho Vault and the KeePass XML export.
 
