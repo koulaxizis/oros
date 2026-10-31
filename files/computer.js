@@ -65,6 +65,11 @@
       "c.delete":      "Move to the Trash",
       "c.deleted":     "Moved to the Trash of this computer",
       "c.deleteMsg":   "Move “{name}” to the Trash of this computer?",
+      "c.recycle":     "Open the Recycle Bin",
+      "c.recycleOpen": "The Recycle Bin opens in Windows",
+      "c.deleteW":     "Move to the Recycle Bin",
+      "c.deletedW":    "Moved to the Recycle Bin",
+      "c.deleteMsgW":  "Move “{name}” to the Recycle Bin?",
       "c.toDisk":      "Copy to the orOS disk…",
       "c.toDiskTitle": "Copy to the orOS disk",
       "c.toDiskOk":    "Copy here",
@@ -102,6 +107,8 @@
       "c.e.verify":    "The copy did not match the original; the original was kept",
       "c.e.notempty":  "The folder is not empty",
       "c.e.offline":   "orOS cannot reach the computer's files right now",
+      "c.e.off":       "This computer's files are switched off in Settings › System",
+      "c.e.norecycle": "This drive has no Recycle Bin. Delete it in Windows' File Explorer if you are sure.",
       "c.e.io":        "That did not work: {m}",
       "c.e.name":      "Use a name without “/” that does not start with a dot",
       "c.f.Documents": "Documents",
@@ -140,6 +147,11 @@
       "c.delete":      "Μεταφορά στον Κάδο",
       "c.deleted":     "Μεταφέρθηκε στον Κάδο του υπολογιστή",
       "c.deleteMsg":   "Να μεταφερθεί το «{name}» στον Κάδο του υπολογιστή;",
+      "c.recycle":     "Άνοιγμα του Κάδου Ανακύκλωσης",
+      "c.recycleOpen": "Ο Κάδος Ανακύκλωσης ανοίγει στα Windows",
+      "c.deleteW":     "Μεταφορά στον Κάδο Ανακύκλωσης",
+      "c.deletedW":    "Μεταφέρθηκε στον Κάδο Ανακύκλωσης",
+      "c.deleteMsgW":  "Να μεταφερθεί το «{name}» στον Κάδο Ανακύκλωσης;",
       "c.toDisk":      "Αντιγραφή στον δίσκο του orOS…",
       "c.toDiskTitle": "Αντιγραφή στον δίσκο του orOS",
       "c.toDiskOk":    "Αντιγραφή εδώ",
@@ -177,6 +189,8 @@
       "c.e.verify":    "Το αντίγραφο δεν ταίριαξε με το πρωτότυπο· το πρωτότυπο κρατήθηκε",
       "c.e.notempty":  "Ο φάκελος δεν είναι άδειος",
       "c.e.offline":   "Το orOS δεν φτάνει αυτή τη στιγμή στα αρχεία του υπολογιστή",
+      "c.e.off":       "Τα αρχεία αυτού του υπολογιστή είναι κλειστά στις Ρυθμίσεις › Σύστημα",
+      "c.e.norecycle": "Αυτός ο δίσκος δεν έχει Κάδο Ανακύκλωσης. Αν είσαι σίγουρος, διάγραψέ το από την Εξερεύνηση αρχείων των Windows.",
       "c.e.io":        "Δεν έγινε: {m}",
       "c.e.name":      "Γράψε όνομα χωρίς «/» που δεν αρχίζει με τελεία",
       "c.f.Documents": "Έγγραφα",
@@ -228,6 +242,7 @@
   var active = false;
   var cwd = PREFIX;
   var trashMode = false;
+  var win = false;          // Windows: drive letters, the Recycle Bin (roots.os)
   var renderToken = 0;
   var busy = false;
 
@@ -354,7 +369,11 @@
     var nf = btn("tool", ICON.add, t("c.newFolder"), newFolder);
     nf.id = "cmp-new";
     bar.appendChild(nf);
-    var tr = btn("tool", ICON.trash, t("c.trash"), function () { trashMode = !trashMode; load(); });
+    var tr = btn("tool", ICON.trash, t("c.trash"), function () {
+      if (win) { openRecycleBin(); return; }
+      trashMode = !trashMode;
+      load();
+    });
     tr.id = "cmp-trash";
     bar.appendChild(tr);
     bar.appendChild(btn("tool", ICON.refresh, t("c.refresh"), function () { load(); }));
@@ -419,6 +438,8 @@
     $("cmp-up").disabled = !trashMode && cwd === PREFIX;
     $("cmp-new").hidden = trashMode || cwd === PREFIX;
     $("cmp-trash").classList.toggle("on", trashMode);
+    $("cmp-trash").title = t(win ? "c.recycle" : "c.trash");
+    $("cmp-trash").setAttribute("aria-label", t(win ? "c.recycle" : "c.trash"));
     $("cmp-trash").setAttribute("aria-pressed", trashMode ? "true" : "false");
     $("cmp-head").hidden = cwd === PREFIX || trashMode;
   }
@@ -475,6 +496,7 @@
       api.disks().catch(function () { return []; })
     ]).then(function (res) {
       var roots = res[0] || {}, home = res[1], vols = res[2];
+      win = C.isWindows(roots);
       var rows = [section(t("c.folders"))];
       var homeSub = roots.home && roots.home.total ? t("c.free", { n: fmtKB(roots.home.free) }) : "";
       rows.push(placeRow(ICON.home, t("c.home"), homeSub, function () { go(PREFIX + "/home"); }));
@@ -495,7 +517,7 @@
                    d.path && d.free ? t("c.free", { n: fmtKB(d.free) }) : "", d.readonly ? t("c.readonly") : ""]
           .filter(Boolean).join(" · ");
         var extra = [];
-        if (d.path) {
+        if (d.path && !win) {             // Windows: "Safely remove" in its taskbar
           extra.push(btn("tool cmp-eject", ICON.eject, t("c.eject") + " " + d.name, function (e) { e.stopPropagation(); eject(d); }));
         }
         rows.push(placeRow(d.usb ? ICON.usb : ICON.drive, d.name, sub, function () { openDisk(d); }, extra));
@@ -573,7 +595,7 @@
     var list = [
       { label: t("c.toDisk"), value: "disk" },
       { label: t("c.rename"), value: "rename" },
-      { label: t("c.delete"), value: "trash", cls: "danger" },
+      { label: t(win ? "c.deleteW" : "c.delete"), value: "trash", cls: "danger" },
       { label: t("c.cancel"), value: null }
     ];
     if (!r.dir) list.unshift({ label: t("c.preview"), value: "preview" });
@@ -657,13 +679,19 @@
   }
 
   function remove(r) {
-    confirmBox(t("c.delete"), t("c.deleteMsg", { name: r.name }), t("c.delete"), true).then(function (ok) {
+    var del = t(win ? "c.deleteW" : "c.delete");
+    confirmBox(del, t(win ? "c.deleteMsgW" : "c.deleteMsg", { name: r.name }), del, true).then(function (ok) {
       if (!ok) return null;
       return api.op({ op: "trash", path: r.path }).then(function () {
-        toast(t("c.deleted"));
+        toast(t(win ? "c.deletedW" : "c.deleted"));
         load();
       });
     }).catch(fail);
+  }
+
+  // Windows keeps its own Recycle Bin: orOS opens it in File Explorer.
+  function openRecycleBin() {
+    api.op({ op: "recyclebin" }).then(function () { toast(t("c.recycleOpen")); }, fail);
   }
 
   // ---------- Trash of this computer ----------
@@ -988,6 +1016,7 @@
       probed = true;
       available = ok;
       if (!ok) return;
+      api.roots().then(function (r) { win = C.isWindows(r); if (active) load(); }, function () {});
       if (ctx.onAvailable) ctx.onAvailable();
       var view = readView();
       if (pendingAt) enter(pendingAt);

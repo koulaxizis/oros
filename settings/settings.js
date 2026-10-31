@@ -1937,6 +1937,15 @@
       host.appendChild(mtc);
     }
 
+    // This computer's files: orOS Portable and the desktop apps only
+    // (shell computerFiles(); orOS USB always shows them).
+    if (s.pcfiles) {
+      var pcc = card(t("pc.title"), "pcfiles");
+      pcc.appendChild(row(t("pc.on"), switchBtn(!!s.pcfiles.on, "pcfiles", function (v) { set("pcfiles", v); }, t("pc.on")),
+        { hint: t("pc.hint") }));
+      host.appendChild(pcc);
+    }
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));

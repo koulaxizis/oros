@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.63.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.64.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3376,13 +3376,88 @@
         known = now;
       }, function () {}).then(function () { setTimeout(poll, 5000); });
     }
-    get("roots").then(function (r) {
-      if (!r || !r.home) return;
-      document.documentElement.setAttribute("data-oros-computer-files", "1");
-      // Wave 4: open and save dialogs work in this computer's folders.
-      if (window.orosPcDialog) window.orosPcDialog.enable();
-      poll();
-    }, function () {});
+    var polling = false;
+    function start() {
+      return get("roots").then(function (r) {
+        if (!r || !r.home) return;
+        document.documentElement.setAttribute("data-oros-computer-files", "1");
+        // Wave 4: open and save dialogs work in this computer's folders.
+        if (window.orosPcDialog) window.orosPcDialog.enable();
+        if (!polling) { polling = true; poll(); }
+      }, function () {});
+    }
+    function stop() {
+      document.documentElement.removeAttribute("data-oros-computer-files");
+      if (window.orosPcDialog && window.orosPcDialog.disable) window.orosPcDialog.disable();
+    }
+    // orOS Portable and the desktop apps ask before showing this
+    // computer's files (launcher fsconsent.go): GET consent says on, off
+    // or ask (once per computer), fixed = orOS USB, always on. A launcher
+    // without consent (404 without "state") is an older orOS USB one.
+    function setConsent(on) {
+      return fetch("/__oros/fs/consent", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "X-Oros-FS": "1", "Content-Type": "application/json" },
+        body: JSON.stringify({ on: !!on })
+      }).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).then(function (c) {
+        state.pcFiles = { state: c && c.state === "on" ? "on" : "off", fixed: !!(c && c.fixed) };
+        if (state.pcFiles.state === "on") start(); else stop();
+        settingsNotify();
+      });
+    }
+    function askConsent() {
+      if (document.getElementById("pcfiles-dialog")) return;
+      var dlg = document.createElement("dialog");
+      dlg.id = "pcfiles-dialog";
+      dlg.style.cssText =
+        "border:1px solid var(--border);border-radius:12px;" +
+        "background:var(--panel-bg);color:var(--text);padding:20px;" +
+        "width:min(380px,calc(100vw - 32px));";
+      var h = document.createElement("h3");
+      h.style.cssText = "margin:0 0 6px;font-size:14px;";
+      h.textContent = window.t("pc.ask.title");
+      dlg.appendChild(h);
+      var p = document.createElement("p");
+      p.style.cssText = "font-size:12.5px;line-height:1.5;color:var(--text-dim);margin:0 0 14px;";
+      p.textContent = window.t("pc.ask.body");
+      dlg.appendChild(p);
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;";
+      function button(label, primary, on) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.style.cssText = primary
+          ? "border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;"
+          : "border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+        b.textContent = label;
+        b.addEventListener("click", function () {
+          dlg.close();
+          setConsent(on).catch(function () {});
+        });
+        row.appendChild(b);
+        return b;
+      }
+      button(window.t("pc.ask.no"), false, false);
+      var yes = button(window.t("pc.ask.yes"), true, true);
+      dlg.appendChild(row);
+      // Esc or a closed window: no answer, so orOS asks again next time.
+      dlg.addEventListener("close", function () { dlg.remove(); });
+      document.body.appendChild(dlg);
+      dlg.showModal();
+      yes.focus();
+    }
+    window.__orosPcFilesSet = function (on) { return setConsent(on).catch(function () {}); };
+    get("consent").then(function (c) {
+      var st = c && (c.state === "on" || c.state === "off" || c.state === "ask") ? c.state : "on";
+      state.pcFiles = { state: st, fixed: !!(c && c.fixed) };
+      settingsNotify();
+      if (st === "on") start();
+      else if (st === "ask") askConsent();
+    }, function () { start(); });
   })();
 
   // "Send to orOS" (bookmarklet, Android Share → orOS, a future
@@ -9773,6 +9848,9 @@
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
       multitask: mtSnapshot(),
+      // This computer's files (orOS Portable, desktop apps): null where the
+      // launcher does not ask (useoros.online, orOS USB).
+      pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
       a11y: a11ySnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
@@ -9805,6 +9883,9 @@
       case "autoexport":   setAutoexportUser(value); return;
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
+        return;
+      case "pcfiles":
+        if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
       case "textSize":
       case "contrast":

@@ -20,7 +20,7 @@
     theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    multitask: "device", a11y: "device", lock: "device", osk: "device", widgets: "device"
+    multitask: "device", pcfiles: "device", a11y: "device", lock: "device", osk: "device", widgets: "device"
   };
 
   // Search settings: one row per setting, in page order.
@@ -107,6 +107,7 @@
     ["wallgen", "system", "x.wallgen", "x.more", null, "app:wallpaper"],
     ["shortcuts", "system", "x.shortcuts"],
     ["multitask", "system", "mt.on", "mt.title", null, "multitask"],
+    ["pcfiles", "system", "pc.on", "pc.title", null, "pcfiles"],
     ["reset", "system", "x.reset"]
   ];
 
@@ -515,6 +516,9 @@
       "l.msg.crypto": "This browser couldn't do it. Try again.",
       "l.msg.busy": "Wait for the previous step to finish.",
       "mt.title": "Multitasking",
+      "pc.title": "This computer",
+      "pc.on": "Show this computer's files in orOS",
+      "pc.hint": "Files shows your home folder and this computer's disks under This computer, and apps open and save there. Only on this computer; nothing on it is synced. Files and open apps follow the next time they open.",
       "mt.on": "Keep apps open when you leave them",
       "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. On by default on computers, off on phones and tablets.",
       "mt.open": "Open in the background now: {n}",
@@ -599,6 +603,7 @@
       "w.wallgen": "make wallpaper generator create",
       "w.shortcuts": "keys keyboard hotkeys ctrl",
       "w.multitask": "windows keep open background switch apps",
+      "w.pcfiles": "this computer files disks drives home folder windows linux",
       "w.reset": "erase delete everything factory wipe"
     },
     el: {
@@ -999,6 +1004,9 @@
       "l.msg.crypto": "Ο browser δεν τα κατάφερε. Δοκίμασε ξανά.",
       "l.msg.busy": "Περίμενε να τελειώσει το προηγούμενο βήμα.",
       "mt.title": "Πολυεργασία",
+      "pc.title": "Αυτός ο υπολογιστής",
+      "pc.on": "Τα αρχεία αυτού του υπολογιστή στο orOS",
+      "pc.hint": "Το Αρχεία δείχνει τον προσωπικό σου φάκελο και τους δίσκους του υπολογιστή στο Αυτός ο υπολογιστής, και οι εφαρμογές ανοίγουν και αποθηκεύουν εκεί. Μόνο σε αυτόν τον υπολογιστή· τίποτα από αυτόν δεν συγχρονίζεται. Το Αρχεία και οι ανοιχτές εφαρμογές ακολουθούν την επόμενη φορά που ανοίγουν.",
       "mt.on": "Οι εφαρμογές μένουν ανοιχτές όταν φεύγεις",
       "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Ανοιχτή από default στους υπολογιστές, κλειστή σε κινητά και tablet.",
       "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}",
@@ -1082,6 +1090,7 @@
       "w.wallgen": "δημιουργία ταπετσαρίας φόντο",
       "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl",
       "w.multitask": "πολυεργασία παράθυρα ανοιχτές παρασκήνιο",
+      "w.pcfiles": "αυτός ο υπολογιστής αρχεία δίσκοι προσωπικός φάκελος windows linux",
       "w.reset": "διαγραφή σβήσιμο όλα εργοστασιακή"
     }
   };

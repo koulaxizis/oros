@@ -91,13 +91,13 @@ test("sort: folders first, then by name with numbers in order", () => {
 });
 
 test("errors: every launcher code has its own words, others fall back", () => {
-  for (const c of ["exists", "readonly", "full", "denied", "notfound", "changed", "busy", "inside", "verify", "notempty", "offline"]) {
+  for (const c of ["exists", "readonly", "full", "denied", "notfound", "changed", "busy", "inside", "verify", "notempty", "offline", "off", "norecycle"]) {
     assert.equal(C.errKey(c), "c.e." + c);
   }
   assert.equal(C.errKey("weird"), "c.e.io");
   assert.equal(C.errKey(undefined), "c.e.io");
   const src = fs.readFileSync(path.join(ROOT, "files/computer.js"), "utf8");
-  for (const c of ["exists", "readonly", "full", "denied", "notfound", "changed", "busy", "inside", "verify", "notempty", "offline", "io"]) {
+  for (const c of ["exists", "readonly", "full", "denied", "notfound", "changed", "busy", "inside", "verify", "notempty", "offline", "off", "norecycle", "io"]) {
     assert.equal(src.split('"c.e.' + c + '":').length - 1, 2, c);
   }
 });
@@ -255,4 +255,61 @@ test("the shell probes only on the launcher's own address and checks the event p
   assert.match(part, /data-oros-computer-files/);
   assert.match(part, /"oros-files-open"/);
   assert.match(part, /\(home\|disks\)/);
+});
+
+// ---------- orOS Portable and the desktop apps (consent, Windows) ----------
+
+test("consent: GET and POST go to the launcher with the header; Windows is told by roots", async () => {
+  const f = fakeFetch((url, init) => ({ status: 200, headers: JSONH,
+    json: init.method === "POST" ? { state: JSON.parse(init.body).on ? "on" : "off", fixed: false } : { state: "ask", fixed: false } }));
+  const c = C.client(f);
+  assert.deepEqual(await c.consent(), { state: "ask", fixed: false });
+  assert.deepEqual(await c.setConsent(true), { state: "on", fixed: false });
+  assert.equal(f.calls[0].url, "/__oros/fs/consent");
+  assert.equal(f.calls[1].init.method, "POST");
+  assert.equal(f.calls[1].init.headers["X-Oros-FS"], "1");
+  assert.equal(f.calls[1].init.body, JSON.stringify({ on: true }));
+  assert.equal(C.isWindows({ os: "windows" }), true);
+  assert.equal(C.isWindows({ os: "linux" }), false);
+  assert.equal(C.isWindows(null), false);
+});
+
+test("Windows drives pair with their roots by letter", () => {
+  const rows = C.diskRows([
+    { path: "C:", label: "Windows (C:)", size: 5e11, fstype: "ntfs", mount: "/disks/C", internal: true },
+    { path: "E:", label: "STICK (E:)", usb: true, size: 8e9, fstype: "exfat", mount: "/disks/E" }
+  ], [{ path: "/disks/C", free: 1e11 }, { path: "/disks/E", free: 4e9 }]);
+  assert.equal(rows[0].path, "/computer/disks/C");
+  assert.equal(rows[0].name, "Windows (C:)");
+  assert.equal(rows[1].path, "/computer/disks/E");
+  assert.equal(rows[1].usb, true);
+});
+
+test("Windows: Recycle Bin wording in EN and EL (DE in i18n), eject hidden, op recyclebin", () => {
+  const src = fs.readFileSync(path.join(ROOT, "files/computer.js"), "utf8");
+  const de = fs.readFileSync(path.join(ROOT, "i18n/de/files.js"), "utf8");
+  for (const k of ["c.recycle", "c.recycleOpen", "c.deleteW", "c.deletedW", "c.deleteMsgW"]) {
+    assert.equal(src.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  }
+  for (const k of ["c.e.off", "c.e.norecycle"]) assert.ok(de.includes('"' + k + '":'), "de " + k);
+  assert.match(src, /d\.path && !win/);
+  assert.match(src, /op: "recyclebin"/);
+});
+
+test("shell: asks once per computer, falls back for an older launcher, Settings switch", () => {
+  const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  const tr = fs.readFileSync(path.join(ROOT, "translations.js"), "utf8");
+  const de = fs.readFileSync(path.join(ROOT, "i18n/de/shell.js"), "utf8");
+  assert.match(shell, /get\("consent"\)/);
+  assert.match(shell, /else if \(st === "ask"\) askConsent\(\)/);
+  assert.match(shell, /\}, function \(\) \{ start\(\); \}\);/);   // no consent call: an older orOS USB launcher
+  assert.match(shell, /case "pcfiles":/);
+  assert.match(shell, /orosPcDialog\.disable/);
+  for (const k of ["pc.ask.title", "pc.ask.body", "pc.ask.yes", "pc.ask.no"]) {
+    assert.equal(tr.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  }
+  const pcd = fs.readFileSync(path.join(ROOT, "pcdialog.js"), "utf8");
+  assert.match(pcd, /disable: function/);
 });

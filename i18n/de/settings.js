@@ -116,6 +116,9 @@ orosPack("de", "settings", {
  "mt.on": "Apps offen lassen, wenn du sie verlässt",
  "mt.open": "Jetzt im Hintergrund offen: {n}",
  "mt.title": "Multitasking",
+ "pc.hint": "Dateien zeigt deinen persönlichen Ordner und die Laufwerke dieses Computers unter Dieser Computer, und Apps öffnen und speichern dort. Nur auf diesem Computer; nichts davon wird synchronisiert. Dateien und offene Apps folgen beim nächsten Öffnen.",
+ "pc.on": "Die Dateien dieses Computers in orOS zeigen",
+ "pc.title": "Dieser Computer",
  "n.apps": "Welche Apps benachrichtigen dürfen",
  "n.duration": "Bleibt sichtbar",
  "n.enabled": "Benachrichtigungen",
@@ -684,6 +687,7 @@ orosPack("de", "settings", {
  "w.wallgen": "hintergrund erstellen generator",
  "w.shortcuts": "tasten tastenkürzel strg ctrl",
  "w.multitask": "multitasking fenster offen hintergrund",
+ "w.pcfiles": "dieser computer dateien laufwerke persönlicher ordner windows linux",
  "w.reset": "löschen alles zurücksetzen werkseinstellungen",
  "lock": "Bildschirmsperre"
 });

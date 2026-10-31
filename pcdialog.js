@@ -514,6 +514,16 @@
       D.openFiles = openFiles;
       D.mode = function () { return "computer"; };
     },
+    // shell.js computerFiles(): the person switched This computer off.
+    disable: function () {
+      if (!enabled || !orig) return;
+      enabled = false;
+      var D = w.orosDialog;
+      D.saveFile = orig.saveFile;
+      D.openFile = orig.openFile;
+      D.openFiles = orig.openFiles;
+      D.mode = orig.mode;
+    },
     enabled: function () { return enabled; },
     // The file a name was opened from, for a caller that wants to say so.
     origin: function (name) {
