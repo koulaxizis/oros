@@ -113,6 +113,7 @@ Auf dem orOS-USB-Stick und auf einem Computer, auf dem orOS von ihm installiert 
 - Wenn du einen USB-Stick ansteckst, sagt es eine Benachrichtigung; `Öffnen` zeigt ihn hier. Nichts öffnet sich von selbst.
 - Die Papierkorb-Taste oben ist der Papierkorb dieses Computers, getrennt vom orOS-Papierkorb. `Wiederherstellen` bringt ein Element in seinen Ordner zurück; `Endgültig löschen` und `Papierkorb leeren` geben den Platz frei.
 - Um Dateien in orOS zu holen, wähle `Auf die orOS-Disk kopieren…`. Um Dateien hinauszubringen, wähle sie auf der orOS-Disk aus und dann `An diesen Computer senden…` (Rechtsklickmenü oder Auswahlleiste). Vergebene Namen bekommen „ (2)“; nichts wird überschrieben.
+- Jede orOS-App öffnet und speichert direkt auf diesem Computer: `Öffnen…` und `Speichern…` zeigen seine Ordner und Laufwerke (Windows-Laufwerke nur zum Öffnen). Speicherst du eine Datei, die du von hier geöffnet hast, wird sie an ihrem Platz ersetzt; wurde sie seitdem auf dem Computer geändert, bietet orOS an, deine Fassung als Kopie zu speichern, und überschreibt die andere nie. Bevor eine andere Datei ersetzt wird, fragt orOS nach.
 > Dateien auf diesem Computer werden nie synchronisiert. Nur was du auf die orOS-Disk kopierst, kommt in die orOS-Synchronisierung. Auf einem Stick ohne Persistenz-Partition wird der persönliche Ordner beim Herunterfahren geleert.
 
 ## Synchronisierung und Sicherung

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.60.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.61.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3379,6 +3379,8 @@
     get("roots").then(function (r) {
       if (!r || !r.home) return;
       document.documentElement.setAttribute("data-oros-computer-files", "1");
+      // Wave 4: open and save dialogs work in this computer's folders.
+      if (window.orosPcDialog) window.orosPcDialog.enable();
       poll();
     }, function () {});
   })();
