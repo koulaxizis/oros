@@ -66,13 +66,14 @@
       sfz: x.sfz, bytes: x.bytes, files: x.files | 0
     };
   }
-  var cat = null;
+  var cat = null, catOk = false;
   function catalog() {
     if (cat) return cat;
     cat = file(BASE + "index.json", true).then(function (r) { return r.json(); }).then(function (j) {
       list = (j && Array.isArray(j.packs) ? j.packs : []).map(clean).filter(Boolean);
       byId = {};
       list.forEach(function (p) { byId[p.id] = p; });
+      catOk = true;
       return list;
     }, function () { cat = null; return list; });
     return cat;
@@ -124,6 +125,9 @@
     return Promise.all([catalog(), ids.some(function (id) { return USER_RE.test(id) && !byId[id]; }) ? scan() : null]).then(function () {
       return Promise.all(ids.map(function (id) {
         if (insts[id]) return insts[id];
+        // a pack the catalog no longer lists (retired, e.g. replaced by a NULL JSFX
+        // instrument): the track plays its built-in sound, also in an export
+        if (catOk && !USER_RE.test(id) && !byId[id]) { states[id] = "gone"; return null; }
         if (!jobs[id]) jobs[id] = load(ctx, id, onStep);
         return jobs[id];
       }));
