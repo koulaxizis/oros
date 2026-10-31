@@ -8,7 +8,22 @@ A backup is a single file with all your orOS data: every app, your settings and 
 
 You can also press [[Ctrl+Alt+Shift+X]] (`Export database`). Export works offline and doesn't need Dropbox.
 
->! A backup file is **not encrypted**. Anyone who opens it can read your data. Store it somewhere safe, as `Settings` reminds you: `A backup file is NOT encrypted. Keep it somewhere safe.`
+>! Unless you turn on encryption (below), a backup file is **not encrypted**: anyone who opens it can read your data. Store it somewhere safe, as `Settings` reminds you: `A backup file is NOT encrypted. Keep it somewhere safe.`
+
+## Encrypt your backup files
+Encryption is off unless you turn it on. With it on, every backup file is locked with a passphrase of its own (AES-256, the same strength as sync), so a lost USB stick or a shared folder gives nothing away.
+
+1. In `Settings`, under `Backups`, turn on `Encrypt backup files`.
+2. Type a passphrase of at least 10 characters twice and tap `Encrypt`.
+
+From then on `Export backup file`, `Back up now` and the automatic folder backups are encrypted. `Change passphrase` sets a new one for the next files; files made before keep the passphrase they were made with. Turning the switch off makes plain files again.
+
+>! Write the backup passphrase down. Without it nobody can open these files, orOS included. It is separate from your sync passphrase.
+
+Good to know:
+- The passphrase itself is not stored. This device keeps only a key made from it, so the scheduled backups can run without asking. The switch and the key stay on this device; turn it on on each device you back up from.
+- If this device's site data is cleared, the key is gone: `Settings` asks you to `Set passphrase` again, and no backup file is written until you do.
+
 
 ## Automatic backups to a folder
 In Chrome, Edge and similar browsers on a computer, orOS can write backups to a folder you pick. These options don't appear in Firefox, Safari or on phones, because those browsers can't write to a folder. There, export by hand now and then.
@@ -29,6 +44,8 @@ If you see `Turn on Auto backup first` or `Choose a backup folder first`, set th
 1. Open `Settings`, go to `Backups` and tap `Import backup file`.
 2. Pick an orOS backup file.
 3. You'll see `Data imported` with the number of sections updated.
+
+An encrypted backup file asks for its passphrase first (`Encrypted backup file`). A wrong one shows `Wrong passphrase for this backup file` and nothing changes. Plain backup files, including every file made before encryption existed, import as always.
 
 Importing doesn't wipe orOS first. Where an app can merge, the backup is combined with what's already here, and files from the backup are added to the Files app without deleting yours. If sync is on, the restored data then goes to your other devices too.
 

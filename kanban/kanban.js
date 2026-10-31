@@ -1,30 +1,27 @@
 // ============================================================
-// orOS Kanban — App logic (v0.6.0 - Multi-board)
+// orOS Kanban — app logic
 // -------------------------------------------------------------
-// Νέο στο v0.6.0 (MULTI-BOARD SUPPORT):
-//   - state = { ver: 5, boards: [{ ...oldStateFields, id, mtime }], 
-//               om: <έκδοση σειράς boards>, activeBoardId: ... }
-//   - Κάθε board είναι πλήρης μονάδα δεδομένων (columns, labels, deleted)
-//   - Migration v4→v5: wrapper του υπάρχοντος state σε board "Main"
-//   - Merge logic επεκτάθηκε για union boards + nested merge ανά board_id
+// Data: state = { ver: 5, boards: [{ id, mtime, columns, labels,
+//   deleted, ... }], om (board order stamp), activeBoardId }.
+// Each board is a full unit of data; the v4 → v5 migration wrapped the
+// old single-board state into a board "Main". Sync: union of boards,
+// then a nested merge per board id (LWW + tombstones).
 // -------------------------------------------------------------
-// Παλαιές εκδόσεις (v0.5 merge): cross-device merge με LWW + tombstones
-// -------------------------------------------------------------
-// Ενότητες:
-//   1. Σταθερές, i18n, βοηθητικές συναρτήσεις (helpers)
-//   2. Μοντέλο δεδομένων, αποθήκευση, migration (v5: multi-board)
-//   2b. Μηχανή συγχρονισμού μεταξύ συσκευών (multi-board extended)
-//   3. Εμφάνιση (Render): boards list + columns + cards
+// Sections:
+//   1. Constants, i18n, helpers
+//   2. Data model, storage, migration (v5: multi-board)
+//   2b. Cross-device sync engine (multi-board)
+//   3. Render: board list, columns, cards
 //   4. Board management UI (dialog, dropdown)
-//   5. Γρήγορη προσθήκη (ανά στήλη)
-//   6. Διάλογος καρτών (ζωντανή επεξεργασία)
-//   7. Διάλογος στηλών
-//   8. Αναζήτηση & φιλτράρισμα (session-only)
-//   9. Drag & drop καρτών
-//  10. Drag αναδιάταξης στηλών
+//   5. Quick add (per column)
+//   6. Card dialog (live editing)
+//   7. Column dialog
+//   8. Search and filters (session only)
+//   9. Card drag and drop
+//  10. Column reorder drag
 //  11. Undo / toast
 //  12. Sync slice (merge-registered) + palette
-//  13. Σύνδεση (Wiring) & εκκίνηση (boot)
+//  13. Wiring and boot
 // ============================================================
 // Wave K1 (Trello/Planka/Jira-like boards):
 //   - per-field card merge (kanban/model.js, OrosKanbanModel)
@@ -208,7 +205,6 @@
       "lanes.lane":       "By lane",
       "lanes.nolabel":    "No label",
       "lanes.nolane":     "No lane",
-      "lanes.hint":       "Rows of cards across the columns. Drag a card to another row to change its label or lane.",
       "card.col":         "Column",
       "card.lane":        "Lane",
       "card.laneph":      "e.g. Team A",
@@ -280,7 +276,6 @@
       "csv.board":        "Board",
       "csv.notes":        "Notes",
       "csv.info":         "Extra info",
-      "import.oros":      "orOS Kanban",
       "color.blue":       "Blue",
       "color.green":      "Green",
       "color.red":        "Red",
@@ -440,7 +435,6 @@
       "lanes.lane":       "Ανά λωρίδα",
       "lanes.nolabel":    "Χωρίς ετικέτα",
       "lanes.nolane":     "Χωρίς λωρίδα",
-      "lanes.hint":       "Σειρές καρτών κατά μήκος των στηλών. Σύρε μια κάρτα σε άλλη σειρά για να αλλάξεις ετικέτα ή λωρίδα.",
       "card.col":         "Στήλη",
       "card.lane":        "Λωρίδα",
       "card.laneph":      "π.χ. Ομάδα Α",
@@ -512,7 +506,6 @@
       "csv.board":        "Πίνακας",
       "csv.notes":        "Σημειώσεις",
       "csv.info":         "Επιπλέον στοιχεία",
-      "import.oros":      "orOS Kanban",
       "color.blue":       "Μπλε",
       "color.green":      "Πράσινο",
       "color.red":        "Κόκκινο",

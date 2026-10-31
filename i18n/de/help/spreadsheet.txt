@@ -18,21 +18,26 @@ Beginne eine Zelle mit =, um eine Formel zu schreiben, zum Beispiel =A1*2 oder =
 - Wenn du eine Formel kopierst und einfügst, wandern ihre Bezüge mit, wie in anderen Tabellenprogrammen ($-Teile bleiben).
 
 ## Funktionen
-Über 100 Funktionen funktionieren wie in Excel und Google Sheets, mit ihren englischen Namen. Tippe auf ƒx neben der Formelleiste für die ganze Liste mit einer Zeile zu jeder; während du =SU… tippst, erscheint eine kurze Liste: Nimm die Pfeiltasten und [[Tab]] oder tippe auf einen Namen.
+Über 200 Funktionen funktionieren wie in Excel und Google Sheets, mit ihren englischen Namen. Tippe auf ƒx neben der Formelleiste für die ganze Liste mit einer Zeile zu jeder; während du =SU… tippst, erscheint eine kurze Liste: Nimm die Pfeiltasten und [[Tab]] oder tippe auf einen Namen.
 
 - Summen und Bedingungen: SUM, AVERAGE, COUNT, COUNTA, COUNTBLANK, SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, MAXIFS, MINIFS, SUMPRODUCT.
 - Bedingungen schreibst du wie ">5", "<>bezahlt", "a*" (* beliebiger Text, ? ein Zeichen) oder als Zelle.
-- Nachschlagen: VLOOKUP, HLOOKUP, XLOOKUP, INDEX, MATCH, CHOOSE.
+- Nachschlagen: VLOOKUP, HLOOKUP, XLOOKUP, XMATCH, LOOKUP, INDEX, MATCH, CHOOSE, OFFSET, INDIRECT, ADDRESS.
+- Feste Listen stehen in geschweiften Klammern: {1,2,3} ist eine Zeile, {1;2;3} eine Spalte, {1,2;3,4} zwei Zeilen. Zum Beispiel =SUM({1,2,3}).
 - Logik und Fehler: IF, IFS, SWITCH, AND, OR, NOT, IFERROR, IFNA, ISBLANK, ISNUMBER, ISTEXT, ISERROR.
-- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, SUBSTITUTE, FIND, SEARCH, TEXT, VALUE, TEXTJOIN, CONCAT, REPT.
-- Mathematik und Statistik: ROUND, ROUNDUP, ROUNDDOWN, INT, MOD, POWER, SQRT, PRODUCT, MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, PI, RAND, RANDBETWEEN.
-- Geld: PMT, FV, PV, NPER, NPV.
+- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, CLEAN, SUBSTITUTE, FIND, SEARCH, TEXTBEFORE, TEXTAFTER, TEXT, FIXED, VALUE, NUMBERVALUE, TEXTJOIN, CONCAT, REPT, UNICODE, UNICHAR.
+- Mathematik: ROUND, ROUNDUP, ROUNDDOWN, MROUND, INT, MOD, QUOTIENT, POWER, SQRT, PRODUCT, GCD, LCM, FACT, COMBIN, PERMUT, EVEN, ODD, CEILING.MATH, FLOOR.MATH, SUBTOTAL, SIN, COS, TAN und die anderen Winkelfunktionen, RADIANS, DEGREES, PI, RAND, RANDBETWEEN.
+- Statistik: MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, AVERAGEA, GEOMEAN, HARMEAN, CORREL, SLOPE, INTERCEPT, RSQ, FORECAST, NORM.DIST, NORM.INV, STANDARDIZE.
+- Geld: PMT, IPMT, PPMT, CUMIPMT, CUMPRINC, FV, PV, NPER, RATE, NPV, XNPV, IRR, XIRR, MIRR, EFFECT, NOMINAL.
+- Abschreibung: SLN, SYD, DB, DDB.
+- SUBTOTAL zählt alle Zeilen, auch die, die ein Filter ausblendet.
 - TEXT(Wert; "0.00") schreibt eine Zahl als Text in einem Muster: 0, 0.00, #,##0, 0%, dd/mm/yyyy und so weiter.
 
 ## Datumswerte
 Datumswerte sind Tageszahlen, wie in Excel: 1 ist der 31. Dezember 1899, also ergibt die Differenz zweier Daten die Tage dazwischen.
 
-- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DATEDIF, EDATE, EOMONTH, NETWORKDAYS und WORKDAY arbeiten damit.
+- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DAYS360, DATEDIF, YEARFRAC, EDATE, EOMONTH, WEEKNUM, ISOWEEKNUM, TIMEVALUE, NETWORKDAYS, WORKDAY, NETWORKDAYS.INTL und WORKDAY.INTL arbeiten damit.
+- NETWORKDAYS.INTL und WORKDAY.INTL nehmen dein eigenes Wochenende: 1 ist Samstag und Sonntag, 7 Freitag und Samstag, 11 bis 17 ein einzelner Tag (11 Sonntag), oder sieben Ziffern 0/1 von Montag bis Sonntag, etwa "0000011".
 - Eine Zelle mit =TODAY(), =DATE(…) und Ähnlichem zeigt von selbst ein Datum. Für andere Zellen wähle `Datum` unter `Zahlenformat`: 2026-10-14 auf Englisch und Deutsch, 14/10/2026 auf Griechisch.
 - Ein Datum, das du tippst, wie 2026-10-14 oder 14/10/2026, bleibt so, wie du es getippt hast (Text). Datumsfunktionen lesen es trotzdem (Tag zuerst: 14/10/2026 ist der 14. Oktober), und DATEVALUE macht daraus eine Tageszahl.
 
@@ -153,7 +158,7 @@ Siehe auch [Sicherung](help:t/backup).
 - Verbundene Zellen wachsen nicht, wenn du darin Zeilen oder Spalten einfügst; die Verbindung behält ihre Größe.
 - Umgebrochene Zeilen wachsen mit, wenn du den Umbruch einschaltest; eine Zeile, deren Text du später änderst, behält ihre Höhe, bis du sie erneut umbrichst oder ihren Rand ziehst.
 - Solange eines deiner Geräte noch ein älteres orOS hat, zeigt es keine Diagramme, Regeln, Zeilenhöhen, Füllungen, Rahmen, Umbrüche oder verbundenen Zellen, und die beiden Geräte schicken die Arbeitsmappe womöglich ein paar Mal hin und her, bis beide aktualisiert sind. Das aktualisierte Gerät behält sie, außer wo das ältere dasselbe geändert hat: Ein dort gesetztes Format an einer Zelle verwirft deren Füllung, Rahmen, Umbruch und Verbindung, und eine dort geänderte Blatteinstellung (Name, Spaltenbreite) verwirft seine Zeilenhöhen.
-- Matrixformeln, {1,2}-Konstanten, benannte Bereiche und Pivot-Tabellen werden nicht unterstützt. Eine Formel aus Excel, die eine Funktion nutzt, die orOS nicht kennt, zeigt weiter den Wert, den Excel gespeichert hat.
+- Matrixformeln, die mehrere Zellen füllen (FILTER, SORT, UNIQUE), benannte Bereiche und Pivot-Tabellen werden nicht unterstützt. INDIRECT liest nur A1-Bezüge, nicht R1C1. Eine Formel aus Excel, die eine Funktion nutzt, die orOS nicht kennt, zeigt weiter den Wert, den Excel gespeichert hat.
 - Zeilen einfügen oder löschen verschiebt Zellen: Wenn ein anderes Gerät dieselben Zellen vor der Synchronisierung bearbeitet, bleibt seine Änderung an der alten Stelle.
 - Der Rückgängig-Verlauf wird gelöscht, wenn die Synchronisierung Änderungen bringt, und das Löschen eines Blatts lässt sich nicht rückgängig machen.
 - Excel- und Calc-Dateien brauchen eine Hilfsbibliothek; wenn sie noch nicht geladen ist, brauchst du eventuell eine Internetverbindung.

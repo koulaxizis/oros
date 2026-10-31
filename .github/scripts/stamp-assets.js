@@ -57,6 +57,15 @@ if (!check) {
   console.log(`CSP refreshed in ${csp.written} page(s).`);
 }
 
+// ---- BOOT-P1: shell script preloads follow the new ?v= ----
+// The <link rel="preload"> block ahead of the CSP meta must name each
+// shell script with the same ?v= as its <script>, or it is fetched twice.
+// After the CSP step, which puts the meta in place first.
+if (!check) {
+  const pre = require('./preload.js').run(false, process.cwd());
+  console.log(`Preload block: ${pre.scripts} script(s), ${pre.written ? 'written' : 'already current'}.`);
+}
+
 // ---- G2: OFFLINE COVERAGE GUARD ----
 const sw = fs.readFileSync('sw.js', 'utf8');
 const pc = sw.match(/PRECACHE_URLS\s*=\s*\[([\s\S]*?)\]/);

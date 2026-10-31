@@ -41,7 +41,7 @@ Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Op
 - The search box looks in every folder: titles, addresses, descriptions, tags and folder names.
 - Add tags in the edit window: type one and press [[Enter]] or a comma. [[Backspace]] in an empty field removes the last tag.
 - Tap a tag on a row to show only bookmarks with that tag. Tap more tags to narrow it down. The tag button (`All tags`) lists every tag with a count, and `Clear filters` resets the filter.
-- The sort menu offers `Recent`, `Title A–Z` and `Most visited`.
+- The sort menu offers `Recent`, `Title A–Z`, `Most visited` and `Manual`. In `Manual` the row menu also has `Move up` and `Move down`; that order syncs to your other devices.
 
 ## Tidy up
 

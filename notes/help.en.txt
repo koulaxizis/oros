@@ -18,7 +18,7 @@ Right-click a page in the tree, long-press it on a touch screen, or tap the ⋮ 
 - `New page from template…` (see Daily note and templates below).
 - `Export page (.txt)`, `Export page (.md)`, `Export notebook (.txt, .zip)` and `Export notebook (.md, .zip)`.
 - `Send to someone…` sends the page as a link that opens in any browser. The paper-plane button next to the page title does the same.
-- `Delete` removes the page after you confirm.
+- `Delete` removes the page after you confirm. Its sub-pages are kept: they move up one level.
 
 On a computer you can also drag a page in the tree and drop it onto another page to make it a sub-page, or onto empty space to move it to the top level.
 

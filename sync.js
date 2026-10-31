@@ -596,6 +596,9 @@
   //     (null = object missing — never an error).
   //   storage.deleteObject(key) → Promise<true> (gone = success).
   //   storage.listPrefix(prefix) → Promise<string[]> (relative keys).
+  //   storage.listInfo(prefix) → Promise<[{ key, size, modified }]>
+  //     (files only; modified = ms when the provider stored the
+  //     content, 0 = unknown). VD-GC uses it.
   //   storage.getRevision(key) → Promise<string|null>.
   // Chunked uploads LIVE INSIDE the adapter (upload sessions);
   // callers always pass ONE whole Blob. Content is expected to be
@@ -725,7 +728,9 @@
       .then(function (meta) { return meta ? (meta.rev || "") : null; });
   }
 
-  function adapterList(prefix) {
+  // info: true = [{ key, size, modified (ms since 1970, 0 = unknown) }]
+  // for the files only (VD-GC), else the keys as before.
+  function adapterList(prefix, info) {
     var base = adapterPath(prefix || "");
     var out = [];
     function page(cursor) {
@@ -742,7 +747,11 @@
           (listing.entries || []).forEach(function (e) {
             if (!e.path_lower) return;
             if (e.path_lower.indexOf(base) === 0 && e.path_lower !== base + "/") {
-              out.push(e.path_lower.slice(ADAPTER_ROOT.length + 1));
+              var k = e.path_lower.slice(ADAPTER_ROOT.length + 1);
+              if (!info) out.push(k);
+              else if (e[".tag"] === "file") {
+                out.push({ key: k, size: +e.size || 0, modified: Date.parse(e.server_modified || "") || 0 });
+              }
             }
           });
           if (listing.has_more && listing.cursor) return page(listing.cursor);
@@ -794,6 +803,10 @@
     },
 
     listPrefix: function (prefix) { return adapterList(prefix); },
+
+    // VD-GC: server_modified is when Dropbox stored this content.
+    // Uploading the very same bytes again does not change it.
+    listInfo: function (prefix) { return adapterList(prefix, true); },
 
     getRevision: function (key) { return adapterRevision(key); }
   };
@@ -1335,6 +1348,26 @@
 
   function davKey(key) { return DAV_ROOT + "/" + String(key).replace(/^\/+/, ""); }
 
+  // Every object key under `prefix` (folders walked one level at a
+  // time: many servers refuse Depth: infinity). info: true = files as
+  // { key, size, modified (ms, 0 = unknown) }.
+  function davList(prefix, info) {
+    var out = [];
+    function walk(rel) {
+      return davChildren(rel).then(function (list) {
+        return (list || []).reduce(function (chain, e) {
+          return chain.then(function () {
+            if (e.dir) return walk(e.rel);
+            var k = e.rel.slice(DAV_ROOT.length + 1);
+            if (k.indexOf(prefix || "") !== 0) return;
+            out.push(info ? { key: k, size: e.size, modified: Date.parse(e.modified || "") || 0 } : k);
+          });
+        }, Promise.resolve());
+      });
+    }
+    return walk(DAV_ROOT).then(function () { return out; });
+  }
+
   var davStorage = {
     putObject: function (key, blob, knownRev) {
       var rel = davKey(key);
@@ -1357,21 +1390,9 @@
     deleteObject: function (key) { return davDelete(davKey(key), false); },
     // Every object key under `prefix` (folders walked one level at a
     // time: many servers refuse Depth: infinity).
-    listPrefix: function (prefix) {
-      var out = [];
-      function walk(rel) {
-        return davChildren(rel).then(function (list) {
-          return (list || []).reduce(function (chain, e) {
-            return chain.then(function () {
-              if (e.dir) return walk(e.rel);
-              var k = e.rel.slice(DAV_ROOT.length + 1);
-              if (k.indexOf(prefix || "") === 0) out.push(k);
-            });
-          }, Promise.resolve());
-        });
-      }
-      return walk(DAV_ROOT).then(function () { return out; });
-    },
+    listPrefix: function (prefix) { return davList(prefix, false); },
+    // VD-GC: getlastmodified (an object without one is never old).
+    listInfo: function (prefix) { return davList(prefix, true); },
     getRevision: function (key) {
       return davReq("HEAD", davKey(key)).then(function (res) {
         if (res.status === 404) return null;
@@ -1481,7 +1502,7 @@
   var PROVIDER_KEY = "oros-sync-provider";
   var CLOUD_ID_KEY = "oros-sync-cloud-id";
   var VAULT_CLOUD_KEYS = ["oros-vault-manifest", "oros-vault-rev", "oros-vault-absent-at",
-                          "oros-vault-seeded", "oros-vault-conflicts"];
+                          "oros-vault-seeded", "oros-vault-conflicts", "oros-vault-sent"];
   var PROVIDERS = { dropbox: dropboxProvider, webdav: webdavProvider };
 
   function pickProvider() {
@@ -1534,6 +1555,12 @@
     },
     listPrefix: function (prefix) {
       return adapterEnsureConnected().then(function () { return provider.storage.listPrefix(prefix); });
+    },
+    listInfo: function (prefix) {
+      return adapterEnsureConnected().then(function () {
+        if (typeof provider.storage.listInfo !== "function") throw new Error("clean-unsupported");
+        return provider.storage.listInfo(prefix);
+      });
     },
     getRevision: function (key) {
       return adapterEnsureConnected().then(function () { return provider.storage.getRevision(key); });
@@ -1674,6 +1701,78 @@
         console.warn("orOS sync: pwEpoch mismatch detected — passphrase changed elsewhere?");
       }
       return payload;
+    });
+  }
+
+  // ---------- BK-E: encrypted backup files (Settings › Backups) ----------
+  // Optional, off by default (Chris, 2026-10-31). A backup file sealed
+  // with its own passphrase (at least 10 characters):
+  //   { "format": "oros-backup", "v": 1, "enc": { it, s, iv, ct } }
+  // AES-256-GCM; key = PBKDF2-SHA-256 of the passphrase with the
+  // 16-byte salt `s` and `it` rounds (600 000 for new keys); `ct` is
+  // the plain backup file's text (base64 fields). The shell derives the
+  // key ONCE when the passphrase is set and keeps it non-extractable on
+  // the device (IndexedDB oros-fs "backup-key"), so scheduled folder
+  // backups never need the passphrase itself. One salt per key; every
+  // file draws a fresh 96-bit IV. Plain backup files still import.
+  var BACKUP_FORMAT = "oros-backup";
+  var BACKUP_SEALED_RE = /^\s*\{\s*"format"\s*:\s*"oros-backup"/;
+
+  // (pw, salt?, it?) → { key, s, it }. No salt = a new random one.
+  function backupKey(pw, salt, it) {
+    if (typeof pw !== "string" || !pw) return Promise.reject(new Error("backup-pass"));
+    var rounds = it === undefined ? PBKDF2_ROUNDS : it;
+    if (typeof rounds !== "number" || rounds !== Math.floor(rounds) ||
+        rounds < PBKDF2_LEGACY || rounds > PBKDF2_MAX) {
+      return Promise.reject(new Error("bad backup file"));
+    }
+    var s = salt;
+    if (!s) { s = new Uint8Array(16); crypto.getRandomValues(s); }
+    return crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"])
+      .then(function (base) {
+        return crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt: s, iterations: rounds, hash: "SHA-256" },
+          base, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+      })
+      .then(function (key) { return { key: key, s: b64encode(s), it: rounds }; });
+  }
+
+  // (text, { key, s, it }) → the sealed file's text.
+  function sealBackup(text, k) {
+    if (!k || !k.key || typeof k.s !== "string") return Promise.reject(new Error("backup-nokey"));
+    var iv = new Uint8Array(12); crypto.getRandomValues(iv);
+    return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, k.key, new TextEncoder().encode(String(text)))
+      .then(function (ct) {
+        return JSON.stringify({ format: BACKUP_FORMAT, v: 1,
+          enc: { it: k.it, s: k.s, iv: b64encode(iv.buffer), ct: b64encode(ct) } });
+      });
+  }
+
+  // The sealed part of a file's text, or null (a plain backup file).
+  // Only text that starts like a sealed file is parsed.
+  function backupSealed(text) {
+    if (typeof text !== "string" || !BACKUP_SEALED_RE.test(text.slice(0, 64))) return null;
+    var doc;
+    try { doc = JSON.parse(text); } catch (e) { return null; }
+    var e2 = doc && doc.format === BACKUP_FORMAT && doc.enc;
+    if (!e2 || doc.v !== 1 || typeof e2.s !== "string" || typeof e2.iv !== "string" ||
+        typeof e2.ct !== "string" || typeof e2.it !== "number") return null;
+    return e2;
+  }
+
+  // (text, pw) → the plain backup text. A wrong passphrase (or a
+  // changed file: GCM checks both) rejects with "backup-pass".
+  function openBackup(text, pw) {
+    var e = backupSealed(text);
+    if (!e) return Promise.reject(new Error("bad backup file"));
+    var salt, iv, ct;
+    try { salt = b64decode(e.s); iv = b64decode(e.iv); ct = b64decode(e.ct); }
+    catch (x) { return Promise.reject(new Error("bad backup file")); }
+    if (salt.length < 8 || iv.length !== 12) return Promise.reject(new Error("bad backup file"));
+    return backupKey(pw, salt, e.it).then(function (k) {
+      return crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, k.key, ct)
+        .then(function (plain) { return new TextDecoder().decode(plain); },
+              function () { throw new Error("backup-pass"); });
     });
   }
 
@@ -3786,6 +3885,12 @@
       markDirty();   // imported result must reach the cloud
       return applied;
     },
+
+    // BK-E: optional encrypted backup files (Settings › Backups).
+    backupKey:          backupKey,        // (pw, salt?, it?) → { key, s, it }
+    sealBackup:         sealBackup,       // (text, { key, s, it }) → sealed text
+    backupSealed:       backupSealed,     // (text) → enc part | null (plain file)
+    openBackup:         openBackup,       // (text, pw) → plain text; "backup-pass" on a wrong one
 
     // Passphrase / vault
     setPassphrase:      setPassphrase,    // (pw, remember?) — remember = seal to device
