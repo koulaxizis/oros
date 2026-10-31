@@ -1228,6 +1228,7 @@ var PRECACHE_URLS = [
   "settings/index.html",
   "settings/settings.css",
   "settings/core.js",
+  "settings/report.js",
   "settings/settings.js",
   "settings/translate.js",
   "settings/search.js",
