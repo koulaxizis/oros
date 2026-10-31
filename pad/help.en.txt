@@ -1,0 +1,46 @@
+# Pad
+Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a file as it is, lets you change it and saves it back where it came from, with the same encoding and line endings unless you change them. For documents with formatting use Writer; for quick notes use Notes.
+
+## Getting started
+- `New` (or `+` next to the tabs) opens an empty tab. `Open` asks where the file is: the `orOS disk` or `This device`.
+- `Save` writes the file back where it came from. A tab that was never saved asks where to keep it first. `Save as…` in `More` always asks.
+- Every open file has its own tab. A dot on a tab means changes that are not saved yet. Drag a tab to move it; the × or the middle mouse button closes it.
+- Your tabs, unsaved text included, are kept on this device: close orOS and open Pad again, and everything is where you left it.
+
+## Colours for code
+- Pad colours code in many languages: JavaScript and TypeScript, JSON, HTML, CSS, XML, PHP, Markdown, Python, Go, Rust, C and C++, Java, SQL, YAML, shell, PowerShell, TOML, INI, Lua, Ruby, Perl, C#, Kotlin, Dart, Swift, R, diff, Dockerfile, nginx, and EEL2 for REAPER JSFX effects (NULL JSFX).
+- The language comes from the file name (and from the first line, such as `#!/bin/bash`). The language button in the bar at the bottom changes it.
+- Brackets that belong together light up, and `Close brackets and quotes` in `More` adds the closing one as you type. The arrows next to the line numbers fold a block away.
+
+## Find and replace
+- `Find` (or [[Ctrl+F]]) opens the search bar above the text. `next` and `previous` move between matches, `all` selects them all.
+- Tick `match case`, `regexp` (regular expressions such as `^\s+$`) or `by word`. Write the new text in `Replace`, then `replace` or `replace all`. In a regular expression, `$1` in the new text puts back the first group.
+- `Go to line…` (or [[Ctrl+G]]) jumps to a line, or to line:column.
+
+## Encoding and line endings
+- The bar at the bottom shows the line and column, the language, the indentation, the line endings (LF or CRLF) and the encoding. Each one is a button.
+- Pad reads UTF-8 (with or without BOM), UTF-16 and the older encodings that Greek files often have: Windows-1253 and ISO-8859-7, plus Windows-1252 and ISO-8859-1. When the letters look wrong, open the encoding and choose `Reopen with this encoding`.
+- `Save with this encoding` writes the file in another encoding. If a character has no place in the old encoding (an emoji, for example), Pad says which one and does not save, so the file is never damaged.
+- Line endings stay as the file had them. A file with mixed endings gets one kind on save, and Pad tells you.
+
+## Indentation
+- Pad sees whether a file uses tabs or spaces and how wide. The indentation button changes it for new lines, and `Change the whole file too` turns all leading tabs into spaces or back.
+- [[Tab]] indents and [[Shift+Tab]] takes the indent back. To leave the text with the keyboard, press [[Esc]] and then [[Tab]].
+
+## Where your files go
+- `orOS disk`: the file stays in orOS, in the folder you choose (`Documents` at first), and syncs to your other devices encrypted like every file on the disk. Files lists it too.
+- `This device`: a file on this computer or phone. Where the browser can, it asks where to save; otherwise the file goes to Downloads. On an orOS USB stick it is saved back on the computer itself.
+- If a file on the orOS disk changed somewhere else after you opened it (another device or another app), Pad does not overwrite it. It offers to save yours as a copy next to it, or to open the other version in a new tab, so nothing is lost.
+- Pad never runs a file: HTML or a script opens as text only. Tabs you have not saved are not synced; they stay on this device.
+
+## View
+- In `More`: `Word wrap`, `Line numbers`, `Show spaces and tabs`, `Larger text` and `Smaller text`. These choices are kept on this device.
+- Very large files (over 10 MB) open as plain text, without colours, so Pad stays fast. Files over 50 MB do not open.
+
+## Keyboard shortcuts
+- [[Ctrl+S]]: save. [[Ctrl+Shift+S]]: save as.
+- [[Ctrl+O]]: open.
+- [[Alt+N]]: new tab. [[Alt+W]]: close the tab.
+- [[Alt+PageDown]] and [[Alt+PageUp]]: next and previous tab.
+- [[Ctrl+F]]: find and replace. [[Ctrl+G]]: go to line.
+- [[Ctrl+Z]] and [[Ctrl+Y]]: undo and redo. [[Ctrl+D]]: select the next match of the selected word. [[Alt+↑]] and [[Alt+↓]]: move the line. [[Ctrl+/]]: comment out the line.
