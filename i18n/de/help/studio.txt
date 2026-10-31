@@ -56,10 +56,13 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 
 ## Aufnehmen über deine Soundkarte (orOS Bridge)
 - Ein Browser nimmt über den gemeinsamen Mixer des Systems auf: ein Stereo-Eingang und etwas Verzögerung. Mit orOS Bridge (ein kleines freies Programm für Windows und Linux, github.com/koulaxizis/oros-bridge, Version 0.3.0 oder neuer) nimmt Studio direkt über deine Soundkarte auf.
-- Stelle in den Einstellungen `Aufnehmen und abspielen über` auf `orOS Bridge`, gib einmal den 6-stelligen Code ein, den es zeigt, und wähle `Audiosystem` (Windows Audio, JACK, PipeWire / PulseAudio oder ALSA), die Karte und die `Eingänge`: einen Eingang, ein Stereopaar oder jeden Eingang auf eigener Spur. Unter Windows gibt `Exklusiv` die geringste Verzögerung, andere Programme verstummen dann.
+- Stelle in den Einstellungen `Aufnehmen und abspielen über` auf `orOS Bridge`, gib einmal den 6-stelligen Code ein, den es zeigt, und wähle `Audiosystem` (Windows Audio, ASIO®, JACK, PipeWire / PulseAudio oder ALSA), die Karte und die `Eingänge`: einen Eingang, ein Stereopaar oder jeden Eingang auf eigener Spur. Unter Windows gibt `Exklusiv` die geringste Verzögerung, andere Programme verstummen dann.
+- ASIO (Windows, orOS Bridge 0.4.0 oder neuer, mit `oros-bridge-asio.dll` daneben): Der eigene ASIO-Treiber der Karte nimmt auf und spielt ab, die gewählte Karte dient also für beides, mit der Puffergröße aus dem Bedienfeld des Treibers.
 - `Eingänge prüfen` zeigt einen Pegel für jeden Eingang der Karte, damit du siehst, wo dein Mikrofon oder deine Gitarre ankommt.
 - Nimm wie gewohnt auf. Studio bereitet zuerst den Song ab der Abspielposition vor (bei einem langen Song einen Moment), dann spielt die Karte ihn und nimmt gleichzeitig auf, so bleibt der Take im Takt, auch wenn der Computer beschäftigt ist. Höre über das Direct Monitoring deiner Karte.
 - Der Take liegt dort, wo er gespielt wurde, abzüglich der Verzögerung, die die Bridge für die Karte misst; liegt er noch zu spät, erhöhe den `Aufnahmeversatz`.
+
+[asio-logo]
 
 ## Tastatur und MIDI
 - `Tastatur` im Transportbereich öffnet eine Klaviatur mit eingebautem Synth: Klavier, E-Piano, Orgel, Streicher, Lead und Bass. Spiel sie mit der Maus oder mit den Fingern und gleite über die Tasten für ein Glissando.
@@ -158,7 +161,7 @@ Bitte den Assistenten, deine Songs mit Worten zu ändern, etwa „den Gesang 3 d
 
 ## Tipps
 > Nimm mit Kopfhörern auf, damit Klick und andere Spuren nicht im Take landen.
-- Browser können keine ASIO-Treiber nutzen. Deine Soundkarte läuft über den eigenen Treiber des Systems, mit etwas mehr Verzögerung als in einer Desktop-Studio-App.
+- Ein Browser allein kann keine ASIO-Treiber nutzen: Wähle in den Einstellungen `orOS Bridge` für den eigenen Treiber deiner Karte und die geringste Verzögerung.
 
 ## NULL Drum Machine
 - Neben den eingebauten Klängen kann eine Instrumentenspur von `NULL Drum Machine` gespielt werden, dem ersten Instrument von NULL JSFX: zehn synthetische Schlagzeugstimmen (Kick, Snare, Clap, Rim, geschlossene und offene Hi-Hat, zwei Toms, Cowbell, Becken) und ein Sequenzer mit 16 Schritten. Wähle es unter `+ Spur`, als `Instrument` in den Spureinstellungen oder als `Klang` der Tastatur.
@@ -170,7 +173,7 @@ Bitte den Assistenten, deine Songs mit Worten zu ändern, etwa „den Gesang 3 d
 ## Grenzen
 - Bis zu 50 Projekte, 8 Spuren und 500 Clips pro Projekt, eine Stunde pro Projekt.
 - Eine importierte Datei darf bis zu 100 MB groß sein, ein Take bis zu 30 Minuten lang.
-- Über orOS Bridge hörst du den Song über die Karte, aber nicht deinen eigenen Eingang (nutze das Direct Monitoring der Karte), und der Klick endet zwei Minuten nach dem Ende des Songs. ASIO kommt später als eigenes Modul.
+- Über orOS Bridge hörst du den Song über die Karte, aber nicht deinen eigenen Eingang (nutze das Direct Monitoring der Karte), und der Klick endet zwei Minuten nach dem Ende des Songs. Mit ASIO kann jeweils nur ein Studio-Tab die Karte nutzen.
 - Eine Fernsteuerung gleichzeitig, und das Koppeln braucht Internet auf beiden Geräten.
 - Ein MIDI-Clip hat bis zu 2000 Noten. Die Instrumente sind einfache eingebaute Synths und ein synthetisches Schlagzeug; es gibt keine gesampelten Instrumente oder Soundfonts.
 - Während du live auf der Tastatur spielst, hörst du den Klang ohne die Effekte der Spur; der aufgenommene Clip spielt mit ihnen. Auch der als Audio aufgenommene Synth ist trocken, bis der Take spielt. Nur Sidechain Ducker nimmt einen Key-Eingang an.

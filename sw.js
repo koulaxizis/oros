@@ -820,6 +820,7 @@ var PRECACHE_URLS = [
   "help/search.js",
   "help/help.css",
   "help/help.js",
+  "help/asio-compatible.svg",
   "help/topics.json",
   "help/topics/appearance.el.txt",
   "help/topics/appearance.en.txt",

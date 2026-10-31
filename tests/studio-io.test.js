@@ -140,6 +140,21 @@ test("wiring: settings, recording path, every string in EN/EL/DE and the help", 
   });
   ["studio/help.en.txt", "studio/help.el.txt", "i18n/de/help/studio.txt"].forEach((f) => {
     const h = read(f);
-    assert.ok(/orOS Bridge\)/.test(h) && /JACK/.test(h) && /PipeWire/.test(h) && /ASIO/.test(h), f);
+    assert.ok(/orOS Bridge\)/.test(h) && /JACK/.test(h) && /PipeWire/.test(h) && /ASIO®/.test(h), f);
   });
+});
+
+test("ASIO: one card records and plays, the logo wherever ASIO is offered", () => {
+  const js = read("studio/studio.js"), html = read("studio/index.html"), de = read("i18n/de/studio.js");
+  assert.match(js, /function ioOutName\(\) \{ return prefs\.io\.be === "asio" \? prefs\.io\.inp : prefs\.io\.out; \}/);
+  assert.equal(js.split("output: ioOutName()").length - 1, 2, "the check and the take");
+  assert.ok(!/output: prefs\.io\.out/.test(js));
+  assert.match(js, /\$\("io-out-sec"\)\.hidden = prefs\.io\.be === "asio";/);
+  assert.match(js, /\$\("io-asio"\)\.hidden = !ioDevs\.some\(function \(x\) \{ return x\.id === "asio"; \}\);/);
+  assert.match(html, /<p id="io-asio" class="io-asio" hidden><img src="\.\.\/help\/asio-compatible\.svg" alt="ASIO is a registered trademark of Steinberg Media Technologies GmbH\."/);
+  assert.equal((js.match(/"io\.hint": "[^"]*ASIO®/g) || []).length, 2, "EN and EL");
+  assert.match(de, /"io\.hint": "[^"]*ASIO®/);
+  const dl = read("download/index.html");
+  assert.equal(dl.split('src="../help/asio-compatible.svg"').length - 1, 2, "EN and EL bridge cards");
+  assert.equal(dl.split("releases/latest/download/oros-bridge-windows-x64.zip").length - 1, 2);
 });
