@@ -844,6 +844,7 @@ body.nav #maneuvers { display: none !important; }
 }
 #nav-eta { flex: 1; font-size: 12.5px; color: var(--text-dim); min-width: 0; }
 #nav-mute,
+#nav-north,
 #nav-recenter,
 #nav-exit {
   display: inline-flex;
@@ -858,8 +859,30 @@ body.nav #maneuvers { display: none !important; }
   flex-shrink: 0;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-#nav-mute:hover, #nav-recenter:hover, #nav-exit:hover { color: var(--accent); border-color: var(--accent); }
+#nav-mute:hover, #nav-north:hover, #nav-recenter:hover, #nav-exit:hover { color: var(--accent); border-color: var(--accent); }
 #nav-recenter { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+#nav-north.on { color: var(--accent); border-color: var(--accent); }
+#nav-north svg { transition: transform 0.6s linear; }
+/* Heading-up: #map is a centred square turned by -heading (maps.js
+   applyMapTurn sets its size, offsets and rotation). */
+#map.turned { right: auto; bottom: auto; transition: transform 0.6s linear; will-change: transform; }
+/* The turned square is larger than the screen: #map-clip cuts it at
+   the screen edge, so the page can never be scrolled (not even by
+   script or focus). No z-index: the map keeps its place among the
+   page's layers. */
+#map-clip { position: absolute; inset: 0; overflow: clip; }
+/* Pins stay upright on the turned map (they turn back around their tip). */
+#map.turned .custom-marker > svg { transform: rotate(var(--unturn, 0deg)); transform-origin: 50% 100%; transition: transform 0.6s linear; }
+#map-ctl-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  #map.turned, #map.turned .custom-marker > svg, #nav-north svg { transition: none; }
+}
 #nav-mute.muted { color: var(--danger); border-color: var(--danger); }
 #nav-exit.armed {
   color: var(--danger);
@@ -1053,6 +1076,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
   #maneuvers-close,
   #mapsettings-close,
   #nav-mute,
+  #nav-north,
   #nav-recenter,
   #nav-exit,
   .plan-pick,

@@ -72,6 +72,8 @@ orosPack("de", "files", {
  "c.opening": "{name} wird geöffnet…",
  "c.pick": "Ordner wählen",
  "c.preview": "Vorschau",
+ "c.zip": "Als ZIP komprimieren",
+ "c.extract": "Hier entpacken",
  "c.purge": "Endgültig löschen",
  "c.purgeMsg": "„{name}“ endgültig löschen? Das lässt sich nicht rückgängig machen.",
  "c.readonly": "schreibgeschützt",

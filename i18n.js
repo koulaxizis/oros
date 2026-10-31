@@ -196,3 +196,30 @@
     });
   }
 })();
+
+// Error capture for every page: hands errors to the shell's journal
+// (diag.js), queued on the top window until it runs.
+(function () {
+  "use strict";
+  if (window.__orosDiagOn || typeof window.addEventListener !== "function") return;
+  window.__orosDiagOn = 1;
+  var me = document.currentScript;
+  var app = ((me && me.getAttribute && me.getAttribute("data-app")) || "").split(",")[0].trim() || "page";
+  function put(e) {
+    e.app = app;
+    try {
+      var T = window.top;
+      if (T.orosDiag) { T.orosDiag.add(e); return; }
+      var q = T.__orosDiagQ || (T.__orosDiagQ = []);
+      if (q.length < 30) q.push(e);
+    } catch (x) {}
+  }
+  window.addEventListener("error", function (ev) {
+    if (ev && ev.message) put({ kind: "error", msg: ev.message, at: ev.filename ? ev.filename + ":" + (ev.lineno || 0) + ":" + (ev.colno || 0) : "" });
+  });
+  window.addEventListener("unhandledrejection", function (ev) {
+    var r = ev && ev.reason;
+    var msg = r && typeof r === "object" ? (r.name ? r.name + ": " : "") + (r.message || "") : String(r);
+    put({ kind: "promise", msg: msg === "Error: " || !msg ? "(no message)" : msg, at: "" });
+  });
+})();
