@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.79.00
+- Settings › Sync › Calendars and contacts (CalDAV / CardDAV): connect your own calendar and contacts server (Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail, iCloud…). orOS checks the server first and keeps the password on this device only. Linking it to Calendar, Contacts and To-Do comes next.
+
 ## Version 4.78.01
 - The orOS logo is now in the same gold as the orOS skin, everywhere: the app icon, the browser add-on, the single apps and the link preview.
 
