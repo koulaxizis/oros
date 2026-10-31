@@ -1,12 +1,12 @@
 // ============================================================
-// orOS Layout — zipin.js: read a .zip of packages without loading it
-// (v1.0.0). The central directory is read from the end of the Blob,
+// orOS designkit — zipin.js: read a .zip of packages without loading
+// it (v1.1.0; Layout and Atelier). The central directory is read from the end of the Blob,
 // and each entry is sliced (stored) or inflated (deflated) on its own,
-// so a 1 GB zip of books costs one book's memory at a time.
+// so a 1 GB zip of books or designs costs one package's memory at a time.
 // No ZIP64, no encryption. Inflating uses the platform's
 // DecompressionStream("deflate-raw"); the inflated size is capped while
 // it streams, never trusted from the header.
-// Pure: no DOM. Exposes window.LY_ZIPIN (browser) or module.exports.
+// Pure: no DOM. Exposes window.orosZipIn (browser) or module.exports.
 // ============================================================
 (function (root) {
   "use strict";
@@ -84,5 +84,5 @@
 
   var api = { list: list };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
-  else root.LY_ZIPIN = api;
+  else root.orosZipIn = api;
 })(this);

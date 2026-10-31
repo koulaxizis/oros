@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 4.62.00
 - Studio: NULL JSFX 2.8. Seven new effects and instruments written from scratch for Studio: Glue Comp (bus compressor), Console Channel and Console Buss, Space (reverb), Air, Tone and the Mallets instrument (marimba, xylophone, vibraphone, glockenspiel, tubular bells, timpani). Pluck plays harp and pizzicato strings, Organ has a pipe organ voice, Gate and Saturation have new controls. The sample packs these replace are gone from the instrument list.
 
+## Version 4.61.01
+- Atelier: a .zip of designs is now read one design at a time, the way Layout reads a .zip of books, so a large zip no longer has to fit in memory and the 1 GB limit is gone.
+
 ## Version 4.61.00
 - orOS USB: every app opens and saves straight on this computer. `Open…` and `Save…` show the computer's folders and disks; a file you opened is saved back in place, and if it changed on the computer meanwhile, your version is kept as a copy instead of overwriting it.
 

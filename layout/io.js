@@ -13,7 +13,7 @@
 //   - Rebuild a print PDF with its original pictures (layout/rebuild.js)
 //     and show what landed where it was.
 //   - Many packages at once: picked together, a .zip of them (read a
-//     piece at a time, layout/zipin.js) or a folder in Files.
+//     piece at a time, designkit/zipin.js) or a folder in Files.
 //   - Place image, import plain text, a picture sent from another app.
 // All file I/O goes through orosDialog (R33).
 // ============================================================
@@ -440,7 +440,7 @@
       return openFile(f).then(function () { if (res.ok === before && !res.full) res.bad++; });
     }
     function zipOf(f) {
-      return window.LY_ZIPIN.list(f).then(function (entries) {
+      return window.orosZipIn.list(f).then(function (entries) {
         var chain = Promise.resolve();
         entries.filter(function (e) { return PKG_RE.test(e.name) && !/(^|\/)(__MACOSX\/|\.)/.test(e.name); }).sort(byName).forEach(function (e) {
           chain = chain.then(function () {
