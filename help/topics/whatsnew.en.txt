@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.76.00
+- [Passwords](help:a/passwords) imports more: exports with a password from Bitwarden ("Password protected"), Aegis and 2FAS now open with that password, on your device only. New: Keeper, RoboForm, Zoho Vault and the KeePass XML export.
+
 ## Version 4.75.00
 - New app: [Pad](help:a/pad), an editor for plain text and code in Accessories. Tabs that stay open until you close them, colours for over 30 languages (EEL2 for JSFX too), find and replace with regular expressions, go to line, and the file's own encoding and line endings kept, old Greek Windows-1253 and ISO-8859-7 files included. Open and save on the orOS disk or on this device; a file that changed on another device is never overwritten.
 
