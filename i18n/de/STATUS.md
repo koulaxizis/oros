@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 37306 of 37337 (99%)
-- Help pages: 150 of 150 (100%)
+- Strings: 37465 of 37496 (99%)
+- Help pages: 151 of 151 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -47,7 +47,7 @@ text is still written in the code. They switch over wave by wave
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 436 / 436 |
+| files | 100% | 443 / 443 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -93,6 +93,7 @@ text is still written in the code. They switch over wave by wave
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 189 / 189 |
 | oracle | 100% | 38 / 38 |
+| pad | 100% | 124 / 124 |
 | passwords | 100% | 321 / 321 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
@@ -116,10 +117,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 300 / 300 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 687 / 687 |
+| settings | 100% | 691 / 691 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1047 / 1047 |
+| shell | 100% | 1053 / 1053 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -134,7 +135,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 694 / 694 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 509 / 509 |
+| studio | 100% | 527 / 527 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 82 / 82 |
 | tetris | 100% | 59 / 59 |
