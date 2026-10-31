@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.73.01
+- orOS starts faster, above all on phones and slow connections: the first visit now loads its files side by side instead of one after another, and the welcome screen goes as soon as the desktop is ready. On a slow 4G phone the first open went from about 28 to about 8 seconds, and an ordinary open from 2.3 to 1.6 seconds.
+
 ## Version 4.73.00
 - Spreadsheet knows over 200 functions: new lookups (XMATCH, OFFSET, INDIRECT), loan and investment functions (IPMT, PPMT, RATE, IRR, XIRR), TEXTBEFORE and TEXTAFTER, week numbers, your own weekend for working days, and lists in braces such as {1,2,3}. See [Spreadsheet](help:a/spreadsheet).
 
