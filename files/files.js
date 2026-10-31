@@ -204,6 +204,7 @@
       "menu.moveTo":   "Move to…",
       "menu.copyTo":  "Copy to…",
       "menu.toDropbox": "Send to Dropbox…",
+      "menu.toComputer": "Send to This computer…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
       "menu.copyContent": "Copy content",
@@ -432,6 +433,7 @@
       "menu.moveTo":   "Μετακίνηση σε…",
       "menu.copyTo":   "Αντιγραφή σε…",
       "menu.toDropbox": "Αποστολή στο Dropbox…",
+      "menu.toComputer": "Αποστολή σε αυτόν τον υπολογιστή…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
       "menu.copyContent": "Αντιγραφή περιεχομένου",
@@ -1011,6 +1013,8 @@
     if (d && d.isActive()) d.leave();
     var dv = drv();
     if (dv && dv.isActive()) dv.leave();
+    var pc = cmp();
+    if (pc && pc.isActive()) pc.leave();
     view = "files";
     cwd = path;
     if (selectMode) setSelectMode(false);
@@ -1061,6 +1065,8 @@
     host.appendChild(makeTreeNode(ROOT, t("tree.root"), 0, token));
     var dv = drv();
     if (dv) host.appendChild(dv.treeNode());
+    var pc = cmp();
+    if (pc) host.appendChild(pc.treeNode());
     host.appendChild(makeSpecialNode("trash", t("tree.trash"), TRASH_SVG));
     var d = dbx();
     if (d) host.appendChild(d.treeNode());
@@ -1079,8 +1085,17 @@
     var d = window.OrosFilesDrive;
     return (d && typeof d.treeNode === "function") ? d : null;
   }
-  // Another place (Dropbox, orOS Drive) is shown instead of the disk.
-  function placeActive() { var dv = drv(); return dbxActive() || !!(dv && dv.isActive()); }
+  // This computer's own folders and disks (files/computer.js, orOS USB
+  // only: the launcher's /__oros/fs/ API). Never synced.
+  function cmp() {
+    var c = window.OrosFilesComputer;
+    return (c && typeof c.treeNode === "function") ? c : null;
+  }
+  // Another place (Dropbox, orOS Drive, This computer) is shown instead of the disk.
+  function placeActive() {
+    var dv = drv(), pc = cmp();
+    return dbxActive() || !!(dv && dv.isActive()) || !!(pc && pc.isActive());
+  }
 
   function initDrive() {
     var dv = drv();
@@ -1091,6 +1106,8 @@
       onEnter: function () {
         var d = dbx();
         if (d && d.isActive()) d.leave();
+        var pc = cmp();
+        if (pc && pc.isActive()) pc.leave();
         view = "files"; setSelectMode(false); clearSelection();
       },
       afterEnter: renderTree,
@@ -1112,6 +1129,37 @@
     d.exportFrom(paths);
   }
 
+  // Copies of the selection into a folder of this computer.
+  function sendToComputer() {
+    var pc = cmp(), paths = selectionPaths();
+    if (!pc || !pc.isAvailable() || !paths.length || view === "trash") return;
+    pc.exportFrom(paths);
+  }
+
+  function initComputer() {
+    var pc = cmp();
+    if (!pc) return;
+    pc.init({
+      toast: transientNote,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        var d = dbx();
+        if (d && d.isActive()) d.leave();
+        var dv = drv();
+        if (dv && dv.isActive()) dv.leave();
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      onAvailable: renderTree,
+      fs: FS,
+      fmtKB: fmtKB,
+      t: t,
+      pickFolder: pickFolderDialog,
+      onDiskChanged: function () { forceStorageRecalc(); refresh(); },
+      markDirty: markDirty
+    });
+  }
+
   function initDropbox() {
     var d = dbx();
     if (!d) return;
@@ -1122,6 +1170,8 @@
       onEnter: function () {
         var dv = drv();
         if (dv && dv.isActive()) dv.leave();
+        var pc = cmp();
+        if (pc && pc.isActive()) pc.leave();
         view = "files"; setSelectMode(false); clearSelection(); renderTree();
       },
       fmtKB: fmtKB,
@@ -3239,6 +3289,9 @@
         sendToDropbox();
       }));
     }
+    if (view !== "trash" && cmp() && cmp().isAvailable()) {
+      ctxMenu.appendChild(mkItem(cmp().icon || "", "menu.toComputer", sendToComputer));
+    }
     ctxMenu.appendChild(mkItem(ZIP_SVG, "menu.zip", function () {
       zipCreate(selectionPaths());
     }));
@@ -3954,6 +4007,8 @@
     if (d && d.isActive()) d.leave();
     var dv = drv();
     if (dv && dv.isActive()) dv.leave();
+    var pc = cmp();
+    if (pc && pc.isActive()) pc.leave();
     if (searchQuery !== null) {
       if (searchDebounce) { clearTimeout(searchDebounce); searchDebounce = null; }
       searchQuery = null; searchDir = null; search = null;
@@ -4624,6 +4679,9 @@
     if (dbx() && dbx().exportFrom) {
       bar.appendChild(selBtn("sb-dbx", dbx().icon || "", "menu.toDropbox", function () { sendToDropbox(); }));
     }
+    if (cmp()) {
+      bar.appendChild(selBtn("sb-pc", cmp().icon || "", "menu.toComputer", sendToComputer));
+    }
     bar.appendChild(selBtn("sb-del", TRASH_SVG, "act.delete", function () {
       openDeleteDialog(view === "trash" ? "forever" : "trash");
     }));
@@ -4655,6 +4713,8 @@
     show("sb-move", !trash, n > 0);
     show("sb-copy", !trash, n > 0);
     show("sb-dbx", !trash, n > 0);
+    var pcOn = !trash && !!(cmp() && cmp().isAvailable());
+    show("sb-pc", pcOn, pcOn && n > 0);
     show("sb-del", true, n > 0);
     show("sb-all", true, lastEntries.length > 0);
     var del = $("sb-del");
@@ -5142,6 +5202,7 @@
 
     initDropbox();
     initDrive();
+    initComputer();
 
     // Multitasking (MT-S2): Files left open in the background lists the
     // folder again when it comes back; another app may have saved there.
@@ -5170,6 +5231,11 @@
     // Single app (solo.js) icon shortcut { newFolder: true }.
     if (t && t.newFolder === true) {
       if (isAvailable() && !document.querySelector("dialog[open]")) openNameDialog("folder");
+      return;
+    }
+    // System › Disks "Open" (orOS USB): { computer: "/disks/<name>" | "/home/…" }.
+    if (t && typeof t.computer === "string") {
+      if (cmp()) cmp().openAt(t.computer);
       return;
     }
     if (!t || typeof t.path !== "string" || !isAvailable()) return;

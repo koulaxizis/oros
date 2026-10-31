@@ -273,6 +273,7 @@
   {
    "app": "files",
    "files": [
+    "files/computer.js",
     "files/drive.js",
     "files/dropbox-callback.js",
     "files/dropbox.js",

@@ -106,6 +106,15 @@ Die orOS-Disk ist der verschlüsselte Ort: Mit eingeschalteter orOS-Synchronisie
 - Auf Android ist orOS Drive eine eigene App (aus dem F-Droid-Repository von orOS oder von der Download-Seite); die Handy-Taste in der orOS-App für Android öffnet sie oder ihren Download. Sie sichert Ordner des Handys genauso, im Hintergrund alle 15 Minuten (nur im WLAN, außer du änderst es), hält Dateien oder Ordner offline (lange drücken), nimmt Dateien über Teilen › orOS Drive an und kann neue Fotos und Videos der Kamera nach `Drive › (Name des Handys) › Camera backup` hochladen (nur hochladen).
 - Mit angemeldetem und entsperrtem orOS Drive erscheint die ganze orOS-Disk auch als «orOS» in der Dateien-App des Handys und in jeder App, die Dateien öffnet oder speichert. Eine Datei wird heruntergeladen, wenn du sie öffnest, und hochgeladen, wenn die App sie speichert; hat sie sich in der Zwischenzeit in orOS geändert, werden beide Versionen behalten, und eine Benachrichtigung sagt es dir.
 
+## Dieser Computer (orOS USB)
+Auf dem orOS-USB-Stick und auf einem Computer, auf dem orOS von ihm installiert wurde, zeigt `Dieser Computer` in der Ordnerliste die Dateien des Computers selbst: den persönlichen Ordner (Dokumente, Downloads, Bilder, Musik, Videos, Schreibtisch) und seine Laufwerke. Im Browser und in den orOS-Apps für Windows, macOS und Linux erscheint er nicht.
+- Tippe auf einen Ordner, um ihn zu öffnen, und auf eine Datei für die Vorschau (Bilder, Video, Ton und Text). `⋯` in einer Zeile kopiert sie auf die orOS-Disk, benennt sie um oder verschiebt sie in den Papierkorb.
+- Unter `Laufwerke` öffnest du einen USB-Stick oder ein anderes Laufwerk mit einem Tipp; die Auswurftaste drückst du, bevor du einen Stick abziehst. Windows-Laufwerke öffnen sich schreibgeschützt, damit unter Windows nichts kaputtgeht. Auf USB-Sticks und andere Laufwerke kannst du schreiben.
+- Wenn du einen USB-Stick ansteckst, sagt es eine Benachrichtigung; `Öffnen` zeigt ihn hier. Nichts öffnet sich von selbst.
+- Die Papierkorb-Taste oben ist der Papierkorb dieses Computers, getrennt vom orOS-Papierkorb. `Wiederherstellen` bringt ein Element in seinen Ordner zurück; `Endgültig löschen` und `Papierkorb leeren` geben den Platz frei.
+- Um Dateien in orOS zu holen, wähle `Auf die orOS-Disk kopieren…`. Um Dateien hinauszubringen, wähle sie auf der orOS-Disk aus und dann `An diesen Computer senden…` (Rechtsklickmenü oder Auswahlleiste). Vergebene Namen bekommen „ (2)“; nichts wird überschrieben.
+> Dateien auf diesem Computer werden nie synchronisiert. Nur was du auf die orOS-Disk kopierst, kommt in die orOS-Synchronisierung. Auf einem Stick ohne Persistenz-Partition wird der persönliche Ordner beim Herunterfahren geleert.
+
 ## Synchronisierung und Sicherung
 Die Disk liegt in diesem Browser. Wenn die [orOS-Synchronisierung](help:t/sync) verbunden und entsperrt ist, synchronisiert Vault Drive sie Datei für Datei, ob Dateien offen ist oder nicht. Namen und Inhalte werden verschlüsselt, bevor sie dein Gerät verlassen.
 

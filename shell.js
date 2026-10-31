@@ -3314,6 +3314,75 @@
     } catch (e) { return null; }
   };
 
+  // This computer (orOS USB, Files' computer.js). The orOS launcher on
+  // the stick (or the disk orOS is installed on) serves the computer's
+  // own folders and disks under /__oros/fs/ (oros-portable
+  // launcher/computerfs.go). When it answers, the page tells the System
+  // extension (data-oros-computer-files="1"), which then asks for disks
+  // to open in Files with the DOM event "oros-files-open" (detail
+  // "/disks/<name>" or "/home/…") instead of a file:// window. A USB
+  // stick plugged in brings a notification with "Open"; nothing opens
+  // by itself. Only on the launcher's own address (localhost).
+  (function computerFiles() {
+    var host = location.hostname;
+    if (typeof fetch !== "function" || (host !== "localhost" && host !== "127.0.0.1")) return;
+    function get(what) {
+      return fetch("/__oros/fs/" + what, { credentials: "same-origin", headers: { "X-Oros-FS": "1" } })
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        });
+    }
+    function openInFiles(path) {
+      if (typeof window.__orosOpenAt === "function") window.__orosOpenAt("files", { computer: path });
+    }
+    document.addEventListener("oros-files-open", function (e) {
+      var p = e && e.detail;
+      if (typeof p !== "string" || !/^\/(home|disks)(\/|$)/.test(p) || p.indexOf("..") !== -1) return;
+      openInFiles(p);
+    });
+    var known = null;           // device paths of the USB volumes seen so far
+    function notifyStick(v) {
+      var N = window.orosNotifs;
+      if (!N || typeof N.transient !== "function") return;
+      var name = v.label || v.model || String(v.path || "").replace("/dev/", "");
+      N.transient({
+        ns: "system",
+        title: window.t("pc.stick").replace("{name}", name),
+        body: window.t("pc.stickBody"),
+        action: {
+          label: window.t("pc.open"),
+          fn: function () {
+            fetch("/__oros/fs/op", {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "X-Oros-FS": "1", "Content-Type": "application/json" },
+              body: JSON.stringify({ op: "mount", dev: v.path })
+            }).then(function (r) { return r.ok ? r.json() : null; }).then(function (r) {
+              openInFiles(r && typeof r.path === "string" ? r.path : "/");
+            }, function () { openInFiles("/"); });
+          }
+        }
+      });
+    }
+    function poll() {
+      if (document.visibilityState === "hidden") { setTimeout(poll, 5000); return; }
+      get("disks").then(function (vols) {
+        var now = {};
+        (vols || []).forEach(function (v) { if (v && v.usb && v.path) now[v.path] = v; });
+        if (known) {
+          Object.keys(now).forEach(function (k) { if (!known[k]) notifyStick(now[k]); });
+        }
+        known = now;
+      }, function () {}).then(function () { setTimeout(poll, 5000); });
+    }
+    get("roots").then(function (r) {
+      if (!r || !r.home) return;
+      document.documentElement.setAttribute("data-oros-computer-files", "1");
+      poll();
+    }, function () {});
+  })();
+
   // "Send to orOS" (bookmarklet, Android Share → orOS, a future
   // browser add-on): /?share-url=…&share-title=…&share-text=…
   // stages a NEW bookmark. The params leave the address bar at boot
