@@ -242,3 +242,35 @@ test("helpers: hash, urls, names", () => {
   assert.equal(C.nameKey("ΕΡΤ1 HD (1080p) [Geo-blocked]"), "ερτ1");
   assert.equal(C.decodeText("a<b>c</b>&lt;"), "ac<");
 });
+
+test("calPayload: Remind me prefill for the Calendar (BR-W8)", () => {
+  const at = (h, m, d = 31) => new Date(2026, 9, d, h, m).getTime();
+  const now = at(18, 0);
+  const p = { s: at(20, 30), e: at(21, 45), t: "  Ειδήσεις  ", st: "Κεντρικό δελτίο", c: "News", d: "Τα νέα της ημέρας" };
+  assert.deepEqual(C.calPayload(p, "ΕΡΤ1 HD", now), {
+    date: "2026-10-31", start: "20:30", end: "21:45", title: "Ειδήσεις",
+    location: "ΕΡΤ1 HD", note: "Κεντρικό δελτίο · News\nΤα νέα της ημέρας", remindMin: 15
+  });
+  // started, missing title or start: nothing to remind
+  assert.equal(C.calPayload({ s: at(17, 0), e: at(19, 0), t: "On now" }, "X", now), null);
+  assert.equal(C.calPayload({ s: now, t: "Right now" }, "X", now), null);
+  assert.equal(C.calPayload({ s: at(20, 0), t: "   " }, "X", now), null);
+  assert.equal(C.calPayload(null, "X", now), null);
+  // starts in 10 min: 5-minute reminder; in 3 min: none
+  assert.equal(C.calPayload({ s: at(18, 10), t: "Soon" }, "", now).remindMin, 5);
+  const close = C.calPayload({ s: at(18, 3), t: "Very soon" }, "", now);
+  assert.equal(close.remindMin, undefined);
+  assert.equal(close.location, undefined);
+  assert.equal(close.end, undefined);
+  // past midnight: the end day; ending exactly at midnight stays one day
+  assert.deepEqual(C.calPayload({ s: at(23, 30), e: at(1, 0, 32), t: "Film" }, "", now),
+    { date: "2026-10-31", start: "23:30", end: "01:00", dateEnd: "2026-11-01", title: "Film", remindMin: 15 });
+  const mid = C.calPayload({ s: at(23, 0), e: at(0, 0, 32), t: "Late" }, "", now);
+  assert.equal(mid.end, "23:59");
+  assert.equal(mid.dateEnd, undefined);
+  // limits of the Calendar's dialog
+  const long = C.calPayload({ s: at(20, 0), t: "x".repeat(200), d: "y".repeat(900) }, "z".repeat(300), now);
+  assert.equal(long.title.length, 80);
+  assert.equal(long.location.length, 150);
+  assert.equal(long.note.length, 500);
+});

@@ -25,6 +25,7 @@ Füge einen XMLTV-Programmführer auf dieselbe Weise in `Listen & Programme` hin
 
 - Jede Senderkarte zeigt die laufende Sendung, wie weit sie ist und was `Danach` kommt; der Player zeigt dieselbe Zeile.
 - `Programm` zeigt die heutige Zeitleiste: eine Zeile pro Sender mit Programm, eine rote Linie bei der aktuellen Uhrzeit und `Jetzt`, um dorthin zurückzuspringen. Tippe auf einen Sendernamen, um ihn anzusehen; tippe auf eine Sendung für ihre Details und `Ansehen`.
+- Eine Sendung, die noch nicht begonnen hat, hat auch `Erinnern`: Es öffnet einen neuen Termin im [Kalender](help:a/calendar) mit der Sendezeit, dem Sender und einer Erinnerung 15 Minuten vorher (5, wenn sie früher beginnt). Prüfe ihn und tippe auf `Speichern`; erst dann wird etwas hinzugefügt.
 - Das Menü `Gruppe` und das Suchfeld grenzen auch die Zeilen ein.
 
 ## Favoriten und zuletzt gesehene Sender

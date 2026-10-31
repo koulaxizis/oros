@@ -1977,7 +1977,7 @@ function applyPetSettings(s) {
     if (row) {
       Array.prototype.forEach.call(row.children, function (s, i) {
         s.style.borderColor = (i === cur)
-          ? "var(--accent, #c8a96e)"
+          ? "var(--accent, #d4af37)"
           : "rgba(255,255,255,.15)";
       });
     }
@@ -2190,7 +2190,7 @@ function applyPetSettings(s) {
         "display:flex;justify-content:space-between;gap:12px;" +
         "padding:4px 8px;border-radius:6px;";
       if (highlightId && ev.id === highlightId) {
-        row.style.background = "var(--accent, #c8a96e)";
+        row.style.background = "var(--accent, #d4af37)";
         row.style.color = "#131820";
       }
       var left = document.createElement("span");

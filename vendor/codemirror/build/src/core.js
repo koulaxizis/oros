@@ -1,0 +1,10 @@
+import * as state from "@codemirror/state";
+import * as view from "@codemirror/view";
+import * as language from "@codemirror/language";
+import * as commands from "@codemirror/commands";
+import * as search from "@codemirror/search";
+import * as autocomplete from "@codemirror/autocomplete";
+import * as highlight from "@lezer/highlight";
+import * as common from "@lezer/common";
+import * as lr from "@lezer/lr";
+self.OrosCM = { state, view, language, commands, search, autocomplete, highlight, common, lr, lang: (self.OrosCM && self.OrosCM.lang) || {} };

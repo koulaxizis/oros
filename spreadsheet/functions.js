@@ -1854,8 +1854,44 @@ function Engine(ctx) {
   this.visiting = {};
   this.asts = {};
   this.nAst = 0;
+  /* iterative calculation (wave 4.2): null = off (a cycle is #CYC!),
+     else { n: max iterations, d: max change }. prev holds the last
+     settled value of each formula cell and survives reset(), so the
+     next recalculation starts from there, as in Excel. */
+  this.iter = null;
+  this.prev = {};
+  this.cyc = false;
 }
-Engine.prototype.reset = function () { this.cache = {}; this.visiting = {}; };
+Engine.prototype.reset = function () { this.cache = {}; this.visiting = {}; this.cyc = false; };
+Engine.prototype.setIter = function (o) {
+  var n = o && o.it ? Math.max(1, Math.min(1000, Math.floor(o.n) || 100)) : 0;
+  this.iter = n ? { n: n, d: (typeof o.d === "number" && o.d > 0) ? o.d : 0.001 } : null;
+  if (!this.iter) this.prev = {};
+  this.reset();
+};
+/* with iteration on: evaluate every formula cell, and while a circular
+   reference was met, again from the values just found, until no
+   number moves by more than d or n rounds are done. -> rounds run */
+Engine.prototype.settle = function () {
+  if (!this.iter || !this.ctx.formulaCells) return 0;
+  var list = this.ctx.formulaCells(), k, i, key, round;
+  for (round = 1; round <= this.iter.n; round++) {
+    this.reset();
+    for (i = 0; i < list.length; i++) this.value(list[i][0], list[i][1], list[i][2]);
+    if (!this.cyc) return round;
+    var moved = false, next = {};
+    for (i = 0; i < list.length; i++) {
+      key = list[i][0] + "|" + list[i][1] + "|" + list[i][2];
+      var v = this.cache[key], w = this.prev[key];
+      next[key] = v;
+      if (typeof v === "number" && typeof w === "number") { if (Math.abs(v - w) > this.iter.d) moved = true; }
+      else if (v !== w) moved = true;
+    }
+    for (k in next) this.prev[k] = next[k];
+    if (!moved) return round;
+  }
+  return this.iter.n;
+};
 
 Engine.prototype.ast = function (raw) {
   var a = this.asts[raw];
@@ -1873,7 +1909,13 @@ Engine.prototype.cell = function (sid, r, c, depth) {
   var raw = this.ctx.raw(sid, r, c);
   if (raw === "" || raw === null || raw === undefined) return null;
   if (raw.charAt(0) !== "=") { var lv = literal(raw); cache[key] = lv; return lv; }
-  if (this.visiting[key]) return ERR.CYC;
+  if (this.visiting[key]) {
+    if (!this.iter) return ERR.CYC;
+    /* a circular reference: use this cell's value from the last round */
+    this.cyc = true;
+    var pv = this.prev[key];
+    return pv === undefined ? 0 : pv;
+  }
   if (depth > MAX_DEPTH) throw DEEP;
   this.visiting[key] = true;
   var res;
@@ -2037,9 +2079,10 @@ Engine.prototype.ev = function (n, cx) {
 
 /* evaluate a formula string outside any sheet (tests, previews) */
 Engine.prototype.formula = function (sid, formula) {
-  var ast;
-  try { ast = parse(formula); } catch (e) { if (e instanceof Fx) return e.fx; throw e; }
-  return scalar(this.ev(ast, { sid: sid, r: 0, c: 0, depth: 0, lang: this.ctx.lang, now: this.ctx.now || Date.now }));
+  var ast = this.ast(formula);                 /* parsed once, then cached */
+  if (!ast) return ERR.ERROR;
+  try { return scalar(this.ev(ast, { sid: sid, r: 0, c: 0, depth: 0, lang: this.ctx.lang, now: this.ctx.now || Date.now })); }
+  catch (e) { if (e instanceof Fx) return e.fx; if (e === DEEP || e instanceof RangeError) return ERR.NUM; throw e; }
 };
 
 /* ===== reference rewriting (copy / sort / insert / delete) ===== */

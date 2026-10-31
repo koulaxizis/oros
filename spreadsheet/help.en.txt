@@ -72,16 +72,22 @@ The small square at the bottom right of the selection is the fill handle. Drag i
 - `Greater than`, `Less than`, `Between`, `Equal to`, `Text contains`, `Top` / `Bottom` N values and `Duplicate values` colour the matching cells with a fill, a text colour or bold.
 - `Colour scale` shades every number from the lowest to the highest with two or three colours.
 - `Data bars` draws a bar in each cell, as long as its value.
+- `Icon set` puts an arrow or a traffic light in each cell: green for the top third between the lowest and the highest number, amber for the middle, red for the bottom.
+- `Formula is true` colours a cell when a formula gives TRUE. Write the formula for the first cell of the range, for example =$B2>100 to colour whole rows where column B is over 100; it moves with each cell like a copied formula.
 - When rules overlap, the one higher in the list wins. The arrow moves a rule up.
 - Rules follow the values as they change, and reach your other devices with sync.
 
 ## Charts
 Select the data with its headings, for example A1:C5, and press the chart button.
 
-- Pick `Column`, `Bar`, `Line`, `Pie`, `Donut` or `Scatter`, and give it a title, axis titles and colours. A first row or column of text gives the names of the series and of the categories; `Series in` chooses columns or rows.
+- Pick `Column`, `Bar`, `Line`, `Area`, `Pie`, `Donut` or `Scatter`, and give it a title, axis titles and colours. A first row or column of text gives the names of the series and of the categories; `Series in` chooses columns or rows.
 - The chart floats over the sheet. Drag it to move it; drag its corner to resize it. Tap it to show its buttons: edit (or double-click it), `PNG`, `SVG` and delete. [[Delete]] deletes the selected chart and [[Ctrl+Z]] brings it back.
 - A chart follows its cells: change a number and the chart changes with it. Rows hidden by a filter are left out. It uses the colours of your theme, light or dark.
+- `Stacked` (column, bar, area) piles the series on top of each other. `Last series as a line` (column) draws the last series as a line over the columns, for example a total or a target. `Trend line` (column, line, area, scatter) adds a dashed straight line that fits the numbers best.
 - Charts reach your other devices with sync.
+
+## Circular references
+A formula that refers back to itself, directly or through other cells, shows #CYC!. For models that need it (for example interest that depends on a balance that depends on the interest), turn on `Calculation…` › `Iterative calculation` in the sheet menu: orOS then repeats the calculation until no value changes by more than `Maximum change`, at most `Maximum iterations` times (100 and 0.001 unless you change them). The setting belongs to the workbook and reaches your other devices with sync.
 
 ## Copy and paste with other apps
 - [[Ctrl+C]] or the Copy button puts the selected cells on the clipboard as text with tabs and as a table, so they paste into Excel, Google Sheets, LibreOffice, Word or an email.
@@ -157,7 +163,7 @@ See also [Backup](help:t/backup).
 - Charts, fills, borders, wrapping and conditional formatting are not saved in Excel, Calc or CSV files (an .orossheet keeps them) (merged cells, column widths and row heights are). From Excel, Sheets and LibreOffice, a paste brings fills, colours and bold, but not borders or rules.
 - Merged cells don't grow when you insert rows or columns inside them; the merge keeps its size.
 - Wrapped rows grow to fit when you turn wrapping on; a row whose text you change later keeps its height until you wrap it again or drag its edge.
-- While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.
+- While one of your devices still runs orOS 4.73 or older, it shows an area chart as columns and leaves out stacking, the line over the columns and trend lines, icon sets, formula rules and iterative calculation; the updated device keeps them unless the chart is edited on the older one. While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.
 - Array formulas that fill several cells (FILTER, SORT, UNIQUE), named ranges and pivot tables are not supported. INDIRECT reads A1 references only, not R1C1. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
 - Inserting or deleting rows moves cells: if another device edits the same cells before sync, its edit stays at the old place.
 - Undo history is cleared when sync brings in changes, and deleting a sheet has no Undo.

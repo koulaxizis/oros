@@ -32,11 +32,11 @@ function svg(id, maskable) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">\n' +
     (maskable ? '  <rect width="512" height="512" fill="#1b1a18"/>\n'
               : '  <rect width="512" height="512" rx="96" fill="#1b1a18"/>\n') +
-    '  <g transform="translate(' + (off + 8).toFixed(1) + ' ' + off.toFixed(1) + ') scale(' + k.toFixed(3) + ')" stroke="#c8a96e" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none">' +
+    '  <g transform="translate(' + (off + 8).toFixed(1) + ' ' + off.toFixed(1) + ') scale(' + k.toFixed(3) + ')" stroke="#d4af37" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none">' +
     inner.replace(/stroke-width="[^"]*"/g, "") + '</g>\n' +
     '  <circle cx="' + bx + '" cy="' + by + '" r="' + badgeR + '" fill="#2a2721" stroke="#1b1a18" stroke-width="10"/>\n' +
     '  <g transform="translate(' + (bx - 60 * bs) + ' ' + (by - 64 * bs) + ') scale(' + bs.toFixed(3) + ')">' +
-    '<path d="M60 26 L108 98 L12 98 Z M60 26 L80 60 L91 43 L108 98" stroke="#c8a96e" stroke-width="7" stroke-linecap="round" stroke-linejoin="miter" fill="none"/></g>\n' +
+    '<path d="M60 26 L108 98 L12 98 Z M60 26 L80 60 L91 43 L108 98" stroke="#d4af37" stroke-width="7" stroke-linecap="round" stroke-linejoin="miter" fill="none"/></g>\n' +
     '</svg>\n';
 }
 
