@@ -12,6 +12,7 @@ const vm = require("vm");
 const ROOT = path.join(__dirname, "..");
 const R = require(path.join(ROOT, "settings", "report.js"));
 const I18N = fs.readFileSync(path.join(ROOT, "i18n.js"), "utf8");
+const DIAG = fs.readFileSync(path.join(ROOT, "diag.js"), "utf8");
 
 // i18n.js in a fake page; frames share the top window's journal.
 function page(opts) {
@@ -37,10 +38,14 @@ function page(opts) {
     currentScript: { src: "https://useoros.online/i18n.js?v=1", getAttribute: (k) => (k === "data-app" ? (opts.app || "shell") : null) },
     readyState: "complete", write: () => {}
   };
-  vm.runInNewContext(I18N, Object.assign(win, { JSON, Date, Array, String, Object }));
+  const ctx = vm.createContext(Object.assign(win, { JSON, Date, Array, String, Object }));
+  vm.runInContext(I18N, ctx);
+  const fire = (k, ev) => (listeners[k] || []).forEach((fn) => fn(ev));
+  if (opts.early) opts.early(win, fire);
+  if (win.top === win) vm.runInContext(DIAG, ctx);
   return {
     win, store,
-    fire: (k, ev) => (listeners[k] || []).forEach((fn) => fn(ev)),
+    fire,
     flush: () => { while (timers.length) timers.shift()(); }
   };
 }
@@ -75,6 +80,15 @@ test("journal: an app frame hands its errors to the top window", () => {
   const l = top.win.orosDiag.list();
   assert.equal(l.length, 1);
   assert.equal(l[0].app, "calendar");
+});
+
+test("journal: errors before diag.js runs are kept", () => {
+  const p = page({ early: (w, fire) => fire("error", { message: "too early", filename: "https://useoros.online/shell.js?v=1", lineno: 9, colno: 1 }) });
+  const l = p.win.orosDiag.list();
+  assert.equal(l.length, 1);
+  assert.equal(l[0].msg, "too early");
+  assert.equal(l[0].at, "/shell.js:9:1");
+  assert.equal(p.win.__orosDiagQ, null);
 });
 
 test("journal: bounded size and message length", () => {

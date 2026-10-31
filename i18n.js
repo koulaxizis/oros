@@ -197,105 +197,29 @@
   }
 })();
 
-// ---- Error journal (Settings › System › Report a problem) ----
-// Lives here because i18n.js is the one file every orOS page loads
-// first (the shell and every app frame). The top window keeps the
-// last JOURNAL_MAX script errors and unhandled promise rejections in
-// the device-local key "oros-diag-log" (never synced, never sent
-// anywhere: only the person's own "Report a problem" file reads it).
-// App frames hand their errors to the top window. Only the message,
-// the file and line are kept; URL queries and fragments are cut,
-// messages are shortened. A repeating error raises a count instead of
-// filling the journal.
+// Error capture for every page: hands errors to the shell's journal
+// (diag.js), queued on the top window until it runs.
 (function () {
   "use strict";
-  if (window.orosDiag || typeof window.addEventListener !== "function") return;
-  var KEY = "oros-diag-log", JOURNAL_MAX = 60, MSG_MAX = 240;
+  if (window.__orosDiagOn || typeof window.addEventListener !== "function") return;
+  window.__orosDiagOn = 1;
   var me = document.currentScript;
-  var appId = ((me && me.getAttribute && me.getAttribute("data-app")) || "").split(",")[0].trim() || "page";
-
-  // "https://useoros.online/notes/notes.js?v=1#x" → "/notes/notes.js"
-  function cleanUrls(s) {
-    return String(s).replace(/(?:https?|file|chrome-extension):\/\/[^\s/)'"]*(\/[^\s?#)'"]*)?(?:[?#][^\s)'":]*)?/g,
-      function (m, p) { return p || "/"; });
-  }
-  function clean(s, max) {
-    s = cleanUrls(s == null ? "" : s).replace(/\s+/g, " ").trim();
-    return s.length > max ? s.slice(0, max - 1) + "…" : s;
-  }
-
-  function top() {
-    try { if (window.top !== window && window.top.orosDiag) return window.top.orosDiag; } catch (e) {}
-    return null;
-  }
-
-  var list = null, timer = 0;
-  function load() {
-    if (list) return list;
-    list = [];
+  var app = ((me && me.getAttribute && me.getAttribute("data-app")) || "").split(",")[0].trim() || "page";
+  function put(e) {
+    e.app = app;
     try {
-      var raw = JSON.parse(localStorage.getItem(KEY) || "[]");
-      if (Array.isArray(raw)) list = raw.slice(-JOURNAL_MAX);
-    } catch (e) {}
-    return list;
+      var T = window.top;
+      if (T.orosDiag) { T.orosDiag.add(e); return; }
+      var q = T.__orosDiagQ || (T.__orosDiagQ = []);
+      if (q.length < 30) q.push(e);
+    } catch (x) {}
   }
-  function save() {
-    if (timer) return;
-    timer = setTimeout(function () {
-      timer = 0;
-      try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
-    }, 1500);
-  }
-
-  function add(e) {
-    if (!e || typeof e !== "object") return;
-    var entry = {
-      t: new Date().toISOString(),
-      app: clean(e.app || appId, 40),
-      kind: e.kind === "promise" ? "promise" : "error",
-      msg: clean(e.msg, MSG_MAX),
-      at: clean(e.at || "", 120)
-    };
-    if (!entry.msg) return;
-    var l = load(), last = l[l.length - 1];
-    if (last && last.app === entry.app && last.msg === entry.msg && last.at === entry.at) {
-      last.n = (last.n || 1) + 1;
-      last.t = entry.t;
-    } else {
-      l.push(entry);
-      if (l.length > JOURNAL_MAX) l.splice(0, l.length - JOURNAL_MAX);
-    }
-    save();
-  }
-
-  function report(e) {
-    e.app = appId;
-    var T = top();
-    if (T) { try { T.add(e); return; } catch (x) {} }
-    if (window.top === window) add(e);
-  }
-
   window.addEventListener("error", function (ev) {
-    // Resource load failures (no message) are left to their own code.
-    if (!ev || !ev.message) return;
-    var at = ev.filename ? ev.filename + ":" + (ev.lineno || 0) + ":" + (ev.colno || 0) : "";
-    report({ kind: "error", msg: ev.message, at: at });
+    if (ev && ev.message) put({ kind: "error", msg: ev.message, at: ev.filename ? ev.filename + ":" + (ev.lineno || 0) + ":" + (ev.colno || 0) : "" });
   });
   window.addEventListener("unhandledrejection", function (ev) {
-    var r = ev && ev.reason, msg;
-    if (r && typeof r === "object") msg = (r.name ? r.name + ": " : "") + (r.message || "");
-    else msg = String(r);
-    if (msg === "Error: " || msg === "") msg = "(no message)";
-    report({ kind: "promise", msg: msg, at: "" });
+    var r = ev && ev.reason;
+    var msg = r && typeof r === "object" ? (r.name ? r.name + ": " : "") + (r.message || "") : String(r);
+    put({ kind: "promise", msg: msg === "Error: " || !msg ? "(no message)" : msg, at: "" });
   });
-
-  if (window.top === window) {
-    window.orosDiag = {
-      add: add,
-      list: function () { return load().map(function (x) { var c = {}; for (var k in x) c[k] = x[k]; return c; }); },
-      clear: function () { list = []; try { localStorage.removeItem(KEY); } catch (e) {} },
-      KEY: KEY,
-      clean: clean
-    };
-  }
 })();

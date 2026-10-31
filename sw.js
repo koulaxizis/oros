@@ -232,6 +232,7 @@ var PRECACHE_URLS = [
   "./vault.js",
   "./remote-link.js",
   "./i18n.js",
+  "./diag.js",
   "./i18n-tables.js",
   "./translations.js",
   "./lock.js",
