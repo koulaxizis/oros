@@ -16,7 +16,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
   var PREFS_KEY = "oros-scanpdf-prefs";      // device-local (R10), never synced
   var SIGS_KEY = "oros-scanpdf-sigs";        // device-local (R10), never synced
   var MAX_SIGS = 6;

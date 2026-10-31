@@ -1455,6 +1455,7 @@ var PRECACHE_URLS = [
   "scanpdf/scanpdf.css",
   "scanpdf/core.js",
   "scanpdf/scan.js",
+  "scanpdf/device.js",
   "scanpdf/ocr.js",
   "scanpdf/pdfops.js",
   "scanpdf/scanpdf.js",
