@@ -1,7 +1,7 @@
 {
   "note": "Size budget of the quality gate (.github/qa/budget.js). The gate fails at precache.bytes + 10 % and at an app's bytes + 20 % (ms is a warning only). Raise a value only for an intended growth: node .github/qa/budget.js [--precache] --update-budget.",
   "precache": {
-    "bytes": 51489183
+    "bytes": 51808363
   },
   "apps": {
     "assistant": {

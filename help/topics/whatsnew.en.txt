@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.75.00
+- New app: [Pad](help:a/pad), an editor for plain text and code in Accessories. Tabs that stay open until you close them, colours for over 30 languages (EEL2 for JSFX too), find and replace with regular expressions, go to line, and the file's own encoding and line endings kept, old Greek Windows-1253 and ISO-8859-7 files included. Open and save on the orOS disk or on this device; a file that changed on another device is never overwritten.
+
 ## Version 4.74.00
 - New app: [Typing Tutor](help:a/typing) teaches you to type with all ten fingers without looking at the keys, on Greek, English (US) and German keyboards. Short lessons add two keys at a time, a coloured keyboard shows which finger to use, and speed tests and statistics show your progress on all your devices. Find it in the menu under Learning.
 
