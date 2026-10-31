@@ -7,7 +7,13 @@
 // disk opened under /media/oros). Only the orOS page may call it (a
 // cookie the launcher sets on orOS's pages, same-origin headers and
 // X-Oros-FS: 1). Everywhere else (useoros.online, orOS Portable,
-// installers) the API is absent and none of this shows.
+// installers) the API is absent and none of this shows. orOS Portable
+// and the desktop apps (launcher 0.x with fsconsent.go) serve it too,
+// once the person agrees for this computer: GET consent says on, off or
+// ask; until "on" every other call answers 404 "off". On Windows roots
+// says os "windows": disks are drive letters (/disks/C) and removing
+// goes to the Recycle Bin (op recyclebin opens it; a removable drive
+// answers 409 "norecycle").
 //
 // Files shows these places under "/computer" (/computer/home/...,
 // /computer/disks/<name>/...). They are never part of the orOS disk:
@@ -17,8 +23,9 @@
 // Contract (oros-portable launcher/computerfs.go, README "Computer
 // files"): GET roots | list?path= | stat?path= | raw?path= (Range) |
 // trash | disks; PUT raw?path=[&replace=1][&ifmtime=ms]; POST op
-// {op: mkdir|rename|copy|move|trash|restore|purge|mount|unmount, path,
-// to, root, id, dev}. Errors: {error: code, message}.
+// {op: mkdir|rename|copy|move|trash|restore|purge|mount|unmount|recyclebin,
+// path, to, root, id, dev}; GET consent {state, fixed}, POST consent
+// {on}. Errors: {error: code, message}.
 // ============================================================
 (function (root, factory) {
   var api = factory();
@@ -144,6 +151,8 @@
       case "verify": return "c.e.verify";
       case "notempty": return "c.e.notempty";
       case "offline": return "c.e.offline";
+      case "off": return "c.e.off";
+      case "norecycle": return "c.e.norecycle";
     }
     return "c.e.io";
   }
@@ -265,9 +274,17 @@
           });
         });
       },
-      disks: function () { return call("GET", "disks"); }
+      disks: function () { return call("GET", "disks"); },
+      // { state: "on" | "off" | "ask", fixed } (fixed: orOS USB, always on).
+      consent: function () { return call("GET", "consent"); },
+      setConsent: function (on) {
+        return call("POST", "consent", "", JSON.stringify({ on: !!on }), { "Content-Type": "application/json" });
+      }
     };
   }
+
+  // Is this a Windows computer (roots.os)? Its Trash is the Recycle Bin.
+  function isWindows(roots) { return !!(roots && roots.os === "windows"); }
 
   // Is the API there? One cheap call; never throws.
   function probe(c) {
@@ -294,6 +311,7 @@
     diskRows: diskRows,
     client: client,
     probe: probe,
+    isWindows: isWindows,
     CallError: CallError
   };
 });

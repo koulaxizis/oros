@@ -255,7 +255,7 @@ test("find: every row names a known section and real labels, with words", () => 
     assert.ok(C.isSection(f[1]), f[0] + " section");
     [f[2], f[3], f[4]].forEach((k) => { if (k) assert.ok(C.STRINGS.en[k] && C.STRINGS.el[k], f[0] + " label " + k); });
     assert.ok(C.STRINGS.en["w." + f[0]] && C.STRINGS.el["w." + f[0]], f[0] + " words");
-    if (f[5]) assert.match(f[5], /^(app:[a-z]+|dock|seasonal|phone|push|osk|translate|install|multitask|widgets)$/, f[0] + " need");
+    if (f[5]) assert.match(f[5], /^(app:[a-z]+|dock|seasonal|phone|push|osk|translate|install|multitask|pcfiles|widgets)$/, f[0] + " need");
   });
   // every need the core can name is answered by the app
   assert.match(APP, /function findOk\(s, need\)/);

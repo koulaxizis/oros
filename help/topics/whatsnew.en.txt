@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.64.00
+- orOS Portable and the orOS apps for Windows and Linux get `This computer` in [Files](help:a/files): your home folder and the computer's disks, and every app opens and saves there, as on the orOS USB stick. orOS Portable asks once on each computer; the switch is in [Settings](help:a/settings) › System. On Windows the disks are your drive letters, Windows' own folders stay hidden, and deleting goes to the Windows Recycle Bin. Needs orOS Portable or the orOS app 0.4.0 or newer.
+
 ## Version 4.63.00
 - Studio: record and play through your card's own ASIO® driver on Windows, with orOS Bridge 0.4.0 and its ASIO module (`oros-bridge-asio.dll`, in the Windows zip). In Studio's settings choose `orOS Bridge`, then `ASIO` as the sound system and your card: the same card records and plays, at the buffer size set in the driver's control panel.
 
