@@ -64,9 +64,12 @@ function opts(argv) {
   return o;
 }
 
+// The version the files are stamped with (index.html ?v=, sw.js
+// CACHE_VERSION). Between a merge and main's stamp it can be older than
+// shell.js APP_VERSION, so the release visit rewrites this one.
 function appVersion() {
-  const m = /var APP_VERSION = "([^"]+)"/.exec(fs.readFileSync(path.join(ROOT, "shell.js"), "utf8"));
-  if (!m) throw new Error("APP_VERSION not found in shell.js");
+  const m = /shell\.js\?v=([^"]+)"/.exec(fs.readFileSync(path.join(ROOT, "index.html"), "utf8"));
+  if (!m) throw new Error("shell.js?v= not found in index.html");
   return m[1];
 }
 
