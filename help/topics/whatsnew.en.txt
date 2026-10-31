@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.65.00
+- Studio: hear yourself through one of your plugins while you play and record, with orOS Bridge 0.5.0. In Studio's settings, under `orOS Bridge`, choose an effect in `Listen through a plugin` (an amp for a guitar, a reverb for a voice): the inputs go through it on the computer with only a few milliseconds of delay. A take records your inputs as they come and the track keeps the plugin with its sound, ready to freeze; or choose to record the plugin's sound. Use headphones.
+
 ## Version 4.64.00
 - orOS Portable and the orOS apps for Windows and Linux get `This computer` in [Files](help:a/files): your home folder and the computer's disks, and every app opens and saves there, as on the orOS USB stick. orOS Portable asks once on each computer; the switch is in [Settings](help:a/settings) › System. On Windows the disks are your drive letters, Windows' own folders stay hidden, and deleting goes to the Windows Recycle Bin. Needs orOS Portable or the orOS app 0.4.0 or newer.
 

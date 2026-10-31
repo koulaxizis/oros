@@ -430,6 +430,23 @@
             <option value="1" data-i18n="io.excl">Exclusive (lowest delay, other programs go quiet)</option>
           </select>
         </div>
+        <div id="io-fx-sec" hidden>
+          <label class="field" for="io-fx" data-i18n="io.fx">Listen through a plugin</label>
+          <select id="io-fx"></select>
+          <div id="io-fx-on" hidden>
+            <p class="hint small" data-i18n="io.fxHint"></p>
+            <label class="field" for="io-fx-gain"><span data-i18n="io.fxGain">Plugin level</span><output id="io-fx-gout"></output></label>
+            <input type="range" id="io-fx-gain" min="0" max="200" step="1">
+            <label class="field" for="io-fx-wet" data-i18n="io.fxRec">A take records</label>
+            <select id="io-fx-wet">
+              <option value="" data-i18n="io.fxDry">The inputs as they come (the plugin stays on the track)</option>
+              <option value="1" data-i18n="io.fxWet">The plugin's sound</option>
+            </select>
+            <div class="dlg-actions">
+              <button type="button" id="io-fx-win" class="chip" data-i18n="br.window">Show its window</button>
+            </div>
+          </div>
+        </div>
         <div id="io-meters" class="io-meters" aria-hidden="true"></div>
         <div class="dlg-actions spread">
           <button type="button" id="io-test" class="chip" aria-pressed="false" data-i18n="io.test">Check the inputs</button>
