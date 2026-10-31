@@ -126,6 +126,7 @@ orosPack("de", "shell", {
  "app.travel": "Reisen",
  "app.trees": "Baumzeichner",
  "app.typewriter": "Schreibmaschine",
+ "app.typing": "Zehnfingerschreiben",
  "app.units": "Einheitenrechner",
  "app.wallpaper": "Hintergrundbild-Generator",
  "app.water": "Wasser",

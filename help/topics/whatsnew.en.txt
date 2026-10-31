@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.74.00
+- New app: [Typing Tutor](help:a/typing) teaches you to type with all ten fingers without looking at the keys, on Greek, English (US) and German keyboards. Short lessons add two keys at a time, a coloured keyboard shows which finger to use, and speed tests and statistics show your progress on all your devices. Find it in the menu under Learning.
+
 ## Version 4.73.01
 - orOS starts faster, above all on phones and slow connections: the first visit now loads its files side by side instead of one after another, and the welcome screen goes as soon as the desktop is ready. On a slow 4G phone the first open went from about 28 to about 8 seconds, and an ordinary open from 2.3 to 1.6 seconds.
 
