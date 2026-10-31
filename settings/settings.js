@@ -1025,6 +1025,22 @@
   var CD_ERRS = ["url", "auth", "unreachable", "notdav", "none", "readonly", "conditions", "etag", "moved", "relay-target", "too-big"];
 
   function cdApi() { return window.OrosDav && window.OrosDav.v >= 1 ? window.OrosDav : null; }
+  // davkit.js loads only when the Sync section is first drawn (the
+  // Settings first-open budget, .github/qa/budget.json).
+  var CD_V = (function () {
+    var m = (document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&#]+)/);
+    return m ? m[1] : "";
+  })();
+  var cdLoading = 0;   // 0 not asked, 1 loading, 2 failed
+  function cdLoad() {
+    if (cdLoading) return;
+    cdLoading = 1;
+    var sc = document.createElement("script");
+    sc.src = "../davkit.js" + (CD_V ? "?v=" + encodeURIComponent(CD_V) : "");
+    sc.onload = function () { render(); };
+    sc.onerror = function () { cdLoading = 2; render(); };
+    document.head.appendChild(sc);
+  }
   function cdErr(e) {
     var code = String((e && e.message) || "").replace(/^cd-/, "");
     return { kind: "err", key: CD_ERRS.indexOf(code) >= 0 ? "cd.err." + code : "cd.err.other" };
@@ -1096,7 +1112,11 @@
     var D = cdApi();
     var c = card(t("cd.title"), "caldav");
     c.appendChild(el("p", "hint", t("cd.hint")));
-    if (!D) { c.appendChild(el("p", "msg msg-err", t("cd.err.other"))); return c; }
+    if (!D) {
+      if (cdLoading === 2) c.appendChild(el("p", "msg msg-err", t("cd.err.other")));
+      else { cdLoad(); c.appendChild(el("p", "hint", t("cd.working"))); }
+      return c;
+    }
     var a = D.load();
     if (!a) {
       if (cd.open) c.appendChild(cdForm(D));
