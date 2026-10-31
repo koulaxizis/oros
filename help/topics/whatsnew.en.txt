@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.67.00
+- Settings › System › `Report a problem`: one text file to send to whoever helps you when something goes wrong. It holds the orOS version, your browser and device, how sync and backups are set up and the last errors orOS noticed, never your notes, files, names, passwords or keys, and you read all of it before you save it. On the orOS USB stick and in orOS Portable it can also carry the computer's own logs.
+
 ## Version 4.66.00
 - Studio: play your instrument plugins from a MIDI keyboard through orOS Bridge 0.6.0. Choose an instrument in `Listen through a plugin` and the keyboard it plays from: the bridge reads the keyboard itself, so the notes reach the instrument with only the sound card's delay. Recording an instrument track then keeps the notes you played as a MIDI clip, and the track keeps the instrument, ready to freeze.
 
