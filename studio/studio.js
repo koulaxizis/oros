@@ -783,12 +783,12 @@
   // download what the project's tracks play; then `after` (e.g. play again)
   // (`retry`: also the ones that failed before, e.g. on Play)
   function loadSmps(a, ids, after, retry) {
-    var miss = ids.filter(function (id) { return !SND.get(id) && (retry || SND.state(id) !== "bad"); });
+    var miss = ids.filter(function (id) { return !SND.get(id) && SND.state(id) !== "gone" && (retry || SND.state(id) !== "bad"); });
     if (!miss.length) return;
     var names = function (id) { var e = SND.find(id); return e ? packName(e) : id; };
     miss.forEach(function (id) { if (SND.state(id) !== "loading") live(t("smp.loading", { name: names(id) })); });
     SND.ensure(a, miss, function (id, n, total) { if (n === total || n % 8 === 0) live(t("smp.step", { name: names(id), n: n, total: total })); }).then(function () {
-      miss.forEach(function (id) { showToast(t("smp.ready", { name: names(id) })); });
+      miss.forEach(function (id) { if (SND.get(id)) showToast(t("smp.ready", { name: names(id) })); });
       if (after) after();
     }, function () {
       miss.forEach(function (id) { if (!SND.get(id) && !smpTold[id]) { smpTold[id] = 1; showToast(t("smp.fail", { name: names(id) })); } });

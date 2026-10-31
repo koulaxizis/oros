@@ -2,6 +2,20 @@
  "version": "2.0",
  "effects": [
   {
+   "id": "air",
+   "name": "Air",
+   "category": "One Slider",
+   "tags": "eq air high shelf top end sheen brightness presence open gui",
+   "gfx": [
+    360,
+    240
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 1,
+   "bytes": 34525
+  },
+  {
    "id": "brighter",
    "name": "Brighter",
    "category": "One Slider",
@@ -614,8 +628,22 @@
    ],
    "ins": 4,
    "outs": 2,
-   "sliders": 10,
-   "bytes": 59100
+   "sliders": 11,
+   "bytes": 63111
+  },
+  {
+   "id": "glue_comp",
+   "name": "Glue Comp",
+   "category": "Essentials",
+   "tags": "compressor bus glue mix buss console stereo link auto release parallel sidechain hpf gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 46176
   },
   {
    "id": "limiter",
@@ -810,8 +838,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 9,
-   "bytes": 69972
+   "sliders": 11,
+   "bytes": 77842
   },
   {
    "id": "shaper",
@@ -840,6 +868,20 @@
    "outs": 2,
    "sliders": 7,
    "bytes": 44923
+  },
+  {
+   "id": "space",
+   "name": "Space",
+   "category": "Essentials",
+   "tags": "reverb space room chamber hall galaxy fdn feedback delay network algorithmic modulation ambience long decay pre-delay gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 58901
   },
   {
    "id": "stereo_width",
@@ -896,6 +938,20 @@
    "outs": 2,
    "sliders": 11,
    "bytes": 69264
+  },
+  {
+   "id": "tone",
+   "name": "Tone",
+   "category": "Essentials",
+   "tags": "eq tone bass treble baxandall shelf low high console hi-fi warm bright simple gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 5,
+   "bytes": 40717
   },
   {
    "id": "transient_shaper",
@@ -1008,6 +1064,34 @@
    "outs": 2,
    "sliders": 4,
    "bytes": 42520
+  },
+  {
+   "id": "console_buss",
+   "name": "Console Buss",
+   "category": "Advanced",
+   "tags": "console buss bus master analog mixer summing saturation crosstalk colour warm punchy bright drive glue gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 43556
+  },
+  {
+   "id": "console_channel",
+   "name": "Console Channel",
+   "category": "Advanced",
+   "tags": "console channel analog mixer summing saturation colour warm punchy bright drive harmonics gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 3,
+   "bytes": 42625
   },
   {
    "id": "convolution",
@@ -1600,6 +1684,20 @@
    "bytes": 94765
   },
   {
+   "id": "mallets",
+   "name": "Mallets",
+   "category": "Instruments",
+   "tags": "instrument mallets marimba xylophone vibraphone vibes glockenspiel tubular bells chimes timpani kettle drum orchestral percussion modal synthesis midi gui",
+   "gfx": [
+    560,
+    416
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 81933
+  },
+  {
    "id": "organ",
    "name": "Organ",
    "category": "Instruments",
@@ -1610,8 +1708,8 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 20,
-   "bytes": 99994
+   "sliders": 21,
+   "bytes": 106630
   },
   {
    "id": "percussion",
@@ -1634,12 +1732,12 @@
    "tags": "instrument pluck plucked string karplus strong guitar nylon steel harp koto pipa lute banjo dulcimer strum strummer chord rhythm body midi gui",
    "gfx": [
     560,
-    416
+    502
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 102037
+   "sliders": 13,
+   "bytes": 103851
   },
   {
    "id": "sampler",

@@ -188,6 +188,10 @@ test("sounds.js: the pack list is cleaned, downloads are kept in oros-sounds", a
   assert.equal(SND.CACHE, "oros-sounds");
   assert.equal(SND.isReady([]), true);
   assert.equal(SND.isReady(["vsco-harp"]), false);
+  // a pack the list no longer has (retired) does not hold up playback or an export
+  await SND.ensure({}, ["vsco-organ"]);
+  assert.equal(SND.state("vsco-organ"), "gone");
+  assert.equal(SND.get("vsco-organ"), null, "the track plays its built-in sound");
 });
 
 test("wiring: scripts, offline cache, sound lists, playback, export and credits", () => {
