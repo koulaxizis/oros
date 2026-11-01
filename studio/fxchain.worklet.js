@@ -19,13 +19,14 @@
 //     messages "midi" and "time" with at), the plugin's own state
 //     ("state", item.state) and its interface's pokes ("vars"); an
 //     export hands its MIDI and transport over in processorOptions.
+//     An instrument with more output pins plays its first pair.
 // Lives in studio/ (not studio/nullfx/, which the sync workflow owns).
 // Load eel-rt.js, null-fx.js and the effect files first.
 // ============================================================
 /* global AudioWorkletProcessor, registerProcessor, sampleRate, currentTime, NULLRT, NULLFXHost, NULLFX */
 (function () {
   "use strict";
-  var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8;
+  var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8, MAX_OUTS = 16;
 
   class StudioFxChain extends AudioWorkletProcessor {
     static get parameterDescriptors() {
@@ -113,7 +114,19 @@
       this.post({ type: "error", uid: it.uid, id: it.id, message: String(e && e.message || e) });
       return null;
     }
-    return { uid: it.uid, id: it.id, FX: FX, fx: fx, bypass: false, key: 0, pins: FX.inPins.length };
+    return { uid: it.uid, id: it.id, FX: FX, fx: fx, bypass: false, key: 0, pins: FX.inPins.length, outs: this.outsFor(FX) };
+  };
+  // An effect with more output pins than two (NULL Drum Machine 3.0: main + Snare, Hats
+  // and Perc pairs) writes pins 1/2 into the chain and the rest into buffers of its own,
+  // made here and not on the audio clock, that nobody plays: like REAPER on a
+  // two-channel track. (The generated code would pad a short list, but with new
+  // buffers every block.)
+  P.outsFor = function (FX) {
+    var n = Math.min((FX.outPins || []).length, MAX_OUTS);
+    if (n <= 2) return this.a;
+    var o = [this.a[0], this.a[1]];
+    while (o.length < n) o.push(new Float32Array(BLOCK));
+    return o;
   };
   // [{ k, uid, i, inc, min, max }]
   P.setAuto = function (map) {
@@ -203,7 +216,7 @@
         nin = s.pins;
       }
       try {
-        s.fx.process(ins, this.a, n, nin, s.FX.usesMidi ? due.midi : null);
+        s.fx.process(ins, s.outs, n, nin, s.FX.usesMidi ? due.midi : null);
       } catch (e) {
         s.bypass = true;
         this.post({ type: "error", uid: s.uid, id: s.id, message: String(e && e.message || e) });

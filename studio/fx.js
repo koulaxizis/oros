@@ -35,6 +35,7 @@
 
   var BASE = "nullfx/";
   var PEEK_MS = 33;
+  var MAX_OUTS = 16;                          // output pins of an instrument (fxchain.worklet.js has the same)
 
   window.StudioFX = function (host) {
     var C = host.C, t = host.t, el = host.el, setLabel = host.setLabel;
@@ -59,7 +60,9 @@
         }).then(function (j) {
           // stereo effects, and those with a stereo key input (Sidechain Ducker)
           catalog = (j.effects || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && (e.ins <= 2 || e.ins === 4) && e.outs === 2; });
-          instCat = (j.instruments || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && e.ins === 0 && e.outs === 2; });
+          // instruments: stereo, or stereo pairs (NULL Drum Machine 3.0: main + 3 group
+          // pairs); Studio plays the first pair, like REAPER on a two-channel track
+          instCat = (j.instruments || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && e.ins === 0 && e.outs >= 2 && e.outs <= MAX_OUTS && e.outs % 2 === 0; });
           return catalog;
         }, function (e) { catalogP = null; throw e; });
       }
