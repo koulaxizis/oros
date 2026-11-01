@@ -1261,6 +1261,8 @@ var PRECACHE_URLS = [
   "quote/core.js",
   "kanban/core.js",
   "contacts/dates.js",
+  "contacts/vcard.js",
+  "contacts/dav.js",
   "todo/today.js",
   "quote/today.js",
   "kanban/today.js",
