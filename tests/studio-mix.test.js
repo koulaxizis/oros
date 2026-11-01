@@ -211,6 +211,72 @@ test("instrument: NULL Drum Machine in the chain processor plays MIDI and the tr
   delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate; delete globalThis.currentTime;
 });
 
+test("instrument: a multi-out instrument (NULL Drum Machine 3.0, 8 pins) is listed and plays its first pair", async () => {
+  // the catalog: the real index.json through StudioFX's loadCatalog
+  const idx = JSON.parse(read("studio/nullfx/fx/index.json"));
+  const dm = idx.instruments.filter((e) => e.id === "drum_machine")[0];
+  assert.ok(dm && dm.ins === 0 && dm.outs >= 2, "the synced catalog has the Drum Machine");
+  globalThis.window = {};
+  globalThis.fetch = async () => ({ ok: true, json: async () => idx });
+  delete require.cache[require.resolve(path.join(ROOT, "studio/fx.js"))];
+  require(path.join(ROOT, "studio/fx.js"));
+  const F = globalThis.window.StudioFX({ C, t: (k) => k, el: () => null, setLabel: () => {}, version: "test" });
+  await F.loadCatalog();
+  const ids = F.instruments().map((e) => e.id);
+  assert.ok(ids.includes("drum_machine"), "Drum Machine is an instrument again: " + ids.join(","));
+  assert.ok(F.isInstrument("drum_machine"));
+  idx.instruments.forEach((e) => assert.equal(ids.includes(e.id), e.ins === 0 && e.outs >= 2 && e.outs <= 16 && e.outs % 2 === 0, e.id));
+  delete globalThis.window; delete globalThis.fetch;
+
+  // the chain processor: Outputs = Groups puts snare, clap, hats and toms on pins 3-8;
+  // Studio hears pins 1/2 (the kick), with no error and no new buffers per block
+  let Proc = null;
+  const posted = [];
+  globalThis.sampleRate = 48000;
+  globalThis.currentTime = 0;
+  globalThis.AudioWorkletProcessor = class { constructor() { this.port = { postMessage: (m) => posted.push(m) }; } };
+  globalThis.registerProcessor = (name, cls) => { Proc = cls; };
+  require(path.join(ROOT, "studio/nullfx/runtime/eel-rt.js"));
+  require(path.join(ROOT, "studio/nullfx/runtime/null-fx.js"));
+  require(path.join(ROOT, "studio/nullfx/fx/drum_machine.js"));
+  delete require.cache[require.resolve(path.join(ROOT, "studio/fxchain.worklet.js"))];
+  require(path.join(ROOT, "studio/fxchain.worklet.js"));
+  const sr = 48000;
+  const energy = (groups, note) => {
+    const p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: { 1: 0, 63: groups } }], midi: [[100 / sr, 0x99, note, 120]] } });
+    const s = p.slots[0];
+    assert.equal(s.outs.length, 8);
+    assert.equal(s.outs[0], p.a[0]);
+    assert.equal(s.outs[1], p.a[1]);
+    const extra = s.outs.slice(2);
+    let e = 0, side = 0;
+    for (let b = 0; b < 40; b++) {
+      globalThis.currentTime = b * 128 / sr;
+      const out = [new Float32Array(128), new Float32Array(128)];
+      p.process([[]], [out], {});
+      for (let i = 0; i < 128; i++) e += out[0][i] * out[0][i] + out[1][i] * out[1][i];
+      extra.forEach((x) => { for (let i = 0; i < 128; i++) side += x[i] * x[i]; });
+    }
+    assert.ok(s.outs.slice(2).every((x, i) => x === extra[i]), "the same buffers every block");
+    assert.equal(s.bypass, false);
+    return [e, side];
+  };
+  const [kickMain, kickSide] = energy(0, 36);
+  assert.ok(kickMain > 0.01 && kickSide === 0, "Main: the kick on pins 1/2 only");
+  const [kickGroups] = energy(1, 36);
+  assert.ok(kickGroups > 0.01, "Groups: the kick stays on pins 1/2");
+  const [snareMain] = energy(0, 38);
+  const [snareGroups, snareSide] = energy(1, 38);
+  assert.ok(snareMain > 0.01, "Main: the snare on pins 1/2");
+  assert.ok(snareGroups === 0 && snareSide > 0.01, "Groups: the snare on its own pins, which Studio does not play");
+  assert.equal(posted.filter((m) => m.type === "error" || m.type === "missing").length, 0);
+  // a stereo effect still writes straight into the chain's pair
+  const p2 = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: {} }] } });
+  assert.equal(p2.outsFor({ outPins: ["L", "R"] }), p2.a);
+  assert.equal(p2.outsFor({ outPins: new Array(40).fill("x") }).length, 16);
+  delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate; delete globalThis.currentTime;
+});
+
 // ---------- MP3 ----------
 function parseFrames(bytes) {
   let o = 0;
