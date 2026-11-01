@@ -1,6 +1,21 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.94.02
+- PDF export in every app now uses jsPDF 4.2.1, which closes two security holes of the old version; your PDFs look the same. Studio: the hint in an empty project no longer gets cut off on a phone. Files opened on its own no longer shows an error.
+
+## Version 4.94.01
+- Updates no longer get stuck: if one file of a new version cannot be downloaded (a slow or filtered network, common on phones), orOS tries again, picks up where it stopped, and after a few tries installs the update without that file. A phone that stayed on an old version updates by itself the next time you open orOS.
+
+## Version 4.94.00
+- Studio: the Assisted effects (Assisted EQ, Compressor, Reverb and Delay) are in `+ Effect`, and what their `Learn` finds is saved with the track and can be undone. Instrument tracks get the NULL JSFX MIDI effects (Arpeggiator, Chords, Scale and more) above the instrument. On the remote, a track with a NULL instrument gets `Pads` or `Keys` that play it on the PC, and recording MIDI keeps what you play. See [Studio](help:a/studio).
+
+## Version 4.93.02
+- Studio: NULL Drum Machine now sounds whole with `Outputs` set to Groups too. Studio mixes the group outputs (snare, hats, percussion) into the track, each with its own Drive, Grit and Volume. With Main nothing changes. See [Studio](help:a/studio).
+
+## Version 4.93.01
+- Studio: NULL Drum Machine is back in the instrument list, and projects that use it play it again. Since NULL JSFX 3.0 it has extra outputs for groups; Studio plays its main pair, so with `Outputs` set to Groups only the kick sounds. See [Studio](help:a/studio).
+
 ## Version 4.93.00
 - **Remote for orOS Studio**: Studio's remote as an Android app of its own (F-Droid repository, Droid-ify, Obtainium) and at useoros.online/studio/remote/. Scan the QR code from the PC right in the app, the screen stays on, phones tick under your finger, tablets on their side get bigger faders, and the app comes back to the same PC without a new Allow. The QR code on the PC now opens this page. See [Studio](help:a/studio).
 

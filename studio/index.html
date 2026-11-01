@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Studio · orOS</title>
 
-  <link rel="stylesheet" href="studio.css?v=4.93.00">
+  <link rel="stylesheet" href="studio.css?v=4.94.01">
 
 </head>
 <body>
@@ -597,30 +597,47 @@
     </div>
   </dialog>
 
+  <!-- Remote control: pads or keys for a track's NULL instrument, played on the PC -->
+  <dialog id="rup-dlg" class="wide" aria-labelledby="rup-title">
+    <div class="dlg-head">
+      <h2 id="rup-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="rup-mode" class="chip"></button>
+      <button type="button" id="rup-close" class="icon-btn" data-i18n-aria="btn.close"></button>
+    </div>
+    <div id="rup-oct" class="kb-oct" hidden>
+      <button type="button" id="rup-dn" class="icon-btn small" data-i18n-aria="kb.octDown"></button>
+      <span id="rup-octv" class="hint small"></span>
+      <button type="button" id="rup-up" class="icon-btn small" data-i18n-aria="kb.octUp"></button>
+    </div>
+    <div id="rup-pads" class="rup-pads"></div>
+    <p class="hint small" data-i18n="rp.hint"></p>
+  </dialog>
+
   <!-- effects runtime (NULL JSFX) and the Effects dialog; before core.js -->
-  <script src="../i18n.js?v=4.93.00" data-app="studio"></script>
-  <script src="nullfx/runtime/eel-rt.js?v=4.93.00"></script>
-  <script src="nullfx/runtime/null-fx.js?v=4.93.00"></script>
-  <script src="nullfx/runtime/null-gfx.js?v=4.93.00"></script>
-  <script src="nullfx/runtime/null-node.js?v=4.93.00"></script>
-  <script src="../qr/qr-encode.js?v=4.93.00"></script>
-  <script src="remote.js?v=4.93.00"></script>
-  <script src="fx.js?v=4.93.00"></script>
-  <script src="encode.js?v=4.93.00"></script>
-  <script src="midi.js?v=4.93.00"></script>
-  <script src="sfz.js?v=4.93.00"></script>
-  <script src="sounds.js?v=4.93.00"></script>
-  <script src="notes.js?v=4.93.00"></script>
-  <script src="loops.js?v=4.93.00"></script>
-  <script src="roll.js?v=4.93.00"></script>
+  <script src="../i18n.js?v=4.94.01" data-app="studio"></script>
+  <script src="nullfx/runtime/eel-rt.js?v=4.94.01"></script>
+  <script src="nullfx/runtime/null-fx.js?v=4.94.01"></script>
+  <script src="nullfx/runtime/null-gfx.js?v=4.94.01"></script>
+  <script src="nullfx/runtime/null-node.js?v=4.94.01"></script>
+  <script src="../qr/qr-encode.js?v=4.94.01"></script>
+  <script src="remote.js?v=4.94.01"></script>
+  <script src="fx.js?v=4.94.01"></script>
+  <script src="encode.js?v=4.94.01"></script>
+  <script src="midi.js?v=4.94.01"></script>
+  <script src="sfz.js?v=4.94.01"></script>
+  <script src="sounds.js?v=4.94.01"></script>
+  <script src="notes.js?v=4.94.01"></script>
+  <script src="loops.js?v=4.94.01"></script>
+  <script src="roll.js?v=4.94.01"></script>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="core.js?v=4.93.00"></script>
-  <script src="../bundle.js?v=4.93.00"></script>
-  <script src="package.js?v=4.93.00"></script>
-  <script src="studio.js?v=4.93.00"></script>
+  <script src="core.js?v=4.94.01"></script>
+  <script src="../bundle.js?v=4.94.01"></script>
+  <script src="package.js?v=4.94.01"></script>
+  <script src="studio.js?v=4.94.01"></script>
 
 </body>
 </html>

@@ -153,7 +153,7 @@
       "fx.removed": "Effect removed", "fx.max": "A chain has up to {n} effects", "fx.controls": "All controls",
       "fx.gfx": "{name} interface", "fx.unknown": "Unknown effect ({id})",
       "fx.unknownHint": "This effect comes from a newer Studio. It is kept, but does not play here.",
-      "fx.cat1": "One Slider", "fx.cat2": "Essentials", "fx.cat3": "Advanced", "fx.catInst": "Instruments",
+      "fx.cat1": "One Slider", "fx.cat2": "Essentials", "fx.cat3": "Advanced", "fx.catAssist": "Assisted", "fx.catMidi": "MIDI", "fx.catInst": "Instruments",
       "fx.noFile": "No file", "fx.chooseFile": "Choose file", "fx.failed": "{name} stopped: it is bypassed",
       "fx.noCatalog": "The effects could not be loaded.", "fx.credit": "Effects: NULL JSFX by Christos Koulaxizis (nulljsfx.tech), MIT License.",
       "rm.title": "Remote control", "rm.sec": "Remote control", "rm.host": "Connect a tablet or phone", "rm.join": "Control Studio on another device",
@@ -166,6 +166,7 @@
       "rm.code": "Code", "rm.go": "Connect", "rm.badCode": "Type the 6 digits shown on the PC.", "rm.exit": "Stop controlling",
       "rm.scan": "Scan the QR code", "rm.scanStop": "Stop the camera", "rm.scanHint": "Point the camera at the QR code on the PC.",
       "rm.scanNo": "The camera could not start. Type the code instead.", "rm.scanBad": "This QR code is not from Studio.",
+      "rp.pads": "Pads", "rp.keys": "Keys", "rp.open": "Play {name}", "rp.title": "Play: {name}", "rp.hint": "Plays the track's NULL instrument on the PC. On a pad, higher is louder. While this track records MIDI, what you play is recorded.", "rp.d36": "Kick", "rp.d37": "Rim", "rp.d38": "Snare", "rp.d39": "Clap", "rp.d40": "Snare 2", "rp.d41": "Low Tom", "rp.d42": "Closed Hat", "rp.d43": "Low Tom 2", "rp.d44": "Pedal Hat", "rp.d45": "Mid Tom", "rp.d46": "Open Hat", "rp.d47": "Mid Tom 2", "rp.d48": "High Tom", "rp.d49": "Crash", "rp.d50": "High Tom 2", "rp.d51": "Ride",
       "rm.badge.direct": "Direct", "rm.badge.relay": "Via internet", "rm.badge.lost": "Reconnecting…",
       "rm.noProject": "No project open on the PC", "rm.empty": "The project on the PC has no tracks yet.", "rm.fxOn": "on", "rm.fxOff": "bypassed",
       "rm.pos": "Position in the song", "rm.privacy": "The link is encrypted with this code and the orOS relay only passes it on. Studio asks you here before any device can control it.",
@@ -313,7 +314,7 @@
       "fx.removed": "Το εφέ αφαιρέθηκε", "fx.max": "Μια αλυσίδα έχει έως {n} εφέ", "fx.controls": "Όλα τα χειριστήρια",
       "fx.gfx": "Περιβάλλον του {name}", "fx.unknown": "Άγνωστο εφέ ({id})",
       "fx.unknownHint": "Αυτό το εφέ έρχεται από νεότερο Studio. Κρατιέται, αλλά δεν παίζει εδώ.",
-      "fx.cat1": "Ένα ρυθμιστικό", "fx.cat2": "Βασικά", "fx.cat3": "Προχωρημένα", "fx.catInst": "Όργανα",
+      "fx.cat1": "Ένα ρυθμιστικό", "fx.cat2": "Βασικά", "fx.cat3": "Προχωρημένα", "fx.catAssist": "Υποβοηθούμενα", "fx.catMidi": "MIDI", "fx.catInst": "Όργανα",
       "fx.noFile": "Κανένα αρχείο", "fx.chooseFile": "Επιλογή αρχείου", "fx.failed": "Το {name} σταμάτησε: παρακάμπτεται",
       "fx.noCatalog": "Τα εφέ δεν φόρτωσαν.", "fx.credit": "Εφέ: NULL JSFX του Christos Koulaxizis (nulljsfx.tech), άδεια MIT.",
       "rm.title": "Τηλεχειρισμός", "rm.sec": "Τηλεχειρισμός", "rm.host": "Σύνδεση tablet ή κινητού", "rm.join": "Χειρισμός του Studio άλλης συσκευής",
@@ -326,6 +327,7 @@
       "rm.code": "Κωδικός", "rm.go": "Σύνδεση", "rm.badCode": "Γράψε τα 6 ψηφία που δείχνει το PC.", "rm.exit": "Τέλος χειρισμού",
       "rm.scan": "Σάρωση του QR", "rm.scanStop": "Κλείσιμο κάμερας", "rm.scanHint": "Στρέψε την κάμερα στον κωδικό QR του PC.",
       "rm.scanNo": "Η κάμερα δεν άνοιξε. Γράψε καλύτερα τον κωδικό.", "rm.scanBad": "Αυτό το QR δεν είναι του Studio.",
+      "rp.pads": "Pads", "rp.keys": "Πλήκτρα", "rp.open": "Παίξε το {name}", "rp.title": "Παίξε: {name}", "rp.hint": "Παίζει το όργανο NULL του καναλιού στον υπολογιστή. Σε ένα pad, όσο πιο ψηλά πατάς τόσο πιο δυνατά. Όσο το κανάλι ηχογραφεί MIDI, ό,τι παίζεις γράφεται.", "rp.d36": "Μπότα", "rp.d37": "Rim", "rp.d38": "Ταμπούρο", "rp.d39": "Παλαμάκια", "rp.d40": "Ταμπούρο 2", "rp.d41": "Χαμηλό τομ", "rp.d42": "Κλειστό hi-hat", "rp.d43": "Χαμηλό τομ 2", "rp.d44": "Hi-hat πεντάλ", "rp.d45": "Μεσαίο τομ", "rp.d46": "Ανοιχτό hi-hat", "rp.d47": "Μεσαίο τομ 2", "rp.d48": "Ψηλό τομ", "rp.d49": "Crash", "rp.d50": "Ψηλό τομ 2", "rp.d51": "Ride",
       "rm.badge.direct": "Απευθείας", "rm.badge.relay": "Μέσω internet", "rm.badge.lost": "Επανασύνδεση…",
       "rm.noProject": "Κανένα ανοιχτό έργο στο PC", "rm.empty": "Το έργο στο PC δεν έχει ακόμη κανάλια.", "rm.fxOn": "ενεργό", "rm.fxOff": "παρακάμπτεται",
       "rm.pos": "Θέση στο τραγούδι", "rm.privacy": "Η σύνδεση κρυπτογραφείται με αυτόν τον κωδικό και το relay του orOS απλώς τη μεταφέρει. Το Studio σε ρωτά εδώ πριν το χειριστεί οποιαδήποτε συσκευή.",
@@ -4798,7 +4800,7 @@
           mfx: fxList(proj.fx),
           tracks: tracks().map(function (tr) {
             return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: !!tr.mute, solo: !!tr.solo,
-                     arm: prefs.arm === tr.id, fx: fxList(tr.fx) };
+                     arm: prefs.arm === tr.id, fx: fxList(tr.fx), ins: nxOf(tr) ? nxKind(nxOf(tr).id) : undefined };
           })
         };
       },
@@ -4815,6 +4817,13 @@
       setMaster: function (v) { setProject({ vol: v }, burst("master", { live: true })); },
       setTrack: function (id, f) { setTrack(id, f, burst("r" + Object.keys(f).join("") + id, { live: true })); },
       arm: armTrack,
+      // a pad or key on the tablet (v 0: let go): the track's NULL instrument plays it, and a MIDI take on that track keeps it
+      note: function (id, n, v) {
+        var tr = C.find(data, "tracks", id);
+        if (!tr || !proj || tr.p !== proj.id || !nxOf(tr)) return;
+        nxNote(tr, v ? 0x99 : 0x89, n, v);
+        if (midiRec && midiRec.tid === id) recEvent(v ? "on" : "off", n, v);
+      },
       toggleFx: function (key, u, on) {
         var tr = key === "master" ? null : C.find(data, "tracks", key);
         var items = key === "master" ? (proj ? proj.fx : []) : (tr ? tr.fx : []);

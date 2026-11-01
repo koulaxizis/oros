@@ -934,6 +934,9 @@
   // raw === true keeps the hidden Trash folder (/internal/.trash);
   // every view, chooser and search of this app leaves it out.
   function fsList(path, raw) {
+    // Opened on its own (?standalone) there is no orOS file system: a
+    // rejected promise, never a TypeError, so callers show their fallback.
+    if (!isAvailable()) return Promise.reject(new Error("orosFS missing"));
     return FS().ls(path).then(function (list) {
       var dirs = [], files = [];
       (list || []).forEach(function (e) {
@@ -2398,6 +2401,7 @@
   function ensureStorageBar() {
     var host = $("storage-bar");
     if (!host) return;
+    if (!isAvailable()) { host.textContent = "-"; return; }
 
     var cached = readStorageCache();
     if (cached) {

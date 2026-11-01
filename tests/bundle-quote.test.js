@@ -105,7 +105,11 @@ test("quote: Open as copy adds quotes and templates under fresh ids, as drafts w
   const mine = slice();
   let n = 0;
   const cd = P.asCopy(() => mine, () => "copy" + String(++n).padStart(3, "0"));
-  const res = K.open(cd, mine, r.content, { now: NOW });
+  // A copy is stamped with the real clock (as in the app), so the kit is given
+  // the real clock too: with the fixed NOW the stamp would be clamped to
+  // NOW + 5 min and the check below would fail once that date has passed.
+  const live = Date.now();
+  const res = K.open(cd, mine, r.content, { now: live });
   assert.deepEqual(res.report, { added: 2, skipped: 1, updated: 0 });       // copy of q1, copy of t1 | c1 kept
   assert.equal(res.next.quotes.length, 2);
   const q = res.next.quotes[1];
@@ -116,7 +120,7 @@ test("quote: Open as copy adds quotes and templates under fresh ids, as drafts w
   assert.equal(q.share, undefined);
   assert.equal(q.clientId, "c1");
   assert.ok(q.items[0].id !== "q1-i1" && q.instalments[0].id !== "q1-n1");
-  assert.ok(q.mtime > Date.now() - 60000);                                  // stamped now: a new record
+  assert.ok(q.mtime >= live && q.mtime <= Date.now());                      // stamped now: a new record
   assert.equal(res.next.templates[1].name, "Website");
   assert.equal(res.next.quotes[0].id, "q1");                                 // the original untouched
   // a taken or malformed id is never used
