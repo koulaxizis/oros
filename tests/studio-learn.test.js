@@ -60,11 +60,13 @@ test("chain processor: Assisted EQ's Learn result is reported once, page and aut
 
 test("page: Assisted in both pickers, the strings in EN/EL/DE, the report saved as one undo step", () => {
   const fx = read("studio/fx.js"), rm = read("studio/remote.js"), js = read("studio/studio.js"), de = read("i18n/de/studio.js");
-  const cats = '["One Slider", "Essentials", "Advanced", "Assisted"]';
-  assert.ok(fx.includes(cats), "Studio's picker");
-  assert.ok(rm.includes(cats), "the remote's picker");
-  assert.equal((js.match(/"fx\.catAssist":/g) || []).length, 2, "EN and EL");
-  assert.match(de, /"fx\.catAssist":/);
+  assert.ok(fx.includes('["One Slider", "Essentials", "Advanced", "Assisted"]'), "Studio's categories");
+  assert.ok(fx.includes("cats(instrumentOf(chainOf(openKey))).forEach"), "Studio's picker");
+  assert.ok(rm.includes("FXA.cats(FXA.instrumentOf(RF.items)).forEach"), "the remote's picker");
+  ["fx.catAssist", "fx.catMidi"].forEach((k) => {
+    assert.equal((js.match(new RegExp('"' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k + " EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " DE");
+  });
   assert.match(fx, /m\.type === "sliders"\) \{ if \(ch\.onsliders\) ch\.onsliders\(m\); \}/);
   assert.match(fx, /if \(!offline\) ch\.onsliders = function \(m\) \{ fromAudio\(key, m\.uid, m\.v, ch\); \};/);
   assert.match(fx, /host\.burst\("fxa" \+ u, \{ live: true \}\)/);
@@ -88,4 +90,66 @@ test("remote pads: the host checks every note, lets go of held notes, and the st
     assert.equal((js.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN/EL");
     assert.ok(de.includes('"' + k + '":'), k + " DE");
   });
+});
+
+test("chain processor: a MIDI effect's notes reach the instrument after it (Chords → Keys), bypassed it passes them on", () => {
+  let Proc = null;
+  const posted = [];
+  globalThis.sampleRate = 48000;
+  globalThis.currentTime = 0;
+  globalThis.AudioWorkletProcessor = class { constructor() { this.port = { postMessage: (m) => posted.push(m) }; } };
+  globalThis.registerProcessor = (name, cls) => { Proc = cls; };
+  require(path.join(ROOT, "studio/nullfx/runtime/eel-rt.js"));
+  require(path.join(ROOT, "studio/nullfx/runtime/null-fx.js"));
+  require(path.join(ROOT, "studio/nullfx/fx/chords.js"));
+  require(path.join(ROOT, "studio/nullfx/fx/keys.js"));
+  delete require.cache[require.resolve(path.join(ROOT, "studio/fxchain.worklet.js"))];
+  require(path.join(ROOT, "studio/fxchain.worklet.js"));
+  const run = (p, n) => {
+    for (let b = 0; b < n; b++) { globalThis.currentTime = b * 128 / 48000; p.process([[]], [[new Float32Array(128), new Float32Array(128)]], {}); }
+  };
+  const notesOn = (list) => list.filter((e) => (e[1] & 0xf0) === 0x90 && e[3] > 0).map((e) => e[2]).sort((a, b) => a - b);
+  const heard = (bypass) => {
+    const p = new Proc({ processorOptions: { chain: [{ uid: "fchd0001", id: "chords", sliders: {}, bypass: false }, { uid: "fkey0001", id: "keys", sliders: {} }] } });
+    p.slots[0].bypass = bypass;
+    const seen = [];
+    const keys = p.slots[1].fx, proc = keys.process.bind(keys);
+    keys.process = function (ins, outs, n, nin, midi) { if (midi) seen.push(...midi); return proc(ins, outs, n, nin, midi); };
+    p.onMessage({ type: "midi", ev: [[0, 0x90, 60, 100]] });
+    run(p, 20);
+    return notesOn(seen);
+  };
+  const withChords = heard(false), plain = heard(true);
+  assert.deepEqual(plain, [60], "bypassed: the played note only");
+  assert.ok(withChords.length >= 3 && withChords.indexOf(60) >= 0, "Chords turns one note into a chord for Keys: " + withChords);
+  delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate; delete globalThis.currentTime;
+});
+
+test("MIDI effects: synced files, above the instrument, only offered with one, and moved only among themselves", () => {
+  const fx = read("studio/fx.js"), rm = read("studio/remote.js"), sync = read(".github/scripts/sync-nullfx.js");
+  const idx = JSON.parse(read("studio/nullfx/fx/index.json"));
+  idx.midi.forEach((e) => assert.ok(fs.existsSync(path.join(ROOT, "studio/nullfx/fx", e.id + ".js")), e.id));
+  assert.match(sync, /index\.effects\.concat\(index\.instruments \|\| \[\], index\.midi \|\| \[\]\)/);
+  assert.match(fx, /catalog = \(j\.effects \|\| \[\]\)\.concat\(j\.midi \|\| \[\]\)/);
+  assert.match(fx, /return midiFx\.concat\(\[old && old\.id === id \? old : /);
+  assert.match(fx, /var one = midiOf\(items\)\.concat\(\[x\]\)/);
+  assert.match(fx, /return \["One Slider", "Essentials", "Advanced", "Assisted"\]\.concat\(withInst \? \["MIDI"\] : \[\]\);/);
+  assert.match(rm, /FXA\.cats\(FXA\.instrumentOf\(RF\.items\)\)/);
+  assert.match(rm, /!host\.fx\.movable\(RF\.items, k, -1\)/);
+  // the ordering rules, run on their own
+  const src = fx.slice(fx.indexOf("    function isMidiFx(id)"), fx.indexOf("    function fxMeta(id)"));
+  const cat = { arp: "MIDI", chd: "MIDI", keys: "inst", eq: "Essentials" };
+  const C = { MAX_FX: 8, newId: () => "fnew0001" };
+  const mk = new Function("C", "info", "isInstrument", src + "; return { instrumentOf, withInstrument, movable, midiOf };");
+  const R = mk(C, (id) => cat[id] && cat[id] !== "inst" ? { category: cat[id] } : null, (id) => cat[id] === "inst");
+  const it = (id) => ({ u: "f" + id, id });
+  const chain = [it("arp"), it("chd"), it("keys"), it("eq")];
+  assert.equal(R.instrumentOf(chain).id, "keys");
+  assert.equal(R.instrumentOf([it("eq"), it("keys")]), null);
+  assert.deepEqual(R.withInstrument([it("eq"), it("arp")], "keys").map((x) => x.id), ["arp", "keys", "eq"]);
+  assert.deepEqual(R.withInstrument(chain, null).map((x) => x.id), ["arp", "chd", "eq"]);
+  assert.equal(R.movable(chain, 0, 1), true);
+  assert.equal(R.movable(chain, 1, 1), false, "a MIDI effect does not go below the instrument");
+  assert.equal(R.movable(chain, 2, -1), false, "the instrument stays put");
+  assert.equal(R.movable(chain, 3, -1), false, "an audio effect does not go above the instrument");
 });

@@ -166,6 +166,7 @@ orosPack("de", "studio", {
  "fx.cat2": "Grundlagen",
  "fx.cat3": "Fortgeschritten",
  "fx.catAssist": "Assistiert",
+ "fx.catMidi": "MIDI",
  "fx.catInst": "Instrumente",
  "fx.chooseFile": "Datei wählen",
  "fx.controls": "Alle Regler",

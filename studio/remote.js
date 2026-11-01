@@ -1035,7 +1035,11 @@
       RF.views = {};
     }
     function fxItem(u) { return (RF.items || []).filter(function (x) { return x.u === u; })[0] || null; }
-    function infoOf(id) { var cat = host.fx.catalog(); return cat ? cat.filter(function (e) { return e.id === id; })[0] || null : null; }
+    // an effect, a MIDI effect or an instrument of the catalog
+    function infoOf(id) {
+      var cat = host.fx.catalog(), all = cat ? cat.concat(host.fx.instruments() || []) : null;
+      return all ? all.filter(function (e) { return e.id === id; })[0] || null : null;
+    }
     function fxName(id) { var e = infoOf(id); return e ? e.name : id; }
     function slOf(FX, i) { return (FX.sliders || []).filter(function (q) { return q.i === i; })[0] || null; }
 
@@ -1146,8 +1150,8 @@
       if (e) nm.appendChild(el("span", "fx-cat", FXA.catName(e.category)));
       nm.addEventListener("click", function () { RF.open[x.u] = !RF.open[x.u]; renderFx(); focusIn(x.u, ".fx-name"); });
       head.appendChild(nm);
-      head.appendChild(fxIconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + name, k === 0, function () { send(fxAddr({ t: "fxm", u: x.u, d: -1 })); }));
-      head.appendChild(fxIconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + name, k === n - 1, function () { send(fxAddr({ t: "fxm", u: x.u, d: 1 })); }));
+      head.appendChild(fxIconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + name, !host.fx.movable(RF.items, k, -1), function () { send(fxAddr({ t: "fxm", u: x.u, d: -1 })); }));
+      head.appendChild(fxIconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + name, !host.fx.movable(RF.items, k, 1), function () { send(fxAddr({ t: "fxm", u: x.u, d: 1 })); }));
       head.appendChild(fxIconBtn("fx-del", "M6 6l12 12M18 6L6 18", t("fx.remove") + ": " + name, false, function () { send(fxAddr({ t: "fxd", u: x.u })); }));
       li.appendChild(head);
       if (!isOpen) return li;
@@ -1284,7 +1288,7 @@
       cats.textContent = "";
       if (!cat) { cats.appendChild(el("p", "hint small", t("clip.loading"))); return; }
       var q = RF.q.trim().toLowerCase(), any = false;
-      ["One Slider", "Essentials", "Advanced", "Assisted"].forEach(function (c) {
+      FXA.cats(FXA.instrumentOf(RF.items)).forEach(function (c) {
         var list = cat.filter(function (e) { return e.category === c && (!q || (e.name + " " + (e.tags || "")).toLowerCase().indexOf(q) >= 0); });
         if (!list.length) return;
         any = true;

@@ -33,6 +33,7 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 - Die Abspieltaste im Effektfenster spielt den Song, während du einstellst. Änderungen hörst du sofort, und du kannst sie rückgängig machen.
 - Convolution kann deine eigene Impulsantwort nutzen: Setz `Source` auf `IR File` und wähle eine WAV-Datei (bis 20 MB). Sie liegt im Ordner `Studio/fx` und wird wie das übrige Audio synchronisiert.
 - `Assistiert` enthält die Effekte, die sich nach deinem Klang selbst einstellen (Assisted EQ, Compressor, Reverb und Delay): Schalte `Learn` ein, spiel einen Teil des Songs und schalte es wieder aus. Was sie gelernt haben, wird wie jede andere Einstellung mit der Spur gespeichert, und [[Ctrl+Z]] macht es in einem Schritt rückgängig.
+- Auf einer Instrumentenspur listet `MIDI` die MIDI-Effekte (Arpeggiator, Chords, Scale, Note Echo und mehr). Sie stehen über dem Instrument und ändern die Noten, bevor es sie spielt: Die Noten der Clips, der Tasten und der Pads der Fernsteuerung laufen der Reihe nach von oben nach unten durch sie. Sie lassen sich nur untereinander verschieben, und das Instrument bleibt unter ihnen.
 - Manche Effekte brauchen einen Moment Vorlauf. Studio verzögert die anderen Spuren passend, damit alles im Takt bleibt, auch im Export.
 - Die Effekte sind [NULL JSFX](https://nulljsfx.tech) (MIT-Lizenz) und laufen im Browser.
 

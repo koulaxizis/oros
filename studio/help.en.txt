@@ -33,6 +33,7 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - The play button in the effects window plays the song while you adjust. Changes are heard at once and can be undone.
 - Convolution can use your own impulse response: set `Source` to `IR File` and choose a WAV file (up to 20 MB). It is kept in the `Studio/fx` folder and syncs like the rest of the audio.
 - `Assisted` holds the effects that set themselves up from your sound (Assisted EQ, Compressor, Reverb and Delay): turn on `Learn`, play a part of the song, then turn it off. What they learned is saved with the track like any other setting, and [[Ctrl+Z]] undoes it in one step.
+- On an instrument track, `MIDI` lists the MIDI effects (Arpeggiator, Chords, Scale, Note Echo and more). They sit above the instrument and change the notes before it plays them: the notes of clips, of the keys and of the remote's pads go through them in order, top to bottom. They move only among themselves, and the instrument stays below them.
 - Some effects need a moment to look ahead. Studio delays the other tracks to match, so everything stays in time, also in the export.
 - The effects are [NULL JSFX](https://nulljsfx.tech) (MIT License), running in the browser.
 

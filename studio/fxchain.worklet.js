@@ -19,6 +19,9 @@
 //     messages "midi" and "time" with at), the plugin's own state
 //     ("state", item.state) and its interface's pokes ("vars"); an
 //     export hands its MIDI and transport over in processorOptions.
+//   - MIDI effects (Arpeggiator, Chords...) sit before the instrument:
+//     the block's MIDI goes through the slots in order, and what a slot
+//     that uses MIDI sends (midisend) is what the next slots receive.
 //   - sliders the effect moves itself (sliderchange()/slider_automate()
 //     in @slider, @block or @sample, e.g. an Assisted effect's Learn
 //     writing its result): message "sliders" { uid, v: { i: value } }
@@ -62,6 +65,15 @@
     }
   }
   var P = StudioFxChain.prototype;
+  // a block's MIDI [[offset, status, d1, d2]] in time order (stable: same offset keeps the order sent)
+  function sortMidi(list) {
+    for (var i = 1; i < list.length; i++) {
+      var e = list[i], k = i;
+      while (k > 0 && list[k - 1][0] > e[0]) { list[k] = list[k - 1]; k--; }
+      list[k] = e;
+    }
+    return list;
+  }
 
   P.post = function (m) { this.port.postMessage(m); };
   P.onMessage = function (m) {
@@ -219,7 +231,7 @@
     if (params) this.applyAuto(params);
     var due = this.sched.block(currentTime, n, sampleRate);
     if (due.time) this.setTime(due.time);
-    var T = this.time;
+    var T = this.time, mid = due.midi;
     for (var j = 0; j < this.slots.length; j++) {
       var s = this.slots[j];
       if (s.bypass) continue;
@@ -233,7 +245,9 @@
         nin = s.pins;
       }
       try {
-        s.fx.process(ins, this.a, n, nin, s.FX.usesMidi ? due.midi : null);
+        s.fx.process(ins, this.a, n, nin, s.FX.usesMidi ? mid : null);
+        // what a MIDI effect sends goes on to the next slots (the instrument); the others pass it on
+        if (s.FX.usesMidi) mid = sortMidi(s.fx.midiOut);
       } catch (e) {
         s.bypass = true;
         this.post({ type: "error", uid: s.uid, id: s.id, message: String(e && e.message || e) });
