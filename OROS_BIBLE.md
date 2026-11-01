@@ -9383,3 +9383,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** `sw.js`, `tests/sw-network.test.js`, `OROS_BIBLE.md`, `help/topics/whatsnew.{en,el}.txt`, `shell.js` (APP_VERSION).
 - **Tests:** `tests/sw-network.test.js` (new SW-T4 cases), full `node --test tests/*.test.js`; reproduced in Chromium with one file whose connection is cut. Not tested: a real Android phone.
 
+### 2026-11-01 — 4.94.02 — Fixes from the November audit (#764)
+
+- **Fixes:** `vendor/jspdf.umd.min.js` 2.5.2 → 4.2.1 (CVE-2025-29907, CVE-2025-57810; same browser UMD API, a reference PDF gives the same text and pixels; CREDITS.md, shell credits, Part VIII). Studio: the empty-project hint wraps at the left (cut off at 360px). Files `?standalone`: no TypeError on `ls` without the orOS file system. Pad: ISO-8859-1 decoded as Windows-1252 by name (WHATWG), so Node 22.22 and browsers agree.
+- **Tests:** `tests/bundle-quote.test.js` no longer clamps to the fixed NOW; new `tests/clock.test.js` (+ `clock-shift.js`) re-runs every test file with a fixed 13-digit timestamp with the clock ten years ahead; `tests/pad.test.js` simulates strict Latin-1 Node. `.node-version` 22.23.4 used by tests.yml and quality.yml. Full `node --test tests/*.test.js`.
+- **Files:** `vendor/jspdf.umd.min.js`, `CREDITS.md`, `shell.js` (credits, APP_VERSION), `translations.js`, `i18n/de/shell.js`, `studio/studio.css`, `files/files.js`, `pad/core.js`, tests, workflows, `help/topics/whatsnew.{en,el}.txt`.
+
