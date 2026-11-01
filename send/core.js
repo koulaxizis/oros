@@ -54,6 +54,7 @@
   var CARD_NOTES = 5000;         // a card's notes
   var PROMPT_MAX = 8000;         // a Prompter prompt
   var MAKE_MAX = 200000;         // Flashcards' text cap (flashcards/make.js)
+  var TYPING_MAX = 20000;        // Typing Tutor's My texts cap (typing/texts.js)
 
   // Control characters other than tab / newline, and U+2028/2029.
   var CTRL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u2028\u2029]/g;
@@ -352,6 +353,12 @@
         return { make: { title: d.title, text: d.text.slice(0, MAKE_MAX) } };
       }
     },
+    // Typing Tutor (wave 2): the text fills the "Add a text" dialog of
+    // My texts; nothing is saved until Save.
+    typing: {
+      kinds: ["text"],
+      build: function (k, d) { return { addText: { title: d.title, text: d.text.slice(0, TYPING_MAX) } }; }
+    },
     labels: {
       kinds: ["text"],
       // A label is one short line.
@@ -361,7 +368,7 @@
   };
   // The sheet's order: the everyday places first.
   var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "wiki", "mindmap", "prompter",
-    "flashcards", "layout", "assistant", "texttools", "textcase", "labels"];
+    "flashcards", "typing", "layout", "assistant", "texttools", "textcase", "labels"];
 
   function accepts(app, kind, d) {
     if (!own(RECEIVERS, app)) return false;

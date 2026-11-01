@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.80.00
+- [Typing Tutor](help:a/typing): practise with passages from literature (Kavafis, Austen, Kafka and more) or with your own texts, which you can also send from Notes or Writer with "Send to an app…". A round for your weak keys, a 30-day speed chart, a row in Today and Habits, and a daily practice reminder you can switch on in the app's settings.
+
 ## Version 4.79.00
 - Settings › Sync › Calendars and contacts (CalDAV / CardDAV): connect your own calendar and contacts server (Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail, iCloud…). orOS checks the server first and keeps the password on this device only. Linking it to Calendar, Contacts and To-Do comes next.
 
