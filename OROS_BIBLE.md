@@ -9360,3 +9360,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** `studio/fx.js`, `studio/fxchain.worklet.js`, `tests/studio-mix.test.js`, `help/topics/whatsnew.{en,el}.txt`, `shell.js` (APP_VERSION).
 - **Tests:** new test in `tests/studio-mix.test.js`: the shipped `studio/nullfx/fx/index.json` through the real `StudioFX().loadCatalog()` lists `drum_machine` (and every instrument passes exactly by the rule); the chain processor with the 3.0 Drum Machine: 8 outputs, pins 1/2 are the chain's buffers, the extra buffers stay the same every block, Main puts kick and snare on pins 1/2, Groups keeps the kick there and moves the snare to its own pins, no `error` or `missing`. It fails on the old `fx.js` and on the old worklet. Full `node --test tests/*.test.js`. Not tested in a browser.
 - **Next:** proposal for Chris: in Studio, mix the group pairs into the main pair when `Outputs` = Groups (or hide that control), so the whole kit is heard whatever the setting.
+
+### 2026-11-01 — Shell 4.93.02 — SW-T4: an update can no longer be held forever by one file (#762)
+
+- **Fixes:** a phone (TWA APK) stayed on 4.66.00 while main reached 4.92.00: under SW-T2 one precache file the network never delivered failed every update attempt, and an install the browser killed left no resume marker. `sw.js` now aborts each precache download after `PRECACHE_FETCH_MS` (30 s), gives a failed file `PRECACHE_TRIES` (2) tries per attempt, writes `PARTIAL_MARK` with the attempt number at the start, counts attempts across releases, and from attempt `PRECACHE_GIVE_UP` (3) activates without the unreachable files (logged; they come from the network when used). Part II `sw.js` and X-B troubleshooting updated.
+- **Files:** `sw.js`, `tests/sw-network.test.js`, `OROS_BIBLE.md`, `help/topics/whatsnew.{en,el}.txt`, `shell.js` (APP_VERSION).
+- **Tests:** `tests/sw-network.test.js` (new SW-T4 cases), full `node --test tests/*.test.js`; reproduced in Chromium with one file whose connection is cut. Not tested: a real Android phone.
+

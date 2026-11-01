@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.93.02
+- Updates no longer get stuck: if one file of a new version cannot be downloaded (a slow or filtered network, common on phones), orOS tries again, picks up where it stopped, and after a few tries installs the update without that file. A phone that stayed on an old version updates by itself the next time you open orOS.
+
 ## Version 4.93.01
 - Studio: NULL Drum Machine is back in the instrument list, and projects that use it play it again. Since NULL JSFX 3.0 it has extra outputs for groups; Studio plays its main pair, so with `Outputs` set to Groups only the kick sounds. See [Studio](help:a/studio).
 
