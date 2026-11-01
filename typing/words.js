@@ -188,7 +188,133 @@
     ]
   };
 
-  var API = { WORDS: WORDS, SENTENCES: SENTENCES };
+  // Wave 3: more everyday words (still own lists), so the later lessons
+  // and the speed tests repeat less.
+  var MORE = {
+    en: split(
+      "about above across act add age ago agree air allow almost alone along already always amount " +
+      "animal answer appear area arm army around arrive art article attack aunt baby bag ball band " +
+      "base basket bath battle beach bean beat beauty become begin behind believe bell belt bench " +
+      "best better between bike bill birth bit bite blank block blood blow board boat bone book boot " +
+      "born both bottle bottom bowl brain branch brick bridge bright bring broad brother brush build " +
+      "burn bus busy button buy cable call camp card care carry cart catch cause cell center chain " +
+      "chance change charge cheap check chest chicken child choice choose church circle class clock " +
+      "close cloth cloud club coat coin collect come common cook copy corner cost cotton count " +
+      "course cousin cover cream cross crowd cry cup cut daily damage dance danger date daughter " +
+      "dead deal dear decide degree design detail die dinner direction dirty dish doctor dollar " +
+      "double down draw dream dress drink drive drop dry during duty each ear earth east eat edge " +
+      "effect eight either else empty end energy engine enough enter evening event ever every " +
+      "example eye face factory fail fair family famous far farm fast father fear feel field fight " +
+      "figure fill film final find finger finish fire floor flower fly fold follow foot force forest " +
+      "forget form forward four friend front fruit fun future game gate gift girl glad goal gold " +
+      "grass gray ground grow guess guest guide hair hand hang happen hat head health hear heavy " +
+      "help hide history hold hole holiday hope horse hospital hotel hour hunt hurry husband ice " +
+      "inch include inside iron island item join judge keep key kid king kiss knee knife knock lady " +
+      "land language late laugh law lead learn leave left leg lend less letter lie life lift line " +
+      "lip list listen live lock lose lot love lunch machine main man map mark match matter meal " +
+      "mean measure meet member memory middle mile mind minute miss moment monday mother mountain " +
+      "mouth move music name narrow nature near neck need neighbor nest net news nice nine noise " +
+      "noon north nose note nothing notice nurse oil open order page paint pair paper parent park " +
+      "part party pass past path pay peace pen pencil person pick picture piece pink pipe plant " +
+      "plate play please pocket poem pool pour power present press pretty print pull push put " +
+      "quarter race radio reach read ready reason record remember repeat rest return ring road " +
+      "rock roll roof root rope rose round row rule run salt sand save school score season seat " +
+      "second secret sell send sense serve set seven shape share sheet shelf shine ship shirt shoe " +
+      "short shout show shut sick side sign silver sing sister sit skin skirt sleep smile smoke " +
+      "snake sock soft soldier son song sound south space speak speed spend spoon sport spot stage " +
+      "stair stand start state station stay steel step stick stone stop store storm story strong " +
+      "student study sudden summer supper sure surprise swim talk tall taste teach team tell ten " +
+      "thank thick thin thing third thirty though three throw ticket tie tiny tired toe together " +
+      "tool tooth top touch tower toy track train travel tree trip trouble truck try turn twelve " +
+      "uncle under until upon usual valley village visit wait wake walk wall wash watch wave wear " +
+      "weather wedding west wet wheel while whole wife wild win wing winter wish woman wonder wood " +
+      "word worry write wrong yard yellow yesterday zebra"),
+    el: split(
+      "αέρας αγκαλιά άγκυρα αγώνας αδύνατος αίμα αίθουσα αλήθεια αλλαγή αμάξι ανάγκη ανατολή " +
+      "ανεβαίνω άνθρωπος αντίο απόγευμα απόφαση αργότερα αριστερά αρκετά αρχίζω ασθενής αστείο " +
+      "αυλή αφού βάθος βαλίτσα βάρος βασιλιάς βήμα βιβλιοθήκη βοήθεια βόρεια βράχος βρύση γαλάζιο " +
+      "γάμος γειτονιά γέλιο γεύση γη γιαγιά γιατρός γλώσσα γνώμη γονείς γραμμή γρήγορος γυαλί γωνία " +
+      "δάχτυλο δεξιά δέρμα δευτέρα δίπλα δοκιμή δρόμος δύναμη δύσκολο δώρο δωμάτιο εικόνα είδος " +
+      "εισοδος εκδρομή εκκλησία ελάχιστα ελπίδα εμπρός ενώ εξήγηση επάγγελμα επιστολή εποχή εργασία " +
+      "έρχεται ευκαιρία ζακέτα ζωγραφική ζωντανός ηλικία ημέρα ήρωας θείος θεία θερμοκρασία θόρυβος " +
+      "θυμός ιατρείο ίδιος ισχυρός καθαρίζω καθρέφτης καιρός καλάθι καλημέρα καλησπέρα καλοσύνη " +
+      "καπνός καράβι καρδούλα κατάστημα κάστρο κερί κεφάλαιο κιθάρα κινητό κλαδί κλείδωμα κόκαλο " +
+      "κόλπος κομμάτι κορυφή κουβέντα κουτί κρασί κύκλος κυριακή λάθος λαιμός λαχανικά λεπτό " +
+      "λευκός λιβάδι λίγα λόγος λουλουδάκι λύση μάγουλο μαθηματικά μακριά μαλακός μάρμαρο μαχαίρι " +
+      "μέγεθος μέλλον μέση μέτρο μηχανή μικρό μισό μνήμη μόλις μονοπάτι μοναξιά μπαμπάς μπουκάλι " +
+      "νησάκι νίκη νόημα νότια νοσοκομείο ντουλάπα ντροπή ξεκινάω ξενοδοχείο ξύπνιος όμορφος " +
+      "όνειρο οπωροπωλείο ορίζοντας ουρά πάγος παζάρι παλάμη παππούς παράδειγμα παρέα πάρκο " +
+      "πάτωμα πεζοδρόμιο πεινάω πελάτης περιοδικό περίπατος πετάω πετσέτα πιάτο πινακίδα πίσω " +
+      "πλατεία πλευρά πνεύμα ποδόσφαιρο πολυθρόνα πονάω πορεία ποσό ποτήρι πουλόβερ πρόβα " +
+      "πρόσκληση πρωινό πύργος ράφι ρεύμα ρόδι ρούχα σακάκι σαπούνι σβήνω σειρά σεντόνι σημαία " +
+      "σημείο σιγά σκέψη σκιά σκουλαρίκι σοκολάτα σπορ σταθμός στάση στέγη στιγμή στόχος " +
+      "συζήτηση συναυλία συνήθεια σύννεφο σύντομα σφουγγάρι σχήμα σωστό ταβάνι ταινία ταμείο " +
+      "ταχυδρομείο τέχνη τζάμι τηλεόραση τοίχος τόπος τούρτα τρίτη τριαντάφυλλο τρόπος τσέπη " +
+      "τύχη υγεία ύπνος υπόσχεση υφασμα φανάρι φαρμακείο φεγγαράκι φιλί φλιτζάνι φούρνος φούστα " +
+      "φράουλα φτερό φυσική φως φωτιά φωτογραφία χαιρετώ χαλί χαρτοπετσέτα χειρουργός χιονάνθρωπος " +
+      "χορεύω χρειάζομαι χρόνια χωράφι ψάρεμα ψέμα ψυγείο ψώνια ωκεανός ωραιότατος ώριμος"),
+    de: split(
+      "aber acht allein also ander antworten auch auf aus außen bald bauen beginnen bekommen " +
+      "bereit besser besuchen bezahlen bitten blühen braten breit danken daher damit dann darum " +
+      "decken dick dienen doch draußen drehen dünn eben ehrlich eilen einkaufen einladen endlich " +
+      "entdecken erklären erzählen fallen fangen fehlen feiern fertig fest feucht fliegen folgen " +
+      "fragen fremd fressen freuen früh fühlen füllen ganz gestern gewinnen glauben gleich " +
+      "graben greifen gucken halb heben heiraten heizen hinten holen hungrig jagen kaputt kennen " +
+      "klettern klingeln klug knapp kosten kräftig kriechen lächeln lecker legen leihen lieb " +
+      "lieben loben malen manchmal meinen merken mischen mitten modern nähen nass nett neben " +
+      "nennen niemand noch nützlich oben packen passen pflanzen plötzlich putzen rechnen reden " +
+      "regnen reiten rennen retten riechen rufen ruhen rund sammeln satt schauen schenken " +
+      "schicken schieben schlagen schmecken schneiden schneien schütteln schwimmen segeln senden " +
+      "setzen sitzen sofort sogar sparen später spitz springen stark stecken steigen still " +
+      "stören streiten stumm tragen treffen treiben trocken tun üben unten vergessen verlieren " +
+      "verstehen viele vorbei wachsen wählen wandern waschen wechseln wecken weich weit wenden " +
+      "werfen wichtig wieder wild winken wohl wünschen zählen zeichnen zeigen ziehen zurück " +
+      "Abend Ahnung Ampel Angst Apotheke Ast Aufgabe Ausflug Badewanne Bahnhof Ball Bauch Becher " +
+      "Besuch Bild Birne Blitz Boden Boot Bürger Dach Decke Ding Donner Durst Ecke Eimer Eis " +
+      "Eltern Erde Ergebnis Fahne Feder Feld Fest Feuer Film Finger Flasche Flügel Form Gabel " +
+      "Gast Gebäude Geburtstag Gedicht Gefühl Gemüse Geschenk Gesundheit Glocke Gold Gras " +
+      "Großmutter Großvater Hafen Hals Hemd Hilfe Hof Höhle Hose Hunger Hut Insel Jacke Kamm " +
+      "Kanne Kartoffel Kasten Kerze Kirche Kirsche Kissen Kleid Knie Knopf Koffer Korb Kreis " +
+      "Krone Kuss Lampe Leiter Licht Löffel Luft Mantel Märchen Mauer Messer Minute Mittag " +
+      "Möbel Mühle Mütze Nachbar Nadel Nebel Nest Netz Nudel Obst Onkel Paket Park Pause " +
+      "Pflaster Pilz Platz Puppe Rad Rathaus Raum Rose Rücken Sack Schal Schatten Schere " +
+      "Schlüssel Schnecke Schrank Schuh Schwein Seife Sessel Socke Spiegel Sport Stall Stiefel " +
+      "Strom Stück Stunde Tante Tasche Tasse Teller Tier Topf Treppe Tuch Turm Uhr Ufer Vase " +
+      "Wald Wand Wange Welle Wetter Wiese Wolke Wurst Zahn Zaun Zeitung Zimmer Zitrone Zwiebel")
+  };
+  ["en", "el", "de"].forEach(function (l) { WORDS[l] = WORDS[l].concat(MORE[l]); });
+
+  // Kids mode (wave 3): short, friendly words a child knows (animals,
+  // colours, food, family, toys). Lower case, so they fit before the
+  // Shift lesson; German nouns come with their capital and appear after it.
+  var KIDS = {
+    en: split(
+      "cat dog cow pig hen duck fish frog bee fox owl bear lion tiger horse sheep goat mouse " +
+      "red blue green pink black white gold " +
+      "apple pear plum milk cake jam egg rice soup bread juice honey " +
+      "mom dad baby sister brother friend " +
+      "ball doll kite game toy book drum bike car boat train " +
+      "sun moon star rain snow tree leaf sea sand " +
+      "run jump play sing draw read hop skip smile hug fun yes"),
+    el: split(
+      "γάτα σκύλος αγελάδα γουρούνι κότα πάπια ψάρι βάτραχος μέλισσα αλεπού κουκουβάγια " +
+      "αρκούδα λιοντάρι τίγρη άλογο πρόβατο κατσίκα ποντίκι " +
+      "κόκκινο μπλε πράσινο ροζ μαύρο άσπρο " +
+      "μήλο αχλάδι γάλα κέικ μέλι αυγό ρύζι σούπα ψωμί χυμός " +
+      "μαμά μπαμπάς μωρό αδελφή αδελφός φίλος φίλη " +
+      "μπάλα κούκλα χαρταετός παιχνίδι βιβλίο τύμπανο ποδήλατο τρένο βάρκα " +
+      "ήλιος φεγγάρι αστέρι βροχή χιόνι δέντρο φύλλο θάλασσα άμμος " +
+      "τρέχω πηδάω παίζω τραγουδάω ζωγραφίζω διαβάζω χαρά ναι"),
+    de: split(
+      "ja nein rot blau grün gelb rosa schwarz weiß " +
+      "laufen springen spielen singen malen lesen lachen hüpfen " +
+      "Katze Hund Kuh Schwein Huhn Ente Fisch Frosch Biene Fuchs Eule Bär Löwe Tiger Pferd " +
+      "Schaf Ziege Maus Apfel Birne Milch Kuchen Ei Reis Suppe Brot Saft Honig " +
+      "Mama Papa Baby Schwester Bruder Freund Ball Puppe Drachen Spiel Buch Trommel Rad " +
+      "Auto Boot Zug Sonne Mond Stern Regen Schnee Baum Blatt Meer Sand")
+  };
+
+  var API = { WORDS: WORDS, SENTENCES: SENTENCES, KIDS: KIDS };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.TypingWords = API;
 })(typeof window !== "undefined" ? window : globalThis);

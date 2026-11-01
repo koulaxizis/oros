@@ -115,6 +115,18 @@ Die Reiter unten sind deine Blätter.
 - Doppelklicke einen Reiter oder halte ihn auf einem Touchscreen gedrückt, um ihn umzubenennen.
 - Tippe auf ✕ an einem Reiter und innerhalb von 3 Sekunden noch einmal auf ✕, um das Blatt zu löschen. Das letzte Blatt kann nicht gelöscht werden.
 
+## Drucken und PDF
+`Drucken oder als PDF speichern…` steht im Blattmenü (Rechtsklick, oder auf dem Handy eine Zelle gedrückt halten) und unter der Export-Schaltfläche `XL`; [[Ctrl+P]] öffnet es auch.
+
+- `Drucken`: `Das ganze Blatt` (alles bis zur letzten gefüllten Zelle, mit seinen Diagrammen) oder `Die Auswahl`.
+- `Papier` A4, A3, Letter oder Legal, `Hochformat` oder `Querformat`.
+- `Größe`: `An die Seitenbreite anpassen` (Standard: alle Spalten passen nebeneinander auf eine Seite), `Auf eine Seite anpassen` oder `Tatsächliche Größe`.
+- `Oben auf jeder Seite wiederholen`: die ersten Zeilen (1 bis 5) auf jeder Seite, für Überschriften.
+- `Gitternetzlinien`, `Seitenzahlen` (mit dem Namen des Blatts) und `Diagramme` lassen sich ausschalten.
+- `PDF speichern` speichert die Datei; `Drucken` öffnet den Druckdialog deines Geräts mit denselben Seiten.
+
+Das PDF enthält echten Text: Griechisch und Umlaute werden richtig gedruckt, und du kannst darin suchen und kopieren. Füllungen, Farben, fett und kursiv, Rahmen, verbundene Zellen, Umbrüche, Datenbalken und Symbolsätze werden so gedruckt, wie du sie siehst; Text läuft über leere Zellen rechts daneben weiter. Von einem Filter ausgeblendete Zeilen werden weggelassen. Die Einstellungen bleiben auf diesem Gerät.
+
 ## Der Assistent
 Bitte den Assistenten, deine Blätter mit Worten zu ändern, etwa „2026 statt 2025“, „die erste Zeile fett“, „nach Preis sortieren“, „zwei Zeilen über Zeile 5 einfügen“ oder „die erste Zeile fixieren“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet das Blatt. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt die Zellen wieder her, solange sie seitdem nicht geändert wurden. In der Hilfe des Assistenten steht alles, was er kann.
 
@@ -150,6 +162,7 @@ Siehe auch [Sicherung](help:t/backup).
 - [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] kopieren, ausschneiden und einfügen, auch mit anderen Apps.
 - [[Delete]] auf einem ausgewählten Diagramm löscht es.
 - [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]] fett, kursiv, unterstrichen.
+- [[Ctrl+P]] drucken oder als PDF speichern.
 - Auf einem Mac nimmst du Cmd statt Ctrl.
 
 ## Tipps
@@ -167,4 +180,5 @@ Siehe auch [Sicherung](help:t/backup).
 - Matrixformeln, die mehrere Zellen füllen (FILTER, SORT, UNIQUE), benannte Bereiche und Pivot-Tabellen werden nicht unterstützt. INDIRECT liest nur A1-Bezüge, nicht R1C1. Eine Formel aus Excel, die eine Funktion nutzt, die orOS nicht kennt, zeigt weiter den Wert, den Excel gespeichert hat.
 - Zeilen einfügen oder löschen verschiebt Zellen: Wenn ein anderes Gerät dieselben Zellen vor der Synchronisierung bearbeitet, bleibt seine Änderung an der alten Stelle.
 - Der Rückgängig-Verlauf wird gelöscht, wenn die Synchronisierung Änderungen bringt, und das Löschen eines Blatts lässt sich nicht rückgängig machen.
+- Drucken und PDF nehmen unabhängig vom Design die Farben einer hellen Seite, die Schrift Noto Sans und bis zu 5 wiederholte Zeilen; ein Diagramm wird auf der Seite gedruckt, auf der seine obere linke Ecke liegt, und was über den Seitenrand hinausgeht, wird abgeschnitten. Fixierte Spalten werden auf späteren Seiten nicht wiederholt.
 - Excel- und Calc-Dateien brauchen eine Hilfsbibliothek; wenn sie noch nicht geladen ist, brauchst du eventuell eine Internetverbindung.

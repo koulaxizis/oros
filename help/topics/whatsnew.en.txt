@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.84.00
+- Typing Tutor: a kids mode with short lessons and stars for accuracy, the Letter rain game, a certificate after the course or a speed test, and more words. See [Typing Tutor](help:a/typing).
+
+## Version 4.83.00
+- Calendar › More › Server calendars (CalDAV): link a label to a calendar on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything; then events go both ways. Nothing is deleted on either side unless it was in sync before, an event changed on both sides keeps the newer version and a copy marked (conflict), and guests or extra reminders on the server stay untouched. See [Calendar](help:a/calendar).
+
+## Version 4.82.00
+- Spreadsheet: print a sheet or save it as a PDF (sheet menu › Print or save as PDF…, or Ctrl+P): the whole sheet or the selection, A4/A3/Letter, portrait or landscape, fit to the page width, heading rows on every page, gridlines and page numbers, charts included, Greek text as real text. See [Spreadsheet](help:a/spreadsheet).
+
 ## Version 4.81.00
 - [Pad](help:a/pad) now saves a file back in its own place: on this computer in Chrome and Edge, and on the computer's own folders with an orOS USB stick or orOS Portable, as it already did on the orOS disk. A file that changed elsewhere in the meantime is still never overwritten. `Recent files` brings back what you worked on, and in Files `Open with…` opens code and text files in Pad.
 
