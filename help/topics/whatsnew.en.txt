@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.89.00
+- [Pad](help:a/pad) can save automatically (More › `Save automatically`, off at first): a file with its own place is saved 2 seconds after you stop typing, with the same checks as Save, so a file that changed elsewhere is still never overwritten. The menu search finds Pad's recent files, and the Assistant can open them or write a new file for you that opens as a new tab in Pad.
+
 ## Version 4.88.00
 - Typing Tutor: new keyboards for polytonic Greek (six lessons for the breathings, accents and iota subscript, with Homer, John and Solomos), Dvorak and Colemak. See [Typing Tutor](help:a/typing).
 
