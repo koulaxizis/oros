@@ -102,10 +102,13 @@ test("Bitwarden JSON import: logins, folders, cards, identities, notes, hidden f
   assert.deepEqual(git.fields, [{ h: 1, n: "Recovery", v: "abc-def" }, { h: 0, n: "Team", v: "core" }]);
   assert.deepEqual(git.hist, [{ pw: "old1", t: Date.parse("2024-01-01T00:00:00.000Z") }]);
   assert.match(git.totp, /^otpauth:/);
-  assert.deepEqual(card.fields.map((f) => [f.n, f.h]), [["Cardholder name", 0], ["Brand", 0], ["Number", 1],
-    ["Expiry month", 0], ["Expiry year", 0], ["Security code", 1]]);
-  assert.deepEqual(id.fields.map((f) => f.n), ["First name", "Last name", "Passport number"]);
+  // cards, identities and notes become their own types (PW-K1)
+  assert.deepEqual(card.fields.map((f) => [f.n, f.v, f.h]), [["oros:k", "card", 0], ["oros:cc.holder", "M. P.", 0],
+    ["oros:cc.num", "4111111111111111", 1], ["oros:cc.exp", "01/2030", 0], ["oros:cc.cvv", "123", 1]]);
+  assert.deepEqual(id.fields.map((f) => [f.n, f.v, f.h]), [["oros:k", "identity", 0], ["oros:id.first", "Maria", 0],
+    ["oros:id.last", "P", 0], ["oros:id.pass", "AB123", 1]]);
   assert.equal(note.notes, "router pw: x");
+  assert.deepEqual(note.fields, [{ h: 0, n: "oros:k", v: "note" }]);
   assert.equal(PC.fromBitwarden(JSON.stringify({ encrypted: true, items: [] })).error, "encrypted");
   assert.equal(PC.fromBitwarden("{nope").error, "json");
   assert.equal(PC.fromBitwarden("{}").error, "format");

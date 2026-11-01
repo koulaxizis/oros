@@ -126,11 +126,23 @@
     if (res.entries.length + res.codes.length >= MAX_ITEMS) { res.skipped++; return; }
     if (!e.title && e.urls.length) e.title = hostTitle(e.urls[0]);
     e.id = hexId(res.source + "|" + (key ? "k|" + key : "c|" + core().canon([e.title, e.user, e.pw, e.urls[0] || "", e.notes])));
-    var n = core().normEntry(e, e.m);
-    if (n && (n.title || n.user || n.pw || n.notes || n.urls.length || n.fields.length || n.totp)) {
-      res.entries.push(n);
-      res.types[type || "login"] = (res.types[type || "login"] || 0) + 1;
-    } else res.skipped++;
+    // Cards, identities and notes become their own types (PW-K1); an
+    // identity with an address gives an address entry too.
+    var K = kinds(), list = K && (type === "card" || type === "identity" || type === "note") ?
+      K.fromLabels(e, type, function (id) { return hexId(id + "|address"); }) : [e];
+    var counted = false;
+    list.forEach(function (x) {
+      var n = core().normEntry(x, x.m);
+      if (n && (n.title || n.user || n.pw || n.notes || n.urls.length || n.fields.length || n.totp)) {
+        res.entries.push(n);
+        if (!counted) res.types[type || "login"] = (res.types[type || "login"] || 0) + 1;
+        counted = true;
+      } else if (!counted) res.skipped++;
+    });
+  }
+  function kinds() {
+    if (NODE) { try { return require("./pmkinds.js"); } catch (e) { return null; } }
+    return root.PmKinds || null;
   }
 
   // ---------- two-factor codes ----------
@@ -914,7 +926,8 @@
     arr(r.entries).forEach(function (e) {
       var x = JSON.parse(JSON.stringify(e));
       x.id = "";
-      push(res, x, "", "login");
+      var k = kinds() ? kinds().kindOf(x) : "login";
+      push(res, x, "", k === "address" ? "identity" : k);
     });
     return res;
   }

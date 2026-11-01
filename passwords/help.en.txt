@@ -17,6 +17,17 @@ Press an entry to see it. Passwords and hidden fields show dots until you press 
 
 Search finds words in titles, usernames, websites, tags, notes and fields that are not hidden. The buttons under the search show `Favourites`, `2FA codes`, `Weak` passwords and passwords `Reused` in more than one entry, and the tag list shows one tag.
 
+## Cards, identities, addresses and notes
+`New` asks what you want to keep: a `Login`, a `Payment card`, an `Identity`, an `Address` or a `Secure note`. Each has its own form, and the list shows an icon and a short line for each one. `All types` above the list shows one type only.
+- Payment card: cardholder name, card number, expiry date (MM/YY), security code (CVV), PIN, bank and the bank's website. The number is checked (check digit) and its network is shown (Visa, Mastercard and others). The list shows only its last four digits, and `Expires soon` or `Expired` near its expiry date. `Copy in order` copies the number, then the expiry, then the code, then the name, one per press, for a payment form.
+- Identity: title, name, date of birth, email, phone, company, ID card, passport and driving licence with their expiry dates, tax number, social security number and insurance number. Documents that expire soon are marked. `Copy name` copies the whole name.
+- Address: recipient, street, floor, city, postal code, region, country and phone. `Copy address` copies it as lines.
+- Secure note: text that shows dots until you press `Show`, for Wi-Fi passwords, recovery codes or a lock combination.
+
+Card numbers, codes, PINs and document numbers are hidden like passwords and leave the clipboard after 30 seconds. None of them ever appears in search results, Today, the Assistant or notifications.
+
+A login made from a card or an identity of another app (fields such as `Number` and `Security code`, or `First name` and `Passport number`) shows `Convert`: it turns the entry into a card or an identity, with `Undo`. An identity with an address gives an identity and an address.
+
 ## Two-factor codes
 Put the secret a website gives you for an authenticator app into `Two-factor secret or otpauth:// link`: the text code, or the whole otpauth:// link. `Scan QR` reads the QR code with the camera, or from a picture with `Choose a picture`. The entry then shows the current code and the seconds it has left; `Copy` copies it.
 
@@ -24,7 +35,7 @@ Codes from a counter (HOTP) are not supported.
 
 ## Import and export
 `⋯` then `Import` brings entries and two-factor codes from another app. Press `Choose file`: the app is recognised by itself. Entries that are already in the vault (same title, username, password and first website) are skipped, and you see what was found and how many are new before you import. `Undo` in the message after the import takes it all back.
-- Bitwarden: export as `.json`, or as `.json (Encrypted)` with the type `Password protected`: then type that password. The `Account restricted` kind opens only in Bitwarden. Folders become tags; cards, identities and hidden fields become fields.
+- Bitwarden: export as `.json`, or as `.json (Encrypted)` with the type `Password protected`: then type that password. The `Account restricted` kind opens only in Bitwarden. Folders become tags; cards, identities and secure notes keep their type, and hidden fields stay hidden.
 - KeePass / KeePassXC (`.kdbx`): type the file's password and, if it has one, choose its key file. Groups become tags. Attachments and the recycle bin are left out. KeePass 2 can also export as `KeePass XML (2.x)`, which is not encrypted.
 - 1Password: File › Export, as `.1pux` (or CSV). Vaults and tags become tags; sections become fields.
 - Proton Pass: Settings › Export, without encryption (a ZIP or CSV). Encrypted (PGP) exports can't be read. Vaults become tags; cards, aliases and identities come too.

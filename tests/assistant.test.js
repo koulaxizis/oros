@@ -76,6 +76,22 @@ test("permissions: mail/passwords never offered, sensitive apps start at never",
   assert.equal(A.permFor(d, { id: "health", sensitive: true }), "always");
 });
 
+test("Passwords never reaches the Assistant (Chris 2026-11-01): no setting, provider, bridge or edit catalog", () => {
+  const d = A.emptyData();
+  d.perm.passwords = { m: 9, v: "always" };          // even a synced "always" from anywhere
+  assert.equal(A.permFor(d, { id: "passwords", sensitive: false }), "off");
+  assert.ok(A.NEVER_APPS.passwords);
+  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8"));
+  const list = Array.isArray(apps) ? apps : apps.apps;
+  const pw = list.find(a => a.id === "passwords");
+  assert.ok(pw && !pw.search && !pw.today, "Passwords registers no search provider or Today feed");
+  for (const f of fs.readdirSync(path.join(ROOT, "passwords")).filter(f => /\.(js|html)$/.test(f))) {
+    const src = fs.readFileSync(path.join(ROOT, "passwords", f), "utf8");
+    assert.ok(!/orosSend|orosAssist|AssistHost|"assistant"/.test(src), "passwords/" + f + " talks to the Assistant");
+  }
+  assert.ok(!/passwords\s*:/.test(fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8").match(/var EDIT_APP = \{[^\n]*/)[0]));
+});
+
 // ---------- requests ----------
 const TOOLS = A.TOOLS;
 const histTool = [
