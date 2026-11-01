@@ -13,7 +13,7 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello", key, token, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
@@ -21,6 +21,8 @@
 //   HubSpot https://api.hubapi.com<path> (Bearer), Pipedrive
 //   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only;
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
+//   Enable Banking https://api.enablebanking.com<path> (Bearer JWT signed on the
+//   person's device with their own application's key, read-only account information)
 //   Todoist https://api.todoist.com/api/v1<path> (Bearer, read-only: projects, open tasks)
 //   Trello https://api.trello.com/1<path> (OAuth header: key + token), GitHub
 //   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues /
@@ -160,6 +162,23 @@ function okBvRow(x) {
   if (!onlyKeys(x, ["email", "attributes"]) || !okEmail(x.email)) return false;
   return x.attributes === undefined || (onlyKeys(x.attributes, ["FIRSTNAME"]) && (x.attributes.FIRSTNAME === undefined || okName(x.attributes.FIRSTNAME)));
 }
+// Enable Banking (Budget BK-2): same shapes as links/core.js
+const EB_UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const EB_CTY = /^[A-Z]{2}$/, EB_PSU = /^(personal|business)$/, EB_SVC = /^AIS$/, EB_TST = /^(BOOK|PDNG)$/,
+      EB_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, EB_CK = /^([A-Za-z0-9._~-]|%2B|%2F|%3D){1,1000}$/;
+const EB_REDIRECTS = ["https://useoros.online/budget/bankback.html"];
+function okEbVal(kind, v) {
+  const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+  if (kind === "ebacc") return obj(v) && Object.keys(v).length === 1 && typeof v.valid_until === "string" &&
+    /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(v.valid_until);
+  if (kind === "ebasp") return obj(v) && Object.keys(v).length === 2 && typeof v.name === "string" && v.name.length > 0 &&
+    v.name.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v.name) && typeof v.country === "string" && EB_CTY.test(v.country);
+  if (kind === "ebstate") return typeof v === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(v);
+  if (kind === "ebredir") return EB_REDIRECTS.indexOf(v) >= 0;
+  if (kind === "ebpsu") return typeof v === "string" && EB_PSU.test(v);
+  if (kind === "ebcode") return typeof v === "string" && /^[A-Za-z0-9._~-]{1,512}$/.test(v);
+  return false;
+}
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
@@ -170,7 +189,9 @@ const WHOLE = {
   // Notion: search only with the "pages" filter
   ntq: (b) => "filter" in b,
   // WooCommerce: a new product only as a draft, always with a name
-  wdraft: (b) => b.status === "draft" && "name" in b
+  wdraft: (b) => b.status === "draft" && "name" in b,
+  // Enable Banking: a consent request always names all its parts
+  ebauth: (b) => "access" in b && "aspsp" in b && "state" in b && "redirect_url" in b
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
@@ -276,6 +297,24 @@ export const PLATFORMS = {
       ["GET", /^\/persons$/, { limit: LIM500, cursor: PD_CURSOR }, null],
       ["GET", /^\/deals$/, { limit: LIM500, cursor: PD_CURSOR, status: PD_DST }, null],
       ["GET", /^\/activities$/, { limit: LIM500, cursor: PD_CURSOR, done: BOOL }, null]
+    ]
+  },
+  // Bank accounts (Budget BK-2), read-only: Enable Banking with the
+  // person's own application. The key is a short-lived JWT signed on the
+  // person's device; the private key never comes here.
+  ebank: {
+    root: "",
+    host: "api.enablebanking.com",
+    keys: { key: /^[A-Za-z0-9_-]{10,1000}\.[A-Za-z0-9_-]{10,2000}\.[A-Za-z0-9_-]{10,1400}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/application$/, null, null],
+      ["GET", /^\/aspsps$/, { country: EB_CTY, psu_type: EB_PSU, service: EB_SVC }, null],
+      ["POST", /^\/auth$/, null, { access: "ebacc", aspsp: "ebasp", state: "ebstate", redirect_url: "ebredir", psu_type: "ebpsu" }, "ebauth"],
+      ["POST", /^\/sessions$/, null, { code: "ebcode" }, null],
+      ["GET", new RegExp("^\\/sessions\\/" + EB_UUID + "$"), null, null],
+      ["GET", new RegExp("^\\/accounts\\/" + EB_UUID + "\\/balances$"), null, null],
+      ["GET", new RegExp("^\\/accounts\\/" + EB_UUID + "\\/transactions$"), { date_from: EB_DAY, date_to: EB_DAY, continuation_key: EB_CK, transaction_status: EB_TST }, null]
     ]
   },
   // Payments (wave 4B), read-only: a restricted key (rk_) only
@@ -408,6 +447,7 @@ function okVal(kind, v) {
   if (kind === "ooff") return Number.isInteger(v) && v >= 0 && v <= 10000000;
   if (kind === "nlim") return Number.isInteger(v) && v >= 1 && v <= 100;
   if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
+  if (kind.slice(0, 2) === "eb") return okEbVal(kind, v);
   // "=a" or "=a|b": exactly one of the fixed values
   if (kind[0] === "=") return kind.slice(1).split("|").some((k) => Object.prototype.hasOwnProperty.call(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]);
   return false;

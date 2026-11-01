@@ -324,7 +324,7 @@ test("collections of a newer version merge LWW with their own tombstones", () =>
   assert.equal(ab.plan.length, 1);
   assert.equal(ab.tombs["wish:card"], 6);
   // key order is canonical whatever the order of the inputs
-  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "plan", "wish", "set", "tombs"]);
+  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "plan", "wish", "set", "tombs"]);
   // not a collection: bad name, not an array, bad items
   const n = B.mergeBudget(D({ BAD: [{ id: "x", m: 1 }], toolongname: [{ id: "x", m: 1 }], obj: { a: 1 }, zz: [null, { id: "UP", m: 1 }, { id: "ok", m: -1 }] }), B.emptyData());
   assert.equal("BAD" in n || "toolongname" in n || "obj" in n, false);
@@ -395,7 +395,7 @@ test("accounts and transfers: merge stays canonical, deletes stick", () => {
   assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
   assert.equal(ab.acc[0].n, "Wallet");
   assert.deepEqual(ab.xfer, []);
-  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "set", "tombs"]);
+  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "set", "tombs"]);
 });
 
 test("CRM partner on an entry (BR-CRM-LINK): kept when valid, only when set, and through the prefill", () => {

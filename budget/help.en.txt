@@ -83,6 +83,15 @@ From the `More` menu:
 - **Categories.** Pick a category on any row. After a correction, `Always do this` makes a rule from it, so the next import does it by itself.
 - `Import` adds them as normal entries, marked with a small bank icon. `Undo` takes back the whole import. The same file imported again, here or on another device, adds nothing twice.
 
+## Banks (automatic)
+`More` › `Banks (automatic)` connects your bank accounts so new bookings come in by themselves, through Enable Banking (open banking, PSD2). orOS only reads your accounts; it can never make a payment.
+
+- **Once: your own Enable Banking application.** Create a free account at enablebanking.com, register a `Production` application with the redirect URL Budget shows, keep the `.pem` key file it downloads, and press `Activate by linking accounts` with your own accounts (not `Request activation`). Then enter the `Application ID` and choose the `.pem` file in Budget. The key stays sealed on this device; to use it on your other devices, turn on `Use on all my devices` in [Settings](app:settings) › `Connected services`.
+- **Connect a bank.** Pick the country, the bank and `Personal` or `Business`, then `Go to the bank`: you sign in on the bank's own page, in a new window. When you come back, pick which Budget account each bank account fills.
+- **Updates.** Each time you open Budget, at most every 6 hours, new booked entries come in; `Update now` does it at once. The first time Budget reads the last 89 days. Pending payments wait until the bank books them. Rules, categories, duplicates and `Already here another way` work as for a statement file, and entries carry the small bank icon.
+- **Access ends.** Your bank gives access for up to 180 days. A week before the end a bar above the list says so; `Renew` asks the bank again and keeps each account's Budget account and its place. `Remove` forgets a bank account; entries already in Budget stay.
+- If your bank isn't in the list, statement files above always work.
+
 ## Other budgeting apps
 `More` › `Import from another app` (or `Import bank statement`, it's the same picker) recognises the export of these apps by itself and brings in categories and accounts too, not only amounts:
 - **YNAB**: on the web, open an account or All Accounts and use `Export` (the register CSV; YNAB 4's register CSV works too). Transfers and the starting balance are left out; money into `Ready to Assign` comes in without a category.

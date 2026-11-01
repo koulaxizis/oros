@@ -2147,7 +2147,7 @@
   // monogram each (no third-party logos), a search box and how many
   // accounts of that service this orOS already has.
   var SVC_GROUPS = [
-    { id: "shop", ps: ["woo", "shopify", "tol", "ininja", "stripe"] },
+    { id: "shop", ps: ["woo", "shopify", "tol", "ininja", "stripe", "ebank"] },
     { id: "mail", ps: ["mlite", "mchimp", "brevo"] },
     { id: "crm", ps: ["hubspot", "pdrive", "odoo"] },
     { id: "work", ps: ["todoist", "trello", "github", "notion", "raindrop"] }
@@ -2155,7 +2155,7 @@
   // monogram per service; its brand colour is in settings.css (.svc-mark.m-<id>)
   var SVC_MARK = {
     woo: "Wo", shopify: "Sh", tol: "t", ininja: "IN", stripe: "S", mlite: "ML", mchimp: "M", brevo: "B",
-    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R"
+    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R", ebank: "EB"
   };
   function svcMark(p, name) {
     var m = SVC_MARK[p];
@@ -2173,7 +2173,8 @@
   function pickerCard(Lk) {
     var f = svc.add;
     var c = card(t("v.pick"));
-    var plats = Lk.platforms(), byId = {}, count = {};
+    // a platform whose keys an app asks for itself (Enable Banking: Budget › Banks) is not added here
+    var plats = Lk.platforms().filter(function (p) { return !p.ownUi; }), byId = {}, count = {};
     plats.forEach(function (p) { byId[p.id] = p; });
     Lk.list().forEach(function (a) { count[a.p] = (count[a.p] || 0) + 1; });
     var srch = el("input", "svc-search");
@@ -2402,7 +2403,7 @@
 
     var acts = actions(
       has !== false ? button(svc.busy[a.id] ? t("v.checking") : t("v.test"), "v.test:" + a.id, function () { if (!svc.busy[a.id]) runTest(a.id); }) : null,
-      button(t("v.newKeys"), "v.keys:" + a.id, function () { svc.keysFor = a.id; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); var f = $("f-v-kck"); if (f) f.focus(); }, has === false ? "primary" : ""),
+      plat && plat.ownUi ? null : button(t("v.newKeys"), "v.keys:" + a.id, function () { svc.keysFor = a.id; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); var f = $("f-v-kck"); if (f) f.focus(); }, has === false ? "primary" : ""),
       button(t("v.rename"), "v.rn:" + a.id, function () { svc.rename = a.id; render(); var f = $("f-v-rn"); if (f) f.focus(); })
     );
     c.appendChild(acts);

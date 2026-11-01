@@ -138,7 +138,7 @@
       "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
       "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
-      "menu.bank": "Import bank statement", "menu.rules": "Rules",
+      "menu.bank": "Import bank statement", "menu.banks": "Banks (automatic)", "menu.rules": "Rules",
       "flt.inbox": "Imported, no category ({n})", "inbox.bar": "{n} imported entries without a category",
       "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
       "inbox.run": "Apply rules", "inbox.rule": "Rule…", "inbox.done": "Category set",
@@ -243,7 +243,7 @@
       "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
       "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
-      "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.rules": "Κανόνες",
+      "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.banks": "Τράπεζες (αυτόματα)", "menu.rules": "Κανόνες",
       "flt.inbox": "Εισαγόμενες χωρίς κατηγορία ({n})", "inbox.bar": "{n} εισαγόμενες κινήσεις χωρίς κατηγορία",
       "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
       "inbox.run": "Εφαρμογή κανόνων", "inbox.rule": "Κανόνας…", "inbox.done": "Η κατηγορία μπήκε",
@@ -686,6 +686,34 @@
       sv: isInt(x.sv) && x.sv >= 0 && x.sv <= MAX_CENTS ? x.sv : 0, t: x.t }, x);
   }
 
+  // Connected bank account (since BK-2, budget/bankapi.js) = { id, m,
+  // ac (Budget account | ""), bk (bank name), cty (country), cu
+  // (currency), ib (last four of the account number), ih (the
+  // provider's hash of the account, to find it again after a renewed
+  // consent), la (the Connected services account in orOS that holds
+  // the keys), lf (last booked day fetched, "" = never), nm (the
+  // bank's name for the account), ps ("personal" | "business"), sid
+  // (consent session), uid (the account in that session), vu (consent
+  // end, ms) }: keys in name order after id, m. Nothing secret: a
+  // session or account id is useless without the person's key.
+  var EB_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  function normBnk(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
+        typeof x.sid !== "string" || !EB_UUID.test(x.sid) || typeof x.uid !== "string" || !EB_UUID.test(x.uid) ||
+        typeof x.la !== "string" || !/^[a-z0-9]{8,24}$/.test(x.la)) return null;
+    var bk = normText(x.bk, 120);
+    if (!bk || typeof x.cty !== "string" || !/^[A-Z]{2}$/.test(x.cty)) return null;
+    return withExtras({ id: x.id, m: x.m,
+      ac: typeof x.ac === "string" && ID_RE.test(x.ac) ? x.ac : "",
+      bk: bk, cty: x.cty, cu: okCur3(x.cu) ? x.cu : "",
+      ib: typeof x.ib === "string" && /^[A-Za-z0-9]{4}$/.test(x.ib) ? x.ib : "",
+      ih: normText(x.ih, 120), la: x.la,
+      lf: parseYmd(x.lf) ? x.lf : "", nm: normText(x.nm, 40),
+      ps: x.ps === "business" ? "business" : "personal",
+      sid: x.sid, uid: x.uid,
+      vu: isInt(x.vu) && x.vu > 0 && x.vu < 1e14 ? x.vu : 0 }, x);
+  }
+
   var COLLS = [
     { key: "tx",   tomb: "tx",  norm: normTx },
     { key: "cats", tomb: "cat", norm: normCat },
@@ -696,15 +724,16 @@
     { key: "asg",  tomb: "asg",  norm: normAsg },    // in name order: where an older
     { key: "goal", tomb: "goal", norm: normGoal },   // version puts unknown collections
     { key: "prof", tomb: "prof", norm: normProf },
-    { key: "rule", tomb: "rule", norm: normRule }
+    { key: "rule", tomb: "rule", norm: normRule },
+    { key: "bnk",  tomb: "bnk",  norm: normBnk }     // since BK-2: after the others (an older version's place for it)
   ];
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -1258,6 +1287,7 @@
   // The bar over the list: a way into the inbox, or, inside it, a hint
   // and the rule buttons.
   function renderInboxBar() {
+    if (BANKLIVE) BANKLIVE.bar($("bank-bar"));
     var bar = $("inbox-bar"), n = inboxCount();
     bar.innerHTML = "";
     if (filter === "inbox") {
@@ -2462,7 +2492,7 @@
   // removes the added records with tombstones, like importApp.
   var RP = window.OrosRecordPkg || null, BPK = window.OrosBudgetPackage || null;
   if (BPK) BPK.useCsv(buildCsv);              // entries.csv = the app's own CSV export
-  var TOMB_OF = { tx: "tx", cats: "cat", rec: "rec", acc: "acc", xfer: "xfer", asg: "asg", goal: "goal", rule: "rule" };
+  var TOMB_OF = { tx: "tx", cats: "cat", rec: "rec", acc: "acc", xfer: "xfer", asg: "asg", goal: "goal", rule: "rule", bnk: "bnk" };
   var fileAdded = null, fileCur = "";
   // One receipt of the file → Budget/Receipts, only when that name is
   // not on the disk yet, through the checks of attaching one
@@ -2609,6 +2639,43 @@
       xlsx: function (done) { loadLib("xlsx.full.min.js", function () { done(window.XLSX); }); },
       importCats: importCats, accs: accs, accName: accName, fx: fx, maxCats: MAX_CATS, maxAcc: MAX_ACC,
       importApp: importApp
+    });
+  }
+
+  // Live bank connection (BK-2: budget/bankapi.js + budget/banklive.js).
+  // Connected accounts are the collection "bnk"; entries come in through
+  // addEntries (one write, Undo), like a statement file.
+  var BANKLIVE = window.OrosBudgetBankApi && window.OrosBudgetBankLive && BANKUI ? window.OrosBudgetBankLive : null;
+  function saveBnk(row) {
+    var prev = findIn(data.bnk, row.id);
+    var next = Object.assign({}, row, { m: stamp(Math.max(prev ? prev.m : 0, data.tombs["bnk:" + row.id] || 0)) });
+    data.bnk = data.bnk.filter(function (x) { return x.id !== row.id; }).concat([next]);
+    untomb("bnk", row.id);
+    commit();
+    renderAll();
+  }
+  function patchBnk(id, fields) {
+    var prev = findIn(data.bnk, id);
+    if (!prev) return;
+    var same = Object.keys(fields).every(function (k) { return prev[k] === fields[k]; });
+    if (same) return;
+    saveBnk(Object.assign({}, prev, fields));
+  }
+  function dropBnk(id) {
+    if (!findIn(data.bnk, id)) return;
+    data.bnk = data.bnk.filter(function (x) { return x.id !== id; });
+    tombstone("bnk", id);
+    commit();
+    renderAll();
+  }
+  function initBankLive() {
+    if (!BANKLIVE) return;
+    BANKLIVE.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
+      pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
+      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk
     });
   }
 
@@ -3660,7 +3727,7 @@
   }
   function changedCount(a, b) {
     var n = 0;
-    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule"].forEach(function (k) {
+    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk"].forEach(function (k) {
       var idx = {};
       a[k].forEach(function (x) { idx[x.id] = JSON.stringify(x); });
       b[k].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });
@@ -3914,7 +3981,7 @@
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
                  stripe: function () { if (PAY) PAY.open(); },
-                 bank: function () { if (BANKUI) BANKUI.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); },
+                 bank: function () { if (BANKUI) BANKUI.open(); }, banks: function () { if (BANKLIVE) BANKLIVE.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); },
                  osave: function () { if (recFile) recFile.save(); }, oopen: function () { if (recFile) recFile.open(); },
                  ofolder: function () { if (recFile) recFile.openFolder(); } };
     ["osave", "oopen", "ofolder"].forEach(function (k) {     // .orosbudget (the record kit)
@@ -4048,6 +4115,7 @@
     loadPrefs();
     initPay();
     initBank();
+    initBankLive();
     loadFx();
     initPlan();
     applyI18n();
