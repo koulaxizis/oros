@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.93.02
+- Studio: NULL Drum Machine now sounds whole with `Outputs` set to Groups too. Studio mixes the group outputs (snare, hats, percussion) into the track, each with its own Drive, Grit and Volume. With Main nothing changes. See [Studio](help:a/studio).
+
 ## Version 4.93.01
 - Studio: NULL Drum Machine is back in the instrument list, and projects that use it play it again. Since NULL JSFX 3.0 it has extra outputs for groups; Studio plays its main pair, so with `Outputs` set to Groups only the kick sounds. See [Studio](help:a/studio).
 
