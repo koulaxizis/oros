@@ -29,7 +29,7 @@
   var VAULT_KEY = "oros-passwords-vault";
   var CLIP_MS = 30000;
   var MIN_MASTER = 12;
-  var PV = window.PmVault, PC = window.PmCore, KX = window.Kdbx, P = window.PwCore;
+  var PV = window.PmVault, PC = window.PmCore, KX = window.Kdbx, P = window.PwCore, PK = window.PmKinds;
 
   // ---------- 1. Strings + helpers ----------
   function appLang() {
@@ -159,6 +159,78 @@
       "locked.auto": "The vault locked itself.", "locked": "Vault locked",
       "d.cancel": "Cancel", "d.ok": "OK", "d.close": "Close", "d.delete": "Delete",
       "show": "Show", "hide": "Hide", "busy": "Working…",
+      "k.login": "Login",
+      "k.card": "Payment card",
+      "k.identity": "Identity",
+      "k.address": "Address",
+      "k.note": "Secure note",
+      "k.pick": "New entry",
+      "k.pickText": "What do you want to keep?",
+      "k.loginHint": "A website or app account",
+      "k.cardHint": "Credit, debit or prepaid card",
+      "k.identityHint": "Your name, ID card, passport, tax and social security numbers",
+      "k.addressHint": "Home, work or delivery address",
+      "k.noteHint": "Text that only you can open (Wi-Fi, recovery codes, combinations)",
+      "f.kind": "Type",
+      "f.anyKind": "All types",
+      "kf.login": "Logins",
+      "kf.card": "Cards",
+      "kf.identity": "Identities",
+      "kf.address": "Addresses",
+      "kf.note": "Secure notes",
+      "cc.holder": "Cardholder name",
+      "cc.num": "Card number",
+      "cc.exp": "Expiry date (MM/YY)",
+      "cc.cvv": "Security code (CVV)",
+      "cc.pin": "PIN",
+      "cc.bank": "Bank or issuer",
+      "cc.urls": "Bank website",
+      "id.honor": "Title (Mr, Ms, Dr)",
+      "id.first": "First name",
+      "id.middle": "Middle name",
+      "id.last": "Last name",
+      "id.birth": "Date of birth",
+      "id.email": "Email",
+      "id.phone": "Phone",
+      "id.company": "Company",
+      "id.idno": "ID card number",
+      "id.idexp": "ID card expiry",
+      "id.pass": "Passport number",
+      "id.passexp": "Passport expiry",
+      "id.lic": "Driving licence number",
+      "id.licexp": "Driving licence expiry",
+      "id.tax": "Tax number",
+      "id.ssn": "Social security number",
+      "id.ins": "Insurance number",
+      "id.secDocs": "Documents",
+      "id.secNums": "Numbers",
+      "id.secPerson": "Person",
+      "ad.name": "Recipient",
+      "ad.street": "Street and number",
+      "ad.line2": "Address line 2",
+      "ad.floor": "Floor or flat",
+      "ad.city": "City",
+      "ad.zip": "Postal code",
+      "ad.region": "Region or state",
+      "ad.country": "Country",
+      "ad.phone": "Phone",
+      "note.text": "Text",
+      "st.expired": "Expired",
+      "st.soon": "Expires soon",
+      "cc.badNum": "This number fails the card check digit. Check it; you can still save it.",
+      "cc.badExp": "Write the expiry as MM/YY.",
+      "v.copySeq": "Copy in order",
+      "v.copyNext": "Next: {what}",
+      "v.copiedWhat": "{what} copied.",
+      "v.copyAddr": "Copy address",
+      "v.copyName": "Copy name",
+      "v.convert": "This entry looks like a {kind} from another app. Turn it into one?",
+      "v.convertGo": "Convert",
+      "v.converted": "Converted.",
+      "e.newKind": "New {kind}",
+      "e.editKind": "Edit {kind}",
+      "e.countryNone": "Choose a country",
+      "e.countryOther": "Other (as written)",
       "addon": "orOS does not fill in passwords on websites. Copy them from here."
     },
     el: {
@@ -279,6 +351,78 @@
       "locked.auto": "Η κρύπτη κλείδωσε μόνη της.", "locked": "Η κρύπτη κλείδωσε",
       "d.cancel": "Ακύρωση", "d.ok": "OK", "d.close": "Κλείσιμο", "d.delete": "Διαγραφή",
       "show": "Εμφάνιση", "hide": "Απόκρυψη", "busy": "Γίνεται…",
+      "k.login": "Σύνδεση",
+      "k.card": "Κάρτα πληρωμής",
+      "k.identity": "Ταυτότητα",
+      "k.address": "Διεύθυνση",
+      "k.note": "Ασφαλής σημείωση",
+      "k.pick": "Νέα εγγραφή",
+      "k.pickText": "Τι θέλεις να φυλάξεις;",
+      "k.loginHint": "Λογαριασμός σε ιστότοπο ή εφαρμογή",
+      "k.cardHint": "Πιστωτική, χρεωστική ή προπληρωμένη κάρτα",
+      "k.identityHint": "Το όνομά σου, ταυτότητα, διαβατήριο, ΑΦΜ και ΑΜΚΑ",
+      "k.addressHint": "Διεύθυνση σπιτιού, δουλειάς ή παράδοσης",
+      "k.noteHint": "Κείμενο που ανοίγεις μόνο εσύ (Wi-Fi, κωδικοί ανάκτησης, συνδυασμοί)",
+      "f.kind": "Τύπος",
+      "f.anyKind": "Όλοι οι τύποι",
+      "kf.login": "Συνδέσεις",
+      "kf.card": "Κάρτες",
+      "kf.identity": "Ταυτότητες",
+      "kf.address": "Διευθύνσεις",
+      "kf.note": "Ασφαλείς σημειώσεις",
+      "cc.holder": "Όνομα κατόχου",
+      "cc.num": "Αριθμός κάρτας",
+      "cc.exp": "Λήξη (ΜΜ/ΕΕ)",
+      "cc.cvv": "Κωδικός ασφαλείας (CVV)",
+      "cc.pin": "PIN",
+      "cc.bank": "Τράπεζα ή εκδότρια",
+      "cc.urls": "Ιστότοπος τράπεζας",
+      "id.honor": "Προσφώνηση (κ., κα, Δρ)",
+      "id.first": "Όνομα",
+      "id.middle": "Πατρώνυμο ή μεσαίο όνομα",
+      "id.last": "Επώνυμο",
+      "id.birth": "Ημερομηνία γέννησης",
+      "id.email": "Email",
+      "id.phone": "Τηλέφωνο",
+      "id.company": "Εταιρεία",
+      "id.idno": "Αριθμός ταυτότητας (ΑΔΤ)",
+      "id.idexp": "Λήξη ταυτότητας",
+      "id.pass": "Αριθμός διαβατηρίου",
+      "id.passexp": "Λήξη διαβατηρίου",
+      "id.lic": "Αριθμός διπλώματος οδήγησης",
+      "id.licexp": "Λήξη διπλώματος",
+      "id.tax": "ΑΦΜ",
+      "id.ssn": "ΑΜΚΑ",
+      "id.ins": "ΑΜΑ (αριθμός μητρώου ασφάλισης)",
+      "id.secDocs": "Έγγραφα",
+      "id.secNums": "Αριθμοί",
+      "id.secPerson": "Πρόσωπο",
+      "ad.name": "Παραλήπτης",
+      "ad.street": "Οδός και αριθμός",
+      "ad.line2": "Δεύτερη γραμμή",
+      "ad.floor": "Όροφος ή διαμέρισμα",
+      "ad.city": "Πόλη",
+      "ad.zip": "Τ.Κ.",
+      "ad.region": "Νομός ή περιφέρεια",
+      "ad.country": "Χώρα",
+      "ad.phone": "Τηλέφωνο",
+      "note.text": "Κείμενο",
+      "st.expired": "Έληξε",
+      "st.soon": "Λήγει σύντομα",
+      "cc.badNum": "Ο αριθμός δεν περνά τον έλεγχο της κάρτας. Έλεγξέ τον· μπορείς να τον αποθηκεύσεις και έτσι.",
+      "cc.badExp": "Γράψε τη λήξη ως ΜΜ/ΕΕ.",
+      "v.copySeq": "Αντιγραφή κατά σειρά",
+      "v.copyNext": "Επόμενο: {what}",
+      "v.copiedWhat": "Αντιγράφηκε: {what}.",
+      "v.copyAddr": "Αντιγραφή διεύθυνσης",
+      "v.copyName": "Αντιγραφή ονόματος",
+      "v.convert": "Αυτή η εγγραφή μοιάζει με {kind} από άλλη εφαρμογή. Να γίνει {kind};",
+      "v.convertGo": "Μετατροπή",
+      "v.converted": "Έγινε η μετατροπή.",
+      "e.newKind": "Νέα εγγραφή: {kind}",
+      "e.editKind": "Επεξεργασία: {kind}",
+      "e.countryNone": "Διάλεξε χώρα",
+      "e.countryOther": "Άλλη (όπως γράφτηκε)",
       "addon": "Το orOS δεν συμπληρώνει κωδικούς σε ιστότοπους. Αντίγραψέ τους από εδώ."
     }
   };
@@ -378,7 +522,7 @@
   var snap = null;               // decrypted snapshot while unlocked
   var blobSnaps = {};            // blob id -> decrypted snapshot (memory)
   var badBlobs = {};             // blob ids that did not open
-  var view = { mode: "list", id: null, query: "", filter: "all", tag: "" };
+  var view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "" };
   var weakCache = {};
   var pending = null;            // { password, title?, urls? } handed from the generator or a share
   var root = null;               // #vault
@@ -776,7 +920,7 @@
     q.type = "search"; q.id = "pv-search"; q.placeholder = t("open.search"); q.setAttribute("aria-label", t("open.search"));
     q.autocomplete = "off"; q.spellcheck = false; q.value = view.query;
     bar.appendChild(q);
-    bar.appendChild(btn(t("open.new"), "act primary", function () { openEditor(null); }));
+    bar.appendChild(btn(t("open.new"), "act primary", function () { kindPicker(); }));
     var menuBtn = btn("⋯", "act pv-more", function () { openMenu(menuBtn); });
     menuBtn.setAttribute("aria-label", t("open.menu")); menuBtn.title = t("open.menu");
     menuBtn.setAttribute("aria-haspopup", "menu");
@@ -794,6 +938,14 @@
       c.setAttribute("role", "radio"); c.setAttribute("data-f", f);
       chips.appendChild(c);
     });
+    var ksel = el("select", "chip-select pv-kind-sel");
+    ksel.setAttribute("aria-label", t("f.kind"));
+    [["", t("f.anyKind")]].concat(PK.KINDS.map(function (k) { return [k, t("kf." + k)]; })).forEach(function (o) {
+      var op = el("option", "", o[1]); op.value = o[0]; ksel.appendChild(op);
+    });
+    ksel.value = view.kind;
+    ksel.addEventListener("change", function () { view.kind = ksel.value; renderList(); });
+    chips.appendChild(ksel);
     var tags = PC.allTags(entries());
     if (tags.length) {
       var sel = el("select", "chip-select");
@@ -829,6 +981,7 @@
     var re = view.filter === "reused" ? PC.reused(all) : null;
     var list = PC.sortEntries(all.filter(function (e) {
       if (view.tag && e.tags.indexOf(view.tag) < 0 && !e.tags.some(function (x) { return x.indexOf(view.tag + "/") === 0; })) return false;
+      if (view.kind && PK.kindOf(e) !== view.kind) return false;
       if (view.filter === "fav" && !e.fav) return false;
       if (view.filter === "totp" && !e.totp) return false;
       if (view.filter === "weak" && !isWeak(e)) return false;
@@ -840,15 +993,19 @@
     list.forEach(function (e) {
       var li = el("li");
       var b = btn(null, "pv-item");
-      var host = PC.hostOf(e);
-      var badge = el("span", "pv-badge", ((e.title || host || e.user || "?").trim().charAt(0) || "?").toUpperCase());
+      var host = PC.hostOf(e), kind = PK.kindOf(e);
+      var badge = el("span", "pv-badge" + (kind !== "login" ? " pv-badge-" + kind : ""),
+                     KIND_ICON[kind] || ((e.title || host || e.user || "?").trim().charAt(0) || "?").toUpperCase());
       badge.setAttribute("aria-hidden", "true");
       b.appendChild(badge);
       var txt = el("span", "pv-item-text");
       txt.appendChild(el("span", "pv-item-title", (e.fav ? "★ " : "") + (e.title || host || t("v.untitled"))));
-      txt.appendChild(el("span", "pv-item-sub", [e.user, host].filter(Boolean).join(" · ")));
+      txt.appendChild(el("span", "pv-item-sub", kind === "login" ? [e.user, host].filter(Boolean).join(" · ") :
+        [t("k." + kind), PK.summary(e, countryName)].filter(Boolean).join(" · ")));
       b.appendChild(txt);
       var flags = el("span", "pv-flags");
+      var st = typedStatus(e);
+      if (st) flags.appendChild(el("span", "pv-flag warnf", t("st." + st)));
       if (e.totp) flags.appendChild(el("span", "pv-flag", t("badge.totp")));
       if (view.filter === "weak") flags.appendChild(el("span", "pv-flag warnf", t("badge.weak")));
       if (re) flags.appendChild(el("span", "pv-flag warnf", t("badge.reused")));
@@ -940,6 +1097,8 @@
   }
 
   function renderEntry(e) {
+    var kind = PK.kindOf(e);
+    if (kind !== "login") { renderTyped(e, kind); return; }
     clear(root);
     var head = el("div", "pv-toolbar");
     head.appendChild(btn("‹ " + t("v.back"), "act", function () { view.mode = "list"; view.id = null; renderOpen(); }));
@@ -949,6 +1108,8 @@
     root.appendChild(head);
     var card = el("div", "card pv-detail");
     card.appendChild(el("h2", "pv-title", (e.fav ? "★ " : "") + (e.title || PC.hostOf(e) || t("v.untitled"))));
+    var legacy = PK.legacyKind(e);
+    if (legacy) card.appendChild(convertBanner(e, legacy));
     if (e.user) card.appendChild(rowCopy(t("v.user"), e.user, {}));
     if (e.pw) {
       var r = rowCopy(t("v.pw"), e.pw, { secret: true, mono: true });
@@ -962,7 +1123,9 @@
     }
     if (e.totp) card.appendChild(totpRow(e));
     e.urls.forEach(function (u) { card.appendChild(rowCopy(t("v.urls"), u, { link: PC.safeUrl(u) })); });
-    e.fields.forEach(function (f) { card.appendChild(rowCopy(f.n || t("v.fields"), f.v, { secret: !!f.h, mono: !!f.h })); });
+    e.fields.filter(function (f) { return f.n !== PK.KIND_FIELD; }).forEach(function (f) {
+      card.appendChild(rowCopy(f.n || t("v.fields"), f.v, { secret: !!f.h, mono: !!f.h }));
+    });
     if (e.notes) {
       var n = el("div", "pv-field pv-notes");
       n.appendChild(el("span", "pv-field-label", t("v.notes")));
@@ -1034,6 +1197,399 @@
     });
   }
 
+  // ---------- 7b. Cards, identities, addresses, notes (PW-K1) ----------
+  // Typed values live in reserved fields (pmkinds.js); everything is
+  // put on the page with textContent only.
+  var KIND_ICON = { card: "💳", identity: "🪪", address: "🏠", note: "📝" };
+  var KPRE = { card: "cc", identity: "id", address: "ad" };
+  var regionNames = null;
+  function countryName(code) {
+    if (!code || !/^[A-Z]{2}$/.test(code)) return code || "";
+    try {
+      if (!regionNames) regionNames = new Intl.DisplayNames([window.orosI18n ? window.orosI18n.locale(LANG) : LANG], { type: "region" });
+      return regionNames.of(code) || code;
+    } catch (e) { return code; }
+  }
+  function kLabel(kind, key) { return t(KPRE[kind] + "." + key); }
+  function fmtDay(iso) {
+    var d = PK.normDate(iso);
+    if (!d) return iso || "";
+    var p = d.split("-");
+    try {
+      return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString(
+        window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"),
+        { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+    } catch (e) { return d; }
+  }
+  // "expired" | "soon" | "" for the list and the detail view.
+  function typedStatus(e) {
+    var kind = PK.kindOf(e), d = PK.dataOf(e), worst = "";
+    function take(s) { if (s === "expired" || (s === "soon" && worst !== "expired")) worst = s; }
+    if (kind === "card") take(PK.expStatus(d.exp));
+    if (kind === "identity") ["idexp", "passexp", "licexp"].forEach(function (k) { take(PK.dateStatus(d[k])); });
+    return worst;
+  }
+  function statusChip(s) {
+    var c = el("span", "pv-flag warnf pv-st", t("st." + s));
+    c.setAttribute("data-st", s);
+    return c;
+  }
+  // One button that copies the next value each time (number, expiry,
+  // code…), for forms the add-on cannot reach.
+  function seqButton(items) {
+    items = items.filter(function (x) { return x.value; });
+    if (items.length < 2) return null;
+    var i = 0;
+    var wrap = el("div", "pv-row pv-seq");
+    var next = el("span", "hint");
+    var b = btn(t("v.copySeq"), "act primary", function () {
+      var it = items[i];
+      copySecret(it.value, !!it.secret);
+      i = (i + 1) % items.length;
+      paint();
+    });
+    function paint() { next.textContent = t("v.copyNext", { what: items[i].label }); }
+    paint();
+    wrap.appendChild(b); wrap.appendChild(next);
+    return wrap;
+  }
+  function plainCopy(label, text) {
+    return btn(label, "act", function () { copySecret(text, false); });
+  }
+
+  function kindPicker() {
+    var d = dialog(t("k.pick"));
+    d.body.appendChild(el("p", "hint", t("k.pickText")));
+    var list = el("div", "pv-menu pv-kinds");
+    PK.KINDS.forEach(function (k) {
+      var b = btn(null, "pv-menu-item pv-kind", function () {
+        d.close();
+        if (k === "login") openEditor(null); else openTypedEditor(null, k);
+      });
+      b.setAttribute("data-kind", k);
+      var ic = el("span", "pv-badge" + (k !== "login" ? " pv-badge-" + k : ""), KIND_ICON[k] || "🔑");
+      ic.setAttribute("aria-hidden", "true");
+      b.appendChild(ic);
+      var tx = el("span", "pv-item-text");
+      tx.appendChild(el("span", "pv-item-title", t("k." + k)));
+      tx.appendChild(el("span", "pv-item-sub", t("k." + k + "Hint")));
+      b.appendChild(tx);
+      list.appendChild(b);
+    });
+    d.body.appendChild(list);
+    d.actions(t("d.cancel"));
+    var first = list.querySelector("button"); if (first) first.focus();
+  }
+
+  // A login made from another app's card / identity fields → offer to
+  // turn it into its type (one save, Undo).
+  function convertBanner(e, kind) {
+    var box = el("div", "hint pv-convert");
+    box.appendChild(el("p", "", t("v.convert", { kind: t("k." + kind).toLowerCase() })));
+    box.appendChild(btn(t("v.convertGo"), "act small", function () {
+      var keep = JSON.parse(JSON.stringify(e)), now = Date.now();
+      var list = PK.fromLabels(e, kind, function () { return PC.newId(); }).map(function (x) {
+        x.m = Math.max(now, e.m + 1); return x;
+      });
+      save(function (s) { list.forEach(function (x) { s = PC.upsert(s, x); }); return s; }).then(function () {
+        view.mode = "view"; view.id = e.id;
+        renderOpen();
+        if (app()) app().undoToast(t("v.converted"), t("v.undo"), function () {
+          var t2 = Date.now();
+          save(function (s) {
+            keep.m = Math.max(t2, list[0].m + 1);
+            s = PC.upsert(s, keep);
+            list.slice(1).forEach(function (x) { s = PC.remove(s, x.id, t2); });
+            return s;
+          });
+        });
+      }, noop);
+    }));
+    return box;
+  }
+
+  function renderTyped(e, kind) {
+    clear(root);
+    var head = el("div", "pv-toolbar");
+    head.appendChild(btn("‹ " + t("v.back"), "act", function () { view.mode = "list"; view.id = null; renderOpen(); }));
+    head.appendChild(el("span", "pv-spacer"));
+    head.appendChild(btn(t("v.edit"), "act primary", function () { openTypedEditor(e, kind); }));
+    head.appendChild(btn(t("v.delete"), "act danger", function () { deleteEntry(e); }));
+    root.appendChild(head);
+    var card = el("div", "card pv-detail pv-typed");
+    card.setAttribute("data-kind", kind);
+    var h = el("h2", "pv-title", (e.fav ? "★ " : "") + (e.title || t("v.untitled")));
+    card.appendChild(h);
+    var sub = el("p", "hint pv-kind-line", t("k." + kind));
+    var st = typedStatus(e);
+    if (st) { sub.appendChild(document.createTextNode(" ")); sub.appendChild(statusChip(st)); }
+    card.appendChild(sub);
+    var d = PK.dataOf(e);
+    function row(key, opts) {
+      if (!d[key]) return;
+      opts = opts || {};
+      var spec = PK.specOf(kind).filter(function (x) { return x.k === key; })[0] || {};
+      var value = opts.value != null ? opts.value : d[key];
+      var r = rowCopy(kLabel(kind, key), value, { secret: !!spec.h, mono: !!spec.h || opts.mono });
+      if (opts.status) {
+        var s2 = opts.status(d[key]);
+        if (s2 === "expired" || s2 === "soon") r.querySelector(".pv-field-label").appendChild(statusChip(s2));
+      }
+      card.appendChild(r);
+    }
+    if (kind === "card") {
+      var br = PK.BRAND_NAME[PK.brand(d.num)];
+      if (br) sub.insertBefore(document.createTextNode(br + " · "), sub.firstChild);
+      var seq = seqButton([
+        { label: kLabel("card", "num"), value: PK.digits(d.num), secret: true },
+        { label: kLabel("card", "exp"), value: d.exp ? PK.expShort(d.exp) : "" },
+        { label: kLabel("card", "cvv"), value: d.cvv, secret: true },
+        { label: kLabel("card", "holder"), value: d.holder }
+      ]);
+      if (seq) card.appendChild(seq);
+      row("holder");
+      if (d.num) {
+        var nr = rowCopy(kLabel("card", "num"), PK.digits(d.num), { secret: true, mono: true });
+        // shown grouped, copied as plain digits
+        var val = nr.querySelector(".pv-field-value"), shown = false;
+        nr.querySelector(".pv-field-acts button").addEventListener("click", function () {
+          shown = !shown; val.textContent = shown ? PK.groupNum(d.num) : "•••• " + PK.last4(d.num);
+        });
+        val.textContent = "•••• " + PK.last4(d.num);
+        card.appendChild(nr);
+      }
+      row("exp", { value: PK.expShort(d.exp), mono: true, status: PK.expStatus });
+      row("cvv"); row("pin"); row("bank");
+      e.urls.forEach(function (u) { card.appendChild(rowCopy(t("cc.urls"), u, { link: PC.safeUrl(u) })); });
+    } else if (kind === "identity") {
+      var name = PK.fullName(d);
+      var acts = el("div", "pv-row pv-seq");
+      if (name) acts.appendChild(plainCopy(t("v.copyName"), [d.honor, name].filter(Boolean).join(" ")));
+      if (acts.firstChild) card.appendChild(acts);
+      ["honor", "first", "middle", "last"].forEach(function (k) { row(k); });
+      if (d.birth) row("birth", { value: fmtDay(d.birth) });
+      ["email", "phone", "company"].forEach(function (k) { row(k); });
+      [["idno", "idexp"], ["pass", "passexp"], ["lic", "licexp"]].forEach(function (p) {
+        row(p[0]);
+        if (d[p[1]]) row(p[1], { value: fmtDay(d[p[1]]), status: PK.dateStatus });
+      });
+      ["tax", "ssn", "ins"].forEach(function (k) { row(k); });
+    } else if (kind === "address") {
+      var lines = PK.addressLines(d, countryName);
+      if (lines.length) {
+        var blk = el("div", "pv-field pv-addr");
+        blk.appendChild(el("span", "pv-field-label", t("k.address")));
+        blk.appendChild(el("div", "pv-notes-text", lines.join("\n")));
+        card.appendChild(blk);
+        var ab = el("div", "pv-row pv-seq");
+        ab.appendChild(plainCopy(t("v.copyAddr"), lines.join("\n")));
+        card.appendChild(ab);
+      }
+      ["name", "street", "line2", "floor", "city", "zip", "region"].forEach(function (k) { row(k); });
+      if (d.country) row("country", { value: countryName(d.country) });
+      row("phone");
+    } else if (kind === "note" && e.notes) {
+      var nb = el("div", "pv-field pv-notes pv-secret-note");
+      nb.appendChild(el("span", "pv-field-label", t("note.text")));
+      var txt = el("div", "pv-notes-text mono", "••••••••••");
+      nb.appendChild(txt);
+      var na = el("span", "pv-field-acts");
+      var shownN = false;
+      var sb = btn(t("v.show"), "act small", function () {
+        shownN = !shownN;
+        txt.textContent = shownN ? e.notes : "••••••••••";
+        sb.textContent = t(shownN ? "v.hide" : "v.show");
+        sb.setAttribute("aria-pressed", shownN ? "true" : "false");
+      });
+      sb.setAttribute("aria-pressed", "false");
+      na.appendChild(sb);
+      na.appendChild(btn(t("v.copy"), "act small", function () { copySecret(e.notes, true); }));
+      nb.appendChild(na);
+      card.appendChild(nb);
+    }
+    PK.visibleFields(e).forEach(function (f) { card.appendChild(rowCopy(f.n || t("v.fields"), f.v, { secret: !!f.h, mono: !!f.h })); });
+    if (e.notes && kind !== "note") {
+      var n = el("div", "pv-field pv-notes");
+      n.appendChild(el("span", "pv-field-label", t("v.notes")));
+      n.appendChild(el("div", "pv-notes-text", e.notes));
+      card.appendChild(n);
+    }
+    if (e.tags.length) {
+      var tg = el("div", "pv-tags");
+      e.tags.forEach(function (x) { tg.appendChild(el("span", "pv-tag", x)); });
+      card.appendChild(tg);
+    }
+    card.appendChild(el("p", "hint", t("v.modified", { d: fmtDate(e.m) }) + " · " + t("v.created", { d: fmtDate(e.c) })));
+    root.appendChild(card);
+  }
+
+  // One custom field row (name, value, hidden), shared by both editors.
+  function fieldRow(f, onRemove) {
+    var r = el("div", "pv-frow");
+    var n = textInput(); n.placeholder = t("e.fName"); n.value = f ? f.n : ""; n.setAttribute("aria-label", t("e.fName"));
+    var v = f && f.h ? secretInput() : textInput(); v.placeholder = t("e.fValue"); v.value = f ? f.v : "";
+    v.setAttribute("aria-label", t("e.fValue"));
+    var hl = el("label", "pv-check small");
+    var hc = el("input"); hc.type = "checkbox"; hc.checked = !!(f && f.h);
+    hc.addEventListener("change", function () { v.type = hc.checked ? "password" : "text"; });
+    hl.appendChild(hc); hl.appendChild(el("span", "", t("e.fHidden")));
+    var rm = btn("×", "act small", function () { r.remove(); if (onRemove) onRemove(); });
+    rm.setAttribute("aria-label", t("e.fRemove"));
+    r.appendChild(n); r.appendChild(v); r.appendChild(hl); r.appendChild(rm);
+    r.read = function () { return { n: n.value, v: v.value, h: hc.checked ? 1 : 0 }; };
+    return r;
+  }
+
+  function countrySelect(value) {
+    var sel = el("select", "pv-country");
+    var o0 = el("option", "", t("e.countryNone")); o0.value = ""; sel.appendChild(o0);
+    var coll;
+    try { coll = new Intl.Collator(window.orosI18n ? window.orosI18n.locale(LANG) : LANG); } catch (e) { coll = null; }
+    PK.COUNTRIES.map(function (c) { return [c, countryName(c)]; })
+      .sort(function (a, b) { return coll ? coll.compare(a[1], b[1]) : (a[1] < b[1] ? -1 : 1); })
+      .forEach(function (c) { var o = el("option", "", c[1]); o.value = c[0]; sel.appendChild(o); });
+    if (value && !PK.countryCode(value)) {
+      var ox = el("option", "", value + " · " + t("e.countryOther")); ox.value = value; sel.appendChild(ox);
+    }
+    sel.value = value ? (PK.countryCode(value) || value) : "";
+    return sel;
+  }
+
+  function openTypedEditor(e, kind) {
+    clearInterval(totpTimer); totpTimer = null;
+    view.mode = "edit";
+    clear(root);
+    var isNew = !e;
+    var d = e ? PK.dataOf(e) : {};
+    var card = el("div", "card pv-edit pv-typed");
+    card.setAttribute("data-kind", kind);
+    card.appendChild(el("h2", "pv-h", t(isNew ? "e.newKind" : "e.editKind", { kind: t("k." + kind) })));
+    var title = textInput("pv-e-title"); title.value = e ? e.title : ""; title.maxLength = PC.LIM.title;
+    card.appendChild(labelled(t("e.title"), title));
+    var inputs = {};
+    PK.specOf(kind).forEach(function (s) {
+      var i, wrap;
+      if (s.t === "country") { i = countrySelect(d[s.k] || (isNew && LANG === "el" ? "GR" : "")); wrap = i; }
+      else if (s.h) { i = secretInput(); wrap = showable(i); }
+      else {
+        i = textInput();
+        if (s.t === "date") i.type = "date";
+        if (s.t === "email") { i.type = "email"; i.inputMode = "email"; }
+        if (s.t === "tel") { i.type = "tel"; i.inputMode = "tel"; }
+        if (s.t === "exp") { i.placeholder = "MM/YY"; i.inputMode = "numeric"; i.maxLength = 7; i.classList.add("mono"); }
+        wrap = i;
+      }
+      if (s.t === "num") { i.inputMode = "numeric"; i.maxLength = 23; }
+      i.id = "pv-e-" + s.k;
+      var v = d[s.k] || "";
+      if (s.t === "exp" && v) v = PK.expShort(v);
+      if (s.t === "date") v = PK.normDate(v) || "";
+      if (s.t !== "country") i.value = v;
+      inputs[s.k] = i;
+      var lab = labelled(kLabel(kind, s.k), wrap);
+      card.appendChild(lab);
+      if (s.t === "date" && d[s.k] && !PK.normDate(d[s.k])) {
+        // a date another app wrote in its own way: keep it as text
+        i.type = "text"; i.value = d[s.k];
+      }
+    });
+    var numMsg = null, expMsg = null;
+    if (kind === "card") {
+      numMsg = el("p", "hint"); numMsg.hidden = true;
+      inputs.num.closest(".fld").after(numMsg);
+      expMsg = el("p", "hint err"); expMsg.hidden = true;
+      inputs.exp.closest(".fld").after(expMsg);
+      var checkNum = function () {
+        var dg = PK.digits(inputs.num.value);
+        numMsg.hidden = dg.length < 12;
+        if (numMsg.hidden) return;
+        var ok = PK.luhn(dg), b = PK.BRAND_NAME[PK.brand(dg)] || "";
+        numMsg.className = ok ? "hint" : "hint err";
+        numMsg.textContent = ok ? b : t("cc.badNum");
+      };
+      inputs.num.addEventListener("input", checkNum);
+      checkNum();
+      var checkExp = function () {
+        var v = inputs.exp.value.trim();
+        expMsg.hidden = !v || !!PK.parseExp(v);
+        expMsg.textContent = expMsg.hidden ? "" : t("cc.badExp");
+      };
+      inputs.exp.addEventListener("change", checkExp);
+    }
+    var urls = null;
+    if (kind === "card") {
+      urls = el("textarea", "pv-ta"); urls.id = "pv-e-urls"; urls.rows = 1; urls.value = e ? e.urls.join("\n") : "";
+      urls.spellcheck = false; urls.setAttribute("autocapitalize", "off");
+      card.appendChild(labelled(t("cc.urls"), urls));
+    }
+    var notes = el("textarea", "pv-ta" + (kind === "note" ? " mono" : "")); notes.id = "pv-e-notes";
+    notes.rows = kind === "note" ? 8 : 3; notes.value = e ? e.notes : ""; notes.maxLength = PC.LIM.notes;
+    if (kind === "note") { notes.spellcheck = false; notes.setAttribute("autocapitalize", "off"); }
+    card.appendChild(labelled(t(kind === "note" ? "note.text" : "e.notes"), notes));
+    var tags = textInput("pv-e-tags"); tags.value = e ? e.tags.join(", ") : "";
+    var dl = el("datalist"); dl.id = "pv-taglist";
+    PC.allTags(entries()).forEach(function (x) { var o = el("option"); o.value = x; dl.appendChild(o); });
+    tags.setAttribute("list", "pv-taglist");
+    card.appendChild(labelled(t("e.tags"), tags));
+    card.appendChild(dl);
+    card.appendChild(el("h3", "pv-sub", t("e.fields")));
+    var fl = el("div", "pv-fields");
+    card.appendChild(fl);
+    var dirty = false;
+    function addField(f) { fl.appendChild(fieldRow(f, function () { dirty = true; })); }
+    // reserved values of another type (a newer orOS) stay as they are
+    var kept = e ? PK.userFields(e).filter(function (f) { return PK.isReserved(f.n); }) : [];
+    (e ? PK.visibleFields(e) : []).forEach(addField);
+    card.appendChild(btn("+ " + t("e.addField"), "link-btn", function () { addField(null); dirty = true; }));
+    var favL = el("label", "pv-check");
+    var fav = el("input"); fav.type = "checkbox"; fav.checked = !!(e && e.fav);
+    favL.appendChild(fav); favL.appendChild(el("span", "", t("e.fav")));
+    card.appendChild(favL);
+    var err = el("p", "hint err"); err.setAttribute("role", "alert"); err.hidden = true;
+    card.appendChild(err);
+    var acts = el("div", "pv-row pv-edit-acts");
+    card.addEventListener("input", function () { dirty = true; });
+    card.addEventListener("change", function () { dirty = true; });
+    acts.appendChild(btn(t("e.cancel"), "act", function () {
+      if (!dirty) return leave();
+      confirmDialog(t("e.cancel"), t("e.discard"), t("d.ok")).then(function (y) { if (y) leave(); });
+    }));
+    var saveBtn = btn(t("e.save"), "act primary", function () {
+      if (kind === "card" && inputs.exp.value.trim() && !PK.parseExp(inputs.exp.value)) {
+        expMsg.hidden = false; expMsg.textContent = t("cc.badExp"); inputs.exp.focus(); return;
+      }
+      var now = Date.now(), data = {};
+      Object.keys(inputs).forEach(function (k) { data[k] = inputs[k].value; });
+      var next = {
+        id: e ? e.id : PC.newId(), c: e ? e.c : now, m: Math.max(now, e ? e.m + 1 : 0),
+        title: title.value, user: "", pw: "", totp: "", hist: [], notes: notes.value,
+        urls: urls ? urls.value.split(/\r?\n/) : [], tags: tags.value.split(","), fav: fav.checked ? 1 : 0, fields: []
+      };
+      if (e && e.x) next.x = e.x;
+      var own = kept.concat(Array.prototype.map.call(fl.children, function (r) { return r.read(); }));
+      var n = PC.normEntry(PK.withData(next, kind, data, own));
+      if (!n || !PK.hasContent(n)) { err.textContent = t("e.empty"); err.hidden = false; return; }
+      saveBtn.disabled = true;
+      save(function (s) { return PC.upsert(s, n); }).then(function () {
+        toast(t("e.saved"));
+        view.mode = "view"; view.id = n.id;
+        clearForm(); renderOpen();
+      }, function () { saveBtn.disabled = false; });
+    });
+    acts.appendChild(saveBtn);
+    card.appendChild(acts);
+    root.appendChild(card);
+    function clearForm() {
+      Array.prototype.forEach.call(card.querySelectorAll("input, textarea"), function (i) { i.value = ""; });
+    }
+    function leave() {
+      clearForm();
+      view.mode = e ? "view" : "list"; view.id = e ? e.id : null;
+      renderOpen();
+    }
+    setTimeout(function () { try { title.focus(); } catch (x) {} }, 0);
+  }
+
   // ---------- 8. Entry editor ----------
   // pre (new entries only): { title, urls } from a share to the single app.
   function openEditor(e, presetPw, pre) {
@@ -1102,22 +1658,11 @@
     card.appendChild(el("h3", "pv-sub", t("e.fields")));
     var fl = el("div", "pv-fields");
     card.appendChild(fl);
-    function addField(f) {
-      var r = el("div", "pv-frow");
-      var n = textInput(); n.placeholder = t("e.fName"); n.value = f ? f.n : ""; n.setAttribute("aria-label", t("e.fName"));
-      var v = f && f.h ? secretInput() : textInput(); v.placeholder = t("e.fValue"); v.value = f ? f.v : "";
-      v.setAttribute("aria-label", t("e.fValue"));
-      var hl = el("label", "pv-check small");
-      var hc = el("input"); hc.type = "checkbox"; hc.checked = !!(f && f.h);
-      hc.addEventListener("change", function () { v.type = hc.checked ? "password" : "text"; });
-      hl.appendChild(hc); hl.appendChild(el("span", "", t("e.fHidden")));
-      var rm = btn("×", "act small", function () { r.remove(); dirty = true; });
-      rm.setAttribute("aria-label", t("e.fRemove"));
-      r.appendChild(n); r.appendChild(v); r.appendChild(hl); r.appendChild(rm);
-      r.read = function () { return { n: n.value, v: v.value, h: hc.checked ? 1 : 0 }; };
-      fl.appendChild(r);
-    }
-    (e ? e.fields : []).forEach(addField);
+    function addField(f) { fl.appendChild(fieldRow(f, function () { dirty = true; })); }
+    // Reserved fields (a type marker or values of a newer orOS) are kept
+    // as they are and never shown in the editor.
+    var kept = e ? e.fields.filter(function (f) { return PK.isReserved(f.n); }) : [];
+    (e ? e.fields.filter(function (f) { return !PK.isReserved(f.n); }) : []).forEach(addField);
     card.appendChild(btn("+ " + t("e.addField"), "link-btn", function () { addField(null); dirty = true; }));
     var favL = el("label", "pv-check");
     var fav = el("input"); fav.type = "checkbox"; fav.checked = !!(e && e.fav);
@@ -1139,8 +1684,9 @@
         id: e ? e.id : PC.newId(), c: e ? e.c : now, m: Math.max(now, e ? e.m + 1 : 0),
         title: title.value, user: user.value, pw: pw.value, notes: notes.value, totp: totp.value.trim(),
         urls: urls.value.split(/\r?\n/), tags: tags.value.split(","), fav: fav.checked ? 1 : 0,
-        fields: Array.prototype.map.call(fl.children, function (r) { return r.read(); }), hist: e ? e.hist : []
+        fields: kept.concat(Array.prototype.map.call(fl.children, function (r) { return r.read(); })), hist: e ? e.hist : []
       };
+      if (e && e.x) next.x = e.x;
       next.hist = PC.withHistory(e, next, now);
       var n = PC.normEntry(next);
       if (!n || !(n.title || n.user || n.pw)) { err.textContent = t("e.empty"); err.hidden = false; return; }

@@ -66,11 +66,11 @@ test("Proton Pass ZIP: logins, notes, cards, aliases, identities; trash left out
   assert.ok(/^otpauth:\/\/totp\//.test(gh.totp));
   assert.deepEqual(gh.fields.map((f) => [f.n, f.h]), [["Email", 0], ["Recovery", 1]]);
   const card = r.entries.find((e) => e.title === "Visa");
-  assert.equal(card.fields.find((f) => f.n === "Number").h, 1);
+  assert.equal(card.fields.find((f) => f.n === "oros:cc.num").h, 1);
   assert.equal(r.entries.find((e) => e.title === "Alias").user, "alias.x@passmail.net");
   const me = r.entries.find((e) => e.title === "Me");
-  assert.equal(me.fields.find((f) => f.n === "Passport Number").h, 1);
-  assert.equal(me.fields.find((f) => f.n === "Phone Number").h, 0);
+  assert.equal(me.fields.find((f) => f.n === "oros:id.pass").h, 1);
+  assert.equal(me.fields.find((f) => f.n === "oros:id.phone").h, 0);
   assert.ok(r.entries.every((e) => /^[0-9a-f]{16}$/.test(e.id)));
   assert.equal(zip.every((b) => b === 0), true, "file bytes wiped after parsing");
   // the same file again gives the same ids
@@ -165,7 +165,8 @@ test("NordPass CSV: logins, cards, folder rows skipped; Apple Passwords CSV with
   assert.deepEqual(r.entries[0].urls, ["https://mail.example", "https://m2.example"]);
   assert.deepEqual(r.entries[0].tags, ["Work"]);
   assert.equal(r.types.card, 1);
-  assert.equal(r.entries[1].fields.find((f) => f.n === "Number").h, 1);
+  assert.equal(r.entries[1].fields.find((f) => f.n === "oros:cc.num").h, 1);
+  assert.equal(r.entries[1].fields.find((f) => f.n === "oros:cc.exp").v, "01/2028");
   const apple = "Title,URL,Username,Password,Notes,OTPAuth\nexample.com (me),https://example.com/,me,pw,,otpauth://totp/x?secret=" + SECRET + "\n";
   const a = I.parseText(apple, "Passwords.csv", NOW);
   assert.equal(a.source, "apple");

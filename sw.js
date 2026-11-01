@@ -2036,6 +2036,7 @@ var PRECACHE_URLS = [
   "passwords/kdbx.js",
   "passwords/pmapp.js",
   "passwords/pmcore.js",
+  "passwords/pmkinds.js",
   "passwords/pmcrypto.js",
   "passwords/import.js",
   "photolab/batch.js",

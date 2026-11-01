@@ -69,7 +69,7 @@
       var p = str(h.pw, LIM.pw);
       if (p) hist.push({ pw: p, t: okTime(h.t) ? h.t : m });
     });
-    return {
+    var out = {
       c: okTime(e.c) ? Math.min(e.c, m) : m,
       fav: e.fav ? 1 : 0,
       fields: fields,
@@ -84,6 +84,24 @@
       urls: normUrls(e.urls),
       user: line(e.user, LIM.user)
     };
+    var x = normX(e.x);
+    if (x) out.x = x;
+    return out;
+  }
+  // `x`: room for fields of a newer orOS (PW-K1). Kept as it is when it
+  // is a small plain object (≤ 40 keys, string / number / 0|1 values,
+  // ≤ 8,000 characters as canonical JSON), else dropped; never read here.
+  function normX(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var keys = Object.keys(x).filter(function (k) { return /^[a-z][a-z0-9_.]{0,39}$/i.test(k); }).sort();
+    if (!keys.length || keys.length > 40) return null;
+    var out = {};
+    for (var i = 0; i < keys.length; i++) {
+      var v = x[keys[i]];
+      if (typeof v === "number" ? !isFinite(v) : typeof v !== "string") return null;
+      out[keys[i]] = v;
+    }
+    return canon(out).length <= 8000 ? out : null;
   }
 
   function canon(v) {
@@ -293,11 +311,20 @@
       (Array.isArray(it.passwordHistory) ? it.passwordHistory : []).forEach(function (h) {
         if (h && h.password) e.hist.push({ pw: str(h.password, LIM.pw), t: msOf(h.lastUsedDate) || e.m });
       });
-      var n = normEntry(e, now);
-      if (n && (n.title || n.user || n.pw || n.notes || n.urls.length || n.fields.length)) out.push(n);
-      else skipped++;
+      var K = kinds(), hint = it.type === 3 ? "card" : it.type === 4 ? "identity" : it.type === 2 ? "note" : "";
+      var list = K && hint ? K.fromLabels(e, hint, function () { return newId(); }) : [e];
+      list.forEach(function (x) {
+        var n = normEntry(x, now);
+        if (n && (n.title || n.user || n.pw || n.notes || n.urls.length || n.fields.length)) out.push(n);
+        else skipped++;
+      });
     });
     return { entries: out, skipped: skipped };
+  }
+  // Entry types (pmkinds.js), loaded after this file in the app.
+  function kinds() {
+    if (NODE) { try { return require("./pmkinds.js"); } catch (e) { return null; } }
+    return root.PmKinds || null;
   }
 
   // RFC 4180 CSV (quotes, doubled quotes, CR/LF inside quotes).
@@ -371,7 +398,14 @@
 
   // Imported entries not already in the vault (title, user, password
   // and first URL equal = the same login).
-  function dupKey(e) { return canon([e.title.toLowerCase(), e.user, e.pw, (e.urls[0] || "").toLowerCase()]); }
+  // Typed entries (PW-K1) compare their typed values too: two cards
+  // with the same title are not the same card.
+  function dupKey(e) {
+    var typed = e.fields.filter(function (f) { return /^oros:/.test(f.n); }).map(function (f) { return [f.n, f.v]; });
+    var k = [e.title.toLowerCase(), e.user, e.pw, (e.urls[0] || "").toLowerCase()];
+    if (typed.length) k.push(typed);
+    return canon(k);
+  }
   function dedupe(existing, incoming) {
     var seen = {};
     existing.forEach(function (e) { seen[dupKey(e)] = 1; });
@@ -402,7 +436,18 @@
         folders.push({ id: folderOf[t], name: t });
       }
     });
+    var K = kinds();
     var items = entries.map(function (e) {
+      var typed = K && K.kindOf(e) !== "login" ? K.toBitwardenItem(e) : null;
+      if (typed) {
+        var it = {
+          id: uuidLike(e.id), organizationId: null, folderId: e.tags[0] ? folderOf[e.tags[0]] : null,
+          type: typed.type, reprompt: 0, name: e.title || "-", notes: e.notes || null, favorite: !!e.fav,
+          fields: typed.fields, collectionIds: null, revisionDate: iso(e.m), creationDate: iso(e.c), passwordHistory: null
+        };
+        ["card", "identity", "secureNote"].forEach(function (k) { if (typed[k]) it[k] = typed[k]; });
+        return it;
+      }
       return {
         id: uuidLike(e.id), organizationId: null, folderId: e.tags[0] ? folderOf[e.tags[0]] : null,
         type: 1, reprompt: 0, name: e.title || "-", notes: e.notes || null, favorite: !!e.fav,
@@ -425,7 +470,8 @@
     var terms = fold(query).split(/\s+/).filter(Boolean);
     if (!terms.length) return true;
     var hay = fold([e.title, e.user, e.urls.join(" "), e.tags.join(" "), e.notes,
-                    e.fields.filter(function (f) { return !f.h; }).map(function (f) { return f.n + " " + f.v; }).join(" ")].join(" "));
+                    e.fields.filter(function (f) { return !f.h && f.n !== "oros:k"; })
+                      .map(function (f) { return (/^oros:/.test(f.n) ? "" : f.n + " ") + f.v; }).join(" ")].join(" "));
     return terms.every(function (t) { return hay.indexOf(t) >= 0; });
   }
   function allTags(entries) {
