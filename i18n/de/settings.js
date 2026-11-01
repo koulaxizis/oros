@@ -760,7 +760,7 @@ orosPack("de", "settings", {
  "cd.kind.both": "Kalender und Aufgaben",
  "cd.kind.card": "Adressbuch",
  "cd.ro": "nur lesen",
- "cd.next": "Kalender: Mehr › Server-Kalender (CalDAV) verknüpft einen Kalender von hier mit einem Label. Kontakte und To-Do kommen mit den nächsten Updates.",
+ "cd.next": "Kalender: Mehr › Server-Kalender (CalDAV) verknüpft einen Kalender von hier mit einem Label. Kontakte: Server (CardDAV) verknüpft deine Kontakte mit einem Adressbuch. To-Do kommt mit dem nächsten Update.",
  "cd.refresh": "Erneut prüfen",
  "cd.disconnect": "Trennen",
  "cd.disconnect.confirm": "Zum Trennen erneut tippen",

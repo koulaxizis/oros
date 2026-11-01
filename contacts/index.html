@@ -18,6 +18,7 @@
       <button id="ct-export" type="button" class="nav-mini" data-i18n="ct.export"></button>
       <button id="ct-phone" type="button" class="nav-mini" data-i18n="ct.phone" hidden></button>
       <button id="ct-acct" type="button" class="nav-mini" data-i18n="ac.btn"></button>
+      <button id="ct-dav" type="button" class="nav-mini" data-i18n="cd.btn"></button>
       <button id="ct-mirror" type="button" class="nav-mini" data-i18n="ph.btn" hidden></button>
       <button id="ct-dedup" type="button" class="nav-mini" data-i18n="dup.scan"></button>
       <button id="ct-enrich" type="button" class="nav-mini" data-i18n="en.btn"></button>
@@ -151,6 +152,7 @@
       <label for="ct-note" data-i18n="ct.field.note"></label>
       <textarea id="ct-note" rows="3" maxlength="2000" data-i18n-ph="ct.ph.note"></textarea>
     </div>
+    <p id="ct-dav-ro" class="del-text cd-ro-note" data-i18n="ct.dav.ro" hidden></p>
     <div class="dlg-row">
       <button id="ct-save" type="button" class="btn prim" data-i18n="ct.save"></button>
       <button id="ct-cancel" type="button" class="btn" data-i18n="ct.cancel"></button>
@@ -231,6 +233,27 @@
       <button id="av-ini" type="button" class="btn" data-i18n="av.ini"></button>
       <button id="av-px" type="button" class="btn prim" data-i18n="av.px"></button>
       <button id="av-close" type="button" class="btn" data-i18n="ph.close"></button>
+    </div>
+  </dialog>
+
+  <!-- Server address book (CardDAV wave 4) -->
+  <dialog id="cd-dlg" aria-labelledby="cd-dlg-title">
+    <h3 id="cd-dlg-title" data-i18n="cd.title"></h3>
+    <p class="del-text" data-i18n="cd.text"></p>
+    <p id="cd-noacct" class="del-text" data-i18n="cd.noacct" hidden></p>
+    <div id="cd-set-row" class="dlg-row" hidden>
+      <button id="cd-settings" type="button" class="btn" data-i18n="cd.settings"></button>
+    </div>
+    <ul id="cd-list" class="cd-list"></ul>
+    <div id="cd-prev" class="cd-prev" hidden>
+      <p id="cd-prev-text" class="del-text" aria-live="polite"></p>
+      <div class="dlg-row">
+        <button id="cd-prev-go" type="button" class="btn prim" data-i18n="cd.link"></button>
+        <button id="cd-prev-no" type="button" class="btn" data-i18n="ct.cancel"></button>
+      </div>
+    </div>
+    <div class="dlg-row">
+      <button id="cd-done" type="button" class="btn" data-i18n="ph.close"></button>
     </div>
   </dialog>
 

@@ -149,6 +149,38 @@
       "ph.last": "Sent {t}: {n} {what}.",
       "ph.err": "Last attempt failed: {e}",
       "ph.close": "Close",
+      "cd.btn": "Server (CardDAV)",
+      "cd.title": "Server address book (CardDAV)",
+      "cd.text": "Link your contacts to an address book on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…): all of them then go both ways. Nothing is deleted on either side unless it was in sync before, and photos stay on the server.",
+      "cd.noacct": "Connect your contacts server first, in Settings › Sync › Calendars and contacts. The password stays on this device.",
+      "cd.settings": "Open Settings",
+      "cd.none": "Your server has no address book.",
+      "cd.noname": "Contacts",
+      "cd.ro.col": "read-only",
+      "cd.link": "Link",
+      "cd.linked": "Linked to your contacts",
+      "cd.one": "Your contacts link to one address book. Unlink it first to link another one.",
+      "cd.preview.wait": "Checking the server…",
+      "cd.preview": "{down} to download, {up} to upload, {same} already here, {merged} found on both sides and joined into one.",
+      "cd.preview.ro": "The address book is read-only on the server, so nothing goes up.",
+      "cd.sync": "Sync now",
+      "cd.unlink": "Unlink",
+      "cd.unlinked": "Unlinked. The contacts stay in orOS.",
+      "cd.ok": "In sync, {t}",
+      "cd.never": "Not synced yet",
+      "cd.wait": "Syncing…",
+      "cd.other": "Linked on another of your devices. Connect this device in Settings › Sync to sync here too.",
+      "cd.conflicts": "{n} changed on both sides: the newer kept, the other as a copy marked (conflict).",
+      "cd.mark": " (conflict)",
+      "cd.held": "{n} deletions wait for you ({a} in orOS, {b} on the server).",
+      "cd.held.yes": "Delete them",
+      "cd.held.no": "Bring them back",
+      "cd.err.noacct": "No server account on this device: connect it in Settings › Sync.",
+      "cd.err.net": "Could not reach the server. orOS tries again later.",
+      "cd.err.auth": "The server refused the password: check it in Settings › Sync.",
+      "cd.err.ro": "The server does not allow changes to this address book.",
+      "cd.err.other": "The server answered with an error ({e}). orOS tries again later.",
+      "ct.dav.ro": "This contact comes from your server address book and orOS cannot show all of it, so it is read-only here. Change it on the server.",
       "en.btn": "Update online",
       "en.one": "Update from online sources",
       "en.save": "Save your changes first.",
@@ -435,6 +467,38 @@
       "ph.last": "Στάλθηκαν {t}: {n} {what}.",
       "ph.err": "Η τελευταία προσπάθεια απέτυχε: {e}",
       "ph.close": "Κλείσιμο",
+      "cd.btn": "Server (CardDAV)",
+      "cd.title": "Βιβλίο διευθύνσεων στον server (CardDAV)",
+      "cd.text": "Σύνδεσε τις επαφές σου με ένα βιβλίο διευθύνσεων του δικού σου server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…): όλες τους πηγαίνουν μετά και προς τις δύο μεριές. Τίποτα δεν διαγράφεται σε καμία μεριά αν δεν ήταν συγχρονισμένο πριν, και οι φωτογραφίες μένουν στον server.",
+      "cd.noacct": "Σύνδεσε πρώτα τον server επαφών σου, στις Ρυθμίσεις › Συγχρονισμός › Ημερολόγια και επαφές. Ο κωδικός μένει σε αυτή τη συσκευή.",
+      "cd.settings": "Άνοιγμα Ρυθμίσεων",
+      "cd.none": "Ο server σου δεν έχει βιβλίο διευθύνσεων.",
+      "cd.noname": "Επαφές",
+      "cd.ro.col": "μόνο ανάγνωση",
+      "cd.link": "Σύνδεση",
+      "cd.linked": "Συνδεδεμένο με τις επαφές σου",
+      "cd.one": "Οι επαφές σου συνδέονται με ένα βιβλίο διευθύνσεων. Αποσύνδεσε πρώτα αυτό για να συνδέσεις άλλο.",
+      "cd.preview.wait": "Έλεγχος του server…",
+      "cd.preview": "{down} για λήψη, {up} για αποστολή, {same} υπάρχουν ήδη εδώ, {merged} βρέθηκαν και στις δύο μεριές και ενώθηκαν σε μία.",
+      "cd.preview.ro": "Το βιβλίο διευθύνσεων είναι μόνο για ανάγνωση στον server, οπότε δεν στέλνεται τίποτα.",
+      "cd.sync": "Συγχρονισμός τώρα",
+      "cd.unlink": "Αποσύνδεση",
+      "cd.unlinked": "Αποσυνδέθηκε. Οι επαφές μένουν στο orOS.",
+      "cd.ok": "Συγχρονισμένο, {t}",
+      "cd.never": "Δεν έχει συγχρονιστεί ακόμα",
+      "cd.wait": "Συγχρονισμός…",
+      "cd.other": "Συνδέθηκε σε άλλη συσκευή σου. Σύνδεσε και αυτή τη συσκευή στις Ρυθμίσεις › Συγχρονισμός για να συγχρονίζεται κι εδώ.",
+      "cd.conflicts": "{n} άλλαξαν και στις δύο μεριές: κρατήθηκε η νεότερη, η άλλη ως αντίγραφο με την ένδειξη (σύγκρουση).",
+      "cd.mark": " (σύγκρουση)",
+      "cd.held": "{n} διαγραφές περιμένουν εσένα ({a} στο orOS, {b} στον server).",
+      "cd.held.yes": "Διάγραψέ τες",
+      "cd.held.no": "Φέρ' τες πίσω",
+      "cd.err.noacct": "Δεν υπάρχει λογαριασμός server σε αυτή τη συσκευή: σύνδεσέ τον στις Ρυθμίσεις › Συγχρονισμός.",
+      "cd.err.net": "Ο server δεν ήταν προσβάσιμος. Το orOS θα ξαναδοκιμάσει αργότερα.",
+      "cd.err.auth": "Ο server δεν δέχτηκε τον κωδικό: έλεγξέ τον στις Ρυθμίσεις › Συγχρονισμός.",
+      "cd.err.ro": "Ο server δεν επιτρέπει αλλαγές σε αυτό το βιβλίο διευθύνσεων.",
+      "cd.err.other": "Ο server απάντησε με σφάλμα ({e}). Το orOS θα ξαναδοκιμάσει αργότερα.",
+      "ct.dav.ro": "Αυτή η επαφή έρχεται από το βιβλίο διευθύνσεων του server σου και το orOS δεν μπορεί να δείξει όλα της τα στοιχεία, οπότε εδώ είναι μόνο για ανάγνωση. Άλλαξέ την στον server.",
       "en.btn": "Ενημέρωση online",
       "en.one": "Ενημέρωση από online πηγές",
       "en.save": "Αποθήκευσε πρώτα τις αλλαγές σου.",
@@ -993,11 +1057,25 @@
       if (d && Array.isArray(d.labels)) {
         state.labels = d.labels.map(sanitizeLabel).filter(Boolean);
       }
+      setDav(d && d.dav);
       if (!state.labels.length) state.labels = defaultLabels();
     } catch (e) {
       rescueRaw(rawText);
       if (!state.labels.length) state.labels = defaultLabels();
     }
+  }
+  // CardDAV wave 4: the address book the contacts are linked to,
+  // { url, mtime } ("" = unlinked, kept so the unlink wins its merge).
+  // Synced in this slice; absent until a first link.
+  function sanitizeDav(x) {
+    if (!x || typeof x !== "object" || typeof x.url !== "string" || x.url.length > 2000) return null;
+    if (x.url && !/^https?:\/\/[^\s]+$/.test(x.url)) return null;
+    if (typeof x.mtime !== "number" || !isFinite(x.mtime)) return null;
+    return { url: x.url, mtime: x.mtime };
+  }
+  function setDav(x) {
+    var d = sanitizeDav(x);
+    if (d) state.dav = d; else delete state.dav;
   }
   function rescueRaw(text) {
     if (!text) return;
@@ -1028,6 +1106,7 @@
     stampContacts();
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
     markDirty();
+    cdKick();            // CardDAV: the change goes to the server soon
   }
 
   // Shell sync bridge — canonical __orosSyncApi funnel (Part VII).
@@ -2869,6 +2948,10 @@ document.addEventListener("keydown", function (e) {
     $("ct-keep-n").disabled = !kp;
 
     $("ct-del-row").className = "dlg-row" + (existing ? " show" : "");
+    // CardDAV: a contact orOS cannot show exactly is changed on the server.
+    var dro = !!(existing && cdRo[existing.id]);
+    if ($("ct-dav-ro")) $("ct-dav-ro").hidden = !dro;
+    $("ct-save").hidden = dro;
     // CT-2: what the form shows now, read back through the same
     // readers Save uses — Save writes only the fields that differ.
     dlgSnap = existing ? readDlgDraft() : null;
@@ -2992,6 +3075,7 @@ document.addEventListener("keydown", function (e) {
      edits. Edited-while-deleted-elsewhere → resurrect (fresh mtime
      beats the tombstone, calendar contract). */
   $("ct-save").addEventListener("click", function () {
+    if (editingId && cdRo[editingId]) return;     // CardDAV: read-only here
     var form = readDlgDraft();
     var given = form.given, middle = form.middle, family = form.family;
     var nickname = form.nickname, org = form.org;
@@ -3717,65 +3801,26 @@ document.addEventListener("keydown", function (e) {
      Round-trip target: Android Contacts imports our exports and
      exports (Google Contacts takeout included) read back in. */
 
-  // Unfold: CRLF/CR/LF + a leading space/tab continues the line.
-  function vcfUnfold(text) {
-    var lines = String(text || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");
-    var out = [];
-    for (var i = 0; i < lines.length; i++) {
-      if ((lines[i].charAt(0) === " " || lines[i].charAt(0) === "\t") && out.length) {
-        out[out.length - 1] += lines[i].slice(1);
-      } else {
-        out.push(lines[i]);
-      }
-    }
-    return out;
-  }
-
-  // Parse property params: "TEL;TYPE=CELL,VOICE:+3069…" → {name, params, value}
-  function vcfProp(line) {
-    var ix = line.indexOf(":");
-    if (ix === -1) return null;
-    var head = line.slice(0, ix);
-    var value = line.slice(ix + 1);
-    var parts = head.split(";");
-    return { name: parts[0].toUpperCase(), params: parts.slice(1), value: value };
-  }
-  function vcfType(params) {
-    // Map common vCard TYPE params onto our whitelists.
-    var t = "";
-    params.forEach(function (p) {
-      var kv = p.toUpperCase().split("=");
-      if (kv[0] === "TYPE") t = kv[1] || "";
+  // The reader and the line helpers live in vcard.js (pure, shared
+  // with the CardDAV mapper contacts/dav.js, Node-tested). It loads on
+  // first use (soon after Contacts opens, or when a .vcf comes in).
+  var vcLibP = null;
+  function vcLib() {
+    if (window.OrosVcard) return Promise.resolve(true);
+    if (vcLibP) return vcLibP;
+    vcLibP = new Promise(function (res) {
+      var sc = document.createElement("script");
+      sc.src = "vcard.js" + (SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "");
+      sc.onload = function () { res(!!window.OrosVcard); };
+      sc.onerror = function () { vcLibP = null; res(false); };
+      document.head.appendChild(sc);
     });
-    return t;
+    return vcLibP;
   }
-  // One pass, so an escaped backslash before "n" ("\\n") stays a
-  // backslash and an "n" instead of becoming a line break.
-  function vcfUnesc(s) {
-    return String(s || "").replace(/\\([nN,;\\])/g, function (m, ch) {
-      return ch === "n" || ch === "N" ? "\n" : ch;
-    });
-  }
-  function vcfEsc(s) {
-    return String(s || "")
-      .replace(/\\/g, "\\\\")
-      .replace(/\n/g, "\\n")
-      .replace(/,/g, "\\,").replace(/;/g, "\\;");
-  }
-  // 75-byte folding on export (RFC 6350 §3.2)
-  function vcfFold(line) {
-    if (line.length <= 75) return [line];
-    var out = [];
-    var rest = line;
-    out.push(rest.slice(0, 75));
-    rest = rest.slice(75);
-    while (rest.length) {
-      out.push(" " + rest.slice(0, 74));
-      rest = rest.slice(74);
-    }
-    return out;
-  }
-
+  function vcfUnfold(text) { return window.OrosVcard.unfold(text); }
+  function vcfEsc(s) { return window.OrosVcard.esc(s); }
+  function vcfFold(line) { return window.OrosVcard.fold(line); }
+  // CSV type columns ("Mobile", "Work", …) → one of ours.
   function typeFromVcf(rawT, whitelist, fallback) {
     var r = String(rawT || "").toLowerCase();
     if (r.indexOf("cell") !== -1 || r.indexOf("mobile") !== -1) {
@@ -3787,128 +3832,15 @@ document.addEventListener("keydown", function (e) {
     return fallback;
   }
 
-  // Parse one vCard block (array of unfolded lines, BEGIN..END).
+  // Parse one vCard block (array of unfolded lines, BEGIN..END) → the
+  // import shape (vcard.js parse without its own extra keys).
   function parseVcardBlock(lines) {
-    var c = {
-      given: "", middle: "", family: "", nickname: "",
-      org: "", jobTitle: "",
-      phones: [], emails: [], addresses: [], websites: [], im: [],
-      events: [], cats: [], note: "", avatar: null, starred: false
-    };
-    lines.forEach(function (line) {
-      if (!line) return;
-      var p = vcfProp(line);
-      if (!p) return;
-      var ty = vcfType(p.params);
-      switch (p.name) {
-        case "N":
-          // N:family;given;middle;prefix;suffix
-          var nn = p.value.split(";");
-          c.family  = vcfUnesc(nn[0] || "").trim().slice(0, 60);
-          c.given   = vcfUnesc(nn[1] || "").trim().slice(0, 60);
-          c.middle  = vcfUnesc(nn[2] || "").trim().slice(0, 60);
-          break;
-        case "FN":
-          // Only used if N was absent (some exports ship FN only).
-          if (!c.given && !c.family) {
-            var fn = vcfUnesc(p.value).trim().split(/\s+/);
-            c.given = (fn[0] || "").slice(0, 60);
-            c.family = fn.slice(1).join(" ").slice(0, 60);
-          }
-          break;
-        case "NICKNAME": c.nickname = vcfUnesc(p.value).trim().slice(0, 60); break;
-        case "ORG":
-          // ORG:company;unit → keep company
-          c.org = vcfUnesc(p.value.split(";")[0] || "").trim().slice(0, 80);
-          break;
-        case "TITLE": c.jobTitle = vcfUnesc(p.value).trim().slice(0, 80); break;
-        case "TEL":
-          if (p.value.trim()) c.phones.push({ v: p.value.trim().slice(0, 40), type: typeFromVcf(ty, PHONE_TYPES, "other") });
-          break;
-        case "EMAIL":
-          if (p.value.trim()) c.emails.push({ v: p.value.trim().slice(0, 120), type: typeFromVcf(ty, EMAIL_TYPES, "other") });
-          break;
-        case "ADR":
-          // ADR;pobox;ext;street;city;region;zip;country
-          var aa = p.value.split(";");
-          var ad = {
-            street: vcfUnesc(aa[2] || "").trim().slice(0, 120),
-            city: vcfUnesc(aa[3] || "").trim().slice(0, 60),
-            region: vcfUnesc(aa[4] || "").trim().slice(0, 60),
-            zip: vcfUnesc(aa[5] || "").trim().slice(0, 20),
-            country: vcfUnesc(aa[6] || "").trim().slice(0, 60),
-            type: typeFromVcf(ty, ADDR_TYPES, "other")
-          };
-          if (ad.street || ad.city || ad.region || ad.zip || ad.country) c.addresses.push(ad);
-          break;
-        case "URL":
-          if (p.value.trim()) c.websites.push({ v: p.value.trim().slice(0, 300), type: typeFromVcf(ty, WEB_TYPES, "other") });
-          break;
-        case "IMPP":
-          if (p.value.trim()) c.im.push({ v: p.value.trim().slice(0, 120), type: typeFromVcf(ty, IM_TYPES, "other") });
-          break;
-        case "BDAY":
-        case "ANNIVERSARY":
-          // "YYYY-MM-DD" | "--MM-DD" | "YYYYMMDD" (v2.1 legacy)
-          var bv = p.value.trim();
-          var mm;
-          if ((mm = bv.match(/^(\d{4})-(\d{2})-(\d{2})$/)) ||
-              (mm = bv.match(/^(\d{4})(\d{2})(\d{2})$/))) {
-            if (validDay(mm[2] + "-" + mm[3])) {
-              c.events.push({ day: mm[2] + "-" + mm[3], year: +mm[1], type: p.name === "BDAY" ? "birthday" : "anniversary", label: "" });
-            }
-          } else if ((mm = bv.match(/^-{0,2}(\d{2})-(\d{2})$/))) {
-            if (validDay(mm[1] + "-" + mm[2])) {
-              c.events.push({ day: mm[1] + "-" + mm[2], year: null, type: p.name === "BDAY" ? "birthday" : "anniversary", label: "" });
-            }
-          }
-          break;
-        case "X-EVENT": {
-          // Our own custom-event round-trip form:
-          // X-EVENT;TYPE=CUSTOM;X-LABEL=<escaped label>:<date>.
-          // The label is extracted BEFORE unescaping — vcfProp()
-          // splits raw params on ";", which would cut an escaped
-          // "\;" inside the label, so the params are re-joined and
-          // regex-matched with escaped-atom tolerance, THEN unesc.
-          var xv = p.value.trim();
-          var xm;
-          var xlab = "";
-          var pm = p.params.join(";").match(/X-LABEL=((?:\\.|[^;])*)/i);
-          if (pm) xlab = vcfUnesc(pm[1]).trim().slice(0, 40);
-          if ((xm = xv.match(/^(\d{4})-(\d{2})-(\d{2})$/)) ||
-              (xm = xv.match(/^(\d{4})(\d{2})(\d{2})$/))) {
-            if (validDay(xm[2] + "-" + xm[3])) {
-              c.events.push({ day: xm[2] + "-" + xm[3], year: +xm[1], type: "custom", label: xlab });
-            }
-          } else if ((xm = xv.match(/^-{0,2}(\d{2})-(\d{2})$/))) {
-            if (validDay(xm[1] + "-" + xm[2])) {
-              c.events.push({ day: xm[1] + "-" + xm[2], year: null, type: "custom", label: xlab });
-            }
-          }
-          break;
-        }
-        case "NOTE": c.note = vcfUnesc(p.value).trim().slice(0, 2000); break;
-        case "PHOTO": break;   // CT-NP: photos are not kept
-        case "X-OROS-AVATAR": {
-          var av = p.value.trim();
-          if (PX_RE.test(av)) c.avatar = av;
-          break;
-        }
-        case "X-OROS-STARRED":
-          if (/^TRUE$/i.test(p.value.trim())) c.starred = true;
-          break;
-        case "CATEGORIES":
-          vcfUnesc(p.value).split(",").forEach(function (cat) {
-            var n = cat.trim();
-            if (n) c.cats.push(n.slice(0, 40));
-          });
-          break;
-      }
-    });
-    return c;
+    var p = window.OrosVcard.parse(lines);
+    delete p.uid; delete p.rev; delete p.version; delete p.kind; delete p.cut;
+    return p;
   }
 
-  // ===== IMPORT REVIEW =====
+// ===== IMPORT REVIEW =====
   // Every import (vCard / CSV file, From phone, a .vcf handed over by
   // the shell, From an account) opens this review first. The plan
   // (importplan.js) sorts the incoming contacts into new / already
@@ -4549,6 +4481,10 @@ document.addEventListener("keydown", function (e) {
     });
   }
   function importVcfText(text, src) {
+    if (!window.OrosVcard) {
+      vcLib().then(function (ok) { if (ok) importVcfText(text, src); else notifyTransient(t("ct.import.bad")); });
+      return;
+    }
     try {
       var parsed = parseVcfText(text);
       if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
@@ -4566,6 +4502,10 @@ document.addEventListener("keydown", function (e) {
   var VCF_MAX_CHARS = 5 * 1024 * 1024;
   function askImportVcf(text, name) {
     if (text.length > VCF_MAX_CHARS) { notifyTransient(t("ct.import.bad")); return; }
+    if (!window.OrosVcard) {
+      vcLib().then(function (ok) { if (ok) askImportVcf(text, name); else notifyTransient(t("ct.import.bad")); });
+      return;
+    }
     var parsed;
     try { parsed = parseVcfText(text); } catch (e) { parsed = []; }
     if (!parsed.length) { notifyTransient(t("ct.import.bad")); return; }
@@ -5137,8 +5077,12 @@ document.addEventListener("keydown", function (e) {
   }
 
   if ($("ct-export")) {
-    $("ct-export").addEventListener("click", function () {
+    $("ct-export").addEventListener("click", function exportVcf() {
       if (!state.contacts.length) { notifyTransient(t("ct.none")); return; }
+      if (!window.OrosVcard) {          // not loaded yet (it loads soon after open)
+        vcLib().then(function (ok) { if (ok) exportVcf(); else notifyTransient(t("ct.export.bad")); });
+        return;
+      }
       var lines = [];
       // Alphabetical export (deterministic, merge-order agnostic).
       var sorted = state.contacts.slice().sort(function (a, b) {
@@ -5368,6 +5312,417 @@ document.addEventListener("keydown", function (e) {
     });
   }
 
+// ===== CARDDAV =====
+
+  /* ---------- 7c. CardDAV: the contacts linked to an address book on the person's own server (wave 4) ----------
+     The account is in Settings › Sync (../davkit.js, this device
+     only); here the whole of Contacts is linked to one address book
+     (state.dav, synced, so every device of the person links the same)
+     and the contacts go both ways through ../davsync.js with
+     contacts/dav.js as the mapper (with vcard.js). The scripts load
+     on first use. The sync state (ETags, the server's
+     own text) is device-local in IndexedDB "oros-dav", key
+     "card|<url>": { link: the link's mtime, st }; a record of an older
+     link generation is not used (a relink deletes nothing).
+     First link: a contact found on both sides (a shared e-mail or
+     phone and names that agree) is joined into one (dav.js merge),
+     the others go up or come down. Labels travel as CATEGORIES by
+     name; what orOS alone keeps (relations, keep in touch, the log)
+     stays here. Runs while Contacts is open: shortly after it opens,
+     every 5 minutes, when it is shown again, when the network is
+     back, a few seconds after an edit, after an orOS sync and on
+     "Sync now". Contacts orOS cannot show exactly are read-only here
+     (cdRo). PHOTO stays on the server (DAV-5, CT-NP). */
+  var CD_EVERY = 5 * 60000, CD_KICK = 4000;
+  var cdLibP = null, cdStore = null, cdBusy = false, cdQueued = false, cdApplying = false;
+  var cdInfo = {};          // { busy, at, err, stats, held, decision } of the link
+  var cdRo = {};            // contact id → 1 (read-only here, DAV-4)
+  var cdKickT = null, cdLastRun = 0, cdPrev = null;
+
+  function cdLib() {
+    if (window.OrosDav && window.OrosDavSync && window.OrosContactsDav && cdStore) return Promise.resolve(true);
+    if (cdLibP) return cdLibP;
+    var q = SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "";
+    function load(src, has) {
+      if (has()) return Promise.resolve(true);
+      return new Promise(function (res) {
+        var sc = document.createElement("script");
+        sc.src = src + q;
+        sc.onload = function () { res(true); };
+        sc.onerror = function () { res(false); };
+        document.head.appendChild(sc);
+      });
+    }
+    cdLibP = vcLib()
+      .then(function () { return load("../davkit.js", function () { return !!window.OrosDav; }); })
+      .then(function () { return load("../davsync.js", function () { return !!window.OrosDavSync; }); })
+      .then(function () { return load("dav.js", function () { return !!window.OrosContactsDav; }); })
+      .then(function () {
+        var ok = !!(window.OrosVcard && window.OrosDav && window.OrosDavSync && window.OrosContactsDav);
+        if (!ok) { cdLibP = null; return false; }
+        if (!cdStore) {
+          try { cdStore = window.indexedDB ? window.OrosDavSync.idbStore() : window.OrosDavSync.memStore(); }
+          catch (e) { cdStore = window.OrosDavSync.memStore(); }
+        }
+        return true;
+      });
+    return cdLibP;
+  }
+  function cdLink() { return state.dav && state.dav.url ? state.dav : null; }
+  function cdAccount() {
+    try { return window.OrosDav ? window.OrosDav.load() : null; } catch (e) { return null; }
+  }
+  function cdColOf(acct, url) {
+    var cols = acct && acct.cols || [];
+    for (var i = 0; i < cols.length; i++) if (cols[i].url === url) return cols[i];
+    return null;
+  }
+  function cdKey(url) { return "card|" + url; }
+  // A contact → the item the engine compares (its labels by name).
+  function cdItem(c) {
+    var it = {};
+    ["id", "given", "middle", "family", "nickname", "org", "jobTitle", "phones", "emails", "addresses",
+     "websites", "im", "events", "note", "starred", "avatar", "mtime"].forEach(function (f) { it[f] = c[f]; });
+    it.cats = c.labelIds.map(function (lid) { var l = labelById(lid); return l ? l.name : ""; }).filter(Boolean);
+    return it;
+  }
+  function cdNameKey(c) {
+    return greekFold([c.given, c.family].filter(Boolean).join(" ")).replace(/\s+/g, " ").trim();
+  }
+  // The same person on both sides at the first sight of a server card:
+  // a shared e-mail or phone, and the names agree (or one has none).
+  function cdMatch(srv) {
+    var mails = (srv.emails || []).map(function (e) { return normalizeEmail(e.v); }).filter(Boolean);
+    var tels = (srv.phones || []).map(function (p) { return p.v; });
+    var sn = cdNameKey(srv), found = null, many = false;
+    state.contacts.forEach(function (c) {
+      if (many) return;
+      var hit = c.emails.some(function (e) { return mails.indexOf(normalizeEmail(e.v)) !== -1; }) ||
+        c.phones.some(function (p) { return tels.some(function (v) { return IP ? IP.samePhone(p.v, v) : phoneDigits(p.v) === phoneDigits(v); }); });
+      if (!hit) return;
+      var cn = cdNameKey(c);
+      if (sn && cn && sn !== cn) return;
+      if (found) { many = true; found = null; return; }
+      found = c.id;
+    });
+    return many ? null : found;
+  }
+  function cdLocal() {
+    return {
+      items: state.contacts.map(function (c) { return { id: c.id, item: cdItem(c) }; }),
+      find: function (id) { var c = contactById(id); return c ? cdItem(c) : null; },
+      match: cdMatch
+    };
+  }
+  // Label names from the server → label ids here (a seed label in any
+  // language, then by name without case or accents, else a new label).
+  function cdLabels(names) {
+    var CD = window.OrosContactsDav, out = [];
+    (names || []).forEach(function (n) {
+      var seed = CD.seedOf(n), k = CD.fold(n), hit = null;
+      if (!k) return;
+      state.labels.forEach(function (l) {
+        if (!hit && seed && l.id === seed) hit = l;
+      });
+      state.labels.forEach(function (l) {
+        if (!hit && CD.fold(l.name) === k) hit = l;
+      });
+      if (!hit) {
+        hit = { id: "lbl-" + uid(), name: String(n).slice(0, 40),
+                color: LABEL_PALETTE[(state.labels.length + 1) % LABEL_PALETTE.length], mtime: Date.now() };
+        state.labels.push(hit);
+      }
+      if (out.indexOf(hit.id) === -1) out.push(hit.id);
+    });
+    return out.sort();
+  }
+  // The engine's result → Contacts' own data (saveState stamps the
+  // changed fields now, so other orOS devices get them by normal sync).
+  function cdApply(r) {
+    if (!r.upsert.length && !r.remove.length) return;
+    var now = Date.now(), back = {}, gone = {};
+    r.upsert.forEach(function (it) {
+      var cur = contactById(it.id);
+      var c = cur ? JSON.parse(JSON.stringify(cur)) : { id: it.id, relations: [] };
+      ["given", "middle", "family", "nickname", "org", "jobTitle", "phones", "emails", "addresses",
+       "websites", "im", "events", "note", "starred", "avatar"].forEach(function (f) { c[f] = it[f]; });
+      c.labelIds = cdLabels(it.cats);
+      c.mtime = now;
+      var sc = sanitizeContact(c);
+      if (!sc) return;
+      var ix = -1;
+      for (var i = 0; i < state.contacts.length; i++) if (state.contacts[i].id === sc.id) { ix = i; break; }
+      if (ix !== -1) state.contacts[ix] = sc; else state.contacts.push(sc);
+      back[sc.id] = 1;
+    });
+    r.remove.forEach(function (id) { if (!back[id]) gone[id] = 1; });
+    state.contacts = state.contacts.filter(function (c) { return !gone[c.id]; });
+    state.deleted = state.deleted.filter(function (d) { return !back[d.id] && !gone[d.id]; });
+    Object.keys(gone).forEach(function (id) { state.deleted.push({ id: id, mtime: now }); });
+    cdApplying = true;
+    try { saveState(); } finally { cdApplying = false; }
+    renderChips();
+    renderList();
+    if ($("ct-view") && viewCardId) {
+      var vc = contactById(viewCardId);
+      if (vc) openViewCard(vc); else closeViewCard();
+    }
+  }
+  function cdRoFrom(st) {
+    cdRo = {};
+    if (!st || !st.items) return;
+    Object.keys(st.items).forEach(function (k) { if (st.items[k].ro) cdRo[st.items[k].id] = 1; });
+  }
+  function cdRecord(x) {
+    return cdStore.get(cdKey(x.url)).then(function (rec) {
+      return rec && rec.link === x.mtime ? rec.st : null;
+    }, function () { return null; });
+  }
+  function cdPass(x, acct) {
+    var DS = window.OrosDavSync, key = cdKey(x.url);
+    var col = cdColOf(acct, x.url);
+    var decision = cdInfo.decision || null;
+    cdInfo.decision = null;
+    cdInfo.busy = true;
+    renderCdList();
+    var cl = window.OrosDav.client(acct.conf, acct.pass);
+    var map = window.OrosContactsDav.mapper(x.url, { mark: t("cd.mark") });
+    function still() { var y = cdLink(); return y && y.url === x.url && y.mtime === x.mtime; }
+    return cdRecord(x).then(function (st) {
+      return DS.sync({ client: cl, url: x.url, readOnly: !!(col && col.readOnly), state: st, map: map, decision: decision },
+        cdLocal,
+        function (r) { if (!still()) throw new Error("dav-unlinked"); cdApply(r); },
+        function (s) { return cdStore.set(key, { link: x.mtime, st: s }); });
+    }).then(function (r) {
+      cdInfo.at = Date.now();
+      cdInfo.err = "";
+      cdInfo.stats = r.stats;
+      cdInfo.held = r.held;
+      cdRoFrom(r.state);
+    }, function (e) {
+      cdInfo.err = (e && e.message) || "other";
+      if (cdInfo.err === "dav-unlinked") cdInfo.err = "";
+      else console.warn("[Contacts] CardDAV pass failed:", cdInfo.err);
+    }).then(function () {
+      cdInfo.busy = false;
+      renderCdList();
+    });
+  }
+  function cdRun() {
+    if (cdBusy) { cdQueued = true; return Promise.resolve(); }
+    if (!cdLink()) return Promise.resolve();
+    cdBusy = true;
+    return cdLib().then(function (ok) {
+      if (!ok) return;
+      var acct = cdAccount(), x = cdLink();
+      if (!x) return;
+      if (!acct || (typeof navigator !== "undefined" && navigator.onLine === false)) {
+        cdInfo.err = acct ? "offline" : "noacct";
+        return;
+      }
+      return cdPass(x, acct);
+    }).then(function () {
+      cdBusy = false;
+      cdLastRun = Date.now();
+      renderCdList();
+      if (cdQueued) { cdQueued = false; cdKick(); }
+    }, function (e) {
+      cdBusy = false;
+      console.warn("[Contacts] CardDAV:", e);
+    });
+  }
+  function cdKick() {
+    if (cdApplying || !cdLink()) return;
+    clearTimeout(cdKickT);
+    cdKickT = setTimeout(cdRun, CD_KICK);
+  }
+  function cdBoot() {
+    if (cdLink()) {
+      cdLib().then(function (ok) {
+        var x = cdLink();
+        if (ok && x) cdRecord(x).then(cdRoFrom);
+      });
+      setTimeout(cdRun, 1500);
+    }
+    setInterval(function () {
+      if (document.visibilityState !== "hidden") cdRun();
+    }, CD_EVERY);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && Date.now() - cdLastRun > 60000) cdRun();
+    });
+    window.addEventListener("online", function () { cdRun(); });
+  }
+
+  // ----- The "Server address book" window -----
+  function cdErrText(e) {
+    if (e === "noacct") return t("cd.err.noacct");
+    if (e === "offline" || e === "cd-unreachable") return t("cd.err.net");
+    if (e === "cd-auth") return t("cd.err.auth");
+    if (e === "cd-readonly") return t("cd.err.ro");
+    return t("cd.err.other").replace("{e}", String(e).slice(0, 40));
+  }
+  function cdStamp(ms) {
+    return new Date(ms).toLocaleString(loc(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+  function cdStatus() {
+    if (cdInfo.busy) return t("cd.wait");
+    if (cdInfo.err) return cdErrText(cdInfo.err);
+    if (!cdInfo.at) return t("cd.never");
+    var s = t("cd.ok").replace("{t}", cdStamp(cdInfo.at));
+    if (cdInfo.stats && cdInfo.stats.conflicts) s += " · " + t("cd.conflicts").replace("{n}", String(cdInfo.stats.conflicts));
+    return s;
+  }
+  function cdBtn(text, cls, fn) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn" + (cls ? " " + cls : "");
+    b.textContent = text;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function cdDiv(cls, text) {
+    var d = document.createElement("div");
+    d.className = cls;
+    d.textContent = text;
+    return d;
+  }
+  function renderCdList() {
+    var ul = $("cd-list"), dlg = $("cd-dlg");
+    if (!ul || !dlg || !dlg.open) return;
+    ul.textContent = "";
+    var acct = cdAccount(), x = cdLink();
+    $("cd-noacct").hidden = !!acct;
+    $("cd-set-row").hidden = !!acct;
+    var cols = acct ? (acct.cols || []).filter(function (c) { return c.kind === "card"; }) : [];
+    var rows = cols.slice();
+    // Linked on another device, or no account here: shown, so it can be unlinked.
+    if (x && !cols.some(function (c) { return c.url === x.url; })) rows.push(null);
+    if (!rows.length) {
+      if (acct) {
+        var li0 = document.createElement("li");
+        li0.className = "cd-row empty";
+        li0.textContent = t("cd.none");
+        ul.appendChild(li0);
+      }
+      return;
+    }
+    rows.forEach(function (c) {
+      var linked = x && (!c || c.url === x.url);
+      var li = document.createElement("li");
+      li.className = "cd-row";
+      var nm = cdDiv("cd-name", (c && c.name) || t("cd.noname"));
+      if (c && c.readOnly) {
+        var ro = document.createElement("span");
+        ro.className = "cd-ro";
+        ro.textContent = t("cd.ro.col");
+        nm.appendChild(document.createTextNode(" "));
+        nm.appendChild(ro);
+      }
+      li.appendChild(nm);
+      li.appendChild(cdDiv("cd-url", (c && c.url) || x.url));
+      var acts = document.createElement("div");
+      acts.className = "cd-acts";
+      if (linked) {
+        li.appendChild(cdDiv("cd-stat", t("cd.linked")));
+        var st = cdDiv("cd-stat" + (cdInfo.err ? " err" : ""), c ? cdStatus() : t("cd.other"));
+        st.setAttribute("aria-live", "polite");
+        li.appendChild(st);
+        if (cdInfo.held && !cdInfo.busy) {
+          li.appendChild(cdDiv("cd-stat err", t("cd.held").replace("{n}", String(cdInfo.held.local + cdInfo.held.server))
+            .replace("{a}", String(cdInfo.held.local)).replace("{b}", String(cdInfo.held.server))));
+          acts.appendChild(cdBtn(t("cd.held.yes"), "danger", function () { cdInfo.decision = "allow"; cdInfo.held = null; cdRun(); }));
+          acts.appendChild(cdBtn(t("cd.held.no"), "", function () { cdInfo.decision = "restore"; cdInfo.held = null; cdRun(); }));
+        }
+        if (c && acct) {
+          var sn = cdBtn(t("cd.sync"), "", function () { cdRun(); });
+          sn.disabled = !!cdInfo.busy || cdBusy;
+          acts.appendChild(sn);
+        }
+        acts.appendChild(cdBtn(t("cd.unlink"), "danger", cdUnlink));
+      } else if (x) {
+        li.appendChild(cdDiv("cd-stat", t("cd.one")));
+      } else {
+        acts.appendChild(cdBtn(t("cd.link"), "prim", function () { cdPreview(c); }));
+      }
+      if (acts.childNodes.length) li.appendChild(acts);
+      ul.appendChild(li);
+    });
+  }
+  function cdPrevShow(text, canGo) {
+    $("cd-prev").hidden = false;
+    $("cd-prev-text").textContent = text;
+    $("cd-prev-go").disabled = !canGo;
+  }
+  // First link: what would happen, before anything is written.
+  function cdPreview(col) {
+    var acct = cdAccount();
+    if (!acct || cdBusy) return;
+    var mine = cdPrev = { col: col, ok: false };
+    cdPrevShow(t("cd.preview.wait"), false);
+    var map = window.OrosContactsDav.mapper(col.url, { mark: t("cd.mark") });
+    window.OrosDavSync.run({ client: window.OrosDav.client(acct.conf, acct.pass), url: col.url, readOnly: !!col.readOnly,
+                             state: null, local: cdLocal(), map: map, dry: true })
+      .then(function (r) {
+        if (cdPrev !== mine) return;
+        mine.ok = true;
+        var s = r.stats;
+        var text = t("cd.preview").replace("{down}", String(s.down)).replace("{up}", String(col.readOnly ? 0 : s.up))
+          .replace("{same}", String(s.same)).replace("{merged}", String(s.merged));
+        if (col.readOnly) text += " " + t("cd.preview.ro");
+        cdPrevShow(text, true);
+      }, function (e) {
+        if (cdPrev !== mine) return;
+        cdPrevShow(cdErrText((e && e.message) || "other"), false);
+      });
+  }
+  function cdPrevClose() {
+    cdPrev = null;
+    if ($("cd-prev")) $("cd-prev").hidden = true;
+  }
+  function cdLinkNow() {
+    var p = cdPrev;
+    if (!p || !p.ok) return;
+    cdPrevClose();
+    state.dav = { url: p.col.url, mtime: Date.now() };
+    cdInfo = {};
+    saveState();
+    renderCdList();
+    cdRun();
+  }
+  function cdUnlink() {
+    var x = cdLink();
+    if (!x) return;
+    state.dav = { url: "", mtime: Date.now() };
+    cdInfo = {};
+    cdRo = {};
+    if (cdStore) cdStore.del(cdKey(x.url)).catch(function () {});
+    saveState();
+    renderCdList();
+    notifyTransient(t("cd.unlinked"));
+  }
+  function openCdDlg() {
+    cdPrevClose();
+    $("cd-dlg").showModal();
+    cdLib().then(function (ok) {
+      if (!ok) { $("cd-noacct").hidden = false; return; }
+      renderCdList();
+    });
+  }
+  if ($("cd-dlg")) {
+    $("ct-dav").addEventListener("click", openCdDlg);
+    $("cd-done").addEventListener("click", function () { $("cd-dlg").close(); });
+    $("cd-prev-go").addEventListener("click", cdLinkNow);
+    $("cd-prev-no").addEventListener("click", cdPrevClose);
+    $("cd-dlg").addEventListener("close", cdPrevClose);
+    $("cd-settings").addEventListener("click", function () {
+      var p = null;
+      try { p = window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+      if (!p) return;
+      $("cd-dlg").close();
+      p.__orosOpenAt("settings", { section: "sync" });
+    });
+  }
+
 // ===== SYNC =====
 
   /* ---------- 8. Merge + register ----------
@@ -5417,6 +5772,14 @@ document.addEventListener("keydown", function (e) {
       deleted:  Object.keys(tomb).map(function (k) { return tomb[k]; })
                   .sort(function (x, y) { return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0); })
     };
+    // CardDAV link (wave 4): the newer wins; equal stamps → the larger
+    // address. Left out while neither side has one.
+    var dl = local.dav, dr = remote.dav;
+    var okD = function (x) { return !!x && typeof x === "object" && typeof x.url === "string" && typeof x.mtime === "number"; };
+    if (!okD(dl)) dl = null;
+    if (!okD(dr)) dr = null;
+    var dv = !dl ? dr : !dr ? dl : (dr.mtime > dl.mtime || (dr.mtime === dl.mtime && dr.url > dl.url)) ? dr : dl;
+    if (dv) merged.dav = { url: dv.url, mtime: dv.mtime };
     return merged;
   }
 
@@ -5451,6 +5814,7 @@ document.addEventListener("keydown", function (e) {
     if (Array.isArray(data.deleted)) {
       state.deleted = data.deleted.map(sanitizeTomb).filter(Boolean);
     }
+    if (Array.isArray(data.contacts)) setDav(data.dav);
     try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {
       console.error("contacts: could not store synced data:", e);
     }
@@ -5465,6 +5829,7 @@ document.addEventListener("keydown", function (e) {
     if ($("ct-dlg") && $("ct-dlg").open) renderDlgLabels();
     renderChips();
     renderList();
+    cdKick();            // CardDAV: what another device changed goes to the server too
     // info.merged → sync dot (taskbar), not toast (Wave 11 doctrine)
   }
 
@@ -5546,6 +5911,8 @@ document.addEventListener("keydown", function (e) {
   // them out); the save also marks sync dirty, so the cloud copy and
   // the other devices lose them too.
   if (hadPhotos) saveState();
+  cdBoot();            // CardDAV wave 4: the contacts linked to the person's own server
+  setTimeout(vcLib, 2500);   // vcard.js ready before Export is pressed
 
   // Wave 2.1 — the shell staged a contact deep-link while we were
   // closed (sessionStorage, one-shot take). Runs AFTER render so the
