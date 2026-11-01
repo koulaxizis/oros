@@ -51,6 +51,8 @@ From the next start orOS opens with a sign-in window: pick your name and type yo
 
 Each person can `Change my password` and `Rename` themselves. The owner adds and removes users, sets a new password for someone who forgot theirs, hands the owner role to someone else (`Make owner`) and turns on `Guest sign-in`, each time with their own password. A guest needs no password and nothing they do is kept. Removing a user deletes their orOS on this computer (what they synced stays in their own cloud); on orOS USB their files move into the owner's home folder. On orOS USB each person also has their own home folder in Files › This computer, and only the owner updates or installs the system.
 
+On orOS USB, anyone but the first user can also turn on `Encrypt my files` (off by default) with their password. At the next sign-in their orOS data and home folder are encrypted; from then on they open only while that person is signed in, and nobody else can read them, not even the owner. You get your own recovery code once: keep it, because the owner cannot reset an encrypted user's password, and without your password or the code the files are lost. Removing an encrypted user deletes their files. `Turn off` decrypts them at the next sign-in.
+
 What it doesn't do: the password keeps others away from your orOS on the screen, but someone who reads the stick on another computer could read the folders; on orOS USB an encrypted stick protects them. In a normal browser (useoros.online) or on Android, `Users` explains how to use browser profiles or Android's own users instead.
 
 ### Multitasking

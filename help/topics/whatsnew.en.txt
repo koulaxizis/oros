@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.96.00
+- **Encrypt my files** (orOS USB, optional, off by default): on the Live USB, every user except the first can now encrypt their own files in Settings › Users. They are encrypted at the next sign-in and can be opened only while that user is signed in, not even by the owner. Each encrypted user gets their own recovery code, because the owner can no longer reset their password. See [Settings](help:a/settings).
+
 ## Version 4.95.01
 - orOS opens faster the first time: the files it needs only for background work (reminders, household, Today and similar) now load after the desktop is shown. On a slow phone the first open went from about 9 to about 6 seconds.
 

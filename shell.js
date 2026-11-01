@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.95.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.96.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3799,7 +3799,7 @@
   (function users() {
     var host = location.hostname;
     if (typeof fetch !== "function" || (host !== "localhost" && host !== "127.0.0.1") || location.port !== "47800") return;
-    var NAMES = /^(state|sizes|signout|add|remove|password|rename|owner|guest)$/;
+    var NAMES = /^(state|sizes|signout|add|remove|password|rename|owner|guest|vault)$/;
     function call(name, body) {
       if (!NAMES.test(String(name))) return Promise.resolve({ error: "bad" });
       var opt = body === undefined
