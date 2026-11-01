@@ -7,10 +7,14 @@
 //   2. Numbers and dates of any bank (1.234,56 · 1,234.56 ·
 //      dd/mm/yyyy · mm/dd/yyyy · yyyy-mm-dd · 14 Oct 2026)
 //   3. CSV: separator, header row, column guess, rows
-//   4. OFX / QFX, QIF, CAMT.053 (also .052 / .054)
+//   4. OFX / QFX, QIF, CAMT.053 (also .052 / .054), MT940 (and
+//      MT942), PayPal's activity CSV
 //   5. Rules: match (longest "contains" wins), apply, re-run
 //   6. Plan: ids, duplicates (same id, FITID, or same account +
-//      date + amount + similar text), deleted earlier, skipped
+//      date + amount + similar text), deleted earlier, skipped;
+//      money already in Budget another way: an Invoices payment, a
+//      transfer between own accounts, the other side of a PayPal
+//      payment (BK-1)
 // Nothing here runs imported code: files are read as text only.
 // ============================================================
 (function (root) {
@@ -460,10 +464,161 @@
     });
     return out;
   }
+  // SWIFT MT940 / MT942 (many banks' "statement for accounting
+  // software"). :25: account, :60F: (or :60M:) opening balance with
+  // the currency, :61: one booking, :86: its text (free, or German
+  // structured ?20..?29 / ?32 ?33 name, or /NAME/ /REMI/ codes).
+  function mt940Text(s) {
+    var t = String(s || "").replace(/\r?\n/g, "");
+    if (/\?\d\d/.test(t)) {
+      var parts = {}, re = /\?(\d\d)([^?]*)/g, m;
+      while ((m = re.exec(t))) parts[m[1]] = (parts[m[1]] || "") + m[2];
+      var name = [parts["32"], parts["33"]].filter(Boolean).join("");
+      var ref = [];
+      for (var k = 20; k <= 29; k++) if (parts[String(k)]) ref.push(parts[String(k)]);
+      [60, 61, 62, 63].forEach(function (k2) { if (parts[String(k2)]) ref.push(parts[String(k2)]); });
+      var post = parts["00"] || "";
+      var refTxt = ref.join("").replace(/^(SVWZ\+|EREF\+\S*\s*)/, "");
+      return clean([name, refTxt || post].filter(Boolean).join(" · "), 200);
+    }
+    if (/\/(NAME|REMI|ORDP|BENM)\//.test(t)) {
+      var get = function (code) {
+        var mm = new RegExp("/" + code + "/(?:NAME/)?(.*?)(?=/(?:NAME|REMI|ORDP|BENM|EREF|BREF|IREF|PURP|ULTD|ULTB|ULTC|TRCD|CDTR|DBTR|ADDR)/|$)").exec(t);
+        return mm ? mm[1].replace(/\/+$/, "") : "";
+      };
+      var who = get("NAME") || get("BENM") || get("ORDP");
+      var rem = get("REMI").replace(/^USTD\/\/?/, "");
+      if (who || rem) return clean([who, rem].filter(Boolean).join(" · "), 200);
+    }
+    return clean(t, 200);
+  }
+  function parseMt940(text) {
+    var out = { items: [], cur: "", acct: "" };
+    var lines = String(text).replace(/\r\n?/g, "\n").split("\n"), fields = [], cur = null;
+    lines.forEach(function (ln) {
+      var m = /^:(\d\d[A-Z]?):(.*)$/.exec(ln);
+      if (m) { cur = { tag: m[1], val: m[2] }; fields.push(cur); }
+      else if (cur && !/^-\}?\s*$/.test(ln) && !/^\{/.test(ln)) cur.val += "\n" + ln;
+    });
+    var last = null;
+    fields.forEach(function (f) {
+      if (f.tag === "25" && !out.acct) out.acct = clean(f.val, 60);
+      else if ((f.tag === "60F" || f.tag === "60M" || f.tag === "34F") && !out.cur) {
+        var c = /^[CD]?\d{6}([A-Z]{3})/.exec(f.val) || /^([A-Z]{3})/.exec(f.val);
+        if (c) out.cur = c[1];
+      } else if (f.tag === "61") {
+        if (out.items.length >= MAX_ROWS) { last = null; return; }
+        var v = f.val.split("\n");
+        var m = /^(\d{2})(\d{2})(\d{2})(\d{4})?(R?[CD])([A-Z])?(\d+(?:,\d*)?)[A-Z]([A-Z0-9]{3})?([^\n]*)$/.exec(v[0]);
+        var it = { line: out.items.length + 1, d: null, amt: null, text: "", fit: "" };
+        if (m) {
+          it.d = ymd(2000 + +m[1], +m[2], +m[3]);
+          var a = parseMoney(m[7], ",");
+          if (a !== null) it.amt = (m[5] === "D" || m[5] === "RC") ? -a : a;
+          var refs = m[9] || "";
+          var own = refs.split("//");
+          var bankRef = clean(own[1] || "", 40), custRef = clean(own[0] || "", 40);
+          it.fit = (bankRef || (custRef && custRef !== "NONREF" ? custRef : "")).slice(0, 80);
+          if (v[1]) it.text = clean(v[1], 140);
+        }
+        if (!it.d) it.err = "date";
+        else if (it.amt === null) it.err = "amount";
+        out.items.push(it);
+        last = it;
+      } else if (f.tag === "86" && last) {
+        var tx = mt940Text(f.val);
+        last.text = clean([tx, last.text && fold(tx).indexOf(fold(last.text)) < 0 ? last.text : ""].filter(Boolean).join(" · "));
+        last = null;
+      }
+    });
+    // Two bookings with the same bank reference in one file stay two.
+    var seenRef = {};
+    out.items.forEach(function (it) {
+      if (!it.fit) return;
+      if (seenRef[it.fit]) it.fit = "";
+      else seenRef[it.fit] = 1;
+    });
+    return out;
+  }
+
+  // PayPal › Activity › Download (CSV, "balance affecting" or all):
+  // one row per money movement, columns named in the language of the
+  // account. A purchase in another currency is a pair: the payment in
+  // that currency and "General Currency Conversion" rows that point
+  // at it (Reference Txn ID); the one in the Budget currency is what
+  // left the account. Money that only moves between PayPal and the
+  // person's own card or bank (funding a payment, a withdrawal) is a
+  // transfer, not income or an expense: skipped, with the reason.
+  var PP = {
+    date: ["date", "ημερομηνια", "datum", "fecha"],
+    name: ["name", "ονομα", "ονοματεπωνυμο", "nombre"],
+    type: ["type", "τυπος", "typ", "tipo"],
+    status: ["status", "κατασταση", "estado"],
+    cur: ["currency", "νομισμα", "wahrung", "divisa", "moneda"],
+    gross: ["gross", "μικτο", "μεικτο", "ακαθαριστο", "μικτο ποσο", "brutto", "bruto"],
+    fee: ["fee", "χρεωση", "προμηθεια", "gebuhr", "tarifa", "comision"],
+    net: ["net", "καθαρο", "καθαρο ποσο", "netto", "neto"],
+    id: ["transaction id", "κωδικος συναλλαγης", "αναγνωριστικο συναλλαγης", "transaktionscode", "id de transaccion", "codigo de transaccion"],
+    ref: ["reference txn id", "κωδικος συναλλαγης αναφορας", "αναγνωριστικο συναλλαγης αναφορας", "zugehoriger transaktionscode", "id. de referencia de la transaccion", "id de transaccion de referencia"],
+    item: ["item title", "τιτλος αντικειμενου", "artikelbezeichnung", "titulo del objeto"],
+    impact: ["balance impact", "επιπτωση στο υπολοιπο", "επιδραση στο υπολοιπο", "auswirkung auf guthaben", "impacto en el saldo"]
+  };
+  function ppCol(head, list) {
+    var fl = list.map(fold);
+    for (var i = 0; i < head.length; i++) if (fl.indexOf(fold(head[i])) >= 0) return i;
+    return -1;
+  }
+  // A header row → the PayPal column map, or null when it is not one.
+  function paypalMap(head) {
+    if (!head || head.length < 6) return null;
+    var m = {};
+    Object.keys(PP).forEach(function (k) { m[k] = ppCol(head, PP[k]); });
+    if (m.date < 0 || m.cur < 0 || m.net < 0 || m.id < 0 || (m.gross < 0 && m.fee < 0)) return null;
+    return m;
+  }
+  var PP_DONE = /^(completed|ολοκληρωθηκε|ολοκληρωμενη|ολοκληρωμενο|abgeschlossen|completado|completada)$/;
+  var PP_MOVE = /(card deposit|bank deposit|deposit to pp|withdrawal|transfer to bank|transfer from bank|user initiated withdrawal|καταθεση|αναληψη|μεταφορα σε τραπεζ|μεταφορα απο τραπεζ|bankeinzahlung|abbuchung|ruckzahlung von bank|retirada|deposito)/;
+  var PP_CONV = /(currency conversion|μετατροπη νομισματ|wahrungsumrechnung|conversion de divisa)/;
+  var PP_HOLD = /(hold|authori[sz]ation|δεσμευση|εξουσιοδοτηση|einbehalt|autorizacion|retencion)/;
+  function paypalItems(rows, start, m, home) {
+    var data = rows.slice(start), conv = {}, out = [];
+    var order = detectDateOrder(data.map(function (r) { return r[m.date] || ""; }), "dmy");
+    var dec = detectDec(data.map(function (r) { return r[m.net] || ""; }), ".");
+    function g(r, c) { return c >= 0 && c < r.length ? r[c] : ""; }
+    data.forEach(function (r) {
+      var ty = fold(g(r, m.type));
+      if (PP_CONV.test(ty) && m.ref >= 0 && g(r, m.ref)) {
+        var ref = g(r, m.ref), cc = String(g(r, m.cur)).toUpperCase();
+        (conv[ref] = conv[ref] || {})[cc] = (conv[ref][cc] || 0) + (parseMoney(g(r, m.net), dec) || 0);
+      }
+    });
+    for (var i = 0; i < data.length && out.length < MAX_ROWS; i++) {
+      var r = data[i], ty = fold(g(r, m.type)), id = clean(g(r, m.id), 80);
+      var cur = String(g(r, m.cur)).toUpperCase().trim();
+      var it = { line: start + i + 1, d: parseDate(g(r, m.date), order), amt: parseMoney(g(r, m.net), dec),
+                 text: "", fit: id, cur: cur };
+      var name = clean(g(r, m.name), 80), title = clean(g(r, m.item), 80);
+      it.text = clean([name, title && fold(title) !== fold(name) ? title : ""].filter(Boolean).join(" · ") || g(r, m.type));
+      var stt = fold(g(r, m.status)), imp = fold(g(r, m.impact));
+      if (PP_CONV.test(ty)) continue;                     // folded into its payment below
+      if (!it.d) it.err = "date";
+      else if (it.amt === null) it.err = "amount";
+      else if (imp === "memo" || imp === "υπομνημα" || imp === "σημειωμα" || PP_HOLD.test(ty)) it.err = "memo";
+      else if (stt && !PP_DONE.test(stt)) it.err = "pending";
+      else if (PP_MOVE.test(ty)) it.err = "xfer";
+      else if (home && cur && cur !== home && conv[id] && conv[id][home]) {
+        it.amt = conv[id][home];                          // what left the account in the Budget currency
+        it.cur = home;
+      }
+      out.push(it);
+    }
+    return out;
+  }
   function detectFormat(text, name) {
     var head = text.slice(0, 4000);
     if (/<(?:[\w.-]+:)?BkToCstmr(Stmt|AcctRpt|DbtCdtNtfctn)\b/.test(head) || /camt\.05[234]/.test(head)) return "camt";
     if (/OFXHEADER|<OFX>/i.test(head)) return "ofx";
+    if (/(^|\n):20:/.test(head) && /(^|\n):61:\d{6}/.test(text.slice(0, 20000))) return "mt940";
     if (/^\s*!(Type|Account|Option)/im.test(head) || /\.qif$/i.test(name || "")) return "qif";
     return "csv";
   }
@@ -560,6 +715,40 @@
   // ticked; "dup": looks like one that is here (FITID, or same
   // account, date, amount and similar text), unticked; "gone":
   // imported and deleted here earlier, unticked.
+  function dayGap(a, b) {
+    var x = Date.parse(a + "T00:00:00Z"), y = Date.parse(b + "T00:00:00Z");
+    return isFinite(x) && isFinite(y) ? Math.abs(x - y) / 86400000 : 999;
+  }
+  var PAYPAL_RE = /paypal|pp \*|pypl/;
+  // Money already in Budget another way (BK-1), for a row that is not
+  // a plain duplicate: → { x, dk } | null. dk "inv": an Invoices
+  // payment kept here (BR-B3) with the same amount within 10 days;
+  // "xfer": a transfer between own accounts that left / reached this
+  // account within 3 days; "pp": the other side of a PayPal payment
+  // (a bank's "PAYPAL *…" line and a row from PayPal's own file,
+  // pp 1) within 4 days, whatever Budget accounts they went to.
+  function crossTwin(row, ctx, ac, used) {
+    var hit = null;
+    (ctx.tx || []).some(function (x) {
+      if (used[x.id] || x.a !== row.a || x.k !== row.k) return false;
+      if (row.k === "i" && x.src === "invoices" && dayGap(x.d, row.d) <= 10) { hit = { x: x, dk: "inv" }; return true; }
+      if (x.src === "bank" && dayGap(x.d, row.d) <= 4 &&
+          (ctx.pp ? !x.pp && PAYPAL_RE.test(fold(x.ot || x.n)) : x.pp === 1 && PAYPAL_RE.test(fold(row.text)))) {
+        hit = { x: x, dk: "pp" };
+        return true;
+      }
+      return false;
+    });
+    if (hit || !ac) return hit;
+    (ctx.xfer || []).some(function (x) {
+      if (used[x.id] || dayGap(x.d, row.d) > 3) return false;
+      var out = row.k === "o" && x.f === ac && x.a === row.a;
+      var inn = row.k === "i" && x.t === ac && (x.ta || x.a) === row.a;
+      if (out || inn) { hit = { x: x, dk: "xfer" }; return true; }
+      return false;
+    });
+    return hit;
+  }
   function plan(items, ctx) {
     var tx = ctx.tx || [], tombs = ctx.tombs || {}, ac = ctx.ac || "";
     var byId = {}, byFit = {}, byKey = {};
@@ -576,7 +765,7 @@
       if (it.err) { row.st = "skip"; row.why = it.err; row.on = false; return row; }
       if (!it.amt) { row.st = "skip"; row.why = "zero"; row.on = false; return row; }
       var fc = it.cur || ctx.fileCur || "";
-      if (fc && ctx.cur && fc !== ctx.cur) { row.st = "skip"; row.why = "cur"; row.on = false; return row; }
+      if (fc && ctx.cur && fc !== ctx.cur) { row.st = "skip"; row.why = "cur"; row.cur = fc; row.on = false; return row; }
       row.k = it.amt < 0 ? "o" : "i";
       row.a = Math.abs(it.amt);
       if (row.a > MAX_CENTS) { row.st = "skip"; row.why = "amount"; row.on = false; return row; }
@@ -598,17 +787,20 @@
           return true;
         });
       }
-      if (twin) { used[twin.id] = 1; row.st = "dup"; row.on = false; row.why = twin.id; }
+      if (twin) { used[twin.id] = 1; row.st = "dup"; row.on = false; row.why = twin.id; return row; }
+      var cross = crossTwin(row, ctx, ac, used);
+      if (cross) { used[cross.x.id] = 1; row.st = "dup"; row.on = false; row.why = cross.x.id; row.dk = cross.dk; }
       return row;
     });
   }
   // Ticked rows → Budget entries (m is stamped by the app).
-  function entries(rows, ac) {
+  function entries(rows, ac, pp) {
     return rows.filter(function (r) { return r.on && r.id && r.st !== "same" && r.st !== "skip"; }).map(function (r) {
       var x = { id: r.id, d: r.d, a: r.a, k: r.k, c: r.c || "", n: r.n || "", src: "bank" };
       if (ac) x.ac = ac;
       if (r.text) x.ot = r.text;
       if (r.fit) x.fit = r.fit;
+      if (pp) x.pp = 1;
       return x;
     });
   }
@@ -622,7 +814,7 @@
     MAX_ROWS: MAX_ROWS, decode: decode, sniffLegacy: sniffLegacy, fold: fold, clean: clean,
     detectDec: detectDec, parseMoney: parseMoney, parseDate: parseDate, detectDateOrder: detectDateOrder,
     parseCsv: parseCsv, guessSep: guessSep, findHeader: findHeader, guessMap: guessMap, csvItems: csvItems,
-    headerSig: headerSig, parseOfx: parseOfx, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
+    headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
     detectFormat: detectFormat, ruleMatches: ruleMatches, matchRule: matchRule, noteFor: noteFor, rerun: rerun,
     suggestQ: suggestQ, bankId: bankId, similar: similar, plan: plan, entries: entries, counts: counts
   };
