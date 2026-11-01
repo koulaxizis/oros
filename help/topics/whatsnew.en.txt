@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.86.00
+- Spreadsheet on phones and tablets: drag the round handles on the corners of the selection to make it bigger or smaller, and turn on Extend selection (sheet menu) to add cells, columns or rows with a tap. See [Spreadsheet](help:a/spreadsheet).
+
 ## Version 4.85.00
 - [Pad](help:a/pad) gets tools: format or compact JSON (only the spaces change, numbers and key order stay as written), sort lines, remove duplicate lines and spaces at line ends. Markdown files have a live `Preview`, `Compare with another tab…` shows two files line by line, and on phones a key row adds Tab, arrows and brackets.
 
