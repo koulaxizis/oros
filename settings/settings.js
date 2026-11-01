@@ -1534,7 +1534,10 @@
   // passwords stay in `us.f` only until they are sent, then are cleared.
   // Elsewhere (useoros.online, Android) the page explains browser
   // profiles and Android users instead.
-  var us = { mode: null, id: null, f: {}, msg: null, code: null, sizes: null, sizing: false, busy: false };
+  var us = { mode: null, id: null, f: {}, msg: null, code: null, codeKind: null, sizes: null, sizing: false, busy: false };
+  // An encrypted user (oros-portable vault.go): only their own password or
+  // recovery code opens their files.
+  function usLocked(u) { return !!u && (u.vault === "on" || u.vault === "off-pending" || u.vault === "pending"); }
 
   function usersApi() {
     var p = parentWin();
@@ -1575,15 +1578,15 @@
   function usAnswer(r, okKey, vars) {
     us.busy = false;
     if (r && r.ok) {
+      if (r.code) { us.code = String(r.code); us.codeKind = us.mode === "vaultOn" ? "vault" : null; }
       us.mode = null; us.id = null; us.f = {}; us.sizes = null;
-      if (r.code) us.code = String(r.code);
       usMsg("ok", okKey, vars);
     } else {
       var code = (r && r.error) || "bad";
       if (code === "wait" || (code === "wrong" && r.wait)) {
         usMsg("err", "u.err.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
       } else {
-        usMsg("err", "u.err." + (/^(password|name|taken|wrong|full|busy|self|first|denied|network)$/.test(code) ? code : "bad"));
+        usMsg("err", "u.err." + (/^(password|name|taken|wrong|full|busy|self|first|denied|network|vault|novault)$/.test(code) ? code : "bad"));
       }
       ["auth", "old"].forEach(function (k) { us.f[k] = ""; });
     }
@@ -1612,13 +1615,17 @@
       form.appendChild(usField("pw2", t("u.f.again")));
     }
     if (m === "remove") form.appendChild(el("p", "hint", t("u.removeWarn", { name: name })));
+    if (m === "remove" && usLocked(who)) form.appendChild(el("p", "hint warn", t("u.vault.removeWarn", { name: name })));
+    if (m === "vaultOn") form.appendChild(el("p", "hint", t("u.vault.onWarn")));
+    if (m === "vaultOff") form.appendChild(el("p", "hint", t("u.vault.offWarn")));
+    if (m === "vaultOn" || m === "vaultOff") form.appendChild(usField("vpw", t("u.f.old")));
     if (m === "owner") form.appendChild(el("p", "hint", t("u.ownerWarn", { name: name })));
     if (m === "add" || m === "reset" || m === "remove" || m === "owner" || m === "guest") {
       form.appendChild(usField("auth", t("u.f.auth")));
     }
-    if (m !== "remove" && m !== "owner" && m !== "guest" && m !== "rename") form.appendChild(el("p", "hint", t("u.f.hint")));
+    if (m !== "remove" && m !== "owner" && m !== "guest" && m !== "rename" && m !== "vaultOn" && m !== "vaultOff") form.appendChild(el("p", "hint", t("u.f.hint")));
     var goKey = { first: "u.go.add", add: "u.go.add", remove: "u.go.remove", owner: "u.go.owner",
-      guest: st.guest ? "u.go.guestOff" : "u.go.guestOn" }[m] || "u.go.save";
+      guest: st.guest ? "u.go.guestOff" : "u.go.guestOn", vaultOn: "u.go.vaultOn", vaultOff: "u.go.vaultOff" }[m] || "u.go.save";
     var go = el("button", "btn " + (m === "remove" ? "danger" : "primary"), t(goKey));
     go.type = "submit";
     go.setAttribute("data-k", "us-go");
@@ -1648,6 +1655,8 @@
       else if (m === "remove") { call = "remove"; body = { id: us.id, auth: f.auth }; okKey = "u.ok.removed"; }
       else if (m === "owner") { call = "owner"; body = { id: us.id, auth: f.auth }; }
       else if (m === "guest") { call = "guest"; body = { on: !st.guest, auth: f.auth }; }
+      else if (m === "vaultOn") { call = "vault"; body = { on: true, password: f.vpw }; okKey = "u.ok.vaultOn"; }
+      else if (m === "vaultOff") { call = "vault"; body = { on: false, password: f.vpw }; okKey = "u.ok.vaultOff"; }
       if (!call) return;
       us.f = {};
       us.busy = true;
@@ -1670,9 +1679,9 @@
 
     if (us.code) {
       var cc = card(t("u.code.title"));
-      cc.appendChild(el("p", "hint", t("u.code.hint")));
+      cc.appendChild(el("p", "hint", t(us.codeKind === "vault" ? "u.vault.codeHint" : "u.code.hint")));
       cc.appendChild(el("p", "users-code", us.code));
-      cc.appendChild(actions(button(t("u.code.ok"), "us-code-ok", function () { us.code = null; us.msg = null; render(); }, "primary")));
+      cc.appendChild(actions(button(t("u.code.ok"), "us-code-ok", function () { us.code = null; us.codeKind = null; us.msg = null; render(); }, "primary")));
       host.appendChild(cc);
     }
 
@@ -1692,9 +1701,11 @@
       }
       var owner = !!(me && me.owner);
       users.forEach(function (u) {
-        var label = u.name + (u.owner ? " · " + t("u.owner") : "") + (me && me.id === u.id ? " · " + t("u.you") : "");
+        var label = u.name + (u.owner ? " · " + t("u.owner") : "") + (u.vault === "on" || u.vault === "off-pending" ? " · " + t("u.encrypted") : "") +
+          (me && me.id === u.id ? " · " + t("u.you") : "");
         var opts = {};
         if (us.sizes && us.sizes[u.id]) opts.hint = t("u.size", { n: usBytes(us.sizes[u.id]) });
+        if (owner && !(me && me.id === u.id) && usLocked(u)) opts.hint = (opts.hint ? opts.hint + " · " : "") + t("u.vault.noReset");
         var r = row(label, null, opts);
         var mine = me && me.id === u.id;
         var btns = [];
@@ -1702,7 +1713,7 @@
           btns.push(button(t("u.myPassword"), "us-pw", function () { usOpen("pw", u.id); }));
           btns.push(button(t("u.rename"), "us-rename", function () { usOpen("rename", u.id); us.f.name = u.name; render(); }));
         } else if (owner) {
-          btns.push(button(t("u.reset"), "us-reset:" + u.id, function () { usOpen("reset", u.id); }));
+          if (!usLocked(u)) btns.push(button(t("u.reset"), "us-reset:" + u.id, function () { usOpen("reset", u.id); }));
           btns.push(button(t("u.rename"), "us-rename:" + u.id, function () { usOpen("rename", u.id); us.f.name = u.name; render(); }));
           btns.push(button(t("u.makeOwner"), "us-owner:" + u.id, function () { usOpen("owner", u.id); }));
           if (!u.first) btns.push(button(t("u.remove"), "us-remove:" + u.id, function () { usOpen("remove", u.id); }, "danger"));
@@ -1729,6 +1740,27 @@
         { hint: t("u.guest.hint") }));
       if (us.mode === "guest") c3.appendChild(usForm(U, st, null));
       host.appendChild(c3);
+    }
+
+    // Encrypt my files: orOS USB, a signed-in user other than the first.
+    if (st.enabled && st.vault && me && !me.guest) {
+      var c5 = card(t("u.vault"));
+      c5.appendChild(el("p", "hint", t("u.vault.hint")));
+      if (me.first) {
+        c5.appendChild(el("p", "hint", t("u.vault.first")));
+      } else {
+        var vs = me.vault || "";
+        var stateKey = { pending: "u.vault.pending", on: "u.vault.on", "off-pending": "u.vault.offPending",
+          failed: me.vaultError === "space" ? "u.vault.failedSpace" : "u.vault.failed" }[vs] || "u.vault.off";
+        var vBtn = vs === "on" ? button(t("u.vault.turnOff"), "us-vault-off", function () { usOpen("vaultOff", null); })
+          : vs === "pending" ? button(t("u.vault.cancel"), "us-vault-off", function () { usOpen("vaultOff", null); })
+          : vs === "off-pending" ? button(t("u.vault.keep"), "us-vault-on", function () { usOpen("vaultOn", null); }, "primary")
+          : button(t("u.vault.turnOn"), "us-vault-on", function () { usOpen("vaultOn", null); }, "primary");
+        c5.appendChild(row(t("u.vault"), us.mode === "vaultOn" || us.mode === "vaultOff" ? null : actions(vBtn),
+          { hint: t(stateKey) }));
+        if (us.mode === "vaultOn" || us.mode === "vaultOff") c5.appendChild(usForm(U, st, me));
+      }
+      host.appendChild(c5);
     }
 
     var c4 = card(null);

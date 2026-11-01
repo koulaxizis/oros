@@ -3799,7 +3799,7 @@
   (function users() {
     var host = location.hostname;
     if (typeof fetch !== "function" || (host !== "localhost" && host !== "127.0.0.1") || location.port !== "47800") return;
-    var NAMES = /^(state|sizes|signout|add|remove|password|rename|owner|guest)$/;
+    var NAMES = /^(state|sizes|signout|add|remove|password|rename|owner|guest|vault)$/;
     function call(name, body) {
       if (!NAMES.test(String(name))) return Promise.resolve({ error: "bad" });
       var opt = body === undefined
