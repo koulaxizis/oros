@@ -581,6 +581,15 @@ body.editing #toast { top: auto; bottom: calc(48px + env(safe-area-inset-bottom,
 .sc-auto { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 36px; }
 .sc-auto input { accent-color: var(--accent); width: 20px; height: 20px; margin: 0; }
 #sc-torch.on { color: var(--accent); }
+/* a scanner on this computer (orOS Bridge): the settings in place of the camera */
+.sc-dev { flex: 1 1 auto; min-height: 0; overflow-y: auto; background: var(--bg); display: flex; justify-content: center; }
+.sc-devbox { width: 100%; max-width: 520px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.dv-msg { font-size: 14px; }
+.dv-msg:empty { display: none; }
+.dv-msg.bad { color: var(--danger); }
+.dv-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.sc-devbox .opt input[type=checkbox] { accent-color: var(--accent); flex-shrink: 0; width: 22px; height: 22px; margin: 0; }
+#dv-code { letter-spacing: 0.2em; font-size: 18px; max-width: 12ch; }
 .sc-strip {
   display: flex;
   gap: 8px;

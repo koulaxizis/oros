@@ -49,6 +49,7 @@
         <p class="drop-hint hint small" data-i18n="drop.hint"></p>
         <div class="drop-btns">
           <button type="button" id="scan-start" class="btn primary" data-i18n="btn.scan">Scan with the camera</button>
+          <button type="button" id="dev-start" class="btn" data-i18n="btn.device" hidden>Add from scanner</button>
           <button type="button" id="add-files" class="btn" data-i18n="btn.add">Add PDFs or pictures</button>
         </div>
         <p class="hint small local" data-i18n="drop.local"></p>
@@ -59,6 +60,7 @@
         <ul id="grid" class="grid" aria-labelledby="title-main"></ul>
         <div class="add-more">
           <button type="button" id="scan-more" class="btn" data-i18n="btn.scan">Scan with the camera</button>
+          <button type="button" id="dev-more" class="btn" data-i18n="btn.device" hidden>Add from scanner</button>
           <button type="button" id="add-more" class="btn" data-i18n="btn.addMore">Add more</button>
         </div>
       </section>
@@ -147,6 +149,33 @@
           <button type="button" id="sc-msg-photos" class="btn primary" data-i18n="sc.photos">Choose photos</button>
         </div>
       </div>
+      <div id="sc-dev" class="sc-dev" hidden>
+        <div class="sc-devbox">
+          <p id="dv-msg" class="dv-msg" aria-live="polite"></p>
+          <div id="dv-pair" class="form" hidden>
+            <p class="hint small" data-i18n="dv.pair"></p>
+            <button type="button" id="dv-show" class="btn" data-i18n="dv.showCode">Show the code</button>
+            <label class="field"><span class="field-l" data-i18n="dv.code">Code</span><input type="text" id="dv-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" spellcheck="false"></label>
+            <button type="button" id="dv-pairgo" class="btn primary" data-i18n="dv.pairGo">Pair</button>
+          </div>
+          <div id="dv-form" class="form" hidden>
+            <label class="field"><span class="field-l" data-i18n="dv.scanner">Scanner</span><select id="dv-scanner"></select></label>
+            <div class="dv-row">
+              <label class="field"><span class="field-l" data-i18n="dv.source">Paper</span><select id="dv-source"></select></label>
+              <label class="field"><span class="field-l" data-i18n="dv.mode">Colour</span><select id="dv-mode"></select></label>
+              <label class="field"><span class="field-l" data-i18n="dv.dpi">Resolution</span><select id="dv-dpi"></select></label>
+            </div>
+            <label class="opt"><input type="checkbox" id="dv-read"><span class="opt-t" data-i18n="dv.read">Read the text after scanning</span></label>
+            <p class="hint small" data-i18n="dv.hint"></p>
+          </div>
+        </div>
+      </div>
+      <div class="sc-bar sc-devbar" id="sc-devbar" hidden>
+        <button type="button" id="dv-again" class="btn small" data-i18n="dv.again">Look again</button>
+        <span class="spacer"></span>
+        <button type="button" id="dv-cancel" class="btn" data-i18n="dv.cancel" hidden>Cancel</button>
+        <button type="button" id="dv-scan" class="btn primary" data-i18n="dv.scan" disabled>Scan</button>
+      </div>
       <div class="sc-bar sc-shootbar">
         <button type="button" id="sc-photos" class="icon-btn"></button>
         <label class="sc-auto" id="sc-auto-l"><input type="checkbox" id="sc-auto" checked><span data-i18n="sc.auto">Auto</span></label>
@@ -211,6 +240,7 @@
   <script src="../vendor/pdf-lib/pdf-lib.min.js?v=4.90.00"></script>
   <script src="core.js?v=4.90.00"></script>
   <script src="scan.js?v=4.90.00"></script>
+  <script src="device.js?v=4.90.00"></script>
   <script src="ocr.js?v=4.90.00"></script>
   <script src="pdfops.js?v=4.90.00"></script>
   <script src="../bundle.js?v=4.90.00"></script>

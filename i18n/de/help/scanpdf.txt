@@ -22,6 +22,14 @@ Drück `Mit der Kamera scannen` (die Kamera-Schaltfläche oben oder auf dem leer
 - Ist die Kamera nicht erlaubt oder nicht vorhanden, sagt der Scanner das; du kannst trotzdem Fotos auswählen.
 Drück `… Seiten hinzufügen`, um sie hinter die vorhandenen Seiten in die Liste zu setzen. Eine gescannte Seite behält im PDF ihre eigene Form, ohne Rand. Schließ den Scanner mit dem Kreuz, um die gescannten Seiten zu verwerfen. Die Kamera geht aus, sobald du den Scanner oder die App verlässt.
 
+## Vom Scanner scannen
+Läuft auf diesem Computer [orOS Bridge](https://github.com/koulaxizis/oros-bridge) 0.9.0 oder neuer, erscheint neben der Kamera `Vom Scanner hinzufügen`. Es funktioniert mit Flachbettscannern und Multifunktionsdruckern: unter Windows jeder Scanner mit Windows-Treiber, unter Linux und orOS USB über SANE (Netzwerk- und USB-Drucker brauchen meist keinen Treiber).
+1. Verbinde diesen Browser beim ersten Mal mit der Bridge: Drück `Code zeigen` und gib den 6-stelligen Code ein, den die Bridge zeigt. Wenn du ihn für Studio verbunden hast, wird nicht gefragt.
+2. Wähle den Scanner, das Papier (`Glas`, `Einzug` oder `Einzug, beidseitig`), die Farbe (`Farbe`, `Grau`, `Schwarzweiß`) und die Auflösung (300 dpi passt für Dokumente). `Noch einmal suchen` findet einen Scanner, der später eingeschaltet wurde.
+3. Drück `Scannen`. Jede Seite erscheint im Streifen, sobald sie kommt; `Abbrechen` hält das Scannen an; die schon gescannten Seiten bleiben. Tippe auf eine Seite, um Ecken (für einen Kassenbon auf großem Glas), Aussehen oder Drehung zu ändern.
+4. Drück `… Seiten hinzufügen`. Ist `Den Text nach dem Scannen lesen` an, wird der Text der neuen Seiten gleich gelesen, damit man im PDF suchen kann.
+Die Seiten gehen direkt von der Bridge auf diesem Computer zu dieser Seite; nichts wird hochgeladen, und die Bridge behält nichts.
+
 ## Was die App liest
 - PDF-Dateien (.pdf).
 - Bilder: JPEG, PNG, WebP, GIF, BMP und AVIF. Jedes Bild wird eine Seite.

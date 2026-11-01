@@ -169,6 +169,48 @@
       "toast.notSmaller": "It was already small, so it was saved as it was.",
       "err.font": "The font for the text could not be loaded.",
       "btn.scan": "Scan with the camera", "btn.scanIcon": "Scan with the camera",
+      "btn.device": "Add from scanner",
+      "dv.title": "Scan from a scanner",
+      "dv.connecting": "Connecting to orOS Bridge…",
+      "dv.looking": "Looking for scanners…",
+      "dv.none": "No scanner was found. Check that it is switched on and connected, then look again.",
+      "dv.nosane": "On Linux, orOS Bridge reaches scanners through SANE: install libsane1 and sane-airscan (and ipp-usb for USB printers), then look again.",
+      "dv.nobridge": "orOS Bridge is not running on this computer. Start it, then try again.",
+      "dv.old": "This orOS Bridge is too old for scanners. Update it to version 0.9.0 or newer.",
+      "dv.pair": "Pair this browser with orOS Bridge once: it shows a 6-digit code on this computer. If you paired it for Studio, this is not asked.",
+      "dv.showCode": "Show the code",
+      "dv.code": "Code",
+      "dv.pairGo": "Pair",
+      "dv.badCode": "That code is not right. Try again, or show a new code.",
+      "dv.scanner": "Scanner",
+      "dv.source": "Paper",
+      "dv.src.flatbed": "Glass",
+      "dv.src.adf": "Feeder",
+      "dv.src.adf-duplex": "Feeder, both sides",
+      "dv.dpi": "Resolution",
+      "dv.dpiN": "{n} dpi",
+      "dv.mode": "Colour",
+      "dv.m.color": "Colour",
+      "dv.m.gray": "Grey",
+      "dv.m.lineart": "Black and white",
+      "dv.read": "Read the text after scanning",
+      "dv.again": "Look again",
+      "dv.scan": "Scan",
+      "dv.cancel": "Cancel",
+      "dv.page": "Scanning page {n}… {p}%",
+      "dv.got": "{n} pages scanned.",
+      "dv.got.one": "1 page scanned.",
+      "dv.stopped": "Scanning stopped.",
+      "dv.hint": "Each page lands below. Tap one to set its corners, look or turn. Pages already scanned stay when you scan again.",
+      "dv.e.busy": "The scanner is busy. Wait for it, or close the other program that is using it.",
+      "dv.e.nopaper": "There is no paper in the feeder.",
+      "dv.e.jammed": "The paper is jammed. Clear it and scan again.",
+      "dv.e.cover": "The scanner's cover is open.",
+      "dv.e.denied": "This computer did not let orOS Bridge use the scanner.",
+      "dv.e.gone": "The scanner is not answering. Check that it is on, then look again.",
+      "dv.e.unsupported": "The scanner cannot scan with these settings. Choose others.",
+      "dv.e.nosane": "On Linux, orOS Bridge reaches scanners through SANE: install libsane1 and sane-airscan (and ipp-usb for USB printers), then look again.",
+      "dv.e.other": "The scan did not finish.",
       "sc.title": "Scan", "sc.done": "Add {n} pages", "sc.done.one": "Add 1 page", "sc.close": "Close the scanner",
       "sc.shoot": "Take the picture", "sc.photos": "Choose photos", "sc.auto": "Auto", "sc.autoHint": "Take the picture by itself when the page is held still",
       "sc.torchOn": "Turn the light on", "sc.torchOff": "Turn the light off",
@@ -299,6 +341,48 @@
       "toast.notSmaller": "Ήταν ήδη μικρό, οπότε αποθηκεύτηκε όπως ήταν.",
       "err.font": "Η γραμματοσειρά για το κείμενο δεν φορτώθηκε.",
       "btn.scan": "Σάρωση με την κάμερα", "btn.scanIcon": "Σάρωση με την κάμερα",
+      "btn.device": "Προσθήκη από σαρωτή",
+      "dv.title": "Σάρωση από σαρωτή",
+      "dv.connecting": "Σύνδεση με το orOS Bridge…",
+      "dv.looking": "Αναζήτηση σαρωτών…",
+      "dv.none": "Δεν βρέθηκε σαρωτής. Έλεγξε ότι είναι αναμμένος και συνδεδεμένος και ψάξε ξανά.",
+      "dv.nosane": "Στο Linux το orOS Bridge φτάνει στους σαρωτές μέσω SANE: εγκατάστησε τα libsane1 και sane-airscan (και το ipp-usb για εκτυπωτές USB) και ψάξε ξανά.",
+      "dv.nobridge": "Το orOS Bridge δεν τρέχει σε αυτόν τον υπολογιστή. Άνοιξέ το και δοκίμασε ξανά.",
+      "dv.old": "Αυτό το orOS Bridge είναι πολύ παλιό για σαρωτές. Ενημέρωσέ το στην έκδοση 0.9.0 ή νεότερη.",
+      "dv.pair": "Σύνδεσε μία φορά αυτόν τον browser με το orOS Bridge: δείχνει έναν εξαψήφιο κωδικό σε αυτόν τον υπολογιστή. Αν το έχεις συνδέσει για το Studio, δεν ζητείται.",
+      "dv.showCode": "Δείξε τον κωδικό",
+      "dv.code": "Κωδικός",
+      "dv.pairGo": "Σύνδεση",
+      "dv.badCode": "Ο κωδικός δεν είναι σωστός. Δοκίμασε ξανά ή ζήτα νέο κωδικό.",
+      "dv.scanner": "Σαρωτής",
+      "dv.source": "Χαρτί",
+      "dv.src.flatbed": "Τζάμι",
+      "dv.src.adf": "Τροφοδότης",
+      "dv.src.adf-duplex": "Τροφοδότης, δύο όψεις",
+      "dv.dpi": "Ανάλυση",
+      "dv.dpiN": "{n} dpi",
+      "dv.mode": "Χρώμα",
+      "dv.m.color": "Έγχρωμο",
+      "dv.m.gray": "Γκρι",
+      "dv.m.lineart": "Ασπρόμαυρο",
+      "dv.read": "Ανάγνωση του κειμένου μετά τη σάρωση",
+      "dv.again": "Ψάξε ξανά",
+      "dv.scan": "Σάρωση",
+      "dv.cancel": "Ακύρωση",
+      "dv.page": "Σάρωση σελίδας {n}… {p}%",
+      "dv.got": "Σαρώθηκαν {n} σελίδες.",
+      "dv.got.one": "Σαρώθηκε 1 σελίδα.",
+      "dv.stopped": "Η σάρωση σταμάτησε.",
+      "dv.hint": "Κάθε σελίδα μπαίνει από κάτω. Πάτησε μία για τις γωνίες, την εμφάνιση ή το γύρισμα. Οι σελίδες που σαρώθηκαν μένουν όταν σαρώνεις ξανά.",
+      "dv.e.busy": "Ο σαρωτής είναι απασχολημένος. Περίμενε ή κλείσε το άλλο πρόγραμμα που τον χρησιμοποιεί.",
+      "dv.e.nopaper": "Δεν υπάρχει χαρτί στον τροφοδότη.",
+      "dv.e.jammed": "Το χαρτί μπλόκαρε. Βγάλ' το και σάρωσε ξανά.",
+      "dv.e.cover": "Το καπάκι του σαρωτή είναι ανοιχτό.",
+      "dv.e.denied": "Ο υπολογιστής δεν επέτρεψε στο orOS Bridge να χρησιμοποιήσει τον σαρωτή.",
+      "dv.e.gone": "Ο σαρωτής δεν απαντά. Έλεγξε ότι είναι αναμμένος και ψάξε ξανά.",
+      "dv.e.unsupported": "Ο σαρωτής δεν σαρώνει με αυτές τις ρυθμίσεις. Διάλεξε άλλες.",
+      "dv.e.nosane": "Στο Linux το orOS Bridge φτάνει στους σαρωτές μέσω SANE: εγκατάστησε τα libsane1 και sane-airscan (και το ipp-usb για εκτυπωτές USB) και ψάξε ξανά.",
+      "dv.e.other": "Η σάρωση δεν ολοκληρώθηκε.",
       "sc.title": "Σάρωση", "sc.done": "Προσθήκη {n} σελίδων", "sc.done.one": "Προσθήκη 1 σελίδας", "sc.close": "Κλείσιμο του σαρωτή",
       "sc.shoot": "Λήψη φωτογραφίας", "sc.photos": "Διάλεξε φωτογραφίες", "sc.auto": "Αυτόματα", "sc.autoHint": "Η φωτογραφία τραβιέται μόνη της όταν η σελίδα μένει ακίνητη",
       "sc.torchOn": "Άναψε το φως", "sc.torchOff": "Σβήσε το φως",
@@ -2390,29 +2474,50 @@
   var sc = null;   // { stream, track, torch, pages: [], cur, queue, hist, timer, view, cool }
   var MAX_RAW_SIDE = 4000;
 
-  function openScanner() {
+  // device: a scanner on this computer through orOS Bridge (section 7d2)
+  // instead of the camera; the rest (strip, corners, looks) is shared.
+  function openScanner(device) {
     if (!SC || sc) return;
-    sc = { pages: [], cur: null, queue: [], hist: [], view: "cam", back: document.activeElement, cool: 0 };
+    device = device === true;
+    sc = { pages: [], cur: null, queue: [], hist: [], view: "cam", back: document.activeElement, cool: 0, device: device };
     $("scanner").hidden = false;
     document.body.classList.add("editing");
     try { $("sc-auto").checked = localStorage.getItem("oros-scanpdf-auto") !== "0"; } catch (e) {}
+    $("sc-title").textContent = t(device ? "dv.title" : "sc.title");
+    $("sc-camstage").hidden = device;
+    document.querySelector(".sc-shootbar").hidden = device;
+    $("sc-dev").hidden = !device;
+    $("sc-devbar").hidden = !device;
     scView("cam");
     renderStrip();
+    if (device) { devOpen(); return; }
     startCamera();
     setTimeout(function () { $("sc-shoot").focus(); }, 0);
   }
+  // the first control of the scanner's main view
+  function focusHome() { (sc && sc.device ? devFocus() : $("sc-shoot")).focus(); }
   function closeScanner(add) {
     if (!sc) return;
     var s0 = sc;
     sc = null;
     stopCamera(s0);
+    if (s0.device) devClose();
     $("scanner").hidden = true;
     document.body.classList.remove("editing");
     $("sc-strip").textContent = "";
     if (add && s0.pages.length) {
+      var before = pages.length;
       addBlobs(s0.pages.map(function (pg, i) {
         return { name: t("sc.name", { n: srcOrder.length + i + 1 }), blob: pg.blob, scan: true };
-      }));
+      })).then(function () {
+        // "Read the text after scanning" (a scanner on this computer)
+        if (s0.device && devPrefs().read && pages.length > before) {
+          var list = pages.slice(before);
+          readPages(list, prefs.ocr).then(function (r) {
+            if (r.stopped) showToast(tn("ocr.stopped", r.read));
+          }, function () { showToast(t("ocr.err")); });
+        }
+      });
     }
     if (s0.back && s0.back.isConnected && s0.back.focus) { try { s0.back.focus({ preventScroll: true }); } catch (e) {} }
   }
@@ -2613,6 +2718,10 @@
   }
   function straighten() {
     var sh = sc.cur, cv = sh.canvas, W = cv.width, H = cv.height;
+    if (sh.device && isWhole(sh.quad)) {
+      sh.warped = cv.getContext("2d").getImageData(0, 0, W, H);
+      return Promise.resolve();
+    }
     showBusy(t("sc.working"));
     return new Promise(function (res) { setTimeout(res, 30); }).then(function () {
       var q = SC.scaleQuad(sh.quad, W, H), size = SC.outSize(q);
@@ -2682,7 +2791,7 @@
       renderStrip();
       say(t("sc.kept", { n: n }));
       sc.cool = Date.now() + 1500;
-      if (!nextPhoto()) { scView("cam"); $("sc-shoot").focus(); }
+      if (!nextPhoto()) { scView("cam"); focusHome(); }
     }, "image/jpeg", sh.filter === "photo" ? 0.88 : 0.85);
   }
   function thumbCanvas(cv) {
@@ -2736,7 +2845,7 @@
     sc.cur = null; sc.edit = null;
     renderStrip();
     scView("cam");
-    $("sc-shoot").focus();
+    focusHome();
   }
   function retake() {
     // back to the camera; the next picture replaces this page
@@ -2744,7 +2853,7 @@
     sc.cur = null; sc.edit = null;
     if (!sc.stream) { scView("cam"); return; }
     scView("cam");
-    $("sc-shoot").focus();
+    focusHome();
   }
 
   // --- corners by hand ---
@@ -2834,7 +2943,7 @@
       e.preventDefault();
       if (sc.view === "cam") leaveScanner();
       else if (sc.view === "adjust" && sc.cur && sc.cur.warped) openReview();
-      else { sc.cur = null; sc.edit = null; scView("cam"); $("sc-shoot").focus(); }
+      else { sc.cur = null; sc.edit = null; scView("cam"); focusHome(); }
       return true;
     }
     var h = e.target.closest && e.target.closest(".sc-h");
@@ -2848,7 +2957,9 @@
   }
 
   function wireScanner() {
-    [$("scan-btn"), $("scan-start"), $("scan-more")].forEach(function (b) { b.addEventListener("click", openScanner); });
+    [$("scan-btn"), $("scan-start"), $("scan-more")].forEach(function (b) { b.addEventListener("click", function () { openScanner(false); }); });
+    [$("dev-start"), $("dev-more")].forEach(function (b) { b.addEventListener("click", function () { openScanner(true); }); });
+    wireDevice();
     $("sc-close").addEventListener("click", leaveScanner);
     $("sc-done").addEventListener("click", function () { closeScanner(true); });
     $("sc-shoot").addEventListener("click", capture);
@@ -2887,10 +2998,239 @@
     // the camera stops when the app is hidden or closed
     document.addEventListener("visibilitychange", function () {
       if (!sc) return;
+      if (sc.device) return;
       if (document.hidden) stopCamera();
       else if (!sc.stream) startCamera();
     });
     window.addEventListener("pagehide", function () { if (sc) stopCamera(); });
+  }
+
+  // ---------- 7d2. A scanner on this computer (orOS Bridge) ----------
+  // device.js talks to orOS Bridge (0.9.0+) on 127.0.0.1; WIA or SANE
+  // reaches the scanner. "Add from scanner" shows only when a bridge
+  // with scanners answers. Pages come in strips (ORS1), are put
+  // together here and kept like camera pages (full corners, a look from
+  // the colour mode), so tapping one gives corners, looks and turns.
+  // Pairing is shared with Studio (same browser, same key).
+  var DV = window.ScanPdfDevice;
+  var dvc = null;           // the bridge client, made once
+  var dv = null;            // this scanner screen: { list, scanning, builder, chain, unsub }
+  var DV_PREFS = "oros-scanpdf-device";
+  function devPrefs() {
+    var p = {};
+    try { p = JSON.parse(localStorage.getItem(DV_PREFS) || "{}") || {}; } catch (e) {}
+    return { scanner: typeof p.scanner === "string" ? p.scanner : "", source: p.source, mode: p.mode,
+             dpi: typeof p.dpi === "number" ? p.dpi : 0, read: p.read === true };
+  }
+  function saveDevPrefs(p) { try { localStorage.setItem(DV_PREFS, JSON.stringify(p)); } catch (e) {} }
+  function devClient() {
+    if (!dvc && DV && typeof WebSocket === "function") dvc = DV.client(WebSocket, localStorage);
+    return dvc;
+  }
+  // Is a bridge with scanners here? Then the buttons show.
+  var dvProbing = false, dvSeen = false;
+  function devProbe() {
+    var c = devClient();
+    if (!c || dvProbing || dvSeen) return;
+    dvProbing = true;
+    c.connect(2000).then(function (r) {
+      dvProbing = false;
+      if (r === "ok" || r === "pair") { dvSeen = true; $("dev-start").hidden = false; $("dev-more").hidden = false; }
+    }, function () { dvProbing = false; });
+  }
+  function isWhole(q) {
+    var w = SC.fullQuad(1, 1, 0);
+    return q && q.length === 4 && q.every(function (p, i) { return Math.abs(p[0] - w[i][0]) < 1e-9 && Math.abs(p[1] - w[i][1]) < 1e-9; });
+  }
+  function devMsg(key, params, bad) {
+    var m = $("dv-msg");
+    m.textContent = key ? t(key, params) : "";
+    m.classList.toggle("bad", !!bad);
+  }
+  function devFocus() {
+    if (!$("dv-pair").hidden) return $("dv-code");
+    if (!$("dv-scan").disabled) return $("dv-scan");
+    return $("dv-again");
+  }
+  function devState(view) {
+    // view: "wait" | "pair" | "form" | "none"
+    $("dv-pair").hidden = view !== "pair";
+    $("dv-form").hidden = view !== "form";
+    $("dv-scan").disabled = view !== "form" || !dv || !dv.list.length || dv.scanning;
+    $("dv-again").hidden = view === "pair";
+    $("dv-again").disabled = !!(dv && dv.scanning);
+    $("dv-cancel").hidden = !(dv && dv.scanning);
+    ["dv-scanner", "dv-source", "dv-mode", "dv-dpi", "dv-read"].forEach(function (id) { $(id).disabled = !!(dv && dv.scanning); });
+  }
+  function devOpen() {
+    dv = { list: [], scanning: false, builder: null, chain: Promise.resolve(), unsub: null };
+    var c = devClient();
+    devState("wait");
+    if (!c) { devMsg("dv.nobridge", null, true); return; }
+    devMsg("dv.connecting");
+    dv.unsub = c.on(devEvent);
+    c.connect(4000).then(function (r) {
+      if (!dv) return;
+      if (r === "old") { devMsg("dv.old", null, true); devState("none"); return; }
+      if (r === "pair") { devMsg(""); devState("pair"); setTimeout(function () { $("dv-show").focus(); }, 0); return; }
+      devLook(false);
+    }, function () {
+      if (!dv) return;
+      devMsg("dv.nobridge", null, true);
+      devState("none");
+    });
+  }
+  function devClose() {
+    if (!dv) return;
+    if (dv.scanning && dvc) dvc.cancel();
+    if (dv.unsub) dv.unsub();
+    dv = null;
+  }
+  function devLook(full) {
+    var c = devClient();
+    if (!dv || !c) return;
+    devMsg("dv.looking");
+    devState("wait");
+    var p = (c.connected() ? Promise.resolve("ok") : c.connect(4000)).then(function (r) {
+      if (r !== "ok") throw new Error(r);
+      return c.scanners(full);
+    });
+    p.then(function (res) {
+      if (!dv) return;
+      dv.list = res.list;
+      if (!res.list.length) { devMsg(res.nosane ? "dv.nosane" : "dv.none", null, true); devState("none"); return; }
+      devMsg("");
+      devFill();
+      devState("form");
+      setTimeout(function () { if (sc && sc.view === "cam") $("dv-scan").focus(); }, 0);
+    }, function (e) {
+      if (!dv) return;
+      if (e && e.message === "pair") { devMsg(""); devState("pair"); return; }
+      devMsg("dv.nobridge", null, true);
+      devState("none");
+    });
+  }
+  function fillSelect(s, opts, value) {
+    s.textContent = "";
+    opts.forEach(function (o) {
+      var op = document.createElement("option");
+      op.value = String(o[0]); op.textContent = o[1]; op.selected = String(o[0]) === String(value);
+      s.appendChild(op);
+    });
+  }
+  function devCurrent() {
+    var id = $("dv-scanner").value;
+    return dv.list.filter(function (x) { return x.id === id; })[0] || dv.list[0];
+  }
+  function devFill(keepScanner) {
+    var p = devPrefs();
+    var sid = keepScanner ? $("dv-scanner").value : p.scanner;
+    if (!dv.list.some(function (x) { return x.id === sid; })) sid = dv.list[0].id;
+    fillSelect($("dv-scanner"), dv.list.map(function (x) { return [x.id, x.name]; }), sid);
+    var cur = devCurrent(), ch = DV.choose(cur, p);
+    fillSelect($("dv-source"), cur.sources.map(function (k) { return [k, t("dv.src." + k)]; }), ch.source);
+    fillSelect($("dv-mode"), cur.modes.map(function (k) { return [k, t("dv.m." + k)]; }), ch.mode);
+    fillSelect($("dv-dpi"), cur.dpi.map(function (d) { return [d, t("dv.dpiN", { n: d })]; }), ch.dpi);
+    $("dv-read").checked = p.read;
+  }
+  function devSettings() {
+    return { scanner: $("dv-scanner").value, source: $("dv-source").value, mode: $("dv-mode").value,
+             dpi: parseInt($("dv-dpi").value, 10) || 300, read: $("dv-read").checked };
+  }
+  function devScan() {
+    var c = devClient();
+    if (!dv || !c || dv.scanning || !dv.list.length) return;
+    var o = devSettings();
+    saveDevPrefs(o);
+    dv.scanning = true;
+    dv.mode = o.mode;
+    dv.got = 0;
+    dv.builder = null;
+    devState("form");
+    devMsg("dv.page", { n: 1, p: 0 });
+    c.start(o).then(function () { $("dv-cancel").focus(); }, function (e) {
+      if (!dv) return;
+      dv.scanning = false;
+      devState("form");
+      devMsg(DV.errKey(e && e.message), null, true);
+    });
+  }
+  function devEvent(m) {
+    if (!dv) return;
+    if (m.event === "closed") {
+      if (dv.scanning) { dv.scanning = false; devMsg("dv.nobridge", null, true); devState("none"); }
+      return;
+    }
+    if (!dv.scanning) return;
+    if (m.event === "strip") {
+      if (!dv.builder) dv.builder = DV.pageBuilder();
+      dv.builder.add(m.strip);
+      return;
+    }
+    if (m.event === "scanProgress") {
+      devMsg("dv.page", { n: (m.page | 0) + 1, p: Math.max(0, Math.min(100, m.pct | 0)) });
+      return;
+    }
+    if (m.event === "scanPage") {
+      var b = dv.builder, img = b && b.done({ width: m.width, height: m.height, channels: m.channels });
+      dv.builder = null;
+      if (img) { dv.got++; devKeep(img, dv.mode); }
+      return;
+    }
+    if (m.event === "scanDone" || m.event === "scanError") {
+      dv.scanning = false;
+      dv.builder = null;
+      devState("form");
+      if (m.event === "scanError") devMsg(DV.errKey(m.code), null, true);
+      else if (m.cancelled) devMsg("dv.stopped");
+      else devMsg(dv.got === 1 ? "dv.got.one" : "dv.got", { n: dv.got });
+      setTimeout(function () { if (sc && sc.view === "cam" && sc.device) devFocus().focus(); }, 0);
+    }
+  }
+  // A scanned page joins the strip as it comes, one after the other.
+  function devKeep(img, mode) {
+    var s0 = sc;
+    dv.chain = dv.chain.then(function () {
+      if (!sc || sc !== s0) return;
+      var cv = document.createElement("canvas");
+      cv.width = img.width; cv.height = img.height;
+      var x = cv.getContext("2d"), id = x.createImageData(img.width, img.height);
+      id.data.set(img.data);
+      x.putImageData(id, 0, 0);
+      var sh = { canvas: cv, quad: SC.fullQuad(1, 1, 0), filter: DV.lookFor(mode), rot: 0, photo: true, device: true, warped: id };
+      var out = shotCanvas(sh);
+      return new Promise(function (res) {
+        out.toBlob(function (blob) {
+          if (!blob || !sc || sc !== s0) { res(); return; }
+          var pg = { blob: blob, shot: sh, thumb: thumbCanvas(out) };
+          cv.toBlob(function (raw) { sh.raw = raw; dropBig(sh); res(); }, "image/jpeg", 0.92);
+          sc.pages.push(pg);
+          renderStrip();
+          say(t("sc.kept", { n: sc.pages.length }));
+        }, "image/jpeg", 0.85);
+      });
+    });
+  }
+  function wireDevice() {
+    $("dv-again").addEventListener("click", function () { devLook(true); });
+    $("dv-scan").addEventListener("click", devScan);
+    $("dv-cancel").addEventListener("click", function () { if (dvc) dvc.cancel(); });
+    $("dv-scanner").addEventListener("change", function () { if (dv) devFill(true); });
+    $("dv-read").addEventListener("change", function () { var p = devSettings(); saveDevPrefs(p); });
+    $("dv-show").addEventListener("click", function () {
+      var c = devClient();
+      if (!c) return;
+      c.pair().then(function () { devMsg(""); $("dv-code").focus(); }, function () { devMsg("dv.nobridge", null, true); });
+    });
+    function sendCode() {
+      var c = devClient(), code = $("dv-code").value;
+      if (!c || code.replace(/\D/g, "").length !== 6) { devMsg("dv.badCode", null, true); return; }
+      c.sendCode(code).then(function () { $("dv-code").value = ""; devLook(false); }, function () { devMsg("dv.badCode", null, true); });
+    }
+    $("dv-pairgo").addEventListener("click", sendCode);
+    $("dv-code").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); sendCode(); } });
+    devProbe();
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) devProbe(); });
   }
 
   // ---------- 7e. Reading text (OCR) ----------
