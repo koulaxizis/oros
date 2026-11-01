@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.91.00
+- [Scanner & PDF](help:a/scanpdf) can scan from a real scanner or multifunction printer on this computer: install [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) 0.9.0 and `Add from scanner` appears. Pick the scanner, the glass or the feeder (both sides when it can), colour, gray or line art and the resolution; the pages come into the same review strip as camera scans, and `Read the text after scanning` makes them searchable. Pairing with the Bridge is shared with Studio, and nothing leaves your computer. On Linux the Bridge uses SANE (with sane-airscan for network scanners), already on orOS USB.
+
 ## Version 4.90.00
 - To-Do › a list's settings › Server task list (CalDAV): link a list to a task list on your own server (Nextcloud Tasks, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything. Then tasks go both ways with their notes, dates, priorities, repeats, labels and subtasks, so your phone and Thunderbird see the same tasks; alarms and details orOS doesn't show stay on the server untouched, and nothing is deleted on either side unless it was in sync before. See [To-Do](help:a/todo).
 
