@@ -32,6 +32,8 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - The power button bypasses an effect, the arrows change the order, and `×` removes it.
 - The play button in the effects window plays the song while you adjust. Changes are heard at once and can be undone.
 - Convolution can use your own impulse response: set `Source` to `IR File` and choose a WAV file (up to 20 MB). It is kept in the `Studio/fx` folder and syncs like the rest of the audio.
+- `Assisted` holds the effects that set themselves up from your sound (Assisted EQ, Compressor, Reverb and Delay): turn on `Learn`, play a part of the song, then turn it off. What they learned is saved with the track like any other setting, and [[Ctrl+Z]] undoes it in one step.
+- On an instrument track, `MIDI` lists the MIDI effects (Arpeggiator, Chords, Scale, Note Echo and more). They sit above the instrument and change the notes before it plays them: the notes of clips, of the keys and of the remote's pads go through them in order, top to bottom. They move only among themselves, and the instrument stays below them.
 - Some effects need a moment to look ahead. Studio delays the other tracks to match, so everything stays in time, also in the export.
 - The effects are [NULL JSFX](https://nulljsfx.tech) (MIT License), running in the browser.
 
@@ -128,6 +130,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 3. On the PC, press `Allow`. Once a device is allowed, no other device can join with that code.
 - The remote shows play, stop, record, loop, the click, the tempo and a position bar, and a strip per track with the fader, pan, `M` `S` `R`, effect on/off and a meter, plus the master.
 - `FX` on a strip opens that track's effects, as on the PC: the effect's own interface with its meters, every control, on/off, order, adding and removing. Files for effects (such as Convolution's IR) are chosen on the PC.
+- A track with a NULL instrument has `Pads` (drums) or `Keys` on its strip: what you play there sounds on the PC through that instrument, and while the track records MIDI it is recorded. On a pad, higher is louder; on the keys you can slide from key to key, and `−` `+` change the octave. The button at the top switches between pads and keys.
 - Drag a fader to move it from where it is; a double tap puts it back to 0 dB. Every move is a normal edit on the PC, so [[Ctrl+Z]] undoes it there.
 - On the same network the two devices talk directly. Through a VPN or on different networks (for example a phone on 4G) they talk through the orOS relay instead, with a little more delay. Either way the link is encrypted with the code, and the relay only passes it on.
 - `Disconnect` on the PC ends the link at once. If the link drops, the remote reconnects by itself while Studio stays open on the PC.
