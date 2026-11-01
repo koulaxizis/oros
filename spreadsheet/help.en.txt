@@ -42,7 +42,12 @@ Dates are day numbers, as in Excel: 1 is 31 December 1899, so subtracting two da
 - A date you type, like 2026-10-14 or 14/10/2026, stays as you typed it (text). Date functions still read it (day first: 14/10/2026 is 14 October), and DATEVALUE turns it into a day number.
 
 ## Format and edit
-- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys. On a touch screen, touch and hold a cell for a moment, then drag; or choose `Select a range…` in the sheet menu and tap the last cell.
+- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys. Click a column letter or a row number to select the whole column or row; [[Shift]] + click on another one selects all in between.
+- On a touch screen: tap a cell, then drag one of the round handles on its corners: the opposite corner stays put. On a whole column or row, the handles change only the columns or the rows.
+- On a touch screen: touch and hold a cell for a moment, then drag.
+- On a touch screen: tap a column letter or a row number to select the whole column or row.
+- On a touch screen: `Extend selection` in the sheet menu: every cell, column letter or row number you tap then joins the selection, up to it. The `Extending ✕` button above the sheet tabs (or [[Esc]], or starting to type) ends it.
+- On a touch screen, the small square just outside the bottom-right corner is the fill handle (see Fill handle).
 - The toolbar has Undo, Redo, Copy, Cut, Paste, bold, italic, underline, alignment, `Number format` (`auto`, 123, 123.00, %, €, `date`), `Text color`, `Clear formatting` and the cell format button (see Fill, borders and merged cells).
 - Tap a column letter or a row number to select the whole column or row.
 - [[Delete]] or [[Backspace]] empties the selected cells.
@@ -59,7 +64,7 @@ The cell format button next to `Clear formatting` has:
 - `Conditional formatting…` (see below).
 
 ## Fill handle
-The small square at the bottom right of the selection is the fill handle. Drag it down, up, left or right, with the mouse or a finger:
+The small square at the bottom right of the selection (on a touch screen, just outside that corner) is the fill handle. Drag it down, up, left or right, with the mouse or a finger:
 
 - Numbers in a pattern (1, 2 or 10, 20) continue; one number is copied (hold [[Ctrl]] while dragging to count up instead).
 - Dates continue by day, or by the step between them. Weekdays and months continue in English and Greek (Monday, Tuesday… or Ιαν, Φεβ…), and so does text ending in a number, like Item 1, Item 2.
