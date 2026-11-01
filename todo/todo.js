@@ -4680,7 +4680,26 @@
     clearTimeout(tdKickT);
     tdKickT = setTimeout(tdRun, TD_KICK);
   }
+  // CalDAV wave 6: the shell's background pass opens this app in a
+  // hidden frame (?davbg=1) while it is closed; one pass, then the
+  // shell is told and drops the frame.
+  function tdBgDone() {
+    var held = 0, errs = [];
+    tdLinks().forEach(function (x) {
+      var i = tdInfo[x.id] || {};
+      if (i.err) errs.push(i.err);
+      if (i.held && (i.held.local || i.held.server)) held++;
+    });
+    try {
+      parent.postMessage({ oros: "dav-bg-done", app: "todo", links: tdLinks().length, held: held, err: errs[0] || "" },
+                         location.origin);
+    } catch (e) {}
+  }
   function tdBoot() {
+    if (/[?&]davbg=1(&|$)/.test(location.search)) {
+      tdRun().then(tdBgDone, tdBgDone);
+      return;
+    }
     if (tdLinks().length) {
       tdLib().then(function (ok) {
         if (!ok) return;

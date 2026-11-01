@@ -1022,7 +1022,8 @@
   // they turn it on). Nothing is saved before the server has passed
   // the probe.
   var cd = { open: false, url: "", user: "", pass: "", relay: false, busy: false, msg: null };
-  var CD_ERRS = ["url", "auth", "unreachable", "notdav", "none", "readonly", "conditions", "etag", "moved", "relay-target", "too-big"];
+  var CD_ERRS = ["url", "auth", "unreachable", "notdav", "none", "readonly", "conditions", "etag", "moved", "relay-target", "too-big",
+                 "notnc", "login-expired", "cancelled"];
 
   function cdApi() { return window.OrosDav && window.OrosDav.v >= 1 ? window.OrosDav : null; }
   // davkit.js loads only when the Sync section is first drawn (the
@@ -1073,8 +1074,6 @@
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
     form.appendChild(cdInput("url", t("cd.url"), "url", t("cd.url.ph"), "url"));
-    form.appendChild(cdInput("user", t("cd.user"), "text", "", "username"));
-    form.appendChild(cdInput("pass", t("cd.pass"), "password", "", "current-password"));
     var rl = el("label", "check");
     var rc = el("input");
     rc.type = "checkbox";
@@ -1085,11 +1084,20 @@
     rl.appendChild(el("span", null, t("cd.relay")));
     form.appendChild(rl);
     form.appendChild(el("div", "hint", t("cd.relay.hint")));
+    // W6: Nextcloud Login Flow v2 (davkit ncLogin): no password typed here.
+    form.appendChild(actions(cd.ncWait
+      ? button(t("cd.nc.cancel"), "cd.nc.cancel", function () { D.ncCancel(); })
+      : button(t("cd.nc"), "cd.nc", function () { cdNextcloud(D); })));
+    form.appendChild(el("div", "hint", t("cd.nc.hint")));
+    form.appendChild(el("div", "row-label", t("cd.or")));
+    form.appendChild(cdInput("user", t("cd.user"), "text", "", "username"));
+    form.appendChild(cdInput("pass", t("cd.pass"), "password", "", "current-password"));
     var go = el("button", "btn primary", t(cd.busy ? "cd.working" : "cd.go"));
     go.type = "submit";
     go.setAttribute("data-k", "cd.go");
     if (cd.busy) go.disabled = true;
     form.appendChild(actions(go, button(t("cd.cancel"), "cd.cancel", function () {
+      if (cd.ncWait) D.ncCancel();
       cd.open = false; cd.pass = ""; cd.msg = null; render();
     })));
     form.addEventListener("submit", function (ev) {
@@ -1107,6 +1115,69 @@
       });
     });
     return form;
+  }
+  // The window opens on the click (no pop-up blocker), the server's
+  // page goes into it once Nextcloud answers.
+  function cdNextcloud(D) {
+    if (cd.busy) return;
+    var w = null;
+    try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
+    try { if (w) w.opener = null; } catch (e) {}
+    cd.busy = true;
+    cd.ncWait = true;
+    cd.msg = { kind: "dim", key: "cd.working" };
+    render();
+    D.ncLogin({ url: cd.url, relay: cd.relay }, function (url) {
+      cd.msg = { kind: "dim", key: "cd.nc.wait" };
+      render();
+      if (w && !w.closed) w.location.href = url;
+      else window.open(url, "_blank", "noopener");
+    }).then(function () {
+      cd.busy = false; cd.ncWait = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
+    }, function (e) {
+      try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (x) {}
+      cd.busy = false; cd.ncWait = false; cd.msg = cdErr(e); render();
+    });
+  }
+  // W6: the shell's background pass (shell.js 10e) and its last result.
+  function cdBgInfo() {
+    var p = parentWin();
+    try { return p && typeof p.__orosDavBg === "function" ? p.__orosDavBg() : null; } catch (e) { return null; }
+  }
+  function cdTime(at) {
+    var d = new Date(at), now = new Date();
+    var hm = ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+    if (d.toDateString() === now.toDateString()) return hm;
+    try { return d.toLocaleDateString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "short" }) + " " + hm; }
+    catch (e) { return hm; }
+  }
+  function cdBgBlock() {
+    var b = cdBgInfo();
+    if (!b) return null;
+    var wrap = el("div", "cd-bg");
+    var lab = el("label", "check");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.setAttribute("data-k", "cd-bg");
+    cb.checked = !b.off;
+    cb.addEventListener("change", function () {
+      act("caldav.bg", { on: cb.checked });
+      render();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(el("span", null, t("cd.bg")));
+    wrap.appendChild(lab);
+    wrap.appendChild(el("div", "hint", t("cd.bg.hint")));
+    if (b.off) return wrap;
+    var ids = ["calendar", "contacts", "todo"].filter(function (id) { return b.apps[id] && b.apps[id].at; });
+    if (!ids.length) wrap.appendChild(el("div", "hint", t("cd.bg.never")));
+    ids.forEach(function (id) {
+      var r = b.apps[id], v = { app: t("cd.app." + id), time: cdTime(r.at) };
+      var line = el("div", r.err ? "hint warn" : "hint", t(r.err ? "cd.bg.err" : r.held ? "cd.bg.held" : "cd.bg.ok", v));
+      line.setAttribute("data-k", "cd-bg-" + id);
+      wrap.appendChild(line);
+    });
+    return wrap;
   }
   function caldavCard() {
     var D = cdApi();
@@ -1144,6 +1215,8 @@
       });
       c.appendChild(ul);
       c.appendChild(el("p", "hint", t("cd.next")));
+      var bg = cdBgBlock();
+      if (bg) c.appendChild(bg);
       var chk = button(t(cd.busy ? "cd.working" : "cd.refresh"), "cd.refresh", function () {
         cd.busy = true; cd.msg = null; render();
         D.refresh().then(function () { cd.busy = false; render(); }, function (e) { cd.busy = false; cd.msg = cdErr(e); render(); });

@@ -722,3 +722,7 @@ body.tr-open { overflow: hidden; }
 /* Calendars and contacts (CalDAV / CardDAV): the collections found */
 .cd-cols { margin: 4px 0 8px; padding-left: 18px; }
 .cd-cols li { margin: 2px 0; overflow-wrap: anywhere; }
+.cd-bg { margin: 10px 0 8px; }
+.cd-bg .hint { margin-top: 2px; }
+.cd-bg .check { align-items: flex-start; }
+.cd-bg .check span { white-space: normal; overflow: visible; }
