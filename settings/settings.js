@@ -1001,6 +1001,7 @@
       host.appendChild(c2);
 
       if (y.canRestore) host.appendChild(backupsCard(y));
+      if (y.canClean) host.appendChild(cleanCard(y));
 
       var c3 = card(null);
       c3.appendChild(actions(
@@ -1011,6 +1012,215 @@
         }, "danger")));
       host.appendChild(c3);
     }
+    host.appendChild(caldavCard());
+  }
+
+  // ---------- 6a-2. Calendars and contacts (CalDAV / CardDAV, wave 2) ----------
+  // The account lives in davkit.js (window.OrosDav, loaded by this
+  // page): device-local, the app password never leaves this device
+  // except to the person's own server (and through the relay only when
+  // they turn it on). Nothing is saved before the server has passed
+  // the probe.
+  var cd = { open: false, url: "", user: "", pass: "", relay: false, busy: false, msg: null };
+  var CD_ERRS = ["url", "auth", "unreachable", "notdav", "none", "readonly", "conditions", "etag", "moved", "relay-target", "too-big"];
+
+  function cdApi() { return window.OrosDav && window.OrosDav.v >= 1 ? window.OrosDav : null; }
+  // davkit.js loads only when the Sync section is first drawn (the
+  // Settings first-open budget, .github/qa/budget.json).
+  var CD_V = (function () {
+    var m = (document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&#]+)/);
+    return m ? m[1] : "";
+  })();
+  var cdLoading = 0;   // 0 not asked, 1 loading, 2 failed
+  function cdLoad() {
+    if (cdLoading) return;
+    cdLoading = 1;
+    var sc = document.createElement("script");
+    sc.src = "../davkit.js" + (CD_V ? "?v=" + encodeURIComponent(CD_V) : "");
+    sc.onload = function () { render(); };
+    sc.onerror = function () { cdLoading = 2; render(); };
+    document.head.appendChild(sc);
+  }
+  function cdErr(e) {
+    var code = String((e && e.message) || "").replace(/^cd-/, "");
+    return { kind: "err", key: CD_ERRS.indexOf(code) >= 0 ? "cd.err." + code : "cd.err.other" };
+  }
+  function cdInput(key, label, type, ph, auto) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-cd-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-cd-" + key;
+    inp.type = type;
+    inp.autocomplete = auto;
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", "off");
+    if (ph) inp.placeholder = ph;
+    inp.maxLength = key === "url" ? 500 : 200;
+    inp.value = cd[key];
+    inp.setAttribute("data-k", "cd-" + key);
+    inp.addEventListener("input", function () { cd[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function cdKind(c) {
+    if (c.kind === "card") return t("cd.kind.card");
+    var ev = c.comps.indexOf("VEVENT") >= 0, td = c.comps.indexOf("VTODO") >= 0;
+    return t(ev && td ? "cd.kind.both" : ev ? "cd.kind.cal" : "cd.kind.todo");
+  }
+  function cdForm(D) {
+    var form = el("form", "pass dav-form");
+    form.setAttribute("autocomplete", "off");
+    form.appendChild(cdInput("url", t("cd.url"), "url", t("cd.url.ph"), "url"));
+    form.appendChild(cdInput("user", t("cd.user"), "text", "", "username"));
+    form.appendChild(cdInput("pass", t("cd.pass"), "password", "", "current-password"));
+    var rl = el("label", "check");
+    var rc = el("input");
+    rc.type = "checkbox";
+    rc.setAttribute("data-k", "cd-relay");
+    rc.checked = cd.relay;
+    rc.addEventListener("change", function () { cd.relay = rc.checked; });
+    rl.appendChild(rc);
+    rl.appendChild(el("span", null, t("cd.relay")));
+    form.appendChild(rl);
+    form.appendChild(el("div", "hint", t("cd.relay.hint")));
+    var go = el("button", "btn primary", t(cd.busy ? "cd.working" : "cd.go"));
+    go.type = "submit";
+    go.setAttribute("data-k", "cd.go");
+    if (cd.busy) go.disabled = true;
+    form.appendChild(actions(go, button(t("cd.cancel"), "cd.cancel", function () {
+      cd.open = false; cd.pass = ""; cd.msg = null; render();
+    })));
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (cd.busy) return;
+      var pass = cd.pass;
+      cd.pass = "";
+      cd.busy = true;
+      cd.msg = { kind: "dim", key: "cd.working" };
+      render();
+      D.connect({ url: cd.url, user: cd.user, relay: cd.relay }, pass).then(function () {
+        cd.busy = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
+      }, function (e) {
+        cd.busy = false; cd.msg = cdErr(e); render();
+      });
+    });
+    return form;
+  }
+  function caldavCard() {
+    var D = cdApi();
+    var c = card(t("cd.title"), "caldav");
+    c.appendChild(el("p", "hint", t("cd.hint")));
+    if (!D) {
+      if (cdLoading === 2) c.appendChild(el("p", "msg msg-err", t("cd.err.other")));
+      else { cdLoad(); c.appendChild(el("p", "hint", t("cd.working"))); }
+      return c;
+    }
+    var a = D.load();
+    if (!a) {
+      if (cd.open) c.appendChild(cdForm(D));
+      else c.appendChild(actions(button(t("cd.connect"), "cd.connect", function () {
+        cd.open = true; cd.msg = null; render();
+        var f = $("f-cd-url"); if (f) f.focus();
+      }, "primary")));
+    } else {
+      var host = a.conf.url;
+      try { host = new URL(a.conf.url).host; } catch (e) {}
+      var st = el("div", "status status-on");
+      st.appendChild(el("span", "dot"));
+      var tx = el("div", "status-txt");
+      tx.appendChild(el("div", "status-main", t("cd.on", { host: host, user: a.conf.user })));
+      if (a.conf.relay) tx.appendChild(el("div", "hint", t("cd.via.relay")));
+      st.appendChild(tx);
+      c.appendChild(st);
+      c.appendChild(el("div", "row-label", t("cd.found")));
+      if (!a.cols.length) c.appendChild(el("p", "hint", t("cd.none")));
+      var ul = el("ul", "cd-cols");
+      a.cols.forEach(function (col) {
+        var li = el("li", "hint");
+        li.textContent = (col.name || t("cd.noname")) + " \u00b7 " + cdKind(col) + (col.readOnly ? " \u00b7 " + t("cd.ro") : "");
+        ul.appendChild(li);
+      });
+      c.appendChild(ul);
+      c.appendChild(el("p", "hint", t("cd.next")));
+      var chk = button(t(cd.busy ? "cd.working" : "cd.refresh"), "cd.refresh", function () {
+        cd.busy = true; cd.msg = null; render();
+        D.refresh().then(function () { cd.busy = false; render(); }, function (e) { cd.busy = false; cd.msg = cdErr(e); render(); });
+      });
+      if (cd.busy) chk.disabled = true;
+      c.appendChild(actions(chk, confirmBtn(t("cd.disconnect"), t("cd.disconnect.confirm"), "cd.disconnect", function () {
+        D.disconnect(); cd.msg = null; render();
+      }, "danger")));
+    }
+    if (cd.msg) {
+      var m = el("p", "msg msg-" + cd.msg.kind, t(cd.msg.key));
+      m.setAttribute("role", "status");
+      c.appendChild(m);
+    }
+    return c;
+  }
+
+  // VD-GC: unused copies in the cloud. Check changes nothing; the
+  // clean-up runs only on a second tap, and only on what Check found.
+  function bytesLabel(n) {
+    n = +n || 0;
+    if (n < 1048576) return Math.max(n ? 1 : 0, Math.round(n / 1024)) + " KB";
+    if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+    return (n / 1073741824).toFixed(2) + " GB";
+  }
+  function cleanCard(y) {
+    var c = card(t("y.clean"));
+    var days = y.cleanDays || 30;
+    c.appendChild(el("p", "hint", t("y.clean.hint", { days: days })));
+    var k = y.clean || {}, u = k.usage, r = k.result;
+    if (r) {
+      var done = el("div", "msg msg-ok", t("y.clean.done", { n: r.removed, size: bytesLabel(r.bytes) }));
+      done.setAttribute("role", "status");
+      c.appendChild(done);
+      if (r.healed) c.appendChild(el("div", "hint", t("y.clean.healed", { n: r.healed })));
+      if (r.stopped) c.appendChild(el("div", "msg msg-dim", t("y.clean.stopped")));
+      if (r.lost && r.lost.length) {
+        c.appendChild(el("div", "msg msg-err", t("y.clean.lost", { list: r.lost.join(", ") })));
+      }
+    }
+    if (k.code) {
+      var code = k.code.replace(/^clean-/, "");
+      var key = code === "no-manifest" || code === "mismatch" ? "y.clean.hold." + code : "y.clean.err." + code;
+      c.appendChild(el("div", "msg msg-err", t(key)));
+    } else if (k.err) {
+      c.appendChild(el("div", "msg msg-err", k.err));
+    }
+    if (k.busy === "check") c.appendChild(el("div", "hint", t("y.clean.checking")));
+    if (u && k.busy !== "check") {
+      c.appendChild(el("div", "hint", t("y.clean.used", { n: u.files, size: bytesLabel(u.fileBytes) })));
+      c.appendChild(el("div", "hint", t("y.clean.unused", { n: u.unused, size: bytesLabel(u.unusedBytes) })));
+      if (u.missing) c.appendChild(el("div", "hint", t("y.clean.missing", { n: u.missing })));
+      if (u.hold) {
+        c.appendChild(el("div", "msg msg-err", t("y.clean.hold." + (u.hold === "no-manifest" ? "no-manifest" : "mismatch"))));
+      } else if (u.free > 0) {
+        c.appendChild(el("div", "hint", t("y.clean.free", { n: u.free, size: bytesLabel(u.freeBytes) })));
+        if (u.unused > u.free) c.appendChild(el("div", "hint", t("y.clean.young", { days: days })));
+      } else {
+        c.appendChild(el("div", "hint", t(u.unused ? "y.clean.young" : "y.clean.none", { days: days })));
+      }
+    }
+    var btns = [];
+    if (k.busy === "clean") {
+      var w = button(t("y.clean.running"), "y.clean.run", function () {});
+      w.disabled = true;
+      btns.push(w);
+    } else {
+      var chk = button(t("y.clean.check"), "y.clean.check", function () { act("sync.clean.check"); });
+      if (k.busy) chk.disabled = true;
+      btns.push(chk);
+      if (u && !u.hold && u.free > 0 && !k.busy) {
+        btns.push(confirmBtn(t("y.clean.run", { size: bytesLabel(u.freeBytes) }),
+          t("y.clean.run.confirm", { n: u.free }), "y.clean.run", function () { act("sync.clean.run"); }, "danger"));
+      }
+    }
+    c.appendChild(actions.apply(null, btns));
+    return c;
   }
 
   // A43: the cloud's daily backups, newest first, each with Restore
@@ -1264,12 +1474,22 @@
     }
 
     var c2 = card(null);
+    // BK-E: the switch only asks; the shell's passphrase dialog turns
+    // it on once the key is stored.
+    c2.appendChild(row(t("b.enc"), switchBtn(!!b.encrypt, "b.enc", function (v) { act("backup.encrypt", v); }, t("b.enc")),
+      { scope: "backupenc", hint: t("b.enc.hint") }));
+    if (b.encLost) {
+      c2.appendChild(el("div", "hint warn", t("b.enc.lost")));
+      c2.appendChild(actions(button(t("b.enc.set"), "b.enc.set", function () { act("backup.encryptPass"); }, "primary")));
+    } else if (b.encrypt) {
+      c2.appendChild(actions(button(t("b.enc.change"), "b.enc.change", function () { act("backup.encryptPass"); })));
+    }
     c2.appendChild(actions(
       button(t("b.export"), "b.export", function () { act("backup.export"); }, "primary"),
       button(t("b.import"), "b.import", function () { act("backup.import"); }),
       b.folderSupported && b.folder && b.autoexport !== "off"
         ? button(t("b.now"), "b.now", function () { act("backup.now"); }) : null));
-    c2.appendChild(el("p", "hint", t("b.hint")));
+    c2.appendChild(el("p", "hint", t(b.encrypt ? "b.hint.enc" : "b.hint")));
     host.appendChild(c2);
   }
 
@@ -1946,6 +2166,8 @@
       host.appendChild(pcc);
     }
 
+    host.appendChild(reportCard());
+
     var c4 = card(t("x.reset"));
     c4.classList.add("danger-card");
     c4.appendChild(el("p", "hint", t("x.reset.hint")));
@@ -1960,6 +2182,102 @@
     host.appendChild(c4);
   }
   var resetting = false;
+
+  // "Report a problem": settings/report.js builds one text file (no user
+  // data); the person reads it here before it is saved. Under the orOS
+  // launcher with the System extension (USB, Portable, desktop apps) the
+  // extension adds the computer's own logs and saves one file in
+  // Downloads (event "oros-report" → "oros-report-done", string details).
+  var rep = { busy: false, text: "", name: "", msg: null };
+  function sysReport() {
+    var p = parentWin();
+    try { return !!(p && p.document.documentElement.getAttribute("data-oros-report") === "1"); }
+    catch (e) { return false; }
+  }
+  function reportMake() {
+    var R = window.SettingsReport;
+    if (!R || rep.busy) return;
+    rep.busy = true; rep.msg = null; render();
+    R.gather(parentWin() || window, snap() || {}).then(function (ctx) {
+      rep.text = R.build(ctx);
+      rep.name = R.fileName(ctx.now);
+    }, function () {
+      rep.msg = { cls: "msg-err", text: t("x.report.fail") };
+    }).then(function () { rep.busy = false; render(); });
+  }
+  function reportSave() {
+    var p = parentWin(), D = null;
+    try { D = p && p.orosDialog; } catch (e) {}
+    var done = function (r) {
+      if (r && r.ok) rep.msg = { cls: "msg-ok", text: t("x.report.saved", { f: rep.name }) };
+      render();
+    };
+    if (D && typeof D.saveFile === "function") {
+      D.saveFile({ text: rep.text, filename: rep.name, mime: "text/plain" }).then(done, function () {
+        rep.msg = { cls: "msg-err", text: t("x.report.fail") }; render();
+      });
+      return;
+    }
+    // Standalone run (no shell): a plain download.
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([rep.text], { type: "text/plain" }));
+      a.download = rep.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      done({ ok: true });
+    } catch (e) { rep.msg = { cls: "msg-err", text: t("x.report.fail") }; render(); }
+  }
+  function reportSaveSys() {
+    var p = parentWin();
+    if (!p || rep.busy) return;
+    rep.busy = true; rep.msg = { cls: "msg-dim", text: t("x.report.sysWorking") }; render();
+    var doc = p.document, timer = 0;
+    function finish(r) {
+      doc.removeEventListener("oros-report-done", onDone);
+      clearTimeout(timer);
+      rep.busy = false;
+      rep.msg = r && r.ok
+        ? { cls: "msg-ok", text: t("x.report.sysSaved", { f: String(r.file || "") }) }
+        : { cls: "msg-err", text: t("x.report.sysFail", { e: String((r && r.error) || "timeout") }) };
+      render();
+    }
+    function onDone(ev) {
+      var r = null;
+      try { r = JSON.parse(String(ev.detail)); } catch (e) {}
+      finish(r);
+    }
+    doc.addEventListener("oros-report-done", onDone);
+    timer = setTimeout(function () { finish(null); }, 90000);
+    doc.dispatchEvent(new p.CustomEvent("oros-report", { detail: JSON.stringify({ text: rep.text }) }));
+  }
+  function reportCard() {
+    var c = card(t("x.report"));
+    c.appendChild(el("p", "hint", t("x.report.hint")));
+    if (!rep.text) {
+      c.appendChild(actions(button(rep.busy ? t("x.report.making") : t("x.report.make"), "x.report", reportMake, "primary")));
+    } else {
+      c.appendChild(el("p", "hint", t("x.report.check")));
+      var pre = el("pre", "report-text", rep.text);
+      pre.tabIndex = 0;
+      pre.setAttribute("aria-label", t("x.report"));
+      c.appendChild(pre);
+      var sys = sysReport();
+      c.appendChild(actions(
+        sys ? button(t("x.report.saveSys"), "x.report.sys", reportSaveSys, "primary") : null,
+        button(t("x.report.save"), "x.report.save", reportSave, sys ? "" : "primary"),
+        button(t("x.report.again"), "x.report.again", function () { rep.text = ""; rep.msg = null; reportMake(); }),
+        confirmBtn(t("x.report.clear"), t("x.report.clearConfirm"), "x.report.clear", function () {
+          var p = parentWin();
+          try { if (p && p.orosDiag) p.orosDiag.clear(); } catch (e) {}
+          rep.text = ""; rep.msg = { cls: "msg-dim", text: t("x.report.cleared") }; render();
+        })
+      ));
+      if (sys) c.appendChild(el("p", "hint", t("x.report.sysHint")));
+    }
+    if (rep.msg) c.appendChild(el("p", "msg " + rep.msg.cls, rep.msg.text));
+    return c;
+  }
 
   // ---------- 10. Navigation + render ----------
   var current = null;        // open section id, or null = the list (narrow)

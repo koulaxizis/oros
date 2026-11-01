@@ -1,4 +1,4 @@
-:root { color-scheme: light dark; --accent: #c8a96e; }
+:root { color-scheme: light dark; --accent: #d4af37; }
 body { font: 14px/1.45 system-ui, sans-serif; margin: 16px; min-width: 300px; max-width: 520px; }
 label { display: block; font-weight: 600; margin-bottom: 6px; }
 input { width: 100%; box-sizing: border-box; padding: 8px 10px; font: inherit; border: 1px solid #8884; border-radius: 8px; }

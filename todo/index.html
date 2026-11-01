@@ -7,7 +7,7 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=todo" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>To-Do · orOS</title>
-  <link rel="stylesheet" href="todo.css?v=4.66.00">
+  <link rel="stylesheet" href="todo.css?v=4.90.00">
 </head>
 <body>
 
@@ -98,6 +98,7 @@
   <dialog id="dlg-item">
     <form method="dialog" id="item-form" autocomplete="off">
       <h3 data-i18n="item.title">Task</h3>
+      <p id="f-dav-ro" class="hint dav-ro-note" hidden data-i18n="td.ro">This task comes from your server task list and orOS cannot keep all of it, so changes made here are undone. Change it on the server.</p>
 
       <label data-i18n="item.text">Text</label>
       <input id="f-text" type="text" required>
@@ -232,6 +233,44 @@
         </div>
       </fieldset>
 
+      <!-- A server task list (CalDAV wave 5, todo.js section 15; own lists only) -->
+      <fieldset id="l-dav" hidden>
+        <legend data-i18n="td.title">Server task list (CalDAV)</legend>
+        <div id="l-dav-noacct" hidden>
+          <p class="hint" data-i18n="td.noacct">Connect your calendar server first, in Settings › Sync › Calendars and contacts. The password stays on this device.</p>
+          <button type="button" id="l-dav-set" class="ghost" data-i18n="td.settings">Open Settings</button>
+        </div>
+        <div id="l-dav-off" hidden>
+          <p class="hint" data-i18n="td.hint">Link this list to a task list on your own server: its tasks then go both ways.</p>
+          <div class="hh-row" id="l-dav-pickrow">
+            <select id="l-dav-col" data-i18n-title="td.pick"></select>
+            <button type="button" id="l-dav-go" class="ghost" data-i18n="td.link">Link</button>
+          </div>
+          <div id="l-dav-prev" hidden>
+            <p id="l-dav-prev-text" class="hint" aria-live="polite"></p>
+            <div class="hh-row">
+              <button type="button" id="l-dav-prev-go" class="ghost" data-i18n="td.link">Link</button>
+              <button type="button" id="l-dav-prev-no" class="ghost" data-i18n="confirm.no">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <div id="l-dav-on" hidden>
+          <p id="l-dav-in"></p>
+          <p id="l-dav-st" class="hint" aria-live="polite"></p>
+          <div id="l-dav-held" hidden>
+            <p id="l-dav-held-text" class="hint err"></p>
+            <div class="hh-row">
+              <button type="button" id="l-dav-yes" class="danger" data-i18n="td.held.yes">Delete them</button>
+              <button type="button" id="l-dav-no" class="ghost" data-i18n="td.held.no">Bring them back</button>
+            </div>
+          </div>
+          <div class="hh-row">
+            <button type="button" id="l-dav-sync" class="ghost" data-i18n="td.sync">Sync now</button>
+            <button type="button" id="l-dav-unlink" class="ghost" data-i18n="td.unlink">Unlink</button>
+          </div>
+        </div>
+      </fieldset>
+
       <!-- Import from a task platform (todo/platforms.js; shown inside the shell) -->
       <button type="button" id="l-import" class="ghost import-btn" hidden></button>
       <!-- One-time import from Google Tasks (todo/gtasks.js) -->
@@ -295,21 +334,21 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=4.66.00" data-app="todo,recordpkg,google-import,links"></script>
-  <script src="../links/core.js?v=4.66.00"></script>
-  <script src="../links/todo.js?v=4.66.00"></script>
-  <script src="platforms.js?v=4.66.00"></script>
-  <script src="../google-import.js?v=4.66.00"></script>
-  <script src="gtasks.js?v=4.66.00"></script>
-  <script src="../atelier/zip.js?v=4.66.00"></script>
-  <script src="../importkit.js?v=4.66.00"></script>
-  <script src="import.js?v=4.66.00"></script>
-  <script src="model.js?v=4.66.00"></script>
-  <script src="../bundle.js?v=4.66.00"></script>
-  <script src="../recordpkg.js?v=4.66.00"></script>
-  <script src="package.js?v=4.66.00"></script>
-  <script src="../household/core.js?v=4.66.00"></script>
-  <script src="house.js?v=4.66.00"></script>
-  <script src="todo.js?v=4.66.00"></script>
+  <script src="../i18n.js?v=4.90.00" data-app="todo,recordpkg,google-import,links"></script>
+  <script src="../links/core.js?v=4.90.00"></script>
+  <script src="../links/todo.js?v=4.90.00"></script>
+  <script src="platforms.js?v=4.90.00"></script>
+  <script src="../google-import.js?v=4.90.00"></script>
+  <script src="gtasks.js?v=4.90.00"></script>
+  <script src="../atelier/zip.js?v=4.90.00"></script>
+  <script src="../importkit.js?v=4.90.00"></script>
+  <script src="import.js?v=4.90.00"></script>
+  <script src="model.js?v=4.90.00"></script>
+  <script src="../bundle.js?v=4.90.00"></script>
+  <script src="../recordpkg.js?v=4.90.00"></script>
+  <script src="package.js?v=4.90.00"></script>
+  <script src="../household/core.js?v=4.90.00"></script>
+  <script src="house.js?v=4.90.00"></script>
+  <script src="todo.js?v=4.90.00"></script>
 </body>
 </html>

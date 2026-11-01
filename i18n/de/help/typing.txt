@@ -1,0 +1,85 @@
+# Zehnfingerschreiben
+Lerne, mit allen zehn Fingern zu tippen, ohne auf die Tasten zu schauen. Kurze Lektionen bringen jeweils zwei Tasten dazu, beginnend mit der Grundreihe, für griechische, englische (US) und deutsche Tastaturen. Ein paar Minuten am Tag reichen.
+
+## Erste Schritte
+1. Wähle oben deine Tastatur: `Ελληνικά`, `English (US)` oder `Deutsch`. Stell die Tastatur deines Computers auf dieselbe Sprache (Windows: Win+Leertaste, Linux: Super+Leertaste, Android mit Tastatur: Strg+Leertaste).
+2. Drück `Lektion 1 starten` oder eine beliebige Lektion in der Liste.
+3. Leg die Finger auf die Grundreihe: den linken Zeigefinger auf F, den rechten auf J. Beide Tasten haben eine kleine fühlbare Erhebung.
+4. Tippe den Text, den du siehst. Der nächste Buchstabe ist unterstrichen, und die Taste auf der Bildschirmtastatur und der passende Finger leuchten auf.
+5. Am Ende siehst du dein Tempo, deine Genauigkeit und die Sterne, die du verdient hast.
+
+## Die Bildschirmtastatur
+- Jede Farbe gehört zu einem Finger. Alle Tasten derselben Farbe tippt dieser Finger, und beide Daumen teilen sich die Leertaste.
+- Unter der Tastatur zeigen die zwei Hände, welcher Finger als Nächstes dran ist.
+- Für einen Großbuchstaben leuchtet auch die Umschalttaste der anderen Hand auf.
+- Für einen griechischen Buchstaben mit Tonos (ά, έ, ή…) drückst du zuerst die Taste mit ΄ (rechts neben Λ) und dann den Buchstaben. Umschalt und dieselbe Taste geben das Trema (ϊ, ϋ).
+- `Tastenhilfe` in den Einstellungen: `Wenn ich zögere` zeigt die Taste nur, wenn du wartest oder einen Fehler machst, `Immer` zeigt sie jedes Mal, `Nie` blendet die Tastatur aus, damit du aus dem Gedächtnis tippst.
+
+## Lektionen und Sterne
+- Die Lektionen gehen Reihe für Reihe: Grundreihe, obere Reihe, untere Reihe, dann Großbuchstaben, Umlaute, Zahlen und Zeichen. Jede Gruppe endet mit einer Wiederholung.
+- Sterne: einer, wenn du mit 90 % Genauigkeit oder mehr fertig wirst, zwei für 95 % und 15 Wörter pro Minute, drei für 98 % und 25 Wörter pro Minute.
+- `Weiter` öffnet immer die erste Lektion ohne Stern. Du kannst jede Lektion jederzeit öffnen.
+- `Fehler` in den Einstellungen: `Warten, bis es stimmt` wartet auf die richtige Taste (am besten zum Lernen), `Weiter, Rücktaste korrigiert` geht weiter und lässt dich zurückgehen.
+
+## Tempotest
+- Der `Tempotest` gibt dir 1, 2 oder 5 Minuten mit gängigen Wörtern.
+- Das Tempo zählt Wörter pro Minute (WpM): fünf Zeichen zählen als ein Wort. Die Genauigkeit ist der Anteil der richtigen Tastendrücke.
+- Dein bestes Ergebnis für jede Länge steht in der `Statistik`.
+
+## Schwache Tasten üben
+- `Meine schwachen Tasten üben` (auf dem ersten Bildschirm) baut eine Runde aus den Tasten, die am häufigsten schiefgehen oder die du am langsamsten tippst, nur aus den Lektionen, die du abgeschlossen hast.
+- Der Name der Runde zeigt, welche Tasten sie übt. Je mehr du übst, desto besser kennt sie deine Tasten.
+
+## Texte
+- `Texte` öffnet kurze Stellen aus gemeinfreier Literatur für deine Tastatur, mit Autor und Jahr, und deine eigenen Texte.
+- `Text hinzufügen` speichert einen eigenen Text (bis zu 50 Texte). Du kannst auch einen Text aus Notizen oder dem Texteditor mit `An eine App senden…` hierher schicken. Er öffnet sich im selben Dialog und wird erst mit `Speichern` gespeichert.
+- Zeichen, die deine Tastatur nicht tippen kann, werden ausgelassen, typografische Anführungszeichen und lange Striche werden zu den einfachen. Lange Texte tippst du in Teilen.
+- `In der Schreibmaschine schreiben` öffnet die [Schreibmaschine](app:typewriter), um frei und ohne Hilfen zu schreiben.
+
+## Polytonisches Griechisch, Dvorak und Colemak
+- Die Tastaturliste oben enthält auch `Ελληνικά (πολυτονικό)`, `English (Dvorak)` und `English (Colemak)`. Jede hat ihre eigenen Lektionen, Sterne und Bestwerte.
+- Dvorak und Colemak folgen demselben Kurs wie Englisch, jeder Buchstabe auf seiner Taste und seinem Finger, mit denselben englischen Wörtern und Texten.
+- Polytonisches Griechisch ist für alle, die schon Griechisch tippen: sechs Lektionen bringen die Zeichen, eine Taste nach der anderen. `;` gibt den Akut (Oxia) und mit Umschalt den Spiritus lenis (Psili); `'` den Gravis (Varia) und mit Umschalt den Spiritus asper (Dasia); `[` den Zirkumflex (Perispomeni) und mit Umschalt das Trema; `]` das Iota subscriptum. Für einen Buchstaben mit mehreren Zeichen drückst du zuerst das Iota subscriptum, dann den Akzent, dann den Spiritus und zuletzt den Buchstaben (ᾄ: `]` `;` Umschalt+`;` α).
+- Die Hilfen folgen der griechischen polytonischen Tastatur von Linux. Bei der polytonischen Tastatur von Windows liegen die Zeichen auf anderen Tasten; die Lektionen nehmen den getippten Buchstaben in beiden Fällen an.
+- Zu den polytonischen Texten gehören der Anfang der Odyssee, der Anfang des Johannesevangeliums und die erste Strophe von Solomos' Hymne an die Freiheit, dazu die griechischen Texte.
+
+## Buchstabenregen
+- `Buchstabenregen` (auf dem ersten Bildschirm) ist ein Spiel: Buchstaben fallen von oben, und wenn du einen tippst, verschwindet er, bevor er unten ankommt.
+- Ein Buchstabe, der unten ankommt, kostet eines deiner drei Leben. Alle 10 Buchstaben beginnt eine neue Stufe, in der sie schneller fallen.
+- Es kommen nur die Buchstaben der Lektionen vor, die du abgeschlossen hast (vor der ersten Lektion die Grundreihe).
+- Das Spiel pausiert, wenn du daneben klickst. Seine Minuten zählen zum Tagesziel, und dein Bestwert bleibt auf diesem Gerät.
+
+## Für Kinder
+- Beim ersten Öffnen und in den Einstellungen unter `Wer übt?` wählst du `Ein Kind` für ein Kind.
+- Die Lektionen sind dann kürzer, mit einfachen Wörtern (Tiere, Farben, Essen), größeren Buchstaben und runderen Tasten.
+- Sterne zählen nur die Genauigkeit: einer für 85 % richtig, zwei für 92 %, drei für 97 %. Tempo und Zeit sind ausgeblendet, und ein Zähler zeigt, wie viele Buchstaben in Folge richtig waren.
+- Der Tempotest ist ausgeblendet. Der Buchstabenregen fällt etwas langsamer.
+
+## Urkunden und das Haustier
+- Nach dem Schlusstext mit mindestens einem Stern oder nach einem Tempotest öffnet `Urkunde erstellen` die [Urkunden](app:certificates) mit einem neuen, schon benannten Satz (für ein Kind die Kinder-Art). Erst wenn du dort `Erstellen` drückst, wird etwas angelegt.
+- Wenn das Desktop-Haustier an ist, freut es sich über ein gutes Ergebnis.
+
+## Heute, Gewohnheiten und die Erinnerung
+- Solange du in der letzten Woche geübt hast und das heutige Ziel nicht erreicht ist, zeigt [Heute](app:today) eine Zeile mit den heutigen Minuten.
+- [Gewohnheiten](app:habits) zeigt eine Zeile „Tippübung“ mit deinen Minuten pro Tag. Ein Tag zählt, wenn du dein Tagesziel erreichst.
+- `Ans Üben erinnern` in den Einstellungen schickt einmal am Tag ab der gewählten Uhrzeit eine Mitteilung, solange das heutige Ziel nicht erreicht ist. Sie ist zuerst aus und gilt für jedes Gerät einzeln.
+
+## Statistik
+- Die `Statistik` (die Diagrammtaste oben) zeigt die heutige Übung, die Tage in Folge, deine Gesamtzeit und dein Tempo der letzten 7 Tage.
+- Die Linie zeigt dein Tempo an jedem der letzten 30 Tage, die Punkte deine Genauigkeit (zwischen 80 % und 100 %).
+- Die Balken zeigen deine Minuten an jedem der letzten 14 Tage.
+- `Deine Tasten` färbt jede Taste danach, wie oft sie schiefgeht: Grün ist gut, Rot braucht Übung. Die Liste darunter nennt die Tasten, an denen du arbeiten solltest.
+
+## Einstellungen
+- Das `Tagesziel` legt die Minuten für den Ring auf dem ersten Bildschirm fest.
+- Die `Textgröße` macht den Lektionstext kleiner oder größer.
+- `Tastentöne` und `Bildschirmtastatur verwenden` gelten nur auf diesem Gerät.
+- `Fortschritt zurücksetzen` löscht alle Lektionen, Statistiken und Bestleistungen auf allen deinen Geräten.
+
+## Auf dem Handy
+Zehnfingerschreiben braucht eine echte Tastatur. Mit angeschlossener Tastatur (Bluetooth oder USB) bleibt die Handytastatur verborgen, und die Lektion funktioniert wie am Computer. Ohne Tastatur kannst du mit `Bildschirmtastatur verwenden` die Buchstaben üben, aber nicht das Zehnfingersystem.
+
+## Deine Daten
+- Fortschritt, Statistik und Einstellungen werden laufend gespeichert. Mit der orOS-Synchronisierung in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte. Übung auf zwei Geräten am selben Tag wird zusammengezählt.
+- Was du in einer Lektion tippst, wird nicht gespeichert, nur die Zahlen (Tempo, Genauigkeit, welche Tasten schiefgingen).
+- Deine eigenen Texte werden genauso gespeichert und synchronisiert. Löschst du einen, ist er auf allen Geräten weg.

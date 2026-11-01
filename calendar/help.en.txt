@@ -80,6 +80,11 @@ Tapping a feed row opens the app it comes from. To change it, edit it there.
 
 The Calendar reads a subscribed calendar when you open it (if it's been more than half an hour) and every 3 hours while it stays open; `Refresh` reads it at once. Offline, you see the last copy. Many servers let the browser read the calendar directly. Those that don't are read through the orOS relay that [Reader](app:feeds) uses, with its address from Reader's `Settings` or from [Mail](app:mail); without one, the window tells you so. In the same window you can rename a subscription, tap its dot to change its colour, or `Remove` it (`Undo` brings it back).
 
+## Your own calendar server (CalDAV)
+If your calendars live on a server of your own (Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail, iCloud with an app password…), connect it once in [Settings](app:settings) › `Sync` › `Calendars and contacts`. Then `More` › `Server calendars (CalDAV)…` lists its calendars. Pick a label for one (or `New label`) and press `Link`: orOS first shows how many events would come down, go up and are already here, and nothing is written until you press `Link` again. From then on the label and the server calendar stay in step both ways, so your phone (DAVx5), Thunderbird and the server's own web page see the same events.
+
+The Calendar syncs a linked label while it is open: when it opens, every 5 minutes, a few seconds after you change something, and on `Sync now`. Nothing is deleted on either side unless this device saw it in sync before. When an event changed on both sides, the newer one stays and the other is kept as a copy marked `(conflict)`. Many deletions at once (more than 50, or more than a fifth of the calendar) wait for you: `Delete them` or `Bring them back`. Guests, extra reminders and anything else orOS does not show stay on the server untouched. An event orOS cannot show exactly (an unusual repeat, a single occurrence changed on the server, a very long title or note) is read-only here: change it on the server. The link travels to your other devices with orOS sync; each device needs the server password once. `Unlink` keeps the events in orOS.
+
 ## Share a calendar with your household
 Once you're in a household (the [Household](app:household) app), a label can become a calendar you share. In `Manage labels`, tap the house icon next to the label and press `Share`. Its events leave your own calendar and go to the household: everyone there sees them with the label's colour and can add, change, move and delete them from their own orOS. Shared calendars are listed under `Shared with a household`, where a new name or colour changes it for everyone. A small circle with initials on an event shows who in the household changed it last.
 
@@ -134,6 +139,7 @@ For a full copy, see [backup](help:t/backup).
 
 ## Limits
 - Reminders can't fire when the browser or the orOS tab is closed.
+- A server calendar linked with CalDAV syncs only while the Calendar is open. Google Calendar is not a CalDAV server orOS links to; use the one-time import instead.
 - Subscribed calendars are read while the Calendar is open (when it opens and every 3 hours), not in the background. A server that blocks browsers needs the orOS relay. A subscription keeps up to 3000 events; one-off events that ended more than a year ago are left out, and its events have no reminders.
 - Quick add reads English and Greek, with dates day first. When it gets something wrong, fix it in the event window before saving.
 - Free times come from this device's calendar only and don't know about other calendars you haven't subscribed to here. The person who picks a time answers you by email; nothing updates by itself, and the link keeps the times it had when you made it.

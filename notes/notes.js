@@ -320,6 +320,7 @@
       "page.conflict":      "conflict copy",
       "book.menu.open":     "Notebook actions",
       "toast.deleted":      "Page deleted",
+      "page.delete.kids":   "Its {n} sub-page(s) move up one level and are kept.",
       "toast.moved":        "Page moved",
       "labels.title":       "Labels",        // v0.14.0
       "labels.none":        "No labels yet",  // v0.14.0
@@ -384,6 +385,7 @@
       "page.conflict":      "αντίγραφο σύγκρουσης",
       "book.menu.open":     "Ενέργειες σημειωματαρίου",
       "toast.deleted":      "Η σελίδα διαγράφηκε",
+      "page.delete.kids":   "Οι {n} υποσελίδες της ανεβαίνουν ένα επίπεδο και κρατιούνται.",
       "toast.moved":        "Η σελίδα μετακινήθηκε",
       "labels.title":       "Ετικέτες",        // v0.14.0
       "labels.none":        "Καμία ετικέτα ακόμη",  // v0.14.0
@@ -1213,15 +1215,37 @@
   function deletePage(id) {
     var page = pageById(id);
     if (!page) return;
+    var nKids = state.pages.filter(function (p) { return p.parent === id; }).length;
     askConfirm(t("page.delete"),
-      '"' + (page.title || t("page.untitled")) + '"',
+      '"' + (page.title || t("page.untitled")) + '"' +
+        (nKids ? " " + t("page.delete.kids").replace("{n}", nKids) : ""),
       t("page.delete"), function () { doDeletePage(id); });
   }
 
   function doDeletePage(id) {
+    var gonePage = pageById(id);
+    var upTo = gonePage ? (gonePage.parent || null) : null;
     // Tombstone — delete wins on merge, resurrected pages revive
     state.tombs[id] = Date.now();
     state.pages = state.pages.filter(function (p) { return p.id !== id; });
+    // Sub-pages move up one level (to the deleted page's parent), in
+    // their own order, at the end of that list. Before 4.66.01 they kept
+    // a parent id that no longer existed and stayed hidden until the
+    // next load/merge re-parented them to the top level. touchStruct
+    // makes the move win on merge on the other devices too.
+    var kids = state.pages
+      .filter(function (p) { return p.parent === id; })
+      .sort(function (a, b) { return a.pos - b.pos; });
+    if (kids.length) {
+      var maxPos = 0;
+      siblingListByParent(upTo).forEach(function (s) { if (s.pos > maxPos) maxPos = s.pos; });
+      kids.forEach(function (p) {
+        p.parent = upTo;
+        p.pos = ++maxPos;
+        touchStruct(p);
+      });
+      if (upTo) prefs.open[upTo] = true;
+    }
 
     if (prefs.current === id) {
       // NO-8: the next page of THIS notebook (state.pages[0] could

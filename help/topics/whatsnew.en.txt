@@ -1,6 +1,91 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.90.00
+- To-Do › a list's settings › Server task list (CalDAV): link a list to a task list on your own server (Nextcloud Tasks, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything. Then tasks go both ways with their notes, dates, priorities, repeats, labels and subtasks, so your phone and Thunderbird see the same tasks; alarms and details orOS doesn't show stay on the server untouched, and nothing is deleted on either side unless it was in sync before. See [To-Do](help:a/todo).
+
+## Version 4.89.00
+- [Pad](help:a/pad) can save automatically (More › `Save automatically`, off at first): a file with its own place is saved 2 seconds after you stop typing, with the same checks as Save, so a file that changed elsewhere is still never overwritten. The menu search finds Pad's recent files, and the Assistant can open them or write a new file for you that opens as a new tab in Pad.
+
+## Version 4.88.00
+- Typing Tutor: new keyboards for polytonic Greek (six lessons for the breathings, accents and iota subscript, with Homer, John and Solomos), Dvorak and Colemak. See [Typing Tutor](help:a/typing).
+
+## Version 4.87.00
+- Contacts › Server (CardDAV): link your contacts to an address book on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything, and a person already on both sides becomes one contact with the details of both. Then contacts go both ways; photos and details orOS doesn't show stay on the server untouched, and nothing is deleted on either side unless it was in sync before. See [Contacts](help:a/contacts).
+
+## Version 4.86.00
+- Spreadsheet on phones and tablets: drag the round handles on the corners of the selection to make it bigger or smaller, and turn on Extend selection (sheet menu) to add cells, columns or rows with a tap. See [Spreadsheet](help:a/spreadsheet).
+
+## Version 4.85.00
+- [Pad](help:a/pad) gets tools: format or compact JSON (only the spaces change, numbers and key order stay as written), sort lines, remove duplicate lines and spaces at line ends. Markdown files have a live `Preview`, `Compare with another tab…` shows two files line by line, and on phones a key row adds Tab, arrows and brackets.
+
+## Version 4.84.00
+- Typing Tutor: a kids mode with short lessons and stars for accuracy, the Letter rain game, a certificate after the course or a speed test, and more words. See [Typing Tutor](help:a/typing).
+
+## Version 4.83.00
+- Calendar › More › Server calendars (CalDAV): link a label to a calendar on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything; then events go both ways. Nothing is deleted on either side unless it was in sync before, an event changed on both sides keeps the newer version and a copy marked (conflict), and guests or extra reminders on the server stay untouched. See [Calendar](help:a/calendar).
+
+## Version 4.82.00
+- Spreadsheet: print a sheet or save it as a PDF (sheet menu › Print or save as PDF…, or Ctrl+P): the whole sheet or the selection, A4/A3/Letter, portrait or landscape, fit to the page width, heading rows on every page, gridlines and page numbers, charts included, Greek text as real text. See [Spreadsheet](help:a/spreadsheet).
+
+## Version 4.81.00
+- [Pad](help:a/pad) now saves a file back in its own place: on this computer in Chrome and Edge, and on the computer's own folders with an orOS USB stick or orOS Portable, as it already did on the orOS disk. A file that changed elsewhere in the meantime is still never overwritten. `Recent files` brings back what you worked on, and in Files `Open with…` opens code and text files in Pad.
+
+## Version 4.80.00
+- [Typing Tutor](help:a/typing): practise with passages from literature (Kavafis, Austen, Kafka and more) or with your own texts, which you can also send from Notes or Writer with "Send to an app…". A round for your weak keys, a 30-day speed chart, a row in Today and Habits, and a daily practice reminder you can switch on in the app's settings.
+
+## Version 4.79.00
+- Settings › Sync › Calendars and contacts (CalDAV / CardDAV): connect your own calendar and contacts server (Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail, iCloud…). orOS checks the server first and keeps the password on this device only. Linking it to Calendar, Contacts and To-Do comes next.
+
+## Version 4.78.01
+- The orOS logo is now in the same gold as the orOS skin, everywhere: the app icon, the browser add-on, the single apps and the link preview.
+
+## Version 4.78.00
+- Spreadsheet: area charts, stacked columns, bars and areas, a line over columns and trend lines; conditional formatting with a formula (=$B2>100) or icon sets; and iterative calculation for circular references (sheet menu › Calculation…). See [Spreadsheet](help:a/spreadsheet).
+
+## Version 4.77.00
+- Television: in the `Guide`, a programme that has not started yet now has `Remind me`. It opens a new [Calendar](help:a/calendar) event with the time, the channel and a reminder 15 minutes before; press `Save` to keep it. See [Television](help:a/television).
+
+## Version 4.76.00
+- [Passwords](help:a/passwords) imports more: exports with a password from Bitwarden ("Password protected"), Aegis and 2FAS now open with that password, on your device only. New: Keeper, RoboForm, Zoho Vault and the KeePass XML export.
+
+## Version 4.75.00
+- New app: [Pad](help:a/pad), an editor for plain text and code in Accessories. Tabs that stay open until you close them, colours for over 30 languages (EEL2 for JSFX too), find and replace with regular expressions, go to line, and the file's own encoding and line endings kept, old Greek Windows-1253 and ISO-8859-7 files included. Open and save on the orOS disk or on this device; a file that changed on another device is never overwritten.
+
+## Version 4.74.00
+- New app: [Typing Tutor](help:a/typing) teaches you to type with all ten fingers without looking at the keys, on Greek, English (US) and German keyboards. Short lessons add two keys at a time, a coloured keyboard shows which finger to use, and speed tests and statistics show your progress on all your devices. Find it in the menu under Learning.
+
+## Version 4.73.01
+- orOS starts faster, above all on phones and slow connections: the first visit now loads its files side by side instead of one after another, and the welcome screen goes as soon as the desktop is ready. On a slow 4G phone the first open went from about 28 to about 8 seconds, and an ordinary open from 2.3 to 1.6 seconds.
+
+## Version 4.73.00
+- Spreadsheet knows over 200 functions: new lookups (XMATCH, OFFSET, INDIRECT), loan and investment functions (IPMT, PPMT, RATE, IRR, XIRR), TEXTBEFORE and TEXTAFTER, week numbers, your own weekend for working days, and lists in braces such as {1,2,3}. See [Spreadsheet](help:a/spreadsheet).
+
+## Version 4.72.00
+- Maps: during navigation the compass button turns the map with you, so the road ahead is always up; tap it again for north up. A route's `Share` now also offers `Download GPX`. See [Maps](help:a/maps).
+
+## Version 4.71.00
+- Free up cloud space: in [Settings](help:a/settings) › Sync, `Unused files in the cloud` › `Check` shows how much room old encrypted copies of deleted or replaced files take, and `Clean up` removes the ones no file uses that are at least 30 days old. It runs only when you ask, never by itself, and stops at anything unexpected. See [Sync across devices](help:t/sync).
+
+## Version 4.70.00
+- Writer: Word (.docx) export now keeps real numbered and bulleted lists (start numbers, a, i, α, nested), alignment and pictures at the size you see them, with captions, so the file opens in Word or LibreOffice looking the same and comes back into Writer the same. Word files with pictures now open with their pictures. PDF, RTF and text exports number lists the same way (3., c., iii., γ)).
+
+## Version 4.69.00
+- Writer can sound like a typewriter: in Writer's `Settings`, turn on `Typewriter sound while typing` for a soft click on every key and a carriage return on Enter. It is off unless you turn it on.
+- Files can make and open ZIP archives in [This computer](help:a/files) too, on the orOS Portable and the Live USB: `Compress to ZIP` on a file or folder, `Extract here` on a .zip.
+- Notes: deleting a page that has sub-pages now moves them up one level instead of hiding them. Bookmarks: with `Manual` sort, the menu of a bookmark has `Move up` and `Move down`.
+- Time: the `Sound` box now also silences alarms that ring while orOS is open, and the converter's Show button stays visible when the converter is hidden.
+- Greek: Photo Lab says «επίπεδα» instead of «layers» (and «Στάθμες» for Levels), and fewer English words appear elsewhere. Slides, Habits, Timesheet, Invoices, CRM, Calculator and Water fit better on narrow phones in Greek.
+
+## Version 4.68.00
+- Backup files can be encrypted. In [Settings](help:a/settings) › Backups, turn on `Encrypt backup files` and choose a passphrase of at least 10 characters: from then on the exported file, `Back up now` and the automatic folder backups are locked with it (AES-256), and importing one asks for it. It is off unless you turn it on, plain backup files still import, and the passphrase is never stored. Write it down: without it nobody can open these files. See [Backup and restore](help:t/backup).
+
+## Version 4.67.01
+- A link to useoros.online, the download page, the privacy policy or Help now shows a preview card when you paste it into a chat or a post: the title, a short description and a picture of orOS.
+
+## Version 4.67.00
+- Settings › System › `Report a problem`: one text file to send to whoever helps you when something goes wrong. It holds the orOS version, your browser and device, how sync and backups are set up and the last errors orOS noticed, never your notes, files, names, passwords or keys, and you read all of it before you save it. On the orOS USB stick and in orOS Portable it can also carry the computer's own logs.
+
 ## Version 4.66.00
 - Studio: play your instrument plugins from a MIDI keyboard through orOS Bridge 0.6.0. Choose an instrument in `Listen through a plugin` and the keyboard it plays from: the bridge reads the keyboard itself, so the notes reach the instrument with only the sound card's delay. Recording an instrument track then keeps the notes you played as a MIDI clip, and the track keeps the instrument, ready to freeze.
 

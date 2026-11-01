@@ -144,7 +144,23 @@ var STRINGS = {
     "ch.ttl": "Title", "ch.xl": "Horizontal axis title", "ch.yl": "Vertical axis title", "ch.lg": "Legend",
     "ch.cols": "Colours", "ch.col": "Colour of series", "ch.reset": "Default colours",
     "ch.saved": "Saved {f}", "ch.file": "chart", "ch.err": "Could not make the image",
-    "rg.mode": "Select a range…", "rg.tap": "Tap the last cell of the range",
+    "rg.mode": "Extend selection", "rg.tap": "Tap cells or headers: the selection grows to them", "rg.off": "Stop extending the selection",
+    "rg.chip": "Extending", "rg.x": "Stop extending", "rg.ha": "Drag to change the selection",
+    "cf.k.fx": "Formula is true", "cf.k.ic": "Icon set", "cf.fx": "Formula", "cf.fx.ph": "=$B2>100",
+    "cf.fx.hint": "Write it for the first cell of the range; it moves with each cell like a copied formula.",
+    "cf.ic.ar": "Arrows", "cf.ic.dt": "Traffic lights",
+    "ch.t.area": "Area", "ch.sk": "Stacked", "ch.cb": "Last series as a line", "ch.ln": "Trend line",
+    "calc.open": "Calculation…", "calc.title": "Calculation", "calc.it": "Iterative calculation (allow circular references)",
+    "calc.n": "Maximum iterations", "calc.d": "Maximum change",
+    "pr.open": "Print or save as PDF…", "pr.title": "Print and PDF", "pr.what": "Print", "pr.all": "The whole sheet",
+    "pr.sel": "The selection", "pr.paper": "Paper", "pr.or": "Orientation", "pr.p": "Portrait", "pr.l": "Landscape",
+    "pr.fit": "Size", "pr.fit.w": "Fit to the page width", "pr.fit.p": "Fit on one page", "pr.fit.n": "Actual size",
+    "pr.hr": "Repeat at the top of each page", "pr.hr.0": "No rows", "pr.hr.1": "Row 1", "pr.hr.n": "Rows 1 to {n}",
+    "pr.gl": "Gridlines", "pr.pn": "Page numbers", "pr.ch": "Charts", "pr.pdf": "Save PDF", "pr.print": "Print",
+    "pr.note": "Hidden (filtered) rows are left out. These settings stay on this device.",
+    "pr.page": "Page {n} of {t}", "pr.busy": "Making the PDF…", "pr.empty": "There is nothing to print on this sheet",
+    "pr.err": "The PDF could not be made",
+    "calc.note": "Off: a formula that refers back to itself shows #CYC!. On: orOS repeats the calculation until no value changes by more than the maximum change.",
     "as.done": "The Assistant changed {n} things in {d} sheets.", "as.done1": "The Assistant changed {n} things in the sheet.",
     "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
     "as.undone": "The Assistant's change was undone.", "as.changed": "These cells were changed since, so the Assistant's change was not undone.",
@@ -252,7 +268,23 @@ var STRINGS = {
     "ch.ttl": "Τίτλος", "ch.xl": "Τίτλος οριζόντιου άξονα", "ch.yl": "Τίτλος κατακόρυφου άξονα", "ch.lg": "Υπόμνημα",
     "ch.cols": "Χρώματα", "ch.col": "Χρώμα σειράς", "ch.reset": "Προεπιλεγμένα χρώματα",
     "ch.saved": "Αποθηκεύτηκε: {f}", "ch.file": "γράφημα", "ch.err": "Δεν ήταν δυνατή η δημιουργία της εικόνας",
-    "rg.mode": "Επιλογή περιοχής…", "rg.tap": "Πάτησε το τελευταίο κελί της περιοχής",
+    "rg.mode": "Επέκταση επιλογής", "rg.tap": "Πάτα κελιά ή επικεφαλίδες: η επιλογή μεγαλώνει ως εκεί", "rg.off": "Τέλος επέκτασης επιλογής",
+    "rg.chip": "Επέκταση", "rg.x": "Τέλος επέκτασης", "rg.ha": "Σύρε για να αλλάξεις την επιλογή",
+    "cf.k.fx": "Ο τύπος είναι αληθής", "cf.k.ic": "Σύνολο εικονιδίων", "cf.fx": "Τύπος", "cf.fx.ph": "=$B2>100",
+    "cf.fx.hint": "Γράψ' τον για το πρώτο κελί της περιοχής· μετακινείται με κάθε κελί όπως ένας τύπος που αντιγράφεις.",
+    "cf.ic.ar": "Βέλη", "cf.ic.dt": "Φανάρια",
+    "ch.t.area": "Περιοχή", "ch.sk": "Στοιβαγμένο", "ch.cb": "Η τελευταία σειρά ως γραμμή", "ch.ln": "Γραμμή τάσης",
+    "calc.open": "Υπολογισμός…", "calc.title": "Υπολογισμός", "calc.it": "Επαναληπτικός υπολογισμός (επιτρέπει κυκλικές αναφορές)",
+    "calc.n": "Μέγιστες επαναλήψεις", "calc.d": "Μέγιστη μεταβολή",
+    "pr.open": "Εκτύπωση ή αποθήκευση ως PDF…", "pr.title": "Εκτύπωση και PDF", "pr.what": "Εκτύπωση", "pr.all": "Όλο το φύλλο",
+    "pr.sel": "Η επιλογή", "pr.paper": "Χαρτί", "pr.or": "Προσανατολισμός", "pr.p": "Κατακόρυφος", "pr.l": "Οριζόντιος",
+    "pr.fit": "Μέγεθος", "pr.fit.w": "Προσαρμογή στο πλάτος της σελίδας", "pr.fit.p": "Προσαρμογή σε μία σελίδα", "pr.fit.n": "Πραγματικό μέγεθος",
+    "pr.hr": "Επανάληψη στην κορυφή κάθε σελίδας", "pr.hr.0": "Καμία γραμμή", "pr.hr.1": "Γραμμή 1", "pr.hr.n": "Γραμμές 1 έως {n}",
+    "pr.gl": "Γραμμές πλέγματος", "pr.pn": "Αριθμοί σελίδων", "pr.ch": "Γραφήματα", "pr.pdf": "Αποθήκευση PDF", "pr.print": "Εκτύπωση",
+    "pr.note": "Οι κρυφές (φιλτραρισμένες) γραμμές παραλείπονται. Οι ρυθμίσεις μένουν σε αυτή τη συσκευή.",
+    "pr.page": "Σελίδα {n} από {t}", "pr.busy": "Φτιάχνεται το PDF…", "pr.empty": "Δεν υπάρχει τίποτα για εκτύπωση σε αυτό το φύλλο",
+    "pr.err": "Το PDF δεν μπόρεσε να γίνει",
+    "calc.note": "Κλειστό: ένας τύπος που αναφέρεται στον εαυτό του δείχνει #CYC!. Ανοιχτό: το orOS επαναλαμβάνει τον υπολογισμό ώσπου καμία τιμή να μην αλλάζει περισσότερο από τη μέγιστη μεταβολή.",
     "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} φύλλα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο φύλλο.",
     "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
     "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Τα κελιά άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
@@ -440,6 +472,8 @@ function normalizeState(st) {
   if (!st.deleted || typeof st.deleted !== "object") st.deleted = {};
   st.charts = normObjs(st.charts, KIT.normChart);
   st.cf = normObjs(st.cf, KIT.normCf);
+  var calc = KIT.normCalc(st.calc);
+  if (calc) st.calc = calc; else delete st.calc;
 
   var k;
   for (k in st.cells) {
@@ -633,6 +667,8 @@ function canonSS(st) {
     });
     if (any) out[p[0]] = o;
   });
+  /* the calculation setting (wave 4.2), only once someone set it */
+  if (st.calc) out.calc = st.calc;
   return out;
 }
 
@@ -694,7 +730,7 @@ function mergeState(local, remote) {
   }
   return canonSS({ ver: DATA_VER, sheets: mergedSheets, cells: mergedCells,
                    deleted: mergedDel, charts: unionObjs(local.charts, remote.charts),
-                   cf: unionObjs(local.cf, remote.cf) });
+                   cf: unionObjs(local.cf, remote.cf), calc: newerObj(local.calc, remote.calc) });
 }
 
 /* ===== SECTION 2c: STORAGE FUNNEL ===== */
@@ -1034,7 +1070,13 @@ var ENG = FX.engine({
   now: function () { return Date.now(); }
 });
 
-function resetEval() { ENG.reset(); EXTENT = {}; FCELLS = null; }
+function resetEval() {
+  ENG.reset(); EXTENT = {}; FCELLS = null;
+  /* iterative calculation: settle the circular references now, so every
+     cell then reads its final value from the cache */
+  ENG.setIter(state && state.calc);
+  if (ENG.iter) { try { ENG.settle(); } catch (e) { console.error("[SS] iterative calculation:", e); } }
+}
 function evalCell(sid, r, c) { return ENG.value(sid, r, c); }
 function isError(v) { return FX.isErr(v); }
 
@@ -1463,7 +1505,8 @@ function paintCell(r, c) {
   var fh = filterHead(r, c);
   var cf = cfAt(r, c);
   var wr = !!(f && f.wr), wh = wr ? spanHeight(r, c) : 0;
-  var mark = disp + "\u0001" + (fh || "") + "\u0001" + wh;
+  var ic = cf && cf.ic ? cf.ic + cf.icCo : "";
+  var mark = disp + "\u0001" + (fh || "") + "\u0001" + wh + "\u0001" + ic;
   if (lastPainted[r][c] !== mark) {
     lastPainted[r][c] = mark;
     if (wr) {
@@ -1474,6 +1517,14 @@ function paintCell(r, c) {
       wd.textContent = disp;
       td.appendChild(wd);
     } else td.textContent = disp;
+    if (ic) {
+      var icn = document.createElement("span");
+      icn.className = "cfi";
+      icn.setAttribute("aria-hidden", "true");
+      icn.style.color = cf.icCo;
+      icn.textContent = cf.ic;
+      td.insertBefore(icn, td.firstChild);
+    }
     if (fh) {
       var b = document.createElement("span");
       b.className = "fbtn" + (fh === 2 ? " on" : "");
@@ -1606,6 +1657,7 @@ function renderSelection() {
 
 function beginEdit(initialText) {
   if (editing) return;
+  if (RANGE_MODE) setRangeMode(false);
   collapseSel(); /* typing replaces the range — single-cell edit */
   ensureVisible(selR, selC);
   var td = cellRefs[selR] && cellRefs[selR][selC];
@@ -1824,7 +1876,7 @@ function clearFormat() {
 }
 
 /* SWATCHES — 8 preset colors from OS palette space */
-var SWATCHES = ["#c8a96e","#d9bd88","#87cf3e","#e0a44c",
+var SWATCHES = ["#d4af37","#ecc75f","#87cf3e","#e0a44c",
                 "#e06c75","#a78bfa","#7dd3fc","#e8e4dc"];
 
 function toggleSwatchPopover() {
@@ -2456,7 +2508,7 @@ function openSheetMenu(anchor) {
   }
   function sep() { var d = document.createElement("div"); d.className = "msep"; m.appendChild(d); }
   var fzr = normFz(sh.fz, sh) || { r: 0, c: 0 };
-  item(t("rg.mode"), function () { RANGE_MODE = true; notifyTransient(t("rg.tap")); });
+  item(RANGE_MODE ? t("rg.off") : t("rg.mode"), function () { setRangeMode(!RANGE_MODE); });
   sep();
   if (sendApi()) { item(t("menu.sendApp"), sendSelection); sep(); }
   if (selR > 0 && selR + 1 <= FZ_MAX_R) item(t("fz.rows").replace("{n}", selR + 1), function () { setFreeze(selR + 1, fzr.c); });
@@ -2476,6 +2528,9 @@ function openSheetMenu(anchor) {
   item(t("add.rows").replace("{n}", 100), function () { addRowsCols("r", 100); }, sh.rows >= MAX_ROWS);
   item(t("add.rows").replace("{n}", (1000).toLocaleString(loc())), function () { addRowsCols("r", 1000); }, sh.rows >= MAX_ROWS);
   item(t("add.cols").replace("{n}", 10), function () { addRowsCols("c", 10); }, sh.cols >= MAX_COLS);
+  sep();
+  item(t("calc.open"), openCalcDialog);
+  item(t("pr.open"), openPrintDialog);
   m.addEventListener("click", function (e) { e.stopPropagation(); });
   m.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { e.preventDefault(); closePops(); $("grid-wrap").focus(); }
@@ -2483,6 +2538,44 @@ function openSheetMenu(anchor) {
   placePop(m, anchor);
   var first = m.querySelector("button:not([disabled])");
   if (first) try { first.focus({ preventScroll: true }); } catch (e) {}
+}
+
+/* ---------- calculation setting (wave 4.2): iterative calculation ---------- */
+function openCalcDialog() {
+  var x = state.calc || { it: 0, n: 100, d: 0.001 };
+  var pop = popShell(t("calc.title"), "calc-dlg");
+  var on = document.createElement("input");
+  on.type = "checkbox"; on.checked = x.it === 1;
+  field(pop, t("calc.it"), on).classList.add("pop-chk");
+  var n = mkInput(String(x.n)), d = mkInput(String(x.d).replace(".", LANG === "el" ? "," : "."));
+  n.inputMode = "numeric"; d.inputMode = "decimal";
+  var row = document.createElement("div");
+  row.className = "pop-2";
+  pop.appendChild(row);
+  var fn = field(row, t("calc.n"), n), fd = field(row, t("calc.d"), d);
+  function sync() { fn.hidden = fd.hidden = !on.checked; }
+  on.addEventListener("change", sync); sync();
+  var note = document.createElement("div");
+  note.className = "pop-note"; note.textContent = t("calc.note");
+  pop.appendChild(note);
+  var btns = document.createElement("div");
+  btns.className = "pop-btns";
+  btns.appendChild(mkBtn(t("flt.cancel"), "", closePops));
+  btns.appendChild(mkBtn(t("save"), "primary", function () {
+    var nn = parseInt(n.value, 10), dd = parseFloat(String(d.value).replace(",", "."));
+    var rec = KIT.normCalc({ it: on.checked ? 1 : 0, n: isFinite(nn) ? nn : 100, d: isFinite(dd) && dd > 0 ? dd : 0.001,
+      mtime: Math.max(now(), state.calc ? state.calc.mtime + 1 : 0) });
+    closePops();
+    if (state.calc && state.calc.it === rec.it && state.calc.n === rec.n && state.calc.d === rec.d) return;
+    if (!state.calc && !rec.it) return;
+    state.calc = rec;
+    invalidateEval(); resetDisp();
+    markDirty(); queueSave();
+    renderGrid();
+  }));
+  pop.appendChild(btns);
+  placePop(pop, { el: $("tb-fmt") });
+  try { on.focus({ preventScroll: true }); } catch (e) {}
 }
 
 /* ---------- function help (formula bar and cell editor) ---------- */
@@ -3275,8 +3368,9 @@ function closeXlMenu() { if (xlMenu) { xlMenu.remove(); xlMenu = null; } }
 function toggleXlExportMenu(btn) {
   var items = [["xlsx", t("xl.xlsx")], ["ods", t("xl.ods")]];
   if (window.OrosBundle) items.push(["oros", t("bk.exp")]);
+  items.push(["pdf", t("pr.open")]);
   toggleXlMenu(btn, items.map(function (o) {
-    return [o[1], function () { if (o[0] === "oros") bookSave(); else xlExport(o[0]); }];
+    return [o[1], function () { if (o[0] === "oros") bookSave(); else if (o[0] === "pdf") openPrintDialog(); else xlExport(o[0]); }];
   }));
 }
 /* the import button: a file (Excel / Calc / orOS) or an unzipped
@@ -3509,7 +3603,23 @@ function cellValue(r, c) {
   if (cel.v.charAt(0) === "=") return evalCell(actSID, r, c);
   return FX.literal(cel.v);
 }
-var CF_NEEDS_STATS = { top: 1, bot: 1, dup: 1, cs: 1, db: 1 };
+var CF_NEEDS_STATS = { top: 1, bot: 1, dup: 1, cs: 1, db: 1, ic: 1 };
+/* a formula rule: its formula is written for the top-left cell of the
+   range and moves with each cell like a copied formula (=$B2>100);
+   TRUE or a number other than 0 colours the cell. Run by the sheet's
+   own engine, never as script. */
+function cfFxHit(ru, r, c) {
+  var key = "fx|" + ru.x.id + "|" + r + "|" + c;
+  if (CFST[key] !== undefined) return CFST[key];
+  var f = String(ru.x.a || "").trim(), hit = false;
+  if (f) {
+    if (f.charAt(0) !== "=") f = "=" + f;
+    var v = ENG.formula(actSID, FX.shiftFormula(f, r - ru.g.t, c - ru.g.l));
+    hit = v === true || (typeof v === "number" && v !== 0);
+  }
+  CFST[key] = hit;
+  return hit;
+}
 function cfStatsFor(rule) {
   if (CFST[rule.x.id]) return CFST[rule.x.id];
   var ext = sheetExtent(actSID), g = rule.g, vals = [], r, c;
@@ -3527,8 +3637,10 @@ function cfAt(r, c) {
     var ru = rules[i];
     if (!KIT.inRange(ru.g, r, c)) continue;
     if (!got) { v = cellValue(r, c); got = true; }
-    if (v === null) return null;
-    var s = KIT.cfStyle(ru.x, v, CF_NEEDS_STATS[ru.x.k] ? cfStatsFor(ru) : {});
+    var s;
+    if (ru.x.k === "fx") s = KIT.cfStyle(ru.x, v, {}, cfFxHit(ru, r, c));
+    else if (v === null) continue;
+    else s = KIT.cfStyle(ru.x, v, CF_NEEDS_STATS[ru.x.k] ? cfStatsFor(ru) : {});
     if (!s) continue;
     out = out || {};
     for (var k in s) if (out[k] === undefined) out[k] = s[k];
@@ -3590,7 +3702,7 @@ function adjustObjs(sid, axis, at, n) {
 }
 
 /* ---------- cell format menu ---------- */
-var FILLS = ["#fde68a", "#fecaca", "#bbf7d0", "#bfdbfe", "#e9d5ff", "#fed7aa", "#c8a96e", "#5b8def", "#1baf7a", "#e34948"];
+var FILLS = ["#fde68a", "#fecaca", "#bbf7d0", "#bfdbfe", "#e9d5ff", "#fed7aa", "#d4af37", "#5b8def", "#1baf7a", "#e34948"];
 function fmtFill(bg) { return function (f) { if (bg) f.bg = bg; else delete f.bg; return { f: f }; }; }
 function fmtBorder(mode) {
   var T = selTop(), L = selLeft();
@@ -3753,6 +3865,8 @@ function cfDesc(x) {
   else if (k === "bt") s += " " + x.a + " – " + x.b;
   else if (k === "tx") s += " “" + x.a + "”";
   else if (k === "top" || k === "bot") s += " " + x.n;
+  else if (k === "fx") s += " " + x.a;
+  else if (k === "ic") s += " · " + t("cf.ic." + (x.is || "ar"));
   return s;
 }
 function cfChip(x) {
@@ -3760,6 +3874,10 @@ function cfChip(x) {
   d.className = "cf-chip";
   if (x.k === "cs") d.style.background = "linear-gradient(90deg," + x.cs.join(",") + ")";
   else if (x.k === "db") d.style.background = "linear-gradient(90deg," + x.db + " 60%,transparent 60%)";
+  else if (x.k === "ic") {
+    var set = KIT.CF_ICONS[x.is] || KIT.CF_ICONS.ar;
+    set.forEach(function (g, i) { var e = document.createElement("span"); e.textContent = g; e.style.color = KIT.CF_ICON_CO[i]; d.appendChild(e); });
+  }
   else {
     if (x.st.bg) d.style.background = x.st.bg;
     d.style.color = x.st.co || (x.st.bg ? KIT.inkOn(x.st.bg) : "");
@@ -3887,15 +4005,19 @@ function openCfEditor(rule) {
   var a = mkInput(x.a), b = mkInput(x.b), n = mkInput(String(x.n || 10));
   n.inputMode = "numeric";
   var fa = field(pop, t("cf.val"), a), fb = field(pop, t("cf.and"), b), fn = field(pop, t("cf.n"), n);
+  var faLab = fa.querySelector("span"), fxHint = document.createElement("div");
+  fxHint.className = "pop-note"; fxHint.textContent = t("cf.fx.hint");
+  fa.parentNode.insertBefore(fxHint, fa.nextSibling);
   var choice = document.createElement("div");
   choice.className = "cf-choice";
   pop.appendChild(choice);
-  var cur = { st: x.st || clone(CF_STYLES[0][1]), cs: x.cs || CF_SCALES[0][1].slice(), db: x.db || CF_BARS[0] };
+  var cur = { st: x.st || clone(CF_STYLES[0][1]), cs: x.cs || CF_SCALES[0][1].slice(), db: x.db || CF_BARS[0], is: x.is || "ar" };
   function paintChoice() {
     choice.innerHTML = "";
     var k = kind.value;
     var opts = k === "cs" ? CF_SCALES.map(function (s) { return { lab: t(s[0]), rec: { k: "cs", cs: s[1] }, on: JSON.stringify(s[1]) === JSON.stringify(cur.cs), set: function () { cur.cs = s[1].slice(); } }; })
       : k === "db" ? CF_BARS.map(function (c) { return { lab: "", rec: { k: "db", db: c }, on: c === cur.db, set: function () { cur.db = c; } }; })
+      : k === "ic" ? ["ar", "dt"].map(function (c) { return { lab: t("cf.ic." + c), rec: { k: "ic", is: c }, on: c === cur.is, set: function () { cur.is = c; } }; })
       : CF_STYLES.map(function (s) { return { lab: t(s[0]), rec: { k: "gt", st: s[1] }, on: JSON.stringify(s[1]) === JSON.stringify(cur.st), set: function () { cur.st = clone(s[1]); } }; });
     opts.forEach(function (o) {
       var bt = mkBtn("", "cf-opt" + (o.on ? " on" : ""), function () { o.set(); paintChoice(); });
@@ -3904,8 +4026,10 @@ function openCfEditor(rule) {
       bt.setAttribute("aria-pressed", o.on ? "true" : "false");
       choice.appendChild(bt);
     });
-    var vk = k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt";
-    fa.hidden = !vk; fb.hidden = k !== "bt"; fn.hidden = !(k === "top" || k === "bot");
+    var vk = k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt" || k === "fx";
+    fa.hidden = !vk; fxHint.hidden = k !== "fx";
+    if (faLab) faLab.textContent = k === "fx" ? t("cf.fx") : t("cf.val");
+    a.placeholder = k === "fx" ? t("cf.fx.ph") : ""; fb.hidden = k !== "bt"; fn.hidden = !(k === "top" || k === "bot");
   }
   kind.addEventListener("change", paintChoice);
   paintChoice();
@@ -3916,12 +4040,12 @@ function openCfEditor(rule) {
     var sh = getActiveSheet(), g = KIT.parseRange(rg.value, sh.rows, sh.cols);
     if (!g) { notifyTransient(t("cf.badrange")); rg.focus(); return; }
     var k = kind.value;
-    if ((k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt") && !a.value.trim()) { a.focus(); return; }
+    if ((k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt" || k === "fx") && !a.value.trim()) { a.focus(); return; }
     if (k === "bt" && !b.value.trim()) { b.focus(); return; }
     var maxPos = 0;
     sheetRules().forEach(function (q) { if (q.pos > maxPos) maxPos = q.pos; });
     var rec = { sid: actSID, pos: rule ? rule.pos : maxPos + 1, rg: KIT.rangeStr(g), k: k,
-      a: a.value.trim(), b: b.value.trim(), n: parseInt(n.value, 10) || 10, st: cur.st, cs: cur.cs, db: cur.db };
+      a: a.value.trim(), b: b.value.trim(), n: parseInt(n.value, 10) || 10, st: cur.st, cs: cur.cs, db: cur.db, is: cur.is };
     objDone([putObj("cf", rule ? rule.id : uid(), rec)]);
     openCfManager();
   }));
@@ -3973,7 +4097,125 @@ function commitColW() {
 
 /* ---------- fill handle ---------- */
 var fillH = null, fillDrag = null, RANGE_MODE = false;
+
+/* ---------- range selection on touch (Spreadsheet wave 4.4) ----------
+   Two round handles on the selection's top-left and bottom-right
+   corners: drag one and the opposite corner stays. A whole-column
+   selection keeps its rows (only columns change), a whole-row one its
+   columns. "Extend selection" (sheet menu) is a mode, shown as a chip
+   in the status bar: each tap on a cell or a header grows the selection
+   to it, until the chip, Esc or editing ends it. Mouse use is as before. */
+var LASTPTR = "", rgA = null, rgB = null, rgDrag = null;
+function touchUi() {
+  if (LASTPTR) return LASTPTR !== "mouse";
+  try { return !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches); } catch (e) { return false; }
+}
+function cellBox(r, c) {
+  var m = mergeAt(r, c);
+  var td = cellRefs[r] && cellRefs[r][c];
+  if (m && (!td || td.style.display === "none")) { td = cellRefs[m.r] && cellRefs[m.r][m.c]; }
+  if (!td || td.style.display === "none") return null;
+  return td.getBoundingClientRect();
+}
+function placeRangeHandles() {
+  if (!rgA) return;
+  var sh = getActiveSheet();
+  var hide = !touchUi() || editing || CHSEL || fillDrag || !sh;
+  var wrap = $("grid-wrap"), wr = wrap.getBoundingClientRect();
+  function put(el, r, c, corner) {
+    var b = !hide && cellBox(r, c);
+    if (!b) { el.hidden = true; return; }
+    var x = corner ? b.right : b.left, y = corner ? b.bottom : b.top;
+    /* off the visible grid (under the headers or the frozen panes) */
+    if (x < wr.left + ROWHEADW - 2 || x > wr.right + 2 || y < wr.top + HEADH - 2 || y > wr.bottom + 2) { el.hidden = true; return; }
+    el.hidden = false;
+    el.style.left = (x - wr.left + wrap.scrollLeft - wrap.clientLeft) + "px";
+    el.style.top = (y - wr.top + wrap.scrollTop - wrap.clientTop) + "px";
+  }
+  put(rgA, selTop(), selLeft(), false);
+  put(rgB, selBottom(), selRight(), true);
+}
+/* the corner that moves: for a whole-column selection only its column,
+   for a whole-row one only its row */
+function rgMove(x, y) {
+  if (!rgDrag) return;
+  rgDrag.x = x; rgDrag.y = y;
+  var p = cellFromPoint(x, y);
+  if (!p) return;
+  var q = KIT.handleMove(rgDrag.g, p);
+  if (q.r !== selR || q.c !== selC) { selR = q.r; selC = q.c; renderSelection(); }
+}
+function rgAuto() {
+  if (!rgDrag) return;
+  var wrap = $("grid-wrap"), br = wrap.getBoundingClientRect(), dx = 0, dy = 0;
+  if (rgDrag.y > br.bottom - 28) dy = 18; else if (rgDrag.y < br.top + HEADH + FRH + 8) dy = -18;
+  if (rgDrag.x > br.right - 28) dx = 18; else if (rgDrag.x < br.left + ROWHEADW + 8) dx = -18;
+  if (dx || dy) { wrap.scrollTop += dy; wrap.scrollLeft += dx; renderWindow(false); rgMove(rgDrag.x, rgDrag.y); }
+  rgDrag.raf = (window.requestAnimationFrame || setTimeout)(rgAuto);
+}
+function initRangeHandles() {
+  var wrap = $("grid-wrap");
+  function mk(end) {
+    var el = document.createElement("div");
+    el.className = "rg-h rg-" + end;
+    el.hidden = true;
+    el.title = t("rg.ha");
+    el.setAttribute("aria-hidden", "true");
+    wrap.appendChild(el);
+    el.addEventListener("pointerdown", function (e) {
+      if (e.button && e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      if (editing) commitEdit(0, 0);
+      var sh = getActiveSheet();
+      /* the opposite corner becomes the anchor, this one the moving end */
+      var g = KIT.handleGrab({ t: selTop(), b: selBottom(), l: selLeft(), r: selRight() }, end, sh.rows, sh.cols);
+      selAR = g.ar; selAC = g.ac; selR = g.r; selC = g.c;
+      try { el.setPointerCapture(e.pointerId); } catch (er) {}
+      rgDrag = { end: end, x: e.clientX, y: e.clientY, g: g };
+      el.classList.add("on");
+      rgDrag.raf = (window.requestAnimationFrame || setTimeout)(rgAuto);
+    });
+    el.addEventListener("pointermove", function (e) {
+      if (!rgDrag) return;
+      e.preventDefault();
+      rgMove(e.clientX, e.clientY);
+    });
+    function stop() {
+      if (!rgDrag) return;
+      (window.cancelAnimationFrame || clearTimeout)(rgDrag.raf);
+      rgDrag = null;
+      el.classList.remove("on");
+      renderSelection();
+    }
+    el.addEventListener("pointerup", stop);
+    el.addEventListener("pointercancel", stop);
+    el.addEventListener("click", function (e) { e.stopPropagation(); });
+    return el;
+  }
+  rgA = mk("a"); rgB = mk("b");
+}
+/* the extend mode and its chip in the status bar */
+function setRangeMode(on) {
+  RANGE_MODE = !!on;
+  var chip = $("st-ext");
+  if (!chip && on) {
+    chip = document.createElement("button");
+    chip.type = "button"; chip.id = "st-ext";
+    chip.addEventListener("click", function (e) { e.stopPropagation(); setRangeMode(false); });
+    document.body.appendChild(chip);
+  }
+  if (chip) {
+    chip.hidden = !on;
+    /* floats just above the sheet tabs, so the status bar keeps its room */
+    var tabs = $("stabs"), top = tabs ? tabs.getBoundingClientRect().top : window.innerHeight;
+    chip.style.bottom = Math.max(8, window.innerHeight - top + 8) + "px";
+    chip.textContent = t("rg.chip") + " \u2715";
+    chip.title = t("rg.x"); chip.setAttribute("aria-label", t("rg.x"));
+  }
+  if (on) notifyTransient(t("rg.tap"));
+}
 function placeFillHandle() {
+  placeRangeHandles();
   if (!fillH) return;
   var hide = editing || CHSEL || selBottom() - selTop() > 5000;
   var r = selBottom(), c = selRight(), m = !hide && mergeAt(r, c);
@@ -3982,8 +4224,11 @@ function placeFillHandle() {
   if (!td || td.style.display === "none") { fillH.hidden = true; return; }
   var wrap = $("grid-wrap"), wr = wrap.getBoundingClientRect(), tr = td.getBoundingClientRect();
   fillH.hidden = false;
-  fillH.style.left = (tr.right - wr.left + wrap.scrollLeft - wrap.clientLeft - 5) + "px";
-  fillH.style.top = (tr.bottom - wr.top + wrap.scrollTop - wrap.clientTop - 5) + "px";
+  /* touch: the corner carries a range handle, so the fill handle sits
+     just outside it, diagonally (it never covers the selected cells) */
+  var off = touchUi() ? 16 - 7 : -5;
+  fillH.style.left = (tr.right - wr.left + wrap.scrollLeft - wrap.clientLeft + off) + "px";
+  fillH.style.top = (tr.bottom - wr.top + wrap.scrollTop - wrap.clientTop + off) + "px";
 }
 function cellFromPoint(x, y) {
   var els = document.elementsFromPoint ? document.elementsFromPoint(x, y) : [document.elementFromPoint(x, y)];
@@ -4294,6 +4539,7 @@ function chartData(x) {
 }
 function chartOpts(x, pal, w, h) {
   return { t: x.t, w: w || x.w, h: h || x.h, ttl: x.ttl, xl: x.xl, yl: x.yl, lg: x.lg, co: x.co, lang: LANG,
+    cb: x.cb, ln: x.ln, sk: x.sk,
     pal: pal, empty: t("ch.empty"), seriesWord: t("ch.series"), otherWord: t("ch.other") };
 }
 function chartBox(x) {
@@ -4466,6 +4712,17 @@ function openChartEditor(id, init) {
   lg.type = "checkbox"; lg.checked = x.lg !== 0;
   var lw = field(pop, t("ch.lg"), lg);
   lw.classList.add("pop-chk");
+  /* wave 4.2: stacked, combo, trend line; each shown for the types it fits */
+  var opt = {};
+  ["sk", "cb", "ln"].forEach(function (k) {
+    var cbx = document.createElement("input");
+    cbx.type = "checkbox"; cbx.checked = x[k] === 1;
+    var fw = field(pop, t("ch." + k), cbx);
+    fw.classList.add("pop-chk");
+    opt[k] = { box: cbx, wrap: fw };
+    cbx.addEventListener("change", function () { draw(); });
+  });
+  function showOpts() { for (var k in opt) opt[k].wrap.hidden = !KIT.CH_OPT[k][type.value]; }
   var colRow = document.createElement("div");
   colRow.className = "ch-cols";
   pop.appendChild(colRow);
@@ -4479,9 +4736,11 @@ function openChartEditor(id, init) {
     y.ttl = ttl.value; y.xl = xl.value; y.yl = yl.value; y.lg = lg.checked ? 1 : 0;
     y.co = co.slice();
     y.sid = x.sid || actSID;
+    for (var k in opt) { if (opt[k].box.checked && KIT.CH_OPT[k][y.t]) y[k] = 1; else delete y[k]; }
     return y;
   }
   function upd() {
+    showOpts();
     var y = cur(), pal = chartPal(), model = chartData(y);
     var n = (y.t === "pie" || y.t === "donut") ? (model.series[0] ? KIT.pieSlices(model.series[0], model.cats).length : 0) : model.series.length;
     var base = KIT.seriesColors(pal, co);
@@ -4569,6 +4828,375 @@ function initCharts() {
   chLayer = document.createElement("div");
   chLayer.id = "ch-layer";
   wrap.insertBefore(chLayer, wrap.firstChild);
+}
+
+/* ===== SECTION 3j: PRINT · PDF (Spreadsheet wave 4.3) =====
+   The active sheet (its used area, or the selection) as a real PDF:
+   jsPDF + the Noto Sans fonts (both precached, loaded on first use),
+   text as selectable text, so Greek comes out right. The page plan is
+   KIT.printPages (pure, tested); this draws it: fills, data bars,
+   icons, borders, merged cells, gridlines, repeated heading rows,
+   charts (their SVG drawn to a picture) and "Page n of t". Print opens
+   the same PDF in the browser's print dialog. The settings stay on
+   this device (PR_KEY), nothing in the workbook changes.            */
+var PR_KEY = "oros-spreadsheet-print";   /* device-local, NEVER synced */
+var PR_FONT = { n: "NotoSans-Regular", b: "NotoSans-Bold", i: "NotoSans-Italic", bi: "NotoSans-BoldItalic" };
+var prLib = { loading: false, q: [], fonts: null };
+function prSettings() {
+  var o = {};
+  try { o = JSON.parse(localStorage.getItem(PR_KEY) || "{}") || {}; } catch (e) { o = {}; }
+  return KIT.normPrint(o);
+}
+function prKeep(x) { try { localStorage.setItem(PR_KEY, JSON.stringify(x)); } catch (e) {} }
+function prLoadLib(done) {
+  if (window.jspdf && window.jspdf.jsPDF) { done(true); return; }
+  prLib.q.push(done);
+  if (prLib.loading) return;
+  prLib.loading = true;
+  var s = document.createElement("script");
+  s.src = "../vendor/jspdf.umd.min.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+  s.onload = function () { prLib.loading = false; prLib.q.splice(0).forEach(function (cb) { cb(true); }); };
+  s.onerror = function () { prLib.loading = false; s.remove(); prLib.q.splice(0).forEach(function (cb) { cb(false); }); };
+  document.head.appendChild(s);
+}
+function prLoadFonts() {
+  if (prLib.fonts) return Promise.resolve(prLib.fonts);
+  function get(name) {
+    return fetch("../vendor/noto/" + name + ".ttf").then(function (r) { if (!r.ok) throw new Error("font"); return r.arrayBuffer(); })
+      .then(function (buf) {
+        var bytes = new Uint8Array(buf), bin = "";
+        for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+        return btoa(bin);
+      });
+  }
+  var keys = Object.keys(PR_FONT);
+  return Promise.all(keys.map(function (k) { return get(PR_FONT[k]); })).then(function (list) {
+    var out = {};
+    keys.forEach(function (k, i) { out[k] = list[i]; });
+    prLib.fonts = out;
+    return out;
+  });
+}
+/* the rows and columns to print: { rows: [r], cols: [c], head: [r] } or null */
+function prArea(x) {
+  var sh = getActiveSheet(), r0 = 0, r1 = -1, c0 = 0, c1 = -1, id;
+  if (x.sel && selIsRange()) { r0 = selTop(); r1 = selBottom(); c0 = selLeft(); c1 = selRight(); }
+  else {
+    var ext = sheetExtent(actSID);
+    r1 = ext.rows - 1; c1 = ext.cols - 1;
+    mergeMap().list.forEach(function (m) { r1 = Math.max(r1, m.r2); c1 = Math.max(c1, m.c2); });
+    if (x.ch) for (id in state.charts) {
+      var ch = state.charts[id];
+      if (ch.sid !== actSID) continue;
+      var e = prChartEnd(sh, ch);
+      r1 = Math.max(r1, e.r); c1 = Math.max(c1, e.c);
+    }
+  }
+  r1 = Math.min(r1, sh.rows - 1); c1 = Math.min(c1, sh.cols - 1);
+  if (r1 < r0 || c1 < c0) return null;
+  var head = [], rows = [], cols = [], r, c;
+  for (r = 0; r < Math.min(x.hr, sh.rows); r++) if (!(POS && POS[r] < 0)) head.push(r);
+  for (r = r0; r <= r1; r++) {
+    if (POS && r < POS.length && POS[r] < 0) continue;     /* filtered out */
+    if (x.hr && r < x.hr) continue;                        /* drawn as headings */
+    rows.push(r);
+  }
+  for (c = c0; c <= c1; c++) cols.push(c);
+  if (!rows.length && !head.length) return null;
+  return { rows: rows, cols: cols, head: head };
+}
+/* the last cell a chart covers */
+function prChartEnd(sh, ch) {
+  var c = ch.at.c, w = ch.at.x + ch.w, r = ch.at.r, h = ch.at.y + ch.h;
+  while (c < sh.cols - 1 && w > colW(sh, c)) { w -= colW(sh, c); c++; }
+  while (r < sh.rows - 1 && h > rowH(sh, r)) { h -= rowH(sh, r); r++; }
+  return { r: r, c: c };
+}
+/* the charts of the active sheet as PNG data URLs, light colours */
+function prCharts(x) {
+  if (!x.ch) return Promise.resolve([]);
+  var pal = { bg: "#ffffff", text: "#1f1d1a", dim: "#5f5a52", grid: "#d9d4ca", dark: false,
+    font: "Noto Sans, Nunito, -apple-system, Segoe UI, Roboto, sans-serif" };
+  var list = [], id;
+  for (id in state.charts) if (state.charts[id].sid === actSID) list.push(state.charts[id]);
+  return Promise.all(list.map(function (ch) {
+    return new Promise(function (res) {
+      var svgS = KIT.chartSVG(chartData(ch), chartOpts(ch, pal));
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var cv = document.createElement("canvas"), k = 3;
+          cv.width = ch.w * k; cv.height = ch.h * k;
+          var g = cv.getContext("2d");
+          g.fillStyle = "#ffffff"; g.fillRect(0, 0, cv.width, cv.height);
+          g.scale(k, k);
+          g.drawImage(img, 0, 0, ch.w, ch.h);
+          res({ ch: ch, png: cv.toDataURL("image/png") });
+        } catch (e) { res(null); }
+      };
+      img.onerror = function () { res(null); };
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgS);
+    });
+  })).then(function (a) { return a.filter(Boolean); });
+}
+function prRgb(hex) {
+  var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ""));
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0];
+}
+function prFill(pdf, hex) { var c = prRgb(hex); pdf.setFillColor(c[0], c[1], c[2]); }
+function prDrawC(pdf, hex) { var c = prRgb(hex); pdf.setDrawColor(c[0], c[1], c[2]); }
+function prInk(pdf, hex) { var c = prRgb(hex); pdf.setTextColor(c[0], c[1], c[2]); }
+/* one icon of an icon-set rule as a shape (the font has no arrows) */
+function prIcon(pdf, ch, hex, x, y, s) {
+  prFill(pdf, hex);
+  var h = s / 2;
+  if (ch === "▲") pdf.triangle(x, y + h, x + s, y + h, x + h, y - h, "F");
+  else if (ch === "▼") pdf.triangle(x, y - h, x + s, y - h, x + h, y + h, "F");
+  else if (ch === "▶") pdf.triangle(x, y - h, x, y + h, x + s, y, "F");
+  else pdf.circle(x + h, y, h * 0.9, "F");
+}
+/* the whole PDF; resolves to { blob, pages } */
+function prBuild(x) {
+  freshEval();
+  var area = prArea(x);
+  if (!area) return Promise.reject(new Error("empty"));
+  return new Promise(function (res, rej) {
+    prLoadLib(function (ok) { if (ok) res(); else rej(new Error("lib")); });
+  }).then(function () {
+    return Promise.all([prLoadFonts(), prCharts(x)]);
+  }).then(function (got) { return prRender(x, area, got[0], got[1]); });
+}
+function prRender(x, area, fonts, charts) {
+  var sh = getActiveSheet(), PT = KIT.PX_PT, FOOT = 18;
+  var colWs = area.cols.map(function (c) { return colW(sh, c) * PT; });
+  var rowHs = area.rows.map(function (r) { return rowH(sh, r) * PT; });
+  var headHs = area.head.map(function (r) { return rowH(sh, r) * PT; });
+  var P = KIT.printPages({ pa: x.pa, or: x.or, fit: x.fit, colW: colWs, rowH: rowHs, headH: headHs, margin: 36, foot: x.pn ? FOOT : 0 });
+  var pdf = new window.jspdf.jsPDF({ unit: "pt", format: [P.w, P.h], orientation: x.or === "l" ? "landscape" : "portrait", compress: true });
+  Object.keys(PR_FONT).forEach(function (k) {
+    var file = PR_FONT[k] + ".ttf";
+    pdf.addFileToVFS(file, fonts[k]);
+    pdf.addFont(file, "NotoSans", k === "n" ? "normal" : k === "b" ? "bold" : k === "i" ? "italic" : "bolditalic");
+  });
+  pdf.setProperties({ title: displayName(sh), creator: "orOS Spreadsheet" });
+  var s = P.scale, total = P.pages.length, name = displayName(sh);
+  P.pages.forEach(function (pg, n) {
+    if (n) pdf.addPage([P.w, P.h], x.or === "l" ? "landscape" : "portrait");
+    var cols = area.cols.slice(pg.c[0], pg.c[1] + 1), cw = colWs.slice(pg.c[0], pg.c[1] + 1);
+    var body = pg.r ? area.rows.slice(pg.r[0], pg.r[1] + 1) : [];
+    var rows = area.head.concat(body), rh = rows.map(function (r) { return rowH(sh, r) * PT; });
+    var cx = [P.x0], ry = [P.y0], i;
+    for (i = 0; i < cw.length; i++) cx.push(cx[i] + cw[i] * s);
+    for (i = 0; i < rh.length; i++) ry.push(ry[i] + rh[i] * s);
+    prPage(pdf, sh, x, s, rows, cols, cx, ry);
+    prPageCharts(pdf, s, charts, rows, cols, cx, ry, !pg.r || pg.r[0] === 0 ? 0 : area.head.length);
+    if (x.pn) {
+      pdf.setFont("NotoSans", "normal"); pdf.setFontSize(8); prInk(pdf, "#5f5a52");
+      var lab = KIT.pageLabel(t("pr.page"), n + 1, total), yb = P.h - 36 + 4;
+      pdf.text(KIT.fitText(name, P.uw / 2 - 12, function (q) { return pdf.getTextWidth(q); }), P.x0, yb, { baseline: "top" });
+      pdf.text(lab, P.w - 36, yb, { baseline: "top", align: "right" });
+    }
+  });
+  return { blob: pdf.output("blob"), pages: total };
+}
+function prPage(pdf, sh, x, s, rows, cols, cx, ry) {
+  var nR = rows.length, nC = cols.length, i, j, fs = 9.75 * s, pad = 4.5 * s;
+  var colAt = {}, rowAt = {};
+  cols.forEach(function (c, j) { colAt[c] = j; });
+  rows.forEach(function (r, i) { rowAt[r] = i; });
+  var covered = {}, spans = {};
+  mergeMap().list.forEach(function (m) {
+    for (var r = m.r; r <= m.r2; r++) for (var c = m.c; c <= m.c2; c++) {
+      if (rowAt[r] === undefined || colAt[c] === undefined) continue;
+      if (r === m.r && c === m.c) continue;
+      covered[r + "," + c] = m;
+    }
+    if (rowAt[m.r] !== undefined && colAt[m.c] !== undefined) spans[m.r + "," + m.c] = m;
+  });
+  /* the box of a cell (a merge's top-left: the visible part of the merge) */
+  function box(i, j) {
+    var r = rows[i], c = cols[j], m = spans[r + "," + c], i2 = i, j2 = j;
+    if (m) {
+      while (i2 + 1 < nR && rows[i2 + 1] <= m.r2 && rows[i2 + 1] > r) i2++;
+      while (j2 + 1 < nC && cols[j2 + 1] <= m.c2) j2++;
+    }
+    return { x: cx[j], y: ry[i], w: cx[j2 + 1] - cx[j], h: ry[i2 + 1] - ry[i], j2: j2 };
+  }
+  var cells = [];
+  for (i = 0; i < nR; i++) for (j = 0; j < nC; j++) {
+    var r = rows[i], c = cols[j], key = r + "," + c;
+    var mc = covered[key];
+    if (mc && spans[mc.r + "," + mc.c]) continue;          /* drawn by its top-left */
+    var src = mc ? { r: mc.r, c: mc.c } : { r: r, c: c };
+    var cel = getCell(src.r, src.c), f = (cel && cel.f) || {}, cf = cfAt(src.r, src.c) || {};
+    var b = box(i, j), view = mc ? { s: "", k: "" } : cellView(r, c);
+    cells.push({ i: i, j: j, r: r, c: c, b: b, f: f, cf: cf, v: view, m: !!spans[key] || !!mc });
+  }
+  /* fills and data bars */
+  cells.forEach(function (q) {
+    var bg = q.cf.bg || q.f.bg;
+    if (bg) { prFill(pdf, bg); pdf.rect(q.b.x, q.b.y, q.b.w, q.b.h, "F"); }
+    if (q.cf.bar !== undefined) {
+      var bc = prRgb(q.cf.barCo), mix = function (v) { return Math.round(v * 0.55 + 255 * 0.45); };
+      pdf.setFillColor(mix(bc[0]), mix(bc[1]), mix(bc[2]));
+      pdf.rect(q.b.x, q.b.y + 0.5, q.b.w * Math.max(0, Math.min(1, q.cf.bar)), q.b.h - 1, "F");
+    }
+  });
+  /* gridlines: every cell edge but the inside of merges */
+  if (x.gl) {
+    pdf.setLineWidth(0.4); prDrawC(pdf, "#c8c3b8");
+    cells.forEach(function (q) {
+      pdf.line(q.b.x + q.b.w, q.b.y, q.b.x + q.b.w, q.b.y + q.b.h);
+      pdf.line(q.b.x, q.b.y + q.b.h, q.b.x + q.b.w, q.b.y + q.b.h);
+    });
+    pdf.line(cx[0], ry[0], cx[nC], ry[0]);
+    pdf.line(cx[0], ry[0], cx[0], ry[nR]);
+  }
+  /* text: left-aligned text runs on over empty cells to its right, like on screen in Excel */
+  var empty = {};
+  cells.forEach(function (q) { if (!q.v.s && !q.m) empty[q.i + "," + q.j] = 1; });
+  cells.forEach(function (q) {
+    var txt = q.v.s, f = q.f, cf = q.cf;
+    var bold = !!(f.b || cf.b), ital = !!f.i;
+    pdf.setFont("NotoSans", bold && ital ? "bolditalic" : bold ? "bold" : ital ? "italic" : "normal");
+    pdf.setFontSize(fs);
+    var bg = cf.bg || f.bg;
+    var ink = q.v.k === "err" ? "#c62828" : (cf.co || f.co || (bg ? KIT.inkOn(bg) : "#1f1d1a"));
+    var al = f.al || (q.v.k === "num" ? "r" : q.v.k === "bool" || q.v.k === "err" ? "c" : "l");
+    var x0 = q.b.x + pad, w = q.b.w - 2 * pad;
+    if (cf.ic) { prIcon(pdf, cf.ic, cf.icCo, x0, q.b.y + q.b.h / 2, fs * 0.7); x0 += fs; w -= fs; }
+    if (!txt || w <= 0) return;
+    prInk(pdf, ink);
+    var meas = function (z) { return pdf.getTextWidth(z); };
+    var va = f.va || "m", lh = fs * 1.2;
+    if (f.wr) {
+      var lines = pdf.splitTextToSize(txt, w), room = Math.max(1, Math.floor((q.b.h - 2 * s) / lh));
+      if (lines.length > room) { lines = lines.slice(0, room); lines[room - 1] = KIT.fitText(lines[room - 1] + "…", w, meas); }
+      var th = lines.length * lh, ty = va === "t" ? q.b.y + 2 * s : va === "b" ? q.b.y + q.b.h - 2 * s - th : q.b.y + (q.b.h - th) / 2;
+      lines.forEach(function (ln, k) { prText(pdf, ln, al, x0, w, ty + k * lh + lh / 2, f.u); });
+      return;
+    }
+    if (al === "l" && !q.m && q.v.k === "") {
+      for (var jj = q.b.j2 + 1; jj < nC && empty[q.i + "," + jj] && meas(txt) > w; jj++) w = cx[jj + 1] - x0 - pad;
+    }
+    var yy = va === "t" ? q.b.y + 2 * s + fs * 0.6 : va === "b" ? q.b.y + q.b.h - 2 * s - fs * 0.6 : q.b.y + q.b.h / 2;
+    var out = q.v.k === "num" && meas(txt) > w ? "#".repeat(Math.max(1, Math.floor(w / Math.max(1, meas("#"))))) : KIT.fitText(txt, w, meas);
+    prText(pdf, out, al, x0, w, yy, f.u);
+  });
+  /* borders on top */
+  pdf.setLineWidth(0.75);
+  cells.forEach(function (q) {
+    var bd = q.f.bd;
+    if (!bd) return;
+    var bg = q.cf.bg || q.f.bg;
+    prDrawC(pdf, bg ? KIT.inkOn(bg) : "#1f1d1a");
+    var X = q.b.x, Y = q.b.y, W = q.b.w, H = q.b.h;
+    if (bd.indexOf("t") >= 0) pdf.line(X, Y, X + W, Y);
+    if (bd.indexOf("b") >= 0) pdf.line(X, Y + H, X + W, Y + H);
+    if (bd.indexOf("l") >= 0) pdf.line(X, Y, X, Y + H);
+    if (bd.indexOf("r") >= 0) pdf.line(X + W, Y, X + W, Y + H);
+  });
+}
+function prText(pdf, s, al, x0, w, y, u) {
+  if (!s) return;
+  var tx = al === "r" ? x0 + w : al === "c" ? x0 + w / 2 : x0;
+  pdf.text(s, tx, y, { baseline: "middle", align: al === "r" ? "right" : al === "c" ? "center" : "left" });
+  if (u) {
+    var tw = pdf.getTextWidth(s), ux = al === "r" ? tx - tw : al === "c" ? tx - tw / 2 : tx, fsz = pdf.getFontSize();
+    pdf.setLineWidth(fsz / 18); pdf.setDrawColor(pdf.getTextColor());
+    pdf.line(ux, y + fsz * 0.45, ux + tw, y + fsz * 0.45);
+  }
+}
+/* charts whose anchor cell is on this page, at their place; a chart
+   that starts in a repeated heading row prints once, on the first page
+   of its columns (from: where on this page anchors may be looked for) */
+function prPageCharts(pdf, s, charts, rows, cols, cx, ry, from) {
+  var PT = KIT.PX_PT;
+  charts.forEach(function (o) {
+    var ch = o.ch, j = cols.indexOf(ch.at.c), i = rows.indexOf(ch.at.r, from);
+    if (j < 0 || i < 0) return;
+    pdf.addImage(o.png, "PNG", cx[j] + ch.at.x * PT * s, ry[i] + ch.at.y * PT * s, ch.w * PT * s, ch.h * PT * s, undefined, "FAST");
+  });
+}
+/* file name: the sheet's name, safe on every system */
+function prName() {
+  var n = displayName(getActiveSheet()).replace(/[\\\/:*?"<>|\u0000-\u001f]+/g, " ").trim().slice(0, 80);
+  return (n || "sheet") + ".pdf";
+}
+function prMake(x, then) {
+  notifyTransient(t("pr.busy"));
+  prBuild(x).then(then, function (e) {
+    notifyTransient(e && e.message === "empty" ? t("pr.empty") : t("pr.err"));
+    if (!(e && e.message === "empty")) console.error("[SS] PDF failed:", e);
+  });
+}
+/* Print: the PDF in a hidden frame, then the browser's print dialog;
+   where a frame cannot print a PDF, the PDF opens in a new tab */
+function prPrint(blob) {
+  var url = URL.createObjectURL(blob), old = $("ss-print");
+  if (old) old.remove();
+  var fr = document.createElement("iframe");
+  fr.id = "ss-print";
+  fr.setAttribute("aria-hidden", "true");
+  fr.tabIndex = -1;
+  fr.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0;pointer-events:none";
+  fr.addEventListener("load", function () {
+    setTimeout(function () {
+      try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+      catch (e) { try { window.open(url, "_blank", "noopener"); } catch (e2) {} }
+    }, 250);
+  }, { once: true });
+  fr.src = url;
+  document.body.appendChild(fr);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 10 * 60 * 1000);
+}
+function openPrintDialog() {
+  var x = prSettings();
+  if (!selIsRange()) x.sel = 0;
+  var pop = popShell(t("pr.title"), "print-dlg");
+  var what = mkSelect([["0", t("pr.all")], ["1", t("pr.sel")]], String(x.sel));
+  if (!selIsRange()) what.disabled = true;
+  field(pop, t("pr.what"), what);
+  var row1 = document.createElement("div");
+  row1.className = "pop-2";
+  pop.appendChild(row1);
+  var pa = mkSelect([["a4", "A4"], ["a3", "A3"], ["letter", "Letter"], ["legal", "Legal"]], x.pa);
+  var or = mkSelect([["p", t("pr.p")], ["l", t("pr.l")]], x.or);
+  field(row1, t("pr.paper"), pa); field(row1, t("pr.or"), or);
+  var fit = mkSelect([["w", t("pr.fit.w")], ["p", t("pr.fit.p")], ["n", t("pr.fit.n")]], x.fit);
+  field(pop, t("pr.fit"), fit);
+  var hrOpts = [["0", t("pr.hr.0")]];
+  for (var k = 1; k <= 5; k++) hrOpts.push([String(k), t(k === 1 ? "pr.hr.1" : "pr.hr.n").replace("{n}", k)]);
+  var hr = mkSelect(hrOpts, String(x.hr));
+  field(pop, t("pr.hr"), hr);
+  function chk(label, on) {
+    var b = document.createElement("input");
+    b.type = "checkbox"; b.checked = !!on;
+    field(pop, label, b).classList.add("pop-chk");
+    return b;
+  }
+  var gl = chk(t("pr.gl"), x.gl), pn = chk(t("pr.pn"), x.pn), chs = chk(t("pr.ch"), x.ch);
+  var note = document.createElement("div");
+  note.className = "pop-note"; note.textContent = t("pr.note");
+  pop.appendChild(note);
+  function read() {
+    return KIT.normPrint({ sel: what.value === "1" ? 1 : 0, pa: pa.value, or: or.value, fit: fit.value,
+      hr: parseInt(hr.value, 10), gl: gl.checked ? 1 : 0, pn: pn.checked ? 1 : 0, ch: chs.checked ? 1 : 0 });
+  }
+  var btns = document.createElement("div");
+  btns.className = "pop-btns";
+  btns.appendChild(mkBtn(t("flt.cancel"), "", closePops));
+  btns.appendChild(mkBtn(t("pr.print"), "", function () {
+    var y = read(); prKeep(y); closePops();
+    prMake(y, function (o) { prPrint(o.blob); });
+  }));
+  btns.appendChild(mkBtn(t("pr.pdf"), "primary", function () {
+    var y = read(); prKeep(y); closePops();
+    prMake(y, function (o) { saveBlob(o.blob, prName(), "application/pdf", "PDF"); });
+  }));
+  pop.appendChild(btns);
+  placePop(pop, { el: $("tb-fmt") });
+  try { what.focus({ preventScroll: true }); } catch (e) {}
 }
 
 /* ===== SECTION 4: SYNC SLICE + PALETTE + NOTIFICATIONS ===== */
@@ -4821,6 +5449,7 @@ function wire() {
 
   $("grid").addEventListener("pointerdown", function (e) {
     ptrType = e.pointerType || "mouse";
+    if (ptrType !== LASTPTR) { LASTPTR = ptrType; placeFillHandle(); }
   }, true);
 
   /* a header click selects the whole column / row (corner = all) */
@@ -4862,15 +5491,15 @@ function wire() {
         return;
       }
       mdSelected = (ptrType === "mouse");
-      headerSelect(pos, e.shiftKey);
+      headerSelect(pos, e.shiftKey || RANGE_MODE);
       return;
     }
     var r = pos.r, c = pos.c;
     tapWasSelected = (r === selR && c === selC && !editing);
     mdSelected = (ptrType === "mouse");
     if (editing) commitEdit(0, 0); /* then KEEP selecting the clicked cell */
-    if (RANGE_MODE && mdSelected) {
-      RANGE_MODE = false;
+    if (RANGE_MODE) {                     /* extend mode: grows, stays on (touch too:
+                                             the click after this must not collapse it) */
       selR = r; selC = c;
       renderSelection();
       return;
@@ -4941,11 +5570,10 @@ function wire() {
     if (CHSEL) selectChart(null);
     var pos = gridPos(e.target);
     if (!pos) return;
-    if (pos.td === undefined) { if (editing) commitEdit(0, 0); headerSelect(pos, false); return; }
+    if (pos.td === undefined) { if (editing) commitEdit(0, 0); headerSelect(pos, RANGE_MODE); return; }
     var r = pos.r, c = pos.c;
     if (editing) commitEdit(0, 0);
-    if (RANGE_MODE) {
-      RANGE_MODE = false;
+    if (RANGE_MODE) {                     /* extend mode: grows, stays on */
       selR = r; selC = c;
       renderSelection();
       return;
@@ -5017,7 +5645,7 @@ function wire() {
       if (e.cancelable) e.preventDefault();      /* no click after it */
       ignoreClickUntil = Date.now() + 450;
       if (d.moved) { if (d.k === "c") { commitColW(); } else commitRowH(d.i, d.v); }
-      else { if (editing) commitEdit(0, 0); headerSelect(d.pos, false); }
+      else { if (editing) commitEdit(0, 0); headerSelect(d.pos, RANGE_MODE); }
       return;
     }
     if (lp.on) {
@@ -5039,7 +5667,7 @@ function wire() {
     if (editing) return;
     var k = e.key;
     if (CHSEL) selectChart(null);
-    if (RANGE_MODE && k === "Escape") { RANGE_MODE = false; return; }
+    if (RANGE_MODE && k === "Escape") { setRangeMode(false); return; }
     if (k === "ArrowUp") { e.preventDefault(); navigate(-1, 0, e.shiftKey); }
     else if (k === "ArrowDown") { e.preventDefault(); navigate(1, 0, e.shiftKey); }
     else if (k === "ArrowLeft") { e.preventDefault(); navigate(0, -1, e.shiftKey); }
@@ -5073,6 +5701,9 @@ function wire() {
     }
     else if ((e.ctrlKey || e.metaKey) && (k === "u" || k === "U")) {
       e.preventDefault(); applyFormatToSelection(fmtToggle("u"));
+    }
+    else if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (k === "p" || k === "P")) {
+      e.preventDefault(); openPrintDialog();     /* the sheet, not the app's window */
     }
     else if (k.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault(); beginEdit(k);
@@ -5464,6 +6095,7 @@ function boot() {
   injectIcons();
   initCharts();
   initFillHandle();
+  initRangeHandles();
   wire();
   registerSync();
   inheritPalette();

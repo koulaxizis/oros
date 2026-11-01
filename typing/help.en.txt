@@ -1,0 +1,85 @@
+# Typing Tutor
+Learn to type with all ten fingers without looking at the keys. Short lessons bring in two keys at a time, starting from the home row, for Greek, English (US) and German keyboards. A few minutes a day are enough.
+
+## Getting started
+1. Choose your keyboard at the top: `Ελληνικά`, `English (US)` or `Deutsch`. Switch your computer's keyboard to the same language (Windows: Win+Space, Linux: Super+Space, Android with a keyboard: Ctrl+Space).
+2. Press `Start lesson 1`, or any lesson in the list.
+3. Rest your fingers on the home row: the left index finger on F, the right one on J. Both keys have a small bump you can feel.
+4. Type the text you see. The letter to type next is underlined, and the key on the screen keyboard and the finger to use light up.
+5. At the end you see your speed, your accuracy and the stars you earned.
+
+## The screen keyboard
+- Each colour belongs to one finger. Every key of the same colour is typed with that finger, and both thumbs share the space bar.
+- Under the keyboard, the two hands show which finger to use next.
+- For a capital letter, the Shift key on the other hand lights up too.
+- For a Greek letter with a tonos (ά, έ, ή…), first press the key with ΄ (right of Λ), then the letter. Shift and the same key give the dialytika (ϊ, ϋ).
+- `Key hints` in the settings: `When I hesitate` lights the key only when you wait or make a mistake, `Always` lights it every time, `Never` hides the keyboard so you type from memory.
+
+## Lessons and stars
+- The lessons go row by row: the home row, the top row, the bottom row, then capitals, accents, numbers and signs. Each group ends with a review.
+- Stars: one star for finishing with 90% accuracy or more, two for 95% and 15 words per minute, three for 98% and 25 words per minute.
+- `Continue` always opens the first lesson without a star. You can open any lesson at any time.
+- `Mistakes` in the settings: `Stop until it is right` waits for the right key (best for learning), `Go on, Backspace fixes` moves on and lets you go back.
+
+## Speed test
+- `Speed test` gives you 1, 2 or 5 minutes of common words.
+- Speed is in words per minute: five characters count as one word. Accuracy is the share of right key presses.
+- Your best result for each length is kept in `Statistics`.
+
+## Practise your weak keys
+- `Practise my weak keys` (on the first screen) makes a round from the keys that go wrong most often or that you type slowest, using only the keys of the lessons you have finished.
+- The name of the round shows which keys it practises. The more you practise, the better it knows your keys.
+
+## Texts
+- `Texts` opens short passages from public-domain literature for your keyboard, with author and year, and your own texts.
+- `Add a text` keeps a text of your own (up to 50 texts). You can also send a text here from Notes or Writer with `Send to an app…`; it opens in the same dialog and is saved only when you press `Save`.
+- Characters your keyboard cannot type are left out, and curly quotes and long dashes become the plain ones. Long texts are typed in parts.
+- `Write in Typewriter` opens [Typewriter](app:typewriter) to write freely, without hints.
+
+## Polytonic Greek, Dvorak and Colemak
+- The keyboard list at the top also has `Ελληνικά (πολυτονικό)`, `English (Dvorak)` and `English (Colemak)`. Each keeps its own lessons, stars and records.
+- Dvorak and Colemak follow the same course as English, with each letter on its own key and finger, and the same English words and texts.
+- Polytonic Greek is for those who already type Greek: six lessons bring in the marks, one key at a time. `;` gives the oxia and, with Shift, the psili (smooth breathing); `'` gives the varia and, with Shift, the dasia (rough breathing); `[` gives the perispomeni and, with Shift, the dialytika; `]` gives the ypogegrammeni (iota subscript). For a letter with several marks, press the ypogegrammeni first, then the accent, then the breathing, then the letter (ᾄ: `]` `;` Shift+`;` α).
+- The hints follow the Linux Greek (polytonic) keyboard. Windows' Greek Polytonic keyboard has the marks on other keys; the lessons accept the letter you type either way.
+- The polytonic texts include the opening of the Odyssey, the opening of the Gospel of John and the first stanza of Solomos' Hymn to Liberty, and the Greek passages too.
+
+## Letter rain
+- `Letter rain` (on the first screen) is a game: letters fall from the top, and typing one takes it away before it reaches the bottom.
+- A letter that reaches the bottom costs one of your three lives. Every 10 letters is a new level, where they fall faster.
+- Only the letters of the lessons you have finished take part (the home row before your first lesson).
+- The game pauses when you click outside it. Its minutes count towards your daily goal, and your best score is kept on this device.
+
+## For children
+- On the first open, and in the settings under `Who is practising?`, choose `A child` for a child.
+- The lessons are then shorter, with simple words (animals, colours, food), bigger letters and rounder keys.
+- Stars count only accuracy: one for 85% right, two for 92%, three for 97%. Speed and time are hidden, and a counter shows how many letters in a row were right.
+- The speed test is hidden. Letter rain is a little slower.
+
+## Certificates and the pet
+- After the final text with at least one star, or after a speed test, `Make a certificate` opens [Certificates](app:certificates) with a new set already named (for a child, the children's kind). Nothing is made until you press `Create` there.
+- When the desktop pet is on, it cheers a good result.
+
+## Today, Habits and the reminder
+- While you have practised in the last week and today's goal is not reached, [Today](app:today) shows a row with today's minutes.
+- [Habits](app:habits) shows a "Typing practice" row with your minutes each day; a day is done when you reach your daily goal.
+- `Remind me to practise` in the settings sends one notice a day from the chosen time on, while today's goal is not reached. It is off at first and set for each device.
+
+## Statistics
+- `Statistics` (the chart button at the top) shows today's practice, the days in a row, your total time and your speed of the last 7 days.
+- The line shows your speed on each of the last 30 days, the dots your accuracy (between 80% and 100%).
+- The bars show your minutes on each of the last 14 days.
+- `Your keys` colours each key by how often it goes wrong: green is good, red needs practice. The list under it names the keys to work on.
+
+## Settings
+- `Daily goal` sets the minutes for the ring on the first screen.
+- `Text size` makes the lesson text smaller or larger.
+- `Key sounds` and `Use the screen keyboard` apply to this device only.
+- `Reset progress` clears every lesson, statistic and record on all your devices.
+
+## On a phone
+Touch typing needs a real keyboard. With a keyboard connected (Bluetooth or USB), the phone's own keyboard stays hidden and the lesson works as on a computer. Without one, `Use the screen keyboard` lets you practise the letters, but not the ten-finger method.
+
+## Your data
+- Your progress, statistics and settings are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted. Practice on two devices on the same day adds up.
+- What you type in a lesson is not kept, only the counts (speed, accuracy, which keys went wrong).
+- Your own texts are kept and synced the same way. Deleting one deletes it on every device.

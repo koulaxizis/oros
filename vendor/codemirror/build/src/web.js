@@ -1,0 +1,18 @@
+import { javascript } from "@codemirror/lang-javascript";
+import { json } from "@codemirror/lang-json";
+import { html } from "@codemirror/lang-html";
+import { css } from "@codemirror/lang-css";
+import { xml } from "@codemirror/lang-xml";
+import { php } from "@codemirror/lang-php";
+var L = self.OrosCM.lang;
+L.javascript = function () { return javascript(); };
+L.jsx = function () { return javascript({ jsx: true }); };
+L.typescript = function () { return javascript({ typescript: true }); };
+L.tsx = function () { return javascript({ typescript: true, jsx: true }); };
+L.json = function () { return json(); };
+L.html = function () { return html(); };
+L.css = function () { return css(); };
+L.xml = function () { return xml(); };
+L.php = function () { return php(); };
+import { markdown } from "@codemirror/lang-markdown";
+L.markdown = function () { return markdown(); };

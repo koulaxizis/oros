@@ -427,7 +427,11 @@ function toHTML(rows) {
 }
 
 /* ===== conditional formatting ===== */
-var CF_KINDS = ["gt", "lt", "bt", "eq", "tx", "top", "bot", "dup", "cs", "db"];
+var CF_KINDS = ["gt", "lt", "bt", "eq", "tx", "top", "bot", "dup", "cs", "db", "fx", "ic"];
+/* icon sets (wave 4.2): top third, middle third, bottom third of the
+   range between the smallest and the largest number */
+var CF_ICONS = { ar: ["\u25B2", "\u25B6", "\u25BC"], dt: ["\u25CF", "\u25CF", "\u25CF"] };
+var CF_ICON_CO = ["#1baf7a", "#eda100", "#e34948"];
 function cfNum(s) {
   s = String(s === null || s === undefined ? "" : s).trim();
   if (NUM_RE.test(s)) return parseFloat(s);
@@ -462,10 +466,18 @@ function cfStats(rule, vals) {
   return st;
 }
 /* -> { bg?, co?, b?, bar?: 0..1, barCo? } or null */
-function cfStyle(rule, v, st) {
+function cfStyle(rule, v, st, fxHit) {
+  var k = rule.k, hit = false;
+  if (k === "fx") return fxHit ? cfLook(rule) : null;   /* the app evaluates the formula */
   v = cfVal(v);
   if (v === null) return null;
-  var k = rule.k, hit = false, a = cfNum(rule.a), b = cfNum(rule.b);
+  var a = cfNum(rule.a), b = cfNum(rule.b);
+  if (k === "ic") {
+    if (typeof v !== "number") return null;
+    var span = st.max - st.min, q = span > 0 ? (v - st.min) / span : 1;
+    var i = q >= 2 / 3 - 1e-12 ? 0 : (q >= 1 / 3 - 1e-12 ? 1 : 2), set = CF_ICONS[rule.is] || CF_ICONS.ar;
+    return { ic: set[i], icCo: CF_ICON_CO[i] };
+  }
   if (k === "cs" || k === "db") {
     if (typeof v !== "number") return null;
     if (k === "db") {
@@ -489,6 +501,9 @@ function cfStyle(rule, v, st) {
   else if (k === "bot") hit = typeof v === "number" && st.cut !== undefined && v <= st.cut;
   else if (k === "dup") hit = (st.cnt[typeof v === "number" ? "n" + v : "s" + v.toLowerCase()] || 0) > 1;
   if (!hit) return null;
+  return cfLook(rule);
+}
+function cfLook(rule) {
   var s = rule.st || {}, o = {};
   if (s.bg) { o.bg = s.bg; o.co = s.co || inkOn(s.bg); }
   else if (s.co) o.co = s.co;
@@ -501,14 +516,21 @@ var ID_RE = /^[\w-]{1,40}$/;
 function str(s, n) { return typeof s === "string" ? s.replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, n) : ""; }
 function int(x, lo, hi, d) { x = parseInt(x, 10); return isFinite(x) ? Math.max(lo, Math.min(hi, x)) : d; }
 function stamp(x) { return (typeof x === "number" && isFinite(x) && x > 0) ? x : 0; }
-var CHART_TYPES = ["col", "bar", "line", "pie", "donut", "scatter"];
+var CHART_TYPES = ["col", "bar", "line", "area", "pie", "donut", "scatter"];
+/* wave 4.2 options, each only where it means something. They are
+   written right after t and their names sort before "src", so on an
+   equal mtime the copy that still has them is the smaller canonical
+   JSON and wins over a copy an older device stripped (same rule as
+   "area" < "col"). */
+var CH_OPT = { cb: { col: 1 }, ln: { col: 1, line: 1, area: 1, scatter: 1 }, sk: { col: 1, bar: 1, area: 1 } };
 function normChart(x) {
   if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) ||
       typeof x.sid !== "string" || !ID_RE.test(x.sid)) return null;
   var g = parseRange(x.src);
   var o = { id: x.id, sid: x.sid, mtime: stamp(x.mtime),
-    t: CHART_TYPES.indexOf(x.t) >= 0 ? x.t : "col",
-    src: g ? rangeStr(g) : str(x.src, 40) };
+    t: CHART_TYPES.indexOf(x.t) >= 0 ? x.t : "col" };
+  ["cb", "ln", "sk"].forEach(function (k) { if (x[k] === 1 && CH_OPT[k][o.t]) o[k] = 1; });
+  o.src = g ? rangeStr(g) : str(x.src, 40);
   if (x.by === "c" || x.by === "r") o.by = x.by;
   var ttl = str(x.ttl, 100), xl = str(x.xl, 60), yl = str(x.yl, 60);
   if (ttl) o.ttl = ttl;
@@ -533,13 +555,14 @@ function normCf(x) {
   if (!g) return null;
   var o = { id: x.id, sid: x.sid, mtime: stamp(x.mtime), pos: (typeof x.pos === "number" && isFinite(x.pos)) ? x.pos : 0,
     rg: rangeStr(g), k: x.k };
-  if (o.k === "gt" || o.k === "lt" || o.k === "eq" || o.k === "tx" || o.k === "bt") o.a = str(x.a, 200);
+  if (o.k === "gt" || o.k === "lt" || o.k === "eq" || o.k === "tx" || o.k === "bt" || o.k === "fx") o.a = str(x.a, 200);
   if (o.k === "bt") o.b = str(x.b, 200);
   if (o.k === "top" || o.k === "bot") o.n = int(x.n, 1, 1000, 10);
   if (o.k === "cs") {
     var cs = Array.isArray(x.cs) ? x.cs.map(hex).filter(Boolean).slice(0, 3) : [];
     o.cs = cs.length >= 2 ? cs : ["#e34948", "#1baf7a"];
   } else if (o.k === "db") o.db = hex(x.db) || "#2a78d6";
+  else if (o.k === "ic") o.is = CF_ICONS[x.is] ? x.is : "ar";
   else {
     var s = x.st && typeof x.st === "object" ? x.st : {}, st = {};
     if (hex(s.bg)) st.bg = hex(s.bg);
@@ -549,6 +572,14 @@ function normCf(x) {
     o.st = st;
   }
   return o;
+}
+
+/* the workbook's calculation setting (wave 4.2): iterative
+   calculation on / off, max iterations, max change. One record, LWW. */
+function normCalc(x) {
+  if (!x || typeof x !== "object") return null;
+  var d = typeof x.d === "number" && isFinite(x.d) && x.d > 0 ? Math.max(1e-9, Math.min(1, x.d)) : 0.001;
+  return { it: x.it === 1 ? 1 : 0, n: int(x.n, 1, 1000, 100), d: d, mtime: stamp(x.mtime) };
 }
 
 /* ===== charts: data ===== */
@@ -688,8 +719,22 @@ function chartSVG(model, o) {
   if (o.xl) { out.push(txt((left + right) / 2, bottom, fit(o.xl, 50), dim, 11, "middle")); bottom -= 16; }
   if (o.yl) { out.push('<text x="0" y="0" transform="translate(' + (left + 8) + "," + ((top + bottom) / 2).toFixed(1) + ') rotate(-90)" fill="' + dim + '" font-size="11" text-anchor="middle">' + esc(fit(o.yl, 40)) + "</text>"); left += 16; }
 
+  var stack = !!o.sk && (t === "col" || t === "bar" || t === "area");
+  var combo = !!o.cb && t === "col" && series.length > 1;
   var all = [];
-  series.forEach(function (s) { s.vals.forEach(function (v) { if (v !== null) all.push(v); }); });
+  if (stack) {
+    /* the scale holds the stacked totals: positives up, negatives down
+       (an area stacks everything on the running total) */
+    model.cats.forEach(function (c, i) {
+      var p = 0, q = 0;
+      series.forEach(function (s) {
+        var v = s.vals[i];
+        if (v === null) return;
+        if (v >= 0 || t === "area") p += v; else q += v;
+        all.push(p, q);
+      });
+    });
+  } else series.forEach(function (s) { s.vals.forEach(function (v) { if (v !== null) all.push(v); }); });
   var vmin = Math.min.apply(null, all), vmax = Math.max.apply(null, all);
   if (t !== "line" && t !== "scatter") { vmin = Math.min(0, vmin); vmax = Math.max(0, vmax); }
   var horiz = t === "bar";
@@ -731,6 +776,10 @@ function chartSVG(model, o) {
         out.push('<circle cx="' + sx(xs[i]).toFixed(1) + '" cy="' + vy(v).toFixed(1) + '" r="4" fill="' + cols[si] + '" stroke="' + bg + '" stroke-width="2"><title>' +
           esc((s.name ? s.name + " · " : "") + fmtNum(xs[i], lang) + ", " + fmtNum(v, lang)) + "</title></circle>");
       });
+      if (o.ln) {
+        var ft = trendFit(xs, s.vals);
+        if (ft) out.push(trendLine(sx(xsc.min), vy(ft.a + ft.b * xsc.min), sx(xsc.max), vy(ft.a + ft.b * xsc.max), cols[si]));
+      }
     });
     out.push("</svg>");
     return out.join("");
@@ -743,6 +792,40 @@ function chartSVG(model, o) {
     if (horiz) out.push(txt(x0p - 6, y0p + band * (i + 0.5) + 3.5, fit(c, 14), dim, 10.5, "end"));
     else out.push(txt(x0p + band * (i + 0.5), y1p + 14, fit(c, 14), dim, 10.5, "middle"));
   });
+  function cx(i) { return x0p + band * (i + 0.5); }
+  /* a dashed least-squares line over the categories (x = 1, 2, …) */
+  function trendOver(s, si) {
+    var xs1 = s.vals.map(function (v, i) { return i + 1; }), ft = trendFit(xs1, s.vals);
+    if (!ft) return;
+    out.push(trendLine(cx(0), vy(ft.a + ft.b), cx(n - 1), vy(ft.a + ft.b * n), cols[si]));
+  }
+  if (t === "area") {
+    var base = model.cats.map(function () { return 0; }), y0 = vy(Math.max(sc.min, Math.min(sc.max, 0)));
+    series.forEach(function (s, si) {
+      var segs = [], seg = null, top = [];
+      s.vals.forEach(function (v, i) {
+        if (v === null && !stack) { seg = null; return; }
+        var lo = stack ? base[i] : 0, hi = lo + (v || 0);
+        if (stack) base[i] = hi;
+        if (!seg) { seg = []; segs.push(seg); }
+        seg.push({ x: cx(i), lo: vy(lo), hi: vy(hi), v: v, i: i });
+      });
+      segs.forEach(function (g) {
+        var d = "M" + g.map(function (p) { return p.x.toFixed(1) + " " + p.hi.toFixed(1); }).join("L");
+        var back = g.slice().reverse().map(function (p) { return p.x.toFixed(1) + " " + (stack ? p.lo : y0).toFixed(1); }).join("L");
+        out.push('<path d="' + d + "L" + back + 'Z" fill="' + cols[si] + '" fill-opacity="' + (stack ? 0.55 : 0.25) + '"/>');
+        out.push('<path d="' + d + '" fill="none" stroke="' + cols[si] + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+        g.forEach(function (p) { if (p.v !== null) top.push(p); });
+      });
+      if (n <= 60) top.forEach(function (p) {
+        out.push('<circle cx="' + p.x.toFixed(1) + '" cy="' + p.hi.toFixed(1) + '" r="3" fill="' + cols[si] + '" stroke="' + bg + '" stroke-width="1.5"><title>' +
+          esc((s.name ? s.name + " · " : "") + model.cats[p.i] + ": " + fmtNum(p.v, lang)) + "</title></circle>");
+      });
+      if (o.ln && !stack) trendOver(s, si);
+    });
+    out.push("</svg>");
+    return out.join("");
+  }
   if (t === "line") {
     series.forEach(function (s, si) {
       var d = "", pen = false;
@@ -757,14 +840,43 @@ function chartSVG(model, o) {
         out.push('<circle cx="' + (x0p + band * (i + 0.5)).toFixed(1) + '" cy="' + vy(v).toFixed(1) + '" r="4" fill="' + cols[si] + '" stroke="' + bg + '" stroke-width="2"><title>' +
           esc((s.name ? s.name + " · " : "") + model.cats[i] + ": " + fmtNum(v, lang)) + "</title></circle>");
       });
+      if (o.ln) trendOver(s, si);
     });
     out.push("</svg>");
     return out.join("");
   }
-  /* columns / bars, grouped, 2 px gap between neighbours */
-  var bw = Math.max(1, Math.min(24, (band * 0.8 - (ns - 1) * 2) / ns));
-  var gw = bw * ns + (ns - 1) * 2;
-  series.forEach(function (s, si) {
+  /* columns / bars, grouped, 2 px gap between neighbours; stacked:
+     one bar per category, the outermost piece gets the rounded end;
+     combo: the last series is drawn as a line over the columns */
+  var barS = combo ? series.slice(0, -1) : series, nb = barS.length;
+  if (stack) {
+    var sw = Math.max(1, Math.min(32, band * 0.6)), pos = [], neg = [], lastP = [], lastN = [];
+    model.cats.forEach(function (c, i) {
+      pos[i] = 0; neg[i] = 0;
+      barS.forEach(function (s, si) { var v = s.vals[i]; if (v === null || v === 0) return; if (v > 0) lastP[i] = si; else lastN[i] = si; });
+    });
+    barS.forEach(function (s, si) {
+      s.vals.forEach(function (v, i) {
+        if (v === null || v === 0) return;
+        var lo = v > 0 ? pos[i] : neg[i], hi = lo + v, outer = v > 0 ? lastP[i] === si : lastN[i] === si;
+        if (v > 0) pos[i] = hi; else neg[i] = hi;
+        var off = band * i + (band - sw) / 2, tip = esc((s.name ? s.name + " · " : "") + model.cats[i] + ": " + fmtNum(v, lang));
+        if (horiz) {
+          var xa = vx(lo), xb = vx(hi);
+          out.push('<path d="' + barPath(Math.min(xa, xb), y0p + off, Math.abs(xb - xa), sw, outer ? (v >= 0 ? "r" : "l") : "n") + '" fill="' + cols[si] + '" stroke="' + bg + '" stroke-width="1"><title>' + tip + "</title></path>");
+        } else {
+          var ya = vy(lo), yb = vy(hi);
+          out.push('<path d="' + barPath(x0p + off, Math.min(ya, yb), sw, Math.abs(ya - yb), outer ? (v >= 0 ? "t" : "b") : "n") + '" fill="' + cols[si] + '" stroke="' + bg + '" stroke-width="1"><title>' + tip + "</title></path>");
+        }
+      });
+    });
+    comboLine();
+    out.push("</svg>");
+    return out.join("");
+  }
+  var bw = Math.max(1, Math.min(24, (band * 0.8 - (nb - 1) * 2) / nb));
+  var gw = bw * nb + (nb - 1) * 2;
+  barS.forEach(function (s, si) {
     s.vals.forEach(function (v, i) {
       if (v === null) return;
       var off = band * i + (band - gw) / 2 + si * (bw + 2), tip = esc((s.name ? s.name + " · " : "") + model.cats[i] + ": " + fmtNum(v, lang));
@@ -776,9 +888,27 @@ function chartSVG(model, o) {
         out.push('<path d="' + barPath(xb2, Math.min(ya, yv), bw, Math.abs(ya - yv), v >= 0 ? "t" : "b") + '" fill="' + cols[si] + '"><title>' + tip + "</title></path>");
       }
     });
+    if (o.ln && !horiz) trendOver(s, si);
   });
+  comboLine();
   out.push("</svg>");
   return out.join("");
+
+  function comboLine() {
+    if (!combo || horiz) return;
+    var s = series[ns - 1], si = ns - 1, d = "", pen = false;
+    s.vals.forEach(function (v, i) {
+      if (v === null) { pen = false; return; }
+      d += (pen ? "L" : "M") + cx(i).toFixed(1) + " " + vy(v).toFixed(1);
+      pen = true;
+    });
+    out.push('<path d="' + d + '" fill="none" stroke="' + cols[si] + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+    if (n <= 60) s.vals.forEach(function (v, i) {
+      if (v === null) return;
+      out.push('<circle cx="' + cx(i).toFixed(1) + '" cy="' + vy(v).toFixed(1) + '" r="4" fill="' + cols[si] + '" stroke="' + bg + '" stroke-width="2"><title>' +
+        esc((s.name ? s.name + " · " : "") + model.cats[i] + ": " + fmtNum(v, lang)) + "</title></circle>");
+    });
+  }
 
   function drawPie() {
     var sl = pieSlices(series[0], model.cats, o.otherWord), tot = 0;
@@ -807,11 +937,32 @@ function chartSVG(model, o) {
     return '<line x1="' + xa.toFixed(1) + '" y1="' + ya.toFixed(1) + '" x2="' + xb.toFixed(1) + '" y2="' + yb.toFixed(1) + '" stroke="' + c + '" stroke-width="1"/>';
   }
 }
-/* a bar with a 4 px rounded data end ("t" top, "b" bottom, "r", "l") */
+/* least squares y = a + b·x over the points where both are numbers;
+   null with fewer than 2 points or no spread in x */
+function trendFit(xs, ys) {
+  var n = 0, sx = 0, sy = 0, sxx = 0, sxy = 0, i;
+  for (i = 0; i < ys.length; i++) {
+    var x = xs[i], y = ys[i];
+    if (typeof x !== "number" || typeof y !== "number" || !isFinite(x) || !isFinite(y)) continue;
+    n++; sx += x; sy += y; sxx += x * x; sxy += x * y;
+  }
+  if (n < 2) return null;
+  var den = n * sxx - sx * sx;
+  if (Math.abs(den) < 1e-12) return null;
+  var b = (n * sxy - sx * sy) / den;
+  return { a: (sy - b * sx) / n, b: b };
+}
+function trendLine(xa, ya, xb, yb, c) {
+  return '<line x1="' + xa.toFixed(1) + '" y1="' + ya.toFixed(1) + '" x2="' + xb.toFixed(1) + '" y2="' + yb.toFixed(1) +
+    '" stroke="' + c + '" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.9"/>';
+}
+/* a bar with a 4 px rounded data end ("t" top, "b" bottom, "r", "l";
+   "n" none: a plain rectangle, used inside a stack) */
 function barPath(x, y, w, h, end) {
   var rr = Math.min(4, w / 2, h / 2);
   if (h <= 0 || w <= 0) return "M" + x.toFixed(1) + " " + y.toFixed(1);
   var X = function (v) { return v.toFixed(1); };
+  if (end === "n") return "M" + X(x) + " " + X(y) + "H" + X(x + w) + "V" + X(y + h) + "H" + X(x) + "Z";
   if (end === "t") return "M" + X(x) + " " + X(y + h) + "V" + X(y + rr) + "Q" + X(x) + " " + X(y) + " " + X(x + rr) + " " + X(y) + "H" + X(x + w - rr) + "Q" + X(x + w) + " " + X(y) + " " + X(x + w) + " " + X(y + rr) + "V" + X(y + h) + "Z";
   if (end === "b") return "M" + X(x) + " " + X(y) + "V" + X(y + h - rr) + "Q" + X(x) + " " + X(y + h) + " " + X(x + rr) + " " + X(y + h) + "H" + X(x + w - rr) + "Q" + X(x + w) + " " + X(y + h) + " " + X(x + w) + " " + X(y + h - rr) + "V" + X(y) + "Z";
   if (end === "r") return "M" + X(x) + " " + X(y) + "H" + X(x + w - rr) + "Q" + X(x + w) + " " + X(y) + " " + X(x + w) + " " + X(y + rr) + "V" + X(y + h - rr) + "Q" + X(x + w) + " " + X(y + h) + " " + X(x + w - rr) + " " + X(y + h) + "H" + X(x) + "Z";
@@ -1014,6 +1165,86 @@ function csvName(i, name) {
   return (i < 9 ? "0" : "") + (i + 1) + "-" + s + ".csv";
 }
 
+/* ---------- print / PDF page layout (wave 4.3) ----------
+   Pure: the renderer in spreadsheet.js draws what this plans. Sizes in
+   points (1 px on screen = 0.75 pt). Pages run down, then over, like
+   Excel; repeated heading rows are taken out of the body and drawn on
+   top of every page. Print settings stay on the device (not synced). */
+var PAPER = { a4: [595.28, 841.89], a3: [841.89, 1190.55], letter: [612, 792], legal: [612, 1008] };
+var PX_PT = 0.75;
+function normPrint(o) {
+  o = o || {};
+  var x = {};
+  x.pa = PAPER[o.pa] ? o.pa : "a4";
+  x.or = o.or === "l" ? "l" : "p";
+  x.fit = o.fit === "n" || o.fit === "p" ? o.fit : "w";
+  x.gl = o.gl === 0 ? 0 : 1;
+  x.pn = o.pn === 0 ? 0 : 1;
+  x.ch = o.ch === 0 ? 0 : 1;
+  var hr = parseInt(o.hr, 10);
+  x.hr = isFinite(hr) && hr > 0 ? Math.min(hr, 50) : 0;
+  x.sel = o.sel === 1 ? 1 : 0;
+  return x;
+}
+/* bands of consecutive sizes that each fit in room (at least one each) */
+function bands(sizes, room) {
+  var out = [], a = 0, acc = 0;
+  for (var i = 0; i < sizes.length; i++) {
+    if (i > a && acc + sizes[i] > room + 0.01) { out.push([a, i - 1]); a = i; acc = 0; }
+    acc += sizes[i];
+  }
+  if (sizes.length) out.push([a, sizes.length - 1]);
+  return out;
+}
+/* o: { pa, or, fit, colW: [pt], rowH: [pt] (body rows), headH: [pt]
+   (repeated rows), margin pt, foot pt }.
+   Returns { w, h, scale, x0, y0, pages: [{ c: [a, b], r: [a, b] }] }
+   with indexes into colW / rowH; r is null on a page with no body rows. */
+function printPages(o) {
+  var pp = PAPER[o.pa] || PAPER.a4, w = o.or === "l" ? pp[1] : pp[0], h = o.or === "l" ? pp[0] : pp[1];
+  var m = o.margin === undefined ? 36 : o.margin, foot = o.foot || 0;
+  var uw = w - 2 * m, uh = h - 2 * m - foot;
+  var sum = function (a) { var t = 0; for (var i = 0; i < a.length; i++) t += a[i]; return t; };
+  var tw = sum(o.colW), th = sum(o.rowH), hh = sum(o.headH || []);
+  var scale = 1;
+  if (o.fit === "w" && tw > uw) scale = uw / tw;
+  if (o.fit === "p") scale = Math.min(1, tw > 0 ? uw / tw : 1, th + hh > 0 ? uh / (th + hh) : 1);
+  scale = Math.max(scale, 0.05);
+  var room = uh / scale - hh;
+  if (room < uh / scale * 0.25) room = uh / scale * 0.25;   /* headings taller than the page: body still moves on */
+  var cb = bands(o.colW, uw / scale), rb = o.rowH.length ? bands(o.rowH, room) : [null];
+  var pages = [];
+  cb.forEach(function (c) { rb.forEach(function (r) { pages.push({ c: c, r: r }); }); });
+  return { w: w, h: h, scale: scale, x0: m, y0: m, uw: uw, uh: uh, pages: pages };
+}
+/* the text that fits in width w (measure: string -> width), with "…" */
+function fitText(s, w, measure) {
+  s = String(s);
+  if (measure(s) <= w) return s;
+  var lo = 0, hi = s.length;
+  while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (measure(s.slice(0, mid) + "…") <= w) lo = mid; else hi = mid - 1; }
+  return lo ? s.slice(0, lo) + "…" : "";
+}
+/* the page footer: "Page {n} of {t}" from the language's pattern */
+function pageLabel(pat, n, t) { return String(pat).replace("{n}", n).replace("{t}", t); }
+
+/* ---------- range handles on touch (wave 4.4) ----------
+   Grabbing a corner of the selection g {t, b, l, r} on a sheet of
+   rows x cols: the opposite corner becomes the anchor (ar, ac), the
+   grabbed one the moving end (r, c). A whole-column selection keeps its
+   rows (lockR), a whole-row one its columns (lockC). */
+function handleGrab(g, end, rows, cols) {
+  var fullCols = g.t === 0 && g.b === rows - 1, fullRows = g.l === 0 && g.r === cols - 1;
+  var o = end === "a" ? { ar: g.b, ac: g.r, r: g.t, c: g.l } : { ar: g.t, ac: g.l, r: g.b, c: g.r };
+  o.lockR = fullCols && !fullRows;
+  o.lockC = fullRows && !fullCols;
+  return o;
+}
+/* where the moving end goes for the cell p {r, c} under the finger */
+function handleMove(o, p) {
+  return { r: o.lockR ? o.r : p.r, c: o.lockC ? o.c : p.c };
+}
+
 var API = {
   MAX_ROWS: MAX_ROWS, MAX_COLS: MAX_COLS, MAX_POINTS: MAX_POINTS, MAX_SERIES: MAX_SERIES,
   colName: colName, colFromName: colFromName, esc: esc, hex: hex, mix: mix, inkOn: inkOn, rgba: rgba, luminance: luminance,
@@ -1021,11 +1252,13 @@ var API = {
   fillSeries: fillSeries, classify: classify,
   toTSV: toTSV, parseTSV: parseTSV, parseHTMLTable: parseHTMLTable, toHTML: toHTML, pasteValue: pasteValue, cssFmt: cssFmt,
   CF_KINDS: CF_KINDS, cfStats: cfStats, cfStyle: cfStyle,
-  CHART_TYPES: CHART_TYPES, normChart: normChart, normCf: normCf,
+  CHART_TYPES: CHART_TYPES, normChart: normChart, normCf: normCf, CF_ICONS: CF_ICONS, CF_ICON_CO: CF_ICON_CO, CH_OPT: CH_OPT, trendFit: trendFit, normCalc: normCalc,
   chartModel: chartModel, chartSVG: chartSVG, niceScale: niceScale, fmtNum: fmtNum, seriesColors: seriesColors, pieSlices: pieSlices,
   SERIES: SERIES,
   BOOK_KIND: BOOK_KIND, bookContent: bookContent, bookWorkbook: bookWorkbook, importBook: importBook,
-  sheetCSV: sheetCSV, csvName: csvName, nameKey: nameKey
+  sheetCSV: sheetCSV, csvName: csvName, nameKey: nameKey,
+  handleGrab: handleGrab, handleMove: handleMove,
+  PAPER: PAPER, PX_PT: PX_PT, normPrint: normPrint, printPages: printPages, fitText: fitText, pageLabel: pageLabel
 };
 root.OrosSheetKit = API;
 if (typeof module !== "undefined" && module.exports) module.exports = API;

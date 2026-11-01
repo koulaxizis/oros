@@ -71,6 +71,16 @@ In der orOS-Android-App legt `Auf diesem Telefon` deine orOS-Kontakte in die Kon
 
 Auch andere Apps können Kontakte an orOS senden. Wenn eine Telefon-App „Kontakt hinzufügen“ oder „Kontakt erstellen“ anbietet (nach einem Anruf von einer unbekannten Nummer, aus Viber oder einem anderen Messenger) oder eine .vcf-Datei öffnet, wähle orOS. Der Kontakt öffnet sich in `Import prüfen`, und nichts wird gespeichert, bis du bestätigst. Die Taste erscheint nicht im Browser, nur in der Android-App, und die Wahl bleibt nur auf diesem Telefon.
 
+## Dein eigener Kontakte-Server (CardDAV)
+Liegt dein Adressbuch auf deinem eigenen Server (Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail, iCloud mit einem App-Passwort…), verbinde ihn einmal unter [Einstellungen](app:settings) › `Synchronisierung` › `Kalender und Kontakte`. Danach zeigt `Server (CardDAV)` in der oberen Leiste seine Adressbücher. Tippe neben einem auf `Verknüpfen`: orOS zeigt zuerst, wie viele Kontakte herunterkämen, wie viele hochgingen, wie viele schon hier sind und wie viele es auf beiden Seiten gefunden hat, und nichts wird geschrieben, bevor du noch einmal `Verknüpfen` tippst. Ab dann stimmen alle deine Kontakte und dieses Adressbuch in beide Richtungen überein, sodass dein Telefon (DAVx5), Thunderbird und die Seite des Servers dieselben Menschen sehen.
+- Eine Person, die beim ersten Verknüpfen auf beiden Seiten steht (dieselbe E-Mail oder Telefonnummer und passende Namen), wird ein Kontakt mit den Angaben beider; bei Angaben mit nur einem Wert (Name, Firma) bleibt der aus orOS.
+- Labels gehen als Kategorien auf den Server und kommen als Labels zurück. Beziehungen, `In Kontakt bleiben` und die protokollierten Kontakte bleiben nur in orOS.
+- Fotos auf dem Server bleiben dort und werden nie nach orOS kopiert; andere Angaben, die orOS nicht zeigt (eine zweite Firmenabteilung, Apples Beschriftungen, Social-Media-Profile), bleiben auf dem Server unverändert, wenn du hier einen Kontakt änderst.
+- Auf keiner Seite wird etwas gelöscht, das vorher nicht abgeglichen war. Würden viele Kontakte auf einmal gelöscht, wartet orOS und fragt: `Löschen` oder `Zurückholen`.
+- Ein auf beiden Seiten geänderter Kontakt behält die neuere Fassung, die andere bleibt als Kopie mit dem Vermerk (Konflikt).
+- Ein Kontakt mit etwas, das orOS nicht vollständig halten kann (eine sehr lange Notiz, ein Datum, das es nicht lesen kann), ist hier schreibgeschützt: ändere ihn auf dem Server.
+- Abgeglichen wird, solange Kontakte offen ist: beim Öffnen, alle 5 Minuten, ein paar Sekunden nach einer Änderung und mit `Jetzt abgleichen`. `Verknüpfung lösen` beendet es; die Kontakte bleiben in orOS und auf dem Server.
+
 ## orOS-Datei speichern und öffnen
 `orOS-Datei (.oroscontacts)` in der oberen Leiste speichert alle Kontakte (mit ihren Einträgen) und alle Labels als eine `.oroscontacts`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie aufzubewahren. Die Datei ist ein einfaches ZIP: Entpackt enthält sie die Kontakte als `content.json` plus `preview/contacts.vcf`, das andere Adressbücher öffnen. Sie enthält keine Fotos (Kontakte speichert keine) und nichts von `Aus einem Konto`. Sie ist nicht verschlüsselt und enthält persönliche Daten, also bewahre sie sicher auf.
 
@@ -105,3 +115,4 @@ Siehe auch [Sicherung](help:t/backup).
 - Ein Gerät mit einer älteren orOS-Version kennt `In Kontakt bleiben` nicht: Bearbeitest du dort einen Kontakt, funktioniert das weiter, aber ein gleichzeitig auf diesem Gerät geänderter Rhythmus kann verloren gehen.
 - Kontakte speichert keine Fotos: Importe, das Telefon und alte Sicherungen bringen keine mit. `Aus einem Konto` liest nur deine eigenen Kontakte (nicht Googles „Weitere Kontakte“ oder ein Firmenverzeichnis).
 - `Vom Telefon` erscheint nur in Chrome auf Android, weil andere Browser die Kontaktliste des Telefons nicht öffnen können.
+- Die Verknüpfung mit einem Server-Adressbuch (CardDAV) gleicht nur ab, solange Kontakte offen ist. Google Kontakte ist kein CardDAV-Server, den orOS verknüpft; nutze stattdessen einmal `Aus einem Konto`.

@@ -211,7 +211,7 @@ test("Bitwarden JSON still goes through pmcore (and an encrypted one is refused)
 });
 
 // ---------- two-factor apps ----------
-test("Aegis: plain export → codes (HOTP / Steam counted as unsupported); encrypted refused", () => {
+test("Aegis: plain export → codes (HOTP / Steam counted as unsupported); encrypted waits for its password", () => {
   const j = { version: 1, header: { slots: null, params: null }, db: { version: 3, entries: [
     { type: "totp", uuid: "a", name: "ann@example.org", issuer: "GitHub", note: "", info: { secret: SECRET, algo: "SHA1", digits: 6, period: 30 } },
     { type: "totp", uuid: "b", name: "x", issuer: "Bank", info: { secret: SECRET2, algo: "SHA256", digits: 8, period: 60 } },
@@ -227,10 +227,12 @@ test("Aegis: plain export → codes (HOTP / Steam counted as unsupported); encry
   const p = PC.parseOtp(r.codes[1].uri);
   assert.equal(p.algo, "SHA-256"); assert.equal(p.digits, 8); assert.equal(p.period, 60);
   const encd = { version: 1, header: { slots: [{ type: 1 }], params: { nonce: "x" } }, db: "base64..." };
-  assert.equal(I.parseText(JSON.stringify(encd)).error, "encrypted-aegis");
+  // encrypted with a password slot: opened by unlock() (passwords-import3.test.js)
+  assert.equal(I.parseText(JSON.stringify(encd)).locked, "aegis");
+  assert.equal(I.parseText(JSON.stringify({ version: 1, header: { slots: [{ type: 2 }], params: { nonce: "x" } }, db: "x" })).error, "encrypted-aegis");
 });
 
-test("2FAS backup → codes; encrypted backup refused", () => {
+test("2FAS backup → codes; a backup with a password waits for it", () => {
   const j = { schemaVersion: 4, services: [
     { name: "Dropbox", secret: SECRET, otp: { account: "me@x.org", issuer: "Dropbox", digits: 6, period: 30, algorithm: "SHA1", tokenType: "TOTP" } },
     { name: "Ctr", secret: SECRET, otp: { tokenType: "HOTP", counter: 1 } }
@@ -240,7 +242,8 @@ test("2FAS backup → codes; encrypted backup refused", () => {
   assert.equal(r.codes.length, 1);
   assert.equal(r.unsupported, 1);
   assert.equal(r.codes[0].account, "me@x.org");
-  assert.equal(I.parseText(JSON.stringify({ schemaVersion: 4, services: [], servicesEncrypted: "abc:def:ghi" })).error, "encrypted-2fas");
+  assert.equal(I.parseText(JSON.stringify({ schemaVersion: 4, services: [], servicesEncrypted: "abc:def:ghi" })).locked, "2fas");
+  assert.equal(I.parseText(JSON.stringify({ schemaVersion: 4, services: [], servicesEncrypted: "abc" })).error, "encrypted-2fas");
 });
 
 // Protobuf encoder for test fixtures only.

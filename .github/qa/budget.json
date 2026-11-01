@@ -1,7 +1,7 @@
 {
   "note": "Size budget of the quality gate (.github/qa/budget.js). The gate fails at precache.bytes + 10 % and at an app's bytes + 20 % (ms is a warning only). Raise a value only for an intended growth: node .github/qa/budget.js [--precache] --update-budget.",
   "precache": {
-    "bytes": 46115553
+    "bytes": 51808363
   },
   "apps": {
     "assistant": {
@@ -121,7 +121,7 @@
       "ms": 75
     },
     "files": {
-      "bytes": 435416,
+      "bytes": 522628,
       "ms": 52
     },
     "fitness": {
@@ -197,8 +197,8 @@
       "ms": 69
     },
     "lightsout": {
-      "bytes": 54321,
-      "ms": 53
+      "bytes": 65216,
+      "ms": 57
     },
     "mahjong": {
       "bytes": 74867,
@@ -287,6 +287,10 @@
     "oracle": {
       "bytes": 71367,
       "ms": 48
+    },
+    "pad": {
+      "bytes": 614822,
+      "ms": 111
     },
     "passwords": {
       "bytes": 482048,
@@ -377,12 +381,12 @@
       "ms": 37
     },
     "sky": {
-      "bytes": 119089,
-      "ms": 45
+      "bytes": 143617,
+      "ms": 64
     },
     "slider": {
-      "bytes": 48651,
-      "ms": 41
+      "bytes": 59540,
+      "ms": 58
     },
     "slides": {
       "bytes": 1461191,
@@ -405,8 +409,8 @@
       "ms": 56
     },
     "spreadsheet": {
-      "bytes": 537582,
-      "ms": 113
+      "bytes": 650217,
+      "ms": 160
     },
     "stickies": {
       "bytes": 147262,
@@ -493,8 +497,8 @@
       "ms": 64
     },
     "whack": {
-      "bytes": 54396,
-      "ms": 43
+      "bytes": 65296,
+      "ms": 53
     },
     "wheel": {
       "bytes": 74481,

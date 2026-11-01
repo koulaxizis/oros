@@ -18,26 +18,36 @@ Start a cell with = to make a formula, for example =A1*2 or =SUM(B2:B10).
 - When you copy and paste a formula, its references move with it, as in other spreadsheets ($ parts stay).
 
 ## Functions
-Over 100 functions work as in Excel and Google Sheets. Tap ƒx next to the formula bar for the full list with a line on each; while you type =SU… a short list appears: use the arrow keys and [[Tab]], or tap a name.
+Over 200 functions work as in Excel and Google Sheets. Tap ƒx next to the formula bar for the full list with a line on each; while you type =SU… a short list appears: use the arrow keys and [[Tab]], or tap a name.
 
 - Totals and conditions: SUM, AVERAGE, COUNT, COUNTA, COUNTBLANK, SUMIF, SUMIFS, COUNTIF, COUNTIFS, AVERAGEIF, AVERAGEIFS, MAXIFS, MINIFS, SUMPRODUCT.
 - Conditions are written like ">5", "<>paid", "a*" (* any text, ? one character) or a cell.
-- Lookups: VLOOKUP, HLOOKUP, XLOOKUP, INDEX, MATCH, CHOOSE.
+- Lookups: VLOOKUP, HLOOKUP, XLOOKUP, XMATCH, LOOKUP, INDEX, MATCH, CHOOSE, OFFSET, INDIRECT, ADDRESS.
+- Fixed lists go in braces: {1,2,3} is a row, {1;2;3} a column, {1,2;3,4} two rows. For example =SUM({1,2,3}) or =XLOOKUP(A1;{"a","b"};{10,20}).
 - Logic and errors: IF, IFS, SWITCH, AND, OR, NOT, IFERROR, IFNA, ISBLANK, ISNUMBER, ISTEXT, ISERROR.
-- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, SUBSTITUTE, FIND, SEARCH, TEXT, VALUE, TEXTJOIN, CONCAT, REPT.
-- Maths and statistics: ROUND, ROUNDUP, ROUNDDOWN, INT, MOD, POWER, SQRT, PRODUCT, MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, PI, RAND, RANDBETWEEN.
-- Money: PMT, FV, PV, NPER, NPV.
+- Text: LEN, LEFT, RIGHT, MID, UPPER, LOWER, PROPER, TRIM, CLEAN, SUBSTITUTE, FIND, SEARCH, TEXTBEFORE, TEXTAFTER, TEXT, FIXED, VALUE, NUMBERVALUE, TEXTJOIN, CONCAT, REPT, UNICODE, UNICHAR.
+- Maths: ROUND, ROUNDUP, ROUNDDOWN, MROUND, INT, MOD, QUOTIENT, POWER, SQRT, PRODUCT, GCD, LCM, FACT, COMBIN, PERMUT, EVEN, ODD, CEILING.MATH, FLOOR.MATH, SUBTOTAL, SIN, COS, TAN and the other angle functions, RADIANS, DEGREES, PI, RAND, RANDBETWEEN.
+- Statistics: MEDIAN, MODE, STDEV, VAR, LARGE, SMALL, RANK, AVERAGEA, GEOMEAN, HARMEAN, CORREL, SLOPE, INTERCEPT, RSQ, FORECAST, NORM.DIST, NORM.INV, STANDARDIZE.
+- Money: PMT, IPMT, PPMT, CUMIPMT, CUMPRINC, FV, PV, NPER, RATE, NPV, XNPV, IRR, XIRR, MIRR, EFFECT, NOMINAL.
+- Depreciation: SLN, SYD, DB, DDB.
+- SUBTOTAL counts every row, including rows a filter hides.
 - TEXT(value; "0.00") writes a number as text in a pattern: 0, 0.00, #,##0, 0%, dd/mm/yyyy and so on.
 
 ## Dates
 Dates are day numbers, as in Excel: 1 is 31 December 1899, so subtracting two dates gives the days between them.
 
-- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DATEDIF, EDATE, EOMONTH, NETWORKDAYS and WORKDAY work with them.
+- TODAY, NOW, DATE, YEAR, MONTH, DAY, WEEKDAY, DAYS, DAYS360, DATEDIF, YEARFRAC, EDATE, EOMONTH, WEEKNUM, ISOWEEKNUM, TIMEVALUE, NETWORKDAYS, WORKDAY, NETWORKDAYS.INTL and WORKDAY.INTL work with them.
+- NETWORKDAYS.INTL and WORKDAY.INTL take your own weekend: 1 is Saturday and Sunday, 7 is Friday and Saturday, 11 to 17 a single day (11 Sunday), or seven 0/1 digits from Monday to Sunday, such as "0000011".
 - A cell with =TODAY(), =DATE(…) and similar shows a date by itself. For other cells pick `date` in `Number format`: 2026-10-14 in English, 14/10/2026 in Greek.
 - A date you type, like 2026-10-14 or 14/10/2026, stays as you typed it (text). Date functions still read it (day first: 14/10/2026 is 14 October), and DATEVALUE turns it into a day number.
 
 ## Format and edit
-- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys. On a touch screen, touch and hold a cell for a moment, then drag; or choose `Select a range…` in the sheet menu and tap the last cell.
+- Select a range by dragging with the mouse or with [[Shift]] and the arrow keys. Click a column letter or a row number to select the whole column or row; [[Shift]] + click on another one selects all in between.
+- On a touch screen: tap a cell, then drag one of the round handles on its corners: the opposite corner stays put. On a whole column or row, the handles change only the columns or the rows.
+- On a touch screen: touch and hold a cell for a moment, then drag.
+- On a touch screen: tap a column letter or a row number to select the whole column or row.
+- On a touch screen: `Extend selection` in the sheet menu: every cell, column letter or row number you tap then joins the selection, up to it. The `Extending ✕` button above the sheet tabs (or [[Esc]], or starting to type) ends it.
+- On a touch screen, the small square just outside the bottom-right corner is the fill handle (see Fill handle).
 - The toolbar has Undo, Redo, Copy, Cut, Paste, bold, italic, underline, alignment, `Number format` (`auto`, 123, 123.00, %, €, `date`), `Text color`, `Clear formatting` and the cell format button (see Fill, borders and merged cells).
 - Tap a column letter or a row number to select the whole column or row.
 - [[Delete]] or [[Backspace]] empties the selected cells.
@@ -54,7 +64,7 @@ The cell format button next to `Clear formatting` has:
 - `Conditional formatting…` (see below).
 
 ## Fill handle
-The small square at the bottom right of the selection is the fill handle. Drag it down, up, left or right, with the mouse or a finger:
+The small square at the bottom right of the selection (on a touch screen, just outside that corner) is the fill handle. Drag it down, up, left or right, with the mouse or a finger:
 
 - Numbers in a pattern (1, 2 or 10, 20) continue; one number is copied (hold [[Ctrl]] while dragging to count up instead).
 - Dates continue by day, or by the step between them. Weekdays and months continue in English and Greek (Monday, Tuesday… or Ιαν, Φεβ…), and so does text ending in a number, like Item 1, Item 2.
@@ -67,16 +77,22 @@ The small square at the bottom right of the selection is the fill handle. Drag i
 - `Greater than`, `Less than`, `Between`, `Equal to`, `Text contains`, `Top` / `Bottom` N values and `Duplicate values` colour the matching cells with a fill, a text colour or bold.
 - `Colour scale` shades every number from the lowest to the highest with two or three colours.
 - `Data bars` draws a bar in each cell, as long as its value.
+- `Icon set` puts an arrow or a traffic light in each cell: green for the top third between the lowest and the highest number, amber for the middle, red for the bottom.
+- `Formula is true` colours a cell when a formula gives TRUE. Write the formula for the first cell of the range, for example =$B2>100 to colour whole rows where column B is over 100; it moves with each cell like a copied formula.
 - When rules overlap, the one higher in the list wins. The arrow moves a rule up.
 - Rules follow the values as they change, and reach your other devices with sync.
 
 ## Charts
 Select the data with its headings, for example A1:C5, and press the chart button.
 
-- Pick `Column`, `Bar`, `Line`, `Pie`, `Donut` or `Scatter`, and give it a title, axis titles and colours. A first row or column of text gives the names of the series and of the categories; `Series in` chooses columns or rows.
+- Pick `Column`, `Bar`, `Line`, `Area`, `Pie`, `Donut` or `Scatter`, and give it a title, axis titles and colours. A first row or column of text gives the names of the series and of the categories; `Series in` chooses columns or rows.
 - The chart floats over the sheet. Drag it to move it; drag its corner to resize it. Tap it to show its buttons: edit (or double-click it), `PNG`, `SVG` and delete. [[Delete]] deletes the selected chart and [[Ctrl+Z]] brings it back.
 - A chart follows its cells: change a number and the chart changes with it. Rows hidden by a filter are left out. It uses the colours of your theme, light or dark.
+- `Stacked` (column, bar, area) piles the series on top of each other. `Last series as a line` (column) draws the last series as a line over the columns, for example a total or a target. `Trend line` (column, line, area, scatter) adds a dashed straight line that fits the numbers best.
 - Charts reach your other devices with sync.
+
+## Circular references
+A formula that refers back to itself, directly or through other cells, shows #CYC!. For models that need it (for example interest that depends on a balance that depends on the interest), turn on `Calculation…` › `Iterative calculation` in the sheet menu: orOS then repeats the calculation until no value changes by more than `Maximum change`, at most `Maximum iterations` times (100 and 0.001 unless you change them). The setting belongs to the workbook and reaches your other devices with sync.
 
 ## Copy and paste with other apps
 - [[Ctrl+C]] or the Copy button puts the selected cells on the clipboard as text with tabs and as a table, so they paste into Excel, Google Sheets, LibreOffice, Word or an email.
@@ -103,6 +119,18 @@ The tabs at the bottom are your sheets.
 - `New sheet` (the + button) adds one.
 - Double-click a tab, or long-press it on a touch screen, to rename it.
 - Tap ✕ on a tab, then ✕ again within 3 seconds, to delete the sheet. The last sheet can't be deleted.
+
+## Print and PDF
+`Print or save as PDF…` is in the sheet menu (right-click, or touch and hold a cell on a phone) and under the `XL` export button; [[Ctrl+P]] opens it too.
+
+- `Print`: `The whole sheet` (everything up to the last filled cell, with its charts) or `The selection`.
+- `Paper` A4, A3, Letter or Legal, `Portrait` or `Landscape`.
+- `Size`: `Fit to the page width` (the default: every column on one page across), `Fit on one page` or `Actual size`.
+- `Repeat at the top of each page`: the first rows (1 to 5) on every page, for headings.
+- `Gridlines`, `Page numbers` (with the sheet's name) and `Charts` can be turned off.
+- `Save PDF` saves the file; `Print` opens your device's print dialog with the same pages.
+
+The PDF has real text, so Greek prints correctly and you can search and copy it. Fills, colours, bold and italics, borders, merged cells, wrapped text, data bars and icon sets print as you see them; text runs on over empty cells to its right. Rows hidden by a filter are left out. The settings stay on this device.
 
 ## The Assistant
 Ask the Assistant to change your sheets in words, such as "2026 instead of 2025", "make the first row bold", "sort by price", "insert two rows above row 5" or "freeze the first row". It shows the changes on a card first; `Apply` makes them here and opens the sheet. `Undo` on the message here, or on the Assistant's card, puts the cells back as long as they weren't changed since. See the Assistant's help for everything it can do.
@@ -139,6 +167,7 @@ See also [Backup](help:t/backup).
 - [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] copy, cut and paste, also with other apps.
 - [[Delete]] on a selected chart deletes it.
 - [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]] bold, italic, underline.
+- [[Ctrl+P]] print or save as PDF.
 - On a Mac use Cmd instead of Ctrl.
 
 ## Tips
@@ -152,8 +181,9 @@ See also [Backup](help:t/backup).
 - Charts, fills, borders, wrapping and conditional formatting are not saved in Excel, Calc or CSV files (an .orossheet keeps them) (merged cells, column widths and row heights are). From Excel, Sheets and LibreOffice, a paste brings fills, colours and bold, but not borders or rules.
 - Merged cells don't grow when you insert rows or columns inside them; the merge keeps its size.
 - Wrapped rows grow to fit when you turn wrapping on; a row whose text you change later keeps its height until you wrap it again or drag its edge.
-- While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.
-- Array formulas, {1,2} constants, named ranges and pivot tables are not supported. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
+- While one of your devices still runs orOS 4.73 or older, it shows an area chart as columns and leaves out stacking, the line over the columns and trend lines, icon sets, formula rules and iterative calculation; the updated device keeps them unless the chart is edited on the older one. While one of your devices still runs an older orOS, it doesn't show charts, rules, row heights, fills, borders, wrapping or merged cells, and the two devices may send the workbook back and forth a few times until both are updated. The updated device keeps them, except where the older one changed the same thing: setting a format on a cell there drops that cell's fill, borders, wrapping and merge, and changing a sheet there (its name, a column width) drops its row heights.
+- Array formulas that fill several cells (FILTER, SORT, UNIQUE), named ranges and pivot tables are not supported. INDIRECT reads A1 references only, not R1C1. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
 - Inserting or deleting rows moves cells: if another device edits the same cells before sync, its edit stays at the old place.
 - Undo history is cleared when sync brings in changes, and deleting a sheet has no Undo.
+- Print and PDF use the colours of a light page whatever the theme, the Noto Sans font and up to 5 repeated rows; a chart prints on the page where its top-left corner is, and a part that runs past the page edge is cut off. Frozen columns don't repeat on later pages.
 - Excel and Calc files need a helper library; if it hasn't loaded yet, you may need an internet connection.

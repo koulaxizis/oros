@@ -5,7 +5,8 @@ name: Quality gate
 # English text left in the Greek UI, runs a two-device sync convergence
 # sweep on every merge function (converge.js), an axe-core accessibility
 # check (a11y.js) and a size budget for the precache and each app's first
-# open (budget.js, budget.json). Known problems live in
+# open (budget.js, budget.json), and the shell's start-up on a throttled
+# phone (boot.js, boot.json). Known problems live in
 # .github/qa/baseline.json (may only shrink). Playwright and axe-core are
 # installed here only and never ship with orOS. See OROS_BIBLE.md "Quality gate".
 
@@ -28,7 +29,7 @@ concurrency:
 
 jobs:
   apps:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -56,6 +57,9 @@ jobs:
       - name: First-open size budget
         if: success() || failure()
         run: node .github/qa/budget.js --shard ${{ matrix.shard }}/4 --out qa-budget-${{ matrix.shard }}.json
+      - name: Start-up on a phone (boot.js, boot.json)
+        if: matrix.shard == 2 && (success() || failure())
+        run: node .github/qa/boot.js --out qa-boot-2.json
       - name: Every app with multitasking on (experimental switch)
         if: success() || failure()
         run: node .github/qa/multitask.js --shard ${{ matrix.shard }}/4 --out qa-mt-${{ matrix.shard }}.json
@@ -85,7 +89,7 @@ jobs:
   # browser part is the "apps" job above (an app with no baseline is strict).
   new-apps:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

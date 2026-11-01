@@ -30,9 +30,9 @@
 //
 // Limits (documented, Wave 2): encryption is whole-file in RAM
 // (SubtleCrypto has no streaming) — files of many hundreds of MB
-// are heavy on memory. Object GC (deleting unreferenced objects)
-// is deferred — deleted files leave orphaned encrypted blobs that
-// only occupy provider space, never leak anything.
+// are heavy on memory. Deleted and replaced files leave their
+// encrypted objects behind (provider space only, nothing leaks);
+// VD-GC removes them only when the person asks (Settings › Sync).
 // ============================================================
 (function () {
   "use strict";
@@ -723,6 +723,7 @@
     });
     var legacyDone = [];                           // legacy hashes converted in this push
     var gone = {};                                 // paths this push deletes
+    var sent = [];                                 // VD-GC: [path, hash] uploaded in this push
 
     // VD-KEY: nothing goes up before the vault key exists IN THE
     // CLOUD. No manifest there = the vault is being created or was
@@ -746,7 +747,9 @@
               // copies / renames / re-pushes of identical content
               // cost one existence probe, not a transfer.
               return objectStored(hash, cloudHashes).then(function (stored) {
-                return stored ? null : uploadObject(buf, hash);
+                if (stored) return null;
+                sent.push([path, hash]);
+                return uploadObject(buf, hash);
               }).then(function () {
                 cloudHashes[hash] = true;
                 var was = lm.files[path];
@@ -794,6 +797,7 @@
             legacyDone.forEach(function (h) {
               if (!still[h]) ST().deleteObject(OBJECTS_PREFIX + h).catch(function () {});
             });
+            noteSent(sent);
             return res;
           });
       });
@@ -1015,6 +1019,7 @@
     }
 
     return attempt()
+      .then(function () { return recheckSent(); })
       .then(function () {
         syncInFlight = false;
         release();
@@ -1087,6 +1092,262 @@
   }
 
   // ---------- Public API ----------
+  // ---------- VD-GC · clean-up of unused objects (2026-10-31) ----------
+  // Deleted and replaced files leave their encrypted objects in the
+  // cloud. Only when the person asks (Settings › Sync), the objects no
+  // manifest entry names any more are removed. The rules are the ones
+  // orOS Drive keeps (koulaxizis/oros-drive vault/clean.go), each one
+  // against a way to lose a file:
+  //   · No manifest, a manifest that cannot be opened, or no vault key:
+  //     nothing is removed (VD-1; without the key the keyed names
+  //     cannot be told apart). An entry without a hash holds it too.
+  //   · Always the cloud manifest itself, read fresh (never this
+  //     device's cache, which lacks on-demand and failed entries), and
+  //     its revision must be the same before and after the read.
+  //   · An object is in use under every name an entry can have: the
+  //     keyed name and the legacy "objects/<h>", whatever its "v".
+  //   · Only names "objects/<64 hex>" are ever removed; the manifest,
+  //     key.json and anything else are never touched.
+  //   · Only objects the provider stored GC_MIN_AGE_DAYS or more ago
+  //     (a device uploads objects before the manifest that names
+  //     them); an object without a time is never old.
+  //   · Fewer than nine in ten of the named objects listed = something
+  //     is off (a partial listing, another key): nothing is removed.
+  //   · The manifest revision is checked before every removal; when it
+  //     moved, the clean-up stops (run it again for a fresh look).
+  //   · Afterwards the manifest is read again. An object it names again
+  //     (a device re-uploaded the same content, which on Dropbox keeps
+  //     the old time, just before writing its manifest) is put back
+  //     from this device's copy; what cannot be put back is reported.
+  //     The uploading device also looks again (recheckSent).
+  var GC_MIN_AGE_DAYS = 30;
+  var GC_MIN_AGE_MS   = GC_MIN_AGE_DAYS * 864e5;
+  var GC_OBJECT       = /^objects\/[0-9a-f]{64}$/;
+
+  // The cloud manifest as stored: { rev, files } (files null = none).
+  function gcManifest() {
+    return ST().getRevision(MANIFEST_KEY).then(function (rev) {
+      if (rev === null) return { rev: null, files: null };
+      return ST().getObject(MANIFEST_KEY).then(function (buf) {
+        if (!buf) throw new Error("clean-moved");
+        return openManifest(buf);
+      }).then(function (m) {
+        return ST().getRevision(MANIFEST_KEY).then(function (again) {
+          if (again !== rev) throw new Error("clean-moved");
+          return { rev: rev, files: m.files };
+        });
+      });
+    });
+  }
+
+  // Object names an entry can be stored under → its hash.
+  function gcNames(files, keys) {
+    var names = {}, hashes = [], seen = {}, bad = false;
+    Object.keys(files || {}).forEach(function (p) {
+      var e = files[p];
+      if (!e || typeof e.h !== "string" || !e.h) { bad = true; return; }
+      if (seen[e.h]) return;
+      seen[e.h] = true;
+      hashes.push(e.h);
+    });
+    return Promise.all(hashes.map(function (h) {
+      names[(OBJECTS_PREFIX + h).toLowerCase()] = h;
+      return keys ? objectKey(h).then(function (k) { names[k] = h; }) : null;
+    })).then(function () { return { names: names, hashes: hashes, bad: bad }; });
+  }
+
+  function gcScan(now) {
+    if (!usable()) return Promise.reject(new Error("not-connected"));
+    var cloud, keys, ref;
+    return gcManifest().then(function (c) {
+      cloud = c;
+      return c.files ? loadVaultKeys(false) : null;
+    }).then(function (k) {
+      keys = k || null;
+      return gcNames(cloud.files, keys);
+    }).then(function (r) {
+      ref = r;
+      return ST().listInfo("");
+    }).then(function (list) {
+      var u = { files: 0, fileBytes: 0, objects: 0, stored: 0, unused: 0, unusedBytes: 0,
+                free: 0, freeBytes: 0, missing: 0, otherBytes: 0, hold: "" };
+      var free = [], have = {};
+      Object.keys(cloud.files || {}).forEach(function (p) {
+        var e = cloud.files[p];
+        u.files++;
+        if (e && typeof e.s === "number" && e.s > 0) u.fileBytes += e.s;
+      });
+      (list || []).forEach(function (o) {
+        var key = String(o && o.key || ""), size = +(o && o.size) || 0;
+        if (!GC_OBJECT.test(key)) { u.otherBytes += size; return; }
+        u.objects++;
+        u.stored += size;
+        have[key] = true;
+        if (Object.prototype.hasOwnProperty.call(ref.names, key)) return;
+        u.unused++;
+        u.unusedBytes += size;
+        var at = +o.modified || 0;
+        if (at > 0 && now - at >= GC_MIN_AGE_MS) {
+          u.free++;
+          u.freeBytes += size;
+          free.push({ key: key, size: size });
+        }
+      });
+      var found = 0;
+      var byHash = {};
+      Object.keys(ref.names).forEach(function (n) { if (have[n]) byHash[ref.names[n]] = true; });
+      ref.hashes.forEach(function (h) { if (byHash[h]) found++; else u.missing++; });
+      if (!cloud.files) u.hold = "no-manifest";
+      else if (!keys || ref.bad || found * 10 < ref.hashes.length * 9) u.hold = "mismatch";
+      if (u.hold) { u.free = 0; u.freeBytes = 0; free = []; }
+      return { u: u, rev: cloud.rev, free: free };
+    });
+  }
+
+  // What the vault holds; changes nothing.
+  // → { files, fileBytes, objects, stored, unused, unusedBytes, free,
+  //     freeBytes, missing, otherBytes, hold: "" | "no-manifest" | "mismatch" }
+  function gcUsage() {
+    return gcScan(Date.now()).then(function (s) { return s.u; });
+  }
+
+  // Put back a removed object the manifest names again, from this
+  // device's own copy (hash-checked). Resolves true when it is back.
+  function gcHeal(hash, legacy) {
+    var lm = getLocalManifest().files;
+    var paths = Object.keys(lm).filter(function (p) { return lm[p] && lm[p].h === hash; });
+    function next(i) {
+      if (i >= paths.length) return Promise.resolve(false);
+      return FS().read(paths[i]).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
+        return VC().sha256Hex(buf).then(function (h) {
+          if (h !== hash) return next(i + 1);
+          var put = legacy
+            ? VC().encryptBytes(buf).then(function (sealed) {
+                return ST().putObject(OBJECTS_PREFIX + hash, new Blob([sealed]));
+              })
+            : uploadObject(buf, hash);
+          return put.then(function () { return true; });
+        });
+      }, function () { return next(i + 1); });
+    }
+    return next(0);
+  }
+
+  // After removals: read the manifest again; every removed object it
+  // names is put back or reported in `lost` (paths).
+  function gcAfter(gone, out) {
+    if (!Object.keys(gone).length) return Promise.resolve(out);
+    function read(tries) {
+      return gcManifest().catch(function (e) {
+        if (e && e.message === "clean-moved" && tries < 3) return read(tries + 1);
+        throw e;
+      });
+    }
+    return read(0).then(function (cloud) {
+      if (!cloud.files) return out;
+      var hit = {};                                   // hash → { legacy, paths }
+      return gcNames(cloud.files, vaultKeys).then(function (ref) {
+        Object.keys(gone).forEach(function (n) {
+          if (!Object.prototype.hasOwnProperty.call(ref.names, n)) return;
+          var h = ref.names[n];
+          hit[h] = hit[h] || { legacy: false, keyed: false, paths: [] };
+          if (n === (OBJECTS_PREFIX + h).toLowerCase()) hit[h].legacy = true; else hit[h].keyed = true;
+        });
+        Object.keys(cloud.files).forEach(function (p) {
+          var e = cloud.files[p];
+          if (e && hit[e.h]) hit[e.h].paths.push(p);
+        });
+        return Object.keys(hit).reduce(function (chain, h) {
+          return chain.then(function () {
+            var wants = [];
+            if (hit[h].keyed) wants.push(false);
+            if (hit[h].legacy) wants.push(true);
+            return wants.reduce(function (c2, legacy) {
+              return c2.then(function (ok) {
+                return gcHeal(h, legacy).catch(function () { return false; })
+                  .then(function (one) { return ok && one; });
+              });
+            }, Promise.resolve(true)).then(function (ok) {
+              if (ok) out.healed++;
+              else out.lost = out.lost.concat(hit[h].paths);
+            });
+          });
+        }, Promise.resolve());
+      });
+    }).then(function () { return out; });
+  }
+
+  // Remove what gcScan finds removable (looks again first).
+  // → { removed, bytes, stopped (the vault moved: run it again),
+  //     healed, lost: [path] }. Rejects "clean-no-manifest",
+  //     "clean-mismatch", "clean-moved" or a storage error.
+  function gcCleanUp() {
+    return betweenSyncs(function () {
+      return gcScan(Date.now()).then(function (s) {
+        if (s.u.hold === "no-manifest") throw new Error("clean-no-manifest");
+        if (s.u.hold) throw new Error("clean-mismatch");
+        var out = { removed: 0, bytes: 0, stopped: false, healed: 0, lost: [] }, gone = {};
+        var chain = s.free.reduce(function (c, o) {
+          return c.then(function () {
+            if (out.stopped) return null;
+            return ST().getRevision(MANIFEST_KEY).then(function (rev) {
+              if (rev !== s.rev) { out.stopped = true; return null; }
+              return ST().deleteObject(o.key).then(function () {
+                gone[o.key] = true;
+                out.removed++;
+                out.bytes += o.size;
+              });
+            });
+          });
+        }, Promise.resolve());
+        return chain.then(function () {
+          return gcAfter(gone, out);
+        }, function (err) {
+          return gcAfter(gone, out).catch(function () {}).then(function () { throw err; });
+        });
+      });
+    });
+  }
+
+  // The uploading side of the same race: every object a push uploaded
+  // is looked at again by the syncs that follow (SENT_KEY, device-
+  // local), until one at least GC_RECHECK_MS after the upload still
+  // finds it. One that a clean-up elsewhere removed in the meantime
+  // is queued again; the next push finds it missing (objectStored)
+  // and uploads it once more.
+  var SENT_KEY        = "oros-vault-sent";       // { path: [hash, uploadedAt] }
+  var GC_RECHECK_MS   = 10000;
+  function noteSent(sent) {
+    if (!sent.length) return;
+    var m = readJson(SENT_KEY) || {}, now = Date.now();
+    sent.forEach(function (ph) { m[ph[0]] = [ph[1], now]; });
+    writeJson(SENT_KEY, m);
+  }
+  function recheckSent() {
+    var m = readJson(SENT_KEY);
+    if (!m || typeof m !== "object") return Promise.resolve();
+    var lm = getLocalManifest().files;
+    return Object.keys(m).reduce(function (chain, path) {
+      return chain.then(function () {
+        var it = m[path], cur = lm[path];
+        if (!Array.isArray(it) || !cur || cur.h !== it[0]) { delete m[path]; return null; }
+        return loadVaultKeys(false).then(function (k) {
+          if (!k) return;                              // looked at again next time
+          return objectKey(it[0]).then(function (key) {
+            return ST().getRevision(key);
+          }).then(function (rev) {
+            if (rev === null) { delete m[path]; queueAdd(path); }
+            else if (Date.now() - (+it[1] || 0) >= GC_RECHECK_MS) delete m[path];
+          });
+        }).catch(function () {});
+      });
+    }, Promise.resolve()).catch(function () {}).then(function () {
+      try {
+        if (Object.keys(m).length) writeJson(SENT_KEY, m); else localStorage.removeItem(SENT_KEY);
+      } catch (e) {}
+    });
+  }
+
   window.orosVault = {
     version: "0.1.0",
 
@@ -1159,7 +1420,12 @@
     removeRemote: removeOnDemand,
     offlineFolders: offlineFolders,
     isKeptOffline: keptOffline,
-    setKeptOffline: setKeptOffline
+    setKeptOffline: setKeptOffline,
+
+    // VD-GC: clean-up of unused cloud objects, only when asked.
+    usage: gcUsage,
+    cleanUp: gcCleanUp,
+    cleanMinAgeDays: GC_MIN_AGE_DAYS
   };
 
   // ---------- Boot ----------

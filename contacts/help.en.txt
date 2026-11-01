@@ -71,6 +71,16 @@ In the orOS Android app, `On this phone` puts your orOS contacts in the phone's 
 
 Other apps can send contacts to orOS too. When a phone app offers "Add contact" or "Create contact" (after a call from a number you don't have, from Viber or another messenger) or opens a .vcf file, pick orOS. The contact opens in `Review import`, and nothing is saved until you confirm. The button doesn't appear in a browser, only in the Android app, and the choice is kept on this phone only.
 
+## Your own contacts server (CardDAV)
+If your address book lives on your own server (Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail, iCloud with an app password…), connect it once in [Settings](app:settings) › `Sync` › `Calendars and contacts`. Then `Server (CardDAV)` in the top bar lists its address books. Tap `Link` next to one: orOS first shows how many contacts would come down, how many would go up, how many are already here and how many it found on both sides, and nothing is written until you tap `Link` again. From then on all your contacts and that address book agree both ways, so your phone (DAVx5), Thunderbird and the server's own page see the same people.
+- A person found on both sides at the first link (the same e-mail or phone, and names that agree) becomes one contact with the details of both; on a detail with one value (a name, the company) the one in orOS stays.
+- Labels go to the server as categories and come back as labels. Relations, `Keep in touch` and the interactions you log stay in orOS only.
+- Photos on the server stay there and are never copied into orOS; other details orOS doesn't show (a second company unit, Apple's labels, social profiles) stay on the server untouched when you change a contact here.
+- Nothing is deleted on either side unless it was in sync before. When many contacts would be deleted at once, orOS waits and asks: `Delete them` or `Bring them back`.
+- A contact changed on both sides keeps the newer version, and the other one is kept as a copy marked (conflict).
+- A contact with something orOS cannot hold in full (a very long note, a date it can't read) is read-only here: change it on the server.
+- It syncs while Contacts is open: when it opens, every 5 minutes, a few seconds after a change, and with `Sync now`. `Unlink` stops it; the contacts stay in orOS and on the server.
+
 ## Save and open an orOS file
 `orOS file (.oroscontacts)` in the top bar saves every contact (with its interactions) and every label as one `.oroscontacts` file, for example to move them to another device without sync or to keep a copy. The file is a plain ZIP: unzipped it holds the contacts as `content.json` plus `preview/contacts.vcf`, which other address books open. It has no photos (Contacts keeps none) and nothing of `From an account`. It is not encrypted and holds personal details, so keep it somewhere safe.
 
@@ -105,3 +115,4 @@ See also [backup](help:t/backup).
 - A device still on an older orOS version doesn't know `Keep in touch`: if you edit a contact there, it keeps working, but a cadence changed on that device at the same time may be lost.
 - Contacts keeps no photos: imports, the phone and old backups bring none in. `From an account` and reads only your own contacts (not Google's "Other contacts" or a company directory).
 - `From phone` appears only in Chrome on Android, because other browsers can't open the phone's contact list.
+- The link to a server address book (CardDAV) syncs only while Contacts is open. Google Contacts is not a CardDAV server orOS links to; use `From an account` once instead.

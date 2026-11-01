@@ -80,7 +80,9 @@ test("I watered it: the next due day moves for everyone, and two people at once 
   assert.deepEqual(m1, C.merge(edit(base, b, {}, 21, "m2"), edit(base, a, {}, 20, "m1")));
   const got = H.build(C.view(m1));
   const due = PC.tasks(got.data, TODAY, 30, "n");
-  assert.equal(due.find((x) => x.key === "basil01:water").due, PC.addDays(TODAY, 2));
+  // the interval in force today: 2 days, 3 in winter (Nov–Feb north)
+  const basil = got.data.plants.find((p) => p.id === "basil01");
+  assert.equal(due.find((x) => x.key === "basil01:water").due, PC.addDays(TODAY, PC.interval(basil, "water", TODAY, "n")));
   assert.equal(got.data.plants.find((p) => p.id === "fern001").notes, "moved to the kitchen");
   assert.equal(got.by.wateraa, "m1");
   assert.equal(got.by.mistbbb, "m2");

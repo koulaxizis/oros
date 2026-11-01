@@ -1,0 +1,385 @@
+// Pad (text and code editor): the pure helpers in pad/core.js and the
+// EEL2 stream mode in pad/eel2.js, plus the app's contracts that a
+// browser test would only catch late (never runs a file, no sync
+// slice, every CodeMirror file it may load is precached).
+// Run: node --test tests/
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("fs");
+const path = require("path");
+const C = require("../pad/core.js");
+const EEL = require("../pad/eel2.js");
+
+const ROOT = path.join(__dirname, "..");
+const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
+
+test("every encoding round-trips Greek text exactly", () => {
+  const s = "Καλημέρα κόσμε! Άλφα ΐ ΰ ς\nline two\ttab";
+  for (const enc of ["utf-8", "utf-8-bom", "utf-16le", "utf-16be", "windows-1253", "iso-8859-7"]) {
+    const r = C.encode(s, enc);
+    assert.ok(r.bytes, enc);
+    assert.equal(C.decode(r.bytes, enc), s, enc);
+  }
+});
+
+test("the BOM is written once and read back once", () => {
+  const r = C.encode("abc", "utf-8-bom");
+  assert.deepEqual([...r.bytes.slice(0, 3)], [0xEF, 0xBB, 0xBF]);
+  assert.equal(C.detectEncoding(r.bytes, "windows-1253"), "utf-8-bom");
+  assert.equal(C.decode(r.bytes, "utf-8-bom"), "abc");
+  assert.equal(C.decode(r.bytes, "utf-8"), "abc");
+  const u = C.encode("Ωmega", "utf-16le");
+  assert.equal(C.detectEncoding(u.bytes, ""), "utf-16le");
+  assert.equal(C.detectEncoding(C.encode("Ωmega", "utf-16be").bytes, ""), "utf-16be");
+});
+
+test("an old Greek file is not valid UTF-8: the fallback encoding decides", () => {
+  const b = C.encode("Ελληνικά", "windows-1253").bytes;
+  assert.equal(C.detectEncoding(b, "windows-1253"), "windows-1253");
+  assert.equal(C.detectEncoding(b, "iso-8859-7"), "iso-8859-7");
+  assert.equal(C.detectEncoding(b, ""), "windows-1252");
+  assert.equal(C.detectEncoding(new TextEncoder().encode("Ελληνικά"), "windows-1253"), "utf-8");
+});
+
+test("a character with no byte in the encoding is reported, never replaced", () => {
+  assert.deepEqual(C.encode("ok\nab☃", "windows-1253").bad, { ch: "☃", line: 2, col: 3 });
+  // Browsers read "ISO-8859-1" as Windows-1252 (WHATWG), so € fits both.
+  assert.deepEqual(C.encode("€😀", "iso-8859-1").bad, { ch: "😀", line: 1, col: 2 });
+  assert.deepEqual(C.encode("x😀", "windows-1252").bad, { ch: "😀", line: 1, col: 2 });
+  assert.ok(C.encode("€", "windows-1252").bytes);
+});
+
+test("line endings: detected, kept on save, mixed reported", () => {
+  assert.deepEqual(C.detectEol("a\r\nb\r\n"), { eol: "crlf", mixed: false });
+  assert.deepEqual(C.detectEol("a\nb\r\nc\n"), { eol: "lf", mixed: true });
+  assert.deepEqual(C.detectEol("a\rb\r"), { eol: "cr", mixed: false });
+  assert.deepEqual(C.detectEol("no newline"), { eol: "lf", mixed: false });
+  const lf = C.toLf("a\r\nb\rc\n");
+  assert.equal(lf, "a\nb\nc\n");
+  assert.equal(C.withEol(lf, "crlf"), "a\r\nb\r\nc\r\n");
+  assert.equal(C.withEol(lf, "cr"), "a\rb\rc\r");
+  assert.equal(C.withEol("a\r\nb", "lf"), "a\nb");
+});
+
+test("indentation is guessed from the text", () => {
+  assert.deepEqual(C.detectIndent("a\n\tb\n\t\tc\n"), { tabs: true, size: 4 });
+  assert.deepEqual(C.detectIndent("a\n  b\n    c\n  d\n"), { tabs: false, size: 2 });
+  assert.deepEqual(C.detectIndent("a\n    b\n        c\n"), { tabs: false, size: 4 });
+  assert.equal(C.detectIndent("flat\ntext\n"), null);
+});
+
+test("language from the name, then the first line", () => {
+  assert.equal(C.guessLang("app.js"), "javascript");
+  assert.equal(C.guessLang("x.TSX"), "tsx");
+  assert.equal(C.guessLang("/internal/a/b.jsfx-inc"), "eel2");
+  assert.equal(C.guessLang("Dockerfile"), "dockerfile");
+  assert.equal(C.guessLang("C:\\work\\.gitignore"), "ini");
+  assert.equal(C.guessLang("run", "#!/usr/bin/env python3"), "python");
+  assert.equal(C.guessLang("run", "#!/bin/bash"), "shell");
+  assert.equal(C.guessLang("NULL Gate", "desc:NULL Gate"), "eel2");
+  assert.equal(C.guessLang("page", "<!DOCTYPE html>"), "html");
+  assert.equal(C.guessLang("notes"), "text");
+  for (const l of C.LANGS) assert.equal(C.langInfo(l.id).id, l.id);
+  assert.equal(C.langInfo("nope").id, "text");
+});
+
+test("names: safe file names and copies next to the original", () => {
+  assert.equal(C.safeName("a/b:c?.txt"), "a_b_c_.txt");
+  assert.equal(C.safeName("  ..  "), "untitled.txt");
+  assert.equal(C.copyName("a.txt", ["a.txt"]), "a (2).txt");
+  assert.equal(C.copyName("a.txt", ["A.TXT", "a (2).txt"]), "a (3).txt");
+  assert.equal(C.copyName("a (2).txt", ["a (2).txt"]), "a (3).txt");
+  assert.equal(C.copyName("Makefile", ["Makefile"]), "Makefile (2)");
+  assert.equal(C.untitledName("Untitled", ["Untitled.txt"]), "Untitled 2.txt");
+});
+
+test("binary files are spotted, UTF-16 is not binary", () => {
+  assert.equal(C.looksBinary(new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0, 0, 0, 13])), true);
+  assert.equal(C.looksBinary(C.encode("hello world, this is text", "utf-16le").bytes), false);
+  assert.equal(C.looksBinary(new TextEncoder().encode("plain")), false);
+});
+
+test("a stored session is cleaned, never trusted", () => {
+  const tab = C.cleanTab({ id: "tabc123", name: "../x", text: "hi", lang: "evil", enc: "koi8", eol: "zz", dirty: 1,
+    loc: { kind: "disk", path: "/internal/../etc" }, sel: { a: -5, h: "7" } });
+  assert.deepEqual(tab, { id: "tabc123", name: "_x", text: "hi", lang: "text", enc: "utf-8", eol: "lf", dirty: false,
+    loc: null, sel: { a: 0, h: 7 }, top: 0, mtime: 0 });
+  assert.equal(C.cleanTab({ id: "bad id" }), null);
+  const disk = C.cleanLoc({ kind: "disk", path: "/internal/Documents/a.txt", mtime: 5, size: 2, h: "abc:2" });
+  assert.deepEqual(disk, { kind: "disk", path: "/internal/Documents/a.txt", mtime: 5, size: 2, h: "abc:2" });
+  assert.equal(C.cleanLoc({ kind: "http", path: "https://x" }), null);
+  const s = C.cleanSession({ order: ["tabc123", "tabc123", "nope", 4], active: "zzz", recent: [{ kind: "device" }, disk] });
+  assert.deepEqual(s, { order: ["tabc123"], active: "tabc123", recent: [{ kind: "disk", path: disk.path }] });
+});
+
+test("wave 2: This computer and device-handle locations, the recent list", () => {
+  assert.deepEqual(C.cleanLoc({ kind: "pc", path: "/home/Documents/a.py", mtime: 9, size: 3, h: "x" }),
+    { kind: "pc", path: "/home/Documents/a.py", mtime: 9, size: 3, h: "x" });
+  assert.equal(C.cleanLoc({ kind: "pc", path: "/home/../etc/passwd" }), null);
+  assert.equal(C.cleanLoc({ kind: "pc", path: "relative/a" }), null);
+  // The handle never travels in the loc; only the check values do.
+  assert.deepEqual(C.cleanLoc({ kind: "fsa", path: "/x", name: "a.js", mtime: 2, size: 1, h: "y" }),
+    { kind: "fsa", mtime: 2, size: 1, h: "y" });
+  assert.ok(C.sameLoc({ kind: "pc", path: "/home/a" }, { kind: "pc", path: "/home/a", mtime: 4 }));
+  assert.ok(!C.sameLoc({ kind: "pc", path: "/home/a" }, { kind: "disk", path: "/home/a" }));
+  assert.ok(!C.sameLoc({ kind: "fsa" }, { kind: "fsa" }), "handles are compared by the browser, not here");
+  let r = [];
+  r = C.addRecent(r, { kind: "disk", path: "/internal/a.txt", mtime: 1 });
+  r = C.addRecent(r, { kind: "pc", path: "/home/b.py" });
+  r = C.addRecent(r, { kind: "disk", path: "/internal/a.txt" });
+  r = C.addRecent(r, { kind: "fsa" });
+  r = C.addRecent(r, { kind: "device" });
+  assert.deepEqual(r, [{ kind: "disk", path: "/internal/a.txt" }, { kind: "pc", path: "/home/b.py" }]);
+  for (let i = 0; i < 30; i++) r = C.addRecent(r, { kind: "disk", path: "/internal/f" + i });
+  assert.equal(r.length, 20);
+  assert.deepEqual(C.cleanSession({ recent: [{ kind: "pc", path: "/home/x" }, { kind: "pc", path: "/home/x" }, { kind: "fsa" }] }).recent,
+    [{ kind: "pc", path: "/home/x" }]);
+});
+
+test("wave 2: saving in place never skips the change check (PAD-CF)", () => {
+  const src = read("pad/app.js");
+  // Every place a file lives has stat / read / write / copy / other.
+  for (const B of ["DISK", "PC", "FSA"]) {
+    const m = src.match(new RegExp("var " + B + " = \\{([\\s\\S]*?)\\n  \\};"));
+    assert.ok(m, B);
+    for (const k of ["stat:", "read:", "write:", "copy:", "other:"]) assert.ok(m[1].includes(k), B + " " + k);
+  }
+  // save() checks first, and a refused write on This computer is a conflict, never a retry.
+  const save = src.slice(src.indexOf("function save(tab)"), src.indexOf("function conflict("));
+  assert.match(save, /changed\(B, tab\)/);
+  assert.match(save, /e\.code === "changed" \|\| e\.code === "exists"\)\) return conflict/);
+  // This computer writes always carry the time just checked (the launcher's ifmtime).
+  assert.match(src, /pcApi\(\)\.write\(path, new Blob\(\[bytes\], \{ type: mimeOf\(tab\) \}\), ifm \|\| 0, false\)/);
+  // A copy never replaces: disk and This computer pick a free "name (2).ext".
+  assert.match(src, /C\.copyName\(tab\.name, \(entries \|\| \[\]\)\.map/);
+  // Pad takes "Open with" files (BR-FO-4) and Files' paths.
+  assert.match(src, /__orosTakeFile\(target\.openFile\.token\)/);
+  assert.match(src, /target\.openPath/);
+});
+
+test("wave 2: pcdialog's path API keeps the launcher's ifmtime rule", () => {
+  const src = read("pcdialog.js");
+  for (const k of ["opened:", "stat:", "list:", "read:", "write:"]) assert.ok(src.includes(k), k);
+  assert.match(src, /put\(path, blob, !!replace \|\| m > 0, m\)/);
+});
+
+test("the change check: same bytes give the same hash, any change another", () => {
+  const a = C.hashBytes(new TextEncoder().encode("one"));
+  assert.equal(a, C.hashBytes(new TextEncoder().encode("one")));
+  assert.notEqual(a, C.hashBytes(new TextEncoder().encode("onf")));
+  assert.notEqual(C.hash("x"), C.hash("y"));
+});
+
+// A tiny stand-in for CodeMirror's StringStream, enough for the mode.
+function tokens(src) {
+  const st = EEL.startState(), out = [];
+  for (const line of src.split("\n")) {
+    let pos = 0;
+    const s = {
+      string: line,
+      get pos() { return pos; }, set pos(v) { pos = v; },
+      start: 0,
+      sol() { return pos === 0; },
+      eol() { return pos >= line.length; },
+      peek() { return line.charAt(pos) || undefined; },
+      next() { return pos < line.length ? line.charAt(pos++) : undefined; },
+      eatSpace() { const p = pos; while (/\s/.test(line.charAt(pos)) && pos < line.length) pos++; return pos > p; },
+      skipToEnd() { pos = line.length; },
+      current() { return line.slice(this.start, pos); },
+      match(p) {
+        if (typeof p === "string") { if (line.startsWith(p, pos)) { pos += p.length; return true; } return false; }
+        const m = p.exec(line.slice(pos));
+        if (m && m.index === 0) { pos += m[0].length; return m; }
+        return null;
+      }
+    };
+    while (pos < line.length) {
+      s.start = pos;
+      const ty = EEL.token(s, st);
+      if (pos === s.start) pos++;
+      if (ty) out.push([line.slice(s.start, pos), ty]);
+    }
+  }
+  return out;
+}
+
+test("EEL2 mode: header, sections, comments, numbers, keywords", () => {
+  const tk = tokens('desc:NULL Gate\nslider1:0<-60,0,1>Threshold\n@init\nfunction f(x) local(y) ( y = $pi * 0x1F; );\n/* block\n still */ spl0 = sin(spl0); // gain\n"str"');
+  const find = (text) => tk.find((x) => x[0].trim() === text);
+  assert.equal(find("desc:")[1], "meta");
+  assert.equal(find("slider1:")[1], "meta");
+  assert.equal(find("@init")[1], "heading");
+  assert.equal(find("function")[1], "keyword");
+  assert.equal(find("local")[1], "keyword");
+  assert.equal(find("$pi")[1], "variableName.special");
+  assert.equal(find("0x1F")[1], "number");
+  assert.equal(find("spl0")[1], "variableName.special");
+  assert.equal(find("sin")[1], "variableName.function");
+  assert.equal(find("// gain")[1], "comment");
+  assert.equal(find('"str"')[1], "string");
+  assert.ok(tk.some((x) => x[0] === "/* block" && x[1] === "comment"));
+  assert.ok(tk.some((x) => x[0].indexOf("still */") === 1 && x[1] === "comment"));
+  // After a section, "slider1:" is code, not a header line.
+  const t2 = tokens("@slider\nslider1 = 2;");
+  assert.equal(t2.find((x) => x[0] === "slider1")[1], "variableName.special");
+});
+
+test("Pad never runs a file and registers no sync slice", () => {
+  const src = read("pad/app.js");
+  assert.ok(!/registerSlice\s*\(/.test(src), "documents are disk files; tabs stay on the device");
+  assert.ok(!/\beval\s*\(|new Function|srcdoc|document\.write/.test(src));
+  // innerHTML only ever takes the fixed ICO markup, or the Markdown preview
+  // from Notes' renderer (escapes all text; tested in notes-md.test.js).
+  for (const m of src.matchAll(/\.innerHTML\s*=\s*([^;]+);/g)) {
+    assert.match(m[1].trim(), /^(ICO[.[]|ICO\b|en\.dir \? ICO|it\.on \? ICO|r\.ico|ICO\[|MD\.render\()/, m[1]);
+  }
+});
+
+test("every CodeMirror file Pad can load is in vendor/ and in the precache", () => {
+  const sw = read("sw.js");
+  const bundles = new Set(C.LANGS.map((l) => l.bundle).filter(Boolean));
+  bundles.add("core");
+  for (const b of bundles) {
+    const f = "vendor/codemirror/cm-" + b + ".min.js";
+    assert.ok(fs.existsSync(path.join(ROOT, f)), f);
+    assert.ok(sw.includes('"' + f + '"'), f + " precached");
+  }
+  for (const f of ["pad/", "pad/index.html", "pad/app.css", "pad/core.js", "pad/eel2.js", "pad/app.js", "pad/help.en.txt", "pad/help.el.txt"]) {
+    assert.ok(sw.includes('"' + f + '"'), f + " precached");
+  }
+  assert.ok(fs.existsSync(path.join(ROOT, "vendor/codemirror/LICENSE")));
+  assert.ok(read("CREDITS.md").includes("vendor/codemirror/LICENSE"));
+});
+
+test("each language bundle registers the ids core.js routes to it", () => {
+  const byBundle = {};
+  for (const l of C.LANGS) if (l.bundle) (byBundle[l.bundle] = byBundle[l.bundle] || []).push(l.id);
+  for (const [b, ids] of Object.entries(byBundle)) {
+    const src = read("vendor/codemirror/build/src/" + b + ".js");
+    for (const id of ids) assert.match(src, new RegExp("\\.lang\\." + id + "\\b|\\bL\\." + id + "\\b"), b + ": " + id);
+  }
+});
+
+test("the factory reset deletes Pad's tab store", () => {
+  assert.match(read("shell.js"), /"oros-pad", "oros-assistant", "oros-legacy"\]\.forEach/);
+});
+
+// ---------- wave 3: tools, preview, compare, key row ----------
+
+test("jsonFormat changes only white space: key order, numbers and strings stay", () => {
+  const src = '{"b":1,"a":[1.50,12345678901234567890,-0e0],"s":"x\\u00e9\\"y","e":{},"z":[]}';
+  const r = C.jsonFormat(src, "  ");
+  assert.ok(r.text, JSON.stringify(r));
+  assert.equal(r.text, '{\n  "b": 1,\n  "a": [\n    1.50,\n    12345678901234567890,\n    -0e0\n  ],\n  "s": "x\\u00e9\\"y",\n  "e": {},\n  "z": []\n}\n');
+  assert.equal(r.text.replace(/\s+/g, ""), src.replace(/\s+/g, ""));
+  const m = C.jsonFormat(r.text, "");
+  assert.equal(m.text, src);
+  assert.equal(C.jsonFormat("[1,\t2]", "\t").text, "[\n\t1,\n\t2\n]\n");
+  assert.equal(C.jsonFormat('  "x"  ', "  ").text, '"x"\n');
+});
+
+test("jsonFormat reports where the JSON is broken and changes nothing", () => {
+  for (const [bad, line, col] of [['{"a":1,}', 1, 8], ['{\n  "a": 1\n  "b": 2\n}', 3, 3], ["[1, 2", 1, 6], ["{'a':1}", 1, 2], ["[01]", 1, 3], ["", 1, 1], ["[1] 2", 1, 5], ['"a\nb"', 1, 3]]) {
+    const r = C.jsonFormat(bad, "  ");
+    assert.ok(r.error && !r.text, bad);
+    assert.equal(r.error.line, line, bad + " line");
+    assert.equal(r.error.col, col, bad + " col");
+  }
+  const deep = "[".repeat(600) + "]".repeat(600);
+  assert.ok(C.jsonFormat(deep, "  ").error, "depth limit");
+});
+
+test("sortLines is natural, stable and keeps the closing newline; uniqueLines and trimTrailing", () => {
+  assert.equal(C.sortLines("b10\nb2\na\nB2\n", false, "en"), "a\nB2\nb2\nb10\n"); // same letters: a fixed tie-break
+  assert.equal(C.sortLines("a\nc\nb", true, "en"), "c\nb\na");
+  assert.equal(C.sortLines("γ\nα\nβ\n", false, "el"), "α\nβ\nγ\n");
+  assert.equal(C.uniqueLines("x\ny\nx\n\n\nz\n"), "x\ny\n\nz\n");
+  assert.equal(C.trimTrailing("a  \nb\t\n  c \n"), "a\nb\n  c\n");
+  assert.equal(C.trimTrailing("none"), "none");
+});
+
+test("wave 3 wiring: tools, preview, compare and key row are reachable and labelled", () => {
+  const src = read("pad/app.js");
+  const html = read("pad/index.html");
+  for (const id of ["btn-preview", "preview", "cmp", "cmp-prev", "cmp-next", "cmp-close", "cmp-body", "keys"]) {
+    assert.ok(html.includes('id="' + id + '"'), id);
+  }
+  assert.match(html, /id="keys"[^>]*role="toolbar"/);
+  assert.match(html, /id="btn-preview"[^>]*aria-pressed/);
+  for (const fn of ["toolsMenu", "jsonTool", "togglePreview", "showCompare", "stepCompare", "closeCompare", "paintKeys", "pressKey"]) {
+    assert.ok(new RegExp("function " + fn + "\\b").test(src), fn);
+  }
+  // reused, already precached modules; nothing new from the network
+  assert.ok(src.includes('"../notes/md.js"') && src.includes('"../texttools/core.js"'));
+  const sw = read("sw.js");
+  assert.ok(sw.includes('"notes/md.js"') && sw.includes('"texttools/core.js"'));
+  // the key row never steals focus from the editor
+  assert.match(src, /pointerdown[^\n]*preventDefault|preventDefault[^\n]*pointerdown/);
+});
+
+// ---------- wave 4: search, Assistant, save automatically ----------
+
+const SEARCH = require("../pad/search.js");
+
+test("Pad's search provider lists only valid recent paths, read-only, and opens through the deep links", () => {
+  const store = { "oros-pad-session": { order: [], recent: [
+    { kind: "disk", path: "/internal/Code/app.json" },
+    { kind: "pc", path: "/home/chris/run.sh" },
+    { kind: "disk", path: "/internal/Code/app.json" },
+    { kind: "disk", path: "/internal/../etc" },
+    { kind: "disk", path: "/elsewhere/x.txt" },
+    { kind: "pc", path: "/home/../root/x" },
+    { kind: "fsa", path: "/x" },
+    { kind: "pc", path: "relative.txt" },
+    null
+  ] } };
+  const hits = SEARCH.search({ q: "", readJSON: (k) => store[k] });
+  assert.deepEqual(hits, [
+    { id: "disk:/internal/Code/app.json", title: "app.json", text: "/internal/Code/app.json", target: { openPath: "/internal/Code/app.json" } },
+    { id: "pc:/home/chris/run.sh", title: "run.sh", text: "/home/chris/run.sh", target: { openPc: "/home/chris/run.sh" } }
+  ]);
+  assert.deepEqual(SEARCH.search({ readJSON: () => null }), []);
+  assert.deepEqual(SEARCH.keys, ["oros-pad-session"]);
+  const aj = JSON.parse(read("apps.json"));
+  const apps = Array.isArray(aj) ? aj : aj.apps;
+  assert.equal(apps.find((a) => a.id === "pad").search, "search.js");
+  assert.ok(read("sw.js").includes('"pad/search.js"'));
+  const app = read("pad/app.js");
+  assert.match(app, /typeof target\.openPc === "string"[\s\S]{0,200}C\.cleanLoc\(\{ kind: "pc"/);
+});
+
+test("Assistant text_file: a new Pad tab with the file as written; languages match Pad's", () => {
+  const A = require("../assistant/core.js");
+  const e = (args) => A.normEntry(args, { has: () => true });
+  const code = "\n\ndef hi():\r\n    return 1\t\n\n";
+  const r = e({ kind: "text_file", title: "hi.py", text: code });
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(r.call, { fn: "openAt", args: ["pad", { newText: { name: "hi.py", text: "def hi():\n    return 1\n" } }] });
+  const l = e({ kind: "text_file", title: "build", text: "echo hi", lang: "shell" });
+  assert.equal(l.call.args[1].newText.lang, "shell");
+  assert.equal(e({ kind: "text_file", title: "x", text: "a", lang: "cobol" }).call.args[1].newText.lang, undefined);
+  assert.equal(e({ kind: "text_file", title: "a/b:c?.txt", text: "x" }).call.args[1].newText.name, "a_b_c_.txt");
+  assert.match(e({ kind: "text_file", title: "x" }).err, /needs text/);
+  assert.match(e({ kind: "text_file", title: "x", text: "a".repeat(500001) }).err, /keeps 500000/);
+  assert.ok(A.entryKinds().includes("text_file"));
+  assert.deepEqual(A.entryKinds((id) => id === "notes"), ["note"]);
+  const src = read("assistant/core.js");
+  const m = /var PAD_LANGS = (\[[^\]]+\])/.exec(src);
+  assert.deepEqual(JSON.parse(m[1]), C.LANGS.map((x) => x.id));
+});
+
+test("save automatically: off by default, only placed tabs, never asks, holds on a change elsewhere", () => {
+  const src = read("pad/app.js");
+  assert.match(src, /var prefs = \{[^}]*auto: false/);
+  const auto = src.slice(src.indexOf("function autoSave("), src.indexOf("// ---------- 16. Wiring"));
+  assert.ok(auto.length > 200);
+  // no dialogs, no permission prompts, no conflict copy from autosave
+  assert.ok(!/\bask\(|conflict\(|requestPermission|saveAs\(|saveToDevice\(|loadHandle\(/.test(auto), "autosave never asks");
+  assert.match(auto, /c\.state !== "same"\) \{ autoHold\(tab\)/);
+  assert.match(src, /if \(tab\.dirty && tab\.loc && !tab\.autoHeld && !tab\.saving\) autoSave\(tab\)/);
+  // a Save by hand waits for a running one and lifts the hold
+  assert.match(src, /if \(tab\.saving\) return tab\.saving\.then/);
+  assert.match(src, /tab\.autoHeld = false;\s*editedSince\(tab, sent\);/);
+});
