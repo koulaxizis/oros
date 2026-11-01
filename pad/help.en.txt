@@ -36,6 +36,13 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 - In Files, `Open with…` on a code or text file opens it in Pad, and `Save` writes it back to the same file. Code files that you open with orOS from your computer's own file manager open in Pad as a copy: save them with `Save as…`.
 - Pad never runs a file: HTML or a script opens as text only. Tabs you have not saved are not synced; they stay on this device.
 
+## Tools
+- `Tools…` in `More` works on the selected lines, or on the whole file when nothing is selected: `Format JSON` (one item per line, indented like the file), `Compact JSON` (all on one line), `Sort lines A → Z` and `Z → A` (numbers in their natural order, so 2 comes before 10), `Remove duplicate lines` (keeps the first) and `Remove spaces at line ends`. [[Ctrl+Z]] takes any of them back.
+- `Format JSON` changes only the spaces and line breaks: keys keep their order, and numbers and strings stay exactly as written. If the JSON is not valid, Pad says on which line and column, and changes nothing.
+- `Preview` in the top bar (for Markdown files) shows the text formatted, next to the editor on a wide screen and in its place on a narrow one. It follows as you type. Links open in a new window; pictures are not shown.
+- `Compare with another tab…` in `More` shows two open tabs line by line: lines only on the left are red, lines only on the right are green, and long runs of the same lines fold away. `Next change` and `Previous change` (or [[F7]] and [[Shift+F7]]) move between the changes, [[Esc]] closes the comparison.
+- `Key row` in `More` adds a row of keys above the bottom bar that phone keyboards lack: indent, arrows, brackets, quotes and other signs, undo and redo. It is on by itself on touch screens.
+
 ## View
 - In `More`: `Word wrap`, `Line numbers`, `Show spaces and tabs`, `Larger text` and `Smaller text`. These choices are kept on this device.
 - Very large files (over 10 MB) open as plain text, without colours, so Pad stays fast. Files over 50 MB do not open.

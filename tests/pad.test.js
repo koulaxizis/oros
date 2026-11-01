@@ -230,9 +230,10 @@ test("Pad never runs a file and registers no sync slice", () => {
   const src = read("pad/app.js");
   assert.ok(!/registerSlice\s*\(/.test(src), "documents are disk files; tabs stay on the device");
   assert.ok(!/\beval\s*\(|new Function|srcdoc|document\.write/.test(src));
-  // innerHTML only ever takes the fixed ICO markup.
+  // innerHTML only ever takes the fixed ICO markup, or the Markdown preview
+  // from Notes' renderer (escapes all text; tested in notes-md.test.js).
   for (const m of src.matchAll(/\.innerHTML\s*=\s*([^;]+);/g)) {
-    assert.match(m[1].trim(), /^(ICO[.[]|ICO\b|en\.dir \? ICO|it\.on \? ICO|r\.ico|ICO\[)/, m[1]);
+    assert.match(m[1].trim(), /^(ICO[.[]|ICO\b|en\.dir \? ICO|it\.on \? ICO|r\.ico|ICO\[|MD\.render\()/, m[1]);
   }
 });
 
@@ -263,4 +264,57 @@ test("each language bundle registers the ids core.js routes to it", () => {
 
 test("the factory reset deletes Pad's tab store", () => {
   assert.match(read("shell.js"), /"oros-pad", "oros-assistant", "oros-legacy"\]\.forEach/);
+});
+
+// ---------- wave 3: tools, preview, compare, key row ----------
+
+test("jsonFormat changes only white space: key order, numbers and strings stay", () => {
+  const src = '{"b":1,"a":[1.50,12345678901234567890,-0e0],"s":"x\\u00e9\\"y","e":{},"z":[]}';
+  const r = C.jsonFormat(src, "  ");
+  assert.ok(r.text, JSON.stringify(r));
+  assert.equal(r.text, '{\n  "b": 1,\n  "a": [\n    1.50,\n    12345678901234567890,\n    -0e0\n  ],\n  "s": "x\\u00e9\\"y",\n  "e": {},\n  "z": []\n}\n');
+  assert.equal(r.text.replace(/\s+/g, ""), src.replace(/\s+/g, ""));
+  const m = C.jsonFormat(r.text, "");
+  assert.equal(m.text, src);
+  assert.equal(C.jsonFormat("[1,\t2]", "\t").text, "[\n\t1,\n\t2\n]\n");
+  assert.equal(C.jsonFormat('  "x"  ', "  ").text, '"x"\n');
+});
+
+test("jsonFormat reports where the JSON is broken and changes nothing", () => {
+  for (const [bad, line, col] of [['{"a":1,}', 1, 8], ['{\n  "a": 1\n  "b": 2\n}', 3, 3], ["[1, 2", 1, 6], ["{'a':1}", 1, 2], ["[01]", 1, 3], ["", 1, 1], ["[1] 2", 1, 5], ['"a\nb"', 1, 3]]) {
+    const r = C.jsonFormat(bad, "  ");
+    assert.ok(r.error && !r.text, bad);
+    assert.equal(r.error.line, line, bad + " line");
+    assert.equal(r.error.col, col, bad + " col");
+  }
+  const deep = "[".repeat(600) + "]".repeat(600);
+  assert.ok(C.jsonFormat(deep, "  ").error, "depth limit");
+});
+
+test("sortLines is natural, stable and keeps the closing newline; uniqueLines and trimTrailing", () => {
+  assert.equal(C.sortLines("b10\nb2\na\nB2\n", false, "en"), "a\nB2\nb2\nb10\n"); // same letters: a fixed tie-break
+  assert.equal(C.sortLines("a\nc\nb", true, "en"), "c\nb\na");
+  assert.equal(C.sortLines("γ\nα\nβ\n", false, "el"), "α\nβ\nγ\n");
+  assert.equal(C.uniqueLines("x\ny\nx\n\n\nz\n"), "x\ny\n\nz\n");
+  assert.equal(C.trimTrailing("a  \nb\t\n  c \n"), "a\nb\n  c\n");
+  assert.equal(C.trimTrailing("none"), "none");
+});
+
+test("wave 3 wiring: tools, preview, compare and key row are reachable and labelled", () => {
+  const src = read("pad/app.js");
+  const html = read("pad/index.html");
+  for (const id of ["btn-preview", "preview", "cmp", "cmp-prev", "cmp-next", "cmp-close", "cmp-body", "keys"]) {
+    assert.ok(html.includes('id="' + id + '"'), id);
+  }
+  assert.match(html, /id="keys"[^>]*role="toolbar"/);
+  assert.match(html, /id="btn-preview"[^>]*aria-pressed/);
+  for (const fn of ["toolsMenu", "jsonTool", "togglePreview", "showCompare", "stepCompare", "closeCompare", "paintKeys", "pressKey"]) {
+    assert.ok(new RegExp("function " + fn + "\\b").test(src), fn);
+  }
+  // reused, already precached modules; nothing new from the network
+  assert.ok(src.includes('"../notes/md.js"') && src.includes('"../texttools/core.js"'));
+  const sw = read("sw.js");
+  assert.ok(sw.includes('"notes/md.js"') && sw.includes('"texttools/core.js"'));
+  // the key row never steals focus from the editor
+  assert.match(src, /pointerdown[^\n]*preventDefault|preventDefault[^\n]*pointerdown/);
 });

@@ -586,6 +586,39 @@
     en: {
       "cal.more": "More",
       "mm.subs": "Subscribe to a calendar…",
+      "mm.dav": "Server calendars (CalDAV)…",
+      "dav.title": "Server calendars (CalDAV)",
+      "dav.text": "Link a calendar on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…) to a label: its events then go both ways. Nothing is deleted on either side unless it was in sync before.",
+      "dav.noacct": "Connect your calendar server first, in Settings › Sync › Calendars and contacts. The password stays on this device.",
+      "dav.settings": "Open Settings",
+      "dav.none": "Your server has no calendar for events.",
+      "dav.noname": "Calendar",
+      "dav.ro.col": "read-only",
+      "dav.pick": "Link to…",
+      "dav.newlbl": "New label “{n}”",
+      "dav.link": "Link",
+      "dav.linked": "Linked to the label {l}",
+      "dav.preview.wait": "Checking the server…",
+      "dav.preview": "{down} to download, {up} to upload, {same} already here.",
+      "dav.preview.ro": "The calendar is read-only on the server, so nothing goes up.",
+      "dav.sync": "Sync now",
+      "dav.unlink": "Unlink",
+      "dav.unlinked": "Unlinked. The events stay in orOS.",
+      "dav.ok": "In sync, {t}",
+      "dav.never": "Not synced yet",
+      "dav.wait": "Syncing…",
+      "dav.other": "Linked on another of your devices. Connect this device in Settings › Sync to sync here too.",
+      "dav.conflicts": "{n} changed on both sides: the newer kept, the other as a copy marked (conflict).",
+      "dav.mark": " (conflict)",
+      "dav.held": "{n} deletions wait for you ({a} in orOS, {b} on the server).",
+      "dav.held.yes": "Delete them",
+      "dav.held.no": "Bring them back",
+      "dav.err.noacct": "No server account on this device: connect it in Settings › Sync.",
+      "dav.err.net": "Could not reach the server. orOS tries again later.",
+      "dav.err.auth": "The server refused the password: check it in Settings › Sync.",
+      "dav.err.ro": "The server does not allow changes to this calendar.",
+      "dav.err.other": "The server answered with an error ({e}). orOS tries again later.",
+      "ev.dav.ro": "This event comes from your server calendar and orOS cannot show all of it, so it is read-only here. Change it on the server.",
       "mm.free": "Share free times…",
       "mm.print": "Print…",
       "mm.names": "Event names in Month",
@@ -655,6 +688,39 @@
     el: {
       "cal.more": "Περισσότερα",
       "mm.subs": "Συνδρομή σε ημερολόγιο…",
+      "mm.dav": "Ημερολόγια server (CalDAV)…",
+      "dav.title": "Ημερολόγια server (CalDAV)",
+      "dav.text": "Σύνδεσε ένα ημερολόγιο του δικού σου server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…) με μια ετικέτα: τα συμβάντα του πηγαίνουν και προς τις δύο μεριές. Τίποτα δεν διαγράφεται σε καμία μεριά αν δεν ήταν συγχρονισμένο πριν.",
+      "dav.noacct": "Σύνδεσε πρώτα τον server ημερολογίου σου, στις Ρυθμίσεις › Συγχρονισμός › Ημερολόγια και επαφές. Ο κωδικός μένει σε αυτή τη συσκευή.",
+      "dav.settings": "Άνοιγμα Ρυθμίσεων",
+      "dav.none": "Ο server σου δεν έχει ημερολόγιο για συμβάντα.",
+      "dav.noname": "Ημερολόγιο",
+      "dav.ro.col": "μόνο ανάγνωση",
+      "dav.pick": "Σύνδεση με…",
+      "dav.newlbl": "Νέα ετικέτα «{n}»",
+      "dav.link": "Σύνδεση",
+      "dav.linked": "Συνδεδεμένο με την ετικέτα {l}",
+      "dav.preview.wait": "Έλεγχος του server…",
+      "dav.preview": "{down} για λήψη, {up} για αποστολή, {same} υπάρχουν ήδη εδώ.",
+      "dav.preview.ro": "Το ημερολόγιο είναι μόνο για ανάγνωση στον server, οπότε δεν στέλνεται τίποτα.",
+      "dav.sync": "Συγχρονισμός τώρα",
+      "dav.unlink": "Αποσύνδεση",
+      "dav.unlinked": "Αποσυνδέθηκε. Τα συμβάντα μένουν στο orOS.",
+      "dav.ok": "Συγχρονισμένο, {t}",
+      "dav.never": "Δεν έχει συγχρονιστεί ακόμα",
+      "dav.wait": "Συγχρονισμός…",
+      "dav.other": "Συνδέθηκε σε άλλη συσκευή σου. Σύνδεσε και αυτή τη συσκευή στις Ρυθμίσεις › Συγχρονισμός για να συγχρονίζεται κι εδώ.",
+      "dav.conflicts": "{n} άλλαξαν και στις δύο μεριές: κρατήθηκε το νεότερο, το άλλο ως αντίγραφο με την ένδειξη (σύγκρουση).",
+      "dav.mark": " (σύγκρουση)",
+      "dav.held": "{n} διαγραφές περιμένουν εσένα ({a} στο orOS, {b} στον server).",
+      "dav.held.yes": "Διάγραψέ τες",
+      "dav.held.no": "Φέρ' τες πίσω",
+      "dav.err.noacct": "Δεν υπάρχει λογαριασμός server σε αυτή τη συσκευή: σύνδεσέ τον στις Ρυθμίσεις › Συγχρονισμός.",
+      "dav.err.net": "Ο server δεν ήταν προσβάσιμος. Το orOS θα ξαναδοκιμάσει αργότερα.",
+      "dav.err.auth": "Ο server δεν δέχτηκε τον κωδικό: έλεγξέ τον στις Ρυθμίσεις › Συγχρονισμός.",
+      "dav.err.ro": "Ο server δεν επιτρέπει αλλαγές σε αυτό το ημερολόγιο.",
+      "dav.err.other": "Ο server απάντησε με σφάλμα ({e}). Το orOS θα ξαναδοκιμάσει αργότερα.",
+      "ev.dav.ro": "Αυτό το συμβάν έρχεται από το ημερολόγιο του server σου και το orOS δεν μπορεί να δείξει όλα του τα στοιχεία, οπότε εδώ είναι μόνο για ανάγνωση. Άλλαξέ το στον server.",
       "mm.free": "Κοινοποίηση ελεύθερων ωρών…",
       "mm.print": "Εκτύπωση…",
       "mm.names": "Ονόματα συμβάντων στον Μήνα",
@@ -911,7 +977,7 @@ function transientNote(title, body) {
   /* ---------- 2. State ---------- */
   var DATA_KEY = "oros-calendar-data";
   var RESCUE_KEY = "oros-calendar-data-broken";   // CA-12: αντίγραφο μη αναγνώσιμων δεδομένων
-  var state = { ver: 1, labels: [], events: [], deleted: [], subs: [] };
+  var state = { ver: 1, labels: [], events: [], deleted: [], subs: [], dav: [] };
 
   // Whitelist — the sync-sanitizer contract (deterministic).
   // Declared HERE (moved up from §3b in v0.3): sanitizeEvent runs
@@ -1124,6 +1190,22 @@ function transientNote(title, body) {
   function sanitizeSub(s) { return window.OrosCalSubs ? window.OrosCalSubs.sanitizeSub(s, VALID_COLORS, false) : null; }
   function mergeSanitizeSub(s) { return window.OrosCalSubs ? window.OrosCalSubs.sanitizeSub(s, VALID_COLORS, true) : null; }
 
+  // CalDAV wave 3: a label linked to a calendar on the person's own
+  // CalDAV server { id: label id, url: the server calendar, mtime }.
+  // An unlinked label keeps its row with url "" (newer wins in the
+  // merge, no tombstone). Travels in the blob so every device of the
+  // person links the same; the account and the sync state stay on
+  // each device (davkit.js, davsync.js).
+  function davUrlOk(u) { return typeof u === "string" && (u === "" || (/^https?:\/\/[^\s]+$/.test(u) && u.length <= 2000)); }
+  function sanitizeDav(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !x.id || x.id.length > 64 || !davUrlOk(x.url)) return null;
+    return { id: x.id, url: x.url, mtime: (typeof x.mtime === "number" && isFinite(x.mtime)) ? x.mtime : Date.now() };
+  }
+  function mergeSanitizeDav(x) {
+    if (!x || typeof x.mtime !== "number" || !isFinite(x.mtime)) return null;
+    return sanitizeDav(x);
+  }
+
   // Deterministic on every device (no Intl): a name, not a lookup.
   function validTzName(tz) {
     return typeof tz === "string" && /^[A-Za-z][A-Za-z0-9_+\-\/]{0,63}$/.test(tz);
@@ -1156,6 +1238,10 @@ function transientNote(title, body) {
       // Wave 8: subscribed calendars (absent in older blobs = none)
       if (d && Array.isArray(d.subs)) {
         state.subs = d.subs.map(sanitizeSub).filter(Boolean);
+      }
+      // CalDAV wave 3: linked server calendars (absent = none)
+      if (d && Array.isArray(d.dav)) {
+        state.dav = d.dav.map(sanitizeDav).filter(Boolean);
       }
       // Seed ΜΟΝΟ όταν λείπει το κλειδί "labels" (φρέσκια
       // εγκατάσταση / v0.1 blob). Άδειο-but-παρόν array = ο χρήστης
@@ -1209,6 +1295,7 @@ function transientNote(title, body) {
     hhTombMoved();
     if (writeStore()) markDirty();
     hhPush();
+    davKick();            // CalDAV wave 3: a linked label's edit goes out soon
   }
 
   // Shell sync bridge — canonical __orosSyncApi funnel (Part VII).
@@ -5042,6 +5129,7 @@ function transientNote(title, body) {
     });
   }
 
+  var dlgRo = false;
   function openDlg(existing, mode) {
     dlgMode = mode || null;
     if (mode !== "occ") pendingOverride = null;   // kept by openDlgOccurrence
@@ -5074,6 +5162,11 @@ function transientNote(title, body) {
 
     dlgLabelId = existing ? existing.labelId : null;
     renderDlgLabels();
+    // CalDAV wave 3: an event orOS cannot show exactly is read-only
+    // here (the server always wins); it is changed on the server.
+    dlgRo = !!(existing && (davRo[existing.id] || (mode === "occ" && pendingOverride && davRo[pendingOverride.masterId])));
+    if ($("ev-dav-ro")) $("ev-dav-ro").hidden = !dlgRo;
+    $("ev-save").hidden = dlgRo;
     // Occurrence mode keeps the delete button too — del-dlg-yes
     // routes occ-mode deletes to exdateMaster (the series lives on).
     $("ev-del-row").className = "dlg-row" +
@@ -5128,6 +5221,7 @@ function transientNote(title, body) {
   }
 
   $("ev-save").addEventListener("click", function () {
+    if (dlgRo) return;
     var title = $("ev-title").value.trim();
     if (!title) { fieldError("ev-title", "ev.err.title"); return; }
     var date = $("ev-date") ? $("ev-date").value : (selDate || "");
@@ -5406,6 +5500,7 @@ function transientNote(title, body) {
     var parts = String(payload).split("|");
     var ev = findEvent(parts[0]);
     if (!ev) return;
+    if (davRo[ev.id]) { transientNote(t("ev.dav.ro")); return; }   // CalDAV: read-only here
     var from = /^\d{4}-\d{2}-\d{2}$/.test(parts[1] || "") ? parts[1] : ev.date;
     var occ = /^\d{4}-\d{2}-\d{2}$/.test(parts[2] || "") ? parts[2] : ev.date;
     var delta = OCC.dayNum(targetYmd) - OCC.dayNum(from);
@@ -6343,7 +6438,8 @@ function transientNote(title, body) {
         labels: (Array.isArray(next.labels) ? next.labels : []).map(sanitizeLabel).filter(Boolean),
         events: next.events.map(sanitizeEvent).filter(function (e) { return e && !isHhEv(e); }).concat(hhEvs),
         deleted: (Array.isArray(next.deleted) ? next.deleted : []).map(sanitizeTomb).filter(Boolean),
-        subs: state.subs                // never from a file
+        subs: state.subs,               // never from a file
+        dav: state.dav                  // CalDAV links: neither
       };
       saveState();
       renderChips();
@@ -7437,10 +7533,447 @@ function transientNote(title, body) {
     $("mm-subs").hidden = !SUBS;
     $("mm-free").hidden = !FREE;
     $("mm-subs").addEventListener("click", function () { setMore(false); openSubsDlg(); });
+    if ($("mm-dav")) $("mm-dav").addEventListener("click", function () { setMore(false); openDavDlg(); });
     $("mm-free").addEventListener("click", function () { setMore(false); openFree(); });
     $("mm-send").hidden = !shareApi();
     $("mm-send").addEventListener("click", function () { setMore(false); openScal(); });
     $("mm-print").addEventListener("click", function () { setMore(false); doPrint(); });
+  }
+
+  /* ---------- 7f. CalDAV: a label linked to a calendar on the person's own server (wave 3) ----------
+     The account is in Settings › Sync (../davkit.js, this device
+     only); here a label is linked to one of its calendars (state.dav,
+     synced, so every device of the person links the same) and the
+     events go both ways through ../davsync.js with calendar/dav.js as
+     the mapper. The three scripts load on first use. The sync state
+     (ETags, the server's own text) is device-local in IndexedDB
+     "oros-dav", one record per link: { link: the link's mtime, st }.
+     A record of an older link generation is not used (a calendar
+     unlinked and linked again starts as a first link: nothing is
+     deleted on either side).
+     Runs while the Calendar is open: shortly after it opens, every 5
+     minutes, when it is shown again, when the network is back, a few
+     seconds after an edit, after an orOS sync and on "Sync now".
+     Downloaded events are ordinary events of the label, stamped now,
+     so the person's other orOS devices get them by normal sync. Events
+     orOS cannot show exactly are read-only here (davRo). */
+  var DAV_EVERY = 5 * 60000, DAV_KICK = 4000;
+  var davLibP = null, davStore = null, davBusy = false, davQueued = false, davApplying = false;
+  var davInfo = {};        // label id → { busy, at, err, stats, held, decision }
+  var davRo = {};          // event id → label id (read-only here, DAV-4)
+  var davKickT = null, davLastRun = 0;
+  var davPrev = null;      // the first-link preview waiting for "Link"
+
+  function davLib() {
+    if (window.OrosDav && window.OrosDavSync && window.OrosCalDav && davStore) return Promise.resolve(true);
+    if (davLibP) return davLibP;
+    var q = SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "";
+    function load(src, has) {
+      if (has()) return Promise.resolve(true);
+      return new Promise(function (res) {
+        var sc = document.createElement("script");
+        sc.src = src + q;
+        sc.onload = function () { res(true); };
+        sc.onerror = function () { res(false); };
+        document.head.appendChild(sc);
+      });
+    }
+    davLibP = load("../davkit.js", function () { return !!window.OrosDav; })
+      .then(function () { return load("../davsync.js", function () { return !!window.OrosDavSync; }); })
+      .then(function () { return load("dav.js", function () { return !!window.OrosCalDav; }); })
+      .then(function () {
+        var ok = !!(window.OrosDav && window.OrosDavSync && window.OrosCalDav);
+        if (!ok) { davLibP = null; return false; }
+        if (!davStore) {
+          try { davStore = window.indexedDB ? window.OrosDavSync.idbStore() : window.OrosDavSync.memStore(); }
+          catch (e) { davStore = window.OrosDavSync.memStore(); }
+        }
+        return true;
+      });
+    return davLibP;
+  }
+  function davOwnLabel(id) {
+    for (var i = 0; i < state.labels.length; i++) if (state.labels[i].id === id) return state.labels[i];
+    return null;
+  }
+  function davLinkOf(lid) {
+    for (var i = 0; i < state.dav.length; i++) if (state.dav[i].id === lid) return state.dav[i];
+    return null;
+  }
+  // The active links: an own label (never a household one) and an address.
+  function davLinks() {
+    return state.dav.filter(function (x) { return x.url && davOwnLabel(x.id) && !isHh(x.id); });
+  }
+  function davLinkByUrl(url) {
+    var l = davLinks();
+    for (var i = 0; i < l.length; i++) if (l[i].url === url) return l[i];
+    return null;
+  }
+  function davAccount() {
+    try { return window.OrosDav ? window.OrosDav.load() : null; } catch (e) { return null; }
+  }
+  function davColOf(acct, url) {
+    var cols = acct && acct.cols || [];
+    for (var i = 0; i < cols.length; i++) if (cols[i].url === url) return cols[i];
+    return null;
+  }
+  function davKey(url) { return "cal|" + url; }
+  function davLocal(lid) {
+    var linked = {};
+    davLinks().forEach(function (x) { linked[x.id] = 1; });
+    return {
+      items: state.events.filter(function (e) { return lid && e.labelId === lid && !isHhEv(e); })
+        .map(function (e) { return { id: e.id, item: e }; }),
+      // An own event that may be bound by its UID: not one of another link.
+      find: function (id) {
+        var e = findEvent(id);
+        if (!e || isHhEv(e)) return null;
+        if (e.labelId && e.labelId !== lid && linked[e.labelId]) return null;
+        return e;
+      }
+    };
+  }
+  // The engine's result → the Calendar's own data (stamped now).
+  function davApply(lid, r) {
+    if (!r.upsert.length && !r.remove.length) return;
+    var now = Date.now(), at = {}, back = {}, gone = {};
+    state.events.forEach(function (e, i) { at[e.id] = i; });
+    r.upsert.forEach(function (it) {
+      var ev = sanitizeEvent(Object.assign({}, it, { labelId: lid, mtime: now }));
+      if (!ev) return;
+      if (at[ev.id] != null) state.events[at[ev.id]] = ev;
+      else { at[ev.id] = state.events.length; state.events.push(ev); }
+      back[ev.id] = 1;
+    });
+    r.remove.forEach(function (id) { if (!back[id]) gone[id] = 1; });
+    state.events = state.events.filter(function (e) { return !gone[e.id] || isHhEv(e); });
+    state.deleted = state.deleted.filter(function (d) { return !back[d.id] && !gone[d.id]; });
+    Object.keys(gone).forEach(function (id) { state.deleted.push({ id: id, mtime: now }); });
+    davApplying = true;
+    try { saveState(); } finally { davApplying = false; }
+    renderAll();
+    renderDay();
+  }
+  function davRoFor(lid, st) {
+    Object.keys(davRo).forEach(function (id) { if (davRo[id] === lid) delete davRo[id]; });
+    if (!st || !st.items) return;
+    Object.keys(st.items).forEach(function (k) {
+      var b = st.items[k];
+      if (b.ro) davRo[b.id] = lid;
+      Object.keys(b.extra || {}).forEach(function (x) { davRo[x] = lid; });
+    });
+  }
+  function davRecord(x) {
+    return davStore.get(davKey(x.url)).then(function (rec) {
+      return rec && rec.link === x.mtime ? rec.st : null;
+    }, function () { return null; });
+  }
+  function davPassOne(x, acct) {
+    var DS = window.OrosDavSync, lid = x.id, key = davKey(x.url);
+    var info = davInfo[lid] || (davInfo[lid] = {});
+    var col = davColOf(acct, x.url);
+    var decision = info.decision || null;
+    info.decision = null;
+    info.busy = true;
+    renderDavList();
+    var cl = window.OrosDav.client(acct.conf, acct.pass);
+    var map = window.OrosCalDav.mapper(x.url, { mark: t("dav.mark") });
+    function still() { var y = davLinkOf(lid); return y && y.url === x.url && y.mtime === x.mtime; }
+    return davRecord(x).then(function (st) {
+      return DS.sync({ client: cl, url: x.url, readOnly: !!(col && col.readOnly), state: st, map: map, decision: decision },
+        function () { return davLocal(lid); },
+        function (r) { if (!still()) throw new Error("dav-unlinked"); davApply(lid, r); },
+        function (s) { return davStore.set(key, { link: x.mtime, st: s }); });
+    }).then(function (r) {
+      info.at = Date.now();
+      info.err = "";
+      info.stats = r.stats;
+      info.held = r.held;
+      davRoFor(lid, r.state);
+    }, function (e) {
+      info.err = (e && e.message) || "other";
+      if (info.err === "dav-unlinked") info.err = "";
+      else console.warn("[Calendar] CalDAV pass failed:", info.err);
+    }).then(function () {
+      info.busy = false;
+      renderDavList();
+    });
+  }
+  function davRun() {
+    if (davBusy) { davQueued = true; return Promise.resolve(); }
+    if (!davLinks().length) return Promise.resolve();
+    davBusy = true;
+    return davLib().then(function (ok) {
+      if (!ok) return;
+      var acct = davAccount(), links = davLinks();
+      if (!acct || (typeof navigator !== "undefined" && navigator.onLine === false)) {
+        links.forEach(function (x) { (davInfo[x.id] = davInfo[x.id] || {}).err = acct ? "offline" : "noacct"; });
+        return;
+      }
+      return links.reduce(function (p, x) {
+        return p.then(function () { return davPassOne(x, acct); });
+      }, Promise.resolve());
+    }).then(function () {
+      davBusy = false;
+      davLastRun = Date.now();
+      renderDavList();
+      if (davQueued) { davQueued = false; davKick(); }
+    }, function (e) {
+      davBusy = false;
+      console.warn("[Calendar] CalDAV:", e);
+    });
+  }
+  function davKick() {
+    if (davApplying || !davLinks().length) return;
+    clearTimeout(davKickT);
+    davKickT = setTimeout(davRun, DAV_KICK);
+  }
+  function davBoot() {
+    if (davLinks().length) {
+      davLib().then(function (ok) {
+        if (!ok) return;
+        davLinks().forEach(function (x) { davRecord(x).then(function (st) { davRoFor(x.id, st); }); });
+      });
+      setTimeout(davRun, 1500);
+    }
+    setInterval(function () {
+      if (document.visibilityState !== "hidden") davRun();
+    }, DAV_EVERY);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && Date.now() - davLastRun > 60000) davRun();
+    });
+    window.addEventListener("online", function () { davRun(); });
+  }
+
+  // ----- The "Server calendars" window -----
+  function davHex(c) {
+    var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(c || "");
+    return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : null;
+  }
+  // The palette colour nearest to the server's, a free one when it has none.
+  function davColor(c) {
+    var h = davHex(c);
+    if (!h) return nextFreeColor();
+    var best = LABEL_PALETTE[0], bd = Infinity;
+    LABEL_PALETTE.forEach(function (p) {
+      var q = davHex(p), d = Math.pow(q[0] - h[0], 2) + Math.pow(q[1] - h[1], 2) + Math.pow(q[2] - h[2], 2);
+      if (d < bd) { bd = d; best = p; }
+    });
+    return best;
+  }
+  function davErrText(e) {
+    if (e === "noacct") return t("dav.err.noacct");
+    if (e === "offline" || e === "cd-unreachable") return t("dav.err.net");
+    if (e === "cd-auth") return t("dav.err.auth");
+    if (e === "cd-readonly") return t("dav.err.ro");
+    return t("dav.err.other").replace("{e}", String(e).slice(0, 40));
+  }
+  function davStatus(x) {
+    var info = davInfo[x.id] || {};
+    if (info.busy) return t("dav.wait");
+    if (info.err) return davErrText(info.err);
+    if (!info.at) return t("dav.never");
+    var s = t("dav.ok").replace("{t}", fmtStamp(info.at));
+    if (info.stats && info.stats.conflicts) s += " · " + t("dav.conflicts").replace("{n}", String(info.stats.conflicts));
+    return s;
+  }
+  function davBtn(text, cls, fn) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn" + (cls ? " " + cls : "");
+    b.textContent = text;
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function renderDavList() {
+    var ul = $("dav-list"), dlg = $("dav-dlg");
+    if (!ul || !dlg || !dlg.open) return;
+    ul.textContent = "";
+    var acct = davAccount();
+    $("dav-noacct").hidden = !!acct;
+    $("dav-set-row").hidden = !!acct;
+    var cols = acct ? (acct.cols || []).filter(function (c) { return c.kind === "cal" && c.comps.indexOf("VEVENT") !== -1; }) : [];
+    var rows = cols.map(function (c) { return { col: c, link: davLinkByUrl(c.url) }; });
+    // Links whose calendar is not in this device's list (another
+    // device, or no account here): shown, so they can be unlinked.
+    davLinks().forEach(function (x) {
+      if (!cols.some(function (c) { return c.url === x.url; })) rows.push({ col: null, link: x });
+    });
+    if (!rows.length) {
+      if (acct) {
+        var li0 = document.createElement("li");
+        li0.className = "empty";
+        li0.textContent = t("dav.none");
+        ul.appendChild(li0);
+      }
+      return;
+    }
+    rows.forEach(function (row) {
+      var c = row.col, x = row.link, lb = x ? davOwnLabel(x.id) : null;
+      var li = document.createElement("li");
+      li.className = "sub-row dav-row";
+      var dot = document.createElement("span");
+      dot.className = "sub-dot";
+      dot.style.background = lb ? lb.color : davColor(c && c.color);
+      dot.setAttribute("aria-hidden", "true");
+      var main = document.createElement("div");
+      main.className = "sub-main";
+      var nm = document.createElement("div");
+      nm.className = "dav-name";
+      nm.textContent = (c && c.name) || (lb && lblName(lb)) || t("dav.noname");
+      if (c && c.readOnly) {
+        var ro = document.createElement("span");
+        ro.className = "dav-ro";
+        ro.textContent = t("dav.ro.col");
+        nm.appendChild(document.createTextNode(" "));
+        nm.appendChild(ro);
+      }
+      var url = document.createElement("div");
+      url.className = "sub-url";
+      url.textContent = (c && c.url) || x.url;
+      main.appendChild(nm);
+      main.appendChild(url);
+      var acts = document.createElement("div");
+      acts.className = "sub-acts";
+      if (x) {
+        var info = davInfo[x.id] || {};
+        var lk = document.createElement("div");
+        lk.className = "sub-stat";
+        lk.textContent = t("dav.linked").replace("{l}", lb ? lblName(lb) : "");
+        main.appendChild(lk);
+        var st = document.createElement("div");
+        st.className = "sub-stat" + (info.err ? " err" : "");
+        st.setAttribute("aria-live", "polite");
+        st.textContent = c ? davStatus(x) : t("dav.other");
+        main.appendChild(st);
+        if (info.held && !info.busy) {
+          var h = document.createElement("div");
+          h.className = "sub-stat err";
+          h.textContent = t("dav.held").replace("{n}", String(info.held.local + info.held.server))
+            .replace("{a}", String(info.held.local)).replace("{b}", String(info.held.server));
+          main.appendChild(h);
+          acts.appendChild(davBtn(t("dav.held.yes"), "danger", function () { info.decision = "allow"; info.held = null; davRun(); }));
+          acts.appendChild(davBtn(t("dav.held.no"), "", function () { info.decision = "restore"; info.held = null; davRun(); }));
+        }
+        if (c && acct) {
+          var sn = davBtn(t("dav.sync"), "", function () { davRun(); });
+          sn.disabled = !!info.busy || davBusy;
+          acts.appendChild(sn);
+        }
+        acts.appendChild(davBtn(t("dav.unlink"), "danger", function () { davUnlink(x); }));
+      } else {
+        var sel = document.createElement("select");
+        sel.className = "dav-pick";
+        sel.setAttribute("aria-label", t("dav.pick") + ": " + (c.name || t("dav.noname")));
+        var o0 = document.createElement("option");
+        o0.value = "";
+        o0.textContent = t("dav.pick");
+        sel.appendChild(o0);
+        var on = document.createElement("option");
+        on.value = "\u0000new";
+        on.textContent = t("dav.newlbl").replace("{n}", (c.name || t("dav.noname")).slice(0, 40));
+        sel.appendChild(on);
+        state.labels.forEach(function (l) {
+          if (isHh(l.id) || davLinks().some(function (y) { return y.id === l.id; })) return;
+          var op = document.createElement("option");
+          op.value = l.id;
+          op.textContent = lblName(l);
+          sel.appendChild(op);
+        });
+        var go = davBtn(t("dav.link"), "prim", function () {
+          if (!sel.value) { sel.focus(); return; }
+          davPreview(c, sel.value === "\u0000new" ? null : sel.value);
+        });
+        acts.appendChild(sel);
+        acts.appendChild(go);
+      }
+      li.appendChild(dot);
+      li.appendChild(main);
+      li.appendChild(acts);
+      ul.appendChild(li);
+    });
+  }
+  function davPrevShow(text, canGo) {
+    $("dav-prev").hidden = false;
+    $("dav-prev-text").textContent = text;
+    $("dav-prev-go").disabled = !canGo;
+  }
+  // First link: what would happen, before anything is written.
+  function davPreview(col, lid) {
+    var acct = davAccount();
+    if (!acct || davBusy) return;
+    var mine = davPrev = { col: col, lid: lid, ok: false };
+    davPrevShow(t("dav.preview.wait"), false);
+    var map = window.OrosCalDav.mapper(col.url, { mark: t("dav.mark") });
+    window.OrosDavSync.run({ client: window.OrosDav.client(acct.conf, acct.pass), url: col.url, readOnly: !!col.readOnly,
+                             state: null, local: davLocal(lid), map: map, dry: true })
+      .then(function (r) {
+        if (davPrev !== mine) return;
+        mine.ok = true;
+        var s = r.stats;
+        var text = t("dav.preview").replace("{down}", String(s.down)).replace("{up}", String(col.readOnly ? 0 : s.up))
+          .replace("{same}", String(s.same));
+        if (col.readOnly) text += " " + t("dav.preview.ro");
+        if (s.conflicts) text += " " + t("dav.conflicts").replace("{n}", String(s.conflicts));
+        davPrevShow(text, true);
+      }, function (e) {
+        if (davPrev !== mine) return;
+        davPrevShow(davErrText((e && e.message) || "other"), false);
+      });
+  }
+  function davPrevClose() {
+    davPrev = null;
+    $("dav-prev").hidden = true;
+  }
+  function davLinkNow() {
+    var p = davPrev;
+    if (!p || !p.ok) return;
+    davPrevClose();
+    var lid = p.lid, now = Date.now();
+    if (!lid) {
+      var l = { id: uid(), name: String(p.col.name || t("dav.noname")).replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 40) || t("dav.noname"),
+                color: davColor(p.col.color), mtime: now };
+      state.labels.push(l);
+      lid = l.id;
+    }
+    state.dav = state.dav.filter(function (y) { return y.id !== lid; });
+    state.dav.push({ id: lid, url: p.col.url, mtime: now });
+    saveState();
+    renderChips();
+    renderDavList();
+    davRun();
+  }
+  function davUnlink(x) {
+    var y = davLinkOf(x.id);
+    if (!y) return;
+    y.url = "";
+    y.mtime = Date.now();
+    delete davInfo[x.id];
+    davRoFor(x.id, null);
+    if (davStore) davStore.del(davKey(x.url)).catch(function () {});
+    saveState();
+    renderDavList();
+    transientNote(t("dav.unlinked"));
+  }
+  function openDavDlg() {
+    davPrevClose();
+    $("dav-dlg").showModal();
+    davLib().then(function (ok) {
+      if (!ok) { $("dav-noacct").hidden = false; return; }
+      renderDavList();
+    });
+  }
+  if ($("dav-dlg")) {
+    $("dav-done").addEventListener("click", function () { $("dav-dlg").close(); });
+    $("dav-prev-go").addEventListener("click", davLinkNow);
+    $("dav-prev-no").addEventListener("click", davPrevClose);
+    $("dav-dlg").addEventListener("close", davPrevClose);
+    $("dav-settings").addEventListener("click", function () {
+      var p = shellOpenAt();
+      if (!p) return;
+      $("dav-dlg").close();
+      p.__orosOpenAt("settings", { section: "sync" });
+    });
   }
 
   /* ---------- 8. Boot ---------- */
@@ -7457,6 +7990,7 @@ function transientNote(title, body) {
   loadFeedVis();
   loadDays();
   subsBoot();          // wave 8: subscribed calendars (cache, then re-read)
+  davBoot();           // CalDAV wave 3: labels linked to the person's own server
   renderChips();
   setView("month");
   selectDay(todayYMD());
@@ -7734,6 +8268,14 @@ function transientNote(title, body) {
         subById[x.id] = x;
       }
     }
+    var davById = {};
+    function takeDav(x) {
+      var cur = davById[x.id];
+      if (!cur || x.mtime > cur.mtime ||
+          (x.mtime === cur.mtime && JSON.stringify(x) < JSON.stringify(cur))) {
+        davById[x.id] = x;
+      }
+    }
     var lblById = {};
     function takeLbl(l) {
       var cur = lblById[l.id];
@@ -7753,6 +8295,8 @@ function transientNote(title, body) {
         .map(mergeSanitizeEv).filter(Boolean).forEach(takeEv);
       (Array.isArray(side.subs) ? side.subs : [])
         .map(mergeSanitizeSub).filter(Boolean).forEach(takeSub);
+      (Array.isArray(side.dav) ? side.dav : [])
+        .map(mergeSanitizeDav).filter(Boolean).forEach(takeDav);
     });
 
     var events = [], deleted = [], labels = [];
@@ -7790,6 +8334,10 @@ function transientNote(title, body) {
     // Left out when there are none: blobs without subscriptions keep
     // their exact bytes (no upload just for upgrading).
     if (subs.length) out.subs = subs;
+    // CalDAV links: newer wins per label, no tombstones; also left
+    // out when there are none (byte stability).
+    var dav = Object.keys(davById).sort().map(function (id) { return davById[id]; });
+    if (dav.length) out.dav = dav;
     return out;
   }
 
@@ -7837,13 +8385,15 @@ function transientNote(title, body) {
     // BR-HH: the shared calendars are not in the person's copy; they stay.
     var hhEvs = state.events.filter(isHhEv);
     state = { ver: 1, labels: lbls, events: evs.filter(function (e) { return !isHhEv(e); }).concat(hhEvs), deleted: dels,
-              subs: Array.isArray(data.subs) ? data.subs.map(sanitizeSub).filter(Boolean) : [] };
+              subs: Array.isArray(data.subs) ? data.subs.map(sanitizeSub).filter(Boolean) : [],
+              dav: Array.isArray(data.dav) ? data.dav.map(sanitizeDav).filter(Boolean) : [] };
     // CA-10: Undo data survives a pull (R28) — undoDelete/undoMove/
     // undoExdate all work by id on the live state.
     reseedSeedNames();
     refreshOpenDlg();
     writeStore();         // no markDirty: this IS the sync result
     subsAfterChange();    // wave 8: a new / moved subscription is read now
+    davKick();            // CalDAV wave 3: what another device changed goes out too
     // INVALIDATE ALL FEED CACHES — sync may have just pulled fresh
     // data for Contacts/Cycle/Mood/Habits/Kanban; the 1s micro-cache
     // would otherwise serve stale reads on the immediate renderAll()

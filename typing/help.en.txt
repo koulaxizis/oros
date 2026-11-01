@@ -36,6 +36,22 @@ Learn to type with all ten fingers without looking at the keys. Short lessons br
 - Characters your keyboard cannot type are left out, and curly quotes and long dashes become the plain ones. Long texts are typed in parts.
 - `Write in Typewriter` opens [Typewriter](app:typewriter) to write freely, without hints.
 
+## Letter rain
+- `Letter rain` (on the first screen) is a game: letters fall from the top, and typing one takes it away before it reaches the bottom.
+- A letter that reaches the bottom costs one of your three lives. Every 10 letters is a new level, where they fall faster.
+- Only the letters of the lessons you have finished take part (the home row before your first lesson).
+- The game pauses when you click outside it. Its minutes count towards your daily goal, and your best score is kept on this device.
+
+## For children
+- On the first open, and in the settings under `Who is practising?`, choose `A child` for a child.
+- The lessons are then shorter, with simple words (animals, colours, food), bigger letters and rounder keys.
+- Stars count only accuracy: one for 85% right, two for 92%, three for 97%. Speed and time are hidden, and a counter shows how many letters in a row were right.
+- The speed test is hidden. Letter rain is a little slower.
+
+## Certificates and the pet
+- After the final text with at least one star, or after a speed test, `Make a certificate` opens [Certificates](app:certificates) with a new set already named (for a child, the children's kind). Nothing is made until you press `Create` there.
+- When the desktop pet is on, it cheers a good result.
+
 ## Today, Habits and the reminder
 - While you have practised in the last week and today's goal is not reached, [Today](app:today) shows a row with today's minutes.
 - [Habits](app:habits) shows a "Typing practice" row with your minutes each day; a day is done when you reach your daily goal.

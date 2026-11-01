@@ -36,6 +36,22 @@ Lerne, mit allen zehn Fingern zu tippen, ohne auf die Tasten zu schauen. Kurze L
 - Zeichen, die deine Tastatur nicht tippen kann, werden ausgelassen, typografische Anführungszeichen und lange Striche werden zu den einfachen. Lange Texte tippst du in Teilen.
 - `In der Schreibmaschine schreiben` öffnet die [Schreibmaschine](app:typewriter), um frei und ohne Hilfen zu schreiben.
 
+## Buchstabenregen
+- `Buchstabenregen` (auf dem ersten Bildschirm) ist ein Spiel: Buchstaben fallen von oben, und wenn du einen tippst, verschwindet er, bevor er unten ankommt.
+- Ein Buchstabe, der unten ankommt, kostet eines deiner drei Leben. Alle 10 Buchstaben beginnt eine neue Stufe, in der sie schneller fallen.
+- Es kommen nur die Buchstaben der Lektionen vor, die du abgeschlossen hast (vor der ersten Lektion die Grundreihe).
+- Das Spiel pausiert, wenn du daneben klickst. Seine Minuten zählen zum Tagesziel, und dein Bestwert bleibt auf diesem Gerät.
+
+## Für Kinder
+- Beim ersten Öffnen und in den Einstellungen unter `Wer übt?` wählst du `Ein Kind` für ein Kind.
+- Die Lektionen sind dann kürzer, mit einfachen Wörtern (Tiere, Farben, Essen), größeren Buchstaben und runderen Tasten.
+- Sterne zählen nur die Genauigkeit: einer für 85 % richtig, zwei für 92 %, drei für 97 %. Tempo und Zeit sind ausgeblendet, und ein Zähler zeigt, wie viele Buchstaben in Folge richtig waren.
+- Der Tempotest ist ausgeblendet. Der Buchstabenregen fällt etwas langsamer.
+
+## Urkunden und das Haustier
+- Nach dem Schlusstext mit mindestens einem Stern oder nach einem Tempotest öffnet `Urkunde erstellen` die [Urkunden](app:certificates) mit einem neuen, schon benannten Satz (für ein Kind die Kinder-Art). Erst wenn du dort `Erstellen` drückst, wird etwas angelegt.
+- Wenn das Desktop-Haustier an ist, freut es sich über ein gutes Ergebnis.
+
 ## Heute, Gewohnheiten und die Erinnerung
 - Solange du in der letzten Woche geübt hast und das heutige Ziel nicht erreicht ist, zeigt [Heute](app:today) eine Zeile mit den heutigen Minuten.
 - [Gewohnheiten](app:habits) zeigt eine Zeile „Tippübung“ mit deinen Minuten pro Tag. Ein Tag zählt, wenn du dein Tagesziel erreichst.

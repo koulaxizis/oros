@@ -149,23 +149,34 @@
   }
 
   var TARGET = 220;   // about this many characters per lesson
+  var KID_TARGET = 110;   // kids mode (wave 3): shorter lessons
   // Signs typed around a word: openers wrap it, the rest follow it.
   var WRAP = { "(": ")", "[": "]", "{": "}", "<": ">", "\"": "\"", "'": "'", "«": "»" };
   var CLOSERS = { ")": 1, "]": 1, "}": 1, ">": 1, "»": 1 };
   function wrap(sign, word, ok) {
     if (!WRAP[sign]) return word + sign;
     return ok[WRAP[sign]] ? sign + word + WRAP[sign] : sign + word;
-  }   // about this many characters per lesson
+  }
+
+  // Kids mode: the simple words first (animals, colours, food), then
+  // short common words, so a lesson is never empty.
+  function kidWords(lay, ok) {
+    var kw = uniq((W.KIDS && W.KIDS[lay] || []).map(function (w) { return w.normalize("NFC"); })).filter(function (w) { return fits(w, ok); });
+    var short = wordsFor(lay, ok).filter(function (w) { return Array.from(w).length <= 5 && kw.indexOf(w) < 0; });
+    return kw.concat(short);
+  }
 
   // The text of a lesson: a string of words separated by single spaces.
-  function build(lay, id, seed) {
+  // opt.kid (wave 3): about half as long, kids' words, no sentences.
+  function build(lay, id, seed, opt) {
     var idx = indexOf(id);
     if (idx < 0) return "";
+    var kid = !!(opt && opt.kid), target = kid ? KID_TARGET : TARGET;
     var Ls = LESSONS[idx], r = rng(seed || 1), ok = allowed(lay, idx);
     var nw = fresh(lay, idx), parts = [];
     var letters = Object.keys(ok).filter(function (c) { return /\p{Ll}/u.test(c); });
     var newLetters = nw.filter(function (c) { return /\p{L}/u.test(c); });
-    var words = wordsFor(lay, ok);
+    var words = kid ? kidWords(lay, ok) : wordsFor(lay, ok);
     var withNew = words.filter(function (w) {
       return nw.some(function (c) { return w.indexOf(c) !== -1; });
     });
@@ -183,7 +194,7 @@
       var marks = nw.filter(function (c) { return !/\p{L}/u.test(c); });
       var digits = marks.filter(function (c) { return /\d/.test(c); });
       var signs = marks.filter(function (c) { return !/\d/.test(c) && !CLOSERS[c]; });
-      for (var d = 0; d < 16 && base.length; d++) {
+      for (var d = 0; d < (kid ? 8 : 16) && base.length; d++) {
         var w0 = base[d % base.length];
         if (digits.length && (d % 2 === 0 || !signs.length)) parts.push(drill(r, digits, 1)[0]);
         else if (signs.length) parts.push(wrap(pick(r, signs), w0, ok));
@@ -195,12 +206,18 @@
     //    is new), then new with old
     if (newLetters.length && !Ls.shift) {
       var dl = newLetters.length > 1 ? newLetters : newLetters.concat(letters.filter(function (c) { return newLetters.indexOf(c) < 0; }).slice(0, 2));
-      parts = parts.concat(drill(r, dl, 6));
+      parts = parts.concat(drill(r, dl, kid ? 4 : 6));
       var mixed = letters.length > newLetters.length ? letters : newLetters;
-      parts = parts.concat(drill(r, mixed.concat(newLetters), 6));
+      parts = parts.concat(drill(r, mixed.concat(newLetters), kid ? 3 : 6));
     }
     // 2. words (half of them with a new letter when there are)
+    // kids: their own words keep their order of preference (shuffled within)
     var pool = withNew.length >= 4 ? shuffle(r, withNew).concat(shuffle(r, words)) : shuffle(r, words);
+    if (kid && withNew.length < 4) {
+      var kw = W.KIDS && W.KIDS[lay] ? W.KIDS[lay].map(function (w) { return w.normalize("NFC"); }) : [];
+      pool = shuffle(r, words.filter(function (w) { return kw.indexOf(w) >= 0; }))
+        .concat(shuffle(r, words.filter(function (w) { return kw.indexOf(w) < 0; })));
+    }
     if (pool.length < 15) {
       // few real words yet: made-up words from the learned letters too
       var src = letters.length ? letters : newLetters;
@@ -210,14 +227,14 @@
     var tail = Ls.shift ? [] : nw.filter(function (c) { return !/\p{L}/u.test(c) && newLetters.length; });
     var len = function () { return parts.join(" ").length; };
     var k = 0;
-    while (len() < TARGET && k < 400 && pool.length) {
+    while (len() < target && k < 400 && pool.length) {
       var w = pool[k % pool.length];
       if (tail.length && k % 3 === 2) w = wrap(pick(r, tail), w, ok);
       parts.push(w);
       k++;
     }
     // 3. a sentence that fits
-    if (Ls.s) {
+    if (Ls.s && !kid) {
       var sents = (W.SENTENCES[lay] || []).map(function (s) { return s.normalize("NFC"); }).filter(function (s) { return fits(s, ok); });
       if (sents.length) {
         var n = Ls.fin ? 4 : 1;
@@ -292,7 +309,7 @@
 
   var API = {
     GROUPS: GROUPS, lessons: lessons, lesson: lesson, indexOf: indexOf,
-    allowed: allowed, fresh: fresh, label: label, build: build, testText: testText, rng: rng,
+    allowed: allowed, fresh: fresh, label: label, build: build, testText: testText, rng: rng, KID_TARGET: KID_TARGET,
     weak: weak, practice: practice
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

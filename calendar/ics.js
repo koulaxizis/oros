@@ -408,6 +408,9 @@
     // 2000-01-01 fallback mtime as a stable STAMP source
     L.push("DTSTAMP:" + icsUtc(e.mtime || 946684800000));
     var tz = e.start && e.tz && OCC.tzValid(e.tz) ? e.tz : "";
+    // opts.zone (CalDAV, calendar/dav.js): a timed event without its
+    // own zone is written in this device's zone instead of floating.
+    if (!tz && e.start && opts.zone && OCC.tzValid(opts.zone)) tz = opts.zone;
     var tzp = tz ? ";TZID=" + tz : "";
     if (!e.start) {
       // all-day: DTEND is exclusive in RFC 5545 → +1 day
@@ -460,8 +463,13 @@
     return L.join("\r\n");
   }
 
+  // CalDAV (calendar/dav.js): one event's VEVENT lines, and the
+  // readers it patches the server's own text with.
+  function lines(e, opts) { return eventLines(e, opts || {}); }
+
   var api = { parse: parse, parseDt: parseDt, durMin: durMin, hashId: hashId, MAX_EVENTS: MAX_EVENTS,
-              build: build, esc: icsEsc };
+              build: build, esc: icsEsc, lines: lines, unfold: unfold, prop: prop, unesc: unesc,
+              alarmMinutes: alarmMinutes };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosIcs = api;
 })(typeof window !== "undefined" ? window : null);

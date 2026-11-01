@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 37756 of 37882 (99%)
+- Strings: 37884 of 38010 (99%)
 - Help pages: 152 of 152 (100%)
 - Shown in the language list: yes
 
@@ -23,7 +23,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 53 / 53 |
 | budget | 100% | 556 / 556 |
 | calculator | 100% | 166 / 166 |
-| calendar | 98% | 397 / 405 |
+| calendar | 98% | 430 / 438 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | certificates | 100% | 391 / 391 |
@@ -93,7 +93,7 @@ text is still written in the code. They switch over wave by wave
 | nonogram | 100% | 70 / 70 |
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
-| pad | 100% | 140 / 140 |
+| pad | 100% | 180 / 180 |
 | passwords | 100% | 323 / 323 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
@@ -131,7 +131,7 @@ text is still written in the code. They switch over wave by wave
 | solo | English for now | 89 / 89 |
 | split | 100% | 356 / 356 |
 | spot | 100% | 54 / 54 |
-| spreadsheet | 81% | 378 / 464 |
+| spreadsheet | 82% | 405 / 491 |
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 694 / 694 |
 | storage | 100% | 179 / 179 |
@@ -150,7 +150,7 @@ text is still written in the code. They switch over wave by wave
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |
-| typing | 94% | 140 / 148 |
+| typing | 95% | 168 / 176 |
 | units | 100% | 214 / 214 |
 | wallpaper | 100% | 71 / 71 |
 | water | 100% | 94 / 94 |
