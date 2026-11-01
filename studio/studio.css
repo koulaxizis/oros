@@ -309,7 +309,9 @@ input[type="range"] { accent-color: var(--accent); }
   touch-action: pan-y pan-x;
 }
 .row.track.sel .lane { background-color: rgba(127, 127, 127, 0.05); }
-.empty { padding: 24px calc(var(--head-w) + 16px); }
+/* The sheet is as wide as the timeline: the hint stays at the left edge of
+   the view and wraps within the screen (360px: it was cut off). */
+.empty { position: sticky; left: 0; box-sizing: border-box; max-width: 100vw; padding: 24px 16px 24px calc(var(--head-w) + 16px); }
 #playhead {
   position: absolute;
   top: 0;

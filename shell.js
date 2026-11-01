@@ -6944,7 +6944,7 @@
         { name: "Health Connect client 1.1.0 + Kotlin", url: "https://developer.android.com/jetpack/androidx/releases/health-connect",
           by: "The Android Open Source Project; JetBrains & Kotlin contributors", lic: "Apache-2.0",
           k: "cr.health-connect" },
-        { name: "jsPDF 2.5.2", url: "https://github.com/parallax/jsPDF",
+        { name: "jsPDF 4.2.1", url: "https://github.com/parallax/jsPDF",
           by: "James Hall, yWorks & contributors", lic: "MIT",
           k: "cr.jspdf" },
         { name: "SheetJS Community Edition 0.20.3", url: "https://sheetjs.com/",

@@ -226,7 +226,7 @@ orosPack("de", "shell", {
  "cr.jamendo": "Songs, Alben, Stimmungen und Radios (Musik)",
  "cr.jellyfin": "Deine Jellyfin-Musikbibliothek (Musik)",
  "cr.jina-reader": "Liest eine gefundene Webseite als Text (Assistent)",
- "cr.jspdf": "PDF-Export (Stimmung, Zyklus, Angebot, Texteditor, Netizen-ID, Tabelle, Budget)",
+ "cr.jspdf": "PDF-Export (Stimmung, Zyklus, Angebot, Texteditor, Netizen-ID, Tabelle, Budget, Rechnungen, Urkunden, Kosten teilen, Whiteboard, Wiki, Ein-Satz-Tagebuch, QR-Generator, Mockups, Seitenlayout, Atelier, Folien)",
  "cr.jsqr": "QR-Codes von der Kamera oder einem Bild lesen (QR, Passwörter)",
  "cr.leaflet": "Karten",
  "cr.libarchive-js": ".cbr-/RAR-Comics öffnen (Bibliothek)",
