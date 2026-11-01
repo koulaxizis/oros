@@ -669,6 +669,13 @@ dialog #pr-grid-sel { width: auto; }
 .rm-ask { border: 2px solid var(--accent, #c33); border-radius: 10px; padding: 10px 12px; margin: 12px 0 4px; }
 .rm-ask p { margin: 0 0 8px; font-weight: 700; }
 .rj-code { font: 700 24px ui-monospace, "Cascadia Mono", Menlo, monospace; letter-spacing: 0.15em; width: 9ch; padding: 6px 10px; flex: 1 1 auto; }
+.rj-scan { margin-top: 8px; width: 100%; min-height: 44px; }
+.rj-cam { display: block; width: 100%; max-height: 50vh; margin-top: 8px; border-radius: 10px; background: #000; object-fit: cover; }
+.rj-cam[hidden] { display: none; }
+/* Remote for orOS Studio (studio/remote/): the join screen and the console only */
+body.remote-app > :not(#remote-ui):not(dialog):not(#toast):not(#live) { display: none !important; }
+body.remote-app #join-dlg { width: min(420px, calc(100vw - 32px)); }
+body.remote-app #join-dlg::backdrop { background: var(--bg, #14120d); }
 
 body.remote-on > :not(#remote-ui):not(dialog):not(#toast):not(#live) { display: none !important; }
 #remote-ui { display: none; }
@@ -693,6 +700,14 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
 .ru-sname { font-size: 13px; font-weight: 700; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ru-fxo { font-size: 12px; font-weight: 700; min-height: 32px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--accent); color: var(--accent); background: var(--accent-soft); cursor: pointer; }
 .ru-fxo:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* pads / keys for a track's NULL instrument (remote) */
+.rup-pads { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; user-select: none; touch-action: none; }
+.rup-pads.keys { display: block; position: relative; height: min(42vh, 220px); }
+.rup-pad { min-height: 64px; aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-bg); color: var(--text); min-width: 0; font-size: 12px; font-weight: 700; line-height: 1.2; text-align: left; overflow-wrap: anywhere; padding: 6px; display: flex; align-items: flex-end; justify-content: flex-start; cursor: pointer; touch-action: none; }
+.rup-pad.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.rup-pad:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#rup-oct { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; }
+#rup-oct[hidden] { display: none; }
 .ru-fx { display: flex; flex-direction: column; gap: 4px; max-height: 96px; overflow-y: auto; }
 .ru-fxb { font-size: 11px; padding: 4px 6px; min-height: 32px; border-radius: 6px; border: 1px solid var(--border); background: transparent;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: line-through; color: var(--text-dim); }
@@ -773,6 +788,24 @@ body.remote-on #remote-ui { display: flex; flex-direction: column; flex: 1 1 aut
 [hidden] { display: none !important; }
 /* the tablet / phone Effects window: on a phone the name needs the room */
 @media (max-width: 420px) { #ruf-list .fx-cat { display: none; } }
+/* Tablets on their side: bigger strips and faders, the transport on one row */
+@media (min-width: 900px) and (orientation: landscape) and (pointer: coarse) {
+  .ru-strip { flex-basis: 128px; }
+  .ru-fader { width: 52px; }
+  .ru-knob { height: 34px; }
+  .ru-b { height: 44px; font-size: 15px; }
+  .ru-tp { flex-wrap: nowrap; }
+  .ru-tp .tbtn { width: 60px; height: 52px; }
+}
+/* Phones on their side: little height, so the console keeps the faders */
+@media (max-height: 480px) and (orientation: landscape) {
+  body.remote-on #remote-ui { padding-top: 4px; gap: 4px; }
+  .ru-tp { flex-wrap: nowrap; overflow-x: auto; }
+  .ru-tp .tbtn { height: 38px; }
+  .ru-pos { height: 24px; }
+  .ru-strips { min-height: 160px; }
+  .ru-body { min-height: 90px; }
+}
 /* instrument tracks, piano roll and loops on a phone */
 @media (max-width: 760px) {
   #loops { order: 2; }

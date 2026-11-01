@@ -22,6 +22,13 @@
      3. Host (PC): pairing dialog, commands, state and meters
      4. Remote (tablet / phone): join dialog and the console
      5. Remote: the Effects window of a track (phase 2)
+     6. Remote for orOS Studio (STUDIO-RA): the remote on its own
+        (studio/remote/, the Android app), QR scan, screen kept on,
+        haptics, rejoin without a new Allow
+
+   Remote mode: studio/index.html?remote (framed by studio/remote/)
+   boots only the join screen and the console (studio.js bootRemote):
+   no project, no sync, nothing stored but the last code (RA_KEY).
    ============================================================ */
 (function () {
   "use strict";
@@ -109,7 +116,11 @@
     var sendQ = Promise.resolve();
     // Who is on the other end: the remote picks a random id per pairing;
     // the host lets in only the id it was told to allow (o.admit).
-    var rid = self.role === "remote" ? hex(crypto.getRandomValues(new Uint8Array(16))) : "";
+    // A remote that was allowed before brings the same id back (o.rid),
+    // so the PC lets it in again without asking (STUDIO-RA rejoin).
+    var rid = self.role !== "remote" ? "" : typeof o.rid === "string" && /^[0-9a-f]{32}$/.test(o.rid) ? o.rid
+      : hex(crypto.getRandomValues(new Uint8Array(16)));
+    this.rid = rid;
     var okRid = "", asking = "";
 
     function setState(s) {
@@ -314,6 +325,13 @@
       setState("closed");
     };
     this.direct = function () { return !!(dc && dc.readyState === "open"); };
+    // Back from the background (a phone app): try the room at once
+    // instead of waiting for the next retry.
+    this.kick = function () {
+      if (closed || !keys) return;
+      if (!ws) { retry = 0; openWs(); }
+      else if (ws.readyState === 1) frame({ k: "ping" });
+    };
     this.peer = function () { return peer; };
 
     derive(o.code).then(function (k) {
@@ -354,7 +372,7 @@
     }
 
     // ---------- 3. Host (PC) ----------
-    var H = { link: null, code: "", dev: "", stTimer: 0, mTimer: 0, lastSt: "" };
+    var H = { link: null, code: "", dev: "", stTimer: 0, mTimer: 0, lastSt: "", held: {} };
 
     function hostStart() {
       hostStop(true);
@@ -362,13 +380,13 @@
       host.wakeAudio();                       // the click is the gesture the audio needs later
       H.link = new Link({
         role: "host", code: H.code, relay: relayUrl(), dev: deviceName(),
-        onState: function (s) { renderHost(); if (s === "direct" || s === "relay") pushState(true); syncMeters(); syncPeek(); },
+        onState: function (s) { if (s !== "direct" && s !== "relay") releaseNotes(); renderHost(); if (s === "direct" || s === "relay") pushState(true); syncMeters(); syncPeek(); },
         onPeer: function (dev) {
           H.dev = dev;
           host.showToast(t("rm.joined", { dev: t("rm.dev." + (dev === "phone" || dev === "tablet" ? dev : "computer")) }));
           pushState(true);
         },
-        onGone: function () { HF.key = ""; HF.watch = []; renderHost(); syncMeters(); syncPeek(); },
+        onGone: function () { releaseNotes(); HF.key = ""; HF.watch = []; renderHost(); syncMeters(); syncPeek(); },
         admit: askAllow,
         onApp: onCommand
       });
@@ -386,12 +404,19 @@
       try { $("rm-allow").focus(); } catch (e) {}
     }
     function hostStop(quiet) {
+      releaseNotes();
       if (H.answer) H.answer(false);
       if (H.link) H.link.close();
       H.link = null; H.code = ""; H.dev = "";
       clearTimeout(H.stTimer); clearInterval(H.mTimer); H.mTimer = 0;
       clearInterval(HF.timer); HF.timer = 0; HF.key = ""; HF.watch = [];
       if (!quiet) renderHost();
+    }
+    // notes the tablet's pads hold: let go when the tablet goes, so nothing hangs
+    function releaseNotes() {
+      var held = H.held;
+      H.held = {};
+      Object.keys(held).forEach(function (k) { var p = k.split(":"); if (host.note) host.note(p[0], +p[1], 0); });
     }
     function hostLive() { return !!(H.link && (H.link.state === "relay" || H.link.state === "direct")); }
     function openHost() {
@@ -416,11 +441,10 @@
       $("rm-pair").hidden = !on || hostLive();
       drawQr(on ? joinUrl(H.code) : "");
     }
+    // The QR opens Remote for orOS Studio (studio/remote/): the Android
+    // app when it is installed, else the same page in the browser.
     function joinUrl(code) {
-      var base = "";
-      try { base = window.parent.location.origin + window.parent.location.pathname; } catch (e) {}
-      if (!base) base = location.origin + "/";
-      return base.replace(/\/index\.html$/, "/") + "?open=studio#studio-remote=" + code;
+      return new URL("remote/#studio-remote=" + code, location.href).href;
     }
     function drawQr(text) {
       var cv = $("rm-qr");
@@ -446,9 +470,9 @@
       return {
         t: "st", v: PROTO, name: s.name, bpm: s.bpm, sig: s.sig, vol: s.vol, loop: s.loop, metro: s.metro,
         playing: s.playing, rec: s.rec, pos: Math.round(s.pos * 1000) / 1000, len: Math.round(s.len * 1000) / 1000,
-        min: C.VOL_MIN, max: C.VOL_MAX, mfx: s.mfx, fxr: 1,
+        min: C.VOL_MIN, max: C.VOL_MAX, mfx: s.mfx, fxr: 1, nt: host.note ? 1 : 0,
         tracks: s.tracks.map(function (tr) {
-          return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: tr.mute, solo: tr.solo, arm: tr.arm, fx: tr.fx };
+          return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: tr.mute, solo: tr.solo, arm: tr.arm, fx: tr.fx, ins: tr.ins };
         })
       };
     }
@@ -585,6 +609,16 @@
           break;
         }
         case "arm": if (tr) host.arm(tr.id); break;
+        // a pad or key on the tablet: a note to the track's NULL instrument (v 0: let go)
+        case "nt": {
+          if (!tr || !tr.ins || !host.note || !Number.isInteger(c.n) || c.n < 0 || c.n > 127 || !Number.isInteger(c.v) || c.v < 0 || c.v > 127) return;
+          var hk = tr.id + ":" + c.n;
+          if (c.v) H.held[hk] = 1;
+          else if (H.held[hk]) delete H.held[hk];
+          else return;
+          host.note(tr.id, c.n, c.v);
+          break;
+        }
         case "fx": {
           if (typeof c.u !== "string" || !FXU_RE.test(c.u) || typeof c.on !== "boolean") return;
           var key = c.key === "master" ? "master" : tr ? tr.id : "";
@@ -635,8 +669,9 @@
       if (H.link) hostStop();
       joinStop(true);
       R.code = code; R.st = null;
+      var last = lastJoin();
       R.link = new Link({
-        role: "remote", code: code, relay: relayUrl(), dev: deviceName(),
+        role: "remote", code: code, relay: relayUrl(), dev: deviceName(), rid: last && last.code === code ? last.rid : "",
         onState: function (s) {
           $("rj-status").textContent = stateText(s, "remote");
           renderBadge();
@@ -647,12 +682,14 @@
         },
         onApp: onHostMsg,
         onDeny: function () {
+          saveJoin(null);
           joinStop(true);
           $("rj-status").textContent = t("rm.denied");
           renderBadge();
         },
         onGone: function () { renderBadge(); }
       });
+      saveJoin({ code: code, rid: R.link.rid });
       $("rj-status").textContent = t("rm.connecting");
     }
     function joinStop(quiet) {
@@ -680,16 +717,26 @@
     function send(c) { if (R.link) R.link.send(c); }
 
     function enterConsole() {
+      stopScan();
       host.hideDlg("join-dlg");
       document.body.classList.add("remote-on");
       $("remote-ui").hidden = false;
       if (!R.raf) R.raf = requestAnimationFrame(animate);
+      keepAwake(true);
     }
     function leaveConsole() {
       if (RF.key) host.hideDlg("ruf-dlg");
+      if (RP.id) host.hideDlg("rup-dlg");
       document.body.classList.remove("remote-on");
       $("remote-ui").hidden = true;
       $("ru-strips").textContent = "";
+      shape = "";
+      keepAwake(false);
+      if (RA.on) {                      // the remote app has nothing behind the console
+        var last = lastJoin();
+        openJoin("");
+        if (last) $("rj-code").value = last.code;
+      }
     }
     function renderBadge() {
       var b = $("ru-link");
@@ -714,12 +761,13 @@
       tpBtn("ru-loop", !!st.loop, "loop", t("btn.loop"));
       tpBtn("ru-metro", !!st.metro, null, t("btn.metro"));
       if (document.activeElement !== $("ru-bpm")) $("ru-bpm").value = String(st.bpm || "");
-      var sig = (st.tracks || []).map(function (x) { return x.id + ":" + x.name + ":" + x.color + ":" + (x.fx || []).map(function (f) { return f.u; }).join(","); }).join("|") + "|M:" + (st.mfx || []).map(function (f) { return f.u; }).join(",");
+      var sig = (st.tracks || []).map(function (x) { return x.id + ":" + x.name + ":" + x.color + ":" + (x.ins || "") + ":" + (x.fx || []).map(function (f) { return f.u; }).join(","); }).join("|") + "|M:" + (st.mfx || []).map(function (f) { return f.u; }).join(",");
       if (sig !== shape) { shape = sig; buildStrips(); }
       (st.tracks || []).forEach(function (tr) { updateStrip(tr.id, tr); });
       updateStrip("master", { vol: st.vol, fx: st.mfx });
       if (RF.key && RF.key !== "master" && !(st.tracks || []).some(function (x) { return x.id === RF.key; })) host.hideDlg("ruf-dlg");
       else if (RF.key) $("ruf-title").textContent = t("fx.title", { name: fxTitle() });
+      if (RP.id && !(padTrack() || {}).ins) host.hideDlg("rup-dlg");
     }
     function tpBtn(id, on, icon, label) {
       var b = $(id);
@@ -750,6 +798,14 @@
         setLabel(fo, master ? t("fx.openMaster") : t("fx.open") + ": " + (tr.name || ""));
         fo.addEventListener("click", function () { openFx(id); });
         s.appendChild(fo);
+      }
+      // a NULL instrument: its pads or keys
+      if (!master && R.st.nt && tr.ins) {
+        var pb = el("button", "ru-fxo ru-pads", tr.ins === "drums" ? t("rp.pads") : t("rp.keys"));
+        pb.type = "button";
+        setLabel(pb, t("rp.open", { name: tr.name || "" }));
+        pb.addEventListener("click", function () { openPads(id); });
+        s.appendChild(pb);
       }
       var fxs = el("div", "ru-fx");
       (tr.fx || []).forEach(function (f) {
@@ -805,6 +861,7 @@
       setLabel(b, label);
       b.addEventListener("click", function () {
         var on = b.getAttribute("aria-pressed") !== "true";
+        buzz(10);
         fn(on);
       });
       return b;
@@ -866,7 +923,9 @@
         e.preventDefault();
         try { f.setPointerCapture(e.pointerId); } catch (err) {}
         drag = { y: e.clientY, v: parseFloat(f.getAttribute("data-v")) || 0, id: e.pointerId };
+        drag.last = drag.v;
         f.classList.add("drag");
+        buzz(8);
       });
       f.addEventListener("pointermove", function (e) {
         if (!drag || e.pointerId !== drag.id) return;
@@ -874,6 +933,9 @@
         var fine = e.shiftKey ? 0.25 : 1;
         var v = drag.v - (e.clientY - drag.y) / h * (st.max - st.min) * fine;
         v = Math.max(st.min, Math.min(st.max, Math.round(v * 2) / 2));
+        // a tick when the fader passes 0 dB (unity) or hits an end
+        if ((drag.last < 0) !== (v < 0) || ((v === st.min || v === st.max) && v !== drag.last)) buzz(15);
+        drag.last = v;
         move(id, "vol", v);
       });
       var end = function (e) {
@@ -973,7 +1035,11 @@
       RF.views = {};
     }
     function fxItem(u) { return (RF.items || []).filter(function (x) { return x.u === u; })[0] || null; }
-    function infoOf(id) { var cat = host.fx.catalog(); return cat ? cat.filter(function (e) { return e.id === id; })[0] || null : null; }
+    // an effect, a MIDI effect or an instrument of the catalog
+    function infoOf(id) {
+      var cat = host.fx.catalog(), all = cat ? cat.concat(host.fx.instruments() || []) : null;
+      return all ? all.filter(function (e) { return e.id === id; })[0] || null : null;
+    }
     function fxName(id) { var e = infoOf(id); return e ? e.name : id; }
     function slOf(FX, i) { return (FX.sliders || []).filter(function (q) { return q.i === i; })[0] || null; }
 
@@ -1084,8 +1150,8 @@
       if (e) nm.appendChild(el("span", "fx-cat", FXA.catName(e.category)));
       nm.addEventListener("click", function () { RF.open[x.u] = !RF.open[x.u]; renderFx(); focusIn(x.u, ".fx-name"); });
       head.appendChild(nm);
-      head.appendChild(fxIconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + name, k === 0, function () { send(fxAddr({ t: "fxm", u: x.u, d: -1 })); }));
-      head.appendChild(fxIconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + name, k === n - 1, function () { send(fxAddr({ t: "fxm", u: x.u, d: 1 })); }));
+      head.appendChild(fxIconBtn("fx-up", "M6 15l6-6 6 6", t("btn.up") + ": " + name, !host.fx.movable(RF.items, k, -1), function () { send(fxAddr({ t: "fxm", u: x.u, d: -1 })); }));
+      head.appendChild(fxIconBtn("fx-down", "M6 9l6 6 6-6", t("btn.down") + ": " + name, !host.fx.movable(RF.items, k, 1), function () { send(fxAddr({ t: "fxm", u: x.u, d: 1 })); }));
       head.appendChild(fxIconBtn("fx-del", "M6 6l12 12M18 6L6 18", t("fx.remove") + ": " + name, false, function () { send(fxAddr({ t: "fxd", u: x.u })); }));
       li.appendChild(head);
       if (!isOpen) return li;
@@ -1222,7 +1288,7 @@
       cats.textContent = "";
       if (!cat) { cats.appendChild(el("p", "hint small", t("clip.loading"))); return; }
       var q = RF.q.trim().toLowerCase(), any = false;
-      ["One Slider", "Essentials", "Advanced"].forEach(function (c) {
+      FXA.cats(FXA.instrumentOf(RF.items)).forEach(function (c) {
         var list = cat.filter(function (e) { return e.category === c && (!q || (e.name + " " + (e.tags || "")).toLowerCase().indexOf(q) >= 0); });
         if (!list.length) return;
         any = true;
@@ -1245,10 +1311,134 @@
       });
       if (!any) cats.appendChild(el("p", "hint small", t("fx.none")));
     }
+    // ---------- Pads / keys: a track's NULL instrument, played on the PC ----------
+    // General MIDI drum notes, as a 4 x 4 pad bank (36 at the bottom left)
+    var DRUMS = [48, 49, 50, 51, 44, 45, 46, 47, 40, 41, 42, 43, 36, 37, 38, 39];
+    var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    var RP = { id: "", mode: "", oct: 0, down: {} };       // down: pointer id (or "k") -> note
+    function padTrack() {
+      return RP.id && R.st ? (R.st.tracks || []).filter(function (x) { return x.id === RP.id; })[0] || null : null;
+    }
+    function openPads(id) {
+      RP.id = id;
+      var tr = padTrack();
+      if (!tr || !tr.ins) { RP.id = ""; return; }
+      RP.mode = tr.ins === "drums" ? "pads" : "keys";
+      renderPads();
+      host.showDlg("rup-dlg");
+    }
+    function closePads() { padsOff(); RP.id = ""; }
+    function noteSend(n, v) { if (RP.id) send({ t: "nt", id: RP.id, n: n, v: v }); }
+    function padEl(n) { return document.querySelector('#rup-pads [data-n="' + n + '"]'); }
+    function padOn(key, n, v) {
+      if (RP.down[key] === n) return;
+      if (RP.down[key] !== undefined) padOff(key);
+      RP.down[key] = n;
+      noteSend(n, v);
+      var b = padEl(n);
+      if (b) b.classList.add("on");
+      buzz(8);
+    }
+    function padOff(key) {
+      var n = RP.down[key];
+      if (n === undefined) return;
+      delete RP.down[key];
+      noteSend(n, 0);
+      var still = Object.keys(RP.down).some(function (k) { return RP.down[k] === n; }), b = padEl(n);
+      if (b && !still) b.classList.remove("on");
+    }
+    function padsOff() { Object.keys(RP.down).forEach(padOff); }
+    function noteName(n) { return NOTE_NAMES[n % 12] + (Math.floor(n / 12) - 1); }
+    function renderPads() {
+      var tr = padTrack();
+      if (!tr) return;
+      padsOff();
+      var keys = RP.mode === "keys", box = $("rup-pads");
+      $("rup-title").textContent = t("rp.title", { name: tr.name || "" });
+      $("rup-mode").textContent = keys ? t("rp.pads") : t("rp.keys");
+      $("rup-oct").hidden = !keys;
+      $("rup-octv").textContent = t("kb.oct", { n: RP.oct > 0 ? "+" + RP.oct : String(RP.oct) });
+      $("rup-dn").disabled = RP.oct <= -3;
+      $("rup-up").disabled = RP.oct >= 3;
+      box.textContent = "";
+      box.className = "rup-pads" + (keys ? " keys kb-keys" : "");
+      if (!keys) {
+        DRUMS.forEach(function (n) {
+          var b = el("button", "rup-pad", t("rp.d" + n));
+          b.type = "button";
+          b.setAttribute("data-n", String(n));
+          box.appendChild(b);
+        });
+        return;
+      }
+      var base = 48 + 12 * RP.oct, whites = 0, wi = 0, n;
+      for (n = base; n <= base + 24; n++) if (NOTE_NAMES[n % 12].length === 1) whites++;
+      for (n = base; n <= base + 24; n++) {
+        var black = NOTE_NAMES[n % 12].length > 1, k = el("button", "kb-key " + (black ? "b" : "w"));
+        k.type = "button";
+        k.setAttribute("data-n", String(n));
+        setLabel(k, noteName(n));
+        if (black) { k.style.left = "calc(" + (wi / whites * 100) + "% - " + (50 / whites * 0.62) + "%)"; k.style.width = (100 / whites * 0.62) + "%"; }
+        else { k.style.left = (wi / whites * 100) + "%"; k.style.width = (100 / whites) + "%"; wi++; }
+        if (!black && n % 12 === 0) k.appendChild(el("span", "kb-c", noteName(n)));
+        box.appendChild(k);
+      }
+    }
+    // a pad's velocity: higher on the pad is louder (40..127); keys play at 100
+    function velAt(b, y) {
+      if (RP.mode === "keys") return 100;
+      var r = b.getBoundingClientRect(), f = r.height > 0 ? Math.max(0, Math.min(1, (y - r.top) / r.height)) : 0;
+      return Math.max(1, Math.min(127, Math.round(127 - 87 * f)));
+    }
+    function noteAt(x, y) {
+      var b = document.elementFromPoint(x, y);
+      b = b && b.closest ? b.closest("#rup-pads [data-n]") : null;
+      return b;
+    }
+    function wirePads() {
+      var box = $("rup-pads");
+      $("rup-close").innerHTML = host.ICON.close;
+      $("rup-close").addEventListener("click", function () { host.hideDlg("rup-dlg"); });
+      $("rup-dlg").addEventListener("close", closePads);
+      $("rup-mode").addEventListener("click", function () { RP.mode = RP.mode === "keys" ? "pads" : "keys"; renderPads(); });
+      $("rup-dn").innerHTML = host.ICON.minus;
+      $("rup-up").innerHTML = host.ICON.plus;
+      $("rup-dn").addEventListener("click", function () { if (RP.oct > -3) { RP.oct--; renderPads(); } });
+      $("rup-up").addEventListener("click", function () { if (RP.oct < 3) { RP.oct++; renderPads(); } });
+      box.addEventListener("pointerdown", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-n]") : null;
+        if (!b) return;
+        e.preventDefault();
+        try { box.setPointerCapture(e.pointerId); } catch (x) { /* old browsers */ }
+        padOn(String(e.pointerId), +b.getAttribute("data-n"), velAt(b, e.clientY));
+      });
+      // keys: a finger sliding along plays the keys it reaches
+      box.addEventListener("pointermove", function (e) {
+        var key = String(e.pointerId);
+        if (RP.mode !== "keys" || RP.down[key] === undefined) return;
+        var b = noteAt(e.clientX, e.clientY);
+        if (b && +b.getAttribute("data-n") !== RP.down[key]) padOn(key, +b.getAttribute("data-n"), 100);
+      });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (k) {
+        box.addEventListener(k, function (e) { padOff(String(e.pointerId)); });
+      });
+      box.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      // the keyboard: Space or Enter holds the focused pad
+      box.addEventListener("keydown", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-n]") : null;
+        if (!b || (e.key !== " " && e.key !== "Enter")) return;
+        e.preventDefault();
+        if (!e.repeat) padOn("k", +b.getAttribute("data-n"), 100);
+      });
+      box.addEventListener("keyup", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); padOff("k"); } });
+      box.addEventListener("focusout", function () { padOff("k"); });
+    }
+
     function drawFx() {
       Object.keys(RF.views).forEach(function (u) { try { RF.views[u].view.draw(); } catch (e) {} });
     }
     function wireFx() {
+      wirePads();
       $("ruf-close").innerHTML = host.ICON.close;
       $("ruf-close").addEventListener("click", function () { host.hideDlg("ruf-dlg"); });
       $("ruf-play").addEventListener("click", function () { send({ t: "tp", a: "play" }); });
@@ -1259,6 +1449,191 @@
         if (RF.picking) { var sr = $("ruf-search"); sr.value = RF.q; sr.focus(); }
       });
       $("ruf-search").addEventListener("input", function () { RF.q = $("ruf-search").value; renderPick(); });
+    }
+
+    // ---------- 6. Remote for orOS Studio (STUDIO-RA) ----------
+    // RA.on: this page is the remote on its own (studio/remote/ frames
+    // studio/index.html?remote). The last code and the device's id for
+    // it are kept on this device only (RA_KEY), so the app can come back
+    // to the same PC without a new Allow while the PC still shows that code.
+    var RA_KEY = "oros-studio-remote-join", RA_DAYS = 7;
+    var RA = { on: false, lock: null, scan: null };
+    function lastJoin() {
+      try {
+        var j = JSON.parse(localStorage.getItem(RA_KEY) || "null");
+        if (j && CODE_RE.test(j.code) && /^[0-9a-f]{32}$/.test(j.rid) && typeof j.at === "number" &&
+            Date.now() - j.at < RA_DAYS * 864e5) return j;
+      } catch (e) {}
+      return null;
+    }
+    function saveJoin(j) {
+      try {
+        if (j) localStorage.setItem(RA_KEY, JSON.stringify({ code: j.code, rid: j.rid, at: Date.now() }));
+        else localStorage.removeItem(RA_KEY);
+      } catch (e) {}
+    }
+    // The screen stays on while the console is shown (Wake Lock; the
+    // browser lets it go when the page is hidden, so it is asked again).
+    function keepAwake(on) {
+      if (!on) {
+        if (RA.lock) { try { RA.lock.release(); } catch (e) {} }
+        RA.lock = null;
+        return;
+      }
+      if (RA.lock || !navigator.wakeLock || document.visibilityState !== "visible") return;
+      navigator.wakeLock.request("screen").then(function (l) {
+        if (!R.st) { try { l.release(); } catch (e) {} return; }
+        RA.lock = l;
+        l.addEventListener("release", function () { if (RA.lock === l) RA.lock = null; });
+      }, function () {});
+    }
+    // A short tick under the finger (phones; silently nothing elsewhere).
+    function buzz(ms) {
+      try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+    }
+    function onVisible() {
+      if (document.visibilityState !== "visible") { padsOff(); return; }
+      if (R.link) R.link.kick();
+      if (R.st) keepAwake(true);
+    }
+
+    // The code from a scanned QR: Studio's own link (…#studio-remote=123456)
+    // or the bare six digits.
+    function codeFrom(text) {
+      var s = String(text || "").trim(), m = /#studio-remote=([0-9]{6})$/.exec(s);
+      if (m) return m[1];
+      return CODE_RE.test(s) ? s : "";
+    }
+    // QR scan: BarcodeDetector where the browser has it (Chrome on
+    // Android), else jsQR (vendor/jsqr, as the QR app); a frame every
+    // 150 ms; the camera stops when a code is read or the dialog closes.
+    var detP = null, jsqrP = null, grabCv = null;
+    function detector() {
+      if (detP) return detP;
+      detP = Promise.resolve(null);
+      if (typeof window.BarcodeDetector !== "function") return detP;
+      var BD = window.BarcodeDetector;
+      detP = (typeof BD.getSupportedFormats === "function" ? BD.getSupportedFormats() : Promise.resolve(["qr_code"]))
+        .then(function (f) { return f && f.indexOf("qr_code") >= 0 ? new BD({ formats: ["qr_code"] }) : null; })
+        .catch(function () { return null; });
+      return detP;
+    }
+    function loadJsQR() {
+      if (window.jsQR) return Promise.resolve(window.jsQR);
+      if (jsqrP) return jsqrP;
+      jsqrP = new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = "../vendor/jsqr/jsQR.js";
+        sc.onload = function () { if (typeof window.jsQR === "function") resolve(window.jsQR); else reject(new Error("jsqr")); };
+        sc.onerror = function () { jsqrP = null; reject(new Error("jsqr")); };
+        document.head.appendChild(sc);
+      });
+      return jsqrP;
+    }
+    function readFrame(v) {
+      var w = v.videoWidth, h = v.videoHeight;
+      if (!w || !h) return Promise.resolve("");
+      return detector().then(function (det) {
+        if (det) {
+          return det.detect(v).then(function (list) {
+            var hit = (list || []).filter(function (b) { return typeof b.rawValue === "string" && b.rawValue; })[0];
+            return hit ? hit.rawValue : "";
+          }, function () { return ""; });
+        }
+        return loadJsQR().then(function (jsQR) {
+          var k = Math.min(1, 640 / Math.max(w, h));
+          if (!grabCv) grabCv = document.createElement("canvas");
+          grabCv.width = Math.round(w * k); grabCv.height = Math.round(h * k);
+          var g = grabCv.getContext("2d", { willReadFrequently: true });
+          g.drawImage(v, 0, 0, grabCv.width, grabCv.height);
+          var px = g.getImageData(0, 0, grabCv.width, grabCv.height);
+          var r = jsQR(px.data, px.width, px.height, { inversionAttempts: "dontInvert" });
+          return r && typeof r.data === "string" ? r.data : "";
+        });
+      });
+    }
+    function canScan() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+    function startScan() {
+      if (RA.scan) { stopScan(); return; }
+      var v = $("rj-cam"), job = { stream: null, timer: 0, bad: "" };
+      RA.scan = job;
+      $("rj-status").textContent = t("rm.scanHint");
+      renderScan();
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }).then(function (stream) {
+        if (RA.scan !== job) { stream.getTracks().forEach(function (x) { x.stop(); }); return; }
+        job.stream = stream;
+        v.srcObject = stream;
+        v.hidden = false;
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+        var tick = function () {
+          if (RA.scan !== job) return;
+          readFrame(v).then(function (text) {
+            if (RA.scan !== job) return;
+            var code = codeFrom(text);
+            if (code) { buzz(20); stopScan(); $("rj-code").value = code; joinStart(code); return; }
+            if (text && text !== job.bad) { job.bad = text; $("rj-status").textContent = t("rm.scanBad"); }
+            job.timer = setTimeout(tick, 150);
+          }, function () { if (RA.scan === job) job.timer = setTimeout(tick, 150); });
+        };
+        tick();
+      }, function () {
+        if (RA.scan !== job) return;
+        stopScan();
+        $("rj-status").textContent = t("rm.scanNo");
+      });
+    }
+    function stopScan() {
+      var job = RA.scan;
+      RA.scan = null;
+      if (job) {
+        clearTimeout(job.timer);
+        if (job.stream) job.stream.getTracks().forEach(function (x) { x.stop(); });
+      }
+      var v = $("rj-cam");
+      if (v) { try { v.pause(); } catch (e) {} v.srcObject = null; v.hidden = true; }
+      renderScan();
+    }
+    function renderScan() {
+      var b = $("rj-scan");
+      if (!b) return;
+      b.hidden = !canScan();
+      b.textContent = RA.scan ? t("rm.scanStop") : t("rm.scan");
+      b.setAttribute("aria-pressed", RA.scan ? "true" : "false");
+    }
+    function hashJoinCode() {
+      var code = "";
+      try {
+        var h = window.parent.location.hash || "", m = h.match(/^#studio-remote=([0-9]{6})$/);
+        if (m) {
+          code = m[1];
+          window.parent.history.replaceState(window.parent.history.state, "", window.parent.location.pathname + window.parent.location.search);
+        }
+      } catch (e) {}
+      return code;
+    }
+    // The remote on its own: the join screen is the page; Back or Esc
+    // on it does not close it, Stop controlling comes back to it.
+    function app() {
+      RA.on = true;
+      document.body.classList.add("remote-app");
+      $("rj-close").hidden = true;
+      $("join-dlg").addEventListener("cancel", function (e) { if (RA.on) e.preventDefault(); });
+      // A QR scanned while the app is open only changes the hash of its page.
+      try {
+        window.parent.addEventListener("hashchange", function () {
+          var c = hashJoinCode();
+          if (!c || (R.link && R.code === c)) return;
+          if (R.link) joinStop(true);
+          leaveConsole();
+          openJoin(c);
+        });
+      } catch (e) {}
+      if (!$("join-dlg").open && !R.link) {
+        var last = lastJoin();
+        openJoin("");
+        if (last && !$("rj-code").value) $("rj-code").value = last.code;
+      }
     }
 
     function wire() {
@@ -1275,13 +1650,14 @@
       $("rj-go").addEventListener("click", function () { joinStart($("rj-code").value); });
       $("rj-code").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); joinStart($("rj-code").value); } });
       $("rj-close").addEventListener("click", function () { host.hideDlg("join-dlg"); if (R.link && !R.st) joinStop(); });
+      $("rj-scan").addEventListener("click", startScan);
+      $("join-dlg").addEventListener("close", stopScan);
+      renderScan();
+      document.addEventListener("visibilitychange", onVisible);
       $("ru-exit").addEventListener("click", function () { joinStop(); });
-      $("ru-play").addEventListener("click", function () { send({ t: "tp", a: "play" }); });
-      $("ru-stop").addEventListener("click", function () { send({ t: "tp", a: "stop" }); });
-      $("ru-home").addEventListener("click", function () { send({ t: "tp", a: "home" }); });
-      $("ru-rec").addEventListener("click", function () { send({ t: "tp", a: "rec" }); });
-      $("ru-loop").addEventListener("click", function () { send({ t: "tp", a: "loop" }); });
-      $("ru-metro").addEventListener("click", function () { send({ t: "tp", a: "metro" }); });
+      ["play", "stop", "home", "rec", "loop", "metro"].forEach(function (a) {
+        $("ru-" + a).addEventListener("click", function () { buzz(10); send({ t: "tp", a: a }); });
+      });
       $("ru-bpm").addEventListener("change", function () {
         var v = parseFloat($("ru-bpm").value);
         if (isFinite(v)) send({ t: "bpm", v: v });
@@ -1302,20 +1678,15 @@
       setLabel($("ru-exit"), t("rm.exit"));
       setLabel($("ru-home"), t("btn.home"));
       setLabel($("ru-stop"), t("btn.stop"));
-      // a QR scanned on the tablet opens orOS at "?open=studio#studio-remote=<code>"
-      var code = "";
-      try {
-        var h = window.parent.location.hash || "", m = h.match(/^#studio-remote=([0-9]{6})$/);
-        if (m) {
-          code = m[1];
-          window.parent.history.replaceState(window.parent.history.state, "", window.parent.location.pathname + window.parent.location.search);
-        }
-      } catch (e) {}
+      // a QR scanned on the tablet opens "…#studio-remote=<code>": orOS
+      // (older QR codes) or Remote for orOS Studio (studio/remote/)
+      var code = hashJoinCode();
       if (code) openJoin(code);
     }
 
     return {
       wire: wire,
+      app: app,
       // the PC's state changed (any render): the tablet follows
       changed: function () { if (H.link) { pushState(false); syncMeters(); syncPeek(); renderHost(); } },
       hosting: function () { return !!H.link; },
