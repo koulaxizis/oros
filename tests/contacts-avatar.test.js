@@ -18,7 +18,9 @@ test("the sanitizer keeps an avatar seed and drops photos", () => {
   // vCard: no PHOTO out, avatar round-trips
   assert.match(s, /L\.push\("X-OROS-AVATAR:" \+ c\.avatar\)/);
   assert.doesNotMatch(s, /L\.push\("PHOTO:/);
-  assert.match(s, /case "PHOTO": break;/);
+  // the reader moved to vcard.js (CardDAV wave 4); the mapper writes no PHOTO either
+  assert.match(src("contacts/vcard.js"), /case "PHOTO": break;/);
+  assert.doesNotMatch(src("contacts/dav.js"), /"PHOTO[:;]/);
 });
 
 test("no photo source is left", () => {
