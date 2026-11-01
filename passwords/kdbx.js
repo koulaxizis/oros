@@ -9,7 +9,8 @@
 //   4. Header + variant dictionary
 //   5. Small XML reader / writer (no DTD, no entities beyond the five
 //      standard ones and numeric references; nothing is executed)
-//   6. read(bytes, { password, keyFile }) → { entries, … }
+//   6. read(bytes, { password, keyFile }) → { entries, … };
+//      readXml(text) → the same from a KeePass 2 XML export
 //   7. write(entries, password, opts) → KDBX 4 bytes
 // Attachments are not imported (counted); Twofish is refused.
 // ============================================================
@@ -456,7 +457,7 @@
     children(en, "String").forEach(function (st) {
       var k = textOf(child(st, "Key")), v = child(st, "Value");
       if (!k) return;
-      s[k] = { v: textOf(v), p: !!(v && v.protectedValue) };
+      s[k] = { v: textOf(v), p: !!(v && (v.protectedValue || (v.a && /^true$/i.test(v.a.ProtectInMemory || "")))) };
       order.push(k);
     });
     var times = child(en, "Times");
@@ -526,8 +527,18 @@
         return readV3(bytes, h, encKey);
       });
     }).then(function (res) {
-      var doc = parseXml(res.xml);
-      unprotect(doc, res.stream);
+      var out = fromDoc(parseXml(res.xml), res.stream, now);
+      out.version = h.major + "." + h.minor;
+      return out;
+    });
+  }
+  // The XML of a database → { entries, skipped, recycled, attachments,
+  // name }. stream: the inner stream of a .kdbx; null for the plain
+  // XML export of KeePass 2 (File › Export › KeePass XML), whose values
+  // are plain text (a Protected value there means a damaged file).
+  function fromDoc(doc, stream, now) {
+      if (stream) unprotect(doc, stream);
+      else if (hasProtected(doc)) throw new Error("bad-file");
       var meta = child(doc, "Meta"), rootEl = child(doc, "Root");
       var ctx = { entries: [], skipped: 0, recycled: 0, attachments: 0, now: now, recycle: null };
       if (/^true$/i.test(textOf(child(meta, "RecycleBinEnabled")).trim())) {
@@ -537,8 +548,19 @@
       var top = child(rootEl, "Group");
       if (top) readGroup(top, "", ctx, true);
       return { entries: ctx.entries, skipped: ctx.skipped, recycled: ctx.recycled, attachments: ctx.attachments,
-               name: textOf(child(meta, "DatabaseName")), version: h.major + "." + h.minor };
-    });
+               name: textOf(child(meta, "DatabaseName")) };
+  }
+  function hasProtected(n) {
+    if (n.a && n.a.Protected && /^true$/i.test(n.a.Protected)) return true;
+    return n.c.some(hasProtected);
+  }
+  // text of a KeePass 2 XML export → the same result as read().
+  // Errors: bad-xml / bad-file (thrown), not-kdbx (no KeePassFile root).
+  function readXml(text, opts) {
+    var now = (opts && opts.now) || Date.now();
+    var doc = parseXml(String(text || ""));
+    if (!doc || doc.n !== "KeePassFile" || !child(doc, "Root")) throw new Error("not-kdbx");
+    return fromDoc(doc, null, now);
   }
 
   function innerStream(id, key) {
@@ -800,7 +822,7 @@
 
   var Kdbx = {
     version: "1.0.0", UUID: UUID,
-    read: read, write: write, setArgon2Loader: setArgon2Loader,
+    read: read, readXml: readXml, write: write, setArgon2Loader: setArgon2Loader,
     // exposed for the tests
     chacha20: chacha20, salsa20: salsa20, aesKdf: aesKdf, parseXml: parseXml, keyFileKey: keyFileKey,
     compositeKey: compositeKey, readHeader: readHeader

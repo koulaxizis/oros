@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 37653 of 37778 (99%)
+- Strings: 37756 of 37882 (99%)
 - Help pages: 152 of 152 (100%)
 - Shown in the language list: yes
 
@@ -94,7 +94,7 @@ text is still written in the code. They switch over wave by wave
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 140 / 140 |
-| passwords | 100% | 321 / 321 |
+| passwords | 100% | 323 / 323 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
@@ -117,7 +117,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 300 / 300 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 738 / 738 |
+| settings | 100% | 778 / 778 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 1068 / 1068 |
@@ -131,13 +131,13 @@ text is still written in the code. They switch over wave by wave
 | solo | English for now | 89 / 89 |
 | split | 100% | 356 / 356 |
 | spot | 100% | 54 / 54 |
-| spreadsheet | 80% | 362 / 447 |
+| spreadsheet | 81% | 378 / 464 |
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 694 / 694 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 527 / 527 |
 | sudoku | 100% | 139 / 139 |
-| television | 100% | 82 / 82 |
+| television | 100% | 85 / 85 |
 | tetris | 100% | 59 / 59 |
 | textcase | 100% | 91 / 91 |
 | texttools | 100% | 315 / 315 |
@@ -150,7 +150,7 @@ text is still written in the code. They switch over wave by wave
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
 | typewriter | 100% | 46 / 46 |
-| typing | 92% | 98 / 106 |
+| typing | 94% | 140 / 148 |
 | units | 100% | 214 / 214 |
 | wallpaper | 100% | 71 / 71 |
 | water | 100% | 94 / 94 |

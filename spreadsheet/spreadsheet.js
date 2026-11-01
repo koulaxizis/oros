@@ -145,6 +145,13 @@ var STRINGS = {
     "ch.cols": "Colours", "ch.col": "Colour of series", "ch.reset": "Default colours",
     "ch.saved": "Saved {f}", "ch.file": "chart", "ch.err": "Could not make the image",
     "rg.mode": "Select a range…", "rg.tap": "Tap the last cell of the range",
+    "cf.k.fx": "Formula is true", "cf.k.ic": "Icon set", "cf.fx": "Formula", "cf.fx.ph": "=$B2>100",
+    "cf.fx.hint": "Write it for the first cell of the range; it moves with each cell like a copied formula.",
+    "cf.ic.ar": "Arrows", "cf.ic.dt": "Traffic lights",
+    "ch.t.area": "Area", "ch.sk": "Stacked", "ch.cb": "Last series as a line", "ch.ln": "Trend line",
+    "calc.open": "Calculation…", "calc.title": "Calculation", "calc.it": "Iterative calculation (allow circular references)",
+    "calc.n": "Maximum iterations", "calc.d": "Maximum change",
+    "calc.note": "Off: a formula that refers back to itself shows #CYC!. On: orOS repeats the calculation until no value changes by more than the maximum change.",
     "as.done": "The Assistant changed {n} things in {d} sheets.", "as.done1": "The Assistant changed {n} things in the sheet.",
     "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
     "as.undone": "The Assistant's change was undone.", "as.changed": "These cells were changed since, so the Assistant's change was not undone.",
@@ -253,6 +260,13 @@ var STRINGS = {
     "ch.cols": "Χρώματα", "ch.col": "Χρώμα σειράς", "ch.reset": "Προεπιλεγμένα χρώματα",
     "ch.saved": "Αποθηκεύτηκε: {f}", "ch.file": "γράφημα", "ch.err": "Δεν ήταν δυνατή η δημιουργία της εικόνας",
     "rg.mode": "Επιλογή περιοχής…", "rg.tap": "Πάτησε το τελευταίο κελί της περιοχής",
+    "cf.k.fx": "Ο τύπος είναι αληθής", "cf.k.ic": "Σύνολο εικονιδίων", "cf.fx": "Τύπος", "cf.fx.ph": "=$B2>100",
+    "cf.fx.hint": "Γράψ' τον για το πρώτο κελί της περιοχής· μετακινείται με κάθε κελί όπως ένας τύπος που αντιγράφεις.",
+    "cf.ic.ar": "Βέλη", "cf.ic.dt": "Φανάρια",
+    "ch.t.area": "Περιοχή", "ch.sk": "Στοιβαγμένο", "ch.cb": "Η τελευταία σειρά ως γραμμή", "ch.ln": "Γραμμή τάσης",
+    "calc.open": "Υπολογισμός…", "calc.title": "Υπολογισμός", "calc.it": "Επαναληπτικός υπολογισμός (επιτρέπει κυκλικές αναφορές)",
+    "calc.n": "Μέγιστες επαναλήψεις", "calc.d": "Μέγιστη μεταβολή",
+    "calc.note": "Κλειστό: ένας τύπος που αναφέρεται στον εαυτό του δείχνει #CYC!. Ανοιχτό: το orOS επαναλαμβάνει τον υπολογισμό ώσπου καμία τιμή να μην αλλάζει περισσότερο από τη μέγιστη μεταβολή.",
     "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} φύλλα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο φύλλο.",
     "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
     "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Τα κελιά άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
@@ -440,6 +454,8 @@ function normalizeState(st) {
   if (!st.deleted || typeof st.deleted !== "object") st.deleted = {};
   st.charts = normObjs(st.charts, KIT.normChart);
   st.cf = normObjs(st.cf, KIT.normCf);
+  var calc = KIT.normCalc(st.calc);
+  if (calc) st.calc = calc; else delete st.calc;
 
   var k;
   for (k in st.cells) {
@@ -633,6 +649,8 @@ function canonSS(st) {
     });
     if (any) out[p[0]] = o;
   });
+  /* the calculation setting (wave 4.2), only once someone set it */
+  if (st.calc) out.calc = st.calc;
   return out;
 }
 
@@ -694,7 +712,7 @@ function mergeState(local, remote) {
   }
   return canonSS({ ver: DATA_VER, sheets: mergedSheets, cells: mergedCells,
                    deleted: mergedDel, charts: unionObjs(local.charts, remote.charts),
-                   cf: unionObjs(local.cf, remote.cf) });
+                   cf: unionObjs(local.cf, remote.cf), calc: newerObj(local.calc, remote.calc) });
 }
 
 /* ===== SECTION 2c: STORAGE FUNNEL ===== */
@@ -1034,7 +1052,13 @@ var ENG = FX.engine({
   now: function () { return Date.now(); }
 });
 
-function resetEval() { ENG.reset(); EXTENT = {}; FCELLS = null; }
+function resetEval() {
+  ENG.reset(); EXTENT = {}; FCELLS = null;
+  /* iterative calculation: settle the circular references now, so every
+     cell then reads its final value from the cache */
+  ENG.setIter(state && state.calc);
+  if (ENG.iter) { try { ENG.settle(); } catch (e) { console.error("[SS] iterative calculation:", e); } }
+}
 function evalCell(sid, r, c) { return ENG.value(sid, r, c); }
 function isError(v) { return FX.isErr(v); }
 
@@ -1463,7 +1487,8 @@ function paintCell(r, c) {
   var fh = filterHead(r, c);
   var cf = cfAt(r, c);
   var wr = !!(f && f.wr), wh = wr ? spanHeight(r, c) : 0;
-  var mark = disp + "\u0001" + (fh || "") + "\u0001" + wh;
+  var ic = cf && cf.ic ? cf.ic + cf.icCo : "";
+  var mark = disp + "\u0001" + (fh || "") + "\u0001" + wh + "\u0001" + ic;
   if (lastPainted[r][c] !== mark) {
     lastPainted[r][c] = mark;
     if (wr) {
@@ -1474,6 +1499,14 @@ function paintCell(r, c) {
       wd.textContent = disp;
       td.appendChild(wd);
     } else td.textContent = disp;
+    if (ic) {
+      var icn = document.createElement("span");
+      icn.className = "cfi";
+      icn.setAttribute("aria-hidden", "true");
+      icn.style.color = cf.icCo;
+      icn.textContent = cf.ic;
+      td.insertBefore(icn, td.firstChild);
+    }
     if (fh) {
       var b = document.createElement("span");
       b.className = "fbtn" + (fh === 2 ? " on" : "");
@@ -1824,7 +1857,7 @@ function clearFormat() {
 }
 
 /* SWATCHES — 8 preset colors from OS palette space */
-var SWATCHES = ["#c8a96e","#d9bd88","#87cf3e","#e0a44c",
+var SWATCHES = ["#d4af37","#ecc75f","#87cf3e","#e0a44c",
                 "#e06c75","#a78bfa","#7dd3fc","#e8e4dc"];
 
 function toggleSwatchPopover() {
@@ -2476,6 +2509,8 @@ function openSheetMenu(anchor) {
   item(t("add.rows").replace("{n}", 100), function () { addRowsCols("r", 100); }, sh.rows >= MAX_ROWS);
   item(t("add.rows").replace("{n}", (1000).toLocaleString(loc())), function () { addRowsCols("r", 1000); }, sh.rows >= MAX_ROWS);
   item(t("add.cols").replace("{n}", 10), function () { addRowsCols("c", 10); }, sh.cols >= MAX_COLS);
+  sep();
+  item(t("calc.open"), openCalcDialog);
   m.addEventListener("click", function (e) { e.stopPropagation(); });
   m.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { e.preventDefault(); closePops(); $("grid-wrap").focus(); }
@@ -2483,6 +2518,44 @@ function openSheetMenu(anchor) {
   placePop(m, anchor);
   var first = m.querySelector("button:not([disabled])");
   if (first) try { first.focus({ preventScroll: true }); } catch (e) {}
+}
+
+/* ---------- calculation setting (wave 4.2): iterative calculation ---------- */
+function openCalcDialog() {
+  var x = state.calc || { it: 0, n: 100, d: 0.001 };
+  var pop = popShell(t("calc.title"), "calc-dlg");
+  var on = document.createElement("input");
+  on.type = "checkbox"; on.checked = x.it === 1;
+  field(pop, t("calc.it"), on).classList.add("pop-chk");
+  var n = mkInput(String(x.n)), d = mkInput(String(x.d).replace(".", LANG === "el" ? "," : "."));
+  n.inputMode = "numeric"; d.inputMode = "decimal";
+  var row = document.createElement("div");
+  row.className = "pop-2";
+  pop.appendChild(row);
+  var fn = field(row, t("calc.n"), n), fd = field(row, t("calc.d"), d);
+  function sync() { fn.hidden = fd.hidden = !on.checked; }
+  on.addEventListener("change", sync); sync();
+  var note = document.createElement("div");
+  note.className = "pop-note"; note.textContent = t("calc.note");
+  pop.appendChild(note);
+  var btns = document.createElement("div");
+  btns.className = "pop-btns";
+  btns.appendChild(mkBtn(t("flt.cancel"), "", closePops));
+  btns.appendChild(mkBtn(t("save"), "primary", function () {
+    var nn = parseInt(n.value, 10), dd = parseFloat(String(d.value).replace(",", "."));
+    var rec = KIT.normCalc({ it: on.checked ? 1 : 0, n: isFinite(nn) ? nn : 100, d: isFinite(dd) && dd > 0 ? dd : 0.001,
+      mtime: Math.max(now(), state.calc ? state.calc.mtime + 1 : 0) });
+    closePops();
+    if (state.calc && state.calc.it === rec.it && state.calc.n === rec.n && state.calc.d === rec.d) return;
+    if (!state.calc && !rec.it) return;
+    state.calc = rec;
+    invalidateEval(); resetDisp();
+    markDirty(); queueSave();
+    renderGrid();
+  }));
+  pop.appendChild(btns);
+  placePop(pop, { el: $("tb-fmt") });
+  try { on.focus({ preventScroll: true }); } catch (e) {}
 }
 
 /* ---------- function help (formula bar and cell editor) ---------- */
@@ -3509,7 +3582,23 @@ function cellValue(r, c) {
   if (cel.v.charAt(0) === "=") return evalCell(actSID, r, c);
   return FX.literal(cel.v);
 }
-var CF_NEEDS_STATS = { top: 1, bot: 1, dup: 1, cs: 1, db: 1 };
+var CF_NEEDS_STATS = { top: 1, bot: 1, dup: 1, cs: 1, db: 1, ic: 1 };
+/* a formula rule: its formula is written for the top-left cell of the
+   range and moves with each cell like a copied formula (=$B2>100);
+   TRUE or a number other than 0 colours the cell. Run by the sheet's
+   own engine, never as script. */
+function cfFxHit(ru, r, c) {
+  var key = "fx|" + ru.x.id + "|" + r + "|" + c;
+  if (CFST[key] !== undefined) return CFST[key];
+  var f = String(ru.x.a || "").trim(), hit = false;
+  if (f) {
+    if (f.charAt(0) !== "=") f = "=" + f;
+    var v = ENG.formula(actSID, FX.shiftFormula(f, r - ru.g.t, c - ru.g.l));
+    hit = v === true || (typeof v === "number" && v !== 0);
+  }
+  CFST[key] = hit;
+  return hit;
+}
 function cfStatsFor(rule) {
   if (CFST[rule.x.id]) return CFST[rule.x.id];
   var ext = sheetExtent(actSID), g = rule.g, vals = [], r, c;
@@ -3527,8 +3616,10 @@ function cfAt(r, c) {
     var ru = rules[i];
     if (!KIT.inRange(ru.g, r, c)) continue;
     if (!got) { v = cellValue(r, c); got = true; }
-    if (v === null) return null;
-    var s = KIT.cfStyle(ru.x, v, CF_NEEDS_STATS[ru.x.k] ? cfStatsFor(ru) : {});
+    var s;
+    if (ru.x.k === "fx") s = KIT.cfStyle(ru.x, v, {}, cfFxHit(ru, r, c));
+    else if (v === null) continue;
+    else s = KIT.cfStyle(ru.x, v, CF_NEEDS_STATS[ru.x.k] ? cfStatsFor(ru) : {});
     if (!s) continue;
     out = out || {};
     for (var k in s) if (out[k] === undefined) out[k] = s[k];
@@ -3590,7 +3681,7 @@ function adjustObjs(sid, axis, at, n) {
 }
 
 /* ---------- cell format menu ---------- */
-var FILLS = ["#fde68a", "#fecaca", "#bbf7d0", "#bfdbfe", "#e9d5ff", "#fed7aa", "#c8a96e", "#5b8def", "#1baf7a", "#e34948"];
+var FILLS = ["#fde68a", "#fecaca", "#bbf7d0", "#bfdbfe", "#e9d5ff", "#fed7aa", "#d4af37", "#5b8def", "#1baf7a", "#e34948"];
 function fmtFill(bg) { return function (f) { if (bg) f.bg = bg; else delete f.bg; return { f: f }; }; }
 function fmtBorder(mode) {
   var T = selTop(), L = selLeft();
@@ -3753,6 +3844,8 @@ function cfDesc(x) {
   else if (k === "bt") s += " " + x.a + " – " + x.b;
   else if (k === "tx") s += " “" + x.a + "”";
   else if (k === "top" || k === "bot") s += " " + x.n;
+  else if (k === "fx") s += " " + x.a;
+  else if (k === "ic") s += " · " + t("cf.ic." + (x.is || "ar"));
   return s;
 }
 function cfChip(x) {
@@ -3760,6 +3853,10 @@ function cfChip(x) {
   d.className = "cf-chip";
   if (x.k === "cs") d.style.background = "linear-gradient(90deg," + x.cs.join(",") + ")";
   else if (x.k === "db") d.style.background = "linear-gradient(90deg," + x.db + " 60%,transparent 60%)";
+  else if (x.k === "ic") {
+    var set = KIT.CF_ICONS[x.is] || KIT.CF_ICONS.ar;
+    set.forEach(function (g, i) { var e = document.createElement("span"); e.textContent = g; e.style.color = KIT.CF_ICON_CO[i]; d.appendChild(e); });
+  }
   else {
     if (x.st.bg) d.style.background = x.st.bg;
     d.style.color = x.st.co || (x.st.bg ? KIT.inkOn(x.st.bg) : "");
@@ -3887,15 +3984,19 @@ function openCfEditor(rule) {
   var a = mkInput(x.a), b = mkInput(x.b), n = mkInput(String(x.n || 10));
   n.inputMode = "numeric";
   var fa = field(pop, t("cf.val"), a), fb = field(pop, t("cf.and"), b), fn = field(pop, t("cf.n"), n);
+  var faLab = fa.querySelector("span"), fxHint = document.createElement("div");
+  fxHint.className = "pop-note"; fxHint.textContent = t("cf.fx.hint");
+  fa.parentNode.insertBefore(fxHint, fa.nextSibling);
   var choice = document.createElement("div");
   choice.className = "cf-choice";
   pop.appendChild(choice);
-  var cur = { st: x.st || clone(CF_STYLES[0][1]), cs: x.cs || CF_SCALES[0][1].slice(), db: x.db || CF_BARS[0] };
+  var cur = { st: x.st || clone(CF_STYLES[0][1]), cs: x.cs || CF_SCALES[0][1].slice(), db: x.db || CF_BARS[0], is: x.is || "ar" };
   function paintChoice() {
     choice.innerHTML = "";
     var k = kind.value;
     var opts = k === "cs" ? CF_SCALES.map(function (s) { return { lab: t(s[0]), rec: { k: "cs", cs: s[1] }, on: JSON.stringify(s[1]) === JSON.stringify(cur.cs), set: function () { cur.cs = s[1].slice(); } }; })
       : k === "db" ? CF_BARS.map(function (c) { return { lab: "", rec: { k: "db", db: c }, on: c === cur.db, set: function () { cur.db = c; } }; })
+      : k === "ic" ? ["ar", "dt"].map(function (c) { return { lab: t("cf.ic." + c), rec: { k: "ic", is: c }, on: c === cur.is, set: function () { cur.is = c; } }; })
       : CF_STYLES.map(function (s) { return { lab: t(s[0]), rec: { k: "gt", st: s[1] }, on: JSON.stringify(s[1]) === JSON.stringify(cur.st), set: function () { cur.st = clone(s[1]); } }; });
     opts.forEach(function (o) {
       var bt = mkBtn("", "cf-opt" + (o.on ? " on" : ""), function () { o.set(); paintChoice(); });
@@ -3904,8 +4005,10 @@ function openCfEditor(rule) {
       bt.setAttribute("aria-pressed", o.on ? "true" : "false");
       choice.appendChild(bt);
     });
-    var vk = k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt";
-    fa.hidden = !vk; fb.hidden = k !== "bt"; fn.hidden = !(k === "top" || k === "bot");
+    var vk = k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt" || k === "fx";
+    fa.hidden = !vk; fxHint.hidden = k !== "fx";
+    if (faLab) faLab.textContent = k === "fx" ? t("cf.fx") : t("cf.val");
+    a.placeholder = k === "fx" ? t("cf.fx.ph") : ""; fb.hidden = k !== "bt"; fn.hidden = !(k === "top" || k === "bot");
   }
   kind.addEventListener("change", paintChoice);
   paintChoice();
@@ -3916,12 +4019,12 @@ function openCfEditor(rule) {
     var sh = getActiveSheet(), g = KIT.parseRange(rg.value, sh.rows, sh.cols);
     if (!g) { notifyTransient(t("cf.badrange")); rg.focus(); return; }
     var k = kind.value;
-    if ((k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt") && !a.value.trim()) { a.focus(); return; }
+    if ((k === "gt" || k === "lt" || k === "eq" || k === "tx" || k === "bt" || k === "fx") && !a.value.trim()) { a.focus(); return; }
     if (k === "bt" && !b.value.trim()) { b.focus(); return; }
     var maxPos = 0;
     sheetRules().forEach(function (q) { if (q.pos > maxPos) maxPos = q.pos; });
     var rec = { sid: actSID, pos: rule ? rule.pos : maxPos + 1, rg: KIT.rangeStr(g), k: k,
-      a: a.value.trim(), b: b.value.trim(), n: parseInt(n.value, 10) || 10, st: cur.st, cs: cur.cs, db: cur.db };
+      a: a.value.trim(), b: b.value.trim(), n: parseInt(n.value, 10) || 10, st: cur.st, cs: cur.cs, db: cur.db, is: cur.is };
     objDone([putObj("cf", rule ? rule.id : uid(), rec)]);
     openCfManager();
   }));
@@ -4294,6 +4397,7 @@ function chartData(x) {
 }
 function chartOpts(x, pal, w, h) {
   return { t: x.t, w: w || x.w, h: h || x.h, ttl: x.ttl, xl: x.xl, yl: x.yl, lg: x.lg, co: x.co, lang: LANG,
+    cb: x.cb, ln: x.ln, sk: x.sk,
     pal: pal, empty: t("ch.empty"), seriesWord: t("ch.series"), otherWord: t("ch.other") };
 }
 function chartBox(x) {
@@ -4466,6 +4570,17 @@ function openChartEditor(id, init) {
   lg.type = "checkbox"; lg.checked = x.lg !== 0;
   var lw = field(pop, t("ch.lg"), lg);
   lw.classList.add("pop-chk");
+  /* wave 4.2: stacked, combo, trend line; each shown for the types it fits */
+  var opt = {};
+  ["sk", "cb", "ln"].forEach(function (k) {
+    var cbx = document.createElement("input");
+    cbx.type = "checkbox"; cbx.checked = x[k] === 1;
+    var fw = field(pop, t("ch." + k), cbx);
+    fw.classList.add("pop-chk");
+    opt[k] = { box: cbx, wrap: fw };
+    cbx.addEventListener("change", function () { draw(); });
+  });
+  function showOpts() { for (var k in opt) opt[k].wrap.hidden = !KIT.CH_OPT[k][type.value]; }
   var colRow = document.createElement("div");
   colRow.className = "ch-cols";
   pop.appendChild(colRow);
@@ -4479,9 +4594,11 @@ function openChartEditor(id, init) {
     y.ttl = ttl.value; y.xl = xl.value; y.yl = yl.value; y.lg = lg.checked ? 1 : 0;
     y.co = co.slice();
     y.sid = x.sid || actSID;
+    for (var k in opt) { if (opt[k].box.checked && KIT.CH_OPT[k][y.t]) y[k] = 1; else delete y[k]; }
     return y;
   }
   function upd() {
+    showOpts();
     var y = cur(), pal = chartPal(), model = chartData(y);
     var n = (y.t === "pie" || y.t === "donut") ? (model.series[0] ? KIT.pieSlices(model.series[0], model.cats).length : 0) : model.series.length;
     var base = KIT.seriesColors(pal, co);

@@ -13,9 +13,9 @@
   --bar-bg: rgba(20, 24, 33, 0.92);
   --text: #e8e6e1;
   --text-dim: #9a968e;
-  --accent: #c8a96e;
-  --accent-hover: #d9bc85;
-  --accent-soft: rgba(200, 169, 110, 0.16);
+  --accent: #d4af37;
+  --accent-hover: #ecc75f;
+  --accent-soft: rgba(212, 175, 55, 0.16);
   --panel-bg: #1b212c;
   --border: #2a3140;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -317,7 +317,7 @@ input[type="number"] {
 }
 .meta-row select:hover { background-color: var(--panel-bg); }
 .meta-row select:focus-visible {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c8a96e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
 /* Στενές οθόνες: τα ζεύγη Date/Due σπάνε σε δύο γραμμές

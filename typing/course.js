@@ -241,9 +241,59 @@
     return out.join(" ");
   }
 
+  // ---------- Adaptive practice (wave 2) ----------
+  // ks = TypingCore.keyStats(data, lay): {char: {r right, w wrong, ms on the right ones}}.
+  // A key's weight: its error share (with one made-up miss so a key
+  // seen twice does not look perfect or hopeless) plus how much slower
+  // than the person's usual key it is. Keys seen fewer than 5 times
+  // count as average. Only letters the person has learned (lesson
+  // index `upto`) take part, lower case unless Shift is learned.
+  function weak(lay, ks, upto, n) {
+    var ok = allowed(lay, upto);
+    var letters = Object.keys(ok).filter(function (c) { return /\p{L}/u.test(c); });
+    var times = [];
+    letters.forEach(function (c) { var s = ks[c]; if (s && s.r >= 5) times.push(s.ms / s.r); });
+    times.sort(function (a, b) { return a - b; });
+    var mid = times.length ? times[Math.floor(times.length / 2)] : 0;
+    var scored = letters.map(function (c) {
+      var s = ks[c] || { r: 0, w: 0, ms: 0 }, seen = s.r + s.w;
+      if (seen < 5) return { c: c, v: 0.05 };
+      var err = (s.w + 1) / (seen + 2);
+      var slow = mid && s.r ? Math.max(0, (s.ms / s.r) / mid - 1) : 0;
+      return { c: c, v: err + Math.min(1, slow) * 0.1 };
+    });
+    scored.sort(function (a, b) { return b.v - a.v || (a.c < b.c ? -1 : a.c > b.c ? 1 : 0); });
+    return scored.slice(0, n || 5).filter(function (x) { return x.v > 0.05; }).map(function (x) { return x.c; });
+  }
+  // The text of a practice round: the weak letters in short groups, then
+  // real words that hold them (about two in three), then other words.
+  // Same input and seed, same text.
+  function practice(lay, ks, upto, seed) {
+    upto = Math.max(0, Math.min(LESSONS.length - 1, upto | 0));
+    var r = rng(seed || 1), ok = allowed(lay, upto);
+    var weakOnes = weak(lay, ks, upto, 5);
+    var letters = Object.keys(ok).filter(function (c) { return /\p{Ll}/u.test(c); });
+    var focus = weakOnes.length ? weakOnes : shuffle(r, letters).slice(0, 4);
+    var words = wordsFor(lay, ok).filter(function (w) { return Array.from(w).length >= 2; });
+    var hit = words.filter(function (w) { return focus.some(function (c) { return w.indexOf(c) !== -1; }); });
+    // one weak key alone makes a dull drill: two other learned letters join it
+    var dl = focus.length > 1 ? focus : focus.concat(shuffle(r, letters.filter(function (c) { return focus.indexOf(c) < 0; })).slice(0, 2));
+    var parts = drill(r, dl.concat(focus), 6);
+    var pool = hit.length ? hit : words;
+    if (pool.length < 10) pool = pool.concat(drill(r, letters.length ? letters : focus, 12));
+    var others = words.length ? words : pool;
+    var k = 0;
+    while (parts.join(" ").length < TARGET + 80 && k < 400) {
+      parts.push(k % 3 === 2 ? pick(r, others) : pick(r, pool));
+      k++;
+    }
+    return { text: parts.join(" ").replace(/\s+/g, " ").trim(), keys: focus };
+  }
+
   var API = {
     GROUPS: GROUPS, lessons: lessons, lesson: lesson, indexOf: indexOf,
-    allowed: allowed, fresh: fresh, label: label, build: build, testText: testText, rng: rng
+    allowed: allowed, fresh: fresh, label: label, build: build, testText: testText, rng: rng,
+    weak: weak, practice: practice
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.TypingCourse = API;

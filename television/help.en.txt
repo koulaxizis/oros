@@ -25,6 +25,7 @@ Add an XMLTV guide in `Lists & guides` the same way (an address, or `Open fileâ€
 
 - Each channel card shows the programme on now, how far it has got, and what comes `Next`; the player shows the same line.
 - `Guide` shows today's timeline: one row per channel that has programmes, a red line at the current time, and `Now` to jump back to it. Tap a channel name to watch it; tap a programme for its details and `Watch`.
+- A programme that has not started yet also has `Remind me`: it opens a new [Calendar](help:a/calendar) event with the programme's time, the channel and a reminder 15 minutes before (5 when it starts sooner). Check it and press `Save`; nothing is added until you do.
 - The `Group` menu and the search box narrow the rows too.
 
 ## Favourites and recent channels
