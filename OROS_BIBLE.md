@@ -9416,3 +9416,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** `shell.js` (SKINS, APP_VERSION), `settings/core.js`, `settings/settings.js`, `settings/settings.css`, `i18n/de/settings.js`, `help/topics/appearance.{en,el}.txt`, `help/topics/whatsnew.{en,el}.txt`, `tests/skin-wallpaper.test.js`.
 - **Tests:** new `tests/skin-wallpaper.test.js`; full `node --test tests/*.test.js`.
 
+### 2026-11-01 — 4.95.00 — Users on one computer or stick, U3 (#769)
+
+- **What:** the orOS side of separate users (audit 2026-11 finding 14, plan /mnt/project-files/users/plan.md); the launcher side is oros-portable #21 (U1) and oros-usb #20 (U2). Part II "Users on one computer or stick", Part IX "Users on one device decisions".
+- **Changes:** `shell.js` `window.orosUsers` (state, refresh, call, signOut; only on localhost:47800), sync push before sign-out, tray "Switch user" via `#oros-signout`; Quick settings power menu `Sign out` while users are on; Settings › Users (first set-up with owner and recovery code, add, rename, password, owner reset, remove, owner transfer, guest, sizes, honest limit). EN/EL/DE strings and help.
+- **Files:** `shell.js` (users, APP_VERSION), `qsettings.js`, `settings/core.js`, `settings/settings.js`, `settings/settings.css`, `settings/help.{en,el}.txt`, `i18n/de/*`, `translations.js`, `tests/settings.test.js`, `help/topics/whatsnew.{en,el}.txt`.
+- **Tests:** full `node --test tests/*.test.js`. Not tested: real Windows, the real Live USB with users.
+
