@@ -9458,3 +9458,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Sources:** hand-written facts (church calendar, UN / WHO lists of international days, Greek law on days of remembrance); nothing copied from a third-party dataset, nothing fetched from other sites at runtime.
 - **Files:** `calendar/namedays.js` (NAMES_FIXED, v1.1.0), `calendar/days.json`, `shell.js` (APP_VERSION), `help/topics/whatsnew.{en,el}.txt`, `OROS_BIBLE.md`.
 - **Tests:** full `node --test tests/*.test.js` (the namedays test checks every date and no duplicate name per day). Playwright real shell, Calendar ?standalone on 2026-11-01, 360 px EL and 1280 px EN: name line shows 8 names + "+2 more", World Vegan Day listed, no sideways scroll, no page errors. Devices that already cached `days.json` see the new world days within a week. Not tested: real phone.
+
+### 2026-11-01 — 4.97.02 — Credits: Tor Browser and the Tor button's Go modules (#775)
+
+- **What:** register entries ahead of the Tor button (thread "Πρόσθεσε Tor στο Portable και στους εγκαταστάτες"): Tor Browser (downloaded on first use, signature checked) and the Go modules ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz. Part III credits register updated.
+- **Files:** `CREDITS.md`, `shell.js` (`CREDIT_GROUPS` `cr.tor-browser`, `cr.tor-modules`, APP_VERSION), `translations.js`, `i18n/de/shell.js`, `help/topics/whatsnew.{en,el}.txt`, `OROS_BIBLE.md`.
+- **Tests:** full `node --test tests/*.test.js`.

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.97.02
+- Credits now name Tor Browser and the Go modules that check its signature, for the coming Tor button in orOS Portable, the installers and the Live USB. Tor Browser is never part of an orOS download; it is fetched from torproject.org when you first use it.
+
 ## Version 4.97.01
 - **Fuller name days and world days in Calendar.** Name days now cover many more saints and list the female and other forms of each name (1 November: Kosmas, Kosmia, Damianos, Damiani, Anargyros, Anargyri, Argyrios, Argyro…). World days grew from 65 to 168: the United Nations and WHO days and the Greek days of remembrance. Contacts who celebrate are found on the new days too. See [Calendar](help:a/calendar).
 
