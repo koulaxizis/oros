@@ -27,13 +27,14 @@
 //     writing its result): message "sliders" { uid, v: { i: value } }
 //     tells the page, at most every FLUSH blocks, and only for values
 //     that differ from what the page, a key or automation last set.
+//     An instrument with more output pins plays its first pair.
 // Lives in studio/ (not studio/nullfx/, which the sync workflow owns).
 // Load eel-rt.js, null-fx.js and the effect files first.
 // ============================================================
 /* global AudioWorkletProcessor, registerProcessor, sampleRate, currentTime, NULLRT, NULLFXHost, NULLFX */
 (function () {
   "use strict";
-  var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8, FLUSH = 16;
+  var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8, FLUSH = 16, MAX_OUTS = 16;
 
   class StudioFxChain extends AudioWorkletProcessor {
     static get parameterDescriptors() {
@@ -133,7 +134,7 @@
     }
     var known = {};
     FX.sliders.forEach(function (sl) { known[sl.i] = fx.inst.getSlider(sl.i); });
-    return { uid: it.uid, id: it.id, FX: FX, fx: fx, bypass: false, key: 0, pins: FX.inPins.length, known: known, pend: 0 };
+    return { uid: it.uid, id: it.id, FX: FX, fx: fx, bypass: false, key: 0, pins: FX.inPins.length, outs: this.outsFor(FX), known: known, pend: 0 };
   };
   // a slider the page (or automation) sets: known, so it is not reported back
   P.setSl = function (s, i, v) {
@@ -156,6 +157,18 @@
       }
       if (v) this.post({ type: "sliders", uid: s.uid, v: v });
     }
+  };
+  // An effect with more output pins than two (NULL Drum Machine 3.0: main + Snare, Hats
+  // and Perc pairs) writes pins 1/2 into the chain and the rest into buffers of its own,
+  // made here and not on the audio clock, that nobody plays: like REAPER on a
+  // two-channel track. (The generated code would pad a short list, but with new
+  // buffers every block.)
+  P.outsFor = function (FX) {
+    var n = Math.min((FX.outPins || []).length, MAX_OUTS);
+    if (n <= 2) return this.a;
+    var o = [this.a[0], this.a[1]];
+    while (o.length < n) o.push(new Float32Array(BLOCK));
+    return o;
   };
   // [{ k, uid, i, inc, min, max }]
   P.setAuto = function (map) {
@@ -245,7 +258,7 @@
         nin = s.pins;
       }
       try {
-        s.fx.process(ins, this.a, n, nin, s.FX.usesMidi ? mid : null);
+        s.fx.process(ins, s.outs, n, nin, s.FX.usesMidi ? mid : null);
         // what a MIDI effect sends goes on to the next slots (the instrument); the others pass it on
         if (s.FX.usesMidi) mid = sortMidi(s.fx.midiOut);
       } catch (e) {
