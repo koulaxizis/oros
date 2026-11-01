@@ -1,14 +1,20 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.01.00
+## Version 5.02.00
 - **Save new logins to Passwords.** In the orOS browser add-on, `Save the login from this page` sends the name and password you just typed to Passwords in orOS; on Android, with autofill on, answer yes to `Save to orOS Passwords?`. orOS opens it in the Passwords editor, as a new entry or as a new password for the same site and user (the old one goes to the history), and stores it only when you press Save. See [Passwords](help:a/passwords).
 
-## Version 5.00.00
+## Version 5.01.00
 - **orOS fills your Passwords on your Android phone.** In the orOS app for Android, Passwords › Menu › `Autofill on this phone` makes orOS the phone's autofill service: tap an orOS suggestion in an app or a browser, confirm with your fingerprint, face or screen lock, and the login with its 2FA code, a card or an address is filled. The phone keeps only a sealed copy that only it can open. See [Passwords](help:a/passwords).
 
-## Version 4.99.00
+## Version 5.00.00
 - **The orOS browser add-on fills your Passwords on websites.** Version 2 of the add-on for Chrome, Edge, Brave and Firefox fills logins with their 2FA code, cards, identities and addresses: press the orOS icon in the toolbar (or Ctrl+Shift+L), unlock with your master password and choose an entry. Your vault stays encrypted and the add-on locks itself after 15 minutes. Download it with the install steps at [useoros.online/download](https://useoros.online/download/#addon). See [Passwords](help:a/passwords).
+
+## Version 4.99.00
+- **Budget reads more bank files.** Import now takes MT940 / MT942 bank statements (`.sta`, `.mt940`, `.940`, `.942`) and the PayPal activity file (CSV, in English, Greek, German or Spanish), with the net amount after PayPal's fee and payments in another currency converted. Rows that are already in Budget another way, such as an Invoices payment, a transfer between your own accounts or the bank's line for a PayPal payment, come unticked so they are not counted twice. See [Budget](help:a/budget).
+
+## Version 4.98.01
+- **More name days and world days in Calendar, checked against the United Nations list and Wikipedia.** 23 more name days (Olga, Lydia, Polyxeni, Ermioni, Orestis, Platon, Themistoklis, Arsenios, Pelagia, Margarita…) and 54 more world days, among them the Mediterranean Diet, Tsunami Awareness, Patient Safety and Cleanup days, Olympic Day, World Voice Day and the Greek Organ Donation, National Benefactors and Armed Forces days. See [Calendar](help:a/calendar).
 
 ## Version 4.98.00
 - **Passwords shows all your two-factor codes on one screen.** `Codes` at the top lists every code with the seconds it has left; tap one to copy it, and in its last 5 seconds you get the next one instead. `New` › `2FA code` keeps an account's code without a password, like an authenticator app, and codes imported from Aegis, 2FAS or Google Authenticator become such entries. `QR code` shows one account as a QR code for moving it to another app, and `Export` now also writes your codes for Aegis (encrypted) or 2FAS. See [Passwords](help:a/passwords).

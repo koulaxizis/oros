@@ -553,6 +553,9 @@
     if (!(okCur3(y.oc) && okCents(y.oa))) { delete y.oc; delete y.oa; }
     if (!(typeof y.rc === "string" && RC_STR_RE.test(y.rc))) delete y.rc;
     if (!(typeof y.crm === "string" && CRM_RE.test(y.crm))) delete y.crm;
+    // Since BK-1: pp 1 = the row came from a PayPal activity file (the
+    // bank's "PAYPAL *…" line for the same money is then a duplicate).
+    if (y.pp !== 1) delete y.pp;
     return y;
   }
   var CUR3_RE = /^[A-Z]{3}$/;
