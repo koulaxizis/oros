@@ -290,6 +290,9 @@
   // a day, so no box goes idle). At most once a minute unless forced.
   function schedule(force) {
     if (busy || inApp() || !(root.crypto && crypto.subtle)) return Promise.resolve(false);   // any device may refresh the others
+    // BOOT-L1: the rows need app cores from the shell's late bundle; a
+    // list sent without them would replace the full one at the relay.
+    if (root.orosLate && !root.orosLate.done) return Promise.resolve(false);
     var now = Date.now();
     if (!force && now - lastCheck < 60000) return Promise.resolve(false);
     lastCheck = now;
@@ -430,6 +433,7 @@
   setInterval(function () { schedule(false); }, 60000);
   document.addEventListener("visibilitychange", function () { if (document.hidden) { lastCheck = 0; schedule(false); } });
   setTimeout(function () { schedule(false); }, 8000);
+  root.addEventListener("oros:late-ready", function () { setTimeout(function () { schedule(false); }, 1000); });
   // An app saved something (a Calendar event, an alarm): send soon, not
   // up to a minute later, so closing orOS right after still counts.
   // The apps run in frames, so their writes reach this page as storage events.

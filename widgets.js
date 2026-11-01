@@ -495,6 +495,10 @@
         }, function () { todayBusy = false; todayAt = Date.now(); });
       }
       var res = todayCache;
+      if (!root.orosToday && root.orosLate && !root.orosLate.done) {   // BOOT-L1: today/host.js is on its way
+        fill(c, "wait", function () {});
+        return;
+      }
       if (!root.orosToday) {
         fill(c, "none", function (b) { b.appendChild(el("div", "wg-empty", t("wg.today.none"))); });
         return;
