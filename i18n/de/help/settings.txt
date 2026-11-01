@@ -63,6 +63,18 @@ Die Einstellungen speichern nichts Eigenes. Jede Option speichert orOS an dersel
 ### Verbundene Dienste und deine Schlüssel
 Die Schlüssel eines verbundenen Dienstes landen nie im Klartext in deinen synchronisierten Daten. Jedes Gerät hält sie mit seinem eigenen Schlüssel versiegelt; ein neues Gerät fragt einmal danach. Mit `Diese Schlüssel auf allen meinen Geräten nutzen` reisen sie auch in deiner verschlüsselten Synchronisierung mit, versiegelt mit deiner Sync-Passphrase. Das Konto selbst (Name, Adresse) wird auf alle deine Geräte synchronisiert. `Trennen` entfernt es samt Schlüsseln überall.
 
+### Dein eigener Kalender- und Kontakteserver
+`Kalender und Kontakte (CalDAV / CardDAV)` verbindet ein Konto für [Kalender](app:calendar), [Kontakte](app:contacts) und [Aufgaben](app:todo). Verwende ein App-Passwort, wo dein Anbieter eines hat, nicht dein Hauptpasswort. Die meisten Server antworten dem Browser nicht direkt: Meldet die Prüfung, dass der Server nicht erreichbar war, setze den Haken bei `Über das orOS-Relay` und versuche es erneut.
+
+- Nextcloud: Gib die Adresse deines Servers ein (zum Beispiel `https://cloud.example.com`) und tippe auf `Mit Nextcloud anmelden`. Die Anmeldeseite deines Servers öffnet sich; erlaube dort orOS und komm zurück: Nextcloud erstellt ein App-Passwort für orOS, hier wird nichts eingegeben. Oder gib `https://cloud.example.com/remote.php/dav`, deinen Benutzernamen und ein App-Passwort aus Nextclouds `Einstellungen` › `Sicherheit` › `Geräte & Sitzungen` ein.
+- Radicale: die Adresse, unter der dein Radicale antwortet (zum Beispiel `https://dav.example.com/`), mit seinem Benutzernamen und Passwort. Ein Radicale auf diesem Computer funktioniert ohne Relay unter `http://localhost:5232/`; das Relay erreicht nur öffentliche https-Server auf Port 443, 5006, 8443 oder 9443.
+- Baïkal: `https://dein-server/dav.php/` mit dem Benutzer und Passwort aus der Admin-Seite von Baïkal.
+- mailbox.org: `https://dav.mailbox.org/` mit deiner vollständigen mailbox.org-Adresse und deinem Passwort (einem App-Passwort, wenn du die Zwei-Faktor-Anmeldung nutzt).
+- Fastmail: `https://caldav.fastmail.com/` mit deiner Fastmail-Adresse und einem App-Passwort aus `Settings` › `Privacy & Security` › `App passwords` mit Zugriff auf Kalender und Kontakte. Wenn deine Adressbücher nicht erscheinen, verbinde stattdessen mit `https://carddav.fastmail.com/`.
+- iCloud: `https://caldav.icloud.com/` mit der E-Mail deines Apple Accounts und einem app-spezifischen Passwort von account.apple.com › `Anmeldung und Sicherheit` › `App-spezifische Passwörter`, über das Relay.
+
+Ist das Konto verbunden, setze den Haken bei `Im Hintergrund synchronisieren, solange Kalender, Kontakte und Aufgaben geschlossen sind` (standardmäßig an). Alle 15 Minuten, solange orOS auf diesem Gerät geöffnet ist, führt orOS dieselbe Synchronisierung aus, die diese Apps im geöffneten Zustand ausführen, eine nach der anderen; eine geöffnete App synchronisiert sich selbst. Die Karte zeigt, wann jede App zuletzt im Hintergrund synchronisiert wurde und ob ein Durchgang nicht beendet wurde (öffne die App, um den Grund zu sehen) oder ob viele Löschungen auf einmal dort auf deine Antwort warten.
+
 ## Tastenkürzel
 - [[Esc]] geht auf einem Handy-Bildschirm von einem Bereich zurück zur Liste.
 - Die orOS-Tastenkürzel stehen unter `System` und in [Tastenkürzel](help:t/shortcuts).

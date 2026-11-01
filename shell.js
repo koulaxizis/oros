@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.91.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.92.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1508,6 +1508,7 @@
       tickSafe("calRemTick", calRemTickThrottled);       // Wave 3: calendar reminders (30s throttle)
       tickSafe("moodCheckInTick", moodCheckInTickThrottled); // Wave 1B: Mood check-in reminder (60s throttle)
       tickSafe("cycleCheckTick", cycleCheckTickThrottled);   // Wave 4: Cycle prediction reminder (60s throttle)
+      tickSafe("davBgTick", davBgTickThrottled);         // CalDAV W6: background pass for closed apps (15 min)
       tickSafe("notifTick", notifTickThrottled);         // Wave 1A: notification sweep (60s throttle)
       tickSafe("syncPendingTick", syncPendingTickThrottled); // SY-D3: "changes waiting for a merge" notice (60s throttle)
       tickSafe("wxBriefTick", wxBriefTickThrottled);     // Weather unification: daily morning briefing (60s throttle)
@@ -10239,6 +10240,10 @@
         if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
         return;
       case "sync.moveDb":     syncMoveDropbox(); return;
+      case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
+        davBgSetOn(!!(arg && arg.on));
+        settingsNotify();
+        return;
       case "sync.cancelNc":
         if (S && typeof S.cancelNextcloud === "function") S.cancelNextcloud();
         return;
@@ -10537,6 +10542,7 @@
     mtList().forEach(function (r) {
       try { if (r.el.contentDocument) out.push(r.el.contentDocument); } catch (e) {}
     });
+    try { if (davBg && davBg.el.contentDocument) out.push(davBg.el.contentDocument); } catch (e) {}   // 10e
     return out;
   };
 
@@ -10913,6 +10919,7 @@
   }
 
   function openApp(app, at) {
+    if (app && app.type === "internal") davBgStop(app.id);   // 10e: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;
     if (mtActive() && app.type === "internal" && (mtSideIs(app.id) || pick) && mtSideOpen(app, at)) {
@@ -10967,6 +10974,123 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     tourMaybe();   // a first-run tour put off by a launch-param app
   }
+
+  // ---------- 10e. CalDAV / CardDAV background pass (CalDAV wave 6) ----------
+  // Calendar, Contacts and To-Do sync with the person's own DAV server
+  // while they are open (waves 3-5). With them closed, the shell runs
+  // one pass for them every 15 minutes: the app opens in a hidden frame
+  // with ?davbg=1, runs its own pass (the same code, the same DAV rules,
+  // nothing new to trust), posts {oros:"dav-bg-done"} and the frame is
+  // dropped. One app at a time, never one that is open (an open app
+  // syncs itself; opening one stops its background frame first). Only
+  // with a saved CalDAV account, online, not in a single-app window,
+  // and not when the person turned it off in Settings
+  // (oros-davbg-off = "1", device-local). The hidden frame is a live
+  // app document for sync.js while it runs (__orosAppDocs).
+  //   oros-davbg-last  { at, apps: { calendar|contacts|todo:
+  //                      { at, err, held } } }  (device-local)
+  var DAVBG_EVERY = 15 * 60000;
+  var DAVBG_LIMIT = 120000;          // one app may take two minutes, then it waits for the next round
+  var DAVBG_APPS = ["calendar", "contacts", "todo"];
+  var DAVBG_KEYS = { calendar: "oros-calendar-data", contacts: "oros-contacts-data", todo: "oros-todo-data" };
+  var davBg = null;                  // { id, el, timer } while a frame runs
+  var davBgLastTick = 0;
+  function davBgRead() {
+    try {
+      var v = JSON.parse(localStorage.getItem("oros-davbg-last") || "null");
+      return v && typeof v === "object" ? v : {};
+    } catch (e) { return {}; }
+  }
+  // The app has a server link in its data (read like the apps do).
+  function davBgLinked(id) {
+    var d;
+    try { d = JSON.parse(localStorage.getItem(DAVBG_KEYS[id]) || "null"); } catch (e) { return false; }
+    if (!d || !d.dav) return false;
+    if (id === "contacts") return typeof d.dav.url === "string" && !!d.dav.url;
+    return Array.isArray(d.dav) && d.dav.some(function (x) { return x && typeof x.url === "string" && x.url; });
+  }
+  function davBgWanted() {
+    try {
+      if (SOLO || localStorage.getItem("oros-davbg-off") === "1") return false;
+      if (!localStorage.getItem("oros-caldav-conf") || !localStorage.getItem("oros-caldav-pass")) return false;
+    } catch (e) { return false; }
+    return navigator.onLine !== false;
+  }
+  function davBgTickThrottled() {
+    var now = Date.now();
+    if (now - davBgLastTick < 60000) return;
+    davBgLastTick = now;
+    davBgTick();
+  }
+  function davBgTick() {
+    if (davBg || !davBgWanted()) return;
+    var last = davBgRead();
+    if (Date.now() - (last.at || 0) < DAVBG_EVERY) return;
+    var todo = DAVBG_APPS.filter(function (id) { return davBgLinked(id) && !appLive(id); });
+    last.at = Date.now();
+    try { localStorage.setItem("oros-davbg-last", JSON.stringify(last)); } catch (e) {}
+    davBgNext(todo);
+  }
+  function davBgApp(id) {
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id && state.apps[i].type === "internal") return state.apps[i];
+    return null;
+  }
+  function davBgNext(todo) {
+    var id = todo.shift(), app = id && davBgApp(id);
+    if (!id) return;
+    if (!app || appLive(id) || !davBgWanted()) { davBgNext(todo); return; }
+    var f = document.createElement("iframe");
+    f.name = "oros-davbg-" + Date.now().toString(36);
+    f.setAttribute("aria-hidden", "true");
+    f.setAttribute("tabindex", "-1");
+    f.className = "oros-davbg";
+    f.style.cssText = "position:fixed;width:1px;height:1px;left:-10px;top:-10px;border:0;opacity:0;pointer-events:none;";
+    davBg = { id: id, el: f, todo: todo };
+    davBg.timer = setTimeout(function () { davBgEnd(id, { err: "timeout" }); }, DAVBG_LIMIT);
+    document.body.appendChild(f);
+    frameGo(f, app.url + (app.url.indexOf("?") === -1 ? "?" : "&") + "davbg=1");
+  }
+  // Ends the running frame (done, timed out, or the app opened). r null:
+  // stopped without a result (nothing is recorded).
+  function davBgEnd(id, r, keepGoing) {
+    if (!davBg || davBg.id !== id) return;
+    var b = davBg;
+    davBg = null;
+    clearTimeout(b.timer);
+    if (r) {
+      var last = davBgRead();
+      last.apps = last.apps && typeof last.apps === "object" ? last.apps : {};
+      last.apps[id] = { at: Date.now(), err: String(r.err || "").slice(0, 40), held: r.held ? 1 : 0 };
+      try { localStorage.setItem("oros-davbg-last", JSON.stringify(last)); } catch (e) {}
+    }
+    // Two seconds for the app's last save to reach sync.js.
+    setTimeout(function () {
+      mtDrop(b.el);
+      if (keepGoing !== false) davBgNext(b.todo);
+    }, r ? 2000 : 0);
+  }
+  window.addEventListener("message", function (ev) {
+    var d = ev.data;
+    if (!davBg || !d || d.oros !== "dav-bg-done" || ev.origin !== location.origin) return;
+    if (ev.source !== davBg.el.contentWindow || d.app !== davBg.id) return;
+    davBgEnd(davBg.id, { err: typeof d.err === "string" ? d.err : "", held: !!d.held });
+  });
+  // openApp: the app's own frame takes over, the background one goes now.
+  function davBgStop(id) {
+    if (davBg && davBg.id === id) davBgEnd(id, null, true);
+  }
+  function davBgSetOn(on) {
+    try {
+      if (on) localStorage.removeItem("oros-davbg-off");
+      else localStorage.setItem("oros-davbg-off", "1");
+    } catch (e) {}
+  }
+  // Settings asks: { off, at, apps } (the shape above).
+  window.__orosDavBg = function () {
+    var last = davBgRead(), off = false;
+    try { off = localStorage.getItem("oros-davbg-off") === "1"; } catch (e) {}
+    return { off: off, at: last.at || 0, apps: last.apps || {}, running: davBg ? davBg.id : "" };
+  };
 
   // ---------- 10d. Back key (BK-1) ----------
   // The phone's Back key (and the browser's Back) does what the bar's

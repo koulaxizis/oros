@@ -47,6 +47,8 @@
 // cd-readonly, cd-conditions, cd-etag, cd-moved, cd-relay-target,
 // cd-too-big, cd-token (a sync token the server no longer knows),
 // cd-http (any other refusal; .status holds the status).
+// Wave 6: ncLogin (Nextcloud Login Flow v2, below) adds cd-notnc,
+// cd-login-expired, cd-cancelled.
 //
 // Pure parts (Node-tested, tests/davkit.test.js against
 // tests/dav-fake.js): normConf, parseXml, multistatus, the client
@@ -630,10 +632,121 @@
     store.removeItem(COLS_KEY);
   }
 
+  // ---------- Nextcloud Login Flow v2 (CalDAV wave 6) ----------
+  // The same flow as sync.js connectNextcloud (WebDAV W3): the person
+  // signs in on their own server's page and approves orOS, orOS gets an
+  // app password made for it and never sees the main password. Then
+  // connect() as usual (discovery, probe, save) on
+  // <server>/remote.php/dav/. If that fails, the new app password is
+  // removed again so it does not stay unused on the server.
+  //   form { url (the server address), relay? }
+  //   open(loginUrl) shows the server's page (the caller opened the
+  //   window on the click, so no pop-up blocker stops it).
+  //   opts { store, every (ms between polls), limit (ms), wait(ms) }
+  // ncCancel() stops the waiting ("cd-cancelled").
+  // New codes: cd-notnc (not a Nextcloud), cd-login-expired.
+  var ncJob = null;
+  function ncCancel() {
+    if (!ncJob) return;
+    ncJob.cancelled = true;
+    if (ncJob.wake) ncJob.wake();
+    ncJob = null;
+  }
+  function ncLogin(form, open, fetchFn, opts) {
+    opts = opts || {};
+    var doFetch = fetchFn || function (u, o) { return fetch(u, o); };
+    var conf;
+    try { conf = normConf({ url: form && form.url, user: "-", relay: form && form.relay }); }
+    catch (e) { return Promise.reject(e); }
+    // "https://host/nextcloud/remote.php/dav/…" → "https://host/nextcloud"
+    var server = conf.url.replace(/\/+$/, "").replace(/\/(index\.php|remote\.php)(\/.*)?$/, "");
+    var relay = !!conf.relay;
+    var every = opts.every || (relay ? 7000 : 3000);   // the relay allows 10 logins a minute
+    var limit = opts.limit || 20 * 60000;              // Nextcloud's own limit for a login token
+    var deadline = Date.now() + limit;
+    var job = { cancelled: false };
+    ncCancel();
+    ncJob = job;
+    function wait(ms) {
+      if (opts.wait) return opts.wait(ms);
+      return new Promise(function (r) { job.wake = r; setTimeout(r, ms); });
+    }
+    function stop() { if (job.cancelled) throw fail("cd-cancelled"); }
+    function same(a) { try { return new URL(a).origin === new URL(server).origin; } catch (e) { return false; } }
+    function post(url, body, auth) {
+      var h = {};
+      if (body) h["Content-Type"] = "application/x-www-form-urlencoded";
+      if (auth) { h.Authorization = auth; h["OCS-APIRequest"] = "true"; }
+      if (relay) h["X-Oros-Target"] = url;
+      return Promise.resolve().then(function () {
+        return doFetch(relay ? RELAY : url, {
+          method: auth ? "DELETE" : "POST", headers: h, body: body || undefined, credentials: "omit", cache: "no-store"
+        });
+      }).then(function (res) {
+        if (relay && res.headers.get("X-Oros-Error")) {
+          var code = res.headers.get("X-Oros-Error");
+          throw fail(code === "bad-target" || code === "port" ? "cd-relay-target" : "cd-unreachable");
+        }
+        return res;
+      }, function (err) {
+        if (err && /^cd-/.test(err.message)) throw err;
+        throw fail("cd-unreachable");
+      });
+    }
+    function json(res) { return res.text().then(function (t) { try { return JSON.parse(t); } catch (e) { throw fail("cd-notnc"); } }); }
+    var cred = null;
+    return post(server + "/index.php/login/v2").then(function (res) {
+      if (res.status === 404 || res.status === 405) throw fail("cd-notnc");
+      if (res.status !== 200) throw fail("cd-http", res.status);
+      return json(res);
+    }).then(function (start) {
+      stop();
+      var p = start && start.poll;
+      if (!start || typeof start.login !== "string" || !/^https?:\/\//.test(start.login) || !p ||
+          typeof p.token !== "string" || typeof p.endpoint !== "string" || !same(p.endpoint)) throw fail("cd-notnc");
+      open(start.login);
+      function poll() {
+        stop();
+        if (Date.now() > deadline) throw fail("cd-login-expired");
+        return post(p.endpoint, "token=" + encodeURIComponent(p.token)).then(function (res) {
+          if (res.status === 200) return json(res);
+          if (res.status !== 404 && res.status !== 429) throw fail("cd-http", res.status);
+          return null;                                    // not approved yet
+        }, function (err) {
+          if (err && err.message === "cd-unreachable") return null;   // keep waiting
+          throw err;
+        }).then(function (got) {
+          if (got) return got;
+          return wait(every).then(poll);
+        });
+      }
+      return poll();
+    }).then(function (got) {
+      stop();
+      if (!got || typeof got.loginName !== "string" || typeof got.appPassword !== "string" ||
+          !got.loginName || !got.appPassword) throw fail("cd-notnc");
+      cred = got;
+      var f = { url: server + "/remote.php/dav/", user: got.loginName };
+      if (relay) f.relay = true;
+      return connect(f, got.appPassword, fetchFn, opts.store).catch(function (err) {
+        var auth = "Basic " + b64(got.loginName + ":" + got.appPassword);
+        return post(server + "/ocs/v2.php/core/apppassword", null, auth)
+          .catch(function () {}).then(function () { throw err; });
+      });
+    }).then(function (acc) {
+      if (ncJob === job) ncJob = null;
+      return acc;
+    }, function (err) {
+      if (ncJob === job) ncJob = null;
+      throw err;
+    });
+  }
+
   var api = {
     v: 1, RELAY: RELAY, CONF_KEY: CONF_KEY, PASS_KEY: PASS_KEY, COLS_KEY: COLS_KEY, NS: NS,
     normConf: normConf, parseXml: parseXml, multistatus: multistatus, etagOf: etagOf,
-    client: client, connect: connect, refresh: refresh, load: load, disconnect: disconnect, memStore: memStore
+    client: client, connect: connect, refresh: refresh, load: load, disconnect: disconnect, memStore: memStore,
+    ncLogin: ncLogin, ncCancel: ncCancel
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.OrosDav = api;

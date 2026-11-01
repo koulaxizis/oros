@@ -5536,7 +5536,21 @@ document.addEventListener("keydown", function (e) {
     clearTimeout(cdKickT);
     cdKickT = setTimeout(cdRun, CD_KICK);
   }
+  // CalDAV wave 6: the shell's background pass opens this app in a
+  // hidden frame (?davbg=1) while it is closed; one pass, then the
+  // shell is told and drops the frame.
+  function cdBgDone() {
+    var x = cdLink(), h = cdInfo.held;
+    try {
+      parent.postMessage({ oros: "dav-bg-done", app: "contacts", links: x ? 1 : 0,
+                           held: h && (h.local || h.server) ? 1 : 0, err: (x && cdInfo.err) || "" }, location.origin);
+    } catch (e) {}
+  }
   function cdBoot() {
+    if (/[?&]davbg=1(&|$)/.test(location.search)) {
+      cdRun().then(cdBgDone, cdBgDone);
+      return;
+    }
     if (cdLink()) {
       cdLib().then(function (ok) {
         var x = cdLink();

@@ -63,6 +63,18 @@ Settings stores nothing of its own. Every option is saved by orOS in the same pl
 ### Connected services and your keys
 The keys of a connected service never go into your synced data in clear. Each device keeps them sealed with its own key; a new device asks for them once. With `Use these keys on all my devices` on, they also travel inside your encrypted sync, sealed with your sync passphrase. The account itself (name, address) syncs to all your devices. `Disconnect` removes it and its keys everywhere.
 
+### Your own calendar and contacts server
+`Calendars and contacts (CalDAV / CardDAV)` connects one account for [Calendar](app:calendar), [Contacts](app:contacts) and [To-Do](app:todo). Use an app password where your provider has one, not your main password. Most servers don't answer browsers directly: if the check says the server could not be reached, tick `Through the orOS relay` and try again.
+
+- Nextcloud: type your server's address (for example `https://cloud.example.com`) and press `Sign in with Nextcloud`. Your server's sign-in page opens; approve orOS there and come back: Nextcloud makes an app password for orOS and nothing is typed here. Or type `https://cloud.example.com/remote.php/dav`, your username and an app password from Nextcloud's `Settings` › `Security` › `Devices & sessions`.
+- Radicale: the address your Radicale answers on (for example `https://dav.example.com/`) with its username and password. Radicale on this computer works without the relay at `http://localhost:5232/`; the relay only reaches public https servers on port 443, 5006, 8443 or 9443.
+- Baïkal: `https://your-server/dav.php/` with the user and password made in Baïkal's admin page.
+- mailbox.org: `https://dav.mailbox.org/` with your full mailbox.org address and your password (an app password if you use two-step sign-in).
+- Fastmail: `https://caldav.fastmail.com/` with your Fastmail address and an app password from `Settings` › `Privacy & Security` › `App passwords` with calendar and contacts access. If your address books don't show, connect with `https://carddav.fastmail.com/` instead.
+- iCloud: `https://caldav.icloud.com/` with your Apple Account e-mail and an app-specific password from account.apple.com › `Sign-In and Security` › `App-Specific Passwords`, through the relay.
+
+With the account connected, tick `Sync in the background while Calendar, Contacts and To-Do are closed` (on by default). Every 15 minutes, while orOS is open on this device, orOS runs the same sync those apps run when they are open, one at a time; an app that is open syncs by itself. The card shows when each app last synced in the background, and whether a pass did not finish (open the app to see why) or many deletions at once wait for your answer there.
+
 ## Keyboard shortcuts
 - [[Esc]] on a phone-sized screen goes back from a section to the list.
 - The orOS shortcuts are listed under `System` and in [Keyboard shortcuts](help:t/shortcuts).

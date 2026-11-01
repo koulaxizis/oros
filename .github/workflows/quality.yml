@@ -100,3 +100,34 @@ jobs:
           node-version: 22
       - name: Check every app this PR adds
         run: node .github/app-kit/check-app.js --added-since origin/${{ github.base_ref }} --no-browser
+
+  # CalDAV / CardDAV wave 6: davkit.js, davsync.js and the Calendar, To-Do
+  # and Contacts mappers against a real DAV server (Radicale, any user,
+  # storage in a temporary folder): discovery and the probe, then round
+  # trips both ways (.github/qa/radicale.js). The unit tests use the fake
+  # server in tests/dav-fake.js; this one was not written by orOS.
+  radicale:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Start Radicale
+        run: |
+          pip install 'radicale==3.*'
+          mkdir -p "$RUNNER_TEMP/radicale"
+          printf '[server]\nhosts = 127.0.0.1:5232\n[auth]\ntype = none\n[storage]\nfilesystem_folder = %s/radicale/collections\n' "$RUNNER_TEMP" > "$RUNNER_TEMP/radicale/config"
+          python -m radicale --config "$RUNNER_TEMP/radicale/config" > "$RUNNER_TEMP/radicale/log.txt" 2>&1 &
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:5232/ && break; sleep 1; done
+      - name: Round trips against Radicale
+        env:
+          RADICALE_URL: http://127.0.0.1:5232/
+        run: node --test .github/qa/radicale.js
+      - name: Radicale log
+        if: failure()
+        run: cat "$RUNNER_TEMP/radicale/log.txt"

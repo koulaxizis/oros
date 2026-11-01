@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.92.00
+- Calendar, Contacts and To-Do now stay in step with your own server even while they are closed: every 15 minutes, while orOS is open, orOS runs their sync in the background (Settings › Sync › Calendars and contacts, where you also see when each last synced). Nextcloud users can now connect with Sign in with Nextcloud, without typing a password, and the Settings help has short guides for Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail and iCloud. See [Settings](help:a/settings).
+
 ## Version 4.91.00
 - [Scanner & PDF](help:a/scanpdf) can scan from a real scanner or multifunction printer on this computer: install [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) 0.9.0 and `Add from scanner` appears. Pick the scanner, the glass or the feeder (both sides when it can), colour, gray or line art and the resolution; the pages come into the same review strip as camera scans, and `Read the text after scanning` makes them searchable. Pairing with the Bridge is shared with Studio, and nothing leaves your computer. On Linux the Bridge uses SANE (with sane-airscan for network scanners), already on orOS USB.
 

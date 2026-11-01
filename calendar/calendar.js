@@ -7728,7 +7728,26 @@ function transientNote(title, body) {
     clearTimeout(davKickT);
     davKickT = setTimeout(davRun, DAV_KICK);
   }
+  // CalDAV wave 6: the shell's background pass opens this app in a
+  // hidden frame (?davbg=1) while it is closed; one pass, then the
+  // shell is told and drops the frame.
+  function davBgDone() {
+    var held = 0, errs = [];
+    davLinks().forEach(function (x) {
+      var i = davInfo[x.id] || {};
+      if (i.err) errs.push(i.err);
+      if (i.held && (i.held.local || i.held.server)) held++;
+    });
+    try {
+      parent.postMessage({ oros: "dav-bg-done", app: "calendar", links: davLinks().length, held: held, err: errs[0] || "" },
+                         location.origin);
+    } catch (e) {}
+  }
   function davBoot() {
+    if (/[?&]davbg=1(&|$)/.test(location.search)) {
+      davRun().then(davBgDone, davBgDone);
+      return;
+    }
     if (davLinks().length) {
       davLib().then(function (ok) {
         if (!ok) return;
