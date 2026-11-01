@@ -157,13 +157,15 @@
       "fx.noFile": "No file", "fx.chooseFile": "Choose file", "fx.failed": "{name} stopped: it is bypassed",
       "fx.noCatalog": "The effects could not be loaded.", "fx.credit": "Effects: NULL JSFX by Christos Koulaxizis (nulljsfx.tech), MIT License.",
       "rm.title": "Remote control", "rm.sec": "Remote control", "rm.host": "Connect a tablet or phone", "rm.join": "Control Studio on another device",
-      "rm.hint": "On the tablet or phone, open Studio › Settings › Control Studio on another device and type this code, or scan the QR code with the camera.",
+      "rm.hint": "On the tablet or phone, scan the QR code with the camera or the Remote for orOS Studio app, or open Studio › Settings › Control Studio on another device and type this code.",
       "rm.start": "Show a code", "rm.newCode": "New code", "rm.stop": "Disconnect", "rm.off": "Not connected.",
       "rm.connecting": "Connecting…", "rm.waitRemote": "Waiting for the tablet or phone…", "rm.waitHost": "Looking for Studio on the PC with this code…",
       "rm.direct": "Connected directly (same network).", "rm.relay": "Connected through the internet (orOS relay).", "rm.closed": "Disconnected.",
       "rm.joined": "A {dev} is now controlling Studio", "rm.dev.tablet": "tablet", "rm.dev.phone": "phone", "rm.dev.computer": "computer",
-      "rm.joinTitle": "Control Studio on another device", "rm.joinHint": "On the PC, open Studio › Settings › Connect a tablet or phone, then type the 6-digit code here.",
+      "rm.joinTitle": "Control Studio on another device", "rm.joinHint": "On the PC, open Studio › Settings › Connect a tablet or phone, then scan its QR code or type the 6-digit code here.",
       "rm.code": "Code", "rm.go": "Connect", "rm.badCode": "Type the 6 digits shown on the PC.", "rm.exit": "Stop controlling",
+      "rm.scan": "Scan the QR code", "rm.scanStop": "Stop the camera", "rm.scanHint": "Point the camera at the QR code on the PC.",
+      "rm.scanNo": "The camera could not start. Type the code instead.", "rm.scanBad": "This QR code is not from Studio.",
       "rm.badge.direct": "Direct", "rm.badge.relay": "Via internet", "rm.badge.lost": "Reconnecting…",
       "rm.noProject": "No project open on the PC", "rm.empty": "The project on the PC has no tracks yet.", "rm.fxOn": "on", "rm.fxOff": "bypassed",
       "rm.pos": "Position in the song", "rm.privacy": "The link is encrypted with this code and the orOS relay only passes it on. Studio asks you here before any device can control it.",
@@ -315,13 +317,15 @@
       "fx.noFile": "Κανένα αρχείο", "fx.chooseFile": "Επιλογή αρχείου", "fx.failed": "Το {name} σταμάτησε: παρακάμπτεται",
       "fx.noCatalog": "Τα εφέ δεν φόρτωσαν.", "fx.credit": "Εφέ: NULL JSFX του Christos Koulaxizis (nulljsfx.tech), άδεια MIT.",
       "rm.title": "Τηλεχειρισμός", "rm.sec": "Τηλεχειρισμός", "rm.host": "Σύνδεση tablet ή κινητού", "rm.join": "Χειρισμός του Studio άλλης συσκευής",
-      "rm.hint": "Στο tablet ή στο κινητό άνοιξε Studio › Ρυθμίσεις › Χειρισμός του Studio άλλης συσκευής και γράψε αυτόν τον κωδικό, ή σκάναρε το QR με την κάμερα.",
+      "rm.hint": "Στο tablet ή στο κινητό σκάναρε το QR με την κάμερα ή με την εφαρμογή Remote for orOS Studio, ή άνοιξε Studio › Ρυθμίσεις › Χειρισμός του Studio άλλης συσκευής και γράψε αυτόν τον κωδικό.",
       "rm.start": "Εμφάνιση κωδικού", "rm.newCode": "Νέος κωδικός", "rm.stop": "Αποσύνδεση", "rm.off": "Χωρίς σύνδεση.",
       "rm.connecting": "Σύνδεση…", "rm.waitRemote": "Αναμονή για το tablet ή το κινητό…", "rm.waitHost": "Αναζήτηση του Studio στο PC με αυτόν τον κωδικό…",
       "rm.direct": "Απευθείας σύνδεση (ίδιο δίκτυο).", "rm.relay": "Σύνδεση μέσω internet (relay του orOS).", "rm.closed": "Αποσυνδέθηκε.",
       "rm.joined": "Συνδέθηκε {dev} και χειρίζεται το Studio", "rm.dev.tablet": "tablet", "rm.dev.phone": "κινητό", "rm.dev.computer": "υπολογιστής",
-      "rm.joinTitle": "Χειρισμός του Studio άλλης συσκευής", "rm.joinHint": "Στο PC άνοιξε Studio › Ρυθμίσεις › Σύνδεση tablet ή κινητού και γράψε εδώ τον 6ψήφιο κωδικό.",
+      "rm.joinTitle": "Χειρισμός του Studio άλλης συσκευής", "rm.joinHint": "Στο PC άνοιξε Studio › Ρυθμίσεις › Σύνδεση tablet ή κινητού και σκάναρε το QR του ή γράψε εδώ τον 6ψήφιο κωδικό.",
       "rm.code": "Κωδικός", "rm.go": "Σύνδεση", "rm.badCode": "Γράψε τα 6 ψηφία που δείχνει το PC.", "rm.exit": "Τέλος χειρισμού",
+      "rm.scan": "Σάρωση του QR", "rm.scanStop": "Κλείσιμο κάμερας", "rm.scanHint": "Στρέψε την κάμερα στον κωδικό QR του PC.",
+      "rm.scanNo": "Η κάμερα δεν άνοιξε. Γράψε καλύτερα τον κωδικό.", "rm.scanBad": "Αυτό το QR δεν είναι του Studio.",
       "rm.badge.direct": "Απευθείας", "rm.badge.relay": "Μέσω internet", "rm.badge.lost": "Επανασύνδεση…",
       "rm.noProject": "Κανένα ανοιχτό έργο στο PC", "rm.empty": "Το έργο στο PC δεν έχει ακόμη κανάλια.", "rm.fxOn": "ενεργό", "rm.fxOff": "παρακάμπτεται",
       "rm.pos": "Θέση στο τραγούδι", "rm.privacy": "Η σύνδεση κρυπτογραφείται με αυτόν τον κωδικό και το relay του orOS απλώς τη μεταφέρει. Το Studio σε ρωτά εδώ πριν το χειριστεί οποιαδήποτε συσκευή.",
@@ -4822,7 +4826,20 @@
     });
   }
 
+  // Remote for orOS Studio (STUDIO-RA, studio/remote/ frames
+  // index.html?remote): only the join screen and the console. No
+  // project is read or written, nothing is synced, no audio starts; the
+  // effect files load only for the interfaces the remote draws.
+  function bootRemote() {
+    makeFx();
+    makeRemote();
+    applyI18n();
+    Remote.wire();
+    Remote.app();
+  }
+
   function boot() {
+    if (/[?&]remote(&|$)/.test(location.search)) { bootRemote(); return; }
     load();
     loadPrefs();
     makeFx();
