@@ -57,6 +57,21 @@
       "m.saveAs": "Save as…", "m.goto": "Go to line…", "m.replace": "Find and replace", "m.wrap": "Word wrap", "m.nums": "Line numbers",
       "m.ws": "Show spaces and tabs", "m.brackets": "Close brackets and quotes", "m.bigger": "Larger text", "m.smaller": "Smaller text",
       "m.closeTab": "Close tab", "m.closeOthers": "Close other saved tabs", "m.help": "Help",
+      "btn.preview": "Preview", "aria.preview": "Markdown preview", "aria.compare": "Comparison of two tabs", "aria.keys": "Extra keys",
+      "pv.fail": "The preview could not load.",
+      "m.tools": "Tools…", "m.compare": "Compare with another tab…", "m.keys": "Key row (Tab, brackets, arrows)",
+      "tools.title": "Tools", "tools.whole": "On the whole file.", "tools.sel": "On the selected lines.",
+      "tools.json": "Format JSON", "tools.jsonSub": "One item per line, indented like the file",
+      "tools.jsonMin": "Compact JSON", "tools.jsonMinSub": "All on one line, without spaces",
+      "tools.az": "Sort lines A → Z", "tools.za": "Sort lines Z → A", "tools.uniq": "Remove duplicate lines",
+      "tools.trim": "Remove spaces at line ends", "tool.same": "Nothing to change.",
+      "json.bad": "This is not valid JSON: line {line}, column {col}.",
+      "cmp.pick": "Compare {name} with", "cmp.none": "Open a second tab to compare with.",
+      "cmp.big": "These files are too long to compare (at most 200,000 lines each).", "cmp.fail": "The comparison could not load.",
+      "cmp.title": "{a} ↔ {b}", "cmp.sum": "{del} lines only on the left, {add} only on the right", "cmp.same": "The two texts are the same.",
+      "cmp.at": "change {i} of {n}", "cmp.fold": "{n} same lines (show)", "cmp.next": "Next change", "cmp.prev": "Previous change",
+      "key.tab": "Indent (Tab)", "key.untab": "Remove indent", "key.left": "Left", "key.right": "Right", "key.up": "Up", "key.down": "Down",
+      "key.undo": "Undo", "key.redo": "Redo",
       "m.recent": "Recent files…", "recent.title": "Recent files", "recent.none": "No recent files yet.",
       "recent.clear": "Clear the list", "recent.cleared": "The list of recent files is empty now.",
       "recent.gone": "{name} is no longer there.",
@@ -118,6 +133,21 @@
       "m.saveAs": "Αποθήκευση ως…", "m.goto": "Μετάβαση σε γραμμή…", "m.replace": "Εύρεση και αντικατάσταση", "m.wrap": "Αναδίπλωση γραμμών", "m.nums": "Αριθμοί γραμμών",
       "m.ws": "Εμφάνιση κενών και tab", "m.brackets": "Αυτόματο κλείσιμο αγκυλών και εισαγωγικών", "m.bigger": "Μεγαλύτερα γράμματα", "m.smaller": "Μικρότερα γράμματα",
       "m.closeTab": "Κλείσιμο καρτέλας", "m.closeOthers": "Κλείσιμο των άλλων αποθηκευμένων καρτελών", "m.help": "Βοήθεια",
+      "btn.preview": "Προεπισκόπηση", "aria.preview": "Προεπισκόπηση Markdown", "aria.compare": "Σύγκριση δύο καρτελών", "aria.keys": "Επιπλέον πλήκτρα",
+      "pv.fail": "Η προεπισκόπηση δεν φόρτωσε.",
+      "m.tools": "Εργαλεία…", "m.compare": "Σύγκριση με άλλη καρτέλα…", "m.keys": "Σειρά πλήκτρων (Tab, αγκύλες, βέλη)",
+      "tools.title": "Εργαλεία", "tools.whole": "Σε όλο το αρχείο.", "tools.sel": "Στις επιλεγμένες γραμμές.",
+      "tools.json": "Μορφοποίηση JSON", "tools.jsonSub": "Ένα στοιχείο ανά γραμμή, με εσοχές όπως το αρχείο",
+      "tools.jsonMin": "Συμπτυγμένο JSON", "tools.jsonMinSub": "Όλο σε μία γραμμή, χωρίς κενά",
+      "tools.az": "Ταξινόμηση γραμμών Α → Ω", "tools.za": "Ταξινόμηση γραμμών Ω → Α", "tools.uniq": "Αφαίρεση διπλών γραμμών",
+      "tools.trim": "Αφαίρεση κενών στο τέλος των γραμμών", "tool.same": "Δεν υπάρχει κάτι να αλλάξει.",
+      "json.bad": "Αυτό δεν είναι έγκυρο JSON: γραμμή {line}, στήλη {col}.",
+      "cmp.pick": "Σύγκριση του {name} με", "cmp.none": "Άνοιξε μια δεύτερη καρτέλα για να συγκρίνεις.",
+      "cmp.big": "Αυτά τα αρχεία είναι πολύ μεγάλα για σύγκριση (έως 200.000 γραμμές το καθένα).", "cmp.fail": "Η σύγκριση δεν φόρτωσε.",
+      "cmp.title": "{a} ↔ {b}", "cmp.sum": "{del} γραμμές μόνο αριστερά, {add} μόνο δεξιά", "cmp.same": "Τα δύο κείμενα είναι ίδια.",
+      "cmp.at": "αλλαγή {i} από {n}", "cmp.fold": "{n} ίδιες γραμμές (εμφάνιση)", "cmp.next": "Επόμενη αλλαγή", "cmp.prev": "Προηγούμενη αλλαγή",
+      "key.tab": "Εσοχή (Tab)", "key.untab": "Αφαίρεση εσοχής", "key.left": "Αριστερά", "key.right": "Δεξιά", "key.up": "Πάνω", "key.down": "Κάτω",
+      "key.undo": "Αναίρεση", "key.redo": "Επανάληψη",
       "m.recent": "Πρόσφατα αρχεία…", "recent.title": "Πρόσφατα αρχεία", "recent.none": "Δεν υπάρχουν ακόμη πρόσφατα αρχεία.",
       "recent.clear": "Καθαρισμός της λίστας", "recent.cleared": "Η λίστα με τα πρόσφατα αρχεία άδειασε.",
       "recent.gone": "Το {name} δεν υπάρχει πια εκεί.",
@@ -228,6 +258,7 @@
     folder: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
     up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+    eye: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
     clock: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>'
   };
@@ -420,7 +451,7 @@
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (!p || typeof p !== "object") return;
-      ["wrap", "nums", "ws", "brackets"].forEach(function (k) { if (typeof p[k] === "boolean") prefs[k] = p[k]; });
+      ["wrap", "nums", "ws", "brackets", "keys"].forEach(function (k) { if (typeof p[k] === "boolean") prefs[k] = p[k]; });
       if (typeof p.size === "number" && p.size >= 10 && p.size <= 28) prefs.size = Math.round(p.size);
       if (typeof p.dir === "string" && /^\/internal(\/|$)/.test(p.dir) && p.dir.indexOf("..") < 0) prefs.dir = p.dir;
     } catch (e) {}
@@ -620,6 +651,7 @@
     if (u.docChanged) {
       if (!active.dirty) { active.dirty = true; paintTabs(); }
       schedulePersist(active);
+      schedulePreview();
     } else if (u.selectionSet) {
       schedulePersist(active);
     }
@@ -736,6 +768,7 @@
     $("st-enc").textContent = (C.encInfo(active.enc) || C.ENCODINGS[0]).name;
     $("st-where").textContent = whereText(active);
     $("st-where").title = whereText(active);
+    paintPreviewBtn();
   }
   function langName(id) { return id === "text" ? t("lang.text") : C.langInfo(id).name; }
 
@@ -757,6 +790,7 @@
     requestAnimationFrame(function () { if (view) view.scrollDOM.scrollTop = top; });
     paintTabs();
     paintStatus();
+    closeCompare();
     ensureLang(tab);
     schedulePersist(null);
     view.focus();
@@ -1577,11 +1611,14 @@
       { label: t("m.recent"), fn: onRecent },
       { label: t("m.replace"), fn: function () { F.openSearchPanel(view); } },
       { label: t("m.goto"), fn: gotoLine },
+      { label: t("m.tools"), fn: toolsMenu },
+      { label: t("m.compare"), fn: compareMenu },
       null,
       { label: t("m.wrap"), on: prefs.wrap, fn: function () { toggle("wrap"); } },
       { label: t("m.nums"), on: prefs.nums, fn: function () { toggle("nums"); } },
       { label: t("m.ws"), on: prefs.ws, fn: function () { toggle("ws"); } },
       { label: t("m.brackets"), on: prefs.brackets, fn: function () { toggle("brackets"); } },
+      { label: t("m.keys"), on: keysWanted(), fn: function () { prefs.keys = !keysWanted(); savePrefs(); paintKeys(); } },
       { label: t("m.bigger"), fn: function () { fontSize(1); }, keep: true },
       { label: t("m.smaller"), fn: function () { fontSize(-1); }, keep: true },
       null,
@@ -1626,6 +1663,265 @@
     if (first) first.focus();
   }
 
+  // ---------- 15b. Tools (wave 3) ----------
+  // Every tool is one change of the text (one Undo). With a selection
+  // the tool works on the whole lines it touches, else on the file.
+  function toolRange() {
+    var st = view.state, m = st.selection.main;
+    if (m.empty) return { from: 0, to: st.doc.length, all: true };
+    var a = st.doc.lineAt(m.from), b = st.doc.lineAt(m.to > m.from && st.doc.lineAt(m.to).from === m.to ? m.to - 1 : m.to);
+    return { from: a.from, to: b.to, all: false };
+  }
+  function applyTool(fn) {
+    if (!view || !active) return false;
+    var r = toolRange(), before = view.state.sliceDoc(r.from, r.to), after = fn(before, r);
+    if (after === null || after === undefined) return false;
+    if (after === before) { toast(t("tool.same")); return false; }
+    view.dispatch({ changes: { from: r.from, to: r.to, insert: after }, selection: { anchor: r.from, head: r.from + after.length }, scrollIntoView: true, userEvent: "input.tool" });
+    view.focus();
+    return true;
+  }
+  function jsonTool(pretty) {
+    var ind = active.indent || { tabs: false, size: 2 };
+    var indent = pretty ? (ind.tabs ? "\t" : new Array((ind.size || 2) + 1).join(" ")) : "";
+    applyTool(function (text, r) {
+      var out = C.jsonFormat(text, indent);
+      if (out.error) {
+        var line = out.error.line + (r.all ? 0 : view.state.doc.lineAt(r.from).number - 1);
+        toast(t("json.bad", { line: line, col: out.error.col }));
+        return null;
+      }
+      // A selection keeps its own last new line, the file ends with one.
+      return r.all ? out.text : out.text.replace(/\n$/, "");
+    });
+    if (pretty && active.lang === "text") { active.lang = "json"; ensureLang(active); paintStatus(); }
+  }
+  function toolsMenu() {
+    if (!view) return;
+    choose(t("tools.title"), [
+      { value: "json", label: t("tools.json"), sub: t("tools.jsonSub") },
+      { value: "jsonMin", label: t("tools.jsonMin"), sub: t("tools.jsonMinSub") },
+      { value: "az", label: t("tools.az") },
+      { value: "za", label: t("tools.za") },
+      { value: "uniq", label: t("tools.uniq") },
+      { value: "trim", label: t("tools.trim") }
+    ], view.state.selection.main.empty ? t("tools.whole") : t("tools.sel")).then(function (v) {
+      if (v === "json") jsonTool(true);
+      else if (v === "jsonMin") jsonTool(false);
+      else if (v === "az" || v === "za") applyTool(function (x) { return C.sortLines(x, v === "za", locale()); });
+      else if (v === "uniq") applyTool(C.uniqueLines);
+      else if (v === "trim") applyTool(C.trimTrailing);
+    });
+  }
+
+  // ---------- 15c. Markdown preview (wave 3) ----------
+  // Notes' Markdown renderer (notes/md.js, precached): it escapes every
+  // character and builds only allow-listed tags, links http/https/mailto
+  // only, no pictures, no HTML from the text. Nothing in it runs.
+  var preview = false, mdP = null, pvTimer = 0;
+  function loadMd() {
+    if (window.OrosNotesMd) return Promise.resolve(window.OrosNotesMd);
+    if (mdP) return mdP;
+    mdP = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "../notes/md.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+      sc.onload = function () { resolve(window.OrosNotesMd || null); };
+      sc.onerror = function () { mdP = null; resolve(null); };
+      document.head.appendChild(sc);
+    });
+    return mdP;
+  }
+  function canPreview(tab) { return !!tab && tab.lang === "markdown"; }
+  function paintPreviewBtn() {
+    var b = $("btn-preview"), on = canPreview(active);
+    b.hidden = !on;
+    b.setAttribute("aria-pressed", on && preview ? "true" : "false");
+    var show = on && preview;
+    $("preview").hidden = !show;
+    document.body.classList.toggle("pv-on", show);
+    if (show) renderPreview();
+  }
+  function renderPreview() {
+    if (!preview || !canPreview(active) || !view) return;
+    var text = view.state.doc.toString();
+    loadMd().then(function (MD) {
+      var box = $("preview");
+      if (!MD || typeof MD.render !== "function") { box.textContent = t("pv.fail"); return; }
+      // MD.render returns safe HTML only (see above): wiki links stay inert.
+      box.innerHTML = MD.render(text.slice(0, 2000000), { wiki: function () { return ""; } });
+    });
+  }
+  function schedulePreview() {
+    if (!preview) return;
+    clearTimeout(pvTimer);
+    pvTimer = setTimeout(renderPreview, 250);
+  }
+  function togglePreview() {
+    if (!canPreview(active)) return;
+    preview = !preview;
+    paintPreviewBtn();
+    if (!preview && view) view.focus();
+  }
+
+  // ---------- 15d. Compare two tabs (wave 3) ----------
+  // Line by line, with Text Tools' diff (texttools/core.js, precached:
+  // Myers, then patience anchors for very different texts; never
+  // freezes). Same lines far from a change fold into one row.
+  var cmpP = null, cmpRows = [], cmpAt = -1;
+  var CMP_MAX = 200000, CMP_CONTEXT = 3;
+  function loadDiff() {
+    if (window.TextToolsCore && window.TextToolsCore.diffLines) return Promise.resolve(window.TextToolsCore);
+    if (cmpP) return cmpP;
+    cmpP = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "../texttools/core.js" + (SCRIPT_V ? "?v=" + SCRIPT_V : "");
+      sc.onload = function () { resolve(window.TextToolsCore || null); };
+      sc.onerror = function () { cmpP = null; resolve(null); };
+      document.head.appendChild(sc);
+    });
+    return cmpP;
+  }
+  function compareMenu() {
+    if (!active) return;
+    if (view) active.state = view.state;
+    var others = tabs.filter(function (x) { return x !== active; });
+    if (!others.length) { toast(t("cmp.none")); return; }
+    choose(t("cmp.pick", { name: active.name }), others.map(function (x) {
+      return { value: x.id, label: x.name, sub: whereText(x) };
+    })).then(function (id) {
+      var other = tabById(id);
+      if (other) showCompare(active, other);
+    });
+  }
+  function textOfTab(tab) { return (tab === active && view ? view.state : tab.state).doc.toString(); }
+  function showCompare(a, b) {
+    var ta = textOfTab(a).split("\n"), tb = textOfTab(b).split("\n");
+    if (ta.length > CMP_MAX || tb.length > CMP_MAX) { toast(t("cmp.big")); return; }
+    loadDiff().then(function (TT) {
+      if (!TT) { toast(t("cmp.fail")); return; }
+      var ops = TT.diffLines(ta, tb), add = 0, del = 0;
+      ops.forEach(function (o) { if (o[0] > 0) add++; else if (o[0] < 0) del++; });
+      $("cmp-title").textContent = t("cmp.title", { a: a.name, b: b.name });
+      $("cmp-sum").textContent = add || del ? t("cmp.sum", { add: add.toLocaleString(locale()), del: del.toLocaleString(locale()) }) : t("cmp.same");
+      paintCompare(ops, ta, tb);
+      $("cmp").hidden = false;
+      document.body.classList.add("cmp-on");
+      $("cmp-body").focus();
+      cmpAt = -1;
+      if (add || del) stepCompare(1);
+    });
+  }
+  function cmpRow(cls, na, nb, sign, text) {
+    var r = el("div", "dl " + cls);
+    r.appendChild(el("span", "dl-n", na));
+    r.appendChild(el("span", "dl-n", nb));
+    r.appendChild(el("span", "dl-s", sign));
+    r.appendChild(el("span", "dl-t", text));
+    return r;
+  }
+  function paintCompare(ops, ta, tb) {
+    var body = $("cmp-body");
+    body.textContent = "";
+    cmpRows = [];
+    // Which "same" lines are near a change (kept) and which fold.
+    var keep = new Uint8Array(ops.length), i, k;
+    for (i = 0; i < ops.length; i++) {
+      if (ops[i][0] !== 0) for (k = Math.max(0, i - CMP_CONTEXT); k <= Math.min(ops.length - 1, i + CMP_CONTEXT); k++) keep[k] = 1;
+    }
+    var frag = document.createDocumentFragment(), run = [];
+    function flush() {
+      if (!run.length) return;
+      if (run.length <= 2 * CMP_CONTEXT + 1) run.forEach(function (o) { frag.appendChild(sameRow(o)); });
+      else {
+        var hidden = run.slice();
+        var fold = el("button", "dl-fold", t("cmp.fold", { n: hidden.length.toLocaleString(locale()) }));
+        fold.type = "button";
+        fold.addEventListener("click", function () {
+          var f2 = document.createDocumentFragment();
+          hidden.forEach(function (o) { f2.appendChild(sameRow(o)); });
+          fold.replaceWith(f2);
+        });
+        frag.appendChild(fold);
+      }
+      run = [];
+    }
+    function sameRow(o) { return cmpRow("same", String(o[1] + 1), String(o[2] + 1), "", ta[o[1]]); }
+    for (i = 0; i < ops.length; i++) {
+      var o = ops[i];
+      if (o[0] === 0 && !keep[i]) { run.push(o); continue; }
+      flush();
+      var row;
+      if (o[0] === 0) row = sameRow(o);
+      else if (o[0] < 0) row = cmpRow("del", String(o[1] + 1), "", "−", ta[o[1]]);
+      else row = cmpRow("add", "", String(o[1] + 1), "+", tb[o[1]]);
+      if (o[0] !== 0 && (!i || ops[i - 1][0] === 0)) cmpRows.push(row);
+      frag.appendChild(row);
+    }
+    flush();
+    body.appendChild(frag);
+  }
+  function stepCompare(d) {
+    if (!cmpRows.length) return;
+    cmpAt = (cmpAt + d + cmpRows.length) % cmpRows.length;
+    cmpRows.forEach(function (r, i) { r.classList.toggle("cur", i === cmpAt); });
+    var r = cmpRows[cmpAt];
+    if (r.scrollIntoView) r.scrollIntoView({ block: "center" });
+    $("cmp-sum").textContent = $("cmp-sum").textContent.replace(/ · .*$/, "") + " · " + t("cmp.at", { i: cmpAt + 1, n: cmpRows.length });
+  }
+  function closeCompare() {
+    if ($("cmp").hidden) return;
+    $("cmp").hidden = true;
+    document.body.classList.remove("cmp-on");
+    $("cmp-body").textContent = "";
+    cmpRows = [];
+    if (view) view.focus();
+  }
+
+  // ---------- 15e. Key row for touch screens (wave 3) ----------
+  // Keys a phone keyboard hides: Tab, brackets, signs, arrows, Undo.
+  // A key never takes the focus from the text (pointerdown is cancelled),
+  // so the phone keyboard stays open.
+  var KEYS = [
+    { k: "tab", label: "⇥", aria: "key.tab" }, { k: "untab", label: "⇤", aria: "key.untab" },
+    { k: "left", label: "←", aria: "key.left" }, { k: "right", label: "→", aria: "key.right" },
+    { k: "up", label: "↑", aria: "key.up" }, { k: "down", label: "↓", aria: "key.down" },
+    { ins: "{" }, { ins: "}" }, { ins: "[" }, { ins: "]" }, { ins: "(" }, { ins: ")" }, { ins: "<" }, { ins: ">" },
+    { ins: "\"" }, { ins: "'" }, { ins: "`" }, { ins: "=" }, { ins: ";" }, { ins: ":" }, { ins: "/" }, { ins: "\\" },
+    { ins: "|" }, { ins: "-" }, { ins: "_" }, { ins: "+" }, { ins: "*" }, { ins: "#" }, { ins: "$" }, { ins: "&" },
+    { k: "undo", label: "↶", aria: "key.undo" }, { k: "redo", label: "↷", aria: "key.redo" }
+  ];
+  function keysWanted() {
+    if (typeof prefs.keys === "boolean") return prefs.keys;
+    try { return window.matchMedia("(pointer: coarse)").matches; } catch (e) { return false; }
+  }
+  function paintKeys() {
+    var row = $("keys");
+    row.hidden = !keysWanted();
+    if (row.hidden || row.firstChild) return;
+    KEYS.forEach(function (key) {
+      var b = el("button", "key", key.label || key.ins);
+      b.type = "button";
+      b.setAttribute("aria-label", key.aria ? t(key.aria) : key.ins);
+      b.addEventListener("pointerdown", function (e) { e.preventDefault(); });
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      b.addEventListener("click", function () { pressKey(key); });
+      row.appendChild(b);
+    });
+  }
+  function pressKey(key) {
+    if (!view) return;
+    if (key.ins) {
+      view.dispatch(view.state.replaceSelection(key.ins), { scrollIntoView: true, userEvent: "input.type" });
+    } else {
+      var cmd = { tab: K.indentMore, untab: K.indentLess, left: K.cursorCharLeft, right: K.cursorCharRight,
+        up: K.cursorLineUp, down: K.cursorLineDown, undo: K.undo, redo: K.redo }[key.k];
+      // Tab with no selection puts in one indent unit, as the Tab key does.
+      if (key.k === "tab" && view.state.selection.main.empty) view.dispatch(view.state.replaceSelection(L.indentString(view.state, L.getIndentUnit(view.state))), { scrollIntoView: true, userEvent: "input.type" });
+      else if (cmd) cmd(view);
+    }
+    if (!view.hasFocus) view.focus();
+  }
+
   // ---------- 16. Wiring ----------
   function wire() {
     paintIcons();
@@ -1634,6 +1930,15 @@
     $("btn-open").addEventListener("click", onOpen);
     $("btn-save").addEventListener("click", function () { save(); });
     $("btn-find").addEventListener("click", function () { if (view) F.openSearchPanel(view); });
+    $("btn-preview").addEventListener("click", togglePreview);
+    $("cmp-close").addEventListener("click", closeCompare);
+    $("cmp-next").addEventListener("click", function () { stepCompare(1); });
+    $("cmp-prev").addEventListener("click", function () { stepCompare(-1); });
+    $("cmp").addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeCompare(); }
+      else if (e.key === "F7") { e.preventDefault(); stepCompare(e.shiftKey ? -1 : 1); }
+    });
+    paintKeys();
     $("btn-menu").addEventListener("click", function (e) { e.stopPropagation(); openMenu(); });
     $("st-lang").addEventListener("click", pickLang);
     $("st-indent").addEventListener("click", pickIndent);
