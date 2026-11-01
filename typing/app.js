@@ -7,7 +7,8 @@
 // (never keydown alone), so dead keys (Greek tonos, dialytika) and
 // phone keyboards give the final character. `keydown` only lights the
 // physical key and notices a system keyboard in another language.
-// User text: none in wave 1; lesson text goes in with textContent.
+// User text: My texts (wave 2) and every lesson text go in with
+// textContent only, never as HTML.
 // ============================================================
 (function () {
   "use strict";
@@ -21,7 +22,9 @@
   var STORAGE_KEY = "oros-typing-data";
   var PREFS_KEY = "oros-typing-prefs";      // device-local {snd, osk}
   var DEV_KEY = "oros-typing-dev";          // device-local id of this device's rows
-  var C = window.TypingCore, K = window.TypingLayouts, CO = window.TypingCourse;
+  var TEXTS_KEY = "oros-typing-texts";      // My texts, slice "typingtexts"
+  var REM_KEY = "oros-typing-rem";          // device-local reminder {on, at}
+  var C = window.TypingCore, K = window.TypingLayouts, CO = window.TypingCourse, TX = window.TypingTexts;
 
   // ---------- 1. Language ----------
   function appLang() {
@@ -81,7 +84,26 @@
       "fs.1": "Small", "fs.2": "Medium", "fs.3": "Large",
       "conf.reset": "Reset all lessons, statistics and records on every device? This cannot be undone.",
       "conf.resetBtn": "Reset", "toast.reset": "Progress reset",
-      "full": "This device is out of storage space. The result was not saved."
+      "full": "This device is out of storage space. The result was not saved.",
+      "btn.practice": "Practise my weak keys", "btn.texts": "Texts",
+      "prac.none": "Finish lesson 1 first, then practice picks the keys that need it.",
+      "run.practice": "Practice: {k}", "run.text": "{t} · part {p} of {n}",
+      "res.practice": "Practice done", "res.text": "Text done", "res.nextPart": "Next part",
+      "tx.lib": "Texts from literature", "tx.libHint": "Short passages from public-domain books and poems.",
+      "tx.mine": "My texts", "tx.add": "Add a text",
+      "tx.mineHint": "Paste any text, or send one here from Notes or Writer with \"Send to an app…\".",
+      "tx.none": "No texts of your own yet.", "tx.by": "{a}, {y}", "tx.len": "{n} characters", "tx.parts": "{n} characters, {p} parts",
+      "tx.del": "Delete {t}",
+      "tx.tw": "Done with the lessons? Write your own text freely, without hints, on Typewriter's rolling paper.",
+      "tx.twBtn": "Write in Typewriter",
+      "add.title": "Add a text", "add.name": "Title", "add.text": "Text", "add.save": "Save",
+      "add.dropped": "Characters the keyboard ({name}) cannot type are left out: {n}.",
+      "add.empty": "Write or paste a text first.", "add.full": "You have 50 texts. Delete one first.",
+      "conf.del": "Delete the text \"{t}\" on every device?", "conf.delBtn": "Delete",
+      "toast.added": "Text saved", "toast.del": "Text deleted",
+      "st.chart": "Speed and accuracy, last 30 days", "st.chartNone": "Practise on a few days to see your progress here.",
+      "st.chartDay": "{d}: {w} wpm, {a}% accuracy",
+      "set.rem": "Remind me to practise", "set.remAt": "Reminder time"
     },
     el: {
       "app.name": "Τυφλό σύστημα",
@@ -130,7 +152,26 @@
       "fs.1": "Μικρό", "fs.2": "Μεσαίο", "fs.3": "Μεγάλο",
       "conf.reset": "Να μηδενιστούν όλα τα μαθήματα, τα στατιστικά και τα ρεκόρ σε όλες τις συσκευές; Δεν αναιρείται.",
       "conf.resetBtn": "Μηδενισμός", "toast.reset": "Η πρόοδος μηδενίστηκε",
-      "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Το αποτέλεσμα δεν αποθηκεύτηκε."
+      "full": "Ο χώρος αποθήκευσης της συσκευής γέμισε. Το αποτέλεσμα δεν αποθηκεύτηκε.",
+      "btn.practice": "Εξάσκηση στα αδύναμα πλήκτρα", "btn.texts": "Κείμενα",
+      "prac.none": "Τελείωσε πρώτα το μάθημα 1 και η εξάσκηση θα διαλέγει τα πλήκτρα που τη χρειάζονται.",
+      "run.practice": "Εξάσκηση: {k}", "run.text": "{t} · μέρος {p} από {n}",
+      "res.practice": "Η εξάσκηση τελείωσε", "res.text": "Το κείμενο τελείωσε", "res.nextPart": "Επόμενο μέρος",
+      "tx.lib": "Κείμενα από τη λογοτεχνία", "tx.libHint": "Μικρά αποσπάσματα από βιβλία και ποιήματα κοινού κτήματος.",
+      "tx.mine": "Τα κείμενά μου", "tx.add": "Νέο κείμενο",
+      "tx.mineHint": "Επικόλλησε όποιο κείμενο θέλεις ή στείλε ένα εδώ από τις Σημειώσεις ή τον Κειμενογράφο με το «Στείλε σε εφαρμογή…».",
+      "tx.none": "Δεν έχεις ακόμα δικά σου κείμενα.", "tx.by": "{a}, {y}", "tx.len": "{n} χαρακτήρες", "tx.parts": "{n} χαρακτήρες, {p} μέρη",
+      "tx.del": "Διαγραφή: {t}",
+      "tx.tw": "Τελείωσες τα μαθήματα; Γράψε ελεύθερα δικό σου κείμενο, χωρίς βοήθεια, στο χαρτί της Γραφομηχανής.",
+      "tx.twBtn": "Γράψε στη Γραφομηχανή",
+      "add.title": "Νέο κείμενο", "add.name": "Τίτλος", "add.text": "Κείμενο", "add.save": "Αποθήκευση",
+      "add.dropped": "Χαρακτήρες που δεν γράφονται με το πληκτρολόγιο ({name}) και θα παραλειφθούν: {n}.",
+      "add.empty": "Γράψε ή επικόλλησε πρώτα ένα κείμενο.", "add.full": "Έχεις 50 κείμενα. Διάγραψε πρώτα ένα.",
+      "conf.del": "Να διαγραφεί το κείμενο «{t}» σε όλες τις συσκευές;", "conf.delBtn": "Διαγραφή",
+      "toast.added": "Το κείμενο αποθηκεύτηκε", "toast.del": "Το κείμενο διαγράφηκε",
+      "st.chart": "Ταχύτητα και ακρίβεια, τελευταίες 30 μέρες", "st.chartNone": "Κάνε εξάσκηση μερικές μέρες για να δεις εδώ την πρόοδό σου.",
+      "st.chartDay": "{d}: {w} λ/λ, ακρίβεια {a}%",
+      "set.rem": "Υπενθύμιση για εξάσκηση", "set.remAt": "Ώρα υπενθύμισης"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, APP_ID, LANG);
@@ -152,6 +193,7 @@
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
+  var mine = TX.emptyMine();
   var prefs = { snd: false, osk: false };
   var DEV = "";
 
@@ -162,6 +204,8 @@
   function load() {
     try { data = C.normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || "null")); }
     catch (e) { data = C.empty(); }
+    try { mine = TX.normMine(JSON.parse(localStorage.getItem(TEXTS_KEY) || "null")); }
+    catch (e) { mine = TX.emptyMine(); }
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object") { prefs.snd = p.snd === true; prefs.osk = p.osk === true; }
@@ -185,6 +229,22 @@
     var api = syncApi();
     if (api && typeof api.markDirty === "function") api.markDirty();
   }
+  function saveMine(next) {
+    try { localStorage.setItem(TEXTS_KEY, TX.serializeMine(next)); }
+    catch (e) { toast(t("full")); return false; }
+    mine = next;
+    var api = syncApi();
+    if (api && typeof api.markDirty === "function") api.markDirty();
+    return true;
+  }
+  function textsGet() { return TX.normMine(mine); }
+  function textsSet(incoming) {
+    var merged = TX.mergeMine(mine, incoming);
+    if (TX.serializeMine(merged) === TX.serializeMine(mine)) return;
+    mine = merged;
+    try { localStorage.setItem(TEXTS_KEY, TX.serializeMine(mine)); } catch (e) { /* full: kept in memory */ }
+    if (!run && screen === "texts") renderTexts();
+  }
   function sliceGet() { return C.normalize(data); }
   function sliceSet(incoming) {
     var merged = C.merge(data, incoming);
@@ -197,6 +257,8 @@
     var api = syncApi();
     if (!api || typeof api.registerSlice !== "function") return;
     try { api.registerSlice(APP_ID, sliceGet, sliceSet, STORAGE_KEY, C.merge); }
+    catch (e) { /* the next boot registers again */ }
+    try { api.registerSlice("typingtexts", textsGet, textsSet, TEXTS_KEY, TX.mergeMine); }
     catch (e) { /* the next boot registers again */ }
   }
 
@@ -240,6 +302,7 @@
     back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     stats: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
     set: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    del: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
     restart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>'
   };
   function iconBtn(id, icon, label) {
@@ -274,7 +337,7 @@
   var screen = "home";
   function show(name) {
     screen = name;
-    ["home", "run", "stats"].forEach(function (s) { $(s).hidden = s !== name; });
+    ["home", "run", "stats", "texts"].forEach(function (s) { $(s).hidden = s !== name; });
     $("back-btn").hidden = name === "home";
     $("lay-sel").hidden = name !== "home";
     $("stats-btn").hidden = name === "stats";
@@ -309,6 +372,9 @@
     go.textContent = !nx ? t("btn.review") : nx === "h1" && !C.progress(data, L, "h1") ? t("btn.start") : t("btn.continue", { n: lessonNo(nx) });
     go.dataset.lesson = nx || "f1";
     $("lay-hint").textContent = t("lay.hint", { name: K.get(L).name });
+    var pb = $("prac-btn");
+    pb.setAttribute("aria-disabled", learnedUpTo() < 0 ? "true" : "false");
+    pb.title = learnedUpTo() < 0 ? t("prac.none") : "";
 
     var box = $("course");
     box.textContent = "";
@@ -338,6 +404,7 @@
     document.documentElement.setAttribute("data-fs", String(data.set.fs));
     if (screen === "home") renderHome();
     else if (screen === "stats") renderStats();
+    else if (screen === "texts") renderTexts();
   }
   function fillLaySelect(sel) {
     var cur = lay();
@@ -448,6 +515,38 @@
     var seed = (Date.now() % 100000) + 1;
     beginRun({ kind: "lesson", id: id, text: CO.build(lay(), id, seed) });
   }
+  // The last lesson with at least one star (-1: none yet).
+  function learnedUpTo() {
+    var ls = CO.lessons(), L = lay(), up = -1;
+    ls.forEach(function (x, i) { var p = C.progress(data, L, x.id); if (p && p.s >= 1) up = i; });
+    return up;
+  }
+  function startPractice() {
+    var up = learnedUpTo();
+    if (up < 0) { toast(t("prac.none")); return; }
+    var p = CO.practice(lay(), C.keyStats(data, lay()), up, (Date.now() % 100000) + 1);
+    beginRun({ kind: "practice", text: p.text, focus: p.keys });
+  }
+  // src "l:<library id>" | "m:<my text id>"; part from 0.
+  function textSource(src) {
+    var m = /^([lm]):(.+)$/.exec(String(src || ""));
+    if (!m) return null;
+    if (m[1] === "l") {
+      var x = TX.libText(m[2]);
+      return x ? { src: src, title: x.w, lay: x.l, text: x.t } : null;
+    }
+    var it = TX.mineById(mine, m[2]);
+    return it ? { src: src, title: TX.titleOf(it), lay: lay(), text: it.t } : null;
+  }
+  function startText(src, part) {
+    var x = textSource(src);
+    if (!x) return;
+    if (x.lay !== lay()) save(C.setPrefs(data, { lay: x.lay }, Date.now()));
+    var ps = TX.parts(TX.clean(lay(), x.text).text);
+    if (!ps.length) { toast(t("add.empty")); return; }
+    part = Math.max(0, Math.min(ps.length - 1, part | 0));
+    beginRun({ kind: "text", src: src, part: part, nparts: ps.length, title: x.title, text: ps[part] });
+  }
   function startTest(min) {
     var n = min === 5 ? 600 : min === 2 ? 260 : 140;
     beginRun({ kind: "test", min: min, text: CO.testText(lay(), (Date.now() % 100000) + 1, n) });
@@ -457,11 +556,12 @@
     stopRun();
     run = {
       kind: o.kind, id: o.id || "", min: o.min || 0, text: Array.from(o.text.normalize("NFC")),
+      src: o.src || "", part: o.part || 0, nparts: o.nparts || 0, title: o.title || "", focus: o.focus || [],
       pos: 0, marks: [], errHere: false, chars: 0, errors: 0, keys: {}, t0: 0, last: 0, active: 0, done: false
     };
     run.marks = run.text.map(function () { return 0; });
     show("run");
-    $("run-name").textContent = run.kind === "test" ? t("run.test", { n: run.min }) : lessonTitle(run.id);
+    $("run-name").textContent = runName(run);
     var L = lay();
     buildKeyboard($("kbd"), L, false);
     buildHands();
@@ -478,6 +578,12 @@
     applyOsk();
     focusCap();
     scheduleHint();
+  }
+  function runName(r) {
+    if (r.kind === "test") return t("run.test", { n: r.min });
+    if (r.kind === "practice") return t("run.practice", { k: r.focus.map(showLabel).join(" ") });
+    if (r.kind === "text") return r.nparts > 1 ? t("run.text", { t: r.title, p: r.part + 1, n: r.nparts }) : r.title;
+    return lessonTitle(r.id);
   }
   function stopRun() {
     clearInterval(tick); tick = 0;
@@ -541,7 +647,7 @@
     if (!run || run.done) return;
     var mode = data.set.hint;
     if (mode === "off") { lightKeys(null); return; }
-    if (mode === "on" || run.errHere || run.pos === 0 && run.kind === "lesson" && !run.t0) { lightKeys(strokesNow()); }
+    if (mode === "on" || run.errHere || run.pos === 0 && run.kind !== "test" && !run.t0) { lightKeys(strokesNow()); }
     else {
       lightKeys(null);
       hintTimer = setTimeout(function () { if (run) lightKeys(strokesNow()); }, 1500);
@@ -639,11 +745,14 @@
     lightKeys(null);
     var ms = elapsed();
     if (run.kind === "lesson") ms = Math.max(ms, 1000);
+    if (run.kind !== "test") ms = Math.max(ms, 1000);
     var L = lay(), rec = { lay: L, chars: run.chars, errors: run.errors, ms: ms, keys: run.keys };
-    if (run.kind === "lesson") rec.lesson = run.id; else rec.test = run.min;
+    if (run.kind === "lesson") rec.lesson = run.id;
+    else if (run.kind === "test") rec.test = run.min;
+    var done = { kind: run.kind, src: run.src, part: run.part, nparts: run.nparts };
     var before = run.kind === "test" ? (data.best[L + "|" + run.min] || null) : null;
     if (run.chars > 0) save(C.record(data, rec, Date.now(), DEV));
-    showResult(rec, before);
+    showResult(rec, before, done);
   }
 
   // Sound (device-local, off by default): a short tick, a low tone for a mistake.
@@ -717,29 +826,115 @@
   }
 
   // ---------- 9. Result ----------
-  function showResult(rec, before) {
+  function showResult(rec, before, done) {
     var w = C.wpm(rec.chars, rec.ms), a = C.accuracy(rec.chars, rec.errors);
-    var isTest = !!rec.test;
-    $("res-title").textContent = isTest ? t("res.test") : t("res.lesson", { n: lessonNo(rec.lesson) });
+    var isTest = !!rec.test, free = done.kind === "practice" || done.kind === "text";
+    $("res-title").textContent = isTest ? t("res.test") : done.kind === "practice" ? t("res.practice") :
+      done.kind === "text" ? t("res.text") : t("res.lesson", { n: lessonNo(rec.lesson) });
     var s = C.stars(w, a);
-    $("res-stars").textContent = isTest ? "" : "★★★".slice(0, s) + "☆☆☆".slice(0, 3 - s);
-    $("res-stars").hidden = isTest;
+    $("res-stars").textContent = isTest || free ? "" : "★★★".slice(0, s) + "☆☆☆".slice(0, 3 - s);
+    $("res-stars").hidden = isTest || free;
     $("res-wpm").textContent = String(w);
     $("res-acc").textContent = a + "%";
     $("res-time").textContent = mmss(rec.ms);
-    var note = isTest ? "" : t("res." + s);
+    var note = isTest ? "" : free ? (a < 90 ? t("res.0") : "") : t("res." + s);
     if (isTest && rec.chars > 0 && (!before || w > before.w)) note = t("res.best");
     $("res-note").textContent = note;
     var bad = Object.keys(rec.keys).filter(function (c) { return rec.keys[c][1] > 0; })
       .sort(function (x, y) { return rec.keys[y][1] - rec.keys[x][1]; }).slice(0, 5).map(showLabel);
     $("res-keys").textContent = bad.length ? t("res.keys", { k: bad.join("  ") }) : "";
-    var idx = isTest ? -1 : CO.indexOf(rec.lesson), ls = CO.lessons();
-    var nxt = $("res-next");
-    nxt.hidden = isTest || idx < 0 || idx >= ls.length - 1;
-    nxt.dataset.lesson = !nxt.hidden ? ls[idx + 1].id : "";
-    $("res-again").dataset.lesson = isTest ? "" : rec.lesson;
-    $("res-again").dataset.min = isTest ? String(rec.test) : "";
-    openDialog("dlg-result", (s >= 1 && !nxt.hidden) ? nxt : $("res-again"));
+    var idx = rec.lesson ? CO.indexOf(rec.lesson) : -1, ls = CO.lessons();
+    var nxt = $("res-next"), again = $("res-again");
+    nxt.dataset.lesson = ""; nxt.dataset.src = ""; nxt.dataset.part = "";
+    again.dataset.lesson = ""; again.dataset.min = ""; again.dataset.kind = done.kind;
+    again.dataset.src = done.src || ""; again.dataset.part = String(done.part || 0);
+    if (done.kind === "text") {
+      nxt.hidden = done.part >= done.nparts - 1;
+      nxt.textContent = t("res.nextPart");
+      if (!nxt.hidden) { nxt.dataset.src = done.src; nxt.dataset.part = String(done.part + 1); }
+    } else {
+      nxt.hidden = idx < 0 || idx >= ls.length - 1;
+      nxt.textContent = t("btn.next");
+      if (!nxt.hidden) nxt.dataset.lesson = ls[idx + 1].id;
+    }
+    if (rec.lesson) again.dataset.lesson = rec.lesson;
+    if (isTest) again.dataset.min = String(rec.test);
+    var good = done.kind === "text" ? a >= 90 : s >= 1;
+    openDialog("dlg-result", (good && !nxt.hidden) ? nxt : again);
+  }
+
+  // ---------- 9b. Texts (wave 2) ----------
+  function shell() {
+    try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
+    catch (e) { return null; }
+  }
+  function textRow(list, src, title, sub, onDel) {
+    var li = el("li", "trow");
+    var b = el("button", "topen");
+    b.type = "button";
+    b.dataset.src = src;
+    b.appendChild(el("span", "tname", title));
+    b.appendChild(el("span", "tsub", sub));
+    li.appendChild(b);
+    if (onDel) {
+      var d = el("button", "icon-btn tdel");
+      d.type = "button";
+      d.innerHTML = ICON.del;   // fixed markup written here, never user text
+      d.setAttribute("aria-label", t("tx.del", { t: title }));
+      d.title = t("tx.del", { t: title });
+      d.addEventListener("click", onDel);
+      li.appendChild(d);
+    }
+    list.appendChild(li);
+  }
+  function lenText(text) {
+    var n = Array.from(TX.clean(lay(), text).text).length, p = TX.parts(TX.clean(lay(), text).text).length;
+    return p > 1 ? t("tx.parts", { n: fmtNum(n), p: p }) : t("tx.len", { n: fmtNum(n) });
+  }
+  function renderTexts() {
+    var L = lay();
+    var lib = $("lib");
+    lib.textContent = "";
+    TX.library(L).forEach(function (x) {
+      textRow(lib, "l:" + x.id, x.w, t("tx.by", { a: x.a, y: x.y }) + " · " + lenText(x.t));
+    });
+    var box = $("mine");
+    box.textContent = "";
+    if (!mine.items.length) box.appendChild(el("li", "hint", t("tx.none")));
+    mine.items.slice().sort(function (a, b) { return b.m - a.m; }).forEach(function (it) {
+      var title = TX.titleOf(it);
+      textRow(box, "m:" + it.id, title, lenText(it.t), function () {
+        confirmBox(t("conf.del", { t: title }), t("conf.delBtn"), function () {
+          if (saveMine(TX.removeMine(mine, it.id, Date.now()))) { toast(t("toast.del")); renderTexts(); }
+        });
+      });
+    });
+    $("tw-box").hidden = !shell();
+  }
+  function openTexts() { stopRun(); show("texts"); renderTexts(); }
+  function addNote() {
+    var v = $("add-text").value, c = TX.clean(lay(), v);
+    $("add-note").textContent = c.dropped ? t("add.dropped", { n: c.dropped, name: K.get(lay()).name }) : "";
+  }
+  // A prefill from "Send to an app" or the Add button: nothing is
+  // saved until Save (BR-W8-6).
+  function openAdd(title, text) {
+    if (screen !== "texts") openTexts();
+    $("add-name").value = Array.from(String(title || "")).slice(0, TX.TITLE_MAX).join("");
+    $("add-text").value = Array.from(String(text || "")).slice(0, TX.TEXT_MAX).join("");
+    addNote();
+    openDialog("dlg-add", text ? $("add-save") : $("add-name"));
+  }
+  function saveAdd() {
+    var text = $("add-text").value;
+    if (!TX.clean(lay(), text).text) { $("add-note").textContent = t("add.empty"); return; }
+    if (mine.items.length >= TX.MAX_ITEMS) { $("add-note").textContent = t("add.full"); return; }
+    var r = TX.addMine(mine, $("add-name").value, text, Date.now());
+    if (!r.id) { $("add-note").textContent = t("add.empty"); return; }
+    if (!saveMine(r.data)) return;
+    closeDialogs();
+    toast(t("toast.added"));
+    renderTexts();
   }
 
   // ---------- 10. Statistics ----------
@@ -775,6 +970,8 @@
       var b = data.best[L + "|" + m];
       tile(best, t("test." + m), b ? b.w + " " + t("u.wpm") + " · " + b.a + "%" : t("st.none"));
     });
+
+    drawChart(hist, nowT);
 
     var days = $("days");
     days.textContent = "";
@@ -826,6 +1023,55 @@
     rows.forEach(function (x) { weak.appendChild(el("li", "", t("st.weak", { k: showLabel(x.c), p: Math.round(100 * x.p) }))); });
   }
 
+  // Speed (line) and accuracy (dots) per day, last 30 days, devices added up.
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, String(attrs[k])); });
+    return e;
+  }
+  function drawChart(hist, nowT) {
+    var box = $("chart");
+    box.textContent = "";
+    var byDay = {};
+    hist.forEach(function (h) { byDay[h.day] = h; });
+    var pts = [], maxW = 10;
+    for (var i = 29; i >= 0; i--) {
+      var d = C.ymd(nowT - i * 864e5), h = byDay[d];
+      if (h && h.ms >= 20000 && h.ch > 0) {
+        var w = C.wpm(h.ch, h.ms), a = C.accuracy(h.ch, h.er);
+        pts.push({ i: 29 - i, d: d, w: w, a: a });
+        maxW = Math.max(maxW, w);
+      }
+    }
+    if (pts.length < 2) { box.appendChild(el("p", "hint small", t("st.chartNone"))); return; }
+    maxW = Math.ceil(maxW / 10) * 10;
+    var W = 300, H = 120, P = 6;
+    var x = function (i) { return P + (W - 2 * P) * i / 29; };
+    var yW = function (w) { return H - P - (H - 2 * P) * w / maxW; };
+    var yA = function (a) { return H - P - (H - 2 * P) * Math.max(0, a - 80) / 20; };
+    var svg = svgEl("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "class": "chart-svg" });
+    var ttl = svgEl("title");
+    ttl.textContent = pts.map(function (p) { return t("st.chartDay", { d: fmtDay(p.d), w: p.w, a: p.a }); }).join("; ");
+    svg.appendChild(ttl);
+    [0.5, 1].forEach(function (f) {
+      svg.appendChild(svgEl("line", { x1: P, x2: W - P, y1: yW(maxW * f), y2: yW(maxW * f), "class": "grid" }));
+    });
+    var lbl = svgEl("text", { x: P, y: yW(maxW) + 10, "class": "axis" });
+    lbl.textContent = maxW + " " + t("u.wpm");
+    svg.appendChild(lbl);
+    svg.appendChild(svgEl("polyline", { points: pts.map(function (p) { return x(p.i).toFixed(1) + "," + yW(p.w).toFixed(1); }).join(" "), "class": "wline" }));
+    pts.forEach(function (p) {
+      svg.appendChild(svgEl("circle", { cx: x(p.i).toFixed(1), cy: yA(p.a).toFixed(1), r: 2.4, "class": "adot" }));
+    });
+    box.appendChild(svg);
+    var leg = el("p", "hint small legend");
+    leg.appendChild(el("span", "lg-w", t("u.wpm")));
+    leg.appendChild(document.createTextNode("  "));
+    leg.appendChild(el("span", "lg-a", t("u.acc") + " 80-100%"));
+    box.appendChild(leg);
+  }
+
   // ---------- 11. Dialogs ----------
   var lastFocus = null;
   function openDialog(id, focusEl) {
@@ -852,8 +1098,21 @@
     $("s-goal").value = String(data.set.goal);
     $("s-fs").value = String(data.set.fs);
     $("s-snd").checked = prefs.snd;
+    var rem = readRem();
+    $("s-rem").checked = rem.on;
+    $("s-rem-at").value = rem.at;
+    $("s-rem-at").disabled = !rem.on;
     $("s-osk").checked = prefs.osk;
     openDialog("dlg-set");
+  }
+  function readRem() {
+    var r = null;
+    try { r = JSON.parse(localStorage.getItem(REM_KEY) || "null"); } catch (e) { r = null; }
+    r = r && typeof r === "object" ? r : {};
+    return { on: r.on === true, at: typeof r.at === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.at) ? r.at : "19:00" };
+  }
+  function writeRem(on, at) {
+    try { localStorage.setItem(REM_KEY, JSON.stringify({ on: !!on, at: at })); } catch (e) { toast(t("full")); }
   }
   function setPref(patch) {
     save(C.setPrefs(data, patch, Date.now()));
@@ -873,6 +1132,19 @@
     $("lay-sel").addEventListener("change", function () { setPref({ lay: this.value }); });
     $("go-btn").addEventListener("click", function () { startLesson(this.dataset.lesson); });
     $("test-btn").addEventListener("click", function () { openDialog("dlg-test"); });
+    $("prac-btn").addEventListener("click", startPractice);
+    $("texts-btn").addEventListener("click", openTexts);
+    $("add-btn").addEventListener("click", function () { openAdd("", ""); });
+    $("add-save").addEventListener("click", saveAdd);
+    $("add-text").addEventListener("input", addNote);
+    $("texts").addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest(".topen");
+      if (b) startText(b.dataset.src, 0);
+    });
+    $("tw-btn").addEventListener("click", function () {
+      var sh = shell();
+      if (sh) { try { sh.__orosOpenAt("typewriter", null); } catch (err) { /* not installed */ } }
+    });
     $("course").addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest(".lesson");
       if (b) startLesson(b.dataset.lesson);
@@ -886,13 +1158,23 @@
     $("conf-no").addEventListener("click", closeDialogs);
     $("restart-btn").addEventListener("click", function () {
       if (!run) return;
-      if (run.kind === "test") startTest(run.min); else startLesson(run.id);
+      if (run.kind === "test") startTest(run.min);
+      else if (run.kind === "practice") beginRun({ kind: "practice", text: run.text.join(""), focus: run.focus });
+      else if (run.kind === "text") startText(run.src, run.part);
+      else startLesson(run.id);
     });
     $("res-home").addEventListener("click", function () { closeDialogs(); goHome(); });
     $("res-again").addEventListener("click", function () {
-      if (this.dataset.min) startTest(+this.dataset.min); else startLesson(this.dataset.lesson);
+      var k = this.dataset.kind;
+      if (k === "practice") startPractice();
+      else if (k === "text") startText(this.dataset.src, +this.dataset.part);
+      else if (this.dataset.min) startTest(+this.dataset.min);
+      else startLesson(this.dataset.lesson);
     });
-    $("res-next").addEventListener("click", function () { startLesson(this.dataset.lesson); });
+    $("res-next").addEventListener("click", function () {
+      if (this.dataset.src) startText(this.dataset.src, +this.dataset.part);
+      else startLesson(this.dataset.lesson);
+    });
 
     // settings
     $("s-lay").addEventListener("change", function () { setPref({ lay: this.value }); });
@@ -904,6 +1186,15 @@
       if (v >= 1 && v <= 120) setPref({ goal: v }); else this.value = String(data.set.goal);
     });
     $("s-snd").addEventListener("change", function () { prefs.snd = this.checked; savePrefs(); });
+    $("s-rem").addEventListener("change", function () {
+      var r = readRem();
+      writeRem(this.checked, r.at);
+      $("s-rem-at").disabled = !this.checked;
+    });
+    $("s-rem-at").addEventListener("change", function () {
+      if (/^([01]\d|2[0-3]):[0-5]\d$/.test(this.value)) writeRem(readRem().on, this.value);
+      else this.value = readRem().at;
+    });
     $("s-osk").addEventListener("change", function () { prefs.osk = this.checked; savePrefs(); applyOsk(); });
     $("s-reset").addEventListener("click", function () {
       confirmBox(t("conf.reset"), t("conf.resetBtn"), function () {
@@ -944,6 +1235,7 @@
         return;
       }
       if (e.target === $("cap")) return;
+      if (screen === "texts" && e.code === "Escape") { e.preventDefault(); goHome(); return; }
       if (screen === "run" && run && !e.ctrlKey && !e.metaKey && !e.altKey && e.code !== "Tab") {
         // a key while the field lost focus: take it back and let the key through
         focusCap();
@@ -954,18 +1246,36 @@
     });
   }
 
-  // ---------- 13. Deep link: {lesson} | {test: 1|2|5} | {stats: 1} ----------
+  // ---------- 13. Deep link ----------
+  // {lesson} | {test: 1|2|5} | {stats: 1} | {practice: 1} | {texts: 1}
+  // | {text: "l:<id>" | "m:<id>"} (shows the Texts screen) | {home: 1}
+  // | {addText: {title, text}} (BR-SEND: the Add dialog, filled, unsaved)
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (typeof target.lesson === "string" && CO.lesson(target.lesson)) startLesson(target.lesson);
     else if ([1, 2, 5].indexOf(target.test) >= 0) startTest(target.test);
     else if (target.stats) { stopRun(); show("stats"); renderStats(); }
+    else if (target.practice) startPractice();
+    else if (target.addText && typeof target.addText === "object") {
+      closeDialogs();
+      openAdd(typeof target.addText.title === "string" ? target.addText.title : "",
+              typeof target.addText.text === "string" ? target.addText.text : "");
+    }
+    else if (target.texts || typeof target.text === "string") {
+      closeDialogs();
+      openTexts();
+      if (typeof target.text === "string") {
+        var b = document.querySelector('#texts .topen[data-src="' + (/^[lm]:[a-z0-9-]{1,40}$/.test(target.text) ? target.text : "") + '"]');
+        if (b) { b.scrollIntoView({ block: "center" }); b.focus(); }
+      }
+    }
+    else if (target.home) { closeDialogs(); goHome(); }
   };
   function takePending() {
     try {
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") {
-        var pending = p.__orosTakeTarget(APP_ID);
+        var pending = p.__orosTakeTarget("typing");
         if (pending) window.__orosOpenAt(pending);
       }
     } catch (e) { /* standalone */ }

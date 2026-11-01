@@ -116,7 +116,7 @@ small {
 }
 
 .proposal-block.dig {
-  border-left-color: #c8a96e; /* gold variant for digital stream */
+  border-left-color: #d4af37; /* gold variant for digital stream */
 }
 
 .proposal-level {
@@ -239,7 +239,7 @@ small {
 }
 
 .streak-chip.dig {
-  border-left: 3px solid #c8a96e;
+  border-left: 3px solid #d4af37;
   padding-left: 10px;
 }
 
@@ -265,7 +265,7 @@ small {
   right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  color: #c8a96e;
+  color: #d4af37;
   font-size: 12px;
 }
 

@@ -828,7 +828,7 @@
     a.href = apkHref(id, win.navigator.userAgent, true, pkgOf(id));
     a.rel = "noopener";
     a.textContent = T("get");
-    a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+    a.style.cssText = "border-radius:8px;padding:8px 14px;background:#d4af37;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
     bar.appendChild(a);
     var x = doc.createElement("button");
     x.type = "button";
@@ -897,20 +897,20 @@
         var a = doc.createElement("a");
         a.href = installUrl(id, win.navigator.userAgent, win.location.origin, inApp);
         a.textContent = T.chrome;
-        a.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+        a.style.cssText = "border-radius:8px;padding:8px 14px;background:#d4af37;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
         bar.appendChild(a);
       } else if (withButton === "win" && /Android/i.test(win.navigator.userAgent || "")) {
         // Chrome's installed orOS took the link: the APK installs it
         var k = doc.createElement("a");
         k.href = apkHref(id, win.navigator.userAgent, true);
         k.textContent = T.apk;
-        k.style.cssText = "border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
+        k.style.cssText = "border-radius:8px;padding:8px 14px;background:#d4af37;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
         bar.appendChild(k);
       } else if (withButton === true) {
         var b = doc.createElement("button");
         b.type = "button";
         b.textContent = T.btn;
-        b.style.cssText = "border:0;border-radius:8px;padding:8px 14px;background:#c8a96e;color:#1b1a18;font:inherit;font-weight:600";
+        b.style.cssText = "border:0;border-radius:8px;padding:8px 14px;background:#d4af37;color:#1b1a18;font:inherit;font-weight:600";
         b.addEventListener("click", function () {
           var d = deferred;
           deferred = null;

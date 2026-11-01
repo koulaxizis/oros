@@ -231,7 +231,7 @@ select.chip { padding: 6px 8px; max-width: 9.5em; }
 .dlg h2 { font-size: 18px; }
 .dlg .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; min-height: 40px; }
 .dlg .row > span { flex: 1 1 140px; min-width: 0; }
-.dlg .row select, .dlg .row input[type="number"] {
+.dlg .row select, .dlg .row input[type="number"], .dlg .row input[type="time"] {
   min-height: 40px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px;
   background: var(--bg); color: var(--text); font: inherit; max-width: 100%;
 }
@@ -264,3 +264,38 @@ select.chip { padding: 6px 8px; max-width: 9.5em; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* ---------- Wave 2: practice, texts, chart ---------- */
+.home-act { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.home-act .chip[aria-disabled="true"] { opacity: .6; }
+#texts h2 { font-size: 15px; margin: 16px 2px 4px; color: var(--text-dim); font-weight: 700; }
+#texts > h2:first-child { margin-top: 4px; }
+.h2row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.h2row h2 { margin: 0 2px !important; }
+.tlist { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+.trow { display: flex; align-items: stretch; gap: 6px; }
+.topen {
+  flex: 1; min-width: 0; min-height: 48px; text-align: left; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--panel-bg); color: var(--text);
+  font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px;
+}
+.topen:hover, .topen:focus-visible { border-color: var(--accent); }
+.tname { font-weight: 700; overflow-wrap: anywhere; }
+.tsub { font-size: 13px; color: var(--text-dim); overflow-wrap: anywhere; }
+.tdel { align-self: center; color: var(--danger); }
+.tw { padding: 12px 14px; margin-top: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.dlg .col { display: flex; flex-direction: column; gap: 4px; }
+.dlg .col input, .dlg .col textarea {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); font: inherit;
+}
+.dlg .col textarea { resize: vertical; min-height: 120px; }
+.chart { margin: 6px 0 4px; }
+.chart-svg { width: 100%; height: auto; max-height: 180px; display: block; }
+.chart .grid { stroke: var(--border); stroke-width: 1; }
+.chart .axis { fill: var(--text-dim); font-size: 9px; }
+.chart .wline { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .adot { fill: var(--ok); }
+.legend .lg-w::before, .legend .lg-a::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.legend .lg-w::before { background: var(--accent); }
+.legend .lg-a::before { background: var(--ok); border-radius: 50%; }

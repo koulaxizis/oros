@@ -14,11 +14,15 @@
 //     localStorage "oros-pad-session", settings "oros-pad-prefs".
 //     Nothing registers with sync (no slice): Pad never uploads by
 //     itself, a file goes up only when the person saves it.
-// Saving to the orOS disk in place checks first that the file is
-// still the version Pad opened (size + time, then the text). When
-// it changed in the meantime (another device, another app), Pad
-// never overwrites it: it offers a copy next to it, or opening the
-// other version in a new tab.
+// Save writes a file back where it came from: the orOS disk, This
+// computer (orOS USB / Portable, pcdialog path API with ifmtime) or a
+// file of this device with its File System Access handle (store
+// "handles"). It checks first that the file is still the version Pad
+// opened (size + time, then the bytes' hash, PAD-CF). When it changed
+// in the meantime (another device, app or program), Pad never
+// overwrites it: it offers a copy next to it, or opening the other
+// version in a new tab. Recent files (disk, This computer) are in
+// the session.
 // A file is shown as text only. Pad never runs a file.
 // ============================================================
 (function () {
@@ -53,6 +57,16 @@
       "m.saveAs": "Save as…", "m.goto": "Go to line…", "m.replace": "Find and replace", "m.wrap": "Word wrap", "m.nums": "Line numbers",
       "m.ws": "Show spaces and tabs", "m.brackets": "Close brackets and quotes", "m.bigger": "Larger text", "m.smaller": "Smaller text",
       "m.closeTab": "Close tab", "m.closeOthers": "Close other saved tabs", "m.help": "Help",
+      "m.recent": "Recent files…", "recent.title": "Recent files", "recent.none": "No recent files yet.",
+      "recent.clear": "Clear the list", "recent.cleared": "The list of recent files is empty now.",
+      "recent.gone": "{name} is no longer there.",
+      "from.pc": "This computer", "from.pcSub": "A file in this computer's folders and disks",
+      "pc.none": "This computer is not available here.",
+      "where.pc": "This computer: {path}", "where.fsa": "On this device (saved in place)",
+      "cf.title.pc": "{name} changed on this computer", "cf.title.fsa": "{name} changed on this device",
+      "gone.pc": "{name} is no longer in that folder of this computer. Save it there again?",
+      "gone.fsa": "{name} is no longer where it was on this device. Save it there again?",
+      "perm.denied": "Pad may not write to this file. Use Save as to keep your text somewhere else.",
       "from.title": "Open from", "from.disk": "orOS disk", "from.diskSub": "Your files in orOS, synced and encrypted",
       "from.device": "This device", "from.deviceSub": "A file on this computer or phone",
       "to.title": "Save to", "to.diskSub": "Saved in orOS, follows you to your other devices",
@@ -104,6 +118,16 @@
       "m.saveAs": "Αποθήκευση ως…", "m.goto": "Μετάβαση σε γραμμή…", "m.replace": "Εύρεση και αντικατάσταση", "m.wrap": "Αναδίπλωση γραμμών", "m.nums": "Αριθμοί γραμμών",
       "m.ws": "Εμφάνιση κενών και tab", "m.brackets": "Αυτόματο κλείσιμο αγκυλών και εισαγωγικών", "m.bigger": "Μεγαλύτερα γράμματα", "m.smaller": "Μικρότερα γράμματα",
       "m.closeTab": "Κλείσιμο καρτέλας", "m.closeOthers": "Κλείσιμο των άλλων αποθηκευμένων καρτελών", "m.help": "Βοήθεια",
+      "m.recent": "Πρόσφατα αρχεία…", "recent.title": "Πρόσφατα αρχεία", "recent.none": "Δεν υπάρχουν ακόμη πρόσφατα αρχεία.",
+      "recent.clear": "Καθαρισμός της λίστας", "recent.cleared": "Η λίστα με τα πρόσφατα αρχεία άδειασε.",
+      "recent.gone": "Το {name} δεν υπάρχει πια εκεί.",
+      "from.pc": "Αυτός ο υπολογιστής", "from.pcSub": "Ένα αρχείο στους φακέλους και τους δίσκους αυτού του υπολογιστή",
+      "pc.none": "Ο υπολογιστής δεν είναι διαθέσιμος εδώ.",
+      "where.pc": "Αυτός ο υπολογιστής: {path}", "where.fsa": "Σε αυτή τη συσκευή (αποθήκευση στη θέση του)",
+      "cf.title.pc": "Το {name} άλλαξε σε αυτόν τον υπολογιστή", "cf.title.fsa": "Το {name} άλλαξε σε αυτή τη συσκευή",
+      "gone.pc": "Το {name} δεν υπάρχει πια σε εκείνον τον φάκελο του υπολογιστή. Να αποθηκευτεί ξανά εκεί;",
+      "gone.fsa": "Το {name} δεν υπάρχει πια εκεί που ήταν σε αυτή τη συσκευή. Να αποθηκευτεί ξανά εκεί;",
+      "perm.denied": "Το Pad δεν έχει άδεια να γράψει σε αυτό το αρχείο. Με την Αποθήκευση ως κρατάς το κείμενό σου κάπου αλλού.",
       "from.title": "Άνοιγμα από", "from.disk": "Δίσκος orOS", "from.diskSub": "Τα αρχεία σου στο orOS, συγχρονισμένα και κρυπτογραφημένα",
       "from.device": "Αυτή η συσκευή", "from.deviceSub": "Ένα αρχείο σε αυτόν τον υπολογιστή ή το κινητό",
       "to.title": "Αποθήκευση σε", "to.diskSub": "Μένει στο orOS και σε ακολουθεί στις άλλες συσκευές σου",
@@ -204,6 +228,7 @@
     folder: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>',
     up: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     check: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>'
   };
   function paintIcons(rootEl) {
@@ -296,6 +321,7 @@
       if (note) d.appendChild(el("p", "pd-text", note));
       var list = el("div", "pd-list");
       rows.forEach(function (r) {
+        if (r.head) { list.appendChild(el("p", "pd-head", r.head)); return; }
         var b = el("button", "pd-row" + (r.on ? " on" : ""));
         b.type = "button";
         if (r.ico) { var i = el("span", "ico"); i.innerHTML = ICO[r.ico]; b.appendChild(i); }
@@ -311,7 +337,7 @@
       var row = el("div", "pd-btns");
       row.appendChild(button(t("btn.cancel"), "chip", function () { close(null); }));
       d.appendChild(row);
-      var on = list.querySelector(".on") || list.firstChild;
+      var on = list.querySelector(".on") || list.querySelector(".pd-row");
       if (on) setTimeout(function () { on.focus(); }, 0);
     });
   }
@@ -355,6 +381,19 @@
     try { return (window.parent && window.parent !== window && window.parent.orosDialog) || null; }
     catch (e) { return null; }
   }
+  // This computer on orOS USB / Portable (pcdialog.js): path reads and
+  // writes with the launcher's ifmtime check.
+  function pcApi() {
+    try {
+      var p = window.parent && window.parent !== window && window.parent.orosPcDialog;
+      return p && typeof p.enabled === "function" && p.enabled() && typeof p.write === "function" ? p : null;
+    } catch (e) { return null; }
+  }
+  // File System Access (desktop Chrome / Edge): a file chosen here keeps
+  // its handle, so Save writes it again in place. Feature detection only.
+  function fsaOk() { return typeof window.showOpenFilePicker === "function" && typeof window.showSaveFilePicker === "function"; }
+  function isHandle(h) { return !!h && typeof h === "object" && h.kind === "file" && typeof h.getFile === "function"; }
+  function isAbort(e) { return !!e && e.name === "AbortError"; }
   function openDeviceFile() {
     var D = shellDialog();
     if (D && typeof D.openFile === "function") return Promise.resolve(D.openFile(""));
@@ -389,13 +428,21 @@
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
 
   // ---------- 7. Session store (IndexedDB "oros-pad", this device) ----------
+  // Store "tabs": one row per open tab (text included). Store "handles"
+  // (since wave 2): { id, hdl } the File System Access handle of a tab,
+  // read only when that tab saves, so a browser that cannot bring a
+  // handle back never stops the tabs themselves from coming back.
   var dbP = null;
   function db() {
     if (dbP) return dbP;
     dbP = new Promise(function (resolve) {
       try {
-        var req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = function () { if (!req.result.objectStoreNames.contains("tabs")) req.result.createObjectStore("tabs", { keyPath: "id" }); };
+        var req = indexedDB.open(DB_NAME, 2);
+        req.onupgradeneeded = function () {
+          var names = req.result.objectStoreNames;
+          if (!names.contains("tabs")) req.result.createObjectStore("tabs", { keyPath: "id" });
+          if (!names.contains("handles")) req.result.createObjectStore("handles", { keyPath: "id" });
+        };
         req.onsuccess = function () { resolve(req.result); };
         req.onerror = function () { resolve(null); };
         req.onblocked = function () { resolve(null); };
@@ -426,6 +473,33 @@
           tx.oncomplete = function () { resolve(true); };
           tx.onerror = tx.onabort = function () { resolve(false); };
         } catch (e) { resolve(false); }
+      });
+    });
+  }
+  // A handle the browser cannot store is simply not kept (the tab
+  // then saves through Save as after a restart).
+  function handlePut(id, h) {
+    return db().then(function (d) {
+      if (!d) return false;
+      return new Promise(function (resolve) {
+        try {
+          var tx = d.transaction("handles", "readwrite"), st = tx.objectStore("handles");
+          if (h) st.put({ id: id, hdl: h }); else st.delete(id);
+          tx.oncomplete = function () { resolve(true); };
+          tx.onerror = tx.onabort = function () { resolve(false); };
+        } catch (e) { resolve(false); }
+      });
+    });
+  }
+  function handleGet(id) {
+    return db().then(function (d) {
+      if (!d) return null;
+      return new Promise(function (resolve) {
+        try {
+          var r = d.transaction("handles").objectStore("handles").get(id);
+          r.onsuccess = function () { resolve(r.result && isHandle(r.result.hdl) ? r.result.hdl : null); };
+          r.onerror = function () { resolve(null); };
+        } catch (e) { resolve(null); }
       });
     });
   }
@@ -636,8 +710,13 @@
 
   function whereText(tab) {
     if (!tab.loc) return t("where.new");
-    if (tab.loc.kind === "disk") return t("where.disk", { path: tab.loc.path.slice(DISK_ROOT.length) || "/" });
+    if (tab.loc.kind === "disk" || tab.loc.kind === "pc") return whereOf(tab.loc);
+    if (tab.loc.kind === "fsa" && (isHandle(tab.hdl) || tab.hdlStored)) return t("where.fsa");
     return t("where.device");
+  }
+  function whereOf(loc) {
+    if (loc.kind === "pc") return t("where.pc", { path: loc.path });
+    return t("where.disk", { path: loc.path.slice(DISK_ROOT.length) || "/" });
   }
 
   function paintPos() {
@@ -690,10 +769,12 @@
       id: opts.id || newId(),
       name: C.safeName(opts.name, C.untitledName(t("untitled"), tabs.map(function (x) { return x.name; }))),
       lang: opts.lang || "text", enc: opts.enc || "utf-8", eol: opts.eol || "lf", mixed: !!opts.mixed,
-      dirty: !!opts.dirty, loc: opts.loc || null, raw: opts.raw || null, big: !!opts.big,
+      dirty: !!opts.dirty, loc: opts.loc || null, hdl: null, hdlStored: !!(opts.restored && opts.loc && opts.loc.kind === "fsa"),
+      raw: opts.raw || null, big: !!opts.big,
       indent: C.detectIndent(text) || { tabs: false, size: 4 }, top: opts.top || 0, state: null
     };
     tab.state = makeState(tab, text, opts.sel);
+    if (isHandle(opts.hdl)) setHandle(tab, opts.hdl);
     var at = active ? tabs.indexOf(active) + 1 : tabs.length;
     tabs.splice(at, 0, tab);
     schedulePersist(tab);
@@ -701,6 +782,25 @@
   }
 
   function newTab() { activate(addTab({})); }
+
+  // The tab's device handle: kept in the "handles" store, read back only
+  // when the tab saves (loadHandle).
+  function setHandle(tab, h) {
+    var had = tab.hdl || tab.hdlStored;
+    tab.hdl = isHandle(h) ? h : null;
+    tab.hdlStored = false;
+    if (tab.hdl || had) handlePut(tab.id, tab.hdl);
+  }
+  function loadHandle(tab) {
+    if (tab.hdl || !tab.hdlStored) return Promise.resolve(tab.hdl);
+    tab.hdlStored = false;
+    return handleGet(tab.id).then(function (h) {
+      tab.hdl = h;
+      // A handle that did not come back: the file is a plain copy now.
+      if (!h && tab.loc && tab.loc.kind === "fsa") { tab.loc = { kind: "device" }; paintTabs(); paintStatus(); schedulePersist(tab); }
+      return h;
+    });
+  }
 
   // An empty, never-saved tab is replaced when a file opens.
   function isBlank(tab) { return tab && !tab.loc && !tab.dirty && (tab === active && view ? view.state : tab.state).doc.length === 0; }
@@ -711,6 +811,7 @@
     tabs.splice(i, 1);
     delete pendingWrite[tab.id];
     pendingDel[tab.id] = true;
+    if (tab.hdl || tab.hdlStored) handlePut(tab.id, null);
     if (tab === active) {
       active = null;
       if (!tabs.length) addTab({});
@@ -739,7 +840,7 @@
   }
 
   // ---------- 11. Opening ----------
-  // bytes → a tab. src: { name, loc, mtime, size }
+  // bytes → a tab. src: { name, loc, hdl? }
   function openBytes(buf, src) {
     var bytes = new Uint8Array(buf);
     var size = bytes.length;
@@ -766,7 +867,7 @@
       var firstLine = text.slice(0, 200).split("\n")[0];
       var replace = isBlank(active) ? active : null;
       var tab = addTab({ name: src.name, text: text, lang: C.guessLang(src.name, firstLine), enc: enc, eol: eol.eol, mixed: eol.mixed,
-        loc: src.loc, raw: size <= KEEP_RAW ? bytes : null, big: big });
+        loc: src.loc, hdl: src.hdl, raw: size <= KEEP_RAW ? bytes : null, big: big });
       if (replace) dropTab(replace);
       activate(tab);
       if (eol.mixed) toast(t("eol.mixed"));
@@ -775,15 +876,22 @@
   }
 
   // Already open? Show that tab instead of a second copy.
-  function findDiskTab(path) {
-    for (var i = 0; i < tabs.length; i++) if (tabs[i].loc && tabs[i].loc.kind === "disk" && tabs[i].loc.path === path) return tabs[i];
+  function findTab(loc) {
+    for (var i = 0; i < tabs.length; i++) if (C.sameLoc(tabs[i].loc, loc)) return tabs[i];
     return null;
+  }
+  function locOf(kind, path, buf, mtime) {
+    return { kind: kind, path: path, mtime: mtime || 0, size: buf.byteLength, h: C.hashBytes(new Uint8Array(buf)) };
+  }
+  function forgetRecent(loc) {
+    recent = recent.filter(function (r) { return !C.sameLoc(r, loc); });
+    schedulePersist(null);
   }
 
   function openDiskPath(path) {
     var fs = shellFS();
     if (!fs) { toast(t("disk.none")); return Promise.resolve(null); }
-    var open = findDiskTab(path);
+    var open = findTab({ kind: "disk", path: path });
     if (open) { activate(open); return Promise.resolve(open); }
     var name = C.baseName(path);
     var st = null;
@@ -794,32 +902,130 @@
     }).then(function (blob) {
       if (!blob) return null;
       return blob.arrayBuffer().then(function (buf) {
-        return openBytes(buf, { name: name, loc: { kind: "disk", path: path, mtime: st && st.mtime || 0, size: st && st.size || buf.byteLength, h: C.hashBytes(new Uint8Array(buf)) } });
+        return openBytes(buf, { name: name, loc: locOf("disk", path, buf, st && st.mtime) });
       });
     }).then(function (tab) {
-      if (tab) rememberDir(path.slice(0, path.lastIndexOf("/")) || DISK_ROOT);
+      if (tab) { rememberDir(path.slice(0, path.lastIndexOf("/")) || DISK_ROOT); pushRecent(tab.loc); }
       return tab;
-    }, function () { toast(t("open.fail", { name: name })); return null; });
-  }
-
-  function openDevice() {
-    return openDeviceFile().then(function (file) {
-      if (!file) return null;
-      if (file.size > MAX_BYTES) { toast(t("huge", { name: file.name, size: fmtSize(file.size) })); return null; }
-      return file.arrayBuffer().then(function (buf) {
-        return openBytes(buf, { name: file.name, loc: { kind: "device" } });
-      }, function () { toast(t("open.fail", { name: file.name })); return null; });
+    }, function (e) {
+      if (e && e.code === "ENOENT") { forgetRecent({ kind: "disk", path: path }); toast(t("recent.gone", { name: name })); }
+      else toast(t("open.fail", { name: name }));
+      return null;
     });
   }
 
+  // A file of This computer (orOS USB / Portable) by its path.
+  function openPcPath(path) {
+    var P = pcApi();
+    if (!P) { toast(t("pc.none")); return Promise.resolve(null); }
+    var open = findTab({ kind: "pc", path: path });
+    if (open) { activate(open); return Promise.resolve(open); }
+    var name = C.baseName(path);
+    return Promise.resolve(P.stat(path)).then(function (st) {
+      if (st && st.size > MAX_BYTES) { toast(t("huge", { name: name, size: fmtSize(st.size) })); return null; }
+      return Promise.resolve(P.read(path)).then(function (file) {
+        return file.arrayBuffer().then(function (buf) {
+          return openBytes(buf, { name: name, loc: locOf("pc", path, buf, file.lastModified || st && st.mtime) });
+        });
+      });
+    }).then(function (tab) {
+      if (tab) pushRecent(tab.loc);
+      return tab;
+    }, function (e) {
+      if (e && e.code === "notfound") { forgetRecent({ kind: "pc", path: path }); toast(t("recent.gone", { name: name })); }
+      else toast(t("open.fail", { name: name }));
+      return null;
+    });
+  }
+
+  // A file of this device with its handle (File System Access).
+  function handleTab(h) {
+    return tabs.reduce(function (p, x) {
+      return p.then(function (hit) {
+        if (hit || !isHandle(x.hdl) || typeof x.hdl.isSameEntry !== "function") return hit;
+        return x.hdl.isSameEntry(h).then(function (same) { return same ? x : null; }, function () { return null; });
+      });
+    }, Promise.resolve(null));
+  }
+  function openHandle(h) {
+    return handleTab(h).then(function (open) {
+      if (open) { activate(open); return open; }
+      return h.getFile().then(function (file) {
+        if (file.size > MAX_BYTES) { toast(t("huge", { name: file.name, size: fmtSize(file.size) })); return null; }
+        return file.arrayBuffer().then(function (buf) {
+          return openBytes(buf, { name: file.name, hdl: h,
+            loc: { kind: "fsa", mtime: file.lastModified || 0, size: buf.byteLength, h: C.hashBytes(new Uint8Array(buf)) } });
+        });
+      });
+    }).then(null, function () { toast(t("open.fail", { name: h.name || "" })); return null; });
+  }
+
+  // A plain File (input picker, Open with, Files' copy): a copy, saved
+  // again through Save as. On This computer pcdialog knows its path.
+  function openFileObj(file) {
+    if (!file) return Promise.resolve(null);
+    if (file.size > MAX_BYTES) { toast(t("huge", { name: file.name, size: fmtSize(file.size) })); return Promise.resolve(null); }
+    var P = pcApi(), o = P && typeof P.opened === "function" ? P.opened(file.name) : null;
+    if (o && o.path) {
+      var open = findTab({ kind: "pc", path: o.path });
+      if (open) { activate(open); return Promise.resolve(open); }
+    }
+    return file.arrayBuffer().then(function (buf) {
+      var loc = o && o.path ? locOf("pc", o.path, buf, o.mtime || file.lastModified) : { kind: "device" };
+      return openBytes(buf, { name: file.name, loc: loc }).then(function (tab) {
+        if (tab && loc.kind === "pc") pushRecent(loc);
+        return tab;
+      });
+    }, function () { toast(t("open.fail", { name: file.name })); return null; });
+  }
+
+  function openDevice() {
+    if (!pcApi() && fsaOk()) {
+      return window.showOpenFilePicker({ multiple: false }).then(function (hs) {
+        return hs && hs[0] ? openHandle(hs[0]) : null;
+      }, function (e) { if (!isAbort(e)) toast(t("open.fail", { name: "" })); return null; });
+    }
+    return openDeviceFile().then(openFileObj);
+  }
+
+  function openRecent(r) {
+    if (r.kind === "pc") return openPcPath(r.path);
+    return openDiskPath(r.path);
+  }
+  // Recent files this page can reach now (the disk, This computer).
+  function reachableRecent() {
+    var fs = !!shellFS(), pc = !!pcApi();
+    return recent.filter(function (r) { return r.kind === "disk" ? fs : pc; });
+  }
+  function recentRows(list) {
+    return list.map(function (r) {
+      return { value: r, label: C.baseName(r.path), sub: whereOf({ kind: r.kind, path: r.path.slice(0, r.path.lastIndexOf("/")) || "/" }), ico: "clock" };
+    });
+  }
+
+  function deviceRow(save) {
+    var pc = !!pcApi();
+    return { value: "device", label: t(pc ? "from.pc" : "from.device"), sub: t(pc ? "from.pcSub" : (save ? "to.deviceSub" : "from.deviceSub")), ico: "device" };
+  }
   function onOpen() {
-    if (!shellFS()) { openDevice(); return; }
-    choose(t("from.title"), [
-      { value: "disk", label: t("from.disk"), sub: t("from.diskSub"), ico: "disk" },
-      { value: "device", label: t("from.device"), sub: t("from.deviceSub"), ico: "device" }
-    ]).then(function (v) {
+    var rows = [];
+    if (shellFS()) rows.push({ value: "disk", label: t("from.disk"), sub: t("from.diskSub"), ico: "disk" });
+    rows.push(deviceRow(false));
+    var rec = reachableRecent().filter(function (r) { return !findTab(r); }).slice(0, 5);
+    if (rows.length === 1 && !rec.length) { openDevice(); return; }
+    if (rec.length) rows = rows.concat([{ head: t("recent.title") }], recentRows(rec));
+    choose(t("from.title"), rows).then(function (v) {
       if (v === "disk") diskBrowser("open").then(function (p) { if (p) openDiskPath(p); });
       else if (v === "device") openDevice();
+      else if (v && typeof v === "object") openRecent(v);
+    });
+  }
+  function onRecent() {
+    var rec = reachableRecent();
+    if (!rec.length) { toast(t("recent.none")); return; }
+    choose(t("recent.title"), recentRows(rec).concat([{ value: "clear", label: t("recent.clear"), ico: "x" }])).then(function (v) {
+      if (v === "clear") { recent = []; schedulePersist(null); toast(t("recent.cleared")); }
+      else if (v && typeof v === "object") openRecent(v);
     });
   }
 
@@ -968,14 +1174,23 @@
     tab.mixed = false;
     tab.raw = bytes && bytes.length <= KEEP_RAW ? bytes : null;
     if (loc) tab.loc = loc;
-    if (tab.loc && tab.loc.kind === "disk") pushRecent(tab.loc);
+    if (tab.loc && tab.loc.kind !== "fsa" && (tab.hdl || tab.hdlStored)) setHandle(tab, null);
+    pushRecent(tab.loc);
     paintTabs();
     paintStatus();
     schedulePersist(tab);
   }
   function pushRecent(loc) {
-    recent = [C.cleanLoc(loc)].concat(recent.filter(function (r) { return r.path !== loc.path; })).slice(0, 20);
+    if (loc && (loc.kind === "disk" || loc.kind === "pc")) recent = C.addRecent(recent, loc);
   }
+  // A new name after a save: the language follows a telling extension.
+  function renameTo(tab, name) {
+    if (!name || name === tab.name) return;
+    tab.name = C.safeName(name, tab.name);
+    var g = C.guessLang(tab.name, "");
+    if (g !== "text" && g !== tab.lang) { tab.lang = g; ensureLang(tab); }
+  }
+  function dirOf(path) { return path.slice(0, path.lastIndexOf("/")) || "/"; }
 
   // Write to the orOS disk and read back its size and time.
   function diskWrite(fs, path, bytes, tab) {
@@ -983,44 +1198,148 @@
     var mk = dir && dir !== DISK_ROOT ? fs.mkdir(dir).catch(function () {}) : Promise.resolve();
     return mk.then(function () { return fs.write(path, new Blob([bytes], { type: mimeOf(tab) })); })
       .then(function () { return fs.stat(path).catch(function () { return null; }); })
-      .then(function (st) { return { kind: "disk", path: path, mtime: st && st.mtime || Date.now(), size: st && st.size || bytes.length, h: C.hashBytes(bytes) }; });
+      .then(function (st) {
+        return { loc: { kind: "disk", path: path, mtime: st && st.mtime || Date.now(), size: st && st.size || bytes.length, h: C.hashBytes(bytes) }, name: C.baseName(path) };
+      });
+  }
+  // This computer: the launcher refuses ("changed") when the file's time
+  // is no longer ifm, so a change between the check and the write is
+  // never overwritten either. ifm 0: refuses a file that is there.
+  function pcWrite(path, bytes, tab, ifm) {
+    return Promise.resolve(pcApi().write(path, new Blob([bytes], { type: mimeOf(tab) }), ifm || 0, false)).then(function (st) {
+      return { loc: { kind: "pc", path: path, mtime: st && st.mtime || 0, size: st && st.size || bytes.length, h: C.hashBytes(bytes) }, name: C.baseName(path) };
+    });
+  }
+  // File System Access: the person allows writing once per file and
+  // session (asked on the first save, which is a click or Ctrl+S).
+  function fsaPerm(h) {
+    var o = { mode: "readwrite" };
+    return Promise.resolve(typeof h.queryPermission === "function" ? h.queryPermission(o) : "granted").then(function (p) {
+      if (p === "granted") return true;
+      return typeof h.requestPermission === "function" ? h.requestPermission(o).then(function (q) { return q === "granted"; }) : false;
+    }).then(function (ok) {
+      if (!ok) { var e = new Error(t("perm.denied")); e.code = "denied"; throw e; }
+    });
+  }
+  function fsaWrite(h, bytes, tab) {
+    return fsaPerm(h).then(function () { return h.createWritable(); }).then(function (w) {
+      return w.write(new Blob([bytes], { type: mimeOf(tab) })).then(function () { return w.close(); }, function (e) {
+        try { w.abort(); } catch (x) { /* already closed */ }
+        throw e;
+      });
+    }).then(function () { return h.getFile(); }).then(function (f) {
+      return { loc: { kind: "fsa", mtime: f.lastModified || Date.now(), size: f.size, h: C.hashBytes(bytes) }, name: h.name, hdl: h };
+    });
   }
 
-  // The disk copy changed since Pad read it? true / false. Same text
-  // with a new time (a sync that wrote the same bytes) is not a change.
-  function diskChanged(fs, tab) {
-    var loc = tab.loc;
-    return fs.stat(loc.path).then(function (st) {
-      if (!st || st.dir) return "gone";
-      if (st.size === loc.size && (!loc.mtime || !st.mtime || st.mtime === loc.mtime)) return false;
-      if (!loc.h) return true;
-      return fs.read(loc.path).then(function (blob) { return blob.arrayBuffer(); }).then(function (buf) {
-        return C.hashBytes(new Uint8Array(buf)) !== loc.h;
+  // Where a file lives decides how it is checked and written. PAD-CF:
+  // Pad never overwrites a file that changed since it read it.
+  //   stat(tab)            -> { size, mtime } | null (no longer there)
+  //   read(tab)            -> ArrayBuffer of what is there now
+  //   write(tab, bytes, m) -> { loc, name, hdl? } (m: the time just checked, 0 = gone)
+  //   copy(tab, bytes)     -> { loc, name, hdl? } of a copy beside it, or null
+  //   other(src)           -> opens what is there now in a new tab
+  var DISK = {
+    stat: function (tab) {
+      return shellFS().stat(tab.loc.path).then(function (st) { return st && !st.dir ? { size: st.size, mtime: st.mtime } : null; },
+        function (e) { if (e && e.code === "ENOENT") return null; throw e; });
+    },
+    read: function (tab) { return shellFS().read(tab.loc.path).then(function (b) { return b.arrayBuffer(); }); },
+    write: function (tab, bytes) { return diskWrite(shellFS(), tab.loc.path, bytes, tab); },
+    copy: function (tab, bytes) {
+      var fs = shellFS(), dir = dirOf(tab.loc.path);
+      return fs.ls(dir).then(function (entries) {
+        return diskWrite(fs, joinPath(dir, C.copyName(tab.name, (entries || []).map(function (e) { return e.name; }))), bytes, tab);
       });
-    }, function (e) { return e && e.code === "ENOENT" ? "gone" : true; });
+    },
+    other: function (src) { return openDiskPath(src.path); }
+  };
+  var PC = {
+    stat: function (tab) {
+      return Promise.resolve(pcApi().stat(tab.loc.path)).then(function (st) { return st && !st.dir ? { size: st.size, mtime: st.mtime } : null; },
+        function (e) { if (e && e.code === "notfound") return null; throw e; });
+    },
+    read: function (tab) { return Promise.resolve(pcApi().read(tab.loc.path)).then(function (f) { return f.arrayBuffer(); }); },
+    write: function (tab, bytes, m) { return pcWrite(tab.loc.path, bytes, tab, m); },
+    copy: function (tab, bytes) {
+      var dir = dirOf(tab.loc.path);
+      return Promise.resolve(pcApi().list(dir)).then(function (entries) {
+        return pcWrite(dir.replace(/\/$/, "") + "/" + C.copyName(tab.name, (entries || []).map(function (e) { return e.name; })), bytes, tab, 0);
+      });
+    },
+    other: function (src) { return openPcPath(src.path); }
+  };
+  var FSA = {
+    stat: function (tab) {
+      return fsaPerm(tab.hdl).then(function () { return tab.hdl.getFile(); }).then(function (f) { return { size: f.size, mtime: f.lastModified }; },
+        function (e) { if (e && e.name === "NotFoundError") return null; throw e; });
+    },
+    read: function (tab) { return tab.hdl.getFile().then(function (f) { return f.arrayBuffer(); }); },
+    write: function (tab, bytes) { return fsaWrite(tab.hdl, bytes, tab); },
+    // No folder handle: the browser's own save window, beside the file.
+    copy: function (tab, bytes) {
+      return window.showSaveFilePicker({ suggestedName: C.copyName(tab.name, [tab.name]), startIn: tab.hdl }).then(function (h) {
+        return fsaWrite(h, bytes, tab);
+      }, function (e) { if (isAbort(e)) return null; throw e; });
+    },
+    other: function (src) { return openHandle(src.hdl); }
+  };
+  function backend(tab) {
+    var k = tab.loc && tab.loc.kind;
+    if (k === "disk" && shellFS()) return DISK;
+    if (k === "pc" && pcApi()) return PC;
+    if (k === "fsa" && isHandle(tab.hdl)) return FSA;
+    return null;
   }
+
+  // Changed since Pad read it? Same bytes with a new time (a sync that
+  // wrote the same text) is not a change. { state: same|changed|gone, mtime }
+  function changed(B, tab) {
+    var loc = tab.loc;
+    return B.stat(tab).then(function (st) {
+      if (!st) return { state: "gone" };
+      if (st.size === loc.size && (!loc.mtime || !st.mtime || st.mtime === loc.mtime)) return { state: "same", mtime: st.mtime };
+      if (!loc.h) return { state: "changed" };
+      return B.read(tab).then(function (buf) {
+        return { state: C.hashBytes(new Uint8Array(buf)) === loc.h ? "same" : "changed", mtime: st.mtime };
+      });
+    }, function (e) {
+      if (e && e.code === "denied") throw e;
+      return { state: "changed" };
+    });
+  }
+  function cfTitle(tab) { return t(tab.loc.kind === "disk" ? "cf.title" : "cf.title." + tab.loc.kind, { name: tab.name }); }
+  function goneText(tab) { return t(tab.loc.kind === "disk" ? "gone.body" : "gone." + tab.loc.kind, { name: tab.name }); }
 
   function save(tab) {
     tab = tab || active;
     if (!tab) return Promise.resolve(false);
     if (!tab.loc) return saveAs(tab);
-    if (tab.loc.kind === "device") return saveToDevice(tab);
-    var fs = shellFS();
-    if (!fs) return saveToDevice(tab);
+    if (tab.loc.kind === "fsa" && !tab.hdl && tab.hdlStored) return loadHandle(tab).then(function () { return save(tab); });
+    var B = backend(tab);
+    if (!B) return saveToDevice(tab);
     var bytes = fileBytes(tab);
     if (!bytes) return Promise.resolve(false);
-    return diskChanged(fs, tab).then(function (changed) {
-      if (changed === "gone") {
-        return ask(t("cf.title", { name: tab.name }), t("gone.body", { name: tab.name }), [{ label: t("btn.save"), value: true, pri: true }])
-          .then(function (yes) { return yes ? diskWrite(fs, tab.loc.path, bytes, tab) : null; });
+    function put(m) {
+      return B.write(tab, bytes, m).then(null, function (e) {
+        // This computer: changed or created again between the check and the write.
+        if (e && (e.code === "changed" || e.code === "exists")) return conflict(B, tab, bytes);
+        throw e;
+      });
+    }
+    return changed(B, tab).then(function (c) {
+      if (c.state === "gone") {
+        return ask(cfTitle(tab), goneText(tab), [{ label: t("btn.save"), value: true, pri: true }])
+          .then(function (yes) { return yes ? put(0) : null; });
       }
-      if (changed) return conflict(fs, tab, bytes);
-      return diskWrite(fs, tab.loc.path, bytes, tab);
-    }).then(function (loc) {
-      if (!loc) return false;
-      var asCopy = loc.path !== tab.loc.path;
-      if (asCopy) tab.name = C.baseName(loc.path);
-      markSaved(tab, loc, bytes);
+      if (c.state === "changed") return conflict(B, tab, bytes);
+      return put(c.mtime);
+    }).then(function (r) {
+      if (!r) return false;
+      var asCopy = !!r.name && r.name !== tab.name;
+      if (r.hdl && r.hdl !== tab.hdl) setHandle(tab, r.hdl);
+      if (asCopy) renameTo(tab, r.name);
+      markSaved(tab, r.loc, bytes);
       toast(asCopy ? t("saved.copy", { name: tab.name }) : t("saved"));
       return true;
     }, function (e) {
@@ -1030,40 +1349,63 @@
   }
 
   // Never overwrite a file that changed elsewhere (sync rule): a copy
-  // next to it, or the other version in a new tab. Resolves a loc or null.
-  function conflict(fs, tab, bytes) {
-    return ask(t("cf.title", { name: tab.name }), t("cf.body"), [
+  // next to it, or the other version in a new tab. Resolves a result or null.
+  function conflict(B, tab, bytes) {
+    return ask(cfTitle(tab), t("cf.body"), [
       { label: t("cf.copy"), value: "copy", pri: true },
       { label: t("cf.theirs"), value: "theirs" }
     ]).then(function (v) {
-      var dir = tab.loc.path.slice(0, tab.loc.path.lastIndexOf("/")) || DISK_ROOT;
-      if (v === "copy") {
-        return fs.ls(dir).then(function (entries) {
-          var name = C.copyName(tab.name, (entries || []).map(function (e) { return e.name; }));
-          return diskWrite(fs, joinPath(dir, name), bytes, tab);
-        });
-      }
+      if (v === "copy") return B.copy(tab, bytes);
       if (v === "theirs") {
-        var path = tab.loc.path, mine = tab;
-        // The other version opens beside it; this tab stays as it is.
-        mine.loc = null;
-        mine.name = C.copyName(mine.name, tabs.map(function (x) { return x.name; }).concat([mine.name]));
+        var src = { path: tab.loc.path, hdl: tab.hdl };
+        // The other version opens beside it; this tab keeps the text, unsaved.
+        tab.loc = null;
+        setHandle(tab, null);
+        tab.name = C.copyName(tab.name, tabs.map(function (x) { return x.name; }).concat([tab.name]));
         paintTabs();
         paintStatus();
-        schedulePersist(mine);
-        openDiskPath(path);
+        schedulePersist(tab);
+        B.other(src);
         return null;
       }
       return null;
     });
   }
 
+  // Save as on this device: This computer (pcdialog), the browser's save
+  // window with a handle (File System Access), or a download.
   function saveToDevice(tab) {
     var bytes = fileBytes(tab);
     if (!bytes) return Promise.resolve(false);
+    var P = pcApi();
+    if (!P && fsaOk()) {
+      return window.showSaveFilePicker({ suggestedName: tab.name }).then(function (h) {
+        return fsaWrite(h, bytes, tab).then(function (r) {
+          setHandle(tab, r.hdl);
+          renameTo(tab, r.name);
+          markSaved(tab, r.loc, bytes);
+          toast(t("saved"));
+          return true;
+        });
+      }).then(null, function (e) {
+        if (!isAbort(e)) toast(t("save.fail", { why: (e && (e.message || e.code)) || "?" }));
+        return false;
+      });
+    }
     return saveDeviceFile(new Blob([bytes], { type: mimeOf(tab) }), tab.name).then(function (r) {
       if (!r || !r.ok) return false;
-      if (r.mode === "computer" && r.path) tab.name = C.baseName(r.path);
+      if (r.mode === "computer" && r.path) {
+        renameTo(tab, C.baseName(r.path));
+        return Promise.resolve(P && P.stat(r.path)).then(function (st) {
+          markSaved(tab, { kind: "pc", path: r.path, mtime: st && st.mtime || 0, size: st && st.size || bytes.length, h: C.hashBytes(bytes) }, bytes);
+          toast(t("saved"));
+          return true;
+        }, function () {
+          markSaved(tab, { kind: "device" }, bytes);
+          toast(t("saved"));
+          return true;
+        });
+      }
       markSaved(tab, { kind: "device" }, bytes);
       toast(t("saved.device"));
       return true;
@@ -1076,7 +1418,7 @@
     if (!shellFS()) return saveToDevice(tab);
     return choose(t("to.title"), [
       { value: "disk", label: t("from.disk"), sub: t("to.diskSub"), ico: "disk" },
-      { value: "device", label: t("from.device"), sub: t("to.deviceSub"), ico: "device" }
+      deviceRow(true)
     ]).then(function (v) {
       if (v === "device") return saveToDevice(tab);
       if (v !== "disk") return false;
@@ -1084,16 +1426,11 @@
         if (!pick) return false;
         var bytes = fileBytes(tab);
         if (!bytes) return false;
-        var other = findDiskTab(pick.path);
+        var other = findTab({ kind: "disk", path: pick.path });
         if (other && other !== tab) dropTab(other);
-        return diskWrite(shellFS(), pick.path, bytes, tab).then(function (loc) {
-          var newName = C.baseName(pick.path);
-          if (newName !== tab.name) {
-            tab.name = newName;
-            var g = C.guessLang(newName, "");
-            if (g !== "text" && g !== tab.lang) { tab.lang = g; ensureLang(tab); }
-          }
-          markSaved(tab, loc, bytes);
+        return diskWrite(shellFS(), pick.path, bytes, tab).then(function (r) {
+          renameTo(tab, r.name);
+          markSaved(tab, r.loc, bytes);
           toast(t("saved"));
           return true;
         }, function (e) { toast(t("save.fail", { why: (e && (e.message || e.code)) || "?" })); return false; });
@@ -1237,6 +1574,7 @@
   function menuItems() {
     return [
       { label: t("m.saveAs"), fn: function () { saveAs(); } },
+      { label: t("m.recent"), fn: onRecent },
       { label: t("m.replace"), fn: function () { F.openSearchPanel(view); } },
       { label: t("m.goto"), fn: gotoLine },
       null,
@@ -1342,7 +1680,10 @@
   // ---------- 17. Deep links ----------
   // { newText: { text, name?, lang? } }  a new tab with that text (other
   //   apps, the Assistant); nothing is saved until the person saves.
-  // { openPath: "/internal/…" }            open a file of the orOS disk.
+  // { openPath: "/internal/…" }            open a file of the orOS disk
+  //   (Files' "Open with Pad"; saved again in place).
+  // { openFile: { token, name, size } }    a File handed over by the shell
+  //   (BR-FO-4): a copy, saved through Save as.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (target.newText && typeof target.newText === "object" && typeof target.newText.text === "string") {
@@ -1358,6 +1699,13 @@
     }
     if (typeof target.openPath === "string" && /^\/internal\/./.test(target.openPath) && target.openPath.indexOf("..") < 0) {
       openDiskPath(target.openPath);
+      return;
+    }
+    // "Open with" from the system or Files (BR-FO-4): a one-shot File.
+    if (target.openFile && typeof target.openFile === "object" && typeof target.openFile.token === "string") {
+      var file = null;
+      try { file = window.parent.__orosTakeFile(target.openFile.token); } catch (e) { file = null; }
+      if (file) openFileObj(file);
     }
   };
 
@@ -1365,7 +1713,7 @@
     try {
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") {
-        var pending = p.__orosTakeTarget(APP_ID);
+        var pending = p.__orosTakeTarget("pad");
         if (pending) window.__orosOpenAt(pending);
       }
     } catch (e) { /* standalone */ }
@@ -1378,13 +1726,16 @@
     recent = sess.recent;
     return dbAll().then(function (rows) {
       var byId = {};
-      rows.map(C.cleanTab).forEach(function (r) { if (r) byId[r.id] = r; });
+      rows.forEach(function (raw) {
+        var r = C.cleanTab(raw);
+        if (r) byId[r.id] = r;
+      });
       var order = sess.order.filter(function (id) { return byId[id]; });
       // Tabs in the store but not in the order (a crash between writes) come last.
       Object.keys(byId).sort().forEach(function (id) { if (order.indexOf(id) < 0) order.push(id); });
       order.forEach(function (id) {
         var r = byId[id];
-        var tab = addTab({ id: r.id, name: r.name, text: r.text, lang: r.lang, enc: r.enc, eol: r.eol, dirty: r.dirty, loc: r.loc, sel: r.sel, top: r.top, big: r.text.length > BIG_BYTES });
+        var tab = addTab({ id: r.id, name: r.name, text: r.text, lang: r.lang, enc: r.enc, eol: r.eol, dirty: r.dirty, loc: r.loc, restored: true, sel: r.sel, top: r.top, big: r.text.length > BIG_BYTES });
         tabs.splice(tabs.indexOf(tab), 1);
         tabs.push(tab);
       });

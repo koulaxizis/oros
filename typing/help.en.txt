@@ -26,8 +26,24 @@ Learn to type with all ten fingers without looking at the keys. Short lessons br
 - Speed is in words per minute: five characters count as one word. Accuracy is the share of right key presses.
 - Your best result for each length is kept in `Statistics`.
 
+## Practise your weak keys
+- `Practise my weak keys` (on the first screen) makes a round from the keys that go wrong most often or that you type slowest, using only the keys of the lessons you have finished.
+- The name of the round shows which keys it practises. The more you practise, the better it knows your keys.
+
+## Texts
+- `Texts` opens short passages from public-domain literature for your keyboard, with author and year, and your own texts.
+- `Add a text` keeps a text of your own (up to 50 texts). You can also send a text here from Notes or Writer with `Send to an app…`; it opens in the same dialog and is saved only when you press `Save`.
+- Characters your keyboard cannot type are left out, and curly quotes and long dashes become the plain ones. Long texts are typed in parts.
+- `Write in Typewriter` opens [Typewriter](app:typewriter) to write freely, without hints.
+
+## Today, Habits and the reminder
+- While you have practised in the last week and today's goal is not reached, [Today](app:today) shows a row with today's minutes.
+- [Habits](app:habits) shows a "Typing practice" row with your minutes each day; a day is done when you reach your daily goal.
+- `Remind me to practise` in the settings sends one notice a day from the chosen time on, while today's goal is not reached. It is off at first and set for each device.
+
 ## Statistics
 - `Statistics` (the chart button at the top) shows today's practice, the days in a row, your total time and your speed of the last 7 days.
+- The line shows your speed on each of the last 30 days, the dots your accuracy (between 80% and 100%).
 - The bars show your minutes on each of the last 14 days.
 - `Your keys` colours each key by how often it goes wrong: green is good, red needs practice. The list under it names the keys to work on.
 
@@ -43,3 +59,4 @@ Touch typing needs a real keyboard. With a keyboard connected (Bluetooth or USB)
 ## Your data
 - Your progress, statistics and settings are saved as you go. With orOS sync switched on in [Settings](app:settings), they follow you to your other devices, encrypted. Practice on two devices on the same day adds up.
 - What you type in a lesson is not kept, only the counts (speed, accuracy, which keys went wrong).
+- Your own texts are kept and synced the same way. Deleting one deletes it on every device.
