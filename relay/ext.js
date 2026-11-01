@@ -174,7 +174,12 @@ const EB_REDIRECTS = ["https://useoros.online/budget/bankback.html"];
 const PP_KEY = /^[A-Za-z0-9_-]{40,128}$/,
       PP_DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-0000$/,
       PP_FIELDS = /^(all|transaction_info,payer_info,cart_info)$/, PP_SIZE = /^([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|500)$/,
-      PP_YN = /^(Y|N)$/, PP_TOKEN = /^[A-Za-z0-9._~+\/=-]{20,4096}$/;
+      PP_YN = /^(Y|N)$/, PP_TOKEN = /^[A-Za-z0-9._~+\/=-]{20,4096}$/, PP_PG = /^([1-9][0-9]{0,2}|1000)$/;
+// start_date ≤ end_date, at most 31 days apart (PayPal refuses more)
+function ppRange(q) {
+  const s = Date.parse(String(q.start_date || "").replace(/-0000$/, "Z")), e = Date.parse(String(q.end_date || "").replace(/-0000$/, "Z"));
+  return isFinite(s) && isFinite(e) && s <= e && e - s <= 31 * 86400000;
+}
 function okEbVal(kind, v) {
   const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
   if (kind === "ebacc") return obj(v) && Object.keys(v).length === 1 && typeof v.valid_until === "string" &&
@@ -313,6 +318,7 @@ export const PLATFORMS = {
   ebank: {
     root: "",
     host: "api.enablebanking.com",
+    once: true,                     // POST /auth and /sessions travel alone, never retried
     keys: { key: /^[A-Za-z0-9_-]{10,1000}\.[A-Za-z0-9_-]{10,2000}\.[A-Za-z0-9_-]{10,1400}$/ },
     auth: (b) => ["Authorization", "Bearer " + b.key],
     allow: [
@@ -340,15 +346,19 @@ export const PLATFORMS = {
                    Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" },
         body: "grant_type=client_credentials"
       });
-      const text = res.status === 200 ? await readCapped(res, 16384) : null;
-      if (text === null) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status === 200 ? 502 : res.status }; }
+      // never PayPal's error body: only its status and a fixed code
+      const text = res.status === 200 ? await readCapped(res, 8192) : null;
+      if (text === null) {
+        try { if (res.body) await res.body.cancel(); } catch (e) {}
+        return res.status >= 400 && res.status < 500 ? { status: res.status, err: "auth" } : { status: res.status === 200 ? 502 : res.status, err: "network" };
+      }
       let j = null;
       try { j = JSON.parse(text); } catch (e) {}
       const tok = j && typeof j.access_token === "string" && PP_TOKEN.test(j.access_token) ? j.access_token : "";
-      return tok ? { auth: ["Authorization", "Bearer " + tok] } : { status: 502 };
+      return tok ? { auth: ["Authorization", "Bearer " + tok] } : { status: 502, err: "network" };
     },
     allow: [
-      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: NUM, balance_affecting_records_only: PP_YN }, null]
+      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: PP_PG, balance_affecting_records_only: PP_YN }, null, null, ppRange]
     ]
   },
   // Payments (wave 4B), read-only: a restricted key (rk_) only
@@ -513,16 +523,18 @@ export function checkExtReq(p, r) {
   const path = qi < 0 ? r.path : r.path.slice(0, qi), query = qi < 0 ? "" : r.path.slice(qi + 1);
   const rule = pl.allow.find((a) => a[0] === r.m && a[1].test(path));
   if (!rule) return "path";
+  const seen = {};
   if (query) {
     if (!rule[2]) return "query";
-    const seen = {};
     for (const kv of query.split("&")) {
       const i = kv.indexOf("=");
       const k = i < 0 ? kv : kv.slice(0, i), v = i < 0 ? "" : kv.slice(i + 1);
-      if (!Object.prototype.hasOwnProperty.call(rule[2], k) || seen[k] || !rule[2][k].test(v)) return "query";
-      seen[k] = 1;
+      if (!Object.prototype.hasOwnProperty.call(rule[2], k) || Object.prototype.hasOwnProperty.call(seen, k) || !rule[2][k].test(v)) return "query";
+      seen[k] = v;
     }
   }
+  // a check across the query's values (PayPal: a date range ≤ 31 days)
+  if (rule[5] && !rule[5](seen)) return "query";
   if (r.m === "GET") return r.body === undefined ? "" : "body";
   const b = r.body;
   if (!b || typeof b !== "object" || Array.isArray(b)) return "body";
@@ -653,7 +665,7 @@ export async function runExt(b, fetchFn, now) {
     try { tk = await pl.tokenOf(b, fetchFn, ctl.signal); }
     catch (e) { tk = { err: ctl.signal.aborted ? "timeout" : "network" }; }
     finally { clearTimeout(timer); }
-    if (!tk.auth) return { res: b.reqs.map(() => (tk.status ? { status: tk.status, body: "" } : { err: tk.err || "network" })) };
+    if (!tk.auth) return { res: b.reqs.map(() => (tk.status ? { status: tk.status, err: tk.err || "network" } : { err: tk.err || "network" })) };
     auth = tk.auth;
   } else auth = pl.auth(b);
   const out = new Array(b.reqs.length);

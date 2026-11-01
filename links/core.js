@@ -168,6 +168,7 @@
       ],
       apps: ["budget"],
       probe: "/application",
+      once: true,                   // a consent request / session: never sent twice by a fallback
       ownUi: "budget"
     },
     // PayPal Business (Budget BK-3): the person's OWN REST app on
@@ -593,7 +594,12 @@
   // PayPal (Budget BK-3): Transaction Search, ≤ 31 days per request
   var PP_DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-0000$/,
       PP_FIELDS = /^(all|transaction_info,payer_info,cart_info)$/, PP_SIZE = /^([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|500)$/,
-      PP_YN = /^(Y|N)$/;
+      PP_YN = /^(Y|N)$/, PP_PG = /^([1-9][0-9]{0,2}|1000)$/;
+  // start_date ≤ end_date, at most 31 days apart (PayPal refuses more)
+  function ppRange(q) {
+    var s = Date.parse(String(q.start_date || "").replace(/-0000$/, "Z")), e = Date.parse(String(q.end_date || "").replace(/-0000$/, "Z"));
+    return isFinite(s) && isFinite(e) && s <= e && e - s <= 31 * 86400000;
+  }
   function ppStamp(ms) { return new Date(ms).toISOString().slice(0, 19) + "-0000"; }
   function okEbVal(kind, v) {
     if (kind === "ebacc") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 1 &&
@@ -673,7 +679,7 @@
     ],
     // PayPal (Budget BK-3): read-only transaction search
     paypal: [
-      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: NUM, balance_affecting_records_only: PP_YN }, null]
+      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: PP_PG, balance_affecting_records_only: PP_YN }, null, null, ppRange]
     ],
     // Enable Banking (Budget BK-2): read-only account information
     ebank: [
@@ -786,10 +792,12 @@
       for (var j = 0; j < parts.length; j++) {
         var kv = parts[j], e = kv.indexOf("=");
         var k = e < 0 ? kv : kv.slice(0, e), v = e < 0 ? "" : kv.slice(e + 1);
-        if (!has(rule[2], k) || seen[k] || !rule[2][k].test(v)) return "query";
-        seen[k] = 1;
+        if (!has(rule[2], k) || has(seen, k) || !rule[2][k].test(v)) return "query";
+        seen[k] = v;
       }
     }
+    // a check across the query's values (PayPal: a date range ≤ 31 days)
+    if (rule[5] && !rule[5](seen || {})) return "query";
     if (r.m === "GET") return r.body === undefined ? "" : "body";
     var b = r.body;
     if (!b || typeof b !== "object" || Array.isArray(b)) return "body";

@@ -444,11 +444,21 @@
     if (imgs && (imgs !== reqs.length || imgs > 1)) return Promise.reject(err("bad"));   // one picture per call (relay CPU)
     if (imgs) return openLocal(id).then(function (local) { if (!local) throw err("keys"); return viaRelay(a, local.keys, reqs); });
     if (a.p === "ebank") {
-      // Enable Banking: the keys become a JWT here, before either way
+      // Enable Banking: the keys become a JWT here, before either way.
+      // Its writes (a consent request, a session from the bank's code)
+      // travel alone and are never sent a second way after a failure.
+      var ebW = reqs.some(function (r) { return r.m !== "GET"; });
+      if (ebW && reqs.length > 1) return Promise.reject(err("bad"));
+      if (ebW && !prefs().mode[id]) {
+        return call(id, [L.probeReq(a.p)]).then(function () {
+          if (!prefs().mode[id]) throw err("network");
+          return call(id, reqs);
+        });
+      }
       return openLocal(id).then(function (local) {
         if (!local) throw err("keys");
         return callKeys(a, local.keys);
-      }).then(function (k) { return callWith(a, id, pl, reqs, k, false); });
+      }).then(function (k) { return callWith(a, id, pl, reqs, k, ebW); });
     }
     var writes = reqs.some(function (r) { return r.m !== "GET"; });
     // a write that must happen once travels alone (the relay refuses more)

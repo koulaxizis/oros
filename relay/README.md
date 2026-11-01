@@ -22,7 +22,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `smtp.js` | Minimal SMTP submission client (465 TLS / 587 STARTTLS, AUTH PLAIN or LOGIN) |
 | `sieve.js` | Minimal ManageSieve client (RFC 5804; port 4190, STARTTLS required, SASL PLAIN) |
 | `papi.js` | Newsletter's provider HTTP APIs (Brevo, Postmark, SendGrid, Mailgun): fixed hosts, an exact allowlist (see below) |
-| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io and Notion, all read-only; exact allowlist (see below) |
+| `ext.js` | Connected services' `ext` operation: a person's own shop (WooCommerce) when the browser can't reach it, timologisi.online (myDATA), the email platforms (MailerLite, Mailchimp, Brevo) the CRMs (HubSpot, Pipedrive, Odoo), Stripe, Invoice Ninja, Todoist, Trello, GitHub, Raindrop.io, Notion, Enable Banking and PayPal, all read-only; exact allowlist (see below) |
 | `newsletter.js` | Newsletter's public sign-up form and one-click unsubscribe, kept in D1 until the list's orOS pulls them (see below) |
 | `crmform.js` | CRM's public contact form (`/crm/f/<k>`) and op `crmf`, kept in the same D1 until the user's CRM picks the messages up (see below) |
 | `share.js` | "Send to someone" links with an expiry: op `shr` and `/s/<id>/<i>`, encrypted pieces kept in their own D1 until they expire or are revoked (see below) |
@@ -259,6 +259,44 @@ always comes here (a key never talks to Stripe from a browser). Only GETs.
 |---|---|
 | `/balance` | none (the connection check) |
 | `/balance_transactions` | `limit (≤100), starting_after (txn_…), created[gte], created[lt]` (unix seconds) |
+
+### Enable Banking (`p: "ebank"`, Budget › Banks, read-only)
+
+`POST /v1 { op: "ext", p: "ebank", key, reqs }`: no `host`, `base` or `env`.
+`https://api.enablebanking.com<path>` with `Authorization: Bearer <key>`, where
+`key` is a JWT (three base64url parts, length capped) the person's device
+signed with their own application's private key; the private key never comes
+here. orOS calls Enable Banking straight from the browser first and comes here
+only when that fails. **Bank data (accounts, transactions) passes through the
+relay in plain form; it is never stored or logged.** The writes (`once`)
+travel alone in their call and are never retried another way.
+
+| Method | Path | Query / body |
+|---|---|---|
+| GET | `/application` | none (the connection check) |
+| GET | `/aspsps` | `country` (2 letters), `psu_type` (personal, business), `service` (AIS) |
+| POST | `/auth` | exactly `access {valid_until}`, `aspsp {name, country}`, `state`, `redirect_url` (only `https://useoros.online/budget/bankback.html`), `psu_type` |
+| POST | `/sessions` | exactly `{code}` |
+| GET | `/sessions/<uuid>`, `/accounts/<uuid>/balances` | none |
+| GET | `/accounts/<uuid>/transactions` | `date_from`, `date_to` (YYYY-MM-DD), `continuation_key`, `transaction_status` (BOOK, PDNG); each once |
+
+### PayPal (`p: "paypal"`, Budget › Banks, read-only)
+
+`POST /v1 { op: "ext", p: "paypal", key, token, reqs }`: `key` = Client ID,
+`token` = Secret of the person's own live REST app (each 40–128 of
+`A-Za-z0-9_-`). PayPal gives tokens only for client credentials, so at the
+start of each call the relay POSTs `https://api-m.paypal.com/v1/oauth2/token`
+(Basic id:secret, `grant_type=client_credentials`, manual redirects, the call's
+timeout, answer capped at 8 KB) and keeps only `access_token` (anchored, ≤ 4096)
+for that call: one token request per call, no retry. Without a token nothing is
+sent and each request answers the token's status with a fixed code (`auth`),
+never PayPal's body. The token and the Secret are never returned, logged or
+put in an error. **Payment data passes through the relay in plain form; it is
+never stored or logged.** Always through the relay.
+
+| Method | Path | Query |
+|---|---|---|
+| GET | `/v1/reporting/transactions` | `start_date`, `end_date` (`YYYY-MM-DDTHH:MM:SS-0000`, start ≤ end, ≤ 31 days apart), `fields` (`all` or `transaction_info,payer_info,cart_info`), `page_size` (1–500), `page` (1–1000), `balance_affecting_records_only` (Y, N); each once |
 
 ### Invoice Ninja (`p: "ininja"`, CRM and Budget, read-only)
 

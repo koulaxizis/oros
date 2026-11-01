@@ -33,7 +33,12 @@ test("allowlist: only transaction search, the same in app and relay; the probe p
     { m: "POST", path: "/v2/payments/captures/X/refund", body: {} },
     { m: "GET", path: "/v1/reporting/transactions?start_date=2026-10-01&end_date=2026-10-02" },
     { m: "GET", path: K.ppPath(w, 1).replace("page_size=500", "page_size=501") },
-    { m: "GET", path: K.ppPath(w, 1) + "&transaction_id=X" }
+    { m: "GET", path: K.ppPath(w, 1) + "&transaction_id=X" },
+    { m: "GET", path: K.ppPath(w, 1) + "&page=2" },
+    { m: "GET", path: K.ppPath(w, 1001) },
+    { m: "GET", path: K.ppPath({ s: "2026-08-01T00:00:00-0000", e: "2026-09-02T00:00:00-0000" }, 1) },
+    { m: "GET", path: K.ppPath({ s: w.e, e: w.s }, 1) },
+    { m: "GET", path: "/v1/reporting/transactions?page_size=1" }
   ];
   for (const r of bad) assert.notEqual(L.checkReq("paypal", r), "", r.m + " " + r.path);
   const base = { op: "ext", p: "paypal", key: CID, token: SEC };
@@ -81,7 +86,7 @@ test("relay: a token for the call (Basic Client ID:Secret), then Bearer; a refus
   const f2 = fakePayPal(401);
   const out2 = await X.runExt(b, f2);
   assert.equal(f2.calls.length, 1, "no request without a token");
-  assert.deepEqual(out2.res, [{ status: 401, body: "" }]);
+  assert.deepEqual(out2.res, [{ status: 401, err: "auth" }], "a fixed code, never PayPal's body");
 });
 
 test("windows: ≤ 31 days each, up to a minute ago; nothing for a start in the future", () => {
@@ -185,4 +190,12 @@ test("bnk rows of kind PayPal: no bank session, canonical keys, merge", () => {
   const m1 = BJ.mergeBudget(a, b);
   assert.equal(JSON.stringify(m1), JSON.stringify(BJ.mergeBudget(b, a)));
   assert.equal(m1.bnk[0].lf, "2026-11-01");
+});
+
+test("Enable Banking writes travel alone (once), in the app and the relay", () => {
+  const jwt = "eyJhbGciOiJSUzI1NiJ9.eyJpc3MiOiJlbmFibGViYW5raW5nLmNvbSJ9.c2lnbmF0dXJlLXNpZ25hdHVyZQ";
+  const w = { m: "POST", path: "/sessions", body: JSON.stringify({ code: "abc" }) };
+  assert.equal(L.PLATFORMS.ebank.once, true);
+  assert.equal(X.validExt({ op: "ext", p: "ebank", key: jwt, reqs: [w] }), "");
+  assert.equal(X.validExt({ op: "ext", p: "ebank", key: jwt, reqs: [w, { m: "GET", path: "/application" }] }), "reqs");
 });
