@@ -28,6 +28,7 @@
           <button id="cal-more" type="button" class="nav-mini" aria-haspopup="true" aria-expanded="false" aria-controls="more-menu"></button>
           <div id="more-menu" class="more-menu" hidden>
             <button id="mm-subs" type="button" data-i18n="mm.subs"></button>
+            <button id="mm-dav" type="button" data-i18n="mm.dav"></button>
             <button id="mm-free" type="button" data-i18n="mm.free"></button>
             <button id="mm-send" type="button" data-i18n="mm.send" hidden></button>
             <button id="mm-google" type="button" data-i18n="mm.google" hidden></button>
@@ -102,6 +103,7 @@
   <!-- Event dialog (add & edit share it) -->
   <dialog id="ev-dlg" aria-labelledby="ev-dlg-title">
     <h3 id="ev-dlg-title" data-i18n="ev.dlg.new"></h3>
+    <p id="ev-dav-ro" class="del-text dav-ro-note" data-i18n="ev.dav.ro" hidden></p>
     <div class="ev-form">
       <label for="ev-title" data-i18n="ev.field.title"></label>
       <input id="ev-title" type="text" maxlength="80" data-i18n-ph="ev.ph.title">
@@ -304,6 +306,27 @@
     <div class="dlg-row">
       <button id="sub-add" type="button" class="btn prim" data-i18n="subs.add"></button>
       <button id="sub-done" type="button" class="btn" data-i18n="lbl.done"></button>
+    </div>
+  </dialog>
+
+  <!-- CalDAV wave 3: labels linked to calendars on the person's own server -->
+  <dialog id="dav-dlg" aria-labelledby="dav-dlg-title">
+    <h3 id="dav-dlg-title" data-i18n="dav.title"></h3>
+    <p class="del-text" data-i18n="dav.text"></p>
+    <p id="dav-noacct" class="del-text" data-i18n="dav.noacct" hidden></p>
+    <div id="dav-set-row" class="dlg-row" hidden>
+      <button id="dav-settings" type="button" class="btn" data-i18n="dav.settings"></button>
+    </div>
+    <ul id="dav-list" class="subs-list"></ul>
+    <div id="dav-prev" class="dav-prev" hidden>
+      <p id="dav-prev-text" class="del-text" aria-live="polite"></p>
+      <div class="dlg-row">
+        <button id="dav-prev-go" type="button" class="btn prim" data-i18n="dav.link"></button>
+        <button id="dav-prev-no" type="button" class="btn" data-i18n="ev.cancel"></button>
+      </div>
+    </div>
+    <div class="dlg-row">
+      <button id="dav-done" type="button" class="btn" data-i18n="lbl.done"></button>
     </div>
   </dialog>
 
