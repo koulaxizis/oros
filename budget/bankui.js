@@ -23,7 +23,7 @@
   var S = {
     en: {
       title: "Import bank statement", pick: "Choose a file",
-      intro: "A statement file from your bank: CSV (any bank), OFX / QFX, QIF or CAMT.053 (XML). You see everything before it is added.",
+      intro: "A statement file from your bank: CSV or Excel (any bank), OFX / QFX, QIF, CAMT.053 (XML), MT940, or PayPal's activity file. You see everything before it is added.",
       big: "The file is too big (up to 8 MB).", bad: "Couldn't read this file.", empty: "No transactions found in this file.",
       file: "{f} · {fmt} · {n} rows", other: "Another file",
       prof: "Bank profile", profNew: "New profile", profName: "Remember as", profName_ph: "Bank name, e.g. Eurobank",
@@ -40,7 +40,9 @@
       st_new: "New", st_dup: "Looks like an entry already here", st_same: "Already imported",
       st_gone: "Deleted here earlier", st_skip: "Skipped",
       why_date: "no date", why_amount: "no amount", why_zero: "zero amount", why_cur: "another currency ({c})",
-      why_pending: "not booked yet",
+      why_pending: "not booked yet", why_memo: "a hold or note, no money moved",
+      dup_inv: "Already here from Invoices", dup_xfer: "Already here as a transfer between your accounts",
+      dup_pp: "Already here from PayPal (the same payment)",
       rule: "Rule: {q}", always: "Always do this",
       more: "Showing the first {s} of {n} rows. Import takes every ticked row.",
       go: "Import {n}", go0: "Import", done: "Imported {n} entries", doneU: "Imported {n} entries · {u} without a category",
@@ -57,7 +59,7 @@
       saved: "Rule saved", deleted: "Rule deleted",
       ruleTxt: "contains “{q}”", ruleAmt: "{a}", ruleFrom: "from {a}", ruleTo: "up to {a}",
       save: "Save", cancel: "Cancel", del: "Delete", close: "Close",
-      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053",
+      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053", fmt_mt940: "MT940", fmt_paypal: "PayPal",
       // exports of personal-finance apps (budget/import.js)
       appTitle: "Import from {app}", appFile: "{f} · {app} · {n} rows",
       appRange: "From {a} to {b}", appBig: "The file is too big (up to 20 MB).",
@@ -77,7 +79,7 @@
     },
     el: {
       title: "Εισαγωγή κίνησης λογαριασμού", pick: "Επιλογή αρχείου",
-      intro: "Ένα αρχείο κινήσεων από την τράπεζά σου: CSV (οποιασδήποτε τράπεζας), OFX / QFX, QIF ή CAMT.053 (XML). Βλέπεις τα πάντα πριν προστεθούν.",
+      intro: "Ένα αρχείο κινήσεων από την τράπεζά σου: CSV ή Excel (οποιασδήποτε τράπεζας), OFX / QFX, QIF, CAMT.053 (XML), MT940 ή το αρχείο δραστηριότητας του PayPal. Βλέπεις τα πάντα πριν προστεθούν.",
       big: "Το αρχείο είναι πολύ μεγάλο (έως 8 MB).", bad: "Δεν ήταν δυνατή η ανάγνωση του αρχείου.", empty: "Δεν βρέθηκαν κινήσεις σε αυτό το αρχείο.",
       file: "{f} · {fmt} · {n} γραμμές", other: "Άλλο αρχείο",
       prof: "Προφίλ τράπεζας", profNew: "Νέο προφίλ", profName: "Αποθήκευση ως", profName_ph: "Όνομα τράπεζας, π.χ. Eurobank",
@@ -94,7 +96,9 @@
       st_new: "Νέα", st_dup: "Μοιάζει με κίνηση που υπάρχει ήδη", st_same: "Έχει ήδη εισαχθεί",
       st_gone: "Διαγράφηκε εδώ παλιότερα", st_skip: "Παραλείπεται",
       why_date: "χωρίς ημερομηνία", why_amount: "χωρίς ποσό", why_zero: "μηδενικό ποσό", why_cur: "άλλο νόμισμα ({c})",
-      why_pending: "δεν έχει λογιστικοποιηθεί ακόμα",
+      why_pending: "δεν έχει λογιστικοποιηθεί ακόμα", why_memo: "δέσμευση ή σημείωση, δεν κινήθηκαν χρήματα",
+      dup_inv: "Υπάρχει ήδη από τα Τιμολόγια", dup_xfer: "Υπάρχει ήδη ως μεταφορά μεταξύ των λογαριασμών σου",
+      dup_pp: "Υπάρχει ήδη από το PayPal (η ίδια πληρωμή)",
       rule: "Κανόνας: {q}", always: "Πάντα έτσι",
       more: "Φαίνονται οι πρώτες {s} από {n} γραμμές. Η εισαγωγή παίρνει όλες τις επιλεγμένες.",
       go: "Εισαγωγή {n}", go0: "Εισαγωγή", done: "Εισήχθησαν {n} κινήσεις", doneU: "Εισήχθησαν {n} κινήσεις · {u} χωρίς κατηγορία",
@@ -110,7 +114,7 @@
       saved: "Ο κανόνας αποθηκεύτηκε", deleted: "Ο κανόνας διαγράφηκε",
       ruleTxt: "περιέχει «{q}»", ruleAmt: "{a}", ruleFrom: "από {a}", ruleTo: "έως {a}",
       save: "Αποθήκευση", cancel: "Άκυρο", del: "Διαγραφή", close: "Κλείσιμο",
-      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053",
+      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053", fmt_mt940: "MT940", fmt_paypal: "PayPal",
       appTitle: "Εισαγωγή από {app}", appFile: "{f} · {app} · {n} γραμμές",
       appRange: "Από {a} έως {b}", appBig: "Το αρχείο είναι πολύ μεγάλο (έως 20 MB).",
       appNoXls: "Αυτό το υπολογιστικό φύλλο δεν είναι εξαγωγή που αναγνωρίζει η εφαρμογή.",
@@ -167,7 +171,7 @@
                             (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0));
   }
   function open() {
-    A.pickFile(".csv,.txt,.tsv,.ofx,.qfx,.qif,.xml,.053,.xls,.xlsx,text/csv,text/plain,application/xml,text/xml,application/x-ofx," +
+    A.pickFile(".csv,.txt,.tsv,.ofx,.qfx,.qif,.xml,.053,.sta,.mt940,.940,.942,.xls,.xlsx,text/csv,text/plain,application/xml,text/xml,application/x-ofx," +
                "application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").then(function (file) {
       if (!file) return;
       if (file.size > (IMP ? APP_MAX : MAX_FILE)) { A.showToast(t(IMP ? "appBig" : "big")); return; }
@@ -477,7 +481,14 @@
         st.rows = B.parseCsv(st.text, st.sep);
         st.hd = B.findHeader(st.rows);
         st.sig = st.hd.header >= 0 ? B.headerSig(st.rows[st.hd.header]) : "";
-        if (first) {
+        // PayPal's activity file: its own columns and rules (BK-1).
+        var ppm = st.hd.header >= 0 ? B.paypalMap(st.rows[st.hd.header]) : null;
+        if (ppm) {
+          st.fmt = "paypal";
+          st.ppMap = ppm;
+          st.sig = "paypal";
+          if (first) { var pq = profBySig(st.sig); if (pq) applyProfile(pq); det.open = false; }
+        } else if (first) {
           var p = profBySig(st.sig);
           if (p && p.sep !== st.sep) { st.sep = p.sep; st.rows = B.parseCsv(st.text, st.sep); st.hd = B.findHeader(st.rows); }
           st.map = B.guessMap(st.rows, st.hd, A.lang);
@@ -487,7 +498,7 @@
       } else if (st.fmt === "qif") {
         if (first || !st.map) st.map = { df: B.detectDateOrder(B.qifDates(st.text), "mdy") };
       } else {
-        var r = st.fmt === "ofx" ? B.parseOfx(st.text) : B.parseCamt(st.text);
+        var r = st.fmt === "ofx" ? B.parseOfx(st.text) : st.fmt === "mt940" ? B.parseMt940(st.text) : B.parseCamt(st.text);
         st.items = r.items;
         st.fileCur = r.cur;
         st.acct = r.acct;
@@ -498,6 +509,7 @@
     function items() {
       if (st.fmt === "csv") st.items = B.csvItems(st.rows, st.hd.start, st.map);
       else if (st.fmt === "qif") st.items = B.parseQif(st.text, st.map.df).items;
+      else if (st.fmt === "paypal") st.items = B.paypalItems(st.rows, st.hd.start, st.ppMap, A.cur());
     }
 
     function colLabel(i) {
@@ -600,7 +612,8 @@
       items();
       var D = A.data();
       st.ac = acSel ? acSel.value : "";
-      st.plan = B.plan(st.items, { tx: D.tx, tombs: D.tombs, ac: st.ac, cur: A.cur(), fileCur: st.fileCur, rules: D.rule });
+      st.plan = B.plan(st.items, { tx: D.tx, tombs: D.tombs, ac: st.ac, cur: A.cur(), fileCur: st.fileCur, rules: D.rule,
+                               xfer: D.xfer, pp: st.fmt === "paypal" });
       st.plan.forEach(function (r) {
         var o = r.id && st.over[r.id];
         if (!o) return;
@@ -686,12 +699,13 @@
       return li;
     }
     function stText(r) {
-      if (r.st === "skip") return t("st_skip") + ": " + t("why_" + r.why, { c: st.fileCur || "" });
+      if (r.st === "skip") return t("st_skip") + ": " + t("why_" + r.why, { c: st.fileCur || r.cur || "" });
+      if (r.st === "dup" && r.dk) return t("dup_" + r.dk);
       return t("st_" + r.st);
     }
 
     function doImport() {
-      var rows = B.entries(st.plan, st.ac);
+      var rows = B.entries(st.plan, st.ac, st.fmt === "paypal");
       if (!rows.length) return;
       var nm = A.normText(profName.value, 30);
       if (nm) {
