@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.94.03
+- Every skin now suggests one of the wallpapers. When you pick a skin, orOS moves to its wallpaper only if you have not chosen one yourself; Settings › Appearance marks the suggested wallpaper with a star. See [Settings](help:a/settings).
+
 ## Version 4.94.02
 - PDF export in every app now uses jsPDF 4.2.1, which closes two security holes of the old version; your PDFs look the same. Studio: the hint in an empty project no longer gets cut off on a phone. Files opened on its own no longer shows an error.
 

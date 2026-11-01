@@ -409,6 +409,17 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   background: var(--bg);
 }
 .wall.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+/* SKIN-WP: the wallpaper suggested for the current skin */
+.wall { position: relative; }
+.wall.sugg::after {
+  content: "\2605";
+  position: absolute;
+  top: 3px; right: 5px;
+  font-size: 12px; line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
 .wall.make {
   display: inline-flex;
   align-items: center;
