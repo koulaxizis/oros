@@ -20,11 +20,13 @@
 
   var APP_ID = "typing";
   var STORAGE_KEY = "oros-typing-data";
-  var PREFS_KEY = "oros-typing-prefs";      // device-local {snd, osk}
+  var PREFS_KEY = "oros-typing-prefs";      // device-local {snd, osk, asked (who is practising)}
   var DEV_KEY = "oros-typing-dev";          // device-local id of this device's rows
   var TEXTS_KEY = "oros-typing-texts";      // My texts, slice "typingtexts"
   var REM_KEY = "oros-typing-rem";          // device-local reminder {on, at}
+  var RAIN_KEY = "oros-typing-rain";        // device-local Letter rain best {lay: score}
   var C = window.TypingCore, K = window.TypingLayouts, CO = window.TypingCourse, TX = window.TypingTexts;
+  var R = window.TypingRain;
 
   // ---------- 1. Language ----------
   function appLang() {
@@ -103,7 +105,23 @@
       "toast.added": "Text saved", "toast.del": "Text deleted",
       "st.chart": "Speed and accuracy, last 30 days", "st.chartNone": "Practise on a few days to see your progress here.",
       "st.chartDay": "{d}: {w} wpm, {a}% accuracy",
-      "set.rem": "Remind me to practise", "set.remAt": "Reminder time"
+      "set.rem": "Remind me to practise", "set.remAt": "Reminder time",
+      "btn.rain": "Letter rain", "u.row": "in a row", "run.field": "Typing field",
+      "rain.score": "Score", "rain.level": "Level", "rain.start": "Start", "rain.again": "Play again", "rain.continue": "Go on",
+      "rain.intro": "Type the falling letters before they reach the bottom. Three lives.",
+      "rain.letters": "Letters: {k}", "rain.best": "Best on this device: {n}", "rain.newBest": "A new best!",
+      "rain.over": "Game over: {n} points", "rain.paused": "Paused", "rain.lives": "{n} of 3 lives left",
+      "rain.level.up": "Level {n}",
+      "set.kid": "Who is practising?", "kid.0": "A grown-up", "kid.1": "A child",
+      "who.hint": "For a child the lessons are shorter, with simple words, bigger letters and stars for accuracy instead of speed. You can change it in Settings.",
+      "res.k0": "Below 85% right. Go slowly, every letter counts.",
+      "res.k1": "Well done! For two stars: 92% right.",
+      "res.k2": "Great! For three stars: 97% right.",
+      "res.k3": "Super! Three stars!",
+      "res.row": "Most right letters in a row: {n}",
+      "cert.btn": "Make a certificate",
+      "cert.course": "Touch typing course ({name} keyboard)",
+      "cert.test": "Touch typing: {w} words per minute ({name} keyboard)"
     },
     el: {
       "app.name": "Τυφλό σύστημα",
@@ -171,7 +189,23 @@
       "toast.added": "Το κείμενο αποθηκεύτηκε", "toast.del": "Το κείμενο διαγράφηκε",
       "st.chart": "Ταχύτητα και ακρίβεια, τελευταίες 30 μέρες", "st.chartNone": "Κάνε εξάσκηση μερικές μέρες για να δεις εδώ την πρόοδό σου.",
       "st.chartDay": "{d}: {w} λ/λ, ακρίβεια {a}%",
-      "set.rem": "Υπενθύμιση για εξάσκηση", "set.remAt": "Ώρα υπενθύμισης"
+      "set.rem": "Υπενθύμιση για εξάσκηση", "set.remAt": "Ώρα υπενθύμισης",
+      "btn.rain": "Βροχή γραμμάτων", "u.row": "στη σειρά", "run.field": "Πεδίο πληκτρολόγησης",
+      "rain.score": "Πόντοι", "rain.level": "Επίπεδο", "rain.start": "Ξεκίνα", "rain.again": "Ξαναπαίξε", "rain.continue": "Συνέχεια",
+      "rain.intro": "Γράψε τα γράμματα που πέφτουν πριν φτάσουν κάτω. Τρεις ζωές.",
+      "rain.letters": "Γράμματα: {k}", "rain.best": "Καλύτερο σε αυτή τη συσκευή: {n}", "rain.newBest": "Νέο ρεκόρ!",
+      "rain.over": "Τέλος παιχνιδιού: {n} πόντοι", "rain.paused": "Παύση", "rain.lives": "Ζωές που μένουν: {n} από 3",
+      "rain.level.up": "Επίπεδο {n}",
+      "set.kid": "Ποιος κάνει εξάσκηση;", "kid.0": "Ενήλικας", "kid.1": "Παιδί",
+      "who.hint": "Για παιδί τα μαθήματα είναι πιο σύντομα, με απλές λέξεις, μεγαλύτερα γράμματα και αστέρια για την ακρίβεια αντί για την ταχύτητα. Αλλάζει στις Ρυθμίσεις.",
+      "res.k0": "Κάτω από 85% σωστά. Πήγαινε σιγά, κάθε γράμμα μετράει.",
+      "res.k1": "Μπράβο! Για δύο αστέρια: 92% σωστά.",
+      "res.k2": "Τέλεια! Για τρία αστέρια: 97% σωστά.",
+      "res.k3": "Σούπερ! Τρία αστέρια!",
+      "res.row": "Τα περισσότερα σωστά γράμματα στη σειρά: {n}",
+      "cert.btn": "Φτιάξε πιστοποιητικό",
+      "cert.course": "Μαθήματα τυφλού συστήματος (πληκτρολόγιο {name})",
+      "cert.test": "Τυφλό σύστημα: {w} λέξεις το λεπτό (πληκτρολόγιο {name})"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, APP_ID, LANG);
@@ -189,12 +223,13 @@
     document.documentElement.lang = LANG;
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
     document.title = t("app.name") + " · orOS";
+    $("cap").setAttribute("aria-label", t("run.field"));
   }
 
   // ---------- 2. Data: local first, then sync ----------
   var data = C.empty();
   var mine = TX.emptyMine();
-  var prefs = { snd: false, osk: false };
+  var prefs = { snd: false, osk: false, asked: false };
   var DEV = "";
 
   function syncApi() {
@@ -208,7 +243,7 @@
     catch (e) { mine = TX.emptyMine(); }
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
-      if (p && typeof p === "object") { prefs.snd = p.snd === true; prefs.osk = p.osk === true; }
+      if (p && typeof p === "object") { prefs.snd = p.snd === true; prefs.osk = p.osk === true; prefs.asked = p.asked === true; }
     } catch (e) { /* defaults */ }
     try {
       DEV = localStorage.getItem(DEV_KEY) || "";
@@ -251,7 +286,7 @@
     if (C.serialize(merged) === C.serialize(data)) return;
     data = merged;
     persist();
-    if (!run) render();
+    if (!run && !game) render();
   }
   function registerSync() {
     var api = syncApi();
@@ -325,6 +360,7 @@
     return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
   }
   function lessonNo(id) { return CO.indexOf(id) + 1; }
+  function isKid() { return data.set.kid === 1; }
   function lessonTitle(id) {
     var L = CO.lesson(id);
     if (!L) return "";
@@ -337,7 +373,7 @@
   var screen = "home";
   function show(name) {
     screen = name;
-    ["home", "run", "stats", "texts"].forEach(function (s) { $(s).hidden = s !== name; });
+    ["home", "run", "stats", "texts", "rain"].forEach(function (s) { $(s).hidden = s !== name; });
     $("back-btn").hidden = name === "home";
     $("lay-sel").hidden = name !== "home";
     $("stats-btn").hidden = name === "stats";
@@ -345,6 +381,7 @@
   }
   function goHome() {
     stopRun();
+    stopRain();
     show("home");
     render();
   }
@@ -402,6 +439,7 @@
   function render() {
     fillLaySelect($("lay-sel"));
     document.documentElement.setAttribute("data-fs", String(data.set.fs));
+    document.documentElement.setAttribute("data-kid", String(data.set.kid));
     if (screen === "home") renderHome();
     else if (screen === "stats") renderStats();
     else if (screen === "texts") renderTexts();
@@ -513,7 +551,7 @@
   function startLesson(id) {
     if (!CO.lesson(id)) return;
     var seed = (Date.now() % 100000) + 1;
-    beginRun({ kind: "lesson", id: id, text: CO.build(lay(), id, seed) });
+    beginRun({ kind: "lesson", id: id, kid: isKid(), text: CO.build(lay(), id, seed, { kid: isKid() }) });
   }
   // The last lesson with at least one star (-1: none yet).
   function learnedUpTo() {
@@ -554,10 +592,11 @@
   function beginRun(o) {
     closeDialogs();
     stopRun();
+    stopRain();
     run = {
       kind: o.kind, id: o.id || "", min: o.min || 0, text: Array.from(o.text.normalize("NFC")),
       src: o.src || "", part: o.part || 0, nparts: o.nparts || 0, title: o.title || "", focus: o.focus || [],
-      pos: 0, marks: [], errHere: false, chars: 0, errors: 0, keys: {}, t0: 0, last: 0, active: 0, done: false
+      kid: !!o.kid, row: 0, bestRow: 0, pos: 0, marks: [], errHere: false, chars: 0, errors: 0, keys: {}, t0: 0, last: 0, active: 0, done: false
     };
     run.marks = run.text.map(function () { return 0; });
     show("run");
@@ -677,6 +716,7 @@
     var ms = elapsed();
     $("m-wpm").textContent = String(C.wpm(run.chars, ms));
     $("m-acc").textContent = String(C.accuracy(run.chars, run.errors));
+    $("m-row").textContent = String(run.row);
     $("m-time").textContent = run.kind === "test" ? mmss(run.min * 60000 - ms) : mmss(ms);
     var pct = run.kind === "test" ? (ms / (run.min * 60000)) : (run.pos / Math.max(1, run.text.length));
     $("run-fill").style.width = Math.round(100 * Math.min(1, pct)) + "%";
@@ -698,6 +738,7 @@
       ks[0]++; ks[2] += Math.round(gap);
       run.marks[run.pos] = run.errHere ? 2 : 1;
       run.chars++;
+      if (!run.errHere) { run.row++; run.bestRow = Math.max(run.bestRow, run.row); }
       markSpan(run.pos);
       var st = K.strokes(lay(), want);
       if (st) pressFlash(st[st.length - 1].code, false);
@@ -707,6 +748,7 @@
       if (run.pos >= run.text.length) { paintPos(); finish(); return; }
     } else {
       run.errors++;
+      run.row = 0;
       keyStat(want)[1]++;
       click(true);
       if (data.set.err === "go") {
@@ -747,9 +789,9 @@
     if (run.kind === "lesson") ms = Math.max(ms, 1000);
     if (run.kind !== "test") ms = Math.max(ms, 1000);
     var L = lay(), rec = { lay: L, chars: run.chars, errors: run.errors, ms: ms, keys: run.keys };
-    if (run.kind === "lesson") rec.lesson = run.id;
+    if (run.kind === "lesson") { rec.lesson = run.id; if (run.kid) rec.kid = 1; }
     else if (run.kind === "test") rec.test = run.min;
-    var done = { kind: run.kind, src: run.src, part: run.part, nparts: run.nparts };
+    var done = { kind: run.kind, src: run.src, part: run.part, nparts: run.nparts, bestRow: run.bestRow };
     var before = run.kind === "test" ? (data.best[L + "|" + run.min] || null) : null;
     if (run.chars > 0) save(C.record(data, rec, Date.now(), DEV));
     showResult(rec, before, done);
@@ -801,7 +843,11 @@
   }
 
   function onKeyDown(e) {
-    if (!run) return;
+    if (!run) {
+      if (screen === "rain" && e.code === "Escape") { e.preventDefault(); goHome(); }
+      else if (screen === "rain" && (e.code === "Enter" || e.code === "Tab")) e.preventDefault();
+      return;
+    }
     sawKey = true;
     if (!$("banner").hidden && $("banner-btn").textContent === t("ban.phoneBtn")) hideBanner();
     if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -822,7 +868,7 @@
     if (!v) return;
     cap.value = "";
     deadPending = false;
-    Array.from(v.normalize("NFC")).forEach(typeChar);
+    Array.from(v.normalize("NFC")).forEach(screen === "rain" ? rainChar : typeChar);
   }
 
   // ---------- 9. Result ----------
@@ -831,13 +877,13 @@
     var isTest = !!rec.test, free = done.kind === "practice" || done.kind === "text";
     $("res-title").textContent = isTest ? t("res.test") : done.kind === "practice" ? t("res.practice") :
       done.kind === "text" ? t("res.text") : t("res.lesson", { n: lessonNo(rec.lesson) });
-    var s = C.stars(w, a);
+    var kid = !!rec.kid, s = C.stars(w, a, kid);
     $("res-stars").textContent = isTest || free ? "" : "★★★".slice(0, s) + "☆☆☆".slice(0, 3 - s);
     $("res-stars").hidden = isTest || free;
     $("res-wpm").textContent = String(w);
     $("res-acc").textContent = a + "%";
     $("res-time").textContent = mmss(rec.ms);
-    var note = isTest ? "" : free ? (a < 90 ? t("res.0") : "") : t("res." + s);
+    var note = isTest ? "" : free ? (a < 90 ? t("res.0") : "") : t((kid ? "res.k" : "res.") + s);
     if (isTest && rec.chars > 0 && (!before || w > before.w)) note = t("res.best");
     $("res-note").textContent = note;
     var bad = Object.keys(rec.keys).filter(function (c) { return rec.keys[c][1] > 0; })
@@ -859,14 +905,180 @@
     }
     if (rec.lesson) again.dataset.lesson = rec.lesson;
     if (isTest) again.dataset.min = String(rec.test);
-    var good = done.kind === "text" ? a >= 90 : s >= 1;
+    var good = done.kind === "text" || free ? a >= 90 : isTest ? rec.chars > 0 : s >= 1;
+    $("res-row").hidden = !isKid();
+    $("res-row").textContent = t("res.row", { n: done.bestRow || 0 });
+    // a certificate after the final text (one star or more) or a speed test
+    var cert = $("res-cert");
+    var certTitle = rec.lesson === "f1" && s >= 1 ? t("cert.course", { name: K.get(rec.lay).name }) :
+      isTest && rec.chars > 0 ? t("cert.test", { w: w, name: K.get(rec.lay).name }) : "";
+    cert.dataset.title = certTitle;
+    $("res-cert-row").hidden = !certTitle || !installed("certificates");
+    showPet($("res-pet"), good);
     openDialog("dlg-result", (good && !nxt.hidden) ? nxt : again);
+  }
+
+  // ---------- 9a. Letter rain (wave 3) ----------
+  // game = TypingRain state; drawn with one span per falling letter.
+  // The game pauses when the typing field loses focus or the app is
+  // hidden. A finished game counts as practice: its minutes, the letters
+  // hit as right characters, wrong presses as errors (no key statistics:
+  // the time between letters is not typing time). Best score per
+  // layout on this device only.
+  var game = null, paused = false, raf = 0, lastT = 0, drops = {};
+  function readRainBest() {
+    try { var o = JSON.parse(localStorage.getItem(RAIN_KEY) || "null"); return o && typeof o === "object" ? o : {}; }
+    catch (e) { return {}; }
+  }
+  function rainBest() { var v = readRainBest()[lay()]; return typeof v === "number" && v >= 0 ? Math.floor(v) : 0; }
+  function rainLetters() { return R.letters(lay(), learnedUpTo()); }
+  function rainVeil(msg, sub, btn) {
+    $("rain-msg").textContent = msg;
+    $("rain-sub").textContent = sub;
+    $("rain-go").textContent = btn;
+    $("rain-veil").hidden = false;
+  }
+  function rainMeters() {
+    var sc = game ? game.score : 0, lv = game ? game.level : 1, li = game ? game.lives : R.LIVES;
+    $("r-score").textContent = String(sc);
+    $("r-level").textContent = String(lv);
+    var lives = $("r-lives");
+    lives.textContent = "♥♥♥".slice(0, li) + "♡♡♡".slice(0, R.LIVES - li);
+    lives.setAttribute("aria-label", t("rain.lives", { n: li }));
+  }
+  function clearDrops() { $("rain-drops").textContent = ""; drops = {}; }
+  function openRain() {
+    stopRun();
+    stopRain();
+    closeDialogs();
+    show("rain");
+    rainMeters();
+    $("rain-pet").hidden = true;
+    rainVeil(t("rain.intro"), t("rain.letters", { k: rainLetters().join(" ") }) + " · " + t("rain.best", { n: rainBest() }), t("rain.start"));
+    setTimeout(function () { $("rain-go").focus(); }, 0);
+  }
+  function startRain() {
+    stopRain();
+    game = R.create(rainLetters(), (Date.now() % 100000) + 1, isKid());
+    game.active = 0;
+    $("rain-veil").hidden = true;
+    $("rain-pet").hidden = true;
+    rainMeters();
+    focusCap();
+    lastT = 0;
+    raf = requestAnimationFrame(rainLoop);
+  }
+  function stopRain() {
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    game = null;
+    paused = false;
+    clearDrops();
+  }
+  function pauseRain() {
+    if (!game || game.over || paused || screen !== "rain") return;
+    paused = true;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    rainVeil(t("rain.paused"), t("rain.letters", { k: game.letters.join(" ") }), t("rain.continue"));
+  }
+  function resumeRain() {
+    if (!game || game.over || !paused) return;
+    paused = false;
+    $("rain-veil").hidden = true;
+    focusCap();
+    lastT = 0;
+    raf = requestAnimationFrame(rainLoop);
+  }
+  function rainLoop(ts) {
+    raf = 0;
+    if (!game || game.over || paused) return;
+    var dt = lastT ? ts - lastT : 16;
+    lastT = ts;
+    game.active += Math.min(dt, 250);
+    var lost = R.step(game, dt);
+    if (lost.length) {
+      lost.forEach(function (it) { var d = drops[it.id]; if (d) { d.remove(); delete drops[it.id]; } });
+      click(true);
+      var f = $("rain-field");
+      f.classList.add("hurt");
+      setTimeout(function () { f.classList.remove("hurt"); }, 200);
+      rainMeters();
+      $("rain-live").textContent = t("rain.lives", { n: game.lives });
+    }
+    drawRain();
+    if (game.over) { endRain(); return; }
+    raf = requestAnimationFrame(rainLoop);
+  }
+  function drawRain() {
+    var field = $("rain-field"), box = $("rain-drops");
+    var w = Math.max(0, field.clientWidth - 48), h = Math.max(0, field.clientHeight - 44);
+    game.items.forEach(function (it) {
+      var d = drops[it.id];
+      if (!d) { d = drops[it.id] = el("span", "drop", it.ch); box.appendChild(d); }
+      d.style.transform = "translate(" + Math.round(it.x * w) + "px," + Math.round(it.y * h) + "px)";
+    });
+  }
+  function rainChar(ch) {
+    if (!game || game.over || paused) return;
+    var lv = game.level, it = R.hit(game, ch);
+    if (!it) { click(true); rainMeters(); return; }
+    click(false);
+    var d = drops[it.id];
+    if (d) {
+      delete drops[it.id];
+      d.classList.add("pop");
+      setTimeout(function () { d.remove(); }, 260);
+    }
+    rainMeters();
+    if (game.level > lv) $("rain-live").textContent = t("rain.level.up", { n: game.level });
+  }
+  function endRain() {
+    var g = game, L = lay();
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    if (g.score > 0) save(C.record(data, { lay: L, chars: g.score, errors: g.wrong, ms: Math.max(1000, g.active), keys: {} }, Date.now(), DEV));
+    var best = rainBest(), isBest = g.score > best;
+    if (isBest) {
+      var all = readRainBest();
+      all[L] = g.score;
+      try { localStorage.setItem(RAIN_KEY, JSON.stringify(all)); } catch (e) { /* full */ }
+    }
+    var msg = t("rain.over", { n: g.score });
+    rainVeil(msg, isBest ? t("rain.newBest") : t("rain.best", { n: best }), t("rain.again"));
+    showPet($("rain-pet"), isBest || g.score >= R.PER_LEVEL);
+    $("rain-live").textContent = msg;
+    setTimeout(function () { $("rain-go").focus(); }, 0);
   }
 
   // ---------- 9b. Texts (wave 2) ----------
   function shell() {
     try { return window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; }
     catch (e) { return null; }
+  }
+  // Is an app installed? (the shell's list; standalone: no)
+  function installed(id) {
+    var sh = shell();
+    try { return !!sh && typeof sh.orosAssistInstalled === "function" && sh.orosAssistInstalled().some(function (a) { return a && a.id === id; }); }
+    catch (e) { return false; }
+  }
+  // The desktop pet cheers a good result, when it is on.
+  function showPet(box, good) {
+    var line = "";
+    if (good) {
+      try {
+        var p = window.parent;
+        if (p && p !== window && p.orosPet && typeof p.orosPet.isEnabled === "function" && p.orosPet.isEnabled()) line = String(p.orosPet.line("speech.happy") || "");
+      } catch (e) { line = ""; }
+    }
+    box.textContent = line ? "🐾 " + line : "";
+    box.hidden = !line;
+  }
+  function openCert(title) {
+    var sh = shell();
+    if (!sh || !title) return;
+    try { sh.__orosOpenAt("certificates", { newEvent: { kind: isKid() ? "kids" : "complete", t: title } }); }
+    catch (e) { /* not installed */ }
   }
   function textRow(list, src, title, sub, onDel) {
     var li = el("li", "trow");
@@ -909,7 +1121,7 @@
         });
       });
     });
-    $("tw-box").hidden = !shell();
+    $("tw-box").hidden = !installed("typewriter");
   }
   function openTexts() { stopRun(); show("texts"); renderTexts(); }
   function addNote() {
@@ -1097,6 +1309,7 @@
     $("s-err").value = data.set.err;
     $("s-goal").value = String(data.set.goal);
     $("s-fs").value = String(data.set.fs);
+    $("s-kid").value = String(data.set.kid);
     $("s-snd").checked = prefs.snd;
     var rem = readRem();
     $("s-rem").checked = rem.on;
@@ -1181,6 +1394,24 @@
     $("s-hint").addEventListener("change", function () { setPref({ hint: this.value }); });
     $("s-err").addEventListener("change", function () { setPref({ err: this.value }); });
     $("s-fs").addEventListener("change", function () { setPref({ fs: +this.value }); });
+    $("s-kid").addEventListener("change", function () { setPref({ kid: this.value === "1" ? 1 : 0 }); });
+    [].forEach.call(document.querySelectorAll("#dlg-who [data-kid]"), function (b) {
+      b.addEventListener("click", function () {
+        prefs.asked = true; savePrefs();
+        closeDialogs();
+        // a grown-up is the default: nothing is written (a first open on a
+        // new device never overrides the synced settings with defaults)
+        if (b.dataset.kid === "1") setPref({ kid: 1 });
+      });
+    });
+    $("res-cert").addEventListener("click", function () { var tt = this.dataset.title; closeDialogs(); goHome(); openCert(tt); });
+    $("rain-btn").addEventListener("click", openRain);
+    $("rain-go").addEventListener("click", function () { if (game && paused && !game.over) resumeRain(); else startRain(); });
+    $("rain-home").addEventListener("click", goHome);
+    $("rain-field").addEventListener("pointerdown", function (e) {
+      if (e.target.closest && e.target.closest("button")) return;
+      if (game && !game.over) { e.preventDefault(); focusCap(); }
+    });
     $("s-goal").addEventListener("change", function () {
       var v = Math.round(+this.value);
       if (v >= 1 && v <= 120) setPref({ goal: v }); else this.value = String(data.set.goal);
@@ -1211,8 +1442,14 @@
     cap.addEventListener("compositionend", function () { composing = false; flushCap(); });
     cap.addEventListener("input", function (e) { if (!composing && !e.isComposing) flushCap(); });
     cap.addEventListener("keydown", onKeyDown);
-    cap.addEventListener("blur", function () { if (run && !run.done && $("veil").hidden) $("focus-veil").hidden = false; });
-    cap.addEventListener("focus", function () { $("focus-veil").hidden = true; });
+    cap.addEventListener("blur", function () {
+      if (run && !run.done && $("veil").hidden) $("focus-veil").hidden = false;
+      if (screen === "rain") pauseRain();
+    });
+    cap.addEventListener("focus", function () {
+      $("focus-veil").hidden = true;
+      if (screen === "rain" && paused) resumeRain();
+    });
     $("board").addEventListener("pointerdown", function (e) { if (run) { e.preventDefault(); focusCap(); } });
 
     // Contract Β: Ctrl+Alt+Shift belongs to the shell.
@@ -1236,18 +1473,19 @@
       }
       if (e.target === $("cap")) return;
       if (screen === "texts" && e.code === "Escape") { e.preventDefault(); goHome(); return; }
-      if (screen === "run" && run && !e.ctrlKey && !e.metaKey && !e.altKey && e.code !== "Tab") {
+      if ((screen === "run" && run || screen === "rain" && game && !game.over) && !e.ctrlKey && !e.metaKey && !e.altKey && e.code !== "Tab" && e.code !== "Escape") {
         // a key while the field lost focus: take it back and let the key through
         focusCap();
       } else if (screen !== "home" && e.code === "Escape") { e.preventDefault(); goHome(); }
     });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden" && run && run.kind === "test" && !run.done && run.t0) finish();
+      if (document.visibilityState === "hidden") pauseRain();
     });
   }
 
   // ---------- 13. Deep link ----------
-  // {lesson} | {test: 1|2|5} | {stats: 1} | {practice: 1} | {texts: 1}
+  // {lesson} | {test: 1|2|5} | {stats: 1} | {practice: 1} | {texts: 1} | {rain: 1}
   // | {text: "l:<id>" | "m:<id>"} (shows the Texts screen) | {home: 1}
   // | {addText: {title, text}} (BR-SEND: the Add dialog, filled, unsaved)
   window.__orosOpenAt = function (target) {
@@ -1256,6 +1494,7 @@
     else if ([1, 2, 5].indexOf(target.test) >= 0) startTest(target.test);
     else if (target.stats) { stopRun(); show("stats"); renderStats(); }
     else if (target.practice) startPractice();
+    else if (target.rain) { closeDialogs(); openRain(); }
     else if (target.addText && typeof target.addText === "object") {
       closeDialogs();
       openAdd(typeof target.addText.title === "string" ? target.addText.title : "",
@@ -1276,9 +1515,17 @@
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") {
         var pending = p.__orosTakeTarget("typing");
-        if (pending) window.__orosOpenAt(pending);
+        if (pending) { window.__orosOpenAt(pending); return true; }
       }
     } catch (e) { /* standalone */ }
+    return false;
+  }
+  // First open (wave 3): who is practising? Asked once per device, only
+  // while there are no settings or progress yet.
+  function askWho() {
+    if (prefs.asked || data.set.m || Object.keys(data.prog).length || Object.keys(data.days).length) return;
+    prefs.asked = true; savePrefs();
+    openDialog("dlg-who");
   }
 
   // ---------- 14. Boot ----------
@@ -1291,7 +1538,7 @@
     watchPalette();
     show("home");
     render();
-    takePending();
+    if (!takePending()) askWho();
   }
   boot();
 })();

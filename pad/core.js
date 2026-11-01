@@ -445,13 +445,123 @@
     return (h >>> 0).toString(36) + ":" + b.length;
   }
 
+  // ---------- Tools (wave 3) ----------
+  // JSON: only the white space between tokens changes. Strings and
+  // numbers are copied as written (JSON.parse would round big numbers
+  // and move keys that look like numbers to the front), so formatting
+  // never changes the data. indent: "" = one line, "  " / "\t" = pretty.
+  // → { text } | { error: { line, col } } (1-based, where it went wrong).
+  var JSON_NUM = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
+  function jsonTokens(s) {
+    var toks = [], i = 0, n = s.length, line = 1, lineAt = 0;
+    if (s.charCodeAt(0) === 0xFEFF) i = 1;
+    function at(k) { return { line: line, col: k - lineAt + 1 }; }
+    while (i < n) {
+      var c = s.charAt(i);
+      if (c === "\n") { line++; lineAt = i + 1; i++; continue; }
+      if (c === " " || c === "\t" || c === "\r") { i++; continue; }
+      if ("{}[]:,".indexOf(c) >= 0) { toks.push({ t: c, v: c, at: at(i) }); i++; continue; }
+      if (c === '"') {
+        var j = i + 1;
+        for (; j < n; j++) {
+          var d = s.charCodeAt(j);
+          if (d === 92) { j++; continue; }               // backslash: skip the escaped char
+          if (d === 34) break;                            // closing quote
+          if (d < 32) return { error: at(j) };            // raw control char / new line
+        }
+        if (j >= n) return { error: at(i) };
+        toks.push({ t: "v", v: s.slice(i, j + 1), at: at(i) });
+        i = j + 1;
+        continue;
+      }
+      JSON_NUM.lastIndex = i;
+      var m = JSON_NUM.exec(s);
+      if (m && m[0] !== "-") { toks.push({ t: "v", v: m[0], at: at(i) }); i += m[0].length; continue; }
+      var lit = /^(true|false|null)/.exec(s.slice(i, i + 5));
+      if (lit) { toks.push({ t: "v", v: lit[1], at: at(i) }); i += lit[1].length; continue; }
+      return { error: at(i) };
+    }
+    return { toks: toks, end: at(i) };
+  }
+  function jsonFormat(text, indent) {
+    var r = jsonTokens(String(text));
+    if (r.error) return r;
+    var toks = r.toks, p = 0, out = [], depth = 0, ind = typeof indent === "string" ? indent : "";
+    function fail(tk) { return { error: tk ? tk.at : r.end }; }
+    function nl() { if (ind) { out.push("\n"); for (var k = 0; k < depth; k++) out.push(ind); } }
+    function value() {
+      var tk = toks[p];
+      if (!tk) return fail();
+      if (tk.t === "v") { out.push(tk.v); p++; return null; }
+      if (tk.t !== "{" && tk.t !== "[") return fail(tk);
+      if (depth >= 512) return fail(tk);
+      var obj = tk.t === "{", close = obj ? "}" : "]";
+      out.push(tk.t); p++;
+      if (toks[p] && toks[p].t === close) { out.push(close); p++; return null; }
+      depth++;
+      for (;;) {
+        nl();
+        if (obj) {
+          var key = toks[p];
+          if (!key || key.t !== "v" || key.v.charAt(0) !== '"') return fail(key);
+          out.push(key.v); p++;
+          if (!toks[p] || toks[p].t !== ":") return fail(toks[p]);
+          out.push(ind ? ": " : ":"); p++;
+        }
+        var e = value();
+        if (e) return e;
+        var nx = toks[p];
+        if (nx && nx.t === ",") { out.push(","); p++; continue; }
+        if (nx && nx.t === close) { depth--; nl(); out.push(close); p++; return null; }
+        return fail(nx);
+      }
+    }
+    var e = value();
+    if (e) return e;
+    if (p < toks.length) return fail(toks[p]);
+    return { text: out.join("") + (ind ? "\n" : "") };
+  }
+
+  // Lines: a trailing empty line (the file's last new line) stays last.
+  function splitKeep(text) {
+    var lines = String(text).split("\n"), tail = lines.length > 1 && lines[lines.length - 1] === "";
+    if (tail) lines.pop();
+    return { lines: lines, tail: tail };
+  }
+  function joinKeep(o) { return o.lines.join("\n") + (o.tail ? "\n" : ""); }
+  // A → Z in the language's order, numbers by value (file2 < file10);
+  // equal lines keep their order. desc: Z → A.
+  function sortLines(text, desc, locale) {
+    var o = splitKeep(text), coll;
+    try { coll = new Intl.Collator(locale || undefined, { numeric: true, sensitivity: "base" }); }
+    catch (e) { coll = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }); }
+    var idx = o.lines.map(function (l, i) { return i; });
+    idx.sort(function (a, b) {
+      var c = coll.compare(o.lines[a], o.lines[b]);
+      if (!c) c = o.lines[a] < o.lines[b] ? -1 : o.lines[a] > o.lines[b] ? 1 : 0;
+      return (desc ? -c : c) || a - b;
+    });
+    o.lines = idx.map(function (i) { return o.lines[i]; });
+    return joinKeep(o);
+  }
+  // The first copy of each line stays, later identical ones go.
+  function uniqueLines(text) {
+    var o = splitKeep(text), seen = Object.create(null);
+    o.lines = o.lines.filter(function (l) { if (seen[l]) return false; seen[l] = true; return true; });
+    return joinKeep(o);
+  }
+  function trimTrailing(text) {
+    return String(text).split("\n").map(function (l) { return l.replace(/[ \t]+$/, ""); }).join("\n");
+  }
+
   var api = {
     LANGS: LANGS, ENCODINGS: ENCODINGS,
     extOf: extOf, baseName: baseName, guessLang: guessLang, langInfo: langInfo, encInfo: encInfo,
     detectEncoding: detectEncoding, decode: decode, encode: encode, looksBinary: looksBinary,
     detectEol: detectEol, toLf: toLf, withEol: withEol, detectIndent: detectIndent,
     safeName: safeName, copyName: copyName, untitledName: untitledName,
-    cleanTab: cleanTab, cleanSession: cleanSession, cleanLoc: cleanLoc, sameLoc: sameLoc, addRecent: addRecent, hash: hash, hashBytes: hashBytes
+    cleanTab: cleanTab, cleanSession: cleanSession, cleanLoc: cleanLoc, sameLoc: sameLoc, addRecent: addRecent, hash: hash, hashBytes: hashBytes,
+    jsonFormat: jsonFormat, sortLines: sortLines, uniqueLines: uniqueLines, trimTrailing: trimTrailing
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.PadCore = api;

@@ -173,7 +173,9 @@
   function accuracy(chars, errors) { return chars + errors > 0 ? Math.round(100 * chars / (chars + errors)) : 100; }
   // Stars: 1 = finished with 90 % or more; 2 = 95 % and 15 wpm;
   // 3 = 98 % and 25 wpm. Review lessons ask the same.
-  function stars(w, a) {
+  // Kids mode (wave 3): accuracy only, 85 / 92 / 97 %.
+  function stars(w, a, kid) {
+    if (kid) return a >= 97 ? 3 : a >= 92 ? 2 : a >= 85 ? 1 : 0;
     if (a >= 98 && w >= 25) return 3;
     if (a >= 95 && w >= 15) return 2;
     if (a >= 90) return 1;
@@ -198,7 +200,7 @@
     return normalize(out);
   }
 
-  // run = { lay, lesson?, test? (minutes), chars, errors, ms, keys: {char: [right, wrong, ms]} }
+  // run = { lay, lesson?, test? (minutes), kid? (kids' stars), chars, errors, ms, keys: {char: [right, wrong, ms]} }
   function record(d, run, now, dev) {
     var out = normalize(d), lay = run.lay, m = Math.max(now, out.set.rs);
     if (LAYS.indexOf(lay) < 0 || !DEV_RE.test(dev)) return out;
@@ -220,7 +222,7 @@
     // lesson progress
     if (run.lesson && ID_RE.test(run.lesson)) {
       var pk = lay + "|" + run.lesson;
-      out.prog[pk] = maxProg(out.prog[pk], { s: stars(w, a), w: w, a: a, m: m });
+      out.prog[pk] = maxProg(out.prog[pk], { s: stars(w, a, !!run.kid), w: w, a: a, m: m });
     }
     // speed test record
     if (run.test && [1, 2, 5].indexOf(run.test) >= 0) {
