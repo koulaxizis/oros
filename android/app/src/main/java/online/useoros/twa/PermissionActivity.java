@@ -26,6 +26,7 @@ public class PermissionActivity extends Activity {
         if ("reminders".equals(kind)) { reminders(); return; }
         if ("install".equals(kind)) { install(data); return; }
         if ("drive".equals(kind)) { drive(); return; }
+        if ("autofill".equals(kind)) { autofill(); return; }
         if ("health".equals(kind)) {
             startActivity(new Intent(this, HealthPermissionActivity.class));
             finish();
@@ -151,6 +152,20 @@ public class PermissionActivity extends Activity {
             }
         }
         OrosApp.bridge(this).permissionsChanged();
+        finish();
+    }
+
+    /** Passwords autofill (PW-AF2): Android's own screen that makes orOS
+     *  the autofill service (Android 8+), else the autofill settings. */
+    private void autofill() {
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            try {
+                startActivity(new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE,
+                        Uri.fromParts("package", getPackageName(), null)));
+            } catch (android.content.ActivityNotFoundException e) {
+                Toast.makeText(this, R.string.af_settings_missing, Toast.LENGTH_LONG).show();
+            }
+        }
         finish();
     }
 }

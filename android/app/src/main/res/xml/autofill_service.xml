@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Passwords autofill (PW-AF2). No compatibility-mode packages:
+     current browsers (Chrome 135+ with "Autofill using another
+     service", Firefox, Brave, Samsung Internet) talk to the autofill
+     framework themselves. -->
+<autofill-service xmlns:android="http://schemas.android.com/apk/res/android" />

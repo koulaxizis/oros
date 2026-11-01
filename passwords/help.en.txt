@@ -74,6 +74,13 @@ Delete an export that is not encrypted, and any picture of those QR codes, as so
 - On a login page the add-on lists the logins saved for that site; choose one and it fills the name, password and the current 2FA code. Cards, identities and addresses can be filled on any site. When a card number sits in a payment frame from another site (Stripe, your bank), the add-on names that site and fills it there only after you press `Fill in the payment frame` and the browser allows it.
 - It fills only for the exact site or its sub-domains, never an http page for an https login, and never a card PIN, ID numbers or notes.
 
+## Autofill on your Android phone
+- In the orOS app for Android, `Menu` › `Autofill on this phone` fills logins, 2FA codes, cards and addresses in other apps and in browsers that support Android autofill (Chrome 135 and newer with "Autofill using another service", Firefox, Brave, Samsung Internet).
+- Turn it on, then press `Open Android settings` and choose orOS as the autofill service. orOS gives the app a copy sealed with a key that only this phone has; it is renewed each time you unlock or change Passwords on the phone.
+- In a form, tap an orOS suggestion and confirm with your fingerprint, face or screen lock; only that entry is filled. In a browser, logins are offered for the same site or its sub-domains only.
+- Apps: a login is offered in an app when one of its sites is `androidapp://` plus the app's package name. Otherwise choose `Choose a login from orOS` once and confirm; the phone remembers it.
+- A new fingerprint or face on the phone turns autofill off for safety: open Passwords and turn it on again. Turning it off removes the phone's copy and keys.
+
 ## Locking and the clipboard
 The vault locks itself after 5 minutes without use and as soon as you leave the app or switch to another tab. Change both in `⋯`, `Lock settings`. The padlock button locks it at once.
 
