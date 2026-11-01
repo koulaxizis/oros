@@ -9434,3 +9434,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** `index.html`, `shell.js` (late loader, APP_VERSION), `phone.js`, `webpush.js`, `widgets.js`, `.github/scripts/preload.js`, `.github/qa/boot.{js,json}`, `tests/late.test.js`, `tests/preload.test.js`, `help/topics/whatsnew.{en,el}.txt`.
 - **Tests:** new `tests/late.test.js`; full `node --test tests/*.test.js`. Not tested: a real phone.
 
+### 2026-11-01 — 4.96.00 — Users U4, Encrypt my files (#771)
+
+- **What:** optional per-user encryption on orOS USB, off by default (Chris 2026-11-01). Launcher side oros-portable #22 (`launcher/vault.go`, fscrypt v2), system side oros-usb #21 (initramfs `oros-fscrypt`, `mkfs.ext4 -O encrypt`, `oros-system vault-base`, boot self-test). Part II "Users on one computer or stick", Part IX decision.
+- **Changes:** Settings › Users card `u.vault` (turn on/off with the password, recovery code shown once), no owner Reset for an encrypted user, remove warning; `shell.js` `orosUsers` accepts `vault`. EN/EL/DE strings and help.
+- **Files:** `shell.js` (users NAMES, APP_VERSION), `settings/core.js`, `settings/settings.js`, `settings/help.{en,el}.txt`, `i18n/de/*`, `help/topics/whatsnew.{en,el}.txt`, `OROS_BIBLE.md`.
+- **Tests:** full `node --test tests/*.test.js`; launcher tests with real fscrypt on a loop ext4. Not tested: a real USB stick, real hardware.
