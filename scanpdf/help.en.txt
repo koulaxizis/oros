@@ -22,6 +22,14 @@ Press `Scan with the camera` (the camera button at the top, or on the empty scre
 - When the camera is not allowed or not there, the scanner says so; you can still choose photos.
 Press `Add … pages` to put them in the list, after the pages already there. A scanned page keeps its own shape in the PDF, with no margin. Close the scanner with the cross to let the scanned pages go. The camera turns off as soon as you leave the scanner or the app.
 
+## Scanning from a scanner
+With [orOS Bridge](https://github.com/koulaxizis/oros-bridge) 0.9.0 or newer running on this computer, `Add from scanner` appears next to the camera. It works with flatbed scanners and multifunction printers: on Windows every scanner with a Windows driver, on Linux and orOS USB through SANE (network and USB printers usually need no driver).
+1. The first time, pair this browser with the bridge: press `Show the code` and type the 6-digit code the bridge shows. If you paired it for Studio, this is not asked.
+2. Choose the scanner, the paper (`Glass`, `Feeder` or `Feeder, both sides`), the colour (`Colour`, `Grey`, `Black and white`) and the resolution (300 dpi suits documents). `Look again` finds a scanner switched on later.
+3. Press `Scan`. Each page lands in the strip as it comes; `Cancel` stops the scan; the pages already scanned stay. Tap a page to set its corners (for a receipt on a big glass), its look or its turn.
+4. Press `Add … pages`. With `Read the text after scanning` on, the text of the new pages is read right away, so the PDF can be searched.
+The pages go straight from the bridge on this computer to this page; nothing is uploaded or kept by the bridge.
+
 ## What it reads
 - PDF files (.pdf).
 - Pictures: JPEG, PNG, WebP, GIF, BMP and AVIF. Each picture becomes one page.
