@@ -17,6 +17,13 @@
       <span id="status" role="status"></span>
     </div>
   </form>
+  <h2 data-i18n="optPmTitle">Passwords</h2>
+  <label for="lockMin" data-i18n="optLock">Lock the passwords after</label>
+  <select id="lockMin"></select>
+  <div class="row">
+    <button type="button" id="forget" data-i18n="optForget">Remove the vault copy from this browser</button>
+    <span id="pmStatus" role="status"></span>
+  </div>
   <h2 data-i18n="optHowTitle">How to use</h2>
   <ul>
     <li data-i18n="optHow1"></li>
@@ -24,9 +31,14 @@
     <li data-i18n="optHow3"></li>
     <li data-i18n="optHow4"></li>
     <li data-i18n="optHow5"></li>
+    <li data-i18n="optHow6"></li>
   </ul>
   <p class="hint" data-i18n="optPrivacy"></p>
   <script src="core.js"></script>
+  <script src="pm/pmcrypto.js"></script>
+  <script src="pm/pmcore.js"></script>
+  <script src="pm/pmkinds.js"></script>
+  <script src="pmvault.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

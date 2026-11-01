@@ -1,12 +1,16 @@
-/* Send to orOS: toolbar button, Alt+Shift+O, right-click menu (page,
-   link, selected text for the Assistant) and the "oros" address-bar
-   keyword. Every action opens orOS in a new tab next to the current
-   one; nothing is read from or stored about the pages you visit beyond
-   the one address or the selected text you send. */
+/* orOS add-on: Alt+Shift+O, right-click menu (page, link, selected
+   text for the Assistant) and the "oros" address-bar keyword open orOS
+   in a new tab next to the current one; nothing is read from or stored
+   about the pages you visit beyond the one address or the selected text
+   you send. The toolbar button opens popup.html (save the page, and
+   Passwords). Passwords here (PW-AF1): keep the add-on's copy of the
+   encrypted vault fresh when an orOS tab finishes loading, and lock
+   (forget the vault key) when the lock time is reached. */
 "use strict";
 
 if (typeof OrosExt === "undefined" && typeof importScripts === "function") {
-  importScripts("core.js");     // Chrome/Edge service worker
+  // Chrome/Edge service worker; Firefox loads the same list from the manifest
+  importScripts("core.js", "pm/pmcrypto.js", "pm/pmcore.js", "pm/pmkinds.js", "pmvault.js");
 }
 
 const api = typeof browser !== "undefined" ? browser : chrome;
@@ -55,9 +59,28 @@ function buildMenus() {
 api.runtime.onInstalled.addListener(buildMenus);
 if (api.runtime.onStartup) api.runtime.onStartup.addListener(buildMenus);
 
-api.action.onClicked.addListener((tab) => {
-  send(tab && tab.url, tab && tab.title, tab);
+if (api.commands) {
+  api.commands.onCommand.addListener(async (cmd, tab) => {
+    if (cmd !== "send-page") return;
+    if (!tab) { const t = await api.tabs.query({ active: true, currentWindow: true }); tab = t && t[0]; }
+    send(tab && tab.url, tab && tab.title, tab);
+  });
+}
+
+/* Passwords: a finished orOS tab refreshes the encrypted copy (only
+   with the host permission for the orOS address; otherwise nothing). */
+api.tabs.onUpdated.addListener(async (tabId, info, tab) => {
+  if (info.status !== "complete" || !tab || !tab.url) return;
+  const base = await getBase();
+  if (!OrosVault.isOrosTab(tab, base)) return;
+  let origin;
+  try { origin = new URL(base).origin + "/*"; } catch (e) { return; }
+  const ok = await api.permissions.contains({ origins: [origin] }).catch(() => false);
+  if (ok) OrosVault.refreshFromTab(tabId);
 });
+if (api.alarms) {
+  api.alarms.onAlarm.addListener((a) => { if (a.name === "pm-lock") OrosVault.keyState(); });
+}
 
 api.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "oros-page") {

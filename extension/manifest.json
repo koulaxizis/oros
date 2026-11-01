@@ -3,7 +3,7 @@
   "name": "__MSG_extName__",
   "short_name": "orOS",
   "description": "__MSG_extDesc__",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "default_locale": "en",
   "homepage_url": "https://useoros.online/",
   "icons": {
@@ -13,30 +13,73 @@
     "128": "icons/icon-128.png"
   },
   "action": {
-    "default_title": "__MSG_actionTitle__",
+    "default_title": "__MSG_popTitle__",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"
-    }
+    },
+    "default_popup": "popup.html"
   },
   "background": {
     "service_worker": "background.js",
-    "scripts": ["core.js", "background.js"]
+    "scripts": [
+      "core.js",
+      "pm/pmcrypto.js",
+      "pm/pmcore.js",
+      "pm/pmkinds.js",
+      "pmvault.js",
+      "background.js"
+    ]
   },
-  "permissions": ["activeTab", "contextMenus", "storage"],
+  "permissions": [
+    "activeTab",
+    "alarms",
+    "contextMenus",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://useoros.online/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "commands": {
     "_execute_action": {
-      "suggested_key": { "default": "Alt+Shift+O" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "Command+Shift+L"
+      },
+      "description": "__MSG_cmdPopup__"
+    },
+    "send-page": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
       "description": "__MSG_actionTitle__"
     }
   },
-  "omnibox": { "keyword": "oros" },
-  "options_ui": { "page": "options.html", "open_in_tab": false },
+  "omnibox": {
+    "keyword": "oros"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "send-to-oros@useoros.online",
       "strict_min_version": "121.0",
-      "data_collection_permissions": { "required": ["none"] }
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   }
 }

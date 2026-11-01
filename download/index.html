@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-NE8zVJIu2ggKFZzcBtZOHIsWtssSqzHj9gwYQSBWJ6c='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-0IR5en1Kil4tXHqGeoNRpVvl0aeHHZsW62MlPaq8GLA='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Generated page (owner: thread "orOS συσκευές και USB προς πώληση");
        published by Chris 2026-10-15. -->
@@ -229,9 +229,13 @@
         <p class="dim"><b>Updates:</b> every APK here is also in the orOS repository for <b>F-Droid</b>, <b>Droid-ify</b> and <b>Obtainium</b>, which install updates for you. With F-Droid or Droid-ify installed, tap <a href="fdroidrepos://koulaxizis.github.io/oros-fdroid/repo?fingerprint=2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846">Add the orOS repository</a>. Elsewhere, add <code>https://koulaxizis.github.io/oros-fdroid/repo</code> by hand; fingerprint <code class="fp">2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846</code>. Inside orOS, Settings › Single apps also has these links, including one per app for Obtainium.</p>
         
       </section>
-      <section class="card">
-        <div class="ch"><h2>“Send to orOS” browser add-on</h2><span class="badge soon">Coming soon</span></div>
-        <p>Save the page you are on to orOS Bookmarks, or search orOS from the address bar. For Chrome, Edge, Brave and Firefox.</p>
+      <section class="card" id="addon">
+        <div class="ch"><h2>orOS browser add-on</h2><span class="badge test">Install by hand</span></div>
+        <p>Fill your orOS Passwords on any site: logins, 2FA codes, cards, identities and addresses. It also saves the page you are on to orOS Bookmarks and searches orOS from the address bar. For Chrome, Edge, Brave and Firefox. Your vault stays encrypted; only the key is kept in the browser's memory until it locks.</p>
+        <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/browser-addon/oros-addon.zip">Download the add-on (.zip)</a>
+        <p class="dim"><b>Chrome, Edge, Brave:</b> unzip it into a folder you keep. Open <code>chrome://extensions</code> (<code>edge://extensions</code>, <code>brave://extensions</code>), turn on <b>Developer mode</b>, press <b>Load unpacked</b> and choose that folder. Pin the orOS icon to the toolbar. To update, unzip the new zip over the same folder and press the reload arrow on the add-on.</p>
+        <p class="dim"><b>Firefox:</b> unzip it, open <code>about:debugging#/runtime/this-firefox</code>, press <b>Load Temporary Add-on</b> and choose <code>manifest.json</code>. Firefox removes it when it closes, until the add-on is on addons.mozilla.org.</p>
+        <p class="dim"><b>First use:</b> open orOS in a tab and press the orOS icon (or Ctrl+Shift+L). Press <b>Allow access to orOS</b> once so it can copy your encrypted vault, then unlock with your master password. On a site, choose an entry and it fills the form. If a card number sits in a payment frame from another site, the add-on names that site and asks first.</p>
         <a class="btn soft" href="https://github.com/koulaxizis/oros/tree/main/extension" target="_blank" rel="noopener">Add-on source</a>
       </section>
     </div>
@@ -381,9 +385,13 @@
         <p class="dim"><b>Ενημερώσεις:</b> κάθε APK εδώ υπάρχει και στο αποθετήριο του orOS για <b>F-Droid</b>, <b>Droid-ify</b> και <b>Obtainium</b>, που εγκαθιστούν τις ενημερώσεις για σένα. Αν έχεις το F-Droid ή το Droid-ify, πάτησε <a href="fdroidrepos://koulaxizis.github.io/oros-fdroid/repo?fingerprint=2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846">Πρόσθεσε το αποθετήριο του orOS</a>. Αλλιώς πρόσθεσε με το χέρι το <code>https://koulaxizis.github.io/oros-fdroid/repo</code>· αποτύπωμα <code class="fp">2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846</code>. Μέσα στο orOS, στις Ρυθμίσεις › Μεμονωμένες εφαρμογές, υπάρχουν τα ίδια links, και ένα για κάθε εφαρμογή στο Obtainium.</p>
         
       </section>
-      <section class="card">
-        <div class="ch"><h2>Πρόσθετο browser «Send to orOS»</h2><span class="badge soon">Σύντομα</span></div>
-        <p>Αποθηκεύεις τη σελίδα που βλέπεις στους Σελιδοδείκτες του orOS, ή ψάχνεις στο orOS από τη γραμμή διευθύνσεων. Για Chrome, Edge, Brave και Firefox.</p>
+      <section class="card" id="addon-el">
+        <div class="ch"><h2>Πρόσθετο browser orOS</h2><span class="badge test">Χειροκίνητη εγκατάσταση</span></div>
+        <p>Συμπληρώνει τα Passwords του orOS σε κάθε site: λογαριασμούς, κωδικούς 2FA, κάρτες, ταυτότητες και διευθύνσεις. Αποθηκεύει επίσης τη σελίδα που βλέπεις στους Σελιδοδείκτες του orOS και ψάχνει στο orOS από τη γραμμή διευθύνσεων. Για Chrome, Edge, Brave και Firefox. Η κρύπτη μένει κρυπτογραφημένη· μόνο το κλειδί κρατιέται στη μνήμη του browser ώσπου να κλειδώσει.</p>
+        <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/browser-addon/oros-addon.zip">Λήψη του πρόσθετου (.zip)</a>
+        <p class="dim"><b>Chrome, Edge, Brave:</b> αποσυμπίεσέ το σε έναν φάκελο που θα κρατήσεις. Άνοιξε το <code>chrome://extensions</code> (<code>edge://extensions</code>, <code>brave://extensions</code>), άναψε τη <b>Λειτουργία προγραμματιστή</b>, πάτα <b>Φόρτωση αποσυμπιεσμένου</b> και διάλεξε τον φάκελο. Καρφίτσωσε το εικονίδιο του orOS στη γραμμή εργαλείων. Για ενημέρωση, αποσυμπίεσε το νέο zip στον ίδιο φάκελο και πάτα το βελάκι επαναφόρτωσης στο πρόσθετο.</p>
+        <p class="dim"><b>Firefox:</b> αποσυμπίεσέ το, άνοιξε το <code>about:debugging#/runtime/this-firefox</code>, πάτα <b>Φόρτωση προσωρινού πρόσθετου</b> και διάλεξε το <code>manifest.json</code>. Ο Firefox το αφαιρεί όταν κλείσει, ώσπου το πρόσθετο να μπει στο addons.mozilla.org.</p>
+        <p class="dim"><b>Πρώτη χρήση:</b> άνοιξε το orOS σε μια καρτέλα και πάτα το εικονίδιο του orOS (ή Ctrl+Shift+L). Πάτα <b>Άδεια πρόσβασης στο orOS</b> μία φορά ώστε να αντιγράψει την κρυπτογραφημένη κρύπτη σου και ξεκλείδωσε με τον κύριο κωδικό. Σε ένα site διάλεξε μια εγγραφή και συμπληρώνεται η φόρμα. Αν ο αριθμός κάρτας είναι σε πλαίσιο πληρωμής άλλου site, το πρόσθετο λέει ποιο είναι και ρωτά πρώτα.</p>
         <a class="btn soft" href="https://github.com/koulaxizis/oros/tree/main/extension" target="_blank" rel="noopener">Ο κώδικας του πρόσθετου</a>
       </section>
     </div>
@@ -463,7 +471,7 @@
       b.setAttribute("aria-pressed", String(b.getAttribute("data-l") === l));
     });
   }
-  var start = /[?&]lang=el\b/.test(location.search) || location.hash === "#el" ? "el" : "en";
+  var start = /[?&]lang=el\b/.test(location.search) || /^#(.+-)?el$/.test(location.hash) ? "el" : "en";
   if (start === "en" && !/[?&]lang=en\b/.test(location.search)) {
     try { if (localStorage.getItem("oros-lang") === "el") start = "el"; } catch (e) {}
   }
