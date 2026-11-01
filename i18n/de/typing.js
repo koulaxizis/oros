@@ -100,6 +100,7 @@ orosPack("de", "typing", {
  "res.row": "Die meisten richtigen Buchstaben in Folge: {n}",
  "res.test": "Tempotest geschafft",
  "res.text": "Text geschafft",
+ "run.field": "Tippfeld",
  "run.focus": "Hier klicken und lostippen",
  "run.next": "Nächste Taste: {k}, {f}",
  "run.practice": "Üben: {k}",

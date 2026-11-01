@@ -106,7 +106,7 @@
       "st.chart": "Speed and accuracy, last 30 days", "st.chartNone": "Practise on a few days to see your progress here.",
       "st.chartDay": "{d}: {w} wpm, {a}% accuracy",
       "set.rem": "Remind me to practise", "set.remAt": "Reminder time",
-      "btn.rain": "Letter rain", "u.row": "in a row",
+      "btn.rain": "Letter rain", "u.row": "in a row", "run.field": "Typing field",
       "rain.score": "Score", "rain.level": "Level", "rain.start": "Start", "rain.again": "Play again", "rain.continue": "Go on",
       "rain.intro": "Type the falling letters before they reach the bottom. Three lives.",
       "rain.letters": "Letters: {k}", "rain.best": "Best on this device: {n}", "rain.newBest": "A new best!",
@@ -190,7 +190,7 @@
       "st.chart": "Ταχύτητα και ακρίβεια, τελευταίες 30 μέρες", "st.chartNone": "Κάνε εξάσκηση μερικές μέρες για να δεις εδώ την πρόοδό σου.",
       "st.chartDay": "{d}: {w} λ/λ, ακρίβεια {a}%",
       "set.rem": "Υπενθύμιση για εξάσκηση", "set.remAt": "Ώρα υπενθύμισης",
-      "btn.rain": "Βροχή γραμμάτων", "u.row": "στη σειρά",
+      "btn.rain": "Βροχή γραμμάτων", "u.row": "στη σειρά", "run.field": "Πεδίο πληκτρολόγησης",
       "rain.score": "Πόντοι", "rain.level": "Επίπεδο", "rain.start": "Ξεκίνα", "rain.again": "Ξαναπαίξε", "rain.continue": "Συνέχεια",
       "rain.intro": "Γράψε τα γράμματα που πέφτουν πριν φτάσουν κάτω. Τρεις ζωές.",
       "rain.letters": "Γράμματα: {k}", "rain.best": "Καλύτερο σε αυτή τη συσκευή: {n}", "rain.newBest": "Νέο ρεκόρ!",
@@ -223,6 +223,7 @@
     document.documentElement.lang = LANG;
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) { n.textContent = t(n.getAttribute("data-i18n")); });
     document.title = t("app.name") + " · orOS";
+    $("cap").setAttribute("aria-label", t("run.field"));
   }
 
   // ---------- 2. Data: local first, then sync ----------
