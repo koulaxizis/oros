@@ -383,3 +383,26 @@ test("save automatically: off by default, only placed tabs, never asks, holds on
   assert.match(src, /if \(tab\.saving\) return tab\.saving\.then/);
   assert.match(src, /tab\.autoHeld = false;\s*editedSince\(tab, sent\);/);
 });
+
+test("ISO-8859-1 means Windows-1252 even where Node reads the label as strict Latin-1", () => {
+  // Some Node builds (22.22) decode "iso-8859-1" as Latin-1, browsers as
+  // Windows-1252 (WHATWG). The encoder names Windows-1252 itself, so a
+  // decoder that refuses the label must never be asked for it.
+  const Real = global.TextDecoder;
+  const key = require.resolve("../pad/core.js");
+  delete require.cache[key];
+  global.TextDecoder = class extends Real {
+    constructor(label, o) {
+      if (String(label).toLowerCase() === "iso-8859-1") throw new Error("strict latin1 asked");
+      super(label, o);
+    }
+  };
+  try {
+    const X = require("../pad/core.js");
+    assert.deepEqual(X.encode("€😀", "iso-8859-1").bad, { ch: "😀", line: 1, col: 2 });
+    assert.equal(X.decode(new Uint8Array([0x80, 0x41]), "iso-8859-1"), "€A");
+  } finally {
+    global.TextDecoder = Real;
+    delete require.cache[key];
+  }
+});

@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .node-version
       - name: Install Playwright (CI only)
         run: |
           npm install --prefix .github/qa --no-audit --no-fund
@@ -97,7 +97,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .node-version
       - name: Check every app this PR adds
         run: node .github/app-kit/check-app.js --added-since origin/${{ github.base_ref }} --no-browser
 
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .node-version
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

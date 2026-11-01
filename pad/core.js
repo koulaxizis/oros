@@ -158,6 +158,11 @@
     { id: "iso-8859-1",   name: "ISO-8859-1" }
   ];
   var SINGLE = { "windows-1253": 1, "iso-8859-7": 1, "windows-1252": 1, "iso-8859-1": 1 };
+  // The WHATWG Encoding Standard reads the label ISO-8859-1 as Windows-1252,
+  // and every browser does. Some Node builds read it as strict Latin-1, so
+  // the decoder is given Windows-1252 by name: the same bytes everywhere.
+  var DECODER = { "iso-8859-1": "windows-1252" };
+  function decoderLabel(enc) { return DECODER[enc] || enc; }
   function encInfo(id) {
     for (var i = 0; i < ENCODINGS.length; i++) if (ENCODINGS[i].id === id) return ENCODINGS[i];
     return null;
@@ -223,13 +228,13 @@
     if (enc === "utf-16le" && b[0] === 0xFF && b[1] === 0xFE) skip = 2;
     if (enc === "utf-16be" && b[0] === 0xFE && b[1] === 0xFF) skip = 2;
     // ignoreBOM: the BOM is removed above, exactly once.
-    return new TextDecoder(label, { ignoreBOM: true }).decode(b.subarray(skip));
+    return new TextDecoder(decoderLabel(label), { ignoreBOM: true }).decode(b.subarray(skip));
   }
 
   var tables = {};
   function singleTable(enc) {
     if (tables[enc]) return tables[enc];
-    var dec = new TextDecoder(enc), map = {};
+    var dec = new TextDecoder(decoderLabel(enc)), map = {};
     for (var i = 255; i >= 0; i--) {
       var ch = dec.decode(new Uint8Array([i]));
       if (ch !== "�") map[ch] = i;   // lower byte wins a duplicate (loop runs down)

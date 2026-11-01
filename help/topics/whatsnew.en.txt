@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.94.02
+- PDF export in every app now uses jsPDF 4.2.1, which closes two security holes of the old version; your PDFs look the same. Studio: the hint in an empty project no longer gets cut off on a phone. Files opened on its own no longer shows an error.
+
 ## Version 4.94.01
 - Updates no longer get stuck: if one file of a new version cannot be downloaded (a slow or filtered network, common on phones), orOS tries again, picks up where it stopped, and after a few tries installs the update without that file. A phone that stayed on an old version updates by itself the next time you open orOS.
 
