@@ -22,9 +22,9 @@ name: Android app
 on:
   push:
     branches: [main]
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', '.github/workflows/android.yml']
   pull_request:
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'icons/solo/**', '.github/oros-drive.env', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', '.github/oros-drive.env', '.github/workflows/android.yml']
   workflow_dispatch:
     inputs:
       diag:

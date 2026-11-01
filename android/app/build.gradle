@@ -17,6 +17,10 @@ def appVersion = {
 // their packages; android/tools/gen.js writes each one's manifest
 // overlay, resources and icon under app/solo-gen/<id>/.
 def soloApps = new groovy.json.JsonSlurper().parse(file('../solo-apps.json')).apps
+// Page apps (STUDIO-RA): android/page-apps.json, one page of the site on
+// its own ("Remote for orOS Studio"); gen.js writes their overlays to
+// app/solo-gen/<id>/ too.
+new groovy.json.JsonSlurper().parse(file('../page-apps.json')).apps.each { id, spec -> soloApps[id] = spec.package }
 
 // Release signing comes from the environment (GitHub secrets in CI):
 // the same upload key as the PWABuilder package, so Play and
