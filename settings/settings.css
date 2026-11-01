@@ -563,6 +563,8 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .svc-mark.m-tol { background: #0e6fb7; }
 .svc-mark.m-ininja { background: #2e7d5b; }
 .svc-mark.m-stripe { background: #635bff; }
+.svc-mark.m-ebank { background: #0b6e69; }
+.svc-mark.m-paypal { background: #003087; }
 .svc-mark.m-mlite { background: #09a35a; }
 .svc-mark.m-mchimp { background: #ffe01b; }
 .svc-mark.m-brevo { background: #0b996e; }

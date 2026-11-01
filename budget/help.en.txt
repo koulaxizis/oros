@@ -83,6 +83,16 @@ From the `More` menu:
 - **Categories.** Pick a category on any row. After a correction, `Always do this` makes a rule from it, so the next import does it by itself.
 - `Import` adds them as normal entries, marked with a small bank icon. `Undo` takes back the whole import. The same file imported again, here or on another device, adds nothing twice.
 
+## Banks (automatic)
+`More` › `Banks (automatic)` connects your bank accounts so new bookings come in by themselves, through Enable Banking (open banking, PSD2). orOS only reads your accounts; it can never make a payment.
+
+- **Once: your own Enable Banking application.** Create a free account at enablebanking.com, register a `Production` application with the redirect URL Budget shows, keep the `.pem` key file it downloads, and press `Activate by linking accounts` with your own accounts (not `Request activation`). Then enter the `Application ID` and choose the `.pem` file in Budget. Budget calls Enable Banking straight from your device; when it can't, the call goes through the orOS relay, where your bank data passes through but is never stored or logged. The key stays sealed on this device; to use it on your other devices, turn on `Use on all my devices` in [Settings](app:settings) › `Connected services`.
+- **Connect a bank.** Pick the country, the bank and `Personal` or `Business`, then `Go to the bank`: you sign in on the bank's own page, in a new window. When you come back, pick which Budget account each bank account fills.
+- **Updates.** Each time you open Budget, at most every 6 hours, new booked entries come in; `Update now` does it at once. The first time Budget reads the last 89 days. Pending payments wait until the bank books them. Rules, categories, duplicates and `Already here another way` work as for a statement file, and entries carry the small bank icon.
+- **Access ends.** Your bank gives access for up to 180 days. A week before the end a bar above the list says so; `Renew` asks the bank again and keeps each account's Budget account and its place. `Remove` forgets a bank account; entries already in Budget stay.
+- **PayPal Business.** On developer.paypal.com, log in with your PayPal Business account, open `Apps & Credentials` › `Live` › `Create App`, keep only the `Transaction search` feature and copy the `Client ID` and `Secret` into [Settings](app:settings) › `Connected services` › PayPal. Then `Add` it under `PayPal Business` here and pick its Budget account. It updates with your banks and follows the PayPal file's rules: income after PayPal's fee, a payment in another currency at what left in yours, holds, pending payments and money between PayPal and your own card or bank left out. A PayPal file imported before or after adds nothing twice, and the bank's "PAYPAL *…" line is marked `Already here from PayPal`. PayPal is always reached through the orOS relay: your payments pass through it but are never stored or logged. PayPal's own answers can lag up to 3 hours, and a new app can take a few hours to answer at all.
+- If your bank isn't in the list, statement files above always work.
+
 ## Other budgeting apps
 `More` › `Import from another app` (or `Import bank statement`, it's the same picker) recognises the export of these apps by itself and brings in categories and accounts too, not only amounts:
 - **YNAB**: on the web, open an account or All Accounts and use `Export` (the register CSV; YNAB 4's register CSV works too). Transfers and the starting balance are left out; money into `Ready to Assign` comes in without a category.
@@ -101,6 +111,8 @@ In the preview:
 
 ## Rules
 `More` › `Rules`: "if the description contains LIDL → Groceries". A rule can also look at an amount range (`Amount from`, `Amount to`), rename the entry (`Rename to`) and add a note. When several rules match, the one with the longest text wins. `Apply to uncategorised entries` runs them on what is already here; `Undo` puts it back.
+
+**Budget learns.** Without a rule, an entry from a bank or a file takes the category you gave most often to earlier entries from the same name (the preview says `As before for this name`); a rule always wins. `Apply rules` also fills in these learned categories. When you change the category of an entry that came from a bank, the message at the top offers `Always for "…"`: one tap makes the rule (or changes the one that already exists for that name).
 
 ## Uncategorised imports
 When imported entries have no category, a bar above the list says how many. Tap it, or pick `Imported, no category` in the menu next to the search: you see them from every month, each with its category right there. `Apply rules` and `Rule…` help you clear them faster.

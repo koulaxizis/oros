@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.02.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.03.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7552,6 +7552,12 @@
         { name: "Stripe API", url: "https://docs.stripe.com/api",
           by: "Stripe, Inc.; your own account", lic: { k: "cr.lic.stripe-api" },
           k: "cr.stripe-api" },
+        { name: "Enable Banking API", url: "https://enablebanking.com/docs/api/reference/",
+          by: "Enable Banking Oy; your own application", lic: { k: "cr.lic.enablebanking" },
+          k: "cr.enablebanking" },
+        { name: "PayPal Transaction Search API", url: "https://developer.paypal.com/docs/api/transaction-search/v1/",
+          by: "PayPal, Inc.; your own app", lic: { k: "cr.lic.paypal-api" },
+          k: "cr.paypal-api" },
         { name: "Invoice Ninja API", url: "https://api-docs.invoicing.co/",
           by: "Invoice Ninja LLC; your own account or install", lic: { k: "cr.lic.invoice-ninja" },
           k: "cr.invoice-ninja" },

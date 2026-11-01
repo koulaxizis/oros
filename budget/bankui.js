@@ -43,7 +43,7 @@
       why_pending: "not booked yet", why_memo: "a hold or note, no money moved",
       dup_inv: "Already here from Invoices", dup_xfer: "Already here as a transfer between your accounts",
       dup_pp: "Already here from PayPal (the same payment)",
-      rule: "Rule: {q}", always: "Always do this",
+      rule: "Rule: {q}", always: "Always do this", learned: "As before for this name",
       more: "Showing the first {s} of {n} rows. Import takes every ticked row.",
       go: "Import {n}", go0: "Import", done: "Imported {n} entries", doneU: "Imported {n} entries · {u} without a category",
       tick: "Import {t}",
@@ -99,7 +99,7 @@
       why_pending: "δεν έχει λογιστικοποιηθεί ακόμα", why_memo: "δέσμευση ή σημείωση, δεν κινήθηκαν χρήματα",
       dup_inv: "Υπάρχει ήδη από τα Τιμολόγια", dup_xfer: "Υπάρχει ήδη ως μεταφορά μεταξύ των λογαριασμών σου",
       dup_pp: "Υπάρχει ήδη από το PayPal (η ίδια πληρωμή)",
-      rule: "Κανόνας: {q}", always: "Πάντα έτσι",
+      rule: "Κανόνας: {q}", always: "Πάντα έτσι", learned: "Όπως παλιότερα για αυτό το όνομα",
       more: "Φαίνονται οι πρώτες {s} από {n} γραμμές. Η εισαγωγή παίρνει όλες τις επιλεγμένες.",
       go: "Εισαγωγή {n}", go0: "Εισαγωγή", done: "Εισήχθησαν {n} κινήσεις", doneU: "Εισήχθησαν {n} κινήσεις · {u} χωρίς κατηγορία",
       tick: "Εισαγωγή: {t}",
@@ -683,7 +683,7 @@
       if (r.rule) {
         var ru = ruleById(r.rule);
         if (ru) bot.appendChild(el("span", "bk-rule", t("rule", { q: ruleText(ru) })));
-      }
+      } else if (r.learn && !r.manual) bot.appendChild(el("span", "bk-rule", t("learned")));
       cs.addEventListener("change", function () {
         r.c = cs.value;
         r.manual = true;
@@ -800,7 +800,7 @@
   // Re-run rules (all, or only `only`) on the uncategorised entries.
   function applyAll(only) {
     var D = A.data();
-    var ch = B.rerun(D.tx, only && only.length ? only : D.rule);
+    var ch = B.rerun(D.tx, only && only.length ? only : D.rule, !(only && only.length));
     if (!ch.length) { if (!only || !only.length) A.showToast(t("applied0")); return 0; }
     A.applyChanges(ch, (ch.length === 1 ? t("applied1") : t("applied", { n: ch.length })));
     return ch.length;

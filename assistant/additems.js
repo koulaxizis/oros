@@ -689,7 +689,7 @@
   // Budget stores nothing before its first entry: then it starts from
   // budget.js emptyData(), as its own first commit does.
   function bgEmpty() {
-    return { ver: 1, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], set: { m: 0, cur: "EUR" }, tombs: {} };
+    return { ver: 1, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], set: { m: 0, cur: "EUR" }, tombs: {} };
   }
   function bgCats(d, k, lang) {
     var tombs = isObj(d.tombs) ? d.tombs : {}, stored = {}, out = [];

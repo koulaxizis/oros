@@ -13,14 +13,19 @@
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "trello", key, token, reqs: [...] }
+//           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
+//           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
 //   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key),
 //   HubSpot https://api.hubapi.com<path> (Bearer), Pipedrive
 //   https://api.pipedrive.com/api/v2<path> (header x-api-token); both read-only;
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
+//   Enable Banking https://api.enablebanking.com<path> (Bearer JWT signed on the
+//   person's device with their own application's key, read-only account information)
+//   PayPal https://api-m.paypal.com<path> (Bearer token the relay gets for this call
+//   from the person's own REST app: key = Client ID, token = Secret; read-only
+//   transaction search)
 //   Todoist https://api.todoist.com/api/v1<path> (Bearer, read-only: projects, open tasks)
 //   Trello https://api.trello.com/1<path> (OAuth header: key + token), GitHub
 //   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues /
@@ -160,6 +165,33 @@ function okBvRow(x) {
   if (!onlyKeys(x, ["email", "attributes"]) || !okEmail(x.email)) return false;
   return x.attributes === undefined || (onlyKeys(x.attributes, ["FIRSTNAME"]) && (x.attributes.FIRSTNAME === undefined || okName(x.attributes.FIRSTNAME)));
 }
+// Enable Banking (Budget BK-2): same shapes as links/core.js
+const EB_UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const EB_CTY = /^[A-Z]{2}$/, EB_PSU = /^(personal|business)$/, EB_SVC = /^AIS$/, EB_TST = /^(BOOK|PDNG)$/,
+      EB_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, EB_CK = /^([A-Za-z0-9._~-]|%2B|%2F|%3D){1,1000}$/;
+const EB_REDIRECTS = ["https://useoros.online/budget/bankback.html"];
+// PayPal (Budget BK-3): same shapes as links/core.js
+const PP_KEY = /^[A-Za-z0-9_-]{40,128}$/,
+      PP_DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-0000$/,
+      PP_FIELDS = /^(all|transaction_info,payer_info,cart_info)$/, PP_SIZE = /^([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|500)$/,
+      PP_YN = /^(Y|N)$/, PP_TOKEN = /^[A-Za-z0-9._~+\/=-]{20,4096}$/, PP_PG = /^([1-9][0-9]{0,2}|1000)$/;
+// start_date ≤ end_date, at most 31 days apart (PayPal refuses more)
+function ppRange(q) {
+  const s = Date.parse(String(q.start_date || "").replace(/-0000$/, "Z")), e = Date.parse(String(q.end_date || "").replace(/-0000$/, "Z"));
+  return isFinite(s) && isFinite(e) && s <= e && e - s <= 31 * 86400000;
+}
+function okEbVal(kind, v) {
+  const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
+  if (kind === "ebacc") return obj(v) && Object.keys(v).length === 1 && typeof v.valid_until === "string" &&
+    /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(v.valid_until);
+  if (kind === "ebasp") return obj(v) && Object.keys(v).length === 2 && typeof v.name === "string" && v.name.length > 0 &&
+    v.name.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v.name) && typeof v.country === "string" && EB_CTY.test(v.country);
+  if (kind === "ebstate") return typeof v === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(v);
+  if (kind === "ebredir") return EB_REDIRECTS.indexOf(v) >= 0;
+  if (kind === "ebpsu") return typeof v === "string" && EB_PSU.test(v);
+  if (kind === "ebcode") return typeof v === "string" && /^[A-Za-z0-9._~-]{1,512}$/.test(v);
+  return false;
+}
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
@@ -170,7 +202,9 @@ const WHOLE = {
   // Notion: search only with the "pages" filter
   ntq: (b) => "filter" in b,
   // WooCommerce: a new product only as a draft, always with a name
-  wdraft: (b) => b.status === "draft" && "name" in b
+  wdraft: (b) => b.status === "draft" && "name" in b,
+  // Enable Banking: a consent request always names all its parts
+  ebauth: (b) => "access" in b && "aspsp" in b && "state" in b && "redirect_url" in b
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
@@ -276,6 +310,55 @@ export const PLATFORMS = {
       ["GET", /^\/persons$/, { limit: LIM500, cursor: PD_CURSOR }, null],
       ["GET", /^\/deals$/, { limit: LIM500, cursor: PD_CURSOR, status: PD_DST }, null],
       ["GET", /^\/activities$/, { limit: LIM500, cursor: PD_CURSOR, done: BOOL }, null]
+    ]
+  },
+  // Bank accounts (Budget BK-2), read-only: Enable Banking with the
+  // person's own application. The key is a short-lived JWT signed on the
+  // person's device; the private key never comes here.
+  ebank: {
+    root: "",
+    host: "api.enablebanking.com",
+    once: true,                     // POST /auth and /sessions travel alone, never retried
+    keys: { key: /^[A-Za-z0-9_-]{10,1000}\.[A-Za-z0-9_-]{10,2000}\.[A-Za-z0-9_-]{10,1400}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/application$/, null, null],
+      ["GET", /^\/aspsps$/, { country: EB_CTY, psu_type: EB_PSU, service: EB_SVC }, null],
+      ["POST", /^\/auth$/, null, { access: "ebacc", aspsp: "ebasp", state: "ebstate", redirect_url: "ebredir", psu_type: "ebpsu" }, "ebauth"],
+      ["POST", /^\/sessions$/, null, { code: "ebcode" }, null],
+      ["GET", new RegExp("^\\/sessions\\/" + EB_UUID + "$"), null, null],
+      ["GET", new RegExp("^\\/accounts\\/" + EB_UUID + "\\/balances$"), null, null],
+      ["GET", new RegExp("^\\/accounts\\/" + EB_UUID + "\\/transactions$"), { date_from: EB_DAY, date_to: EB_DAY, continuation_key: EB_CK, transaction_status: EB_TST }, null]
+    ]
+  },
+  // PayPal Business (Budget BK-3), read-only: the person's own REST app.
+  // PayPal hands a token only for the Client ID + Secret (client
+  // credentials), so the relay asks for one at the start of each call and
+  // keeps it nowhere; the token can only reach the allowlist below.
+  paypal: {
+    root: "",
+    host: "api-m.paypal.com",
+    keys: { key: PP_KEY, token: PP_KEY },
+    tokenOf: async (b, fetchFn, signal) => {
+      const res = await fetchFn("https://api-m.paypal.com/v1/oauth2/token", {
+        method: "POST", redirect: "manual", signal,
+        headers: { Authorization: "Basic " + btoa(b.key + ":" + b.token), "Content-Type": "application/x-www-form-urlencoded",
+                   Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" },
+        body: "grant_type=client_credentials"
+      });
+      // never PayPal's error body: only its status and a fixed code
+      const text = res.status === 200 ? await readCapped(res, 8192) : null;
+      if (text === null) {
+        try { if (res.body) await res.body.cancel(); } catch (e) {}
+        return res.status >= 400 && res.status < 500 ? { status: res.status, err: "auth" } : { status: res.status === 200 ? 502 : res.status, err: "network" };
+      }
+      let j = null;
+      try { j = JSON.parse(text); } catch (e) {}
+      const tok = j && typeof j.access_token === "string" && PP_TOKEN.test(j.access_token) ? j.access_token : "";
+      return tok ? { auth: ["Authorization", "Bearer " + tok] } : { status: 502, err: "network" };
+    },
+    allow: [
+      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: PP_PG, balance_affecting_records_only: PP_YN }, null, null, ppRange]
     ]
   },
   // Payments (wave 4B), read-only: a restricted key (rk_) only
@@ -408,6 +491,7 @@ function okVal(kind, v) {
   if (kind === "ooff") return Number.isInteger(v) && v >= 0 && v <= 10000000;
   if (kind === "nlim") return Number.isInteger(v) && v >= 1 && v <= 100;
   if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
+  if (kind.slice(0, 2) === "eb") return okEbVal(kind, v);
   // "=a" or "=a|b": exactly one of the fixed values
   if (kind[0] === "=") return kind.slice(1).split("|").some((k) => Object.prototype.hasOwnProperty.call(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]);
   return false;
@@ -439,16 +523,18 @@ export function checkExtReq(p, r) {
   const path = qi < 0 ? r.path : r.path.slice(0, qi), query = qi < 0 ? "" : r.path.slice(qi + 1);
   const rule = pl.allow.find((a) => a[0] === r.m && a[1].test(path));
   if (!rule) return "path";
+  const seen = {};
   if (query) {
     if (!rule[2]) return "query";
-    const seen = {};
     for (const kv of query.split("&")) {
       const i = kv.indexOf("=");
       const k = i < 0 ? kv : kv.slice(0, i), v = i < 0 ? "" : kv.slice(i + 1);
-      if (!Object.prototype.hasOwnProperty.call(rule[2], k) || seen[k] || !rule[2][k].test(v)) return "query";
-      seen[k] = 1;
+      if (!Object.prototype.hasOwnProperty.call(rule[2], k) || Object.prototype.hasOwnProperty.call(seen, k) || !rule[2][k].test(v)) return "query";
+      seen[k] = v;
     }
   }
+  // a check across the query's values (PayPal: a date range ≤ 31 days)
+  if (rule[5] && !rule[5](seen)) return "query";
   if (r.m === "GET") return r.body === undefined ? "" : "body";
   const b = r.body;
   if (!b || typeof b !== "object" || Array.isArray(b)) return "body";
@@ -569,8 +655,19 @@ async function readCapped(res, max) {
 export async function runExt(b, fetchFn, now) {
   now = now || (() => Date.now());
   const pl = PLATFORMS[b.p];
-  const auth = pl.auth(b);
   const start = now();
+  let auth;
+  if (pl.tokenOf) {
+    // a token for this call only (PayPal): no token, no request
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), lim(b.p, "timeout"));
+    let tk;
+    try { tk = await pl.tokenOf(b, fetchFn, ctl.signal); }
+    catch (e) { tk = { err: ctl.signal.aborted ? "timeout" : "network" }; }
+    finally { clearTimeout(timer); }
+    if (!tk.auth) return { res: b.reqs.map(() => (tk.status ? { status: tk.status, err: tk.err || "network" } : { err: tk.err || "network" })) };
+    auth = tk.auth;
+  } else auth = pl.auth(b);
   const out = new Array(b.reqs.length);
   let outBytes = 0, next = 0;
   async function one(i) {

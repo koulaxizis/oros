@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 37927 of 38055 (99%)
+- Strings: 38239 of 38458 (99%)
 - Help pages: 152 of 152 (100%)
 - Shown in the language list: yes
 
@@ -21,7 +21,7 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
-| budget | 100% | 556 / 556 |
+| budget | 87% | 556 / 636 |
 | calculator | 100% | 166 / 166 |
 | calendar | 98% | 430 / 438 |
 | capture | 100% | 54 / 54 |
@@ -94,7 +94,7 @@ text is still written in the code. They switch over wave by wave
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 184 / 184 |
-| passwords | 100% | 323 / 323 |
+| passwords | 100% | 423 / 423 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
@@ -115,12 +115,12 @@ text is still written in the code. They switch over wave by wave
 | reversi | 100% | 60 / 60 |
 | ringtones | 100% | 107 / 107 |
 | rps | 100% | 59 / 59 |
-| scanpdf | 100% | 300 / 300 |
+| scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 778 / 778 |
+| settings | 99% | 881 / 888 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1068 / 1068 |
+| shell | 99% | 1075 / 1079 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -135,7 +135,7 @@ text is still written in the code. They switch over wave by wave
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 694 / 694 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 527 / 527 |
+| studio | 100% | 555 / 555 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 59 / 59 |
@@ -145,7 +145,7 @@ text is still written in the code. They switch over wave by wave
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 293 / 293 |
 | today | 100% | 91 / 91 |
-| todo | 100% | 227 / 227 |
+| todo | 100% | 259 / 259 |
 | together | 100% | 303 / 303 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
@@ -169,4 +169,6 @@ text is still written in the code. They switch over wave by wave
 
 These show English until fixed (usually the English text changed).
 
+- de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
+- de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt

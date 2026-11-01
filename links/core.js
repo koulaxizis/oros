@@ -45,7 +45,10 @@
 
   var VER = 1;
   var ID_RE = /^[a-z0-9]{8,24}$/;
-  var NAME_LEN = 60, SITE_LEN = 200, SEAL_LEN = 4000;
+  // SEAL_LEN: an Enable Banking private key (PEM, up to 4096 bits) sealed
+  // with the sync passphrase is ~6 KB; an older device drops a longer
+  // copy only for itself (equal m: the larger canonical JSON wins back).
+  var NAME_LEN = 60, SITE_LEN = 200, SEAL_LEN = 9000;
   var MAX_ACCTS = 50;
   var VAT_RE = /^[0-9]{9}$/;
   var DB_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$/;
@@ -144,6 +147,46 @@
       keys: [{ k: "key", re: /^rk_(live|test)_[A-Za-z0-9]{20,250}$/ }],
       apps: ["budget"],
       probe: "/balance",
+      relayOnly: true
+    },
+    // Bank accounts (Budget BK-2): Enable Banking, an open-banking (PSD2)
+    // provider, with the person's OWN application in restricted mode
+    // (free, reads only the accounts they linked themselves). The keys
+    // are the application id and its private key (PEM); a call carries
+    // only a JWT signed from them on this device (links/host.js), so the
+    // private key never leaves the device (the relay gets the JWT).
+    // Read-only account information, never payments. Added from
+    // Budget › Banks (ownUi: not in the Settings add form).
+    ebank: {
+      name: "Enable Banking",
+      site: false,
+      host: "api.enablebanking.com",
+      root: "",
+      keys: [
+        { k: "app", re: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/ },
+        { k: "pem", re: /^-----BEGIN (RSA )?PRIVATE KEY-----[A-Za-z0-9+\/=\s]{200,6000}-----END (RSA )?PRIVATE KEY-----$/ }
+      ],
+      apps: ["budget"],
+      probe: "/application",
+      once: true,                   // a consent request / session: never sent twice by a fallback
+      ownUi: "budget"
+    },
+    // PayPal Business (Budget BK-3): the person's OWN REST app on
+    // developer.paypal.com (Client ID + Secret, live), with only the
+    // "Transaction search" feature needed. orOS reads the transactions;
+    // the relay exchanges the two keys for a token on each call (PayPal
+    // gives no token to a browser page), so always through the relay.
+    paypal: {
+      name: "PayPal",
+      site: false,
+      host: "api-m.paypal.com",
+      root: "",
+      keys: [{ k: "key", re: /^[A-Za-z0-9_-]{40,128}$/ }, { k: "token", re: /^[A-Za-z0-9_-]{40,128}$/ }],
+      apps: ["budget"],
+      // the last day (a fixed path would fall outside PayPal's 3 years)
+      probe: function (now) {
+        return { m: "GET", path: "/v1/reporting/transactions?start_date=" + ppStamp(now - 86400000) + "&end_date=" + ppStamp(now - 60000) + "&page_size=1&page=1" };
+      },
       relayOnly: true
     },
     // Invoice Ninja (wave 4C): the person's own install or invoicing.co.
@@ -516,6 +559,8 @@
     ntq: function (b) { return has(b, "filter"); },
     // WooCommerce: a new product only as a draft, always with a name
     wdraft: function (b) { return b.status === "draft" && has(b, "name"); },
+    // Enable Banking: a consent request always names all its parts
+    ebauth: function (b) { return has(b, "access") && has(b, "aspsp") && has(b, "state") && has(b, "redirect_url"); },
     // Shopify: a query is always there; products with a page size,
     // nodes with ids, the shop name with nothing
     sfq: function (b) {
@@ -537,6 +582,37 @@
     description: "desc", short_description: "desc", weight: "dec", dimensions: "dims",
     virtual: "bool", manage_stock: "bool"
   };
+  // Enable Banking (Budget BK-2): the shapes its requests may take
+  var EB_UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+  var EB_SES = new RegExp("^\\/sessions\\/" + EB_UUID + "$"),
+      EB_BAL = new RegExp("^\\/accounts\\/" + EB_UUID + "\\/balances$"),
+      EB_TX = new RegExp("^\\/accounts\\/" + EB_UUID + "\\/transactions$");
+  var EB_CTY = /^[A-Z]{2}$/, EB_PSU = /^(personal|business)$/, EB_SVC = /^AIS$/, EB_TST = /^(BOOK|PDNG)$/,
+      EB_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, EB_CK = /^([A-Za-z0-9._~-]|%2B|%2F|%3D){1,1000}$/;
+  // The only addresses a bank may send the person back to.
+  var EB_REDIRECTS = ["https://useoros.online/budget/bankback.html"];
+  // PayPal (Budget BK-3): Transaction Search, ≤ 31 days per request
+  var PP_DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-0000$/,
+      PP_FIELDS = /^(all|transaction_info,payer_info,cart_info)$/, PP_SIZE = /^([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|500)$/,
+      PP_YN = /^(Y|N)$/, PP_PG = /^([1-9][0-9]{0,2}|1000)$/;
+  // start_date ≤ end_date, at most 31 days apart (PayPal refuses more)
+  function ppRange(q) {
+    var s = Date.parse(String(q.start_date || "").replace(/-0000$/, "Z")), e = Date.parse(String(q.end_date || "").replace(/-0000$/, "Z"));
+    return isFinite(s) && isFinite(e) && s <= e && e - s <= 31 * 86400000;
+  }
+  function ppStamp(ms) { return new Date(ms).toISOString().slice(0, 19) + "-0000"; }
+  function okEbVal(kind, v) {
+    if (kind === "ebacc") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 1 &&
+      typeof v.valid_until === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(v.valid_until);
+    if (kind === "ebasp") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 2 &&
+      typeof v.name === "string" && v.name.length > 0 && v.name.length <= 120 && !/[\u0000-\u001f\u007f]/.test(v.name) &&
+      typeof v.country === "string" && EB_CTY.test(v.country);
+    if (kind === "ebstate") return typeof v === "string" && /^[A-Za-z0-9_-]{16,64}$/.test(v);
+    if (kind === "ebredir") return EB_REDIRECTS.indexOf(v) >= 0;
+    if (kind === "ebpsu") return typeof v === "string" && EB_PSU.test(v);
+    if (kind === "ebcode") return typeof v === "string" && /^[A-Za-z0-9._~-]{1,512}$/.test(v);
+    return false;
+  }
   var ALLOW = {
     woo: [
       ["GET", /^\/system_status$/, null, null],
@@ -600,6 +676,20 @@
     stripe: [
       ["GET", /^\/balance$/, null, null],
       ["GET", /^\/balance_transactions$/, { limit: LIM100, starting_after: TXN, "created[gte]": UNIX, "created[lt]": UNIX }, null]
+    ],
+    // PayPal (Budget BK-3): read-only transaction search
+    paypal: [
+      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: PP_PG, balance_affecting_records_only: PP_YN }, null, null, ppRange]
+    ],
+    // Enable Banking (Budget BK-2): read-only account information
+    ebank: [
+      ["GET", /^\/application$/, null, null],
+      ["GET", /^\/aspsps$/, { country: EB_CTY, psu_type: EB_PSU, service: EB_SVC }, null],
+      ["POST", /^\/auth$/, null, { access: "ebacc", aspsp: "ebasp", state: "ebstate", redirect_url: "ebredir", psu_type: "ebpsu" }, "ebauth"],
+      ["POST", /^\/sessions$/, null, { code: "ebcode" }, null],
+      ["GET", EB_SES, null, null],
+      ["GET", EB_BAL, null, null],
+      ["GET", EB_TX, { date_from: EB_DAY, date_to: EB_DAY, continuation_key: EB_CK, transaction_status: EB_TST }, null]
     ],
     ininja: [
       ["GET", /^\/statics$/, null, null],
@@ -666,6 +756,7 @@
     if (kind === "nlim") return isInt(v) && v >= 1 && v <= 100;
     if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
     if (kind === "sfvars") return okSfVars(v);
+    if (kind.slice(0, 2) === "eb") return okEbVal(kind, v);
     // "=a" or "=a|b": exactly one of the fixed values
     if (kind[0] === "=") return kind.slice(1).split("|").some(function (k) { return has(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]; });
     return false;
@@ -701,10 +792,12 @@
       for (var j = 0; j < parts.length; j++) {
         var kv = parts[j], e = kv.indexOf("=");
         var k = e < 0 ? kv : kv.slice(0, e), v = e < 0 ? "" : kv.slice(e + 1);
-        if (!has(rule[2], k) || seen[k] || !rule[2][k].test(v)) return "query";
-        seen[k] = 1;
+        if (!has(rule[2], k) || has(seen, k) || !rule[2][k].test(v)) return "query";
+        seen[k] = v;
       }
     }
+    // a check across the query's values (PayPal: a date range ≤ 31 days)
+    if (rule[5] && !rule[5](seen || {})) return "query";
     if (r.m === "GET") return r.body === undefined ? "" : "body";
     var b = r.body;
     if (!b || typeof b !== "object" || Array.isArray(b)) return "body";
@@ -757,6 +850,7 @@
     if (p === "raindrop") return ["Authorization", "Bearer " + keys.key];
     if (p === "notion") return ["Authorization", "Bearer " + keys.key];
     if (p === "shopify") return ["X-Shopify-Storefront-Access-Token", keys.key];
+    if (p === "ebank") return ["Authorization", "Bearer " + keys.jwt];   // signed on the device (links/host.js)
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).
@@ -769,10 +863,13 @@
   function probeReq(p) {
     var pr = PLATFORMS[p] && PLATFORMS[p].probe;
     if (typeof pr === "string") return { m: "GET", path: pr };
+    if (typeof pr === "function") return pr(Date.now());
     return pr ? JSON.parse(JSON.stringify(pr)) : null;
   }
 
   var api = {
+    EB_REDIRECTS: EB_REDIRECTS,
+    ppStamp: ppStamp,
     VER: VER, ID_RE: ID_RE, PLATFORMS: PLATFORMS, PLATFORM_IDS: PLATFORM_IDS, MAX_ACCTS: MAX_ACCTS,
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,

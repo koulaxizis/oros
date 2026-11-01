@@ -31,6 +31,7 @@
       <button type="button" role="menuitem" data-act="osave" data-i18n="menu.osave" hidden>orOS file (.orosbudget)</button>
       <button type="button" role="menuitem" data-act="oopen" data-i18n="menu.oopen" hidden>Open orOS file…</button>
       <button type="button" role="menuitem" data-act="ofolder" data-i18n="menu.ofolder" hidden>Unzipped orOS folder…</button>
+      <button type="button" role="menuitem" data-act="banks" data-i18n="menu.banks">Banks (automatic)</button>
       <button type="button" role="menuitem" data-act="bank" data-i18n="menu.bank">Import bank statement</button>
       <button type="button" role="menuitem" data-act="apps" data-i18n="menu.apps">Import from another app</button>
       <button type="button" role="menuitem" data-act="rules" data-i18n="menu.rules">Rules</button>
@@ -60,6 +61,7 @@
         <input id="q" type="search" autocomplete="off">
         <select id="flt"></select>
       </div>
+      <div id="bank-bar" class="inbox-bar" hidden></div>
       <div id="inbox-bar" class="inbox-bar" hidden></div>
       <p class="hint" id="list-found" hidden></p>
       <div id="list"></div>
@@ -103,6 +105,8 @@
   <script src="../importkit.js?v=5.02.00"></script>
   <script src="import.js?v=5.02.00"></script>
   <script src="bankui.js?v=5.02.00"></script>
+  <script src="bankapi.js?v=5.02.00"></script>
+  <script src="banklive.js?v=5.02.00"></script>
   <script src="../units/core.js?v=5.02.00"></script>
   <script src="plan.js?v=5.02.00"></script>
   <script src="planui.js?v=5.02.00"></script>

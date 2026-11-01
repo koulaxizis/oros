@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.03.00
+- **Budget can read your bank and PayPal by itself.** Budget › More › `Banks (automatic)` connects your bank accounts through Enable Banking with your own free application, read-only: Budget updates them when it opens, at most every 6 hours, and warns you before the bank's consent runs out. PayPal Business accounts can be read live too, with your own PayPal app (Settings › Connected services). Your keys stay on your device; nothing can pay or move money. Categories now learn: an entry without a rule takes the category you gave most often to the same merchant, and after you correct one, `Always for "…"` turns it into a rule. See [Budget](help:a/budget).
+
 ## Version 5.02.00
 - **Save new logins to Passwords.** In the orOS browser add-on, `Save the login from this page` sends the name and password you just typed to Passwords in orOS; on Android, with autofill on, answer yes to `Save to orOS Passwords?`. orOS opens it in the Passwords editor, as a new entry or as a new password for the same site and user (the old one goes to the history), and stores it only when you press Save. See [Passwords](help:a/passwords).
 

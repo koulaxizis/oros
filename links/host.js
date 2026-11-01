@@ -29,7 +29,9 @@
 // Brevo) take a key instead of a site; the relay gets the same env or
 // key, never a host. Mailchimp doesn't answer browsers: always relay.
 // Shopify (Storefront API) answers browsers and the relay doesn't know
-// it: never relay.
+// it: never relay. Enable Banking (Budget BK-2): the keys are an
+// application id and its private key; every call carries only a JWT
+// signed here with a non-extractable copy of that key.
 // ============================================================
 (function (root) {
   "use strict";
@@ -295,6 +297,67 @@
     return dropLocal(id).then(function () { return putAcct({ id: id, m: a.m, p: a.p, d: 1 }); });
   }
 
+  // ---------- Enable Banking: a JWT signed on this device ----------
+  // The application's private key (PEM, PKCS#8 or PKCS#1) is imported
+  // once per page as a NON-extractable WebCrypto key; a call carries
+  // only a JWT (RS256, 1 hour) signed with it, never the key itself.
+  function b64urlBytes(u8) {
+    var s = "";
+    for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
+    return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function b64urlText(t) { return b64urlBytes(new TextEncoder().encode(t)); }
+  function derLen(n) {
+    if (n < 0x80) return [n];
+    var out = [];
+    while (n > 0) { out.unshift(n & 0xff); n = n >> 8; }
+    return [0x80 | out.length].concat(out);
+  }
+  // PKCS#1 RSAPrivateKey → PKCS#8 PrivateKeyInfo (what WebCrypto imports)
+  function pkcs1to8(der) {
+    var algo = [0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00];
+    var oct = [0x04].concat(derLen(der.length));
+    var body = [0x02, 0x01, 0x00].concat(algo, oct);
+    var total = body.length + der.length;
+    var head = [0x30].concat(derLen(total), body);
+    var out = new Uint8Array(head.length + der.length);
+    out.set(head, 0);
+    out.set(der, head.length);
+    return out;
+  }
+  function pemDer(pem) {
+    var b = atob(String(pem).replace(/-----[A-Z ]+-----/g, "").replace(/\s+/g, ""));
+    var u = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return /BEGIN RSA PRIVATE KEY/.test(pem) ? pkcs1to8(u) : u;
+  }
+  var ebKeys = {}, ebTokens = {};
+  function ebJwt(id, keys) {
+    var now = Math.floor(Date.now() / 1000), c = ebTokens[id];
+    if (c && c.app === keys.app && c.exp - 120 > now) return Promise.resolve(c.jwt);
+    var kp = ebKeys[id] && ebKeys[id].app === keys.app ? ebKeys[id].key : null;
+    var getKey = kp ? Promise.resolve(kp) : crypto.subtle.importKey("pkcs8", pemDer(keys.pem),
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]).then(function (k) {
+        ebKeys[id] = { app: keys.app, key: k };
+        return k;
+      });
+    return getKey.then(function (k) {
+      var exp = now + 3600;
+      var head = b64urlText(JSON.stringify({ typ: "JWT", alg: "RS256", kid: keys.app }));
+      var body = b64urlText(JSON.stringify({ iss: "enablebanking.com", aud: "api.enablebanking.com", iat: now, exp: exp }));
+      return crypto.subtle.sign("RSASSA-PKCS1-v1_5", k, new TextEncoder().encode(head + "." + body)).then(function (sig) {
+        var jwt = head + "." + body + "." + b64urlBytes(new Uint8Array(sig));
+        ebTokens[id] = { app: keys.app, jwt: jwt, exp: exp };
+        return jwt;
+      });
+    }, function () { throw err("keys"); });
+  }
+  // The keys a call uses: for Enable Banking the signed JWT only.
+  function callKeys(a, keys) {
+    if (a.p !== "ebank") return Promise.resolve(keys);
+    return ebJwt(a.id, keys).then(function (jwt) { return { jwt: jwt }; });
+  }
+
   // ---------- Calls ----------
   function err(code, extra) { var e = new Error(code); e.code = code; if (extra) e.extra = extra; return e; }
   function relayUrl() {
@@ -337,7 +400,8 @@
   }
   function viaRelay(a, keys, reqs) {
     var body = { op: "ext", p: a.p };
-    if (a.p === "tol") { body.env = a.env; body.key = keys.key; }
+    if (a.p === "ebank") body.key = keys.jwt;            // never the private key
+    else if (a.p === "tol") { body.env = a.env; body.key = keys.key; }
     else if (a.p !== "woo" && !L.PLATFORMS[a.p].site) {                       // fixed hosts: the relay knows them
       L.PLATFORMS[a.p].keys.forEach(function (f) { body[f.k] = keys[f.k]; });
     }
@@ -379,6 +443,23 @@
     var imgs = reqs.filter(function (r) { return r.img === 1; }).length;
     if (imgs && (imgs !== reqs.length || imgs > 1)) return Promise.reject(err("bad"));   // one picture per call (relay CPU)
     if (imgs) return openLocal(id).then(function (local) { if (!local) throw err("keys"); return viaRelay(a, local.keys, reqs); });
+    if (a.p === "ebank") {
+      // Enable Banking: the keys become a JWT here, before either way.
+      // Its writes (a consent request, a session from the bank's code)
+      // travel alone and are never sent a second way after a failure.
+      var ebW = reqs.some(function (r) { return r.m !== "GET"; });
+      if (ebW && reqs.length > 1) return Promise.reject(err("bad"));
+      if (ebW && !prefs().mode[id]) {
+        return call(id, [L.probeReq(a.p)]).then(function () {
+          if (!prefs().mode[id]) throw err("network");
+          return call(id, reqs);
+        });
+      }
+      return openLocal(id).then(function (local) {
+        if (!local) throw err("keys");
+        return callKeys(a, local.keys);
+      }).then(function (k) { return callWith(a, id, pl, reqs, k, ebW); });
+    }
     var writes = reqs.some(function (r) { return r.m !== "GET"; });
     // a write that must happen once travels alone (the relay refuses more)
     if (pl.once && writes && reqs.length > 1) return Promise.reject(err("bad"));
@@ -397,35 +478,38 @@
     }
     return openLocal(id).then(function (local) {
       if (!local) throw err("keys");
-      var keys = local.keys, mode = pl.relayOnly ? "relay" : pl.direct ? "direct" : (prefs().mode[id] || "direct");
-      function all(how) {
-        return reqs.reduce(function (p, r) {
-          return p.then(function (out) { return direct(a, keys, r, how).then(function (x) { out.push(x); return out; }); });
-        }, Promise.resolve([]));
+      return callWith(a, id, pl, reqs, local.keys, once);
+    });
+  }
+  function callWith(a, id, pl, reqs, keys, once) {
+    var mode = pl.relayOnly ? "relay" : pl.direct ? "direct" : (prefs().mode[id] || "direct");
+    function all(how) {
+      return reqs.reduce(function (p, r) {
+        return p.then(function (out) { return direct(a, keys, r, how).then(function (x) { out.push(x); return out; }); });
+      }, Promise.resolve([]));
+    }
+    function relay() {
+      return viaRelay(a, keys, reqs).then(function (res) { setMode(id, "relay"); return res; });
+    }
+    if (mode === "relay") {
+      if (once) return viaRelay(a, keys, reqs).catch(function (e) { throw err(e && e.code === "relay" ? "unknown" : (e && e.code) || "unknown"); });
+      return relay();
+    }
+    return all(mode).then(function (res) {
+      // 401 with the header: some servers drop it; try the address
+      if (a.p === "woo" && mode === "direct" && res[0] && res[0].status === 401) {
+        return all("query").then(function (r2) {
+          if (r2[0] && r2[0].status !== 401) { setMode(id, "query"); return r2; }
+          return res;
+        }, function () { return res; });
       }
-      function relay() {
-        return viaRelay(a, keys, reqs).then(function (res) { setMode(id, "relay"); return res; });
-      }
-      if (mode === "relay") {
-        if (once) return viaRelay(a, keys, reqs).catch(function (e) { throw err(e && e.code === "relay" ? "unknown" : (e && e.code) || "unknown"); });
-        return relay();
-      }
-      return all(mode).then(function (res) {
-        // 401 with the header: some servers drop it; try the address
-        if (a.p === "woo" && mode === "direct" && res[0] && res[0].status === 401) {
-          return all("query").then(function (r2) {
-            if (r2[0] && r2[0].status !== 401) { setMode(id, "query"); return r2; }
-            return res;
-          }, function () { return res; });
-        }
-        setMode(id, mode);
-        return res;
-      }, function (e) {
-        if (once) throw err("unknown");            // it may have arrived: the app checks before trying again
-        if (e && e.name === "AbortError") throw err("network");
-        if (pl.direct) throw err("network");       // a platform the relay doesn't know (Shopify)
-        return relay();                            // the browser could not reach it: CORS or firewall
-      });
+      setMode(id, mode);
+      return res;
+    }, function (e) {
+      if (once) throw err("unknown");            // it may have arrived: the app checks before trying again
+      if (e && e.name === "AbortError") throw err("network");
+      if (pl.direct) throw err("network");       // a platform the relay doesn't know (Shopify)
+      return relay();                            // the browser could not reach it: CORS or firewall
     });
   }
   // A status as one of the codes above ("" = fine).
@@ -456,7 +540,7 @@
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
-    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db }; }); }
+    platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || "" }; }); }
   };
 
   registerSlice();
