@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Passwords — entry types (PmKinds, v1.0.0, PW-K1)
+// orOS Passwords — entry types (PmKinds, v1.1.0, PW-K1, PW-OTP2)
 // Pure logic, no DOM: the app (pmapp.js), the importers and the
 // tests (tests/passwords-kinds.test.js) load this same file. Works on
 // DECRYPTED entries only, in memory; it stores and logs nothing.
@@ -11,6 +11,9 @@
 // updated) keeps them untouched in its merges and shows them as
 // "More fields". Nothing in the encryption, the slice or the merge
 // changes (Bible PASSWORDS v2, decision PW-K1).
+// A "2FA only" entry (PW-OTP2) is a login with the marker "otp": the
+// issuer is the title, the account the user name, the secret `totp`;
+// it has no password. An older orOS shows it as a login.
 //   1. Types and their fields
 //   2. Read / write an entry's typed values
 //   3. Cards: digits, Luhn, network, expiry
@@ -27,7 +30,7 @@
   // t: text | num (card number) | exp (MM/YYYY) | date (YYYY-MM-DD)
   //    | country (ISO 3166-1 alpha-2 or free text) | email | tel
   // h: 1 = hidden until Show, copied with the 30 s clipboard clear.
-  var KINDS = ["login", "card", "identity", "address", "note"];
+  var KINDS = ["login", "card", "identity", "address", "otp", "note"];
   var PRE = { card: "cc", identity: "id", address: "ad" };
   var SPEC = {
     card: [
@@ -47,7 +50,7 @@
       { k: "city", t: "text" }, { k: "zip", t: "text" }, { k: "region", t: "text" }, { k: "country", t: "country" },
       { k: "phone", t: "tel" }
     ],
-    login: [], note: []
+    login: [], otp: [], note: []
   };
   // English names: the labels of Bitwarden / KeePass custom fields in
   // exports, read back by fromLabels() (round trip).
@@ -136,8 +139,9 @@
     });
     var x = JSON.parse(JSON.stringify(e || {}));
     x.fields = out.slice(0, FIELDS_MAX);
-    if (kind !== "login" && kind !== "card") x.urls = [];
-    if (kind !== "login") { x.user = ""; x.pw = ""; x.totp = ""; x.hist = []; }
+    if (kind !== "login" && kind !== "card" && kind !== "otp") x.urls = [];
+    if (kind === "otp") { x.pw = ""; x.hist = []; }
+    else if (kind !== "login") { x.user = ""; x.pw = ""; x.totp = ""; x.hist = []; }
     return x;
   }
   // Does the entry hold anything worth saving?
@@ -145,6 +149,7 @@
     var kind = kindOf(e);
     if (kind === "login") return !!(e.title || e.user || e.pw);
     if (kind === "note") return !!(e.title || e.notes);
+    if (kind === "otp") return !!e.totp;
     return !!(e.title || Object.keys(dataOf(e)).length);
   }
 
@@ -279,6 +284,7 @@
     }
     if (kind === "identity") return fullName(d) || d.email || "";
     if (kind === "address") return [d.street, d.city, d.country ? (nameOf ? nameOf(d.country) : d.country) : ""].filter(Boolean).join(", ");
+    if (kind === "otp") return e.user || "";
     return "";
   }
 
@@ -438,7 +444,7 @@
   function idObj(o) { var out = {}; BW_ID_KEYS.forEach(function (k) { out[k] = o[k] || null; }); return out; }
 
   var PmKinds = {
-    version: "1.0.0", KINDS: KINDS, SPEC: SPEC, EN: EN, KIND_FIELD: KIND_FIELD, BRAND_NAME: BRAND_NAME,
+    version: "1.1.0", KINDS: KINDS, SPEC: SPEC, EN: EN, KIND_FIELD: KIND_FIELD, BRAND_NAME: BRAND_NAME,
     COUNTRIES: COUNTRIES,
     isReserved: isReserved, fieldName: fieldName, specOf: specOf, kindOf: kindOf, dataOf: dataOf,
     userFields: userFields, visibleFields: visibleFields, withData: withData, hasContent: hasContent,
