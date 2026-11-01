@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.97.01
+- **Fuller name days and world days in Calendar.** Name days now cover many more saints and list the female and other forms of each name (1 November: Kosmas, Kosmia, Damianos, Damiani, Anargyros, Anargyri, Argyrios, Argyro…). World days grew from 65 to 168: the United Nations and WHO days and the Greek days of remembrance. Contacts who celebrate are found on the new days too. See [Calendar](help:a/calendar).
+
 ## Version 4.97.00
 - **Passwords keeps cards, identities, addresses and secure notes.** `New` now asks what you want to keep. Cards show their network and last four digits, are checked for typos and are marked before they expire; `Copy in order` copies number, expiry, code and name one after another for a payment form. Identities hold your ID card, passport, driving licence, tax and social security numbers; addresses copy as lines. Everything stays in the same encrypted vault and syncs as before. Cards and identities imported earlier from Bitwarden, Proton Pass and others offer `Convert`. See [Passwords](help:a/passwords).
 
