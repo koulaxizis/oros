@@ -27,7 +27,7 @@
 //     writing its result): message "sliders" { uid, v: { i: value } }
 //     tells the page, at most every FLUSH blocks, and only for values
 //     that differ from what the page, a key or automation last set.
-//     An instrument with more output pins plays its first pair.
+//     An instrument with more output pins plays them all, mixed into its pair.
 // Lives in studio/ (not studio/nullfx/, which the sync workflow owns).
 // Load eel-rt.js, null-fx.js and the effect files first.
 // ============================================================
@@ -160,15 +160,23 @@
   };
   // An effect with more output pins than two (NULL Drum Machine 3.0: main + Snare, Hats
   // and Perc pairs) writes pins 1/2 into the chain and the rest into buffers of its own,
-  // made here and not on the audio clock, that nobody plays: like REAPER on a
-  // two-channel track. (The generated code would pad a short list, but with new
-  // buffers every block.)
+  // made here and not on the audio clock; mixDown() adds them to the pair, so the whole
+  // kit sounds with Outputs = Groups too (with Main they are silent: nothing changes).
+  // (The generated code would pad a short list, but with new buffers every block.)
   P.outsFor = function (FX) {
     var n = Math.min((FX.outPins || []).length, MAX_OUTS);
     if (n <= 2) return this.a;
     var o = [this.a[0], this.a[1]];
     while (o.length < n) o.push(new Float32Array(BLOCK));
     return o;
+  };
+  // the extra output pins into the chain's pair: odd pins (3, 5, ...) left, even right
+  P.mixDown = function (o, n) {
+    var a0 = this.a[0], a1 = this.a[1], k, i, x, y;
+    for (k = 2; k + 1 < o.length; k += 2) {
+      x = o[k]; y = o[k + 1];
+      for (i = 0; i < n; i++) { a0[i] += x[i]; a1[i] += y[i]; }
+    }
   };
   // [{ k, uid, i, inc, min, max }]
   P.setAuto = function (map) {
@@ -259,6 +267,7 @@
       }
       try {
         s.fx.process(ins, s.outs, n, nin, s.FX.usesMidi ? mid : null);
+        if (s.outs !== this.a) this.mixDown(s.outs, n);
         // what a MIDI effect sends goes on to the next slots (the instrument); the others pass it on
         if (s.FX.usesMidi) mid = sortMidi(s.fx.midiOut);
       } catch (e) {
