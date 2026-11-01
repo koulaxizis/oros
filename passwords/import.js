@@ -1010,6 +1010,7 @@
       e.id = c.key;
       if (live[e.id]) { duplicates++; return; }
       e.title = c.title; e.user = c.account; e.totp = c.uri; e.notes = c.notes || ""; e.tags = c.tags || [];
+      e.fields = [{ h: 0, n: "oros:k", v: "otp" }];   // a "2FA only" entry (PW-OTP2)
       e.m = stamp(e.id);
       var n = PC.normEntry(e, now);
       if (n) { adds.push(n); codesNew++; }

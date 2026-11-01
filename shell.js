@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.97.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.98.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7565,6 +7565,12 @@
         { name: "orOS installers' tray Go modules (fyne systray, godbus, golang.org/x/sys)", url: "https://github.com/koulaxizis/oros-portable",
           by: "Their authors", lic: "Apache-2.0, BSD-2-Clause, BSD-3-Clause",
           k: "cr.tray-modules" },
+        { name: "Tor Browser", url: "https://www.torproject.org/",
+          by: "The Tor Project", lic: { k: "cr.lic.tor-browser" },
+          k: "cr.tor-browser" },
+        { name: "Tor button's Go modules (ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz)", url: "https://github.com/ProtonMail/go-crypto",
+          by: "The Go Authors, Proton AG, Cloudflare, Ulrich Kunitz", lic: "BSD-3-Clause",
+          k: "cr.tor-modules" },
         { name: "Inno Setup", url: "https://jrsoftware.org/isinfo.php",
           by: "Jordan Russell & Martijn Laan; Greek texts by Anastasis Chatzioglou, XhmikosR, Vasileios Karamichail", lic: "Inno Setup License",
           k: "cr.inno-setup" },

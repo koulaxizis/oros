@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.98.01
+- **More name days and world days in Calendar, checked against the United Nations list and Wikipedia.** 23 more name days (Olga, Lydia, Polyxeni, Ermioni, Orestis, Platon, Themistoklis, Arsenios, Pelagia, Margarita…) and 54 more world days, among them the Mediterranean Diet, Tsunami Awareness, Patient Safety and Cleanup days, Olympic Day, World Voice Day and the Greek Organ Donation, National Benefactors and Armed Forces days. See [Calendar](help:a/calendar).
+
+## Version 4.98.00
+- **Passwords shows all your two-factor codes on one screen.** `Codes` at the top lists every code with the seconds it has left; tap one to copy it, and in its last 5 seconds you get the next one instead. `New` › `2FA code` keeps an account's code without a password, like an authenticator app, and codes imported from Aegis, 2FAS or Google Authenticator become such entries. `QR code` shows one account as a QR code for moving it to another app, and `Export` now also writes your codes for Aegis (encrypted) or 2FAS. See [Passwords](help:a/passwords).
+
+## Version 4.97.02
+- Credits now name Tor Browser and the Go modules that check its signature, for the coming Tor button in orOS Portable, the installers and the Live USB. Tor Browser is never part of an orOS download; it is fetched from torproject.org when you first use it.
+
 ## Version 4.97.01
 - **Fuller name days and world days in Calendar.** Name days now cover many more saints and list the female and other forms of each name (1 November: Kosmas, Kosmia, Damianos, Damiani, Anargyros, Anargyri, Argyrios, Argyro…). World days grew from 65 to 168: the United Nations and WHO days and the Greek days of remembrance. Contacts who celebrate are found on the new days too. See [Calendar](help:a/calendar).
 
