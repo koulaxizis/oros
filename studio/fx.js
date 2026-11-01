@@ -61,7 +61,7 @@
           // stereo effects, and those with a stereo key input (Sidechain Ducker)
           catalog = (j.effects || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && (e.ins <= 2 || e.ins === 4) && e.outs === 2; });
           // instruments: stereo, or stereo pairs (NULL Drum Machine 3.0: main + 3 group
-          // pairs); Studio plays the first pair, like REAPER on a two-channel track
+          // pairs); the chain processor mixes the pairs into one
           instCat = (j.instruments || []).filter(function (e) { return C.FX_ID_RE.test(e.id) && e.ins === 0 && e.outs >= 2 && e.outs <= MAX_OUTS && e.outs % 2 === 0; });
           return catalog;
         }, function (e) { catalogP = null; throw e; });
