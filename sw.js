@@ -2084,6 +2084,8 @@ var PRECACHE_URLS = [
   "time/clock-core.js",
   "today/layout.js",
   "todo/model.js",
+  "todo/vtodo.js",
+  "todo/dav.js",
   "todo/house.js",
   "travel/booking.js",
   "vendor/hash-wasm/argon2.umd.min.js",

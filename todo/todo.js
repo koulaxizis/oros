@@ -178,6 +178,38 @@
       "hh.title":       "Household",
       "hh.shareHint":   "Everyone in the household sees and edits this list from their own orOS. It is encrypted on your devices.",
       "hh.shareGo":     "Share",
+      "td.title": "Server task list (CalDAV)",
+      "td.hint": "Link this list to a task list on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…): its tasks then go both ways, subtasks too. Nothing is deleted on either side unless it was in sync before.",
+      "td.noacct": "Connect your calendar server first, in Settings › Sync › Calendars and contacts. The password stays on this device.",
+      "td.settings": "Open Settings",
+      "td.pick": "Choose a server task list",
+      "td.none": "Your server has no task list that is not linked yet.",
+      "td.noname": "Tasks",
+      "td.ro.col": "read-only",
+      "td.link": "Link",
+      "td.linked": "Linked to {n}",
+      "td.preview.wait": "Checking the server…",
+      "td.preview": "{down} to download, {up} to upload, {same} already here. Nothing is written until you tap Link.",
+      "td.preview.ro": "The task list is read-only on the server, so nothing goes up.",
+      "td.sync": "Sync now",
+      "td.unlink": "Unlink",
+      "td.unlinked": "Unlinked. The tasks stay in this list and on the server.",
+      "td.ok": "In sync, {t}",
+      "td.never": "Not synced yet",
+      "td.wait": "Syncing…",
+      "td.other": "Linked on another device of yours. Connect this device too in Settings › Sync so it syncs here as well.",
+      "td.gone": "Your server no longer lists this task list. Check it in Settings › Sync, or unlink.",
+      "td.conflicts": "{n} changed on both sides: the newer was kept, the other as a copy marked (conflict).",
+      "td.mark": " (conflict)",
+      "td.held": "{n} deletions wait for you ({a} in orOS, {b} on the server).",
+      "td.held.yes": "Delete them",
+      "td.held.no": "Bring them back",
+      "td.ro": "This task comes from your server task list and orOS cannot keep all of it, so changes made here are undone. Change it on the server.",
+      "td.err.noacct": "No server account on this device: connect it in Settings › Sync.",
+      "td.err.net": "The server could not be reached. orOS will try again later.",
+      "td.err.auth": "The server did not accept the password: check it in Settings › Sync.",
+      "td.err.ro": "The server does not allow changes to this task list.",
+      "td.err.other": "The server answered with an error ({e}). orOS will try again later.",
       "hh.none":        "No household yet. Make one in the Household app, then share lists from here.",
       "hh.open":        "Open Household",
       "hh.sharedIn":    "Shared with {hh}",
@@ -321,6 +353,38 @@
       "hh.title":       "Νοικοκυριό",
       "hh.shareHint":   "Όλοι στο νοικοκυριό βλέπουν και αλλάζουν αυτή τη λίστα από το δικό τους orOS. Κρυπτογραφείται στις συσκευές σου.",
       "hh.shareGo":     "Κοινή χρήση",
+      "td.title": "Λίστα εργασιών server (CalDAV)",
+      "td.hint": "Σύνδεσε αυτή τη λίστα με μια λίστα εργασιών του δικού σου server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…): οι εργασίες της πηγαίνουν μετά και προς τις δύο μεριές, μαζί και οι υποεργασίες. Τίποτα δεν διαγράφεται σε καμία μεριά αν δεν ήταν συγχρονισμένο πριν.",
+      "td.noacct": "Σύνδεσε πρώτα τον server ημερολογίου σου, στις Ρυθμίσεις › Συγχρονισμός › Ημερολόγια και επαφές. Ο κωδικός μένει σε αυτή τη συσκευή.",
+      "td.settings": "Άνοιγμα Ρυθμίσεων",
+      "td.pick": "Διάλεξε λίστα εργασιών του server",
+      "td.none": "Ο server σου δεν έχει λίστα εργασιών που να μην είναι ήδη συνδεδεμένη.",
+      "td.noname": "Εργασίες",
+      "td.ro.col": "μόνο ανάγνωση",
+      "td.link": "Σύνδεση",
+      "td.linked": "Συνδεδεμένη με {n}",
+      "td.preview.wait": "Έλεγχος του server…",
+      "td.preview": "{down} για λήψη, {up} για αποστολή, {same} υπάρχουν ήδη εδώ. Δεν γράφεται τίποτα μέχρι να πατήσεις Σύνδεση.",
+      "td.preview.ro": "Η λίστα εργασιών είναι μόνο για ανάγνωση στον server, οπότε δεν στέλνεται τίποτα.",
+      "td.sync": "Συγχρονισμός τώρα",
+      "td.unlink": "Αποσύνδεση",
+      "td.unlinked": "Αποσυνδέθηκε. Οι εργασίες μένουν σε αυτή τη λίστα και στον server.",
+      "td.ok": "Συγχρονισμένη, {t}",
+      "td.never": "Δεν έχει συγχρονιστεί ακόμα",
+      "td.wait": "Συγχρονισμός…",
+      "td.other": "Συνδέθηκε σε άλλη συσκευή σου. Σύνδεσε και αυτή τη συσκευή στις Ρυθμίσεις › Συγχρονισμός για να συγχρονίζεται κι εδώ.",
+      "td.gone": "Ο server σου δεν δείχνει πια αυτή τη λίστα εργασιών. Έλεγξέ το στις Ρυθμίσεις › Συγχρονισμός ή αποσύνδεσέ τη.",
+      "td.conflicts": "{n} άλλαξαν και στις δύο μεριές: κρατήθηκε η νεότερη, η άλλη ως αντίγραφο με την ένδειξη (σύγκρουση).",
+      "td.mark": " (σύγκρουση)",
+      "td.held": "{n} διαγραφές περιμένουν εσένα ({a} στο orOS, {b} στον server).",
+      "td.held.yes": "Διάγραψέ τες",
+      "td.held.no": "Φέρ' τες πίσω",
+      "td.ro": "Αυτή η εργασία έρχεται από τη λίστα εργασιών του server σου και το orOS δεν μπορεί να κρατήσει όλα της τα στοιχεία, οπότε οι αλλαγές εδώ αναιρούνται. Άλλαξέ τη στον server.",
+      "td.err.noacct": "Δεν υπάρχει λογαριασμός server σε αυτή τη συσκευή: σύνδεσέ τον στις Ρυθμίσεις › Συγχρονισμός.",
+      "td.err.net": "Ο server δεν ήταν προσβάσιμος. Το orOS θα ξαναδοκιμάσει αργότερα.",
+      "td.err.auth": "Ο server δεν δέχτηκε τον κωδικό: έλεγξέ τον στις Ρυθμίσεις › Συγχρονισμός.",
+      "td.err.ro": "Ο server δεν επιτρέπει αλλαγές σε αυτή τη λίστα εργασιών.",
+      "td.err.other": "Ο server απάντησε με σφάλμα ({e}). Το orOS θα ξαναδοκιμάσει αργότερα.",
       "hh.none":        "Δεν έχεις ακόμα νοικοκυριό. Φτιάξε ένα στην εφαρμογή «Νοικοκυριό» και μετά μοιράσου λίστες από εδώ.",
       "hh.open":        "Άνοιγμα «Νοικοκυριό»",
       "hh.sharedIn":    "Κοινή με: {hh}",
@@ -670,6 +734,7 @@
       });
     });
     normFilters(data);
+    normDav(data);
     data.ver = DATA_VER;
     return data;
   }
@@ -694,6 +759,31 @@
     if (it.recurrence && typeof it.recurrence === "object") {
       if (it.recurrence.after !== undefined && it.recurrence.after !== true) delete it.recurrence.after;
     }
+  }
+  // CalDAV links (wave 5): state.dav = [{ id: <list id>, url, mtime }],
+  // one per list, the newer one wins (an unlink is url "" with its own
+  // stamp, so it beats the link on the person's other devices). Absent
+  // while there is none: the slice then has the previous shape.
+  function cleanDavLink(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !x.id || x.id.length > 80) return null;
+    var url = typeof x.url === "string" && x.url.length <= 2000 && /^https?:\/\//.test(x.url) ? x.url : "";
+    var mt = typeof x.mtime === "number" && isFinite(x.mtime) ? x.mtime : 0;
+    return { id: x.id, url: url, mtime: mt };
+  }
+  function newerLink(a, b) {
+    if (a.mtime !== b.mtime) return a.mtime > b.mtime ? a : b;
+    return a.url >= b.url ? a : b;
+  }
+  function normDav(data) {
+    if (data.dav === undefined) return;
+    var by = {};
+    (Array.isArray(data.dav) ? data.dav : []).forEach(function (x) {
+      var c = cleanDavLink(x);
+      if (c) by[c.id] = by[c.id] ? newerLink(by[c.id], c) : c;
+    });
+    var ids = Object.keys(by).sort();
+    if (ids.length) data.dav = ids.map(function (id) { return by[id]; });
+    else delete data.dav;
   }
   // Saved filters (state.filters, order version state.fom). Absent
   // when there are none: the slice then has the previous shape.
@@ -793,6 +883,7 @@
       });
     });
     normFilters(out);
+    normDav(out);
     out.deleted = canonDeleted(out);
     // one root key order whatever order the state was built in
     var root = {};
@@ -800,7 +891,7 @@
     Object.keys(out).sort().forEach(function (k) { if (root[k] === undefined) root[k] = out[k]; });
     return root;
   }
-  var ROOT_KEYS = ["ver", "sm", "om", "activeList", "hideCompleted", "deleted", "labels", "lists", "filters", "fom"];
+  var ROOT_KEYS = ["ver", "sm", "om", "activeList", "hideCompleted", "deleted", "labels", "lists", "filters", "fom", "dav"];
 
   function load() {
     try {
@@ -847,6 +938,7 @@
       } catch (e2) {}
     }
     hhPush();
+    if (!tdApplying) tdKick();
     // only the person's own lists sync to their cloud (shared ones go
     // to the household): nothing of theirs changed → nothing to upload
     if (mine === lastSaved) return;
@@ -1363,6 +1455,16 @@
       if (entAlive(merged, tomb)) mergedLists.push(merged);
     });
     out.lists = orderEntities(mergedLists, pickRef(a.lists, b.lists, a.om, b.om, mergedLists));
+
+    // CalDAV links: per list the newer one (a link of a list that is
+    // gone goes with it)
+    var links = {};
+    (a.dav || []).concat(b.dav || []).forEach(function (x) {
+      var c = cleanDavLink(x);
+      if (c) links[c.id] = links[c.id] ? newerLink(links[c.id], c) : c;
+    });
+    var dav = out.lists.filter(function (l) { return links[l.id]; }).map(function (l) { return links[l.id]; });
+    if (dav.length) out.dav = dav;
 
     // post-conditions: never ship an empty state (fresh-install
     // fallback), never point activeList at a ghost
@@ -2096,6 +2198,7 @@
     if (hasRec) fillRecFields("f-", item.recurrence);
     else { $("f-rec-mode").value = "fixed"; $("f-weekday").hidden = false; }
 
+    if ($("f-dav-ro")) $("f-dav-ro").hidden = !tdRo[itemId];
     openValues = readItemDialog();
     $("dlg-item").showModal();
     setTimeout(function () { $("f-text").focus(); }, 50);
@@ -2944,6 +3047,7 @@
 
     updateNextResetLabel(list);
     hhFillDialog(list);
+    tdFillDialog();
 
     $("dlg-list").showModal();
     setTimeout(function () { $("l-name").focus(); }, 50);
@@ -3666,6 +3770,7 @@
     var ok = state.lists.some(function (l) { return l.id === state.activeList; });
     if (!ok) state.activeList = state.lists[0].id;
     scheduleRender();
+    tdKick();                          // a change from another device goes to the server too
     // (No toast per merge: it fired on every sync cycle that brought
     // anything, on top of whatever the user was doing.)
   }
@@ -4246,6 +4351,519 @@
     });
   });
 
+  // ---------- 15. CalDAV: a list linked to a task list on the person's own server (wave 5) ----------
+  // The account is in Settings › Sync (../davkit.js, this device only);
+  // here one of the person's own lists (never a household one) is
+  // linked to one server task list (state.dav, synced, so every device
+  // of the person links the same) and the tasks go both ways through
+  // ../davsync.js with todo/dav.js (+ todo/vtodo.js) as the mapper. The
+  // four scripts load on first use. The sync state (ETags, the
+  // server's own text) is device-local in IndexedDB "oros-dav", key
+  // "todo|<url>", one record per link: { link: the link's mtime, st };
+  // a record of an older link is not used (linked again = a first
+  // link, nothing deleted on either side).
+  // A task is one server task; a subtask is a server task whose
+  // RELATED-TO names its task (and that holds only a text and a tick:
+  // a child task with more is a task of the list here). Tasks that
+  // come down are stamped field by field like any edit (TD-3), so the
+  // person's other orOS devices get them by normal sync. Runs while
+  // To-Do is open: shortly after it opens, every 5 minutes, when it is
+  // shown again, when the network is back, a few seconds after an
+  // edit, after an orOS sync and on "Sync now".
+  var TD_EVERY = 5 * 60000, TD_KICK = 4000;
+  var tdLibP = null, tdStore = null, tdBusy = false, tdQueued = false, tdApplying = false;
+  var tdInfo = {};       // list id → { busy, at, err, stats, held, decision }
+  var tdRo = {};         // task / subtask id → list id (read-only here, DAV-4)
+  var tdUids = {};       // link url → { orOS id: server UID }
+  var tdKickT = null, tdLastRun = 0, tdPrev = null;
+
+  function tdLib() {
+    if (window.OrosDav && window.OrosDavSync && window.OrosTodoDav && tdStore) return Promise.resolve(true);
+    if (tdLibP) return tdLibP;
+    var q = SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "";
+    function load(src, has) {
+      if (has()) return Promise.resolve(true);
+      return new Promise(function (res) {
+        var sc = document.createElement("script");
+        sc.src = src + q;
+        sc.onload = function () { res(true); };
+        sc.onerror = function () { res(false); };
+        document.head.appendChild(sc);
+      });
+    }
+    tdLibP = load("../davkit.js", function () { return !!window.OrosDav; })
+      .then(function () { return load("../davsync.js", function () { return !!window.OrosDavSync; }); })
+      .then(function () { return load("vtodo.js", function () { return !!window.OrosVtodo; }); })
+      .then(function () { return load("dav.js", function () { return !!window.OrosTodoDav; }); })
+      .then(function () {
+        var ok = !!(window.OrosDav && window.OrosDavSync && window.OrosVtodo && window.OrosTodoDav);
+        if (!ok) { tdLibP = null; return false; }
+        if (!tdStore) {
+          try { tdStore = window.indexedDB ? window.OrosDavSync.idbStore() : window.OrosDavSync.memStore(); }
+          catch (e) { tdStore = window.OrosDavSync.memStore(); }
+        }
+        return true;
+      });
+    return tdLibP;
+  }
+  function tdLinkOf(lid) {
+    var d = state.dav || [];
+    for (var i = 0; i < d.length; i++) if (d[i].id === lid) return d[i];
+    return null;
+  }
+  // The active links: a list of the person's own that is still here.
+  function tdLinks() {
+    return (state.dav || []).filter(function (x) { return x.url && !isShared(x.id) && !!listById(x.id); });
+  }
+  function tdLinkByUrl(url) {
+    var l = tdLinks();
+    for (var i = 0; i < l.length; i++) if (l[i].url === url) return l[i];
+    return null;
+  }
+  function tdAccount() {
+    try { return window.OrosDav ? window.OrosDav.load() : null; } catch (e) { return null; }
+  }
+  function tdColOf(acct, url) {
+    var cols = acct && acct.cols || [];
+    for (var i = 0; i < cols.length; i++) if (cols[i].url === url) return cols[i];
+    return null;
+  }
+  function tdCols(acct) {
+    return (acct && acct.cols || []).filter(function (c) { return c.kind === "cal" && c.comps.indexOf("VTODO") !== -1; });
+  }
+  function tdKey(url) { return "todo|" + url; }
+  function tdKeepUids(url, st) {
+    var m = {};
+    if (st && st.items) {
+      Object.keys(st.items).forEach(function (k) {
+        var u = st.raw && st.raw[k] ? window.OrosTodoDav.uidOf(st.raw[k]) : "";
+        if (u) m[st.items[k].id] = u;
+      });
+    }
+    tdUids[url] = m;
+  }
+  function tdUidOf(url, id) {
+    var m = tdUids[url] || {};
+    return m[id] || id + "@oros.todo";
+  }
+  function tdLabelNames(it) {
+    return (it.labels || []).map(function (id) { var lb = labelById(id); return lb ? lb.name : ""; })
+      .filter(Boolean);
+  }
+  // What the engine compares: a task, or a subtask (a text and a tick).
+  function tdTask(it) {
+    return { id: it.id, text: it.text || "", notes: it.notes || "", due: it.due || null, prio: Mdl.prioOf(it),
+             done: !!it.done, rec: it.recurrence || null, cats: tdLabelNames(it), sub: false, mtime: it.mtime || 0 };
+  }
+  function tdSub(url, it, s) {
+    return { id: s.id, text: s.text || "", notes: "", due: null, prio: 4, done: !!s.done, rec: null, cats: [],
+             sub: true, parent: it.id, puid: tdUidOf(url, it.id), mtime: s.mtime || 0 };
+  }
+  function tdLocal(lid, url) {
+    var list = listById(lid), items = [];
+    if (list && !isShared(lid)) {
+      list.items.forEach(function (it) {
+        items.push({ id: it.id, item: tdTask(it) });
+        (it.subs || []).forEach(function (s) { items.push({ id: s.id, item: tdSub(url, it, s) }); });
+      });
+    }
+    return { items: items, find: function () { return null; } };
+  }
+  // Label names → label ids (one label per name, without case; a new
+  // name becomes a new label).
+  function tdLabelIds(names, now) {
+    var DV = window.OrosTodoDav, out = [];
+    (names || []).forEach(function (n) {
+      var k = DV.catKey(n), lb = null;
+      if (!k) return;
+      for (var i = 0; i < state.labels.length; i++) if (DV.catKey(state.labels[i].name) === k) { lb = state.labels[i]; break; }
+      if (!lb) {
+        lb = { id: uid(), name: String(n).trim().slice(0, 40), color: SWATCH_COLORS[state.labels.length % SWATCH_COLORS.length],
+               mtime: now, om: 0, pos: state.labels.length };
+        state.labels.push(lb);
+      }
+      if (out.indexOf(lb.id) === -1) out.push(lb.id);
+    });
+    return out;
+  }
+  function tdSameCats(it, names) {
+    var DV = window.OrosTodoDav;
+    var a = tdLabelNames(it).map(DV.catKey).filter(Boolean).sort(), b = (names || []).map(DV.catKey).filter(Boolean).sort();
+    a = a.filter(function (x, i) { return a.indexOf(x) === i; });
+    b = b.filter(function (x, i) { return b.indexOf(x) === i; });
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  // A task's fields from the server, each stamped only when it changed.
+  function tdSetTask(it, x, now) {
+    var V = window.OrosVtodo, any = false;
+    function set(f, v) {
+      if (JSON.stringify(it[f] === undefined ? null : it[f]) === JSON.stringify(v)) return;
+      it[f] = v;
+      ensureFm(it);
+      it.fm[f] = now;
+      it.mtime = Math.max(it.mtime || 0, now);
+      any = true;
+    }
+    set("text", x.text || it.text || "?");
+    if ((it.notes || "").replace(/\s+$/, "") !== (x.notes || "")) set("notes", x.notes || "");
+    set("due", x.due || null);
+    set("done", !!x.done);
+    if (JSON.stringify(V.normRec(it.recurrence)) !== JSON.stringify(V.normRec(x.rec))) set("recurrence", V.normRec(x.rec));
+    if (!tdSameCats(it, x.cats)) set("labels", tdLabelIds(x.cats, now));
+    var p = x.prio === 1 || x.prio === 2 || x.prio === 3 ? x.prio : 4;
+    if (Mdl.prioOf(it) !== p) {
+      if (p < 4) it.prio = p; else delete it.prio;
+      touchXf(it, "prio", now);
+      any = true;
+    }
+    return any;
+  }
+  // The engine's result → the list (stamped now). r.state names the
+  // server UID of every item, so a subtask finds its task.
+  function tdApply(lid, url, r) {
+    var list = listById(lid);
+    if (!list || (!r.upsert.length && !r.remove.length)) return;
+    var DV = window.OrosTodoDav, now = Date.now(), changed = false;
+    tdKeepUids(url, r.state);
+    var byUid = {};
+    Object.keys(tdUids[url] || {}).forEach(function (id) { byUid[tdUids[url][id]] = id; });
+    function taskOf(id) { for (var i = 0; i < list.items.length; i++) if (list.items[i].id === id) return list.items[i]; return null; }
+    function subOf(id) {
+      for (var i = 0; i < list.items.length; i++) {
+        var s = findSub(list.items[i], id);
+        if (s) return { task: list.items[i], sub: s };
+      }
+      return null;
+    }
+    function dropSub(hit) {
+      hit.task.subs = hit.task.subs.filter(function (s) { return s !== hit.sub; });
+      if (!hit.task.subs.length) delete hit.task.subs;
+      touchXf(hit.task, "subs", now);
+    }
+    function newTask(x) {
+      var it = { id: x.id, text: x.text || "?", done: false, due: null, notes: "", labels: [], info: [], recurrence: null,
+                 mtime: now, om: 0, pos: list.items.length };
+      stampItemNewest(it, now);
+      tdSetTask(it, x, now);
+      list.items.push(it);
+      return it;
+    }
+    function putTask(x) {
+      var hit = subOf(x.id);
+      if (hit) dropSub(hit);                       // a subtask that now holds more: a task here
+      var it = taskOf(x.id);
+      if (it) { if (tdSetTask(it, x, now)) changed = true; }
+      else { newTask(x); changed = true; }
+    }
+    function parentOf(x) {
+      var pid = x.parent || (x.puid ? (byUid[x.puid] || DV.parentId(url, x.puid)) : null);
+      var p = pid ? taskOf(pid) : null;
+      return p && p.id !== x.id ? p : null;
+    }
+    var subs = [];
+    r.upsert.forEach(function (x) { if (x.sub) subs.push(x); else putTask(x); });
+    subs.forEach(function (x) {
+      var parent = parentOf(x), hit = subOf(x.id);
+      if (!parent) { putTask(x); return; }         // its task is not in this list
+      var text = String(x.text || "").replace(/\s+/g, " ").trim().slice(0, Mdl.SUB_TEXT) || "?";
+      if (hit) {
+        if (hit.sub.text !== text || hit.sub.done !== !!x.done) {
+          hit.sub.text = text; hit.sub.done = !!x.done; hit.sub.mtime = now;
+          touchXf(hit.task, "subs", now);
+          changed = true;
+        }
+        return;
+      }
+      var asTask = taskOf(x.id);
+      if (asTask && ((asTask.info || []).length || (asTask.subs || []).length)) { putTask(x); return; }
+      if ((parent.subs || []).length >= Mdl.SUB_MAX) { putTask(x); return; }
+      if (asTask) list.items = list.items.filter(function (y) { return y !== asTask; });
+      parent.subs = (parent.subs || []).concat([{ id: x.id, text: text, done: !!x.done, mtime: now }]);
+      touchXf(parent, "subs", now);
+      changed = true;
+    });
+    var gone = {};
+    r.remove.forEach(function (id) { gone[id] = 1; });
+    r.remove.forEach(function (id) {
+      var it = taskOf(id);
+      if (it) {
+        // Its subtasks still on the server stay, as tasks of the list.
+        (it.subs || []).forEach(function (s) {
+          if (gone[s.id]) { tombstone(s.id); return; }
+          var t2 = { id: s.id, text: s.text, done: !!s.done, due: null, notes: "", labels: [], info: [], recurrence: null,
+                     mtime: now, om: 0, pos: list.items.length };
+          stampItemNewest(t2, now);
+          list.items.push(t2);
+        });
+        list.items = list.items.filter(function (y) { return y !== it; });
+        tombstone(id);
+        changed = true;
+        return;
+      }
+      var hit = subOf(id);
+      if (hit) { dropSub(hit); tombstone(id); changed = true; }
+    });
+    if (!changed) return;
+    list.items.forEach(function (it, i) { it.pos = i; });
+    tdApplying = true;
+    try { save(); } finally { tdApplying = false; }
+    scheduleRender();
+  }
+  function tdRoFor(lid, st) {
+    Object.keys(tdRo).forEach(function (id) { if (tdRo[id] === lid) delete tdRo[id]; });
+    if (!st || !st.items) return;
+    Object.keys(st.items).forEach(function (k) { if (st.items[k].ro) tdRo[st.items[k].id] = lid; });
+  }
+  function tdRecord(x) {
+    return tdStore.get(tdKey(x.url)).then(function (rec) {
+      return rec && rec.link === x.mtime ? rec.st : null;
+    }, function () { return null; });
+  }
+  function tdPassOne(x, acct) {
+    var DS = window.OrosDavSync, lid = x.id, key = tdKey(x.url);
+    var info = tdInfo[lid] || (tdInfo[lid] = {});
+    var col = tdColOf(acct, x.url);
+    var decision = info.decision || null;
+    info.decision = null;
+    info.busy = true;
+    renderTdBox();
+    var cl = window.OrosDav.client(acct.conf, acct.pass);
+    var map = window.OrosTodoDav.mapper(x.url, { mark: t("td.mark") });
+    function still() { var y = tdLinkOf(lid); return y && y.url === x.url && y.mtime === x.mtime; }
+    return tdRecord(x).then(function (st) {
+      tdKeepUids(x.url, st);
+      return DS.sync({ client: cl, url: x.url, readOnly: !!(col && col.readOnly), state: st, map: map, decision: decision },
+        function () { return tdLocal(lid, x.url); },
+        function (r) { if (!still()) throw new Error("dav-unlinked"); tdApply(lid, x.url, r); },
+        function (s) { tdKeepUids(x.url, s); return tdStore.set(key, { link: x.mtime, st: s }); });
+    }).then(function (r) {
+      info.at = Date.now();
+      info.err = "";
+      info.stats = r.stats;
+      info.held = r.held;
+      tdRoFor(lid, r.state);
+    }, function (e) {
+      info.err = (e && e.message) || "other";
+      if (info.err === "dav-unlinked") info.err = "";
+      else console.warn("[To-Do] CalDAV pass failed:", info.err);
+    }).then(function () {
+      info.busy = false;
+      renderTdBox();
+    });
+  }
+  function tdRun() {
+    if (tdBusy) { tdQueued = true; return Promise.resolve(); }
+    if (!tdLinks().length) return Promise.resolve();
+    tdBusy = true;
+    return tdLib().then(function (ok) {
+      if (!ok) return;
+      var acct = tdAccount(), links = tdLinks();
+      if (!acct || (typeof navigator !== "undefined" && navigator.onLine === false)) {
+        links.forEach(function (x) { (tdInfo[x.id] = tdInfo[x.id] || {}).err = acct ? "offline" : "noacct"; });
+        return;
+      }
+      return links.reduce(function (p, x) {
+        return p.then(function () { return tdPassOne(x, acct); });
+      }, Promise.resolve());
+    }).then(function () {
+      tdBusy = false;
+      tdLastRun = Date.now();
+      renderTdBox();
+      if (tdQueued) { tdQueued = false; tdKick(); }
+    }, function (e) {
+      tdBusy = false;
+      console.warn("[To-Do] CalDAV:", e);
+    });
+  }
+  function tdKick() {
+    if (tdApplying || !tdLinks().length) return;
+    clearTimeout(tdKickT);
+    tdKickT = setTimeout(tdRun, TD_KICK);
+  }
+  function tdBoot() {
+    if (tdLinks().length) {
+      tdLib().then(function (ok) {
+        if (!ok) return;
+        tdLinks().forEach(function (x) { tdRecord(x).then(function (st) { tdKeepUids(x.url, st); tdRoFor(x.id, st); }); });
+      });
+      setTimeout(tdRun, 1500);
+    }
+    setInterval(function () {
+      if (document.visibilityState !== "hidden") tdRun();
+    }, TD_EVERY);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && Date.now() - tdLastRun > 60000) tdRun();
+    });
+    window.addEventListener("online", function () { tdRun(); });
+  }
+
+  // ----- The "Server task list" part of the list dialog -----
+  function tdErrText(e) {
+    if (e === "noacct") return t("td.err.noacct");
+    if (e === "offline" || e === "cd-unreachable") return t("td.err.net");
+    if (e === "cd-auth") return t("td.err.auth");
+    if (e === "cd-readonly") return t("td.err.ro");
+    return t("td.err.other").replace("{e}", String(e).slice(0, 40));
+  }
+  function tdStamp(ms) {
+    var d = new Date(ms);
+    return d.toLocaleTimeString(loc(), { hour: "2-digit", minute: "2-digit" });
+  }
+  function tdStatus(x) {
+    var info = tdInfo[x.id] || {};
+    if (info.busy) return t("td.wait");
+    if (info.err) return tdErrText(info.err);
+    if (!info.at) return t("td.never");
+    var s = t("td.ok").replace("{t}", tdStamp(info.at));
+    if (info.stats && info.stats.conflicts) s += " · " + t("td.conflicts").replace("{n}", String(info.stats.conflicts));
+    return s;
+  }
+  function renderTdBox() {
+    var box = $("l-dav"), dlg = $("dlg-list");
+    if (!box || !dlg || !dlg.open) return;
+    var lid = editingListId, list = lid ? listById(lid) : null;
+    box.hidden = !list || isShared(lid);
+    if (box.hidden) return;
+    var ready = !!(window.OrosDav && window.OrosTodoDav);
+    var acct = ready ? tdAccount() : null, x = tdLinks().filter(function (y) { return y.id === lid; })[0] || null;
+    $("l-dav-on").hidden = !x;
+    $("l-dav-noacct").hidden = !!x || !!acct;
+    $("l-dav-off").hidden = !!x || !acct;
+    if (tdPrev && (x || tdPrev.lid !== lid)) tdPrevClose();
+    if (x) {
+      var col = tdColOf(acct, x.url), info = tdInfo[x.id] || {};
+      $("l-dav-in").textContent = t("td.linked").replace("{n}", (col && col.name) || x.url);
+      var st = $("l-dav-st");
+      st.textContent = col ? tdStatus(x) : (acct ? t("td.gone") : t("td.other"));
+      st.classList.toggle("err", !!info.err);
+      $("l-dav-held").hidden = !(info.held && !info.busy);
+      if (info.held) {
+        $("l-dav-held-text").textContent = t("td.held").replace("{n}", String(info.held.local + info.held.server))
+          .replace("{a}", String(info.held.local)).replace("{b}", String(info.held.server));
+      }
+      $("l-dav-sync").hidden = !(col && acct);
+      $("l-dav-sync").disabled = !!info.busy || tdBusy;
+      return;
+    }
+    if (!acct) return;
+    var sel = $("l-dav-col"), keep = sel.value;
+    sel.textContent = "";
+    var cols = tdCols(acct).filter(function (c) { return !tdLinkByUrl(c.url); });
+    var o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = cols.length ? t("td.pick") : t("td.none");
+    sel.appendChild(o0);
+    cols.forEach(function (c) {
+      var o = document.createElement("option");
+      o.value = c.url;
+      o.textContent = (c.name || t("td.noname")) + (c.readOnly ? " (" + t("td.ro.col") + ")" : "");
+      sel.appendChild(o);
+    });
+    if (keep && cols.some(function (c) { return c.url === keep; })) sel.value = keep;
+    sel.disabled = !cols.length;
+    $("l-dav-go").disabled = !cols.length;
+  }
+  function tdPrevShow(text, canGo) {
+    $("l-dav-prev").hidden = false;
+    $("l-dav-pickrow").hidden = true;
+    $("l-dav-prev-text").textContent = text;
+    $("l-dav-prev-go").disabled = !canGo;
+  }
+  function tdPrevClose() {
+    tdPrev = null;
+    if ($("l-dav-prev")) $("l-dav-prev").hidden = true;
+    if ($("l-dav-pickrow")) $("l-dav-pickrow").hidden = false;
+  }
+  // First link: what would happen, before anything is written.
+  function tdPreview() {
+    var acct = tdAccount(), lid = editingListId, url = $("l-dav-col").value;
+    var col = tdColOf(acct, url);
+    if (!acct || !col || !lid || tdBusy) { if (!url) $("l-dav-col").focus(); return; }
+    var mine = tdPrev = { col: col, lid: lid, ok: false };
+    tdPrevShow(t("td.preview.wait"), false);
+    var map = window.OrosTodoDav.mapper(col.url, { mark: t("td.mark") });
+    window.OrosDavSync.run({ client: window.OrosDav.client(acct.conf, acct.pass), url: col.url, readOnly: !!col.readOnly,
+                             state: null, local: tdLocal(lid, col.url), map: map, dry: true })
+      .then(function (r) {
+        if (tdPrev !== mine) return;
+        mine.ok = true;
+        var s = r.stats;
+        var text = t("td.preview").replace("{down}", String(s.down)).replace("{up}", String(col.readOnly ? 0 : s.up))
+          .replace("{same}", String(s.same));
+        if (col.readOnly) text += " " + t("td.preview.ro");
+        if (s.conflicts) text += " " + t("td.conflicts").replace("{n}", String(s.conflicts));
+        tdPrevShow(text, true);
+      }, function (e) {
+        if (tdPrev !== mine) return;
+        tdPrevShow(tdErrText((e && e.message) || "other"), false);
+      });
+  }
+  function tdLinkNow() {
+    var p = tdPrev;
+    if (!p || !p.ok || !listById(p.lid) || isShared(p.lid)) return;
+    tdPrevClose();
+    var now = Date.now();
+    state.dav = (state.dav || []).filter(function (y) { return y.id !== p.lid; });
+    state.dav.push({ id: p.lid, url: p.col.url, mtime: now });
+    normDav(state);
+    save();
+    renderTdBox();
+    tdRun();
+  }
+  function tdUnlink() {
+    var y = tdLinkOf(editingListId);
+    if (!y || !y.url) return;
+    var url = y.url;
+    y.url = "";
+    y.mtime = Date.now();
+    delete tdInfo[y.id];
+    tdRoFor(y.id, null);
+    delete tdUids[url];
+    if (tdStore) tdStore.del(tdKey(url)).catch(function () {});
+    save();
+    renderTdBox();
+    showToast(t("td.unlinked"), false);
+  }
+  function tdFillDialog() {
+    if (!$("l-dav")) return;
+    tdPrevClose();
+    var list = editingListId ? listById(editingListId) : null;
+    $("l-dav").hidden = !list || isShared(list.id);
+    if ($("l-dav").hidden) return;
+    $("l-dav-on").hidden = $("l-dav-off").hidden = true;
+    $("l-dav-noacct").hidden = true;
+    tdLib().then(function (ok) {
+      if (!ok) { $("l-dav-noacct").hidden = false; return; }
+      renderTdBox();
+    });
+  }
+  if ($("l-dav")) {
+    $("l-dav-go").addEventListener("click", tdPreview);
+    $("l-dav-prev-go").addEventListener("click", tdLinkNow);
+    $("l-dav-prev-no").addEventListener("click", tdPrevClose);
+    $("l-dav-sync").addEventListener("click", function () { tdRun(); });
+    $("l-dav-unlink").addEventListener("click", tdUnlink);
+    $("l-dav-yes").addEventListener("click", function () {
+      var info = tdInfo[editingListId];
+      if (!info) return;
+      info.decision = "allow"; info.held = null; tdRun();
+    });
+    $("l-dav-no").addEventListener("click", function () {
+      var info = tdInfo[editingListId];
+      if (!info) return;
+      info.decision = "restore"; info.held = null; tdRun();
+    });
+    $("l-dav-set").addEventListener("click", function () {
+      var p = null;
+      try { p = window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function" ? window.parent : null; } catch (e) {}
+      if (!p) return;
+      if (editingListId !== null) saveListDialog();
+      editingListId = null;
+      $("dlg-list").close();
+      p.__orosOpenAt("settings", { section: "sync" });
+    });
+  }
+
   // ---------- Boot ----------
   load();
   loadView();
@@ -4486,6 +5104,7 @@
 
   wire();
   registerSync();
+  tdBoot();
   inheritPalette();
   watchPalette();
 

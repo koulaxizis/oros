@@ -1303,3 +1303,14 @@ dialog .hh-row button.ghost { margin-top: 0; }
   min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
   font-size: 10px; font-weight: 800; color: #111;
 }
+
+/* CalDAV wave 5: a server task list in the list dialog (todo.js section 15) */
+#l-dav-in { font-weight: 600; overflow-wrap: anywhere; margin: 0 0 4px; }
+#l-dav-st, #l-dav-prev-text, #l-dav-held-text { overflow-wrap: anywhere; }
+#l-dav .err, #l-dav-st.err { color: var(--danger, #e06c75); }
+#l-dav-prev { margin-top: 8px; }
+#l-dav .hh-row + .hh-row { margin-top: 6px; }
+#l-dav-col { min-width: 0; max-width: 100%; flex: 1 1 12em; }
+.dav-ro-note { border-left: 3px solid var(--accent); padding-left: 8px; }
+#l-dav-prev-go:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+#l-dav-pickrow[hidden] { display: none; }

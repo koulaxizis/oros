@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.90.00
+- To-Do › a list's settings › Server task list (CalDAV): link a list to a task list on your own server (Nextcloud Tasks, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything. Then tasks go both ways with their notes, dates, priorities, repeats, labels and subtasks, so your phone and Thunderbird see the same tasks; alarms and details orOS doesn't show stay on the server untouched, and nothing is deleted on either side unless it was in sync before. See [To-Do](help:a/todo).
+
 ## Version 4.89.00
 - [Pad](help:a/pad) can save automatically (More › `Save automatically`, off at first): a file with its own place is saved 2 seconds after you stop typing, with the same checks as Save, so a file that changed elsewhere is still never overwritten. The menu search finds Pad's recent files, and the Assistant can open them or write a new file for you that opens as a new tab in Pad.
 
