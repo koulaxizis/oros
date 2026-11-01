@@ -9,8 +9,8 @@
 // same-origin files the page runs anyway; running them is still up to
 // the <script> elements, which the CSP covers.
 //
-// The block is generated from the page's own <script src> list, in
-// order, with the same ?v= (so each file is fetched once). Run after
+// The block is generated from the page's own <script src> list (not
+// the late bundle, BOOT-L1), in order, with the same ?v= (so each file is fetched once). Run after
 // adding, removing or moving a shell script; stamp-assets.js runs it on
 // main after the ?v= stamp. tests/preload.test.js fails a stale block.
 // Usage: node .github/scripts/preload.js [--check]
@@ -24,10 +24,15 @@ const START = "<!-- BOOT-P1 preload: generated from the scripts below (Bible Par
 const END = "<!-- /BOOT-P1 -->";
 const BLOCK_RE = /[ \t]*<!-- BOOT-P1 preload:[^\n]*\n(?:[ \t]*<link rel="preload"[^\n]*\n)*[ \t]*<!-- \/BOOT-P1 -->\r?\n/;
 
-// The same-origin classic scripts of a page, in document order.
+// BOOT-L1: scripts inside <template data-oros-late> are inert markup;
+// shell.js loads them after the desktop is drawn. Preloading them
+// would put them back in the start-up path, so they are left out.
+const LATE_RE = /<template data-oros-late>[\s\S]*?<\/template>/g;
+
+// The same-origin classic scripts a page runs while it loads, in document order.
 function scriptsOf(html) {
   const out = [];
-  for (const m of html.replace(BLOCK_RE, "").matchAll(/<script\b([^>]*)\bsrc="([^"]+)"([^>]*)>/g)) {
+  for (const m of html.replace(BLOCK_RE, "").replace(LATE_RE, "").matchAll(/<script\b([^>]*)\bsrc="([^"]+)"([^>]*)>/g)) {
     const attrs = m[1] + m[3];
     const src = m[2];
     if (/^(https?:)?\/\//.test(src) || /\btype="module"/.test(attrs)) continue;

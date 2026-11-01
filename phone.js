@@ -166,8 +166,14 @@
   // or in the event's own zone when it carries one (`tz`, Calendar
   // wave 5): then EVENT_TIMEZONE is that zone, so Android repeats it
   // at that zone's wall time. Rules come from calendar/occur.js.
-  var OCC = (root && root.OrosCalOccur) ||
-    (typeof module !== "undefined" && typeof require === "function" ? require("./calendar/occur.js") : null);
+  // Looked up on each use: calendar/occur.js is in the late bundle
+  // (BOOT-L1, loaded after this file).
+  var occNode = null;
+  function OCC() {
+    if (root && root.OrosCalOccur) return root.OrosCalOccur;
+    if (occNode === null) occNode = typeof module !== "undefined" && typeof require === "function" ? require("./calendar/occur.js") : false;
+    return occNode || null;
+  }
   var FREQ = { D: "DAILY", W: "WEEKLY", M: "MONTHLY", Y: "YEARLY" };
   function parts(ymd) { var p = ymd.split("-"); return [+p[0], +p[1] - 1, +p[2]]; }
   function hm(s) { var p = (s || "00:00").split(":"); return [+p[0], +p[1]]; }
@@ -176,7 +182,7 @@
     return new Date(d[0], d[1], d[2], t[0], t[1]).getTime();
   }
   // Wall time in zone z (null: the page's own zone) → ms.
-  function zonedMs(ymd, time, z) { return z && OCC ? OCC.wallToMs(ymd, time, z) : localMs(ymd, time); }
+  function zonedMs(ymd, time, z) { return z && OCC() ? OCC().wallToMs(ymd, time, z) : localMs(ymd, time); }
   function utcMidnight(ymd, addDays) {
     var d = parts(ymd);
     return Date.UTC(d[0], d[1], d[2] + (addDays || 0));
@@ -186,7 +192,7 @@
   }
   function eventZone(e) {
     var timed = typeof e.start === "string" && /^\d{2}:\d{2}$/.test(e.start);
-    return timed && e.tz && OCC && OCC.tzValid(e.tz) ? e.tz : null;
+    return timed && e.tz && OCC() && OCC().tzValid(e.tz) ? e.tz : null;
   }
   // The Calendar's monthly / yearly rule clamps to the month's last
   // day (Jan 31 → Feb 28 → Mar 31). RFC 5545 skips such months
@@ -196,8 +202,8 @@
     var r = e.recur;
     if (!r || !FREQ[r.freq]) return null;
     var z = eventZone(e);
-    if (OCC) {
-      return OCC.toRrule(e, {
+    if (OCC()) {
+      return OCC().toRrule(e, {
         until: function (u) {
           return e.start ? utcStamp(zonedMs(u, "23:59", z) + 59000) : utcStamp(utcMidnight(u));
         }
@@ -245,7 +251,7 @@
       if (rule) {
         // Series: Android wants DURATION, never DTEND. A series may
         // span days (Calendar wave 5): the duration covers them.
-        var span = dateEnd && dateEnd > e.date && OCC ? OCC.dayNum(dateEnd) - OCC.dayNum(e.date) : 0;
+        var span = dateEnd && dateEnd > e.date && OCC() ? OCC().dayNum(dateEnd) - OCC().dayNum(e.date) : 0;
         var mins = 0;
         if (timed) {
           var a = hm(e.start), b = hm(end || e.start);
@@ -315,7 +321,7 @@
   function ymdUtc(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()); }
   function hmLocal(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
   function wallIn(ms, z) {
-    if (z && OCC) return OCC.msToWall(ms, z);
+    if (z && OCC()) return OCC().msToWall(ms, z);
     return { date: ymdLocal(ms), time: hmLocal(ms) };
   }
   function isoSecs(s) {          // "P3600S", "PT1H30M", "P1D", "P1W" → seconds
@@ -338,8 +344,8 @@
   function recurIn(rule, exdate, allDay, start, z) {
     if (!rule) return null;
     var r = null;
-    if (OCC && typeof start === "string") {
-      var got = OCC.fromRrule(rule, start, { until: function (v) { return stampDay(v, allDay, z); } });
+    if (OCC() && typeof start === "string") {
+      var got = OCC().fromRrule(rule, start, { until: function (v) { return stampDay(v, allDay, z); } });
       if (got.single) return null;
       if (got.recur) r = got.recur;
     }
@@ -1012,6 +1018,7 @@
   // Send a kind when it is on, allowed by Android, and changed since
   // the last send in this page (the app diffs again, row by row).
   function push(kind, force) {
+    if (!lateOk()) return;                      // BOOT-L1: the cores are not in yet
     var p = prefs();
     if (!port || !appState || !p[kind] || appState[kind] !== "granted") return;
     var raw = "";
@@ -1030,6 +1037,15 @@
     }
     if (send({ t: kind, seq: ++seq, items: items })) lastSent[kind] = key;
   }
+  // BOOT-L1: the reminder, Today and Health rows need app cores from the
+  // shell's late bundle. Until it is in, nothing is handed to Android
+  // (a list without them would cancel reminders there); then all at once.
+  function lateOk() {
+    var L = root && root.orosLate;
+    if (L) return !!L.done;
+    try { return !(root && root.document && root.document.querySelector("template[data-oros-late]")); } catch (e) { return true; }
+  }
+  if (root && typeof root.addEventListener === "function") root.addEventListener("oros:late-ready", function () { pushAll(false); });
   function pushAll(force) { push("contacts", force); push("calendar", force); pushReminders(force); pushToday(force); pushAgenda(force); pushHealth(force); }
 
   // Health Connect (v5): the last 30 days of Water and Workouts, sent
@@ -1038,6 +1054,7 @@
   // ({t:"health-in"}), so steps follow the day.
   function healthOk() { return appState && (appState.health === "granted" || appState.health === "some"); }
   function pushHealth(force) {
+    if (!lateOk()) return;                      // BOOT-L1: the cores are not in yet
     if (!port || !prefs().health || !healthOk()) return;
     var now = Date.now(), raw = "";
     try { raw = localStorage.getItem(HEALTH_KEYS.water) + "\n" + localStorage.getItem(HEALTH_KEYS.fitness); } catch (e) { return; }
@@ -1104,6 +1121,7 @@
   // only when the rows changed.
   var todayAt = 0, todayBusy = false;
   function pushToday(force) {
+    if (!lateOk()) return;                      // BOOT-L1: the cores are not in yet
     var T = root.orosToday, now = Date.now();
     if (!port || !appState || !(appState.widgets > 0) || todayBusy) return;
     if (!T || typeof T.build !== "function") return;
@@ -1124,6 +1142,7 @@
   // placed; the other one goes as null and the app keeps what it had.
   var agendaAt = 0, agendaBusy = false;
   function pushAgenda(force) {
+    if (!lateOk()) return;                      // BOOT-L1: the cores are not in yet
     var T = root.orosToday, now = Date.now();
     if (!port || !appState || !(appState.wcal > 0 || appState.wtodo > 0) || agendaBusy) return;
     if (!T || typeof T.agenda !== "function") return;
@@ -1219,10 +1238,11 @@
     if (!P || typeof P.calendarRows !== "function") return [];
     var data = null;
     try { data = JSON.parse(localStorage.getItem(KEYS.calendar) || "null"); } catch (e) {}
-    try { return P.calendarRows(data, OCC, now, now + REM_HOURS * 3600000, (document.documentElement.lang || "en").slice(0, 2)); }
+    try { return P.calendarRows(data, OCC(), now, now + REM_HOURS * 3600000, (document.documentElement.lang || "en").slice(0, 2)); }
     catch (e) { return []; }
   }
   function pushReminders(force) {
+    if (!lateOk()) return;                      // BOOT-L1: the cores are not in yet
     var p = prefs();
     if (!port || !appState || !p.reminders || appState.reminders !== "granted") return;
     var now = Date.now(), raw = "";

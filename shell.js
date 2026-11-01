@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.95.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.95.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1584,6 +1584,10 @@
   var shellBootAt = Date.now();
   var ENGINE_GRACE_MS = 8000;
   function enginesMayRun() {
+    // BOOT-L1: the engines read the app cores of the late bundle. Run
+    // them only once it is in, so none burns its throttle on a silent
+    // return (fail-safe: LATE_GRACE_MS after boot they run anyway).
+    if (!late.done && (Date.now() - shellBootAt) <= LATE_GRACE_MS) return false;
     var N = window.orosNotifs;
     if (N && typeof N.getState === "function") {
       try { if (N.getState().ready) return true; } catch (e) {}
@@ -3364,12 +3368,92 @@
 
   // BOOT-S1: the desktop is drawn; the boot splash (index.html) may go
   // once the page's scripts have all run. Two frames so the menu and
-  // the clock are painted before the splash fades.
+  // the clock are painted before the splash fades. BOOT-L1: then the
+  // late bundle starts loading.
   function splashDone() {
-    var go = function () { try { if (window.__orosSplashDone) window.__orosSplashDone(); } catch (e) {} };
+    var go = function () {
+      try { if (window.__orosSplashDone) window.__orosSplashDone(); } catch (e) {}
+      setTimeout(lateStart, 0);
+    };
     if (typeof requestAnimationFrame !== "function") return go();
     requestAnimationFrame(function () { requestAnimationFrame(go); });
   }
+
+  // BOOT-L1: the late bundle. The app files the shell needs only in the
+  // background (the clock engines' cores, the household, Newsletter,
+  // Podcasts, Music, Links and Sticky Notes hosts, mail notices, the
+  // Today summary) sit in index.html inside <template data-oros-late>:
+  // inert markup, so they are no longer fetched and run before the
+  // desktop is drawn (first visit on a slow phone 9.5 -> ~5 s). Once
+  // the desktop is up they are added in document order (async=false:
+  // fetched in parallel, run in order). Until then:
+  //   - the clock engines wait (enginesMayRun), so no reminder is lost;
+  //   - an app that is opened waits (openApp), so its bridges to the
+  //     shell (window.parent.orosHousehold, orosLinks, ...) are there;
+  //   - phone.js and webpush.js hand nothing to Android or the push
+  //     relay, so a reminder list is never sent without its cores.
+  // window.orosLate: { done, when(fn) }; "oros:late-ready" on window.
+  // No template (an older cached index.html with plain tags) = done at
+  // once. A file that fails or hangs never holds the rest: each one
+  // settles on load or error, and LATE_MAX_MS marks the bundle done.
+  var LATE_MAX_MS = 20000, LATE_GRACE_MS = 30000, LATE_SPLASH_MS = 12000;
+  var late = { done: false, started: false, waiters: [] };
+  window.orosLate = {
+    get done() { return late.done; },
+    when: function (fn) { lateWhen(fn); }
+  };
+  function lateWhen(fn) {
+    if (late.done) { try { fn(); } catch (e) {} return; }
+    late.waiters.push(fn);
+  }
+  function lateFinish() {
+    if (late.done) return;
+    late.done = true;
+    var list = late.waiters; late.waiters = [];
+    list.forEach(function (fn) { try { fn(); } catch (e) {} });
+    try { window.dispatchEvent(new Event("oros:late-ready")); } catch (e) {}
+  }
+  function lateSources() {
+    var out = [];
+    Array.prototype.forEach.call(document.querySelectorAll("template[data-oros-late]"), function (tpl) {
+      var root = tpl.content || tpl;
+      Array.prototype.forEach.call(root.querySelectorAll("script[src]"), function (s) {
+        var src = s.getAttribute("src");
+        if (src && !/^(https?:)?\/\//i.test(src)) out.push(src);     // same origin only
+      });
+    });
+    return out;
+  }
+  function lateStart() {
+    if (late.started) return;
+    if (document.readyState === "loading") {           // the last template is not parsed yet
+      document.addEventListener("DOMContentLoaded", lateStart);
+      return;
+    }
+    // Not while the splash fades (a busy main thread makes it stutter
+    // and keeps it up longer); at most LATE_SPLASH_MS for it.
+    if (document.getElementById("oro-splash") && Date.now() - shellBootAt < LATE_SPLASH_MS) {
+      setTimeout(lateStart, 50);
+      return;
+    }
+    late.started = true;
+    var list = lateSources(), left = list.length;
+    if (!left) return lateFinish();
+    setTimeout(lateFinish, LATE_MAX_MS);
+    var settle = function () { if (--left === 0) lateFinish(); };
+    list.forEach(function (src) {
+      var s = document.createElement("script");
+      s.src = src;
+      s.async = false;
+      s.onload = s.onerror = settle;
+      document.body.appendChild(s);
+    });
+  }
+  // Once the bundle is in: the cards and badges that read it repaint.
+  lateWhen(function () {
+    if (SOLO) { try { soloBadgeTick(); } catch (e) {} }
+    try { if (window.orosWidgets && window.orosWidgets.refresh) window.orosWidgets.refresh(); } catch (e) {}
+  });
 
   // Launch shortcuts (manifest "shortcuts", long-press on the app
   // icon): "/?open=<id>" opens that app once the list is loaded. The
@@ -11035,6 +11119,15 @@
   }
 
   function openApp(app, at) {
+    // BOOT-L1: an app opened before the late bundle is in (a launch
+    // link, a notification, a quick tap) waits for it: its bridges to
+    // the shell live there. The last request wins.
+    if (!late.done && app && app.type === "internal") {
+      var first = !late.open;
+      late.open = [app, at];
+      if (first) lateWhen(function () { var o = late.open; late.open = null; if (o) openApp(o[0], o[1]); });
+      return;
+    }
     if (app && app.type === "internal") davBgStop(app.id);   // 10e: the background frame of this app goes first
     var pick = mt.pickSide && document.getElementById("app-menu").classList.contains("open");
     mt.pickSide = false;

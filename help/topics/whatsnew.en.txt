@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.95.01
+- orOS opens faster the first time: the files it needs only for background work (reminders, household, Today and similar) now load after the desktop is shown. On a slow phone the first open went from about 9 to about 6 seconds.
+
 ## Version 4.95.00
 - **Users on one computer or stick** (orOS Portable and the Live USB): several people can now share one PC or USB stick, each with their own orOS, data and password. Set it up in Settings › Users (the first person becomes the owner and gets a recovery code); a guest account is optional. Sign out is in the power menu. Passwords keep users apart but do not encrypt the stick. See [Settings](help:a/settings).
 

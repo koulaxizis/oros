@@ -23,6 +23,8 @@
 // JavaScript the page evaluated and how much of it ran during start-up
 // (V8 block coverage), the script time (CDP ScriptDuration) and the
 // slowest scripts (gap between consecutive script load events).
+// Start-up JavaScript is what ran before "ready"; the scripts the shell
+// adds after it (its late bundle, BOOT-L1) are reported apart.
 //
 // The budget (boot.json) holds the start-up JavaScript bytes and script
 // count (deterministic, they fail the gate at +10 %) and the warm ready
@@ -263,8 +265,14 @@ async function openShell(ctx, url, o, srvSt, untilVersion) {
   await pause(3000);
   const boot = await page.evaluate(() => window.__boot);
   const metrics = Object.fromEntries((await cdp.send("Performance.getMetrics")).metrics.map((m) => [m.name, m.value]));
-  const cov = coverageOf((await cdp.send("Profiler.takePreciseCoverage")).result, new URL(url).origin);
+  const covAll = coverageOf((await cdp.send("Profiler.takePreciseCoverage")).result, new URL(url).origin);
   await cdp.send("Profiler.stopPreciseCoverage");
+  // Start-up JavaScript = what ran before "ready". What the shell adds
+  // after it (the late bundle, BOOT-L1; the Today providers) is counted
+  // apart, as "after ready".
+  const atReady = new Set(boot.scripts.filter((s) => s.at <= boot.ready).map((s) => s.src));
+  const startUp = (c) => !/\.js$/.test(c.src) || atReady.has(c.src);
+  const cov = covAll.filter(startUp), after = covAll.filter((c) => !startUp(c));
   // Scripts of the page itself, in order, before DOMContentLoaded: the
   // gap to the previous one is mostly its own run time once cached.
   const parsed = boot.scripts.filter((s) => !boot.dcl || s.at <= boot.dcl);
@@ -287,6 +295,7 @@ async function openShell(ctx, url, o, srvSt, untilVersion) {
       scriptMs: Math.round(metrics.ScriptDuration * 1000), taskMs: Math.round(metrics.TaskDuration * 1000),
       jsHeap: metrics.JSHeapUsedSize,
       js: { scripts: cov.length, bytes: cov.reduce((a, c) => a + c.bytes, 0), used: cov.reduce((a, c) => a + c.used, 0), evaluated: cov.reduce((a, c) => a + c.bytes * c.runs, 0) },
+      afterReady: { scripts: after.length, bytes: after.reduce((a, c) => a + c.bytes, 0) },
       coverage: cov.sort((a, b) => b.bytes - a.bytes),
       slowest: scripts.slice().sort((a, b) => b.ms - a.ms).slice(0, 12),
     },
@@ -418,7 +427,8 @@ async function main() {
     if (!x) continue;
     console.log("  " + k.padEnd(8) + sec(summary[k + "Ms"]).padStart(8) + "  page fetched " + kb(x.pageNet.bytes) + " (" + x.pageNet.requests + " req), with the worker " + kb(x.serverBytes) + ", " +
       "JS " + kb(x.js.bytes) + " in " + x.js.scripts + " scripts, " + Math.round(x.js.used / x.js.bytes * 100) + " % of it ran, " +
-      "script time " + sec(x.scriptMs) + ", DOMContentLoaded " + sec(x.inPage.dcl) +
+      "script time " + sec(x.scriptMs) + ", DOMContentLoaded " + sec(x.inPage.dcl) + ", splash gone (in page) " + sec(x.inPage.splashGone) +
+      (x.afterReady && x.afterReady.scripts ? ", after ready " + kb(x.afterReady.bytes) + " in " + x.afterReady.scripts + " scripts" : "") +
       (x.oldVersionReadyMs ? ", old version ready at " + sec(x.oldVersionReadyMs) : "") + (x.reloads ? ", " + x.reloads + " reload(s)" : ""));
   }
   if (r.app) console.log("  app      " + sec(summary.appMs).padStart(8) + "  " + r.app.id + " from the warm shell");

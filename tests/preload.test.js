@@ -12,7 +12,7 @@ const shell = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
 test("index.html preloads every shell script, current and before the CSP meta", () => {
   assert.deepEqual(P.check(shell), []);
   const scripts = P.scriptsOf(shell);
-  assert.ok(scripts.length > 50, "the shell scripts are listed");
+  assert.ok(scripts.length > 20, "the shell scripts are listed");
   for (const s of scripts) assert.ok(shell.includes('<link rel="preload" as="script" href="' + s + '">'), s);
 });
 
