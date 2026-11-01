@@ -349,6 +349,7 @@ button { font: inherit; color: inherit; }
 .pd-row-txt { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .pd-row-main { overflow-wrap: anywhere; }
 .pd-row-sub { font-size: 13px; color: var(--text-dim); overflow-wrap: anywhere; }
+.pd-head { margin: 10px 4px 2px; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--text-dim); text-transform: none; }
 .pd-row .on-mark { color: var(--accent); }
 .pd-radios { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 4px; }
 .pd-radio { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 6px; cursor: pointer; }
