@@ -17,6 +17,9 @@ const src = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 test("insideFor: the table's apps, plus Music for songs (inside orOS only)", () => {
   assert.deepEqual(FO.insideFor(".csv"), FO.appsFor(".csv"));
+  // Pad reads web and data files as text inside orOS only (BR-FO-2).
+  assert.deepEqual(FO.insideFor(".json"), ["pad"]);
+  assert.deepEqual(FO.insideFor(".html"), ["pad"]);
   assert.deepEqual(FO.insideFor(".MP3"), ["music"]);
   assert.deepEqual(FO.insideFor(".flac"), ["music"]);
   assert.deepEqual(FO.insideFor(".exe"), []);
@@ -57,7 +60,7 @@ test("files kind: only paths of the orOS disk, ≤ 10, to Mail as attachments", 
 
 test("Files and Music wiring", () => {
   const f = src("files/files.js");
-  assert.match(f, /openInside\(file, !!ask\)/);
+  assert.match(f, /openInside\(file, !!ask, path\)/);
   assert.match(f, /"music", \{ playPath: path \}/);
   assert.match(f, /kind: "files"/);
   assert.match(f, /"pv\.openWith":\s+"Άνοιγμα με…"/);

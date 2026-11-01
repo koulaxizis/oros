@@ -62,7 +62,7 @@ test("every app in the table exists and takes a file through its deep link", () 
     stock: ["stock/stock.js"], diary: ["diary/diary.js"], health: ["health/health.js"], fitness: ["fitness/fitness.js"],
     baby: ["baby/baby.js"], petcare: ["petcare/petcare.js"], plants: ["plants/plants.js"], garage: ["garage/garage.js"],
     shelf: ["shelf/shelf.js"], signature: ["signature/signature.js"], newsletter: ["newsletter/newsletter.js"], storage: ["storage/storage.js"],
-    flashcards: ["flashcards/app.js"], lyricsync: ["lyricsync/app.js"]
+    flashcards: ["flashcards/app.js"], lyricsync: ["lyricsync/app.js"], pad: ["pad/app.js"]
   };
   // Phase 4b: the record apps' bundle types are registered ahead of
   // their waves. An app listed here has no "Open with" receiver for its
@@ -95,23 +95,26 @@ test("extOf and appsFor", () => {
   assert.equal(F.extOf(null), "");
   assert.deepEqual(F.appsFor(".docx"), ["writer"]);
   assert.deepEqual(F.appsFor(".DOCX"), ["writer"]);
-  assert.deepEqual(F.appsFor(".txt"), ["writer", "mindmap", "notes", "texttools"]);
+  assert.deepEqual(F.appsFor(".txt"), ["writer", "mindmap", "notes", "texttools", "pad"]);
   assert.deepEqual(F.appsFor(".opml"), ["feeds", "podcasts", "mindmap"]);
   assert.deepEqual(F.appsFor(".csv"), ["spreadsheet", "texttools"]);
   assert.deepEqual(F.appsFor(".tsv"), ["texttools"]);
   assert.deepEqual(F.appsFor("__proto__"), []);
   assert.deepEqual(F.appsFor("constructor"), []);
   assert.deepEqual(F.shared().sort(), [".csv", ".markdown", ".md", ".opml", ".pptx", ".txt"]);
+  assert.deepEqual(F.appsFor(".py"), ["pad"]);
+  assert.deepEqual(F.appsFor(".jsfx"), ["pad"]);
+  assert.deepEqual(F.appsFor(".md"), ["writer", "mindmap", "notes", "pad"]);
   assert.deepEqual(F.appsFor(".pptx"), ["atelier", "slides"]);
 });
 
 test("choose: the only app, the person's choice, else ask", () => {
   assert.deepEqual(F.choose("a.xlsx", null), { app: "spreadsheet", ext: ".xlsx" });
-  assert.deepEqual(F.choose("a.txt", null), { ask: ["writer", "mindmap", "notes", "texttools"], ext: ".txt" });
+  assert.deepEqual(F.choose("a.txt", null), { ask: ["writer", "mindmap", "notes", "texttools", "pad"], ext: ".txt" });
   assert.deepEqual(F.choose("a.txt", { map: { ".txt": "mindmap" } }), { app: "mindmap", ext: ".txt" });
-  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "ask" } }), { ask: ["writer", "mindmap", "notes", "texttools"], ext: ".txt" });
+  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "ask" } }), { ask: ["writer", "mindmap", "notes", "texttools", "pad"], ext: ".txt" });
   // a choice for an app that cannot read the type is ignored
-  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "spreadsheet" } }).ask, ["writer", "mindmap", "notes", "texttools"]);
+  assert.deepEqual(F.choose("a.txt", { map: { ".txt": "spreadsheet" } }).ask, ["writer", "mindmap", "notes", "texttools", "pad"]);
   assert.deepEqual(F.choose("a.pdf", null), { app: "library", ext: ".pdf" });
   assert.equal(F.choose("a.svg", null), null);
   assert.equal(F.choose("", null), null);

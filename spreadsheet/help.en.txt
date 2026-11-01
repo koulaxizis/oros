@@ -115,6 +115,18 @@ The tabs at the bottom are your sheets.
 - Double-click a tab, or long-press it on a touch screen, to rename it.
 - Tap ✕ on a tab, then ✕ again within 3 seconds, to delete the sheet. The last sheet can't be deleted.
 
+## Print and PDF
+`Print or save as PDF…` is in the sheet menu (right-click, or touch and hold a cell on a phone) and under the `XL` export button; [[Ctrl+P]] opens it too.
+
+- `Print`: `The whole sheet` (everything up to the last filled cell, with its charts) or `The selection`.
+- `Paper` A4, A3, Letter or Legal, `Portrait` or `Landscape`.
+- `Size`: `Fit to the page width` (the default: every column on one page across), `Fit on one page` or `Actual size`.
+- `Repeat at the top of each page`: the first rows (1 to 5) on every page, for headings.
+- `Gridlines`, `Page numbers` (with the sheet's name) and `Charts` can be turned off.
+- `Save PDF` saves the file; `Print` opens your device's print dialog with the same pages.
+
+The PDF has real text, so Greek prints correctly and you can search and copy it. Fills, colours, bold and italics, borders, merged cells, wrapped text, data bars and icon sets print as you see them; text runs on over empty cells to its right. Rows hidden by a filter are left out. The settings stay on this device.
+
 ## The Assistant
 Ask the Assistant to change your sheets in words, such as "2026 instead of 2025", "make the first row bold", "sort by price", "insert two rows above row 5" or "freeze the first row". It shows the changes on a card first; `Apply` makes them here and opens the sheet. `Undo` on the message here, or on the Assistant's card, puts the cells back as long as they weren't changed since. See the Assistant's help for everything it can do.
 
@@ -150,6 +162,7 @@ See also [Backup](help:t/backup).
 - [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]] copy, cut and paste, also with other apps.
 - [[Delete]] on a selected chart deletes it.
 - [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]] bold, italic, underline.
+- [[Ctrl+P]] print or save as PDF.
 - On a Mac use Cmd instead of Ctrl.
 
 ## Tips
@@ -167,4 +180,5 @@ See also [Backup](help:t/backup).
 - Array formulas that fill several cells (FILTER, SORT, UNIQUE), named ranges and pivot tables are not supported. INDIRECT reads A1 references only, not R1C1. A formula from Excel that uses a function orOS doesn't know keeps showing the value Excel saved.
 - Inserting or deleting rows moves cells: if another device edits the same cells before sync, its edit stays at the old place.
 - Undo history is cleared when sync brings in changes, and deleting a sheet has no Undo.
+- Print and PDF use the colours of a light page whatever the theme, the Noto Sans font and up to 5 repeated rows; a chart prints on the page where its top-left corner is, and a part that runs past the page edge is cut off. Frozen columns don't repeat on later pages.
 - Excel and Calc files need a helper library; if it hasn't loaded yet, you may need an internet connection.

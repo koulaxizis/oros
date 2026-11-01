@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.82.00
+- Spreadsheet: print a sheet or save it as a PDF (sheet menu › Print or save as PDF…, or Ctrl+P): the whole sheet or the selection, A4/A3/Letter, portrait or landscape, fit to the page width, heading rows on every page, gridlines and page numbers, charts included, Greek text as real text. See [Spreadsheet](help:a/spreadsheet).
+
+## Version 4.81.00
+- [Pad](help:a/pad) now saves a file back in its own place: on this computer in Chrome and Edge, and on the computer's own folders with an orOS USB stick or orOS Portable, as it already did on the orOS disk. A file that changed elsewhere in the meantime is still never overwritten. `Recent files` brings back what you worked on, and in Files `Open with…` opens code and text files in Pad.
+
 ## Version 4.80.00
 - [Typing Tutor](help:a/typing): practise with passages from literature (Kavafis, Austen, Kafka and more) or with your own texts, which you can also send from Notes or Writer with "Send to an app…". A round for your weak keys, a 30-day speed chart, a row in Today and Habits, and a daily practice reminder you can switch on in the app's settings.
 

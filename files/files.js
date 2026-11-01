@@ -835,7 +835,8 @@
     FS().read(path).then(function (blob) {
       if (!blob) { transientNote(t("pv.notFound")); return; }
       var file = blob instanceof File && blob.name === name ? blob : new File([blob], name, { type: blob.type || mimeForExt(extOf(name)) });
-      o.openInside(file, !!ask);
+      // The path too: an app that saves in place (Pad) takes the file itself.
+      o.openInside(file, !!ask, path);
     }, function () { transientNote(t("pv.notFound")); });
   }
   function sendApi() {
