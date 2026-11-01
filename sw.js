@@ -2134,6 +2134,23 @@ var PRECACHE_HASH = {"./":"5186cec0a537a91d","./index.html":"5186cec0a537a91d","
 // SW-U2: at most this many precache files at a time, at low fetch
 // priority, so an install leaves room on the network for the page.
 var PRECACHE_POOL = 4;
+// SW-T4: a precache download that has not answered after this long
+// counts as a network failure. A request that never answered (a VPN or
+// a phone network that drops the connection silently) used to hold the
+// whole install until the browser killed the worker, and a killed
+// install left no marker: every attempt started from zero and the
+// phone stayed on its old release for good.
+var PRECACHE_FETCH_MS = 30000;
+// SW-T4: a file that failed on the network is tried once more before
+// the attempt gives up.
+var PRECACHE_TRIES = 2;
+// SW-T4: after this many failed attempts at an update (counted across
+// releases, so a release every half hour does not reset it) the new
+// release activates without the files it could not reach; they come
+// from the network when they are used. One file the network never
+// delivers (a filter that blocks it, a broken route) must not hold a
+// device on an old release forever.
+var PRECACHE_GIVE_UP = 3;
 
 function pool(items, size, fn) {
   var i = 0;
@@ -2145,6 +2162,34 @@ function pool(items, size, fn) {
   var runners = [];
   for (var k = 0; k < Math.min(size, items.length); k++) runners.push(next());
   return Promise.all(runners);
+}
+
+// SW-T4: fetch(u) for the precache, failing after PRECACHE_FETCH_MS.
+function precacheFetch(u) {
+  var ctl = typeof AbortController === "function" ? new AbortController() : null;
+  var timer = null;
+  var init = { cache: "reload", priority: "low" };
+  if (ctl) init.signal = ctl.signal;
+  return Promise.race([
+    fetch(new Request(u, init)),
+    new Promise(function (resolve, reject) {
+      timer = setTimeout(function () {
+        if (ctl) { try { ctl.abort(); } catch (e) {} }
+        reject(new Error("timeout after " + PRECACHE_FETCH_MS + " ms"));
+      }, PRECACHE_FETCH_MS);
+    })
+  ]).then(function (r) { clearTimeout(timer); return r; },
+          function (e) { clearTimeout(timer); throw e; });
+}
+
+// SW-T4: the number of failed update attempts the marker records
+// (an empty marker from an older release counts as one).
+function markTries(res) {
+  if (!res) return Promise.resolve(0);
+  return res.text().then(function (t) {
+    var n = parseInt(t, 10);
+    return n > 0 ? n : 1;
+  }).catch(function () { return 1; });
 }
 
 // The other releases' shell caches, newest name first.
@@ -2215,36 +2260,67 @@ self.addEventListener("install", function (event) {
       // Resume only after a FAILED attempt of this same release (its
       // marker): a worker re-installed under an unchanged version
       // still refreshes every file, as before.
+      // SW-T4: the marker goes in at the START of an update and holds
+      // the number of attempts so far, so an attempt the browser
+      // killed half way (no time to write anything at the end) still
+      // resumes, and attempts are counted across releases.
       return Promise.all([cache.match(PARTIAL_MARK), previousShells()]).then(function (got) {
       var resume = got[0], prev = got[1];
+      return Promise.all([markTries(resume)].concat(prev.map(function (c) {
+        return c.match(PARTIAL_MARK).then(markTries, function () { return 0; });
+      }))).then(function (counts) {
+      var tries = Math.max.apply(null, counts) + 1;
+      return (updating ? cache.put(PARTIAL_MARK, new Response(String(tries))).catch(function () {})
+                       : Promise.resolve()).then(function () {
+      function download(u) {
+        return precacheFetch(u).then(function (response) {
+          if (!response.ok) {
+            console.warn("[SW] precache MISS:", u, response.status);
+            return true;
+          }
+          return cache.put(u, response).then(function () { return true; });
+        }, function (e) {
+          console.warn("[SW] precache MISS:", u, e && e.message);
+          return false;
+        });
+      }
       return pool(PRECACHE_URLS, PRECACHE_POOL, function (u) {
         return (resume ? cache.match(u) : Promise.resolve(undefined)).then(function (have) {
           if (have) return;
           return unchangedCopy(prev, u).then(function (same) {
           if (same) return cache.put(u, same);
-          return fetch(new Request(u, { cache: "reload", priority: "low" })).then(function (response) {
-            if (!response.ok) {
-              console.warn("[SW] precache MISS:", u, response.status);
-              return;
-            }
-            return cache.put(u, response);
-          }, function (e) {
-            netFailed.push(u);
-            console.warn("[SW] precache MISS:", u, e && e.message);
-          });
+          return download(u).then(function (ok) { if (!ok) netFailed.push(u); });
           });   // unchangedCopy
         });
       }).then(function () {
+        // SW-T4: the files that failed get PRECACHE_TRIES - 1 more
+        // tries, one at a time.
+        var round = 1;
+        function again() {
+          if (!netFailed.length || round >= PRECACHE_TRIES) return;
+          round++;
+          var list = netFailed;
+          netFailed = [];
+          return pool(list, 1, function (u) {
+            return download(u).then(function (ok) { if (!ok) netFailed.push(u); });
+          }).then(again);
+        }
+        return again();
+      }).then(function () {
         return adoptNullfx(prev);
       }).then(function () {
-        if (updating && netFailed.length) {
-          return cache.put(PARTIAL_MARK, new Response("")).catch(function () {}).then(function () {
-            throw new Error("precache: " + netFailed.length +
-              " file(s) unreachable, keeping the current release");
-          });
+        if (updating && netFailed.length && tries < PRECACHE_GIVE_UP) {
+          throw new Error("precache: " + netFailed.length +
+            " file(s) unreachable, keeping the current release (attempt " + tries + ")");
+        }
+        if (netFailed.length) {
+          console.warn("[SW] precache: activating without " + netFailed.length +
+            " file(s) after " + tries + " attempts:", netFailed.join(" "));
         }
         return cache.delete(PARTIAL_MARK);
       });
+      });   // marker written
+      });   // attempt count
       });   // PARTIAL_MARK + previous release
     })
   );

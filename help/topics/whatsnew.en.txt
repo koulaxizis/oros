@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.94.01
+- Updates no longer get stuck: if one file of a new version cannot be downloaded (a slow or filtered network, common on phones), orOS tries again, picks up where it stopped, and after a few tries installs the update without that file. A phone that stayed on an old version updates by itself the next time you open orOS.
+
 ## Version 4.94.00
 - Studio: the Assisted effects (Assisted EQ, Compressor, Reverb and Delay) are in `+ Effect`, and what their `Learn` finds is saved with the track and can be undone. Instrument tracks get the NULL JSFX MIDI effects (Arpeggiator, Chords, Scale and more) above the instrument. On the remote, a track with a NULL instrument gets `Pads` or `Keys` that play it on the PC, and recording MIDI keeps what you play. See [Studio](help:a/studio).
 
