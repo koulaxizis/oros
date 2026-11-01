@@ -19,9 +19,10 @@
   function gap(level, kid) { return Math.max(500, 1800 - 150 * (level - 1)) * (kid ? 1.3 : 1); }
 
   // The letters of the game: the learned lower-case letters, else the
-  // home row (lesson 5), so a first game is still possible.
+  // home row (lesson 5; on polytonic every plain letter), so a first game
+  // is still possible.
   function letters(lay, upto) {
-    var ok = CO.allowed(lay, upto >= 0 ? upto : CO.indexOf("h5"));
+    var ok = CO.allowed(lay, upto >= 0 ? upto : CO.homeIdx(lay));
     var out = Object.keys(ok).filter(function (c) { return /\p{Ll}/u.test(c); }).sort();
     return out.length ? out : ["f", "j"];
   }

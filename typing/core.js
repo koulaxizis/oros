@@ -3,7 +3,7 @@
 // Loaded by index.html before app.js, and by Node in the tests.
 // TYPING v1, slice "typing", localStorage "oros-typing-data":
 //   { ver: 1,
-//     set:  { m, lay "el"|"en"|"de", goal minutes 1-120, hint "auto"|"on"|"off",
+//     set:  { m, lay "el"|"en"|"de"|"elp"|"dv"|"cm", goal minutes 1-120, hint "auto"|"on"|"off",
 //             err "stop"|"go", kid 0|1, fs 1-3 text size, rs reset stamp },
 //     prog: { "<lay>|<lesson id>": { s stars 0-3, w best wpm, a best accuracy %, m } },
 //     days: { "<yyyymmdd>|<dev>": { ms practice time, ch characters right, er errors, n runs, m } },
@@ -24,7 +24,10 @@
   "use strict";
 
   var VER = 1;
-  var LAYS = ["el", "en", "de"];
+  // wave 4 adds elp (polytonic), dv (Dvorak), cm (Colemak): a device on
+  // 4.84.00 or older drops their rows when it saves; every newer device
+  // keeps them (each merge is a union), so nothing is lost for good.
+  var LAYS = ["el", "en", "de", "elp", "dv", "cm"];
   var HINTS = ["auto", "on", "off"];
   var ERRS = ["stop", "go"];
   var MAX_DAYS = 400;

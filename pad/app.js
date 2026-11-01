@@ -72,6 +72,9 @@
       "cmp.at": "change {i} of {n}", "cmp.fold": "{n} same lines (show)", "cmp.next": "Next change", "cmp.prev": "Previous change",
       "key.tab": "Indent (Tab)", "key.untab": "Remove indent", "key.left": "Left", "key.right": "Right", "key.up": "Up", "key.down": "Down",
       "key.undo": "Undo", "key.redo": "Redo",
+      "m.auto": "Save automatically", "auto.on": "Files with a place are now saved 2 seconds after each change.",
+      "auto.off": "Pad saves only when you press Save.",
+      "auto.held": "{name} was not saved automatically. Press Save to see why.",
       "m.recent": "Recent files…", "recent.title": "Recent files", "recent.none": "No recent files yet.",
       "recent.clear": "Clear the list", "recent.cleared": "The list of recent files is empty now.",
       "recent.gone": "{name} is no longer there.",
@@ -148,6 +151,9 @@
       "cmp.at": "αλλαγή {i} από {n}", "cmp.fold": "{n} ίδιες γραμμές (εμφάνιση)", "cmp.next": "Επόμενη αλλαγή", "cmp.prev": "Προηγούμενη αλλαγή",
       "key.tab": "Εσοχή (Tab)", "key.untab": "Αφαίρεση εσοχής", "key.left": "Αριστερά", "key.right": "Δεξιά", "key.up": "Πάνω", "key.down": "Κάτω",
       "key.undo": "Αναίρεση", "key.redo": "Επανάληψη",
+      "m.auto": "Αυτόματη αποθήκευση", "auto.on": "Τα αρχεία με θέση αποθηκεύονται πλέον 2 δευτερόλεπτα μετά από κάθε αλλαγή.",
+      "auto.off": "Το Pad αποθηκεύει μόνο όταν πατάς Αποθήκευση.",
+      "auto.held": "Το {name} δεν αποθηκεύτηκε αυτόματα. Πάτα Αποθήκευση για να δεις γιατί.",
       "m.recent": "Πρόσφατα αρχεία…", "recent.title": "Πρόσφατα αρχεία", "recent.none": "Δεν υπάρχουν ακόμη πρόσφατα αρχεία.",
       "recent.clear": "Καθαρισμός της λίστας", "recent.cleared": "Η λίστα με τα πρόσφατα αρχεία άδειασε.",
       "recent.gone": "Το {name} δεν υπάρχει πια εκεί.",
@@ -446,12 +452,12 @@
   }
 
   // ---------- 6. Preferences (this device) ----------
-  var prefs = { wrap: false, nums: true, ws: false, brackets: true, size: 14, dir: DEFAULT_DIR };
+  var prefs = { wrap: false, nums: true, ws: false, brackets: true, size: 14, dir: DEFAULT_DIR, auto: false };
   function loadPrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (!p || typeof p !== "object") return;
-      ["wrap", "nums", "ws", "brackets", "keys"].forEach(function (k) { if (typeof p[k] === "boolean") prefs[k] = p[k]; });
+      ["wrap", "nums", "ws", "brackets", "keys", "auto"].forEach(function (k) { if (typeof p[k] === "boolean") prefs[k] = p[k]; });
       if (typeof p.size === "number" && p.size >= 10 && p.size <= 28) prefs.size = Math.round(p.size);
       if (typeof p.dir === "string" && /^\/internal(\/|$)/.test(p.dir) && p.dir.indexOf("..") < 0) prefs.dir = p.dir;
     } catch (e) {}
@@ -652,6 +658,7 @@
       if (!active.dirty) { active.dirty = true; paintTabs(); }
       schedulePersist(active);
       schedulePreview();
+      scheduleAuto();
     } else if (u.selectionSet) {
       schedulePersist(active);
     }
@@ -1214,6 +1221,17 @@
     paintStatus();
     schedulePersist(tab);
   }
+  // The document as it is now (CodeMirror's Text is immutable, so the
+  // same object means no edit since).
+  function docOf(tab) { return (tab === active && view ? view.state : tab.state).doc; }
+  // Typed on while the file was being written: still unsaved.
+  function editedSince(tab, sent) {
+    if (docOf(tab) === sent) return;
+    tab.dirty = true;
+    paintTabs();
+    schedulePersist(tab);
+    scheduleAuto();
+  }
   function pushRecent(loc) {
     if (loc && (loc.kind === "disk" || loc.kind === "pc")) recent = C.addRecent(recent, loc);
   }
@@ -1348,12 +1366,14 @@
   function save(tab) {
     tab = tab || active;
     if (!tab) return Promise.resolve(false);
+    if (tab.saving) return tab.saving.then(function () { return save(tab); });
     if (!tab.loc) return saveAs(tab);
     if (tab.loc.kind === "fsa" && !tab.hdl && tab.hdlStored) return loadHandle(tab).then(function () { return save(tab); });
     var B = backend(tab);
     if (!B) return saveToDevice(tab);
     var bytes = fileBytes(tab);
     if (!bytes) return Promise.resolve(false);
+    var sent = docOf(tab);
     function put(m) {
       return B.write(tab, bytes, m).then(null, function (e) {
         // This computer: changed or created again between the check and the write.
@@ -1374,6 +1394,8 @@
       if (r.hdl && r.hdl !== tab.hdl) setHandle(tab, r.hdl);
       if (asCopy) renameTo(tab, r.name);
       markSaved(tab, r.loc, bytes);
+      tab.autoHeld = false;
+      editedSince(tab, sent);
       toast(asCopy ? t("saved.copy", { name: tab.name }) : t("saved"));
       return true;
     }, function (e) {
@@ -1619,6 +1641,13 @@
       { label: t("m.ws"), on: prefs.ws, fn: function () { toggle("ws"); } },
       { label: t("m.brackets"), on: prefs.brackets, fn: function () { toggle("brackets"); } },
       { label: t("m.keys"), on: keysWanted(), fn: function () { prefs.keys = !keysWanted(); savePrefs(); paintKeys(); } },
+      { label: t("m.auto"), on: !!prefs.auto, fn: function () {
+        prefs.auto = !prefs.auto;
+        savePrefs();
+        tabs.forEach(function (x) { x.autoHeld = false; });
+        toast(t(prefs.auto ? "auto.on" : "auto.off"));
+        scheduleAuto();
+      } },
       { label: t("m.bigger"), fn: function () { fontSize(1); }, keep: true },
       { label: t("m.smaller"), fn: function () { fontSize(-1); }, keep: true },
       null,
@@ -1922,6 +1951,58 @@
     if (!view.hasFocus) view.focus();
   }
 
+  // ---------- 15f. Save automatically (wave 4; off by default) ----------
+  // More › Save automatically. Only a tab that has its own place (orOS
+  // disk, This computer, or a device file Pad may already write) is
+  // saved, 2 s after the last change, and only through the same checks
+  // as Save (PAD-CF): it never asks anything and never writes over a
+  // file that changed elsewhere or is gone. Then, or on any error, it
+  // holds that tab (one toast) until the person saves it by hand.
+  var AUTO_MS = 2000, autoTimer = 0;
+  function scheduleAuto() {
+    if (!prefs.auto) return;
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(runAuto, AUTO_MS);
+  }
+  function runAuto() {
+    if (!prefs.auto) return;
+    tabs.forEach(function (tab) {
+      if (tab.dirty && tab.loc && !tab.autoHeld && !tab.saving) autoSave(tab);
+    });
+  }
+  function autoHold(tab) {
+    if (tab.autoHeld) return;
+    tab.autoHeld = true;
+    toast(t("auto.held", { name: tab.name }));
+  }
+  function autoSave(tab) {
+    if (tab.loc.kind === "fsa" && !tab.hdl) return;   // a stored handle is read only by a Save
+    var B = backend(tab);
+    if (!B) return;
+    var st = tab === active && view ? view.state : tab.state;
+    var enc = C.encode(C.withEol(st.doc.toString(), tab.eol), tab.enc);
+    if (enc.bad) { autoHold(tab); return; }
+    var bytes = enc.bytes, sent = st.doc;
+    // Never a permission prompt without a click: only a file the
+    // browser already lets Pad write.
+    var perm = tab.loc.kind !== "fsa" ? Promise.resolve(true)
+      : Promise.resolve(typeof tab.hdl.queryPermission === "function" ? tab.hdl.queryPermission({ mode: "readwrite" }) : "granted")
+          .then(function (p) { return p === "granted"; });
+    var run = perm.then(function (ok) {
+      if (!ok) return null;
+      return changed(B, tab).then(function (c) {
+        if (c.state !== "same") { autoHold(tab); return null; }
+        return B.write(tab, bytes, c.mtime);
+      });
+    }).then(function (r) {
+      if (!r) return;
+      markSaved(tab, r.loc, bytes);
+      editedSince(tab, sent);
+    }, function () { autoHold(tab); });
+    function done() { tab.saving = null; }
+    tab.saving = run.then(done, done);
+  }
+
   // ---------- 16. Wiring ----------
   function wire() {
     paintIcons();
@@ -1986,7 +2067,9 @@
   // { newText: { text, name?, lang? } }  a new tab with that text (other
   //   apps, the Assistant); nothing is saved until the person saves.
   // { openPath: "/internal/…" }            open a file of the orOS disk
-  //   (Files' "Open with Pad"; saved again in place).
+  //   (Files' "Open with Pad", search; saved again in place).
+  // { openPc: "/home/…" }                  open a file on This computer
+  //   (search; orOS USB / Portable only).
   // { openFile: { token, name, size } }    a File handed over by the shell
   //   (BR-FO-4): a copy, saved through Save as.
   window.__orosOpenAt = function (target) {
@@ -2004,6 +2087,14 @@
     }
     if (typeof target.openPath === "string" && /^\/internal\/./.test(target.openPath) && target.openPath.indexOf("..") < 0) {
       openDiskPath(target.openPath);
+      return;
+    }
+    // A file on This computer (orOS USB / Portable): Pad's recent files
+    // in the menu search and the Assistant. Elsewhere it cannot open.
+    if (typeof target.openPc === "string") {
+      var pl = C.cleanLoc({ kind: "pc", path: target.openPc });
+      if (pl && pcApi()) openPcPath(pl.path);
+      else toast(t("pc.none"));
       return;
     }
     // "Open with" from the system or Files (BR-FO-4): a one-shot File.

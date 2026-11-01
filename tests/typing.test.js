@@ -35,7 +35,7 @@ test("layouts: every character of a lesson can be typed, accents through the dea
   assert.equal(K.shiftFor("KeyA"), "ShiftRight");
   assert.equal(K.shiftFor("KeyJ"), "ShiftLeft");
   for (const lay of K.LAYOUT_IDS) {
-    for (const l of CO.lessons()) {
+    for (const l of CO.lessons(lay)) {
       for (const seed of [1, 7, 99]) {
         const text = CO.build(lay, l.id, seed);
         assert.ok(text.length > 60, `${lay} ${l.id} has text`);
@@ -47,7 +47,7 @@ test("layouts: every character of a lesson can be typed, accents through the dea
 
 test("course: a lesson uses only the keys learned so far, the same seed gives the same text", () => {
   for (const lay of K.LAYOUT_IDS) {
-    CO.lessons().forEach((l, i) => {
+    CO.lessons(lay).forEach((l, i) => {
       const ok = CO.allowed(lay, i);
       for (const ch of Array.from(CO.build(lay, l.id, 5))) assert.ok(ok[ch], `${lay} ${l.id}: '${ch}' learned`);
     });
@@ -154,7 +154,7 @@ test("broken input is dropped, never repaired", () => {
 
 test("layouts: a Latin key on a Greek lesson does not fit the Greek layout", () => {
   assert.deepEqual(K.fits("KeyF", "f", false), ["en", "de"]);
-  assert.deepEqual(K.fits("KeyF", "φ", false), ["el"]);
-  assert.deepEqual(K.fits("Digit1", "1", false), ["el", "en", "de"]);
+  assert.deepEqual(K.fits("KeyF", "φ", false), ["el", "elp"]);
+  assert.deepEqual(K.fits("Digit1", "1", false), ["el", "en", "de", "elp", "dv", "cm"]);
   assert.equal(C.wpm(100000, 1000), 400, "wpm is capped at 400");
 });

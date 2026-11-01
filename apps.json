@@ -87,6 +87,7 @@
       "category": "Accessories",
       "icon": "pad",
       "url": "pad/",
+      "search": "search.js",
       "type": "internal"
     },
     {
