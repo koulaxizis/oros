@@ -1476,6 +1476,7 @@ var PRECACHE_URLS = [
   "typing/due.js",
   "typing/today.js",
   "typing/search.js",
+  "typing/rain.js",
   "typing/app.js",
   "typing/help.en.txt",
   "typing/help.el.txt",
