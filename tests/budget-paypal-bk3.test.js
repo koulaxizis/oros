@@ -199,3 +199,27 @@ test("Enable Banking writes travel alone (once), in the app and the relay", () =
   assert.equal(X.validExt({ op: "ext", p: "ebank", key: jwt, reqs: [w] }), "");
   assert.equal(X.validExt({ op: "ext", p: "ebank", key: jwt, reqs: [w, { m: "GET", path: "/application" }] }), "reqs");
 });
+
+test("learned categories (BK-4): most often for the same merchant, rules win, rerun fills the rest", () => {
+  const tx = [
+    { id: "a1", k: "o", a: 500, d: "2026-10-01", c: "o-groc", ot: "LIDL HELLAS 123", n: "LIDL HELLAS 123", src: "bank" },
+    { id: "a2", k: "o", a: 700, d: "2026-10-05", c: "o-groc", n: "Lidl Hellas" },
+    { id: "a3", k: "o", a: 900, d: "2026-10-09", c: "o-home", ot: "LIDL HELLAS 9", n: "x", src: "bank" },
+    { id: "a4", k: "i", a: 900, d: "2026-10-09", c: "i-other", n: "LIDL HELLAS refund" },
+    { id: "a5", k: "o", a: 300, d: "2026-10-10", c: "", ot: "LIDL HELLAS 77", n: "LIDL HELLAS 77", src: "bank" }
+  ];
+  const m = Bk.learnMap(tx);
+  assert.equal(Bk.learned(m, "o", "LIDL HELLAS 555"), "o-groc", "2 against 1");
+  assert.equal(Bk.learned(m, "i", "LIDL HELLAS 555"), "i-other", "per kind");
+  assert.equal(Bk.learned(m, "o", "Unknown shop"), "");
+  const p = Bk.plan([{ line: 1, d: "2026-10-20", amt: -400, text: "LIDL HELLAS 9001", fit: "Z1" }], { tx, ac: "", cur: "EUR" });
+  assert.deepEqual([p[0].c, p[0].learn], ["o-groc", 1]);
+  const rules = [{ id: "r1", m: 1, k: "o", c: "o-eat", q: "lidl", lo: 0, hi: 0 }];
+  const p2 = Bk.plan([{ line: 1, d: "2026-10-20", amt: -400, text: "LIDL HELLAS 9001", fit: "Z1" }], { tx, ac: "", cur: "EUR", rules });
+  assert.deepEqual([p2[0].c, p2[0].learn], ["o-eat", undefined], "a rule wins");
+  assert.deepEqual(Bk.rerun(tx, [], true), [{ id: "a5", c: "o-groc", n: "LIDL HELLAS 77" }]);
+  assert.deepEqual(Bk.rerun(tx, []), []);
+  // a tie goes to the newest
+  const tie = Bk.learnMap([{ k: "o", c: "x1", d: "2026-01-01", n: "Cafe Nero" }, { k: "o", c: "x2", d: "2026-02-01", n: "Cafe Nero" }]);
+  assert.equal(Bk.learned(tie, "o", "CAFE NERO 2"), "x2");
+});

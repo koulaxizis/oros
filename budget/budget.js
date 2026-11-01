@@ -142,6 +142,7 @@
       "flt.inbox": "Imported, no category ({n})", "inbox.bar": "{n} imported entries without a category",
       "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
       "inbox.run": "Apply rules", "inbox.rule": "Rule…", "inbox.done": "Category set",
+      "learn.ask": "Category changed", "learn.yes": "Always for “{q}”", "learn.done": "From now on “{q}” goes to {c}",
       "inbox.empty": "Every imported entry has a category.", "inbox.cat": "Category for {x}",
       "tag.bank": "Imported from the bank", "tag.app": "Imported from another app",
       "menu.apps": "Import from another app",
@@ -247,6 +248,7 @@
       "flt.inbox": "Εισαγόμενες χωρίς κατηγορία ({n})", "inbox.bar": "{n} εισαγόμενες κινήσεις χωρίς κατηγορία",
       "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
       "inbox.run": "Εφαρμογή κανόνων", "inbox.rule": "Κανόνας…", "inbox.done": "Η κατηγορία μπήκε",
+      "learn.ask": "Η κατηγορία άλλαξε", "learn.yes": "Πάντα για «{q}»", "learn.done": "Από εδώ και πέρα το «{q}» πάει στο {c}",
       "inbox.empty": "Όλες οι εισαγόμενες κινήσεις έχουν κατηγορία.", "inbox.cat": "Κατηγορία για {x}",
       "tag.bank": "Από την τράπεζα", "tag.app": "Από άλλη εφαρμογή",
       "menu.apps": "Εισαγωγή από άλλη εφαρμογή",
@@ -1344,7 +1346,7 @@
     cs.setAttribute("aria-label", t("inbox.cat", { x: x.n || money(x.a) }));
     cs.addEventListener("change", function () {
       if (!cs.value) return;
-      applyChanges([{ id: x.id, c: cs.value, n: x.n }], t("inbox.done"));
+      applyChanges([{ id: x.id, c: cs.value, n: x.n }], t("inbox.done"), learnOffer(x, cs.value));
     });
     bot.appendChild(cs);
     if (BANKUI) {
@@ -2049,6 +2051,7 @@
       if (!rcb && cur0) rc = cur0.rc || "";
       // Without CRM partners the field is absent and an entry keeps its partner.
       var crm = crmSel ? crmSel.value : (cur0 ? cur0.crm || "" : (pre && pre.crm) || "");
+      var offer = cur0 && cur0.c !== c ? learnOffer(cur0, c) : null;
       if (cur0) {
         if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n || (cur0.ac || "") !== ac ||
             (cur0.oc || "") !== oc || (cur0.oa || 0) !== oa || (cur0.rc || "") !== rc || (cur0.crm || "") !== crm) {
@@ -2079,6 +2082,7 @@
       live(t("live.saved"));
       if (!x && mkOf(date.value) !== viewMk && !query) setMonth(mkOf(date.value));
       else renderAll();
+      if (offer) localToast(t("learn.ask"), null, offer);
     });
     dlg.appendChild(form);
     document.body.appendChild(dlg);
@@ -2388,6 +2392,23 @@
       renderAll();
     });
   }
+  // After the person corrects the category of an entry from a bank
+  // (BK-4): "Always for «LIDL»?" makes or updates the rule in one tap.
+  // → { label, fn } for a toast button, or null when there is nothing
+  // to learn (not from a bank, no category, or the rule already says so).
+  function learnOffer(x, c) {
+    var Bk = window.OrosBudgetBank;
+    if (!Bk || !x || x.src !== "bank" || !c) return null;
+    var q = Bk.suggestQ(x.ot || x.n || "");
+    if (!q || q.length < 3) return null;
+    var fq = Bk.fold(q), same = null;
+    data.rule.forEach(function (r) { if (!same && r.k === x.k && !r.lo && !r.hi && Bk.fold(r.q || "") === fq) same = r; });
+    if (same && same.c === c) return null;
+    return { label: t("learn.yes", { q: q }), fn: function () {
+      var r = saveRule(same ? { id: same.id, k: same.k, c: c, q: same.q, py: same.py, nt: same.nt } : { k: x.k, c: c, q: q });
+      if (r) showToast(t("learn.done", { q: q, c: catName(c) }));
+    } };
+  }
   // Bank profile: by id, else by name (same name = same profile).
   function saveProf(v) {
     var cur0 = v.id ? findIn(data.prof, v.id) : null;
@@ -2407,7 +2428,7 @@
   }
   // [{ id, c, n }] → set on the entries in one write; Undo puts back
   // what they had (unless that entry was changed again since).
-  function applyChanges(list, text) {
+  function applyChanges(list, text, extra) {
     var before = [];
     list.forEach(function (ch) {
       var x = findIn(data.tx, ch.id);
@@ -2429,7 +2450,7 @@
       });
       commit();
       renderAll();
-    });
+    }, extra || null);
   }
   // Categories for matching an app's names: the live ones, the ready
   // ones also by their name in the other language.
@@ -3762,10 +3783,11 @@
     localToast(text, null);
   }
   // Undo toasts stay local (the closure never leaves the frame), 8 s.
-  function undoToast(text, onUndo) { localToast(text, onUndo); }
+  // extra = { label, fn }: a second button (Budget BK-4 "Always").
+  function undoToast(text, onUndo, extra) { localToast(text, onUndo, extra); }
 
   var toastTimer = null;
-  function localToast(text, onUndo) {
+  function localToast(text, onUndo, extra) {
     var box = $("toast");
     if (!box) return;
     hostToast();
@@ -3782,10 +3804,20 @@
       });
       box.appendChild(b);
     }
+    if (extra) {
+      var xb = el("button", "", extra.label);
+      xb.type = "button";
+      xb.addEventListener("click", function () {
+        box.classList.remove("show");
+        clearTimeout(toastTimer);
+        extra.fn();
+      });
+      box.appendChild(xb);
+    }
     void box.offsetWidth;
     box.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { box.classList.remove("show"); }, onUndo ? 8000 : 4000);
+    toastTimer = setTimeout(function () { box.classList.remove("show"); }, onUndo || extra ? 8000 : 4000);
   }
   function hostToast() {
     var box = $("toast"), d = document.querySelector("dialog[open]");

@@ -651,12 +651,18 @@
   // Uncategorised entries a rule now covers → [{ id, c, n }]. The
   // note is rewritten only on an imported entry whose note is still
   // what the import wrote (its own text, maybe renamed by a rule).
-  function rerun(txs, rules) {
-    var out = [];
+  // learn: also the learned category (BK-4) where no rule matches.
+  function rerun(txs, rules, learn) {
+    var out = [], map = learn ? learnMap(txs) : null;
     (txs || []).forEach(function (x) {
       if (x.c) return;
       var text = x.ot || x.n || "";
       var r = matchRule(rules, x.k, x.a, text);
+      if (!r && map) {
+        var lc = learned(map, x.k, text);
+        if (lc) out.push({ id: x.id, c: lc, n: x.n });
+        return;
+      }
       if (!r) return;
       var ch = { id: x.id, c: r.c, n: x.n };
       if (x.ot && (x.n === x.ot || x.n === "")) ch.n = noteFor(x.ot, r);
@@ -749,8 +755,40 @@
     });
     return hit;
   }
+  // Learned categories (BK-4, Chris 2026-11-01 "Ναι σε όλα"): without
+  // a rule, a row takes the category the person gave most often to
+  // earlier entries of the same kind from the same merchant (the
+  // merchant = the first word or two suggestQ picks from the text;
+  // a tie goes to the newest). Rules always win.
+  function merchantKey(text) {
+    var q = fold(suggestQ(text || ""));
+    return q.length >= 3 ? q : "";
+  }
+  function learnMap(tx) {
+    var m = {};
+    (tx || []).forEach(function (x) {
+      if (!x || !x.c) return;
+      var key = merchantKey(x.ot || x.n);
+      if (!key) return;
+      var e = (m[x.k + "|" + key] = m[x.k + "|" + key] || {});
+      var c = (e[x.c] = e[x.c] || { n: 0, d: "" });
+      c.n++;
+      if ((x.d || "") > c.d) c.d = x.d || "";
+    });
+    return m;
+  }
+  function learned(map, k, text) {
+    var key = merchantKey(text), e = key ? map[k + "|" + key] : null, best = "", bn = 0, bd = "";
+    if (!e) return "";
+    Object.keys(e).sort().forEach(function (c) {
+      var v = e[c];
+      if (v.n > bn || (v.n === bn && v.d > bd)) { best = c; bn = v.n; bd = v.d; }
+    });
+    return best;
+  }
   function plan(items, ctx) {
     var tx = ctx.tx || [], tombs = ctx.tombs || {}, ac = ctx.ac || "";
+    var learnt = ctx.learn === false ? null : learnMap(tx);
     var byId = {}, byFit = {}, byKey = {};
     tx.forEach(function (x) {
       byId[x.id] = x;
@@ -776,6 +814,7 @@
       var r = matchRule(ctx.rules, row.k, row.a, row.text);
       row.c = r ? r.c : "";
       row.rule = r ? r.id : "";
+      if (!r && learnt) { row.c = learned(learnt, row.k, row.text); if (row.c) row.learn = 1; }
       row.n = noteFor(row.text, r);
       if (byId[row.id]) { row.st = "same"; row.on = false; used[row.id] = 1; return row; }
       if (("tx:" + row.id) in tombs) { row.st = "gone"; row.on = false; return row; }
@@ -816,7 +855,7 @@
     parseCsv: parseCsv, guessSep: guessSep, findHeader: findHeader, guessMap: guessMap, csvItems: csvItems,
     headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
     detectFormat: detectFormat, ruleMatches: ruleMatches, matchRule: matchRule, noteFor: noteFor, rerun: rerun,
-    suggestQ: suggestQ, bankId: bankId, similar: similar, plan: plan, entries: entries, counts: counts
+    suggestQ: suggestQ, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, counts: counts
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetBank = api;

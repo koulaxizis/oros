@@ -112,6 +112,8 @@ In the preview:
 ## Rules
 `More` › `Rules`: "if the description contains LIDL → Groceries". A rule can also look at an amount range (`Amount from`, `Amount to`), rename the entry (`Rename to`) and add a note. When several rules match, the one with the longest text wins. `Apply to uncategorised entries` runs them on what is already here; `Undo` puts it back.
 
+**Budget learns.** Without a rule, an entry from a bank or a file takes the category you gave most often to earlier entries from the same name (the preview says `As before for this name`); a rule always wins. `Apply rules` also fills in these learned categories. When you change the category of an entry that came from a bank, the message at the top offers `Always for "…"`: one tap makes the rule (or changes the one that already exists for that name).
+
 ## Uncategorised imports
 When imported entries have no category, a bar above the list says how many. Tap it, or pick `Imported, no category` in the menu next to the search: you see them from every month, each with its category right there. `Apply rules` and `Rule…` help you clear them faster.
 
