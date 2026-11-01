@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.91.00
+- Calendar, Contacts and To-Do now stay in step with your own server even while they are closed: every 15 minutes, while orOS is open, orOS runs their sync in the background (Settings › Sync › Calendars and contacts, where you also see when each last synced). Nextcloud users can now connect with Sign in with Nextcloud, without typing a password, and the Settings help has short guides for Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail and iCloud. See [Settings](help:a/settings).
+
 ## Version 4.90.00
 - To-Do › a list's settings › Server task list (CalDAV): link a list to a task list on your own server (Nextcloud Tasks, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything. Then tasks go both ways with their notes, dates, priorities, repeats, labels and subtasks, so your phone and Thunderbird see the same tasks; alarms and details orOS doesn't show stay on the server untouched, and nothing is deleted on either side unless it was in sync before. See [To-Do](help:a/todo).
 
