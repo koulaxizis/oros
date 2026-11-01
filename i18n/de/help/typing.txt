@@ -26,8 +26,24 @@ Lerne, mit allen zehn Fingern zu tippen, ohne auf die Tasten zu schauen. Kurze L
 - Das Tempo zählt Wörter pro Minute (WpM): fünf Zeichen zählen als ein Wort. Die Genauigkeit ist der Anteil der richtigen Tastendrücke.
 - Dein bestes Ergebnis für jede Länge steht in der `Statistik`.
 
+## Schwache Tasten üben
+- `Meine schwachen Tasten üben` (auf dem ersten Bildschirm) baut eine Runde aus den Tasten, die am häufigsten schiefgehen oder die du am langsamsten tippst, nur aus den Lektionen, die du abgeschlossen hast.
+- Der Name der Runde zeigt, welche Tasten sie übt. Je mehr du übst, desto besser kennt sie deine Tasten.
+
+## Texte
+- `Texte` öffnet kurze Stellen aus gemeinfreier Literatur für deine Tastatur, mit Autor und Jahr, und deine eigenen Texte.
+- `Text hinzufügen` speichert einen eigenen Text (bis zu 50 Texte). Du kannst auch einen Text aus Notizen oder dem Texteditor mit `An eine App senden…` hierher schicken. Er öffnet sich im selben Dialog und wird erst mit `Speichern` gespeichert.
+- Zeichen, die deine Tastatur nicht tippen kann, werden ausgelassen, typografische Anführungszeichen und lange Striche werden zu den einfachen. Lange Texte tippst du in Teilen.
+- `In der Schreibmaschine schreiben` öffnet die [Schreibmaschine](app:typewriter), um frei und ohne Hilfen zu schreiben.
+
+## Heute, Gewohnheiten und die Erinnerung
+- Solange du in der letzten Woche geübt hast und das heutige Ziel nicht erreicht ist, zeigt [Heute](app:today) eine Zeile mit den heutigen Minuten.
+- [Gewohnheiten](app:habits) zeigt eine Zeile „Tippübung“ mit deinen Minuten pro Tag. Ein Tag zählt, wenn du dein Tagesziel erreichst.
+- `Ans Üben erinnern` in den Einstellungen schickt einmal am Tag ab der gewählten Uhrzeit eine Mitteilung, solange das heutige Ziel nicht erreicht ist. Sie ist zuerst aus und gilt für jedes Gerät einzeln.
+
 ## Statistik
 - Die `Statistik` (die Diagrammtaste oben) zeigt die heutige Übung, die Tage in Folge, deine Gesamtzeit und dein Tempo der letzten 7 Tage.
+- Die Linie zeigt dein Tempo an jedem der letzten 30 Tage, die Punkte deine Genauigkeit (zwischen 80 % und 100 %).
 - Die Balken zeigen deine Minuten an jedem der letzten 14 Tage.
 - `Deine Tasten` färbt jede Taste danach, wie oft sie schiefgeht: Grün ist gut, Rot braucht Übung. Die Liste darunter nennt die Tasten, an denen du arbeiten solltest.
 
@@ -43,3 +59,4 @@ Zehnfingerschreiben braucht eine echte Tastatur. Mit angeschlossener Tastatur (B
 ## Deine Daten
 - Fortschritt, Statistik und Einstellungen werden laufend gespeichert. Mit der orOS-Synchronisierung in den [Einstellungen](app:settings) folgen sie dir verschlüsselt auf deine anderen Geräte. Übung auf zwei Geräten am selben Tag wird zusammengezählt.
 - Was du in einer Lektion tippst, wird nicht gespeichert, nur die Zahlen (Tempo, Genauigkeit, welche Tasten schiefgingen).
+- Deine eigenen Texte werden genauso gespeichert und synchronisiert. Löschst du einen, ist er auf allen Geräten weg.

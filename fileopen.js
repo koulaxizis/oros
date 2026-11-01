@@ -173,6 +173,37 @@
     { app: "newsletter", accept: { "application/x-oros-newsletter": [".orosnewsletter"] } },
     { app: "storage", accept: { "application/x-oros-inventory": [".orosinventory"] } },
     { app: "flashcards", accept: { "application/x-oros-cards": [".oroscards"] } },
+    // Pad (text and code editor): code and config types no other app
+    // reads (Pad is their only app), plus .txt / .md as one more choice
+    // after Writer, Mind Map, Notes and Text Tools (Writer stays the
+    // default for .txt). From Files, Pad gets the disk path (path:
+    // "openPath") so it saves in place; a file from the system's
+    // "Open with" is a copy, as for every app (BR-FO-4).
+    { app: "pad", path: "openPath", accept: {
+      "text/plain": [".txt", ".log", ".nfo", ".ini", ".cfg", ".conf", ".properties", ".env", ".diff", ".patch"],
+      "text/markdown": [".md", ".markdown"],
+      "text/x-python": [".py", ".pyw"],
+      "application/x-sh": [".sh", ".bash", ".zsh"],
+      "text/x-powershell": [".ps1", ".psm1"],
+      "text/x-c": [".c", ".h", ".cpp", ".cc", ".cxx", ".hpp", ".hh", ".ino"],
+      "text/x-java": [".java", ".kt", ".kts"],
+      "text/x-csharp": [".cs"],
+      "text/x-go": [".go"],
+      "text/x-rust": [".rs"],
+      "text/x-typescript": [".ts", ".tsx", ".jsx", ".mts", ".cts"],
+      "text/css": [".css", ".scss", ".less"],
+      "application/xml": [".xml", ".xsl", ".xslt"],
+      "application/x-yaml": [".yaml", ".yml"],
+      "application/toml": [".toml"],
+      "application/sql": [".sql"],
+      "text/x-lua": [".lua"],
+      "text/x-ruby": [".rb"],
+      "text/x-perl": [".pl", ".pm"],
+      "application/x-php": [".php"],
+      "text/x-swift": [".swift"],
+      "text/x-dart": [".dart"],
+      "text/x-r": [".r"],
+      "text/x-jsfx": [".jsfx", ".eel"] } },
     { app: "lyricsync", accept: {
       "application/x-lrc": [".lrc"],
       "application/x-subrip": [".srt"],
@@ -187,7 +218,10 @@
   // system's "Open with". Music copies a song from elsewhere into its
   // folder (Files passes { playPath } for a song already there).
   var INSIDE = [
-    { app: "music", exts: [".mp3", ".m4a", ".m4b", ".aac", ".ogg", ".oga", ".opus", ".flac", ".wav", ".wave", ".weba"] }
+    { app: "music", exts: [".mp3", ".m4a", ".m4b", ".aac", ".ogg", ".oga", ".opus", ".flac", ".wav", ".wave", ".weba"] },
+    // Web and data files stay out of the system's "Open with" (BR-FO-2);
+    // inside orOS, Files can open them in Pad (as text, never run).
+    { app: "pad", path: "openPath", exts: [".js", ".mjs", ".cjs", ".json", ".jsonc", ".webmanifest", ".html", ".htm", ".xhtml", ".vue", ".svelte"] }
   ];
 
   var STRINGS = {
@@ -450,8 +484,23 @@
     } catch (e) { return file; }
   }
 
-  function openWith(app, file) {
+  // The deep-link key of an app that takes a file of the orOS disk by
+  // its path (Pad: "openPath"), else "".
+  function pathKey(app) {
+    var all = HANDLERS.concat(INSIDE);
+    for (var i = 0; i < all.length; i++) if (all[i].app === app && all[i].path) return all[i].path;
+    return "";
+  }
+
+  function openWith(app, file, path) {
     if (typeof w.__orosOpenAt !== "function") return;
+    var pk = pathKey(app);
+    if (pk && typeof path === "string" && /^\/internal\/./.test(path) && path.indexOf("..") < 0) {
+      var pt = {};
+      pt[pk] = path;
+      w.__orosOpenAt(app, pt);
+      return;
+    }
     var name = String(file.name || "").slice(0, 255), key = textKey(app, extOf(name));
     if (key) {
       if (file.size > TEXT_MAX) { notice(T("big")); return; }
@@ -467,7 +516,7 @@
 
   // The "Open with" chooser: one button per app, "always" box, Cancel.
   // Inline styles with palette vars, like the shell's own dialogs.
-  function chooser(file, apps, ext) {
+  function chooser(file, apps, ext, path) {
     var stale = doc.getElementById("fileopen-dialog");
     if (stale) stale.remove();
     var dlg = doc.createElement("dialog");
@@ -500,7 +549,7 @@
       b.addEventListener("click", function () {
         if (cb.checked) savePrefs(setChoice(loadPrefs(), ext, id));
         dlg.close();
-        openWith(id, file);
+        openWith(id, file, path);
       });
       list.appendChild(b);
     });
@@ -625,7 +674,9 @@
     insideFor: insideFor,
     // A file from the orOS disk: the saved choice, the only app, or the
     // chooser (ask: true always shows the chooser).
-    openInside: function (file, ask) {
+    // path (optional): where the file is on the orOS disk, for an app
+    // that takes the path instead of a copy (pathKey).
+    openInside: function (file, ask, path) {
       if (!file) return;
       file = ownFile(file);
       var c = chooseInside(file.name, loadPrefs());
@@ -633,11 +684,11 @@
       if (ask && c.app && insideFor(c.ext).length > 1) c = { ask: insideFor(c.ext), ext: c.ext };
       if (c.app) {
         if (file.size > maxFor(c.app)) { notice(T("big")); return; }
-        openWith(c.app, file);
+        openWith(c.app, file, path);
         return;
       }
       if (file.size > maxFor("")) { notice(T("big")); return; }
-      chooser(file, c.ask, c.ext);
+      chooser(file, c.ask, c.ext, path);
     },
     // The Assistant's file card (WR-FMT): one file straight into the
     // app named (no chooser); false when that app can't take it.

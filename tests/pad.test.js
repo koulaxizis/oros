@@ -111,7 +111,58 @@ test("a stored session is cleaned, never trusted", () => {
   assert.deepEqual(disk, { kind: "disk", path: "/internal/Documents/a.txt", mtime: 5, size: 2, h: "abc:2" });
   assert.equal(C.cleanLoc({ kind: "http", path: "https://x" }), null);
   const s = C.cleanSession({ order: ["tabc123", "tabc123", "nope", 4], active: "zzz", recent: [{ kind: "device" }, disk] });
-  assert.deepEqual(s, { order: ["tabc123"], active: "tabc123", recent: [disk] });
+  assert.deepEqual(s, { order: ["tabc123"], active: "tabc123", recent: [{ kind: "disk", path: disk.path }] });
+});
+
+test("wave 2: This computer and device-handle locations, the recent list", () => {
+  assert.deepEqual(C.cleanLoc({ kind: "pc", path: "/home/Documents/a.py", mtime: 9, size: 3, h: "x" }),
+    { kind: "pc", path: "/home/Documents/a.py", mtime: 9, size: 3, h: "x" });
+  assert.equal(C.cleanLoc({ kind: "pc", path: "/home/../etc/passwd" }), null);
+  assert.equal(C.cleanLoc({ kind: "pc", path: "relative/a" }), null);
+  // The handle never travels in the loc; only the check values do.
+  assert.deepEqual(C.cleanLoc({ kind: "fsa", path: "/x", name: "a.js", mtime: 2, size: 1, h: "y" }),
+    { kind: "fsa", mtime: 2, size: 1, h: "y" });
+  assert.ok(C.sameLoc({ kind: "pc", path: "/home/a" }, { kind: "pc", path: "/home/a", mtime: 4 }));
+  assert.ok(!C.sameLoc({ kind: "pc", path: "/home/a" }, { kind: "disk", path: "/home/a" }));
+  assert.ok(!C.sameLoc({ kind: "fsa" }, { kind: "fsa" }), "handles are compared by the browser, not here");
+  let r = [];
+  r = C.addRecent(r, { kind: "disk", path: "/internal/a.txt", mtime: 1 });
+  r = C.addRecent(r, { kind: "pc", path: "/home/b.py" });
+  r = C.addRecent(r, { kind: "disk", path: "/internal/a.txt" });
+  r = C.addRecent(r, { kind: "fsa" });
+  r = C.addRecent(r, { kind: "device" });
+  assert.deepEqual(r, [{ kind: "disk", path: "/internal/a.txt" }, { kind: "pc", path: "/home/b.py" }]);
+  for (let i = 0; i < 30; i++) r = C.addRecent(r, { kind: "disk", path: "/internal/f" + i });
+  assert.equal(r.length, 20);
+  assert.deepEqual(C.cleanSession({ recent: [{ kind: "pc", path: "/home/x" }, { kind: "pc", path: "/home/x" }, { kind: "fsa" }] }).recent,
+    [{ kind: "pc", path: "/home/x" }]);
+});
+
+test("wave 2: saving in place never skips the change check (PAD-CF)", () => {
+  const src = read("pad/app.js");
+  // Every place a file lives has stat / read / write / copy / other.
+  for (const B of ["DISK", "PC", "FSA"]) {
+    const m = src.match(new RegExp("var " + B + " = \\{([\\s\\S]*?)\\n  \\};"));
+    assert.ok(m, B);
+    for (const k of ["stat:", "read:", "write:", "copy:", "other:"]) assert.ok(m[1].includes(k), B + " " + k);
+  }
+  // save() checks first, and a refused write on This computer is a conflict, never a retry.
+  const save = src.slice(src.indexOf("function save(tab)"), src.indexOf("function conflict("));
+  assert.match(save, /changed\(B, tab\)/);
+  assert.match(save, /e\.code === "changed" \|\| e\.code === "exists"\)\) return conflict/);
+  // This computer writes always carry the time just checked (the launcher's ifmtime).
+  assert.match(src, /pcApi\(\)\.write\(path, new Blob\(\[bytes\], \{ type: mimeOf\(tab\) \}\), ifm \|\| 0, false\)/);
+  // A copy never replaces: disk and This computer pick a free "name (2).ext".
+  assert.match(src, /C\.copyName\(tab\.name, \(entries \|\| \[\]\)\.map/);
+  // Pad takes "Open with" files (BR-FO-4) and Files' paths.
+  assert.match(src, /__orosTakeFile\(target\.openFile\.token\)/);
+  assert.match(src, /target\.openPath/);
+});
+
+test("wave 2: pcdialog's path API keeps the launcher's ifmtime rule", () => {
+  const src = read("pcdialog.js");
+  for (const k of ["opened:", "stat:", "list:", "read:", "write:"]) assert.ok(src.includes(k), k);
+  assert.match(src, /put\(path, blob, !!replace \|\| m > 0, m\)/);
 });
 
 test("the change check: same bytes give the same hash, any change another", () => {

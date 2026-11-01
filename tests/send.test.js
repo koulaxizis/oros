@@ -50,7 +50,7 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "kanban", "slides", "wiki", "mindmap", "prompter", "flashcards", "assistant", "texttools", "textcase"]);
+    ["todo", "writer", "mail", "kanban", "slides", "wiki", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools", "textcase"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
   assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "assistant"]);
   assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "mindmap", "flashcards", "texttools"]);
@@ -131,7 +131,8 @@ test("every receiver's app code takes the target it is sent", () => {
     kanban: ["kanban/kanban.js", ["tg.addCards", "T.asCards"]],
     prompter: ["prompter/prompter.js", ["tg.newPrompt", "tg.newPrompt.text"]],
     layout: ["layout/layout.js", ["placeImage"]],
-    flashcards: ["flashcards/app.js", ["target.make", "FlashcardsMake"]]
+    flashcards: ["flashcards/app.js", ["target.make", "FlashcardsMake"]],
+    typing: ["typing/app.js", ["target.addText", "target.addText.text"]]
   };
   assert.deepEqual(Object.keys(need).sort(), Object.keys(C.RECEIVERS).sort());
   for (const app of Object.keys(need)) {
@@ -170,6 +171,8 @@ test("Flashcards takes text, lists, articles and two-column tables (Flashcards w
   assert.deepEqual(C.target("flashcards", "link", { url: "https://a.b", title: "News", note: "The ==sun== is a star." }),
     { make: { title: "News", text: "The ==sun== is a star." } });
   assert.equal(C.target("flashcards", "link", { url: "https://a.b", title: "News" }), null);
+  assert.deepEqual(C.target("typing", "text", { title: "Poem", text: "Σα βγεις" }), { addText: { title: "Poem", text: "Σα βγεις" } });
+  assert.equal(C.target("typing", "link", { url: "https://a.b", title: "News" }), null);
   // A table: row 1 is the heading row; at least one later row needs two cells.
   assert.deepEqual(C.target("flashcards", "table", { name: "W", rows: [["Word", "Meaning"], ["perro", "dog"]] }),
     { make: { title: "W", rows: [["Word", "Meaning"], ["perro", "dog"]] } });

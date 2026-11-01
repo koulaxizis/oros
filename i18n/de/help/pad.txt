@@ -29,8 +29,11 @@ Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet
 
 ## Wohin deine Dateien gehen
 - `orOS-Laufwerk`: Die Datei bleibt in orOS, in dem Ordner, den du wählst (anfangs `Documents`), und wird verschlüsselt auf deine anderen Geräte synchronisiert wie jede Datei auf dem Laufwerk. Auch Dateien zeigt sie.
-- `Dieses Gerät`: eine Datei auf diesem Computer oder Handy. Wo der Browser es kann, fragt er, wo gespeichert wird; sonst landet die Datei in den Downloads. Auf einem orOS-USB-Stick wird sie auf dem Computer selbst zurückgespeichert.
-- Wenn eine Datei auf dem orOS-Laufwerk woanders geändert wurde, nachdem du sie geöffnet hast (auf einem anderen Gerät oder in einer anderen App), überschreibt Pad sie nicht. Es bietet an, deine als Kopie daneben zu speichern oder die andere Fassung in einem neuen Tab zu öffnen, damit nichts verloren geht.
+- `Dieses Gerät`: eine Datei auf diesem Computer oder Handy. In Chrome und Edge auf einem Computer speichert `Speichern` eine Datei, die du hier öffnest oder speicherst, wieder an ihrem Ort; der Browser fragt einmal, ob Pad sie ändern darf. In anderen Browsern fragt `Speichern`, wo gespeichert wird, oder die Datei landet in den Downloads.
+- `Dieser Computer` (orOS-USB-Stick und orOS Portable): die eigenen Ordner und Laufwerke des Computers. `Speichern` schreibt die Datei dorthin zurück, woher sie kam.
+- Wenn eine Datei woanders geändert wurde, nachdem du sie geöffnet hast (auf einem anderen Gerät, in einer anderen App oder einem anderen Programm), überschreibt Pad sie nicht. Es bietet an, deine als Kopie daneben zu speichern oder die andere Fassung in einem neuen Tab zu öffnen, damit nichts verloren geht. Das gilt für das orOS-Laufwerk, diesen Computer und dieses Gerät gleichermaßen.
+- `Zuletzt geöffnet…` in `Mehr` (und unten in `Öffnen`) zeigt die Dateien, die du zuletzt auf dem orOS-Laufwerk und diesem Computer geöffnet oder gespeichert hast. `Liste leeren` leert sie.
+- In Dateien öffnet `Öffnen mit…` bei einer Code- oder Textdatei sie in Pad, und `Speichern` schreibt sie in dieselbe Datei zurück. Codedateien, die du aus der Dateiverwaltung deines Computers mit orOS öffnest, öffnen sich in Pad als Kopie: speichere sie mit `Speichern unter…`.
 - Pad führt nie eine Datei aus: HTML oder ein Skript öffnet sich nur als Text. Tabs, die du nicht gespeichert hast, werden nicht synchronisiert; sie bleiben auf diesem Gerät.
 
 ## Ansicht

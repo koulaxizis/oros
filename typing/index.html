@@ -7,7 +7,7 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=typing" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Typing Tutor · orOS</title>
-  <link rel="stylesheet" href="app.css?v=4.79.00">
+  <link rel="stylesheet" href="app.css?v=4.81.00">
 </head>
 <body>
 
@@ -37,6 +37,10 @@
           <button type="button" id="go-btn" class="chip pri"></button>
           <button type="button" id="test-btn" class="chip" data-i18n="btn.test">Speed test</button>
         </div>
+      </div>
+      <div class="home-act">
+        <button type="button" id="prac-btn" class="chip" data-i18n="btn.practice">Practise my weak keys</button>
+        <button type="button" id="texts-btn" class="chip" data-i18n="btn.texts">Texts</button>
       </div>
       <p id="lay-hint" class="hint small"></p>
       <div id="course"></div>
@@ -70,11 +74,30 @@
       </div>
     </section>
 
+    <!-- Texts: the library and My texts -->
+    <section id="texts" hidden>
+      <h2 data-i18n="tx.lib">Texts from literature</h2>
+      <p class="hint small" data-i18n="tx.libHint">Short passages from public-domain books and poems.</p>
+      <ul id="lib" class="tlist"></ul>
+      <div class="h2row">
+        <h2 data-i18n="tx.mine">My texts</h2>
+        <button type="button" id="add-btn" class="chip pri" data-i18n="tx.add">Add a text</button>
+      </div>
+      <p class="hint small" data-i18n="tx.mineHint">Paste any text, or send one here from Notes or Writer with "Send to an app…".</p>
+      <ul id="mine" class="tlist"></ul>
+      <div id="tw-box" class="card tw" hidden>
+        <p data-i18n="tx.tw">Done with the lessons? Write your own text freely, without hints, on Typewriter's rolling paper.</p>
+        <button type="button" id="tw-btn" class="chip" data-i18n="tx.twBtn">Write in Typewriter</button>
+      </div>
+    </section>
+
     <!-- Statistics -->
     <section id="stats" hidden>
       <div class="tiles" id="tiles"></div>
       <h2 data-i18n="st.best">Best speed tests</h2>
       <div class="tiles" id="best"></div>
+      <h2 data-i18n="st.chart">Speed and accuracy, last 30 days</h2>
+      <div id="chart" class="chart"></div>
       <h2 data-i18n="st.days">Last 14 days</h2>
       <div id="days" class="days"></div>
       <h2 data-i18n="st.keys">Your keys</h2>
@@ -136,11 +159,24 @@
           <option value="3" data-i18n="fs.3">Large</option>
         </select></label>
       <p class="sub" data-i18n="set.device">This device only</p>
+      <label class="row check"><input type="checkbox" id="s-rem"><span data-i18n="set.rem">Remind me to practise</span></label>
+      <label class="row"><span data-i18n="set.remAt">Reminder time</span><input type="time" id="s-rem-at" step="300"></label>
       <label class="row check"><input type="checkbox" id="s-snd"><span data-i18n="set.snd">Key sounds</span></label>
       <label class="row check"><input type="checkbox" id="s-osk"><span data-i18n="set.osk">Use the screen keyboard (phones without a keyboard)</span></label>
       <div class="dlg-btns">
         <button type="button" id="s-reset" class="chip danger" data-i18n="set.reset">Reset progress</button>
         <button type="button" class="chip pri dlg-close" data-i18n="btn.done">Done</button>
+      </div>
+    </div>
+
+    <div id="dlg-add" class="dlg" role="dialog" aria-modal="true" aria-labelledby="add-title" hidden>
+      <h2 id="add-title" data-i18n="add.title">Add a text</h2>
+      <label class="col"><span data-i18n="add.name">Title</span><input type="text" id="add-name" maxlength="80" autocomplete="off"></label>
+      <label class="col"><span data-i18n="add.text">Text</span><textarea id="add-text" rows="7" maxlength="20000" spellcheck="false"></textarea></label>
+      <p id="add-note" class="hint small"></p>
+      <div class="dlg-btns">
+        <button type="button" class="chip dlg-close" data-i18n="btn.cancel">Cancel</button>
+        <button type="button" id="add-save" class="chip pri" data-i18n="add.save">Save</button>
       </div>
     </div>
 
@@ -155,12 +191,13 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=4.79.00" data-app="typing"></script>
-  <script src="layouts.js?v=4.79.00"></script>
-  <script src="words.js?v=4.79.00"></script>
-  <script src="course.js?v=4.79.00"></script>
-  <script src="core.js?v=4.79.00"></script>
-  <script src="app.js?v=4.79.00"></script>
+  <script src="../i18n.js?v=4.81.00" data-app="typing"></script>
+  <script src="layouts.js?v=4.81.00"></script>
+  <script src="words.js?v=4.81.00"></script>
+  <script src="course.js?v=4.81.00"></script>
+  <script src="texts.js?v=4.81.00"></script>
+  <script src="core.js?v=4.81.00"></script>
+  <script src="app.js?v=4.81.00"></script>
 
 </body>
 </html>

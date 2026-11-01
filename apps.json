@@ -317,6 +317,8 @@
       "category": "Learning",
       "icon": "typing",
       "url": "typing/",
+      "search": "search.js",
+      "today": ["due.js", "today.js"],
       "type": "internal"
     },
     {

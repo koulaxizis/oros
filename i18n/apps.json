@@ -1050,6 +1050,7 @@
    "app": "typing",
    "files": [
     "typing/app.js",
+    "typing/due.js",
     "typing/layouts.js"
    ]
   },
