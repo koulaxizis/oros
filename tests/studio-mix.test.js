@@ -211,7 +211,7 @@ test("instrument: NULL Drum Machine in the chain processor plays MIDI and the tr
   delete globalThis.registerProcessor; delete globalThis.AudioWorkletProcessor; delete globalThis.sampleRate; delete globalThis.currentTime;
 });
 
-test("instrument: a multi-out instrument (NULL Drum Machine 3.0, 8 pins) is listed and plays its first pair", async () => {
+test("instrument: a multi-out instrument (NULL Drum Machine 3.0, 8 pins) is listed and plays all its pins", async () => {
   // the catalog: the real index.json through StudioFX's loadCatalog
   const idx = JSON.parse(read("studio/nullfx/fx/index.json"));
   const dm = idx.instruments.filter((e) => e.id === "drum_machine")[0];
@@ -229,7 +229,8 @@ test("instrument: a multi-out instrument (NULL Drum Machine 3.0, 8 pins) is list
   delete globalThis.window; delete globalThis.fetch;
 
   // the chain processor: Outputs = Groups puts snare, clap, hats and toms on pins 3-8;
-  // Studio hears pins 1/2 (the kick), with no error and no new buffers per block
+  // Studio mixes them into pins 1/2, so the whole kit sounds in both modes, with no
+  // error and no new buffers per block
   let Proc = null;
   const posted = [];
   globalThis.sampleRate = 48000;
@@ -241,34 +242,43 @@ test("instrument: a multi-out instrument (NULL Drum Machine 3.0, 8 pins) is list
   require(path.join(ROOT, "studio/nullfx/fx/drum_machine.js"));
   delete require.cache[require.resolve(path.join(ROOT, "studio/fxchain.worklet.js"))];
   require(path.join(ROOT, "studio/fxchain.worklet.js"));
-  const sr = 48000;
-  const energy = (groups, note) => {
-    const p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: { 1: 0, 63: groups } }], midi: [[100 / sr, 0x99, note, 120]] } });
+  const sr = 48000, BL = 40;
+  // returns the chain's output (L, R), the energy on pins 3-8, and pins 1/2 as the effect wrote them
+  const play = (groups, notes) => {
+    const p = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: { 1: 0, 63: groups } }], midi: notes.map((nt, j) => [(100 + j * 50) / sr, 0x99, nt, 120]) } });
     const s = p.slots[0];
     assert.equal(s.outs.length, 8);
     assert.equal(s.outs[0], p.a[0]);
     assert.equal(s.outs[1], p.a[1]);
     const extra = s.outs.slice(2);
-    let e = 0, side = 0;
-    for (let b = 0; b < 40; b++) {
-      globalThis.currentTime = b * 128 / sr;
+    const L = new Float32Array(BL * 128), R = new Float32Array(BL * 128), own = new Float32Array(BL * 128);
+    let side = 0;
+    const mix = p.mixDown;
+    p.mixDown = function (o, n) { own.set(o[0].subarray(0, n), cur * 128); return mix.call(this, o, n); };
+    let cur = 0;
+    for (; cur < BL; cur++) {
+      globalThis.currentTime = cur * 128 / sr;
       const out = [new Float32Array(128), new Float32Array(128)];
       p.process([[]], [out], {});
-      for (let i = 0; i < 128; i++) e += out[0][i] * out[0][i] + out[1][i] * out[1][i];
+      L.set(out[0], cur * 128); R.set(out[1], cur * 128);
       extra.forEach((x) => { for (let i = 0; i < 128; i++) side += x[i] * x[i]; });
     }
     assert.ok(s.outs.slice(2).every((x, i) => x === extra[i]), "the same buffers every block");
     assert.equal(s.bypass, false);
-    return [e, side];
+    return { L, R, side, own };
   };
-  const [kickMain, kickSide] = energy(0, 36);
-  assert.ok(kickMain > 0.01 && kickSide === 0, "Main: the kick on pins 1/2 only");
-  const [kickGroups] = energy(1, 36);
-  assert.ok(kickGroups > 0.01, "Groups: the kick stays on pins 1/2");
-  const [snareMain] = energy(0, 38);
-  const [snareGroups, snareSide] = energy(1, 38);
-  assert.ok(snareMain > 0.01, "Main: the snare on pins 1/2");
-  assert.ok(snareGroups === 0 && snareSide > 0.01, "Groups: the snare on its own pins, which Studio does not play");
+  const energy = (y) => { let e = 0; for (let i = 0; i < y.L.length; i++) e += y.L[i] * y.L[i] + y.R[i] * y.R[i]; return e; };
+  const kit = [36, 38, 42, 45];
+  const main = play(0, kit);
+  assert.ok(energy(main) > 0.01 && main.side === 0, "Main: pins 3-8 silent");
+  assert.deepEqual(Array.from(main.L), Array.from(main.own), "Main: the output is the effect's own pins 1/2, sample for sample");
+  const groups = play(1, kit);
+  assert.ok(groups.side > 0.01, "Groups: snare, hats and toms on their own pins");
+  const snare = play(1, [38]);
+  assert.ok(energy(snare) > 0.01 && snare.side > 0.01, "Groups: the snare comes through the mix-down");
+  let d = 0;
+  for (let i = 0; i < main.L.length; i++) d = Math.max(d, Math.abs(main.L[i] - groups.L[i]), Math.abs(main.R[i] - groups.R[i]));
+  assert.ok(d < 1e-4, "Groups mixed down sounds like Main (default kit, no drive): " + d);
   assert.equal(posted.filter((m) => m.type === "error" || m.type === "missing").length, 0);
   // a stereo effect still writes straight into the chain's pair
   const p2 = new Proc({ processorOptions: { chain: [{ uid: "fdrum0001", id: "drum_machine", sliders: {} }] } });

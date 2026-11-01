@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.93.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "4.94.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -59,24 +59,27 @@
     autoexport:      "off"
   };
 
+  // wp = the wallpaper suggested with the skin (SKIN-WP): picking the
+  // skin moves to it only while the wallpaper is still the default or
+  // the previous skin's suggestion (maybeFollowSkin, 5b).
   var SKINS = [
-    { id: "adwaita",    color: "#3584e4" },
-    { id: "lumo",       color: "#6d4aff" },
-    { id: "oros",       color: "#d4af37" },
-    { id: "ubuntu",     color: "#e95420" },
-    { id: "fedora",     color: "#51a2da" },
-    { id: "mint",       color: "#87cf3e" },
-    { id: "arch",       color: "#1793d1" },
-    { id: "debian",     color: "#d70a53" },
-    { id: "elementary", color: "#8c5ec7" },
-    { id: "tux",        color: "#c9c9c9" },
+    { id: "adwaita",    color: "#3584e4", wp: "dusk" },
+    { id: "lumo",       color: "#6d4aff", wp: "nebula" },
+    { id: "oros",       color: "#d4af37", wp: "sand" },
+    { id: "ubuntu",     color: "#e95420", wp: "plum" },
+    { id: "fedora",     color: "#51a2da", wp: "nordic" },
+    { id: "mint",       color: "#87cf3e", wp: "forest" },
+    { id: "arch",       color: "#1793d1", wp: "midnight" },
+    { id: "debian",     color: "#d70a53", wp: "ember" },
+    { id: "elementary", color: "#8c5ec7", wp: "aurora" },
+    { id: "tux",        color: "#c9c9c9", wp: "mono" },
     // v0.12.0 — second Linux family (6 new: 16 total, grid 2×8)
-    { id: "manjaro",    color: "#35bf5c" },
-    { id: "opensuse",   color: "#73ba25" },
-    { id: "nixos",      color: "#5277c3" },
-    { id: "gentoo",     color: "#7d5ba6" },
-    { id: "popos",      color: "#ff7043" },
-    { id: "zorin",      color: "#15a6a0" }
+    { id: "manjaro",    color: "#35bf5c", wp: "borealis" },
+    { id: "opensuse",   color: "#73ba25", wp: "forest" },
+    { id: "nixos",      color: "#5277c3", wp: "hex" },
+    { id: "gentoo",     color: "#7d5ba6", wp: "obsidian" },
+    { id: "popos",      color: "#ff7043", wp: "ember" },
+    { id: "zorin",      color: "#15a6a0", wp: "terrazzo" }
   ];
 
   var DEFAULT_WALLPAPER = "sand";
@@ -85,23 +88,23 @@
   // string feeds the desktop background AND the picker thumbnails —
   // WYSIWYG guaranteed, no CSS-specificity battles.
   var WALLPAPERS = [
-    { id: "custom",   pair: null,          css: "" },  // "Mine": drawn from state.wpart (5b)
-    { id: "dusk",     pair: null,          css: "linear-gradient(160deg, #1b2735 0%, #10151f 45%, #0b0f17 100%)" },
-    { id: "midnight", pair: "arch",        css: "linear-gradient(165deg, #0d1117 0%, #06080c 60%, #000000 100%)" },
-    { id: "plum",     pair: "ubuntu",      css: "radial-gradient(ellipse at 30% 20%, #4a2545 0%, #2c1626 55%, #190d17 100%)" },
-    { id: "forest",   pair: "mint",        css: "linear-gradient(150deg, #16281c 0%, #0e1a12 55%, #070f09 100%)" },
-    { id: "ember",    pair: "debian",      css: "linear-gradient(160deg, #2b1810 0%, #1d0f0a 50%, #120806 100%)" },
-    { id: "nordic",   pair: "fedora",      css: "linear-gradient(170deg, #2c3e50 0%, #1d2a38 55%, #131b24 100%)" },
-    { id: "aurora",   pair: "elementary",  css: "linear-gradient(155deg, #10302b 0%, #0b2320 45%, #071512 100%)" },
-    { id: "sand",     pair: "oros",        css: "linear-gradient(160deg, #33291d 0%, #241c13 55%, #161009 100%)" },
-    { id: "mono",     pair: "tux",         css: "linear-gradient(170deg, #262626 0%, #1a1a1a 55%, #0e0e0e 100%)" },
+    { id: "custom",   css: "" },  // "Mine": drawn from state.wpart (5b)
+    { id: "dusk",     css: "linear-gradient(160deg, #1b2735 0%, #10151f 45%, #0b0f17 100%)" },
+    { id: "midnight", css: "linear-gradient(165deg, #0d1117 0%, #06080c 60%, #000000 100%)" },
+    { id: "plum",     css: "radial-gradient(ellipse at 30% 20%, #4a2545 0%, #2c1626 55%, #190d17 100%)" },
+    { id: "forest",   css: "linear-gradient(150deg, #16281c 0%, #0e1a12 55%, #070f09 100%)" },
+    { id: "ember",    css: "linear-gradient(160deg, #2b1810 0%, #1d0f0a 50%, #120806 100%)" },
+    { id: "nordic",   css: "linear-gradient(170deg, #2c3e50 0%, #1d2a38 55%, #131b24 100%)" },
+    { id: "aurora",   css: "linear-gradient(155deg, #10302b 0%, #0b2320 45%, #071512 100%)" },
+    { id: "sand",     css: "linear-gradient(160deg, #33291d 0%, #241c13 55%, #161009 100%)" },
+    { id: "mono",     css: "linear-gradient(170deg, #262626 0%, #1a1a1a 55%, #0e0e0e 100%)" },
     // v0.12.0 — five composite wallpapers (layered gradients)
-    { id: "nebula",   pair: "lumo",        css: "radial-gradient(ellipse at 25% 15%, #3d2b63 0%, #241b3d 40%, #14102a 70%, #0a0817 100%)" },
-    { id: "borealis", pair: "manjaro",     css: "radial-gradient(ellipse at 70% 0%, rgba(63,175,127,0.30) 0%, rgba(63,175,127,0) 45%), radial-gradient(ellipse at 40% 8%, rgba(94,231,160,0.14) 0%, rgba(94,231,160,0) 35%), linear-gradient(170deg, #0e1a17 0%, #0a1210 55%, #050908 100%)" },
-    { id: "hex",      pair: "arch",        css: "repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 22px), repeating-linear-gradient(60deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 26px), linear-gradient(165deg, #17181d 0%, #101116 60%, #0a0b0f 100%)" },
-    { id: "obsidian", pair: "tux",         css: "linear-gradient(200deg, #1a1025 0%, #0e0a14 55%, #070609 100%)" },
-    { id: "terrazzo", pair: "zorin",       css: "radial-gradient(circle at 15% 22%, #d4af37 0 2.5px, transparent 3px), radial-gradient(circle at 62% 30%, #6d4aff 0 2px, transparent 2.5px), radial-gradient(circle at 38% 68%, #e06c75 0 2.5px, transparent 3px), radial-gradient(circle at 78% 76%, #15a6a0 0 2px, transparent 2.5px), radial-gradient(circle at 28% 48%, #87cf3e 0 1.5px, transparent 2px), radial-gradient(circle at 85% 18%, #51a2da 0 1.5px, transparent 2px), radial-gradient(circle at 8% 82%, #ff7043 0 2px, transparent 2.5px), linear-gradient(160deg, #211f1b 0%, #161411 60%, #0e0d0b 100%)" },
-    { id: "clear",    pair: null,          css: "" }   // "None": theme background
+    { id: "nebula",   css: "radial-gradient(ellipse at 25% 15%, #3d2b63 0%, #241b3d 40%, #14102a 70%, #0a0817 100%)" },
+    { id: "borealis", css: "radial-gradient(ellipse at 70% 0%, rgba(63,175,127,0.30) 0%, rgba(63,175,127,0) 45%), radial-gradient(ellipse at 40% 8%, rgba(94,231,160,0.14) 0%, rgba(94,231,160,0) 35%), linear-gradient(170deg, #0e1a17 0%, #0a1210 55%, #050908 100%)" },
+    { id: "hex",      css: "repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 22px), repeating-linear-gradient(60deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 26px), linear-gradient(165deg, #17181d 0%, #101116 60%, #0a0b0f 100%)" },
+    { id: "obsidian", css: "linear-gradient(200deg, #1a1025 0%, #0e0a14 55%, #070609 100%)" },
+    { id: "terrazzo", css: "radial-gradient(circle at 15% 22%, #d4af37 0 2.5px, transparent 3px), radial-gradient(circle at 62% 30%, #6d4aff 0 2px, transparent 2.5px), radial-gradient(circle at 38% 68%, #e06c75 0 2.5px, transparent 3px), radial-gradient(circle at 78% 76%, #15a6a0 0 2px, transparent 2.5px), radial-gradient(circle at 28% 48%, #87cf3e 0 1.5px, transparent 2px), radial-gradient(circle at 85% 18%, #51a2da 0 1.5px, transparent 2px), radial-gradient(circle at 8% 82%, #ff7043 0 2px, transparent 2.5px), linear-gradient(160deg, #211f1b 0%, #161411 60%, #0e0d0b 100%)" },
+    { id: "clear",    css: "" }   // "None": theme background
   ];
 
   // ---------- Auto-backup configuration (folder export — localStorage snapshots removed) ----------
@@ -798,20 +801,28 @@
     });
   })();
 
-  // Suggest, don't impose: when the user picks a skin with a classic
-  // wallpaper pair AND is still on the default wallpaper, the
-  // wallpaper follows the skin. Never overrides a deliberate choice.
-  function maybeFollowSkin(newSkinId) {
-    if (state.wallpaper !== DEFAULT_WALLPAPER) return false;
-    for (var i = 0; i < WALLPAPERS.length; i++) {
-      if (WALLPAPERS[i].pair === newSkinId) {
-        state.wallpaper = WALLPAPERS[i].id;
-        localStorage.setItem("oros-wallpaper", state.wallpaper);
-        applyWallpaper();
-        return true;
-      }
+  // Suggest, don't impose (SKIN-WP): every skin names one wallpaper
+  // (SKINS[].wp). Picking a skin moves to its wallpaper only while the
+  // wallpaper is still the default or the previous skin's suggestion,
+  // i.e. one the user never picked away from. Any other wallpaper,
+  // "Mine", "None" and a device picture stay as they are.
+  function skinWallpaper(skinId) {
+    for (var i = 0; i < SKINS.length; i++) {
+      if (SKINS[i].id === skinId) return findWallpaper(SKINS[i].wp) ? SKINS[i].wp : null;
     }
-    return false;
+    return null;
+  }
+
+  function maybeFollowSkin(oldSkinId, newSkinId) {
+    if (wpPic()) return false;
+    var cur = state.wallpaper;
+    if (cur !== DEFAULT_WALLPAPER && cur !== skinWallpaper(oldSkinId)) return false;
+    var next = skinWallpaper(newSkinId);
+    if (!next || next === cur) return false;
+    state.wallpaper = next;
+    localStorage.setItem("oros-wallpaper", state.wallpaper);
+    applyWallpaper();
+    return true;
   }
 
   // ---------- 5e. Accessibility (Settings › Accessibility) ----------
@@ -5094,10 +5105,11 @@
   // value already in place does nothing (R27).
   function setSkinUser(id) {
     if (!isValidSkin(id) || state.skin === id) return;
+    var was = state.skin;
     state.skin = id;
     localStorage.setItem("oros-skin", state.skin);
     applySkin();
-    maybeFollowSkin(id);       // suggests paired wallpaper (from default only)
+    maybeFollowSkin(was, id);  // the skin's wallpaper, unless the user picked their own
     noteLocalChange();
     renderMenu();
   }
@@ -7044,7 +7056,7 @@
         { name: "Health Connect client 1.1.0 + Kotlin", url: "https://developer.android.com/jetpack/androidx/releases/health-connect",
           by: "The Android Open Source Project; JetBrains & Kotlin contributors", lic: "Apache-2.0",
           k: "cr.health-connect" },
-        { name: "jsPDF 2.5.2", url: "https://github.com/parallax/jsPDF",
+        { name: "jsPDF 4.2.1", url: "https://github.com/parallax/jsPDF",
           by: "James Hall, yWorks & contributors", lic: "MIT",
           k: "cr.jspdf" },
         { name: "SheetJS Community Edition 0.20.3", url: "https://sheetjs.com/",
@@ -10182,6 +10194,7 @@
         return { id: k.id, color: k.color, name: skinTitle(k.id) };
       }),
       wallpaper: pic ? "custom" : state.wallpaper,
+      suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "custom") {
