@@ -2103,6 +2103,16 @@
       if (!fontsReady) { pending = tg; return true; }
       return openFileTarget(tg.openFile);
     }
+    // {newEvent: {kind, t}} (Typing Tutor wave 3): the New dialog, filled
+    // in, nothing created until the person presses Create.
+    if (tg && typeof tg === "object" && tg.newEvent && typeof tg.newEvent === "object") {
+      if (!fontsReady) { pending = tg; return true; }
+      showHome();
+      openNew();
+      if (C.KINDS.indexOf(tg.newEvent.kind) >= 0) { newKind = tg.newEvent.kind; renderNewKinds(); }
+      if (typeof tg.newEvent.t === "string") $("new-t").value = C.line(tg.newEvent.t, C.LIM.title);
+      return true;
+    }
     if (!tg || typeof tg !== "object" || typeof tg.ev !== "string") return false;
     if (!fontsReady) { pending = tg; return true; }
     if (!C.eventById(data, tg.ev)) return false;

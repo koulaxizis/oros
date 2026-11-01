@@ -41,6 +41,7 @@
       <div class="home-act">
         <button type="button" id="prac-btn" class="chip" data-i18n="btn.practice">Practise my weak keys</button>
         <button type="button" id="texts-btn" class="chip" data-i18n="btn.texts">Texts</button>
+        <button type="button" id="rain-btn" class="chip" data-i18n="btn.rain">Letter rain</button>
       </div>
       <p id="lay-hint" class="hint small"></p>
       <div id="course"></div>
@@ -51,9 +52,10 @@
       <div class="run-top">
         <div id="run-name" class="run-name"></div>
         <div class="meters" aria-live="off">
-          <span class="meter"><b id="m-wpm">0</b> <span data-i18n="u.wpm">wpm</span></span>
+          <span class="meter m-adult"><b id="m-wpm">0</b> <span data-i18n="u.wpm">wpm</span></span>
+          <span class="meter m-kid"><b id="m-row">0</b> <span data-i18n="u.row">in a row</span></span>
           <span class="meter"><b id="m-acc">100</b>%</span>
-          <span class="meter" id="m-time-w"><b id="m-time">0:00</b></span>
+          <span class="meter m-adult" id="m-time-w"><b id="m-time">0:00</b></span>
           <button type="button" id="restart-btn" class="icon-btn"></button>
         </div>
       </div>
@@ -64,7 +66,6 @@
       </div>
       <div id="board">
         <div id="text-view"><div id="text-in" aria-hidden="true"></div></div>
-        <textarea id="cap" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
         <div id="focus-veil" hidden><span data-i18n="run.focus">Click here and start typing</span></div>
       </div>
       <div id="live" class="sr-only" aria-live="polite"></div>
@@ -72,6 +73,31 @@
         <div id="kbd" aria-hidden="true"></div>
         <div id="hands" aria-hidden="true"></div>
       </div>
+    </section>
+
+    <!-- Letter rain (wave 3): type the falling letters -->
+    <section id="rain" hidden>
+      <div class="run-top">
+        <div class="run-name" data-i18n="btn.rain">Letter rain</div>
+        <div class="meters">
+          <span class="meter"><span data-i18n="rain.score">Score</span> <b id="r-score">0</b></span>
+          <span class="meter"><span data-i18n="rain.level">Level</span> <b id="r-level">1</b></span>
+          <span class="meter lives" id="r-lives" role="img"></span>
+        </div>
+      </div>
+      <div id="rain-field">
+        <div id="rain-drops" aria-hidden="true"></div>
+        <div id="rain-veil" class="rain-veil">
+          <p id="rain-msg" class="big"></p>
+          <p id="rain-sub" class="hint"></p>
+          <p id="rain-pet" class="pet" hidden></p>
+          <div class="dlg-btns">
+            <button type="button" id="rain-home" class="chip" data-i18n="btn.home">Lessons</button>
+            <button type="button" id="rain-go" class="chip pri" data-i18n="rain.start">Start</button>
+          </div>
+        </div>
+      </div>
+      <div id="rain-live" class="sr-only" aria-live="polite"></div>
     </section>
 
     <!-- Texts: the library and My texts -->
@@ -113,12 +139,17 @@
       <h2 id="res-title"></h2>
       <div id="res-stars" class="stars" aria-hidden="true"></div>
       <div class="res-nums">
-        <div><b id="res-wpm"></b><span data-i18n="u.wpm">wpm</span></div>
+        <div class="n-wpm"><b id="res-wpm"></b><span data-i18n="u.wpm">wpm</span></div>
         <div><b id="res-acc"></b><span data-i18n="u.acc">accuracy</span></div>
-        <div><b id="res-time"></b><span data-i18n="u.time">time</span></div>
+        <div class="n-time"><b id="res-time"></b><span data-i18n="u.time">time</span></div>
       </div>
       <p id="res-note" class="hint"></p>
+      <p id="res-row" class="hint" hidden></p>
       <p id="res-keys" class="hint"></p>
+      <p id="res-pet" class="pet" hidden></p>
+      <div class="dlg-btns" id="res-cert-row" hidden>
+        <button type="button" id="res-cert" class="chip" data-i18n="cert.btn">Make a certificate</button>
+      </div>
       <div class="dlg-btns">
         <button type="button" id="res-home" class="chip" data-i18n="btn.home">Lessons</button>
         <button type="button" id="res-again" class="chip" data-i18n="btn.again">Again</button>
@@ -140,6 +171,11 @@
     <div id="dlg-set" class="dlg" role="dialog" aria-modal="true" aria-labelledby="set-title" hidden>
       <h2 id="set-title" data-i18n="set.title">Settings</h2>
       <label class="row"><span data-i18n="set.lay">Keyboard</span><select id="s-lay"></select></label>
+      <label class="row"><span data-i18n="set.kid">Who is practising?</span>
+        <select id="s-kid">
+          <option value="0" data-i18n="kid.0">A grown-up</option>
+          <option value="1" data-i18n="kid.1">A child</option>
+        </select></label>
       <label class="row"><span data-i18n="set.hint">Key hints</span>
         <select id="s-hint">
           <option value="auto" data-i18n="hint.auto">When I hesitate</option>
@@ -180,6 +216,15 @@
       </div>
     </div>
 
+    <div id="dlg-who" class="dlg" role="dialog" aria-modal="true" aria-labelledby="who-title" hidden>
+      <h2 id="who-title" data-i18n="set.kid">Who is practising?</h2>
+      <p class="hint" data-i18n="who.hint">For a child the lessons are shorter, with simple words, bigger letters and stars for accuracy instead of speed. You can change it in Settings.</p>
+      <div class="dlg-btns">
+        <button type="button" class="chip pri" data-kid="0" data-i18n="kid.0">A grown-up</button>
+        <button type="button" class="chip pri" data-kid="1" data-i18n="kid.1">A child</button>
+      </div>
+    </div>
+
     <div id="dlg-confirm" class="dlg" role="dialog" aria-modal="true" aria-labelledby="conf-txt" hidden>
       <p id="conf-txt"></p>
       <div class="dlg-btns">
@@ -189,12 +234,16 @@
     </div>
   </div>
 
+  <!-- the typing field: outside the screens, so lessons and Letter rain both read it -->
+  <textarea id="cap" inputmode="none" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" rows="1"></textarea>
+
   <div id="toast" role="status"></div>
 
   <script src="../i18n.js?v=4.80.00" data-app="typing"></script>
   <script src="layouts.js?v=4.80.00"></script>
   <script src="words.js?v=4.80.00"></script>
   <script src="course.js?v=4.80.00"></script>
+  <script src="rain.js?v=4.80.00"></script>
   <script src="texts.js?v=4.80.00"></script>
   <script src="core.js?v=4.80.00"></script>
   <script src="app.js?v=4.80.00"></script>
