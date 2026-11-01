@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.98.00
+- **Passwords shows all your two-factor codes on one screen.** `Codes` at the top lists every code with the seconds it has left; tap one to copy it, and in its last 5 seconds you get the next one instead. `New` › `2FA code` keeps an account's code without a password, like an authenticator app, and codes imported from Aegis, 2FAS or Google Authenticator become such entries. `QR code` shows one account as a QR code for moving it to another app, and `Export` now also writes your codes for Aegis (encrypted) or 2FAS. See [Passwords](help:a/passwords).
+
 ## Version 4.97.00
 - **Passwords keeps cards, identities, addresses and secure notes.** `New` now asks what you want to keep. Cards show their network and last four digits, are checked for typos and are marked before they expire; `Copy in order` copies number, expiry, code and name one after another for a payment form. Identities hold your ID card, passport, driving licence, tax and social security numbers; addresses copy as lines. Everything stays in the same encrypted vault and syncs as before. Cards and identities imported earlier from Bitwarden, Proton Pass and others offer `Convert`. See [Passwords](help:a/passwords).
 

@@ -29,7 +29,7 @@
   var VAULT_KEY = "oros-passwords-vault";
   var CLIP_MS = 30000;
   var MIN_MASTER = 12;
-  var PV = window.PmVault, PC = window.PmCore, KX = window.Kdbx, P = window.PwCore, PK = window.PmKinds;
+  var PV = window.PmVault, PC = window.PmCore, KX = window.Kdbx, P = window.PwCore, PK = window.PmKinds, PmOtp = window.PmOtpExport;
 
   // ---------- 1. Strings + helpers ----------
   function appLang() {
@@ -163,6 +163,18 @@
       "k.card": "Payment card",
       "k.identity": "Identity",
       "k.address": "Address",
+      "k.otp": "2FA code", "k.otpHint": "A two-factor code with no password stored here (from Aegis, 2FAS, Google Authenticator…)",
+      "kf.otp": "2FA codes", "e.issuer": "Service", "e.account": "Account", "e.otpNeeded": "Add the secret or scan the QR code of the service.",
+      "tab.entries": "Entries", "tab.codes": "Codes", "tab.label": "Show",
+      "cd.empty": "No two-factor codes yet. Add a 2FA code with New, scan a QR code in an entry, or import from Aegis, 2FAS or Google Authenticator.",
+      "cd.none": "No code matches.", "cd.next": "Next {code}", "cd.tap": "Tap a code to copy it.",
+      "cd.count1": "1 code", "cd.count": "{n} codes",
+      "qr.show": "QR code", "qr.title": "QR code of {name}", "qr.warn": "Anyone who sees or photographs this QR code can make your codes for this account. Show it only to move the account to another app, then close it.",
+      "qr.go": "Show the QR code", "qr.fail": "The QR code could not be drawn.", "qr.close": "Close",
+      "exp.aegis": "Aegis (.json, encrypted) — two-factor codes only", "exp.2fas": "2FAS (.2fas, NOT encrypted) — two-factor codes only",
+      "exp.otpPw": "Password for the file", "exp.aegisHint": "Aegis asks for this password when you import the file. 2FAS and other apps that read Aegis files may ask for it too.",
+      "exp.warn2fas": "The 2FAS file holds every two-factor secret as plain text. Anyone who gets it can make your codes. Import it right away and then delete it.",
+      "exp.noCodes": "There are no two-factor codes to export.", "exp.doneCodes": "Exported {n} two-factor codes.",
       "k.note": "Secure note",
       "k.pick": "New entry",
       "k.pickText": "What do you want to keep?",
@@ -355,6 +367,18 @@
       "k.card": "Κάρτα πληρωμής",
       "k.identity": "Ταυτότητα",
       "k.address": "Διεύθυνση",
+      "k.otp": "Κωδικός 2FA", "k.otpHint": "Κωδικός δύο βημάτων χωρίς αποθηκευμένο κωδικό σύνδεσης (από Aegis, 2FAS, Google Authenticator…)",
+      "kf.otp": "Κωδικοί 2FA", "e.issuer": "Υπηρεσία", "e.account": "Λογαριασμός", "e.otpNeeded": "Πρόσθεσε το μυστικό ή σάρωσε τον κωδικό QR της υπηρεσίας.",
+      "tab.entries": "Εγγραφές", "tab.codes": "Κωδικοί", "tab.label": "Εμφάνιση",
+      "cd.empty": "Δεν υπάρχουν ακόμη κωδικοί δύο βημάτων. Πρόσθεσε έναν κωδικό 2FA από το Νέο, σάρωσε έναν κωδικό QR μέσα σε μια εγγραφή ή κάνε εισαγωγή από Aegis, 2FAS ή Google Authenticator.",
+      "cd.none": "Κανένας κωδικός δεν ταιριάζει.", "cd.next": "Επόμενος {code}", "cd.tap": "Πάτησε έναν κωδικό για αντιγραφή.",
+      "cd.count1": "1 κωδικός", "cd.count": "{n} κωδικοί",
+      "qr.show": "Κωδικός QR", "qr.title": "Κωδικός QR για {name}", "qr.warn": "Όποιος δει ή φωτογραφίσει αυτόν τον κωδικό QR μπορεί να φτιάχνει τους κωδικούς σου για αυτόν τον λογαριασμό. Δείξ' τον μόνο για να μεταφέρεις τον λογαριασμό σε άλλη εφαρμογή και μετά κλείσ' τον.",
+      "qr.go": "Εμφάνιση του κωδικού QR", "qr.fail": "Ο κωδικός QR δεν σχεδιάστηκε.", "qr.close": "Κλείσιμο",
+      "exp.aegis": "Aegis (.json, κρυπτογραφημένο) — μόνο κωδικοί δύο βημάτων", "exp.2fas": "2FAS (.2fas, ΜΗ κρυπτογραφημένο) — μόνο κωδικοί δύο βημάτων",
+      "exp.otpPw": "Κωδικός για το αρχείο", "exp.aegisHint": "Το Aegis ζητά αυτόν τον κωδικό όταν κάνεις εισαγωγή του αρχείου. Το 2FAS και άλλες εφαρμογές που διαβάζουν αρχεία Aegis μπορεί να τον ζητήσουν επίσης.",
+      "exp.warn2fas": "Το αρχείο 2FAS έχει όλα τα μυστικά δύο βημάτων σε απλό κείμενο. Όποιος το αποκτήσει φτιάχνει τους κωδικούς σου. Κάνε αμέσως την εισαγωγή και μετά σβήσ' το.",
+      "exp.noCodes": "Δεν υπάρχουν κωδικοί δύο βημάτων για εξαγωγή.", "exp.doneCodes": "Εξήχθησαν {n} κωδικοί δύο βημάτων.",
       "k.note": "Ασφαλής σημείωση",
       "k.pick": "Νέα εγγραφή",
       "k.pickText": "Τι θέλεις να φυλάξεις;",
@@ -522,7 +546,7 @@
   var snap = null;               // decrypted snapshot while unlocked
   var blobSnaps = {};            // blob id -> decrypted snapshot (memory)
   var badBlobs = {};             // blob ids that did not open
-  var view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "" };
+  var view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "", screen: "list" };
   var weakCache = {};
   var pending = null;            // { password, title?, urls? } handed from the generator or a share
   var root = null;               // #vault
@@ -662,7 +686,7 @@
   function lock(auto) {
     var was = !!session;
     session = null; snap = null; blobSnaps = {}; badBlobs = {}; weakCache = {}; pending = null;
-    view = { mode: "list", id: null, query: "", filter: "all", tag: "" };
+    view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "", screen: "list" };
     clearInterval(totpTimer); totpTimer = null;
     closeDialogs();
     if (clip.pending) clearClip(true);
@@ -832,7 +856,7 @@
 
   function startSession(s) {
     session = s; snap = null; blobSnaps = {}; badBlobs = {}; weakCache = {};
-    view = { mode: "list", id: null, query: "", filter: "all", tag: "" };
+    view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "", screen: "list" };
     touch();
     clear(root);
     root.appendChild(el("p", "hint pv-busy", t("lock.busy")));
@@ -915,6 +939,7 @@
     if (Object.keys(badBlobs).length) {
       root.appendChild(el("p", "warn", t("err.badFile")));
     }
+    root.appendChild(screenTabs());
     var bar = el("div", "pv-toolbar");
     var q = el("input", "pv-search");
     q.type = "search"; q.id = "pv-search"; q.placeholder = t("open.search"); q.setAttribute("aria-label", t("open.search"));
@@ -930,6 +955,15 @@
     lockBtn.setAttribute("aria-label", t("open.lock")); lockBtn.title = t("open.lock");
     bar.appendChild(lockBtn);
     root.appendChild(bar);
+    if (view.screen === "codes") {
+      var cc = el("p", "hint pv-count"); cc.id = "pv-count";
+      root.appendChild(cc);
+      var cl = el("ul", "pv-list pv-codes"); cl.id = "pv-codes";
+      root.appendChild(cl);
+      q.addEventListener("input", function () { view.query = q.value; renderCodes(); });
+      renderCodes();
+      return;
+    }
 
     var chips = el("div", "pv-chips");
     chips.setAttribute("role", "radiogroup");
@@ -1098,7 +1132,7 @@
 
   function renderEntry(e) {
     var kind = PK.kindOf(e);
-    if (kind !== "login") { renderTyped(e, kind); return; }
+    if (kind !== "login" && kind !== "otp") { renderTyped(e, kind); return; }
     clear(root);
     var head = el("div", "pv-toolbar");
     head.appendChild(btn("‹ " + t("v.back"), "act", function () { view.mode = "list"; view.id = null; renderOpen(); }));
@@ -1110,7 +1144,8 @@
     card.appendChild(el("h2", "pv-title", (e.fav ? "★ " : "") + (e.title || PC.hostOf(e) || t("v.untitled"))));
     var legacy = PK.legacyKind(e);
     if (legacy) card.appendChild(convertBanner(e, legacy));
-    if (e.user) card.appendChild(rowCopy(t("v.user"), e.user, {}));
+    if (kind === "otp") card.appendChild(el("p", "hint pv-kind-line", t("k.otp")));
+    if (e.user) card.appendChild(rowCopy(t(kind === "otp" ? "e.account" : "v.user"), e.user, {}));
     if (e.pw) {
       var r = rowCopy(t("v.pw"), e.pw, { secret: true, mono: true });
       var a = P.audit(e.pw);
@@ -1160,6 +1195,7 @@
     var cur = "";
     var acts = el("span", "pv-field-acts");
     acts.appendChild(btn(t("v.copy"), "act small", function () { if (cur) copySecret(cur, true); }));
+    acts.appendChild(btn(t("qr.show"), "act small pv-qr-btn", function () { qrDialog(e); }));
     row.appendChild(acts);
     var lastStep = -1;
     function tick() {
@@ -1200,7 +1236,7 @@
   // ---------- 7b. Cards, identities, addresses, notes (PW-K1) ----------
   // Typed values live in reserved fields (pmkinds.js); everything is
   // put on the page with textContent only.
-  var KIND_ICON = { card: "💳", identity: "🪪", address: "🏠", note: "📝" };
+  var KIND_ICON = { card: "💳", identity: "🪪", address: "🏠", otp: "⏱", note: "📝" };
   var KPRE = { card: "cc", identity: "id", address: "ad" };
   var regionNames = null;
   function countryName(code) {
@@ -1264,7 +1300,9 @@
     PK.KINDS.forEach(function (k) {
       var b = btn(null, "pv-menu-item pv-kind", function () {
         d.close();
-        if (k === "login") openEditor(null); else openTypedEditor(null, k);
+        if (k === "login") openEditor(null);
+        else if (k === "otp") openEditor(null, null, null, "otp");
+        else openTypedEditor(null, k);
       });
       b.setAttribute("data-kind", k);
       var ic = el("span", "pv-badge" + (k !== "login" ? " pv-badge-" + k : ""), KIND_ICON[k] || "🔑");
@@ -1590,19 +1628,191 @@
     setTimeout(function () { try { title.focus(); } catch (x) {} }, 0);
   }
 
+  // ---------- 7c. Codes screen, QR (PW-OTP2) ----------
+  // Every two-factor code of the vault in one list. Codes are made
+  // only for the rows on screen (IntersectionObserver) and only while
+  // the vault is open; nothing is kept when the screen goes.
+  function fmtCode(c) {
+    return c.length === 6 ? c.slice(0, 3) + " " + c.slice(3) : c.length === 8 ? c.slice(0, 4) + " " + c.slice(4) : c;
+  }
+  function screenTabs() {
+    var tabs = el("div", "pv-tabs");
+    tabs.setAttribute("role", "tablist");
+    tabs.setAttribute("aria-label", t("tab.label"));
+    [["list", "tab.entries"], ["codes", "tab.codes"]].forEach(function (o) {
+      var b = btn(t(o[1]), "pv-tab", function () {
+        if (view.screen === o[0]) return;
+        view.screen = o[0]; view.mode = "list"; view.id = null;
+        renderOpen();
+        var f = document.querySelector('.pv-tab[data-screen="' + o[0] + '"]'); if (f) f.focus();
+      });
+      b.setAttribute("role", "tab");
+      b.setAttribute("data-screen", o[0]);
+      b.setAttribute("aria-selected", view.screen === o[0] ? "true" : "false");
+      tabs.appendChild(b);
+    });
+    return tabs;
+  }
+  function codeEntries() {
+    return entries().map(function (e) { return { e: e, o: e.totp ? PC.parseOtp(e.totp) : { error: "none" } }; })
+      .filter(function (x) { return !x.o.error; });
+  }
+  function renderCodes() {
+    var ul = $("pv-codes"), count = $("pv-count");
+    if (!ul) return;
+    clearInterval(totpTimer); totpTimer = null;
+    clear(ul);
+    var all = codeEntries();
+    if (!all.length) { count.textContent = ""; ul.appendChild(el("li", "pv-empty hint", t("cd.empty"))); return; }
+    var list = all.filter(function (x) { return PC.matches(x.e, view.query); }).sort(function (a, b) {
+      return (a.e.title || a.e.user || "").toLowerCase().localeCompare((b.e.title || b.e.user || "").toLowerCase());
+    });
+    count.textContent = (list.length === 1 ? t("cd.count1") : t("cd.count", { n: list.length })) + " · " + t("cd.tap");
+    if (!list.length) { ul.appendChild(el("li", "pv-empty hint", t("cd.none"))); return; }
+    var rows = [];
+    var io = typeof IntersectionObserver === "function" ? new IntersectionObserver(function (es) {
+      es.forEach(function (en) { var r = en.target.__row; if (r) { r.visible = en.isIntersecting; if (r.visible) r.tick(Date.now(), true); } });
+    }) : null;
+    list.forEach(function (x) {
+      var e = x.e, o = x.o;
+      var li = el("li", "pv-coderow-li");
+      var b = btn(null, "pv-item pv-coderow");
+      var badge = el("span", "pv-badge", ((e.title || e.user || "?").trim().charAt(0) || "?").toUpperCase());
+      badge.setAttribute("aria-hidden", "true");
+      b.appendChild(badge);
+      var txt = el("span", "pv-item-text");
+      txt.appendChild(el("span", "pv-item-title", (e.fav ? "★ " : "") + (e.title || PC.hostOf(e) || t("v.untitled"))));
+      if (e.user) txt.appendChild(el("span", "pv-item-sub", e.user));
+      b.appendChild(txt);
+      var codeBox = el("span", "pv-code-box");
+      var code = el("span", "pv-code mono", "··· ···");
+      var next = el("span", "pv-code-next hint");
+      next.hidden = true;
+      codeBox.appendChild(code); codeBox.appendChild(next);
+      b.appendChild(codeBox);
+      var ring = el("span", "pv-left");
+      b.appendChild(ring);
+      var row = { visible: !io, step: -1, nextStep: -1, cur: "", nxt: "" };
+      row.tick = function (now, force) {
+        var sec = Math.floor(now / 1000), step = Math.floor(sec / o.period), left = o.period - sec % o.period;
+        ring.textContent = t("v.left", { n: left });
+        ring.style.setProperty("--p", String(left / o.period));
+        li.classList.toggle("ending", left <= 5);
+        if (!row.visible && !force) return;
+        if (step !== row.step) {
+          row.step = step;
+          PC.totp(o, now).then(function (r) {
+            if (row.step !== step) return;
+            row.cur = r.code; code.textContent = fmtCode(r.code);
+            b.setAttribute("aria-label", (e.title || e.user || "") + " " + r.code);
+          });
+        }
+        if (left <= 5) {
+          if (row.nextStep !== step) {
+            row.nextStep = step;
+            PC.totp(o, (step + 1) * o.period * 1000).then(function (r) {
+              if (row.nextStep !== step) return;
+              row.nxt = r.code; next.textContent = t("cd.next", { code: fmtCode(r.code) }); next.hidden = false;
+            });
+          }
+        } else if (!next.hidden) { next.hidden = true; next.textContent = ""; row.nxt = ""; }
+      };
+      // In the last 5 seconds a tap copies the next code: it is still
+      // valid when it reaches the other app.
+      b.addEventListener("click", function () { var v = row.nxt || row.cur; if (v) copySecret(v, true); });
+      li.appendChild(b);
+      var open = btn("›", "act small pv-code-open", function () { view.screen = "list"; view.mode = "view"; view.id = e.id; renderOpen(); });
+      open.setAttribute("aria-label", t("v.open") + " " + (e.title || e.user || ""));
+      open.title = t("v.open");
+      li.appendChild(open);
+      li.__row = row;
+      ul.appendChild(li);
+      rows.push(row);
+      if (io) io.observe(li);
+    });
+    function tickAll() {
+      if (!session || !document.body.contains(ul)) {
+        clearInterval(totpTimer); totpTimer = null;
+        if (io) io.disconnect();
+        rows.forEach(function (r) { r.cur = r.nxt = ""; });
+        return;
+      }
+      var now = Date.now();
+      rows.forEach(function (r) { r.tick(now, false); });
+    }
+    tickAll();
+    totpTimer = setInterval(tickAll, 1000);
+  }
+
+  // One account's otpauth:// link as a QR code, only after a tap, for
+  // moving the account to another app. Drawn on a canvas inside the
+  // dialog; closing it (or locking) wipes the canvas.
+  var qrLibP = null;
+  function loadQrEncoder() {
+    if (window.orosQR) return Promise.resolve(window.orosQR);
+    if (qrLibP) return qrLibP;
+    qrLibP = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = "../qr/qr-encode.js";
+      sc.onload = function () { if (window.orosQR && window.orosQR.encode) resolve(window.orosQR); else reject(new Error("qr")); };
+      sc.onerror = function () { qrLibP = null; reject(new Error("qr")); };
+      document.head.appendChild(sc);
+    });
+    return qrLibP;
+  }
+  function qrDialog(e) {
+    var o = PC.parseOtp(e.totp);
+    if (o.error) return;
+    var name = e.title || e.user || PC.hostOf(e) || t("v.untitled");
+    var d = dialog(t("qr.title", { name: name }));
+    d.body.appendChild(el("p", "warn", t("qr.warn")));
+    var box = el("div", "pv-qr");
+    d.body.appendChild(box);
+    var err = d.error();
+    var canvas = null;
+    d.onClose(function () {
+      if (canvas) { var cx = canvas.getContext("2d"); if (cx) cx.clearRect(0, 0, canvas.width, canvas.height); canvas.width = canvas.height = 0; }
+      clear(box);
+    });
+    var go = d.actions(t("qr.close"), t("qr.go"), function (done) {
+      var uri = PmOtp.codes([e])[0];
+      loadQrEncoder().then(function (Q) {
+        if (!session) return done(true);
+        var qr = Q.encode(uri ? uri.uri : e.totp, { ecl: "M" });
+        var scale = Math.max(3, Math.floor(260 / (qr.size + 8)));
+        canvas = el("canvas", "pv-qr-canvas");
+        canvas.width = canvas.height = (qr.size + 8) * scale;
+        canvas.setAttribute("role", "img");
+        canvas.setAttribute("aria-label", t("qr.title", { name: name }));
+        var cx = canvas.getContext("2d");
+        cx.fillStyle = "#fff"; cx.fillRect(0, 0, canvas.width, canvas.height);
+        cx.fillStyle = "#000";
+        for (var y = 0; y < qr.size; y++) for (var x = 0; x < qr.size; x++) {
+          if (qr.modules[y][x]) cx.fillRect((x + 4) * scale, (y + 4) * scale, scale, scale);
+        }
+        clear(box); box.appendChild(canvas);
+        go.hidden = true;
+        done(false);
+      }).catch(function () { err(t("qr.fail")); done(false); });
+    });
+  }
+
   // ---------- 8. Entry editor ----------
   // pre (new entries only): { title, urls } from a share to the single app.
-  function openEditor(e, presetPw, pre) {
+  // mode "otp" (new entries only): a "2FA only" entry (PW-OTP2); an
+  // existing one is recognised by its marker.
+  function openEditor(e, presetPw, pre, mode) {
     clearInterval(totpTimer); totpTimer = null;
     view.mode = "edit";
     clear(root);
     var isNew = !e;
+    var isOtp = e ? PK.kindOf(e) === "otp" : mode === "otp";
     var card = el("div", "card pv-edit");
-    card.appendChild(el("h2", "pv-h", t(isNew ? "e.new" : "e.editing")));
+    card.appendChild(el("h2", "pv-h", isOtp && isNew ? t("k.otp") : t(isNew ? "e.new" : "e.editing")));
     var title = textInput("pv-e-title"); title.value = e ? e.title : (pre && pre.title) || ""; title.maxLength = PC.LIM.title;
-    card.appendChild(labelled(t("e.title"), title));
+    card.appendChild(labelled(t(isOtp ? "e.issuer" : "e.title"), title));
     var user = textInput("pv-e-user"); user.value = e ? e.user : ""; user.maxLength = PC.LIM.user;
-    card.appendChild(labelled(t("e.user"), user));
+    card.appendChild(labelled(t(isOtp ? "e.account" : "e.user"), user));
     var pw = secretInput("pv-e-pw"); pw.value = e ? e.pw : (presetPw || ""); pw.maxLength = PC.LIM.pw;
     var pwWrap = labelled(t("e.pw"), showable(pw));
     card.appendChild(pwWrap);
@@ -1611,9 +1821,11 @@
     gen.appendChild(btn(t("e.genPw"), "act small", function () { genInto("pw"); }));
     gen.appendChild(btn(t("e.genPh"), "act small", function () { genInto("ph"); }));
     card.appendChild(gen);
-    card.appendChild(el("p", "hint", t("e.genHint")));
+    var genHint = el("p", "hint", t("e.genHint"));
+    card.appendChild(genHint);
     var meter = meterBox(); card.appendChild(meter);
     meter.update(pw.value);
+    if (isOtp) { pwWrap.hidden = true; gen.hidden = true; genHint.hidden = true; meter.hidden = true; }
     pw.addEventListener("input", function () { meter.update(pw.value); dirty = true; });
     function genInto(kind) {
       var v = app() && app().generate(kind);
@@ -1629,8 +1841,18 @@
     var totp = textInput("pv-e-totp"); totp.className = "mono"; totp.value = e ? e.totp : "";
     var totpRowEl = el("div", "pw-row");
     totpRowEl.appendChild(totp);
-    totpRowEl.appendChild(btn(t("e.scan"), "act small", function () { scanDialog(function (text) { totp.value = text; dirty = true; checkTotp(); }); }));
-    card.appendChild(labelled(t("e.totp"), totpRowEl));
+    totpRowEl.appendChild(btn(t("e.scan"), "act small", function () { scanDialog(function (text) { totp.value = text; dirty = true; checkTotp(); fillFromOtp(); }); }));
+    var totpLab = labelled(t("e.totp"), totpRowEl);
+    if (isOtp) card.insertBefore(totpLab, pwWrap); else card.appendChild(totpLab);
+    // A scanned otpauth:// link fills an empty service / account.
+    function fillFromOtp() {
+      if (!isOtp) return;
+      var o = PC.parseOtp(totp.value.trim());
+      if (o.error) return;
+      if (!title.value && o.issuer) title.value = o.issuer;
+      if (!user.value && o.account) user.value = o.account;
+    }
+    totp.addEventListener("change", fillFromOtp);
     var totpMsg = el("p", "hint"); totpMsg.hidden = true; card.appendChild(totpMsg);
     function checkTotp() {
       var v = totp.value.trim();
@@ -1661,7 +1883,7 @@
     function addField(f) { fl.appendChild(fieldRow(f, function () { dirty = true; })); }
     // Reserved fields (a type marker or values of a newer orOS) are kept
     // as they are and never shown in the editor.
-    var kept = e ? e.fields.filter(function (f) { return PK.isReserved(f.n); }) : [];
+    var kept = e ? e.fields.filter(function (f) { return PK.isReserved(f.n); }) : (isOtp ? [{ h: 0, n: PK.KIND_FIELD, v: "otp" }] : []);
     (e ? e.fields.filter(function (f) { return !PK.isReserved(f.n); }) : []).forEach(addField);
     card.appendChild(btn("+ " + t("e.addField"), "link-btn", function () { addField(null); dirty = true; }));
     var favL = el("label", "pv-check");
@@ -1679,17 +1901,18 @@
     }));
     var saveBtn = btn(t("e.save"), "act primary", function () {
       if (!checkTotp()) { err.textContent = t("e.badOtp"); err.hidden = false; totp.focus(); return; }
+      if (isOtp && !totp.value.trim()) { err.textContent = t("e.otpNeeded"); err.hidden = false; totp.focus(); return; }
       var now = Date.now();
       var next = {
         id: e ? e.id : PC.newId(), c: e ? e.c : now, m: Math.max(now, e ? e.m + 1 : 0),
-        title: title.value, user: user.value, pw: pw.value, notes: notes.value, totp: totp.value.trim(),
+        title: title.value, user: user.value, pw: isOtp ? "" : pw.value, notes: notes.value, totp: totp.value.trim(),
         urls: urls.value.split(/\r?\n/), tags: tags.value.split(","), fav: fav.checked ? 1 : 0,
         fields: kept.concat(Array.prototype.map.call(fl.children, function (r) { return r.read(); })), hist: e ? e.hist : []
       };
       if (e && e.x) next.x = e.x;
-      next.hist = PC.withHistory(e, next, now);
+      next.hist = isOtp ? [] : PC.withHistory(e, next, now);
       var n = PC.normEntry(next);
-      if (!n || !(n.title || n.user || n.pw)) { err.textContent = t("e.empty"); err.hidden = false; return; }
+      if (!n || !(isOtp ? n.totp : (n.title || n.user || n.pw))) { err.textContent = t(isOtp ? "e.otpNeeded" : "e.empty"); err.hidden = false; return; }
       saveBtn.disabled = true;
       save(function (s) { return PC.upsert(s, n); }).then(function () {
         toast(t("e.saved"));
@@ -2038,22 +2261,33 @@
     var d = dialog(t("exp.title"));
     var kind = "kdbx";
     var opts = el("div", "pv-radios");
-    [["kdbx", "exp.kdbx"], ["bw", "exp.bw"]].forEach(function (o, i) {
+    [["kdbx", "exp.kdbx"], ["bw", "exp.bw"], ["aegis", "exp.aegis"], ["2fas", "exp.2fas"]].forEach(function (o, i) {
       var l = el("label", "pv-check");
       var r = el("input"); r.type = "radio"; r.name = "pv-exp"; r.value = o[0]; r.checked = i === 0;
-      r.addEventListener("change", function () { kind = o[0]; kx.hidden = kind !== "kdbx"; bw.hidden = kind !== "bw"; });
+      r.addEventListener("change", function () {
+        kind = o[0];
+        var pwKind = kind === "kdbx" || kind === "aegis", plain = kind === "bw" || kind === "2fas";
+        kx.hidden = !pwKind; bw.hidden = !plain;
+        kxLabel.textContent = t(kind === "aegis" ? "exp.otpPw" : "exp.kdbxPw");
+        kxHint.textContent = t(kind === "aegis" ? "exp.aegisHint" : "exp.kdbxHint");
+        bwWarn.textContent = t(kind === "2fas" ? "exp.warn2fas" : "exp.warn");
+      });
       l.appendChild(r); l.appendChild(el("span", "", t(o[1])));
       opts.appendChild(l);
     });
     d.body.appendChild(opts);
     var kx = el("div");
     var p1 = secretInput(null, "new-password"), p2 = secretInput(null, "new-password");
-    kx.appendChild(labelled(t("exp.kdbxPw"), showable(p1)));
+    var p1Lab = labelled(t("exp.kdbxPw"), showable(p1));
+    var kxLabel = p1Lab.querySelector("span") || p1Lab.firstChild;
+    kx.appendChild(p1Lab);
     kx.appendChild(labelled(t("create.pw2"), p2));
-    kx.appendChild(el("p", "hint", t("exp.kdbxHint")));
+    var kxHint = el("p", "hint", t("exp.kdbxHint"));
+    kx.appendChild(kxHint);
     d.body.appendChild(kx);
     var bw = el("div"); bw.hidden = true;
-    bw.appendChild(el("p", "warn", t("exp.warn")));
+    var bwWarn = el("p", "warn", t("exp.warn"));
+    bw.appendChild(bwWarn);
     var ackL = el("label", "pv-check"), ack = el("input"); ack.type = "checkbox";
     ackL.appendChild(ack); ackL.appendChild(el("span", "", t("exp.ack")));
     bw.appendChild(ackL);
@@ -2062,7 +2296,9 @@
     d.body.appendChild(labelled(t("exp.master"), showable(master)));
     var err = d.error();
     var go = d.actions(t("d.cancel"), t("exp.go"), function (done) {
-      if (kind === "kdbx") {
+      var otpOnly = kind === "aegis" || kind === "2fas";
+      if (otpOnly && !PmOtp.codes(entries()).length) { err(t("exp.noCodes")); return done(false); }
+      if (kind === "kdbx" || kind === "aegis") {
         if (p1.value.length < 8) { err(t("create.short", { n: 8 })); return done(false); }
         if (p1.value !== p2.value) { err(t("create.mismatch")); return done(false); }
       } else if (!ack.checked) { err(t("exp.ack")); return done(false); }
@@ -2075,13 +2311,24 @@
           return saveFile(new Blob([PC.toBitwarden(list)], { type: "application/json" }),
                           "oros-passwords-" + stamp + ".json", "application/json", "json");
         }
+        if (kind === "2fas") {
+          return saveFile(new Blob([PmOtp.to2fas(list)], { type: "application/json" }),
+                          "oros-2fa-" + stamp + ".2fas", "application/json", "2fas");
+        }
+        if (kind === "aegis") {
+          return PmOtp.toAegis(list, p1.value, { scrypt: window.OrosPasswordsImport.scrypt }).then(function (text) {
+            p1.value = p2.value = "";
+            return saveFile(new Blob([text], { type: "application/json" }),
+                            "oros-2fa-aegis-" + stamp + ".json", "application/json", "json");
+          });
+        }
         return KX.write(list, p1.value).then(function (bytes) {
           p1.value = p2.value = "";
           return saveFile(new Blob([bytes], { type: "application/octet-stream" }),
                           "oros-passwords-" + stamp + ".kdbx", "application/octet-stream", "kdbx");
         });
       }).then(function (r) {
-        if (r && r.ok) toast(t("exp.done", { n: list.length }));
+        if (r && r.ok) toast(otpOnly ? t("exp.doneCodes", { n: PmOtp.codes(list).length }) : t("exp.done", { n: list.length }));
         done(true);
       }).catch(function (e) {
         go.textContent = t("exp.go");
