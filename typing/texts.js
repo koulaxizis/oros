@@ -80,9 +80,27 @@
          "war so schön, daß die Sonne selber, die doch so vieles schon gesehen hat, sich verwunderte, so oft sie ihr ins Gesicht schien." },
     { id: "de-loreley", l: "de", a: "Heinrich Heine", w: "Die Lore-Ley", y: 1824,
       t: "Ich weiß nicht, was soll es bedeuten, daß ich so traurig bin; ein Märchen aus alten Zeiten, das kommt mir nicht aus dem Sinn. " +
-         "Die Luft ist kühl und es dunkelt, und ruhig fließt der Rhein; der Gipfel des Berges funkelt im Abendsonnenschein." }
+         "Die Luft ist kühl und es dunkelt, und ruhig fließt der Rhein; der Gipfel des Berges funkelt im Abendsonnenschein." },
+    // Polytonic (wave 4): typed on the polytonic layout; yd is the date
+    // shown when the year alone would read oddly.
+    { id: "elp-odyssey", l: "elp", a: "Ὅμηρος", w: "Ὀδύσσεια", y: -700, yd: "8ος αἰ. π.Χ.",
+      t: "Ἄνδρα μοι ἔννεπε, Μοῦσα, πολύτροπον, ὃς μάλα πολλὰ πλάγχθη, ἐπεὶ Τροίης ἱερὸν πτολίεθρον ἔπερσε." },
+    { id: "elp-john", l: "elp", a: "Ἰωάννης", w: "Κατὰ Ἰωάννην", y: 100, yd: "1ος αἰ.",
+      t: "Ἐν ἀρχῇ ἦν ὁ λόγος, καὶ ὁ λόγος ἦν πρὸς τὸν θεόν, καὶ θεὸς ἦν ὁ λόγος. οὗτος ἦν ἐν ἀρχῇ πρὸς τὸν θεόν. " +
+         "ἐν αὐτῷ ζωὴ ἦν, καὶ ἡ ζωὴ ἦν τὸ φῶς τῶν ἀνθρώπων· καὶ τὸ φῶς ἐν τῇ σκοτίᾳ φαίνει, καὶ ἡ σκοτία αὐτὸ οὐ κατέλαβεν." },
+    { id: "elp-hymn", l: "elp", a: "Διονύσιος Σολωμός", w: "Ὕμνος εἰς τὴν Ἐλευθερίαν", y: 1823,
+      t: "Σὲ γνωρίζω ἀπὸ τὴν κόψι τοῦ σπαθιοῦ τὴν τρομερή, σὲ γνωρίζω ἀπὸ τὴν ὄψι, ποὺ μὲ βιὰ μετράει τὴ γῆ." }
   ];
-  function library(lay) { return LIB.filter(function (x) { return !lay || x.l === lay; }); }
+  // The passages for a layout: its own and those of its word language
+  // and family (Dvorak and Colemak show the English ones, polytonic the
+  // Greek ones and its own).
+  function library(lay) {
+    if (!lay) return LIB.slice();
+    var L = K.get(lay), ok = {};
+    ok[lay] = ok[L.words] = ok[L.base] = true;
+    if (L.lang === "en") ok.en = true;
+    return LIB.filter(function (x) { return ok[x.l]; });
+  }
   function libText(id) {
     for (var i = 0; i < LIB.length; i++) if (LIB[i].id === id) return LIB[i];
     return null;

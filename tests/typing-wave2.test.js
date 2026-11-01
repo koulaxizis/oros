@@ -26,7 +26,7 @@ test("library: every passage types on its own layout, with author, work and year
     assert.ok(!ids.has(x.id), "unique id " + x.id);
     ids.add(x.id);
     assert.ok(K.LAYOUT_IDS.includes(x.l));
-    assert.ok(x.a && x.w && x.y > 1700 && x.y < 1956, x.id + " is old enough to be public domain");
+    assert.ok(x.a && x.w && (x.y > 1700 || x.yd) && x.y < 1956, x.id + " is old enough to be public domain");
     const c = TX.clean(x.l, x.t);
     assert.equal(c.dropped, 0, x.id + " loses no character");
     for (const ch of Array.from(c.text)) assert.ok(K.strokes(x.l, ch), x.id + ": '" + ch + "' is typeable");
