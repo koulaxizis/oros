@@ -139,7 +139,7 @@ select.chip { padding: 6px 8px; max-width: 9.5em; }
 .ch.cur.err { background: rgba(224, 108, 117, .35); box-shadow: 0 3px 0 var(--danger); }
 .ch.sp.bad::after { content: ""; }
 #cap {
-  position: absolute; left: 0; top: 0; width: 1px; height: 1px;
+  position: fixed; left: 0; top: 0; width: 1px; height: 1px;
   opacity: 0; border: 0; padding: 0; resize: none; overflow: hidden; caret-color: transparent;
 }
 #focus-veil {
@@ -299,3 +299,45 @@ select.chip { padding: 6px 8px; max-width: 9.5em; }
 .legend .lg-w::before, .legend .lg-a::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 .legend .lg-w::before { background: var(--accent); }
 .legend .lg-a::before { background: var(--ok); border-radius: 50%; }
+
+/* ---------- Wave 3: kids mode, Letter rain, certificate, pet ---------- */
+.meter.m-kid { display: none; }
+html[data-kid="1"] .meter.m-kid { display: inline; }
+html[data-kid="1"] .meter.m-adult,
+html[data-kid="1"] #test-btn,
+html[data-kid="1"] .res-nums .n-wpm,
+html[data-kid="1"] .res-nums .n-time { display: none; }
+html[data-kid="1"] { --text-size: 32px; }
+html[data-kid="1"][data-fs="1"] { --text-size: 26px; }
+html[data-kid="1"][data-fs="3"] { --text-size: 40px; }
+html[data-kid="1"] #text-view { border-radius: 20px; border-width: 2px; }
+html[data-kid="1"] .key { border-radius: 12px; }
+html[data-kid="1"] .lesson { border-radius: 16px; }
+html[data-kid="1"] .l-stars { font-size: 17px; }
+html[data-kid="1"] .chip { border-radius: 14px; }
+.pet { text-align: center; font-style: italic; }
+
+#rain-field {
+  position: relative; margin-top: 10px; height: min(62vh, 520px); min-height: 260px; overflow: hidden;
+  border-radius: 12px; border: 1px solid var(--border); background: var(--panel-bg); cursor: text;
+}
+#rain-drops { position: absolute; inset: 0; }
+.drop {
+  position: absolute; left: 0; top: 0; min-width: 44px; height: 44px; padding: 0 8px;
+  display: flex; align-items: center; justify-content: center; border-radius: 22px;
+  background: var(--accent-soft); border: 2px solid var(--accent); color: var(--text);
+  font: 700 26px/1 ui-monospace, "Cascadia Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  will-change: transform;
+}
+.drop.pop { background: var(--ok); border-color: var(--ok); opacity: 0; transition: opacity .25s; }
+#rain-field.hurt { box-shadow: 0 0 0 3px var(--danger) inset; }
+.rain-veil {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 16px; text-align: center; background: rgba(0, 0, 0, .45); color: #fff;
+}
+.rain-veil .hint { color: #e8e2d2; }
+.rain-veil .big { font-size: 20px; font-weight: 700; }
+.lives { color: var(--danger); letter-spacing: 2px; font-size: 17px; }
+@media (prefers-reduced-motion: reduce) {
+  .drop.pop { opacity: 0; }
+}
