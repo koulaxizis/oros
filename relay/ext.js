@@ -14,7 +14,7 @@
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
-//           POST /v1 { op: "ext", p: "trello", key, token, reqs: [...] }
+//           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
 //   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key),
@@ -23,6 +23,9 @@
 //   Stripe https://api.stripe.com/v1<path> (Bearer, restricted key, read-only)
 //   Enable Banking https://api.enablebanking.com<path> (Bearer JWT signed on the
 //   person's device with their own application's key, read-only account information)
+//   PayPal https://api-m.paypal.com<path> (Bearer token the relay gets for this call
+//   from the person's own REST app: key = Client ID, token = Secret; read-only
+//   transaction search)
 //   Todoist https://api.todoist.com/api/v1<path> (Bearer, read-only: projects, open tasks)
 //   Trello https://api.trello.com/1<path> (OAuth header: key + token), GitHub
 //   https://api.github.com<path> (Bearer): read-only, a board / a repository's issues /
@@ -167,6 +170,11 @@ const EB_UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const EB_CTY = /^[A-Z]{2}$/, EB_PSU = /^(personal|business)$/, EB_SVC = /^AIS$/, EB_TST = /^(BOOK|PDNG)$/,
       EB_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, EB_CK = /^([A-Za-z0-9._~-]|%2B|%2F|%3D){1,1000}$/;
 const EB_REDIRECTS = ["https://useoros.online/budget/bankback.html"];
+// PayPal (Budget BK-3): same shapes as links/core.js
+const PP_KEY = /^[A-Za-z0-9_-]{40,128}$/,
+      PP_DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-0000$/,
+      PP_FIELDS = /^(all|transaction_info,payer_info,cart_info)$/, PP_SIZE = /^([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|500)$/,
+      PP_YN = /^(Y|N)$/, PP_TOKEN = /^[A-Za-z0-9._~+\/=-]{20,4096}$/;
 function okEbVal(kind, v) {
   const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
   if (kind === "ebacc") return obj(v) && Object.keys(v).length === 1 && typeof v.valid_until === "string" &&
@@ -315,6 +323,32 @@ export const PLATFORMS = {
       ["GET", new RegExp("^\\/sessions\\/" + EB_UUID + "$"), null, null],
       ["GET", new RegExp("^\\/accounts\\/" + EB_UUID + "\\/balances$"), null, null],
       ["GET", new RegExp("^\\/accounts\\/" + EB_UUID + "\\/transactions$"), { date_from: EB_DAY, date_to: EB_DAY, continuation_key: EB_CK, transaction_status: EB_TST }, null]
+    ]
+  },
+  // PayPal Business (Budget BK-3), read-only: the person's own REST app.
+  // PayPal hands a token only for the Client ID + Secret (client
+  // credentials), so the relay asks for one at the start of each call and
+  // keeps it nowhere; the token can only reach the allowlist below.
+  paypal: {
+    root: "",
+    host: "api-m.paypal.com",
+    keys: { key: PP_KEY, token: PP_KEY },
+    tokenOf: async (b, fetchFn, signal) => {
+      const res = await fetchFn("https://api-m.paypal.com/v1/oauth2/token", {
+        method: "POST", redirect: "manual", signal,
+        headers: { Authorization: "Basic " + btoa(b.key + ":" + b.token), "Content-Type": "application/x-www-form-urlencoded",
+                   Accept: "application/json", "User-Agent": "orOS-Connect/1.0 (+https://useoros.online)" },
+        body: "grant_type=client_credentials"
+      });
+      const text = res.status === 200 ? await readCapped(res, 16384) : null;
+      if (text === null) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status === 200 ? 502 : res.status }; }
+      let j = null;
+      try { j = JSON.parse(text); } catch (e) {}
+      const tok = j && typeof j.access_token === "string" && PP_TOKEN.test(j.access_token) ? j.access_token : "";
+      return tok ? { auth: ["Authorization", "Bearer " + tok] } : { status: 502 };
+    },
+    allow: [
+      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: NUM, balance_affecting_records_only: PP_YN }, null]
     ]
   },
   // Payments (wave 4B), read-only: a restricted key (rk_) only
@@ -609,8 +643,19 @@ async function readCapped(res, max) {
 export async function runExt(b, fetchFn, now) {
   now = now || (() => Date.now());
   const pl = PLATFORMS[b.p];
-  const auth = pl.auth(b);
   const start = now();
+  let auth;
+  if (pl.tokenOf) {
+    // a token for this call only (PayPal): no token, no request
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), lim(b.p, "timeout"));
+    let tk;
+    try { tk = await pl.tokenOf(b, fetchFn, ctl.signal); }
+    catch (e) { tk = { err: ctl.signal.aborted ? "timeout" : "network" }; }
+    finally { clearTimeout(timer); }
+    if (!tk.auth) return { res: b.reqs.map(() => (tk.status ? { status: tk.status, body: "" } : { err: tk.err || "network" })) };
+    auth = tk.auth;
+  } else auth = pl.auth(b);
   const out = new Array(b.reqs.length);
   let outBytes = 0, next = 0;
   async function one(i) {

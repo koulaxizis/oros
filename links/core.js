@@ -170,6 +170,24 @@
       probe: "/application",
       ownUi: "budget"
     },
+    // PayPal Business (Budget BK-3): the person's OWN REST app on
+    // developer.paypal.com (Client ID + Secret, live), with only the
+    // "Transaction search" feature needed. orOS reads the transactions;
+    // the relay exchanges the two keys for a token on each call (PayPal
+    // gives no token to a browser page), so always through the relay.
+    paypal: {
+      name: "PayPal",
+      site: false,
+      host: "api-m.paypal.com",
+      root: "",
+      keys: [{ k: "key", re: /^[A-Za-z0-9_-]{40,128}$/ }, { k: "token", re: /^[A-Za-z0-9_-]{40,128}$/ }],
+      apps: ["budget"],
+      // the last day (a fixed path would fall outside PayPal's 3 years)
+      probe: function (now) {
+        return { m: "GET", path: "/v1/reporting/transactions?start_date=" + ppStamp(now - 86400000) + "&end_date=" + ppStamp(now - 60000) + "&page_size=1&page=1" };
+      },
+      relayOnly: true
+    },
     // Invoice Ninja (wave 4C): the person's own install or invoicing.co.
     // Clients into CRM, payments into Budget. Read-only.
     ininja: {
@@ -572,6 +590,11 @@
       EB_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, EB_CK = /^([A-Za-z0-9._~-]|%2B|%2F|%3D){1,1000}$/;
   // The only addresses a bank may send the person back to.
   var EB_REDIRECTS = ["https://useoros.online/budget/bankback.html"];
+  // PayPal (Budget BK-3): Transaction Search, ≤ 31 days per request
+  var PP_DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}-0000$/,
+      PP_FIELDS = /^(all|transaction_info,payer_info,cart_info)$/, PP_SIZE = /^([1-9]|[1-9][0-9]|[1-4][0-9][0-9]|500)$/,
+      PP_YN = /^(Y|N)$/;
+  function ppStamp(ms) { return new Date(ms).toISOString().slice(0, 19) + "-0000"; }
   function okEbVal(kind, v) {
     if (kind === "ebacc") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === 1 &&
       typeof v.valid_until === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{1,6})?(Z|[+-][0-9]{2}:[0-9]{2})$/.test(v.valid_until);
@@ -647,6 +670,10 @@
     stripe: [
       ["GET", /^\/balance$/, null, null],
       ["GET", /^\/balance_transactions$/, { limit: LIM100, starting_after: TXN, "created[gte]": UNIX, "created[lt]": UNIX }, null]
+    ],
+    // PayPal (Budget BK-3): read-only transaction search
+    paypal: [
+      ["GET", /^\/v1\/reporting\/transactions$/, { start_date: PP_DT, end_date: PP_DT, fields: PP_FIELDS, page_size: PP_SIZE, page: NUM, balance_affecting_records_only: PP_YN }, null]
     ],
     // Enable Banking (Budget BK-2): read-only account information
     ebank: [
@@ -828,11 +855,13 @@
   function probeReq(p) {
     var pr = PLATFORMS[p] && PLATFORMS[p].probe;
     if (typeof pr === "string") return { m: "GET", path: pr };
+    if (typeof pr === "function") return pr(Date.now());
     return pr ? JSON.parse(JSON.stringify(pr)) : null;
   }
 
   var api = {
     EB_REDIRECTS: EB_REDIRECTS,
+    ppStamp: ppStamp,
     VER: VER, ID_RE: ID_RE, PLATFORMS: PLATFORMS, PLATFORM_IDS: PLATFORM_IDS, MAX_ACCTS: MAX_ACCTS,
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,

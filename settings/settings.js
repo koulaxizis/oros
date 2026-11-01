@@ -2147,7 +2147,7 @@
   // monogram each (no third-party logos), a search box and how many
   // accounts of that service this orOS already has.
   var SVC_GROUPS = [
-    { id: "shop", ps: ["woo", "shopify", "tol", "ininja", "stripe", "ebank"] },
+    { id: "shop", ps: ["woo", "shopify", "tol", "ininja", "stripe", "paypal", "ebank"] },
     { id: "mail", ps: ["mlite", "mchimp", "brevo"] },
     { id: "crm", ps: ["hubspot", "pdrive", "odoo"] },
     { id: "work", ps: ["todoist", "trello", "github", "notion", "raindrop"] }
@@ -2155,8 +2155,12 @@
   // monogram per service; its brand colour is in settings.css (.svc-mark.m-<id>)
   var SVC_MARK = {
     woo: "Wo", shopify: "Sh", tol: "t", ininja: "IN", stripe: "S", mlite: "ML", mchimp: "M", brevo: "B",
-    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R", ebank: "EB"
+    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R", ebank: "EB", paypal: "PP"
   };
+  // platforms with a second secret (Trello's token, PayPal's Secret)
+  function twoKeys(p) { return p === "trello" || p === "paypal"; }
+  // a platform's own name for a key field ("Client ID"), else the plain one
+  function keyLabel(p, k) { var s = t("v." + k + "." + p); return s === "v." + k + "." + p ? t("v." + k) : s; }
   function svcMark(p, name) {
     var m = SVC_MARK[p];
     var b = el("span", "svc-mark " + (m ? "m-" + p : "plain"), m || String(name || p).charAt(0).toUpperCase());
@@ -2278,8 +2282,8 @@
         form.appendChild(labelled(t("v.vat"), "v-vat", vin));
       }
       form.appendChild(el("div", "hint", t("v.keys.hint." + f.p)));
-      form.appendChild(labelled(t("v.key"), "v-key", textInput("v-key", f.key, "", function (v) { f.key = v; }, "password")));
-      if (f.p === "trello") form.appendChild(labelled(t("v.token"), "v-token", textInput("v-token", f.token || "", "", function (v) { f.token = v; }, "password")));
+      form.appendChild(labelled(keyLabel(f.p, "key"), "v-key", textInput("v-key", f.key, "", function (v) { f.key = v; }, "password")));
+      if (twoKeys(f.p)) form.appendChild(labelled(keyLabel(f.p, "token"), "v-token", textInput("v-token", f.token || "", "", function (v) { f.token = v; }, "password")));
     } else {
       form.appendChild(labelled(t("v.site"), "v-site", textInput("v-site", f.site, t("v.site.ph"), function (v) { f.site = v; }, "url")));
       form.appendChild(el("div", "hint", t("v.keys.hint")));
@@ -2299,7 +2303,7 @@
       f.err = "";
       render();
       var o = f.p === "tol" ? { p: "tol", name: f.name, env: f.env, vat: f.vat, keys: { key: f.key } }
-            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, db: hasDb ? f.db || "" : undefined, keys: f.p === "trello" ? { key: f.key, token: f.token || "" } : { key: f.key } }
+            : f.p !== "woo" ? { p: f.p, name: f.name, site: isSite ? f.site : undefined, db: hasDb ? f.db || "" : undefined, keys: twoKeys(f.p) ? { key: f.key, token: f.token || "" } : { key: f.key } }
             : { p: f.p, name: f.name, site: f.site, keys: { ck: f.ck, cs: f.cs } };
       Lk.add(o).then(function (id) {
         svc.add = null;
@@ -2367,8 +2371,8 @@
       kf.setAttribute("autocomplete", "off");
       if (a.p !== "woo") {
         kf.appendChild(el("div", "hint", t("v.keys.hint." + a.p)));
-        kf.appendChild(labelled(t("v.key"), "v-kck", textInput("v-kck", svc.keyForm.key, "", function (v) { svc.keyForm.key = v; }, "password")));
-        if (a.p === "trello") kf.appendChild(labelled(t("v.token"), "v-ktok", textInput("v-ktok", svc.keyForm.token || "", "", function (v) { svc.keyForm.token = v; }, "password")));
+        kf.appendChild(labelled(keyLabel(a.p, "key"), "v-kck", textInput("v-kck", svc.keyForm.key, "", function (v) { svc.keyForm.key = v; }, "password")));
+        if (twoKeys(a.p)) kf.appendChild(labelled(keyLabel(a.p, "token"), "v-ktok", textInput("v-ktok", svc.keyForm.token || "", "", function (v) { svc.keyForm.token = v; }, "password")));
       } else {
         kf.appendChild(el("div", "hint", t("v.keys.hint")));
         kf.appendChild(labelled(t("v.ck"), "v-kck", textInput("v-kck", svc.keyForm.ck, "ck_…", function (v) { svc.keyForm.ck = v; }, "password")));
@@ -2380,7 +2384,7 @@
       kf.appendChild(actions(button(t("v.cancel"), "v.k.cancel", function () { svc.keysFor = null; svc.keyForm = { ck: "", cs: "", key: "", token: "" }; render(); }), sk));
       kf.addEventListener("submit", function (e) {
         e.preventDefault();
-        Lk.setKeys(a.id, a.p === "trello" ? { key: svc.keyForm.key, token: svc.keyForm.token || "" } : a.p !== "woo" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
+        Lk.setKeys(a.id, twoKeys(a.p) ? { key: svc.keyForm.key, token: svc.keyForm.token || "" } : a.p !== "woo" ? { key: svc.keyForm.key } : { ck: svc.keyForm.ck, cs: svc.keyForm.cs }).then(function () {
           svc.keysFor = null;
           svc.keyForm = { ck: "", cs: "", key: "", token: "" };
           svc.has[a.id] = true;

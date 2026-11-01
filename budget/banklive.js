@@ -31,7 +31,7 @@
 
   var S = {
     en: {
-      lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking). orOS only reads them and never makes payments.",
+      lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking), and so can PayPal Business. orOS only reads them and never makes payments.",
       lvNoShell: "Open Budget inside orOS to connect a bank.",
       appT: "Your Enable Banking application", appNone: "Once: create a free account at enablebanking.com, register a Production application with this redirect URL, keep the .pem key file it downloads, and press “Activate by linking accounts” with your own accounts (not “Request activation”).",
       appLink: "Open Enable Banking", appId: "Application ID", appId_ph: "e.g. 1a2b3c4d-…", keyFile: "Private key (.pem)", keyPick: "Choose the .pem file",
@@ -51,10 +51,12 @@
       err_busy: "The bank asks to wait a little (too many requests).", err_keys: "No key on this device.",
       err_consent: "The bank no longer gives access: renew it.", err_state: "That answer doesn't belong to a request from this device.",
       err_cancel: "The bank connection was cancelled.", err_other: "The bank or Enable Banking didn't answer. Try again later.",
+      ppT: "PayPal Business", ppNone: "Connect PayPal Business in Settings › Connected services first (Client ID and Secret of your own PayPal app). Then add it here.",
+      ppAll: "Your PayPal accounts are connected above.", ppAdd: "Add",
       close: "Close", cancel: "Cancel"
     },
     el: {
-      lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking). Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές.",
+      lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking), και το ίδιο το PayPal Business. Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές.",
       lvNoShell: "Άνοιξε την εφαρμογή μέσα στο orOS για να συνδέσεις τράπεζα.",
       appT: "Η εφαρμογή σου στο Enable Banking", appNone: "Μία φορά: φτιάξε δωρεάν λογαριασμό στο enablebanking.com, δήλωσε μια εφαρμογή Production με αυτό το Redirect URL, κράτα το αρχείο κλειδιού .pem που κατεβαίνει και πάτα «Activate by linking accounts» με τους δικούς σου λογαριασμούς (όχι «Request activation»).",
       appLink: "Άνοιγμα Enable Banking", appId: "Application ID", appId_ph: "π.χ. 1a2b3c4d-…", keyFile: "Ιδιωτικό κλειδί (.pem)", keyPick: "Διάλεξε το αρχείο .pem",
@@ -74,6 +76,8 @@
       err_busy: "Η τράπεζα ζητά λίγη αναμονή (πολλά αιτήματα).", err_keys: "Δεν υπάρχει κλειδί σε αυτή τη συσκευή.",
       err_consent: "Η τράπεζα δεν δίνει πια πρόσβαση: ανανέωσέ τη.", err_state: "Αυτή η απάντηση δεν ανήκει σε αίτημα αυτής της συσκευής.",
       err_cancel: "Η σύνδεση με την τράπεζα ακυρώθηκε.", err_other: "Η τράπεζα ή το Enable Banking δεν απάντησε. Δοκίμασε ξανά αργότερα.",
+      ppT: "PayPal Business", ppNone: "Σύνδεσε πρώτα το PayPal Business στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες (Client ID και Secret της δικής σου εφαρμογής PayPal). Μετά πρόσθεσέ το εδώ.",
+      ppAll: "Οι λογαριασμοί σου PayPal είναι συνδεδεμένοι παραπάνω.", ppAdd: "Προσθήκη",
       close: "Κλείσιμο", cancel: "Άκυρο"
     }
   };
@@ -126,6 +130,23 @@
     }
     return next("");
   }
+  // PayPal Business (BK-3): every window since the fetch point, every page
+  function fetchPayPal(row) {
+    var wins = K.ppWindows(K.fromDate(row, Date.now()), Date.now()), all = [];
+    return wins.reduce(function (p, w) {
+      return p.then(function () {
+        function page(n) {
+          return ask(row.la, { m: "GET", path: K.ppPath(w, n) }).then(function (j) {
+            var pg = K.ppPage(j);
+            all = all.concat(pg.list);
+            if (n < pg.pages) return page(n + 1);
+          });
+        }
+        return page(1);
+      });
+    }, Promise.resolve()).then(function () { return K.ppItems(all, A.cur()); });
+  }
+  function isPP(r) { return r.src === "pp"; }
   // → Promise<{ n, errs: { id: code } }>
   function refresh(auto) {
     if (busy || !links()) return Promise.resolve({ n: 0, errs: {} });
@@ -135,14 +156,16 @@
     var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {};
     var tx = D.tx.slice();
     return checkKeys().then(function (has) {
-      if (!has) { rows.forEach(function (r) { errs[r.id] = "keys"; }); return; }
       return rows.reduce(function (p, row) {
         return p.then(function () {
-          if (row.vu && row.vu < now) { errs[row.id] = "consent"; return; }
-          return fetchAll(row).then(function (its) {
+          var pp = isPP(row);
+          if (!pp && !has) { errs[row.id] = "keys"; return; }
+          if (!pp && row.vu && row.vu < now) { errs[row.id] = "consent"; return; }
+          return (pp ? fetchPayPal(row) : fetchAll(row)).then(function (its) {
             K.uniqueFits(its);
-            var plan = B.plan(its, { tx: tx, tombs: D.tombs, ac: row.ac, cur: A.cur(), rules: D.rule, xfer: D.xfer });
-            B.entries(plan, row.ac).forEach(function (x) {
+            // a PayPal reading is a PayPal file: its bank twins ("PAYPAL *…") are found
+            var plan = B.plan(its, { tx: tx, tombs: D.tombs, ac: row.ac, cur: A.cur(), rules: D.rule, xfer: D.xfer, pp: pp });
+            B.entries(plan, row.ac, pp).forEach(function (x) {
               if (seenIds[x.id]) return;
               seenIds[x.id] = 1;
               add.push(x);
@@ -152,7 +175,7 @@
             if (lb && lb > (row.lf || "")) lfs[row.id] = lb;
           }, function (e) {
             var c = code(e);
-            errs[row.id] = e && (e.status === 401 || e.status === 403 || e.status === 422) && c !== "keys" ? "consent" : c;
+            errs[row.id] = !pp && e && (e.status === 401 || e.status === 403 || e.status === 422) && c !== "keys" ? "consent" : c;
           });
         });
       }, Promise.resolve());
@@ -238,6 +261,7 @@
     A.showDialog(dlg);
   }
   function rowName(r) {
+    if (isPP(r)) return "PayPal" + (r.nm && r.nm !== "PayPal" ? " · " + r.nm : "");
     return r.bk + (r.nm ? " · " + r.nm : "") + (r.ib ? " ··" + r.ib : "") + (r.cu ? " (" + r.cu + ")" : "");
   }
   function statusText(r) {
@@ -354,7 +378,7 @@
       var bot = el("div", "bk-bot");
       bot.appendChild(el("span", "dlg-lbl", t("fills")));
       bot.appendChild(s);
-      bot.appendChild(A.button(t("renew"), "mini", function () { connect({ name: r.bk, country: r.cty, days: 180 }, r.ps, r.la); }));
+      if (!isPP(r)) bot.appendChild(A.button(t("renew"), "mini", function () { connect({ name: r.bk, country: r.cty, days: 180 }, r.ps, r.la); }));
       bot.appendChild(A.button(t("remove"), "mini danger", function () {
         if (!root.confirm(t("removeQ", { n: rowName(r) }))) return;
         A.dropBnk(r.id);
@@ -440,6 +464,39 @@
     box.appendChild(msg);
     return box;
   }
+  // PayPal Business: its accounts in Connected services, each added once
+  function ppSection(dlg) {
+    var Lk = links();
+    var box = el("section", "bk-sec");
+    box.appendChild(el("h3", "bk-h", t("ppT")));
+    var accts = Lk.list("paypal"), rows = live();
+    if (!accts.length) {
+      box.appendChild(el("p", "hint", t("ppNone")));
+      var acts0 = el("div", "dlg-actions");
+      acts0.appendChild(A.button(t("appSettings"), "", function () {
+        dlg.close();
+        try { root.parent.__orosOpenAt("settings", { section: "services" }); } catch (e) {}
+      }));
+      box.appendChild(acts0);
+      return box;
+    }
+    var free = accts.filter(function (a) { return !rows.some(function (r) { return isPP(r) && r.la === a.id; }); });
+    if (!free.length) { box.appendChild(el("p", "hint", t("ppAll"))); return box; }
+    var ul = el("ul", "day-list bk-links");
+    free.forEach(function (a) {
+      var li = el("li", "bk-link-row");
+      li.appendChild(el("div", "bk-text", a.name));
+      li.appendChild(A.button(t("ppAdd"), "primary mini", function () {
+        var row = { id: A.newId(), ac: "", bk: "PayPal", la: a.id, lf: "", nm: B.clean(a.name, 40), src: "pp" };
+        A.saveBnk(row);
+        connecting = true;
+        mapDialog([row.id]);
+      }));
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    return box;
+  }
   function open() {
     var dlg = A.makeDialog("bd-banks", t("lvTitle"));
     dlg.classList.add("wide");
@@ -463,8 +520,9 @@
       if (!Lk) { body.appendChild(el("p", "", t("lvNoShell"))); nowB.hidden = true; return; }
       body.appendChild(appSection(dlg, function () { checkKeys().then(draw); }));
       body.appendChild(accsSection(draw));
-      nowB.hidden = !live().length || !keysHere;
+      nowB.hidden = !live().length;
       if (app() && keysHere) body.appendChild(connSection());
+      body.appendChild(ppSection(dlg));
     }
     checkKeys().then(draw, draw);
     A.showDialog(dlg);

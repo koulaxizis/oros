@@ -16,6 +16,7 @@
 //      a statement file
 //   5. Links (Budget collection "bnk"): one row per bank account
 //      the person connected, the window to fetch, consent days left
+//   6. PayPal Business (BK-3): Transaction Search windows and items
 // Everything from the bank is data: shown with textContent only.
 // ============================================================
 (function (root) {
@@ -201,11 +202,109 @@
     return hit;
   }
 
+  // ---------- 6. PayPal (BK-3) ----------
+  // Transaction Search through the person's own REST app (Connected
+  // services "paypal"): at most 31 days per request, 500 per page. The
+  // items are the same as from PayPal's activity file (bank.js
+  // paypalItems): FITID = transaction id, so the file and the live
+  // reading land on the same ids and never double.
+  var PP_DAYS = 31, PP_PAGE = 500, PP_MAX_PAGES = 10;
+  function ppStamp(ms) { return new Date(ms).toISOString().slice(0, 19) + "-0000"; }
+  // [from day 00:00 UTC, now - 1 min] cut into windows of ≤ 31 days
+  function ppWindows(fromYmd, now) {
+    var start = msOfYmd(fromYmd), end = now - 60000, out = [];
+    if (!isFinite(start) || start >= end) return out;
+    while (start < end && out.length < 12) {
+      var e = Math.min(end, start + PP_DAYS * DAY - 1000);
+      out.push({ s: ppStamp(start), e: ppStamp(e) });
+      start = e + 1000;
+    }
+    return out;
+  }
+  function ppPath(w, page) {
+    return "/v1/reporting/transactions?start_date=" + w.s + "&end_date=" + w.e +
+           "&fields=transaction_info,payer_info,cart_info&page_size=" + PP_PAGE + "&page=" + (page || 1);
+  }
+  // one page → { list: transaction_details, pages: total_pages }
+  function ppPage(json) {
+    var list = json && Array.isArray(json.transaction_details) ? json.transaction_details : [];
+    var pages = json && typeof json.total_pages === "number" && json.total_pages > 0 ? Math.min(json.total_pages, PP_MAX_PAGES) : 1;
+    return { list: list, pages: pages };
+  }
+  // signed money string → cents (null when not money)
+  function signedCents(v) {
+    var s = String(v == null ? "" : v).trim();
+    if (!/^-?\d{1,12}(\.\d{1,6})?$/.test(s)) return null;
+    var c = B.parseMoney(s.replace(/^-/, ""), ".");
+    return c === null ? null : (s.charAt(0) === "-" ? -Math.abs(c) : Math.abs(c));
+  }
+  // PayPal's event codes (T + group + kind): what the activity file
+  // tells by its Type column
+  function ppKind(code) {
+    var m = /^T(\d{2})\d{2}$/.exec(code || "");
+    if (!m) return "";
+    var g = m[1];
+    if (g === "02") return "conv";                                   // currency conversion
+    if (g === "13" || g === "15" || g === "21" || g === "98" ||        // authorisations, holds, reserves, display only
+        code === "T1105" || code === "T1110" || code === "T1111") return "memo";
+    if (g === "03" || g === "04" || g === "06" || g === "07" || g === "17") return "xfer";   // own bank / card in and out
+    return "";
+  }
+  function ppName(p) {
+    if (!p || typeof p !== "object") return "";
+    var n = p.payer_name && typeof p.payer_name === "object" ? p.payer_name : {};
+    return clean(str(n.alternate_full_name) || [str(n.given_name), str(n.surname)].filter(Boolean).join(" ") || str(p.payer_name && p.payer_name.full_name), 80);
+  }
+  // all transaction_details of a reading → items for plan()
+  function ppItems(list, home) {
+    var conv = {}, out = [];
+    (list || []).forEach(function (x) {
+      var ti = x && x.transaction_info;
+      if (!ti || ppKind(str(ti.transaction_event_code)) !== "conv") return;
+      var ref = str(ti.paypal_reference_id), amt = ti.transaction_amount || {};
+      var cc = str(amt.currency_code).toUpperCase(), c = signedCents(amt.value);
+      if (!ref || c === null) return;
+      (conv[ref] = conv[ref] || {})[cc] = (conv[ref][cc] || 0) + c;
+    });
+    (list || []).forEach(function (x, i) {
+      var ti = x && x.transaction_info;
+      if (!ti || typeof ti !== "object") return;
+      var kind = ppKind(str(ti.transaction_event_code));
+      if (kind === "conv") return;                                      // folded into its payment
+      var amt = ti.transaction_amount && typeof ti.transaction_amount === "object" ? ti.transaction_amount : {};
+      var gross = signedCents(amt.value), fee = ti.fee_amount ? signedCents(ti.fee_amount.value) : 0;
+      var net = gross === null ? null : gross + (fee || 0);
+      var id = clean(str(ti.transaction_id), 80), cur = str(amt.currency_code).toUpperCase();
+      var item = "";
+      var cart = x.cart_info && Array.isArray(x.cart_info.item_details) ? x.cart_info.item_details : [];
+      if (cart[0] && typeof cart[0] === "object") item = clean(str(cart[0].item_name), 80);
+      var name = ppName(x.payer_info);
+      var text = [name, item && B.fold(item) !== B.fold(name) ? item : ""].filter(Boolean).join(" · ") ||
+                 clean(str(ti.transaction_subject), 140) || clean(str(ti.transaction_note), 140) || str(ti.transaction_event_code);
+      var d = str(ti.transaction_initiation_date).slice(0, 10);
+      var it = { line: i + 1, d: /^\d{4}-\d{2}-\d{2}$/.test(d) ? B.parseDate(d, "ymd") : null, amt: net, text: clean(text), fit: id,
+                 cur: /^[A-Z]{3}$/.test(cur) ? cur : "" };
+      var st = str(ti.transaction_status);
+      if (!it.d) it.err = "date";
+      else if (it.amt === null) it.err = "amount";
+      else if (kind === "memo") it.err = "memo";
+      else if (st && st !== "S") it.err = "pending";
+      else if (kind === "xfer") it.err = "xfer";
+      else if (home && it.cur && it.cur !== home && conv[id] && conv[id][home]) {
+        it.amt = conv[id][home];                                         // what left the account in the Budget currency
+        it.cur = home;
+      }
+      out.push(it);
+    });
+    return out;
+  }
+
   var api = {
     COUNTRIES: COUNTRIES, REDIRECT: REDIRECT, REFRESH_MS: REFRESH_MS, WARN_DAYS: WARN_DAYS, MAX_PAGES: MAX_PAGES,
     banks: banks, newState: newState, authBody: authBody, session: session, tail: tail,
     items: items, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
-    daysLeft: daysLeft, needsRenew: needsRenew, due: due, matchLink: matchLink, ymdOf: ymdOf
+    daysLeft: daysLeft, needsRenew: needsRenew, due: due, matchLink: matchLink, ymdOf: ymdOf,
+    PP_PAGE: PP_PAGE, ppStamp: ppStamp, ppWindows: ppWindows, ppPath: ppPath, ppPage: ppPage, ppKind: ppKind, ppItems: ppItems
   };
   if (NODE) module.exports = api;
   else root.OrosBudgetBankApi = api;

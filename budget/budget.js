@@ -699,8 +699,14 @@
   var EB_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   function normBnk(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
-        typeof x.sid !== "string" || !EB_UUID.test(x.sid) || typeof x.uid !== "string" || !EB_UUID.test(x.uid) ||
         typeof x.la !== "string" || !/^[a-z0-9]{8,24}$/.test(x.la)) return null;
+    // PayPal Business (BK-3): a Connected services account, no bank session
+    if (x.src === "pp") {
+      return withExtras({ id: x.id, m: x.m,
+        ac: typeof x.ac === "string" && ID_RE.test(x.ac) ? x.ac : "",
+        bk: "PayPal", la: x.la, lf: parseYmd(x.lf) ? x.lf : "", nm: normText(x.nm, 40), src: "pp" }, x);
+    }
+    if (typeof x.sid !== "string" || !EB_UUID.test(x.sid) || typeof x.uid !== "string" || !EB_UUID.test(x.uid)) return null;
     var bk = normText(x.bk, 120);
     if (!bk || typeof x.cty !== "string" || !/^[A-Z]{2}$/.test(x.cty)) return null;
     return withExtras({ id: x.id, m: x.m,
