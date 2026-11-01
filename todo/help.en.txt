@@ -112,6 +112,16 @@ Your lists, tasks (with priorities and subtasks), labels and saved filters sync 
 
 To-Do has no export of its own; use the orOS [backup](help:t/backup) to keep a copy.
 
+## Your own task server (CalDAV)
+If your tasks live on your own server (Nextcloud Tasks, Radicale, Baïkal, mailbox.org, Fastmail, iCloud Reminders with an app password…), connect it once in [Settings](app:settings) › `Sync` › `Calendars and contacts`. Then open a list's settings (the pencil on its tab or the three dots): `Server task list (CalDAV)` lists the server's task lists. Choose one and tap `Link`: orOS first shows how many tasks would come down, how many would go up and how many are already here, and nothing is written until you tap `Link` again. From then on that list and the server's task list agree both ways, so your phone (DAVx5 with Tasks.org or jtx Board), Thunderbird and the server's own page see the same tasks.
+
+- A task's title, notes, due date, priority, tick, repeat and labels go both ways. Subtasks go too: on the server each one is a task of its own that names its task.
+- A task on the server with something orOS has no place for (a time of day, an alarm, a start date, other people) keeps it: orOS changes only what you changed here. A task orOS cannot show exactly (a repeat with an end or on several days, for example) is read-only here, with a note in its window; change it on the server.
+- A child task on the server that has its own date, priority, notes or labels is a task of the list here, not a subtask.
+- When a task changed on both sides since the last sync, the newer change wins and the other is kept as a task marked "(conflict)".
+- A task is deleted on one side only when it was in sync before. Many deletions at once (more than 50, or 5 and more that are over a fifth of the list) wait for you: `Delete them` or `Bring them back`.
+- It syncs while To-Do is open: when it opens, every 5 minutes, a few seconds after a change, and with `Sync now`. `Unlink` stops it; the tasks stay in both places. Lists shared with a household can't be linked.
+
 ## Keyboard shortcuts
 - [[Enter]] in the add box adds the task; in `New subtask…` it adds the step.
 - [[Esc]] closes the quick menu, the sort or label filter menu, the open window, or ends a selection.
@@ -126,3 +136,4 @@ To-Do has no export of its own; use the orOS [backup](help:t/backup) to keep a c
 - You can't drag tasks while searching, in a smart list or saved filter, or while a list is sorted by priority or date. Subtasks are reordered with the arrows, not by dragging.
 - Subtasks have no due dates, priorities or subtasks of their own, and don't show in Calendar or Today. A task holds up to 100.
 - A device still on an older orOS version shows a task moved elsewhere in both lists until it updates.
+- A server task list syncs only while To-Do is open, and with one list here. Repeats with an end, on several days or by the day of the month are read-only, and a subtask on the server keeps only its title and tick here.

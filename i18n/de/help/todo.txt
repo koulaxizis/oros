@@ -112,6 +112,16 @@ Deine Listen, Aufgaben (mit Prioritäten und Unteraufgaben), Labels und gespeich
 
 Aufgaben hat keinen eigenen Export; nutze die orOS-[Sicherung](help:t/backup), um eine Kopie zu behalten.
 
+## Dein eigener Aufgaben-Server (CalDAV)
+Wenn deine Aufgaben auf deinem eigenen Server liegen (Nextcloud Tasks, Radicale, Baïkal, mailbox.org, Fastmail, iCloud-Erinnerungen mit App-Passwort…), verbinde ihn einmal unter [Einstellungen](app:settings) › `Synchronisierung` › `Kalender und Kontakte`. Öffne dann die Einstellungen einer Liste (der Stift auf ihrem Tab oder die drei Punkte): `Server-Aufgabenliste (CalDAV)` zeigt die Aufgabenlisten des Servers. Wähle eine und tippe auf `Verknüpfen`: orOS zeigt zuerst, wie viele Aufgaben herunterkommen, wie viele hochgehen und wie viele schon hier sind, und es wird nichts geschrieben, bis du noch einmal auf `Verknüpfen` tippst. Danach stimmen die Liste und die Aufgabenliste des Servers in beide Richtungen überein, sodass dein Handy (DAVx5 mit Tasks.org oder jtx Board), Thunderbird und die Seite des Servers dieselben Aufgaben sehen.
+
+- Titel, Notizen, Fälligkeit, Priorität, Haken, Wiederholung und Labels einer Aufgabe gehen in beide Richtungen. Unteraufgaben auch: auf dem Server ist jede eine eigene Aufgabe, die ihre Aufgabe nennt.
+- Eine Aufgabe auf dem Server mit etwas, wofür orOS keinen Platz hat (eine Uhrzeit, eine Erinnerung, ein Startdatum, andere Personen), behält es: orOS ändert nur, was du hier geändert hast. Eine Aufgabe, die orOS nicht genau zeigen kann (etwa eine Wiederholung mit Ende oder an mehreren Tagen), ist hier schreibgeschützt, mit einem Hinweis in ihrem Fenster; ändere sie auf dem Server.
+- Eine untergeordnete Aufgabe auf dem Server mit eigener Fälligkeit, Priorität, Notizen oder Labels ist hier eine Aufgabe der Liste, keine Unteraufgabe.
+- Wurde eine Aufgabe seit dem letzten Abgleich auf beiden Seiten geändert, gewinnt die neuere Änderung und die andere bleibt als Aufgabe mit dem Vermerk „(Konflikt)“.
+- Eine Aufgabe wird auf einer Seite nur gelöscht, wenn sie vorher abgeglichen war. Viele Löschungen auf einmal (mehr als 50, oder 5 und mehr, die über ein Fünftel der Liste sind) warten auf dich: `Löschen` oder `Zurückholen`.
+- Der Abgleich läuft, solange Aufgaben geöffnet ist: beim Öffnen, alle 5 Minuten, einige Sekunden nach einer Änderung und mit `Jetzt abgleichen`. `Verknüpfung lösen` beendet ihn; die Aufgaben bleiben an beiden Orten. Mit einem Haushalt geteilte Listen lassen sich nicht verknüpfen.
+
 ## Tastenkürzel
 - [[Enter]] im Eingabefeld fügt die Aufgabe hinzu; in `Neue Unteraufgabe…` fügt es den Schritt hinzu.
 - [[Esc]] schließt das Schnellmenü, das Sortier- oder Labelfilter-Menü, das offene Fenster oder beendet eine Auswahl.
@@ -126,3 +136,4 @@ Aufgaben hat keinen eigenen Export; nutze die orOS-[Sicherung](help:t/backup), u
 - Du kannst Aufgaben nicht ziehen, während du suchst, in einer intelligenten Liste oder einem gespeicherten Filter oder wenn eine Liste nach Priorität oder Datum sortiert ist. Unteraufgaben ordnest du mit den Pfeilen, nicht durch Ziehen.
 - Unteraufgaben haben keine eigenen Fälligkeiten, Prioritäten oder Unteraufgaben und erscheinen nicht im Kalender oder in Heute. Eine Aufgabe hat bis zu 100.
 - Ein Gerät mit einer älteren orOS-Version zeigt eine anderswo hin verschobene Aufgabe in beiden Listen, bis es aktualisiert wird.
+- Eine Server-Aufgabenliste wird nur abgeglichen, solange Aufgaben geöffnet ist, und mit einer Liste hier. Wiederholungen mit Ende, an mehreren Tagen oder nach Monatstag sind schreibgeschützt, und eine Unteraufgabe auf dem Server behält hier nur Titel und Haken.
