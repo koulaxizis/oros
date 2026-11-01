@@ -279,7 +279,9 @@
       var b = el("button", "wall" + (w.id === s.wallpaper ? " on" : "") + (make ? " make" : ""));
       b.type = "button";
       b.setAttribute("data-k", "wall:" + w.id);
-      var name = make ? t("a.wallpaper.make") : w.name;
+      var sugg = !make && w.id === s.suggested;          // SKIN-WP
+      if (sugg) b.classList.add("sugg");
+      var name = make ? t("a.wallpaper.make") : w.name + (sugg ? " · " + t("a.wallpaper.sugg") : "");
       b.title = name;
       b.setAttribute("aria-label", name);
       if (make) b.innerHTML = ICON.plus;               // static icon
@@ -294,6 +296,7 @@
       grid.appendChild(b);
     });
     c3.appendChild(grid);
+    if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     host.appendChild(c3);
 
     if (s.seasonal) secSeasonal(host, s.seasonal);

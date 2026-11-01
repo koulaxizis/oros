@@ -41,7 +41,7 @@ In `Settings`, under `Appearance`, choose `Dark` or `Light` next to `Theme`. orO
 ## Skins
 The coloured dots under `System colour` are skins: each one gives orOS and its apps a different accent colour. They are named after Linux systems, such as `Ubuntu`, `Fedora`, `Mint` or `Pop!_OS`; hover over a dot to see its name. The default is `Oros`, in gold.
 
-> If you still have the default wallpaper (`Desert Sand`), choosing a skin also switches to the wallpaper that goes with it. Once you pick a wallpaper yourself, skins leave it alone.
+> Every skin comes with a suggested wallpaper, marked with a ★ under `Wallpaper`. Choosing a skin also switches to its wallpaper, as long as you still have the default wallpaper (`Desert Sand`) or the one suggested for your previous skin. Once you pick another wallpaper yourself, skins leave it alone, and you can still choose any wallpaper with any skin.
 
 ## Wallpapers
 Under `Wallpaper`, tap or click a picture to make it your desktop background. You can choose from `Adwaita Dusk`, `Midnight`, `Aubergine`, `Forest Night`, `Ember`, `Nordic Frost`, `Aurora`, `Desert Sand`, `Monochrome`, `Nebula`, `Nordic Aurora`, `Hex Grid`, `Obsidian Veil` and `Retro Terrazzo`. `None` uses the plain background of your theme.
