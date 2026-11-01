@@ -3692,6 +3692,106 @@
     }, function () { start(); });
   })();
 
+  // Users on one computer or stick (Bible Part II "Users on one device";
+  // oros-portable launcher users.go). The orOS Portable / orOS USB
+  // launcher gives each user a browser profile of their own and shows a
+  // sign-in window before orOS; this page only asks it who is signed in
+  // (GET /__oros/users/state) and signs out. Settings › Users manages the
+  // users through window.orosUsers.call. Only on the launcher's own
+  // address; elsewhere (useoros.online, the Android apps) state stays
+  // null and Settings explains browser profiles instead.
+  var usersLeaving = false;
+  (function users() {
+    var host = location.hostname;
+    if (typeof fetch !== "function" || (host !== "localhost" && host !== "127.0.0.1") || location.port !== "47800") return;
+    var NAMES = /^(state|sizes|signout|add|remove|password|rename|owner|guest)$/;
+    function call(name, body) {
+      if (!NAMES.test(String(name))) return Promise.resolve({ error: "bad" });
+      var opt = body === undefined
+        ? { credentials: "same-origin" }
+        : { method: "POST", credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "X-Oros-Users": "1" }, body: JSON.stringify(body) };
+      return fetch("/__oros/users/" + name, opt).then(function (r) {
+        return r.json().catch(function () { return { error: "bad" }; });
+      }).then(function (j) { return j && typeof j === "object" ? j : { error: "bad" }; },
+        function () { return { error: "network" }; });
+    }
+    function refresh() {
+      return call("state").then(function (s) {
+        // An older launcher answers 404 (no users): state stays null.
+        state.users = s && typeof s.enabled === "boolean" ? s : null;
+        settingsNotify();
+        return state.users;
+      });
+    }
+    // What this device has not synced yet goes up first (connected,
+    // unlocked, online; at most 15 s), as before a device reset.
+    function lastPush() {
+      var S = window.orosSync;
+      if (!S || !navigator.onLine || !S.isConnected() || !S.hasPassphrase() || !S.isDirty()) return Promise.resolve();
+      return Promise.race([
+        S.push().catch(function () { return null; }),
+        new Promise(function (res) { setTimeout(res, 15000); })
+      ]);
+    }
+    function closeHint() {
+      if (document.getElementById("users-close-dialog")) return;
+      var dlg = document.createElement("dialog");
+      dlg.id = "users-close-dialog";
+      dlg.style.cssText =
+        "border:1px solid var(--border);border-radius:12px;background:var(--panel-bg);color:var(--text);" +
+        "padding:20px;width:min(360px,calc(100vw - 32px));";
+      var p = document.createElement("p");
+      p.style.cssText = "font-size:13px;line-height:1.5;margin:0;";
+      p.textContent = window.t("users.closeNow");
+      dlg.appendChild(p);
+      dlg.addEventListener("cancel", function (e) { e.preventDefault(); });
+      document.body.appendChild(dlg);
+      dlg.showModal();
+    }
+    var leaving = null;
+    function signOut() {
+      if (leaving) return leaving;
+      if (!state.users || !state.users.enabled || !state.users.me) return Promise.resolve(false);
+      scToast("dim", window.t("users.signingOut"));
+      leaving = lastPush().then(function () { return call("signout", {}); }).then(function (r) {
+        if (!r || !r.ok) {
+          leaving = null;
+          scToast("err", window.t("users.signOutFail"));
+          return false;
+        }
+        usersLeaving = true;   // the beforeunload guard stays silent
+        // orOS Portable's and orOS USB's System extension closes every
+        // window of this user's browser; elsewhere the window tries to
+        // close itself and otherwise asks to be closed.
+        if (document.documentElement.hasAttribute("data-oros-signout")) {
+          document.dispatchEvent(new CustomEvent("oros-signout"));
+        } else {
+          try { window.close(); } catch (e) {}
+        }
+        setTimeout(closeHint, 2500);
+        return true;
+      });
+      return leaving;
+    }
+    window.orosUsers = {
+      v: 1,
+      state: function () { return state.users || null; },
+      refresh: refresh,
+      call: function (name, body) {
+        return call(name, body).then(function (r) { return refresh().then(function () { return r; }); });
+      },
+      signOut: signOut
+    };
+    refresh().then(function (s) {
+      // The tray's "Switch user" opens orOS with #oros-signout.
+      if (location.hash === "#oros-signout") {
+        try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+        if (s && s.enabled) signOut();
+      }
+    });
+  })();
+
   // "Send to orOS" (bookmarklet, Android Share → orOS, a future
   // browser add-on): /?share-url=…&share-title=…&share-text=…
   // stages a NEW bookmark. The params leave the address bar at boot
@@ -10152,6 +10252,9 @@
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
+      // Users on this computer or stick (the launcher's sign-in): null
+      // where the launcher has no users API (Settings › Users explains).
+      users: state.users || null,
       a11y: a11ySnapshot(),
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
@@ -11463,6 +11566,7 @@
   // (offline data is safe in localStorage — nothing to warn about).
   window.addEventListener("beforeunload", function (e) {
     if (osResetting) return;   // factory reset owns this unload
+    if (usersLeaving) return;   // a sign-out pushed what it could and closes the window
     if (Date.now() - extHandoffAt < 2000) return;   // EXT-1: a tel:/mailto: handoff, the page stays
     // SH-B8: sync.js arms the dirty flag on EVERY change, connected or
     // not, and only a successful push clears it. Without Dropbox (or
@@ -12759,6 +12863,11 @@
         else openAppById("settings");
       },
       restart: function () { location.reload(); },
+      // Sign out (several users on an orOS Portable / orOS USB launcher).
+      users: {
+        on: function () { return !!(state.users && state.users.enabled && state.users.me); },
+        signOut: function () { if (window.orosUsers) window.orosUsers.signOut(); }
+      },
       sync: {
         state: function () {
           var dot = document.getElementById("sync-dot");

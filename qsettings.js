@@ -212,6 +212,7 @@
     keys: SV + '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
     more: SV + '<path d="M9 6l6 6-6 6"/></svg>',
     restart: SV + '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
+    signout: SV + '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
     play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
     pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
     music: SV + '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>'
@@ -367,6 +368,10 @@
     parts.powerMenu.setAttribute("role", "group");
     parts.powerMenu.setAttribute("aria-label", t("qs.power"));
     parts.powerMenu.appendChild(menuItem(IC.restart, t("qs.restart"), function () { close(); host.restart(); }));
+    // Several users on this computer or stick: back to the sign-in window.
+    if (host.users && host.users.on()) {
+      parts.powerMenu.appendChild(menuItem(IC.signout, t("qs.signout"), function () { close(); host.users.signOut(); }));
+    }
     var sysPower = el("div");
     sysPower.id = "qs-power-sys";
     parts.powerMenu.appendChild(sysPower);
