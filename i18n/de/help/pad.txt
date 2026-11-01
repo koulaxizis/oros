@@ -36,6 +36,11 @@ Pad ist ein Editor für reinen Text und Code, im Geist von Notepad++. Es öffnet
 - In Dateien öffnet `Öffnen mit…` bei einer Code- oder Textdatei sie in Pad, und `Speichern` schreibt sie in dieselbe Datei zurück. Codedateien, die du aus der Dateiverwaltung deines Computers mit orOS öffnest, öffnen sich in Pad als Kopie: speichere sie mit `Speichern unter…`.
 - Pad führt nie eine Datei aus: HTML oder ein Skript öffnet sich nur als Text. Tabs, die du nicht gespeichert hast, werden nicht synchronisiert; sie bleiben auf diesem Gerät.
 
+## Automatisch speichern und suchen
+- `Automatisch speichern` unter `Mehr` (anfangs aus) speichert einen Tab, der seinen eigenen Ort hat (das orOS-Laufwerk, Dieser Computer oder eine Datei dieses Geräts, die Pad schon ändern darf), 2 Sekunden nachdem du aufhörst zu tippen. Ein Tab, der nie gespeichert wurde, bleibt unberührt: speichere ihn zuerst einmal mit `Speichern`.
+- Es gelten dieselben Prüfungen wie bei `Speichern`. Wurde die Datei woanders geändert oder ist sie weg, oder passt der Text nicht in die Kodierung, schreibt Pad sie nicht und sagt es einmal; drücke `Speichern`, um zu sehen, warum, und zu wählen. Bis dahin wird dieser Tab nicht automatisch gespeichert.
+- Die Suche im orOS-Menü findet Pads zuletzt geöffnete Dateien nach Name oder Ordner, und der [Assistent](app:assistant) kann sie ebenfalls öffnen oder dir eine neue Datei schreiben (ein Skript, eine Konfigurationsdatei, eine Webseite), die hier als neuer Tab aufgeht.
+
 ## Werkzeuge
 - `Werkzeuge…` unter `Mehr` wirkt auf die markierten Zeilen, oder auf die ganze Datei, wenn nichts markiert ist: `JSON formatieren` (ein Eintrag pro Zeile, eingerückt wie die Datei), `JSON kompakt` (alles in einer Zeile), `Zeilen sortieren A → Z` und `Z → A` (Zahlen in natürlicher Reihenfolge, also 2 vor 10), `Doppelte Zeilen entfernen` (die erste bleibt) und `Leerzeichen am Zeilenende entfernen`. [[Ctrl+Z]] nimmt jedes davon zurück.
 - `JSON formatieren` ändert nur Leerzeichen und Zeilenumbrüche: Schlüssel behalten ihre Reihenfolge, Zahlen und Texte bleiben genau so, wie sie geschrieben sind. Ist das JSON nicht gültig, sagt Pad, in welcher Zeile und Spalte, und ändert nichts.

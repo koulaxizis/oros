@@ -1691,6 +1691,7 @@ var PRECACHE_URLS = [
   "pad/index.html",
   "pad/app.css",
   "pad/core.js",
+  "pad/search.js",
   "pad/eel2.js",
   "pad/app.js",
   "textcase/",

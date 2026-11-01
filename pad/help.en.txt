@@ -36,6 +36,11 @@ Pad is an editor for plain text and code, in the spirit of Notepad++. It opens a
 - In Files, `Open with…` on a code or text file opens it in Pad, and `Save` writes it back to the same file. Code files that you open with orOS from your computer's own file manager open in Pad as a copy: save them with `Save as…`.
 - Pad never runs a file: HTML or a script opens as text only. Tabs you have not saved are not synced; they stay on this device.
 
+## Save automatically and search
+- `Save automatically` in `More` (off at first) saves a tab that has its own place (the orOS disk, This computer, or a file of this device that Pad may already change) 2 seconds after you stop typing. A tab that was never saved is not touched: save it once with `Save` first.
+- It goes through the same checks as `Save`. If the file changed somewhere else or is gone, or the text does not fit the encoding, Pad does not write it and says so once; press `Save` to see why and choose. Until then that tab is not saved automatically.
+- The search in the orOS menu finds Pad's recent files by name or folder, and the [Assistant](app:assistant) can open them too, or write a new file for you (a script, a config file, a web page) that opens as a new tab here.
+
 ## Tools
 - `Tools…` in `More` works on the selected lines, or on the whole file when nothing is selected: `Format JSON` (one item per line, indented like the file), `Compact JSON` (all on one line), `Sort lines A → Z` and `Z → A` (numbers in their natural order, so 2 comes before 10), `Remove duplicate lines` (keeps the first) and `Remove spaces at line ends`. [[Ctrl+Z]] takes any of them back.
 - `Format JSON` changes only the spaces and line breaks: keys keep their order, and numbers and strings stay exactly as written. If the JSON is not valid, Pad says on which line and column, and changes nothing.

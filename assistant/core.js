@@ -1353,6 +1353,11 @@
       required: ["ref"]
     }
   };
+  // Pad's languages (pad/core.js LANGS ids; tests/pad.test.js keeps
+  // the two lists equal).
+  var PAD_LANGS = ["text", "javascript", "typescript", "jsx", "tsx", "json", "html", "css", "xml", "php", "markdown", "python", "go", "rust",
+                   "cpp", "java", "sql", "yaml", "shell", "powershell", "toml", "ini", "lua", "ruby", "perl", "csharp", "kotlin", "dart",
+                   "swift", "r", "diff", "dockerfile", "nginx", "eel2"];
   var TOOL_ENTRY = {
     name: "propose_entry",
     description: "Suggest a new entry in one of the user's orOS apps. The user sees it as a card and " +
@@ -1382,16 +1387,19 @@
       "wiki_article (title, text: an article in Markdown, ## headings, **bold**, [[Other article]] links; opens in the Wiki's editor) · " +
       "document (title, text: a Writer document you write, in Markdown: # to ###### headings, **bold**, *italic*, - and 1. lists (indent to nest), " +
       "a block ending in {.center}, {.right} or {.justify} gets that alignment; made when the user presses Open. To bring a file the user attached into Writer use open_file instead) · " +
-      "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box). " +
+      "mind_map (title = the central idea, outline: one idea per line, two spaces per level; opens Mind map's Paste a list box) · " +
+      "text_file (title = the file name with its extension such as notes.txt, script.py, config.json, index.html, text: the whole file exactly as it should be, " +
+      "code or plain text, every space and line kept; lang?: the language when the name does not tell; opens as a new tab in Pad, which never runs it; the user saves it where they want). " +
       "Give only what the user said or plainly meant; leave the rest out.",
     params: {
       type: "object",
       properties: {
         kind: { type: "string", "enum": ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                                          "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map"] },
+                                         "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"] },
         title: { type: "string", description: "The entry's title or name (event, note, sheet, presentation, bookmark, card, habit, plant, media, place, car service or reminder, pet record, shared expense)." },
-        text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included. wiki_article, document: the whole text (Markdown)." },
+        text: { type: "string", description: "note: the note's text (plain text). post: the post's text, hashtags included. wiki_article, document: the whole text (Markdown). text_file: the whole file, as it is." },
+        lang: { type: "string", "enum": PAD_LANGS, description: "text_file: the language for colours, only when the file name does not tell (default: from the name)." },
         cards: { type: "array", description: "flashcards: up to 500 cards.",
                  items: { type: "object", properties: { front: { type: "string" }, back: { type: "string" },
                                                          both: { type: "boolean", description: "Also the reverse card (back → front)." },
@@ -2997,14 +3005,17 @@
     // to…" receiver (send/core.js), where the user checks and saves it:
     // Flashcards' card preview, Wiki's editor, a new Writer document
     // (made on Open, as a note), Mind map's "Paste a list" box.
-    flashcards: "flashcards", wiki_article: "wiki", document: "writer", mind_map: "mindmap"
+    flashcards: "flashcards", wiki_article: "wiki", document: "writer", mind_map: "mindmap",
+    // Pad wave 4: a text or code file opens as a new, unsaved tab in Pad
+    // (__orosOpenAt("pad", { newText })); the user saves it.
+    text_file: "pad"
   };
   var ENTRY_ORDER = ["todo", "event", "expense", "income", "quote", "invoice", "sheet", "slides", "bookmark", "note",
                      "contact", "customer", "card", "habit", "workout", "car", "plant", "pet_record", "media", "place", "shared_expense", "book",
-                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map"];
+                     "post", "settlement", "flashcards", "wiki_article", "document", "mind_map", "text_file"];
   // The receivers' own caps (flashcards/make.js, wiki/core.js MAX_TEXT,
   // writer.js NEWDOC_MAX, mindmap.js paste box): longer is refused.
-  var A4_MAX = { cards: 500, field: 20000, wiki: 200000, doc: 500000, map: 20000 };
+  var A4_MAX = { cards: 500, field: 20000, wiki: 200000, doc: 500000, map: 20000, pad: 500000 };
   // Invoices' currencies (invoices/core.js CURRENCIES, BR-INV-NEW).
   var INV_CURRENCIES = ["EUR", "USD", "GBP", "CHF", "CAD", "AUD", "SEK", "NOK", "DKK",
                         "PLN", "CZK", "HUF", "RON", "BGN", "TRY", "JPY"];
@@ -3250,6 +3261,23 @@
       if (kind === "document") ls3 = ls3.map(function (x) { return mdPlain(x); }).filter(Boolean);
       view.list = ls3.slice(0, 8);
       if (ls3.length > 8) view.more = ls3.length - 8;
+      return out;
+    }
+    if (kind === "text_file") {
+      // Code keeps its indentation: no trim of the first line, only
+      // blank lines around the file and spaces at its very end go.
+      var fx = typeof args.text === "string" ? args.text.replace(/\r\n?/g, "\n").replace(CTRL, " ").replace(/^(?:[ \t]*\n)+/, "").replace(/\s+$/, "") : "";
+      if (!fx) return bad("text_file needs text.");
+      if (fx.length > A4_MAX.pad) return bad("text_file: text has " + fx.length + " characters; it keeps " + A4_MAX.pad + ". Make it shorter or split it.");
+      var fname = line(args.title, 200).replace(/[\\\/:*?"<>|]/g, "_").replace(/^[\s.]+|[\s.]+$/g, "").slice(0, 120);
+      var nt = { text: fx + "\n" };
+      if (fname) nt.name = fname;
+      if (typeof args.lang === "string" && PAD_LANGS.indexOf(args.lang) >= 0) nt.lang = args.lang;
+      out.call = { fn: "openAt", args: [app, { newText: nt }] };
+      view.title = fname;
+      var ls4 = fx.split("\n");
+      view.list = ls4.slice(0, 8);
+      if (ls4.length > 8) view.more = ls4.length - 8;
       return out;
     }
     if (kind === "bookmark") {
