@@ -36,6 +36,13 @@ Lerne, mit allen zehn Fingern zu tippen, ohne auf die Tasten zu schauen. Kurze L
 - Zeichen, die deine Tastatur nicht tippen kann, werden ausgelassen, typografische Anführungszeichen und lange Striche werden zu den einfachen. Lange Texte tippst du in Teilen.
 - `In der Schreibmaschine schreiben` öffnet die [Schreibmaschine](app:typewriter), um frei und ohne Hilfen zu schreiben.
 
+## Polytonisches Griechisch, Dvorak und Colemak
+- Die Tastaturliste oben enthält auch `Ελληνικά (πολυτονικό)`, `English (Dvorak)` und `English (Colemak)`. Jede hat ihre eigenen Lektionen, Sterne und Bestwerte.
+- Dvorak und Colemak folgen demselben Kurs wie Englisch, jeder Buchstabe auf seiner Taste und seinem Finger, mit denselben englischen Wörtern und Texten.
+- Polytonisches Griechisch ist für alle, die schon Griechisch tippen: sechs Lektionen bringen die Zeichen, eine Taste nach der anderen. `;` gibt den Akut (Oxia) und mit Umschalt den Spiritus lenis (Psili); `'` den Gravis (Varia) und mit Umschalt den Spiritus asper (Dasia); `[` den Zirkumflex (Perispomeni) und mit Umschalt das Trema; `]` das Iota subscriptum. Für einen Buchstaben mit mehreren Zeichen drückst du zuerst das Iota subscriptum, dann den Akzent, dann den Spiritus und zuletzt den Buchstaben (ᾄ: `]` `;` Umschalt+`;` α).
+- Die Hilfen folgen der griechischen polytonischen Tastatur von Linux. Bei der polytonischen Tastatur von Windows liegen die Zeichen auf anderen Tasten; die Lektionen nehmen den getippten Buchstaben in beiden Fällen an.
+- Zu den polytonischen Texten gehören der Anfang der Odyssee, der Anfang des Johannesevangeliums und die erste Strophe von Solomos' Hymne an die Freiheit, dazu die griechischen Texte.
+
 ## Buchstabenregen
 - `Buchstabenregen` (auf dem ersten Bildschirm) ist ein Spiel: Buchstaben fallen von oben, und wenn du einen tippst, verschwindet er, bevor er unten ankommt.
 - Ein Buchstabe, der unten ankommt, kostet eines deiner drei Leben. Alle 10 Buchstaben beginnt eine neue Stufe, in der sie schneller fallen.

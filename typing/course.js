@@ -1,5 +1,6 @@
 // ============================================================
 // orOS Typing Tutor: the course (pure, no DOM)
+// i18n-inline-ok: the Greek letters below are lesson material (marked vowels and consonants), no UI text
 // One course for every layout, written as physical keys, so each
 // layout gets its own letters on the same fingers. Lesson ids are
 // stored in the synced progress and NEVER change meaning; a new lesson
@@ -45,14 +46,40 @@
     { id: "p1", g: "more", k: ["Equal", "BracketRight", "Backslash", "Backquote", "IntlBackslash"], s: true },
     { id: "f1", g: "more", k: [], r: true, s: true, fin: true }
   ];
-  var GROUPS = ["home", "top", "bottom", "more"];
+  // Polytonic Greek (wave 4, layout elp): the letters are known from the
+  // Greek course; these lessons bring in the marks, one dead key each.
+  // mk: what the lesson card shows.
+  var POLY_LESSONS = [
+    { id: "g1", g: "poly", k: ["Semicolon"], mk: "ά ἀ" },
+    { id: "g2", g: "poly", k: ["Quote"], mk: "ὰ ἁ" },
+    { id: "g3", g: "poly", k: ["BracketLeft"], mk: "ᾶ ϊ" },
+    { id: "g4", g: "poly", k: ["BracketRight"], mk: "ᾳ" },
+    { id: "g5", g: "poly", k: [], r: true, s: true },
+    { id: "g6", g: "poly", k: [], r: true, s: true, fin: true }
+  ];
+  var GROUPS = ["home", "top", "bottom", "more", "poly"];
 
-  function lessons() { return LESSONS.slice(); }
+  function isPoly(lay) { return !!(L && L.get(lay).poly); }
+  function listFor(lay) { return isPoly(lay) ? POLY_LESSONS : LESSONS; }
+  // The lessons of a layout (no layout: the main course).
+  function lessons(lay) { return (lay ? listFor(lay) : LESSONS).slice(); }
+  // A lesson's place in its own list (lesson ids are unique across both).
   function indexOf(id) {
     for (var i = 0; i < LESSONS.length; i++) if (LESSONS[i].id === id) return i;
+    for (var j = 0; j < POLY_LESSONS.length; j++) if (POLY_LESSONS[j].id === id) return j;
     return -1;
   }
-  function lesson(id) { var i = indexOf(id); return i < 0 ? null : LESSONS[i]; }
+  function lesson(id) {
+    for (var i = 0; i < LESSONS.length; i++) if (LESSONS[i].id === id) return LESSONS[i];
+    for (var j = 0; j < POLY_LESSONS.length; j++) if (POLY_LESSONS[j].id === id) return POLY_LESSONS[j];
+    return null;
+  }
+  // Is this lesson part of the layout's course?
+  function has(lay, id) { return listFor(lay).some(function (x) { return x.id === id; }); }
+  // The lesson index whose keys a game or test may use before any lesson
+  // is done (-1 on polytonic: every letter, no marks).
+  function homeIdx(lay) { return isPoly(lay) ? -1 : indexOf("h5"); }
+  function fullIdx(lay) { return isPoly(lay) ? POLY_LESSONS.length - 1 : indexOf("b6"); }
 
   // ---------- seeded random (mulberry32) ----------
   function rng(seed) {
@@ -75,12 +102,21 @@
   }
 
   // ---------- which characters a lesson may use ----------
-  function learnedCodes(upto) {
-    var set = {};
-    for (var i = 0; i <= upto && i < LESSONS.length; i++) LESSONS[i].k.forEach(function (c) { set[c] = true; });
+  function learnedCodes(lay, upto) {
+    var set = {}, list = listFor(lay);
+    if (isPoly(lay)) {
+      // every key that is not a dead key is known from the start
+      var keys = L.get(lay).keys;
+      Object.keys(keys).forEach(function (c) {
+        if (!keys[c].some(function (ch) { return ch && ch.indexOf("dead:") === 0; })) set[c] = true;
+      });
+      set.Space = set.ShiftLeft = set.ShiftRight = true;
+    }
+    for (var i = 0; i <= upto && i < list.length; i++) list[i].k.forEach(function (c) { set[c] = true; });
     return set;
   }
-  function shiftAt(upto) {
+  function shiftAt(lay, upto) {
+    if (isPoly(lay)) return true;
     for (var i = 0; i <= upto && i < LESSONS.length; i++) if (LESSONS[i].shift) return true;
     return false;
   }
@@ -88,7 +124,7 @@
   // Characters typeable with the keys learned up to lesson index `upto`
   // (dead-key letters included once the dead key and the letter are in).
   function allowed(lay, upto) {
-    var codes = learnedCodes(upto), sh = shiftAt(upto), out = {};
+    var codes = learnedCodes(lay, upto), sh = shiftAt(lay, upto), out = {};
     L.chars(lay).forEach(function (ch) {
       var st = L.strokes(lay, ch);
       if (!st) return;
@@ -99,7 +135,7 @@
   }
   // The characters a lesson brings in (for its label and its drill).
   function fresh(lay, idx) {
-    var now = allowed(lay, idx), before = idx > 0 ? allowed(lay, idx - 1) : {};
+    var now = allowed(lay, idx), before = idx > 0 || isPoly(lay) ? allowed(lay, idx - 1) : {};
     return Object.keys(now).filter(function (c) { return !before[c] && c !== " "; }).sort(function (a, b) {
       // letters first, then the rest, in key order
       var la = /\p{L}/u.test(a), lb = /\p{L}/u.test(b);
@@ -117,8 +153,10 @@
   function label(lay, id) {
     var i = indexOf(id);
     if (i < 0) return "";
+    var Ls = lesson(id);
+    if (Ls.mk) return Ls.mk;
     var f = fresh(lay, i);
-    if (LESSONS[i].shift) return "⇧";
+    if (Ls.shift) return "⇧";
     return f.slice(0, 8).join(" ");
   }
 
@@ -132,8 +170,9 @@
     list.forEach(function (w) { if (!seen[w]) { seen[w] = true; out.push(w); } });
     return out;
   }
+  function lang(lay) { return L.get(lay).words || lay; }
   function wordsFor(lay, ok) {
-    return uniq((W.WORDS[lay] || []).map(function (w) { return w.normalize("NFC"); })).filter(function (w) { return fits(w, ok); });
+    return uniq((W.WORDS[lang(lay)] || []).map(function (w) { return w.normalize("NFC"); })).filter(function (w) { return fits(w, ok); });
   }
 
   // Groups of 2-5 characters from `letters` (the drill).
@@ -161,7 +200,7 @@
   // Kids mode: the simple words first (animals, colours, food), then
   // short common words, so a lesson is never empty.
   function kidWords(lay, ok) {
-    var kw = uniq((W.KIDS && W.KIDS[lay] || []).map(function (w) { return w.normalize("NFC"); })).filter(function (w) { return fits(w, ok); });
+    var kw = uniq((W.KIDS && W.KIDS[lang(lay)] || []).map(function (w) { return w.normalize("NFC"); })).filter(function (w) { return fits(w, ok); });
     var short = wordsFor(lay, ok).filter(function (w) { return Array.from(w).length <= 5 && kw.indexOf(w) < 0; });
     return kw.concat(short);
   }
@@ -170,9 +209,9 @@
   // opt.kid (wave 3): about half as long, kids' words, no sentences.
   function build(lay, id, seed, opt) {
     var idx = indexOf(id);
-    if (idx < 0) return "";
+    if (idx < 0 || !has(lay, id)) return "";
     var kid = !!(opt && opt.kid), target = kid ? KID_TARGET : TARGET;
-    var Ls = LESSONS[idx], r = rng(seed || 1), ok = allowed(lay, idx);
+    var Ls = listFor(lay)[idx], r = rng(seed || 1), ok = allowed(lay, idx);
     var nw = fresh(lay, idx), parts = [];
     var letters = Object.keys(ok).filter(function (c) { return /\p{Ll}/u.test(c); });
     var newLetters = nw.filter(function (c) { return /\p{L}/u.test(c); });
@@ -204,7 +243,13 @@
 
     // 1. drill of the new letters (with two home letters when only one
     //    is new), then new with old
-    if (newLetters.length && !Ls.shift) {
+    if (newLetters.length && isPoly(lay)) {
+      // polytonic: the new marked vowels in short syllables (ἀν, ὁτ…),
+      // lower case, the most frequent forms first
+      var vow = newLetters.filter(function (c) { return /\p{Ll}/u.test(c) && c !== "ῤ" && c.normalize("NFD").length <= 3; });
+      var cons = ["ν", "σ", "τ", "λ", "κ", "ρ", "μ"];
+      for (var q = 0; q < (kid ? 6 : 12) && vow.length; q++) parts.push(pick(r, vow) + pick(r, cons));
+    } else if (newLetters.length && !Ls.shift) {
       var dl = newLetters.length > 1 ? newLetters : newLetters.concat(letters.filter(function (c) { return newLetters.indexOf(c) < 0; }).slice(0, 2));
       parts = parts.concat(drill(r, dl, kid ? 4 : 6));
       var mixed = letters.length > newLetters.length ? letters : newLetters;
@@ -214,7 +259,7 @@
     // kids: their own words keep their order of preference (shuffled within)
     var pool = withNew.length >= 4 ? shuffle(r, withNew).concat(shuffle(r, words)) : shuffle(r, words);
     if (kid && withNew.length < 4) {
-      var kw = W.KIDS && W.KIDS[lay] ? W.KIDS[lay].map(function (w) { return w.normalize("NFC"); }) : [];
+      var kw = W.KIDS && W.KIDS[lang(lay)] ? W.KIDS[lang(lay)].map(function (w) { return w.normalize("NFC"); }) : [];
       pool = shuffle(r, words.filter(function (w) { return kw.indexOf(w) >= 0; }))
         .concat(shuffle(r, words.filter(function (w) { return kw.indexOf(w) < 0; })));
     }
@@ -235,7 +280,7 @@
     }
     // 3. a sentence that fits
     if (Ls.s && !kid) {
-      var sents = (W.SENTENCES[lay] || []).map(function (s) { return s.normalize("NFC"); }).filter(function (s) { return fits(s, ok); });
+      var sents = (W.SENTENCES[lang(lay)] || []).map(function (s) { return s.normalize("NFC"); }).filter(function (s) { return fits(s, ok); });
       if (sents.length) {
         var n = Ls.fin ? 4 : 1;
         shuffle(r, sents).slice(0, n).forEach(function (s) { parts.push(s); });
@@ -248,7 +293,7 @@
   // Words for a speed test: common words the whole layout can type,
   // lower case only (a test measures speed, not Shift).
   function testText(lay, seed, n) {
-    var r = rng(seed || 1), ok = allowed(lay, indexOf("b6"));
+    var r = rng(seed || 1), ok = allowed(lay, fullIdx(lay));
     var words = wordsFor(lay, ok).filter(function (w) { return Array.from(w).length >= 2; });
     var out = [];
     while (out.length < (n || 200) && words.length) {
@@ -286,7 +331,7 @@
   // real words that hold them (about two in three), then other words.
   // Same input and seed, same text.
   function practice(lay, ks, upto, seed) {
-    upto = Math.max(0, Math.min(LESSONS.length - 1, upto | 0));
+    upto = Math.max(isPoly(lay) ? -1 : 0, Math.min(listFor(lay).length - 1, upto | 0));
     var r = rng(seed || 1), ok = allowed(lay, upto);
     var weakOnes = weak(lay, ks, upto, 5);
     var letters = Object.keys(ok).filter(function (c) { return /\p{Ll}/u.test(c); });
@@ -310,7 +355,7 @@
   var API = {
     GROUPS: GROUPS, lessons: lessons, lesson: lesson, indexOf: indexOf,
     allowed: allowed, fresh: fresh, label: label, build: build, testText: testText, rng: rng, KID_TARGET: KID_TARGET,
-    weak: weak, practice: practice
+    weak: weak, practice: practice, has: has, isPoly: isPoly, homeIdx: homeIdx, fullIdx: fullIdx
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.TypingCourse = API;

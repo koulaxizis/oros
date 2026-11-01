@@ -106,8 +106,8 @@
     return Promise.all(ws);
   }
 
-  // o: { client, url, readOnly, state, local: { items: [{id, item}], find(id) },
-  //      map: { read, write, hash, idFor, file, copy, mtime, type, kind },
+  // o: { client, url, readOnly, state, local: { items: [{id, item}], find(id), match?(item) },
+  //      map: { read, write, hash, idFor, file, copy, mtime, type, kind, merge? },
   //      dry, decision: "allow" | "restore" | null }
   // → { state, upsert: [item], remove: [id], held, retry, ro: {id: 1}, stats }
   function run(o) {
@@ -129,7 +129,7 @@
     var full = !S.token || o.decision === "restore" ||
       Object.keys(L).some(function (id) { return !claimed[id] && /^dav-/.test(id); });
 
-    var stats = { up: 0, down: 0, same: 0, del: 0, delServer: 0, conflicts: 0, ro: 0, errors: 0, items: 0 };
+    var stats = { up: 0, down: 0, same: 0, merged: 0, del: 0, delServer: 0, conflicts: 0, ro: 0, errors: 0, items: 0 };
     var up = [], rm = [], roIds = {}, retry = false, forceFull = false;
     var upById = {};
     function upsert(item) { upById[item.id] = item; }
@@ -176,6 +176,7 @@
       var puts = [], dels = [], restoreLocal = [];
       var visited = {};
       var localDeletes = [];             // [key] DAV-1 removals here
+      var matched = {};                  // id → 1, found by local.match in this pass
       stats.items = p.lst.changed.length;
 
       function pickId(r, k) {
@@ -183,6 +184,12 @@
         var taken = function (id) { return id && claimed[id] && claimed[id] !== k; };
         if (ids.own && !taken(ids.own)) return ids.own;
         if (ids.bind && !taken(ids.bind) && (L[ids.bind] || o.local.find(ids.bind))) return ids.bind;
+        // The same item found here by its content (Contacts: a shared
+        // e-mail or phone), on a first sight only.
+        if (!S.items[k] && typeof o.local.match === "function" && !taken(ids.dav)) {
+          var m = o.local.match(r.main);
+          if (m && L[m] && !taken(m) && !matched[m]) { matched[m] = 1; return m; }
+        }
         if (!taken(ids.dav)) return ids.dav;
         return "dav-" + hash(k);
       }
@@ -231,6 +238,20 @@
             (r.extras || []).forEach(function (x) { upsert(x); });
             stats.same++;
             baseOf(r, k, g.etag, id, g.data);
+            return;
+          }
+          // Never in sync before, and the mapper can join the two
+          // (Contacts): one item with both, nothing of either lost.
+          if (!ro && typeof map.merge === "function") {
+            var mg = map.merge(loc, r.main);
+            mg.id = id;
+            var hm = map.hash(mg);
+            if (hm !== map.hash(loc)) upsert(mg);
+            stats.merged++;
+            baseOf(r, k, g.etag, id, g.data);
+            if (hm === sh) return;
+            S.items[k].hash = "";          // not in sync yet: the PUT sets it
+            puts.push({ k: k, href: g.href, id: id, item: mg, etag: g.etag, raw: g.data, nobase: true, merged: true });
             return;
           }
           // Never in sync before: the newer one is kept, no copy.
@@ -343,7 +364,7 @@
       });
 
       if (o.dry) {
-        stats.up = puts.length;
+        stats.up = puts.filter(function (w) { return !w.merged; }).length;   // joined ones are counted as merged
         stats.delServer = dels.length;
         stats.del = localDeletes.length;
         return finish(held, true);
@@ -355,6 +376,9 @@
           // Cannot be written exactly: read-only, the server version stays.
           stats.ro++;
           roIds[w.id] = 1;
+          // A joined item stays joined here (nothing of it is lost); the
+          // server keeps its own until one of the two changes again.
+          if (w.merged) { S.items[w.k].hash = map.hash(w.item); return; }
           if (w.k && S.raw[w.k]) {
             var r = map.read(S.raw[w.k], w.href);
             if (r && !r.gone) { r.main.id = w.id; takeServer(r, S.items[w.k].extra); S.items[w.k].ro = true; S.items[w.k].hash = map.hash(r.main); }

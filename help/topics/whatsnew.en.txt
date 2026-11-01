@@ -1,6 +1,15 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.88.00
+- Typing Tutor: new keyboards for polytonic Greek (six lessons for the breathings, accents and iota subscript, with Homer, John and Solomos), Dvorak and Colemak. See [Typing Tutor](help:a/typing).
+
+## Version 4.87.00
+- Contacts › Server (CardDAV): link your contacts to an address book on your own server (Nextcloud, Radicale, mailbox.org, Fastmail, iCloud…, connected in Settings › Sync). orOS shows what would come down and go up before it writes anything, and a person already on both sides becomes one contact with the details of both. Then contacts go both ways; photos and details orOS doesn't show stay on the server untouched, and nothing is deleted on either side unless it was in sync before. See [Contacts](help:a/contacts).
+
+## Version 4.86.00
+- Spreadsheet on phones and tablets: drag the round handles on the corners of the selection to make it bigger or smaller, and turn on Extend selection (sheet menu) to add cells, columns or rows with a tap. See [Spreadsheet](help:a/spreadsheet).
+
 ## Version 4.85.00
 - [Pad](help:a/pad) gets tools: format or compact JSON (only the spaces change, numbers and key order stay as written), sort lines, remove duplicate lines and spaces at line ends. Markdown files have a live `Preview`, `Compare with another tab…` shows two files line by line, and on phones a key row adds Tab, arrows and brackets.
 

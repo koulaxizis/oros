@@ -36,6 +36,13 @@ Learn to type with all ten fingers without looking at the keys. Short lessons br
 - Characters your keyboard cannot type are left out, and curly quotes and long dashes become the plain ones. Long texts are typed in parts.
 - `Write in Typewriter` opens [Typewriter](app:typewriter) to write freely, without hints.
 
+## Polytonic Greek, Dvorak and Colemak
+- The keyboard list at the top also has `Ελληνικά (πολυτονικό)`, `English (Dvorak)` and `English (Colemak)`. Each keeps its own lessons, stars and records.
+- Dvorak and Colemak follow the same course as English, with each letter on its own key and finger, and the same English words and texts.
+- Polytonic Greek is for those who already type Greek: six lessons bring in the marks, one key at a time. `;` gives the oxia and, with Shift, the psili (smooth breathing); `'` gives the varia and, with Shift, the dasia (rough breathing); `[` gives the perispomeni and, with Shift, the dialytika; `]` gives the ypogegrammeni (iota subscript). For a letter with several marks, press the ypogegrammeni first, then the accent, then the breathing, then the letter (ᾄ: `]` `;` Shift+`;` α).
+- The hints follow the Linux Greek (polytonic) keyboard. Windows' Greek Polytonic keyboard has the marks on other keys; the lessons accept the letter you type either way.
+- The polytonic texts include the opening of the Odyssey, the opening of the Gospel of John and the first stanza of Solomos' Hymn to Liberty, and the Greek passages too.
+
 ## Letter rain
 - `Letter rain` (on the first screen) is a game: letters fall from the top, and typing one takes it away before it reaches the bottom.
 - A letter that reaches the bottom costs one of your three lives. Every 10 letters is a new level, where they fall faster.

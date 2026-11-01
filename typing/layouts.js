@@ -8,6 +8,17 @@
 //   el: Greek (Windows / Linux "gr", based on US): ; is the dead key
 //       for the tonos, Shift+; for the dialytika
 //   de: German QWERTZ (ISO, T1)
+//   elp (wave 4): Greek polytonic, as Linux xkb gr(polytonic): the
+//       letters of el; ; = oxia/tonos, Shift+; = psili, ' = varia,
+//       Shift+' = dasia, [ = perispomeni, Shift+[ = dialytika,
+//       ] = ypogegrammeni. Several dead keys in a row (iota first, then
+//       the accent, then the breathing), as in the X11 Compose table.
+//       Windows' own polytonic layout puts the marks elsewhere; the app
+//       reads the typed letter, so it works too, only the hints differ.
+//   dv, cm (wave 4): Dvorak and Colemak (US, ANSI).
+// base: the family a layout belongs to (el and elp type the same
+// letters, so a key press cannot tell them apart); words: the language
+// of its words and texts.
 // Loaded by index.html and by Node in the tests.
 // ============================================================
 (function (root) {
@@ -55,7 +66,7 @@
 
   var LAYOUTS = {
     en: {
-      id: "en", lang: "en", name: "English (US)", short: "EN", iso: false,
+      id: "en", lang: "en", base: "en", words: "en", name: "English (US)", short: "EN", iso: false,
       rows: [
         ["Backquote"].concat(DIGITS, ["Minus", "Equal"]),
         TOP.concat(["BracketLeft", "BracketRight", "Backslash"]),
@@ -69,7 +80,7 @@
       dead: {}
     },
     el: {
-      id: "el", lang: "el", name: "Ελληνικά", short: "ΕΛ", iso: false,
+      id: "el", lang: "el", base: "el", words: "el", name: "Ελληνικά", short: "ΕΛ", iso: false,
       rows: [
         ["Backquote"].concat(DIGITS, ["Minus", "Equal"]),
         TOP.concat(["BracketLeft", "BracketRight", "Backslash"]),
@@ -88,7 +99,7 @@
       }
     },
     de: {
-      id: "de", lang: "de", name: "Deutsch", short: "DE", iso: true,
+      id: "de", lang: "de", base: "de", words: "de", name: "Deutsch", short: "DE", iso: true,
       rows: [
         ["Backquote"].concat(DIGITS, ["Minus", "Equal"]),
         TOP.concat(["BracketLeft", "BracketRight"]),
@@ -106,7 +117,47 @@
       }
     }
   };
-  var LAYOUT_IDS = ["el", "en", "de"];
+  var ANSI_ROWS = [
+    ["Backquote"].concat(DIGITS, ["Minus", "Equal"]),
+    TOP.concat(["BracketLeft", "BracketRight", "Backslash"]),
+    HOME.concat(["Semicolon", "Quote"]),
+    ["ShiftLeft"].concat(BOTTOM, ["ShiftRight"])
+  ];
+  LAYOUTS.elp = {
+    id: "elp", lang: "el", base: "el", words: "elp", name: "Ελληνικά (πολυτονικό)", short: "ΠΟΛ", iso: false, poly: true,
+    rows: ANSI_ROWS,
+    keys: assign({}, LAYOUTS.el.keys, {
+      Semicolon: ["dead:tonos", "dead:psili"], Quote: ["dead:grave", "dead:dasia"],
+      BracketLeft: ["dead:perisp", "dead:dial"], BracketRight: ["dead:iota", ""]
+    }),
+    dead: {}
+  };
+  LAYOUTS.dv = {
+    id: "dv", lang: "en", base: "dv", words: "en", name: "English (Dvorak)", short: "DV", iso: false,
+    rows: ANSI_ROWS,
+    keys: assign({},
+      mapRow(["Backquote"].concat(DIGITS, ["Minus", "Equal"]), "`1234567890[]", "~!@#$%^&*(){}"),
+      mapRow(TOP.concat(["BracketLeft", "BracketRight", "Backslash"]), "',.pyfgcrl/=\\", "\"<>PYFGCRL?+|"),
+      mapRow(HOME.concat(["Semicolon", "Quote"]), "aoeuidhtns-", "AOEUIDHTNS_"),
+      mapRow(BOTTOM, ";qjkxbmwvz", ":QJKXBMWVZ")),
+    dead: {}
+  };
+  LAYOUTS.cm = {
+    id: "cm", lang: "en", base: "cm", words: "en", name: "English (Colemak)", short: "CM", iso: false,
+    rows: ANSI_ROWS,
+    keys: assign({}, US_DIGITS,
+      mapRow(TOP.concat(["BracketLeft", "BracketRight", "Backslash"]), "qwfpgjluy;[]\\", "QWFPGJLUY:{}|"),
+      mapRow(HOME.concat(["Semicolon", "Quote"]), "arstdhneio'", "ARSTDHNEIO\""),
+      mapRow(BOTTOM, "zxcvbkm,./", "ZXCVBKM<>?")),
+    dead: {}
+  };
+  var LAYOUT_IDS = ["el", "en", "de", "elp", "dv", "cm"];
+
+  // Polytonic: the combining mark of each dead key, and the order the
+  // dead keys are pressed in (X11 Compose: iota, accent, breathing).
+  var POLY_MARK = { iota: "\u0345", grave: "\u0300", tonos: "\u0301", perisp: "\u0342", psili: "\u0313", dasia: "\u0314", dial: "\u0308" };
+  var POLY_SETS = [["", "iota"], ["", "grave", "tonos", "perisp"], ["", "psili", "dasia", "dial"]];
+  var POLY_BASES = Array.from("αεηιουωρΑΕΗΙΟΥΩΡ");
 
   function get(id) { return LAYOUTS[id] || LAYOUTS.en; }
 
@@ -131,6 +182,25 @@
         if (!rev[ch]) rev[ch] = [{ code: code, shift: i === 1 }];
       });
     });
+    if (L.poly) {
+      // every single-letter combination of a vowel (or ρ) with up to one
+      // iota, one accent and one breathing or dialytika
+      POLY_BASES.forEach(function (base) {
+        if (!rev[base]) return;
+        POLY_SETS[0].forEach(function (a) {
+          POLY_SETS[1].forEach(function (b) {
+            POLY_SETS[2].forEach(function (c) {
+              var names = [a, b, c].filter(Boolean);
+              if (!names.length || !names.every(function (n) { return deadKey[n]; })) return;
+              // Unicode order of the marks: breathing, accent, iota
+              var out = (base + [c, b, a].filter(Boolean).map(function (n) { return POLY_MARK[n]; }).join("")).normalize("NFC");
+              if (Array.from(out).length !== 1 || rev[out]) return;
+              rev[out] = names.map(function (n) { return deadKey[n]; }).concat(rev[base]);
+            });
+          });
+        });
+      });
+    }
     Object.keys(L.dead).forEach(function (name) {
       var dk = deadKey[name];
       if (!dk) return;
@@ -155,7 +225,8 @@
 
   // What a layout shows on a key cap: [normal, shift], dead keys as
   // their mark (´ ¨ ^ ` ).
-  var DEAD_MARK = { tonos: "΄", dial: "¨", circ: "^", acute: "´", grave: "`" };
+  var DEAD_MARK = { tonos: "΄", dial: "¨", circ: "^", acute: "´", grave: "`",
+                    psili: "\u1FBF", dasia: "\u1FFE", perisp: "\u1FC0", iota: "\u037A" };
   function cap(lay, code) {
     var k = get(lay).keys[code];
     if (!k) return null;
@@ -165,9 +236,12 @@
   // A key press (code + the character the system typed) → which of our
   // layouts gives that character on that key, or "" when none or when
   // the press says nothing (Space, digits that are the same everywhere).
+  // Layouts of one family (el, elp) count as their base layout.
   function guess(code, key, shift) {
     var hits = fits(code, key, shift);
-    return hits.length === 1 ? hits[0] : "";
+    if (!hits.length) return "";
+    var base = get(hits[0]).base;
+    return hits.every(function (h) { return get(h).base === base; }) ? base : "";
   }
   // Every layout that gives `key` on `code` ([] when the press says
   // nothing: no code, a key name, an unknown key).

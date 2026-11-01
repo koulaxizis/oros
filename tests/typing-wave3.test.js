@@ -18,7 +18,7 @@ const src = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
 const T0 = new Date(2026, 10, 1, 18).getTime();
 
 test("words: kids' words exist and type on their own layout", () => {
-  for (const l of K.LAYOUT_IDS) {
+  for (const l of ["el", "en", "de"]) {
     assert.ok(W.KIDS[l].length >= 50, l + " has kids' words");
     assert.ok(new Set(W.WORDS[l]).size >= 650, l + " has a bigger word list");
     for (const w of W.KIDS[l]) for (const ch of Array.from(w.normalize("NFC"))) assert.ok(K.strokes(l, ch), l + ": '" + w + "' is typeable");
@@ -26,8 +26,8 @@ test("words: kids' words exist and type on their own layout", () => {
 });
 
 test("kids lessons: shorter, only learned keys, no sentences, same seed same text", () => {
-  for (const l of K.LAYOUT_IDS) {
-    for (const x of CO.lessons()) {
+  for (const l of ["el", "en", "de"]) {
+    for (const x of CO.lessons(l)) {
       const ok = CO.allowed(l, CO.indexOf(x.id));
       const kid = CO.build(l, x.id, 5, { kid: true });
       assert.equal(CO.build(l, x.id, 5, { kid: true }), kid);

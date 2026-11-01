@@ -42,7 +42,12 @@ Datumswerte sind Tageszahlen, wie in Excel: 1 ist der 31. Dezember 1899, also er
 - Ein Datum, das du tippst, wie 2026-10-14 oder 14/10/2026, bleibt so, wie du es getippt hast (Text). Datumsfunktionen lesen es trotzdem (Tag zuerst: 14/10/2026 ist der 14. Oktober), und DATEVALUE macht daraus eine Tageszahl.
 
 ## Formatieren und bearbeiten
-- Wähle einen Bereich aus, indem du mit der Maus ziehst oder [[Shift]] und die Pfeiltasten nimmst. Auf einem Touchscreen hältst du eine Zelle kurz gedrückt und ziehst dann; oder wähle `Bereich auswählen…` im Blattmenü und tippe auf die letzte Zelle.
+- Wähle einen Bereich aus, indem du mit der Maus ziehst oder [[Shift]] und die Pfeiltasten nimmst. Ein Klick auf einen Spaltenbuchstaben oder eine Zeilennummer wählt die ganze Spalte oder Zeile; [[Shift]] + Klick auf eine andere wählt alles dazwischen.
+- Auf einem Touchscreen: tippe auf eine Zelle und ziehe einen der runden Griffe an ihren Ecken: Die gegenüberliegende Ecke bleibt stehen. Bei einer ganzen Spalte oder Zeile ändern die Griffe nur die Spalten oder nur die Zeilen.
+- Auf einem Touchscreen: halte eine Zelle kurz gedrückt und ziehe dann.
+- Auf einem Touchscreen: tippe auf einen Spaltenbuchstaben oder eine Zeilennummer, um die ganze Spalte oder Zeile zu wählen.
+- Auf einem Touchscreen: `Auswahl erweitern` im Blattmenü: Jede Zelle, jeder Spaltenbuchstabe und jede Zeilennummer, auf die du danach tippst, kommt bis dorthin zur Auswahl. Die Schaltfläche `Erweitern ✕` über den Blattreitern (oder [[Esc]], oder wenn du zu tippen beginnst) beendet es.
+- Auf einem Touchscreen ist das kleine Quadrat knapp außerhalb der unteren rechten Ecke das Ausfüllkästchen (siehe Ausfüllkästchen).
 - Die Symbolleiste hat Rückgängig, Wiederholen, Kopieren, Ausschneiden, Einfügen, fett, kursiv, unterstrichen, Ausrichtung, `Zahlenformat` (`auto`, 123, 123.00, %, €, `Datum`), `Textfarbe`, `Formatierung entfernen` und den Zellformat-Knopf (siehe Füllung, Rahmen und verbundene Zellen).
 - Tippe auf einen Spaltenbuchstaben oder eine Zeilennummer, um die ganze Spalte oder Zeile auszuwählen.
 - [[Delete]] oder [[Backspace]] leert die ausgewählten Zellen.
