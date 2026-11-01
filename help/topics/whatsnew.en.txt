@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.99.00
+- **Budget reads more bank files.** Import now takes MT940 / MT942 bank statements (`.sta`, `.mt940`, `.940`, `.942`) and the PayPal activity file (CSV, in English, Greek, German or Spanish), with the net amount after PayPal's fee and payments in another currency converted. Rows that are already in Budget another way, such as an Invoices payment, a transfer between your own accounts or the bank's line for a PayPal payment, come unticked so they are not counted twice. See [Budget](help:a/budget).
+
 ## Version 4.98.01
 - **More name days and world days in Calendar, checked against the United Nations list and Wikipedia.** 23 more name days (Olga, Lydia, Polyxeni, Ermioni, Orestis, Platon, Themistoklis, Arsenios, Pelagia, Margarita…) and 54 more world days, among them the Mediterranean Diet, Tsunami Awareness, Patient Safety and Cleanup days, Olympic Day, World Voice Day and the Greek Organ Donation, National Benefactors and Armed Forces days. See [Calendar](help:a/calendar).
 

@@ -9480,3 +9480,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** follow-up to #773. sansimera.gr blocks automated reading, so on Chris's choice the dates were cross-checked with the UN list of international days and the Greek Wikipedia day pages (facts only, no text copied). Every existing world-day date matched the UN list; 54 rules added (168 → 222). 23 more name-day feasts (136 → 159 dates). Calendar name-days section records the sources.
 - **Files:** `calendar/days.json`, `calendar/namedays.js`, `help/topics/whatsnew.{en,el}.txt`, `shell.js` (4.98.01), `OROS_BIBLE.md`.
 - **Tests:** full `node --test tests/*.test.js`.
+
+### 2026-11-01 — 4.99.00 — Budget BK-1: MT940, PayPal activity file, money already here another way (#777)
+
+- **What:** first wave of the bank-connection plan (Part IX BANK-CONNECT). MT940 / MT942 statements (`:61:` bookings, bank reference as FITID, `:86:` text in `?20` or `/NAME/ /REMI/` form); PayPal activity CSV (EN/EL/DE/ES headers, net amount, Transaction ID as FITID, conversion to the Budget currency, holds / pending / funding rows skipped with a reason, entries carry `pp: 1`); import rows already here another way (Invoices payment ≤ 10 days, own-account transfer ≤ 3 days, the two sides of a PayPal payment ≤ 4 days) come unticked, never hidden. BK-2 (live connection) follows in its own PR.
+- **Files:** `budget/bank.js`, `budget/bankui.js`, `budget/budget.js`, `budget/help.{en,el}.txt`, `tests/budget-bank-bk1.test.js` (new), `help/topics/whatsnew.{en,el}.txt`, `shell.js` (4.99.00), `OROS_BIBLE.md`.
+- **Tests:** full `node --test tests/*.test.js`; new `tests/budget-bank-bk1.test.js`. Playwright real shell, desktop EN and 360 px EL: PayPal CSV (Greek headers) then MT940, the bank's PAYPAL line shows "Already here from PayPal" unticked, no console errors. Not tested: real bank / PayPal / Viva files, a real phone, Safari.
