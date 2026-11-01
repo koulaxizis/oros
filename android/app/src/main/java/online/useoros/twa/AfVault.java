@@ -19,6 +19,8 @@ import java.security.PublicKey;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -39,6 +41,12 @@ import javax.crypto.spec.SecretKeySpec;
  *    fingerprint is enrolled): the values to fill.
  * Neither key ever leaves the Keystore; the master password and the
  * vault key never reach this side. Nothing is kept in plain text.
+ *
+ * PW-AF3: a login the person asks Android to save waits here, sealed
+ * with a third Keystore key (ALIAS_SAVE, AES-GCM), until the orOS page
+ * takes it over the bridge ({t:"af-save"}); at most MAX_SAVES, each
+ * for SAVE_HOURS. orOS shows it in the Passwords editor and stores it
+ * only when the person presses Save there.
  */
 final class AfVault {
     static final String ALIAS_INDEX = "oros-af-index";
@@ -47,6 +55,9 @@ final class AfVault {
     private static final String PREFS = "oros-autofill";
     private static final String RSA = "RSA/ECB/OAEPWithSHA-1AndMGF1Padding";
     static final int MAX_BLOB = 8 * 1024 * 1024;
+    static final String ALIAS_SAVE = "oros-af-save";
+    static final int MAX_SAVES = 10;
+    static final long SAVE_HOURS = 24;
 
     private AfVault() {
     }
@@ -105,6 +116,7 @@ final class AfVault {
             KeyStore k = ks();
             k.deleteEntry(ALIAS_INDEX);
             k.deleteEntry(ALIAS_NAMES);
+            k.deleteEntry(ALIAS_SAVE);
         } catch (Exception ignored) {
         }
     }
@@ -128,9 +140,10 @@ final class AfVault {
                 .putLong("at", at).commit();
     }
 
-    /** Forgets the copies; keeps the per-phone app links. */
+    /** Forgets the copies and the logins waiting to be saved; keeps
+     *  the per-phone app links. */
     static void clear(Context c) {
-        prefs(c).edit().remove("index").remove("names").remove("at").commit();
+        prefs(c).edit().remove("index").remove("names").remove("at").remove("saves").commit();
     }
 
     /** Checks the shape the page sends: {w, iv, ct} base64, bounded. */
@@ -174,6 +187,98 @@ final class AfVault {
             Arrays.fill(raw, (byte) 0);
             if (plain != null) Arrays.fill(plain, (byte) 0);
         }
+    }
+
+    // ---- logins waiting to be saved in orOS (PW-AF3) ----
+    private static SecretKey saveKey() throws Exception {
+        KeyStore k = ks();
+        if (k.containsAlias(ALIAS_SAVE)) return (SecretKey) k.getKey(ALIAS_SAVE, null);
+        KeyGenerator g = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+        g.init(new KeyGenParameterSpec.Builder(ALIAS_SAVE, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setKeySize(256)
+                .build());
+        return g.generateKey();
+    }
+
+    private static JSONArray saves(SharedPreferences p) {
+        try {
+            return new JSONArray(p.getString("saves", "[]"));
+        } catch (JSONException e) {
+            return new JSONArray();
+        }
+    }
+
+    /** Seals one login {url|app, user, pw, title} and keeps it until
+     *  the page takes it. The oldest goes when there are MAX_SAVES. */
+    static synchronized void queueSave(Context c, JSONObject item) throws Exception {
+        Cipher gcm = Cipher.getInstance("AES/GCM/NoPadding");
+        gcm.init(Cipher.ENCRYPT_MODE, saveKey());
+        byte[] plain = item.toString().getBytes(StandardCharsets.UTF_8);
+        byte[] ct;
+        try {
+            ct = gcm.doFinal(plain);
+        } finally {
+            Arrays.fill(plain, (byte) 0);
+        }
+        long now = System.currentTimeMillis();
+        JSONArray old = saves(prefs(c)), keep = new JSONArray();
+        for (int i = Math.max(0, old.length() - (MAX_SAVES - 1)); i < old.length(); i++) {
+            JSONObject o = old.optJSONObject(i);
+            if (o != null && now - o.optLong("at") < SAVE_HOURS * 3600_000L) keep.put(o);
+        }
+        JSONObject o = new JSONObject();
+        o.put("ref", Long.toString(now, 36) + "-" + Integer.toString((int) (Math.random() * 1e6), 36));
+        o.put("at", now);
+        o.put("iv", Base64.encodeToString(gcm.getIV(), Base64.NO_WRAP));
+        o.put("ct", Base64.encodeToString(ct, Base64.NO_WRAP));
+        keep.put(o);
+        prefs(c).edit().putString("saves", keep.toString()).commit();
+    }
+
+    /** The logins still waiting, opened, each with its ref. */
+    static synchronized JSONArray pendingSaves(Context c) {
+        JSONArray out = new JSONArray();
+        JSONArray all = saves(prefs(c));
+        if (all.length() == 0) return out;
+        long now = System.currentTimeMillis();
+        try {
+            SecretKey key = saveKey();
+            for (int i = 0; i < all.length(); i++) {
+                JSONObject o = all.optJSONObject(i);
+                if (o == null || now - o.optLong("at") >= SAVE_HOURS * 3600_000L) continue;
+                byte[] plain = null;
+                try {
+                    Cipher gcm = Cipher.getInstance("AES/GCM/NoPadding");
+                    gcm.init(Cipher.DECRYPT_MODE, key, new GCMParameterSpec(128, Base64.decode(o.getString("iv"), Base64.NO_WRAP)));
+                    plain = gcm.doFinal(Base64.decode(o.getString("ct"), Base64.NO_WRAP));
+                    JSONObject it = new JSONObject(new String(plain, StandardCharsets.UTF_8));
+                    it.put("ref", o.optString("ref"));
+                    out.put(it);
+                } catch (Exception ignored) {
+                    // a copy that no longer opens is dropped by takenSaves
+                } finally {
+                    if (plain != null) Arrays.fill(plain, (byte) 0);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return out;
+    }
+
+    /** The page took these (and expired ones go too). */
+    static synchronized void takenSaves(Context c, JSONArray refs) {
+        JSONArray all = saves(prefs(c)), keep = new JSONArray();
+        long now = System.currentTimeMillis();
+        for (int i = 0; i < all.length(); i++) {
+            JSONObject o = all.optJSONObject(i);
+            if (o == null || now - o.optLong("at") >= SAVE_HOURS * 3600_000L) continue;
+            boolean taken = false;
+            for (int j = 0; refs != null && j < refs.length(); j++) if (o.optString("ref").equals(refs.optString(j))) taken = true;
+            if (!taken) keep.put(o);
+        }
+        prefs(c).edit().putString("saves", keep.toString()).commit();
     }
 
     // ---- links from apps to logins, made on this phone ----

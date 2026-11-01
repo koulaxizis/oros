@@ -49,8 +49,16 @@ Android's Share → orOS.
   "Fill in the payment frame" and the browser's own permission prompt
   for it fills the card in those frames (`framesInPage`, second pass
   with `allFrames`, each frame re-checks that its origin was confirmed).
-- **Not yet:** logins inside a frame, saving a
-  new login from a form (PW-AF3).
+- **Save a login (PW-AF3).** "Save the login from this page" (a click)
+  reads the typed password and user name from the top frame of that
+  tab (`pmfill.js` `readLogin`: a new-password field first; current,
+  new, confirm → the new one), shows "Send the login for … to
+  Passwords in orOS?" and on a yes hands it to `background.js`, which
+  focuses an orOS tab (or opens one) and posts it from the add-on's
+  isolated world into that page; the orOS shell answers
+  `oros-pw-saved`. orOS shows it in the Passwords editor and stores it
+  only when the person presses Save there. Nothing is kept here.
+- **Not yet:** logins inside a frame, passkeys.
 
 Permissions: `activeTab` and `scripting` (fill the tab you clicked
 on, only then), `storage`, `alarms` (the lock time), `contextMenus`,

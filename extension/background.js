@@ -5,7 +5,8 @@
    you send. The toolbar button opens popup.html (save the page, and
    Passwords). Passwords here (PW-AF1): keep the add-on's copy of the
    encrypted vault fresh when an orOS tab finishes loading, and lock
-   (forget the vault key) when the lock time is reached. */
+   (forget the vault key) when the lock time is reached, and (PW-AF3)
+   hand a login the person chose to save to the orOS tab. */
 "use strict";
 
 if (typeof OrosExt === "undefined" && typeof importScripts === "function") {
@@ -81,6 +82,66 @@ api.tabs.onUpdated.addListener(async (tabId, info, tab) => {
 if (api.alarms) {
   api.alarms.onAlarm.addListener((a) => { if (a.name === "pm-lock") OrosVault.keyState(); });
 }
+
+/* Passwords PW-AF3: a login from the popup's "Save the login from
+   this page" goes to the orOS tab (one is opened when none is), which
+   shows it in the Passwords editor; nothing is saved there without the
+   person pressing Save. It is posted from the add-on's own isolated
+   world into the orOS page (shell.js answers "oros-pw-saved"), never
+   put in a URL or stored here. */
+function postSave(item, n) {
+  return new Promise(function (resolve) {
+    if (document.readyState === "loading") { resolve(null); return; }
+    var done = false;
+    function on(ev) {
+      var d = ev.data;
+      if (ev.source !== window || !d || d.type !== "oros-pw-saved" || d.n !== n) return;
+      done = true;
+      window.removeEventListener("message", on);
+      resolve(!!d.ok);
+    }
+    window.addEventListener("message", on);
+    window.postMessage({ type: "oros-pw-save", n: n, item: item }, location.origin);
+    setTimeout(function () { if (!done) { window.removeEventListener("message", on); resolve(null); } }, 800);
+  });
+}
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+async function deliverSave(item) {
+  const base = await getBase();
+  let b;
+  try { b = new URL(base); } catch (e) { return false; }
+  if (!(await api.permissions.contains({ origins: [b.origin + "/*"] }).catch(() => false))) return false;
+  const tabs = await api.tabs.query({ url: b.origin + "/*" }).catch(() => []);
+  const shellPath = (p) => p === b.pathname || p === b.pathname.replace(/\/?$/, "/") + "index.html";
+  let t = (tabs || []).find((x) => { try { return shellPath(new URL(x.url).pathname); } catch (e) { return false; } });
+  if (t) {
+    await api.tabs.update(t.id, { active: true }).catch(() => {});
+    if (api.windows && typeof t.windowId === "number") api.windows.update(t.windowId, { focused: true }).catch(() => {});
+  } else {
+    t = await api.tabs.create({ url: base }).catch(() => null);
+    if (!t) return false;
+  }
+  const n = Array.from(crypto.getRandomValues(new Uint8Array(12)), (x) => x.toString(16).padStart(2, "0")).join("");
+  for (let i = 0; i < 40; i++) {
+    try {
+      const r = await api.scripting.executeScript({ target: { tabId: t.id }, func: postSave, args: [item, n] });
+      const v = r && r[0] ? r[0].result : null;
+      if (v === true || v === false) return v;
+    } catch (e) { /* still loading */ }
+    await wait(750);
+  }
+  return false;
+}
+api.runtime.onMessage.addListener((m, sender, reply) => {
+  // only the add-on's own popup (no tab) may hand a login over
+  if (!m || m.t !== "pm-save" || sender.id !== api.runtime.id || sender.tab) return false;
+  const it = m.item;
+  if (!it || typeof it !== "object" || typeof it.pw !== "string" || !it.pw || typeof it.url !== "string") { reply({ ok: false }); return false; }
+  const item = { url: it.url.slice(0, 2048), user: String(it.user || "").slice(0, 512), pw: it.pw.slice(0, 4096), title: String(it.title || "").slice(0, 200) };
+  reply({ ok: true });
+  deliverSave(item);
+  return false;
+});
 
 api.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "oros-page") {

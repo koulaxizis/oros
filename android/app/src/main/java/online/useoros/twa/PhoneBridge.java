@@ -241,6 +241,7 @@ public class PhoneBridge {
                 io.execute(() -> {
                     send(state());
                     sendTicksNow();
+                    sendSavesNow();
                 });
             });
         }
@@ -269,6 +270,25 @@ public class PhoneBridge {
             o.put("t", "ticks");
             o.put("items", items);
             diag("widget ticks sent: " + items.length());
+            send(o);
+        } catch (JSONException ignored) {
+        }
+    }
+
+    /** PW-AF3: logins the person chose to save in another app, sent on
+     *  every channel until the page answers {t:"applied", what:"af-save"}. */
+    void sendSaves() {
+        io.execute(this::sendSavesNow);
+    }
+
+    private void sendSavesNow() {
+        JSONArray items = AfVault.pendingSaves(app);
+        if (items.length() == 0) return;
+        try {
+            JSONObject o = new JSONObject();
+            o.put("t", "af-save");
+            o.put("items", items);
+            diag("logins to save sent: " + items.length());
             send(o);
         } catch (JSONException ignored) {
         }
@@ -392,6 +412,7 @@ public class PhoneBridge {
                     send(state());
                     sendChanges();
                     sendTicksNow();
+                    sendSavesNow();
                     return;
                 case "seen":
                     seenVisible = m.optBoolean("v");
@@ -439,6 +460,11 @@ public class PhoneBridge {
                 case "applied": {
                     String w = m.optString("what");
                     JSONArray refs = m.optJSONArray("refs");
+                    if ("af-save".equals(w)) {
+                        AfVault.takenSaves(app, refs);
+                        diag("logins to save taken: " + (refs == null ? 0 : refs.length()));
+                        return;
+                    }
                     if ("ticks".equals(w)) {
                         AgendaWidgets.taken(app, refs);
                         Widgets.update(app);

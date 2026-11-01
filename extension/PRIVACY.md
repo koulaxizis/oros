@@ -20,7 +20,10 @@ makes no network requests of its own and has no analytics.
 - It fills a page only when you choose an entry in its window, and
   only with that entry. When a card number sits in a payment frame of
   another site, it names that site and asks the browser for access to
-  it first. It never reads the pages you visit.
+  it first. It never reads the pages you visit, except when you press
+  "Save the login from this page": then it reads the name and password
+  you typed on that page, asks you, and hands them to Passwords in your
+  orOS tab, where they are saved only when you press Save.
 - It stores its settings in your browser: the orOS address, the
   Passwords lock time. "Forget the vault copy" in its options removes
   the copy.

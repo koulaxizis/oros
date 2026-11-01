@@ -8,7 +8,10 @@
    is the saved host or a sub-domain of it, and a login saved for https
    never fills a page on http. Cards, identities and addresses are not
    tied to a site: the person picks one. Nothing is filled without a
-   click (or Enter on a focused button). */
+   click (or Enter on a focused button).
+   readLogin() (PW-AF3) is the other injected function: after a click
+   on "Save the login from this page" it reads the password the person
+   typed (and the user name before it) from the top frame only. */
 (function (root, factory) {
   if (typeof module === "object" && module.exports) module.exports = factory();
   else root.OrosFill = factory();
@@ -278,5 +281,31 @@
     return out.slice(0, 5);
   }
 
-  return { fits: fits, matches: matches, payload: payload, fillInPage: fillInPage, framesInPage: framesInPage, hostOf: function (s) { return hostOf(urlOf(s)); } };
+  /* Injected (PW-AF3): the login typed on this page, or null. A form
+     with a new password (sign-up, change) gives the new one; the user
+     name is an autocomplete username/email field, else the last filled
+     text field before the password. Top frame only. */
+  function readLogin() {
+    var all = Array.prototype.slice.call(document.querySelectorAll("input"));
+    function ac(el) { return String(el.getAttribute("autocomplete") || "").toLowerCase(); }
+    var pws = all.filter(function (el) { return el.type === "password" && el.value; });
+    if (!pws.length) return null;
+    var nw = pws.filter(function (el) { return /new-password/.test(ac(el)); }), pick;
+    if (nw.length) pick = nw[0];
+    else if (pws.length >= 3) pick = pws[1];                       // current, new, confirm
+    else if (pws.length === 2 && pws[0].value === pws[1].value) pick = pws[0];
+    else pick = pws[pws.length - 1];
+    var TEXT = ["text", "email", "tel", ""];
+    var user = all.filter(function (el) { return el.value && el.type !== "password" && /\b(username|email)\b/.test(ac(el)); })[0];
+    if (!user) {
+      all.forEach(function (el) {
+        if (!el.value || TEXT.indexOf(el.type) < 0) return;
+        if (el.compareDocumentPosition(pick) & 4) user = el;          // pick follows el
+      });
+    }
+    return { url: location.origin, user: user ? String(user.value).trim().slice(0, 512) : "",
+             pw: String(pick.value).slice(0, 4096), title: String(document.title || "").slice(0, 200) };
+  }
+
+  return { fits: fits, matches: matches, payload: payload, fillInPage: fillInPage, framesInPage: framesInPage, readLogin: readLogin, hostOf: function (s) { return hostOf(urlOf(s)); } };
 });

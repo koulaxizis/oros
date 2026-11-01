@@ -54,4 +54,7 @@
     <string name="af_no_lock">Βάλε κλείδωμα οθόνης στο κινητό για να χρησιμοποιήσεις την αυτόματη συμπλήρωση του orOS.</string>
     <string name="af_none">Δεν υπάρχει κάτι να συμπληρωθεί εδώ από αυτή την εγγραφή.</string>
     <string name="af_settings_missing">Αυτό το κινητό δεν έχει οθόνη ρυθμίσεων αυτόματης συμπλήρωσης.</string>
+    <string name="af_save_desc">Κωδικοί orOS. Ελέγχεις τον λογαριασμό στο orOS και πατάς Αποθήκευση εκεί.</string>
+    <string name="af_save_later">Άνοιξε το orOS για να ολοκληρωθεί η αποθήκευση στους Κωδικούς.</string>
+    <string name="af_save_failed">Το orOS δεν μπόρεσε να κρατήσει αυτόν τον λογαριασμό.</string>
 </resources>

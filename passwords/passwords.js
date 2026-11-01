@@ -827,6 +827,21 @@
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") openTarget(p.__orosTakeTarget("passwords"));
     } catch (e) {}
+    // PW-AF3: logins to save, from the browser add-on or the phone. The
+    // shell keeps them in memory only (never in a URL or storage) and
+    // pokes us when more arrive while we run.
+    window.__orosPwPoke = takeSaves;
+    takeSaves();
+  }
+  function takeSaves() {
+    var l = null;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakePwSave === "function") l = p.__orosTakePwSave();
+    } catch (e) { l = null; }
+    if (!Array.isArray(l) || !l.length || !window.PmApp || typeof window.PmApp.saveLogin !== "function") return;
+    l.forEach(function (x) { window.PmApp.saveLogin(x); });
+    setTab("pv");
   }
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;

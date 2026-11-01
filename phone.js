@@ -48,6 +48,8 @@
 //               {t:"af-index", seq, idx, names, at}  (v8: the sealed fill
 //                 lists, passwords/afindex.js; never plain values)
 //               {t:"clear", what:"af"}         (v8: copies and keys removed)
+//               {t:"applied", what:"af-save", refs}  (v8, PW-AF3: logins
+//                 to save handed to Passwords)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
 //                widgets, wcal, wtodo, health, drive, app}  (drive: the
 //                orOS Drive app is installed, DRIVE-APP; widgets, wcal,
@@ -58,6 +60,9 @@
 //               {t:"ticks", items:[{ref, l, i, at}]}  (v7: tasks ticked
 //                 on the To-Do widget, sent until answered; see tickTask)
 //               {t:"af-keys", idx, names, af}  (v8: base64 SPKI public keys)
+//               {t:"af-save", items:[{ref, url|app, user, pw, title}]}
+//                 (v8, PW-AF3: logins the person chose to save in
+//                 another app; sent until answered; see takeSaves)
 //               {t:"done", what, seq, added, updated, removed}  (what
 //                 "af-index" carries af: {svc, keys, stored, at})
 //               {t:"error", what, seq, msg}
@@ -1210,6 +1215,20 @@
     if (wrote || frame) { setTimeout(function () { pushAgenda(true); pushToday(true); pushReminders(false); }, frame ? 1500 : 0); }
   }
 
+  // PW-AF3: logins the person asked Android to save in orOS. They go
+  // to Passwords through the shell (memory only), which opens each one
+  // in its editor; nothing is stored until Save is pressed there.
+  function takeSaves(items) {
+    var refs = [];
+    items.slice(0, 10).forEach(function (x) {
+      if (!x || typeof x.ref !== "string" || x.ref.length > 100) return;
+      if (typeof root.__orosPwSave !== "function") return;   // the shell is not ready: the app sends it again
+      try { root.__orosPwSave({ url: x.url, app: x.app, user: x.user, pw: x.pw, title: x.title }); } catch (e) {}
+      refs.push(x.ref);
+    });
+    if (refs.length) send({ t: "applied", what: "af-save", refs: refs });
+  }
+
   // Reminders (v3): the next 48 hours, worked out here from the
   // same data and rules as the shell's engines, rung by the app.
   // Reminders the shell already showed (in its inbox) are left out.
@@ -1328,6 +1347,8 @@
       takeHealth(m);
     } else if (m.t === "ticks" && Array.isArray(m.items)) {
       takeTicks(m.items);
+    } else if (m.t === "af-save" && Array.isArray(m.items)) {
+      takeSaves(m.items);
     } else if (m.t === "changes" && (m.what === "calendar" || m.what === "contacts") && Array.isArray(m.items)) {
       takeChanges(m.what, m.items);
     } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar" || m.what === "reminders" || m.what === "health")) {

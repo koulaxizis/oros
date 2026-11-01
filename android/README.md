@@ -47,6 +47,11 @@ Passwords hands it two lists sealed with this phone's Keystore keys
 after the fingerprint, face or screen lock (`AfAuthActivity`). Rules
 (`AfMatch`) follow the browser add-on's `extension/pmfill.js`. Single
 apps leave the service out. Bible Part IV "Phone autofill".
+Saving (PW-AF3): with autofill on, forms with a password field carry
+a `SaveInfo`; a login the person saves is sealed with a third Keystore
+key (`oros-af-save`, AES-GCM), kept at most a day and handed to the
+page over the bridge (`af-save`), which shows it in the Passwords
+editor; nothing is stored in the vault without Save there.
 
 ## Single apps (wave 7)
 

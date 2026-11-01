@@ -181,5 +181,20 @@
   },
   "pmFrameNo": {
     "message": "Not now"
+  },
+  "pmSaveLogin": {
+    "message": "Save the login from this page"
+  },
+  "pmSaveYes": {
+    "message": "Save in orOS"
+  },
+  "pmSaveAsk": {
+    "message": "Send the login for $1 ($2) to Passwords in orOS? You check it there and press Save."
+  },
+  "pmSaveNone": {
+    "message": "No password typed on this page yet. Type it in the form first, then try again."
+  },
+  "pmSaveFail": {
+    "message": "orOS could not be reached. Open orOS and try again."
   }
 }

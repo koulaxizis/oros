@@ -14,6 +14,10 @@
      fields or password history.
    Sealing: a fresh AES-256-GCM key per list, wrapped with RSA-OAEP
    (SHA-1, the digest Android Keystore's OAEP supports for MGF1).
+   PW-AF3 also keeps here the rules for a login handed over to be
+   saved (from the add-on or the phone): saveItem() cleans it and
+   findSave() looks for the entry it belongs to. Nothing is saved
+   without the person pressing Save in the editor.
    Pure apart from seal() (WebCrypto); Node-tested in
    tests/passwords-autofill.test.js. Exposes window.PmAfIndex. */
 (function (root, factory) {
@@ -22,7 +26,7 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
   var MAX = { title: 120, sub: 120, sites: 20, site: 300, apps: 10 };
   var PKG = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/;
 
@@ -132,6 +136,61 @@
     });
   }
 
+  // ---- PW-AF3: a login to save ----
+  function clip(v, n) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, n) : "";
+  }
+  function bareHost(h) { return String(h || "").toLowerCase().replace(/\.$/, "").replace(/^www\./, ""); }
+
+  /* x: { url (http/https page) | app (Android package), user, pw, title }
+     → the same, cleaned, with site (the address saved in the entry) and
+     host; or null when there is no password or no valid place. */
+  function saveItem(x, LIM) {
+    if (!x || typeof x !== "object") return null;
+    LIM = LIM || {};
+    var pw = typeof x.pw === "string" ? x.pw.slice(0, LIM.pw || 4096) : "";
+    if (!pw) return null;
+    var user = clip(x.user, LIM.user || 512), title = clip(x.title, LIM.title || 200);
+    var site = "", host = "";
+    if (typeof x.app === "string" && x.app) {
+      if (!PKG.test(x.app) || x.app.length > 255) return null;
+      site = "androidapp://" + x.app; host = x.app;
+    } else {
+      var u;
+      try { u = new URL(String(x.url || "")); } catch (e) { return null; }
+      if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+      if (!u.hostname) return null;
+      site = u.origin; host = bareHost(u.hostname);
+    }
+    return { site: site, host: host, user: user, pw: pw, title: title || host };
+  }
+
+  function entryHosts(e) {
+    var out = [];
+    (Array.isArray(e.urls) ? e.urls : []).forEach(function (u) {
+      u = String(u || "").trim();
+      var m = u.match(/^androidapp:\/\/([^/?#]+)/i);
+      if (m) { out.push(m[1]); return; }
+      if (!/^[a-z][a-z0-9+.-]*:/i.test(u)) u = "https://" + u;
+      try { var x = new URL(u); if (x.protocol === "https:" || x.protocol === "http:") out.push(bareHost(x.hostname)); } catch (err) {}
+    });
+    return out;
+  }
+
+  /* The login entry for the same place and user name, newest first.
+     → { entry, same: password unchanged } or null (a new entry). */
+  function findSave(entries, item, K) {
+    if (!item) return null;
+    var u = item.user.toLowerCase(), best = null;
+    (Array.isArray(entries) ? entries : []).forEach(function (e) {
+      if (!e || (K && K.kindOf(e) !== "login")) return;
+      if (String(e.user || "").trim().toLowerCase() !== u) return;
+      if (entryHosts(e).indexOf(item.host) < 0) return;
+      if (!best || (e.m || 0) > (best.m || 0)) best = e;
+    });
+    return best ? { entry: best, same: best.pw === item.pw } : null;
+  }
+
   /* The pair the app stores: names under keys.names, index under keys.idx. */
   function sealBoth(entries, K, PC, keys) {
     var l = lists(entries, K, PC);
@@ -140,5 +199,6 @@
     });
   }
 
-  return { VERSION: VERSION, lists: lists, sites: sites, seal: seal, sealBoth: sealBoth, b64: b64, unb64: unb64 };
+  return { VERSION: VERSION, lists: lists, sites: sites, seal: seal, sealBoth: sealBoth,
+           saveItem: saveItem, findSave: findSave, b64: b64, unb64: unb64 };
 });

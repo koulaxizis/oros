@@ -130,3 +130,70 @@ test("Passwords: the phone dialog appears only inside the orOS app, afindex.js l
   assert.ok(!html.includes("afindex.js"), "not loaded at first open");
   assert.ok(fs.readFileSync(path.join(ROOT, "sw.js"), "utf8").includes('"passwords/afindex.js"'));
 });
+
+test("PW-AF3 saveItem: needs a password and an http(s) page or an Android package; cleans the rest", () => {
+  assert.equal(A.saveItem({ url: "https://x.example", user: "u" }), null, "no password");
+  assert.equal(A.saveItem({ url: "javascript:alert(1)", pw: "p" }), null);
+  assert.equal(A.saveItem({ url: "file:///etc/passwd", pw: "p" }), null);
+  assert.equal(A.saveItem({ app: "bad pkg", pw: "p" }), null);
+  assert.equal(A.saveItem({ pw: "p" }), null, "no place");
+  const w = A.saveItem({ url: "https://www.Shop.Example/login?next=/x#y", user: " ana\n ", pw: " p w ", title: "Shop\u0000 login" }, PC.LIM);
+  assert.deepEqual(w, { site: "https://www.shop.example", host: "shop.example", user: "ana", pw: " p w ", title: "Shop login" },
+    "only the origin is kept, the password exactly as typed");
+  const a = A.saveItem({ app: "com.bank.app", user: "m", pw: "x" });
+  assert.equal(a.site, "androidapp://com.bank.app");
+  assert.equal(a.title, "com.bank.app");
+});
+
+test("PW-AF3 findSave: same place and user name → that login (newest); same password → nothing to do", () => {
+  const list = sample();
+  const bank = list[0];
+  const it = (o) => A.saveItem(Object.assign({ url: "https://bank.example/in", user: "Maria", pw: "new-pw" }, o));
+  const f = A.findSave(list, it(), K);
+  assert.equal(f.entry.id, bank.id, "user names compare without case");
+  assert.equal(f.same, false);
+  assert.equal(A.findSave(list, it({ pw: "s3cret-pw" }), K).same, true);
+  assert.equal(A.findSave(list, it({ user: "other" }), K), null, "another user name is a new entry");
+  assert.equal(A.findSave(list, it({ url: "https://evil-bank.example" }), K), null, "another site is a new entry");
+  assert.equal(A.findSave(list, it({ url: "https://www.bank.example" }), K).entry.id, bank.id, "www. is the same site");
+  assert.equal(A.findSave(list, A.saveItem({ app: "com.bank.app", user: "maria", pw: "z" }), K).entry.id, bank.id);
+  // a card, identity or 2FA-only entry is never the target
+  assert.equal(A.findSave(list, A.saveItem({ url: "https://github.com", user: "m", pw: "z" }), K), null);
+  const newer = entry({ title: "Bank 2", user: "maria", pw: "b", urls: ["bank.example"] });
+  newer.m = bank.m + 10;
+  assert.equal(A.findSave(list.concat([newer]), it(), K).entry.id, newer.id, "newest first; a bare host counts");
+});
+
+test("PW-AF3: the login travels in memory only and is stored only from the editor's Save", () => {
+  const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  const i = shell.indexOf("var pwSaves = [];"), j = shell.indexOf("// This computer (orOS USB");
+  assert.ok(i > 0 && j > i);
+  const part = shell.slice(i, j);
+  assert.ok(!/sessionStorage|localStorage|location\.(href|hash|search)\s*=|history\./.test(part), "never in storage or a URL");
+  assert.match(part, /ev\.source !== window \|\| ev\.origin !== location\.origin/, "only this window's own messages");
+  const app = fs.readFileSync(path.join(ROOT, "passwords/pmapp.js"), "utf8");
+  const q = app.slice(app.indexOf("function queueSave("), app.indexOf("function afSoon("));
+  assert.ok(!/save\(|PC\.upsert|writeStored/.test(q), "queueSave / nextSave never write the vault");
+  assert.match(q, /openEditor\(f\.entry, null, \{ newPw: it\.pw/);
+  assert.match(app, /if \(was\) saveQ = \[\];/, "locking drops what waited");
+  const phone = fs.readFileSync(path.join(ROOT, "phone.js"), "utf8");
+  assert.match(phone, /m\.t === "af-save" && Array\.isArray\(m\.items\)/);
+  const bg = fs.readFileSync(path.join(ROOT, "extension/background.js"), "utf8");
+  assert.match(bg, /sender\.id !== api\.runtime\.id \|\| sender\.tab/, "only the popup hands a login over");
+  // Android: queued sealed, sent until answered, gone when autofill goes off
+  const v = fs.readFileSync(path.join(ROOT, "android/app/src/main/java/online/useoros/twa/AfVault.java"), "utf8");
+  assert.match(v, /remove\("saves"\)/);
+  assert.match(v, /KeyGenParameterSpec\.Builder\(ALIAS_SAVE/);
+  const br = fs.readFileSync(path.join(ROOT, "android/app/src/main/java/online/useoros/twa/PhoneBridge.java"), "utf8");
+  assert.match(br, /"af-save"\.equals\(w\)[\s\S]*?AfVault\.takenSaves/);
+});
+
+test("PW-AF3 readLogin rule matches Android's pickPassword", () => {
+  const m = fs.readFileSync(path.join(ROOT, "android/app/src/main/java/online/useoros/twa/AfMatch.java"), "utf8");
+  assert.match(m, /if \(n >= 3\) return 1;/);
+  assert.match(m, /if \(n == 2 && values\.get\(0\)\.equals\(values\.get\(1\)\)\) return 0;/);
+  const f = fs.readFileSync(path.join(ROOT, "extension/pmfill.js"), "utf8");
+  assert.match(f, /else if \(pws\.length >= 3\) pick = pws\[1\];/);
+  assert.match(f, /else if \(pws\.length === 2 && pws\[0\]\.value === pws\[1\]\.value\) pick = pws\[0\];/);
+  assert.equal(typeof F.readLogin, "function");
+});

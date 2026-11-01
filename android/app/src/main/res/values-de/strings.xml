@@ -54,4 +54,7 @@
     <string name="af_no_lock">Richte eine Displaysperre ein, um das Ausfüllen mit orOS zu nutzen.</string>
     <string name="af_none">Aus diesem Eintrag gibt es hier nichts auszufüllen.</string>
     <string name="af_settings_missing">Dieses Handy hat keinen Einstellungsbildschirm für Autofill.</string>
+    <string name="af_save_desc">orOS Passwörter. Du prüfst das Login in orOS und tippst dort auf Speichern.</string>
+    <string name="af_save_later">Öffne orOS, um das Speichern in Passwörter abzuschließen.</string>
+    <string name="af_save_failed">orOS konnte dieses Login nicht behalten.</string>
 </resources>

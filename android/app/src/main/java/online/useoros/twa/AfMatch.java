@@ -214,6 +214,19 @@ final class AfMatch {
         return NONE;
     }
 
+    // ---- saving (PW-AF3), as extension/pmfill.js readLogin ----
+    /** Which typed password to save: a new-password field first; with
+     *  three (current, new, confirm) the second; two equal ones the
+     *  first; else the last. -1: none. */
+    static int pickPassword(java.util.List<Integer> kinds, java.util.List<String> values) {
+        int n = values.size();
+        if (n == 0) return -1;
+        for (int i = 0; i < n; i++) if (kinds.get(i) == NEW_PASS) return i;
+        if (n >= 3) return 1;
+        if (n == 2 && values.get(0).equals(values.get(1))) return 0;
+        return n - 1;
+    }
+
     // ---- 2FA codes ----
     static String totp(byte[] key, String algo, int digits, int period, long nowMs) throws Exception {
         String mac = "SHA-256".equals(algo) ? "HmacSHA256" : "SHA-512".equals(algo) ? "HmacSHA512" : "HmacSHA1";

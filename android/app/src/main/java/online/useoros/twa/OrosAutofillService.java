@@ -13,6 +13,7 @@ import android.service.autofill.FillContext;
 import android.service.autofill.FillRequest;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
+import android.service.autofill.SaveInfo;
 import android.service.autofill.SaveRequest;
 import android.text.InputType;
 import android.util.Log;
@@ -20,7 +21,9 @@ import android.util.Pair;
 import android.view.View;
 import android.view.ViewStructure;
 import android.view.autofill.AutofillId;
+import android.view.autofill.AutofillValue;
 import android.widget.RemoteViews;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,8 +38,13 @@ import java.util.List;
  * user names, sites, apps; no secrets) to decide what to suggest; every
  * suggestion is locked: a tap opens AfAuthActivity (fingerprint, face
  * or screen lock), which opens the values and fills just that entry.
- * Suggests nothing when autofill is off in orOS, nothing in orOS
- * itself, and never saves anything (PW-AF3).
+ * Suggests nothing when autofill is off in orOS and nothing in orOS
+ * itself.
+ * Saving (PW-AF3): with autofill on, a form with a password field also
+ * carries a SaveInfo, so Android asks "Save to orOS Passwords?" after
+ * the person signs in or signs up. A yes seals the login (AfVault
+ * queueSave), opens orOS, and the page shows it in the Passwords
+ * editor; it is stored in the vault only when the person presses Save.
  */
 public class OrosAutofillService extends AutofillService {
     private static final String TAG = "orOS/Autofill";
@@ -46,6 +54,7 @@ public class OrosAutofillService extends AutofillService {
     static final class Field {
         final AutofillId id;
         int kind;
+        String value = "";
         Field(AutofillId id, int kind) {
             this.id = id;
             this.kind = kind;
@@ -55,6 +64,7 @@ public class OrosAutofillService extends AutofillService {
     /** What the form is: its fields, the app, and (in a known browser) the page. */
     static final class Form {
         final List<Field> fields = new ArrayList<>();
+        final List<Field> all = new ArrayList<>();   // with new-password fields, for saving
         String pkg = "", scheme, host, port = "";
         boolean browser;
 
@@ -87,7 +97,86 @@ public class OrosAutofillService extends AutofillService {
 
     @Override
     public void onSaveRequest(SaveRequest request, SaveCallback callback) {
-        callback.onSuccess();   // nothing is saved from the phone yet (PW-AF3)
+        try {
+            List<FillContext> ctx = request.getFillContexts();
+            Form form = parse(ctx.get(ctx.size() - 1).getStructure());
+            String user = value(form, AfMatch.USER);
+            // a sign-in in two steps: the user name was on the screen before
+            for (int i = ctx.size() - 2; user.isEmpty() && i >= 0; i--) {
+                Form earlier = parse(ctx.get(i).getStructure());
+                if (earlier.pkg.equals(form.pkg) && (earlier.host == null ? form.host == null : earlier.host.equals(form.host))) {
+                    user = value(earlier, AfMatch.USER);
+                }
+            }
+            JSONObject item = saveItem(form, user);
+            if (item == null) {
+                callback.onSuccess();
+                return;
+            }
+            AfVault.queueSave(this, item);
+            OrosApp.bridge(this).sendSaves();    // at once when orOS is running
+            if (Build.VERSION.SDK_INT >= 28) {
+                Intent open = getPackageManager().getLaunchIntentForPackage(getPackageName());
+                if (open != null) {
+                    open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    IntentSender go = PendingIntent.getActivity(this, 7200, open,
+                            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE).getIntentSender();
+                    callback.onSuccess(go);
+                    return;
+                }
+            }
+            Toast.makeText(this, R.string.af_save_later, Toast.LENGTH_LONG).show();
+            callback.onSuccess();
+        } catch (Exception e) {
+            Log.w(TAG, "save request: " + e);
+            callback.onFailure(getString(R.string.af_save_failed));
+        }
+    }
+
+    /** The first non-empty value of a kind (USER falls back to EMAIL). */
+    private static String value(Form f, int kind) {
+        for (Field x : f.all) if (x.kind == kind && !x.value.isEmpty()) return x.value.trim();
+        if (kind == AfMatch.USER) for (Field x : f.all) if (x.kind == AfMatch.EMAIL && !x.value.isEmpty()) return x.value.trim();
+        return "";
+    }
+
+    /** {url|app, user, pw, title} for the page, or null. */
+    private JSONObject saveItem(Form f, String user) throws Exception {
+        List<Integer> kinds = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+        for (Field x : f.all) {
+            if ((x.kind == AfMatch.PASS || x.kind == AfMatch.NEW_PASS) && !x.value.isEmpty()) {
+                kinds.add(x.kind);
+                values.add(x.value);
+            }
+        }
+        int k = AfMatch.pickPassword(kinds, values);
+        if (k < 0 || f.pkg.equals(getPackageName())) return null;
+        JSONObject o = new JSONObject();
+        if (f.browser) {
+            if (f.host == null || f.host.isEmpty() || f.host.equals("useoros.online")) return null;
+            String sc = f.scheme == null ? "https" : f.scheme.toLowerCase(java.util.Locale.ROOT);
+            if (!sc.equals("https") && !sc.equals("http")) return null;
+            o.put("url", sc + "://" + f.host);
+            o.put("title", f.host);
+        } else {
+            if (f.pkg.isEmpty()) return null;
+            o.put("app", f.pkg);
+            o.put("title", appLabel(f.pkg));
+        }
+        o.put("user", user.length() > 512 ? user.substring(0, 512) : user);
+        String pw = values.get(k);
+        o.put("pw", pw.length() > 4096 ? pw.substring(0, 4096) : pw);
+        return o;
+    }
+
+    private String appLabel(String pkg) {
+        try {
+            android.content.pm.PackageManager pm = getPackageManager();
+            return String.valueOf(pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)));
+        } catch (Exception e) {
+            return pkg;
+        }
     }
 
     // ---- the form ----
@@ -112,6 +201,7 @@ public class OrosAutofillService extends AutofillService {
                 if (before != null) before.kind = AfMatch.USER;
             }
         }
+        f.all.addAll(f.fields);
         List<Field> keep = new ArrayList<>();
         for (Field x : f.fields) if (x.kind != AfMatch.NONE && x.kind != AfMatch.NEW_PASS) keep.add(x);
         f.fields.clear();
@@ -131,6 +221,8 @@ public class OrosAutofillService extends AutofillService {
             int kind = kindOf(n);
             if (kind != -1) {
                 Field fl = new Field(id, kind);
+                AutofillValue v = n.getAutofillValue();
+                if (v != null && v.isText() && v.getTextValue() != null) fl.value = v.getTextValue().toString();
                 f.fields.add(fl);
                 if (kind == AfMatch.NONE) plain.add(fl);
             }
@@ -180,18 +272,18 @@ public class OrosAutofillService extends AutofillService {
 
     // ---- suggestions ----
     private FillResponse respond(Form form) {
-        if (form.fields.isEmpty()) return null;
+        if (form.all.isEmpty()) return null;
         if (form.pkg.equals(getPackageName())) return null;          // never inside orOS itself
         if (form.browser && form.host != null && form.host.equals("useoros.online")) return null;
-        if (!AfVault.stored(this)) return null;
+        if (!AfVault.stored(this)) return null;                      // autofill is off in orOS
         JSONArray names;
         try {
             names = AfVault.names(this);
         } catch (Exception e) {
             Log.w(TAG, "names: " + e);
-            return null;
+            names = null;
         }
-        if (names == null) return null;
+        if (names == null) names = new JSONArray();                  // nothing to suggest; saving still works
         String webPort = form.port;
         boolean wantLogin = form.any(1), wantCard = form.any(2), wantPerson = form.any(3);
         boolean otpOnly = wantLogin && form.has(AfMatch.OTP) && !form.has(AfMatch.USER) && !form.has(AfMatch.PASS);
@@ -226,7 +318,27 @@ public class OrosAutofillService extends AutofillService {
             Dataset d = dataset(form, "", getString(R.string.af_pick), "", "login", true, n);
             if (d != null) { r.addDataset(d); n++; }
         }
-        return n > 0 ? r.build() : null;
+        boolean save = addSave(r, form);
+        return n > 0 || save ? r.build() : null;
+    }
+
+    /** PW-AF3: Android offers "Save to orOS Passwords?" after a form
+     *  with a password field (also a new-password one) is sent. */
+    private boolean addSave(FillResponse.Builder r, Form form) {
+        List<AutofillId> pass = new ArrayList<>(), user = new ArrayList<>();
+        for (Field x : form.all) {
+            if (x.kind == AfMatch.PASS || x.kind == AfMatch.NEW_PASS) pass.add(x.id);
+            else if (x.kind == AfMatch.USER || x.kind == AfMatch.EMAIL) user.add(x.id);
+        }
+        if (pass.isEmpty()) return false;
+        if (form.browser ? form.host == null : form.pkg.isEmpty()) return false;
+        int type = SaveInfo.SAVE_DATA_TYPE_PASSWORD | (user.isEmpty() ? 0 : SaveInfo.SAVE_DATA_TYPE_USERNAME);
+        SaveInfo.Builder b = new SaveInfo.Builder(type, pass.toArray(new AutofillId[0]));
+        if (!user.isEmpty()) b.setOptionalIds(user.toArray(new AutofillId[0]));
+        b.setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+        b.setDescription(getString(R.string.af_save_desc));
+        r.setSaveInfo(b.build());
+        return true;
     }
 
     /** 2: the exact host or a linked app, 1: a sub-domain, 0: no. */

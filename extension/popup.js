@@ -165,6 +165,33 @@ function askFrames(p, frames, n) {
   $("frameYes").focus();
 }
 
+/* PW-AF3: the login typed on this page goes to Passwords in orOS
+   (background.js hands it to the orOS tab); orOS opens it in the
+   editor and saves it only when the person presses Save there. */
+$("saveLogin").addEventListener("click", async () => {
+  $("saveAsk").hidden = true;
+  if (!tab || !/^https?:/.test(tab.url || "")) { say(msg("pmNoPage"), true); return; }
+  const ok = await api.permissions.contains({ origins: [originPattern()] }).catch(() => false)
+    || await api.permissions.request({ origins: [originPattern()] }).catch(() => false);
+  if (!ok) { say(msg("pmNoAccess"), true); return; }
+  let item = null;
+  try {
+    const res = await api.scripting.executeScript({ target: { tabId: tab.id }, func: F.readLogin });
+    item = res && res[0] ? res[0].result : null;
+  } catch (x) { say(msg("pmNoAccess"), true); return; }
+  if (!item || !item.pw) { say(msg("pmSaveNone"), true); return; }
+  say(msg("pmSaveAsk", [new URL(item.url).host, item.user || "—"]));
+  $("saveAsk").hidden = false;
+  $("saveYes").onclick = () => {
+    api.runtime.sendMessage({ t: "pm-save", item: item }).then((r) => {
+      item = null;
+      if (r && r.ok) window.close(); else say(msg("pmSaveFail"), true);
+    }, () => say(msg("pmSaveFail"), true));
+  };
+  $("saveNo").onclick = () => { item = null; $("saveAsk").hidden = true; say(""); };
+  $("saveYes").focus();
+});
+
 async function start() {
   say("");
   base = await getBase();

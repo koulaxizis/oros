@@ -56,4 +56,7 @@
     <string name="af_no_lock">Set a screen lock on this phone to use orOS autofill.</string>
     <string name="af_none">Nothing to fill here from this entry.</string>
     <string name="af_settings_missing">This phone has no autofill settings screen.</string>
+    <string name="af_save_desc">orOS Passwords. You check the login in orOS and press Save there.</string>
+    <string name="af_save_later">Open orOS to finish saving this login in Passwords.</string>
+    <string name="af_save_failed">orOS could not keep this login.</string>
 </resources>
