@@ -18,7 +18,7 @@ Press an entry to see it. Passwords and hidden fields show dots until you press 
 Search finds words in titles, usernames, websites, tags, notes and fields that are not hidden. The buttons under the search show `Favourites`, `2FA codes`, `Weak` passwords and passwords `Reused` in more than one entry, and the tag list shows one tag.
 
 ## Cards, identities, addresses and notes
-`New` asks what you want to keep: a `Login`, a `Payment card`, an `Identity`, an `Address` or a `Secure note`. Each has its own form, and the list shows an icon and a short line for each one. `All types` above the list shows one type only.
+`New` asks what you want to keep: a `Login`, a `Payment card`, an `Identity`, an `Address`, a `2FA code` or a `Secure note`. Each has its own form, and the list shows an icon and a short line for each one. `All types` above the list shows one type only.
 - Payment card: cardholder name, card number, expiry date (MM/YY), security code (CVV), PIN, bank and the bank's website. The number is checked (check digit) and its network is shown (Visa, Mastercard and others). The list shows only its last four digits, and `Expires soon` or `Expired` near its expiry date. `Copy in order` copies the number, then the expiry, then the code, then the name, one per press, for a payment form.
 - Identity: title, name, date of birth, email, phone, company, ID card, passport and driving licence with their expiry dates, tax number, social security number and insurance number. Documents that expire soon are marked. `Copy name` copies the whole name.
 - Address: recipient, street, floor, city, postal code, region, country and phone. `Copy address` copies it as lines.
@@ -30,6 +30,14 @@ A login made from a card or an identity of another app (fields such as `Number` 
 
 ## Two-factor codes
 Put the secret a website gives you for an authenticator app into `Two-factor secret or otpauth:// link`: the text code, or the whole otpauth:// link. `Scan QR` reads the QR code with the camera, or from a picture with `Choose a picture`. The entry then shows the current code and the seconds it has left; `Copy` copies it.
+
+A `2FA code` is an account whose two-factor code you keep here without its password, as in an authenticator app: the service, the account and the secret. Scanning the service's QR code fills in the service and the account. Codes that you import from Aegis, 2FAS or Google Authenticator and that match no entry become 2FA codes.
+
+`Codes` at the top shows every two-factor code of the vault in one list, with the seconds each one has left. Type in the search to find one, and tap a code to copy it. In its last 5 seconds a code also shows the next one, and a tap copies the next one, so it is still valid when you paste it. `›` opens the entry.
+
+`QR code` next to a code shows the account as a QR code, for moving it to another authenticator app. Anyone who sees or photographs it can make your codes, so close it once the other app has read it.
+
+Your codes and your passwords are in the same vault: one master password opens both. That is simpler, but a separate authenticator app keeps the second step apart; `Export` can copy your codes to Aegis or 2FAS.
 
 Codes from a counter (HOTP) are not supported.
 
@@ -57,6 +65,8 @@ Delete an export that is not encrypted, and any picture of those QR codes, as so
 `⋯` then `Export` saves every entry with your master password as a check.
 - `KeePass (.kdbx 4, encrypted)`: the file opens in KeePass and KeePassXC with the password you choose for it.
 - `Bitwarden (.json, NOT encrypted)`: anyone who gets this file can read every password. You have to tick that you understand.
+- `Aegis (.json, encrypted)`: only the two-factor codes, in a file Aegis imports with the password you choose for it (Aegis: Settings › Import & Export › Import, `Aegis`).
+- `2FAS (.2fas, NOT encrypted)`: only the two-factor codes, for 2FAS (Settings › 2FAS Backup › Import). Anyone who gets the file can make your codes, so import it right away and delete it.
 
 ## Locking and the clipboard
 The vault locks itself after 5 minutes without use and as soon as you leave the app or switch to another tab. Change both in `⋯`, `Lock settings`. The padlock button locks it at once.
