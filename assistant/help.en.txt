@@ -106,7 +106,7 @@ The assistant can add straight to more apps, with the same card, ticks and `Undo
 
 Longer content opens in the app's own window, where you check it and save it yourself:
 - [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
-- [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document the assistant writes, with headings, bold, italic, lists, numbering and alignment, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`.
+- [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document the assistant writes, with headings, bold, italic, lists, numbering and alignment, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`. [Pad](app:pad): a text or code file the assistant writes (a script, a config file, a web page), opened as a new tab that you save where you want; nothing in it is ever run. Pad's recent files also turn up when the assistant searches, so "open config.json in Pad" opens one.
 
 ## Partners across apps
 When a CRM customer is the same partner as a supplier or consignment shop in [Stock](app:stock), a client in [Timesheet](app:timesheet) or [Invoices](app:invoices), or a person on your titles in [Publishing](app:publish), ask the assistant to link them ("supplier Beta Ltd in Stock is the customer Beta Print"). It is the same link as `+ Link` under `In other apps` on the customer in [CRM](app:crm), so the card then shows that partner's stock, hours, invoices or titles.

@@ -318,3 +318,68 @@ test("wave 3 wiring: tools, preview, compare and key row are reachable and label
   // the key row never steals focus from the editor
   assert.match(src, /pointerdown[^\n]*preventDefault|preventDefault[^\n]*pointerdown/);
 });
+
+// ---------- wave 4: search, Assistant, save automatically ----------
+
+const SEARCH = require("../pad/search.js");
+
+test("Pad's search provider lists only valid recent paths, read-only, and opens through the deep links", () => {
+  const store = { "oros-pad-session": { order: [], recent: [
+    { kind: "disk", path: "/internal/Code/app.json" },
+    { kind: "pc", path: "/home/chris/run.sh" },
+    { kind: "disk", path: "/internal/Code/app.json" },
+    { kind: "disk", path: "/internal/../etc" },
+    { kind: "disk", path: "/elsewhere/x.txt" },
+    { kind: "pc", path: "/home/../root/x" },
+    { kind: "fsa", path: "/x" },
+    { kind: "pc", path: "relative.txt" },
+    null
+  ] } };
+  const hits = SEARCH.search({ q: "", readJSON: (k) => store[k] });
+  assert.deepEqual(hits, [
+    { id: "disk:/internal/Code/app.json", title: "app.json", text: "/internal/Code/app.json", target: { openPath: "/internal/Code/app.json" } },
+    { id: "pc:/home/chris/run.sh", title: "run.sh", text: "/home/chris/run.sh", target: { openPc: "/home/chris/run.sh" } }
+  ]);
+  assert.deepEqual(SEARCH.search({ readJSON: () => null }), []);
+  assert.deepEqual(SEARCH.keys, ["oros-pad-session"]);
+  const aj = JSON.parse(read("apps.json"));
+  const apps = Array.isArray(aj) ? aj : aj.apps;
+  assert.equal(apps.find((a) => a.id === "pad").search, "search.js");
+  assert.ok(read("sw.js").includes('"pad/search.js"'));
+  const app = read("pad/app.js");
+  assert.match(app, /typeof target\.openPc === "string"[\s\S]{0,200}C\.cleanLoc\(\{ kind: "pc"/);
+});
+
+test("Assistant text_file: a new Pad tab with the file as written; languages match Pad's", () => {
+  const A = require("../assistant/core.js");
+  const e = (args) => A.normEntry(args, { has: () => true });
+  const code = "\n\ndef hi():\r\n    return 1\t\n\n";
+  const r = e({ kind: "text_file", title: "hi.py", text: code });
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(r.call, { fn: "openAt", args: ["pad", { newText: { name: "hi.py", text: "def hi():\n    return 1\n" } }] });
+  const l = e({ kind: "text_file", title: "build", text: "echo hi", lang: "shell" });
+  assert.equal(l.call.args[1].newText.lang, "shell");
+  assert.equal(e({ kind: "text_file", title: "x", text: "a", lang: "cobol" }).call.args[1].newText.lang, undefined);
+  assert.equal(e({ kind: "text_file", title: "a/b:c?.txt", text: "x" }).call.args[1].newText.name, "a_b_c_.txt");
+  assert.match(e({ kind: "text_file", title: "x" }).err, /needs text/);
+  assert.match(e({ kind: "text_file", title: "x", text: "a".repeat(500001) }).err, /keeps 500000/);
+  assert.ok(A.entryKinds().includes("text_file"));
+  assert.deepEqual(A.entryKinds((id) => id === "notes"), ["note"]);
+  const src = read("assistant/core.js");
+  const m = /var PAD_LANGS = (\[[^\]]+\])/.exec(src);
+  assert.deepEqual(JSON.parse(m[1]), C.LANGS.map((x) => x.id));
+});
+
+test("save automatically: off by default, only placed tabs, never asks, holds on a change elsewhere", () => {
+  const src = read("pad/app.js");
+  assert.match(src, /var prefs = \{[^}]*auto: false/);
+  const auto = src.slice(src.indexOf("function autoSave("), src.indexOf("// ---------- 16. Wiring"));
+  assert.ok(auto.length > 200);
+  // no dialogs, no permission prompts, no conflict copy from autosave
+  assert.ok(!/\bask\(|conflict\(|requestPermission|saveAs\(|saveToDevice\(|loadHandle\(/.test(auto), "autosave never asks");
+  assert.match(auto, /c\.state !== "same"\) \{ autoHold\(tab\)/);
+  assert.match(src, /if \(tab\.dirty && tab\.loc && !tab\.autoHeld && !tab\.saving\) autoSave\(tab\)/);
+  // a Save by hand waits for a running one and lifts the hold
+  assert.match(src, /if \(tab\.saving\) return tab\.saving\.then/);
+  assert.match(src, /tab\.autoHeld = false;\s*editedSince\(tab, sent\);/);
+});
