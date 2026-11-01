@@ -106,7 +106,7 @@
       "st.chart": "Speed and accuracy, last 30 days", "st.chartNone": "Practise on a few days to see your progress here.",
       "st.chartDay": "{d}: {w} wpm, {a}% accuracy",
       "set.rem": "Remind me to practise", "set.remAt": "Reminder time",
-      "btn.rain": "Letter rain", "u.row": "in a row", "run.field": "Typing field",
+      "btn.rain": "Letter rain", "u.row": "in a row", "grp.poly": "Polytonic marks", "lay.hintPoly": "The hints follow the Linux Greek (polytonic) keyboard. Windows' Greek Polytonic keyboard has the marks on other keys; the lessons accept what you type either way.", "run.field": "Typing field",
       "rain.score": "Score", "rain.level": "Level", "rain.start": "Start", "rain.again": "Play again", "rain.continue": "Go on",
       "rain.intro": "Type the falling letters before they reach the bottom. Three lives.",
       "rain.letters": "Letters: {k}", "rain.best": "Best on this device: {n}", "rain.newBest": "A new best!",
@@ -190,7 +190,7 @@
       "st.chart": "Ταχύτητα και ακρίβεια, τελευταίες 30 μέρες", "st.chartNone": "Κάνε εξάσκηση μερικές μέρες για να δεις εδώ την πρόοδό σου.",
       "st.chartDay": "{d}: {w} λ/λ, ακρίβεια {a}%",
       "set.rem": "Υπενθύμιση για εξάσκηση", "set.remAt": "Ώρα υπενθύμισης",
-      "btn.rain": "Βροχή γραμμάτων", "u.row": "στη σειρά", "run.field": "Πεδίο πληκτρολόγησης",
+      "btn.rain": "Βροχή γραμμάτων", "u.row": "στη σειρά", "grp.poly": "Πολυτονικά σημάδια", "lay.hintPoly": "Η βοήθεια ακολουθεί το ελληνικό πολυτονικό πληκτρολόγιο του Linux. Στο πολυτονικό πληκτρολόγιο των Windows τα σημάδια είναι σε άλλα πλήκτρα· τα μαθήματα δέχονται ό,τι γράφεις και στις δύο περιπτώσεις.", "run.field": "Πεδίο πληκτρολόγησης",
       "rain.score": "Πόντοι", "rain.level": "Επίπεδο", "rain.start": "Ξεκίνα", "rain.again": "Ξαναπαίξε", "rain.continue": "Συνέχεια",
       "rain.intro": "Γράψε τα γράμματα που πέφτουν πριν φτάσουν κάτω. Τρεις ζωές.",
       "rain.letters": "Γράμματα: {k}", "rain.best": "Καλύτερο σε αυτή τη συσκευή: {n}", "rain.newBest": "Νέο ρεκόρ!",
@@ -388,7 +388,7 @@
 
   // Home
   function nextLesson() {
-    var ls = CO.lessons(), L = lay();
+    var L = lay(), ls = CO.lessons(L);
     for (var i = 0; i < ls.length; i++) {
       var p = C.progress(data, L, ls[i].id);
       if (!p || p.s < 1) return ls[i].id;
@@ -406,9 +406,10 @@
     $("ring-fg").setAttribute("stroke-dasharray", (circ * frac).toFixed(1) + " " + circ.toFixed(1));
     var nx = nextLesson();
     var go = $("go-btn");
-    go.textContent = !nx ? t("btn.review") : nx === "h1" && !C.progress(data, L, "h1") ? t("btn.start") : t("btn.continue", { n: lessonNo(nx) });
-    go.dataset.lesson = nx || "f1";
-    $("lay-hint").textContent = t("lay.hint", { name: K.get(L).name });
+    go.textContent = !nx ? t("btn.review") : nx === CO.lessons(L)[0].id && !C.progress(data, L, nx) ? t("btn.start") : t("btn.continue", { n: lessonNo(nx) });
+    var all = CO.lessons(L);
+    go.dataset.lesson = nx || all[all.length - 1].id;
+    $("lay-hint").textContent = t("lay.hint", { name: K.get(L).name }) + (CO.isPoly(L) ? " " + t("lay.hintPoly") : "");
     var pb = $("prac-btn");
     pb.setAttribute("aria-disabled", learnedUpTo() < 0 ? "true" : "false");
     pb.title = learnedUpTo() < 0 ? t("prac.none") : "";
@@ -416,9 +417,11 @@
     var box = $("course");
     box.textContent = "";
     CO.GROUPS.forEach(function (g) {
+      var inGroup = CO.lessons(L).filter(function (x) { return x.g === g; });
+      if (!inGroup.length) return;
       box.appendChild(el("h2", "grp", t("grp." + g)));
       var grid = el("div", "lessons");
-      CO.lessons().filter(function (x) { return x.g === g; }).forEach(function (x) {
+      inGroup.forEach(function (x) {
         var p = C.progress(data, L, x.id), s = p ? p.s : 0;
         var b = el("button", "lesson" + (x.id === nx ? " next" : "") + (s ? " done" : ""));
         b.type = "button";
@@ -546,16 +549,18 @@
   // ---------- 7. A run (lesson or speed test) ----------
   // run = { kind "lesson"|"test", id, min, text [chars], pos, marks [0 todo,1 right,2 fixed,3 wrong],
   //         errHere, chars, errors, keys {ch:[r,w,ms]}, t0, last, active ms, done }
-  var run = null, tick = 0, hintTimer = 0, deadPending = false, mismatch = 0, sawKey = false;
+  var run = null, tick = 0, hintTimer = 0, deadPending = 0, mismatch = 0, sawKey = false;
 
   function startLesson(id) {
     if (!CO.lesson(id)) return;
+    // a lesson of another course (main course vs polytonic): its first lesson
+    if (!CO.has(lay(), id)) id = CO.lessons(lay())[0].id;
     var seed = (Date.now() % 100000) + 1;
     beginRun({ kind: "lesson", id: id, kid: isKid(), text: CO.build(lay(), id, seed, { kid: isKid() }) });
   }
   // The last lesson with at least one star (-1: none yet).
   function learnedUpTo() {
-    var ls = CO.lessons(), L = lay(), up = -1;
+    var L = lay(), ls = CO.lessons(L), up = -1;
     ls.forEach(function (x, i) { var p = C.progress(data, L, x.id); if (p && p.s >= 1) up = i; });
     return up;
   }
@@ -579,7 +584,10 @@
   function startText(src, part) {
     var x = textSource(src);
     if (!x) return;
-    if (x.lay !== lay()) save(C.setPrefs(data, { lay: x.lay }, Date.now()));
+    // a passage of another language switches the layout (Dvorak keeps the
+    // English ones, polytonic the Greek ones)
+    if (!TX.library(lay()).some(function (p) { return "l:" + p.id === src; }) && x.lay !== lay() && /^l:/.test(src))
+      save(C.setPrefs(data, { lay: x.lay }, Date.now()));
     var ps = TX.parts(TX.clean(lay(), x.text).text);
     if (!ps.length) { toast(t("add.empty")); return; }
     part = Math.max(0, Math.min(ps.length - 1, part | 0));
@@ -678,7 +686,8 @@
     if (!ch) return null;
     var st = K.strokes(lay(), ch);
     if (!st) return null;
-    if (deadPending && st.length > 1) return st.slice(1);
+    // dead keys already pressed for this letter (polytonic: up to three)
+    if (deadPending && st.length > 1) return st.slice(Math.min(deadPending, st.length - 1));
     return st;
   }
   function scheduleHint() {
@@ -834,10 +843,10 @@
       if (!kb || typeof kb.getLayoutMap !== "function") return;
       kb.getLayoutMap().then(function (map) {
         if (!run) return;
-        var g = K.guess("KeyA", map.get("KeyA"), false) || K.guess("KeyY", map.get("KeyY"), false);
-        // "a" on KeyA fits en and de: tell them apart by KeyY
-        if (g !== "el") g = K.guess("KeyY", map.get("KeyY"), false) || g;
-        if (g && g !== lay()) layoutWarn(g);
+        // KeyY tells every layout family apart (y z υ f j); el and elp
+        // type the same letters, so they count as one
+        var g = K.guess("KeyY", map.get("KeyY"), false);
+        if (g && g !== K.get(lay()).base) layoutWarn(g);
       }).catch(function () { /* not allowed in this frame */ });
     } catch (e) { /* no API */ }
   }
@@ -854,7 +863,7 @@
     if (e.code === "Escape") { e.preventDefault(); goHome(); return; }
     if (e.code === "Backspace") { e.preventDefault(); backspace(); return; }
     if (e.code === "Enter" || e.code === "Tab") { e.preventDefault(); return; }
-    if (e.key === "Dead") { deadPending = true; scheduleHint(); return; }
+    if (e.key === "Dead") { deadPending++; scheduleHint(); return; }
     if (typeof e.key === "string" && Array.from(e.key).length === 1) {
       // a press that fits other layouts but not this one counts; three
       // in a row show the banner, a press that fits this one clears it
@@ -867,7 +876,7 @@
     var cap = $("cap"), v = cap.value;
     if (!v) return;
     cap.value = "";
-    deadPending = false;
+    deadPending = 0;
     Array.from(v.normalize("NFC")).forEach(screen === "rain" ? rainChar : typeChar);
   }
 
@@ -889,7 +898,7 @@
     var bad = Object.keys(rec.keys).filter(function (c) { return rec.keys[c][1] > 0; })
       .sort(function (x, y) { return rec.keys[y][1] - rec.keys[x][1]; }).slice(0, 5).map(showLabel);
     $("res-keys").textContent = bad.length ? t("res.keys", { k: bad.join("  ") }) : "";
-    var idx = rec.lesson ? CO.indexOf(rec.lesson) : -1, ls = CO.lessons();
+    var idx = rec.lesson ? CO.indexOf(rec.lesson) : -1, ls = CO.lessons(rec.lay);
     var nxt = $("res-next"), again = $("res-again");
     nxt.dataset.lesson = ""; nxt.dataset.src = ""; nxt.dataset.part = "";
     again.dataset.lesson = ""; again.dataset.min = ""; again.dataset.kind = done.kind;
@@ -910,7 +919,7 @@
     $("res-row").textContent = t("res.row", { n: done.bestRow || 0 });
     // a certificate after the final text (one star or more) or a speed test
     var cert = $("res-cert");
-    var certTitle = rec.lesson === "f1" && s >= 1 ? t("cert.course", { name: K.get(rec.lay).name }) :
+    var certTitle = rec.lesson && CO.lesson(rec.lesson).fin && s >= 1 ? t("cert.course", { name: K.get(rec.lay).name }) :
       isTest && rec.chars > 0 ? t("cert.test", { w: w, name: K.get(rec.lay).name }) : "";
     cert.dataset.title = certTitle;
     $("res-cert-row").hidden = !certTitle || !installed("certificates");
@@ -1108,7 +1117,7 @@
     var lib = $("lib");
     lib.textContent = "";
     TX.library(L).forEach(function (x) {
-      textRow(lib, "l:" + x.id, x.w, t("tx.by", { a: x.a, y: x.y }) + " · " + lenText(x.t));
+      textRow(lib, "l:" + x.id, x.w, t("tx.by", { a: x.a, y: x.yd || x.y }) + " · " + lenText(x.t));
     });
     var box = $("mine");
     box.textContent = "";
