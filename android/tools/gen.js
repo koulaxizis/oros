@@ -444,6 +444,25 @@ ${aliases}
             </intent-filter>
             <meta-data android:name="android.content.SyncAdapter" android:resource="@xml/sync_calendar" />
         </service>
+
+        <!-- Passwords autofill (PW-AF2): orOS as the phone's autofill
+             service, chosen by the person in Android's settings. Only the
+             system can bind it; a suggestion opens AfAuthActivity
+             (fingerprint, face or screen lock) before anything is filled. -->
+        <service android:name=".OrosAutofillService"
+            android:label="@string/af_service"
+            android:exported="true"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data android:name="android.autofill" android:resource="@xml/autofill_service" />
+        </service>
+        <activity android:name=".AfAuthActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 </manifest>
 `;
@@ -469,7 +488,8 @@ const REMOVE_PERMS = ["SCHEDULE_EXACT_ALARM", "RECEIVE_BOOT_COMPLETED", "READ_CO
 const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"], ["activity", ".PermissionActivity"],
   ["receiver", ".ReminderReceiver"], ["activity", ".HealthPermissionActivity"], ["activity", ".HealthPrivacyActivity"],
   ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".QuickBarWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"], ["service", ".QuickTile"],
-  ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"]];
+  ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"],
+  ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"]];
 
 function soloApps() {
   return JSON.parse(fs.readFileSync(SOLO_LIST, "utf8")).apps;

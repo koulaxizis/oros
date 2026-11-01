@@ -39,4 +39,22 @@
     <string name="widget_quickbar_desc">Eine Aufgabe hinzufügen oder in deinen orOS-Daten suchen</string>
     <string name="widget_quickbar_hint">Hinzufügen oder suchen…</string>
     <string name="tile_quick">orOS Schnell</string>
+
+    <!-- Passwords autofill (PW-AF2) -->
+    <string name="af_service">orOS Passwörter</string>
+    <string name="af_pick">Login aus orOS wählen</string>
+    <string name="af_pick_title">Login für %1$s</string>
+    <string name="af_link_q">„%1$s“ ab jetzt in %2$s (%3$s) verwenden? orOS merkt sich das auf diesem Handy.</string>
+    <string name="af_yes">Verwenden</string>
+    <string name="af_no">Abbrechen</string>
+    <string name="af_auth_title">Aus orOS ausfüllen</string>
+    <string name="af_auth_sub">Bestätige, dass du es bist, um diesen Eintrag auszufüllen</string>
+    <string name="af_invalidated">Ein neuer Fingerabdruck oder ein neues Gesicht wurde hinzugefügt, daher ist das Ausfüllen mit orOS aus. Öffne orOS Passwörter, um es wieder einzuschalten.</string>
+    <string name="af_failed">orOS konnte seine Ausfüll-Kopie nicht öffnen. Öffne orOS Passwörter einmal, um sie zu erneuern.</string>
+    <string name="af_no_lock">Richte eine Displaysperre ein, um das Ausfüllen mit orOS zu nutzen.</string>
+    <string name="af_none">Aus diesem Eintrag gibt es hier nichts auszufüllen.</string>
+    <string name="af_settings_missing">Dieses Handy hat keinen Einstellungsbildschirm für Autofill.</string>
+    <string name="af_save_desc">orOS Passwörter. Du prüfst das Login in orOS und tippst dort auf Speichern.</string>
+    <string name="af_save_later">Öffne orOS, um das Speichern in Passwörter abzuschließen.</string>
+    <string name="af_save_failed">orOS konnte dieses Login nicht behalten.</string>
 </resources>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>orOS</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon-32.png" alt="" width="20" height="20">
+    <strong>orOS</strong>
+    <span class="grow"></span>
+    <button type="button" id="send" data-i18n="popSend">Save this page to orOS</button>
+  </header>
+  <main id="pm">
+    <h1 data-i18n="pmTitle">Passwords</h1>
+    <p id="msg" class="hint" role="status"></p>
+    <div id="need" hidden>
+      <button type="button" id="grant" class="primary" data-i18n="pmGrant">Allow</button>
+      <button type="button" id="openOros" data-i18n="menuOpen">Open orOS</button>
+    </div>
+    <form id="unlock" hidden autocomplete="off">
+      <label for="pw" data-i18n="pmMaster">Master password</label>
+      <input id="pw" type="password" autocomplete="current-password" spellcheck="false">
+      <div class="row">
+        <button type="submit" class="primary" id="go" data-i18n="pmUnlock">Unlock</button>
+      </div>
+    </form>
+    <div id="frames" class="row" hidden>
+      <button type="button" id="frameYes" class="primary" data-i18n="pmFrameYes">Fill in the payment frame</button>
+      <button type="button" id="frameNo" data-i18n="pmFrameNo">Not now</button>
+    </div>
+    <div id="saveAsk" class="row" hidden>
+      <button type="button" id="saveYes" class="primary" data-i18n="pmSaveYes">Save in orOS</button>
+      <button type="button" id="saveNo" data-i18n="pmFrameNo">Not now</button>
+    </div>
+    <div id="open" hidden>
+      <input id="q" type="search" autocomplete="off" spellcheck="false" data-i18n-ph="pmSearch">
+      <h2 id="siteH" data-i18n="pmForSite">For this site</h2>
+      <ul id="site" class="list"></ul>
+      <h2 id="moreH" data-i18n="pmMore">Cards, addresses and identities</h2>
+      <ul id="more" class="list"></ul>
+      <div class="foot">
+        <span id="at" class="hint"></span>
+        <span class="grow"></span>
+        <button type="button" id="lock" data-i18n="pmLock">Lock</button>
+      </div>
+    </div>
+    <div class="row" id="saveRow">
+      <button type="button" id="saveLogin" data-i18n="pmSaveLogin">Save the login from this page</button>
+    </div>
+  </main>
+  <script src="core.js"></script>
+  <script src="pm/pmcrypto.js"></script>
+  <script src="pm/pmcore.js"></script>
+  <script src="pm/pmkinds.js"></script>
+  <script src="pmvault.js"></script>
+  <script src="pmfill.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

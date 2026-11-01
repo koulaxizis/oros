@@ -199,7 +199,7 @@
   // ---------- 2. Prefs ----------
   var DEF_PREFS = {
     tab: "pv",
-    lock: 5, lockHide: 1,
+    lock: 5, lockHide: 1, af: 0,
     pw: { mode: "chars", length: P.LEN_DEF, pin: P.PIN_DEF, lower: 1, upper: 1, digits: 1,
           symbols: 1, noAmbig: 0, custom: "" },
     ph: { src: "device", list: "large", words: P.WORDS_DEF, sep: "space", caps: 0, extra: 0 },
@@ -223,6 +223,7 @@
       tab: oneOf(r.tab, ["pv", "pw", "ph", "au"], D.tab),
       lock: oneOf(r.lock, [1, 2, 5, 15, 30, 60], D.lock),
       lockHide: bool(r.lockHide, D.lockHide),
+      af: bool(r.af, D.af),          // PW-AF2: autofill on this phone (this device only)
       pw: {
         mode: oneOf(pw.mode, ["chars", "pin"], D.pw.mode),
         length: intIn(pw.length, P.LEN_MIN, P.LEN_MAX, D.pw.length),
@@ -795,7 +796,8 @@
     undoToast: undoToast,
     scoreLabel: function (s) { return t("s." + s); },
     generate: generateFor,
-    prefs: function () { return { lock: prefs.lock, lockHide: prefs.lockHide }; },
+    prefs: function () { return { lock: prefs.lock, lockHide: prefs.lockHide, af: prefs.af }; },
+    setAutofill: function (on) { prefs.af = on ? 1 : 0; savePrefsNow(); },
     setLockPrefs: function (mins, hide) {
       prefs.lock = [1, 2, 5, 15, 30, 60].indexOf(mins) >= 0 ? mins : 5;
       prefs.lockHide = hide ? 1 : 0;
@@ -825,6 +827,21 @@
       var p = window.parent;
       if (p && p !== window && typeof p.__orosTakeTarget === "function") openTarget(p.__orosTakeTarget("passwords"));
     } catch (e) {}
+    // PW-AF3: logins to save, from the browser add-on or the phone. The
+    // shell keeps them in memory only (never in a URL or storage) and
+    // pokes us when more arrive while we run.
+    window.__orosPwPoke = takeSaves;
+    takeSaves();
+  }
+  function takeSaves() {
+    var l = null;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakePwSave === "function") l = p.__orosTakePwSave();
+    } catch (e) { l = null; }
+    if (!Array.isArray(l) || !l.length || !window.PmApp || typeof window.PmApp.saveLogin !== "function") return;
+    l.forEach(function (x) { window.PmApp.saveLogin(x); });
+    setTab("pv");
   }
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;

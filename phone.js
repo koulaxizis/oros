@@ -43,6 +43,13 @@
 //               {t:"applied", what:"ticks", refs} (v7: widget ticks taken)
 //               {t:"health", seq, since, water, workouts}  (v5: Health
 //                 Connect, see healthOut)
+//               {t:"af-keys"}                  (v8, PW-AF2: Passwords asks
+//                 for the two Keystore public keys)
+//               {t:"af-index", seq, idx, names, at}  (v8: the sealed fill
+//                 lists, passwords/afindex.js; never plain values)
+//               {t:"clear", what:"af"}         (v8: copies and keys removed)
+//               {t:"applied", what:"af-save", refs}  (v8, PW-AF3: logins
+//                 to save handed to Passwords)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
 //                widgets, wcal, wtodo, health, drive, app}  (drive: the
 //                orOS Drive app is installed, DRIVE-APP; widgets, wcal,
@@ -52,7 +59,12 @@
 //               {t:"changes", what, items}   (v2: edits made on the phone)
 //               {t:"ticks", items:[{ref, l, i, at}]}  (v7: tasks ticked
 //                 on the To-Do widget, sent until answered; see tickTask)
-//               {t:"done", what, seq, added, updated, removed}
+//               {t:"af-keys", idx, names, af}  (v8: base64 SPKI public keys)
+//               {t:"af-save", items:[{ref, url|app, user, pw, title}]}
+//                 (v8, PW-AF3: logins the person chose to save in
+//                 another app; sent until answered; see takeSaves)
+//               {t:"done", what, seq, added, updated, removed}  (what
+//                 "af-index" carries af: {svc, keys, stored, at})
 //               {t:"error", what, seq, msg}
 // Exposes window.orosPhone and, under Node, module.exports.
 // ============================================================
@@ -71,7 +83,9 @@
                    reminders: "intent://reminders#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    health: "intent://health#Intent;scheme=oros-permission;package=online.useoros.twa;end",
                    // DRIVE-APP: opens the orOS Drive app, or its download.
-                   drive: "intent://drive#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
+                   drive: "intent://drive#Intent;scheme=oros-permission;package=online.useoros.twa;end",
+                   // PW-AF2: Android's "use orOS as the autofill service" screen.
+                   autofill: "intent://autofill#Intent;scheme=oros-permission;package=online.useoros.twa;end" };
   var HEALTH_KEYS = { water: "oros-water-data", fitness: "oros-fitness-data", health: "oros-health-data" };
 
   /* ---------- pure helpers ---------- */
@@ -995,6 +1009,7 @@
   }
 
   var port = null, appState = null, seq = 0, lastSent = {}, listeners = [], timer = null;
+  var afKeys = null;   // PW-AF2: {idx, names} public keys from the app, this page only
 
   function prefs() {
     try {
@@ -1200,6 +1215,20 @@
     if (wrote || frame) { setTimeout(function () { pushAgenda(true); pushToday(true); pushReminders(false); }, frame ? 1500 : 0); }
   }
 
+  // PW-AF3: logins the person asked Android to save in orOS. They go
+  // to Passwords through the shell (memory only), which opens each one
+  // in its editor; nothing is stored until Save is pressed there.
+  function takeSaves(items) {
+    var refs = [];
+    items.slice(0, 10).forEach(function (x) {
+      if (!x || typeof x.ref !== "string" || x.ref.length > 100) return;
+      if (typeof root.__orosPwSave !== "function") return;   // the shell is not ready: the app sends it again
+      try { root.__orosPwSave({ url: x.url, app: x.app, user: x.user, pw: x.pw, title: x.title }); } catch (e) {}
+      refs.push(x.ref);
+    });
+    if (refs.length) send({ t: "applied", what: "af-save", refs: refs });
+  }
+
   // Reminders (v3): the next 48 hours, worked out here from the
   // same data and rules as the shell's engines, rung by the app.
   // Reminders the shell already showed (in its inbox) are left out.
@@ -1297,14 +1326,29 @@
         wtodo: Math.max(0, Math.min(50, m.wtodo | 0)),
         health: ["granted", "some", "ask", "denied", "update", "unavailable"].indexOf(m.health) >= 0 ? m.health : "",
         drive: m.drive === true,
-        app: typeof m.app === "string" ? m.app.slice(0, 20) : ""
+        app: typeof m.app === "string" ? m.app.slice(0, 20) : "",
+        af: afState(m.af)
       };
       emit();
       pushAll(true);
+    } else if (m.t === "af-keys") {
+      var k1 = typeof m.idx === "string" ? m.idx : "", k2 = typeof m.names === "string" ? m.names : "";
+      var B64 = /^[A-Za-z0-9+/]+={0,2}$/;
+      afKeys = B64.test(k1) && B64.test(k2) && k1.length < 1200 && k2.length < 1200 && k1 !== k2 ? { idx: k1, names: k2 } : null;
+      if (appState) appState.af = afState(m.af);
+      emit();
+    } else if (m.t === "done" && m.what === "af-index") {
+      if (appState) appState.af = afState(m.af);
+      emit();
+    } else if (m.t === "error" && m.what === "af-index") {
+      if (appState && appState.af) appState.af.err = String(m.msg || "error").slice(0, 120);
+      emit();
     } else if (m.t === "health-in") {
       takeHealth(m);
     } else if (m.t === "ticks" && Array.isArray(m.items)) {
       takeTicks(m.items);
+    } else if (m.t === "af-save" && Array.isArray(m.items)) {
+      takeSaves(m.items);
     } else if (m.t === "changes" && (m.what === "calendar" || m.what === "contacts") && Array.isArray(m.items)) {
       takeChanges(m.what, m.items);
     } else if ((m.t === "done" || m.t === "error") && (m.what === "contacts" || m.what === "calendar" || m.what === "reminders" || m.what === "health")) {
@@ -1316,6 +1360,13 @@
       if (m.t === "error") lastSent[m.what] = null;
       emit();
     }
+  }
+
+  // PW-AF2: what the app says about Passwords autofill on this phone.
+  function afState(a) {
+    if (!a || typeof a !== "object") return null;
+    return { svc: a.svc === true, keys: a.keys === true, stored: a.stored === true,
+             at: typeof a.at === "number" && a.at > 0 ? a.at : 0, err: "" };
   }
 
   // Phone → orOS: Calendar / Contacts is the data's writer when it is
@@ -1452,6 +1503,19 @@
       root.location.href = PERM_URL[kind];
     },
     refresh: function () { send({ t: "state" }); },
+    // Passwords autofill (PW-AF2). The Passwords app seals its lists
+    // with the keys from afKeys() (passwords/afindex.js) and hands them
+    // over; this file never sees a value.
+    afInfo: function () { return appState && appState.af ? appState.af : null; },
+    afKeys: function () { return afKeys; },
+    afAskKeys: function () { return send({ t: "af-keys" }); },
+    afSend: function (sealed) {
+      if (!sealed || !sealed.idx || !sealed.names) return false;
+      return send({ t: "af-index", seq: ++seq, idx: sealed.idx, names: sealed.names, at: Date.now() });
+    },
+    afClear: function () { afKeys = null; return send({ t: "clear", what: "af" }); },
+    // Must run inside a click (an intent: link, like askPermission).
+    afSettings: function () { if (port) root.location.href = PERM_URL.autofill; },
     // Returns an "off" function: an app frame calls it when it closes.
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};

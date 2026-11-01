@@ -59,10 +59,14 @@ test("manifest: MV3, minimal permissions, files exist", () => {
   const m = JSON.parse(read("manifest.json"));
   assert.equal(m.manifest_version, 3);
   assert.match(m.version, /^\d+\.\d+\.\d+$/);
-  assert.deepEqual(m.permissions.slice().sort(), ["activeTab", "contextMenus", "storage"]);
-  assert.equal(m.host_permissions, undefined);
+  // 2.0 (PW-AF1): scripting + alarms for Passwords; the only host is the
+  // orOS address (to read the encrypted vault); never "all sites", never
+  // a content script that runs by itself
+  assert.deepEqual(m.permissions.slice().sort(), ["activeTab", "alarms", "contextMenus", "scripting", "storage"]);
+  assert.deepEqual(m.host_permissions, ["https://useoros.online/*"]);
   assert.equal(m.content_scripts, undefined);
-  const files = [m.background.service_worker, ...m.background.scripts, m.options_ui.page,
+  assert.ok(!JSON.stringify(m.host_permissions).includes("<all_urls>"));
+  const files = [m.background.service_worker, ...m.background.scripts, m.options_ui.page, m.action.default_popup,
     ...Object.values(m.icons), ...Object.values(m.action.default_icon)];
   files.forEach((f) => assert.ok(fs.existsSync(path.join(DIR, f)), f));
   assert.ok(m.browser_specific_settings.gecko.id);
@@ -74,9 +78,12 @@ test("locales: en and el have the same keys, every key used exists", () => {
   assert.deepEqual(Object.keys(el).sort(), Object.keys(en).sort());
   Object.values(en).concat(Object.values(el)).forEach((v) => assert.ok(v.message && v.message.trim()));
   const used = new Set();
-  const all = read("manifest.json") + read("background.js") + read("options.html") + read("options.js");
+  const all = read("manifest.json") + read("background.js") + read("options.html") + read("options.js") +
+    read("popup.html") + read("popup.js");
   for (const m of all.matchAll(/__MSG_(\w+)__/g)) used.add(m[1]);
-  for (const m of all.matchAll(/(?:msg\(|data-i18n=)"(\w+)"/g)) used.add(m[1]);
+  for (const m of all.matchAll(/(?:msg\(|data-i18n=|data-i18n-ph=)"(\w+)"/g)) used.add(m[1]);
+  used.delete("pmKind_");   // msg("pmKind_" + kind)
+  ["card", "identity", "address"].forEach((k) => used.add("pmKind_" + k));
   assert.ok(used.size > 10);
   used.forEach((k) => assert.ok(en[k], "missing key " + k));
   assert.ok(en.extDesc.message.length <= 132 && el.extDesc.message.length <= 132);

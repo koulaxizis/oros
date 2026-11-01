@@ -41,4 +41,22 @@
     <string name="widget_quickbar_desc">Add a task or search your orOS data</string>
     <string name="widget_quickbar_hint">Add or search…</string>
     <string name="tile_quick">orOS Quick</string>
+
+    <!-- Passwords autofill (PW-AF2) -->
+    <string name="af_service">orOS Passwords</string>
+    <string name="af_pick">Choose a login from orOS</string>
+    <string name="af_pick_title">Login for %1$s</string>
+    <string name="af_link_q">Use “%1$s” in %2$s (%3$s) from now on? orOS remembers this on this phone.</string>
+    <string name="af_yes">Use it</string>
+    <string name="af_no">Cancel</string>
+    <string name="af_auth_title">Fill from orOS</string>
+    <string name="af_auth_sub">Confirm it is you to fill this entry</string>
+    <string name="af_invalidated">A new fingerprint or face was added, so orOS autofill was turned off. Open orOS Passwords to turn it on again.</string>
+    <string name="af_failed">orOS could not open its autofill copy. Open orOS Passwords once to renew it.</string>
+    <string name="af_no_lock">Set a screen lock on this phone to use orOS autofill.</string>
+    <string name="af_none">Nothing to fill here from this entry.</string>
+    <string name="af_settings_missing">This phone has no autofill settings screen.</string>
+    <string name="af_save_desc">orOS Passwords. You check the login in orOS and press Save there.</string>
+    <string name="af_save_later">Open orOS to finish saving this login in Passwords.</string>
+    <string name="af_save_failed">orOS could not keep this login.</string>
 </resources>

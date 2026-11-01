@@ -39,4 +39,22 @@
     <string name="widget_quickbar_desc">Πρόσθεσε εργασία ή ψάξε στα δεδομένα του orOS</string>
     <string name="widget_quickbar_hint">Πρόσθεσε ή ψάξε…</string>
     <string name="tile_quick">orOS Γρήγορα</string>
+
+    <!-- Passwords autofill (PW-AF2) -->
+    <string name="af_service">Κωδικοί orOS</string>
+    <string name="af_pick">Διάλεξε λογαριασμό από το orOS</string>
+    <string name="af_pick_title">Λογαριασμός για %1$s</string>
+    <string name="af_link_q">Να χρησιμοποιείται το «%1$s» στο %2$s (%3$s) από εδώ και πέρα; Το orOS το θυμάται σε αυτό το κινητό.</string>
+    <string name="af_yes">Χρήση</string>
+    <string name="af_no">Άκυρο</string>
+    <string name="af_auth_title">Συμπλήρωση από το orOS</string>
+    <string name="af_auth_sub">Επιβεβαίωσε ότι είσαι εσύ για να συμπληρωθεί η εγγραφή</string>
+    <string name="af_invalidated">Προστέθηκε νέο δακτυλικό αποτύπωμα ή πρόσωπο, άρα η αυτόματη συμπλήρωση του orOS απενεργοποιήθηκε. Άνοιξε τους Κωδικούς του orOS για να την ενεργοποιήσεις ξανά.</string>
+    <string name="af_failed">Το orOS δεν μπόρεσε να ανοίξει το αντίγραφο συμπλήρωσης. Άνοιξε μία φορά τους Κωδικούς του orOS για να ανανεωθεί.</string>
+    <string name="af_no_lock">Βάλε κλείδωμα οθόνης στο κινητό για να χρησιμοποιήσεις την αυτόματη συμπλήρωση του orOS.</string>
+    <string name="af_none">Δεν υπάρχει κάτι να συμπληρωθεί εδώ από αυτή την εγγραφή.</string>
+    <string name="af_settings_missing">Αυτό το κινητό δεν έχει οθόνη ρυθμίσεων αυτόματης συμπλήρωσης.</string>
+    <string name="af_save_desc">Κωδικοί orOS. Ελέγχεις τον λογαριασμό στο orOS και πατάς Αποθήκευση εκεί.</string>
+    <string name="af_save_later">Άνοιξε το orOS για να ολοκληρωθεί η αποθήκευση στους Κωδικούς.</string>
+    <string name="af_save_failed">Το orOS δεν μπόρεσε να κρατήσει αυτόν τον λογαριασμό.</string>
 </resources>
