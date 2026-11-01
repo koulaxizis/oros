@@ -2,7 +2,9 @@
 // PNGs the manifests list (192, 512, maskable 512). The glyph is the
 // app's own menu icon (shell.js ICONS, named in apps.json), in orOS gold
 // on the orOS dark square, with a small orOS mark at the corner.
-// Run after adding a single app:  node tools/solo-icons.js
+// Run after adding a single app:  node tools/solo-icons.js [id ...]
+// (no id: every app). Page apps (android/page-apps.json, STUDIO-RA) get
+// their glyph from GLYPHS below by their "glyph" name.
 // (needs Playwright's Chromium; the PNGs are committed, nothing runs at
 // page load).
 "use strict";
@@ -12,6 +14,12 @@ const ROOT = path.join(__dirname, "..");
 const SOLO = require(path.join(ROOT, "solo.js"));
 const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
 const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8")).apps;
+const pages = JSON.parse(fs.readFileSync(path.join(ROOT, "android", "page-apps.json"), "utf8")).apps;
+// Glyphs of page apps (24-unit, stroked): "remote" = a phone sending
+// (Studio's remote indicator, studio/index.html #remote-ind).
+const GLYPHS = {
+  remote: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/><path d="M3 8a10 10 0 0 0 0 8M21 8a10 10 0 0 1 0 8"/>'
+};
 
 function glyph(iconName) {
   const re = new RegExp("\\n    " + iconName + ": '<svg[^>]*>([\\s\\S]*?)</svg>'");
@@ -23,7 +31,7 @@ function glyph(iconName) {
 // scale: share of the square the 24-unit glyph takes.
 function svg(id, maskable) {
   const app = apps.find((a) => a.id === id);
-  const inner = glyph(app.icon);
+  const inner = pages[id] ? GLYPHS[pages[id].glyph] : glyph(app.icon);
   const g = maskable ? 0.46 : 0.56;
   const size = 512 * g, off = (512 - size) / 2 - (maskable ? 10 : 18);
   const k = size / 24;
@@ -44,7 +52,9 @@ function svg(id, maskable) {
   const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "/opt/node22/lib/node_modules/playwright");
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  for (const id of SOLO.ids()) {
+  const only = process.argv.slice(2);
+  for (const id of SOLO.ids().concat(Object.keys(pages))) {
+    if (only.length && only.indexOf(id) < 0) continue;
     const plain = svg(id, false), mask = svg(id, true);
     fs.writeFileSync(path.join(ROOT, "icons/solo", id + ".svg"), plain);
     for (const [name, src, px] of [[id + "-192.png", plain, 192], [id + "-512.png", plain, 512], [id + "-maskable-512.png", mask, 512]]) {

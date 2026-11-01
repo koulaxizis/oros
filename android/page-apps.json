@@ -1,0 +1,11 @@
+{
+  "_": "Page apps (STUDIO-RA): flavours that open one page of the site on its own, without the orOS shell. Key = Gradle flavour; package = applicationId (permanent once published); page = the folder (its index.html and its hand-written manifest.webmanifest; the app catches only links under it). Icons: icons/solo/<key>-*.png (tools/solo-icons.js). android/tools/gen.js, app/build.gradle and tools/fdroid-metadata.js read this file.",
+  "apps": {
+    "studioremote": {
+      "package": "online.useoros.studioremote",
+      "page": "studio/remote",
+      "name": "Remote for orOS Studio",
+      "glyph": "remote"
+    }
+  }
+}

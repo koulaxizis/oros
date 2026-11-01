@@ -1,0 +1,44 @@
+{
+  "name": "Remote for orOS Studio",
+  "short_name": "Studio Remote",
+  "description": "Remote for orOS Studio: the mixer, transport and NULL JSFX effects of Studio on your PC, from a phone or tablet. Pair with a code or QR, no account, end-to-end encrypted.",
+  "id": "/studio/remote/",
+  "start_url": "/studio/remote/",
+  "scope": "/studio/remote/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/studioremote.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/studioremote-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/studioremote-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/studioremote-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "music",
+    "utilities"
+  ]
+}

@@ -32,6 +32,8 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 - Die Ein-Aus-Taste umgeht einen Effekt, die Pfeile ändern die Reihenfolge, und `×` entfernt ihn.
 - Die Abspieltaste im Effektfenster spielt den Song, während du einstellst. Änderungen hörst du sofort, und du kannst sie rückgängig machen.
 - Convolution kann deine eigene Impulsantwort nutzen: Setz `Source` auf `IR File` und wähle eine WAV-Datei (bis 20 MB). Sie liegt im Ordner `Studio/fx` und wird wie das übrige Audio synchronisiert.
+- `Assistiert` enthält die Effekte, die sich nach deinem Klang selbst einstellen (Assisted EQ, Compressor, Reverb und Delay): Schalte `Learn` ein, spiel einen Teil des Songs und schalte es wieder aus. Was sie gelernt haben, wird wie jede andere Einstellung mit der Spur gespeichert, und [[Ctrl+Z]] macht es in einem Schritt rückgängig.
+- Auf einer Instrumentenspur listet `MIDI` die MIDI-Effekte (Arpeggiator, Chords, Scale, Note Echo und mehr). Sie stehen über dem Instrument und ändern die Noten, bevor es sie spielt: Die Noten der Clips, der Tasten und der Pads der Fernsteuerung laufen der Reihe nach von oben nach unten durch sie. Sie lassen sich nur untereinander verschieben, und das Instrument bleibt unter ihnen.
 - Manche Effekte brauchen einen Moment Vorlauf. Studio verzögert die anderen Spuren passend, damit alles im Takt bleibt, auch im Export.
 - Die Effekte sind [NULL JSFX](https://nulljsfx.tech) (MIT-Lizenz) und laufen im Browser.
 
@@ -128,6 +130,7 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 3. Drück am PC `Erlauben`. Ist ein Gerät erlaubt, kann kein anderes mehr mit diesem Code beitreten.
 - Die Fernsteuerung zeigt Abspielen, Stopp, Aufnahme, Loop, Klick, Tempo und eine Positionsleiste, dazu pro Spur einen Streifen mit Fader, Panorama, `M` `S` `R`, Effekt an/aus und Pegelanzeige, plus den Master.
 - `FX` auf einem Streifen öffnet die Effekte dieser Spur wie am PC: die eigene Oberfläche des Effekts mit ihren Anzeigen, jeden Regler, an/aus, Reihenfolge, Hinzufügen und Entfernen. Dateien für Effekte (etwa die IR von Convolution) werden am PC gewählt.
+- Eine Spur mit einem NULL-Instrument hat auf ihrem Streifen `Pads` (Drums) oder `Tasten`: Was du dort spielst, klingt am PC über dieses Instrument, und während die Spur MIDI aufnimmt, wird es aufgenommen. Auf einem Pad gilt: weiter oben ist lauter; auf den Tasten kannst du von Taste zu Taste gleiten, und `−` `+` wechseln die Oktave. Der Knopf oben wechselt zwischen Pads und Tasten.
 - Zieh einen Fader, um ihn von seiner Stelle aus zu bewegen; ein Doppeltipp setzt ihn auf 0 dB zurück. Jede Bewegung ist eine normale Änderung am PC, also macht [[Ctrl+Z]] sie dort rückgängig.
 - Im selben Netzwerk sprechen die beiden Geräte direkt miteinander. Über ein VPN oder in verschiedenen Netzwerken (etwa ein Handy im 4G-Netz) sprechen sie stattdessen über das orOS-Relay, mit etwas mehr Verzögerung. So oder so ist die Verbindung mit dem Code verschlüsselt, und das Relay leitet sie nur weiter.
 - `Trennen` am PC beendet die Verbindung sofort. Bricht die Verbindung ab, verbindet sich die Fernsteuerung von selbst neu, solange Studio am PC offen bleibt.
