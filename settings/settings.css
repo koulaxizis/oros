@@ -737,3 +737,6 @@ body.tr-open { overflow: hidden; }
 .cd-bg .hint { margin-top: 2px; }
 .cd-bg .check { align-items: flex-start; }
 .cd-bg .check span { white-space: normal; overflow: visible; }
+
+/* Users: the owner's recovery code, shown once */
+.users-code { margin: 6px 0 10px; padding: 12px; border: 1px dashed var(--accent); border-radius: 10px; font: 600 18px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 1px; color: var(--accent); user-select: all; overflow-wrap: anywhere; }

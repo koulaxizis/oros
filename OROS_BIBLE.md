@@ -737,6 +737,19 @@ Multitasking (several live app frames), per device (Chris 2026-10-17; plan `/mnt
 - **Honest limit (stated in Settings and Help):** it protects the screen, not the disk. Anyone who reads the browser profile or opens developer tools gets past it; nothing on the device is encrypted by it. At-rest encryption would be a later, separate step.
 - Tests: `tests/lock.test.js` (core, hash, keys, strings, `checkPassphrase` against the harness), `tests/direct-link.test.js` (lock + `?standalone`), `tests/settings.test.js` (section, search topic).
 
+### Users on one computer or stick (`window.orosUsers`, Settings › Users) [US, U3]
+
+- Chris 2026-11-01 (audit 2026-11 finding 14, plan /mnt/project-files/users/plan.md, "Ναι σε όλα"): separate users with their own data and password on one PC or USB stick, orOS Portable and the Live USB only. Web, PWA and Android get an explanation card only.
+- **Design: one user = one browser profile.** The oros-portable launcher (Go, `launcher/users.go`, `usersapi.go`, `session.go`) picks the Chromium `--user-data-dir` per user: the first user keeps `data/` (dir `""`), others `data/users/<id>/`, the guest `data/users/guest` (emptied before and after each session). orOS storage, sync and every app are unchanged; each user's orOS simply sees an empty browser profile of its own (own sync, own Dropbox/WebDAV, own lock).
+- **Files:** `data/users.json` (list, PBKDF2-SHA-256 600 000 rounds, owner flag, guest switch, owner's recovery-code hash), `data/users/current.json` (who is signed in), `data/users/signout` (sign-out marker). One user at a time; at most 8 users; roles owner + ordinary; guest off by default; no auto sign-out. 5 free tries, then 30 s doubling to 15 min.
+- **Launcher API** `/__oros/users/{state,login,recover,signout,add,remove,password,rename,owner,guest,sizes}`: host check, `Sec-Fetch-Site: same-origin`, same Origin and `X-Oros-Users: 1` on POST; owner actions carry `auth` (the owner's password); the first `add` also sets the owner (`ownerName`, `ownerPassword`) and returns the recovery code once. Sign-in page `/__oros/login` (embedded, strict CSP, EN/EL/DE) in its own profile `data/login`.
+- **Shell (`shell.js`, IIFE `users()`):** runs only on localhost/127.0.0.1:47800. `window.orosUsers {v, state, refresh, call, signOut}`; `state.users` feeds Settings. `signOut()` pushes sync first (`lastPush`), posts `signout`, then asks the System extension (orOS USB, DOM event `oros-signout`) or shows `#users-close-dialog` ("close this window"). `usersLeaving` skips the beforeunload guard. Tray `Switch user` arrives as `#oros-signout`.
+- **Quick settings:** power menu `Sign out` (`IC.signout`, `qs.signout`) only while `host.users.on()` (2+ users or guest).
+- **Settings › Users** (section `users`, after `lock`, `secUsers` in settings.js, strings `u.*` in core.js EN/EL + `i18n/de/settings.js`): first set-up (owner name + password + first user), add, rename, password, owner resets a user's password, remove (the browser profile is deleted; on the USB the user's home moves to the owner as "<name> (removed user)"), owner transfer, guest switch, recovery code card (`.users-code`), folder sizes, sign-out row, honest-limit card. `usersPassOk` (core.js) mirrors the launcher's `validPassword`.
+- **orOS USB:** per-user homes `~/oros/homes/<id>` for This computer; the System extension refuses update/install for non-owners (`notOwner`); the sign-in page gets Restart / Shut down on the kiosk.
+- **Honest limit (Settings, Help):** passwords keep users apart, they do not encrypt the disk; anyone with the stick and another computer can read the folders. Per-user encryption on the USB is U4 (optional, after U1-U3 are tested on a real PC).
+- Tests: oros-portable `launcher/users_test.go`, oros-usb `system/users_test.go`, here `tests/settings.test.js` (section list).
+
 ### Sticky Notes (`stickies/`, shell side `stickies/host.js`) [1.02.00]
 - `stickies/core.js` (UMD `StickiesCore`, pure) + `stickies/host.js` load in `index.html` right after `today/host.js` (so after `notifications.js`). Inert until `apps.json` lists `stickies` (`orosStickiesEnv.registered()`).
 - The host is the ONLY writer of `oros-stickies-data` (slice `stickies`, registered by the host with no storage key, merge `StickiesCore.merge`). The app (`stickies/stickies.js`) only reads and asks through `window.parent.orosStickies` (`data`, `prefs`, `setPref`, `newNote`, `create`, `edit`, `show`, `remove` (Undo toast), `restore`, `fade`, `tidy`, `testSound`, `exportText`, `onChange`).
@@ -3464,6 +3477,12 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - **Device-local.** `oros-backup-enc` = "1" and the key never travel (a key cannot be synced); each device turns it on. Settings scope `backupenc: "device"`. The factory reset removes both (`oros-*` sweep, `oros-fs` database).
 - **On without a key writes nothing.** Site data cleared → Settings shows `b.enc.lost` + `Set passphrase`; export and folder backups stop with `sync.err.backupkey` instead of falling back to a plain file. The folder schedule stamp is kept (no retry storm on every tab-visible).
 - **Import:** a sealed file opens the passphrase dialog; a wrong passphrase or a changed file (GCM) keeps the dialog open with `sync.err.backuppass` and imports nothing; plain files (every file before BK-E) import as before. Off makes plain files again.
+
+### Users on one device decisions (2026-11-01, US)
+
+- **Profile per user, not data per user inside orOS.** A browser profile per user keeps every app, sync and storage path unchanged and cannot leak one user's IndexedDB/OPFS into another; the cost is that it works only where orOS controls the browser (Portable, Live USB). Web, PWA and Android show an explanation card.
+- **Owner recovery = a recovery code, not the sync passphrase.** Each user may have a different sync (or none), so the launcher has no passphrase to check against; a one-time code (base32, 4 groups of 5) shown at set-up and on request is checked by hash. Chris was told of this change from the plan.
+- **No auto sign-out, one user at a time, ≤ 8 users, guest off by default** (Chris, plan questions 1-8, all recommendations approved).
 
 ## Part X — Open items, audit queue, lessons
 
@@ -9396,4 +9415,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Changes:** every one of the 16 `SKINS` entries in `shell.js` names one existing wallpaper in `wp` (never `custom` or `clear`). Picking a skin moves to its wallpaper only while the wallpaper is still the default or the previous skin's suggestion, so a wallpaper the person chose stays theirs. Settings › Appearance marks the suggested tile with a star and a hint (EN/EL/DE). Replaces `WALLPAPERS[].pair`, which followed only from the default wallpaper and covered 11 skins. Decision in Part IX (Chris 2026-11-01 14:06).
 - **Files:** `shell.js` (SKINS, APP_VERSION), `settings/core.js`, `settings/settings.js`, `settings/settings.css`, `i18n/de/settings.js`, `help/topics/appearance.{en,el}.txt`, `help/topics/whatsnew.{en,el}.txt`, `tests/skin-wallpaper.test.js`.
 - **Tests:** new `tests/skin-wallpaper.test.js`; full `node --test tests/*.test.js`.
+
+### 2026-11-01 — 4.95.00 — Users on one computer or stick, U3 (#769)
+
+- **What:** the orOS side of separate users (audit 2026-11 finding 14, plan /mnt/project-files/users/plan.md); the launcher side is oros-portable #21 (U1) and oros-usb #20 (U2). Part II "Users on one computer or stick", Part IX "Users on one device decisions".
+- **Changes:** `shell.js` `window.orosUsers` (state, refresh, call, signOut; only on localhost:47800), sync push before sign-out, tray "Switch user" via `#oros-signout`; Quick settings power menu `Sign out` while users are on; Settings › Users (first set-up with owner and recovery code, add, rename, password, owner reset, remove, owner transfer, guest, sizes, honest limit). EN/EL/DE strings and help.
+- **Files:** `shell.js` (users, APP_VERSION), `qsettings.js`, `settings/core.js`, `settings/settings.js`, `settings/settings.css`, `settings/help.{en,el}.txt`, `i18n/de/*`, `translations.js`, `tests/settings.test.js`, `help/topics/whatsnew.{en,el}.txt`.
+- **Tests:** full `node --test tests/*.test.js`. Not tested: real Windows, the real Live USB with users.
 

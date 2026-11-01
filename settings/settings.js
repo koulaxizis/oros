@@ -83,6 +83,7 @@
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
+    users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 4.8"/></svg>',
     lock: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1" fill="currentColor"/></svg>',
     services: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
@@ -1525,6 +1526,216 @@
     host.appendChild(c3);
   }
 
+  // ---------- 6c. Section: Users ----------
+  // Several people on one orOS Portable / orOS USB (the launcher's users,
+  // oros-portable users.go). The shell asks the launcher
+  // (window.parent.orosUsers); every change goes through orosUsers.call,
+  // which refreshes the shell's state and repaints this page. Typed
+  // passwords stay in `us.f` only until they are sent, then are cleared.
+  // Elsewhere (useoros.online, Android) the page explains browser
+  // profiles and Android users instead.
+  var us = { mode: null, id: null, f: {}, msg: null, code: null, sizes: null, sizing: false, busy: false };
+
+  function usersApi() {
+    var p = parentWin();
+    try { var U = p && p.orosUsers; return (U && U.v >= 1 && typeof U.call === "function") ? U : null; }
+    catch (e) { return null; }
+  }
+  function usMsg(kind, key, vars) { us.msg = { kind: kind, key: key, vars: vars || null }; }
+  function usOpen(mode, id) {
+    us.mode = mode; us.id = id || null; us.f = {}; us.msg = null;
+    render();
+    var f = document.querySelector("#users-form input");
+    if (f) f.focus();
+  }
+  function usBytes(n) {
+    n = Number(n) || 0;
+    if (n < 1024 * 1024) return Math.max(1, Math.round(n / 1024)) + " KB";
+    if (n < 1024 * 1024 * 1024) return Math.round(n / (1024 * 1024)) + " MB";
+    return (n / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+  }
+  function usField(key, label, kind) {
+    var wrap = el("div", "dav-field");
+    var lab = el("label", "row-label", label);
+    lab.htmlFor = "f-us-" + key;
+    wrap.appendChild(lab);
+    var inp = el("input");
+    inp.id = "f-us-" + key;
+    inp.type = kind === "text" ? "text" : "password";
+    inp.autocomplete = kind === "text" ? "off" : "new-password";
+    inp.spellcheck = false;
+    inp.setAttribute("autocapitalize", kind === "text" ? "words" : "off");
+    inp.maxLength = kind === "text" ? 40 : 256;
+    inp.value = us.f[key] || "";
+    inp.setAttribute("data-k", "us-" + key);
+    inp.addEventListener("input", function () { us.f[key] = inp.value; });
+    wrap.appendChild(inp);
+    return wrap;
+  }
+  function usAnswer(r, okKey, vars) {
+    us.busy = false;
+    if (r && r.ok) {
+      us.mode = null; us.id = null; us.f = {}; us.sizes = null;
+      if (r.code) us.code = String(r.code);
+      usMsg("ok", okKey, vars);
+    } else {
+      var code = (r && r.error) || "bad";
+      if (code === "wait" || (code === "wrong" && r.wait)) {
+        usMsg("err", "u.err.wait", { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) });
+      } else {
+        usMsg("err", "u.err." + (/^(password|name|taken|wrong|full|busy|self|first|denied|network)$/.test(code) ? code : "bad"));
+      }
+      ["auth", "old"].forEach(function (k) { us.f[k] = ""; });
+    }
+    render();
+  }
+  // Each form: which fields, which call, what it sends.
+  function usForm(U, st, who) {
+    var form = el("form", "pass dav-form");
+    form.id = "users-form";
+    form.setAttribute("autocomplete", "off");
+    var m = us.mode, name = who ? who.name : "";
+    if (m === "first") {
+      form.appendChild(usField("oname", t("u.f.yourName"), "text"));
+      form.appendChild(usField("opw", t("u.f.yourPass")));
+      form.appendChild(usField("opw2", t("u.f.again")));
+    }
+    if (m === "first" || m === "add") {
+      form.appendChild(usField("name", t("u.f.name"), "text"));
+      form.appendChild(usField("pw", t("u.f.pass")));
+      form.appendChild(usField("pw2", t("u.f.again")));
+    }
+    if (m === "rename") form.appendChild(usField("name", t("u.f.newName"), "text"));
+    if (m === "pw") form.appendChild(usField("old", t("u.f.old")));
+    if (m === "pw" || m === "reset") {
+      form.appendChild(usField("pw", t("u.f.new")));
+      form.appendChild(usField("pw2", t("u.f.again")));
+    }
+    if (m === "remove") form.appendChild(el("p", "hint", t("u.removeWarn", { name: name })));
+    if (m === "owner") form.appendChild(el("p", "hint", t("u.ownerWarn", { name: name })));
+    if (m === "add" || m === "reset" || m === "remove" || m === "owner" || m === "guest") {
+      form.appendChild(usField("auth", t("u.f.auth")));
+    }
+    if (m !== "remove" && m !== "owner" && m !== "guest" && m !== "rename") form.appendChild(el("p", "hint", t("u.f.hint")));
+    var goKey = { first: "u.go.add", add: "u.go.add", remove: "u.go.remove", owner: "u.go.owner",
+      guest: st.guest ? "u.go.guestOff" : "u.go.guestOn" }[m] || "u.go.save";
+    var go = el("button", "btn " + (m === "remove" ? "danger" : "primary"), t(goKey));
+    go.type = "submit";
+    go.setAttribute("data-k", "us-go");
+    if (us.busy) go.disabled = true;
+    form.appendChild(actions(go, button(t("u.cancel"), "us-cancel", function () {
+      us.mode = null; us.id = null; us.f = {}; us.msg = null; render();
+    })));
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (us.busy) return;
+      var f = us.f, body = null, name2 = String(f.name || "").trim();
+      function bad(key) { usMsg("err", key); render(); }
+      if (m === "first" && !String(f.oname || "").trim()) return bad("u.err.name");
+      if (m === "first" && !C.usersPassOk(f.opw)) return bad("u.err.password");
+      if (m === "first" && f.opw !== f.opw2) return bad("u.err.mismatch");
+      if ((m === "first" || m === "add" || m === "rename") && !name2) return bad("u.err.name");
+      if (m === "first" || m === "add" || m === "pw" || m === "reset") {
+        if (!C.usersPassOk(f.pw)) return bad("u.err.password");
+        if (f.pw !== f.pw2) return bad("u.err.mismatch");
+      }
+      var call = "", okKey = "u.ok.saved", vars = null;
+      if (m === "first") { call = "add"; body = { name: name2, password: f.pw, ownerName: f.oname, ownerPassword: f.opw }; okKey = "u.ok.add"; vars = { name: name2 }; }
+      else if (m === "add") { call = "add"; body = { name: name2, password: f.pw, auth: f.auth }; okKey = "u.ok.add"; vars = { name: name2 }; }
+      else if (m === "rename") { call = "rename"; body = { id: us.id, name: name2 }; }
+      else if (m === "pw") { call = "password"; body = { id: us.id, old: f.old, password: f.pw }; }
+      else if (m === "reset") { call = "password"; body = { id: us.id, auth: f.auth, password: f.pw }; }
+      else if (m === "remove") { call = "remove"; body = { id: us.id, auth: f.auth }; okKey = "u.ok.removed"; }
+      else if (m === "owner") { call = "owner"; body = { id: us.id, auth: f.auth }; }
+      else if (m === "guest") { call = "guest"; body = { on: !st.guest, auth: f.auth }; }
+      if (!call) return;
+      us.f = {};
+      us.busy = true;
+      render();
+      U.call(call, body).then(function (r) { usAnswer(r, okKey, vars); }, function () { usAnswer(null); });
+    });
+    return form;
+  }
+
+  function secUsers(host, s) {
+    var U = usersApi(), st = s && s.users;
+    var c1 = card(null);
+    c1.appendChild(el("p", "hint", t("u.intro")));
+    if (!U || !st) {
+      c1.appendChild(el("p", "hint", t("u.web")));
+      host.appendChild(c1);
+      return;
+    }
+    host.appendChild(c1);
+
+    if (us.code) {
+      var cc = card(t("u.code.title"));
+      cc.appendChild(el("p", "hint", t("u.code.hint")));
+      cc.appendChild(el("p", "users-code", us.code));
+      cc.appendChild(actions(button(t("u.code.ok"), "us-code-ok", function () { us.code = null; us.msg = null; render(); }, "primary")));
+      host.appendChild(cc);
+    }
+
+    var users = st.users || [], me = st.me || null;
+    var byId = {};
+    users.forEach(function (u) { byId[u.id] = u; });
+    var c2 = card(st.enabled ? t("u.list") : null, "users");
+    if (!st.enabled) {
+      c2.appendChild(el("p", "hint", t("u.none")));
+      if (us.mode === "first") c2.appendChild(usForm(U, st, null));
+      else c2.appendChild(actions(button(t("u.add"), "us-first", function () { usOpen("first"); }, "primary")));
+    } else {
+      if (us.sizes === null && !us.sizing) {
+        us.sizing = true;
+        U.call("sizes").then(function (r) { us.sizing = false; us.sizes = r && !r.error ? r : {}; render(); },
+          function () { us.sizing = false; us.sizes = {}; });
+      }
+      var owner = !!(me && me.owner);
+      users.forEach(function (u) {
+        var label = u.name + (u.owner ? " · " + t("u.owner") : "") + (me && me.id === u.id ? " · " + t("u.you") : "");
+        var opts = {};
+        if (us.sizes && us.sizes[u.id]) opts.hint = t("u.size", { n: usBytes(us.sizes[u.id]) });
+        var r = row(label, null, opts);
+        var mine = me && me.id === u.id;
+        var btns = [];
+        if (mine) {
+          btns.push(button(t("u.myPassword"), "us-pw", function () { usOpen("pw", u.id); }));
+          btns.push(button(t("u.rename"), "us-rename", function () { usOpen("rename", u.id); us.f.name = u.name; render(); }));
+        } else if (owner) {
+          btns.push(button(t("u.reset"), "us-reset:" + u.id, function () { usOpen("reset", u.id); }));
+          btns.push(button(t("u.rename"), "us-rename:" + u.id, function () { usOpen("rename", u.id); us.f.name = u.name; render(); }));
+          btns.push(button(t("u.makeOwner"), "us-owner:" + u.id, function () { usOpen("owner", u.id); }));
+          if (!u.first) btns.push(button(t("u.remove"), "us-remove:" + u.id, function () { usOpen("remove", u.id); }, "danger"));
+        }
+        if (btns.length && us.id !== u.id) r.appendChild(actions.apply(null, btns));
+        c2.appendChild(r);
+        if (us.mode && us.id === u.id) c2.appendChild(usForm(U, st, u));
+      });
+      if (owner) {
+        if (us.mode === "add") c2.appendChild(usForm(U, st, null));
+        else if (users.length < (st.max || 8)) c2.appendChild(actions(button(t("u.add"), "us-add", function () { usOpen("add"); })));
+      }
+      if (me) {
+        c2.appendChild(row(t("u.signOut"), actions(button(t("u.signOut"), "us-signout", function () { U.signOut(); }, "primary")),
+          { hint: t("u.signOut.hint") }));
+      }
+    }
+    if (us.msg) c2.appendChild(el("p", "msg msg-" + us.msg.kind, t(us.msg.key, us.msg.vars)));
+    host.appendChild(c2);
+
+    if (st.enabled && me && me.owner) {
+      var c3 = card(t("u.guest"));
+      c3.appendChild(row(t("u.guest"), switchBtn(!!st.guest, "us-guest", function () { usOpen("guest"); }, t("u.guest")),
+        { hint: t("u.guest.hint") }));
+      if (us.mode === "guest") c3.appendChild(usForm(U, st, null));
+      host.appendChild(c3);
+    }
+
+    var c4 = card(null);
+    c4.appendChild(el("p", "hint", t("u.honest")));
+    host.appendChild(c4);
+  }
+
   // ---------- 7. Section: Backups ----------
   function secBackup(host, s) {
     var b = s.backup;
@@ -2383,7 +2594,7 @@
   }
 
   var SECTION_FN = {
-    appearance: secAppearance, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock,
+    appearance: secAppearance, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, users: secUsers,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem
   };
 

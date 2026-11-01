@@ -3,7 +3,7 @@ Settings gathers the options of orOS itself in one place: how it looks, notifica
 
 ## Getting started
 1. Open the menu and choose `Settings`, at the bottom under the apps. You'll also find it in the `System` category.
-2. Pick a section on the left: `Appearance`, `Accessibility`, `Menu`, `Notifications`, `Sync`, `Screen lock`, `Backups`, `Language & search`, `Opening files`, `Connected services` or `System`.
+2. Pick a section on the left: `Appearance`, `Accessibility`, `Menu`, `Notifications`, `Sync`, `Screen lock`, `Users`, `Backups`, `Language & search`, `Opening files`, `Connected services` or `System`.
 3. Change what you like. Every change applies at once; there is no save button.
 
 On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
@@ -20,6 +20,7 @@ To find one option quickly, type in `Search settings` at the top of the list: a 
 - `Sync`: `Connect to Dropbox` or `Use WebDAV / Nextcloud` (with `Sign in with Nextcloud` and `Through the orOS relay`), your `Passphrase`, `Get from cloud`, `Send to cloud`, `Sync automatically`, `Unused files in the cloud` and `Disconnect`. See [Sync across devices](help:t/sync).
 - `Calendars and contacts (CalDAV / CardDAV)` (in `Sync`): `Connect a server` with its address, your username and an app password, optionally `Through the orOS relay` for servers that don't answer browsers. orOS first checks that the server keeps the rules that stop two devices from overwriting each other, and saves nothing if it doesn't. The app password stays on this device. On the relay path your calendars, contacts and tasks pass through the orOS relay unencrypted (never stored there). `Check again` lists the calendars and address books anew; `Disconnect` forgets the account on this device. In [Calendar](app:calendar), `More` › `Server calendars (CalDAV)…` links one of the calendars to a label, and in [Contacts](app:contacts) `Server (CardDAV)` links your contacts to one of the address books, and in [To-Do](app:todo) a list's settings › `Server task list (CalDAV)` link that list to a task list.
 - `Screen lock`: a PIN or a passphrase that orOS asks for when it starts and when you leave it alone, on this device only. See Screen lock below.
+- `Users`: several people on one orOS Portable stick, orOS USB or installed orOS, each with their own orOS and password. See Users below.
 - `Backups`: `Automatic backup`, `Backup folder`, `Encrypt backup files`, `Back up now`, `Export backup file` and `Import backup file`. See [Backup and restore](help:t/backup).
 - `Language & search`: the `Language` of orOS, the `On-screen keyboard` (on touch screens: when it shows and which layouts it has, see [Appearance](help:t/appearance)) and which apps the menu search looks in. `Help translate` opens a page where you can translate orOS into another language line by line: English and Greek are shown next to each line, `Try it` shows your lines in orOS at once, and `Download file` or `Send on GitHub` sends them for review. Your lines stay on this device until then.
 - `Opening files`: which orOS app opens which file type from your device (`Open with`), the choice for types more than one app opens, and how to make orOS the default on Windows, Linux and Mac.
@@ -38,6 +39,19 @@ orOS then asks for it every time it starts, after the idle time, and with the se
 Forgot it? On the lock screen choose `Forgot your PIN?`. If sync is connected on this device, your sync passphrase opens it and the lock turns off; set a new one here. Otherwise `Reset this device` is the last resort: it erases orOS on this device only (changes not synced yet are sent first when sync can) and keeps your cloud data and backup folder, so connecting sync again brings everything back.
 
 What it doesn't do: it protects the screen, not the disk. Anyone who can read this device's storage, or open the browser's developer tools, can get past it, and your data on the device is not encrypted by it. Only a slow, salted hash of the PIN is kept on the device; it is never synced and never goes into a backup file.
+
+### Users
+With orOS Portable, orOS USB or the orOS app installed on a computer, everyone who shares it can have their own orOS: their own apps, files, settings, password and sync account. Nobody sees anyone else's data, because each person gets a browser profile of their own.
+
+1. Open `Users` and press `Add a user`.
+2. The first time, type your own name and a new password or PIN for yourself, then the other person's name and their password (a PIN of 4 to 12 digits or at least 6 characters). You become the owner; your data stays where it is.
+3. Write down the recovery code orOS shows you once. If you forget your password, the sign-in window takes it under `Forgot your password?`.
+
+From the next start orOS opens with a sign-in window: pick your name and type your password. `Sign out` (here, or in Quick settings under the power button) sends your changes to the cloud first, closes your orOS and brings the sign-in window back; on an installed orOS the tray icon has `Switch user` too. One person uses orOS at a time.
+
+Each person can `Change my password` and `Rename` themselves. The owner adds and removes users, sets a new password for someone who forgot theirs, hands the owner role to someone else (`Make owner`) and turns on `Guest sign-in`, each time with their own password. A guest needs no password and nothing they do is kept. Removing a user deletes their orOS on this computer (what they synced stays in their own cloud); on orOS USB their files move into the owner's home folder. On orOS USB each person also has their own home folder in Files › This computer, and only the owner updates or installs the system.
+
+What it doesn't do: the password keeps others away from your orOS on the screen, but someone who reads the stick on another computer could read the folders; on orOS USB an encrypted stick protects them. In a normal browser (useoros.online) or on Android, `Users` explains how to use browser profiles or Android's own users instead.
 
 ### Multitasking
 `System` also has `Multitasking`, for this device only: on by default on computers, off on phones and tablets. With `Keep apps open when you leave them` on, an app you leave (with the menu button, the menu or a link from another app) stays open in the background and comes back exactly as you left it, half-typed text included. Music, Radio and Podcasts play on as always. How many stay open depends on your device's memory (the card says how many); heavy apps such as Atelier, Maps and Photo Lab count as two, and when there is no room the app you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone close when you leave them, as before. Changing the language closes the ones in the background. Turning the switch off closes them all at once.
