@@ -205,7 +205,8 @@ test("update install: a network failure keeps the current release, the retry res
     : Promise.resolve(new Response("x")), { updating: true });
   await assert.rejects(install(sw), /keeping the current release/);
   const n = sw.ctx.PRECACHE_URLS.length;
-  assert.equal(sw.fetchLog.length, n);
+  // Every file once, the two failed ones once more (SW-T4).
+  assert.equal(sw.fetchLog.length, n + 2);
   // Second attempt: only the two missing files go to the network.
   down = new Set();
   sw.fetchLog.length = 0;
@@ -217,6 +218,71 @@ test("update install: a network failure keeps the current release, the retry res
   sw.fetchLog.length = 0;
   await install(sw);
   assert.equal(sw.fetchLog.length, n);
+});
+
+// SW-T4: a request that never answers, an attempt the browser killed,
+// a file the network never delivers: none of them may hold a device
+// on an old release forever.
+test("update install: a download that never answers fails after PRECACHE_FETCH_MS", async () => {
+  const sw = loadSW((u) => u === abs("./shell.js") ? never() : Promise.resolve(new Response("x")),
+    { updating: true });
+  sw.ctx.PRECACHE_FETCH_MS = 30;
+  await assert.rejects(install(sw), /keeping the current release \(attempt 1\)/);
+});
+
+test("update install: a file that fails once is tried again in the same attempt", async () => {
+  let failed = false;
+  const sw = loadSW((u) => {
+    if (u === abs("./shell.js") && !failed) { failed = true; return Promise.reject(new TypeError("reset")); }
+    return Promise.resolve(new Response("x"));
+  }, { updating: true });
+  await install(sw);
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  assert.ok(await c.match("./shell.js"), "shell.js stored on the second try");
+  assert.equal(await c.match(sw.ctx.PARTIAL_MARK), undefined, "marker cleared");
+});
+
+test("update install: the marker is written at the start, so a killed attempt resumes", async () => {
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const sw = loadSW((u) => u === abs("./shell.js") ? gate.then(() => new Response("late")) : Promise.resolve(new Response("x")),
+    { updating: true });
+  sw.ctx.PRECACHE_FETCH_MS = 60000;
+  install(sw);   // the browser kills this attempt: it never settles
+  await delay(50);
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  assert.equal(await (await c.match(sw.ctx.PARTIAL_MARK)).text(), "1");
+  // Next attempt: only the file that never arrived is downloaded.
+  sw.fetchLog.length = 0;
+  sw.ctx.fetch = (req) => { sw.fetchLog.push(abs(req)); return Promise.resolve(new Response("x")); };
+  await install(sw);
+  assert.deepEqual(sw.fetchLog, [abs("./shell.js")]);
+  release();
+});
+
+test("update install: after PRECACHE_GIVE_UP attempts the release activates without the unreachable file", async () => {
+  const sw = loadSW((u) => u === abs("./shell.js")
+    ? Promise.reject(new TypeError("blocked"))
+    : Promise.resolve(new Response("x")), { updating: true });
+  await assert.rejects(install(sw), /attempt 1/);
+  await assert.rejects(install(sw), /attempt 2/);
+  await install(sw);   // attempt 3 activates
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  assert.equal(await c.match(sw.ctx.PARTIAL_MARK), undefined, "marker cleared");
+  assert.equal(await c.match("./shell.js"), undefined, "the blocked file is not stored");
+  assert.ok(await c.match("./sync.js"), "the rest is stored");
+});
+
+test("update install: failed attempts count across releases", async () => {
+  const sw = loadSW((u) => u === abs("./shell.js")
+    ? Promise.reject(new TypeError("blocked"))
+    : Promise.resolve(new Response("x")), { updating: true });
+  // An older release that never activated already failed twice here.
+  const older = await sw.caches.open("oros-shell-oros-v0.0.2");
+  await older.put(sw.ctx.PARTIAL_MARK, new Response("2"));
+  await install(sw);   // this release's first attempt is the third: it activates
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  assert.equal(await c.match(sw.ctx.PARTIAL_MARK), undefined, "marker cleared");
 });
 
 test("update install: a server error (404) only logs and does not block", async () => {
