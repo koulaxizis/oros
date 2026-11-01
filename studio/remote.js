@@ -372,7 +372,7 @@
     }
 
     // ---------- 3. Host (PC) ----------
-    var H = { link: null, code: "", dev: "", stTimer: 0, mTimer: 0, lastSt: "" };
+    var H = { link: null, code: "", dev: "", stTimer: 0, mTimer: 0, lastSt: "", held: {} };
 
     function hostStart() {
       hostStop(true);
@@ -380,13 +380,13 @@
       host.wakeAudio();                       // the click is the gesture the audio needs later
       H.link = new Link({
         role: "host", code: H.code, relay: relayUrl(), dev: deviceName(),
-        onState: function (s) { renderHost(); if (s === "direct" || s === "relay") pushState(true); syncMeters(); syncPeek(); },
+        onState: function (s) { if (s !== "direct" && s !== "relay") releaseNotes(); renderHost(); if (s === "direct" || s === "relay") pushState(true); syncMeters(); syncPeek(); },
         onPeer: function (dev) {
           H.dev = dev;
           host.showToast(t("rm.joined", { dev: t("rm.dev." + (dev === "phone" || dev === "tablet" ? dev : "computer")) }));
           pushState(true);
         },
-        onGone: function () { HF.key = ""; HF.watch = []; renderHost(); syncMeters(); syncPeek(); },
+        onGone: function () { releaseNotes(); HF.key = ""; HF.watch = []; renderHost(); syncMeters(); syncPeek(); },
         admit: askAllow,
         onApp: onCommand
       });
@@ -404,12 +404,19 @@
       try { $("rm-allow").focus(); } catch (e) {}
     }
     function hostStop(quiet) {
+      releaseNotes();
       if (H.answer) H.answer(false);
       if (H.link) H.link.close();
       H.link = null; H.code = ""; H.dev = "";
       clearTimeout(H.stTimer); clearInterval(H.mTimer); H.mTimer = 0;
       clearInterval(HF.timer); HF.timer = 0; HF.key = ""; HF.watch = [];
       if (!quiet) renderHost();
+    }
+    // notes the tablet's pads hold: let go when the tablet goes, so nothing hangs
+    function releaseNotes() {
+      var held = H.held;
+      H.held = {};
+      Object.keys(held).forEach(function (k) { var p = k.split(":"); if (host.note) host.note(p[0], +p[1], 0); });
     }
     function hostLive() { return !!(H.link && (H.link.state === "relay" || H.link.state === "direct")); }
     function openHost() {
@@ -463,9 +470,9 @@
       return {
         t: "st", v: PROTO, name: s.name, bpm: s.bpm, sig: s.sig, vol: s.vol, loop: s.loop, metro: s.metro,
         playing: s.playing, rec: s.rec, pos: Math.round(s.pos * 1000) / 1000, len: Math.round(s.len * 1000) / 1000,
-        min: C.VOL_MIN, max: C.VOL_MAX, mfx: s.mfx, fxr: 1,
+        min: C.VOL_MIN, max: C.VOL_MAX, mfx: s.mfx, fxr: 1, nt: host.note ? 1 : 0,
         tracks: s.tracks.map(function (tr) {
-          return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: tr.mute, solo: tr.solo, arm: tr.arm, fx: tr.fx };
+          return { id: tr.id, name: tr.name, color: tr.color, vol: tr.vol, pan: tr.pan, mute: tr.mute, solo: tr.solo, arm: tr.arm, fx: tr.fx, ins: tr.ins };
         })
       };
     }
@@ -602,6 +609,16 @@
           break;
         }
         case "arm": if (tr) host.arm(tr.id); break;
+        // a pad or key on the tablet: a note to the track's NULL instrument (v 0: let go)
+        case "nt": {
+          if (!tr || !tr.ins || !host.note || !Number.isInteger(c.n) || c.n < 0 || c.n > 127 || !Number.isInteger(c.v) || c.v < 0 || c.v > 127) return;
+          var hk = tr.id + ":" + c.n;
+          if (c.v) H.held[hk] = 1;
+          else if (H.held[hk]) delete H.held[hk];
+          else return;
+          host.note(tr.id, c.n, c.v);
+          break;
+        }
         case "fx": {
           if (typeof c.u !== "string" || !FXU_RE.test(c.u) || typeof c.on !== "boolean") return;
           var key = c.key === "master" ? "master" : tr ? tr.id : "";
@@ -709,6 +726,7 @@
     }
     function leaveConsole() {
       if (RF.key) host.hideDlg("ruf-dlg");
+      if (RP.id) host.hideDlg("rup-dlg");
       document.body.classList.remove("remote-on");
       $("remote-ui").hidden = true;
       $("ru-strips").textContent = "";
@@ -743,12 +761,13 @@
       tpBtn("ru-loop", !!st.loop, "loop", t("btn.loop"));
       tpBtn("ru-metro", !!st.metro, null, t("btn.metro"));
       if (document.activeElement !== $("ru-bpm")) $("ru-bpm").value = String(st.bpm || "");
-      var sig = (st.tracks || []).map(function (x) { return x.id + ":" + x.name + ":" + x.color + ":" + (x.fx || []).map(function (f) { return f.u; }).join(","); }).join("|") + "|M:" + (st.mfx || []).map(function (f) { return f.u; }).join(",");
+      var sig = (st.tracks || []).map(function (x) { return x.id + ":" + x.name + ":" + x.color + ":" + (x.ins || "") + ":" + (x.fx || []).map(function (f) { return f.u; }).join(","); }).join("|") + "|M:" + (st.mfx || []).map(function (f) { return f.u; }).join(",");
       if (sig !== shape) { shape = sig; buildStrips(); }
       (st.tracks || []).forEach(function (tr) { updateStrip(tr.id, tr); });
       updateStrip("master", { vol: st.vol, fx: st.mfx });
       if (RF.key && RF.key !== "master" && !(st.tracks || []).some(function (x) { return x.id === RF.key; })) host.hideDlg("ruf-dlg");
       else if (RF.key) $("ruf-title").textContent = t("fx.title", { name: fxTitle() });
+      if (RP.id && !(padTrack() || {}).ins) host.hideDlg("rup-dlg");
     }
     function tpBtn(id, on, icon, label) {
       var b = $(id);
@@ -779,6 +798,14 @@
         setLabel(fo, master ? t("fx.openMaster") : t("fx.open") + ": " + (tr.name || ""));
         fo.addEventListener("click", function () { openFx(id); });
         s.appendChild(fo);
+      }
+      // a NULL instrument: its pads or keys
+      if (!master && R.st.nt && tr.ins) {
+        var pb = el("button", "ru-fxo ru-pads", tr.ins === "drums" ? t("rp.pads") : t("rp.keys"));
+        pb.type = "button";
+        setLabel(pb, t("rp.open", { name: tr.name || "" }));
+        pb.addEventListener("click", function () { openPads(id); });
+        s.appendChild(pb);
       }
       var fxs = el("div", "ru-fx");
       (tr.fx || []).forEach(function (f) {
@@ -1257,7 +1284,7 @@
       cats.textContent = "";
       if (!cat) { cats.appendChild(el("p", "hint small", t("clip.loading"))); return; }
       var q = RF.q.trim().toLowerCase(), any = false;
-      ["One Slider", "Essentials", "Advanced"].forEach(function (c) {
+      ["One Slider", "Essentials", "Advanced", "Assisted"].forEach(function (c) {
         var list = cat.filter(function (e) { return e.category === c && (!q || (e.name + " " + (e.tags || "")).toLowerCase().indexOf(q) >= 0); });
         if (!list.length) return;
         any = true;
@@ -1280,10 +1307,134 @@
       });
       if (!any) cats.appendChild(el("p", "hint small", t("fx.none")));
     }
+    // ---------- Pads / keys: a track's NULL instrument, played on the PC ----------
+    // General MIDI drum notes, as a 4 x 4 pad bank (36 at the bottom left)
+    var DRUMS = [48, 49, 50, 51, 44, 45, 46, 47, 40, 41, 42, 43, 36, 37, 38, 39];
+    var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    var RP = { id: "", mode: "", oct: 0, down: {} };       // down: pointer id (or "k") -> note
+    function padTrack() {
+      return RP.id && R.st ? (R.st.tracks || []).filter(function (x) { return x.id === RP.id; })[0] || null : null;
+    }
+    function openPads(id) {
+      RP.id = id;
+      var tr = padTrack();
+      if (!tr || !tr.ins) { RP.id = ""; return; }
+      RP.mode = tr.ins === "drums" ? "pads" : "keys";
+      renderPads();
+      host.showDlg("rup-dlg");
+    }
+    function closePads() { padsOff(); RP.id = ""; }
+    function noteSend(n, v) { if (RP.id) send({ t: "nt", id: RP.id, n: n, v: v }); }
+    function padEl(n) { return document.querySelector('#rup-pads [data-n="' + n + '"]'); }
+    function padOn(key, n, v) {
+      if (RP.down[key] === n) return;
+      if (RP.down[key] !== undefined) padOff(key);
+      RP.down[key] = n;
+      noteSend(n, v);
+      var b = padEl(n);
+      if (b) b.classList.add("on");
+      buzz(8);
+    }
+    function padOff(key) {
+      var n = RP.down[key];
+      if (n === undefined) return;
+      delete RP.down[key];
+      noteSend(n, 0);
+      var still = Object.keys(RP.down).some(function (k) { return RP.down[k] === n; }), b = padEl(n);
+      if (b && !still) b.classList.remove("on");
+    }
+    function padsOff() { Object.keys(RP.down).forEach(padOff); }
+    function noteName(n) { return NOTE_NAMES[n % 12] + (Math.floor(n / 12) - 1); }
+    function renderPads() {
+      var tr = padTrack();
+      if (!tr) return;
+      padsOff();
+      var keys = RP.mode === "keys", box = $("rup-pads");
+      $("rup-title").textContent = t("rp.title", { name: tr.name || "" });
+      $("rup-mode").textContent = keys ? t("rp.pads") : t("rp.keys");
+      $("rup-oct").hidden = !keys;
+      $("rup-octv").textContent = t("kb.oct", { n: RP.oct > 0 ? "+" + RP.oct : String(RP.oct) });
+      $("rup-dn").disabled = RP.oct <= -3;
+      $("rup-up").disabled = RP.oct >= 3;
+      box.textContent = "";
+      box.className = "rup-pads" + (keys ? " keys kb-keys" : "");
+      if (!keys) {
+        DRUMS.forEach(function (n) {
+          var b = el("button", "rup-pad", t("rp.d" + n));
+          b.type = "button";
+          b.setAttribute("data-n", String(n));
+          box.appendChild(b);
+        });
+        return;
+      }
+      var base = 48 + 12 * RP.oct, whites = 0, wi = 0, n;
+      for (n = base; n <= base + 24; n++) if (NOTE_NAMES[n % 12].length === 1) whites++;
+      for (n = base; n <= base + 24; n++) {
+        var black = NOTE_NAMES[n % 12].length > 1, k = el("button", "kb-key " + (black ? "b" : "w"));
+        k.type = "button";
+        k.setAttribute("data-n", String(n));
+        setLabel(k, noteName(n));
+        if (black) { k.style.left = "calc(" + (wi / whites * 100) + "% - " + (50 / whites * 0.62) + "%)"; k.style.width = (100 / whites * 0.62) + "%"; }
+        else { k.style.left = (wi / whites * 100) + "%"; k.style.width = (100 / whites) + "%"; wi++; }
+        if (!black && n % 12 === 0) k.appendChild(el("span", "kb-c", noteName(n)));
+        box.appendChild(k);
+      }
+    }
+    // a pad's velocity: higher on the pad is louder (40..127); keys play at 100
+    function velAt(b, y) {
+      if (RP.mode === "keys") return 100;
+      var r = b.getBoundingClientRect(), f = r.height > 0 ? Math.max(0, Math.min(1, (y - r.top) / r.height)) : 0;
+      return Math.max(1, Math.min(127, Math.round(127 - 87 * f)));
+    }
+    function noteAt(x, y) {
+      var b = document.elementFromPoint(x, y);
+      b = b && b.closest ? b.closest("#rup-pads [data-n]") : null;
+      return b;
+    }
+    function wirePads() {
+      var box = $("rup-pads");
+      $("rup-close").innerHTML = host.ICON.close;
+      $("rup-close").addEventListener("click", function () { host.hideDlg("rup-dlg"); });
+      $("rup-dlg").addEventListener("close", closePads);
+      $("rup-mode").addEventListener("click", function () { RP.mode = RP.mode === "keys" ? "pads" : "keys"; renderPads(); });
+      $("rup-dn").innerHTML = host.ICON.minus;
+      $("rup-up").innerHTML = host.ICON.plus;
+      $("rup-dn").addEventListener("click", function () { if (RP.oct > -3) { RP.oct--; renderPads(); } });
+      $("rup-up").addEventListener("click", function () { if (RP.oct < 3) { RP.oct++; renderPads(); } });
+      box.addEventListener("pointerdown", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-n]") : null;
+        if (!b) return;
+        e.preventDefault();
+        try { box.setPointerCapture(e.pointerId); } catch (x) { /* old browsers */ }
+        padOn(String(e.pointerId), +b.getAttribute("data-n"), velAt(b, e.clientY));
+      });
+      // keys: a finger sliding along plays the keys it reaches
+      box.addEventListener("pointermove", function (e) {
+        var key = String(e.pointerId);
+        if (RP.mode !== "keys" || RP.down[key] === undefined) return;
+        var b = noteAt(e.clientX, e.clientY);
+        if (b && +b.getAttribute("data-n") !== RP.down[key]) padOn(key, +b.getAttribute("data-n"), 100);
+      });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (k) {
+        box.addEventListener(k, function (e) { padOff(String(e.pointerId)); });
+      });
+      box.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      // the keyboard: Space or Enter holds the focused pad
+      box.addEventListener("keydown", function (e) {
+        var b = e.target.closest ? e.target.closest("[data-n]") : null;
+        if (!b || (e.key !== " " && e.key !== "Enter")) return;
+        e.preventDefault();
+        if (!e.repeat) padOn("k", +b.getAttribute("data-n"), 100);
+      });
+      box.addEventListener("keyup", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); padOff("k"); } });
+      box.addEventListener("focusout", function () { padOff("k"); });
+    }
+
     function drawFx() {
       Object.keys(RF.views).forEach(function (u) { try { RF.views[u].view.draw(); } catch (e) {} });
     }
     function wireFx() {
+      wirePads();
       $("ruf-close").innerHTML = host.ICON.close;
       $("ruf-close").addEventListener("click", function () { host.hideDlg("ruf-dlg"); });
       $("ruf-play").addEventListener("click", function () { send({ t: "tp", a: "play" }); });
@@ -1337,7 +1488,7 @@
       try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
     }
     function onVisible() {
-      if (document.visibilityState !== "visible") return;
+      if (document.visibilityState !== "visible") { padsOff(); return; }
       if (R.link) R.link.kick();
       if (R.st) keepAwake(true);
     }

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — effect chain processor "studio-fx-chain" (v1.0.0)
+// orOS Studio — effect chain processor "studio-fx-chain" (v1.1.0)
 // Studio's own AudioWorklet processor for a chain of NULL JSFX effects.
 // It speaks the same messages as NULL JSFX's "null-fx-chain"
 // (nullfx/runtime/null-worklet.js, MIT License, driven through
@@ -19,13 +19,18 @@
 //     messages "midi" and "time" with at), the plugin's own state
 //     ("state", item.state) and its interface's pokes ("vars"); an
 //     export hands its MIDI and transport over in processorOptions.
+//   - sliders the effect moves itself (sliderchange()/slider_automate()
+//     in @slider, @block or @sample, e.g. an Assisted effect's Learn
+//     writing its result): message "sliders" { uid, v: { i: value } }
+//     tells the page, at most every FLUSH blocks, and only for values
+//     that differ from what the page, a key or automation last set.
 // Lives in studio/ (not studio/nullfx/, which the sync workflow owns).
 // Load eel-rt.js, null-fx.js and the effect files first.
 // ============================================================
 /* global AudioWorkletProcessor, registerProcessor, sampleRate, currentTime, NULLRT, NULLFXHost, NULLFX */
 (function () {
   "use strict";
-  var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8;
+  var BLOCK = 128, PARAMS = 16, UNSET = -3e38, KEYS = 8, FLUSH = 16;
 
   class StudioFxChain extends AudioWorkletProcessor {
     static get parameterDescriptors() {
@@ -46,6 +51,7 @@
       this.map = [];
       this.last = new Float64Array(PARAMS).fill(NaN);
       this.lastPdc = -1;
+      this.blocks = 0;
       this.sched = new NULLFXHost.Sched();
       this.port.onmessage = function (e) { self.onMessage(e.data); };
       if (o.time) this.setTime(o.time);
@@ -63,7 +69,7 @@
     var s = m.uid != null ? this.find(m.uid) : null;
     switch (m.type) {
       case "chain": this.setChain(m.chain || []); break;
-      case "slider": if (s) s.fx.setSlider(m.i, +m.v); break;
+      case "slider": if (s) this.setSl(s, m.i, +m.v); break;
       case "bypass": if (s) s.bypass = !!m.on; break;
       case "time": if (m.at >= 0) this.sched.addTime(m); else { if (m.playing === false) this.sched.clear(); this.setTime(m); } break;
       case "auto": this.setAuto(m.map || []); break;
@@ -76,7 +82,7 @@
       case "file":
         if (s && m.data) {
           s.fx.files["slider" + m.i] = { channels: m.channels | 0, srate: +m.srate, data: m.data };
-          s.fx.setSlider(m.i, +m.v);
+          this.setSl(s, m.i, +m.v);
         }
         break;
       case "peek": if (s) this.peek(s, m.req); break;
@@ -113,7 +119,31 @@
       this.post({ type: "error", uid: it.uid, id: it.id, message: String(e && e.message || e) });
       return null;
     }
-    return { uid: it.uid, id: it.id, FX: FX, fx: fx, bypass: false, key: 0, pins: FX.inPins.length };
+    var known = {};
+    FX.sliders.forEach(function (sl) { known[sl.i] = fx.inst.getSlider(sl.i); });
+    return { uid: it.uid, id: it.id, FX: FX, fx: fx, bypass: false, key: 0, pins: FX.inPins.length, known: known, pend: 0 };
+  };
+  // a slider the page (or automation) sets: known, so it is not reported back
+  P.setSl = function (s, i, v) {
+    s.known[i] = v;
+    s.fx.setSlider(i, v);
+  };
+  // the sliders the effects moved themselves since the last report
+  P.reportSliders = function () {
+    for (var j = 0; j < this.slots.length; j++) {
+      var s = this.slots[j], mask = s.pend, v = null;
+      if (!mask) continue;
+      s.pend = 0;
+      for (var q = 0; q < s.FX.sliders.length; q++) {
+        var i = s.FX.sliders[q].i;
+        if (!(mask & Math.pow(2, i - 1))) continue;
+        var x = s.fx.inst.getSlider(i);
+        if (x === s.known[i] || !isFinite(x)) continue;
+        s.known[i] = x;
+        (v || (v = {}))[i] = x;
+      }
+      if (v) this.post({ type: "sliders", uid: s.uid, v: v });
+    }
   };
   // [{ k, uid, i, inc, min, max }]
   P.setAuto = function (map) {
@@ -169,7 +199,7 @@
       if (m.max >= m.min) v = Math.max(m.min, Math.min(m.max, v));
       else v = Math.max(m.max, Math.min(m.min, v));
       var s = this.find(m.uid);
-      if (s) s.fx.setSlider(m.i, v);
+      if (s) this.setSl(s, m.i, v);
     }
   };
 
@@ -208,7 +238,9 @@
         s.bypass = true;
         this.post({ type: "error", uid: s.uid, id: s.id, message: String(e && e.message || e) });
       }
+      if (s.fx.changed) { s.pend |= s.fx.changed; s.fx.changed = 0; }
     }
+    if (++this.blocks >= FLUSH) { this.blocks = 0; this.reportSliders(); }
     this.timeDirty = false;
     if (T.playing) { T.position += n / sampleRate; T.beat = T.position * T.tempo / 60; }
     if (out[0]) out[0].set(n === BLOCK ? a0 : a0.subarray(0, n));

@@ -597,6 +597,23 @@
     </div>
   </dialog>
 
+  <!-- Remote control: pads or keys for a track's NULL instrument, played on the PC -->
+  <dialog id="rup-dlg" class="wide" aria-labelledby="rup-title">
+    <div class="dlg-head">
+      <h2 id="rup-title"></h2>
+      <span class="spacer"></span>
+      <button type="button" id="rup-mode" class="chip"></button>
+      <button type="button" id="rup-close" class="icon-btn" data-i18n-aria="btn.close"></button>
+    </div>
+    <div id="rup-oct" class="kb-oct" hidden>
+      <button type="button" id="rup-dn" class="icon-btn small" data-i18n-aria="kb.octDown"></button>
+      <span id="rup-octv" class="hint small"></span>
+      <button type="button" id="rup-up" class="icon-btn small" data-i18n-aria="kb.octUp"></button>
+    </div>
+    <div id="rup-pads" class="rup-pads"></div>
+    <p class="hint small" data-i18n="rp.hint"></p>
+  </dialog>
+
   <!-- effects runtime (NULL JSFX) and the Effects dialog; before core.js -->
   <script src="../i18n.js?v=4.93.00" data-app="studio"></script>
   <script src="nullfx/runtime/eel-rt.js?v=4.93.00"></script>

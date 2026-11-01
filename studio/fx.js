@@ -267,13 +267,14 @@
         processorOptions: { chain: list, auto: auto, midi: extra && extra.midi || null, times: extra && extra.times || null }
       });
       ch.pdc = 0; ch.waiting = {}; ch.req = 0;
-      ch.onpdc = null; ch.onerror = null; ch.onmissing = null;
+      ch.onpdc = null; ch.onerror = null; ch.onmissing = null; ch.onsliders = null;
       ch.node.port.onmessage = function (e) {
         var m = e.data || {};
         if (m.type === "pdc") { ch.pdc = m.samples; if (ch.onpdc) ch.onpdc(m.samples); }
         else if (m.type === "live") { var w = ch.waiting[m.req]; if (w) { delete ch.waiting[m.req]; w(m); } }
         else if (m.type === "error") { if (ch.onerror) ch.onerror(m); }
         else if (m.type === "missing") { if (ch.onmissing) ch.onmissing(m); }
+        else if (m.type === "sliders") { if (ch.onsliders) ch.onsliders(m); }
       };
       return ch;
     }
@@ -314,6 +315,7 @@
         var ch;
         try { ch = makeChain(ctx, chainList(items), map, offline ? extra : null); } catch (e) { return null; }
         ch.onerror = function (m) { host.showToast(t("fx.failed", { name: nameOf(m.id) })); };
+        if (!offline) ch.onsliders = function (m) { fromAudio(key, m.uid, m.v, ch); };
         rec = { chain: ch, ctx: ctx, files: "" };
         if (!offline) live[key] = rec;
       } else {
@@ -354,6 +356,7 @@
         if (pv && pv.key === key && pv.id === x.id) return true;
         var ch;
         try { ch = makeChain(ctx, chainList(one), []); } catch (e) { return false; }
+        ch.onsliders = function (m) { fromAudio(key, m.uid, m.v, ch); };
         sendSliders(ch, one);
         ch.node.connect(out);
         pv = { key: key, ctx: ctx, chain: ch, id: x.id, u: x.u, out: out };
@@ -369,6 +372,28 @@
     function prune(keys) {
       Object.keys(live).forEach(function (k) {
         if (keys.indexOf(k) < 0) { live[k].chain.disconnect(); delete live[k]; }
+      });
+    }
+    // sliders an effect moved itself (an Assisted effect's Learn result):
+    // saved with the track as one undo step, shown, and sent to the other
+    // chain of the track (the live chain or the preview), not back to `from`
+    function fromAudio(key, u, vals, from) {
+      var x = chainOf(key).filter(function (y) { return y.u === u; })[0], FX = x && fxMeta(x.id);
+      if (!FX || !vals) return;
+      var got = [];
+      FX.sliders.forEach(function (sl) {
+        var v = vals[sl.i];
+        if (sl.path || typeof v !== "number" || !isFinite(v) || C.fxValue(x, sl) === v) return;
+        got.push([sl.i, v]);
+      });
+      if (!got.length) return;
+      update(key, u, function (n) { got.forEach(function (g) { n.s[String(g[0])] = g[1]; }); }, host.burst("fxa" + u, { live: true }));
+      var rec = live[key], vw = views[u];
+      got.forEach(function (g) {
+        if (rec && rec.chain !== from) rec.chain.setSlider(u, g[0], g[1]);
+        if (pv && pv.key === key && pv.u === u && pv.chain !== from) pv.chain.setSlider(u, g[0], g[1]);
+        if (vw) vw.view.setSlider(g[0], g[1]);
+        refreshControl(u, g[0]);
       });
     }
     // a slider moved while playing
@@ -637,7 +662,7 @@
       return b;
     }
     function catName(c) {
-      return c === "One Slider" ? t("fx.cat1") : c === "Essentials" ? t("fx.cat2") : c === "Advanced" ? t("fx.cat3") : c === "Instruments" ? t("fx.catInst") : c;
+      return c === "One Slider" ? t("fx.cat1") : c === "Essentials" ? t("fx.cat2") : c === "Advanced" ? t("fx.cat3") : c === "Assisted" ? t("fx.catAssist") : c === "Instruments" ? t("fx.catInst") : c;
     }
     function decimals(sl) {
       if (sl.inc >= 1 || !(sl.inc > 0)) return sl.inc > 0 ? 0 : 2;
@@ -722,7 +747,7 @@
       host2.innerHTML = "";
       if (!catalog) { host2.appendChild(el("p", "hint small", t("clip.loading"))); return; }
       var q = query.trim().toLowerCase(), any = false;
-      ["One Slider", "Essentials", "Advanced"].forEach(function (cat) {
+      ["One Slider", "Essentials", "Advanced", "Assisted"].forEach(function (cat) {
         var list = catalog.filter(function (e) {
           return e.category === cat && (!q || (e.name + " " + (e.tags || "")).toLowerCase().indexOf(q) >= 0);
         });
