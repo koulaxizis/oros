@@ -547,6 +547,8 @@
       <input type="text" id="rj-code" class="rj-code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" pattern="[0-9 ]*">
       <button type="button" id="rj-go" class="chip primary" data-i18n="rm.go">Connect</button>
     </div>
+    <button type="button" id="rj-scan" class="chip rj-scan" aria-pressed="false" data-i18n="rm.scan" hidden>Scan the QR code</button>
+    <video id="rj-cam" class="rj-cam" muted playsinline aria-hidden="true" hidden></video>
     <p id="rj-status" class="rm-status" role="status"></p>
   </dialog>
 

@@ -323,7 +323,14 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
   const l = M.list();
   // orOS Drive (DRIVE-APP) is built from koulaxizis/oros-drive by the same workflow
-  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk"].concat(Object.keys(pk).map((id) => "oros-" + id + ".apk")).sort());
+  // page apps (STUDIO-RA, android/page-apps.json) are built as flavours too
+  const pg = JSON.parse(read("android/page-apps.json")).apps;
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
+  Object.keys(pg).forEach((id) => {
+    const a = l.find((x) => x.id === id);
+    assert.equal(a.pkg, pg[id].package);
+    assert.equal(M.texts(a, "el").name, pg[id].name);
+  });
   assert.ok(!pk.drive, "a single app called drive would publish a second oros-drive.apk");
   const dr = l.find((a) => a.id === "drive");
   assert.equal(dr.pkg, "online.useoros.drive");

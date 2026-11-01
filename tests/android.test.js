@@ -85,6 +85,42 @@ test("android: single-app flavours (wave 7) keep orOS untouched and drop the pho
   }
 });
 
+test("android: page apps (STUDIO-RA) open their own page, catch only its links and drop the phone bridge", () => {
+  const { buildPage, pageApps, soloApps, flavours, REMOVE_NODES } = require(path.join(ROOT, "android", "tools", "gen.js"));
+  const pages = pageApps();
+  const links = JSON.parse(fs.readFileSync(path.join(ROOT, ".well-known", "assetlinks.json"), "utf8"));
+  const all = Object.values(flavours());
+  assert.equal(new Set(all).size, all.length);                       // no package twice across both lists
+  assert.ok(!all.includes("online.useoros.twa"));
+  const v = /APP_VERSION\s*=\s*"(\d+)\.(\d+)\.(\d+)"/.exec(fs.readFileSync(path.join(ROOT, "shell.js"), "utf8"));
+  const code = Number(v[1]) * 1000000 + Number(v[2]) * 1000 + Number(v[3]);
+  assert.ok(Object.keys(pages).includes("studioremote"));
+  for (const [id, spec] of Object.entries(pages)) {
+    assert.ok(!(id in soloApps()), id + " is also a single app");
+    assert.match(id, /^[a-z][a-z0-9]*$/);                               // a Gradle flavour name
+    assert.match(spec.package, /^online\.useoros\.[a-z0-9]+$/);
+    assert.ok(typeof spec.name === "string" && spec.name.length > 0 && spec.name.length <= 30, id + " name");
+    assert.ok(links.some((s) => s.target.package_name === spec.package && s.relation.includes("delegate_permission/common.use_as_origin")), spec.package);
+    const m = JSON.parse(fs.readFileSync(path.join(ROOT, spec.page, "manifest.webmanifest"), "utf8"));
+    assert.equal(m.scope, "/" + spec.page + "/");
+    assert.equal(m.start_url, "/" + spec.page + "/");
+    assert.equal(m.name, spec.name);
+    assert.ok(fs.existsSync(path.join(ROOT, spec.page, "index.html")), spec.page + "/index.html");
+    const o = buildPage(id, spec, m, web);
+    const x = o["AndroidManifest.xml"];
+    REMOVE_NODES.forEach(([tag, name]) => assert.ok(x.includes(`<${tag} android:name="${name}" tools:node="remove" />`), id + " " + name));
+    assert.match(x, /android\.permission\.READ_CONTACTS" tools:node="remove"/);
+    assert.ok(x.includes(`android:pathPrefix="/${spec.page}/"`), id + " links");
+    assert.ok(x.includes(`https://useoros.online/${spec.page}/manifest.webmanifest`));
+    assert.ok(!x.includes("SoloWidget"), id + " has no widget");
+    assert.ok(!o["res/values/solo_widget.xml"]);
+    assert.ok(o["res/values/web_manifest.xml"].includes(`<string name="launchUrl">https://useoros.online/${spec.page}/?apk=${code}</string>`));
+    ["", "-192", "-512", "-maskable-512"].forEach((k) => assert.ok(fs.existsSync(path.join(ROOT, "icons", "solo", id + k + (k ? ".png" : ".svg"))), id + k));
+  }
+  const gradle = fs.readFileSync(path.join(ROOT, "android", "app", "build.gradle"), "utf8");
+  assert.match(gradle, /parse\(file\('\.\.\/page-apps\.json'\)\)\.apps\.each \{ id, spec -> soloApps\[id\] = spec\.package \}/);
+});
+
 test("android: SoloWidget only opens the app's own page with a shortcut word", () => {
   const j = fs.readFileSync(path.join(ROOT, "android", "app", "src", "main", "java", "online", "useoros", "twa", "SoloWidget.java"), "utf8");
   assert.match(j, /getString\(R\.string\.launchUrl\)/);

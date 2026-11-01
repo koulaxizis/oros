@@ -15,6 +15,8 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const S = require(path.join(ROOT, "solo.js"));
 const APPS = JSON.parse(fs.readFileSync(path.join(ROOT, "android", "solo-apps.json"), "utf8")).apps;
+// Page apps (STUDIO-RA): one page of the site on its own, own name
+const PAGES = JSON.parse(fs.readFileSync(path.join(ROOT, "android", "page-apps.json"), "utf8")).apps;
 const STORE = path.join(__dirname, "fdroid");
 
 const WEB = "https://useoros.online/";
@@ -56,6 +58,10 @@ function list() {
   const out = [{ id: "oros", pkg: "online.useoros.twa", apk: "oros.apk", icon: path.join(ROOT, "icons", "icon-512.png") }];
   for (const [id, pkg] of Object.entries(APPS)) {
     out.push({ id, pkg, apk: "oros-" + id + ".apk", icon: path.join(ROOT, "icons", "solo", id + "-512.png") });
+  }
+  for (const [id, p] of Object.entries(PAGES)) {
+    out.push({ id, pkg: p.package, apk: "oros-" + id + ".apk", icon: path.join(ROOT, "icons", "solo", id + "-512.png"),
+      name: p.name, web: WEB + p.page + "/" });
   }
   out.push({ id: "drive", pkg: "online.useoros.drive", apk: "oros-drive.apk", icon: path.join(ROOT, "icons", "icon-512.png"),
     name: "orOS Drive", source: "https://github.com/koulaxizis/oros-drive", web: WEB + "download/" });

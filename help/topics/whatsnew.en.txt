@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 4.93.00
+- **Remote for orOS Studio**: Studio's remote as an Android app of its own (F-Droid repository, Droid-ify, Obtainium) and at useoros.online/studio/remote/. Scan the QR code from the PC right in the app, the screen stays on, phones tick under your finger, tablets on their side get bigger faders, and the app comes back to the same PC without a new Allow. The QR code on the PC now opens this page. See [Studio](help:a/studio).
+
 ## Version 4.92.00
 - Calendar, Contacts and To-Do now stay in step with your own server even while they are closed: every 15 minutes, while orOS is open, orOS runs their sync in the background (Settings › Sync › Calendars and contacts, where you also see when each last synced). Nextcloud users can now connect with Sign in with Nextcloud, without typing a password, and the Settings help has short guides for Nextcloud, Radicale, Baïkal, mailbox.org, Fastmail and iCloud. See [Settings](help:a/settings).
 

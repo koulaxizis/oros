@@ -22,6 +22,13 @@
      3. Host (PC): pairing dialog, commands, state and meters
      4. Remote (tablet / phone): join dialog and the console
      5. Remote: the Effects window of a track (phase 2)
+     6. Remote for orOS Studio (STUDIO-RA): the remote on its own
+        (studio/remote/, the Android app), QR scan, screen kept on,
+        haptics, rejoin without a new Allow
+
+   Remote mode: studio/index.html?remote (framed by studio/remote/)
+   boots only the join screen and the console (studio.js bootRemote):
+   no project, no sync, nothing stored but the last code (RA_KEY).
    ============================================================ */
 (function () {
   "use strict";
@@ -109,7 +116,11 @@
     var sendQ = Promise.resolve();
     // Who is on the other end: the remote picks a random id per pairing;
     // the host lets in only the id it was told to allow (o.admit).
-    var rid = self.role === "remote" ? hex(crypto.getRandomValues(new Uint8Array(16))) : "";
+    // A remote that was allowed before brings the same id back (o.rid),
+    // so the PC lets it in again without asking (STUDIO-RA rejoin).
+    var rid = self.role !== "remote" ? "" : typeof o.rid === "string" && /^[0-9a-f]{32}$/.test(o.rid) ? o.rid
+      : hex(crypto.getRandomValues(new Uint8Array(16)));
+    this.rid = rid;
     var okRid = "", asking = "";
 
     function setState(s) {
@@ -314,6 +325,13 @@
       setState("closed");
     };
     this.direct = function () { return !!(dc && dc.readyState === "open"); };
+    // Back from the background (a phone app): try the room at once
+    // instead of waiting for the next retry.
+    this.kick = function () {
+      if (closed || !keys) return;
+      if (!ws) { retry = 0; openWs(); }
+      else if (ws.readyState === 1) frame({ k: "ping" });
+    };
     this.peer = function () { return peer; };
 
     derive(o.code).then(function (k) {
@@ -416,11 +434,10 @@
       $("rm-pair").hidden = !on || hostLive();
       drawQr(on ? joinUrl(H.code) : "");
     }
+    // The QR opens Remote for orOS Studio (studio/remote/): the Android
+    // app when it is installed, else the same page in the browser.
     function joinUrl(code) {
-      var base = "";
-      try { base = window.parent.location.origin + window.parent.location.pathname; } catch (e) {}
-      if (!base) base = location.origin + "/";
-      return base.replace(/\/index\.html$/, "/") + "?open=studio#studio-remote=" + code;
+      return new URL("remote/#studio-remote=" + code, location.href).href;
     }
     function drawQr(text) {
       var cv = $("rm-qr");
@@ -635,8 +652,9 @@
       if (H.link) hostStop();
       joinStop(true);
       R.code = code; R.st = null;
+      var last = lastJoin();
       R.link = new Link({
-        role: "remote", code: code, relay: relayUrl(), dev: deviceName(),
+        role: "remote", code: code, relay: relayUrl(), dev: deviceName(), rid: last && last.code === code ? last.rid : "",
         onState: function (s) {
           $("rj-status").textContent = stateText(s, "remote");
           renderBadge();
@@ -647,12 +665,14 @@
         },
         onApp: onHostMsg,
         onDeny: function () {
+          saveJoin(null);
           joinStop(true);
           $("rj-status").textContent = t("rm.denied");
           renderBadge();
         },
         onGone: function () { renderBadge(); }
       });
+      saveJoin({ code: code, rid: R.link.rid });
       $("rj-status").textContent = t("rm.connecting");
     }
     function joinStop(quiet) {
@@ -680,16 +700,25 @@
     function send(c) { if (R.link) R.link.send(c); }
 
     function enterConsole() {
+      stopScan();
       host.hideDlg("join-dlg");
       document.body.classList.add("remote-on");
       $("remote-ui").hidden = false;
       if (!R.raf) R.raf = requestAnimationFrame(animate);
+      keepAwake(true);
     }
     function leaveConsole() {
       if (RF.key) host.hideDlg("ruf-dlg");
       document.body.classList.remove("remote-on");
       $("remote-ui").hidden = true;
       $("ru-strips").textContent = "";
+      shape = "";
+      keepAwake(false);
+      if (RA.on) {                      // the remote app has nothing behind the console
+        var last = lastJoin();
+        openJoin("");
+        if (last) $("rj-code").value = last.code;
+      }
     }
     function renderBadge() {
       var b = $("ru-link");
@@ -805,6 +834,7 @@
       setLabel(b, label);
       b.addEventListener("click", function () {
         var on = b.getAttribute("aria-pressed") !== "true";
+        buzz(10);
         fn(on);
       });
       return b;
@@ -866,7 +896,9 @@
         e.preventDefault();
         try { f.setPointerCapture(e.pointerId); } catch (err) {}
         drag = { y: e.clientY, v: parseFloat(f.getAttribute("data-v")) || 0, id: e.pointerId };
+        drag.last = drag.v;
         f.classList.add("drag");
+        buzz(8);
       });
       f.addEventListener("pointermove", function (e) {
         if (!drag || e.pointerId !== drag.id) return;
@@ -874,6 +906,9 @@
         var fine = e.shiftKey ? 0.25 : 1;
         var v = drag.v - (e.clientY - drag.y) / h * (st.max - st.min) * fine;
         v = Math.max(st.min, Math.min(st.max, Math.round(v * 2) / 2));
+        // a tick when the fader passes 0 dB (unity) or hits an end
+        if ((drag.last < 0) !== (v < 0) || ((v === st.min || v === st.max) && v !== drag.last)) buzz(15);
+        drag.last = v;
         move(id, "vol", v);
       });
       var end = function (e) {
@@ -1261,6 +1296,191 @@
       $("ruf-search").addEventListener("input", function () { RF.q = $("ruf-search").value; renderPick(); });
     }
 
+    // ---------- 6. Remote for orOS Studio (STUDIO-RA) ----------
+    // RA.on: this page is the remote on its own (studio/remote/ frames
+    // studio/index.html?remote). The last code and the device's id for
+    // it are kept on this device only (RA_KEY), so the app can come back
+    // to the same PC without a new Allow while the PC still shows that code.
+    var RA_KEY = "oros-studio-remote-join", RA_DAYS = 7;
+    var RA = { on: false, lock: null, scan: null };
+    function lastJoin() {
+      try {
+        var j = JSON.parse(localStorage.getItem(RA_KEY) || "null");
+        if (j && CODE_RE.test(j.code) && /^[0-9a-f]{32}$/.test(j.rid) && typeof j.at === "number" &&
+            Date.now() - j.at < RA_DAYS * 864e5) return j;
+      } catch (e) {}
+      return null;
+    }
+    function saveJoin(j) {
+      try {
+        if (j) localStorage.setItem(RA_KEY, JSON.stringify({ code: j.code, rid: j.rid, at: Date.now() }));
+        else localStorage.removeItem(RA_KEY);
+      } catch (e) {}
+    }
+    // The screen stays on while the console is shown (Wake Lock; the
+    // browser lets it go when the page is hidden, so it is asked again).
+    function keepAwake(on) {
+      if (!on) {
+        if (RA.lock) { try { RA.lock.release(); } catch (e) {} }
+        RA.lock = null;
+        return;
+      }
+      if (RA.lock || !navigator.wakeLock || document.visibilityState !== "visible") return;
+      navigator.wakeLock.request("screen").then(function (l) {
+        if (!R.st) { try { l.release(); } catch (e) {} return; }
+        RA.lock = l;
+        l.addEventListener("release", function () { if (RA.lock === l) RA.lock = null; });
+      }, function () {});
+    }
+    // A short tick under the finger (phones; silently nothing elsewhere).
+    function buzz(ms) {
+      try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {}
+    }
+    function onVisible() {
+      if (document.visibilityState !== "visible") return;
+      if (R.link) R.link.kick();
+      if (R.st) keepAwake(true);
+    }
+
+    // The code from a scanned QR: Studio's own link (…#studio-remote=123456)
+    // or the bare six digits.
+    function codeFrom(text) {
+      var s = String(text || "").trim(), m = /#studio-remote=([0-9]{6})$/.exec(s);
+      if (m) return m[1];
+      return CODE_RE.test(s) ? s : "";
+    }
+    // QR scan: BarcodeDetector where the browser has it (Chrome on
+    // Android), else jsQR (vendor/jsqr, as the QR app); a frame every
+    // 150 ms; the camera stops when a code is read or the dialog closes.
+    var detP = null, jsqrP = null, grabCv = null;
+    function detector() {
+      if (detP) return detP;
+      detP = Promise.resolve(null);
+      if (typeof window.BarcodeDetector !== "function") return detP;
+      var BD = window.BarcodeDetector;
+      detP = (typeof BD.getSupportedFormats === "function" ? BD.getSupportedFormats() : Promise.resolve(["qr_code"]))
+        .then(function (f) { return f && f.indexOf("qr_code") >= 0 ? new BD({ formats: ["qr_code"] }) : null; })
+        .catch(function () { return null; });
+      return detP;
+    }
+    function loadJsQR() {
+      if (window.jsQR) return Promise.resolve(window.jsQR);
+      if (jsqrP) return jsqrP;
+      jsqrP = new Promise(function (resolve, reject) {
+        var sc = document.createElement("script");
+        sc.src = "../vendor/jsqr/jsQR.js";
+        sc.onload = function () { if (typeof window.jsQR === "function") resolve(window.jsQR); else reject(new Error("jsqr")); };
+        sc.onerror = function () { jsqrP = null; reject(new Error("jsqr")); };
+        document.head.appendChild(sc);
+      });
+      return jsqrP;
+    }
+    function readFrame(v) {
+      var w = v.videoWidth, h = v.videoHeight;
+      if (!w || !h) return Promise.resolve("");
+      return detector().then(function (det) {
+        if (det) {
+          return det.detect(v).then(function (list) {
+            var hit = (list || []).filter(function (b) { return typeof b.rawValue === "string" && b.rawValue; })[0];
+            return hit ? hit.rawValue : "";
+          }, function () { return ""; });
+        }
+        return loadJsQR().then(function (jsQR) {
+          var k = Math.min(1, 640 / Math.max(w, h));
+          if (!grabCv) grabCv = document.createElement("canvas");
+          grabCv.width = Math.round(w * k); grabCv.height = Math.round(h * k);
+          var g = grabCv.getContext("2d", { willReadFrequently: true });
+          g.drawImage(v, 0, 0, grabCv.width, grabCv.height);
+          var px = g.getImageData(0, 0, grabCv.width, grabCv.height);
+          var r = jsQR(px.data, px.width, px.height, { inversionAttempts: "dontInvert" });
+          return r && typeof r.data === "string" ? r.data : "";
+        });
+      });
+    }
+    function canScan() { return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+    function startScan() {
+      if (RA.scan) { stopScan(); return; }
+      var v = $("rj-cam"), job = { stream: null, timer: 0, bad: "" };
+      RA.scan = job;
+      $("rj-status").textContent = t("rm.scanHint");
+      renderScan();
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }).then(function (stream) {
+        if (RA.scan !== job) { stream.getTracks().forEach(function (x) { x.stop(); }); return; }
+        job.stream = stream;
+        v.srcObject = stream;
+        v.hidden = false;
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+        var tick = function () {
+          if (RA.scan !== job) return;
+          readFrame(v).then(function (text) {
+            if (RA.scan !== job) return;
+            var code = codeFrom(text);
+            if (code) { buzz(20); stopScan(); $("rj-code").value = code; joinStart(code); return; }
+            if (text && text !== job.bad) { job.bad = text; $("rj-status").textContent = t("rm.scanBad"); }
+            job.timer = setTimeout(tick, 150);
+          }, function () { if (RA.scan === job) job.timer = setTimeout(tick, 150); });
+        };
+        tick();
+      }, function () {
+        if (RA.scan !== job) return;
+        stopScan();
+        $("rj-status").textContent = t("rm.scanNo");
+      });
+    }
+    function stopScan() {
+      var job = RA.scan;
+      RA.scan = null;
+      if (job) {
+        clearTimeout(job.timer);
+        if (job.stream) job.stream.getTracks().forEach(function (x) { x.stop(); });
+      }
+      var v = $("rj-cam");
+      if (v) { try { v.pause(); } catch (e) {} v.srcObject = null; v.hidden = true; }
+      renderScan();
+    }
+    function renderScan() {
+      var b = $("rj-scan");
+      if (!b) return;
+      b.hidden = !canScan();
+      b.textContent = RA.scan ? t("rm.scanStop") : t("rm.scan");
+      b.setAttribute("aria-pressed", RA.scan ? "true" : "false");
+    }
+    function hashJoinCode() {
+      var code = "";
+      try {
+        var h = window.parent.location.hash || "", m = h.match(/^#studio-remote=([0-9]{6})$/);
+        if (m) {
+          code = m[1];
+          window.parent.history.replaceState(window.parent.history.state, "", window.parent.location.pathname + window.parent.location.search);
+        }
+      } catch (e) {}
+      return code;
+    }
+    // The remote on its own: the join screen is the page; Back or Esc
+    // on it does not close it, Stop controlling comes back to it.
+    function app() {
+      RA.on = true;
+      document.body.classList.add("remote-app");
+      $("rj-close").hidden = true;
+      $("join-dlg").addEventListener("cancel", function (e) { if (RA.on) e.preventDefault(); });
+      // A QR scanned while the app is open only changes the hash of its page.
+      try {
+        window.parent.addEventListener("hashchange", function () {
+          var c = hashJoinCode();
+          if (!c || (R.link && R.code === c)) return;
+          if (R.link) joinStop(true);
+          leaveConsole();
+          openJoin(c);
+        });
+      } catch (e) {}
+      if (!$("join-dlg").open && !R.link) {
+        var last = lastJoin();
+        openJoin("");
+        if (last && !$("rj-code").value) $("rj-code").value = last.code;
+      }
+    }
+
     function wire() {
       wireFx();
       $("rm-start").addEventListener("click", hostStart);
@@ -1275,13 +1495,14 @@
       $("rj-go").addEventListener("click", function () { joinStart($("rj-code").value); });
       $("rj-code").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); joinStart($("rj-code").value); } });
       $("rj-close").addEventListener("click", function () { host.hideDlg("join-dlg"); if (R.link && !R.st) joinStop(); });
+      $("rj-scan").addEventListener("click", startScan);
+      $("join-dlg").addEventListener("close", stopScan);
+      renderScan();
+      document.addEventListener("visibilitychange", onVisible);
       $("ru-exit").addEventListener("click", function () { joinStop(); });
-      $("ru-play").addEventListener("click", function () { send({ t: "tp", a: "play" }); });
-      $("ru-stop").addEventListener("click", function () { send({ t: "tp", a: "stop" }); });
-      $("ru-home").addEventListener("click", function () { send({ t: "tp", a: "home" }); });
-      $("ru-rec").addEventListener("click", function () { send({ t: "tp", a: "rec" }); });
-      $("ru-loop").addEventListener("click", function () { send({ t: "tp", a: "loop" }); });
-      $("ru-metro").addEventListener("click", function () { send({ t: "tp", a: "metro" }); });
+      ["play", "stop", "home", "rec", "loop", "metro"].forEach(function (a) {
+        $("ru-" + a).addEventListener("click", function () { buzz(10); send({ t: "tp", a: a }); });
+      });
       $("ru-bpm").addEventListener("change", function () {
         var v = parseFloat($("ru-bpm").value);
         if (isFinite(v)) send({ t: "bpm", v: v });
@@ -1302,20 +1523,15 @@
       setLabel($("ru-exit"), t("rm.exit"));
       setLabel($("ru-home"), t("btn.home"));
       setLabel($("ru-stop"), t("btn.stop"));
-      // a QR scanned on the tablet opens orOS at "?open=studio#studio-remote=<code>"
-      var code = "";
-      try {
-        var h = window.parent.location.hash || "", m = h.match(/^#studio-remote=([0-9]{6})$/);
-        if (m) {
-          code = m[1];
-          window.parent.history.replaceState(window.parent.history.state, "", window.parent.location.pathname + window.parent.location.search);
-        }
-      } catch (e) {}
+      // a QR scanned on the tablet opens "…#studio-remote=<code>": orOS
+      // (older QR codes) or Remote for orOS Studio (studio/remote/)
+      var code = hashJoinCode();
       if (code) openJoin(code);
     }
 
     return {
       wire: wire,
+      app: app,
       // the PC's state changed (any render): the tablet follows
       changed: function () { if (H.link) { pushState(false); syncMeters(); syncPeek(); renderHost(); } },
       hosting: function () { return !!H.link; },
