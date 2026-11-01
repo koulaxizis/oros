@@ -352,6 +352,20 @@
    "bytes": 66003
   },
   {
+   "id": "bitcrusher",
+   "name": "Bitcrusher",
+   "category": "Essentials",
+   "tags": "bitcrusher bit crusher decimator sample rate reduction lo-fi lofi digital aliasing 8-bit 12-bit retro gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 47322
+  },
+  {
    "id": "breath_control",
    "name": "Breath Control",
    "category": "Essentials",
@@ -509,15 +523,15 @@
    "id": "delay",
    "name": "Delay",
    "category": "Essentials",
-   "tags": "delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet gui",
+   "tags": "delay echo slapback feedback pre-delay timing sync tempo tape modulation diffusion ducking freeze dotted triplet reverse pitch shimmer gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 13,
-   "bytes": 74927
+   "sliders": 15,
+   "bytes": 80686
   },
   {
    "id": "disperser",
@@ -614,8 +628,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 54838
+   "sliders": 9,
+   "bytes": 59593
   },
   {
    "id": "gate",
@@ -663,15 +677,15 @@
    "id": "maximizer",
    "name": "Maximizer",
    "category": "Essentials",
-   "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs gui",
+   "tags": "limiter maximizing loudness ceiling mastering peak protection dither multiband saturation lufs target loudness learn streaming gui",
    "gfx": [
     480,
     408
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 14,
-   "bytes": 91597
+   "sliders": 16,
+   "bytes": 101737
   },
   {
    "id": "mid_side_matrix",
@@ -686,6 +700,20 @@
    "outs": 2,
    "sliders": 3,
    "bytes": 39710
+  },
+  {
+   "id": "multi_tap_delay",
+   "name": "Multi-Tap Delay",
+   "category": "Essentials",
+   "tags": "delay multi tap multitap rhythmic echo pattern dotted triplet swing accelerate scatter tempo sync stereo spread gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 54563
   },
   {
    "id": "multiband_compressor",
@@ -758,6 +786,20 @@
    "bytes": 91691
   },
   {
+   "id": "passive_eq",
+   "name": "Passive EQ",
+   "category": "Essentials",
+   "tags": "eq equalizer passive program tube vintage low boost attenuate shelf air bandwidth mastering color gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 61997
+  },
+  {
    "id": "phase_align",
    "name": "Phase Align",
    "category": "Essentials",
@@ -782,8 +824,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 8,
-   "bytes": 57398
+   "sliders": 9,
+   "bytes": 66572
   },
   {
    "id": "pitch_shifter",
@@ -803,15 +845,15 @@
    "id": "reverb",
    "name": "Reverb",
    "category": "Essentials",
-   "tags": "reverb room space ambience hall plate decay pre-delay freeze modulation gui",
+   "tags": "reverb room space ambience hall plate decay pre-delay freeze modulation ducking gated reverb gate gui",
    "gfx": [
     480,
-    380
+    466
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 83775
+   "sliders": 15,
+   "bytes": 90038
   },
   {
    "id": "ring_mod",
@@ -884,6 +926,20 @@
    "bytes": 58901
   },
   {
+   "id": "speaker_sim",
+   "name": "Speaker Sim",
+   "category": "Essentials",
+   "tags": "speaker simulator device phone laptop earbuds tv radio telephone megaphone car mix check lo-fi small speaker gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 4,
+   "bytes": 71146
+  },
+  {
    "id": "stereo_width",
    "name": "Stereo Width",
    "category": "Essentials",
@@ -938,6 +994,20 @@
    "outs": 2,
    "sliders": 11,
    "bytes": 69264
+  },
+  {
+   "id": "test_signal",
+   "name": "Test Signal",
+   "category": "Essentials",
+   "tags": "test signal tone generator sine sweep pink noise white noise polarity calibration reference level speaker wiring utility gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 7,
+   "bytes": 50327
   },
   {
    "id": "tone",
@@ -1146,8 +1216,8 @@
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 4,
-   "bytes": 43114
+   "sliders": 5,
+   "bytes": 45783
   },
   {
    "id": "glitch_fx",
@@ -1195,15 +1265,15 @@
    "id": "harmonizer",
    "name": "Harmonizer",
    "category": "Advanced",
-   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola gui",
+   "tags": "harmonizer harmony pitch shift voices interval thirds fifths octave backing vocals scale diatonic key midi formant psola four voices choir gui",
    "gfx": [
     480,
-    380
+    466
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 80758
+   "sliders": 17,
+   "bytes": 100930
   },
   {
    "id": "kick_shaper",
@@ -1276,6 +1346,20 @@
    "bytes": 62929
   },
   {
+   "id": "oscilloscope",
+   "name": "Oscilloscope",
+   "category": "Advanced",
+   "tags": "oscilloscope scope waveform trigger time domain wave shape phase meter analyzer metering tempo sync gui",
+   "gfx": [
+    560,
+    500
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 54030
+  },
+  {
    "id": "ott",
    "name": "OTT",
    "category": "Advanced",
@@ -1335,15 +1419,15 @@
    "id": "resonator",
    "name": "Resonator",
    "category": "Advanced",
-   "tags": "resonator karplus-strong comb tuned pitch chord ringing sympathetic string gui",
+   "tags": "resonator karplus-strong comb tuned pitch chord ringing sympathetic string midi gui",
    "gfx": [
     480,
     380
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 54777
+   "sliders": 8,
+   "bytes": 62000
   },
   {
    "id": "reverser",
@@ -1447,15 +1531,15 @@
    "id": "spectrum_analyzer",
    "name": "Spectrum Analyzer",
    "category": "Advanced",
-   "tags": "spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering gui",
+   "tags": "spectrum analyzer analyser fft frequency meter metering peak hold slope visual mixing mastering spectrogram waterfall sidechain overlay compare gui",
    "gfx": [
     640,
     540
    ],
-   "ins": 2,
+   "ins": 4,
    "outs": 2,
-   "sliders": 7,
-   "bytes": 49514
+   "sliders": 9,
+   "bytes": 60491
   },
   {
    "id": "spring_reverb",
@@ -1489,15 +1573,15 @@
    "id": "stereo_scope",
    "name": "Stereo Scope",
    "category": "Advanced",
-   "tags": "stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering gui",
+   "tags": "stereo scope goniometer vectorscope lissajous correlation phase balance width meter analyzer metering multiband band low mid high bass mono gui",
    "gfx": [
     600,
     474
    ],
    "ins": 2,
    "outs": 2,
-   "sliders": 5,
-   "bytes": 50118
+   "sliders": 6,
+   "bytes": 60775
   },
   {
    "id": "sub_bloom",
@@ -1554,6 +1638,20 @@
    "outs": 2,
    "sliders": 24,
    "bytes": 75878
+  },
+  {
+   "id": "transient_split",
+   "name": "Transient Split",
+   "category": "Advanced",
+   "tags": "transient tonal split attack sustain body tail drums separate routing parallel reverb saturation gui",
+   "gfx": [
+    480,
+    294
+   ],
+   "ins": 2,
+   "outs": 4,
+   "sliders": 6,
+   "bytes": 45692
   },
   {
    "id": "tuner",
@@ -1624,6 +1722,62 @@
    "outs": 2,
    "sliders": 8,
    "bytes": 47741
+  },
+  {
+   "id": "assisted_comp",
+   "name": "Assisted Comp",
+   "category": "Assisted",
+   "tags": "compressor dynamics assisted learn assistant auto threshold vocal drums bus podcast loudness lufs gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 73147
+  },
+  {
+   "id": "assisted_delay",
+   "name": "Assisted Delay",
+   "category": "Assisted",
+   "tags": "delay echo slapback assisted learn assistant auto automatic tempo sync ping-pong ducking vocal drums bus gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 72246
+  },
+  {
+   "id": "assisted_eq",
+   "name": "Assisted EQ",
+   "category": "Assisted",
+   "tags": "eq equalizer assisted learn assistant tonal balance auto vocal mix warm bright radio podcast gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 16,
+   "bytes": 98956
+  },
+  {
+   "id": "assisted_reverb",
+   "name": "Assisted Reverb",
+   "category": "Assisted",
+   "tags": "reverb room space ambience assisted learn assistant auto automatic decay pre-delay ducking vocal drums bus gui",
+   "gfx": [
+    480,
+    400
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 13,
+   "bytes": 83945
   }
  ],
  "instruments": [
@@ -1666,8 +1820,22 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 37,
-   "bytes": 237054
+   "sliders": 39,
+   "bytes": 251553
+  },
+  {
+   "id": "granular",
+   "name": "Granular",
+   "category": "Instruments",
+   "tags": "instrument granular grains cloud texture pad ambient sample wav flac freeze scan spray polyphonic midi gui",
+   "gfx": [
+    560,
+    496
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 14,
+   "bytes": 75238
   },
   {
    "id": "keys",
@@ -1676,12 +1844,26 @@
    "tags": "instrument keys electric piano ep tine reed fm music box celesta glockenspiel vibraphone marimba kalimba mallets bell tremolo autopan chorus drive midi gui",
    "gfx": [
     560,
-    416
+    502
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 12,
-   "bytes": 94765
+   "sliders": 14,
+   "bytes": 103597
+  },
+  {
+   "id": "kick",
+   "name": "Kick",
+   "category": "Instruments",
+   "tags": "instrument kick drum bass drum 808 909 sub click punch pitch sweep synth midi gui",
+   "gfx": [
+    560,
+    410
+   ],
+   "ins": 0,
+   "outs": 2,
+   "sliders": 10,
+   "bytes": 58860
   },
   {
    "id": "mallets",
@@ -1736,22 +1918,22 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 13,
-   "bytes": 103851
+   "sliders": 15,
+   "bytes": 110829
   },
   {
    "id": "sampler",
    "name": "Sampler",
    "category": "Instruments",
-   "tags": "instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi gui",
+   "tags": "instrument sampler sample player one-shot chromatic wav flac loop adsr filter polyphonic midi slice slices chop beat gui",
    "gfx": [
     640,
     448
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 21,
-   "bytes": 103654
+   "sliders": 23,
+   "bytes": 110282
   },
   {
    "id": "synth",
@@ -1764,8 +1946,8 @@
    ],
    "ins": 0,
    "outs": 2,
-   "sliders": 45,
-   "bytes": 228663
+   "sliders": 47,
+   "bytes": 242826
   }
  ],
  "midi": [
@@ -1796,6 +1978,34 @@
    "outs": 2,
    "sliders": 11,
    "bytes": 91739
+  },
+  {
+   "id": "drum_trigger",
+   "name": "Drum Trigger",
+   "category": "MIDI",
+   "tags": "midi drum trigger replace replacement audio to midi kick snare tom hit detect velocity sample layer gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 50017
+  },
+  {
+   "id": "euclid",
+   "name": "Euclid",
+   "category": "MIDI",
+   "tags": "midi euclid euclidean rhythm generator sequencer pattern pulses steps rotate polyrhythm drum trigger swing tempo sync gui",
+   "gfx": [
+    480,
+    466
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 11,
+   "bytes": 50856
   },
   {
    "id": "humanize",
@@ -1838,6 +2048,34 @@
    "outs": 2,
    "sliders": 14,
    "bytes": 75083
+  },
+  {
+   "id": "note_echo",
+   "name": "Note Echo",
+   "category": "MIDI",
+   "tags": "midi note echo delay repeat repeater ratchet tempo sync velocity decay pitch step arpeggio generative gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 8,
+   "bytes": 53145
+  },
+  {
+   "id": "pitch_to_midi",
+   "name": "Pitch to MIDI",
+   "category": "MIDI",
+   "tags": "midi pitch to midi audio to midi convert tracker detection yin monophonic bass vocal guitar melody note pitch bend gui",
+   "gfx": [
+    480,
+    380
+   ],
+   "ins": 2,
+   "outs": 2,
+   "sliders": 9,
+   "bytes": 57677
   },
   {
    "id": "riff",
