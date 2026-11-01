@@ -9391,3 +9391,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Tests:** `tests/bundle-quote.test.js` no longer clamps to the fixed NOW; new `tests/clock.test.js` (+ `clock-shift.js`) re-runs every test file with a fixed 13-digit timestamp with the clock ten years ahead; `tests/pad.test.js` simulates strict Latin-1 Node. `.node-version` 22.23.4 used by tests.yml and quality.yml. Full `node --test tests/*.test.js`.
 - **Files:** `vendor/jspdf.umd.min.js`, `CREDITS.md`, `shell.js` (credits, APP_VERSION), `translations.js`, `i18n/de/shell.js`, `studio/studio.css`, `files/files.js`, `pad/core.js`, tests, workflows, `help/topics/whatsnew.{en,el}.txt`.
 
+### 2026-11-01 — 4.94.03 — Suggested wallpaper for every skin, SKIN-WP (#767)
+
+- **Changes:** every one of the 16 `SKINS` entries in `shell.js` names one existing wallpaper in `wp` (never `custom` or `clear`). Picking a skin moves to its wallpaper only while the wallpaper is still the default or the previous skin's suggestion, so a wallpaper the person chose stays theirs. Settings › Appearance marks the suggested tile with a star and a hint (EN/EL/DE). Replaces `WALLPAPERS[].pair`, which followed only from the default wallpaper and covered 11 skins. Decision in Part IX (Chris 2026-11-01 14:06).
+- **Files:** `shell.js` (SKINS, APP_VERSION), `settings/core.js`, `settings/settings.js`, `settings/settings.css`, `i18n/de/settings.js`, `help/topics/appearance.{en,el}.txt`, `help/topics/whatsnew.{en,el}.txt`, `tests/skin-wallpaper.test.js`.
+- **Tests:** new `tests/skin-wallpaper.test.js`; full `node --test tests/*.test.js`.
+
