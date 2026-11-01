@@ -1165,6 +1165,69 @@ function csvName(i, name) {
   return (i < 9 ? "0" : "") + (i + 1) + "-" + s + ".csv";
 }
 
+/* ---------- print / PDF page layout (wave 4.3) ----------
+   Pure: the renderer in spreadsheet.js draws what this plans. Sizes in
+   points (1 px on screen = 0.75 pt). Pages run down, then over, like
+   Excel; repeated heading rows are taken out of the body and drawn on
+   top of every page. Print settings stay on the device (not synced). */
+var PAPER = { a4: [595.28, 841.89], a3: [841.89, 1190.55], letter: [612, 792], legal: [612, 1008] };
+var PX_PT = 0.75;
+function normPrint(o) {
+  o = o || {};
+  var x = {};
+  x.pa = PAPER[o.pa] ? o.pa : "a4";
+  x.or = o.or === "l" ? "l" : "p";
+  x.fit = o.fit === "n" || o.fit === "p" ? o.fit : "w";
+  x.gl = o.gl === 0 ? 0 : 1;
+  x.pn = o.pn === 0 ? 0 : 1;
+  x.ch = o.ch === 0 ? 0 : 1;
+  var hr = parseInt(o.hr, 10);
+  x.hr = isFinite(hr) && hr > 0 ? Math.min(hr, 50) : 0;
+  x.sel = o.sel === 1 ? 1 : 0;
+  return x;
+}
+/* bands of consecutive sizes that each fit in room (at least one each) */
+function bands(sizes, room) {
+  var out = [], a = 0, acc = 0;
+  for (var i = 0; i < sizes.length; i++) {
+    if (i > a && acc + sizes[i] > room + 0.01) { out.push([a, i - 1]); a = i; acc = 0; }
+    acc += sizes[i];
+  }
+  if (sizes.length) out.push([a, sizes.length - 1]);
+  return out;
+}
+/* o: { pa, or, fit, colW: [pt], rowH: [pt] (body rows), headH: [pt]
+   (repeated rows), margin pt, foot pt }.
+   Returns { w, h, scale, x0, y0, pages: [{ c: [a, b], r: [a, b] }] }
+   with indexes into colW / rowH; r is null on a page with no body rows. */
+function printPages(o) {
+  var pp = PAPER[o.pa] || PAPER.a4, w = o.or === "l" ? pp[1] : pp[0], h = o.or === "l" ? pp[0] : pp[1];
+  var m = o.margin === undefined ? 36 : o.margin, foot = o.foot || 0;
+  var uw = w - 2 * m, uh = h - 2 * m - foot;
+  var sum = function (a) { var t = 0; for (var i = 0; i < a.length; i++) t += a[i]; return t; };
+  var tw = sum(o.colW), th = sum(o.rowH), hh = sum(o.headH || []);
+  var scale = 1;
+  if (o.fit === "w" && tw > uw) scale = uw / tw;
+  if (o.fit === "p") scale = Math.min(1, tw > 0 ? uw / tw : 1, th + hh > 0 ? uh / (th + hh) : 1);
+  scale = Math.max(scale, 0.05);
+  var room = uh / scale - hh;
+  if (room < uh / scale * 0.25) room = uh / scale * 0.25;   /* headings taller than the page: body still moves on */
+  var cb = bands(o.colW, uw / scale), rb = o.rowH.length ? bands(o.rowH, room) : [null];
+  var pages = [];
+  cb.forEach(function (c) { rb.forEach(function (r) { pages.push({ c: c, r: r }); }); });
+  return { w: w, h: h, scale: scale, x0: m, y0: m, uw: uw, uh: uh, pages: pages };
+}
+/* the text that fits in width w (measure: string -> width), with "…" */
+function fitText(s, w, measure) {
+  s = String(s);
+  if (measure(s) <= w) return s;
+  var lo = 0, hi = s.length;
+  while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (measure(s.slice(0, mid) + "…") <= w) lo = mid; else hi = mid - 1; }
+  return lo ? s.slice(0, lo) + "…" : "";
+}
+/* the page footer: "Page {n} of {t}" from the language's pattern */
+function pageLabel(pat, n, t) { return String(pat).replace("{n}", n).replace("{t}", t); }
+
 var API = {
   MAX_ROWS: MAX_ROWS, MAX_COLS: MAX_COLS, MAX_POINTS: MAX_POINTS, MAX_SERIES: MAX_SERIES,
   colName: colName, colFromName: colFromName, esc: esc, hex: hex, mix: mix, inkOn: inkOn, rgba: rgba, luminance: luminance,
@@ -1176,7 +1239,8 @@ var API = {
   chartModel: chartModel, chartSVG: chartSVG, niceScale: niceScale, fmtNum: fmtNum, seriesColors: seriesColors, pieSlices: pieSlices,
   SERIES: SERIES,
   BOOK_KIND: BOOK_KIND, bookContent: bookContent, bookWorkbook: bookWorkbook, importBook: importBook,
-  sheetCSV: sheetCSV, csvName: csvName, nameKey: nameKey
+  sheetCSV: sheetCSV, csvName: csvName, nameKey: nameKey,
+  PAPER: PAPER, PX_PT: PX_PT, normPrint: normPrint, printPages: printPages, fitText: fitText, pageLabel: pageLabel
 };
 root.OrosSheetKit = API;
 if (typeof module !== "undefined" && module.exports) module.exports = API;
