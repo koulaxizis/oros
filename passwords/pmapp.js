@@ -29,7 +29,7 @@
   var VAULT_KEY = "oros-passwords-vault";
   var CLIP_MS = 30000;
   var MIN_MASTER = 12;
-  var PV = window.PmVault, PC = window.PmCore, KX = window.Kdbx, P = window.PwCore, PK = window.PmKinds, PmOtp = window.PmOtpExport;
+  var PV = window.PmVault, PC = window.PmCore, P = window.PwCore, PK = window.PmKinds, PmOtp = window.PmOtpExport;
 
   // ---------- 1. Strings + helpers ----------
   function appLang() {
@@ -98,6 +98,23 @@
       "scan.denied": "The camera is not available.", "scan.found": "Two-factor code read.",
       "m.import": "Import", "m.export": "Export", "m.changePw": "Change master password",
       "m.newRk": "New recovery key", "m.settings": "Lock settings", "m.delete": "Delete vault", "m.lock": "Lock now",
+      "m.autofill": "Autofill on this phone",
+      "af.title": "Autofill on this phone",
+      "af.text": "Fill logins, 2FA codes, cards and addresses in other apps and in your browser on this phone. orOS gives the orOS app a copy sealed with a key that only this phone has; your fingerprint, face or screen lock opens it for each fill. Card PINs, ID numbers and notes are not in it. The copy is renewed each time you unlock or change Passwords here.",
+      "af.on": "Use autofill on this phone",
+      "af.svc.yes": "orOS is this phone's autofill service.",
+      "af.svc.no": "Choose orOS as the autofill service in Android's settings.",
+      "af.svc.go": "Open Android settings",
+      "af.at": "Phone copy updated {d}",
+      "af.never": "No copy on the phone yet.",
+      "af.wait": "Preparing this phone's keys…",
+      "af.apps": "Apps: add androidapp://<package name> as a site of a login, or pick the login once from the app.",
+      "af.err": "The phone could not keep the copy: {e}",
+      "af.offDone": "Autofill is off: the phone's copy and keys were removed.",
+      "save.new": "New login from {site}. Check it and press Save to keep it.",
+      "save.update": "New password from {site}. Press Save to keep it; the old one stays in the history.",
+      "save.same": "The login for {site} is already saved.",
+      "save.unlock": "A login from {site} is waiting. Unlock to save it.",
       "imp.title": "Import passwords", "imp.text": "Bring your passwords and two-factor codes from another app. Entries already in your vault are skipped.",
       "imp.sources": "Choose the export file of Bitwarden, KeePass (.kdbx or XML), 1Password (.1pux or CSV), Proton Pass, LastPass, Dashlane, NordPass, Keeper, RoboForm, Zoho Vault, Enpass, Apple Passwords, Chrome, Edge, Firefox or KeePassXC, or a backup of Aegis or 2FAS. KeePass files, and Bitwarden, Aegis and 2FAS files with a password, open with their password; other files must not be encrypted.",
       "imp.filePw": "Password of the export file",
@@ -243,7 +260,7 @@
       "e.editKind": "Edit {kind}",
       "e.countryNone": "Choose a country",
       "e.countryOther": "Other (as written)",
-      "addon": "orOS does not fill in passwords on websites. Copy them from here."
+      "addon": "To fill in and save logins on websites, install the orOS browser add-on (useoros.online/download)."
     },
     el: {
       "tab": "Κρύπτη",
@@ -302,6 +319,23 @@
       "scan.denied": "Η κάμερα δεν είναι διαθέσιμη.", "scan.found": "Ο κωδικός δύο βημάτων διαβάστηκε.",
       "m.import": "Εισαγωγή", "m.export": "Εξαγωγή", "m.changePw": "Αλλαγή κύριου κωδικού",
       "m.newRk": "Νέο κλειδί ανάκτησης", "m.settings": "Ρυθμίσεις κλειδώματος", "m.delete": "Διαγραφή κρύπτης", "m.lock": "Κλείδωμα τώρα",
+      "m.autofill": "Αυτόματη συμπλήρωση στο κινητό",
+      "af.title": "Αυτόματη συμπλήρωση στο κινητό",
+      "af.text": "Συμπληρώνει λογαριασμούς, κωδικούς 2FA, κάρτες και διευθύνσεις σε άλλες εφαρμογές και στον browser αυτού του κινητού. Το orOS δίνει στην εφαρμογή orOS ένα αντίγραφο κλειδωμένο με κλειδί που έχει μόνο αυτό το κινητό· το δακτυλικό, το πρόσωπο ή το κλείδωμα οθόνης το ανοίγει σε κάθε συμπλήρωση. Δεν περιέχει PIN καρτών, αριθμούς εγγράφων ή σημειώσεις. Το αντίγραφο ανανεώνεται κάθε φορά που ξεκλειδώνεις ή αλλάζεις κάτι στους Κωδικούς εδώ.",
+      "af.on": "Αυτόματη συμπλήρωση σε αυτό το κινητό",
+      "af.svc.yes": "Το orOS είναι η υπηρεσία αυτόματης συμπλήρωσης του κινητού.",
+      "af.svc.no": "Διάλεξε το orOS ως υπηρεσία αυτόματης συμπλήρωσης στις ρυθμίσεις του Android.",
+      "af.svc.go": "Ρυθμίσεις Android",
+      "af.at": "Το αντίγραφο του κινητού ενημερώθηκε {d}",
+      "af.never": "Δεν υπάρχει ακόμη αντίγραφο στο κινητό.",
+      "af.wait": "Ετοιμάζονται τα κλειδιά του κινητού…",
+      "af.apps": "Εφαρμογές: πρόσθεσε androidapp://<όνομα πακέτου> ως ιστότοπο ενός λογαριασμού, ή διάλεξε τον λογαριασμό μία φορά μέσα από την εφαρμογή.",
+      "af.err": "Το κινητό δεν μπόρεσε να κρατήσει το αντίγραφο: {e}",
+      "af.offDone": "Η αυτόματη συμπλήρωση απενεργοποιήθηκε: το αντίγραφο και τα κλειδιά του κινητού διαγράφηκαν.",
+      "save.new": "Νέος λογαριασμός από {site}. Έλεγξέ τον και πάτα Αποθήκευση για να τον κρατήσεις.",
+      "save.update": "Νέος κωδικός από {site}. Πάτα Αποθήκευση για να τον κρατήσεις· ο παλιός μένει στο ιστορικό.",
+      "save.same": "Ο λογαριασμός για {site} είναι ήδη αποθηκευμένος.",
+      "save.unlock": "Ένας λογαριασμός από {site} περιμένει. Ξεκλείδωσε για να τον αποθηκεύσεις.",
       "imp.title": "Εισαγωγή κωδικών", "imp.text": "Φέρε τους κωδικούς σου και τους κωδικούς δύο βημάτων από άλλη εφαρμογή. Όσες εγγραφές υπάρχουν ήδη παραλείπονται.",
       "imp.sources": "Διάλεξε το αρχείο εξαγωγής από Bitwarden, KeePass (.kdbx ή XML), 1Password (.1pux ή CSV), Proton Pass, LastPass, Dashlane, NordPass, Keeper, RoboForm, Zoho Vault, Enpass, Apple Passwords, Chrome, Edge, Firefox ή KeePassXC, ή ένα αντίγραφο ασφαλείας του Aegis ή του 2FAS. Τα αρχεία του KeePass, και τα αρχεία του Bitwarden, του Aegis και του 2FAS με κωδικό, ανοίγουν με τον κωδικό τους· τα άλλα αρχεία δεν πρέπει να είναι κρυπτογραφημένα.",
       "imp.filePw": "Κωδικός του αρχείου εξαγωγής",
@@ -447,7 +481,7 @@
       "e.editKind": "Επεξεργασία: {kind}",
       "e.countryNone": "Διάλεξε χώρα",
       "e.countryOther": "Άλλη (όπως γράφτηκε)",
-      "addon": "Το orOS δεν συμπληρώνει κωδικούς σε ιστότοπους. Αντίγραψέ τους από εδώ."
+      "addon": "Για συμπλήρωση και αποθήκευση λογαριασμών σε ιστότοπους, εγκατάστησε το πρόσθετο orOS για browser (useoros.online/download)."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "passwords", LANG);
@@ -549,6 +583,7 @@
   var view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "", screen: "list" };
   var weakCache = {};
   var pending = null;            // { password, title?, urls? } handed from the generator or a share
+  var saveQ = [];                // PW-AF3: logins handed over to be saved (memory only, max 10)
   var root = null;               // #vault
 
   function readStored() {
@@ -676,7 +711,7 @@
         snap = fn(snap);
         return writeSnap();
       });
-    }).then(function () { render(); }, function (e) { toast(errText(e)); render(); throw e; });
+    }).then(function () { render(); afSoon(); }, function (e) { toast(errText(e)); render(); throw e; });
   }
 
   // ---------- 4. Lock, auto-lock, clipboard ----------
@@ -686,6 +721,7 @@
   function lock(auto) {
     var was = !!session;
     session = null; snap = null; blobSnaps = {}; badBlobs = {}; weakCache = {}; pending = null;
+    if (was) saveQ = [];         // locked while they waited: the person chose to lock
     view = { mode: "list", id: null, query: "", filter: "all", tag: "", kind: "", screen: "list" };
     clearInterval(totpTimer); totpTimer = null;
     closeDialogs();
@@ -808,7 +844,7 @@
         // A generated password or a shared link waiting for a vault
         // goes into the first entry (it would otherwise pop up later).
         if (pending) { var pp = pending; pending = null; openEditor(null, pp.password, pp); }
-        else render();
+        else { render(); nextSave(); }
         showRecovery(v.recovery);
       }).catch(function (e) {
         go.disabled = false; go.textContent = t("create.go");
@@ -861,8 +897,10 @@
     clear(root);
     root.appendChild(el("p", "hint pv-busy", t("lock.busy")));
     enqueue(settle).then(function () {
+      afSoon();
       if (pending && session) { var p = pending; pending = null; openEditor(null, p.password, p); return; }
       render();
+      nextSave();
     }, function (e) { toast(errText(e)); render(); });
   }
 
@@ -1612,6 +1650,7 @@
         toast(t("e.saved"));
         view.mode = "view"; view.id = n.id;
         clearForm(); renderOpen();
+        nextSave();
       }, function () { saveBtn.disabled = false; });
     });
     acts.appendChild(saveBtn);
@@ -1624,6 +1663,7 @@
       clearForm();
       view.mode = e ? "view" : "list"; view.id = e ? e.id : null;
       renderOpen();
+      nextSave();
     }
     setTimeout(function () { try { title.focus(); } catch (x) {} }, 0);
   }
@@ -1809,11 +1849,12 @@
     var isOtp = e ? PK.kindOf(e) === "otp" : mode === "otp";
     var card = el("div", "card pv-edit");
     card.appendChild(el("h2", "pv-h", isOtp && isNew ? t("k.otp") : t(isNew ? "e.new" : "e.editing")));
+    if (pre && pre.note) card.appendChild(el("p", "hint pv-note", pre.note));
     var title = textInput("pv-e-title"); title.value = e ? e.title : (pre && pre.title) || ""; title.maxLength = PC.LIM.title;
     card.appendChild(labelled(t(isOtp ? "e.issuer" : "e.title"), title));
-    var user = textInput("pv-e-user"); user.value = e ? e.user : ""; user.maxLength = PC.LIM.user;
+    var user = textInput("pv-e-user"); user.value = e ? e.user : (pre && pre.user) || ""; user.maxLength = PC.LIM.user;
     card.appendChild(labelled(t(isOtp ? "e.account" : "e.user"), user));
-    var pw = secretInput("pv-e-pw"); pw.value = e ? e.pw : (presetPw || ""); pw.maxLength = PC.LIM.pw;
+    var pw = secretInput("pv-e-pw"); pw.value = e ? (pre && typeof pre.newPw === "string" ? pre.newPw : e.pw) : (presetPw || ""); pw.maxLength = PC.LIM.pw;
     var pwWrap = labelled(t("e.pw"), showable(pw));
     card.appendChild(pwWrap);
     var gen = el("div", "pv-row pv-gen");
@@ -1893,7 +1934,7 @@
     var err = el("p", "hint err"); err.setAttribute("role", "alert"); err.hidden = true;
     card.appendChild(err);
     var acts = el("div", "pv-row pv-edit-acts");
-    var dirty = !!presetPw || !!(pre && (pre.title || pre.urls));
+    var dirty = !!presetPw || !!(pre && (pre.title || pre.urls || pre.newPw));
     card.addEventListener("input", function () { dirty = true; });
     acts.appendChild(btn(t("e.cancel"), "act", function () {
       if (!dirty) return leave();
@@ -1918,6 +1959,7 @@
         toast(t("e.saved"));
         view.mode = "view"; view.id = n.id;
         clearForm(); renderOpen();
+        nextSave();
       }, function () { saveBtn.disabled = false; });
     });
     acts.appendChild(saveBtn);
@@ -1930,6 +1972,7 @@
       clearForm();
       view.mode = e ? "view" : "list"; view.id = e ? e.id : null;
       renderOpen();
+      nextSave();
     }
     setTimeout(function () { try { title.focus(); } catch (x) {} }, 0);
   }
@@ -2049,7 +2092,7 @@
     list.setAttribute("role", "menu");
     [["m.import", importDialog], ["m.export", exportDialog], ["m.changePw", changePwDialog],
      ["m.newRk", newRkDialog], ["m.settings", settingsDialog], ["m.delete", deleteVaultDialog],
-     ["m.lock", function () { lock(false); toast(t("locked")); }]].forEach(function (it) {
+     ["m.lock", function () { lock(false); toast(t("locked")); }]].concat(phone() ? [["m.autofill", autofillDialog]] : []).forEach(function (it) {
       var b = btn(t(it[0]), "pv-menu-item" + (it[0] === "m.delete" ? " danger" : ""), function () { d.close(); it[1](); });
       b.setAttribute("role", "menuitem");
       list.appendChild(b);
@@ -2070,6 +2113,26 @@
                     zoho: "Zoho Vault", keepassxml: "KeePass (XML)" };
   var IMPORT_ACCEPT = ".json,.csv,.zip,.1pux,.kdbx,.xml,.2fas,.txt,.pgp,.dash,application/json,text/csv,application/zip";
   var IMPORT_MAX = 50 * 1024 * 1024;
+  // KeePass (kdbx.js, 38 KB) only for Import and Export: loaded on
+  // demand, not at the first open.
+  var kdbxP = null;
+  function loadKdbx() {
+    if (window.Kdbx) return Promise.resolve(window.Kdbx);
+    if (kdbxP) return kdbxP;
+    kdbxP = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = "kdbx.js";
+      sc.onload = function () {
+        var KX = window.Kdbx;
+        if (!KX) { kdbxP = null; reject(new Error("kdbx")); return; }
+        if (typeof KX.setArgon2Loader === "function") KX.setArgon2Loader(function () { return PV.loadArgon2(); });
+        resolve(KX);
+      };
+      sc.onerror = function () { kdbxP = null; reject(new Error("kdbx")); };
+      document.head.appendChild(sc);
+    });
+    return kdbxP;
+  }
   function importDialog() {
     var OI = window.OrosPasswordsImport, K = window.OrosImportKit;
     var d = dialog(t("imp.title"));
@@ -2215,7 +2278,7 @@
       if (kdbxBytes) {
         status.textContent = t("imp.reading");
         var b = kdbxBytes;
-        KX.read(b, { password: kpw.value, keyFile: keyFile }).then(function (r) {
+        loadKdbx().then(function (KX) { return KX.read(b, { password: kpw.value, keyFile: keyFile }); }).then(function (r) {
           kpw.value = ""; b.fill(0); kdbxBytes = null;
           if (keyFile) { keyFile.fill(0); keyFile = null; }
           take(OI.fromEntries("keepass", r));
@@ -2229,7 +2292,7 @@
         var x = null;
         return K.readFile(f, IMPORT_MAX).then(function (got) {
           x = got;
-          return OI.parse(x);   // wipes the bytes once read (not a .kdbx)
+          return loadKdbx().then(function () { return OI.parse(x); });   // wipes the bytes once read (not a .kdbx); KeePass XML needs kdbx.js
         }).then(function (r) {
           status.textContent = "";
           if (r && (r.kdbx || r.locked)) {
@@ -2322,7 +2385,7 @@
                             "oros-2fa-aegis-" + stamp + ".json", "application/json", "json");
           });
         }
-        return KX.write(list, p1.value).then(function (bytes) {
+        return loadKdbx().then(function (KX) { return KX.write(list, p1.value); }).then(function (bytes) {
           p1.value = p2.value = "";
           return saveFile(new Blob([bytes], { type: "application/octet-stream" }),
                           "oros-passwords-" + stamp + ".kdbx", "application/octet-stream", "kdbx");
@@ -2400,6 +2463,126 @@
     d.body.appendChild(el("p", "hint", t("set.clip")));
     sel.addEventListener("change", function () { if (app()) app().setLockPrefs(parseInt(sel.value, 10), hc.checked ? 1 : 0); });
     hc.addEventListener("change", function () { if (app()) app().setLockPrefs(parseInt(sel.value, 10), hc.checked ? 1 : 0); });
+    d.actions(t("d.close"));
+  }
+
+  // ---------- 9b. Autofill on this phone (PW-AF2) ----------
+  // Only inside the orOS Android app (phone bridge). While the vault is
+  // open and the person turned it on (this device only), the lists of
+  // passwords/afindex.js are sealed with the app's Keystore keys and
+  // handed over: after unlock and after every change, 2 s apart. The
+  // switch is in the app's device-local options (passwords.js prefs.af).
+  var afTimer = null, afBusy = false;
+  function phone() {
+    try { var p = window.parent && window.parent !== window ? window.parent.orosPhone : null; return p && p.available && p.available() && p.afSend ? p : null; }
+    catch (e) { return null; }
+  }
+  function afOn() { return !!(app() && app().prefs().af); }
+  function afSet(on) { if (app() && app().setAutofill) app().setAutofill(on); }
+  var afLibP = null;
+  function loadAfIndex() {          // autofill on the phone, or a login to save
+    if (window.PmAfIndex) return Promise.resolve(window.PmAfIndex);
+    if (afLibP) return afLibP;
+    afLibP = new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      sc.src = "afindex.js";
+      sc.onload = function () { if (window.PmAfIndex) resolve(window.PmAfIndex); else reject(new Error("af")); };
+      sc.onerror = function () { afLibP = null; reject(new Error("af")); };
+      document.head.appendChild(sc);
+    });
+    return afLibP;
+  }
+  // PW-AF3: a login from the add-on or the phone, handed over by the
+  // shell (window.__orosPwSave, memory only). It opens in the editor,
+  // as a new entry or as a new password for the entry of the same site
+  // and user name; nothing is stored until the person presses Save.
+  function queueSave(x) {
+    loadAfIndex().then(function (AFX) {
+      var it = AFX.saveItem(x, PC.LIM);
+      if (!it) return;
+      for (var i = 0; i < saveQ.length; i++) if (saveQ[i].site === it.site && saveQ[i].user === it.user) { saveQ.splice(i, 1); break; }
+      if (saveQ.length >= 10) saveQ.shift();
+      saveQ.push(it);
+      if (!session) { toast(t("save.unlock", { site: it.host })); return; }
+      nextSave();
+    }, function () {});
+  }
+  function nextSave() {
+    if (!session || view.mode === "edit" || !saveQ.length) return;
+    var it = saveQ.shift();
+    loadAfIndex().then(function (AFX) {
+      if (!session || view.mode === "edit") { saveQ.unshift(it); return; }
+      var f = AFX.findSave(entries(), it, PK);
+      if (f && f.same) { toast(t("save.same", { site: it.host })); nextSave(); return; }
+      if (f) openEditor(f.entry, null, { newPw: it.pw, note: t("save.update", { site: it.host }) });
+      else openEditor(null, it.pw, { title: it.title, urls: it.site, user: it.user, note: t("save.new", { site: it.host }) });
+    }, function () { saveQ.unshift(it); });
+  }
+
+  function afSoon() {
+    if (!afOn() || !phone()) return;
+    clearTimeout(afTimer);
+    afTimer = setTimeout(afPush, 2000);
+  }
+  function afPush() {
+    var p = phone();
+    if (!p || !afOn() || !session || !snap || afBusy) return;
+    var keys = p.afKeys();
+    if (!keys) { p.afAskKeys(); return; }        // the answer calls afSoon() again (afWatch)
+    var s = session, entries = PC.normSnap(snap).e;
+    afBusy = true;
+    loadAfIndex().then(function (AFX) { return AFX.sealBoth(entries, PK, PC, keys); }).then(function (sealed) {
+      afBusy = false;
+      if (session === s && afOn()) p.afSend(sealed);
+    }, function () { afBusy = false; });
+  }
+  var afWatchOff = null;
+  function afWatch() {
+    var p = phone();
+    if (!p || afWatchOff) return;
+    var had = !!p.afKeys();
+    afWatchOff = p.onChange(function () {
+      var now = !!p.afKeys();
+      if (now && !had) afSoon();
+      had = now;
+    });
+  }
+  function autofillDialog() {
+    var p = phone();
+    if (!p) return;
+    afWatch();
+    var d = dialog(t("af.title"));
+    d.body.appendChild(el("p", "hint", t("af.text")));
+    var l = el("label", "pv-check"), c = el("input"); c.type = "checkbox"; c.checked = afOn();
+    l.appendChild(c); l.appendChild(el("span", "", t("af.on")));
+    d.body.appendChild(l);
+    var st = el("p", "hint pv-af-state"); st.setAttribute("role", "status");
+    var go = btn(t("af.svc.go"), "", function () { p.afSettings(); });
+    d.body.appendChild(st);
+    d.body.appendChild(go);
+    d.body.appendChild(el("p", "hint", t("af.apps")));
+    function show() {
+      var info = p.afInfo() || {};
+      var lines = [];
+      if (c.checked) {
+        if (!p.afKeys() && !info.stored) lines.push(t("af.wait"));
+        else if (info.err) lines.push(t("af.err", { e: info.err }));
+        else lines.push(info.at ? t("af.at", { d: fmtDate(info.at) }) : t("af.never"));
+        lines.push(info.svc ? t("af.svc.yes") : t("af.svc.no"));
+      }
+      st.textContent = lines.join(" · ");
+      go.hidden = !c.checked || !!info.svc;
+    }
+    c.addEventListener("change", function () {
+      afSet(c.checked);
+      if (c.checked) { p.afAskKeys(); afSoon(); }
+      else { clearTimeout(afTimer); p.afClear(); toast(t("af.offDone")); }
+      show();
+    });
+    var off = p.onChange(show);
+    d.onClose(off);
+    p.refresh();
+    show();
     d.actions(t("d.close"));
   }
 
@@ -2545,6 +2728,9 @@
       if (session) { if (view.mode !== "edit") openEditor(null, "", pre); return; }
       pending = pre;
     },
+    // PW-AF3: a login to save, from the browser add-on or the phone
+    // (passwords.js takes it from the shell). Saved only on Save.
+    saveLogin: function (x) { queueSave(x); },
     label: function () { return t("tab"); }
   };
   window.PmApp = PmApp;
@@ -2553,7 +2739,6 @@
     root = $("vault");
     if (!root || !PV || !PC || !P) return;
     slice = readStored();
-    if (KX && typeof KX.setArgon2Loader === "function") KX.setArgon2Loader(function () { return PV.loadArgon2(); });
     registerSync();
     ["pointerdown", "keydown", "wheel", "touchstart"].forEach(function (ev) {
       document.addEventListener(ev, touch, { passive: true, capture: true });

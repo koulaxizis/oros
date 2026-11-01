@@ -41,7 +41,9 @@ import java.util.concurrent.Executors;
  * (Reminders). v4: the Today summary for the home-screen widget
  * (Widgets). v5: Health Connect (HealthBridge). v7: the Calendar and
  * To-Do widgets, and tasks ticked on the To-Do widget back to the
- * page as {t:"ticks"} (AgendaWidgets).
+ * page as {t:"ticks"} (AgendaWidgets). v8: Passwords autofill (PW-AF2,
+ * AfVault): the page asks for two Keystore public keys and hands over
+ * its sealed fill lists; this side never sees the vault or its key.
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -239,6 +241,7 @@ public class PhoneBridge {
                 io.execute(() -> {
                     send(state());
                     sendTicksNow();
+                    sendSavesNow();
                 });
             });
         }
@@ -267,6 +270,25 @@ public class PhoneBridge {
             o.put("t", "ticks");
             o.put("items", items);
             diag("widget ticks sent: " + items.length());
+            send(o);
+        } catch (JSONException ignored) {
+        }
+    }
+
+    /** PW-AF3: logins the person chose to save in another app, sent on
+     *  every channel until the page answers {t:"applied", what:"af-save"}. */
+    void sendSaves() {
+        io.execute(this::sendSavesNow);
+    }
+
+    private void sendSavesNow() {
+        JSONArray items = AfVault.pendingSaves(app);
+        if (items.length() == 0) return;
+        try {
+            JSONObject o = new JSONObject();
+            o.put("t", "af-save");
+            o.put("items", items);
+            diag("logins to save sent: " + items.length());
             send(o);
         } catch (JSONException ignored) {
         }
@@ -313,9 +335,32 @@ public class PhoneBridge {
             o.put("health", HealthBridge.status(app));
             o.put("drive", hasDrive(app));
             o.put("app", BuildConfig.VERSION_NAME);
+            o.put("af", afState());
         } catch (JSONException ignored) {
         }
         return o;
+    }
+
+    /** Passwords autofill (v8): whether orOS is the phone's autofill
+     *  service, whether keys and a sealed copy are here, and when the
+     *  copy was made. Public keys only after {t:"af-keys"}. */
+    private JSONObject afState() throws JSONException {
+        JSONObject a = new JSONObject();
+        a.put("svc", afService());
+        a.put("keys", AfVault.hasKeys());
+        a.put("stored", AfVault.stored(app));
+        a.put("at", AfVault.storedAt(app));
+        return a;
+    }
+
+    private boolean afService() {
+        if (android.os.Build.VERSION.SDK_INT < 26) return false;
+        try {
+            android.view.autofill.AutofillManager am = app.getSystemService(android.view.autofill.AutofillManager.class);
+            return am != null && am.hasEnabledAutofillServices();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /** Edits made on the phone in the orOS account go to the page (v2). */
@@ -367,6 +412,7 @@ public class PhoneBridge {
                     send(state());
                     sendChanges();
                     sendTicksNow();
+                    sendSavesNow();
                     return;
                 case "seen":
                     seenVisible = m.optBoolean("v");
@@ -414,6 +460,11 @@ public class PhoneBridge {
                 case "applied": {
                     String w = m.optString("what");
                     JSONArray refs = m.optJSONArray("refs");
+                    if ("af-save".equals(w)) {
+                        AfVault.takenSaves(app, refs);
+                        diag("logins to save taken: " + (refs == null ? 0 : refs.length()));
+                        return;
+                    }
                     if ("ticks".equals(w)) {
                         AgendaWidgets.taken(app, refs);
                         Widgets.update(app);
@@ -461,7 +512,38 @@ public class PhoneBridge {
                     sendChanges(t);
                     return;
                 }
+                case "af-keys": {
+                    AfVault.ensureKeys();
+                    JSONObject o = new JSONObject();
+                    o.put("t", "af-keys");
+                    o.put("idx", AfVault.publicKey(AfVault.ALIAS_INDEX));
+                    o.put("names", AfVault.publicKey(AfVault.ALIAS_NAMES));
+                    o.put("af", afState());
+                    diag("autofill keys sent");
+                    send(o);
+                    return;
+                }
+                case "af-index": {
+                    JSONObject idx = m.optJSONObject("idx"), names = m.optJSONObject("names");
+                    if (!AfVault.validBlob(idx) || !AfVault.validBlob(names)) throw new IllegalArgumentException("bad blob");
+                    if (!AfVault.hasKeys()) throw new IllegalStateException("no keys");
+                    AfVault.save(app, idx, names, m.optLong("at", System.currentTimeMillis()));
+                    JSONObject done = new JSONObject();
+                    done.put("t", "done");
+                    done.put("what", "af-index");
+                    done.put("seq", seq);
+                    done.put("af", afState());
+                    diag("autofill copy stored");
+                    send(done);
+                    return;
+                }
                 case "clear":
+                    if ("af".equals(what)) {
+                        AfVault.clear(app);
+                        AfVault.deleteKeys();
+                        send(state());
+                        return;
+                    }
                     if ("contacts".equals(what) && granted(CONTACTS_PERMS)) new ContactsWriter(app).clear();
                     else if ("calendar".equals(what) && granted(CALENDAR_PERMS)) new CalendarWriter(app).clear();
                     else if ("reminders".equals(what)) Reminders.clear(app);

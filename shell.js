@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "4.99.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.02.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3356,6 +3356,7 @@
         if (window.orosPhone && window.orosPhone.ready) window.orosPhone.ready();
         // "#quick-ask" from outside orOS (quickmenu.js, AS-OUT).
         if (window.orosQuick && window.orosQuick.ready && !SOLO) window.orosQuick.ready();
+        pwSaveReady();     // Passwords PW-AF3: a login handed over before the list was in
         quickReady();
       })
       .catch(function () {
@@ -3640,6 +3641,69 @@
       return p.target === undefined ? null : p.target;
     } catch (e) { return null; }
   };
+
+  // Passwords PW-AF3: a login to save, from the orOS browser add-on
+  // (window message, below) or the orOS Android app (phone.js). Kept
+  // in memory only, never in a URL or storage, for 10 minutes at most;
+  // Passwords takes it with __orosTakePwSave() when it starts, or at
+  // once through its __orosPwPoke() when it already runs. Passwords
+  // opens it in the editor; nothing is saved without Save there.
+  var pwSaves = [];
+  window.__orosPwSave = function (item) {
+    if (!item || typeof item !== "object" || typeof item.pw !== "string" || !item.pw || item.pw.length > 4096) return false;
+    var it = {
+      url: typeof item.url === "string" ? item.url.slice(0, 2048) : "",
+      app: typeof item.app === "string" ? item.app.slice(0, 255) : "",
+      user: typeof item.user === "string" ? item.user.slice(0, 512) : "",
+      pw: item.pw,
+      title: typeof item.title === "string" ? item.title.slice(0, 200) : ""
+    };
+    var now = Date.now();
+    pwSaves = pwSaves.filter(function (x) { return now - x.at < 600000; });
+    if (pwSaves.length >= 10) pwSaves.shift();
+    pwSaves.push({ at: now, it: it });
+    if (!state.apps.length) { pwSaveWait = true; return true; }   // the app list is not in yet: loadApps calls pwSaveReady
+    if (!pwSaveOpen()) { pwSaves.pop(); return false; }
+    return true;
+  };
+  var pwSaveWait = false;
+  function pwSaveReady() {
+    if (!pwSaveWait) return;
+    pwSaveWait = false;
+    if (pwSaves.length && !pwSaveOpen()) pwSaves = [];
+  }
+  function pwSaveOpen() {
+    var app = null;
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === "passwords") { app = state.apps[i]; break; }
+    if (!app) return false;
+    if (appLive("passwords")) {
+      closeMenu();
+      menuReset();
+      appShow("passwords");
+      var f = appFrameOf("passwords");
+      try {
+        if (f && f.contentWindow && typeof f.contentWindow.__orosPwPoke === "function") f.contentWindow.__orosPwPoke();
+      } catch (e) {}
+    } else {
+      openApp(app);
+    }
+    return true;
+  }
+  window.__orosTakePwSave = function () {
+    var now = Date.now(), out = pwSaves.filter(function (x) { return now - x.at < 600000; }).map(function (x) { return x.it; });
+    pwSaves = [];
+    return out;
+  };
+  // The add-on (extension/background.js) posts from its isolated world
+  // into this window; only this window itself counts, and the answer
+  // tells it the login arrived.
+  window.addEventListener("message", function (ev) {
+    if (ev.source !== window || ev.origin !== location.origin) return;
+    var d = ev.data;
+    if (!d || typeof d !== "object" || d.type !== "oros-pw-save" || typeof d.n !== "string") return;
+    var ok = window.__orosPwSave(d.item);
+    try { window.postMessage({ type: "oros-pw-saved", n: d.n, ok: !!ok }, location.origin); } catch (e) {}
+  });
 
   // This computer (orOS USB, Files' computer.js). The orOS launcher on
   // the stick (or the disk orOS is installed on) serves the computer's

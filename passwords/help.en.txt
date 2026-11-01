@@ -68,6 +68,21 @@ Delete an export that is not encrypted, and any picture of those QR codes, as so
 - `Aegis (.json, encrypted)`: only the two-factor codes, in a file Aegis imports with the password you choose for it (Aegis: Settings › Import & Export › Import, `Aegis`).
 - `2FAS (.2fas, NOT encrypted)`: only the two-factor codes, for 2FAS (Settings › 2FAS Backup › Import). Anyone who gets the file can make your codes, so import it right away and delete it.
 
+## Fill on websites (browser add-on)
+- The orOS add-on for Chrome, Edge, Brave and Firefox fills logins, 2FA codes, cards, identities and addresses on websites. Get it with the install steps at [useoros.online/download](https://useoros.online/download/#addon).
+- Open orOS in a tab, press the orOS icon in the toolbar (or Ctrl+Shift+L) and press `Allow access to orOS` once: the add-on keeps a copy of your vault, encrypted as in orOS. Unlock it with your master password; it locks again after 15 minutes without use (change it in the add-on's options).
+- On a login page the add-on lists the logins saved for that site; choose one and it fills the name, password and the current 2FA code. Cards, identities and addresses can be filled on any site. When a card number sits in a payment frame from another site (Stripe, your bank), the add-on names that site and fills it there only after you press `Fill in the payment frame` and the browser allows it.
+- It fills only for the exact site or its sub-domains, never an http page for an https login, and never a card PIN, ID numbers or notes.
+- Saving a new login: after you type a name and password on a site (sign up, sign in, change of password), press `Save the login from this page` in the add-on and confirm. orOS opens with the login in the Passwords editor, as a new entry or as a new password for the entry of the same site and user name (the old password goes to the history). It is stored only when you press `Save` there.
+
+## Autofill on your Android phone
+- In the orOS app for Android, `Menu` › `Autofill on this phone` fills logins, 2FA codes, cards and addresses in other apps and in browsers that support Android autofill (Chrome 135 and newer with "Autofill using another service", Firefox, Brave, Samsung Internet).
+- Turn it on, then press `Open Android settings` and choose orOS as the autofill service. orOS gives the app a copy sealed with a key that only this phone has; it is renewed each time you unlock or change Passwords on the phone.
+- In a form, tap an orOS suggestion and confirm with your fingerprint, face or screen lock; only that entry is filled. In a browser, logins are offered for the same site or its sub-domains only.
+- Apps: a login is offered in an app when one of its sites is `androidapp://` plus the app's package name. Otherwise choose `Choose a login from orOS` once and confirm; the phone remembers it.
+- A new fingerprint or face on the phone turns autofill off for safety: open Passwords and turn it on again. Turning it off removes the phone's copy and keys.
+- Saving: when autofill is on, Android offers `Save to orOS Passwords?` after you sign in or sign up somewhere new. A yes opens orOS with the login in the Passwords editor (unlock first if needed); it is stored only when you press `Save` there. Until then the phone keeps it sealed for at most a day.
+
 ## Locking and the clipboard
 The vault locks itself after 5 minutes without use and as soon as you leave the app or switch to another tab. Change both in `⋯`, `Lock settings`. The padlock button locks it at once.
 
@@ -119,7 +134,7 @@ Older cloud backups of your data still open with the master password you had the
 
 ## Limits
 - Nobody can reset your master password. Without it and without the recovery key, the vault cannot be opened.
-- orOS does not fill in passwords on websites: copy them from the vault. Autofill would need the "Send to orOS" browser add-on in the browser stores, which is not there.
+- The browser add-on fills logins only in the page itself, not in a login box embedded from another site, and saves a new login only when you press its button.
 - Attachments are not kept: a KeePass import leaves them out.
 - KeePass files encrypted with Twofish cannot be imported; switch them to AES or ChaCha20 in KeePass first.
 - While the vault is open, anything that controls this browser can read it. Lock it on shared computers.

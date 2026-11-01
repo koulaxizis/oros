@@ -1,9 +1,9 @@
 {
   "extName": {
-    "message": "Send to orOS"
+    "message": "orOS"
   },
   "extDesc": {
-    "message": "Save pages to orOS Bookmarks in one click, ask the orOS Assistant about text you select, search orOS from the address bar."
+    "message": "Fill orOS passwords, cards and addresses into pages, save pages to orOS, ask its Assistant, search orOS."
   },
   "actionTitle": {
     "message": "Save this page to orOS"
@@ -45,7 +45,7 @@
     "message": "How to use"
   },
   "optHow1": {
-    "message": "Toolbar button or Alt+Shift+O: save the page you are on."
+    "message": "Alt+Shift+O: save the page you are on. The toolbar button opens a small window with Save this page to orOS and your passwords."
   },
   "optHow2": {
     "message": "Right-click a page or a link: Save to orOS."
@@ -60,6 +60,141 @@
     "message": "Select text, right-click it: Ask the orOS Assistant. orOS opens its Assistant with the text in the message box; nothing is sent until you press Send."
   },
   "optPrivacy": {
-    "message": "This add-on collects nothing and talks to no server. It only opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser)."
+    "message": "This add-on collects nothing and talks to no server. Saving opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser). For passwords it keeps an encrypted copy of your vault, read from your orOS tab; your master password is never stored, and the opened vault key is kept in memory only until the lock time or until the browser closes."
+  },
+  "popTitle": {
+    "message": "orOS: save this page, fill a password"
+  },
+  "cmdPopup": {
+    "message": "Open orOS (save the page, fill a password)"
+  },
+  "popSend": {
+    "message": "Save this page to orOS"
+  },
+  "popCannotSave": {
+    "message": "This page cannot be saved."
+  },
+  "pmTitle": {
+    "message": "Passwords"
+  },
+  "pmGrant": {
+    "message": "Allow access to orOS"
+  },
+  "pmNeedPerm": {
+    "message": "To fill passwords, the add-on reads your encrypted vault from orOS at $1. Allow it once."
+  },
+  "pmNoCopy": {
+    "message": "Open orOS ($1) and its Passwords app once in this browser. The add-on then keeps an encrypted copy of your vault and opens it with your master password."
+  },
+  "pmFuture": {
+    "message": "This vault comes from a newer orOS. Update the add-on."
+  },
+  "pmMaster": {
+    "message": "Master password"
+  },
+  "pmUnlock": {
+    "message": "Unlock"
+  },
+  "pmBusy": {
+    "message": "Unlocking…"
+  },
+  "pmWrong": {
+    "message": "Wrong master password."
+  },
+  "pmErr": {
+    "message": "The vault could not be opened."
+  },
+  "pmSearch": {
+    "message": "Search"
+  },
+  "pmForSite": {
+    "message": "For this site"
+  },
+  "pmMore": {
+    "message": "Cards, addresses and identities"
+  },
+  "pmLock": {
+    "message": "Lock"
+  },
+  "pmLocked": {
+    "message": "Locked."
+  },
+  "pmFill": {
+    "message": "Fill"
+  },
+  "pmCodeOnly": {
+    "message": "2FA code only"
+  },
+  "pm2fa": {
+    "message": "with 2FA code"
+  },
+  "pmNoneSite": {
+    "message": "No login is saved for $1."
+  },
+  "pmNoPage": {
+    "message": "Passwords fill only web pages."
+  },
+  "pmAt": {
+    "message": "Copy of your vault from orOS: $1"
+  },
+  "pmMoved": {
+    "message": "The page changed. Open the add-on again."
+  },
+  "pmNoAccess": {
+    "message": "The add-on cannot reach this page."
+  },
+  "pmNoFields": {
+    "message": "No fields to fill were found on this page."
+  },
+  "pmKind_card": {
+    "message": "Card"
+  },
+  "pmKind_identity": {
+    "message": "Identity"
+  },
+  "pmKind_address": {
+    "message": "Address"
+  },
+  "optPmTitle": {
+    "message": "Passwords"
+  },
+  "optLock": {
+    "message": "Lock the passwords after"
+  },
+  "optLockMin": {
+    "message": "$1 minutes without use"
+  },
+  "optForget": {
+    "message": "Remove the vault copy from this browser"
+  },
+  "optForgot": {
+    "message": "Removed."
+  },
+  "optHow6": {
+    "message": "Ctrl+Shift+L or the toolbar button: fill a login (with its 2FA code), a card or an address into the page. Nothing is filled without your click, and a login fills only on its own site."
+  },
+  "pmFrameAsk": {
+    "message": "The card number is in a payment frame from $1. Fill the card there too?"
+  },
+  "pmFrameYes": {
+    "message": "Fill in the payment frame"
+  },
+  "pmFrameNo": {
+    "message": "Not now"
+  },
+  "pmSaveLogin": {
+    "message": "Save the login from this page"
+  },
+  "pmSaveYes": {
+    "message": "Save in orOS"
+  },
+  "pmSaveAsk": {
+    "message": "Send the login for $1 ($2) to Passwords in orOS? You check it there and press Save."
+  },
+  "pmSaveNone": {
+    "message": "No password typed on this page yet. Type it in the form first, then try again."
+  },
+  "pmSaveFail": {
+    "message": "orOS could not be reached. Open orOS and try again."
   }
 }
