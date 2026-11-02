@@ -138,3 +138,13 @@ test("overviewui.js: English and Greek have the same keys, none twice", () => {
   assert.deepEqual(en.slice().sort(), el.slice().sort());
   for (const m of s.matchAll(/\bt\("(ov\.[^"]+)"/g)) assert.ok(en.includes(m[1]), "missing string " + m[1]);
 });
+
+test("per account: the month's income and expenses, unknown or no account apart, transfers never", () => {
+  const txs = [Object.assign(tx("2026-11-02", 1000, "o"), { ac: "bank" }), Object.assign(tx("2026-11-03", 5000, "i"), { ac: "bank" }),
+               Object.assign(tx("2026-11-04", 300, "o"), { ac: "gone" }), tx("2026-11-05", 200, "o"),
+               Object.assign(tx("2026-10-30", 9999, "o"), { ac: "bank" })];
+  const r = O.perAccount(txs, "2026-11", ["bank", "cash"]);
+  assert.deepEqual(r.by.bank, { inc: 5000, out: 1000 });
+  assert.deepEqual(r.by.cash, { inc: 0, out: 0 });
+  assert.deepEqual(r.none, { inc: 0, out: 500 });
+});

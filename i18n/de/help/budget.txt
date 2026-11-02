@@ -10,7 +10,7 @@ Oben steht der Monat, mit Pfeilen zum Wechseln zwischen den Monaten; `Dieser Mon
 Budget öffnet mit der `Übersicht`: der Monat, den du ansiehst, als Karten.
 - `Sicher ausgeben`: wie viel du pro Tag bis zum Monatsende ausgeben kannst. Mit einem Monatslimit für `Alle Ausgaben` ist es das, was bis zum Limit übrig ist; ohne Limit die Einnahmen minus die Ausgaben. Wiederkehrende Einträge, die in diesem Monat noch kommen, zählen mit. Ein vergangener Monat zeigt `So endete der Monat`, ein kommender `Was diesen Monat kommt`.
 - `Ausgabentempo`: deine Ausgaben Tag für Tag aufaddiert (durchgezogene Linie), neben dem letzten Monat (gestrichelt) und dem Durchschnitt der drei Monate davor (gepunktet). Mit Monatslimit siehst du auch das Limit und eine Gerade von 0 bis dorthin: Bleibst du unter der Geraden, liegst du im Plan. Zeige auf einen Tag, um seine Zahlen zu sehen; `Als Tabelle zeigen` listet alle auf.
-- `Konten`: dein Nettovermögen und der Saldo jedes Kontos; tippe auf eines, um seine Einträge zu sehen.
+- `Konten`: dein Nettovermögen und darunter Einnahmen, Ausgaben und ihre Differenz aller Konten im Monat. Jedes Konto zeigt seinen Saldo heute und dieselben drei Zahlen für den Monat (`Ohne Konto` sammelt Einträge ohne Konto). Umbuchungen zwischen deinen Konten zählen nicht. Tippe auf ein Konto, um seine Einträge zu sehen.
 - `Limits`: die Limits, die am nächsten an ihrem Ende sind, als Ringe. `Nächste 7 Tage`: kommende wiederkehrende Einträge. `Sparziele`: wie weit jedes ist.
 - `Wohin das Geld ging`: die größten Ausgabenkategorien, mit wie viel mehr (▲) oder weniger (▼) als letzten Monat. Tippe auf eine, um ihre Einträge zu sehen.
 

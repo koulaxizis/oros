@@ -812,6 +812,14 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .ov-s.warn { color: var(--warn); }
 .ov-s.over { color: var(--over); }
 .ov-foot { margin-top: 6px; font-variant-numeric: tabular-nums; }
+.ov-accrow { flex-direction: column; align-items: stretch; gap: 2px; }
+div.ov-accrow:hover { background: none; }
+.ov-flow { display: flex; flex-wrap: wrap; gap: 2px 10px; padding-left: 20px; font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.ov-nw .ov-flow { padding-left: 0; font-size: 13px; }
+.ov-flow .in, .ov-flow .pos { color: var(--in-ink); }
+.ov-flow .neg { color: var(--over); }
+.ov-flow .pos, .ov-flow .neg { font-weight: 800; }
+.ov-mk { margin-top: 6px; }
 .ov-toprow { flex-direction: column; align-items: stretch; gap: 0; }
 .ov-top-l { display: flex; align-items: center; gap: 8px; }
 .ov-toprow .rank-bar { margin-left: 20px; }

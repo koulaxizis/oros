@@ -112,6 +112,21 @@
     return out.slice(0, max || 5);
   }
 
+  // Income and expenses of month `mk` per account (main-currency
+  // amounts, as every total): { by: { <account id>: { inc, out } },
+  // none: { inc, out } (entries without an account, or of an account
+  // that is gone) }. Transfers are neither, so they are not here.
+  function perAccount(txs, mk, accIds) {
+    var known = {}, by = {}, none = { inc: 0, out: 0 };
+    (accIds || []).forEach(function (id) { known[id] = 1; by[id] = { inc: 0, out: 0 }; });
+    txs.forEach(function (x) {
+      if (x.d.slice(0, 7) !== mk) return;
+      var r = x.ac && known[x.ac] ? by[x.ac] : none;
+      if (x.k === "i") r.inc += x.a; else r.out += x.a;
+    });
+    return { by: by, none: none };
+  }
+
   // Overview cards and their order. set.ov (synced) is a list such as
   // "pace,safe,-acc,lim": every known card once, "-" = hidden. Unknown
   // names are kept at their place (a newer Budget's cards), missing
@@ -144,7 +159,7 @@
 
   var api = {
     CARDS: CARDS, daysIn: daysIn, cumulative: cumulative, pace: pace, upcoming: upcoming, safe: safe,
-    topCats: topCats, cardList: cardList, cardString: cardString, normOv: normOv
+    topCats: topCats, perAccount: perAccount, cardList: cardList, cardString: cardString, normOv: normOv
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetOverview = api;

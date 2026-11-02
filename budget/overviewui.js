@@ -38,6 +38,8 @@
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
       "ov.acc": "Accounts", "ov.nw": "Net worth", "ov.accNone": "Add your cash, cards and bank accounts to see their balances here.",
       "ov.accAdd": "Accounts", "ov.accTip": "Show the entries of {a}",
+      "ov.flowAll": "All accounts, {m}", "ov.flowAria": "in {i}, out {o}, difference {d}", "ov.noAcc": "Without an account",
+      "ov.flowHint": "Balance today, then the month's income, expenses and their difference. Transfers between your accounts are not counted.",
       "ov.lim": "Limits", "ov.limNone": "Give a category a monthly limit to see here how much of it is left.",
       "ov.limSet": "Set limits", "ov.limLeft": "{a} left", "ov.limOver": "{a} over", "ov.limAll": "All expenses",
       "ov.up": "Next 7 days", "ov.upNone": "No recurring entries in the next 7 days.", "ov.today": "Today", "ov.tomorrow": "Tomorrow",
@@ -67,6 +69,8 @@
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
       "ov.acc": "Λογαριασμοί", "ov.nw": "Καθαρή θέση", "ov.accNone": "Πρόσθεσε μετρητά, κάρτες και τραπεζικούς λογαριασμούς για να βλέπεις εδώ τα υπόλοιπά τους.",
       "ov.accAdd": "Λογαριασμοί", "ov.accTip": "Οι κινήσεις του {a}",
+      "ov.flowAll": "Όλοι οι λογαριασμοί, {m}", "ov.flowAria": "έσοδα {i}, έξοδα {o}, διαφορά {d}", "ov.noAcc": "Χωρίς λογαριασμό",
+      "ov.flowHint": "Υπόλοιπο σήμερα, μετά τα έσοδα, τα έξοδα και η διαφορά τους στον μήνα. Οι μεταφορές ανάμεσα στους λογαριασμούς σου δεν μετράνε.",
       "ov.lim": "Όρια", "ov.limNone": "Δώσε σε μια κατηγορία μηνιαίο όριο για να βλέπεις εδώ πόσα μένουν.",
       "ov.limSet": "Ορισμός ορίων", "ov.limLeft": "μένουν {a}", "ov.limOver": "{a} πάνω", "ov.limAll": "Όλα τα έξοδα",
       "ov.up": "Επόμενες 7 μέρες", "ov.upNone": "Κανένα πάγιο τις επόμενες 7 μέρες.", "ov.today": "Σήμερα", "ov.tomorrow": "Αύριο",
@@ -249,30 +253,58 @@
   }
 
   // ---------- accounts ----------
+  // Each account: its balance today and what came in, went out and the
+  // difference in the month you are looking at; on top the total of all.
+  function flowLine(f) {
+    var net = f.inc - f.out;
+    var line = el("span", "ov-flow");
+    line.appendChild(el("span", "in", "+" + A.money(f.inc)));
+    line.appendChild(el("span", "", "−" + A.money(f.out)));
+    line.appendChild(el("span", net < 0 ? "neg" : "pos", "= " + (net < 0 ? "−" : "+") + A.money(Math.abs(net))));
+    return line;
+  }
+  function flowAria(f) {
+    return t("ov.flowAria", { i: A.money(f.inc), o: A.money(f.out), d: A.money(f.inc - f.out) });
+  }
   function cardAcc(card) {
     var list = A.accs();
     head(card, "acc", t("ov.acc"), list.length ? t("ov.open") : null, A.accountsDialog);
     if (!list.length) { hint(card, t("ov.accNone"), t("ov.accAdd"), A.accountsDialog); return; }
+    var mk = A.viewMk(), tt = A.totals(mk);
+    var flows = O.perAccount(D().tx, mk, list.map(function (a) { return a.id; }));
     var nw = P.netWorth(D(), A.today(), A.cur(), A.fx);
     var top = el("div", "ov-nw");
     top.appendChild(el("span", "ov-k", t("ov.nw")));
     top.appendChild(el("span", "ov-big" + (nw.tot < 0 ? " neg" : ""), A.money(nw.tot)));
+    var all = { inc: tt.inc, out: tt.out };
+    var tl = el("span", "ov-k ov-mk", t("ov.flowAll", { m: A.monthLabel(mk) }));
+    top.appendChild(tl);
+    var fl = flowLine(all);
+    fl.setAttribute("aria-label", t("ov.flowAll", { m: A.monthLabel(mk) }) + ": " + flowAria(all));
+    top.appendChild(fl);
     card.appendChild(top);
     var bal = A.balNow();
-    var ul = el("ul", "ov-rows");
-    list.forEach(function (a) {
+    var ul = el("ul", "ov-rows ov-accs");
+    function row(name, col, balTxt, neg, f, onClick) {
       var li = el("li");
-      var b = el("button", "ov-row");
-      b.type = "button";
-      b.setAttribute("aria-label", t("ov.accTip", { a: a.n }) + ", " + A.money(bal[a.id], a.cur));
-      b.appendChild(A.swatch(a.col));
-      b.appendChild(el("span", "ov-n", a.n));
-      b.appendChild(el("span", "ov-v" + (bal[a.id] < 0 ? " neg" : ""), A.money(bal[a.id], a.cur)));
-      b.addEventListener("click", function () { A.showFilter("a:" + a.id); });
+      var b = el(onClick ? "button" : "div", "ov-row ov-accrow");
+      if (onClick) { b.type = "button"; b.addEventListener("click", onClick); }
+      var l1 = el("span", "ov-top-l");
+      l1.appendChild(A.swatch(col));
+      l1.appendChild(el("span", "ov-n", name));
+      if (balTxt) l1.appendChild(el("span", "ov-v" + (neg ? " neg" : ""), balTxt));
+      b.appendChild(l1);
+      b.appendChild(flowLine(f));
+      b.setAttribute("aria-label", (onClick ? t("ov.accTip", { a: name }) : name) + (balTxt ? ", " + balTxt : "") + ", " + flowAria(f));
       li.appendChild(b);
       ul.appendChild(li);
+    }
+    list.forEach(function (a) {
+      row(a.n, a.col, A.money(bal[a.id], a.cur), bal[a.id] < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); });
     });
+    if (flows.none.inc || flows.none.out) row(t("ov.noAcc"), 8, "", false, flows.none, null);
     card.appendChild(ul);
+    card.appendChild(el("p", "hint ov-foot", t("ov.flowHint")));
   }
 
   // ---------- limits ----------
