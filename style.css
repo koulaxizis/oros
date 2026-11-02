@@ -1260,6 +1260,25 @@ body {
   body.app-running #help-btn:not([hidden]) ~ #btn-lang { display: none; }
 }
 
+/* UPD-1: an update waits (an app is open): "New version · Restart". */
+#update-ready {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 32px; padding: 0 10px;
+  border: 1px solid var(--accent); border-radius: 999px;
+  background: var(--accent-soft); color: var(--text);
+  font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap;
+  cursor: pointer;
+}
+#update-ready:hover { background: var(--accent); color: var(--accent-ink, #fff); }
+#update-ready:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Narrow bars: the icon alone (the title says the rest). */
+@media (max-width: 640px) {
+  #update-ready { width: 36px; min-width: 36px; padding: 0; justify-content: center; }
+  #update-ready .upd-label { display: none; }
+}
+#oros-bar.bar-tight #update-ready { width: 36px; min-width: 36px; padding: 0; justify-content: center; }
+#oros-bar.bar-tight #update-ready .upd-label { display: none; }
+
 /* Multitasking wave M3 — app switcher (shell.js section 10c). */
 #mt-btn {
   background: transparent; border: none; cursor: pointer;

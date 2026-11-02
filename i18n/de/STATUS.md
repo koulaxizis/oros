@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 38239 of 38458 (99%)
+- Strings: 38262 of 38482 (99%)
 - Help pages: 152 of 152 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1645 / 1645 |
+| assistant | 100% | 1648 / 1648 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | baby | 100% | 340 / 340 |
@@ -94,7 +94,7 @@ text is still written in the code. They switch over wave by wave
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 184 / 184 |
-| passwords | 100% | 423 / 423 |
+| passwords | 99% | 439 / 440 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
@@ -120,7 +120,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 99% | 881 / 888 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1075 / 1079 |
+| shell | 99% | 1079 / 1083 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -169,6 +169,8 @@ text is still written in the code. They switch over wave by wave
 
 These show English until fixed (usually the English text changed).
 
+- de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
+- de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
