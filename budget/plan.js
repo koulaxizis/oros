@@ -279,6 +279,12 @@
         bal[x.t] += v === null ? x.a : v;
       }
     });
+    // loans and their repayments (budget/loans.js), like transfers
+    var L = typeof root !== "undefined" && root && root.OrosBudgetLoans;
+    if (L) {
+      var mv = L.balanceMoves(d.loan, d.lpay, upto);
+      Object.keys(mv).forEach(function (id) { if (bal[id] !== undefined) bal[id] += mv[id]; });
+    }
     return bal;
   }
   // Sum of the balances in the main currency. missing = accounts whose

@@ -25,6 +25,14 @@ If you use [CRM](help:a/crm), an entry can name the customer, supplier or other 
 
 Payments you record in [Invoices](app:invoices) come in here by themselves as freelance income, with the invoice number and the client in the note. If the payment's amount or date changes there, the entry follows; if the payment is deleted, so is the entry. An entry you change or delete here stays as you left it. Invoices › Settings turns this off.
 
+
+Faster entry: the amount takes sums (`12+4,5` saves 16,50; × and ÷ too), and on a touch screen a keypad replaces the keyboard. While you type a note, earlier notes are suggested; picking one on a new entry fills its category and amount. `Again today` at the top of a new entry adds one of your last 5 entries again for today in one tap (Undo takes it back). In an entry, `Duplicate` opens a new one with the same amount, category, note and account, dated today.
+## Budgets
+At the top of `Limits`, `New budget` sets an amount for a stretch of time, next to your monthly limits:
+- `Repeats`: `Every week`, `Every month` (from any day, for example from payday on the 25th), `Every few days` (pick how many) or `Once`, from a `First day` to a `Last day` (a trip, the holidays).
+- `Which expenses count`: `All expenses` or the categories you tick; `From which accounts`: all, or the ones you tick.
+Each budget shows the current period, what is spent and left, what is left a day until it ends, and a small mark where an even pace would be by today. Under it, the past periods as bars (red = over) with their average. Running budgets also show as rings on the Overview. Budgets sync on all your devices; your monthly limits are not changed.
+
 ## Monthly limits
 On `Limits`, `Set limit` gives an expense category a monthly limit, and `All expenses` takes an overall one. Limits apply to every month. Each bar shows how much is spent and how much is left, and turns to `Close to the limit` at 80% and `Over the limit` after 100%. When you pass a limit in the current month, orOS sends you one [notification](help:t/notifications).
 
@@ -48,6 +56,9 @@ Envelope budgeting (zero-based, as in YNAB) is optional. Open the `Plan` tab and
 ## Savings goals
 On `Plan`, `New goal`: a `Name`, a `Target` and, if you want, a date (`By`). Progress comes from `What I put aside by hand` (use `Add money`; a minus sign takes money out) or from the balance of one of your accounts. Each goal shows how far along it is and how much to put aside each month to make it by its date.
 
+## Loans and debts
+At the end of `Plan`, `Loans and debts` keeps what you lent and what you borrowed. `New loan`: `I lent` or `I borrowed`, who, how much, the date, an optional pay-back date and, if you like, the account the money left or went into. A loan is neither income nor expense: like a transfer, it only moves that account's balance. `Repayment` adds what came back (or what you paid back), in parts if you like; each loan shows what is paid and what is left, and turns to `Overdue` after its date. In the loan's own window, `Write off what is left` (or `Mark as forgiven`) adds what was left as one expense (or income) and closes the loan; Undo takes both back. The Overview has a `Loans and debts` card with what is owed both ways.
+
 ## Subscriptions
 On `Recurring`, `Subscriptions` lists your recurring expenses by their next charge, each with what it costs `A month` and `A year`, and the totals on top. In a recurring expense, `Remind me` (`On the day of the charge`, or 1 to 14 days before) sends you a [notification](help:t/notifications) before the charge. `Reminders at` sets the hour on this device; `Off on this device` silences them here only.
 
@@ -61,10 +72,19 @@ The main currency (`More` › `Currency`) is the one every total is in. An accou
 In an entry, under `Receipt`, the `+` adds a photo or a PDF of the receipt (up to 3). Photos are redrawn on this device, so no location or camera data is kept; a PDF is kept only if it really is one (up to 10 MB). The files sit in [Files](app:files), folder Budget/Receipts, and reach your other devices with Vault Drive, not with sync. `Read the total from text` takes the receipt's text (for example from your phone's "copy text from photo") and puts its total into `Amount`.
 
 ## Charts
-`Charts` shows `Expenses by category` for the month, `Income and expenses, 12 months` and `Balance at the end of each month`. Tap a category to see its entries, or a month to open it. `Show as a table` gives the numbers as text.
+At the top of `Charts`, pick the period: `Month`, `Quarter` or `Year` (around the month you are looking at) or your own `Dates`. The period stays on this device.
+- `Income`, `Expenses` and `Difference` of the period, each next to the period of the same length just before it (▲ more, ▼ less), with the average spent a day and how much of the income you kept.
+- `Expenses by category`, or `Income`: a donut with every category's share and its change against the period before. Tap a category to see its entries.
+- `Day by day`: the month as a calendar, darker on the days that cost more. Tap a day to see its expenses; tap one to open it.
+- `What changed`: the categories that moved most against the period before, now and before side by side.
+- `Where you spend most`: your expenses by name (the note or the bank's text), so "LIDL 1234" and "Lidl" count as one. Tap a name to search for it.
+
+Further down, `Charts` shows `Income and expenses, 12 months` and `Balance at the end of each month`. Tap a month to open it. `Show as a table` gives the numbers as text.
 
 ## Categories and currency
 From the `More` menu (the three dots), `Categories` lets you add your own (`New category…`), rename them, change colours and delete them. Entries of a deleted category show as `Uncategorized`.
+
+Every category can have an icon (tap the second square) and can sit under a main category of the same kind, one level deep: pick `Under Eating out` for Coffee and it shows as `Eating out › Coffee`. Totals, monthly limits, envelopes and charts count a subcategory in its main category too; a limit or budget on a subcategory counts only that one. In `Charts`, tapping a main category with subcategories opens them, and `All categories` goes back. Deleting a main category makes its subcategories main ones again.
 
 `Currency` sets the main currency, the one every total is in (see Currencies). Changing it doesn't convert the amounts already there.
 

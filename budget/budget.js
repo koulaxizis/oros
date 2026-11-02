@@ -80,6 +80,9 @@
       "cat.none": "Uncategorized", "cat.other": "Other",
       "dlg.new": "New entry", "f.from": "From {app}", "dlg.edit": "Edit entry", "f.amount": "Amount", "f.date": "Date",
       "f.cat": "Category", "f.note": "Note", "f.note.ph": "Optional",
+      "kp.label": "Amount keys", "kp.back": "Delete the last character", "kp.div": "Divided by", "kp.mul": "Times", "kp.eq": "Work out the sum",
+      "kp.result": "= {a}", "f.again": "Again today", "f.againOne": "Add {n}, {a}, again for today", "f.againDone": "Added again for today",
+      "dlg.dup": "Duplicate",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete", "dlg.close": "Close",
       "err.amount": "Type an amount, for example 12,50", "err.date": "Pick a date",
       "rec.tag": "Recurring",
@@ -105,6 +108,9 @@
       "cats.add": "New category…", "cats.color": "Colour of {c}", "cats.del": "Delete {c}",
       "cats.name": "Name of {c}", "cats.deleted": "Category deleted", "cats.full": "Up to {n} categories",
       "cats.needName": "Give the category a name", "cats.hint": "Entries of a deleted category show as “Uncategorized”.",
+      "cats.icon": "Icon of {c}", "cats.iconTitle": "Pick an icon", "cats.noIcon": "No icon",
+      "cats.parent": "Main category of {c}", "cats.top": "Main category", "cats.under": "Under {c}",
+      "cats.subHint": "A category can sit under a main one (Eating out › Coffee). Totals, limits and envelopes of the main category count its subcategories too.",
       "ch.donut": "Expenses by category", "ch.bars": "Income and expenses, 12 months",
       "ch.line": "Balance at the end of each month", "ch.table": "Show as a table",
       "ch.none": "No expenses this month.", "ch.total": "total",
@@ -186,6 +192,9 @@
       "cat.none": "Χωρίς κατηγορία", "cat.other": "Υπόλοιπες",
       "dlg.new": "Νέα κίνηση", "f.from": "Από: {app}", "dlg.edit": "Επεξεργασία κίνησης", "f.amount": "Ποσό", "f.date": "Ημερομηνία",
       "f.cat": "Κατηγορία", "f.note": "Σημείωση", "f.note.ph": "Προαιρετικά",
+      "kp.label": "Πλήκτρα ποσού", "kp.back": "Σβήσε τον τελευταίο χαρακτήρα", "kp.div": "Διά", "kp.mul": "Επί", "kp.eq": "Κάνε την πράξη",
+      "kp.result": "= {a}", "f.again": "Ξανά σήμερα", "f.againOne": "Πρόσθεσε ξανά για σήμερα: {n}, {a}", "f.againDone": "Προστέθηκε ξανά για σήμερα",
+      "dlg.dup": "Διπλότυπο",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή", "dlg.close": "Κλείσιμο",
       "err.amount": "Γράψε ένα ποσό, π.χ. 12,50", "err.date": "Διάλεξε ημερομηνία",
       "rec.tag": "Πάγιο",
@@ -211,6 +220,9 @@
       "cats.add": "Νέα κατηγορία…", "cats.color": "Χρώμα: {c}", "cats.del": "Διαγραφή: {c}",
       "cats.name": "Όνομα: {c}", "cats.deleted": "Η κατηγορία διαγράφηκε", "cats.full": "Έως {n} κατηγορίες",
       "cats.needName": "Δώσε ένα όνομα στην κατηγορία", "cats.hint": "Οι κινήσεις μιας κατηγορίας που σβήνεται εμφανίζονται «Χωρίς κατηγορία».",
+      "cats.icon": "Εικονίδιο: {c}", "cats.iconTitle": "Διάλεξε εικονίδιο", "cats.noIcon": "Χωρίς εικονίδιο",
+      "cats.parent": "Κύρια κατηγορία: {c}", "cats.top": "Κύρια κατηγορία", "cats.under": "Κάτω από: {c}",
+      "cats.subHint": "Μια κατηγορία μπορεί να μπει κάτω από μια κύρια (Φαγητό έξω › Καφές). Τα σύνολα, τα όρια και οι φάκελοι της κύριας μετρούν και τις υποκατηγορίες της.",
       "ch.donut": "Έξοδα ανά κατηγορία", "ch.bars": "Έσοδα και έξοδα, 12 μήνες",
       "ch.line": "Υπόλοιπο στο τέλος κάθε μήνα", "ch.table": "Προβολή ως πίνακας",
       "ch.none": "Κανένα έξοδο αυτόν τον μήνα.", "ch.total": "σύνολο",
@@ -466,6 +478,11 @@
           "i-gift": "Δώρα", "i-other": "Άλλα" }
   };
   if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(SEED_NAMES, "budget", LANG);
+  // Their icons (budget/caticons.js) until you pick another.
+  var SEED_IC = { "o-groc": "cart", "o-eat": "cutlery", "o-bills": "receipt", "o-home": "home", "o-trans": "bus",
+                  "o-health": "heart", "o-fun": "film", "o-cloth": "shirt", "o-gift": "gift", "o-other": "dots",
+                  "i-salary": "briefcase", "i-free": "laptop", "i-gift": "gift", "i-other": "coins" };
+  var IC_RE = /^[a-z0-9-]{1,24}$/;
   var SEED_BY_ID = {};
   SEEDS.forEach(function (s) { SEED_BY_ID[s.id] = s; });
 
@@ -605,7 +622,14 @@
     var name = normText(x.name, NAME_LEN);
     if (!name && !seed) return null;
     var col = isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : (seed ? seed.col : 8);
-    return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, x);
+    // Since C4: ic (icon id, budget/caticons.js) and p (the main
+    // category's id: this one is its subcategory), each written only
+    // when set, in name order among the extras (what an older version
+    // keeps), so old and new devices write the same JSON.
+    var y = Object.assign({}, x);
+    if (!(typeof y.ic === "string" && IC_RE.test(y.ic))) delete y.ic;
+    if (!(typeof y.p === "string" && ID_RE.test(y.p) && y.p !== x.id)) delete y.p;
+    return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, y);
   }
   // limit = { id (category id | "all"), m, a (cents; 0 = no limit) }
   function normBud(x) {
@@ -741,15 +765,34 @@
     { key: "goal", tomb: "goal", norm: normGoal },   // version puts unknown collections
     { key: "prof", tomb: "prof", norm: normProf },
     { key: "rule", tomb: "rule", norm: normRule },
-    { key: "bnk",  tomb: "bnk",  norm: normBnk }     // since BK-2: after the others (an older version's place for it)
+    { key: "bnk",  tomb: "bnk",  norm: normBnk },    // since BK-2: after the others (an older version's place for it)
+    { key: "bgt",  tomb: "bgt",  norm: normBgt },    // since C3 (flexible budgets): after bnk, the same reason
+    { key: "loan", tomb: "loan", norm: normLoan },   // since C5 (loans and debts): after bgt, in name order
+    { key: "lpay", tomb: "lpay", norm: normLpay }    // since C5: a loan's repayments
   ];
+  // Flexible budgets (C3): budget/budgets.js cleans them; without it
+  // (tests that load only this file) they ride along like a newer
+  // version's collection.
+  function normBgt(x) {
+    var G = typeof window !== "undefined" && window.OrosBudgetBudgets;
+    return G ? G.norm(x) : normOther(x);
+  }
+  // Loans and their repayments (C5): budget/loans.js, the same way.
+  function normLoan(x) {
+    var L = typeof window !== "undefined" && window.OrosBudgetLoans;
+    return L ? L.normLoan(x) : normOther(x);
+  }
+  function normLpay(x) {
+    var L = typeof window !== "undefined" && window.OrosBudgetLoans;
+    return L ? L.normPay(x) : normOther(x);
+  }
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -812,20 +855,82 @@
 
   // ---------- 4. Derived ----------
   // Every live category: the ready ones (unless deleted), changed by
-  // what is stored, then your own, by name. `names` = SEED_NAMES[lang].
+  // what is stored, then your own, by name; each main category is
+  // followed by its subcategories (by name). A subcategory (p, C4)
+  // counts as one only while its main category is live, of the same
+  // kind and not a subcategory itself (one level); otherwise it is a
+  // main one again (the stored p stays, so it comes back).
+  // `names` = SEED_NAMES[lang]. → [{ id, k, col, name, seed, ic, p ("" = main) }].
   function categoryList(d, names) {
-    var stored = {}, out = [];
+    var stored = {}, all = [];
     d.cats.forEach(function (c) { stored[c.id] = c; });
     SEEDS.forEach(function (s) {
       if (("cat:" + s.id) in d.tombs && !stored[s.id]) return;
       var c = stored[s.id];
-      out.push({ id: s.id, k: s.k, col: c ? c.col : s.col,
-                 name: (c && c.name) || names[s.id] || s.id, seed: true });
+      all.push({ id: s.id, k: s.k, col: c ? c.col : s.col,
+                 name: (c && c.name) || names[s.id] || s.id, seed: true,
+                 ic: (c && c.ic) || SEED_IC[s.id] || "", sp: (c && c.p) || "" });
     });
     var own = d.cats.filter(function (c) { return !SEED_BY_ID[c.id]; })
-      .map(function (c) { return { id: c.id, k: c.k, col: c.col, name: c.name, seed: false }; });
+      .map(function (c) { return { id: c.id, k: c.k, col: c.col, name: c.name, seed: false, ic: c.ic || "", sp: c.p || "" }; });
     own.sort(function (x, y) { return x.name.localeCompare(y.name) || cmpStr(x.id, y.id); });
-    return out.concat(own);
+    all = all.concat(own);
+    var byId = {};
+    all.forEach(function (c) { byId[c.id] = c; });
+    all.forEach(function (c) {
+      var m = c.sp ? byId[c.sp] : null;
+      c.p = m && m.k === c.k && !m.sp ? m.id : "";
+    });
+    var kids = {}, out = [];
+    all.forEach(function (c) { if (c.p) (kids[c.p] = kids[c.p] || []).push(c); });
+    all.forEach(function (c) {
+      if (c.p) return;
+      out.push(c);
+      (kids[c.id] || []).sort(function (x, y) { return x.name.localeCompare(y.name) || cmpStr(x.id, y.id); })
+        .forEach(function (k) { out.push(k); });
+    });
+    out.forEach(function (c) { delete c.sp; });
+    return out;
+  }
+  // { category id: its main category's id } for subcategories only.
+  function parentMap(list) {
+    var m = {};
+    list.forEach(function (c) { if (c.p) m[c.id] = c.p; });
+    return m;
+  }
+  // byCat ("k:id" → cents) with each subcategory folded into its main
+  // category (charts: every amount counted once).
+  function rollUp(byCat, pm) {
+    var out = {};
+    Object.keys(byCat).forEach(function (key) {
+      var id = key.slice(2), top = pm[id] || id, k2 = key.charAt(0) + ":" + top;
+      out[k2] = (out[k2] || 0) + byCat[key];
+    });
+    return out;
+  }
+  // byCat with each subcategory also added into its main category, the
+  // subcategory keeping its own (limits: a main category's limit
+  // covers its subcategories, a subcategory's covers itself).
+  function withKids(byCat, pm) {
+    var out = Object.assign({}, byCat);
+    Object.keys(byCat).forEach(function (key) {
+      var id = key.slice(2);
+      if (!pm[id]) return;
+      var k2 = key.charAt(0) + ":" + pm[id];
+      out[k2] = (out[k2] || 0) + byCat[key];
+    });
+    return out;
+  }
+  // Entries with c = the main category; a subcategory's entry keeps
+  // its own as sc (copies only where it changes).
+  function rollTx(txs, pm) {
+    return txs.map(function (x) {
+      var top = x.c && pm[x.c];
+      if (!top) return x;
+      var y = Object.assign({}, x);
+      y.sc = x.c; y.c = top;
+      return y;
+    });
   }
 
   // Totals of the entries whose date starts with `prefix`
@@ -902,6 +1007,12 @@
       if (bal[x.f] !== undefined) bal[x.f] -= x.a;
       if (bal[x.t] !== undefined) bal[x.t] += x.a;
     });
+    // loans and their repayments move money like transfers (C5)
+    var L = typeof window !== "undefined" && window.OrosBudgetLoans;
+    if (L) {
+      var mv = L.balanceMoves(d.loan, d.lpay, upto);
+      Object.keys(mv).forEach(function (id) { if (bal[id] !== undefined) bal[id] += mv[id]; });
+    }
     return bal;
   }
   // "-12,50", "−12.50", "" (= 0) → signed cents | null. For starting balances.
@@ -983,6 +1094,7 @@
       // on the tab last used, as before.
       tab: TABS.indexOf(p.tab) >= 0 && p.ov0 ? p.tab : "ov",
       ov0: 1,
+      cp: ["m", "q", "y", "c"].indexOf(p.cp) >= 0 ? p.cp : "m",               // Charts period: month | quarter | year | own dates
       csv: p.csv === "std" || p.csv === "excel" ? p.csv : (decComma(LANG) ? "excel" : "std"),
       rv: p.rv === "subs" ? "subs" : "all",                                     // Recurring tab: all | subscriptions
       nh: isInt(p.nh) && p.nh >= -1 && p.nh <= 23 ? p.nh : 9                   // subscription reminders: hour, -1 = off here
@@ -1016,7 +1128,28 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
-  function catName(id) { var c = id ? catById(id) : null; return c ? c.name : t("cat.none"); }
+  // A subcategory's name says its main category too: "Food › Coffee".
+  function catName(id) {
+    var c = id ? catById(id) : null;
+    if (!c) return t("cat.none");
+    var m = c.p ? catById(c.p) : null;
+    return m ? m.name + " › " + c.name : c.name;
+  }
+  function pmNow() { return parentMap(cats()); }
+  function rolledTx(list) { return rollTx(list || data.tx, pmNow()); }
+  // The category's icon as SVG ("" = none; budget/caticons.js).
+  var ICONS = window.OrosBudgetIcons || null;
+  function catIcon(id) { var c = id ? catById(id) : null; return c && c.ic && ICONS ? ICONS.svg(c.ic) : ""; }
+  // The colour dot of a category, with its icon when it has one.
+  function catBadge(id) {
+    var svg = catIcon(id);
+    if (!svg) return swatch(catCol(id));
+    var s = el("span", "sw cat-ic");
+    s.style.setProperty("--cc", "var(--c" + catCol(id) + ")");
+    s.innerHTML = svg;
+    s.setAttribute("aria-hidden", "true");
+    return s;
+  }
   function catCol(id) { var c = id ? catById(id) : null; return c ? c.col : 8; }
   function cur() { return data.set.cur || "EUR"; }
   // Accounts, by name.
@@ -1172,7 +1305,10 @@
     if (prefs.tab === "limits") renderLimits();
     if (prefs.tab === "rec") renderRec();
   }
-  function renderPlanTab() { if (PLANUI) PLANUI.renderPlan($("plan")); }
+  function renderPlanTab() {
+    if (PLANUI) PLANUI.renderPlan($("plan"));
+    if (LNUI) LNUI.render($("loans"));
+  }
   function renderOverview() { if (OVUI) OVUI.render($("overview")); }
 
   function renderToolbar() {
@@ -1258,7 +1394,7 @@
   function matches(x) {
     if (filter === "inbox" && !inInbox(x)) return false;
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
-    if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2)) return false;
+    if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2) && (!x.c || !catById(x.c) || catById(x.c).p !== filter.slice(2))) return false;
     if (filter.indexOf("a:") === 0 && (x.ac || "") !== filter.slice(2)) return false;
     if (query) {
       var hay = (x.n + " " + catName(x.c) + " " + accName(x.ac) + " " + centsToInput(x.a, LANG)).toLowerCase();
@@ -1386,7 +1522,7 @@
     var li = el("li");
     var b = el("button", "tx " + (x.k === "i" ? "in" : "out"));
     b.type = "button";
-    b.appendChild(swatch(catCol(x.c)));
+    b.appendChild(catBadge(x.c));
     var mid = el("span", "tx-mid");
     mid.appendChild(el("span", "tx-cat", catName(x.c)));
     var an = accName(x.ac);
@@ -1444,9 +1580,11 @@
   function budOf(id) { var b = findIn(data.bud, id); return b ? b.a : 0; }
 
   function renderLimits() {
+    if (BGUI) BGUI.render($("bgts"));
     var box = $("limits");
     box.innerHTML = "";
     var tt = totals(data.tx, viewMk);
+    tt.byCat = withKids(tt.byCat, pmNow());
     box.appendChild(limitRow({ id: "all", name: t("lim.total"), col: null }, tt.out, budOf("all")));
     var withL = [], without = [];
     cats().filter(function (c) { return c.k === "o"; }).forEach(function (c) {
@@ -1643,7 +1781,8 @@
 
   function renderCharts() {
     hideTip();
-    renderDonut();
+    if (INUI) { INUI.render($("ch-period")); $("ch-donut").parentNode.hidden = true; }
+    else renderDonut();
     renderBars();
     renderLine();
     if (PLANUI) {
@@ -1659,6 +1798,7 @@
     var box = $("ch-donut");
     box.innerHTML = "";
     var tt = totals(data.tx, viewMk);
+    tt.byCat = rollUp(tt.byCat, pmNow());
     var parts = [];
     Object.keys(tt.byCat).forEach(function (k) {
       if (k.charAt(0) !== "o") return;
@@ -1902,7 +2042,7 @@
   function fillCatSelect(sel, k, selected) {
     sel.innerHTML = "";
     var list = cats().filter(function (c) { return c.k === k; });
-    list.forEach(function (c) { var o = el("option", "", c.name); o.value = c.id; sel.appendChild(o); });
+    list.forEach(function (c) { var o = el("option", "", c.p ? catName(c.id) : c.name); o.value = c.id; sel.appendChild(o); });
     var none = el("option", "", t("cat.none")); none.value = ""; sel.appendChild(none);
     sel.value = selected;
     if (sel.value !== selected) sel.value = list.length ? list[0].id : "";
@@ -1944,6 +2084,75 @@
     sel.value = selected || "";
     return sel;
   }
+  // ---------- Faster entry (C6) ----------
+  var KP = window.OrosBudgetKeypad || null;
+  // A touch screen without a mouse: the keypad instead of the keyboard.
+  function touchFirst() {
+    try { return window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(any-pointer: fine)").matches; }
+    catch (e) { return false; }
+  }
+  // Notes used before, latest first (≤ 60), and each one's latest entry.
+  function noteMemory() {
+    var list = data.tx.filter(function (y) { return y.n; }).sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m; });
+    var last = {}, out = [];
+    list.forEach(function (y) {
+      if (last[y.n]) return;
+      last[y.n] = y;
+      if (out.length < 60) out.push(y.n);
+    });
+    return { list: out, last: last };
+  }
+  // The last 5 different entries (kind, category, amount, note, account),
+  // each a tap from being added again today.
+  function recentDistinct(max) {
+    var seen = {}, out = [];
+    data.tx.slice().sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m; }).some(function (y) {
+      if (y.rc || y.src === "bank") return false;
+      var key = [y.k, y.c, y.a, y.n, y.ac || ""].join("|");
+      if (seen[key]) return false;
+      seen[key] = 1;
+      out.push(y);
+      return out.length >= max;
+    });
+    return out;
+  }
+  function againRow(close) {
+    var list = recentDistinct(5);
+    if (!list.length) return null;
+    var box = el("div", "again");
+    box.appendChild(el("span", "again-h", t("f.again")));
+    var row = el("div", "again-row");
+    list.forEach(function (y) {
+      var label = y.n || catName(y.c);
+      var b = el("button", "again-chip");
+      b.type = "button";
+      b.appendChild(catBadge(y.c));
+      b.appendChild(el("span", "again-n", label));
+      b.appendChild(el("span", "again-a", money(y.a)));
+      b.setAttribute("aria-label", t("f.againOne", { n: label, a: money(y.a) }));
+      b.addEventListener("click", function () {
+        var nx = { id: newId(), m: stamp(0), d: today, a: y.a, k: y.k, c: catById(y.c) ? y.c : "", n: y.n };
+        if (y.ac && findIn(data.acc, y.ac)) nx.ac = y.ac;
+        if (y.crm) nx.crm = y.crm;
+        data.tx.push(nx);
+        commit();
+        close();
+        if (nx.k === "o") checkLimits(today, nx.c);
+        if (mkOf(today) !== viewMk) setMonth(mkOf(today)); else renderAll();
+        undoToast(t("f.againDone"), function () {
+          if (!findIn(data.tx, nx.id)) return;
+          data.tx = data.tx.filter(function (z) { return z.id !== nx.id; });
+          tombstone("tx", nx.id);
+          commit();
+          renderAll();
+        });
+      });
+      row.appendChild(b);
+    });
+    box.appendChild(row);
+    return box;
+  }
+
   function txDialog(id, preset) {
     var x = id ? findIn(data.tx, id) : null;
     if (id && !x) return;
@@ -1974,6 +2183,10 @@
     var sw = kindSwitch(k0, function (v) { fillCatSelect(sel, v, lastCat[v]); });
     var err = errLine();
     if (pre && pre.src) dlg.appendChild(el("div", "dlg-sub", t("f.from").replace("{app}", appName(pre.src))));
+    if (!x && !pre) {
+      var again = againRow(function () { dlg.close(); });
+      if (again) form.appendChild(again);
+    }
     form.appendChild(sw);
     var accSel = null;
     if (data.acc.length) accSel = accSelect(x ? x.ac : lastAcc);
@@ -1994,6 +2207,24 @@
     cf.className = "fld cur-fld";
     amtRow.appendChild(cf);
     form.appendChild(amtRow);
+    // Sums in the amount ("12+4,5"), and on touch screens a keypad (C6).
+    var sumLine = el("p", "hint kp-sum");
+    sumLine.setAttribute("aria-live", "polite");
+    form.appendChild(sumLine);
+    function amtVal() { return KP && KP.hasOp(amt.value) ? KP.calc(amt.value, parseAmount, MAX_CENTS) : parseAmount(amt.value); }
+    function showSum() {
+      var on = KP && KP.hasOp(amt.value), v = on ? amtVal() : null;
+      sumLine.textContent = on && v !== null ? t("kp.result", { a: centsToInput(v, LANG) }) : "";
+    }
+    amt.addEventListener("input", showSum);
+    if (KP && touchFirst()) {
+      amt.inputMode = "none";
+      form.appendChild(KP.pad(amt, {
+        el: el, comma: decComma(LANG), label: t("kp.label"), back: t("kp.back"), div: t("kp.div"), mul: t("kp.mul"), eq: t("kp.eq"),
+        onChange: function () { showSum(); syncCur(); },
+        onEquals: function () { var v = amtVal(); if (v !== null) { amt.value = centsToInput(v, LANG); showSum(); syncCur(); } }
+      }));
+    }
     var inMain = el("input");
     inMain.inputMode = "decimal";
     inMain.autocomplete = "off";
@@ -2008,7 +2239,7 @@
       var c = curSel.value, on = c !== main;
       mainF.hidden = !on;
       if (!on) return;
-      var oc = parseAmount(amt.value);
+      var oc = amtVal();
       var r = oc === null ? null : fx(oc, c, main);
       if (!mainTouched && r !== null && r > 0) inMain.value = centsToInput(r, LANG);
       var one = fx(100000, c, main);
@@ -2039,6 +2270,20 @@
     var crmSel = crmSelect(x ? x.crm || "" : (pre && pre.crm) || "");
     if (crmSel) form.appendChild(field(t("f.crm"), crmSel, "bd-crm"));
     form.appendChild(field(t("f.note"), note, "bd-note"));
+    // Earlier notes as suggestions; picking one on a new entry fills
+    // the category and amount of its latest use (C6).
+    var seen = noteMemory();
+    var dl = el("datalist");
+    dl.id = "bd-notes";
+    seen.list.forEach(function (n) { var o = el("option"); o.value = n; dl.appendChild(o); });
+    note.setAttribute("list", "bd-notes");
+    form.appendChild(dl);
+    if (!x) note.addEventListener("change", function () {
+      var y = seen.last[note.value.trim()];
+      if (!y || y.k !== sw.get()) return;
+      if (catById(y.c)) sel.value = y.c;
+      if (!amt.value.trim()) { amt.value = centsToInput(y.a, LANG); showSum(); syncCur(); }
+    });
     // Receipt photo / PDF on the orOS disk, and its total from text.
     var rowId = x ? x.id : newId();
     var rcb = PLAN ? receiptBox(dlg, x, rowId, date, function (cents) {
@@ -2050,6 +2295,11 @@
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (x) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteTx(x.id); }));
+    if (x) acts.appendChild(button(t("dlg.dup"), "", function () {
+      dlg.close();
+      lastAcc = x.ac || "";
+      txDialog(null, { k: x.k, a: x.a, c: x.c, n: x.n, d: today });
+    }));
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
     var ok = button(t("dlg.save"), "primary", null);
     ok.type = "submit";
@@ -2057,7 +2307,7 @@
     form.appendChild(acts);
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var typed = parseAmount(amt.value);
+      var typed = amtVal();
       if (typed === null) { showErr(err, t("err.amount"), amt); return; }
       var oc = curSel.value !== main ? curSel.value : "", cents = typed, oa = 0;
       if (oc) {
@@ -2542,7 +2792,7 @@
   // removes the added records with tombstones, like importApp.
   var RP = window.OrosRecordPkg || null, BPK = window.OrosBudgetPackage || null;
   if (BPK) BPK.useCsv(buildCsv);              // entries.csv = the app's own CSV export
-  var TOMB_OF = { tx: "tx", cats: "cat", rec: "rec", acc: "acc", xfer: "xfer", asg: "asg", goal: "goal", rule: "rule", bnk: "bnk" };
+  var TOMB_OF = { tx: "tx", cats: "cat", rec: "rec", acc: "acc", xfer: "xfer", asg: "asg", goal: "goal", rule: "rule", bnk: "bnk", bgt: "bgt", loan: "loan", lpay: "lpay" };
   var fileAdded = null, fileCur = "";
   // One receipt of the file → Budget/Receipts, only when that name is
   // not on the disk yet, through the checks of attaching one
@@ -2780,7 +3030,9 @@
       icon: function (k) { return UI[k] || ""; },
       notifyHour: function () { return prefs.nh; }, setNotifyHour: function (h) { prefs.nh = h; savePrefs(); },
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, tableTwin: tableTwin,
-      fx: fx, fxNote: fxNote
+      fx: fx, fxNote: fxNote,
+      // envelopes and the year count subcategories in their main category
+      rolledData: function () { return Object.assign({}, data, { tx: rolledTx() }); }
     });
   }
 
@@ -2801,10 +3053,77 @@
       commit: commit, renderAll: renderAll, showToast: showToast, tt: t,
       money: money, moneyShort: moneyShort, monthLabel: monthLabel, dayLabel: dayLabel,
       viewMk: function () { return viewMk; }, today: function () { return today; }, setTab: setTab, cur: cur,
-      totals: function (mk) { return totals(data.tx, mk); }, limitOf: budOf, limitState: limitState,
+      totals: function (mk) { var tt = totals(data.tx, mk); tt.byCat = withKids(tt.byCat, pmNow()); return tt; },
+      limitOf: budOf, limitState: limitState, rolledTx: rolledTx, catBadge: catBadge,
+      budgets: function () { return BGUI ? BGUI.current() : []; },
+      loansCard: LNUI ? function (card) { LNUI.overviewCard(card); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin
+    });
+  }
+
+  // Flexible budgets on the Limits tab (budget/budgetsui.js over budgets.js).
+  var BGUI = window.OrosBudgetBudgets && window.OrosBudgetBudgetsUI ? window.OrosBudgetBudgetsUI : null;
+  function initBudgets() {
+    if (!BGUI) return;
+    BGUI.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, errLine: errLine, showErr: showErr, swatch: swatch,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      data: function () { return data; }, cats: cats, accs: accs, findIn: findIn, today: function () { return today; },
+      money: money, dateShort: dateShort, weekday: function (ymd) { return t("wd." + weekday(ymd)); }, cur: cur,
+      centsToInput: function (c) { return centsToInput(c, LANG); }, parseAmount: parseAmount,
+      newId: newId, stamp: stamp, tombstone: tombstone, untomb: untomb, commit: commit, renderAll: renderAll,
+      showToast: showToast, undoToast: undoToast, tt: t, rolledTx: rolledTx
+    });
+  }
+
+  // Loans and debts at the end of the Plan tab (budget/loansui.js over loans.js).
+  var LNUI = window.OrosBudgetLoans && window.OrosBudgetLoansUI ? window.OrosBudgetLoansUI : null;
+  function initLoans() {
+    if (!LNUI) return;
+    LNUI.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, errLine: errLine, showErr: showErr,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      data: function () { return data; }, accs: accs, accName: accName, findIn: findIn, today: function () { return today; },
+      money: money, dateShort: dateShort, cur: cur, icon: function (k) { return UI[k] || ""; },
+      centsToInput: function (c) { return centsToInput(c, LANG); }, parseAmount: parseAmount,
+      newId: newId, stamp: stamp, tombstone: tombstone, untomb: untomb, commit: commit, renderAll: renderAll,
+      showToast: showToast, undoToast: undoToast, tt: t,
+      // a one-time entry (writing a loan off), without an account → its id
+      addEntry: function (x) {
+        var y = normTx({ id: newId(), m: stamp(0), d: x.d, a: x.a, k: x.k, c: catById(x.c) ? x.c : "", n: x.n });
+        if (!y) return "";
+        data.tx.push(y);
+        return y.id;
+      },
+      removeEntry: function (id) {
+        if (!id || !findIn(data.tx, id)) return;
+        data.tx = data.tx.filter(function (y) { return y.id !== id; });
+        tombstone("tx", id);
+      }
+    });
+  }
+
+  // Charts by period (budget/insightsui.js over insights.js).
+  var INUI = window.OrosBudgetInsights && window.OrosBudgetInsightsUI ? window.OrosBudgetInsightsUI : null;
+  function initInsights() {
+    if (!INUI) return;
+    INUI.init({
+      lang: LANG, el: el, field: field, swatch: swatch, data: function () { return data; },
+      viewMk: function () { return viewMk; }, today: function () { return today; },
+      periodKind: function () { return prefs.cp; },
+      setPeriodKind: function (k) { prefs.cp = k; savePrefs(); renderCharts(); },
+      renderCharts: renderCharts, money: money, moneyShort: moneyShort, dateShort: dateShort,
+      monthLabel: monthLabel, dayLabel: dayLabel, catName: catName, catCol: catCol, catBadge: catBadge,
+      cats: cats, pm: pmNow, rollUp: rollUp,
+      sv: sv, svText: svText, hit: hit, showFilter: showFilter, openTx: function (id) { txDialog(id, null); },
+      search: function (q) {
+        filter = "all";
+        query = String(q).trim().toLowerCase();
+        $("q").value = q;
+        setTab("list");
+      }
     });
   }
 
@@ -2831,8 +3150,11 @@
   function checkLimits(ymd, catId) {
     var mk = mkOf(ymd);
     if (mk !== mkOf(today)) return;
-    var tt = totals(data.tx, mk);
-    [[catId, tt.byCat["o:" + catId] || 0, catName(catId)], ["all", tt.out, t("lim.total")]].forEach(function (z) {
+    var tt = totals(data.tx, mk), pm = pmNow();
+    var by = withKids(tt.byCat, pm);
+    var list = [[catId, by["o:" + catId] || 0, catName(catId)], ["all", tt.out, t("lim.total")]];
+    if (pm[catId]) list.splice(1, 0, [pm[catId], by["o:" + pm[catId]] || 0, catName(pm[catId])]);
+    list.forEach(function (z) {
       var lim = z[0] ? budOf(z[0]) : 0;
       if (!lim || z[1] <= lim) return;
       notify("over:" + z[0] + ":" + mk, t("notif.over", { c: z[2] }),
@@ -3338,6 +3660,7 @@
     dlg.classList.add("wide");
     var body = el("div");
     dlg.appendChild(body);
+    dlg.appendChild(el("p", "hint", t("cats.subHint")));
     dlg.appendChild(el("p", "hint", t("cats.hint")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
@@ -3347,7 +3670,8 @@
       ["o", "i"].forEach(function (k) {
         body.appendChild(el("h3", "sub-h", t(k === "o" ? "cats.out" : "cats.in")));
         var ul = el("ul", "cat-list");
-        cats().filter(function (c) { return c.k === k; }).forEach(function (c) { ul.appendChild(catRow(c, draw)); });
+        var list = cats().filter(function (c) { return c.k === k; });
+        list.forEach(function (c) { ul.appendChild(catRow(c, draw, list)); });
         body.appendChild(ul);
         var add = el("form", "cat-add");
         var inp = el("input");
@@ -3390,8 +3714,43 @@
     }
     return s;
   }
-  function catRow(c, redraw) {
+  // Icon picker: a grid of the built-in icons (budget/caticons.js).
+  function iconDialog(c, done) {
+    var dlg = makeDialog("bd-icon", t("cats.iconTitle"));
+    var grid = el("div", "ic-grid");
+    grid.setAttribute("role", "group");
+    grid.setAttribute("aria-label", t("cats.icon", { c: c.name }));
+    function pick(id) {
+      var s = storedCat(c);
+      if (id) s.ic = id; else delete s.ic;
+      // a ready category has an icon by default, so its "No icon" is stored as "none"
+      if (!id && c.seed) s.ic = "none";
+      s.m = stamp(s.m);
+      commit();
+      dlg.close();
+      done();
+    }
+    ICONS.ids.forEach(function (id) {
+      var b = el("button", "ic-pick" + (c.ic === id ? " on" : ""));
+      b.type = "button";
+      b.innerHTML = ICONS.svg(id);
+      b.setAttribute("aria-label", id);
+      b.setAttribute("aria-pressed", c.ic === id ? "true" : "false");
+      b.style.setProperty("--cc", "var(--c" + c.col + ")");
+      b.addEventListener("click", function () { pick(id); });
+      grid.appendChild(b);
+    });
+    dlg.appendChild(grid);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("cats.noIcon"), "", function () { pick(""); }));
+    acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  function catRow(c, redraw, list) {
     var li = el("li");
+    if (c.p) li.className = "sub";
     var colB = el("button", "col-btn");
     colB.type = "button";
     colB.appendChild(swatch(c.col));
@@ -3452,8 +3811,49 @@
       });
     });
     li.appendChild(colB);
+    if (ICONS) {
+      var icB = el("button", "col-btn ic-btn");
+      icB.type = "button";
+      icB.style.setProperty("--cc", "var(--c" + c.col + ")");
+      icB.innerHTML = (c.ic && ICONS.svg(c.ic)) || UI.plus;
+      icB.setAttribute("aria-label", t("cats.icon", { c: c.name }));
+      icB.addEventListener("click", function () {
+        iconDialog(c, function () {
+          redraw();
+          renderAll();
+          var again = document.querySelector('#bd-cats [data-cat="' + c.id + '"] .ic-btn');
+          if (again) again.focus();
+        });
+      });
+      li.appendChild(icB);
+    }
     li.appendChild(inp);
     li.appendChild(del);
+    // Main category: any main category of the same kind; one with
+    // subcategories of its own stays a main one.
+    var hasKids = list.some(function (y) { return y.p === c.id; });
+    var ps = el("select", "cat-parent");
+    ps.setAttribute("aria-label", t("cats.parent", { c: c.name }));
+    var top = el("option", "", t("cats.top")); top.value = ""; ps.appendChild(top);
+    if (!hasKids) {
+      list.forEach(function (y) {
+        if (y.p || y.id === c.id) return;
+        var o = el("option", "", t("cats.under", { c: y.name })); o.value = y.id; ps.appendChild(o);
+      });
+    }
+    ps.value = c.p || "";
+    ps.disabled = hasKids;
+    ps.addEventListener("change", function () {
+      var s = storedCat(c);
+      if (ps.value) s.p = ps.value; else delete s.p;
+      s.m = stamp(s.m);
+      commit();
+      redraw();
+      renderAll();
+      var again = document.querySelector('#bd-cats [data-cat="' + c.id + '"] .cat-parent');
+      if (again) again.focus();
+    });
+    li.appendChild(ps);
     return li;
   }
 
@@ -3827,7 +4227,7 @@
   }
   function changedCount(a, b) {
     var n = 0;
-    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk"].forEach(function (k) {
+    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay"].forEach(function (k) {
       var idx = {};
       a[k].forEach(function (x) { idx[x.id] = JSON.stringify(x); });
       b[k].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });
@@ -4234,6 +4634,9 @@
     loadFx();
     initPlan();
     initOverview();
+    initInsights();
+    initBudgets();
+    initLoans();
     applyI18n();
     wire();
     registerSync();

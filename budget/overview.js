@@ -131,7 +131,7 @@
   // "pace,safe,-acc,lim": every known card once, "-" = hidden. Unknown
   // names are kept at their place (a newer Budget's cards), missing
   // known ones are added at the end, shown.
-  var CARDS = ["safe", "pace", "acc", "lim", "up", "goal", "top"];
+  var CARDS = ["safe", "pace", "acc", "lim", "up", "goal", "loan", "top"];   // loan since C5
   var OV_RE = /^-?[a-z]{2,8}$/;
   function cardList(ov) {
     var seen = {}, out = [];

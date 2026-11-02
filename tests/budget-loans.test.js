@@ -1,0 +1,79 @@
+// Budget loans and debts (C5): stored shape, status, what is owed,
+// and how loans move account balances.
+"use strict";
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("fs");
+const path = require("path");
+const L = require("../budget/loans.js");
+
+const loan = (x) => Object.assign({ id: "l1", m: 1, a: 10000, ac: "bank", crm: "", d: "2026-10-01", due: "", k: "l", n: "Nikos", nt: "", wo: false }, x || {});
+const pay = (x) => Object.assign({ id: "p1", m: 1, a: 2500, ac: "bank", d: "2026-10-10", l: "l1", n: "" }, x || {});
+
+test("a loan and a repayment keep every field, in name order after id and m", () => {
+  const l = L.normLoan(loan({ zz: 1, n: "  Nikos  ", due: "2026-12-01" }));
+  assert.deepEqual(Object.keys(l), ["id", "m", "a", "ac", "crm", "d", "due", "k", "n", "nt", "wo"]);
+  assert.equal(l.n, "Nikos");
+  assert.deepEqual(Object.keys(L.normPay(pay())), ["id", "m", "a", "ac", "d", "l", "n"]);
+  // keys in name order: what an older version writes for an unknown collection
+  const k = Object.keys(l).slice(2);
+  assert.deepEqual(k, k.slice().sort());
+  [{ k: "x" }, { n: " " }, { a: 0 }, { d: "2026-02-30" }, { id: "BAD" }].forEach((bad) =>
+    assert.equal(L.normLoan(loan(bad)), null, JSON.stringify(bad)));
+  assert.equal(L.normLoan(loan({ due: "2026-09-01" })).due, "");      // before the date: dropped
+  assert.equal(L.normLoan(loan({ wo: "yes" })).wo, false);
+  assert.equal(L.normLoan(loan({ crm: "bad id!" })).crm, "");
+  assert.equal(L.normPay(pay({ l: "" })), null);
+});
+
+test("status: paid, left, late, written off", () => {
+  const l = loan({ due: "2026-11-01" });
+  let s = L.status(l, [pay(), pay({ id: "p2", a: 2500, d: "2026-10-20" })], "2026-10-25");
+  assert.deepEqual(s, { paid: 5000, left: 5000, over: 0, pct: 50, state: "open", last: "2026-10-20" });
+  assert.equal(L.status(l, [], "2026-11-02").state, "late");
+  assert.equal(L.status(l, [pay({ a: 12000 })], "2026-11-02").state, "paid");
+  assert.equal(L.status(l, [pay({ a: 12000 })], "2026-11-02").over, 2000);
+  assert.equal(L.status(loan({ wo: true }), [], "2026-11-02").state, "off");
+});
+
+test("summary: what is owed to you and what you owe, open loans only", () => {
+  const loans = [loan(), loan({ id: "l2", k: "b", a: 3000, n: "Bank of mum" }), loan({ id: "l3", wo: true }), loan({ id: "l4", a: 100 })];
+  const pays = [pay(), pay({ id: "p9", l: "l4", a: 100 })];
+  assert.deepEqual(L.summary(loans, pays, "2026-11-02"), { toMe: 7500, byMe: 3000, nToMe: 1, nByMe: 1 });
+});
+
+test("balances: a loan is like a transfer to or from the person", () => {
+  const loans = [loan(), loan({ id: "l2", k: "b", a: 3000, ac: "cash", d: "2026-10-05" }), loan({ id: "l3", ac: "" })];
+  const pays = [pay(), pay({ id: "p2", l: "l2", a: 1000, ac: "bank", d: "2026-10-06" }), pay({ id: "p3", l: "gone" })];
+  assert.deepEqual(L.balanceMoves(loans, pays, "2026-10-31"), { bank: -10000 + 2500 - 1000, cash: 3000 });
+  assert.deepEqual(L.balanceMoves(loans, pays, "2026-10-01"), { bank: -10000 });
+  assert.deepEqual(L.balanceMoves(undefined, undefined, "2026-10-31"), {});
+});
+
+test("budget.js: loans move account balances; without loans.js they ride along", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "budget/budget.js"), "utf8");
+  const block = (from, to) => { const i = src.indexOf(from), j = src.indexOf(to, i); return src.slice(i, j); };
+  const body = block("  var STORAGE_KEY", "  // ---------- 1.") + block("  function cmpStr(", "  function newId(") +
+    block("  // ---------- 2. Money", "  // ---------- 6. Storage") + "\nreturn { mergeBudget, emptyData, accBalances };";
+  const NEW = new Function("window", body)({ OrosBudgetLoans: L });
+  const OLD = new Function("window", body)(undefined);
+  const d = Object.assign(NEW.emptyData(), { acc: [{ id: "bank", m: 1, n: "Bank", o: 50000, col: 0 }], loan: [loan()], lpay: [pay()] });
+  const merged = NEW.mergeBudget(d, NEW.emptyData());
+  assert.deepEqual(NEW.accBalances(merged, "2026-11-02"), { bank: 50000 - 10000 + 2500 });
+  // an older copy (no loans.js) writes the same JSON for the loan collections
+  const old = OLD.mergeBudget(d, OLD.emptyData());
+  assert.equal(JSON.stringify(old.loan), JSON.stringify(merged.loan));
+  assert.equal(JSON.stringify(old.lpay), JSON.stringify(merged.lpay));
+  assert.equal(JSON.stringify(NEW.mergeBudget(old, merged)), JSON.stringify(NEW.mergeBudget(merged, old)));
+  // a deleted loan stays deleted
+  const del = Object.assign(NEW.emptyData(), { tombs: { "loan:l1": 5 } });
+  assert.deepEqual(NEW.mergeBudget(merged, del).loan, []);
+});
+
+test("loansui: EN and EL have the same keys and every key in the code exists", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "budget/loansui.js"), "utf8");
+  const tables = new Function("root", "var A = { lang: 'en' };" + src.slice(src.indexOf("var S = {"), src.indexOf("// orosI18n")) + "return S;")({});
+  assert.deepEqual(Object.keys(tables.en).sort(), Object.keys(tables.el).sort());
+  const used = [...src.matchAll(/t\("(ln\.[A-Za-z.]+)"\s*[,)]/g)].map((m) => m[1]);
+  used.forEach((k) => assert.ok(k in tables.en, k));
+});
