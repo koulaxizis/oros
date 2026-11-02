@@ -42,11 +42,12 @@
   </header>
 
   <nav id="tabs" role="tablist">
-    <button type="button" role="tab" id="tab-list" aria-controls="p-list" data-i18n="tab.list">Entries</button>
-    <button type="button" role="tab" id="tab-plan" aria-controls="p-plan" data-i18n="tab.plan">Plan</button>
-    <button type="button" role="tab" id="tab-charts" aria-controls="p-charts" data-i18n="tab.charts">Charts</button>
-    <button type="button" role="tab" id="tab-limits" aria-controls="p-limits" data-i18n="tab.limits">Limits</button>
-    <button type="button" role="tab" id="tab-rec" aria-controls="p-rec" data-i18n="tab.rec">Recurring</button>
+    <button type="button" role="tab" id="tab-ov" aria-controls="p-ov"><span class="tab-ic" aria-hidden="true"></span><span data-i18n="tab.ov">Overview</span></button>
+    <button type="button" role="tab" id="tab-list" aria-controls="p-list"><span class="tab-ic" aria-hidden="true"></span><span data-i18n="tab.list">Entries</span></button>
+    <button type="button" role="tab" id="tab-plan" aria-controls="p-plan"><span class="tab-ic" aria-hidden="true"></span><span data-i18n="tab.plan">Plan</span></button>
+    <button type="button" role="tab" id="tab-charts" aria-controls="p-charts"><span class="tab-ic" aria-hidden="true"></span><span data-i18n="tab.charts">Charts</span></button>
+    <button type="button" role="tab" id="tab-limits" aria-controls="p-limits"><span class="tab-ic" aria-hidden="true"></span><span data-i18n="tab.limits">Limits</span></button>
+    <button type="button" role="tab" id="tab-rec" aria-controls="p-rec"><span class="tab-ic" aria-hidden="true"></span><span data-i18n="tab.rec">Recurring</span></button>
   </nav>
 
   <main id="main">
@@ -56,6 +57,10 @@
       <div class="tile"><span class="tile-k" data-i18n="sum.bal">Balance</span><span class="tile-v" id="sum-bal"></span></div>
     </section>
     <div id="acc-strip" class="acc-strip" hidden></div>
+
+    <section id="p-ov" role="tabpanel" aria-labelledby="tab-ov" hidden>
+      <div id="overview"></div>
+    </section>
 
     <section id="p-list" role="tabpanel" aria-labelledby="tab-list">
       <div class="search-row">
@@ -111,6 +116,8 @@
   <script src="../units/core.js?v=5.05.00"></script>
   <script src="plan.js?v=5.05.00"></script>
   <script src="planui.js?v=5.05.00"></script>
+  <script src="overview.js?v=5.05.00"></script>
+  <script src="overviewui.js?v=5.05.00"></script>
   <script src="../bundle.js?v=5.05.00"></script>
   <script src="../recordpkg.js?v=5.05.00"></script>
   <script src="package.js?v=5.05.00"></script>

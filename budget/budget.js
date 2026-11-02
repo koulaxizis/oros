@@ -66,7 +66,7 @@
   var STRINGS = {
     en: {
       "app": "Budget",
-      "tab.list": "Entries", "tab.charts": "Charts", "tab.limits": "Limits", "tab.rec": "Recurring",
+      "tab.ov": "Overview", "tab.list": "Entries", "tab.charts": "Charts", "tab.limits": "Limits", "tab.rec": "Recurring",
       "sum.in": "Income", "sum.out": "Expenses", "sum.bal": "Balance",
       "btn.add": "New", "btn.add.aria": "New entry (N)", "btn.prev": "Previous month", "btn.next": "Next month",
       "btn.menu": "More", "btn.today": "This month",
@@ -172,7 +172,7 @@
     },
     el: {
       "app": "Έσοδα & Έξοδα",
-      "tab.list": "Κινήσεις", "tab.charts": "Γραφήματα", "tab.limits": "Όρια", "tab.rec": "Πάγια",
+      "tab.ov": "Σύνοψη", "tab.list": "Κινήσεις", "tab.charts": "Γραφήματα", "tab.limits": "Όρια", "tab.rec": "Πάγια",
       "sum.in": "Έσοδα", "sum.out": "Έξοδα", "sum.bal": "Υπόλοιπο",
       "btn.add": "Νέα", "btn.add.aria": "Νέα κίνηση (N)", "btn.prev": "Προηγούμενος μήνας", "btn.next": "Επόμενος μήνας",
       "btn.menu": "Περισσότερα", "btn.today": "Τρέχων μήνας",
@@ -627,12 +627,17 @@
   // Settings. Since wave 10: env (true = envelope budgeting on) and
   // envs ("YYYY-MM", the month it started), each written only when set,
   // in name order among the extras (what an older version keeps).
+  // Since the Overview (C1): ov, the Overview's cards in order, "-" =
+  // hidden ("pace,safe,-acc"; budget/overview.js cardList), only when
+  // not the default.
   var MK_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+  var OV_SET_RE = /^-?[a-z]{2,8}(,-?[a-z]{2,8}){0,15}$/;
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
     var y = Object.assign({}, x);
     if (y.env !== true) delete y.env;
     if (!(typeof y.envs === "string" && MK_RE.test(y.envs))) delete y.envs;
+    if (!(typeof y.ov === "string" && OV_SET_RE.test(y.ov))) delete y.ov;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
@@ -937,7 +942,7 @@
 
   // ---------- 6. Storage, prefs ----------
   var data = null, prefs = null;
-  var TABS = ["list", "plan", "charts", "limits", "rec"];
+  var TABS = ["ov", "list", "plan", "charts", "limits", "rec"];
 
   function load() {
     var raw = null;
@@ -974,11 +979,15 @@
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null"); } catch (e) {}
     p = (p && typeof p === "object") ? p : {};
     prefs = {
-      tab: TABS.indexOf(p.tab) >= 0 ? p.tab : "list",
+      // Budget opens on the Overview once after it arrives (ov0), then
+      // on the tab last used, as before.
+      tab: TABS.indexOf(p.tab) >= 0 && p.ov0 ? p.tab : "ov",
+      ov0: 1,
       csv: p.csv === "std" || p.csv === "excel" ? p.csv : (decComma(LANG) ? "excel" : "std"),
       rv: p.rv === "subs" ? "subs" : "all",                                     // Recurring tab: all | subscriptions
       nh: isInt(p.nh) && p.nh >= -1 && p.nh <= 23 ? p.nh : 9                   // subscription reminders: hour, -1 = off here
     };
+    if (!p.ov0) savePrefs();
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) {}
@@ -1115,6 +1124,14 @@
   }
 
   // ---------- 7. Rendering ----------
+  var TAB_IC = {
+    ov: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+    plan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>',
+    charts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+    limits: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>',
+    rec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
+  };
   var UI = {
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
@@ -1148,6 +1165,7 @@
     renderTabs();
     renderSummary();
     renderFilter();
+    if (prefs.tab === "ov") renderOverview();
     if (prefs.tab === "list") renderList();
     if (prefs.tab === "plan") renderPlanTab();
     if (prefs.tab === "charts") renderCharts();
@@ -1155,6 +1173,7 @@
     if (prefs.tab === "rec") renderRec();
   }
   function renderPlanTab() { if (PLANUI) PLANUI.renderPlan($("plan")); }
+  function renderOverview() { if (OVUI) OVUI.render($("overview")); }
 
   function renderToolbar() {
     $("month").textContent = monthLabel(viewMk);
@@ -1169,6 +1188,7 @@
       $("p-" + k).hidden = !on;
     });
     $("sum").hidden = prefs.tab === "rec";
+    document.body.classList.toggle("on-ov", prefs.tab === "ov");
   }
 
   function renderSummary() {
@@ -1185,7 +1205,7 @@
     var box = $("acc-strip");
     box.innerHTML = "";
     var list = accs();
-    box.hidden = !list.length || prefs.tab === "rec";
+    box.hidden = !list.length || prefs.tab === "rec" || prefs.tab === "ov";   // the Overview has its own Accounts card
     if (box.hidden) return;
     var bal = balNow();
     var btn = el("button", "acc-chips");
@@ -2764,6 +2784,30 @@
     });
   }
 
+  // Overview tab (budget/overviewui.js over overview.js).
+  var OVUI = window.OrosBudgetOverview && PLAN && window.OrosBudgetOverviewUI ? window.OrosBudgetOverviewUI : null;
+  function showFilter(f) {
+    filter = f;
+    query = "";
+    $("q").value = "";
+    setTab("list");
+  }
+  function initOverview() {
+    if (!OVUI) { $("tab-ov").hidden = true; if (prefs.tab === "ov") prefs.tab = "list"; return; }
+    OVUI.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, swatch: swatch,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      data: function () { return data; }, cats: cats, catName: catName, catCol: catCol, stamp: stamp,
+      commit: commit, renderAll: renderAll, showToast: showToast, tt: t,
+      money: money, moneyShort: moneyShort, monthLabel: monthLabel, dayLabel: dayLabel,
+      viewMk: function () { return viewMk; }, today: function () { return today; }, setTab: setTab, cur: cur,
+      totals: function (mk) { return totals(data.tx, mk); }, limitOf: budOf, limitState: limitState,
+      accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
+      recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
+      chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin
+    });
+  }
+
   function deleteTx(id) {
     var x = findIn(data.tx, id);
     if (!x) return;
@@ -3919,7 +3963,7 @@
     // Tabs: arrows move between them (ARIA tabs pattern)
     $("tabs").addEventListener("keydown", function (e) {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-      var order = TABS, i = order.indexOf(prefs.tab);
+      var order = TABS.filter(function (k) { return !$("tab-" + k).hidden; }), i = order.indexOf(prefs.tab);
       i = (i + (e.key === "ArrowRight" ? 1 : order.length - 1)) % order.length;
       e.preventDefault();
       e.stopPropagation();
@@ -4011,6 +4055,10 @@
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
+    TABS.forEach(function (k) {   // the tab bar's icons (shown on phones, where it sits at the bottom)
+      var ic = document.querySelector("#tab-" + k + " .tab-ic");
+      if (ic) ic.innerHTML = TAB_IC[k];
+    });
     document.title = t("app") + " · orOS";
     var ib = function (id, icon, key) {
       var b = $(id);
@@ -4069,7 +4117,7 @@
     var rt = null;
     window.addEventListener("resize", function () {
       clearTimeout(rt);
-      rt = setTimeout(function () { if (prefs.tab === "charts") renderCharts(); }, 120);
+      rt = setTimeout(function () { if (prefs.tab === "charts") renderCharts(); if (prefs.tab === "ov") renderOverview(); }, 120);
     });
     $("main").addEventListener("scroll", hideTip, { passive: true });
     // A new day: due recurring entries, "today" moves on.
@@ -4185,6 +4233,7 @@
     initBankLive();
     loadFx();
     initPlan();
+    initOverview();
     applyI18n();
     wire();
     registerSync();

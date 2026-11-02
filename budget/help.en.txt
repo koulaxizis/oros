@@ -1,10 +1,20 @@
 # Budget
-Budget tracks your income and expenses one month at a time, with categories, monthly limits, envelopes, savings goals, subscriptions, recurring entries, several currencies, receipts and reports.
+Budget tracks your income and expenses one month at a time, with an overview, categories, monthly limits, envelopes, savings goals, subscriptions, recurring entries, several currencies, receipts and reports.
 
 ## Getting started
 Tap or click `New`, choose `Expense` or `Income`, type the `Amount`, pick a `Category` and press `Save`. You can also set the `Date` and add a `Note`. Amounts can be typed as `12,50` or `12.50`.
 
 The top shows the month, with arrows to move between months; `This month` brings you back. Under it, `Income`, `Expenses` and `Balance` add up the month you're looking at.
+
+## Overview
+Budget opens on `Overview`: the month you are looking at, as cards.
+- `Safe to spend`: how much you can spend a day until the month ends. With a monthly limit for `All expenses` it is what is left under that limit; without one, what came in minus what went out. Recurring entries still to come this month are counted. A past month shows `How the month ended`, a month ahead what is `Coming this month`.
+- `Spending pace`: your expenses added up day by day (the solid line), next to last month (dashed) and the average of the three months before (dotted). With a monthly limit you also see the limit and a straight line from 0 to it: staying under that line means you are on track. Point at a day to see its numbers; `Show as a table` lists them all.
+- `Accounts`: your net worth and, under it, what came in, went out and the difference for all accounts in the month. Each account shows its balance today and the same three numbers for the month (`Without an account` collects entries that have none). Transfers between your accounts are not counted. Tap an account to see its entries.
+- `Limits`: the limits closest to their end, as rings. `Next 7 days`: recurring entries coming up. `Savings goals`: how far along each one is.
+- `Where the money went`: the biggest expense categories, with how much more (▲) or less (▼) than last month. Tap one to see its entries.
+
+`Edit the overview` picks which cards show and their order; it applies on all your devices. On a phone the tabs sit in a bar at the bottom of the screen; on a wide screen the cards stand in two columns.
 
 ## Entries
 The `Entries` tab lists the month's entries by day, with a `Day total`. Tap an entry to edit or delete it; a delete shows `Undo` for a few seconds.
