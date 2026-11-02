@@ -1844,6 +1844,11 @@
         my.text = txt;
         var node = document.getElementById("sum-text");
         if (node && openItem && openItem.id === id) node.textContent = txt;
+      }, function (alt) {
+        // The local server failed: the Assistant's online stand-in answers.
+        if (sums[id] !== my) return;
+        my.name = alt.name;
+        if (openItem && openItem.id === id) renderReader();
       }).then(function (txt) {
         if (sums[id] !== my) return;
         my.text = String(txt || "").trim();
