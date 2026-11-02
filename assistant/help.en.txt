@@ -1,5 +1,5 @@
 # Assistant
-Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a service with a free plan (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova, Pollinations), a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
+Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a service with a free plan (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova), a paid service (Pollinations), a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
 
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
@@ -15,8 +15,9 @@ These need only a free account and a free key, with daily limits. Nothing is cha
 - `GitHub Models`: GPT, Llama, Mistral and more with any GitHub account. The key is a fine-grained personal access token with the `Models` permission set to read.
 - `Cohere`: Command models. The free trial key is for personal use and testing only.
 - `Hugging Face`: many open models through one free token.
-- `Pollinations`: use a publishable key (it starts with `pk_`).
 - `OpenRouter`: tick `Only free models`, then `Load models`: only the models whose name ends in `:free` are listed.
+
+`Pollinations` is no longer free: it is paid with Pollen (about $1 for 1 Pollen; free Pollen comes only from its Quests). If you still want it, use a secret key (it starts with `sk_`): at enter.pollinations.ai press `Create` under `Secrets`, not under `Apps` (that one asks for a callback link and is for other apps), and set a spending limit. The same key works for pictures.
 
 Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device.
 
@@ -258,7 +259,8 @@ In `Settings` → `Internet`, `Let the assistant search the internet when an ans
 
 ## Pictures (image AI)
 `Settings` → `Pictures` chooses who makes pictures for Atelier's `Image from text`. The choice stays on this device.
-- `Default: Pollinations`: free, with no key and no account. A free Pollinations key (enter.pollinations.ai) makes it faster.
+- `Default: AI Horde`: free, with no key and no account. Volunteers' computers make the pictures, so at busy times it can take a minute or two. A free key from aihorde.net/register moves you up the waiting line.
+- `Pollinations`: no longer free, paid with Pollen. It needs a secret key (enter.pollinations.ai, `Create` under `Secrets`; it starts with `sk_`).
 - `Hugging Face`: a free account and an access token with "Make calls to Inference Providers" (small monthly credit). It is the same key as Hugging Face for text.
 - `OpenAI gpt-image-1`: your own OpenAI key, paid per picture (the same key as ChatGPT). It can also do Magic edit and Magic expand.
 - `Stability AI`: your own key from platform.stability.ai, paid with credits. It can also do Magic edit and Magic expand.
