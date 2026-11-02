@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.06.00
+- **Budget opens on an Overview.** One look shows what is safe to spend until the end of the month, how this month runs against the last one and your average, every account with its balance and the month's income, expenses and difference (and the total over all of them), your limits, what is due next, your goals and where most of the money went. `Edit the overview` hides or moves cards; the order follows you to your other devices.
+- **A tab bar on phones.** On a narrow screen Budget's tabs sit at the bottom with icons, within reach of your thumb.
+
 ## Version 5.05.00
 - **Your bank balance in Budget.** Each bank update also reads the balance your bank shows. In More › Banks it appears under each account, next to Budget's own; if they differ, `Match` fixes the account's starting balance (with Undo).
 - **Clearer bank messages.** When Enable Banking or the bank refuses, the message now says why. Retrying no longer adds a second Enable Banking connection. Banks and PayPal can be reached only from useoros.online for now; the installed app and Portable say so.
