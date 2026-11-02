@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 5.08.00
 - **Play on a speaker or TV.** Radio and Television have a new button, `Play on…`. It sends the station or channel to a Chromecast or a TV through your browser's own device list (Chrome on Android; AirPlay on Safari) and, where the browser allows, picks the speaker on this device. A Bluetooth speaker works once it is paired in your system's Bluetooth settings. orOS loads no code from Google for this.
 
+## Version 5.07.01
+- **The Assistant keeps answering when your local model is away.** If you use a model on your own computer (Ollama, LM Studio and others), pick an online service under `If the local model can't be reached, use`. On your phone, or while the server is off, that service answers for the moment, apps set to `Always share` ask first, and a grey line says so. As soon as your computer's model answers again, the Assistant goes back to it.
+
 ## Version 5.07.00
 - **Charts by period in Budget.** Pick a month, a quarter, a year or your own dates and see income, expenses and the difference against the period before, a donut per category with its change, a calendar shaded by what each day cost, what changed most, and where the money went by name.
 - **Budgets for any stretch of time.** Next to the monthly limits: every week, every month from payday, every few days, or once (a holiday), over the categories and accounts you pick, with what is left a day and how past periods went.
