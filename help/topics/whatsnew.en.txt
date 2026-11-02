@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.03.01
+- **Notification count readable in every colour.** In the Tux colour (dark theme) the number on the notification bell was white on a white circle. The number on the bell, the tour's Next button, a pressed key on the on-screen keyboard and the main button of shell dialogs now pick dark or white text, whichever reads on the colour you chose, in all 16 colours and in high contrast.
+
 ## Version 5.03.00
 - **Budget can read your bank and PayPal by itself.** Budget › More › `Banks (automatic)` connects your bank accounts through Enable Banking with your own free application, read-only: Budget updates them when it opens, at most every 6 hours, and warns you before the bank's consent runs out. PayPal Business accounts can be read live too, with your own PayPal app (Settings › Connected services). Your keys stay on your device; nothing can pay or move money. Categories now learn: an entry without a rule takes the category you gave most often to the same merchant, and after you correct one, `Always for "…"` turns it into a rule. See [Budget](help:a/budget).
 
