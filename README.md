@@ -181,3 +181,13 @@ on your own domain with your own sync, your logo and app list, or a custom app.
 orOS is released under the [MIT License](LICENSE), © 2026 Christos
 Koulaxizis. Bundled third-party libraries, fonts, icons and data keep their
 own licences, listed in [`CREDITS.md`](CREDITS.md).
+
+## Disclaimer
+
+Use at your own risk. orOS and all its apps, sync, installers, orOS Portable,
+the orOS USB, orOS Drive and the Android apps are free software, provided
+"as is", without warranty of any kind. You are responsible for your own data:
+keep backups and keep sync turned on. To the fullest extent permitted by law,
+the makers of orOS and its contributors accept no liability for any loss of
+data or any other damage arising from the use of orOS. The same text, in
+English and Greek, is in the [privacy policy](https://useoros.online/privacy.html#disclaimer).
