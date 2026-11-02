@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-tkS0ui6pyC1oAGZ2pt4hv233n3yOBfsk9dNtYXFCT7U='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Wallpapers, logos, banners, print files, colour palettes, fonts and press releases for orOS, and for orOS, NULL JSFX and Noxpress together. Free to download.">
+  <title>orOS media kit</title>
+  <link rel="canonical" href="https://useoros.online/media-kit/">
+  <!-- Link previews (Open Graph + Twitter/X card); image: icons/og-image.png, 1200x630 -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="orOS">
+  <meta property="og:title" content="orOS media kit: wallpapers, logos, press">
+  <meta property="og:description" content="Wallpapers, logos, banners, print files, colour palettes, fonts and press releases for orOS, and for orOS, NULL JSFX and Noxpress together. Free to download.">
+  <meta property="og:url" content="https://useoros.online/media-kit/">
+  <meta property="og:image" content="https://useoros.online/icons/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="orOS: the desktop with the app menu open, the clock, calendar and Today widgets">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="el_GR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="orOS media kit: wallpapers, logos, press">
+  <meta name="twitter:description" content="Wallpapers, logos, banners, print files, colour palettes, fonts and press releases for orOS, and for orOS, NULL JSFX and Noxpress together. Free to download.">
+  <meta name="twitter:image" content="https://useoros.online/icons/og-image.png">
+  <meta name="twitter:image:alt" content="orOS: the desktop with the app menu open, the clock, calendar and Today widgets">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../fonts.css?v=5.04.06">
+  <style>
+    :root { --bg: #14120d; --panel: #1d1a14; --text: #f0ead9; --dim: #b9b09a; --accent: #d4af37; --border: #3a3428; }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #faf7ef; --panel: #ffffff; --text: #241f14; --dim: #5d5544; --accent: #8a6d12; --border: #e2dac6; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand img { width: 44px; height: 44px; }
+    h1 { font-size: 26px; margin: 0; }
+    .lede { color: var(--dim); margin: 8px 0 20px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; align-items: start; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .card img { width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--border); background: #111214; }
+    .card img.phone { max-width: 340px; align-self: center; }
+    h2 { font-size: 19px; margin: 0; color: var(--accent); }
+    p { margin: 4px 0; }
+    .dim { color: var(--dim); font-size: 14px; }
+    a { color: var(--accent); }
+    code { font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 4px; word-break: break-all; }
+    .btn { align-self: flex-start; display: inline-flex; align-items: center; min-height: 40px; padding: 8px 16px;
+      border-radius: 8px; background: var(--accent); color: var(--bg); font-weight: 600; text-decoration: none; }
+    .terms { margin-top: 24px; }
+    .terms p { color: var(--dim); }
+    .lang button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+      font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+    .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+    .foot { color: var(--dim); font-size: 14px; margin-top: 28px; text-align: center; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><img src="/icon.svg" alt=""><h1 id="t">orOS media kit</h1></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="en" aria-pressed="true">English</button>
+      <button type="button" data-l="el" aria-pressed="false">Ελληνικά</button>
+    </div>
+  </header>
+
+  <article lang="en" id="en">
+    <p class="lede">Wallpapers for desktop, phone and tablet, logos and icons, banners for social profiles, print files for t-shirts, mugs and stickers, colour palettes, fonts, brand guidelines and press releases in English and Greek. Everything is free to download.</p>
+    <div class="grid">
+      <section class="card" id="oros">
+        <h2>orOS</h2>
+        <img src="oros-wallpaper.jpg" width="960" height="540" loading="lazy" alt="orOS desktop wallpaper: the gold mountain mark on a dark background">
+        <img class="phone" src="oros-phone.jpg" width="680" height="480" loading="lazy" alt="Three orOS phone wallpapers: mark, pattern and minimal">
+        <p>The orOS media kit: wallpapers, logos, banners, print files, palette, fonts (Nunito with a Greek companion), guidelines and press release.</p>
+        <p class="dim"><code>orOS-Media-Kit.zip</code> · about 19 MB</p>
+        <a class="btn" href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/orOS-Media-Kit.zip">Download the kit</a>
+        <p class="dim">24 wallpapers in three styles: 4K, 5K, 16:10, ultrawide, Android, iPhone and tablet. <a href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/orOS-Wallpapers.zip">Wallpapers only</a> (about 14 MB).</p>
+      </section>
+      <section class="card" id="all">
+        <h2>orOS, NULL JSFX and Noxpress together</h2>
+        <img src="all-three-wallpaper.jpg" width="960" height="540" loading="lazy" alt="Desktop wallpaper with the NULL JSFX, orOS and Noxpress icons side by side">
+        <img class="phone" src="all-three-phone.jpg" width="680" height="480" loading="lazy" alt="Three phone wallpapers with the three projects together">
+        <p>The kits of all three projects, plus the wallpapers, logos, banners and print files that show them together.</p>
+        <p class="dim"><code>NULL-JSFX-orOS-noxpress-Media-Kit.zip</code> · about 63 MB</p>
+        <a class="btn" href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/NULL-JSFX-orOS-noxpress-Media-Kit.zip">Download the kit</a>
+        <p class="dim">24 wallpapers of the three projects together, in the same sizes. <a href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/NULL-JSFX-orOS-noxpress-Wallpapers.zip">Wallpapers only</a> (about 10 MB).</p>
+      </section>
+    </div>
+    <section class="terms">
+      <h2>Using the kit</h2>
+      <p>Use anything in it to present, review or write about the projects, on screen or in print, and to show your support (wallpapers, stickers, a t-shirt for yourself). Please don’t change the marks, their colours or their proportions, and don’t sell the kit or products made from it. The fonts are under the SIL Open Font License; <code>LICENSE-media-kit.md</code> in each zip has the details.</p>
+      <p>The kits of <a href="https://nulljsfx.tech/media-kit/">NULL JSFX</a> and <a href="https://noxpress.tech/#media-kit">Noxpress</a> on their own are on their sites.</p>
+      <p>For press and interviews: <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a></p>
+    </section>
+    <p class="foot">Free forever, MIT licence. Support orOS on <a href="https://ko-fi.com/koulaxizis">Ko-fi</a>. <a href="/download/">Get orOS</a> · <a href="/privacy.html">Privacy policy</a> · <a href="https://github.com/koulaxizis/oros">Source code</a></p>
+  </article>
+
+  <article lang="el" id="el" hidden>
+    <p class="lede">Wallpapers για υπολογιστή, κινητό και tablet, λογότυπα και εικονίδια, banners για προφίλ στα social, αρχεία εκτύπωσης για μπλουζάκια, κούπες και αυτοκόλλητα, χρωματικές παλέτες, γραμματοσειρές, οδηγός ταυτότητας και δελτία τύπου στα αγγλικά και στα ελληνικά. Όλα δωρεάν.</p>
+    <div class="grid">
+      <section class="card" id="oros-el">
+        <h2>orOS</h2>
+        <img src="oros-wallpaper.jpg" width="960" height="540" loading="lazy" alt="Wallpaper του orOS για υπολογιστή: το χρυσό βουνό σε σκούρο φόντο">
+        <img class="phone" src="oros-phone.jpg" width="680" height="480" loading="lazy" alt="Τρία wallpapers του orOS για κινητό: σήμα, μοτίβο και λιτό">
+        <p>Το media kit του orOS: wallpapers, λογότυπα, banners, αρχεία εκτύπωσης, παλέτα, γραμματοσειρές (Nunito με ελληνική συνοδό), οδηγός και δελτίο τύπου.</p>
+        <p class="dim"><code>orOS-Media-Kit.zip</code> · περίπου 19 MB</p>
+        <a class="btn" href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/orOS-Media-Kit.zip">Λήψη του πακέτου</a>
+        <p class="dim">24 wallpapers σε τρία στιλ: 4K, 5K, 16:10, ultrawide, Android, iPhone και tablet. <a href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/orOS-Wallpapers.zip">Μόνο τα wallpapers</a> (περίπου 14 MB).</p>
+      </section>
+      <section class="card" id="all-el">
+        <h2>orOS, NULL JSFX και Noxpress μαζί</h2>
+        <img src="all-three-wallpaper.jpg" width="960" height="540" loading="lazy" alt="Wallpaper με τα εικονίδια των NULL JSFX, orOS και Noxpress δίπλα δίπλα">
+        <img class="phone" src="all-three-phone.jpg" width="680" height="480" loading="lazy" alt="Τρία wallpapers για κινητό με τα τρία projects μαζί">
+        <p>Τα πακέτα και των τριών projects, μαζί με wallpapers, λογότυπα, banners και αρχεία εκτύπωσης που τα δείχνουν μαζί.</p>
+        <p class="dim"><code>NULL-JSFX-orOS-noxpress-Media-Kit.zip</code> · περίπου 63 MB</p>
+        <a class="btn" href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/NULL-JSFX-orOS-noxpress-Media-Kit.zip">Λήψη του πακέτου</a>
+        <p class="dim">24 wallpapers με τα τρία projects μαζί, στα ίδια μεγέθη. <a href="https://github.com/koulaxizis/null-jsfx/releases/download/media-kit/NULL-JSFX-orOS-noxpress-Wallpapers.zip">Μόνο τα wallpapers</a> (περίπου 10 MB).</p>
+      </section>
+    </div>
+    <section class="terms">
+      <h2>Χρήση του πακέτου</h2>
+      <p>Χρησιμοποίησε ό,τι περιέχει για να παρουσιάσεις, να κάνεις κριτική ή να γράψεις για τα projects, στην οθόνη ή σε έντυπο, και για να δείξεις τη στήριξή σου (wallpapers, αυτοκόλλητα, ένα μπλουζάκι για σένα). Μην αλλάζεις τα σήματα, τα χρώματα ή τις αναλογίες τους και μην πουλάς το πακέτο ή προϊόντα που φτιάχνονται από αυτό. Οι γραμματοσειρές έχουν την άδεια SIL Open Font License· οι λεπτομέρειες είναι στο <code>LICENSE-media-kit.md</code> μέσα σε κάθε zip.</p>
+      <p>Τα πακέτα του <a href="https://nulljsfx.tech/media-kit/">NULL JSFX</a> και του <a href="https://noxpress.tech/#media-kit">Noxpress</a> μόνα τους βρίσκονται στις σελίδες τους.</p>
+      <p>Για τον Τύπο και συνεντεύξεις: <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a></p>
+    </section>
+    <p class="foot">Δωρεάν για πάντα, άδεια MIT. Στήριξε το orOS στο <a href="https://ko-fi.com/koulaxizis">Ko-fi</a>. <a href="/download/?lang=el">Απόκτησε το orOS</a> · <a href="/privacy.html">Πολιτική απορρήτου</a> · <a href="https://github.com/koulaxizis/oros">Πηγαίος κώδικας</a></p>
+  </article>
+</main>
+<script>
+(function () {
+  "use strict";
+  var TITLE = { en: "orOS media kit", el: "Media kit του orOS" };
+  function set(l) {
+    if (l !== "el") l = "en";
+    document.documentElement.lang = l;
+    document.getElementById("en").hidden = l !== "en";
+    document.getElementById("el").hidden = l !== "el";
+    document.getElementById("t").textContent = TITLE[l];
+    document.title = TITLE[l];
+    [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-l") === l));
+    });
+  }
+  var start = /[?&]lang=el\b/.test(location.search) || /^#(.+-)?el$/.test(location.hash) ? "el" : "en";
+  if (start === "en" && !/[?&]lang=en\b/.test(location.search)) {
+    try { if (localStorage.getItem("oros-lang") === "el") start = "el"; } catch (e) {}
+  }
+  set(start);
+  [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+    b.addEventListener("click", function () { set(b.getAttribute("data-l")); });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.04.06
+## Version 5.04.07
 - **Buttons stay readable in every theme.** In the Tux theme some buttons were white on light grey or black on dark grey, like the "+ Effect" button in Studio. Buttons and highlights on the accent colour in all apps now pick white or dark text so they can always be read.
+
+## Version 5.04.06
+- **A media kit for orOS.** Wallpapers for desktop, phone and tablet, logos, banners, print files, colour palettes, fonts and press releases, for orOS on its own and together with NULL JSFX and Noxpress. Free to download from the [media kit page](https://useoros.online/media-kit/).
 
 ## Version 5.04.05
 - **The apps use the orOS font too.** Notes, Calendar, Writer, the games and the other apps were still drawn in your system font, because only the desktop loaded Nunito. Every app now loads it, Greek included, and it works offline.
