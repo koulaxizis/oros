@@ -13,6 +13,11 @@ Der Player zeigt den Namen des Senders, sein Land und seine Etiketten sowie Knö
 
 Manche Sender haben mehrere Streams. Fällt einer aus, versucht die App von selbst den nächsten (`Stream fehlgeschlagen – nächster wird versucht…`). Hat ein Sender mehr als einen Stream, kannst du im Menü `Andere Streams` selbst einen wählen. Funktioniert nichts, bekommst du eine Benachrichtigung, dass der Sender auf diesem Gerät nicht abspielbar ist.
 
+## Auf einem Fernseher oder Lautsprecher abspielen
+Die Taste mit dem Bildschirm und den Wellen im Player (`Abspielen auf…`) wählt, wo der Sender läuft.
+- **Chromecast, AirPlay oder Fernseher:** `Chromecast, AirPlay oder Fernseher` öffnet die eigene Geräteliste des Browsers. Chrome auf Android findet Chromecast und Cast-Fernseher, Safari findet AirPlay. orOS lädt dafür keinen Code von Google oder Apple; die Verbindung stellt der Browser her. Der Fernseher bekommt die eigene Adresse des Senders, also geht ein Sender nur, wenn sein Stream https nutzt und der Fernseher ihn abspielen kann. Solange ein Fernseher spielt, bleibt der Player hier pausiert und sagt das; wechselst du Sender oder Stream, wechselt er auch auf dem Fernseher. Öffne die Taste erneut und wähle `Beenden oder wechseln`, um ihn zurückzuholen.
+- **Bluetooth-Lautsprecher oder -Kopfhörer:** in den Bluetooth-Einstellungen des Systems koppeln (auf orOS USB: Schnelleinstellungen › Bluetooth). Wo der Browser eine Seite die Ausgabe wählen lässt, stehen die Ausgaben unter `Dieses Gerät`.
+
 ## Deine eigenen Playlists
 Öffne `Listen & Programme` (oben rechts), um eine M3U-Playlist hinzuzufügen: Füge ihre Adresse ein und drücke `Hinzufügen`, oder drücke `Datei öffnen…`, um eine `.m3u`-Datei zu wählen. `Meine Listen` zeigt dann ihre Sender; das Menü `Gruppe` grenzt sie nach den Gruppen der Playlist ein, und das Suchfeld durchsucht sie. Tippe auf einen Sender, um ihn im selben Player anzusehen, und markiere ihn wie jeden anderen Sender mit einem Stern.
 

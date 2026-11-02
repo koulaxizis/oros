@@ -2374,6 +2374,17 @@ function setupPlayerControls(){
   if(playBtn)  playBtn.addEventListener("click", togglePlayPause);
   if(favBtn){ favBtn.addEventListener("click", toggleFavorite); favBtn.setAttribute("aria-label", t("favorite")); }
   if(sleepBtn) sleepBtn.addEventListener("click", openSleepDialog);
+  // CAST-1: "Play on…" (cast.js): another output or a TV. The audio
+  // element lives in the shell, so a TV keeps playing after Radio closes.
+  var castBtn = $("rx-pl-cast");
+  if(castBtn){
+    if(window.OrosCast){
+      window.OrosCast.attach({ app: "radio", button: castBtn, lang: activeLang(),
+        media: function(){ return host.audio; } });
+    }else{
+      castBtn.setAttribute("hidden", "");
+    }
+  }
   var moreBtn = $("rx-pl-more");
   if(moreBtn){
     moreBtn.addEventListener("click", openMoreDialog);
