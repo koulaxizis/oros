@@ -225,6 +225,8 @@
   //   perm{appId: {m, v}}, ks{m, on}, keys{pid: {m, d, s}} }
   //   set.prov  the provider in use ("" = none chosen yet)
   //   set.chat  1 = chat only, no access to app data
+  //   set.fb    online provider that answers while the local server
+  //             (set.prov "local") cannot be reached ("" = none)
   //   perm.v    "ask" | "always" | "never"
   //   ks.on     1 = API keys travel in the slice (sealed, see below)
   //   keys.s    the key sealed with the sync passphrase
@@ -239,7 +241,32 @@
   function normSet(x) {
     if (!isObj(x)) return null;
     return { m: stamp(x.m), chat: x.chat ? 1 : 0, prov: PROVIDERS[x.prov] ? x.prov : "", web: x.web ? 1 : 0,
-             ws: SEARCH_IDS.indexOf(x.ws) >= 0 ? x.ws : "auto", wsBase: normBase(x.wsBase) };
+             ws: SEARCH_IDS.indexOf(x.ws) >= 0 ? x.ws : "auto", wsBase: normBase(x.wsBase),
+             fb: fbOk(x.fb) ? x.fb : "" };
+  }
+  // ---------- 2a. Online fallback for a local server (AS-FB) ----------
+  // A model on the user's computer can't be reached from another device
+  // (a phone) or while it is switched off. The user may name an online
+  // service that answers meanwhile: the Assistant checks the local
+  // address before each turn (PROBE_MS; the result is kept PROBE_UP ms
+  // when it answered, PROBE_DOWN ms when not) and goes back to it as
+  // soon as it answers again.
+  var PROBE_MS = 1500, PROBE_UP = 60000, PROBE_DOWN = 15000;
+  // A provider that can stand in: an online one, not on the device.
+  function fbOk(pid) {
+    var p = PROVIDERS[pid];
+    return !!p && !p.local && !p.device && !p.builtin;
+  }
+  // The stand-in for these settings, or "" (none, or not a local server).
+  function fbFor(set) {
+    if (!isObj(set) || !PROVIDERS[set.prov] || !PROVIDERS[set.prov].local) return "";
+    return fbOk(set.fb) ? set.fb : "";
+  }
+  // A probe result { base, ok, at } still good at time now?
+  // → true | false | null (check again)
+  function probeFresh(pr, base, now) {
+    if (!isObj(pr) || pr.base !== base) return null;
+    return now - pr.at < (pr.ok ? PROBE_UP : PROBE_DOWN) ? !!pr.ok : null;
   }
   function normProv(x) {
     if (!isObj(x)) return null;
@@ -300,7 +327,7 @@
     b = isObj(b) ? b : {};
     return {
       ver: DATA_VER,
-      set: better(normSet(a.set), normSet(b.set)) || { m: 0, chat: 0, prov: "", web: 0, ws: "auto", wsBase: "" },
+      set: better(normSet(a.set), normSet(b.set)) || { m: 0, chat: 0, prov: "", web: 0, ws: "auto", wsBase: "", fb: "" },
       provs: mergeMap(a.provs, b.provs, normProv, isProv, PROV_IDS.length),
       perm: mergeMap(a.perm, b.perm, normPerm, isAppId, MAX_PERMS),
       ks: better(normKs(a.ks), normKs(b.ks)) || { m: 0, on: 0 },
@@ -3919,6 +3946,7 @@
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
+    fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS,
     provBase: provBase, normBase: normBase,
