@@ -300,6 +300,7 @@ var state = {
   playerCh: null,            // channel currently in the dialog
   streamIdx: 0,              // index into playerCh.streams[]
   hls: null,                 // live Hls instance (destroyed on switch)
+  cast: null,                // CAST-1 controller (cast.js), set by setupCast
   persistedVol: 1,           // loaded from localStorage
   persistedMuted: false,     // loaded from localStorage
   // Wave 43 — own playlists + programme guides (device memory only):
@@ -2268,6 +2269,14 @@ function tryStream(){
 
   // Update UI
   updatePlayerUI();
+  if(state.cast){
+    state.cast.update();   // a TV that is on follows the channel
+    if(castOn() && status){
+      status.textContent = state.cast.t("net.on");
+      status.classList.remove("err");
+      status.removeAttribute("hidden");
+    }
+  }
 }
 
 /* ===== STREAM PICKER ===== */
@@ -2413,6 +2422,54 @@ function toggleFullscreen(){
 }
 
 /* ===== PLAYER CONTROLS ===== */
+
+// CAST-1: "Play on…" (../cast.js). hls.js plays through MSE, which no
+// TV can take, so cast.js sends the channel's own address from a hidden
+// element (probe) and this player stays quiet while a TV has it.
+function castOn(){
+  return !!(state.cast && state.cast.remote() === "connected");
+}
+
+function castStreamUrl(){
+  var ch = state.playerCh;
+  // After every stream failed here, a TV may still play one: the last tried.
+  var n = ch && ch.streams ? ch.streams.length : 0;
+  var s = n ? ch.streams[Math.min(state.streamIdx, n - 1)] : null;
+  return s && /^https:\/\//i.test(s.url || "") ? s.url : "";
+}
+
+function setupCast(){
+  var btn = $("#tvp-cast");
+  var video = $("#tvp-video");
+  if(!btn || !video) return;
+  if(!window.OrosCast){ btn.setAttribute("hidden", ""); return; }
+  state.cast = window.OrosCast.attach({
+    app: "television", button: btn, lang: activeLang(), probe: true,
+    media: function(){ return $("#tvp-video"); },
+    url: castStreamUrl,
+    onRemote: function(st){
+      var v = $("#tvp-video"), status = $("#tvp-status");
+      if(st === "connected"){
+        if(v) v.pause();
+        if(state.hls){ try{ state.hls.stopLoad(); }catch(e){} }
+        if(status){
+          status.textContent = state.cast.t("net.on");
+          status.classList.remove("err");
+          status.removeAttribute("hidden");
+        }
+      }else if(st === "disconnected"){
+        if(status) status.setAttribute("hidden", "");
+        if(state.playerCh && v){
+          if(state.hls){ try{ state.hls.startLoad(); }catch(e){} }
+          v.play().catch(function(){});
+        }
+      }
+      updatePlayerUI();
+    }
+  });
+  // A stream that starts while a TV has the channel stays quiet here.
+  video.addEventListener("play", function(){ if(castOn()) video.pause(); });
+}
 
 function setupPlayerControls(){
   var playBtn = $("#tvp-play");
@@ -2735,6 +2792,7 @@ function wire(){
   setupFilters();
   setupSearch();
   setupPlayerControls();
+  setupCast();
   setupSourcesDialog();
   setupProgDialog();
 

@@ -31,6 +31,12 @@ Playback runs in orOS itself, so it keeps going when you close the app. A chip i
 ### Sleep timer
 Tap ☾ and choose 15, 30, 60 or 90 minutes. The time left shows in the player bar; the sound fades out during the last minute and playback stops when it runs out. `Turn off` cancels the timer.
 
+### Play on a speaker or TV
+The button with the screen-and-waves icon in the player bar (`Play on…`) chooses where the station plays.
+- **Bluetooth speaker or headphones:** pair them in your system's Bluetooth settings (on orOS USB: Quick settings › Bluetooth). orOS then plays through them like any other speaker. Where the browser lets a page choose the output (Chrome and Edge on a computer, once a page has had microphone access; Firefox through `Choose a speaker…`), the outputs are listed under `This device`. orOS never asks for the microphone just for this.
+- **Chromecast, AirPlay or a TV:** `Chromecast, AirPlay or TV` opens the browser's own list of devices. Chrome on Android finds Chromecast and Cast TVs, Safari finds AirPlay. orOS loads no code from Google or Apple for this; the browser does the connecting. While a TV plays, the button turns gold; open it again and choose `Stop or change`.
+The station keeps playing on the TV or speaker when you close Radio.
+
 ## Station tools
 The ⋯ button in the player bar opens the tools for the station that's playing.
 

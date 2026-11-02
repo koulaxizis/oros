@@ -13,6 +13,11 @@ The player shows the channel's name, its country and labels, and controls for pl
 
 Some channels have several streams. If one fails, the app tries the next one on its own (`Stream failed — trying next…`). When a channel has more than one stream, the `Alternate streams` menu lets you pick one yourself. If nothing works, you get a notification that the channel couldn't play on this device.
 
+## Play on a TV or speaker
+The button with the screen-and-waves icon in the player (`Play on…`) chooses where the channel plays.
+- **Chromecast, AirPlay or a TV:** `Chromecast, AirPlay or TV` opens the browser's own list of devices. Chrome on Android finds Chromecast and Cast TVs, Safari finds AirPlay. orOS loads no code from Google or Apple for this; the browser does the connecting. The TV gets the channel's own address, so a channel only goes if its stream uses https and the TV can play it. While a TV plays, the player here stays paused and says so; changing channel or stream changes it on the TV too. Open the button again and choose `Stop or change` to bring it back.
+- **Bluetooth speaker or headphones:** pair them in your system's Bluetooth settings (on orOS USB: Quick settings › Bluetooth). Where the browser lets a page choose the output, the outputs are listed under `This device`.
+
 ## Your own playlists
 Open `Lists & guides` (top right) to add an M3U playlist: paste its address and press `Add`, or press `Open file…` to pick a `.m3u` file. `My lists` then shows its channels; the `Group` menu narrows them by the playlist's groups, and the search box searches them. Tap a channel to watch it in the same player, and star it like any other channel.
 

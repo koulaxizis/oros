@@ -119,6 +119,12 @@
    ]
   },
   {
+   "app": "cast",
+   "files": [
+    "cast.js"
+   ]
+  },
+  {
    "app": "certificates",
    "files": [
     "certificates/certificates.js",

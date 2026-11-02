@@ -1,0 +1,21 @@
+orosPack("de", "cast", {
+ "btn": "Abspielen auf…",
+ "title": "Abspielen auf",
+ "close": "Schließen",
+ "dev.head": "Dieses Gerät",
+ "dev.system": "Systemausgabe",
+ "dev.default": "Standardausgabe",
+ "dev.n": "Ausgabe {n}",
+ "dev.select": "Lautsprecher wählen…",
+ "dev.fail": "Diese Ausgabe kann gerade nicht verwendet werden.",
+ "bt.note": "Bluetooth-Lautsprecher oder -Kopfhörer: in den Bluetooth-Einstellungen des Systems koppeln (auf orOS USB: Schnelleinstellungen › Bluetooth). Danach spielt orOS darüber.",
+ "net.head": "Fernseher oder Lautsprecher im Netzwerk",
+ "net.remote": "Chromecast, AirPlay oder Fernseher",
+ "net.remote.sub": "Der Browser zeigt die Geräte, die er findet",
+ "net.on": "Läuft auf einem Fernseher oder Lautsprecher",
+ "net.connecting": "Verbinden…",
+ "net.manage": "Beenden oder wechseln",
+ "net.none": "Dieser Browser hat keinen Fernseher und keinen Lautsprecher gefunden. Chrome auf Android findet Chromecast-Geräte, Safari findet AirPlay.",
+ "net.nostream": "Dieser Sender oder Kanal kann nicht an einen Fernseher gesendet werden.",
+ "net.notfound": "Kein Fernseher und kein Lautsprecher hat geantwortet."
+});
