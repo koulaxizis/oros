@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.04.01
+- **Use at your own risk.** orOS is free software without any warranty, and nobody can be held liable for lost data, so keep backups and sync turned on. A short notice is now in Info, on the download page and in Help › Privacy, and the full text is in the [privacy policy](https://useoros.online/privacy.html?lang=en#disclaimer).
+
+## Version 5.04.00
+- **Free pictures again, with no account.** Pollinations now charges for pictures and refuses them without a key, so Atelier's `Image from text` uses AI Horde by default: free, open source, no account (volunteers make the pictures, so at busy times it can take a minute or two). Pollinations stays a choice in Assistant › Settings › Pictures with your own secret key (it starts with `sk_`: create it under `Secrets`, not `Apps`), and the Assistant no longer lists it as free. `Test` now says when a key is missing.
+
 ## Version 5.03.01
 - **Notification count readable in every colour.** In the Tux colour (dark theme) the number on the notification bell was white on a white circle. The number on the bell, the tour's Next button, a pressed key on the on-screen keyboard and the main button of shell dialogs now pick dark or white text, whichever reads on the colour you chose, in all 16 colours and in high contrast.
 

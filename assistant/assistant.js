@@ -105,7 +105,8 @@
       "set.wsBaseBad": "That address doesn't look right. It starts with https://",
       "set.img": "Pictures (image AI)", "set.imgProv": "Make pictures with",
       "set.imgHint": "Used by Atelier for Image from text, Magic edit and Magic expand. Kept on this device only. Only your description (and, to edit, the picture) goes to the service you pick, straight from this device.",
-      "img.opt.off": "Default: Pollinations (free, no key)", "img.opt.pollinations": "Pollinations (free, no key needed)",
+      "img.opt.off": "Default: AI Horde (free, no account)", "img.opt.horde": "AI Horde (free, no account, volunteers)",
+      "img.opt.pollinations": "Pollinations (your key, paid with Pollen)",
       "img.opt.huggingface": "Hugging Face (free account, small monthly credit)",
       "img.opt.openai": "OpenAI gpt-image-1 (your key, paid)", "img.opt.stability": "Stability AI (your key, paid credits)",
       "img.opt.sdwebui": "Stable Diffusion WebUI / Forge on my computer (free, open source)",
@@ -117,7 +118,9 @@
       "img.err.limit": "No credit left, or too many pictures for now. Try later or add credit.",
       "img.err.net": "Couldn't reach the service. Check the internet; for WebUI check that it runs with --api and --cors-allow-origins.",
       "img.err.http": "The service answered with an error: {why}", "img.err.bad": "The answer was not a picture.",
-      "img.steps.pollinations": "Nothing to do: it works at once, free and with no account.|Optional: for faster pictures with no waiting line, make a free account at enter.pollinations.ai, create a key there and paste it below.|Your description goes to Pollinations (pollinations.ai, an open-source project).",
+      "img.err.nokey": "{name} needs a key. Make one with the steps above, save it, then Test.",
+      "img.steps.horde": "Nothing to do: it works at once, free and with no account. Press Test to check.|Pictures are made by volunteers’ computers, so at busy times you may wait a minute or two.|Optional: a free account at aihorde.net/register gives a key that moves you up the waiting line. Paste it below and press Save key.|Your description goes to AI Horde (aihorde.net, an open-source project).",
+      "img.steps.pollinations": "Pollinations is no longer free: pictures are paid with Pollen (about $1 for 1 Pollen); free Pollen comes only from its Quests.|Make an account at enter.pollinations.ai. Under “Secrets” press Create, not under “Apps” (that one is for apps that ask for a callback link). Any name will do, for example orOS; set a spending limit.|Copy the key (it starts with sk_), paste it below, press Save key, then Test.|Your description goes to Pollinations (pollinations.ai).",
       "img.steps.huggingface": "Make a free account at huggingface.co.|Open Settings › Access Tokens and press “Create new token”. Choose “Fine-grained”, tick “Make calls to Inference Providers”, create it and copy it.|Paste it below and press Save key, then Test.|Free accounts get a small monthly credit; more needs a paid plan.",
       "img.steps.openai": "Sign in at platform.openai.com and add a payment method (Settings › Billing).|gpt-image-1 may ask you to verify your organisation once (Settings › Organization › Verify).|Open API keys › “Create new secret key”, copy it, paste it below, press Save key, then Test.|Paid per picture (from about $0.01 to $0.25, by size and quality).",
       "img.steps.stability": "Make an account at platform.stability.ai: new accounts get some free credits.|Open Account › API Keys and copy your key.|Paste it below, press Save key, then Test (it shows your credit).|Paid with credits (about 3 per picture with Core).",
@@ -169,7 +172,7 @@
       "set.keyHintFree": "The key is kept on this device, encrypted, and is sent only to {host}. {name} has a free plan: a free account and key are enough, with daily limits. Nothing is charged unless you add a way to pay there.",
       "set.note.github": "The key is a GitHub personal access token (fine-grained) with the \u201cModels\u201d permission set to read. Free with daily limits for every GitHub account.",
       "set.note.cohere": "A free trial key is for personal use and testing, not for business use, and has a monthly limit.",
-      "set.note.pollinations": "Use a publishable key (it starts with pk_). The free tier has hourly limits.",
+      "set.note.pollinations": "Pollinations is no longer free: it is paid with Pollen (free Pollen only from its Quests). Use a secret key (it starts with sk_): at enter.pollinations.ai press Create under “Secrets”, not under “Apps”, and set a spending limit. For a free service pick Groq or Cerebras.",
       "set.note.openrouter": "OpenRouter has models that cost nothing (their names end in \u201c:free\u201d): tick \u201cOnly free models\u201d and load the list. A free key is enough for them, with daily limits.",
       "set.freeOnly": "Only free models",
       "set.modelsFree": "The key works · {n} free models",
@@ -676,7 +679,8 @@
       "set.wsBaseBad": "Η διεύθυνση δεν φαίνεται σωστή. Ξεκινά με https://",
       "set.img": "Εικόνες (AI εικόνας)", "set.imgProv": "Φτιάχνω εικόνες με",
       "set.imgHint": "Το χρησιμοποιεί το Ατελιέ για Εικόνα από κείμενο, Μαγική επεξεργασία και Μαγική επέκταση. Μένει μόνο σε αυτή τη συσκευή. Μόνο η περιγραφή σου (και, για επεξεργασία, η εικόνα) πηγαίνει στην υπηρεσία που διαλέγεις, απευθείας από αυτή τη συσκευή.",
-      "img.opt.off": "Προεπιλογή: Pollinations (δωρεάν, χωρίς κλειδί)", "img.opt.pollinations": "Pollinations (δωρεάν, χωρίς κλειδί)",
+      "img.opt.off": "Προεπιλογή: AI Horde (δωρεάν, χωρίς λογαριασμό)", "img.opt.horde": "AI Horde (δωρεάν, χωρίς λογαριασμό, εθελοντές)",
+      "img.opt.pollinations": "Pollinations (δικό σου κλειδί, πληρώνεται με Pollen)",
       "img.opt.huggingface": "Hugging Face (δωρεάν λογαριασμός, μικρή μηνιαία πίστωση)",
       "img.opt.openai": "OpenAI gpt-image-1 (δικό σου κλειδί, επί πληρωμή)", "img.opt.stability": "Stability AI (δικό σου κλειδί, πληρωμένα credits)",
       "img.opt.sdwebui": "Stable Diffusion WebUI / Forge στον υπολογιστή μου (δωρεάν, ανοιχτός κώδικας)",
@@ -688,7 +692,9 @@
       "img.err.limit": "Δεν έμεινε πίστωση ή ζητήθηκαν πολλές εικόνες. Δοκίμασε αργότερα ή πρόσθεσε πίστωση.",
       "img.err.net": "Δεν βρέθηκε η υπηρεσία. Έλεγξε τη σύνδεση· για το WebUI έλεγξε ότι τρέχει με --api και --cors-allow-origins.",
       "img.err.http": "Η υπηρεσία απάντησε με σφάλμα: {why}", "img.err.bad": "Η απάντηση δεν ήταν εικόνα.",
-      "img.steps.pollinations": "Δεν χρειάζεται τίποτα: δουλεύει αμέσως, δωρεάν και χωρίς λογαριασμό.|Προαιρετικά: για πιο γρήγορες εικόνες χωρίς αναμονή, φτιάξε δωρεάν λογαριασμό στο enter.pollinations.ai, δημιούργησε εκεί κλειδί και επικόλλησέ το παρακάτω.|Η περιγραφή σου πηγαίνει στο Pollinations (pollinations.ai, έργο ανοιχτού κώδικα).",
+      "img.err.nokey": "Το {name} θέλει κλειδί. Φτιάξε ένα με τα βήματα παραπάνω, αποθήκευσέ το και πάτα Δοκιμή.",
+      "img.steps.horde": "Δεν χρειάζεται τίποτα: δουλεύει αμέσως, δωρεάν και χωρίς λογαριασμό. Πάτα Δοκιμή για έλεγχο.|Τις εικόνες τις φτιάχνουν υπολογιστές εθελοντών, οπότε τις ώρες αιχμής ίσως περιμένεις ένα με δύο λεπτά.|Προαιρετικά: ένας δωρεάν λογαριασμός στο aihorde.net/register δίνει κλειδί που σε ανεβάζει στη σειρά αναμονής. Επικόλλησέ το παρακάτω και πάτα Αποθήκευση κλειδιού.|Η περιγραφή σου πηγαίνει στο AI Horde (aihorde.net, έργο ανοιχτού κώδικα).",
+      "img.steps.pollinations": "Το Pollinations δεν είναι πια δωρεάν: οι εικόνες πληρώνονται με Pollen (περίπου 1 $ για 1 Pollen)· δωρεάν Pollen δίνουν μόνο τα Quests του.|Φτιάξε λογαριασμό στο enter.pollinations.ai. Στο «Secrets» πάτα Create, όχι στο «Apps» (εκείνο είναι για εφαρμογές που ζητούν callback link). Οποιοδήποτε όνομα κάνει, π.χ. orOS· βάλε όριο εξόδων.|Αντέγραψε το κλειδί (ξεκινά με sk_), επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή.|Η περιγραφή σου πηγαίνει στο Pollinations (pollinations.ai).",
       "img.steps.huggingface": "Φτιάξε δωρεάν λογαριασμό στο huggingface.co.|Άνοιξε Settings › Access Tokens και πάτα «Create new token». Διάλεξε «Fine-grained», τσέκαρε «Make calls to Inference Providers», δημιούργησέ το και αντέγραψέ το.|Επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή.|Οι δωρεάν λογαριασμοί έχουν μικρή μηνιαία πίστωση· για περισσότερα χρειάζεται συνδρομή.",
       "img.steps.openai": "Μπες στο platform.openai.com και πρόσθεσε τρόπο πληρωμής (Settings › Billing).|Για το gpt-image-1 μπορεί να ζητηθεί μία φορά επιβεβαίωση του οργανισμού (Settings › Organization › Verify).|Άνοιξε API keys › «Create new secret key», αντέγραψέ το, επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή.|Χρέωση ανά εικόνα (από περίπου $0,01 έως $0,25, ανάλογα με μέγεθος και ποιότητα).",
       "img.steps.stability": "Φτιάξε λογαριασμό στο platform.stability.ai: οι νέοι λογαριασμοί παίρνουν μερικά δωρεάν credits.|Άνοιξε Account › API Keys και αντέγραψε το κλειδί σου.|Επικόλλησέ το παρακάτω, πάτα Αποθήκευση κλειδιού και μετά Δοκιμή (δείχνει την πίστωσή σου).|Πληρώνεται με credits (περίπου 3 ανά εικόνα με το Core).",
@@ -740,7 +746,7 @@
       "set.keyHintFree": "Το κλειδί μένει κρυπτογραφημένο σε αυτή τη συσκευή και στέλνεται μόνο στο {host}. Το {name} έχει δωρεάν πρόγραμμα: αρκεί ένας δωρεάν λογαριασμός και κλειδί, με ημερήσια όρια. Δεν χρεώνεσαι τίποτα αν δεν βάλεις εκεί τρόπο πληρωμής.",
       "set.note.github": "Το κλειδί είναι ένα personal access token του GitHub (fine-grained) με την άδεια «Models» σε ανάγνωση. Δωρεάν με ημερήσια όρια για κάθε λογαριασμό GitHub.",
       "set.note.cohere": "Το δωρεάν δοκιμαστικό κλειδί είναι για προσωπική χρήση και δοκιμές, όχι για επαγγελματική χρήση, και έχει μηνιαίο όριο.",
-      "set.note.pollinations": "Χρησιμοποίησε δημόσιο κλειδί (ξεκινά με pk_). Το δωρεάν πρόγραμμα έχει ωριαία όρια.",
+      "set.note.pollinations": "Το Pollinations δεν είναι πια δωρεάν: πληρώνεται με Pollen (δωρεάν Pollen μόνο από τα Quests του). Χρησιμοποίησε μυστικό κλειδί (ξεκινά με sk_): στο enter.pollinations.ai πάτα Create στο «Secrets», όχι στο «Apps», και βάλε όριο εξόδων. Για δωρεάν υπηρεσία διάλεξε Groq ή Cerebras.",
       "set.note.openrouter": "Το OpenRouter έχει μοντέλα που δεν κοστίζουν τίποτα (τα ονόματά τους τελειώνουν σε «:free»): τσέκαρε «Μόνο δωρεάν μοντέλα» και φόρτωσε τη λίστα. Αρκεί ένα δωρεάν κλειδί, με ημερήσια όρια.",
       "set.freeOnly": "Μόνο δωρεάν μοντέλα",
       "set.modelsFree": "Το κλειδί δουλεύει · {n} δωρεάν μοντέλα",
@@ -7131,6 +7137,7 @@
           var c2 = IA.use(imPref);
           (P.keyId ? loadKey(P.keyId) : Promise.resolve(null)).then(function (k) {
             var key = k && k.key || "";
+            if (P.key === "yes" && !key) throw { code: "nokey" };
             var req = IA.buildTest(c2, key);
             var pic = !req;
             if (pic) req = IA.buildGenerate(c2, key, { prompt: "a red apple on a white table", w: 1, h: 1 });
@@ -7140,7 +7147,7 @@
             });
           }).catch(function (e) {
             var code = e && e.code || "net";
-            stat.textContent = t("img.err." + (/^(key|limit|net|http|bad)$/.test(code) ? code : "net"), { why: (e && e.status ? e.status + " " : "") + (e && e.msg || "") });
+            stat.textContent = t("img.err." + (/^(key|nokey|limit|net|http|bad)$/.test(code) ? code : "net"), { why: (e && e.status ? e.status + " " : "") + (e && e.msg || ""), name: P.name });
             stat.classList.add("err");
           }).then(function () { tBtn2.disabled = false; });
         });

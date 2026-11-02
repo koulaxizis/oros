@@ -1,8 +1,8 @@
 // ============================================================
 // orOS Atelier — imagine.js: Image from text (v1.0.0)
 // A picture made from a description, by the image AI chosen in the
-// Assistant (Settings › Pictures; assistant/imgai.js): Pollinations
-// (free, the default), Hugging Face, OpenAI, Stability AI or Stable
+// Assistant (Settings › Pictures; assistant/imgai.js): AI Horde
+// (free, no account, the default), Pollinations, Hugging Face, OpenAI, Stability AI or Stable
 // Diffusion WebUI / Forge on the user's own computer. Only the
 // description goes to that service, straight from this device; the
 // key is the Assistant's own (read, never written, by AT.ai.readKey).

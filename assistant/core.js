@@ -107,7 +107,8 @@
       model: "Meta-Llama-3.3-70B-Instruct"
     },
     pollinations: {
-      name: "Pollinations", kind: "openai", key: "yes", free: 1,
+      // Paid with Pollen since 2026 (no free plan any more): not free.
+      name: "Pollinations", kind: "openai", key: "yes",
       base: "https://gen.pollinations.ai/v1",
       keyUrl: "https://enter.pollinations.ai/",
       model: "openai"
@@ -168,7 +169,7 @@
   };
   var KIT_IDS = ["ollama", "lmstudio", "llamacpp", "jan", "localai", "vllm", "koboldcpp"];
   // Web search services that take a key of their own (section 3e).
-  var KEY_EXTRA = ["tavily", "stability"];   // stability: image AI (imgai.js)
+  var KEY_EXTRA = ["tavily", "stability", "horde"];   // stability, horde: image AI (imgai.js)
   var KEY_IDS = PROV_IDS.concat(KEY_EXTRA);
   var SEARCH_IDS = ["auto", "wiki", "tavily", "searx"];
 

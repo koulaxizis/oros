@@ -14,7 +14,7 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 function memLS() { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); } }; }
 
-test("choice: normalised, device-local, Pollinations by default", () => {
+test("choice: normalised, device-local, AI Horde by default", () => {
   assert.deepEqual(IA.normPref({ prov: "google", base: "javascript:x", model: 5 }), { prov: "", base: "", model: "" });
   const ls = memLS();
   assert.equal(IA.readPref(ls).prov, "");
@@ -22,7 +22,7 @@ test("choice: normalised, device-local, Pollinations by default", () => {
   assert.deepEqual(IA.readPref(ls), { prov: "sdwebui", base: "http://127.0.0.1:7860", model: "sdxl" });
   assert.equal(IA.conf({ prov: "sdwebui" }).base, "http://127.0.0.1:7860");
   assert.equal(IA.conf({}), null);
-  assert.equal(IA.use({}).pid, "pollinations");
+  assert.equal(IA.use({}).pid, "horde");
   assert.equal(IA.use({ prov: "openai" }).model, "gpt-image-1");
 });
 
@@ -52,15 +52,33 @@ test("styled: a style word added to the description", () => {
 });
 
 test("buildGenerate: each service's request", () => {
-  const free = IA.buildGenerate(IA.use({}), "", { prompt: "a red apple", w: 1, h: 1, seed: 7 });
-  assert.equal(free.method, "GET");
-  assert.ok(free.url.startsWith("https://image.pollinations.ai/prompt/a%20red%20apple?"));
-  assert.match(free.url, /width=1024&height=1024/);
-  assert.match(free.url, /seed=7/);
-  assert.deepEqual(free.headers, {});
-  const keyed = IA.buildGenerate(IA.use({}), "pk", { prompt: "x/y", w: 1, h: 1 });
-  assert.ok(keyed.url.startsWith("https://gen.pollinations.ai/image/x%2Fy?"));
-  assert.equal(keyed.headers.Authorization, "Bearer pk");
+  // AI Horde: free, no account; the anonymous key when none is saved
+  const ho = IA.buildGenerate(IA.use({}), "", { prompt: "a red apple", w: 2, h: 1, n: 9 });
+  assert.equal(ho.url, "https://aihorde.net/api/v2/generate/async");
+  assert.equal(ho.method, "POST");
+  assert.equal(ho.headers.apikey, "0000000000");
+  assert.match(ho.headers["Client-Agent"], /^orOS:/);
+  assert.equal(ho.json.prompt, "a red apple");
+  assert.deepEqual([ho.json.params.width, ho.json.params.height, ho.json.params.n], [1024, 512, 2]);
+  assert.equal(ho.json.nsfw, false);
+  assert.equal(ho.json.r2, false);
+  assert.deepEqual(ho.json.models, ["AlbedoBase XL (SDXL)"]);
+  assert.equal(ho.reply, "horde");
+  assert.equal(IA.buildGenerate(IA.use({}), "own", { prompt: "p", w: 1, h: 1 }).headers.apikey, "own");
+  assert.equal(IA.PROVIDERS.horde.key, "opt");
+  // Pollinations needs a secret key now (no free plan, no keyless host)
+  assert.equal(IA.PROVIDERS.pollinations.key, "yes");
+  assert.ok(!IA.PROVIDERS.pollinations.free);
+  assert.equal(IA.PROVIDERS.pollinations.freeBase, undefined);
+  const pol = IA.buildGenerate(IA.conf({ prov: "pollinations" }), "sk_x", { prompt: "a red apple", w: 1, h: 1, seed: 7 });
+  assert.equal(pol.method, "GET");
+  assert.ok(pol.url.startsWith("https://gen.pollinations.ai/image/a%20red%20apple?"));
+  assert.match(pol.url, /width=1024&height=1024/);
+  assert.match(pol.url, /seed=7/);
+  assert.equal(pol.headers.Authorization, "Bearer sk_x");
+  const slash = IA.buildGenerate(IA.conf({ prov: "pollinations" }), "sk_x", { prompt: "x/y", w: 1, h: 1 });
+  assert.ok(slash.url.startsWith("https://gen.pollinations.ai/image/x%2Fy?"));
+  assert.ok(!/image\.pollinations\.ai/.test(read("assistant/imgai.js")));
 
   const hf = IA.buildGenerate(IA.conf({ prov: "huggingface" }), "hk", { prompt: "p", w: 1, h: 1 });
   assert.equal(hf.url, "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell");
@@ -95,7 +113,10 @@ test("buildEdit / buildExpand / buildTest", () => {
   const so = IA.buildExpand(IA.conf({ prov: "stability" }), "k", { original: img, pad: { left: 100, down: 3000 } });
   assert.match(so.url, /edit\/outpaint$/);
   assert.deepEqual(so.form.filter((f) => ["left", "down", "right"].includes(f[0])), [["left", "100"], ["down", "2000"]]);
-  assert.equal(IA.buildTest(IA.use({}), ""), null);
+  assert.equal(IA.buildTest(IA.conf({ prov: "pollinations" }), "sk"), null);
+  const ht = IA.buildTest(IA.use({}), "");
+  assert.equal(ht.url, "https://aihorde.net/api/v2/find_user");
+  assert.equal(ht.headers.apikey, "0000000000");
   assert.match(IA.buildTest(IA.conf({ prov: "stability" }), "k").url, /\/v1\/user\/balance$/);
   assert.match(IA.buildTest(IA.conf({ prov: "sdwebui" }), "").url, /\/sdapi\/v1\/sd-models$/);
 });
@@ -117,4 +138,36 @@ test("wiring: Assistant settings, Atelier, precache, help, credits", () => {
   assert.ok(read("atelier/help.en.txt").includes("`Image from text`"));
   assert.ok(read("CREDITS.md").includes("Image AI you choose"));
   assert.ok(read("translations.js").includes("Image AI you choose"));   // the credits line (shell.js cr.* key)
+});
+
+test("AI Horde: waits for the volunteers, then returns the pictures", async () => {
+  const calls = [];
+  let checks = 0;
+  global.fetch = async (url, init) => {
+    calls.push([init && init.method || "GET", url]);
+    if (url.endsWith("/generate/async")) return { ok: true, json: async () => ({ id: "abc-123" }) };
+    if (url.includes("/generate/check/abc-123")) { checks++; return { ok: true, json: async () => ({ done: checks >= 2, is_possible: true }) }; }
+    if (url.includes("/generate/status/abc-123")) return { ok: true, json: async () => ({ generations: [{ img: "AAAA" }, { img: "BBBB", censored: true }] }) };
+    throw new Error("unexpected " + url);
+  };
+  try {
+    const req = IA.buildGenerate(IA.use({}), "", { prompt: "p", w: 1, h: 1 });
+    const pics = await IA.run(req, null, { sleep: async () => {}, now: () => 0 });
+    assert.equal(pics.length, 1);                         // the censored one is left out
+    assert.equal(pics[0].type, "image/webp");
+    assert.equal(checks, 2);
+    assert.deepEqual(calls.map((c) => c[0]), ["POST", "GET", "GET", "GET"]);
+    // no worker for the model: the job is cancelled and the error says so
+    checks = 0;
+    global.fetch = async (url, init) => {
+      calls.push([init && init.method || "GET", url]);
+      if (url.endsWith("/generate/async")) return { ok: true, json: async () => ({ id: "abc-123" }) };
+      if (url.includes("/generate/check/")) return { ok: true, json: async () => ({ done: false, is_possible: false }) };
+      return { ok: true, json: async () => ({}) };
+    };
+    await assert.rejects(IA.run(req, null, { sleep: async () => {}, now: () => 0 }), (e) => e.code === "http" && /no worker/.test(e.msg));
+    assert.ok(calls.some((c) => c[0] === "DELETE"));
+    // a bad job id is never put into a URL
+    await assert.rejects(IA.hordeWait(req, { id: "../x" }, null), (e) => e.code === "bad");
+  } finally { delete global.fetch; }
 });

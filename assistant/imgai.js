@@ -1,11 +1,14 @@
 // ============================================================
-// orOS — assistant/imgai.js: image AI providers (v1.0.0)
+// orOS — assistant/imgai.js: image AI providers (v1.1.0)
 // Shared by the Assistant (Settings › Image AI: choose, key, test)
 // and Atelier (Image from text; Magic edit and Magic expand). The
 // choice is kept on this device only (localStorage IMG_PREF); keys
 // are the Assistant's own sealed keys (IndexedDB "oros-assistant"),
 // under the id in `keyId`: the same key as the text provider where
 // the service is the same (OpenAI, Hugging Face, Pollinations).
+// AI Horde (the free default since v1.1.0) needs no account: with no
+// key it sends the anonymous key, and a free AI Horde key only gives
+// a place further up its volunteers' queue.
 // Every request goes from this device straight to the provider (or
 // the user's own computer), with only the description and, to edit,
 // the picture and its mask. No Google service is offered.
@@ -21,9 +24,15 @@
   // painted part (Magic edit). expand: can grow a picture (Magic
   // expand). n: pictures per request.
   var PROVIDERS = {
+    horde: {
+      name: "AI Horde", kind: "horde", key: "opt", keyId: "horde", free: 1, n: 2,
+      base: "https://aihorde.net/api/v2", keyUrl: "https://aihorde.net/register", model: "AlbedoBase XL (SDXL)"
+    },
     pollinations: {
-      name: "Pollinations", kind: "pollinations", key: "opt", keyId: "pollinations", free: 1, n: 1,
-      base: "https://gen.pollinations.ai", freeBase: "https://image.pollinations.ai",
+      // A secret key (sk_) is needed: since 2026 Pollinations answers
+      // 401 without one and is paid with Pollen (gen.pollinations.ai).
+      name: "Pollinations", kind: "pollinations", key: "yes", keyId: "pollinations", n: 1,
+      base: "https://gen.pollinations.ai",
       keyUrl: "https://enter.pollinations.ai/", model: "flux"
     },
     huggingface: {
@@ -44,10 +53,14 @@
       base: "", defaultBase: "http://127.0.0.1:7860", model: ""
     }
   };
-  var IDS = ["pollinations", "huggingface", "openai", "stability", "sdwebui"];
+  var IDS = ["horde", "pollinations", "huggingface", "openai", "stability", "sdwebui"];
   // Key ids the Assistant keeps for image AI only (the others are the
   // text providers' own).
-  var KEY_EXTRA = ["stability"];
+  var KEY_EXTRA = ["stability", "horde"];
+  // AI Horde: the anonymous key, and how this app names itself there
+  // (the Horde asks every client for a Client-Agent).
+  var HORDE_ANON = "0000000000", HORDE_AGENT = "orOS:1.1:https://useoros.online";
+  var HORDE_WAIT = 300000, HORDE_POLL = 3000;
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
@@ -76,8 +89,8 @@
     return { pid: pref.prov, p: p, base: p.local ? (pref.base || p.defaultBase) : p.base, model: pref.model || p.model };
   }
 
-  // The choice, or the free default (Pollinations) when none is made.
-  function use(pref) { return conf(pref) || conf({ prov: "pollinations" }); }
+  // The choice, or the free default (AI Horde) when none is made.
+  function use(pref) { return conf(pref) || conf({ prov: "horde" }); }
 
   // A style word added to the description (English: the models read
   // English best). "" = as written.
@@ -118,12 +131,16 @@
     var pid = cf.pid, prompt = str(opts.prompt, MAX_PROMPT).trim(), n = Math.max(1, Math.min(cf.p.n, opts.n || 1));
     var size = sizeFor(pid, opts.w, opts.h), wh = size.split("x");
     var auth = key ? { Authorization: "Bearer " + key } : {};
+    if (pid === "horde") {
+      return { url: cf.base + "/generate/async", method: "POST", headers: hordeHeaders(key, true),
+        json: { prompt: prompt, params: { width: +wh[0], height: +wh[1], steps: 20, n: n, sampler_name: "k_euler_a", cfg_scale: 6 },
+                models: cf.model ? [cf.model] : [], nsfw: false, censor_nsfw: true, r2: false, shared: false },
+        reply: "horde" };
+    }
     if (pid === "pollinations") {
       var q = "?model=" + encodeURIComponent(cf.model || "flux") + "&width=" + wh[0] + "&height=" + wh[1] +
         "&nologo=true&private=true&seed=" + (opts.seed != null ? opts.seed : Math.floor(Math.random() * 1e9));
-      return key
-        ? { url: cf.p.base + "/image/" + encodeURIComponent(prompt) + q, method: "GET", headers: auth, reply: "image" }
-        : { url: cf.p.freeBase + "/prompt/" + encodeURIComponent(prompt) + q, method: "GET", headers: {}, reply: "image" };
+      return { url: cf.p.base + "/image/" + encodeURIComponent(prompt) + q, method: "GET", headers: auth, reply: "image" };
     }
     if (pid === "huggingface") {
       return { url: cf.base + "/" + cf.model.split("/").map(encodeURIComponent).join("/"), method: "POST",
@@ -187,9 +204,16 @@
       form: form, reply: "image" };
   }
 
+  function hordeHeaders(key, json) {
+    var h = { apikey: key || HORDE_ANON, "Client-Agent": HORDE_AGENT };
+    if (json) h["Content-Type"] = "application/json";
+    return h;
+  }
+
   // A cheap request that shows whether the key / address works.
   function buildTest(cf, key) {
     var auth = key ? { Authorization: "Bearer " + key } : {};
+    if (cf.pid === "horde") return { url: cf.base + "/find_user", method: "GET", headers: hordeHeaders(key) };
     if (cf.pid === "pollinations") return null;               // nothing to check without generating
     if (cf.pid === "huggingface") return { url: "https://huggingface.co/api/whoami-v2", method: "GET", headers: auth };
     if (cf.pid === "openai") return { url: cf.base + "/models", method: "GET", headers: auth };
@@ -207,8 +231,55 @@
     for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
     return new Blob([u], { type: type || "image/png" });
   }
+  // AI Horde answers a job id; its volunteers make the picture while
+  // we ask every few seconds, then fetch it (base64 WebP). A stop
+  // cancels the job there too.
+  function hordeWait(req, job, signal, deps) {
+    deps = deps || {};
+    var base = req.url.replace(/\/generate\/async$/, ""), id = String(job && job.id || "");
+    if (!/^[\w-]{1,80}$/.test(id)) return Promise.reject(new ImageError("bad"));
+    var get = function (path, method) {
+      return fetch(base + path + id, { method: method || "GET", headers: { "Client-Agent": HORDE_AGENT }, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })
+        .catch(function () { throw new ImageError("net"); })
+        .then(function (res) {
+          if (!res.ok) throw new ImageError(res.status === 429 ? "limit" : "http", "", res.status);
+          return res.json();
+        });
+    };
+    var sleep = deps.sleep || function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+    var now = deps.now || Date.now, t0 = now();
+    var stop = function () { get("/generate/status/", "DELETE").catch(function () {}); };
+    if (signal) signal.addEventListener("abort", stop, { once: true });
+    var loop = function () {
+      if (signal && signal.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
+      if (now() - t0 > HORDE_WAIT) { stop(); return Promise.reject(new ImageError("http", "timeout")); }
+      return get("/generate/check/").then(function (c) {
+        if (c.faulted) throw new ImageError("http", "faulted");
+        if (c.is_possible === false) { stop(); throw new ImageError("http", "no worker for this model"); }
+        if (c.done) return get("/generate/status/").then(function (s) {
+          var list = (s.generations || []).filter(function (g) { return g && !g.censored && typeof g.img === "string" && g.img; });
+          if (!list.length) throw new ImageError("bad");
+          return Promise.all(list.map(function (g) {
+            // r2: false asks for base64; a link (r2) is fetched the same way
+            if (/^https:\/\//.test(g.img)) return fetch(g.img, { credentials: "omit", referrerPolicy: "no-referrer" })
+              .then(function (r) { if (!r.ok) throw new ImageError("http", "", r.status); return r.blob(); });
+            return b64Blob(g.img, "image/webp");
+          }));
+        });
+        return sleep(HORDE_POLL).then(loop);
+      });
+    };
+    return loop().then(function (r) {
+      if (signal) signal.removeEventListener("abort", stop);
+      return r;
+    }, function (e) {
+      if (signal) signal.removeEventListener("abort", stop);
+      throw e;
+    });
+  }
+
   // → Promise<Blob[]>
-  function run(req, signal) {
+  function run(req, signal, deps) {
     if (!req) return Promise.reject(new ImageError("unsupported"));
     var init = { method: req.method, headers: req.headers || {}, signal: signal, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
     if (req.json) init.body = JSON.stringify(req.json);
@@ -230,6 +301,7 @@
         });
       }
       if (!req.reply) return [];
+      if (req.reply === "horde") return res.json().then(function (j) { return hordeWait(req, j, signal, deps); });
       if (req.reply === "image") return res.blob().then(function (b) {
         if (!/^image\//.test(b.type || "image/")) throw new ImageError("bad");
         return [b];
@@ -248,7 +320,7 @@
     normPref: normPref, readPref: readPref, writePref: writePref, conf: conf, use: use,
     STYLES: STYLES, STYLE_IDS: STYLE_IDS, styled: styled, MAX_PROMPT: MAX_PROMPT, sizeFor: sizeFor,
     buildGenerate: buildGenerate, buildEdit: buildEdit, buildExpand: buildExpand, buildTest: buildTest,
-    run: run, ImageError: ImageError, b64Blob: b64Blob
+    run: run, ImageError: ImageError, b64Blob: b64Blob, hordeWait: hordeWait, HORDE_ANON: HORDE_ANON
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosImageAI = api;

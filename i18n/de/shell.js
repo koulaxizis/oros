@@ -273,7 +273,7 @@ orosPack("de", "shell", {
  "cr.lic.pexels": "Pexels License, dein eigener Schlüssel",
  "cr.lic.pixabay": "Pixabay Content License, dein eigener Schlüssel",
  "cr.lic.plntnet-api": "Bedingungen von Pl@ntNet; dein eigener Schlüssel",
- "cr.lic.pollinations-hugging": "Ihre Bedingungen; Pollinations kostenlos ohne Schlüssel, die anderen mit deinem eigenen Schlüssel oder deinem eigenen Computer",
+ "cr.lic.pollinations-hugging": "Ihre Bedingungen; AI Horde kostenlos ohne Konto, die anderen mit deinem eigenen Schlüssel oder deinem eigenen Computer",
  "cr.lic.project-gutenberg": "Gemeinfreie Bücher (USA)",
  "cr.lic.radio-browser": "Kostenlose Community-API",
  "cr.lic.scowl-via": "SCOWL-Lizenz (freizügig)",
