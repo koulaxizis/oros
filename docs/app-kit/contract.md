@@ -49,7 +49,12 @@ shell's CSS variables (`--bg`, `--text`, `--accent`, …) into your page, and
 follow theme and skin changes. Use those variables in your CSS, with
 fallback values for `?standalone`.
 
-**Check:** `check-app` (G3), release guard G3.
+The font works the same way. The shell's font rules do not reach your
+frame, so a page that uses `"Nunito"` links the shared stylesheet before
+its own: `<link rel="stylesheet" href="../fonts.css">`. It holds Nunito and
+its Greek companion (the template already has the line).
+
+**Check:** `check-app` (G3, fonts), release guard G3, `tests/fonts-cmap.test.js`.
 
 ## 5. Data and sync (Checklist B 6)
 

@@ -4,7 +4,8 @@
 // basic a-z, no digits, so every page fell back to the system font while
 // DESIGN.md said Nunito. This test reads each file's cmap straight from the
 // woff2 (Brotli stream, no dependencies) and checks the coverage and the
-// weight each @font-face rule in style.css promises.
+// weight each @font-face rule in fonts.css promises (style.css until
+// 5.04.05).
 // Nunito upstream has no Greek, so Greek comes from M PLUS Rounded 1c
 // files declared under the same family with a Greek unicode-range; they
 // are checked here too. See DESIGN.md › Typography.
@@ -19,7 +20,7 @@ const path = require("path");
 const zlib = require("zlib");
 
 const ROOT = path.join(__dirname, "..");
-const css = fs.readFileSync(path.join(ROOT, "style.css"), "utf8");
+const css = fs.readFileSync(path.join(ROOT, "fonts.css"), "utf8");
 
 // WOFF2 known-table indices used here (spec §5.1 table of known tags).
 const T_CMAP = 0, T_OS2 = 6, T_GLYF = 10, T_LOCA = 11;
@@ -104,7 +105,7 @@ function cmapCodepoints(cmap) {
   return set;
 }
 
-// @font-face rules for "Nunito" in style.css: file -> weight.
+// @font-face rules for "Nunito" in fonts.css: file -> weight.
 const FACES = [];
 const GREEK = [];
 for (const m of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
@@ -123,7 +124,7 @@ for (const ch of "ĂăĞğİıŁłŐőŚśŠšŰűŻżŽžđČčĆćŘřĚěŮů
 for (const ch of "€–—‘’“”„…•«»·©®™°±×÷") MUST.push(ch.codePointAt(0)); // UI punctuation and symbols
 for (const ch of "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЮЯабвгдежзийклмнопрстуфхцчшщьюяЁё") MUST.push(ch.codePointAt(0)); // Cyrillic
 
-test("style.css declares the five Nunito weights 400-800, each from fonts/", () => {
+test("fonts.css declares the five Nunito weights 400-800, each from fonts/", () => {
   assert.deepEqual(FACES.map((f) => f.weight).sort(), [400, 500, 600, 700, 800]);
   for (const f of FACES) assert.match(f.src, /^fonts\/nunito-[a-z]+\.woff2$/);
 });
@@ -153,7 +154,7 @@ for (const ch of "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩαβγδεζη
 
 // Each Greek face carries exactly one weight that a Nunito face also has,
 // so every weight the shell uses finds Greek in the same family.
-test("style.css declares the Greek companion at exactly the five Nunito weights", () => {
+test("fonts.css declares the Greek companion at exactly the five Nunito weights", () => {
   assert.deepEqual(GREEK.map((f) => f.weight).sort(), [400, 500, 600, 700, 800]);
   for (const m of css.matchAll(/@font-face\s*\{([^}]*)\}/g)) {
     if (/font-family:\s*"Nunito"/.test(m[1])) assert.match(m[1], /font-weight:\s*\d+;/, "Nunito faces use single weights, no ranges");
@@ -180,8 +181,9 @@ for (const face of GREEK) {
   });
 }
 
-test("sw.js precaches every font file style.css uses", () => {
+test("sw.js precaches fonts.css and every font file it uses", () => {
   const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
+  assert.ok(sw.includes('"./fonts.css"'), "./fonts.css missing from PRECACHE_URLS");
   for (const f of FACES.concat(GREEK)) assert.ok(sw.includes('"' + f.src + '"'), f.src + " missing from PRECACHE_URLS");
 });
 
@@ -195,4 +197,51 @@ test("fonts/OFL.txt ships beside the Nunito files", () => {
   const ofl = fs.readFileSync(path.join(ROOT, "fonts", "OFL.txt"), "utf8");
   assert.match(ofl, /Nunito Project Authors/);
   assert.match(ofl, /SIL OPEN FONT LICENSE Version 1\.1/i);
+});
+
+// FONTS-APPS (5.04.05): an app frame is its own document and never sees
+// the shell's @font-face rules, so until 5.04.05 every app that asks for
+// "Nunito" drew in the system font. fonts.css is the one place that
+// declares the faces; the shell and every page that asks for Nunito (in
+// its own markup or in a stylesheet it links) link it.
+const SKIP = new Set(["vendor", "node_modules"]);
+function pages(dir, out) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith(".") || SKIP.has(e.name)) continue;
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) pages(p, out);
+    else if (e.name.endsWith(".html")) out.push(p);
+  }
+  return out;
+}
+const linkedCss = (html) => [...html.matchAll(/<link[^>]*\bhref="([^"#?]+\.css)(?:\?[^"]*)?"/g)].map((m) => m[1]).filter((h) => !/^(?:https?:)?\/\//.test(h));
+
+test("fonts.css is the only file with @font-face rules for Nunito", () => {
+  const style = fs.readFileSync(path.join(ROOT, "style.css"), "utf8");
+  assert.doesNotMatch(style, /@font-face/, "style.css declares @font-face again; keep the rules in fonts.css");
+  const shell = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const order = linkedCss(shell);
+  assert.ok(order.indexOf("fonts.css") >= 0, "index.html does not link fonts.css");
+  assert.ok(order.indexOf("fonts.css") < order.indexOf("style.css"), "index.html links fonts.css after style.css");
+});
+
+test("every page that asks for Nunito links the root fonts.css", () => {
+  const TEMPLATE = path.join("docs", "app-kit", "template") + path.sep;
+  const missing = [];
+  let checked = 0;
+  for (const file of pages(ROOT, [])) {
+    const rel = path.relative(ROOT, file);
+    if (rel === "index.html") continue;
+    const html = fs.readFileSync(file, "utf8");
+    const links = linkedCss(html);
+    // The app-kit template is copied to <id>/ by new-app.js.
+    const base = rel.startsWith(TEMPLATE) ? path.join(ROOT, "myapp") : path.dirname(file);
+    let text = html;
+    for (const h of links) { try { text += fs.readFileSync(path.resolve(path.dirname(file), h), "utf8"); } catch (e) { /* a missing stylesheet is another test's business */ } }
+    if (!/Nunito/.test(text)) continue;
+    checked++;
+    if (!links.some((h) => path.resolve(base, h) === path.join(ROOT, "fonts.css"))) missing.push(rel);
+  }
+  assert.ok(checked > 100, "expected the app pages, found " + checked);
+  assert.deepEqual(missing, [], "pages ask for Nunito without linking fonts.css");
 });

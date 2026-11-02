@@ -5,7 +5,7 @@
   },
   "apps": {
     "assistant": {
-      "bytes": 1059297,
+      "bytes": 1389567,
       "ms": 205
     },
     "atelier": {
@@ -13,35 +13,35 @@
       "ms": 507
     },
     "aura": {
-      "bytes": 94591,
+      "bytes": 243711,
       "ms": 78
     },
     "baby": {
-      "bytes": 339163,
+      "bytes": 498687,
       "ms": 46
     },
     "backgammon": {
-      "bytes": 163961,
+      "bytes": 269311,
       "ms": 42
     },
     "battleship": {
-      "bytes": 158386,
+      "bytes": 263167,
       "ms": 51
     },
     "bookmarks": {
-      "bytes": 406656,
+      "bytes": 525311,
       "ms": 75
     },
     "breakout": {
-      "bytes": 69568,
+      "bytes": 174079,
       "ms": 48
     },
     "bubble": {
-      "bytes": 67720,
+      "bytes": 172031,
       "ms": 47
     },
     "budget": {
-      "bytes": 594021,
+      "bytes": 848895,
       "ms": 99
     },
     "calculator": {
@@ -49,7 +49,7 @@
       "ms": 59
     },
     "calendar": {
-      "bytes": 1390360,
+      "bytes": 1676287,
       "ms": 115
     },
     "certificates": {
@@ -57,23 +57,23 @@
       "ms": 63
     },
     "characters": {
-      "bytes": 106479,
+      "bytes": 301055,
       "ms": 35
     },
     "checkers": {
-      "bytes": 72499,
+      "bytes": 266239,
       "ms": 42
     },
     "chess": {
-      "bytes": 495249,
+      "bytes": 645119,
       "ms": 59
     },
     "chores": {
-      "bytes": 273897,
+      "bytes": 413695,
       "ms": 68
     },
     "connect4": {
-      "bytes": 128023,
+      "bytes": 278527,
       "ms": 53
     },
     "contacts": {
@@ -81,43 +81,43 @@
       "ms": 68
     },
     "converter": {
-      "bytes": 119240,
+      "bytes": 270335,
       "ms": 53
     },
     "crm": {
-      "bytes": 579070,
+      "bytes": 773119,
       "ms": 123
     },
     "crossword": {
-      "bytes": 277806,
+      "bytes": 396287,
       "ms": 70
     },
     "cycle": {
-      "bytes": 338755,
+      "bytes": 492543,
       "ms": 63
     },
     "device": {
-      "bytes": 87240,
+      "bytes": 283647,
       "ms": 45
     },
     "diary": {
-      "bytes": 320889,
+      "bytes": 480255,
       "ms": 66
     },
     "dice": {
-      "bytes": 73210,
+      "bytes": 267263,
       "ms": 51
     },
     "dots": {
-      "bytes": 64737,
+      "bytes": 214015,
       "ms": 44
     },
     "familytree": {
-      "bytes": 278869,
+      "bytes": 429055,
       "ms": 46
     },
     "feeds": {
-      "bytes": 439599,
+      "bytes": 591871,
       "ms": 75
     },
     "files": {
@@ -125,43 +125,43 @@
       "ms": 52
     },
     "fitness": {
-      "bytes": 467150,
+      "bytes": 623615,
       "ms": 62
     },
     "flashcards": {
-      "bytes": 237540,
+      "bytes": 331775,
       "ms": 783
     },
     "flow": {
-      "bytes": 98264,
+      "bytes": 247807,
       "ms": 63
     },
     "g2048": {
-      "bytes": 60488,
+      "bytes": 164863,
       "ms": 41
     },
     "gamecenter": {
-      "bytes": 73922,
+      "bytes": 168959,
       "ms": 60
     },
     "garage": {
-      "bytes": 408833,
+      "bytes": 619519,
       "ms": 61
     },
     "gomoku": {
-      "bytes": 72511,
+      "bytes": 266239,
       "ms": 57
     },
     "habits": {
-      "bytes": 356775,
+      "bytes": 520191,
       "ms": 51
     },
     "hangman": {
-      "bytes": 123987,
+      "bytes": 241663,
       "ms": 47
     },
     "health": {
-      "bytes": 481981,
+      "bytes": 635903,
       "ms": 66
     },
     "help": {
@@ -169,23 +169,23 @@
       "ms": 41
     },
     "hexagon": {
-      "bytes": 81177,
+      "bytes": 186367,
       "ms": 42
     },
     "invoices": {
-      "bytes": 532767,
+      "bytes": 753663,
       "ms": 54
     },
     "jigsaw": {
-      "bytes": 175594,
+      "bytes": 324607,
       "ms": 44
     },
     "kanban": {
-      "bytes": 496726,
+      "bytes": 626687,
       "ms": 51
     },
     "labels": {
-      "bytes": 147754,
+      "bytes": 296959,
       "ms": 52
     },
     "layout": {
@@ -193,23 +193,23 @@
       "ms": 472
     },
     "library": {
-      "bytes": 523982,
+      "bytes": 677887,
       "ms": 69
     },
     "lightsout": {
-      "bytes": 65216,
+      "bytes": 203775,
       "ms": 57
     },
     "mahjong": {
-      "bytes": 74867,
+      "bytes": 179199,
       "ms": 81
     },
     "mail": {
-      "bytes": 473838,
+      "bytes": 624639,
       "ms": 63
     },
     "mancala": {
-      "bytes": 69509,
+      "bytes": 219135,
       "ms": 57
     },
     "maps": {
@@ -217,23 +217,23 @@
       "ms": 132
     },
     "mastermind": {
-      "bytes": 64165,
+      "bytes": 168959,
       "ms": 50
     },
     "meals": {
-      "bytes": 434526,
+      "bytes": 648191,
       "ms": 83
     },
     "memory": {
-      "bytes": 60413,
+      "bytes": 254975,
       "ms": 45
     },
     "mindmap": {
-      "bytes": 369680,
+      "bytes": 525311,
       "ms": 50
     },
     "minesweeper": {
-      "bytes": 85486,
+      "bytes": 234495,
       "ms": 36
     },
     "minimalism": {
@@ -241,11 +241,11 @@
       "ms": 40
     },
     "mixer": {
-      "bytes": 79923,
+      "bytes": 229375,
       "ms": 44
     },
     "mockups": {
-      "bytes": 252406,
+      "bytes": 402431,
       "ms": 49
     },
     "montage": {
@@ -253,23 +253,23 @@
       "ms": 103
     },
     "mood": {
-      "bytes": 400289,
+      "bytes": 560127,
       "ms": 71
     },
     "museum": {
-      "bytes": 60441,
+      "bytes": 223231,
       "ms": 31
     },
     "music": {
-      "bytes": 495373,
+      "bytes": 651263,
       "ms": 74
     },
     "names": {
-      "bytes": 70759,
+      "bytes": 220159,
       "ms": 30
     },
     "netizen": {
-      "bytes": 497784,
+      "bytes": 701439,
       "ms": 81
     },
     "newsletter": {
@@ -277,7 +277,7 @@
       "ms": 167
     },
     "nonogram": {
-      "bytes": 90914,
+      "bytes": 240639,
       "ms": 52
     },
     "notes": {
@@ -285,7 +285,7 @@
       "ms": 55
     },
     "oracle": {
-      "bytes": 71367,
+      "bytes": 177151,
       "ms": 48
     },
     "pad": {
@@ -297,43 +297,43 @@
       "ms": 211
     },
     "petcare": {
-      "bytes": 348216,
+      "bytes": 488447,
       "ms": 64
     },
     "petworld": {
-      "bytes": 178979,
+      "bytes": 328703,
       "ms": 46
     },
     "photolab": {
-      "bytes": 701754,
+      "bytes": 958463,
       "ms": 91
     },
     "pixel": {
-      "bytes": 181764,
+      "bytes": 335871,
       "ms": 48
     },
     "plants": {
-      "bytes": 268728,
+      "bytes": 408575,
       "ms": 65
     },
     "podcasts": {
-      "bytes": 478917,
+      "bytes": 631807,
       "ms": 60
     },
     "pong": {
-      "bytes": 71944,
+      "bytes": 177151,
       "ms": 54
     },
     "prompter": {
-      "bytes": 174829,
+      "bytes": 329727,
       "ms": 47
     },
     "pubdomain": {
-      "bytes": 76723,
+      "bytes": 184319,
       "ms": 39
     },
     "qr": {
-      "bytes": 199585,
+      "bytes": 349183,
       "ms": 64
     },
     "quote": {
@@ -341,51 +341,51 @@
       "ms": 121
     },
     "radio": {
-      "bytes": 162447,
+      "bytes": 312319,
       "ms": 54
     },
     "reversi": {
-      "bytes": 65538,
+      "bytes": 260095,
       "ms": 53
     },
     "ringtones": {
-      "bytes": 150903,
+      "bytes": 303103,
       "ms": 54
     },
     "rps": {
-      "bytes": 57983,
+      "bytes": 162815,
       "ms": 43
     },
     "scanpdf": {
-      "bytes": 836070,
+      "bytes": 1048575,
       "ms": 135
     },
     "scores": {
-      "bytes": 230273,
+      "bytes": 380927,
       "ms": 43
     },
     "settings": {
-      "bytes": 314373,
+      "bytes": 399359,
       "ms": 78
     },
     "shelf": {
-      "bytes": 357225,
+      "bytes": 510975,
       "ms": 61
     },
     "signature": {
-      "bytes": 277786,
+      "bytes": 430079,
       "ms": 47
     },
     "simon": {
-      "bytes": 58379,
+      "bytes": 153599,
       "ms": 37
     },
     "sky": {
-      "bytes": 143617,
+      "bytes": 281599,
       "ms": 64
     },
     "slider": {
-      "bytes": 59540,
+      "bytes": 153599,
       "ms": 58
     },
     "slides": {
@@ -393,75 +393,75 @@
       "ms": 73
     },
     "snake": {
-      "bytes": 59452,
+      "bytes": 163839,
       "ms": 41
     },
     "solitaire": {
-      "bytes": 131271,
+      "bytes": 236543,
       "ms": 45
     },
     "split": {
-      "bytes": 433537,
+      "bytes": 639999,
       "ms": 68
     },
     "spot": {
-      "bytes": 79724,
+      "bytes": 184319,
       "ms": 56
     },
     "spreadsheet": {
-      "bytes": 650217,
+      "bytes": 794623,
       "ms": 160
     },
     "stickies": {
-      "bytes": 147262,
+      "bytes": 297983,
       "ms": 34
     },
     "stock": {
-      "bytes": 569452,
+      "bytes": 802815,
       "ms": 60
     },
     "storage": {
-      "bytes": 304728,
+      "bytes": 412671,
       "ms": 51
     },
     "studio": {
-      "bytes": 797747,
+      "bytes": 1042431,
       "ms": 135
     },
     "sudoku": {
-      "bytes": 159210,
+      "bytes": 308223,
       "ms": 45
     },
     "television": {
-      "bytes": 593655,
+      "bytes": 746495,
       "ms": 80
     },
     "tetris": {
-      "bytes": 79156,
+      "bytes": 184319,
       "ms": 54
     },
     "textcase": {
-      "bytes": 76770,
+      "bytes": 239615,
       "ms": 47
     },
     "texttools": {
-      "bytes": 207537,
+      "bytes": 357375,
       "ms": 50
     },
     "tictactoe": {
-      "bytes": 58227,
+      "bytes": 207871,
       "ms": 40
     },
     "time": {
-      "bytes": 494461,
+      "bytes": 710655,
       "ms": 97
     },
     "timesheet": {
-      "bytes": 308575,
+      "bytes": 455679,
       "ms": 54
     },
     "today": {
-      "bytes": 327545,
+      "bytes": 433151,
       "ms": 83
     },
     "todo": {
@@ -469,63 +469,63 @@
       "ms": 61
     },
     "travel": {
-      "bytes": 431388,
+      "bytes": 614399,
       "ms": 55
     },
     "trees": {
-      "bytes": 95036,
+      "bytes": 244735,
       "ms": 80
     },
     "typewriter": {
-      "bytes": 62355,
+      "bytes": 211967,
       "ms": 40
     },
     "units": {
-      "bytes": 104798,
+      "bytes": 276479,
       "ms": 54
     },
     "wallpaper": {
-      "bytes": 126154,
+      "bytes": 275455,
       "ms": 64
     },
     "water": {
-      "bytes": 167372,
+      "bytes": 320511,
       "ms": 64
     },
     "weather": {
-      "bytes": 269782,
+      "bytes": 375807,
       "ms": 64
     },
     "whack": {
-      "bytes": 65296,
+      "bytes": 158719,
       "ms": 53
     },
     "wheel": {
-      "bytes": 74481,
+      "bytes": 225279,
       "ms": 57
     },
     "wiki": {
-      "bytes": 460947,
+      "bytes": 611327,
       "ms": 56
     },
     "wordle": {
-      "bytes": 192799,
+      "bytes": 311295,
       "ms": 45
     },
     "wordsearch": {
-      "bytes": 196179,
+      "bytes": 314367,
       "ms": 50
     },
     "writer": {
-      "bytes": 609778,
+      "bytes": 743423,
       "ms": 82
     },
     "xeri": {
-      "bytes": 172616,
+      "bytes": 278527,
       "ms": 54
     },
     "zen": {
-      "bytes": 102274,
+      "bytes": 251903,
       "ms": 67
     }
   }

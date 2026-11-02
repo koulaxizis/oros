@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.04.05
+- **The apps use the orOS font too.** Notes, Calendar, Writer, the games and the other apps were still drawn in your system font, because only the desktop loaded Nunito. Every app now loads it, Greek included, and it works offline.
+
 ## Version 5.04.04
 - **orOS shows its own font again.** The built-in Nunito font files were missing the basic letters and digits, so orOS was drawn in your system font. They are complete now, and Greek has a matching rounded font of its own.
 

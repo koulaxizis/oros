@@ -156,6 +156,14 @@ function checkApp(root, id) {
   if (own3.includes("inheritPalette") && own3.includes("watchPalette")) pass("G3", "inheritPalette + watchPalette");
   else err("G3", "the app's scripts need inheritPalette() and watchPalette()");
 
+  // 4b. Fonts (FONTS-APPS): the frame is its own document, so a page that
+  // asks for "Nunito" links the shared ../fonts.css or draws in the
+  // system font.
+  const asksNunito = /Nunito/.test(html + styles.filter(own).map((p) => codeOf(id + "/" + p)).join("\n"));
+  if (!asksNunito) pass("fonts", "no Nunito, no fonts.css needed");
+  else if (styles.indexOf("../fonts.css") >= 0) pass("fonts", "links ../fonts.css");
+  else err("fonts", "the page asks for \"Nunito\" but does not link ../fonts.css (add <link rel=\"stylesheet\" href=\"../fonts.css\"> before its own stylesheet)");
+
   // 5. Help (R38)
   const hen = id + "/help.en.txt", hel = id + "/help.el.txt";
   if (!exists(root, hen) || !exists(root, hel)) err("R38", "help.en.txt and help.el.txt are both needed");

@@ -6,7 +6,7 @@
      data-skin  = palette (16 skins)
      data-theme = light/dark (orthogonal to skin)
    Sections:
-     0. Local fonts (Nunito + Greek companion, vendored)
+     0. Local fonts: moved to fonts.css (5.04.05)
      1. Skin palettes (16 skins)
      2. Reset & base
      3. Top bar (persistent, safe-area aware)
@@ -31,95 +31,9 @@
                z-index ladder documentation (splash 9999)
    ============================================================ */
 
-/* ---------- 0. Local fonts (Nunito + Greek companion, vendored) ---------- */
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/nunito-regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/nunito-medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/nunito-semibold.woff2") format("woff2");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/nunito-bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/nunito-extrabold.woff2") format("woff2");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-/* Nunito has no Greek (upstream either). Greek and polytonic Greek come
-   from M PLUS Rounded 1c (OFL 1.1), subset to U+0370-03FF and U+1F00-1FFF,
-   under the same family name so every "Nunito" stack picks it up.
-   size-adjust brings its x-height (520) near Nunito's (490). There is no
-   600 file: the Bold file is declared twice, at 600 and at 700 (one
-   download), so every Nunito weight has a Greek face of exactly the same
-   weight and the browser never picks Greek from another font.
-   Test: tests/fonts-cmap.test.js */
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/mplusrounded-greek-regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0370-03FF, U+1F00-1FFF;
-  size-adjust: 95%;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/mplusrounded-greek-medium.woff2") format("woff2");
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0370-03FF, U+1F00-1FFF;
-  size-adjust: 95%;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/mplusrounded-greek-bold.woff2") format("woff2");
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0370-03FF, U+1F00-1FFF;
-  size-adjust: 95%;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/mplusrounded-greek-bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0370-03FF, U+1F00-1FFF;
-  size-adjust: 95%;
-}
-@font-face {
-  font-family: "Nunito";
-  src: url("fonts/mplusrounded-greek-extrabold.woff2") format("woff2");
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0370-03FF, U+1F00-1FFF;
-  size-adjust: 95%;
-}
+/* ---------- 0. Local fonts ---------- */
+/* The font-face rules live in fonts.css (root), linked before this file
+   by index.html and by every app page. */
 
 /* ---------- 1. Skin palettes ---------- */
 

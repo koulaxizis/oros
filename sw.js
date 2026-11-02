@@ -210,6 +210,7 @@ var PRECACHE_URLS = [
   "./",
   "./index.html",
   "./style.css",
+  "./fonts.css",
   "./search.js",
   "./shell.js",
   "./sync.js",
