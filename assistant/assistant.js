@@ -164,6 +164,12 @@
       "att.localBoth": "{name} can't read files itself: orOS reads their text on this device and sends only that. For photos the text engine is downloaded once the first time (about 7 MB).",
       "set.vis": "This model can see photos",
       "set.nt": "This model can't use tools",
+      "set.fb": "If the local model can't be reached, use",
+      "set.fbOff": "Nothing (show an error)",
+      "set.fbHint": "For when you use orOS on another device, such as your phone, or the server is switched off. This online service then answers until the local model answers again, and apps set to “Always share” ask before anything goes to it. It needs its key and model on each device: pick it once as the assistant above, save its key and choose a model.",
+      "set.fbNoKey": "{name} has no key or model on this device yet, so here you will see the local server's error instead.",
+      "note.fb": "{local} can't be reached, so {name} answers for now. Apps set to “Always share” ask first.",
+      "note.fbBack": "{local} answers again.",
       "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
       "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
       "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
@@ -738,6 +744,12 @@
       "att.localBoth": "Το {name} δεν διαβάζει μόνο του αρχεία: το orOS διαβάζει το κείμενό τους σε αυτή τη συσκευή και στέλνει μόνο αυτό. Για φωτογραφίες, την πρώτη φορά κατεβαίνει μία φορά η μηχανή κειμένου (περίπου 7 MB).",
       "set.vis": "Αυτό το μοντέλο βλέπει φωτογραφίες",
       "set.nt": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία",
+      "set.fb": "Αν δεν βρεθεί το τοπικό μοντέλο, χρησιμοποίησε",
+      "set.fbOff": "Τίποτα (δείξε σφάλμα)",
+      "set.fbHint": "Για όταν χρησιμοποιείς το orOS σε άλλη συσκευή, π.χ. στο κινητό, ή όταν ο server είναι κλειστός. Τότε απαντά αυτή η online υπηρεσία ώσπου να απαντήσει ξανά το τοπικό μοντέλο, και οι εφαρμογές που είναι στο «Πάντα» ρωτούν πριν σταλεί οτιδήποτε. Χρειάζεται το κλειδί και μοντέλο σε κάθε συσκευή: διάλεξέ την μία φορά ως βοηθό παραπάνω, αποθήκευσε το κλειδί της και διάλεξε μοντέλο.",
+      "set.fbNoKey": "Το {name} δεν έχει ακόμη κλειδί ή μοντέλο σε αυτή τη συσκευή, οπότε εδώ θα βλέπεις το σφάλμα του τοπικού server.",
+      "note.fb": "Το {local} δεν βρέθηκε, οπότε απαντά προσωρινά το {name}. Οι εφαρμογές στο «Πάντα» ρωτούν πρώτα.",
+      "note.fbBack": "Το {local} απαντά ξανά.",
       "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
       "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
       "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
@@ -1335,7 +1347,9 @@
     if (pid === "local") return t("prov.local");
     return C.PROVIDERS[pid] ? C.PROVIDERS[pid].name : pid;
   }
-  function curProv() { return data.set.prov; }
+  // The provider answering now: the chosen one, or its online stand-in
+  // while a local server can't be reached (AS-FB, fbUse).
+  function curProv() { return fbUse || data.set.prov; }
   function provConf(pid) { return data.provs[pid] || { m: 0, base: "", model: "" }; }
   function modelOf(pid) { return provConf(pid).model || (C.PROVIDERS[pid] && C.PROVIDERS[pid].model) || ""; }
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
@@ -1349,7 +1363,7 @@
   function setSetting(patch) {
     var cur = data.set;
     var next = { m: Math.max(Date.now(), cur.m + 1), chat: cur.chat, prov: cur.prov, web: cur.web ? 1 : 0,
-                 ws: cur.ws || "auto", wsBase: cur.wsBase || "" };
+                 ws: cur.ws || "auto", wsBase: cur.wsBase || "", fb: cur.fb || "" };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.set = next;
     saveData();
@@ -1557,7 +1571,13 @@
   }
   function readableApps() {
     if (data.set.chat) return [];
-    return appList().filter(function (a) { return a.perm === "ask" || a.perm === "always"; });
+    return appList().filter(function (a) { return a.perm === "ask" || a.perm === "always"; })
+      .map(function (a) {
+        // An online stand-in for a local model (AS-FB) asks first even
+        // for "Always" apps: those were allowed for the local model.
+        if (fbUse && a.perm === "always") a.perm = "ask";
+        return a;
+      });
   }
   function setPerm(appId, v) {
     var cur = data.perm[appId];
@@ -1608,8 +1628,53 @@
   }
 
   // ---------- 6. Provider calls ----------
+  // Online stand-in for a local server (AS-FB). fbUse is the provider
+  // answering in its place ("" = the chosen one answers); probe is the
+  // last check of the local address; fbNoted[chat id] is the state the
+  // chat was last told about, so each conversation says it once.
+  var fbUse = "";
+  var probe = null;
+  var fbNoted = {};
+  // Does the local server answer at all? Any HTTP answer counts; no
+  // answer within PROBE_MS (off, another device, blocked) does not.
+  function localUp(pid) {
+    var base = baseOf(pid), now = Date.now();
+    var known = C.probeFresh(probe, base, now);
+    if (known !== null) return Promise.resolve(known);
+    return loadKey(pid).then(function (k) {
+      var req = C.modelsRequest(pid, { key: k ? k.key : "", base: provConf(pid).base });
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var tm = setTimeout(function () { if (ctl) ctl.abort(); }, C.PROBE_MS);
+      var o = { method: "GET", headers: req.headers, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
+      if (ctl) o.signal = ctl.signal;
+      return fetch(req.url, o).then(function () { return true; }, function () { return false; })
+        .then(function (ok) { clearTimeout(tm); probe = { base: base, ok: ok, at: Date.now() }; return ok; });
+    });
+  }
+  // Before a turn: the local server, or the stand-in when it is away
+  // and the stand-in has what it needs on this device (a model, its key).
+  function chooseProv(c) {
+    var pid = data.set.prov, fb = C.fbFor(data.set);
+    if (!fb) { fbUse = ""; return Promise.resolve(); }
+    return localUp(pid).then(function (up) {
+      if (up) return "";
+      return loadKey(fb).then(function (k) {
+        return !modelOf(fb) || (C.PROVIDERS[fb].key === "yes" && !(k && k.key)) ? "" : fb;
+      });
+    }).then(function (use) {
+      fbUse = use;
+      var was = fbNoted[c.id] || "";
+      if (use !== was && (use || was)) {
+        c.msgs.push({ r: "note", kind: "info", text: use
+          ? t("note.fb", { local: provName(pid), name: provName(use) })
+          : t("note.fbBack", { local: provName(pid) }) });
+      }
+      fbNoted[c.id] = use;
+    });
+  }
+  // The chosen provider is set up (its stand-in is checked per turn).
   function ready() {
-    var pid = curProv();
+    var pid = data.set.prov;
     if (!pid || !modelOf(pid)) return false;
     if (C.PROVIDERS[pid].builtin) return builtinState() !== "none";
     if (C.PROVIDERS[pid].kind === "webllm") return wlState(modelOf(pid)) === "ok";
@@ -2756,12 +2821,17 @@
 
   // A catalog too big for the Assistant's first open (Slides needs its
   // core.js) is loaded before the first turn that may use it.
-  function runTurn(c) {
+  // again: this turn already went once and the local server failed.
+  function runTurn(c, again) {
     var have = installed(), want = Object.keys(EDIT_LAZY).filter(function (id) { return have[id] && !window[EDIT_SRC[id].mod]; });
-    if (!want.length) { runTurnNow(c); return; }
-    editLoadMods(want).then(function () { runTurnNow(c); });
+    var modsP = want.length ? editLoadMods(want) : Promise.resolve();
+    // The busy mark first, so a second Send can't start a turn while
+    // the local server is checked (up to PROBE_MS).
+    busy = { abort: null, live: "", consent: null, chat: c };
+    renderAll();
+    Promise.all([modsP, chooseProv(c).catch(function () { fbUse = ""; })]).then(function () { runTurnNow(c, again); });
   }
-  function runTurnNow(c) {
+  function runTurnNow(c, again) {
     var pid = curProv();
     var ctl = typeof AbortController === "function" ? new AbortController() : null;
     busy = { abort: ctl, live: "", consent: null, chat: c };
@@ -2864,6 +2934,7 @@
       });
     }
     var last = c.msgs[c.msgs.length - 1];
+    var startLen = c.msgs.length, hadFound = !!(last && last.found), retry = false;
     var first = preApps.length && last && last.r === "user" && !last.brief && !last.found && last.text
       ? preSearch(c, last, preApps).then(function () {
           if (ctl && ctl.signal.aborted) throw new DOMException("Aborted", "AbortError");
@@ -2875,11 +2946,19 @@
         if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
         if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
+      } else if (!again && !fbUse && C.fbFor(data.set) && e instanceof C.ProviderError && e.code === "net" &&
+                 c.msgs.length === startLen && !(last && last.found && !hadFound)) {
+        // The local server stopped answering before this turn said
+        // anything (and before any of the user's data was shared with
+        // it): the same turn goes once more, to the stand-in.
+        probe = { base: baseOf(data.set.prov), ok: false, at: Date.now() };
+        retry = true;
       } else {
         note("err", errText(e, pid));
       }
     }).then(function () {
       busy = null;
+      if (retry) { runTurn(c, true); return; }
       saveChat(c);
       renderAll();
       scrollEnd();
@@ -6478,12 +6557,14 @@
       o.value = pid;
       sel.appendChild(o);
     });
-    sel.value = curProv();
+    sel.value = data.set.prov;
     secA.appendChild(sel);
     var provBox = el("div", "prov-box");
     secA.appendChild(provBox);
     sel.addEventListener("change", function () {
       setSetting({ prov: sel.value });
+      fbUse = "";
+      probe = null;
       drawProv();
       renderAll();
     });
@@ -6553,6 +6634,39 @@
         });
         nt.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
+        // Online stand-in while this server can't be reached (AS-FB).
+        label(provBox, "as-fb", t("set.fb"));
+        var fbSel = el("select", "dlg-input");
+        fbSel.id = "as-fb";
+        var fo = el("option", "", t("set.fbOff"));
+        fo.value = "";
+        fbSel.appendChild(fo);
+        C.PROV_IDS.filter(C.fbOk).forEach(function (q) {
+          var o = el("option", "", provName(q));
+          o.value = q;
+          fbSel.appendChild(o);
+        });
+        fbSel.value = data.set.fb || "";
+        provBox.appendChild(fbSel);
+        var fbHint = el("p", "dlg-hint");
+        fbHint.id = "as-fb-hint";
+        provBox.appendChild(fbHint);
+        var paintFb = function () {
+          var q = fbSel.value;
+          fbHint.textContent = t("set.fbHint");
+          if (!q || C.PROVIDERS[q].key !== "yes") return;
+          loadKey(q).then(function (k) {
+            if (fbSel.value === q && (!(k && k.key) || !modelOf(q))) fbHint.textContent = t("set.fbHint") + " " + t("set.fbNoKey", { name: provName(q) });
+          });
+        };
+        fbSel.addEventListener("change", function () {
+          setSetting({ fb: fbSel.value });
+          fbUse = "";
+          probe = null;
+          paintFb();
+          renderAll();
+        });
+        paintFb();
       }
       // Key
       label(provBox, "as-key", P.key === "opt" ? t("set.keyOpt") : t("set.key"));
@@ -7552,7 +7666,7 @@
       } catch (e) {}
     }
     var biP = curProv() === "browser" ? checkBuiltin() : curProv() === "webllm" ? wlCheck(modelOf("webllm")) : null;
-    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), biP, histLoad()]).then(function () {
+    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), data.set.fb ? loadKey(data.set.fb) : null, biP, histLoad()]).then(function () {
       renderAll();
       scrollEnd();
       if (pending) openTarget(pending);
