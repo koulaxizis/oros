@@ -1,6 +1,14 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.07.00
+- **Charts by period in Budget.** Pick a month, a quarter, a year or your own dates and see income, expenses and the difference against the period before, a donut per category with its change, a calendar shaded by what each day cost, what changed most, and where the money went by name.
+- **Budgets for any stretch of time.** Next to the monthly limits: every week, every month from payday, every few days, or once (a holiday), over the categories and accounts you pick, with what is left a day and how past periods went.
+- **Subcategories and icons.** Put Coffee under Eating out; totals, limits and charts count it in both. Every category can have an icon.
+- **Loans and debts.** In Plan: what you lent and borrowed, repayments as they come, what is left and when it is due. A loan is neither income nor expense.
+- **Faster entry.** Sums in the amount (12+4,5), a keypad on touch screens, earlier notes as suggestions, `Duplicate`, and `Again today` for your last entries.
+- **Accounts at a glance.** In the Overview, rename any account, add your own (a wallet) and update from your banks with one tap. Budget also checks the banks when you come back to it.
+
 ## Version 5.06.00
 - **Budget opens on an Overview.** One look shows what is safe to spend until the end of the month, how this month runs against the last one and your average, every account with its balance and the month's income, expenses and difference (and the total over all of them), your limits, what is due next, your goals and where most of the money went. `Edit the overview` hides or moves cards; the order follows you to your other devices.
 - **A tab bar on phones.** On a narrow screen Budget's tabs sit at the bottom with icons, within reach of your thumb.
