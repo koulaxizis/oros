@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.03.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.03.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3822,7 +3822,7 @@
         var b = document.createElement("button");
         b.type = "button";
         b.style.cssText = primary
-          ? "border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;"
+          ? "border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:var(--accent-ink, #fff);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;"
           : "border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text-dim);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
         b.textContent = label;
         b.addEventListener("click", function () {

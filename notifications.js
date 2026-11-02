@@ -746,7 +746,7 @@
         // half of the count. In-bounds = unclippable everywhere.
         badge.style.cssText =
           'position:absolute;top:2px;right:2px;min-width:14px;height:14px;' +
-          'background:var(--accent);color:#fff;border-radius:9px;font-size:9px;' +
+          'background:var(--accent);color:var(--accent-ink, #fff);border-radius:9px;font-size:9px;' +
           'font-weight:700;display:flex;align-items:center;justify-content:center;' +
           'padding:0 3px;transition:transform 0.2s ease;line-height:1;';
         bellBtn.style.position = 'relative';

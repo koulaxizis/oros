@@ -932,7 +932,7 @@
     "border:1px solid var(--border);box-shadow:0 6px 24px var(--shadow);font-size:14px}" +
     "#ssn-bar button{font:inherit;border-radius:8px;padding:6px 12px;cursor:pointer;border:1px solid var(--border);" +
     "background:transparent;color:var(--text);min-height:34px}" +
-    "#ssn-bar button.ssn-main{background:var(--accent);border-color:var(--accent);color:#fff}" +
+    "#ssn-bar button.ssn-main{background:var(--accent);border-color:var(--accent);color:var(--accent-ink, #fff)}" +
     "#ssn-bar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}" +
     "body.app-running #ssn-bar{display:none}";
 
