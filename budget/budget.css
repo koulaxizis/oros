@@ -768,3 +768,105 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .bk-bot .dlg-lbl { margin: 0; }
 .bk-bot select { flex: 1 1 160px; min-width: 0; width: auto; }
 .bk-link-row > .dlg-btn { align-self: flex-start; }
+
+/* ---------- Overview tab (budget/overviewui.js) + tab bar ---------- */
+.tab-ic { display: none; }
+.tab-ic svg { width: 20px; height: 20px; }
+.ov-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.ov-grid > .card { margin-bottom: 0; }
+.ov-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ov-head h2 { flex: 1 1 auto; min-width: 0; margin: 0; }
+.ov-big { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15; overflow-wrap: anywhere; }
+.ov-big.neg, .ov-v.neg, .ov-line.neg { color: var(--over); }
+.ov-v.in, .ov-line.good { color: var(--in-ink); }
+.ov-sub { font-size: 13px; color: var(--text-dim); margin: 2px 0 8px; }
+.ov-line { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.ov-card .hint + .hint { margin-top: 6px; }
+.ov-cta { margin-top: 10px; }
+.ov-edit { display: flex; margin: 14px auto 4px; }
+.ov-chart { margin-top: 4px; }
+.ov-key { display: inline-block; width: 16px; height: 0; border-top: 3px solid var(--c1); }
+.ov-key.k-prev { border-top: 2px dashed var(--c6); }
+.ov-key.k-avg { border-top: 2px dotted var(--c8); }
+.ov-key.k-lim { border-top: 2px dashed var(--over); }
+.chart .line.ov-cur { stroke: var(--c1); stroke-width: 3; }
+.chart .line.ov-prev { stroke: var(--c6); stroke-dasharray: 6 4; }
+.chart .line.ov-avg { stroke: var(--c8); stroke-dasharray: 2 4; }
+.chart .ov-lim { stroke: var(--over); stroke-width: 1.5; stroke-dasharray: 6 4; }
+.chart .ov-ideal { stroke: var(--text-dim); stroke-width: 1; stroke-dasharray: 1 4; opacity: 0.8; }
+.chart .ov-dot { fill: var(--c1); }
+.chart.pace .hit:hover { fill: var(--accent-soft); }
+.ov-nw { display: flex; flex-direction: column; margin-bottom: 6px; }
+.ov-k { font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.ov-rows { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.ov-row {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px;
+  padding: 6px; text-align: left; font-size: 13px;
+  background: none; border: none; border-radius: 8px;
+}
+.ov-row:hover { background: var(--accent-soft); }
+.ov-n { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; flex-direction: column; }
+.ov-when { font-size: 11px; font-weight: 700; color: var(--text-dim); }
+.ov-v { font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ov-s { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.ov-s.warn { color: var(--warn); }
+.ov-s.over { color: var(--over); }
+.ov-foot { margin-top: 6px; font-variant-numeric: tabular-nums; }
+.ov-toprow { flex-direction: column; align-items: stretch; gap: 0; }
+.ov-top-l { display: flex; align-items: center; gap: 8px; }
+.ov-toprow .rank-bar { margin-left: 20px; }
+.ov-chip { font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 999px; white-space: nowrap; border: 1px solid var(--border); color: var(--text-dim); }
+.ov-chip.up { color: var(--over); border-color: currentColor; }
+.ov-chip.down { color: var(--in-ink); border-color: currentColor; }
+.ov-rings { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.ov-ring-b { display: flex; align-items: center; gap: 8px; padding: 6px; min-height: 44px; text-align: left; background: none; border: none; border-radius: 8px; min-width: 0; }
+.ov-ring-b:hover { background: var(--accent-soft); }
+.ov-ring { flex-shrink: 0; overflow: visible; }
+.ov-ring-bg { fill: none; stroke: var(--border); stroke-width: 5; }
+.ov-ring-fg { fill: none; stroke: var(--c2); stroke-width: 5; stroke-linecap: round; }
+.ov-ring.warn .ov-ring-fg { stroke: var(--warn); }
+.ov-ring.over .ov-ring-fg { stroke: var(--over); }
+.ov-ring-t { fill: var(--text); font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.ov-ring-l { display: flex; flex-direction: column; min-width: 0; font-size: 13px; }
+.ov-ring-l .ov-n { font-weight: 700; display: block; }
+.ov-goal { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 6px; margin-bottom: 2px; text-align: left; background: none; border: none; border-radius: 8px; font-size: 13px; }
+.ov-goal:hover { background: var(--accent-soft); }
+.ov-goal-top { display: flex; align-items: center; gap: 8px; }
+.ov-goal-top .ov-n { display: block; font-weight: 700; }
+.ov-goal .bar { height: 8px; }
+.ov-edit-list { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+.ov-edit-list li { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 8px; }
+.ov-edit-list input[type="checkbox"] { width: 20px; min-height: 20px; height: 20px; flex-shrink: 0; accent-color: var(--accent); }
+.ov-edit-list label { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 700; padding: 8px 0; }
+.ov-mv { width: 36px; padding: 0; }
+
+/* Desktop: a wider page and two columns of cards; the pace chart spans both. */
+@media (min-width: 900px) {
+  body.on-ov #main { max-width: 1160px; }
+  .ov-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row dense; align-items: start; }
+  .ov-grid > .ovc-pace { grid-column: 1 / -1; }
+}
+/* Phones: the tabs become a bar at the bottom, icon over a short label. */
+@media (max-width: 599px) {
+  #tabs {
+    order: 3;
+    gap: 0;
+    padding: 0 2px env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    background: var(--bar-bg);
+    overflow: hidden;
+  }
+  #tabs button {
+    flex: 1 1 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    min-height: 56px; padding: 6px 1px 4px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: -0.1px;
+    border-bottom: none; border-top: 3px solid transparent;
+  }
+  #tabs button > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #tabs button[aria-selected="true"] { border-top-color: var(--accent); color: var(--accent); }
+  .tab-ic { display: inline-flex; }
+  #main { order: 2; padding-bottom: 16px; }
+  .ov-big { font-size: 24px; }
+}

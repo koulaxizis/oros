@@ -83,6 +83,7 @@
     "budget/bankui.js",
     "budget/budget.js",
     "budget/feed.js",
+    "budget/overviewui.js",
     "budget/package.js",
     "budget/payments.js",
     "budget/planui.js",
