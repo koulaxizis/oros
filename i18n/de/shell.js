@@ -726,6 +726,8 @@ orosPack("de", "shell", {
  "sc.err.notconnected": "Cloud-Synchronisierung ist nicht verbunden",
  "sc.info.cap": "Offline-first · Sync mit Auto-Merge · Automatische Sicherung in Ordner · Lokaler Export · Keine Cookies, kein Tracking.",
  "sc.info.download": "orOS holen",
+ "sc.info.disclaimer": "Nutzung auf eigene Gefahr: orOS bietet keine Gewährleistung und haftet nicht für verlorene Daten. Mach Sicherungen.",
+ "sc.info.disclaimer.more": "Haftungsausschluss",
  "sc.info.extsvc": "Wetter und die Vorhersage für Reiseziele: Open-Meteo (open-meteo.com) – kein API-Schlüssel, kein Tracking. Amtliche Warnungen: MeteoAlarm (meteoalarm.org), nur das Land wird gesendet.",
  "sc.info.extsvc.assistant": "Assistent: Deine Nachrichten und nur die Suchergebnisse, die du erlaubst, gehen direkt aus diesem Browser an den KI-Anbieter, den du mit deinem eigenen Schlüssel wählst (oder an deinen lokalen Server); nichts läuft über orOS.",
  "sc.info.extsvc.feeds": "Reader: Feeds werden direkt von jeder Seite geladen; Seiten ohne CORS laufen über dein Mail-Relay (web op), das nur öffentliche Seiten weiterreicht und nichts speichert.",

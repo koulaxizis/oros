@@ -75,3 +75,6 @@ orOS saves itself and its apps on your device, so it opens and works without a c
 - Things that need the internet wait for it. The weather icon shows a crossed-out cloud instead of a made-up temperature, and online services such as maps, radio and TV catalogues come back when you are online.
 - Changes you make offline are kept on the device. With sync on, they are sent when you are back online.
 - If an app hasn't been saved for offline use yet, you'll see a short message instead. Open it once while online.
+
+## Use at your own risk
+orOS and all its apps, sync, installers, orOS Portable, the orOS USB, orOS Drive and the Android apps are free software, provided "as is", without warranty of any kind (MIT licence). You are responsible for your own data: keep [backups](help:t/backup) and keep [sync](help:t/sync) turned on. To the fullest extent permitted by law, the makers of orOS and its contributors accept no liability for any loss of data or any other damage arising from the use of orOS. The full text is in the [privacy policy](https://useoros.online/privacy.html?lang=en#disclaimer).

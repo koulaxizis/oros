@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.04.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.04.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7782,6 +7782,11 @@
           'target="_blank" rel="noopener">koulaxizis/oros</a> · <a href="download/" target="_blank" rel="noopener">' +
           escapeHtml(window.t("sc.info.download")) + '</a> · <a href="privacy.html" target="_blank" rel="noopener">' +
           escapeHtml(window.t("sc.info.privacy")) + '</a></span>' +
+          // Use-at-your-own-risk line (Bible IX, 2026-11-02): the full text
+          // is the Disclaimer section of privacy.html, in the shell language.
+          '<div class="sc-cred" id="sc-disc">' + escapeHtml(window.t("sc.info.disclaimer")) +
+          ' <a href="privacy.html' + (window.orosLang === "el" ? "?lang=el#disclaimer-el" : "?lang=en#disclaimer") +
+          '" target="_blank" rel="noopener">' + escapeHtml(window.t("sc.info.disclaimer.more")) + '</a></div>' +
           '<div class="sc-cred" id="sc-cred"></div></div>' +
       '</div>';
 
