@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.05.00
+- **Your bank balance in Budget.** Each bank update also reads the balance your bank shows. In More › Banks it appears under each account, next to Budget's own; if they differ, `Match` fixes the account's starting balance (with Undo).
+- **Clearer bank messages.** When Enable Banking or the bank refuses, the message now says why. Retrying no longer adds a second Enable Banking connection. Banks and PayPal can be reached only from useoros.online for now; the installed app and Portable say so.
+
 ## Version 5.04.07
 - **Buttons stay readable in every theme.** In the Tux theme some buttons were white on light grey or black on dark grey, like the "+ Effect" button in Studio. Buttons and highlights on the accent colour in all apps now pick white or dark text so they can always be read.
 

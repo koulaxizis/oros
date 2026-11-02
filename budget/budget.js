@@ -711,7 +711,7 @@
     if (typeof x.sid !== "string" || !EB_UUID.test(x.sid) || typeof x.uid !== "string" || !EB_UUID.test(x.uid)) return null;
     var bk = normText(x.bk, 120);
     if (!bk || typeof x.cty !== "string" || !/^[A-Z]{2}$/.test(x.cty)) return null;
-    return withExtras({ id: x.id, m: x.m,
+    var out = { id: x.id, m: x.m,
       ac: typeof x.ac === "string" && ID_RE.test(x.ac) ? x.ac : "",
       bk: bk, cty: x.cty, cu: okCur3(x.cu) ? x.cu : "",
       ib: typeof x.ib === "string" && /^[A-Za-z0-9]{4}$/.test(x.ib) ? x.ib : "",
@@ -719,7 +719,10 @@
       lf: parseYmd(x.lf) ? x.lf : "", nm: normText(x.nm, 40),
       ps: x.ps === "business" ? "business" : "personal",
       sid: x.sid, uid: x.uid,
-      vu: isInt(x.vu) && x.vu > 0 && x.vu < 1e14 ? x.vu : 0 }, x);
+      vu: isInt(x.vu) && x.vu > 0 && x.vu < 1e14 ? x.vu : 0 };
+    // BK-5: the bank's last balance (signed cents, its currency, its date)
+    if (isInt(x.bb) && Math.abs(x.bb) <= MAX_CENTS && okCur3(x.bc) && parseYmd(x.bd)) { out.bb = x.bb; out.bc = x.bc; out.bd = x.bd; }
+    return withExtras(out, x, { bb: 1, bc: 1, bd: 1 });
   }
 
   var COLLS = [
@@ -2695,6 +2698,31 @@
     commit();
     renderAll();
   }
+  // BK-5: an account's balance (its own currency) at the end of a day,
+  // and "Match": move its starting balance by the difference, with Undo.
+  function accBalAt(id, ymd) {
+    var b = accBalances(data, ymd || today);
+    return b[id] === undefined ? null : b[id];
+  }
+  function accCurOf(id) { var a = findIn(data.acc, id); return a ? (a.cur || cur()) : ""; }
+  function shiftStart(id, diff, text) {
+    var a = findIn(data.acc, id);
+    if (!a || !diff || Math.abs(a.o + diff) > MAX_CENTS) return false;
+    var was = a.o;
+    a.o = was + diff;
+    a.m = stamp(a.m);
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      var b = findIn(data.acc, id);
+      if (!b) return;
+      b.o = was;
+      b.m = stamp(b.m);
+      commit();
+      renderAll();
+    });
+    return true;
+  }
   function initBankLive() {
     if (!BANKLIVE) return;
     BANKLIVE.init({
@@ -2702,7 +2730,8 @@
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
-      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk
+      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
+      accBalAt: accBalAt, accCur: accCurOf, shiftStart: shiftStart, money: money
     });
   }
 

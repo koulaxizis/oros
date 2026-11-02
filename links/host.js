@@ -420,7 +420,8 @@
         headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal: signal
       }).then(function (res) { return res.json(); });
     }).then(function (j) {
-      if (!j || !j.ok || !j.data || !Array.isArray(j.data.res)) throw err("relay");
+      // the relay's own reason (origin, rate, bad-request…) helps tell a setup fault apart
+      if (!j || !j.ok || !j.data || !Array.isArray(j.data.res)) throw err("relay", j && j.error && typeof j.error.code === "string" ? j.error.code.slice(0, 40) : "");
       return j.data.res.map(function (x) {
         if (x && x.err) return { status: x.status || 0, err: x.err };
         if (x && typeof x.b64 === "string") return { status: x.status, type: String(x.type || ""), b64: x.b64 };   // a product picture
