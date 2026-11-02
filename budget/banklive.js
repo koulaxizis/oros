@@ -31,6 +31,10 @@
 
   var S = {
     en: {
+      webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
+      bankBal: "Bank balance {a} ({d})", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
+      balMatchHint: "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      balMatched: "Starting balance changed by {a}",
       lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking), and so can PayPal Business. orOS only reads them and never makes payments. When a call goes through the orOS relay (always for PayPal), the data passes through it but is never stored or logged.",
       lvNoShell: "Open Budget inside orOS to connect a bank.",
       appT: "Your Enable Banking application", appNone: "Once: create a free account at enablebanking.com, register a Production application with this redirect URL, keep the .pem key file it downloads, and press “Activate by linking accounts” with your own accounts (not “Request activation”).",
@@ -51,11 +55,17 @@
       err_busy: "The bank asks to wait a little (too many requests).", err_keys: "No key on this device.",
       err_consent: "The bank no longer gives access: renew it.", err_state: "That answer doesn't belong to a request from this device.",
       err_cancel: "The bank connection was cancelled.", err_other: "The bank or Enable Banking didn't answer. Try again later.",
+      err_server: "Enable Banking or the bank refused the request.", err_notfound: "Enable Banking or the bank refused the request.",
+      err_noacc: "The bank gave access to no account. In Enable Banking's control panel, link this bank's accounts (same Personal or Business) to your application first.",
       ppT: "PayPal Business", ppNone: "Connect PayPal Business in Settings › Connected services first (Client ID and Secret of your own PayPal app). Then add it here.",
       ppAll: "Your PayPal accounts are connected above.", ppAdd: "Add",
       close: "Close", cancel: "Cancel"
     },
     el: {
+      webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
+      bankBal: "Υπόλοιπο τράπεζας {a} ({d})", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
+      balMatchHint: "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      balMatched: "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking), και το ίδιο το PayPal Business. Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές. Όταν μια κλήση περνά από το relay του orOS (πάντα για το PayPal), τα δεδομένα περνούν αλλά δεν αποθηκεύονται ούτε καταγράφονται ποτέ.",
       lvNoShell: "Άνοιξε την εφαρμογή μέσα στο orOS για να συνδέσεις τράπεζα.",
       appT: "Η εφαρμογή σου στο Enable Banking", appNone: "Μία φορά: φτιάξε δωρεάν λογαριασμό στο enablebanking.com, δήλωσε μια εφαρμογή Production με αυτό το Redirect URL, κράτα το αρχείο κλειδιού .pem που κατεβαίνει και πάτα «Activate by linking accounts» με τους δικούς σου λογαριασμούς (όχι «Request activation»).",
@@ -76,6 +86,8 @@
       err_busy: "Η τράπεζα ζητά λίγη αναμονή (πολλά αιτήματα).", err_keys: "Δεν υπάρχει κλειδί σε αυτή τη συσκευή.",
       err_consent: "Η τράπεζα δεν δίνει πια πρόσβαση: ανανέωσέ τη.", err_state: "Αυτή η απάντηση δεν ανήκει σε αίτημα αυτής της συσκευής.",
       err_cancel: "Η σύνδεση με την τράπεζα ακυρώθηκε.", err_other: "Η τράπεζα ή το Enable Banking δεν απάντησε. Δοκίμασε ξανά αργότερα.",
+      err_server: "Το Enable Banking ή η τράπεζα δεν δέχτηκε το αίτημα.", err_notfound: "Το Enable Banking ή η τράπεζα δεν δέχτηκε το αίτημα.",
+      err_noacc: "Η τράπεζα δεν έδωσε πρόσβαση σε κανέναν λογαριασμό. Στο control panel του Enable Banking κάνε πρώτα link τους λογαριασμούς αυτής της τράπεζας (ίδιο Personal ή Business) στην εφαρμογή σου.",
       ppT: "PayPal Business", ppNone: "Σύνδεσε πρώτα το PayPal Business στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες (Client ID και Secret της δικής σου εφαρμογής PayPal). Μετά πρόσθεσέ το εδώ.",
       ppAll: "Οι λογαριασμοί σου PayPal είναι συνδεδεμένοι παραπάνω.", ppAdd: "Προσθήκη",
       close: "Κλείσιμο", cancel: "Άκυρο"
@@ -93,19 +105,39 @@
     catch (e) { return null; }
   }
   function app() { var Lk = links(); var l = Lk ? Lk.list("ebank") : []; return l.length ? l[0] : null; }
+  function webOrigin() {
+    try { return root.location.origin === "https://useoros.online"; }
+    catch (e) { return true; }
+  }
   function live() { return (A.data().bnk || []).slice(); }
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function code(e) { return (e && e.code) || "other"; }
-  function errText(c) {
+  // Enable Banking's own words for a refusal, short and plain text
+  // (shown with textContent), so a wrong setting can be told apart.
+  function detailOf(r) {
+    var d = r && r.data, w = "";
+    if (d && typeof d === "object") {
+      w = [d.error, d.message, typeof d.detail === "string" ? d.detail : ""].filter(function (x) { return typeof x === "string" && x; }).join(": ");
+    }
+    w = w.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+    var st = r && r.status ? "HTTP " + r.status : "";
+    return [st, w].filter(Boolean).join(" · ");
+  }
+  function errText(c, e) {
     var k = "err_" + c;
-    return S.en[k] ? t(k) : t("err_other");
+    var base = S.en[k] ? t(k) : t("err_other");
+    var d = e && typeof e.detail === "string" ? e.detail
+          : e && !e.code && e.message ? String(e.message).slice(0, 120)
+          : e && typeof e.extra === "string" && e.extra ? c + ": " + e.extra.replace(/[^\w .-]/g, "").slice(0, 40)
+          : (S.en[k] ? "" : String(c || ""));
+    return d && k !== "err_offline" && k !== "err_keys" ? base + " (" + d + ")" : base;
   }
   function ask(la, req) {
     return links().call(la, [req]).then(function (res) {
       var r = res && res[0];
       var c = links().statusCode(r);
-      if (c) { var e = new Error(c); e.code = c; e.status = r && r.status; throw e; }
+      if (c) { var e = new Error(c); e.code = c; e.status = r && r.status; e.detail = detailOf(r) || c; throw e; }
       return r.data;
     });
   }
@@ -153,7 +185,7 @@
     var rows = live(), now = Date.now();
     if (!rows.length) return Promise.resolve({ n: 0, errs: {} });
     busy = true;
-    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {};
+    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {}, bals = {};
     var tx = D.tx.slice();
     return checkKeys().then(function (has) {
       return rows.reduce(function (p, row) {
@@ -173,6 +205,13 @@
             });
             var lb = K.lastBooked(its);
             if (lb && lb > (row.lf || "")) lfs[row.id] = lb;
+            if (pp) return;
+            // BK-5: the bank's own balance; a bank that won't give it
+            // costs nothing (the entries are in already)
+            return ask(row.la, { m: "GET", path: "/accounts/" + row.uid + "/balances" }).then(function (j) {
+              var b = K.balance(j);
+              if (b) bals[row.id] = { bb: b.a, bc: b.cu, bd: b.d || K.ymdOf(Date.now()) };
+            }, function () {});
           }, function (e) {
             var c = code(e);
             errs[row.id] = !pp && e && (e.status === 401 || e.status === 403 || e.status === 422) && c !== "keys" ? "consent" : c;
@@ -184,6 +223,7 @@
       lastErr = errs;
       store(DEV_KEY, { t: Date.now() });
       Object.keys(lfs).forEach(function (id) { A.patchBnk(id, { lf: lfs[id] }); });
+      Object.keys(bals).forEach(function (id) { A.patchBnk(id, bals[id]); });
       if (add.length) A.addEntries(add, t("got", { n: add.length }));
       else if (!auto && !Object.keys(errs).length) A.showToast(t("gotNone"));
       A.renderAll();
@@ -215,7 +255,8 @@
     ask(pend.la, { m: "POST", path: "/sessions", body: { code: cb.code } }).then(function (j) {
       handling = false;
       var ses = K.session(j);
-      if (!ses || !ses.accts.length) { connecting = false; A.showToast(t("err_other")); return; }
+      if (!ses) { connecting = false; A.showToast(errText("other", { detail: "session" })); return; }
+      if (!ses.accts.length) { connecting = false; A.showToast(t("err_noacc")); return; }
       var rows = live(), saved = [];
       ses.accts.forEach(function (ac) {
         var old = K.matchLink(rows, pend.bank, ac);
@@ -228,7 +269,7 @@
         saved.push(row.id);
       });
       mapDialog(saved);
-    }, function (e) { handling = false; connecting = false; A.showToast(errText(code(e))); });
+    }, function (e) { handling = false; connecting = false; A.showToast(errText(code(e), e)); });
   }
   function listen() {
     try {
@@ -263,6 +304,22 @@
   function rowName(r) {
     if (isPP(r)) return "PayPal" + (r.nm && r.nm !== "PayPal" ? " · " + r.nm : "");
     return r.bk + (r.nm ? " · " + r.nm : "") + (r.ib ? " ··" + r.ib : "") + (r.cu ? " (" + r.cu + ")" : "");
+  }
+  // BK-5: the bank's balance next to Budget's, and "Match" when they differ
+  function balRow(li, r, redraw) {
+    if (typeof r.bb !== "number" || !r.bc) return;
+    var line = el("div", "bk-meta bk-bal", t("bankBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }));
+    li.appendChild(line);
+    if (!r.ac || A.accCur(r.ac) !== r.bc) return;
+    var mine = A.accBalAt(r.ac, r.bd);
+    if (mine === null || mine === r.bb) { if (mine === r.bb) line.appendChild(el("span", "bk-ok", " · " + t("balSame"))); return; }
+    var diff = r.bb - mine;
+    line.appendChild(el("span", "", " · " + t("balBudget", { a: A.money(mine, r.bc) })));
+    var b = A.button(t("balMatch"), "mini", function () {
+      if (A.shiftStart(r.ac, diff, t("balMatched", { a: A.money(diff, r.bc) }))) redraw();
+    });
+    b.title = t("balMatchHint");
+    li.appendChild(b);
   }
   function statusText(r) {
     var d = K.daysLeft(r, Date.now());
@@ -316,7 +373,7 @@
         msg.className = "hint bk-msg";
         msg.textContent = t("appOk", { n: B.clean(j && j.name ? String(j.name) : "", 60) || "—" });
         redraw();
-      }, function (e) { msg.className = "err bk-msg"; msg.textContent = e && e.code === "keys" && e.extra ? t("keyBad") : errText(code(e)); });
+      }, function (e) { msg.className = "err bk-msg"; msg.textContent = e && e.code === "keys" && e.extra ? t("keyBad") : errText(code(e), e); });
     }
     if (!a) {
       box.appendChild(el("p", "hint", t("appNone")));
@@ -331,11 +388,16 @@
       box.appendChild(red);
       box.appendChild(keyForm(true));
       var acts = el("div", "dlg-actions");
-      acts.appendChild(A.button(t("appSave"), "primary", function () {
+      var saveB = A.button(t("appSave"), "primary", function () {
         if (!APP_RE.test(st.id)) { msg.className = "err bk-msg"; msg.textContent = t("idBad"); return; }
         if (!st.pem) { msg.className = "err bk-msg"; msg.textContent = t("keyBad"); return; }
+        // one Enable Banking application: a second Save (after a failed
+        // check) must not add another account
+        if (app()) { redraw(); return; }
+        saveB.disabled = true;
         done(Lk.add({ p: "ebank", name: "Enable Banking", keys: { app: st.id, pem: st.pem } }));
-      }));
+      });
+      acts.appendChild(saveB);
       box.appendChild(acts);
     } else {
       box.appendChild(el("p", "", a.name));
@@ -372,6 +434,7 @@
       var meta = [r.lf ? t("upd", { d: A.dateShort(r.lf) }) : t("updNever"), statusText(r)].filter(Boolean).join(" · ");
       li.appendChild(el("div", "bk-meta", meta));
       if (lastErr[r.id]) li.appendChild(el("div", "err", errText(lastErr[r.id])));
+      balRow(li, r, redraw);
       var s = A.accSelect(r.ac);
       s.setAttribute("aria-label", t("fills") + ": " + rowName(r));
       s.addEventListener("change", function () { A.patchBnk(r.id, { ac: s.value }); });
@@ -404,14 +467,14 @@
     ask(la, { m: "POST", path: "/auth", body: K.authBody(bank, state, psu, Date.now()) }).then(function (j) {
       // the bank's page (https; a local address only in tests)
       var url = j && typeof j.url === "string" && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/)/.test(j.url) ? j.url : "";
-      if (!url) throw Object.assign(new Error("other"), { code: "other" });
+      if (!url) throw Object.assign(new Error("other"), { code: "other", detail: "auth: no url" });
       if (w && !w.closed) { try { w.opener = null; } catch (e) {} w.location.href = url; }
       else { try { root.top.location.href = url; } catch (e) { A.showToast(t("popup")); } }
       if (waitMsg) waitMsg.textContent = t("wait");
     }).catch(function (e) {
       if (w && !w.closed) w.close();
       store(PEND_KEY, null);
-      A.showToast(errText(code(e)));
+      A.showToast(errText(code(e), e));
     });
   }
   function connSection() {
@@ -452,7 +515,7 @@
         bs.innerHTML = "";
         list.forEach(function (b, i) { var o = el("option", "", b.name + (b.beta ? " (beta)" : "")); o.value = String(i); bs.appendChild(o); });
         bs.disabled = goB.disabled = !list.length;
-      }, function (e) { findB.disabled = false; msg.className = "err bk-msg"; msg.textContent = errText(code(e)); });
+      }, function (e) { findB.disabled = false; msg.className = "err bk-msg"; msg.textContent = errText(code(e), e); });
     });
     var row2 = el("div", "fld-row");
     row2.appendChild(A.field(t("bank"), bs, "bc-bank"));
@@ -517,6 +580,9 @@
       nowB.disabled = false;
       nowB.textContent = t("now");
       body.appendChild(el("p", "hint", t("lvIntro")));
+      // the relay (ALLOWED_ORIGINS) and the bank's return page answer
+      // useoros.online only: the installed app and Portable can't connect
+      if (!webOrigin()) body.appendChild(el("p", "err bk-web", t("webOnly")));
       if (!Lk) { body.appendChild(el("p", "", t("lvNoShell"))); nowB.hidden = true; return; }
       body.appendChild(appSection(dlg, function () { checkKeys().then(draw); }));
       body.appendChild(accsSection(draw));

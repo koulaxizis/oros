@@ -114,6 +114,31 @@
     var c = B.parseMoney(s, ".");
     return c === null ? null : Math.abs(c);
   }
+  // ---------- 4b. Balance (BK-5) ----------
+  // GET /accounts/{uid}/balances → { a (signed cents), cu, d (YYYY-MM-DD), ty } | null.
+  // The booked balance first (what the statement shows), else the others
+  // in this order; a "DBIT" indicator makes it a debt (a credit card).
+  var BAL_ORDER = ["CLBD", "ITBD", "XPCD", "ITAV", "CLAV", "OPBD", "PRCD", "OTHR"];
+  function balance(json) {
+    var list = json && Array.isArray(json.balances) ? json.balances : [];
+    var best = null, rank = 99;
+    list.forEach(function (b) {
+      if (!b || typeof b !== "object" || !b.balance_amount || typeof b.balance_amount !== "object") return;
+      var raw = String(b.balance_amount.amount == null ? "" : b.balance_amount.amount).trim();
+      var neg = raw.charAt(0) === "-";
+      var c = cents(neg ? raw.slice(1) : raw);
+      var cu = str(b.balance_amount.currency);
+      if (c === null || !/^[A-Z]{3}$/.test(cu)) return;
+      if (b.credit_debit_indicator === "DBIT") neg = !neg;
+      var r = BAL_ORDER.indexOf(str(b.balance_type));
+      if (r < 0) r = BAL_ORDER.length;
+      if (best && r >= rank) return;
+      var d = str(b.reference_date || b.last_change_date_time).slice(0, 10);
+      best = { a: neg ? -c : c, cu: cu, d: /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "", ty: str(b.balance_type).slice(0, 4) };
+      rank = r;
+    });
+    return best;
+  }
   function partyName(p) { return p && typeof p === "object" ? clean(str(p.name), 80) : ""; }
   // One page of transactions → items for bank.js plan().
   // Booked only (status BOOK); pending ones come back as err "pending".
@@ -302,7 +327,7 @@
   var api = {
     COUNTRIES: COUNTRIES, REDIRECT: REDIRECT, REFRESH_MS: REFRESH_MS, WARN_DAYS: WARN_DAYS, MAX_PAGES: MAX_PAGES,
     banks: banks, newState: newState, authBody: authBody, session: session, tail: tail,
-    items: items, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
+    items: items, balance: balance, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
     daysLeft: daysLeft, needsRenew: needsRenew, due: due, matchLink: matchLink, ymdOf: ymdOf,
     PP_PAGE: PP_PAGE, ppStamp: ppStamp, ppWindows: ppWindows, ppPath: ppPath, ppPage: ppPage, ppKind: ppKind, ppItems: ppItems
   };
