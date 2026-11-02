@@ -306,6 +306,7 @@ orosPack("de", "shell", {
  "cr.noto-sans-2": "Die Schriften der Seitenlayout-Dokumente (Bildschirm und PDF)",
  "cr.null-jsfx": "Effekte und ihre Oberflächen (Studio)",
  "cr.nunito": "Die Oberfläche von orOS",
+ "cr.mplus-rounded": "Griechische Buchstaben in der Oberfläche von orOS",
  "cr.oasa-telematics": "Busankünfte live an Haltestellen in Athen, über das orOS-Relay (Karten)",
  "cr.odoo-api": "Verbundene Dienste: Kontakte und Verkaufschancen importieren (CRM)",
  "cr.onnx-runtime": "Hintergrund entfernen (Atelier, Fotolabor) und Spracherkennung (Montage) auf dem Gerät",

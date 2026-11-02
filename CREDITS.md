@@ -55,6 +55,7 @@ as an independent decoder for the QR encoder tests. The tests run on [Node.js](h
 | Font | Copyright | Licence | Used for |
 |---|---|---|---|
 | [Nunito](https://github.com/googlefonts/nunito) (`fonts/`) | © 2014 The Nunito Project Authors (Vernon Adams, Jacques Le Bailly) | [SIL OFL 1.1](fonts/OFL.txt) | The whole interface |
+| [M PLUS Rounded 1c](https://github.com/coz-m/MPLUS_FONTS) (`fonts/mplusrounded-greek-*.woff2`, subset: Greek and Greek Extended) | © 2016 The Rounded M+ Project Authors | [SIL OFL 1.1](fonts/OFL-MPLUSRounded1c.txt) | Greek letters in the interface (Nunito has no Greek) |
 | [Noto Sans](https://notofonts.github.io/) (`vendor/NotoSans-Regular.ttf`) | © 2022 The Noto Project Authors | [SIL OFL 1.1](vendor/NotoSans-OFL.txt) | Greek text in exported PDFs |
 | [Noto Sans, Noto Serif, Noto Sans Mono](https://notofonts.github.io/) (`vendor/noto/`, subset: Latin, Greek, punctuation) | © 2022 The Noto Project Authors | [SIL OFL 1.1](vendor/noto/OFL.txt) | Layout documents on screen and in PDF |
 
