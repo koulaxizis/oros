@@ -78,7 +78,7 @@ html, body {
   cursor: pointer;
 }
 .chip.on { border-color: var(--accent); background: var(--accent-soft); }
-.chip.pri { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
 .chip.pri:hover { background: var(--accent-hover); }
 .chip.big { min-height: 48px; font-size: 16px; }
 .chip.del { color: var(--danger); }

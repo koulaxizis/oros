@@ -1372,7 +1372,7 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
 }
 .qst-pin > span i {
   position: absolute; top: -6px; right: -8px; min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
-  background: var(--accent); color: #111; font: 600 10px/16px system-ui, sans-serif; font-style: normal; text-align: center;
+  background: var(--accent); color: var(--accent-ink, #111); font: 600 10px/16px system-ui, sans-serif; font-style: normal; text-align: center;
 }
 .qst-ic { flex: none; width: 28px; font-size: 18px; text-align: center; }
 .qst-q { font-size: 15px; font-weight: 600; line-height: 1.4; margin: 0 0 10px; overflow-wrap: anywhere; }

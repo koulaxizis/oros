@@ -191,12 +191,12 @@ html, body {
 }
 .key.op:hover {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink, #fff);
 }
 .key.eq {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink, #fff);
 }
 .key.eq:hover { background: var(--accent-hover); }
 .key.fn {
@@ -211,7 +211,7 @@ html, body {
   font-weight: 700;
   font-size: clamp(15px, 2.8vw, 19px);
 }
-.key.ans:hover { background: var(--accent); color: #fff; }
+.key.ans:hover { background: var(--accent); color: var(--accent-ink, #fff); }
 
 /* Keyboard equal visual state for Enter/Eq */
 .key.eq.flash { background: var(--accent-hover); }

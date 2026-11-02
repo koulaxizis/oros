@@ -47,7 +47,7 @@
       var pDoc = window.parent.document;
       var pCs = window.parent.getComputedStyle(pDoc.documentElement);
       ["--bg", "--text", "--text-dim", "--accent", "--accent-hover",
-       "--accent-soft", "--panel-bg", "--border", "--shadow"].forEach(function (v) {
+       "--accent-soft", "--accent-ink", "--panel-bg", "--border", "--shadow"].forEach(function (v) {
         var val = pCs.getPropertyValue(v).trim();
         if (val) document.documentElement.style.setProperty(v, val);
       });

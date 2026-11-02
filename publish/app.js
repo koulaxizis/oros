@@ -2688,7 +2688,7 @@
 
   // ---------- 12. Palette + boot ----------
   var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-hover",
-                  "--accent-soft", "--panel-bg", "--border", "--danger"];
+                  "--accent-soft", "--accent-ink", "--panel-bg", "--border", "--danger"];
   function inheritPalette() {
     try {
       var pRoot = window.parent.document.documentElement;

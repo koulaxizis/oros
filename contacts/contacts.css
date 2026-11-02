@@ -112,7 +112,7 @@ h2 {
 .btn.prim {
   background: var(--accent);
   border-color: var(--accent);
-  color: #14130f;
+  color: var(--accent-ink, #14130f);
   font-weight: 700;
 }
 .btn.prim:hover { background: var(--accent-hover); }

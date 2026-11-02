@@ -76,7 +76,7 @@ function hostOf(url) {
 
 const PALETTE_VARS = [
   "--bg", "--text", "--text-dim", "--accent", "--accent-hover",
-  "--accent-soft", "--panel-bg", "--border", "--danger", "--shadow"
+  "--accent-soft", "--accent-ink", "--panel-bg", "--border", "--danger", "--shadow"
 ];
 
 function inheritPalette() {

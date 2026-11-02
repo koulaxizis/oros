@@ -91,8 +91,8 @@ ul { list-style: none; }
 }
 .btn svg { width: 18px; height: 18px; }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #1a1508; }
-.btn.primary:hover { background: var(--accent-hover); color: #1a1508; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #1a1508); }
+.btn.primary:hover { background: var(--accent-hover); color: var(--accent-ink, #1a1508); }
 .btn.danger { color: var(--danger); }
 .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 .btn:disabled { opacity: 0.4; cursor: default; }

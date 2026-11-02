@@ -124,8 +124,8 @@ body:not(.editing) #toolbar { display: none; }
   white-space: nowrap;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #1a1508; }
-.btn.primary:hover { background: var(--accent-hover); color: #1a1508; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #1a1508); }
+.btn.primary:hover { background: var(--accent-hover); color: var(--accent-ink, #1a1508); }
 .btn.ghost { background: transparent; }
 .btn.small { min-height: 30px; padding: 3px 10px; font-size: 13px; }
 .btn:disabled { opacity: 0.4; cursor: default; }

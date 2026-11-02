@@ -369,7 +369,7 @@ button { font: inherit; color: inherit; }
 }
 .chip:hover:not(:disabled) { background: var(--accent-soft); }
 .chip:disabled { opacity: .5; cursor: default; }
-.chip.pri { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
 .chip.pri:hover { background: var(--accent-hover); }
 .chip.danger { color: var(--danger); }
 .chip.icon { min-width: 40px; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }

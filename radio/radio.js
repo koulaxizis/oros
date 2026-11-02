@@ -2417,6 +2417,7 @@ function updateSleepChip(){
 var SHELL_VAR_MAP = [
   // [shell variable, radio variable]
   ["--accent",   "--accent"],
+  ["--accent-ink", "--accent-ink"],
   ["--bg",       "--bg"],
   ["--panel-bg", "--panel"],
   ["--text",     "--fg"],

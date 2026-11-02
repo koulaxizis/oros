@@ -576,7 +576,7 @@
   // list to todo.css/kanban.css (ARCHITECTURE REFERENCE, v0.13.1).
 
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft", "--panel-bg",
+                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink", "--panel-bg",
                   "--border", "--shadow"];
 
   function inheritPalette() {
@@ -795,8 +795,8 @@
       btn.style.cssText =
         "padding:8px 14px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;" +
         (b.primary
-          ? "background:" + (b.danger ? "#e06c75" : "var(--accent)") +
-            ";color:#fff;border:none;"
+          ? "background:" + (b.danger ? "#e06c75;color:#fff" : "var(--accent);color:var(--accent-ink, #fff)") +
+            ";border:none;"
           : "background:transparent;color:var(--text);border:1px solid var(--border);");
       btn.addEventListener("click", function () {
         closeUiDlg();

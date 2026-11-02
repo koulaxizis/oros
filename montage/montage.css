@@ -84,7 +84,7 @@ ul { list-style: none; }
   border: 1px solid var(--border); background: var(--panel-bg); font-size: 14px; font-weight: 700;
 }
 .btn:hover { border-color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #1b1206; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #1b1206); }
 .btn.primary:hover { background: var(--accent-hover); }
 .btn.danger { color: var(--danger); }
 .btn:disabled { opacity: 0.45; cursor: default; }

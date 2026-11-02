@@ -2578,6 +2578,7 @@ function setupPlayerControls(){
 // with the :root fallbacks in television.css.
 var SHELL_VAR_MAP = [
   ["--accent",   "--accent"],
+  ["--accent-ink", "--accent-ink"],
   ["--bg",       "--bg"],
   ["--panel-bg", "--panel-bg"],
   ["--text",     "--text"],

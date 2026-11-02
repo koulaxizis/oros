@@ -50,7 +50,7 @@
     try {
       var src = window.parent.document.documentElement;
       var cs  = getComputedStyle(src);
-      ["--accent","--accent-soft","--bg","--panel-bg","--panel-2",
+      ["--accent","--accent-soft", "--accent-ink","--bg","--panel-bg","--panel-2",
        "--border","--text","--text-dim","--shadow"].forEach(function (v) {
         var val = cs.getPropertyValue(v).trim();
         if (val) document.documentElement.style.setProperty(v, val);

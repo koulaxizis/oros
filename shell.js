@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.04.06";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.04.07";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1302,7 +1302,7 @@
     okBtn.type = "submit";
     okBtn.style.cssText =
       "border:1px solid var(--accent);border-radius:8px;background:var(--accent);" +
-      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+      "color:var(--accent-ink, #fff);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
     okBtn.textContent = window.t(okLabel);
     btnRow.appendChild(okBtn);
     form.appendChild(btnRow);
@@ -6313,7 +6313,7 @@
     okBtn.type = "submit";
     okBtn.style.cssText =
       "border:1px solid var(--accent);border-radius:8px;background:var(--accent);" +
-      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+      "color:var(--accent-ink, #fff);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
     okBtn.textContent = window.t("sync.changepw.ok");
     btnRow.appendChild(okBtn);
 
@@ -6751,7 +6751,7 @@
     okBtn.type = "submit";
     okBtn.style.cssText =
       "border:1px solid var(--accent);border-radius:8px;background:var(--accent);" +
-      "color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
+      "color:var(--accent-ink, #fff);padding:7px 14px;font-size:12.5px;font-weight:600;cursor:pointer;";
     okBtn.textContent = window.t("sync.pass.apply");
     btnRow.appendChild(okBtn);
     form.appendChild(btnRow);
