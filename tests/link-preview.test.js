@@ -16,6 +16,7 @@ const IMG = SITE + "/icons/og-image.png";
 const PAGES = {
   "index.html": SITE + "/",
   "download/index.html": SITE + "/download/",
+  "media-kit/index.html": SITE + "/media-kit/",
   "privacy.html": SITE + "/privacy.html",
   "help/index.html": SITE + "/help/",
 };
