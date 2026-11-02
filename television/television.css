@@ -415,6 +415,11 @@ dialog#tv-player::backdrop { background: rgba(0, 0, 0, 0.6); }
   .tv-tools select { max-width: none; width: 100%; }
   #tvp-vol { width: 80px; }
 }
+/* CAST-1: with "Play on…" a phone's player row keeps one line; phones
+   set the volume with their own buttons (mute stays). */
+@media (max-width: 400px) {
+  #tvp-vol { display: none; }
+}
 
 /* ---------- Scrollbars (Part VII) ---------- */
 #tv-main, #tv-ac, dialog#tv-player {

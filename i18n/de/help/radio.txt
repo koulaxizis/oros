@@ -31,6 +31,12 @@ Die Wiedergabe läuft in orOS selbst, also geht sie weiter, wenn du die App schl
 ### Sleep-Timer
 Tippe auf ☾ und wähle 15, 30, 60 oder 90 Minuten. Die Restzeit steht in der Player-Leiste; in der letzten Minute wird der Ton leiser, und die Wiedergabe stoppt, wenn die Zeit abläuft. `Ausschalten` bricht den Timer ab.
 
+### Auf einem Lautsprecher oder Fernseher abspielen
+Die Taste mit dem Bildschirm und den Wellen in der Player-Leiste (`Abspielen auf…`) wählt, wo der Sender läuft.
+- **Bluetooth-Lautsprecher oder -Kopfhörer:** in den Bluetooth-Einstellungen des Systems koppeln (auf orOS USB: Schnelleinstellungen › Bluetooth). Danach spielt orOS darüber wie über jeden anderen Lautsprecher. Wo der Browser eine Seite die Ausgabe wählen lässt (Chrome und Edge auf dem Computer, sobald eine Seite Mikrofonzugriff hatte; Firefox über `Lautsprecher wählen…`), stehen die Ausgaben unter `Dieses Gerät`. orOS fragt nie nur dafür nach dem Mikrofon.
+- **Chromecast, AirPlay oder Fernseher:** `Chromecast, AirPlay oder Fernseher` öffnet die eigene Geräteliste des Browsers. Chrome auf Android findet Chromecast und Cast-Fernseher, Safari findet AirPlay. orOS lädt dafür keinen Code von Google oder Apple; die Verbindung stellt der Browser her. Solange ein Fernseher spielt, wird die Taste golden; öffne sie erneut und wähle `Beenden oder wechseln`.
+Der Sender läuft auf dem Fernseher oder Lautsprecher weiter, wenn du Radio schließt.
+
 ## Sender-Tools
 Die Taste ⋯ in der Player-Leiste öffnet die Tools für den Sender, der gerade läuft.
 
