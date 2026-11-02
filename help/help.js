@@ -650,10 +650,30 @@
     return h;
   }
 
+  // UPD-H1: a new release took over this frame's worker. The pages in
+  // pageCache (and this page's own scripts) belong to the old release,
+  // and the shell may keep Help open for days: it waits for a safe
+  // moment, with no app open, to load a new release. The next page
+  // change reloads the frame, so the new release's pages show ("What's
+  // new" above all, which the update notice opens). Help holds nothing
+  // to lose; the hash already names the page asked for.
+  var newRelease = false;
+  try {
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener("controllerchange", function () { newRelease = true; });
+    }
+  } catch (e) {}
+  function reloadForNewRelease() {
+    if (!newRelease) return false;
+    newRelease = false;
+    location.reload();
+    return true;
+  }
+
   // Hash changes never add history entries: the frame shares the
   // shell's history, and Back must leave the app, not walk pages.
   function go(route) {
-    if (currentRoute() === route) { onHash(); return; }
+    if (currentRoute() === route) { if (!reloadForNewRelease()) onHash(); return; }
     try { location.replace("#" + route); } catch (e) { onHash(); }
   }
 
@@ -780,7 +800,11 @@
       setView("list");
       markActive("");
     });
-    window.addEventListener("hashchange", function () { clearSearch(); onHash(); });
+    window.addEventListener("hashchange", function () {
+      if (reloadForNewRelease()) return;
+      clearSearch();
+      onHash();
+    });
     var wasNarrow = narrow();
     window.addEventListener("resize", function () {
       if (narrow() === wasNarrow) return;

@@ -963,6 +963,8 @@ orosPack("de", "shell", {
  "ts.tray.title": "Zeiterfassung: {p}, läuft seit {t} ({d})",
  "update.checking": "Suche nach Updates…",
  "update.done": "orOS wurde aktualisiert auf",
+ "update.ready": "Neue Version · Neu starten",
+ "update.ready.title": "Eine neue Version von orOS ist bereit. Starte orOS neu, um sie zu verwenden.",
  "users.closeNow": "Du bist abgemeldet. Schließe dieses Fenster, um es abzuschließen; danach meldet sich die nächste Person an.",
  "users.signOutFail": "Das Abmelden hat nicht geklappt. Versuche es erneut.",
  "users.signingOut": "Abmelden… Änderungen gehen zuerst in die Cloud.",

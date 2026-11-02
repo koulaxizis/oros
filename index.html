@@ -30,7 +30,7 @@
   <link rel="preload" as="script" href="notifications.js?v=5.04.01">
   <link rel="preload" as="script" href="webpush.js?v=5.04.01">
   <!-- /BOOT-P1 -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-jbEJL10ZOVWr93xSV+COllAo/oLXR/DRBt8cCDAwqJE='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-6LdBgqvGbVusCPLusq4Rm4DmT3X+MUcH7kLnVIljHI8='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="orOS — A static operating system in your browser. Mobile-friendly, works offline, no cookies, no tracking.">
   <title>orOS</title>
@@ -337,9 +337,49 @@
     return true;
   }
 
+  // UPD-1: someone who never goes back to the desktop (an app always
+  // open) stayed on the old release for days, under a worker of the
+  // new one: Help kept showing the old "What's new" while the synced
+  // update notice from another device named the new version. While
+  // an update waits, the top bar offers it: "New version · Restart".
+  // The click is the person's own choice, so it reloads at once (the
+  // shell's beforeunload guard still speaks for unsynced changes).
+  var readyBtn = null;
+  function readyText(key, en) {
+    try {
+      var v = typeof window.t === "function" ? window.t(key) : "";
+      return v && v !== key ? v : en;
+    } catch (e) { return en; }
+  }
+  function showUpdateReady() {
+    if (readyBtn || reloading) return;
+    try {
+      var bar = document.querySelector("#oros-bar .bar-right");
+      if (!bar) return;
+      readyBtn = document.createElement("button");
+      readyBtn.id = "update-ready";
+      readyBtn.type = "button";
+      readyBtn.setAttribute("data-i18n-title", "update.ready.title");
+      readyBtn.title = readyText("update.ready.title", "A new version of orOS is ready. Restart orOS to use it.");
+      readyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span class="upd-label"></span>';
+      var label = readyBtn.querySelector(".upd-label");
+      label.setAttribute("data-i18n", "update.ready");
+      label.textContent = readyText("update.ready", "New version \u00b7 Restart");
+      readyBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
+        reloading = true;
+        try { sessionStorage.setItem("oros-skip-splash", "1"); } catch (err) {}
+        window.location.reload();
+      });
+      bar.insertBefore(readyBtn, bar.firstChild);
+    } catch (e) { readyBtn = null; }
+  }
+
   function reloadWhenSafe() {
     if (reloading) return;
     if (!safeToReload()) {
+      showUpdateReady();
       // Poll ONLY while an update is waiting (no idle timer otherwise).
       if (!waitTimer) waitTimer = setInterval(reloadWhenSafe, 3000);
       return;

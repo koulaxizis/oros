@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.04.02
+- **New versions no longer wait for days.** If you always keep an app open, orOS waits to load a new version so nothing you are doing is lost, and could stay on an old version for days (Help then still showed an old "What's new"). While a new version waits, the top bar now shows `New version · Restart`: one click and it opens. Help also loads the new version by itself the next time you change page.
+
 ## Version 5.04.01
 - **Use at your own risk.** orOS is free software without any warranty, and nobody can be held liable for lost data, so keep backups and sync turned on. A short notice is now in Info, on the download page and in Help › Privacy, and the full text is in the [privacy policy](https://useoros.online/privacy.html?lang=en#disclaimer).
 
