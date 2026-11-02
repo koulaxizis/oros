@@ -241,3 +241,11 @@ test("BK-5 balance: booked balance first, DBIT is a debt, bad items skipped", ()
   assert.equal(K.balance({ balances: [{ balance_type: "CLBD", balance_amount: { amount: "1", currency: "eur" } }] }), null);
   assert.equal(K.balance(null), null);
 });
+
+test("budget.js declares each function name once (a second one would silently replace the first)", () => {
+  const src = fs.readFileSync(require("path").join(__dirname, "..", "budget", "budget.js"), "utf8");
+  // top level of the app's IIFE: two-space indent
+  const names = [...src.matchAll(/^ {2}function ([A-Za-z0-9_$]+)\s*\(/gm)].map((m) => m[1]);
+  const dup = names.filter((n, i) => names.indexOf(n) !== i);
+  assert.deepEqual(dup, []);
+});

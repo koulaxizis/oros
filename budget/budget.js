@@ -2704,7 +2704,7 @@
     var b = accBalances(data, ymd || today);
     return b[id] === undefined ? null : b[id];
   }
-  function accCur(id) { var a = findIn(data.acc, id); return a ? (a.cur || cur()) : ""; }
+  function accCurOf(id) { var a = findIn(data.acc, id); return a ? (a.cur || cur()) : ""; }
   function shiftStart(id, diff, text) {
     var a = findIn(data.acc, id);
     if (!a || !diff || Math.abs(a.o + diff) > MAX_CENTS) return false;
@@ -2731,7 +2731,7 @@
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
       newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
-      accBalAt: accBalAt, accCur: accCur, shiftStart: shiftStart, money: money
+      accBalAt: accBalAt, accCur: accCurOf, shiftStart: shiftStart, money: money
     });
   }
 
