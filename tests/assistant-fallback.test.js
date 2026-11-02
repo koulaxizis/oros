@@ -59,3 +59,43 @@ test("fallback: an online stand-in asks first even for apps set to Always", () =
   assert.match(js, /if \(fbUse && a\.perm === "always"\) a\.perm = "ask";/);
   assert.match(js, /function curProv\(\) \{ return fbUse \|\| data\.set\.prov; \}/);
 });
+
+test("fallback: pickProv uses the stand-in only while the local server doesn't answer", async () => {
+  const realFetch = globalThis.fetch;
+  const d = C.mergeAssist({ set: { m: 2, prov: "local", fb: "openai" },
+    provs: { local: { m: 1, base: "http://localhost:11434/v1", model: "qwen3:8b" }, openai: { m: 1, model: "gpt-4.1-mini" } } }, null);
+  const keys = { openai: "sk-x" };
+  const readKey = (p) => Promise.resolve(keys[p] || "");
+  let calls = 0;
+  try {
+    globalThis.fetch = () => { calls++; return Promise.reject(new TypeError("Failed to fetch")); };
+    C.probeSet("");
+    assert.deepEqual(await C.pickProv(d, readKey), { pid: "openai", fb: 1 });
+    assert.deepEqual(await C.pickProv(d, readKey), { pid: "openai", fb: 1 });
+    assert.equal(calls, 1, "the result is kept");
+    delete keys.openai;
+    assert.deepEqual(await C.pickProv(d, readKey), { pid: "local", fb: 0 }, "no key here: the local one");
+    keys.openai = "sk-x";
+    globalThis.fetch = () => Promise.resolve({ ok: false, status: 404 });
+    C.probeSet("");
+    assert.deepEqual(await C.pickProv(d, readKey), { pid: "local", fb: 0 }, "any answer counts");
+    const off = C.mergeAssist({ set: { m: 2, prov: "local", fb: "" }, provs: { local: { m: 1, model: "x" } } }, null);
+    assert.deepEqual(await C.pickProv(off, readKey), { pid: "local", fb: 0 });
+    const noModel = C.mergeAssist({ set: { m: 2, prov: "local", fb: "openai" }, provs: { local: { m: 1, model: "x" } } }, null);
+    C.probeSet("");
+    globalThis.fetch = () => Promise.reject(new TypeError("x"));
+    assert.deepEqual(await C.pickProv(noModel, readKey), { pid: "local", fb: 0 }, "a stand-in without a model can't answer");
+  } finally {
+    globalThis.fetch = realFetch;
+    C.probeSet("");
+  }
+});
+
+test("fallback: Feeds and Atelier take the stand-in too", () => {
+  ["feeds/ai.js", "atelier/ai.js"].forEach((f) => {
+    const js = read(f);
+    assert.match(js, /pickProv\(/, f);
+    assert.match(js, /probeSet\(cf\.base, false\)/, f);
+    assert.match(js, /e\.code !== "net"/, f);
+  });
+});

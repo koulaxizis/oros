@@ -95,14 +95,16 @@
   var ASSIST_DATA = "oros-assistant-data", ASSIST_DB = "oros-assistant";
   function C() { return window.OrosAssistCore || null; }
 
+  function assistData(core) {
+    try { return core.mergeAssist(JSON.parse(localStorage.getItem(ASSIST_DATA) || "null"), null); }
+    catch (e) { return core.emptyData(); }
+  }
   // → { pid, name, model, base, p } | null (nothing chosen)
-  function conf() {
+  function conf(pidIn) {
     var core = C();
     if (!core) return null;
-    var d;
-    try { d = core.mergeAssist(JSON.parse(localStorage.getItem(ASSIST_DATA) || "null"), null); }
-    catch (e) { d = core.emptyData(); }
-    var pid = d.set && d.set.prov;
+    var d = assistData(core);
+    var pid = pidIn || (d.set && d.set.prov);
     var p = pid && core.PROVIDERS[pid];
     if (!p) return null;
     var pc = d.provs[pid] || {};
@@ -224,7 +226,23 @@
   }
 
   // One question → the answer's text. onText(text so far) as it streams.
-  function ask(cf, system, user, signal, onText) {
+  // A local server that fails on the network before it answers: the
+  // same question goes once to the stand-in (AS-FB); onSwitch(cf) says
+  // which one answers then.
+  function ask(cf, system, user, signal, onText, onSwitch) {
+    var core = C();
+    return askNow(cf, system, user, signal, onText).catch(function (e) {
+      if (cf.fb || !cf.p.local || !core.fbFor || (signal && signal.aborted) || !(e instanceof core.ProviderError) || e.code !== "net") throw e;
+      if (!core.fbFor(assistData(core).set)) throw e;
+      core.probeSet(cf.base, false);
+      return pick(conf()).then(function (alt) {
+        if (!alt || !alt.fb) throw e;
+        if (onSwitch) onSwitch(alt);
+        return askNow(alt, system, user, signal, onText);
+      });
+    });
+  }
+  function askNow(cf, system, user, signal, onText) {
     var core = C();
     var msgs = [{ r: "user", text: user }];
     if (cf.p.kind === "webllm") return wlAsk(cf, system, user, signal, onText);
@@ -310,10 +328,22 @@
     AT.toast(t("ai.noAssistant"));
   }
 
+  // The chosen AI, or its online stand-in while a local server can't
+  // be reached (AS-FB; cf.fb = 1). → Promise<conf>
+  function pick(cf) {
+    var core = C();
+    if (!core || !core.pickProv) return Promise.resolve(cf);
+    return core.pickProv(assistData(core), readKey).then(function (r) {
+      if (!r.fb) return cf;
+      var alt = conf(r.pid);
+      if (alt) alt.fb = 1;
+      return alt || cf;
+    }, function () { return cf; });
+  }
   // The AI to use, or the "set it up" dialog.
   function need(then) {
     var cf = conf();
-    if (cf) { then(cf); return; }
+    if (cf) { pick(cf).then(then); return; }
     AT.openDialog(t("ai.menu"), function (body, close) {
       body.appendChild(el("p", "hint", t("ai.none")));
       var act = el("div", "dlg-actions");
@@ -356,7 +386,12 @@
         stat.textContent = t("ai.asking", { name: cf.name });
         again.disabled = true; stop.textContent = t("ai.stop");
         useBtns.forEach(function (b) { b.disabled = true; });
-        ask(cf, spec.system, spec.user, my.signal, function (txt) { if (ctl === my) out.textContent = txt; }).then(function (txt) {
+        ask(cf, spec.system, spec.user, my.signal, function (txt) { if (ctl === my) out.textContent = txt; }, function (alt) {
+          // The local server failed: the Assistant's online stand-in answers.
+          cf = alt;
+          note.textContent = t("ai.sent", { name: cf.name });
+          if (ctl === my) stat.textContent = t("ai.asking", { name: cf.name });
+        }).then(function (txt) {
           if (ctl !== my) return;
           var v = spec.post ? spec.post(txt) : txt;
           out.textContent = v;
@@ -448,7 +483,7 @@
       ideasSt = { busy: ctl, list: [], err: "", base: base, slots: slots, pg: ED.pg, doc: AT.doc.id, cf: cf, colours: colours };
       AT.renderDrawer();
       var q = AIT.ideas(topic, slots, { colors: colours, lang: AT.LANG });
-      ask(cf, q.system, q.user, ctl.signal, null).then(function (txt) {
+      ask(cf, q.system, q.user, ctl.signal, null, function (alt) { cf = alt; ideasSt.cf = alt; }).then(function (txt) {
         if (ideasSt.busy !== ctl) return;
         ideasSt.list = AIT.parseIdeas(txt, slots);
         if (!ideasSt.list.length) ideasSt.err = t("ai.ideasBad");
@@ -685,6 +720,6 @@
   }
   AT.registerView("ai", view);
 
-  AT.ai = { textMenu: textMenu, rewriteText: rewriteText, newText: newText, cutout: cutout, conf: conf, readKey: readKey,
+  AT.ai = { textMenu: textMenu, rewriteText: rewriteText, newText: newText, cutout: cutout, conf: conf, pick: pick, readKey: readKey,
     need: need, ask: ask, errText: errText, openAssistant: openAssistant };
 })();
