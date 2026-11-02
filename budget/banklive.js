@@ -51,6 +51,8 @@
       err_busy: "The bank asks to wait a little (too many requests).", err_keys: "No key on this device.",
       err_consent: "The bank no longer gives access: renew it.", err_state: "That answer doesn't belong to a request from this device.",
       err_cancel: "The bank connection was cancelled.", err_other: "The bank or Enable Banking didn't answer. Try again later.",
+      err_server: "Enable Banking or the bank refused the request.", err_notfound: "Enable Banking or the bank refused the request.",
+      err_noacc: "The bank gave access to no account. In Enable Banking's control panel, link this bank's accounts (same Personal or Business) to your application first.",
       ppT: "PayPal Business", ppNone: "Connect PayPal Business in Settings › Connected services first (Client ID and Secret of your own PayPal app). Then add it here.",
       ppAll: "Your PayPal accounts are connected above.", ppAdd: "Add",
       close: "Close", cancel: "Cancel"
@@ -76,6 +78,8 @@
       err_busy: "Η τράπεζα ζητά λίγη αναμονή (πολλά αιτήματα).", err_keys: "Δεν υπάρχει κλειδί σε αυτή τη συσκευή.",
       err_consent: "Η τράπεζα δεν δίνει πια πρόσβαση: ανανέωσέ τη.", err_state: "Αυτή η απάντηση δεν ανήκει σε αίτημα αυτής της συσκευής.",
       err_cancel: "Η σύνδεση με την τράπεζα ακυρώθηκε.", err_other: "Η τράπεζα ή το Enable Banking δεν απάντησε. Δοκίμασε ξανά αργότερα.",
+      err_server: "Το Enable Banking ή η τράπεζα δεν δέχτηκε το αίτημα.", err_notfound: "Το Enable Banking ή η τράπεζα δεν δέχτηκε το αίτημα.",
+      err_noacc: "Η τράπεζα δεν έδωσε πρόσβαση σε κανέναν λογαριασμό. Στο control panel του Enable Banking κάνε πρώτα link τους λογαριασμούς αυτής της τράπεζας (ίδιο Personal ή Business) στην εφαρμογή σου.",
       ppT: "PayPal Business", ppNone: "Σύνδεσε πρώτα το PayPal Business στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες (Client ID και Secret της δικής σου εφαρμογής PayPal). Μετά πρόσθεσέ το εδώ.",
       ppAll: "Οι λογαριασμοί σου PayPal είναι συνδεδεμένοι παραπάνω.", ppAdd: "Προσθήκη",
       close: "Κλείσιμο", cancel: "Άκυρο"
@@ -97,15 +101,31 @@
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
   function code(e) { return (e && e.code) || "other"; }
-  function errText(c) {
+  // Enable Banking's own words for a refusal, short and plain text
+  // (shown with textContent), so a wrong setting can be told apart.
+  function detailOf(r) {
+    var d = r && r.data, w = "";
+    if (d && typeof d === "object") {
+      w = [d.error, d.message, typeof d.detail === "string" ? d.detail : ""].filter(function (x) { return typeof x === "string" && x; }).join(": ");
+    }
+    w = w.replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+    var st = r && r.status ? "HTTP " + r.status : "";
+    return [st, w].filter(Boolean).join(" · ");
+  }
+  function errText(c, e) {
     var k = "err_" + c;
-    return S.en[k] ? t(k) : t("err_other");
+    var base = S.en[k] ? t(k) : t("err_other");
+    var d = e && typeof e.detail === "string" ? e.detail
+          : e && !e.code && e.message ? String(e.message).slice(0, 120)
+          : e && typeof e.extra === "string" && e.extra ? c + ": " + e.extra.replace(/[^\w .-]/g, "").slice(0, 40)
+          : (S.en[k] ? "" : String(c || ""));
+    return d && k !== "err_offline" && k !== "err_keys" ? base + " (" + d + ")" : base;
   }
   function ask(la, req) {
     return links().call(la, [req]).then(function (res) {
       var r = res && res[0];
       var c = links().statusCode(r);
-      if (c) { var e = new Error(c); e.code = c; e.status = r && r.status; throw e; }
+      if (c) { var e = new Error(c); e.code = c; e.status = r && r.status; e.detail = detailOf(r) || c; throw e; }
       return r.data;
     });
   }
@@ -215,7 +235,8 @@
     ask(pend.la, { m: "POST", path: "/sessions", body: { code: cb.code } }).then(function (j) {
       handling = false;
       var ses = K.session(j);
-      if (!ses || !ses.accts.length) { connecting = false; A.showToast(t("err_other")); return; }
+      if (!ses) { connecting = false; A.showToast(errText("other", { detail: "session" })); return; }
+      if (!ses.accts.length) { connecting = false; A.showToast(t("err_noacc")); return; }
       var rows = live(), saved = [];
       ses.accts.forEach(function (ac) {
         var old = K.matchLink(rows, pend.bank, ac);
@@ -228,7 +249,7 @@
         saved.push(row.id);
       });
       mapDialog(saved);
-    }, function (e) { handling = false; connecting = false; A.showToast(errText(code(e))); });
+    }, function (e) { handling = false; connecting = false; A.showToast(errText(code(e), e)); });
   }
   function listen() {
     try {
@@ -316,7 +337,7 @@
         msg.className = "hint bk-msg";
         msg.textContent = t("appOk", { n: B.clean(j && j.name ? String(j.name) : "", 60) || "—" });
         redraw();
-      }, function (e) { msg.className = "err bk-msg"; msg.textContent = e && e.code === "keys" && e.extra ? t("keyBad") : errText(code(e)); });
+      }, function (e) { msg.className = "err bk-msg"; msg.textContent = e && e.code === "keys" && e.extra ? t("keyBad") : errText(code(e), e); });
     }
     if (!a) {
       box.appendChild(el("p", "hint", t("appNone")));
@@ -331,11 +352,16 @@
       box.appendChild(red);
       box.appendChild(keyForm(true));
       var acts = el("div", "dlg-actions");
-      acts.appendChild(A.button(t("appSave"), "primary", function () {
+      var saveB = A.button(t("appSave"), "primary", function () {
         if (!APP_RE.test(st.id)) { msg.className = "err bk-msg"; msg.textContent = t("idBad"); return; }
         if (!st.pem) { msg.className = "err bk-msg"; msg.textContent = t("keyBad"); return; }
+        // one Enable Banking application: a second Save (after a failed
+        // check) must not add another account
+        if (app()) { redraw(); return; }
+        saveB.disabled = true;
         done(Lk.add({ p: "ebank", name: "Enable Banking", keys: { app: st.id, pem: st.pem } }));
-      }));
+      });
+      acts.appendChild(saveB);
       box.appendChild(acts);
     } else {
       box.appendChild(el("p", "", a.name));
@@ -404,14 +430,14 @@
     ask(la, { m: "POST", path: "/auth", body: K.authBody(bank, state, psu, Date.now()) }).then(function (j) {
       // the bank's page (https; a local address only in tests)
       var url = j && typeof j.url === "string" && /^(https:\/\/|http:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/)/.test(j.url) ? j.url : "";
-      if (!url) throw Object.assign(new Error("other"), { code: "other" });
+      if (!url) throw Object.assign(new Error("other"), { code: "other", detail: "auth: no url" });
       if (w && !w.closed) { try { w.opener = null; } catch (e) {} w.location.href = url; }
       else { try { root.top.location.href = url; } catch (e) { A.showToast(t("popup")); } }
       if (waitMsg) waitMsg.textContent = t("wait");
     }).catch(function (e) {
       if (w && !w.closed) w.close();
       store(PEND_KEY, null);
-      A.showToast(errText(code(e)));
+      A.showToast(errText(code(e), e));
     });
   }
   function connSection() {
@@ -452,7 +478,7 @@
         bs.innerHTML = "";
         list.forEach(function (b, i) { var o = el("option", "", b.name + (b.beta ? " (beta)" : "")); o.value = String(i); bs.appendChild(o); });
         bs.disabled = goB.disabled = !list.length;
-      }, function (e) { findB.disabled = false; msg.className = "err bk-msg"; msg.textContent = errText(code(e)); });
+      }, function (e) { findB.disabled = false; msg.className = "err bk-msg"; msg.textContent = errText(code(e), e); });
     });
     var row2 = el("div", "fld-row");
     row2.appendChild(A.field(t("bank"), bs, "bc-bank"));
