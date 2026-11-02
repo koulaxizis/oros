@@ -3,7 +3,7 @@
   "name": "__MSG_extName__",
   "short_name": "orOS",
   "description": "__MSG_extDesc__",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "default_locale": "en",
   "homepage_url": "https://useoros.online/",
   "icons": {
@@ -21,15 +21,7 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js",
-    "scripts": [
-      "core.js",
-      "pm/pmcrypto.js",
-      "pm/pmcore.js",
-      "pm/pmkinds.js",
-      "pmvault.js",
-      "background.js"
-    ]
+    "service_worker": "background.js"
   },
   "permissions": [
     "activeTab",

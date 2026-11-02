@@ -66,7 +66,11 @@ test("manifest: MV3, minimal permissions, files exist", () => {
   assert.deepEqual(m.host_permissions, ["https://useoros.online/*"]);
   assert.equal(m.content_scripts, undefined);
   assert.ok(!JSON.stringify(m.host_permissions).includes("<all_urls>"));
-  const files = [m.background.service_worker, ...m.background.scripts, m.options_ui.page, m.action.default_popup,
+  // Chromium form: a service worker only; "background.scripts" next to it
+  // makes Chrome/Edge/Brave warn "requires manifest version of 2 or lower"
+  // (the Firefox form is built by .github/scripts/ext-firefox.js)
+  assert.deepEqual(Object.keys(m.background), ["service_worker"]);
+  const files = [m.background.service_worker, m.options_ui.page, m.action.default_popup,
     ...Object.values(m.icons), ...Object.values(m.action.default_icon)];
   files.forEach((f) => assert.ok(fs.existsSync(path.join(DIR, f)), f));
   assert.ok(m.browser_specific_settings.gecko.id);
