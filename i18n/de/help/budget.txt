@@ -10,7 +10,7 @@ Oben steht der Monat, mit Pfeilen zum Wechseln zwischen den Monaten; `Dieser Mon
 Budget öffnet mit der `Übersicht`: der Monat, den du ansiehst, als Karten.
 - `Sicher ausgeben`: wie viel du pro Tag bis zum Monatsende ausgeben kannst. Mit einem Monatslimit für `Alle Ausgaben` ist es das, was bis zum Limit übrig ist; ohne Limit die Einnahmen minus die Ausgaben. Wiederkehrende Einträge, die in diesem Monat noch kommen, zählen mit. Ein vergangener Monat zeigt `So endete der Monat`, ein kommender `Was diesen Monat kommt`.
 - `Ausgabentempo`: deine Ausgaben Tag für Tag aufaddiert (durchgezogene Linie), neben dem letzten Monat (gestrichelt) und dem Durchschnitt der drei Monate davor (gepunktet). Mit Monatslimit siehst du auch das Limit und eine Gerade von 0 bis dorthin: Bleibst du unter der Geraden, liegst du im Plan. Zeige auf einen Tag, um seine Zahlen zu sehen; `Als Tabelle zeigen` listet alle auf.
-- `Konten`: dein Nettovermögen und darunter Einnahmen, Ausgaben und ihre Differenz aller Konten im Monat. Jedes Konto zeigt seinen Saldo heute und dieselben drei Zahlen für den Monat (`Ohne Konto` sammelt Einträge ohne Konto). Umbuchungen zwischen deinen Konten zählen nicht. Tippe auf ein Konto, um seine Einträge zu sehen.
+- `Konten`: dein Nettovermögen und darunter Einnahmen, Ausgaben und ihre Differenz aller Konten im Monat. Jedes Konto zeigt seinen Saldo heute und dieselben drei Zahlen für den Monat (`Ohne Konto` sammelt Einträge ohne Konto). Umbuchungen zwischen deinen Konten zählen nicht. Tippe auf ein Konto, um seine Einträge zu sehen. Der Stift neben einem Konto ändert Namen, Anfangssaldo und Farbe (auch bei Bankkonten); `Neues Konto` fügt ein eigenes hinzu, etwa ein Portemonnaie. Mit verbundenen Banken holt `Von Banken aktualisieren` neue Einträge sofort und zeigt, wann dieses Gerät das zuletzt getan hat; Budget aktualisiert auch selbst, wenn du es öffnest oder zurückkehrst und die letzte Aktualisierung 6 Stunden oder älter ist. Solange orOS geschlossen ist, wird nichts aktualisiert.
 - `Limits`: die Limits, die am nächsten an ihrem Ende sind, als Ringe. `Nächste 7 Tage`: kommende wiederkehrende Einträge. `Sparziele`: wie weit jedes ist.
 - `Wohin das Geld ging`: die größten Ausgabenkategorien, mit wie viel mehr (▲) oder weniger (▼) als letzten Monat. Tippe auf eine, um ihre Einträge zu sehen.
 
@@ -24,6 +24,14 @@ Der Tab `Einträge` listet die Einträge des Monats nach Tag, mit einer `Tagessu
 Wenn du [CRM](help:a/crm) nutzt, kann ein Eintrag den Kunden, Lieferanten oder anderen Partner nennen, mit dem er war (`Partner im CRM`); die Karte dieses Partners zeigt dann die Einnahmen und Ausgaben mit ihm in diesem Jahr und insgesamt. Zahlungen, die du aus Invoices schickst, bringen ihren Partner mit.
 
 Zahlungen, die du in [Rechnungen](app:invoices) erfasst, kommen hier von selbst als Einnahme aus freiberuflicher Tätigkeit an, mit Rechnungsnummer und Kunde in der Notiz. Ändern sich dort Betrag oder Datum der Zahlung, folgt der Eintrag; wird die Zahlung gelöscht, verschwindet auch der Eintrag. Einen Eintrag, den du hier änderst oder löschst, lassen wir so, wie du ihn hinterlassen hast. In Rechnungen › Einstellungen schaltest du das aus.
+
+
+Schneller eintragen: der Betrag rechnet (`12+4,5` wird als 16,50 gespeichert; auch × und ÷), und auf einem Touchscreen ersetzt ein Tastenfeld die Tastatur. Beim Tippen einer Notiz werden frühere vorgeschlagen; wählst du eine bei einem neuen Eintrag, werden ihre Kategorie und ihr Betrag ausgefüllt. `Heute noch einmal` oben in einem neuen Eintrag fügt einen deiner letzten 5 Einträge mit einem Tippen für heute noch einmal hinzu (Rückgängig nimmt ihn zurück). In einem Eintrag öffnet `Duplizieren` einen neuen mit demselben Betrag, derselben Kategorie, Notiz und demselben Konto, mit heutigem Datum.
+## Budgets
+Oben in `Limits` legt `Neues Budget` einen Betrag für eine Zeitspanne fest, neben deinen Monatslimits:
+- `Wiederholung`: `Jede Woche`, `Jeden Monat` (ab einem beliebigen Tag, etwa ab dem Zahltag am 25.), `Alle paar Tage` (wähle wie viele) oder `Einmal`, vom `Ersten Tag` bis zum `Letzten Tag` (eine Reise, die Feiertage).
+- `Welche Ausgaben zählen`: `Alle Ausgaben` oder die Kategorien, die du ankreuzt; `Von welchen Konten`: alle oder die angekreuzten.
+Jedes Budget zeigt den aktuellen Zeitraum, was ausgegeben und übrig ist, was pro Tag bis zum Ende bleibt, und eine kleine Marke, wo ein gleichmäßiges Tempo heute stünde. Darunter die früheren Zeiträume als Balken (rot = darüber) mit ihrem Durchschnitt. Laufende Budgets erscheinen auch als Ringe in der Übersicht. Budgets werden auf all deinen Geräten synchronisiert; deine Monatslimits ändern sich nicht.
 
 ## Monatslimits
 Unter `Limits` gibt `Limit setzen` einer Ausgabenkategorie ein Monatslimit, und `Alle Ausgaben` nimmt ein Gesamtlimit. Limits gelten für jeden Monat. Jeder Balken zeigt, wie viel ausgegeben und wie viel übrig ist, und wechselt bei 80 % zu `Nah am Limit` und über 100 % zu `Über dem Limit`. Wenn du im aktuellen Monat ein Limit überschreitest, schickt dir orOS eine [Benachrichtigung](help:t/notifications).
@@ -48,6 +56,9 @@ Die Umschlagmethode (nullbasiert, wie bei YNAB) ist optional. Öffne den Tab `Pl
 ## Sparziele
 Unter `Plan` legst du mit `Neues Ziel` an: einen `Name`, ein `Ziel` und, wenn du willst, ein Datum (`Bis`). Der Fortschritt kommt aus `Was ich von Hand zurücklege` (mit `Geld hinzufügen`; ein Minuszeichen nimmt Geld heraus) oder aus dem Saldo eines deiner Konten. Jedes Ziel zeigt, wie weit es ist und wie viel du jeden Monat zurücklegen musst, um es bis zum Datum zu schaffen.
 
+## Darlehen und Schulden
+Am Ende von `Plan` hält `Darlehen und Schulden` fest, was du verliehen und was du geliehen hast. `Neues Darlehen`: `Ich habe verliehen` oder `Ich habe geliehen`, mit wem, wie viel, das Datum, optional bis wann zurückgezahlt wird und, wenn du willst, das Konto, von dem das Geld ging oder auf das es kam. Ein Darlehen ist weder Einnahme noch Ausgabe: wie eine Umbuchung ändert es nur den Saldo dieses Kontos. `Rückzahlung` trägt ein, was zurückkam (oder was du zurückgezahlt hast), gern in Teilen; jedes Darlehen zeigt, was bezahlt ist und was fehlt, und wird nach seinem Datum `Überfällig`. Im Fenster des Darlehens trägt `Rest abschreiben` (oder `Als erlassen markieren`) den Rest als eine Ausgabe (oder Einnahme) ein und schließt das Darlehen; Rückgängig nimmt beides zurück. Die Übersicht hat eine Karte `Darlehen und Schulden` mit dem, was in beide Richtungen offen ist.
+
 ## Abos
 Unter `Wiederkehrend` listet `Abos` deine wiederkehrenden Ausgaben nach ihrer nächsten Abbuchung, jede mit ihren Kosten `Im Monat` und `Im Jahr`, und die Summen oben. In einer wiederkehrenden Ausgabe schickt dir `Erinnern` (`Am Tag der Abbuchung` oder 1 bis 14 Tage vorher) eine [Benachrichtigung](help:t/notifications) vor der Abbuchung. `Erinnerungen um` legt die Uhrzeit auf diesem Gerät fest; `Aus auf diesem Gerät` schaltet sie nur hier stumm.
 
@@ -61,10 +72,19 @@ Die Hauptwährung (`Mehr` › `Währung`) ist die, in der jede Summe steht. Ein 
 In einem Eintrag fügt unter `Beleg` das `+` ein Foto oder ein PDF des Belegs hinzu (bis zu 3). Fotos werden auf diesem Gerät neu gezeichnet, sodass keine Standort- oder Kameradaten bleiben; ein PDF wird nur behalten, wenn es wirklich eines ist (bis zu 10 MB). Die Dateien liegen in [Dateien](app:files), Ordner Budget/Receipts, und kommen mit Vault Drive auf deine anderen Geräte, nicht mit der Synchronisierung. `Summe aus Text lesen` nimmt den Text des Belegs (zum Beispiel aus „Text aus Foto kopieren“ auf deinem Handy) und setzt seine Summe in `Betrag` ein.
 
 ## Diagramme
-`Diagramme` zeigt `Ausgaben nach Kategorie` für den Monat, `Einnahmen und Ausgaben, 12 Monate` und `Saldo am Ende jedes Monats`. Tippe auf eine Kategorie, um ihre Einträge zu sehen, oder auf einen Monat, um ihn zu öffnen. `Als Tabelle zeigen` gibt die Zahlen als Text aus.
+Oben in `Diagramme` wählst du den Zeitraum: `Monat`, `Quartal` oder `Jahr` (um den Monat, den du ansiehst) oder eigene `Daten`. Der Zeitraum bleibt auf diesem Gerät.
+- `Einnahmen`, `Ausgaben` und `Differenz` des Zeitraums, jeweils neben dem gleich langen Zeitraum direkt davor (▲ mehr, ▼ weniger), mit den durchschnittlichen Ausgaben pro Tag und wie viel der Einnahmen du behalten hast.
+- `Ausgaben nach Kategorie` oder `Einnahmen`: ein Ring mit dem Anteil jeder Kategorie und ihrer Änderung gegenüber dem Zeitraum davor. Tippe auf eine Kategorie, um ihre Einträge zu sehen.
+- `Tag für Tag`: der Monat als Kalender, dunkler an den teureren Tagen. Tippe auf einen Tag für seine Ausgaben; tippe auf eine, um sie zu öffnen.
+- `Was sich geändert hat`: die Kategorien, die sich gegenüber dem Zeitraum davor am stärksten verändert haben, jetzt und davor nebeneinander.
+- `Wo du am meisten ausgibst`: deine Ausgaben nach Namen (Notiz oder Banktext), sodass „LIDL 1234“ und „Lidl“ als eins zählen. Tippe auf einen Namen, um danach zu suchen.
+
+Weiter unten zeigt `Diagramme` `Einnahmen und Ausgaben, 12 Monate` und `Saldo am Ende jedes Monats`. Tippe auf einen Monat, um ihn zu öffnen. `Als Tabelle zeigen` gibt die Zahlen als Text aus.
 
 ## Kategorien und Währung
 Im Menü `Mehr` (die drei Punkte) kannst du unter `Kategorien` eigene hinzufügen (`Neue Kategorie…`), sie umbenennen, ihre Farben ändern und sie löschen. Einträge einer gelöschten Kategorie erscheinen als `Ohne Kategorie`.
+
+Jede Kategorie kann ein Symbol haben (tippe auf das zweite Quadrat) und unter einer Hauptkategorie derselben Art stehen, eine Ebene tief: wähle `Unter Auswärts essen` für Kaffee, dann erscheint sie als `Auswärts essen › Kaffee`. Summen, Monatslimits, Umschläge und Diagramme zählen eine Unterkategorie auch in ihrer Hauptkategorie; ein Limit oder Budget auf einer Unterkategorie zählt nur diese. In `Diagramme` öffnet ein Tippen auf eine Hauptkategorie mit Unterkategorien diese, `Alle Kategorien` führt zurück. Wird eine Hauptkategorie gelöscht, werden ihre Unterkategorien wieder Hauptkategorien.
 
 `Währung` legt die Hauptwährung fest, in der jede Summe steht (siehe Währungen). Eine Änderung rechnet die vorhandenen Beträge nicht um.
 

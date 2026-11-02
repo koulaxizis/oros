@@ -45,7 +45,7 @@
       "ov.up": "Next 7 days", "ov.upNone": "No recurring entries in the next 7 days.", "ov.today": "Today", "ov.tomorrow": "Tomorrow",
       "ov.upSum": "In {i} · out {o}",
       "ov.goal": "Savings goals", "ov.goalNone": "A trip, a new laptop, a safety net: set a target and see how close you are.",
-      "ov.goalNew": "New goal",
+      "ov.goalNew": "New goal", "ov.accEdit": "Rename or change {a}", "ov.accNew": "New account", "ov.bkNow": "Update from banks", "ov.bkBusy": "Updating…", "ov.bkLast": "Last update {d}", "ov.bkNever": "Not updated on this device yet", "ov.bkWeb": "Banks update only at useoros.online", "ov.loan": "Loans and debts",
       "ov.top": "Where the money went", "ov.topNone": "No expenses this month.", "ov.new": "new",
       "ov.up%": "{p}% more than last month", "ov.down%": "{p}% less than last month", "ov.new.aria": "Nothing in this category last month",
       "ov.edit": "Edit the overview", "ov.editHint": "Pick the cards to show and their order. It applies on all your devices.",
@@ -76,7 +76,7 @@
       "ov.up": "Επόμενες 7 μέρες", "ov.upNone": "Κανένα πάγιο τις επόμενες 7 μέρες.", "ov.today": "Σήμερα", "ov.tomorrow": "Αύριο",
       "ov.upSum": "Έσοδα {i} · έξοδα {o}",
       "ov.goal": "Στόχοι αποταμίευσης", "ov.goalNone": "Ένα ταξίδι, ένας νέος υπολογιστής, ένα αποθεματικό: βάλε στόχο και δες πόσο κοντά είσαι.",
-      "ov.goalNew": "Νέος στόχος",
+      "ov.goalNew": "Νέος στόχος", "ov.accEdit": "Όνομα και ρυθμίσεις: {a}", "ov.accNew": "Νέος λογαριασμός", "ov.bkNow": "Ενημέρωση από τράπεζες", "ov.bkBusy": "Ενημέρωση…", "ov.bkLast": "Τελευταία ενημέρωση {d}", "ov.bkNever": "Δεν έχει γίνει ακόμα ενημέρωση σε αυτή τη συσκευή", "ov.bkWeb": "Οι τράπεζες ενημερώνονται μόνο στο useoros.online", "ov.loan": "Δάνεια και χρέη",
       "ov.top": "Πού πήγαν τα χρήματα", "ov.topNone": "Κανένα έξοδο αυτόν τον μήνα.", "ov.new": "νέα",
       "ov.up%": "{p}% περισσότερα από τον προηγούμενο μήνα", "ov.down%": "{p}% λιγότερα από τον προηγούμενο μήνα", "ov.new.aria": "Τίποτα σε αυτή την κατηγορία τον προηγούμενο μήνα",
       "ov.edit": "Προσαρμογή σύνοψης", "ov.editHint": "Διάλεξε ποιες κάρτες φαίνονται και με ποια σειρά. Ισχύει σε όλες τις συσκευές σου.",
@@ -98,8 +98,8 @@
   function D() { return A.data(); }
   function lastDayOf(mk) { return mk + "-" + (O.daysIn(mk) < 10 ? "0" : "") + O.daysIn(mk); }
 
-  var TITLE = { safe: "ov.safe", pace: "ov.pace", acc: "ov.acc", lim: "ov.lim", up: "ov.up", goal: "ov.goal", top: "ov.top" };
-  var BUILD = { safe: cardSafe, pace: cardPace, acc: cardAcc, lim: cardLim, up: cardUp, goal: cardGoal, top: cardTop };
+  var TITLE = { safe: "ov.safe", pace: "ov.pace", acc: "ov.acc", lim: "ov.lim", up: "ov.up", goal: "ov.goal", loan: "ov.loan", top: "ov.top" };
+  var BUILD = { safe: cardSafe, pace: cardPace, acc: cardAcc, lim: cardLim, up: cardUp, goal: cardGoal, loan: cardLoan, top: cardTop };
 
   function render(box) {
     A.hideTip();
@@ -107,7 +107,7 @@
     var grid = el("div", "ov-grid");
     box.appendChild(grid);
     O.cardList(D().set.ov).forEach(function (c) {
-      if (!c.on || !BUILD[c.id]) return;
+      if (!c.on || !BUILD[c.id] || (c.id === "loan" && !A.loansCard)) return;
       var card = el("section", "card ov-card ovc-" + c.id);
       card.setAttribute("aria-labelledby", "ov-h-" + c.id);
       grid.appendChild(card);
@@ -285,8 +285,9 @@
     card.appendChild(top);
     var bal = A.balNow();
     var ul = el("ul", "ov-rows ov-accs");
-    function row(name, col, balTxt, neg, f, onClick) {
+    function row(name, col, balTxt, neg, f, onClick, onEdit) {
       var li = el("li");
+      if (onEdit) li.className = "ov-acc-li";
       var b = el(onClick ? "button" : "div", "ov-row ov-accrow");
       if (onClick) { b.type = "button"; b.addEventListener("click", onClick); }
       var l1 = el("span", "ov-top-l");
@@ -297,14 +298,45 @@
       b.appendChild(flowLine(f));
       b.setAttribute("aria-label", (onClick ? t("ov.accTip", { a: name }) : name) + (balTxt ? ", " + balTxt : "") + ", " + flowAria(f));
       li.appendChild(b);
+      if (onEdit) {
+        var e = el("button", "icon-btn ov-acc-edit");
+        e.type = "button";
+        e.innerHTML = A.icon("edit");
+        e.setAttribute("aria-label", t("ov.accEdit", { a: name }));
+        e.addEventListener("click", onEdit);
+        li.appendChild(e);
+      }
       ul.appendChild(li);
     }
     list.forEach(function (a) {
-      row(a.n, a.col, A.money(bal[a.id], a.cur), bal[a.id] < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); });
+      row(a.n, a.col, A.money(bal[a.id], a.cur), bal[a.id] < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); },
+          A.accDialog ? function () { A.accDialog(a.id); } : null);
     });
     if (flows.none.inc || flows.none.out) row(t("ov.noAcc"), 8, "", false, flows.none, null);
     card.appendChild(ul);
     card.appendChild(el("p", "hint ov-foot", t("ov.flowHint")));
+    // New account (a wallet, cash) and, with banks linked, an update now.
+    var acts = el("div", "ov-acts");
+    var bk = A.bankState ? A.bankState() : null;
+    if (bk && bk.linked) {
+      var ub = el("button", "mini", bk.busy ? t("ov.bkBusy") : t("ov.bkNow"));
+      ub.type = "button";
+      ub.disabled = bk.busy || !bk.reach;
+      ub.addEventListener("click", function () {
+        ub.disabled = true;
+        ub.textContent = t("ov.bkBusy");
+        A.bankRefresh();
+      });
+      acts.appendChild(ub);
+      acts.appendChild(el("span", "hint ov-bk-when", !bk.reach ? t("ov.bkWeb") : bk.last ? t("ov.bkLast", { d: A.whenShort(bk.last) }) : t("ov.bkNever")));
+    }
+    if (A.accDialog) {
+      var nb = el("button", "mini", t("ov.accNew"));
+      nb.type = "button";
+      nb.addEventListener("click", function () { A.accDialog(null); });
+      acts.appendChild(nb);
+    }
+    if (acts.childNodes.length) card.appendChild(acts);
   }
 
   // ---------- limits ----------
@@ -327,6 +359,7 @@
       var l = A.limitOf(c.id);
       if (l) items.push({ name: c.name, col: c.col, spent: tt.byCat["o:" + c.id] || 0, limit: l });
     });
+    A.budgets().forEach(function (b) { items.push(b); });   // flexible budgets running today (C3)
     items.sort(function (x, y) { return y.spent * x.limit - x.spent * y.limit || x.name.localeCompare(y.name); });
     items = items.slice(0, all ? 3 : 4);
     if (all) items.unshift({ name: t("ov.limAll"), col: null, spent: tt.out, limit: all });
@@ -380,6 +413,12 @@
     card.appendChild(el("p", "hint ov-foot", t("ov.upSum", { i: A.money(inc), o: A.money(out) })));
   }
 
+  // ---------- loans and debts (budget/loansui.js) ----------
+  function cardLoan(card) {
+    head(card, "loan", t("ov.loan"), t("ov.open"), function () { A.setTab("plan"); });
+    A.loansCard(card);
+  }
+
   // ---------- savings goals ----------
   function goalSaved(g) {
     if (!g.ac) return g.sv;
@@ -424,7 +463,7 @@
   function cardTop(card) {
     var mk = A.viewMk();
     head(card, "top", t("ov.top"), t("ov.open"), function () { A.setTab("charts"); });
-    var list = O.topCats(D().tx, mk, 5);
+    var list = O.topCats(A.rolledTx ? A.rolledTx() : D().tx, mk, 5);
     if (!list.length) { hint(card, t("ov.topNone")); return; }
     var ul = el("ul", "ov-rows");
     list.forEach(function (r) {

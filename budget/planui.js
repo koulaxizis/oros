@@ -99,14 +99,17 @@
   function opt(sel, v, label) { var o = el("option", "", label); o.value = String(v); sel.appendChild(o); return o; }
   function D() { return A.data(); }
   function signedInput(c) { return (c < 0 ? "-" : "") + A.centsToInput(Math.abs(c)); }
-  function liveExpenseCats() { return A.cats().filter(function (c) { return c.k === "o"; }); }
+  // Main expense categories: a subcategory's spending counts in its
+  // main category's envelope (A.rolledData).
+  function liveExpenseCats() { return A.cats().filter(function (c) { return c.k === "o" && !c.p; }); }
+  function DR() { return A.rolledData ? A.rolledData() : D(); }
   function envName(c) { return c ? A.catName(c) : t("uncat"); }
 
   // ---------- Envelopes ----------
   function envOn() { var s = D().set; return s.env === true && P.okMk(s.envs); }
   function monthState(mk) {
     var live = liveExpenseCats().map(function (c) { return c.id; });
-    return P.envMonth(D(), mk, D().set.envs, live, A.startCash());
+    return P.envMonth(DR(), mk, D().set.envs, live, A.startCash());
   }
   function asgOf(mk, c) {
     var g = A.findIn(D().asg, P.asgId(mk, c));
@@ -633,7 +636,7 @@
     head.appendChild(nav);
     box.appendChild(head);
     var live = liveExpenseCats().map(function (c) { return c.id; });
-    var rep = P.yearReport(D(), year, live);
+    var rep = P.yearReport(DR(), year, live);
     if (!rep.rows.length) { box.appendChild(el("p", "hint", t("yNone", { y: year }))); return; }
     // stacked bars: the 6 largest categories + the rest
     var top = rep.rows.slice(0, rep.rows.length > 7 ? 6 : 7);

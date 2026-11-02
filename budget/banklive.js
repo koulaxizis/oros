@@ -615,6 +615,17 @@
     if (!K || !B) return;
     listen();
     setTimeout(autoRefresh, 2500);
+    // Back to an orOS left open (a phone in the pocket, a tab overnight):
+    // the same check, so the update still comes about once a day or more.
+    if (typeof document !== "undefined") document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") setTimeout(autoRefresh, 1500);
+    });
   }
-  root.OrosBudgetBankLive = { init: init, open: open, refresh: refresh, bar: bar, _takeAnswer: takeAnswer };
+  // For the Overview: are banks linked here, when did this device last
+  // update, is an update running.
+  function state() {
+    var dev = load(DEV_KEY);
+    return { linked: live().length > 0, reach: !!links(), last: dev && dev.t ? dev.t : 0, busy: busy };
+  }
+  root.OrosBudgetBankLive = { init: init, open: open, refresh: refresh, bar: bar, state: state, _takeAnswer: takeAnswer };
 })(typeof window !== "undefined" ? window : this);
