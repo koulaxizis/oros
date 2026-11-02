@@ -31,6 +31,7 @@
 
   var S = {
     en: {
+      webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
       lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking), and so can PayPal Business. orOS only reads them and never makes payments. When a call goes through the orOS relay (always for PayPal), the data passes through it but is never stored or logged.",
       lvNoShell: "Open Budget inside orOS to connect a bank.",
       appT: "Your Enable Banking application", appNone: "Once: create a free account at enablebanking.com, register a Production application with this redirect URL, keep the .pem key file it downloads, and press “Activate by linking accounts” with your own accounts (not “Request activation”).",
@@ -58,6 +59,7 @@
       close: "Close", cancel: "Cancel"
     },
     el: {
+      webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
       lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking), και το ίδιο το PayPal Business. Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές. Όταν μια κλήση περνά από το relay του orOS (πάντα για το PayPal), τα δεδομένα περνούν αλλά δεν αποθηκεύονται ούτε καταγράφονται ποτέ.",
       lvNoShell: "Άνοιξε την εφαρμογή μέσα στο orOS για να συνδέσεις τράπεζα.",
       appT: "Η εφαρμογή σου στο Enable Banking", appNone: "Μία φορά: φτιάξε δωρεάν λογαριασμό στο enablebanking.com, δήλωσε μια εφαρμογή Production με αυτό το Redirect URL, κράτα το αρχείο κλειδιού .pem που κατεβαίνει και πάτα «Activate by linking accounts» με τους δικούς σου λογαριασμούς (όχι «Request activation»).",
@@ -97,6 +99,10 @@
     catch (e) { return null; }
   }
   function app() { var Lk = links(); var l = Lk ? Lk.list("ebank") : []; return l.length ? l[0] : null; }
+  function webOrigin() {
+    try { return root.location.origin === "https://useoros.online"; }
+    catch (e) { return true; }
+  }
   function live() { return (A.data().bnk || []).slice(); }
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
@@ -543,6 +549,9 @@
       nowB.disabled = false;
       nowB.textContent = t("now");
       body.appendChild(el("p", "hint", t("lvIntro")));
+      // the relay (ALLOWED_ORIGINS) and the bank's return page answer
+      // useoros.online only: the installed app and Portable can't connect
+      if (!webOrigin()) body.appendChild(el("p", "err bk-web", t("webOnly")));
       if (!Lk) { body.appendChild(el("p", "", t("lvNoShell"))); nowB.hidden = true; return; }
       body.appendChild(appSection(dlg, function () { checkKeys().then(draw); }));
       body.appendChild(accsSection(draw));
