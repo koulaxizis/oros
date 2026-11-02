@@ -2379,8 +2379,14 @@ function setupPlayerControls(){
   var castBtn = $("rx-pl-cast");
   if(castBtn){
     if(window.OrosCast){
-      window.OrosCast.attach({ app: "radio", button: castBtn, lang: activeLang(),
-        media: function(){ return host.audio; } });
+      var castCtl = window.OrosCast.attach({ app: "radio", button: castBtn, lang: activeLang(),
+        media: function(){ return host.audio; }, kind: "audio",
+        title: function(){ var c = getHostState().current; return c ? c.name : ""; } });
+      // A TV or speaker found through orOS Bridge follows the station; this
+      // device stays quiet while it plays.
+      if(host.audio) host.audio.addEventListener("play", function(){
+        if(castCtl.remote() === "connected") castCtl.update();
+      });
     }else{
       castBtn.setAttribute("hidden", "");
     }

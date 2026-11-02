@@ -17,5 +17,22 @@ orosPack("de", "cast", {
  "net.manage": "Beenden oder wechseln",
  "net.none": "Dieser Browser hat keinen Fernseher und keinen Lautsprecher gefunden. Chrome auf Android findet Chromecast-Geräte, Safari findet AirPlay.",
  "net.nostream": "Dieser Sender oder Kanal kann nicht an einen Fernseher gesendet werden.",
- "net.notfound": "Kein Fernseher und kein Lautsprecher hat geantwortet."
+ "net.notfound": "Kein Fernseher und kein Lautsprecher hat geantwortet.",
+ "net.bridge": "Smart-TVs und Netzwerklautsprecher (DLNA): orOS Bridge auf einem Windows- oder Linux-Computer findet sie.",
+ "net.getbridge": "orOS Bridge herunterladen",
+ "net.old": "Aktualisiere orOS Bridge, um Fernseher und Lautsprecher im Netzwerk zu finden.",
+ "net.pair": "Mit orOS Bridge verbinden",
+ "net.code": "Der 6-stellige Code, den orOS Bridge zeigt",
+ "net.codeok": "Verbinden",
+ "net.badcode": "Dieser Code hat nicht funktioniert. Versuche es noch einmal.",
+ "net.looking": "Suche nach Fernsehern und Lautsprechern…",
+ "net.empty": "Kein Fernseher und kein Lautsprecher im Netzwerk gefunden.",
+ "net.again": "Erneut suchen",
+ "net.playing": "Läuft auf {name}",
+ "net.pause": "Pause",
+ "net.play": "Abspielen",
+ "net.back": "Zurück zu diesem Gerät",
+ "net.volume": "Lautstärke",
+ "net.fail": "Das Gerät hat diesen Stream nicht angenommen.",
+ "net.unreach": "Das Gerät antwortet nicht."
 });

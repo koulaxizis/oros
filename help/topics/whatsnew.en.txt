@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.09.00
+- **Play on smart TVs and network speakers, and in Podcasts and Music.** `Play on…` now also lists the smart TVs, Kodi boxes and network speakers on your home network when orOS Bridge 0.10.0 or newer runs on a Windows or Linux computer, with pause, volume and `Back to this device`. Podcasts and Music have the button in their full player; in Music, next and previous change the song on the TV too.
+
 ## Version 5.08.01
 - **Reader and Atelier use the online stand-in too.** When the model on your computer can't be reached, summaries in Reader and the writing help in Atelier go to the online service you picked in the Assistant, and they show its name.
 
