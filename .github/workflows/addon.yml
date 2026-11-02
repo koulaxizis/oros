@@ -1,21 +1,24 @@
 name: Browser add-on
 
-# Packs the orOS browser add-on (extension/, Bible PW-AF1) into one zip
-# for Chrome, Edge, Brave and Firefox. Every run checks that
+# Packs the orOS browser add-on (extension/, Bible PW-AF1) into two zips:
+# oros-addon.zip for Chrome, Edge and Brave (extension/ as it is, MV3
+# service worker) and oros-addon-firefox.zip (background.scripts, built
+# by .github/scripts/ext-firefox.js). Every run checks that
 # extension/pm/ is still a byte-for-byte copy of the Passwords vault
 # code (.github/scripts/ext-pm.js) and runs the add-on tests.
 #
 # On main the zip is also published to the GitHub release
 # "browser-addon" under a fixed name, so the download page can link to
-# it directly (no GitHub account needed):
+# them directly (no GitHub account needed):
 #   https://github.com/koulaxizis/oros/releases/download/browser-addon/oros-addon.zip
+#   https://github.com/koulaxizis/oros/releases/download/browser-addon/oros-addon-firefox.zip
 
 on:
   push:
     branches: [main]
-    paths: ['extension/**', 'passwords/pmcrypto.js', 'passwords/pmcore.js', 'passwords/pmkinds.js', 'vendor/hash-wasm/**', '.github/scripts/ext-pm.js', '.github/workflows/addon.yml']
+    paths: ['extension/**', 'passwords/pmcrypto.js', 'passwords/pmcore.js', 'passwords/pmkinds.js', 'vendor/hash-wasm/**', '.github/scripts/ext-pm.js', '.github/scripts/ext-firefox.js', '.github/workflows/addon.yml']
   pull_request:
-    paths: ['extension/**', 'passwords/pmcrypto.js', 'passwords/pmcore.js', 'passwords/pmkinds.js', 'vendor/hash-wasm/**', '.github/scripts/ext-pm.js', '.github/workflows/addon.yml']
+    paths: ['extension/**', 'passwords/pmcrypto.js', 'passwords/pmcore.js', 'passwords/pmkinds.js', 'vendor/hash-wasm/**', '.github/scripts/ext-pm.js', '.github/scripts/ext-firefox.js', '.github/workflows/addon.yml']
   workflow_dispatch:
 
 permissions:
@@ -48,11 +51,16 @@ jobs:
           echo "ADDON_VERSION=$ver" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/out"
           (cd extension && zip -qr -X "$RUNNER_TEMP/out/oros-addon.zip" .)
+          node .github/scripts/ext-firefox.js "$RUNNER_TEMP/firefox"
+          (cd "$RUNNER_TEMP/firefox" && zip -qr -X "$RUNNER_TEMP/out/oros-addon-firefox.zip" .)
           unzip -l "$RUNNER_TEMP/out/oros-addon.zip" | tail -1
+          unzip -l "$RUNNER_TEMP/out/oros-addon-firefox.zip" | tail -1
       - uses: actions/upload-artifact@v4
         with:
           name: oros-addon
-          path: ${{ runner.temp }}/out/oros-addon.zip
+          path: |
+            ${{ runner.temp }}/out/oros-addon.zip
+            ${{ runner.temp }}/out/oros-addon-firefox.zip
           if-no-files-found: error
           retention-days: 14
       - name: Publish to the browser-addon release
@@ -60,9 +68,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          notes="orOS browser add-on $ADDON_VERSION for Chrome, Edge, Brave and Firefox, built from main ($(date -u +%Y-%m-%d)). Install steps: https://useoros.online/download/#addon"
+          notes="orOS browser add-on $ADDON_VERSION, built from main ($(date -u +%Y-%m-%d)): oros-addon.zip for Chrome, Edge and Brave, oros-addon-firefox.zip for Firefox. Install steps: https://useoros.online/download/#addon"
           if ! gh release view browser-addon >/dev/null 2>&1; then
             gh release create browser-addon --target "$GITHUB_SHA" --prerelease --latest=false --title "orOS browser add-on" --notes "$notes"
           fi
-          gh release upload browser-addon "$RUNNER_TEMP/out/oros-addon.zip" --clobber
+          gh release upload browser-addon "$RUNNER_TEMP/out/oros-addon.zip" "$RUNNER_TEMP/out/oros-addon-firefox.zip" --clobber
           gh release edit browser-addon --title "orOS browser add-on $ADDON_VERSION" --notes "$notes"

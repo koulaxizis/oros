@@ -68,35 +68,42 @@ No content scripts, no network requests of its own.
 
 ## Install
 
-Until the store listings exist, the zip from the GitHub release
-`browser-addon` (`https://github.com/koulaxizis/oros/releases/download/browser-addon/oros-addon.zip`,
-built by `.github/workflows/addon.yml` from `main`) is the download;
-the download page links to it.
+Until the store listings exist, the zips from the GitHub release
+`browser-addon`, built by `.github/workflows/addon.yml` from `main`, are
+the download; the download page links to both:
+`oros-addon.zip` (Chrome, Edge, Brave: this folder as it is) and
+`oros-addon-firefox.zip` (Firefox). This folder's `manifest.json` has
+only `background.service_worker`, because Chromium warns
+"'background.scripts' requires manifest version of 2 or lower" when
+both are there; `node .github/scripts/ext-firefox.js OUT_DIR` writes the
+Firefox form, with `background.scripts` read from the `importScripts`
+line of `background.js`.
 
 - Chrome/Edge/Brave: unzip into a folder you keep, `chrome://extensions`
   (`edge://extensions`, `brave://extensions`) → Developer mode → Load
   unpacked → that folder. To update: unzip the new zip over it and press
   the reload arrow.
 - Firefox: `about:debugging#/runtime/this-firefox` → Load Temporary
-  Add-on → `manifest.json` from the unzipped folder (it stays until
+  Add-on → `manifest.json` from the unzipped `oros-addon-firefox.zip` (it stays until
   Firefox closes; a permanent install needs the signed version from
   addons.mozilla.org).
 
 ## Package for the stores
 
     zip -qr -X ../oros-addon.zip . -x README.md
+    node ../.github/scripts/ext-firefox.js /tmp/oros-firefox
+    (cd /tmp/oros-firefox && zip -qr -X ../oros-addon-firefox.zip . -x README.md)
 
-The same zip goes to all three stores. Raise `version` in
+`oros-addon.zip` goes to the Chrome and Edge stores,
+`oros-addon-firefox.zip` to addons.mozilla.org. Raise `version` in
 `manifest.json` for every upload.
 
 - Chrome Web Store: developer account (one-time US$5), upload the zip,
   privacy: "does not collect or use data", privacy policy URL
   `https://useoros.online/extension/PRIVACY.md`.
-- Microsoft Edge Add-ons (Partner Center, free): same zip.
-- Firefox (addons.mozilla.org, free): same zip; the Gecko id is
-  `send-to-oros@useoros.online` and never changes. `web-ext lint`
-  passes (one expected warning: Firefox ignores
-  `background.service_worker` and uses `background.scripts`).
+- Microsoft Edge Add-ons (Partner Center, free): `oros-addon.zip`.
+- Firefox (addons.mozilla.org, free): `oros-addon-firefox.zip`; the
+  Gecko id is `send-to-oros@useoros.online` and never changes.
 
 Safari is out of scope (needs Xcode and a paid Apple account).
 
