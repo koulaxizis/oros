@@ -228,3 +228,16 @@ test("bnk rows: normalised, LWW merge, tombstones, kept by an older shape", () =
   assert.equal(BJ.mergeBudget(m1, c).bnk.length, 0);
   assert.ok(JSON.stringify(Object.keys(BJ.mergeBudget(a, BJ.emptyData()))).indexOf("bnk") > 0);
 });
+
+test("BK-5 balance: booked balance first, DBIT is a debt, bad items skipped", () => {
+  const K = require("../budget/bankapi.js");
+  assert.deepEqual(K.balance({ balances: [
+    { balance_type: "ITAV", balance_amount: { amount: "10.00", currency: "EUR" } },
+    { balance_type: "CLBD", balance_amount: { amount: "-1234.56", currency: "EUR" }, reference_date: "2026-11-01" }
+  ] }), { a: -123456, cu: "EUR", d: "2026-11-01", ty: "CLBD" });
+  assert.deepEqual(K.balance({ balances: [{ balance_type: "XPCD", credit_debit_indicator: "DBIT", balance_amount: { amount: "500", currency: "EUR" } }] }),
+    { a: -50000, cu: "EUR", d: "", ty: "XPCD" });
+  assert.equal(K.balance({ balances: [{ balance_type: "CLBD", balance_amount: { amount: "1e3", currency: "EUR" } }] }), null);
+  assert.equal(K.balance({ balances: [{ balance_type: "CLBD", balance_amount: { amount: "1", currency: "eur" } }] }), null);
+  assert.equal(K.balance(null), null);
+});

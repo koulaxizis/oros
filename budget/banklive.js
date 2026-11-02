@@ -32,6 +32,9 @@
   var S = {
     en: {
       webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
+      bankBal: "Bank balance {a} ({d})", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
+      balMatchHint: "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      balMatched: "Starting balance changed by {a}",
       lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking), and so can PayPal Business. orOS only reads them and never makes payments. When a call goes through the orOS relay (always for PayPal), the data passes through it but is never stored or logged.",
       lvNoShell: "Open Budget inside orOS to connect a bank.",
       appT: "Your Enable Banking application", appNone: "Once: create a free account at enablebanking.com, register a Production application with this redirect URL, keep the .pem key file it downloads, and press “Activate by linking accounts” with your own accounts (not “Request activation”).",
@@ -60,6 +63,9 @@
     },
     el: {
       webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
+      bankBal: "Υπόλοιπο τράπεζας {a} ({d})", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
+      balMatchHint: "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      balMatched: "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking), και το ίδιο το PayPal Business. Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές. Όταν μια κλήση περνά από το relay του orOS (πάντα για το PayPal), τα δεδομένα περνούν αλλά δεν αποθηκεύονται ούτε καταγράφονται ποτέ.",
       lvNoShell: "Άνοιξε την εφαρμογή μέσα στο orOS για να συνδέσεις τράπεζα.",
       appT: "Η εφαρμογή σου στο Enable Banking", appNone: "Μία φορά: φτιάξε δωρεάν λογαριασμό στο enablebanking.com, δήλωσε μια εφαρμογή Production με αυτό το Redirect URL, κράτα το αρχείο κλειδιού .pem που κατεβαίνει και πάτα «Activate by linking accounts» με τους δικούς σου λογαριασμούς (όχι «Request activation»).",
@@ -179,7 +185,7 @@
     var rows = live(), now = Date.now();
     if (!rows.length) return Promise.resolve({ n: 0, errs: {} });
     busy = true;
-    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {};
+    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {}, bals = {};
     var tx = D.tx.slice();
     return checkKeys().then(function (has) {
       return rows.reduce(function (p, row) {
@@ -199,6 +205,13 @@
             });
             var lb = K.lastBooked(its);
             if (lb && lb > (row.lf || "")) lfs[row.id] = lb;
+            if (pp) return;
+            // BK-5: the bank's own balance; a bank that won't give it
+            // costs nothing (the entries are in already)
+            return ask(row.la, { m: "GET", path: "/accounts/" + row.uid + "/balances" }).then(function (j) {
+              var b = K.balance(j);
+              if (b) bals[row.id] = { bb: b.a, bc: b.cu, bd: b.d || K.ymdOf(Date.now()) };
+            }, function () {});
           }, function (e) {
             var c = code(e);
             errs[row.id] = !pp && e && (e.status === 401 || e.status === 403 || e.status === 422) && c !== "keys" ? "consent" : c;
@@ -210,6 +223,7 @@
       lastErr = errs;
       store(DEV_KEY, { t: Date.now() });
       Object.keys(lfs).forEach(function (id) { A.patchBnk(id, { lf: lfs[id] }); });
+      Object.keys(bals).forEach(function (id) { A.patchBnk(id, bals[id]); });
       if (add.length) A.addEntries(add, t("got", { n: add.length }));
       else if (!auto && !Object.keys(errs).length) A.showToast(t("gotNone"));
       A.renderAll();
@@ -290,6 +304,22 @@
   function rowName(r) {
     if (isPP(r)) return "PayPal" + (r.nm && r.nm !== "PayPal" ? " · " + r.nm : "");
     return r.bk + (r.nm ? " · " + r.nm : "") + (r.ib ? " ··" + r.ib : "") + (r.cu ? " (" + r.cu + ")" : "");
+  }
+  // BK-5: the bank's balance next to Budget's, and "Match" when they differ
+  function balRow(li, r, redraw) {
+    if (typeof r.bb !== "number" || !r.bc) return;
+    var line = el("div", "bk-meta bk-bal", t("bankBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }));
+    li.appendChild(line);
+    if (!r.ac || A.accCur(r.ac) !== r.bc) return;
+    var mine = A.accBalAt(r.ac, r.bd);
+    if (mine === null || mine === r.bb) { if (mine === r.bb) line.appendChild(el("span", "bk-ok", " · " + t("balSame"))); return; }
+    var diff = r.bb - mine;
+    line.appendChild(el("span", "", " · " + t("balBudget", { a: A.money(mine, r.bc) })));
+    var b = A.button(t("balMatch"), "mini", function () {
+      if (A.shiftStart(r.ac, diff, t("balMatched", { a: A.money(diff, r.bc) }))) redraw();
+    });
+    b.title = t("balMatchHint");
+    li.appendChild(b);
   }
   function statusText(r) {
     var d = K.daysLeft(r, Date.now());
@@ -404,6 +434,7 @@
       var meta = [r.lf ? t("upd", { d: A.dateShort(r.lf) }) : t("updNever"), statusText(r)].filter(Boolean).join(" · ");
       li.appendChild(el("div", "bk-meta", meta));
       if (lastErr[r.id]) li.appendChild(el("div", "err", errText(lastErr[r.id])));
+      balRow(li, r, redraw);
       var s = A.accSelect(r.ac);
       s.setAttribute("aria-label", t("fills") + ": " + rowName(r));
       s.addEventListener("change", function () { A.patchBnk(r.id, { ac: s.value }); });
