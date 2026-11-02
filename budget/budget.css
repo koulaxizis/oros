@@ -1039,3 +1039,11 @@ div.ov-accrow:hover { background: none; }
 .again-chip .sw.cat-ic { width: 26px; height: 26px; }
 .again-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .again-a { color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---------- Overview accounts: edit, new account, bank update ---------- */
+.ov-acc-li { display: flex; align-items: center; gap: 4px; }
+.ov-acc-li > .ov-row { flex: 1 1 auto; min-width: 0; }
+.ov-acc-edit { flex-shrink: 0; }
+.ov-acc-edit svg { width: 16px; height: 16px; }
+.ov-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.ov-bk-when { flex: 1 1 140px; min-width: 0; }

@@ -3057,6 +3057,21 @@
       limitOf: budOf, limitState: limitState, rolledTx: rolledTx, catBadge: catBadge,
       budgets: function () { return BGUI ? BGUI.current() : []; },
       loansCard: LNUI ? function (card) { LNUI.overviewCard(card); } : null,
+      icon: function (k) { return UI[k] || ""; }, accDialog: accDialog,
+      // banks (budget/banklive.js): state, and an update now; a failed
+      // bank opens Banks, where each one says why
+      bankState: BANKLIVE && BANKLIVE.state ? BANKLIVE.state : null,
+      bankRefresh: function () {
+        if (!BANKLIVE) return;
+        BANKLIVE.refresh(false).then(function (r) {
+          renderAll();
+          if (r && r.errs && Object.keys(r.errs).length) BANKLIVE.open();
+        }, function () { renderAll(); BANKLIVE.open(); });
+      },
+      whenShort: function (ms) {
+        var d = new Date(ms);
+        return dateShort(ymdLocal(d)) + ", " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+      },
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin
