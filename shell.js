@@ -7528,7 +7528,7 @@
         { name: "Pollinations", url: "https://pollinations.ai/",
           by: "Pollinations.AI", lic: { k: "cr.lic.groq" },
           k: "cr.anthropic-openai" },
-        { name: "Pollinations, Hugging Face, OpenAI, Stability AI, Stable Diffusion WebUI / Forge", url: "https://pollinations.ai/",
+        { name: "AI Horde, Pollinations, Hugging Face, OpenAI, Stability AI, Stable Diffusion WebUI / Forge", url: "https://aihorde.net/",
           by: "Each provider or project", lic: { k: "cr.lic.pollinations-hugging" },
           k: "cr.pollinations-hugging" },
         { name: "Cloudflare Workers", url: "https://workers.cloudflare.com/",

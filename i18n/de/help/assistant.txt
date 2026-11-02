@@ -1,5 +1,5 @@
 # Assistent
-Der Assistent ist ein Chat mit dem KI-Assistenten deiner Wahl: Claude, ChatGPT, Gemini, Mistral, OpenRouter, ein Dienst mit kostenlosem Tarif (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova, Pollinations), ein Modell auf deinem eigenen Computer oder das eingebaute Modell des Browsers. Er kann deine orOS-Daten durchsuchen, um Fragen zu deinen Notizen, Aufgaben, Terminen und mehr zu beantworten, aber nur, was du erlaubst. Er kann auch einen Eintrag für dich vorbereiten, etwa eine Aufgabe, einen Termin oder eine Ausgabe, den du in der jeweiligen App prüfst und selbst speicherst. Außerdem kann er eine Aufgabe, einen Termin, eine Ausgabe, ein Lesezeichen, einen Kontakt, eine Kanban-Karte und mehr, die du schon hast, ändern oder löschen, aber erst, nachdem du die Änderung gesehen und auf Übernehmen gedrückt hast.
+Der Assistent ist ein Chat mit dem KI-Assistenten deiner Wahl: Claude, ChatGPT, Gemini, Mistral, OpenRouter, ein Dienst mit kostenlosem Tarif (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova), ein kostenpflichtiger Dienst (Pollinations), ein Modell auf deinem eigenen Computer oder das eingebaute Modell des Browsers. Er kann deine orOS-Daten durchsuchen, um Fragen zu deinen Notizen, Aufgaben, Terminen und mehr zu beantworten, aber nur, was du erlaubst. Er kann auch einen Eintrag für dich vorbereiten, etwa eine Aufgabe, einen Termin oder eine Ausgabe, den du in der jeweiligen App prüfst und selbst speicherst. Außerdem kann er eine Aufgabe, einen Termin, eine Ausgabe, ein Lesezeichen, einen Kontakt, eine Kanban-Karte und mehr, die du schon hast, ändern oder löschen, aber erst, nachdem du die Änderung gesehen und auf Übernehmen gedrückt hast.
 
 ## Erste Schritte
 1. Öffne `Assistent` und tippe oder klicke auf `Assistenten einrichten`.
@@ -15,8 +15,9 @@ Diese brauchen nur ein kostenloses Konto und einen kostenlosen Schlüssel, mit t
 - `GitHub Models`: GPT, Llama, Mistral und mehr mit jedem GitHub-Konto. Der Schlüssel ist ein persönliches Zugriffstoken (fine-grained) mit der Berechtigung `Models` auf Lesen.
 - `Cohere`: Command-Modelle. Der kostenlose Testschlüssel ist nur für private Nutzung und Tests.
 - `Hugging Face`: viele offene Modelle über ein kostenloses Token.
-- `Pollinations`: Nutze einen veröffentlichbaren Schlüssel (er beginnt mit `pk_`).
 - `OpenRouter`: Setze den Haken bei `Nur kostenlose Modelle`, dann `Modelle laden`: Es werden nur die Modelle gelistet, deren Name auf `:free` endet.
+
+`Pollinations` ist nicht mehr kostenlos: Es wird mit Pollen bezahlt (etwa 1 $ für 1 Pollen; kostenlose Pollen gibt es nur über die Quests). Wenn du es trotzdem willst, nutze einen geheimen Schlüssel (er beginnt mit `sk_`): Drücke bei enter.pollinations.ai unter `Secrets` auf `Create`, nicht unter `Apps` (das verlangt einen Callback-Link und ist für andere Apps), und setze ein Ausgabenlimit. Derselbe Schlüssel funktioniert auch für Bilder.
 
 Jeder von ihnen kann deine Daten durchsuchen, Einträge vorbereiten und mit der eigenen Suche von orOS im Internet suchen. Fotos und PDFs gehen als der Text an sie, den orOS auf diesem Gerät liest.
 
@@ -258,7 +259,8 @@ Unter `Einstellungen` → `Internet` lässt `Den Assistenten im Internet suchen 
 
 ## Bilder (Bild-KI)
 `Einstellungen` → `Bilder` wählt, wer Bilder für `Bild aus Text` in Atelier erstellt. Die Wahl bleibt auf diesem Gerät.
-- `Standard: Pollinations`: kostenlos, ohne Schlüssel und ohne Konto. Ein kostenloser Pollinations-Schlüssel (enter.pollinations.ai) macht es schneller.
+- `Standard: AI Horde`: kostenlos, ohne Schlüssel und ohne Konto. Die Bilder erstellen Computer von Freiwilligen; zu Stoßzeiten kann es ein bis zwei Minuten dauern. Ein kostenloser Schlüssel von aihorde.net/register bringt dich in der Warteschlange nach vorne.
+- `Pollinations`: nicht mehr kostenlos, bezahlt mit Pollen. Es braucht einen geheimen Schlüssel (enter.pollinations.ai, `Create` unter `Secrets`; er beginnt mit `sk_`).
 - `Hugging Face`: ein kostenloses Konto und ein Zugriffstoken mit „Make calls to Inference Providers“ (kleines Monatsguthaben). Es ist derselbe Schlüssel wie bei Hugging Face für Text.
 - `OpenAI gpt-image-1`: dein eigener OpenAI-Schlüssel, bezahlt pro Bild (derselbe Schlüssel wie bei ChatGPT). Es kann auch Magisch bearbeiten und Magisch erweitern.
 - `Stability AI`: dein eigener Schlüssel von platform.stability.ai, bezahlt mit Guthaben. Es kann auch Magisch bearbeiten und Magisch erweitern.

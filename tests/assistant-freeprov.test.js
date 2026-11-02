@@ -6,7 +6,9 @@ const assert = require("node:assert/strict");
 const path = require("path");
 const C = require(path.join(__dirname, "..", "assistant/core.js"));
 
-const FREE = ["groq", "cerebras", "github", "cohere", "huggingface", "sambanova", "pollinations"];
+const FREE = ["groq", "cerebras", "github", "cohere", "huggingface", "sambanova"];
+// Pollinations is paid with Pollen since 2026: same OpenAI format, own key, not free.
+const OPENAI_KEYED = FREE.concat(["pollinations"]);
 const hist = [{ r: "user", text: "hi" }];
 
 test("freeprov: every new service is listed, free, https, OpenAI format, needs a key", () => {
@@ -21,6 +23,8 @@ test("freeprov: every new service is listed, free, https, OpenAI format, needs a
     assert.ok(p.model, pid);
     assert.ok(!/google/i.test(p.base + (p.modelsUrl || "")), pid);
   });
+  assert.ok(!C.PROVIDERS.pollinations.free, "Pollinations is paid with Pollen now");
+  assert.equal(C.PROVIDERS.pollinations.key, "yes");
   // the on-device ones stay last
   assert.deepEqual(C.PROV_IDS.slice(-3), ["local", "webllm", "browser"]);
 });
@@ -35,7 +39,7 @@ test("freeprov: chat requests go to each service's OpenAI endpoint with a Bearer
     sambanova: "https://api.sambanova.ai/v1/chat/completions",
     pollinations: "https://gen.pollinations.ai/v1/chat/completions"
   };
-  FREE.forEach((pid) => {
+  OPENAI_KEYED.forEach((pid) => {
     const r = C.buildRequest(pid, { key: "sk", model: "m" }, hist, { tools: [{ name: "t", description: "d", params: { type: "object" } }] });
     assert.equal(r.url, want[pid]);
     assert.equal(r.headers.authorization, "Bearer sk");
