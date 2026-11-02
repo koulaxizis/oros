@@ -71,6 +71,11 @@ Für andere Songs kann Musik LRCLIB fragen (lrclib.net, eine freie und offene So
 
 Diese Einstellungen bleiben auf diesem Gerät.
 
+## Auf einem Lautsprecher oder Fernseher abspielen
+Im großen Player wählt die Taste mit dem Bildschirm und den Wellen (`Abspielen auf…`), wo die Musik läuft: eine andere Ausgabe dieses Geräts, ein in den Systemeinstellungen gekoppelter Bluetooth-Lautsprecher, Chromecast oder AirPlay über den Browser oder ein Smart-TV oder Netzwerklautsprecher über orOS Bridge.
+- **Smart-TV oder Netzwerklautsprecher (DLNA):** Läuft [orOS Bridge](https://useoros.online/download/) 0.10.0 oder neuer auf einem Windows- oder Linux-Computer zu Hause, zeigt dasselbe Fenster die Smart-TVs, Kodi-Boxen und Netzwerklautsprecher in deinem Netzwerk. Beim ersten Mal fragt `Mit orOS Bridge verbinden` nach dem 6-stelligen Code, den die Bridge zeigt (dieselbe Kopplung wie Studio und Scanner & PDF). Wähle ein Gerät, und es spielt; das Fenster hat dann Pause, Lautstärke und `Zurück zu diesem Gerät`. Das Gerät holt den Stream selbst, also gehen nur http- und https-Adressen. `Erneut suchen` sucht noch einmal.
+Das Gerät bekommt die eigene https-Adresse des Songs, also gehen freie Musik und Songs von deinen eigenen Servern; Songs auf deinem orOS-Laufwerk und Offline-Kopien spielen nur auf diesem Gerät. Solange ein Fernseher oder Lautsprecher spielt, bleibt Musik hier still und ist seine Fernbedienung: Nächster, vorheriger oder ein anderer Song wird dorthin geschickt.
+
 ## Sleep-Timer
 `Sleep-Timer` im großen Player stoppt die Musik nach 5 bis 90 Minuten oder am Ende des laufenden Songs. Die letzten zehn Sekunden werden ausgeblendet. Die Schaltfläche zeigt, wie viel Zeit übrig ist; wähle `Timer ausschalten`, um ihn abzubrechen.
 

@@ -1175,6 +1175,8 @@
     var nB = button(t("ep.note"), "icon-btn", function () { var st3 = H.getState(); if (st3.cur) noteTo(st3.cur.id, Math.floor(st3.pos)); }, UI.pen); nB.id = "fp-note";
     nB.hidden = !openAt();
     extra.appendChild(nB);
+    var cb = castButton();
+    if (cb) extra.appendChild(cb);
     extra.appendChild(button(t("pl.next"), "icon-btn", function () { H.next(); }, UI.next));
     extra.appendChild(button(t("pl.stop"), "icon-btn", function () { dlg.close(); H.stop(); }, UI.stop));
     dlg.appendChild(extra);
@@ -1196,6 +1198,36 @@
     document.body.appendChild(dlg);
     dlg.showModal();
     paintFull(H.getState(), true);
+  }
+  // CAST-1: "Play on…" (../cast.js): another output, a TV or a network
+  // speaker. One button and one controller for the app's life, so a TV
+  // that plays stays known when the full player is opened again. The
+  // TV gets the episode's own address (a downloaded copy cannot go) and
+  // starts it from the beginning.
+  var castBtn = null, castCtl = null, castAudio = null, castHear = null;
+  function shellAudio() {
+    var w = shellWin() || window;
+    try { var h = w.__orosPodcastsHost; return h && h.audio ? h.audio : null; } catch (e) { return null; }
+  }
+  function castButton() {
+    if (!window.OrosCast) return null;
+    if (castBtn) return castBtn;
+    castBtn = el("button", "icon-btn");
+    castBtn.type = "button";
+    castBtn.id = "fp-cast";
+    castCtl = window.OrosCast.attach({
+      app: "podcasts", button: castBtn, lang: appLang(), kind: "audio",
+      media: shellAudio,
+      url: function () { var c = H && H.getState().cur; return c ? c.audio : ""; },
+      title: function () { var c = H && H.getState().cur; return c ? c.title : ""; }
+    });
+    castAudio = shellAudio();
+    if (castAudio) {
+      castHear = function () { try { if (castCtl.remote() === "connected") castCtl.update(); } catch (e) {} };
+      castAudio.addEventListener("play", castHear);
+      window.addEventListener("pagehide", function () { try { castAudio.removeEventListener("play", castHear); } catch (e) {} });
+    }
+    return castBtn;
   }
   function paintFull(st, first) {
     var dlg = $("pc-full");

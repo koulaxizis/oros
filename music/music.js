@@ -2399,6 +2399,37 @@
       b.setAttribute("aria-label", on ? t("pause") : t("play"));
     });
   }
+  // CAST-1: "Play on…" (../cast.js): another output, a TV or a network
+  // speaker. One button and one controller for the app's life. A TV
+  // gets the song's own https address (songs on the orOS disk and
+  // offline copies cannot go: they play from this device), from the
+  // beginning; Music here stays quiet and works as its remote: next,
+  // previous or another song send the new one.
+  var castBtn = null, castCtl = null;
+  function castUrl() {
+    var c = H && H.getState().cur;
+    return c && typeof c.u === "string" && /^https:\/\//i.test(c.u) ? c.u : "";
+  }
+  function castButton() {
+    if (!window.OrosCast) return null;
+    if (castBtn) return castBtn;
+    castBtn = el("button", "icon-btn");
+    castBtn.type = "button";
+    castBtn.id = "fp-cast";
+    castCtl = window.OrosCast.attach({
+      app: "music", button: castBtn, lang: appLang(), kind: "audio", probe: true,
+      media: function () { var w = shellWin() || window; try { var h = w.__orosMusicHost; return h ? h.audio : null; } catch (e) { return null; } },
+      url: castUrl,
+      title: function () { var c = H && H.getState().cur; return c ? (c.t || "") + (c.a ? " · " + c.a : "") : ""; },
+      onRemote: function (st) { if (st === "connected" && H && H.getState().playing) H.pause(); }
+    });
+    return castBtn;
+  }
+  function castFollow() {
+    if (castCtl.remote() !== "connected") return;
+    castCtl.update();
+    if (H.getState().playing) H.pause();
+  }
   function fullPlayer() {
     if (!H || !H.getState().cur) return;
     var dlg = makeDialog("mu-full", "full-dlg");
@@ -2411,6 +2442,8 @@
     head.appendChild(from);
     var lyBtn = button(t("ly.btn"), "icon-btn", function () { showLy = !showLy; if (showLy) showQ = false; dlg._paint(true); }, I.lyrics);
     var qBtn = button(t("queue"), "icon-btn", function () { showQ = !showQ; if (showQ) showLy = false; dlg._paint(true); }, I.queue);
+    var cb = castButton();
+    if (cb) head.appendChild(cb);
     head.appendChild(lyBtn);
     head.appendChild(qBtn);
     dlg.appendChild(head);
@@ -3042,6 +3075,7 @@
   }
   var paintTimer = null;
   function onHost(ev) {
+    if ((ev === "play" || ev === "load") && castCtl) castFollow();
     if (ev === "time") {
       if (paintTimer) return;
       paintTimer = setTimeout(function () { paintTimer = null; paintPlayer(); }, 250);

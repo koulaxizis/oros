@@ -32,6 +32,11 @@ A podcast's page lists its episodes, with filters `All`, `Unplayed`, `In progres
 
 `Podcast settings` sets a speed for that show, `Skip the first` and `Skip the last` seconds (for intros and outros), and `Download new episodes automatically`. `Tell me about new episodes` sends a notification when that show puts out a new episode; it is off by default, and orOS checks every few hours while it is open.
 
+## Play on a speaker or TV
+In the full player (tap the player bar), the button with the screen-and-waves icon (`Play on…`) chooses where the episode plays: another output of this device, a Bluetooth speaker paired in your system settings, Chromecast or AirPlay through the browser, or a smart TV or network speaker through orOS Bridge.
+- **Smart TV or network speaker (DLNA):** with [orOS Bridge](https://useoros.online/download/) 0.10.0 or newer running on a Windows or Linux computer at home, the same window lists the smart TVs, Kodi boxes and network speakers on your network. The first time, `Connect to orOS Bridge` asks for the 6-digit code the bridge shows (Studio and Scanner & PDF use the same pairing). Choose a device and it plays; the window then has pause, volume and `Back to this device`. The device fetches the stream itself, so only http and https addresses go. `Search again` looks once more.
+The device gets the episode's own address: a downloaded copy cannot go, and a TV or speaker found through orOS Bridge starts the episode from the beginning. While it plays there, Podcasts here stays paused.
+
 ## Downloads
 Choose `Download` from an episode's menu. The `Downloads` tab shows how much space they take and how much is free. `Keep downloads safe from automatic clean-up` asks the browser to keep them; `Delete played downloads` tidies up.
 

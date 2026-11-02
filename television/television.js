@@ -2446,7 +2446,8 @@ function setupCast(){
   state.cast = window.OrosCast.attach({
     app: "television", button: btn, lang: activeLang(), probe: true,
     media: function(){ return $("#tvp-video"); },
-    url: castStreamUrl,
+    url: castStreamUrl, kind: "video",
+    title: function(){ return state.playerCh ? String(state.playerCh.name || "") : ""; },
     onRemote: function(st){
       var v = $("#tvp-video"), status = $("#tvp-status");
       if(st === "connected"){
