@@ -268,6 +268,44 @@
     if (!isObj(pr) || pr.base !== base) return null;
     return now - pr.at < (pr.ok ? PROBE_UP : PROBE_DOWN) ? !!pr.ok : null;
   }
+  // The last check of a local address in this page (one per page, so
+  // the Assistant, Feeds and Atelier don't each wait for it).
+  var lastProbe = null;
+  function probeSet(base, ok) { lastProbe = base ? { base: base, ok: !!ok, at: Date.now() } : null; }
+  // Does the local server at pid's address answer at all? Any HTTP
+  // answer counts; none within PROBE_MS does not. readKey(pid) →
+  // Promise<string> (its key, "" = none). → Promise<boolean>
+  function probeLocal(pid, pc, readKey) {
+    var base = provBase(pid, pc || {});
+    var known = probeFresh(lastProbe, base, Date.now());
+    if (known !== null) return Promise.resolve(known);
+    return Promise.resolve(readKey ? readKey(pid) : "").then(function (key) {
+      var req = modelsRequest(pid, { key: key || "", base: (pc || {}).base });
+      var ctl = typeof AbortController === "function" ? new AbortController() : null;
+      var tm = setTimeout(function () { if (ctl) ctl.abort(); }, PROBE_MS);
+      var o = { method: "GET", headers: req.headers, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
+      if (ctl) o.signal = ctl.signal;
+      return fetch(req.url, o).then(function () { return true; }, function () { return false; })
+        .then(function (ok) { clearTimeout(tm); probeSet(base, ok); return ok; });
+    }, function () { return false; });
+  }
+  // The provider for one call made with these settings (d = the
+  // Assistant's merged data): the chosen one, or its online stand-in
+  // when the local server doesn't answer and the stand-in has a model
+  // and (if it needs one) a key here. → Promise<{ pid, fb: 0 | 1 }>
+  function pickProv(d, readKey) {
+    var set = d && d.set, pid = set && set.prov, fb = fbFor(set);
+    var same = { pid: pid, fb: 0 };
+    if (!fb) return Promise.resolve(same);
+    var fc = (d.provs && d.provs[fb]) || {};
+    if (!(fc.model || PROVIDERS[fb].model)) return Promise.resolve(same);
+    return probeLocal(pid, (d.provs && d.provs[pid]) || {}, readKey).then(function (up) {
+      if (up) return same;
+      return Promise.resolve(readKey ? readKey(fb) : "").then(function (key) {
+        return PROVIDERS[fb].key === "yes" && !key ? same : { pid: fb, fb: 1 };
+      });
+    }, function () { return same; });
+  }
   function normProv(x) {
     if (!isObj(x)) return null;
     return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0,
@@ -3946,7 +3984,7 @@
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
-    fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
+    fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS,
     provBase: provBase, normBase: normBase,

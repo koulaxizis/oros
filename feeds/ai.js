@@ -14,12 +14,17 @@
 //   - the answer is plain text: the caller shows it with textContent
 // The Assistant's core (../assistant/core.js) is loaded on first use.
 // window.orosFeedsAI:
-//   ready()                -> Promise<conf | null>   null = not set up
-//   ask(conf, q, signal, onText(textSoFar)) -> Promise<text>
+//   ready()                -> Promise<conf | null>   null = not set up;
+//                             while a local server can't be reached,
+//                             the Assistant's online stand-in (AS-FB,
+//                             conf.fb = 1)
+//   ask(conf, q, signal, onText(textSoFar), onSwitch(conf)) -> Promise<text>
 //                             rejects ProviderError ("nokey", "net",
-//                             "builtin", HTTP status …)
+//                             "builtin", HTTP status …); a local server
+//                             that fails on the network goes once to
+//                             the stand-in and onSwitch says so
 //   errorText(e, conf, t)  -> one line for the user
-// conf: { pid, name, model, base, p }
+// conf: { pid, name, model, base, p, fb }
 // ============================================================
 (function (root) {
   "use strict";
@@ -52,12 +57,13 @@
     return coreLoading;
   }
 
+  function assistData(C) {
+    try { return C.mergeAssist(JSON.parse(root.localStorage.getItem(ASSIST_DATA) || "null"), null); }
+    catch (e) { return C.emptyData(); }
+  }
   // → { pid, name, model, base, p } | null (nothing chosen)
-  function conf(C) {
-    var d;
-    try { d = C.mergeAssist(JSON.parse(root.localStorage.getItem(ASSIST_DATA) || "null"), null); }
-    catch (e) { d = C.emptyData(); }
-    var pid = d.set && d.set.prov;
+  function conf(C, d, pid) {
+    pid = pid || (d.set && d.set.prov);
     var p = pid && C.PROVIDERS[pid];
     if (!p) return null;
     var pc = d.provs[pid] || {};
@@ -65,8 +71,20 @@
     if (!model) return null;
     return { pid: pid, name: p.name, model: model, base: C.provBase(pid, pc), p: p };
   }
+  // The Assistant's AI, or its online stand-in while a local server
+  // can't be reached (AS-FB; cf.fb = 1).
   function ready() {
-    return core().then(function (C) { return C ? conf(C) : null; }, function () { return null; });
+    return core().then(function (C) {
+      if (!C) return null;
+      var d = assistData(C), cf = conf(C, d);
+      if (!cf || !C.pickProv) return cf;
+      return C.pickProv(d, readKey).then(function (r) {
+        if (!r.fb) return cf;
+        var alt = conf(C, d, r.pid);
+        if (alt) alt.fb = 1;
+        return alt || cf;
+      });
+    }, function () { return null; });
   }
 
   function readKey(pid) {
@@ -99,8 +117,24 @@
     catch (e) { return null; }
   }
 
-  // q: { system, user }
-  function ask(cf, q, signal, onText) {
+  // q: { system, user }. A local server that fails on the network
+  // before it answers: the same question goes once to the stand-in
+  // (AS-FB); onSwitch(cf) says which one answers then.
+  function ask(cf, q, signal, onText, onSwitch) {
+    var C = root.OrosAssistCore;
+    return askNow(cf, q, signal, onText).catch(function (e) {
+      if (cf.fb || !cf.p.local || !C.fbFor || (signal && signal.aborted) || !(e instanceof C.ProviderError) || e.code !== "net") throw e;
+      var d = assistData(C);
+      if (!C.fbFor(d.set)) throw e;
+      C.probeSet(cf.base, false);
+      return ready().then(function (alt) {
+        if (!alt || !alt.fb) throw e;
+        if (onSwitch) onSwitch(alt);
+        return askNow(alt, q, signal, onText);
+      });
+    });
+  }
+  function askNow(cf, q, signal, onText) {
     var C = root.OrosAssistCore;
     var msgs = [{ r: "user", text: q.user }];
     if (cf.p.builtin) {

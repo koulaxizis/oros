@@ -1629,27 +1629,15 @@
 
   // ---------- 6. Provider calls ----------
   // Online stand-in for a local server (AS-FB). fbUse is the provider
-  // answering in its place ("" = the chosen one answers); probe is the
-  // last check of the local address; fbNoted[chat id] is the state the
-  // chat was last told about, so each conversation says it once.
+  // answering in its place ("" = the chosen one answers); the last
+  // check of the local address is kept by core.probeLocal; fbNoted[chat
+  // id] is the state the chat was last told about, so each says it once.
   var fbUse = "";
-  var probe = null;
   var fbNoted = {};
-  // Does the local server answer at all? Any HTTP answer counts; no
-  // answer within PROBE_MS (off, another device, blocked) does not.
+  // Does the local server answer at all? (core.probeLocal, the same
+  // check Feeds and Atelier make)
   function localUp(pid) {
-    var base = baseOf(pid), now = Date.now();
-    var known = C.probeFresh(probe, base, now);
-    if (known !== null) return Promise.resolve(known);
-    return loadKey(pid).then(function (k) {
-      var req = C.modelsRequest(pid, { key: k ? k.key : "", base: provConf(pid).base });
-      var ctl = typeof AbortController === "function" ? new AbortController() : null;
-      var tm = setTimeout(function () { if (ctl) ctl.abort(); }, C.PROBE_MS);
-      var o = { method: "GET", headers: req.headers, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
-      if (ctl) o.signal = ctl.signal;
-      return fetch(req.url, o).then(function () { return true; }, function () { return false; })
-        .then(function (ok) { clearTimeout(tm); probe = { base: base, ok: ok, at: Date.now() }; return ok; });
-    });
+    return C.probeLocal(pid, provConf(pid), function (q) { return loadKey(q).then(function (k) { return k ? k.key : ""; }); });
   }
   // Before a turn: the local server, or the stand-in when it is away
   // and the stand-in has what it needs on this device (a model, its key).
@@ -2951,7 +2939,7 @@
         // The local server stopped answering before this turn said
         // anything (and before any of the user's data was shared with
         // it): the same turn goes once more, to the stand-in.
-        probe = { base: baseOf(data.set.prov), ok: false, at: Date.now() };
+        C.probeSet(baseOf(data.set.prov), false);
         retry = true;
       } else {
         note("err", errText(e, pid));
@@ -6564,7 +6552,7 @@
     sel.addEventListener("change", function () {
       setSetting({ prov: sel.value });
       fbUse = "";
-      probe = null;
+      C.probeSet("");
       drawProv();
       renderAll();
     });
@@ -6662,7 +6650,7 @@
         fbSel.addEventListener("change", function () {
           setSetting({ fb: fbSel.value });
           fbUse = "";
-          probe = null;
+          C.probeSet("");
           paintFb();
           renderAll();
         });
