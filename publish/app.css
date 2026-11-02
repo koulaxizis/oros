@@ -73,7 +73,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--accent); box-sha
   white-space: nowrap;
 }
 .btn:hover:not(:disabled) { border-color: var(--accent); }
-.btn.pri { background: var(--accent); border-color: var(--accent); color: #14120d; }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #14120d); }
 .btn.pri:hover:not(:disabled) { background: var(--accent-hover); }
 .btn.danger { color: var(--danger); }
 .btn.small { min-height: 34px; padding: 4px 10px; font-size: 13px; }

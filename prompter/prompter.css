@@ -258,7 +258,7 @@ input, textarea, select {
   padding: 3px 8px;
   border-radius: 999px;
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink, #fff);
   margin-bottom: 8px;
 }
 

@@ -68,7 +68,7 @@ html, body {
 }
 .chip.sm { min-height: 36px; padding: 4px 10px; font-size: 14px; }
 .chip:hover { border-color: var(--accent); }
-.chip.pri { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
 .chip.pri:hover { background: var(--accent-hover); }
 .chip.danger-btn { background: var(--danger); border-color: var(--danger); color: #111; font-weight: 700; }
 .chip:disabled { opacity: .55; cursor: default; }

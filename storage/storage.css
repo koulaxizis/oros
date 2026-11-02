@@ -73,7 +73,7 @@ body {
 .btn.ghost { background: transparent; }
 .btn.prim {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink, #fff);
   border-color: var(--accent);
 }
 .btn.danger {

@@ -61,7 +61,7 @@ html, body {
   font: inherit;
   cursor: pointer;
 }
-.chip.pri { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
 .chip.pri:hover { background: var(--accent-hover); }
 .chip:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 

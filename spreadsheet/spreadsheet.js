@@ -5271,7 +5271,7 @@ function registerSync() {
 }
 
 var PAL_VARS = ["--bg","--bg-desktop","--bar-bg","--text","--text-dim",
-  "--accent","--accent-hover","--accent-soft","--panel-bg","--border",
+  "--accent","--accent-hover","--accent-soft", "--accent-ink","--panel-bg","--border",
   "--shadow","--danger","--ok","--warn","--font-stack","--mono"];
 
 function inheritPalette() {

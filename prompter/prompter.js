@@ -2189,7 +2189,7 @@ document.body.appendChild(loader);
       var pRoot=window.parent.document.documentElement;
       document.documentElement.setAttribute("data-theme", pRoot.getAttribute("data-theme")||"dark");
       var cs=window.parent.getComputedStyle(pRoot);
-      ["--bg","--bar-bg","--text","--text-dim","--accent","--accent-soft","--panel-bg","--border"].forEach(function(v){
+      ["--bg","--bar-bg","--text","--text-dim","--accent","--accent-soft", "--accent-ink","--panel-bg","--border"].forEach(function(v){
         document.documentElement.style.setProperty(v, cs.getPropertyValue(v).trim());
       });
     } catch(e){}

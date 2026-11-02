@@ -521,7 +521,7 @@
         dlg.appendChild(hint);
         var row = el("div", "display:flex;gap:8px;justify-content:flex-end;");
         var no = el("button", "border:1px solid var(--border,#444);border-radius:7px;background:transparent;color:var(--text-dim,#999);padding:7px 14px;min-height:36px;cursor:pointer;", T("cancel"));
-        var yes = el("button", "border:1px solid var(--accent,#6d4aff);border-radius:7px;background:var(--accent,#6d4aff);color:#fff;padding:7px 14px;min-height:36px;font-weight:600;cursor:pointer;", T("add"));
+        var yes = el("button", "border:1px solid var(--accent,#6d4aff);border-radius:7px;background:var(--accent,#6d4aff);color:var(--accent-ink, #fff);padding:7px 14px;min-height:36px;font-weight:600;cursor:pointer;", T("add"));
         no.type = "button"; yes.type = "button"; yes.id = "recordpkg-add";
         row.appendChild(no); row.appendChild(yes);
         dlg.appendChild(row);

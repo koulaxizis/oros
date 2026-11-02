@@ -3633,7 +3633,7 @@
       ".tl-gl.major{opacity:.14}" +
       ".tl-we{position:absolute;top:0;bottom:0;background:var(--text);opacity:.05}" +
       ".tl-dnum{position:absolute;bottom:2px;transform:translateX(2px);font-size:9px;color:var(--text-dim)}" +
-      ".tl-log{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}" +
+      ".tl-log{background:var(--accent);color:var(--accent-ink, #fff);border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer}" +
       ".tl-log:hover{filter:brightness(1.1)}" +
       ".tl-bar:hover{opacity:1!important;box-shadow:0 2px 8px rgba(0,0,0,.35)}" +
       ".tl-dot:hover{opacity:1;transform:scale(1.3)}" +
@@ -3650,7 +3650,7 @@
 
   // ---------- 4. Sync slice + palette ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft",
+                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
                   "--panel-bg", "--border", "--shadow"];
 
   function inheritPalette() {

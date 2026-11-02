@@ -59,7 +59,7 @@ body { overflow-x: hidden; }
   white-space: nowrap;
 }
 .chip.icon { min-width: 40px; padding: 6px 8px; }
-.chip.pri { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
 .chip.pri:hover:not(:disabled) { background: var(--accent-hover); }
 .chip.danger { background: var(--danger); border-color: var(--danger); color: #111; font-weight: 700; }
 .chip:disabled { opacity: .45; cursor: default; }
@@ -183,7 +183,7 @@ textarea { min-height: 260px; resize: vertical; line-height: 1.6; }
 .wchip .ww { font-weight: 700; overflow-wrap: anywhere; }
 .wchip .wt { font-size: 11px; font-variant-numeric: tabular-nums; }
 .wchip.done { border-color: var(--accent); }
-.wchip.next { background: var(--accent); color: #111; border-color: var(--accent); }
+.wchip.next { background: var(--accent); color: var(--accent-ink, #111); border-color: var(--accent); }
 .wchip.next .wt { color: #111; }
 .tw, .tv { font-size: 11px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); }
 .tw.part { border-style: dashed; color: var(--text-dim); border-color: var(--text-dim); }
@@ -236,7 +236,7 @@ textarea { min-height: 260px; resize: vertical; line-height: 1.6; }
 .line.sel .line-btn { background: var(--accent-soft); }
 .line.now .lt { color: var(--accent); font-weight: 700; }
 .ts.bad { color: var(--danger); font-weight: 700; }
-.line.holding .line-btn { background: var(--accent); color: #111; }
+.line.holding .line-btn { background: var(--accent); color: var(--accent-ink, #111); }
 
 #pad-row {
   position: fixed;
@@ -263,7 +263,7 @@ textarea { min-height: 260px; resize: vertical; line-height: 1.6; }
   border: 0;
   border-radius: 12px;
   background: var(--accent);
-  color: #111;
+  color: var(--accent-ink, #111);
   font: inherit;
   font-size: 19px;
   font-weight: 800;

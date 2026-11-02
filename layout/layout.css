@@ -98,8 +98,8 @@ button:disabled { cursor: default; opacity: 0.4; }
   flex-shrink: 0;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { background: var(--accent-hover); color: #fff; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+.btn.primary:hover { background: var(--accent-hover); color: var(--accent-ink, #fff); }
 .btn.ghost { background: transparent; }
 .btn.small { min-height: 30px; padding: 2px 10px; font-size: 12px; }
 .btn.block { display: flex; width: 100%; margin-top: 6px; }
@@ -394,7 +394,7 @@ body.panel-closed #side { display: none; }
   display: inline-block;
   padding: 0 4px; margin: 0 1px;
   border-radius: 4px;
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--accent-ink, #fff);
   font: 700 0.8em ui-monospace, monospace;
   vertical-align: 0.1em;
   user-select: all;

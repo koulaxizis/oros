@@ -210,7 +210,7 @@
     try { var p = window.parent; return p && p !== window && p.orosHousehold ? p.orosHousehold : null; } catch (e) { return null; }
   }
   var H = engine();
-  var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-hover", "--accent-soft", "--panel-bg", "--border", "--danger"];
+  var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-hover", "--accent-soft", "--accent-ink", "--panel-bg", "--border", "--danger"];
   function inheritPalette() {
     try {
       var pRoot = window.parent.document.documentElement;

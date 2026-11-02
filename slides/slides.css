@@ -98,8 +98,8 @@ button:disabled { cursor: default; opacity: 0.4; }
   flex-shrink: 0;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { background: var(--accent-hover); color: #fff; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #fff); }
+.btn.primary:hover { background: var(--accent-hover); color: var(--accent-ink, #fff); }
 .btn.ghost { background: transparent; }
 .btn.small { min-height: 30px; padding: 2px 10px; font-size: 12px; }
 .btn.block { display: flex; width: 100%; margin-top: 6px; }
@@ -527,7 +527,7 @@ body:not([data-view="slide"]) #side { display: none; }
 .anim-badge {
   position: absolute; transform: translate(-50%, -50%);
   min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px;
-  background: var(--accent); color: #fff; font: 800 11px/18px system-ui, sans-serif; text-align: center;
+  background: var(--accent); color: var(--accent-ink, #fff); font: 800 11px/18px system-ui, sans-serif; text-align: center;
   pointer-events: none; box-shadow: 0 1px 3px var(--shadow);
 }
 #ov.previewing .selbox, #ov.previewing .hd, #ov.previewing .anim-badge { display: none; }

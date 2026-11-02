@@ -82,7 +82,7 @@
   }
 
   // ---------- Palette (same rules as share/view.js) ----------
-  var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-soft", "--panel-bg", "--border"];
+  var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-soft", "--accent-ink", "--panel-bg", "--border"];
   function inheritPalette() {
     var root = document.documentElement, theme = null;
     try {

@@ -123,7 +123,7 @@
   // ---------- Palette ----------
   // Standalone (the usual case): the orOS theme of this browser when
   // there is one, else the system's. Framed: the shell's own palette.
-  var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-soft", "--panel-bg", "--border"];
+  var PAL_VARS = ["--bg", "--text", "--text-dim", "--accent", "--accent-soft", "--accent-ink", "--panel-bg", "--border"];
   function inheritPalette() {
     var root = document.documentElement, theme = null;
     try {

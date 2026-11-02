@@ -2495,7 +2495,7 @@
   // += — that APPENDS duplicates instead of replacing on every
   // call). Live skin/theme switches repaint via watchPalette().
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft",
+                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
                   "--panel-bg", "--panel-bg-light", "--border", "--shadow",
                   "--font-stack"];
 

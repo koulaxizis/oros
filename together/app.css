@@ -65,7 +65,7 @@ body.is-locked { overflow: hidden; }
   background: var(--panel-bg); color: var(--text); font: inherit; cursor: pointer;
 }
 .chip:hover { border-color: var(--accent); }
-.chip.pri { background: var(--accent); border-color: var(--accent); color: #111; font-weight: 700; }
+.chip.pri { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); font-weight: 700; }
 .chip.pri:hover { background: var(--accent-hover); }
 .chip.danger-btn { background: var(--danger); border-color: var(--danger); color: #111; font-weight: 700; }
 .link-btn { min-height: 40px; padding: 4px 6px; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; text-decoration: underline; }

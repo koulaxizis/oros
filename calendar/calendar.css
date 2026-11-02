@@ -1050,7 +1050,7 @@ dialog#ev-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   cursor: pointer;
 }
 .tp-opt:hover { background: var(--accent-soft); }
-.tp-opt.active { background: var(--accent); color: #14120d; font-weight: 800; }
+.tp-opt.active { background: var(--accent); color: var(--accent-ink, #14120d); font-weight: 800; }
 .tp-opt.tp-none { color: var(--text-dim); font-style: italic; }
 .tp-opt.tp-none.active { background: var(--text-dim); color: var(--bg); }
 

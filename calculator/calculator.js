@@ -340,7 +340,7 @@
 
   // ---------- 2. Palette bridge (mood.js canonical) ----------
   var PAL_VARS = ["--bg", "--bg-desktop", "--bar-bg", "--text", "--text-dim",
-                  "--accent", "--accent-hover", "--accent-soft",
+                  "--accent", "--accent-hover", "--accent-soft", "--accent-ink",
                   "--panel-bg", "--border", "--shadow"];
 
   function inheritPalette() {
