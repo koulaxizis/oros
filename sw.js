@@ -2121,7 +2121,11 @@ var PRECACHE_URLS = [
   "fonts/nunito-medium.woff2",
   "fonts/nunito-semibold.woff2",
   "fonts/nunito-bold.woff2",
-  "fonts/nunito-extrabold.woff2"
+  "fonts/nunito-extrabold.woff2",
+  "fonts/mplusrounded-greek-regular.woff2",
+  "fonts/mplusrounded-greek-medium.woff2",
+  "fonts/mplusrounded-greek-bold.woff2",
+  "fonts/mplusrounded-greek-extrabold.woff2"
 ];
 
 // SW-U1: every release used to download the WHOLE precache again

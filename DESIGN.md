@@ -18,7 +18,8 @@ Design language for orOS (useoros.online): the shell, every app, the installers'
 
 ## Typography
 
-- Nunito, self-hosted woff2 (400–800), Greek-capable. No web-font services.
+- Nunito, self-hosted woff2 (400–800): Latin, Latin Extended, Cyrillic, Vietnamese. No web-font services.
+- Nunito has no Greek, upstream either. Greek and polytonic Greek come from M PLUS Rounded 1c (OFL 1.1, rounded like Nunito), subset to U+0370–03FF and U+1F00–1FFF and declared under the family name "Nunito" with `unicode-range` and `size-adjust: 95%` at all five weights (600 reuses the Bold file, as the font has no SemiBold). `tests/fonts-cmap.test.js` checks the coverage of every file.
 - Apps that offer user fonts (Atelier, Layout) use their own offline font sets; the shell font stays Nunito.
 
 ## Layout and components

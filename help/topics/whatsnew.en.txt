@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.04.04
+- **orOS shows its own font again.** The built-in Nunito font files were missing the basic letters and digits, so orOS was drawn in your system font. They are complete now, and Greek has a matching rounded font of its own.
+
 ## Version 5.04.03
 - **The browser add-on installs without a warning.** Chrome, Edge and Brave no longer show "'background.scripts' requires manifest version of 2 or lower" when you load the add-on by hand. Firefox now has its own zip: on the [download page](https://useoros.online/download/#addon), use the Firefox link in the Firefox step.
 

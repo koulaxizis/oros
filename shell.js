@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.04.03";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.04.04";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7287,6 +7287,9 @@
         { name: "Nunito", url: "https://github.com/googlefonts/nunito",
           by: "The Nunito Project Authors (Vernon Adams, Jacques Le Bailly)", lic: "SIL OFL 1.1",
           k: "cr.nunito" },
+        { name: "M PLUS Rounded 1c", url: "https://github.com/coz-m/MPLUS_FONTS",
+          by: "The Rounded M+ Project Authors", lic: "SIL OFL 1.1",
+          k: "cr.mplus-rounded" },
         { name: "Noto Sans", url: "https://notofonts.github.io/",
           by: "The Noto Project Authors", lic: "SIL OFL 1.1",
           k: "cr.noto-sans" },
