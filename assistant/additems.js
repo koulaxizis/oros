@@ -957,6 +957,11 @@
         b = hb.b;
       } else {
         if (!boards.length) return { err: "Kanban has no open boards. Ask the user to make one in Kanban." };
+        // KB-WHERE: with several boards the card never lands on one by default.
+        if (boards.length > 1) {
+          return { err: "items[" + i + "]: Kanban has several boards (" + boards.map(function (x) { return x.names[0]; }).join(", ") +
+            "): give board, the one the user named. To move cards that already exist, use change_item move with board; never add them again." };
+        }
         b = boards[0].b;
       }
       var cols = b.columns.filter(function (c) { return isObj(c) && Array.isArray(c.cards); });

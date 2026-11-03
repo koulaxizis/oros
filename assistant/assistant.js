@@ -4986,7 +4986,7 @@
         cb.setAttribute("aria-label", t(link ? "cr.tickLink" : "cr.tick", { name: String(row.title || "") }));
         cb.addEventListener("change", function () {
           if (cb.checked) delete skip[i]; else skip[i] = 1;
-          if (yes) yes.disabled = !left();
+          if (yes) { yes.disabled = !left(); yes.textContent = t(link ? "cr.yesLink" : "cr.yes", { n: left() }); }
         });
         return cb;
       }
