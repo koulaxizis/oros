@@ -126,7 +126,10 @@ test("Bookmarks: folder paths with counts, tags, a folder with its subfolders, t
   sameTargets("bookmarks", BM, s.items);
   const w = S.bookmarksFolders(BM, { folder: "work" });
   assert.deepEqual(w.items.map((i) => i.title).sort(), ["A", "B"]);
-  const amb = S.bookmarksFolders(BM, { folder: "Tools" });
+  const top = S.bookmarksFolders(BM, { folder: "Tools" });   // the whole path "Tools" wins over Work › Tools
+  assert.equal(top.folder, "Tools");
+  assert.deepEqual(top.items, []);
+  const amb = S.bookmarksFolders({ folders: { a: { name: "A" }, b: { name: "B" }, x: { name: "T", parent: "a" }, y: { name: "T", parent: "b" } }, items: {} }, { folder: "T" });
   assert.equal(amb.ok, false);
   assert.match(amb.err, /whole path/);
   assert.deepEqual(S.bookmarksFolders(BM, { folder: "Work › Tools" }).items.map((i) => i.title), ["A"]);

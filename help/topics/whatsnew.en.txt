@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.13.00
+- **The Assistant moves things to another list, notebook, folder or calendar.** "Move these tasks to the Music list", "put this page in the Work notebook", "move this link to Work › Tools" or "move the concert to my Home calendar" now work, for one item or many on one card, with `Undo`. A page takes the pages under it along.
+- A list, notebook or folder name that doesn't exist is never swapped for another: the Assistant tells you the ones you have.
+
 ## Version 5.12.00
 - **The Assistant knows how your apps are organised.** Ask "what is in my Music list?", "which notebooks do I have?" or "show the bookmarks in Work": it now sees your To-Do lists, Notes notebooks, Bookmarks folders and tags, Contacts labels, Media Shelf kinds and statuses and Library books, each with their items, so it can also open or change them.
 - **No more guessed names.** The Assistant gets the real names of your lists, notebooks, folders, labels and boards before it uses one, and when a name you gave does not exist it says so and lists the ones you have, instead of picking another.

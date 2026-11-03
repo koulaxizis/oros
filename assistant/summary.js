@@ -577,6 +577,8 @@
       var f = foldName(opts.folder), hits = rows.filter(function (r) {
         return foldName(r.path) === f || foldName(fpath(r.id).slice(-1)[0] || "") === f;
       });
+      var exact = hits.filter(function (r) { return foldName(r.path) === f; });
+      if (hits.length > 1 && exact.length) hits = exact;   // a whole path wins over a last name
       if (!hits.length) return { ok: false, err: "Bookmarks has no folder named \"" + opts.folder + "\". Its folders: " + (rows.length ? rows.slice(0, 80).map(function (r) { return r.path; }).join(", ") : "none") + "." };
       if (hits.length > 1) return { ok: false, err: "Bookmarks has more than one folder called " + opts.folder + ": " + hits.map(function (r) { return r.path; }).join(", ") + ". Give the whole path." };
       want = hits[0];

@@ -1679,10 +1679,10 @@
       "card for all of them. To make DIFFERENT updates to several items of one app (e.g. several people " +
       "from an attached list, form or business cards, each with their own phone, address…), pass changes " +
       "instead: one card, the user can untick rows. Apps and actions: " +
-      "todo (complete, reopen, reschedule: date, update: title / date / note / labels / priority, delete) · " +
-      "calendar (reschedule: date / start / end, update: title / date / start / end / location / label / note, delete) · " +
+      "todo (complete, reopen, reschedule: date, update: title / date / note / labels / priority, move: list = another list, delete) · " +
+      "calendar (reschedule: date / start / end, update: title / date / start / end / location / label / note, move: label = the calendar it goes to, delete) · " +
       "budget (reschedule: date, update: amount / date / category / note, delete) · " +
-      "bookmarks (update: title / note / labels = tags, delete) · " +
+      "bookmarks (update: title / note / labels = tags, move: folder = another folder, delete) · " +
       "contacts (update: title = name / nickname / org / job_title / phone, email, website = add one, or with " +
       "old_phone / old_email / old_website replace that one / address (address_replace: true replaces the address " +
       "of that type) / date = birthday / labels / note = replace the note / note_add = add a line to the note, delete) · " +
@@ -1694,7 +1694,7 @@
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
-      "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels) · " +
+      "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels, move: notebook = another notebook, with the pages under it) · " +
       "timesheet (an entry, update or reschedule: title / date / start / end, in local time) · " +
       "invoices (complete = the invoice was paid: amount = only a part, date = the day paid, how) · " +
       "chores (complete / reopen = today's turn of the chore, update: title) · " +
@@ -1711,7 +1711,7 @@
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
         refs: { type: "array", items: { type: "string" },
-                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. delete or move: several Kanban cards at once (Kanban only; e.g. every card of a board or column from app_summary kanban with board, or move them all to another board), one card and one Undo for all." },
+                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. move: several items of one app at once (Kanban, To-Do, Notes, Bookmarks, Calendar; e.g. every task of a list from app_summary todo with list, to another list). delete: several Kanban cards at once. One card and one Undo for all." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
@@ -1755,6 +1755,9 @@
         note_add: { type: "string", description: "contacts, crm: text to add to the note on a new line (the old note stays; the whole note holds 2000 characters in Contacts, 2000 in CRM). Use instead of note." },
         column: { type: "string", description: "kanban move: the name of the column to move the card to." },
         board: { type: "string", description: "kanban move: the name of another board to move the card to (with column, or its first column). Labels go by name." },
+        list: { type: "string", description: "todo move: the name of the list the task goes to (it lands on top)." },
+        notebook: { type: "string", description: "notes move: the name of the notebook the page goes to, with the pages under it. Labels go by name." },
+        folder: { type: "string", description: "bookmarks move: the folder's name or whole path (\"Work › Tools\"); \"Unsorted\" for none." },
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },

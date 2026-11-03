@@ -56,10 +56,10 @@
   // Media Shelf statuses by the names the model knows.
   var STATUS_NAMES = ["want", "now", "done", "dropped"];
   var APPS = {
-    todo:      { key: "oros-todo-data",      actions: ["complete", "reopen", "reschedule", "update", "delete"] },
-    calendar:  { key: "oros-calendar-data",  actions: ["reschedule", "update", "delete"] },
+    todo:      { key: "oros-todo-data",      actions: ["complete", "reopen", "reschedule", "update", "move", "delete"] },
+    calendar:  { key: "oros-calendar-data",  actions: ["reschedule", "update", "move", "delete"] },
     budget:    { key: "oros-budget-data",    actions: ["reschedule", "update", "delete"] },
-    bookmarks: { key: "oros-bookmarks-data", actions: ["update", "delete"] },
+    bookmarks: { key: "oros-bookmarks-data", actions: ["update", "move", "delete"] },
     // Phase 4 wave 2
     contacts:  { key: "oros-contacts-data",  actions: ["update", "delete"] },
     // Wave CF2: a CRM customer's details (deleting one takes its deals
@@ -97,7 +97,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -286,6 +286,14 @@
       if (!bo) return bad("board must not be empty.");
       set.board = bo;
     }
+    // AS-MOVE (wave 2): where a task, page or bookmark goes.
+    ["list", "notebook", "folder"].forEach(function (k) {
+      if (set.err || !has(args, k) || args[k] === null || args[k] === undefined || args[k] === "") return;
+      var v = line(String(args[k]), 240);
+      if (!v) set.err = k + " must not be empty.";
+      else set[k] = v;
+    });
+    if (set.err) return bad(set.err);
     // Labels (AS-LBL): label = one label's name (Calendar: THE label;
     // the other apps: add it), "none" / "" takes them all off; labels =
     // the whole new list of names (replaces; [] takes them all off).
@@ -341,12 +349,17 @@
     }
     var keys = Object.keys(set);
     if (action === "move") {
-      if (!set.column && !set.board) return bad("move needs the column (or, for Kanban, the board) to move the card to.");
-      if (keys.some(function (k) { return k !== "column" && k !== "board"; })) return bad("move changes only the board and column; use update for the rest.");
+      // AS-MOVE: one place word per app, checked by the app itself.
+      var MOVE_KEYS = ["column", "board", "list", "notebook", "folder", "label"];
+      if (!keys.some(function (k) { return k !== "label" && MOVE_KEYS.indexOf(k) >= 0; }) && !has(set, "label")) {
+        return bad("move needs where to: list (To-Do), notebook (Notes), folder (Bookmarks), label (Calendar: the event's calendar), column and/or board (Kanban).");
+      }
+      if (keys.some(function (k) { return MOVE_KEYS.indexOf(k) < 0; })) return bad("move changes only where the item is; use update for the rest.");
       return { ok: true, ref: ref, action: action, set: set };
     }
     if (set.column) return bad("column is only for move.");
     if (set.board) return bad("board is only for move (a Kanban card to another board).");
+    if (set.list || set.notebook || set.folder) return bad((set.list ? "list" : set.notebook ? "notebook" : "folder") + " is only for move.");
     if (action === "complete" && keys.every(function (k) { return k === "amount" || k === "date" || k === "how"; }) && keys.length) {
       // an invoice paid: the amount (default all that is owed), the day and how
     } else if (action === "complete" || action === "reopen" || action === "delete") {
@@ -463,9 +476,41 @@
     };
   }
 
+  // AS-MOVE: a task to another of the user's own lists, as To-Do's
+  // Move to (todo.js moveItems, TD-14): to the top of that list, with
+  // its subtasks; xf.list stamps the move (model.js dedupeMoved keeps
+  // the newest place on every device); both lists' order is stamped.
+  function tdOwnLists(d) {
+    return (Array.isArray(d.lists) ? d.lists : []).filter(function (l) { return isObj(l) && typeof l.id === "string" && Array.isArray(l.items); });
+  }
+  function tdReorder(l, now) {
+    l.items.forEach(function (x, i) { if (isObj(x)) x.pos = i; });
+    l.om = stampAfter(now, l.om);
+  }
+  function todoMove(d, h, s, now) {
+    var keys = Object.keys(s);
+    if (!s.list || keys.length !== 1) return bad("A To-Do task moves with list only (the name of another list).");
+    var lists = tdOwnLists(d), f = foldName(s.list);
+    var hits = lists.filter(function (l) { return foldName(typeof l.name === "string" ? l.name : "") === f; });
+    var names = lists.map(function (l) { return line(typeof l.name === "string" ? l.name : "", 80) || "—"; }).join(", ");
+    if (!hits.length) return bad("To-Do has no list named \"" + s.list + "\". Its lists: " + names + ".");
+    if (hits.length > 1) return bad("To-Do has more than one list called " + s.list + "; ask the user which one.");
+    var to = hits[0], it = h.it;
+    if (to.id === h.list.id) return bad("The task is already in the list " + line(to.name, 80) + ".");
+    var before = { title: typeof it.text === "string" ? it.text : "", list: line(h.list.name, 80) };
+    h.list.items.splice(h.ii, 1);
+    to.items.unshift(it);
+    tdTouchXf(it, "list", now);
+    tdReorder(h.list, now);
+    tdReorder(to, now);
+    return { ok: true, title: before.title, before: before, after: { title: before.title, list: line(to.name, 80) }, del: false,
+             target: { list: to.id, item: it.id },
+             undo: { t: "mv", app: "todo", item: it.id, from: h.list.id, index: h.ii, to: to.id, m: it.mtime } };
+  }
   function todoChange(d, target, ch, now) {
     var h = tdFind(d, target);
     if (!h) return bad("That task is no longer in To-Do.");
+    if (ch.action === "move") return todoMove(d, h, ch.set, now);
     var it = h.it, before = tdView(it, d);
     var title = before.title;
     if (ch.action === "delete") {
@@ -522,6 +567,19 @@
              undo: { t: "set", app: "todo", target: { list: h.list.id, item: it.id }, prev: prev, next: nextRaw } };
   }
   function todoUndo(d, u, now) {
+    if (u.t === "mv") {
+      var hm = tdFind(d, { list: u.to, item: u.item });
+      if (!hm || hm.list.id !== u.to) return bad("That task is no longer in the list it was moved to.");
+      if ((hm.it.mtime || 0) !== u.m) return bad("The task changed since; nothing was undone.");
+      var home = tdOwnLists(d).filter(function (l) { return l.id === u.from; })[0];
+      if (!home) return bad("Its list is gone.");
+      hm.list.items.splice(hm.ii, 1);
+      home.items.splice(Math.max(0, Math.min(home.items.length, Math.floor(u.index) || 0)), 0, hm.it);
+      tdTouchXf(hm.it, "list", now);
+      tdReorder(hm.list, now);
+      tdReorder(home, now);
+      return { ok: true };
+    }
     if (u.t === "del") {
       if (!isObj(u.item) || typeof u.item.id !== "string" || !ID_RE.test(u.item.id)) return bad("bad undo");
       if (tdFind(d, { item: u.item.id })) return bad("The task is back already.");
@@ -643,6 +701,12 @@
     var ev = h.ev, before = calView(ev, d), title = before.title;
     var series = !!ev.recur;
     if (ch.action === "complete" || ch.action === "reopen") return bad("A calendar event can't be ticked off.");
+    // AS-MOVE: an event's calendar is its label (Calendar's own
+    // calendars); a move to another calendar sets the label.
+    if (ch.action === "move") {
+      if (!has(ch.set, "label") || Object.keys(ch.set).length !== 1) return bad("A calendar event moves with label only: the name of the calendar (label) it goes to.");
+      ch = { action: "update", set: { label: ch.set.label } };
+    }
     if (ch.action === "delete") {
       if (series) return bad("That event repeats. Deleting one occurrence or the whole series is done in Calendar: tell the user to open it there.");
       var copy = clone(ev);
@@ -858,11 +922,55 @@
       note: typeof it.note === "string" ? it.note : ""
     };
   }
+  // AS-MOVE: a bookmark to another folder (bookmarks.js moveItem:
+  // folderId and modified, the whole item LWW). The folder by its name
+  // or whole path "A › B"; "Unsorted" is the root folder.
+  var BM_ROOT = "unsorted";
+  function bmFolders(d) {
+    var f = isObj(d.folders) ? d.folders : {}, del = isObj(d.deleted) ? d.deleted : {};
+    function path(id) {
+      var out = [], seen = {}, cur = id;
+      while (cur && has(f, cur) && isObj(f[cur]) && !seen[cur] && out.length < 12) {
+        seen[cur] = 1;
+        out.unshift(line(typeof f[cur].name === "string" ? f[cur].name : "", 60) || "—");
+        var p = f[cur].parent;
+        cur = typeof p === "string" && p !== cur && p !== BM_ROOT ? p : "";
+      }
+      return out;
+    }
+    return Object.keys(f).filter(function (id) { return isObj(f[id]) && !del[id]; }).map(function (id) {
+      var p = path(id);
+      return { id: id, path: p.join(" › "), last: p[p.length - 1] || "" };
+    }).sort(function (a, b) { return cmpStr(a.path, b.path); });
+  }
+  function bmPathOf(d, id) {
+    var hit = bmFolders(d).filter(function (r) { return r.id === id; })[0];
+    return hit && id !== BM_ROOT ? hit.path : "Unsorted";
+  }
+  function bmMove(d, it, s, now, title) {
+    if (!s.folder || Object.keys(s).length !== 1) return bad("A bookmark moves with folder only (a folder's name or whole path).");
+    var rows = bmFolders(d), f = foldName(s.folder), hits;
+    if (/^(unsorted|χωρίς φάκελο|unsortiert)$/i.test(s.folder.trim())) hits = [{ id: BM_ROOT, path: "Unsorted" }];
+    else hits = rows.filter(function (r) { return r.id !== BM_ROOT && (foldName(r.path) === f || foldName(r.last) === f); });
+    var exact = hits.filter(function (r) { return foldName(r.path) === f; });
+    if (hits.length > 1 && exact.length) hits = exact;   // a whole path wins over a last name
+    if (!hits.length) return bad("Bookmarks has no folder named \"" + s.folder + "\". Its folders: " +
+      (rows.filter(function (r) { return r.id !== BM_ROOT; }).map(function (r) { return r.path; }).join(", ") || "none") + " (and Unsorted).");
+    if (hits.length > 1) return bad("Bookmarks has more than one folder called " + s.folder + ": give the whole path.");
+    var to = hits[0].id, from = typeof it.folderId === "string" ? it.folderId : BM_ROOT;
+    if (to === from) return bad("The bookmark is already in " + bmPathOf(d, to) + ".");
+    var before = { title: title, folder: bmPathOf(d, from) };
+    it.folderId = to;
+    it.modified = stampAfter(now, it.modified);
+    return { ok: true, title: title, before: before, after: { title: title, folder: bmPathOf(d, to) }, del: false,
+             undo: { t: "set", app: "bookmarks", target: { id: it.id }, folder: { from: from, to: to, m: it.modified } } };
+  }
   function bookmarksChange(d, target, ch, now) {
     var it = bmFind(d, target);
     if (!it) return bad("That bookmark is no longer in Bookmarks.");
     var before = bmView(it), title = before.title || before.url;
-    if (ch.action !== "update" && ch.action !== "delete") return bad("A bookmark can only be renamed, have its note changed, or be deleted.");
+    if (ch.action === "move") return bmMove(d, it, ch.set, now, title);
+    if (ch.action !== "update" && ch.action !== "delete") return bad("A bookmark can only be renamed, have its note changed, moved to another folder, or be deleted.");
     if (ch.action === "delete") {
       if (it.arch) return bad("That bookmark has a saved copy on the orOS disk; delete it in Bookmarks.");
       var copy = clone(it);
@@ -911,6 +1019,13 @@
     }
     var cur = bmFind(d, u.target);
     if (!cur) return bad("That bookmark is no longer in Bookmarks.");
+    if (isObj(u.folder)) {   // AS-MOVE
+      if (cur.folderId !== u.folder.to || cur.modified !== u.folder.m) return bad("The bookmark changed since; nothing was undone.");
+      var fl = isObj(d.folders) ? d.folders : {};
+      cur.folderId = u.folder.from === BM_ROOT || has(fl, u.folder.from) ? u.folder.from : BM_ROOT;
+      cur.modified = stampAfter(now, cur.modified);
+      return { ok: true };
+    }
     if (!u.next || cur.title !== u.next.title || (cur.note || "") !== (u.next.note || "") ||
         (Array.isArray(u.next.tags) && JSON.stringify(bmTags(cur)) !== JSON.stringify(u.next.tags))) return bad("The bookmark changed since; nothing was undone.");
     cur.title = String(u.prev && u.prev.title || cur.title);
@@ -1342,6 +1457,7 @@
     if (b.archived || (typeof b.id === "string" && b.id.indexOf("tpl-") === 0)) return bad("That card's board is archived; change it in Kanban.");
     if (isObj(d.boardDeleted) && typeof d.boardDeleted[b.id] === "number" && d.boardDeleted[b.id] >= (b.mtime || 0)) return bad("That card's board was deleted.");
     if (ch.action === "complete" || ch.action === "reopen") return bad("A Kanban card has no done mark; move it to another column instead.");
+    if (ch.action === "move" && Object.keys(ch.set).some(function (k) { return k !== "column" && k !== "board"; })) return bad("A Kanban card moves with column and/or board only.");
     if (ch.action === "delete") {
       if (Array.isArray(card.att) && card.att.length) return bad("That card has attachments on the orOS disk; delete it in Kanban.");
       var copy = clone(card);
@@ -2342,7 +2458,7 @@
   // u = apply().undo (kept in memory by the Assistant, never from a
   // stored conversation). → { ok, data } | { ok: false, err }
   function undo(appId, data, u, now) {
-    if (!has(APPS, appId) || !UNDO[appId] || !isObj(u) || u.app !== appId || (u.t !== "set" && u.t !== "del" && !(u.t === "xmove" && appId === "kanban"))) return bad("bad undo");
+    if (!has(APPS, appId) || !UNDO[appId] || !isObj(u) || u.app !== appId || (u.t !== "set" && u.t !== "del" && !(u.t === "xmove" && appId === "kanban") && !(u.t === "mv" && (appId === "todo" || appId === "notes")))) return bad("bad undo");
     var d = clone(data) || {};
     var r = UNDO[appId](d, u, now);
     if (!r.ok) return r;
@@ -2382,7 +2498,7 @@
   // core, which keeps the stored copy in the app's canonical form).
   // Known here so the tool and the prompt can offer them.
   var LAZY = {
-    notes:     { key: "oros-notes-data",     actions: ["update"], src: [] },
+    notes:     { key: "oros-notes-data",     actions: ["update", "move"], src: [] },
     timesheet: { key: "oros-timesheet-data", actions: ["reschedule", "update"], src: ["../timesheet/core.js"], g: "orosTimesheetCore" },
     invoices:  { key: "oros-invoices-data",  actions: ["complete"], src: ["../invoices/core.js"], g: "OrosInvoicesCore" },
     chores:    { key: "oros-chores-data",    actions: ["complete", "reopen", "update"], src: ["../chores/core.js"], g: "OrosChoresCore" },

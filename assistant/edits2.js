@@ -143,9 +143,79 @@
     p.mtime = t;
     p.pinned = !!p.pinned;
   }
+  // AS-MOVE: a page to another notebook, with the pages under it.
+  // It lands at the end of the notebook's top level (the pages under
+  // it keep their own tree); labels belong to a notebook, so each
+  // goes by name to the new one's label and one it lacks is left off
+  // (named in the result). A structure edit per page (st = mtime),
+  // which the whole-page merge carries to every device.
+  function ntNotebooks(d) {
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    return (Array.isArray(d.notebooks) ? d.notebooks : []).filter(function (n) {
+      return isObj(n) && typeof n.id === "string" && !(typeof tombs["nb:" + n.id] === "number" && tombs["nb:" + n.id] >= (n.mtime || 0));
+    });
+  }
+  function nbName(d, id) {
+    var n = ntNotebooks(d).filter(function (x) { return x.id === id; })[0];
+    return n ? String(n.name || "") : "";
+  }
+  function notesMove(d, h, s, now) {
+    if (!s.notebook || Object.keys(s).length !== 1) return bad("A Notes page moves with notebook only (the name of another notebook).");
+    var nbs = ntNotebooks(d), f = H.foldName(s.notebook);
+    var hits = nbs.filter(function (n) { return H.foldName(String(n.name || "")) === f; });
+    if (!hits.length) return bad("Notes has no notebook named \"" + s.notebook + "\". Its notebooks: " + nbs.map(function (n) { return String(n.name || "") || "—"; }).join(", ") + ".");
+    if (hits.length > 1) return bad("Notes has more than one notebook called " + s.notebook + "; ask the user which one.");
+    var to = hits[0], top = h.x;
+    if (top.nb === to.id) return bad("The page is already in the notebook " + String(to.name || "") + ".");
+    // The page and every page under it (same notebook), cycle-safe.
+    var ids = [top.id], seen = {};
+    seen[top.id] = 1;
+    for (var k = 0; k < ids.length; k++) {
+      d.pages.forEach(function (q) {
+        if (isObj(q) && q.parent === ids[k] && q.nb === top.nb && !seen[q.id] && ntFind(d, { page: q.id })) { seen[q.id] = 1; ids.push(q.id); }
+      });
+    }
+    var srcLabels = ntLabels(d, top.nb), dstLabels = ntLabels(d, to.id), lost = [];
+    var maxPos = 0;
+    d.pages.forEach(function (q) { if (isObj(q) && q.nb === to.id && !q.parent && typeof q.pos === "number" && q.pos > maxPos) maxPos = q.pos; });
+    var prevs = [], nexts = [];
+    ids.forEach(function (id) {
+      var hh = byId(d.pages, id), p = clone(hh.x);
+      prevs.push(clone(hh.x));
+      var labels = [];
+      (p.labels || []).forEach(function (lid) {
+        var src = srcLabels.filter(function (l) { return l.id === lid; })[0];
+        if (!src) return;
+        var dst = dstLabels.filter(function (l) { return H.foldName(l.name) === H.foldName(src.name); })[0];
+        if (dst) { if (labels.indexOf(dst.id) < 0) labels.push(dst.id); }
+        else if (lost.indexOf(src.name) < 0) lost.push(src.name);
+      });
+      var t = stampAfter(now, p.mtime);
+      p.ct = ntCs(p);
+      p.nb = to.id;
+      if (id === top.id) { p.parent = null; p.pos = maxPos + 1; }
+      p.labels = labels.sort();
+      p.st = t;
+      p.mtime = t;
+      p.pinned = !!p.pinned;
+      d.pages[hh.i] = ntCanon(p);
+      nexts.push(clone(d.pages[hh.i]));
+    });
+    ntSort(d);
+    var before = { title: String(top.title || ""), notebook: nbName(d, top.nb) };
+    var r = { ok: true, title: before.title, before: before, after: { title: before.title, notebook: String(to.name || "") }, del: false,
+              target: { page: top.id, nb: to.id },
+              undo: { t: "mv", app: "notes", prevs: prevs, nexts: nexts } };
+    var notes = [];
+    if (ids.length > 1) notes.push((ids.length - 1) + " page(s) under it went along.");
+    if (lost.length) notes.push("The notebook " + String(to.name || "") + " has no label " + lost.join(", ") + "; it was left off.");
+    if (notes.length) r.note = notes.join(" ");
+    return r;
+  }
   function notesChange(d, target, ch, now) {
     var h = ntFind(d, target);
     if (!h) return bad("That page is no longer in Notes.");
+    if (ch.action === "move") return notesMove(d, h, ch.set, now);
     var e = only(ch, ["title", "text", "text_add", "label", "labels"], "A Notes page");
     if (e) return e;
     var s = ch.set, p = clone(h.x), before = ntView(d, h.x);
@@ -178,6 +248,25 @@
              undo: { t: "set", app: "notes", prev: clone(h.x), next: clone(d.pages.filter(function (x) { return x.id === p.id; })[0]) } };
   }
   function notesUndo(d, u, now) {
+    if (u.t === "mv") {   // AS-MOVE: every page back where it was, if none changed since
+      if (!Array.isArray(u.prevs) || !Array.isArray(u.nexts) || u.prevs.length !== u.nexts.length) return bad("bad undo");
+      for (var i = 0; i < u.nexts.length; i++) {
+        var hn = ntFind(d, { page: u.nexts[i].id });
+        if (!hn || !same(hn.x, u.nexts[i])) return bad("A page changed since; nothing was undone.");
+      }
+      var home = u.prevs[0] && ntNotebooks(d).some(function (n) { return n.id === u.prevs[0].nb; });
+      if (!home) return bad("Its notebook is gone.");
+      u.prevs.forEach(function (pv) {
+        var hp = byId(d.pages, pv.id), p = clone(hp.x), t = stampAfter(now, p.mtime);
+        p.ct = ntCs(p);
+        p.nb = pv.nb; p.parent = pv.parent === undefined ? null : pv.parent; p.pos = pv.pos;
+        p.labels = (pv.labels || []).slice().sort();
+        p.st = t; p.mtime = t;
+        d.pages[hp.i] = ntCanon(p);
+      });
+      ntSort(d);
+      return { ok: true };
+    }
     var h = ntFind(d, { page: u.next.id });
     if (!h || !same(h.x, u.next)) return bad("The page changed since; nothing was undone.");
     var p = clone(h.x), prev = u.prev;
@@ -641,7 +730,7 @@
   var libraryUndo = recUndo(function (d) { return d.books; }, function (d) { return core("library").mergeLibrary(d, d); });
 
   var MODS = {
-    notes:     { settable: { title: 1, text: 1, text_add: 1, label: 1, labels: 1 }, change: notesChange, undo: notesUndo },
+    notes:     { settable: { title: 1, text: 1, text_add: 1, label: 1, labels: 1, notebook: 1 }, change: notesChange, undo: notesUndo },
     timesheet: { settable: { title: 1, date: 1, start: 1, end: 1 }, change: timesheetChange, undo: timesheetUndo },
     invoices:  { settable: { amount: 1, date: 1, how: 1 }, change: invoicesChange, undo: invoicesUndo },
     chores:    { settable: { title: 1 }, change: choresChange, undo: choresUndo },
