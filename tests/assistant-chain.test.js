@@ -151,3 +151,30 @@ test("chain: the Assistant picks per turn, retries the next on a cooling error, 
     assert.ok(read("i18n/de/assistant.js").indexOf('"' + k + '":') >= 0, k + " in DE");
   });
 });
+
+test("chain: when only cooled services are set up, one of them again rather than a server that isn't there (AS-CHAIN 3)", async () => {
+  const realFetch = globalThis.fetch;
+  const d = data({ prov: "anthropic", auto: 1 }, { local: { m: 1, base: "http://localhost:11434/v1", model: "qwen3:8b" },
+    anthropic: { m: 1, model: "claude-haiku-5-5" } });
+  const readKey = (p) => Promise.resolve(p === "anthropic" ? "sk-ant" : "");
+  try {
+    globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+    C.probeSet("");
+    const cool = { anthropic: Date.now() + 15000 };
+    assert.deepEqual(await C.pickChain(d, { readKey, tools: true, cool }), { pid: "anthropic", fb: 0 });
+    assert.deepEqual(await C.pickChain(d, { readKey, cool }), { pid: "anthropic", fb: 0 });
+    assert.deepEqual(await C.pickChain(d, { readKey: () => Promise.resolve(""), cool }), { pid: "local", fb: 1 },
+      "nothing set up at all: the first in the order");
+  } finally {
+    globalThis.fetch = realFetch;
+    C.probeSet("");
+  }
+});
+
+test("chain: an online service gets the same request again after a short drop, also mid-turn (AS-CHAIN 3)", () => {
+  const js = read("assistant/assistant.js");
+  assert.match(js, /var RETRY_WAIT = \[2000, 6000\], RETRY_CODES = \["net", "busy", "server"\];/);
+  assert.match(js, /return callRetry\(pid, withFiles\(c\.msgs\)/);
+  assert.match(js, /P\.local \|\| P\.device/);
+  assert.match(js, /if \(C\.provTier\(failed\.pid, provConf\(failed\.pid\)\) <= 2\) c\.msgs\.push\(\{ r: "note", kind: "info", text: t\("note\.noNext"\) \}\);/);
+});
