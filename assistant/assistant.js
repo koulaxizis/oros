@@ -180,9 +180,9 @@
       "note.fbBack": "{local} answers again.",
       "note.via": "{name} answers from here on.",
       "note.noNext": "No other AI is set up on this device to answer instead. In Settings, save a key for a free service (Groq, Mistral, Cerebras and others) and pick its model, and it will answer whenever this one can't.",
-      "set.chain": "Order of use",
-      "set.auto": "Choose the service for each message on its own",
-      "set.autoHint": "Models on your own devices first (a server on your computer, then this browser), then free online services, then paid ones. The assistant chosen above goes first within its group. A message that needs tools (adding or changing something, a web search) skips models without tools. A service that is busy, over its free limit or unreachable is passed over for a while and the next one answers. Only services set up on this device are used, and apps set to “Always share” ask first when an online service stands in for a local one.",
+      "set.chain": "Connected services and order",
+      "set.auto": "Local and free first for each message (instead of your first choice)",
+      "set.autoHint": "On: for each message, models on your own devices go first (a server on your computer, then this browser), then free online services, then paid ones; your first choice leads its group. Off: your first choice answers first and the rest follow in the order shown. Either way a message that needs tools (adding or changing something, a web search) skips models without tools, a service that is busy, over its free limit or unreachable is passed over for a while, and apps set to “Always share” ask first when an online service stands in for a local one.",
       "set.tier0": "On your computer",
       "set.tier1": "In this browser",
       "set.tier3": "Free online",
@@ -190,7 +190,15 @@
       "set.chain.ok": "set up here",
       "set.chain.off": "not set up here",
       "set.chain.down": "not answering now",
-      "set.fbAuto": "The order of use below decides who answers when this server is away.",
+      "set.fbAuto": "The connected services below decide who answers when this server is away.",
+      "set.chainHint": "Every service set up on this device can answer. Your assistant above answers first; if it is away, busy or over its limit, the next one below takes over. Untick one to leave it out.",
+      "set.chainNow": "{name} answers first; if it can't, the next one below takes over.",
+      "set.chainOnly": "Only {name} is in use here, so nothing stands in when it can't answer.",
+      "set.chainNone": "No service is set up on this device yet.",
+      "set.chainEmpty": "Pick a service above, save its key or address and model, and it shows here.",
+      "set.chainFirst": "first choice",
+      "set.chainMore": "{n} more services not set up here",
+      "set.chainHow": "To add one, pick it above as the assistant, save its key and model, then pick your first choice again. It stays connected.",
       "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
       "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
       "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
@@ -790,9 +798,9 @@
       "note.fbBack": "Το {local} απαντά ξανά.",
       "note.via": "Από εδώ και πέρα απαντά το {name}.",
       "note.noNext": "Δεν υπάρχει άλλο AI ρυθμισμένο σε αυτή τη συσκευή για να απαντήσει στη θέση του. Στις Ρυθμίσεις αποθήκευσε κλειδί για μια δωρεάν υπηρεσία (Groq, Mistral, Cerebras κ.ά.) και διάλεξε μοντέλο, και θα απαντά όποτε αυτό δεν μπορεί.",
-      "set.chain": "Σειρά χρήσης",
-      "set.auto": "Διάλεγε μόνος την υπηρεσία για κάθε μήνυμα",
-      "set.autoHint": "Πρώτα τα μοντέλα στις δικές σου συσκευές (server στον υπολογιστή σου, μετά αυτός ο browser), μετά δωρεάν online υπηρεσίες, μετά οι πληρωμένες. Ο βοηθός που διάλεξες παραπάνω μπαίνει πρώτος στην ομάδα του. Ένα μήνυμα που θέλει εργαλεία (προσθήκη ή αλλαγή, αναζήτηση στο web) παρακάμπτει τα μοντέλα χωρίς εργαλεία. Μια υπηρεσία που είναι απασχολημένη, έχει ξεπεράσει το δωρεάν όριο ή δεν απαντά παρακάμπτεται για λίγο και απαντά η επόμενη. Χρησιμοποιούνται μόνο υπηρεσίες ρυθμισμένες σε αυτή τη συσκευή, και οι εφαρμογές στο «Πάντα» ρωτούν πρώτα όταν μια online υπηρεσία απαντά στη θέση τοπικής.",
+      "set.chain": "Συνδεδεμένες υπηρεσίες και σειρά",
+      "set.auto": "Πρώτα τοπικά και δωρεάν σε κάθε μήνυμα (αντί για την πρώτη σου επιλογή)",
+      "set.autoHint": "Ενεργό: σε κάθε μήνυμα πρώτα τα μοντέλα στις δικές σου συσκευές (server στον υπολογιστή σου, μετά αυτός ο browser), μετά δωρεάν online υπηρεσίες, μετά οι πληρωμένες· η πρώτη σου επιλογή μπαίνει πρώτη στην ομάδα της. Ανενεργό: απαντά πρώτα η πρώτη σου επιλογή και ακολουθούν οι υπόλοιπες με τη σειρά που φαίνεται. Και στις δύο περιπτώσεις ένα μήνυμα που θέλει εργαλεία (προσθήκη ή αλλαγή, αναζήτηση στο web) παρακάμπτει τα μοντέλα χωρίς εργαλεία, μια υπηρεσία απασχολημένη, πάνω από το δωρεάν όριο ή εκτός δικτύου παρακάμπτεται για λίγο, και οι εφαρμογές στο «Πάντα» ρωτούν πρώτα όταν μια online υπηρεσία απαντά στη θέση τοπικής.",
       "set.tier0": "Στον υπολογιστή σου",
       "set.tier1": "Σε αυτόν τον browser",
       "set.tier3": "Δωρεάν online",
@@ -800,7 +808,15 @@
       "set.chain.ok": "ρυθμισμένο εδώ",
       "set.chain.off": "δεν έχει ρυθμιστεί εδώ",
       "set.chain.down": "δεν απαντά τώρα",
-      "set.fbAuto": "Η σειρά χρήσης παρακάτω αποφασίζει ποιος απαντά όταν αυτός ο server λείπει.",
+      "set.fbAuto": "Οι συνδεδεμένες υπηρεσίες παρακάτω αποφασίζουν ποιος απαντά όταν αυτός ο server λείπει.",
+      "set.chainHint": "Κάθε υπηρεσία ρυθμισμένη σε αυτή τη συσκευή μπορεί να απαντήσει. Ο βοηθός σου παραπάνω απαντά πρώτος· αν λείπει, είναι απασχολημένος ή έφτασε το όριό του, συνεχίζει η επόμενη από κάτω. Ξετσέκαρε μία για να μείνει έξω.",
+      "set.chainNow": "Πρώτη απαντά η υπηρεσία {name}· αν δεν μπορεί, συνεχίζει η επόμενη από κάτω.",
+      "set.chainOnly": "Εδώ χρησιμοποιείται μόνο η υπηρεσία {name}, οπότε καμία δεν απαντά στη θέση της όταν δεν μπορεί.",
+      "set.chainNone": "Δεν έχει ρυθμιστεί ακόμη καμία υπηρεσία σε αυτή τη συσκευή.",
+      "set.chainEmpty": "Διάλεξε μια υπηρεσία παραπάνω, αποθήκευσε κλειδί ή διεύθυνση και μοντέλο, και θα εμφανιστεί εδώ.",
+      "set.chainFirst": "πρώτη επιλογή",
+      "set.chainMore": "Άλλες {n} υπηρεσίες δεν έχουν ρυθμιστεί εδώ",
+      "set.chainHow": "Για να προσθέσεις μία, διάλεξέ την παραπάνω ως βοηθό, αποθήκευσε κλειδί και μοντέλο και ξαναδιάλεξε την πρώτη σου επιλογή. Μένει συνδεδεμένη.",
       "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
       "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
       "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
@@ -1419,6 +1435,14 @@
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
+    provChanged();
+  }
+  // The settings list of connected services redraws when a service's model,
+  // address or key changes (AS-CHAIN 4); set while Settings is open.
+  var onProvChange = null, provChangeT = 0;
+  function provChanged() {
+    clearTimeout(provChangeT);
+    provChangeT = setTimeout(function () { if (onProvChange) onProvChange(); }, 250);
   }
   function setSetting(patch) {
     var cur = data.set;
@@ -1491,7 +1515,7 @@
       var iv = crypto.getRandomValues(new Uint8Array(12));
       return crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, dk, new TextEncoder().encode(key))
         .then(function (sealed) { return idbPut("creds", pid, { iv: iv.buffer, data: sealed, m: m }); })
-        .then(function () { keyCache[pid] = { key: key, m: m }; });
+        .then(function () { keyCache[pid] = { key: key, m: m }; provChanged(); });
     });
   }
   // → { key, m } | null
@@ -1510,6 +1534,7 @@
   }
   function dropKey(pid) {
     keyCache[pid] = null;
+    provChanged();
     return idbDel("creds", pid).catch(function () {});
   }
 
@@ -7568,45 +7593,69 @@
     }
     drawProv();
 
-    // Order of use (AS-CHAIN): local first, then free, then paid.
+    // Connected services and their order (AS-CHAIN 4, Chris 2026-11-03:
+    // it must show that the first choice adds to the others, not
+    // replaces them). The services set up on this device, numbered in
+    // the order they answer, each with a tick to leave it out; the
+    // rest folded below.
     var secO = section(body, t("set.chain"));
+    secO.appendChild(el("p", "dlg-hint", t("set.chainHint")));
+    var chainBox = el("div", "chain-box");
+    chainBox.id = "as-chain";
+    secO.appendChild(chainBox);
     checkbox(secO, "as-auto", t("set.auto"), !!data.set.auto, function (on) {
       setSetting({ auto: on ? 1 : 0 });
       fbUse = "";
       C.probeSet("");
-      chainBox.hidden = !on;
       drawProv();
       drawChain();
       renderAll();
     }).parentNode.classList.add("check");
     secO.appendChild(el("p", "dlg-hint", t("set.autoHint")));
-    var chainBox = el("div", "chain-box");
-    chainBox.id = "as-chain";
-    chainBox.hidden = !data.set.auto;
-    secO.appendChild(chainBox);
+    var chainDraw = 0;
     function drawChain() {
-      chainBox.textContent = "";
-      if (!data.set.auto) return;
-      var skip = data.set.skip || [], tier = -1;
-      C.chainOrder({ set: { auto: 1, prov: data.set.prov, skip: [] }, provs: data.provs }).forEach(function (q) {
-        var tr = C.provTier(q, provConf(q)), shown = tr === 2 ? 1 : tr;
-        if (shown !== tier) { tier = shown; chainBox.appendChild(el("p", "chain-tier", t("set.tier" + shown))); }
-        var row = el("div", "chain-row");
-        var cb = checkbox(row, "as-use-" + q, provName(q), skip.indexOf(q) < 0, function (on) {
-          var cur = (data.set.skip || []).filter(function (x) { return x !== q; });
-          if (!on) cur.push(q);
-          setSetting({ skip: cur });
-          fbUse = "";
-          renderAll();
+      var my = ++chainDraw;
+      var skip = data.set.skip || [];
+      var order = C.chainOrder({ set: { auto: data.set.auto, prov: data.set.prov, fb: data.set.fb, skip: [] }, provs: data.provs });
+      if (!order.length) order = C.chainOrder({ set: { auto: 1, prov: "", skip: [] }, provs: data.provs });
+      Promise.all(order.map(function (q) { return chainHere(q).catch(function () { return "off"; }); })).then(function (st) {
+        if (my !== chainDraw) return;
+        chainBox.textContent = "";
+        var here = [], other = [];
+        order.forEach(function (q, k) { (st[k] === "off" ? other : here).push({ q: q, st: st[k] }); });
+        var used = here.filter(function (x) { return skip.indexOf(x.q) < 0 && x.st === "ok"; });
+        var sum = el("p", "chain-sum");
+        sum.id = "as-chain-sum";
+        sum.textContent = !used.length ? t("set.chainNone") : t(used.length > 1 ? "set.chainNow" : "set.chainOnly", { name: provName(used[0].q) });
+        chainBox.appendChild(sum);
+        if (!here.length) chainBox.appendChild(el("p", "dlg-hint", t("set.chainEmpty")));
+        var n = 0;
+        here.forEach(function (x) {
+          var q = x.q, on = skip.indexOf(q) < 0;
+          var row = el("div", "chain-row" + (on ? "" : " off"));
+          row.appendChild(el("span", "chain-n", on ? String(++n) : "–"));
+          var cb = checkbox(row, "as-use-" + q, provName(q), on, function (v) {
+            var cur = (data.set.skip || []).filter(function (y) { return y !== q; });
+            if (!v) cur.push(q);
+            setSetting({ skip: cur });
+            fbUse = "";
+            drawChain();
+            renderAll();
+          });
+          cb.parentNode.classList.add("check");
+          var tag = q === data.set.prov ? t("set.chainFirst") + " · " : "";
+          var stEl = el("span", "chain-st" + (x.st === "ok" ? " ok" : ""), tag + t("set.chain." + x.st));
+          row.appendChild(stEl);
+          chainBox.appendChild(row);
         });
-        cb.parentNode.classList.add("check");
-        var st = el("span", "chain-st", "…");
-        row.appendChild(st);
-        chainBox.appendChild(row);
-        chainHere(q).then(function (v) {
-          st.textContent = t("set.chain." + v);
-          st.classList.toggle("ok", v === "ok");
-        });
+        if (other.length) {
+          var det = el("details", "chain-more");
+          det.appendChild(el("summary", "", t("set.chainMore", { n: other.length })));
+          var names = el("p", "dlg-hint", other.map(function (x) { return provName(x.q); }).join(", "));
+          det.appendChild(names);
+          det.appendChild(el("p", "dlg-hint", t("set.chainHow")));
+          chainBox.appendChild(det);
+        }
       });
     }
     // Is this service there on this device? → "ok" | "off" | "down"
@@ -7618,6 +7667,7 @@
       if (P.key !== "yes") return Promise.resolve("ok");
       return readKey(q).then(function (k) { return k ? "ok" : "off"; });
     }
+    onProvChange = drawChain;
     drawChain();
 
     // Data access
