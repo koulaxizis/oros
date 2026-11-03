@@ -262,7 +262,7 @@
       "ck.badBlock": "A button without text or link, or a picture block without a picture.",
       "ck.placeholder": "Something in braces isn't {first}, {name} or {first|…}.",
       "ck.noAudience": "Nobody to send to: no active subscriber matches.",
-      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products", "bk.cpn": "Coupon", "cpn.code": "Code", "cpn.codeHint": "Letters, digits, - and _. With a code for each reader this is the start of each code.", "cpn.dt": "Discount", "cpn.pct": "Percent off", "cpn.fix": "Amount off the order", "cpn.amt": "Value", "cpn.exp": "Valid until", "cpn.min": "Smallest order (optional)", "cpn.t": "Text (optional)", "cpn.btn": "Button (optional)", "cpn.shop": "Shop", "cpn.noShop": "None (I make it myself)", "cpn.goneShop": "A shop that is no longer connected", "cpn.connect": "Connect a WooCommerce shop in Settings › Connected services to make codes from here.", "cpn.per": "A code for each reader (used once, only by them)", "cpn.perHint": "Each reader's code is made in the shop just before their email goes out.", "cpn.noShopHint": "Make this code in your shop yourself before you send.", "cpn.make": "Create in shop", "cpn.making": "Creating the code in the shop…", "cpn.made": "Created in the shop {d}", "cpn.notMade": "Not created in the shop yet.", "cpn.done": "The code is in the shop", "cpn.refused": "The shop refused the code: check that it is not taken by another coupon.", "cpn.htmlTitle": "Coupon", "cpn.htmlHint": "Write {{COUPON}} in the HTML and the text where each reader's code goes.", "cpn.add": "Coupon", "cpn.remove": "Remove coupon", "ck.badCoupon": "A coupon needs a code, a value and an end date, and a button needs both its text and its link.", "ck.oldCoupon": "A coupon has already ended.", "ck.perShop": "A code for each reader needs a connected shop.", "ck.cpnNotMade": "The coupon code has not been created in the shop yet: use Create in shop.", "ck.cpnUnused": "The issue has a coupon but no {{COUPON}} in the HTML or the text.", "err.coupon": "the shop did not make the coupon codes",
+      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products", "bk.cpn": "Coupon", "cpn.code": "Code", "cpn.codeHint": "Letters, digits, - and _. With a code for each reader this is the start of each code.", "cpn.dt": "Discount", "cpn.pct": "Percent off", "cpn.fix": "Amount off the order", "cpn.amt": "Value", "cpn.exp": "Valid until", "cpn.min": "Smallest order (optional)", "cpn.t": "Text (optional)", "cpn.btn": "Button (optional)", "cpn.shop": "Shop", "cpn.noShop": "None (I make it myself)", "cpn.goneShop": "A shop that is no longer connected", "cpn.connect": "Connect a WooCommerce shop in Settings › Connected services to make codes from here.", "cpn.per": "A code for each reader (used once, only by them)", "cpn.perHint": "Each reader's code is made in the shop just before their email goes out.", "cpn.noShopHint": "Make this code in your shop yourself before you send.", "cpn.make": "Create in shop", "cpn.making": "Creating the code in the shop…", "cpn.made": "Created in the shop {d}", "cpn.notMade": "Not created in the shop yet.", "cpn.done": "The code is in the shop", "cpn.refused": "The shop refused the code: check that it is not taken by another coupon.", "cpn.htmlTitle": "Coupon", "cpn.htmlHint": "Write {{COUPON}} in the HTML and the text where each reader's code goes.", "cpn.add": "Coupon", "cpn.remove": "Remove coupon", "ck.badCoupon": "A coupon needs a code, a value and an end date, and a button needs both its text and its link.", "ck.oldCoupon": "A coupon has already ended.", "ck.perShop": "A code for each reader needs a connected shop.", "ck.cpnNotMade": "The coupon code has not been created in the shop yet: use Create in shop.", "ck.cpnUnused": "The issue has a coupon but no {{COUPON}} in the HTML or the text.", "err.coupon": "the shop did not make the coupon codes", "seg.buyH": "Purchases", "seg.buy": "Orders in the shop", "seg.buyAny": "Any (don't look at orders)", "seg.buyNone": "No order yet", "seg.buyOne": "Exactly one (first purchase)", "seg.buyEver": "At least one", "seg.buyMore": "At least…", "seg.bn": "Orders, at least", "seg.bs": "Spent at least ({c}, optional)", "seg.bago": "Last order more than … months ago (optional)", "seg.bagoHint": "For example 12: people who bought before but not in the last year.", "seg.buyAt": "Purchases read from the shop {t}.", "seg.buyNever": "Purchases not read yet: use Subscribers › Purchases from the shop first, or every rule here finds nobody (and No order yet finds everyone).", "seg.winback": "Ready: win back past customers", "seg.winbackName": "Past customers", "seg.buy_none": "no order yet", "seg.buy_one": "first purchase", "seg.buy_ever": "bought", "seg.buyMoreN": "{n}+ orders", "seg.bsT": "spent {s}+", "seg.bagoT": "last order {n}+ months ago", "s.buys": "{n} orders · {s} · last {d}", "src.chk": "Shop checkout", "lay.winback": "Win back past customers", "lay.b.title": "We miss you", "lay.b.intro": "Hello {first|there}! It has been a while since your last order, so here is something just for you.", "lay.b.cpn": "Your own code, for your next order", "lay.b.end": "Thank you for being with us.", "fm.shk": "Shop key (checkout sign-ups)", "fm.shkHint": "The same key as in orOS Connect › Newsletter on your WooCommerce site. People who tick the box at checkout then become subscribers at once, without a confirmation e-mail: ticking the unticked box is their consent and the shop keeps it with the order. Leave it empty and they confirm by e-mail like everyone else.", "fm.shkNew": "New key", "fm.shkBad": "A shop key is 32 letters and digits.", "fm.shkSaved": "Shop key saved. Put the same key in orOS Connect.", "fm.shkOff": "No shop key: checkout sign-ups confirm by e-mail.",
       "sd.title": "Send", "sd.text": "{n} messages from {f} through {c}.",
       "sd.time": "At one message every {s} s it takes about {m} minutes; with up to {cap} a day it needs {d} days.",
       "sd.time1": "At one message every {s} s it takes about {m} minutes.",
@@ -496,7 +496,7 @@
       "ck.badBlock": "Ένα κουμπί χωρίς κείμενο ή σύνδεσμο, ή block εικόνας χωρίς εικόνα.",
       "ck.placeholder": "Κάτι μέσα σε άγκιστρα δεν είναι {first}, {name} ή {first|…}.",
       "ck.noAudience": "Δεν υπάρχει παραλήπτης: κανένας ενεργός συνδρομητής δεν ταιριάζει.",
-      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα", "bk.cpn": "Κουπόνι", "cpn.code": "Κωδικός", "cpn.codeHint": "Γράμματα, αριθμοί, - και _. Με κωδικό για κάθε αναγνώστη, αυτή είναι η αρχή κάθε κωδικού.", "cpn.dt": "Έκπτωση", "cpn.pct": "Ποσοστό", "cpn.fix": "Ποσό από την παραγγελία", "cpn.amt": "Τιμή", "cpn.exp": "Ισχύει έως", "cpn.min": "Ελάχιστη παραγγελία (προαιρετικά)", "cpn.t": "Κείμενο (προαιρετικά)", "cpn.btn": "Κουμπί (προαιρετικά)", "cpn.shop": "Κατάστημα", "cpn.noShop": "Κανένα (τον φτιάχνω εγώ)", "cpn.goneShop": "Κατάστημα που δεν είναι πια συνδεδεμένο", "cpn.connect": "Σύνδεσε ένα κατάστημα WooCommerce στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να φτιάχνεις κωδικούς από εδώ.", "cpn.per": "Κωδικός για κάθε αναγνώστη (μία χρήση, μόνο από αυτόν)", "cpn.perHint": "Ο κωδικός κάθε αναγνώστη φτιάχνεται στο κατάστημα λίγο πριν φύγει το email του.", "cpn.noShopHint": "Φτιάξε αυτόν τον κωδικό στο κατάστημά σου πριν την αποστολή.", "cpn.make": "Δημιουργία στο κατάστημα", "cpn.making": "Δημιουργία του κωδικού στο κατάστημα…", "cpn.made": "Δημιουργήθηκε στο κατάστημα {d}", "cpn.notMade": "Δεν έχει δημιουργηθεί ακόμα στο κατάστημα.", "cpn.done": "Ο κωδικός είναι στο κατάστημα", "cpn.refused": "Το κατάστημα αρνήθηκε τον κωδικό: έλεγξε ότι δεν τον έχει ήδη άλλο κουπόνι.", "cpn.htmlTitle": "Κουπόνι", "cpn.htmlHint": "Γράψε {{COUPON}} στο HTML και στο κείμενο εκεί που μπαίνει ο κωδικός κάθε αναγνώστη.", "cpn.add": "Κουπόνι", "cpn.remove": "Αφαίρεση κουπονιού", "ck.badCoupon": "Ένα κουπόνι θέλει κωδικό, τιμή και ημερομηνία λήξης, και ένα κουμπί θέλει και κείμενο και σύνδεσμο.", "ck.oldCoupon": "Ένα κουπόνι έχει ήδη λήξει.", "ck.perShop": "Ο κωδικός για κάθε αναγνώστη θέλει συνδεδεμένο κατάστημα.", "ck.cpnNotMade": "Ο κωδικός του κουπονιού δεν έχει δημιουργηθεί ακόμα στο κατάστημα: πάτα Δημιουργία στο κατάστημα.", "ck.cpnUnused": "Το τεύχος έχει κουπόνι αλλά δεν έχει {{COUPON}} στο HTML ή στο κείμενο.", "err.coupon": "το κατάστημα δεν έφτιαξε τους κωδικούς κουπονιών",
+      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα", "bk.cpn": "Κουπόνι", "cpn.code": "Κωδικός", "cpn.codeHint": "Γράμματα, αριθμοί, - και _. Με κωδικό για κάθε αναγνώστη, αυτή είναι η αρχή κάθε κωδικού.", "cpn.dt": "Έκπτωση", "cpn.pct": "Ποσοστό", "cpn.fix": "Ποσό από την παραγγελία", "cpn.amt": "Τιμή", "cpn.exp": "Ισχύει έως", "cpn.min": "Ελάχιστη παραγγελία (προαιρετικά)", "cpn.t": "Κείμενο (προαιρετικά)", "cpn.btn": "Κουμπί (προαιρετικά)", "cpn.shop": "Κατάστημα", "cpn.noShop": "Κανένα (τον φτιάχνω εγώ)", "cpn.goneShop": "Κατάστημα που δεν είναι πια συνδεδεμένο", "cpn.connect": "Σύνδεσε ένα κατάστημα WooCommerce στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να φτιάχνεις κωδικούς από εδώ.", "cpn.per": "Κωδικός για κάθε αναγνώστη (μία χρήση, μόνο από αυτόν)", "cpn.perHint": "Ο κωδικός κάθε αναγνώστη φτιάχνεται στο κατάστημα λίγο πριν φύγει το email του.", "cpn.noShopHint": "Φτιάξε αυτόν τον κωδικό στο κατάστημά σου πριν την αποστολή.", "cpn.make": "Δημιουργία στο κατάστημα", "cpn.making": "Δημιουργία του κωδικού στο κατάστημα…", "cpn.made": "Δημιουργήθηκε στο κατάστημα {d}", "cpn.notMade": "Δεν έχει δημιουργηθεί ακόμα στο κατάστημα.", "cpn.done": "Ο κωδικός είναι στο κατάστημα", "cpn.refused": "Το κατάστημα αρνήθηκε τον κωδικό: έλεγξε ότι δεν τον έχει ήδη άλλο κουπόνι.", "cpn.htmlTitle": "Κουπόνι", "cpn.htmlHint": "Γράψε {{COUPON}} στο HTML και στο κείμενο εκεί που μπαίνει ο κωδικός κάθε αναγνώστη.", "cpn.add": "Κουπόνι", "cpn.remove": "Αφαίρεση κουπονιού", "ck.badCoupon": "Ένα κουπόνι θέλει κωδικό, τιμή και ημερομηνία λήξης, και ένα κουμπί θέλει και κείμενο και σύνδεσμο.", "ck.oldCoupon": "Ένα κουπόνι έχει ήδη λήξει.", "ck.perShop": "Ο κωδικός για κάθε αναγνώστη θέλει συνδεδεμένο κατάστημα.", "ck.cpnNotMade": "Ο κωδικός του κουπονιού δεν έχει δημιουργηθεί ακόμα στο κατάστημα: πάτα Δημιουργία στο κατάστημα.", "ck.cpnUnused": "Το τεύχος έχει κουπόνι αλλά δεν έχει {{COUPON}} στο HTML ή στο κείμενο.", "err.coupon": "το κατάστημα δεν έφτιαξε τους κωδικούς κουπονιών", "seg.buyH": "Αγορές", "seg.buy": "Παραγγελίες στο κατάστημα", "seg.buyAny": "Οποιεσδήποτε (χωρίς έλεγχο παραγγελιών)", "seg.buyNone": "Καμία παραγγελία ακόμα", "seg.buyOne": "Ακριβώς μία (πρώτη αγορά)", "seg.buyEver": "Τουλάχιστον μία", "seg.buyMore": "Τουλάχιστον…", "seg.bn": "Παραγγελίες, τουλάχιστον", "seg.bs": "Ξόδεψε τουλάχιστον ({c}, προαιρετικά)", "seg.bago": "Τελευταία παραγγελία πριν από πάνω από … μήνες (προαιρετικά)", "seg.bagoHint": "Για παράδειγμα 12: όσοι αγόρασαν παλιότερα αλλά όχι τον τελευταίο χρόνο.", "seg.buyAt": "Οι αγορές διαβάστηκαν από το κατάστημα {t}.", "seg.buyNever": "Οι αγορές δεν έχουν διαβαστεί ακόμα: πάτα πρώτα Συνδρομητές › Αγορές από το κατάστημα, αλλιώς κάθε κανόνας εδώ δεν βρίσκει κανέναν (και το Καμία παραγγελία ακόμα βρίσκει όλους).", "seg.winback": "Έτοιμο: επαναφορά παλιών πελατών", "seg.winbackName": "Παλιοί πελάτες", "seg.buy_none": "καμία παραγγελία", "seg.buy_one": "πρώτη αγορά", "seg.buy_ever": "αγόρασαν", "seg.buyMoreN": "{n}+ παραγγελίες", "seg.bsT": "ξόδεψαν {s}+", "seg.bagoT": "τελευταία παραγγελία πριν από {n}+ μήνες", "s.buys": "{n} παραγγελίες · {s} · τελευταία {d}", "src.chk": "Ταμείο καταστήματος", "lay.winback": "Επαναφορά παλιών πελατών", "lay.b.title": "Μας έλειψες", "lay.b.intro": "Γεια σου {first|φίλε}! Πέρασε καιρός από την τελευταία σου παραγγελία, γι' αυτό έχουμε κάτι μόνο για σένα.", "lay.b.cpn": "Ο δικός σου κωδικός, για την επόμενη παραγγελία σου", "lay.b.end": "Ευχαριστούμε που είσαι μαζί μας.", "fm.shk": "Κλειδί καταστήματος (εγγραφές από το ταμείο)", "fm.shkHint": "Το ίδιο κλειδί με το orOS Connect › Newsletter στο site WooCommerce σου. Όσοι τσεκάρουν το κουτάκι στο ταμείο γίνονται τότε συνδρομητές αμέσως, χωρίς email επιβεβαίωσης: το τσεκάρισμα του ατσέκαρτου κουτιού είναι η συγκατάθεσή τους και το κατάστημα την κρατά στην παραγγελία. Άφησέ το κενό και επιβεβαιώνουν με email όπως όλοι.", "fm.shkNew": "Νέο κλειδί", "fm.shkBad": "Το κλειδί καταστήματος έχει 32 γράμματα και αριθμούς.", "fm.shkSaved": "Το κλειδί καταστήματος αποθηκεύτηκε. Βάλε το ίδιο κλειδί στο orOS Connect.", "fm.shkOff": "Χωρίς κλειδί καταστήματος: οι εγγραφές από το ταμείο επιβεβαιώνονται με email.",
       "sd.title": "Αποστολή", "sd.text": "{n} μηνύματα από {f} μέσω {c}.",
       "sd.time": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά· με έως {cap} τη μέρα χρειάζεται {d} μέρες.",
       "sd.time1": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά.",
@@ -787,6 +787,7 @@
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
     if (crmPeople()) acts.appendChild(mini(t("subs.crm"), crmDialog));
     if (Sh && Sh.hasWoo()) acts.appendChild(mini(shopT("shop.cust"), Sh.customers));
+    if (Sh && Sh.hasWoo()) acts.appendChild(mini(shopT("shop.buy"), function () { readPurchases(l.id); }));
     if (P && P.has()) acts.appendChild(mini(P.label(), P.open));
     acts.appendChild(mini(t("subs.enrich"), function () { enrichNames(shownSubs); }));
     acts.appendChild(mini(t("subs.export"), exportCsv));
@@ -1000,7 +1001,7 @@
   }
   // The built-in layouts: the list's own header and footer (or new
   // ones) around blocks to fill in.
-  var LAYOUTS = ["weekly", "announce", "offer"];
+  var LAYOUTS = ["weekly", "announce", "offer", "winback"];
   function layoutBlocks(k, l) {
     var head = l.hf && l.hf.head ? copy(l.hf.head) : newBlock("head", l);
     var foot = l.hf && l.hf.foot ? copy(l.hf.foot) : newBlock("foot", l);
@@ -1020,6 +1021,13 @@
       mid = [{ k: "h", t: t("lay.a.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.a.intro") }, newBlock("img", l),
              { k: "p", t: t("lay.a.body") }, { k: "btn", t: t("lay.a.btn"), href: "", al: "center" },
              { k: "quote", t: t("lay.a.quote"), by: t("lay.a.by") }];
+    } else if (k === "winback") {
+      // N2: someone who bought before and not lately gets their own code
+      var cp = newCoupon("cpn");
+      cp.code = "BACK"; cp.amt = "15"; cp.per = 1; cp.t = t("lay.b.cpn");
+      if (!cp.sh) delete cp.per;
+      mid = [{ k: "h", t: t("lay.b.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.b.intro") }, cp,
+             { k: "p", t: t("lay.b.end") }];
     } else {
       mid = [{ k: "h", t: t("lay.o.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.o.intro"), al: "center" },
              it("lay.o.p1", "lay.o.p1t", false, "lay.o.buy"), it("lay.o.p2", "lay.o.p2t", true, "lay.o.buy"),
@@ -1435,6 +1443,9 @@
     var parts = [];
     if (g.tags.length) parts.push((g.match === "all" ? t("seg.all") : t("seg.any")) + ": " + g.tags.join(", "));
     if (g.lang) parts.push(langName(g.lang));
+    if (g.buy) parts.push(t(g.buy === "more" ? "seg.buyMoreN" : "seg.buy_" + g.buy, { n: g.bn || 2 }));
+    if (g.bs) { var l1 = C.list(data, listId); parts.push(t("seg.bsT", { s: money(g.bs, (l1 && l1.buyCur) || "EUR") })); }
+    if (g.bago) parts.push(t("seg.bagoT", { n: g.bago }));
     parts.push(t("seg.count", { n: segCount(g, listId) }));
     return parts.join(" · ");
   }
@@ -1468,6 +1479,32 @@
     var lang = sel([["", t("seg.anyLang")], ["en", langName("en")], ["el", langName("el")]], src.lang);
     lang.addEventListener("change", update);
     dlg.appendChild(field(t("seg.lang"), lang));
+    // N2: purchases (read with Subscribers › Purchases from the shop)
+    var l0 = C.list(data, listId);
+    dlg.appendChild(el("p", "dlg-h", t("seg.buyH")));
+    var buy = sel([["", t("seg.buyAny")], ["none", t("seg.buyNone")], ["one", t("seg.buyOne")], ["ever", t("seg.buyEver")], ["more", t("seg.buyMore")]], src.buy || "");
+    dlg.appendChild(field(t("seg.buy"), buy));
+    var bn = inp("number", String(src.bn || 2), 4);
+    bn.min = "2"; bn.max = "9999";
+    var bnF = field(t("seg.bn"), bn);
+    dlg.appendChild(bnF);
+    var bsv = inp("text", src.bs ? String(src.bs / 100) : "", 12);
+    bsv.inputMode = "decimal";
+    var bsF = field(t("seg.bs", { c: (l0 && l0.buyCur) || "EUR" }), bsv);
+    dlg.appendChild(bsF);
+    var bago = inp("number", src.bago ? String(src.bago) : "", 3);
+    bago.min = "1"; bago.max = "120";
+    var bagoF = field(t("seg.bago"), bago, t("seg.bagoHint"));
+    dlg.appendChild(bagoF);
+    dlg.appendChild(el("p", "hint", l0 && l0.buyAt ? t("seg.buyAt", { t: when(l0.buyAt) }) : t("seg.buyNever")));
+    if (!g) {
+      dlg.appendChild(mini(t("seg.winback"), function () {
+        if (!name.value.trim()) name.value = t("seg.winbackName");
+        buy.value = "ever"; bago.value = "12"; bsv.value = "";
+        update();
+      }));
+    }
+    [buy, bn, bsv, bago].forEach(function (c) { c.addEventListener("input", update); c.addEventListener("change", update); });
     var count = el("p", "dlg-text");
     dlg.appendChild(count);
     function collect() {
@@ -1476,6 +1513,15 @@
       r.tags = [].filter.call(chips.querySelectorAll("input"), function (c) { return c.checked; }).map(function (c) { return c.value; });
       r.match = match.value;
       r.lang = lang.value;
+      delete r.buy; delete r.bn; delete r.bs; delete r.bago;
+      if (buy.value) r.buy = buy.value;
+      if (buy.value === "more") r.bn = Math.round(+bn.value) || 2;
+      var money0 = Math.round(parseFloat(String(bsv.value).replace(",", ".")) * 100);
+      if (money0 > 0) r.bs = money0;
+      var ago = Math.round(+bago.value);
+      if (ago > 0) r.bago = ago;
+      bnF.hidden = buy.value !== "more";
+      bsF.hidden = bagoF.hidden = buy.value === "none";
       return C.normSeg(r);
     }
     function update() { var r = collect(); if (r) count.textContent = t("seg.count", { n: segCount(r, listId) }); }
@@ -2638,6 +2684,25 @@
     });
     bw.appendChild(save);
     c.appendChild(bw);
+    // N2: the shop key of orOS Connect's checkout box
+    var shk = inp("text", l.form.shk || "", 32);
+    shk.spellcheck = false; shk.autocomplete = "off";
+    var kw = field(t("fm.shk"), shk, t("fm.shkHint"));
+    var ka = el("div", "acts");
+    ka.appendChild(mini(t("fm.shkNew"), function () { shk.value = E.newShopKey(); }));
+    ka.appendChild(mini(t("lk.copy"), function () {
+      try { navigator.clipboard.writeText(shk.value).then(function () { showToast(t("lk.copied")); }, function () { shk.select(); }); } catch (e) { shk.select(); }
+    }));
+    ka.appendChild(mini(t("dlg.save"), function () {
+      var v = shk.value.trim();
+      if (v && !C.SHOP_KEY.test(v)) { shk.classList.add("bad"); showToast(t("fm.shkBad")); return; }
+      shk.classList.remove("bad");
+      E.setShopKey(l.id, v);
+      data = E.read();
+      showToast(v ? t("fm.shkSaved") : t("fm.shkOff"));
+    }));
+    kw.appendChild(ka);
+    c.appendChild(kw);
     var here = !l.form.dev || l.form.dev === E.devState().dev;
     c.appendChild(el("p", "hint", here ? t("fm.here") : t("fm.there")));
     var acts = el("div", "acts");
@@ -2831,6 +2896,7 @@
       });
       info.appendChild(el("p", "row-sub", t("s.src", { s: t("src." + s.src) }) + " · " + t("basis." + s.basis)));
       if (s.cn) info.appendChild(el("p", "row-sub", t("s.cn", { c: s.cn })));
+      if (s.bn) info.appendChild(el("p", "row-sub", buyText(s, C.list(data, s.list))));
       dlg.appendChild(info);
     }
     var left = [];
@@ -3482,6 +3548,23 @@
   // ---------- products from a shop (wave E4, newsletter/shop.js) ----------
   var Sh = window.OrosNewsletterShop || null;
   function shopT(k, p) { return Sh ? Sh.t(k, p) : k; }
+  // N2: the shop's paid orders → each subscriber's purchases (synced)
+  function readPurchases(listId) {
+    var l = C.list(data, listId);
+    if (!l || !Sh) return;
+    Sh.purchases(l, function (buys, meta) {
+      var n = 0;
+      changed(E.change(function (d) {
+        n = C.applyPurchases(d, listId, buys, meta, Date.now());
+      }));
+      showToast(shopT("shop.buyDone", { o: meta.n, n: n }));
+    });
+  }
+  function buyText(s, l) {
+    if (!s.bn) return "";
+    var cur = (l && l.buyCur) || "EUR";
+    return t("s.buys", { n: s.bn, s: money(s.bs || 0, cur), d: s.bl ? new Date(s.bl).toLocaleDateString(loc()) : "" });
+  }
   function money(c, cur) {
     if (!(c >= 0)) return "";
     try { return new Intl.NumberFormat(loc(), { style: "currency", currency: cur || "EUR" }).format(c / 100); }

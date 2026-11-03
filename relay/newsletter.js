@@ -4,7 +4,8 @@
 // the list's own orOS pulls them. See relay/README.md.
 //
 // Public (no Origin check; browsers and mail clients call them):
-//   POST /nl/s/<k>          sign-up form: email, name?, lang?, website (honeypot)
+//   POST /nl/s/<k>          sign-up form: email, name?, lang?, website (honeypot),
+//                           src=shop + ts + sig (a signed checkout sign-up, passed on sealed)
 //   GET  /nl/u/<k>/<tok>    a page with one button (never unsubscribes)
 //   POST /nl/u/<k>/<tok>    unsubscribe (List-Unsubscribe=One-Click or the button)
 // App (POST /v1, origin-gated): { op: "nl", act, k, sec, ... }
@@ -322,7 +323,13 @@ async function afterRead(request, env, url, now, kind, k, tok, lang, text) {
   if (n && n.n >= NL_LIMITS.pending) return thanks();
   let pub;
   try { pub = JSON.parse(list.pub); } catch (e) { return page(503, lang, "off"); }
-  const v = await seal(pub, { e: email, n: oneLine(f.get("name"), 120), l: lang, t: now });
+  const o = { e: email, n: oneLine(f.get("name"), 120), l: lang, t: now };
+  // A checkout sign-up from orOS Connect (N2): src=shop, ts, sig. The
+  // relay never knows the shop key; it only passes them on, sealed, and
+  // the list's orOS checks the signature.
+  const ts = f.get("ts") || "", sig = f.get("sig") || "";
+  if (f.get("src") === "shop" && /^[0-9]{9,11}$/.test(ts) && /^[0-9a-f]{64}$/.test(sig)) { o.s = "shop"; o.ts = ts; o.sig = sig; }
+  const v = await seal(pub, o);
   await q(d, SQL.addRow, k, "s", v, now).run();
   return thanks();
 }

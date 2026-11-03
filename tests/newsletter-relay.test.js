@@ -247,3 +247,17 @@ test("a failing D1 call gives the visitor a page, never a raw error", async () =
   const u = await pub(env, "/nl/u/" + K + "/abcd1234", { method: "POST", body: "List-Unsubscribe=One-Click" });
   assert.equal(u.status, 503);
 });
+
+test("N2: a checkout sign-up's src/ts/sig pass sealed; malformed ones are left out", async () => {
+  const { D, env, kp } = await setup();
+  const sig = "a".repeat(64);
+  await pub(env, "/nl/s/" + K, form({ email: "buyer@x.gr", name: "B", lang: "el", src: "shop", ts: "1793750000", sig }));
+  await pub(env, "/nl/s/" + K, form({ email: "odd@x.gr", src: "shop", ts: "12", sig }));
+  await pub(env, "/nl/s/" + K, form({ email: "odd2@x.gr", src: "shop", ts: "1793750000", sig: "XYZ" }));
+  assert.equal(D.rows.length, 3);
+  const got = await Promise.all(D.rows.map((r) => open(kp.priv, r.v)));
+  assert.deepEqual([got[0].s, got[0].ts, got[0].sig], ["shop", "1793750000", sig]);
+  assert.equal(typeof got[0].t, "number");
+  assert.equal(got[1].s, undefined);
+  assert.equal(got[2].sig, undefined);
+});

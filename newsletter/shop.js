@@ -40,7 +40,7 @@
       "shop.at": "Prices from {t}", "shop.never": "Prices not read from the shop yet.", "shop.out": "sold out",
       "shop.per": "Per row", "shop.bt": "Button text", "shop.btPh": "Buy now", "shop.remove": "Remove",
       "shop.otherShop": "This block's products come from another shop. Remove them first to choose from this one.",
-      "shop.cust": "From the shop", "shop.custTitle": "Customers from the shop",
+      "shop.cust": "From the shop", "shop.custTitle": "Customers from the shop", "shop.buy": "Purchases from the shop", "shop.buyTitle": "Purchases from the shop", "shop.buyHint": "Reads the shop's paid orders (processing and completed) and keeps, for each subscriber of this list with the same e-mail, how many orders, how much they spent and when they first and last ordered. Only on your devices; nothing is written to the shop. Use them in segments.", "shop.buyGo": "Read orders", "shop.buyLoading": "Reading orders… {n}", "shop.buyMany": "The shop has more than 10,000 paid orders: that is more than orOS reads.", "shop.buyDone": "{o} orders read: {n} subscribers updated.",
       "shop.custNone": "No customers with an e-mail address in this shop.",
       "shop.custHint": "Your shop's customers, for news about similar products. They count as \"Existing customer\" and every issue lets them unsubscribe. Anyone who left this list is never brought back.",
       "shop.custTags": "Tag them with the shop's name",
@@ -65,7 +65,7 @@
       "shop.at": "Τιμές από {t}", "shop.never": "Οι τιμές δεν έχουν διαβαστεί ακόμα από το κατάστημα.", "shop.out": "εξαντλήθηκε",
       "shop.per": "Ανά σειρά", "shop.bt": "Κείμενο κουμπιού", "shop.btPh": "Αγορά", "shop.remove": "Αφαίρεση",
       "shop.otherShop": "Τα προϊόντα αυτού του block είναι από άλλο κατάστημα. Αφαίρεσέ τα πρώτα για να διαλέξεις από αυτό.",
-      "shop.cust": "Από το κατάστημα", "shop.custTitle": "Πελάτες από το κατάστημα",
+      "shop.cust": "Από το κατάστημα", "shop.custTitle": "Πελάτες από το κατάστημα", "shop.buy": "Αγορές από το κατάστημα", "shop.buyTitle": "Αγορές από το κατάστημα", "shop.buyHint": "Διαβάζει τις εξοφλημένες παραγγελίες του καταστήματος (σε επεξεργασία και ολοκληρωμένες) και κρατά, για κάθε συνδρομητή αυτής της λίστας με το ίδιο email, πόσες παραγγελίες έκανε, πόσα ξόδεψε και πότε παρήγγειλε πρώτη και τελευταία φορά. Μόνο στις συσκευές σου· τίποτα δεν γράφεται στο κατάστημα. Χρησιμοποίησέ τα στα τμήματα.", "shop.buyGo": "Ανάγνωση παραγγελιών", "shop.buyLoading": "Ανάγνωση παραγγελιών… {n}", "shop.buyMany": "Το κατάστημα έχει πάνω από 10.000 εξοφλημένες παραγγελίες: περισσότερες από όσες διαβάζει το orOS.", "shop.buyDone": "Διαβάστηκαν {o} παραγγελίες: ενημερώθηκαν {n} συνδρομητές.",
       "shop.custNone": "Κανένας πελάτης με email σε αυτό το κατάστημα.",
       "shop.custHint": "Οι πελάτες του καταστήματός σου, για νέα για παρόμοια προϊόντα. Μετράνε ως «Υπάρχων πελάτης» και κάθε τεύχος τους δίνει δυνατότητα διαγραφής. Όποιος έφυγε από αυτή τη λίστα δεν ξαναμπαίνει ποτέ.",
       "shop.custTags": "Ετικέτα με το όνομα του καταστήματος",
@@ -615,6 +615,57 @@
     A.openDialog(dlg, f.acct);
   }
 
+  // ---------- purchases (N2) ----------
+  // The list's paid WooCommerce orders → done(buys, { acct, cur, n })
+  // (buys: C.purchasesOf). Read only; every page must come back, or
+  // nothing is changed (half the orders would give wrong totals).
+  var BUY_PAGES = 100, BUY_STEP = 3;
+  function purchases(l, done) {
+    var dlg = A.makeDialog("nl-shopb", t("shop.buyTitle"), true);
+    if (!links()) { noShop(dlg, t("shop.noShell")); return; }
+    var accts = accounts(["woo"]);
+    if (!accts.length) { noShop(dlg, t("shop.none")); return; }
+    var first = l.buyAcct && accts.some(function (a) { return a.id === l.buyAcct; }) ? l.buyAcct : accts[0].id;
+    var f = { acct: A.sel(accts.map(function (a) { return [a.id, a.name]; }), first) };
+    dlg.appendChild(A.field(t("shop.acct"), f.acct));
+    dlg.appendChild(A.el("p", "hint", t("shop.buyHint")));
+    var msg = A.el("p", "hint", "");
+    msg.setAttribute("aria-live", "polite");
+    dlg.appendChild(msg);
+    var busy = false;
+    A.actionsRow(dlg, [], t("shop.buyGo"), function () {
+      if (busy) return;
+      busy = true;
+      var a = acctOf(f.acct.value), buys = {}, page = 1, count = 0, cur = "";
+      function step() {
+        msg.textContent = t("shop.buyLoading", { n: count });
+        var withCur = page === 1, reqs = withCur ? [{ m: "GET", path: "/data/currencies/current" }] : [], pages = 0;
+        for (var i = 0; i < BUY_STEP && page + i <= BUY_PAGES; i++, pages++) {
+          reqs.push({ m: "GET", path: "/orders?status=processing,completed&per_page=100&page=" + (page + i) + "&orderby=id&order=asc" });
+        }
+        return ask(a.id, reqs).then(function (r) {
+          if (withCur) { var c = r.shift(); cur = curOf(c && c.code) || cur; }
+          var short = false;
+          r.forEach(function (list) {
+            if (short) return;
+            if (!Array.isArray(list)) throw errOf("other");
+            C.purchasesOf(list, buys);
+            count += list.length;
+            if (list.length < 100) short = true;
+          });
+          page += pages;
+          if (!short && page > BUY_PAGES) throw errOf("tooMany");
+          return short ? null : step();
+        });
+      }
+      step().then(function () {
+        dlg.close();
+        done(buys, { acct: a.id, cur: cur || "EUR", n: count });
+      }, function (e) { busy = false; msg.textContent = e && e.code === "tooMany" ? t("shop.buyMany") : errText(e); });
+    });
+    A.openDialog(dlg, f.acct);
+  }
+
   // ---------- coupons (N1) ----------
   // The WooCommerce shops a coupon can be made in → [{ id, name }]
   function wooShops() { return accounts(["woo"]).map(function (a) { return { id: a.id, name: a.name || a.site || "WooCommerce" }; }); }
@@ -637,7 +688,7 @@
     has: function () { return !!links() && accounts().length > 0; },
     hasWoo: function () { return !!links() && accounts(["woo"]).length > 0; },
     pick: pick, refresh: refresh, customers: customers, auto: auto, t: t,
-    wooShops: wooShops, makeCoupon: makeCoupon, errText: errText
+    wooShops: wooShops, makeCoupon: makeCoupon, errText: errText, purchases: purchases
   };
   if (NODE) module.exports = api;
   else root.OrosNewsletterShop = api;

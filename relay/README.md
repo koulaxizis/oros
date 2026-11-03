@@ -434,7 +434,7 @@ CSP, `X-Frame-Options: DENY` and `Referrer-Policy: no-referrer`):
 
 | Route | What it does |
 |---|---|
-| `POST /nl/s/<k>` | Sign-up form (≤4 KB): `email`, `name?`, `lang?`, honeypot `website`. Stored encrypted for the list (AES-256-GCM, key wrapped with the list's RSA-OAEP-256 public key), then a "check your inbox" page or a 303 to the list's https thank-you page |
+| `POST /nl/s/<k>` | Sign-up form (≤4 KB): `email`, `name?`, `lang?`, honeypot `website`. A checkout sign-up from orOS Connect also has `src=shop`, `ts`, `sig` (HMAC-SHA256 with the shop key, which the relay never sees); well-formed ones go into the sealed sign-up for the list's orOS to check. Stored encrypted for the list (AES-256-GCM, key wrapped with the list's RSA-OAEP-256 public key), then a "check your inbox" page or a 303 to the list's https thank-you page |
 | `GET /nl/u/<k>/<tok>` | A page with one button. Never unsubscribes (link scanners open links) |
 | `POST /nl/u/<k>/<tok>` | Unsubscribe: RFC 8058 `List-Unsubscribe=One-Click` or the page's button. Stores only the subscriber's random token, once a day |
 

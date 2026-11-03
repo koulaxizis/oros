@@ -512,7 +512,8 @@
         });
       });
     return made.then(function (f) {
-      var form = C.normForm({ k: f.k, sec: f.sec, priv: f.priv, back: back || "", dev: (l.form && l.form.dev) || dev, at: Date.now() });
+      var form = C.normForm({ k: f.k, sec: f.sec, priv: f.priv, back: back || "", dev: (l.form && l.form.dev) || dev, at: Date.now(),
+                              shk: (l.form && l.form.shk) || "" });
       if (!form) throw { code: "bad-request" };
       return relay({ op: "nl", act: "reg", k: form.k, sec: form.sec, pub: C.formPub(form), back: form.back }).then(function () {
         change(function (d) {
@@ -539,6 +540,31 @@
         put(d, "lists", y);
       });
     });
+  }
+  // N2: the shop key orOS Connect signs checkout sign-ups with ("" = none:
+  // they confirm by e-mail like any other sign-up).
+  function setShopKey(listId, key) {
+    if (key && !C.SHOP_KEY.test(key)) return false;
+    return change(function (d) {
+      var cur = C.list(d, listId);
+      if (!cur || !cur.form || (cur.form.shk || "") === key) return false;
+      var y = copy(cur); y.form.shk = key;
+      put(d, "lists", y);
+    }) !== null;
+  }
+  function newShopKey() { return rnd(32, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"); }
+  // Is a checkout sign-up signed with the list's shop key? → Promise<bool>
+  function shopOk(key, o) {
+    if (!key || !C.shopSigned(o)) return Promise.resolve(false);
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (k) {
+      return crypto.subtle.sign("HMAC", k, enc.encode(C.shopSigText(o.e, o.ts)));
+    }).then(function (mac) {
+      var hex = Array.prototype.map.call(new Uint8Array(mac), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+      var x = 0;
+      for (var i = 0; i < 64; i++) x |= hex.charCodeAt(i) ^ o.sig.charCodeAt(i);
+      return x === 0;
+    }, function () { return false; });
   }
   // This device collects the list's sign-ups from now on.
   function formHere(listId) {
@@ -570,6 +596,7 @@
     var email = C.normEmail(o && o.e), now = Date.now();
     if (!email) return false;
     var id = C.subId(l.id, email), cur = C.sub(d, id);
+    if (o.ok === true) return applyCheckout(d, l, o, email, id, cur, now, tally);
     if (cur) {
       var st = C.status(cur);
       if (st === "on" || st === "pend" || st === "spam") return false;
@@ -583,6 +610,31 @@
                                     lang: o.l === "el" || o.l === "en" ? o.l : "", src: "form", basis: "optin", at: now, conf: 0 }));
     }
     tally.s++;
+    return true;
+  }
+  // A checkout sign-up signed with the shop key (N2): the person ticked
+  // the unticked box at the shop's checkout, so they are active at once
+  // (no confirmation e-mail). Fresh consent also brings back someone who
+  // had left; someone already active or waiting is left as they are
+  // (waiting ones are confirmed).
+  function applyCheckout(d, l, o, email, id, cur, now, tally) {
+    var cn = "Checkout (orOS Connect)";
+    if (cur) {
+      var st = C.status(cur);
+      if (st === "on") return false;
+      var y = copy(cur);
+      if (st !== "pend") { y.at = now; y.off = 0; y.offSt = ""; y.src = "chk"; y.basis = "consent"; y.cn = cn; delete y.ask; }
+      y.conf = now; y.bnc = 0; y.m = stamp(y.m);
+      replaceIn(d.subs, C.normSub(y));
+    } else {
+      if (C.live(d.subs).length >= C.LIM.subs) return false;
+      var tomb = null;
+      d.subs.forEach(function (s) { if (s.id === id) tomb = s; });
+      replaceIn(d.subs, C.normSub({ id: id, m: stamp(tomb ? tomb.m : 0), list: l.id, email: email, name: C.oneLine(o.n, C.LIM.name),
+                                    lang: o.l === "el" || o.l === "en" ? o.l : "", src: "chk", basis: "consent", cn: cn, at: now, conf: now }));
+    }
+    tally.s++;
+    tally.chk = (tally.chk || 0) + 1;
     return true;
   }
   // Sign-ups and one-click unsubscribes waiting at the relay for the
@@ -603,7 +655,11 @@
               return rows.reduce(function (q, r) {
                 return q.then(function () {
                   if (r.kind !== "s") return;
-                  return openSealed(priv, r.v).then(function (o) { opened.push(o); }, function () {});
+                  return openSealed(priv, r.v).then(function (o) {
+                    if (!o || typeof o !== "object") return;
+                    delete o.ok;
+                    return shopOk(f.shk, o).then(function (ok) { if (ok) o.ok = true; opened.push(o); });
+                  }, function () {});
                 });
               }, Promise.resolve()).then(function () {
                 var d = read(), cur = C.list(d, l.id);
@@ -1321,6 +1377,7 @@
     images: imgData, loadImages: loadImages, filesFor: filesFor, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
     runClean: runClean, claimClean: claimClean, ensureCoupons: ensureCoupons,
+    setShopKey: setShopKey, newShopKey: newShopKey, shopOk: shopOk, applySignup: applySignup,
     formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create

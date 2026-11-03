@@ -52,7 +52,7 @@
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform", "shop"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform", "shop", "chk"];
   var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
@@ -230,6 +230,10 @@
     // signs up (form or e-mail) and becomes active after welAt. Plain
     // scalars, so an older orOS keeps them (keepExtra).
     if (validId(x.welTpl)) { o.welTpl = x.welTpl; o.welAt = nat(x.welAt); }
+    // purchases (N2): when they were last read from which shop, its currency
+    if (nat(x.buyAt) && typeof x.buyAcct === "string" && /^[a-z0-9]{8,24}$/.test(x.buyAcct)) {
+      o.buyAt = nat(x.buyAt); o.buyAcct = x.buyAcct; o.buyCur = typeof x.buyCur === "string" && /^[A-Z]{3}$/.test(x.buyCur) ? x.buyCur : "EUR";
+    }
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -251,8 +255,20 @@
     }
     var back = safeUrl(f.back);
     return { k: f.k, sec: f.sec, priv: priv, back: /^https:\/\//i.test(back) && back.length <= 300 ? back : "",
-             dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at) };
+             dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at),
+             shk: typeof f.shk === "string" && SHOP_KEY.test(f.shk) ? f.shk : "" };
   }
+  // N2: the shop key a checkout sign-up is signed with (orOS Connect:
+  // sig = HMAC-SHA256(key, lower-case e-mail + "|" + ts), ts in seconds).
+  // A signed sign-up within SHOP_SKEW of the relay's own time is active
+  // at once; anything else asks for confirmation as usual.
+  var SHOP_KEY = /^[A-Za-z0-9]{32}$/, SHOP_SKEW = 900;
+  function shopSigned(o) {
+    return !!(o && o.s === "shop" && typeof o.ts === "string" && /^[0-9]{9,11}$/.test(o.ts) &&
+              typeof o.sig === "string" && /^[0-9a-f]{64}$/.test(o.sig) && typeof o.t === "number" &&
+              Math.abs(o.t / 1000 - +o.ts) <= SHOP_SKEW);
+  }
+  function shopSigText(email, ts) { return String(email || "").trim().toLowerCase() + "|" + ts; }
   // The public half (what the relay keeps) of a form's private key.
   function formPub(f) { return f && f.priv ? { kty: "RSA", alg: "RSA-OAEP-256", n: f.priv.n, e: f.priv.e } : null; }
   // The subscriber's token as the relay's unsubscribe path wants it.
@@ -293,6 +309,10 @@
     if (ask) o.ask = ask;
     var wel = nat(x.wel);                // when the welcome mail was sent (W3; left out while never)
     if (wel) o.wel = wel;
+    // purchases in the list's shop (N2): orders, spent (cents), first
+    // and last order (ms); left out while none
+    var bn = clamp(x.bn, 1, 1e6, 0);
+    if (bn) { o.bn = bn; o.bs = clamp(x.bs, 0, 1e13, 0); o.bf = nat(x.bf); o.bl = nat(x.bl); }
     return o;
   }
   // Fields a newer orOS may add to a block or a list: kept as they are
@@ -302,7 +322,7 @@
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec",
                     "code", "dt", "amt", "exp", "min", "made"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -699,10 +719,80 @@
     c.lang = v.lang;
     return c;
   }
+  // N2 purchase rules: buy "" (any) | "none" | "one" | "ever" | "more"
+  // (bn or more orders), bs spent at least (cents), bago last order more
+  // than that many months ago (needs a purchase)
+  var SEG_BUY = ["none", "one", "ever", "more"];
   function normSeg(x) {
     if (!validId(x.list)) return null;
-    return { id: x.id, m: nat(x.m), list: x.list, name: oneLine(x.name, LIM.name), tags: normTags(x.tags),
-             match: x.match === "all" ? "all" : "any", lang: x.lang === "en" || x.lang === "el" ? x.lang : "" };
+    var o = { id: x.id, m: nat(x.m), list: x.list, name: oneLine(x.name, LIM.name), tags: normTags(x.tags),
+              match: x.match === "all" ? "all" : "any", lang: x.lang === "en" || x.lang === "el" ? x.lang : "" };
+    if (SEG_BUY.indexOf(x.buy) >= 0) o.buy = x.buy;
+    if (o.buy === "more") o.bn = clampInt(x.bn, 2, 9999, 2);
+    var bs = clamp(x.bs, 1, 1e13, 0);
+    if (bs && o.buy !== "none") o.bs = Math.round(bs);
+    var bago = clampInt(x.bago, 1, 120, 0);
+    if (bago && o.buy !== "none") o.bago = bago;
+    return keepExtra(x, o, ["id", "m", "del", "list", "name", "tags", "match", "lang", "buy", "bn", "bs", "bago"]);
+  }
+  function segBuys(g) { return !!(g && (g.buy || g.bs || g.bago)); }
+  // Does a subscriber's purchase record fit the segment's rules?
+  function buyMatch(g, s, now) {
+    var n = s.bn || 0;
+    if (g.buy === "none" && n) return false;
+    if (g.buy === "one" && n !== 1) return false;
+    if (g.buy === "ever" && !n) return false;
+    if (g.buy === "more" && n < (g.bn || 2)) return false;
+    if (g.bs && (s.bs || 0) < g.bs) return false;
+    if (g.bago && (!n || !s.bl || s.bl > (now || Date.now()) - g.bago * 30 * DAY)) return false;
+    return true;
+  }
+  // WooCommerce orders → purchases by e-mail: { key: { n, s, f, l } }.
+  // Only paid orders count (the request asks for processing and
+  // completed; anything else here is skipped too), refunds taken off.
+  var BUY_STS = { processing: 1, completed: 1 };
+  function purchasesOf(orders, into) {
+    var out = into || {};
+    (Array.isArray(orders) ? orders : []).forEach(function (o) {
+      if (!o || typeof o !== "object" || !BUY_STS[o.status]) return;
+      var email = normEmail(o.billing && o.billing.email);
+      if (!email) return;
+      var tot = typeof o.total === "string" && /^-?[0-9]{1,12}(\.[0-9]{1,4})?$/.test(o.total) ? Math.round(+o.total * 100) : 0;
+      var at = Date.parse(typeof o.date_created_gmt === "string" ? o.date_created_gmt + "Z" : "");
+      if (!isFinite(at)) at = 0;
+      var k = emailKey(email), r = out[k] || (out[k] = { n: 0, s: 0, f: 0, l: 0 });
+      r.n++;
+      r.s += Math.max(0, tot);
+      if (at && (!r.f || at < r.f)) r.f = at;
+      if (at > r.l) r.l = at;
+    });
+    return out;
+  }
+  // Put purchases on a list's subscribers (changes d) → how many changed.
+  // A subscriber with none any more loses theirs.
+  function applyPurchases(d, listId, buys, meta, now) {
+    var n = 0;
+    subsOf(d, listId).forEach(function (s) {
+      var r = buys[emailKey(s.email)];
+      var want = r && r.n ? { bn: Math.min(r.n, 1e6), bs: r.s, bf: r.f, bl: r.l } : null;
+      var same = want ? s.bn === want.bn && s.bs === want.bs && s.bf === want.bf && s.bl === want.bl : !s.bn;
+      if (same) return;
+      var y = JSON.parse(JSON.stringify(s));
+      delete y.bn; delete y.bs; delete y.bf; delete y.bl;
+      if (want) { y.bn = want.bn; y.bs = want.bs; y.bf = want.bf; y.bl = want.bl; }
+      y.m = Math.max(now, (y.m || 0) + 1);
+      var i = d.subs.indexOf(s);
+      d.subs[i] = normSub(y);
+      n++;
+    });
+    var l = list(d, listId);
+    if (l && meta) {
+      var z = JSON.parse(JSON.stringify(l));
+      z.buyAt = now; z.buyAcct = meta.acct; z.buyCur = meta.cur || "EUR";
+      z.m = Math.max(now, (z.m || 0) + 1);
+      d.lists[d.lists.indexOf(l)] = normList(z);
+    }
+    return n;
   }
   function normTpl(x) {
     var c = withHtml(normContent(x), x);
@@ -1050,8 +1140,9 @@
   // ---------- audience + sending progress ----------
   // Does a subscriber fit a segment? tags: any or all of them (none:
   // everyone); lang: the subscriber's language (or the list's).
-  function segMatch(seg, s, list) {
+  function segMatch(seg, s, list, now) {
     if (seg.lang && (s.lang || (list && list.lang) || "en") !== seg.lang) return false;
+    if (segBuys(seg) && !buyMatch(seg, s, now)) return false;
     if (!seg.tags.length) return true;
     var have = {};
     s.tags.forEach(function (t) { have[fold(t)] = 1; });
@@ -1218,7 +1309,7 @@
     var l = list(d, listId);
     if (!welcomeTpl(d, l)) return [];
     return subsOf(d, listId).filter(function (s) {
-      return status(s) === "on" && (s.src === "form" || s.src === "mail") && !s.wel &&
+      return status(s) === "on" && (s.src === "form" || s.src === "mail" || s.src === "chk") && !s.wel &&
              s.conf >= (l.welAt || 0) && now - s.conf <= WEL_DAYS * DAY;
     }).sort(function (a, b) { return a.conf - b.conf || (a.id < b.id ? -1 : 1); });
   }
@@ -1949,6 +2040,8 @@
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     normCoupon: normCoupon, couponCode: couponCode, couponsOf: couponsOf, couponValue: couponValue, couponReq: couponReq,
     couponResult: couponResult, badCoupon: badCoupon,
+    shopSigned: shopSigned, shopSigText: shopSigText, SHOP_SKEW: SHOP_SKEW, SHOP_KEY: SHOP_KEY,
+    purchasesOf: purchasesOf, applyPurchases: applyPurchases, buyMatch: buyMatch, segBuys: segBuys, SEG_BUY: SEG_BUY,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,
     empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, AS_KINDS: AS_KINDS, AS_MAX: AS_MAX, asAdd: asAdd, insertAt: insertAt, SECTIONS: SECTIONS, normSub: normSub,
