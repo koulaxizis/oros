@@ -1613,7 +1613,7 @@
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
         refs: { type: "array", items: { type: "string" },
-                description: "update only: several refs of the same app (up to 200) that get the same change, instead of ref." },
+                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. delete: several Kanban cards at once (Kanban only; e.g. every card of a board or column from app_summary kanban with board), one card and one Undo for all." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
@@ -2989,7 +2989,7 @@
       lines.push("When a file or message holds details of people or companies (a form, a list, business cards, a vCard, a signature), look each one up first with search_data (Contacts, and CRM for customers and partners). Someone already there gets change_item with only what is new or different (changes: one entry per person, when there are several); add phones, e-mails and websites, and replace one (old_phone…) only when the file says it changed; never drop details they have. Someone not there gets " + (opts.creates && opts.creates.length ? "create_items (all of them in one call per app)" : "propose_entry") + ". Tax numbers and tax office go to the CRM customer (tax_id, tax_office) when there is one; bank details or a bio, which have no field, go in note_add, briefly, only if the user wants them there.");
     }
     var changeLine = canChange
-      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
+      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items, or to delete several Kanban cards at once). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
       : "You cannot change or delete anything in orOS.";
     if (opts.builtin) {
       lines.push("You cannot create, change or delete anything in orOS.");

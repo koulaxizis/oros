@@ -136,3 +136,59 @@ test("wiring: assistant.js builds the kanban summary from every board; core.js t
   assert.match(c, /kanban \(EVERY board/);
   assert.match(c, /board: \{ type: "string", description: "kanban: one board's name/);
 });
+
+// ---------- KB-DEL: many Kanban cards deleted with one card ----------
+test("KB-DEL: several cards of one board deleted in a row on the same data, Undo brings all back in place", () => {
+  const d0 = kb();
+  const s = S.kanbanBoards(d0, { today: TODAY, board: "My board" });
+  const targets = s.items.map((i) => i.target);
+  assert.equal(targets.length, 3);
+  let d = JSON.parse(JSON.stringify(d0));
+  const undos = [];
+  targets.forEach((tg, i) => {
+    const ch = E.normArgs({ ref: "r" + i, action: "delete" });
+    assert.equal(ch.ok, true, ch.err);
+    const pl = E.plan("kanban", d, tg, ch, 1760000000000);
+    assert.notEqual(pl.ok, false, pl.err);
+    const res = E.apply("kanban", d, tg, ch, 1760000000000 + i, pl.before);
+    assert.equal(res.ok, true, res.err);
+    d = res.data;
+    undos.push(res.undo);
+  });
+  const b = d.boards.find((x) => x.id === "kb-seed-main");
+  assert.deepEqual(b.columns.map((c) => c.cards.length), [0, 0]);
+  assert.equal(d.boards.find((x) => x.id === "b2").columns[0].cards.length, 1);   // other boards untouched
+  for (let i = undos.length - 1; i >= 0; i--) {
+    const r = E.undo("kanban", d, undos[i], 1760000001000);
+    assert.equal(r.ok, true, r.err);
+    d = r.data;
+  }
+  const back = d.boards.find((x) => x.id === "kb-seed-main");
+  assert.deepEqual(back.columns[0].cards.map((k) => k.id), ["k1", "k2"]);
+  assert.deepEqual(back.columns[1].cards.map((k) => k.id), ["k3"]);
+});
+
+test("KB-DEL wiring: refs take delete for Kanban only, with a delete card in EN/EL/DE", () => {
+  const a = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(a, /var MANY_DEL_APP = "kanban";/);
+  assert.match(a, /if \(del && app\.id !== MANY_DEL_APP\) return/);
+  assert.match(a, /askChange\(app\.name, \{ many: many, del: del \}, act\)/);
+  assert.match(a, /"chg\.ask\.manyDel": "Delete these \{n\} items from \{app\}\?"/);
+  assert.match(a, /"chg\.ask\.manyDel": "Διαγραφή αυτών/);
+  const de = fs.readFileSync(path.join(ROOT, "i18n/de/assistant.js"), "utf8");
+  assert.match(de, /"chg\.ask\.manyDel"/);
+  assert.match(de, /"chg\.textManyDel"/);
+  const c = fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8");
+  assert.match(c, /delete: several Kanban cards at once \(Kanban only/);
+});
+
+// ---------- KB-PICK: choose the boards of a multi-board import ----------
+test("KB-PICK wiring: a multi-board import shows a tick per board and imports only the ticked ones", () => {
+  const k = fs.readFileSync(path.join(ROOT, "kanban/kanban.js"), "utf8");
+  assert.match(k, /many = res\.boards\.length > 1/);
+  assert.match(k, /go\.disabled = !pickedBoards\(res\)\.length/);
+  assert.match(k, /addParsed\(boards\.length === parsed\.boards\.length \? parsed : Object\.assign\(\{\}, parsed, \{ boards: boards \}\)\)/);
+  assert.match(k, /"import\.pick":\s+"Untick the boards you don't want\."/);
+  assert.match(k, /"import\.pick":\s+"Ξετσέκαρε/);
+  assert.match(fs.readFileSync(path.join(ROOT, "i18n/de/kanban.js"), "utf8"), /"import\.pick"/);
+});

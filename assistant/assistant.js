@@ -622,6 +622,8 @@
       "chg.storage": "it could not be saved (storage full?)",
       "chg.conflict": "the item changed meanwhile",
       "chg.ask.many": "Change these {n} items in {app}?",
+      "chg.ask.manyDel": "Delete these {n} items from {app}?",
+      "chg.textManyDel": "{name} asks to delete {n} of your items. Check them: nothing is deleted until you press Delete, and Undo brings them all back.",
       "chg.textMany": "{name} asks to make the same change to {n} of your items. Check them: nothing changes until you press Apply.",
       "chg.many": "{n} items", "f.label": "Label",
       "chg.textEach": "{name} asks to change {n} of your items, each in its own way. Check them: nothing changes until you press Apply.",
@@ -1206,6 +1208,8 @@
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
       "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
+      "chg.ask.manyDel": "Διαγραφή αυτών των {n} στοιχείων από: {app};",
+      "chg.textManyDel": "Το {name} ζητά να διαγραφούν {n} στοιχεία σου. Έλεγξέ τα: τίποτα δεν διαγράφεται πριν πατήσεις Διαγραφή, και η Αναίρεση τα φέρνει όλα πίσω.",
       "chg.textMany": "Το {name} ζητά την ίδια αλλαγή σε {n} στοιχεία σου. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
       "chg.many": "{n} στοιχεία", "f.label": "Ετικέτα",
       "chg.textEach": "Το {name} ζητά να αλλάξει {n} στοιχεία σου, το καθένα διαφορετικά. Έλεγξέ τα: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
@@ -3985,8 +3989,12 @@
   // An item that can't take the change stays off the card and is named
   // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
+  var MANY_DEL_APP = "kanban";   // KB-DEL: the one app whose items refs may delete
   function changeMany(c, args, apps) {
-    if (args.action !== "update") return Promise.resolve({ content: "Error: refs is only for update; change other things one item at a time with ref.", err: 1 });
+    // KB-DEL (Chris 2026-11-03): delete also takes refs, for Kanban
+    // cards only (checked below, once the app is known).
+    var del = args.action === "delete";
+    if (args.action !== "update" && !del) return Promise.resolve({ content: "Error: refs is only for update (and delete of Kanban cards); change other things one item at a time with ref.", err: 1 });
     if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
     var refs = [];
     args.refs.forEach(function (x) {
@@ -4017,6 +4025,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
+    if (del && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted only in Kanban; delete these one at a time with ref.", err: 1 });
     var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {
       // Planned one after the other on the same data, as Apply writes them.
@@ -4032,8 +4041,9 @@
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
     sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
-    var base = { k: "change", app: app.name, act: "update", title: t("chg.many", { n: plans.length }), many: many };
-    return askChange(app.name, { many: many }, "update").then(function (ok) {
+    var act = del ? "delete" : "update";
+    var base = { k: "change", app: app.name, act: act, title: t("chg.many", { n: plans.length }), many: many };
+    return askChange(app.name, { many: many, del: del }, act).then(function (ok) {
       if (!ok) {
         base.st = "declined";
         return { content: JSON.stringify({ refs: refs, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
@@ -4058,10 +4068,10 @@
       }
       markAppDirty();
       var uid = newId();
-      remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: "update", title: base.title, items: plans.map(function (p) { return p.pl.title; }) });
+      remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: act, title: base.title, items: plans.map(function (p) { return p.pl.title; }) });
       base.st = "done";
       base.u = uid;
-      return { content: JSON.stringify({ refs: refs, applied: true, action: "update", items: plans.length, note: "The user applied the change to " + plans.length + " items. They can undo it." + sameNote }), ui: base };
+      return { content: JSON.stringify({ refs: refs, applied: true, action: act, items: plans.length, note: (del ? "The user deleted " + plans.length + " items." : "The user applied the change to " + plans.length + " items.") + " They can undo it." + sameNote }), ui: base };
     });
   }
   // Different updates to several items of one app (changes: [{ ref,
@@ -4222,9 +4232,9 @@
       });
     });
   }
-  function chgList(host, many, tickOf) {
+  function chgList(host, many, tickOf, del) {
     var list = (Array.isArray(many) ? many : []).filter(Boolean);
-    var shared = tickOf ? [] : chgShared(list);
+    var shared = tickOf || del ? [] : chgShared(list);
     if (list.length > 1 && shared.length) {
       var sum = el("div", "chg-sum");
       sum.appendChild(el("p", "dlg-hint", t("chg.sum", { n: list.length })));
@@ -4237,7 +4247,7 @@
     function add(m) {
       var i = list.indexOf(m);
       if (m.title) box.appendChild(el("p", "entry-title", String(m.title)));
-      box.appendChild(chgTable(chgRows(m.rows), false, tickOf ? function (row, tr) { return tickOf(i, row, tr); } : null));
+      box.appendChild(chgTable(chgRows(m.rows), !!del, tickOf ? function (row, tr) { return tickOf(i, row, tr); } : null));
     }
     list.slice(0, CHG_SHOWN).forEach(add);
     host.appendChild(box);
@@ -4282,10 +4292,10 @@
         return cb;
       }
       if (pl.many) {
-        card.appendChild(el("h3", "", t("chg.ask.many", { app: appName, n: pl.many.length })));
-        card.appendChild(el("p", "consent-text", t(pl.each ? "chg.textEach" : "chg.textMany", { name: provName(curProv()), n: pl.many.length })));
+        card.appendChild(el("h3", "", t(pl.del ? "chg.ask.manyDel" : "chg.ask.many", { app: appName, n: pl.many.length })));
+        card.appendChild(el("p", "consent-text", t(pl.del ? "chg.textManyDel" : pl.each ? "chg.textEach" : "chg.textMany", { name: provName(curProv()), n: pl.many.length })));
         if (pl.tick) card.appendChild(el("p", "dlg-hint", t("chg.tickHint")));
-        chgList(card, pl.many, pl.tick ? tickOf : null);
+        chgList(card, pl.many, pl.tick ? tickOf : null, pl.del);
       } else {
         card.appendChild(el("h3", "", t("chg.ask." + action, { app: appName })));
         card.appendChild(el("p", "consent-text", t("chg.text", { name: provName(curProv()) })));
@@ -4314,7 +4324,7 @@
                st === "undone" ? "chg.undone" : st === "declined" ? "chg.declined" : "chg.failed";
     card.appendChild(el("h3", "entry-head", t(head, { app: String(ui.app || ""), msg: String(ui.msg || "") })));
     if (ui.title) card.appendChild(el("p", "entry-title", String(ui.title)));
-    if (ui.many) chgList(card, ui.many);
+    if (ui.many) chgList(card, ui.many, null, del);
     else if (rows.length) card.appendChild(chgTable(rows, del));
     if (st === "done" && undoable(ui.u)) {
       card.appendChild(el("p", "dlg-hint", t("chg.undoHint")));

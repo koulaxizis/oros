@@ -151,6 +151,7 @@
       "import.nosec":     "No section",
       "import.newBoard":  "New board:",
       "import.into":      "Adds to the board:",
+      "import.pick":      "Untick the boards you don't want.",
       "import.known":     "Already here:",
       "import.knownHint": "kept as they are",
       "import.skipped":   "Left out (archived, empty or repeated):",
@@ -381,6 +382,7 @@
       "import.nosec":     "Χωρίς ενότητα",
       "import.newBoard":  "Νέος πίνακας:",
       "import.into":      "Προσθήκη στον πίνακα:",
+      "import.pick":      "Ξετσέκαρε τους πίνακες που δεν θέλεις.",
       "import.known":     "Υπάρχουν ήδη:",
       "import.knownHint": "μένουν όπως είναι",
       "import.skipped":   "Παραλείπονται (αρχειοθετημένα, κενά ή διπλά):",
@@ -4516,9 +4518,13 @@
     dlg.appendChild(preview);
     dlg.appendChild(foot);
     document.body.appendChild(dlg);
+    // KB-PICK (Chris 2026-11-03): a file or account with several
+    // boards shows a tick per board; only the ticked ones are imported.
+    var skip = {};
     function showParsed(res) {
       preview.classList.remove("imp-error");
       preview.textContent = "";
+      skip = {};
       function ln(text, cls) {
         var d = document.createElement("div");
         if (cls) d.className = cls;
@@ -4531,10 +4537,27 @@
         String(res.stats.cards) + " " + t("meta.cards") + ", " +
         String(res.stats.labels) + " " + t("import.labels"));
       // Which board it lands in, and what is already here (re-import).
-      var known = 0;
+      var known = 0, many = res.boards.length > 1;
+      if (many) ln(t("import.pick"), "imp-sub");
       res.boards.forEach(function (nb) {
         var ex = boardByIdIn(state.boards, nb.id);
-        ln((ex ? t("import.into") : t("import.newBoard")) + " " + (ex ? ex.name : nb.name), "imp-sub");
+        var text = (ex ? t("import.into") : t("import.newBoard")) + " " + (ex ? ex.name : nb.name);
+        if (many) {
+          var row = document.createElement("label");
+          row.className = "imp-sub imp-pick";
+          var cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = true;
+          cb.addEventListener("change", function () {
+            if (cb.checked) delete skip[nb.id]; else skip[nb.id] = true;
+            go.disabled = !pickedBoards(res).length;
+          });
+          row.appendChild(cb);
+          row.appendChild(document.createTextNode(" " + text));
+          preview.appendChild(row);
+        } else {
+          ln(text, "imp-sub");
+        }
         if (!ex) return;
         var have = {};
         ex.columns.forEach(function (col) { col.cards.forEach(function (c) { have[c.id] = true; }); });
@@ -4548,6 +4571,10 @@
       if (res.from) ln(t("import.dates") + " " + res.from + (res.to && res.to !== res.from ? " – " + res.to : ""), "imp-sub");
       if (known) ln(t("import.known") + " " + String(known) + " — " + t("import.knownHint"), "imp-sub");
       if (res.skipped) ln(t("import.skipped") + " " + String(res.skipped), "imp-sub");
+    }
+
+    function pickedBoards(res) {
+      return res.boards.filter(function (nb) { return !skip[nb.id]; });
     }
 
     dlg.addEventListener("close", function () { dlg.remove(); });
@@ -4607,8 +4634,10 @@
 
     go.addEventListener("click", function () {
       if (!parsed || !parsed.boards || parsed.boards.length === 0) return;
+      var boards = pickedBoards(parsed);
+      if (!boards.length) return;
 
-      addParsed(parsed);
+      addParsed(boards.length === parsed.boards.length ? parsed : Object.assign({}, parsed, { boards: boards }));
       dlg.close();                    // η pushUndo κρατά το toast+Undo ζωντανό
     });
 
