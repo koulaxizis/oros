@@ -71,6 +71,13 @@ Each list's look is set on the list card (`Edit`): theme and colour, and also th
 - `Plain text` is the text-only part of the e-mail. Leave it empty and it is made from the HTML when it is sent, or use `Open a .txt file` or `Make from the HTML` to edit it.
 - `Save as template` keeps the HTML as one of your templates, for example your own monthly design.
 
+## Coupons
+`More blocks` › `Coupon` adds a discount code to an issue: its `Code`, a percent or an amount off the order, the day it ends, an optional smallest order, text and button. In an HTML issue, `+ Coupon` under the HTML does the same, and `{{COUPON}}` marks where the code goes.
+- With a WooCommerce shop connected in [Settings](app:settings) › `Connected services`, pick it as the coupon's `Shop`. `Create in shop` makes the code there; `Check` reminds you if you haven't.
+- `A code for each reader` gives everyone their own code, used once and only with their address. Each code is made in the shop just before that person's e-mail goes out; if the shop refuses, the issue pauses and nobody gets a code that doesn't work. A welcome mail template with such a coupon gives each new subscriber their own welcome code.
+- Without a shop, make the code in your shop yourself before you send.
+- orOS can only look up and create coupons in your shop, never change or delete them.
+
 ## Writing with the Assistant
 Tell the [Assistant](app:assistant) what goes in, piece by piece as it reaches you: "add the interview from this link", "a short note that the fair starts on Friday, with a button to the programme". It answers with a card listing the blocks (heading, text, quote, button, list, divider, space, picture, picture and text, products; a banner is a picture with a link). `Open in Newsletter` asks which draft they go into, or starts a new one; the open draft takes them at once. Each block lands in its place: the top story first, then news, products, banners and offers, and a closing note last, all before the footer; blocks you placed yourself stay where they are. `Undo` in the message takes them out again. Pictures are copied from their web address when the site allows it; when it does not, the message says so and you pick that picture in its block. "Our latest release" comes from your own shop (Settings › Connected services): Newsletter reads the newest products itself when they are added, with their prices and pictures. Other publishers' products come from their pages, with their own links. Nothing is added before you choose, and the Assistant never sends: you send from here, as always. When you tell it the issue is ready, its card `Open the check` opens the draft's check here: what is missing, and when nothing is, the send screen, where you press Send.
 

@@ -290,6 +290,47 @@
     return code === "no" && msg ? "no:" + msg : code;
   }
 
+  // ---------- personal coupon codes (N1) ----------
+  // Before a message with a personal coupon goes out, that person's code
+  // is made in the shop (Connected services, WooCommerce). The codes of
+  // the next ≤ 100 readers go in one request. A code made once is
+  // remembered on this device for this window; one made elsewhere (or
+  // by a try that got cut off) answers "already there" and counts as
+  // made. A refusal stops the issue (or the welcome mails): no message
+  // ever goes out with a code that doesn't work.
+  var cpnMade = {};                     // acct + "|" + code → 1
+  function linksApi() {
+    try { if (root.orosLinks && typeof root.orosLinks.call === "function") return root.orosLinks; } catch (e) {}
+    try { var p = root.parent; if (p && p !== root && p.orosLinks && typeof p.orosLinks.call === "function") return p.orosLinks; } catch (e) {}
+    return null;
+  }
+  function ensureCoupons(x, subs) {
+    var specs = C.couponsOf(x).filter(function (b) { return b.per && b.sh === "woo" && b.acct; });
+    if (!specs.length || !subs.length) return Promise.resolve();
+    var Lk = linksApi();
+    if (!Lk) return Promise.reject({ code: "coupon" });
+    var desc = "orOS Newsletter: " + (x.subj || "");
+    return specs.reduce(function (p, b) {
+      return p.then(function () {
+        var todo = subs.map(function (s) { return { code: C.couponCode(b, x.id, s), email: s.email }; })
+          .filter(function (c) { return !cpnMade[b.acct + "|" + c.code]; });
+        var go = function (i) {
+          var chunk = todo.slice(i, i + 100);
+          if (!chunk.length) return Promise.resolve();
+          return Lk.call(b.acct, [C.couponReq(b, chunk, desc)]).then(function (res) {
+            var r = res && res[0], bad = Lk.statusCode(r);
+            if (bad) throw { code: bad === "network" ? "network" : "coupon" };
+            var out = C.couponResult(chunk, r.data);
+            out.ok.forEach(function (code) { cpnMade[b.acct + "|" + code] = 1; });
+            if (out.bad.length) throw { code: "coupon" };
+            return go(i + 100);
+          });
+        };
+        return go(0);
+      });
+    }, Promise.resolve());
+  }
+
   // ---------- pictures (inline in the message) ----------
   var imgData = {};        // path → { bin, type, url (data:) } this window
   function loadImages(x, fs) {
@@ -1090,6 +1131,11 @@
       var p = job.kind === "issue" || job.kind === "wel" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       p.then(function (ok) {
         if (!ok) throw { code: "noImg" };
+        if (job.kind !== "issue" && job.kind !== "wel") return null;
+        var f0 = read(), xi0 = job.kind === "issue" ? C.issue(f0, job.issue.id) : job.issue;
+        var next = job.kind === "issue" ? (xi0 ? C.nextSubs(f0, xi0, 100) : []) : C.welcomesDue(f0, l.id, Date.now()).slice(0, 100);
+        return ensureCoupons(xi0 || job.issue, next);
+      }).then(function () {
         return sendCreds(ch);
       }).then(function (cr) {
         // the subscriber may have left meanwhile (Inbox, another device)
@@ -1148,6 +1194,9 @@
           if (job.kind === "wel") { xi = C.welcomeIssue(fresh, C.list(fresh, l.id) || l); if (!xi) throw { code: "skip" }; }
         }
         if (!subs.length) throw { code: "skip" };
+        return (job.kind === "issue" || job.kind === "wel" ? ensureCoupons(xi, subs) : Promise.resolve()).then(function () { return { cr: cr, subs: subs, xi: xi, fresh: fresh }; });
+      }).then(function (w) {
+        var cr = w.cr, subs = w.subs, xi = w.xi, fresh = w.fresh;
         var lf = C.list(fresh, l.id) || l, size = 0;
         for (var i = 0; i < subs.length; i++) {
           var s = subs[i];
@@ -1271,7 +1320,7 @@
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
     images: imgData, loadImages: loadImages, filesFor: filesFor, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
-    runClean: runClean, claimClean: claimClean,
+    runClean: runClean, claimClean: claimClean, ensureCoupons: ensureCoupons,
     formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create

@@ -57,7 +57,7 @@
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list", "head", "foot", "social",
-                     "imgtxt", "cols3", "gallery", "video", "table", "event", "prod"];
+                     "imgtxt", "cols3", "gallery", "video", "table", "event", "prod", "cpn"];
   // shops a product block can come from (wave E4: links/ accounts)
   var SHOP_PS = ["woo", "shopify"];
   var S = root.OrosNewsletterSocial || (typeof require === "function" ? require("./social.js") : null);
@@ -299,7 +299,8 @@
   // (short scalars only), so this device never strips them on a save.
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
-                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec"];
+                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec",
+                    "code", "dt", "amt", "exp", "min", "made"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
                    "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt"];
   function keepExtra(src, out, skip) {
@@ -447,9 +448,106 @@
         if (SHOP_PS.indexOf(b.sh) >= 0 && typeof b.acct === "string" && /^[a-z0-9]{8,24}$/.test(b.acct)) { o.sh = b.sh; o.acct = b.acct; }
         if (clamp(b.at, 1, 1e14, 0)) o.at = b.at;
         break;
+      // N1: a discount code (shared, or one per subscriber: per)
+      case "cpn":
+        o = normCoupon(b);
+        o.k = "cpn";
+        break;
     }
     return keepExtra(b, blockLook(b, o), BLOCK_KEYS);
   }
+  // ---------- coupons (N1) ----------
+  // A coupon: code (A-Z 0-9 _ -; with per = the start of each person's
+  // own code), dt "pct" | "fix", amt ("10", "5.50"), exp (last day,
+  // YYYY-MM-DD), min (smallest order, "" = none), a line of text, a
+  // button; sh + acct = the shop that makes it, made = when the shared
+  // code was made there.
+  // the address shape links/core.js accepts in a coupon
+  var CPN_MAIL = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
+  var CPN_RE = /^[A-Z0-9_-]{3,30}$/, CPN_AMT = /^[0-9]{1,6}(\.[0-9]{1,2})?$/, CPN_MIN = /^[0-9]{1,7}(\.[0-9]{1,2})?$/;
+  function normCoupon(b) {
+    b = b && typeof b === "object" ? b : {};
+    var code = typeof b.code === "string" ? b.code.trim().toUpperCase() : "";
+    var dt = b.dt === "fix" ? "fix" : "pct";
+    var amt = typeof b.amt === "string" && CPN_AMT.test(b.amt) && +b.amt > 0 && (dt === "fix" || +b.amt <= 100) ? b.amt : "";
+    var o = { code: CPN_RE.test(code) ? code : "", dt: dt, amt: amt, exp: validDay(b.exp) ? b.exp : "",
+              min: typeof b.min === "string" && CPN_MIN.test(b.min) && +b.min > 0 ? b.min : "",
+              t: oneLine(b.t, 300), bt: oneLine(b.bt, 40), bh: safeUrl(b.bh) };
+    if (b.per === 1) o.per = 1;
+    if (b.sh === "woo" && typeof b.acct === "string" && /^[a-z0-9]{8,24}$/.test(b.acct)) { o.sh = "woo"; o.acct = b.acct; }
+    if (o.sh && !o.per && clamp(b.made, 1, 1e14, 0)) o.made = b.made;
+    return o;
+  }
+  // The code one subscriber gets: the shared one, or the start + 6
+  // letters fixed by the issue and the person (the same on every
+  // device, so making it twice changes nothing). No subscriber (a test,
+  // the preview): the start + "-TEST00".
+  function couponCode(b, issueId, sub) {
+    if (!b || !b.code) return "";
+    if (!b.per) return b.code;
+    if (!sub || !sub.id) return b.code + "-TEST00";
+    return b.code + "-" + hash53("cpn|" + issueId + "|" + sub.id).slice(-6).toUpperCase();
+  }
+  // Every coupon of an issue or template (blocks of both languages and
+  // the HTML coupon), each once.
+  function couponsOf(x) {
+    var out = [], seen = {};
+    [x].concat(x && x.l2 ? [x.l2] : []).forEach(function (v) {
+      var list = v.fmt === "html" ? (v.cpn ? [v.cpn] : []) : v.fmt === "blocks" ? (v.blocks || []).filter(function (b) { return b.k === "cpn"; }) : [];
+      list.forEach(function (b) {
+        if (!b.code) return;
+        var key = (b.per ? "p:" : "s:") + b.code + "|" + (b.acct || "");
+        if (seen[key]) return;
+        seen[key] = 1;
+        out.push(b);
+      });
+    });
+    return out;
+  }
+  // How the coupon is written in the e-mail ("10%", "5,50 €")
+  function couponValue(b, lang, cur) {
+    if (!b.amt) return "";
+    if (b.dt === "pct") return b.amt.replace(/\.0+$/, "") + "%";
+    var n = +b.amt;
+    try { return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-IE", { style: "currency", currency: cur || "EUR" }).format(n); }
+    catch (e) { return n.toFixed(2) + " " + (cur || "EUR"); }
+  }
+  // The WooCommerce request that makes coupons: codes = [{ code, email? }]
+  // (email: that person's own code, once). Each lasts to the end of exp.
+  function couponReq(b, codes, desc) {
+    return { m: "POST", path: "/coupons/batch", body: { create: codes.slice(0, 100).map(function (c) {
+      var o = { code: c.code, discount_type: b.dt === "fix" ? "fixed_cart" : "percent", amount: b.amt, date_expires: b.exp + "T23:59:59",
+                individual_use: true, description: oneLine(desc || "orOS Newsletter", 200) };
+      if (b.min) o.minimum_amount = b.min;
+      // an address the shop's rules can't hold keeps the code to one use
+      if (c.email !== undefined) { o.usage_limit = 1; if (CPN_MAIL.test(c.email) && c.email.length <= 254) o.email_restrictions = [c.email]; }
+      else o.usage_limit_per_user = 1;
+      return o;
+    }) } };
+  }
+  // WooCommerce's answer to couponReq → { ok: [code], bad: [code] }; a
+  // code that is already there counts as made (another device, or a
+  // try that got cut off, made it).
+  function couponResult(codes, data) {
+    var out = { ok: [], bad: [] };
+    var list = data && Array.isArray(data.create) ? data.create : [];
+    codes.forEach(function (c, i) {
+      var r = list[i];
+      var made = r && ((r.id > 0 && !r.error) || (r.error && r.error.code === "woocommerce_rest_coupon_code_already_exists"));
+      (made ? out.ok : out.bad).push(c.code);
+    });
+    return out;
+  }
+  // A coupon that can't go out: no code or value, no end date, an end
+  // date gone by, a personal code without a shop to make it.
+  function badCoupon(b, today) {
+    if (!b.code || !b.amt || !b.exp) return "badCoupon";
+    if (today && b.exp < today) return "oldCoupon";
+    if (b.per && !b.sh) return "perShop";
+    if (!!b.bt !== !!b.bh) return "badCoupon";
+    return "";
+  }
+
   // One product of a product block: the shop's id, name, a line of
   // text, price and old price (cents; -1 = not known), currency, the
   // product page, its picture (copied into the issue) and the shop's
@@ -571,7 +669,7 @@
       start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
       err: oneLine(x.err, 300), fail: fail, imp: x.imp === 1 && st === "sent" ? 1 : 0
     };
-    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; }
+    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; if (c.cpn) o.cpn = c.cpn; }
     return o;
   }
   // The written part of an issue or template (subject … Markdown).
@@ -591,6 +689,8 @@
     if (c.fmt !== "html") return c;
     c.html = typeof x.html === "string" && x.html.length <= LIM.html ? sanitizeHtml(x.html) : "";
     c.txt = multi(x.txt, LIM.md);
+    // N1: the coupon that fills {{COUPON}}
+    if (x.cpn && typeof x.cpn === "object") { var cp = normCoupon(x.cpn); if (cp.code) c.cpn = cp; }
     return c;
   }
   function normL2(v) {
@@ -608,7 +708,7 @@
     var c = withHtml(normContent(x), x);
     var o = { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
               blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
-    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; }
+    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; if (c.cpn) o.cpn = c.cpn; }
     return o;
   }
   // A feed that becomes issues (RSS to e-mail), run by the device that
@@ -842,10 +942,12 @@
     return hDecode(s).replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   }
   // {{SLOT}} placeholders still in an HTML issue (not the unsubscribe one)
-  function htmlSlots(html) {
+  // (and not {{COUPON}} when the issue has a coupon: cpn)
+  function htmlSlots(html, cpn) {
     var out = [], m, re = /\{\{\s*([A-Za-z0-9_]{1,40})\s*\}\}/g;
     while ((m = re.exec(String(html || "")))) {
-      if (m[1].toUpperCase() !== "UNSUBSCRIBE" && out.indexOf(m[1]) < 0) out.push(m[1]);
+      var up = m[1].toUpperCase();
+      if (up !== "UNSUBSCRIBE" && !(cpn && up === "COUPON") && out.indexOf(m[1]) < 0) out.push(m[1]);
     }
     return out;
   }
@@ -981,7 +1083,7 @@
   function contentFor(x, lang) {
     var v = x.l2 && x.l2.lang === lang ? x.l2 : x;
     var o = { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
-    if (v.fmt === "html") { o.html = v.html || ""; o.txt = v.txt || ""; }
+    if (v.fmt === "html") { o.html = v.html || ""; o.txt = v.txt || ""; if (v.cpn) o.cpn = v.cpn; }
     return o;
   }
   // A scheduled issue whose time has come, on the device that
@@ -1125,7 +1227,7 @@
     var tp = welcomeTpl(d, l);
     if (!tp) return null;
     return normIssue({ id: tp.id, m: tp.m, list: l.id, subj: tp.subj, pre: tp.pre, fmt: tp.fmt, blocks: tp.blocks, md: tp.md,
-                       html: tp.html, txt: tp.txt, l2: tp.l2, st: "draft" });
+                       html: tp.html, txt: tp.txt, cpn: tp.cpn, l2: tp.l2, st: "draft" });
   }
   // What happened after an issue (W3 report): people of its list who
   // left from its start until REPORT_DAYS after it was done (or now),
@@ -1439,6 +1541,7 @@
       case "video": return !b.url;
       case "event": return !b.t || !b.d || (!!b.bt !== !!b.bh);
       case "prod": return !b.items.length || b.items.some(function (p) { return !p.name || !p.href; });
+      case "cpn": return !b.code;           // the rest: badCoupon
     }
     return false;
   }
@@ -1505,7 +1608,7 @@
       }
       if (v.fmt === "html") {
         if (!htmlToText(v.html).replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/gi, "").trim() && !/<img\s/i.test(v.html || "")) add("err", "noBody");
-        if (htmlSlots(v.html).length || htmlSlots(v.txt).length) add("err", "slots");
+        if (htmlSlots(v.html, v.cpn).length || htmlSlots(v.txt, v.cpn).length) add("err", "slots");
         if (/<img\s[^>]*src="https:/i.test(v.html || "")) add("warn", "webImgs");
         if (badPlaceholders((htmlToText(v.html) + " " + v.txt).replace(/\{\{[^{}]*\}\}/g, "") + " " + v.subj)) add("warn", "placeholder");
         return;
@@ -1516,6 +1619,7 @@
         if (b.k === "head" || b.k === "foot" || b.k === "social") return false;    // a frame, not the content
         if (b.k === "gallery") return b.items.some(function (g) { return !!g.f; });
         if (b.k === "prod") return b.items.length > 0;
+        if (b.k === "cpn") return !!b.code;
         if (b.k === "table") return b.rows.some(function (r) { return r.some(Boolean); });
         return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || b.hd || b.f || ((b.k === "cols" || b.k === "cols3") && (b.b || b.c)));
       });
@@ -1537,6 +1641,16 @@
         return parts.concat(buttonsOf(b).slice(1).map(function (x) { return x.t; })).join(" ");
       }).join(" ");
       if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
+    });
+    // N1: coupons (blocks and the HTML one)
+    var today = new Date(info.now || Date.now()).toISOString().slice(0, 10);
+    couponsOf(x).forEach(function (b) {
+      var bad = badCoupon(b, today);
+      if (bad) add("err", bad);
+      else if (b.sh && !b.per && !b.made) add("warn", "cpnNotMade");
+    });
+    [x].concat(x.l2 ? [x.l2] : []).forEach(function (v) {
+      if (v.fmt === "html" && v.cpn && !/\{\{\s*COUPON\s*\}\}/i.test((v.html || "") + " " + (v.txt || ""))) add("warn", "cpnUnused");
     });
     if (!l || !l.addr) add("err", "noAddr");
     // info.relay: the app can turn on one-click unsubscribe (the relay's /nl)
@@ -1833,6 +1947,8 @@
     CLEAN_IDLE: CLEAN_IDLE, ASK_WAIT: ASK_WAIT, lastSeen: lastSeen, asksDue: asksDue,
     welcomesDue: welcomesDue, welcomeTpl: welcomeTpl, welcomeIssue: welcomeIssue, issueReport: issueReport, WEL_DAYS: WEL_DAYS, askTimeouts: askTimeouts, idleCount: idleCount,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
+    normCoupon: normCoupon, couponCode: couponCode, couponsOf: couponsOf, couponValue: couponValue, couponReq: couponReq,
+    couponResult: couponResult, badCoupon: badCoupon,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,
     empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, AS_KINDS: AS_KINDS, AS_MAX: AS_MAX, asAdd: asAdd, insertAt: insertAt, SECTIONS: SECTIONS, normSub: normSub,

@@ -724,3 +724,6 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 .imp-cols .fld { overflow-wrap: anywhere; }
 /* HTML issues (W2 2026-11) */
 .code-area { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+/* N1: coupon fields of an HTML issue */
+.cpn-box { margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 10px; }
+.cpn-box > .dlg-h { margin-top: 0; }

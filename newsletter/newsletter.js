@@ -262,7 +262,7 @@
       "ck.badBlock": "A button without text or link, or a picture block without a picture.",
       "ck.placeholder": "Something in braces isn't {first}, {name} or {first|…}.",
       "ck.noAudience": "Nobody to send to: no active subscriber matches.",
-      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products",
+      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products", "bk.cpn": "Coupon", "cpn.code": "Code", "cpn.codeHint": "Letters, digits, - and _. With a code for each reader this is the start of each code.", "cpn.dt": "Discount", "cpn.pct": "Percent off", "cpn.fix": "Amount off the order", "cpn.amt": "Value", "cpn.exp": "Valid until", "cpn.min": "Smallest order (optional)", "cpn.t": "Text (optional)", "cpn.btn": "Button (optional)", "cpn.shop": "Shop", "cpn.noShop": "None (I make it myself)", "cpn.goneShop": "A shop that is no longer connected", "cpn.connect": "Connect a WooCommerce shop in Settings › Connected services to make codes from here.", "cpn.per": "A code for each reader (used once, only by them)", "cpn.perHint": "Each reader's code is made in the shop just before their email goes out.", "cpn.noShopHint": "Make this code in your shop yourself before you send.", "cpn.make": "Create in shop", "cpn.making": "Creating the code in the shop…", "cpn.made": "Created in the shop {d}", "cpn.notMade": "Not created in the shop yet.", "cpn.done": "The code is in the shop", "cpn.refused": "The shop refused the code: check that it is not taken by another coupon.", "cpn.htmlTitle": "Coupon", "cpn.htmlHint": "Write {{COUPON}} in the HTML and the text where each reader's code goes.", "cpn.add": "Coupon", "cpn.remove": "Remove coupon", "ck.badCoupon": "A coupon needs a code, a value and an end date, and a button needs both its text and its link.", "ck.oldCoupon": "A coupon has already ended.", "ck.perShop": "A code for each reader needs a connected shop.", "ck.cpnNotMade": "The coupon code has not been created in the shop yet: use Create in shop.", "ck.cpnUnused": "The issue has a coupon but no {{COUPON}} in the HTML or the text.", "err.coupon": "the shop did not make the coupon codes",
       "sd.title": "Send", "sd.text": "{n} messages from {f} through {c}.",
       "sd.time": "At one message every {s} s it takes about {m} minutes; with up to {cap} a day it needs {d} days.",
       "sd.time1": "At one message every {s} s it takes about {m} minutes.",
@@ -496,7 +496,7 @@
       "ck.badBlock": "Ένα κουμπί χωρίς κείμενο ή σύνδεσμο, ή block εικόνας χωρίς εικόνα.",
       "ck.placeholder": "Κάτι μέσα σε άγκιστρα δεν είναι {first}, {name} ή {first|…}.",
       "ck.noAudience": "Δεν υπάρχει παραλήπτης: κανένας ενεργός συνδρομητής δεν ταιριάζει.",
-      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα",
+      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα", "bk.cpn": "Κουπόνι", "cpn.code": "Κωδικός", "cpn.codeHint": "Γράμματα, αριθμοί, - και _. Με κωδικό για κάθε αναγνώστη, αυτή είναι η αρχή κάθε κωδικού.", "cpn.dt": "Έκπτωση", "cpn.pct": "Ποσοστό", "cpn.fix": "Ποσό από την παραγγελία", "cpn.amt": "Τιμή", "cpn.exp": "Ισχύει έως", "cpn.min": "Ελάχιστη παραγγελία (προαιρετικά)", "cpn.t": "Κείμενο (προαιρετικά)", "cpn.btn": "Κουμπί (προαιρετικά)", "cpn.shop": "Κατάστημα", "cpn.noShop": "Κανένα (τον φτιάχνω εγώ)", "cpn.goneShop": "Κατάστημα που δεν είναι πια συνδεδεμένο", "cpn.connect": "Σύνδεσε ένα κατάστημα WooCommerce στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να φτιάχνεις κωδικούς από εδώ.", "cpn.per": "Κωδικός για κάθε αναγνώστη (μία χρήση, μόνο από αυτόν)", "cpn.perHint": "Ο κωδικός κάθε αναγνώστη φτιάχνεται στο κατάστημα λίγο πριν φύγει το email του.", "cpn.noShopHint": "Φτιάξε αυτόν τον κωδικό στο κατάστημά σου πριν την αποστολή.", "cpn.make": "Δημιουργία στο κατάστημα", "cpn.making": "Δημιουργία του κωδικού στο κατάστημα…", "cpn.made": "Δημιουργήθηκε στο κατάστημα {d}", "cpn.notMade": "Δεν έχει δημιουργηθεί ακόμα στο κατάστημα.", "cpn.done": "Ο κωδικός είναι στο κατάστημα", "cpn.refused": "Το κατάστημα αρνήθηκε τον κωδικό: έλεγξε ότι δεν τον έχει ήδη άλλο κουπόνι.", "cpn.htmlTitle": "Κουπόνι", "cpn.htmlHint": "Γράψε {{COUPON}} στο HTML και στο κείμενο εκεί που μπαίνει ο κωδικός κάθε αναγνώστη.", "cpn.add": "Κουπόνι", "cpn.remove": "Αφαίρεση κουπονιού", "ck.badCoupon": "Ένα κουπόνι θέλει κωδικό, τιμή και ημερομηνία λήξης, και ένα κουμπί θέλει και κείμενο και σύνδεσμο.", "ck.oldCoupon": "Ένα κουπόνι έχει ήδη λήξει.", "ck.perShop": "Ο κωδικός για κάθε αναγνώστη θέλει συνδεδεμένο κατάστημα.", "ck.cpnNotMade": "Ο κωδικός του κουπονιού δεν έχει δημιουργηθεί ακόμα στο κατάστημα: πάτα Δημιουργία στο κατάστημα.", "ck.cpnUnused": "Το τεύχος έχει κουπόνι αλλά δεν έχει {{COUPON}} στο HTML ή στο κείμενο.", "err.coupon": "το κατάστημα δεν έφτιαξε τους κωδικούς κουπονιών",
       "sd.title": "Αποστολή", "sd.text": "{n} μηνύματα από {f} μέσω {c}.",
       "sd.time": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά· με έως {cap} τη μέρα χρειάζεται {d} μέρες.",
       "sd.time1": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά.",
@@ -1029,7 +1029,7 @@
   }
   function createIssue(l, tpl) {
     var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
-                                blocks: copy(tpl.blocks), md: tpl.md, html: tpl.html, txt: tpl.txt, l2: tpl.l2 ? copy(tpl.l2) : null }
+                                blocks: copy(tpl.blocks), md: tpl.md, html: tpl.html, txt: tpl.txt, cpn: tpl.cpn ? copy(tpl.cpn) : undefined, l2: tpl.l2 ? copy(tpl.l2) : null }
       : { id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
           blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], [{ k: "h", t: "" }, { k: "p", t: t("seed.hi") }],
                             l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
@@ -1076,7 +1076,7 @@
       name.classList.toggle("bad", !nm);
       if (!nm) return;
       put("tpls", C.normTpl({ id: C.randomId("t", null), m: 0, name: nm, subj: x.subj, pre: x.pre, fmt: x.fmt,
-                              blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt, l2: x.l2 ? copy(x.l2) : null }));
+                              blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt, cpn: x.cpn ? copy(x.cpn) : undefined, l2: x.l2 ? copy(x.l2) : null }));
       dlg.close();
       showToast(t("tpl.saved"));
     });
@@ -1172,6 +1172,24 @@
         put("issues", x); renderEditor();
       }));
       c2.appendChild(hacts);
+      // N1: a coupon for {{COUPON}}
+      var cbox = el("div", "cpn-box");
+      cbox.appendChild(el("p", "dlg-h", t("cpn.htmlTitle")));
+      if (cx.cpn) {
+        cbox.appendChild(el("p", "hint", t("cpn.htmlHint")));
+        couponFields(cbox, cx.cpn, x, function (ctl, key) {
+          ctl.addEventListener("input", function () { typed(x); cx.cpn[key] = ctl.value; touchIssue(x); });
+          return ctl;
+        }, function (key, v) {
+          snap(x);
+          if (v === "" || v === null || v === undefined) delete cx.cpn[key]; else cx.cpn[key] = v;
+          touchIssue(x);
+        });
+        cbox.appendChild(mini(t("cpn.remove"), function () { snap(x); delete cx.cpn; put("issues", x); renderEditor(); }));
+      } else {
+        cbox.appendChild(mini("+ " + t("cpn.add"), function () { snap(x); cx.cpn = newCoupon(""); put("issues", x); renderEditor(); }));
+      }
+      c2.appendChild(cbox);
     } else if (cx.fmt === "md") {
       var ta = el("textarea", "md-area");
       ta.value = cx.md;
@@ -1283,7 +1301,7 @@
     if (!x.l2) {
       w.appendChild(mini(t("ed.l2Add", { l: langName(b) }), function () {
         flushIssue();
-        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt });
+        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt, cpn: x.cpn ? copy(x.cpn) : undefined });
         edSide = { id: x.id, l2: true };
         put("issues", x);
         renderEditor();
@@ -1491,7 +1509,7 @@
   // ---------- the block editor (wave E1) ----------
   var ADD_KINDS = ["h", "p", "img", "btn", "list", "quote", "hr", "sp", "cols"];
   // under "More blocks", with the saved blocks (wave E3)
-  var MORE_KINDS = ["head", "imgtxt", "gallery", "prod", "video", "cols3", "table", "event", "social", "foot"];
+  var MORE_KINDS = ["head", "imgtxt", "gallery", "prod", "cpn", "video", "cols3", "table", "event", "social", "foot"];
   var SO = window.OrosNewsletterSocial;
   function newBlock(k, l) {
     switch (k) {
@@ -1511,6 +1529,7 @@
       case "prod": return { k: "prod", items: [], bt: "" };
       case "video": return { k: "video", f: "", w: 600, h: 400, b: 0, url: "", alt: "", t: "" };
       case "table": return { k: "table", rows: [["", ""], ["", ""]], hd: 1 };
+      case "cpn": return newCoupon("cpn");
       case "event": {
         var d = new Date(Date.now() + 7 * 86400000);
         var day = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
@@ -1519,13 +1538,107 @@
     }
     return { k: k, t: "" };
   }
+  // A new coupon (N1): 10% for 30 days, in the only shop when there is one
+  function newCoupon(k) {
+    var d = new Date(Date.now() + 30 * 86400000);
+    var o = { code: "", dt: "pct", amt: "10", exp: d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2),
+              min: "", t: "", bt: "", bh: "" };
+    if (k) o.k = k;
+    var shops = Sh && Sh.wooShops ? Sh.wooShops() : [];
+    if (shops.length === 1) { o.sh = "woo"; o.acct = shops[0].id; }
+    return o;
+  }
+  // The fields of a coupon (a block, or an HTML issue's cpn). onType(ctl,
+  // key) for text, onSet(key, value) for the rest. Changing what the
+  // shop holds (code, value, dates, smallest order, shop) forgets that
+  // the shared code was made there.
+  var CPN_SHOP_KEYS = { code: 1, dt: 1, amt: 1, exp: 1, min: 1, acct: 1, per: 1 };
+  function couponFields(box, b, x, onType, onSet) {
+    var status = el("p", "hint");
+    var unmake = function (key) { if (CPN_SHOP_KEYS[key] && b.made) { delete b.made; showMade(); } };
+    var type = function (ctl, key, fix) {
+      ctl.addEventListener("input", function () { if (fix) fix(ctl); unmake(key); });
+      return onType(ctl, key);
+    };
+    var set = function (key, v) { unmake(key); onSet(key, v); };
+    var r1 = el("div", "fld-row");
+    var code = inp("text", b.code, 30);
+    code.autocapitalize = "characters"; code.spellcheck = false;
+    r1.appendChild(field(t("cpn.code"), type(code, "code", function (c) {
+      var v = c.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+      if (v !== c.value) c.value = v;
+    }), t("cpn.codeHint")));
+    var dt = sel([["pct", t("cpn.pct")], ["fix", t("cpn.fix")]], b.dt || "pct");
+    dt.addEventListener("change", function () { set("dt", dt.value); });
+    r1.appendChild(field(t("cpn.dt"), dt));
+    var amt = inp("text", b.amt, 9);
+    amt.inputMode = "decimal";
+    r1.appendChild(field(t("cpn.amt"), type(amt, "amt", function (c) { var v = c.value.replace(",", "."); if (v !== c.value) c.value = v; })));
+    box.appendChild(r1);
+    var r2 = el("div", "fld-row");
+    var exp = inp("date", b.exp, 10);
+    exp.addEventListener("change", function () { set("exp", exp.value); });
+    r2.appendChild(field(t("cpn.exp"), exp));
+    var min = inp("text", b.min, 10);
+    min.inputMode = "decimal";
+    r2.appendChild(field(t("cpn.min"), type(min, "min", function (c) { var v = c.value.replace(",", "."); if (v !== c.value) c.value = v; })));
+    box.appendChild(r2);
+    box.appendChild(field(t("cpn.t"), onType(inp("text", b.t, 300), "t")));
+    var r3 = el("div", "fld-row");
+    r3.appendChild(field(t("bk.btnText"), onType(inp("text", b.bt, 40), "bt")));
+    r3.appendChild(field(t("bk.link"), onType(inp("url", b.bh, 2000), "bh")));
+    box.appendChild(el("p", "dlg-h", t("cpn.btn")));
+    box.appendChild(r3);
+    // the shop, and one code for all or one for each reader
+    var shops = Sh && Sh.wooShops ? Sh.wooShops() : [];
+    var opts = [["", t("cpn.noShop")]].concat(shops.map(function (a) { return [a.id, a.name]; }));
+    if (b.acct && !shops.some(function (a) { return a.id === b.acct; })) opts.push([b.acct, t("cpn.goneShop")]);
+    var shop = sel(opts, b.acct || "");
+    shop.addEventListener("change", function () {
+      if (shop.value) { onSet("sh", "woo"); set("acct", shop.value); } else { onSet("sh", ""); set("acct", ""); }
+      showMade();
+    });
+    box.appendChild(field(t("cpn.shop"), shop, shops.length ? "" : t("cpn.connect")));
+    var pl = el("label", "check");
+    var pc = el("input");
+    pc.type = "checkbox";
+    pc.checked = b.per === 1;
+    pc.addEventListener("change", function () { set("per", pc.checked ? 1 : ""); showMade(); });
+    pl.appendChild(pc);
+    pl.appendChild(el("span", "", t("cpn.per")));
+    box.appendChild(pl);
+    var make = mini(t("cpn.make"), function () {
+      if (!b.code || !b.amt || !b.exp) { status.textContent = t("ck.badCoupon"); return; }
+      make.disabled = true;
+      status.textContent = t("cpn.making");
+      flushIssue();
+      Sh.makeCoupon(C.normCoupon(b), "orOS Newsletter: " + (x.subj || "")).then(function () {
+        onSet("made", Date.now());
+        showToast(t("cpn.done"));
+        showMade();
+      }, function (e) {
+        make.disabled = false;
+        status.textContent = e && e.code === "coupon" ? t("cpn.refused") : Sh.errText(e);
+      });
+    });
+    box.appendChild(make);
+    box.appendChild(status);
+    function showMade() {
+      var withShop = !!(b.sh && b.acct);
+      make.hidden = !withShop || b.per === 1 || !!b.made;
+      make.disabled = false;
+      status.textContent = !withShop ? t("cpn.noShopHint") : b.per === 1 ? t("cpn.perHint")
+        : b.made ? t("cpn.made", { d: when(b.made) }) : t("cpn.notMade");
+    }
+    showMade();
+  }
   // Undo / redo of the issue being edited: snapshots of its written
   // part (both language versions), taken before each change; typing
   // makes one snapshot per pause, not one per letter.
   var hist = { id: "", past: [], future: [], at: 0 };
   var HIST_MAX = 60;
   function contentOf(x) {
-    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, html: x.html, txt: x.txt, l2: x.l2 });
+    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, html: x.html, txt: x.txt, cpn: x.cpn, l2: x.l2 });
   }
   function histFor(x) {
     if (hist.id !== x.id) hist = { id: x.id, past: [], future: [], at: 0 };
@@ -1553,7 +1666,7 @@
     saveTimer = null;
     to.push(contentOf(x));
     var c = JSON.parse(from.pop());
-    ["subj", "pre", "fmt", "blocks", "md", "html", "txt", "l2"].forEach(function (k) { if (c[k] === undefined) delete x[k]; else x[k] = c[k]; });
+    ["subj", "pre", "fmt", "blocks", "md", "html", "txt", "cpn", "l2"].forEach(function (k) { if (c[k] === undefined) delete x[k]; else x[k] = c[k]; });
     var cur = C.issue(data, x.id);
     if (!cur || cur.st !== "draft") return false;
     put("issues", x);
@@ -2033,6 +2146,9 @@
         il.appendChild(ic);
         il.appendChild(el("span", "", t("bk.evIcs")));
         card.appendChild(il);
+      }
+      if (b.k === "cpn") {
+        couponFields(card, b, x, function (ctl, key) { return bind(ctl, key); }, function (key, v) { setNow(key, v); });
       }
       if ((b.k === "head" || b.k === "foot") && l) {
         var isDef = l.hf && l.hf[b.k] && JSON.stringify(l.hf[b.k]) === JSON.stringify(C.normBlock(b));

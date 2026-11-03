@@ -615,13 +615,29 @@
     A.openDialog(dlg, f.acct);
   }
 
+  // ---------- coupons (N1) ----------
+  // The WooCommerce shops a coupon can be made in → [{ id, name }]
+  function wooShops() { return accounts(["woo"]).map(function (a) { return { id: a.id, name: a.name || a.site || "WooCommerce" }; }); }
+  // Make a shared code in the shop → Promise (made, or already there);
+  // rejects with a code (errText) when the shop refused it.
+  function makeCoupon(b, desc) {
+    if (!links() || !b || !b.acct || !b.code || b.per) return Promise.reject(errOf("other"));
+    var codes = [{ code: b.code }];
+    return ask(b.acct, [C.couponReq(b, codes, desc)]).then(function (r) {
+      var out = C.couponResult(codes, r[0]);
+      if (!out.ok.length) throw errOf("coupon");
+      return true;
+    });
+  }
+
   var api = {
     plain: plain, cents: cents, wooItem: wooItem, wooReqs: wooReqs, sfReq: sfReq, sfNode: sfNode, sfPage: sfPage,
     refreshReqs: refreshReqs, applyFresh: applyFresh, toItem: toItem, wooPeople: wooPeople, imgPath: imgPath, MAX: MAX,
     init: function (helpers) { A = helpers; },
     has: function () { return !!links() && accounts().length > 0; },
     hasWoo: function () { return !!links() && accounts(["woo"]).length > 0; },
-    pick: pick, refresh: refresh, customers: customers, auto: auto, t: t
+    pick: pick, refresh: refresh, customers: customers, auto: auto, t: t,
+    wooShops: wooShops, makeCoupon: makeCoupon, errText: errText
   };
   if (NODE) module.exports = api;
   else root.OrosNewsletterShop = api;
