@@ -50,6 +50,7 @@ Für Summen und Überblicke, etwa „Wie viel habe ich diesen Monat für Lebensm
 - Budget: Einnahmen, Ausgaben und jede Kategorie eines Monats.
 - Zeiterfassung: Stunden und Beträge eines Monats pro Projekt.
 - Aufgaben: offene, überfällige und heute fällige Aufgaben pro Liste und was als Nächstes fällig ist.
+- Kanban: alle Boards, nicht nur das in Kanban geöffnete: ihre Spalten mit der Zahl der Karten, überfällige und heute fällige Karten und die Karten selbst mit Board und Spalte, sodass der Assistent auch eine Karte auf jedem Board ändern kann. Frag nach einem Board mit seinem Namen, um nur seine Karten zu bekommen. Archivierte Boards werden nur mit Namen genannt.
 - CRM: „Was ist mit … offen?“ für einen Partner: was er dir schuldet und du ihm, Kommissionsware, Bestellungen, nicht abgerechnete Stunden, Tantiemen, Verträge und das nächste Follow-up. Passen mehrere Partner, fragt der Assistent, welcher gemeint ist.
 - Kalender, Gewohnheiten, Pflanzenpflege und die anderen Apps, die in `Heute` erscheinen: was überfällig ist, heute und in den nächsten Tagen.
 

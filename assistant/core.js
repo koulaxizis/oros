@@ -1544,7 +1544,10 @@
     name: "app_summary",
     description: "Totals and an overview of one app, worked out on the user's device: budget (income, " +
       "expenses and each category of a month), timesheet (hours and amounts per project of a month), " +
-      "todo (open, late and due-today tasks per list, and what is due next), stock (what sold in a month, per product and " +
+      "todo (open, late and due-today tasks per list, and what is due next), kanban (EVERY board, not only " +
+      "the one open in Kanban: each board's columns with how many cards they hold, late and due-today cards, " +
+      "archived boards by name, and the cards of all boards with board › column, due date, labels and a ref; " +
+      "with board only that board's cards), stock (what sold in a month, per product and " +
       "per place: the user's own stock and each consignment shop or other warehouse; returns taken off) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
       "plants and more). Better than search_data for questions like 'how much did I spend on food " +
@@ -1559,6 +1562,7 @@
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, timesheet, stock: YYYY-MM (default: this month). calendar: list that month's events." },
         label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one." },
+        board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
       },

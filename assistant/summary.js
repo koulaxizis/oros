@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Assistant — per-app summaries (v1.0.0)
+// orOS Assistant — per-app summaries (v1.1.0)
 // The app_summary tool: totals worked out ON THE DEVICE from what an
 // app keeps in localStorage, so the model gets a few numbers instead
 // of every entry. Pure: no DOM, no storage, never writes. The
@@ -15,6 +15,10 @@
 //                                 rounding (OrosTimesheetCore.report)
 //   todoLists(raw, today)        To-Do: open / done / late / due today,
 //                                 in total and per list
+//   kanbanBoards(raw, opts)      Kanban: every board (KB-ALL), its
+//                                 columns with how many cards each
+//                                 has, late / due today, and the cards
+//                                 of every board (or of one board)
 //   calendarEvents(raw, opts)    Calendar: the user's labels with how
 //                                 many events each has, and, with a
 //                                 label ("none" = no label) and/or a
@@ -41,7 +45,7 @@
   var MAX_CATS = 40, MAX_PROJECTS = 40, MAX_LISTS = 40, MAX_ITEMS = 60,
       MAX_EVENTS = 200;   // calendarEvents (by label / month): as many as refs take
   // Apps with a summary of their own; any other app needs a Today provider.
-  var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month" };
+  var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards" };
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -82,6 +86,9 @@
     var out = { ok: true, app: app, month: month, days: days };
     if (app === "crm" && typeof args.partner === "string" && args.partner.trim()) {
       out.partner = args.partner.replace(/\s+/g, " ").trim().slice(0, 120);
+    }
+    if (app === "kanban" && typeof args.board === "string" && args.board.trim()) {
+      out.board = args.board.replace(/\s+/g, " ").trim().slice(0, 120);
     }
     if (app === "calendar") {
       out.monthSet = monthSet;
@@ -309,6 +316,86 @@
     return out;
   }
 
+  // ---------- Kanban (KB-ALL) ----------
+  // Same data and the same rules as kanban/search.js and the
+  // Assistant's Kanban edits (oros-kanban-data): every board in stored
+  // order, not only the one open in Kanban. Templates ("tpl-") and
+  // deleted boards stay out; archived boards are named only (Kanban
+  // opens and changes them only after they are restored). A card is
+  // late when its due date passed and it is not in its board's last
+  // column (the "Done" column, as Today and the Calendar feed count).
+  // opts: { board?, today }
+  var MAX_BOARDS = 60, MAX_COLS = 30;
+  function kanbanBoards(raw, opts) {
+    opts = opts || {};
+    var d = isObj(raw) ? raw : {}, today = opts.today || "";
+    var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
+    var out = { app: "kanban", today: today, boards: [] }, live = [], archived = [];
+    arr(d.boards).forEach(function (b) {
+      if (!isObj(b) || typeof b.id !== "string" || !b.id || b.id.indexOf("tpl-") === 0) return;
+      if (typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0)) return;
+      if (b.archived) { archived.push(str(b.name, 80) || "—"); return; }
+      live.push(b);
+    });
+    var want = null;
+    if (opts.board) {
+      var f = foldName(opts.board);
+      var hits = live.filter(function (b) { return foldName(b.name) === f; });
+      if (!hits.length) {
+        return { ok: false, err: "Kanban has no open board named \"" + opts.board + "\". Its boards: " +
+          (live.length ? live.map(function (b) { return str(b.name, 80) || "—"; }).join(", ") : "none") + "." +
+          (archived.length ? " Archived (restore them in Kanban first): " + archived.join(", ") + "." : "") };
+      }
+      if (hits.length > 1) return { ok: false, err: "Kanban has more than one board called " + opts.board + "; ask the user which one." };
+      want = hits[0];
+    }
+    var items = [], cards = 0, late = 0, dueToday = 0;
+    live.forEach(function (b) {
+      var lbl = {};
+      arr(b.labels).forEach(function (l) { if (isObj(l) && typeof l.id === "string" && str(l.name, 40)) lbl[l.id] = str(l.name, 40); });
+      var cols = arr(b.columns).filter(function (c) { return isObj(c) && typeof c.id === "string"; });
+      var row = { name: str(b.name, 80) || "—", cards: 0, late: 0, due_today: 0, columns: [] };
+      cols.forEach(function (c, ci) {
+        var last = ci === cols.length - 1 && cols.length > 1;
+        var cr = { name: str(c.name, 60) || "—", cards: 0 };
+        arr(c.cards).forEach(function (k) {
+          if (!isObj(k) || typeof k.id !== "string") return;
+          cr.cards++;
+          var due = typeof k.due === "string" && YMD.test(k.due) ? k.due : "";
+          var isLate = !!(due && today && due < today && !last);
+          if (isLate) row.late++;
+          if (due && due === today && !last) row.due_today++;
+          if (want && b !== want) return;
+          var it = { title: str(k.text, 160) || "—", where: row.name + " › " + cr.name };
+          if (due) it.date = due;
+          if (isLate) it.late = true;
+          var ln = arr(k.labels).map(function (id) { return lbl[id] || ""; }).filter(Boolean);
+          if (ln.length) it.labels = ln.slice(0, 10);
+          var st = arr(k.subtasks).filter(isObj);
+          if (st.length) it.subtasks = st.filter(function (x) { return x.done; }).length + "/" + st.length;
+          it.target = { board: b.id, col: c.id, card: k.id };   // → a ref (assistant.js)
+          items.push(it);
+        });
+        row.cards += cr.cards;
+        row.columns.push(cr);
+      });
+      if (row.columns.length > MAX_COLS) { row.more_columns = row.columns.length - MAX_COLS; row.columns = row.columns.slice(0, MAX_COLS); }
+      cards += row.cards; late += row.late; dueToday += row.due_today;
+      out.boards.push(row);
+    });
+    out.cards = cards; out.late = late; out.due_today = dueToday;
+    if (out.boards.length > MAX_BOARDS) {
+      out.more_boards = out.boards.length - MAX_BOARDS;
+      out.boards = out.boards.slice(0, MAX_BOARDS);
+    }
+    if (archived.length) out.archived_boards = archived.slice(0, MAX_BOARDS);
+    if (want) out.board = str(want.name, 80) || "—";
+    out.items = items.slice(0, MAX_EVENTS);
+    out.listed = items.length;
+    if (items.length > MAX_EVENTS) out.more_items = items.length - MAX_EVENTS;
+    return out;
+  }
+
   // ---------- Calendar ----------
   // Same data as calendar/search.js (oros-calendar-data): the user's
   // own labels (calendar.js state.labels; untouched seeds, mtime 0,
@@ -420,13 +507,15 @@
           run: "Running now", more: "+{n} more", uncat: "Uncategorized",
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
-          orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up" },
+          orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up",
+          kbCard: "card", kbCards: "cards", kbArch: "Archived" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
-          orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Σύμβαση", next: "Επόμενο follow-up" }
+          orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Σύμβαση", next: "Επόμενο follow-up",
+          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -488,6 +577,14 @@
       });
       more(s.more_products);
       if (!s.sales) out.push(w.none);
+    } else if (s.app === "kanban" && Array.isArray(s.boards)) {
+      s.boards.forEach(function (b) {
+        out.push(b.name + ": " + b.cards + " " + (b.cards === 1 ? w.kbCard : w.kbCards) + (b.late ? ", " + b.late + " " + w.late : "") +
+                 (b.due_today ? ", " + b.due_today + " " + w.today : "") + " (" +
+                 b.columns.map(function (c) { return c.name + " " + c.cards; }).join(" · ") + ")");
+      });
+      if (s.more_boards) more(s.more_boards);
+      if (s.archived_boards) out.push(w.kbArch + ": " + s.archived_boards.join(", "));
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -496,7 +593,7 @@
     if (Array.isArray(s.items)) {
       if (s.from) out.push(s.from + " → " + s.to);
       s.items.forEach(function (it) {
-        out.push([it.date || "", it.time || "", it.title, it.label ? w.lbl + ": " + it.label : "", it.location || "", it.text || it.note || ""].filter(Boolean).join(" · ") + (it.late ? " (" + w.late + ")" : ""));
+        out.push([it.date || "", it.time || "", it.title, it.label ? w.lbl + ": " + it.label : "", it.where || "", it.location || "", it.text || it.note || ""].filter(Boolean).join(" · ") + (it.late ? " (" + w.late + ")" : ""));
       });
       more(s.more_items);
       if (!s.items.length) out.push(w.none);
@@ -505,9 +602,9 @@
   }
 
   var API = {
-    VERSION: "1.0.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
+    VERSION: "1.1.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
-    todoLists: todoLists, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    todoLists: todoLists, kanbanBoards: kanbanBoards, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

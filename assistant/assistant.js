@@ -5148,6 +5148,10 @@
         return S.timesheetMonth(core, d, a.month, Date.now());
       });
     }
+    // Kanban (KB-ALL): every board, not only the one open in Kanban;
+    // its cards' due dates are in the list, so no agenda on top. The
+    // Briefing (brief) keeps the agenda: only what is due.
+    if (a.app === "kanban" && !a.brief) return Promise.resolve(S.kanbanBoards(readStore("oros-kanban-data"), { board: a.board, today: today }));
     var own = a.app === "todo" ? S.todoLists(readStore("oros-todo-data"), today) :
       a.app === "stock" ? S.stockMonth(readStore("oros-stock-data"), a.month, LANG) : null;
     // Calendar: its labels always; with a label or a month, those
@@ -5355,7 +5359,7 @@
     var sums = [];
     var steps = plan.reduce(function (pr, x) {
       return pr.then(function () {
-        return buildSummary({ app: x.app, month: today.slice(0, 7), days: x.days }, today).then(function (s) {
+        return buildSummary({ app: x.app, month: today.slice(0, 7), days: x.days, brief: true }, today).then(function (s) {
           if (C.briefKeep(s)) sums.push({ app: byId[x.app], sum: s });
         }, function () {});
       });
