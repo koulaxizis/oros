@@ -1698,5 +1698,16 @@ orosPack("de", "assistant", {
  "kSeries": "Serien",
  "kAlbum": "Musik",
  "kPodcast": "Podcasts",
- "kGame": "Spiele"
+ "kGame": "Spiele",
+ "f.perweek": "Mal pro Woche",
+ "f.permonth": "Mal pro Monat",
+ "f.water": "Gießen alle (Tage)",
+ "f.nextdue": "Nächstes Mal",
+ "f.until": "Letzter Tag",
+ "f.platform": "Plattform",
+ "ft.a.run": "Laufen",
+ "ft.a.walk": "Gehen",
+ "ft.a.bike": "Radfahren",
+ "ft.a.swim": "Schwimmen",
+ "ft.a.row": "Rudern"
 });

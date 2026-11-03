@@ -1788,16 +1788,49 @@
     meals: "meals = a recipe in Meal Planner",
     travel_plan: "travel_plan = an entry in a trip's itinerary in Travel (a flight, stay, visit, meal…)",
     travel_pack: "travel_pack = an item on a trip's packing list in Travel",
-    stickies: "stickies = a sticky note on the desktop, optionally with a reminder"
+    stickies: "stickies = a sticky note on the desktop, optionally with a reminder",
+    // AS-ADD6 (wave 4, assistant/additems3.js)
+    habits: "habits = a habit to track in Habits",
+    fitness: "fitness = a finished workout logged in Workouts",
+    garage: "garage = a vehicle's service (done) or renewal (an expiry: insurance, road tax, MOT…) in Garage",
+    plants: "plants = a plant in Plant Care",
+    petcare: "petcare = a pet's health record (vaccine, deworming, vet visit, medication, weight) in Pet Health Book",
+    shelf: "shelf = a book, film, series, album, podcast or game on Media Shelf"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
     ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
-    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "timesheet", "meals", "travel_plan", "travel_pack"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry or packing item title (budget: use note; timesheet: what was done)." }],
+    ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "timesheet", "meals", "travel_plan", "travel_pack",
+               "habits", "fitness", "garage", "plants", "petcare", "shelf"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant or shelf title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight)." }],
+    ["days", ["habits"], { type: "array", items: { type: "integer" }, description: "habits: weekdays, 0 = Monday … 6 = Sunday (leave out for any day)." }],
+    ["per_week", ["habits"], { type: "integer", description: "habits: times a week, instead of days." }],
+    ["per_month", ["habits"], { type: "integer", description: "habits: times a month, instead of days." }],
+    ["target", ["habits"], { type: "number", description: "habits: a daily amount to reach, e.g. 8." }],
+    ["unit", ["habits"], { type: "string", description: "habits: the target's unit, e.g. glasses." }],
+    ["at_most", ["habits"], { type: "boolean", description: "habits: true when the target is a most, e.g. at most 2 coffees." }],
+    ["remind_at", ["habits"], { type: "string", description: "habits: a daily reminder, HH:MM." }],
+    ["activity", ["fitness"], { type: "string", "enum": ["run", "walk", "bike", "swim", "row"], description: "fitness: an outdoor activity, logged as its done set; leave out for anything else and say it in title." }],
+    ["distance_km", ["fitness"], { type: "number", description: "fitness: the distance in km (with activity)." }],
+    ["vehicle", ["garage"], { type: "string", description: "garage: the vehicle's name or plate (may be left out when there is one)." }],
+    ["pet", ["petcare"], { type: "string", description: "petcare: the pet's name (may be left out when there is one)." }],
+    ["record", ["garage", "petcare"], { type: "string", "enum": ["service", "renewal", "vaccine", "deworm", "visit", "medication", "weight"], description: "garage: service (done, default) or renewal (something that expires on date). petcare: vaccine, deworm, visit, medication or weight (required)." }],
+    ["km", ["garage"], { type: "integer", description: "garage service: the odometer in km." }],
+    ["shop", ["garage"], { type: "string", description: "garage service: the garage or mechanic." }],
+    ["next_due", ["petcare"], { type: "string", description: "petcare vaccine, deworm, visit: the next dose or recheck, YYYY-MM-DD." }],
+    ["vet", ["petcare"], { type: "string", description: "petcare vaccine, visit: the vet." }],
+    ["dose", ["petcare"], { type: "string", description: "petcare medication: the dose, e.g. 1/2 tablet twice a day." }],
+    ["until", ["petcare"], { type: "string", description: "petcare medication: the course's last day, YYYY-MM-DD." }],
+    ["weight_kg", ["petcare"], { type: "number", description: "petcare weight: in kg, e.g. 4.25." }],
+    ["species", ["plants"], { type: "string", description: "plants: the species (a ready one such as Monstera fills its care values; else kept as the scientific name)." }],
+    ["water_days", ["plants"], { type: "integer", description: "plants: water every this many days (default the species', else 7)." }],
+    ["media", ["shelf"], { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: what it is (default book)." }],
+    ["by", ["shelf"], { type: "string", description: "shelf: the author, director, creator, artist, host or studio." }],
+    ["year", ["shelf"], { type: "integer", description: "shelf: the year it came out." }],
+    ["platform", ["shelf"], { type: "string", description: "shelf game: the platform, e.g. Switch." }],
     ["trip", ["travel_plan", "travel_pack"], { type: "string", description: "travel_*: the trip's ref (from search_data, app travel), required." }],
     ["project", ["timesheet"], { type: "string", description: "timesheet: the name of one of the user's projects." }],
     ["task", ["timesheet"], { type: "string", description: "timesheet: the task within the project." }],
-    ["minutes", ["timesheet"], { type: "integer", description: "timesheet: how long, instead of end." }],
+    ["minutes", ["timesheet", "fitness"], { type: "integer", description: "timesheet: how long, instead of end. fitness: how long it took (required)." }],
     ["servings", ["meals"], { type: "integer", description: "meals: servings (default 4)." }],
     ["prep_minutes", ["meals"], { type: "integer", description: "meals: preparation time in minutes." }],
     ["cook_minutes", ["meals"], { type: "integer", description: "meals: cooking time in minutes." }],
@@ -1828,17 +1861,17 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity: the day (default today); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none)." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
     ["end_date", ["calendar", "travel_plan"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day." }],
-    ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet: when the work started (required); travel_plan: departure or start; stickies: the reminder's time." }],
+    ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies", "fitness"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet, fitness: when it started (required); travel_plan: departure or start; stickies: the reminder's time." }],
     ["end", ["calendar", "timesheet", "travel_plan"], { type: "string", description: "End time HH:MM (timesheet: on the same day; else give minutes)." }],
-    ["location", ["calendar", "travel_plan"], { type: "string", description: "calendar, travel_plan: where." }],
+    ["location", ["calendar", "travel_plan", "plants"], { type: "string", description: "calendar, travel_plan: where. plants: the room." }],
     ["reminder", ["calendar"], { type: "integer", "enum": [5, 15, 30, 60, 1440, 4320, 7200], description: "calendar: remind this many minutes before." }],
     ["list", ["todo"], { type: "string", description: "todo: the list's name (default the open list; a new list is made when none has the name)." }],
     ["priority", ["todo"], { type: "integer", "enum": [1, 2, 3, 4], description: "todo: 1 = P1, most urgent." }],
     ["subtasks", ["todo", "kanban"], { type: "array", items: { type: "string" }, description: "todo, kanban: steps of the task or card." }],
     ["entry", ["budget"], { type: "string", "enum": ["expense", "income"], description: "budget: expense (default) or income." }],
-    ["amount", ["budget", "crm_deal"], { type: "number", description: "budget, crm_deal: the amount in the app's currency, e.g. 12.5." }],
+    ["amount", ["budget", "crm_deal", "garage", "petcare"], { type: "number", description: "budget, crm_deal, garage, petcare visit: the amount (cost) in the app's currency, e.g. 12.5." }],
     ["category", ["budget"], { type: "string", description: "budget: groceries, eating-out, bills, home, transport, health, fun, clothes, gift, salary, freelance, other, or the name of one of the user's own categories." }],
     ["text", ["notes", "stickies"], { type: "string", description: "notes: the page's text (Markdown). stickies: the note (up to 1000 characters, line breaks kept)." }],
     ["notebook", ["notes"], { type: "string", description: "notes: an existing notebook's name (default the first)." }],
@@ -1847,10 +1880,10 @@
     ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name (default the first)." }],
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
-    ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300). crm_activity: what happened or was said (required)." }],
+    ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf: tags, any)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
-    ["status", ["crm"], { type: "string", "enum": ["lead", "active", "past"], description: "crm: lead (default), active customer, or past." }],
+    ["status", ["crm", "shelf"], { type: "string", "enum": ["lead", "active", "past", "want", "now", "done", "dropped"], description: "crm: lead (default), active customer, or past. shelf: want (default), now (reading / watching), done or dropped." }],
     ["tax_id", ["crm"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ)." }],
     ["tax_office", ["crm"], { type: "string", description: "crm: tax office (e.g. Greek ΔΟΥ)." }],
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
@@ -1871,7 +1904,7 @@
         "The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. " +
         "An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead. " +
         "The result gives a ref for every item made" + (people ? ": use a new contact's ref as contact of a CRM customer, or with link_contact" : "") + ". " +
-        "Lists, notebooks, folders, boards, columns, labels, categories and Timesheet projects must be the user's own (search_data or list_apps shows them); " +
+        "Lists, notebooks, folders, boards, columns, labels, categories, Timesheet projects, Garage vehicles and pets must be the user's own (search_data or list_apps shows them); " +
         "only a To-Do list is made when none has the name. Give only what the user said or the documents show.",
       params: {
         type: "object",
@@ -3126,7 +3159,8 @@
                       budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards",
                       crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals",
                       timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
-                      stickies: "sticky notes" };
+                      stickies: "sticky notes", habits: "habits", fitness: "finished workouts", garage: "Garage services and renewals",
+                      plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
         (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +
