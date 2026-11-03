@@ -117,3 +117,26 @@ test("N2: purchase rules in segments, and the win-back rules", () => {
   assert.equal(C.normSeg({ id: "g", list: "list-1", buy: "zzz" }).buy, undefined);
   assert.equal(C.normSeg({ id: "g", list: "list-1", buy: "more", bn: 1 }).bn, 2);
 });
+
+test("N3: the list's notice address and key; the engine signs ts.body and retries nothing it can't check", async () => {
+  const good = C.normList({ id: "list-1", m: 1, name: "N", hookUrl: "https://x.example.gr/hook", hookKey: KEY });
+  assert.deepEqual([good.hookUrl, good.hookKey], ["https://x.example.gr/hook", KEY]);
+  assert.equal(C.normList({ id: "list-1", m: 1, name: "N", hookUrl: "http://x.example.gr/hook", hookKey: KEY }).hookUrl, undefined);
+  assert.equal(C.normList({ id: "list-1", m: 1, name: "N", hookUrl: "https://x.example.gr/hook", hookKey: "short" }).hookUrl, undefined);
+  const { sandbox } = require("./newsletter-sandbox.js");
+  const S = await sandbox(data([]));
+  S.engine.stop();
+  let sent = null, answer = { status: 200 };
+  S.ctx.fetch = async (url, o) => { sent = JSON.parse(o.body); return { json: async () => ({ ok: true, data: answer }) }; };
+  const x = { id: "iss-1", subj: "Hello", n: 3, done: Date.now() };
+  assert.equal(await S.E.sendHook(good, x), 200);
+  assert.equal(sent.op, "nlhook");
+  assert.equal(sent.url, good.hookUrl);
+  assert.equal(sent.sig, nodeCrypto.createHmac("sha256", KEY).update(sent.ts + "." + sent.body).digest("hex"));
+  assert.equal(JSON.parse(sent.body).subject, "Hello");
+  answer = { status: 500 };
+  await assert.rejects(S.E.sendHook(good, x), (e) => e.code === "hook");
+  answer = { status: 0, err: "timeout" };
+  await assert.rejects(S.E.sendHook(good, x), (e) => e.code === "timeout");
+  assert.equal(await S.E.sendHook(C.normList({ id: "list-1", m: 1, name: "N" }), x), 0, "no address: nothing sent");
+});

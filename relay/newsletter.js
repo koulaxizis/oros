@@ -333,3 +333,47 @@ async function afterRead(request, env, url, now, kind, k, tok, lang, text) {
   await q(d, SQL.addRow, k, "s", v, now).run();
   return thanks();
 }
+
+// ---------- "issue sent" notice (N3) ----------
+// App op { op: "nlhook", url, body, ts, sig } → { status }. The list's
+// orOS signs the notice (HMAC-SHA256 with the list's notice key over
+// ts + "." + body) and the relay only posts it to the list's address
+// (Broadcast's route, or any https receiver): https, a public host, no
+// redirects, 10 s. The body is the one fixed notice, checked here, so
+// the op can't post anything else.
+export const HOOK_LIMITS = { body: 2048, url: 500, timeout: 10000 };
+const HOOK_KEYS = ["event", "list", "subject", "sent", "at", "issue", "lang"];
+export function validHookBody(s) {
+  if (typeof s !== "string" || s.length > HOOK_LIMITS.body) return false;
+  let o;
+  try { o = JSON.parse(s); } catch (e) { return false; }
+  if (!o || typeof o !== "object" || Array.isArray(o)) return false;
+  const keys = Object.keys(o);
+  if (keys.length !== HOOK_KEYS.length || !HOOK_KEYS.every((k) => keys.indexOf(k) >= 0)) return false;
+  const text = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u001f]/.test(v);
+  return o.event === "issue.sent" && text(o.list, 120) && text(o.subject, 300) && Number.isSafeInteger(o.sent) && o.sent >= 0 &&
+    typeof o.at === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/.test(o.at) &&
+    typeof o.issue === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(o.issue) && (o.lang === "el" || o.lang === "en");
+}
+export function validHook(b, checkUrl) {
+  if (typeof b.url !== "string" || b.url.length > HOOK_LIMITS.url || !/^https:\/\//i.test(b.url) || checkUrl(b.url)) return "url";
+  if (!validHookBody(b.body)) return "body";
+  if (typeof b.ts !== "string" || !/^[0-9]{9,11}$/.test(b.ts)) return "ts";
+  if (typeof b.sig !== "string" || !/^[0-9a-f]{64}$/.test(b.sig)) return "sig";
+  return "";
+}
+export async function runHook(b, fetchFn) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), HOOK_LIMITS.timeout);
+  try {
+    const res = await fetchFn(b.url, {
+      method: "POST", redirect: "manual", signal: ctl.signal, body: b.body,
+      headers: { "Content-Type": "application/json", "User-Agent": "orOS-Newsletter/1.0 (+https://useoros.online)",
+                 "X-Oros-Event": "issue.sent", "X-Oros-Timestamp": b.ts, "X-Oros-Signature": "sha256=" + b.sig }
+    });
+    try { if (res.body) await res.body.cancel(); } catch (e) {}
+    return { status: res.status };
+  } catch (e) {
+    return { status: 0, err: ctl.signal.aborted ? "timeout" : "network" };
+  } finally { clearTimeout(timer); }
+}

@@ -553,6 +553,27 @@
     }) !== null;
   }
   function newShopKey() { return rnd(32, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"); }
+  function hmacHex(key, text) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (k) {
+      return crypto.subtle.sign("HMAC", k, enc.encode(text));
+    }).then(function (mac) {
+      return Array.prototype.map.call(new Uint8Array(mac), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+    });
+  }
+  // N3: tell the list's address that an issue went out (signed; the
+  // relay posts it). → Promise<status>; rejects { code } when it didn't arrive.
+  function sendHook(l, x) {
+    if (!l || !l.hookUrl || !l.hookKey) return Promise.resolve(0);
+    var body = C.hookBody(l, x, Date.now()), ts = String(Math.floor(Date.now() / 1000));
+    return hmacHex(l.hookKey, ts + "." + body).then(function (sig) {
+      return relay({ op: "nlhook", url: l.hookUrl, body: body, ts: ts, sig: sig });
+    }).then(function (r) {
+      var st = r && r.status;
+      if (!(st >= 200 && st < 300)) throw { code: st ? "hook" : (r && r.err) || "network", status: st || 0 };
+      return st;
+    });
+  }
   // Is a checkout sign-up signed with the list's shop key? → Promise<bool>
   function shopOk(key, o) {
     if (!key || !C.shopSigned(o)) return Promise.resolve(false);
@@ -1042,6 +1063,15 @@
     function changed() { call("dirty"); call("onChange"); }
     function later(ms) { clearTimeout(timer); if (!stopped) timer = setTimeout(step, ms); }
     function kick() { if (!busy) later(50); }
+    // the "issue sent" notice: now, after 1 and 10 minutes, then a notice
+    var HOOK_WAIT = [60000, 600000];
+    function hookLater(l, y, n) {
+      if (!l.hookUrl || stopped) return;
+      sendHook(l, y)["catch"](function (e) {
+        if (n < HOOK_WAIT.length) setTimeout(function () { hookLater(l, y, n + 1); }, HOOK_WAIT[n]);
+        else call("notify", "hookfail", { list: l, issue: y, err: (e && e.code) || "network" });
+      });
+    }
 
     // the next job: { kind: "inv"|"issue"|"ask"|"cap"|"other"|"paused", … }
     function nextJob(d, dev, now) {
@@ -1060,7 +1090,7 @@
         var p = C.progress(d, x);
         if (!p.next) {
           var y = finish(x.id);
-          if (y) { changed(); call("notify", "done", { issue: y }); }
+          if (y) { changed(); call("notify", "done", { issue: y }); hookLater(l2, y, 0); }
           continue;
         }
         if (capLeft(ch2) <= 0) return { kind: "cap", chan: ch2, issue: x };
@@ -1377,7 +1407,7 @@
     images: imgData, loadImages: loadImages, filesFor: filesFor, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
     runClean: runClean, claimClean: claimClean, ensureCoupons: ensureCoupons,
-    setShopKey: setShopKey, newShopKey: newShopKey, shopOk: shopOk, applySignup: applySignup,
+    setShopKey: setShopKey, newShopKey: newShopKey, sendHook: sendHook, shopOk: shopOk, applySignup: applySignup,
     formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create

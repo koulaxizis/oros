@@ -234,6 +234,9 @@
     if (nat(x.buyAt) && typeof x.buyAcct === "string" && /^[a-z0-9]{8,24}$/.test(x.buyAcct)) {
       o.buyAt = nat(x.buyAt); o.buyAcct = x.buyAcct; o.buyCur = typeof x.buyCur === "string" && /^[A-Z]{3}$/.test(x.buyCur) ? x.buyCur : "EUR";
     }
+    // "issue sent" notice (N3): an https address and the key it is signed with
+    var hu = typeof x.hookUrl === "string" && x.hookUrl.length <= 500 && /^https:\/\/[^\s<>"']+$/i.test(x.hookUrl) ? x.hookUrl : "";
+    if (hu && typeof x.hookKey === "string" && SHOP_KEY.test(x.hookKey)) { o.hookUrl = hu; o.hookKey = x.hookKey; }
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -267,6 +270,13 @@
     return !!(o && o.s === "shop" && typeof o.ts === "string" && /^[0-9]{9,11}$/.test(o.ts) &&
               typeof o.sig === "string" && /^[0-9a-f]{64}$/.test(o.sig) && typeof o.t === "number" &&
               Math.abs(o.t / 1000 - +o.ts) <= SHOP_SKEW);
+  }
+  // The "issue sent" notice (N3) a list posts through the relay: fixed
+  // keys in a fixed order (the relay checks the same shape).
+  function hookBody(l, x, now) {
+    return JSON.stringify({ event: "issue.sent", list: oneLine(l.name, 120), subject: oneLine(x.subj, 300), sent: nat(x.n),
+                            at: new Date(x.done || now).toISOString().slice(0, 19) + "Z", issue: String(x.id).slice(0, 40),
+                            lang: l.lang === "el" ? "el" : "en" });
   }
   function shopSigText(email, ts) { return String(email || "").trim().toLowerCase() + "|" + ts; }
   // The public half (what the relay keeps) of a form's private key.
@@ -322,7 +332,7 @@
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec",
                     "code", "dt", "amt", "exp", "min", "made"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct", "hookUrl", "hookKey"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -2040,7 +2050,7 @@
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     normCoupon: normCoupon, couponCode: couponCode, couponsOf: couponsOf, couponValue: couponValue, couponReq: couponReq,
     couponResult: couponResult, badCoupon: badCoupon,
-    shopSigned: shopSigned, shopSigText: shopSigText, SHOP_SKEW: SHOP_SKEW, SHOP_KEY: SHOP_KEY,
+    shopSigned: shopSigned, shopSigText: shopSigText, hookBody: hookBody, SHOP_SKEW: SHOP_SKEW, SHOP_KEY: SHOP_KEY,
     purchasesOf: purchasesOf, applyPurchases: applyPurchases, buyMatch: buyMatch, segBuys: segBuys, SEG_BUY: SEG_BUY,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,

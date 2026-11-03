@@ -96,8 +96,14 @@ Eine geplante Ausgabe geht von dem Gerät raus, auf dem sie geplant wurde, wo di
 
 Nach dem Versand zeigt die Seite einer Ausgabe, wie viele Nachrichten gesendet und nicht zugestellt wurden und wie viele Personen der Liste sich abgemeldet haben, unzustellbar waren oder sie als Spam markiert haben, vom Start bis 14 Tage danach. Öffnungen und Klicks werden nie gezählt.
 
+## Ausgabe aus einem Produkt
+Mit verbundenem Shop startet `Neu` › `Aus einem Produkt…` eine Ausgabe für eine Neuerscheinung oder Vorbestellung: wähle ein oder mehrere Produkte, und sie kommen als Produktblock (Bild, Text, Preis und eine Schaltfläche zur Produktseite) unter eine Überschrift und einen kurzen Gruß, mit dem Namen des ersten Produkts als Betreff. Füge bei Bedarf einen Gutschein über `Weitere Blöcke` hinzu.
+
 ## Willkommens-E-Mail
 Unter `Bearbeiten` einer Liste wählt `Willkommens-E-Mail` eine deiner Vorlagen. Wer sich über das Formular oder per E-Mail anmeldet, bekommt sie nach der Bestätigung einmal, vom Gerät, das die Liste sendet. Wer schon auf der Liste ist, importiert oder von Hand hinzugefügt wurde, bekommt sie nicht, ebenso wenig wer vor mehr als 30 Tagen bestätigt hat. Mit `Keine` hörst du auf.
+
+## Meldung, wenn eine Ausgabe rausgeht
+Unter `Bearbeiten` einer Liste nimmt `Wenn eine Ausgabe rausgeht, benachrichtigen` eine https-Adresse, zum Beispiel das Broadcast-Plugin deiner Website, das die Neuigkeit dann auf Viber postet. Wenn eine Ausgabe gesendet wurde, schickt orOS über das orOS-Relay eine kurze Meldung dorthin: Name der Liste, Betreff, wie viele sie bekommen haben, wann, die Kennung der Ausgabe und die Sprache der Liste, nie Abonnentendaten. Jede Meldung ist mit dem `Meldungsschlüssel` signiert (Header `X-Oros-Signature: sha256=` HMAC-SHA256 aus dem Wert von `X-Oros-Timestamp`, einem Punkt und dem Inhalt), damit der Empfänger prüfen kann, dass sie von dir kommt. Kommt sie nicht an, wird sie nach 1 und 10 Minuten erneut versucht, danach bekommst du eine Benachrichtigung.
 
 ## RSS per E-Mail
 Auf einer Listenkarte macht `RSS per E-Mail` aus einem Blog- oder News-Feed Ausgaben. Wähle einen deiner Feeds im [Reader](app:feeds) oder gib eine beliebige Feed-Adresse ein, wähle jeden Tag, jede Woche oder jeden Monat und die Uhrzeit, und wie viele Artikel hineinkommen. Jede Ausgabe listet die neuen Artikel mit Bild, ein paar Zeilen und einer Schaltfläche `Weiterlesen`.

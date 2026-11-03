@@ -57,6 +57,7 @@
       cleanOff: "{o} who did not answer “Stay?” were unsubscribed.", stay: "{n} chose to stay",
       askStop: "“Stay?” e-mails stopped", askStopBody: "Open Newsletter: the sending account needs a look.",
       welStop: "Welcome mails stopped",
+      hookFail: "The \"issue sent\" notice didn't arrive", hookFailBody: "{s}: the address set in the list didn't take it. Check it in Lists › Edit.",
       cleanWait: "Newsletter: {list} waits for your OK", cleanWaitBody: "{n} people would be deleted at once. Open Subscribers › Clean up to look and confirm."
     },
     el: {
@@ -71,6 +72,7 @@
       cleanOff: "Απεγγράφηκαν {o} που δεν απάντησαν στο «Θέλεις να συνεχίσεις;».", stay: "{n} επέλεξαν να μείνουν",
       askStop: "Σταμάτησαν τα email «Θέλεις να συνεχίσεις;»", askStopBody: "Άνοιξε το Ενημερωτικό δελτίο: ο λογαριασμός αποστολής θέλει έλεγχο.",
       welStop: "Σταμάτησαν τα email καλωσορίσματος",
+      hookFail: "Η ειδοποίηση «έφυγε τεύχος» δεν έφτασε", hookFailBody: "{s}: η διεύθυνση της λίστας δεν τη δέχτηκε. Έλεγξέ τη στις Λίστες › Επεξεργασία.",
       cleanWait: "Ενημερωτικό δελτίο: η λίστα {list} περιμένει το ΟΚ σου", cleanWaitBody: "Θα διαγράφονταν {n} άτομα μαζί. Άνοιξε Συνδρομητές › Καθαρισμός για να δεις και να επιβεβαιώσεις."
     }
   };
@@ -122,6 +124,8 @@
       emit({ key: "ask-" + info.list.id + "-" + E.dayKey(), type: "reminder", title: tx("askStop"), body: tx("askStopBody") });
     } else if (kind === "welfail") {
       emit({ key: "wel-" + info.list.id + "-" + E.dayKey(), type: "reminder", title: tx("welStop"), body: tx("askStopBody") });
+    } else if (kind === "hookfail") {
+      emit({ key: "hook-" + info.issue.id, type: "reminder", title: tx("hookFail"), body: tx("hookFailBody", { s: subjOf(info.issue) }) });
     }
   }
   // RSS to e-mail: feeds due on this device, read through the Reader's

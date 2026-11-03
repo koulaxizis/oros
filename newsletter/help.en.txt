@@ -96,8 +96,14 @@ A scheduled issue goes out from the device that scheduled it, where the password
 
 After an issue goes out, its page shows how many messages were sent and not delivered, and how many people of the list unsubscribed, bounced or marked it as spam from the start until 14 days later. Opens and clicks are never counted.
 
+## Issue from a product
+With a shop connected, `New` › `From a product…` starts an issue for a new release or a pre-order: choose one or more products and they come in as a product block (picture, text, price and a button to the product page) under a heading and a short greeting, with the first product's name as the subject. Add a coupon from `More blocks` if you want one.
+
 ## Welcome mail
 On a list's `Edit`, `Welcome mail` picks one of your templates. Each person who signs up through the form or by e-mail gets it once, after confirming, from the device that sends the list. People already on the list, imported or added by hand don't get it, nor anyone who confirmed more than 30 days ago. Pick `None` to stop it.
+
+## Notice when an issue goes out
+On a list's `Edit`, `When an issue goes out, tell` takes an https address, for example your site's Broadcast plugin, which then posts the news on Viber. When an issue has been sent, orOS posts a short notice there through the orOS relay: the list's name, the subject, how many got it, when, the issue's id and the list's language, never any subscriber. Each notice is signed with the `Notice key` (header `X-Oros-Signature: sha256=` HMAC-SHA256 of the `X-Oros-Timestamp` value, a dot and the body), so the receiver can check it came from you. If it doesn't arrive it is tried again after 1 and 10 minutes, then you get a notification.
 
 ## RSS to e-mail
 On a list card, `RSS to e-mail` turns a blog or news feed into issues. Pick one of your feeds in [Reader](app:feeds) or type any feed address, choose every day, every week or every month and the time, and how many articles go in. Each issue lists the new articles with their picture, a few lines and a `Read more` button.
