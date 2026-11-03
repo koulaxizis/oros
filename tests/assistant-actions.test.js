@@ -99,7 +99,7 @@ test("change history: 30 days, at most 500, newest first; the model hears titles
   assert.match(C.histQuery(list, { from: "2026-02-30" }, NOW).err, /real date/);
   assert.match(C.histQuery(list, { from: "2026-10-26", to: "2026-10-01" }, NOW).err, /after/);
   const fm = C.histForModel(C.histQuery(list, {}, NOW).list, NOW);
-  assert.deepEqual(fm[0], { when: C.ymd(NOW - 1000) + " " + "14:59", app: "todo", what: "delete", items: ["Milk"], title: "Old task", can_undo: true });
+  assert.deepEqual(fm[0], { when: C.ymd(NOW - 1000) + " " + "14:59", app: "todo", what: "delete", items: ["Milk"], title: "Old task", can_undo: true, id: "d" });
   assert.ok(!JSON.stringify(fm).includes("\"undo\""), "no undo data for the model");
   const un = Object.assign(entry("u", NOW - 5), { st: "undone" });
   assert.deepEqual(C.histForModel([un], NOW)[0].undone, true);
@@ -137,4 +137,25 @@ test("Podcasts plays { show, ep, play }; Maps routes to { routeTo, mode }", () =
   assert.match(mp, /else if \(target && target\.routeTo\) routeToTarget\(target\.routeTo, target\.mode\);/);
   assert.match(mp, /else if \(pt && pt\.routeTo\) \{ mapsHost\.pendingTarget = null; routeToTarget\(pt\.routeTo, pt\.mode\); \}/);
   assert.match(mp, /function routeToTarget\(x, mode\)[\s\S]*startRouteTo\(/);
+});
+
+test("undo_change (AS-UNDO): last or ids, only what can still be undone, newest first; the user presses Undo", () => {
+  const list = [entry("a", NOW - 2 * DAY), entry("b", NOW - DAY, { app: "crm" }), entry("c", NOW - 1000, { kind: "change", act: "move", title: "Card" }),
+                Object.assign(entry("u", NOW - 10), { st: "undone" }), entry("old", NOW - 31 * DAY)];
+  assert.deepEqual(C.undoPick(list, { last: true }, NOW, () => true).list.map((e) => e.id), ["c"]);
+  assert.deepEqual(C.undoPick(list, { ids: ["a", "c", "a"] }, NOW, () => true).list.map((e) => e.id), ["c", "a"]);
+  assert.match(C.undoPick(list, { ids: ["u"] }, NOW, () => true).err, /No change to undo/);
+  assert.match(C.undoPick(list, { ids: ["old"] }, NOW, () => true).err, /No change to undo/);
+  assert.match(C.undoPick(list, { ids: ["b"] }, NOW, (id) => id !== "crm").err, /No change to undo/);
+  assert.match(C.undoPick(list, {}, NOW, null).err, /last: true or ids/);
+  assert.match(C.undoPick(list, { ids: Array.from({ length: 21 }, (_, i) => "x" + i) }, NOW, null).err, /At most 20/);
+  assert.match(C.undoPick([], { last: true }, NOW, null).err, /no change of yours/);
+  const tools = C.toolsFor({ data: true, history: true });
+  assert.ok(tools.find((x) => x.name === "undo_change"));
+  assert.equal(C.toolsFor({ data: true }).find((x) => x.name === "undo_change"), undefined);
+  const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  const ut = src.slice(src.indexOf("function undoTool("), src.indexOf("function drawUndo("));
+  assert.doesNotMatch(ut, /undoById|runUndo/, "nothing is undone at the tool call");
+  const du = src.slice(src.indexOf("function drawUndo("), src.indexOf("function drawHist("));
+  assert.match(du, /button\(t\("chg\.undo"\), "primary"[\s\S]*undoById\(e\.id\)/, "only the press undoes, through the app's own undo");
 });

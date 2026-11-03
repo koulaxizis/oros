@@ -611,6 +611,9 @@
       "hist.k.change": "Changed in {app}",
       "hist.k.delete": "Deleted in {app}",
       "hist.k.link": "Linked in {app}",
+      "undo.title": "Undo these changes",
+      "undo.hint": "Press Undo to take them back. A change that was edited since stays as it is.",
+      "undo.done": "Changes undone: {n}. Not undone, changed since: {f}.",
       "do.timer": "Timer ({app})",
       "do.alarm": "Alarm ({app})",
       "do.open": "Open in {app}",
@@ -1209,6 +1212,9 @@
       "hist.k.change": "Αλλαγή: {app}",
       "hist.k.delete": "Διαγραφή: {app}",
       "hist.k.link": "Σύνδεση: {app}",
+      "undo.title": "Αναίρεση αυτών των αλλαγών",
+      "undo.hint": "Πάτα Αναίρεση για να γυρίσουν πίσω. Ό,τι άλλαξε από τότε μένει όπως είναι.",
+      "undo.done": "Αλλαγές που αναιρέθηκαν: {n}. Δεν αναιρέθηκαν, άλλαξαν από τότε: {f}.",
       "do.timer": "Χρονόμετρο ({app})",
       "do.alarm": "Ξυπνητήρι ({app})",
       "do.open": "Άνοιγμα: {app}",
@@ -3172,6 +3178,7 @@
     if (call.name === "link_items") return linkItems(c, call.args, apps);
     if (call.name === "do_action") return Promise.resolve(doAction(c, call.args));
     if (call.name === "change_history") return changeHistory(c, call.args, apps);
+    if (call.name === "undo_change") return undoTool(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
@@ -5077,7 +5084,7 @@
   }
   // One entry as the user reads it: when, the app, what, the titles,
   // and Undo while it can be undone.
-  function histRow(e, onUndo) {
+  function histRow(e, onUndo, noBtn) {
     var row = el("div", "hist-row");
     var d = new Date(e.at);
     var when = d.toLocaleDateString(LANG, { weekday: "short", day: "numeric", month: "short" }) + " " +
@@ -5088,7 +5095,7 @@
     var shown = items.slice(0, 5).join(", ") + (e.n > 5 ? " " + t("hist.more", { n: e.n - Math.min(5, items.length) }) : "");
     if (shown) row.appendChild(el("div", "hist-items", shown));
     if (e.st === "undone") row.appendChild(el("div", "hist-st", t("chg.undone")));
-    else if (C.canUndo(e, Date.now())) {
+    else if (!noBtn && C.canUndo(e, Date.now())) {
       var b = button(t("chg.undo"), "", function () {
         b.disabled = true;
         undoById(e.id).then(function (ok) { if (ok) onUndo(); else b.disabled = false; });
@@ -5109,6 +5116,62 @@
       if (q.more) out.more = q.more;
       return { content: JSON.stringify(out), ui: { k: "hist", ids: q.list.map(function (e) { return e.id; }) } };
     });
+  }
+  // undo_change (AS-UNDO): the model names its changes, the user
+  // presses Undo once; each goes through undoById (the app's own undo,
+  // which refuses a record changed since), newest first.
+  function undoTool(c, args, apps) {
+    var ok = {};
+    apps.forEach(function (a) { ok[a.id] = 1; });
+    return histLoad().then(function () {
+      var q = C.undoPick(histList(), args, Date.now(), function (id) { return !!ok[id]; });
+      if (!q.ok) return { content: "Error: " + q.err, err: 1 };
+      return { content: JSON.stringify({ shown: C.histForModel(q.list, Date.now()),
+                                         note: "Shown to the user as a card with Undo. Nothing is undone before they press it." }),
+               ui: { k: "undo", ids: q.list.map(function (e) { return e.id; }) } };
+    });
+  }
+  function drawUndo(host, r, c) {
+    var ui = r.ui;
+    var ids = Array.isArray(ui.ids) ? ui.ids : [];
+    var list = ids.map(function (id) { return hist[id]; }).filter(Boolean);
+    var card = el("section", "entry-card hist-card");
+    card.appendChild(el("h3", "entry-head", t("undo.title")));
+    if (!list.length) card.appendChild(el("p", "dlg-hint", t("hist.elsewhere")));
+    list.forEach(function (e) { card.appendChild(histRow(e, null, true)); });
+    var open = list.filter(function (e) { return C.canUndo(e, Date.now()); });
+    if (ui.st) {
+      // Each row already says Undone; the card adds only a refusal or a dismissal.
+      if (ui.st === "dismissed" || ui.fail) {
+        card.appendChild(el("p", "entry-state" + (ui.fail ? " err" : ""), t(ui.fail ? "undo.done" : "entry.dismissed", { n: ui.n || 0, f: ui.fail || 0 })));
+      }
+    } else if (open.length) {
+      card.appendChild(el("p", "dlg-hint", t("undo.hint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        r.content = "The user dismissed the card; nothing was undone.";
+        saveChat(c);
+        renderMessages();
+      }));
+      var go = button(t("chg.undo"), "primary", function () {
+        go.disabled = true;
+        var n = 0, fail = 0;
+        open.reduce(function (p, e) {
+          return p.then(function () { return undoById(e.id).then(function (ok) { if (ok) n++; else fail++; }); });
+        }, Promise.resolve()).then(function () {
+          ui.st = "done";
+          ui.n = n;
+          ui.fail = fail;
+          r.content = "The user pressed Undo: " + n + " undone" + (fail ? ", " + fail + " could not be undone (changed since or the app refused)" : "") + ".";
+          saveChat(c);
+          renderMessages();
+        });
+      });
+      acts.appendChild(go);
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
   }
   function drawHist(host, r) {
     var ids = Array.isArray(r.ui.ids) ? r.ui.ids : [];
@@ -6139,6 +6202,7 @@
         if (ui.k === "create") { drawCreate(host, r, c); return; }
         if (ui.k === "do") { drawDo(host, r, c); return; }
         if (ui.k === "hist") { drawHist(host, r); return; }
+        if (ui.k === "undo") { drawUndo(host, r, c); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");
         var ico = el("span", "tool-ico");

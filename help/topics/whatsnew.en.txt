@@ -4,6 +4,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 5.11.01
 - **The Assistant moves Kanban cards to another board.** "Move these cards to the Music board" now works, for one card or many on one card, with `Undo`. Labels go along by name; a label the other board doesn't have is left off and the Assistant says so.
 - **Cards land on the board you named.** A card the Assistant prepares for a board by name ("on the Music board") now goes there even when the name is written without accents or in other capitals, and a board that doesn't exist is no longer swapped silently for the one on screen.
+- **Ask the Assistant to undo its changes.** "Undo that" or "put the cards back" now brings a card with the changes and one `Undo`, instead of a reply that it cannot undo.
 
 ## Version 5.11.00
 - **The Assistant sees every Kanban board.** Before, it saw only the first board. Ask "what is on my boards?" and it gets each board with its columns, how many cards they hold, what is late or due today, and the cards themselves, so it can also change a card on any board. Ask for one board by its name to get only its cards.

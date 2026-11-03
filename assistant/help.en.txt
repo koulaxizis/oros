@@ -130,6 +130,7 @@ Ask "countdown 25 minutes", "wake me at 7:00 every day", "play my jazz station",
 
 ## Change history
 Everything the assistant added, changed or linked for you is kept on this device for 30 days, under `Change history` in the conversations list. Ask "what did you change yesterday?" and the assistant answers from it, with the same list on a card.
+- Say "undo that" or "put the cards back" and the assistant prepares it: a card lists the changes and one `Undo` takes them all back.
 - `Undo` next to a change takes it back, also after you left the Assistant, as long as nothing was changed since (in the app or on another device). Otherwise nothing is undone and you are told why.
 - The history stays on this device only: it is never synced, exported or sent. The assistant sees only the titles, and only for apps you let it read. `Clear history` removes the list; your data stays as it is.
 

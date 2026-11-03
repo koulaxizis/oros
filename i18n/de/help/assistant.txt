@@ -130,6 +130,7 @@ Bitte etwa „Countdown 25 Minuten“, „weck mich jeden Tag um 7:00“, „spi
 
 ## Änderungsverlauf
 Alles, was der Assistent für dich hinzugefügt, geändert oder verknüpft hat, bleibt 30 Tage auf diesem Gerät, unter `Änderungsverlauf` in der Liste der Unterhaltungen. Frag „was hast du gestern geändert?“, und der Assistent antwortet daraus, mit derselben Liste auf einer Karte.
+- Sag „mach das rückgängig“ oder „leg die Karten zurück“, und der Assistent bereitet es vor: Eine Karte zeigt die Änderungen, und ein `Rückgängig` nimmt sie alle zurück.
 - `Rückgängig` neben einer Änderung nimmt sie zurück, auch nachdem du den Assistenten verlassen hast, solange seitdem nichts geändert wurde (in der App oder auf einem anderen Gerät). Sonst wird nichts rückgängig gemacht, und du erfährst, warum.
 - Der Verlauf bleibt nur auf diesem Gerät: Er wird nie synchronisiert, exportiert oder gesendet. Der Assistent sieht nur die Titel, und nur für Apps, die er lesen darf. `Verlauf leeren` löscht die Liste; deine Daten bleiben, wie sie sind.
 

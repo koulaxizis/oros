@@ -1930,13 +1930,28 @@
     name: "change_history",
     description: "What you (the assistant) added, changed or linked in the user's apps on this device in the last 30 days, newest first, " +
       "and whether the user undid it. Use it for questions like \"what did you change yesterday?\". The user sees the list as a card " +
-      "with Undo next to each change that can still be undone; you never undo anything yourself.",
+      "with Undo next to each change that can still be undone. To take a change back, call undo_change with its id.",
     params: {
       type: "object",
       properties: {
         from: { type: "string", description: "First day, YYYY-MM-DD (default: 30 days ago)." },
         to: { type: "string", description: "Last day, YYYY-MM-DD (default: today)." },
         app: { type: "string", description: "Only this app's id." }
+      }
+    }
+  };
+  // AS-UNDO: the model prepares the undo of its own earlier changes;
+  // the user presses Undo once on the card (nothing is undone before).
+  var TOOL_UNDO = {
+    name: "undo_change",
+    description: "Take back changes you (the assistant) made, when the user asks (\"undo that\", \"put them back\", \"undo what you added to my calendar\"). " +
+      "last: true = your latest change that can still be undone; ids = entries from change_history (can_undo). The user sees them on one card and presses Undo once; " +
+      "never say it is undone before the result says so, and never tell the user you cannot undo. An app refuses a record changed since.",
+    params: {
+      type: "object",
+      properties: {
+        last: { type: "boolean", description: "Your latest change that can still be undone." },
+        ids: { type: "array", items: { type: "string" }, description: "Up to 20 ids from change_history." }
       }
     }
   };
@@ -2793,7 +2808,7 @@
     if (opts.data && opts.links) out.push(TOOL_LINK);
     if (opts.data && opts.partnerLinks) out.push(TOOL_LINK_ITEMS);
     if (opts.actions && opts.actions.length) out.push(doTool(opts.actions));
-    if (opts.history) out.push(TOOL_HISTORY);
+    if (opts.history) out.push(TOOL_HISTORY, TOOL_UNDO);
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
@@ -3110,7 +3125,7 @@
     }
     if (!opts.builtin && !opts.chatOnly && opts.history) {
       lines.push("Questions about what you changed before (\"what did you change yesterday?\", \"undo what you added to my calendar\") are answered with change_history: it lists what was added, changed or linked on this device in the last 30 days. " +
-        "Tell it from the result, briefly; the user undoes something with Undo on the card. Changes from other devices or older than 30 days are not there.");
+        "Tell it from the result, briefly. When the user asks you to undo something you changed, call undo_change (last: true for what you just did, or ids from change_history): the user presses Undo once on its card. Changes from other devices or older than 30 days are not there.");
     }
     if (!opts.builtin && opts.edits && opts.edits.length) {
       lines.push("To change anything in the user's documents in " + opts.edits.join(", ") + " (texts, fonts, colours, photos, positions, layers, pages, backgrounds, bleed), read the document with read_in_app and change it with edit_in_app; never give the user manual steps for what a command does. " +
@@ -3897,8 +3912,31 @@
       if (e.n > e.items.length) o.more_items = e.n - e.items.length;
       if (e.st === "undone") o.undone = true;
       else o.can_undo = canUndo(e, now);
+      if (o.can_undo) o.id = e.id;
       return o;
     });
+  }
+  // undo_change's args → { ok, list: entries to undo (newest first) } |
+  // { ok: false, err }. Only entries that can still be undone and apps
+  // the user still lets the assistant read.
+  var UNDO_MAX = 20;
+  function undoPick(list, args, now, allowed) {
+    var a = isObj(args) ? args : {};
+    var live = histPrune(list, now).keep.filter(function (e) { return canUndo(e, now) && (!allowed || allowed(e.app)); });
+    if (a.last === true && !a.ids) {
+      return live.length ? { ok: true, list: [live[0]] } : bad("There is no change of yours left to undo on this device (30 days).");
+    }
+    if (!Array.isArray(a.ids) || !a.ids.length) return bad("Give last: true or ids from change_history.");
+    if (a.ids.length > UNDO_MAX) return bad("At most " + UNDO_MAX + " ids at once.");
+    var by = {}, out = [], seen = {};
+    live.forEach(function (e) { by[e.id] = e; });
+    for (var i = 0; i < a.ids.length; i++) {
+      var id = typeof a.ids[i] === "string" ? a.ids[i].trim() : "";
+      if (!by[id]) return bad("No change to undo with id " + JSON.stringify(String(a.ids[i]).slice(0, 40)) + "; read change_history again.");
+      if (!seen[id]) { seen[id] = 1; out.push(by[id]); }
+    }
+    out.sort(function (x, y) { return y.at - x.at; });
+    return { ok: true, list: out };
   }
 
   // ---------- 11. Conversation files ----------
@@ -4088,7 +4126,7 @@
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
     toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
-    DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, canUndo: canUndo,
+    DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,
     GONE_FILE: GONE_FILE, GONE_DAYS: GONE_DAYS, GONE_MAX: GONE_MAX, TOMB_KEEP: TOMB_KEEP,
