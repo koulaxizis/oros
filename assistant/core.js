@@ -1877,7 +1877,7 @@
     ["notebook", ["notes"], { type: "string", description: "notes: an existing notebook's name (default the first)." }],
     ["url", ["bookmarks", "meals"], { type: "string", description: "bookmarks: the http(s) address. meals: where the recipe comes from." }],
     ["folder", ["bookmarks"], { type: "string", description: "bookmarks: an existing folder's name (default Unsorted)." }],
-    ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name (default the first)." }],
+    ["board", ["kanban"], { type: "string", description: "kanban: an existing board's name; required when there are several boards. To move existing cards use change_item move, never add them again." }],
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf: tags, any)." }],

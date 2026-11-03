@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.15.01
+- **Kanban cards no longer land on the first board by themselves.** When you have several boards, the Assistant has to name the board you asked for; a card without one is refused instead of going to the first board. To move cards it uses Move, not a second copy.
+- **The Add button counts the ticks.** On the Assistant's card for new items, `Add (n)` now changes as you tick or untick a row.
+
 ## Version 5.15.00
 - **The Assistant adds whole lists to six more apps.** Habits, Workouts, Garage, Plant Care, Pet Health Book and Media Shelf now take many records at once on one card, with a tick on each and one `Undo`, instead of one form at a time: "add these ten books to my wishlist", "log my runs of this week", "the Golf had an oil change at 61,000 km, 85 euros", "Rex got his rabies shot today, next one in a year".
 - A record that looks like one already there starts unticked, and a vehicle or pet name that doesn't exist is answered with the ones you have.
