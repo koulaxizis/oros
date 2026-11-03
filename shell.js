@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.19.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.20.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7644,6 +7644,15 @@
         { name: "Tor button's Go modules (ProtonMail go-crypto, CIRCL, golang.org/x/crypto, ulikunitz/xz)", url: "https://github.com/ProtonMail/go-crypto",
           by: "The Go Authors, Proton AG, Cloudflare, Ulrich Kunitz", lic: "BSD-3-Clause",
           k: "cr.tor-modules" },
+        { name: "Ollama (with llama.cpp and ggml)", url: "https://github.com/ollama/ollama",
+          by: "Ollama, Georgi Gerganov & contributors", lic: "MIT",
+          k: "cr.ollama" },
+        { name: "Qwen3 models", url: "https://ollama.com/library/qwen3",
+          by: "Qwen team, Alibaba Cloud", lic: "Apache-2.0",
+          k: "cr.qwen3" },
+        { name: "klauspost/compress", url: "https://github.com/klauspost/compress",
+          by: "Klaus Post & The Go Authors", lic: "BSD-3-Clause",
+          k: "cr.ai-modules" },
         { name: "Inno Setup", url: "https://jrsoftware.org/isinfo.php",
           by: "Jordan Russell & Martijn Laan; Greek texts by Anastasis Chatzioglou, XhmikosR, Vasileios Karamichail", lic: "Inno Setup License",
           k: "cr.inno-setup" },

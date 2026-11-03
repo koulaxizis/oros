@@ -1723,5 +1723,16 @@ orosPack("de", "assistant", {
  "f.front": "Vorderseite",
  "f.back": "Rückseite",
  "f.songs": "Titel",
- "chg.disk": "Die Änderung konnte nicht auf die orOS-Disk geschrieben werden."
+ "chg.disk": "Die Änderung konnte nicht auf die orOS-Disk geschrieben werden.",
+ "wel.sys": "Noch ist keine KI eingerichtet. Am einfachsten: Installiere mit einem Klick die kostenlose lokale KI auf diesem Computer. Sie funktioniert ohne Internet und ohne Konto, und nichts, was du schreibst, verlässt den Computer. Du kannst auch einen Online-Dienst wählen.",
+ "sys.title": "Lokale KI auf diesem Computer",
+ "sys.install": "Lokale KI installieren",
+ "sys.none": "Kostenlose KI, die auf diesem Computer läuft: kein Internet, kein Konto, nichts, was du schreibst, verlässt ihn. Ein Download von einigen GB, danach funktioniert sie offline.",
+ "sys.ready": "Bereit: {model}. Der Assistent antwortet damit ohne Internet, und nichts, was du schreibst, verlässt diesen Computer.",
+ "sys.use": "Lokale KI verwenden",
+ "sys.used": "Der Assistent verwendet sie.",
+ "sys.off": "Die lokale KI ist installiert und startet gleich von selbst.",
+ "sys.manage": "Lokale KI verwalten",
+ "set.fast": "Schnelle Antworten (ohne vorheriges Nachdenken)",
+ "set.fastHint": "Viel schneller auf einem Computer ohne starke Grafikkarte. Für schwierige Fragen schalte es aus."
 });

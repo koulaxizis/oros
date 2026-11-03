@@ -300,6 +300,58 @@
         .then(function (ok) { clearTimeout(tm); probeSet(base, ok); return ok; });
     }, function () { return false; });
   }
+  // ---------- 2a. Local AI on this computer (orOS USB, AS-SYSAI) ----------
+  // The orOS USB System extension puts on the shell's page the state
+  // of the local AI it installs (data-oros-sys-ai: "ready", "off",
+  // "none"; with "ready" its address and models). sysAIRead(doc) →
+  // { state, url, models } | null. Only an Ollama on this computer's
+  // loopback is taken.
+  var SYSAI_URL = /^http:\/\/(127\.0\.0\.1|localhost):11434$/;
+  function sysAIRead(doc) {
+    var de = doc && doc.documentElement;
+    if (!de || typeof de.getAttribute !== "function") return null;
+    var st = de.getAttribute("data-oros-sys-ai");
+    if (st !== "ready" && st !== "off" && st !== "none") return null;
+    var url = String(de.getAttribute("data-oros-sys-ai-url") || "");
+    var models = String(de.getAttribute("data-oros-sys-ai-models") || "").split(/\s+/).filter(function (m) {
+      return /^[\w.:\/-]{1,100}$/.test(m);
+    });
+    if (st === "ready" && (!SYSAI_URL.test(url) || !models.length)) st = "off";
+    return { state: st, url: st === "ready" ? url : "", models: st === "ready" ? models : [] };
+  }
+  // The biggest model it has ("qwen3:8b" over "qwen3:4b"): the one the
+  // person picked for this computer or added since.
+  function sysAIModel(models) {
+    var best = "", size = -1;
+    (models || []).forEach(function (m) {
+      var n = /:(\d+(?:\.\d+)?)b\b/i.exec(m);
+      var v = n ? parseFloat(n[1]) : 0;
+      if (v > size) { best = m; size = v; }
+    });
+    return best;
+  }
+  // What the Assistant takes from a ready local AI, so that it works
+  // with no setting at all: the "local" service pointed at it (when it
+  // is not set up for another server), quick answers, and, when no
+  // assistant was chosen yet, that one. A model already chosen there
+  // and still installed stays. → { prov: patch|null, set: patch|null }
+  function sysAIAdopt(d, sys) {
+    var out = { prov: null, set: null };
+    if (!sys || sys.state !== "ready") return out;
+    var set = (d && d.set) || {}, pc = ((d && d.provs) || {}).local || {};
+    var base = LOCAL_KITS.ollama;
+    var mine = !pc.base || normBase(pc.base) === base || /^http:\/\/(127\.0\.0\.1|localhost):11434(\/v1)?$/.test(normBase(pc.base));
+    if (!mine) return out;
+    var model = sys.models.indexOf(pc.model) >= 0 ? pc.model : sysAIModel(sys.models);
+    if (pc.base !== base || pc.model !== model || pc.kit !== "ollama") {
+      out.prov = { base: base, model: model, kit: "ollama" };
+      // Set up here for the first time: quick answers (no thinking).
+      if (!pc.base) out.prov.fast = 1;
+    }
+    if (!set.prov) out.set = { prov: "local" };
+    return out;
+  }
+
   // ---------- 2b. The order of use (AS-CHAIN) ----------
   // set.auto = 1: every service set up on a device is used in this
   // order, the first that can answer this message winning: a server
@@ -406,7 +458,7 @@
   function normProv(x) {
     if (!isObj(x)) return null;
     return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0,
-             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "", nt: x.nt ? 1 : 0 };
+             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "", nt: x.nt ? 1 : 0, fast: x.fast ? 1 : 0 };
   }
   function normPerm(x) {
     if (!isObj(x) || (x.v !== "ask" && x.v !== "always" && x.v !== "never")) return null;
@@ -1164,6 +1216,10 @@
     });
     var body = { model: model, messages: messages, stream: true };
     if (PROVIDERS[pid].usage) body.stream_options = { include_usage: true };
+    // Quick answers (conf.fast, a local server): the model answers
+    // without thinking first, which on a processor saves most of the
+    // wait (Ollama and others take reasoning_effort "none").
+    if (PROVIDERS[pid].local && conf && conf.fast) body.reasoning_effort = "none";
     if (tools.length) {
       body.tools = tools.map(function (t) {
         return { type: "function", "function": { name: t.name, description: t.description, parameters: t.params } };
@@ -4237,6 +4293,7 @@
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
+    sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS,

@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.20.00
+- **Local AI on orOS USB with one button.** On an installed orOS USB (with saved changes), open the Assistant and press `Install local AI`, or go to System › Local AI. orOS downloads the AI engine and a model that fits your computer's memory, starts it by itself, and the Assistant uses it with no setting: free, offline after the download, and nothing you write leaves the computer. Under "More choices" you can pick a smaller or larger model, use the graphics card, or remove it all to free the space.
+- **Quick answers** for a model on your computer: it answers at once instead of thinking first (Assistant › Settings, on by default for the local AI).
+
 ## Version 5.19.00
 - **The Assistant can check a whole website.** Name a site ("check every audiobook on glarolykoi.net") and, with web search on, it reads every page of that site: its lists, next pages, links and sitemap, and a long page part by part instead of cutting it. It then says how many items it found against how many the site lists. It still never opens other sites because a page says so. Claude reads pages this way too, at no search cost.
 
