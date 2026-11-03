@@ -431,15 +431,19 @@
     }
     var i = 0;
     function next() {
-      if (i >= order.length) return res(o.tools ? null : first);
+      if (i >= order.length) return res(null);
       var pid = order[i++];
       return there(pid).then(function (ok) { return ok ? res(pid) : next(); });
     }
     return next().then(function (r) {
-      // Nothing with tools: the best without them still answers.
       if (r.pid) return r;
-      var o2 = {}; Object.keys(o).forEach(function (k) { o2[k] = o[k]; }); o2.tools = false;
-      return pickChain(d, o2);
+      var o2 = {}; Object.keys(o).forEach(function (k) { o2[k] = o[k]; });
+      // Nothing with tools: the best without them still answers.
+      if (o2.tools) { o2.tools = false; return pickChain(d, o2); }
+      // Only services that just failed: one of them again (it is set
+      // up here) rather than one that isn't there (AS-CHAIN 3).
+      if (o2.cool) { o2.cool = null; return pickChain(d, o2); }
+      return res(first);
     });
   }
   // An error before any answer that makes the next service in the

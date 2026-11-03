@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.20.01
+- **The Assistant rides out short network drops.** When the connection to an online service drops for a moment or the service is overloaded, the same request goes again after a few seconds, also in the middle of a long task, before anything else is tried. If it still fails, the Assistant stays with that service instead of trying a model that isn't there (such as your computer's from the phone), so "Continue" carries on.
+
 ## Version 5.20.00
 - **Local AI on orOS USB with one button.** On an installed orOS USB (with saved changes), open the Assistant and press `Install local AI`, or go to System › Local AI. orOS downloads the AI engine and a model that fits your computer's memory, starts it by itself, and the Assistant uses it with no setting: free, offline after the download, and nothing you write leaves the computer. Under "More choices" you can pick a smaller or larger model, use the graphics card, or remove it all to free the space.
 - **Quick answers** for a model on your computer: it answers at once instead of thinking first (Assistant › Settings, on by default for the local AI).
