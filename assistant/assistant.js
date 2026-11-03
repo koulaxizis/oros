@@ -1825,6 +1825,26 @@
     return !!data.set.auto && C.chainOrder(data).some(provReady);
   }
 
+  // A short network drop, or an online service overloaded for a
+  // moment: the same request goes again after a pause, also in the
+  // middle of a turn, before the turn gives this service up (AS-CHAIN
+  // 3, Chris 2026-11-03: on the phone Claude dropped during a long site
+  // read). Local servers (the probe decides) and device models don't.
+  var RETRY_WAIT = [2000, 6000], RETRY_CODES = ["net", "busy", "server"];
+  function callRetry(pid, msgs, opts, signal, onText, n) {
+    n = n || 0;
+    return callModel(pid, msgs, opts, signal, onText).catch(function (e) {
+      var P = C.PROVIDERS[pid];
+      if ((signal && signal.aborted) || n >= RETRY_WAIT.length || P.local || P.device ||
+          !(e instanceof C.ProviderError) || RETRY_CODES.indexOf(e.code) < 0) throw e;
+      if (onText) onText("");
+      return new Promise(function (ok, no) {
+        var tm = setTimeout(ok, RETRY_WAIT[n]);
+        if (signal) signal.addEventListener("abort", function () { clearTimeout(tm); no(new DOMException("Aborted", "AbortError")); });
+      }).then(function () { return callRetry(pid, msgs, opts, signal, onText, n + 1); });
+    });
+  }
+
   // Output ceilings Claude named for a model (a 400), for this session.
   var outMax = {};
   // One streamed request → reducer result. onText(text) as it arrives.
@@ -3011,7 +3031,9 @@
     Promise.all([modsP, chooseProv(c, keep).catch(function () { fbUse = ""; })]).then(function () {
       if (failed && curProv() === failed.pid) {
         c.msgs.push({ r: "note", kind: "err", text: errText(failed.e, failed.pid) });
-        c.msgs.push({ r: "note", kind: "info", text: t("note.noNext") });
+        // The hint is for a model on the user's own devices; an online
+        // service that failed after its retries just shows its error.
+        if (C.provTier(failed.pid, provConf(failed.pid)) <= 2) c.msgs.push({ r: "note", kind: "info", text: t("note.noNext") });
         busy = null;
         saveChat(c);
         renderAll();
@@ -3083,7 +3105,7 @@
       var before = head >= 0 ? joinedText(c.msgs, head) : "";
       busy.join = head;
       if (head >= 0) { busy.live = before; renderMessages(); }
-      return callModel(pid, withFiles(c.msgs), { system: system, tools: tools, web: web }, ctl && ctl.signal, function (txt) {
+      return callRetry(pid, withFiles(c.msgs), { system: system, tools: tools, web: web }, ctl && ctl.signal, function (txt) {
         busy.live = before + txt;
         scheduleLive();
       }).then(function (res) {
