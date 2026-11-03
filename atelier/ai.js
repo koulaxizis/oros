@@ -142,6 +142,14 @@
     });
   }
 
+  // The browser's own model is ready here (not "downloadable").
+  function lmReady() {
+    var api = LM();
+    if (!api) return Promise.resolve(false);
+    return Promise.resolve().then(function () {
+      return typeof api.availability === "function" ? api.availability() : "available";
+    }).then(function (a) { return a === "available"; }, function () { return false; });
+  }
   function LM() {
     try { return window.LanguageModel && typeof window.LanguageModel.create === "function" ? window.LanguageModel : null; }
     catch (e) { return null; }
@@ -226,19 +234,21 @@
   }
 
   // One question → the answer's text. onText(text so far) as it streams.
-  // A local server that fails on the network before it answers: the
-  // same question goes once to the stand-in (AS-FB); onSwitch(cf) says
-  // which one answers then.
-  function ask(cf, system, user, signal, onText, onSwitch) {
+  // A service that fails before it answers (off, over its limit, busy:
+  // core.coolFor) is passed over for a while and the question goes to
+  // the next one in the order, at most 3 times; onSwitch(cf) says which
+  // one answers then.
+  function ask(cf, system, user, signal, onText, onSwitch, tries) {
     var core = C();
     return askNow(cf, system, user, signal, onText).catch(function (e) {
-      if (cf.fb || !cf.p.local || !core.fbFor || (signal && signal.aborted) || !(e instanceof core.ProviderError) || e.code !== "net") throw e;
-      if (!core.fbFor(assistData(core).set)) throw e;
-      core.probeSet(cf.base, false);
+      var ms = core.coolFor ? core.coolFor(e) : 0;
+      if (!ms || (signal && signal.aborted) || (tries || 0) >= 3) throw e;
+      cool[cf.pid] = Date.now() + ms;
+      if (cf.p.local && e.code === "net") core.probeSet(cf.base, false);
       return pick(conf()).then(function (alt) {
-        if (!alt || !alt.fb) throw e;
+        if (!alt || alt.pid === cf.pid) throw e;
         if (onSwitch) onSwitch(alt);
-        return askNow(alt, system, user, signal, onText);
+        return ask(alt, system, user, signal, onText, onSwitch, (tries || 0) + 1);
       });
     });
   }
@@ -328,22 +338,32 @@
     AT.toast(t("ai.noAssistant"));
   }
 
-  // The chosen AI, or its online stand-in while a local server can't
-  // be reached (AS-FB; cf.fb = 1). → Promise<conf>
+  // The first service of the Assistant's order of use that is there on
+  // this device (AS-CHAIN), or the chosen one and its online stand-in
+  // (AS-FB); cf.fb = 1 when not the chosen one. Services that just
+  // failed are passed over for a while (cool). → Promise<conf | null>
+  var cool = {};
+  function device(pid) {
+    if (pid === "browser") return lmReady();
+    var cf = conf(pid);
+    return !!cf && wlGpu() ? wlCached(cf.model) : false;
+  }
   function pick(cf) {
     var core = C();
-    if (!core || !core.pickProv) return Promise.resolve(cf);
-    return core.pickProv(assistData(core), readKey).then(function (r) {
-      if (!r.fb) return cf;
-      var alt = conf(r.pid);
-      if (alt) alt.fb = 1;
+    if (!core || !core.pickChain) return Promise.resolve(cf);
+    return core.pickChain(assistData(core), { readKey: readKey, device: device, cool: cool }).then(function (r) {
+      var alt = r.pid ? conf(r.pid) : null;
+      if (alt) alt.fb = r.fb;
       return alt || cf;
     }, function () { return cf; });
   }
   // The AI to use, or the "set it up" dialog.
   function need(then) {
-    var cf = conf();
-    if (cf) { pick(cf).then(then); return; }
+    pick(conf()).then(function (cf) {
+      if (cf) then(cf); else needSetup();
+    });
+  }
+  function needSetup() {
     AT.openDialog(t("ai.menu"), function (body, close) {
       body.appendChild(el("p", "hint", t("ai.none")));
       var act = el("div", "dlg-actions");
