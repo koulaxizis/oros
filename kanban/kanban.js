@@ -5583,11 +5583,16 @@
       pf[i].remove();
     }
   }
+  // KB-MOVE: case, accents and final sigma aside (the Assistant may
+  // write "Μουσικη" for "Μουσική").
+  function foldName(v) {
+    return String(v == null ? "" : v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
+  }
   function byName(list, name) {
     if (!name) return null;
-    var want = name.toLowerCase(), hit = null, n = 0;
+    var want = foldName(name), hit = null, n = 0;
     list.forEach(function (x) {
-      if (String(x.name || "").trim().toLowerCase() === want) { hit = x; n++; }
+      if (foldName(x.name) === want) { hit = x; n++; }
     });
     return n === 1 ? hit : null;
   }

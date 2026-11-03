@@ -171,7 +171,7 @@ test("KB-DEL: several cards of one board deleted in a row on the same data, Undo
 test("KB-DEL wiring: refs take delete for Kanban only, with a delete card in EN/EL/DE", () => {
   const a = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
   assert.match(a, /var MANY_DEL_APP = "kanban";/);
-  assert.match(a, /if \(del && app\.id !== MANY_DEL_APP\) return/);
+  assert.match(a, /if \(\(del \|\| mv\) && app\.id !== MANY_DEL_APP\) return/);
   assert.match(a, /askChange\(app\.name, \{ many: many, del: del \}, act\)/);
   assert.match(a, /"chg\.ask\.manyDel": "Delete these \{n\} items from \{app\}\?"/);
   assert.match(a, /"chg\.ask\.manyDel": "Διαγραφή αυτών/);
@@ -179,7 +179,7 @@ test("KB-DEL wiring: refs take delete for Kanban only, with a delete card in EN/
   assert.match(de, /"chg\.ask\.manyDel"/);
   assert.match(de, /"chg\.textManyDel"/);
   const c = fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8");
-  assert.match(c, /delete: several Kanban cards at once \(Kanban only/);
+  assert.match(c, /delete or move: several Kanban cards at once \(Kanban only/);
 });
 
 // ---------- KB-PICK: choose the boards of a multi-board import ----------
@@ -191,4 +191,80 @@ test("KB-PICK wiring: a multi-board import shows a tick per board and imports on
   assert.match(k, /"import\.pick":\s+"Untick the boards you don't want\."/);
   assert.match(k, /"import\.pick":\s+"Ξετσέκαρε/);
   assert.match(fs.readFileSync(path.join(ROOT, "i18n/de/kanban.js"), "utf8"), /"import\.pick"/);
+});
+
+// ---------- KB-MOVE: a card to another board ----------
+function two() {
+  return { ver: 5, om: 1, boards: [
+    { id: "b1", name: "Βιβλία", mtime: 1, om: 1, deleted: {}, labels: [{ id: "l1", name: "Urgent" }, { id: "l2", name: "Only here" }],
+      columns: [{ id: "c1", name: "Todo", mtime: 1, om: 1, pos: 0, cards: [
+        { id: "k1", text: "Song", labels: ["l1", "l2"], subtasks: [], info: [], mtime: 5, pos: 0 },
+        { id: "k2", text: "Other", labels: [], subtasks: [], info: [], mtime: 5, pos: 1 }] }] },
+    { id: "b2", name: "Μουσική", mtime: 1, om: 1, deleted: {}, labels: [{ id: "m1", name: "urgent" }],
+      columns: [{ id: "c2", name: "Ιδέες", mtime: 1, om: 1, pos: 0, cards: [] }, { id: "c3", name: "Έτοιμα", mtime: 1, om: 1, pos: 1, cards: [] }] }] };
+}
+
+test("KB-MOVE: move takes board (and column), board only for move", () => {
+  assert.deepEqual(E.normArgs({ ref: "r1", action: "move", board: "Μουσική" }).set, { board: "Μουσική" });
+  assert.equal(E.normArgs({ ref: "r1", action: "move" }).ok, false);
+  assert.equal(E.normArgs({ ref: "r1", action: "update", board: "x", title: "y" }).ok, false);
+  assert.equal(E.normArgs({ ref: "r1", action: "move", board: "x", title: "y" }).ok, false);
+});
+
+test("KB-MOVE: the card goes to the named board (accents aside), keeps its id, labels by name, Undo puts it back", () => {
+  const d = two(), tg = { board: "b1", col: "c1", card: "k1" };
+  const ch = E.normArgs({ ref: "r1", action: "move", board: "μουσικη", column: "ετοιμα" });
+  const pl = E.plan("kanban", d, tg, ch, 1000);
+  assert.equal(pl.ok, true, pl.err);
+  assert.deepEqual(pl.rows.find((r) => r.f === "board"), { f: "board", b: "Βιβλία", a: "Μουσική" });
+  const r = E.apply("kanban", d, tg, ch, 1000, pl.before);
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(r.target, { board: "b2", col: "c3", card: "k1" });
+  assert.match(r.note, /Only here/);
+  const b1 = r.data.boards.find((b) => b.id === "b1"), b2 = r.data.boards.find((b) => b.id === "b2");
+  assert.deepEqual(b1.columns[0].cards.map((k) => k.id), ["k2"]);
+  assert.ok(b1.deleted.k1 >= 1000);
+  const moved = b2.columns[1].cards[0];
+  assert.equal(moved.id, "k1");
+  assert.deepEqual(moved.labels, ["m1"]);
+  assert.ok(moved.mtime > b1.deleted.k1);           // alive on the new board, dead on the old one
+  const u = E.undo("kanban", r.data, r.undo, 2000);
+  assert.equal(u.ok, true, u.err);
+  const ub1 = u.data.boards.find((b) => b.id === "b1"), ub2 = u.data.boards.find((b) => b.id === "b2");
+  assert.deepEqual(ub1.columns[0].cards.map((k) => k.id), ["k1", "k2"]);
+  assert.deepEqual(ub1.columns[0].cards[0].labels, ["l1", "l2"]);
+  assert.equal(ub1.deleted.k1, undefined);
+  assert.ok(ub2.deleted.k1 >= 2000);
+  assert.equal(ub2.columns[1].cards.length, 0);
+});
+
+test("KB-MOVE: the old device's copy merges to the moved card (sync)", () => {
+  const M = require("../kanban/model.js");
+  const d = two(), tg = { board: "b1", col: "c1", card: "k1" };
+  const ch = E.normArgs({ ref: "r1", action: "move", board: "Μουσική" });
+  const r = E.apply("kanban", d, tg, ch, 1000, E.plan("kanban", d, tg, ch, 1000).before);
+  const merged = M.mergeKanbanStates(two(), r.data, 3000);
+  const ids = (b) => merged.boards.find((x) => x.id === b).columns.flatMap((c) => c.cards.map((k) => k.id));
+  assert.deepEqual(ids("b1"), ["k2"]);
+  assert.deepEqual(ids("b2"), ["k1"]);
+});
+
+test("KB-MOVE: unknown board names the real ones; same board is refused", () => {
+  const d = two(), tg = { board: "b1", col: "c1", card: "k1" };
+  const e1 = E.plan("kanban", d, tg, E.normArgs({ ref: "r1", action: "move", board: "Jazz" }), 1000);
+  assert.equal(e1.ok, false);
+  assert.match(e1.err, /Βιβλία, Μουσική/);
+  assert.equal(E.plan("kanban", d, tg, E.normArgs({ ref: "r1", action: "move", board: "βιβλια" }), 1000).ok, false);
+});
+
+test("KB-MOVE wiring: refs follow the moved card, many moves on one card, entry cards check the board", () => {
+  const a = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(a, /if \(res\.target\) r\.target = res\.target;/);
+  assert.match(a, /c\.refs\[p\.x\.ch\.ref\]\.target = p\.moved/);
+  assert.match(a, /var del = args\.action === "delete", mv = args\.action === "move";/);
+  assert.match(a, /var kc = kbEntryCheck\(args\);/);
+  const k = fs.readFileSync(path.join(ROOT, "kanban/kanban.js"), "utf8");
+  assert.match(k, /var want = foldName\(name\)/);
+  const c = fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8");
+  assert.match(c, /kanban move: the name of another board/);
 });

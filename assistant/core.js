@@ -1678,7 +1678,7 @@
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
       "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
-      "kanban (reschedule: date = due, update: title / date / note / labels, move: column, delete) · " +
+      "kanban (reschedule: date = due, update: title / date / note / labels, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
@@ -1699,7 +1699,7 @@
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
         refs: { type: "array", items: { type: "string" },
-                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. delete: several Kanban cards at once (Kanban only; e.g. every card of a board or column from app_summary kanban with board), one card and one Undo for all." },
+                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. delete or move: several Kanban cards at once (Kanban only; e.g. every card of a board or column from app_summary kanban with board, or move them all to another board), one card and one Undo for all." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
@@ -1742,6 +1742,7 @@
         tax_office: { type: "string", description: "crm: the customer's tax office (e.g. Greek ΔΟΥ)." },
         note_add: { type: "string", description: "contacts, crm: text to add to the note on a new line (the old note stays; the whole note holds 2000 characters in Contacts, 2000 in CRM). Use instead of note." },
         column: { type: "string", description: "kanban move: the name of the column to move the card to." },
+        board: { type: "string", description: "kanban move: the name of another board to move the card to (with column, or its first column). Labels go by name." },
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },

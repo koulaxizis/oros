@@ -3242,10 +3242,49 @@
     var have = installed();
     var e = C.normEntry(args, { from: t("app"), has: function (id) { return !!have[id]; } });
     if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "entryErr" } };
+    // KB-MOVE: a Kanban card's board and column must be ones the user
+    // has (case and accents aside); Kanban would otherwise drop the card
+    // on the board on screen. The names go on in Kanban's spelling.
+    if (args && args.kind === "card") {
+      var kc = kbEntryCheck(args);
+      if (kc) return { content: "Error: " + kc, err: 1, ui: { k: "entryErr" } };
+    }
     return {
       content: "Shown to the user as a card. They will open it in the app and save it themselves, or dismiss it. It is not saved yet.",
       ui: { k: "entry", args: JSON.parse(JSON.stringify(args)), st: "" }
     };
+  }
+
+  function kbFoldName(v) {
+    return String(v == null ? "" : v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
+  }
+  // → an error for the model, or "" (args.board / args.column set to Kanban's own spelling)
+  function kbEntryCheck(args) {
+    var hasB = typeof args.board === "string" && args.board.trim(), hasC = typeof args.column === "string" && args.column.trim();
+    if (!hasB && !hasC) return "";
+    var d = readStore("oros-kanban-data");
+    if (!d || !Array.isArray(d.boards)) return "";
+    var gone = d.boardDeleted && typeof d.boardDeleted === "object" ? d.boardDeleted : {};
+    var live = d.boards.filter(function (b) {
+      return b && typeof b.id === "string" && b.id.indexOf("tpl-") !== 0 && !b.archived && Array.isArray(b.columns) &&
+        !(typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0));
+    });
+    var board = null;
+    if (hasB) {
+      var f = kbFoldName(args.board);
+      var hits = live.filter(function (b) { return kbFoldName(b.name) === f; });
+      if (!hits.length) return "Kanban has no open board named \"" + args.board + "\". Its boards: " + live.map(function (b) { return String(b.name || ""); }).join(", ") + ". Use one of them, or leave board out.";
+      if (hits.length > 1) return "Kanban has more than one board called " + args.board + "; ask the user which one.";
+      board = hits[0];
+      args.board = String(board.name || "");
+    }
+    if (hasC && board) {
+      var cf = kbFoldName(args.column);
+      var ch = board.columns.filter(function (c) { return c && kbFoldName(c.name) === cf; });
+      if (!ch.length) return "The board " + board.name + " has no column \"" + args.column + "\". Its columns: " + board.columns.map(function (c) { return String(c && c.name || ""); }).join(", ") + ".";
+      args.column = String(ch[0].name || "");
+    }
+    return "";
   }
 
   // open_file (WR-FMT): an attached file, opened as it is in Writer's
@@ -4083,13 +4122,14 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
+      if (res.target) r.target = res.target;     // KB-MOVE: the ref follows the card to its new board
       var uid = newId();
       remember(uid, { app: app.id, key: key, undo: res.undo }, { kind: "change", app: app.id, name: app.name, act: ch.action, title: pl.title, items: [pl.title] });
       base.st = "done";
       base.u = uid;
       base.rows = res.rows;
       var skipped = left.length ? " The user left these out (not changed): " + left.join(", ") + "." : "";
-      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." + skipped }), ui: base };
+      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." + skipped + (res.note ? " " + res.note : "") }), ui: base };
     });
   }
   // The same update to several items of one app (refs): one card, one
@@ -4099,12 +4139,12 @@
   // An item that can't take the change stays off the card and is named
   // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
-  var MANY_DEL_APP = "kanban";   // KB-DEL: the one app whose items refs may delete
+  var MANY_DEL_APP = "kanban";   // KB-DEL / KB-MOVE: the one app whose items refs may delete or move
   function changeMany(c, args, apps) {
     // KB-DEL (Chris 2026-11-03): delete also takes refs, for Kanban
     // cards only (checked below, once the app is known).
-    var del = args.action === "delete";
-    if (args.action !== "update" && !del) return Promise.resolve({ content: "Error: refs is only for update (and delete of Kanban cards); change other things one item at a time with ref.", err: 1 });
+    var del = args.action === "delete", mv = args.action === "move";
+    if (args.action !== "update" && !del && !mv) return Promise.resolve({ content: "Error: refs is only for update (and delete or move of Kanban cards); change other things one item at a time with ref.", err: 1 });
     if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
     var refs = [];
     args.refs.forEach(function (x) {
@@ -4135,7 +4175,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    if (del && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted only in Kanban; delete these one at a time with ref.", err: 1 });
+    if ((del || mv) && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted or moved only in Kanban; do these one at a time with ref.", err: 1 });
     var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {
       // Planned one after the other on the same data, as Apply writes them.
@@ -4151,20 +4191,22 @@
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
     sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
-    var act = del ? "delete" : "update";
+    var act = del ? "delete" : mv ? "move" : "update";
     var base = { k: "change", app: app.name, act: act, title: t("chg.many", { n: plans.length }), many: many };
     return askChange(app.name, { many: many, del: del }, act).then(function (ok) {
       if (!ok) {
         base.st = "declined";
         return { content: JSON.stringify({ refs: refs, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
       }
-      var d = readStore(key), undos = [], t2 = Date.now(), fail = null;
+      var d = readStore(key), undos = [], t2 = Date.now(), fail = null, notes = [];
       plans.forEach(function (p) {
         if (fail) return;
         var res = E.apply(app.id, d, p.x.target, p.x.ch, t2, p.pl.before);
         if (!res.ok) { fail = res; return; }
         d = res.data;
         undos.push(res.undo);
+        if (res.target) p.moved = res.target;
+        if (res.note && notes.indexOf(res.note) < 0) notes.push(res.note);
       });
       if (fail) {
         base.st = "failed";
@@ -4177,11 +4219,13 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
+      plans.forEach(function (p) { if (p.moved && c.refs[p.x.ch.ref]) c.refs[p.x.ch.ref].target = p.moved; });
+      if (notes.length) sameNote += " " + notes.join(" ");
       var uid = newId();
       remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: act, title: base.title, items: plans.map(function (p) { return p.pl.title; }) });
       base.st = "done";
       base.u = uid;
-      return { content: JSON.stringify({ refs: refs, applied: true, action: act, items: plans.length, note: (del ? "The user deleted " + plans.length + " items." : "The user applied the change to " + plans.length + " items.") + " They can undo it." + sameNote }), ui: base };
+      return { content: JSON.stringify({ refs: refs, applied: true, action: act, items: plans.length, note: (del ? "The user deleted " + plans.length + " items." : mv ? "The user moved " + plans.length + " items." : "The user applied the change to " + plans.length + " items.") + " They can undo it." + sameNote }), ui: base };
     });
   }
   // Different updates to several items of one app (changes: [{ ref,
