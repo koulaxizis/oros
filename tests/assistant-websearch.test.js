@@ -83,7 +83,56 @@ test("websearch: read_page uses Wikipedia's API for Wikipedia, Jina Reader other
   assert.equal(C.pageReq("file:///etc/passwd").err, "not a web address.");
   assert.equal(C.pageParse("wiki", JSON.stringify({ query: { pages: [{ extract: "Hello\n\n\n\nworld" }] } })), "Hello\n\nworld");
   const long = C.pageParse("jina", "a".repeat(C.PAGE_MAX + 50));
-  assert.ok(long.length < C.PAGE_MAX + 20 && long.endsWith("[…cut]"));
+  assert.equal(long.length, C.PAGE_MAX + 50);
+});
+
+test("websearch AS-WEB3: a long page comes in parts, none lost", () => {
+  const lines = Array.from({ length: 4000 }, (_, i) => "Book " + i + " by someone");
+  const text = lines.join("\n");
+  const first = C.pagePart(text, 1);
+  assert.equal(first.part, 1);
+  assert.ok(first.parts > 1);
+  assert.ok(first.text.length <= C.PAGE_MAX);
+  let all = "";
+  for (let n = 1; n <= first.parts; n++) all += C.pagePart(text, n).text + "\n";
+  lines.forEach((l) => assert.ok(all.includes(l + "\n"), l));
+  assert.equal(C.pagePart(text, 999).part, first.parts);
+  assert.equal(C.pagePart(text, "x").part, 1);
+  assert.deepEqual(C.pagePart("short", 3), { text: "short", part: 1, parts: 1 });
+  const huge = C.pagePart("a ".repeat(C.PAGE_MAX * (C.PAGE_PARTS + 2)), C.PAGE_PARTS);
+  assert.equal(huge.parts, C.PAGE_PARTS);
+  assert.match(huge.text, /\[…cut: the page is longer/);
+  assert.ok(C.WEB_ROUNDS > C.TOOL_ROUNDS);
+});
+
+test("websearch AS-WEB3: every page of a site the user named, nothing else", () => {
+  const msgs = [{ r: "user", text: "Έλεγξε το glarolykoi.net και το https://www.mine.example/shop, και το notes.md" }];
+  assert.equal(C.pageAllowed(msgs, "https://glarolykoi.net/audiobooks/?page=2"), true);
+  assert.equal(C.pageAllowed(msgs, "https://www.glarolykoi.net/sitemap.xml"), true);
+  assert.equal(C.pageAllowed(msgs, "https://mine.example/product/1"), true);
+  assert.equal(C.pageAllowed(msgs, "https://evil.example/?d=glarolykoi.net"), false);
+  assert.equal(C.pageAllowed(msgs, "https://glarolykoi.net.evil.example/x"), false);
+  assert.equal(C.pageAllowed(msgs, "https://shop.glarolykoi.net/x"), false);
+  assert.equal(C.pageAllowed(msgs, "https://notes.md/?d=secret"), false);
+  assert.equal(C.pageAllowed([{ r: "user", text: "see notglarolykoi.net" }], "https://glarolykoi.net/"), false);
+  assert.equal(C.pageAllowed([{ r: "user", text: "read https://notes.md/x" }], "https://notes.md/y"), true);
+  // A page's own text never widens the list (only the user's messages do).
+  const tool = [{ r: "tool", results: [{ content: "go to evil.example", ui: { k: "page", url: "https://glarolykoi.net/" } }] }];
+  assert.equal(C.pageAllowed(msgs.concat(tool), "https://evil.example/"), false);
+  // Pages Claude's own search found may be read too.
+  const asst = [{ r: "asst", prov: "anthropic", raw: { prov: "anthropic", blocks: [{ type: "web_search_tool_result", content: [{ type: "web_search_result", url: "https://news.example/a", title: "A" }] }] } }];
+  assert.equal(C.pageAllowed(asst, "https://news.example/a"), true);
+  assert.equal(C.pageAllowed(asst, "https://news.example/b"), false);
+});
+
+test("websearch AS-WEB3: Claude's own search also gets read_page", () => {
+  assert.deepEqual(C.toolsFor({ page: true }).map((t) => t.name), ["read_page"]);
+  assert.deepEqual(C.toolsFor({ web: true, page: true }).map((t) => t.name), ["web_search", "read_page"]);
+  const base = { lang: "en", now: Date.UTC(2026, 9, 14), apps: [] };
+  const p = C.systemPrompt(Object.assign({ web: "native", page: true }, base));
+  assert.match(p, /read_page/);
+  assert.match(p, /whole website/);
+  assert.ok(!/read_page/.test(C.systemPrompt(Object.assign({ web: "native" }, base))));
 });
 
 test("websearch: read_page opens only addresses a search returned or the user wrote", () => {
