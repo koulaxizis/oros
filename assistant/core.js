@@ -369,16 +369,21 @@
   // → [pid] in the order to try (not yet checked on this device)
   function chainOrder(d) {
     var set = (d && d.set) || {}, provs = (d && d.provs) || {};
-    if (!set.auto) {
-      var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
-      var fb = fbFor(set);
-      if (fb) out.push(fb);
-      return out;
-    }
     var skip = normSkip(set.skip);
-    return PROV_IDS.filter(function (p) { return skip.indexOf(p) < 0; }).map(function (p, i) {
+    var all = PROV_IDS.filter(function (p) { return skip.indexOf(p) < 0; }).map(function (p, i) {
       return { p: p, k: provTier(p, provs[p]) * 100 + (p === set.prov ? 0 : 1 + i) };
     }).sort(function (a, b) { return a.k - b.k; }).map(function (x) { return x.p; });
+    if (set.auto) return all;
+    var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
+    var fb = fbFor(set);
+    if (fb) out.push(fb);
+    // A model on the user's own devices that isn't there (a phone, the
+    // computer off) is never a dead end (AS-CHAIN 2, Chris 2026-11-03):
+    // after it and its stand-in come the rest, in the same order.
+    if (out.length && provTier(set.prov, provs[set.prov]) <= 2) {
+      all.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
+    }
+    return out;
   }
   // Does this message need tools (an entry, a change, a web search)?
   // A model without tools still answers questions about the user's
@@ -435,7 +440,9 @@
   }
   // An error before any answer that makes the next service in the
   // order worth trying, and how long (ms) to pass this one over.
-  var COOL = { net: 15000, rate: 60000, busy: 30000, server: 30000, credit: 600000, key: 600000 };
+  // model: the service doesn't have the chosen model (a local server
+  // without it pulled), so another one answers.
+  var COOL = { net: 15000, rate: 60000, busy: 30000, server: 30000, credit: 600000, key: 600000, model: 600000 };
   function coolFor(e) {
     return e instanceof ProviderError && COOL[e.code] ? COOL[e.code] : 0;
   }

@@ -179,6 +179,7 @@
       "note.fb": "{local} can't be reached, so {name} answers for now. Apps set to “Always share” ask first.",
       "note.fbBack": "{local} answers again.",
       "note.via": "{name} answers from here on.",
+      "note.noNext": "No other AI is set up on this device to answer instead. In Settings, save a key for a free service (Groq, Mistral, Cerebras and others) and pick its model, and it will answer whenever this one can't.",
       "set.chain": "Order of use",
       "set.auto": "Choose the service for each message on its own",
       "set.autoHint": "Models on your own devices first (a server on your computer, then this browser), then free online services, then paid ones. The assistant chosen above goes first within its group. A message that needs tools (adding or changing something, a web search) skips models without tools. A service that is busy, over its free limit or unreachable is passed over for a while and the next one answers. Only services set up on this device are used, and apps set to “Always share” ask first when an online service stands in for a local one.",
@@ -788,6 +789,7 @@
       "note.fb": "Το {local} δεν βρέθηκε, οπότε απαντά προσωρινά το {name}. Οι εφαρμογές στο «Πάντα» ρωτούν πρώτα.",
       "note.fbBack": "Το {local} απαντά ξανά.",
       "note.via": "Από εδώ και πέρα απαντά το {name}.",
+      "note.noNext": "Δεν υπάρχει άλλο AI ρυθμισμένο σε αυτή τη συσκευή για να απαντήσει στη θέση του. Στις Ρυθμίσεις αποθήκευσε κλειδί για μια δωρεάν υπηρεσία (Groq, Mistral, Cerebras κ.ά.) και διάλεξε μοντέλο, και θα απαντά όποτε αυτό δεν μπορεί.",
       "set.chain": "Σειρά χρήσης",
       "set.auto": "Διάλεγε μόνος την υπηρεσία για κάθε μήνυμα",
       "set.autoHint": "Πρώτα τα μοντέλα στις δικές σου συσκευές (server στον υπολογιστή σου, μετά αυτός ο browser), μετά δωρεάν online υπηρεσίες, μετά οι πληρωμένες. Ο βοηθός που διάλεξες παραπάνω μπαίνει πρώτος στην ομάδα του. Ένα μήνυμα που θέλει εργαλεία (προσθήκη ή αλλαγή, αναζήτηση στο web) παρακάμπτει τα μοντέλα χωρίς εργαλεία. Μια υπηρεσία που είναι απασχολημένη, έχει ξεπεράσει το δωρεάν όριο ή δεν απαντά παρακάμπτεται για λίγο και απαντά η επόμενη. Χρησιμοποιούνται μόνο υπηρεσίες ρυθμισμένες σε αυτή τη συσκευή, και οι εφαρμογές στο «Πάντα» ρωτούν πρώτα όταν μια online υπηρεσία απαντά στη θέση τοπικής.",
@@ -2983,14 +2985,27 @@
   // core.js) is loaded before the first turn that may use it.
   // again: how many times this turn already went and failed before any
   // answer (AS-CHAIN, AS-FB); keep: send() already picked the service.
-  function runTurn(c, again, keep) {
+  // failed: { pid, e } the service that just failed; when the order has
+  // nothing else here, its error shows with what to set up.
+  function runTurn(c, again, keep, failed) {
     var have = installed(), want = Object.keys(EDIT_LAZY).filter(function (id) { return have[id] && !window[EDIT_SRC[id].mod]; });
     var modsP = want.length ? editLoadMods(want) : Promise.resolve();
     // The busy mark first, so a second Send can't start a turn while
     // the local server is checked (up to PROBE_MS).
     busy = { abort: null, live: "", consent: null, chat: c };
     renderAll();
-    Promise.all([modsP, chooseProv(c, keep).catch(function () { fbUse = ""; })]).then(function () { runTurnNow(c, again || 0); });
+    Promise.all([modsP, chooseProv(c, keep).catch(function () { fbUse = ""; })]).then(function () {
+      if (failed && curProv() === failed.pid) {
+        c.msgs.push({ r: "note", kind: "err", text: errText(failed.e, failed.pid) });
+        c.msgs.push({ r: "note", kind: "info", text: t("note.noNext") });
+        busy = null;
+        saveChat(c);
+        renderAll();
+        scrollEnd();
+        return;
+      }
+      runTurnNow(c, again || 0);
+    });
   }
   function runTurnNow(c, again) {
     var pid = curProv();
@@ -3115,13 +3130,13 @@
         cool[pid] = Date.now() + C.coolFor(e);
         if (viaNote && c.msgs[c.msgs.length - 1] === viaNote) { c.msgs.pop(); fbNoted[c.id] = viaWas; }
         if (C.PROVIDERS[pid].local && e.code === "net") C.probeSet(baseOf(pid), false);
-        retry = true;
+        retry = { pid: pid, e: e };
       } else {
         note("err", errText(e, pid));
       }
     }).then(function () {
       busy = null;
-      if (retry) { runTurn(c, again + 1); return; }
+      if (retry) { runTurn(c, again + 1, false, retry); return; }
       saveChat(c);
       renderAll();
       scrollEnd();
