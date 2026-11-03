@@ -252,6 +252,7 @@
       "ck.title": "Check", "ck.ok": "Ready to send.", "ck.err": "Must fix", "ck.warn": "Worth a look",
       "ck.noSubj": "The subject is empty.", "ck.longSubj": "The subject is long: phones show about 40 characters.",
       "ck.shouty": "Capitals or !!! in the subject look like spam to filters.", "ck.noBody": "The issue is empty.",
+      "tpl.html": "From HTML file", "toast.htmlBig": "That file is too big for an issue (about 100 KB of HTML at most).", "toast.htmlBad": "Nothing usable in that file: an issue needs HTML with text or pictures.", "toast.htmlIn": "Opened as an HTML issue: scripts, forms and tracking pixels were removed.", "ed.html": "HTML", "ed.htmlHint": "Your own e-mail HTML, sent as it is after cleaning: tables, inline styles, links and https pictures stay; scripts, forms, outside style sheets and tracking pixels go. {$unsubscribe} or {{UNSUBSCRIBE}} in a link becomes the unsubscribe link; without one, the list's footer is added below. Fill every other {{SLOT}} before sending.", "ed.txt": "Plain text", "ed.txtPh": "Empty: made from the HTML when it is sent", "ed.txtHint": "The text-only part of the e-mail, for mail apps that don't show HTML. Leave it empty and it is made from the HTML.", "ed.htmlOpen": "Replace with an HTML file", "ed.txtOpen": "Open a .txt file", "ed.txtMake": "Make from the HTML", "ck.slots": "Some {{SLOTS}} are still empty: fill them in the HTML or the plain text.", "ck.webImgs": "Pictures load from the web: some mail apps show them only when the reader allows it.",
       "ck.noAddr": "The list has no postal address for the footer (Lists › Edit).", "ck.noFrom": "The list has no From address.",
       "ck.noChan": "The list's sending account is missing or has no password on this device.",
       "ck.noInbox": "No Inbox for this list: unsubscribe e-mails won't be read automatically.",
@@ -484,6 +485,7 @@
       "ck.title": "Έλεγχος", "ck.ok": "Έτοιμο για αποστολή.", "ck.err": "Πρέπει να διορθωθεί", "ck.warn": "Αξίζει μια ματιά",
       "ck.noSubj": "Το θέμα είναι κενό.", "ck.longSubj": "Το θέμα είναι μεγάλο: τα κινητά δείχνουν περίπου 40 χαρακτήρες.",
       "ck.shouty": "Κεφαλαία ή !!! στο θέμα μοιάζουν με spam στα φίλτρα.", "ck.noBody": "Το τεύχος είναι κενό.",
+      "tpl.html": "Από αρχείο HTML", "toast.htmlBig": "Το αρχείο είναι πολύ μεγάλο για τεύχος (έως περίπου 100 KB HTML).", "toast.htmlBad": "Τίποτα χρήσιμο σε αυτό το αρχείο: ένα τεύχος θέλει HTML με κείμενο ή εικόνες.", "toast.htmlIn": "Άνοιξε ως τεύχος HTML: αφαιρέθηκαν scripts, φόρμες και pixel παρακολούθησης.", "ed.html": "HTML", "ed.htmlHint": "Το δικό σου HTML του email, στέλνεται όπως είναι μετά τον καθαρισμό: πίνακες, inline στυλ, σύνδεσμοι και εικόνες https μένουν· scripts, φόρμες, εξωτερικά style sheets και pixel παρακολούθησης φεύγουν. Το {$unsubscribe} ή {{UNSUBSCRIBE}} σε σύνδεσμο γίνεται ο σύνδεσμος διαγραφής· χωρίς αυτό, μπαίνει από κάτω το υποσέλιδο της λίστας. Συμπλήρωσε κάθε άλλο {{SLOT}} πριν την αποστολή.", "ed.txt": "Απλό κείμενο", "ed.txtPh": "Κενό: φτιάχνεται από το HTML κατά την αποστολή", "ed.txtHint": "Το μέρος του email μόνο με κείμενο, για εφαρμογές που δεν δείχνουν HTML. Άφησέ το κενό και φτιάχνεται από το HTML.", "ed.htmlOpen": "Αντικατάσταση με αρχείο HTML", "ed.txtOpen": "Άνοιγμα αρχείου .txt", "ed.txtMake": "Φτιάξ' το από το HTML", "ck.slots": "Κάποια {{SLOTS}} είναι ακόμη κενά: συμπλήρωσέ τα στο HTML ή στο απλό κείμενο.", "ck.webImgs": "Οι εικόνες φορτώνουν από το διαδίκτυο: κάποιες εφαρμογές τις δείχνουν μόνο αν το επιτρέψει ο αναγνώστης.",
       "ck.noAddr": "Η λίστα δεν έχει ταχυδρομική διεύθυνση για το κάτω μέρος (Λίστες › Επεξεργασία).", "ck.noFrom": "Η λίστα δεν έχει διεύθυνση αποστολέα.",
       "ck.noChan": "Ο λογαριασμός αποστολής της λίστας λείπει ή δεν έχει κωδικό σε αυτή τη συσκευή.",
       "ck.noInbox": "Η λίστα δεν έχει Εισερχόμενα: τα email διαγραφής δεν θα διαβάζονται αυτόματα.",
@@ -975,6 +977,7 @@
       ul.appendChild(li);
     };
     row(t("tpl.blank"), function () { createIssue(l, null); });
+    row(t("tpl.html") + "\u2026", function () { htmlIssue(l); });
     dlg.appendChild(ul);
     // ready layouts (wave E3), written in the app's language
     dlg.appendChild(el("p", "dlg-h", t("tpl.layouts")));
@@ -1024,13 +1027,42 @@
   }
   function createIssue(l, tpl) {
     var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
-                                blocks: copy(tpl.blocks), md: tpl.md, l2: tpl.l2 ? copy(tpl.l2) : null }
+                                blocks: copy(tpl.blocks), md: tpl.md, html: tpl.html, txt: tpl.txt, l2: tpl.l2 ? copy(tpl.l2) : null }
       : { id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
           blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], [{ k: "h", t: "" }, { k: "p", t: t("seed.hi") }],
                             l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
     put("issues", x);
     viewId = x.id;
     showView("edit");
+  }
+  // New › From HTML file… (W2): an e-mail made elsewhere (the
+  // newsletter skill, another service's export of one campaign) becomes
+  // an HTML issue. The file is cleaned when it is saved (C.sanitizeHtml);
+  // a <title> that is not a {{SLOT}} becomes the subject.
+  var HTML_ACC = ".html,.htm,text/html";
+  var TXT_ACC = ".txt,text/plain";
+  function pickText(acc, max) {
+    var host = dialogHost();
+    var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
+    return pick.then(function (file) {
+      if (!file) return null;
+      if (file.size > max) { showToast(t("toast.htmlBig")); return null; }
+      return file.text();
+    })["catch"](function () { showToast(t("toast.badFile")); return null; });
+  }
+  function htmlTitle(src) {
+    var m = /<title[^>]*>([\s\S]{0,400}?)<\/title>/i.exec(src);
+    var tt = m ? C.htmlToText(m[1]) : "";
+    return /\{\{/.test(tt) ? "" : C.oneLine(tt, C.LIM.subj);
+  }
+  function htmlIssue(l) {
+    pickText(HTML_ACC, C.LIM.html * 2).then(function (src) {
+      if (src === null) return;
+      var clean = C.sanitizeHtml(src);
+      if (!clean) { showToast(t("toast.htmlBad")); return; }
+      createIssue(l, { subj: htmlTitle(src), pre: "", fmt: "html", blocks: [], md: "", html: src, txt: "" });
+      showToast(t("toast.htmlIn"));
+    });
   }
   function saveTemplate(x) {
     if (C.live(data.tpls).length >= C.LIM.tpls) { showToast(t("tpl.full")); return; }
@@ -1042,7 +1074,7 @@
       name.classList.toggle("bad", !nm);
       if (!nm) return;
       put("tpls", C.normTpl({ id: C.randomId("t", null), m: 0, name: nm, subj: x.subj, pre: x.pre, fmt: x.fmt,
-                              blocks: copy(x.blocks), md: x.md, l2: x.l2 ? copy(x.l2) : null }));
+                              blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt, l2: x.l2 ? copy(x.l2) : null }));
       dlg.close();
       showToast(t("tpl.saved"));
     });
@@ -1082,7 +1114,8 @@
 
     var c2 = el("div", "card");
     var seg = el("div", "seg");
-    [["blocks", t("ed.blocks")], ["md", t("ed.md")]].forEach(function (o) {
+    // an HTML issue stays HTML (switching would drop the HTML)
+    (cx.fmt === "html" ? [] : [["blocks", t("ed.blocks")], ["md", t("ed.md")]]).forEach(function (o) {
       var b = el("button", "seg-btn" + (cx.fmt === o[0] ? " on" : ""), o[1]);
       b.type = "button";
       b.setAttribute("aria-pressed", cx.fmt === o[0] ? "true" : "false");
@@ -1098,9 +1131,46 @@
     var hc = el("div", "card-head");
     hc.appendChild(el("h3", "sec-h", t("ed.content")));
     hc.appendChild(histButtons(x));
-    hc.appendChild(seg);
+    if (seg.childNodes.length) hc.appendChild(seg);
     c2.appendChild(hc);
-    if (cx.fmt === "md") {
+    if (cx.fmt === "html") {
+      var hta = el("textarea", "md-area code-area");
+      hta.value = cx.html || "";
+      hta.maxLength = C.LIM.html;
+      hta.rows = 16;
+      hta.spellcheck = false;
+      hta.setAttribute("aria-label", t("ed.html"));
+      hta.addEventListener("input", function () { typed(x); cx.html = hta.value; touchIssue(x); });
+      c2.appendChild(field(t("ed.html"), hta, t("ed.htmlHint")));
+      var tta = el("textarea", "md-area");
+      tta.value = cx.txt || "";
+      tta.maxLength = C.LIM.md;
+      tta.rows = 8;
+      tta.placeholder = t("ed.txtPh");
+      tta.addEventListener("input", function () { typed(x); cx.txt = tta.value; touchIssue(x); });
+      c2.appendChild(field(t("ed.txt"), tta, t("ed.txtHint")));
+      var hacts = el("div", "acts");
+      hacts.appendChild(mini(t("ed.htmlOpen") + "\u2026", function () {
+        pickText(HTML_ACC, C.LIM.html * 2).then(function (src) {
+          if (src === null) return;
+          if (!C.sanitizeHtml(src)) { showToast(t("toast.htmlBad")); return; }
+          snap(x); cx.html = src; if (!cx.subj) cx.subj = htmlTitle(src);
+          put("issues", x); renderEditor();
+        });
+      }));
+      hacts.appendChild(mini(t("ed.txtOpen") + "\u2026", function () {
+        pickText(TXT_ACC, C.LIM.md * 4).then(function (txt) {
+          if (txt === null) return;
+          snap(x); cx.txt = String(txt).replace(/\r\n?/g, "\n").slice(0, C.LIM.md);
+          put("issues", x); renderEditor();
+        });
+      }));
+      hacts.appendChild(mini(t("ed.txtMake"), function () {
+        snap(x); cx.txt = C.htmlToText(C.sanitizeHtml(cx.html || "")).replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/gi, "").slice(0, C.LIM.md);
+        put("issues", x); renderEditor();
+      }));
+      c2.appendChild(hacts);
+    } else if (cx.fmt === "md") {
       var ta = el("textarea", "md-area");
       ta.value = cx.md;
       ta.maxLength = C.LIM.md;
@@ -1211,7 +1281,7 @@
     if (!x.l2) {
       w.appendChild(mini(t("ed.l2Add", { l: langName(b) }), function () {
         flushIssue();
-        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md });
+        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt });
         edSide = { id: x.id, l2: true };
         put("issues", x);
         renderEditor();
@@ -1453,7 +1523,7 @@
   var hist = { id: "", past: [], future: [], at: 0 };
   var HIST_MAX = 60;
   function contentOf(x) {
-    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, l2: x.l2 });
+    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, html: x.html, txt: x.txt, l2: x.l2 });
   }
   function histFor(x) {
     if (hist.id !== x.id) hist = { id: x.id, past: [], future: [], at: 0 };
@@ -1481,7 +1551,7 @@
     saveTimer = null;
     to.push(contentOf(x));
     var c = JSON.parse(from.pop());
-    ["subj", "pre", "fmt", "blocks", "md", "l2"].forEach(function (k) { x[k] = c[k]; });
+    ["subj", "pre", "fmt", "blocks", "md", "html", "txt", "l2"].forEach(function (k) { if (c[k] === undefined) delete x[k]; else x[k] = c[k]; });
     var cur = C.issue(data, x.id);
     if (!cur || cur.st !== "draft") return false;
     put("issues", x);

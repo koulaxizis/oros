@@ -62,6 +62,13 @@ Each list's look is set on the list card (`Edit`): theme and colour, and also th
 
 `Preview` shows the issue on a phone and a desktop (and in each language), `Send a test` mails it to you, and `Check` lists what must be fixed before sending.
 
+## Issues in your own HTML
+`New` › `From HTML file…` opens an e-mail made elsewhere (a template, a draft written for you, one campaign saved from another service) as an HTML issue. It is sent as it is, after cleaning: tables, inline styles, links and https pictures stay; scripts, forms, outside style sheets and tracking pixels (pictures of 1 × 1 pixel) are removed. The HTML's title becomes the subject.
+- A link to `{$unsubscribe}` or `{{UNSUBSCRIBE}}` becomes the list's unsubscribe link. Without one, the list's footer (your address and the unsubscribe link) is added below.
+- `{first}` and `{name}` work as in other issues. Any other `{{SLOT}}` left in the HTML or the plain text stops the send until you fill it.
+- `Plain text` is the text-only part of the e-mail. Leave it empty and it is made from the HTML when it is sent, or use `Open a .txt file` or `Make from the HTML` to edit it.
+- `Save as template` keeps the HTML as one of your templates, for example your own monthly design.
+
 ## Writing with the Assistant
 Tell the [Assistant](app:assistant) what goes in, piece by piece as it reaches you: "add the interview from this link", "a short note that the fair starts on Friday, with a button to the programme". It answers with a card listing the blocks (heading, text, quote, button, list, divider, space, picture, picture and text, products; a banner is a picture with a link). `Open in Newsletter` asks which draft they go into, or starts a new one; the open draft takes them at once. Each block lands in its place: the top story first, then news, products, banners and offers, and a closing note last, all before the footer; blocks you placed yourself stay where they are. `Undo` in the message takes them out again. Pictures are copied from their web address when the site allows it; when it does not, the message says so and you pick that picture in its block. "Our latest release" comes from your own shop (Settings › Connected services): Newsletter reads the newest products itself when they are added, with their prices and pictures. Other publishers' products come from their pages, with their own links. Nothing is added before you choose, and the Assistant never sends: you send from here, as always. When you tell it the issue is ready, its card `Open the check` opens the draft's check here: what is missing, and when nothing is, the send screen, where you press Send.
 

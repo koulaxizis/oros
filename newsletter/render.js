@@ -485,6 +485,7 @@
   function email(o) {
     var lang = o.lang === "el" ? "el" : "en", l = o.list;
     var x = o.issue.l2 ? C.contentFor(o.issue, lang) : o.issue;     // the version in their language
+    if (x.fmt === "html") return htmlEmail(o, x, lang);
     var th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
     var st = lookOf(l, th, lang);
     var body = blocksOf(x).map(function (b) { return blockHtml(b, st, o.img, o.sub); }).join("");
@@ -499,6 +500,28 @@
     var text = blocksOf(x).map(function (b) { return blockText(b, o.sub, lang); }).filter(Boolean).join("\n\n") + "\n\n-- \n" + footText(o, lang);
     var subj = personalize(x.subj, o.sub);
     return { subject: (o.test ? S(lang, "test") : "") + subj, html: html, text: text };
+  }
+  // An HTML issue (W2): the user's own cleaned HTML as it is, names
+  // put in (escaped), {{UNSUBSCRIBE}} filled with the one-click page
+  // (or the mailto); without that link the list's footer is added.
+  // The plain text is the issue's own (txt) or built from the HTML.
+  function htmlEmail(o, x, lang) {
+    var l = o.list, th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
+    var who = o.sub ? { name: esc(o.sub.name || "") } : null;
+    var web = o.unsubWeb && /^https:\/\//.test(o.unsubWeb) ? o.unsubWeb : "";
+    var link = web || o.unsub || "#";
+    var raw = String(x.html || "");
+    var has = raw.indexOf(C.UNSUB) >= 0;
+    var body = personalize(raw, who).split(C.UNSUB).join(esc(link));
+    var pre = x.pre ? "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all\">" + esc(personalize(x.pre, o.sub)) +
+                      new Array(40).join("&#8204;&nbsp;") + "</div>" : "";
+    var html = pre + body + (has ? "" : "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><td align=\"center\">" +
+      footer(o, th, accent, lang) + "</td></tr></table>");
+    var own = String(x.txt || "").trim();
+    var text = (own ? personalize(own, o.sub).split(C.UNSUB).join(link === "#" ? "" : link)
+                    : personalize(C.htmlToText(raw.split(C.UNSUB).join("#")), o.sub))
+               + "\n\n-- \n" + footText(o, lang);
+    return { subject: (o.test ? S(lang, "test") : "") + personalize(x.subj, o.sub), html: html, text: text };
   }
   function footer(o, th, accent, lang) {
     var l = o.list, p = [];

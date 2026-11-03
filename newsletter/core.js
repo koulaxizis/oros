@@ -15,7 +15,8 @@
 //                via: "smtp"|"api" (a provider's HTTP API, phase 3C), dom (Mailgun domain) }],
 //     lists:  [{ id, m, name, chan, from, fromName, reply, lang, addr, why, theme, color, salt }],
 //     subs:   [{ id, m, list, email, name, lang, tags[], src, basis, at, conf, off, offSt, inv, bnc, c }],
-//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md", blocks[], md, tags[], seg,
+//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md"|"html", blocks[], md, tags[], seg,
+//                html, txt (only with fmt "html": the cleaned HTML, its own plain text),
 //                l2: { lang, subj, pre, fmt, blocks[], md }|null   (the other-language version),
 //                st: "draft"|"sched"|"sending"|"paused"|"sent", when (sched: start time),
 //                lock: { dev, at }|null, start, done, n, err, fail: { subId: code } }],
@@ -45,7 +46,7 @@
     chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
     name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
     imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50, rss: 20, archive: 500, blks: 100,
-    dataChars: 2500000, cn: 120, cols: 30
+    dataChars: 2500000, cn: 120, cols: 30, html: 100000
   };
   var KINDS = ["mail", "smtp"];
   var SECS = { 465: "tls", 587: "starttls" };
@@ -550,8 +551,8 @@
     var st = ISSUE_STS.indexOf(x.st) >= 0 ? x.st : "draft";
     var when = st === "sched" ? nat(x.when) : 0;
     if (st === "sched" && !when) st = "draft";
-    var c = normContent(x);
-    return {
+    var c = withHtml(normContent(x), x);
+    var o = {
       id: x.id, m: nat(x.m), list: validId(x.list) ? x.list : "",
       subj: c.subj, pre: c.pre, fmt: c.fmt, blocks: c.blocks, md: c.md,
       tags: normTags(x.tags), seg: validId(x.seg) ? x.seg : "",
@@ -560,19 +561,31 @@
       start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
       err: oneLine(x.err, 300), fail: fail, imp: x.imp === 1 && st === "sent" ? 1 : 0
     };
+    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; }
+    return o;
   }
   // The written part of an issue or template (subject … Markdown).
   function normContent(x) {
     return {
       subj: oneLine(x.subj, LIM.subj), pre: oneLine(x.pre, LIM.pre),
-      fmt: x.fmt === "md" ? "md" : "blocks",
+      fmt: x.fmt === "md" || x.fmt === "html" ? x.fmt : "blocks",
       blocks: (Array.isArray(x.blocks) ? x.blocks : []).map(normBlock).filter(Boolean).slice(0, LIM.blocks),
       md: multi(x.md, LIM.md)
     };
   }
+  // fmt "html" (W2): the cleaned HTML and its own plain text (empty:
+  // built from the HTML). Both keys only on HTML content, so other
+  // records keep their bytes. An older orOS reads such an issue as an
+  // empty "blocks" one and can't send it ("noBody").
+  function withHtml(c, x) {
+    if (c.fmt !== "html") return c;
+    c.html = typeof x.html === "string" && x.html.length <= LIM.html ? sanitizeHtml(x.html) : "";
+    c.txt = multi(x.txt, LIM.md);
+    return c;
+  }
   function normL2(v) {
     if (!v || typeof v !== "object" || (v.lang !== "en" && v.lang !== "el")) return null;
-    var c = normContent(v);
+    var c = withHtml(normContent(v), v);
     c.lang = v.lang;
     return c;
   }
@@ -582,9 +595,11 @@
              match: x.match === "all" ? "all" : "any", lang: x.lang === "en" || x.lang === "el" ? x.lang : "" };
   }
   function normTpl(x) {
-    var c = normContent(x);
-    return { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
-             blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
+    var c = withHtml(normContent(x), x);
+    var o = { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
+              blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
+    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; }
+    return o;
   }
   // A feed that becomes issues (RSS to e-mail), run by the device that
   // set it up (dev), on its schedule; `last` is the date of the newest
@@ -672,6 +687,157 @@
       var d = JSON.parse(raw);
       return d && typeof d === "object" ? normalize(d) : null;
     } catch (e) { return null; }
+  }
+
+  // ---------- HTML issues (W2 2026-11): the user's own e-mail HTML ----------
+  // sanitizeHtml: an allowlist, never a DOM (it runs in Node too).
+  // Kept: layout and text tags, inline styles without url()/expression,
+  // links http(s)/mailto/#, pictures https only (no 1×1 tracking
+  // pixels). Dropped with their content: script, style, head, title,
+  // iframe, object, embed, svg, math, template, noscript, form parts.
+  // Other tags (html, body, unknown) are dropped, their text kept.
+  // The unsubscribe placeholders {$unsubscribe}, {{UNSUBSCRIBE}},
+  // [unsubscribe] in a link become {{UNSUBSCRIBE}} (render fills it).
+  var H_TAGS = ("table thead tbody tfoot tr td th caption colgroup col div span p br hr a img h1 h2 h3 h4 h5 h6 strong b em i u s " +
+                "small sup sub ul ol li blockquote center font pre code").split(" ");
+  var H_VOID = { br: 1, hr: 1, img: 1, col: 1 };
+  var H_DROP = ("script style head title iframe frame frameset object embed applet svg math template noscript form input " +
+                "textarea select option button xml base link meta audio video canvas noembed").split(" ");
+  var H_ATTRS = ("style align valign width height bgcolor border cellpadding cellspacing role colspan rowspan alt title " +
+                 "lang dir color face size").split(" ");
+  var UNSUB = "{{UNSUBSCRIBE}}";
+  var SLOT_RE = /^\{\{\s*[A-Za-z0-9_]{1,40}\s*\}\}$/;
+  var UNSUB_RE = /^(\{\$unsubscribe\}|\{\{\s*unsubscribe\s*\}\}|\[unsubscribe\]|\{unsubscribe\})$/i;
+  function hDecode(s) {
+    return String(s).replace(/&(#x[0-9a-f]{1,6}|#[0-9]{1,7}|amp|lt|gt|quot|apos|nbsp);?/gi, function (m, e) {
+      var k = e.toLowerCase();
+      if (k.charAt(0) === "#") {
+        var n = k.charAt(1) === "x" ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10);
+        return n > 0 && n < 0x110000 && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : "";
+      }
+      return { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " " }[k];
+    });
+  }
+  function hEsc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  // text between tags: keep valid entities, escape the rest
+  function hText(s) {
+    return String(s).replace(/&(?!(#x[0-9a-f]{1,6}|#[0-9]{1,7}|[a-z][a-z0-9]{1,31});)/gi, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function hStyle(v) {
+    var out = [];
+    String(v).split(";").forEach(function (d) {
+      var i = d.indexOf(":");
+      if (i < 0) return;
+      var p = d.slice(0, i).trim().toLowerCase(), val = d.slice(i + 1).trim();
+      if (!/^-?[a-z][a-z-]{0,40}$/.test(p) || !val || val.length > 300) return;
+      if (/url\s*\(|expression|javascript:|vbscript:|@import|behavior|binding|[<>\\{}]|\/\*/i.test(val)) return;
+      if (/^(position|behavior|-moz-binding)$/.test(p)) return;
+      out.push(p + ":" + val);
+    });
+    return out.join(";");
+  }
+  function hUrl(v, img) {
+    var u = hDecode(v).trim();
+    if (!img && UNSUB_RE.test(u)) return UNSUB;
+    if (SLOT_RE.test(u)) return u;                // a slot still to fill: Check stops the send
+    if (!img && u === "#") return "#";
+    if (/[\x00-\x1f"'<>\\`]/.test(u) || u.length > 2000) return "";
+    if (img) return /^https:\/\/[^\/\s]+/i.test(u) ? u : "";
+    return safeUrl(u);
+  }
+  // one tag's attributes (the text after the name) → [[name, value]]
+  function hAttrs(s) {
+    var out = [], re = /([^\s"'>\/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g, m;
+    while ((m = re.exec(s)) && out.length < 40) {
+      out.push([m[1].toLowerCase(), m[2] !== undefined ? m[2] : m[3] !== undefined ? m[3] : m[4] !== undefined ? m[4] : ""]);
+    }
+    return out;
+  }
+  function sanitizeHtml(src) {
+    src = String(src || "").slice(0, LIM.html * 2).replace(/\r\n?/g, "\n").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "");
+    var out = "", i = 0, n = src.length, skip = null, open = [];
+    while (i < n) {
+      var lt = src.indexOf("<", i);
+      if (lt < 0) { if (!skip) out += hText(src.slice(i)); break; }
+      if (!skip) out += hText(src.slice(i, lt));
+      // comments, doctype, CDATA, processing instructions
+      if (src.substr(lt, 4) === "<!--") { var ce = src.indexOf("-->", lt + 4); i = ce < 0 ? n : ce + 3; continue; }
+      if (src.charAt(lt + 1) === "!" || src.charAt(lt + 1) === "?") { var de = src.indexOf(">", lt); i = de < 0 ? n : de + 1; continue; }
+      var m = /^<(\/?)([a-zA-Z][a-zA-Z0-9-]*)/.exec(src.slice(lt, lt + 64));
+      if (!m) { if (!skip) out += "&lt;"; i = lt + 1; continue; }
+      // the end of the tag, outside quotes
+      var j = lt + m[0].length, q = "";
+      while (j < n) {
+        var ch = src.charAt(j);
+        if (q) { if (ch === q) q = ""; } else if (ch === "\"" || ch === "'") q = ch; else if (ch === ">") break;
+        j++;
+      }
+      var close = m[1] === "/", name = m[2].toLowerCase(), rest = src.slice(lt + m[0].length, j);
+      i = j + 1;
+      if (skip) { if (close && name === skip) skip = null; continue; }
+      if (H_DROP.indexOf(name) >= 0) {
+        if (!close && !H_VOID[name] && !/\/\s*$/.test(rest) && name !== "input" && name !== "meta" && name !== "link" && name !== "base") skip = name;
+        continue;
+      }
+      if (H_TAGS.indexOf(name) < 0) continue;
+      if (close) {
+        if (H_VOID[name]) continue;
+        var k = open.lastIndexOf(name);
+        if (k < 0) continue;
+        while (open.length > k) out += "</" + open.pop() + ">";
+        continue;
+      }
+      var attrs = hAttrs(rest), keep = [], w = 0, h = 0, ok = true;
+      attrs.forEach(function (a) {
+        var an = a[0], av = a[1];
+        if (/^on/.test(an)) return;
+        if (an === "href" && name === "a") { var u = hUrl(av, false); if (u) keep.push(["href", u]); return; }
+        if (an === "src" && name === "img") { var s = hUrl(av, true); if (s) keep.push(["src", s]); else ok = false; return; }
+        if (H_ATTRS.indexOf(an) < 0) return;
+        if (an === "style") { var st = hStyle(hDecode(av)); if (st) keep.push(["style", st]); return; }
+        var v = hDecode(av).replace(/[\x00-\x1f]/g, "").slice(0, 300);
+        if (an === "width") w = parseInt(v, 10) || 0;
+        if (an === "height") h = parseInt(v, 10) || 0;
+        if ((an === "bgcolor" || an === "color") && !/^#?[0-9a-z]{1,20}$/i.test(v)) return;
+        keep.push([an, v]);
+      });
+      if (name === "img") {
+        if (!ok || !keep.some(function (a) { return a[0] === "src"; })) continue;
+        if ((w > 0 && w <= 2) || (h > 0 && h <= 2)) continue;        // a tracking pixel
+      }
+      out += "<" + name + keep.map(function (a) { return " " + a[0] + "=\"" + hEsc(a[1]) + "\""; }).join("") + ">";
+      if (!H_VOID[name]) { open.push(name); if (open.length > 200) return ""; }
+      if (out.length > LIM.html) break;
+    }
+    while (open.length) out += "</" + open.pop() + ">";
+    return out.length > LIM.html ? "" : out.trim();
+  }
+  // HTML (already safe) → plain text: block tags become line breaks,
+  // links "text (address)", pictures their alt text.
+  function htmlToText(html) {
+    var s = String(html || "")
+      .replace(/<a\s[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, function (m, u, t) {
+        var txt = t.replace(/<[^>]*>/g, "").trim(), url = hDecode(u);
+        if (url === UNSUB || url === "#" || !txt) return t;
+        return t + " (" + url.replace(/^mailto:/i, "") + ")";
+      })
+      .replace(/<img\s[^>]*alt="([^"]*)"[^>]*>/gi, " $1 ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "\n- ")
+      .replace(/<\/(p|div|h[1-6]|tr|table|blockquote|ul|ol|pre|center)>/gi, "\n\n")
+      .replace(/<\/t[dh]>/gi, " ")
+      .replace(/<[^>]*>/g, "");
+    return hDecode(s).replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  // {{SLOT}} placeholders still in an HTML issue (not the unsubscribe one)
+  function htmlSlots(html) {
+    var out = [], m, re = /\{\{\s*([A-Za-z0-9_]{1,40})\s*\}\}/g;
+    while ((m = re.exec(String(html || "")))) {
+      if (m[1].toUpperCase() !== "UNSUBSCRIBE" && out.indexOf(m[1]) < 0) out.push(m[1]);
+    }
+    return out;
   }
 
   // ---------- subscriber status ----------
@@ -802,7 +968,9 @@
   // second-language version when it is that language, else the main.
   function contentFor(x, lang) {
     var v = x.l2 && x.l2.lang === lang ? x.l2 : x;
-    return { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
+    var o = { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
+    if (v.fmt === "html") { o.html = v.html || ""; o.txt = v.txt || ""; }
+    return o;
   }
   // A scheduled issue whose time has come, on the device that
   // scheduled it (lock.dev: the sending passwords live there).
@@ -1284,6 +1452,13 @@
         if (letters.length >= 8 && letters === letters.toUpperCase()) add("warn", "shouty");
         if (/!!|\$\$\$|€€€/.test(v.subj)) add("warn", "shouty");
       }
+      if (v.fmt === "html") {
+        if (!htmlToText(v.html).replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/gi, "").trim() && !/<img\s/i.test(v.html || "")) add("err", "noBody");
+        if (htmlSlots(v.html).length || htmlSlots(v.txt).length) add("err", "slots");
+        if (/<img\s[^>]*src="https:/i.test(v.html || "")) add("warn", "webImgs");
+        if (badPlaceholders((htmlToText(v.html) + " " + v.txt).replace(/\{\{[^{}]*\}\}/g, "") + " " + v.subj)) add("warn", "placeholder");
+        return;
+      }
       var hasBody = v.fmt === "md" ? !!v.md.trim() : v.blocks.some(function (b) {
         if (!known(b)) return false;
         if (b.k === "img" || b.k === "video") return !!(b.f || (b.k === "video" && b.url));
@@ -1614,7 +1789,8 @@
     byToken: byToken, byCode: byCode,
     audience: audience, sentSet: sentSet, progress: progress, canSend: canSend, invitesDue: invitesDue, usedToday: usedToday,
     parseCsv: parseCsv, peopleFromRows: peopleFromRows, exportDate: exportDate, exportStatus: exportStatus,
-    colValue: colValue, applyColumnTags: applyColumnTags, peopleFromText: peopleFromText, planImport: planImport,
+    colValue: colValue, applyColumnTags: applyColumnTags,
+    sanitizeHtml: sanitizeHtml, htmlToText: htmlToText, htmlSlots: htmlSlots, UNSUB: UNSUB, peopleFromText: peopleFromText, planImport: planImport,
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,
