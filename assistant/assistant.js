@@ -4146,14 +4146,15 @@
   // An item that can't take the change stays off the card and is named
   // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
-  var MANY_DEL_APP = "kanban";   // KB-DEL: the one app whose items refs may delete
+  // KB-DEL, AS-MANYDEL (wave 3): the apps whose items refs may delete, many at once.
+  var MANY_DEL_APPS = { kanban: 1, todo: 1, calendar: 1, notes: 1, bookmarks: 1, contacts: 1 };
   // AS-MOVE (wave 2): the apps whose items refs may move, many at once.
   var MANY_MOVE_APPS = { kanban: 1, todo: 1, notes: 1, bookmarks: 1, calendar: 1 };
   function changeMany(c, args, apps) {
     // KB-DEL (Chris 2026-11-03): delete also takes refs, for Kanban
     // cards only (checked below, once the app is known).
     var del = args.action === "delete", mv = args.action === "move";
-    if (args.action !== "update" && !del && !mv) return Promise.resolve({ content: "Error: refs is only for update, move (Kanban, To-Do, Notes, Bookmarks, Calendar) and delete (Kanban); change other things one item at a time with ref.", err: 1 });
+    if (args.action !== "update" && !del && !mv) return Promise.resolve({ content: "Error: refs is only for update, move (Kanban, To-Do, Notes, Bookmarks, Calendar) and delete (those and Contacts); change other things one item at a time with ref.", err: 1 });
     if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
     var refs = [];
     args.refs.forEach(function (x) {
@@ -4184,7 +4185,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    if (del && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted only in Kanban; delete these one at a time with ref.", err: 1 });
+    if (del && !MANY_DEL_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be deleted in Kanban, To-Do, Calendar, Notes, Bookmarks and Contacts only; delete these one at a time with ref.", err: 1 });
     if (mv && !MANY_MOVE_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be moved in Kanban, To-Do, Notes, Bookmarks and Calendar only.", err: 1 });
     var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {

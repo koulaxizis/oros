@@ -1694,7 +1694,7 @@
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
-      "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels, move: notebook = another notebook, with the pages under it) · " +
+      "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels, move: notebook = another notebook, with the pages under it, delete: the pages under it move up one level) · " +
       "timesheet (an entry, update or reschedule: title / date / start / end, in local time) · " +
       "invoices (complete = the invoice was paid: amount = only a part, date = the day paid, how) · " +
       "chores (complete / reopen = today's turn of the chore, update: title) · " +
@@ -1711,7 +1711,7 @@
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
         refs: { type: "array", items: { type: "string" },
-                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. move: several items of one app at once (Kanban, To-Do, Notes, Bookmarks, Calendar; e.g. every task of a list from app_summary todo with list, to another list). delete: several Kanban cards at once. One card and one Undo for all." },
+                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. move: several items of one app at once (Kanban, To-Do, Notes, Bookmarks, Calendar; e.g. every task of a list from app_summary todo with list, to another list). delete: several items of one app at once (Kanban, To-Do, Calendar, Notes, Bookmarks, Contacts; e.g. every done task of a list). One card and one Undo for all." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
@@ -3108,7 +3108,7 @@
       lines.push("When a file or message holds details of people or companies (a form, a list, business cards, a vCard, a signature), look each one up first with search_data (Contacts, and CRM for customers and partners). Someone already there gets change_item with only what is new or different (changes: one entry per person, when there are several); add phones, e-mails and websites, and replace one (old_phone…) only when the file says it changed; never drop details they have. Someone not there gets " + (opts.creates && opts.creates.length ? "create_items (all of them in one call per app)" : "propose_entry") + ". Tax numbers and tax office go to the CRM customer (tax_id, tax_office) when there is one; bank details or a bio, which have no field, go in note_add, briefly, only if the user wants them there.");
     }
     var changeLine = canChange
-      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items, or to delete several Kanban cards at once). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
+      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items, or to move or delete several items of one app at once). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
       : "You cannot change or delete anything in orOS.";
     if (opts.builtin) {
       lines.push("You cannot create, change or delete anything in orOS.");

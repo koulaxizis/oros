@@ -146,7 +146,7 @@ Ask, for example, "mark the plumber call as done", "move the dentist to Friday a
 - After a change the card says what happened and has `Undo`. Undo works for 30 days, also later from `Change history`, as long as the item wasn't changed since.
 - If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
 - The same change to several items (for example "give every event without a label the label Work") comes as one card, up to 200 items: on top what every item gets, then the first 10 items (`Show all` lists the rest); one `Apply` changes them all, and `Undo` takes them all back.
-- Kanban cards can also be deleted many at once: "delete every card in Done on the Book board" comes as one card listing them all, up to 200; `Delete` removes them and `Undo` brings them all back to their places. In the other apps the assistant deletes one item at a time.
+- Kanban cards can also be deleted many at once: "delete every card in Done on the Book board" comes as one card listing them all, up to 200; `Delete` removes them and `Undo` brings them all back to their places. To-Do tasks, Calendar events, Notes pages, bookmarks and contacts go the same way, many on one card ("delete every done task in Inbox"); in the other apps the assistant deletes one item at a time.
 - A Kanban card can also move to another board: "move these cards to the Music board" (and, if you like, which column; otherwise its first). One card or many come on one card with `Undo`. Labels go along by name; one the other board doesn't have is left off.
 - Tasks, notes, bookmarks and events move too: "move these tasks to the Music list" (To-Do: to the top of that list), "put this page in the Work notebook" (Notes: with the pages under it; labels go along by name), "move this link to Work › Tools" (Bookmarks: a folder by name or whole path, or Unsorted), "move the concert to my Home calendar" (Calendar: an event's calendar is its label). One item or many come on one card with `Undo`. A list, notebook or folder that doesn't exist is never swapped for another: the assistant tells you the ones you have.
 - Different changes to several items (for example the new details of ten people from a list) also come as one card, each item with its own `Before` and `After`. In Contacts every row has a tick: untick what should stay as it is.
@@ -162,7 +162,7 @@ What it can change:
 - [Media Shelf](app:shelf): change a title's status (want to, in progress, done, dropped), name or note, delete it.
 - [Habits](app:habits): tick or untick a yes/no habit for today, rename a habit.
 - [Plant Care](app:plants): mark a plant watered today, rename it, change its notes.
-- [Notes](app:notes): rename a page, replace its text or add a paragraph at the end ("add day 2: Vatican to my Rome note"), change its labels.
+- [Notes](app:notes): rename a page, replace its text or add a paragraph at the end ("add day 2: Vatican to my Rome note"), change its labels, move it to another notebook, delete it (the pages under it move up one level and stay).
 - [Timesheet](app:timesheet): change a time entry's title, day, start or end.
 - [Invoices](app:invoices): mark an issued invoice paid, in full or in part ("ACME paid 50 of invoice 12 by bank transfer yesterday"): it adds the payment, as `Add payment` does. Everything else is done in Invoices.
 - [Chore Wheel](app:chores): tick or untick today's chore (for the person the wheel gives it to), rename a chore.

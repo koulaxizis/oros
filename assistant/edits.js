@@ -2498,7 +2498,7 @@
   // core, which keeps the stored copy in the app's canonical form).
   // Known here so the tool and the prompt can offer them.
   var LAZY = {
-    notes:     { key: "oros-notes-data",     actions: ["update", "move"], src: [] },
+    notes:     { key: "oros-notes-data",     actions: ["update", "move", "delete"], src: [] },
     timesheet: { key: "oros-timesheet-data", actions: ["reschedule", "update"], src: ["../timesheet/core.js"], g: "orosTimesheetCore" },
     invoices:  { key: "oros-invoices-data",  actions: ["complete"], src: ["../invoices/core.js"], g: "OrosInvoicesCore" },
     chores:    { key: "oros-chores-data",    actions: ["complete", "reopen", "update"], src: ["../chores/core.js"], g: "OrosChoresCore" },
