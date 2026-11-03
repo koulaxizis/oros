@@ -45,7 +45,7 @@
     chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
     name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
     imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50, rss: 20, archive: 500, blks: 100,
-    dataChars: 2500000
+    dataChars: 2500000, cn: 120, cols: 30
   };
   var KINDS = ["mail", "smtp"];
   var SECS = { 465: "tls", 587: "starttls" };
@@ -276,6 +276,10 @@
       inv: nat(x.inv), bnc: clamp(x.bnc, 0, 99, 0),
       c: typeof x.c === "string" && x.c.length <= 60 && !/[\x00-\x1f]/.test(x.c) ? x.c : ""
     };
+    // consent note (W1, 2026-11): where and how they signed up, e.g.
+    // "MailerLite, form Popup"; left out while empty
+    var cn = oneLine(x.cn, LIM.cn);
+    if (cn) o.cn = cn;
     var ask = nat(x.ask);                // when "Stay?" was sent (left out while never)
     if (ask) o.ask = ask;
     return o;
@@ -981,24 +985,63 @@
     if (row.some(function (c) { return c.trim(); })) rows.push(row);
     return rows;
   }
-  // CSV rows → [{ email, name, tags[], lang }] + how many rows had no address.
-  function peopleFromRows(rows) {
-    if (!rows.length) return { people: [], bad: 0 };
+  // A date from an export: ISO "2024-03-02", "2024-03-02 10:11(:12)"
+  // or "2024-03-02T10:11:12Z", read as UTC. Before 2000 or in the
+  // future (more than a day) → 0.
+  function exportDate(v, now) {
+    var m = /^\s*(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(v || ""));
+    if (!m) return 0;
+    var t = Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    if (!isFinite(t) || +m[1] < 2000 || +m[2] < 1 || +m[2] > 12 || +m[3] < 1 || +m[3] > 31) return 0;
+    return t > (now || Date.now()) + DAY ? 0 : t;
+  }
+  // A status word from an export → "on" | "pend" | "off" | "bounce" | "spam" | "".
+  function exportStatus(v) {
+    var w = fold(String(v || "").trim()).replace(/[\s_-]+/g, "");
+    if (/^(active|subscribed|confirmed|ενεργ|εγγεγραμμεν)/.test(w)) return "on";
+    if (/^(unconfirmed|pending|waiting|σεαναμονη|ανεπιβεβαιωτ)/.test(w)) return "pend";
+    if (/^(unsubscribed|unsub|optedout|cleaned|αποεγγραφ|διαγραφ)/.test(w)) return "off";
+    if (/^(bounced|bounce|hardbounce|invalid)/.test(w)) return "bounce";
+    if (/^(junk|spam|complain|abuse)/.test(w)) return "spam";
+    return "";
+  }
+  // Columns that mean "has bought": their tag is suggested (W1).
+  var BUY_COL = /(ordercount|orderscount|numorders|orders|totalspent|totalspend|spent|παραγγελιες)$/;
+  // CSV rows → { people: [{ email, name, tags[], lang, st, at0, cn, x[] }],
+  //              bad (rows without an address),
+  //              hasSt (a status column was found),
+  //              cols: [{ i, name, buy }] (the other columns, for the
+  //              mapping step; x[i] of each person is that column's cell) }
+  function peopleFromRows(rows, now) {
+    if (!rows.length) return { people: [], bad: 0, hasSt: false, cols: [] };
+    var raw = rows[0].map(function (h) { return oneLine(String(h), 60); });
     var head = rows[0].map(function (h) { return fold(String(h).trim()).replace(/[\s_-]+/g, ""); });
-    var col = function (re) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) return i; return -1; };
-    var ie = col(/^(e?mail|emailaddress|email1|ηλεκτρονικοταχυδρομειο|διευθυνσηemail)$/);
+    var used = {};
+    var col = function (re) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) { used[i] = 1; return i; } return -1; };
+    var ie = col(/^(e?mail|emailaddress|email1|subscriber|ηλεκτρονικοταχυδρομειο|διευθυνσηemail)$/);
     var hasHead = ie >= 0;
     var iname = col(/^(name|fullname|ονομα|ονοματεπωνυμο|displayname)$/);
     var ifirst = col(/^(firstname|first|givenname|μικροονομα)$/);
     var ilast = col(/^(lastname|last|surname|familyname|επωνυμο)$/);
     var itags = col(/^(tags?|groups?|labels?|ετικετεσ|ομαδεσ)$/);
     var ilang = col(/^(lang|language|γλωσσα)$/);
+    var ist = col(/^(status|subscriberstatus|state|κατασταση)$/);
+    var idate = col(/^(subscribed|subscribedat|datesubscribed|subscriptiondate|signupdate|signedupat|optintime|optinat|dateadded|createdat|created|ημερομηνιαεγγραφησ)$/);
+    var isrc = col(/^(source|signupsource|form|signupform|πηγη)$/);
     var body = rows;
-    if (hasHead) body = rows.slice(1);
-    else {
+    var cols = [];
+    if (hasHead) {
+      body = rows.slice(1);
+      for (var c = 0; c < head.length && cols.length < LIM.cols; c++) {
+        if (used[c] || !head[c]) continue;
+        // a column with no value in any row is left out of the mapping
+        if (!body.some(function (r) { return colValue(r[c]); })) continue;
+        cols.push({ i: c, name: raw[c] || String(c + 1), buy: BUY_COL.test(head[c]) });
+      }
+    } else {
       // no header: the first column holding an address in the first row
       ie = rows[0].findIndex(function (c) { return validEmail(String(c).trim()); });
-      if (ie < 0) return { people: [], bad: rows.length };
+      if (ie < 0) return { people: [], bad: rows.length, hasSt: false, cols: [] };
     }
     var people = [], bad = 0;
     body.forEach(function (r) {
@@ -1006,12 +1049,43 @@
       if (!email) { bad++; return; }
       var name = iname >= 0 ? String(r[iname] || "") : "";
       if (!name && (ifirst >= 0 || ilast >= 0)) name = [ifirst >= 0 ? r[ifirst] : "", ilast >= 0 ? r[ilast] : ""].join(" ");
+      // "Name" + "Last name" (MailerLite): the name column is the first name
+      else if (name && ifirst < 0 && ilast >= 0) {
+        var ln = String(r[ilast] || "").trim();
+        if (ln && name.indexOf(ln) < 0) name = name.trim() + " " + ln;
+      }
       var tags = itags >= 0 ? String(r[itags] || "").split(/[,;|]/) : [];
       var lang = ilang >= 0 ? fold(String(r[ilang] || "")).trim() : "";
-      people.push({ email: email, name: oneLine(name, LIM.name), tags: normTags(tags),
-                    lang: /^(el|gr|ελληνικα|greek)/.test(lang) ? "el" : (/^(en|english|αγγλικα)/.test(lang) ? "en" : "") });
+      var p = { email: email, name: oneLine(name, LIM.name), tags: normTags(tags),
+                lang: /^(el|gr|ελληνικα|greek)/.test(lang) ? "el" : (/^(en|english|αγγλικα)/.test(lang) ? "en" : "") };
+      if (ist >= 0) p.st = exportStatus(r[ist]);
+      if (idate >= 0) p.at0 = exportDate(r[idate], now);
+      if (isrc >= 0) p.cn = oneLine(r[isrc], LIM.cn);
+      if (cols.length) p.x = cols.map(function (k) { return String(r[k.i] === undefined ? "" : r[k.i]); });
+      people.push(p);
     });
-    return { people: people, bad: bad };
+    return { people: people, bad: bad, hasSt: ist >= 0, cols: cols };
+  }
+  // Is a cell "set"? Empty, 0, 0.00, false, no, όχι are not.
+  function colValue(v) {
+    var w = fold(String(v === undefined || v === null ? "" : v).trim());
+    return !!w && !/^(0+([.,]0+)?|false|no|n|οχι|-)$/.test(w);
+  }
+  // The mapping step: tags[k] is the tag for column k of cols (empty:
+  // the column is left out). Each person gets the tag when the cell is
+  // set; several columns may give the same tag. Returns new people.
+  function applyColumnTags(people, tags) {
+    tags = (tags || []).map(function (tg) { return normTags([tg])[0] || ""; });
+    if (!tags.some(Boolean)) return people;
+    return people.map(function (p) {
+      var add = [];
+      (p.x || []).forEach(function (v, k) { if (tags[k] && colValue(v)) add.push(tags[k]); });
+      if (!add.length) return p;
+      var q = {};
+      Object.keys(p).forEach(function (k) { q[k] = p[k]; });
+      q.tags = normTags((p.tags || []).concat(add));
+      return q;
+    });
   }
   // Pasted text: "Name <a@b>, c@d" or one per line.
   function peopleFromText(text) {
@@ -1028,27 +1102,51 @@
     return { people: people, bad: bad };
   }
   // What adding `people` to a list would do. Nothing is changed.
-  //   → { add: [subscriber], dup, supp, left, over, bad }
+  //   → { add: [subscriber], leave: [subscriber], suppAdd: [hash],
+  //       dup, supp, left, over, bad }
   // dup: already on the list (kept as they are); supp: deleted for good
   // earlier; left: unsubscribed or bounced earlier (an import never
   // brings them back); over: past the subscriber limit.
+  // A person whose status (their own st, or opts.st for the whole file)
+  // is off / bounce / spam is never added: someone on the list now is
+  // marked as left (leave), anyone else goes on the suppression list as
+  // a fingerprint only (suppAdd), so no later import can add them.
+  // opts.rowSt: read each person's own st (CSV with a status column);
+  // opts.cn: the consent note for people whose row has none.
   function planImport(d, listId, people, opts) {
     opts = opts || {};
     var now = opts.now || Date.now();
     var basis = BASES.indexOf(opts.basis) >= 0 ? opts.basis : "optin";
     var src = SRCS.indexOf(opts.src) >= 0 ? opts.src : "csv";
+    var fileSt = ["on", "off", "bounce", "spam"].indexOf(opts.st) >= 0 ? opts.st : "";
+    var note = oneLine(opts.cn, LIM.cn);
     var supp = {};
     d.supp.forEach(function (h) { supp[h] = 1; });
     var existing = {};
     d.subs.forEach(function (s) { existing[s.id] = s; });
     var room = LIM.subs - live(d.subs).length;
-    var out = { add: [], dup: 0, supp: 0, left: 0, over: 0, bad: opts.bad || 0 };
+    var out = { add: [], leave: [], suppAdd: [], dup: 0, supp: 0, left: 0, over: 0, bad: opts.bad || 0 };
     var seen = {};
     people.forEach(function (p) {
       var id = subId(listId, p.email);
       if (seen[id]) { out.dup++; return; }
       seen[id] = 1;
       var cur = existing[id];
+      var st = fileSt || (opts.rowSt && p.st) || "on";
+      if (OFF_STS.indexOf(st) >= 0) {
+        if (cur && !cur.del && OFF_STS.indexOf(status(cur)) < 0) {
+          var x = JSON.parse(JSON.stringify(cur));
+          x.m = Math.max(now, cur.m + 1); x.off = Math.max(now, x.at + 1, x.conf + 1); x.offSt = st;
+          out.leave.push(normSub(x));
+          return;
+        }
+        if (cur && !cur.del) { out.left++; return; }
+        var h = suppHash(p.email);
+        if (supp[h]) { out.supp++; return; }
+        supp[h] = 1;
+        out.suppAdd.push(h);
+        return;
+      }
       if (cur && !cur.del) {
         if (OFF_STS.indexOf(status(cur)) >= 0) out.left++;
         else out.dup++;
@@ -1056,10 +1154,12 @@
       }
       if (supp[suppHash(p.email)]) { out.supp++; return; }
       if (out.add.length >= room) { out.over++; return; }
+      var b = st === "pend" ? "optin" : basis;
+      var at = p.at0 > 0 && p.at0 <= now ? p.at0 : now;
       out.add.push(normSub({
         id: id, m: Math.max(now, cur ? cur.m + 1 : 0), list: listId, email: p.email, name: p.name,
-        lang: p.lang, tags: (p.tags || []).concat(opts.tags || []), src: src, basis: basis,
-        at: now, conf: basis === "optin" ? 0 : now, c: p.c || ""
+        lang: p.lang, tags: (p.tags || []).concat(opts.tags || []), src: src, basis: b,
+        at: at, conf: b === "optin" ? 0 : at, c: p.c || "", cn: p.cn || note
       }));
     });
     return out;
@@ -1091,7 +1191,7 @@
       subscriptions: live(d.subs).filter(function (s) { return emailKey(s.email) === k; }).map(function (s) {
         var l = list(d, s.list) || {};
         return { list: l.name || "", name: s.name, language: s.lang, tags: s.tags, status: status(s),
-                 source: s.src, basis: s.basis, consentText: l.why || "",
+                 source: s.src, basis: s.basis, consentNote: s.cn || "", consentText: l.why || "",
                  subscribed: s.at ? new Date(s.at).toISOString() : "",
                  confirmed: s.conf ? new Date(s.conf).toISOString() : "",
                  left: s.off ? new Date(s.off).toISOString() : "",
@@ -1513,7 +1613,8 @@
     live: live, list: list, chan: chan, issue: issue, sub: sub, subsOf: subsOf, counts: counts, allTags: allTags,
     byToken: byToken, byCode: byCode,
     audience: audience, sentSet: sentSet, progress: progress, canSend: canSend, invitesDue: invitesDue, usedToday: usedToday,
-    parseCsv: parseCsv, peopleFromRows: peopleFromRows, peopleFromText: peopleFromText, planImport: planImport,
+    parseCsv: parseCsv, peopleFromRows: peopleFromRows, exportDate: exportDate, exportStatus: exportStatus,
+    colValue: colValue, applyColumnTags: applyColumnTags, peopleFromText: peopleFromText, planImport: planImport,
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,

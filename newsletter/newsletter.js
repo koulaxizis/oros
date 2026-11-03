@@ -238,6 +238,11 @@
       "imp.title": "Import", "imp.paste": "Addresses", "imp.pasteHint": "One per line, or separated by commas: name@example.com or Name <name@example.com>.",
       "imp.tags": "Add these tags", "imp.basis": "On what basis", "imp.next": "Next", "imp.do": "Add {n}",
       "imp.sum": "{a} new · {d} already there · {l} left earlier (not added) · {s} deleted for good · {b} not valid · {o} over the limit",
+      "imp.st": "What the file holds", "imp.stFile": "As its status column says", "imp.st.on": "Subscribers", "imp.st.off": "People who unsubscribed", "imp.st.bounce": "Addresses that bounced", "imp.st.spam": "Spam complaints or junk",
+      "imp.stHint": "Unsubscribed, bounced and junk addresses are never added: they go on the do-not-mail list as a fingerprint, so no later import can add them, and anyone on the list now is marked as left. Exports that keep one status per file (MailerLite) need one import per file.",
+      "imp.cn": "Consent note", "imp.cnDef": "Imported from {f}, {d}", "imp.cnHint": "Kept with each person as the record of how they signed up, unless the file has its own source column.",
+      "imp.cols": "Other columns", "imp.colsHint": "Type a tag to give everyone who has a value in that column (not empty, not 0). Leave it empty and the column is not imported. Several columns may give the same tag.", "imp.buyTag": "customer",
+      "imp.sum2": "{g} go on the do-not-mail list · {u} on the list now are marked as left", "imp.done2": "{n} added · {u} marked as left · {g} on the do-not-mail list", "s.cn": "Consent: {c}", "imp.doAll": "Apply {n}",
       "imp.none": "No addresses found.", "imp.done": "Added {n}", "imp.done1": "Added 1",
       "imp.contacts": "From Contacts", "imp.cFilter": "Find…", "imp.cAll": "Select all shown", "imp.cNone": "No contacts with an e-mail address.",
       "imp.cHint": "A contact is not consent: unless they already agreed, choose \"Confirms by e-mail\".",
@@ -465,6 +470,11 @@
       "imp.title": "Εισαγωγή", "imp.paste": "Διευθύνσεις", "imp.pasteHint": "Μία ανά γραμμή ή χωρισμένες με κόμμα: name@example.com ή Όνομα <name@example.com>.",
       "imp.tags": "Πρόσθεσε αυτές τις ετικέτες", "imp.basis": "Με ποια βάση", "imp.next": "Επόμενο", "imp.do": "Προσθήκη {n}",
       "imp.sum": "{a} νέοι · {d} υπάρχουν ήδη · {l} είχαν αποχωρήσει (δεν μπαίνουν) · {s} οριστικά διαγραμμένοι · {b} μη έγκυρες · {o} πάνω από το όριο",
+      "imp.st": "Τι έχει το αρχείο", "imp.stFile": "Όπως λέει η στήλη κατάστασης", "imp.st.on": "Συνδρομητές", "imp.st.off": "Όσους διαγράφηκαν", "imp.st.bounce": "Διευθύνσεις που επέστρεψαν", "imp.st.spam": "Αναφορές spam ή junk",
+      "imp.stHint": "Διευθύνσεις που διαγράφηκαν, επέστρεψαν ή είναι junk δεν προστίθενται ποτέ: μπαίνουν στη λίστα «ποτέ ξανά» ως αποτύπωμα, ώστε καμία επόμενη εισαγωγή να μην τις προσθέσει, και όποιος είναι τώρα στη λίστα σημειώνεται ότι αποχώρησε. Οι εξαγωγές με μία κατάσταση ανά αρχείο (MailerLite) θέλουν μία εισαγωγή για κάθε αρχείο.",
+      "imp.cn": "Σημείωση συγκατάθεσης", "imp.cnDef": "Εισαγωγή από {f}, {d}", "imp.cnHint": "Μένει σε κάθε άτομο ως καταγραφή του πώς εγγράφηκε, εκτός αν το αρχείο έχει δική του στήλη πηγής.",
+      "imp.cols": "Άλλες στήλες", "imp.colsHint": "Γράψε μια ετικέτα για όσους έχουν τιμή σε αυτή τη στήλη (όχι κενό, όχι 0). Άφησέ το κενό και η στήλη δεν εισάγεται. Πολλές στήλες μπορούν να δίνουν την ίδια ετικέτα.", "imp.buyTag": "πελάτης",
+      "imp.sum2": "{g} μπαίνουν στη λίστα «ποτέ ξανά» · {u} που είναι τώρα στη λίστα σημειώνονται ότι αποχώρησαν", "imp.done2": "{n} προστέθηκαν · {u} σημειώθηκαν ότι αποχώρησαν · {g} στη λίστα «ποτέ ξανά»", "s.cn": "Συγκατάθεση: {c}", "imp.doAll": "Εφαρμογή {n}",
       "imp.none": "Δεν βρέθηκαν διευθύνσεις.", "imp.done": "Προστέθηκαν {n}", "imp.done1": "Προστέθηκε 1",
       "imp.contacts": "Από τις Επαφές", "imp.cFilter": "Εύρεση…", "imp.cAll": "Επιλογή όλων όσων φαίνονται", "imp.cNone": "Καμία επαφή με email.",
       "imp.cHint": "Μια επαφή δεν είναι συναίνεση: αν δεν έχουν ήδη συμφωνήσει, διάλεξε «Επιβεβαιώνει με email».",
@@ -2620,6 +2630,7 @@
         if (p[1]) info.appendChild(el("p", "row-sub", t(p[0], { t: when(p[1]) })));
       });
       info.appendChild(el("p", "row-sub", t("s.src", { s: t("src." + s.src) }) + " · " + t("basis." + s.basis)));
+      if (s.cn) info.appendChild(el("p", "row-sub", t("s.cn", { c: s.cn })));
       dlg.appendChild(info);
     }
     var left = [];
@@ -2681,12 +2692,25 @@
   }
 
   // Import step 2: what will happen, the basis, extra tags → add.
-  function importDialog(people, bad, src, defBasis) {
+  // opts (CSV, W1 2026-11): { hasSt, cols: [{ i, name, buy }], file }
+  // adds "What the file holds", a consent note and the column mapping.
+  function importDialog(people, bad, src, defBasis, opts) {
     var l = curList();
     if (!l) return;
+    opts = opts || {};
     if (!people.length) { showToast(src === "csv" ? t("toast.noCsv") : t("imp.none")); return; }
     var dlg = makeDialog("nl-import", t("imp.title"), true);
-    var f = {};
+    var f = {}, csv = src === "csv";
+    var cols = csv && opts.cols ? opts.cols : [];
+    if (csv) {
+      f.st = sel((opts.hasSt ? [["file", t("imp.stFile")]] : []).concat(["on", "off", "bounce", "spam"].map(function (k) {
+        return [k, t("imp.st." + k)];
+      })), opts.hasSt ? "file" : "on");
+      var sh = el("p", "hint", t("imp.stHint"));
+      var sw = field(t("imp.st"), f.st);
+      sw.appendChild(sh);
+      dlg.appendChild(sw);
+    }
     f.basis = sel(C.BASES.map(function (b) { return [b, t("basis." + b)]; }), defBasis || "optin");
     var bh = el("p", "hint", t("basis." + f.basis.value + "Hint"));
     var bw = field(t("imp.basis"), f.basis);
@@ -2694,30 +2718,89 @@
     dlg.appendChild(bw);
     f.tags = inp("text", "", 400);
     dlg.appendChild(field(t("imp.tags"), f.tags, t("s.tagsHint")));
+    if (csv) {
+      var base = String(opts.file || "").replace(/^.*[\\/]/, "").slice(0, 60) || "CSV";
+      f.cn = inp("text", t("imp.cnDef", { f: base, d: new Date().toISOString().slice(0, 10) }), 120);
+      dlg.appendChild(field(t("imp.cn"), f.cn, t("imp.cnHint")));
+    }
+    var colIns = [];
+    if (cols.length) {
+      var box = el("fieldset", "imp-cols");
+      box.appendChild(el("legend", "", t("imp.cols")));
+      box.appendChild(el("p", "hint", t("imp.colsHint")));
+      cols.forEach(function (c) {
+        var ci = inp("text", c.buy ? t("imp.buyTag") : "", 40);
+        ci.setAttribute("data-col", String(c.i));
+        colIns.push(ci);
+        box.appendChild(field(c.name, ci));
+        ci.addEventListener("input", function () { update(); });
+      });
+      dlg.appendChild(box);
+    }
     var sum = el("p", "dlg-text");
     dlg.appendChild(sum);
+    var sum2 = el("p", "dlg-text");
+    dlg.appendChild(sum2);
     var okBtn = null;
     var plan = null;
     var update = function () {
       bh.textContent = t("basis." + f.basis.value + "Hint");
-      plan = C.planImport(data, l.id, people, { basis: f.basis.value, src: src, bad: bad, tags: f.tags.value.split(",") });
+      var st = f.st ? f.st.value : "";
+      bw.hidden = st === "off" || st === "bounce" || st === "spam";
+      var ppl = colIns.length ? C.applyColumnTags(people, colIns.map(function (ci) { return ci.value; })) : people;
+      plan = C.planImport(data, l.id, ppl, { basis: f.basis.value, src: src, bad: bad, tags: f.tags.value.split(","),
+                                             st: st === "file" ? "" : st, rowSt: st === "file", cn: f.cn ? f.cn.value : "" });
       sum.textContent = t("imp.sum", { a: plan.add.length, d: plan.dup, l: plan.left, s: plan.supp, b: plan.bad, o: plan.over });
-      if (okBtn) { okBtn.textContent = t("imp.do", { n: plan.add.length }); okBtn.disabled = !plan.add.length; }
+      sum2.textContent = plan.suppAdd.length || plan.leave.length ? t("imp.sum2", { g: plan.suppAdd.length, u: plan.leave.length }) : "";
+      var n = plan.add.length + plan.leave.length + plan.suppAdd.length;
+      if (okBtn) { okBtn.textContent = t(n === plan.add.length ? "imp.do" : "imp.doAll", { n: n }); okBtn.disabled = !n; }
     };
     f.basis.addEventListener("change", update);
     f.tags.addEventListener("input", update);
+    if (f.st) f.st.addEventListener("change", update);
     var acts = actionsRow(dlg, [], t("imp.do", { n: 0 }), function () {
-      if (!plan || !plan.add.length) return;
+      if (!plan || !(plan.add.length + plan.leave.length + plan.suppAdd.length)) return;
+      var added = plan.add.map(function (x) { return x.id; });
+      var before = plan.leave.map(function (x) {
+        var cur = null;
+        data.subs.forEach(function (y) { if (y.id === x.id) cur = y; });
+        return copy(cur);
+      });
       plan.add.forEach(function (x) { replaceIn(data.subs, x); });
+      plan.leave.forEach(function (x) { replaceIn(data.subs, x); });
+      // the suppression list only grows (a union in sync): Undo keeps it
+      plan.suppAdd.forEach(function (h) { if (data.supp.indexOf(h) < 0) data.supp.push(h); });
       saveNow();
       dlg.close();
       renderAll();
-      showToast(plan.add.length === 1 ? t("imp.done1") : t("imp.done", { n: plan.add.length }));
-      if (f.basis.value === "optin") kick();
+      var msg = plan.add.length === 1 && !plan.leave.length && !plan.suppAdd.length ? t("imp.done1")
+        : t("imp.done2", { n: plan.add.length, u: plan.leave.length, g: plan.suppAdd.length });
+      if (added.length || before.length) undoToast(msg, function () { importUndo(added, before); });
+      else showToast(msg);
+      if (plan.add.some(function (x) { return x.basis === "optin"; })) kick();
     });
     okBtn = acts.lastChild;
     update();
-    openDialog(dlg, f.basis);
+    openDialog(dlg, f.st || f.basis);
+  }
+  // Undo of a CSV import: the added people become tombstones, people it
+  // marked as left get their earlier record back (a newer m, so it syncs).
+  function importUndo(added, before) {
+    added.forEach(function (id) {
+      var cur = null;
+      data.subs.forEach(function (x) { if (x.id === id) cur = x; });
+      if (cur && !cur.del) replaceIn(data.subs, { id: id, m: stamp(cur.m), del: 1 });
+    });
+    before.forEach(function (b) {
+      if (!b) return;
+      var cur = null;
+      data.subs.forEach(function (x) { if (x.id === b.id) cur = x; });
+      var x = copy(b);
+      x.m = stamp(cur ? cur.m : b.m);
+      replaceIn(data.subs, x);
+    });
+    saveNow();
+    renderAll();
   }
   function pasteDialog() {
     var dlg = makeDialog("nl-paste", t("subs.paste"), true);
@@ -3311,7 +3394,7 @@
         if (file.size > 5 * 1024 * 1024 || /\.zip$/i.test(file.name || "")) { showToast(t("toast.noCsv")); return; }
         return file.text().then(function (text) {
           var r = C.peopleFromRows(C.parseCsv(text));
-          importDialog(r.people, r.bad, "csv", "consent");
+          importDialog(r.people, r.bad, "csv", "consent", { hasSt: r.hasSt, cols: r.cols, file: file.name });
         });
       });
     })["catch"](function () { showToast(t("toast.noCsv")); });

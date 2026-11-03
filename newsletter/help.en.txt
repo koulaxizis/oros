@@ -27,6 +27,13 @@ The key needs permission to send and to read bounces or suppressions. Brevo's AP
 
 An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
 
+`Import CSV` also reads exports from MailerLite and other services:
+- `What the file holds`: when the file has a status column, each row keeps its own status; otherwise pick it. MailerLite exports one status per file (active, unsubscribed, bounced, junk), so import each file once.
+- Unsubscribed, bounced and junk addresses are never added. They go on the do-not-mail list as a fingerprint only, so no later import can add them, and anyone on the list now is marked as left.
+- The sign-up date from the file is kept, and the `Consent note` (or the file's own source column, such as the form's name) is kept with each person as the record of how they signed up. Both show on the person and in `Their data (JSON)`.
+- `Other columns`: type a tag for a column and everyone with a value there (not empty, not 0) gets it. Shop columns such as orders count suggest the tag "customer"; several columns can give the same tag. A column left empty is not imported, so data Newsletter doesn't need (phone, city, money spent) stays out.
+- `Undo` on the message right after removes the people added and gives back those marked as left; the do-not-mail list keeps what was added.
+
 ## Clean up the list
 `Clean up…` keeps a list from growing with people who will never read it. Newsletter doesn't track opens, so it deletes only people who never confirmed (30 days after the confirmation request, by default) and people who left: unsubscribed, bounced or marked as spam (90 days after they left). Active subscribers are never deleted. Those who left are deleted for good, like `Delete for good`; those who never confirmed can be invited again. It runs once a day while orOS is open, on one device per list: the one that sends the list (`Run it on this device` picks another). More than 200 people, or more than a fifth of the list, at once wait for you: the dialog shows who would go, `Export them (CSV)` saves them first and `Clean up now` deletes them. Active subscribers with no sign of life for 12 months (6, 12, 24 or never; a sign of life is signing up or confirming, since opens are not counted) get one e-mail, "Do you still want it?", from the same device, at most 20 a day (or 5% of the list), oldest first. Replying with the prepared e-mail keeps them on the list, even after the time is up; whoever doesn't answer within 30 days is unsubscribed, and later deleted like anyone who left.
 
