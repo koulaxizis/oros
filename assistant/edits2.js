@@ -212,10 +212,41 @@
     if (notes.length) r.note = notes.join(" ");
     return r;
   }
+  // AS-MANYDEL (wave 3): a page deleted as Notes' own Delete page
+  // (notes.js doDeletePage): a tombstone, and the pages under it move
+  // up one level to the end of that list (a structure edit each).
+  // Undo puts the page back (newer than its tombstone) and its pages
+  // under it again, only while none of them changed.
+  function notesDelete(d, h, now) {
+    var page = clone(h.x), upTo = page.parent || null;
+    if (!isObj(d.tombs)) d.tombs = {};
+    var ts = stampAfter(now, page.mtime);
+    d.tombs[page.id] = ts;
+    d.pages.splice(h.i, 1);
+    var kids = d.pages.filter(function (q) { return isObj(q) && q.parent === page.id; })
+      .sort(function (a, b) { return (a.pos || 0) - (b.pos || 0); });
+    var maxPos = 0;
+    d.pages.forEach(function (q) { if (isObj(q) && (q.parent || null) === upTo && q.nb === page.nb && typeof q.pos === "number" && q.pos > maxPos) maxPos = q.pos; });
+    var kidPrev = [], kidNext = [];
+    kids.forEach(function (q) {
+      var hk = byId(d.pages, q.id), p = clone(hk.x), t = stampAfter(now, p.mtime);
+      kidPrev.push(clone(hk.x));
+      p.ct = ntCs(p); p.parent = upTo; p.pos = ++maxPos; p.st = t; p.mtime = t; p.pinned = !!p.pinned;
+      d.pages[hk.i] = ntCanon(p);
+      kidNext.push(clone(d.pages[hk.i]));
+    });
+    ntSort(d);
+    var before = ntView(d, page);
+    var r = { ok: true, title: before.title, before: before, after: null, del: true,
+              undo: { t: "del", app: "notes", page: page, tomb: ts, kidPrev: kidPrev, kidNext: kidNext } };
+    if (kids.length) r.note = kids.length + " page(s) under it moved up one level; they were not deleted.";
+    return r;
+  }
   function notesChange(d, target, ch, now) {
     var h = ntFind(d, target);
     if (!h) return bad("That page is no longer in Notes.");
     if (ch.action === "move") return notesMove(d, h, ch.set, now);
+    if (ch.action === "delete") return notesDelete(d, h, now);
     var e = only(ch, ["title", "text", "text_add", "label", "labels"], "A Notes page");
     if (e) return e;
     var s = ch.set, p = clone(h.x), before = ntView(d, h.x);
@@ -248,6 +279,26 @@
              undo: { t: "set", app: "notes", prev: clone(h.x), next: clone(d.pages.filter(function (x) { return x.id === p.id; })[0]) } };
   }
   function notesUndo(d, u, now) {
+    if (u.t === "del") {
+      if (!isObj(u.page) || typeof u.page.id !== "string" || !Array.isArray(u.kidPrev) || !Array.isArray(u.kidNext)) return bad("bad undo");
+      if (byId(d.pages, u.page.id)) return bad("The page is back already.");
+      for (var k = 0; k < u.kidNext.length; k++) {
+        var hk0 = ntFind(d, { page: u.kidNext[k].id });
+        if (!hk0 || !same(hk0.x, u.kidNext[k])) return bad("A page under it changed since; nothing was undone.");
+      }
+      if (!ntNotebooks(d).some(function (n) { return n.id === u.page.nb; })) return bad("Its notebook is gone.");
+      var p0 = clone(u.page), t0 = stampAfter(now, Math.max(p0.mtime || 0, (isObj(d.tombs) && d.tombs[p0.id]) || 0));
+      p0.ct = ntCs(p0); p0.st = t0; p0.mtime = t0;
+      if (isObj(d.tombs)) delete d.tombs[p0.id];
+      d.pages.push(ntCanon(p0));
+      u.kidPrev.forEach(function (pv) {
+        var hk = byId(d.pages, pv.id), p = clone(hk.x), t = stampAfter(now, p.mtime);
+        p.ct = ntCs(p); p.parent = pv.parent === undefined ? null : pv.parent; p.pos = pv.pos; p.st = t; p.mtime = t;
+        d.pages[hk.i] = ntCanon(p);
+      });
+      ntSort(d);
+      return { ok: true };
+    }
     if (u.t === "mv") {   // AS-MOVE: every page back where it was, if none changed since
       if (!Array.isArray(u.prevs) || !Array.isArray(u.nexts) || u.prevs.length !== u.nexts.length) return bad("bad undo");
       for (var i = 0; i < u.nexts.length; i++) {

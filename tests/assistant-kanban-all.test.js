@@ -170,8 +170,8 @@ test("KB-DEL: several cards of one board deleted in a row on the same data, Undo
 
 test("KB-DEL wiring: refs take delete for Kanban only, with a delete card in EN/EL/DE", () => {
   const a = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
-  assert.match(a, /var MANY_DEL_APP = "kanban";/);
-  assert.match(a, /if \(del && app\.id !== MANY_DEL_APP\) return/);
+  assert.match(a, /var MANY_DEL_APPS = \{ kanban: 1, todo: 1, calendar: 1, notes: 1, bookmarks: 1, contacts: 1 \};/);   // AS-MANYDEL widened it
+  assert.match(a, /if \(del && !MANY_DEL_APPS\[app\.id\]\) return/);
   assert.match(a, /if \(mv && !MANY_MOVE_APPS\[app\.id\]\) return/);   // AS-MOVE: more apps move many
   assert.match(a, /askChange\(app\.name, \{ many: many, del: del \}, act\)/);
   assert.match(a, /"chg\.ask\.manyDel": "Delete these \{n\} items from \{app\}\?"/);
@@ -180,7 +180,7 @@ test("KB-DEL wiring: refs take delete for Kanban only, with a delete card in EN/
   assert.match(de, /"chg\.ask\.manyDel"/);
   assert.match(de, /"chg\.textManyDel"/);
   const c = fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8");
-  assert.match(c, /delete: several Kanban cards at once/);
+  assert.match(c, /delete: several items of one app at once \(Kanban, To-Do, Calendar, Notes, Bookmarks, Contacts/);
 });
 
 // ---------- KB-PICK: choose the boards of a multi-board import ----------
