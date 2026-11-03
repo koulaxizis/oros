@@ -116,6 +116,16 @@ Der Assistent kann direkt auch in weitere Apps eintragen, mit derselben Karte, d
 - [Reisen](app:travel): Einträge im Programm einer Reise (Flug, Unterkunft, Ticket, Besuch, mit Tag, Uhrzeit und Ort) und Dinge auf ihrer Packliste. Die Reise ist die, die der Assistent gefunden hat; eine neue Reise legst du in Reisen an.
 - [Haftnotizen](app:stickies): eine Notiz auf dem Desktop, in einer Farbe und auf Wunsch mit einer Erinnerung an einem Tag und zu einer Uhrzeit. Haftnotizen behält 60 Notizen auf dem Desktop.
 
+## Gewohnheiten, Trainings, dein Auto, Pflanzen, Haustiere und dein Regal
+Der Assistent kann auch eine ganze Liste auf einmal hinzufügen, auf einer Karte mit einem Häkchen bei jedem Eintrag und `Rückgängig`, statt eines Formulars nach dem anderen:
+- [Gewohnheiten](app:habits): Gewohnheiten mit ihren Tagen, einer Anzahl pro Woche oder Monat, einem Tagesziel („8 Gläser Wasser“) und einer Erinnerungszeit.
+- [Training](app:fitness): Trainings, die du gemacht hast, mit Tag, Beginn und Minuten, und bei Laufen, Gehen, Radfahren, Schwimmen oder Rudern der Strecke. Ein kommendes Training planst du in Training.
+- [Garage](app:garage): ein erledigter Service („Ölwechsel bei 61.000 km, 85 Euro“) oder etwas, das abläuft (Versicherung, Kfz-Steuer, TÜV), bei einem deiner Fahrzeuge, nach Name oder Kennzeichen.
+- [Pflanzenpflege](app:plants): Pflanzen mit ihrem Raum; eine fertige Art (Monstera, Efeutute…) bringt ihre Pflegewerte mit, wie wenn du sie im Formular wählst.
+- [Tier-Gesundheitspass](app:petcare): eine Impfung, Entwurmung, ein Tierarztbesuch, ein Medikament oder ein Gewicht für eines deiner Tiere, nach Name.
+- [Medienregal](app:shelf): Bücher, Filme, Serien, Alben, Podcasts und Spiele, mit Status, Urheber und Jahr („setz diese zehn Bücher auf meine Wunschliste“).
+Nur deine eigene Garage, dein Garten und dein Tierpass bekommen sie; ein geteilter des Haushalts wird in der App geändert. Was aussieht wie ein schon vorhandener Eintrag, beginnt ohne Häkchen, und `Rückgängig` nimmt keine Gewohnheit zurück, die du inzwischen abgehakt, keine Pflanze, die du gegossen, und keinen Titel, bei dem du einen Fortschritt eingetragen hast.
+
 Längere Inhalte öffnen sich im eigenen Fenster der App, wo du sie prüfst und selbst speicherst:
 - [Karteikarten](app:flashcards): Lernkarten aus einem Kapitel, einer Wortliste oder deinen Notizen („mach 20 Karten aus diesem Kapitel“). Sie öffnen sich in `Karten erstellen`, wo du jede Karte abwählen oder ändern kannst und den Stapel wählst.
 - [Wiki](app:wiki): ein Artikel, geöffnet im Editor des Wikis. [Texteditor](app:writer): ein neues Dokument, das der Assistent schreibt, mit Überschriften, Fett, Kursiv, Listen, Nummerierung und Ausrichtung, das beim Drücken von `In Texteditor öffnen` entsteht. [Mindmap](app:mindmap): die Ideen einer Map, geöffnet in `Liste einfügen…`. [Pad](app:pad): eine Text- oder Code-Datei, die der Assistent schreibt (ein Skript, eine Konfigurationsdatei, eine Webseite), geöffnet als neuer Tab, den du speicherst, wo du willst; nichts darin wird je ausgeführt. Pads zuletzt geöffnete Dateien erscheinen auch, wenn der Assistent sucht, also öffnet „öffne config.json in Pad“ eine davon.

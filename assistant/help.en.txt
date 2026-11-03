@@ -116,6 +116,16 @@ The assistant can add straight to more apps, with the same card, ticks and `Undo
 - [Travel](app:travel): entries in a trip's itinerary (a flight, a stay, a ticket, a visit, with day, time and place) and items on its packing list. The trip is one the assistant found; a new trip is made in Travel.
 - [Sticky Notes](app:stickies): a note on the desktop, in a colour, and with a reminder at a day and time if you like. Sticky Notes keeps 60 notes on the desktop.
 
+## Habits, workouts, your car, plants, pets and your shelf
+The assistant can also add a whole list at once, on one card with a tick on each and `Undo`, instead of one form at a time:
+- [Habits](app:habits): habits with their days, a number of times a week or month, a daily target ("8 glasses of water") and a reminder time.
+- [Workouts](app:fitness): workouts you finished, with day, start and minutes, and for a run, walk, ride, swim or row its distance. A workout to come is planned in Workouts.
+- [Garage](app:garage): a service that was done ("oil change at 61,000 km, 85 euros") or something that expires (insurance, road tax, the MOT) on one of your vehicles, by its name or plate.
+- [Plant Care](app:plants): plants with their room; a ready species (Monstera, Pothos…) brings its care values, as picking it in the form does.
+- [Pet Health Book](app:petcare): a vaccine, deworming, vet visit, medication or weight for one of your pets, by name.
+- [Media Shelf](app:shelf): books, films, series, albums, podcasts and games, with their status, creator and year ("add these ten books to my wishlist").
+Only your own garage, garden and pet book get these; a household's shared one is changed in the app. Something that looks like one already there starts unticked, and `Undo` doesn't take back a habit you ticked, a plant you watered or a title you logged progress on since.
+
 Longer content opens in the app's own window, where you check it and save it yourself:
 - [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
 - [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document the assistant writes, with headings, bold, italic, lists, numbering and alignment, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`. [Pad](app:pad): a text or code file the assistant writes (a script, a config file, a web page), opened as a new tab that you save where you want; nothing in it is ever run. Pad's recent files also turn up when the assistant searches, so "open config.json in Pad" opens one.

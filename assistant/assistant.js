@@ -476,6 +476,9 @@
       "f.activity": "Activity", "f.minutes": "Minutes", "f.distance": "Distance (km)", "f.vehicle": "Vehicle",
       "f.km": "Odometer (km)", "f.cost": "Cost", "f.shop": "Shop", "f.species": "Species", "f.room": "Room",
       "f.waterDays": "Water every (days)", "f.record": "Record", "f.pet": "Pet", "f.nextDue": "Next due", "f.vet": "Vet",
+      "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
+      "f.until": "Last day", "f.platform": "Platform",
+      "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
       "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
@@ -1077,6 +1080,9 @@
       "f.activity": "Δραστηριότητα", "f.minutes": "Λεπτά", "f.distance": "Απόσταση (km)", "f.vehicle": "Όχημα",
       "f.km": "Χιλιόμετρα", "f.cost": "Κόστος", "f.shop": "Συνεργείο", "f.species": "Είδος φυτού", "f.room": "Δωμάτιο",
       "f.waterDays": "Πότισμα κάθε (μέρες)", "f.record": "Εγγραφή", "f.pet": "Κατοικίδιο", "f.nextDue": "Επόμενη φορά", "f.vet": "Κτηνίατρος",
+      "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
+      "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
+      "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
       "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
@@ -4531,7 +4537,13 @@
   var TRAVEL_ADD = ["travel_plan", "travel_pack"];
   var ADD2_CORES = { timesheet: ["orosTimesheetCore", "../timesheet/core.js"], meals: ["OrosMealsCore", "../meals/core.js"],
                      stickies: ["StickiesCore", "../stickies/core.js"] };
-  ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD);
+  // Wave 4 (AS-ADD6): habits, finished workouts, a vehicle's services
+  // and renewals, plants, a pet's health records and Media Shelf
+  // titles, in assistant/additems3.js with the app's own core.
+  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf"];
+  var ADD3_CORES = { habits: ["OrosHabitsModel", "../habits/model.js"], plants: ["OrosPlantsCore", "../plants/core.js"],
+                     petcare: ["OrosPetcareCore", "../petcare/core.js"], garage: ["OrosGarageCore", "../garage/core.js"] };
+  ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, ADD3_IDS);
   var addScripts = {};
   function loadOnce(src) {
     if (!addScripts[src]) {
@@ -4549,14 +4561,18 @@
     if (ADD_IDS.indexOf(appId) < 0 && CRM_ADD.indexOf(appId) < 0) return Promise.resolve(null);
     var need = [window.OrosAssistAdd ? null : "additems.js"];
     if (appId === "bookmarks" && !window.OrosBookmarksCore) need.push("../bookmarks/core.js");
-    var c2 = ADD2_CORES[appId], two = ADD2_IDS.indexOf(appId) >= 0 || TRAVEL_ADD.indexOf(appId) >= 0;
+    var c2 = ADD2_CORES[appId] || ADD3_CORES[appId], two = ADD2_IDS.indexOf(appId) >= 0 || TRAVEL_ADD.indexOf(appId) >= 0;
+    var three = ADD3_IDS.indexOf(appId) >= 0;
     if (c2 && !window[c2[0]]) need.push(c2[1]);
     return Promise.all(need.filter(Boolean).map(loadOnce)).then(function () {
-      // additems2.js registers into additems.js, so it loads after it.
-      return two && window.OrosAssistAdd && !window.OrosAssistAdd2 ? loadOnce("additems2.js") : null;
+      // additems2.js / additems3.js register into additems.js, so they load after it.
+      if (!window.OrosAssistAdd) return null;
+      if (two && !window.OrosAssistAdd2) return loadOnce("additems2.js");
+      if (three && !window.OrosAssistAdd3) return loadOnce("additems3.js");
+      return null;
     }).then(function () {
       if (appId === "bookmarks" && !window.OrosBookmarksCore) return null;
-      if ((c2 && !window[c2[0]]) || (two && !window.OrosAssistAdd2)) return null;
+      if ((c2 && !window[c2[0]]) || (two && !window.OrosAssistAdd2) || (three && !window.OrosAssistAdd3)) return null;
       return window.OrosAssistAdd || null;
     });
   }
@@ -4871,6 +4887,11 @@
     // Wave A4: Travel's kinds and packing groups, sticky note colours
     var A4V = { kind: "tv.k.", group: "tv.g.", color: "sn.c." };
     if (A4V[f] && STRINGS.en[A4V[f] + v] !== undefined) return t(A4V[f] + v);
+    // Wave 4 (AS-ADD6): Garage and pet records, Media Shelf types and
+    // statuses, outdoor activities (the entry cards' own words)
+    if ((f === "record" || f === "media") && STRINGS.en["v." + (v === "renewal" ? "reminder" : v)] !== undefined) return t("v." + (v === "renewal" ? "reminder" : v));
+    if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
+    if (f === "activity" && STRINGS.en["ft.a." + v] !== undefined) return t("ft.a." + v);
     if (f === "reminder" && typeof v === "number") {
       return v === 1440 ? t("cr.rem.d1") : v % 1440 === 0 ? t("cr.rem.d", { n: v / 1440 }) : v % 60 === 0 ? t("cr.rem.h", { n: v / 60 }) : t("cr.rem.m", { n: v });
     }
