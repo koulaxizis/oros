@@ -381,12 +381,11 @@
     var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
     var fb = fbFor(set);
     if (fb) out.push(fb);
-    // A model on the user's own devices that isn't there (a phone, the
-    // computer off) is never a dead end (AS-CHAIN 2, Chris 2026-11-03):
-    // after it and its stand-in come the rest, in the same order.
-    if (out.length && provTier(set.prov, provs[set.prov]) <= 2) {
-      all.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
-    }
+    // The chosen assistant is the first choice, never the only one
+    // (AS-CHAIN 2 and 4, Chris 2026-11-03 "συμπλήρωση, όχι
+    // αντικατάσταση"): after it and its stand-in come the rest, in the
+    // same order, each used only where it is set up.
+    if (out.length) all.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
     return out;
   }
   // Does this message need tools (an entry, a change, a web search)?
