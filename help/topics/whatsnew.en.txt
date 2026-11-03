@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.12.00
+- **The Assistant knows how your apps are organised.** Ask "what is in my Music list?", "which notebooks do I have?" or "show the bookmarks in Work": it now sees your To-Do lists, Notes notebooks, Bookmarks folders and tags, Contacts labels, Media Shelf kinds and statuses and Library books, each with their items, so it can also open or change them.
+- **No more guessed names.** The Assistant gets the real names of your lists, notebooks, folders, labels and boards before it uses one, and when a name you gave does not exist it says so and lists the ones you have, instead of picking another.
+- Contacts' phones, e-mails and addresses and the text of your notes are not part of these overviews.
+
 ## Version 5.11.01
 - **The Assistant moves Kanban cards to another board.** "Move these cards to the Music board" now works, for one card or many on one card, with `Undo`. Labels go along by name; a label the other board doesn't have is left off and the Assistant says so.
 - **Cards land on the board you named.** A card the Assistant prepares for a board by name ("on the Music board") now goes there even when the name is written without accents or in other capitals, and a board that doesn't exist is no longer swapped silently for the one on screen.

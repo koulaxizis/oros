@@ -51,8 +51,14 @@ Models that can't call tools (the built-in browser model, the in-browser model, 
 For totals and overviews, such as "how much did I spend on groceries this month?", "how many hours did I work in September?" or "what's on this week?", the assistant asks an app for a summary instead of searching item by item. orOS works it out on this device:
 - Budget: income, expenses and each category of a month.
 - Timesheet: hours and amounts of a month per project.
-- To-Do: open, late and due-today tasks per list, and what is due next.
+- To-Do: open, late and due-today tasks per list, and what is due next. Ask for one list by its name ("what is in my Music list?") to get all its tasks.
 - Kanban: every board, not only the one open in Kanban: its columns with how many cards each holds, late and due-today cards, and the cards themselves with their board and column, so the assistant can also change a card on any board. Ask for one board by its name to get only its cards. Archived boards are only named.
+- Notes: every notebook with how many pages it has, your labels, and the pages with their notebook and parent page (titles only, not the text). Ask for one notebook by its name to get only its pages.
+- Bookmarks: every folder ("Work › Tools") with how many bookmarks it holds, your tags, and the bookmarks with their folder, address and tags. Ask for a folder (with its subfolders) or a tag.
+- Contacts: your labels with how many contacts each has, your favorites, and the contacts by name with company and labels. Phones, e-mails and addresses are not in the summary. Ask for one label, or for the contacts without one.
+- Media Shelf: for books, films, series, music, podcasts and games how many you want, have in progress, finished or dropped, your tags, and the items themselves. Ask for one kind, status or tag.
+- Library: how many books you are reading, have finished or not opened yet, your tags, and the books with author, progress or the day you finished them. Ask for one status or tag. Highlights are not in the summary.
+- So the assistant knows the real names of your lists, notebooks, folders, labels and boards before it uses one, and tells you when a name you gave does not exist instead of picking another. Every item in these summaries can also be opened or changed.
 - CRM: "what is open with …?" for one partner: what they owe you and you owe them, stock on consignment, orders, hours not billed, royalties, contracts and the next follow-up. When several partners match, the assistant asks which one.
 - Calendar, Habits, Plant Care and the other apps that appear in `Today`: what is late, today and in the next days.
 

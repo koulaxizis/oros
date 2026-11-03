@@ -1630,7 +1630,13 @@
     name: "app_summary",
     description: "Totals and an overview of one app, worked out on the user's device: budget (income, " +
       "expenses and each category of a month), timesheet (hours and amounts per project of a month), " +
-      "todo (open, late and due-today tasks per list, and what is due next), kanban (EVERY board, not only " +
+      "todo (open, late and due-today tasks per list, and what is due next; with list every task of that list with a ref), " +
+      "notes (every notebook with its pages, the labels, and the pages with notebook › parent page and a ref; with notebook only its pages), " +
+      "bookmarks (every folder as a path with how many bookmarks it holds, the tags, and the bookmarks with folder, address, tags and a ref; with folder or tag only those), " +
+      "contacts (the labels with how many contacts each has, and the contacts by name with company, labels and a ref, no phone or e-mail; with label only those, \"none\" = without a label), " +
+      "shelf (Media Shelf: per kind how many are wanted, in progress, done, dropped, the tags, and the items with a ref; kind, status, tag narrow it), " +
+      "library (how many books are reading, finished, unread, the tags, and the books with author, progress and a ref; status, tag narrow it), " +
+      "kanban (EVERY board, not only " +
       "the one open in Kanban: each board's columns with how many cards they hold, late and due-today cards, " +
       "archived boards by name, and the cards of all boards with board › column, due date, labels and a ref; " +
       "with board only that board's cards), stock (what sold in a month, per product and " +
@@ -1647,7 +1653,13 @@
       properties: {
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, timesheet, stock: YYYY-MM (default: this month). calendar: list that month's events." },
-        label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one." },
+        label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one. contacts: only the contacts with this label (\"none\": without one)." },
+        list: { type: "string", description: "todo: one list's name: every task in it (open first) with a ref." },
+        notebook: { type: "string", description: "notes: one notebook's name: only its pages." },
+        folder: { type: "string", description: "bookmarks: a folder's name or whole path (\"Work › Tools\"): its bookmarks and those of its subfolders." },
+        tag: { type: "string", description: "bookmarks, shelf, library: only the items with this tag." },
+        kind: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: only this kind (album = music)." },
+        status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
@@ -3070,6 +3082,8 @@
         "To let the user open an item, link its title with its ref, e.g. [Dentist](oros:r3). Use only refs that a search returned."
       );
       lines.push("Items in several apps have labels or tags (events, tasks, cards, contacts, notes, bookmarks); each search result lists its labels. For questions about labels (which items have one, which have none) call search_data with label (\"none\" = no label), never guess from titles.");
+      // AS-STRUCT: the real names of an app's groups, never guessed.
+      lines.push("Before you name or use a list, notebook, folder, board, label or shelf of an app (To-Do, Notes, Bookmarks, Contacts, Media Shelf, Library, Kanban), get its real names with app_summary for that app; never guess a name, and never put an item somewhere else than where the user asked. If the name the user gave is not there, say so and list the ones that are.");
       if (opts.apps.some(function (a) { return /\(calendar\)$/.test(a); })) {
         lines.push("For Calendar, app_summary also counts the events of each label and lists them by label or month.");
       }

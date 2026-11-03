@@ -51,8 +51,14 @@ Modelle, die keine Werkzeuge aufrufen können (das eingebaute Browsermodell, das
 Für Summen und Überblicke, etwa „Wie viel habe ich diesen Monat für Lebensmittel ausgegeben?“, „Wie viele Stunden habe ich im September gearbeitet?“ oder „Was steht diese Woche an?“, bittet der Assistent eine App um eine Zusammenfassung, statt Eintrag für Eintrag zu suchen. orOS berechnet sie auf diesem Gerät:
 - Budget: Einnahmen, Ausgaben und jede Kategorie eines Monats.
 - Zeiterfassung: Stunden und Beträge eines Monats pro Projekt.
-- Aufgaben: offene, überfällige und heute fällige Aufgaben pro Liste und was als Nächstes fällig ist.
+- Aufgaben: offene, überfällige und heute fällige Aufgaben pro Liste und was als Nächstes fällig ist. Frag nach einer Liste mit ihrem Namen („was steht in meiner Liste Musik?“), um alle ihre Aufgaben zu bekommen.
 - Kanban: alle Boards, nicht nur das in Kanban geöffnete: ihre Spalten mit der Zahl der Karten, überfällige und heute fällige Karten und die Karten selbst mit Board und Spalte, sodass der Assistent auch eine Karte auf jedem Board ändern kann. Frag nach einem Board mit seinem Namen, um nur seine Karten zu bekommen. Archivierte Boards werden nur mit Namen genannt.
+- Notizen: jedes Notizbuch mit der Zahl seiner Seiten, deine Labels und die Seiten mit Notizbuch und übergeordneter Seite (nur Titel, nicht der Text). Frag nach einem Notizbuch mit seinem Namen, um nur seine Seiten zu bekommen.
+- Lesezeichen: jeder Ordner („Arbeit › Werkzeuge“) mit der Zahl seiner Lesezeichen, deine Tags und die Lesezeichen mit Ordner, Adresse und Tags. Frag nach einem Ordner (mit seinen Unterordnern) oder einem Tag.
+- Kontakte: deine Labels mit der Zahl ihrer Kontakte, deine Favoriten und die Kontakte mit Name, Firma und Labels. Telefonnummern, E-Mails und Adressen sind nicht in der Zusammenfassung. Frag nach einem Label oder nach den Kontakten ohne Label.
+- Medienregal: für Bücher, Filme, Serien, Musik, Podcasts und Spiele, wie viele du möchtest, gerade hast, beendet oder abgebrochen hast, deine Tags und die Einträge selbst. Frag nach einer Art, einem Status oder einem Tag.
+- Bibliothek: wie viele Bücher du gerade liest, beendet oder noch nicht geöffnet hast, deine Tags und die Bücher mit Autor, Fortschritt oder dem Tag, an dem du sie beendet hast. Frag nach einem Status oder Tag. Markierungen sind nicht in der Zusammenfassung.
+- So kennt der Assistent die echten Namen deiner Listen, Notizbücher, Ordner, Labels und Boards, bevor er einen verwendet, und sagt dir, wenn ein genannter Name nicht existiert, statt einen anderen zu nehmen. Jeder Eintrag dieser Zusammenfassungen lässt sich auch öffnen oder ändern.
 - CRM: „Was ist mit … offen?“ für einen Partner: was er dir schuldet und du ihm, Kommissionsware, Bestellungen, nicht abgerechnete Stunden, Tantiemen, Verträge und das nächste Follow-up. Passen mehrere Partner, fragt der Assistent, welcher gemeint ist.
 - Kalender, Gewohnheiten, Pflanzenpflege und die anderen Apps, die in `Heute` erscheinen: was überfällig ist, heute und in den nächsten Tagen.
 
