@@ -54,7 +54,8 @@
       attSend: 13 * 1024 * 1024       // inline data was 20 MB per request (base64 too); kept under it
     },
     mistral: {
-      name: "Mistral", kind: "openai", key: "yes",
+      // Free "Experiment" plan: a free account and key are enough.
+      name: "Mistral", kind: "openai", key: "yes", free: 1,
       base: "https://api.mistral.ai/v1",
       keyUrl: "https://console.mistral.ai/api-keys",
       model: "", att: { img: 1 }
@@ -242,7 +243,13 @@
     if (!isObj(x)) return null;
     return { m: stamp(x.m), chat: x.chat ? 1 : 0, prov: PROVIDERS[x.prov] ? x.prov : "", web: x.web ? 1 : 0,
              ws: SEARCH_IDS.indexOf(x.ws) >= 0 ? x.ws : "auto", wsBase: normBase(x.wsBase),
-             fb: fbOk(x.fb) ? x.fb : "" };
+             fb: fbOk(x.fb) ? x.fb : "", auto: x.auto ? 1 : 0, skip: normSkip(x.skip) };
+  }
+  function normSkip(a) {
+    if (!Array.isArray(a)) return [];
+    var out = [];
+    a.forEach(function (p) { if (PROVIDERS[p] && out.indexOf(p) < 0) out.push(p); });
+    return out.slice(0, PROV_IDS.length);
   }
   // ---------- 2a. Online fallback for a local server (AS-FB) ----------
   // A model on the user's computer can't be reached from another device
@@ -289,22 +296,101 @@
         .then(function (ok) { clearTimeout(tm); probeSet(base, ok); return ok; });
     }, function () { return false; });
   }
-  // The provider for one call made with these settings (d = the
-  // Assistant's merged data): the chosen one, or its online stand-in
-  // when the local server doesn't answer and the stand-in has a model
-  // and (if it needs one) a key here. → Promise<{ pid, fb: 0 | 1 }>
-  function pickProv(d, readKey) {
-    var set = d && d.set, pid = set && set.prov, fb = fbFor(set);
-    var same = { pid: pid, fb: 0 };
-    if (!fb) return Promise.resolve(same);
-    var fc = (d.provs && d.provs[fb]) || {};
-    if (!(fc.model || PROVIDERS[fb].model)) return Promise.resolve(same);
-    return probeLocal(pid, (d.provs && d.provs[pid]) || {}, readKey).then(function (up) {
-      if (up) return same;
-      return Promise.resolve(readKey ? readKey(fb) : "").then(function (key) {
-        return PROVIDERS[fb].key === "yes" && !key ? same : { pid: fb, fb: 1 };
-      });
-    }, function () { return same; });
+  // ---------- 2b. The order of use (AS-CHAIN) ----------
+  // set.auto = 1: every service set up on a device is used in this
+  // order, the first that can answer this message winning: a server
+  // on the user's computer (0), the in-browser model (1), the
+  // browser's built-in model (2), free online services (3), paid ones
+  // (4); the chosen assistant (set.prov) first within its tier;
+  // set.skip leaves a service out. set.auto = 0: set.prov, then its
+  // stand-in set.fb when set.prov is a local server (AS-FB).
+  function provTier(pid, pc) {
+    var p = PROVIDERS[pid];
+    if (!p) return 9;
+    if (p.local) return 0;
+    if (p.kind === "webllm") return 1;
+    if (p.builtin) return 2;
+    if (p.free || (pid === "openrouter" && pc && pc.free)) return 3;
+    return 4;
+  }
+  function isOnline(pid) { return provTier(pid) >= 3 && provTier(pid) < 9; }
+  // → [pid] in the order to try (not yet checked on this device)
+  function chainOrder(d) {
+    var set = (d && d.set) || {}, provs = (d && d.provs) || {};
+    if (!set.auto) {
+      var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
+      var fb = fbFor(set);
+      if (fb) out.push(fb);
+      return out;
+    }
+    var skip = normSkip(set.skip);
+    return PROV_IDS.filter(function (p) { return skip.indexOf(p) < 0; }).map(function (p, i) {
+      return { p: p, k: provTier(p, provs[p]) * 100 + (p === set.prov ? 0 : 1 + i) };
+    }).sort(function (a, b) { return a.k - b.k; }).map(function (x) { return x.p; });
+  }
+  // Does this message need tools (an entry, a change, a web search)?
+  // A model without tools still answers questions about the user's
+  // data (orOS searches first, AS-NOTOOLS), so only actions and web
+  // look-ups count. o: { web: web search on, prev: the last answer
+  // used tools or cards, brief: a Briefing }
+  var NEED_ACT = /\b(add|create|make|new|remind|schedule|book|set up|change|edit|update|rename|move|delete|remove|mark|save|send|log|track|plan)\b|πρόσθ|προσθ|φτιάξ|δημιούργ|κλείσε|όρισε|θύμισ|υπενθύμ|άλλαξ|διόρθωσ|μετακίν|μετονόμ|σβήσ|διάγραψ|σημείωσ|αποθήκευσ|βάλε|καταχώρ|στείλ|προγραμμάτισ|hinzuf|füge|erstell|erinner|änder|lösch|verschieb|speicher|eintrag|trag .* ein|plane/i;
+  var NEED_WEB = /\b(search|look up|google|latest|news|today|tonight|price|weather|score|who won|current)\b|ψάξ|ψάχ|βρες|αναζήτ|ειδήσ|νέα |σήμερα|απόψε|τιμή|καιρ|ποιος κέρδισε|τρέχουσ|such|aktuell|nachricht|heute|preis|wetter/i;
+  function needsTools(text, o) {
+    o = o || {};
+    if (o.brief) return false;
+    if (o.prev) return true;
+    var t = String(text || "");
+    if (NEED_ACT.test(t)) return true;
+    return !!o.web && NEED_WEB.test(t);
+  }
+  // The provider for one call: the first in chainOrder(d) that is
+  // there on this device. o: { readKey(pid) → Promise<string>,
+  // device(pid) → Promise<boolean>|boolean (in-browser and built-in
+  // models; absent = not used), tools: the call needs tools,
+  // cool: { pid: until } services to pass over for now }.
+  // → Promise<{ pid, fb: 0 | 1 }> (fb = not the chosen assistant);
+  // when none is there, the first in the order (its error shows).
+  function pickChain(d, o) {
+    o = o || {};
+    var set = (d && d.set) || {}, provs = (d && d.provs) || {};
+    var order = chainOrder(d), now = Date.now();
+    var first = order[0] || set.prov || "";
+    function res(pid) { return { pid: pid, fb: pid && pid !== set.prov ? 1 : 0 }; }
+    if (order.length < 2) return Promise.resolve(res(first));
+    var readKey = o.readKey || function () { return ""; };
+    function there(pid) {
+      var P = PROVIDERS[pid], pc = provs[pid] || {};
+      if (o.cool && o.cool[pid] > now) return Promise.resolve(false);
+      if (o.tools && (P.device || (P.local && pc.nt))) return Promise.resolve(false);
+      if (P.device) return Promise.resolve(o.device ? o.device(pid) : false).then(function (v) { return !!v; }, function () { return false; });
+      if (!(pc.model || P.model)) return Promise.resolve(false);
+      if (P.local) return provBase(pid, pc) ? probeLocal(pid, pc, readKey) : Promise.resolve(false);
+      if (P.key !== "yes") return Promise.resolve(true);
+      return Promise.resolve(readKey(pid)).then(function (k) { return !!k; }, function () { return false; });
+    }
+    var i = 0;
+    function next() {
+      if (i >= order.length) return res(o.tools ? null : first);
+      var pid = order[i++];
+      return there(pid).then(function (ok) { return ok ? res(pid) : next(); });
+    }
+    return next().then(function (r) {
+      // Nothing with tools: the best without them still answers.
+      if (r.pid) return r;
+      var o2 = {}; Object.keys(o).forEach(function (k) { o2[k] = o[k]; }); o2.tools = false;
+      return pickChain(d, o2);
+    });
+  }
+  // An error before any answer that makes the next service in the
+  // order worth trying, and how long (ms) to pass this one over.
+  var COOL = { net: 15000, rate: 60000, busy: 30000, server: 30000, credit: 600000, key: 600000 };
+  function coolFor(e) {
+    return e instanceof ProviderError && COOL[e.code] ? COOL[e.code] : 0;
+  }
+  // The provider for one call by Feeds or Atelier (no tools): AS-CHAIN
+  // when set.auto, else the chosen one or its stand-in (AS-FB).
+  function pickProv(d, readKey, device) {
+    return pickChain(d, { readKey: readKey, device: device });
   }
   function normProv(x) {
     if (!isObj(x)) return null;
@@ -365,7 +451,7 @@
     b = isObj(b) ? b : {};
     return {
       ver: DATA_VER,
-      set: better(normSet(a.set), normSet(b.set)) || { m: 0, chat: 0, prov: "", web: 0, ws: "auto", wsBase: "", fb: "" },
+      set: better(normSet(a.set), normSet(b.set)) || { m: 0, chat: 0, prov: "", web: 0, ws: "auto", wsBase: "", fb: "", auto: 0, skip: [] },
       provs: mergeMap(a.provs, b.provs, normProv, isProv, PROV_IDS.length),
       perm: mergeMap(a.perm, b.perm, normPerm, isAppId, MAX_PERMS),
       ks: better(normKs(a.ks), normKs(b.ks)) || { m: 0, on: 0 },
@@ -3984,7 +4070,7 @@
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
-    fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
+    fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS,
     provBase: provBase, normBase: normBase,
