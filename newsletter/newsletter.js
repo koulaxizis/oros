@@ -187,7 +187,7 @@
       "iss.imported": "imported", "vw.imported": "Imported from another service; sent {t}.",
       "err.nofeed": "it isn't a feed", "err.nofeeds": "the feed reader isn't loaded",
       "vw.started": "Started {t}", "vw.done": "Finished {t}", "vw.sent": "Sent", "vw.failed": "Failed", "vw.left": "Left",
-      "vw.unsubs": "Unsubscribed since", "vw.pause": "Pause", "vw.resume": "Resume", "vw.stop": "Stop for good",
+      "vw.unsubs": "Unsubscribed", "vw.pause": "Pause", "vw.resume": "Resume", "vw.stop": "Stop for good",
       "vw.web": "Save as web page", "vw.other": "Being sent from another device.", "vw.take": "Send from here",
       "vw.err": "Paused: {e}", "vw.failList": "Not delivered",
       "dlg.cancel": "Cancel", "dlg.save": "Save", "dlg.close": "Close", "dlg.delete": "Delete",
@@ -226,7 +226,7 @@
       "ch.test": "Test login", "ch.testOk": "Login works", "ch.delete": "Remove account",
       "ch.inUse": "Lists use this account: choose another account for them first.",
       "p.other": "Other", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (US)", "p.mailgun-eu": "Mailgun (EU)",
-      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
+      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.proton": "Proton Mail", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
       "s.title": "Subscriber", "s.email": "E-mail", "s.name": "Name", "s.tags": "Tags", "s.tagsHint": "Separate with commas.",
       "s.lang": "Language", "s.langAny": "Like the list", "s.basis": "On what basis", "s.status": "Status",
       "s.since": "Subscribed {t}", "s.conf": "Confirmed {t}", "s.left": "Left {t}", "s.inv": "Confirmation request sent {t}",
@@ -252,6 +252,7 @@
       "ck.title": "Check", "ck.ok": "Ready to send.", "ck.err": "Must fix", "ck.warn": "Worth a look",
       "ck.noSubj": "The subject is empty.", "ck.longSubj": "The subject is long: phones show about 40 characters.",
       "ck.shouty": "Capitals or !!! in the subject look like spam to filters.", "ck.noBody": "The issue is empty.",
+      "ck.noOneClick": "No one-click unsubscribe: Gmail and Yahoo ask bulk senders for it, and their own Unsubscribe button shows only with it.", "ck.oneClickOn": "Turn on one-click unsubscribe", "ck.oneClickDone": "One-click unsubscribe is on for this list.", "l.wel": "Welcome mail", "l.welNone": "None", "l.welHint": "Sent once to each person who signs up through the form or by e-mail, after they confirm. People already on the list and people you import or add don't get it.", "l.welNoTpl": "Save an issue as a template first (Save as template), then pick it here.", "vw.bounces": "Bounced", "vw.spam": "Spam complaints", "vw.repHint": "Counted from the start until {d} days after it went out, on this list. Opens and clicks are not counted.",
       "tpl.html": "From HTML file", "toast.htmlBig": "That file is too big for an issue (about 100 KB of HTML at most).", "toast.htmlBad": "Nothing usable in that file: an issue needs HTML with text or pictures.", "toast.htmlIn": "Opened as an HTML issue: scripts, forms and tracking pixels were removed.", "ed.html": "HTML", "ed.htmlHint": "Your own e-mail HTML, sent as it is after cleaning: tables, inline styles, links and https pictures stay; scripts, forms, outside style sheets and tracking pixels go. {$unsubscribe} or {{UNSUBSCRIBE}} in a link becomes the unsubscribe link; without one, the list's footer is added below. Fill every other {{SLOT}} before sending.", "ed.txt": "Plain text", "ed.txtPh": "Empty: made from the HTML when it is sent", "ed.txtHint": "The text-only part of the e-mail, for mail apps that don't show HTML. Leave it empty and it is made from the HTML.", "ed.htmlOpen": "Replace with an HTML file", "ed.txtOpen": "Open a .txt file", "ed.txtMake": "Make from the HTML", "ck.slots": "Some {{SLOTS}} are still empty: fill them in the HTML or the plain text.", "ck.webImgs": "Pictures load from the web: some mail apps show them only when the reader allows it.",
       "ck.noAddr": "The list has no postal address for the footer (Lists › Edit).", "ck.noFrom": "The list has no From address.",
       "ck.noChan": "The list's sending account is missing or has no password on this device.",
@@ -420,7 +421,7 @@
       "iss.imported": "εισαγωγή", "vw.imported": "Εισαγωγή από άλλη υπηρεσία· στάλθηκε {t}.",
       "err.nofeed": "δεν είναι ροή", "err.nofeeds": "ο αναγνώστης ροών δεν φορτώθηκε",
       "vw.started": "Ξεκίνησε {t}", "vw.done": "Ολοκληρώθηκε {t}", "vw.sent": "Στάλθηκαν", "vw.failed": "Απέτυχαν", "vw.left": "Απομένουν",
-      "vw.unsubs": "Διαγραφές από τότε", "vw.pause": "Παύση", "vw.resume": "Συνέχεια", "vw.stop": "Οριστική διακοπή",
+      "vw.unsubs": "Διαγραφές", "vw.pause": "Παύση", "vw.resume": "Συνέχεια", "vw.stop": "Οριστική διακοπή",
       "vw.web": "Αποθήκευση ως ιστοσελίδα", "vw.other": "Στέλνεται από άλλη συσκευή.", "vw.take": "Αποστολή από εδώ",
       "vw.err": "Σε παύση: {e}", "vw.failList": "Δεν παραδόθηκαν",
       "dlg.cancel": "Άκυρο", "dlg.save": "Αποθήκευση", "dlg.close": "Κλείσιμο", "dlg.delete": "Διαγραφή",
@@ -459,7 +460,7 @@
       "ch.test": "Δοκιμή σύνδεσης", "ch.testOk": "Η σύνδεση δουλεύει", "ch.delete": "Αφαίρεση λογαριασμού",
       "ch.inUse": "Τον χρησιμοποιούν λίστες: διάλεξε πρώτα άλλον λογαριασμό για αυτές.",
       "p.other": "Άλλος", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (ΗΠΑ)", "p.mailgun-eu": "Mailgun (ΕΕ)",
-      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
+      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.proton": "Proton Mail", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
       "s.title": "Συνδρομητής", "s.email": "Email", "s.name": "Όνομα", "s.tags": "Ετικέτες", "s.tagsHint": "Χώρισέ τες με κόμμα.",
       "s.lang": "Γλώσσα", "s.langAny": "Όπως η λίστα", "s.basis": "Με ποια βάση", "s.status": "Κατάσταση",
       "s.since": "Εγγραφή {t}", "s.conf": "Επιβεβαίωση {t}", "s.left": "Αποχώρηση {t}", "s.inv": "Αίτημα επιβεβαίωσης στάλθηκε {t}",
@@ -485,6 +486,7 @@
       "ck.title": "Έλεγχος", "ck.ok": "Έτοιμο για αποστολή.", "ck.err": "Πρέπει να διορθωθεί", "ck.warn": "Αξίζει μια ματιά",
       "ck.noSubj": "Το θέμα είναι κενό.", "ck.longSubj": "Το θέμα είναι μεγάλο: τα κινητά δείχνουν περίπου 40 χαρακτήρες.",
       "ck.shouty": "Κεφαλαία ή !!! στο θέμα μοιάζουν με spam στα φίλτρα.", "ck.noBody": "Το τεύχος είναι κενό.",
+      "ck.noOneClick": "Δεν υπάρχει διαγραφή με ένα κλικ: το Gmail και το Yahoo τη ζητούν από όσους στέλνουν μαζικά, και το δικό τους κουμπί διαγραφής φαίνεται μόνο με αυτήν.", "ck.oneClickOn": "Ενεργοποίηση διαγραφής με ένα κλικ", "ck.oneClickDone": "Η διαγραφή με ένα κλικ ενεργοποιήθηκε για αυτή τη λίστα.", "l.wel": "Email καλωσορίσματος", "l.welNone": "Κανένα", "l.welHint": "Στέλνεται μία φορά σε όποιον εγγράφεται από τη φόρμα ή με email, αφού επιβεβαιώσει. Όσοι είναι ήδη στη λίστα και όσοι εισάγεις ή προσθέτεις δεν το λαμβάνουν.", "l.welNoTpl": "Αποθήκευσε πρώτα ένα τεύχος ως πρότυπο (Αποθήκευση ως πρότυπο) και διάλεξέ το εδώ.", "vw.bounces": "Επιστροφές", "vw.spam": "Αναφορές spam", "vw.repHint": "Μετρημένα από την έναρξη έως {d} ημέρες μετά την αποστολή, σε αυτή τη λίστα. Ανοίγματα και κλικ δεν μετριούνται.",
       "tpl.html": "Από αρχείο HTML", "toast.htmlBig": "Το αρχείο είναι πολύ μεγάλο για τεύχος (έως περίπου 100 KB HTML).", "toast.htmlBad": "Τίποτα χρήσιμο σε αυτό το αρχείο: ένα τεύχος θέλει HTML με κείμενο ή εικόνες.", "toast.htmlIn": "Άνοιξε ως τεύχος HTML: αφαιρέθηκαν scripts, φόρμες και pixel παρακολούθησης.", "ed.html": "HTML", "ed.htmlHint": "Το δικό σου HTML του email, στέλνεται όπως είναι μετά τον καθαρισμό: πίνακες, inline στυλ, σύνδεσμοι και εικόνες https μένουν· scripts, φόρμες, εξωτερικά style sheets και pixel παρακολούθησης φεύγουν. Το {$unsubscribe} ή {{UNSUBSCRIBE}} σε σύνδεσμο γίνεται ο σύνδεσμος διαγραφής· χωρίς αυτό, μπαίνει από κάτω το υποσέλιδο της λίστας. Συμπλήρωσε κάθε άλλο {{SLOT}} πριν την αποστολή.", "ed.txt": "Απλό κείμενο", "ed.txtPh": "Κενό: φτιάχνεται από το HTML κατά την αποστολή", "ed.txtHint": "Το μέρος του email μόνο με κείμενο, για εφαρμογές που δεν δείχνουν HTML. Άφησέ το κενό και φτιάχνεται από το HTML.", "ed.htmlOpen": "Αντικατάσταση με αρχείο HTML", "ed.txtOpen": "Άνοιγμα αρχείου .txt", "ed.txtMake": "Φτιάξ' το από το HTML", "ck.slots": "Κάποια {{SLOTS}} είναι ακόμη κενά: συμπλήρωσέ τα στο HTML ή στο απλό κείμενο.", "ck.webImgs": "Οι εικόνες φορτώνουν από το διαδίκτυο: κάποιες εφαρμογές τις δείχνουν μόνο αν το επιτρέψει ο αναγνώστης.",
       "ck.noAddr": "Η λίστα δεν έχει ταχυδρομική διεύθυνση για το κάτω μέρος (Λίστες › Επεξεργασία).", "ck.noFrom": "Η λίστα δεν έχει διεύθυνση αποστολέα.",
       "ck.noChan": "Ο λογαριασμός αποστολής της λίστας λείπει ή δεν έχει κωδικό σε αυτή τη συσκευή.",
@@ -2120,9 +2122,13 @@
     tile(t("vw.sent"), p.sent, "good");
     tile(t("vw.failed"), p.failed, p.failed ? "bad" : "");
     if (x.st !== "sent") tile(t("vw.left"), p.left);
-    var unsubs = l ? C.subsOf(data, l.id).filter(function (s) { return s.off && s.off >= x.start && s.offSt === "off"; }).length : 0;
-    tile(t("vw.unsubs"), unsubs);
+    // what happened after it (W3): counts only, no opens or clicks
+    var rep = C.issueReport(data, x, Date.now());
+    tile(t("vw.unsubs"), rep.unsub);
+    if (rep.bounce) tile(t("vw.bounces"), rep.bounce, "bad");
+    if (rep.spam) tile(t("vw.spam"), rep.spam, "bad");
     body.appendChild(tiles);
+    body.appendChild(el("p", "hint", t("vw.repHint", { d: rep.days })));
     if (x.st !== "sent" && p.total) {
       var bar = el("div", "prog");
       var fillB = el("span", "prog-fill");
@@ -2328,6 +2334,11 @@
     r3.appendChild(colorPick(t("sty.link"), sty.link || "", src.color, function (v) { sty.link = v; }));
     r3.appendChild(colorPick(t("sty.bg"), sty.bg || "", "#f2f3f5", function (v) { sty.bg = v; }));
     dlg.appendChild(r3);
+    // welcome mail (W3): one of the templates, sent once to new sign-ups
+    var tplsW = C.live(data.tpls).sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; });
+    f.wel = sel([["", t("l.welNone")]].concat(tplsW.map(function (tp) { return [tp.id, tp.name || shownSubj(tp)]; })),
+                src.welTpl && tplsW.some(function (tp) { return tp.id === src.welTpl; }) ? src.welTpl : "");
+    dlg.appendChild(field(t("l.wel"), f.wel, tplsW.length ? t("l.welHint") : t("l.welNoTpl")));
     var left = [];
     if (l) {
       left.push(btn(t("l.delete"), "danger", function () {
@@ -2353,6 +2364,9 @@
        ["why", f.why.value], ["theme", f.theme.value], ["color", f.color.value], ["salt", l ? l.salt : C.randomId("", null)],
        ["form", l ? l.form : null],
        ["sty", { font: f.font.value, hs: f.hs.value, btn: f.btn.value, link: sty.link, bg: sty.bg }]].forEach(function (kv) { base[kv[0]] = kv[1]; });
+      // welAt: only people active from now on are welcomed
+      if (f.wel.value) { if (base.welTpl !== f.wel.value || !base.welAt) base.welAt = Date.now(); base.welTpl = f.wel.value; }
+      else { delete base.welTpl; delete base.welAt; }
       var rec = C.normList(base);
       put("lists", rec);
       prefs.list = rec.id;
@@ -3099,7 +3113,7 @@
     var credsP = ch ? sendCreds(ch).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
     credsP.then(function (chanOk) {
       var aud = C.audience(data, x).length;
-      var res = C.preflight(data, x, { chan: chanOk ? ch : null, inbox: !!inboxAccount(ch), imgBytes: imgBytes(x), aud: aud });
+      var res = C.preflight(data, x, { chan: chanOk ? ch : null, inbox: !!inboxAccount(ch), imgBytes: imgBytes(x), aud: aud, relay: true });
       var errs = res.filter(function (r) { return r.lvl === "err"; });
       if (send && !errs.length) { sendDialog(x, l, ch, aud, res); return; }
       var dlg = makeDialog("nl-check", t("ck.title"), true);
@@ -3113,6 +3127,21 @@
         items.forEach(function (r) { if (!seen[r.k]) { seen[r.k] = 1; ul.appendChild(el("li", "", t("ck." + r.k))); } });
         dlg.appendChild(ul);
       });
+      // one-click unsubscribe (W3): the same relay registration as the web form
+      if (l && !l.form && res.some(function (r) { return r.k === "noOneClick"; })) {
+        var oc = btn(t("ck.oneClickOn"), "", function () {
+          oc.disabled = true;
+          E.formOn(l.id, "").then(function () {
+            data = E.read(); renderAll(); dlg.close(); showToast(t("ck.oneClickDone"));
+          }, function (e) {
+            oc.disabled = false;
+            showToast(e && e.code === "nostore" ? t("fm.nostore") : t("fm.fail", { e: errText(e) }));
+          });
+        });
+        var ow = el("div", "acts");
+        ow.appendChild(oc);
+        dlg.appendChild(ow);
+      }
       actionsRow(dlg, [], "", null);
       openDialog(dlg);
     });
@@ -3258,7 +3287,7 @@
       notify: function (kind, info) {
         if (kind === "done") showToast(t("toast.sentAll", { s: shownSubj(info.issue), n: info.issue.n }));
         else if (kind === "paused") showToast(t("vw.err", { e: errStored(info.err) }));
-        else if (kind === "invfail" || kind === "askfail") showToast(errStored(info.err));
+        else if (kind === "invfail" || kind === "askfail" || kind === "welfail") showToast(errStored(info.err));
       }
     });
   }

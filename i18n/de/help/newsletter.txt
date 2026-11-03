@@ -11,6 +11,8 @@ Eine Liste hat ihr eigenes Aussehen (`Klassisch`, `Warm`, `Dunkel` oder `Schlich
 
 `Sekunden zwischen Nachrichten` und `Nachrichten pro Tag (höchstens)` halten dich unter den Limits deines Anbieters. Das Passwort oder der API-Schlüssel eines Anbieters bleibt versiegelt auf dem Gerät, auf dem du es eingegeben hast, und wird nie synchronisiert: gib es auf jedem sendenden Gerät einmal ein.
 
+Ein gewöhnliches Postfach ist nicht für Massenversand gemacht und hat stündliche Grenzen, die sein Anbieter festlegt. Proton Mail sendet über SMTP nur in bezahlten Tarifen mit eigener Domain: erstelle in Protons Einstellungen ein SMTP-Token und nutze es als Passwort (Vorgabe `Proton Mail`, absichtlich langsam). Hosting-Mail (cPanel, Plesk) erlaubt oft einige hundert Nachrichten pro Stunde: frag deinen Hoster. Für Listen mit Hunderten Personen ist ein Versanddienst mit eigener Domain (Brevo, MailerSend, SMTP2GO…) am zuverlässigsten. Was du auch nutzt, stelle `Sekunden zwischen Nachrichten` und `Nachrichten pro Tag` unter seine Grenzen; eine Ausgabe an 340 Personen mit 10 Sekunden Abstand dauert etwa eine Stunde, bei offenem orOS.
+
 ## Versand über die API eines Anbieters
 Für Brevo, Postmark, SendGrid und Mailgun stellst du im Versandkonto `Verbindung` auf `HTTP-API` und fügst den API-Schlüssel des Anbieters ein (Mailgun braucht auch seine Versanddomain). Dann:
 - Bis zu 10 Nachrichten gehen in einem Aufruf raus statt einzeln.
@@ -79,6 +81,11 @@ Eine geplante Ausgabe geht von dem Gerät raus, auf dem sie geplant wurde, wo di
 
 >! orOS muss offen sein: ist orOS geschlossen, wird nichts gesendet, und eine geplante Ausgabe beginnt beim nächsten Öffnen von orOS auf diesem Gerät. Ein Tab im Hintergrund sendet langsamer.
 
+Nach dem Versand zeigt die Seite einer Ausgabe, wie viele Nachrichten gesendet und nicht zugestellt wurden und wie viele Personen der Liste sich abgemeldet haben, unzustellbar waren oder sie als Spam markiert haben, vom Start bis 14 Tage danach. Öffnungen und Klicks werden nie gezählt.
+
+## Willkommens-E-Mail
+Unter `Bearbeiten` einer Liste wählt `Willkommens-E-Mail` eine deiner Vorlagen. Wer sich über das Formular oder per E-Mail anmeldet, bekommt sie nach der Bestätigung einmal, vom Gerät, das die Liste sendet. Wer schon auf der Liste ist, importiert oder von Hand hinzugefügt wurde, bekommt sie nicht, ebenso wenig wer vor mehr als 30 Tagen bestätigt hat. Mit `Keine` hörst du auf.
+
 ## RSS per E-Mail
 Auf einer Listenkarte macht `RSS per E-Mail` aus einem Blog- oder News-Feed Ausgaben. Wähle einen deiner Feeds im [Reader](app:feeds) oder gib eine beliebige Feed-Adresse ein, wähle jeden Tag, jede Woche oder jeden Monat und die Uhrzeit, und wie viele Artikel hineinkommen. Jede Ausgabe listet die neuen Artikel mit Bild, ein paar Zeilen und einer Schaltfläche `Weiterlesen`.
 
@@ -102,6 +109,8 @@ Jede Ausgabe hat einen Abmeldelink, der eine fertige E-Mail öffnet. `Anmeldelin
 In `Anmeldelink` macht `Formular einrichten` ein Formular für deine eigene Website: kopiere sein HTML in eine beliebige Seite. Leute geben ihre E-Mail und ihren Namen ein, und das orOS-Relay hält die Anmeldung, so verschlüsselt, dass nur dein Newsletter sie lesen kann, bis orOS sie abholt, alle paar Minuten, solange es offen ist. Jeder neue Abonnent bekommt dann eine Bestätigungsanfrage. Du kannst eine `Dankeseite` auf deiner Website festlegen, auf der die Leute danach landen.
 
 Ist das Formular an, hat jede Ausgabe auch einen Ein-Klick-Abmeldelink, und Gmail und andere Mail-Apps zeigen ihren eigenen Abmelden-Knopf.
+
+Auch ohne Formular auf deiner Website bietet `Prüfen` `Abmeldung mit einem Klick einschalten` an, wenn eine Liste sie nicht hat: die Liste wird beim Relay genauso angemeldet, und jede Ausgabe bekommt den Ein-Klick-Link.
 
 >! Anmeldungen werden auf einem Gerät abgeholt, dem, das das Formular eingerichtet hat. Mit `Hier abholen` änderst du das. `Formular ausschalten` löscht, was das Relay hält, und die Ein-Klick-Links in schon versendeten Ausgaben funktionieren nicht mehr; der Weg per E-Mail funktioniert weiter.
 

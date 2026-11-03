@@ -11,6 +11,8 @@ A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer l
 
 `Seconds between messages` and `Messages a day (at most)` keep you under your provider's limits. A provider's password or API key stays sealed on the device where you typed it and is never synced: enter it once on each device that sends.
 
+An ordinary mailbox is not made for bulk mail and has hourly limits that its provider decides. Proton Mail sends through SMTP only on paid plans with your own domain: create an SMTP token in Proton's settings and use it as the password (preset `Proton Mail`, slow on purpose). Hosting mail (cPanel, Plesk) often allows a few hundred messages an hour: ask your host. For lists of hundreds, a sending provider with your own domain (Brevo, MailerSend, SMTP2GO…) is the most reliable. Whatever you use, set `Seconds between messages` and `Messages a day` under its limits; an issue to 340 people at 10 seconds apart takes about an hour, with orOS open.
+
 ## Sending through a provider's API
 For Brevo, Postmark, SendGrid and Mailgun, set `Connection` to `HTTP API` in the sending account and paste the provider's API key (Mailgun also needs its sending domain). Then:
 - Up to 10 messages leave in one call instead of one at a time.
@@ -79,6 +81,11 @@ A scheduled issue goes out from the device that scheduled it, where the password
 
 >! orOS has to be open: with orOS closed nothing is sent, and a scheduled issue starts the next time you open orOS on that device. A tab in the background sends more slowly.
 
+After an issue goes out, its page shows how many messages were sent and not delivered, and how many people of the list unsubscribed, bounced or marked it as spam from the start until 14 days later. Opens and clicks are never counted.
+
+## Welcome mail
+On a list's `Edit`, `Welcome mail` picks one of your templates. Each person who signs up through the form or by e-mail gets it once, after confirming, from the device that sends the list. People already on the list, imported or added by hand don't get it, nor anyone who confirmed more than 30 days ago. Pick `None` to stop it.
+
 ## RSS to e-mail
 On a list card, `RSS to e-mail` turns a blog or news feed into issues. Pick one of your feeds in [Reader](app:feeds) or type any feed address, choose every day, every week or every month and the time, and how many articles go in. Each issue lists the new articles with their picture, a few lines and a `Read more` button.
 
@@ -102,6 +109,8 @@ Every issue has an unsubscribe link that opens a ready e-mail. `Subscribe link` 
 In `Subscribe link`, `Set up the form` makes a form for your own website: copy its HTML into any page. People type their e-mail and name, and orOS's relay keeps the sign-up, encrypted so only your Newsletter can read it, until orOS collects it, every few minutes while it is open. Each new subscriber then gets a confirmation request. You can set a `Thank-you page` on your site where people land afterwards.
 
 With the form on, every issue also has a one-click unsubscribe link, and Gmail and other mail apps show their own Unsubscribe button.
+
+Even without the form on your site, `Check` offers `Turn on one-click unsubscribe` when a list doesn't have it: the list is registered with the relay the same way, and every issue gets the one-click link.
 
 >! Sign-ups are collected on one device, the one that set the form up. Use `Collect here` to change it. `Turn the form off` deletes what the relay holds, and the one-click links in issues already sent stop working; the e-mail way keeps working.
 

@@ -89,6 +89,10 @@
     smtp2go:    { host: "mail.smtp2go.com", port: 587, rate: 1, cap: 200 },
     mailersend: { host: "smtp.mailersend.net", port: 587, rate: 1, cap: 100 },   // MailerLite's sending service
     gmail:      { host: "smtp.gmail.com", port: 465, rate: 6, cap: 450 },
+    // Proton Mail (paid plans with an own domain; the password is an SMTP
+    // token). Proton isn't made for bulk mail and limits by reputation:
+    // slow defaults the user may raise (W4 2026-11).
+    proton:     { host: "smtp.protonmail.ch", port: 587, rate: 15, cap: 150 },
     other:      { host: "", port: 587, rate: 6, cap: 450 }
   };
   var MAIL_DEFAULTS = { rate: 6, cap: 450 };   // an ordinary mailbox (Mail account)
@@ -222,6 +226,10 @@
     if (x.clnGone === 0 || (CLEAN_GONE.indexOf(x.clnGone) >= 0 && x.clnGone !== CLEAN_DFLT.gone)) o.clnGone = x.clnGone;
     if (x.clnIdle === 0 || (CLEAN_IDLE.indexOf(x.clnIdle) >= 0 && x.clnIdle !== CLEAN_DFLT.idle)) o.clnIdle = x.clnIdle;
     if (typeof x.clnDev === "string" && /^[a-z0-9]{6,20}$/.test(x.clnDev)) o.clnDev = x.clnDev;
+    // welcome mail (W3 2026-11): a template sent once to each person who
+    // signs up (form or e-mail) and becomes active after welAt. Plain
+    // scalars, so an older orOS keeps them (keepExtra).
+    if (validId(x.welTpl)) { o.welTpl = x.welTpl; o.welAt = nat(x.welAt); }
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -283,6 +291,8 @@
     if (cn) o.cn = cn;
     var ask = nat(x.ask);                // when "Stay?" was sent (left out while never)
     if (ask) o.ask = ask;
+    var wel = nat(x.wel);                // when the welcome mail was sent (W3; left out while never)
+    if (wel) o.wel = wel;
     return o;
   }
   // Fields a newer orOS may add to a block or a list: kept as they are
@@ -291,7 +301,7 @@
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnIdle", "clnDev"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -867,6 +877,8 @@
     o.bnc = Math.max(a.bnc, b.bnc);
     var ask = Math.max(a.ask || 0, b.ask || 0);
     if (ask) o.ask = ask; else delete o.ask;
+    var wel = Math.max(a.wel || 0, b.wel || 0);
+    if (wel) o.wel = wel; else delete o.wel;
     var src = a.off !== b.off ? (a.off > b.off ? a : b) : ((OFF_RANK[a.offSt] || 0) >= (OFF_RANK[b.offSt] || 0) ? a : b);
     o.off = src.off;
     o.offSt = src.off ? src.offSt : "";
@@ -1091,6 +1103,45 @@
     return on.filter(function (s) { return now - lastSeen(s) >= monthsMs(c.idle) && !(s.ask > lastSeen(s)); })
       .sort(function (a, b) { return lastSeen(a) - lastSeen(b) || (a.id < b.id ? -1 : 1); })
       .slice(0, room);
+  }
+  // Welcome mails due on a list (W3): people who signed up themselves
+  // (web form or e-mail), became active after the welcome mail was
+  // turned on, within WEL_DAYS, and were not welcomed yet. Oldest first.
+  var WEL_DAYS = 30;
+  function welcomeTpl(d, l) {
+    var tp = l && l.welTpl ? find(d.tpls, l.welTpl) : null;
+    return tp && !tp.del ? tp : null;
+  }
+  function welcomesDue(d, listId, now) {
+    var l = list(d, listId);
+    if (!welcomeTpl(d, l)) return [];
+    return subsOf(d, listId).filter(function (s) {
+      return status(s) === "on" && (s.src === "form" || s.src === "mail") && !s.wel &&
+             s.conf >= (l.welAt || 0) && now - s.conf <= WEL_DAYS * DAY;
+    }).sort(function (a, b) { return a.conf - b.conf || (a.id < b.id ? -1 : 1); });
+  }
+  // The welcome template as an issue of the list (never stored).
+  function welcomeIssue(d, l) {
+    var tp = welcomeTpl(d, l);
+    if (!tp) return null;
+    return normIssue({ id: tp.id, m: tp.m, list: l.id, subj: tp.subj, pre: tp.pre, fmt: tp.fmt, blocks: tp.blocks, md: tp.md,
+                       html: tp.html, txt: tp.txt, l2: tp.l2, st: "draft" });
+  }
+  // What happened after an issue (W3 report): people of its list who
+  // left from its start until REPORT_DAYS after it was done (or now),
+  // by kind. Counts only.
+  var REPORT_DAYS = 14;
+  function issueReport(d, x, now) {
+    var from = x.start || x.done || 0, to = (x.done || now || Date.now()) + REPORT_DAYS * DAY;
+    var out = { unsub: 0, bounce: 0, spam: 0, days: REPORT_DAYS };
+    if (!from) return out;
+    subsOf(d, x.list).forEach(function (s) {
+      if (!s.off || s.off < from || s.off > to || status(s) === "on" || status(s) === "pend") return;
+      if (s.offSt === "bounce") out.bounce++;
+      else if (s.offSt === "spam") out.spam++;
+      else out.unsub++;
+    });
+    return out;
   }
   // Asked more than ASK_WAIT days ago and no answer (no reconfirmation
   // since): unsubscribed (reversible; the clean-up deletes them later
@@ -1488,6 +1539,8 @@
       if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
     });
     if (!l || !l.addr) add("err", "noAddr");
+    // info.relay: the app can turn on one-click unsubscribe (the relay's /nl)
+    if (info.relay && l && !l.form) add("warn", "noOneClick");
     if (!l || !l.from) add("err", "noFrom");
     if (!info.chan) add("err", "noChan");
     // Brevo's API can't carry pictures inside a message (no Content-ID)
@@ -1777,7 +1830,8 @@
     BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, SHOP_PS: SHOP_PS, normProd: normProd, oldPrices: oldPrices, PRICE_AGE: PRICE_AGE, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     CLEAN_PEND: CLEAN_PEND, CLEAN_GONE: CLEAN_GONE, CLEAN_DFLT: CLEAN_DFLT, CLEAN_MAX: CLEAN_MAX, cleanOf: cleanOf, cleanPlan: cleanPlan, cleanApply: cleanApply,
-    CLEAN_IDLE: CLEAN_IDLE, ASK_WAIT: ASK_WAIT, lastSeen: lastSeen, asksDue: asksDue, askTimeouts: askTimeouts, idleCount: idleCount,
+    CLEAN_IDLE: CLEAN_IDLE, ASK_WAIT: ASK_WAIT, lastSeen: lastSeen, asksDue: asksDue,
+    welcomesDue: welcomesDue, welcomeTpl: welcomeTpl, welcomeIssue: welcomeIssue, issueReport: issueReport, WEL_DAYS: WEL_DAYS, askTimeouts: askTimeouts, idleCount: idleCount,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,

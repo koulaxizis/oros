@@ -938,6 +938,7 @@
     var timer = null, busy = false, state = { k: "" }, stopped = false;
     var failedInv = {};       // list id → true: no more invitations in this window after an error
     var failedAsk = {};       // the same for "Stay?" e-mails
+    var failedWel = {};       // the same for welcome mails (W3)
     var apiMax = {};          // chan id → a smaller batch after a failed relay call
     function call(name, a) { try { if (env[name]) env[name](a, arguments[2]); } catch (e) {} }
     function setState(s) { state = s; call("onState", s); }
@@ -975,6 +976,13 @@
         if (!cha || capLeft(cha) <= 0 || failedAsk[la.id] || C.cleanOf(la).dev !== dev) continue;
         var asks = C.asksDue(d, la.id, now);
         if (asks.length) return { kind: "ask", list: la, chan: cha, sub: asks[0], left: asks.length };
+      }
+      // welcome mails (W3), on the same device: the list's sending one
+      for (var w = 0; w < lists.length; w++) {
+        var lw = lists[w], chw = C.chan(d, lw.chan);
+        if (!chw || capLeft(chw) <= 0 || failedWel[lw.id] || C.cleanOf(lw).dev !== dev) continue;
+        var wel = C.welcomesDue(d, lw.id, now), xw = wel.length ? C.welcomeIssue(d, lw) : null;
+        if (xw) return { kind: "wel", list: lw, chan: chw, sub: wel[0], left: wel.length, issue: xw };
       }
       var other = C.live(d.issues).filter(function (x) { return x.st === "sending"; })[0];
       if (other) return { kind: "other", issue: other };
@@ -1079,7 +1087,7 @@
       } else setState({ k: job.kind, left: job.left });
       if (C.isApi(job.chan)) { runApi(job, release); return; }
       var l = job.list, ch = job.chan, s = job.sub;
-      var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
+      var p = job.kind === "issue" || job.kind === "wel" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       p.then(function (ok) {
         if (!ok) throw { code: "noImg" };
         return sendCreds(ch);
@@ -1087,19 +1095,20 @@
         // the subscriber may have left meanwhile (Inbox, another device)
         var fresh = read(), cur = C.sub(fresh, s.id);
         if (!cur || (job.kind === "issue" ? C.status(cur) !== "on" : job.kind === "ask" ? C.status(cur) !== "on" || cur.ask > C.lastSeen(cur)
+                                                                 : job.kind === "wel" ? C.status(cur) !== "on" || !!cur.wel
                                                                  : C.status(cur) !== "pend")) throw { code: "skip" };
         if (job.kind === "issue") {
           var xi = C.issue(fresh, job.issue.id);
           if (!xi || xi.st !== "sending" || C.sentSet(fresh, xi.id)[s.id]) throw { code: "skip" };
         }
         var bin = job.kind === "inv" ? confirmFor(l, cur, cr.hdr).bin : job.kind === "ask" ? askFor(l, cur, cr.hdr).bin
-                                                                    : buildFor(job.issue, l, cur, { hdr: cr.hdr }).bin;
+                                                                    : buildFor(job.issue, l, cur, { hdr: cr.hdr }).bin;   // issue or welcome
         return relay({ op: "send", acct: cr.acct, smtp: cr.smtp, from: l.from, rcpt: [cur.email],
                        raw: root.orosMailCompose.b64(bin) }, SEND_TIMEOUT);
       }).then(function () {
         countUsed(ch.id);
         change(function (dd) {
-          if (job.kind === "inv" || job.kind === "ask") {
+          if (job.kind === "inv" || job.kind === "ask" || job.kind === "wel") {
             var cur = C.sub(dd, s.id);
             if (!cur) return false;
             var z = copy(cur); z[job.kind] = Date.now(); put(dd, "subs", z);
@@ -1121,7 +1130,7 @@
     // own: sent, refused (that address bounces), or left for the next try.
     function runApi(job, release) {
       var l = job.list, ch = job.chan, max = Math.min(apiMax[ch.id] || C.API_BATCH, capLeft(ch));
-      var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
+      var p = job.kind === "issue" || job.kind === "wel" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       var batch = [];
       p.then(function (ok) {
         if (!ok) throw { code: "noImg" };
@@ -1134,7 +1143,9 @@
           if (!xi || xi.st !== "sending") throw { code: "skip" };
           subs = C.nextSubs(fresh, xi, max).filter(function (s) { return C.status(s) === "on"; });
         } else {
-          subs = (job.kind === "ask" ? C.asksDue(fresh, l.id, Date.now()) : C.invitesDue(fresh, l.id)).slice(0, max);
+          subs = (job.kind === "ask" ? C.asksDue(fresh, l.id, Date.now()) : job.kind === "wel" ? C.welcomesDue(fresh, l.id, Date.now())
+                  : C.invitesDue(fresh, l.id)).slice(0, max);
+          if (job.kind === "wel") { xi = C.welcomeIssue(fresh, C.list(fresh, l.id) || l); if (!xi) throw { code: "skip" }; }
         }
         if (!subs.length) throw { code: "skip" };
         var lf = C.list(fresh, l.id) || l, size = 0;
@@ -1169,7 +1180,7 @@
               if (!cur) return;
               var z = copy(cur);
               if (refused.indexOf(id) >= 0) { z.off = at; z.offSt = "bounce"; }
-              else if (job.kind === "inv" || job.kind === "ask") z[job.kind] = at;
+              else if (job.kind === "inv" || job.kind === "ask" || job.kind === "wel") z[job.kind] = at;
               else return;
               put(dd, "subs", z);
             });
@@ -1223,8 +1234,8 @@
         later(job.chan.rate * 1000);
         return;
       }
-      if (job.kind === "inv" || job.kind === "ask") {
-        (job.kind === "inv" ? failedInv : failedAsk)[job.list.id] = true;
+      if (job.kind === "inv" || job.kind === "ask" || job.kind === "wel") {
+        (job.kind === "inv" ? failedInv : job.kind === "ask" ? failedAsk : failedWel)[job.list.id] = true;
         call("notify", job.kind + "fail", { list: job.list, err: errCode(e) });
         later(1000);
         return;
