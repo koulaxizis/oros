@@ -321,16 +321,21 @@
   // → [pid] in the order to try (not yet checked on this device)
   function chainOrder(d) {
     var set = (d && d.set) || {}, provs = (d && d.provs) || {};
-    if (!set.auto) {
-      var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
-      var fb = fbFor(set);
-      if (fb) out.push(fb);
-      return out;
-    }
     var skip = normSkip(set.skip);
-    return PROV_IDS.filter(function (p) { return skip.indexOf(p) < 0; }).map(function (p, i) {
+    var all = PROV_IDS.filter(function (p) { return skip.indexOf(p) < 0; }).map(function (p, i) {
       return { p: p, k: provTier(p, provs[p]) * 100 + (p === set.prov ? 0 : 1 + i) };
     }).sort(function (a, b) { return a.k - b.k; }).map(function (x) { return x.p; });
+    if (set.auto) return all;
+    var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
+    var fb = fbFor(set);
+    if (fb) out.push(fb);
+    // A model on the user's own devices that isn't there (a phone, the
+    // computer off) is never a dead end (AS-CHAIN 2, Chris 2026-11-03):
+    // after it and its stand-in come the rest, in the same order.
+    if (out.length && provTier(set.prov, provs[set.prov]) <= 2) {
+      all.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
+    }
+    return out;
   }
   // Does this message need tools (an entry, a change, a web search)?
   // A model without tools still answers questions about the user's
@@ -387,7 +392,9 @@
   }
   // An error before any answer that makes the next service in the
   // order worth trying, and how long (ms) to pass this one over.
-  var COOL = { net: 15000, rate: 60000, busy: 30000, server: 30000, credit: 600000, key: 600000 };
+  // model: the service doesn't have the chosen model (a local server
+  // without it pulled), so another one answers.
+  var COOL = { net: 15000, rate: 60000, busy: 30000, server: 30000, credit: 600000, key: 600000, model: 600000 };
   function coolFor(e) {
     return e instanceof ProviderError && COOL[e.code] ? COOL[e.code] : 0;
   }
@@ -1758,7 +1765,10 @@
       "stock (a product, update: title / note / location / amount = the selling price; a supplier, update: title / note / phone / email, each replaces; " +
       "quantities change only through movements in Stock) · " +
       "music (a playlist, update: title = rename; a song, update: playlist = add it to that playlist / from_playlist = take it out; an album, update: playlist = add all its songs; only playlists the user has) · " +
-      "flashcards (a deck, update: title = rename; a note, update: front / back (a cloze note: front = its text with {{c1::gaps}}, back = the extra) / labels = tags, move: deck = another deck). Never guess a ref.",
+      "flashcards (a deck, update: title = rename; a note, update: front / back (a cloze note: front = its text with {{c1::gaps}}, back = the extra) / labels = tags, move: deck = another deck) · " +
+      "files (a file or folder of the orOS disk from search_data: update: title = rename (a file keeps its extension) or new_folder = make a folder inside that folder; " +
+      "move: folder = the folder it goes to, e.g. Pictures/2024, made when it is not there; delete = to Files' Trash, restorable there for 30 days; refs: up to 50 at once for move and delete; " +
+      "nothing is overwritten; folders where apps keep their data, orOS Drive and the Trash are refused). Never guess a ref.",
     params: {
       type: "object",
       properties: {
@@ -1782,6 +1792,7 @@
         playlist: { type: "string", description: "music: the name of the playlist the song or album goes into (at the end)." },
         from_playlist: { type: "string", description: "music: the name of the playlist the song is taken out of." },
         deck: { type: "string", description: "flashcards move: the name of the deck the note goes to." },
+        new_folder: { type: "string", description: "files: the name of a new folder to make inside the folder ref (action update)." },
         queue: { type: "string", "enum": ["next", "end", "off"], description: "podcasts: the episode goes first in the queue (next), last (end) or out of it (off)." },
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
@@ -1816,7 +1827,7 @@
         board: { type: "string", description: "kanban move: the name of another board to move the card to (with column, or its first column). Labels go by name." },
         list: { type: "string", description: "todo move: the name of the list the task goes to (it lands on top)." },
         notebook: { type: "string", description: "notes move: the name of the notebook the page goes to, with the pages under it. Labels go by name." },
-        folder: { type: "string", description: "bookmarks move: the folder's name or whole path (\"Work › Tools\"); \"Unsorted\" for none." },
+        folder: { type: "string", description: "bookmarks move: the folder's name or whole path (\"Work › Tools\"); \"Unsorted\" for none. files move: the disk folder's path, e.g. Pictures/2024." },
         status: { type: "string", "enum": ["want", "now", "done", "dropped"], description: "shelf: want to watch/read, watching/reading now, finished, dropped." },
         category: { type: "string", "enum": ["groceries", "eating-out", "bills", "home", "transport", "health", "fun", "clothes", "gift", "salary", "freelance", "other"] }
       },
