@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.20.02
+- **More reliable checks behind sync.** A test of moving a device from Dropbox to WebDAV/Nextcloud no longer fails at random on a busy computer. Nothing changes in how orOS syncs.
+
 ## Version 5.20.01
 - **The Assistant rides out short network drops.** When the connection to an online service drops for a moment or the service is overloaded, the same request goes again after a few seconds, also in the middle of a long task, before anything else is tried. If it still fails, the Assistant stays with that service instead of trying a model that isn't there (such as your computer's from the phone), so "Continue" carries on.
 

@@ -9775,3 +9775,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** Chris (17:30, screenshot): on the phone with Claude, "Could not reach api.anthropic.com" during a whole-site read; "Συνέχισε" then went to Local (localhost, not there on a phone), failed, and stopped with "No other AI is set up"; he had to say "use Claude". Cause: no retry of a transient drop; after Claude's retry failed and it was cooled, `pickChain` found nothing un-cooled and returned the first in the order (the local server).
 - **Changes:** `assistant.js` `callRetry` (RETRY_WAIT 2 s / 6 s, codes net/busy/server, online only) used for every model call of a turn; `core.pickChain` pass without `cool` before the first-in-order fallback; `note.noNext` only for tier ≤ 2.
 - **Tests:** `tests/assistant-chain.test.js` (cooled-only pick, retry wiring); full suite; Playwright E2E with an OpenAI mock that resets connections: one drop → same answer with no error (2 requests); always dropping → 3 requests, its error, no local chat, no hint; next message answers.
+
+### 2026-11-03 — 5.20.02 — Tests: the WebDAV move test waits for the sync round, not 400 ms
+
+- **What:** `tests/sync-webdav.test.js` "moving a device from Dropbox to WebDAV starts the new cloud cleanly" failed about 1 run in 4 (`Cannot read properties of null (reading 'apps')`), also on main. Chris approved the fix (2026-11-03 16:26).
+- **Cause:** a test race, not a sync bug. `reconcile()` does not return its round; the test polled the fake server for about 400 ms. Under CPU load the round (pull, PBKDF2 600k, push) was still running then (no `done` event yet) and uploaded later. Reproduced 6/6 with 16 busy processes on 4 cores; unloaded the round takes about 80 ms.
+- **Fix:** the test waits for the round's own `done`/`fail` event through `onAutoSync` and asserts `done`. `sync.js` unchanged. Lesson for sync tests: wait for the round's event, never a fixed poll.
+- **Files:** `tests/sync-webdav.test.js`, What's new EN/EL, `shell.js`, `sw.js`, `manifest.webmanifest`.
+- **Tests:** the test 40 times unloaded and 10 times under the same load, 0 failures; `tests/sync-webdav.test.js` 87 pass; full `node --test tests/*.test.js` green. Not tested in the browser shell (test-only change).
