@@ -479,7 +479,7 @@
       "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
       "f.until": "Last day", "f.platform": "Platform",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
-      "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
+      "f.deck": "Deck", "f.front": "Front", "f.back": "Back", "f.songs": "Songs", "chg.disk": "The change could not be written to the orOS disk.", "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
       "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
@@ -1084,7 +1084,7 @@
       "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
       "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
-      "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
+      "f.deck": "Τράπουλα", "f.front": "Μπροστά", "f.back": "Πίσω", "f.songs": "Τραγούδια", "chg.disk": "Η αλλαγή δεν γράφτηκε στον δίσκο του orOS.", "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
       "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
@@ -4078,6 +4078,7 @@
     return apps.filter(function (a) { return E.editableApps([a.id]).length && have[a.id]; });
   }
   function writeStore(key, value) {
+    if (key === "disk:flashcards") return fcStore(value);
     try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
   }
   function markAppDirty() {
@@ -4101,7 +4102,7 @@
   // AS-EDIT4: Reader's stored articles and Podcasts' episode titles are
   // in the apps' IndexedDB; read them (read-only: a database that is
   // not there is never created) for edits3.js before a change.
-  var PREP_DB = { feeds: ["oros-feeds", "heads"], podcasts: ["oros-podcasts", "feeds"] };
+  var PREP_DB = { feeds: ["oros-feeds", "heads"], podcasts: ["oros-podcasts", "feeds"], music: ["oros-music", "tracks"] };
   function idbAll(name, store) {
     return new Promise(function (resolve) {
       var rq;
@@ -4123,17 +4124,68 @@
     });
   }
   function changePrep(r0) {
-    var E3 = window.OrosAssistEdits3, p = r0 && PREP_DB[r0.app];
-    if (!p || !E3) return Promise.resolve();
+    if (r0 && r0.app === "flashcards") return fcPrep();
+    var Ex = r0 && (r0.app === "music" ? window.OrosAssistEdits4 : window.OrosAssistEdits3), p = r0 && PREP_DB[r0.app];
+    if (!p || !Ex) return Promise.resolve();
     return idbAll(p[0], p[1]).then(function (list) {
       var m = {};
       (Array.isArray(list) ? list : []).forEach(function (x) {
+        if (r0.app === "music") { if (x && typeof x.k === "string") m[x.k] = x; return; }
         if (!x || typeof x.id !== "string") return;
         if (r0.app === "feeds") m[x.id] = { id: x.id, feed: x.feed, title: x.title, link: x.link, date: x.date, author: x.author, snip: x.snip };
         else if (Array.isArray(x.eps)) m[x.id] = x.eps.map(function (e) { return e && typeof e.id === "string" ? { id: e.id, title: String(e.title || ""), pub: e.pub } : null; }).filter(Boolean);
       });
-      E3.setCache(r0.app, m);
+      Ex.setCache(r0.app, m);
     });
+  }
+  // AS-EDIT5: Flashcards' data for edits4.js = its slice plus every note
+  // file on the orOS disk, folded. The Assistant writes notes only into
+  // its OWN file (its own device id, "oros-assistant-fcdev", never the
+  // Flashcards app's), so one writer per file still holds (FLASHCARDS v1).
+  // Store "disk:flashcards": readStore gives this copy, writeStore puts
+  // the slice in localStorage and the own file on the disk.
+  var fcMem = null, fcWrites = Promise.resolve();
+  function fcFS() {
+    try { var f = window.parent && window.parent !== window ? window.parent.orosFS : null; return f && typeof f.ls === "function" && typeof f.readText === "function" && typeof f.writeText === "function" ? f : null; } catch (e) { return null; }
+  }
+  function fcDev() {
+    var id = "", own = "";
+    try { id = localStorage.getItem("oros-assistant-fcdev") || ""; own = localStorage.getItem("oros-flashcards-dev") || ""; } catch (e) {}
+    var C = window.FlashcardsCore;
+    if (!C.DEV_RE.test(id) || id === own) {
+      do { id = C.newDevId(); } while (id === own);
+      try { localStorage.setItem("oros-assistant-fcdev", id); } catch (e) {}
+    }
+    return id;
+  }
+  function fcPrep() {
+    var C = window.FlashcardsCore, F = fcFS();
+    if (!C) return Promise.resolve();
+    var slice = C.normalize(readStore("oros-flashcards-data"));
+    if (!F) { fcMem = { slice: slice, notes: [], own: null }; return Promise.resolve(); }
+    var dev = fcDev(), path = C.notesPath(dev, Date.now()), name = path.split("/").pop();
+    return Promise.resolve(F.ls(C.NOTES_DIR)).catch(function (e) { if (e && e.code === "ENOENT") return []; throw e; }).then(function (list) {
+      var names = (list || []).filter(function (x) { return x && !x.dir && C.parseFileName(x.name); }).map(function (x) { return x.name; });
+      return Promise.all(names.map(function (n) {
+        return Promise.resolve(F.readText(C.NOTES_DIR + "/" + n)).then(function (txt) { return { n: n, items: C.readFile(txt, "notes") || [] }; }, function () { return { n: n, items: [] }; });
+      }));
+    }).then(function (files) {
+      var map = {}, own = { path: path, dev: dev, items: [] };
+      files.forEach(function (f) { map = C.foldNotes(map, f.items); if (f.n === name) own.items = C.mergeNotes(f.items, []); });
+      fcMem = { slice: slice, notes: Object.keys(map).sort().map(function (k) { return map[k]; }), own: own };
+    }, function () { fcMem = { slice: slice, notes: [], own: null }; });
+  }
+  function fcStore(v) {
+    var C = window.FlashcardsCore, F = fcFS();
+    if (!C || !v) return false;
+    var old = fcMem;
+    try { localStorage.setItem("oros-flashcards-data", C.serialize(v.slice)); } catch (e) { return false; }
+    fcMem = v;
+    if (v.own && F && !(old && old.own && JSON.stringify(old.own.items) === JSON.stringify(v.own.items))) {
+      var text = C.writeFile("notes", v.own.dev, v.own.items), path = v.own.path;
+      fcWrites = fcWrites.then(function () { return F.writeText(path, text); }).catch(function () { showToast(t("chg.disk")); });
+    }
+    return true;
   }
   // AS-EDIT4: a file the change also writes to the orOS disk (Wiki's
   // history, as Wiki writes it), after the data was saved. Best effort:
@@ -5086,6 +5138,8 @@
       if (!E) return Promise.resolve(undoFail(t("hist.noMod")));
       var need = typeof E.needs === "function" ? E.needs(mem.app) : [];
       return need.reduce(function (p, src) { return p.then(function () { return loadOnce(src); }); }, Promise.resolve()).then(function () {
+        return mem.app === "flashcards" ? fcPrep() : null;
+      }).then(function () {
         if (typeof E.needs === "function" && E.needs(mem.app).length) return undoFail(t("hist.noMod"));
         var res;
         if (mem.undos) {
@@ -5376,6 +5430,7 @@
     return apps.filter(function (a) { return S.OWN[a.id] || ag[a.id]; }).map(function (a) { return a.id; });
   }
   function readStore(key) {
+    if (key === "disk:flashcards") return fcMem ? JSON.parse(JSON.stringify(fcMem)) : null;
     try { return JSON.parse(localStorage.getItem(key)); } catch (e) { return null; }
   }
   function ymdNow() {

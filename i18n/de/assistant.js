@@ -1717,5 +1717,10 @@ orosPack("de", "assistant", {
  "v.read": "gelesen",
  "v.unread": "ungelesen",
  "v.played": "gehört",
- "v.unplayed": "nicht gehört"
+ "v.unplayed": "nicht gehört",
+ "f.deck": "Stapel",
+ "f.front": "Vorderseite",
+ "f.back": "Rückseite",
+ "f.songs": "Titel",
+ "chg.disk": "Die Änderung konnte nicht auf die orOS-Disk geschrieben werden."
 });

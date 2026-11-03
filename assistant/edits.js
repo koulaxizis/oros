@@ -97,7 +97,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "kind", "roles", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -206,6 +206,16 @@
       if (!nx) return bad("next must be a real date as YYYY-MM-DD.");
       set.next = nx;
     }
+    // AS-EDIT5: a Flashcards note's sides; a song or album into a Music playlist, or a song out of one.
+    var FC_IN = 20000;
+    for (var fi = 0, fk = ["front", "back"]; fi < 2; fi++) {
+      if (!has(args, fk[fi]) || typeof args[fk[fi]] !== "string") continue;
+      if (para(args[fk[fi]], 1000000).length > FC_IN) return bad(fk[fi] + " is too long; a card side holds " + FC_IN + " characters.");
+      set[fk[fi]] = para(args[fk[fi]], FC_IN);
+    }
+    ["playlist", "from_playlist"].forEach(function (k) {
+      if (has(args, k) && typeof args[k] === "string" && args[k].trim()) set[k] = line(args[k], 200);
+    });
     // AS-EDIT4: a Podcasts episode into the queue (first / last) or out.
     if (has(args, "queue") && args.queue !== null && args.queue !== undefined && args.queue !== "") {
       if (["next", "end", "off"].indexOf(args.queue) < 0) return bad("queue must be next, end or off.");
@@ -292,7 +302,7 @@
       set.board = bo;
     }
     // AS-MOVE (wave 2): where a task, page or bookmark goes.
-    ["list", "notebook", "folder"].forEach(function (k) {
+    ["list", "notebook", "folder", "deck"].forEach(function (k) {
       if (set.err || !has(args, k) || args[k] === null || args[k] === undefined || args[k] === "") return;
       var v = line(String(args[k]), 240);
       if (!v) set.err = k + " must not be empty.";
@@ -355,16 +365,16 @@
     var keys = Object.keys(set);
     if (action === "move") {
       // AS-MOVE: one place word per app, checked by the app itself.
-      var MOVE_KEYS = ["column", "board", "list", "notebook", "folder", "label"];
+      var MOVE_KEYS = ["column", "board", "list", "notebook", "folder", "label", "deck"];
       if (!keys.some(function (k) { return k !== "label" && MOVE_KEYS.indexOf(k) >= 0; }) && !has(set, "label")) {
-        return bad("move needs where to: list (To-Do), notebook (Notes), folder (Bookmarks), label (Calendar: the event's calendar), column and/or board (Kanban).");
+        return bad("move needs where to: list (To-Do), notebook (Notes), folder (Bookmarks), label (Calendar: the event's calendar), column and/or board (Kanban), deck (Flashcards).");
       }
       if (keys.some(function (k) { return MOVE_KEYS.indexOf(k) < 0; })) return bad("move changes only where the item is; use update for the rest.");
       return { ok: true, ref: ref, action: action, set: set };
     }
     if (set.column) return bad("column is only for move.");
     if (set.board) return bad("board is only for move (a Kanban card to another board).");
-    if (set.list || set.notebook || set.folder) return bad((set.list ? "list" : set.notebook ? "notebook" : "folder") + " is only for move.");
+    if (set.list || set.notebook || set.folder || set.deck) return bad((set.list ? "list" : set.notebook ? "notebook" : set.folder ? "folder" : "deck") + " is only for move.");
     if (action === "complete" && keys.every(function (k) { return k === "amount" || k === "date" || k === "how"; }) && keys.length) {
       // an invoice paid: the amount (default all that is owed), the day and how
     } else if (action === "complete" || action === "reopen" || action === "delete") {
@@ -2519,7 +2529,11 @@
     wiki:      { key: "oros-wiki-data",      actions: ["update"], src: ["../wiki/core.js"], g: "WikiCore", file: "edits3.js" },
     feeds:     { key: "oros-feeds-data",     actions: ["complete", "reopen", "update"], src: ["../feeds/core.js"], g: "orosFeedsCore", file: "edits3.js" },
     podcasts:  { key: "oros-podcasts-data",  actions: ["complete", "reopen", "update"], src: ["../podcasts/core.js"], g: "OrosPodcastsCore", file: "edits3.js" },
-    stock:     { key: "oros-stock-data",     actions: ["update"], src: ["../stock/core.js"], g: "OrosStockCore", file: "edits3.js" }
+    stock:     { key: "oros-stock-data",     actions: ["update"], src: ["../stock/core.js"], g: "OrosStockCore", file: "edits3.js" },
+    // AS-EDIT5 (wave 5b): assistant/edits4.js. Flashcards' data is its
+    // slice plus the notes on the orOS disk (assistant.js "disk:" store).
+    music:     { key: "oros-music-data",     actions: ["update"], src: ["../music/core.js"], g: "OrosMusicCore", file: "edits4.js" },
+    flashcards: { key: "disk:flashcards",    actions: ["update", "move"], src: ["../flashcards/core.js"], g: "FlashcardsCore", file: "edits4.js" }
   };
   Object.keys(LAZY).forEach(function (id) {
     APPS[id] = { key: LAZY[id].key, actions: LAZY[id].actions };

@@ -1710,7 +1710,9 @@
       "feeds (Reader, an article: complete = read, reopen = not read, update: label / labels = its tags, only tags Reader has) · " +
       "podcasts (an episode: complete = played, reopen = not played, update: queue) · " +
       "stock (a product, update: title / note / location / amount = the selling price; a supplier, update: title / note / phone / email, each replaces; " +
-      "quantities change only through movements in Stock). Never guess a ref.",
+      "quantities change only through movements in Stock) · " +
+      "music (a playlist, update: title = rename; a song, update: playlist = add it to that playlist / from_playlist = take it out; an album, update: playlist = add all its songs; only playlists the user has) · " +
+      "flashcards (a deck, update: title = rename; a note, update: front / back (a cloze note: front = its text with {{c1::gaps}}, back = the extra) / labels = tags, move: deck = another deck). Never guess a ref.",
     params: {
       type: "object",
       properties: {
@@ -1724,11 +1726,16 @@
         end: { type: "string", description: "calendar: new end time HH:MM (24h)." },
         location: { type: "string", description: "calendar: new location; stock: where the product is kept." },
         label: { type: "string", description: "One label's name: calendar sets THE event's label; todo, kanban, contacts, bookmarks, feeds ADD it to the item's labels. \"none\" takes the label(s) off. Only labels the user has (search results show them); bookmarks tags are free words." },
-        labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks, feeds (tags): the item's whole new list of label names (replaces the old list; [] = none)." },
+        labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks, feeds, flashcards (tags): the item's whole new list of label names (replaces the old list; [] = none)." },
         priority: { type: "integer", description: "todo: 1 urgent, 2 high, 3 medium, 4 none." },
         note: { type: "string", description: "New note (replaces the old one; empty clears it; at most 1000 characters)." },
         text: { type: "string", description: "notes, wiki: the page's or article's whole new text (Markdown or wiki text; replaces it)." },
         text_add: { type: "string", description: "notes, wiki: a paragraph to add at the end of the page or article (the text stays)." },
+        front: { type: "string", description: "flashcards: the note's new front (question; a cloze note's text with {{c1::gaps}})." },
+        back: { type: "string", description: "flashcards: the note's new back (answer; a cloze note's extra)." },
+        playlist: { type: "string", description: "music: the name of the playlist the song or album goes into (at the end)." },
+        from_playlist: { type: "string", description: "music: the name of the playlist the song is taken out of." },
+        deck: { type: "string", description: "flashcards move: the name of the deck the note goes to." },
         queue: { type: "string", "enum": ["next", "end", "off"], description: "podcasts: the episode goes first in the queue (next), last (end) or out of it (off)." },
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },

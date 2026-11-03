@@ -134,6 +134,10 @@ The assistant can also change these, on a card you apply or dismiss, with `Undo`
 - [Stock](app:stock): a product's name, selling price, location and note, and a supplier's name, phone, e-mail and note. Quantities change only through movements in Stock.
 `Undo` doesn't take back a change once the article, episode or product changed again since.
 
+## Music playlists and Flashcards
+- [Music](app:music): a playlist renamed, a song or a whole album added to one of your playlists ("add this album to Road trip"), or a song taken out of one. New playlists are made in Music.
+- [Flashcards](app:flashcards): a deck renamed; a card's front and back (a cloze card's text with its {{c1::gaps}}), its tags, or the card moved to another deck. The change is written to the orOS disk; a Flashcards window that is already open shows it once you open it again.
+
 Longer content opens in the app's own window, where you check it and save it yourself:
 - [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
 - [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document the assistant writes, with headings, bold, italic, lists, numbering and alignment, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`. [Pad](app:pad): a text or code file the assistant writes (a script, a config file, a web page), opened as a new tab that you save where you want; nothing in it is ever run. Pad's recent files also turn up when the assistant searches, so "open config.json in Pad" opens one.
