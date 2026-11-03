@@ -21,6 +21,9 @@ These need only a free account and a free key, with daily limits. Nothing is cha
 
 Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device.
 
+## Local AI on orOS USB
+On orOS USB (on a stick or installed on the computer), the Assistant can use a free AI that runs on the computer itself: no internet, no account, and nothing you write leaves the computer. If no assistant is set up yet, press `Install local AI` on the Assistant's first screen (or in its settings, or in System › Local AI). orOS downloads a model that suits the computer's memory once (a few GB) and checks it; you can keep working meanwhile. When it is ready, the Assistant uses it by itself, with nothing to set up. It is slower than online AI, especially on older computers; `Quick answers (no thinking first)` is on to keep it fast, and you can turn it off under `Local / OpenAI-compatible` for hard questions. Other model sizes, the graphics card and removing it are under System › Local AI › `More choices`. It needs a stick with saved data (persistence) or orOS installed on the computer.
+
 ## Open-source models on your computer
 Choose `Local / OpenAI-compatible`, then your program under `Server`: Ollama, LM Studio, llama.cpp, Jan, LocalAI, vLLM or KoboldCpp. orOS fills in its address and shows how to let this site call it (CORS), which every one of them needs once. `Other / my own address` takes any OpenAI-compatible server. A key is optional, except in Jan. Then press `Load models` and `Test the connection`. If the model can't use tools (many small ones can't; the error says so), tick `This model can't use tools`. Chrome may ask to let the site reach devices on your local network: allow it. Nothing leaves your network.
 

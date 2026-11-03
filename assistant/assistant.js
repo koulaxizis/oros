@@ -82,6 +82,14 @@
       "wel.title": "Your AI assistant",
       "wel.text": "Pick the assistant you want: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a model running on your own computer, or the browser's own built-in model. It reads your orOS data only when you allow it, and nothing is saved in your apps until you save it yourself.",
       "wel.ready": "Ask anything. For questions about your own notes, tasks or events, the assistant searches your apps and shows you what it found before anything is shared. It can also prepare a task, an event or an expense for you to save.",
+      "wel.sys": "No AI is set up yet. The easiest way: install the free local AI on this computer with one button. It works without internet and without an account, and nothing you write leaves the computer. You can also pick an online service.",
+      "sys.title": "Local AI on this computer", "sys.install": "Install local AI",
+      "sys.none": "Free AI that runs on this computer: no internet, no account, nothing you write leaves it. One download of a few GB, then it works offline.",
+      "sys.ready": "Ready: {model}. The assistant answers with it without internet, and nothing you write leaves this computer.",
+      "sys.use": "Use the local AI", "sys.used": "The assistant uses it.",
+      "sys.off": "The local AI is installed and starts by itself in a moment.", "sys.manage": "Manage the local AI",
+      "set.fast": "Quick answers (no thinking first)",
+      "set.fastHint": "Much faster on a computer without a strong graphics card. For hard questions, turn it off.",
       "ph.input": "Message the assistant…", "ph.noSetup": "Set up the assistant first",
       "chats.empty": "No conversations yet",
       "chats.local": "Kept on this device only",
@@ -683,6 +691,14 @@
       "wel.title": "Ο AI βοηθός σου",
       "wel.text": "Διάλεξε τον βοηθό που θέλεις: Claude, ChatGPT, Gemini, Mistral, OpenRouter, ένα μοντέλο στον δικό σου υπολογιστή ή το ενσωματωμένο μοντέλο του browser. Διαβάζει τα δεδομένα σου στο orOS μόνο όταν το επιτρέψεις, και τίποτα δεν αποθηκεύεται στις εφαρμογές σου αν δεν το αποθηκεύσεις εσύ.",
       "wel.ready": "Ρώτα ό,τι θέλεις. Για ερωτήσεις πάνω στις σημειώσεις, τις εργασίες ή τα γεγονότα σου, ο βοηθός ψάχνει στις εφαρμογές σου και σου δείχνει τι βρήκε πριν μοιραστεί οτιδήποτε. Μπορεί επίσης να σου ετοιμάσει μια εργασία, ένα γεγονός ή ένα έξοδο για να το αποθηκεύσεις.",
+      "wel.sys": "Δεν έχει ρυθμιστεί ακόμη AI. Ο πιο εύκολος τρόπος: εγκατάστησε με ένα κουμπί το δωρεάν τοπικό AI σε αυτόν τον υπολογιστή. Δουλεύει χωρίς internet και χωρίς λογαριασμό, και ό,τι γράφεις δεν φεύγει από τον υπολογιστή. Μπορείς επίσης να διαλέξεις μια online υπηρεσία.",
+      "sys.title": "Τοπικό AI σε αυτόν τον υπολογιστή", "sys.install": "Εγκατάσταση τοπικού AI",
+      "sys.none": "Δωρεάν AI που τρέχει σε αυτόν τον υπολογιστή: χωρίς internet, χωρίς λογαριασμό, ό,τι γράφεις δεν φεύγει από εδώ. Μία λήψη λίγων GB και μετά δουλεύει offline.",
+      "sys.ready": "Έτοιμο: {model}. Ο βοηθός απαντά με αυτό χωρίς internet, και ό,τι γράφεις δεν φεύγει από αυτόν τον υπολογιστή.",
+      "sys.use": "Χρήση του τοπικού AI", "sys.used": "Ο βοηθός το χρησιμοποιεί.",
+      "sys.off": "Το τοπικό AI είναι εγκατεστημένο και ξεκινά μόνο του σε λίγο.", "sys.manage": "Διαχείριση του τοπικού AI",
+      "set.fast": "Γρήγορες απαντήσεις (χωρίς σκέψη πρώτα)",
+      "set.fastHint": "Πολύ πιο γρήγορο σε υπολογιστή χωρίς δυνατή κάρτα γραφικών. Για δύσκολες ερωτήσεις, κλείσ' το.",
       "ph.input": "Γράψε στον βοηθό…", "ph.noSetup": "Ρύθμισε πρώτα τον βοηθό",
       "chats.empty": "Καμία συζήτηση ακόμη",
       "chats.local": "Μένουν μόνο σε αυτή τη συσκευή",
@@ -1397,7 +1413,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0 };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -1604,6 +1620,37 @@
   function shell() {
     try { return (window.parent && window.parent !== window) ? window.parent : null; } catch (e) { return null; }
   }
+  // ---------- 5a. Local AI on this computer (orOS USB, AS-SYSAI) ----------
+  // The System extension shows on the shell's page whether the local AI
+  // it installs is there (core.sysAIRead). A ready one is taken with no
+  // setting (core.sysAIAdopt); the welcome and the settings offer to
+  // install it with the event "oros-ai" ("install"; "open" manages it).
+  var sysAI = null;
+  function sysDoc() {
+    var p = shell();
+    try { return p ? p.document : document; } catch (e) { return null; }
+  }
+  function sysAIAsk(what) {
+    var d = sysDoc();
+    try { d.dispatchEvent(new d.defaultView.CustomEvent("oros-ai", { detail: what })); } catch (e) {}
+  }
+  function sysAIApply() {
+    sysAI = C.sysAIRead(sysDoc());
+    var a = C.sysAIAdopt(data, sysAI);
+    if (a.prov) setProvConf("local", a.prov);
+    if (a.set) setSetting(a.set);
+    if (a.prov || a.set) { fbUse = ""; C.probeSet(""); }
+  }
+  function sysAIWatch() {
+    sysAIApply();
+    var d = sysDoc();
+    if (!d || typeof MutationObserver !== "function") return;
+    try {
+      new MutationObserver(function () { sysAIApply(); renderAll(); })
+        .observe(d.documentElement, { attributes: true, attributeFilter: ["data-oros-sys-ai", "data-oros-sys-ai-url", "data-oros-sys-ai-models"] });
+    } catch (e) {}
+  }
+
   // Searchable apps (from the shell) with this assistant's permission.
   function appList() {
     var p = shell(), list = [];
@@ -1786,7 +1833,7 @@
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       function send(o) {
-        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt }, msgs, o);
+        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
         return fetch(req.url, {
           method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
           credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -6273,7 +6320,10 @@
     // (e.g. one synced from another device) is open to read.
     if ((!pid || !ready()) && !(chat && chat.msgs.length)) {
       $("welcome").hidden = false;
-      $("wel-text").textContent = t("wel.text");
+      var sys = sysAI && (sysAI.state === "none" || sysAI.state === "off") ? sysAI.state : "";
+      $("wel-text").textContent = sys === "none" ? t("wel.sys") : sys === "off" ? t("wel.text") + " " + t("sys.off") : t("wel.text");
+      $("wel-local").hidden = sys !== "none";
+      $("wel-setup").classList.toggle("primary", sys !== "none");
       $("wel-setup").hidden = false;
       $("wel-brief").hidden = true;
       $("wel-brief-hint").hidden = true;
@@ -6285,6 +6335,7 @@
       $("welcome").hidden = !!busy;
       $("wel-text").textContent = t("wel.ready");
       $("wel-setup").hidden = true;
+      $("wel-local").hidden = true;
       $("wel-brief").hidden = !briefCan();
       $("wel-brief-hint").hidden = !briefCan();
       if (!busy) return;
@@ -7005,6 +7056,39 @@
     var body = el("div", "set-body");
     dlg.appendChild(body);
 
+    // Local AI on this computer (orOS USB): install, use or manage it.
+    if (sysAI) {
+      var secS = section(body, t("sys.title"));
+      secS.id = "as-sys";
+      var sysBtn = function (text, primary, run) {
+        var b = el("button", "dlg-btn" + (primary ? " primary" : ""), text);
+        b.type = "button";
+        b.addEventListener("click", run);
+        secS.appendChild(b);
+        return b;
+      };
+      if (sysAI.state === "none") {
+        secS.appendChild(el("p", "dlg-hint", t("sys.none")));
+        sysBtn(t("sys.install"), true, function () { dlg.close(); sysAIAsk("install"); });
+      } else if (sysAI.state === "off") {
+        secS.appendChild(el("p", "dlg-hint", t("sys.off")));
+        sysBtn(t("sys.manage"), false, function () { dlg.close(); sysAIAsk("open"); });
+      } else {
+        var usedHere = data.set.prov === "local" || (data.set.auto && C.chainOrder(data)[0] === "local");
+        secS.appendChild(el("p", "dlg-hint", t("sys.ready", { model: modelOf("local") || sysAI.models[0] }) + (usedHere ? " " + t("sys.used") : "")));
+        if (!usedHere) {
+          sysBtn(t("sys.use"), true, function () {
+            setSetting({ prov: "local" });
+            fbUse = "";
+            C.probeSet("");
+            dlg.close();
+            renderAll();
+          });
+        }
+        sysBtn(t("sys.manage"), false, function () { dlg.close(); sysAIAsk("open"); });
+      }
+    }
+
     // Assistant + its key / address / model
     var secA = section(body, t("set.provider"));
     var sel = el("select", "dlg-input");
@@ -7096,6 +7180,11 @@
         });
         nt.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
+        var fast = checkbox(provBox, "as-fast", t("set.fast"), !!provConf(pid).fast, function (on) {
+          setProvConf(pid, { fast: on ? 1 : 0 });
+        });
+        fast.parentNode.classList.add("check");
+        provBox.appendChild(el("p", "dlg-hint", t("set.fastHint")));
         // Online stand-in while this server can't be reached (AS-FB);
         // the automatic order (AS-CHAIN) takes its place when on.
         if (data.set.auto) { provBox.appendChild(el("p", "dlg-hint", t("set.fbAuto"))); }
@@ -8087,6 +8176,7 @@
     $("side-hist").addEventListener("click", function () { setSide(false); openHistory(); });
     $("settings-btn").addEventListener("click", settingsDialog);
     $("wel-setup").addEventListener("click", settingsDialog);
+    $("wel-local").addEventListener("click", function () { sysAIAsk("install"); });
     $("wel-brief").addEventListener("click", startBriefing);
     $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     $("att-btn").addEventListener("click", attachDialog);
@@ -8159,6 +8249,7 @@
   function boot() {
     load();
     loadPrefs();
+    sysAIWatch();
     applyI18n();
     wire();
     registerSync();
