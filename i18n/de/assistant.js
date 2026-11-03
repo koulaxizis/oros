@@ -496,6 +496,7 @@ orosPack("de", "assistant", {
  "note.fb": "{local} ist nicht erreichbar, deshalb antwortet vorerst {name}. Apps auf „Immer teilen“ fragen zuerst.",
  "note.fbBack": "{local} antwortet wieder.",
  "note.via": "Ab jetzt antwortet {name}.",
+ "note.noNext": "Auf diesem Gerät ist keine andere KI eingerichtet, die stattdessen antworten könnte. Speichere in den Einstellungen einen Schlüssel für einen kostenlosen Dienst (Groq, Mistral, Cerebras und andere) und wähle sein Modell, dann antwortet er, wann immer dieser nicht kann.",
  "note.refused": "Der Assistent hat es abgelehnt, darauf zu antworten.",
  "note.rounds": "Der Assistent hat nach zu vielen Suchen aufgehört. Frag noch einmal genauer.",
  "note.stopped": "Gestoppt.",
