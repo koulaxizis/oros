@@ -89,7 +89,7 @@ test("every app that inherits the shell palette copies --accent-ink", () => {
 });
 
 test("no app rule puts a fixed text colour on an accent fill", () => {
-  const ACC = /background(?:-color)?\s*:[^;{}"']{0,80}var\(--accent(?:-hover)?\)/g;
+  const ACC = /background(?:-color)?\s*:[^;{}"']{0,80}var\(--accent(?:-hover)?\s*(?:,[^)]*)?\)/g;
   const FIXED = /(?<![-\w])color\s*:\s*(?:#[0-9a-fA-F]{3,6}\b|white\b|black\b)(?!\))/i;
   const bad = [];
   for (const f of ALL) {

@@ -27,11 +27,22 @@ var RECENTS_KEY   = "oros-radio-recents"; // device-local, never synced
 var RECENTS_CAP   = 20;
 var CACHE_TTL_MS  = 30 * 60 * 1000;
 var CACHE_PREFIX  = "oros-radio-cache:";
+// RX-NET (5.21.01): stale entries are kept this long as a fallback for
+// when the directory can't be reached (VPN, slow DNS, a dead mirror).
+var CACHE_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+// radio-browser.info runs community mirrors that come and go (its docs
+// say the names may change). all.api.* is the round-robin name that
+// always points at a live one, so it is the last resort.
 var RB_MIRRORS    = [
   "https://de1.api.radio-browser.info",
+  "https://de2.api.radio-browser.info",
+  "https://fi1.api.radio-browser.info",
   "https://nl1.api.radio-browser.info",
-  "https://fi1.api.radio-browser.info"
+  "https://at1.api.radio-browser.info",
+  "https://all.api.radio-browser.info"
 ];
+var RB_STAGGER_MS = 2500;   // a slow mirror gets company after this
+var RB_CEILING_MS = 12000;  // hard ceiling for one mirror request
 var SLEEP_PRESETS = [15, 30, 60, 90];
 var RT = window.OrosRadioTools || null;   // radio/tools.js (wave 42)
 var SLEEP_TICK_MS = 15000; // battery rule: purpose-sized, self-clearing
@@ -74,7 +85,7 @@ var STRINGS = {
     "view.discover":  "Top Stations Worldwide",
     "random":         "Surprise me",
     "random.hint":    "Play a random top station",
-    "catalog.err":    "Couldn't reach the station directory — check your connection or blockers.",
+    "catalog.err":    "The station directory isn't answering right now — favorites and recent stations still play.",
     "sleep.min":      "{n} min",
     "recents.clear":  "Clear recent stations",
     "recents.cleared":"Recent stations cleared",
@@ -178,7 +189,7 @@ var STRINGS = {
     "view.discover":  "Κορυφαίοι σταθμοί παγκοσμίως",
     "random":         "Τυχαίος σταθμός",
     "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό",
-    "catalog.err":    "Αποτυχία σύνδεσης με τον κατάλογο σταθμών — έλεγξε τη σύνδεση ή τυχόν blockers.",
+    "catalog.err":    "Ο κατάλογος σταθμών δεν απαντά αυτή τη στιγμή — τα αγαπημένα και οι πρόσφατοι σταθμοί παίζουν κανονικά.",
     "sleep.min":      "{n} λεπτά",
     "recents.clear":  "Εκκαθάριση πρόσφατων σταθμών",
     "recents.cleared":"Οι πρόσφατοι σταθμοί εκκαθαρίστηκαν",
@@ -331,6 +342,7 @@ function normalizeStation(s){
 /* ===== STATE ===== */
 
 var state = {
+  catalogDown: false,       // RX-NET: last directory request found nothing to show
   viewMode: "discover",      // discover | countries | genres | favorites | recents | stations | search
   tagFilter: "",             // active tag chip filter inside country views (W3-8)
   parent: null,             // { type:"country"|"genre", code|tag, name }
@@ -779,12 +791,14 @@ function addRecent(station){
 
 /* ===== CACHING ===== */
 
-function getCached(key){
+// stale = true: accept an entry up to CACHE_STALE_MS old (RX-NET
+// fallback when the directory can't be reached).
+function getCached(key, stale){
   try{
     var raw = localStorage.getItem(CACHE_PREFIX + key);
     if(!raw) return null;
     var data = JSON.parse(raw);
-    if(Date.now() - data.ts > CACHE_TTL_MS) return null;
+    if(Date.now() - data.ts > (stale ? CACHE_STALE_MS : CACHE_TTL_MS)) return null;
     return data.value;
   }catch(e){ return null; }
 }
@@ -807,7 +821,7 @@ function sweepCache(keepKey){
       raw = localStorage.getItem(k) || "";
       ts = 0;
       try{ ts = JSON.parse(raw).ts || 0; }catch(e1){}
-      if(now - ts > CACHE_TTL_MS){ localStorage.removeItem(k); continue; }
+      if(now - ts > CACHE_STALE_MS){ localStorage.removeItem(k); continue; }
       live.push({ k: k, ts: ts, n: raw.length });
       total += raw.length;
     }
@@ -857,25 +871,47 @@ function updateOnlineState(){
     var txt = $("rx-banner-text");
     if(state.offline){
       if(txt) txt.textContent = t("offline.hint");
+      banner.setAttribute("data-kind", "offline");
       banner.removeAttribute("hidden");
-    }else{
+    }else if(banner.getAttribute("data-kind") === "offline"){
       banner.setAttribute("hidden", "");
+      banner.removeAttribute("data-kind");
     }
   }
+  paintCatalogBanner();
 }
 
-/* FIX-RX-2: honest banner when the directory is unreachable while
-   "online" (dead mirrors / blocker / DNS). Does NOT overwrite the
-   offline banner — updateOnlineState() still owns that state. */
-function showCatalogBanner(){
+/* FIX-RX-2 / RX-NET: honest banner when the directory is unreachable
+   while "online" (dead mirrors, blocker, slow DNS behind a VPN). It
+   speaks only in the views that need the directory and only when
+   nothing (not even a stale cached copy) could be shown: favorites
+   and recent stations play from their own saved addresses, so a
+   warning there only alarms. The offline banner keeps priority. */
+function paintCatalogBanner(){
   var banner = $("rx-banner"), txt = $("rx-banner-text");
-  if(banner && !banner.hasAttribute("hidden")) return; // already speaking
-  if(txt) txt.textContent = t("catalog.err");
-  if(banner) banner.removeAttribute("hidden");
+  if(!banner || state.offline) return;   // the offline banner owns it
+  var dirView = state.viewMode !== "favorites" && state.viewMode !== "recents";
+  if(state.catalogDown && dirView){
+    if(txt) txt.textContent = t("catalog.err");
+    banner.setAttribute("data-kind", "catalog");
+    banner.removeAttribute("hidden");
+  }else if(banner.getAttribute("data-kind") === "catalog"){
+    banner.setAttribute("hidden", "");
+    banner.removeAttribute("data-kind");
+  }
 }
-function hideCatalogBanner(){
-  var banner = $("rx-banner");
-  if(banner) banner.setAttribute("hidden", "");
+function showCatalogBanner(){ state.catalogDown = true;  paintCatalogBanner(); }
+function hideCatalogBanner(){ state.catalogDown = false; paintCatalogBanner(); }
+
+// A directory request failed: answer with the last copy (up to
+// CACHE_STALE_MS old) if there is one; only an empty answer raises
+// the banner.
+function staleOrEmpty(key, label, err){
+  console.warn("[radio] " + label + " failed:", err && err.message);
+  var stale = getCached(key, true);
+  if(stale && stale.length) return stale;
+  if(!state.offline) showCatalogBanner();
+  return [];
 }
 
 window.addEventListener("online", updateOnlineState);
@@ -885,38 +921,56 @@ window.addEventListener("offline", updateOnlineState);
 
 var rbMirrorIdx = 0; // sticky index of the last healthy mirror
 
-// W3-6: sequential mirror fallback. The healthy mirror is STICKY —
-// a dead mirror costs at most one failed request (3s abort
-// ceiling), then we rotate and stick to the next healthy one.
-// The offline flag short-circuits honestly (no doomed requests).
+// RX-NET (replaces W3-6's 3 s sequential fallback): the healthy mirror
+// is still STICKY and asked first. A mirror that fails moves on to the
+// next at once; one that is merely SLOW (a VPN such as Tailscale adds
+// a DNS hop, mobile data adds latency) gets the next mirror started
+// beside it after RB_STAGGER_MS instead of being cut off at 3 s. The
+// first answer wins and the others are aborted. Every request has a
+// hard ceiling. The offline flag short-circuits (no doomed requests).
 function rbRequest(path){
   if(state.offline) return Promise.reject(new Error("offline"));
-  var tries = 0;
-  function attempt(){
-    var mirror = RB_MIRRORS[rbMirrorIdx];
-    var ctl = (typeof AbortController === "function") ? new AbortController() : null;
-    var timer = ctl ? setTimeout(function(){ ctl.abort(); }, 3000) : null;
-    var opts = { cache: "no-store" };
-    if(ctl) opts.signal = ctl.signal;
-    return fetch(mirror + path, opts).then(function(res){
-      if(timer) clearTimeout(timer);
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    }).then(function(data){
-      hideCatalogBanner(); // FIX-RX-2: healthy request clears the notice
-      return data;
-    }).catch(function(err){
-      if(timer) clearTimeout(timer);
-      tries++;
-      if(tries >= RB_MIRRORS.length){
-        showCatalogBanner(); // FIX-RX-2: honest "directory unreachable" banner
-        throw err;
-      }
-      rbMirrorIdx = (rbMirrorIdx + 1) % RB_MIRRORS.length;
-      return attempt();
-    });
-  }
-  return attempt();
+  var order = [], i;
+  for(i = 0; i < RB_MIRRORS.length; i++) order.push((rbMirrorIdx + i) % RB_MIRRORS.length);
+  return new Promise(function(resolve, reject){
+    var next = 0, pending = 0, done = false, lastErr = null, ctls = [], stagger = null;
+    function finish(){
+      done = true;
+      if(stagger) clearTimeout(stagger);
+      ctls.forEach(function(c){ try{ c.abort(); }catch(e){} });
+    }
+    function launch(){
+      if(done || next >= order.length) return;
+      var idx = order[next++];
+      pending++;
+      var ctl = (typeof AbortController === "function") ? new AbortController() : null;
+      if(ctl) ctls.push(ctl);
+      var timer = ctl ? setTimeout(function(){ ctl.abort(); }, RB_CEILING_MS) : null;
+      var opts = { cache: "no-store" };
+      if(ctl) opts.signal = ctl.signal;
+      if(stagger) clearTimeout(stagger);
+      stagger = setTimeout(launch, RB_STAGGER_MS);
+      fetch(RB_MIRRORS[idx] + path, opts).then(function(res){
+        if(!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      }).then(function(data){
+        if(timer) clearTimeout(timer);
+        if(done) return;
+        rbMirrorIdx = idx;
+        finish();
+        hideCatalogBanner(); // FIX-RX-2: a healthy answer clears the notice
+        resolve(data);
+      }, function(err){
+        if(timer) clearTimeout(timer);
+        pending--;
+        if(done) return;
+        lastErr = err;
+        if(next < order.length) launch();          // failed fast: next one now
+        else if(!pending){ finish(); reject(lastErr); }
+      });
+    }
+    launch();
+  });
 }
 
 function fetchCountries(){
@@ -929,8 +983,7 @@ function fetchCountries(){
     setCached("countries", filtered);
     return filtered;
   }).catch(function(err){
-    console.warn("[radio] countries fetch failed:", err.message);
-    return []; // honest offline response (banner handled by FIX-RX-2)
+    return staleOrEmpty("countries", "countries fetch", err);
   });
 }
 
@@ -947,8 +1000,7 @@ function fetchGenres(){
     setCached("genres", filtered);
     return filtered;
   }).catch(function(err){
-    console.warn("[radio] genres fetch failed:", err.message);
-    return [];
+    return staleOrEmpty("genres", "genres fetch", err);
   });
 }
 
@@ -967,8 +1019,7 @@ function fetchStationsByCountry(code, limit){
     setCached("stations_country_" + code, filtered);
     return filtered;
   }).catch(function(err){
-    console.warn("[radio] stations fetch failed:", err.message);
-    return [];
+    return staleOrEmpty("stations_country_" + code, "stations fetch", err);
   });
 }
 
@@ -987,8 +1038,7 @@ function fetchStationsByTag(tag, limit){
     setCached("stations_tag_" + tag, filtered);
     return filtered;
   }).catch(function(err){
-    console.warn("[radio] tag fetch failed:", err.message);
-    return [];
+    return staleOrEmpty("stations_tag_" + tag, "tag fetch", err);
   });
 }
 
@@ -1009,8 +1059,7 @@ function searchStations(query, limit){
     setCached("search_" + q, filtered);
     return filtered;
   }).catch(function(err){
-    console.warn("[radio] search failed:", err.message);
-    return [];
+    return staleOrEmpty("search_" + q, "search", err);
   });
 }
 
@@ -1027,8 +1076,7 @@ function fetchTopVoted(limit){
     setCached("topvote", filtered);
     return filtered;
   }).catch(function(err){
-    console.warn("[radio] topvote fetch failed:", err.message);
-    return [];
+    return staleOrEmpty("topvote", "topvote fetch", err);
   });
 }
 
@@ -1418,6 +1466,9 @@ function renderMain(){
       break;
   }
   
+  // RX-NET: the directory notice belongs to directory views only
+  paintCatalogBanner();
+  
   // Empty state — sync views ONLY (favorites/recents render
   // synchronously). Async views (countries/genres/stations/search)
   // own their empty banner inside the fetch callbacks, AFTER the
@@ -1532,7 +1583,7 @@ function surpriseMe(){
   // Pool: cached topvote first (instant, offline-friendly), else
   // a fresh fetch. Honest offline: no pool + no network → nothing
   // happens (the offline banner is already speaking).
-  var pool = getCached("topvote") || [];
+  var pool = getCached("topvote", true) || [];
   if(pool.length){
     var st = pool[Math.floor(Math.random() * pool.length)];
     playStation(st);

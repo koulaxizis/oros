@@ -1,6 +1,6 @@
 orosPack("de", "radio", {
  "buffering": "Wird geladen…",
- "catalog.err": "Senderverzeichnis nicht erreichbar – prüfe deine Verbindung oder Blocker.",
+ "catalog.err": "Das Senderverzeichnis antwortet gerade nicht – Favoriten und zuletzt gehörte Sender spielen weiter.",
  "close": "Schließen",
  "err.insecure": "Nur unverschlüsselter (http) Stream, wird nicht abgespielt",
  "err.stream": "Stream nicht verfügbar",
