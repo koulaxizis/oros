@@ -591,7 +591,7 @@
       "err.builtin": "The built-in browser model is not available on this device. Pick another assistant in Settings.",
       "chg.ask.update": "Change this in {app}?", "chg.ask.delete": "Delete this from {app}?",
       "chg.ask.complete": "Mark this done in {app}?", "chg.ask.reopen": "Mark this not done in {app}?",
-      "chg.ask.reschedule": "Move this in {app}?", "chg.ask.move": "Move this card in {app}?",
+      "chg.ask.reschedule": "Move this in {app}?", "chg.ask.move": "Move this item in {app}?",
       "chg.text": "{name} asks to change one of your items. Check it: nothing changes until you press Apply.",
       "chg.yes": "Apply", "chg.no": "Don't change", "chg.yesDel": "Delete",
       "chg.before": "Before", "chg.after": "After", "chg.gone": "deleted",
@@ -1192,7 +1192,7 @@
       "err.builtin": "Το ενσωματωμένο μοντέλο του browser δεν υπάρχει σε αυτή τη συσκευή. Διάλεξε άλλον βοηθό στις Ρυθμίσεις.",
       "chg.ask.update": "Αλλαγή σε αυτό ({app});", "chg.ask.delete": "Διαγραφή από: {app};",
       "chg.ask.complete": "Να σημειωθεί ως έγινε ({app});", "chg.ask.reopen": "Να σημειωθεί ως εκκρεμές ({app});",
-      "chg.ask.reschedule": "Μετακίνηση ({app});", "chg.ask.move": "Μετακίνηση κάρτας ({app});",
+      "chg.ask.reschedule": "Μετακίνηση ({app});", "chg.ask.move": "Μετακίνηση στοιχείου ({app});",
       "chg.text": "Το {name} ζητά να αλλάξει ένα στοιχείο σου. Έλεγξέ το: τίποτα δεν αλλάζει πριν πατήσεις Εφαρμογή.",
       "chg.yes": "Εφαρμογή", "chg.no": "Να μην αλλάξει", "chg.yesDel": "Διαγραφή",
       "chg.before": "Πριν", "chg.after": "Μετά", "chg.gone": "διαγράφεται",
@@ -4146,12 +4146,14 @@
   // An item that can't take the change stays off the card and is named
   // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
-  var MANY_DEL_APP = "kanban";   // KB-DEL / KB-MOVE: the one app whose items refs may delete or move
+  var MANY_DEL_APP = "kanban";   // KB-DEL: the one app whose items refs may delete
+  // AS-MOVE (wave 2): the apps whose items refs may move, many at once.
+  var MANY_MOVE_APPS = { kanban: 1, todo: 1, notes: 1, bookmarks: 1, calendar: 1 };
   function changeMany(c, args, apps) {
     // KB-DEL (Chris 2026-11-03): delete also takes refs, for Kanban
     // cards only (checked below, once the app is known).
     var del = args.action === "delete", mv = args.action === "move";
-    if (args.action !== "update" && !del && !mv) return Promise.resolve({ content: "Error: refs is only for update (and delete or move of Kanban cards); change other things one item at a time with ref.", err: 1 });
+    if (args.action !== "update" && !del && !mv) return Promise.resolve({ content: "Error: refs is only for update, move (Kanban, To-Do, Notes, Bookmarks, Calendar) and delete (Kanban); change other things one item at a time with ref.", err: 1 });
     if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
     var refs = [];
     args.refs.forEach(function (x) {
@@ -4182,7 +4184,8 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    if ((del || mv) && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted or moved only in Kanban; do these one at a time with ref.", err: 1 });
+    if (del && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted only in Kanban; delete these one at a time with ref.", err: 1 });
+    if (mv && !MANY_MOVE_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be moved in Kanban, To-Do, Notes, Bookmarks and Calendar only.", err: 1 });
     var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {
       // Planned one after the other on the same data, as Apply writes them.

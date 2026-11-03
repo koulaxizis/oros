@@ -86,7 +86,7 @@ orosPack("de", "assistant", {
  "chg.ask.delete": "Das aus {app} löschen?",
  "chg.ask.many": "Diese {n} Einträge in {app} ändern?",
  "chg.ask.manyDel": "Diese {n} Einträge aus {app} löschen?",
- "chg.ask.move": "Diese Karte in {app} verschieben?",
+ "chg.ask.move": "Diesen Eintrag in {app} verschieben?",
  "chg.ask.reopen": "Das in {app} als nicht erledigt markieren?",
  "chg.ask.reschedule": "Das in {app} verschieben?",
  "chg.ask.update": "Das in {app} ändern?",
