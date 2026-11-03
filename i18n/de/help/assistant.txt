@@ -130,6 +130,7 @@ Bitte etwa „Countdown 25 Minuten“, „weck mich jeden Tag um 7:00“, „spi
 
 ## Änderungsverlauf
 Alles, was der Assistent für dich hinzugefügt, geändert oder verknüpft hat, bleibt 30 Tage auf diesem Gerät, unter `Änderungsverlauf` in der Liste der Unterhaltungen. Frag „was hast du gestern geändert?“, und der Assistent antwortet daraus, mit derselben Liste auf einer Karte.
+- Sag „mach das rückgängig“ oder „leg die Karten zurück“, und der Assistent bereitet es vor: Eine Karte zeigt die Änderungen, und ein `Rückgängig` nimmt sie alle zurück.
 - `Rückgängig` neben einer Änderung nimmt sie zurück, auch nachdem du den Assistenten verlassen hast, solange seitdem nichts geändert wurde (in der App oder auf einem anderen Gerät). Sonst wird nichts rückgängig gemacht, und du erfährst, warum.
 - Der Verlauf bleibt nur auf diesem Gerät: Er wird nie synchronisiert, exportiert oder gesendet. Der Assistent sieht nur die Titel, und nur für Apps, die er lesen darf. `Verlauf leeren` löscht die Liste; deine Daten bleiben, wie sie sind.
 
@@ -140,6 +141,7 @@ Frag zum Beispiel „Markiere den Anruf beim Klempner als erledigt“, „Versch
 - Hat sich der Eintrag inzwischen geändert (zum Beispiel auf einem anderen Gerät), wird nichts geändert, und die Karte sagt es.
 - Dieselbe Änderung an mehreren Einträgen (zum Beispiel „gib jedem Termin ohne Label das Label Arbeit") kommt als eine Karte, bis zu 200 Einträge: oben, was jeder Eintrag bekommt, dann die ersten 10 (`Alle zeigen` bringt den Rest); ein `Übernehmen` ändert alle, und `Rückgängig` nimmt alle zurück.
 - Kanban-Karten lassen sich auch viele auf einmal löschen: „lösche alle Karten in Erledigt auf dem Board Buch“ kommt als eine Karte, die sie alle zeigt, bis zu 200; `Löschen` entfernt sie, und `Rückgängig` holt alle an ihren Platz zurück. In den anderen Apps löscht der Assistent einen Eintrag nach dem anderen.
+- Eine Kanban-Karte kann auch auf ein anderes Board: „verschiebe diese Karten auf das Board Musik“ (und, wenn du willst, in welche Spalte; sonst in die erste). Eine oder viele kommen auf einer Karte mit `Rückgängig`. Labels gehen nach Namen mit; eines, das das andere Board nicht hat, bleibt weg.
 - Verschiedene Änderungen an mehreren Einträgen (zum Beispiel die neuen Angaben von zehn Personen aus einer Liste) kommen ebenfalls als eine Karte, jeder Eintrag mit eigenem `Vorher` und `Nachher`. In Kontakte hat jede Zeile einen Haken: Nimm ihn weg bei allem, was bleiben soll, wie es ist.
 
 Was er ändern kann:

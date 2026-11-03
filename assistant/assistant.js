@@ -611,6 +611,9 @@
       "hist.k.change": "Changed in {app}",
       "hist.k.delete": "Deleted in {app}",
       "hist.k.link": "Linked in {app}",
+      "undo.title": "Undo these changes",
+      "undo.hint": "Press Undo to take them back. A change that was edited since stays as it is.",
+      "undo.done": "Changes undone: {n}. Not undone, changed since: {f}.",
       "do.timer": "Timer ({app})",
       "do.alarm": "Alarm ({app})",
       "do.open": "Open in {app}",
@@ -1209,6 +1212,9 @@
       "hist.k.change": "Αλλαγή: {app}",
       "hist.k.delete": "Διαγραφή: {app}",
       "hist.k.link": "Σύνδεση: {app}",
+      "undo.title": "Αναίρεση αυτών των αλλαγών",
+      "undo.hint": "Πάτα Αναίρεση για να γυρίσουν πίσω. Ό,τι άλλαξε από τότε μένει όπως είναι.",
+      "undo.done": "Αλλαγές που αναιρέθηκαν: {n}. Δεν αναιρέθηκαν, άλλαξαν από τότε: {f}.",
       "do.timer": "Χρονόμετρο ({app})",
       "do.alarm": "Ξυπνητήρι ({app})",
       "do.open": "Άνοιγμα: {app}",
@@ -3172,6 +3178,7 @@
     if (call.name === "link_items") return linkItems(c, call.args, apps);
     if (call.name === "do_action") return Promise.resolve(doAction(c, call.args));
     if (call.name === "change_history") return changeHistory(c, call.args, apps);
+    if (call.name === "undo_change") return undoTool(c, call.args, apps);
     if (call.name === "web_search") return webSearch(call.args);
     if (call.name === "read_page") return readPage(c, call.args);
     if (call.name !== "search_data") return Promise.resolve({ content: "Error: unknown tool " + call.name, err: 1 });
@@ -3242,10 +3249,49 @@
     var have = installed();
     var e = C.normEntry(args, { from: t("app"), has: function (id) { return !!have[id]; } });
     if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "entryErr" } };
+    // KB-MOVE: a Kanban card's board and column must be ones the user
+    // has (case and accents aside); Kanban would otherwise drop the card
+    // on the board on screen. The names go on in Kanban's spelling.
+    if (args && args.kind === "card") {
+      var kc = kbEntryCheck(args);
+      if (kc) return { content: "Error: " + kc, err: 1, ui: { k: "entryErr" } };
+    }
     return {
       content: "Shown to the user as a card. They will open it in the app and save it themselves, or dismiss it. It is not saved yet.",
       ui: { k: "entry", args: JSON.parse(JSON.stringify(args)), st: "" }
     };
+  }
+
+  function kbFoldName(v) {
+    return String(v == null ? "" : v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
+  }
+  // → an error for the model, or "" (args.board / args.column set to Kanban's own spelling)
+  function kbEntryCheck(args) {
+    var hasB = typeof args.board === "string" && args.board.trim(), hasC = typeof args.column === "string" && args.column.trim();
+    if (!hasB && !hasC) return "";
+    var d = readStore("oros-kanban-data");
+    if (!d || !Array.isArray(d.boards)) return "";
+    var gone = d.boardDeleted && typeof d.boardDeleted === "object" ? d.boardDeleted : {};
+    var live = d.boards.filter(function (b) {
+      return b && typeof b.id === "string" && b.id.indexOf("tpl-") !== 0 && !b.archived && Array.isArray(b.columns) &&
+        !(typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0));
+    });
+    var board = null;
+    if (hasB) {
+      var f = kbFoldName(args.board);
+      var hits = live.filter(function (b) { return kbFoldName(b.name) === f; });
+      if (!hits.length) return "Kanban has no open board named \"" + args.board + "\". Its boards: " + live.map(function (b) { return String(b.name || ""); }).join(", ") + ". Use one of them, or leave board out.";
+      if (hits.length > 1) return "Kanban has more than one board called " + args.board + "; ask the user which one.";
+      board = hits[0];
+      args.board = String(board.name || "");
+    }
+    if (hasC && board) {
+      var cf = kbFoldName(args.column);
+      var ch = board.columns.filter(function (c) { return c && kbFoldName(c.name) === cf; });
+      if (!ch.length) return "The board " + board.name + " has no column \"" + args.column + "\". Its columns: " + board.columns.map(function (c) { return String(c && c.name || ""); }).join(", ") + ".";
+      args.column = String(ch[0].name || "");
+    }
+    return "";
   }
 
   // open_file (WR-FMT): an attached file, opened as it is in Writer's
@@ -4083,13 +4129,14 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
+      if (res.target) r.target = res.target;     // KB-MOVE: the ref follows the card to its new board
       var uid = newId();
       remember(uid, { app: app.id, key: key, undo: res.undo }, { kind: "change", app: app.id, name: app.name, act: ch.action, title: pl.title, items: [pl.title] });
       base.st = "done";
       base.u = uid;
       base.rows = res.rows;
       var skipped = left.length ? " The user left these out (not changed): " + left.join(", ") + "." : "";
-      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." + skipped }), ui: base };
+      return { content: JSON.stringify({ ref: ch.ref, applied: true, action: ch.action, note: "The user applied the change. They can undo it." + skipped + (res.note ? " " + res.note : "") }), ui: base };
     });
   }
   // The same update to several items of one app (refs): one card, one
@@ -4099,12 +4146,12 @@
   // An item that can't take the change stays off the card and is named
   // in the result; the others still go (CT-N2K).
   var MANY_MAX = 200;   // Chris 2026-10-25: 119 events in one card
-  var MANY_DEL_APP = "kanban";   // KB-DEL: the one app whose items refs may delete
+  var MANY_DEL_APP = "kanban";   // KB-DEL / KB-MOVE: the one app whose items refs may delete or move
   function changeMany(c, args, apps) {
     // KB-DEL (Chris 2026-11-03): delete also takes refs, for Kanban
     // cards only (checked below, once the app is known).
-    var del = args.action === "delete";
-    if (args.action !== "update" && !del) return Promise.resolve({ content: "Error: refs is only for update (and delete of Kanban cards); change other things one item at a time with ref.", err: 1 });
+    var del = args.action === "delete", mv = args.action === "move";
+    if (args.action !== "update" && !del && !mv) return Promise.resolve({ content: "Error: refs is only for update (and delete or move of Kanban cards); change other things one item at a time with ref.", err: 1 });
     if (args.ref !== undefined && args.ref !== null && args.ref !== "") return Promise.resolve({ content: "Error: give ref or refs, not both.", err: 1 });
     var refs = [];
     args.refs.forEach(function (x) {
@@ -4135,7 +4182,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    if (del && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted only in Kanban; delete these one at a time with ref.", err: 1 });
+    if ((del || mv) && app.id !== MANY_DEL_APP) return Promise.resolve({ content: "Error: several items at once can be deleted or moved only in Kanban; do these one at a time with ref.", err: 1 });
     var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {
       // Planned one after the other on the same data, as Apply writes them.
@@ -4151,20 +4198,22 @@
     var sameNote = same.length ? " " + same.length + " item(s) already looked like that and were left as they are: " + same.join(", ") + "." : "";
     sameNote += badNote(bad);
     var many = plans.map(function (p) { return { title: p.pl.title, rows: p.pl.rows }; });
-    var act = del ? "delete" : "update";
+    var act = del ? "delete" : mv ? "move" : "update";
     var base = { k: "change", app: app.name, act: act, title: t("chg.many", { n: plans.length }), many: many };
     return askChange(app.name, { many: many, del: del }, act).then(function (ok) {
       if (!ok) {
         base.st = "declined";
         return { content: JSON.stringify({ refs: refs, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
       }
-      var d = readStore(key), undos = [], t2 = Date.now(), fail = null;
+      var d = readStore(key), undos = [], t2 = Date.now(), fail = null, notes = [];
       plans.forEach(function (p) {
         if (fail) return;
         var res = E.apply(app.id, d, p.x.target, p.x.ch, t2, p.pl.before);
         if (!res.ok) { fail = res; return; }
         d = res.data;
         undos.push(res.undo);
+        if (res.target) p.moved = res.target;
+        if (res.note && notes.indexOf(res.note) < 0) notes.push(res.note);
       });
       if (fail) {
         base.st = "failed";
@@ -4177,11 +4226,13 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
+      plans.forEach(function (p) { if (p.moved && c.refs[p.x.ch.ref]) c.refs[p.x.ch.ref].target = p.moved; });
+      if (notes.length) sameNote += " " + notes.join(" ");
       var uid = newId();
       remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: act, title: base.title, items: plans.map(function (p) { return p.pl.title; }) });
       base.st = "done";
       base.u = uid;
-      return { content: JSON.stringify({ refs: refs, applied: true, action: act, items: plans.length, note: (del ? "The user deleted " + plans.length + " items." : "The user applied the change to " + plans.length + " items.") + " They can undo it." + sameNote }), ui: base };
+      return { content: JSON.stringify({ refs: refs, applied: true, action: act, items: plans.length, note: (del ? "The user deleted " + plans.length + " items." : mv ? "The user moved " + plans.length + " items." : "The user applied the change to " + plans.length + " items.") + " They can undo it." + sameNote }), ui: base };
     });
   }
   // Different updates to several items of one app (changes: [{ ref,
@@ -5033,7 +5084,7 @@
   }
   // One entry as the user reads it: when, the app, what, the titles,
   // and Undo while it can be undone.
-  function histRow(e, onUndo) {
+  function histRow(e, onUndo, noBtn) {
     var row = el("div", "hist-row");
     var d = new Date(e.at);
     var when = d.toLocaleDateString(LANG, { weekday: "short", day: "numeric", month: "short" }) + " " +
@@ -5044,7 +5095,7 @@
     var shown = items.slice(0, 5).join(", ") + (e.n > 5 ? " " + t("hist.more", { n: e.n - Math.min(5, items.length) }) : "");
     if (shown) row.appendChild(el("div", "hist-items", shown));
     if (e.st === "undone") row.appendChild(el("div", "hist-st", t("chg.undone")));
-    else if (C.canUndo(e, Date.now())) {
+    else if (!noBtn && C.canUndo(e, Date.now())) {
       var b = button(t("chg.undo"), "", function () {
         b.disabled = true;
         undoById(e.id).then(function (ok) { if (ok) onUndo(); else b.disabled = false; });
@@ -5065,6 +5116,62 @@
       if (q.more) out.more = q.more;
       return { content: JSON.stringify(out), ui: { k: "hist", ids: q.list.map(function (e) { return e.id; }) } };
     });
+  }
+  // undo_change (AS-UNDO): the model names its changes, the user
+  // presses Undo once; each goes through undoById (the app's own undo,
+  // which refuses a record changed since), newest first.
+  function undoTool(c, args, apps) {
+    var ok = {};
+    apps.forEach(function (a) { ok[a.id] = 1; });
+    return histLoad().then(function () {
+      var q = C.undoPick(histList(), args, Date.now(), function (id) { return !!ok[id]; });
+      if (!q.ok) return { content: "Error: " + q.err, err: 1 };
+      return { content: JSON.stringify({ shown: C.histForModel(q.list, Date.now()),
+                                         note: "Shown to the user as a card with Undo. Nothing is undone before they press it." }),
+               ui: { k: "undo", ids: q.list.map(function (e) { return e.id; }) } };
+    });
+  }
+  function drawUndo(host, r, c) {
+    var ui = r.ui;
+    var ids = Array.isArray(ui.ids) ? ui.ids : [];
+    var list = ids.map(function (id) { return hist[id]; }).filter(Boolean);
+    var card = el("section", "entry-card hist-card");
+    card.appendChild(el("h3", "entry-head", t("undo.title")));
+    if (!list.length) card.appendChild(el("p", "dlg-hint", t("hist.elsewhere")));
+    list.forEach(function (e) { card.appendChild(histRow(e, null, true)); });
+    var open = list.filter(function (e) { return C.canUndo(e, Date.now()); });
+    if (ui.st) {
+      // Each row already says Undone; the card adds only a refusal or a dismissal.
+      if (ui.st === "dismissed" || ui.fail) {
+        card.appendChild(el("p", "entry-state" + (ui.fail ? " err" : ""), t(ui.fail ? "undo.done" : "entry.dismissed", { n: ui.n || 0, f: ui.fail || 0 })));
+      }
+    } else if (open.length) {
+      card.appendChild(el("p", "dlg-hint", t("undo.hint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        r.content = "The user dismissed the card; nothing was undone.";
+        saveChat(c);
+        renderMessages();
+      }));
+      var go = button(t("chg.undo"), "primary", function () {
+        go.disabled = true;
+        var n = 0, fail = 0;
+        open.reduce(function (p, e) {
+          return p.then(function () { return undoById(e.id).then(function (ok) { if (ok) n++; else fail++; }); });
+        }, Promise.resolve()).then(function () {
+          ui.st = "done";
+          ui.n = n;
+          ui.fail = fail;
+          r.content = "The user pressed Undo: " + n + " undone" + (fail ? ", " + fail + " could not be undone (changed since or the app refused)" : "") + ".";
+          saveChat(c);
+          renderMessages();
+        });
+      });
+      acts.appendChild(go);
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
   }
   function drawHist(host, r) {
     var ids = Array.isArray(r.ui.ids) ? r.ui.ids : [];
@@ -6095,6 +6202,7 @@
         if (ui.k === "create") { drawCreate(host, r, c); return; }
         if (ui.k === "do") { drawDo(host, r, c); return; }
         if (ui.k === "hist") { drawHist(host, r); return; }
+        if (ui.k === "undo") { drawUndo(host, r, c); return; }
         if (ui.k === "web" || ui.k === "page" || ui.k === "webErr") { drawWebTool(host, ui); return; }
         var line = el("div", "tool-line");
         var ico = el("span", "tool-ico");

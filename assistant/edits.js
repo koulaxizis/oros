@@ -97,7 +97,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "column", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -280,6 +280,12 @@
       if (!co) return bad("column must not be empty.");
       set.column = co;
     }
+    // KB-MOVE (Chris 2026-11-03): a Kanban card to another board.
+    if (has(args, "board") && args.board !== null && args.board !== undefined && args.board !== "") {
+      var bo = line(args.board, 120);
+      if (!bo) return bad("board must not be empty.");
+      set.board = bo;
+    }
     // Labels (AS-LBL): label = one label's name (Calendar: THE label;
     // the other apps: add it), "none" / "" takes them all off; labels =
     // the whole new list of names (replaces; [] takes them all off).
@@ -335,11 +341,12 @@
     }
     var keys = Object.keys(set);
     if (action === "move") {
-      if (!set.column) return bad("move needs the column to move the card to.");
-      if (keys.length > 1) return bad("move changes only the column; use update for the rest.");
+      if (!set.column && !set.board) return bad("move needs the column (or, for Kanban, the board) to move the card to.");
+      if (keys.some(function (k) { return k !== "column" && k !== "board"; })) return bad("move changes only the board and column; use update for the rest.");
       return { ok: true, ref: ref, action: action, set: set };
     }
     if (set.column) return bad("column is only for move.");
+    if (set.board) return bad("board is only for move (a Kanban card to another board).");
     if (action === "complete" && keys.every(function (k) { return k === "amount" || k === "date" || k === "how"; }) && keys.length) {
       // an invoice paid: the amount (default all that is owed), the day and how
     } else if (action === "complete" || action === "reopen" || action === "delete") {
@@ -1286,6 +1293,7 @@
       note: typeof c.notes === "string" ? c.notes : ""
     };
     if (pos) v.position = (col.cards.indexOf(c) + 1) + "/" + col.cards.length;
+    if (pos === "board") v.board = kbName(b.name);
     return v;
   }
   function kbLocalDay(now) {
@@ -1329,7 +1337,8 @@
   function kanbanChange(d, target, ch, now) {
     var h = kbFind(d, target);
     if (!h) return bad("That card is no longer in Kanban.");
-    var b = h.b, card = h.card, before = kbView(b, h.col, card, ch.action === "move"), title = before.title;
+    var xb = ch.action === "move" && ch.set.board;
+    var b = h.b, card = h.card, before = kbView(b, h.col, card, ch.action === "move" && (xb ? "board" : true)), title = before.title;
     if (b.archived || (typeof b.id === "string" && b.id.indexOf("tpl-") === 0)) return bad("That card's board is archived; change it in Kanban.");
     if (isObj(d.boardDeleted) && typeof d.boardDeleted[b.id] === "number" && d.boardDeleted[b.id] >= (b.mtime || 0)) return bad("That card's board was deleted.");
     if (ch.action === "complete" || ch.action === "reopen") return bad("A Kanban card has no done mark; move it to another column instead.");
@@ -1344,6 +1353,13 @@
                undo: { t: "del", app: "kanban", board: b.id, col: h.col.id, index: h.ki, card: copy } };
     }
     var prev = kbRaw(h), idx = h.ki;
+    if (xb) {
+      var xr = kbMoveBoard(d, h, ch.set, now);
+      if (!xr.ok) return xr;
+      xr.title = title;
+      xr.before = before;
+      return xr;
+    }
     if (ch.action === "move") {
       var want = ch.set.column.toLowerCase();
       var hits = b.columns.filter(function (c) { return isObj(c) && Array.isArray(c.cards) && kbName(c.name).toLowerCase() === want; });
@@ -1393,7 +1409,98 @@
     return { ok: true, title: title, before: before, after: kbView(h3.b, h3.col, h3.card), del: false,
              undo: { t: "set", app: "kanban", target: { board: b.id, card: card.id }, prev: p2, next: next } };
   }
+  // KB-MOVE: the card to another open board (by name, case and accents
+  // aside), into the named column or the first one, at the end. The
+  // card keeps its id (links, attachments and the deep link follow it;
+  // tombstones are per board): the old board gets a tombstone after
+  // the card's mtime, the card is restamped whole after it, so every
+  // device's merge drops it there and keeps it here. Labels go by
+  // name; a label the new board doesn't have is dropped and named.
+  // Then the column's arrival rules, as a move inside a board.
+  function kbFold(v) {
+    return kbName(v).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
+  }
+  function kbMoveBoard(d, h, set, now) {
+    var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
+    var live = d.boards.map(function (x, i) { return { b: x, i: i }; }).filter(function (x) {
+      var b = x.b;
+      return isObj(b) && typeof b.id === "string" && b.id.indexOf("tpl-") !== 0 && !b.archived && Array.isArray(b.columns) &&
+        !(typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0));
+    });
+    var want = kbFold(set.board);
+    var hits = live.filter(function (x) { return kbFold(x.b.name) === want; });
+    var names = live.map(function (x) { return kbName(x.b.name); }).join(", ");
+    if (!hits.length) return bad("Kanban has no open board " + set.board + ". Its boards: " + names + ". New boards are made in Kanban.");
+    if (hits.length > 1) return bad("Kanban has more than one board called " + set.board + "; ask the user which one.");
+    var tb = hits[0].b, tbi = hits[0].i;
+    if (tb === h.b) {
+      if (!set.column) return bad("The card is already on the board " + kbName(tb.name) + ".");
+      return bad("The card is already on the board " + kbName(tb.name) + "; to change its column, move it with column only.");
+    }
+    var cols = tb.columns.filter(function (c) { return isObj(c) && Array.isArray(c.cards); });
+    if (!cols.length) return bad("The board " + kbName(tb.name) + " has no columns. Ask the user to add one in Kanban.");
+    var dest = cols[0];
+    if (set.column) {
+      var cw = kbFold(set.column);
+      var ch2 = cols.filter(function (c) { return kbFold(c.name) === cw; });
+      if (!ch2.length) return bad("The board " + kbName(tb.name) + " has no column " + set.column + ". Its columns: " + cols.map(function (c) { return kbName(c.name); }).join(", ") + ".");
+      if (ch2.length > 1) return bad("The board " + kbName(tb.name) + " has more than one column called " + set.column + "; ask the user which one.");
+      dest = ch2[0];
+    }
+    var src = h.b, card = h.card, orig = clone(card);
+    // labels by name
+    var dropped = [], ids = [];
+    kbArr(card.labels).forEach(function (id) {
+      var l = kbLabel(src, id);
+      if (!l) return;
+      var f = kbFold(l.name), m = null;
+      kbArr(tb.labels).forEach(function (x) { if (!m && isObj(x) && typeof x.id === "string" && kbFold(x.name) === f) m = x; });
+      if (m) { if (ids.indexOf(m.id) < 0) ids.push(m.id); } else dropped.push(kbName(l.name));
+    });
+    h.col.cards.splice(h.ki, 1);
+    h.col.om = stampAfter(now, h.col.om);
+    if (!isObj(src.deleted)) src.deleted = {};
+    var tomb = stampAfter(now, Math.max(src.deleted[card.id] || 0, card.mtime || 0));
+    src.deleted[card.id] = tomb;
+    if (isObj(tb.deleted)) delete tb.deleted[card.id];
+    card.labels = ids;
+    kbStamp(card, null, now, tomb);
+    dest.cards.push(card);
+    dest.om = stampAfter(now, dest.om);
+    kbArrival(tb, dest, card, now);
+    kbCanon(d, h.bi);
+    kbCanon(d, tbi);
+    var h2 = kbFind(d, { board: tb.id, card: card.id });
+    var out = { ok: true, after: kbView(h2.b, h2.col, h2.card, "board"), del: false, target: { board: tb.id, col: h2.col.id, card: card.id },
+                undo: { t: "xmove", app: "kanban", from: src.id, col: h.col.id, index: h.ki, to: tb.id, card: orig, m: h2.card.mtime } };
+    if (dropped.length) out.note = "Labels the board " + kbName(tb.name) + " doesn't have were left off: " + dropped.join(", ") + ".";
+    return out;
+  }
   function kanbanUndo(d, u, now) {
+    if (u.t === "xmove") {
+      if (!isObj(u.card) || typeof u.card.id !== "string" || !ID_RE.test(u.card.id)) return bad("bad undo");
+      var hx = kbFind(d, { board: u.to, card: u.card.id });
+      if (!hx) return bad("That card is no longer on the board it was moved to.");
+      if (hx.card.mtime !== u.m) return bad("The card changed since; nothing was undone.");
+      var sbi = kbBoard(d, u.from);
+      if (sbi < 0) return bad("Its old board is gone.");
+      var sb = d.boards[sbi], back = null;
+      sb.columns.forEach(function (c) { if (isObj(c) && c.id === u.col && Array.isArray(c.cards)) back = c; });
+      if (!back) return bad("Its old column is gone.");
+      hx.col.cards.splice(hx.ki, 1);
+      hx.col.om = stampAfter(now, hx.col.om);
+      if (!isObj(hx.b.deleted)) hx.b.deleted = {};
+      var t2 = stampAfter(now, Math.max(hx.b.deleted[u.card.id] || 0, hx.card.mtime || 0));
+      hx.b.deleted[u.card.id] = t2;
+      var c0 = clone(u.card);
+      kbStamp(c0, null, now, Math.max(t2, (isObj(sb.deleted) && sb.deleted[c0.id]) || 0));
+      back.cards.splice(Math.max(0, Math.min(back.cards.length, Math.floor(u.index) || 0)), 0, c0);
+      back.om = stampAfter(now, back.om);
+      if (isObj(sb.deleted)) delete sb.deleted[c0.id];
+      kbCanon(d, hx.bi);
+      kbCanon(d, sbi);
+      return { ok: true };
+    }
     if (u.t === "del") {
       if (!isObj(u.card) || typeof u.card.id !== "string" || !ID_RE.test(u.card.id)) return bad("bad undo");
       var bi = kbBoard(d, u.board);
@@ -2208,8 +2315,10 @@
     if (!CHANGE[appId]) return bad("Changes to this app are not loaded yet.");
     var r = CHANGE[appId](clone(data) || {}, target, ch, now || 0);
     if (!r.ok) return r;
-    return { ok: true, app: appId, title: r.title, before: r.before, after: r.after, del: r.del,
-             rows: buildDiff(r.before, r.after, r.del) };
+    var po = { ok: true, app: appId, title: r.title, before: r.before, after: r.after, del: r.del,
+               rows: buildDiff(r.before, r.after, r.del) };
+    if (r.note) po.note = r.note;
+    return po;
   }
   // The same change on the data as it is NOW. expect = plan().before:
   // a record that changed since the user saw the diff is left alone.
@@ -2225,12 +2334,15 @@
     if (expect && JSON.stringify(r.before) !== JSON.stringify(expect)) {
       return { ok: false, conflict: true, err: "The item changed since the user saw the change; nothing was changed." };
     }
-    return { ok: true, data: d, undo: r.undo, rows: buildDiff(r.before, r.after, r.del) };
+    var ao = { ok: true, data: d, undo: r.undo, rows: buildDiff(r.before, r.after, r.del) };
+    if (r.target) ao.target = r.target;     // KB-MOVE: where the item is now (the ref follows it)
+    if (r.note) ao.note = r.note;
+    return ao;
   }
   // u = apply().undo (kept in memory by the Assistant, never from a
   // stored conversation). → { ok, data } | { ok: false, err }
   function undo(appId, data, u, now) {
-    if (!has(APPS, appId) || !UNDO[appId] || !isObj(u) || u.app !== appId || (u.t !== "set" && u.t !== "del")) return bad("bad undo");
+    if (!has(APPS, appId) || !UNDO[appId] || !isObj(u) || u.app !== appId || (u.t !== "set" && u.t !== "del" && !(u.t === "xmove" && appId === "kanban"))) return bad("bad undo");
     var d = clone(data) || {};
     var r = UNDO[appId](d, u, now);
     if (!r.ok) return r;
