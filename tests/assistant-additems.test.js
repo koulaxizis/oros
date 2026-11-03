@@ -18,6 +18,7 @@ const BM = require("../bookmarks/core.js");
 const KM = require("../kanban/model.js");
 const TM = require("../todo/model.js");
 const core = require("../assistant/core.js");
+const ROOT = path.join(__dirname, "..");
 
 const NOW = 1790000000000;
 const T0 = NOW - 86400000;
@@ -349,4 +350,25 @@ test("tool and prompt: only the apps the user allows, with only their fields", (
   // assistant.js knows the same apps
   const src = fs.readFileSync(path.join(__dirname, "..", "assistant", "assistant.js"), "utf8");
   assert.ok(src.includes('var ADD_IDS = ' + JSON.stringify(A.APP_IDS.filter((a) => A.CRM_IDS.indexOf(a) < 0)).replace(/,/g, ", ")));
+});
+
+// KB-WHERE (Chris 2026-11-03 14:31): a card for "Μουσική" without a board
+// landed on the first board ("Βιβλία › Αναμονή"). With several open
+// boards the board is required; with one it stays the default.
+test("kanban: several open boards need board; the card goes to the named one", () => {
+  const d = kanban();
+  d.boards.push({ id: "b3", name: "Μουσική", archived: false, mtime: T0, om: T0, deleted: {}, labels: [],
+                  columns: [{ id: "c3", name: "Αναμονή", mtime: T0, om: T0, cards: [] }] });
+  const err = A.plan("kanban", d, norm("kanban", [{ title: "Armina" }]), CTX).err;
+  assert.match(err, /several boards \(Book launch, Μουσική\)/);
+  assert.match(err, /change_item move/);
+  const pl = A.plan("kanban", d, norm("kanban", [{ title: "Armina", board: "μουσικη" }]), CTX);
+  assert.equal(pl.ok, true, pl.err);
+  assert.deepEqual(pl.rows[0].fields.slice(0, 2), [["board", "Μουσική"], ["column", "Αναμονή"]]);
+  // one open board (templates and archived ones aside): still the default
+  assert.equal(A.plan("kanban", kanban(), norm("kanban", [{ title: "y" }]), CTX).ok, true);
+});
+test("create_items card: the Add button counts the ticks as they change", () => {
+  const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(src, /yes\.textContent = t\(link \? "cr\.yesLink" : "cr\.yes", \{ n: left\(\) \}\)/);
 });
