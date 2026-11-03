@@ -126,6 +126,14 @@ The assistant can also add a whole list at once, on one card with a tick on each
 - [Media Shelf](app:shelf): books, films, series, albums, podcasts and games, with their status, creator and year ("add these ten books to my wishlist").
 Only your own garage, garden and pet book get these; a household's shared one is changed in the app. Something that looks like one already there starts unticked, and `Undo` doesn't take back a habit you ticked, a plant you watered or a title you logged progress on since.
 
+## Wiki articles, Reader, Podcasts and Stock
+The assistant can also change these, on a card you apply or dismiss, with `Undo`:
+- [Wiki](app:wiki): an article's whole text, or a paragraph added at the end ("add to the Garden article that tomatoes need sun"). It is a new revision in the article's history, as when you save it in Wiki. An article is renamed in Wiki.
+- [Reader](app:feeds): an article marked read or not read, and its tags (only tags you already have; new ones are made in Reader). Reader counts articles older than 60 days as read.
+- [Podcasts](app:podcasts): an episode marked played or not played, and put first or last in the queue or taken out of it.
+- [Stock](app:stock): a product's name, selling price, location and note, and a supplier's name, phone, e-mail and note. Quantities change only through movements in Stock.
+`Undo` doesn't take back a change once the article, episode or product changed again since.
+
 Longer content opens in the app's own window, where you check it and save it yourself:
 - [Flashcards](app:flashcards): study cards from a chapter, a list of words or your notes ("make 20 cards from this chapter"). They open in `Make cards`, where you untick or change any card and pick the deck.
 - [Wiki](app:wiki): an article, opened in the Wiki's editor. [Writer](app:writer): a new document the assistant writes, with headings, bold, italic, lists, numbering and alignment, made when you press `Open in Writer`. [Mind Map](app:mindmap): the ideas of a map, opened in `Paste a list…`. [Pad](app:pad): a text or code file the assistant writes (a script, a config file, a web page), opened as a new tab that you save where you want; nothing in it is ever run. Pad's recent files also turn up when the assistant searches, so "open config.json in Pad" opens one.

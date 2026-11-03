@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.16.00
+- **The Assistant now changes things in Wiki, Reader, Podcasts and Stock too**, on a card you apply, with `Undo`: "add to the Garden article that tomatoes need sun", "mark this article as read and tag it Work", "put this episode first in the queue", "the A5 notebook now sells for 4.20 and sits on shelf 2".
+- A Wiki change is a new revision in the article's history, as when you save it in Wiki. Reader tags must be ones you already have, and Stock quantities still change only through movements.
+
 ## Version 5.15.00
 - **The Assistant adds whole lists to six more apps.** Habits, Workouts, Garage, Plant Care, Pet Health Book and Media Shelf now take many records at once on one card, with a tick on each and one `Undo`, instead of one form at a time: "add these ten books to my wishlist", "log my runs of this week", "the Golf had an oil change at 61,000 km, 85 euros", "Rex got his rabies shot today, next one in a year".
 - A record that looks like one already there starts unticked, and a vehicle or pet name that doesn't exist is answered with the ones you have.
