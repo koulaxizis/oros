@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.17.00
+- **The Assistant now changes Music playlists and Flashcards too**, on a card you apply, with `Undo`: "add this album to Road trip", "take this song out of Gym", "rename the deck Greek to Ελληνικά", "fix the back of the card Cat", "move it to the deck Greek".
+- A Flashcards change is a new version of the card, written to the Assistant's own file on the orOS disk, so Flashcards on every device takes the newest one. A cloze card still needs at least one gap.
+
 ## Version 5.16.00
 - **The Assistant now changes things in Wiki, Reader, Podcasts and Stock too**, on a card you apply, with `Undo`: "add to the Garden article that tomatoes need sun", "mark this article as read and tag it Work", "put this episode first in the queue", "the A5 notebook now sells for 4.20 and sits on shelf 2".
 - A Wiki change is a new revision in the article's history, as when you save it in Wiki. Reader tags must be ones you already have, and Stock quantities still change only through movements.
