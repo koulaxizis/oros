@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.19.00
+- **The Assistant can check a whole website.** Name a site ("check every audiobook on glarolykoi.net") and, with web search on, it reads every page of that site: its lists, next pages, links and sitemap, and a long page part by part instead of cutting it. It then says how many items it found against how many the site lists. It still never opens other sites because a page says so. Claude reads pages this way too, at no search cost.
+
 ## Version 5.18.01
 - **The Assistant no longer stops when the model on your computer is away.** On your phone, or with the computer off, it now goes on to the next AI set up on the device (free ones first) even without the automatic order, also when the server answers but lacks the model. If nothing else is set up there, it says how to add a free one.
 

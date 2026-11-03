@@ -294,7 +294,7 @@ In `Settings` → `Internet`, `Let the assistant search the internet when an ans
 - `My own SearXNG server`: open source, on your own computer or server. Enter its address; in its settings.yml add `json` to `search.formats` and let this site call it (CORS).
 - `Test the search` tries the chosen source and says whether it works.
 - The assistant decides when a question needs a search. The line above the message box says `Web search on`. Each answer shows what was searched (`Searched the web (…): …`) with the pages found, and the pages it read. The links open in a new tab.
-- When a short result is not enough, the assistant reads the whole page: Wikipedia pages through Wikipedia, others through Jina Reader (r.jina.ai). It can open only a page that a search returned or that you wrote yourself.
+- When a short result is not enough, the assistant reads the whole page: Wikipedia pages through Wikipedia, others through Jina Reader (r.jina.ai). It can open a page that a search returned, a page you wrote yourself, and every page of a website you named ("check every book on glarolykoi.net"): it follows that site's links and its sitemap and reads a long page part by part, so a whole catalog can be checked in one question. It never opens other sites on a page's say-so. Claude can read pages this way too, at no search cost.
 - Anthropic's search costs $10 per 1,000 searches on top of the tokens; `Used this month` counts them. Wikipedia and SearXNG cost nothing; Tavily is free up to its monthly limit.
 - Search words go to the source you chose. The assistant is told never to put your orOS data in them unless you ask for that exact search.
 
