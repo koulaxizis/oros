@@ -56,7 +56,8 @@ test("fallback: strings in EN, EL and DE, and help in EN and EL", () => {
 
 test("fallback: an online stand-in asks first even for apps set to Always", () => {
   const js = read("assistant/assistant.js");
-  assert.match(js, /if \(fbUse && a\.perm === "always"\) a\.perm = "ask";/);
+  assert.match(js, /if \(standIn\(\) && a\.perm === "always"\) a\.perm = "ask";/);
+  assert.match(js, /function standIn\(\) \{ return !!fbUse && C\.isOnline\(fbUse\) && !C\.isOnline\(data\.set\.prov\); \}/);
   assert.match(js, /function curProv\(\) \{ return fbUse \|\| data\.set\.prov; \}/);
 });
 
@@ -94,8 +95,8 @@ test("fallback: pickProv uses the stand-in only while the local server doesn't a
 test("fallback: Feeds and Atelier take the stand-in too", () => {
   ["feeds/ai.js", "atelier/ai.js"].forEach((f) => {
     const js = read(f);
-    assert.match(js, /pickProv\(/, f);
+    assert.match(js, /pickChain\(/, f);
     assert.match(js, /probeSet\(cf\.base, false\)/, f);
-    assert.match(js, /e\.code !== "net"/, f);
+    assert.match(js, /coolFor\(e\)/, f);
   });
 });

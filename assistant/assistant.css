@@ -589,6 +589,13 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-text { font-size: 14px; line-height: 1.5; }
 .dlg-check { display: flex; align-items: flex-start; gap: 10px; margin-top: 10px; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .perm-list { margin-top: 4px; }
+/* Order of use (AS-CHAIN) */
+.chain-box { margin-top: 6px; }
+.chain-tier { margin: 12px 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); }
+.chain-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.chain-row .dlg-check { margin-top: 6px; }
+.chain-st { font-size: 13px; color: var(--text-dim); }
+.chain-st.ok { color: var(--text); }
 .perm-row {
   display: flex;
   align-items: center;

@@ -170,6 +170,18 @@
       "set.fbNoKey": "{name} has no key or model on this device yet, so here you will see the local server's error instead.",
       "note.fb": "{local} can't be reached, so {name} answers for now. Apps set to “Always share” ask first.",
       "note.fbBack": "{local} answers again.",
+      "note.via": "{name} answers from here on.",
+      "set.chain": "Order of use",
+      "set.auto": "Choose the service for each message on its own",
+      "set.autoHint": "Models on your own devices first (a server on your computer, then this browser), then free online services, then paid ones. The assistant chosen above goes first within its group. A message that needs tools (adding or changing something, a web search) skips models without tools. A service that is busy, over its free limit or unreachable is passed over for a while and the next one answers. Only services set up on this device are used, and apps set to “Always share” ask first when an online service stands in for a local one.",
+      "set.tier0": "On your computer",
+      "set.tier1": "In this browser",
+      "set.tier3": "Free online",
+      "set.tier4": "Paid online",
+      "set.chain.ok": "set up here",
+      "set.chain.off": "not set up here",
+      "set.chain.down": "not answering now",
+      "set.fbAuto": "The order of use below decides who answers when this server is away.",
       "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
       "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
       "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
@@ -750,6 +762,18 @@
       "set.fbNoKey": "Το {name} δεν έχει ακόμη κλειδί ή μοντέλο σε αυτή τη συσκευή, οπότε εδώ θα βλέπεις το σφάλμα του τοπικού server.",
       "note.fb": "Το {local} δεν βρέθηκε, οπότε απαντά προσωρινά το {name}. Οι εφαρμογές στο «Πάντα» ρωτούν πρώτα.",
       "note.fbBack": "Το {local} απαντά ξανά.",
+      "note.via": "Από εδώ και πέρα απαντά το {name}.",
+      "set.chain": "Σειρά χρήσης",
+      "set.auto": "Διάλεγε μόνος την υπηρεσία για κάθε μήνυμα",
+      "set.autoHint": "Πρώτα τα μοντέλα στις δικές σου συσκευές (server στον υπολογιστή σου, μετά αυτός ο browser), μετά δωρεάν online υπηρεσίες, μετά οι πληρωμένες. Ο βοηθός που διάλεξες παραπάνω μπαίνει πρώτος στην ομάδα του. Ένα μήνυμα που θέλει εργαλεία (προσθήκη ή αλλαγή, αναζήτηση στο web) παρακάμπτει τα μοντέλα χωρίς εργαλεία. Μια υπηρεσία που είναι απασχολημένη, έχει ξεπεράσει το δωρεάν όριο ή δεν απαντά παρακάμπτεται για λίγο και απαντά η επόμενη. Χρησιμοποιούνται μόνο υπηρεσίες ρυθμισμένες σε αυτή τη συσκευή, και οι εφαρμογές στο «Πάντα» ρωτούν πρώτα όταν μια online υπηρεσία απαντά στη θέση τοπικής.",
+      "set.tier0": "Στον υπολογιστή σου",
+      "set.tier1": "Σε αυτόν τον browser",
+      "set.tier3": "Δωρεάν online",
+      "set.tier4": "Πληρωμένα online",
+      "set.chain.ok": "ρυθμισμένο εδώ",
+      "set.chain.off": "δεν έχει ρυθμιστεί εδώ",
+      "set.chain.down": "δεν απαντά τώρα",
+      "set.fbAuto": "Η σειρά χρήσης παρακάτω αποφασίζει ποιος απαντά όταν αυτός ο server λείπει.",
       "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
       "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
       "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
@@ -1347,8 +1371,8 @@
     if (pid === "local") return t("prov.local");
     return C.PROVIDERS[pid] ? C.PROVIDERS[pid].name : pid;
   }
-  // The provider answering now: the chosen one, or its online stand-in
-  // while a local server can't be reached (AS-FB, fbUse).
+  // The provider answering now: the chosen one, or the one the order
+  // of use picked for this turn (AS-CHAIN, AS-FB: fbUse).
   function curProv() { return fbUse || data.set.prov; }
   function provConf(pid) { return data.provs[pid] || { m: 0, base: "", model: "" }; }
   function modelOf(pid) { return provConf(pid).model || (C.PROVIDERS[pid] && C.PROVIDERS[pid].model) || ""; }
@@ -1363,7 +1387,8 @@
   function setSetting(patch) {
     var cur = data.set;
     var next = { m: Math.max(Date.now(), cur.m + 1), chat: cur.chat, prov: cur.prov, web: cur.web ? 1 : 0,
-                 ws: cur.ws || "auto", wsBase: cur.wsBase || "", fb: cur.fb || "" };
+                 ws: cur.ws || "auto", wsBase: cur.wsBase || "", fb: cur.fb || "",
+                 auto: cur.auto ? 1 : 0, skip: (cur.skip || []).slice() };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.set = next;
     saveData();
@@ -1573,9 +1598,10 @@
     if (data.set.chat) return [];
     return appList().filter(function (a) { return a.perm === "ask" || a.perm === "always"; })
       .map(function (a) {
-        // An online stand-in for a local model (AS-FB) asks first even
-        // for "Always" apps: those were allowed for the local model.
-        if (fbUse && a.perm === "always") a.perm = "ask";
+        // An online service standing in for a local or in-browser one
+        // (AS-FB, AS-CHAIN) asks first even for "Always" apps: those
+        // were allowed for the model on the user's own devices.
+        if (standIn() && a.perm === "always") a.perm = "ask";
         return a;
       });
   }
@@ -1628,46 +1654,108 @@
   }
 
   // ---------- 6. Provider calls ----------
-  // Online stand-in for a local server (AS-FB). fbUse is the provider
-  // answering in its place ("" = the chosen one answers); the last
-  // check of the local address is kept by core.probeLocal; fbNoted[chat
-  // id] is the state the chat was last told about, so each says it once.
+  // The order of use (AS-CHAIN) and the online stand-in for a local
+  // server (AS-FB). fbUse is the provider answering this turn in place
+  // of the chosen one ("" = the chosen one answers); core.pickChain
+  // finds it before each turn. cool[pid] = until when a service that
+  // just failed (rate limit, busy, no credit, unreachable) is passed
+  // over. fbNoted[chat id] is the provider the chat was last told
+  // about, so each change is said once.
   var fbUse = "";
   var fbNoted = {};
+  var cool = {};
+  function readKey(q) { return loadKey(q).then(function (k) { return k ? k.key : ""; }); }
   // Does the local server answer at all? (core.probeLocal, the same
   // check Feeds and Atelier make)
-  function localUp(pid) {
-    return C.probeLocal(pid, provConf(pid), function (q) { return loadKey(q).then(function (k) { return k ? k.key : ""; }); });
+  function localUp(pid) { return C.probeLocal(pid, provConf(pid), readKey); }
+  // Is a model that runs in the browser ready here (no download)?
+  function onDevice(pid) {
+    var P = C.PROVIDERS[pid];
+    if (P && P.builtin) return checkBuiltin().then(function (st) { return st === "ok"; });
+    if (P && P.kind === "webllm") return wlCheck(modelOf(pid)).then(function (st) { return st === "ok"; });
+    return false;
   }
-  // Before a turn: the local server, or the stand-in when it is away
-  // and the stand-in has what it needs on this device (a model, its key).
-  function chooseProv(c) {
-    var pid = data.set.prov, fb = C.fbFor(data.set);
-    if (!fb) { fbUse = ""; return Promise.resolve(); }
-    return localUp(pid).then(function (up) {
-      if (up) return "";
-      return loadKey(fb).then(function (k) {
-        return !modelOf(fb) || (C.PROVIDERS[fb].key === "yes" && !(k && k.key)) ? "" : fb;
-      });
-    }).then(function (use) {
-      fbUse = use;
-      var was = fbNoted[c.id] || "";
-      if (use !== was && (use || was)) {
-        c.msgs.push({ r: "note", kind: "info", text: use
-          ? t("note.fb", { local: provName(pid), name: provName(use) })
-          : t("note.fbBack", { local: provName(pid) }) });
-      }
-      fbNoted[c.id] = use;
+  // Does the newest question need tools? Only in automatic order and
+  // not in chat-only mode (core.needsTools).
+  function turnTools(c) {
+    if (!data.set.auto || data.set.chat || !c) return false;
+    var i = c.msgs.length - 1;
+    while (i >= 0 && !(c.msgs[i].r === "user" && !c.msgs[i].cont)) i--;
+    var u = i >= 0 ? c.msgs[i] : null, prev = false;
+    for (var j = i - 1; j >= 0; j--) {
+      if (c.msgs[j].r === "asst") { prev = !!c.msgs[j].tools; break; }
+      if (c.msgs[j].r === "user" && !c.msgs[j].cont) break;
+    }
+    return !!u && C.needsTools(u.text, { web: !!data.set.web, prev: prev, brief: !!u.brief });
+  }
+  // Before a turn: the first service in the order that is there now.
+  // c may hold a message not yet sent (send() picks before files are
+  // read, so they are read for the service that gets them).
+  function pickNow(c) {
+    var order = C.chainOrder(data);
+    if (order.length < 2) return Promise.resolve(order[0] && order[0] !== data.set.prov ? order[0] : "");
+    return C.pickChain(data, { readKey: readKey, device: onDevice, tools: turnTools(c), cool: cool }).then(function (r) {
+      return r.pid && r.pid !== data.set.prov ? r.pid : "";
     });
   }
-  // The chosen provider is set up (its stand-in is checked per turn).
-  function ready() {
-    var pid = data.set.prov;
-    if (!pid || !modelOf(pid)) return false;
+  function chooseProv(c, keep) {
+    return (keep ? Promise.resolve(fbUse) : pickNow(c)).then(function (use) {
+      fbUse = use;
+      noteProv(c);
+    });
+  }
+  // A note in the chat when the service answering changes.
+  // The last "answers from here on" note: taken back when that service
+  // failed before it answered, so the chat names only who answered.
+  var viaNote = null, viaWas = "";
+  function noteProv(c) {
+    viaNote = null;
+    var pid = data.set.prov, use = fbUse;
+    if (data.set.auto) {
+      var now = use || pid, was = fbNoted[c.id] || pid;
+      if (now && now !== was) {
+        viaNote = { r: "note", kind: "info", text: t("note.via", { name: provName(now) }) };
+        viaWas = was;
+        c.msgs.push(viaNote);
+      }
+      fbNoted[c.id] = now;
+      return;
+    }
+    var before = fbNoted[c.id] || "";
+    if (use !== before && (use || before)) {
+      c.msgs.push({ r: "note", kind: "info", text: use
+        ? t("note.fb", { local: provName(pid), name: provName(use) })
+        : t("note.fbBack", { local: provName(pid) }) });
+    }
+    fbNoted[c.id] = use;
+  }
+  // An online service answering in place of a model on the user's own
+  // devices (AS-FB, AS-CHAIN): "Always" apps ask first.
+  function standIn() { return !!fbUse && C.isOnline(fbUse) && !C.isOnline(data.set.prov); }
+  // The provider is set up on this device (keys come from keyCache,
+  // loaded at open; a local server is checked per turn).
+  function provReady(pid) {
+    if (!pid || !C.PROVIDERS[pid] || !modelOf(pid)) return false;
     if (C.PROVIDERS[pid].builtin) return builtinState() !== "none";
     if (C.PROVIDERS[pid].kind === "webllm") return wlState(modelOf(pid)) === "ok";
     if (C.PROVIDERS[pid].local) return !!baseOf(pid);
     return !!(keyCache[pid] && keyCache[pid].key);
+  }
+  // Automatic order: every key and in-browser model state read once at
+  // open, so ready() knows what this device has.
+  function chainLoad() {
+    if (!data.set.auto) return null;
+    return Promise.all(C.chainOrder(data).map(function (q) {
+      var P = C.PROVIDERS[q];
+      if (P.builtin) return checkBuiltin();
+      if (P.kind === "webllm") return wlCheck(modelOf(q));
+      return P.local ? null : loadKey(q);
+    })).catch(function () {});
+  }
+  // The chosen provider is set up, or (in automatic order) any other.
+  function ready() {
+    if (provReady(data.set.prov)) return true;
+    return !!data.set.auto && C.chainOrder(data).some(provReady);
   }
 
   // Output ceilings Claude named for a model (a 400), for this session.
@@ -2709,11 +2797,28 @@
     });
   }
 
+  var sendPick = "";
   function send() {
     var box = $("input");
     var text = box.value.trim();
     if ((!text && !pending.length) || busy || attBusy) return;
     if (!ready()) { settingsDialog(); return; }
+    // Automatic order (AS-CHAIN) with files: the service is picked
+    // first, so the files are read for the one that gets them.
+    var sendKey = pending.map(function (a) { return a.id; }).join() + "\n" + text;
+    if (data.set.auto && pending.length && sendPick !== sendKey) {
+      attBusy++;
+      renderAtt();
+      pickNow({ id: "", msgs: (chat ? chat.msgs : []).concat([{ r: "user", text: text }]) })
+        .catch(function () { return ""; }).then(function (use) {
+          attBusy--;
+          fbUse = use;
+          sendPick = sendKey;
+          renderAtt();
+          send();
+        });
+      return;
+    }
     // PDF pages first where the service counts them, then the text of
     // files the service can't read (or that don't fit), then the message.
     if (pending.some(needsPages)) { countPages().then(function () { if (!pending.some(needsPages)) send(); }); return; }
@@ -2738,7 +2843,9 @@
     box.value = "";
     autosize();
     saveChat(chat);
-    runTurn(chat);
+    var keep = !!sendPick && sendPick === sendKey;
+    sendPick = "";
+    runTurn(chat, 0, keep);
   }
 
   // Web search for this turn: switched on, and a provider that has it.
@@ -2809,15 +2916,16 @@
 
   // A catalog too big for the Assistant's first open (Slides needs its
   // core.js) is loaded before the first turn that may use it.
-  // again: this turn already went once and the local server failed.
-  function runTurn(c, again) {
+  // again: how many times this turn already went and failed before any
+  // answer (AS-CHAIN, AS-FB); keep: send() already picked the service.
+  function runTurn(c, again, keep) {
     var have = installed(), want = Object.keys(EDIT_LAZY).filter(function (id) { return have[id] && !window[EDIT_SRC[id].mod]; });
     var modsP = want.length ? editLoadMods(want) : Promise.resolve();
     // The busy mark first, so a second Send can't start a turn while
     // the local server is checked (up to PROBE_MS).
     busy = { abort: null, live: "", consent: null, chat: c };
     renderAll();
-    Promise.all([modsP, chooseProv(c).catch(function () { fbUse = ""; })]).then(function () { runTurnNow(c, again); });
+    Promise.all([modsP, chooseProv(c, keep).catch(function () { fbUse = ""; })]).then(function () { runTurnNow(c, again || 0); });
   }
   function runTurnNow(c, again) {
     var pid = curProv();
@@ -2934,19 +3042,21 @@
         if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
         if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
-      } else if (!again && !fbUse && C.fbFor(data.set) && e instanceof C.ProviderError && e.code === "net" &&
+      } else if (C.coolFor(e) && again + 1 < C.chainOrder(data).length &&
                  c.msgs.length === startLen && !(last && last.found && !hadFound)) {
-        // The local server stopped answering before this turn said
-        // anything (and before any of the user's data was shared with
-        // it): the same turn goes once more, to the stand-in.
-        C.probeSet(baseOf(data.set.prov), false);
+        // The service failed before this turn said anything (and before
+        // any of the user's data was found for it): it is passed over
+        // for a while and the same turn goes to the next in the order.
+        cool[pid] = Date.now() + C.coolFor(e);
+        if (viaNote && c.msgs[c.msgs.length - 1] === viaNote) { c.msgs.pop(); fbNoted[c.id] = viaWas; }
+        if (C.PROVIDERS[pid].local && e.code === "net") C.probeSet(baseOf(pid), false);
         retry = true;
       } else {
         note("err", errText(e, pid));
       }
     }).then(function () {
       busy = null;
-      if (retry) { runTurn(c, true); return; }
+      if (retry) { runTurn(c, again + 1); return; }
       saveChat(c);
       renderAll();
       scrollEnd();
@@ -6554,6 +6664,7 @@
       fbUse = "";
       C.probeSet("");
       drawProv();
+      drawChain();
       renderAll();
     });
 
@@ -6622,7 +6733,10 @@
         });
         nt.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
-        // Online stand-in while this server can't be reached (AS-FB).
+        // Online stand-in while this server can't be reached (AS-FB);
+        // the automatic order (AS-CHAIN) takes its place when on.
+        if (data.set.auto) { provBox.appendChild(el("p", "dlg-hint", t("set.fbAuto"))); }
+        else {
         label(provBox, "as-fb", t("set.fb"));
         var fbSel = el("select", "dlg-input");
         fbSel.id = "as-fb";
@@ -6655,6 +6769,7 @@
           renderAll();
         });
         paintFb();
+        }
       }
       // Key
       label(provBox, "as-key", P.key === "opt" ? t("set.keyOpt") : t("set.key"));
@@ -6945,6 +7060,58 @@
       checkBuiltin().then(function () { paint(); renderAll(); });
     }
     drawProv();
+
+    // Order of use (AS-CHAIN): local first, then free, then paid.
+    var secO = section(body, t("set.chain"));
+    checkbox(secO, "as-auto", t("set.auto"), !!data.set.auto, function (on) {
+      setSetting({ auto: on ? 1 : 0 });
+      fbUse = "";
+      C.probeSet("");
+      chainBox.hidden = !on;
+      drawProv();
+      drawChain();
+      renderAll();
+    }).parentNode.classList.add("check");
+    secO.appendChild(el("p", "dlg-hint", t("set.autoHint")));
+    var chainBox = el("div", "chain-box");
+    chainBox.id = "as-chain";
+    chainBox.hidden = !data.set.auto;
+    secO.appendChild(chainBox);
+    function drawChain() {
+      chainBox.textContent = "";
+      if (!data.set.auto) return;
+      var skip = data.set.skip || [], tier = -1;
+      C.chainOrder({ set: { auto: 1, prov: data.set.prov, skip: [] }, provs: data.provs }).forEach(function (q) {
+        var tr = C.provTier(q, provConf(q)), shown = tr === 2 ? 1 : tr;
+        if (shown !== tier) { tier = shown; chainBox.appendChild(el("p", "chain-tier", t("set.tier" + shown))); }
+        var row = el("div", "chain-row");
+        var cb = checkbox(row, "as-use-" + q, provName(q), skip.indexOf(q) < 0, function (on) {
+          var cur = (data.set.skip || []).filter(function (x) { return x !== q; });
+          if (!on) cur.push(q);
+          setSetting({ skip: cur });
+          fbUse = "";
+          renderAll();
+        });
+        cb.parentNode.classList.add("check");
+        var st = el("span", "chain-st", "…");
+        row.appendChild(st);
+        chainBox.appendChild(row);
+        chainHere(q).then(function (v) {
+          st.textContent = t("set.chain." + v);
+          st.classList.toggle("ok", v === "ok");
+        });
+      });
+    }
+    // Is this service there on this device? → "ok" | "off" | "down"
+    function chainHere(q) {
+      var P = C.PROVIDERS[q], pc = provConf(q);
+      if (P.device) return Promise.resolve(onDevice(q)).then(function (v) { return v ? "ok" : "off"; });
+      if (!modelOf(q)) return Promise.resolve("off");
+      if (P.local) return baseOf(q) ? localUp(q).then(function (v) { return v ? "ok" : "down"; }) : Promise.resolve("off");
+      if (P.key !== "yes") return Promise.resolve("ok");
+      return readKey(q).then(function (k) { return k ? "ok" : "off"; });
+    }
+    drawChain();
 
     // Data access
     var secD = section(body, t("set.data"));
@@ -7654,7 +7821,7 @@
       } catch (e) {}
     }
     var biP = curProv() === "browser" ? checkBuiltin() : curProv() === "webllm" ? wlCheck(modelOf("webllm")) : null;
-    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), data.set.fb ? loadKey(data.set.fb) : null, biP, histLoad()]).then(function () {
+    Promise.all([loadChats(), loadKey(curProv() || "anthropic"), data.set.fb ? loadKey(data.set.fb) : null, biP, histLoad(), chainLoad()]).then(function () {
       renderAll();
       scrollEnd();
       if (pending) openTarget(pending);

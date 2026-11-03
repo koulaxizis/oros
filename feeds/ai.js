@@ -15,14 +15,14 @@
 // The Assistant's core (../assistant/core.js) is loaded on first use.
 // window.orosFeedsAI:
 //   ready()                -> Promise<conf | null>   null = not set up;
-//                             while a local server can't be reached,
-//                             the Assistant's online stand-in (AS-FB,
-//                             conf.fb = 1)
+//                             the first service of the Assistant's
+//                             order that is there (AS-CHAIN; conf.fb = 1
+//                             when not the chosen one)
 //   ask(conf, q, signal, onText(textSoFar), onSwitch(conf)) -> Promise<text>
 //                             rejects ProviderError ("nokey", "net",
-//                             "builtin", HTTP status …); a local server
-//                             that fails on the network goes once to
-//                             the stand-in and onSwitch says so
+//                             "builtin", HTTP status …); a service that
+//                             fails before answering hands over to the
+//                             next in the order and onSwitch says so
 //   errorText(e, conf, t)  -> one line for the user
 // conf: { pid, name, model, base, p, fb }
 // ============================================================
@@ -71,17 +71,30 @@
     if (!model) return null;
     return { pid: pid, name: p.name, model: model, base: C.provBase(pid, pc), p: p };
   }
-  // The Assistant's AI, or its online stand-in while a local server
-  // can't be reached (AS-FB; cf.fb = 1).
+  // The Assistant's AI: the first service in its order of use that is
+  // there on this device (AS-CHAIN), or the chosen one and its online
+  // stand-in (AS-FB). cf.fb = 1: not the chosen assistant. Services
+  // that just failed are passed over for a while (cool).
+  var cool = {};
+  // Reader can't run the in-browser model; the browser's own one only
+  // when it is ready here (not "downloadable").
+  function device(pid) { return pid === "browser" && lmReady(); }
+  function lmReady() {
+    var api = LM();
+    if (!api) return Promise.resolve(false);
+    return Promise.resolve().then(function () {
+      return typeof api.availability === "function" ? api.availability() : "available";
+    }).then(function (a) { return a === "available"; }, function () { return false; });
+  }
   function ready() {
     return core().then(function (C) {
       if (!C) return null;
       var d = assistData(C), cf = conf(C, d);
-      if (!cf || !C.pickProv) return cf;
-      return C.pickProv(d, readKey).then(function (r) {
-        if (!r.fb) return cf;
-        var alt = conf(C, d, r.pid);
-        if (alt) alt.fb = 1;
+      if (!C.pickChain) return cf;
+      return C.pickChain(d, { readKey: readKey, device: device, cool: cool }).then(function (r) {
+        var alt = r.pid ? conf(C, d, r.pid) : null;
+        if (alt && (alt.p.kind === "webllm")) alt = null;
+        if (alt) alt.fb = r.fb;
         return alt || cf;
       });
     }, function () { return null; });
@@ -117,20 +130,21 @@
     catch (e) { return null; }
   }
 
-  // q: { system, user }. A local server that fails on the network
-  // before it answers: the same question goes once to the stand-in
-  // (AS-FB); onSwitch(cf) says which one answers then.
-  function ask(cf, q, signal, onText, onSwitch) {
+  // q: { system, user }. A service that fails before it answers (off,
+  // over its limit, busy: core.coolFor) is passed over for a while and
+  // the question goes to the next one in the order, at most 3 times;
+  // onSwitch(cf) says which one answers then.
+  function ask(cf, q, signal, onText, onSwitch, tries) {
     var C = root.OrosAssistCore;
     return askNow(cf, q, signal, onText).catch(function (e) {
-      if (cf.fb || !cf.p.local || !C.fbFor || (signal && signal.aborted) || !(e instanceof C.ProviderError) || e.code !== "net") throw e;
-      var d = assistData(C);
-      if (!C.fbFor(d.set)) throw e;
-      C.probeSet(cf.base, false);
+      var ms = C.coolFor ? C.coolFor(e) : 0;
+      if (!ms || (signal && signal.aborted) || (tries || 0) >= 3) throw e;
+      cool[cf.pid] = Date.now() + ms;
+      if (cf.p.local && e.code === "net") C.probeSet(cf.base, false);
       return ready().then(function (alt) {
-        if (!alt || !alt.fb) throw e;
+        if (!alt || alt.pid === cf.pid) throw e;
         if (onSwitch) onSwitch(alt);
-        return askNow(alt, q, signal, onText);
+        return ask(alt, q, signal, onText, onSwitch, (tries || 0) + 1);
       });
     });
   }
