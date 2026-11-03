@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.11.00
+- **The Assistant sees every Kanban board.** Before, it saw only the first board. Ask "what is on my boards?" and it gets each board with its columns, how many cards they hold, what is late or due today, and the cards themselves, so it can also change a card on any board. Ask for one board by its name to get only its cards.
+- **Delete many Kanban cards at once with the Assistant.** "Delete every card in Done on the Book board" comes as one card listing them all, up to 200; `Delete` removes them and `Undo` brings them all back to their places.
+- **Choose which boards to import.** In Kanban's `Import from other apps`, a file or account with several boards shows a tick per board: untick the ones you don't want.
+
 ## Version 5.10.00
 - **The Assistant can pick the AI for each message.** Turn on `Choose the service for each message on its own` in the Assistant's settings (`Order of use`): orOS tries the model on your computer first, then the in-browser models, then free online services, then paid ones. A message that asks to add or change something goes to a model that can use tools; a service that is busy or over its free limit is passed over and the next one answers. Reader summaries and the Atelier writing help follow the same order. Mistral now counts as free.
 

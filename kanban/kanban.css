@@ -564,6 +564,8 @@ input, textarea, select {
 .imp-preview.imp-error { color: var(--danger); }
 .imp-preview { overflow-wrap: anywhere; }
 .imp-preview .imp-sub { margin-top: 4px; color: var(--text-dim); }
+.imp-preview .imp-pick { display: flex; align-items: center; gap: 8px; min-height: 32px; cursor: pointer; text-transform: none; letter-spacing: normal; font-size: inherit; font-weight: inherit; }
+.imp-preview .imp-pick input { width: 20px; height: 20px; margin: 0; flex: none; }
 
 /* Import from a connected account (wave 6B) */
 .imp-acct {

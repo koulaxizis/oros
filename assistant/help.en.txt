@@ -52,6 +52,7 @@ For totals and overviews, such as "how much did I spend on groceries this month?
 - Budget: income, expenses and each category of a month.
 - Timesheet: hours and amounts of a month per project.
 - To-Do: open, late and due-today tasks per list, and what is due next.
+- Kanban: every board, not only the one open in Kanban: its columns with how many cards each holds, late and due-today cards, and the cards themselves with their board and column, so the assistant can also change a card on any board. Ask for one board by its name to get only its cards. Archived boards are only named.
 - CRM: "what is open with …?" for one partner: what they owe you and you owe them, stock on consignment, orders, hours not billed, royalties, contracts and the next follow-up. When several partners match, the assistant asks which one.
 - Calendar, Habits, Plant Care and the other apps that appear in `Today`: what is late, today and in the next days.
 
@@ -138,6 +139,7 @@ Ask, for example, "mark the plumber call as done", "move the dentist to Friday a
 - After a change the card says what happened and has `Undo`. Undo works for 30 days, also later from `Change history`, as long as the item wasn't changed since.
 - If the item changed in the meantime (for example on another device), nothing is changed and the card says so.
 - The same change to several items (for example "give every event without a label the label Work") comes as one card, up to 200 items: on top what every item gets, then the first 10 items (`Show all` lists the rest); one `Apply` changes them all, and `Undo` takes them all back.
+- Kanban cards can also be deleted many at once: "delete every card in Done on the Book board" comes as one card listing them all, up to 200; `Delete` removes them and `Undo` brings them all back to their places. In the other apps the assistant deletes one item at a time.
 - Different changes to several items (for example the new details of ten people from a list) also come as one card, each item with its own `Before` and `After`. In Contacts every row has a tick: untick what should stay as it is.
 
 What it can change:

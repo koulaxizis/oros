@@ -1630,7 +1630,10 @@
     name: "app_summary",
     description: "Totals and an overview of one app, worked out on the user's device: budget (income, " +
       "expenses and each category of a month), timesheet (hours and amounts per project of a month), " +
-      "todo (open, late and due-today tasks per list, and what is due next), stock (what sold in a month, per product and " +
+      "todo (open, late and due-today tasks per list, and what is due next), kanban (EVERY board, not only " +
+      "the one open in Kanban: each board's columns with how many cards they hold, late and due-today cards, " +
+      "archived boards by name, and the cards of all boards with board › column, due date, labels and a ref; " +
+      "with board only that board's cards), stock (what sold in a month, per product and " +
       "per place: the user's own stock and each consignment shop or other warehouse; returns taken off) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
       "plants and more). Better than search_data for questions like 'how much did I spend on food " +
@@ -1645,6 +1648,7 @@
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, timesheet, stock: YYYY-MM (default: this month). calendar: list that month's events." },
         label: { type: "string", description: "calendar: list the events with this label, or \"none\" for the events without one." },
+        board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board)." },
         days: { type: "integer", description: "Other apps: how many days from today, 1-31 (default 7)." },
         partner: { type: "string", description: "crm: a customer's, supplier's, shop's or author's name: everything open with them (owed both ways, consignment stock, orders, unbilled hours, royalties, contracts, next follow-up)." }
       },
@@ -1695,7 +1699,7 @@
       properties: {
         ref: { type: "string", description: "The item's ref from search_data or app_summary, e.g. r3." },
         refs: { type: "array", items: { type: "string" },
-                description: "update only: several refs of the same app (up to 200) that get the same change, instead of ref." },
+                description: "update: several refs of the same app (up to 200) that get the same change, instead of ref. delete: several Kanban cards at once (Kanban only; e.g. every card of a board or column from app_summary kanban with board), one card and one Undo for all." },
         action: { type: "string", "enum": ["complete", "reopen", "reschedule", "update", "move", "delete"] },
         title: { type: "string", description: "New title (task text, event title, bookmark title)." },
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
@@ -3071,7 +3075,7 @@
       lines.push("When a file or message holds details of people or companies (a form, a list, business cards, a vCard, a signature), look each one up first with search_data (Contacts, and CRM for customers and partners). Someone already there gets change_item with only what is new or different (changes: one entry per person, when there are several); add phones, e-mails and websites, and replace one (old_phone…) only when the file says it changed; never drop details they have. Someone not there gets " + (opts.creates && opts.creates.length ? "create_items (all of them in one call per app)" : "propose_entry") + ". Tax numbers and tax office go to the CRM customer (tax_id, tax_office) when there is one; bank details or a bio, which have no field, go in note_add, briefly, only if the user wants them there.");
     }
     var changeLine = canChange
-      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
+      ? "To change or delete an existing item (apps: " + opts.changes.join(", ") + "), find it first with search_data or app_summary, then call change_item with its ref (refs for the same update to several items, or to delete several Kanban cards at once). The user sees the change before → after and must press Apply; say what happened only from the tool result (applied, refused or failed). Never claim a change you did not get confirmed. Other apps' items can't be changed: say which app does it."
       : "You cannot change or delete anything in orOS.";
     if (opts.builtin) {
       lines.push("You cannot create, change or delete anything in orOS.");

@@ -147,6 +147,7 @@ orosPack("de", "kanban", {
  "import.newer": "Diese Datei stammt von einer neueren orOS-Version. Aktualisiere orOS, um sie zu öffnen.",
  "import.none": "Hier gibt es keine Boards.",
  "import.nosec": "Kein Abschnitt",
+ "import.pick": "Entferne den Haken bei den Boards, die du nicht willst.",
  "import.nt.all": "Karten",
  "import.nt.none": "Kein Status",
  "import.nt.untitled": "Ohne Titel",
