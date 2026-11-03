@@ -26,10 +26,38 @@ test("chain: tiers put local first, then the browser, then free, then paid", () 
   assert.equal(C.isOnline(""), false);
 });
 
-test("chain: off keeps the chosen one and its stand-in only", () => {
+test("chain: off keeps a chosen online service alone", () => {
   assert.deepEqual(C.chainOrder(data({ prov: "anthropic" })), ["anthropic"]);
-  assert.deepEqual(C.chainOrder(data({ prov: "local", fb: "openai" })), ["local", "openai"]);
+  assert.deepEqual(C.chainOrder(data({ prov: "groq" })), ["groq"]);
   assert.deepEqual(C.chainOrder(data({ prov: "" })), []);
+});
+
+test("chain: off, a local or in-browser model is never a dead end (AS-CHAIN 2)", () => {
+  const o = C.chainOrder(data({ prov: "local", fb: "openai" }));
+  assert.deepEqual(o.slice(0, 2), ["local", "openai"], "the chosen one, then its stand-in");
+  assert.equal(new Set(o).size, o.length, "no service twice");
+  const rest = o.slice(2).map((p) => C.provTier(p));
+  assert.deepEqual(rest, rest.slice().sort((a, b) => a - b), "then the rest by tier");
+  const w = C.chainOrder(data({ prov: "webllm", skip: ["groq"] }));
+  assert.equal(w[0], "webllm");
+  assert.ok(w.indexOf("groq") < 0, "left-out services stay out");
+  assert.ok(w.indexOf("cerebras") > 0);
+});
+
+test("chain: phone with the computer's server away and a free key here → the free one answers", async () => {
+  const realFetch = globalThis.fetch;
+  const d = data({ prov: "local" }, { local: { m: 1, base: "http://192.168.1.20:11434/v1", model: "qwen3:8b" },
+    groq: { m: 1, model: "llama-3.3-70b-versatile" } });
+  try {
+    globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+    C.probeSet("");
+    assert.deepEqual(await C.pickChain(d, { readKey: (p) => Promise.resolve(p === "groq" ? "gsk" : "") }), { pid: "groq", fb: 1 });
+    C.probeSet("");
+    assert.deepEqual(await C.pickChain(d, { readKey: () => Promise.resolve("") }), { pid: "local", fb: 0 }, "nothing else here");
+  } finally {
+    globalThis.fetch = realFetch;
+    C.probeSet("");
+  }
 });
 
 test("chain: on orders every service by tier, the chosen one first in its tier, skips left out", () => {
@@ -67,6 +95,7 @@ test("chain: errors that pass a service over for a while", () => {
   assert.equal(C.coolFor(new C.ProviderError("rate")), C.COOL.rate);
   assert.equal(C.coolFor(new C.ProviderError("net")), C.COOL.net);
   assert.equal(C.coolFor(new C.ProviderError("credit")), C.COOL.credit);
+  assert.equal(C.coolFor(new C.ProviderError("model")), C.COOL.model, "a server without the model");
   assert.equal(C.coolFor(new C.ProviderError("bad")), 0, "a bad request goes nowhere else");
   assert.equal(C.coolFor(new Error("x")), 0);
 });
@@ -114,7 +143,8 @@ test("chain: the Assistant picks per turn, retries the next on a cooling error, 
   assert.match(js, /C\.coolFor\(e\) && again \+ 1 < C\.chainOrder\(data\)\.length/);
   assert.match(js, /cool\[pid\] = Date\.now\(\) \+ C\.coolFor\(e\);/);
   assert.match(js, /id = "as-auto"|"as-auto"/);
-  ["note.via", "set.chain", "set.auto", "set.autoHint", "set.tier0", "set.tier1", "set.tier3", "set.tier4",
+  assert.match(js, /if \(failed && curProv\(\) === failed\.pid\)/);
+  ["note.via", "note.noNext", "set.chain", "set.auto", "set.autoHint", "set.tier0", "set.tier1", "set.tier3", "set.tier4",
    "set.chain.ok", "set.chain.off", "set.chain.down", "set.fbAuto"].forEach((k) => {
     const n = js.split('"' + k + '":').length - 1;
     assert.equal(n, 2, k + " in EN and EL");

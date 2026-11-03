@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.18.01
+- **The Assistant no longer stops when the model on your computer is away.** On your phone, or with the computer off, it now goes on to the next AI set up on the device (free ones first) even without the automatic order, also when the server answers but lacks the model. If nothing else is set up there, it says how to add a free one.
+
 ## Version 5.18.00
 - **The Assistant now tidies files on the orOS disk**, on a card you apply, with `Undo`: "rename report.pdf to Report March", "move these photos to Pictures › Trips", "make a folder Taxes 2026 in Documents", "delete notes.txt". A deleted file goes to the Trash in Files, as when you delete it there.
 - Nothing is overwritten: a name that is taken is refused, a file that changed after the card was shown is left alone, and the folders apps keep their own data in, orOS Drive and the Trash are not touched. Up to 50 items at a time.
