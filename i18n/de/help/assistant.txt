@@ -126,6 +126,14 @@ Der Assistent kann auch eine ganze Liste auf einmal hinzufügen, auf einer Karte
 - [Medienregal](app:shelf): Bücher, Filme, Serien, Alben, Podcasts und Spiele, mit Status, Urheber und Jahr („setz diese zehn Bücher auf meine Wunschliste“).
 Nur deine eigene Garage, dein Garten und dein Tierpass bekommen sie; ein geteilter des Haushalts wird in der App geändert. Was aussieht wie ein schon vorhandener Eintrag, beginnt ohne Häkchen, und `Rückgängig` nimmt keine Gewohnheit zurück, die du inzwischen abgehakt, keine Pflanze, die du gegossen, und keinen Titel, bei dem du einen Fortschritt eingetragen hast.
 
+## Wiki-Artikel, Reader, Podcasts und Bestand
+Der Assistent kann auch diese ändern, auf einer Karte, die du anwendest oder verwirfst, mit `Rückgängig`:
+- [Wiki](app:wiki): den ganzen Text eines Artikels oder einen Absatz am Ende („ergänze im Artikel Garten, dass Tomaten Sonne brauchen“). Das wird eine neue Version im Verlauf des Artikels, wie beim Speichern im Wiki. Umbenannt wird ein Artikel im Wiki.
+- [Reader](app:feeds): einen Artikel als gelesen oder ungelesen und seine Tags (nur Tags, die du schon hast; neue legst du im Reader an). Der Reader zählt Artikel, die älter als 60 Tage sind, als gelesen.
+- [Podcasts](app:podcasts): eine Folge als gehört oder nicht gehört, und als erste oder letzte in die Warteschlange oder heraus.
+- [Bestand](app:stock): Name, Verkaufspreis, Lagerort und Notiz eines Produkts, und Name, Telefon, E-Mail und Notiz eines Lieferanten. Mengen ändern sich nur durch Bewegungen im Bestand.
+`Rückgängig` nimmt eine Änderung nicht zurück, wenn der Artikel, die Folge oder das Produkt inzwischen wieder geändert wurde.
+
 Längere Inhalte öffnen sich im eigenen Fenster der App, wo du sie prüfst und selbst speicherst:
 - [Karteikarten](app:flashcards): Lernkarten aus einem Kapitel, einer Wortliste oder deinen Notizen („mach 20 Karten aus diesem Kapitel“). Sie öffnen sich in `Karten erstellen`, wo du jede Karte abwählen oder ändern kannst und den Stapel wählst.
 - [Wiki](app:wiki): ein Artikel, geöffnet im Editor des Wikis. [Texteditor](app:writer): ein neues Dokument, das der Assistent schreibt, mit Überschriften, Fett, Kursiv, Listen, Nummerierung und Ausrichtung, das beim Drücken von `In Texteditor öffnen` entsteht. [Mindmap](app:mindmap): die Ideen einer Map, geöffnet in `Liste einfügen…`. [Pad](app:pad): eine Text- oder Code-Datei, die der Assistent schreibt (ein Skript, eine Konfigurationsdatei, eine Webseite), geöffnet als neuer Tab, den du speicherst, wo du willst; nichts darin wird je ausgeführt. Pads zuletzt geöffnete Dateien erscheinen auch, wenn der Assistent sucht, also öffnet „öffne config.json in Pad“ eine davon.

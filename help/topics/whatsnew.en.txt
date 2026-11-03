@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.16.00
+- **The Assistant now changes things in Wiki, Reader, Podcasts and Stock too**, on a card you apply, with `Undo`: "add to the Garden article that tomatoes need sun", "mark this article as read and tag it Work", "put this episode first in the queue", "the A5 notebook now sells for 4.20 and sits on shelf 2".
+- A Wiki change is a new revision in the article's history, as when you save it in Wiki. Reader tags must be ones you already have, and Stock quantities still change only through movements.
+
 ## Version 5.15.01
 - **Kanban cards no longer land on the first board by themselves.** When you have several boards, the Assistant has to name the board you asked for; a card without one is refused instead of going to the first board. To move cards it uses Move, not a second copy.
 - **The Add button counts the ticks.** On the Assistant's card for new items, `Add (n)` now changes as you tick or untick a row.

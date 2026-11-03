@@ -1709,5 +1709,13 @@ orosPack("de", "assistant", {
  "ft.a.walk": "Gehen",
  "ft.a.bike": "Radfahren",
  "ft.a.swim": "Schwimmen",
- "ft.a.row": "Rudern"
+ "ft.a.row": "Rudern",
+ "f.read": "Gelesen",
+ "f.played": "Gehört",
+ "f.queue": "In der Warteschlange",
+ "f.price": "Preis",
+ "v.read": "gelesen",
+ "v.unread": "ungelesen",
+ "v.played": "gehört",
+ "v.unplayed": "nicht gehört"
 });

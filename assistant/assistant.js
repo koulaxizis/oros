@@ -479,6 +479,7 @@
       "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
       "f.until": "Last day", "f.platform": "Platform",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
+      "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
       "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
@@ -1083,6 +1084,7 @@
       "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
       "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
+      "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
       "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
@@ -4090,11 +4092,57 @@
     var first = Array.isArray(a.changes) && a.changes[0] ? a.changes[0].ref : Array.isArray(a.refs) ? a.refs[0] : a.ref;
     var r0 = c.refs ? c.refs[String(first == null ? "" : first).replace(/^oros:/, "").trim()] : null;
     var need = r0 && typeof E.needs === "function" ? E.needs(r0.app) : [];
-    if (!need.length) return changeItem0(c, args, apps);
+    if (!need.length) return changePrep(r0).then(function () { return changeItem0(c, args, apps); });
     return need.reduce(function (p, src) { return p.then(function () { return loadOnce(src); }); }, Promise.resolve()).then(function () {
       if (E.needs(r0.app).length) return { content: "Error: changes to " + r0.app + " could not be loaded right now.", err: 1 };
-      return changeItem0(c, args, apps);
+      return changePrep(r0).then(function () { return changeItem0(c, args, apps); });
     });
+  }
+  // AS-EDIT4: Reader's stored articles and Podcasts' episode titles are
+  // in the apps' IndexedDB; read them (read-only: a database that is
+  // not there is never created) for edits3.js before a change.
+  var PREP_DB = { feeds: ["oros-feeds", "heads"], podcasts: ["oros-podcasts", "feeds"] };
+  function idbAll(name, store) {
+    return new Promise(function (resolve) {
+      var rq;
+      try { rq = indexedDB.open(name); } catch (e) { resolve([]); return; }
+      rq.onupgradeneeded = function () { try { rq.transaction.abort(); } catch (e) {} };
+      rq.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); resolve([]); };
+      rq.onblocked = function () { resolve([]); };
+      rq.onsuccess = function () {
+        var db = rq.result, out = [];
+        function done() { try { db.close(); } catch (e) {} resolve(out); }
+        try {
+          if (!db.objectStoreNames.contains(store)) { done(); return; }
+          var tx = db.transaction(store, "readonly"), r = tx.objectStore(store).getAll();
+          r.onsuccess = function () { out = r.result || []; };
+          tx.oncomplete = done;
+          tx.onerror = tx.onabort = done;
+        } catch (e) { done(); }
+      };
+    });
+  }
+  function changePrep(r0) {
+    var E3 = window.OrosAssistEdits3, p = r0 && PREP_DB[r0.app];
+    if (!p || !E3) return Promise.resolve();
+    return idbAll(p[0], p[1]).then(function (list) {
+      var m = {};
+      (Array.isArray(list) ? list : []).forEach(function (x) {
+        if (!x || typeof x.id !== "string") return;
+        if (r0.app === "feeds") m[x.id] = { id: x.id, feed: x.feed, title: x.title, link: x.link, date: x.date, author: x.author, snip: x.snip };
+        else if (Array.isArray(x.eps)) m[x.id] = x.eps.map(function (e) { return e && typeof e.id === "string" ? { id: e.id, title: String(e.title || ""), pub: e.pub } : null; }).filter(Boolean);
+      });
+      E3.setCache(r0.app, m);
+    });
+  }
+  // AS-EDIT4: a file the change also writes to the orOS disk (Wiki's
+  // history, as Wiki writes it), after the data was saved. Best effort:
+  // the change itself is already in.
+  function changeDisk(f) {
+    var F = null;
+    try { F = window.parent && window.parent !== window ? window.parent.orosFS : null; } catch (e) { F = null; }
+    if (!f || typeof f.path !== "string" || typeof f.text !== "string" || !F || typeof F.writeText !== "function") return;
+    try { Promise.resolve(F.writeText(f.path, f.text)).catch(function () {}); } catch (e) {}
   }
   function changeItem0(c, args, apps) {
     if (args && Array.isArray(args.changes)) return changeList(c, args, apps);
@@ -4135,6 +4183,7 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
+      changeDisk(res.disk);
       if (res.target) r.target = res.target;     // KB-MOVE: the ref follows the card to its new board
       var uid = newId();
       remember(uid, { app: app.id, key: key, undo: res.undo }, { kind: "change", app: app.id, name: app.name, act: ch.action, title: pl.title, items: [pl.title] });
@@ -4222,6 +4271,7 @@
         if (!res.ok) { fail = res; return; }
         d = res.data;
         undos.push(res.undo);
+        if (res.disk) p.disk = res.disk;
         if (res.target) p.moved = res.target;
         if (res.note && notes.indexOf(res.note) < 0) notes.push(res.note);
       });
@@ -4236,7 +4286,7 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
-      plans.forEach(function (p) { if (p.moved && c.refs[p.x.ch.ref]) c.refs[p.x.ch.ref].target = p.moved; });
+      plans.forEach(function (p) { changeDisk(p.disk); if (p.moved && c.refs[p.x.ch.ref]) c.refs[p.x.ch.ref].target = p.moved; });
       if (notes.length) sameNote += " " + notes.join(" ");
       var uid = newId();
       remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: act, title: base.title, items: plans.map(function (p) { return p.pl.title; }) });
@@ -4309,7 +4359,7 @@
         base.st = "declined";
         return { content: JSON.stringify({ refs: plans.map(function (p) { return p.x.ch.ref; }), applied: false, note: "The user did not apply the changes. Nothing changed." }), ui: base };
       }
-      var off = ok.off || {}, d = readStore(key), undos = [], t2 = Date.now(), fail = null, done = [], left = [], shown = [];
+      var off = ok.off || {}, d = readStore(key), undos = [], t2 = Date.now(), fail = null, done = [], left = [], shown = [], disks = [];
       plans.forEach(function (p, i) {
         if (fail) return;
         var ch = off[i] && off[i].length ? E.without(app.id, p.x.ch, off[i]) : p.x.ch;
@@ -4319,6 +4369,7 @@
         if (!res.ok) { fail = res; return; }
         d = res.data;
         undos.push(res.undo);
+        if (res.disk) disks.push(res.disk);
         done.push(p.x.ch.ref);
         shown.push({ title: p.pl.title, rows: res.rows });
       });
@@ -4337,6 +4388,7 @@
         return { content: "Error: the change could not be saved on the device (storage full?). Nothing changed.", err: 1, ui: base };
       }
       markAppDirty();
+      disks.forEach(changeDisk);
       var uid = newId();
       remember(uid, { app: app.id, key: key, undos: undos }, { kind: "change", app: app.id, name: app.name, act: "update", title: t("chg.many", { n: shown.length }), items: shown.map(function (x) { return x.title; }) });
       base.st = "done";
@@ -4354,6 +4406,8 @@
   function chgValue(f, v) {
     if (v === null) return t("chg.gone");
     if (f === "done") return v ? t("v.done") : t("v.open");
+    if (f === "read") return v ? t("v.read") : t("v.unread");
+    if (f === "played") return v ? t("v.played") : t("v.unplayed");
     if (f === "kind") return t("v." + v);
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (f === "status" && /^inv:/.test(v) && STRINGS.en["inv." + v.slice(4)] !== undefined) return t("inv." + v.slice(4));

@@ -1705,7 +1705,12 @@
       "garage (a vehicle, update: title / note / km = the odometer now) · " +
       "petcare (a health record, update or reschedule: date / next = next dose or recheck / note) · " +
       "fitness (a workout, update: title / note) · " +
-      "library (a book, complete = finished today, reopen, update: title / author / labels = tags). Never guess a ref.",
+      "library (a book, complete = finished today, reopen, update: title / author / labels = tags) · " +
+      "wiki (an article, update: text = the whole new text / text_add = a paragraph at the end; renaming is done in Wiki) · " +
+      "feeds (Reader, an article: complete = read, reopen = not read, update: label / labels = its tags, only tags Reader has) · " +
+      "podcasts (an episode: complete = played, reopen = not played, update: queue) · " +
+      "stock (a product, update: title / note / location / amount = the selling price; a supplier, update: title / note / phone / email, each replaces; " +
+      "quantities change only through movements in Stock). Never guess a ref.",
     params: {
       type: "object",
       properties: {
@@ -1717,28 +1722,29 @@
         date: { type: "string", description: "New date YYYY-MM-DD (task due date, event day, entry date)." },
         start: { type: "string", description: "calendar, crm follow-up: new start time HH:MM (24h)." },
         end: { type: "string", description: "calendar: new end time HH:MM (24h)." },
-        location: { type: "string", description: "calendar: new location." },
-        label: { type: "string", description: "One label's name: calendar sets THE event's label; todo, kanban, contacts, bookmarks ADD it to the item's labels. \"none\" takes the label(s) off. Only labels the user has (search results show them); bookmarks tags are free words." },
-        labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks: the item's whole new list of label names (replaces the old list; [] = none)." },
+        location: { type: "string", description: "calendar: new location; stock: where the product is kept." },
+        label: { type: "string", description: "One label's name: calendar sets THE event's label; todo, kanban, contacts, bookmarks, feeds ADD it to the item's labels. \"none\" takes the label(s) off. Only labels the user has (search results show them); bookmarks tags are free words." },
+        labels: { type: "array", items: { type: "string" }, description: "todo, kanban, contacts, bookmarks, feeds (tags): the item's whole new list of label names (replaces the old list; [] = none)." },
         priority: { type: "integer", description: "todo: 1 urgent, 2 high, 3 medium, 4 none." },
         note: { type: "string", description: "New note (replaces the old one; empty clears it; at most 1000 characters)." },
-        text: { type: "string", description: "notes: the page's whole new text (Markdown; replaces it)." },
-        text_add: { type: "string", description: "notes: a paragraph to add at the end of the page (the text stays)." },
+        text: { type: "string", description: "notes, wiki: the page's or article's whole new text (Markdown or wiki text; replaces it)." },
+        text_add: { type: "string", description: "notes, wiki: a paragraph to add at the end of the page or article (the text stays)." },
+        queue: { type: "string", "enum": ["next", "end", "off"], description: "podcasts: the episode goes first in the queue (next), last (end) or out of it (off)." },
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
         end_date: { type: "string", description: "travel: the trip's last day YYYY-MM-DD." },
         next: { type: "string", description: "petcare: next dose or recheck YYYY-MM-DD." },
         servings: { type: "integer", description: "meals: how many servings the recipe makes." },
         km: { type: "integer", description: "garage: what the odometer shows now (km)." },
-        amount: { type: "number", description: "budget, crm deal, split: new amount in currency units, e.g. 12.5; invoices: the part that was paid (leave out when all of it was)." },
+        amount: { type: "number", description: "budget, crm deal, split: new amount in currency units, e.g. 12.5; stock: the product's selling price; invoices: the part that was paid (leave out when all of it was)." },
         roles: { type: "array", items: { type: "string", "enum": ["customer", "supplier", "shop", "author", "associate"] },
                  description: "crm customer: the whole new list of the partner's roles (replaces; shop = consignment shop, author = author / contributor)." },
         stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },
         probability: { type: "integer", description: "crm deal: chance to win, 0-100." },
         reason: { type: "string", description: "crm deal at stage Lost: why it was lost." },
         org: { type: "string", description: "contacts: new organisation / company." },
-        phone: { type: "string", description: "contacts: a phone number to add (the old ones stay)." },
-        email: { type: "string", description: "contacts: an e-mail address to add (the old ones stay)." },
+        phone: { type: "string", description: "contacts: a phone number to add (the old ones stay); stock supplier: the phone (replaces)." },
+        email: { type: "string", description: "contacts: an e-mail address to add (the old ones stay); stock supplier: the e-mail (replaces)." },
         old_phone: { type: "string", description: "contacts: with phone, the contact's number that the new one replaces (only when the document says the old one changed)." },
         old_email: { type: "string", description: "contacts: with email, the address that the new one replaces." },
         website: { type: "string", description: "contacts: a website to add, e.g. example.com." },

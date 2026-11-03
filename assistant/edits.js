@@ -97,7 +97,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "kind", "roles", "status", "stage", "done", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "kind", "roles", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "servings", "km", "next", "paid", "owed", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -183,12 +183,12 @@
     // Wave A3: a Notes page's text (replace) or a line added to it, and
     // fields of the newer apps (checked against each app's own limits).
     if (has(args, "text") && typeof args.text === "string") {
-      if (para(args.text, 1000000).length > 100000) return bad("text is too long; a Notes page holds 100000 characters.");
+      if (para(args.text, 1000000).length > 100000) return bad("text is too long; the most is 100000 characters.");
       set.text = para(args.text, 100000);
     }
     if (has(args, "text_add") && typeof args.text_add === "string" && args.text_add.trim()) {
       if (has(set, "text")) return bad("give text (replaces) or text_add (adds), not both.");
-      if (para(args.text_add, 1000000).length > 100000) return bad("text_add is too long; a Notes page holds 100000 characters.");
+      if (para(args.text_add, 1000000).length > 100000) return bad("text_add is too long; the most is 100000 characters.");
       set.text_add = para(args.text_add, 100000);
     }
     if (has(args, "author") && typeof args.author === "string") set.author = line(args.author, 1000);
@@ -205,6 +205,11 @@
       var nx = realDate(args.next);
       if (!nx) return bad("next must be a real date as YYYY-MM-DD.");
       set.next = nx;
+    }
+    // AS-EDIT4: a Podcasts episode into the queue (first / last) or out.
+    if (has(args, "queue") && args.queue !== null && args.queue !== undefined && args.queue !== "") {
+      if (["next", "end", "off"].indexOf(args.queue) < 0) return bad("queue must be next, end or off.");
+      set.queue = args.queue;
     }
     ["servings", "km"].forEach(function (k) {
       if (set.err || !has(args, k) || args[k] === null || args[k] === undefined || args[k] === "") return;
@@ -2453,6 +2458,7 @@
     var ao = { ok: true, data: d, undo: r.undo, rows: buildDiff(r.before, r.after, r.del) };
     if (r.target) ao.target = r.target;     // KB-MOVE: where the item is now (the ref follows it)
     if (r.note) ao.note = r.note;
+    if (r.disk) ao.disk = r.disk;        // AS-EDIT4: a file to write to the orOS disk too (Wiki's history)
     return ao;
   }
   // u = apply().undo (kept in memory by the Assistant, never from a
@@ -2508,7 +2514,12 @@
     garage:    { key: "oros-garage-data",    actions: ["update"], src: ["../garage/core.js"], g: "OrosGarageCore" },
     petcare:   { key: "oros-petcare-data",   actions: ["reschedule", "update"], src: ["../petcare/core.js"], g: "OrosPetcareCore" },
     fitness:   { key: "oros-fitness-data",   actions: ["update"], src: [] },
-    library:   { key: "oros-library-data",   actions: ["complete", "reopen", "update"], src: ["../library/core.js"], g: "LibCore" }
+    library:   { key: "oros-library-data",   actions: ["complete", "reopen", "update"], src: ["../library/core.js"], g: "LibCore" },
+    // AS-EDIT4 ("Assistant everywhere" wave 5a): assistant/edits3.js.
+    wiki:      { key: "oros-wiki-data",      actions: ["update"], src: ["../wiki/core.js"], g: "WikiCore", file: "edits3.js" },
+    feeds:     { key: "oros-feeds-data",     actions: ["complete", "reopen", "update"], src: ["../feeds/core.js"], g: "orosFeedsCore", file: "edits3.js" },
+    podcasts:  { key: "oros-podcasts-data",  actions: ["complete", "reopen", "update"], src: ["../podcasts/core.js"], g: "OrosPodcastsCore", file: "edits3.js" },
+    stock:     { key: "oros-stock-data",     actions: ["update"], src: ["../stock/core.js"], g: "OrosStockCore", file: "edits3.js" }
   };
   Object.keys(LAZY).forEach(function (id) {
     APPS[id] = { key: LAZY[id].key, actions: LAZY[id].actions };
@@ -2517,11 +2528,11 @@
   // The scripts to load before changing an item of appId ([] = ready).
   function needs(appId) {
     if (!has(LAZY, appId)) return [];
-    var out = CHANGE[appId] ? [] : ["edits2.js"];
+    var out = CHANGE[appId] ? [] : [LAZY[appId].file || "edits2.js"];
     if (LAZY[appId].g && !(root && root.document && root[LAZY[appId].g])) out = out.concat(LAZY[appId].src);
     return root && root.document ? out : [];
   }
-  // edits2.js: { appId: { settable, change, undo, rowKeys? } }
+  // edits2.js / edits3.js: { appId: { settable, change, undo, rowKeys? } }
   function extend(mods) {
     Object.keys(mods).forEach(function (id) {
       if (!has(LAZY, id)) return;
