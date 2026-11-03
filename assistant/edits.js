@@ -216,6 +216,8 @@
     ["playlist", "from_playlist"].forEach(function (k) {
       if (has(args, k) && typeof args[k] === "string" && args[k].trim()) set[k] = line(args[k], 200);
     });
+    // AS-FILES (wave 6): a folder to make inside a folder of the orOS disk.
+    if (has(args, "new_folder") && typeof args.new_folder === "string" && args.new_folder.trim()) set.new_folder = line(args.new_folder, 300);
     // AS-EDIT4: a Podcasts episode into the queue (first / last) or out.
     if (has(args, "queue") && args.queue !== null && args.queue !== undefined && args.queue !== "") {
       if (["next", "end", "off"].indexOf(args.queue) < 0) return bad("queue must be next, end or off.");

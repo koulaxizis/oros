@@ -4085,6 +4085,91 @@
     var api = syncApi();
     try { if (api && typeof api.markDirty === "function") api.markDirty(); } catch (e) {}
   }
+  // AS-FILES (wave 6): files and folders of the orOS disk, through
+  // assistant/fileops.js (plan, then each step re-checked right before
+  // it runs; delete = Files' Trash). One card, one Undo.
+  function filesFS() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : null;
+      return f && ["stat", "ls", "mv", "mkdir", "rm", "writeText"].every(function (k) { return typeof f[k] === "function"; }) ? f : null;
+    } catch (e) { return null; }
+  }
+  function filesMods() {
+    return Promise.all([loadOnce("fileops.js"), loadOnce("../files/files-core.js")]).then(function () { return window.OrosAssistFiles; });
+  }
+  // Files' Favourites follow a moved item and drop a deleted one, as Files does.
+  function filesFavs(done) {
+    var FC = window.OrosFilesCore;
+    if (!FC) return;
+    var key = "oros-files-favs", st = readStore(key), next = st, now = Date.now();
+    done.forEach(function (u) {
+      if (u.k === "mv") next = FC.favMove(next, u.to, u.from, now);
+      else if (u.k === "untrash") next = FC.favDrop(next, u.to, now);
+    });
+    if (JSON.stringify(next) !== JSON.stringify(st) && writeStore(key, next)) markAppDirty();
+  }
+  function changeFiles(c, a, apps) {
+    var app = null;
+    apps.forEach(function (x) { if (x.id === "files") app = x; });
+    if (!app) return Promise.resolve({ content: "Error: the user does not allow Files to be read any more.", err: 1 });
+    if (Array.isArray(a.changes)) return Promise.resolve({ content: "Error: for files and folders give ref or refs with one action, not changes.", err: 1 });
+    var refs = Array.isArray(a.refs) ? a.refs : [a.ref], one = {}, paths = [];
+    Object.keys(a).forEach(function (k) { if (k !== "refs") one[k] = a[k]; });
+    one.ref = String(refs[0] == null ? "" : refs[0]).replace(/^oros:/, "").trim();
+    var ch = E.normArgs(one);
+    if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
+    for (var i = 0; i < refs.length; i++) {
+      var r = c.refs ? c.refs[String(refs[i] == null ? "" : refs[i]).replace(/^oros:/, "").trim()] : null;
+      if (!r) return Promise.resolve({ content: "Error: unknown ref " + refs[i] + ". Find the files with search_data first.", err: 1 });
+      if (r.app !== "files" || !r.target || typeof r.target.path !== "string") return Promise.resolve({ content: "Error: refs must all be files or folders from Files.", err: 1 });
+      if (paths.indexOf(r.target.path) < 0) paths.push(r.target.path);
+    }
+    var fs = filesFS();
+    if (!fs) return Promise.resolve({ content: "Error: the orOS disk is not reachable right now.", err: 1 });
+    return filesMods().then(function (FO) {
+      if (!FO) return { content: "Error: file changes could not be loaded right now.", err: 1 };
+      return FO.load(fs, paths, ch).then(function (l) {
+        var p = FO.plan(l.items, ch, l.taken, Date.now());
+        if (!p.ok) return { content: "Error: " + p.err, err: 1, ui: { k: "chgErr", app: app.name } };
+        var act = p.act === "mkdir" ? "update" : p.act;
+        var pl = p.cards.length > 1 ? { many: p.cards, del: p.del } : { title: p.cards[0].title, rows: p.cards[0].rows, del: p.del };
+        var base = p.cards.length > 1 ? { k: "change", app: app.name, act: act, title: t("chg.many", { n: p.cards.length }), many: p.cards }
+                                      : { k: "change", app: app.name, act: act, title: p.cards[0].title, rows: p.cards[0].rows };
+        return askChange(app.name, pl, act).then(function (ok) {
+          if (!ok) {
+            base.st = "declined";
+            return { content: JSON.stringify({ applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
+          }
+          return FO.run(fs, p.steps).then(function (res) {
+            if (!res.done.length) {
+              base.st = "failed";
+              base.msg = res.fail;
+              return { content: "Error: " + res.fail + " Nothing was changed.", err: 1, ui: base };
+            }
+            filesFavs(res.done);
+            var uid = newId();
+            remember(uid, { app: "files", files: res.done }, { kind: "change", app: "files", name: app.name, act: act, title: base.title, items: p.cards.map(function (x) { return x.title; }) });
+            base.st = "done";
+            base.u = uid;
+            var note = res.fail ? " Only " + res.done.length + " of " + p.steps.length + " were done: " + res.fail + " The rest was left as it is." : "";
+            return { content: JSON.stringify({ applied: true, action: p.act === "mkdir" ? "new_folder" : act, items: res.done.length,
+              note: (p.del ? "Moved to Files' Trash (restorable there for 30 days)." : "Done.") + note + " They can undo it." }), ui: base };
+          });
+        });
+      });
+    });
+  }
+  function filesUndo(done) {
+    var fs = filesFS();
+    if (!fs) return Promise.resolve(undoFail(t("hist.noMod")));
+    return filesMods().then(function (FO) {
+      if (!FO) return undoFail(t("hist.noMod"));
+      return FO.undo(fs, done).then(function (r) {
+        if (r.ok) filesFavs(done.map(function (u) { return u.k === "mv" ? { k: "mv", from: u.to, to: u.from } : { k: "x" }; }));
+        return r;
+      });
+    });
+  }
   // Wave A3: the changes of some apps (and their cores) load the first
   // time one of their items is changed (assistant/edits2.js).
   function changeItem(c, args, apps) {
@@ -4092,6 +4177,7 @@
     var a = args && typeof args === "object" ? args : {};
     var first = Array.isArray(a.changes) && a.changes[0] ? a.changes[0].ref : Array.isArray(a.refs) ? a.refs[0] : a.ref;
     var r0 = c.refs ? c.refs[String(first == null ? "" : first).replace(/^oros:/, "").trim()] : null;
+    if (r0 && r0.app === "files") return changeFiles(c, a, apps);
     var need = r0 && typeof E.needs === "function" ? E.needs(r0.app) : [];
     if (!need.length) return changePrep(r0).then(function () { return changeItem0(c, args, apps); });
     return need.reduce(function (p, src) { return p.then(function () { return loadOnce(src); }); }, Promise.resolve()).then(function () {
@@ -5134,6 +5220,7 @@
   function runUndo(mem) {
     var now = Date.now();
     if (mem.edit) return editUndo(mem.edit);
+    if (mem.files) return filesUndo(mem.files);
     if (mem.undo || mem.undos) {
       if (!E) return Promise.resolve(undoFail(t("hist.noMod")));
       var need = typeof E.needs === "function" ? E.needs(mem.app) : [];
