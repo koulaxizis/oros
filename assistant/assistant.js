@@ -5379,6 +5379,26 @@
     // its cards' due dates are in the list, so no agenda on top. The
     // Briefing (brief) keeps the agenda: only what is due.
     if (a.app === "kanban" && !a.brief) return Promise.resolve(S.kanbanBoards(readStore("oros-kanban-data"), { board: a.board, today: today }));
+    // AS-STRUCT: how the app is organised and its items, with refs.
+    // One list of To-Do by name; Notes, Bookmarks, Contacts, Media
+    // Shelf and Library always (the Briefing keeps only the agenda).
+    if (a.app === "todo" && a.list && !a.brief) return Promise.resolve(S.todoList(readStore("oros-todo-data"), { list: a.list, today: today }));
+    var STRUCT = { notes: ["oros-notes-data", "notesBooks"], bookmarks: ["oros-bookmarks-data", "bookmarksFolders"],
+                   contacts: ["oros-contacts-data", "contactsLabels"], shelf: ["oros-shelf-data", "shelfItems"],
+                   library: ["oros-library-data", "libraryBooks"] }[a.app];
+    if (STRUCT && !a.brief) {
+      var st = S[STRUCT[1]](readStore(STRUCT[0]), a);
+      var narrowed = a.notebook || a.folder || a.tag || a.label || a.kind || a.status;
+      if (st.ok === false || !ag || narrowed) return Promise.resolve(st);
+      return agendaRows(a.app, a.days).then(function (rows) {
+        var g = S.agenda(a.app, rows, today, a.days);
+        if (g.items && g.items.length) {
+          st.from = g.from; st.to = g.to;
+          st.coming = g.items.map(function (it) { var x = {}; Object.keys(it).forEach(function (k) { if (k !== "target") x[k] = it[k]; }); return x; });
+        }
+        return st;
+      }, function () { return st; });
+    }
     var own = a.app === "todo" ? S.todoLists(readStore("oros-todo-data"), today) :
       a.app === "stock" ? S.stockMonth(readStore("oros-stock-data"), a.month, LANG) : null;
     // Calendar: its labels always; with a label or a month, those

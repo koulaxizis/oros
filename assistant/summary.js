@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Assistant — per-app summaries (v1.1.0)
+// orOS Assistant — per-app summaries (v1.2.0)
 // The app_summary tool: totals worked out ON THE DEVICE from what an
 // app keeps in localStorage, so the model gets a few numbers instead
 // of every entry. Pure: no DOM, no storage, never writes. The
@@ -15,6 +15,11 @@
 //                                 rounding (OrosTimesheetCore.report)
 //   todoLists(raw, today)        To-Do: open / done / late / due today,
 //                                 in total and per list
+//   todoList(raw, opts)          To-Do, one list by name: its tasks
+//   notesBooks / bookmarksFolders / contactsLabels / shelfItems /
+//   libraryBooks(raw, opts)      AS-STRUCT: how the app is organised
+//                                 (notebooks, folders, labels, kinds,
+//                                 tags) and its items with targets
 //   kanbanBoards(raw, opts)      Kanban: every board (KB-ALL), its
 //                                 columns with how many cards each
 //                                 has, late / due today, and the cards
@@ -45,7 +50,8 @@
   var MAX_CATS = 40, MAX_PROJECTS = 40, MAX_LISTS = 40, MAX_ITEMS = 60,
       MAX_EVENTS = 200;   // calendarEvents (by label / month): as many as refs take
   // Apps with a summary of their own; any other app needs a Today provider.
-  var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards" };
+  var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards",
+              notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books" };   // AS-STRUCT
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -90,6 +96,16 @@
     if (app === "kanban" && typeof args.board === "string" && args.board.trim()) {
       out.board = args.board.replace(/\s+/g, " ").trim().slice(0, 120);
     }
+    // AS-STRUCT: the group of an app to list (a name, as the user said it).
+    function word(k, max) {
+      return typeof args[k] === "string" && args[k].trim() ? args[k].replace(/\s+/g, " ").trim().slice(0, max || 120) : "";
+    }
+    var grp = { todo: ["list"], notes: ["notebook"], bookmarks: ["folder", "tag"], contacts: ["label"],
+                shelf: ["kind", "status", "tag"], library: ["status", "tag"] }[app] || [];
+    grp.forEach(function (k) {
+      var v = word(k, k === "folder" ? 240 : 120);
+      if (v) out[k] = k === "kind" || k === "status" ? v.toLowerCase() : v;
+    });
     if (app === "calendar") {
       out.monthSet = monthSet;
       if (typeof args.label === "string" && args.label.trim()) out.label = args.label.replace(/\s+/g, " ").trim().slice(0, 40);
@@ -396,6 +412,332 @@
     return out;
   }
 
+  // ---------- Structure of six more apps (AS-STRUCT) ----------
+  // Chris (2026-11-03): the Assistant guessed names because it never
+  // saw how an app is organised. Each summary below lists the app's
+  // own groups (lists, notebooks, folders, labels, kinds, tags) with
+  // their counts, then the items (all, or of one group by name) with
+  // the same target as the app's search provider, so a row becomes a
+  // ref for change_item. Same rules as each app's search.js: what it
+  // skips (deleted, tombstoned) stays out here too. Titles and groups
+  // only: no note text, phone, e-mail or highlight leaves this way
+  // (read_item / search_data do that, item by item).
+  // An unknown or ambiguous group name is an error that names them all.
+  function pickGroup(names, q, what, app) {
+    var f = foldName(q), hits = [];
+    names.forEach(function (n, i) { if (foldName(n) === f) hits.push(i); });
+    if (hits.length === 1) return { i: hits[0] };
+    if (hits.length > 1) return { err: app + " has more than one " + what + " called " + q + "; ask the user which one." };
+    return { err: app + " has no " + what + " named \"" + q + "\". Its " + what + "s: " +
+      (names.length ? names.slice(0, 80).join(", ") : "none") + "." };
+  }
+  function capItems(out, items) {
+    out.items = items.slice(0, MAX_EVENTS);
+    out.listed = items.length;
+    if (items.length > MAX_EVENTS) out.more_items = items.length - MAX_EVENTS;
+    return out;
+  }
+  function capList(out, key, max) {
+    if (out[key].length > max) { out["more_" + key] = out[key].length - max; out[key] = out[key].slice(0, max); }
+  }
+  function ymdOf(ms) {
+    if (typeof ms !== "number" || !(ms > 0)) return "";
+    var d = new Date(ms);
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function firstLine(s) {
+    return String(s || "").split("\n").map(function (l) { return l.trim(); }).filter(Boolean)[0] || "";
+  }
+  function liveLabels(list, dead, deadKey) {
+    var out = {};
+    arr(list).forEach(function (l) {
+      if (!isObj(l) || typeof l.id !== "string" || !str(l.name, 40)) return;
+      var ts = dead ? dead[(deadKey || "") + l.id] : undefined;
+      if (typeof ts === "number" && ts >= (l.mtime || 0)) return;
+      out[l.id] = str(l.name, 40);
+    });
+    return out;
+  }
+  function labelRows(names, count) {
+    return Object.keys(names).map(function (id) { return { name: names[id], n: count[id] || 0 }; });
+  }
+
+  // To-Do, one list (opts.list): its tasks, open first, with a target
+  // { list, item } like todo/search.js. Without a list: todoLists.
+  function todoList(d, opts) {
+    var today = opts.today || "";
+    var lists = isObj(d) ? arr(d.lists).filter(function (l) { return isObj(l) && typeof l.id === "string" && Array.isArray(l.items); }) : [];
+    var g = pickGroup(lists.map(function (l) { return str(l.name, 80) || "—"; }), opts.list, "list", "To-Do");
+    if (g.err) return { ok: false, err: g.err };
+    var l = lists[g.i], dead = isObj(d.deleted) ? d.deleted : {};
+    var lbl = liveLabels(d.labels, dead);
+    var out = { app: "todo", today: today, list: str(l.name, 80) || "—", open: 0, done: 0, overdue: 0, due_today: 0 };
+    var items = [];
+    l.items.forEach(function (it) {
+      if (!isObj(it) || typeof it.id !== "string") return;
+      var row = { title: str(it.text, 160) || "—" };
+      var due = typeof it.due === "string" && YMD.test(it.due) ? it.due : "";
+      if (due) row.date = due;
+      if (it.done) { row.done = true; out.done++; }
+      else {
+        out.open++;
+        if (due && due < today) { row.late = true; out.overdue++; }
+        else if (due && due === today) out.due_today++;
+      }
+      if (it.prio === 1 || it.prio === 2 || it.prio === 3) row.priority = it.prio;
+      var ln = arr(it.labels).map(function (id) { return lbl[id] || ""; }).filter(Boolean);
+      if (ln.length) row.labels = ln.slice(0, 10);
+      var subs = arr(it.subs).filter(isObj);
+      if (subs.length) row.subtasks = subs.filter(function (x) { return x.done; }).length + "/" + subs.length;
+      row.target = { list: l.id, item: it.id };
+      items.push(row);
+    });
+    items.sort(function (a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0); });
+    return capItems(out, items);
+  }
+
+  // Notes: notebooks (with how many pages), labels, and the pages with
+  // notebook › parent page and the day last changed. opts.notebook:
+  // only that notebook's pages. Target { page, nb } (notes/search.js).
+  function notesBooks(d, opts) {
+    d = isObj(d) ? d : {};
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    var nbs = arr(d.notebooks).filter(function (n) {
+      return isObj(n) && typeof n.id === "string" && !(typeof tombs["nb:" + n.id] === "number" && tombs["nb:" + n.id] >= (n.mtime || 0));
+    }).sort(function (a, b) { return (Number(a.pos) || 0) - (Number(b.pos) || 0); });
+    var pages = arr(d.pages).filter(function (p) { return isObj(p) && typeof p.id === "string"; });
+    var byId = {};
+    pages.forEach(function (p) { byId[p.id] = p; });
+    var lbl = liveLabels(d.labels, tombs, "lbl:"), lcount = {};
+    var out = { app: "notes", pages: pages.length, notebooks: [] }, nbIdx = {};
+    nbs.forEach(function (n, i) { nbIdx[n.id] = i; out.notebooks.push({ name: str(n.name, 80) || "—", pages: 0 }); });
+    var want = null;
+    if (opts.notebook) {
+      var g = pickGroup(out.notebooks.map(function (n) { return n.name; }), opts.notebook, "notebook", "Notes");
+      if (g.err) return { ok: false, err: g.err };
+      want = nbs[g.i].id;
+      out.notebook = out.notebooks[g.i].name;
+    }
+    function titleOf(p) { return str(p.title, 160) || str(firstLine(p.text), 60) || "—"; }
+    function path(p) {
+      var up = [], seen = {}, cur = p.parent;
+      while (typeof cur === "string" && byId[cur] && !seen[cur] && up.length < 4) { seen[cur] = 1; up.unshift(titleOf(byId[cur])); cur = byId[cur].parent; }
+      return up;
+    }
+    var items = [];
+    pages.forEach(function (p) {
+      var ni = nbIdx[p.nb];
+      if (ni !== undefined) out.notebooks[ni].pages++;
+      arr(p.labels).forEach(function (id) { if (lbl[id]) lcount[id] = (lcount[id] || 0) + 1; });
+      if (want && p.nb !== want) return;
+      var row = { title: titleOf(p) };
+      row.where = [ni !== undefined ? out.notebooks[ni].name : ""].concat(path(p)).filter(Boolean).join(" › ");
+      if (!row.where) delete row.where;
+      var day = ymdOf(p.mtime);
+      if (day) row.changed = day;
+      if (p.pinned) row.pinned = true;
+      var ln = arr(p.labels).map(function (id) { return lbl[id] || ""; }).filter(Boolean);
+      if (ln.length) row.labels = ln.slice(0, 10);
+      row.target = { page: p.id, nb: typeof p.nb === "string" ? p.nb : null };
+      items.push(row);
+    });
+    out.labels = labelRows(lbl, lcount);
+    capList(out, "notebooks", MAX_LISTS);
+    capList(out, "labels", MAX_LISTS);
+    return capItems(out, items);
+  }
+
+  // Bookmarks: the folder tree ("Parent › Child", bookmarks in each),
+  // the tags with counts, and the bookmarks with folder, address and
+  // tags. opts.folder (a name or a whole "A › B" path): that folder and
+  // its subfolders. opts.tag: only bookmarks with that tag. Target
+  // { id } (bookmarks/search.js).
+  function bookmarksFolders(d, opts) {
+    d = isObj(d) ? d : {};
+    var items = isObj(d.items) ? d.items : {}, folders = isObj(d.folders) ? d.folders : {};
+    var del = isObj(d.deleted) ? d.deleted : {};
+    var ROOT_F = "unsorted";
+    function fpath(id) {
+      var out = [], seen = {}, cur = id;
+      while (cur && Object.prototype.hasOwnProperty.call(folders, cur) && isObj(folders[cur]) && !seen[cur] && out.length < 12) {
+        seen[cur] = 1;
+        out.unshift(str(folders[cur].name, 60) || "—");
+        var p = folders[cur].parent;
+        cur = typeof p === "string" && p !== cur && p !== ROOT_F ? p : "";
+      }
+      return out;
+    }
+    var fids = Object.keys(folders).filter(function (id) { return isObj(folders[id]) && !del[id]; });
+    var rows = fids.map(function (id) { return { id: id, path: fpath(id).join(" › "), n: 0 }; });
+    rows.sort(function (a, b) { return a.path < b.path ? -1 : a.path > b.path ? 1 : 0; });
+    var rowOf = {};
+    rows.forEach(function (r) { rowOf[r.id] = r; });
+    var want = null;
+    if (opts.folder) {
+      var f = foldName(opts.folder), hits = rows.filter(function (r) {
+        return foldName(r.path) === f || foldName(fpath(r.id).slice(-1)[0] || "") === f;
+      });
+      if (!hits.length) return { ok: false, err: "Bookmarks has no folder named \"" + opts.folder + "\". Its folders: " + (rows.length ? rows.slice(0, 80).map(function (r) { return r.path; }).join(", ") : "none") + "." };
+      if (hits.length > 1) return { ok: false, err: "Bookmarks has more than one folder called " + opts.folder + ": " + hits.map(function (r) { return r.path; }).join(", ") + ". Give the whole path." };
+      want = hits[0];
+    }
+    var tagN = {}, list = [], total = 0, unsorted = 0;
+    Object.keys(items).forEach(function (id) {
+      var it = items[id];
+      if (!isObj(it) || del[id]) return;
+      total++;
+      var tags = arr(it.tags).map(function (x) { return str(x, 40); }).filter(Boolean);
+      tags.forEach(function (x) { tagN[x] = (tagN[x] || 0) + 1; });
+      var fr = rowOf[it.folderId];
+      if (fr && it.folderId !== ROOT_F) fr.n++; else { unsorted++; if (fr) fr.n++; }
+      if (want && !(fr && (fr === want || fr.path.indexOf(want.path + " › ") === 0))) return;
+      if (opts.tag && tags.map(foldName).indexOf(foldName(opts.tag)) < 0) return;
+      var url = str(it.url, 200);
+      var row = { title: str(it.title, 160) || url || "—" };
+      if (url) row.url = url;
+      if (fr && it.folderId !== ROOT_F) row.where = fr.path;
+      if (tags.length) row.labels = tags.slice(0, 10);
+      if (it.fav === true) row.favorite = true;
+      row.target = { id: id };
+      list.push(row);
+    });
+    var out = { app: "bookmarks", bookmarks: total, unsorted: unsorted,
+      folders: rows.filter(function (r) { return r.id !== ROOT_F; }).map(function (r) { return { name: r.path, bookmarks: r.n }; }),
+      tags: Object.keys(tagN).sort(function (a, b) { return tagN[b] - tagN[a] || (a < b ? -1 : 1); }).map(function (k) { return { name: k, n: tagN[k] }; }) };
+    if (want) out.folder = want.path;
+    if (opts.tag) out.tag = opts.tag;
+    capList(out, "folders", MAX_BOARDS);
+    capList(out, "tags", MAX_LISTS);
+    return capItems(out, list);
+  }
+
+  // Contacts: the labels (groups) with how many contacts each has,
+  // favourites, and the contacts by name with company and labels (no
+  // phone, e-mail or address). opts.label ("none" = without a label).
+  // Target: the contact's id (contacts/search.js).
+  function contactsLabels(d, opts) {
+    d = isObj(d) ? d : {};
+    var lbl = liveLabels(d.labels), lcount = {};
+    var people = arr(d.contacts).filter(function (c) { return isObj(c) && typeof c.id === "string"; });
+    var want = null, none = false;
+    if (opts.label) {
+      if (foldName(opts.label) === "none") none = true;
+      else {
+        var ids = Object.keys(lbl);
+        var g = pickGroup(ids.map(function (id) { return lbl[id]; }), opts.label, "label", "Contacts");
+        if (g.err) return { ok: false, err: g.err };
+        want = ids[g.i];
+      }
+    }
+    var out = { app: "contacts", contacts: people.length, favorites: 0, no_label: 0 }, items = [];
+    people.forEach(function (c) {
+      var lids = arr(c.labelIds).filter(function (id) { return lbl[id]; });
+      lids.forEach(function (id) { lcount[id] = (lcount[id] || 0) + 1; });
+      if (!lids.length) out.no_label++;
+      if (c.starred) out.favorites++;
+      if (none && lids.length) return;
+      if (want && lids.indexOf(want) < 0) return;
+      var name = [str(c.given, 60), str(c.middle, 60), str(c.family, 60)].filter(Boolean).join(" ") || str(c.nickname, 60) || str(c.org, 80) || "—";
+      var row = { title: name };
+      var org = str(c.org, 80);
+      if (org && org !== name) row.org = org;
+      if (lids.length) row.labels = lids.map(function (id) { return lbl[id]; }).slice(0, 10);
+      if (c.starred) row.favorite = true;
+      row.target = c.id;
+      items.push(row);
+    });
+    out.labels = labelRows(lbl, lcount);
+    if (want) out.label = lbl[want];
+    if (none) out.label = "none";
+    capList(out, "labels", MAX_LISTS);
+    return capItems(out, items);
+  }
+
+  // Media Shelf: per kind (book, film, series, album = music, podcast,
+  // game) how many are wanted, in progress, done and dropped; the tags;
+  // the items with kind, status, creator, year, rating. opts.kind,
+  // opts.status, opts.tag narrow the items. Target { item }.
+  var SHELF_KINDS = ["book", "film", "series", "album", "podcast", "game"];
+  var SHELF_ST = ["want", "now", "done", "drop"];
+  function shelfItems(d, opts) {
+    d = isObj(d) ? d : {};
+    var tombs = isObj(d.tombs) ? d.tombs : {};
+    var kind = opts.kind === "music" ? "album" : opts.kind;
+    if (kind && SHELF_KINDS.indexOf(kind) < 0) return { ok: false, err: "kind must be one of " + SHELF_KINDS.join(", ") + " (music = album)." };
+    if (opts.status && SHELF_ST.indexOf(opts.status) < 0) return { ok: false, err: "status for Media Shelf must be one of " + SHELF_ST.join(", ") + " (now = in progress)." };
+    var kinds = {}, tagN = {}, items = [], total = 0;
+    arr(d.items).forEach(function (it) {
+      if (!isObj(it) || typeof it.id !== "string") return;
+      if (typeof tombs[it.id] === "number" && tombs[it.id] >= (Number(it.m) || 0)) return;
+      total++;
+      var k = SHELF_KINDS.indexOf(it.type) >= 0 ? it.type : "book";
+      var st = SHELF_ST.indexOf(it.st) >= 0 ? it.st : "want";
+      var kr = kinds[k] || (kinds[k] = { kind: k, total: 0, want: 0, now: 0, done: 0, drop: 0 });
+      kr.total++; kr[st]++;
+      var tags = arr(it.tags).map(function (x) { return str(x, 40); }).filter(Boolean);
+      tags.forEach(function (x) { tagN[x] = (tagN[x] || 0) + 1; });
+      if (kind && k !== kind) return;
+      if (opts.status && st !== opts.status) return;
+      if (opts.tag && tags.map(foldName).indexOf(foldName(opts.tag)) < 0) return;
+      var row = { title: str(it.title, 160) || "—", kind: k, status: st };
+      var by = str(it.by, 80); if (by) row.by = by;
+      if (typeof it.year === "number" && it.year > 0) row.year = it.year;
+      if (typeof it.rate === "number" && it.rate > 0) row.rating = it.rate / 2;
+      if (it.fav === 1) row.favorite = true;
+      if (tags.length) row.labels = tags.slice(0, 10);
+      row.target = { item: it.id };
+      items.push(row);
+    });
+    var out = { app: "shelf", items_total: total,
+      kinds: SHELF_KINDS.filter(function (k) { return kinds[k]; }).map(function (k) { return kinds[k]; }),
+      tags: Object.keys(tagN).sort(function (a, b) { return tagN[b] - tagN[a] || (a < b ? -1 : 1); }).map(function (k) { return { name: k, n: tagN[k] }; }) };
+    if (kind) out.kind = kind;
+    if (opts.status) out.status = opts.status;
+    if (opts.tag) out.tag = opts.tag;
+    capList(out, "tags", MAX_LISTS);
+    return capItems(out, items);
+  }
+
+  // Library: how many books are reading (opened, not finished),
+  // finished and unread; the tags; the books with author, format,
+  // progress or the day finished. opts.status (reading, finished,
+  // unread), opts.tag. Highlights stay out (search_data finds them).
+  // Target { book } (library/search.js).
+  var LIB_ST = ["reading", "finished", "unread"];
+  function libraryBooks(d, opts) {
+    d = isObj(d) ? d : {};
+    if (opts.status && LIB_ST.indexOf(opts.status) < 0) return { ok: false, err: "status for Library must be one of " + LIB_ST.join(", ") + "." };
+    var tombs = isObj(d.tombs) ? d.tombs : {}, pos = isObj(d.pos) ? d.pos : {};
+    var out = { app: "library", books: 0, reading: 0, finished: 0, unread: 0 }, tagN = {}, items = [];
+    arr(d.books).forEach(function (b) {
+      if (!isObj(b) || typeof b.id !== "string") return;
+      if (typeof tombs[b.id] === "number" && tombs[b.id] >= (Number(b.m) || 0)) return;
+      out.books++;
+      var p = isObj(pos[b.id]) ? pos[b.id] : null;
+      var fin = typeof b.fin === "string" && YMD.test(b.fin) ? b.fin : "";
+      var st = fin ? "finished" : p ? "reading" : "unread";
+      out[st]++;
+      var tags = arr(b.tags).map(function (x) { return str(x, 40); }).filter(Boolean);
+      tags.forEach(function (x) { tagN[x] = (tagN[x] || 0) + 1; });
+      if (opts.status && st !== opts.status) return;
+      if (opts.tag && tags.map(foldName).indexOf(foldName(opts.tag)) < 0) return;
+      var row = { title: str(b.title, 160) || "—", status: st };
+      var by = str(b.by, 80); if (by) row.by = by;
+      row.format = String(b.kind || b.fmt || "epub").toUpperCase();
+      if (typeof b.year === "number") row.year = b.year;
+      if (st === "reading" && typeof p.pct === "number") row.progress = Math.round(p.pct / 10) + "%";
+      if (fin) row.finished = fin;
+      if (tags.length) row.labels = tags.slice(0, 10);
+      row.target = { book: b.id };
+      items.push(row);
+    });
+    out.tags = Object.keys(tagN).sort(function (a, b) { return tagN[b] - tagN[a] || (a < b ? -1 : 1); }).map(function (k) { return { name: k, n: tagN[k] }; });
+    if (opts.status) out.status = opts.status;
+    if (opts.tag) out.tag = opts.tag;
+    capList(out, "tags", MAX_LISTS);
+    return capItems(out, items);
+  }
+
   // ---------- Calendar ----------
   // Same data as calendar/search.js (oros-calendar-data): the user's
   // own labels (calendar.js state.labels; untouched seeds, mtime 0,
@@ -508,14 +850,22 @@
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
           orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up",
-          kbCard: "card", kbCards: "cards", kbArch: "Archived" },
+          kbCard: "card", kbCards: "cards", kbArch: "Archived",
+          stLists: "Lists", stNbs: "Notebooks", stPages: "pages", stFolders: "Folders", stUnsorted: "Unsorted", stTags: "Tags",
+          stBm: "bookmarks", stCt: "contacts", stFav: "favourites", stItems: "items", stBooks: "books",
+          stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
+          kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
           orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Σύμβαση", next: "Επόμενο follow-up",
-          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο" }
+          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο",
+          stLists: "Λίστες", stNbs: "Τετράδια", stPages: "σελίδες", stFolders: "Φάκελοι", stUnsorted: "Χωρίς φάκελο", stTags: "Ετικέτες",
+          stBm: "σελιδοδείκτες", stCt: "επαφές", stFav: "αγαπημένες", stItems: "στοιχεία", stBooks: "βιβλία",
+          stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
+          kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -547,7 +897,7 @@
       more(s.more_projects);
       if (s.running) out.push(w.run + ": " + s.running.join(", "));
       if (!s.entries) out.push(w.none);
-    } else if (s.app === "todo") {
+    } else if (s.app === "todo" && Array.isArray(s.lists)) {
       out.push(s.open + " " + w.open + " · " + s.overdue + " " + w.late + " · " + s.due_today + " " + w.today + " · " + s.done + " " + w.done);
       s.lists.forEach(function (l) {
         out.push((l.name || "—") + ": " + l.open + " " + w.open + (l.overdue ? ", " + l.overdue + " " + w.late : "") +
@@ -585,26 +935,59 @@
       });
       if (s.more_boards) more(s.more_boards);
       if (s.archived_boards) out.push(w.kbArch + ": " + s.archived_boards.join(", "));
+    } else if (s.app === "todo" && s.list) {
+      out.push(s.list + ": " + s.open + " " + w.open + (s.overdue ? ", " + s.overdue + " " + w.late : "") + (s.due_today ? ", " + s.due_today + " " + w.today : "") + " · " + s.done + " " + w.done);
+    } else if (s.app === "notes" && Array.isArray(s.notebooks)) {
+      out.push(s.pages + " " + w.stPages);
+      out.push(w.stNbs + ": " + s.notebooks.map(function (n) { return n.name + " (" + n.pages + ")"; }).join(", "));
+      more(s.more_notebooks);
+      if (s.labels.length) out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.n + ")"; }).join(", "));
+    } else if (s.app === "bookmarks" && Array.isArray(s.folders)) {
+      out.push(s.bookmarks + " " + w.stBm + " · " + w.stUnsorted + " " + s.unsorted);
+      if (s.folders.length) out.push(w.stFolders + ": " + s.folders.map(function (f) { return f.name + " (" + f.bookmarks + ")"; }).join(", "));
+      more(s.more_folders);
+      if (s.tags.length) out.push(w.stTags + ": " + s.tags.map(function (x) { return x.name + " (" + x.n + ")"; }).join(", "));
+    } else if (s.app === "contacts" && Array.isArray(s.labels)) {
+      out.push(s.contacts + " " + w.stCt + " · " + s.favorites + " " + w.stFav);
+      out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.n + ")"; }).concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
+    } else if (s.app === "shelf" && Array.isArray(s.kinds)) {
+      out.push(s.items_total + " " + w.stItems);
+      var KW = { book: w.kBook, film: w.kFilm, series: w.kSeries, album: w.kAlbum, podcast: w.kPodcast, game: w.kGame };
+      s.kinds.forEach(function (k) {
+        out.push((KW[k.kind] || k.kind) + ": " + k.total + " (" + [[k.want, w.stWant], [k.now, w.stNow], [k.done, w.stFinished], [k.drop, w.stDrop]]
+          .filter(function (x) { return x[0]; }).map(function (x) { return x[0] + " " + x[1]; }).join(", ") + ")");
+      });
+      if (s.tags.length) out.push(w.stTags + ": " + s.tags.map(function (x) { return x.name + " (" + x.n + ")"; }).join(", "));
+    } else if (s.app === "library" && typeof s.books === "number") {
+      out.push(s.books + " " + w.stBooks + " · " + s.reading + " " + w.stReading + " · " + s.finished + " " + w.stFinished + " · " + s.unread + " " + w.stUnread);
+      if (s.tags.length) out.push(w.stTags + ": " + s.tags.map(function (x) { return x.name + " (" + x.n + ")"; }).join(", "));
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
       if (s.filter_label || s.month) out.push([s.month || "", s.filter_label ? w.lbl + ": " + (s.filter_label === "none" ? w.nolbl : s.filter_label) : ""].filter(Boolean).join(" · "));
     }
     if (Array.isArray(s.items)) {
-      if (s.from) out.push(s.from + " → " + s.to);
+      if (s.from && !s.coming) out.push(s.from + " → " + s.to);
       s.items.forEach(function (it) {
-        out.push([it.date || "", it.time || "", it.title, it.label ? w.lbl + ": " + it.label : "", it.where || "", it.location || "", it.text || it.note || ""].filter(Boolean).join(" · ") + (it.late ? " (" + w.late + ")" : ""));
+        out.push([it.date || "", it.time || "", it.title, it.label ? w.lbl + ": " + it.label : "", it.where || "", it.by || "", it.org || "",
+                  Array.isArray(it.labels) ? it.labels.join(", ") : "", it.location || "", it.text || it.note || ""].filter(Boolean).join(" · ") +
+                 (it.late ? " (" + w.late + ")" : "") + (it.done ? " (" + w.done + ")" : ""));
       });
       more(s.more_items);
       if (!s.items.length) out.push(w.none);
+    }
+    if (Array.isArray(s.coming) && s.coming.length) {   // AS-STRUCT: what Today lists for the app
+      if (s.from) out.push(s.from + " → " + s.to);
+      s.coming.forEach(function (it) { out.push([it.date || "", it.time || "", it.title].filter(Boolean).join(" · ") + (it.late ? " (" + w.late + ")" : "")); });
     }
     return out;
   }
 
   var API = {
-    VERSION: "1.1.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
+    VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
-    todoLists: todoLists, kanbanBoards: kanbanBoards, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;
