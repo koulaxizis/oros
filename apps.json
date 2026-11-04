@@ -1206,6 +1206,15 @@
       "type": "internal"
     },
     {
+      "id": "automations",
+      "name": "Automations",
+      "category": "System",
+      "icon": "automations",
+      "url": "automations/",
+      "search": "search.js",
+      "type": "internal"
+    },
+    {
       "id": "today",
       "name": "Today",
       "category": "System",

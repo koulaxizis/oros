@@ -1,0 +1,32 @@
+# Automatisierungen
+Mit Automatisierungen erledigt orOS Dinge für dich im richtigen Moment. Eine Regel sagt, wann etwas passiert und was orOS dann tut: eine Mitteilung zeigen, eine Aufgabenliste öffnen, eine Notiz, einen Timer, eine E-Mail oder einen Budget-Eintrag beginnen. Regeln sind einfache Einstellungen, nie Code, und sie folgen dir verschlüsselt auf deine anderen Geräte.
+
+## Erste Schritte
+- Tippe auf `Vorlagen` und wähle eine Regel, zum Beispiel `Wochenplan` oder `Monatliche Rechnungen`. Ändere, was du möchtest, und tippe auf `Speichern`.
+- Oder tippe auf `Neue Regel`, gib ihr einen `Name`, wähle `Wann` und füge unter `Dann` die Schritte hinzu.
+- Der Schalter neben einer Regel schaltet sie ein oder aus. Die Zeile unter ihrem Namen sagt, wann sie das nächste Mal läuft.
+
+## Wann eine Regel läuft
+- `Jeden Tag oder an manchen Tagen`: Hake die gewünschten Tage an, oder keinen für jeden Tag, und stelle die `Uhrzeit` ein.
+- `Jeden Monat`: ein Tag des Monats oder `Der letzte Tag`. Der 31. läuft in kürzeren Monaten am letzten Tag.
+- `Jedes Jahr` und `Einmal`: Wähle das `Datum`.
+- `Wenn orOS geöffnet wird (einmal am Tag)`: beim ersten Öffnen von orOS an jedem Tag.
+
+## Was eine Regel tut
+- `Mitteilung zeigen` erscheint von selbst bei den Mitteilungen, wie jede Erinnerung.
+- Jeder andere Schritt braucht dein Okay: Die Mitteilung sagt, was ein Tippen tut, und das Tippen öffnet diese App ausgefüllt (To-Do, Kalender, Notizen, Mail, Budget, Zeit oder der Assistent). Dort wird nichts gespeichert, bevor du es speicherst.
+- Hat eine Regel mehrere Schritte, öffnet das Tippen Automatisierungen mit einer Schaltfläche für jeden Schritt.
+- In Texten werden `{date}`, `{weekday}`, `{month}` und `{year}` zum Tag der Ausführung, so wird aus „Rechnungen {month}“ „Rechnungen November“.
+- `Jetzt ausprobieren` im Editor zeigt, was die Regel tun würde, ohne auf ihre Zeit zu warten.
+
+## Gut zu wissen
+- Regeln laufen, solange orOS auf einem deiner Geräte geöffnet ist. War orOS zu der Zeit geschlossen, kommt eine verpasste Ausführung beim nächsten Öffnen einmal, solange sie weniger als 36 Stunden alt ist.
+- Eine Ausführung geschieht einmal für alle deine Geräte: Hat ein Gerät sie gezeigt, sehen die anderen dieselbe Mitteilung und wiederholen sie nicht.
+- Eine Regel, die eine App braucht, die auf diesem Gerät nicht installiert ist, wird dort übersprungen und in der Liste markiert.
+- `Letzte Ausführungen auf diesem Gerät` zeigt die letzten Ausführungen und was passiert ist.
+- Mitteilungen folgen deinen Mitteilungseinstellungen. Sind Mitteilungen aus, oder für Automatisierungen aus, laufen Regeln still und die Liste sagt es.
+- Passwörter sind nie Teil einer Automatisierung.
+
+## Deine Daten
+- Die Regeln werden auf diesem Gerät gespeichert und, wenn Sync in den [Einstellungen](app:settings) an ist, verschlüsselt auch auf deinen anderen Geräten. Die Liste der letzten Ausführungen bleibt auf jedem Gerät.
+- Das Suchfeld des Menüs findet deine Regeln nach ihren Namen und Texten.

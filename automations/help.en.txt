@@ -1,0 +1,32 @@
+# Automations
+Automations lets orOS do things for you at the right moment. A rule says when something happens and what orOS does then: show a notice, open a list of tasks, start a note, a timer, an e-mail or a Budget entry. Rules are plain settings, never code, and they follow you to your other devices, encrypted.
+
+## Getting started
+- Press `Ready-made` and pick a rule, for example `Plan the week` or `Monthly bills`. Change what you like and press `Save`.
+- Or press `New rule`, give it a `Name`, choose `When` and add the steps under `Then`.
+- The switch next to a rule turns it on or off. The line under its name says when it runs next.
+
+## When a rule runs
+- `Every day or on some days`: tick the days you want, or none for every day, and set the `Time`.
+- `Every month`: a day of the month, or `The last day`. The 31st runs on the last day of shorter months.
+- `Every year` and `Once`: pick the `Date`.
+- `When orOS opens (once a day)`: the first time you open orOS each day.
+
+## What a rule does
+- `Show a notice` appears by itself in the notifications, like any reminder.
+- Every other step needs your go-ahead: the notice says what a tap does, and the tap opens that app filled in (To-Do, Calendar, Notes, Mail, Budget, Time or the Assistant). Nothing is saved in that app until you save it there.
+- When a rule has several steps, the tap opens Automations with one button for each step.
+- In texts, `{date}`, `{weekday}`, `{month}` and `{year}` become the day of the run, so "Bills {month}" turns into "Bills November".
+- `Try it now` in the editor shows what the rule would do, without waiting for its time.
+
+## Good to know
+- Rules run while orOS is open on one of your devices. If orOS was closed at the time, the next time you open it a missed run comes once, as long as it is less than 36 hours old.
+- A run happens once for all your devices: when one device has shown it, the others see the same notice and do not repeat it.
+- A rule that needs an app you have not installed on this device is skipped there and marked in the list.
+- `Recent runs on this device` shows the last runs and what happened.
+- Notices follow your notification settings. If notifications are off, or turned off for Automations, rules run quietly and the list says so.
+- Passwords is never part of an automation.
+
+## Your data
+- The rules are saved on this device and, with sync switched on in [Settings](app:settings), on your other devices too, encrypted. The list of recent runs stays on each device.
+- The menu's search box finds your rules by their names and texts.
