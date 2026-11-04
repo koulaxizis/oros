@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.28.00
+- **Your home, car and valuables in Budget.** An account can hold something of value with no market price: type its value on a day and, if you like, how much it changes a year (about −15 % for a car). Budget moves the value on by itself and counts it in your net worth.
+- **Passive income.** Mark income categories such as dividends, interest or rent as `Passive`: the Overview and the net worth chart show what they bring a month and what part of your expenses they cover.
+- **Reminders before a loan installment or a card payment.** Up to 3 days before, orOS sends a notification even with Budget closed; installments and card due dates also show in Calendar and in Today.
+- **Revolut and N26 statements, Coinbase and Binance quantities.** Import Revolut's statement with its fees taken off and pending, cancelled and top-up rows left out; N26's CSV is read by itself. In a crypto account, `Quantities from Coinbase or Binance` reads the exchange's history and fills in what you hold.
+- **A year for your accountant.** Export has `Last year`, and a year's Excel and PDF now also show each account's balance on 31 December and each loan left, with the interest paid that year.
+
 ## Version 5.27.00
 - **Investments in Budget: crypto, gold, silver and shares.** An account can now hold an investment. Pick what it holds and type the quantity; its balance stays what you paid. The Overview shows its value, what you paid and your gain or loss, and the value counts in your net worth. Crypto, gold and silver take live prices from CoinGecko when online; for shares, ETFs and anything else, type the price from your broker.
 
