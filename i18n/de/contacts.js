@@ -79,6 +79,7 @@ orosPack("de", "contacts", {
  "ct.dlg.edit": "Kontakt bearbeiten",
  "ct.dlg.new": "Neuer Kontakt",
  "ct.err.name": "Gib zuerst einen Namen (oder eine Firma) ein",
+ "ct.err.store": "Nicht gespeichert: Der Speicher des Browsers ist voll. Gib etwas Platz frei (Einstellungen › Geräteinfo) und speichere erneut.",
  "ct.export": "Exportieren",
  "ct.export.bad": "Export fehlgeschlagen – bitte erneut versuchen",
  "ct.export.done": "Kontakte exportiert (.vcf)",
