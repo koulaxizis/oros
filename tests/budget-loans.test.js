@@ -109,3 +109,72 @@ test("loansui: EN and EL have the same keys and every key in the code exists", (
   const used = [...src.matchAll(/t\("(ln\.[A-Za-z.]+)"\s*[,)]/g)].map((m) => m[1]);
   used.forEach((k) => assert.ok(k in tables.en, k));
 });
+
+test("CC-1: a credit card's cycle, what is left and the interest estimate", () => {
+  assert.equal(L.cardCfg({ cys: 10 }), null);
+  assert.deepEqual(L.cardCfg({ cys: 10, cyd: 5, cyr: 1650 }), { s: 10, d: 5, r: 1650 });
+  assert.deepEqual(L.cardCfg({ cys: 31, cyd: 20, cyr: -1 }), { s: 31, d: 20, r: 0 });
+  const acc = { cys: 10, cyd: 5, cyr: 1825 };           // statement on the 10th, due the 5th of the next month, 18.25 %
+  const bal = { "2026-10-10": -100000, "2026-09-10": 0, "2026-11-10": -50000 };
+  const balAt = (d) => bal[d] === undefined ? 0 : bal[d];
+  let inflowArgs = null;
+  const inflow = (from, to) => { inflowArgs = [from, to]; return 30000; };
+  const c = L.cardCycle(acc, "2026-10-25", balAt, inflow);
+  assert.deepEqual(inflowArgs, ["2026-10-10", "2026-10-25"]);
+  assert.equal(c.s, "2026-10-10");
+  assert.equal(c.due, "2026-11-05");
+  assert.equal(c.next, "2026-11-10");
+  assert.equal(c.stmt, 100000);
+  assert.equal(c.paid, 30000);
+  assert.equal(c.left, 70000);
+  assert.equal(c.est, Math.round(70000 * 0.1825 * 31 / 365));   // 1085
+  assert.equal(c.days, 11);
+  assert.equal(c.state, "open");
+  // before this month's statement day: the previous cycle
+  const e = L.cardCycle(acc, "2026-10-09", balAt, () => 0);
+  assert.equal(e.s, "2026-09-10");
+  assert.equal(e.state, "none");
+  // late, paid
+  assert.equal(L.cardCycle(acc, "2026-11-07", balAt, () => 0).state, "late");
+  assert.equal(L.cardCycle(acc, "2026-11-07", balAt, () => 200000).state, "paid");
+  assert.equal(L.cardCycle(acc, "2026-11-07", balAt, () => 200000).paid, 100000);
+  // a due day after the statement day falls in the same month; month ends clamp
+  const f = L.cardCycle({ cys: 31, cyd: 28 }, "2027-02-15", () => -1000, () => 0);
+  assert.equal(f.s, "2027-01-31");
+  assert.equal(f.due, "2027-02-28");
+  assert.equal(f.next, "2027-02-28");
+  assert.equal(f.est, 0);
+  const g = L.cardCycle({ cys: 1, cyd: 20 }, "2026-12-01", () => -1000, () => 0);
+  assert.equal(g.s, "2026-12-01");
+  assert.equal(g.due, "2026-12-20");
+});
+
+test("LN-F: rate and months from what the person knows, series and a card cycle from entries", () => {
+  assert.equal(L.solveRate(1000000, 10485, 120), 475);
+  assert.equal(L.solveRate(1000000, 8000, 120), null);            // never pays it off
+  assert.equal(L.solveRate(120000, 10000, 12), 0);
+  assert.equal(L.solveMonths(1000000, 10485, 475), 120);
+  assert.equal(L.solveMonths(1000000, 3000, 475), null);          // does not cover the interest
+  assert.equal(L.solveMonths(120000, 10000, 0), 12);
+  const tx = [
+    { k: "o", a: 10485, d: "2026-07-15", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ 4471" },
+    { k: "o", a: 10485, d: "2026-08-14", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ 4472", ac: "bank" },
+    { k: "o", a: 10485, d: "2026-09-15", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ 4473", ac: "bank" },
+    { k: "o", a: 1599, d: "2026-08-03", n: "Netflix" }, { k: "o", a: 1599, d: "2026-09-03", n: "Netflix" },
+    { k: "o", a: 1599, d: "2026-10-03", n: "Netflix" }, { k: "o", a: 1599, d: "2026-11-03", n: "Netflix" },
+    { k: "o", a: 5000, d: "2026-09-01", n: "Groceries" }, { k: "o", a: 9000, d: "2026-10-01", n: "Groceries" },
+    { k: "i", a: 10485, d: "2026-10-15", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ" }
+  ];
+  const s = L.findSeries(tx);
+  assert.deepEqual(s.map((x) => [x.key, x.count, x.a, x.day, x.loanish]),
+    [["δοση δανειου", 3, 10485, 15, true], ["netflix", 4, 1599, 3, false]]);
+  assert.equal(s[0].first, "2026-07-15");
+  assert.equal(s[0].ac, "bank");
+  // card: payments around the 5th, interest of €12.40 on a €1,000 debt → 14.88 %
+  const g = L.guessCycle([{ d: "2026-08-05", a: 1 }, { d: "2026-09-05", a: 1 }, { d: "2026-10-06", a: 1 }],
+    [{ d: "2026-10-12", a: 1240 }], (d) => (d === "2026-10-11" ? -100000 : 0));
+  assert.deepEqual([g.cyd, g.cys, g.cyr], [5, 15, 1488]);
+  assert.equal(g.from.rate, "2026-10-12");
+  assert.equal(L.guessCycle([], [], () => 0), null);
+  assert.ok(L.INTEREST.test("ΤΟΚΟΙ ΠΕΡΙΟΔΟΥ") && L.INTEREST.test("Interest charge"));
+});

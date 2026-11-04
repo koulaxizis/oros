@@ -184,9 +184,146 @@
     return mv;
   }
 
+  // ---------- CC-1: a credit card's monthly cycle ----------
+  // An account may carry cys (statement day 1…31), cyd (due day 1…31)
+  // and cyr (yearly interest in hundredths of a percent, 0…10000).
+  function cardCfg(a) {
+    if (!a || !isInt(a.cys) || a.cys < 1 || a.cys > 31 || !isInt(a.cyd) || a.cyd < 1 || a.cyd > 31) return null;
+    return { s: a.cys, d: a.cyd, r: isInt(a.cyr) && a.cyr >= 0 && a.cyr <= 10000 ? a.cyr : 0 };
+  }
+  function dayIn(y, m0, day) {            // a day of a month, clamped to its end
+    y += Math.floor(m0 / 12); m0 = ((m0 % 12) + 12) % 12;
+    var dim = new Date(Date.UTC(y, m0 + 1, 0)).getUTCDate();
+    return y + "-" + pad2(m0 + 1) + "-" + pad2(Math.min(day, dim));
+  }
+  function daysBetween(a, b) {
+    return Math.round((Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10)) -
+                       Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))) / 864e5);
+  }
+  // The cycle as of `today`: the last statement (on or before today),
+  // its due date, the next statement; what the statement asked for (the
+  // debt on the statement day), what came into the account since, what
+  // is left, and an estimate of the interest if that is not paid by the
+  // due date (left × rate × the cycle's days / 365). balAt(ymd) → the
+  // account's signed balance at the end of that day; inflow(from, to)
+  // → money in after `from`, up to `to`. → null without a cycle, else
+  // { s, due, next, stmt, paid, left, est, days (to the due date),
+  //   state "none" | "paid" | "open" | "late" }
+  function cardCycle(a, today, balAt, inflow) {
+    var c = cardCfg(a);
+    if (!c || !okYmd(today)) return null;
+    var y = +today.slice(0, 4), m0 = +today.slice(5, 7) - 1;
+    var s = dayIn(y, m0, c.s);
+    if (s > today) { m0 -= 1; s = dayIn(y, m0, c.s); }
+    var due = dayIn(y, m0, c.d);
+    if (due <= s) due = dayIn(y, m0 + 1, c.d);
+    var next = dayIn(y, m0 + 1, c.s);
+    var b = balAt(s);
+    var stmt = isInt(b) && b < 0 ? -b : 0;
+    var paid = stmt ? Math.max(0, inflow(s, today) || 0) : 0;
+    var left = Math.max(0, stmt - paid);
+    var est = left && c.r ? Math.round(left * c.r / 10000 * daysBetween(s, next) / 365) : 0;
+    var state = !stmt ? "none" : !left ? "paid" : today > due ? "late" : "open";
+    return { s: s, due: due, next: next, stmt: stmt, paid: Math.min(paid, stmt), left: left, est: est,
+             days: daysBetween(today, due), state: state };
+  }
+
+  // ---------- LN-F: numbers the person may not know ----------
+  // The yearly rate (hundredths of a percent) that makes `ins` pay `a`
+  // off in `nm` months; null when that is impossible or over 100 %.
+  function solveRate(a, ins, nm) {
+    if (!(a > 0 && ins > 0 && nm >= 1 && nm <= 600)) return null;
+    if (ins * nm < a) return null;
+    if (Math.abs(ins * nm - a) <= nm) return 0;            // within a cent per month: no interest
+    var lo = 0, hi = 100 / 12 / 100, pay = function (i) { return a * i / (1 - Math.pow(1 + i, -nm)); };
+    if (pay(hi) < ins) return null;
+    for (var k = 0; k < 80; k++) { var mid = (lo + hi) / 2; if (pay(mid) < ins) lo = mid; else hi = mid; }
+    return Math.round((lo + hi) / 2 * 12 * 10000);
+  }
+  // How many months `ins` takes to pay `a` off at `r`; null when it never does.
+  function solveMonths(a, ins, r) {
+    if (!(a > 0 && ins > 0)) return null;
+    var i = (r || 0) / 10000 / 12;
+    if (!i) return Math.ceil(a / ins);
+    if (ins <= a * i) return null;
+    var n = Math.ceil(-Math.log(1 - a * i / ins) / Math.log(1 + i) - 1e-9);
+    return n >= 1 && n <= 600 ? n : null;
+  }
+  function noteKey(n) {
+    return String(n || "").toLowerCase().replace(/[0-9]+/g, " ").replace(/[^a-z\u0370-\u03ff\u1f00-\u1fff]+/g, " ").trim().replace(/\s+/g, " ");
+  }
+  // Monthly series among expenses: the same note (digits left out) and
+  // about the same amount (±3 %), 25–35 days apart, at least twice.
+  // → [{ key, n (a note as written), a (the latest amount), count, first,
+  //      last, day (usual day of the month), ac, loanish }] best first.
+  var LOANISH = /(δανει|δάνει|δοσ|δόσ|loan|install|mortgage|στεγαστ|καταναλωτ|kredit|rate)/i;
+  function findSeries(tx) {
+    var groups = {};
+    (tx || []).forEach(function (x) {
+      if (!x || x.k !== "o" || !okYmd(x.d) || !(x.a > 0)) return;
+      var k = noteKey(x.n);
+      if (!k) return;
+      (groups[k] = groups[k] || []).push(x);
+    });
+    var out = [];
+    Object.keys(groups).forEach(function (k) {
+      var list = groups[k].slice().sort(function (p, q) { return p.d < q.d ? -1 : p.d > q.d ? 1 : 0; });
+      // the longest run from the end backwards: monthly, similar amounts
+      var run = [list[list.length - 1]];
+      for (var j = list.length - 2; j >= 0; j--) {
+        var prev = run[0], x = list[j], gap = daysApart(x.d, prev.d);
+        if (gap < 25) continue;                                // a second entry in the same month
+        if (gap > 35 || Math.abs(x.a - prev.a) > prev.a * 0.03) break;
+        run.unshift(x);
+      }
+      if (run.length < 2) return;
+      var days = {}, best = 0, day = +run[run.length - 1].d.slice(8, 10);
+      run.forEach(function (x) { var dd = +x.d.slice(8, 10); days[dd] = (days[dd] || 0) + 1; if (days[dd] > best) { best = days[dd]; day = dd; } });
+      var last = run[run.length - 1];
+      out.push({ key: k, n: last.n, a: last.a, count: run.length, first: run[0].d, last: last.d, day: day,
+                 ac: last.ac || "", loanish: LOANISH.test(last.n || "") });
+    });
+    out.sort(function (p, q) { return (q.loanish - p.loanish) || (q.count - p.count) || (q.a - p.a) || (p.key < q.key ? -1 : 1); });
+    return out;
+  }
+  function daysApart(a, b) { return Math.abs(daysBetween(a, b)); }
+  // A card's cycle from what the account shows: the due day = the usual
+  // day of the month money came in (payments), the statement day about
+  // three weeks before it (Greek cards: 20–25 days), the rate from the
+  // latest interest entry on the card over the debt the day before it.
+  // inflows: [{ d, a }], interest: [{ d, a }] (expenses whose note says
+  // interest), balAt(ymd) → signed balance. → { cyd, cys, cyr, from: { due, rate } } | null
+  var INTEREST = /(τοκ|τόκ|interest|zins|finance charge)/i;
+  function guessCycle(inflows, interest, balAt) {
+    var out = { cyd: 0, cys: 0, cyr: 0, from: { due: 0, rate: "" } };
+    var days = {}, best = 0;
+    (inflows || []).forEach(function (x) {
+      if (!x || !okYmd(x.d)) return;
+      var dd = +x.d.slice(8, 10);
+      days[dd] = (days[dd] || 0) + 1;
+      if (days[dd] > best || (days[dd] === best && dd < out.cyd)) { best = days[dd]; out.cyd = dd; }
+    });
+    if (best) { out.from.due = best; out.cys = ((out.cyd - 21 - 1 + 31) % 31) + 1; }
+    var last = null;
+    (interest || []).forEach(function (x) { if (x && okYmd(x.d) && x.a > 0 && (!last || x.d > last.d)) last = x; });
+    if (last && balAt) {
+      var y = +last.d.slice(0, 4), m0 = +last.d.slice(5, 7) - 1, dd0 = +last.d.slice(8, 10);
+      var before = dayIn(y, m0, dd0 - 1 >= 1 ? dd0 - 1 : 1);
+      if (dd0 === 1) before = dayIn(y, m0 - 1, 31);
+      var debt = -(balAt(before) || 0);
+      if (debt > 0) {
+        var r = Math.round(last.a / debt * 12 * 10000);
+        if (r > 0 && r <= 10000) { out.cyr = r; out.from.rate = last.d; }
+      }
+    }
+    return out.cyd || out.cyr ? out : null;
+  }
+
   var api = { normLoan: normLoan, normPay: normPay, paysBy: paysBy, status: status, summary: summary,
               balanceMoves: balanceMoves, okYmd: okYmd,
-              hasPlan: hasPlan, installment: installment, split: split, schedule: schedule };
+              hasPlan: hasPlan, installment: installment, split: split, schedule: schedule,
+              cardCfg: cardCfg, cardCycle: cardCycle,
+              solveRate: solveRate, solveMonths: solveMonths, findSeries: findSeries, guessCycle: guessCycle, INTEREST: INTEREST };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetLoans = api;
 })(typeof window !== "undefined" ? window : this);

@@ -249,6 +249,12 @@ test("model: reminder lead, account currency, transfer received, settings", () =
   assert.equal("nd" in B.normRec({ id: "r1", m: 1, k: "o", a: 5, f: "m", s: "2026-01-01", nd: 1.5 }), false);
   assert.deepEqual(B.normAcc({ id: "a", m: 1, n: "US", o: -5, col: 1, cur: "USD" }), { id: "a", m: 1, n: "US", o: -5, col: 1, cur: "USD" });
   assert.equal("cur" in B.normAcc({ id: "a", m: 1, n: "US", cur: "dollars" }), false);
+  // CC-1: a card cycle, kept only with both days, in name order among the extras
+  const cc = B.normAcc({ id: "a", m: 1, n: "Visa", o: 0, col: 1, cys: 10, cyd: 5, cyr: 1650 });
+  assert.deepEqual(Object.keys(cc), ["id", "m", "n", "o", "col", "cyd", "cyr", "cys"]);
+  assert.equal("cys" in B.normAcc({ id: "a", m: 1, n: "Visa", cys: 10, cyr: 1650 }), false);
+  assert.equal("cyr" in B.normAcc({ id: "a", m: 1, n: "Visa", cys: 10, cyd: 40, cyr: 1650 }), false);
+  assert.equal("cyr" in B.normAcc({ id: "a", m: 1, n: "Visa", cys: 10, cyd: 5, cyr: 20000 }), false);
   assert.equal(B.normXfer({ id: "x", m: 1, d: "2026-10-01", a: 5, f: "a", t: "b", ta: 7 }).ta, 7);
   assert.equal("ta" in B.normXfer({ id: "x", m: 1, d: "2026-10-01", a: 5, f: "a", t: "b", ta: -7 }), false);
   const m = B.mergeBudget(D({ set: { m: 5, cur: "EUR", env: true, envs: "2026-10", zz: 1 } }), B.emptyData());

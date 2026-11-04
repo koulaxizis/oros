@@ -42,7 +42,12 @@
       "ln.needMonths": "Installments: a number of months from 1 to 600", "ln.needRate": "Interest: a yearly percentage from 0 to 100",
       "ln.inst": "Installment {a}", "ln.intPaid": "interest paid {a}", "ln.ends": "last installment {d}", "ln.never": "The installment does not cover the interest",
       "ln.sched": "Installment schedule", "ln.schedT": "Schedule: {n}", "ln.sDate": "Date", "ln.sInt": "Interest", "ln.sPrin": "Principal", "ln.sBal": "Left",
-      "ln.sSum": "{n} installments to go, {i} interest in total", "ln.payInt": "{i} interest, {p} principal"
+      "ln.sSum": "{n} installments to go, {i} interest in total", "ln.payInt": "{i} interest, {p} principal",
+      "ln.rateFound": "Interest about {r} % a year (worked out from the installment).", "ln.monthsFound": "About {n} installments (worked out from the installment).",
+      "ln.noRate": "This installment does not pay the amount off in these months.", "ln.find": "Find in my entries",
+      "ln.foundPick": "Monthly payments in your entries; pick the loan's:", "ln.found": "{n} · {a} × {c} since {d}",
+      "ln.foundNone": "No monthly payment found in your entries yet (bank updates and imports add them).",
+      "ln.foundUsed": "Installment taken from {c} payments since {d}. Type the months or the interest, whichever you know; Budget works out the other."
     },
     el: {
       "ln.h": "Δάνεια και χρέη", "ln.new": "Νέο δάνειο", "ln.edit": "Αλλαγή δανείου",
@@ -68,7 +73,12 @@
       "ln.needMonths": "Δόσεις: αριθμός μηνών από 1 ως 600", "ln.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
       "ln.inst": "Δόση {a}", "ln.intPaid": "τόκοι που πληρώθηκαν {a}", "ln.ends": "τελευταία δόση {d}", "ln.never": "Η δόση δεν καλύπτει τον τόκο",
       "ln.sched": "Πρόγραμμα δόσεων", "ln.schedT": "Πρόγραμμα: {n}", "ln.sDate": "Ημερομηνία", "ln.sInt": "Τόκος", "ln.sPrin": "Κεφάλαιο", "ln.sBal": "Μένει",
-      "ln.sSum": "{n} δόσεις ακόμα, {i} τόκοι συνολικά", "ln.payInt": "{i} τόκος, {p} κεφάλαιο"
+      "ln.sSum": "{n} δόσεις ακόμα, {i} τόκοι συνολικά", "ln.payInt": "{i} τόκος, {p} κεφάλαιο",
+      "ln.rateFound": "Επιτόκιο περίπου {r} % τον χρόνο (από τη δόση).", "ln.monthsFound": "Περίπου {n} δόσεις (από τη δόση).",
+      "ln.noRate": "Αυτή η δόση δεν εξοφλεί το ποσό σε τόσους μήνες.", "ln.find": "Βρες το στις κινήσεις μου",
+      "ln.foundPick": "Μηνιαίες πληρωμές στις κινήσεις σου· διάλεξε του δανείου:", "ln.found": "{n} · {a} × {c} από {d}",
+      "ln.foundNone": "Δεν βρέθηκε ακόμα μηνιαία πληρωμή στις κινήσεις σου (τις φέρνουν οι ενημερώσεις και οι εισαγωγές της τράπεζας).",
+      "ln.foundUsed": "Η δόση πάρθηκε από {c} πληρωμές από {d}. Γράψε τους μήνες ή το επιτόκιο, όποιο ξέρεις· η εφαρμογή βγάζει το άλλο."
     }
   };
   // orosI18n (../i18n.js): S[<pack language>] from the pack "budget".
@@ -267,11 +277,49 @@
       if (!v || /^0+([.,]0*)?$/.test(v)) return 0;
       return A.parseAmount(v);
     }
+    // LN-F: what the person does not know is worked out from the rest:
+    // the installment from amount, rate and months; the rate from amount,
+    // installment and months; the months from amount, installment and rate.
     function preview() {
-      var nm = parseInt(mon.value, 10), a0 = A.parseAmount(amt.value), rr = rateOf(rate.value);
-      if (!(nm > 0 && nm <= 600) || !a0 || rr === null || ins.value.trim()) { insHint.textContent = t("ln.insHint"); return; }
-      insHint.textContent = t("ln.insHint") + " " + t("ln.inst", { a: A.money(L.installment({ a: a0, nm: nm, r: rr || 0, ins: 0 })) });
+      var nm = /^\d{1,3}$/.test(mon.value.trim()) ? parseInt(mon.value, 10) : 0, a0 = A.parseAmount(amt.value), rr = rateOf(rate.value);
+      var i0 = ins.value.trim() ? A.parseAmount(ins.value) : 0, noRate = !rate.value.trim(), extra = "";
+      if (a0 && rr !== null && i0 === 0 && nm > 0 && nm <= 600) extra = t("ln.inst", { a: A.money(L.installment({ a: a0, nm: nm, r: rr || 0, ins: 0 })) });
+      else if (a0 && i0 && noRate && nm > 0 && nm <= 600) {
+        var sr = L.solveRate(a0, i0, nm);
+        extra = sr === null ? t("ln.noRate") : t("ln.rateFound", { r: A.centsToInput(sr) });
+      } else if (a0 && i0 && rr !== null && !nm) {
+        var sm = L.solveMonths(a0, i0, rr || 0);
+        extra = sm === null ? t("ln.never") : t("ln.monthsFound", { n: sm });
+      }
+      insHint.textContent = t("ln.insHint") + (extra ? " " + extra : "");
     }
+    // LN-F: a monthly payment already in the entries (a bank import, a
+    // recurring entry) gives the installment and, often, the name.
+    var findB = A.button(t("ln.find"), "mini", null);
+    findB.type = "button";
+    var foundBox = el("div", "ln-found");
+    findB.addEventListener("click", function () {
+      foundBox.textContent = "";
+      var list = L.findSeries(D().tx || []).slice(0, 5);
+      if (!list.length) { foundBox.appendChild(el("p", "hint", t("ln.foundNone"))); return; }
+      foundBox.appendChild(el("p", "hint", t("ln.foundPick")));
+      list.forEach(function (sr) {
+        var b = A.button(t("ln.found", { n: sr.n, a: A.money(sr.a), c: sr.count, d: A.dateShort(sr.first) }), "mini ln-found-b", null);
+        b.type = "button";
+        b.addEventListener("click", function () {
+          ins.value = A.centsToInput(sr.a);
+          if (!who.value.trim()) who.value = sr.n.replace(/\s*\d+\s*$/, "").slice(0, 60);
+          if (kind.value !== "b") kind.value = "b";
+          if (acc && sr.ac && !acc.value) { acc.value = sr.ac; if (acc.value !== sr.ac) acc.value = ""; }
+          foundBox.textContent = "";
+          foundBox.appendChild(el("p", "hint", t("ln.foundUsed", { c: sr.count, d: A.dateShort(sr.first) })));
+          preview();
+        });
+        foundBox.appendChild(b);
+      });
+    });
+    det.appendChild(findB);
+    det.appendChild(foundBox);
     [rate, mon, ins, amt].forEach(function (x) { x.addEventListener("input", preview); });
     preview();
     form.appendChild(det);
@@ -302,13 +350,19 @@
       if (!L.okYmd(d.value)) { A.showErr(err, t("ln.needDate"), d); return; }
       if (due.value && (!L.okYmd(due.value) || due.value < d.value)) { A.showErr(err, t("ln.needDue"), due); return; }
       var nm = 0, rr = 0, insC = 0;
-      if (mon.value.trim()) {
-        nm = /^\d{1,3}$/.test(mon.value.trim()) ? parseInt(mon.value, 10) : 0;
-        if (!(nm >= 1 && nm <= 600)) { det.open = true; A.showErr(err, t("ln.needMonths"), mon); return; }
+      if (mon.value.trim() || ins.value.trim()) {
         rr = rateOf(rate.value);     // "4,75" → 475 (hundredths of a percent)
         if (rr === null || rr > 10000) { det.open = true; A.showErr(err, t("ln.needRate"), rate); return; }
         insC = ins.value.trim() ? A.parseAmount(ins.value) : 0;
         if (insC === null) { det.open = true; A.showErr(err, A.tt("err.amount"), ins); return; }
+        if (mon.value.trim()) nm = /^\d{1,3}$/.test(mon.value.trim()) ? parseInt(mon.value, 10) : 0;
+        else nm = L.solveMonths(a, insC, rr) || 0;                       // LN-F: months from the installment
+        if (!(nm >= 1 && nm <= 600)) { det.open = true; A.showErr(err, t("ln.needMonths"), mon); return; }
+        if (!rate.value.trim() && insC) {                                  // LN-F: rate from the installment
+          var sr = L.solveRate(a, insC, nm);
+          if (sr === null) { det.open = true; A.showErr(err, t("ln.noRate"), ins); return; }
+          rr = sr;
+        }
       }
       var lid = l ? l.id : A.newId();
       var m = A.stamp(Math.max(l ? l.m : 0, D().tombs["loan:" + lid] || 0));

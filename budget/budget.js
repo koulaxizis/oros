@@ -134,6 +134,13 @@
       "menu.accounts": "Accounts", "acc.title": "Accounts", "acc.new": "New account", "acc.edit": "Edit account",
       "acc.name": "Name", "acc.name.ph": "Cash, Card, Bank…", "acc.open": "Starting balance",
       "acc.open.hint": "What it held before your first entry here. A minus sign for a debt.",
+      "cy.h": "Credit card: statement and due date", "cy.stmt": "Statement day (1–31)", "cy.due": "Payment due day (1–31)",
+      "cy.rate": "Interest, % a year", "cy.hint": "Budget then shows what each statement asks for, what you paid and what is left by the due date, and roughly what interest it costs if not paid in full. Leave both days empty for an account without a cycle.",
+      "cy.needDays": "Both days, from 1 to 31", "cy.needRate": "Interest: a yearly percentage from 0 to 100",
+      "cy.feesCat": "Interest & fees", "cy.feeNote": "Card interest",
+      "cy.guess": "Guess from my entries", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
+      "cy.guessDue": "Due day: when {n} of your payments came in.", "cy.guessStmt": "Statement day: about three weeks before it, as on most cards.",
+      "cy.guessRate": "Interest: from the interest charged on {d}.", "cy.guessCheck": "Check them against a statement.", "cy.guessKept": "The fields you filled stay as they are.",
       "acc.hint": "Pick an account in an entry to keep its balance. Entries without an account still count in the totals.",
       "acc.empty": "No accounts yet: Budget works without them too.", "acc.none": "No account",
       "acc.bal": "Balances today", "acc.deleted": "Account deleted", "acc.full": "Up to {n} accounts",
@@ -246,6 +253,13 @@
       "menu.accounts": "Λογαριασμοί", "acc.title": "Λογαριασμοί", "acc.new": "Νέος λογαριασμός", "acc.edit": "Επεξεργασία λογαριασμού",
       "acc.name": "Όνομα", "acc.name.ph": "Μετρητά, Κάρτα, Τράπεζα…", "acc.open": "Αρχικό υπόλοιπο",
       "acc.open.hint": "Όσα είχε πριν από την πρώτη κίνησή του εδώ. Με μείον για χρέος.",
+      "cy.h": "Πιστωτική κάρτα: κλείσιμο και λήξη", "cy.stmt": "Ημέρα κλεισίματος (1–31)", "cy.due": "Ημέρα λήξης πληρωμής (1–31)",
+      "cy.rate": "Επιτόκιο, % τον χρόνο", "cy.hint": "Η εφαρμογή δείχνει τότε τι ζητά κάθε λογαριασμός της κάρτας, τι πλήρωσες και τι μένει ως τη λήξη, και περίπου τι τόκο κοστίζει αν δεν εξοφληθεί. Άφησε κενές και τις δύο ημέρες για λογαριασμό χωρίς κύκλο.",
+      "cy.needDays": "Και οι δύο ημέρες, από 1 ως 31", "cy.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
+      "cy.feesCat": "Τόκοι και χρεώσεις", "cy.feeNote": "Τόκοι κάρτας",
+      "cy.guess": "Βρες τα από τις κινήσεις μου", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
+      "cy.guessDue": "Ημέρα λήξης: τότε μπήκαν {n} από τις πληρωμές σου.", "cy.guessStmt": "Ημέρα κλεισίματος: περίπου τρεις εβδομάδες νωρίτερα, όπως στις περισσότερες κάρτες.",
+      "cy.guessRate": "Επιτόκιο: από τους τόκους που χρεώθηκαν στις {d}.", "cy.guessCheck": "Έλεγξέ τα με έναν λογαριασμό της κάρτας.", "cy.guessKept": "Τα πεδία που συμπλήρωσες μένουν όπως είναι.",
       "acc.hint": "Διάλεξε λογαριασμό σε μια κίνηση για να κρατάς το υπόλοιπό του. Οι κινήσεις χωρίς λογαριασμό μετρούν κανονικά στα σύνολα.",
       "acc.empty": "Δεν υπάρχουν λογαριασμοί: η εφαρμογή δουλεύει και χωρίς αυτούς.", "acc.none": "Χωρίς λογαριασμό",
       "acc.bal": "Υπόλοιπα σήμερα", "acc.deleted": "Ο λογαριασμός διαγράφηκε", "acc.full": "Έως {n} λογαριασμοί",
@@ -677,6 +691,12 @@
     // Its starting balance is in that currency.
     var y = Object.assign({}, x);
     if (!okCur3(y.cur)) delete y.cur;
+    // CC-1: a credit card's cycle: cys (statement day), cyd (due day),
+    // 1…31, and cyr (yearly interest, hundredths of a percent); kept
+    // only with both days, as extras (an older version keeps them too).
+    var dayOk = function (v) { return isInt(v) && v >= 1 && v <= 31; };
+    if (!dayOk(y.cys) || !dayOk(y.cyd)) { delete y.cys; delete y.cyd; delete y.cyr; }
+    else if (!(isInt(y.cyr) && y.cyr >= 0 && y.cyr <= 10000)) delete y.cyr;
     return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, y);
   }
   // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
@@ -2200,7 +2220,7 @@
     }
     form.appendChild(sw);
     var accSel = null;
-    if (data.acc.length) accSel = accSelect(x ? x.ac : lastAcc);
+    if (data.acc.length) accSel = accSelect(x ? x.ac : pre && pre.ac && findIn(data.acc, pre.ac) ? pre.ac : lastAcc);
     // Amount + its currency. Another currency than the main one keeps
     // what was typed (oc, oa) and asks for the main amount (a), filled
     // in from Unit Converter's ECB rates and open to correction.
@@ -2985,6 +3005,32 @@
     var b = accBalances(data, ymd || today);
     return b[id] === undefined ? null : b[id];
   }
+  // CC-1: money that came into an account after `from`, up to `to`
+  // (income booked to it, transfers to it, loan money in), and its card cycle.
+  function accInflow(id, from, to) {
+    var sum = 0;
+    data.tx.forEach(function (x) { if (x.ac === id && x.k === "i" && x.d > from && x.d <= to) sum += x.a; });
+    data.xfer.forEach(function (x) { if (x.t === id && x.d > from && x.d <= to) sum += isInt(x.ta) && x.ta > 0 ? x.ta : x.a; });
+    return sum;
+  }
+  function cardCycle(id) {
+    var L = window.OrosBudgetLoans, a = findIn(data.acc, id);
+    if (!L || !L.cardCycle || !a) return null;
+    return L.cardCycle(a, today, function (d) { return accBalAt(id, d); }, function (f, t2) { return accInflow(id, f, t2); });
+  }
+  // "Add interest": an expense on the card in "Interest & fees" (made
+  // once, as the person's own category, in their language).
+  var FEES_CAT = "cc-fees";
+  function addCardFee(id, est) {
+    if (!catById(FEES_CAT)) {
+      var tm = data.tombs["cat:" + FEES_CAT] || 0;
+      untomb("cat", FEES_CAT);
+      data.cats = data.cats.filter(function (c) { return c.id !== FEES_CAT; });
+      data.cats.push({ id: FEES_CAT, m: stamp(tm), k: "o", name: t("cy.feesCat"), col: 1, ic: "percent" });
+      commit();
+    }
+    txDialog(null, { k: "o", a: est || 0, d: today, c: FEES_CAT, n: t("cy.feeNote"), ac: id });
+  }
   function accCurOf(id) { var a = findIn(data.acc, id); return a ? (a.cur || cur()) : ""; }
   function shiftStart(id, diff, text) {
     var a = findIn(data.acc, id);
@@ -3086,6 +3132,7 @@
       },
       // BK-7: the bank's balance on each account it fills, and Match
       dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
+      cardCycle: cardCycle, addCardFee: addCardFee,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
@@ -3493,6 +3540,49 @@
     form.appendChild(field(t("acc.cur"), curSel, "bd-acc-cur"));
     form.appendChild(openF);
     form.appendChild(el("p", "hint", t("acc.open.hint")));
+    // CC-1: a credit card's cycle (optional)
+    var cyDet = el("details", "acc-cy");
+    cyDet.open = !!(a && a.cys);
+    cyDet.appendChild(el("summary", "", t("cy.h")));
+    var cyRow = el("div", "fld-row");
+    var cyS = el("input"), cyD = el("input"), cyR = el("input");
+    [cyS, cyD].forEach(function (i) { i.inputMode = "numeric"; i.autocomplete = "off"; i.maxLength = 2; });
+    cyR.inputMode = "decimal"; cyR.autocomplete = "off";
+    cyS.value = a && a.cys ? String(a.cys) : "";
+    cyD.value = a && a.cyd ? String(a.cyd) : "";
+    cyR.value = a && a.cys && a.cyr ? centsToInput(a.cyr, LANG) : "";
+    cyRow.appendChild(field(t("cy.stmt"), cyS, "bd-acc-cys"));
+    cyRow.appendChild(field(t("cy.due"), cyD, "bd-acc-cyd"));
+    cyDet.appendChild(cyRow);
+    cyDet.appendChild(field(t("cy.rate"), cyR, "bd-acc-cyr"));
+    cyDet.appendChild(el("p", "hint", t("cy.hint")));
+    // LN-F: guess the cycle from the card's own entries (payments in,
+    // interest charged), filling only the empty fields
+    var LNS = window.OrosBudgetLoans;
+    if (a && LNS && LNS.guessCycle) {
+      var gB = button(t("cy.guess"), "mini", null);
+      gB.type = "button";
+      var gOut = el("p", "hint");
+      gB.addEventListener("click", function () {
+        var from = ymdLocal(new Date(Date.now() - 200 * 864e5)), ins = [], intr = [];
+        data.tx.forEach(function (x) {
+          if (x.ac !== a.id || x.d < from) return;
+          if (x.k === "i") ins.push(x);
+          else if (LNS.INTEREST.test(x.n || "") || x.c === FEES_CAT) intr.push(x);
+        });
+        data.xfer.forEach(function (x) { if (x.t === a.id && x.d >= from) ins.push(x); });
+        var g = LNS.guessCycle(ins, intr, function (d) { return accBalAt(a.id, d); });
+        if (!g) { gOut.textContent = t("cy.guessNone"); return; }
+        var said = [];
+        if (g.cyd && !cyD.value.trim()) { cyD.value = String(g.cyd); said.push(t("cy.guessDue", { n: g.from.due })); }
+        if (g.cys && !cyS.value.trim()) { cyS.value = String(g.cys); said.push(t("cy.guessStmt")); }
+        if (g.cyr && !cyR.value.trim()) { cyR.value = centsToInput(g.cyr, LANG); said.push(t("cy.guessRate", { d: dateShort(g.from.rate) })); }
+        gOut.textContent = said.length ? said.join(" ") + " " + t("cy.guessCheck") : t("cy.guessKept");
+      });
+      cyDet.appendChild(gB);
+      cyDet.appendChild(gOut);
+    }
+    form.appendChild(cyDet);
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (a) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteAcc(a.id); }));
@@ -3507,12 +3597,27 @@
       if (!n) { showErr(err, t("err.name"), name); return; }
       var o = parseSigned(open.value);
       if (o === null) { showErr(err, t("err.open"), open); return; }
+      var cy = null;
+      if (cyS.value.trim() || cyD.value.trim()) {
+        var ds = /^\d{1,2}$/.test(cyS.value.trim()) ? +cyS.value.trim() : 0, dd = /^\d{1,2}$/.test(cyD.value.trim()) ? +cyD.value.trim() : 0;
+        if (!(ds >= 1 && ds <= 31)) { cyDet.open = true; showErr(err, t("cy.needDays"), cyS); return; }
+        if (!(dd >= 1 && dd <= 31)) { cyDet.open = true; showErr(err, t("cy.needDays"), cyD); return; }
+        var rv = cyR.value.trim(), rr = !rv || /^0+([.,]0*)?$/.test(rv) ? 0 : parseAmount(rv);
+        if (rr === null || rr > 10000) { cyDet.open = true; showErr(err, t("cy.needRate"), cyR); return; }
+        cy = { cys: ds, cyd: dd, cyr: rr };
+      }
+      function setCy(o2) {
+        delete o2.cys; delete o2.cyd; delete o2.cyr;
+        if (cy) { o2.cyd = cy.cyd; if (cy.cyr) o2.cyr = cy.cyr; o2.cys = cy.cys; }
+      }
+      var cyKey = function (o2) { return [o2.cys || 0, o2.cyd || 0, o2.cyr || 0].join(","); };
       var cur0 = a ? findIn(data.acc, a.id) : null;
       var ccy = curSel.value !== cur() ? curSel.value : "";
       if (cur0) {
-        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy) {
+        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy || cyKey(cur0) !== cyKey(cy || {})) {
           cur0.n = n; cur0.o = o;
           if (ccy) cur0.cur = ccy; else delete cur0.cur;
+          setCy(cur0);
           cur0.m = stamp(cur0.m);
           commit();
         }
@@ -3525,6 +3630,7 @@
         if (a) untomb("acc", nid);
         var na = { id: nid, m: stamp(a ? a.m : 0), n: n, o: o, col: col % 8 };
         if (ccy) na.cur = ccy;
+        setCy(na);
         data.acc.push(na);
         commit();
       }
