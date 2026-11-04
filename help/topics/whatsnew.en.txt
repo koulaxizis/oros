@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.31.00
+- **New app: Automations.** Make rules that run at a time you choose: every day or on some days, every month (also the last day), every year, once, or when orOS opens. A rule can show a notice, or open To-Do, Calendar, Notes, Mail, Budget, Time or the Assistant already filled in, so you only check and save. A rule runs once even if orOS is open on several devices. Ten ready-made rules get you started, such as bills at the start of the month or a weekly plan on Monday. Passwords is never part of a rule.
+
 ## Version 5.30.00
 - **Balance corrections you can see.** When you update a balance or match the bank, the difference is now written as a `Balance correction` on that day instead of changing the account's starting balance, so past months stay as they were. It shows in the account's entries but never counts as income or an expense; tap it to delete it or, if you remember what it was, make it an entry.
 
