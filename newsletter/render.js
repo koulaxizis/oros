@@ -35,7 +35,8 @@
       test: "[Test] ",
       video: "Watch the video", ics: "The event is attached as a calendar file: open it to add it to your calendar.",
       mon: "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",
-      buy: "Buy now", soldOut: "Sold out"
+      buy: "Buy now", soldOut: "Sold out",
+      cpnOff: "{v} off", cpnCode: "Your code", cpnUntil: "Valid until {d}", cpnMin: "On orders from {m}", cpnTest: "Each reader gets their own code."
     },
     el: {
       why: "Το λαμβάνεις επειδή έχεις εγγραφεί στο {l}.",
@@ -55,7 +56,8 @@
       test: "[Δοκιμή] ",
       video: "Δες το βίντεο", ics: "Η εκδήλωση είναι συνημμένη ως αρχείο ημερολογίου: άνοιξέ το για να την προσθέσεις στο ημερολόγιό σου.",
       mon: "ΙΑΝ ΦΕΒ ΜΑΡ ΑΠΡ ΜΑΪ ΙΟΥΝ ΙΟΥΛ ΑΥΓ ΣΕΠ ΟΚΤ ΝΟΕ ΔΕΚ",
-      buy: "Αγορά", soldOut: "Εξαντλήθηκε"
+      buy: "Αγορά", soldOut: "Εξαντλήθηκε",
+      cpnOff: "Έκπτωση {v}", cpnCode: "Ο κωδικός σου", cpnUntil: "Ισχύει έως {d}", cpnMin: "Για αγορές από {m}", cpnTest: "Κάθε αναγνώστης παίρνει τον δικό του κωδικό."
     }
   };
   function S(lang, k, p) {
@@ -351,6 +353,7 @@
                badge + "<td valign=\"top\" style=\"text-align:left\">" + info + "</td></tr></table></td></tr></table>";
       }
       case "prod": return prodHtml(b, st, img, t);
+      case "cpn": return cpnHtml(b, st, st.sub, t);
     }
     return "";      // a block from a newer orOS: not drawn here
   }
@@ -391,6 +394,39 @@
       return "<div style=\"display:inline-block;vertical-align:top;width:100%;max-width:" + cw + "px;margin:0 3px 16px;text-align:center\">" + pim + txt + btn + "</div>";
     });
     return per === 1 ? cards.join("") : "<div style=\"font-size:0;text-align:center;margin:0 0 8px\">" + cards.join("") + "</div>";
+  }
+  // A coupon (N1): the value, the code in a dashed box, the end date,
+  // the smallest order and a button. Personal codes: each reader's own.
+  function cpnDay(day, lang) { return day ? day.slice(8, 10) + "/" + day.slice(5, 7) + "/" + day.slice(0, 4) : ""; }
+  function cpnLines(b, lang) {
+    var out = [];
+    if (b.exp) out.push(S(lang, "cpnUntil", { d: cpnDay(b.exp, lang) }));
+    if (b.min) out.push(S(lang, "cpnMin", { m: C.couponValue({ dt: "fix", amt: b.min }, lang) }));
+    return out;
+  }
+  function cpnHtml(b, st, sub, t) {
+    var code = C.couponCode(b, st.iid || "", sub);
+    if (!code) return "";
+    var th = st.th, lang = st.lang, v = C.couponValue(b, lang);
+    var h = "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:0 0 20px;border:2px dashed " + st.accent +
+      ";border-radius:10px\"><tr><td align=\"center\" style=\"padding:18px 16px;text-align:center;font-family:" + st.font + ";color:" + th.text + "\">";
+    if (v) h += "<p style=\"margin:0 0 6px;font-size:" + Math.round(24 * st.hs) + "px;line-height:1.2;font-weight:800;color:" + st.accent + "\">" + esc(S(lang, "cpnOff", { v: v })) + "</p>";
+    if (b.t) h += "<p style=\"margin:0 0 10px;font-size:15px;line-height:1.5\">" + esc(t(b.t)) + "</p>";
+    h += "<p style=\"margin:0 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:" + th.dim + "\">" + esc(S(lang, "cpnCode")) + "</p>" +
+         "<p style=\"margin:0 0 10px;font-size:22px;line-height:1.3;font-weight:700;letter-spacing:2px;font-family:'Courier New',Courier,monospace\">" + esc(code) + "</p>";
+    var lines = cpnLines(b, lang);
+    if (b.per && !sub) lines.push(S(lang, "cpnTest"));
+    if (lines.length) h += "<p style=\"margin:0 0 6px;font-size:13px;line-height:1.5;color:" + th.dim + "\">" + lines.map(esc).join("<br>") + "</p>";
+    if (b.bt && b.bh) h += "<table role=\"presentation\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:10px auto 0\"><tr>" +
+      buttonHtml({ t: t(b.bt), href: b.bh }, st, false, false) + "</tr></table>";
+    return h + "</td></tr></table>";
+  }
+  function cpnText(b, sub, lang, iid, t) {
+    var code = C.couponCode(b, iid || "", sub);
+    if (!code) return "";
+    var v = C.couponValue(b, lang);
+    return [v ? S(lang, "cpnOff", { v: v }) : "", b.t ? t(b.t) : "", S(lang, "cpnCode") + ": " + code].concat(cpnLines(b, lang))
+      .concat(b.bt && b.bh ? [t(b.bt) + ": " + b.bh.replace(/^mailto:/i, "")] : []).filter(Boolean).join("\n");
   }
   function prodText(b, lang) {
     return (b.items || []).filter(function (p) { return p.name && p.href; }).map(function (p) {
@@ -438,7 +474,7 @@
       " style=\"margin:0 0 12px" + (b.bg ? ";background:" + b.bg + ";border-radius:6px" : "") + "\"><tr><td align=\"" + al + "\" style=\"text-align:" + al +
       ";padding:" + (b.pad || 0) + "px " + (b.bg ? 16 : 0) + "px\">" + inner + "</td></tr></table>";
   }
-  function blockText(b, sub, lang) {
+  function blockText(b, sub, lang, iid) {
     var t = function (s) { return personalize(s, sub); };
     switch (b.k) {
       case "h": { var h = inlineText(t(b.t)); return h + "\n" + new Array(Math.min(h.length, 60) + 1).join(b.lv === 3 ? "-" : "="); }
@@ -474,6 +510,7 @@
         return [t(b.t).toUpperCase(), b.d + (b.tm ? " " + b.tm + (b.te ? "\u2013" + b.te : "") : ""), b.loc ? t(b.loc) : "", b.sub ? paraText(t(b.sub)) : "",
                 b.bt && b.bh ? t(b.bt) + ": " + b.bh.replace(/^mailto:/i, "") : ""].filter(Boolean).join("\n");
       case "prod": return prodText(b, lang);
+      case "cpn": return cpnText(b, sub, lang, iid, t);
     }
     return "";
   }
@@ -485,8 +522,10 @@
   function email(o) {
     var lang = o.lang === "el" ? "el" : "en", l = o.list;
     var x = o.issue.l2 ? C.contentFor(o.issue, lang) : o.issue;     // the version in their language
+    if (x.fmt === "html") return htmlEmail(o, x, lang);
     var th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
     var st = lookOf(l, th, lang);
+    st.iid = o.issue.id || ""; st.sub = o.sub || null;            // personal coupon codes (N1)
     var body = blocksOf(x).map(function (b) { return blockHtml(b, st, o.img, o.sub); }).join("");
     var foot = footer(o, th, accent, lang);
     var pre = x.pre ? "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all\">" + esc(personalize(x.pre, o.sub)) +
@@ -496,9 +535,34 @@
       "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"max-width:600px;background:" + th.card +
       (l.theme === "plain" ? "" : ";border-radius:12px;border-top:4px solid " + accent) + "\"><tr><td style=\"padding:" + th.pad + "px;font-family:" + st.font +
       ";color:" + th.text + ";text-align:left\">" + body + "</td></tr></table>" + foot + "</td></tr></table>";
-    var text = blocksOf(x).map(function (b) { return blockText(b, o.sub, lang); }).filter(Boolean).join("\n\n") + "\n\n-- \n" + footText(o, lang);
+    var text = blocksOf(x).map(function (b) { return blockText(b, o.sub, lang, o.issue.id); }).filter(Boolean).join("\n\n") + "\n\n-- \n" + footText(o, lang);
     var subj = personalize(x.subj, o.sub);
     return { subject: (o.test ? S(lang, "test") : "") + subj, html: html, text: text };
+  }
+  // An HTML issue (W2): the user's own cleaned HTML as it is, names
+  // put in (escaped), {{UNSUBSCRIBE}} filled with the one-click page
+  // (or the mailto); without that link the list's footer is added.
+  // The plain text is the issue's own (txt) or built from the HTML.
+  function htmlEmail(o, x, lang) {
+    var l = o.list, th = THEMES[l.theme] || THEMES.classic, accent = l.color || "#2f6fde";
+    var who = o.sub ? { name: esc(o.sub.name || "") } : null;
+    var web = o.unsubWeb && /^https:\/\//.test(o.unsubWeb) ? o.unsubWeb : "";
+    var link = web || o.unsub || "#";
+    var raw = String(x.html || "");
+    var has = raw.indexOf(C.UNSUB) >= 0;
+    // {{COUPON}} (N1): this reader's code
+    var code = x.cpn ? C.couponCode(x.cpn, o.issue.id || "", o.sub) : "";
+    var fill = function (s, e) { return code ? s.replace(/\{\{\s*COUPON\s*\}\}/gi, e ? esc(code) : code) : s; };
+    var body = fill(personalize(raw, who), true).split(C.UNSUB).join(esc(link));
+    var pre = x.pre ? "<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all\">" + esc(personalize(x.pre, o.sub)) +
+                      new Array(40).join("&#8204;&nbsp;") + "</div>" : "";
+    var html = pre + body + (has ? "" : "<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><td align=\"center\">" +
+      footer(o, th, accent, lang) + "</td></tr></table>");
+    var own = String(x.txt || "").trim();
+    var text = fill(own ? personalize(own, o.sub).split(C.UNSUB).join(link === "#" ? "" : link)
+                        : personalize(C.htmlToText(raw.split(C.UNSUB).join("#")), o.sub), false)
+               + "\n\n-- \n" + footText(o, lang);
+    return { subject: (o.test ? S(lang, "test") : "") + personalize(x.subj, o.sub), html: html, text: text };
   }
   function footer(o, th, accent, lang) {
     var l = o.list, p = [];

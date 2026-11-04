@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.22.00
+- **Newsletter can take over from MailerLite.** Import a CSV export with each person's status, send issues written in your own HTML, and greet every new subscriber with a welcome e-mail. A one-click unsubscribe works in Gmail and Yahoo, and each issue gets a report.
+- **Coupons in your issues.** Add a coupon block with one shared code, or a code for each reader that orOS creates in your WooCommerce shop just before their e-mail goes out.
+- **Sign-ups at your shop's checkout.** With the same shop key in orOS Connect and in your list, people who tick the box at checkout join at once, without a confirmation e-mail.
+- **Purchases and win-back.** Read the purchases from your shop, make segments such as first purchase or no order in the last year, and start from the ready "Win back past customers" segment and layout.
+- **Issue from a product, and a notice when an issue goes out.** Start a new issue from a product in your shop. A list can also send a short signed notice when an issue has been sent, for example to your site's Broadcast plugin to post it on Viber.
+
 ## Version 5.21.00
 - **See every AI the Assistant can use.** Assistant › Settings now lists under `Connected services and order` every service set up on this device, numbered in the order they answer, with your assistant marked `first choice`. Choosing a new assistant puts it first and keeps the others connected as stand-ins, also when your first choice is an online service: if it can't answer, the next one in the list does. Untick a service to leave it out; services not set up yet sit under one line you can open.
 

@@ -25,6 +25,7 @@
   }
   function bodyText(x) {
     if (x.fmt === "md") return str(x.md).replace(/[#*\[\]()!>_`-]+/g, " ");
+    if (x.fmt === "html") return str(x.txt) || str(x.html).replace(/<[^>]*>/g, " ").replace(/&[#a-z0-9]{1,10};/gi, " ");
     return (Array.isArray(x.blocks) ? x.blocks : []).map(function (b) {
       if (!b || typeof b !== "object") return "";
       if (b.k === "cols") return [str(b.a), str(b.b)].join(" ");
