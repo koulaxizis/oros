@@ -96,6 +96,11 @@ Schalte in den Einstellungen `Künstlerseiten online (MusicBrainz, Wikipedia)` e
 
 Was gesendet wird: deine Suchwörter, die MusicBrainz- und Wikidata-IDs des Künstlers und der Wikipedia-Titel; nichts über deine Musik oder was du hörst. Antworten bleiben bis zu 30 Tage auf diesem Gerät.
 
+**Entdecken.** Mit eingeschaltetem Schalter hat die Startseite auch `Neu von Künstlern, denen du folgst`, `Top-Künstler der Woche` und `Neuerscheinungen` (ListenBrainz, offene Daten der MetaBrainz Foundation). Die Seite eines Künstlers hat zusätzlich `Fans hören auch` und eine Taste für Radiosender seines Genres in Radio. `Künstlerradio` (die Taste mit der Antenne) spielt gemischt freie Songs dieses Künstlers und von bis zu sechs Künstlern, die seine Fans auch hören. Bitte den Assistenten, einen Künstler zu spielen, dem du folgst, und er startet dessen Künstlerradio.
+
+## ListenBrainz
+`ListenBrainz-Konto…` in den Einstellungen verbindet dein eigenes kostenloses ListenBrainz-Konto: Füge deinen User-Token aus listenbrainz.org › Settings ein. Der Token bleibt verschlossen auf diesem Gerät und geht nur an ListenBrainz; jedes Gerät wird einzeln verbunden. Mit `Senden, was ich höre` zählt ein Song nach der Hälfte oder vier Minuten, und Titel, Künstler, Album, Länge und Quelle gehen an dein ListenBrainz-Profil; offline Gehörtes wird später gesendet. `Aus deinem ListenBrainz` auf der Startseite zeigt die Playlists, die ListenBrainz für dich erstellt (wie Weekly Jams), und deine eigenen: Songs auf diesem Gerät spielen, `Songs, die hier spielen, als Playlist speichern` behält sie, und die übrigen zeigen, wo sie ganz zu hören sind. `Dieses Gerät trennen` löscht den Token hier.
+
 ## Cover und andere Apps
 `Fehlende Cover online suchen` in den Einstellungen oder `Cover online suchen` auf der ⋯-Schaltfläche eines Albums fragt MusicBrainz und das Cover Art Archive nach Covern für Alben, die keins haben; gesendet werden nur Album- und Künstlernamen. Die ⋯-Schaltfläche eines Albums hat auch `Zum Medienregal hinzufügen`. `In Montage verwenden` bei einem Song öffnet ihn in Montage: einen Song dieses Geräts so, wie er ist, einen freien Song, dessen Lizenz Änderungen erlaubt, zuerst gespeichert in `Dateien › Music › Free music`, mit kopierter Quellenangabe für dein Video.
 

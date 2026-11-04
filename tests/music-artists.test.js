@@ -165,3 +165,45 @@ test("followed artists: merge, unfollow, old data unchanged", () => {
   assert.equal(C.setFollow(base, { id: "nope", n: "x" }, true, 5).fa, undefined);
   assert.deepEqual(C.canon(m), m, "canonical");
 });
+
+test("ListenBrainz charts, fresh releases, similar artists (wave 6c)", () => {
+  assert.equal(A.topArtistsUrl("bad"), "https://api.listenbrainz.org/1/stats/sitewide/artists?range=week&count=30");
+  assert.deepEqual(A.parseTopArtists({ payload: { artists: [
+    { artist_mbid: BEATLES, artist_name: "The Beatles", listen_count: 900 },
+    { artist_mbids: [LENNON], artist_name: "John Lennon", listen_count: 5 },
+    { artist_name: "No id", listen_count: 3 }, { artist_mbid: BEATLES, artist_name: "dup" }] } }),
+  [{ id: BEATLES, n: "The Beatles", c: 900 }, { id: LENNON, n: "John Lennon", c: 5 }]);
+  const fr = A.parseFresh({ payload: { releases: [
+    { release_group_mbid: RG, release_name: "Old", artist_credit_name: "X", artist_mbids: [BEATLES], release_date: "2026-10-01", caa_release_mbid: "b0000000-0000-4000-8000-000000000002" },
+    { release_group_mbid: "21111111-2222-4333-8444-555555555555", release_name: "New", artist_credit_name: "Y", artist_mbids: [LENNON, "bad"], release_date: "2026-11-01" },
+    { release_group_mbid: "nope", release_name: "bad" }] } });
+  assert.deepEqual(fr.map((r) => r.n), ["New", "Old"]);
+  assert.deepEqual(fr[0].all, [LENNON]);
+  assert.equal(fr[1].art, "https://coverartarchive.org/release/b0000000-0000-4000-8000-000000000002/front-250");
+  const sim = [{ artist_mbid: LENNON, name: "John Lennon", score: 10 }, { artist_mbid: BEATLES, name: "self", score: 99 }, { artist_mbid: "x", name: "bad" }];
+  assert.deepEqual(A.parseSimilar(sim, BEATLES), [{ id: LENNON, n: "John Lennon", sc: 10 }]);
+  assert.deepEqual(A.parseSimilar([{ type: "similar", data: sim }], BEATLES).map((x) => x.id), [LENNON]);
+  assert.match(A.similarUrl(BEATLES), /^https:\/\/labs\.api\.listenbrainz\.org\/similar-artists\/json\?artist_mbids=b10bbbfc/);
+});
+
+test("ListenBrainz with my own token (wave 6d): listens and playlists", () => {
+  const L = require(path.join(__dirname, "..", "music/lb.js"));
+  assert.ok(L.okToken("0b7e2a4c-1f3d-4e5a-9b8c-7d6e5f4a3b2c"));
+  assert.ok(!L.okToken("hello"));
+  assert.equal(L.listenAt(600), 240);
+  assert.equal(L.listenAt(200), 100);
+  assert.equal(L.listenAt(20), Infinity);
+  assert.equal(L.listenAt(0), 240);
+  const l = L.listen({ k: "jm:abcdef1", t: "Song\u0007", a: "Band", al: "LP", d: 200, s: "jm", pg: "https://www.jamendo.com/track/1" }, 1700000000123, "5.33.00");
+  assert.deepEqual(l, { track_metadata: { artist_name: "Band", track_name: "Song", release_name: "LP",
+    additional_info: { media_player: "orOS Music", submission_client: "orOS Music", submission_client_version: "5.33.00", duration_ms: 200000, music_service: "jamendo.com", origin_url: "https://www.jamendo.com/track/1" } }, listened_at: 1700000000 });
+  assert.equal(L.listen({ t: "x", a: "" }, 1), null);
+  assert.equal("listened_at" in L.listen({ t: "x", a: "y" }, 0), false, "playing now has no time");
+  assert.deepEqual(L.payload("single", [l]).listen_type, "single");
+  const jspf = { playlist: { title: "Weekly Jams for chris", creator: "listenbrainz", identifier: "https://listenbrainz.org/playlist/c0000000-0000-4000-8000-000000000001",
+    track: [{ title: "Ripple", creator: "Grateful Dead", album: "American Beauty", duration: 250000, identifier: ["https://musicbrainz.org/recording/a0000000-0000-4000-8000-000000000001"] }, { creator: "no title" }] } };
+  const p = L.parsePlaylist(jspf);
+  assert.equal(p.id, "c0000000-0000-4000-8000-000000000001");
+  assert.deepEqual(p.tracks, [{ t: "Ripple", a: "Grateful Dead", n: 1, al: "American Beauty", d: 250, rid: "a0000000-0000-4000-8000-000000000001" }]);
+  assert.deepEqual(L.parsePlaylists({ playlists: [jspf, { playlist: { title: "no id" } }] }).map((x) => x.n), ["Weekly Jams for chris"]);
+});

@@ -190,7 +190,17 @@
       "mb.nFree": "{n} free here", "mb.albumNone": "None of these songs is free to play here. The ⋯ button has links to where the album can be heard in full.",
       "mb.l.home": "Official site", "mb.l.listen": "Listen on {s}", "mb.l.buy": "Buy on {s}", "mb.l.info": "{s}", "mb.l.mb": "Open in MusicBrainz", "mb.l.wiki": "Read on Wikipedia",
       "mb.ty.person": "Person", "mb.ty.group": "Group", "mb.ty.orchestra": "Orchestra", "mb.ty.choir": "Choir", "mb.ty.character": "Character",
-      "mb.credit": "Artist details: MusicBrainz (CC0), Wikidata (CC0), Wikipedia (CC BY-SA 4.0). Covers: Cover Art Archive.", "mb.creditAlbum": "Track list: MusicBrainz (CC0). Cover: Cover Art Archive.",
+      "mb.newFollow": "New from artists you follow", "mb.top": "Top artists this week", "mb.topSub": "What the world listens to most this week (ListenBrainz). Their pages show what plays free here.",
+      "mb.fresh": "Fresh releases", "mb.similar": "Fans also like", "mb.stations": "Radio stations: {g}", "mb.radio": "Artist radio", "mb.radioOf": "Radio: {n}",
+      "mb.radioBusy": "Building the radio from free songs…", "mb.radioNone": "No free songs of {n} or similar artists were found.",
+      "lb.btn": "ListenBrainz account…", "lb.btnAs": "ListenBrainz: {u}", "lb.intro": "Connect your own free ListenBrainz account (MetaBrainz Foundation) to send what you listen to here, and to see the playlists ListenBrainz makes for you. Paste your user token from listenbrainz.org › Settings. It stays on this device, locked, and goes only to ListenBrainz.",
+      "lb.token": "User token", "lb.get": "Get my token at listenbrainz.org", "lb.connect": "Connect", "lb.checking": "Checking…", "lb.connected": "Connected to ListenBrainz as {u}.",
+      "lb.errFormat": "That is not a ListenBrainz user token (it looks like 8-4-4-4-12 letters and digits).", "lb.errToken": "ListenBrainz did not accept this token.",
+      "lb.as": "Connected as {u}.", "lb.send": "Send what I listen to", "lb.sendHint": "A song counts after half of it or four minutes. Sent: title, artist, album, length and where it played from. Listens made offline go later.",
+      "lb.queued": "Waiting to be sent: {n}.", "lb.profile": "Open my ListenBrainz page", "lb.disconnect": "Disconnect this device", "lb.gone": "ListenBrainz is disconnected on this device.",
+      "lb.home": "From your ListenBrainz", "lb.none": "No playlists on ListenBrainz yet.", "lb.noneHere": "None of these songs is on this device or your servers. A tap shows where they can be heard in full.",
+      "lb.save": "Save the songs that play here as a playlist", "lb.open": "Open on ListenBrainz",
+      "mb.credit": "Artist details: MusicBrainz (CC0), Wikidata (CC0), Wikipedia (CC BY-SA 4.0); fans also like: ListenBrainz. Covers: Cover Art Archive.", "mb.creditAlbum": "Track list: MusicBrainz (CC0). Cover: Cover Art Archive.",
       "time.min": "{m} min", "time.h": "{h} h {m} min",
       "month.1": "January", "month.2": "February", "month.3": "March", "month.4": "April", "month.5": "May", "month.6": "June",
       "month.7": "July", "month.8": "August", "month.9": "September", "month.10": "October", "month.11": "November", "month.12": "December"
@@ -341,7 +351,17 @@
       "mb.nFree": "{n} ελεύθερα εδώ", "mb.albumNone": "Κανένα από αυτά τα τραγούδια δεν παίζει ελεύθερα εδώ. Το κουμπί ⋯ έχει συνδέσμους για να ακούσεις το άλμπουμ ολόκληρο.",
       "mb.l.home": "Επίσημο site", "mb.l.listen": "Άκου στο {s}", "mb.l.buy": "Αγόρασε στο {s}", "mb.l.info": "{s}", "mb.l.mb": "Άνοιγμα στο MusicBrainz", "mb.l.wiki": "Διάβασε στη Wikipedia",
       "mb.ty.person": "Πρόσωπο", "mb.ty.group": "Συγκρότημα", "mb.ty.orchestra": "Ορχήστρα", "mb.ty.choir": "Χορωδία", "mb.ty.character": "Χαρακτήρας",
-      "mb.credit": "Στοιχεία καλλιτέχνη: MusicBrainz (CC0), Wikidata (CC0), Wikipedia (CC BY-SA 4.0). Εξώφυλλα: Cover Art Archive.", "mb.creditAlbum": "Λίστα τραγουδιών: MusicBrainz (CC0). Εξώφυλλο: Cover Art Archive.",
+      "mb.newFollow": "Νέα από καλλιτέχνες που ακολουθείς", "mb.top": "Κορυφαίοι καλλιτέχνες της εβδομάδας", "mb.topSub": "Ό,τι ακούει περισσότερο ο κόσμος αυτή την εβδομάδα (ListenBrainz). Οι σελίδες τους δείχνουν τι παίζει ελεύθερα εδώ.",
+      "mb.fresh": "Νέες κυκλοφορίες", "mb.similar": "Οι θαυμαστές ακούν και", "mb.stations": "Ραδιοφωνικοί σταθμοί: {g}", "mb.radio": "Ραδιόφωνο καλλιτέχνη", "mb.radioOf": "Ραδιόφωνο: {n}",
+      "mb.radioBusy": "Φτιάχνω το ραδιόφωνο από ελεύθερα τραγούδια…", "mb.radioNone": "Δεν βρέθηκαν ελεύθερα τραγούδια: {n} ή παρόμοιοι καλλιτέχνες.",
+      "lb.btn": "Λογαριασμός ListenBrainz…", "lb.btnAs": "ListenBrainz: {u}", "lb.intro": "Σύνδεσε τον δικό σου δωρεάν λογαριασμό ListenBrainz (MetaBrainz Foundation) για να στέλνεις ό,τι ακούς εδώ και να βλέπεις τις λίστες που φτιάχνει για σένα το ListenBrainz. Επικόλλησε το user token σου από το listenbrainz.org › Settings. Μένει κλειδωμένο σε αυτή τη συσκευή και πηγαίνει μόνο στο ListenBrainz.",
+      "lb.token": "User token", "lb.get": "Πάρε το token σου στο listenbrainz.org", "lb.connect": "Σύνδεση", "lb.checking": "Έλεγχος…", "lb.connected": "Συνδέθηκες στο ListenBrainz ως {u}.",
+      "lb.errFormat": "Αυτό δεν είναι user token του ListenBrainz (μοιάζει με 8-4-4-4-12 γράμματα και ψηφία).", "lb.errToken": "Το ListenBrainz δεν δέχτηκε αυτό το token.",
+      "lb.as": "Συνδεδεμένος ως {u}.", "lb.send": "Στέλνε ό,τι ακούω", "lb.sendHint": "Ένα τραγούδι μετρά μετά τη μέση του ή τα τέσσερα λεπτά. Στέλνονται: τίτλος, καλλιτέχνης, άλμπουμ, διάρκεια και από πού έπαιξε. Όσα ακούς χωρίς σύνδεση στέλνονται αργότερα.",
+      "lb.queued": "Περιμένουν να σταλούν: {n}.", "lb.profile": "Άνοιξε τη σελίδα μου στο ListenBrainz", "lb.disconnect": "Αποσύνδεση αυτής της συσκευής", "lb.gone": "Το ListenBrainz αποσυνδέθηκε σε αυτή τη συσκευή.",
+      "lb.home": "Από το ListenBrainz σου", "lb.none": "Δεν υπάρχουν ακόμα λίστες στο ListenBrainz.", "lb.noneHere": "Κανένα από αυτά τα τραγούδια δεν είναι σε αυτή τη συσκευή ή στους servers σου. Με ένα πάτημα βλέπεις πού ακούγονται ολόκληρα.",
+      "lb.save": "Αποθήκευση όσων παίζουν εδώ ως λίστα", "lb.open": "Άνοιγμα στο ListenBrainz",
+      "mb.credit": "Στοιχεία καλλιτέχνη: MusicBrainz (CC0), Wikidata (CC0), Wikipedia (CC BY-SA 4.0)· παρόμοιοι καλλιτέχνες: ListenBrainz. Εξώφυλλα: Cover Art Archive.", "mb.creditAlbum": "Λίστα τραγουδιών: MusicBrainz (CC0). Εξώφυλλο: Cover Art Archive.",
       "time.min": "{m} λεπ.", "time.h": "{h} ώρ. {m} λεπ.",
       "month.1": "Ιανουάριος", "month.2": "Φεβρουάριος", "month.3": "Μάρτιος", "month.4": "Απρίλιος", "month.5": "Μάιος", "month.6": "Ιούνιος",
       "month.7": "Ιούλιος", "month.8": "Αύγουστος", "month.9": "Σεπτέμβριος", "month.10": "Οκτώβριος", "month.11": "Νοέμβριος", "month.12": "Δεκέμβριος"
@@ -1707,7 +1727,9 @@
     var pool = mbPool(names);
     var img = w && w.im || "";
     var fol = C.isFollowed(D(), a.id);
+    if (v.radio && !v._r) { v._r = 1; setTimeout(function () { artistRadio(a, name, names); }, 0); }
     var extra = [
+      button(t("mb.radio"), "icon-btn", function () { artistRadio(a, name, names); }, I.rss),
       button(fol ? t("mb.following") : t("mb.follow"), "pill" + (fol ? " on" : ""), function () {
         mutate(function (d, now) { return C.setFollow(d, { id: a.id, n: name, im: img }, !fol, now); });
         showToast(fol ? t("mb.unfollowed", { n: name }) : t("mb.followed", { n: name }));
@@ -1762,6 +1784,19 @@
       });
       m.appendChild(row);
     });
+    // Fans also like (ListenBrainz) + stations of the genre (Radio).
+    var ks = "mbs|" + a.id, fs = feed(ks, fOne(function () { return A.similar(a.id); }));
+    if (fs.extra && fs.extra.length) {
+      m.appendChild(el("h2", "sub-h", t("mb.similar")));
+      var rs = el("div", "cards");
+      fs.extra.slice(0, 16).forEach(function (x) { rs.appendChild(mbArtistCard(x)); });
+      m.appendChild(rs);
+    }
+    if (a.g.length) {
+      var rg = el("div", "o-note");
+      rg.appendChild(button(t("mb.stations", { g: a.g[0] }), "pill small-pill", function () { openApp("radio", { tag: a.g[0] }); }));
+      m.appendChild(rg);
+    }
     // Discography.
     var kg = "mbg|" + a.id, fg = feed(kg, fOne(function () { return A.groups(a.id); }));
     if (fg.extra) {
@@ -1777,6 +1812,60 @@
     } else { m.appendChild(el("h2", "sub-h", t("mb.disc"))); oneStatus(m, kg, MB_NAME); }
     var cr = el("p", "dim small mb-credit", t("mb.credit"));
     m.appendChild(cr);
+  }
+  // Discover (wave 6c): ListenBrainz world charts and fresh releases,
+  // new releases of the artists I follow. Home only, while the
+  // switch is on.
+  function freshCard(r) {
+    return card(cover(r.art || A.caa(r.id), r.n, ""), r.n, [r.a, r.d].filter(Boolean).join(" · "), function () { openView({ kind: "mbr", id: r.id, n: r.n, a: r.a, ai: r.ai }); });
+  }
+  function discoverSection(m) {
+    if (!A || !O || !prefs.mb) return;
+    var kf = "lb|fresh", ff = feed(kf, fOne(function () { return A.fresh(14); }));
+    var kt = "lb|top", ft = feed(kt, fOne(function () { return A.topArtists("week"); }));
+    var fol = {};
+    C.followed(D(), LANG).forEach(function (f) { fol[f.k] = 1; });
+    var mine = (ff.extra || []).filter(function (r) { return (r.all || [r.ai]).some(function (id) { return fol[id]; }); });
+    if (mine.length) {
+      var s0 = section(m, t("mb.newFollow"));
+      var r0 = el("div", "cards"); mine.slice(0, 20).forEach(function (r) { r0.appendChild(freshCard(r)); }); s0.appendChild(r0);
+    }
+    var s1 = section(m, t("mb.top"));
+    s1.appendChild(el("p", "dim small sec-note", t("mb.topSub")));
+    if (ft.extra && ft.extra.length) {
+      var r1 = el("div", "cards"); ft.extra.slice(0, 20).forEach(function (a) { r1.appendChild(mbArtistCard(a)); }); s1.appendChild(r1);
+    } else oneStatus(s1, kt, "ListenBrainz");
+    var s2 = section(m, t("mb.fresh"));
+    if (ff.extra && ff.extra.length) {
+      var r2 = el("div", "cards"); ff.extra.slice(0, 24).forEach(function (r) { r2.appendChild(freshCard(r)); }); s2.appendChild(r2);
+    } else oneStatus(s2, kf, "ListenBrainz");
+  }
+  // Free songs of one artist by name (this device, open catalogues).
+  function freeOf(name) {
+    var local = A.byArtist(tracks, [name]);
+    if (!openOn()) return Promise.resolve(local);
+    var safe = function (p) { return p.then(function (r) { return r.tracks || []; }, function () { return []; }); };
+    return Promise.all([safe(O.jmTracks({ q: name })), safe(O.ovSearch({ creator: name }))]).then(function (l) {
+      return local.concat(A.byArtist(l[0].concat(l[1]), [name]));
+    });
+  }
+  // Artist radio: this artist's free songs and those of the artists
+  // fans also like (up to six), shuffled. Only songs that play here.
+  var radioBusy = false;
+  function artistRadio(a, name, names) {
+    if (radioBusy) return;
+    radioBusy = true;
+    showToast(t("mb.radioBusy"));
+    var base = mbPool(names).songs.slice(0, 25);
+    A.similar(a.id).catch(function () { return []; }).then(function (sim) {
+      return Promise.all(sim.slice(0, 6).map(function (x) { return freeOf(x.n).then(function (l) { return l.slice(0, 10); }); }));
+    }).then(function (lists) {
+      radioBusy = false;
+      var seen = {}, out = [];
+      [base].concat(lists).forEach(function (l) { l.forEach(function (r) { if (r && r.k && !seen[r.k]) { seen[r.k] = 1; out.push(r); } }); });
+      if (!out.length) { showToast(t("mb.radioNone", { n: name })); return; }
+      playRows(out, -1, { kind: "mbradio", id: a.id, n: t("mb.radioOf", { n: name }) }, true);
+    }, function () { radioBusy = false; showToast(t("mb.radioNone", { n: name })); });
   }
   function renderMbAlbum(m, v) {
     var k = "mbr|" + v.id, f = feed(k, fOne(function () { return A.album(v.id); }));
@@ -1821,6 +1910,117 @@
     if (pool.busy) m.appendChild(el("p", "dim small o-note", t("o.loading")));
     else if (!nFree) m.appendChild(el("p", "dim small o-note", t("mb.albumNone")));
     m.appendChild(el("p", "dim small mb-credit", t("mb.creditAlbum")));
+  }
+
+  // ---------- 3f. ListenBrainz with my own account (lb.js, wave 6d) ----------
+  var LB = window.OrosMusicLB || null;
+  function lbErr(e) {
+    var c = e && e.code;
+    return c === "format" ? t("lb.errFormat") : c === "token" ? t("lb.errToken") : c === "busy" ? t("o.busy", { s: "ListenBrainz" }) : t("o.err", { s: "ListenBrainz" });
+  }
+  function lbDlg() {
+    if (!LB) return;
+    var dlg = makeDialog("mu-lb", "menu-dlg");
+    dlg.appendChild(el("h2", "dlg-title", "ListenBrainz"));
+    var p = LB.prefs();
+    if (!p) {
+      dlg.appendChild(el("p", "dim small", t("lb.intro")));
+      var form = el("form", "");
+      form.method = "dialog";
+      var lab = el("label", "field");
+      lab.appendChild(el("span", "dim small", t("lb.token")));
+      var inp = el("input");
+      inp.type = "password"; inp.autocomplete = "off"; inp.spellcheck = false; inp.maxLength = 64;
+      inp.setAttribute("autocapitalize", "none");
+      lab.appendChild(inp);
+      form.appendChild(lab);
+      var msg = el("p", "dim small", "");
+      form.appendChild(msg);
+      var col = el("div", "menu-col");
+      col.appendChild(button(t("lb.get"), "", function () { openExt("https://listenbrainz.org/settings/"); }));
+      form.appendChild(col);
+      var row = el("div", "dlg-btns");
+      row.appendChild(button(t("cancel"), "txt-btn", function () { dlg.close(); }));
+      var ok = el("button", "txt-btn accent", t("lb.connect"));
+      ok.type = "submit";
+      row.appendChild(ok);
+      form.appendChild(row);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        ok.disabled = true; msg.textContent = t("lb.checking");
+        LB.connect(inp.value).then(function (u) {
+          inp.value = "";
+          dlg.close();
+          showToast(t("lb.connected", { u: u }));
+          renderKeepScroll();
+        }, function (err) { ok.disabled = false; msg.textContent = lbErr(err); });
+      });
+      dlg.appendChild(form);
+    } else {
+      dlg.appendChild(el("p", "", t("lb.as", { u: p.u })));
+      var cl = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox"; cb.checked = !!p.on;
+      cb.addEventListener("change", function () { LB.setPrefs({ u: p.u, on: cb.checked }); });
+      cl.appendChild(cb);
+      cl.appendChild(el("span", "", t("lb.send")));
+      dlg.appendChild(cl);
+      dlg.appendChild(el("p", "dim small", t("lb.sendHint")));
+      var nq = LB.queue().length;
+      if (nq) dlg.appendChild(el("p", "dim small", t("lb.queued", { n: nq })));
+      var c2 = el("div", "menu-col");
+      c2.appendChild(button(t("lb.profile"), "", function () { openExt("https://listenbrainz.org/user/" + encodeURIComponent(p.u) + "/"); }));
+      c2.appendChild(button(t("lb.disconnect"), "danger", function () { LB.forget().then(function () { dlg.close(); showToast(t("lb.gone")); renderKeepScroll(); }); }));
+      dlg.appendChild(c2);
+      var r2 = el("div", "dlg-btns");
+      r2.appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
+      dlg.appendChild(r2);
+    }
+    openDialog(dlg);
+  }
+  // Home: the playlists ListenBrainz makes for me, and my own.
+  function lbSection(m) {
+    var p = LB && LB.prefs();
+    if (!p) return;
+    var k = "lb|pls|" + p.u, f = feed(k, fOne(function () { return LB.playlists(p.u); }));
+    var s = section(m, t("lb.home"));
+    if (f.extra && f.extra.length) {
+      var row = el("div", "cards");
+      f.extra.slice(0, 16).forEach(function (pl) { row.appendChild(card(cover("", pl.n, "", I.queue), pl.n, pl.by || "ListenBrainz", function () { openView({ kind: "lbpl", id: pl.id, n: pl.n }); })); });
+      s.appendChild(row);
+    } else if (f.extra) s.appendChild(el("p", "dim small o-note", t("lb.none")));
+    else if (feeds[k] && feeds[k].err) { var e = el("div", "o-note o-err"); e.appendChild(el("span", "dim small", lbErr({ code: feeds[k].err }))); s.appendChild(e); }
+    else s.appendChild(el("p", "dim small o-note", t("o.loading")));
+  }
+  // A ListenBrainz playlist: songs this device or my servers have
+  // play; the others link to MusicBrainz.
+  function renderLbPl(m, v) {
+    var k = "lbpl|" + v.id, f = feed(k, fOne(function () { return LB.playlist(v.id); }));
+    var pl = f.extra;
+    var src = { kind: "lbpl", id: v.id, n: (pl && pl.n) || v.n || "" };
+    if (!pl) {
+      pageHead(m, cover("", v.n || "", "big", I.queue), t("kind.pl") + " · ListenBrainz", v.n || "?", null, null, src);
+      if (feeds[k] && feeds[k].err) { var e = el("div", "o-note o-err"); e.appendChild(el("span", "dim small", lbErr({ code: feeds[k].err }))); e.appendChild(button(t("o.retry"), "pill small-pill", function () { feeds[k].more = true; feedMore(k); renderKeepScroll(); })); m.appendChild(e); }
+      else m.appendChild(el("p", "dim small o-note", t("o.loading")));
+      return;
+    }
+    var rows = pl.tracks.map(function (x) {
+      var hit = resolve(x) || (A ? A.matchTracks([x], tracks)[0] : null);
+      if (hit && !hit._mb) return Object.assign({}, hit, { n: x.n });
+      return Object.assign({ _mb: 1, k: "lb:" + C.hash(x.rid || (x.t + "|" + x.a)) }, x);
+    });
+    var free = rows.filter(function (x) { return !x._mb; });
+    var sub = el("div", "ph-sub dim", [pl.by, nSongs(rows.length), A ? t("mb.nFree", { n: free.length }) : ""].filter(Boolean).join(" · "));
+    var extra = [];
+    if (free.length) extra.push(button(t("lb.save"), "icon-btn", function () {
+      var refs = free.map(function (x) { return C.normRef(C.refOf(x)); }).filter(Boolean);
+      mutate(function (d, now) { return C.addPl(d, pl.n, refs, now); });
+      showToast(t("toast.mixSaved", { n: pl.n }));
+    }, I.plus));
+    extra.push(button(t("more"), "icon-btn", function () { menuDlg([[t("lb.open"), function () { openExt("https://listenbrainz.org/playlist/" + v.id + "/"); }]], pl.n, pl.by); }, I.more));
+    pageHead(m, cover("", pl.n, "big", I.queue), t("kind.pl") + " · ListenBrainz", pl.n, sub, free.length ? rows : null, src, extra);
+    m.appendChild(rowList(rows, { src: src, numbers: true }));
+    if (!free.length) m.appendChild(el("p", "dim small o-note", t("lb.noneHere")));
   }
 
   // ---------- 4. Actions ----------
@@ -2004,7 +2204,7 @@
     return h < 12 && h >= 5 ? t("hello.m") : h < 18 && h >= 5 ? t("hello.a") : t("hello.e");
   }
   function renderHome(m) {
-    if (!tracks.length && !D().pls.length && !C.likedList(D()).length && !svList().length) { emptyHero(m); followSection(m); freeSection(m); return; }
+    if (!tracks.length && !D().pls.length && !C.likedList(D()).length && !svList().length) { emptyHero(m); followSection(m); lbSection(m); discoverSection(m); freeSection(m); return; }
     m.appendChild(el("h1", "greet", greeting()));
     // Quick tiles: liked songs, playlists, shuffle all.
     var tiles = el("div", "tiles");
@@ -2059,6 +2259,8 @@
       }
     }
     followSection(m);
+    lbSection(m);
+    discoverSection(m);
     var arts = artistsAll().slice(0, 12);
     if (arts.length) {
       var s4 = section(m, t("sec.artists"));
@@ -2378,6 +2580,8 @@
       m.appendChild(rowList(gl, { src: src }));
     } else if (O && (v.kind === "browse" || v.kind === "ogenre" || v.kind === "omood" || v.kind === "ia" || v.kind === "jm" || v.kind === "oartist")) {
       renderOpen(m, v);
+    } else if (LB && v.kind === "lbpl") {
+      renderLbPl(m, v);
     } else if (A && O && (v.kind === "mba" || v.kind === "mbr")) {
       renderMb(m, v);
     } else if (SV && /^(sv|svall|svar|sva|svr|svp|svf)$/.test(v.kind)) {
@@ -3264,6 +3468,10 @@
     dlg.appendChild(el("p", "dim small", t("s.lrclibHint")));
     var col = el("div", "menu-col");
     if (hasSound()) col.appendChild(button(t("snd.title"), "", function () { dlg.close(); soundDlg(); }));
+    if (LB) {
+      var lp = LB.prefs();
+      col.appendChild(button(lp ? t("lb.btnAs", { u: lp.u }) : t("lb.btn"), "", function () { dlg.close(); lbDlg(); }));
+    }
     if (MX && tracks.length) {
       col.appendChild(button(t("cv.find"), "", function () { dlg.close(); findCovers(albumsAll()); }));
       col.appendChild(el("p", "dim small", t("cv.hint")));
@@ -3449,7 +3657,7 @@
     else if (typeof tg.pl === "string" && C.findPl(D(), tg.pl)) openView({ kind: "pl", id: tg.pl });
     else if (tg.liked) openView({ kind: "liked" });
     else if (typeof tg.ia === "string" && O) openView({ kind: "ia", id: tg.ia });
-    else if (A && O && typeof tg.mbartist === "string" && C.MBID_RE.test(tg.mbartist)) openView({ kind: "mba", id: tg.mbartist, n: typeof tg.n === "string" ? tg.n.slice(0, 200) : "" });
+    else if (A && O && typeof tg.mbartist === "string" && C.MBID_RE.test(tg.mbartist)) openView({ kind: "mba", id: tg.mbartist, n: typeof tg.n === "string" ? tg.n.slice(0, 200) : "", radio: tg.radio ? 1 : 0 });
     else if (typeof tg.jm === "string" && O) openView({ kind: "jm", id: tg.jm });
     else if (typeof tg.mix === "string" && MX && MIXES[tg.mix]) openView({ kind: "mix", id: tg.mix });
     else if (/^\d{4}$/.test(String(tg.recap || "")) && MX) openView({ kind: "recap", id: String(tg.recap) });

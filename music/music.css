@@ -423,3 +423,7 @@ dl.info dd { overflow-wrap: anywhere; }
 .mb-row .row-main { cursor: pointer; }
 .mb-credit { margin: 24px 0 8px; }
 .mb-bio .link { min-height: 36px; display: inline-flex; align-items: center; }
+.play-bar { flex-wrap: wrap; }
+.play-bar > .big-play, .play-bar > .icon-btn { flex: 0 0 auto; }
+.play-bar > .pill { padding: 0 14px; }
+@media (max-width: 380px) { .play-bar { gap: 4px; } }

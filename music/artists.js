@@ -13,6 +13,8 @@
 //                      Commons photo (P18) when no article has one. CC0.
 //   Wikipedia          a short bio in the app language (else English),
 //                      text CC BY-SA 4.0, always shown with its link.
+//   ListenBrainz       (wave 6c) world charts of the week, fresh
+//                      releases and "fans also like" (similar artists).
 // What is sent: the search words, the MusicBrainz / Wikidata ids and
 // the Wikipedia title. Nothing about the person's music.
 // Full songs play only where they are free to play: the person's
@@ -316,6 +318,62 @@
     return (list || []).filter(function (r) { return r && ns.some(function (n) { return sameArtist(r.a, n); }); });
   }
 
+  // ---------- 6b. ListenBrainz (wave 6c): world charts, fresh releases, similar artists ----------
+  // Open data of the MetaBrainz Foundation, no key for these.
+  var LB = "https://api.listenbrainz.org/1/";
+  var RANGES = ["week", "month", "year"];
+  function topArtistsUrl(range) { return LB + "stats/sitewide/artists?" + qs({ range: RANGES.indexOf(range) >= 0 ? range : "week", count: 30 }); }
+  function firstMbid(x) {
+    if (!x) return "";
+    if (mbId(x.artist_mbid)) return x.artist_mbid;
+    var l = Array.isArray(x.artist_mbids) ? x.artist_mbids : [];
+    return mbId(l[0]) || "";
+  }
+  function parseTopArtists(j) {
+    var list = j && j.payload && Array.isArray(j.payload.artists) ? j.payload.artists : [];
+    var seen = {};
+    return list.map(function (x) {
+      var id = firstMbid(x);
+      if (!id || seen[id]) return null;
+      seen[id] = 1;
+      return { id: id, n: str(x.artist_name) || "?", c: +x.listen_count || 0 };
+    }).filter(Boolean);
+  }
+  function freshUrl(days) { return LB + "explore/fresh-releases/?" + qs({ days: Math.max(1, Math.min(30, days || 14)), sort: "release_date", past: "true", future: "false" }); }
+  function caaRelease(id) { return mbId(id) ? "https://coverartarchive.org/release/" + id + "/front-250" : ""; }
+  function parseFresh(j) {
+    var list = j && j.payload && Array.isArray(j.payload.releases) ? j.payload.releases : [];
+    var seen = {};
+    var out = list.map(function (x) {
+      var id = mbId(x && x.release_group_mbid);
+      if (!id || seen[id]) return null;
+      seen[id] = 1;
+      var d = /^\d{4}-\d{2}-\d{2}$/.test(x.release_date || "") ? x.release_date : "";
+      var o = { id: id, n: str(x.release_name) || "?", a: str(x.artist_credit_name) || "", ai: firstMbid(x), d: d, y: year(d),
+        ty: str(x.release_group_primary_type, 20), art: caaRelease(x.caa_release_mbid) };
+      if (Array.isArray(x.artist_mbids)) o.all = x.artist_mbids.filter(mbId).slice(0, 10);
+      return o;
+    }).filter(Boolean);
+    out.sort(function (a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : 0; });
+    return out;
+  }
+  var SIM_ALGO = "session_based_days_7500_session_300_contribution_5_threshold_10_limit_100_filter_True_skip_30";
+  function similarUrl(id) { return mbId(id) ? "https://labs.api.listenbrainz.org/similar-artists/json?" + qs({ artist_mbids: id, algorithm: SIM_ALGO }) : ""; }
+  // The labs API answers either a list of artists or a list of
+  // { type, data: [artists] } blocks; both are read.
+  function parseSimilar(j, self) {
+    var list = [];
+    if (Array.isArray(j)) j.forEach(function (x) { if (x && Array.isArray(x.data)) list = list.concat(x.data); else list.push(x); });
+    var seen = {};
+    if (self) seen[self] = 1;
+    return list.map(function (x) {
+      var id = mbId(x && x.artist_mbid);
+      if (!id || seen[id] || !x.name) return null;
+      seen[id] = 1;
+      return { id: id, n: str(x.name), sc: +x.score || 0 };
+    }).filter(Boolean).sort(function (a, b) { return b.sc - a.sc; }).slice(0, 24);
+  }
+
   // ---------- 7. Network (browser) ----------
   // JSON through open.js (straight from the browser, the relay "web"
   // op when a site sends no CORS headers), MusicBrainz one at a time.
@@ -449,6 +507,17 @@
     });
   }
   function pages(id) { return { mb: "https://musicbrainz.org/artist/" + id }; }
+  // ListenBrainz (one day / a week on the device).
+  function topArtists(range) {
+    return cached("lt|" + range, DAY, function () { return O().getJSON(topArtistsUrl(range)).then(parseTopArtists); });
+  }
+  function fresh(days) {
+    return cached("lf|" + days, DAY, function () { return O().getJSON(freshUrl(days)).then(parseFresh); });
+  }
+  function similar(id) {
+    if (!mbId(id)) return Promise.reject(Err("id"));
+    return cached("ls|" + id, 7 * DAY, function () { return O().getJSON(similarUrl(id)).then(function (j) { return parseSimilar(j, id); }); });
+  }
 
   var api = {
     VERSION: "1.0.0", MB_GAP: MB_GAP, TTL: TTL, MBID_RE: MBID_RE, DB: DB,
@@ -457,6 +526,8 @@
     groupsUrl: groupsUrl, parseGroups: parseGroups, shelves: shelves, caa: caa, releasesUrl: releasesUrl, pickRelease: pickRelease, parseRelease: parseRelease,
     wdUrl: wdUrl, parseSitelinks: parseSitelinks, wikiPick: wikiPick, summaryUrl: summaryUrl, parseSummary: parseSummary, p18Url: p18Url, parseP18: parseP18,
     matchTracks: matchTracks, byArtist: byArtist,
+    topArtistsUrl: topArtistsUrl, parseTopArtists: parseTopArtists, freshUrl: freshUrl, parseFresh: parseFresh, similarUrl: similarUrl, parseSimilar: parseSimilar,
+    topArtists: topArtists, fresh: fresh, similar: similar,
     search: search, artist: artist, groups: groups, album: album, wiki: wiki, pages: pages
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
