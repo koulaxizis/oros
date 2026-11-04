@@ -156,10 +156,29 @@
     return v;
   }
 
+  // AC-1: account groups on the Overview. "inv" an investment or a thing
+  // of value (ivk), "card" a credit card (its cycle, or a credit limit
+  // typed at the bank that fills it), "cash" the rest (bank, cash,
+  // wallets). bnk = the bank rows (collection bnk).
+  var GROUPS = ["cash", "card", "inv"];
+  function accGroup(a, bnk) {
+    if (!a) return "cash";
+    if (a.ivk) return "inv";
+    if (a.cys || (bnk || []).some(function (r) { return r && r.ac === a.id && typeof r.cl === "number" && r.cl > 0; })) return "card";
+    return "cash";
+  }
+  // What you have and what you owe: the sums of the positive and the
+  // negative values (main currency, null = no rate, left out).
+  function haveOwe(vals) {
+    var have = 0, owe = 0;
+    (vals || []).forEach(function (v) { if (typeof v !== "number" || !isFinite(v)) return; if (v >= 0) have += v; else owe -= v; });
+    return { have: have, owe: owe };
+  }
 
   var api = {
     CARDS: CARDS, daysIn: daysIn, cumulative: cumulative, pace: pace, upcoming: upcoming, safe: safe,
-    topCats: topCats, perAccount: perAccount, cardList: cardList, cardString: cardString, normOv: normOv
+    topCats: topCats, perAccount: perAccount, cardList: cardList, cardString: cardString, normOv: normOv,
+    GROUPS: GROUPS, accGroup: accGroup, haveOwe: haveOwe
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetOverview = api;
