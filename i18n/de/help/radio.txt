@@ -63,7 +63,7 @@ Deine Favoriten und Wecksender werden über die [orOS-Synchronisierung](help:t/s
 - Spielt ein Sender nicht, siehst du `Stream nicht verfügbar`: Versuch einen anderen, Streams kommen und gehen.
 
 ## Grenzen
-- Die Sender stammen aus dem freien Community-Verzeichnis radio-browser.info, daher sind Namen, Logos und Genres nur so gut wie dieses Verzeichnis. Ist es nicht erreichbar (keine Verbindung oder ein Content-Blocker), bleiben die Listen leer.
+- Die Sender stammen aus dem freien Community-Verzeichnis radio-browser.info, daher sind Namen, Logos und Genres nur so gut wie dieses Verzeichnis. Radio probiert mehrere seiner Server und wartet auf einen langsamen (ein VPN wie Tailscale oder mobile Daten können die erste Antwort verzögern). Antwortet keiner (keine Verbindung oder ein Content-Blocker), zeigt das Gerät Listen, die du in den letzten 7 Tagen geöffnet hast, und nur eine Liste ohne Inhalt meldet, dass das Verzeichnis nicht antwortet. Favoriten und zuletzt gehörte Sender brauchen das Verzeichnis nie und spielen weiter.
 - Favoriten kannst du nur über die Player-Leiste, den Taskleisten-Chip oder `Sender importieren` hinzufügen, nicht aus der Senderliste.
 - Songtitel und Aufnahmen brauchen einen Sender, der Webseiten seinen Stream lesen lässt (CORS). Viele tun das nicht: Dann erscheint `Dieser Sender sagt nicht, was er spielt.`, oder die Aufnahme erklärt, dass sie nicht erlaubt ist. Das Senderverzeichnis selbst hat keine Song-Infos.
 - Eine Aufnahme lädt den Stream während sie läuft ein zweites Mal, braucht also doppelt so viele Daten. Playlist-Streams (HLS) lassen sich nicht aufnehmen.

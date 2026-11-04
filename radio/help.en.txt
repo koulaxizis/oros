@@ -63,7 +63,7 @@ Your favourites and wake-up stations sync between your devices through [orOS syn
 - If a station won't play, you'll see `Stream unavailable`: try another, as streams come and go.
 
 ## Limits
-- Stations come from the free community directory radio-browser.info, so names, logos and genres are only as good as that directory. If it can't be reached (no connection, or a content blocker), the lists stay empty.
+- Stations come from the free community directory radio-browser.info, so names, logos and genres are only as good as that directory. Radio tries several of its servers and waits for a slow one (a VPN such as Tailscale or mobile data can make the first answer slow). If none answers (no connection, or a content blocker), lists you opened in the last 7 days still show from this device, and only a list with nothing to show says the directory isn't answering. Favorites and recent stations never need the directory, so they keep playing.
 - Favourites can only be added from the player bar, the taskbar chip or `Import stations`, not from the station list.
 - Song titles and recording need a station that lets web pages read its stream (CORS). Many don't: then `This station does not say what it plays.` shows, or recording explains it isn't allowed. The station directory itself has no song information.
 - Recording downloads the stream a second time while it runs, so it uses double the data. Playlist-style streams (HLS) can't be recorded.

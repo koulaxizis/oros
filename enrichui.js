@@ -79,7 +79,7 @@
     ".oe-c.check{border-color:#c05252}",
     ".oe-btns{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:8px}",
     ".oe-btns button{min-height:40px;padding:0 14px;border-radius:8px;border:1px solid var(--border,#2c3038);background:transparent;color:inherit;font:inherit;cursor:pointer}",
-    ".oe-btns button.prim{background:var(--accent,#d4af37);color:#14120d;border-color:transparent}",
+    ".oe-btns button.prim{background:var(--accent,#d4af37);color:var(--accent-ink,#14120d);border-color:transparent}",
     ".oe-btns .oe-left{margin-right:auto}",
     ".oe-self{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.85em;margin:4px 0}",
     ".oe-self a{color:inherit;border:1px solid var(--border,#2c3038);border-radius:12px;padding:4px 10px;text-decoration:none;min-height:32px;display:inline-flex;align-items:center}"
