@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.29.00
+- **Clearer accounts in Budget, made for the phone.** The Overview groups your accounts into money, cards, and investments and things of value, each with its total, and shows what you have and what you owe. Each account has its balance and one line about what matters now: a card payment due, an investment's gain, the bank showing another balance. Tap an account for big buttons: new entry, entries, update balance, transfer, edit.
+- **Update a balance in seconds.** `Update balance` asks what the account shows now; the difference goes into its starting balance, never into your expenses, with Undo.
+- **Match the bank by itself.** For an account a bank fills, turn on `Match the bank by itself` and Budget keeps it in step with the bank's balance, telling you each time.
+
 ## Version 5.28.00
 - **Your home, car and valuables in Budget.** An account can hold something of value with no market price: type its value on a day and, if you like, how much it changes a year (about −15 % for a car). Budget moves the value on by itself and counts it in your net worth.
 - **Passive income.** Mark income categories such as dividends, interest or rent as `Passive`: the Overview and the net worth chart show what they bring a month and what part of your expenses they cover.

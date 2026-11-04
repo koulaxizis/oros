@@ -296,3 +296,12 @@ test("PI-1: passive income is kept only on income categories, only when true", (
   assert.equal("pv" in BU.normCat({ id: "u1", m: 1, k: "o", name: "Rent", col: 1, pv: true }), false);
   assert.equal("pv" in BU.normCat({ id: "u1", m: 1, k: "i", name: "Rent", col: 1, pv: "yes" }), false);
 });
+
+test("AC-1: an account keeps am only when true and chk only as a day", () => {
+  const a = BU.normAcc({ id: "a1", m: 5, n: "Alpha", o: 0, col: 2, am: true, chk: "2026-11-04" });
+  assert.equal(a.am, true);
+  assert.equal(a.chk, "2026-11-04");
+  const b = BU.normAcc({ id: "a2", m: 5, n: "Beta", o: 0, col: 2, am: "yes", chk: "04/11/2026" });
+  assert.equal("am" in b, false);
+  assert.equal("chk" in b, false);
+});

@@ -148,3 +148,15 @@ test("per account: the month's income and expenses, unknown or no account apart,
   assert.deepEqual(r.by.cash, { inc: 0, out: 0 });
   assert.deepEqual(r.none, { inc: 0, out: 500 });
 });
+
+test("AC-1: account groups and what I have and owe", () => {
+  const O2 = require("../budget/overview.js");
+  assert.equal(O2.accGroup({ id: "a", n: "Visa", cys: 10, cyd: 5 }, []), "card");
+  assert.equal(O2.accGroup({ id: "b", n: "Visa" }, [{ ac: "b", cl: 200000 }]), "card");
+  assert.equal(O2.accGroup({ id: "c", n: "BTC", ivk: "c" }, []), "inv");
+  assert.equal(O2.accGroup({ id: "d", n: "Car", ivk: "p" }, []), "inv");
+  assert.equal(O2.accGroup({ id: "e", n: "Cash" }, [{ ac: "e" }]), "cash");
+  assert.deepEqual(O2.GROUPS, ["cash", "card", "inv"]);
+  assert.deepEqual(O2.haveOwe([10000, -3200, null, 500, NaN]), { have: 10500, owe: 3200 });
+  assert.deepEqual(O2.haveOwe([]), { have: 0, owe: 0 });
+});
