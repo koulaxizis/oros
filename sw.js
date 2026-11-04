@@ -1269,6 +1269,7 @@ var PRECACHE_URLS = [
   "automations/app.js",
   "automations/core.js",
   "automations/host.js",
+  "automations/hookin.js",
   "automations/search.js",
   "automations/help.en.txt",
   "automations/help.el.txt",

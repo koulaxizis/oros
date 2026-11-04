@@ -29,6 +29,21 @@
         <button type="button" id="empty-tpl" class="chip pri" data-i18n="btn.templates">Ready-made</button>
       </div>
     </section>
+    <section aria-labelledby="wh-h" id="wh-sec">
+      <h2 id="wh-h" data-i18n="wh.title">Incoming webhook</h2>
+      <p class="hint" data-i18n="wh.hint">An address other services (n8n, Home Assistant, a form) can post a small JSON to. A rule with "When a webhook arrives" then runs on this device.</p>
+      <div id="wh-on" hidden>
+        <label class="fld"><span data-i18n="wh.url">Your address (keep it secret)</span><input id="wh-url" type="text" readonly spellcheck="false"></label>
+        <p class="hint" id="wh-exp"></p>
+        <div class="row wrap">
+          <button type="button" id="wh-copy" class="chip pri" data-i18n="wh.copy">Copy address</button>
+          <button type="button" id="wh-rot" class="chip" data-i18n="wh.rot">New address</button>
+          <button type="button" id="wh-off" class="chip del" data-i18n="wh.off">Turn off</button>
+        </div>
+      </div>
+      <button type="button" id="wh-start" class="chip" data-i18n="wh.start">Turn on</button>
+      <p class="hint" data-i18n="wh.privacy">What arrives is encrypted on the relay to a key only this device has, kept until this device picks it up, and never logged. The relay sees it in plain text as it arrives.</p>
+    </section>
     <section aria-labelledby="log-h">
       <h2 id="log-h" data-i18n="sec.log">Recent runs on this device</h2>
       <ul id="log" class="log"></ul>

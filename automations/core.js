@@ -37,8 +37,9 @@
   var WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
   // Wave A2 (BR-EV): what apps tell the shell's event bus. A new event =
   // one name here + an orosEvent() call in that app + its words.
-  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done"];
-  var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness" };
+  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in"];
+  var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness",
+                    "webhook.in": "automations" };   // wave A5: automations/hookin.js
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
   var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook"];
@@ -467,6 +468,7 @@
       "when.word": " with \u201c{word}\u201d",
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
+      "ev.webhook.in": "When a webhook arrives",
       "tpl.mail-todo": "Urgent e-mail to To-Do", "tpl.mail-todo.word": "urgent", "tpl.mail-todo.item": "{text}",
       "tpl.habit-cheer": "Cheer for a habit", "tpl.habit-cheer.text": "Well done: {text}. Keep the streak going.",
       "tpl.workout-log": "After a workout", "tpl.workout-log.text": "Workout done: {text}. Drink some water.",
@@ -505,6 +507,7 @@
       "when.word": " με \u00ab{word}\u00bb",
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
+      "ev.webhook.in": "Όταν έρχεται webhook",
       "tpl.mail-todo": "Επείγον e-mail στο To-Do", "tpl.mail-todo.word": "επείγον", "tpl.mail-todo.item": "{text}",
       "tpl.habit-cheer": "Μπράβο για μια συνήθεια", "tpl.habit-cheer.text": "Μπράβο: {text}. Συνέχισε το σερί.",
       "tpl.workout-log": "Μετά την προπόνηση", "tpl.workout-log.text": "Η προπόνηση τελείωσε: {text}. Πιες λίγο νερό.",

@@ -30,6 +30,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `remote.js` | Studio Remote's meeting rooms: a Durable Object that joins two WebSockets (see below) |
 | `push.js` | Notifications with orOS closed (op `push`): one Durable Object per device holding its encrypted reminders, sent by Web Push at their time (see below) |
 | `house.js` | Households (`/h/<box>`): one Durable Object per household holding only encrypted shared documents, invites, join requests and key envelopes, with live notices over a WebSocket (see below) |
+| `hook.js` | Automations' incoming webhooks (`/wh/<id>.<sec>`, op `hook`): one Durable Object per device holding what arrived, encrypted to that device's key, until it pulls and acks it (see below) |
 | `dav.js` | Sync through WebDAV: `/dav` passes one WebDAV request to the user's own server when that server sends no CORS headers (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -687,6 +688,46 @@ Secrets, type *Secret*):
 
 Without them every `push` request answers 503 `nopush`, and Settings
 shows the switch as unavailable.
+
+## Automations: incoming webhooks (`/wh/`, op `hook`)
+
+Optional, off by default: a device turns it on in Automations. It then
+has a box here, one SQLite Durable Object (`HookBox`, binding `HOOK`,
+migration `hook-v1`) named by a random 22-character id the page made,
+and a secret address `https://<relay>/wh/<id>.<sec>` (sec: 43 random
+base64url characters) that any service can POST a small JSON object to.
+Rules with "When a webhook arrives" then run on that device.
+
+**What the relay sees.** The sender posts plain JSON over HTTPS, so the
+Worker sees it in memory as it arrives. It encrypts it at once to the
+device's own P-256 key (RFC 8291, aes128gcm, the scheme `webpush.js`
+uses) and stores only that ciphertext. It never stores the plain text,
+never puts it in an error and never logs it. The box keeps the address
+secret and the read token only as SHA-256, compared in constant time.
+
+Ingress, `POST /wh/<id>.<sec>`: no Origin check and no CORS (servers
+post, not pages). The body is read with a streaming cap of 4 KB and must
+be a JSON object. The answer is a status with an empty body and
+`Cache-Control: no-store`: `202` stored, `400` not a JSON object, `404`
+no box, wrong secret or expired (all the same), `405` not POST, `413`
+over 4 KB, `429` rate (30 per minute per sender IP, per isolate; 30 per
+minute and 500 per day per box) or a full queue (100 items or 256 KB).
+A full queue never drops older items.
+
+| act | Fields | Returns |
+|---|---|---|
+| `new` | `id`, `tok`, `wh` (SHA-256 hex of sec), `key` (P-256 public, 65 bytes b64url), `auth` (16 bytes b64url) | `{ exp }`. Five per IP per day (per isolate). |
+| `pull` | `id`, `tok` | `{ items[{ i, at, ct }], exp }`, the oldest 50, still encrypted. They stay until acked, so a lost pull loses nothing. |
+| `ack` | `id`, `tok`, `ids[]` | `{ ok }` (those items are deleted) |
+| `renew` | `id`, `tok` | `{ exp }`, 7 more days. The device renews once a day while orOS is open. |
+| `rot` | `id`, `tok`, `wh` | `{ ok }`: a new address; the old one answers 404 and the queue is wiped |
+| `del` | `id`, `tok` | `{ ok }` (the box is erased) |
+
+A wrong `tok`, a missing box and an expired box all answer 404 `gone`.
+The op never carries the address secret, only its hash at `new` and
+`rot`. The box's alarm erases it at expiry. Without the `HOOK` binding
+the op answers 503 `nohook` and `/wh/` answers 503. Tests:
+`tests/hook-relay.test.js`.
 
 ## Sync through WebDAV: pass-through (`/dav`)
 
