@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.23.00
+- **Budget's banks work on your phone too.** A bank connected on another device no longer says "No key on this device" with nothing to do, and Renew no longer fails with "(gone)": each bank now uses the Enable Banking application that has its key on the device you are on. To get the key on your phone, turn on "Use on all my devices", now right under the key in Budget › More › Banks on the device that has it (sync with a passphrase needed).
+- **Your bank balance in Budget's Overview.** Under each account in Overview › Accounts you now see the balance your bank gave on the last update, with its day, and "Match" when Budget shows another amount (Undo takes it back). When no bank fills a Budget account yet, Overview tells you where to set it.
+
 ## Version 5.22.02
 - **Picking apples works again on a tree left for a few days.** In Pet World's garden, one Pick now takes the ripe apples and frees the bed right away. Before, an apple tree nobody had picked for several days stayed "ready to pick" for one tap per missed day, so it looked stuck and then seemed to start over with Water.
 
