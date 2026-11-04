@@ -180,7 +180,7 @@ small {
 
 .btn-primary {
   background: var(--accent, #6d4aff);
-  color: #fff;
+  color: var(--accent-ink, #fff);
 }
 
 .btn-primary:hover {

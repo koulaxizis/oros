@@ -373,7 +373,7 @@ body {
   border-radius: 50%;
   border: none;
   background: var(--accent, #6d4aff);
-  color: #fff;
+  color: var(--accent-ink, #fff);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,7 +420,7 @@ body {
 
 .rx-eq i {
   width: 3px;
-  background: #fff;
+  background: var(--accent-ink, #fff);
   border-radius: 1px;
   animation: rx-eq-bounce 1s ease-in-out infinite;
 }
@@ -615,7 +615,8 @@ body {
 
 /* ===== W42: station tools (record, wake-up, song history) ===== */
 
-.rx-pl-icon.rec { color: var(--danger, #e06c75); border-color: var(--danger, #e06c75); }
+/* Recording: red ring on the accent fill read poorly (Tux, purple). */
+.rx-pl-icon.rec { color: var(--danger, #e06c75); background: transparent; border: 2px solid var(--danger, #e06c75); }
 .rx-pl-meta .rec { color: var(--danger, #e06c75); font-weight: 800; font-variant-numeric: tabular-nums; }
 
 .rx-dlg {
@@ -790,7 +791,7 @@ body {
 .rx-imp-btn:hover { border-color: var(--accent, #6d4aff); }
 
 .rx-imp-btn.rx-imp-go {
-  color: #fff;
+  color: var(--accent-ink, #fff);
   background: var(--accent, #6d4aff);
   border-color: var(--accent, #6d4aff);
 }
