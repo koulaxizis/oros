@@ -46,6 +46,11 @@
       "a.notify": "Show a notice", "a.todo": "Add tasks to To-Do", "a.event": "Add an event to Calendar",
       "a.note": "Write a note", "a.mail": "Write an e-mail", "a.budget": "Add to Budget", "a.open": "Open an app",
       "a.timer": "Start a timer", "a.ask": "Ask the Assistant",
+      "a.push": "Push to my phone (ntfy, Gotify)", "a.hook": "Send to a webhook (n8n, Home Assistant…)",
+      "x.svc": "Service", "x.url": "Address (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/your-secret-topic · Gotify: https://your-server/message?token=…",
+      "x.urlHintHook": "Your webhook's address, for example Home Assistant https://…/api/webhook/<id> or n8n. The server must accept requests from orOS (CORS).",
+      "x.allow": "Let this rule send this to {host} by itself", "x.sends": "What it sends:", "x.notAllowed": "Not sent until you tick it.",
+      "log.outErr": "Push or webhook not delivered",
       "x.text": "Text", "x.items": "Tasks, one per line", "x.newList": "In a new list named (optional)",
       "x.title": "Title", "x.off": "Days after the run", "x.start": "Start time (optional)", "x.to": "To (optional)",
       "x.subject": "Subject", "x.body": "Message", "x.kind": "Kind", "x.out": "Expense", "x.in": "Income",
@@ -85,6 +90,11 @@
       "a.notify": "Εμφάνιση ειδοποίησης", "a.todo": "Εργασίες στο To-Do", "a.event": "Γεγονός στο Ημερολόγιο",
       "a.note": "Νέα σημείωση", "a.mail": "Νέο e-mail", "a.budget": "Καταχώριση στον Προϋπολογισμό", "a.open": "Άνοιγμα εφαρμογής",
       "a.timer": "Έναρξη χρονομέτρου", "a.ask": "Ερώτηση στον Βοηθό",
+      "a.push": "Ειδοποίηση στο κινητό (ntfy, Gotify)", "a.hook": "Αποστολή σε webhook (n8n, Home Assistant…)",
+      "x.svc": "Υπηρεσία", "x.url": "Διεύθυνση (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/το-μυστικό-σου-θέμα · Gotify: https://ο-server-σου/message?token=…",
+      "x.urlHintHook": "Η διεύθυνση του webhook σου, π.χ. Home Assistant https://…/api/webhook/<id> ή n8n. Ο server πρέπει να δέχεται αιτήματα από το orOS (CORS).",
+      "x.allow": "Να το στέλνει μόνος του αυτός ο κανόνας στο {host}", "x.sends": "Τι στέλνει:", "x.notAllowed": "Δεν στέλνεται πριν το τσεκάρεις.",
+      "log.outErr": "Η ειδοποίηση ή το webhook δεν παραδόθηκε",
       "x.text": "Κείμενο", "x.items": "Εργασίες, μία σε κάθε γραμμή", "x.newList": "Σε νέα λίστα με όνομα (προαιρετικό)",
       "x.title": "Τίτλος", "x.off": "Μέρες μετά την εκτέλεση", "x.start": "Ώρα έναρξης (προαιρετικό)", "x.to": "Προς (προαιρετικό)",
       "x.subject": "Θέμα", "x.body": "Μήνυμα", "x.kind": "Είδος", "x.out": "Έξοδο", "x.in": "Έσοδο",
@@ -459,9 +469,61 @@
         inp = field(li, t("x.label"), textIn(a.label, 40)); inp.addEventListener("input", set("label"));
       } else if (a.a === "ask") {
         inp = field(li, t("x.question"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
+      } else if (C.OUT[a.a]) {
+        outFields(li, a);
       }
       ul.appendChild(li);
     });
+  }
+
+  // Wave A5: a push / webhook step shows exactly what leaves and is sent
+  // only after the person ticks "let it send" for this address (ok).
+  function outFields(li, a) {
+    if (a.a === "push") {
+      var sv = el("select");
+      sv.appendChild(new Option("ntfy", "ntfy"));
+      sv.appendChild(new Option("Gotify", "gotify"));
+      sv.value = a.svc === "gotify" ? "gotify" : "ntfy";
+      a.svc = sv.value;
+      field(li, t("x.svc"), sv).addEventListener("change", function (ev) { a.svc = ev.target.value; showOut(); });
+    }
+    var url = field(li, t("x.url"), textIn(a.url, 500, "url"));
+    url.placeholder = "https://";
+    url.autocomplete = "off";
+    url.spellcheck = false;
+    li.appendChild(el("p", "hint", t(a.a === "push" ? "x.urlHintPush" : "x.urlHintHook")));
+    var txt = field(li, t("x.text"), area(a.text, 300, 2));
+    var lab = el("label", "row allow");
+    var cb = el("input");
+    cb.type = "checkbox";
+    var cap = el("span");
+    lab.appendChild(cb);
+    lab.appendChild(cap);
+    li.appendChild(lab);
+    li.appendChild(el("p", "hint", t("x.sends")));
+    var pre = el("pre", "sends");
+    li.appendChild(pre);
+    var warn = el("p", "hint warn", t("x.notAllowed"));
+    li.appendChild(warn);
+    function showOut() {
+      var u = C.cleanUrl(a.url || "");
+      if (a.ok && a.ok !== u) delete a.ok;
+      cb.checked = !!u && a.ok === u;
+      cb.disabled = !u;
+      cap.textContent = t("x.allow", { host: u ? C.hostOf(u) : "…" });
+      var q = u ? C.outbound(Object.assign({}, a, { url: u, ok: u }), { name: $("f-name").value.trim() }, Date.now(), BASE, "…") : null;
+      pre.textContent = q ? q.method + " " + C.hostOf(q.url) + "\n" + q.body : "";
+      pre.hidden = !q;
+      warn.hidden = cb.checked || !u;
+    }
+    url.addEventListener("input", function (ev) { a.url = ev.target.value.trim(); showOut(); });
+    txt.addEventListener("input", function (ev) { a.text = ev.target.value; showOut(); });
+    cb.addEventListener("change", function () {
+      var u = C.cleanUrl(a.url || "");
+      if (cb.checked && u) a.ok = u; else delete a.ok;
+      showOut();
+    });
+    showOut();
   }
 
   function draft() {
@@ -563,6 +625,8 @@
     // opened in the editor as a new rule; nothing is saved until Save.
     if (target.newRule && typeof target.newRule === "object") {
       var nr = C.cleanRule(Object.assign({}, target.newRule, { id: "new" }));
+      // An address is allowed only by the person, here (wave A5).
+      if (nr) nr["do"].forEach(function (a) { delete a.ok; });
       if (nr) edit(null, nr); else toast(t("badRule"));
     }
   };

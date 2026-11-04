@@ -278,3 +278,35 @@ test("A2 wiring: Notifications hands its own notices over; the apps send their e
   }
   assert.doesNotMatch(src("passwords/passwords.js"), /orosEvents|orosEvent\(/);
 });
+
+// ---------- Wave A5: push and webhook steps ----------
+test("A5: push and webhook steps send only to an address the person allowed", () => {
+  const C = require("../automations/core.js");
+  const rule = { name: "Done", when: { t: "open" }, do: [] };
+  const push = { a: "push", url: "https://ntfy.sh/secret-topic", text: "On {date}" };
+  assert.strictEqual(C.outbound(push, rule, 0, "en"), null);                     // not allowed yet
+  assert.strictEqual(C.cleanAction(Object.assign({}, push, { ok: "https://other.example/x" })).ok, undefined);
+  const ok = C.cleanAction(Object.assign({}, push, { ok: push.url }));
+  assert.strictEqual(ok.ok, push.url);
+  const at = new Date(2026, 10, 4, 9, 0).getTime();
+  const q = C.outbound(ok, rule, at, "en");
+  assert.strictEqual(q.url, "https://ntfy.sh/secret-topic?title=Done");
+  assert.strictEqual(q.body, "On 4/11/2026");
+  assert.strictEqual(q.headers["Content-Type"], "text/plain");
+  const g = C.outbound({ a: "push", svc: "gotify", url: "https://g.example/message?token=abc", ok: "https://g.example/message?token=abc", text: "{text}" }, rule, at, "en", "Hello");
+  assert.deepStrictEqual(JSON.parse(g.body), { title: "Done", message: "Hello", priority: 5 });
+  const h = C.outbound({ a: "hook", url: "https://ha.example/api/webhook/x", ok: "https://ha.example/api/webhook/x", text: "{text}" }, rule, at, "en", "Hi");
+  assert.deepStrictEqual(JSON.parse(h.body), { source: "orOS", rule: "Done", at: new Date(at).toISOString(), text: "Hi" });
+  ["http://ntfy.sh/x", "https://u:p@ntfy.sh/x", "https://ntfy.sh/x#y", "javascript:alert(1)", "https:///x"].forEach((u) => assert.strictEqual(C.cleanUrl(u), "", u));
+});
+
+test("A5: outside steps are never tap steps, and the notice names only the host", () => {
+  const C = require("../automations/core.js");
+  const r = C.cleanRule({ id: "a", name: "", when: { t: "open" }, do: [{ a: "push", url: "https://ntfy.sh/secret-topic", text: "x" }, { a: "todo", items: ["y"] }] });
+  assert.deepStrictEqual(C.pending(r).map((a) => a.a), ["todo"]);
+  assert.strictEqual(C.call(r.do[0], 0, "en", "x"), null);
+  const n = C.notice(r, 0, "en");
+  assert.match(n.body, /ntfy\.sh/);
+  assert.ok(!/secret-topic/.test(n.body));
+  assert.deepStrictEqual(C.outSteps(r).map((a) => a.a), ["push"]);
+});

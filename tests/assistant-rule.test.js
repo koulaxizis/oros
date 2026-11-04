@@ -70,3 +70,11 @@ test("the Automations summary explains runs and never carries what a notice said
   assert.ok(pv.some((l) => /\(ανενεργός\)/.test(l)));
   assert.strictEqual(S.OWN.automations, "rules");
 });
+
+test("A5: the Assistant cannot write a push or webhook step, and never sees their addresses", () => {
+  assert.ok(!C.normRule({ when: { type: "open" }, steps: [{ do: "push", text: "x" }] }, all).ok);
+  let d = AC.put(AC.empty(), { name: "P", on: true, when: { t: "open" }, do: [{ a: "hook", url: "https://ha.example/api/webhook/SECRET", ok: "https://ha.example/api/webhook/SECRET", text: "x" }] }, 5).data;
+  const sum = S.automationsRules(AC, d, [], { lang: "en" });
+  assert.match(JSON.stringify(sum), /ha\.example/);
+  assert.ok(!/SECRET/.test(JSON.stringify(sum)));
+});

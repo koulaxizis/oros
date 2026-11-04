@@ -1722,6 +1722,7 @@ orosPack("de", "assistant", {
  "au.off": "Hinweise aus",
  "au.skip": "übersprungen, eine App fehlt",
  "au.run": "geöffnet",
+ "au.outErr": "Push oder Webhook nicht zugestellt",
  "f.perweek": "Mal pro Woche",
  "f.permonth": "Mal pro Monat",
  "f.water": "Gießen alle (Tage)",

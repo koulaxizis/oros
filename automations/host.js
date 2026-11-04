@@ -111,6 +111,7 @@
     } catch (e) { return []; }
   }
   // what: "sent" | "off" (notices off) | "skip" (an app is missing) | "run" (tapped) | "late"
+  //       | "outErr" (a push or webhook step was not delivered)
   function log(rule, key, at, what) {
     var a = readLog();
     a.unshift({ r: rule.id, n: rule.name || "", k: key, at: at, t: Date.now(), w: what });
@@ -164,10 +165,29 @@
         deepLink: C.pending(rule).length ? "automations:run:" + d.key : "automations:open"
       });
       log(rule, d.key, d.at, id ? (d.late ? "late" : "sent") : "off");
+      if (id) sendOut(rule, d.key, d.at, l, "");
     });
     // Forget rules that are gone, so the record stays small.
     Object.keys(local.done).forEach(function (k) { if (!C.find(data, k)) { delete local.done[k]; touched = true; } });
     if (touched) writeLocal(local);
+  }
+
+  // ---------- Wave A5: steps that leave the device ----------
+  // Only the device whose notice claimed the run (the synced inbox
+  // holds it) sends, and only to an address the person allowed in the
+  // editor (C.outbound returns null otherwise). No cookies, no
+  // referrer, no redirects; a failure is logged, never retried.
+  function sendOut(rule, key, at, l, said) {
+    if (typeof fetch !== "function") return;
+    C.outSteps(rule).forEach(function (a) {
+      var q = C.outbound(a, rule, at, l, said);
+      if (!q) return;
+      try {
+        fetch(q.url, { method: q.method, headers: q.headers, body: q.body, mode: "cors", credentials: "omit", cache: "no-store",
+                       redirect: "error", referrerPolicy: "no-referrer", keepalive: true })
+          .then(function (res) { if (!res.ok) log(rule, key, at, "outErr"); }, function () { log(rule, key, at, "outErr"); });
+      } catch (e) { log(rule, key, at, "outErr"); }
+    });
   }
 
   // ---------- Wave A2: rules that follow what happens (BR-EV) ----------
@@ -211,6 +231,7 @@
       var id = N.emit({ ns: "automations", key: rk, type: "reminder", title: txt.title, body: txt.body,
                         deepLink: C.pending(rule).length ? "automations:run:" + rk : "automations:open" });
       log(rule, rk, now, id ? "sent" : "off");
+      if (id) sendOut(rule, rk, now, l, said);
       n++;
     });
     writeLocal(local);
@@ -260,7 +281,7 @@
   }
 
   root.orosAutomations = {
-    VERSION: "1.1.0",
+    VERSION: "1.2.0",
     rules: function () { return read(); },
     save: save,
     tick: tick,

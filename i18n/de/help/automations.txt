@@ -20,6 +20,13 @@ Eine Regel kann statt einer Uhrzeit auch etwas folgen, das passiert:
 
 In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte: die Aufgabe, die Gewohnheit, das Training oder der Text der Mitteilung. So eine Regel läuft einmal für alles, was passiert, höchstens 20-mal am Tag, und nur auf dem Gerät, auf dem es passiert ist. Mitteilungen von Passwörter starten nie eine Regel, und nichts aus Passwörter wird je gelesen.
 
+## Außerhalb von orOS
+Zwei Schritte verlassen orOS von selbst, wenn die Regel läuft:
+- `Push aufs Handy`: über [ntfy](https://ntfy.sh) (kostenlos, ohne Konto; wähle ein Thema, das niemand errät, oder deinen eigenen Server) oder deinen eigenen Gotify-Server. Installiere die App ntfy oder Gotify auf dem Handy und abonniere dasselbe Thema.
+- `An einen Webhook senden`: eine kleine JSON-Nachricht (`source`, `rule`, `at`, `text`) an dein eigenes n8n, Home Assistant (eine Automation mit Webhook-Auslöser), Make oder Ähnliches. Der Server muss https nutzen und Anfragen von orOS annehmen (CORS; ntfy tut das).
+
+Unter jedem siehst du genau, was gesendet wird, und nichts geht raus, bevor du `Diese Regel darf das von selbst…` für diese Adresse abhakst; änderst du die Adresse, hakst du es erneut ab. Nur das Gerät, das die Regel ausführt, sendet, einmal. Halte die Adresse geheim: Wer sie hat, kann an dein Thema oder deinen Webhook senden. Der Assistent schlägt Regeln vor, aber nie diese zwei Schritte.
+
 ## Den Assistenten fragen
 Sag dem [Assistenten](app:assistant), was du willst, zum Beispiel „erinnere mich jeden Montag um 8 an den Müll" oder „wenn eine dringende E-Mail kommt, setz sie in To-Do". Er schreibt die Regel und zeigt sie auf einer Karte; `In Automatisierungen öffnen` öffnet sie hier als neue Regel, und nichts wird gespeichert, bevor du auf Speichern tippst. Frag ihn „warum ist das gelaufen?", und wenn du ihn Automatisierungen lesen lässt, sieht er deine Regeln und die letzten Läufe auf diesem Gerät an (nie, was ein Hinweis sagte) und erklärt sie oder schlägt eine bessere Regel vor. Passwörter sieht er nie.
 

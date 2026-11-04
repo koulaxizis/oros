@@ -41,7 +41,14 @@
   var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness" };
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook"];
+  // Wave A5: steps that leave the device by themselves (AUTO-2 "each
+  // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
+  // POST to the person's own webhook (n8n, Home Assistant, Make…).
+  // `ok` holds the address the person allowed; a changed address
+  // is not allowed until they tick it again. Only https.
+  var OUT = { push: true, hook: true };
+  var URL_MAX = 500;
   // Apps an action needs (the shell offers the action only when it is installed).
   var NEEDS = { todo: "todo", event: "calendar", note: "notes", mail: "mail", budget: "budget",
                 timer: "time", ask: "assistant" };
@@ -158,8 +165,48 @@
       var min = int(x.min, 1, 6000);
       return min === null ? null : { a: a, min: min, label: line(x.label, 40) };
     }
+    if (OUT[a]) {
+      var url = cleanUrl(x.url);
+      if (!url) return null;
+      var o2 = { a: a, url: url, text: line(x.text, 300) };
+      if (a === "push") o2.svc = x.svc === "gotify" ? "gotify" : "ntfy";
+      if (x.ok === url) o2.ok = url;
+      return o2;
+    }
     var q = str(x.text, TEXT_MAX).trim();           // ask
     return q ? { a: a, text: q } : null;
+  }
+
+  // https only, no user:password@, no fragment; ntfy wants a topic.
+  function cleanUrl(v) {
+    if (typeof v !== "string") return "";
+    var s = v.trim();
+    if (!s || s.length > URL_MAX || !/^https:\/\/[^\s\/?#@]+(\/[^\s#]*)?$/i.test(s)) return "";
+    return s;
+  }
+  function hostOf(url) { var m = /^https:\/\/([^\/?#]+)/i.exec(url || ""); return m ? m[1].toLowerCase() : ""; }
+  // The request a push / hook step makes (pure, so the editor shows
+  // exactly what leaves and the tests check it) → { url, method,
+  // headers, body } or null when the step is not allowed yet.
+  function outbound(action, rule, at, lang, said) {
+    var a = cleanAction(action);
+    if (!a || !OUT[a.a] || a.ok !== a.url) return null;
+    var title = line(rule && rule.name, NAME_MAX) || "orOS";
+    var text = fill(a.text || "", at, lang, said).slice(0, 1000);
+    if (a.a === "hook") {
+      return { url: a.url, method: "POST", headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ source: "orOS", rule: title, at: new Date(at).toISOString(), text: text }) };
+    }
+    if (a.svc === "gotify") {
+      return { url: a.url, method: "POST", headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ title: title, message: text || title, priority: 5 }) };
+    }
+    // ntfy: the message is the body, the title in the query (UTF-8 safe)
+    return { url: a.url + (a.url.indexOf("?") < 0 ? "?" : "&") + "title=" + encodeURIComponent(title), method: "POST",
+             headers: { "Content-Type": "text/plain" }, body: text || title };
+  }
+  function outSteps(rule) {
+    return (rule && rule["do"] || []).filter(function (a) { return OUT[a.a]; });
   }
 
   function cleanRule(raw) {
@@ -400,6 +447,7 @@
       "act.todo": "add {n} to To-Do", "act.event": "add to Calendar", "act.note": "add a note",
       "act.mail": "write an e-mail", "act.budget": "add to Budget", "act.open": "open {app}",
       "act.timer": "start a {n} min timer", "act.ask": "ask the Assistant",
+      "act.push": "a push to your phone through {host}", "act.hook": "a webhook to {host}",
       "tpl.week-plan": "Plan the week",
       "tpl.week-plan.text": "A new week starts. Have a look at your calendar and tasks.",
       "tpl.evening": "End of the day", "tpl.evening.text": "How was your day? Write one sentence about it.",
@@ -437,6 +485,7 @@
       "act.todo": "{n} στο To-Do", "act.event": "στο Ημερολόγιο", "act.note": "νέα σημείωση",
       "act.mail": "νέο e-mail", "act.budget": "στον Προϋπολογισμό", "act.open": "άνοιγμα: {app}",
       "act.timer": "χρονόμετρο {n} λεπτών", "act.ask": "ερώτηση στον Βοηθό",
+      "act.push": "ειδοποίηση στο κινητό μέσω {host}", "act.hook": "webhook προς {host}",
       "tpl.week-plan": "Πρόγραμμα εβδομάδας",
       "tpl.week-plan.text": "Ξεκινά νέα εβδομάδα. Ρίξε μια ματιά στο ημερολόγιο και στις εργασίες σου.",
       "tpl.evening": "Τέλος της μέρας", "tpl.evening.text": "Πώς ήταν η μέρα σου; Γράψε μια πρόταση γι' αυτήν.",
@@ -493,7 +542,7 @@
   // dates), `from` the source label the receiver shows.
   function call(action, at, lang, from, said) {
     var a = cleanAction(action);
-    if (!a || a.a === "notify") return null;
+    if (!a || a.a === "notify" || OUT[a.a]) return null;
     var f = function (s) { return fill(s, at, lang, said); };
     if (a.a === "todo") {
       var add = { from: from, items: a.items.map(function (s) { return { text: f(s).slice(0, LINE_MAX) }; }) };
@@ -558,6 +607,7 @@
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
     if (a.a === "open") return sub(w(lang, "act.open"), { app: appName ? appName(a.app) : a.app });
     if (a.a === "timer") return sub(w(lang, "act.timer"), { n: a.min });
+    if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);
   }
   // The notice for one run → { title, body }.
@@ -565,13 +615,14 @@
     var parts = [], rest = [];
     rule["do"].forEach(function (a) {
       if (a.a === "notify") parts.push(fill(a.text, at, lang, said));
+      else if (OUT[a.a]) parts.push(actText(a, lang, appName));
       else rest.push(actText(a, lang, appName));
     });
     if (rest.length) parts.push(sub(w(lang, "notice.tap"), { what: rest.join(", ") }));
     return { title: rule.name || whenText(rule.when, lang), body: parts.join("\n").slice(0, 500) };
   }
   function pending(rule) {
-    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify"; });
+    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a]; });
   }
 
   // ---------- Ready-made rules (templates) ----------
@@ -635,6 +686,7 @@
     put: put, remove: remove, setOn: setOn, find: find,
     lastAt: lastAt, nextAt: nextAt, due: due, fill: fill, call: call, needs: needs, runnable: runnable,
     whenText: whenText, actText: actText, notice: notice, pending: pending,
+    OUT: OUT, cleanUrl: cleanUrl, hostOf: hostOf, outbound: outbound, outSteps: outSteps,
     EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
     templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS
   };

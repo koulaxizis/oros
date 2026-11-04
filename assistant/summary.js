@@ -858,7 +858,8 @@
   // signal said (oros-automations-said) is never read here, so a Mail
   // notice's words never reach the model (Mail is never read).
   var AU_RESULT = { sent: "notice shown", late: "notice shown late (orOS was closed at the time)", off: "not shown: notices are switched off",
-                    skip: "skipped: an app a step needs is not installed on this device", run: "the user opened its step" };
+                    skip: "skipped: an app a step needs is not installed on this device", run: "the user opened its step",
+                    outErr: "a push or webhook step was not delivered (the server refused it or does not accept requests from orOS)" };
   var MAX_RULES_SUM = 60, MAX_RUNS_SUM = 30;
   function hmOf(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
   function automationsRules(AC, d, log, opts) {
@@ -907,7 +908,7 @@
           stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
           kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games",
           auRules: "rules", auOn: "on", auRuns: "Recent runs on this device", auOff: "off", auGone: "deleted",
-          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened" },
+          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
@@ -920,7 +921,7 @@
           stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
           kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια",
           auRules: "κανόνες", auOn: "ενεργοί", auRuns: "Πρόσφατες εκτελέσεις σε αυτή τη συσκευή", auOff: "ανενεργός", auGone: "διαγράφηκε",
-          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες" }
+          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
