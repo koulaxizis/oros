@@ -25,7 +25,7 @@ const B = new Function(
   block("  // ---------- 2. Money", "  // ---------- 6. Storage") +
   "\nreturn { MAX_CENTS, parseAmount, centsToInput, centsPlain, parseYmd, daysIn, addDays, mkAdd, weekday," +
   " occurrences, recTxId, SEEDS, SEED_NAMES, normTx, normCat, normRec, mergeBudget, emptyData, categoryList," +
-  " totals, monthSeries, limitState, dueRecurring, csvCell, buildCsv, normPrefill, normAcc, normXfer, accBalances, parseSigned };")();
+  " totals, monthSeries, limitState, dueRecurring, csvCell, buildCsv, normPrefill, normAcc, normXfer, normAdj, accBalances, parseSigned };")();
 
 const canon = (x) => JSON.stringify(x);
 function tx(id, m, extra) { return Object.assign({ id, m, d: "2026-10-08", a: 1250, k: "o", c: "o-groc", n: "" }, extra || {}); }
@@ -324,7 +324,7 @@ test("collections of a newer version merge LWW with their own tombstones", () =>
   assert.equal(ab.plan.length, 1);
   assert.equal(ab.tombs["wish:card"], 6);
   // key order is canonical whatever the order of the inputs
-  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "plan", "wish", "set", "tombs"]);
+  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj", "plan", "wish", "set", "tombs"]);
   // not a collection: bad name, not an array, bad items
   const n = B.mergeBudget(D({ BAD: [{ id: "x", m: 1 }], toolongname: [{ id: "x", m: 1 }], obj: { a: 1 }, zz: [null, { id: "UP", m: 1 }, { id: "ok", m: -1 }] }), B.emptyData());
   assert.equal("BAD" in n || "toolongname" in n || "obj" in n, false);
@@ -373,6 +373,32 @@ test("account balances: start + income − expenses ± transfers, up to a day", 
   assert.deepEqual(B.accBalances(B.emptyData(), "2026-10-09"), {});
 });
 
+test("AC-2: a balance correction moves only its account's balance, from its day, and is in no total", () => {
+  const d = B.mergeBudget(D({
+    acc: [{ id: "cash", m: 1, n: "Cash", o: 1000, col: 0 }],
+    tx: [tx("t1", 1, { d: "2026-10-01", a: 300, k: "o", ac: "cash" })],
+    adj: [{ id: "j1", m: 1, a: -250, ac: "cash", d: "2026-10-10", n: "" }, { id: "j2", m: 1, a: 40, ac: "gone", d: "2026-10-02", n: "" }]
+  }), B.emptyData());
+  assert.equal(d.adj.length, 2);
+  assert.deepEqual(B.accBalances(d, "2026-10-09"), { cash: 700 });
+  assert.deepEqual(B.accBalances(d, "2026-10-10"), { cash: 450 });
+  const tt = B.totals(d.tx, "2026-10");
+  assert.equal(tt.inc, 0);
+  assert.equal(tt.out, 300);
+  // a deleted correction stays deleted on a merge with an older copy
+  const del = B.mergeBudget(Object.assign({}, d, { adj: d.adj.filter((x) => x.id !== "j1"), tombs: { "adj:j1": Date.now() } }), D());
+  assert.ok(!B.mergeBudget(del, d).adj.some((x) => x.id === "j1"));
+});
+
+test("AC-2: a correction needs a non-zero whole amount, an account and a day", () => {
+  assert.deepEqual(B.normAdj({ id: "j1", m: 5, a: -12, ac: "a1", d: "2026-11-04", n: "x" }), { id: "j1", m: 5, a: -12, ac: "a1", d: "2026-11-04", n: "x" });
+  assert.equal(B.normAdj({ id: "j1", m: 5, a: 0, ac: "a1", d: "2026-11-04" }), null);
+  assert.equal(B.normAdj({ id: "j1", m: 5, a: 1.5, ac: "a1", d: "2026-11-04" }), null);
+  assert.equal(B.normAdj({ id: "j1", m: 5, a: 3, d: "2026-11-04" }), null);
+  assert.equal(B.normAdj({ id: "j1", m: 5, a: 3, ac: "a1", d: "4/11" }), null);
+  assert.equal(B.normAdj({ id: "j1", m: 5, a: B.MAX_CENTS + 1, ac: "a1", d: "2026-11-04" }), null);
+});
+
 test("signed amounts for starting balances", () => {
   const ok = { "": 0, "0": 0, "0,00": 0, "-0": 0, "12,50": 1250, "-12,50": -1250, "−1.234,56": -123456, "  -  5 ": -500 };
   Object.keys(ok).forEach((v) => assert.equal(B.parseSigned(v), ok[v], JSON.stringify(v)));
@@ -395,7 +421,7 @@ test("accounts and transfers: merge stays canonical, deletes stick", () => {
   assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
   assert.equal(ab.acc[0].n, "Wallet");
   assert.deepEqual(ab.xfer, []);
-  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "set", "tombs"]);
+  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj", "set", "tombs"]);
 });
 
 test("CRM partner on an entry (BR-CRM-LINK): kept when valid, only when set, and through the prefill", () => {
