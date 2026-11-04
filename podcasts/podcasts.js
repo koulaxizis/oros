@@ -110,7 +110,7 @@
       "pl.sleepEnd": "End of episode", "pl.sleepLeft": "Stops in {t}", "pl.back": "Back {n} s", "pl.fwd": "Forward {n} s",
       "pl.stop": "Stop", "pl.next": "Next in queue", "pl.open": "Open player", "pl.close": "Close",
       "pl.seek": "Position", "pl.buffer": "Loading…", "pl.err": "This episode could not be played.",
-      "find.ph": "Search podcasts", "find.go": "Search", "find.add": "Feed, website or Apple Podcasts address",
+      "find.ph": "Search podcasts", "find.go": "Search", "find.add": "Feed, website, Apple Podcasts or Spotify address",
       "find.addBtn": "Add", "find.subscribe": "Subscribe", "find.subscribed": "Subscribed",
       "find.none": "Nothing found.", "find.off": "Catalog search is off in Settings. You can still add a podcast by its address.",
       "find.by": "{by} · {n} episodes", "find.src": "Results from {s}.", "find.opmlIn": "Import OPML", "find.opmlOut": "Export OPML",
@@ -120,7 +120,7 @@
       "notes.title": "Show notes", "notes.stamps": "Jump to", "notes.none": "No notes for this episode.",
       "s.title": "Settings", "s.back": "Skip back", "s.fwd": "Skip forward", "s.autoNext": "Play the next episode in the queue",
       "s.delPlayed": "Delete downloads after they are played", "s.search": "Catalog search",
-      "s.search.both": "Apple Podcasts and fyyd", "s.search.apple": "Apple Podcasts only", "s.search.fyyd": "fyyd only",
+      "s.search.both": "All catalogs (Apple Podcasts, fyyd, gpodder.net, Podcast Index with your key)", "s.search.apple": "Apple Podcasts only", "s.search.fyyd": "fyyd only",
       "s.search.none": "Off (add by address only)",
       "s.searchNote": "Search terms go to the catalog you pick. Your subscriptions never leave your devices except through your own encrypted sync.",
       "s.relay": "Feeds that block browsers go through the relay you set up in Mail.", "s.noRelay": "No relay set: feeds that block browsers cannot be read. Set the relay in Mail.",
@@ -168,6 +168,17 @@
       "fc.src": "Catalog", "fc.genre": "Genre", "fc.by": "Host / publisher",
       "find.count": "{n} podcasts", "find.recent": "Recent", "find.recentClear": "Clear", "find.subs": "{n} subscribers",
       "pv.moreBy": "More from {by}",
+      "sp.found": "From Spotify: “{s}” has an open RSS feed. Subscribe to it below.",
+      "sp.none": "From Spotify: “{s}” was not found in the open catalogs. It is probably only on Spotify (no RSS), so no open player can follow it. Similar names are below.",
+      "sp.episode": "This is a Spotify episode link. Paste the show's link (open.spotify.com/show/…).",
+      "sp.fail": "Could not read this Spotify link right now.",
+      "pi.open": "Podcast Index (your own key)…", "pi.openOn": "Podcast Index: on…", "pi.title": "Podcast Index",
+      "pi.intro": "Podcast Index is the largest open podcast catalog. It is free, but each person needs their own key and secret.",
+      "pi.get": "Get a free key", "pi.save": "Save", "pi.key": "API key", "pi.secret": "API secret",
+      "pi.note": "Kept only on this device, sealed with a key the browser cannot export; never synced, never in a backup or orOS file. Searches go straight from your browser to Podcast Index.",
+      "pi.on": "Your key is saved. Searches with “All catalogs” include Podcast Index.", "pi.badForm": "Enter the key and the secret as Podcast Index shows them.",
+      "pi.saveFail": "The key could not be saved on this device.", "pi.offDone": "Podcast Index key removed from this device.",
+      "pi.bad": "Podcast Index refused your key. Check it in Settings.",
       "sh.show": "Shuffle", "sh.all": "Shuffle all", "sh.none": "No unplayed episodes to shuffle.",
       "sh.done": "Playing in random order: {n} more in Up next.", "sh.one": "Playing a random episode.", "idx.label": "Jump to a letter",
       "set.notify": "Tell me about new episodes", "toast.ntfOn": "You will get a notice when a new episode comes out.",
@@ -226,7 +237,7 @@
       "pl.sleepEnd": "Τέλος επεισοδίου", "pl.sleepLeft": "Σταματά σε {t}", "pl.back": "Πίσω {n} δευτ.", "pl.fwd": "Μπροστά {n} δευτ.",
       "pl.stop": "Διακοπή", "pl.next": "Επόμενο στην ουρά", "pl.open": "Άνοιγμα player", "pl.close": "Κλείσιμο",
       "pl.seek": "Θέση", "pl.buffer": "Φόρτωση…", "pl.err": "Δεν ήταν δυνατή η αναπαραγωγή του επεισοδίου.",
-      "find.ph": "Αναζήτηση podcasts", "find.go": "Αναζήτηση", "find.add": "Διεύθυνση feed, ιστότοπου ή Apple Podcasts",
+      "find.ph": "Αναζήτηση podcasts", "find.go": "Αναζήτηση", "find.add": "Διεύθυνση feed, ιστότοπου, Apple Podcasts ή Spotify",
       "find.addBtn": "Προσθήκη", "find.subscribe": "Εγγραφή", "find.subscribed": "Εγγεγραμμένο",
       "find.none": "Δεν βρέθηκε τίποτα.", "find.off": "Η αναζήτηση καταλόγου είναι κλειστή στις Ρυθμίσεις. Μπορείς να προσθέσεις podcast με τη διεύθυνσή του.",
       "find.by": "{by} · {n} επεισόδια", "find.src": "Αποτελέσματα από {s}.", "find.opmlIn": "Εισαγωγή OPML", "find.opmlOut": "Εξαγωγή OPML",
@@ -236,7 +247,7 @@
       "notes.title": "Σημειώσεις επεισοδίου", "notes.stamps": "Μετάβαση σε", "notes.none": "Το επεισόδιο δεν έχει σημειώσεις.",
       "s.title": "Ρυθμίσεις", "s.back": "Πίσω κατά", "s.fwd": "Μπροστά κατά", "s.autoNext": "Αναπαραγωγή του επόμενου στην ουρά",
       "s.delPlayed": "Διαγραφή λήψεων όταν ακουστούν", "s.search": "Αναζήτηση καταλόγου",
-      "s.search.both": "Apple Podcasts και fyyd", "s.search.apple": "Μόνο Apple Podcasts", "s.search.fyyd": "Μόνο fyyd",
+      "s.search.both": "Όλοι οι κατάλογοι (Apple Podcasts, fyyd, gpodder.net, Podcast Index με δικό σου κλειδί)", "s.search.apple": "Μόνο Apple Podcasts", "s.search.fyyd": "Μόνο fyyd",
       "s.search.none": "Κλειστή (μόνο με διεύθυνση)",
       "s.searchNote": "Οι όροι αναζήτησης πάνε στον κατάλογο που διαλέγεις. Οι συνδρομές σου δεν φεύγουν από τις συσκευές σου, εκτός από το δικό σου κρυπτογραφημένο sync.",
       "s.relay": "Τα feeds που μπλοκάρουν τους browsers περνούν από το relay που έστησες στο Mail.", "s.noRelay": "Δεν υπάρχει relay: τα feeds που μπλοκάρουν τους browsers δεν διαβάζονται. Όρισέ το στο Mail.",
@@ -284,6 +295,17 @@
       "fc.src": "Κατάλογος", "fc.genre": "Είδος", "fc.by": "Εκφωνητής / παραγωγός",
       "find.count": "{n} podcasts", "find.recent": "Πρόσφατα", "find.recentClear": "Καθαρισμός", "find.subs": "{n} συνδρομητές",
       "pv.moreBy": "Περισσότερα από {by}",
+      "sp.found": "Από το Spotify: το «{s}» έχει ανοιχτό RSS. Κάνε εγγραφή παρακάτω.",
+      "sp.none": "Από το Spotify: το «{s}» δεν βρέθηκε στους ανοιχτούς καταλόγους. Μάλλον υπάρχει μόνο στο Spotify (χωρίς RSS), οπότε δεν το ακολουθεί κανένας ανοιχτός player. Παρακάτω είναι παρόμοια ονόματα.",
+      "sp.episode": "Αυτός είναι σύνδεσμος επεισοδίου του Spotify. Επικόλλησε τον σύνδεσμο της εκπομπής (open.spotify.com/show/…).",
+      "sp.fail": "Ο σύνδεσμος του Spotify δεν διαβάστηκε αυτή τη στιγμή.",
+      "pi.open": "Podcast Index (δικό σου κλειδί)…", "pi.openOn": "Podcast Index: ενεργό…", "pi.title": "Podcast Index",
+      "pi.intro": "Το Podcast Index είναι ο μεγαλύτερος ανοιχτός κατάλογος podcasts. Είναι δωρεάν, αλλά ο καθένας χρειάζεται δικό του κλειδί και μυστικό.",
+      "pi.get": "Πάρε δωρεάν κλειδί", "pi.save": "Αποθήκευση", "pi.key": "Κλειδί API", "pi.secret": "Μυστικό API",
+      "pi.note": "Μένει μόνο σε αυτή τη συσκευή, σφραγισμένο με κλειδί που ο browser δεν μπορεί να εξαγάγει· δεν συγχρονίζεται και δεν μπαίνει σε αντίγραφο ή αρχείο orOS. Οι αναζητήσεις πάνε κατευθείαν από τον browser σου στο Podcast Index.",
+      "pi.on": "Το κλειδί σου αποθηκεύτηκε. Οι αναζητήσεις με «Όλοι οι κατάλογοι» περιλαμβάνουν το Podcast Index.", "pi.badForm": "Γράψε το κλειδί και το μυστικό όπως τα δείχνει το Podcast Index.",
+      "pi.saveFail": "Το κλειδί δεν αποθηκεύτηκε σε αυτή τη συσκευή.", "pi.offDone": "Το κλειδί του Podcast Index αφαιρέθηκε από αυτή τη συσκευή.",
+      "pi.bad": "Το Podcast Index απέρριψε το κλειδί σου. Έλεγξέ το στις Ρυθμίσεις.",
       "sh.show": "Τυχαία σειρά", "sh.all": "Τυχαία από όλα", "sh.none": "Δεν υπάρχουν μη ακουσμένα επεισόδια για τυχαία σειρά.",
       "sh.done": "Παίζει σε τυχαία σειρά: άλλα {n} στο «Επόμενα».", "sh.one": "Παίζει ένα τυχαίο επεισόδιο.", "idx.label": "Μετάβαση σε γράμμα",
       "set.notify": "Ειδοποίηση για νέα επεισόδια", "toast.ntfOn": "Θα ειδοποιείσαι όταν βγαίνει νέο επεισόδιο.",
@@ -2077,9 +2099,9 @@
   // ---------- 11. Discover: search, add by address, OPML ----------
   // found: the last search. in = the field it searched, fc = the facet
   // chip on ({ k, v } or null). Filters live in prefs.fd (device-local).
-  var found = { q: "", in: "all", list: [], busy: false, src: "", fc: null };
+  var found = { q: "", in: "all", list: [], busy: false, src: "", fc: null, sp: "" };
   var findOpen = false;
-  function clearFound() { found = { q: "", in: "all", list: [], busy: false, src: "", fc: null }; }
+  function clearFound() { found = { q: "", in: "all", list: [], busy: false, src: "", fc: null, sp: "" }; }
   function renderFind(main) {
     var mode = C.prefOf(D(), "search");
     var fd = prefs.fd;
@@ -2107,6 +2129,8 @@
       ev.preventDefault();
       var v = q.value.trim();
       if (!v) return;
+      var sp = C.spotifyLink(v);
+      if (sp) { spotifyFind(sp); return; }
       if (/^(https?|feed|pcast|itpc):\/\//i.test(v) || /^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(v)) addByAddress(v);
       else search(v);
     });
@@ -2143,10 +2167,17 @@
     }
     main.appendChild(button(t("br.back"), "txt-btn", function () { clearFound(); renderAll(); }));
     var isSub = function (id) { return !!C.findShow(D(), id); };
-    var list = C.refineHits(found.list, fd, { term: found.q, isSub: isSub });
+    var ff = Object.assign({}, fd, { in: found.in });
+    var list = C.refineHits(found.list, ff, { term: found.q, isSub: isSub });
+    // From a Spotify link: the same name first, and say whether it is there.
+    if (found.sp) {
+      if (ff.sort === "rel") list = C.byTitleMatch(list, found.sp);
+      var hitSp = list.some(function (h) { return C.sameTitle(h, found.sp); });
+      main.appendChild(el("p", "sp-note", t(hitSp ? "sp.found" : "sp.none", { s: found.sp })));
+    }
     if (!list.length) {
       main.appendChild(el("p", "dim", t("find.none")));
-      if (C.findCount(fd)) main.appendChild(button(t("fd.clear"), "txt-btn", function () { prefs.fd = C.normFind(null); savePrefs(); search(found.q); }));
+      if (C.findCount(fd)) main.appendChild(button(t("fd.clear"), "txt-btn", function () { prefs.fd = C.normFind(null); savePrefs(); search(found.q, found.sp ? null : "", found.sp ? { sp: found.sp } : null); }));
       return;
     }
     renderFacets(main, list);
@@ -2225,7 +2256,7 @@
     });
     main.appendChild(wrap);
   }
-  function srcName(k) { return k === "apple" ? "Apple Podcasts" : k === "fyyd" ? "fyyd" : k === "gpodder" ? "gpodder.net" : k; }
+  function srcName(k) { return k === "apple" ? "Apple Podcasts" : k === "fyyd" ? "fyyd" : k === "gpodder" ? "gpodder.net" : k === "podcastindex" ? "Podcast Index" : k; }
   function renderRecent(main) {
     var bar = el("div", "chips recent");
     bar.appendChild(el("span", "facet-l", t("find.recent")));
@@ -2260,13 +2291,16 @@
   }
   // inField: search in that field this time (a recent search, a tag, a
   // publisher from a preview); else the "Search in" filter.
-  function search(term, inField) {
+  // opt.sp = a show name from a Spotify link: searched everywhere this
+  // once, without changing "Search in" or the recent searches.
+  function search(term, inField, opt) {
+    opt = opt || {};
     var mode = C.prefOf(D(), "search");
-    if (inField && C.FIND_IN.indexOf(inField) >= 0 && inField !== prefs.fd.in) prefs.fd = C.normFind(Object.assign({}, prefs.fd, { in: inField }));
-    var fd = prefs.fd;
-    found = { q: term, in: fd.in, list: [], busy: true, src: "", fc: null };
+    if (!opt.sp && inField && C.FIND_IN.indexOf(inField) >= 0 && inField !== prefs.fd.in) prefs.fd = C.normFind(Object.assign({}, prefs.fd, { in: inField }));
+    var fd = opt.sp ? C.normFind(Object.assign({}, prefs.fd, { in: "all" })) : prefs.fd;
+    found = { q: term, in: fd.in, list: [], busy: true, src: "", fc: null, sp: opt.sp || "" };
     if (mode === "none") { addByAddress(term); return; }
-    prefs.rs = C.addRecent(prefs.rs, term, fd.in);
+    if (!opt.sp) prefs.rs = C.addRecent(prefs.rs, term, fd.in);
     savePrefs();
     view.pv = null;
     prefs.tab = "find";
@@ -2274,15 +2308,115 @@
     var cc = LANG === "el" ? "gr" : "";
     var jobs = [], names = [];
     var json = function (u, parse) { return NET.fetchOne(u).then(function (r) { return parse(JSON.parse(r.text)); }).catch(function () { return []; }); };
+    var all = mode === "both";
     // Tags: gpodder.net's tag lists first, then Apple's keywords.
     if (fd.in === "tag") { names.push("gpodder.net"); jobs.push(json(C.gpodderTagUrl(term, 60), C.parseGpodderResults)); }
-    if (mode === "both" || mode === "apple") { names.push("Apple Podcasts"); jobs.push(json(C.appleFindUrl(term, fd.in === "tag" ? Object.assign({}, fd, { in: "topic" }) : fd, cc), C.parseAppleResults)); }
-    if ((mode === "both" || mode === "fyyd") && fd.in !== "tag") { names.push("fyyd"); jobs.push(json(C.fyydFindUrl(term, fd), C.parseFyydResults)); }
+    if (all || mode === "apple") { names.push("Apple Podcasts"); jobs.push(json(C.appleFindUrl(term, fd.in === "tag" ? Object.assign({}, fd, { in: "topic" }) : fd, cc), C.parseAppleResults)); }
+    if ((all || mode === "fyyd") && fd.in !== "tag") { names.push("fyyd"); jobs.push(json(C.fyydFindUrl(term, fd), C.parseFyydResults)); }
+    if (all && fd.in !== "tag") { names.push("gpodder.net"); jobs.push(json(C.gpodderSearchUrl(term), C.parseGpodderResults)); }
+    if (all && piCreds) { names.push("Podcast Index"); jobs.push(piSearch(C.piSearchUrl(term, fd))); }
     Promise.all(jobs).then(function (lists) {
       if (found.q !== term || found.in !== fd.in) return;
-      found = { q: term, in: fd.in, list: C.mergeResults(lists).slice(0, 120), busy: false, src: names.join(", "), fc: null };
+      found = { q: term, in: fd.in, list: C.mergeResults(lists).slice(0, 160), busy: false, src: names.join(", "), fc: null, sp: opt.sp || "" };
       if (prefs.tab === "find") renderAll();
     });
+  }
+  // A Spotify show link: its name from Spotify's public oEmbed (no key),
+  // then that name in the open catalogs. Episode links name the episode,
+  // not the show, so they ask for the show's link.
+  function spotifyFind(link) {
+    if (link.kind !== "show") { showToast(t("sp.episode")); return; }
+    if (C.prefOf(D(), "search") === "none") { showToast(t("find.off")); return; }
+    found = { q: "", in: "all", list: [], busy: true, src: "", fc: null, sp: "" };
+    renderAll();
+    NET.fetchOne(C.spotifyOembedUrl(link)).then(function (r) {
+      var name = C.parseSpotifyOembed(JSON.parse(r.text));
+      if (!name) throw { code: "nofeed" };
+      search(name, null, { sp: name });
+    }).catch(function (e) {
+      clearFound(); renderAll();
+      showToast(e && e.code === "offline" ? t("toast.offline") : t("sp.fail"));
+    });
+  }
+  // Podcast Index with the person's own key (sealed by gpodder.js in
+  // IndexedDB "oros-podcasts-sync", slot "podcastindex"). Straight from
+  // the browser: the relay sends no headers. piCreds = { k, s } or null.
+  var piCreds = null;
+  function piLoad() {
+    if (!G) return Promise.resolve(null);
+    return G.loadPass("podcastindex").then(function (txt) {
+      var o = null;
+      try { o = C.normPiKey(JSON.parse(txt || "null")); } catch (e) {}
+      piCreds = o;
+      return o;
+    });
+  }
+  function sha1Hex(text) {
+    return crypto.subtle.digest("SHA-1", new TextEncoder().encode(text)).then(function (b) {
+      return [].map.call(new Uint8Array(b), function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join("");
+    });
+  }
+  function piSearch(url) {
+    var c = piCreds;
+    if (!c || !url) return Promise.resolve([]);
+    var date = String(Math.floor(Date.now() / 1000));
+    return sha1Hex(C.piAuthText(c.k, c.s, date)).then(function (auth) {
+      return fetch(url, { headers: { "X-Auth-Key": c.k, "X-Auth-Date": date, "Authorization": auth }, credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" });
+    }).then(function (r) {
+      if (r.status === 401 || r.status === 403) throw { code: "auth" };
+      if (!r.ok) throw { code: "http" };
+      return r.json();
+    }).then(C.parsePiResults).catch(function (e) { if (e && e.code === "auth") showToast(t("pi.bad")); return []; });
+  }
+  function piDlg() {
+    if (!G) return;
+    var dlg = makeDialog("pc-pi", "form-dlg");
+    var head = el("div", "notes-head g-head");
+    head.appendChild(el("div", "dlg-title", t("pi.title")));
+    head.appendChild(button(t("pl.close"), "icon-btn", function () { dlg.close(); }, UI.x));
+    dlg.appendChild(head);
+    dlg.appendChild(el("p", "dim small", t("pi.intro")));
+    dlg.appendChild(button(t("pi.get"), "txt-btn", function () { openLink("https://api.podcastindex.org/signup"); }));
+    var form = el("div", "form");
+    var field = function (label, type, ac) {
+      var w = el("label", "field");
+      w.appendChild(el("span", "", label));
+      var i = el("input", "inp"); i.type = type; i.autocomplete = ac; i.spellcheck = false; i.maxLength = 128;
+      w.appendChild(i);
+      form.appendChild(w);
+      return i;
+    };
+    var k = field(t("pi.key"), "text", "off");
+    var sc = field(t("pi.secret"), "password", "new-password");
+    if (piCreds) { k.placeholder = sc.placeholder = t("g.passKeep"); }
+    dlg.appendChild(form);
+    dlg.appendChild(el("p", "dim small", t("pi.note")));
+    var st = el("p", "small g-status"); st.setAttribute("role", "status");
+    st.textContent = piCreds ? t("pi.on") : "";
+    dlg.appendChild(st);
+    var row = el("div", "row-btns");
+    row.appendChild(button(t("pi.save"), "txt-btn primary", function () {
+      var o = C.normPiKey({ k: k.value, s: sc.value });
+      if (!o) { st.textContent = t("pi.badForm"); return; }
+      G.savePass(JSON.stringify(o), "podcastindex").then(function (ok) {
+        if (!ok) { st.textContent = t("pi.saveFail"); return; }
+        piCreds = o;
+        k.value = sc.value = ""; k.placeholder = sc.placeholder = t("g.passKeep");
+        st.textContent = t("pi.on");
+        offB.hidden = false;
+      });
+    }));
+    var offB = button(t("g.off"), "txt-btn danger", function () {
+      G.dropPass("podcastindex");
+      piCreds = null;
+      dlg.close();
+      showToast(t("pi.offDone"));
+    });
+    offB.hidden = !piCreds;
+    row.appendChild(offB);
+    dlg.appendChild(row);
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
   // Tags from gpodder.net (most used first), loaded once per window.
   var tagsCache = { list: [], busy: false, failed: false };
@@ -2327,7 +2461,7 @@
     }) : Promise.resolve(url);
     found.busy = true; renderAll();
     p.then(function (u) {
-      if (C.findShow(D(), C.showId(u))) { found = { q: "", list: [], busy: false, src: "" }; openShow(C.showId(u)); return null; }
+      if (C.findShow(D(), C.showId(u))) { clearFound(); openShow(C.showId(u)); return null; }
       return NET.fetchOne(u).then(function (r) {
         var parsed = parseText(r.text, r.finalUrl || u);
         if (parsed) return finishAdd(u, parsed);
@@ -2537,6 +2671,7 @@
     form.appendChild(el("p", "dim small", t("fx.note")));
     form.appendChild(el("p", "dim small", NET.relayAvailable() ? t("s.relay") : t("s.noRelay")));
     if (G) form.appendChild(button(t("g.open"), "txt-btn", function () { dlg.close(); gpodderDlg(); }));
+    if (G) form.appendChild(button(t(piCreds ? "pi.openOn" : "pi.open"), "txt-btn", function () { dlg.close(); piDlg(); }));
     if (recFile) {
       // .orospodcasts: the orOS file of every subscription and its progress
       var frow = el("div", "row-btns");
@@ -3002,6 +3137,7 @@
         if (tgt) openTarget(tgt);
         if (!tgt || typeof tgt.show === "string") refresh(false);
         gAuto();
+        piLoad();
         // While open: refresh every hour (never offline or hidden).
         setInterval(function () {
           if (document.visibilityState === "visible" && now() - lastRefresh > REFRESH_MIN * 60000) refresh(false);

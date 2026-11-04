@@ -413,3 +413,4 @@ dialog.video-dlg:not([open]) { display: none; }
 @media (max-width: 400px) {
   .find .txt-btn.primary { padding-left: 10px; padding-right: 10px; }
 }
+.sp-note { margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-bg); font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }

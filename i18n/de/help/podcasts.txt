@@ -2,7 +2,7 @@
 Mit Podcasts folgst du deinen Lieblingssendungen, siehst neue Folgen, baust eine Warteschlange `Als Nächstes` auf und lädst Folgen herunter, um sie offline zu hören. Der Player läuft weiter, wenn du die App schließt.
 
 ## Erste Schritte
-Öffne `Entdecken`, suche einen Podcast und drück `Abonnieren`. Du kannst auch eine Adresse in `Adresse von Feed, Website oder Apple Podcasts` einfügen und `Hinzufügen` drücken. Die Taste **+** oben (`Podcast hinzufügen`) bringt dich direkt dorthin.
+Öffne `Entdecken`, suche einen Podcast und drück `Abonnieren`. Du kannst auch eine Adresse in `Adresse von Feed, Website, Apple Podcasts oder Spotify` einfügen und `Hinzufügen` drücken. Die Taste **+** oben (`Podcast hinzufügen`) bringt dich direkt dorthin.
 
 Die Tabs:
 - `Hören`: was gerade läuft, die Warteschlange `Als Nächstes` und `Weiterhören`.
@@ -15,6 +15,8 @@ Die Tabs:
 Wähle in `Entdecken` unter dem Feld, wo deine Wörter gesucht werden: `Überall`, `Titel`, `Sprecher & Produzenten` (eine Moderatorin, ein Autor oder ein Netzwerk), `Themen` (Stichwörter) oder `Tags`. Die Schaltfläche `Filter` öffnet `Genre`, `Land (Apple-Podcasts-Store)`, `Sortierung` (`Beste Übereinstimmung`, `Neueste Folge`, `Meiste Folgen`, `A–Z`), `Podcasts mit expliziten Inhalten ausblenden` und `Podcasts ausblenden, denen ich folge`; eine Zahl auf der Schaltfläche zeigt, wie viele aktiv sind, und `Filter zurücksetzen` setzt sie zurück. Die Filter bleiben auf diesem Gerät.
 
 Über den Ergebnissen grenzen Chips die Liste ohne neue Suche ein: `Katalog` (Apple Podcasts, fyyd, gpodder.net), `Genre` und `Sprecher / Produzent`. Wenn du einen Podcast ausprobierst, zeigt `Mehr von …` weitere Sendungen desselben Sprechers oder Produzenten. Deine letzten Suchen stehen unter `Zuletzt`; `Leeren` entfernt sie.
+
+Füge einen Spotify-Link einer Sendung (`open.spotify.com/show/…`) ins Suchfeld ein: orOS liest den Namen der Sendung bei Spotify und sucht ihn in den offenen Katalogen, gleicher Name zuerst. Sendungen mit RSS anderswo kannst du abonnieren; Sendungen nur auf Spotify haben kein RSS, und die App sagt es dir.
 
 `Tags` neben `Beliebt`, `Genres` und `Länder` zeigt die meistgenutzten Tags von gpodder.net; tippe auf einen, um seine Podcasts zu sehen. Genre und Land kommen aus dem Katalog von Apple Podcasts; mit `Nur fyyd` in den Einstellungen werden sie hier an den Ergebnissen geprüft.
 
@@ -48,7 +50,7 @@ Das Gerät bekommt die eigene Adresse der Folge: Eine heruntergeladene Kopie geh
 Wähle `Herunterladen` im Menü einer Folge. Der Tab `Downloads` zeigt, wie viel Platz sie belegen und wie viel frei ist. `Downloads vor automatischem Aufräumen schützen` bittet den Browser, sie zu behalten; `Gehörte Downloads löschen` räumt auf.
 
 ## Einstellungen
-Die Zahnradtaste öffnet `Einstellungen`: Standardtempo, die Sprünge für `Zurückspringen` und `Vorspringen`, `Nächste Folge der Warteschlange abspielen`, `Downloads nach dem Hören löschen` und welchen Katalog die `Katalogsuche` nutzt (`Apple Podcasts und fyyd`, einen davon oder aus).
+Die Zahnradtaste öffnet `Einstellungen`: Standardtempo, die Sprünge für `Zurückspringen` und `Vorspringen`, `Nächste Folge der Warteschlange abspielen`, `Downloads nach dem Hören löschen` und welchen Katalog die `Katalogsuche` nutzt (`Alle Kataloge (Apple Podcasts, fyyd, gpodder.net, Podcast Index mit eigenem Schlüssel)`, nur Apple Podcasts oder nur fyyd, oder aus). `Podcast Index (eigener Schlüssel)…` fügt den größten offenen Katalog hinzu: Hol dir auf podcastindex.org kostenlos Schlüssel und Secret und trag sie ein; sie bleiben versiegelt auf diesem Gerät, werden nie synchronisiert und kommen nie in eine Sicherung oder orOS-Datei.
 
 ### Stille überspringen und Stimmverstärkung
 `Stille überspringen` spielt die leisen Stellen zwischen den Wörtern schneller ab, so dauern Folgen weniger lang; der große Player zeigt, wie viel Zeit es gespart hat, und `Statistik` zählt es zusammen. `Stimmverstärkung` gleicht die Lautstärke aus und macht Stimmen klarer, praktisch in einem lauten Raum. Schalte beides in `Einstellungen` ein oder mit den zwei Tasten im großen Player.

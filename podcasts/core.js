@@ -33,6 +33,7 @@
 //  15. Browse like Radio (genres, countries, surprise)
 //  16. Shuffle + A–Z / Α–Ω index
 //  17. Find shows: search in, filters, sort, facets, tags (2026-11-04)
+//  18. Spotify links + Podcast Index (own key) (2026-11-04)
 // ============================================================
 (function (root) {
   "use strict";
@@ -1573,6 +1574,17 @@
     if (h && h.genre && gs.indexOf(h.genre) < 0) gs.unshift(h.genre);
     return gs;
   }
+  // Apple rows by genre id; others by name. Podcast Index splits
+  // Apple's names ("Society & Culture" → "Society", "Culture"), so a
+  // word of its category inside the genre's name is enough there.
+  function inGenreName(h, g) {
+    if (h.gi && h.gi.indexOf(g.id) >= 0) return true;
+    var names = hitGenres(h);
+    if (names.indexOf(g.en) >= 0) return true;
+    if (h.src !== "podcastindex") return false;
+    var ge = fold(g.en);
+    return names.some(function (n) { n = fold(n); return n.length > 2 && ge.indexOf(n) >= 0; });
+  }
   // The filters and the sort on a merged list. ctx = { term, isSub(id) }.
   function refineHits(hits, f, ctx) {
     f = normFind(f);
@@ -1584,8 +1596,8 @@
       if (f.mine && ctx.isSub && ctx.isSub(h.id)) return false;
       // Genre: rows that name genres must name this one; gpodder rows
       // name none, so they stay out once a genre is picked.
-      if (g && !((h.gi && h.gi.indexOf(g.id) >= 0) || hitGenres(h).indexOf(g.en) >= 0)) return false;
-      if (ctx.term && h.src !== "apple" && h.src !== "gpodder") {
+      if (g && !inGenreName(h, g)) return false;
+      if (ctx.term && h.src !== "apple" && f.in !== "tag") {
         if (f.in === "title" && !wordsIn(h.title, ctx.term)) return false;
         if (f.in === "author" && !wordsIn(h.by, ctx.term)) return false;
       }
@@ -1642,6 +1654,69 @@
     return out.slice(0, max || 8);
   }
 
+
+  // ---------- 18. Spotify links + Podcast Index (own key) (2026-11-04) ----------
+  // A Spotify show link has no feed in it. Spotify's public oEmbed (no
+  // key) gives the show's name; the open catalogs are then searched for
+  // that name and exact matches come first. A show only on Spotify has
+  // no RSS and cannot be followed by any open player.
+  function spotifyLink(v) {
+    v = clean(v, 300);
+    var m = v.match(/^spotify:(show|episode):([A-Za-z0-9]{22})$/) ||
+      v.match(/^(?:https?:\/\/)?open\.spotify\.com\/(?:intl-[a-z]{2}(?:-[a-z]{2})?\/|embed\/)?(show|episode)\/([A-Za-z0-9]{22})(?:[/?#]|$)/i);
+    return m ? { kind: m[1].toLowerCase(), id: m[2] } : null;
+  }
+  function spotifyOembedUrl(link) {
+    if (!link || !/^(show|episode)$/.test(link.kind) || !/^[A-Za-z0-9]{22}$/.test(link.id)) return "";
+    return "https://open.spotify.com/oembed?url=" + encodeURIComponent("https://open.spotify.com/" + link.kind + "/" + link.id);
+  }
+  function parseSpotifyOembed(json) { return clean(json && typeof json.title === "string" ? json.title : "", LIM.title); }
+  // Rows whose title is the name (accents, case, punctuation folded) first.
+  function byTitleMatch(hits, name) {
+    var key = function (x) { return fold(x).replace(/[^a-z0-9α-ω]+/g, " ").trim(); };
+    var want = key(name);
+    if (!want) return hits || [];
+    return stableSort((hits || []).filter(Boolean), function (a, b) { return (key(b.title) === want) - (key(a.title) === want); });
+  }
+  function sameTitle(h, name) {
+    var key = function (x) { return fold(x).replace(/[^a-z0-9α-ω]+/g, " ").trim(); };
+    return !!(h && key(name) && key(h.title) === key(name));
+  }
+  // Podcast Index (podcastindex.org): the largest open RSS catalog. It
+  // needs a free key + secret, so it is used only with the person's
+  // OWN key, sealed on their device (never synced, never in a file).
+  var PI_API = "https://api.podcastindex.org/api/1.0/search/";
+  function normPiKey(o) {
+    o = o && typeof o === "object" ? o : {};
+    var k = clean(typeof o.k === "string" ? o.k : "", 64).replace(/\s+/g, "");
+    var sc = clean(typeof o.s === "string" ? o.s : "", 128).replace(/\s+/g, "");
+    return /^[A-Za-z0-9]{8,64}$/.test(k) && /^[\x21-\x7e]{8,128}$/.test(sc) ? { k: k, s: sc } : null;
+  }
+  function piSearchUrl(term, f) {
+    term = clean(term, 100);
+    f = normFind(f);
+    if (!term) return "";
+    return PI_API + (f.in === "title" ? "bytitle" : "byterm") + "?q=" + encodeURIComponent(term) + "&max=40" + (f.ex ? "&clean" : "");
+  }
+  // Authorization = SHA-1 hex of key + secret + X-Auth-Date (seconds).
+  function piAuthText(key, secret, date) { return String(key) + String(secret) + String(date); }
+  function parsePiResults(json) {
+    var out = [];
+    (json && Array.isArray(json.feeds) ? json.feeds : []).forEach(function (r) {
+      if (!r || typeof r !== "object" || r.dead === 1) return;
+      var cats = r.categories && typeof r.categories === "object" ? Object.keys(r.categories).map(function (k) { return r.categories[k]; })
+        .filter(function (x) { return typeof x === "string"; }) : [];
+      var h = hit(r.url || r.originalUrl, r.title, r.author || r.ownerName, r.artwork || r.image, cats[0] || "", r.episodeCount,
+        "podcastindex", cats);
+      if (!h) return;
+      h.upd = stampOf(r.newestItemPubdate || r.lastUpdateTime);
+      if (r.explicit === true || r.explicit === 1) h.ex = 1;
+      if (typeof r.language === "string" && /^[a-z]{2}\b/i.test(r.language)) h.lang = r.language.slice(0, 2).toLowerCase();
+      out.push(h);
+    });
+    return out;
+  }
+
   root.OrosPodcastsCore = {
     DATA_VER: DATA_VER, LIM: LIM, SPEEDS: SPEEDS, PREF_DEF: PREF_DEF, SYNC_EVERY: SYNC_EVERY, SYNC_MIN_MOVE: SYNC_MIN_MOVE,
     clean: clean, fold: fold, plain: plain, decodeEntities: decodeEntities,
@@ -1672,6 +1747,8 @@
     FIND_IN: FIND_IN, FIND_SORT: FIND_SORT, normFind: normFind, findCount: findCount, appleFindUrl: appleFindUrl, fyydFindUrl: fyydFindUrl,
     stampOf: stampOf, tagSlug: tagSlug, gpodderSearchUrl: gpodderSearchUrl, gpodderTagUrl: gpodderTagUrl, gpodderTopTagsUrl: gpodderTopTagsUrl,
     parseGpodderResults: parseGpodderResults, parseGpodderTags: parseGpodderTags, refineHits: refineHits,
-    findFacets: findFacets, withFacet: withFacet, addRecent: addRecent
+    findFacets: findFacets, withFacet: withFacet, addRecent: addRecent,
+    spotifyLink: spotifyLink, spotifyOembedUrl: spotifyOembedUrl, parseSpotifyOembed: parseSpotifyOembed, byTitleMatch: byTitleMatch,
+    sameTitle: sameTitle, normPiKey: normPiKey, piSearchUrl: piSearchUrl, piAuthText: piAuthText, parsePiResults: parsePiResults
   };
 })(typeof window !== "undefined" ? window : this);

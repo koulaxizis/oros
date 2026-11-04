@@ -799,8 +799,11 @@ test("find: refine filters every catalog alike and sorts stably", () => {
   // Comedy: Apple by id, fyyd by name; gpodder names no genre.
   assert.deepEqual(ids(C.refineHits(rows, { g: "1303" })), ["s1", "s3"]);
   // fyyd rows are checked against the field; Apple already searched it.
-  assert.deepEqual(ids(C.refineHits(rows, { in: "author" }, { term: "ann" })), ["s1", "s3", "s4"]);
-  assert.deepEqual(ids(C.refineHits(rows, { in: "title" }, { term: "alpha" })), ["s1", "s2", "s4"]);
+  // Only Apple searched the field itself; every other catalog is checked.
+  assert.deepEqual(ids(C.refineHits(rows, { in: "author" }, { term: "ann" })), ["s1", "s3"]);
+  assert.deepEqual(ids(C.refineHits(rows, { in: "title" }, { term: "alpha" })), ["s1", "s2"]);
+  // Tag lists are not about words in a field.
+  assert.deepEqual(ids(C.refineHits(rows, { in: "tag" }, { term: "history" })), ["s1", "s2", "s3", "s4"]);
   assert.deepEqual(ids(C.refineHits(rows, { sort: "new" })), ["s1", "s3", "s2", "s4"]);
   assert.deepEqual(ids(C.refineHits(rows, { sort: "eps" })), ["s2", "s3", "s1", "s4"]);
   assert.deepEqual(ids(C.refineHits(rows, { sort: "az" })), ["s2", "s1", "s4", "s3"]);
@@ -826,4 +829,47 @@ test("find: facets, facet filter and recent searches", () => {
   assert.deepEqual(r, [{ q: "HISTORY", in: "tag" }, { q: "news", in: "all" }]);
   assert.deepEqual(C.addRecent([{ q: "x", in: "bad" }, 3, { q: "y", in: "title" }], "", "all"), [{ q: "y", in: "title" }]);
   assert.equal(C.addRecent(Array.from({ length: 20 }, (_, i) => ({ q: "q" + i, in: "all" })), "new", "all").length, 8);
+});
+
+test("find: Spotify show links → name → same title first", () => {
+  const id = "4rOoJ6Egrf8K2IrywzwOMk";
+  assert.deepEqual(C.spotifyLink("https://open.spotify.com/show/" + id + "?si=abc"), { kind: "show", id });
+  assert.deepEqual(C.spotifyLink("open.spotify.com/intl-el/show/" + id), { kind: "show", id });
+  assert.deepEqual(C.spotifyLink("spotify:episode:" + id), { kind: "episode", id });
+  assert.equal(C.spotifyLink("https://open.spotify.com/show/short"), null);
+  assert.equal(C.spotifyLink("https://evil.example/open.spotify.com/show/" + id), null);
+  assert.equal(C.spotifyOembedUrl({ kind: "show", id }), "https://open.spotify.com/oembed?url=" + encodeURIComponent("https://open.spotify.com/show/" + id));
+  assert.equal(C.spotifyOembedUrl({ kind: "artist", id }), "");
+  assert.equal(C.parseSpotifyOembed({ title: "  Η Ιστορία\n μας " }), "Η Ιστορία μας");
+  assert.equal(C.parseSpotifyOembed({ title: 5 }), "");
+  const rows = [{ id: "a", title: "Ιστορία μας, Το Podcast" }, { id: "b", title: "Η ιστορία ΜΑΣ!" }, { id: "c", title: "Other" }];
+  assert.deepEqual(C.byTitleMatch(rows, "Η Ιστορία μας").map((h) => h.id), ["b", "a", "c"]);
+  assert.equal(C.sameTitle(rows[1], "η ιστορια μας"), true);
+  assert.equal(C.sameTitle(rows[0], "η ιστορια μας"), false);
+});
+
+test("find: Podcast Index with the person's own key", () => {
+  assert.deepEqual(C.normPiKey({ k: " ABCDEF123456 ", s: "s3cr3t^value#" }), { k: "ABCDEF123456", s: "s3cr3t^value#" });
+  assert.equal(C.normPiKey({ k: "short", s: "s3cr3tvalue" }), null);
+  assert.equal(C.normPiKey({ k: "ABCDEF123456", s: "" }), null);
+  assert.equal(C.normPiKey(null), null);
+  assert.equal(C.piSearchUrl("a b", { in: "title", ex: 1 }), "https://api.podcastindex.org/api/1.0/search/bytitle?q=a%20b&max=40&clean");
+  assert.equal(C.piSearchUrl("a b", {}), "https://api.podcastindex.org/api/1.0/search/byterm?q=a%20b&max=40");
+  assert.equal(C.piSearchUrl(" ", {}), "");
+  assert.equal(C.piAuthText("K", "S", 1700000000), "KS1700000000");
+  const r = C.parsePiResults({ feeds: [
+    { url: "https://pi.example/feed", title: "PI Show", author: "Pia", artwork: "https://pi.example/a.jpg", categories: { 77: "Society", 78: "Culture" },
+      episodeCount: 12, newestItemPubdate: 1700000000, explicit: true, language: "el" },
+    { url: "https://pi.example/dead", title: "Dead", dead: 1 }, { url: "ftp://x", title: "bad" }, null] });
+  assert.equal(r.length, 1);
+  assert.equal(r[0].src, "podcastindex");
+  assert.equal(r[0].genre, "Society");
+  assert.deepEqual(r[0].gs, ["Society", "Culture"]);
+  assert.equal(r[0].upd, 1700000000000);
+  assert.equal(r[0].ex, 1);
+  assert.equal(r[0].lang, "el");
+  // "Society & Culture" (Apple 1324) takes Podcast Index's split names.
+  const g = C.GENRES.find((x) => /Society/.test(C.genreName(x.id, "en")));
+  if (g) assert.equal(C.refineHits(r, { g: g.id }).length, 1);
+  assert.equal(C.refineHits(r, { g: "1303" }).length, 0);
 });
