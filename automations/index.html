@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-AJH3IU0z0tR+IskqCSGSyee7FbrkuM+Bt8+7ayt9PAw='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=automations" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Automations · orOS</title>
+  <link rel="stylesheet" href="../fonts.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <header id="toolbar">
+    <h1 id="title" data-i18n="app.name">Automations</h1>
+    <span class="grow"></span>
+    <button type="button" id="tpl-btn" class="chip" data-i18n="btn.templates">Ready-made</button>
+    <button type="button" id="new-btn" class="chip pri" data-i18n="btn.new">New rule</button>
+  </header>
+
+  <main id="main">
+    <p id="standalone" class="hint warn" data-i18n="standalone" hidden>Opened outside orOS: rules are saved, but they run only inside orOS.</p>
+    <section aria-labelledby="rules-h">
+      <h2 id="rules-h" data-i18n="sec.rules">My rules</h2>
+      <ul id="list" class="rules"></ul>
+      <div id="empty" class="emptybox">
+        <p data-i18n="empty">No rules yet. A rule says when something happens and what orOS does then. Start from a ready-made one or make your own.</p>
+        <button type="button" id="empty-tpl" class="chip pri" data-i18n="btn.templates">Ready-made</button>
+      </div>
+    </section>
+    <section aria-labelledby="log-h">
+      <h2 id="log-h" data-i18n="sec.log">Recent runs on this device</h2>
+      <ul id="log" class="log"></ul>
+      <p id="log-empty" class="hint" data-i18n="log.empty">Nothing has run yet.</p>
+    </section>
+  </main>
+
+  <dialog id="tpl-dlg" aria-labelledby="tpl-h">
+    <h2 id="tpl-h" data-i18n="tpl.title">Ready-made rules</h2>
+    <p class="hint" data-i18n="tpl.hint">Pick one: you can change it before you save it.</p>
+    <ul id="tpl-list" class="tpls"></ul>
+    <div class="row end"><button type="button" class="chip" data-close data-i18n="btn.close">Close</button></div>
+  </dialog>
+
+  <dialog id="ed-dlg" aria-labelledby="ed-h">
+    <form id="ed-form" method="dialog" autocomplete="off">
+      <h2 id="ed-h" data-i18n="ed.title">Rule</h2>
+      <label class="fld"><span data-i18n="f.name">Name</span>
+        <input type="text" id="f-name" maxlength="80" required data-i18n-ph="f.name.ph"></label>
+
+      <fieldset>
+        <legend data-i18n="f.when">When</legend>
+        <label class="fld"><span class="sr-only" data-i18n="f.when">When</span>
+          <select id="f-when">
+            <option value="day" data-i18n="w.day">Every day or on some days</option>
+            <option value="month" data-i18n="w.month">Every month</option>
+            <option value="year" data-i18n="w.year">Every year</option>
+            <option value="once" data-i18n="w.once">Once</option>
+            <option value="open" data-i18n="w.open">When orOS opens (once a day)</option>
+          </select></label>
+        <div id="wd-row" class="wd" role="group" data-i18n-aria="f.days"></div>
+        <label class="fld" id="md-row"><span data-i18n="f.md">Day of the month</span>
+          <select id="f-md"></select></label>
+        <label class="fld" id="date-row"><span data-i18n="f.date">Date</span>
+          <input type="date" id="f-date"></label>
+        <label class="fld" id="at-row"><span data-i18n="f.at">Time</span>
+          <input type="time" id="f-at" required></label>
+      </fieldset>
+
+      <fieldset>
+        <legend data-i18n="f.do">Then</legend>
+        <ul id="acts" class="acts"></ul>
+        <div class="row wrap addrow">
+          <label class="fld grow"><span class="sr-only" data-i18n="f.addAct">Add a step</span>
+            <select id="f-add"></select></label>
+          <button type="button" id="add-act" class="chip" data-i18n="btn.addAct">Add step</button>
+        </div>
+        <p class="hint small" data-i18n="ed.safe">A notice shows by itself. Every other step opens its app filled in, and nothing is saved there until you save it.</p>
+        <p class="hint small" data-i18n="ed.ph">In texts, {date}, {weekday}, {month} and {year} become the day of the run.</p>
+      </fieldset>
+
+      <label class="check"><input type="checkbox" id="f-on" checked> <span data-i18n="f.on">On</span></label>
+      <p id="ed-err" class="hint warn" role="alert" hidden></p>
+      <div class="row end wrap">
+        <button type="button" id="ed-del" class="chip del" data-i18n="btn.del">Delete</button>
+        <span class="grow"></span>
+        <button type="button" id="ed-test" class="chip" data-i18n="btn.test">Try it now</button>
+        <button type="button" class="chip" data-close data-i18n="btn.cancel">Cancel</button>
+        <button type="submit" id="ed-save" class="chip pri" data-i18n="btn.save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="run-dlg" aria-labelledby="run-h">
+    <h2 id="run-h"></h2>
+    <p id="run-when" class="hint"></p>
+    <ul id="run-list" class="acts"></ul>
+    <div class="row end"><button type="button" class="chip" data-close data-i18n="btn.close">Close</button></div>
+  </dialog>
+
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js" data-app="automations"></script>
+  <script src="core.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
