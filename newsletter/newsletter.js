@@ -187,7 +187,7 @@
       "iss.imported": "imported", "vw.imported": "Imported from another service; sent {t}.",
       "err.nofeed": "it isn't a feed", "err.nofeeds": "the feed reader isn't loaded",
       "vw.started": "Started {t}", "vw.done": "Finished {t}", "vw.sent": "Sent", "vw.failed": "Failed", "vw.left": "Left",
-      "vw.unsubs": "Unsubscribed since", "vw.pause": "Pause", "vw.resume": "Resume", "vw.stop": "Stop for good",
+      "vw.unsubs": "Unsubscribed", "vw.pause": "Pause", "vw.resume": "Resume", "vw.stop": "Stop for good",
       "vw.web": "Save as web page", "vw.other": "Being sent from another device.", "vw.take": "Send from here",
       "vw.err": "Paused: {e}", "vw.failList": "Not delivered",
       "dlg.cancel": "Cancel", "dlg.save": "Save", "dlg.close": "Close", "dlg.delete": "Delete",
@@ -226,7 +226,7 @@
       "ch.test": "Test login", "ch.testOk": "Login works", "ch.delete": "Remove account",
       "ch.inUse": "Lists use this account: choose another account for them first.",
       "p.other": "Other", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (US)", "p.mailgun-eu": "Mailgun (EU)",
-      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
+      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.proton": "Proton Mail", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
       "s.title": "Subscriber", "s.email": "E-mail", "s.name": "Name", "s.tags": "Tags", "s.tagsHint": "Separate with commas.",
       "s.lang": "Language", "s.langAny": "Like the list", "s.basis": "On what basis", "s.status": "Status",
       "s.since": "Subscribed {t}", "s.conf": "Confirmed {t}", "s.left": "Left {t}", "s.inv": "Confirmation request sent {t}",
@@ -238,6 +238,11 @@
       "imp.title": "Import", "imp.paste": "Addresses", "imp.pasteHint": "One per line, or separated by commas: name@example.com or Name <name@example.com>.",
       "imp.tags": "Add these tags", "imp.basis": "On what basis", "imp.next": "Next", "imp.do": "Add {n}",
       "imp.sum": "{a} new · {d} already there · {l} left earlier (not added) · {s} deleted for good · {b} not valid · {o} over the limit",
+      "imp.st": "What the file holds", "imp.stFile": "As its status column says", "imp.st.on": "Subscribers", "imp.st.off": "People who unsubscribed", "imp.st.bounce": "Addresses that bounced", "imp.st.spam": "Spam complaints or junk",
+      "imp.stHint": "Unsubscribed, bounced and junk addresses are never added: they go on the do-not-mail list as a fingerprint, so no later import can add them, and anyone on the list now is marked as left. Exports that keep one status per file (MailerLite) need one import per file.",
+      "imp.cn": "Consent note", "imp.cnDef": "Imported from {f}, {d}", "imp.cnHint": "Kept with each person as the record of how they signed up, unless the file has its own source column.",
+      "imp.cols": "Other columns", "imp.colsHint": "Type a tag to give everyone who has a value in that column (not empty, not 0). Leave it empty and the column is not imported. Several columns may give the same tag.", "imp.buyTag": "customer",
+      "imp.sum2": "{g} go on the do-not-mail list · {u} on the list now are marked as left", "imp.done2": "{n} added · {u} marked as left · {g} on the do-not-mail list", "s.cn": "Consent: {c}", "imp.doAll": "Apply {n}",
       "imp.none": "No addresses found.", "imp.done": "Added {n}", "imp.done1": "Added 1",
       "imp.contacts": "From Contacts", "imp.cFilter": "Find…", "imp.cAll": "Select all shown", "imp.cNone": "No contacts with an e-mail address.",
       "imp.cHint": "A contact is not consent: unless they already agreed, choose \"Confirms by e-mail\".",
@@ -247,6 +252,8 @@
       "ck.title": "Check", "ck.ok": "Ready to send.", "ck.err": "Must fix", "ck.warn": "Worth a look",
       "ck.noSubj": "The subject is empty.", "ck.longSubj": "The subject is long: phones show about 40 characters.",
       "ck.shouty": "Capitals or !!! in the subject look like spam to filters.", "ck.noBody": "The issue is empty.",
+      "ck.noOneClick": "No one-click unsubscribe: Gmail and Yahoo ask bulk senders for it, and their own Unsubscribe button shows only with it.", "ck.oneClickOn": "Turn on one-click unsubscribe", "ck.oneClickDone": "One-click unsubscribe is on for this list.", "l.wel": "Welcome mail", "l.welNone": "None", "l.welHint": "Sent once to each person who signs up through the form or by e-mail, after they confirm. People already on the list and people you import or add don't get it.", "l.welNoTpl": "Save an issue as a template first (Save as template), then pick it here.", "vw.bounces": "Bounced", "vw.spam": "Spam complaints", "vw.repHint": "Counted from the start until {d} days after it went out, on this list. Opens and clicks are not counted.",
+      "tpl.html": "From HTML file", "toast.htmlBig": "That file is too big for an issue (about 100 KB of HTML at most).", "toast.htmlBad": "Nothing usable in that file: an issue needs HTML with text or pictures.", "toast.htmlIn": "Opened as an HTML issue: scripts, forms and tracking pixels were removed.", "ed.html": "HTML", "ed.htmlHint": "Your own e-mail HTML, sent as it is after cleaning: tables, inline styles, links and https pictures stay; scripts, forms, outside style sheets and tracking pixels go. {$unsubscribe} or {{UNSUBSCRIBE}} in a link becomes the unsubscribe link; without one, the list's footer is added below. Fill every other {{SLOT}} before sending.", "ed.txt": "Plain text", "ed.txtPh": "Empty: made from the HTML when it is sent", "ed.txtHint": "The text-only part of the e-mail, for mail apps that don't show HTML. Leave it empty and it is made from the HTML.", "ed.htmlOpen": "Replace with an HTML file", "ed.txtOpen": "Open a .txt file", "ed.txtMake": "Make from the HTML", "ck.slots": "Some {{SLOTS}} are still empty: fill them in the HTML or the plain text.", "ck.webImgs": "Pictures load from the web: some mail apps show them only when the reader allows it.",
       "ck.noAddr": "The list has no postal address for the footer (Lists › Edit).", "ck.noFrom": "The list has no From address.",
       "ck.noChan": "The list's sending account is missing or has no password on this device.",
       "ck.noInbox": "No Inbox for this list: unsubscribe e-mails won't be read automatically.",
@@ -255,7 +262,7 @@
       "ck.badBlock": "A button without text or link, or a picture block without a picture.",
       "ck.placeholder": "Something in braces isn't {first}, {name} or {first|…}.",
       "ck.noAudience": "Nobody to send to: no active subscriber matches.",
-      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products",
+      "ck.oldPrices": "Product prices were read from the shop more than a day ago: use Refresh prices in the product block.", "bk.prod": "Products", "bk.cpn": "Coupon", "cpn.code": "Code", "cpn.codeHint": "Letters, digits, - and _. With a code for each reader this is the start of each code.", "cpn.dt": "Discount", "cpn.pct": "Percent off", "cpn.fix": "Amount off the order", "cpn.amt": "Value", "cpn.exp": "Valid until", "cpn.min": "Smallest order (optional)", "cpn.t": "Text (optional)", "cpn.btn": "Button (optional)", "cpn.shop": "Shop", "cpn.noShop": "None (I make it myself)", "cpn.goneShop": "A shop that is no longer connected", "cpn.connect": "Connect a WooCommerce shop in Settings › Connected services to make codes from here.", "cpn.per": "A code for each reader (used once, only by them)", "cpn.perHint": "Each reader's code is made in the shop just before their email goes out.", "cpn.noShopHint": "Make this code in your shop yourself before you send.", "cpn.make": "Create in shop", "cpn.making": "Creating the code in the shop…", "cpn.made": "Created in the shop {d}", "cpn.notMade": "Not created in the shop yet.", "cpn.done": "The code is in the shop", "cpn.refused": "The shop refused the code: check that it is not taken by another coupon.", "cpn.htmlTitle": "Coupon", "cpn.htmlHint": "Write {{COUPON}} in the HTML and the text where each reader's code goes.", "cpn.add": "Coupon", "cpn.remove": "Remove coupon", "ck.badCoupon": "A coupon needs a code, a value and an end date, and a button needs both its text and its link.", "ck.oldCoupon": "A coupon has already ended.", "ck.perShop": "A code for each reader needs a connected shop.", "ck.cpnNotMade": "The coupon code has not been created in the shop yet: use Create in shop.", "ck.cpnUnused": "The issue has a coupon but no {{COUPON}} in the HTML or the text.", "err.coupon": "the shop did not make the coupon codes", "seg.buyH": "Purchases", "seg.buy": "Orders in the shop", "seg.buyAny": "Any (don't look at orders)", "seg.buyNone": "No order yet", "seg.buyOne": "Exactly one (first purchase)", "seg.buyEver": "At least one", "seg.buyMore": "At least…", "seg.bn": "Orders, at least", "seg.bs": "Spent at least ({c}, optional)", "seg.bago": "Last order more than … months ago (optional)", "seg.bagoHint": "For example 12: people who bought before but not in the last year.", "seg.buyAt": "Purchases read from the shop {t}.", "seg.buyNever": "Purchases not read yet: use Subscribers › Purchases from the shop first, or every rule here finds nobody (and No order yet finds everyone).", "seg.winback": "Ready: win back past customers", "seg.winbackName": "Past customers", "seg.buy_none": "no order yet", "seg.buy_one": "first purchase", "seg.buy_ever": "bought", "seg.buyMoreN": "{n}+ orders", "seg.bsT": "spent {s}+", "seg.bagoT": "last order {n}+ months ago", "s.buys": "{n} orders · {s} · last {d}", "src.chk": "Shop checkout", "lay.winback": "Win back past customers", "lay.b.title": "We miss you", "lay.b.intro": "Hello {first|there}! It has been a while since your last order, so here is something just for you.", "lay.b.cpn": "Your own code, for your next order", "lay.b.end": "Thank you for being with us.", "fm.shk": "Shop key (checkout sign-ups)", "fm.shkHint": "The same key as in orOS Connect › Newsletter on your WooCommerce site. People who tick the box at checkout then become subscribers at once, without a confirmation e-mail: ticking the unticked box is their consent and the shop keeps it with the order. Leave it empty and they confirm by e-mail like everyone else.", "fm.shkNew": "New key", "fm.shkBad": "A shop key is 32 letters and digits.", "fm.shkSaved": "Shop key saved. Put the same key in orOS Connect.", "fm.shkOff": "No shop key: checkout sign-ups confirm by e-mail.", "l.hook": "When an issue goes out, tell (optional)", "l.hookHint": "An https address that gets a short signed notice (list, subject, how many) when an issue has been sent, for example your site's Broadcast plugin to post it on Viber. Sent through the orOS relay; no subscriber data.", "l.hookKey": "Notice key", "l.hookKeyHint": "32 letters and digits, the same on the receiving side. Each notice carries X-Oros-Signature: sha256=HMAC(key, timestamp + \".\" + body).", "l.hookBad": "The notice needs an https address and a key of 32 letters and digits.", "l.hookFail": "The \"issue sent\" notice for {s} didn't arrive: check the list's address.", "tpl.product": "From a product", "lay.p.intro": "Hello {first|there}! Something new in our shop, and we wanted you to hear first.", "lay.p.titleN": "New in our shop", "lay.p.btn": "See it in the shop",
       "sd.title": "Send", "sd.text": "{n} messages from {f} through {c}.",
       "sd.time": "At one message every {s} s it takes about {m} minutes; with up to {cap} a day it needs {d} days.",
       "sd.time1": "At one message every {s} s it takes about {m} minutes.",
@@ -414,7 +421,7 @@
       "iss.imported": "εισαγωγή", "vw.imported": "Εισαγωγή από άλλη υπηρεσία· στάλθηκε {t}.",
       "err.nofeed": "δεν είναι ροή", "err.nofeeds": "ο αναγνώστης ροών δεν φορτώθηκε",
       "vw.started": "Ξεκίνησε {t}", "vw.done": "Ολοκληρώθηκε {t}", "vw.sent": "Στάλθηκαν", "vw.failed": "Απέτυχαν", "vw.left": "Απομένουν",
-      "vw.unsubs": "Διαγραφές από τότε", "vw.pause": "Παύση", "vw.resume": "Συνέχεια", "vw.stop": "Οριστική διακοπή",
+      "vw.unsubs": "Διαγραφές", "vw.pause": "Παύση", "vw.resume": "Συνέχεια", "vw.stop": "Οριστική διακοπή",
       "vw.web": "Αποθήκευση ως ιστοσελίδα", "vw.other": "Στέλνεται από άλλη συσκευή.", "vw.take": "Αποστολή από εδώ",
       "vw.err": "Σε παύση: {e}", "vw.failList": "Δεν παραδόθηκαν",
       "dlg.cancel": "Άκυρο", "dlg.save": "Αποθήκευση", "dlg.close": "Κλείσιμο", "dlg.delete": "Διαγραφή",
@@ -453,7 +460,7 @@
       "ch.test": "Δοκιμή σύνδεσης", "ch.testOk": "Η σύνδεση δουλεύει", "ch.delete": "Αφαίρεση λογαριασμού",
       "ch.inUse": "Τον χρησιμοποιούν λίστες: διάλεξε πρώτα άλλον λογαριασμό για αυτές.",
       "p.other": "Άλλος", "p.brevo": "Brevo", "p.ses": "Amazon SES", "p.mailgun": "Mailgun (ΗΠΑ)", "p.mailgun-eu": "Mailgun (ΕΕ)",
-      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
+      "p.postmark": "Postmark (broadcast stream)", "p.sendgrid": "SendGrid", "p.smtp2go": "SMTP2GO", "p.proton": "Proton Mail", "p.mailersend": "MailerSend (MailerLite)", "p.gmail": "Gmail",
       "s.title": "Συνδρομητής", "s.email": "Email", "s.name": "Όνομα", "s.tags": "Ετικέτες", "s.tagsHint": "Χώρισέ τες με κόμμα.",
       "s.lang": "Γλώσσα", "s.langAny": "Όπως η λίστα", "s.basis": "Με ποια βάση", "s.status": "Κατάσταση",
       "s.since": "Εγγραφή {t}", "s.conf": "Επιβεβαίωση {t}", "s.left": "Αποχώρηση {t}", "s.inv": "Αίτημα επιβεβαίωσης στάλθηκε {t}",
@@ -465,6 +472,11 @@
       "imp.title": "Εισαγωγή", "imp.paste": "Διευθύνσεις", "imp.pasteHint": "Μία ανά γραμμή ή χωρισμένες με κόμμα: name@example.com ή Όνομα <name@example.com>.",
       "imp.tags": "Πρόσθεσε αυτές τις ετικέτες", "imp.basis": "Με ποια βάση", "imp.next": "Επόμενο", "imp.do": "Προσθήκη {n}",
       "imp.sum": "{a} νέοι · {d} υπάρχουν ήδη · {l} είχαν αποχωρήσει (δεν μπαίνουν) · {s} οριστικά διαγραμμένοι · {b} μη έγκυρες · {o} πάνω από το όριο",
+      "imp.st": "Τι έχει το αρχείο", "imp.stFile": "Όπως λέει η στήλη κατάστασης", "imp.st.on": "Συνδρομητές", "imp.st.off": "Όσους διαγράφηκαν", "imp.st.bounce": "Διευθύνσεις που επέστρεψαν", "imp.st.spam": "Αναφορές spam ή junk",
+      "imp.stHint": "Διευθύνσεις που διαγράφηκαν, επέστρεψαν ή είναι junk δεν προστίθενται ποτέ: μπαίνουν στη λίστα «ποτέ ξανά» ως αποτύπωμα, ώστε καμία επόμενη εισαγωγή να μην τις προσθέσει, και όποιος είναι τώρα στη λίστα σημειώνεται ότι αποχώρησε. Οι εξαγωγές με μία κατάσταση ανά αρχείο (MailerLite) θέλουν μία εισαγωγή για κάθε αρχείο.",
+      "imp.cn": "Σημείωση συγκατάθεσης", "imp.cnDef": "Εισαγωγή από {f}, {d}", "imp.cnHint": "Μένει σε κάθε άτομο ως καταγραφή του πώς εγγράφηκε, εκτός αν το αρχείο έχει δική του στήλη πηγής.",
+      "imp.cols": "Άλλες στήλες", "imp.colsHint": "Γράψε μια ετικέτα για όσους έχουν τιμή σε αυτή τη στήλη (όχι κενό, όχι 0). Άφησέ το κενό και η στήλη δεν εισάγεται. Πολλές στήλες μπορούν να δίνουν την ίδια ετικέτα.", "imp.buyTag": "πελάτης",
+      "imp.sum2": "{g} μπαίνουν στη λίστα «ποτέ ξανά» · {u} που είναι τώρα στη λίστα σημειώνονται ότι αποχώρησαν", "imp.done2": "{n} προστέθηκαν · {u} σημειώθηκαν ότι αποχώρησαν · {g} στη λίστα «ποτέ ξανά»", "s.cn": "Συγκατάθεση: {c}", "imp.doAll": "Εφαρμογή {n}",
       "imp.none": "Δεν βρέθηκαν διευθύνσεις.", "imp.done": "Προστέθηκαν {n}", "imp.done1": "Προστέθηκε 1",
       "imp.contacts": "Από τις Επαφές", "imp.cFilter": "Εύρεση…", "imp.cAll": "Επιλογή όλων όσων φαίνονται", "imp.cNone": "Καμία επαφή με email.",
       "imp.cHint": "Μια επαφή δεν είναι συναίνεση: αν δεν έχουν ήδη συμφωνήσει, διάλεξε «Επιβεβαιώνει με email».",
@@ -474,6 +486,8 @@
       "ck.title": "Έλεγχος", "ck.ok": "Έτοιμο για αποστολή.", "ck.err": "Πρέπει να διορθωθεί", "ck.warn": "Αξίζει μια ματιά",
       "ck.noSubj": "Το θέμα είναι κενό.", "ck.longSubj": "Το θέμα είναι μεγάλο: τα κινητά δείχνουν περίπου 40 χαρακτήρες.",
       "ck.shouty": "Κεφαλαία ή !!! στο θέμα μοιάζουν με spam στα φίλτρα.", "ck.noBody": "Το τεύχος είναι κενό.",
+      "ck.noOneClick": "Δεν υπάρχει διαγραφή με ένα κλικ: το Gmail και το Yahoo τη ζητούν από όσους στέλνουν μαζικά, και το δικό τους κουμπί διαγραφής φαίνεται μόνο με αυτήν.", "ck.oneClickOn": "Ενεργοποίηση διαγραφής με ένα κλικ", "ck.oneClickDone": "Η διαγραφή με ένα κλικ ενεργοποιήθηκε για αυτή τη λίστα.", "l.wel": "Email καλωσορίσματος", "l.welNone": "Κανένα", "l.welHint": "Στέλνεται μία φορά σε όποιον εγγράφεται από τη φόρμα ή με email, αφού επιβεβαιώσει. Όσοι είναι ήδη στη λίστα και όσοι εισάγεις ή προσθέτεις δεν το λαμβάνουν.", "l.welNoTpl": "Αποθήκευσε πρώτα ένα τεύχος ως πρότυπο (Αποθήκευση ως πρότυπο) και διάλεξέ το εδώ.", "vw.bounces": "Επιστροφές", "vw.spam": "Αναφορές spam", "vw.repHint": "Μετρημένα από την έναρξη έως {d} ημέρες μετά την αποστολή, σε αυτή τη λίστα. Ανοίγματα και κλικ δεν μετριούνται.",
+      "tpl.html": "Από αρχείο HTML", "toast.htmlBig": "Το αρχείο είναι πολύ μεγάλο για τεύχος (έως περίπου 100 KB HTML).", "toast.htmlBad": "Τίποτα χρήσιμο σε αυτό το αρχείο: ένα τεύχος θέλει HTML με κείμενο ή εικόνες.", "toast.htmlIn": "Άνοιξε ως τεύχος HTML: αφαιρέθηκαν scripts, φόρμες και pixel παρακολούθησης.", "ed.html": "HTML", "ed.htmlHint": "Το δικό σου HTML του email, στέλνεται όπως είναι μετά τον καθαρισμό: πίνακες, inline στυλ, σύνδεσμοι και εικόνες https μένουν· scripts, φόρμες, εξωτερικά style sheets και pixel παρακολούθησης φεύγουν. Το {$unsubscribe} ή {{UNSUBSCRIBE}} σε σύνδεσμο γίνεται ο σύνδεσμος διαγραφής· χωρίς αυτό, μπαίνει από κάτω το υποσέλιδο της λίστας. Συμπλήρωσε κάθε άλλο {{SLOT}} πριν την αποστολή.", "ed.txt": "Απλό κείμενο", "ed.txtPh": "Κενό: φτιάχνεται από το HTML κατά την αποστολή", "ed.txtHint": "Το μέρος του email μόνο με κείμενο, για εφαρμογές που δεν δείχνουν HTML. Άφησέ το κενό και φτιάχνεται από το HTML.", "ed.htmlOpen": "Αντικατάσταση με αρχείο HTML", "ed.txtOpen": "Άνοιγμα αρχείου .txt", "ed.txtMake": "Φτιάξ' το από το HTML", "ck.slots": "Κάποια {{SLOTS}} είναι ακόμη κενά: συμπλήρωσέ τα στο HTML ή στο απλό κείμενο.", "ck.webImgs": "Οι εικόνες φορτώνουν από το διαδίκτυο: κάποιες εφαρμογές τις δείχνουν μόνο αν το επιτρέψει ο αναγνώστης.",
       "ck.noAddr": "Η λίστα δεν έχει ταχυδρομική διεύθυνση για το κάτω μέρος (Λίστες › Επεξεργασία).", "ck.noFrom": "Η λίστα δεν έχει διεύθυνση αποστολέα.",
       "ck.noChan": "Ο λογαριασμός αποστολής της λίστας λείπει ή δεν έχει κωδικό σε αυτή τη συσκευή.",
       "ck.noInbox": "Η λίστα δεν έχει Εισερχόμενα: τα email διαγραφής δεν θα διαβάζονται αυτόματα.",
@@ -482,7 +496,7 @@
       "ck.badBlock": "Ένα κουμπί χωρίς κείμενο ή σύνδεσμο, ή block εικόνας χωρίς εικόνα.",
       "ck.placeholder": "Κάτι μέσα σε άγκιστρα δεν είναι {first}, {name} ή {first|…}.",
       "ck.noAudience": "Δεν υπάρχει παραλήπτης: κανένας ενεργός συνδρομητής δεν ταιριάζει.",
-      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα",
+      "ck.oldPrices": "Οι τιμές των προϊόντων διαβάστηκαν από το κατάστημα πριν από πάνω από μία μέρα: πάτα Ανανέωση τιμών στο block προϊόντων.", "bk.prod": "Προϊόντα", "bk.cpn": "Κουπόνι", "cpn.code": "Κωδικός", "cpn.codeHint": "Γράμματα, αριθμοί, - και _. Με κωδικό για κάθε αναγνώστη, αυτή είναι η αρχή κάθε κωδικού.", "cpn.dt": "Έκπτωση", "cpn.pct": "Ποσοστό", "cpn.fix": "Ποσό από την παραγγελία", "cpn.amt": "Τιμή", "cpn.exp": "Ισχύει έως", "cpn.min": "Ελάχιστη παραγγελία (προαιρετικά)", "cpn.t": "Κείμενο (προαιρετικά)", "cpn.btn": "Κουμπί (προαιρετικά)", "cpn.shop": "Κατάστημα", "cpn.noShop": "Κανένα (τον φτιάχνω εγώ)", "cpn.goneShop": "Κατάστημα που δεν είναι πια συνδεδεμένο", "cpn.connect": "Σύνδεσε ένα κατάστημα WooCommerce στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες για να φτιάχνεις κωδικούς από εδώ.", "cpn.per": "Κωδικός για κάθε αναγνώστη (μία χρήση, μόνο από αυτόν)", "cpn.perHint": "Ο κωδικός κάθε αναγνώστη φτιάχνεται στο κατάστημα λίγο πριν φύγει το email του.", "cpn.noShopHint": "Φτιάξε αυτόν τον κωδικό στο κατάστημά σου πριν την αποστολή.", "cpn.make": "Δημιουργία στο κατάστημα", "cpn.making": "Δημιουργία του κωδικού στο κατάστημα…", "cpn.made": "Δημιουργήθηκε στο κατάστημα {d}", "cpn.notMade": "Δεν έχει δημιουργηθεί ακόμα στο κατάστημα.", "cpn.done": "Ο κωδικός είναι στο κατάστημα", "cpn.refused": "Το κατάστημα αρνήθηκε τον κωδικό: έλεγξε ότι δεν τον έχει ήδη άλλο κουπόνι.", "cpn.htmlTitle": "Κουπόνι", "cpn.htmlHint": "Γράψε {{COUPON}} στο HTML και στο κείμενο εκεί που μπαίνει ο κωδικός κάθε αναγνώστη.", "cpn.add": "Κουπόνι", "cpn.remove": "Αφαίρεση κουπονιού", "ck.badCoupon": "Ένα κουπόνι θέλει κωδικό, τιμή και ημερομηνία λήξης, και ένα κουμπί θέλει και κείμενο και σύνδεσμο.", "ck.oldCoupon": "Ένα κουπόνι έχει ήδη λήξει.", "ck.perShop": "Ο κωδικός για κάθε αναγνώστη θέλει συνδεδεμένο κατάστημα.", "ck.cpnNotMade": "Ο κωδικός του κουπονιού δεν έχει δημιουργηθεί ακόμα στο κατάστημα: πάτα Δημιουργία στο κατάστημα.", "ck.cpnUnused": "Το τεύχος έχει κουπόνι αλλά δεν έχει {{COUPON}} στο HTML ή στο κείμενο.", "err.coupon": "το κατάστημα δεν έφτιαξε τους κωδικούς κουπονιών", "seg.buyH": "Αγορές", "seg.buy": "Παραγγελίες στο κατάστημα", "seg.buyAny": "Οποιεσδήποτε (χωρίς έλεγχο παραγγελιών)", "seg.buyNone": "Καμία παραγγελία ακόμα", "seg.buyOne": "Ακριβώς μία (πρώτη αγορά)", "seg.buyEver": "Τουλάχιστον μία", "seg.buyMore": "Τουλάχιστον…", "seg.bn": "Παραγγελίες, τουλάχιστον", "seg.bs": "Ξόδεψε τουλάχιστον ({c}, προαιρετικά)", "seg.bago": "Τελευταία παραγγελία πριν από πάνω από … μήνες (προαιρετικά)", "seg.bagoHint": "Για παράδειγμα 12: όσοι αγόρασαν παλιότερα αλλά όχι τον τελευταίο χρόνο.", "seg.buyAt": "Οι αγορές διαβάστηκαν από το κατάστημα {t}.", "seg.buyNever": "Οι αγορές δεν έχουν διαβαστεί ακόμα: πάτα πρώτα Συνδρομητές › Αγορές από το κατάστημα, αλλιώς κάθε κανόνας εδώ δεν βρίσκει κανέναν (και το Καμία παραγγελία ακόμα βρίσκει όλους).", "seg.winback": "Έτοιμο: επαναφορά παλιών πελατών", "seg.winbackName": "Παλιοί πελάτες", "seg.buy_none": "καμία παραγγελία", "seg.buy_one": "πρώτη αγορά", "seg.buy_ever": "αγόρασαν", "seg.buyMoreN": "{n}+ παραγγελίες", "seg.bsT": "ξόδεψαν {s}+", "seg.bagoT": "τελευταία παραγγελία πριν από {n}+ μήνες", "s.buys": "{n} παραγγελίες · {s} · τελευταία {d}", "src.chk": "Ταμείο καταστήματος", "lay.winback": "Επαναφορά παλιών πελατών", "lay.b.title": "Μας έλειψες", "lay.b.intro": "Γεια σου {first|φίλε}! Πέρασε καιρός από την τελευταία σου παραγγελία, γι' αυτό έχουμε κάτι μόνο για σένα.", "lay.b.cpn": "Ο δικός σου κωδικός, για την επόμενη παραγγελία σου", "lay.b.end": "Ευχαριστούμε που είσαι μαζί μας.", "fm.shk": "Κλειδί καταστήματος (εγγραφές από το ταμείο)", "fm.shkHint": "Το ίδιο κλειδί με το orOS Connect › Newsletter στο site WooCommerce σου. Όσοι τσεκάρουν το κουτάκι στο ταμείο γίνονται τότε συνδρομητές αμέσως, χωρίς email επιβεβαίωσης: το τσεκάρισμα του ατσέκαρτου κουτιού είναι η συγκατάθεσή τους και το κατάστημα την κρατά στην παραγγελία. Άφησέ το κενό και επιβεβαιώνουν με email όπως όλοι.", "fm.shkNew": "Νέο κλειδί", "fm.shkBad": "Το κλειδί καταστήματος έχει 32 γράμματα και αριθμούς.", "fm.shkSaved": "Το κλειδί καταστήματος αποθηκεύτηκε. Βάλε το ίδιο κλειδί στο orOS Connect.", "fm.shkOff": "Χωρίς κλειδί καταστήματος: οι εγγραφές από το ταμείο επιβεβαιώνονται με email.", "l.hook": "Όταν φεύγει τεύχος, ειδοποίησε (προαιρετικά)", "l.hookHint": "Μια διεύθυνση https που παίρνει μια σύντομη υπογεγραμμένη ειδοποίηση (λίστα, θέμα, πόσοι) όταν σταλεί ένα τεύχος, για παράδειγμα το πρόσθετο Broadcast του site σου για ανάρτηση στο Viber. Στέλνεται μέσω του relay του orOS· χωρίς στοιχεία συνδρομητών.", "l.hookKey": "Κλειδί ειδοποίησης", "l.hookKeyHint": "32 γράμματα και αριθμοί, το ίδιο και στην άλλη μεριά. Κάθε ειδοποίηση έχει X-Oros-Signature: sha256=HMAC(κλειδί, χρονοσφραγίδα + \".\" + σώμα).", "l.hookBad": "Η ειδοποίηση θέλει διεύθυνση https και κλειδί 32 γραμμάτων και αριθμών.", "l.hookFail": "Η ειδοποίηση «έφυγε τεύχος» για το {s} δεν έφτασε: έλεγξε τη διεύθυνση της λίστας.", "tpl.product": "Από προϊόν", "lay.p.intro": "Γεια σου {first|φίλε}! Κάτι νέο στο κατάστημά μας, και θέλαμε να το μάθεις πρώτος.", "lay.p.titleN": "Νέα στο κατάστημά μας", "lay.p.btn": "Δες το στο κατάστημα",
       "sd.title": "Αποστολή", "sd.text": "{n} μηνύματα από {f} μέσω {c}.",
       "sd.time": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά· με έως {cap} τη μέρα χρειάζεται {d} μέρες.",
       "sd.time1": "Με ένα μήνυμα κάθε {s} δλ. θέλει περίπου {m} λεπτά.",
@@ -773,6 +787,7 @@
     acts.appendChild(mini(t("subs.contacts"), contactsDialog));
     if (crmPeople()) acts.appendChild(mini(t("subs.crm"), crmDialog));
     if (Sh && Sh.hasWoo()) acts.appendChild(mini(shopT("shop.cust"), Sh.customers));
+    if (Sh && Sh.hasWoo()) acts.appendChild(mini(shopT("shop.buy"), function () { readPurchases(l.id); }));
     if (P && P.has()) acts.appendChild(mini(P.label(), P.open));
     acts.appendChild(mini(t("subs.enrich"), function () { enrichNames(shownSubs); }));
     acts.appendChild(mini(t("subs.export"), exportCsv));
@@ -965,6 +980,8 @@
       ul.appendChild(li);
     };
     row(t("tpl.blank"), function () { createIssue(l, null); });
+    row(t("tpl.html") + "\u2026", function () { htmlIssue(l); });
+    if (Sh && Sh.has()) row(t("tpl.product") + "\u2026", function () { productIssue(l); });
     dlg.appendChild(ul);
     // ready layouts (wave E3), written in the app's language
     dlg.appendChild(el("p", "dlg-h", t("tpl.layouts")));
@@ -985,7 +1002,7 @@
   }
   // The built-in layouts: the list's own header and footer (or new
   // ones) around blocks to fill in.
-  var LAYOUTS = ["weekly", "announce", "offer"];
+  var LAYOUTS = ["weekly", "announce", "offer", "winback"];
   function layoutBlocks(k, l) {
     var head = l.hf && l.hf.head ? copy(l.hf.head) : newBlock("head", l);
     var foot = l.hf && l.hf.foot ? copy(l.hf.foot) : newBlock("foot", l);
@@ -1005,6 +1022,13 @@
       mid = [{ k: "h", t: t("lay.a.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.a.intro") }, newBlock("img", l),
              { k: "p", t: t("lay.a.body") }, { k: "btn", t: t("lay.a.btn"), href: "", al: "center" },
              { k: "quote", t: t("lay.a.quote"), by: t("lay.a.by") }];
+    } else if (k === "winback") {
+      // N2: someone who bought before and not lately gets their own code
+      var cp = newCoupon("cpn");
+      cp.code = "BACK"; cp.amt = "15"; cp.per = 1; cp.t = t("lay.b.cpn");
+      if (!cp.sh) delete cp.per;
+      mid = [{ k: "h", t: t("lay.b.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.b.intro") }, cp,
+             { k: "p", t: t("lay.b.end") }];
     } else {
       mid = [{ k: "h", t: t("lay.o.title"), lv: 1, al: "center" }, { k: "p", t: t("lay.o.intro"), al: "center" },
              it("lay.o.p1", "lay.o.p1t", false, "lay.o.buy"), it("lay.o.p2", "lay.o.p2t", true, "lay.o.buy"),
@@ -1012,15 +1036,58 @@
     }
     return [head].concat(mid, [foot]);
   }
+  // New › From a product… (N3): a new release or pre-order from the
+  // shop: its picture, text, price and page as the issue's main block.
+  function productIssue(l) {
+    var b = { k: "prod", items: [], per: 1, bt: "" };
+    Sh.pick(b, function (items, sh, acct) {
+      if (!items.length) return;
+      var head = l.hf && l.hf.head ? copy(l.hf.head) : newBlock("head", l);
+      var foot = l.hf && l.hf.foot ? copy(l.hf.foot) : newBlock("foot", l);
+      var prod = { k: "prod", items: items, per: items.length > 1 ? 2 : 1, bt: t("lay.p.btn"), sh: sh, acct: acct, at: Date.now() };
+      createIssue(l, { subj: items[0].name, pre: "", fmt: "blocks", md: "",
+                       blocks: [head, { k: "h", t: items.length > 1 ? t("lay.p.titleN") : items[0].name, lv: 1, al: "center" },
+                                { k: "p", t: t("lay.p.intro") }, prod, foot] });
+    });
+  }
   function createIssue(l, tpl) {
     var x = C.normIssue(tpl ? { id: C.randomId("i", null), m: 0, list: l.id, subj: tpl.subj, pre: tpl.pre, fmt: tpl.fmt,
-                                blocks: copy(tpl.blocks), md: tpl.md, l2: tpl.l2 ? copy(tpl.l2) : null }
+                                blocks: copy(tpl.blocks), md: tpl.md, html: tpl.html, txt: tpl.txt, cpn: tpl.cpn ? copy(tpl.cpn) : undefined, l2: tpl.l2 ? copy(tpl.l2) : null }
       : { id: C.randomId("i", null), m: 0, list: l.id, fmt: "blocks",
           blocks: [].concat(l.hf && l.hf.head ? [copy(l.hf.head)] : [], [{ k: "h", t: "" }, { k: "p", t: t("seed.hi") }],
                             l.hf && l.hf.foot ? [copy(l.hf.foot)] : []) });
     put("issues", x);
     viewId = x.id;
     showView("edit");
+  }
+  // New › From HTML file… (W2): an e-mail made elsewhere (the
+  // newsletter skill, another service's export of one campaign) becomes
+  // an HTML issue. The file is cleaned when it is saved (C.sanitizeHtml);
+  // a <title> that is not a {{SLOT}} becomes the subject.
+  var HTML_ACC = ".html,.htm,text/html";
+  var TXT_ACC = ".txt,text/plain";
+  function pickText(acc, max) {
+    var host = dialogHost();
+    var pick = host && typeof host.openFile === "function" ? host.openFile(acc) : localPickFile(acc);
+    return pick.then(function (file) {
+      if (!file) return null;
+      if (file.size > max) { showToast(t("toast.htmlBig")); return null; }
+      return file.text();
+    })["catch"](function () { showToast(t("toast.badFile")); return null; });
+  }
+  function htmlTitle(src) {
+    var m = /<title[^>]*>([\s\S]{0,400}?)<\/title>/i.exec(src);
+    var tt = m ? C.htmlToText(m[1]) : "";
+    return /\{\{/.test(tt) ? "" : C.oneLine(tt, C.LIM.subj);
+  }
+  function htmlIssue(l) {
+    pickText(HTML_ACC, C.LIM.html * 2).then(function (src) {
+      if (src === null) return;
+      var clean = C.sanitizeHtml(src);
+      if (!clean) { showToast(t("toast.htmlBad")); return; }
+      createIssue(l, { subj: htmlTitle(src), pre: "", fmt: "html", blocks: [], md: "", html: src, txt: "" });
+      showToast(t("toast.htmlIn"));
+    });
   }
   function saveTemplate(x) {
     if (C.live(data.tpls).length >= C.LIM.tpls) { showToast(t("tpl.full")); return; }
@@ -1032,7 +1099,7 @@
       name.classList.toggle("bad", !nm);
       if (!nm) return;
       put("tpls", C.normTpl({ id: C.randomId("t", null), m: 0, name: nm, subj: x.subj, pre: x.pre, fmt: x.fmt,
-                              blocks: copy(x.blocks), md: x.md, l2: x.l2 ? copy(x.l2) : null }));
+                              blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt, cpn: x.cpn ? copy(x.cpn) : undefined, l2: x.l2 ? copy(x.l2) : null }));
       dlg.close();
       showToast(t("tpl.saved"));
     });
@@ -1072,7 +1139,8 @@
 
     var c2 = el("div", "card");
     var seg = el("div", "seg");
-    [["blocks", t("ed.blocks")], ["md", t("ed.md")]].forEach(function (o) {
+    // an HTML issue stays HTML (switching would drop the HTML)
+    (cx.fmt === "html" ? [] : [["blocks", t("ed.blocks")], ["md", t("ed.md")]]).forEach(function (o) {
       var b = el("button", "seg-btn" + (cx.fmt === o[0] ? " on" : ""), o[1]);
       b.type = "button";
       b.setAttribute("aria-pressed", cx.fmt === o[0] ? "true" : "false");
@@ -1088,9 +1156,64 @@
     var hc = el("div", "card-head");
     hc.appendChild(el("h3", "sec-h", t("ed.content")));
     hc.appendChild(histButtons(x));
-    hc.appendChild(seg);
+    if (seg.childNodes.length) hc.appendChild(seg);
     c2.appendChild(hc);
-    if (cx.fmt === "md") {
+    if (cx.fmt === "html") {
+      var hta = el("textarea", "md-area code-area");
+      hta.value = cx.html || "";
+      hta.maxLength = C.LIM.html;
+      hta.rows = 16;
+      hta.spellcheck = false;
+      hta.setAttribute("aria-label", t("ed.html"));
+      hta.addEventListener("input", function () { typed(x); cx.html = hta.value; touchIssue(x); });
+      c2.appendChild(field(t("ed.html"), hta, t("ed.htmlHint")));
+      var tta = el("textarea", "md-area");
+      tta.value = cx.txt || "";
+      tta.maxLength = C.LIM.md;
+      tta.rows = 8;
+      tta.placeholder = t("ed.txtPh");
+      tta.addEventListener("input", function () { typed(x); cx.txt = tta.value; touchIssue(x); });
+      c2.appendChild(field(t("ed.txt"), tta, t("ed.txtHint")));
+      var hacts = el("div", "acts");
+      hacts.appendChild(mini(t("ed.htmlOpen") + "\u2026", function () {
+        pickText(HTML_ACC, C.LIM.html * 2).then(function (src) {
+          if (src === null) return;
+          if (!C.sanitizeHtml(src)) { showToast(t("toast.htmlBad")); return; }
+          snap(x); cx.html = src; if (!cx.subj) cx.subj = htmlTitle(src);
+          put("issues", x); renderEditor();
+        });
+      }));
+      hacts.appendChild(mini(t("ed.txtOpen") + "\u2026", function () {
+        pickText(TXT_ACC, C.LIM.md * 4).then(function (txt) {
+          if (txt === null) return;
+          snap(x); cx.txt = String(txt).replace(/\r\n?/g, "\n").slice(0, C.LIM.md);
+          put("issues", x); renderEditor();
+        });
+      }));
+      hacts.appendChild(mini(t("ed.txtMake"), function () {
+        snap(x); cx.txt = C.htmlToText(C.sanitizeHtml(cx.html || "")).replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/gi, "").slice(0, C.LIM.md);
+        put("issues", x); renderEditor();
+      }));
+      c2.appendChild(hacts);
+      // N1: a coupon for {{COUPON}}
+      var cbox = el("div", "cpn-box");
+      cbox.appendChild(el("p", "dlg-h", t("cpn.htmlTitle")));
+      if (cx.cpn) {
+        cbox.appendChild(el("p", "hint", t("cpn.htmlHint")));
+        couponFields(cbox, cx.cpn, x, function (ctl, key) {
+          ctl.addEventListener("input", function () { typed(x); cx.cpn[key] = ctl.value; touchIssue(x); });
+          return ctl;
+        }, function (key, v) {
+          snap(x);
+          if (v === "" || v === null || v === undefined) delete cx.cpn[key]; else cx.cpn[key] = v;
+          touchIssue(x);
+        });
+        cbox.appendChild(mini(t("cpn.remove"), function () { snap(x); delete cx.cpn; put("issues", x); renderEditor(); }));
+      } else {
+        cbox.appendChild(mini("+ " + t("cpn.add"), function () { snap(x); cx.cpn = newCoupon(""); put("issues", x); renderEditor(); }));
+      }
+      c2.appendChild(cbox);
+    } else if (cx.fmt === "md") {
       var ta = el("textarea", "md-area");
       ta.value = cx.md;
       ta.maxLength = C.LIM.md;
@@ -1201,7 +1324,7 @@
     if (!x.l2) {
       w.appendChild(mini(t("ed.l2Add", { l: langName(b) }), function () {
         flushIssue();
-        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md });
+        x.l2 = C.normL2({ lang: b, subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: copy(x.blocks), md: x.md, html: x.html, txt: x.txt, cpn: x.cpn ? copy(x.cpn) : undefined });
         edSide = { id: x.id, l2: true };
         put("issues", x);
         renderEditor();
@@ -1335,6 +1458,9 @@
     var parts = [];
     if (g.tags.length) parts.push((g.match === "all" ? t("seg.all") : t("seg.any")) + ": " + g.tags.join(", "));
     if (g.lang) parts.push(langName(g.lang));
+    if (g.buy) parts.push(t(g.buy === "more" ? "seg.buyMoreN" : "seg.buy_" + g.buy, { n: g.bn || 2 }));
+    if (g.bs) { var l1 = C.list(data, listId); parts.push(t("seg.bsT", { s: money(g.bs, (l1 && l1.buyCur) || "EUR") })); }
+    if (g.bago) parts.push(t("seg.bagoT", { n: g.bago }));
     parts.push(t("seg.count", { n: segCount(g, listId) }));
     return parts.join(" · ");
   }
@@ -1368,6 +1494,32 @@
     var lang = sel([["", t("seg.anyLang")], ["en", langName("en")], ["el", langName("el")]], src.lang);
     lang.addEventListener("change", update);
     dlg.appendChild(field(t("seg.lang"), lang));
+    // N2: purchases (read with Subscribers › Purchases from the shop)
+    var l0 = C.list(data, listId);
+    dlg.appendChild(el("p", "dlg-h", t("seg.buyH")));
+    var buy = sel([["", t("seg.buyAny")], ["none", t("seg.buyNone")], ["one", t("seg.buyOne")], ["ever", t("seg.buyEver")], ["more", t("seg.buyMore")]], src.buy || "");
+    dlg.appendChild(field(t("seg.buy"), buy));
+    var bn = inp("number", String(src.bn || 2), 4);
+    bn.min = "2"; bn.max = "9999";
+    var bnF = field(t("seg.bn"), bn);
+    dlg.appendChild(bnF);
+    var bsv = inp("text", src.bs ? String(src.bs / 100) : "", 12);
+    bsv.inputMode = "decimal";
+    var bsF = field(t("seg.bs", { c: (l0 && l0.buyCur) || "EUR" }), bsv);
+    dlg.appendChild(bsF);
+    var bago = inp("number", src.bago ? String(src.bago) : "", 3);
+    bago.min = "1"; bago.max = "120";
+    var bagoF = field(t("seg.bago"), bago, t("seg.bagoHint"));
+    dlg.appendChild(bagoF);
+    dlg.appendChild(el("p", "hint", l0 && l0.buyAt ? t("seg.buyAt", { t: when(l0.buyAt) }) : t("seg.buyNever")));
+    if (!g) {
+      dlg.appendChild(mini(t("seg.winback"), function () {
+        if (!name.value.trim()) name.value = t("seg.winbackName");
+        buy.value = "ever"; bago.value = "12"; bsv.value = "";
+        update();
+      }));
+    }
+    [buy, bn, bsv, bago].forEach(function (c) { c.addEventListener("input", update); c.addEventListener("change", update); });
     var count = el("p", "dlg-text");
     dlg.appendChild(count);
     function collect() {
@@ -1376,6 +1528,15 @@
       r.tags = [].filter.call(chips.querySelectorAll("input"), function (c) { return c.checked; }).map(function (c) { return c.value; });
       r.match = match.value;
       r.lang = lang.value;
+      delete r.buy; delete r.bn; delete r.bs; delete r.bago;
+      if (buy.value) r.buy = buy.value;
+      if (buy.value === "more") r.bn = Math.round(+bn.value) || 2;
+      var money0 = Math.round(parseFloat(String(bsv.value).replace(",", ".")) * 100);
+      if (money0 > 0) r.bs = money0;
+      var ago = Math.round(+bago.value);
+      if (ago > 0) r.bago = ago;
+      bnF.hidden = buy.value !== "more";
+      bsF.hidden = bagoF.hidden = buy.value === "none";
       return C.normSeg(r);
     }
     function update() { var r = collect(); if (r) count.textContent = t("seg.count", { n: segCount(r, listId) }); }
@@ -1409,7 +1570,7 @@
   // ---------- the block editor (wave E1) ----------
   var ADD_KINDS = ["h", "p", "img", "btn", "list", "quote", "hr", "sp", "cols"];
   // under "More blocks", with the saved blocks (wave E3)
-  var MORE_KINDS = ["head", "imgtxt", "gallery", "prod", "video", "cols3", "table", "event", "social", "foot"];
+  var MORE_KINDS = ["head", "imgtxt", "gallery", "prod", "cpn", "video", "cols3", "table", "event", "social", "foot"];
   var SO = window.OrosNewsletterSocial;
   function newBlock(k, l) {
     switch (k) {
@@ -1429,6 +1590,7 @@
       case "prod": return { k: "prod", items: [], bt: "" };
       case "video": return { k: "video", f: "", w: 600, h: 400, b: 0, url: "", alt: "", t: "" };
       case "table": return { k: "table", rows: [["", ""], ["", ""]], hd: 1 };
+      case "cpn": return newCoupon("cpn");
       case "event": {
         var d = new Date(Date.now() + 7 * 86400000);
         var day = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
@@ -1437,13 +1599,107 @@
     }
     return { k: k, t: "" };
   }
+  // A new coupon (N1): 10% for 30 days, in the only shop when there is one
+  function newCoupon(k) {
+    var d = new Date(Date.now() + 30 * 86400000);
+    var o = { code: "", dt: "pct", amt: "10", exp: d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2),
+              min: "", t: "", bt: "", bh: "" };
+    if (k) o.k = k;
+    var shops = Sh && Sh.wooShops ? Sh.wooShops() : [];
+    if (shops.length === 1) { o.sh = "woo"; o.acct = shops[0].id; }
+    return o;
+  }
+  // The fields of a coupon (a block, or an HTML issue's cpn). onType(ctl,
+  // key) for text, onSet(key, value) for the rest. Changing what the
+  // shop holds (code, value, dates, smallest order, shop) forgets that
+  // the shared code was made there.
+  var CPN_SHOP_KEYS = { code: 1, dt: 1, amt: 1, exp: 1, min: 1, acct: 1, per: 1 };
+  function couponFields(box, b, x, onType, onSet) {
+    var status = el("p", "hint");
+    var unmake = function (key) { if (CPN_SHOP_KEYS[key] && b.made) { delete b.made; showMade(); } };
+    var type = function (ctl, key, fix) {
+      ctl.addEventListener("input", function () { if (fix) fix(ctl); unmake(key); });
+      return onType(ctl, key);
+    };
+    var set = function (key, v) { unmake(key); onSet(key, v); };
+    var r1 = el("div", "fld-row");
+    var code = inp("text", b.code, 30);
+    code.autocapitalize = "characters"; code.spellcheck = false;
+    r1.appendChild(field(t("cpn.code"), type(code, "code", function (c) {
+      var v = c.value.toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+      if (v !== c.value) c.value = v;
+    }), t("cpn.codeHint")));
+    var dt = sel([["pct", t("cpn.pct")], ["fix", t("cpn.fix")]], b.dt || "pct");
+    dt.addEventListener("change", function () { set("dt", dt.value); });
+    r1.appendChild(field(t("cpn.dt"), dt));
+    var amt = inp("text", b.amt, 9);
+    amt.inputMode = "decimal";
+    r1.appendChild(field(t("cpn.amt"), type(amt, "amt", function (c) { var v = c.value.replace(",", "."); if (v !== c.value) c.value = v; })));
+    box.appendChild(r1);
+    var r2 = el("div", "fld-row");
+    var exp = inp("date", b.exp, 10);
+    exp.addEventListener("change", function () { set("exp", exp.value); });
+    r2.appendChild(field(t("cpn.exp"), exp));
+    var min = inp("text", b.min, 10);
+    min.inputMode = "decimal";
+    r2.appendChild(field(t("cpn.min"), type(min, "min", function (c) { var v = c.value.replace(",", "."); if (v !== c.value) c.value = v; })));
+    box.appendChild(r2);
+    box.appendChild(field(t("cpn.t"), onType(inp("text", b.t, 300), "t")));
+    var r3 = el("div", "fld-row");
+    r3.appendChild(field(t("bk.btnText"), onType(inp("text", b.bt, 40), "bt")));
+    r3.appendChild(field(t("bk.link"), onType(inp("url", b.bh, 2000), "bh")));
+    box.appendChild(el("p", "dlg-h", t("cpn.btn")));
+    box.appendChild(r3);
+    // the shop, and one code for all or one for each reader
+    var shops = Sh && Sh.wooShops ? Sh.wooShops() : [];
+    var opts = [["", t("cpn.noShop")]].concat(shops.map(function (a) { return [a.id, a.name]; }));
+    if (b.acct && !shops.some(function (a) { return a.id === b.acct; })) opts.push([b.acct, t("cpn.goneShop")]);
+    var shop = sel(opts, b.acct || "");
+    shop.addEventListener("change", function () {
+      if (shop.value) { onSet("sh", "woo"); set("acct", shop.value); } else { onSet("sh", ""); set("acct", ""); }
+      showMade();
+    });
+    box.appendChild(field(t("cpn.shop"), shop, shops.length ? "" : t("cpn.connect")));
+    var pl = el("label", "check");
+    var pc = el("input");
+    pc.type = "checkbox";
+    pc.checked = b.per === 1;
+    pc.addEventListener("change", function () { set("per", pc.checked ? 1 : ""); showMade(); });
+    pl.appendChild(pc);
+    pl.appendChild(el("span", "", t("cpn.per")));
+    box.appendChild(pl);
+    var make = mini(t("cpn.make"), function () {
+      if (!b.code || !b.amt || !b.exp) { status.textContent = t("ck.badCoupon"); return; }
+      make.disabled = true;
+      status.textContent = t("cpn.making");
+      flushIssue();
+      Sh.makeCoupon(C.normCoupon(b), "orOS Newsletter: " + (x.subj || "")).then(function () {
+        onSet("made", Date.now());
+        showToast(t("cpn.done"));
+        showMade();
+      }, function (e) {
+        make.disabled = false;
+        status.textContent = e && e.code === "coupon" ? t("cpn.refused") : Sh.errText(e);
+      });
+    });
+    box.appendChild(make);
+    box.appendChild(status);
+    function showMade() {
+      var withShop = !!(b.sh && b.acct);
+      make.hidden = !withShop || b.per === 1 || !!b.made;
+      make.disabled = false;
+      status.textContent = !withShop ? t("cpn.noShopHint") : b.per === 1 ? t("cpn.perHint")
+        : b.made ? t("cpn.made", { d: when(b.made) }) : t("cpn.notMade");
+    }
+    showMade();
+  }
   // Undo / redo of the issue being edited: snapshots of its written
   // part (both language versions), taken before each change; typing
   // makes one snapshot per pause, not one per letter.
   var hist = { id: "", past: [], future: [], at: 0 };
   var HIST_MAX = 60;
   function contentOf(x) {
-    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, l2: x.l2 });
+    return JSON.stringify({ subj: x.subj, pre: x.pre, fmt: x.fmt, blocks: x.blocks, md: x.md, html: x.html, txt: x.txt, cpn: x.cpn, l2: x.l2 });
   }
   function histFor(x) {
     if (hist.id !== x.id) hist = { id: x.id, past: [], future: [], at: 0 };
@@ -1471,7 +1727,7 @@
     saveTimer = null;
     to.push(contentOf(x));
     var c = JSON.parse(from.pop());
-    ["subj", "pre", "fmt", "blocks", "md", "l2"].forEach(function (k) { x[k] = c[k]; });
+    ["subj", "pre", "fmt", "blocks", "md", "html", "txt", "cpn", "l2"].forEach(function (k) { if (c[k] === undefined) delete x[k]; else x[k] = c[k]; });
     var cur = C.issue(data, x.id);
     if (!cur || cur.st !== "draft") return false;
     put("issues", x);
@@ -1952,6 +2208,9 @@
         il.appendChild(el("span", "", t("bk.evIcs")));
         card.appendChild(il);
       }
+      if (b.k === "cpn") {
+        couponFields(card, b, x, function (ctl, key) { return bind(ctl, key); }, function (key, v) { setNow(key, v); });
+      }
       if ((b.k === "head" || b.k === "foot") && l) {
         var isDef = l.hf && l.hf[b.k] && JSON.stringify(l.hf[b.k]) === JSON.stringify(C.normBlock(b));
         var defBtn = mini(isDef ? t("bk.isDefault") : t("bk.makeDefault"), function () {
@@ -2040,9 +2299,13 @@
     tile(t("vw.sent"), p.sent, "good");
     tile(t("vw.failed"), p.failed, p.failed ? "bad" : "");
     if (x.st !== "sent") tile(t("vw.left"), p.left);
-    var unsubs = l ? C.subsOf(data, l.id).filter(function (s) { return s.off && s.off >= x.start && s.offSt === "off"; }).length : 0;
-    tile(t("vw.unsubs"), unsubs);
+    // what happened after it (W3): counts only, no opens or clicks
+    var rep = C.issueReport(data, x, Date.now());
+    tile(t("vw.unsubs"), rep.unsub);
+    if (rep.bounce) tile(t("vw.bounces"), rep.bounce, "bad");
+    if (rep.spam) tile(t("vw.spam"), rep.spam, "bad");
     body.appendChild(tiles);
+    body.appendChild(el("p", "hint", t("vw.repHint", { d: rep.days })));
     if (x.st !== "sent" && p.total) {
       var bar = el("div", "prog");
       var fillB = el("span", "prog-fill");
@@ -2248,6 +2511,25 @@
     r3.appendChild(colorPick(t("sty.link"), sty.link || "", src.color, function (v) { sty.link = v; }));
     r3.appendChild(colorPick(t("sty.bg"), sty.bg || "", "#f2f3f5", function (v) { sty.bg = v; }));
     dlg.appendChild(r3);
+    // welcome mail (W3): one of the templates, sent once to new sign-ups
+    var tplsW = C.live(data.tpls).sort(function (a, b) { return C.fold(a.name) < C.fold(b.name) ? -1 : 1; });
+    f.wel = sel([["", t("l.welNone")]].concat(tplsW.map(function (tp) { return [tp.id, tp.name || shownSubj(tp)]; })),
+                src.welTpl && tplsW.some(function (tp) { return tp.id === src.welTpl; }) ? src.welTpl : "");
+    dlg.appendChild(field(t("l.wel"), f.wel, tplsW.length ? t("l.welHint") : t("l.welNoTpl")));
+    // N3: a signed notice to an address (e.g. the site's Broadcast) when an issue went out
+    f.hookUrl = inp("url", src.hookUrl || "", 500);
+    f.hookUrl.placeholder = "https://…";
+    dlg.appendChild(field(t("l.hook"), f.hookUrl, t("l.hookHint")));
+    f.hookKey = inp("text", src.hookKey || "", 32);
+    f.hookKey.spellcheck = false; f.hookKey.autocomplete = "off";
+    var hkw = field(t("l.hookKey"), f.hookKey, t("l.hookKeyHint"));
+    var hka = el("div", "acts");
+    hka.appendChild(mini(t("fm.shkNew"), function () { f.hookKey.value = E.newShopKey(); }));
+    hka.appendChild(mini(t("lk.copy"), function () {
+      try { navigator.clipboard.writeText(f.hookKey.value).then(function () { showToast(t("lk.copied")); }, function () { f.hookKey.select(); }); } catch (e) { f.hookKey.select(); }
+    }));
+    hkw.appendChild(hka);
+    dlg.appendChild(hkw);
     var left = [];
     if (l) {
       left.push(btn(t("l.delete"), "danger", function () {
@@ -2265,7 +2547,12 @@
       f.from.classList.toggle("bad", !from);
       f.addr.classList.toggle("bad", !f.addr.value.trim());
       f.name.classList.toggle("bad", !f.name.value.trim());
-      if (!from || !f.addr.value.trim() || !f.name.value.trim()) return;
+      var hu = f.hookUrl.value.trim(), hk = f.hookKey.value.trim();
+      var hookBad = !!hu && (!/^https:\/\/[^\s<>"']+$/i.test(hu) || !C.SHOP_KEY.test(hk));
+      f.hookUrl.classList.toggle("bad", hookBad && !/^https:\/\//i.test(hu));
+      f.hookKey.classList.toggle("bad", hookBad);
+      if (hookBad) showToast(t("l.hookBad"));
+      if (!from || !f.addr.value.trim() || !f.name.value.trim() || hookBad) return;
       // start from the stored record, so fields a newer orOS added stay
       var base = l ? copy(l) : {};
       [["id", l ? l.id : C.randomId("l", null)], ["m", l ? l.m : 0], ["name", f.name.value], ["chan", f.chan.value],
@@ -2273,6 +2560,10 @@
        ["why", f.why.value], ["theme", f.theme.value], ["color", f.color.value], ["salt", l ? l.salt : C.randomId("", null)],
        ["form", l ? l.form : null],
        ["sty", { font: f.font.value, hs: f.hs.value, btn: f.btn.value, link: sty.link, bg: sty.bg }]].forEach(function (kv) { base[kv[0]] = kv[1]; });
+      // welAt: only people active from now on are welcomed
+      if (f.wel.value) { if (base.welTpl !== f.wel.value || !base.welAt) base.welAt = Date.now(); base.welTpl = f.wel.value; }
+      else { delete base.welTpl; delete base.welAt; }
+      if (hu) { base.hookUrl = hu; base.hookKey = hk; } else { delete base.hookUrl; delete base.hookKey; }
       var rec = C.normList(base);
       put("lists", rec);
       prefs.list = rec.id;
@@ -2428,6 +2719,25 @@
     });
     bw.appendChild(save);
     c.appendChild(bw);
+    // N2: the shop key of orOS Connect's checkout box
+    var shk = inp("text", l.form.shk || "", 32);
+    shk.spellcheck = false; shk.autocomplete = "off";
+    var kw = field(t("fm.shk"), shk, t("fm.shkHint"));
+    var ka = el("div", "acts");
+    ka.appendChild(mini(t("fm.shkNew"), function () { shk.value = E.newShopKey(); }));
+    ka.appendChild(mini(t("lk.copy"), function () {
+      try { navigator.clipboard.writeText(shk.value).then(function () { showToast(t("lk.copied")); }, function () { shk.select(); }); } catch (e) { shk.select(); }
+    }));
+    ka.appendChild(mini(t("dlg.save"), function () {
+      var v = shk.value.trim();
+      if (v && !C.SHOP_KEY.test(v)) { shk.classList.add("bad"); showToast(t("fm.shkBad")); return; }
+      shk.classList.remove("bad");
+      E.setShopKey(l.id, v);
+      data = E.read();
+      showToast(v ? t("fm.shkSaved") : t("fm.shkOff"));
+    }));
+    kw.appendChild(ka);
+    c.appendChild(kw);
     var here = !l.form.dev || l.form.dev === E.devState().dev;
     c.appendChild(el("p", "hint", here ? t("fm.here") : t("fm.there")));
     var acts = el("div", "acts");
@@ -2620,6 +2930,8 @@
         if (p[1]) info.appendChild(el("p", "row-sub", t(p[0], { t: when(p[1]) })));
       });
       info.appendChild(el("p", "row-sub", t("s.src", { s: t("src." + s.src) }) + " · " + t("basis." + s.basis)));
+      if (s.cn) info.appendChild(el("p", "row-sub", t("s.cn", { c: s.cn })));
+      if (s.bn) info.appendChild(el("p", "row-sub", buyText(s, C.list(data, s.list))));
       dlg.appendChild(info);
     }
     var left = [];
@@ -2681,12 +2993,25 @@
   }
 
   // Import step 2: what will happen, the basis, extra tags → add.
-  function importDialog(people, bad, src, defBasis) {
+  // opts (CSV, W1 2026-11): { hasSt, cols: [{ i, name, buy }], file }
+  // adds "What the file holds", a consent note and the column mapping.
+  function importDialog(people, bad, src, defBasis, opts) {
     var l = curList();
     if (!l) return;
+    opts = opts || {};
     if (!people.length) { showToast(src === "csv" ? t("toast.noCsv") : t("imp.none")); return; }
     var dlg = makeDialog("nl-import", t("imp.title"), true);
-    var f = {};
+    var f = {}, csv = src === "csv";
+    var cols = csv && opts.cols ? opts.cols : [];
+    if (csv) {
+      f.st = sel((opts.hasSt ? [["file", t("imp.stFile")]] : []).concat(["on", "off", "bounce", "spam"].map(function (k) {
+        return [k, t("imp.st." + k)];
+      })), opts.hasSt ? "file" : "on");
+      var sh = el("p", "hint", t("imp.stHint"));
+      var sw = field(t("imp.st"), f.st);
+      sw.appendChild(sh);
+      dlg.appendChild(sw);
+    }
     f.basis = sel(C.BASES.map(function (b) { return [b, t("basis." + b)]; }), defBasis || "optin");
     var bh = el("p", "hint", t("basis." + f.basis.value + "Hint"));
     var bw = field(t("imp.basis"), f.basis);
@@ -2694,30 +3019,89 @@
     dlg.appendChild(bw);
     f.tags = inp("text", "", 400);
     dlg.appendChild(field(t("imp.tags"), f.tags, t("s.tagsHint")));
+    if (csv) {
+      var base = String(opts.file || "").replace(/^.*[\\/]/, "").slice(0, 60) || "CSV";
+      f.cn = inp("text", t("imp.cnDef", { f: base, d: new Date().toISOString().slice(0, 10) }), 120);
+      dlg.appendChild(field(t("imp.cn"), f.cn, t("imp.cnHint")));
+    }
+    var colIns = [];
+    if (cols.length) {
+      var box = el("fieldset", "imp-cols");
+      box.appendChild(el("legend", "", t("imp.cols")));
+      box.appendChild(el("p", "hint", t("imp.colsHint")));
+      cols.forEach(function (c) {
+        var ci = inp("text", c.buy ? t("imp.buyTag") : "", 40);
+        ci.setAttribute("data-col", String(c.i));
+        colIns.push(ci);
+        box.appendChild(field(c.name, ci));
+        ci.addEventListener("input", function () { update(); });
+      });
+      dlg.appendChild(box);
+    }
     var sum = el("p", "dlg-text");
     dlg.appendChild(sum);
+    var sum2 = el("p", "dlg-text");
+    dlg.appendChild(sum2);
     var okBtn = null;
     var plan = null;
     var update = function () {
       bh.textContent = t("basis." + f.basis.value + "Hint");
-      plan = C.planImport(data, l.id, people, { basis: f.basis.value, src: src, bad: bad, tags: f.tags.value.split(",") });
+      var st = f.st ? f.st.value : "";
+      bw.hidden = st === "off" || st === "bounce" || st === "spam";
+      var ppl = colIns.length ? C.applyColumnTags(people, colIns.map(function (ci) { return ci.value; })) : people;
+      plan = C.planImport(data, l.id, ppl, { basis: f.basis.value, src: src, bad: bad, tags: f.tags.value.split(","),
+                                             st: st === "file" ? "" : st, rowSt: st === "file", cn: f.cn ? f.cn.value : "" });
       sum.textContent = t("imp.sum", { a: plan.add.length, d: plan.dup, l: plan.left, s: plan.supp, b: plan.bad, o: plan.over });
-      if (okBtn) { okBtn.textContent = t("imp.do", { n: plan.add.length }); okBtn.disabled = !plan.add.length; }
+      sum2.textContent = plan.suppAdd.length || plan.leave.length ? t("imp.sum2", { g: plan.suppAdd.length, u: plan.leave.length }) : "";
+      var n = plan.add.length + plan.leave.length + plan.suppAdd.length;
+      if (okBtn) { okBtn.textContent = t(n === plan.add.length ? "imp.do" : "imp.doAll", { n: n }); okBtn.disabled = !n; }
     };
     f.basis.addEventListener("change", update);
     f.tags.addEventListener("input", update);
+    if (f.st) f.st.addEventListener("change", update);
     var acts = actionsRow(dlg, [], t("imp.do", { n: 0 }), function () {
-      if (!plan || !plan.add.length) return;
+      if (!plan || !(plan.add.length + plan.leave.length + plan.suppAdd.length)) return;
+      var added = plan.add.map(function (x) { return x.id; });
+      var before = plan.leave.map(function (x) {
+        var cur = null;
+        data.subs.forEach(function (y) { if (y.id === x.id) cur = y; });
+        return copy(cur);
+      });
       plan.add.forEach(function (x) { replaceIn(data.subs, x); });
+      plan.leave.forEach(function (x) { replaceIn(data.subs, x); });
+      // the suppression list only grows (a union in sync): Undo keeps it
+      plan.suppAdd.forEach(function (h) { if (data.supp.indexOf(h) < 0) data.supp.push(h); });
       saveNow();
       dlg.close();
       renderAll();
-      showToast(plan.add.length === 1 ? t("imp.done1") : t("imp.done", { n: plan.add.length }));
-      if (f.basis.value === "optin") kick();
+      var msg = plan.add.length === 1 && !plan.leave.length && !plan.suppAdd.length ? t("imp.done1")
+        : t("imp.done2", { n: plan.add.length, u: plan.leave.length, g: plan.suppAdd.length });
+      if (added.length || before.length) undoToast(msg, function () { importUndo(added, before); });
+      else showToast(msg);
+      if (plan.add.some(function (x) { return x.basis === "optin"; })) kick();
     });
     okBtn = acts.lastChild;
     update();
-    openDialog(dlg, f.basis);
+    openDialog(dlg, f.st || f.basis);
+  }
+  // Undo of a CSV import: the added people become tombstones, people it
+  // marked as left get their earlier record back (a newer m, so it syncs).
+  function importUndo(added, before) {
+    added.forEach(function (id) {
+      var cur = null;
+      data.subs.forEach(function (x) { if (x.id === id) cur = x; });
+      if (cur && !cur.del) replaceIn(data.subs, { id: id, m: stamp(cur.m), del: 1 });
+    });
+    before.forEach(function (b) {
+      if (!b) return;
+      var cur = null;
+      data.subs.forEach(function (x) { if (x.id === b.id) cur = x; });
+      var x = copy(b);
+      x.m = stamp(cur ? cur.m : b.m);
+      replaceIn(data.subs, x);
+    });
+    saveNow();
+    renderAll();
   }
   function pasteDialog() {
     var dlg = makeDialog("nl-paste", t("subs.paste"), true);
@@ -2946,7 +3330,7 @@
     var credsP = ch ? sendCreds(ch).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
     credsP.then(function (chanOk) {
       var aud = C.audience(data, x).length;
-      var res = C.preflight(data, x, { chan: chanOk ? ch : null, inbox: !!inboxAccount(ch), imgBytes: imgBytes(x), aud: aud });
+      var res = C.preflight(data, x, { chan: chanOk ? ch : null, inbox: !!inboxAccount(ch), imgBytes: imgBytes(x), aud: aud, relay: true });
       var errs = res.filter(function (r) { return r.lvl === "err"; });
       if (send && !errs.length) { sendDialog(x, l, ch, aud, res); return; }
       var dlg = makeDialog("nl-check", t("ck.title"), true);
@@ -2960,6 +3344,21 @@
         items.forEach(function (r) { if (!seen[r.k]) { seen[r.k] = 1; ul.appendChild(el("li", "", t("ck." + r.k))); } });
         dlg.appendChild(ul);
       });
+      // one-click unsubscribe (W3): the same relay registration as the web form
+      if (l && !l.form && res.some(function (r) { return r.k === "noOneClick"; })) {
+        var oc = btn(t("ck.oneClickOn"), "", function () {
+          oc.disabled = true;
+          E.formOn(l.id, "").then(function () {
+            data = E.read(); renderAll(); dlg.close(); showToast(t("ck.oneClickDone"));
+          }, function (e) {
+            oc.disabled = false;
+            showToast(e && e.code === "nostore" ? t("fm.nostore") : t("fm.fail", { e: errText(e) }));
+          });
+        });
+        var ow = el("div", "acts");
+        ow.appendChild(oc);
+        dlg.appendChild(ow);
+      }
       actionsRow(dlg, [], "", null);
       openDialog(dlg);
     });
@@ -3105,7 +3504,8 @@
       notify: function (kind, info) {
         if (kind === "done") showToast(t("toast.sentAll", { s: shownSubj(info.issue), n: info.issue.n }));
         else if (kind === "paused") showToast(t("vw.err", { e: errStored(info.err) }));
-        else if (kind === "invfail" || kind === "askfail") showToast(errStored(info.err));
+        else if (kind === "invfail" || kind === "askfail" || kind === "welfail") showToast(errStored(info.err));
+        else if (kind === "hookfail") showToast(t("l.hookFail", { s: shownSubj(info.issue) }));
       }
     });
   }
@@ -3184,6 +3584,23 @@
   // ---------- products from a shop (wave E4, newsletter/shop.js) ----------
   var Sh = window.OrosNewsletterShop || null;
   function shopT(k, p) { return Sh ? Sh.t(k, p) : k; }
+  // N2: the shop's paid orders → each subscriber's purchases (synced)
+  function readPurchases(listId) {
+    var l = C.list(data, listId);
+    if (!l || !Sh) return;
+    Sh.purchases(l, function (buys, meta) {
+      var n = 0;
+      changed(E.change(function (d) {
+        n = C.applyPurchases(d, listId, buys, meta, Date.now());
+      }));
+      showToast(shopT("shop.buyDone", { o: meta.n, n: n }));
+    });
+  }
+  function buyText(s, l) {
+    if (!s.bn) return "";
+    var cur = (l && l.buyCur) || "EUR";
+    return t("s.buys", { n: s.bn, s: money(s.bs || 0, cur), d: s.bl ? new Date(s.bl).toLocaleDateString(loc()) : "" });
+  }
   function money(c, cur) {
     if (!(c >= 0)) return "";
     try { return new Intl.NumberFormat(loc(), { style: "currency", currency: cur || "EUR" }).format(c / 100); }
@@ -3311,7 +3728,7 @@
         if (file.size > 5 * 1024 * 1024 || /\.zip$/i.test(file.name || "")) { showToast(t("toast.noCsv")); return; }
         return file.text().then(function (text) {
           var r = C.peopleFromRows(C.parseCsv(text));
-          importDialog(r.people, r.bad, "csv", "consent");
+          importDialog(r.people, r.bad, "csv", "consent", { hasSt: r.hasSt, cols: r.cols, file: file.name });
         });
       });
     })["catch"](function () { showToast(t("toast.noCsv")); });

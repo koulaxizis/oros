@@ -119,9 +119,15 @@ test("moving a device from Dropbox to WebDAV starts the new cloud cleanly", asyn
   ["oros-vault-manifest", "oros-vault-rev", "oros-vault-seeded"].forEach((k) =>
     assert.equal(B.localStorage.getItem(k), null, k + " belonged to the old cloud"));
   assert.equal(B.sync.isDirty(), true, "everything goes up to the new cloud");
-  await B.sync.reconcile("test");
-  await new Promise((r) => setImmediate(r));
-  for (let i = 0; i < 20 && !dav.files.has("/orOS-data.json"); i++) await new Promise((r) => setTimeout(r, 20));
+  // reconcile() does not return its round; wait for the round's own
+  // end event. A fixed 400 ms poll failed under load (PBKDF2 600k on a
+  // busy CI runner took longer than that).
+  const round = new Promise((resolve) => B.sync.onAutoSync((kind, reason, err) => {
+    if (reason === "test" && (kind === "done" || kind === "fail")) resolve({ kind, err });
+  }));
+  B.sync.reconcile("test");
+  const end = await round;
+  assert.equal(end.kind, "done", "the round ended with " + end.kind + (end.err ? ": " + end.err.message : ""));
   assert.deepEqual((await cloudPayload(dav, B)).apps.notes, { items: { a: 1 } });
 });
 

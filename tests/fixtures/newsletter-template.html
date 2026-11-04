@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>{{SUBJECT}}</title>
+<!-- Email-safe newsletter template (test fixture).
+     Accent #DD183B, headings #0F172A, text #3A3A3A, background #FFEDE6 / #FFD1BF.
+     System fonts only (email clients block web fonts). Fill {{...}} slots; repeat or delete blocks marked BLOCK. -->
+</head>
+<body style="margin:0;padding:0;background:#FFEDE6;">
+<div style="display:none;max-height:0;overflow:hidden;">{{PREHEADER}}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFEDE6;">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;background:#FFFFFF;border-radius:8px;font-family:Ubuntu,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#3A3A3A;font-size:16px;line-height:1.55;">
+
+<!-- Header -->
+<tr><td align="center" style="padding:28px 24px 8px;">
+<a href="https://example.com/" style="text-decoration:none;"><img src="{{LOGO_URL}}" width="140" alt="Example Books" style="display:block;border:0;max-width:140px;height:auto;"></a>
+<p style="margin:12px 0 0;font-size:13px;color:#3A3A3A;">Example Books · {{ISSUE_LABEL}}</p>
+</td></tr>
+
+<!-- Main story -->
+<tr><td style="padding:16px 24px 8px;">
+<h1 style="margin:0 0 12px;font-size:24px;line-height:1.3;color:#0F172A;">{{MAIN_TITLE}}</h1>
+<a href="{{MAIN_URL}}"><img src="{{MAIN_IMAGE}}" width="552" alt="{{MAIN_IMAGE_ALT}}" style="display:block;width:100%;max-width:552px;height:auto;border:0;background:#FFEDE6;border-radius:6px;"></a>
+<p style="margin:16px 0;">{{MAIN_TEXT}}</p>
+<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#DD183B;border-radius:6px;">
+<a href="{{MAIN_URL}}" style="display:inline-block;padding:12px 22px;color:#FFFFFF;font-weight:bold;text-decoration:none;">{{MAIN_BUTTON}}</a>
+</td></tr></table>
+</td></tr>
+
+<!-- Section heading -->
+<tr><td style="padding:24px 24px 4px;"><h2 style="margin:0;font-size:19px;color:#0F172A;border-bottom:2px solid #FFD1BF;padding-bottom:6px;">Νέα στο κατάστημα</h2></td></tr>
+
+<!-- BLOCK: product row (repeat 2–4) -->
+<tr><td style="padding:12px 24px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td width="96" valign="top"><a href="{{ITEM_URL}}"><img src="{{ITEM_IMAGE}}" width="96" alt="{{ITEM_IMAGE_ALT}}" style="display:block;border:0;width:96px;height:auto;"></a></td>
+<td valign="top" style="padding-left:14px;">
+<a href="{{ITEM_URL}}" style="color:#0F172A;font-weight:bold;text-decoration:none;">{{ITEM_TITLE}}</a>
+<p style="margin:4px 0 0;font-size:15px;">{{ITEM_LINE}}</p>
+</td></tr></table>
+</td></tr>
+<!-- /BLOCK -->
+
+<!-- BLOCK: text section (magazine / music / events / free) -->
+<tr><td style="padding:24px 24px 4px;"><h2 style="margin:0;font-size:19px;color:#0F172A;border-bottom:2px solid #FFD1BF;padding-bottom:6px;">{{SECTION_TITLE}}</h2></td></tr>
+<tr><td style="padding:12px 24px;"><p style="margin:0;">{{SECTION_TEXT}} <a href="{{SECTION_URL}}" style="color:#DD183B;">{{SECTION_LINK_TEXT}}</a></p></td></tr>
+<!-- /BLOCK -->
+
+<!-- Sign-off -->
+<tr><td style="padding:24px 24px 8px;">
+<p style="margin:0;">{{SIGNOFF}}</p>
+<p style="margin:12px 0 0;font-size:14px;">Αποστολή σε 1–2 ημέρες</p>
+</td></tr>
+
+<!-- Footer -->
+<tr><td align="center" style="padding:20px 24px 28px;background:#FFEDE6;border-radius:0 0 8px 8px;font-size:13px;color:#3A3A3A;">
+<p style="margin:0 0 6px;"><strong>Example Books</strong></p>
+<p style="margin:0 0 6px;"><a href="https://example.com/" style="color:#DD183B;">example.com</a> · <a href="mailto:hub@example.com" style="color:#DD183B;">hub@example.com</a> · <span style="white-space:nowrap;">+30 210 000 0000</span></p>
+<p style="margin:0 0 6px;">{{SOCIAL_LINKS}}</p>
+<p style="margin:10px 0 0;">Λαμβάνετε αυτό το μήνυμα επειδή εγγραφήκατε στο newsletter μας. <a href="{$unsubscribe}" style="color:#3A3A3A;">Διαγραφή</a></p>
+</td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>

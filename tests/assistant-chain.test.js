@@ -26,10 +26,26 @@ test("chain: tiers put local first, then the browser, then free, then paid", () 
   assert.equal(C.isOnline(""), false);
 });
 
-test("chain: off keeps a chosen online service alone", () => {
-  assert.deepEqual(C.chainOrder(data({ prov: "anthropic" })), ["anthropic"]);
-  assert.deepEqual(C.chainOrder(data({ prov: "groq" })), ["groq"]);
+test("chain: off, the chosen service answers first and the rest stand in (AS-CHAIN 4, adds, never replaces)", () => {
+  ["anthropic", "groq", "local"].forEach((prov) => {
+    const o = C.chainOrder(data({ prov }));
+    assert.equal(o[0], prov, prov + " first");
+    assert.ok(o.length > 3, prov + " is not alone");
+    assert.equal(new Set(o).size, o.length, "no service twice");
+    const rest = o.slice(1).map((p) => C.provTier(p));
+    assert.deepEqual(rest, rest.slice().sort((a, b) => a - b), "the rest by tier, local and free first");
+  });
+  assert.ok(C.chainOrder(data({ prov: "anthropic", skip: ["groq"] })).indexOf("groq") < 0, "left-out services stay out");
   assert.deepEqual(C.chainOrder(data({ prov: "" })), []);
+});
+
+test("chain: settings show every connected service, the first choice and the order (AS-CHAIN 4)", () => {
+  const js = read("assistant/assistant.js");
+  assert.match(js, /chainBox\.id = "as-chain";/);
+  assert.match(js, /sum\.id = "as-chain-sum";/);
+  assert.match(js, /checkbox\(row, "as-use-" \+ q/);
+  assert.match(js, /t\("set\.chainFirst"\)/);
+  assert.match(js, /el\("details", "chain-more"\)/);
 });
 
 test("chain: off, a local or in-browser model is never a dead end (AS-CHAIN 2)", () => {
@@ -145,9 +161,37 @@ test("chain: the Assistant picks per turn, retries the next on a cooling error, 
   assert.match(js, /id = "as-auto"|"as-auto"/);
   assert.match(js, /if \(failed && curProv\(\) === failed\.pid\)/);
   ["note.via", "note.noNext", "set.chain", "set.auto", "set.autoHint", "set.tier0", "set.tier1", "set.tier3", "set.tier4",
-   "set.chain.ok", "set.chain.off", "set.chain.down", "set.fbAuto"].forEach((k) => {
+   "set.chain.ok", "set.chain.off", "set.chain.down", "set.fbAuto", "set.chainHint", "set.chainNow", "set.chainOnly", "set.chainNone",
+   "set.chainEmpty", "set.chainFirst", "set.chainMore", "set.chainHow"].forEach((k) => {
     const n = js.split('"' + k + '":').length - 1;
     assert.equal(n, 2, k + " in EN and EL");
     assert.ok(read("i18n/de/assistant.js").indexOf('"' + k + '":') >= 0, k + " in DE");
   });
+});
+
+test("chain: when only cooled services are set up, one of them again rather than a server that isn't there (AS-CHAIN 3)", async () => {
+  const realFetch = globalThis.fetch;
+  const d = data({ prov: "anthropic", auto: 1 }, { local: { m: 1, base: "http://localhost:11434/v1", model: "qwen3:8b" },
+    anthropic: { m: 1, model: "claude-haiku-5-5" } });
+  const readKey = (p) => Promise.resolve(p === "anthropic" ? "sk-ant" : "");
+  try {
+    globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+    C.probeSet("");
+    const cool = { anthropic: Date.now() + 15000 };
+    assert.deepEqual(await C.pickChain(d, { readKey, tools: true, cool }), { pid: "anthropic", fb: 0 });
+    assert.deepEqual(await C.pickChain(d, { readKey, cool }), { pid: "anthropic", fb: 0 });
+    assert.deepEqual(await C.pickChain(d, { readKey: () => Promise.resolve(""), cool }), { pid: "local", fb: 1 },
+      "nothing set up at all: the first in the order");
+  } finally {
+    globalThis.fetch = realFetch;
+    C.probeSet("");
+  }
+});
+
+test("chain: an online service gets the same request again after a short drop, also mid-turn (AS-CHAIN 3)", () => {
+  const js = read("assistant/assistant.js");
+  assert.match(js, /var RETRY_WAIT = \[2000, 6000\], RETRY_CODES = \["net", "busy", "server"\];/);
+  assert.match(js, /return callRetry\(pid, withFiles\(c\.msgs\)/);
+  assert.match(js, /P\.local \|\| P\.device/);
+  assert.match(js, /if \(C\.provTier\(failed\.pid, provConf\(failed\.pid\)\) <= 2\) c\.msgs\.push\(\{ r: "note", kind: "info", text: t\("note\.noNext"\) \}\);/);
 });

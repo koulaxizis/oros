@@ -217,7 +217,7 @@
         md.push("### " + mdText(x.subj || "—"), "");
         md.push("*" + (x.st === "sent" ? w["pkg.sent"] + " " + day(x.done) : w["pkg.draft"]) + "*", "");
         if (x.pre) md.push("> " + mdText(x.pre), "");
-        var body = x.fmt === "md" ? mdText(x.md) : blocksMd(x.blocks);
+        var body = x.fmt === "md" ? mdText(x.md) : x.fmt === "html" ? mdText(x.txt || String(x.html || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()) : blocksMd(x.blocks);
         if (body) md.push(body, "");
       });
     });

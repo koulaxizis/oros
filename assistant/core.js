@@ -381,12 +381,11 @@
     var out = set.prov && PROVIDERS[set.prov] ? [set.prov] : [];
     var fb = fbFor(set);
     if (fb) out.push(fb);
-    // A model on the user's own devices that isn't there (a phone, the
-    // computer off) is never a dead end (AS-CHAIN 2, Chris 2026-11-03):
-    // after it and its stand-in come the rest, in the same order.
-    if (out.length && provTier(set.prov, provs[set.prov]) <= 2) {
-      all.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
-    }
+    // The chosen assistant is the first choice, never the only one
+    // (AS-CHAIN 2 and 4, Chris 2026-11-03 "συμπλήρωση, όχι
+    // αντικατάσταση"): after it and its stand-in come the rest, in the
+    // same order, each used only where it is set up.
+    if (out.length) all.forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
     return out;
   }
   // Does this message need tools (an entry, a change, a web search)?
@@ -431,15 +430,19 @@
     }
     var i = 0;
     function next() {
-      if (i >= order.length) return res(o.tools ? null : first);
+      if (i >= order.length) return res(null);
       var pid = order[i++];
       return there(pid).then(function (ok) { return ok ? res(pid) : next(); });
     }
     return next().then(function (r) {
-      // Nothing with tools: the best without them still answers.
       if (r.pid) return r;
-      var o2 = {}; Object.keys(o).forEach(function (k) { o2[k] = o[k]; }); o2.tools = false;
-      return pickChain(d, o2);
+      var o2 = {}; Object.keys(o).forEach(function (k) { o2[k] = o[k]; });
+      // Nothing with tools: the best without them still answers.
+      if (o2.tools) { o2.tools = false; return pickChain(d, o2); }
+      // Only services that just failed: one of them again (it is set
+      // up here) rather than one that isn't there (AS-CHAIN 3).
+      if (o2.cool) { o2.cool = null; return pickChain(d, o2); }
+      return res(first);
     });
   }
   // An error before any answer that makes the next service in the

@@ -1,6 +1,22 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.22.00
+- **Newsletter can take over from MailerLite.** Import a CSV export with each person's status, send issues written in your own HTML, and greet every new subscriber with a welcome e-mail. A one-click unsubscribe works in Gmail and Yahoo, and each issue gets a report.
+- **Coupons in your issues.** Add a coupon block with one shared code, or a code for each reader that orOS creates in your WooCommerce shop just before their e-mail goes out.
+- **Sign-ups at your shop's checkout.** With the same shop key in orOS Connect and in your list, people who tick the box at checkout join at once, without a confirmation e-mail.
+- **Purchases and win-back.** Read the purchases from your shop, make segments such as first purchase or no order in the last year, and start from the ready "Win back past customers" segment and layout.
+- **Issue from a product, and a notice when an issue goes out.** Start a new issue from a product in your shop. A list can also send a short signed notice when an issue has been sent, for example to your site's Broadcast plugin to post it on Viber.
+
+## Version 5.21.00
+- **See every AI the Assistant can use.** Assistant › Settings now lists under `Connected services and order` every service set up on this device, numbered in the order they answer, with your assistant marked `first choice`. Choosing a new assistant puts it first and keeps the others connected as stand-ins, also when your first choice is an online service: if it can't answer, the next one in the list does. Untick a service to leave it out; services not set up yet sit under one line you can open.
+
+## Version 5.20.02
+- **More reliable checks behind sync.** A test of moving a device from Dropbox to WebDAV/Nextcloud no longer fails at random on a busy computer. Nothing changes in how orOS syncs.
+
+## Version 5.20.01
+- **The Assistant rides out short network drops.** When the connection to an online service drops for a moment or the service is overloaded, the same request goes again after a few seconds, also in the middle of a long task, before anything else is tried. If it still fails, the Assistant stays with that service instead of trying a model that isn't there (such as your computer's from the phone), so "Continue" carries on.
+
 ## Version 5.20.00
 - **Local AI on orOS USB with one button.** On an installed orOS USB (with saved changes), open the Assistant and press `Install local AI`, or go to System › Local AI. orOS downloads the AI engine and a model that fits your computer's memory, starts it by itself, and the Assistant uses it with no setting: free, offline after the download, and nothing you write leaves the computer. Under "More choices" you can pick a smaller or larger model, use the graphics card, or remove it all to free the space.
 - **Quick answers** for a model on your computer: it answers at once instead of thinking first (Assistant › Settings, on by default for the local AI).

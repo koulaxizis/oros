@@ -290,6 +290,47 @@
     return code === "no" && msg ? "no:" + msg : code;
   }
 
+  // ---------- personal coupon codes (N1) ----------
+  // Before a message with a personal coupon goes out, that person's code
+  // is made in the shop (Connected services, WooCommerce). The codes of
+  // the next ≤ 100 readers go in one request. A code made once is
+  // remembered on this device for this window; one made elsewhere (or
+  // by a try that got cut off) answers "already there" and counts as
+  // made. A refusal stops the issue (or the welcome mails): no message
+  // ever goes out with a code that doesn't work.
+  var cpnMade = {};                     // acct + "|" + code → 1
+  function linksApi() {
+    try { if (root.orosLinks && typeof root.orosLinks.call === "function") return root.orosLinks; } catch (e) {}
+    try { var p = root.parent; if (p && p !== root && p.orosLinks && typeof p.orosLinks.call === "function") return p.orosLinks; } catch (e) {}
+    return null;
+  }
+  function ensureCoupons(x, subs) {
+    var specs = C.couponsOf(x).filter(function (b) { return b.per && b.sh === "woo" && b.acct; });
+    if (!specs.length || !subs.length) return Promise.resolve();
+    var Lk = linksApi();
+    if (!Lk) return Promise.reject({ code: "coupon" });
+    var desc = "orOS Newsletter: " + (x.subj || "");
+    return specs.reduce(function (p, b) {
+      return p.then(function () {
+        var todo = subs.map(function (s) { return { code: C.couponCode(b, x.id, s), email: s.email }; })
+          .filter(function (c) { return !cpnMade[b.acct + "|" + c.code]; });
+        var go = function (i) {
+          var chunk = todo.slice(i, i + 100);
+          if (!chunk.length) return Promise.resolve();
+          return Lk.call(b.acct, [C.couponReq(b, chunk, desc)]).then(function (res) {
+            var r = res && res[0], bad = Lk.statusCode(r);
+            if (bad) throw { code: bad === "network" ? "network" : "coupon" };
+            var out = C.couponResult(chunk, r.data);
+            out.ok.forEach(function (code) { cpnMade[b.acct + "|" + code] = 1; });
+            if (out.bad.length) throw { code: "coupon" };
+            return go(i + 100);
+          });
+        };
+        return go(0);
+      });
+    }, Promise.resolve());
+  }
+
   // ---------- pictures (inline in the message) ----------
   var imgData = {};        // path → { bin, type, url (data:) } this window
   function loadImages(x, fs) {
@@ -471,7 +512,8 @@
         });
       });
     return made.then(function (f) {
-      var form = C.normForm({ k: f.k, sec: f.sec, priv: f.priv, back: back || "", dev: (l.form && l.form.dev) || dev, at: Date.now() });
+      var form = C.normForm({ k: f.k, sec: f.sec, priv: f.priv, back: back || "", dev: (l.form && l.form.dev) || dev, at: Date.now(),
+                              shk: (l.form && l.form.shk) || "" });
       if (!form) throw { code: "bad-request" };
       return relay({ op: "nl", act: "reg", k: form.k, sec: form.sec, pub: C.formPub(form), back: form.back }).then(function () {
         change(function (d) {
@@ -498,6 +540,52 @@
         put(d, "lists", y);
       });
     });
+  }
+  // N2: the shop key orOS Connect signs checkout sign-ups with ("" = none:
+  // they confirm by e-mail like any other sign-up).
+  function setShopKey(listId, key) {
+    if (key && !C.SHOP_KEY.test(key)) return false;
+    return change(function (d) {
+      var cur = C.list(d, listId);
+      if (!cur || !cur.form || (cur.form.shk || "") === key) return false;
+      var y = copy(cur); y.form.shk = key;
+      put(d, "lists", y);
+    }) !== null;
+  }
+  function newShopKey() { return rnd(32, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"); }
+  function hmacHex(key, text) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (k) {
+      return crypto.subtle.sign("HMAC", k, enc.encode(text));
+    }).then(function (mac) {
+      return Array.prototype.map.call(new Uint8Array(mac), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+    });
+  }
+  // N3: tell the list's address that an issue went out (signed; the
+  // relay posts it). → Promise<status>; rejects { code } when it didn't arrive.
+  function sendHook(l, x) {
+    if (!l || !l.hookUrl || !l.hookKey) return Promise.resolve(0);
+    var body = C.hookBody(l, x, Date.now()), ts = String(Math.floor(Date.now() / 1000));
+    return hmacHex(l.hookKey, ts + "." + body).then(function (sig) {
+      return relay({ op: "nlhook", url: l.hookUrl, body: body, ts: ts, sig: sig });
+    }).then(function (r) {
+      var st = r && r.status;
+      if (!(st >= 200 && st < 300)) throw { code: st ? "hook" : (r && r.err) || "network", status: st || 0 };
+      return st;
+    });
+  }
+  // Is a checkout sign-up signed with the list's shop key? → Promise<bool>
+  function shopOk(key, o) {
+    if (!key || !C.shopSigned(o)) return Promise.resolve(false);
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey("raw", enc.encode(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (k) {
+      return crypto.subtle.sign("HMAC", k, enc.encode(C.shopSigText(o.e, o.ts)));
+    }).then(function (mac) {
+      var hex = Array.prototype.map.call(new Uint8Array(mac), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+      var x = 0;
+      for (var i = 0; i < 64; i++) x |= hex.charCodeAt(i) ^ o.sig.charCodeAt(i);
+      return x === 0;
+    }, function () { return false; });
   }
   // This device collects the list's sign-ups from now on.
   function formHere(listId) {
@@ -529,6 +617,7 @@
     var email = C.normEmail(o && o.e), now = Date.now();
     if (!email) return false;
     var id = C.subId(l.id, email), cur = C.sub(d, id);
+    if (o.ok === true) return applyCheckout(d, l, o, email, id, cur, now, tally);
     if (cur) {
       var st = C.status(cur);
       if (st === "on" || st === "pend" || st === "spam") return false;
@@ -542,6 +631,31 @@
                                     lang: o.l === "el" || o.l === "en" ? o.l : "", src: "form", basis: "optin", at: now, conf: 0 }));
     }
     tally.s++;
+    return true;
+  }
+  // A checkout sign-up signed with the shop key (N2): the person ticked
+  // the unticked box at the shop's checkout, so they are active at once
+  // (no confirmation e-mail). Fresh consent also brings back someone who
+  // had left; someone already active or waiting is left as they are
+  // (waiting ones are confirmed).
+  function applyCheckout(d, l, o, email, id, cur, now, tally) {
+    var cn = "Checkout (orOS Connect)";
+    if (cur) {
+      var st = C.status(cur);
+      if (st === "on") return false;
+      var y = copy(cur);
+      if (st !== "pend") { y.at = now; y.off = 0; y.offSt = ""; y.src = "chk"; y.basis = "consent"; y.cn = cn; delete y.ask; }
+      y.conf = now; y.bnc = 0; y.m = stamp(y.m);
+      replaceIn(d.subs, C.normSub(y));
+    } else {
+      if (C.live(d.subs).length >= C.LIM.subs) return false;
+      var tomb = null;
+      d.subs.forEach(function (s) { if (s.id === id) tomb = s; });
+      replaceIn(d.subs, C.normSub({ id: id, m: stamp(tomb ? tomb.m : 0), list: l.id, email: email, name: C.oneLine(o.n, C.LIM.name),
+                                    lang: o.l === "el" || o.l === "en" ? o.l : "", src: "chk", basis: "consent", cn: cn, at: now, conf: now }));
+    }
+    tally.s++;
+    tally.chk = (tally.chk || 0) + 1;
     return true;
   }
   // Sign-ups and one-click unsubscribes waiting at the relay for the
@@ -562,7 +676,11 @@
               return rows.reduce(function (q, r) {
                 return q.then(function () {
                   if (r.kind !== "s") return;
-                  return openSealed(priv, r.v).then(function (o) { opened.push(o); }, function () {});
+                  return openSealed(priv, r.v).then(function (o) {
+                    if (!o || typeof o !== "object") return;
+                    delete o.ok;
+                    return shopOk(f.shk, o).then(function (ok) { if (ok) o.ok = true; opened.push(o); });
+                  }, function () {});
                 });
               }, Promise.resolve()).then(function () {
                 var d = read(), cur = C.list(d, l.id);
@@ -938,12 +1056,22 @@
     var timer = null, busy = false, state = { k: "" }, stopped = false;
     var failedInv = {};       // list id → true: no more invitations in this window after an error
     var failedAsk = {};       // the same for "Stay?" e-mails
+    var failedWel = {};       // the same for welcome mails (W3)
     var apiMax = {};          // chan id → a smaller batch after a failed relay call
     function call(name, a) { try { if (env[name]) env[name](a, arguments[2]); } catch (e) {} }
     function setState(s) { state = s; call("onState", s); }
     function changed() { call("dirty"); call("onChange"); }
     function later(ms) { clearTimeout(timer); if (!stopped) timer = setTimeout(step, ms); }
     function kick() { if (!busy) later(50); }
+    // the "issue sent" notice: now, after 1 and 10 minutes, then a notice
+    var HOOK_WAIT = [60000, 600000];
+    function hookLater(l, y, n) {
+      if (!l.hookUrl || stopped) return;
+      sendHook(l, y)["catch"](function (e) {
+        if (n < HOOK_WAIT.length) setTimeout(function () { hookLater(l, y, n + 1); }, HOOK_WAIT[n]);
+        else call("notify", "hookfail", { list: l, issue: y, err: (e && e.code) || "network" });
+      });
+    }
 
     // the next job: { kind: "inv"|"issue"|"ask"|"cap"|"other"|"paused", … }
     function nextJob(d, dev, now) {
@@ -962,7 +1090,7 @@
         var p = C.progress(d, x);
         if (!p.next) {
           var y = finish(x.id);
-          if (y) { changed(); call("notify", "done", { issue: y }); }
+          if (y) { changed(); call("notify", "done", { issue: y }); hookLater(l2, y, 0); }
           continue;
         }
         if (capLeft(ch2) <= 0) return { kind: "cap", chan: ch2, issue: x };
@@ -975,6 +1103,13 @@
         if (!cha || capLeft(cha) <= 0 || failedAsk[la.id] || C.cleanOf(la).dev !== dev) continue;
         var asks = C.asksDue(d, la.id, now);
         if (asks.length) return { kind: "ask", list: la, chan: cha, sub: asks[0], left: asks.length };
+      }
+      // welcome mails (W3), on the same device: the list's sending one
+      for (var w = 0; w < lists.length; w++) {
+        var lw = lists[w], chw = C.chan(d, lw.chan);
+        if (!chw || capLeft(chw) <= 0 || failedWel[lw.id] || C.cleanOf(lw).dev !== dev) continue;
+        var wel = C.welcomesDue(d, lw.id, now), xw = wel.length ? C.welcomeIssue(d, lw) : null;
+        if (xw) return { kind: "wel", list: lw, chan: chw, sub: wel[0], left: wel.length, issue: xw };
       }
       var other = C.live(d.issues).filter(function (x) { return x.st === "sending"; })[0];
       if (other) return { kind: "other", issue: other };
@@ -1079,27 +1214,33 @@
       } else setState({ k: job.kind, left: job.left });
       if (C.isApi(job.chan)) { runApi(job, release); return; }
       var l = job.list, ch = job.chan, s = job.sub;
-      var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
+      var p = job.kind === "issue" || job.kind === "wel" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       p.then(function (ok) {
         if (!ok) throw { code: "noImg" };
+        if (job.kind !== "issue" && job.kind !== "wel") return null;
+        var f0 = read(), xi0 = job.kind === "issue" ? C.issue(f0, job.issue.id) : job.issue;
+        var next = job.kind === "issue" ? (xi0 ? C.nextSubs(f0, xi0, 100) : []) : C.welcomesDue(f0, l.id, Date.now()).slice(0, 100);
+        return ensureCoupons(xi0 || job.issue, next);
+      }).then(function () {
         return sendCreds(ch);
       }).then(function (cr) {
         // the subscriber may have left meanwhile (Inbox, another device)
         var fresh = read(), cur = C.sub(fresh, s.id);
         if (!cur || (job.kind === "issue" ? C.status(cur) !== "on" : job.kind === "ask" ? C.status(cur) !== "on" || cur.ask > C.lastSeen(cur)
+                                                                 : job.kind === "wel" ? C.status(cur) !== "on" || !!cur.wel
                                                                  : C.status(cur) !== "pend")) throw { code: "skip" };
         if (job.kind === "issue") {
           var xi = C.issue(fresh, job.issue.id);
           if (!xi || xi.st !== "sending" || C.sentSet(fresh, xi.id)[s.id]) throw { code: "skip" };
         }
         var bin = job.kind === "inv" ? confirmFor(l, cur, cr.hdr).bin : job.kind === "ask" ? askFor(l, cur, cr.hdr).bin
-                                                                    : buildFor(job.issue, l, cur, { hdr: cr.hdr }).bin;
+                                                                    : buildFor(job.issue, l, cur, { hdr: cr.hdr }).bin;   // issue or welcome
         return relay({ op: "send", acct: cr.acct, smtp: cr.smtp, from: l.from, rcpt: [cur.email],
                        raw: root.orosMailCompose.b64(bin) }, SEND_TIMEOUT);
       }).then(function () {
         countUsed(ch.id);
         change(function (dd) {
-          if (job.kind === "inv" || job.kind === "ask") {
+          if (job.kind === "inv" || job.kind === "ask" || job.kind === "wel") {
             var cur = C.sub(dd, s.id);
             if (!cur) return false;
             var z = copy(cur); z[job.kind] = Date.now(); put(dd, "subs", z);
@@ -1121,7 +1262,7 @@
     // own: sent, refused (that address bounces), or left for the next try.
     function runApi(job, release) {
       var l = job.list, ch = job.chan, max = Math.min(apiMax[ch.id] || C.API_BATCH, capLeft(ch));
-      var p = job.kind === "issue" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
+      var p = job.kind === "issue" || job.kind === "wel" ? loadImages(job.issue, env.fs ? env.fs() : null) : Promise.resolve(true);
       var batch = [];
       p.then(function (ok) {
         if (!ok) throw { code: "noImg" };
@@ -1134,9 +1275,14 @@
           if (!xi || xi.st !== "sending") throw { code: "skip" };
           subs = C.nextSubs(fresh, xi, max).filter(function (s) { return C.status(s) === "on"; });
         } else {
-          subs = (job.kind === "ask" ? C.asksDue(fresh, l.id, Date.now()) : C.invitesDue(fresh, l.id)).slice(0, max);
+          subs = (job.kind === "ask" ? C.asksDue(fresh, l.id, Date.now()) : job.kind === "wel" ? C.welcomesDue(fresh, l.id, Date.now())
+                  : C.invitesDue(fresh, l.id)).slice(0, max);
+          if (job.kind === "wel") { xi = C.welcomeIssue(fresh, C.list(fresh, l.id) || l); if (!xi) throw { code: "skip" }; }
         }
         if (!subs.length) throw { code: "skip" };
+        return (job.kind === "issue" || job.kind === "wel" ? ensureCoupons(xi, subs) : Promise.resolve()).then(function () { return { cr: cr, subs: subs, xi: xi, fresh: fresh }; });
+      }).then(function (w) {
+        var cr = w.cr, subs = w.subs, xi = w.xi, fresh = w.fresh;
         var lf = C.list(fresh, l.id) || l, size = 0;
         for (var i = 0; i < subs.length; i++) {
           var s = subs[i];
@@ -1169,7 +1315,7 @@
               if (!cur) return;
               var z = copy(cur);
               if (refused.indexOf(id) >= 0) { z.off = at; z.offSt = "bounce"; }
-              else if (job.kind === "inv" || job.kind === "ask") z[job.kind] = at;
+              else if (job.kind === "inv" || job.kind === "ask" || job.kind === "wel") z[job.kind] = at;
               else return;
               put(dd, "subs", z);
             });
@@ -1223,8 +1369,8 @@
         later(job.chan.rate * 1000);
         return;
       }
-      if (job.kind === "inv" || job.kind === "ask") {
-        (job.kind === "inv" ? failedInv : failedAsk)[job.list.id] = true;
+      if (job.kind === "inv" || job.kind === "ask" || job.kind === "wel") {
+        (job.kind === "inv" ? failedInv : job.kind === "ask" ? failedAsk : failedWel)[job.list.id] = true;
         call("notify", job.kind + "fail", { list: job.list, err: errCode(e) });
         later(1000);
         return;
@@ -1260,7 +1406,8 @@
     savePass: savePass, ownPass: ownPass, delPass: delPass, sendCreds: sendCreds, relay: relay, errCode: errCode,
     images: imgData, loadImages: loadImages, filesFor: filesFor, buildFor: buildFor, confirmFor: confirmFor, sendBin: sendBin,
     pause: pause, resume: resume, finish: finish, issueFromFeed: issueFromFeed, runFeeds: runFeeds,
-    runClean: runClean, claimClean: claimClean,
+    runClean: runClean, claimClean: claimClean, ensureCoupons: ensureCoupons,
+    setShopKey: setShopKey, newShopKey: newShopKey, sendHook: sendHook, shopOk: shopOk, applySignup: applySignup,
     formOn: formOn, formOff: formOff, formHere: formHere, pullForms: pullForms, openSealed: openSealed, relayUrl: relayUrl,
     applyRequest: applyRequest, markBounce: markBounce,
     create: create

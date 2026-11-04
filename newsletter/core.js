@@ -15,7 +15,8 @@
 //                via: "smtp"|"api" (a provider's HTTP API, phase 3C), dom (Mailgun domain) }],
 //     lists:  [{ id, m, name, chan, from, fromName, reply, lang, addr, why, theme, color, salt }],
 //     subs:   [{ id, m, list, email, name, lang, tags[], src, basis, at, conf, off, offSt, inv, bnc, c }],
-//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md", blocks[], md, tags[], seg,
+//     issues: [{ id, m, list, subj, pre, fmt: "blocks"|"md"|"html", blocks[], md, tags[], seg,
+//                html, txt (only with fmt "html": the cleaned HTML, its own plain text),
 //                l2: { lang, subj, pre, fmt, blocks[], md }|null   (the other-language version),
 //                st: "draft"|"sched"|"sending"|"paused"|"sent", when (sched: start time),
 //                lock: { dev, at }|null, start, done, n, err, fail: { subId: code } }],
@@ -45,18 +46,18 @@
     chans: 10, lists: 20, subs: 5000, issues: 200, blocks: 60, text: 20000, md: 50000,
     name: 120, subj: 200, pre: 200, tags: 20, tag: 40, fail: 500, why: 1000, addr: 600,
     imgBytes: 400 * 1024, email: 254, segs: 50, tpls: 50, rss: 20, archive: 500, blks: 100,
-    dataChars: 2500000
+    dataChars: 2500000, cn: 120, cols: 30, html: 100000
   };
   var KINDS = ["mail", "smtp"];
   var SECS = { 465: "tls", 587: "starttls" };
   var THEMES = ["classic", "warm", "dark", "plain"];
   var BASES = ["consent", "customer", "optin"];
-  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform", "shop"];
+  var SRCS = ["manual", "paste", "csv", "contacts", "mail", "crm", "form", "platform", "shop", "chk"];
   var PLINK_PS = ["mlite", "mchimp", "brevo"];
   var OFF_STS = ["off", "bounce", "spam"];
   var ISSUE_STS = ["draft", "sched", "sending", "paused", "sent"];
   var BLOCK_KINDS = ["h", "p", "img", "btn", "hr", "cols", "quote", "sp", "list", "head", "foot", "social",
-                     "imgtxt", "cols3", "gallery", "video", "table", "event", "prod"];
+                     "imgtxt", "cols3", "gallery", "video", "table", "event", "prod", "cpn"];
   // shops a product block can come from (wave E4: links/ accounts)
   var SHOP_PS = ["woo", "shopify"];
   var S = root.OrosNewsletterSocial || (typeof require === "function" ? require("./social.js") : null);
@@ -88,6 +89,10 @@
     smtp2go:    { host: "mail.smtp2go.com", port: 587, rate: 1, cap: 200 },
     mailersend: { host: "smtp.mailersend.net", port: 587, rate: 1, cap: 100 },   // MailerLite's sending service
     gmail:      { host: "smtp.gmail.com", port: 465, rate: 6, cap: 450 },
+    // Proton Mail (paid plans with an own domain; the password is an SMTP
+    // token). Proton isn't made for bulk mail and limits by reputation:
+    // slow defaults the user may raise (W4 2026-11).
+    proton:     { host: "smtp.protonmail.ch", port: 587, rate: 15, cap: 150 },
     other:      { host: "", port: 587, rate: 6, cap: 450 }
   };
   var MAIL_DEFAULTS = { rate: 6, cap: 450 };   // an ordinary mailbox (Mail account)
@@ -221,6 +226,17 @@
     if (x.clnGone === 0 || (CLEAN_GONE.indexOf(x.clnGone) >= 0 && x.clnGone !== CLEAN_DFLT.gone)) o.clnGone = x.clnGone;
     if (x.clnIdle === 0 || (CLEAN_IDLE.indexOf(x.clnIdle) >= 0 && x.clnIdle !== CLEAN_DFLT.idle)) o.clnIdle = x.clnIdle;
     if (typeof x.clnDev === "string" && /^[a-z0-9]{6,20}$/.test(x.clnDev)) o.clnDev = x.clnDev;
+    // welcome mail (W3 2026-11): a template sent once to each person who
+    // signs up (form or e-mail) and becomes active after welAt. Plain
+    // scalars, so an older orOS keeps them (keepExtra).
+    if (validId(x.welTpl)) { o.welTpl = x.welTpl; o.welAt = nat(x.welAt); }
+    // purchases (N2): when they were last read from which shop, its currency
+    if (nat(x.buyAt) && typeof x.buyAcct === "string" && /^[a-z0-9]{8,24}$/.test(x.buyAcct)) {
+      o.buyAt = nat(x.buyAt); o.buyAcct = x.buyAcct; o.buyCur = typeof x.buyCur === "string" && /^[A-Z]{3}$/.test(x.buyCur) ? x.buyCur : "EUR";
+    }
+    // "issue sent" notice (N3): an https address and the key it is signed with
+    var hu = typeof x.hookUrl === "string" && x.hookUrl.length <= 500 && /^https:\/\/[^\s<>"']+$/i.test(x.hookUrl) ? x.hookUrl : "";
+    if (hu && typeof x.hookKey === "string" && SHOP_KEY.test(x.hookKey)) { o.hookUrl = hu; o.hookKey = x.hookKey; }
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -242,8 +258,27 @@
     }
     var back = safeUrl(f.back);
     return { k: f.k, sec: f.sec, priv: priv, back: /^https:\/\//i.test(back) && back.length <= 300 ? back : "",
-             dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at) };
+             dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at),
+             shk: typeof f.shk === "string" && SHOP_KEY.test(f.shk) ? f.shk : "" };
   }
+  // N2: the shop key a checkout sign-up is signed with (orOS Connect:
+  // sig = HMAC-SHA256(key, lower-case e-mail + "|" + ts), ts in seconds).
+  // A signed sign-up within SHOP_SKEW of the relay's own time is active
+  // at once; anything else asks for confirmation as usual.
+  var SHOP_KEY = /^[A-Za-z0-9]{32}$/, SHOP_SKEW = 900;
+  function shopSigned(o) {
+    return !!(o && o.s === "shop" && typeof o.ts === "string" && /^[0-9]{9,11}$/.test(o.ts) &&
+              typeof o.sig === "string" && /^[0-9a-f]{64}$/.test(o.sig) && typeof o.t === "number" &&
+              Math.abs(o.t / 1000 - +o.ts) <= SHOP_SKEW);
+  }
+  // The "issue sent" notice (N3) a list posts through the relay: fixed
+  // keys in a fixed order (the relay checks the same shape).
+  function hookBody(l, x, now) {
+    return JSON.stringify({ event: "issue.sent", list: oneLine(l.name, 120), subject: oneLine(x.subj, 300), sent: nat(x.n),
+                            at: new Date(x.done || now).toISOString().slice(0, 19) + "Z", issue: String(x.id).slice(0, 40),
+                            lang: l.lang === "el" ? "el" : "en" });
+  }
+  function shopSigText(email, ts) { return String(email || "").trim().toLowerCase() + "|" + ts; }
   // The public half (what the relay keeps) of a form's private key.
   function formPub(f) { return f && f.priv ? { kty: "RSA", alg: "RSA-OAEP-256", n: f.priv.n, e: f.priv.e } : null; }
   // The subscriber's token as the relay's unsubscribe path wants it.
@@ -276,17 +311,28 @@
       inv: nat(x.inv), bnc: clamp(x.bnc, 0, 99, 0),
       c: typeof x.c === "string" && x.c.length <= 60 && !/[\x00-\x1f]/.test(x.c) ? x.c : ""
     };
+    // consent note (W1, 2026-11): where and how they signed up, e.g.
+    // "MailerLite, form Popup"; left out while empty
+    var cn = oneLine(x.cn, LIM.cn);
+    if (cn) o.cn = cn;
     var ask = nat(x.ask);                // when "Stay?" was sent (left out while never)
     if (ask) o.ask = ask;
+    var wel = nat(x.wel);                // when the welcome mail was sent (W3; left out while never)
+    if (wel) o.wel = wel;
+    // purchases in the list's shop (N2): orders, spent (cents), first
+    // and last order (ms); left out while none
+    var bn = clamp(x.bn, 1, 1e6, 0);
+    if (bn) { o.bn = bn; o.bs = clamp(x.bs, 0, 1e13, 0); o.bf = nat(x.bf); o.bl = nat(x.bl); }
     return o;
   }
   // Fields a newer orOS may add to a block or a list: kept as they are
   // (short scalars only), so this device never strips them on a save.
   var NO_KEYS = { __proto__: 1, constructor: 1, prototype: 1 };
   var BLOCK_KEYS = ["k", "t", "href", "a", "b", "f", "alt", "w", "h", "lv", "st", "full", "more", "c", "wd", "by", "ord", "al", "pad", "bg", "url",
-                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec"];
+                    "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec",
+                    "code", "dt", "amt", "exp", "min", "made"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnIdle", "clnDev"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct", "hookUrl", "hookKey"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -432,9 +478,106 @@
         if (SHOP_PS.indexOf(b.sh) >= 0 && typeof b.acct === "string" && /^[a-z0-9]{8,24}$/.test(b.acct)) { o.sh = b.sh; o.acct = b.acct; }
         if (clamp(b.at, 1, 1e14, 0)) o.at = b.at;
         break;
+      // N1: a discount code (shared, or one per subscriber: per)
+      case "cpn":
+        o = normCoupon(b);
+        o.k = "cpn";
+        break;
     }
     return keepExtra(b, blockLook(b, o), BLOCK_KEYS);
   }
+  // ---------- coupons (N1) ----------
+  // A coupon: code (A-Z 0-9 _ -; with per = the start of each person's
+  // own code), dt "pct" | "fix", amt ("10", "5.50"), exp (last day,
+  // YYYY-MM-DD), min (smallest order, "" = none), a line of text, a
+  // button; sh + acct = the shop that makes it, made = when the shared
+  // code was made there.
+  // the address shape links/core.js accepts in a coupon
+  var CPN_MAIL = /^[^\s@<>"',;:\\\/()\[\]]{1,64}@[A-Za-z0-9-]{1,63}(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,63}$/;
+  var CPN_RE = /^[A-Z0-9_-]{3,30}$/, CPN_AMT = /^[0-9]{1,6}(\.[0-9]{1,2})?$/, CPN_MIN = /^[0-9]{1,7}(\.[0-9]{1,2})?$/;
+  function normCoupon(b) {
+    b = b && typeof b === "object" ? b : {};
+    var code = typeof b.code === "string" ? b.code.trim().toUpperCase() : "";
+    var dt = b.dt === "fix" ? "fix" : "pct";
+    var amt = typeof b.amt === "string" && CPN_AMT.test(b.amt) && +b.amt > 0 && (dt === "fix" || +b.amt <= 100) ? b.amt : "";
+    var o = { code: CPN_RE.test(code) ? code : "", dt: dt, amt: amt, exp: validDay(b.exp) ? b.exp : "",
+              min: typeof b.min === "string" && CPN_MIN.test(b.min) && +b.min > 0 ? b.min : "",
+              t: oneLine(b.t, 300), bt: oneLine(b.bt, 40), bh: safeUrl(b.bh) };
+    if (b.per === 1) o.per = 1;
+    if (b.sh === "woo" && typeof b.acct === "string" && /^[a-z0-9]{8,24}$/.test(b.acct)) { o.sh = "woo"; o.acct = b.acct; }
+    if (o.sh && !o.per && clamp(b.made, 1, 1e14, 0)) o.made = b.made;
+    return o;
+  }
+  // The code one subscriber gets: the shared one, or the start + 6
+  // letters fixed by the issue and the person (the same on every
+  // device, so making it twice changes nothing). No subscriber (a test,
+  // the preview): the start + "-TEST00".
+  function couponCode(b, issueId, sub) {
+    if (!b || !b.code) return "";
+    if (!b.per) return b.code;
+    if (!sub || !sub.id) return b.code + "-TEST00";
+    return b.code + "-" + hash53("cpn|" + issueId + "|" + sub.id).slice(-6).toUpperCase();
+  }
+  // Every coupon of an issue or template (blocks of both languages and
+  // the HTML coupon), each once.
+  function couponsOf(x) {
+    var out = [], seen = {};
+    [x].concat(x && x.l2 ? [x.l2] : []).forEach(function (v) {
+      var list = v.fmt === "html" ? (v.cpn ? [v.cpn] : []) : v.fmt === "blocks" ? (v.blocks || []).filter(function (b) { return b.k === "cpn"; }) : [];
+      list.forEach(function (b) {
+        if (!b.code) return;
+        var key = (b.per ? "p:" : "s:") + b.code + "|" + (b.acct || "");
+        if (seen[key]) return;
+        seen[key] = 1;
+        out.push(b);
+      });
+    });
+    return out;
+  }
+  // How the coupon is written in the e-mail ("10%", "5,50 €")
+  function couponValue(b, lang, cur) {
+    if (!b.amt) return "";
+    if (b.dt === "pct") return b.amt.replace(/\.0+$/, "") + "%";
+    var n = +b.amt;
+    try { return new Intl.NumberFormat(lang === "el" ? "el-GR" : "en-IE", { style: "currency", currency: cur || "EUR" }).format(n); }
+    catch (e) { return n.toFixed(2) + " " + (cur || "EUR"); }
+  }
+  // The WooCommerce request that makes coupons: codes = [{ code, email? }]
+  // (email: that person's own code, once). Each lasts to the end of exp.
+  function couponReq(b, codes, desc) {
+    return { m: "POST", path: "/coupons/batch", body: { create: codes.slice(0, 100).map(function (c) {
+      var o = { code: c.code, discount_type: b.dt === "fix" ? "fixed_cart" : "percent", amount: b.amt, date_expires: b.exp + "T23:59:59",
+                individual_use: true, description: oneLine(desc || "orOS Newsletter", 200) };
+      if (b.min) o.minimum_amount = b.min;
+      // an address the shop's rules can't hold keeps the code to one use
+      if (c.email !== undefined) { o.usage_limit = 1; if (CPN_MAIL.test(c.email) && c.email.length <= 254) o.email_restrictions = [c.email]; }
+      else o.usage_limit_per_user = 1;
+      return o;
+    }) } };
+  }
+  // WooCommerce's answer to couponReq → { ok: [code], bad: [code] }; a
+  // code that is already there counts as made (another device, or a
+  // try that got cut off, made it).
+  function couponResult(codes, data) {
+    var out = { ok: [], bad: [] };
+    var list = data && Array.isArray(data.create) ? data.create : [];
+    codes.forEach(function (c, i) {
+      var r = list[i];
+      var made = r && ((r.id > 0 && !r.error) || (r.error && r.error.code === "woocommerce_rest_coupon_code_already_exists"));
+      (made ? out.ok : out.bad).push(c.code);
+    });
+    return out;
+  }
+  // A coupon that can't go out: no code or value, no end date, an end
+  // date gone by, a personal code without a shop to make it.
+  function badCoupon(b, today) {
+    if (!b.code || !b.amt || !b.exp) return "badCoupon";
+    if (today && b.exp < today) return "oldCoupon";
+    if (b.per && !b.sh) return "perShop";
+    if (!!b.bt !== !!b.bh) return "badCoupon";
+    return "";
+  }
+
   // One product of a product block: the shop's id, name, a line of
   // text, price and old price (cents; -1 = not known), currency, the
   // product page, its picture (copied into the issue) and the shop's
@@ -546,8 +689,8 @@
     var st = ISSUE_STS.indexOf(x.st) >= 0 ? x.st : "draft";
     var when = st === "sched" ? nat(x.when) : 0;
     if (st === "sched" && !when) st = "draft";
-    var c = normContent(x);
-    return {
+    var c = withHtml(normContent(x), x);
+    var o = {
       id: x.id, m: nat(x.m), list: validId(x.list) ? x.list : "",
       subj: c.subj, pre: c.pre, fmt: c.fmt, blocks: c.blocks, md: c.md,
       tags: normTags(x.tags), seg: validId(x.seg) ? x.seg : "",
@@ -556,31 +699,117 @@
       start: nat(x.start), done: st === "sent" ? nat(x.done) : 0, n: nat(x.n),
       err: oneLine(x.err, 300), fail: fail, imp: x.imp === 1 && st === "sent" ? 1 : 0
     };
+    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; if (c.cpn) o.cpn = c.cpn; }
+    return o;
   }
   // The written part of an issue or template (subject … Markdown).
   function normContent(x) {
     return {
       subj: oneLine(x.subj, LIM.subj), pre: oneLine(x.pre, LIM.pre),
-      fmt: x.fmt === "md" ? "md" : "blocks",
+      fmt: x.fmt === "md" || x.fmt === "html" ? x.fmt : "blocks",
       blocks: (Array.isArray(x.blocks) ? x.blocks : []).map(normBlock).filter(Boolean).slice(0, LIM.blocks),
       md: multi(x.md, LIM.md)
     };
   }
+  // fmt "html" (W2): the cleaned HTML and its own plain text (empty:
+  // built from the HTML). Both keys only on HTML content, so other
+  // records keep their bytes. An older orOS reads such an issue as an
+  // empty "blocks" one and can't send it ("noBody").
+  function withHtml(c, x) {
+    if (c.fmt !== "html") return c;
+    c.html = typeof x.html === "string" && x.html.length <= LIM.html ? sanitizeHtml(x.html) : "";
+    c.txt = multi(x.txt, LIM.md);
+    // N1: the coupon that fills {{COUPON}}
+    if (x.cpn && typeof x.cpn === "object") { var cp = normCoupon(x.cpn); if (cp.code) c.cpn = cp; }
+    return c;
+  }
   function normL2(v) {
     if (!v || typeof v !== "object" || (v.lang !== "en" && v.lang !== "el")) return null;
-    var c = normContent(v);
+    var c = withHtml(normContent(v), v);
     c.lang = v.lang;
     return c;
   }
+  // N2 purchase rules: buy "" (any) | "none" | "one" | "ever" | "more"
+  // (bn or more orders), bs spent at least (cents), bago last order more
+  // than that many months ago (needs a purchase)
+  var SEG_BUY = ["none", "one", "ever", "more"];
   function normSeg(x) {
     if (!validId(x.list)) return null;
-    return { id: x.id, m: nat(x.m), list: x.list, name: oneLine(x.name, LIM.name), tags: normTags(x.tags),
-             match: x.match === "all" ? "all" : "any", lang: x.lang === "en" || x.lang === "el" ? x.lang : "" };
+    var o = { id: x.id, m: nat(x.m), list: x.list, name: oneLine(x.name, LIM.name), tags: normTags(x.tags),
+              match: x.match === "all" ? "all" : "any", lang: x.lang === "en" || x.lang === "el" ? x.lang : "" };
+    if (SEG_BUY.indexOf(x.buy) >= 0) o.buy = x.buy;
+    if (o.buy === "more") o.bn = clampInt(x.bn, 2, 9999, 2);
+    var bs = clamp(x.bs, 1, 1e13, 0);
+    if (bs && o.buy !== "none") o.bs = Math.round(bs);
+    var bago = clampInt(x.bago, 1, 120, 0);
+    if (bago && o.buy !== "none") o.bago = bago;
+    return keepExtra(x, o, ["id", "m", "del", "list", "name", "tags", "match", "lang", "buy", "bn", "bs", "bago"]);
+  }
+  function segBuys(g) { return !!(g && (g.buy || g.bs || g.bago)); }
+  // Does a subscriber's purchase record fit the segment's rules?
+  function buyMatch(g, s, now) {
+    var n = s.bn || 0;
+    if (g.buy === "none" && n) return false;
+    if (g.buy === "one" && n !== 1) return false;
+    if (g.buy === "ever" && !n) return false;
+    if (g.buy === "more" && n < (g.bn || 2)) return false;
+    if (g.bs && (s.bs || 0) < g.bs) return false;
+    if (g.bago && (!n || !s.bl || s.bl > (now || Date.now()) - g.bago * 30 * DAY)) return false;
+    return true;
+  }
+  // WooCommerce orders → purchases by e-mail: { key: { n, s, f, l } }.
+  // Only paid orders count (the request asks for processing and
+  // completed; anything else here is skipped too), refunds taken off.
+  var BUY_STS = { processing: 1, completed: 1 };
+  function purchasesOf(orders, into) {
+    var out = into || {};
+    (Array.isArray(orders) ? orders : []).forEach(function (o) {
+      if (!o || typeof o !== "object" || !BUY_STS[o.status]) return;
+      var email = normEmail(o.billing && o.billing.email);
+      if (!email) return;
+      var tot = typeof o.total === "string" && /^-?[0-9]{1,12}(\.[0-9]{1,4})?$/.test(o.total) ? Math.round(+o.total * 100) : 0;
+      var at = Date.parse(typeof o.date_created_gmt === "string" ? o.date_created_gmt + "Z" : "");
+      if (!isFinite(at)) at = 0;
+      var k = emailKey(email), r = out[k] || (out[k] = { n: 0, s: 0, f: 0, l: 0 });
+      r.n++;
+      r.s += Math.max(0, tot);
+      if (at && (!r.f || at < r.f)) r.f = at;
+      if (at > r.l) r.l = at;
+    });
+    return out;
+  }
+  // Put purchases on a list's subscribers (changes d) → how many changed.
+  // A subscriber with none any more loses theirs.
+  function applyPurchases(d, listId, buys, meta, now) {
+    var n = 0;
+    subsOf(d, listId).forEach(function (s) {
+      var r = buys[emailKey(s.email)];
+      var want = r && r.n ? { bn: Math.min(r.n, 1e6), bs: r.s, bf: r.f, bl: r.l } : null;
+      var same = want ? s.bn === want.bn && s.bs === want.bs && s.bf === want.bf && s.bl === want.bl : !s.bn;
+      if (same) return;
+      var y = JSON.parse(JSON.stringify(s));
+      delete y.bn; delete y.bs; delete y.bf; delete y.bl;
+      if (want) { y.bn = want.bn; y.bs = want.bs; y.bf = want.bf; y.bl = want.bl; }
+      y.m = Math.max(now, (y.m || 0) + 1);
+      var i = d.subs.indexOf(s);
+      d.subs[i] = normSub(y);
+      n++;
+    });
+    var l = list(d, listId);
+    if (l && meta) {
+      var z = JSON.parse(JSON.stringify(l));
+      z.buyAt = now; z.buyAcct = meta.acct; z.buyCur = meta.cur || "EUR";
+      z.m = Math.max(now, (z.m || 0) + 1);
+      d.lists[d.lists.indexOf(l)] = normList(z);
+    }
+    return n;
   }
   function normTpl(x) {
-    var c = normContent(x);
-    return { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
-             blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
+    var c = withHtml(normContent(x), x);
+    var o = { id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name), subj: c.subj, pre: c.pre, fmt: c.fmt,
+              blocks: c.blocks, md: c.md, l2: normL2(x.l2) };
+    if (c.fmt === "html") { o.html = c.html; o.txt = c.txt; if (c.cpn) o.cpn = c.cpn; }
+    return o;
   }
   // A feed that becomes issues (RSS to e-mail), run by the device that
   // set it up (dev), on its schedule; `last` is the date of the newest
@@ -670,6 +899,159 @@
     } catch (e) { return null; }
   }
 
+  // ---------- HTML issues (W2 2026-11): the user's own e-mail HTML ----------
+  // sanitizeHtml: an allowlist, never a DOM (it runs in Node too).
+  // Kept: layout and text tags, inline styles without url()/expression,
+  // links http(s)/mailto/#, pictures https only (no 1×1 tracking
+  // pixels). Dropped with their content: script, style, head, title,
+  // iframe, object, embed, svg, math, template, noscript, form parts.
+  // Other tags (html, body, unknown) are dropped, their text kept.
+  // The unsubscribe placeholders {$unsubscribe}, {{UNSUBSCRIBE}},
+  // [unsubscribe] in a link become {{UNSUBSCRIBE}} (render fills it).
+  var H_TAGS = ("table thead tbody tfoot tr td th caption colgroup col div span p br hr a img h1 h2 h3 h4 h5 h6 strong b em i u s " +
+                "small sup sub ul ol li blockquote center font pre code").split(" ");
+  var H_VOID = { br: 1, hr: 1, img: 1, col: 1 };
+  var H_DROP = ("script style head title iframe frame frameset object embed applet svg math template noscript form input " +
+                "textarea select option button xml base link meta audio video canvas noembed").split(" ");
+  var H_ATTRS = ("style align valign width height bgcolor border cellpadding cellspacing role colspan rowspan alt title " +
+                 "lang dir color face size").split(" ");
+  var UNSUB = "{{UNSUBSCRIBE}}";
+  var SLOT_RE = /^\{\{\s*[A-Za-z0-9_]{1,40}\s*\}\}$/;
+  var UNSUB_RE = /^(\{\$unsubscribe\}|\{\{\s*unsubscribe\s*\}\}|\[unsubscribe\]|\{unsubscribe\})$/i;
+  function hDecode(s) {
+    return String(s).replace(/&(#x[0-9a-f]{1,6}|#[0-9]{1,7}|amp|lt|gt|quot|apos|nbsp);?/gi, function (m, e) {
+      var k = e.toLowerCase();
+      if (k.charAt(0) === "#") {
+        var n = k.charAt(1) === "x" ? parseInt(k.slice(2), 16) : parseInt(k.slice(1), 10);
+        return n > 0 && n < 0x110000 && !(n >= 0xd800 && n <= 0xdfff) ? String.fromCodePoint(n) : "";
+      }
+      return { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " " }[k];
+    });
+  }
+  function hEsc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  // text between tags: keep valid entities, escape the rest
+  function hText(s) {
+    return String(s).replace(/&(?!(#x[0-9a-f]{1,6}|#[0-9]{1,7}|[a-z][a-z0-9]{1,31});)/gi, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function hStyle(v) {
+    var out = [];
+    String(v).split(";").forEach(function (d) {
+      var i = d.indexOf(":");
+      if (i < 0) return;
+      var p = d.slice(0, i).trim().toLowerCase(), val = d.slice(i + 1).trim();
+      if (!/^-?[a-z][a-z-]{0,40}$/.test(p) || !val || val.length > 300) return;
+      if (/url\s*\(|expression|javascript:|vbscript:|@import|behavior|binding|[<>\\{}]|\/\*/i.test(val)) return;
+      if (/^(position|behavior|-moz-binding)$/.test(p)) return;
+      out.push(p + ":" + val);
+    });
+    return out.join(";");
+  }
+  function hUrl(v, img) {
+    var u = hDecode(v).trim();
+    if (!img && UNSUB_RE.test(u)) return UNSUB;
+    if (SLOT_RE.test(u)) return u;                // a slot still to fill: Check stops the send
+    if (!img && u === "#") return "#";
+    if (/[\x00-\x1f"'<>\\`]/.test(u) || u.length > 2000) return "";
+    if (img) return /^https:\/\/[^\/\s]+/i.test(u) ? u : "";
+    return safeUrl(u);
+  }
+  // one tag's attributes (the text after the name) → [[name, value]]
+  function hAttrs(s) {
+    var out = [], re = /([^\s"'>\/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g, m;
+    while ((m = re.exec(s)) && out.length < 40) {
+      out.push([m[1].toLowerCase(), m[2] !== undefined ? m[2] : m[3] !== undefined ? m[3] : m[4] !== undefined ? m[4] : ""]);
+    }
+    return out;
+  }
+  function sanitizeHtml(src) {
+    src = String(src || "").slice(0, LIM.html * 2).replace(/\r\n?/g, "\n").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, "");
+    var out = "", i = 0, n = src.length, skip = null, open = [];
+    while (i < n) {
+      var lt = src.indexOf("<", i);
+      if (lt < 0) { if (!skip) out += hText(src.slice(i)); break; }
+      if (!skip) out += hText(src.slice(i, lt));
+      // comments, doctype, CDATA, processing instructions
+      if (src.substr(lt, 4) === "<!--") { var ce = src.indexOf("-->", lt + 4); i = ce < 0 ? n : ce + 3; continue; }
+      if (src.charAt(lt + 1) === "!" || src.charAt(lt + 1) === "?") { var de = src.indexOf(">", lt); i = de < 0 ? n : de + 1; continue; }
+      var m = /^<(\/?)([a-zA-Z][a-zA-Z0-9-]*)/.exec(src.slice(lt, lt + 64));
+      if (!m) { if (!skip) out += "&lt;"; i = lt + 1; continue; }
+      // the end of the tag, outside quotes
+      var j = lt + m[0].length, q = "";
+      while (j < n) {
+        var ch = src.charAt(j);
+        if (q) { if (ch === q) q = ""; } else if (ch === "\"" || ch === "'") q = ch; else if (ch === ">") break;
+        j++;
+      }
+      var close = m[1] === "/", name = m[2].toLowerCase(), rest = src.slice(lt + m[0].length, j);
+      i = j + 1;
+      if (skip) { if (close && name === skip) skip = null; continue; }
+      if (H_DROP.indexOf(name) >= 0) {
+        if (!close && !H_VOID[name] && !/\/\s*$/.test(rest) && name !== "input" && name !== "meta" && name !== "link" && name !== "base") skip = name;
+        continue;
+      }
+      if (H_TAGS.indexOf(name) < 0) continue;
+      if (close) {
+        if (H_VOID[name]) continue;
+        var k = open.lastIndexOf(name);
+        if (k < 0) continue;
+        while (open.length > k) out += "</" + open.pop() + ">";
+        continue;
+      }
+      var attrs = hAttrs(rest), keep = [], w = 0, h = 0, ok = true;
+      attrs.forEach(function (a) {
+        var an = a[0], av = a[1];
+        if (/^on/.test(an)) return;
+        if (an === "href" && name === "a") { var u = hUrl(av, false); if (u) keep.push(["href", u]); return; }
+        if (an === "src" && name === "img") { var s = hUrl(av, true); if (s) keep.push(["src", s]); else ok = false; return; }
+        if (H_ATTRS.indexOf(an) < 0) return;
+        if (an === "style") { var st = hStyle(hDecode(av)); if (st) keep.push(["style", st]); return; }
+        var v = hDecode(av).replace(/[\x00-\x1f]/g, "").slice(0, 300);
+        if (an === "width") w = parseInt(v, 10) || 0;
+        if (an === "height") h = parseInt(v, 10) || 0;
+        if ((an === "bgcolor" || an === "color") && !/^#?[0-9a-z]{1,20}$/i.test(v)) return;
+        keep.push([an, v]);
+      });
+      if (name === "img") {
+        if (!ok || !keep.some(function (a) { return a[0] === "src"; })) continue;
+        if ((w > 0 && w <= 2) || (h > 0 && h <= 2)) continue;        // a tracking pixel
+      }
+      out += "<" + name + keep.map(function (a) { return " " + a[0] + "=\"" + hEsc(a[1]) + "\""; }).join("") + ">";
+      if (!H_VOID[name]) { open.push(name); if (open.length > 200) return ""; }
+      if (out.length > LIM.html) break;
+    }
+    while (open.length) out += "</" + open.pop() + ">";
+    return out.length > LIM.html ? "" : out.trim();
+  }
+  // HTML (already safe) → plain text: block tags become line breaks,
+  // links "text (address)", pictures their alt text.
+  function htmlToText(html) {
+    var s = String(html || "")
+      .replace(/<a\s[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, function (m, u, t) {
+        var txt = t.replace(/<[^>]*>/g, "").trim(), url = hDecode(u);
+        if (url === UNSUB || url === "#" || !txt) return t;
+        return t + " (" + url.replace(/^mailto:/i, "") + ")";
+      })
+      .replace(/<img\s[^>]*alt="([^"]*)"[^>]*>/gi, " $1 ")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "\n- ")
+      .replace(/<\/(p|div|h[1-6]|tr|table|blockquote|ul|ol|pre|center)>/gi, "\n\n")
+      .replace(/<\/t[dh]>/gi, " ")
+      .replace(/<[^>]*>/g, "");
+    return hDecode(s).replace(/[ \t ]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  // {{SLOT}} placeholders still in an HTML issue (not the unsubscribe one)
+  // (and not {{COUPON}} when the issue has a coupon: cpn)
+  function htmlSlots(html, cpn) {
+    var out = [], m, re = /\{\{\s*([A-Za-z0-9_]{1,40})\s*\}\}/g;
+    while ((m = re.exec(String(html || "")))) {
+      var up = m[1].toUpperCase();
+      if (up !== "UNSUBSCRIBE" && !(cpn && up === "COUPON") && out.indexOf(m[1]) < 0) out.push(m[1]);
+    }
+    return out;
+  }
+
   // ---------- subscriber status ----------
   // Three event times decide: the latest of "subscribed" (at),
   // "confirmed" (conf) and "left" (off).
@@ -697,6 +1079,8 @@
     o.bnc = Math.max(a.bnc, b.bnc);
     var ask = Math.max(a.ask || 0, b.ask || 0);
     if (ask) o.ask = ask; else delete o.ask;
+    var wel = Math.max(a.wel || 0, b.wel || 0);
+    if (wel) o.wel = wel; else delete o.wel;
     var src = a.off !== b.off ? (a.off > b.off ? a : b) : ((OFF_RANK[a.offSt] || 0) >= (OFF_RANK[b.offSt] || 0) ? a : b);
     o.off = src.off;
     o.offSt = src.off ? src.offSt : "";
@@ -766,8 +1150,9 @@
   // ---------- audience + sending progress ----------
   // Does a subscriber fit a segment? tags: any or all of them (none:
   // everyone); lang: the subscriber's language (or the list's).
-  function segMatch(seg, s, list) {
+  function segMatch(seg, s, list, now) {
     if (seg.lang && (s.lang || (list && list.lang) || "en") !== seg.lang) return false;
+    if (segBuys(seg) && !buyMatch(seg, s, now)) return false;
     if (!seg.tags.length) return true;
     var have = {};
     s.tags.forEach(function (t) { have[fold(t)] = 1; });
@@ -798,7 +1183,9 @@
   // second-language version when it is that language, else the main.
   function contentFor(x, lang) {
     var v = x.l2 && x.l2.lang === lang ? x.l2 : x;
-    return { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
+    var o = { id: x.id, list: x.list, subj: v.subj, pre: v.pre, fmt: v.fmt, blocks: v.blocks, md: v.md };
+    if (v.fmt === "html") { o.html = v.html || ""; o.txt = v.txt || ""; if (v.cpn) o.cpn = v.cpn; }
+    return o;
   }
   // A scheduled issue whose time has come, on the device that
   // scheduled it (lock.dev: the sending passwords live there).
@@ -920,6 +1307,45 @@
       .sort(function (a, b) { return lastSeen(a) - lastSeen(b) || (a.id < b.id ? -1 : 1); })
       .slice(0, room);
   }
+  // Welcome mails due on a list (W3): people who signed up themselves
+  // (web form or e-mail), became active after the welcome mail was
+  // turned on, within WEL_DAYS, and were not welcomed yet. Oldest first.
+  var WEL_DAYS = 30;
+  function welcomeTpl(d, l) {
+    var tp = l && l.welTpl ? find(d.tpls, l.welTpl) : null;
+    return tp && !tp.del ? tp : null;
+  }
+  function welcomesDue(d, listId, now) {
+    var l = list(d, listId);
+    if (!welcomeTpl(d, l)) return [];
+    return subsOf(d, listId).filter(function (s) {
+      return status(s) === "on" && (s.src === "form" || s.src === "mail" || s.src === "chk") && !s.wel &&
+             s.conf >= (l.welAt || 0) && now - s.conf <= WEL_DAYS * DAY;
+    }).sort(function (a, b) { return a.conf - b.conf || (a.id < b.id ? -1 : 1); });
+  }
+  // The welcome template as an issue of the list (never stored).
+  function welcomeIssue(d, l) {
+    var tp = welcomeTpl(d, l);
+    if (!tp) return null;
+    return normIssue({ id: tp.id, m: tp.m, list: l.id, subj: tp.subj, pre: tp.pre, fmt: tp.fmt, blocks: tp.blocks, md: tp.md,
+                       html: tp.html, txt: tp.txt, cpn: tp.cpn, l2: tp.l2, st: "draft" });
+  }
+  // What happened after an issue (W3 report): people of its list who
+  // left from its start until REPORT_DAYS after it was done (or now),
+  // by kind. Counts only.
+  var REPORT_DAYS = 14;
+  function issueReport(d, x, now) {
+    var from = x.start || x.done || 0, to = (x.done || now || Date.now()) + REPORT_DAYS * DAY;
+    var out = { unsub: 0, bounce: 0, spam: 0, days: REPORT_DAYS };
+    if (!from) return out;
+    subsOf(d, x.list).forEach(function (s) {
+      if (!s.off || s.off < from || s.off > to || status(s) === "on" || status(s) === "pend") return;
+      if (s.offSt === "bounce") out.bounce++;
+      else if (s.offSt === "spam") out.spam++;
+      else out.unsub++;
+    });
+    return out;
+  }
   // Asked more than ASK_WAIT days ago and no answer (no reconfirmation
   // since): unsubscribed (reversible; the clean-up deletes them later
   // like anyone who left). Changes d in place. → count
@@ -981,24 +1407,63 @@
     if (row.some(function (c) { return c.trim(); })) rows.push(row);
     return rows;
   }
-  // CSV rows → [{ email, name, tags[], lang }] + how many rows had no address.
-  function peopleFromRows(rows) {
-    if (!rows.length) return { people: [], bad: 0 };
+  // A date from an export: ISO "2024-03-02", "2024-03-02 10:11(:12)"
+  // or "2024-03-02T10:11:12Z", read as UTC. Before 2000 or in the
+  // future (more than a day) → 0.
+  function exportDate(v, now) {
+    var m = /^\s*(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(v || ""));
+    if (!m) return 0;
+    var t = Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+    if (!isFinite(t) || +m[1] < 2000 || +m[2] < 1 || +m[2] > 12 || +m[3] < 1 || +m[3] > 31) return 0;
+    return t > (now || Date.now()) + DAY ? 0 : t;
+  }
+  // A status word from an export → "on" | "pend" | "off" | "bounce" | "spam" | "".
+  function exportStatus(v) {
+    var w = fold(String(v || "").trim()).replace(/[\s_-]+/g, "");
+    if (/^(active|subscribed|confirmed|ενεργ|εγγεγραμμεν)/.test(w)) return "on";
+    if (/^(unconfirmed|pending|waiting|σεαναμονη|ανεπιβεβαιωτ)/.test(w)) return "pend";
+    if (/^(unsubscribed|unsub|optedout|cleaned|αποεγγραφ|διαγραφ)/.test(w)) return "off";
+    if (/^(bounced|bounce|hardbounce|invalid)/.test(w)) return "bounce";
+    if (/^(junk|spam|complain|abuse)/.test(w)) return "spam";
+    return "";
+  }
+  // Columns that mean "has bought": their tag is suggested (W1).
+  var BUY_COL = /(ordercount|orderscount|numorders|orders|totalspent|totalspend|spent|παραγγελιες)$/;
+  // CSV rows → { people: [{ email, name, tags[], lang, st, at0, cn, x[] }],
+  //              bad (rows without an address),
+  //              hasSt (a status column was found),
+  //              cols: [{ i, name, buy }] (the other columns, for the
+  //              mapping step; x[i] of each person is that column's cell) }
+  function peopleFromRows(rows, now) {
+    if (!rows.length) return { people: [], bad: 0, hasSt: false, cols: [] };
+    var raw = rows[0].map(function (h) { return oneLine(String(h), 60); });
     var head = rows[0].map(function (h) { return fold(String(h).trim()).replace(/[\s_-]+/g, ""); });
-    var col = function (re) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) return i; return -1; };
-    var ie = col(/^(e?mail|emailaddress|email1|ηλεκτρονικοταχυδρομειο|διευθυνσηemail)$/);
+    var used = {};
+    var col = function (re) { for (var i = 0; i < head.length; i++) if (re.test(head[i])) { used[i] = 1; return i; } return -1; };
+    var ie = col(/^(e?mail|emailaddress|email1|subscriber|ηλεκτρονικοταχυδρομειο|διευθυνσηemail)$/);
     var hasHead = ie >= 0;
     var iname = col(/^(name|fullname|ονομα|ονοματεπωνυμο|displayname)$/);
     var ifirst = col(/^(firstname|first|givenname|μικροονομα)$/);
     var ilast = col(/^(lastname|last|surname|familyname|επωνυμο)$/);
     var itags = col(/^(tags?|groups?|labels?|ετικετεσ|ομαδεσ)$/);
     var ilang = col(/^(lang|language|γλωσσα)$/);
+    var ist = col(/^(status|subscriberstatus|state|κατασταση)$/);
+    var idate = col(/^(subscribed|subscribedat|datesubscribed|subscriptiondate|signupdate|signedupat|optintime|optinat|dateadded|createdat|created|ημερομηνιαεγγραφησ)$/);
+    var isrc = col(/^(source|signupsource|form|signupform|πηγη)$/);
     var body = rows;
-    if (hasHead) body = rows.slice(1);
-    else {
+    var cols = [];
+    if (hasHead) {
+      body = rows.slice(1);
+      for (var c = 0; c < head.length && cols.length < LIM.cols; c++) {
+        if (used[c] || !head[c]) continue;
+        // a column with no value in any row is left out of the mapping
+        if (!body.some(function (r) { return colValue(r[c]); })) continue;
+        cols.push({ i: c, name: raw[c] || String(c + 1), buy: BUY_COL.test(head[c]) });
+      }
+    } else {
       // no header: the first column holding an address in the first row
       ie = rows[0].findIndex(function (c) { return validEmail(String(c).trim()); });
-      if (ie < 0) return { people: [], bad: rows.length };
+      if (ie < 0) return { people: [], bad: rows.length, hasSt: false, cols: [] };
     }
     var people = [], bad = 0;
     body.forEach(function (r) {
@@ -1006,12 +1471,43 @@
       if (!email) { bad++; return; }
       var name = iname >= 0 ? String(r[iname] || "") : "";
       if (!name && (ifirst >= 0 || ilast >= 0)) name = [ifirst >= 0 ? r[ifirst] : "", ilast >= 0 ? r[ilast] : ""].join(" ");
+      // "Name" + "Last name" (MailerLite): the name column is the first name
+      else if (name && ifirst < 0 && ilast >= 0) {
+        var ln = String(r[ilast] || "").trim();
+        if (ln && name.indexOf(ln) < 0) name = name.trim() + " " + ln;
+      }
       var tags = itags >= 0 ? String(r[itags] || "").split(/[,;|]/) : [];
       var lang = ilang >= 0 ? fold(String(r[ilang] || "")).trim() : "";
-      people.push({ email: email, name: oneLine(name, LIM.name), tags: normTags(tags),
-                    lang: /^(el|gr|ελληνικα|greek)/.test(lang) ? "el" : (/^(en|english|αγγλικα)/.test(lang) ? "en" : "") });
+      var p = { email: email, name: oneLine(name, LIM.name), tags: normTags(tags),
+                lang: /^(el|gr|ελληνικα|greek)/.test(lang) ? "el" : (/^(en|english|αγγλικα)/.test(lang) ? "en" : "") };
+      if (ist >= 0) p.st = exportStatus(r[ist]);
+      if (idate >= 0) p.at0 = exportDate(r[idate], now);
+      if (isrc >= 0) p.cn = oneLine(r[isrc], LIM.cn);
+      if (cols.length) p.x = cols.map(function (k) { return String(r[k.i] === undefined ? "" : r[k.i]); });
+      people.push(p);
     });
-    return { people: people, bad: bad };
+    return { people: people, bad: bad, hasSt: ist >= 0, cols: cols };
+  }
+  // Is a cell "set"? Empty, 0, 0.00, false, no, όχι are not.
+  function colValue(v) {
+    var w = fold(String(v === undefined || v === null ? "" : v).trim());
+    return !!w && !/^(0+([.,]0+)?|false|no|n|οχι|-)$/.test(w);
+  }
+  // The mapping step: tags[k] is the tag for column k of cols (empty:
+  // the column is left out). Each person gets the tag when the cell is
+  // set; several columns may give the same tag. Returns new people.
+  function applyColumnTags(people, tags) {
+    tags = (tags || []).map(function (tg) { return normTags([tg])[0] || ""; });
+    if (!tags.some(Boolean)) return people;
+    return people.map(function (p) {
+      var add = [];
+      (p.x || []).forEach(function (v, k) { if (tags[k] && colValue(v)) add.push(tags[k]); });
+      if (!add.length) return p;
+      var q = {};
+      Object.keys(p).forEach(function (k) { q[k] = p[k]; });
+      q.tags = normTags((p.tags || []).concat(add));
+      return q;
+    });
   }
   // Pasted text: "Name <a@b>, c@d" or one per line.
   function peopleFromText(text) {
@@ -1028,27 +1524,51 @@
     return { people: people, bad: bad };
   }
   // What adding `people` to a list would do. Nothing is changed.
-  //   → { add: [subscriber], dup, supp, left, over, bad }
+  //   → { add: [subscriber], leave: [subscriber], suppAdd: [hash],
+  //       dup, supp, left, over, bad }
   // dup: already on the list (kept as they are); supp: deleted for good
   // earlier; left: unsubscribed or bounced earlier (an import never
   // brings them back); over: past the subscriber limit.
+  // A person whose status (their own st, or opts.st for the whole file)
+  // is off / bounce / spam is never added: someone on the list now is
+  // marked as left (leave), anyone else goes on the suppression list as
+  // a fingerprint only (suppAdd), so no later import can add them.
+  // opts.rowSt: read each person's own st (CSV with a status column);
+  // opts.cn: the consent note for people whose row has none.
   function planImport(d, listId, people, opts) {
     opts = opts || {};
     var now = opts.now || Date.now();
     var basis = BASES.indexOf(opts.basis) >= 0 ? opts.basis : "optin";
     var src = SRCS.indexOf(opts.src) >= 0 ? opts.src : "csv";
+    var fileSt = ["on", "off", "bounce", "spam"].indexOf(opts.st) >= 0 ? opts.st : "";
+    var note = oneLine(opts.cn, LIM.cn);
     var supp = {};
     d.supp.forEach(function (h) { supp[h] = 1; });
     var existing = {};
     d.subs.forEach(function (s) { existing[s.id] = s; });
     var room = LIM.subs - live(d.subs).length;
-    var out = { add: [], dup: 0, supp: 0, left: 0, over: 0, bad: opts.bad || 0 };
+    var out = { add: [], leave: [], suppAdd: [], dup: 0, supp: 0, left: 0, over: 0, bad: opts.bad || 0 };
     var seen = {};
     people.forEach(function (p) {
       var id = subId(listId, p.email);
       if (seen[id]) { out.dup++; return; }
       seen[id] = 1;
       var cur = existing[id];
+      var st = fileSt || (opts.rowSt && p.st) || "on";
+      if (OFF_STS.indexOf(st) >= 0) {
+        if (cur && !cur.del && OFF_STS.indexOf(status(cur)) < 0) {
+          var x = JSON.parse(JSON.stringify(cur));
+          x.m = Math.max(now, cur.m + 1); x.off = Math.max(now, x.at + 1, x.conf + 1); x.offSt = st;
+          out.leave.push(normSub(x));
+          return;
+        }
+        if (cur && !cur.del) { out.left++; return; }
+        var h = suppHash(p.email);
+        if (supp[h]) { out.supp++; return; }
+        supp[h] = 1;
+        out.suppAdd.push(h);
+        return;
+      }
       if (cur && !cur.del) {
         if (OFF_STS.indexOf(status(cur)) >= 0) out.left++;
         else out.dup++;
@@ -1056,10 +1576,12 @@
       }
       if (supp[suppHash(p.email)]) { out.supp++; return; }
       if (out.add.length >= room) { out.over++; return; }
+      var b = st === "pend" ? "optin" : basis;
+      var at = p.at0 > 0 && p.at0 <= now ? p.at0 : now;
       out.add.push(normSub({
         id: id, m: Math.max(now, cur ? cur.m + 1 : 0), list: listId, email: p.email, name: p.name,
-        lang: p.lang, tags: (p.tags || []).concat(opts.tags || []), src: src, basis: basis,
-        at: now, conf: basis === "optin" ? 0 : now, c: p.c || ""
+        lang: p.lang, tags: (p.tags || []).concat(opts.tags || []), src: src, basis: b,
+        at: at, conf: b === "optin" ? 0 : at, c: p.c || "", cn: p.cn || note
       }));
     });
     return out;
@@ -1091,7 +1613,7 @@
       subscriptions: live(d.subs).filter(function (s) { return emailKey(s.email) === k; }).map(function (s) {
         var l = list(d, s.list) || {};
         return { list: l.name || "", name: s.name, language: s.lang, tags: s.tags, status: status(s),
-                 source: s.src, basis: s.basis, consentText: l.why || "",
+                 source: s.src, basis: s.basis, consentNote: s.cn || "", consentText: l.why || "",
                  subscribed: s.at ? new Date(s.at).toISOString() : "",
                  confirmed: s.conf ? new Date(s.conf).toISOString() : "",
                  left: s.off ? new Date(s.off).toISOString() : "",
@@ -1120,6 +1642,7 @@
       case "video": return !b.url;
       case "event": return !b.t || !b.d || (!!b.bt !== !!b.bh);
       case "prod": return !b.items.length || b.items.some(function (p) { return !p.name || !p.href; });
+      case "cpn": return !b.code;           // the rest: badCoupon
     }
     return false;
   }
@@ -1184,12 +1707,20 @@
         if (letters.length >= 8 && letters === letters.toUpperCase()) add("warn", "shouty");
         if (/!!|\$\$\$|€€€/.test(v.subj)) add("warn", "shouty");
       }
+      if (v.fmt === "html") {
+        if (!htmlToText(v.html).replace(/\{\{\s*UNSUBSCRIBE\s*\}\}/gi, "").trim() && !/<img\s/i.test(v.html || "")) add("err", "noBody");
+        if (htmlSlots(v.html, v.cpn).length || htmlSlots(v.txt, v.cpn).length) add("err", "slots");
+        if (/<img\s[^>]*src="https:/i.test(v.html || "")) add("warn", "webImgs");
+        if (badPlaceholders((htmlToText(v.html) + " " + v.txt).replace(/\{\{[^{}]*\}\}/g, "") + " " + v.subj)) add("warn", "placeholder");
+        return;
+      }
       var hasBody = v.fmt === "md" ? !!v.md.trim() : v.blocks.some(function (b) {
         if (!known(b)) return false;
         if (b.k === "img" || b.k === "video") return !!(b.f || (b.k === "video" && b.url));
         if (b.k === "head" || b.k === "foot" || b.k === "social") return false;    // a frame, not the content
         if (b.k === "gallery") return b.items.some(function (g) { return !!g.f; });
         if (b.k === "prod") return b.items.length > 0;
+        if (b.k === "cpn") return !!b.code;
         if (b.k === "table") return b.rows.some(function (r) { return r.some(Boolean); });
         return b.k !== "hr" && b.k !== "sp" && !!(b.t || b.a || b.hd || b.f || ((b.k === "cols" || b.k === "cols3") && (b.b || b.c)));
       });
@@ -1212,7 +1743,19 @@
       }).join(" ");
       if (badPlaceholders(text + " " + v.subj)) add("warn", "placeholder");
     });
+    // N1: coupons (blocks and the HTML one)
+    var today = new Date(info.now || Date.now()).toISOString().slice(0, 10);
+    couponsOf(x).forEach(function (b) {
+      var bad = badCoupon(b, today);
+      if (bad) add("err", bad);
+      else if (b.sh && !b.per && !b.made) add("warn", "cpnNotMade");
+    });
+    [x].concat(x.l2 ? [x.l2] : []).forEach(function (v) {
+      if (v.fmt === "html" && v.cpn && !/\{\{\s*COUPON\s*\}\}/i.test((v.html || "") + " " + (v.txt || ""))) add("warn", "cpnUnused");
+    });
     if (!l || !l.addr) add("err", "noAddr");
+    // info.relay: the app can turn on one-click unsubscribe (the relay's /nl)
+    if (info.relay && l && !l.form) add("warn", "noOneClick");
     if (!l || !l.from) add("err", "noFrom");
     if (!info.chan) add("err", "noChan");
     // Brevo's API can't carry pictures inside a message (no Content-ID)
@@ -1502,8 +2045,13 @@
     BLOCK_KINDS: BLOCK_KINDS, knownBlock: known, alignOf: alignOf, picsOf: picsOf, picRefs: picRefs, normBlk: normBlk, icsOf: icsOf, SHOP_PS: SHOP_PS, normProd: normProd, oldPrices: oldPrices, PRICE_AGE: PRICE_AGE, validDay: validDay, validTime: validTime, normHf: normHf, socialItems: socialItems, buttonsOf: buttonsOf, normSty: normSty,
     BASES: BASES, OFF_STS: OFF_STS, LOCK_STALE: LOCK_STALE, SOFT_LIMIT: SOFT_LIMIT,
     CLEAN_PEND: CLEAN_PEND, CLEAN_GONE: CLEAN_GONE, CLEAN_DFLT: CLEAN_DFLT, CLEAN_MAX: CLEAN_MAX, cleanOf: cleanOf, cleanPlan: cleanPlan, cleanApply: cleanApply,
-    CLEAN_IDLE: CLEAN_IDLE, ASK_WAIT: ASK_WAIT, lastSeen: lastSeen, asksDue: asksDue, askTimeouts: askTimeouts, idleCount: idleCount,
+    CLEAN_IDLE: CLEAN_IDLE, ASK_WAIT: ASK_WAIT, lastSeen: lastSeen, asksDue: asksDue,
+    welcomesDue: welcomesDue, welcomeTpl: welcomeTpl, welcomeIssue: welcomeIssue, issueReport: issueReport, WEL_DAYS: WEL_DAYS, askTimeouts: askTimeouts, idleCount: idleCount,
     validEmail: validEmail, normEmail: normEmail, emailKey: emailKey, validHost: validHost, validColor: validColor,
+    normCoupon: normCoupon, couponCode: couponCode, couponsOf: couponsOf, couponValue: couponValue, couponReq: couponReq,
+    couponResult: couponResult, badCoupon: badCoupon,
+    shopSigned: shopSigned, shopSigText: shopSigText, hookBody: hookBody, SHOP_SKEW: SHOP_SKEW, SHOP_KEY: SHOP_KEY,
+    purchasesOf: purchasesOf, applyPurchases: applyPurchases, buyMatch: buyMatch, segBuys: segBuys, SEG_BUY: SEG_BUY,
     safeUrl: safeUrl, fold: fold, hash53: hash53, subId: subId, suppHash: suppHash, token: token, listCode: listCode,
     randomId: randomId, oneLine: oneLine, multi: multi,
     empty: empty, normalize: normalize, parse: parse, normBlock: normBlock, AS_KINDS: AS_KINDS, AS_MAX: AS_MAX, asAdd: asAdd, insertAt: insertAt, SECTIONS: SECTIONS, normSub: normSub,
@@ -1513,7 +2061,9 @@
     live: live, list: list, chan: chan, issue: issue, sub: sub, subsOf: subsOf, counts: counts, allTags: allTags,
     byToken: byToken, byCode: byCode,
     audience: audience, sentSet: sentSet, progress: progress, canSend: canSend, invitesDue: invitesDue, usedToday: usedToday,
-    parseCsv: parseCsv, peopleFromRows: peopleFromRows, peopleFromText: peopleFromText, planImport: planImport,
+    parseCsv: parseCsv, peopleFromRows: peopleFromRows, exportDate: exportDate, exportStatus: exportStatus,
+    colValue: colValue, applyColumnTags: applyColumnTags,
+    sanitizeHtml: sanitizeHtml, htmlToText: htmlToText, htmlSlots: htmlSlots, UNSUB: UNSUB, peopleFromText: peopleFromText, planImport: planImport,
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,

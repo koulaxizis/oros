@@ -24,11 +24,11 @@
 // ============================================================
 
 import { withSession, ImapError } from "./imap.js";
-import { validWeb, runWeb } from "./web.js";
+import { validWeb, runWeb, checkUrl } from "./web.js";
 import { validCanva, runCanva, canvaFile, CanvaError } from "./canva.js";
 import { withSmtp, validAddr, SMTP_LIMITS } from "./smtp.js";
 import { runSieve, SIEVE_LIMITS } from "./sieve.js";
-import { validNl, runNl, handleNl, page as nlPage, NlError } from "./newsletter.js";
+import { validNl, runNl, handleNl, page as nlPage, NlError, validHook, runHook } from "./newsletter.js";
 import { validCrmf, runCrmf, handleCrmForm, crmPage, CrmfError } from "./crmform.js";
 import { validPapi, runPapi, PAPI_LIMITS } from "./papi.js";
 import { validExt, runExt, EXT_LIMITS } from "./ext.js";
@@ -49,7 +49,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, papi: 1, ext: 1, crmf: 1, shr: 1, push: 1, oasa: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, push: 1, oasa: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -97,6 +97,7 @@ export function validRequest(b, env, now) {
   if (b.op === "web") return validWeb(b);   // Reader: public pages, no account
   if (b.op === "canva") return validCanva(b, allowedOrigins(env));   // Atelier: Canva Connect
   if (b.op === "nl") return validNl(b);   // Newsletter: sign-ups and unsubscribes waiting in D1
+  if (b.op === "nlhook") return validHook(b, checkUrl);   // Newsletter: signed "issue sent" notice (N3)
   if (b.op === "crmf") return validCrmf(b);   // CRM: web form messages waiting in D1
   if (b.op === "shr") return validShr(b, now);   // Send to someone: encrypted items with an expiry
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
@@ -315,6 +316,11 @@ export async function handle(request, env, connectFn, now, fetchFn) {
       const code = e instanceof OasaError ? e.code : "upstream";
       return fail(200, code, code, okOrigin);                        // fixed codes only, never upstream text
     }
+  }
+
+  if (b.op === "nlhook") {
+    const data = await runHook(b, fetchFn || ((u, o) => fetch(u, o)));
+    return json(200, { ok: true, data }, okOrigin);
   }
 
   if (b.op === "nl") {
