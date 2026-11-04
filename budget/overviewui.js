@@ -36,6 +36,8 @@
       "ov.same": "The same as last month by this day", "ov.paceNone": "No expenses yet in this month or the one before.",
       "ov.dayTip": "Day {d}: {a}", "ov.dayTipPrev": "last month {a}", "ov.dayTipAvg": "average {a}",
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
+      "ov.bkBal": "Bank {a} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      "ov.bkMatched": "Starting balance changed by {a}", "ov.bkUnmapped": "Your banks' balances show here once each bank fills a Budget account (Banks › Fills).", "ov.bkBanks": "Banks",
       "ov.acc": "Accounts", "ov.nw": "Net worth", "ov.accNone": "Add your cash, cards and bank accounts to see their balances here.",
       "ov.accAdd": "Accounts", "ov.accTip": "Show the entries of {a}",
       "ov.flowAll": "All accounts, {m}", "ov.flowAria": "in {i}, out {o}, difference {d}", "ov.noAcc": "Without an account",
@@ -67,6 +69,8 @@
       "ov.same": "Όσα και τον προηγούμενο μήνα ως σήμερα", "ov.paceNone": "Κανένα έξοδο ακόμη σε αυτόν ή στον προηγούμενο μήνα.",
       "ov.dayTip": "{d} του μήνα: {a}", "ov.dayTipPrev": "προηγούμενος {a}", "ov.dayTipAvg": "μέσος όρος {a}",
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
+      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}", "ov.bkUnmapped": "Τα υπόλοιπα των τραπεζών σου φαίνονται εδώ μόλις κάθε τράπεζα γεμίζει έναν λογαριασμό της εφαρμογής (Τράπεζες › Γεμίζει).", "ov.bkBanks": "Τράπεζες",
       "ov.acc": "Λογαριασμοί", "ov.nw": "Καθαρή θέση", "ov.accNone": "Πρόσθεσε μετρητά, κάρτες και τραπεζικούς λογαριασμούς για να βλέπεις εδώ τα υπόλοιπά τους.",
       "ov.accAdd": "Λογαριασμοί", "ov.accTip": "Οι κινήσεις του {a}",
       "ov.flowAll": "Όλοι οι λογαριασμοί, {m}", "ov.flowAria": "έσοδα {i}, έξοδα {o}, διαφορά {d}", "ov.noAcc": "Χωρίς λογαριασμό",
@@ -266,6 +270,29 @@
   function flowAria(f) {
     return t("ov.flowAria", { i: A.money(f.inc), o: A.money(f.out), d: A.money(f.inc - f.out) });
   }
+  // BK-7: under an account, the balance of each bank that fills it (as
+  // read on the last update, BK-5) and Match when Budget differs on that
+  // day; nothing changes without the button (Undo).
+  function bankLines(li, a, bnk) {
+    if (!li || !A.accBalAt) return;
+    bnk.forEach(function (r) {
+      if (r.ac !== a.id || typeof r.bb !== "number" || !r.bc || r.bc !== (a.cur || A.cur())) return;
+      var line = el("div", "ov-bkline");
+      line.appendChild(el("span", "", t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) })));
+      var mine = A.accBalAt(a.id, r.bd);
+      if (mine === r.bb) line.appendChild(el("span", "ov-bk-ok", " · " + t("ov.bkSame")));
+      else if (mine !== null && A.shiftStart) {
+        var diff = r.bb - mine;
+        var b = el("button", "mini", t("ov.bkMatch"));
+        b.type = "button";
+        b.title = t("ov.bkMatchHint");
+        b.setAttribute("aria-label", t("ov.bkMatch") + ": " + a.n + ", " + t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }));
+        b.addEventListener("click", function () { A.shiftStart(a.id, diff, t("ov.bkMatched", { a: A.money(diff, r.bc) })); });
+        line.appendChild(b);
+      }
+      li.appendChild(line);
+    });
+  }
   function cardAcc(card) {
     var list = A.accs();
     head(card, "acc", t("ov.acc"), list.length ? t("ov.open") : null, A.accountsDialog);
@@ -308,12 +335,23 @@
       }
       ul.appendChild(li);
     }
+    var bnk = (D().bnk || []).filter(function (r) { return r && r.src !== "pp"; });
     list.forEach(function (a) {
       row(a.n, a.col, A.money(bal[a.id], a.cur), bal[a.id] < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); },
           A.accDialog ? function () { A.accDialog(a.id); } : null);
+      bankLines(ul.lastChild, a, bnk);
     });
     if (flows.none.inc || flows.none.out) row(t("ov.noAcc"), 8, "", false, flows.none, null);
     card.appendChild(ul);
+    // banks linked, none filling an account: say where that is set
+    if (bnk.length && !bnk.some(function (r) { return r.ac; }) && A.banksOpen) {
+      var um = el("p", "hint ov-bk-um", t("ov.bkUnmapped") + " ");
+      var go = el("button", "link-btn", t("ov.bkBanks"));
+      go.type = "button";
+      go.addEventListener("click", A.banksOpen);
+      um.appendChild(go);
+      card.appendChild(um);
+    }
     card.appendChild(el("p", "hint ov-foot", t("ov.flowHint")));
     // New account (a wallet, cash) and, with banks linked, an update now.
     var acts = el("div", "ov-acts");
