@@ -155,6 +155,19 @@
       "br.previewNote": "You are trying this podcast. Subscribe to keep your place and get new episodes.",
       "br.needApple": "Browsing by genre and country uses the Apple Podcasts catalog (Settings › Catalog search).",
       "br.back": "Back to browsing",
+      "br.tags": "Tags", "tags.src": "Tags from gpodder.net. Results also come from Apple Podcasts keywords.",
+      "tags.failed": "The tags could not be loaded right now.",
+      "in.all": "Everything", "in.title": "Title", "in.author": "Hosts & publishers", "in.topic": "Topics", "in.tag": "Tags",
+      "in.ph.title": "Search podcast titles", "in.ph.author": "Search hosts, authors, networks", "in.ph.topic": "Search topics and keywords",
+      "in.ph.tag": "Search a tag (e.g. history)",
+      "fd.btn": "Filters", "fd.in": "Search in", "fd.genre": "Genre", "fd.country": "Country (Apple Podcasts store)",
+      "fd.countryAuto": "Automatic ({c})", "fd.sort": "Sort", "fs.rel": "Best match", "fs.new": "Newest episode",
+      "fs.eps": "Most episodes", "fs.az": "A–Z", "fd.ex": "Hide explicit podcasts", "fd.mine": "Hide podcasts I follow",
+      "fd.note": "Genre and country use the Apple Podcasts catalog; fyyd and gpodder.net rows are checked here.",
+      "fd.clear": "Clear filters", "fd.explicit": "Explicit",
+      "fc.src": "Catalog", "fc.genre": "Genre", "fc.by": "Host / publisher",
+      "find.count": "{n} podcasts", "find.recent": "Recent", "find.recentClear": "Clear", "find.subs": "{n} subscribers",
+      "pv.moreBy": "More from {by}",
       "sh.show": "Shuffle", "sh.all": "Shuffle all", "sh.none": "No unplayed episodes to shuffle.",
       "sh.done": "Playing in random order: {n} more in Up next.", "sh.one": "Playing a random episode.", "idx.label": "Jump to a letter",
       "set.notify": "Tell me about new episodes", "toast.ntfOn": "You will get a notice when a new episode comes out.",
@@ -258,6 +271,19 @@
       "br.previewNote": "Δοκιμάζεις αυτό το podcast. Κάνε εγγραφή για να κρατιέται η θέση σου και να έρχονται τα νέα επεισόδια.",
       "br.needApple": "Η περιήγηση ανά είδος και χώρα χρησιμοποιεί τον κατάλογο του Apple Podcasts (Ρυθμίσεις › Αναζήτηση καταλόγου).",
       "br.back": "Πίσω στην περιήγηση",
+      "br.tags": "Ετικέτες", "tags.src": "Ετικέτες από το gpodder.net. Αποτελέσματα φέρνουν και οι λέξεις-κλειδιά του Apple Podcasts.",
+      "tags.failed": "Οι ετικέτες δεν φορτώθηκαν αυτή τη στιγμή.",
+      "in.all": "Παντού", "in.title": "Τίτλος", "in.author": "Εκφωνητές & παραγωγοί", "in.topic": "Θέματα", "in.tag": "Ετικέτες",
+      "in.ph.title": "Αναζήτηση σε τίτλους podcasts", "in.ph.author": "Αναζήτηση εκφωνητών, δημιουργών, δικτύων", "in.ph.topic": "Αναζήτηση θεμάτων και λέξεων-κλειδιών",
+      "in.ph.tag": "Αναζήτηση ετικέτας (π.χ. history)",
+      "fd.btn": "Φίλτρα", "fd.in": "Αναζήτηση σε", "fd.genre": "Είδος", "fd.country": "Χώρα (κατάστημα Apple Podcasts)",
+      "fd.countryAuto": "Αυτόματα ({c})", "fd.sort": "Ταξινόμηση", "fs.rel": "Καλύτερη αντιστοιχία", "fs.new": "Νεότερο επεισόδιο",
+      "fs.eps": "Περισσότερα επεισόδια", "fs.az": "Α–Ω", "fd.ex": "Απόκρυψη podcasts για ενήλικες", "fd.mine": "Απόκρυψη όσων ακολουθώ",
+      "fd.note": "Το είδος και η χώρα χρησιμοποιούν τον κατάλογο του Apple Podcasts· τα αποτελέσματα του fyyd και του gpodder.net ελέγχονται εδώ.",
+      "fd.clear": "Καθαρισμός φίλτρων", "fd.explicit": "Για ενήλικες",
+      "fc.src": "Κατάλογος", "fc.genre": "Είδος", "fc.by": "Εκφωνητής / παραγωγός",
+      "find.count": "{n} podcasts", "find.recent": "Πρόσφατα", "find.recentClear": "Καθαρισμός", "find.subs": "{n} συνδρομητές",
+      "pv.moreBy": "Περισσότερα από {by}",
       "sh.show": "Τυχαία σειρά", "sh.all": "Τυχαία από όλα", "sh.none": "Δεν υπάρχουν μη ακουσμένα επεισόδια για τυχαία σειρά.",
       "sh.done": "Παίζει σε τυχαία σειρά: άλλα {n} στο «Επόμενα».", "sh.one": "Παίζει ένα τυχαίο επεισόδιο.", "idx.label": "Μετάβαση σε γράμμα",
       "set.notify": "Ειδοποίηση για νέα επεισόδια", "toast.ntfOn": "Θα ειδοποιείσαι όταν βγαίνει νέο επεισόδιο.",
@@ -367,6 +393,7 @@
     dn:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>',
     gear:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+    filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
     search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
     moon:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     chapters: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
@@ -382,7 +409,7 @@
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "now", filter: "all", sortOld: {}, br: { m: "top", cc: "", g: "", chip: "" } };
+    var p = { tab: "now", filter: "all", sortOld: {}, br: { m: "top", cc: "", g: "", chip: "" }, fd: C.normFind(null), rs: [] };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -391,10 +418,13 @@
         if (o.sortOld && typeof o.sortOld === "object") p.sortOld = o.sortOld;
         // Browse (2026-10-16): view, country, genre, sub-genre chip.
         var b = o.br && typeof o.br === "object" ? o.br : {};
-        if (["top", "genres", "countries"].indexOf(b.m) >= 0) p.br.m = b.m;
+        if (["top", "genres", "countries", "tags"].indexOf(b.m) >= 0) p.br.m = b.m;
         if (C.isCountry(b.cc)) p.br.cc = b.cc;
         if (C.genreOf(b.g)) p.br.g = String(b.g);
         if (typeof b.chip === "string" && b.chip.length <= 60) p.br.chip = b.chip;
+        // Find shows (2026-11-04): search filters + recent searches.
+        p.fd = C.normFind(o.fd);
+        p.rs = C.addRecent(o.rs, "", "all");
       }
     } catch (e) {}
     return p;
@@ -1812,7 +1842,7 @@
   function renderBrowse(main) {
     var br = prefs.br, cc = browseCc();
     var seg = el("div", "chips browse-seg");
-    [["top", t("br.top")], ["genres", t("br.genres")], ["countries", t("br.countries")]].forEach(function (x) {
+    [["top", t("br.top")], ["genres", t("br.genres")], ["countries", t("br.countries")], ["tags", t("br.tags")]].forEach(function (x) {
       var on = br.m === x[0];
       var c = button(x[1], "chip" + (on ? " on" : ""), function () { br.m = x[0]; savePrefs(); renderAll(); });
       c.setAttribute("aria-pressed", on ? "true" : "false");
@@ -1824,6 +1854,7 @@
     main.appendChild(seg);
     if (br.m === "genres") return renderGenres(main);
     if (br.m === "countries") return renderCountries(main);
+    if (br.m === "tags") return renderTags(main);
     // Its own box: the list arriving never redraws the search field
     // (a half-typed search stays as it is).
     var box = el("div", "top-box");
@@ -2015,6 +2046,13 @@
     if (rec) btns.appendChild(button(t("br.playNewest"), "txt-btn", function () { playNewest(h.id); }));
     if (rec && rec.show.link) btns.appendChild(button(t("show.site"), "txt-btn", function () { openLink(rec.show.link); }));
     info.appendChild(btns);
+    // Find more like it: the same host/publisher, the same genre.
+    var who = h.by || sh.by;
+    if (who && C.prefOf(D(), "search") !== "none") {
+      var more = el("div", "row-btns");
+      more.appendChild(button(t("pv.moreBy", { by: who }), "txt-btn", function () { search(who, "author"); }));
+      info.appendChild(more);
+    }
     head.appendChild(info);
     main.appendChild(head);
     if (p.busy) { main.appendChild(el("p", "dim", t("find.searching"))); return; }
@@ -2037,18 +2075,31 @@
   }
 
   // ---------- 11. Discover: search, add by address, OPML ----------
-  var found = { q: "", list: [], busy: false, src: "" };
+  // found: the last search. in = the field it searched, fc = the facet
+  // chip on ({ k, v } or null). Filters live in prefs.fd (device-local).
+  var found = { q: "", in: "all", list: [], busy: false, src: "", fc: null };
+  var findOpen = false;
+  function clearFound() { found = { q: "", in: "all", list: [], busy: false, src: "", fc: null }; }
   function renderFind(main) {
     var mode = C.prefOf(D(), "search");
+    var fd = prefs.fd;
     var form = el("form", "find");
     var lab = el("label", "q-wrap");
     var ic = el("span", "q-ic"); ic.innerHTML = UI.search; lab.appendChild(ic);
     var q = el("input"); q.id = "q"; q.type = "search"; q.maxLength = 100; q.autocomplete = "off";
-    q.placeholder = mode === "none" ? t("find.add") : t("find.ph") + " / " + t("find.add");
+    q.placeholder = mode === "none" ? t("find.add") : (fd.in === "all" ? t("find.ph") + " / " + t("find.add") : t("in.ph." + fd.in));
     q.setAttribute("aria-label", q.placeholder);
     q.value = found.q;
     lab.appendChild(q);
     form.appendChild(lab);
+    if (mode !== "none") {
+      var n = C.findCount(fd);
+      var fb = button(t("fd.btn"), "icon-btn fd-btn" + (findOpen ? " on" : ""), function () { findOpen = !findOpen; renderAll(); }, UI.filter);
+      fb.setAttribute("aria-expanded", findOpen ? "true" : "false");
+      fb.setAttribute("aria-controls", "fd-panel");
+      if (n) { fb.appendChild(el("span", "fd-n", String(n))); fb.setAttribute("aria-label", t("fd.btn") + " (" + n + ")"); }
+      form.appendChild(fb);
+    }
     var go = button(t("find.go"), "txt-btn primary");
     go.type = "submit";
     form.appendChild(go);
@@ -2060,21 +2111,130 @@
       else search(v);
     });
     main.appendChild(form);
-    var row = el("div", "row-btns");
-    row.appendChild(button(t("find.opmlIn"), "txt-btn", importOpml));
-    row.appendChild(button(t("find.opmlOut"), "txt-btn", exportOpml));
-    main.appendChild(row);
+    if (mode !== "none") {
+      // "Search in" is always in view: it is the filter people change most.
+      var seg = el("div", "chips in-seg");
+      seg.setAttribute("role", "group");
+      seg.setAttribute("aria-label", t("fd.in"));
+      C.FIND_IN.forEach(function (k) {
+        var on = fd.in === k;
+        var c = button(t("in." + k), "chip" + (on ? " on" : ""), function () { setFind({ in: k }); });
+        c.setAttribute("aria-pressed", on ? "true" : "false");
+        seg.appendChild(c);
+      });
+      main.appendChild(seg);
+      if (findOpen) main.appendChild(findPanel());
+    }
+    // OPML stays with browsing; results come straight under the search.
+    if (!found.q || mode === "none") {
+      var row = el("div", "row-btns");
+      row.appendChild(button(t("find.opmlIn"), "txt-btn", importOpml));
+      row.appendChild(button(t("find.opmlOut"), "txt-btn", exportOpml));
+      main.appendChild(row);
+    }
     if (mode === "none") main.appendChild(el("p", "dim small", t("find.off")));
     if (!NET.relayAvailable()) main.appendChild(el("p", "dim small", t("s.noRelay")));
     if (found.busy) { main.appendChild(el("p", "dim", t("find.searching"))); return; }
-    if (!found.q && (mode === "both" || mode === "apple")) { renderBrowse(main); return; }
-    if (!found.q) { main.appendChild(el("p", "dim small", t("br.needApple"))); return; }
-    main.appendChild(button(t("br.back"), "txt-btn", function () { found = { q: "", list: [], busy: false, src: "" }; renderAll(); }));
-    if (found.q && !found.list.length) { main.appendChild(el("p", "dim", t("find.none"))); return; }
-    if (found.src) main.appendChild(el("p", "dim small", t("find.src", { s: found.src })));
+    if (!found.q) {
+      if (mode !== "none" && prefs.rs.length) renderRecent(main);
+      if (mode === "both" || mode === "apple") { renderBrowse(main); return; }
+      main.appendChild(el("p", "dim small", t("br.needApple")));
+      return;
+    }
+    main.appendChild(button(t("br.back"), "txt-btn", function () { clearFound(); renderAll(); }));
+    var isSub = function (id) { return !!C.findShow(D(), id); };
+    var list = C.refineHits(found.list, fd, { term: found.q, isSub: isSub });
+    if (!list.length) {
+      main.appendChild(el("p", "dim", t("find.none")));
+      if (C.findCount(fd)) main.appendChild(button(t("fd.clear"), "txt-btn", function () { prefs.fd = C.normFind(null); savePrefs(); search(found.q); }));
+      return;
+    }
+    renderFacets(main, list);
+    var shown = C.withFacet(list, found.fc);
+    main.appendChild(el("p", "dim small", t("find.count", { n: shown.length }) + (found.src ? " · " + t("find.src", { s: found.src }) : "")));
     var ul = el("ul", "hits");
-    found.list.forEach(function (h) { ul.appendChild(hitRow(h)); });
+    shown.forEach(function (h) { ul.appendChild(hitRow(h)); });
     main.appendChild(ul);
+  }
+  // A filter changed: fields the catalogs search on run the search
+  // again; sort and "hide followed" only repaint.
+  function setFind(ch) {
+    var before = prefs.fd;
+    prefs.fd = C.normFind(Object.assign({}, before, ch));
+    savePrefs();
+    var again = found.q && !found.busy && (prefs.fd.in !== before.in || prefs.fd.g !== before.g || prefs.fd.cc !== before.cc || prefs.fd.ex !== before.ex);
+    if (again) search(found.q);
+    else renderAll();
+  }
+  function findPanel() {
+    var fd = prefs.fd;
+    var box = el("div", "fd-panel");
+    box.id = "fd-panel";
+    var g = select(t("fd.genre"), [["", t("br.allGenres")]].concat(C.GENRES.map(function (x) { return [x.id, x.ic + " " + C.genreName(x.id, LANG)]; })), fd.g);
+    g.sel.addEventListener("change", function () { setFind({ g: g.sel.value }); });
+    box.appendChild(g.wrap);
+    var auto = C.topCountry(LANG, navigator.language);
+    var cs = select(t("fd.country"), [["", t("fd.countryAuto", { c: countryName(auto) })]].concat(C.sortCountries(countryName).map(function (cc) {
+      return [cc, C.flag(cc) + " " + countryName(cc)];
+    })), fd.cc);
+    cs.sel.addEventListener("change", function () { setFind({ cc: cs.sel.value }); });
+    box.appendChild(cs.wrap);
+    var so = select(t("fd.sort"), C.FIND_SORT.map(function (k) { return [k, t("fs." + k)]; }), fd.sort);
+    so.sel.addEventListener("change", function () { setFind({ sort: so.sel.value }); });
+    box.appendChild(so.wrap);
+    var checks = el("div", "fd-checks");
+    [["ex", t("fd.ex")], ["mine", t("fd.mine")]].forEach(function (x) {
+      var lab = el("label", "check");
+      var cb = el("input"); cb.type = "checkbox"; cb.checked = fd[x[0]] === 1;
+      cb.addEventListener("change", function () { var ch = {}; ch[x[0]] = cb.checked ? 1 : 0; setFind(ch); });
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", x[1]));
+      checks.appendChild(lab);
+    });
+    box.appendChild(checks);
+    var foot = el("div", "fd-foot");
+    foot.appendChild(el("p", "dim small", t("fd.note")));
+    if (C.findCount(fd)) foot.appendChild(button(t("fd.clear"), "txt-btn", function () {
+      var had = found.q;
+      prefs.fd = C.normFind(null); savePrefs();
+      if (had) search(had); else renderAll();
+    }));
+    box.appendChild(foot);
+    return box;
+  }
+  // Chips that narrow the rows on screen: catalog, genre, host/publisher.
+  function renderFacets(main, list) {
+    var fx = C.findFacets(list, 8);
+    if (found.fc && (fx[found.fc.k] || []).indexOf(found.fc.v) < 0) found.fc = null;
+    var groups = [["src", fx.src], ["genre", fx.genre], ["by", fx.by]].filter(function (x) { return x[1].length; });
+    if (!groups.length) return;
+    var wrap = el("div", "facets");
+    groups.forEach(function (gr) {
+      var bar = el("div", "chips facet");
+      bar.setAttribute("role", "group");
+      bar.setAttribute("aria-label", t("fc." + gr[0]));
+      bar.appendChild(el("span", "facet-l", t("fc." + gr[0])));
+      gr[1].forEach(function (v) {
+        var on = !!(found.fc && found.fc.k === gr[0] && found.fc.v === v);
+        var label = gr[0] === "src" ? srcName(v) : v;
+        var b = button(label, "chip" + (on ? " on" : ""), function () { found.fc = on ? null : { k: gr[0], v: v }; renderAll(); });
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+        bar.appendChild(b);
+      });
+      wrap.appendChild(bar);
+    });
+    main.appendChild(wrap);
+  }
+  function srcName(k) { return k === "apple" ? "Apple Podcasts" : k === "fyyd" ? "fyyd" : k === "gpodder" ? "gpodder.net" : k; }
+  function renderRecent(main) {
+    var bar = el("div", "chips recent");
+    bar.appendChild(el("span", "facet-l", t("find.recent")));
+    prefs.rs.forEach(function (r) {
+      var b = button(r.in === "all" ? r.q : t("in." + r.in) + ": " + r.q, "chip", function () { prefs.fd.in = r.in; savePrefs(); search(r.q); });
+      bar.appendChild(b);
+    });
+    bar.appendChild(button(t("find.recentClear"), "txt-btn sm-txt", function () { prefs.rs = []; savePrefs(); renderAll(); }));
+    main.appendChild(bar);
   }
   function hitRow(h) {
     var li = el("li", "hit");
@@ -2083,8 +2243,11 @@
     var b = el("button", "ep-body hit-open");
     b.type = "button";
     b.addEventListener("click", function () { openPreview(h, false); });
-    b.appendChild(el("div", "ep-title plain", h.title));
-    var by = [h.by, h.genre, h.count ? t("show.n", { n: h.count }) : ""].filter(Boolean).join(" · ");
+    var tl = el("div", "ep-title plain", h.title);
+    if (h.ex) { var e = el("span", "ex-badge", "E"); e.title = t("fd.explicit"); e.setAttribute("aria-label", t("fd.explicit")); tl.appendChild(e); }
+    b.appendChild(tl);
+    var by = [h.by, h.genre, h.count ? t("show.n", { n: h.count }) : "", h.subs ? t("find.subs", { n: h.subs }) : "",
+      h.upd ? t("show.updated", { d: fmtDate(h.upd) }) : ""].filter(Boolean).join(" · ");
     if (by) b.appendChild(el("div", "ep-meta", by));
     li.appendChild(b);
     var subd = !!C.findShow(D(), h.id);
@@ -2095,20 +2258,62 @@
     li.appendChild(sb);
     return li;
   }
-  function search(term) {
+  // inField: search in that field this time (a recent search, a tag, a
+  // publisher from a preview); else the "Search in" filter.
+  function search(term, inField) {
     var mode = C.prefOf(D(), "search");
-    found = { q: term, list: [], busy: true, src: "" };
+    if (inField && C.FIND_IN.indexOf(inField) >= 0 && inField !== prefs.fd.in) prefs.fd = C.normFind(Object.assign({}, prefs.fd, { in: inField }));
+    var fd = prefs.fd;
+    found = { q: term, in: fd.in, list: [], busy: true, src: "", fc: null };
     if (mode === "none") { addByAddress(term); return; }
+    prefs.rs = C.addRecent(prefs.rs, term, fd.in);
+    savePrefs();
+    view.pv = null;
+    prefs.tab = "find";
     renderAll();
     var cc = LANG === "el" ? "gr" : "";
     var jobs = [], names = [];
-    if (mode === "both" || mode === "apple") { names.push("Apple Podcasts"); jobs.push(NET.fetchOne(C.appleSearchUrl(term, cc)).then(function (r) { return C.parseAppleResults(JSON.parse(r.text)); }).catch(function () { return []; })); }
-    if (mode === "both" || mode === "fyyd") { names.push("fyyd"); jobs.push(NET.fetchOne(C.fyydSearchUrl(term)).then(function (r) { return C.parseFyydResults(JSON.parse(r.text)); }).catch(function () { return []; })); }
+    var json = function (u, parse) { return NET.fetchOne(u).then(function (r) { return parse(JSON.parse(r.text)); }).catch(function () { return []; }); };
+    // Tags: gpodder.net's tag lists first, then Apple's keywords.
+    if (fd.in === "tag") { names.push("gpodder.net"); jobs.push(json(C.gpodderTagUrl(term, 60), C.parseGpodderResults)); }
+    if (mode === "both" || mode === "apple") { names.push("Apple Podcasts"); jobs.push(json(C.appleFindUrl(term, fd.in === "tag" ? Object.assign({}, fd, { in: "topic" }) : fd, cc), C.parseAppleResults)); }
+    if ((mode === "both" || mode === "fyyd") && fd.in !== "tag") { names.push("fyyd"); jobs.push(json(C.fyydFindUrl(term, fd), C.parseFyydResults)); }
     Promise.all(jobs).then(function (lists) {
-      if (found.q !== term) return;
-      found = { q: term, list: C.mergeResults(lists).slice(0, 50), busy: false, src: names.join(", ") };
+      if (found.q !== term || found.in !== fd.in) return;
+      found = { q: term, in: fd.in, list: C.mergeResults(lists).slice(0, 120), busy: false, src: names.join(", "), fc: null };
       if (prefs.tab === "find") renderAll();
     });
+  }
+  // Tags from gpodder.net (most used first), loaded once per window.
+  var tagsCache = { list: [], busy: false, failed: false };
+  function renderTags(main) {
+    var box = el("div", "tag-box");
+    main.appendChild(box);
+    var paint = function () {
+      if (!box.isConnected) return;
+      box.textContent = "";
+      if (tagsCache.busy) { box.appendChild(el("p", "dim", t("find.searching"))); return; }
+      if (!tagsCache.list.length) {
+        box.appendChild(el("p", "dim", tagsCache.failed ? t("tags.failed") : t("br.empty")));
+        box.appendChild(button(t("btn.retry"), "txt-btn", load));
+        return;
+      }
+      var bar = el("div", "chips tags");
+      tagsCache.list.forEach(function (x) {
+        bar.appendChild(button("#" + x.title, "chip", function () { search(x.tag, "tag"); $("main").scrollTop = 0; }));
+      });
+      box.appendChild(bar);
+      box.appendChild(el("p", "dim small", t("tags.src")));
+    };
+    var load = function () {
+      tagsCache = { list: [], busy: true, failed: false };
+      paint();
+      NET.fetchOne(C.gpodderTopTagsUrl(60)).then(function (r) {
+        var list = C.parseGpodderTags(JSON.parse(r.text));
+        tagsCache = { list: list, busy: false, failed: !list.length };
+      }).catch(function () { tagsCache = { list: [], busy: false, failed: true }; }).then(paint);
+    };
+    if (!tagsCache.list.length && !tagsCache.busy) load(); else paint();
   }
   // A feed, a web page (discovery) or an Apple Podcasts link.
   function addByAddress(v) {

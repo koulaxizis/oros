@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — core.js (pure logic, v1.2.0)
+// orOS Podcasts — core.js (pure logic, v1.3.0)
 // Everything that is not the screen, the audio element or the
 // network: ids, the podcast parts of a feed (itunes: / podcast:
 // tags) read from a small element tree, durations, chapters,
@@ -32,6 +32,7 @@
 //  14. Skip silence + voice boost
 //  15. Browse like Radio (genres, countries, surprise)
 //  16. Shuffle + A–Z / Α–Ω index
+//  17. Find shows: search in, filters, sort, facets, tags (2026-11-04)
 // ============================================================
 (function (root) {
   "use strict";
@@ -460,7 +461,10 @@
       if (!r || typeof r !== "object") return;
       var h = hit(r.feedUrl, r.collectionName || r.trackName, r.artistName, r.artworkUrl600 || r.artworkUrl100,
         r.primaryGenreName, r.trackCount, "apple", r.genres, r.genreIds);
-      if (h) out.push(h);
+      if (!h) return;
+      h.upd = stampOf(r.releaseDate);
+      if (r.collectionExplicitness === "explicit" || r.contentAdvisoryRating === "Explicit") h.ex = 1;
+      out.push(h);
     });
     return out;
   }
@@ -470,9 +474,18 @@
       if (!r || typeof r !== "object") return;
       var h = hit(r.xmlURL, r.title, r.author, r.imgURL || r.layoutImageURL, (r.categories && r.categories[0] && r.categories[0].name) || "",
         r.episode_count, "fyyd");
-      if (h) out.push(h);
+      if (!h) return;
+      h.upd = stampOf(r.lastpub);
+      if (typeof r.language === "string" && /^[a-z]{2}\b/i.test(r.language)) h.lang = r.language.slice(0, 2).toLowerCase();
+      if (r.explicit === true || r.explicit === 1) h.ex = 1;
+      out.push(h);
     });
     return out;
+  }
+  // A date from a catalog (ISO text or seconds) → ms, 0 when unknown.
+  function stampOf(v) {
+    var n = typeof v === "number" ? (v < 1e11 ? v * 1000 : v) : typeof v === "string" && v ? Date.parse(v) : NaN;
+    return isFinite(n) && n > 0 ? Math.round(n) : 0;
   }
   // Apple first, fyyd fills in; one row per feed.
   function mergeResults(lists) {
@@ -1466,6 +1479,169 @@
     return (st || 0) + (+dtMs > 0 ? Math.min(+dtMs, 1000) : 0);
   }
 
+
+  // ---------- 17. Find shows: search in, filters, sort, facets, tags (2026-11-04) ----------
+  // Discover's search with filters. Server side where the catalog can
+  // (Apple: attribute, genreId, country, explicit; fyyd: title or term;
+  // gpodder.net: tags), then the same rules again on every row here so
+  // results from all catalogs follow the filters alike.
+  // f = { in: "all"|"title"|"author"|"topic"|"tag", g: Apple genre id
+  // or "", cc: storefront or "" (auto), ex: 1 = hide explicit,
+  // sort: "rel"|"new"|"eps"|"az", mine: 1 = hide shows I follow }.
+  var FIND_IN = ["all", "title", "author", "topic", "tag"];
+  var FIND_SORT = ["rel", "new", "eps", "az"];
+  var APPLE_ATTR = { title: "titleTerm", author: "authorTerm", topic: "keywordsTerm" };
+  function normFind(o) {
+    o = o && typeof o === "object" ? o : {};
+    return {
+      in: FIND_IN.indexOf(o.in) >= 0 ? o.in : "all",
+      g: genreOf(o.g) ? String(o.g) : "",
+      cc: isCountry(o.cc) ? o.cc : "",
+      ex: o.ex === 1 ? 1 : 0,
+      sort: FIND_SORT.indexOf(o.sort) >= 0 ? o.sort : "rel",
+      mine: o.mine === 1 ? 1 : 0
+    };
+  }
+  // How many filters differ from the defaults (the badge on "Filters").
+  function findCount(f) {
+    f = normFind(f);
+    return (f.in !== "all") + !!f.g + !!f.cc + f.ex + (f.sort !== "rel") + f.mine;
+  }
+  function appleFindUrl(term, f, autoCc) {
+    term = clean(term, 100);
+    f = normFind(f);
+    if (!term) return "";
+    var cc = f.cc || (isCountry(autoCc) ? autoCc : "");
+    var u = "https://itunes.apple.com/search?media=podcast&entity=podcast&limit=50" + (cc ? "&country=" + cc : "");
+    if (APPLE_ATTR[f.in]) u += "&attribute=" + APPLE_ATTR[f.in];
+    if (f.g) u += "&genreId=" + f.g;
+    if (f.ex) u += "&explicit=No";
+    return u + "&term=" + encodeURIComponent(term);
+  }
+  // fyyd searches a title, or title + description ("term"); hosts are
+  // checked here on the rows it returns.
+  function fyydFindUrl(term, f) {
+    term = clean(term, 100);
+    f = normFind(f);
+    if (!term) return "";
+    return "https://api.fyyd.de/0.2/search/podcast?count=30&" + (f.in === "title" ? "title=" : "term=") + encodeURIComponent(term);
+  }
+  // gpodder.net: public search and tags, no account, no key.
+  var GPO = "https://gpodder.net";
+  function tagSlug(s) {
+    return fold(clean(s, 60)).replace(/[^a-z0-9α-ω]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+  }
+  function gpodderSearchUrl(term) {
+    term = clean(term, 100);
+    return term ? GPO + "/search.json?q=" + encodeURIComponent(term) : "";
+  }
+  function gpodderTagUrl(tag, n) {
+    var t = tagSlug(tag);
+    return t ? GPO + "/api/2/tag/" + encodeURIComponent(t) + "/" + Math.max(1, Math.min(100, +n || 50)) + ".json" : "";
+  }
+  function gpodderTopTagsUrl(n) { return GPO + "/api/2/tags/" + Math.max(1, Math.min(100, +n || 40)) + ".json"; }
+  function parseGpodderResults(json) {
+    var out = [];
+    (Array.isArray(json) ? json : []).forEach(function (r) {
+      if (!r || typeof r !== "object") return;
+      var h = hit(r.url, r.title, r.author, r.scaled_logo_url || r.logo_url, "", 0, "gpodder");
+      if (!h) return;
+      if (isInt(r.subscribers) && r.subscribers > 0) h.subs = r.subscribers;
+      out.push(h);
+    });
+    return out;
+  }
+  function parseGpodderTags(json) {
+    var out = [], seen = {};
+    (Array.isArray(json) ? json : []).forEach(function (r) {
+      var tag = r && tagSlug(typeof r.tag === "string" ? r.tag : "");
+      if (!tag || seen[tag]) return;
+      seen[tag] = 1;
+      out.push({ tag: tag, title: clean(typeof r.title === "string" ? r.title : "", 60) || tag, n: isInt(r.usage) && r.usage > 0 ? r.usage : 0 });
+    });
+    return out.slice(0, 100);
+  }
+  // Does a row match the words in its "search in" field? Every word
+  // must be there (accents and case folded). Catalogs that searched the
+  // field themselves (Apple with an attribute) are trusted.
+  function wordsIn(text, term) {
+    var hay = fold(text), words = fold(clean(term, 100)).split(/\s+/).filter(Boolean);
+    return words.every(function (w) { return hay.indexOf(w) >= 0; });
+  }
+  function hitGenres(h) {
+    var gs = (h && h.gs || []).filter(function (g) { return g !== "Podcasts"; });
+    if (h && h.genre && gs.indexOf(h.genre) < 0) gs.unshift(h.genre);
+    return gs;
+  }
+  // The filters and the sort on a merged list. ctx = { term, isSub(id) }.
+  function refineHits(hits, f, ctx) {
+    f = normFind(f);
+    ctx = ctx || {};
+    var g = genreOf(f.g);
+    var list = (hits || []).filter(function (h) {
+      if (!h) return false;
+      if (f.ex && h.ex) return false;
+      if (f.mine && ctx.isSub && ctx.isSub(h.id)) return false;
+      // Genre: rows that name genres must name this one; gpodder rows
+      // name none, so they stay out once a genre is picked.
+      if (g && !((h.gi && h.gi.indexOf(g.id) >= 0) || hitGenres(h).indexOf(g.en) >= 0)) return false;
+      if (ctx.term && h.src !== "apple" && h.src !== "gpodder") {
+        if (f.in === "title" && !wordsIn(h.title, ctx.term)) return false;
+        if (f.in === "author" && !wordsIn(h.by, ctx.term)) return false;
+      }
+      return true;
+    });
+    if (f.sort === "new") list = stableSort(list, function (a, b) { return (b.upd || 0) - (a.upd || 0); });
+    else if (f.sort === "eps") list = stableSort(list, function (a, b) { return (b.count || 0) - (a.count || 0); });
+    else if (f.sort === "az") list = stableSort(list, function (a, b) { return cmpStr(fold(a.title), fold(b.title)); });
+    return list;
+  }
+  function stableSort(list, cmp) {
+    return list.map(function (x, i) { return [x, i]; })
+      .sort(function (a, b) { return cmp(a[0], b[0]) || a[1] - b[1]; }).map(function (x) { return x[0]; });
+  }
+  // Chips to narrow the rows on screen: genres, hosts/publishers and
+  // catalogs (most common first): genres and hosts on two rows or more.
+  function findFacets(hits, max) {
+    var count = function (pick, min) {
+      var n = {};
+      (hits || []).forEach(function (h) {
+        var seen = {};
+        (h ? pick(h) : []).forEach(function (v) { if (v && !seen[v]) { seen[v] = 1; n[v] = (n[v] || 0) + 1; } });
+      });
+      return Object.keys(n).filter(function (k) { return n[k] >= (min || 2); })
+        .sort(function (a, b) { return n[b] - n[a] || cmpStr(a, b); }).slice(0, max || 10);
+    };
+    // Catalogs: every one with rows, once there are two or more.
+    var srcs = count(function (h) { return [h.src]; }, 1);
+    return {
+      genre: count(hitGenres),
+      by: count(function (h) { return [h.by]; }),
+      src: srcs.length > 1 ? srcs : []
+    };
+  }
+  // One facet chip on: { k: "genre"|"by"|"src", v } (or null = all).
+  function withFacet(hits, fc) {
+    if (!fc || !fc.v) return hits || [];
+    return (hits || []).filter(function (h) {
+      if (!h) return false;
+      if (fc.k === "genre") return hitGenres(h).indexOf(fc.v) >= 0;
+      if (fc.k === "by") return h.by === fc.v;
+      if (fc.k === "src") return h.src === fc.v;
+      return true;
+    });
+  }
+  // Recent searches (device-local): newest first, one per term + field.
+  function addRecent(list, term, inField, max) {
+    term = clean(term, 100);
+    var f = FIND_IN.indexOf(inField) >= 0 ? inField : "all";
+    var out = (Array.isArray(list) ? list : []).filter(function (r) {
+      return r && typeof r.q === "string" && r.q && FIND_IN.indexOf(r.in) >= 0 && !(fold(r.q) === fold(term) && r.in === f);
+    });
+    if (term) out.unshift({ q: term, in: f });
+    return out.slice(0, max || 8);
+  }
+
   root.OrosPodcastsCore = {
     DATA_VER: DATA_VER, LIM: LIM, SPEEDS: SPEEDS, PREF_DEF: PREF_DEF, SYNC_EVERY: SYNC_EVERY, SYNC_MIN_MOVE: SYNC_MIN_MOVE,
     clean: clean, fold: fold, plain: plain, decodeEntities: decodeEntities,
@@ -1492,6 +1668,10 @@
     shuffled: shuffled, unplayedOf: unplayedOf, shufflePlan: shufflePlan, queueFront: queueFront, letterOf: letterOf, indexLetters: indexLetters, indexSort: indexSort,
     freshEpisodes: freshEpisodes, parseTarget: parseTarget, todoItem: todoItem, noteAt: noteAt,
     FX: FX, rms: rms, allZero: allZero, silenceStep: silenceStep, silenceRate: silenceRate, silenceSaved: silenceSaved,
-    addSaved: addSaved, mediaOrigin: mediaOrigin, fxRoute: fxRoute, fxRemember: fxRemember, zeroWatch: zeroWatch
+    addSaved: addSaved, mediaOrigin: mediaOrigin, fxRoute: fxRoute, fxRemember: fxRemember, zeroWatch: zeroWatch,
+    FIND_IN: FIND_IN, FIND_SORT: FIND_SORT, normFind: normFind, findCount: findCount, appleFindUrl: appleFindUrl, fyydFindUrl: fyydFindUrl,
+    stampOf: stampOf, tagSlug: tagSlug, gpodderSearchUrl: gpodderSearchUrl, gpodderTagUrl: gpodderTagUrl, gpodderTopTagsUrl: gpodderTopTagsUrl,
+    parseGpodderResults: parseGpodderResults, parseGpodderTags: parseGpodderTags, refineHits: refineHits,
+    findFacets: findFacets, withFacet: withFacet, addRecent: addRecent
   };
 })(typeof window !== "undefined" ? window : this);

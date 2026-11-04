@@ -215,7 +215,7 @@ orosPack("de", "shell", {
  "cr.google-calendar": "Einmalige Importe aus Google (Kalender, Aufgaben, Reader, Medienregal)",
  "cr.google-drive": "Einmalige Importe aus Google Drive und Google Fotos (Dateien, Fotolabor)",
  "cr.google-people": "Einmaliger Kontaktimport (Kontakte › Aus einem Konto)",
- "cr.gpodder-net": "Synchronisierung der Podcast-Abos, optional (Podcasts)",
+ "cr.gpodder-net": "Synchronisierung der Podcast-Abos (optional) und Podcast-Tags (Podcasts)",
  "cr.gravatar": "Öffentliche Profile (Kontakte, CRM und Newsletter › Online aktualisieren)",
  "cr.hash-wasm": "Schutz des Passworttresors (Passwörter)",
  "cr.health-connect": "Nur in der Android-App: Health Connect (Gesundheit, Wasser, Training)",

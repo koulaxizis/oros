@@ -11,6 +11,13 @@ Die Tabs:
 - `Downloads`: Folgen, die auf diesem Gerät gespeichert sind.
 - `Entdecken`: Suche, Hinzufügen per Adresse und OPML, und Stöbern wie im Radio: `Beliebt` (die Top 100 eines Landes, mit Chips für Untergenres), `Genres`, `Länder` und `Überrasch mich` (ein zufälliger beliebter Podcast startet). Tippe auf den Namen eines Podcasts, um ihn vor dem Abonnieren auszuprobieren: Seine Folgen laufen, aber nichts wird gespeichert oder synchronisiert, bis du `Abonnieren` drückst. Die Listen stammen aus den Charts von Apple Podcasts.
 
+## Podcasts finden
+Wähle in `Entdecken` unter dem Feld, wo deine Wörter gesucht werden: `Überall`, `Titel`, `Sprecher & Produzenten` (eine Moderatorin, ein Autor oder ein Netzwerk), `Themen` (Stichwörter) oder `Tags`. Die Schaltfläche `Filter` öffnet `Genre`, `Land (Apple-Podcasts-Store)`, `Sortierung` (`Beste Übereinstimmung`, `Neueste Folge`, `Meiste Folgen`, `A–Z`), `Podcasts mit expliziten Inhalten ausblenden` und `Podcasts ausblenden, denen ich folge`; eine Zahl auf der Schaltfläche zeigt, wie viele aktiv sind, und `Filter zurücksetzen` setzt sie zurück. Die Filter bleiben auf diesem Gerät.
+
+Über den Ergebnissen grenzen Chips die Liste ohne neue Suche ein: `Katalog` (Apple Podcasts, fyyd, gpodder.net), `Genre` und `Sprecher / Produzent`. Wenn du einen Podcast ausprobierst, zeigt `Mehr von …` weitere Sendungen desselben Sprechers oder Produzenten. Deine letzten Suchen stehen unter `Zuletzt`; `Leeren` entfernt sie.
+
+`Tags` neben `Beliebt`, `Genres` und `Länder` zeigt die meistgenutzten Tags von gpodder.net; tippe auf einen, um seine Podcasts zu sehen. Genre und Land kommen aus dem Katalog von Apple Podcasts; mit `Nur fyyd` in den Einstellungen werden sie hier an den Ergebnissen geprüft.
+
 ## Hören
 Drück die Wiedergabetaste bei einer Folge. Die Player-Leiste unten hat Zurückspringen, Wiedergabe/Pause und Vorspringen; tippe dort auf den Namen der Folge, um den großen Player zu öffnen, mit `Wiedergabetempo`, `Schlaftimer`, Kapiteln, `Shownotes`, `Nächste in der Warteschlange` und `Stopp`. Der Schlaftimer stoppt nach 5 bis 60 Minuten oder am `Ende der Folge`.
 

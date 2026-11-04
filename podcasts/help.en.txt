@@ -11,6 +11,13 @@ The tabs:
 - `Downloads`: episodes saved on this device.
 - `Discover`: search, add by address and OPML, and browsing like the Radio: `Popular` (the top 100 of a country, with sub-genre chips), `Genres`, `Countries` and `Surprise me` (a random popular podcast starts playing). Tap a podcast's name to try it before you subscribe: its episodes play, but nothing is saved or synced until you press `Subscribe`. The lists come from the Apple Podcasts charts.
 
+## Find podcasts
+In `Discover`, choose where your words are searched under the field: `Everything`, `Title`, `Hosts & publishers` (a presenter, an author or a network), `Topics` (keywords) or `Tags`. The `Filters` button opens `Genre`, `Country (Apple Podcasts store)`, `Sort` (`Best match`, `Newest episode`, `Most episodes`, `A–Z`), `Hide explicit podcasts` and `Hide podcasts I follow`; a number on the button shows how many are on, and `Clear filters` resets them. Filters are kept on this device.
+
+Above the results, chips narrow the list without a new search: `Catalog` (Apple Podcasts, fyyd, gpodder.net), `Genre` and `Host / publisher`. When you try a podcast, `More from …` lists other shows by the same host or publisher. Your last searches appear under `Recent`; `Clear` removes them.
+
+`Tags` next to `Popular`, `Genres` and `Countries` shows the most used tags from gpodder.net; tap one to see its podcasts. Genre and country come from the Apple Podcasts catalog, so with `fyyd only` in Settings they are checked on the results here instead.
+
 ## Listen
 Press the play button on any episode. The player bar at the bottom has skip back, play/pause and skip forward; tap the episode's name there to open the full player with `Playback speed`, `Sleep timer`, chapters, `Show notes`, `Next in queue` and `Stop`. The sleep timer stops after 5 to 60 minutes or at the `End of episode`.
 

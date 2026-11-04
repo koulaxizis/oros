@@ -13,6 +13,7 @@
      8. Dialogs — centered (R32): menus, forms, notes, full player
      9. Toast
     10. Mobile (from 360px) + reduced motion
+    11. Find shows: search in, filters, facets, tags
    ============================================================ */
 
 /* ---------- 1. Palette fallback + reset ---------- */
@@ -377,3 +378,38 @@ dialog.video-dlg:not([open]) { display: none; }
 .g-status { min-height: 1.4em; margin: 10px 0 0; line-height: 1.45; overflow-wrap: anywhere; }
 .row-btns > [hidden] { display: none; }
 .notes-head.g-head { display: flex; justify-content: space-between; align-items: flex-start; }
+
+/* ---------- 11. Find shows (2026-11-04): search in, filters, facets, tags ---------- */
+.fd-btn { position: relative; flex: 0 0 auto; }
+.fd-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.fd-n {
+  position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  background: var(--accent); color: var(--bg); font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
+}
+.in-seg { margin: 10px 0 4px; }
+.fd-panel {
+  display: grid; grid-template-columns: 1fr; gap: 10px; margin: 8px 0; padding: 12px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg);
+}
+.fd-panel select { width: 100%; min-width: 0; }
+.fd-checks { display: flex; flex-direction: column; gap: 2px; }
+.fd-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fd-foot p { margin: 0; flex: 1 1 200px; }
+.facets { display: flex; flex-direction: column; gap: 0; }
+.chips.facet, .chips.recent { margin: 6px 0 0; }
+.facet-l { font-size: 12px; font-weight: 700; color: var(--text-dim); margin-right: 2px; }
+.chips.facet .chip, .chips.recent .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm-txt { min-height: 32px; font-size: 12px; }
+.ex-badge {
+  display: inline-block; margin-left: 6px; padding: 0 4px; border-radius: 3px; border: 1px solid var(--text-dim);
+  font-size: 10px; font-weight: 800; line-height: 14px; color: var(--text-dim); vertical-align: 2px;
+}
+.chips.tags .chip { min-height: 34px; }
+@media (min-width: 720px) {
+  .fd-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fd-checks, .fd-foot { grid-column: 1 / -1; }
+  .fd-checks { flex-direction: row; flex-wrap: wrap; gap: 4px 20px; }
+}
+@media (max-width: 400px) {
+  .find .txt-btn.primary { padding-left: 10px; padding-right: 10px; }
+}
