@@ -9801,3 +9801,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** `newsletter/*` (core, engine, render, shop, runner, UI, help EN/EL), `i18n/de/newsletter.js`, `i18n/de/help/newsletter.txt`, `links/core.js`, `relay/core.js`, `relay/newsletter.js`, `relay/ext.js`, `relay/README.md`, `.github/qa/budget.json`, tests, What's new EN/EL, `shell.js`, `sw.js`, `manifest.webmanifest`.
 - **After merge:** redeploy the relay (sign-up checkout fields, op `nlhook`); update every device before sending to a purchase segment (an older device reads it as tags only). The noxpress side is orOS Connect 1.3.0 / Broadcast 1.2.0 (noxpress #153).
 - **Tests:** full `node --test tests/*.test.js` green; Playwright at EL 360 and EN 1280 for the coupon block, win-back preset, shop key, list notice fields. Not tested against a real WooCommerce shop or a real Broadcast site.
+
+### 2026-11-04 — 5.22.01 — Check for updates opens System update on orOS USB and Portable (UPD-SYS)
+
+- **What:** Chris (2026-11-03 18:40): on the installed orOS USB, "Check for updates" showed a checking notice and then nothing; the system there updates through System › System update, not the web app's service worker.
+- **Changes:** `shell.js` `scCheckUpdates`: with `data-oros-sys-update` on the root (set by the System extension on orOS USB and an owner's Portable) it dispatches `oros-sys-update` and returns; otherwise, when no new version installs or waits, it says `update.none` ("You have the newest version, {v}"). `update.none` EN/EL in `translations.js`, DE in `i18n/de/shell.js`. Bible UPD-SYS. Pairs with oros-usb #25 (released in Live USB v0.1.0-beta.8, which also fixes System update on encrypted installed disks) and oros-portable #26 (v0.8.0).
+- **Files:** `shell.js`, `translations.js`, `i18n/de/shell.js`, `tests/update-sys.test.js`, What's new EN/EL, `sw.js`, `manifest.webmanifest`.
+- **Tests:** `tests/update-sys.test.js` (3); full `node --test tests/*.test.js`; the System extension side tested in Playwright in oros-usb #25. Not yet tested by Chris on the stick.
