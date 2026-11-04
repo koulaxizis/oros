@@ -174,7 +174,20 @@
       "f.crm": "CRM customer", "f.crmNone": "Not linked", "f.crmAway": "Linked (not on this device)",
       "f.crmHint": "Invoices made here then take the VAT number, address and email from CRM.",
       "cal.h": "From your calendar", "cal.untitled": "(untitled)", "cal.log": "Log",
-      "cal.logA": "Log the time of {t}", "cal.skip": "Not work time: hide {t}"
+      "cal.logA": "Log the time of {t}", "cal.skip": "Not work time: hide {t}",
+      "f.fee": "Fixed fee", "f.feeHint": "For a job at an agreed price: its hours are tracked but not charged by the hour. Empty: charged by the hour.",
+      "fee.add": "Add the fee as an extra charge", "fee.added": "Fee added as an extra charge on {d}", "fee.desc": "Fixed fee: {p}",
+      "proj.fee": "fixed fee {a}", "proj.eff": "{r}/h effective",
+      "pkg.of.w": "This week: {d} of {b} h ({p} %)", "pkg.of.m": "This month: {d} of {b} h ({p} %)", "pkg.over": "{d} over the package", "pkg.near": "The package is almost used",
+      "f.km": "Mileage (distance × rate)", "f.kmDist": "Distance (km)", "f.kmRate": "Rate per km", "ex.km": "{k} km",
+      "toast.badKm": "Enter a distance in km, e.g. 12,5",
+      "bud.send": "Add to Budget", "bud.again": "Send to Budget again", "bud.sent": "Sent to Budget",
+      "toast.budFail": "Budget couldn't take it. Is Budget installed?",
+      "rep.pdf": "Timesheet PDF", "rep.pdfMail": "Email the PDF", "pdf.title": "Timesheet", "pdf.client": "Client",
+      "pdf.period": "Period", "pdf.date": "Date", "pdf.time": "Time", "pdf.hours": "Hours", "pdf.project": "Project",
+      "pdf.desc": "Description", "pdf.amount": "Amount", "pdf.total": "Total", "pdf.made": "Made with orOS Timesheet",
+      "toast.pdfFail": "The PDF couldn't be made (is the app fully loaded?)",
+      "mail.subj": "Timesheet {r}", "mail.body": "Hello,\n\nattached is the timesheet for {r}: {h} hours."
     },
     el: {
       "app": "Ώρες εργασίας", "settings": "Ρυθμίσεις",
@@ -302,7 +315,20 @@
       "f.crm": "Πελάτης στο CRM", "f.crmNone": "Χωρίς σύνδεση", "f.crmAway": "Συνδεδεμένος (όχι σε αυτή τη συσκευή)",
       "f.crmHint": "Τα τιμολόγια που φτιάχνεις από εδώ παίρνουν τότε ΑΦΜ, διεύθυνση και email από το CRM.",
       "cal.h": "Από το ημερολόγιό σου", "cal.untitled": "(χωρίς τίτλο)", "cal.log": "Καταγραφή",
-      "cal.logA": "Καταγραφή του χρόνου του {t}", "cal.skip": "Δεν είναι χρόνος εργασίας: απόκρυψη του {t}"
+      "cal.logA": "Καταγραφή του χρόνου του {t}", "cal.skip": "Δεν είναι χρόνος εργασίας: απόκρυψη του {t}",
+      "f.fee": "Σταθερή αμοιβή", "f.feeHint": "Για δουλειά σε συμφωνημένη τιμή: οι ώρες της μετριούνται αλλά δεν χρεώνονται με την ώρα. Κενό: χρέωση με την ώρα.",
+      "fee.add": "Προσθήκη της αμοιβής ως πρόσθετη χρέωση", "fee.added": "Η αμοιβή μπήκε ως πρόσθετη χρέωση στις {d}", "fee.desc": "Σταθερή αμοιβή: {p}",
+      "proj.fee": "σταθερή αμοιβή {a}", "proj.eff": "πραγματικά {r}/ώρα",
+      "pkg.of.w": "Αυτή την εβδομάδα: {d} από {b} ώρες ({p} %)", "pkg.of.m": "Αυτόν τον μήνα: {d} από {b} ώρες ({p} %)", "pkg.over": "{d} πάνω από το πακέτο", "pkg.near": "Το πακέτο σχεδόν τελείωσε",
+      "f.km": "Χιλιόμετρα (απόσταση × τιμή)", "f.kmDist": "Απόσταση (km)", "f.kmRate": "Τιμή ανά km", "ex.km": "{k} km",
+      "toast.badKm": "Γράψε απόσταση σε km, π.χ. 12,5",
+      "bud.send": "Προσθήκη στα Έσοδα & Έξοδα", "bud.again": "Ξανά στα Έσοδα & Έξοδα", "bud.sent": "Στάλθηκε στα Έσοδα & Έξοδα",
+      "toast.budFail": "Τα Έσοδα & Έξοδα δεν το δέχτηκαν. Είναι εγκατεστημένα;",
+      "rep.pdf": "PDF ωρών", "rep.pdfMail": "Email με το PDF", "pdf.title": "Φύλλο ωρών", "pdf.client": "Πελάτης",
+      "pdf.period": "Περίοδος", "pdf.date": "Ημερομηνία", "pdf.time": "Ώρα", "pdf.hours": "Ώρες", "pdf.project": "Έργο",
+      "pdf.desc": "Περιγραφή", "pdf.amount": "Ποσό", "pdf.total": "Σύνολο", "pdf.made": "Με τις Ώρες εργασίας του orOS",
+      "toast.pdfFail": "Το PDF δεν έγινε (έχει φορτώσει πλήρως η εφαρμογή;)",
+      "mail.subj": "Φύλλο ωρών {r}", "mail.body": "Καλησπέρα,\n\nσας στέλνω συνημμένο το φύλλο ωρών για {r}: {h} ώρες."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "timesheet", LANG);
@@ -397,6 +423,7 @@
     prefs = {
       tab: TABS.indexOf(v.tab) >= 0 ? v.tab : "timer",
       lastP: str(v.lastP),
+      kmr: C.inRange(v.kmr, C.LIM.kmr) ? v.kmr : 0,       // T3: the last rate per km (this device)
       rep: {
         range: RANGES.indexOf(r.range) >= 0 ? r.range : "thisMonth",
         from: C.validDay(r.from) ? r.from : "",
@@ -585,7 +612,7 @@
     var out = {};
     Object.keys(cur).forEach(function (k) { out[k] = cur[k]; });
     Object.keys(rec).forEach(function (k) { out[k] = rec[k]; });
-    if (!out.budget) delete out.budget;
+    ["budget", "fee", "km", "kmr"].forEach(function (k) { if (!out[k]) delete out[k]; });
     return out;
   }
   function sameBilling(a, b) { return JSON.stringify(C.billingPart(a)) === JSON.stringify(C.billingPart(b)); }
@@ -594,7 +621,7 @@
     if (cur && !cur.del) {
       var same = cur.name === rec.name && cur.client === rec.client && cur.color === rec.color &&
                  cur.rate === rec.rate && cur.bill === rec.bill && cur.arch === rec.arch &&
-                 (cur.budget || 0) === (rec.budget || 0) && sameBilling(cur, rec);
+                 (cur.budget || 0) === (rec.budget || 0) && (cur.fee || 0) === (rec.fee || 0) && sameBilling(cur, rec);
       if (same) return cur.id;
       rec = keepExtras(cur, rec);
       rec.id = cur.id;
@@ -668,7 +695,8 @@
     var cur = id ? findExtra(id) : null;
     if (cur) {
       if (cur.d === rec.d && cur.p === rec.p && cur.c === rec.c && cur.desc === rec.desc &&
-          cur.amt === rec.amt && cur.billed === rec.billed) return cur.id;
+          cur.amt === rec.amt && cur.billed === rec.billed && (cur.km || 0) === (rec.km || 0) &&
+          (cur.kmr || 0) === (rec.kmr || 0) && (rec.bud === undefined || (cur.bud || 0) === rec.bud)) return cur.id;
       rec = keepExtras(cur, rec);
       if (!rec.billed) delete rec.iv;        // T1: no longer on that invoice
       rec.id = cur.id;
@@ -1053,7 +1081,7 @@
       b.appendChild(dot);
       var txt = el("span", "ent-txt");
       txt.appendChild(el("span", "ent-p", x.desc || t("dlg.extra")));
-      var who = extraLabel(x);
+      var who = [x.km ? t("ex.km", { k: C.fmtKm(x.km, LANG) }) : "", extraLabel(x)].filter(Boolean).join(" · ");
       if (who) txt.appendChild(el("span", "ent-d", who));
       b.appendChild(txt);
       var meta = el("span", "ent-meta");
@@ -1282,6 +1310,9 @@
     $("rep-empty").hidden = rep.rows.length > 0;
     renderRepSum(rep);
     $("rep-csv").disabled = !rep.rows.length;
+    $("rep-pdf").disabled = !rep.rows.length;
+    $("rep-pdfmail").hidden = !mailShell();
+    $("rep-pdfmail").disabled = !rep.rows.length;
     // Open in Spreadsheet (BR-S1): shown only inside orOS.
     $("rep-sheet").hidden = !invoicesOpener();
     $("rep-sheet").disabled = !rep.rows.length;
@@ -1382,7 +1413,11 @@
     txt.appendChild(el("span", "p-name", p.name));
     var bits = [];
     if (!p.bill) bits.push(t("proj.nobill"));
-    else {
+    else if (p.fee) {                         // T3: fixed fee and the hourly rate it makes
+      bits.push(t("proj.fee", { a: money(p.fee) }));
+      var eff = C.effRate(data, p.id, Date.now());
+      if (eff && eff.rate) bits.push(t("proj.eff", { r: money(eff.rate) }));
+    } else {
       var rate = p.minAmt ? p.rate : C.rateOf(data, p.id);
       if (rate) bits.push(t("proj.rate", { r: money(rate) }));
     }
@@ -1391,21 +1426,34 @@
     if (totals[p.id] && !use) bits.push(t("proj.total", { d: dur(totals[p.id]) }));
     if (bits.length) txt.appendChild(el("span", "p-sub", bits.join(" · ")));
     if (use) {
-      var bw = el("span", "p-budget " + use.state);
-      var bar = el("span", "p-bar");
-      var fill = el("i", "");
-      fill.style.width = Math.min(100, use.pct) + "%";
-      bar.appendChild(fill);
-      bw.appendChild(bar);
       var btxt = t("budget.of", { d: dur(use.ms), b: budgetText(use.budgetMs / 60000), p: use.pct });
       if (use.state === "over") btxt += " · " + t("budget.over", { d: dur(use.ms - use.budgetMs) });
       else if (use.state === "near") btxt += " · " + t("budget.near");
-      bw.appendChild(el("span", "p-btxt", btxt));
-      txt.appendChild(bw);
+      txt.appendChild(useBar(use.state, use.pct, btxt));
     }
+    var pk = p.bill ? C.pkgUse(data, "p", p.id, todayKey(), Date.now()) : null;
+    if (pk) txt.appendChild(useBar(pk.state, pk.pct, pkgText(pk, p)));
     b.appendChild(txt);
     b.addEventListener("click", function () { projectDialog(p.id); });
     return b;
+  }
+  // A bar of hours used (a budget, or a package's period).
+  function useBar(state, pct, text) {
+    var bw = el("span", "p-budget " + state);
+    var bar = el("span", "p-bar");
+    var fill = el("i", "");
+    fill.style.width = Math.min(100, pct) + "%";
+    bar.appendChild(fill);
+    bw.appendChild(bar);
+    bw.appendChild(el("span", "p-btxt", text));
+    return bw;
+  }
+  // T3: "This month: 12:30 of 20 h (63 %) · …" for a retainer.
+  function pkgText(pk, rec) {
+    var s = t("pkg.of." + rec.minPer, { d: dur(pk.ms), b: budgetText(pk.inclMs / 60000), p: pk.pct });
+    if (pk.state === "over") s += " · " + t("pkg.over", { d: dur(pk.ms - pk.inclMs) });
+    else if (pk.state === "near") s += " · " + t("pkg.near");
+    return s;
   }
   function renderProjects() {
     var totals = projTotals(), host = $("plist"), arch = $("parch-list");
@@ -1425,6 +1473,8 @@
         if (C.hasBilling(c)) hb.appendChild(el("small", "", billingText(c)));
         hb.addEventListener("click", function () { clientDialog(c.id); });
         head.appendChild(hb);
+        var cpk = C.pkgUse(data, "c", c.id, todayKey(), Date.now());
+        if (cpk) head.appendChild(useBar(cpk.state, cpk.pct, pkgText(cpk, c)));
       } else head.appendChild(el("span", "p-client plain", t("noClient")));
       box.appendChild(head);
       var mine = projects.filter(function (p) { return c ? p.client === c.id : !C.client(data, p.client); });
@@ -1814,6 +1864,19 @@
     budget.autocomplete = "off";
     budget.placeholder = "0";
     form.appendChild(field(t("f.budget"), budget, t("f.budgetHint")));
+    var fee = moneyIn(p && p.fee ? p.fee : 0);
+    form.appendChild(field(t("f.fee") + " (" + data.prefs.cur + ")", fee, t("f.feeHint")));
+    if (p && p.fee) {                          // T3: the fee as an extra charge, once
+      var fx = C.feeExtra(data, p.id);
+      if (fx) form.appendChild(el("p", "hint", t("fee.added", { d: shortDate(fx.d) })));
+      else {
+        var fb = button(t("fee.add"), "mini-btn", function () {
+          dlg.close();
+          extraDialog(null, { d: todayKey(), p: p.id, desc: t("fee.desc", { p: p.name }), amt: p.fee, fee: 1 });
+        });
+        form.appendChild(fb);
+      }
+    }
     var bill = checkRow(t("f.billable"), p ? p.bill : 1);
     form.appendChild(bill.row);
     var bf = billingFields(form, p, "bill.hintP");
@@ -1831,6 +1894,8 @@
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
       var mins = C.parseHours(budget.value);
       if (isNaN(mins) || !C.inRange(mins, C.LIM.budget)) { showToast(t("toast.badHours")); budget.focus(); return; }
+      var feeC = C.parseMoney(fee.value);
+      if (isNaN(feeC) || !C.inRange(feeC, C.LIM.fee)) { showToast(t("toast.badMoney")); fee.focus(); return; }
       var bpart = bf.read();
       if (!bpart) return;
       var picked = colorBox.querySelector("input:checked");
@@ -1839,7 +1904,8 @@
         name: nm, client: cli.value, color: picked ? +picked.value : 0, rate: cents,
         bill: bill.box.checked ? 1 : 0, arch: p && arch.box.checked ? 1 : 0
       };
-      if (mins) prec.budget = mins;
+      prec.budget = mins;                    // 0 clears it (keepExtras)
+      prec.fee = feeC;
       Object.assign(prec, bpart);
       var newPid = saveProject(id, prec);
       dlg.close();
@@ -1974,8 +2040,31 @@
     openDialog(dlg, c ? null : name);
   }
 
+  // T3 (BR-TS-BUD): Budget's prefill bridge (BR-B1), inside orOS only.
+  function budgetApi() {
+    try { return typeof window.parent.__orosOpenBudgetNew === "function" ? window.parent.__orosOpenBudgetNew : null; }
+    catch (e) { return null; }
+  }
+  // Hands an extra charge to Budget as a prefilled expense (nothing is
+  // saved there before the user saves it). Marked bud:1 only when
+  // Budget took the prefill; false → a toast and no mark.
+  function sendToBudget(id) {
+    var fn = budgetApi(), x = findExtra(id);
+    if (!fn || !x) return;
+    var ok = false;
+    try { ok = fn(C.budgetPrefill(data, x)) !== false; } catch (e) { ok = false; }
+    if (!ok) { showToast(t("toast.budFail")); return; }
+    if (!x.bud) {
+      var rec = keepExtras(x, { bud: 1 });
+      rec.m = stamp(x.m);
+      replaceIn(extrasList(), rec);
+      saveNow();
+      renderAll();
+    }
+  }
   // An extra charge: date, project (or just a client), what it is
-  // for and the amount. preset: { d, p }.
+  // for and the amount (or a mileage: km × rate per km). preset:
+  // { d, p, desc?, amt?, fee? } (fee: a project's fixed fee, T3).
   function extraDialog(id, preset) {
     var x = id ? findExtra(id) : null;
     if (id && !x) return;
@@ -2001,24 +2090,62 @@
     var desc = input("text", x ? x.desc : "");
     desc.maxLength = C.LIM.exDesc;
     form.appendChild(field(t("f.exDesc"), desc, t("f.exDescHint")));
-    var amt = moneyIn(x ? x.amt : 0);
+    if (!x && preset && preset.desc) desc.value = C.cleanText(preset.desc, C.LIM.exDesc);
+    // T3: mileage, km × rate per km (the last rate is remembered on this device)
+    var isFee = x ? x.fee === 1 : !!(preset && preset.fee);
+    var kmRow = checkRow(t("f.km"), x && x.km ? 1 : 0);
+    var kmIn = input("text", x && x.km ? C.fmtKm(x.km, LANG) : "");
+    kmIn.inputMode = "decimal";
+    kmIn.autocomplete = "off";
+    kmIn.placeholder = "0";
+    var kmF = field(t("f.kmDist"), kmIn);
+    var kmr = moneyIn(x && x.kmr ? x.kmr : (prefs.kmr || 0));
+    var kmrF = field(t("f.kmRate") + " (" + data.prefs.cur + ")", kmr);
+    if (!isFee) { form.appendChild(kmRow.row); form.appendChild(kmF); form.appendChild(kmrF); }
+    var amt = moneyIn(x ? x.amt : (preset && preset.amt) || 0);
     form.appendChild(field(t("f.amount") + " (" + data.prefs.cur + ")", amt));
+    var kmCalc = function () {
+      var a = C.kmAmount(C.parseKm(kmIn.value), C.parseMoney(kmr.value));
+      if (kmRow.box.checked) amt.value = isNaN(a) ? "" : C.moneyInput(a, LANG);
+    };
+    var kmShow = function () {
+      kmF.hidden = kmrF.hidden = !kmRow.box.checked;
+      amt.readOnly = kmRow.box.checked;
+      kmCalc();
+    };
+    kmRow.box.addEventListener("change", kmShow);
+    kmIn.addEventListener("input", kmCalc);
+    kmr.addEventListener("input", kmCalc);
+    kmShow();
     var billed = checkRow(t("f.billed"), x ? x.billed : 0);
     form.appendChild(billed.row);
     if (x && x.billed && x.iv) invRow(form, x.iv);
+    if (x && x.bud) form.appendChild(el("p", "hint", t("bud.sent")));
     var left = [];
     if (x) left.push(button(t("dlg.del"), "danger", function () { dlg.close(); deleteExtra(id); }));
+    if (x && !isFee && budgetApi()) left.push(button(t(x.bud ? "bud.again" : "bud.send"), "", function () { dlg.close(); sendToBudget(id); }));
     actions(form, left, x ? t("dlg.save") : t("dlg.add"));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!C.validDay(day.value)) { day.focus(); return; }
       var d = C.cleanText(desc.value, C.LIM.exDesc);
       if (!d) { showToast(t("toast.badDesc")); desc.focus(); return; }
-      var cents = C.parseMoney(amt.value);
+      var km = 0, kmc = 0, cents;
+      if (kmRow.box.checked && !isFee) {
+        km = C.parseKm(kmIn.value);
+        if (isNaN(km)) { showToast(t("toast.badKm")); kmIn.focus(); return; }
+        kmc = C.parseMoney(kmr.value);
+        if (isNaN(kmc) || !C.inRange(kmc, C.LIM.kmr)) { showToast(t("toast.badMoney")); kmr.focus(); return; }
+        cents = C.kmAmount(km, kmc);
+        prefs.kmr = kmc;
+        savePrefs();
+      } else cents = C.parseMoney(amt.value);
       if (isNaN(cents) || !C.inRange(cents, C.LIM.amt)) { showToast(t("toast.badMoney")); amt.focus(); return; }
       if (id && !findExtra(id)) { dlg.close(); return; }     // deleted elsewhere meanwhile
-      saveExtra(id, { d: day.value, p: sel.value, c: sel.value ? "" : cli.value, desc: d, amt: cents,
-                      billed: billed.box.checked ? 1 : 0 });
+      var xrec = { d: day.value, p: sel.value, c: sel.value ? "" : cli.value, desc: d, amt: cents,
+                   billed: billed.box.checked ? 1 : 0, km: km, kmr: kmc };
+      if (!x && isFee) xrec.fee = 1;
+      saveExtra(id, xrec);
       dlg.close();
       renderAll();
       showToast(t("toast.saved"));
@@ -2120,17 +2247,18 @@
     if (window.orosDialog) return window.orosDialog;
     try { return window.parent.orosDialog || null; } catch (e) { return null; }
   }
+  // text: a string, or a Blob (the T3 PDF).
   function saveText(text, name, mime, ext, desc) {
-    var host = dialogHost();
+    var host = dialogHost(), isBlob = typeof Blob !== "undefined" && text instanceof Blob;
     var types = [{ description: desc }];
     types[0].accept = {};
     types[0].accept[mime] = [ext];
     if (host && typeof host.saveFile === "function") {
-      host.saveFile({ text: text, filename: name, mime: mime, types: types })
+      host.saveFile(isBlob ? { blob: text, filename: name, mime: mime, types: types } : { text: text, filename: name, mime: mime, types: types })
         .then(function (r) { if (r && r.ok) showToast(t("toast.exported")); });
       return;
     }
-    var url = URL.createObjectURL(new Blob([text], { type: mime }));
+    var url = URL.createObjectURL(isBlob ? text : new Blob([text], { type: mime }));
     var a = document.createElement("a");
     a.href = url;
     a.download = name;
@@ -2158,6 +2286,139 @@
     var a = repState.keys[0], b = repState.keys[1];
     var slug = a === b ? a : a.slice(0, 4) === b.slice(0, 4) ? a + "–" + b.slice(5) : a.replace(/-/g, "") + "–" + b.replace(/-/g, "");
     p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + slug, rows: [head].concat(rows), sum: [4, 12] } });
+  }
+  // ---------- T3: the client's timesheet as a PDF ----------
+  // The report's rows (as in the CSV) on A4: client, period, one row
+  // per entry with day, times, hours, project and description, amounts
+  // when the report charges anything, totals. Saved, or attached to a
+  // new Mail message (inside orOS, when Mail has an account).
+  var pdfFonts = null;
+  function pdfFontsLoad(done) {
+    if (pdfFonts) { done(pdfFonts); return; }
+    var get = function (path) {
+      return fetch(path).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (buf) {
+        var bytes = new Uint8Array(buf), bin = "";
+        for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+        return btoa(bin);
+      });
+    };
+    Promise.all([get("../vendor/noto/NotoSans-Regular.ttf"), get("../vendor/noto/NotoSans-Bold.ttf")])
+      .then(function (r) { pdfFonts = { reg: r[0], bold: r[1] }; done(pdfFonts); })
+      .catch(function () { done(null); });
+  }
+  function pdfMake(done) {
+    if (!repState) { done(null); return; }
+    loadOther("../vendor/jspdf.umd.min.js", "jspdf", function (J) {
+      if (!J || !J.jsPDF) { done(null); return; }
+      pdfFontsLoad(function (f) {
+        if (!f) { done(null); return; }
+        try { done(pdfBuild(J.jsPDF, f)); } catch (e) { done(null); }
+      });
+    });
+  }
+  function pdfWho() {
+    var f = repState.f, c = f.client && f.client !== "-" ? C.client(data, f.client) : null;
+    var p = !c && f.project && f.project !== "-" ? C.project(data, f.project) : null;
+    if (!c && p) c = C.projectClient(data, p);
+    return { c: c, p: p };
+  }
+  function pdfName() {
+    var who = pdfWho(), n = who.c ? who.c.name : (who.p ? who.p.name : "");
+    n = n.replace(/[\\\/:*?\x22<>|\u0000-\u001f]+/g, " ").trim();
+    return (t("pdf.title") + (n ? " " + n : "") + " " + repState.keys[0] + "_" + repState.keys[1]).slice(0, 100) + ".pdf";
+  }
+  function pdfBuild(jsPDF, f) {
+    var a = repState.keys[0], b = repState.keys[1], now = Date.now();
+    var rows = C.exportRows(data, a, b, repState.f, now, LANG);
+    var charged = rows.some(function (r) { return r.amount > 0; });
+    var doc = new jsPDF({ unit: "mm", format: "a4" });
+    doc.addFileToVFS("NotoSans-Regular.ttf", f.reg);
+    doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+    doc.addFileToVFS("NotoSans-Bold.ttf", f.bold);
+    doc.addFont("NotoSans-Bold.ttf", "NotoSans", "bold");
+    var W = 210, M = 14, y = 18;
+    var cols = charged ? [[M, 22], [M + 22, 24], [M + 46, 14], [M + 64, 34], [M + 98, 60], [M + 158, 24]]
+                       : [[M, 22], [M + 22, 24], [M + 46, 14], [M + 64, 40], [M + 104, 78]];
+    var who = pdfWho();
+    doc.setFont("NotoSans", "bold"); doc.setFontSize(16);
+    doc.text(t("pdf.title"), M, y); y += 8;
+    doc.setFont("NotoSans", "normal"); doc.setFontSize(10);
+    if (who.c) { doc.text(t("pdf.client") + ": " + who.c.name, M, y); y += 5; }
+    if (who.p) { doc.text(t("pdf.project") + ": " + who.p.name, M, y); y += 5; }
+    doc.text(t("pdf.period") + ": " + C.fmtRange(a, b, LANG), M, y); y += 8;
+    var head = function () {
+      doc.setFont("NotoSans", "bold"); doc.setFontSize(9);
+      var hs = [t("pdf.date"), t("pdf.time"), t("pdf.hours"), t("pdf.project"), t("pdf.desc"), t("pdf.amount")];
+      cols.forEach(function (c, i) {
+        if (i === 2 || i === 5) doc.text(hs[i], c[0] + c[1] - 1, y, { align: "right" }); else doc.text(hs[i], c[0], y);
+      });
+      y += 2; doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 4.5;
+      doc.setFont("NotoSans", "normal");
+    };
+    head();
+    var totMs = 0, totAmt = 0;
+    rows.forEach(function (r) {
+      var timed = !r.ex && !r.top;
+      var descTxt = [r.desc, r.task].filter(Boolean).join(" · ");
+      var desc = doc.splitTextToSize(descTxt || "", cols[4][1] - 2);
+      var proj = doc.splitTextToSize(r.p || "", cols[3][1] - 2);
+      var h = Math.max(1, desc.length, proj.length) * 4;
+      if (y + h > 280) { doc.addPage(); y = 18; head(); }
+      doc.text(C.fmtRange(r.k, r.k, LANG), cols[0][0], y);
+      if (timed) doc.text(C.hhmm(r.s) + "–" + C.endText(r), cols[1][0], y);
+      if (!r.ex) doc.text(C.fmtDur(r.ms), cols[2][0] + cols[2][1] - 1, y, { align: "right" });
+      doc.text(proj, cols[3][0], y);
+      doc.text(desc, cols[4][0], y);
+      if (charged) doc.text(money(r.amount), cols[5][0] + cols[5][1] - 1, y, { align: "right" });
+      if (!r.ex) totMs += r.ms;
+      totAmt += r.amount;
+      y += h + 1.5;
+    });
+    if (y > 270) { doc.addPage(); y = 18; }
+    doc.setLineWidth(0.3); doc.line(M, y - 2, W - M, y - 2); y += 3;
+    doc.setFont("NotoSans", "bold");
+    doc.text(t("pdf.total"), cols[0][0], y);
+    doc.text(C.fmtDur(totMs), cols[2][0] + cols[2][1] - 1, y, { align: "right" });
+    if (charged) doc.text(money(totAmt), cols[5][0] + cols[5][1] - 1, y, { align: "right" });
+    doc.setFont("NotoSans", "normal"); doc.setFontSize(8);
+    var n = doc.getNumberOfPages();
+    for (var i = 1; i <= n; i++) {
+      doc.setPage(i);
+      doc.text(t("pdf.made") + (n > 1 ? " · " + i + "/" + n : ""), M, 290);
+    }
+    return { blob: doc.output("blob"), hours: totMs };
+  }
+  function exportPdf() {
+    pdfMake(function (r) {
+      if (!r) { showToast(t("toast.pdfFail")); return; }
+      saveText(r.blob, pdfName(), "application/pdf", ".pdf", "PDF");
+    });
+  }
+  function mailShell() {
+    try {
+      var p = window.parent;
+      if (p === window || typeof p.__orosOpenAt !== "function") return null;
+      var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      return d && Array.isArray(d.accounts) && d.accounts.length ? p : null;
+    } catch (e) { return null; }
+  }
+  function mailPdf() {
+    var p = mailShell();
+    if (!p) return;
+    pdfMake(function (r) {
+      if (!r) { showToast(t("toast.pdfFail")); return; }
+      var fr = new FileReader();
+      fr.onload = function () {
+        var b64 = String(fr.result || "").replace(/^data:[^,]*,/, "");
+        var range = C.fmtRange(repState.keys[0], repState.keys[1], LANG);
+        p.__orosOpenAt("mail", { compose: {
+          to: "", subject: t("mail.subj", { r: range }).slice(0, 300),
+          body: t("mail.body", { r: range, h: C.fmtDur(r.hours) }),
+          attach: [{ name: pdfName(), type: "application/pdf", b64: b64 }]
+        } });
+      };
+      fr.readAsDataURL(r.blob);
+    });
   }
   function quoteBridge() {
     try { return typeof window.parent.__orosOpenQuoteNew === "function" ? window.parent.__orosOpenQuoteNew : null; }
@@ -2817,6 +3078,8 @@
     $("add-client").innerHTML = UI.plus + "<span></span>";
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
+    $("rep-pdf").textContent = t("rep.pdf");
+    $("rep-pdfmail").textContent = t("rep.pdfMail");
     $("rep-sheet").textContent = t("rep.sheet");
     $("rep-quote").textContent = t("rep.quote");
     $("rep-invoice").textContent = t("rep.invoice");
@@ -2877,6 +3140,8 @@
       });
     });
     $("rep-csv").addEventListener("click", exportCsv);
+    $("rep-pdf").addEventListener("click", exportPdf);
+    $("rep-pdfmail").addEventListener("click", mailPdf);
     $("rep-sheet").addEventListener("click", openInSheet);
     $("rep-quote").addEventListener("click", createQuote);
     $("rep-invoice").addEventListener("click", createInvoice);

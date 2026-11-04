@@ -8,7 +8,9 @@
 //   { ver: 1,
 //     clients:  [ { id, name, rate, <billing>, crm?, m } | { id, m, del: 1 } ]
 //               crm = the CRM customer it is (T1), written only when set
-//     projects: [ { id, name, client, color, rate, bill, arch, <billing>, m } | tomb ]
+//     projects: [ { id, name, client, color, rate, bill, arch, budget?, fee?, <billing>, m } | tomb ]
+//               fee = a fixed fee in cents (T3): its time is not charged
+//               by the hour; the fee goes on as an extra charge (fee: 1)
 //               <billing> = minH?, minAmt?, otH?, minPer?, otRate? (minimum
 //               charge and overtime, see normBilling)
 //     entries:  [ { id, p, desc, s, e, billed, task?, tags?, iv?, m } | tomb ]
@@ -16,7 +18,9 @@
 //               written only when set and meant only while billed;
 //               src = what it was for (T2): "todo:<id>", "kanban:<id>",
 //               "cal:<event>:<day>", written only when set
-//     extras:   [ { id, d, p, c, desc, amt, billed, iv?, m } | tomb ]
+//     extras:   [ { id, d, p, c, desc, amt, billed, iv?, km?, kmr?, fee?, bud?, m } | tomb ]
+//               km/kmr = mileage (distance, cents per km), fee = a
+//               project's fixed fee, bud = sent to Budget (T3)
 //               extra charges (fuel, travel, …): written only when
 //               the list has a record, so data without one stays
 //               byte-identical to what older versions write
@@ -37,6 +41,7 @@
 //   5. Parsing + formatting
 //   5b. Invoices link + unbilled time (T1)
 //   5c. Time from tasks, cards and events (T2)
+//   5d. Packages, fixed fees, mileage, Budget (T3)
 //   6. Export: CSV + JSON backup
 // ============================================================
 (function (root) {
@@ -58,7 +63,10 @@
     budget: [0, 6000000],            // minutes per project (100.000 h), 0 = no budget
     minH: [0, 44640],                // minimum minutes per period (31 days), 0 = none; also otH
     minAmt: [0, 100000000],          // minimum amount per period in cents (a day rate), 0 = none
-    exDesc: 200, amt: [1, 100000000] // extra charge: text, cents (1.000.000,00 max)
+    exDesc: 200, amt: [1, 100000000], // extra charge: text, cents (1.000.000,00 max)
+    fee: [0, 100000000],             // T3: a project's fixed fee in cents, 0 = none
+    km: [0.1, 100000],               // T3: a mileage charge's distance (one decimal)
+    kmr: [1, 100000]                 // T3: its rate in cents per km
   };
   var MIN_PERS = ["d", "w", "m"];    // the minimum applies per day, week or month
   var ROUNDS = [0, 5, 6, 10, 15, 30, 60];
@@ -141,9 +149,9 @@
   var KNOWN = {
     client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "crm", "m", "del"],
     project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget",
-              "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
+              "minH", "minAmt", "otH", "minPer", "otRate", "fee", "m", "del"],
     entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "iv", "src", "m", "del"],
-    extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "iv", "m", "del"]
+    extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "iv", "km", "kmr", "fee", "bud", "m", "del"]
   };
   function withExtras(out, x, known) {
     var n = 0;
@@ -201,6 +209,7 @@
     };
     // Written only when set, so records without one stay byte-identical.
     if (inRange(x.budget, LIM.budget) && x.budget > 0) out.budget = x.budget;
+    if (inRange(x.fee, LIM.fee) && x.fee > 0) out.fee = x.fee;      // T3: fixed fee, time not charged by the hour
     normBilling(out, x);
     out.m = x.m;
     return withExtras(out, x, KNOWN.project);
@@ -256,6 +265,16 @@
     };
     var iv = linkId(x.iv);        // T1: the Invoices document it went on (meant only while billed)
     if (iv) out.iv = iv;
+    // T3: a mileage charge keeps its distance and rate per km (amt is
+    // what was charged: km × kmr, rounded); fee marks a project's fixed
+    // fee; bud marks one sent to Budget. Each only when set.
+    if (typeof x.km === "number" && isFinite(x.km) && x.km >= LIM.km[0] && x.km <= LIM.km[1] &&
+        Math.abs(Math.round(x.km * 10) - x.km * 10) < 1e-9 && inRange(x.kmr, LIM.kmr)) {
+      out.km = Math.round(x.km * 10) / 10;
+      out.kmr = x.kmr;
+    }
+    if (x.fee === 1) out.fee = 1;
+    if (x.bud === 1) out.bud = 1;
     out.m = x.m;
     return withExtras(out, x, KNOWN.extra);
   }
@@ -532,6 +551,7 @@
   // without one charges its day rate and overtime alone.
   function chargeRate(data, pid) {
     var p = project(data, pid);
+    if (p && p.fee) return 0;              // T3: a fixed-fee project's time is not charged by the hour
     return p && hasBilling(p) && p.minAmt ? p.rate : rateOf(data, pid);
   }
   // The report's pieces in the range and filter, oldest first, each
@@ -1003,6 +1023,73 @@
     }).sort(function (a, b) { return a.s - b.s || cmpStr(a.key, b.key); });
   }
 
+  // ---------- 5d. Packages, fixed fees, mileage (T3) ----------
+  // A retainer is a client's or project's minimum charge per week or
+  // month (normBilling) with hours included (otH, else minH): the
+  // period's fee covers them and overtime is charged after them.
+  // → null, or { from, to, ms (this period, rounded as in reports),
+  //   inclMs, pct, state: "ok" | "near" (80 % or more) | "over" }.
+  function pkgUse(data, kind, id, todayKey, now) {
+    var rec = kind === "c" ? client(data, id) : project(data, id);
+    if (!rec || !hasBilling(rec) || rec.minPer === "d") return null;
+    var incl = rec.otH || rec.minH || 0;
+    if (!incl) return null;
+    var from = periodOf(todayKey, rec.minPer), to = periodEnd(from, rec.minPer), key = kind + id, ms = 0;
+    piecesIn(data, from, to, now).forEach(function (pc) {
+      if (!billable(data, pc.x.p)) return;
+      var b = billingOf(data, project(data, pc.x.p));
+      if (b && b.key === key) ms += roundMs(pc.e - pc.s, data.prefs.round, data.prefs.rup);
+    });
+    var inclMs = incl * 60000, pct = Math.floor(ms / inclMs * 100);
+    return { from: from, to: to, ms: ms, inclMs: inclMs, pct: pct,
+             state: ms > inclMs ? "over" : (pct >= 80 ? "near" : "ok") };
+  }
+  // A fixed-fee project: the fee, its time (all time, exact) and the
+  // hourly rate that makes: fee / hours. null without a fee.
+  function effRate(data, pid, now) {
+    var p = project(data, pid);
+    if (!p || !p.fee) return null;
+    var ms = 0;
+    data.entries.forEach(function (x) { if (!x.del && x.p === pid) ms += endOf(x, now) - x.s; });
+    return { fee: p.fee, ms: ms, rate: ms >= 60000 ? Math.round(p.fee * HOUR / ms) : 0 };
+  }
+  // The fixed fee already added as an extra charge (fee: 1), or null.
+  function feeExtra(data, pid) {
+    var hit = null;
+    (data.extras || []).forEach(function (x) { if (!x.del && x.fee === 1 && x.p === pid && (!hit || x.d > hit.d)) hit = x; });
+    return hit;
+  }
+  // Mileage: km (one decimal) × cents per km, rounded; NaN when out of range.
+  function kmAmount(km, kmr) {
+    if (!(typeof km === "number" && km >= LIM.km[0] && km <= LIM.km[1]) || !inRange(kmr, LIM.kmr)) return NaN;
+    var a = Math.round(Math.round(km * 10) * kmr / 10);
+    return inRange(a, LIM.amt) ? a : NaN;
+  }
+  // 12.5 → "12,5" (el, de…) or "12.5" (en).
+  function fmtKm(km, lang) {
+    var v = String(Math.round(km * 10) / 10);
+    return comma(lang) ? v.replace(".", ",") : v;
+  }
+  // "12,5" / "12.5" / "120" → 12.5 (one decimal) or NaN.
+  function parseKm(text) {
+    var v = String(text || "").trim().replace(",", ".");
+    if (!/^\d{1,6}(\.\d)?$/.test(v)) return NaN;
+    var n = Math.round(parseFloat(v) * 10) / 10;
+    return n >= LIM.km[0] && n <= LIM.km[1] ? n : NaN;
+  }
+  // What Budget gets for an extra charge (BR-B1 prefill, BR-TS-BUD):
+  // an expense on its day with its description and client, travel when
+  // it is mileage. → { k, a, d, n, c?, src }
+  function budgetPrefill(data, x) {
+    var c = client(data, extraClient(data, x));
+    var n = cleanText([x.desc, c ? c.name : ""].filter(Boolean).join(" · "), 500);
+    var out = { k: "o", a: x.amt, d: x.d, n: n };
+    if (x.km) out.c = "o-trans";
+    out.src = "timesheet";
+    if (c && c.crm) out.crm = c.crm;
+    return out;
+  }
+
   // ---------- 6. Export ----------
   // A text cell that Excel / LibreOffice would read as a formula gets
   // a leading apostrophe (CSV injection), then RFC 4180 quoting.
@@ -1132,7 +1219,7 @@
       noteClient(p ? p.client : "");
       var rate = chargeRate(data, r.pid), b = billingOf(data, p);
       // a day-rate project without an hourly rate: the minimum line says it all
-      if (rate || !(b && b.src.minAmt)) items.push({ d: nameOf(r.pid) + " · " + range, q: hrs(r.ms), p: rate / 100 });
+      if (!(p && p.fee) && (rate || !(b && b.src.minAmt))) items.push({ d: nameOf(r.pid) + " · " + range, q: hrs(r.ms), p: rate / 100 });
       if (r.ot) items.push({ d: nameOf(r.pid) + " · " + w["exp.overtime"] + " · " + range, q: hrs(r.ot), p: r.otRate / 100 });
     });
     // Top-ups: hours at a rate (per owner and rate), or an amount per
@@ -1568,7 +1655,9 @@
     csvCell: csvCell, toCsv: toCsv, toTable: toTable, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
     readCsv: readCsv, importPlan: importPlan,
     PEND_KEY: PEND_KEY, normPend: normPend, pendAdd: pendAdd, invLink: invLink, unbilled: unbilled, linkId: linkId,
-    srcKey: srcKey, timeBySrc: timeBySrc, calSuggest: calSuggest
+    srcKey: srcKey, timeBySrc: timeBySrc, calSuggest: calSuggest,
+    pkgUse: pkgUse, effRate: effRate, feeExtra: feeExtra, kmAmount: kmAmount, parseKm: parseKm, fmtKm: fmtKm,
+    budgetPrefill: budgetPrefill, endText: endText
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
