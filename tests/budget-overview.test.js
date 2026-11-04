@@ -156,6 +156,10 @@ test("AC-1: account groups and what I have and owe", () => {
   assert.equal(O2.accGroup({ id: "c", n: "BTC", ivk: "c" }, []), "inv");
   assert.equal(O2.accGroup({ id: "d", n: "Car", ivk: "p" }, []), "inv");
   assert.equal(O2.accGroup({ id: "e", n: "Cash" }, [{ ac: "e" }]), "cash");
+  // CD-1: marked as a credit card by the person, or CARD from the bank
+  assert.equal(O2.accGroup({ id: "f", n: "Alpha" }, [{ ac: "f", ck: 1 }]), "card");
+  assert.equal(O2.accGroup({ id: "g", n: "Alpha" }, [{ ac: "g", ty: "CARD" }]), "card");
+  assert.equal(O2.accGroup({ id: "h", n: "Alpha" }, [{ ac: "h", ty: "CARD", ck: 2 }]), "cash");
   assert.deepEqual(O2.GROUPS, ["cash", "card", "inv"]);
   assert.deepEqual(O2.haveOwe([10000, -3200, null, 500, NaN]), { have: 10500, owe: 3200 });
   assert.deepEqual(O2.haveOwe([]), { have: 0, owe: 0 });

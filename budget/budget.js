@@ -853,7 +853,9 @@
     }
     if (isInt(x.cl) && x.cl > 0 && x.cl <= MAX_CENTS) out.cl = x.cl;
     if (typeof x.ty === "string" && /^[A-Z]{4}$/.test(x.ty)) out.ty = x.ty;
-    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1 });
+    // CD-1: ck = the person says it is a credit card (1) or not (2)
+    if (x.ck === 1 || x.ck === 2) out.ck = x.ck;
+    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1, ck: 1 });
   }
 
   var COLLS = [
@@ -3520,6 +3522,9 @@
       dateShort: dateShort, accBalAt: accBalAt, correct: correctBal,
       cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo, passiveStats: passiveStats,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
+      // CD-1: a card's debt: is a bank account a card, its switch and limit
+      isCardRow: BANKLIVE && BANKLIVE.isCard ? BANKLIVE.isCard : null,
+      bankCardRows: BANKLIVE && BANKLIVE.cardRows ? BANKLIVE.cardRows : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin

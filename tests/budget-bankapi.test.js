@@ -224,6 +224,11 @@ test("bnk rows: normalised, LWW merge, tombstones, kept by an older shape", () =
   assert.deepEqual(BJ.normBnk(onlyAv), onlyAv);
   assert.equal(BJ.normBnk(Object.assign({}, row, { cl: -5, ty: "card" })).cl, undefined);
   assert.equal(BJ.normBnk(Object.assign({}, row, { ty: "card" })).ty, undefined);
+  // CD-1: the person's own "this is a credit card" (1) or not (2)
+  assert.equal(BJ.normBnk(Object.assign({}, row, { ck: 1 })).ck, 1);
+  assert.equal(BJ.normBnk(Object.assign({}, row, { ck: 2 })).ck, 2);
+  assert.equal(BJ.normBnk(Object.assign({}, row, { ck: 3 })).ck, undefined);
+  assert.equal(BJ.normBnk(Object.assign({}, row, { ck: "1" })).ck, undefined);
   const a = BJ.emptyData(), b = BJ.emptyData();
   a.bnk = [row];
   b.bnk = [Object.assign({}, row, { m: 9, ac: "acc2" })];
@@ -282,6 +287,9 @@ test("BK-8 card: debt and available add up to the limit; session keeps type and 
   assert.equal(K.isCard({ ty: "CACC", nm: "Visa" }), false);
   assert.equal(K.isCard({ nm: "Alpha Bank MasterCard" }), true);
   assert.equal(K.isCard({ nm: "Alpha Προνομιακός" }), false);
+  // CD-1: the person's answer wins over the bank's kind and the name
+  assert.equal(K.isCard({ ty: "CACC", nm: "Alpha Προνομιακός", ck: 1 }), true);
+  assert.equal(K.isCard({ ty: "CARD", nm: "Visa", ck: 2 }), false);
   const s = K.session({ session_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", access: { valid_until: "2027-05-01T00:00:00Z" }, accounts: [
     { uid: "aaaaaaaa-bbbb-cccc-dddd-000000000001", name: "Visa", currency: "EUR", cash_account_type: "CARD", credit_limit: { amount: "2500.00", currency: "EUR" } },
     { uid: "aaaaaaaa-bbbb-cccc-dddd-000000000002", name: "Current", currency: "EUR", cash_account_type: "CACC" }
@@ -289,4 +297,22 @@ test("BK-8 card: debt and available add up to the limit; session keeps type and 
   assert.equal(s.accts[0].ty, "CARD");
   assert.equal(s.accts[0].cl, 250000);
   assert.equal(s.accts[1].cl, 0);
+});
+
+test("CD-1: a stored bank reading read again as a card's", () => {
+  // not detected as a card, the bank gave only the available amount:
+  // stored as bb = ba = available
+  const r = { bb: 180000, ba: 180000, bc: "EUR", bd: "2026-11-04" };
+  assert.deepEqual(K.recard(Object.assign({}, r, { ck: 1 })), { bb: undefined, ba: 180000 });
+  assert.deepEqual(K.recard(Object.assign({}, r, { ck: 1, cl: 250000 })), { bb: -70000, ba: 180000 });
+  // booked and available the same (ba not stored): the available is bb
+  assert.deepEqual(K.recard({ bb: 180000, ck: 1, cl: 250000 }), { bb: -70000, ba: 180000 });
+  // a card the bank gave a negative booked balance for keeps it as debt
+  assert.deepEqual(K.recard({ bb: -70000, ba: 180000, ck: 1 }), { bb: -70000, ba: 180000 });
+  // over the limit's worth available: no debt, never a positive one
+  assert.deepEqual(K.recard({ ba: 260000, ck: 1, cl: 250000 }), { bb: 0, ba: 260000 });
+  // back to "not a card": the stored values stay
+  assert.deepEqual(K.recard({ bb: 120000, ba: 118000, ck: 2 }), { bb: 120000, ba: 118000 });
+  assert.equal(K.recard({ ck: 1 }), null);
+  assert.equal(K.recard(null), null);
 });
