@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.24.00
+- **Nothing you save is lost when an app is open twice.** With an app open in two places on one device (orOS and a single app like "orOS Contacts", or two tabs), the window opened earlier could write its older copy over what you had just saved in the other, so a new contact or note could vanish if you closed before sync. Now every app that syncs keeps what the other window saved and shows it.
+- **Contacts tells you when storage is full.** If the browser's storage is full, Save in Contacts now says so and keeps the window open with what you typed, instead of looking saved and losing it.
+
 ## Version 5.23.01
 - **Radio keeps its station lists behind a VPN.** With a VPN such as Tailscale, or on slow mobile data, Radio could say "Couldn't reach the station directory" even though your stations played. It now tries more of the directory's servers and waits for a slow one, shows the lists you opened in the last 7 days when none answers, and never shows the notice in Favorites or Recent, which don't need the directory.
 - **Readable buttons in the Tux theme.** The round buttons of Radio's player, the selected files in Files and a few other buttons showed white on light grey in Tux. Their icons and text now take a dark colour where the fill is light.
