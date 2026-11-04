@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.21.00
+- **See every AI the Assistant can use.** Assistant › Settings now lists under `Connected services and order` every service set up on this device, numbered in the order they answer, with your assistant marked `first choice`. Choosing a new assistant puts it first and keeps the others connected as stand-ins, also when your first choice is an online service: if it can't answer, the next one in the list does. Untick a service to leave it out; services not set up yet sit under one line you can open.
+
 ## Version 5.20.02
 - **More reliable checks behind sync.** A test of moving a device from Dropbox to WebDAV/Nextcloud no longer fails at random on a busy computer. Nothing changes in how orOS syncs.
 
