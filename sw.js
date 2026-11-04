@@ -519,6 +519,7 @@ var PRECACHE_URLS = [
   "diary/diary.css",
   "diary/core.js",
   "diary/diary.js",
+  "diary/dayline.js",
   "diary/import.js",
   "time/",
   "time/index.html",

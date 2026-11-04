@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 39104 of 39358 (99%)
+- Strings: 39107 of 39361 (99%)
 - Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
@@ -16,7 +16,7 @@ text is still written in the code. They switch over wave by wave
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 178 / 178 |
-| baby | 100% | 340 / 340 |
+| baby | 100% | 341 / 341 |
 | backgammon | 100% | 91 / 91 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 234 / 234 |
@@ -42,7 +42,7 @@ text is still written in the code. They switch over wave by wave
 | cycle | 100% | 203 / 203 |
 | designkit | 100% | 174 / 174 |
 | device | 100% | 124 / 124 |
-| diary | 100% | 234 / 234 |
+| diary | 100% | 236 / 236 |
 | dice | 100% | 52 / 52 |
 | dots | 100% | 54 / 54 |
 | enrichui | 100% | 28 / 28 |
