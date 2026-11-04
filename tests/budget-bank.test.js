@@ -297,3 +297,31 @@ test("model: bank marker on entries, rules and profiles normalise, merge and sta
   const L = B.mergeBudget(legacy, legacy);
   assert.deepEqual([L.rule, L.prof, L.tx.length], [[], [], 1]);
 });
+
+test("RV-1: Revolut's statement CSV: fee taken off, pending, cancelled and top-ups skipped", () => {
+  const csv = "Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance\n" +
+    "CARD_PAYMENT,Current,2026-10-01 12:00:01,2026-10-02 09:00:00,Lidl,-23.40,0.00,EUR,COMPLETED,100.00\n" +
+    "TOPUP,Current,2026-10-03 10:00:00,2026-10-03 10:00:01,Top-Up by *1234,200.00,0.00,EUR,COMPLETED,300.00\n" +
+    "CARD_PAYMENT,Current,2026-10-04 10:00:00,,Amazon,-10.00,0.00,EUR,PENDING,290.00\n" +
+    "CARD_PAYMENT,Current,2026-10-04 11:00:00,,Shop,-5.00,0.00,EUR,REVERTED,\n" +
+    "ATM,Current,2026-10-05 10:00:00,2026-10-05 10:00:00,Cash at Alpha,-50.00,1.00,EUR,COMPLETED,239.00\n" +
+    "EXCHANGE,Current,2026-10-06 10:00:00,2026-10-06 10:00:00,Exchanged to USD,-20.00,0.00,EUR,COMPLETED,219.00\n" +
+    "TRANSFER,Current,2026-10-07 10:00:00,2026-10-07 10:00:00,From Nikos,30.00,0.00,EUR,COMPLETED,249.00\n";
+  const rows = K.parseCsv(csv, K.guessSep(csv)), hd = K.findHeader(rows);
+  const m = K.revolutMap(rows[hd.header]);
+  assert.ok(m);
+  assert.equal(K.revolutMap(["Date", "Amount", "Description"]), null);
+  const it = K.revolutItems(rows, hd.start, m);
+  assert.deepEqual(it.map((x) => [x.d, x.amt, x.text, x.err || ""]), [
+    ["2026-10-02", -2340, "Lidl", ""],
+    ["2026-10-03", 20000, "Top-Up by *1234", "xfer"],
+    ["2026-10-04", -1000, "Amazon", "pending"],
+    ["2026-10-04", -500, "Shop", "void"],
+    ["2026-10-05", -5100, "Cash at Alpha", ""],
+    ["2026-10-06", -2000, "Exchanged to USD", "xfer"],
+    ["2026-10-07", 3000, "From Nikos", ""]
+  ]);
+  assert.equal(it[0].cur, "EUR");
+  // PayPal's detector does not take it
+  assert.equal(K.paypalMap(rows[hd.header]), null);
+});

@@ -319,11 +319,67 @@
     return out.cyd || out.cyr ? out : null;
   }
 
+  // ---------- RM-1: reminders the shell sends with Budget closed ----------
+  // What falls due in the next `lead` days (default 3, today counts):
+  // a loan's next scheduled installment and a card's unpaid statement.
+  // raw = the stored Budget data; P = budget/plan.js (balances).
+  // → [{ key, kind "loan" | "card", id, n, a (cents), next, days }]
+  function remindersDue(raw, today, P, lead) {
+    var out = [];
+    lead = isInt(lead) ? lead : 3;
+    if (!raw || !okYmd(today)) return out;
+    var byLoan = paysBy(Array.isArray(raw.lpay) ? raw.lpay : []);
+    (Array.isArray(raw.loan) ? raw.loan : []).forEach(function (x) {
+      var l = normLoan(x);
+      if (!l || l.wo || !hasPlan(l)) return;
+      var sc = schedule(l, byLoan[l.id]);
+      var r = sc.rows[0];
+      if (!r) return;
+      var dd = daysBetween(today, r.d);
+      if (dd >= 0 && dd <= lead) out.push({ key: "loan:" + l.id + ":" + r.d, kind: "loan", id: l.id, n: l.n, a: r.pay, next: r.d, days: dd });
+    });
+    if (P && typeof P.balancesFx === "function") {
+      var main = raw.set && typeof raw.set.cur === "string" ? raw.set.cur : "EUR";
+      (Array.isArray(raw.acc) ? raw.acc : []).forEach(function (a) {
+        if (!cardCfg(a)) return;
+        var c = cardCycle(a, today, function (d) { var b = P.balancesFx(raw, d, main, null)[a.id]; return isInt(b) ? b : 0; },
+          function (from, to) {
+            var sum = 0;
+            (raw.tx || []).forEach(function (t) { if (t && t.ac === a.id && t.k === "i" && t.d > from && t.d <= to) sum += t.a; });
+            (raw.xfer || []).forEach(function (t) { if (t && t.t === a.id && t.d > from && t.d <= to) sum += isInt(t.ta) && t.ta > 0 ? t.ta : t.a; });
+            return sum;
+          });
+        if (c && c.state === "open" && c.days >= 0 && c.days <= lead)
+          out.push({ key: "card:" + a.id + ":" + c.due, kind: "card", id: a.id, n: a.n, a: c.left, next: c.due, days: c.days });
+      });
+    }
+    return out;
+  }
+
+  // For Calendar: on `ymd` (today or later), each loan's scheduled
+  // installment and each card's due day. → [{ kind, id, n, a (0 = unknown) }]
+  function duesOn(raw, ymd, today) {
+    var out = [];
+    if (!raw || !okYmd(ymd) || (okYmd(today) && ymd < today)) return out;
+    var byLoan = paysBy(Array.isArray(raw.lpay) ? raw.lpay : []);
+    (Array.isArray(raw.loan) ? raw.loan : []).forEach(function (x) {
+      var l = normLoan(x);
+      if (!l || l.wo || !hasPlan(l)) return;
+      schedule(l, byLoan[l.id]).rows.forEach(function (r) { if (r.d === ymd) out.push({ kind: "loan", id: l.id, n: l.n, a: r.pay }); });
+    });
+    (Array.isArray(raw.acc) ? raw.acc : []).forEach(function (a) {
+      var c = cardCfg(a);
+      if (c && dayIn(+ymd.slice(0, 4), +ymd.slice(5, 7) - 1, c.d) === ymd) out.push({ kind: "card", id: a.id, n: a.n, a: 0 });
+    });
+    return out;
+  }
+
   var api = { normLoan: normLoan, normPay: normPay, paysBy: paysBy, status: status, summary: summary,
               balanceMoves: balanceMoves, okYmd: okYmd,
               hasPlan: hasPlan, installment: installment, split: split, schedule: schedule,
               cardCfg: cardCfg, cardCycle: cardCycle,
-              solveRate: solveRate, solveMonths: solveMonths, findSeries: findSeries, guessCycle: guessCycle, INTEREST: INTEREST };
+              solveRate: solveRate, solveMonths: solveMonths, findSeries: findSeries, guessCycle: guessCycle, INTEREST: INTEREST,
+              remindersDue: remindersDue, duesOn: duesOn };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetLoans = api;
 })(typeof window !== "undefined" ? window : this);

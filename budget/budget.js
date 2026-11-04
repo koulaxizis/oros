@@ -125,6 +125,9 @@
       "exp.hint": "The orOS Spreadsheet opens the Excel file and the “other apps” CSV.",
       "col.date": "Date", "col.type": "Type", "col.cat": "Category", "col.amount": "Amount",
       "col.cur": "Currency", "col.note": "Note", "col.total": "Total", "sheet.tx": "Entries", "sheet.sum": "Summary",
+      "exp.prev": "Last year ({y})", "sheet.ye": "Year-end", "ye.title": "Year-end, {d}",
+      "ye.acc": "Account", "ye.bal": "Balance", "ye.loan": "Loan or debt", "ye.lent": "Lent", "ye.owed": "Borrowed",
+      "ye.left": "Left", "ye.int": "Interest paid in {y}",
       "pdf.title": "Budget report", "pdf.gen": "Created {d}", "pdf.bycat": "Expenses by category",
       "pdf.incat": "Income by category", "pdf.list": "Entries", "pdf.page": "Page {n}",
       "bk.done": "Backup saved", "bk.restored": "Backup merged: {n} new or newer items",
@@ -138,12 +141,21 @@
       "cy.rate": "Interest, % a year", "cy.hint": "Budget then shows what each statement asks for, what you paid and what is left by the due date, and roughly what interest it costs if not paid in full. Leave both days empty for an account without a cycle.",
       "cy.needDays": "Both days, from 1 to 31", "cy.needRate": "Interest: a yearly percentage from 0 to 100",
       "cy.feesCat": "Interest & fees", "cy.feeNote": "Card interest",
-      "iv.h": "Investment: crypto, gold, shares", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
+      "iv.h": "Investment or property: crypto, gold, shares, home, car", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
       "iv.kc": "Crypto", "iv.km": "Gold or silver", "iv.ks": "Shares, ETF or other", "iv.sym": "Which", "iv.gold": "gold or silver",
       "iv.qty": "Quantity", "iv.unit": "Unit", "iv.oz": "Troy ounces", "iv.g": "Grams", "iv.price": "Price per unit (optional)",
+      "iv.exFile": "Quantities from Coinbase or Binance",
+      "iv.exNone": "No Coinbase or Binance transaction history in that file, or nothing left in it.",
+      "iv.exPick": "Left in the {src} file, as of its last row. Pick one:",
+      "iv.exSet": "Quantity from the file: {q} {s}. Save to keep it.",
       "iv.hintC": "A symbol such as BTC, ETH or SOL, or the coin's CoinGecko id. The price comes from CoinGecko when online; type one to use when it can't be reached.",
       "iv.hintM": "\"gold\" or \"silver\": the price comes from CoinGecko (gold- and silver-backed tokens, one ounce each), so it is close to, not exactly, the market price. Platinum and others: type the price.",
       "iv.hintS": "Type the ticker and the price per share from your broker or bank; update it when you like. The account's balance (its starting balance plus transfers into it) is what you paid; Overview shows the value and the gain or loss.",
+      "pi.short": "Passive", "pi.toggle": "{c}: passive income", "pi.hint": "Counts as passive income: dividends, interest, rent, royalties",
+      "iv.kp": "Home, car or other valuable", "iv.what": "What it is (optional)", "iv.what.ph": "Flat in Athens, Fiat Panda…",
+      "iv.value": "Value", "iv.day": "Value on", "iv.rate": "Change a year, % (optional)",
+      "iv.hintP": "Its value on a day, from a valuation, an ad for similar ones or what you paid. A change a year moves it on by itself: about −15 for a car, +2 to +5 for a home. Update the value whenever you know better.",
+      "iv.needValue": "Type its value", "iv.needDay": "Pick the day of that value", "iv.needRate": "Change a year: a percentage from −100 to 100, such as -15",
       "iv.needSym": "Type what the account holds", "iv.needQty": "Quantity: a number above 0, such as 0.25", "iv.needPrice": "Type the price per unit", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
       "cy.guessDue": "Due day: when {n} of your payments came in.", "cy.guessStmt": "Statement day: about three weeks before it, as on most cards.",
       "cy.guessRate": "Interest: from the interest charged on {d}.", "cy.guessCheck": "Check them against a statement.", "cy.guessKept": "The fields you filled stay as they are.",
@@ -250,6 +262,9 @@
       "exp.hint": "Το Υπολογιστικό φύλλο του orOS ανοίγει το αρχείο Excel και το CSV «άλλες εφαρμογές».",
       "col.date": "Ημερομηνία", "col.type": "Τύπος", "col.cat": "Κατηγορία", "col.amount": "Ποσό",
       "col.cur": "Νόμισμα", "col.note": "Σημείωση", "col.total": "Σύνολο", "sheet.tx": "Κινήσεις", "sheet.sum": "Σύνοψη",
+      "exp.prev": "Πέρσι ({y})", "sheet.ye": "Τέλος έτους", "ye.title": "Τέλος έτους, {d}",
+      "ye.acc": "Λογαριασμός", "ye.bal": "Υπόλοιπο", "ye.loan": "Δάνειο ή χρέος", "ye.lent": "Δάνεισα", "ye.owed": "Δανείστηκα",
+      "ye.left": "Μένει", "ye.int": "Τόκοι που πληρώθηκαν το {y}",
       "pdf.title": "Αναφορά εσόδων και εξόδων", "pdf.gen": "Δημιουργήθηκε {d}", "pdf.bycat": "Έξοδα ανά κατηγορία",
       "pdf.incat": "Έσοδα ανά κατηγορία", "pdf.list": "Κινήσεις", "pdf.page": "Σελίδα {n}",
       "bk.done": "Το αντίγραφο αποθηκεύτηκε", "bk.restored": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία",
@@ -263,12 +278,21 @@
       "cy.rate": "Επιτόκιο, % τον χρόνο", "cy.hint": "Η εφαρμογή δείχνει τότε τι ζητά κάθε λογαριασμός της κάρτας, τι πλήρωσες και τι μένει ως τη λήξη, και περίπου τι τόκο κοστίζει αν δεν εξοφληθεί. Άφησε κενές και τις δύο ημέρες για λογαριασμό χωρίς κύκλο.",
       "cy.needDays": "Και οι δύο ημέρες, από 1 ως 31", "cy.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
       "cy.feesCat": "Τόκοι και χρεώσεις", "cy.feeNote": "Τόκοι κάρτας",
-      "iv.h": "Επένδυση: κρυπτονομίσματα, χρυσός, μετοχές", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
+      "iv.h": "Επένδυση ή περιουσία: κρυπτο, χρυσός, μετοχές, σπίτι, αυτοκίνητο", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
       "iv.kc": "Κρυπτονόμισμα", "iv.km": "Χρυσός ή ασήμι", "iv.ks": "Μετοχές, ETF ή άλλο", "iv.sym": "Ποιο", "iv.gold": "χρυσός ή ασήμι",
       "iv.qty": "Ποσότητα", "iv.unit": "Μονάδα", "iv.oz": "Ουγγιές", "iv.g": "Γραμμάρια", "iv.price": "Τιμή ανά μονάδα (προαιρετικό)",
+      "iv.exFile": "Ποσότητες από Coinbase ή Binance",
+      "iv.exNone": "Δεν βρέθηκε ιστορικό συναλλαγών Coinbase ή Binance σε αυτό το αρχείο, ή δεν έμεινε τίποτα.",
+      "iv.exPick": "Ό,τι μένει στο αρχείο {src}, ως την τελευταία του γραμμή. Διάλεξε:",
+      "iv.exSet": "Ποσότητα από το αρχείο: {q} {s}. Πάτα Αποθήκευση για να μείνει.",
       "iv.hintC": "Ένα σύμβολο όπως BTC, ETH ή SOL, ή το id του νομίσματος στο CoinGecko. Η τιμή έρχεται από το CoinGecko όταν υπάρχει σύνδεση· γράψε μία για όταν δεν απαντά.",
       "iv.hintM": "«χρυσός» ή «ασήμι»: η τιμή έρχεται από το CoinGecko (tokens με κάλυψη χρυσού και ασημιού, μία ουγγιά το καθένα), άρα είναι κοντά, όχι ακριβώς, στην τιμή της αγοράς. Πλατίνα και άλλα: γράψε την τιμή.",
       "iv.hintS": "Γράψε το σύμβολο και την τιμή ανά μετοχή από τον χρηματιστή ή την τράπεζά σου· άλλαξέ την όποτε θέλεις. Το υπόλοιπο του λογαριασμού (αρχικό υπόλοιπο συν μεταφορές προς αυτόν) είναι όσα πλήρωσες· η Σύνοψη δείχνει την αξία και το κέρδος ή τη ζημιά.",
+      "pi.short": "Παθητικό", "pi.toggle": "{c}: παθητικό εισόδημα", "pi.hint": "Μετρά ως παθητικό εισόδημα: μερίσματα, τόκοι, ενοίκια, πνευματικά δικαιώματα",
+      "iv.kp": "Σπίτι, αυτοκίνητο ή άλλο πολύτιμο", "iv.what": "Τι είναι (προαιρετικό)", "iv.what.ph": "Διαμέρισμα στην Αθήνα, Fiat Panda…",
+      "iv.value": "Αξία", "iv.day": "Αξία στις", "iv.rate": "Μεταβολή τον χρόνο, % (προαιρετικό)",
+      "iv.hintP": "Η αξία του σε μια ημέρα, από εκτίμηση, αγγελίες για παρόμοια ή όσα πλήρωσες. Η μεταβολή τον χρόνο την αλλάζει μόνη της: περίπου −15 για αυτοκίνητο, +2 ως +5 για σπίτι. Άλλαξε την αξία όποτε ξέρεις καλύτερα.",
+      "iv.needValue": "Γράψε την αξία του", "iv.needDay": "Διάλεξε την ημέρα αυτής της αξίας", "iv.needRate": "Μεταβολή τον χρόνο: ποσοστό από −100 ως 100, όπως -15",
       "iv.needSym": "Γράψε τι κρατά ο λογαριασμός", "iv.needQty": "Ποσότητα: αριθμός πάνω από 0, όπως 0,25", "iv.needPrice": "Γράψε την τιμή ανά μονάδα", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
       "cy.guessDue": "Ημέρα λήξης: τότε μπήκαν {n} από τις πληρωμές σου.", "cy.guessStmt": "Ημέρα κλεισίματος: περίπου τρεις εβδομάδες νωρίτερα, όπως στις περισσότερες κάρτες.",
       "cy.guessRate": "Επιτόκιο: από τους τόκους που χρεώθηκαν στις {d}.", "cy.guessCheck": "Έλεγξέ τα με έναν λογαριασμό της κάρτας.", "cy.guessKept": "Τα πεδία που συμπλήρωσες μένουν όπως είναι.",
@@ -655,6 +679,9 @@
     var y = Object.assign({}, x);
     if (!(typeof y.ic === "string" && IC_RE.test(y.ic))) delete y.ic;
     if (!(typeof y.p === "string" && ID_RE.test(y.p) && y.p !== x.id)) delete y.p;
+    // PI-1: pv = passive income (dividends, interest, rent, royalties),
+    // income categories only, written only when true
+    if (!(y.pv === true && x.k === "i")) delete y.pv;
     return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, y);
   }
   // limit = { id (category id | "all"), m, a (cents; 0 = no limit) }
@@ -935,7 +962,7 @@
       (kids[c.id] || []).sort(function (x, y) { return x.name.localeCompare(y.name) || cmpStr(x.id, y.id); })
         .forEach(function (k) { out.push(k); });
     });
-    out.forEach(function (c) { delete c.sp; });
+    out.forEach(function (c) { delete c.sp; if (stored[c.id] && stored[c.id].pv === true && c.k === "i") c.pv = true; });
     return out;
   }
   // { category id: its main category's id } for subcategories only.
@@ -3045,11 +3072,25 @@
     var c = INV.cfg(a);
     if (!c) return null;
     var cu = a.cur || cur();
-    return { c: c, val: INV.value(a, pricesNow(), cu), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
+    return { c: c, val: INV.value(a, pricesNow(), cu, today), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
   }
   function investValue(a) {
     var i = investInfo(a);
     return i && i.val ? i.val.v : null;
+  }
+  // PI-1: passive income over the last 12 months (this one included)
+  // against all expenses then; null without a passive category.
+  function passiveStats() {
+    var pv = {};
+    cats().forEach(function (c) { if (c.pv) pv[c.id] = 1; });
+    if (!Object.keys(pv).length) return null;
+    var pm = pmNow(), from = mkAdd(mkOf(today), -11) + "-01", inc = 0, out = 0;
+    data.tx.forEach(function (x) {
+      if (x.d < from || x.d > today) return;
+      if (x.k === "o") out += x.a;
+      else if (pv[x.c] || (pm[x.c] && pv[pm[x.c]])) inc += x.a;
+    });
+    return { inc: inc, out: out, pct: out > 0 ? Math.round(inc / out * 100) : null, avg: Math.round(inc / 12) };
   }
   function refreshPrices(force) {
     if (!INV || pricesBusy || navigator.onLine === false) return;
@@ -3136,7 +3177,7 @@
   function initPlan() {
     if (!PLANUI) return;
     PLANUI.init({
-      investValue: investValue,
+      investValue: investValue, passiveStats: passiveStats,
       lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch, errLine: errLine, showErr: showErr,
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       data: function () { return data; }, cats: cats, catName: catName, catCol: catCol, findIn: findIn, stamp: stamp,
@@ -3194,7 +3235,7 @@
       },
       // BK-7: the bank's balance on each account it fills, and Match
       dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
-      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo,
+      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo, passiveStats: passiveStats,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
@@ -3650,7 +3691,7 @@
     ivDet.open = !!(a && a.ivk);
     ivDet.appendChild(el("summary", "", t("iv.h")));
     var ivK = el("select");
-    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
+    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"], ["p", "iv.kp"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
     ivK.value = a && a.ivk ? a.ivk : "";
     var ivS = el("input"); ivS.maxLength = 60; ivS.autocomplete = "off"; ivS.value = a && a.ivs ? a.ivs : "";
     var ivQ = el("input"); ivQ.inputMode = "decimal"; ivQ.autocomplete = "off"; ivQ.value = a && a.ivq ? a.ivq : "";
@@ -3659,6 +3700,13 @@
     ivU.value = a && a.ivu === "g" ? "g" : "oz";
     var ivP = el("input"); ivP.inputMode = "decimal"; ivP.autocomplete = "off"; ivP.value = a && a.ivp ? centsToInput(a.ivp, LANG) : "";
     var ivSF = field(t("iv.sym"), ivS, "bd-acc-ivs"), ivUF = field(t("iv.unit"), ivU, "bd-acc-ivu");
+    // AS-1: a home, car or valuable: its value on a day and a yearly change
+    var ivD = el("input"); ivD.type = "date"; ivD.value = a && a.ivk === "p" && a.ivd ? a.ivd : today;
+    var ivR = el("input"); ivR.inputMode = "decimal"; ivR.autocomplete = "off"; ivR.placeholder = "-15";
+    ivR.value = a && a.ivr ? (a.ivr < 0 ? "-" : "") + centsToInput(Math.abs(a.ivr), LANG) : "";
+    var ivPF, ivDRow = el("div", "fld-row");
+    ivDRow.appendChild(field(t("iv.day"), ivD, "bd-acc-ivd"));
+    ivDRow.appendChild(field(t("iv.rate"), ivR, "bd-acc-ivr"));
     var ivHint = el("p", "hint");
     ivDet.appendChild(field(t("iv.kind"), ivK, "bd-acc-ivk"));
     ivDet.appendChild(ivSF);
@@ -3666,14 +3714,60 @@
     ivRow.appendChild(field(t("iv.qty"), ivQ, "bd-acc-ivq"));
     ivRow.appendChild(ivUF);
     ivDet.appendChild(ivRow);
-    ivDet.appendChild(field(t("iv.price"), ivP, "bd-acc-ivp"));
+    // EX-1: the quantity from an exchange's transaction file
+    var exBox = el("div", "iv-ex"), exOut = el("p", "hint");
+    exOut.setAttribute("aria-live", "polite");
+    var exB = button(t("iv.exFile"), "", function () {
+      var BK = window.OrosBudgetBank;
+      if (!INV || !BK) return;
+      localPick(".csv,text/csv").then(function (file) {
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) { exOut.textContent = t("iv.exNone"); return; }
+        return file.arrayBuffer().then(function (buf) {
+          var txt = BK.decode(new Uint8Array(buf), "auto").text;
+          var h = INV.exchangeHoldings(BK.parseCsv(txt, BK.guessSep(txt)));
+          exOut.textContent = "";
+          exList.innerHTML = "";
+          var syms = h ? Object.keys(h.q) : [];
+          if (!syms.length) { exOut.textContent = t("iv.exNone"); return; }
+          function pick(sym) {
+            var q = INV.qtyText(h.q[sym]);
+            if (!q) return;
+            ivS.value = sym;
+            ivQ.value = LANG === "el" ? q.replace(".", ",") : q;
+            exList.innerHTML = "";
+            exOut.textContent = t("iv.exSet", { q: ivQ.value, s: sym });
+          }
+          var mine = ivS.value.trim().toUpperCase();
+          if (mine && h.q[mine]) { pick(mine); return; }
+          exOut.textContent = t("iv.exPick", { src: h.src === "binance" ? "Binance" : "Coinbase" });
+          syms.slice(0, 30).forEach(function (sym) {
+            exList.appendChild(button(sym + " " + (LANG === "el" ? INV.qtyText(h.q[sym]).replace(".", ",") : INV.qtyText(h.q[sym])), "", function () { pick(sym); }));
+          });
+        });
+      }).catch(function () { exOut.textContent = t("iv.exNone"); });
+    });
+    exB.type = "button";
+    var exList = el("div", "iv-ex-list");
+    exBox.appendChild(exB);
+    exBox.appendChild(exOut);
+    exBox.appendChild(exList);
+    ivDet.appendChild(exBox);
+    ivPF = field(t("iv.price"), ivP, "bd-acc-ivp");
+    ivDet.appendChild(ivPF);
+    ivDet.appendChild(ivDRow);
     ivDet.appendChild(ivHint);
     function ivShow() {
       var k = ivK.value;
-      [ivSF, ivRow, ivP.parentNode, ivHint].forEach(function (x) { x.hidden = !k; });
+      [ivSF, ivRow, ivPF, ivHint].forEach(function (x) { x.hidden = !k; });
+      ivRow.hidden = !k || k === "p";
+      ivDRow.hidden = k !== "p";
       ivUF.hidden = k !== "m";
-      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : "AAPL";
-      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : "";
+      exBox.hidden = k !== "c";
+      ivSF.querySelector("label").textContent = t(k === "p" ? "iv.what" : "iv.sym");
+      ivPF.querySelector("label").textContent = t(k === "p" ? "iv.value" : "iv.price");
+      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : k === "p" ? t("iv.what.ph") : "AAPL";
+      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : k === "p" ? t("iv.hintP") : "";
     }
     ivK.addEventListener("change", ivShow);
     ivShow();
@@ -3702,7 +3796,16 @@
         cy = { cys: ds, cyd: dd, cyr: rr };
       }
       var iv = null;
-      if (ivK.value) {
+      if (ivK.value === "p") {
+        var pv0 = ivP.value.trim() ? parseAmount(ivP.value) : null;
+        if (!pv0) { ivDet.open = true; showErr(err, t("iv.needValue"), ivP); return; }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(ivD.value)) { ivDet.open = true; showErr(err, t("iv.needDay"), ivD); return; }
+        var rv0 = parseSigned(ivR.value);
+        if (rv0 === null || Math.abs(rv0) > 10000) { ivDet.open = true; showErr(err, t("iv.needRate"), ivR); return; }
+        iv = { ivk: "p", ivq: "1", ivp: pv0, ivd: ivD.value };
+        if (ivS.value.trim()) iv.ivs = ivS.value.trim().slice(0, 60);
+        if (rv0) iv.ivr = rv0;
+      } else if (ivK.value) {
         var qv = ivQ.value.trim(), sv = ivS.value.trim();
         if (!sv) { ivDet.open = true; showErr(err, t("iv.needSym"), ivS); return; }
         if (!INV || INV.qty(qv) === null) { ivDet.open = true; showErr(err, t("iv.needQty"), ivQ); return; }
@@ -3715,10 +3818,10 @@
         if (pv) { iv.ivp = pv; iv.ivd = a && a.ivp === pv && a.ivd ? a.ivd : today; }
       }
       function setIv(o2) {
-        ["ivd", "ivk", "ivp", "ivq", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
+        ["ivd", "ivk", "ivp", "ivq", "ivr", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
         if (iv) Object.keys(iv).sort().forEach(function (k) { o2[k] = iv[k]; });
       }
-      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd"].map(function (k) { return o2[k] || ""; }).join("|"); };
+      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd", "ivr"].map(function (k) { return o2[k] || ""; }).join("|"); };
       function setCy(o2) {
         delete o2.cys; delete o2.cyd; delete o2.cyr;
         if (cy) { o2.cyd = cy.cyd; if (cy.cyr) o2.cyr = cy.cyr; o2.cys = cy.cys; }
@@ -4080,6 +4183,25 @@
     }
     li.appendChild(inp);
     li.appendChild(del);
+    // PI-1: an income category can count as passive income
+    var pvB = null;
+    if (c.k === "i") {
+      pvB = el("button", "mini cat-pv" + (c.pv ? " on" : ""), t("pi.short"));
+      pvB.type = "button";
+      pvB.setAttribute("aria-pressed", c.pv ? "true" : "false");
+      pvB.setAttribute("aria-label", t("pi.toggle", { c: c.name }));
+      pvB.title = t("pi.hint");
+      pvB.addEventListener("click", function () {
+        var s = storedCat(c);
+        if (s.pv) delete s.pv; else s.pv = true;
+        s.m = stamp(s.m);
+        commit();
+        redraw();
+        renderAll();
+        var again = document.querySelector('#bd-cats [data-cat="' + c.id + '"] .cat-pv');
+        if (again) again.focus();
+      });
+    }
     // Main category: any main category of the same kind; one with
     // subcategories of its own stays a main one.
     var hasKids = list.some(function (y) { return y.p === c.id; });
@@ -4105,6 +4227,7 @@
       if (again) again.focus();
     });
     li.appendChild(ps);
+    if (pvB) li.appendChild(pvB);
     return li;
   }
 
@@ -4175,6 +4298,7 @@
   function periodOf(p) {
     if (p === "year") return { prefix: viewMk.slice(0, 4), label: viewMk.slice(0, 4), slug: viewMk.slice(0, 4) };
     if (p === "all") return { prefix: "", label: t("exp.all"), slug: "all" };
+    if (p === "prev") { var py = String(+today.slice(0, 4) - 1); return { prefix: py, label: py, slug: py }; }
     return { prefix: viewMk, label: monthLabel(viewMk), slug: viewMk };
   }
   function exportRows(prefix) {
@@ -4198,7 +4322,9 @@
     grp.setAttribute("aria-label", t("exp.period"));
     var pb = {};
     [["month", t("exp.month", { m: monthLabel(viewMk) })], ["year", t("exp.year", { y: viewMk.slice(0, 4) })],
-     ["all", t("exp.all")]].forEach(function (p) {
+     ["prev", t("exp.prev", { y: +today.slice(0, 4) - 1 })], ["all", t("exp.all")]].filter(function (p) {
+      return p[0] !== "prev" || viewMk.slice(0, 4) !== String(+today.slice(0, 4) - 1);
+    }).forEach(function (p) {
       var b = el("button", "seg-btn", p[1]);
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -4313,6 +4439,32 @@
       .sort(function (a, b) { return cmpStr(b.k, a.k) || b.a - a.a; });
   }
 
+  // YE-1: for a year's export (the accountant's): each account's balance
+  // at the end of that year (today for the current one), in its own
+  // currency, and each loan or debt left then, with the interest paid
+  // that year on a bank loan. → null for a month or everything.
+  function yearEnd(P) {
+    if (!P.prefix || P.prefix.length !== 4) return null;
+    var end = P.prefix + "-12-31" < today ? P.prefix + "-12-31" : today;
+    var start = P.prefix + "-01-01", bal = accBalances(data, end);
+    var accl = accs().map(function (a) { return { n: a.n, cur: accCur(a), bal: bal[a.id] || 0 }; });
+    var loans = [], L = window.OrosBudgetLoans;
+    if (L) {
+      var by = L.paysBy(data.lpay.filter(function (p) { return p.d <= end; }));
+      data.loan.forEach(function (l) {
+        if (l.d > end || l.wo) return;
+        var st = L.status(l, by[l.id], end), int = 0;
+        if (L.hasPlan(l)) {
+          var before = (by[l.id] || []).filter(function (p) { return p.d < start; });
+          int = L.split(l, by[l.id]).int - L.split(l, before).int;
+        }
+        if (st.left || int) loans.push({ n: l.n, k: l.k, left: st.left, int: int });
+      });
+      loans.sort(function (a, b) { return cmpStr(a.k, b.k) || cmpStr(a.n, b.n); });
+    }
+    return accl.length || loans.length ? { end: end, y: P.prefix, accs: accl, loans: loans } : null;
+  }
+
   function exportXlsx(rows, P) {
     loadLib("xlsx.full.min.js", function () {
       var X = window.XLSX;
@@ -4340,6 +4492,19 @@
       var wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, t("sheet.tx"));
       X.utils.book_append_sheet(wb, ws2, t("sheet.sum"));
+      var ye = yearEnd(P);
+      if (ye) {
+        var yt = [[t("ye.title", { d: dateShort(ye.end) })], [], [t("ye.acc"), t("col.cur"), t("ye.bal")]];
+        ye.accs.forEach(function (a) { yt.push([safeText(a.n), a.cur, a.bal / 100]); });
+        if (ye.loans.length) {
+          yt.push([]);
+          yt.push([t("ye.loan"), "", t("ye.left"), t("ye.int", { y: ye.y })]);
+          ye.loans.forEach(function (l) { yt.push([safeText(l.n), t(l.k === "l" ? "ye.lent" : "ye.owed"), l.left / 100, l.int / 100]); });
+        }
+        var ws3 = X.utils.aoa_to_sheet(yt);
+        ws3["!cols"] = [{ wch: 26 }, { wch: 12 }, { wch: 14 }, { wch: 20 }];
+        X.utils.book_append_sheet(wb, ws3, t("sheet.ye").slice(0, 31));
+      }
       var buf = X.write(wb, { bookType: "xlsx", type: "array" });
       var mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       saveBlob(new Blob([buf], { type: mime }), "oros-budget-" + P.slug + ".xlsx", mime, "Excel", ".xlsx");
@@ -4427,6 +4592,38 @@
       });
       y += 12;
     });
+    var ye = yearEnd(P);
+    if (ye) {
+      need(40 + 15 * Math.min(ye.accs.length, 3));
+      doc.setFontSize(12);
+      txt(t("ye.title", { d: dateShort(ye.end) }), M, y); y += 8;
+      doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 14;
+      doc.setFontSize(10);
+      ye.accs.forEach(function (a) {
+        need(16);
+        txt(a.n.length > 40 ? a.n.slice(0, 39) + "…" : a.n, M, y);
+        txt(money(a.bal, a.cur), W - M, y, { align: "right" });
+        y += 15;
+      });
+      if (ye.loans.length) {
+        y += 6;
+        need(30);
+        doc.setFontSize(9); doc.setTextColor(110);
+        txt(t("ye.loan"), M, y);
+        txt(t("ye.left"), W - M - 130, y, { align: "right" });
+        txt(t("ye.int", { y: ye.y }), W - M, y, { align: "right" });
+        doc.setTextColor(0); doc.setFontSize(10); y += 15;
+        ye.loans.forEach(function (l) {
+          need(16);
+          var nm = l.n + " · " + t(l.k === "l" ? "ye.lent" : "ye.owed");
+          txt(nm.length > 40 ? nm.slice(0, 39) + "…" : nm, M, y);
+          txt(money(l.left), W - M - 130, y, { align: "right" });
+          txt(l.int ? money(l.int) : "", W - M, y, { align: "right" });
+          y += 15;
+        });
+      }
+      y += 12;
+    }
     need(40);
     doc.setFontSize(12);
     txt(t("pdf.list"), M, y); y += 8;

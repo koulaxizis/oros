@@ -290,3 +290,9 @@ test("caps and safety: rows capped, text cleaned, nothing from a file is code", 
   assert.equal(pm.items.length, I.MAX_ROWS);
   assert.ok(pm.more);
 });
+
+test("PI-1: passive income is kept only on income categories, only when true", () => {
+  assert.equal(BU.normCat({ id: "u1", m: 1, k: "i", name: "Rent", col: 1, pv: true }).pv, true);
+  assert.equal("pv" in BU.normCat({ id: "u1", m: 1, k: "o", name: "Rent", col: 1, pv: true }), false);
+  assert.equal("pv" in BU.normCat({ id: "u1", m: 1, k: "i", name: "Rent", col: 1, pv: "yes" }), false);
+});

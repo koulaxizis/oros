@@ -40,7 +40,7 @@
       st_new: "New", st_dup: "Looks like an entry already here", st_same: "Already imported",
       st_gone: "Deleted here earlier", st_skip: "Skipped",
       why_date: "no date", why_amount: "no amount", why_zero: "zero amount", why_cur: "another currency ({c})",
-      why_pending: "not booked yet", why_memo: "a hold or note, no money moved",
+      why_pending: "not booked yet", why_memo: "a hold or note, no money moved", why_void: "cancelled or declined",
       dup_inv: "Already here from Invoices", dup_xfer: "Already here as a transfer between your accounts",
       dup_pp: "Already here from PayPal (the same payment)",
       rule: "Rule: {q}", always: "Always do this", learned: "As before for this name",
@@ -59,7 +59,7 @@
       saved: "Rule saved", deleted: "Rule deleted",
       ruleTxt: "contains “{q}”", ruleAmt: "{a}", ruleFrom: "from {a}", ruleTo: "up to {a}",
       save: "Save", cancel: "Cancel", del: "Delete", close: "Close",
-      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053", fmt_mt940: "MT940", fmt_paypal: "PayPal",
+      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053", fmt_mt940: "MT940", fmt_paypal: "PayPal", fmt_revolut: "Revolut",
       // exports of personal-finance apps (budget/import.js)
       appTitle: "Import from {app}", appFile: "{f} · {app} · {n} rows",
       appRange: "From {a} to {b}", appBig: "The file is too big (up to 20 MB).",
@@ -96,7 +96,7 @@
       st_new: "Νέα", st_dup: "Μοιάζει με κίνηση που υπάρχει ήδη", st_same: "Έχει ήδη εισαχθεί",
       st_gone: "Διαγράφηκε εδώ παλιότερα", st_skip: "Παραλείπεται",
       why_date: "χωρίς ημερομηνία", why_amount: "χωρίς ποσό", why_zero: "μηδενικό ποσό", why_cur: "άλλο νόμισμα ({c})",
-      why_pending: "δεν έχει λογιστικοποιηθεί ακόμα", why_memo: "δέσμευση ή σημείωση, δεν κινήθηκαν χρήματα",
+      why_pending: "δεν έχει λογιστικοποιηθεί ακόμα", why_memo: "δέσμευση ή σημείωση, δεν κινήθηκαν χρήματα", why_void: "ακυρώθηκε ή απορρίφθηκε",
       dup_inv: "Υπάρχει ήδη από τα Τιμολόγια", dup_xfer: "Υπάρχει ήδη ως μεταφορά μεταξύ των λογαριασμών σου",
       dup_pp: "Υπάρχει ήδη από το PayPal (η ίδια πληρωμή)",
       rule: "Κανόνας: {q}", always: "Πάντα έτσι", learned: "Όπως παλιότερα για αυτό το όνομα",
@@ -114,7 +114,7 @@
       saved: "Ο κανόνας αποθηκεύτηκε", deleted: "Ο κανόνας διαγράφηκε",
       ruleTxt: "περιέχει «{q}»", ruleAmt: "{a}", ruleFrom: "από {a}", ruleTo: "έως {a}",
       save: "Αποθήκευση", cancel: "Άκυρο", del: "Διαγραφή", close: "Κλείσιμο",
-      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053", fmt_mt940: "MT940", fmt_paypal: "PayPal",
+      fmt_csv: "CSV", fmt_ofx: "OFX", fmt_qif: "QIF", fmt_camt: "CAMT.053", fmt_mt940: "MT940", fmt_paypal: "PayPal", fmt_revolut: "Revolut",
       appTitle: "Εισαγωγή από {app}", appFile: "{f} · {app} · {n} γραμμές",
       appRange: "Από {a} έως {b}", appBig: "Το αρχείο είναι πολύ μεγάλο (έως 20 MB).",
       appNoXls: "Αυτό το υπολογιστικό φύλλο δεν είναι εξαγωγή που αναγνωρίζει η εφαρμογή.",
@@ -483,10 +483,12 @@
         st.sig = st.hd.header >= 0 ? B.headerSig(st.rows[st.hd.header]) : "";
         // PayPal's activity file: its own columns and rules (BK-1).
         var ppm = st.hd.header >= 0 ? B.paypalMap(st.rows[st.hd.header]) : null;
-        if (ppm) {
-          st.fmt = "paypal";
-          st.ppMap = ppm;
-          st.sig = "paypal";
+        // Revolut's statement: fees, pending rows, top-ups (RV-1).
+        var rvm = !ppm && st.hd.header >= 0 ? B.revolutMap(st.rows[st.hd.header]) : null;
+        if (ppm || rvm) {
+          st.fmt = ppm ? "paypal" : "revolut";
+          st.ppMap = ppm || rvm;
+          st.sig = st.fmt;
           if (first) { var pq = profBySig(st.sig); if (pq) applyProfile(pq); det.open = false; }
         } else if (first) {
           var p = profBySig(st.sig);
@@ -510,6 +512,7 @@
       if (st.fmt === "csv") st.items = B.csvItems(st.rows, st.hd.start, st.map);
       else if (st.fmt === "qif") st.items = B.parseQif(st.text, st.map.df).items;
       else if (st.fmt === "paypal") st.items = B.paypalItems(st.rows, st.hd.start, st.ppMap, A.cur());
+      else if (st.fmt === "revolut") st.items = B.revolutItems(st.rows, st.hd.start, st.ppMap);
     }
 
     function colLabel(i) {

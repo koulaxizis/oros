@@ -49,7 +49,7 @@
       year: "Where the money goes, {y}", yNone: "No expenses in {y}.", yTot: "Total", yIn: "Income", yOut: "Expenses",
       yOther: "Other", yPrev: "Previous year", yNext: "Next year", yCat: "Category",
       nw: "Net worth", nwNone: "Add accounts (More › Accounts) to see your net worth: the sum of their balances at the end of each month.",
-      nwNow: "Today {a}", nwMiss: "{n} account(s) left out: no exchange rate yet.",
+      nwNow: "Today {a}", piLine: "Passive income, last 12 months: {a} ({m} a month), {p} % of your expenses.", piNoOut: "Passive income, last 12 months: {a} ({m} a month).", nwMiss: "{n} account(s) left out: no exchange rate yet.",
       nwFx: "Other currencies at today's rates."
     },
     el: {
@@ -81,7 +81,7 @@
       year: "Πού πάνε τα χρήματα, {y}", yNone: "Κανένα έξοδο το {y}.", yTot: "Σύνολο", yIn: "Έσοδα", yOut: "Έξοδα",
       yOther: "Υπόλοιπες", yPrev: "Προηγούμενο έτος", yNext: "Επόμενο έτος", yCat: "Κατηγορία",
       nw: "Καθαρή περιουσία", nwNone: "Πρόσθεσε λογαριασμούς (Περισσότερα › Λογαριασμοί) για να δεις την καθαρή σου περιουσία: το άθροισμα των υπολοίπων τους στο τέλος κάθε μήνα.",
-      nwNow: "Σήμερα {a}", nwMiss: "{n} λογαριασμοί έμειναν έξω: δεν υπάρχει ακόμα ισοτιμία.",
+      nwNow: "Σήμερα {a}", piLine: "Παθητικό εισόδημα, τελευταίοι 12 μήνες: {a} ({m} τον μήνα), {p} % των εξόδων σου.", piNoOut: "Παθητικό εισόδημα, τελευταίοι 12 μήνες: {a} ({m} τον μήνα).", nwMiss: "{n} λογαριασμοί έμειναν έξω: δεν υπάρχει ακόμα ισοτιμία.",
       nwFx: "Τα άλλα νομίσματα με τις σημερινές ισοτιμίες."
     }
   };
@@ -721,6 +721,8 @@
     var rows = P.netWorthSeries(D(), months, A.today(), A.cur(), A.fx, A.investValue);
     var now = P.netWorth(D(), A.today(), A.cur(), A.fx, A.investValue);
     box.appendChild(el("p", "nw-now" + (now.tot < 0 ? " neg" : ""), t("nwNow", { a: A.money(now.tot) })));
+    var ps = A.passiveStats ? A.passiveStats() : null;     // PI-1
+    if (ps) box.appendChild(el("p", "hint nw-pi", t(ps.pct === null ? "piNoOut" : "piLine", { a: A.money(ps.inc), m: A.money(ps.avg), p: ps.pct })));
     var W = A.chartWidth(box), H = 180, L = 46, Rm = 10, T = 12, B = 24;
     var lo = 0, hi = 0;
     rows.forEach(function (r) { lo = Math.min(lo, r.tot); hi = Math.max(hi, r.tot); });

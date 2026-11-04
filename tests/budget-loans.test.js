@@ -178,3 +178,21 @@ test("LN-F: rate and months from what the person knows, series and a card cycle 
   assert.equal(L.guessCycle([], [], () => 0), null);
   assert.ok(L.INTEREST.test("ΤΟΚΟΙ ΠΕΡΙΟΔΟΥ") && L.INTEREST.test("Interest charge"));
 });
+
+test("RM-1: reminders for a loan installment and a card statement due soon", () => {
+  const P = require("../budget/plan.js");
+  const raw = {
+    set: { cur: "EUR" },
+    acc: [{ id: "card", m: 1, n: "Visa", o: 0, col: 1, cyd: 5, cyr: 1825, cys: 10 }, { id: "bank", m: 1, n: "Alpha", o: 100000, col: 2 }],
+    tx: [{ id: "t1", m: 1, k: "o", a: 50000, c: "o-groc", d: "2026-10-01", n: "", ac: "card" }],
+    xfer: [{ id: "x1", m: 1, d: "2026-10-20", a: 20000, f: "bank", t: "card", n: "" }],
+    loan: [loan({ id: "l1", a: 1000000, d: "2026-01-15", k: "b", n: "Alpha loan", nm: 120, r: 475, ins: 0 })],
+    lpay: [pay({ id: "p1", l: "l1", a: 10485, d: "2026-10-15" })]
+  };
+  const due = L.remindersDue(raw, "2026-11-03", P);
+  assert.deepEqual(due.map((x) => [x.key, x.a, x.days]), [["card:card:2026-11-05", 30000, 2]]);
+  const due2 = L.remindersDue(raw, "2026-11-13", P);
+  assert.deepEqual(due2.map((x) => [x.kind, x.next, x.days, x.a]), [["loan", "2026-11-15", 2, 10485]]);
+  assert.deepEqual(L.remindersDue(raw, "2026-11-20", P), []);
+  assert.deepEqual(L.remindersDue(null, "2026-11-20", P), []);
+});

@@ -965,6 +965,10 @@ div.ov-accrow:hover { background: none; }
 .cat-list .cat-parent { flex: 1 1 100%; margin-left: 88px; max-width: calc(100% - 88px); font-size: 13px; }
 .cat-list li.sub { padding-left: 20px; border-left: 2px solid var(--border); margin-left: 6px; }
 .cat-list li.sub .cat-parent { margin-left: 88px; }
+/* PI-1: passive income toggle beside the main-category select */
+.cat-list .cat-pv { flex: 0 0 auto; }
+.cat-list li:has(.cat-pv) .cat-parent { flex: 1 1 0; min-width: 0; }
+.cat-list .cat-pv.on { background: var(--accent); color: var(--accent-ink, #14120d); border-color: var(--accent); }
 .ic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; margin: 4px 0 8px; }
 .ic-pick {
   display: inline-flex;
@@ -1005,6 +1009,8 @@ div.ov-accrow:hover { background: none; }
 /* LN-I: interest plan and schedule */
 .ln-plan, .acc-cy { margin: 4px 0 8px; }
 .ln-plan > summary, .acc-cy > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--text-dim); }
+.iv-ex { margin: 4px 0 8px; }
+.iv-ex-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .ln-sched { overflow-x: auto; max-height: 60vh; overflow-y: auto; margin: 6px 0 10px; }
 .ln-sched table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ln-sched th, .ln-sched td { padding: 4px 5px; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: left; }
