@@ -596,6 +596,14 @@ dialog.as-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .chain-row .dlg-check { margin-top: 6px; }
 .chain-st { font-size: 13px; color: var(--text-dim); }
 .chain-st.ok { color: var(--text); }
+.chain-sum { margin: 4px 0 8px; font-weight: 600; }
+.chain-row { justify-content: flex-start; }
+.chain-row .chain-st { margin-left: auto; }
+.chain-n { min-width: 1.6em; height: 1.6em; display: inline-flex; align-items: center; justify-content: center; margin-top: 6px; border-radius: 50%; font-size: 12px; font-weight: 600; background: var(--accent-soft); color: var(--text); border: 1px solid var(--accent); }
+.chain-row.off .chain-n { background: transparent; color: var(--text-dim); border: 1px solid var(--text-dim); }
+.chain-row.off .dlg-check, .chain-row.off .chain-st { opacity: .6; }
+.chain-more { margin-top: 10px; }
+.chain-more summary { cursor: pointer; font-size: 13px; color: var(--text-dim); }
 .perm-row {
   display: flex;
   align-items: center;

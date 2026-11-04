@@ -718,3 +718,12 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 .plat-txt { flex: 1 1 180px; min-width: 0; }
 .plat-name { font-weight: 600; overflow-wrap: anywhere; }
 .plat-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+/* CSV import: the other columns of the file (W1 2026-11) */
+.imp-cols { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px 4px; margin: 0 0 12px; min-width: 0; }
+.imp-cols legend { font-size: 13px; font-weight: 600; padding: 0 4px; }
+.imp-cols .fld { overflow-wrap: anywhere; }
+/* HTML issues (W2 2026-11) */
+.code-area { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+/* N1: coupon fields of an HTML issue */
+.cpn-box { margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--border); border-radius: 10px; }
+.cpn-box > .dlg-h { margin-top: 0; }
