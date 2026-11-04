@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 38980 of 39227 (99%)
+- Strings: 39006 of 39253 (99%)
 - Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
@@ -22,7 +22,7 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
-| budget | 89% | 855 / 957 |
+| budget | 89% | 881 / 983 |
 | calculator | 100% | 166 / 166 |
 | calendar | 98% | 430 / 438 |
 | capture | 100% | 54 / 54 |
@@ -171,6 +171,7 @@ text is still written in the code. They switch over wave by wave
 
 These show English until fixed (usually the English text changed).
 
+- de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
