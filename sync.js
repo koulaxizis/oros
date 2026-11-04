@@ -2160,6 +2160,84 @@
     });
   }
 
+  // SY-SW — A SECOND WINDOW NEVER ERASES AN APP'S WORK (2026-11-04).
+  // Apps keep their data in memory and write it whole on each save. Two
+  // windows of one app on one device (orOS next to a single app, two
+  // tabs, a background frame) each held their own copy, so the older
+  // one's next save wrote over what the other had just saved; with no
+  // sync in between it was gone (Chris 2026-11-03: a contact; the same
+  // in Notes and nearly every app). For every LIVE slice registered
+  // from an app frame with a storage key and a merge function, the
+  // frame's own localStorage.setItem is wrapped for that key: it knows
+  // the stored text the frame last wrote (or found at registration).
+  // When storage holds something else at the next write, another
+  // window (or the shell: phone, CRM, Assistant) wrote in between; the
+  // write then stores merge(this write, the stored copy) instead, and
+  // the app takes the merged data through its own setter right after,
+  // so its memory and screen catch up. Reads are never wrapped (a sync
+  // getter reading storage is not the app seeing it). A merge that
+  // throws, or text that is not JSON, writes exactly what the app
+  // asked (the old behaviour). Storage-shaped data is merge input
+  // already: the closed-app proxy stores cloud data raw the same way.
+  // A deletion made without a tombstone can come back in this
+  // two-window case, as it does between devices; nothing is lost.
+  function guardFrameStorage(name, ownerDoc, storageKey, getter) {
+    var w = null;
+    try { w = ownerDoc && ownerDoc.defaultView; } catch (e) { w = null; }
+    if (!w || w === window || !storageKey) return;
+    // Only the window that made the getter (ownerDocOf may fall back
+    // to the first frame).
+    try { if (!(w.Function && getter instanceof w.Function)) return; } catch (e) { return; }
+    var ls, proto;
+    try { ls = w.localStorage; proto = w.Storage && w.Storage.prototype; } catch (e) { return; }
+    if (!ls || !proto) return;
+    var g = w.__orosSw;
+    if (!g) {
+      var origSet = proto.setItem, origGet = proto.getItem;
+      g = { keys: {}, seen: {}, origSet: origSet, origGet: origGet };
+      try {
+        Object.defineProperty(w, "__orosSw", { value: g, configurable: true });
+        proto.setItem = function (k, v) {
+          if (this !== ls || !Object.prototype.hasOwnProperty.call(g.keys, k)) {
+            return origSet.apply(this, arguments);
+          }
+          return swWrite(g, ls, String(k), String(v));
+        };
+      } catch (e) { return; }
+    }
+    g.keys[storageKey] = name;
+    try { g.seen[storageKey] = g.origGet.call(ls, storageKey); } catch (e) { g.seen[storageKey] = null; }
+  }
+  function swWrite(g, ls, key, text) {
+    var name = g.keys[key];
+    var cur = null;
+    try { cur = g.origGet.call(ls, key); } catch (e) { cur = null; }
+    var seen = g.seen[key];
+    var s = slices[name];
+    var out = text, merged = null;
+    if (cur !== null && cur !== seen && cur !== text && s && s.live && s.merge && s.storageKey === key) {
+      try {
+        merged = s.merge(JSON.parse(text), JSON.parse(cur));
+        if (merged !== null && typeof merged === "object") out = JSON.stringify(merged);
+        else merged = null;
+      } catch (e) {
+        merged = null;
+        try { console.warn("[orOS sync] SY-SW: merge failed for \"" + name + "\", stored as the app wrote it:", e); } catch (e2) {}
+      }
+    }
+    g.origSet.call(ls, key, out);          // throws (storage full) exactly like the app's own call
+    g.seen[key] = out;
+    if (merged && out !== text) {
+      // The app's memory still holds its own version: hand it the
+      // merged one (its setter stores it in its own shape).
+      setTimeout(function () {
+        var live = slices[name];
+        if (!live || live.set !== s.set) return;
+        try { s.set(JSON.parse(out), { merged: true }); } catch (e) {}
+      }, 0);
+    }
+  }
+
   function registerSlice(name, getter, setter, storageKey, mergeFn) {
     if (RETIRED_SLICES[name]) {
       // A cached older shell.js may still try. Not an error.
@@ -2180,6 +2258,7 @@
     };
 
     if (storageKey) persistSliceEntry(name, storageKey);
+    if (ownerDoc && storageKey && slices[name].merge) guardFrameStorage(name, ownerDoc, storageKey, getter);   // SY-SW
 
     // SY-D3: remember that this app can merge when it is open — the
     // closed-app proxy has no mergeFn of its own and needs to know.
