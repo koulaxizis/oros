@@ -36,6 +36,13 @@
    ]
   },
   {
+   "app": "automations",
+   "files": [
+    "automations/app.js",
+    "automations/core.js"
+   ]
+  },
+  {
    "app": "baby",
    "files": [
     "baby/baby.js",

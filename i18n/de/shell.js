@@ -122,6 +122,7 @@ orosPack("de", "shell", {
  "app.tictactoe": "Tic-Tac-Toe",
  "app.time": "Zeit",
  "app.timesheet": "Zeiterfassung",
+ "app.automations": "Automatisierungen",
  "app.today": "Heute",
  "app.todo": "Aufgaben",
  "app.travel": "Reisen",
