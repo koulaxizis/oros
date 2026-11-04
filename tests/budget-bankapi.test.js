@@ -217,6 +217,13 @@ test("bnk rows: normalised, LWW merge, tombstones, kept by an older shape", () =
   assert.equal(BJ.normBnk(Object.assign({}, row, { sid: "x" })), null);
   assert.equal(BJ.normBnk(Object.assign({}, row, { la: "Bad!" })), null);
   assert.equal(BJ.normBnk(Object.assign({}, row, { ib: "GR160110" })).ib, "");
+  // BK-8: a card's debt, available balance, limit and kind
+  const card = Object.assign({}, row, { bb: -70000, bc: "EUR", bd: "2026-11-03", ba: 180000, cl: 250000, ty: "CARD" });
+  assert.deepEqual(BJ.normBnk(card), card);
+  const onlyAv = Object.assign({}, row, { bc: "EUR", bd: "2026-11-03", ba: 180000 });
+  assert.deepEqual(BJ.normBnk(onlyAv), onlyAv);
+  assert.equal(BJ.normBnk(Object.assign({}, row, { cl: -5, ty: "card" })).cl, undefined);
+  assert.equal(BJ.normBnk(Object.assign({}, row, { ty: "card" })).ty, undefined);
   const a = BJ.emptyData(), b = BJ.emptyData();
   a.bnk = [row];
   b.bnk = [Object.assign({}, row, { m: 9, ac: "acc2" })];
@@ -248,4 +255,38 @@ test("budget.js declares each function name once (a second one would silently re
   const names = [...src.matchAll(/^ {2}function ([A-Za-z0-9_$]+)\s*\(/gm)].map((m) => m[1]);
   const dup = names.filter((n, i) => names.indexOf(n) !== i);
   assert.deepEqual(dup, []);
+});
+
+test("BK-8 card: debt and available add up to the limit; session keeps type and limit", () => {
+  const av = K.available({ balances: [
+    { balance_type: "CLBD", balance_amount: { amount: "1800.00", currency: "EUR" } },
+    { balance_type: "ITAV", balance_amount: { amount: "1800.00", currency: "EUR" }, reference_date: "2026-11-03" }
+  ] });
+  assert.deepEqual(av, { a: 180000, cu: "EUR", d: "2026-11-03", ty: "ITAV" });
+  assert.equal(K.available({ balances: [{ balance_type: "CLBD", balance_amount: { amount: "1", currency: "EUR" } }] }), null);
+  const b = { a: 180000, cu: "EUR", d: "2026-11-03", ty: "CLBD" };
+  // a card with a limit of 2,500: debt −700, available 1,800
+  assert.deepEqual(K.view(b, av, 250000, true), { bb: -70000, ba: 180000, bc: "EUR", bd: "2026-11-03", debt: true });
+  // no limit, booked = available: the debt is not known yet
+  assert.deepEqual(K.view(b, av, 0, true), { bb: null, ba: 180000, bc: "EUR", bd: "2026-11-03", debt: false });
+  // only an available balance on a card without limit
+  assert.deepEqual(K.view(av, av, 0, true), { bb: null, ba: 180000, bc: "EUR", bd: "2026-11-03", debt: false });
+  // a debt the bank gives itself (booked differs from available)
+  assert.deepEqual(K.view({ a: -70000, cu: "EUR", d: "2026-11-03", ty: "CLBD" }, av, 0, true).bb, -70000);
+  // a current account: booked, plus available when it differs
+  assert.deepEqual(K.view({ a: 50000, cu: "EUR", d: "2026-11-03", ty: "CLBD" }, { a: 45000, cu: "EUR", d: "2026-11-03", ty: "ITAV" }, 0, false),
+    { bb: 50000, ba: 45000, bc: "EUR", bd: "2026-11-03", debt: false });
+  // paid in full: never a positive debt
+  assert.equal(K.view(b, { a: 260000, cu: "EUR", d: "", ty: "ITAV" }, 250000, true).bb, 0);
+  assert.equal(K.isCard({ ty: "CARD" }), true);
+  assert.equal(K.isCard({ ty: "CACC", nm: "Visa" }), false);
+  assert.equal(K.isCard({ nm: "Alpha Bank MasterCard" }), true);
+  assert.equal(K.isCard({ nm: "Alpha Προνομιακός" }), false);
+  const s = K.session({ session_id: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", access: { valid_until: "2027-05-01T00:00:00Z" }, accounts: [
+    { uid: "aaaaaaaa-bbbb-cccc-dddd-000000000001", name: "Visa", currency: "EUR", cash_account_type: "CARD", credit_limit: { amount: "2500.00", currency: "EUR" } },
+    { uid: "aaaaaaaa-bbbb-cccc-dddd-000000000002", name: "Current", currency: "EUR", cash_account_type: "CACC" }
+  ] });
+  assert.equal(s.accts[0].ty, "CARD");
+  assert.equal(s.accts[0].cl, 250000);
+  assert.equal(s.accts[1].cl, 0);
 });
