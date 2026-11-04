@@ -187,6 +187,18 @@
       "pdf.period": "Period", "pdf.date": "Date", "pdf.time": "Time", "pdf.hours": "Hours", "pdf.project": "Project",
       "pdf.desc": "Description", "pdf.amount": "Amount", "pdf.total": "Total", "pdf.made": "Made with orOS Timesheet",
       "toast.pdfFail": "The PDF couldn't be made (is the app fully loaded?)",
+      "rep.ics": "Export calendar (.ics)",
+      "imp.aw": "Your time at the computer becomes suggested entries of 15 minutes or more (breaks under 5 minutes are joined), each named after the window used most. They have no project: assign one afterwards, or delete the ones that weren't work.",
+      "acc.btn": "Import from an account (Toggl, Clockify, Harvest, Kimai)", "acc.title": "Import from an account",
+      "acc.intro": "Bring your time entries from Toggl Track, Clockify, Harvest or Kimai, with their projects and clients. orOS only reads: nothing changes there. Importing the same time again, or its CSV export, adds nothing.",
+      "acc.none": "Connect Toggl Track, Clockify, Harvest or Kimai in Settings › Connected services first.",
+      "acc.settings": "Open Connected services", "acc.acct": "Account", "acc.from": "From", "acc.to": "To",
+      "acc.range": "Up to one year at a time.", "acc.read": "Read", "acc.reading": "Reading… {n} entries",
+      "acc.badRange": "Pick a period of up to one year, From before To.", "acc.nothing": "Nothing to import in that period",
+      "acc.err.auth": "{p} refused the token. Check it in Settings › Connected services.",
+      "acc.err.keys": "This device doesn't have the account's token yet. Enter it in Settings › Connected services.",
+      "acc.err.offline": "You're offline.", "acc.err.busy": "{p} asks to slow down. Try again in a minute.",
+      "acc.err.other": "Couldn't reach {p}. Try again later.",
       "mail.subj": "Timesheet {r}", "mail.body": "Hello,\n\nattached is the timesheet for {r}: {h} hours."
     },
     el: {
@@ -328,6 +340,18 @@
       "pdf.period": "Περίοδος", "pdf.date": "Ημερομηνία", "pdf.time": "Ώρα", "pdf.hours": "Ώρες", "pdf.project": "Έργο",
       "pdf.desc": "Περιγραφή", "pdf.amount": "Ποσό", "pdf.total": "Σύνολο", "pdf.made": "Με τις Ώρες εργασίας του orOS",
       "toast.pdfFail": "Το PDF δεν έγινε (έχει φορτώσει πλήρως η εφαρμογή;)",
+      "rep.ics": "Εξαγωγή ημερολογίου (.ics)",
+      "imp.aw": "Ο χρόνος σου στον υπολογιστή γίνεται προτεινόμενες καταγραφές 15 λεπτών και πάνω (διαλείμματα κάτω από 5 λεπτά ενώνονται), με το όνομα του παραθύρου που χρησιμοποιήθηκε περισσότερο. Δεν έχουν έργο: όρισέ το μετά ή διάγραψε όσες δεν ήταν δουλειά.",
+      "acc.btn": "Εισαγωγή από λογαριασμό (Toggl, Clockify, Harvest, Kimai)", "acc.title": "Εισαγωγή από λογαριασμό",
+      "acc.intro": "Φέρε τις καταγραφές σου από το Toggl Track, το Clockify, το Harvest ή το Kimai, με τα έργα και τους πελάτες τους. Το orOS μόνο διαβάζει: εκεί δεν αλλάζει τίποτα. Αν φέρεις ξανά τον ίδιο χρόνο, ή την εξαγωγή του σε CSV, δεν προστίθεται τίποτα.",
+      "acc.none": "Σύνδεσε πρώτα το Toggl Track, το Clockify, το Harvest ή το Kimai στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "acc.settings": "Άνοιγμα Συνδεδεμένων υπηρεσιών", "acc.acct": "Λογαριασμός", "acc.from": "Από", "acc.to": "Έως",
+      "acc.range": "Έως έναν χρόνο κάθε φορά.", "acc.read": "Ανάγνωση", "acc.reading": "Ανάγνωση… {n} καταγραφές",
+      "acc.badRange": "Διάλεξε περίοδο έως έναν χρόνο, με το Από πριν από το Έως.", "acc.nothing": "Δεν υπάρχει κάτι για εισαγωγή σε αυτή την περίοδο",
+      "acc.err.auth": "Το {p} απέρριψε το token. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "acc.err.keys": "Αυτή η συσκευή δεν έχει ακόμα το token του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "acc.err.offline": "Είσαι εκτός σύνδεσης.", "acc.err.busy": "Το {p} ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "acc.err.other": "Δεν ήταν δυνατή η σύνδεση με το {p}. Δοκίμασε αργότερα.",
       "mail.subj": "Φύλλο ωρών {r}", "mail.body": "Καλησπέρα,\n\nσας στέλνω συνημμένο το φύλλο ωρών για {r}: {h} ώρες."
     }
   };
@@ -1311,6 +1335,7 @@
     renderRepSum(rep);
     $("rep-csv").disabled = !rep.rows.length;
     $("rep-pdf").disabled = !rep.rows.length;
+    $("rep-ics").disabled = !rep.ids.length;
     $("rep-pdfmail").hidden = !mailShell();
     $("rep-pdfmail").disabled = !rep.rows.length;
     // Open in Spreadsheet (BR-S1): shown only inside orOS.
@@ -2222,6 +2247,7 @@
       });
     }
     form.appendChild(button(window.OrosTimesheetImport ? t("set.import2") : t("set.import"), "block", function () { dlg.close(); importCsv(); }));
+    if (linksApi()) form.appendChild(button(t("acc.btn"), "block", function () { dlg.close(); accountImport(); }));
 
     actions(form, [], t("dlg.save"));
     form.addEventListener("submit", function (ev) {
@@ -2387,6 +2413,12 @@
       doc.text(t("pdf.made") + (n > 1 ? " · " + i + "/" + n : ""), M, 290);
     }
     return { blob: doc.output("blob"), hours: totMs };
+  }
+  // T5: the report's entries as calendar events (.ics), for any calendar app.
+  function exportIcs() {
+    if (!repState) return;
+    var text = C.toIcs(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
+    saveText(text, "oros-timesheet-" + repState.keys[0] + "_" + repState.keys[1] + ".ics", "text/calendar", ".ics", "iCalendar");
   }
   function exportPdf() {
     pdfMake(function (r) {
@@ -2773,7 +2805,7 @@
   // vendored SheetJS, loaded only when an .xlsx is picked). The same
   // preview; the toast now has Undo (tombstones, see import.js).
   var IMPORT_MAX_BYTES = 10 * 1024 * 1024;
-  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest", kimai: "Kimai", tempo: "Jira Tempo" };
+  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest", kimai: "Kimai", tempo: "Jira Tempo", activitywatch: "ActivityWatch" };
   var IMPX = window.OrosTimesheetImport;
   function importCsv() {
     var host = dialogHost(), acc = IMPX ? IMPX.ACCEPT : ".csv,text/csv,text/plain";
@@ -2786,6 +2818,17 @@
   // Also the handle for tests / a file opened with orOS (Promise)
   function importFile(file) {
     if (file.size > IMPORT_MAX_BYTES) { showToast(t(IMPX ? "imp.bad2" : "imp.bad1")); return Promise.resolve(false); }
+    // T5: an ActivityWatch export (JSON) → suggested entries
+    if (/\.json$/i.test(file.name || "") || file.type === "application/json") {
+      return file.text().then(function (text) {
+        var obj = null;
+        try { obj = JSON.parse(text); } catch (e) {}
+        var plan = obj ? C.awPlan(obj, data) : null;
+        if (!plan) { showToast(t("imp.bad2")); return false; }
+        importPreview(function () { return C.awPlan(obj, data); }, plan);
+        return true;
+      });
+    }
     var order = LANG === "en" ? "mdy" : "dmy";
     if (!IMPX || !window.OrosImportKit) {
       return file.text().then(function (text) {
@@ -2819,6 +2862,92 @@
     });
     return xlsxWait;
   }
+  // ---------- T5: import from a time tracker account ----------
+  // Toggl Track, Clockify, Harvest or Kimai, connected in Settings ›
+  // Connected services (the shell's orosLinks keeps the account and its
+  // token; this app never sees a key). links/timesheet.js turns the
+  // answers into the tracker's own export, so the same preview, ids,
+  // Undo and "adds only" rules as importing that file.
+  function linksApi() {
+    try { var p = window.parent; return p && p !== window && p.orosLinks && typeof p.orosLinks.call === "function" ? p.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  var ACC_PLATS = ["toggl", "clockify", "harvest", "kimai"];
+  function accountImport() {
+    var Lk = linksApi();
+    if (!Lk) return;
+    var accts = Lk.list().filter(function (a) { return ACC_PLATS.indexOf(a.p) >= 0; });
+    var dlg = makeDialog("ts-acc", t("acc.title"));
+    var form = el("form");
+    form.method = "dialog";
+    form.appendChild(el("p", "hint", t("acc.intro")));
+    if (!accts.length) {
+      form.appendChild(el("p", "hint", t("acc.none")));
+      actions(form, [button(t("acc.settings"), "", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("settings", { section: "services" }); } catch (e) {}
+      })], t("dlg.cancel"));
+      form.addEventListener("submit", function (ev) { ev.preventDefault(); dlg.close(); });
+      dlg.appendChild(form);
+      openDialog(dlg, null);
+      return;
+    }
+    var sel = el("select");
+    fillSelect(sel, accts.map(function (a) { return [a.id, (SOURCES[a.p] || a.p) + " · " + a.name]; }), accts[0].id);
+    form.appendChild(field(t("acc.acct"), sel));
+    var tk = todayKey();
+    var from = input("date", C.addDays(C.monthStart(C.addDays(C.monthStart(tk), -1)), 0));
+    var to = input("date", tk);
+    form.appendChild(field(t("acc.from"), from));
+    form.appendChild(field(t("acc.to"), to, t("acc.range")));
+    var status = el("p", "hint", "");
+    status.setAttribute("aria-live", "polite");
+    form.appendChild(status);
+    actions(form, [], t("acc.read"));
+    var go = form.querySelector("button[type=submit]");
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var a = accts.filter(function (x) { return x.id === sel.value; })[0];
+      if (!a || go.disabled) return;
+      loadOther("../links/timesheet.js", "OrosLinksTimesheet", function (M) {
+        if (!M) { status.textContent = t("acc.err.other"); return; }
+        if (!M.okRange(from.value, to.value)) { status.textContent = t("acc.badRange"); from.focus(); return; }
+        go.disabled = true;
+        status.textContent = t("acc.reading", { n: 0 });
+        var got = {}, f = from.value, tt = to.value;
+        var step = function (reqs) {
+          return Lk.call(a.id, reqs).then(function (res) {
+            var bad = "";
+            res.forEach(function (x) { if (!bad) bad = Lk.statusCode(x); });
+            if (bad) { var e = new Error(bad); e.code = bad; throw e; }
+            var r = M.next(a.p, f, tt, got, res.map(function (x) { return x.data; }));
+            status.textContent = t("acc.reading", { n: M.count(got) });
+            if (r.bad) { var e2 = new Error("other"); e2.code = "other"; throw e2; }
+            return r.done ? got : step(r.reqs);
+          });
+        };
+        step(M.first(a.p, f, tt)).then(function () {
+          var tb = M.table(a.p, got), order = "dmy";
+          var replan = tb.rows
+            ? function (o, u) { return IMPX ? IMPX.planRows(tb.rows, data, "dmy", u || "") : null; }
+            : function () { return C.importPlan(tb.csv, data, order); };
+          var plan = replan("dmy", "");
+          dlg.close();
+          if (!plan) { showToast(t("acc.nothing")); return; }
+          plan.ambiguous = false;
+          importPreview(replan, plan);
+        }, function (e) {
+          go.disabled = false;
+          var c = e && e.code;
+          status.textContent = t(c === "auth" || c === "keys" || c === "offline" || c === "busy" ? "acc.err." + c : "acc.err.other",
+                                 { p: SOURCES[a.p] || a.p });
+        });
+      });
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, null);
+  }
+
   // replan(order, user) → a fresh plan against the data as it is now
   function importPreview(replan, plan) {
     var dlg = makeDialog("ts-import", t("imp.title", { src: SOURCES[plan.source] || plan.source }));
@@ -2842,6 +2971,7 @@
     }
     if (plan.source === "harvest") form.appendChild(el("p", "hint", t("imp.harvest")));
     if (plan.source === "kimai" || plan.source === "tempo") form.appendChild(el("p", "hint", t("imp." + plan.source)));
+    if (plan.source === "activitywatch") form.appendChild(el("p", "hint", t("imp.aw")));
     form.appendChild(el("p", "hint", t("imp.hint")));
     actions(form, [], t("imp.go"));
     var go = form.querySelector("button[type=submit]");
@@ -3079,6 +3209,7 @@
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
     $("rep-pdf").textContent = t("rep.pdf");
+    $("rep-ics").textContent = t("rep.ics");
     $("rep-pdfmail").textContent = t("rep.pdfMail");
     $("rep-sheet").textContent = t("rep.sheet");
     $("rep-quote").textContent = t("rep.quote");
@@ -3141,6 +3272,7 @@
     });
     $("rep-csv").addEventListener("click", exportCsv);
     $("rep-pdf").addEventListener("click", exportPdf);
+    $("rep-ics").addEventListener("click", exportIcs);
     $("rep-pdfmail").addEventListener("click", mailPdf);
     $("rep-sheet").addEventListener("click", openInSheet);
     $("rep-quote").addEventListener("click", createQuote);

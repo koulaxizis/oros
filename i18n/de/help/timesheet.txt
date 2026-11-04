@@ -61,6 +61,12 @@ Kreuze `Bei laufendem Timer nach Abwesenheit fragen` an und stelle `Abwesend min
 
 ### Umzug aus einer anderen App
 `Aus anderer App importieren` in den `Einstellungen` holt einen Export aus Toggl Track, Clockify, Harvest, Kimai oder Jira Tempo, als CSV oder Excel (.xlsx), mit Aufgaben und Tags. Zuerst siehst du, was die Datei enthält: neue Einträge, schon vorhandene Einträge, neue Projekte und Kunden und Zeilen, die nicht lesbar waren. Nichts ändert sich, bis du auf `Importieren` tippst.
+
+Derselbe Knopf liest auch einen **ActivityWatch**-Export (in ActivityWatch: Settings › Export all buckets as JSON). Deine Zeit am Computer wird zu vorgeschlagenen Einträgen ab 15 Minuten, benannt nach dem meistgenutzten Fenster; Pausen unter 5 Minuten werden zusammengefügt. Sie kommen ohne Projekt: Ordne eins zu oder lösche, was keine Arbeit war.
+
+`Aus einem Konto importieren (Toggl, Clockify, Harvest, Kimai)` liest deine Einträge direkt aus dem Dienst, für bis zu ein Jahr, sobald du ihn unter Einstellungen › Verbundene Dienste mit deinem eigenen Token verbunden hast. Du siehst dieselbe Vorschau wie bei einer Datei, und es gelten dieselben Regeln: Es wird nur hinzugefügt, hier Gelöschtes bleibt gelöscht, und dieselbe Zeit noch einmal (oder aus ihrem CSV-Export) fügt nichts hinzu. orOS liest nur: Im Dienst ändert sich nichts.
+
+`Kalender exportieren (.ics)` unter `Berichte` speichert die Einträge des Berichts als Kalendertermine für jede Kalender-App. Jeder Eintrag behält dieselbe Kennung, ein neuer Export aktualisiert die Termine also, statt sie zu verdoppeln.
 - Der Import fügt nur Einträge hinzu. Dieselbe Datei ein zweites Mal fügt nichts hinzu, und gelöschte Einträge bleiben bei einem neuen Import gelöscht.
 - Projekte und Kunden mit demselben Namen wie deine werden mit ihnen zusammengeführt.
 - Wenn die Datumsangaben in beide Richtungen passen könnten, wähle Tag/Monat oder Monat/Tag unter `Datumsformat in der Datei`.

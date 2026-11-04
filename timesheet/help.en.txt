@@ -61,6 +61,12 @@ Tick `Ask about time away while a timer runs` and set `Away for at least (minute
 
 ### Move from another app
 `Import from another app` in `Settings` brings in an export from Toggl Track, Clockify, Harvest, Kimai or Jira Tempo, as CSV or Excel (.xlsx), with tasks and tags. First you see what the file holds: new entries, entries already here, new projects and clients, and rows that could not be read. Nothing changes until you tap `Import`.
+
+The same button also reads an **ActivityWatch** export (in ActivityWatch: Settings › Export all buckets as JSON). Your time at the computer becomes suggested entries of 15 minutes or more, each named after the window you used most; breaks under 5 minutes are joined. They come without a project: assign one afterwards, or delete the ones that weren't work.
+
+`Import from an account (Toggl, Clockify, Harvest, Kimai)` reads your entries straight from the tracker, for a period of up to a year, once you have connected it in Settings › Connected services with your own token. You see the same preview as for a file, and the same rules hold: it only adds, entries you deleted here stay deleted, and the same time read again (or imported from its CSV) adds nothing. orOS only reads: nothing changes in the tracker.
+
+`Export calendar (.ics)` on `Reports` saves the report's entries as calendar events, for any calendar app. Each entry keeps the same identity, so exporting again updates the events instead of doubling them.
 - Importing only adds entries. The same file twice adds nothing, and entries you delete stay deleted if you import again.
 - Projects and clients with the same name as yours are joined to them.
 - If the dates could be either way round, choose Day/Month or Month/Day in `Dates in the file`.

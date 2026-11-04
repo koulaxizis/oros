@@ -41,7 +41,7 @@
 //   5. Parsing + formatting
 //   5b. Invoices link + unbilled time (T1)
 //   5c. Time from tasks, cards and events (T2)
-//   5d. Packages, fixed fees, mileage, Budget (T3)
+//   5d. Packages, fixed fees, mileage, Budget (T3); .ics (T5)
 //   6. Export: CSV + JSON backup
 // ============================================================
 (function (root) {
@@ -1090,6 +1090,46 @@
     return out;
   }
 
+  // T5: the entries of a report (range and filter, ended ones) as an
+  // iCalendar file: one event each, UTC times, the same UID every
+  // time (the entry id), so a calendar app updates instead of doubling.
+  function icsText(v) {
+    return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  }
+  function icsFold(line) {
+    var out = [], cur = "", n = 0;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i], b = unescape(encodeURIComponent(ch)).length;
+      if (n + b > (out.length ? 74 : 75)) { out.push(cur); cur = ""; n = 0; }
+      cur += ch; n += b;
+    }
+    out.push(cur);
+    return out.join("\r\n ");
+  }
+  function icsStamp(ms) {
+    var d = new Date(ms);
+    return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" +
+           pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + "Z";
+  }
+  function toIcs(data, fromKey, toKey, f, now, lang) {
+    f = f || {};
+    var w = words(lang), lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Timesheet//EN", "CALSCALE:GREGORIAN"];
+    var a = dayStart(fromKey), b = dayStart(addDays(toKey, 1));
+    data.entries.filter(function (x) {
+      return !x.del && x.e !== 0 && x.s >= a && x.s < b && matches(data, x, f);
+    }).sort(function (x, y) { return x.s - y.s || cmpStr(x.id, y.id); }).forEach(function (x) {
+      var p = project(data, x.p), c = p ? projectClient(data, p) : null;
+      var sum = [p ? p.name : "", x.desc].filter(Boolean).join(" · ") || w.noProject;
+      var det = [c ? c.name : "", x.task || "", (x.tags || []).join(", ")].filter(Boolean).join("\n");
+      lines.push("BEGIN:VEVENT", "UID:" + x.id + "@timesheet.useoros.online", "DTSTAMP:" + icsStamp(now),
+                 "DTSTART:" + icsStamp(x.s), "DTEND:" + icsStamp(x.e), icsFold("SUMMARY:" + icsText(sum)));
+      if (det) lines.push(icsFold("DESCRIPTION:" + icsText(det)));
+      lines.push("END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    return lines.join("\r\n") + "\r\n";
+  }
+
   // ---------- 6. Export ----------
   // A text cell that Excel / LibreOffice would read as a formula gets
   // a leading apostrophe (CSV injection), then RFC 4180 quoting.
@@ -1542,6 +1582,75 @@
     };
   }
 
+  // ---------- ActivityWatch (T5) ----------
+  // An ActivityWatch export (Settings › Export all buckets as JSON):
+  // { buckets: { "aw-watcher-afk_<host>": { events }, "aw-watcher-window_<host>": { events } } }.
+  // The time at the computer (afk "not-afk" events, gaps under
+  // AW_GAP merged) becomes suggested entries of AW_MIN or more, each
+  // named after the window it spent the most time in ("App · title").
+  // No project: the person sorts them out after the preview. The ids
+  // come from the block's start and end, so the same export twice adds
+  // nothing, and a deleted suggestion stays deleted (m = 1, Wave 5).
+  // → the shape of importPlan, source "activitywatch", or null.
+  var AW_GAP = 5 * 60000, AW_MIN = 15 * 60000, AW_MAX_EVENTS = 200000;
+  function awEvents(b) {
+    var out = [];
+    (b && Array.isArray(b.events) ? b.events : []).slice(0, AW_MAX_EVENTS).forEach(function (ev) {
+      var s = ev ? Date.parse(ev.timestamp) : NaN, d = ev ? +ev.duration : NaN;
+      if (!isFinite(s) || !(d > 0)) return;
+      out.push({ s: s, e: s + Math.round(d * 1000), data: ev.data && typeof ev.data === "object" ? ev.data : {} });
+    });
+    return out.sort(function (x, y) { return x.s - y.s; });
+  }
+  function awPlan(obj, data) {
+    var bk = obj && typeof obj === "object" && obj.buckets && typeof obj.buckets === "object" ? obj.buckets : null;
+    if (!bk) return null;
+    var afk = [], win = [];
+    Object.keys(bk).forEach(function (k) {
+      var b = bk[k] || {}, type = String(b.type || "");
+      if (type === "afkstatus" || /^aw-watcher-afk/.test(k)) afk = afk.concat(awEvents(b));
+      else if (type === "currentwindow" || /^aw-watcher-window/.test(k)) win = win.concat(awEvents(b));
+    });
+    if (!afk.length && !win.length) return null;
+    afk.sort(function (x, y) { return x.s - y.s; });
+    win.sort(function (x, y) { return x.s - y.s; });
+    var src = afk.length ? afk.filter(function (x) { return x.data.status === "not-afk"; }) : win;
+    var blocks = [];
+    src.forEach(function (x) {
+      var last = blocks[blocks.length - 1];
+      if (last && x.s - last.e <= AW_GAP && dayKeyOf(x.s) === dayKeyOf(last.s)) last.e = Math.max(last.e, x.e);
+      else blocks.push({ s: x.s, e: x.e });
+    });
+    var have = {};
+    data.entries.forEach(function (x) { have[x.id] = 1; });
+    var add = [], dup = 0, fresh = 0, bad = 0, from = "", to = "", wi = 0;
+    blocks.forEach(function (bl) {
+      if (bl.e - bl.s < AW_MIN) return;
+      if (bl.e - bl.s > MAX_SPAN || bl.s < MIN_TS || bl.s > MAX_TS) { bad++; return; }
+      var by = {};
+      while (wi < win.length && win[wi].e <= bl.s) wi++;
+      for (var j = wi; j < win.length && win[j].s < bl.e; j++) {
+        var w = win[j], ms = Math.min(w.e, bl.e) - Math.max(w.s, bl.s);
+        if (ms <= 0) continue;
+        var app = cleanText(w.data.app, 40), title = cleanText(w.data.title, 120);
+        var k = app + "\u0001" + title;
+        by[k] = (by[k] || 0) + ms;
+      }
+      var top = Object.keys(by).sort(function (a, b) { return by[b] - by[a] || cmpStr(a, b); })[0] || "";
+      var desc = top ? top.split("\u0001").filter(Boolean).join(" · ") : "";
+      var id = hashId("aw", bl.s + "\u0001" + bl.e);
+      var k1 = dayKeyOf(bl.s), k2 = dayKeyOf(bl.e - 1);
+      if (!from || k1 < from) from = k1;
+      if (!to || k2 > to) to = k2;
+      if (have[id]) { dup++; return; }
+      fresh++;
+      add.push({ id: id, p: "", desc: cleanText(desc, LIM.desc), s: bl.s, e: bl.e, billed: 0, m: 1 });
+    });
+    return { source: "activitywatch", order: "dmy", ambiguous: false, rows: blocks.length, bad: bad,
+             fresh: fresh, dup: dup, from: from, to: to,
+             add: { ver: DATA_VER, clients: [], projects: [], entries: add, prefs: data.prefs, pm: 0 } };
+  }
+
   // ---------- Time away (Wave 46, idle detection) ----------
   // The shell watches for time away while a timer runs (the Idle
   // Detection API in Chromium after the user allows it, and on every
@@ -1657,7 +1766,7 @@
     PEND_KEY: PEND_KEY, normPend: normPend, pendAdd: pendAdd, invLink: invLink, unbilled: unbilled, linkId: linkId,
     srcKey: srcKey, timeBySrc: timeBySrc, calSuggest: calSuggest,
     pkgUse: pkgUse, effRate: effRate, feeExtra: feeExtra, kmAmount: kmAmount, parseKm: parseKm, fmtKm: fmtKm,
-    budgetPrefill: budgetPrefill, endText: endText
+    budgetPrefill: budgetPrefill, endText: endText, toIcs: toIcs, awPlan: awPlan
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
