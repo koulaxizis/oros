@@ -1281,7 +1281,25 @@
       } else {
         c.appendChild(el("div", "hint", t(u.unused ? "y.clean.young" : "y.clean.none", { days: days })));
       }
+      // VD-SETTLE: when the first young copy may go, and which files
+      // this device sent most often (names as plain text)
+      if (!u.hold && u.nextFreeAt > 0 && !(u.free > 0)) {
+        var nd = new Date(u.nextFreeAt);
+        if (!isNaN(nd.getTime())) {
+          c.appendChild(el("div", "hint", t("y.clean.next", {
+            date: nd.toLocaleDateString(LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB", { day: "numeric", month: "long" }) })));
+        }
+      }
+      if (u.sentMost && u.sentMost.length) {
+        c.appendChild(el("div", "hint", t("y.clean.sent")));
+        var ul = el("ul", "hint");
+        u.sentMost.forEach(function (e) {
+          ul.appendChild(el("li", "", t("y.clean.sent.item", { name: String(e.name), n: +e.n || 0, size: bytesLabel(e.bytes) })));
+        });
+        c.appendChild(ul);
+      }
     }
+    c.appendChild(el("p", "hint", t("y.clean.settle")));
     var btns = [];
     if (k.busy === "clean") {
       var w = button(t("y.clean.running"), "y.clean.run", function () {});
