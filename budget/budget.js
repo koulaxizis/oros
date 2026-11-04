@@ -138,7 +138,13 @@
       "cy.rate": "Interest, % a year", "cy.hint": "Budget then shows what each statement asks for, what you paid and what is left by the due date, and roughly what interest it costs if not paid in full. Leave both days empty for an account without a cycle.",
       "cy.needDays": "Both days, from 1 to 31", "cy.needRate": "Interest: a yearly percentage from 0 to 100",
       "cy.feesCat": "Interest & fees", "cy.feeNote": "Card interest",
-      "cy.guess": "Guess from my entries", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
+      "iv.h": "Investment: crypto, gold, shares", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
+      "iv.kc": "Crypto", "iv.km": "Gold or silver", "iv.ks": "Shares, ETF or other", "iv.sym": "Which", "iv.gold": "gold or silver",
+      "iv.qty": "Quantity", "iv.unit": "Unit", "iv.oz": "Troy ounces", "iv.g": "Grams", "iv.price": "Price per unit (optional)",
+      "iv.hintC": "A symbol such as BTC, ETH or SOL, or the coin's CoinGecko id. The price comes from CoinGecko when online; type one to use when it can't be reached.",
+      "iv.hintM": "\"gold\" or \"silver\": the price comes from CoinGecko (gold- and silver-backed tokens, one ounce each), so it is close to, not exactly, the market price. Platinum and others: type the price.",
+      "iv.hintS": "Type the ticker and the price per share from your broker or bank; update it when you like. The account's balance (its starting balance plus transfers into it) is what you paid; Overview shows the value and the gain or loss.",
+      "iv.needSym": "Type what the account holds", "iv.needQty": "Quantity: a number above 0, such as 0.25", "iv.needPrice": "Type the price per unit", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
       "cy.guessDue": "Due day: when {n} of your payments came in.", "cy.guessStmt": "Statement day: about three weeks before it, as on most cards.",
       "cy.guessRate": "Interest: from the interest charged on {d}.", "cy.guessCheck": "Check them against a statement.", "cy.guessKept": "The fields you filled stay as they are.",
       "acc.hint": "Pick an account in an entry to keep its balance. Entries without an account still count in the totals.",
@@ -257,7 +263,13 @@
       "cy.rate": "Επιτόκιο, % τον χρόνο", "cy.hint": "Η εφαρμογή δείχνει τότε τι ζητά κάθε λογαριασμός της κάρτας, τι πλήρωσες και τι μένει ως τη λήξη, και περίπου τι τόκο κοστίζει αν δεν εξοφληθεί. Άφησε κενές και τις δύο ημέρες για λογαριασμό χωρίς κύκλο.",
       "cy.needDays": "Και οι δύο ημέρες, από 1 ως 31", "cy.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
       "cy.feesCat": "Τόκοι και χρεώσεις", "cy.feeNote": "Τόκοι κάρτας",
-      "cy.guess": "Βρες τα από τις κινήσεις μου", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
+      "iv.h": "Επένδυση: κρυπτονομίσματα, χρυσός, μετοχές", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
+      "iv.kc": "Κρυπτονόμισμα", "iv.km": "Χρυσός ή ασήμι", "iv.ks": "Μετοχές, ETF ή άλλο", "iv.sym": "Ποιο", "iv.gold": "χρυσός ή ασήμι",
+      "iv.qty": "Ποσότητα", "iv.unit": "Μονάδα", "iv.oz": "Ουγγιές", "iv.g": "Γραμμάρια", "iv.price": "Τιμή ανά μονάδα (προαιρετικό)",
+      "iv.hintC": "Ένα σύμβολο όπως BTC, ETH ή SOL, ή το id του νομίσματος στο CoinGecko. Η τιμή έρχεται από το CoinGecko όταν υπάρχει σύνδεση· γράψε μία για όταν δεν απαντά.",
+      "iv.hintM": "«χρυσός» ή «ασήμι»: η τιμή έρχεται από το CoinGecko (tokens με κάλυψη χρυσού και ασημιού, μία ουγγιά το καθένα), άρα είναι κοντά, όχι ακριβώς, στην τιμή της αγοράς. Πλατίνα και άλλα: γράψε την τιμή.",
+      "iv.hintS": "Γράψε το σύμβολο και την τιμή ανά μετοχή από τον χρηματιστή ή την τράπεζά σου· άλλαξέ την όποτε θέλεις. Το υπόλοιπο του λογαριασμού (αρχικό υπόλοιπο συν μεταφορές προς αυτόν) είναι όσα πλήρωσες· η Σύνοψη δείχνει την αξία και το κέρδος ή τη ζημιά.",
+      "iv.needSym": "Γράψε τι κρατά ο λογαριασμός", "iv.needQty": "Ποσότητα: αριθμός πάνω από 0, όπως 0,25", "iv.needPrice": "Γράψε την τιμή ανά μονάδα", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
       "cy.guessDue": "Ημέρα λήξης: τότε μπήκαν {n} από τις πληρωμές σου.", "cy.guessStmt": "Ημέρα κλεισίματος: περίπου τρεις εβδομάδες νωρίτερα, όπως στις περισσότερες κάρτες.",
       "cy.guessRate": "Επιτόκιο: από τους τόκους που χρεώθηκαν στις {d}.", "cy.guessCheck": "Έλεγξέ τα με έναν λογαριασμό της κάρτας.", "cy.guessKept": "Τα πεδία που συμπλήρωσες μένουν όπως είναι.",
       "acc.hint": "Διάλεξε λογαριασμό σε μια κίνηση για να κρατάς το υπόλοιπό του. Οι κινήσεις χωρίς λογαριασμό μετρούν κανονικά στα σύνολα.",
@@ -697,6 +709,9 @@
     var dayOk = function (v) { return isInt(v) && v >= 1 && v <= 31; };
     if (!dayOk(y.cys) || !dayOk(y.cyd)) { delete y.cys; delete y.cyd; delete y.cyr; }
     else if (!(isInt(y.cyr) && y.cyr >= 0 && y.cyr <= 10000)) delete y.cyr;
+    // INV-1: an investment held in the account (budget/invest.js)
+    var INV0 = typeof window !== "undefined" && window.OrosBudgetInvest;
+    if (INV0) INV0.clean(y);
     return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, y);
   }
   // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
@@ -1340,7 +1355,7 @@
     if (PLANUI) PLANUI.renderPlan($("plan"));
     if (LNUI) LNUI.render($("loans"));
   }
-  function renderOverview() { if (OVUI) OVUI.render($("overview")); }
+  function renderOverview() { refreshPrices(); if (OVUI) OVUI.render($("overview")); }
 
   function renderToolbar() {
     $("month").textContent = monthLabel(viewMk);
@@ -3018,6 +3033,52 @@
     if (!L || !L.cardCycle || !a) return null;
     return L.cardCycle(a, today, function (d) { return accBalAt(id, d); }, function (f, t2) { return accInflow(id, f, t2); });
   }
+  // ---------- INV-1: investments (budget/invest.js) ----------
+  // Live prices (CoinGecko, no key) are kept on this device only, at
+  // most every 30 minutes, in the main currency; offline, the last ones.
+  var INV = window.OrosBudgetInvest || null, PRICES_KEY = "oros-budget-prices", pricesBusy = false, pricesFailed = 0;
+  function pricesNow() {
+    try { var p = JSON.parse(localStorage.getItem(PRICES_KEY) || "null"); return p && typeof p === "object" && p.p ? p : null; } catch (e) { return null; }
+  }
+  function investInfo(a) {
+    if (!INV || !a) return null;
+    var c = INV.cfg(a);
+    if (!c) return null;
+    var cu = a.cur || cur();
+    return { c: c, val: INV.value(a, pricesNow(), cu), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
+  }
+  function investValue(a) {
+    var i = investInfo(a);
+    return i && i.val ? i.val.v : null;
+  }
+  function refreshPrices(force) {
+    if (!INV || pricesBusy || navigator.onLine === false) return;
+    var byCur = {};
+    data.acc.forEach(function (a) { if (INV.liveId(a)) (byCur[a.cur || cur()] = byCur[a.cur || cur()] || []).push(a); });
+    var curs = Object.keys(byCur);
+    if (!curs.length) return;
+    var c0 = curs.indexOf(cur()) >= 0 ? cur() : curs[0];     // one currency per call: the main one first
+    var ids = INV.liveIds(byCur[c0]), old = pricesNow();
+    var fresh = old && old.cur === c0 && Date.now() - (old.t || 0) < 30 * 60000 && ids.every(function (id) { return old.p[id] > 0; });
+    if (fresh && !force) return;
+    if (!force && pricesFailed && Date.now() - pricesFailed < 10 * 60000) return;
+    pricesBusy = true;
+    fetch(INV.priceUrl(ids, c0), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("http " + r.status);
+      return r.json();
+    }).then(function (j) {
+      var p = INV.parsePrices(j, ids, c0);
+      if (!Object.keys(p).length) throw new Error("empty");
+      var keep = old && old.cur === c0 ? old.p : {};
+      Object.keys(p).forEach(function (k) { keep[k] = p[k]; });
+      try { localStorage.setItem(PRICES_KEY, JSON.stringify({ t: Date.now(), cur: c0, p: keep })); } catch (e) {}
+      pricesBusy = false; pricesFailed = 0;
+      if (OVUI) OVUI.render($("overview"));
+    }).catch(function () {
+      pricesBusy = false; pricesFailed = Date.now();
+      if (OVUI) OVUI.render($("overview"));
+    });
+  }
   // "Add interest": an expense on the card in "Interest & fees" (made
   // once, as the person's own category, in their language).
   var FEES_CAT = "cc-fees";
@@ -3075,6 +3136,7 @@
   function initPlan() {
     if (!PLANUI) return;
     PLANUI.init({
+      investValue: investValue,
       lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch, errLine: errLine, showErr: showErr,
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       data: function () { return data; }, cats: cats, catName: catName, catCol: catCol, findIn: findIn, stamp: stamp,
@@ -3132,7 +3194,7 @@
       },
       // BK-7: the bank's balance on each account it fills, and Match
       dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
-      cardCycle: cardCycle, addCardFee: addCardFee,
+      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
@@ -3583,6 +3645,39 @@
       cyDet.appendChild(gOut);
     }
     form.appendChild(cyDet);
+    // INV-1: an investment held in this account
+    var ivDet = el("details", "acc-cy acc-iv");
+    ivDet.open = !!(a && a.ivk);
+    ivDet.appendChild(el("summary", "", t("iv.h")));
+    var ivK = el("select");
+    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
+    ivK.value = a && a.ivk ? a.ivk : "";
+    var ivS = el("input"); ivS.maxLength = 60; ivS.autocomplete = "off"; ivS.value = a && a.ivs ? a.ivs : "";
+    var ivQ = el("input"); ivQ.inputMode = "decimal"; ivQ.autocomplete = "off"; ivQ.value = a && a.ivq ? a.ivq : "";
+    var ivU = el("select");
+    [["oz", "iv.oz"], ["g", "iv.g"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivU.appendChild(op); });
+    ivU.value = a && a.ivu === "g" ? "g" : "oz";
+    var ivP = el("input"); ivP.inputMode = "decimal"; ivP.autocomplete = "off"; ivP.value = a && a.ivp ? centsToInput(a.ivp, LANG) : "";
+    var ivSF = field(t("iv.sym"), ivS, "bd-acc-ivs"), ivUF = field(t("iv.unit"), ivU, "bd-acc-ivu");
+    var ivHint = el("p", "hint");
+    ivDet.appendChild(field(t("iv.kind"), ivK, "bd-acc-ivk"));
+    ivDet.appendChild(ivSF);
+    var ivRow = el("div", "fld-row");
+    ivRow.appendChild(field(t("iv.qty"), ivQ, "bd-acc-ivq"));
+    ivRow.appendChild(ivUF);
+    ivDet.appendChild(ivRow);
+    ivDet.appendChild(field(t("iv.price"), ivP, "bd-acc-ivp"));
+    ivDet.appendChild(ivHint);
+    function ivShow() {
+      var k = ivK.value;
+      [ivSF, ivRow, ivP.parentNode, ivHint].forEach(function (x) { x.hidden = !k; });
+      ivUF.hidden = k !== "m";
+      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : "AAPL";
+      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : "";
+    }
+    ivK.addEventListener("change", ivShow);
+    ivShow();
+    form.appendChild(ivDet);
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
     if (a) acts.appendChild(button(t("dlg.delete"), "danger", function () { dlg.close(); deleteAcc(a.id); }));
@@ -3606,6 +3701,24 @@
         if (rr === null || rr > 10000) { cyDet.open = true; showErr(err, t("cy.needRate"), cyR); return; }
         cy = { cys: ds, cyd: dd, cyr: rr };
       }
+      var iv = null;
+      if (ivK.value) {
+        var qv = ivQ.value.trim(), sv = ivS.value.trim();
+        if (!sv) { ivDet.open = true; showErr(err, t("iv.needSym"), ivS); return; }
+        if (!INV || INV.qty(qv) === null) { ivDet.open = true; showErr(err, t("iv.needQty"), ivQ); return; }
+        var pv = ivP.value.trim() ? parseAmount(ivP.value) : 0;
+        if (pv === null) { ivDet.open = true; showErr(err, t("err.amount"), ivP); return; }
+        if (ivK.value === "m" && !INV.metalOf(sv) && !pv) { ivDet.open = true; showErr(err, t("iv.needPrice"), ivP); return; }
+        if (ivK.value === "s" && !pv) { ivDet.open = true; showErr(err, t("iv.needPrice"), ivP); return; }
+        iv = { ivk: ivK.value, ivs: sv, ivq: qv };
+        if (ivK.value === "m") iv.ivu = ivU.value;
+        if (pv) { iv.ivp = pv; iv.ivd = a && a.ivp === pv && a.ivd ? a.ivd : today; }
+      }
+      function setIv(o2) {
+        ["ivd", "ivk", "ivp", "ivq", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
+        if (iv) Object.keys(iv).sort().forEach(function (k) { o2[k] = iv[k]; });
+      }
+      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd"].map(function (k) { return o2[k] || ""; }).join("|"); };
       function setCy(o2) {
         delete o2.cys; delete o2.cyd; delete o2.cyr;
         if (cy) { o2.cyd = cy.cyd; if (cy.cyr) o2.cyr = cy.cyr; o2.cys = cy.cys; }
@@ -3614,10 +3727,11 @@
       var cur0 = a ? findIn(data.acc, a.id) : null;
       var ccy = curSel.value !== cur() ? curSel.value : "";
       if (cur0) {
-        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy || cyKey(cur0) !== cyKey(cy || {})) {
+        if (cur0.n !== n || cur0.o !== o || (cur0.cur || "") !== ccy || cyKey(cur0) !== cyKey(cy || {}) || ivKey(cur0) !== ivKey(iv || {})) {
           cur0.n = n; cur0.o = o;
           if (ccy) cur0.cur = ccy; else delete cur0.cur;
           setCy(cur0);
+          setIv(cur0);
           cur0.m = stamp(cur0.m);
           commit();
         }
@@ -3631,6 +3745,7 @@
         var na = { id: nid, m: stamp(a ? a.m : 0), n: n, o: o, col: col % 8 };
         if (ccy) na.cur = ccy;
         setCy(na);
+        setIv(na);
         data.acc.push(na);
         commit();
       }

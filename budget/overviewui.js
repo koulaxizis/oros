@@ -38,7 +38,9 @@
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
       "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
       "ov.bkMatched": "Starting balance changed by {a}",
-      "ov.cyStmt": "Statement {d}: {a}", "ov.cyNone": "Statement {d}: nothing to pay", "ov.cyPaid": "paid {a}", "ov.cyAll": "paid in full",
+      "ov.cyStmt": "Statement {d}: {a}",
+      "ov.ivPaid": "paid {a}", "ov.ivPx": "{q} {s} at {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "g", "ov.ivOld": "last saved price",
+      "ov.ivLoading": "Getting the price…", "ov.ivNoPrice": "No price: CoinGecko can't be reached. Type a price in the account.", "ov.ivType": "Type a price in the account to see its value.", "ov.cyNone": "Statement {d}: nothing to pay", "ov.cyPaid": "paid {a}", "ov.cyAll": "paid in full",
       "ov.cyLeft": "{a} by {d}", "ov.cyDays": "{n} days left", "ov.cyToday": "due today", "ov.cyTomorrow": "due tomorrow", "ov.cyLate": "{a} not paid by {d}",
       "ov.cyEst": "Interest if not paid in full: about {a}", "ov.cyFee": "Add interest", "ov.cyFeeTip": "Add the interest or fees on your card statement as an expense: {a}", "ov.bkUnmapped": "Your banks' balances show here once each bank fills a Budget account (Banks › Fills).", "ov.bkBanks": "Banks",
       "ov.acc": "Accounts", "ov.nw": "Net worth", "ov.accNone": "Add your cash, cards and bank accounts to see their balances here.",
@@ -74,7 +76,9 @@
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
       "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
       "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
-      "ov.cyStmt": "Κλείσιμο {d}: {a}", "ov.cyNone": "Κλείσιμο {d}: τίποτα για πληρωμή", "ov.cyPaid": "πληρώθηκαν {a}", "ov.cyAll": "εξοφλήθηκε",
+      "ov.cyStmt": "Κλείσιμο {d}: {a}",
+      "ov.ivPaid": "πληρώθηκαν {a}", "ov.ivPx": "{q} {s} προς {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "γρ.", "ov.ivOld": "τελευταία αποθηκευμένη τιμή",
+      "ov.ivLoading": "Παίρνω την τιμή…", "ov.ivNoPrice": "Χωρίς τιμή: το CoinGecko δεν απαντά. Γράψε μια τιμή στον λογαριασμό.", "ov.ivType": "Γράψε μια τιμή στον λογαριασμό για να δεις την αξία του.", "ov.cyNone": "Κλείσιμο {d}: τίποτα για πληρωμή", "ov.cyPaid": "πληρώθηκαν {a}", "ov.cyAll": "εξοφλήθηκε",
       "ov.cyLeft": "{a} ως {d}", "ov.cyDays": "μένουν {n} ημέρες", "ov.cyToday": "λήγει σήμερα", "ov.cyTomorrow": "λήγει αύριο", "ov.cyLate": "{a} απλήρωτα από {d}",
       "ov.cyEst": "Τόκος αν δεν εξοφληθεί: περίπου {a}", "ov.cyFee": "Πρόσθεσε τόκους", "ov.cyFeeTip": "Πρόσθεσε ως έξοδο τους τόκους ή τις χρεώσεις του λογαριασμού της κάρτας: {a}", "ov.bkUnmapped": "Τα υπόλοιπα των τραπεζών σου φαίνονται εδώ μόλις κάθε τράπεζα γεμίζει έναν λογαριασμό της εφαρμογής (Τράπεζες › Γεμίζει).", "ov.bkBanks": "Τράπεζες",
       "ov.acc": "Λογαριασμοί", "ov.nw": "Καθαρή θέση", "ov.accNone": "Πρόσθεσε μετρητά, κάρτες και τραπεζικούς λογαριασμούς για να βλέπεις εδώ τα υπόλοιπά τους.",
@@ -338,13 +342,35 @@
       li.appendChild(l2);
     }
   }
+  // INV-1: under an investment account, what was paid, the gain or
+  // loss, and the price it was valued at (live, or typed on a day).
+  function investLines(li, a, iv, paid) {
+    if (!li || !iv) return;
+    var cu = a.cur || A.cur(), line = el("div", "ov-bkline ov-iv");
+    if (!iv.val) {
+      line.appendChild(el("span", "", iv.live ? (iv.failed ? t("ov.ivNoPrice") : t("ov.ivLoading")) : t("ov.ivType")));
+      li.appendChild(line);
+      return;
+    }
+    var gain = iv.val.v - paid, parts = [t("ov.ivPaid", { a: A.money(paid, cu) })];
+    var pct = paid > 0 ? Math.round(gain / paid * 1000) / 10 : null;
+    parts.push((gain >= 0 ? "+" : "") + A.money(gain, cu) + (pct !== null ? " (" + (pct >= 0 ? "+" : "") + String(pct).replace(".", A.lang === "el" ? "," : ".") + " %)" : ""));
+    line.appendChild(el("span", "", parts.join(" · ")));
+    li.appendChild(line);
+    var l2 = el("div", "ov-bkline ov-iv");
+    var unit = iv.c.k === "m" ? (iv.c.u === "g" ? t("ov.ivG") : t("ov.ivOz")) : "";
+    var when = iv.val.src === "live" ? (A.whenShort ? A.whenShort(iv.val.t) : "") + (iv.failed ? " · " + t("ov.ivOld") : "") : iv.val.d ? A.dateShort(iv.val.d) : "";
+    l2.appendChild(el("span", "", t("ov.ivPx", { q: iv.c.q.toLocaleString(A.lang === "el" ? "el-GR" : "en-GB", { maximumFractionDigits: 12 }) + (unit ? " " + unit : ""),
+      s: iv.c.s, p: A.money(iv.val.px, cu), w: when }) + (iv.val.src === "live" ? " · CoinGecko" : "")));
+    li.appendChild(l2);
+  }
   function cardAcc(card) {
     var list = A.accs();
     head(card, "acc", t("ov.acc"), list.length ? t("ov.open") : null, A.accountsDialog);
     if (!list.length) { hint(card, t("ov.accNone"), t("ov.accAdd"), A.accountsDialog); return; }
     var mk = A.viewMk(), tt = A.totals(mk);
     var flows = O.perAccount(D().tx, mk, list.map(function (a) { return a.id; }));
-    var nw = P.netWorth(D(), A.today(), A.cur(), A.fx);
+    var nw = P.netWorth(D(), A.today(), A.cur(), A.fx, A.investValue);
     var top = el("div", "ov-nw");
     top.appendChild(el("span", "ov-k", t("ov.nw")));
     top.appendChild(el("span", "ov-big" + (nw.tot < 0 ? " neg" : ""), A.money(nw.tot)));
@@ -382,10 +408,12 @@
     }
     var bnk = (D().bnk || []).filter(function (r) { return r && r.src !== "pp"; });
     list.forEach(function (a) {
-      row(a.n, a.col, A.money(bal[a.id], a.cur), bal[a.id] < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); },
+      var iv = A.investInfo ? A.investInfo(a) : null, shown = iv && iv.val ? iv.val.v : bal[a.id];
+      row(a.n, a.col, A.money(shown, a.cur), shown < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); },
           A.accDialog ? function () { A.accDialog(a.id); } : null);
       bankLines(ul.lastChild, a, bnk);
       cycleLines(ul.lastChild, a);
+      investLines(ul.lastChild, a, iv, bal[a.id]);
     });
     if (flows.none.inc || flows.none.out) row(t("ov.noAcc"), 8, "", false, flows.none, null);
     card.appendChild(ul);

@@ -1985,6 +1985,7 @@ var PRECACHE_URLS = [
   "budget/budgetsui.js",
   "budget/caticons.js",
   "budget/loans.js",
+  "budget/invest.js",
   "budget/loansui.js",
   "budget/keypad.js",
   "calculator/core.js",
