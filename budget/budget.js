@@ -3072,6 +3072,9 @@
         var d = new Date(ms);
         return dateShort(ymdLocal(d)) + ", " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
       },
+      // BK-7: the bank's balance on each account it fills, and Match
+      dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
+      banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin

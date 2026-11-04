@@ -247,3 +247,53 @@ test("a failing D1 call gives the visitor a page, never a raw error", async () =
   const u = await pub(env, "/nl/u/" + K + "/abcd1234", { method: "POST", body: "List-Unsubscribe=One-Click" });
   assert.equal(u.status, 503);
 });
+
+test("N2: a checkout sign-up's src/ts/sig pass sealed; malformed ones are left out", async () => {
+  const { D, env, kp } = await setup();
+  const sig = "a".repeat(64);
+  await pub(env, "/nl/s/" + K, form({ email: "buyer@x.gr", name: "B", lang: "el", src: "shop", ts: "1793750000", sig }));
+  await pub(env, "/nl/s/" + K, form({ email: "odd@x.gr", src: "shop", ts: "12", sig }));
+  await pub(env, "/nl/s/" + K, form({ email: "odd2@x.gr", src: "shop", ts: "1793750000", sig: "XYZ" }));
+  assert.equal(D.rows.length, 3);
+  const got = await Promise.all(D.rows.map((r) => open(kp.priv, r.v)));
+  assert.deepEqual([got[0].s, got[0].ts, got[0].sig], ["shop", "1793750000", sig]);
+  assert.equal(typeof got[0].t, "number");
+  assert.equal(got[1].s, undefined);
+  assert.equal(got[2].sig, undefined);
+});
+
+test("N3: nlhook posts only the fixed, signed notice to a public https address", async () => {
+  const C = require("../newsletter/core.js");
+  const env = { ALLOWED_ORIGINS: ORIGIN };
+  const l = C.normList({ id: "list-1", m: 1, name: "Νέα «Γλάρου»", lang: "el", hookUrl: "https://shop.example.gr/wp-json/broadcast/v1/hook/newsletter/oros", hookKey: "K".repeat(32) });
+  const body = C.hookBody(l, { id: "iss-1", subj: "Τεύχος 5", n: 120, done: Date.UTC(2026, 10, 3, 18) }, Date.now());
+  assert.ok(NL.validHookBody(body));
+  assert.deepEqual(Object.keys(JSON.parse(body)), ["event", "list", "subject", "sent", "at", "issue", "lang"]);
+  const calls = [];
+  const fetchFn = async (url, o) => { calls.push([url, o]); return new Response("ok", { status: 202 }); };
+  const send = async (b) => {
+    const r = new Request("https://relay.example/v1", { method: "POST",
+      headers: { Origin: ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": nextIp() }, body: JSON.stringify(Object.assign({ op: "nlhook" }, b)) });
+    const res = await handle(r, env, null, Date.now(), fetchFn);
+    return { status: res.status, body: await res.json() };
+  };
+  const ok = { url: l.hookUrl, body, ts: "1793750000", sig: "b".repeat(64) };
+  const r = await send(ok);
+  assert.equal(r.body.data.status, 202);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][1].redirect, "manual");
+  assert.equal(calls[0][1].headers["X-Oros-Signature"], "sha256=" + "b".repeat(64));
+  assert.equal(calls[0][1].headers["X-Oros-Timestamp"], "1793750000");
+  assert.equal(calls[0][1].body, body);
+  for (const bad of [{ url: "http://shop.example.gr/x" }, { url: "https://localhost/x" }, { url: "https://10.0.0.1/x" }, { url: "https://shop.example.gr:22/x" },
+                     { body: JSON.stringify({ event: "issue.sent" }) }, { body: body.replace("issue.sent", "other") }, { body: JSON.stringify(Object.assign(JSON.parse(body), { extra: 1 })) },
+                     { sig: "x" }, { ts: "1" }]) {
+    const res = await send(Object.assign({}, ok, bad));
+    assert.equal(res.status, 400, JSON.stringify(bad));
+  }
+  assert.equal(calls.length, 1, "nothing else was posted");
+  // a receiver that can't be reached: status 0, no error page
+  const down = await handle(new Request("https://relay.example/v1", { method: "POST", headers: { Origin: ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": nextIp() },
+    body: JSON.stringify(Object.assign({ op: "nlhook" }, ok)) }), env, null, Date.now(), async () => { throw new Error("dns"); });
+  assert.deepEqual((await down.json()).data, { status: 0, err: "network" });
+});

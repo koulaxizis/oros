@@ -192,6 +192,24 @@ function okEbVal(kind, v) {
   if (kind === "ebcode") return typeof v === "string" && /^[A-Za-z0-9._~-]{1,512}$/.test(v);
   return false;
 }
+// Newsletter N1: a coupon (same shape as links/core.js okCoupon)
+const CPN_CODE = /^[A-Za-z0-9_-]{3,40}$/, CPN_EXP = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T23:59:59$/;
+const CPN_KEYS = ["code", "discount_type", "amount", "date_expires", "minimum_amount", "individual_use",
+                  "usage_limit", "usage_limit_per_user", "email_restrictions", "description"];
+function okCoupon(x) {
+  if (!onlyKeys(x, CPN_KEYS)) return false;
+  if (typeof x.code !== "string" || !CPN_CODE.test(x.code)) return false;
+  if (x.discount_type !== "percent" && x.discount_type !== "fixed_cart") return false;
+  if (typeof x.amount !== "string" || !/^[0-9]{1,6}(\.[0-9]{1,2})?$/.test(x.amount) || !(+x.amount > 0)) return false;
+  if (x.discount_type === "percent" && +x.amount > 100) return false;
+  if (typeof x.date_expires !== "string" || !CPN_EXP.test(x.date_expires)) return false;
+  if (x.minimum_amount !== undefined && !(typeof x.minimum_amount === "string" && /^[0-9]{1,7}(\.[0-9]{1,2})?$/.test(x.minimum_amount))) return false;
+  if (x.individual_use !== undefined && x.individual_use !== true && x.individual_use !== false) return false;
+  if (x.usage_limit !== undefined && !(Number.isInteger(x.usage_limit) && x.usage_limit >= 1 && x.usage_limit <= 100000)) return false;
+  if (x.usage_limit_per_user !== undefined && !(Number.isInteger(x.usage_limit_per_user) && x.usage_limit_per_user >= 1 && x.usage_limit_per_user <= 100)) return false;
+  if (x.email_restrictions !== undefined && !listOf(x.email_restrictions, 1, 1, okEmail)) return false;
+  return x.description === undefined || (typeof x.description === "string" && x.description.length <= 200 && !/[\u0000-\u001f\u007f]/.test(x.description));
+}
 const WHOLE = {
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
@@ -231,7 +249,10 @@ export const PLATFORMS = {
       ["GET", /^\/data\/currencies\/current$/, null, null],
       // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
       ["GET", /^\/rs\/balances$/, null, null],
-      ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null]
+      ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],
+      // Newsletter N1: coupons, looked up by code and created (never changed or deleted)
+      ["GET", /^\/coupons$/, { code: CPN_CODE }, null],
+      ["POST", /^\/coupons\/batch$/, null, { create: "cpns" }]
     ]
   },
   tol: {
@@ -479,6 +500,7 @@ function okVal(kind, v) {
   if (kind === "money") return typeof v === "string" && /^[0-9]{1,7}(\.[0-9]{1,2})?$/.test(v);
   if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
   if (kind === "desc") return typeof v === "string" && v.length <= 8000;
+  if (kind === "cpns") return listOf(v, 1, 100, okCoupon);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);

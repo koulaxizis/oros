@@ -28,6 +28,7 @@
   var CHANNEL = "oros-budget-bank";
   var PEND_MS = 30 * 60000;
   var busy = false, connecting = false, lastErr = {}, keysHere = null;
+  var keyMap = {};                            // Enable Banking account id → its key is on this device
 
   var S = {
     en: {
@@ -52,7 +53,11 @@
       now: "Update now", updating: "Updating…", got: "{n} new entries from your banks", gotNone: "Your banks have nothing new",
       bar: "Bank access ends soon: {b}", barEnded: "Bank access ended: {b}", barGo: "Banks",
       err_auth: "Enable Banking refused the key: check the application ID and the .pem file.", err_offline: "You are offline.",
-      err_busy: "The bank asks to wait a little (too many requests).", err_keys: "No key on this device.",
+      err_busy: "The bank asks to wait a little (too many requests).", err_keys: "Needs the key of your Enable Banking application on this device: see above.",
+      err_noapp: "This device doesn't have your Enable Banking application yet: add it above (application ID and .pem file), or wait for sync to bring it.",
+      err_gone: "The Enable Banking application this bank was connected with isn't on this device any more: press Renew.",
+      ksT: "Use on all my devices", ksHint: "Your phone and your other devices get this key through sync, sealed with your sync passphrase. Then banks update there too.",
+      ksNeed: "Connect sync with a passphrase first (Settings › Sync).", ksWait: "“Use on all my devices” is on: the key arrives with sync from the device that has it. It needs the same sync passphrase there and here.",
       err_consent: "The bank no longer gives access: renew it.", err_state: "That answer doesn't belong to a request from this device.",
       err_cancel: "The bank connection was cancelled.", err_other: "The bank or Enable Banking didn't answer. Try again later.",
       err_server: "Enable Banking or the bank refused the request.", err_notfound: "Enable Banking or the bank refused the request.",
@@ -83,7 +88,11 @@
       now: "Ενημέρωση τώρα", updating: "Ενημέρωση…", got: "{n} νέες κινήσεις από τις τράπεζές σου", gotNone: "Δεν υπάρχει κάτι νέο από τις τράπεζές σου",
       bar: "Η πρόσβαση στην τράπεζα λήγει σύντομα: {b}", barEnded: "Η πρόσβαση στην τράπεζα έληξε: {b}", barGo: "Τράπεζες",
       err_auth: "Το Enable Banking δεν δέχτηκε το κλειδί: έλεγξε το Application ID και το αρχείο .pem.", err_offline: "Είσαι εκτός σύνδεσης.",
-      err_busy: "Η τράπεζα ζητά λίγη αναμονή (πολλά αιτήματα).", err_keys: "Δεν υπάρχει κλειδί σε αυτή τη συσκευή.",
+      err_busy: "Η τράπεζα ζητά λίγη αναμονή (πολλά αιτήματα).", err_keys: "Χρειάζεται σε αυτή τη συσκευή το κλειδί της εφαρμογής σου στο Enable Banking: δες παραπάνω.",
+      err_noapp: "Αυτή η συσκευή δεν έχει ακόμα την εφαρμογή σου στο Enable Banking: πρόσθεσέ τη παραπάνω (Application ID και αρχείο .pem) ή περίμενε να τη φέρει ο συγχρονισμός.",
+      err_gone: "Η εφαρμογή του Enable Banking με την οποία συνδέθηκε αυτή η τράπεζα δεν υπάρχει πια σε αυτή τη συσκευή: πάτα Ανανέωση.",
+      ksT: "Χρήση σε όλες τις συσκευές μου", ksHint: "Το κινητό και οι άλλες συσκευές σου παίρνουν αυτό το κλειδί μέσω συγχρονισμού, σφραγισμένο με τη φράση πρόσβασης του συγχρονισμού. Έτσι οι τράπεζες ενημερώνονται κι εκεί.",
+      ksNeed: "Σύνδεσε πρώτα τον συγχρονισμό με φράση πρόσβασης (Ρυθμίσεις › Συγχρονισμός).", ksWait: "Το «Χρήση σε όλες τις συσκευές μου» είναι ανοιχτό: το κλειδί έρχεται με τον συγχρονισμό από τη συσκευή που το έχει. Χρειάζεται την ίδια φράση πρόσβασης συγχρονισμού εκεί και εδώ.",
       err_consent: "Η τράπεζα δεν δίνει πια πρόσβαση: ανανέωσέ τη.", err_state: "Αυτή η απάντηση δεν ανήκει σε αίτημα αυτής της συσκευής.",
       err_cancel: "Η σύνδεση με την τράπεζα ακυρώθηκε.", err_other: "Η τράπεζα ή το Enable Banking δεν απάντησε. Δοκίμασε ξανά αργότερα.",
       err_server: "Το Enable Banking ή η τράπεζα δεν δέχτηκε το αίτημα.", err_notfound: "Το Enable Banking ή η τράπεζα δεν δέχτηκε το αίτημα.",
@@ -104,7 +113,24 @@
     try { var p = root.parent; return p && p !== root && p.orosLinks && typeof p.orosLinks.call === "function" ? p.orosLinks : null; }
     catch (e) { return null; }
   }
-  function app() { var Lk = links(); var l = Lk ? Lk.list("ebank") : []; return l.length ? l[0] : null; }
+  // Every Enable Banking application in Connected services (one, or
+  // copies made on other devices); app() is the one this device can sign
+  // with, else the first.
+  function apps() { var Lk = links(); return Lk ? Lk.list("ebank") : []; }
+  function app() {
+    var l = apps(), h = l.filter(function (a) { return keyMap[a.id]; });
+    return h[0] || l[0] || null;
+  }
+  // The application a bank row is read with on this device: its own
+  // when the key is here; otherwise the one here that has a key (the row
+  // was connected on another device, or with a copy since removed).
+  // → { la, moved } or { la: "", why: "keys" | "noapp" }
+  function appFor(row) {
+    if (row.la && keyMap[row.la]) return { la: row.la, moved: false };
+    var a = app();
+    if (a && keyMap[a.id]) return { la: a.id, moved: a.id !== row.la };
+    return { la: "", why: apps().length ? "keys" : "noapp" };
+  }
   function webOrigin() {
     try { return root.location.origin === "https://useoros.online"; }
     catch (e) { return true; }
@@ -142,17 +168,26 @@
     });
   }
   function checkKeys() {
-    var a = app(), Lk = links();
-    if (!a || !Lk) { keysHere = false; return Promise.resolve(false); }
-    return Lk.hasKeys(a.id).then(function (h) { keysHere = h; return h; }, function () { keysHere = false; return false; });
+    var Lk = links(), l = apps();
+    if (!Lk || !l.length) { keyMap = {}; keysHere = false; return Promise.resolve(false); }
+    return Promise.all(l.map(function (a) {
+      return Lk.hasKeys(a.id).then(function (h) { return !!h; }, function () { return false; });
+    })).then(function (hs) {
+      var m = {};
+      l.forEach(function (a, i) { m[a.id] = hs[i]; });
+      keyMap = m;
+      var a = app();
+      keysHere = !!(a && keyMap[a.id]);
+      return keysHere;
+    });
   }
 
   // ---------- Update (refresh) ----------
-  function fetchAll(row) {
+  function fetchAll(row, la) {
     var from = K.fromDate(row, Date.now()), out = [], page = 0;
     function next(ck) {
       var path = "/accounts/" + row.uid + "/transactions?date_from=" + from + (ck ? "&continuation_key=" + encodeURIComponent(ck) : "");
-      return ask(row.la, { m: "GET", path: path }).then(function (j) {
+      return ask(la, { m: "GET", path: path }).then(function (j) {
         out = out.concat(K.items(j, out.length));
         page++;
         var nk = j && typeof j.continuation_key === "string" ? j.continuation_key : "";
@@ -185,15 +220,17 @@
     var rows = live(), now = Date.now();
     if (!rows.length) return Promise.resolve({ n: 0, errs: {} });
     busy = true;
-    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {}, bals = {};
+    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {}, bals = {}, moves = {};
     var tx = D.tx.slice();
-    return checkKeys().then(function (has) {
+    return checkKeys().then(function () {
       return rows.reduce(function (p, row) {
         return p.then(function () {
-          var pp = isPP(row);
-          if (!pp && !has) { errs[row.id] = "keys"; return; }
+          var pp = isPP(row), use = pp ? { la: row.la, moved: false } : appFor(row);
+          if (!use.la) { errs[row.id] = use.why; return; }
           if (!pp && row.vu && row.vu < now) { errs[row.id] = "consent"; return; }
-          return (pp ? fetchPayPal(row) : fetchAll(row)).then(function (its) {
+          return (pp ? fetchPayPal(row) : fetchAll(row, use.la)).then(function (its) {
+            // read with the application here: the row follows it (synced)
+            if (use.moved) moves[row.id] = use.la;
             K.uniqueFits(its);
             // a PayPal reading is a PayPal file: its bank twins ("PAYPAL *…") are found
             var plan = B.plan(its, { tx: tx, tombs: D.tombs, ac: row.ac, cur: A.cur(), rules: D.rule, xfer: D.xfer, pp: pp });
@@ -208,7 +245,7 @@
             if (pp) return;
             // BK-5: the bank's own balance; a bank that won't give it
             // costs nothing (the entries are in already)
-            return ask(row.la, { m: "GET", path: "/accounts/" + row.uid + "/balances" }).then(function (j) {
+            return ask(use.la, { m: "GET", path: "/accounts/" + row.uid + "/balances" }).then(function (j) {
               var b = K.balance(j);
               if (b) bals[row.id] = { bb: b.a, bc: b.cu, bd: b.d || K.ymdOf(Date.now()) };
             }, function () {});
@@ -222,6 +259,7 @@
       busy = false;
       lastErr = errs;
       store(DEV_KEY, { t: Date.now() });
+      Object.keys(moves).forEach(function (id) { A.patchBnk(id, { la: moves[id] }); });
       Object.keys(lfs).forEach(function (id) { A.patchBnk(id, { lf: lfs[id] }); });
       Object.keys(bals).forEach(function (id) { A.patchBnk(id, bals[id]); });
       if (add.length) A.addEntries(add, t("got", { n: add.length }));
@@ -401,8 +439,10 @@
       box.appendChild(acts);
     } else {
       box.appendChild(el("p", "", a.name));
-      var kl = el("p", keysHere ? "hint" : "err", keysHere ? t("keyHere") : t("keyNot"));
+      var kl = el("p", keysHere ? "hint" : "err", keysHere ? t("keyHere") : a.ks === 1 ? t("ksWait") : t("keyNot"));
       box.appendChild(kl);
+      // the device with the key can send it to the others (phone) right here
+      if (keysHere && typeof Lk.setKeySync === "function") box.appendChild(ksSwitch(a, msg, redraw));
       if (!keysHere) {
         box.appendChild(keyForm(true));
         var acts2 = el("div", "dlg-actions");
@@ -421,6 +461,23 @@
     }
     box.appendChild(msg);
     return box;
+  }
+  function ksSwitch(a, msg, redraw) {
+    var lab = el("label", "bk-check");
+    var cb = el("input");
+    cb.type = "checkbox";
+    cb.checked = a.ks === 1;
+    cb.addEventListener("change", function () {
+      if (cb.checked && !links().canKeySync()) { cb.checked = false; msg.className = "err bk-msg"; msg.textContent = t("ksNeed"); return; }
+      links().setKeySync(a.id, cb.checked);
+      redraw();
+    });
+    lab.appendChild(cb);
+    lab.appendChild(el("span", "", t("ksT")));
+    var wrap = el("div", "");
+    wrap.appendChild(lab);
+    wrap.appendChild(el("p", "hint", t("ksHint")));
+    return wrap;
   }
   function accsSection(redraw) {
     var box = el("section", "bk-sec");
@@ -441,7 +498,13 @@
       var bot = el("div", "bk-bot");
       bot.appendChild(el("span", "dlg-lbl", t("fills")));
       bot.appendChild(s);
-      if (!isPP(r)) bot.appendChild(A.button(t("renew"), "mini", function () { connect({ name: r.bk, country: r.cty, days: 180 }, r.ps, r.la); }));
+      if (!isPP(r)) bot.appendChild(A.button(t("renew"), "mini", function () {
+        // with the application this device can sign with (the row's own
+        // may live on another device only); none here: say what's missing
+        var u = appFor(r);
+        if (!u.la) { A.showToast(t("err_" + u.why)); return; }
+        connect({ name: r.bk, country: r.cty, days: 180 }, r.ps, u.la);
+      }));
       bot.appendChild(A.button(t("remove"), "mini danger", function () {
         if (!root.confirm(t("removeQ", { n: rowName(r) }))) return;
         A.dropBnk(r.id);

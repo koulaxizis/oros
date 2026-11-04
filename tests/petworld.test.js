@@ -37,7 +37,7 @@ const PW = load("petworld/petworld.js",
   ["cmpStr", "normRow", "joinRows", "mergeWorld", "defaultData",
    "worldHasContent", "ledger", "freshStart", "bindPet",
    "normTot", "normPlot", "joinPlot", "mergeGarden", "defaultGarden", "yieldOf", "growthSpan",
-   "readyAt", "plotState", "withPlot", "plantSeed", "waterPlot", "harvestPlot", "digUp",
+   "readyAt", "plotState", "withPlot", "plantSeed", "waterPlot", "harvestPlot", "nextGrowth", "digUp",
    "freshGarden", "stock", "gardenHasContent", "clamp",
    "normWalks", "normNestRow", "joinNestRow", "mergeNest", "defaultNest", "lootOf", "walkList",
    "activeWalk", "lastWalk", "withNestRow", "foldWalks", "startWalk", "nestNet", "nestStage",
@@ -203,6 +203,30 @@ test("petgarden: an apple tree fruits again every 24 h", () => {
   assert.equal(PW.plotState(h.g.plots["1"], 96 * H).state, "ready");     // 72 + 24
   const h2 = PW.harvestPlot(h.g, "1", 96 * H);
   assert.equal(PW.stock(PW.defaultData(), h2.g, "apple"), h.got.apple + h2.got.apple);
+});
+
+test("petgarden: one pick on a tree left for days frees it (missed growths do not pile up)", () => {
+  const H = PW.HOUR;
+  const g = PW.plantSeed(PW.defaultGarden(), "0", "apple", 0);
+  // Ripe at 72 h, then every 24 h; nobody picks for ten more days.
+  const now = 72 * H + 10 * 24 * H + 5 * H;
+  assert.equal(PW.plotState(g.plots["0"], now).state, "ready");
+  const h = PW.harvestPlot(g, "0", now);
+  assert.ok(h.got.apple >= 3 && h.got.apple <= 5);
+  const st = PW.plotState(h.g.plots["0"], now);
+  assert.equal(st.state, "growing");                                   // the bed is free at once
+  assert.ok(st.adult);
+  assert.equal(st.readyAt, 72 * H + 11 * 24 * H);                      // next fruit on schedule
+  assert.equal(PW.harvestPlot(h.g, "0", now + H).g, h.g);              // a second tap takes nothing
+  assert.equal(PW.stock(PW.defaultData(), h.g, "apple"), h.got.apple);
+  // Watering the next growth still works, and it ripens on time.
+  const w = PW.waterPlot(h.g, "0", now + H);
+  assert.equal(w.plots["0"].wn, w.plots["0"].n);
+  assert.equal(PW.plotState(w.plots["0"], 72 * H + 11 * 24 * H - 6 * H).state, "ready");
+  // Two devices picking the same ripe fruit offline still merge into one harvest.
+  const A = PW.harvestPlot(g, "0", now), B = PW.harvestPlot(g, "0", now + 2 * H);
+  assert.equal(J(A.got), J(B.got));
+  assert.equal(PW.stock(PW.defaultData(), PW.mergeGarden(A.g, B.g), "apple"), A.got.apple);
 });
 
 test("petgarden: a fresh start empties the beds on every device", () => {

@@ -11,6 +11,8 @@ A list has its own look (`Classic`, `Warm`, `Dark` or `Plain`), colour, footer l
 
 `Seconds between messages` and `Messages a day (at most)` keep you under your provider's limits. A provider's password or API key stays sealed on the device where you typed it and is never synced: enter it once on each device that sends.
 
+An ordinary mailbox is not made for bulk mail and has hourly limits that its provider decides. Proton Mail sends through SMTP only on paid plans with your own domain: create an SMTP token in Proton's settings and use it as the password (preset `Proton Mail`, slow on purpose). Hosting mail (cPanel, Plesk) often allows a few hundred messages an hour: ask your host. For lists of hundreds, a sending provider with your own domain (Brevo, MailerSend, SMTP2GO…) is the most reliable. Whatever you use, set `Seconds between messages` and `Messages a day` under its limits; an issue to 340 people at 10 seconds apart takes about an hour, with orOS open.
+
 ## Sending through a provider's API
 For Brevo, Postmark, SendGrid and Mailgun, set `Connection` to `HTTP API` in the sending account and paste the provider's API key (Mailgun also needs its sending domain). Then:
 - Up to 10 messages leave in one call instead of one at a time.
@@ -26,6 +28,13 @@ The key needs permission to send and to read bounces or suppressions. Brevo's AP
 - `Confirms by e-mail`: they get a confirmation request and receive issues only after they confirm.
 
 An import never brings back someone who unsubscribed. `Delete for good` removes a person and keeps only a fingerprint of the address, so it can't be imported again by mistake. `Their data (JSON)` saves everything kept about one person.
+
+`Import CSV` also reads exports from MailerLite and other services:
+- `What the file holds`: when the file has a status column, each row keeps its own status; otherwise pick it. MailerLite exports one status per file (active, unsubscribed, bounced, junk), so import each file once.
+- Unsubscribed, bounced and junk addresses are never added. They go on the do-not-mail list as a fingerprint only, so no later import can add them, and anyone on the list now is marked as left.
+- The sign-up date from the file is kept, and the `Consent note` (or the file's own source column, such as the form's name) is kept with each person as the record of how they signed up. Both show on the person and in `Their data (JSON)`.
+- `Other columns`: type a tag for a column and everyone with a value there (not empty, not 0) gets it. Shop columns such as orders count suggest the tag "customer"; several columns can give the same tag. A column left empty is not imported, so data Newsletter doesn't need (phone, city, money spent) stays out.
+- `Undo` on the message right after removes the people added and gives back those marked as left; the do-not-mail list keeps what was added.
 
 ## Clean up the list
 `Clean up…` keeps a list from growing with people who will never read it. Newsletter doesn't track opens, so it deletes only people who never confirmed (30 days after the confirmation request, by default) and people who left: unsubscribed, bounced or marked as spam (90 days after they left). Active subscribers are never deleted. Those who left are deleted for good, like `Delete for good`; those who never confirmed can be invited again. It runs once a day while orOS is open, on one device per list: the one that sends the list (`Run it on this device` picks another). More than 200 people, or more than a fifth of the list, at once wait for you: the dialog shows who would go, `Export them (CSV)` saves them first and `Clean up now` deletes them. Active subscribers with no sign of life for 12 months (6, 12, 24 or never; a sign of life is signing up or confirming, since opens are not counted) get one e-mail, "Do you still want it?", from the same device, at most 20 a day (or 5% of the list), oldest first. Replying with the prepared e-mail keeps them on the list, even after the time is up; whoever doesn't answer within 30 days is unsubscribed, and later deleted like anyone who left.
@@ -55,6 +64,26 @@ Each list's look is set on the list card (`Edit`): theme and colour, and also th
 
 `Preview` shows the issue on a phone and a desktop (and in each language), `Send a test` mails it to you, and `Check` lists what must be fixed before sending.
 
+## Issues in your own HTML
+`New` › `From HTML file…` opens an e-mail made elsewhere (a template, a draft written for you, one campaign saved from another service) as an HTML issue. It is sent as it is, after cleaning: tables, inline styles, links and https pictures stay; scripts, forms, outside style sheets and tracking pixels (pictures of 1 × 1 pixel) are removed. The HTML's title becomes the subject.
+- A link to `{$unsubscribe}` or `{{UNSUBSCRIBE}}` becomes the list's unsubscribe link. Without one, the list's footer (your address and the unsubscribe link) is added below.
+- `{first}` and `{name}` work as in other issues. Any other `{{SLOT}}` left in the HTML or the plain text stops the send until you fill it.
+- `Plain text` is the text-only part of the e-mail. Leave it empty and it is made from the HTML when it is sent, or use `Open a .txt file` or `Make from the HTML` to edit it.
+- `Save as template` keeps the HTML as one of your templates, for example your own monthly design.
+
+## Coupons
+`More blocks` › `Coupon` adds a discount code to an issue: its `Code`, a percent or an amount off the order, the day it ends, an optional smallest order, text and button. In an HTML issue, `+ Coupon` under the HTML does the same, and `{{COUPON}}` marks where the code goes.
+- With a WooCommerce shop connected in [Settings](app:settings) › `Connected services`, pick it as the coupon's `Shop`. `Create in shop` makes the code there; `Check` reminds you if you haven't.
+- `A code for each reader` gives everyone their own code, used once and only with their address. Each code is made in the shop just before that person's e-mail goes out; if the shop refuses, the issue pauses and nobody gets a code that doesn't work. A welcome mail template with such a coupon gives each new subscriber their own welcome code.
+- Without a shop, make the code in your shop yourself before you send.
+- orOS can only look up and create coupons in your shop, never change or delete them.
+
+## Purchases and segments
+With a WooCommerce shop connected, `Subscribers` › `Purchases from the shop` reads the shop's paid orders (processing and completed; nothing is written to the shop) and keeps, for each subscriber with the same e-mail, the number of orders, what they spent and their first and last order. They stay on your devices and sync with the list. Read them again whenever you want them fresh.
+- A segment's `Purchases` rules pick people by orders (none yet, exactly one, at least one, at least a number), by what they spent and by how long ago they last ordered.
+- `Ready: win back past customers` fills in the rules for people who bought before but not in the last 12 months. `New` › `Win back past customers` is a matching layout with a coupon that gives each reader their own code (with a connected shop). You send it yourself, to that segment.
+- Opens and clicks are never counted, so there is no revenue per issue.
+
 ## Writing with the Assistant
 Tell the [Assistant](app:assistant) what goes in, piece by piece as it reaches you: "add the interview from this link", "a short note that the fair starts on Friday, with a button to the programme". It answers with a card listing the blocks (heading, text, quote, button, list, divider, space, picture, picture and text, products; a banner is a picture with a link). `Open in Newsletter` asks which draft they go into, or starts a new one; the open draft takes them at once. Each block lands in its place: the top story first, then news, products, banners and offers, and a closing note last, all before the footer; blocks you placed yourself stay where they are. `Undo` in the message takes them out again. Pictures are copied from their web address when the site allows it; when it does not, the message says so and you pick that picture in its block. "Our latest release" comes from your own shop (Settings › Connected services): Newsletter reads the newest products itself when they are added, with their prices and pictures. Other publishers' products come from their pages, with their own links. Nothing is added before you choose, and the Assistant never sends: you send from here, as always. When you tell it the issue is ready, its card `Open the check` opens the draft's check here: what is missing, and when nothing is, the send screen, where you press Send.
 
@@ -64,6 +93,17 @@ Tell the [Assistant](app:assistant) what goes in, piece by piece as it reaches y
 A scheduled issue goes out from the device that scheduled it, where the passwords are. Open it to `Cancel the schedule` or `Send now`.
 
 >! orOS has to be open: with orOS closed nothing is sent, and a scheduled issue starts the next time you open orOS on that device. A tab in the background sends more slowly.
+
+After an issue goes out, its page shows how many messages were sent and not delivered, and how many people of the list unsubscribed, bounced or marked it as spam from the start until 14 days later. Opens and clicks are never counted.
+
+## Issue from a product
+With a shop connected, `New` › `From a product…` starts an issue for a new release or a pre-order: choose one or more products and they come in as a product block (picture, text, price and a button to the product page) under a heading and a short greeting, with the first product's name as the subject. Add a coupon from `More blocks` if you want one.
+
+## Welcome mail
+On a list's `Edit`, `Welcome mail` picks one of your templates. Each person who signs up through the form or by e-mail gets it once, after confirming, from the device that sends the list. People already on the list, imported or added by hand don't get it, nor anyone who confirmed more than 30 days ago. Pick `None` to stop it.
+
+## Notice when an issue goes out
+On a list's `Edit`, `When an issue goes out, tell` takes an https address, for example your site's Broadcast plugin, which then posts the news on Viber. When an issue has been sent, orOS posts a short notice there through the orOS relay: the list's name, the subject, how many got it, when, the issue's id and the list's language, never any subscriber. Each notice is signed with the `Notice key` (header `X-Oros-Signature: sha256=` HMAC-SHA256 of the `X-Oros-Timestamp` value, a dot and the body), so the receiver can check it came from you. If it doesn't arrive it is tried again after 1 and 10 minutes, then you get a notification.
 
 ## RSS to e-mail
 On a list card, `RSS to e-mail` turns a blog or news feed into issues. Pick one of your feeds in [Reader](app:feeds) or type any feed address, choose every day, every week or every month and the time, and how many articles go in. Each issue lists the new articles with their picture, a few lines and a `Read more` button.
@@ -89,7 +129,12 @@ In `Subscribe link`, `Set up the form` makes a form for your own website: copy i
 
 With the form on, every issue also has a one-click unsubscribe link, and Gmail and other mail apps show their own Unsubscribe button.
 
+Even without the form on your site, `Check` offers `Turn on one-click unsubscribe` when a list doesn't have it: the list is registered with the relay the same way, and every issue gets the one-click link.
+
 >! Sign-ups are collected on one device, the one that set the form up. Use `Collect here` to change it. `Turn the form off` deletes what the relay holds, and the one-click links in issues already sent stop working; the e-mail way keeps working.
+
+### Sign-ups at your shop's checkout
+The orOS Connect plugin for WordPress adds an unticked box to the WooCommerce checkout that posts to this form. Put the same `Shop key (checkout sign-ups)` here and in orOS Connect (`New key` makes one) and people who tick the box become subscribers at once, from source `Shop checkout`, without a confirmation e-mail: ticking an unticked box is their consent, and the shop keeps it with the order. The relay never sees the key; it only passes the shop's signature on, and a sign-up whose signature doesn't match, or that is more than 15 minutes old, asks for confirmation like any other. Someone who had unsubscribed and ticks the box again is subscribed again; nobody is ever brought back by an import.
 
 ## Save and open an orOS file
 In `Settings`, under `Data`, `orOS file (.orosnewsletter)` saves your lists, subscribers, issues (with their pictures), segments, templates, RSS feeds and sending accounts as one `.orosnewsletter` file, for example to move them to another device without sync or to keep a copy. Passwords, API keys, SMTP user names, the sign-up form's keys, the email-platform links and the sending progress stay on this device; an issue that was scheduled or going out is saved as a draft, and RSS feeds as off. The file is a plain ZIP: unzipped it holds everything as `content.json`, the pictures in `media/`, and `preview/issues.md` and one `preview/subscribers-….csv` per list for other programs. It holds your subscribers' e-mail addresses and is not encrypted, so keep it somewhere safe.

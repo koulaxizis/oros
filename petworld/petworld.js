@@ -657,13 +657,28 @@
   }
 
   // Returns { g, got: {item:n} } — got is empty when nothing was ready.
+  // A tree holds one crop at a time: growths missed while nobody picked
+  // do not pile up. One pick takes the ripe fruit and moves n on to the
+  // growth that is still to come, so the bed shows "growing" right
+  // after (a tree left for days used to stay "ready to pick"
+  // for one tap per missed day).
   function harvestPlot(g, id, now) {
     var cur = g.plots[id];
     if (!cur || plotState(cur, now).state !== "ready") return { g: g, got: {} };
     var got = yieldOf(id, cur), tot = {};
     Object.keys(cur.tot).forEach(function (k) { tot[k] = cur.tot[k]; });
     Object.keys(got).forEach(function (k) { tot[k] = Math.min(MAX_N, (tot[k] || 0) + got[k]); });
-    return { g: withPlot(g, id, { s: cur.s, t: cur.t, n: cur.n + 1, wn: cur.wn, tot: tot }), got: got };
+    return { g: withPlot(g, id, { s: cur.s, t: cur.t, n: nextGrowth(cur, now), wn: cur.wn, tot: tot }), got: got };
+  }
+
+  // The growth after a pick at time now: n + 1, or for a tree the first
+  // growth that is not ripe yet at now (scheduled from planting time).
+  function nextGrowth(p, now) {
+    var c = CROPS[p.s], n = p.n + 1;
+    if (!c || !c.regrow) return n;
+    var first = p.t + c.d * HOUR, span = c.regrow * HOUR;
+    if (now < first) return n;
+    return Math.min(1e6, Math.max(n, Math.floor((now - first) / span) + 1));
   }
 
   function digUp(g, id, now) {

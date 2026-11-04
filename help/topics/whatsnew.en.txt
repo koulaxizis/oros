@@ -1,6 +1,23 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.23.00
+- **Budget's banks work on your phone too.** A bank connected on another device no longer says "No key on this device" with nothing to do, and Renew no longer fails with "(gone)": each bank now uses the Enable Banking application that has its key on the device you are on. To get the key on your phone, turn on "Use on all my devices", now right under the key in Budget › More › Banks on the device that has it (sync with a passphrase needed).
+- **Your bank balance in Budget's Overview.** Under each account in Overview › Accounts you now see the balance your bank gave on the last update, with its day, and "Match" when Budget shows another amount (Undo takes it back). When no bank fills a Budget account yet, Overview tells you where to set it.
+
+## Version 5.22.02
+- **Picking apples works again on a tree left for a few days.** In Pet World's garden, one Pick now takes the ripe apples and frees the bed right away. Before, an apple tree nobody had picked for several days stayed "ready to pick" for one tap per missed day, so it looked stuck and then seemed to start over with Water.
+
+## Version 5.22.01
+- **Check for updates finds system updates on orOS USB and Portable.** On orOS USB and the installed orOS, "Check for updates" now opens System › System update and checks for a new system there. Elsewhere it says so when you already have the newest version, instead of showing nothing.
+
+## Version 5.22.00
+- **Newsletter can take over from MailerLite.** Import a CSV export with each person's status, send issues written in your own HTML, and greet every new subscriber with a welcome e-mail. A one-click unsubscribe works in Gmail and Yahoo, and each issue gets a report.
+- **Coupons in your issues.** Add a coupon block with one shared code, or a code for each reader that orOS creates in your WooCommerce shop just before their e-mail goes out.
+- **Sign-ups at your shop's checkout.** With the same shop key in orOS Connect and in your list, people who tick the box at checkout join at once, without a confirmation e-mail.
+- **Purchases and win-back.** Read the purchases from your shop, make segments such as first purchase or no order in the last year, and start from the ready "Win back past customers" segment and layout.
+- **Issue from a product, and a notice when an issue goes out.** Start a new issue from a product in your shop. A list can also send a short signed notice when an issue has been sent, for example to your site's Broadcast plugin to post it on Viber.
+
 ## Version 5.21.00
 - **See every AI the Assistant can use.** Assistant › Settings now lists under `Connected services and order` every service set up on this device, numbered in the order they answer, with your assistant marked `first choice`. Choosing a new assistant puts it first and keeps the others connected as stand-ins, also when your first choice is an online service: if it can't answer, the next one in the list does. Untick a service to leave it out; services not set up yet sit under one line you can open.
 
