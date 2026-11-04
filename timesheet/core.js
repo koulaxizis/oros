@@ -13,7 +13,9 @@
 //               charge and overtime, see normBilling)
 //     entries:  [ { id, p, desc, s, e, billed, task?, tags?, iv?, m } | tomb ]
 //               iv = the Invoices document it went on (T1, BR-TS-INV),
-//               written only when set and meant only while billed
+//               written only when set and meant only while billed;
+//               src = what it was for (T2): "todo:<id>", "kanban:<id>",
+//               "cal:<event>:<day>", written only when set
 //     extras:   [ { id, d, p, c, desc, amt, billed, iv?, m } | tomb ]
 //               extra charges (fuel, travel, …): written only when
 //               the list has a record, so data without one stays
@@ -34,6 +36,7 @@
 //   4. Time maths: day pieces, rounding, week grid, reports
 //   5. Parsing + formatting
 //   5b. Invoices link + unbilled time (T1)
+//   5c. Time from tasks, cards and events (T2)
 //   6. Export: CSV + JSON backup
 // ============================================================
 (function (root) {
@@ -125,6 +128,10 @@
   // customer): the shape those apps accept, nothing more is assumed.
   var LINK_RE = /^[A-Za-z0-9_-]{1,60}$/;
   function linkId(v) { return typeof v === "string" && LINK_RE.test(v) ? v : ""; }
+  // T2 (BR-TS-SRC): what an entry was for, "todo:<task>", "kanban:<card>"
+  // or "cal:<event>:<occurrence day>".
+  var SRC_RE = /^(todo|kanban|cal):[A-Za-z0-9_.:-]{1,90}$/;
+  function srcKey(v) { return typeof v === "string" && SRC_RE.test(v) ? v : ""; }
 
   // Forward compatibility (as in Budget): a flat field this version
   // does not know rides along on its record, sorted by name, so a
@@ -135,7 +142,7 @@
     client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "crm", "m", "del"],
     project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget",
               "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
-    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "iv", "m", "del"],
+    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "iv", "src", "m", "del"],
     extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "iv", "m", "del"]
   };
   function withExtras(out, x, known) {
@@ -232,6 +239,8 @@
     if (tags.length) out.tags = tags;
     var iv = linkId(x.iv);        // T1: the Invoices document it went on (meant only while billed)
     if (iv) out.iv = iv;
+    var src = srcKey(x.src);      // T2: the To-Do task, Kanban card or Calendar event it was for
+    if (src) out.src = src;
     out.m = x.m;
     return withExtras(out, x, KNOWN.entry);
   }
@@ -962,6 +971,38 @@
     }).sort(function (a, b) { return b.amount - a.amount || b.ms - a.ms || cmpStr(a.cid, b.cid); });
   }
 
+  // ---------- 5c. Time from tasks, cards and events (T2, BR-TS-SRC) ----------
+  // Tracked time per source key: { "todo:<id>": ms, … } for the keys
+  // that start with `prefix` ("" = every key). A running entry counts
+  // up to now.
+  function timeBySrc(data, prefix, now) {
+    var out = {};
+    data.entries.forEach(function (x) {
+      if (x.del || !x.src || (prefix && x.src.indexOf(prefix) !== 0)) return;
+      out[x.src] = (out[x.src] || 0) + (endOf(x, now) - x.s);
+    });
+    return out;
+  }
+  // Calendar events of a day that ended and have no time logged:
+  // evs = [{ key, title, s, e }] (timed occurrences, ms); left out are
+  // those not over yet, those dismissed (skip = { key: 1 }), those an
+  // entry names (src) and those already covered for half their length
+  // or more by entries (a timer started from the event, say).
+  function calSuggest(data, evs, skip, now) {
+    var named = timeBySrc(data, "cal:", now);
+    return (evs || []).filter(function (v) {
+      if (!v || !srcKey(v.key) || !isInt(v.s) || !isInt(v.e) || v.e <= v.s || v.e > now) return false;
+      if ((skip && skip[v.key]) || named[v.key]) return false;
+      var cov = 0;
+      data.entries.forEach(function (x) {
+        if (x.del) return;
+        var a = Math.max(x.s, v.s), b = Math.min(endOf(x, now), v.e);
+        if (b > a) cov += b - a;
+      });
+      return cov * 2 < v.e - v.s;
+    }).sort(function (a, b) { return a.s - b.s || cmpStr(a.key, b.key); });
+  }
+
   // ---------- 6. Export ----------
   // A text cell that Excel / LibreOffice would read as a formula gets
   // a leading apostrophe (CSV injection), then RFC 4180 quoting.
@@ -1526,7 +1567,8 @@
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
     csvCell: csvCell, toCsv: toCsv, toTable: toTable, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
     readCsv: readCsv, importPlan: importPlan,
-    PEND_KEY: PEND_KEY, normPend: normPend, pendAdd: pendAdd, invLink: invLink, unbilled: unbilled, linkId: linkId
+    PEND_KEY: PEND_KEY, normPend: normPend, pendAdd: pendAdd, invLink: invLink, unbilled: unbilled, linkId: linkId,
+    srcKey: srcKey, timeBySrc: timeBySrc, calSuggest: calSuggest
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

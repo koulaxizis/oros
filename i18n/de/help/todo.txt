@@ -127,6 +127,7 @@ Wenn deine Aufgaben auf deinem eigenen Server liegen (Nextcloud Tasks, Radicale,
 - [[Esc]] schließt das Schnellmenü, das Sortier- oder Labelfilter-Menü, das offene Fenster oder beendet eine Auswahl.
 
 ## Tipps
+- `Zeit erfassen` im Fenster einer Aufgabe (wenn [Zeiterfassung](app:timesheet) installiert ist) startet dort einen Timer mit dem Namen der Aufgabe, mit dem Projekt, das wie die Aufgabe oder die Liste heißt, falls du eins hast; ein laufender Timer bleibt unberührt. Das Fenster zeigt danach `Erfasste Zeit`, die Summe, die die Zeiterfassung für die Aufgabe hat.
 - Nicht erledigte Aufgaben mit Fälligkeit erscheinen an ihrem Tag im [Kalender](app:calendar), und der Kalendereintrag öffnet die Liste hier. Sie erscheinen auch in Heute, mit einer Schaltfläche, die sie hier abhakt.
 - Andere Apps können Einträge hierher schicken, etwa die Einkaufsliste aus dem [Essensplaner](app:meals). Ein Fenster `Zu Aufgaben hinzufügen` zeigt sie mit einer Auswahl für die `Liste`; Einträge, die schon auf dieser Liste stehen, starten nicht angehakt, und nichts wird gespeichert, bis du `Hinzufügen` drückst.
 - orOS kann dich erinnern, wenn Aufgaben fällig oder überfällig sind; siehe [Benachrichtigungen](help:t/notifications).

@@ -22,11 +22,16 @@ Wähle unter `Berichte` einen `Zeitraum` (diese Woche, letzter Monat, dieses Jah
 - `CSV exportieren` speichert den Bericht für eine Tabellenkalkulation.
 - Innerhalb von orOS öffnet `In Tabelle öffnen` dieselben Zeilen als neues Blatt in Tabelle, mit Summen unter Stunden und Betrag.
 - `Angebot erstellen` macht aus dem Bericht ein neues [Angebot](app:quote): eine Zeile pro abrechenbarem Projekt mit Satz, mit den Stunden als Menge und dem Stundensatz als Preis. Der Kunde wird eingetragen, wenn der Zeitraum nur einen hat. Das Angebot übernimmt die Währung der Zeiterfassung, egal welche.
-- `Rechnung erstellen` übernimmt dieselben Zeilen in eine neue Rechnung in [Rechnungen](app:invoices), in jeder Währung. Prüfe sie dort, dann speichere oder stelle sie aus.
+- `Rechnung erstellen` übernimmt dieselben Zeilen in eine neue Rechnung in [Rechnungen](app:invoices), in jeder Währung. Prüfe sie dort, dann speichere oder stelle sie aus. Sobald sie gespeichert ist (auch als Entwurf), werden genau diese Einträge und Zusatzkosten hier als `Abgerechnet` markiert, damit dieselben Stunden nie zweimal abgerechnet werden. Fahre über das Häkchen oder öffne einen Eintrag, um Nummer und Zahlungsstand der Rechnung zu sehen; `Rechnung öffnen` bringt dich hin. Löschst oder stornierst du die Rechnung oder schreibst sie voll gut, sind sie wieder nicht abgerechnet. Ist der Kunde mit einem CRM-Kunden verknüpft, bekommt die Rechnung auch USt-IdNr., Adresse und E-Mail.
 - `… als abgerechnet markieren` markiert alle abrechenbaren Einträge des Berichts als abgerechnet, damit du das nächste Mal nach `Nicht abgerechnet` filtern kannst. Auf dieselbe Weise hebst du die Markierung wieder auf.
+
+## Abzurechnen
+Der Tab `Abzurechnen` zeigt pro Kunde die abrechenbare Zeit und die Zusatzkosten, die noch nicht abgerechnet sind (`Nicht abgerechnet`), seit jeher und mit dem Tag des ältesten Eintrags. Sind [Rechnungen](app:invoices) auf diesem Gerät, zeigt er auch, was abgerechnet, aber noch unbezahlt ist, und wie viele dieser Rechnungen überfällig sind. `Rechnung erstellen` macht eine Rechnung für die ganze noch nicht abgerechnete Zeit des Kunden; `Bericht` öffnet diese Einträge unter `Berichte`. Ein noch laufender Timer bleibt außen vor, bis du ihn stoppst.
 
 ## Projekte und Kunden
 Lege unter `Projekte` ein `Neues Projekt` oder einen Kunden (`Neuer Kunde`) an. Ein Projekt hat `Name`, `Kunde`, `Farbe`, `Stundensatz`, ein optionales `Stundenbudget` (z. B. 40 oder 12:30) und `Abrechenbar`. Mit Budget zeigt das Projekt einen Balken der verbrauchten Stunden: Er wird ab 90 % golden und rot, wenn das Budget überschritten ist. Lass den Satz leer, um den Satz des Kunden zu nutzen oder den Standard aus den `Einstellungen`. Ein Projekt mit Einträgen lässt sich nicht löschen; kreuze stattdessen `Archiviert` an, um es im Timer auszublenden und seine Zeit zu behalten.
+
+Ist [CRM](app:crm) auf diesem Gerät, hat ein Kunde ein Feld `Kunde im CRM`: Wähle den passenden Kunden (ein neuer Kunde übernimmt dessen Namen). Rechnungen aus der Zeiterfassung tragen dann USt-IdNr., Finanzamt, Adresse und E-Mail des Kunden, und seine Seite im CRM zeigt die Stunden dieses Kunden.
 
 ## Tagessatz, Mindestabrechnung, Überstunden und Zusatzkosten
 Öffne unter `Projekte` ein Projekt (oder einen Kunden, für alle seine Projekte ohne eigene Angaben) und klappe `Tagessatz, Minimum und Überstunden` auf. Wähle `Pro` `Arbeitstag`, `Woche` oder `Monat`, dann beliebig:
@@ -81,7 +86,8 @@ Wähle in [Zeit](app:time) → `Pomodoro` unter `Fokus in der Zeiterfassung erfa
 
 ## Tipps
 - [Kalender](app:calendar) kann deine Zeit unter dem Chip `Arbeitszeit` zeigen: eine Zeile pro Projekt und Tag, etwa „Website · 2:15“. Ein Tipp auf eine Zeile öffnet diesen Tag hier.
-- `Zeit erfassen` bei einem Termin im [Kalender](app:calendar) startet hier einen Timer mit dem Namen des Termins (mit dem gleichnamigen Projekt, falls du eins hast). Läuft schon ein Timer, läuft er weiter.
+- `Zeit erfassen` bei einem Termin im [Kalender](app:calendar), einer Aufgabe in [To-Do](app:todo) oder einer Karte in [Kanban](app:kanban) startet hier einen Timer mit ihrem Namen, mit dem gleichnamigen Projekt, falls du eins hast (bei Aufgabe oder Karte auch dem Projekt, das wie ihre Liste oder ihr Board heißt). Läuft schon ein Timer, läuft er weiter. Die Aufgabe oder Karte zeigt danach die für sie erfasste Zeit.
+- `Aus deinem Kalender` im Timer zeigt die Termine des Tages mit Uhrzeit, die vorbei sind und noch keine erfasste Zeit haben. `Eintragen` öffnet `Zeit eintragen` mit Beginn und Ende des Termins; gespeichert wird erst, wenn du `Hinzufügen` drückst. Das X blendet einen Termin aus, der keine Arbeitszeit war (nur auf diesem Gerät). Ein Termin, aus dem schon ein Eintrag stammt oder den deine Einträge zur Hälfte abdecken, erscheint nicht. `Zeit eintragen` bei einem vergangenen Termin im [Kalender](app:calendar) macht dasselbe.
 - Zum Starten brauchst du kein Projekt: Zeit ohne Projekt wird gespeichert, und du kannst sie später zuordnen.
 - Wurden auf zwei Geräten gleichzeitig Timer gestartet, laufen beide weiter und du kannst jeden einzeln stoppen.
 

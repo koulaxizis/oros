@@ -172,7 +172,9 @@
       "inv.open": "Open invoice", "toast.invLinked": "Marked as invoiced: {n} · {num}", "inv.draftNum": "Draft invoice",
       "toast.invGone": "Not invoiced again: {n} (their invoice was cancelled)",
       "f.crm": "CRM customer", "f.crmNone": "Not linked", "f.crmAway": "Linked (not on this device)",
-      "f.crmHint": "Invoices made here then take the VAT number, address and email from CRM."
+      "f.crmHint": "Invoices made here then take the VAT number, address and email from CRM.",
+      "cal.h": "From your calendar", "cal.untitled": "(untitled)", "cal.log": "Log",
+      "cal.logA": "Log the time of {t}", "cal.skip": "Not work time: hide {t}"
     },
     el: {
       "app": "Ώρες εργασίας", "settings": "Ρυθμίσεις",
@@ -298,7 +300,9 @@
       "inv.open": "Άνοιγμα τιμολογίου", "toast.invLinked": "Σημειώθηκαν ως τιμολογημένα: {n} · {num}", "inv.draftNum": "Πρόχειρο τιμολόγιο",
       "toast.invGone": "Ξανά ατιμολόγητα: {n} (το τιμολόγιό τους ακυρώθηκε)",
       "f.crm": "Πελάτης στο CRM", "f.crmNone": "Χωρίς σύνδεση", "f.crmAway": "Συνδεδεμένος (όχι σε αυτή τη συσκευή)",
-      "f.crmHint": "Τα τιμολόγια που φτιάχνεις από εδώ παίρνουν τότε ΑΦΜ, διεύθυνση και email από το CRM."
+      "f.crmHint": "Τα τιμολόγια που φτιάχνεις από εδώ παίρνουν τότε ΑΦΜ, διεύθυνση και email από το CRM.",
+      "cal.h": "Από το ημερολόγιό σου", "cal.untitled": "(χωρίς τίτλο)", "cal.log": "Καταγραφή",
+      "cal.logA": "Καταγραφή του χρόνου του {t}", "cal.skip": "Δεν είναι χρόνος εργασίας: απόκρυψη του {t}"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "timesheet", LANG);
@@ -338,6 +342,7 @@
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
     bill:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"/></svg>'
   };
 
@@ -432,11 +437,12 @@
   // ---------- 3. Edits ----------
   // Start: every running timer stops first (one at a time), then a
   // new entry opens with the draft's project and description.
-  function startTimer(p, desc, from) {
+  function startTimer(p, desc, from, src) {
     var now = Date.now();
     stopAll(now, true);
     var id = newId();
     var x = { id: id, p: p || "", desc: C.cleanText(desc, C.LIM.desc), s: now, e: 0, billed: 0, m: now };
+    if (C.srcKey(src)) x.src = src;          // T2: the task, card or event it is for
     // "Continue" keeps the task and tags of the entry it continues.
     if (from && from.task) x.task = from.task;
     if (from && from.tags && from.tags.length) x.tags = from.tags.slice();
@@ -485,7 +491,7 @@
   }
   function resume(x) {
     var p = C.project(data, x.p) ? x.p : "";
-    startTimer(p, x.desc, p === x.p ? x : { tags: x.tags });
+    startTimer(p, x.desc, p === x.p ? x : { tags: x.tags }, p === x.p ? x.src : "");
   }
 
   // The running entry follows the timer fields as they change.
@@ -527,6 +533,7 @@
   function addEntry(rec) {
     var now = Date.now();
     var x = { id: newId(), p: rec.p, desc: rec.desc, s: rec.s, e: rec.e, billed: rec.billed, m: now };
+    if (C.srcKey(rec.src)) x.src = rec.src;
     setTaskTags(x, rec);
     data.entries.push(x);
     saveNow();
@@ -959,6 +966,73 @@
     });
     $("entries-empty").hidden = list.length > 0;
     renderDayExtras();
+    renderCalSugg();
+  }
+  // T2: the day's Calendar events that are over and have no time
+  // logged, each with "Log" (the prefilled dialog) and "Dismiss"
+  // (device-local, never synced).
+  var CAL_KEY = "oros-calendar-data", CALSKIP_KEY = "oros-timesheet-calskip";
+  function calSkip() {
+    try { var v = JSON.parse(localStorage.getItem(CALSKIP_KEY) || "[]"); return Array.isArray(v) ? v.filter(function (k) { return typeof k === "string"; }) : []; }
+    catch (e) { return []; }
+  }
+  function calSkipAdd(key) {
+    var v = calSkip().filter(function (k) { return k !== key; });
+    v.push(key);
+    try { localStorage.setItem(CALSKIP_KEY, JSON.stringify(v.slice(-300))); } catch (e) {}
+  }
+  function calEventsOn(day) {
+    var O = window.OrosCalOccur, out = [];
+    var cal = O ? readForeign(CAL_KEY, function (raw) { return JSON.parse(raw); }) : null;
+    if (!cal || typeof O.eventsOn !== "function") return out;
+    O.eventsOn(cal, day).forEach(function (ev) {
+      var inst = typeof O.instanceOn === "function" ? O.instanceOn(ev, day) : null;
+      if (!inst || typeof inst.start !== "string" || typeof inst.end !== "string" || !inst.start || !inst.end) return;
+      var dEnd = typeof inst.dateEnd === "string" && inst.dateEnd ? inst.dateEnd : inst.date;
+      var hm = function (d, s) { var p = s.split(":"); var k = C.keyDate(d); return k ? k.getTime() + (+p[0] * 60 + +p[1]) * 60000 : NaN; };
+      var s = hm(inst.date, inst.start), e = hm(dEnd, inst.end);
+      if (!(e > s)) return;
+      out.push({ key: "cal:" + ev.id + ":" + (inst.occ || inst.date), title: typeof ev.title === "string" ? ev.title : "", s: s, e: e });
+    });
+    return out;
+  }
+  function renderCalSugg() {
+    var host = $("cal-sugg"), head = $("cal-h");
+    if (!host) return;
+    host.innerHTML = "";
+    var list = [];
+    if (hasKey(CAL_KEY)) {
+      if (!window.OrosCalOccur) {
+        loadOther("../calendar/occur.js", "OrosCalOccur", function (O) { if (O && tab === "timer") renderCalSugg(); });
+      } else {
+        var skip = {};
+        calSkip().forEach(function (k) { skip[k] = 1; });
+        list = C.calSuggest(data, calEventsOn(dayKey), skip, Date.now());
+      }
+    }
+    head.hidden = host.hidden = !list.length;
+    list.forEach(function (v) {
+      var li = el("li", "cal-row");
+      var txt = el("span", "cal-txt");
+      txt.appendChild(el("span", "cal-t", v.title || t("cal.untitled")));
+      txt.appendChild(el("small", "", C.hhmm(v.s) + "–" + C.hhmm(v.e) + " · " + dur(v.e - v.s)));
+      li.appendChild(txt);
+      var add = el("button", "mini-btn", t("cal.log"));
+      add.type = "button";
+      add.setAttribute("aria-label", t("cal.logA", { t: v.title || t("cal.untitled") }));
+      add.addEventListener("click", function () {
+        entryDialog(null, { p: projectFor(v.title, ""), desc: v.title, s: v.s, e: v.e, src: v.key });
+      });
+      li.appendChild(add);
+      var no = el("button", "icon-btn cal-no");
+      no.type = "button";
+      no.innerHTML = UI.close;
+      no.setAttribute("aria-label", t("cal.skip", { t: v.title || t("cal.untitled") }));
+      no.title = no.getAttribute("aria-label");
+      no.addEventListener("click", function () { calSkipAdd(v.key); renderCalSugg(); });
+      li.appendChild(no);
+      host.appendChild(li);
+    });
   }
   // The day's extra charges, under its entries.
   function extraLabel(x) {
@@ -1518,7 +1592,7 @@
     var sel = el("select");
     fillProjectSelect(sel, x ? x.p : (preset && preset.p) || prefs.lastP || "", false);
     form.appendChild(field(t("f.project"), sel));
-    var desc = input("text", x ? x.desc : "");
+    var desc = input("text", x ? x.desc : (preset && typeof preset.desc === "string" ? preset.desc : ""));
     desc.maxLength = C.LIM.desc;
     form.appendChild(field(t("f.desc"), desc));
 
@@ -1572,6 +1646,7 @@
 
     var e0 = x ? (running ? 0 : (x.e || Math.max(Date.now(), x.s + 60000))) : defaultEnd(dayKey);
     var s0 = x ? x.s : Math.max(C.dayStart(dayKey), e0 - C.HOUR);
+    if (!x && preset && C.isInt(preset.s) && C.isInt(preset.e) && preset.e > preset.s) { s0 = preset.s; e0 = preset.e; }
     var sd = input("date", C.dayKeyOf(s0)), st = input("time", C.hhmm(s0));
     var r1 = el("div", "fld-row");
     r1.appendChild(field(t("f.sdate"), sd));
@@ -1649,6 +1724,7 @@
         billed: running ? 0 : (billed.box.checked ? 1 : 0),
         task: C.cleanText(task.value, C.LIM.task), tags: C.parseTags(tags.value)
       };
+      if (isNew && preset && C.srcKey(preset.src)) rec.src = preset.src;
       var cur = isNew ? null : findEntry(id);
       if (!isNew && !cur) { dlg.close(); return; }          // deleted elsewhere meanwhile
       if (!isNew && cur.e !== 0 && running) { dlg.close(); renderAll(); return; }   // stopped elsewhere
@@ -2734,6 +2810,7 @@
     $("add-extra").innerHTML = UI.plus + "<span></span>";
     $("add-extra").lastChild.textContent = t("add.extra");
     $("extras-h").textContent = t("extra.h");
+    $("cal-h").textContent = t("cal.h");
     $("rep-extras-h").textContent = t("extra.h");
     $("add-project").innerHTML = UI.plus + "<span></span>";
     $("add-project").lastChild.textContent = t("add.project");
@@ -2920,8 +2997,10 @@
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { entry } | { project } | { client } | { day } (Calendar
   // feed row, Wave 4: the Timer tab on that day) | { startTimer: { title,
-  // note? } } (Calendar's "Track time" on an event: the user's own click
-  // there, like pressing Start). An entry: the Timer tab on its day,
+  // note?, project?, src? } } (Calendar's, To-Do's and Kanban's "Track
+  // time": the user's own click there, like pressing Start; project is a
+  // name hint, src "todo:|kanban:|cal:<id>" is kept on the entry, T2)
+  // | { logTime: { title, s, e, src? } } (Calendar's "Log time"). An entry: the Timer tab on its day,
   // then its dialog; a project or a client: the Projects tab, then its
   // dialog. startTimer: the Timer tab; with no timer running, a new one
   // starts with the title (≤ 200, " · note" appended) as its description
@@ -2937,6 +3016,7 @@
     if (t.toggle) { window.__orosTimesheetToggle(); return; }
     if (t.newEntry) { setTab("timer"); entryDialog(null, null); return; }
     if (t.startTimer && typeof t.startTimer === "object") { startFromTarget(t.startTimer); return; }
+    if (t.logTime && typeof t.logTime === "object") { logFromTarget(t.logTime); return; }
     if (typeof t.entry === "string") {
       var x = findEntry(t.entry);
       if (!x) return;
@@ -2966,12 +3046,33 @@
       return;
     }
     var note = C.cleanText(typeof st.note === "string" ? st.note : "", C.LIM.desc);
-    var key = title.toLowerCase(), pid = "";
-    C.live(data.projects).forEach(function (p) {
-      if (!pid && !p.arch && String(p.name || "").trim().toLowerCase() === key) pid = p.id;
-    });
-    startTimer(pid, note ? title + " · " + note : title);
+    var pid = projectFor(title, st.project);
+    startTimer(pid, note ? title + " · " + note : title, null, st.src);
     showToast(t("toast.started", { p: pid ? projLabel(pid) : title }));
+  }
+  // The project a task, card or event means: one named like its title,
+  // else like the hint (its To-Do list, Kanban board); not archived.
+  function projectFor(title, hint) {
+    var pid = "";
+    [title, typeof hint === "string" ? hint : ""].forEach(function (n) {
+      var key = String(n || "").trim().toLowerCase();
+      if (!key || pid) return;
+      C.live(data.projects).forEach(function (p) {
+        if (!pid && !p.arch && String(p.name || "").trim().toLowerCase() === key) pid = p.id;
+      });
+    });
+    return pid;
+  }
+  // T2 (BR-TS-SRC): { logTime: { title, s, e, src?, project? } } — an
+  // event that is over, as a prefilled "Add time" dialog (nothing is
+  // saved until Add).
+  function logFromTarget(lt) {
+    var title = C.cleanText(typeof lt.title === "string" ? lt.title : "", C.LIM.desc);
+    if (!C.isInt(lt.s) || !C.isInt(lt.e) || lt.e <= lt.s || lt.e - lt.s > C.MAX_SPAN) return;
+    setTab("timer");
+    goDay(C.dayKeyOf(lt.s) > todayKey() ? todayKey() : C.dayKeyOf(lt.s));
+    entryDialog(null, { p: projectFor(title, lt.project), desc: title, s: lt.s, e: Math.min(lt.e, Date.now()),
+                        src: C.srcKey(lt.src) ? lt.src : "" });
   }
   window.__orosOpenAt = openSearchTarget;
   try {

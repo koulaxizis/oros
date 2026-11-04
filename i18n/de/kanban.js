@@ -1,4 +1,6 @@
 orosPack("de", "kanban", {
+ "card.track": "Zeit erfassen",
+ "card.tsSpent": "Erfasste Zeit: {t}",
  "srch.labels": "Labels: ",
  "add.board": "Board",
  "add.btn": "Hinzufügen",

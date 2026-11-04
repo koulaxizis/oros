@@ -82,6 +82,8 @@
       "unit.week":     "weeks",
       "unit.month":    "months",
       "item.delete":   "Delete",
+      "item.track":    "Track time",
+      "item.tsSpent":  "Time tracked: {t}",
       "save":          "Save",
       "list.settings": "List settings",
       "list.share":    "Send to someone…",
@@ -257,6 +259,8 @@
       "unit.week":     "εβδομάδες",
       "unit.month":    "μήνες",
       "item.delete":   "Διαγραφή",
+      "item.track":    "Χρονομέτρηση",
+      "item.tsSpent":  "Χρόνος που καταγράφηκε: {t}",
       "save":          "Αποθήκευση",
       "list.settings": "Ρυθμίσεις λίστας",
       "list.share":    "Στείλε σε κάποιον…",
@@ -2168,6 +2172,56 @@
     });
   }
 
+  // Timesheet T2 (BR-TS-SRC): "Track time" starts a Timesheet timer
+  // for the SAVED task (__orosOpenAt("timesheet", { startTimer: { title,
+  // project: list name (a hint), src: "todo:<task id>" } }), the user's
+  // own click; a running timer is kept. The dialog shows the time
+  // Timesheet holds for the task (read-only: entries whose src names
+  // it). Inside orOS only, when Timesheet is installed.
+  var TS_KEY = "oros-timesheet-data";
+  function tsApi() {
+    try {
+      var p = window.parent;
+      if (p === window || typeof p.__orosOpenAt !== "function" || typeof p.orosAssistInstalled !== "function") return null;
+      return p.orosAssistInstalled().some(function (a) { return a && a.id === "timesheet"; }) ? p : null;
+    } catch (e) { return null; }
+  }
+  function tsSpent(src) {
+    var raw = null, ms = 0, now = Date.now();
+    try { raw = JSON.parse(localStorage.getItem(TS_KEY) || "null"); } catch (e) { return 0; }
+    ((raw && Array.isArray(raw.entries)) ? raw.entries : []).forEach(function (x) {
+      if (!x || x.del || x.src !== src || typeof x.s !== "number" || typeof x.e !== "number") return;
+      var e = x.e === 0 ? Math.max(now, x.s) : x.e;
+      if (e > x.s) ms += e - x.s;
+    });
+    return ms;
+  }
+  function tsDur(ms) {
+    var m = Math.round(ms / 60000), h = Math.floor(m / 60);
+    return h ? h + ":" + (m % 60 < 10 ? "0" : "") + (m % 60) + " h" : m + " min";
+  }
+  function renderTsSpent(item) {
+    var box = $("f-ts-spent"), btn = $("f-track");
+    var on = !!(item && item.id && tsApi());
+    if (btn) btn.hidden = !on;
+    if (!box) return;
+    var ms = on ? tsSpent("todo:" + item.id) : 0;
+    box.hidden = !(ms >= 60000);
+    box.textContent = ms >= 60000 ? t("item.tsSpent").replace("{t}", tsDur(ms)) : "";
+  }
+  function trackItem() {
+    var p = tsApi(), id = editingItemId, list = listById(editingListId);
+    if (!p || !id) return;
+    $("dlg-item").close();         // persistence commits in the close handler
+    var hit = findItem(id), item = hit ? hit.item : null;
+    if (!item) return;
+    var title = String(item.text || "").replace(/\s+/g, " ").trim().slice(0, 200);
+    if (!title) return;
+    if (hit.list) list = hit.list;
+    p.__orosOpenAt("timesheet", { startTimer: { title: title, project: list && list.name ? String(list.name) : "", src: "todo:" + id } });
+  }
+  if ($("f-track")) $("f-track").addEventListener("click", trackItem);
+
   function openItemDialog(listId, itemId) {
     var list = listById(listId);
     var item = itemById(list, itemId);
@@ -2199,6 +2253,7 @@
     else { $("f-rec-mode").value = "fixed"; $("f-weekday").hidden = false; }
 
     if ($("f-dav-ro")) $("f-dav-ro").hidden = !tdRo[itemId];
+    renderTsSpent(item);
     openValues = readItemDialog();
     $("dlg-item").showModal();
     setTimeout(function () { $("f-text").focus(); }, 50);

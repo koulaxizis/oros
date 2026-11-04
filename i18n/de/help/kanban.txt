@@ -19,6 +19,8 @@ Der Dialog `Karte` speichert, während du tippst. Er hat:
 - `Bahn`: ein freier Name wie „Team A“, den die Swimlanes nutzen (siehe unten).
 - `Anhänge` und `Titelbild`: siehe unten.
 
+`Zeit erfassen` (wenn [Zeiterfassung](app:timesheet) installiert ist) startet dort einen Timer mit dem Namen der Karte, mit dem Projekt, das wie die Karte oder das Board heißt, falls du eins hast; ein laufender Timer bleibt unberührt. Die Karte zeigt danach `Erfasste Zeit`, die Summe, die die Zeiterfassung für sie hat.
+
 `Duplizieren` macht eine Kopie der Karte. `Löschen` fragt vorher, und die Meldung danach hat ein paar Sekunden lang einen Knopf `Rückgängig`.
 
 ## Spalten und Boards
