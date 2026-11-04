@@ -5788,6 +5788,77 @@
     // re-mark dirty, or pull → set → push → pull → … infinite loop.
   }
 
+  // ---------- ME v1: your name (Settings › Appearance) ----------
+  // Optional, empty by default. Greets you on Today and the Start page
+  // (startpage/). Device storage "oros-me", slice "me", synced
+  // encrypted like every slice; never read by the Assistant and never
+  // sent anywhere else. Per-field LWW as SEASONAL v1 (Part IV):
+  // { ver:1, f:{ name:{ v, t } } }, t moves only at the user's change.
+  var ME_KEY = "oros-me";
+  var ME_MAX = 40;
+  var ME_FIELD_RE = /^[a-z][a-z0-9]{0,15}$/;
+  function meClean(v) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, ME_MAX) : "";
+  }
+  // Canonical form: fields sorted, small primitives only (a newer
+  // bundle's fields are kept as they came).
+  function meNorm(d) {
+    var src = (d && typeof d === "object" && d.f && typeof d.f === "object") ? d.f : {};
+    var f = {};
+    Object.keys(src).filter(function (k) { return ME_FIELD_RE.test(k); }).sort().slice(0, 32).forEach(function (k) {
+      var e = src[k];
+      if (!e || typeof e !== "object") return;
+      var v = e.v;
+      if (k === "name") { if (typeof v !== "string" || meClean(v) !== v) return; }
+      else if (!(typeof v === "boolean" || (typeof v === "number" && isFinite(v)) || (typeof v === "string" && v.length <= 120))) return;
+      f[k] = { v: v, t: (typeof e.t === "number" && isFinite(e.t) && e.t >= 0) ? Math.floor(e.t) : 0 };
+    });
+    return { ver: 1, f: f };
+  }
+  function meMerge(a, b) {
+    var A = meNorm(a), B = meNorm(b), f = {};
+    Object.keys(A.f).concat(Object.keys(B.f)).forEach(function (k) {
+      var p = A.f[k], q = B.f[k];
+      if (!p || !q) { f[k] = p || q; return; }
+      if (p.t !== q.t) f[k] = p.t > q.t ? p : q;
+      else f[k] = JSON.stringify(p) >= JSON.stringify(q) ? p : q;
+    });
+    return meNorm({ f: f });
+  }
+  function meRead() {
+    try { return meNorm(JSON.parse(localStorage.getItem(ME_KEY) || "null")); }
+    catch (e) { return meNorm(null); }
+  }
+  function meWrite(d) {
+    try { localStorage.setItem(ME_KEY, JSON.stringify(meNorm(d))); return true; }
+    catch (e) { scToast("err", window.t("me.savefail")); return false; }
+  }
+  function meName() { var e = meRead().f.name; return e ? e.v : ""; }
+  function meSliceGet() {
+    var raw = null;
+    try { raw = localStorage.getItem(ME_KEY); } catch (e) {}
+    return raw ? meRead() : null;          // a fresh device sends nothing
+  }
+  function meSliceSet(data) {
+    if (!data) return;
+    meWrite(data);                         // pulled: never markDirty
+    settingsNotify();
+  }
+  function meSetName(v) {
+    var d = meRead(), cur = d.f.name, name = meClean(v);
+    if ((cur ? cur.v : "") === name) return;
+    d.f.name = { v: name, t: Math.max(Date.now(), cur ? cur.t + 1 : 0) };
+    if (!meWrite(d)) return;
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+    settingsNotify();
+  }
+  function registerMeSlice() {
+    if (window.orosSync && typeof window.orosSync.registerSlice === "function") {
+      window.orosSync.registerSlice("me", meSliceGet, meSliceSet, ME_KEY, meMerge);
+    }
+  }
+  window.orosMe = { name: meName };
+
   function registerShellSlice() {
     if (window.orosSync) {
       // SH-D1: stamps first (first-run migration + parked-legacy
@@ -8774,6 +8845,7 @@
 
   function initSyncIntegration() {
     registerShellSlice();
+    registerMeSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
@@ -10476,6 +10548,7 @@
       install: !!state.deferredPrompt,
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
+      me: { name: meName(), max: ME_MAX },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       menu: settingsMenuApps(),
@@ -10526,6 +10599,7 @@
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
+      case "me:name":      meSetName(value); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
