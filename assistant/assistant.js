@@ -5735,6 +5735,14 @@
   function buildSummary(a, today) {
     var ag = agendaIds().indexOf(a.app) >= 0;
     if (a.app === "budget") return Promise.resolve(S.budgetMonth(readStore("oros-budget-data"), a.month, LANG));
+    // Wave A6: the rules and this device's recent runs ("why did this
+    // run?"), never what a notice said (oros-automations-said).
+    if (a.app === "automations") {
+      var have = installed(), AH = shell() && shell().orosAutomations;
+      var runs = []; try { runs = AH && typeof AH.log === "function" ? AH.log() : readStore("oros-automations-log"); } catch (e) {}
+      return Promise.resolve(S.automationsRules(window.OrosAutoCore, readStore("oros-automations-data"), runs,
+        { lang: LANG, appName: function (id) { return have[id] || id; } }));
+    }
     if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
     if (a.app === "timesheet") {
       return timesheetCore().then(function (core) {

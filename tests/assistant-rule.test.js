@@ -46,3 +46,27 @@ test("the model hears what to fix", () => {
   assert.match(C.normRule({ when: { type: "open" }, steps: [{ do: "event", title: "x" }] }, noCal).err, /calendar/);
   assert.match(C.normRule({ when: { type: "open" }, steps: [{ do: "notify", text: "x" }] }, (id) => id !== "automations").err, /not installed/);
 });
+
+const S = require("../assistant/summary.js");
+
+test("the Automations summary explains runs and never carries what a notice said", () => {
+  let d = AC.empty();
+  d = AC.put(d, { name: "Urgent mail", on: true, when: { t: "notice", app: "mail", word: "urgent" }, do: [{ a: "todo", items: ["{text}"] }] }, 1000).data;
+  d = AC.put(d, { name: "", on: false, when: { t: "day", at: "08:00", wd: [1] }, do: [{ a: "notify", text: "Bins" }] }, 1001).data;
+  const id = d.rules.find((r) => r.name === "Urgent mail").id;
+  const at = new Date(2026, 10, 4, 9, 5).getTime();
+  const log = [{ r: id, n: "Urgent mail", k: id + "@sabc", at, t: at, w: "sent" }, { r: "gone1", n: "Old", k: "gone1@x", at, t: at, w: "skip" }];
+  const sum = S.automationsRules(AC, d, log, { lang: "en", appName: (x) => x === "mail" ? "Mail" : x });
+  assert.strictEqual(sum.rules_total, 2);
+  assert.strictEqual(sum.rules_on, 1);
+  assert.deepStrictEqual(sum.items.map((x) => x.target.rule).sort(), d.rules.map((r) => r.id).sort());
+  assert.strictEqual(sum.runs[0].kind, "something happened");
+  assert.strictEqual(sum.runs[0].time, "09:05");
+  assert.match(sum.runs[0].result, /notice shown/);
+  assert.ok(sum.runs[1].gone);
+  assert.ok(!/said/.test(JSON.stringify(sum)));
+  const pv = S.preview(sum, "el");
+  assert.ok(pv.some((l) => /09:05 · Urgent mail · εμφανίστηκε ειδοποίηση/.test(l)));
+  assert.ok(pv.some((l) => /\(ανενεργός\)/.test(l)));
+  assert.strictEqual(S.OWN.automations, "rules");
+});

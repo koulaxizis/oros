@@ -21,7 +21,7 @@ Eine Regel kann statt einer Uhrzeit auch etwas folgen, das passiert:
 In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte: die Aufgabe, die Gewohnheit, das Training oder der Text der Mitteilung. So eine Regel läuft einmal für alles, was passiert, höchstens 20-mal am Tag, und nur auf dem Gerät, auf dem es passiert ist. Mitteilungen von Passwörter starten nie eine Regel, und nichts aus Passwörter wird je gelesen.
 
 ## Den Assistenten fragen
-Sag dem [Assistenten](app:assistant), was du willst, zum Beispiel „erinnere mich jeden Montag um 8 an den Müll" oder „wenn eine dringende E-Mail kommt, setz sie in To-Do". Er schreibt die Regel und zeigt sie auf einer Karte; `In Automatisierungen öffnen` öffnet sie hier als neue Regel, und nichts wird gespeichert, bevor du auf Speichern tippst. Der Assistent sieht nie deine Regeln oder die Liste der Läufe, und nie Passwörter.
+Sag dem [Assistenten](app:assistant), was du willst, zum Beispiel „erinnere mich jeden Montag um 8 an den Müll" oder „wenn eine dringende E-Mail kommt, setz sie in To-Do". Er schreibt die Regel und zeigt sie auf einer Karte; `In Automatisierungen öffnen` öffnet sie hier als neue Regel, und nichts wird gespeichert, bevor du auf Speichern tippst. Frag ihn „warum ist das gelaufen?", und wenn du ihn Automatisierungen lesen lässt, sieht er deine Regeln und die letzten Läufe auf diesem Gerät an (nie, was ein Hinweis sagte) und erklärt sie oder schlägt eine bessere Regel vor. Passwörter sieht er nie.
 
 ## Was eine Regel tut
 - `Mitteilung zeigen` erscheint von selbst bei den Mitteilungen, wie jede Erinnerung.

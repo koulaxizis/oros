@@ -39,6 +39,11 @@
 //                                 CRM: one partner's card (partner card
 //                                 W5): what is open both ways, stock,
 //                                 hours, royalties, contracts, contact
+//   automationsRules(AC, data, log, opts)
+//                                 Automations (wave A6, "why did this
+//                                 run?"): every rule in words and the
+//                                 device's recent runs with what came of
+//                                 them; never what a notice said
 //   preview(sum, lang)           → [line] what the consent card shows
 // Exposes window.OrosAssistSummary and, under Node, module.exports.
 // ============================================================
@@ -51,7 +56,8 @@
       MAX_EVENTS = 200;   // calendarEvents (by label / month): as many as refs take
   // Apps with a summary of their own; any other app needs a Today provider.
   var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards",
-              notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books" };   // AS-STRUCT
+              notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books",
+              automations: "rules" };   // AS-STRUCT
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -845,6 +851,49 @@
   }
 
   // ---------- What the consent card shows ----------
+  // ---------- Automations (wave A6) ----------
+  // AC = OrosAutoCore (automations/core.js), data = the rules slice,
+  // log = orosAutomations.log() rows { r, n, k, at, t, w }. Rule texts
+  // are what the person wrote ({text} stays a placeholder); what a
+  // signal said (oros-automations-said) is never read here, so a Mail
+  // notice's words never reach the model (Mail is never read).
+  var AU_RESULT = { sent: "notice shown", late: "notice shown late (orOS was closed at the time)", off: "not shown: notices are switched off",
+                    skip: "skipped: an app a step needs is not installed on this device", run: "the user opened its step" };
+  var MAX_RULES_SUM = 60, MAX_RUNS_SUM = 30;
+  function hmOf(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function automationsRules(AC, d, log, opts) {
+    opts = opts || {};
+    if (!AC) return { ok: false, err: "Automations is not available." };
+    var lang = opts.lang || "en", nameOf = opts.appName || null;
+    var rules = AC.normalize(d).rules, byId = {};
+    var out = { app: "automations", rules_total: rules.length, rules_on: 0, items: [], runs: [] };
+    function stepWords(a) {
+      var w = AC.actText(a, lang, nameOf);
+      var x = a.a === "notify" || a.a === "ask" ? a.text : a.a === "todo" ? a.items.join(", ") : a.a === "event" || a.a === "note" ? a.title :
+        a.a === "mail" ? a.subject : a.a === "budget" ? money(a.amount).toFixed(2) + (a.note ? " " + a.note : "") : a.a === "timer" ? a.label : "";
+      return str([w, x].filter(Boolean).join(": "), 160);
+    }
+    rules.forEach(function (r) {
+      byId[r.id] = r;
+      if (r.on) out.rules_on++;
+      if (out.items.length >= MAX_RULES_SUM) return;
+      var when = AC.whenText(r.when, lang, nameOf);
+      var only = r["if"] ? [r["if"].wd ? "days " + r["if"].wd.join(",") : "", r["if"].from ? r["if"].from + "-" + r["if"].to : ""].filter(Boolean).join(" ") : "";
+      out.items.push({ title: str(r.name, 80) || str(when, 80), text: str(when + (only ? " (" + only + ")" : "") + " → " + r["do"].map(stepWords).join("; "), 400),
+                       on: r.on, target: { rule: r.id } });
+    });
+    if (rules.length > MAX_RULES_SUM) out.more_items = rules.length - MAX_RULES_SUM;
+    arr(log).slice(0, MAX_RUNS_SUM).forEach(function (x) {
+      if (!x || typeof x.r !== "string" || typeof x.at !== "number") return;
+      var r = byId[x.r];
+      out.runs.push({ date: ymdOf(x.at), time: hmOf(x.at), rule: str(r ? r.name || AC.whenText(r.when, lang, nameOf) : x.n, 80) || "—",
+                      gone: !r, kind: /@s/.test(String(x.k)) ? "something happened" : /@manual$|^manual$/.test(String(x.k)) ? "run by hand" : "its time came",
+                      result: AU_RESULT[x.w] || "", w: typeof x.w === "string" ? x.w : "" });
+    });
+    return out;
+  }
+  function ymdOf(ms) { var t = new Date(ms); return t.getFullYear() + "-" + pad(t.getMonth() + 1) + "-" + pad(t.getDate()); }
+
   var L = {
     en: { inc: "Income", exp: "Expenses", net: "Balance", ent: "entries", h: "h", bill: "billable",
           open: "open", done: "done", late: "late", today: "due today", none: "Nothing in this period.",
@@ -856,7 +905,9 @@
           stLists: "Lists", stNbs: "Notebooks", stPages: "pages", stFolders: "Folders", stUnsorted: "Unsorted", stTags: "Tags",
           stBm: "bookmarks", stCt: "contacts", stFav: "favourites", stItems: "items", stBooks: "books",
           stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
-          kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games" },
+          kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games",
+          auRules: "rules", auOn: "on", auRuns: "Recent runs on this device", auOff: "off", auGone: "deleted",
+          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
@@ -867,7 +918,9 @@
           stLists: "Λίστες", stNbs: "Τετράδια", stPages: "σελίδες", stFolders: "Φάκελοι", stUnsorted: "Χωρίς φάκελο", stTags: "Ετικέτες",
           stBm: "σελιδοδείκτες", stCt: "επαφές", stFav: "αγαπημένες", stItems: "στοιχεία", stBooks: "βιβλία",
           stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
-          kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια" }
+          kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια",
+          auRules: "κανόνες", auOn: "ενεργοί", auRuns: "Πρόσφατες εκτελέσεις σε αυτή τη συσκευή", auOff: "ανενεργός", auGone: "διαγράφηκε",
+          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -963,6 +1016,8 @@
     } else if (s.app === "library" && typeof s.books === "number") {
       out.push(s.books + " " + w.stBooks + " · " + s.reading + " " + w.stReading + " · " + s.finished + " " + w.stFinished + " · " + s.unread + " " + w.stUnread);
       if (s.tags.length) out.push(w.stTags + ": " + s.tags.map(function (x) { return x.name + " (" + x.n + ")"; }).join(", "));
+    } else if (s.app === "automations" && Array.isArray(s.runs)) {
+      out.push(s.rules_total + " " + w.auRules + " · " + s.rules_on + " " + w.auOn);
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -973,10 +1028,14 @@
       s.items.forEach(function (it) {
         out.push([it.date || "", it.time || "", it.title, it.label ? w.lbl + ": " + it.label : "", it.where || "", it.by || "", it.org || "",
                   Array.isArray(it.labels) ? it.labels.join(", ") : "", it.location || "", it.text || it.note || ""].filter(Boolean).join(" · ") +
-                 (it.late ? " (" + w.late + ")" : "") + (it.done ? " (" + w.done + ")" : ""));
+                 (it.late ? " (" + w.late + ")" : "") + (it.done ? " (" + w.done + ")" : "") + (it.on === false ? " (" + w.auOff + ")" : ""));
       });
       more(s.more_items);
       if (!s.items.length) out.push(w.none);
+    }
+    if (s.app === "automations" && Array.isArray(s.runs) && s.runs.length) {
+      out.push(w.auRuns + ":");
+      s.runs.forEach(function (x) { out.push(x.date + " " + x.time + " · " + x.rule + (x.gone ? " (" + w.auGone + ")" : "") + (w["au." + x.w] ? " · " + w["au." + x.w] : "")); });
     }
     if (Array.isArray(s.coming) && s.coming.length) {   // AS-STRUCT: what Today lists for the app
       if (s.from) out.push(s.from + " → " + s.to);
@@ -989,7 +1048,7 @@
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
-    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, calendarEvents: calendarEvents, crmPartner: crmPartner, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;
