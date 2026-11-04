@@ -1,8 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.31.00
+## Version 5.32.00
 - **New app: Automations.** Make rules that run at a time you choose: every day or on some days, every month (also the last day), every year, once, or when orOS opens. A rule can show a notice, or open To-Do, Calendar, Notes, Mail, Budget, Time or the Assistant already filled in, so you only check and save. A rule runs once even if orOS is open on several devices. Ten ready-made rules get you started, such as bills at the start of the month or a weekly plan on Monday. Passwords is never part of a rule.
+
+## Version 5.31.00
+- **Your cloud fills up much more slowly.** Every time a file changes, a new encrypted copy goes to your cloud and the old one stays until you clean it up. Big files (256 KB or more) now go up once they have stopped changing for 2 minutes, or when you leave orOS, so far fewer old copies pile up. Nothing is lost while a file waits: it stays on this device and no other device can overwrite it.
+- **See what fills it.** Settings › Sync › Unused files in the cloud › `Check` now shows when the first old copies can be cleaned up and which files this device sent most often.
 
 ## Version 5.30.00
 - **Balance corrections you can see.** When you update a balance or match the bank, the difference is now written as a `Balance correction` on that day instead of changing the account's starting balance, so past months stay as they were. It shows in the account's entries but never counts as income or an expense; tap it to delete it or, if you remember what it was, make it an entry.
@@ -815,26 +819,20 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 3.41.00
 - Atelier: Photo collage. On Atelier's home, choose up to 9 photos at once, pick one of 22 ready grids, set the spacing, the corners and the background, and the collage is ready. Drag a photo onto another to swap them, tap an empty box to add one, and change the grid any time from More › Photo collage. Filters, crop, text and every download work as on any design.
 
-
 ## Version 3.40.02
 - orOS and its apps open quickly again. Since the last updates, opening orOS could leave an empty desktop for 10 seconds or more, even on a fast connection.
-
 
 ## Version 3.40.01
 - Assistant: with Claude, a second question in a conversation no longer fails with "Invalid signature in thinking block". Old conversations work again too.
 
-
 ## Version 3.40.00
 - Studio: 18 new NULL JSFX plugins. Eight new instruments for instrument tracks (Bass, FM, Keys, Organ, Percussion, Pluck, Sampler, Synth) and ten new effects (Clipper, De-Plosive, Draw EQ, Half Speed, Phase Align, Shaper, Slicer, Step FX, Tape Echo, Wah); the other effects got the latest NULL JSFX fixes. Effects now download the first time you use one and then keep working offline, also after updates, so orOS itself updates faster. While you are online, Studio also saves the effects your projects use, including projects synced from another device.
-
 
 ## Version 3.39.01
 - Credits: Info › Credits & licences has a new group, orOS outside the browser. It thanks the projects inside orOS Portable, the Windows and Linux installers, the Live USB, the Android app and orOS Drive: ungoogled-chromium, Chromium, Debian, cage, Go, Inno Setup, AppImage and more. Each of those downloads now carries every licence text and says where the source code is.
 
-
 ## Version 3.39.00
 - Newsletter: products from your shop. The new Products block (under More blocks…) takes up to 9 products from your WooCommerce shop or Shopify store (Settings › Connected services), with search and categories, 1, 2 or 3 in a row. Each card shows the picture, name, short text and price, the old price struck through on a sale and Sold out when nothing is left. Refresh prices before you send; the check before sending reminds you when prices are more than a day old. Subscribers › From the shop brings in your WooCommerce customers, and a Shopify customer file brings in only the people who said yes to e-mail marketing.
-
 
 ## Version 3.38.00
 - Scanner & PDF: draw and mark up your pages. The page editor (the pen on each page) now adds shapes (box, oval, line, arrow, tick, cross), a pen for handwriting, a see-through highlighter, a white cover to hide something and pictures such as a logo or stamp. Pick from six colours, three line widths and fill; everything lands in the PDF as sharp lines, exactly where you put it.
@@ -848,18 +846,14 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 3.36.00
 - Newsletter: header, footer and social icons. A header block holds your logo, a name, a line under it and up to four links. Social icons for 14 networks come in their own colours, dark or light, in three sizes, and are sent inside the e-mail, so they show even when pictures from the web are blocked. A footer block holds your own text and small icons. Save a header or footer for a list and every new issue of that list starts and ends with it.
 
-
 ## Version 3.35.00
 - Newsletter: a better editor. Drag blocks into place (or move them with the arrow keys), duplicate them, and Undo or Redo every change. New blocks: quote, space, list, headings in three sizes, dashed or dotted lines in your own colour and width, and up to three buttons in a row, filled or outlined. Every block can be centred or right-aligned, get space around it or its own background colour. Each list also gets its own font, heading size, button shape, link colour and e-mail background.
-
 
 ## Version 3.34.01
 - Back on a phone (or in the browser) inside an app now returns to the desktop, like the Back button in the bar. Before, it could show an app you had closed earlier for a few seconds, empty and without text.
 
-
 ## Version 3.34.00
 - Atelier: Morph. Set it as the transition to a page and the page before turns into it: what both pages share moves, grows, turns and changes colour into place, a shape becomes another shape, and the rest fades. Duplicate a page, move things on the copy and pick Morph. It plays in Present, in video and in GIF.
-
 
 ## Version 3.33.00
 - Automations travel: ask the Assistant for one ("every photo 1080 px with my watermark, saved as JPG") and it shows the steps in plain words; Open in Photo Lab, Atelier or Layout fills them in for you to check, save and run. Share any automation as a .orosrecipe file and Import one from someone else. Only steps, never code, and nothing runs until you press Run.
