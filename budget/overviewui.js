@@ -57,6 +57,12 @@
       "ov.up%": "{p}% more than last month", "ov.down%": "{p}% less than last month", "ov.new.aria": "Nothing in this category last month",
       "ov.edit": "Edit the overview", "ov.editHint": "Pick the cards to show and their order. It applies on all your devices.",
       "ov.upBtn": "Move up: {c}", "ov.downBtn": "Move down: {c}", "ov.reset": "Default order", "ov.saveDone": "Overview saved",
+      "ov.gCash": "Money", "ov.gCard": "Cards", "ov.gInv": "Investments and things of value",
+      "ov.have": "I have {a}", "ov.owe": "I owe {a}",
+      "ov.stFlow": "this month +{i} · −{o}", "ov.stDue": "{a} by {d} · in {n} days", "ov.stChk": "Checked {d}", "ov.stBank": "Bank says {a}",
+      "ov.sheetTip": "{a}: entries, update the balance, transfer, edit",
+      "ov.shEntries": "Entries", "ov.shNew": "New entry", "ov.shUpd": "Update balance", "ov.shXfer": "Transfer", "ov.shEdit": "Edit",
+      "ov.shAuto": "Match the bank by itself", "ov.shAutoHint": "When the bank's balance differs, Budget changes the starting balance so the two agree, and says so (with Undo).",
       "ov.open": "More",
       "ov.lessAll": "{a} less than the month before", "ov.moreAll": "{a} more than the month before", "ov.sameAll": "The same as the month before"
     },
@@ -95,6 +101,12 @@
       "ov.up%": "{p}% περισσότερα από τον προηγούμενο μήνα", "ov.down%": "{p}% λιγότερα από τον προηγούμενο μήνα", "ov.new.aria": "Τίποτα σε αυτή την κατηγορία τον προηγούμενο μήνα",
       "ov.edit": "Προσαρμογή σύνοψης", "ov.editHint": "Διάλεξε ποιες κάρτες φαίνονται και με ποια σειρά. Ισχύει σε όλες τις συσκευές σου.",
       "ov.upBtn": "Πάνω: {c}", "ov.downBtn": "Κάτω: {c}", "ov.reset": "Αρχική σειρά", "ov.saveDone": "Η σύνοψη αποθηκεύτηκε",
+      "ov.gCash": "Χρήματα", "ov.gCard": "Κάρτες", "ov.gInv": "Επενδύσεις και περιουσία",
+      "ov.have": "Έχω {a}", "ov.owe": "Χρωστάω {a}",
+      "ov.stFlow": "αυτόν τον μήνα +{i} · −{o}", "ov.stDue": "{a} ως {d} · σε {n} μέρες", "ov.stChk": "Ελέγχθηκε {d}", "ov.stBank": "Η τράπεζα λέει {a}",
+      "ov.sheetTip": "{a}: κινήσεις, ενημέρωση υπολοίπου, μεταφορά, επεξεργασία",
+      "ov.shEntries": "Κινήσεις", "ov.shNew": "Νέα κίνηση", "ov.shUpd": "Ενημέρωση υπολοίπου", "ov.shXfer": "Μεταφορά", "ov.shEdit": "Επεξεργασία",
+      "ov.shAuto": "Ταίριασμα με την τράπεζα αυτόματα", "ov.shAutoHint": "Όταν το υπόλοιπο της τράπεζας διαφέρει, η εφαρμογή αλλάζει το αρχικό υπόλοιπο ώστε να συμφωνούν, και το λέει (με Αναίρεση).",
       "ov.open": "Περισσότερα",
       "ov.lessAll": "{a} λιγότερα από τον προηγούμενο μήνα", "ov.moreAll": "{a} περισσότερα από τον προηγούμενο μήνα", "ov.sameAll": "Όσα και τον προηγούμενο μήνα"
     }
@@ -372,6 +384,103 @@
       s: iv.c.s, p: A.money(iv.val.px, cu), w: when }) + (iv.val.src === "live" ? " · CoinGecko" : "")));
     li.appendChild(l2);
   }
+  // AC-1: an account's value in the main currency (null: no rate).
+  function mainVal(a, v) {
+    if (typeof v !== "number") return null;
+    var c = a.cur || A.cur();
+    if (c === A.cur()) return v;
+    var r = A.fx ? A.fx(v, c, A.cur()) : null;
+    return typeof r === "number" ? r : null;
+  }
+  // The one line under an account on the Overview, by what matters most:
+  // a card payment due, an investment's gain, the bank saying another
+  // balance, the month's money in and out, when it was last checked.
+  function statusOf(a, iv, paid, f, mk, bnk) {
+    var cu = a.cur || A.cur();
+    var c = A.cardCycle ? A.cardCycle(a.id) : null;
+    if (c && (c.state === "open" || c.state === "late") && c.left) {
+      if (c.state === "late") return { text: t("ov.cyLate", { a: A.money(c.left, cu), d: A.dateShort(c.due) }), cls: "over" };
+      var dm = c.due.slice(8, 10) + "/" + c.due.slice(5, 7);
+      return { text: c.days > 1 ? t("ov.stDue", { a: A.money(c.left, cu), d: dm, n: c.days }) : t("ov.cyLeft", { a: A.money(c.left, cu), d: dm }) + " · " + (c.days === 1 ? t("ov.cyTomorrow") : t("ov.cyToday")),
+               cls: c.days <= 3 ? "warn" : "" };
+    }
+    if (iv) {
+      if (!iv.val) return { text: iv.live ? (iv.failed ? t("ov.ivNoPrice") : t("ov.ivLoading")) : t("ov.ivType"), cls: "" };
+      if (iv.c.k === "p") return { text: iv.c.r ? t("ov.asRate", { r: (iv.c.r > 0 ? "+" : "") + String(iv.c.r / 100).replace(".", A.lang === "el" ? "," : ".") }) : t("ov.asOn", { a: A.money(iv.c.p, cu), d: A.dateShort(iv.c.d) }), cls: "" };
+      var gain = iv.val.v - paid, pct = paid > 0 ? Math.round(gain / paid * 1000) / 10 : null;
+      return { text: (gain >= 0 ? "+" : "\u2212") + A.money(Math.abs(gain), cu) + (pct !== null ? " (" + (pct >= 0 ? "+" : "\u2212") + String(Math.abs(pct)).replace(".", A.lang === "el" ? "," : ".") + " %)" : ""),
+               cls: gain >= 0 ? "good" : "over" };
+    }
+    for (var i = 0; i < bnk.length; i++) {
+      var r = bnk[i];
+      if (r.ac !== a.id || r.bc !== cu || typeof r.bb !== "number" || !A.accBalAt) continue;
+      var mine = A.accBalAt(a.id, r.bd);
+      if (mine !== null && mine !== r.bb) return { text: t("ov.stBank", { a: A.money(r.bb, cu) }) + " (" + A.dateShort(r.bd) + ")", cls: "warn" };
+    }
+    if (f.inc || f.out) return { text: t("ov.stFlow", { m: A.monthLabel(mk), i: A.money(f.inc), o: A.money(f.out) }), cls: "" };
+    if (a.chk) return { text: t("ov.stChk", { d: A.dateShort(a.chk) }), cls: "" };
+    return null;
+  }
+  // AC-1: an account's sheet: its balance, every detail line (bank and
+  // Match, card cycle, investment), and big buttons for what people do
+  // with an account. On phones it rises from the bottom.
+  function accSheet(id) {
+    var a = A.accs().filter(function (x) { return x.id === id; })[0];
+    if (!a) return;
+    var dlg = A.makeDialog("bd-acc-sheet", a.n);
+    dlg.classList.add("sheet");
+    var bal = A.balNow(), iv = A.investInfo ? A.investInfo(a) : null, shown = iv && iv.val ? iv.val.v : bal[a.id];
+    var big = el("div", "ov-big sh-big" + (shown < 0 ? " neg" : ""), A.money(shown, a.cur));
+    dlg.appendChild(big);
+    var det = el("div", "sh-det");
+    var bnk = (D().bnk || []).filter(function (r) { return r && r.src !== "pp"; });
+    bankLines(det, a, bnk);
+    cycleLines(det, a);
+    investLines(det, a, iv, bal[a.id]);
+    var mk = A.viewMk(), f = O.perAccount(D().tx, mk, [a.id]).by[a.id] || { inc: 0, out: 0 };
+    if (f.inc || f.out) {
+      var fl = el("div", "ov-bkline");
+      fl.appendChild(el("span", "", t("ov.stFlow", { m: A.monthLabel(mk), i: A.money(f.inc), o: A.money(f.out) })));
+      det.appendChild(fl);
+    }
+    if (a.chk) det.appendChild(el("div", "ov-bkline", t("ov.stChk", { d: A.dateShort(a.chk) })));
+    if (det.childNodes.length) dlg.appendChild(det);
+    // any button in a detail line (Match, Add interest) also closes the sheet
+    det.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("button")) setTimeout(function () { dlg.close(); }, 0); });
+    var grid = el("div", "sh-acts");
+    function act(label, ic, fn, cls) {
+      var b = el("button", "sh-act" + (cls ? " " + cls : ""));
+      b.type = "button";
+      if (ic && A.icon(ic)) { var s0 = el("span", "sh-ic"); s0.innerHTML = A.icon(ic); b.appendChild(s0); }
+      b.appendChild(el("span", "", label));
+      b.addEventListener("click", function () { dlg.close(); fn(); });
+      grid.appendChild(b);
+    }
+    if (A.newTxIn) act(t("ov.shNew"), "plus", function () { A.newTxIn(a.id); }, "primary");
+    act(t("ov.shEntries"), "lst", function () { A.showFilter("a:" + a.id); });
+    if (A.updateBalance && !(a.ivk)) act(t("ov.shUpd"), "scale", function () { A.updateBalance(a.id); });
+    if (A.xferFrom && A.accs().length > 1) act(t("ov.shXfer"), "xfer", function () { A.xferFrom(a.id); });
+    if (A.accDialog) act(t("ov.shEdit"), "edit", function () { A.accDialog(a.id); });
+    dlg.appendChild(grid);
+    // auto-match: only for an account a bank fills, in its currency
+    if (A.setAutoMatch && bnk.some(function (r) { return r.ac === a.id && r.bc === (a.cur || A.cur()); })) {
+      var lab = el("label", "sh-auto");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = !!a.am;
+      cb.addEventListener("change", function () { var on = cb.checked; dlg.close(); A.setAutoMatch(a.id, on); });
+      lab.appendChild(cb);
+      var tx = el("span");
+      tx.appendChild(el("span", "sh-auto-t", t("ov.shAuto")));
+      tx.appendChild(el("span", "hint", t("ov.shAutoHint")));
+      lab.appendChild(tx);
+      dlg.appendChild(lab);
+    }
+    var close = el("div", "dlg-actions");
+    close.appendChild(A.button(A.tt("dlg.close"), "", function () { dlg.close(); }));
+    dlg.appendChild(close);
+    A.showDialog(dlg);
+  }
   function cardAcc(card) {
     var list = A.accs();
     head(card, "acc", t("ov.acc"), list.length ? t("ov.open") : null, A.accountsDialog);
@@ -392,41 +501,60 @@
     var ps = A.passiveStats ? A.passiveStats() : null;     // PI-1
     if (ps) card.appendChild(el("p", "hint ov-pi", ps.pct === null ? t("ov.piNoOut", { m: A.money(ps.avg) }) : t("ov.pi", { m: A.money(ps.avg), p: ps.pct })));
     var bal = A.balNow();
-    var ul = el("ul", "ov-rows ov-accs");
-    function row(name, col, balTxt, neg, f, onClick, onEdit) {
-      var li = el("li");
-      if (onEdit) li.className = "ov-acc-li";
-      var b = el(onClick ? "button" : "div", "ov-row ov-accrow");
-      if (onClick) { b.type = "button"; b.addEventListener("click", onClick); }
-      var l1 = el("span", "ov-top-l");
-      l1.appendChild(A.swatch(col));
-      l1.appendChild(el("span", "ov-n", name));
-      if (balTxt) l1.appendChild(el("span", "ov-v" + (neg ? " neg" : ""), balTxt));
-      b.appendChild(l1);
-      b.appendChild(flowLine(f));
-      b.setAttribute("aria-label", (onClick ? t("ov.accTip", { a: name }) : name) + (balTxt ? ", " + balTxt : "") + ", " + flowAria(f));
-      li.appendChild(b);
-      if (onEdit) {
-        var e = el("button", "icon-btn ov-acc-edit");
-        e.type = "button";
-        e.innerHTML = A.icon("edit");
-        e.setAttribute("aria-label", t("ov.accEdit", { a: name }));
-        e.addEventListener("click", onEdit);
-        li.appendChild(e);
-      }
-      ul.appendChild(li);
-    }
     var bnk = (D().bnk || []).filter(function (r) { return r && r.src !== "pp"; });
-    list.forEach(function (a) {
-      var iv = A.investInfo ? A.investInfo(a) : null, shown = iv && iv.val ? iv.val.v : bal[a.id];
-      row(a.n, a.col, A.money(shown, a.cur), shown < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); },
-          A.accDialog ? function () { A.accDialog(a.id); } : null);
-      bankLines(ul.lastChild, a, bnk);
-      cycleLines(ul.lastChild, a);
-      investLines(ul.lastChild, a, iv, bal[a.id]);
+    // AC-1: what I have and owe, then the accounts in groups, each one a
+    // row with its balance and one line of status; a tap opens its sheet.
+    var ho = O.haveOwe(list.map(function (a) { return nw.bal[a.id] === undefined ? null : mainVal(a, nw.bal[a.id]); }));
+    if (ho.owe) {
+      var hoL = el("div", "ov-ho");
+      hoL.appendChild(el("span", "ov-ho-h", t("ov.have", { a: A.money(ho.have) })));
+      hoL.appendChild(el("span", "ov-ho-o", t("ov.owe", { a: A.money(ho.owe) })));
+      top.appendChild(hoL);
+    }
+    var groups = {};
+    list.forEach(function (a) { var g = O.accGroup(a, bnk); (groups[g] = groups[g] || []).push(a); });
+    var gIds = O.GROUPS.filter(function (g) { return groups[g]; });
+    gIds.forEach(function (g) {
+      if (gIds.length > 1) {
+        var gh = el("div", "ov-gh");
+        gh.appendChild(el("span", "", t(g === "cash" ? "ov.gCash" : g === "card" ? "ov.gCard" : "ov.gInv")));
+        var gt = 0, gMiss = false;
+        groups[g].forEach(function (a) { var v = mainVal(a, nw.bal[a.id]); if (v === null) gMiss = true; else gt += v; });
+        if (!gMiss) gh.appendChild(el("span", "ov-gh-v" + (gt < 0 ? " neg" : ""), A.money(gt)));
+        card.appendChild(gh);
+      }
+      var ul = el("ul", "ov-rows ov-accs");
+      groups[g].forEach(function (a) {
+        var iv = A.investInfo ? A.investInfo(a) : null, shown = iv && iv.val ? iv.val.v : bal[a.id];
+        var li = el("li");
+        var b = el("button", "ov-row ov-acc");
+        b.type = "button";
+        b.appendChild(A.swatch(a.col));
+        var mid = el("span", "ov-acc-m");
+        mid.appendChild(el("span", "ov-acc-n", a.n));
+        var st = statusOf(a, iv, bal[a.id], flows.by[a.id] || { inc: 0, out: 0 }, mk, bnk);
+        if (st) mid.appendChild(el("span", "ov-acc-s" + (st.cls ? " " + st.cls : ""), st.text));
+        b.appendChild(mid);
+        var bv = A.money(shown, a.cur);
+        b.appendChild(el("span", "ov-v ov-acc-v" + (shown < 0 ? " neg" : ""), bv));
+        b.setAttribute("aria-label", a.n + ", " + bv + (st ? ", " + st.text : "") + ". " + t("ov.sheetTip", { a: a.n }));
+        b.addEventListener("click", function () { accSheet(a.id); });
+        li.appendChild(b);
+        ul.appendChild(li);
+      });
+      card.appendChild(ul);
     });
-    if (flows.none.inc || flows.none.out) row(t("ov.noAcc"), 8, "", false, flows.none, null);
-    card.appendChild(ul);
+    if (flows.none.inc || flows.none.out) {
+      var nl = el("ul", "ov-rows ov-accs"), nli = el("li"), nb0 = el("div", "ov-row ov-acc");
+      nb0.appendChild(A.swatch(8));
+      var nm = el("span", "ov-acc-m");
+      nm.appendChild(el("span", "ov-acc-n", t("ov.noAcc")));
+      nm.appendChild(el("span", "ov-acc-s", t("ov.stFlow", { m: A.monthLabel(mk), i: A.money(flows.none.inc), o: A.money(flows.none.out) })));
+      nb0.appendChild(nm);
+      nli.appendChild(nb0);
+      nl.appendChild(nli);
+      card.appendChild(nl);
+    }
     // banks linked, none filling an account: say where that is set
     if (bnk.length && !bnk.some(function (r) { return r.ac; }) && A.banksOpen) {
       var um = el("p", "hint ov-bk-um", t("ov.bkUnmapped") + " ");
@@ -436,7 +564,6 @@
       um.appendChild(go);
       card.appendChild(um);
     }
-    card.appendChild(el("p", "hint ov-foot", t("ov.flowHint")));
     // New account (a wallet, cash) and, with banks linked, an update now.
     var acts = el("div", "ov-acts");
     var bk = A.bankState ? A.bankState() : null;

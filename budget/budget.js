@@ -84,6 +84,10 @@
       "kp.result": "= {a}", "f.again": "Again today", "f.againOne": "Add {n}, {a}, again for today", "f.againDone": "Added again for today",
       "dlg.dup": "Duplicate",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete", "dlg.close": "Close",
+      "ub.title": "Update balance", "ub.q": "What does the account show now?", "ub.have": "I have", "ub.owe": "I owe",
+      "ub.amt": "Amount ({c})", "ub.same": "The same as in Budget", "ub.diff": "Difference {a}",
+      "ub.hint": "The difference changes the account's starting balance: it is not counted as income or an expense.",
+      "ub.ok": "Balance checked", "ub.done": "Balance updated ({a})", "ub.auto": "{n} matched to the bank ({a})",
       "err.amount": "Type an amount, for example 12,50", "err.date": "Pick a date",
       "rec.tag": "Recurring",
       "toast.saved": "Saved", "toast.deleted": "Entry deleted", "toast.undo": "Undo",
@@ -221,6 +225,10 @@
       "kp.result": "= {a}", "f.again": "Ξανά σήμερα", "f.againOne": "Πρόσθεσε ξανά για σήμερα: {n}, {a}", "f.againDone": "Προστέθηκε ξανά για σήμερα",
       "dlg.dup": "Διπλότυπο",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή", "dlg.close": "Κλείσιμο",
+      "ub.title": "Ενημέρωση υπολοίπου", "ub.q": "Τι δείχνει τώρα ο λογαριασμός;", "ub.have": "Έχω", "ub.owe": "Χρωστάω",
+      "ub.amt": "Ποσό ({c})", "ub.same": "Ίδιο με την εφαρμογή", "ub.diff": "Διαφορά {a}",
+      "ub.hint": "Η διαφορά αλλάζει το αρχικό υπόλοιπο του λογαριασμού: δεν μετρά ως έσοδο ή έξοδο.",
+      "ub.ok": "Το υπόλοιπο ελέγχθηκε", "ub.done": "Το υπόλοιπο ενημερώθηκε ({a})", "ub.auto": "{n}: ταίριαξε με την τράπεζα ({a})",
       "err.amount": "Γράψε ένα ποσό, π.χ. 12,50", "err.date": "Διάλεξε ημερομηνία",
       "rec.tag": "Πάγιο",
       "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Η κίνηση διαγράφηκε", "toast.undo": "Αναίρεση",
@@ -739,6 +747,10 @@
     // INV-1: an investment held in the account (budget/invest.js)
     var INV0 = typeof window !== "undefined" && window.OrosBudgetInvest;
     if (INV0) INV0.clean(y);
+    // AC-1: am (match the bank by itself, written only when true) and
+    // chk (the day the balance was last checked or matched)
+    if (y.am !== true) delete y.am;
+    if (!(typeof y.chk === "string" && parseYmd(y.chk))) delete y.chk;
     return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, y);
   }
   // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
@@ -1339,6 +1351,9 @@
     rec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
   };
   var UI = {
+    lst: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+    xfer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>',
+    scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
@@ -1382,7 +1397,7 @@
     if (PLANUI) PLANUI.renderPlan($("plan"));
     if (LNUI) LNUI.render($("loans"));
   }
-  function renderOverview() { refreshPrices(); if (OVUI) OVUI.render($("overview")); }
+  function renderOverview() { refreshPrices(); autoMatch(); if (OVUI) OVUI.render($("overview")); }
 
   function renderToolbar() {
     $("month").textContent = monthLabel(viewMk);
@@ -3137,8 +3152,9 @@
   function shiftStart(id, diff, text) {
     var a = findIn(data.acc, id);
     if (!a || !diff || Math.abs(a.o + diff) > MAX_CENTS) return false;
-    var was = a.o;
+    var was = a.o, wasChk = a.chk;
     a.o = was + diff;
+    a.chk = today;
     a.m = stamp(a.m);
     commit();
     renderAll();
@@ -3146,11 +3162,131 @@
       var b = findIn(data.acc, id);
       if (!b) return;
       b.o = was;
+      if (wasChk) b.chk = wasChk; else delete b.chk;
       b.m = stamp(b.m);
       commit();
       renderAll();
     });
     return true;
+  }
+  // AC-1: "Update balance": what the account shows now. The difference
+  // moves the starting balance (never an income or an expense), with Undo.
+  function updateBalance(id) {
+    var a = findIn(data.acc, id);
+    if (!a) return;
+    var now = accBalAt(id, today) || 0, cu = accCurOf(id);
+    var dlg = makeDialog("bd-upd", t("ub.title"));
+    dlg.appendChild(el("p", "dlg-sub", a.n));
+    var form = el("form");
+    form.method = "dialog";
+    var owe = now < 0;
+    var sw = el("div", "seg");
+    sw.setAttribute("role", "radiogroup");
+    sw.setAttribute("aria-label", t("ub.q"));
+    var sb = {};
+    [["h", "ub.have"], ["o", "ub.owe"]].forEach(function (p) {
+      var b = el("button", "seg-btn " + (p[0] === "h" ? "in" : "out"), t(p[1]));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.addEventListener("click", function () { owe = p[0] === "o"; mark(); show(); });
+      sb[p[0]] = b;
+      sw.appendChild(b);
+    });
+    function mark() { sb.h.setAttribute("aria-checked", owe ? "false" : "true"); sb.o.setAttribute("aria-checked", owe ? "true" : "false"); }
+    mark();
+    form.appendChild(el("div", "dlg-lbl", t("ub.q")));
+    form.appendChild(sw);
+    var amt = el("input");
+    amt.inputMode = "decimal";
+    amt.autocomplete = "off";
+    amt.className = "amt-in";
+    amt.value = centsToInput(Math.abs(now), LANG);
+    form.appendChild(field(t("ub.amt", { c: cu }), amt, "bd-upd-a"));
+    var diffL = el("p", "hint ub-diff");
+    diffL.setAttribute("aria-live", "polite");
+    form.appendChild(diffL);
+    function val() {
+      var v = KP && KP.hasOp(amt.value) ? KP.calc(amt.value, parseAmount, MAX_CENTS) : (amt.value.trim() ? parseAmount(amt.value) : 0);
+      return v === null ? null : (owe ? -v : v);
+    }
+    function show() {
+      var v = val();
+      diffL.textContent = v === null ? "" : v === now ? t("ub.same") : t("ub.diff", { a: (v > now ? "+" : "\u2212") + money(Math.abs(v - now), cu) });
+    }
+    amt.addEventListener("input", show);
+    if (KP && touchFirst()) {
+      amt.inputMode = "none";
+      form.appendChild(KP.pad(amt, {
+        el: el, comma: decComma(LANG), label: t("kp.label"), back: t("kp.back"), div: t("kp.div"), mul: t("kp.mul"), eq: t("kp.eq"),
+        onChange: show,
+        onEquals: function () { var v = val(); if (v !== null) { amt.value = centsToInput(Math.abs(v), LANG); show(); } }
+      }));
+    }
+    show();
+    form.appendChild(el("p", "hint", t("ub.hint")));
+    var err = errLine();
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = val();
+      if (v === null || Math.abs(v) > MAX_CENTS) { showErr(err, t("err.amount"), amt); return; }
+      dlg.close();
+      var b = findIn(data.acc, id);
+      if (!b) return;
+      if (v === now) {
+        b.chk = today;
+        b.m = stamp(b.m);
+        commit();
+        renderAll();
+        showToast(t("ub.ok"));
+        return;
+      }
+      if (!shiftStart(id, v - now, t("ub.done", { a: (v > now ? "+" : "\u2212") + money(Math.abs(v - now), cu) }))) showToast(t("err.amount"));
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    try { if (!touchFirst()) { amt.focus(); amt.select(); } } catch (x) {}
+  }
+  function setAutoMatch(id, on) {
+    var a = findIn(data.acc, id);
+    if (!a || !!a.am === !!on) return;
+    if (on) a.am = true; else delete a.am;
+    a.m = stamp(a.m);
+    commit();
+    renderAll();
+    if (on) autoMatch();
+  }
+  // Accounts with am: when the bank's last balance (BK-5) differs from
+  // Budget's on that day, the starting balance moves so they agree,
+  // with Undo. A second pass finds nothing to do.
+  var autoBusy = false;
+  function autoMatch() {
+    if (autoBusy) return;
+    var bnk = Array.isArray(data.bnk) ? data.bnk : [];
+    var done = [];
+    data.acc.forEach(function (a) {
+      if (!a.am) return;
+      var cu = accCurOf(a.id), r = null;
+      bnk.forEach(function (x) { if (x && x.src !== "pp" && x.ac === a.id && x.bc === cu && typeof x.bb === "number" && x.bd && (!r || x.bd > r.bd)) r = x; });
+      if (!r) return;
+      var mine = accBalAt(a.id, r.bd);
+      if (mine === null || mine === r.bb) return;
+      done.push({ id: a.id, diff: r.bb - mine, n: a.n, cu: cu });
+    });
+    if (!done.length) return;
+    autoBusy = true;
+    try {
+      done.forEach(function (d) {
+        shiftStart(d.id, d.diff, t("ub.auto", { n: d.n, a: (d.diff > 0 ? "+" : "\u2212") + money(Math.abs(d.diff), d.cu) }));
+      });
+    } finally { autoBusy = false; }
   }
   function initBankLive() {
     if (!BANKLIVE) return;
@@ -3219,6 +3355,9 @@
       budgets: function () { return BGUI ? BGUI.current() : []; },
       loansCard: LNUI ? function (card) { LNUI.overviewCard(card); } : null,
       icon: function (k) { return UI[k] || ""; }, accDialog: accDialog,
+      // AC-1: the account sheet's actions
+      updateBalance: updateBalance, setAutoMatch: setAutoMatch, xferFrom: function (id) { xferDialog(null, id); },
+      newTxIn: function (id) { txDialog(null, { ac: id }); },
       // banks (budget/banklive.js): state, and an update now; a failed
       // bank opens Banks, where each one says why
       bankState: BANKLIVE && BANKLIVE.state ? BANKLIVE.state : null,
@@ -3880,14 +4019,14 @@
       renderAll();
     });
   }
-  function xferDialog(id) {
+  function xferDialog(id, fromId) {
     var x = id ? findIn(data.xfer, id) : null;
     if (id && !x) return;
     var list = accs();
     if (!x && list.length < 2) { showToast(t("xf.need")); return; }
     var dlg = makeDialog("bd-xf", t(x ? "xf.edit" : "xf.new"));
     var form = el("form");
-    var from = accSelect(x ? x.f : (lastAcc || list[0].id));
+    var from = accSelect(x ? x.f : (fromId && findIn(data.acc, fromId) ? fromId : (lastAcc || list[0].id)));
     var to = accSelect(x ? x.t : "");
     // "No account" makes no sense for a transfer, except to keep one whose account was deleted.
     [from, to].forEach(function (s, i) {
