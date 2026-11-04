@@ -1236,6 +1236,7 @@ var PRECACHE_URLS = [
   "share/out.js",
   "share/album.js",
   "send/core.js",
+  "send/detect.js",
   "send/sheet.js",
   "commands/core.js",
   "commands/bar.js",

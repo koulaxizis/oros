@@ -4106,7 +4106,13 @@
           document.head.appendChild(s);
         });
       };
-      sendLoad = load("send/core.js").then(function () { return load("send/sheet.js"); })
+      // Wave A3: the sheet reads days (Calendar's quick add) and phones
+      // / addresses (Contacts' card reader) through send/detect.js.
+      sendLoad = Promise.all([
+        window.OrosCalQuick ? null : load("calendar/quickadd.js"),
+        window.OrosContactsCard ? null : load("contacts/cardtext.js")
+      ]).then(function () { return load("send/detect.js"); }, function () { return load("send/detect.js"); })
+        .then(function () { return load("send/core.js"); }).then(function () { return load("send/sheet.js"); })
         .then(function () {
           if (!window.__orosSendImpl) throw new Error("send module missing");
           return window.__orosSendImpl;
@@ -4124,6 +4130,8 @@
       sendModule().then(function (m) {
         m.open(opts, {
           apps: apps, self: self, from: from, openAt: window.__orosOpenAt,
+          calendarNew: function (p) { window.__orosOpenCalendarNew(p); },
+          budgetNew: function (p) { return window.__orosOpenBudgetNew(p); },
           share: function (item) { window.orosShare.open(item); },
           icon: function (id) {
             for (var i = 0; i < state.apps.length; i++) {
