@@ -9929,6 +9929,7 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Changes:** `vault.js` (`settleHeld`, `armSettle`, `pushCloud(…, held)`, `stats.waiting`, churn log `oros-vault-churn`, `usage()` adds `sentMost`, `sentSince`, `nextFreeAt`; API `settleBytes`, `settleMs`, `settleMaxMs`), `sync.js` (the churn key is cleared on a cloud switch), `settings/settings.js` + `settings/core.js` (clean-up card: next clean-up date, files sent most, the rule; EN/EL).
 - **Files:** the above, `tests/vault-settle.test.js`, What's new EN/EL, `shell.js`, `sw.js`, `manifest.webmanifest`, `OROS_BIBLE.md`.
 - **Tests:** full `node --test tests/*.test.js`; `tests/vault-settle.test.js` also with `OROS_CLOUD=webdav`. Playwright Chromium (LANG=C.UTF-8): Settings › Sync clean-up card with stubbed usage at 360 px EL and 1280 px EN, no horizontal overflow, a file name with HTML shown as text. Not tested: the real Dropbox, a real phone, Safari.
+
 ### 2026-11-04 — 5.31.01 — Budget card debt in sight (CD-1)
 
 - **What:** Chris 2026-11-04: "I only see what is left to spend on the credit card, not what I owe." His bank does not mark the card, so it had no limit field and its available amount stood as its balance. See the Budget section (CD-1 bullet) and the decision of 2026-11-04.
