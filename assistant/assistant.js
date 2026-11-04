@@ -476,6 +476,8 @@
       "ed.v.mode.shift": "move by", "ed.v.mode.fit": "whole picture", "ed.v.mode.fill": "fill the frame",
       "ed.note.fitLater": "Layout fits the text when it makes the changes.",
       "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
+      "ru.head": "Automation rule · {app}", "ru.hint": "Opens in {app} with this rule. You check it and save it; nothing runs until it is saved there.",
+      "ru.notify": "Notice: \u201c{text}\u201d", "ru.only": "Only {when}",
       "rc.file": "Save as file", "rc.saved": "Saved {name}. Send it to anyone with orOS.",
       "entry.hint.form": "Opens {app} with this filled in. Nothing is saved until you save it there.",
       "entry.hint.make": "The button makes it in {app}; you can change or delete it there.",
@@ -1098,6 +1100,8 @@
       "ed.v.mode.shift": "μετακίνηση κατά", "ed.v.mode.fit": "ολόκληρη η εικόνα", "ed.v.mode.fill": "γεμίζει το πλαίσιο",
       "ed.note.fitLater": "Η Σελιδοποίηση χωράει το κείμενο όταν κάνει τις αλλαγές.",
       "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
+      "ru.head": "Κανόνας αυτοματισμού · {app}", "ru.hint": "Ανοίγει ({app}) με αυτόν τον κανόνα. Τον ελέγχεις και τον αποθηκεύεις· τίποτα δεν τρέχει πριν αποθηκευτεί εκεί.",
+      "ru.notify": "Ειδοποίηση: \u00ab{text}\u00bb", "ru.only": "Μόνο {when}",
       "rc.file": "Αποθήκευση ως αρχείο", "rc.saved": "Αποθηκεύτηκε το {name}. Στείλ' το σε όποιον έχει orOS.",
       "entry.hint.form": "Ανοίγει συμπληρωμένη η φόρμα ({app}). Δεν αποθηκεύεται τίποτα μέχρι να την αποθηκεύσεις εκεί.",
       "entry.hint.make": "Το κουμπί το δημιουργεί ({app})· εκεί μπορείς να το αλλάξεις ή να το σβήσεις.",
@@ -3086,6 +3090,7 @@
     var plOn = !builtin && partnerLinksOn(crIds, apps);
     var rcApps = builtin ? [] : recipeApps();
     var nlOn = !builtin && !!installed().newsletter;
+    var ruOn = !builtin && !!installed().automations && !!window.OrosAutoCore;
     var cvOn = !builtin && !!installed().layout;
     var wmode = webMode(pid);
     var acts = builtin ? [] : actionKinds();
@@ -3096,7 +3101,7 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn });
+                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3109,6 +3114,7 @@
       actions: acts,
       history: hiOn,
       recipes: rcApps.map(function (a) { return a.name + " (" + a.id + ")"; }),
+      rules: ruOn,
       edits: Object.keys(edCats).map(function (id) { return installed()[id] + " (" + id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
@@ -3301,6 +3307,7 @@
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
+    if (call.name === "propose_rule") return Promise.resolve(proposeRule(call.args));
     if (call.name === "read_in_app") return readInApp(c, call.args, apps);
     if (call.name === "edit_in_app") return proposeEdit(c, call.args, apps);
     if (call.name === "newsletter_add") return Promise.resolve(proposeNewsletter(c, call.args));
@@ -4024,6 +4031,20 @@
     return {
       content: "Shown to the user as a card with the " + a.steps.length + " steps. They will open it in the app, check it, save it and run it themselves, or dismiss it. Nothing is saved or run yet.",
       ui: { k: "recipe", args: JSON.parse(JSON.stringify(args)), st: "" }
+    };
+  }
+
+  // propose_rule (wave A6, automations/core.js): checked now with the
+  // Automations app's own cleanRule (the model hears what to fix),
+  // shown as a card in plain words; the button opens the Automations
+  // editor with it ({ newRule }), where the user checks and saves it.
+  function proposeRule(args) {
+    var have = installed();
+    var a = C.normRule(args, function (id) { return !!have[id]; });
+    if (!a.ok) return { content: "Error: " + a.err, err: 1, ui: { k: "ruleErr" } };
+    return {
+      content: "Shown to the user as a card with the rule. They will open it in Automations, check it and save it themselves, or dismiss it. Nothing is saved yet.",
+      ui: { k: "rule", args: JSON.parse(JSON.stringify(args)), st: "" }
     };
   }
 
@@ -6563,6 +6584,8 @@
         if (ui.k === "houseErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
+        if (ui.k === "rule") { drawRule(host, r, c); return; }
+        if (ui.k === "ruleErr") return;
         if (ui.k === "edit") { drawEdit(host, r, c); return; }
         if (ui.k === "editErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
@@ -6967,6 +6990,65 @@
         ui.st = "opened";
         saveChat(c).then(function () {
           if (!runEntry({ call: { fn: "openAt", args: [a.app, { newRecipe: draft }] } })) { ui.st = "failed"; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+  // A rule card (propose_rule): rebuilt from the stored arguments
+  // with the same check every time.
+  function ruleStep(AC, x, nameOf) {
+    var what = AC.actText(x, LANG, nameOf);
+    var detail = x.a === "notify" || x.a === "ask" || x.a === "note" ? (x.a === "note" ? x.title : x.text) :
+      x.a === "todo" ? x.items.join(", ") : x.a === "event" ? x.title : x.a === "mail" ? x.subject || x.body :
+      x.a === "budget" ? (x.amount / 100).toLocaleString(LANG, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " \u20ac" + (x.note ? " · " + x.note : "") :
+      x.a === "timer" ? x.label : "";
+    if (x.a === "notify") return t("ru.notify", { text: detail });
+    return what + (detail ? ": " + String(detail).slice(0, 160) : "");
+  }
+  function ruleIf(cond) {
+    if (!cond) return "";
+    var parts = [];
+    if (cond.wd) parts.push(cond.wd.map(function (n) {
+      try { return new Date(2023, 0, 1 + n).toLocaleDateString(LANG, { weekday: "short" }); } catch (e) { return String(n); }
+    }).join(", "));
+    if (cond.from) parts.push(cond.from + "\u2013" + cond.to);
+    return t("ru.only", { when: parts.join(", ") });
+  }
+  function drawRule(host, r, c) {
+    var ui = r.ui, have = installed(), AC = window.OrosAutoCore;
+    var a = AC ? C.normRule(ui.args, function (id) { return !!have[id]; }) : { ok: false };
+    var name = have.automations || "Automations";
+    if (!a.ok) {
+      host.appendChild(el("div", "tool-line", t("entry.gone", { app: name })));
+      return;
+    }
+    var nameOf = function (id) { return have[id] || id; };
+    var card = el("section", "entry-card ru-card");
+    card.appendChild(el("h3", "entry-head", t("ru.head", { app: name })));
+    if (a.rule.name) card.appendChild(el("p", "entry-title", a.rule.name));
+    card.appendChild(el("p", "ru-when", AC.whenText(a.rule.when, LANG, nameOf)));
+    var only = ruleIf(a.rule["if"]);
+    if (only) card.appendChild(el("p", "dlg-hint", only));
+    var ol = el("ol", "entry-list ru-steps");
+    a.rule["do"].forEach(function (x) { ol.appendChild(el("li", "", ruleStep(AC, x, nameOf))); });
+    card.appendChild(ol);
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state" + (ui.st === "failed" ? " err" : ""), t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("ru.hint", { app: name })));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () {
+        ui.st = "dismissed";
+        saveChat(c);
+        renderMessages();
+      }));
+      acts.appendChild(button(t("entry.open", { app: name }), "primary", function () {
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          if (!runEntry({ call: { fn: "openAt", args: ["automations", { newRule: a.rule }] } })) { ui.st = "failed"; saveChat(c); }
           renderMessages();
         });
       }));

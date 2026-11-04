@@ -57,7 +57,7 @@
       "next": "Next: {when}", "never": "Will not run again", "needs": "Needs {app}, which is not installed here",
       "run.notice": "Notice: {text}", "run.at": "Run of {when}", "run.none": "This rule has no other step.",
       "log.sent": "Ran", "log.late": "Ran late", "log.off": "Notices are off", "log.skip": "Skipped: an app is missing",
-      "log.run": "You opened it", "gone": "This rule was deleted.",
+      "log.run": "You opened it", "gone": "This rule was deleted.", "badRule": "This rule cannot be opened here.",
       "conf.del": "Delete this rule?"
     },
     el: {
@@ -96,7 +96,7 @@
       "next": "Επόμενη: {when}", "never": "Δεν θα ξανατρέξει", "needs": "Χρειάζεται το {app}, που δεν είναι εγκατεστημένο εδώ",
       "run.notice": "Ειδοποίηση: {text}", "run.at": "Εκτέλεση της {when}", "run.none": "Αυτός ο κανόνας δεν έχει άλλο βήμα.",
       "log.sent": "Έτρεξε", "log.late": "Έτρεξε με καθυστέρηση", "log.off": "Οι ειδοποιήσεις είναι κλειστές", "log.skip": "Παραλείφθηκε: λείπει εφαρμογή",
-      "log.run": "Το άνοιξες", "gone": "Αυτός ο κανόνας διαγράφηκε.",
+      "log.run": "Το άνοιξες", "gone": "Αυτός ο κανόνας διαγράφηκε.", "badRule": "Αυτός ο κανόνας δεν ανοίγει εδώ.",
       "conf.del": "Διαγραφή αυτού του κανόνα;"
     }
   };
@@ -548,7 +548,7 @@
 
   // ---------- 9. Deep link ----------
   // { run: { r, k, at } } from a notice with several steps;
-  // { rule: id } from search.
+  // { rule: id } from search; { newRule } from the Assistant.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (target.run && typeof target.run.r === "string") {
@@ -558,7 +558,13 @@
       showRun(r, typeof target.run.k === "string" ? target.run.k.slice(0, 90) : "", at);
       return;
     }
-    if (typeof target.rule === "string" && C.find(rules(), target.rule)) edit(target.rule);
+    if (typeof target.rule === "string" && C.find(rules(), target.rule)) { edit(target.rule); return; }
+    // { newRule } from the Assistant (wave A6): checked again here and
+    // opened in the editor as a new rule; nothing is saved until Save.
+    if (target.newRule && typeof target.newRule === "object") {
+      var nr = C.cleanRule(Object.assign({}, target.newRule, { id: "new" }));
+      if (nr) edit(null, nr); else toast(t("badRule"));
+    }
   };
   function takePending() {
     try {

@@ -20,6 +20,9 @@ A rule can also follow what happens instead of a time:
 
 In its texts, `{text}` becomes what the notice or the event said: the task, the habit, the workout or the notice's text. Such a rule runs once for each thing that happens, at most 20 times a day, and only on the device where it happened. Notices from Passwords never start a rule, and nothing of Passwords is ever read.
 
+## Ask the Assistant
+Tell the [Assistant](app:assistant) what you want, for example "every Monday at 8 remind me to put the bins out" or "when an urgent mail comes, add it to To-Do". It writes the rule and shows it on a card; `Open in Automations` opens it here as a new rule, and nothing is saved until you press Save. The Assistant never sees your rules or the list of runs, and never Passwords.
+
 ## What a rule does
 - `Show a notice` appears by itself in the notifications, like any reminder.
 - Every other step needs your go-ahead: the notice says what a tap does, and the tap opens that app filled in (To-Do, Calendar, Notes, Mail, Budget, Time or the Assistant). Nothing is saved in that app until you save it there.

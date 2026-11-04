@@ -1,4 +1,5 @@
 orosPack("de", "automations", {
+ "badRule": "Diese Regel lässt sich hier nicht öffnen.",
  "a.ask": "Den Assistenten fragen",
  "a.budget": "Ins Budget eintragen",
  "a.event": "Termin im Kalender anlegen",
