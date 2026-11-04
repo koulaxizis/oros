@@ -234,6 +234,7 @@
       view.cel = key;
       saveView();
       celebrate();
+      orosEvent("water.goal", "water:" + key, fmtA(after));
       undoToast(t("toast.goal"), function () { removeSip(id, true); });
       return;
     }
@@ -411,6 +412,12 @@
   function weekStartKey(key) {
     var d = C.keyDate(key), wd = (d.getDay() + 6) % 7;   // Monday-first
     return C.addDays(key, -wd);
+  }
+  // Automations wave A2 (BR-EV): tell the shell's event bus that
+  // something happened here; a rule may then post its notice. Only
+  // the event's name, a stable key and a short text leave this app.
+  function orosEvent(name, key, text) {
+    try { var p = window.parent; if (p && p !== window && p.orosEvents) p.orosEvents.emit(name, key, text); } catch (e) {}
   }
   function level(total, goal) {
     if (!total) return 0;

@@ -28,6 +28,9 @@
   var LOCAL_KEY = "oros-automations-local";
   var LOG_KEY = "oros-automations-log";
   var LOG_MAX = 50;
+  var SAID_KEY = "oros-automations-said";       // device-local: what a signal run said, for its tap
+  var SAID_MAX = 50;
+  var DAY_CAP = 20;                              // signal runs per rule per day on this device
   var bootAt = Date.now();
   var listeners = [];
 
@@ -91,8 +94,12 @@
           if (C.ID_RE.test(k) && typeof o.done[k] === "string" && o.done[k].length <= 90) done[k] = o.done[k];
         });
       }
-      return { done: done };
-    } catch (e) { return { done: {} }; }
+      var day = o && typeof o.day === "string" ? o.day : "", cnt = {};
+      if (o && o.cnt && typeof o.cnt === "object") {
+        Object.keys(o.cnt).forEach(function (k) { if (C.ID_RE.test(k) && typeof o.cnt[k] === "number") cnt[k] = o.cnt[k]; });
+      }
+      return { done: done, day: day, cnt: cnt };
+    } catch (e) { return { done: {}, day: "", cnt: {} }; }
   }
   function writeLocal(o) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(o)); } catch (e) {} }
   function readLog() {
@@ -163,10 +170,66 @@
     if (touched) writeLocal(local);
   }
 
+  // ---------- Wave A2: rules that follow what happens (BR-EV) ----------
+  // A signal = a notice another app posted on THIS device (notifications.js
+  // calls notice() after its own emit; notices pulled from another
+  // device do not come here, that device ran them) or an app's event
+  // (window.orosEvents.emit). Each matching rule posts one notice keyed
+  // by the signal's own key, so the synced inbox runs it once.
+  function readSaid() {
+    try { var o = JSON.parse(localStorage.getItem(SAID_KEY)); return o && typeof o === "object" ? o : {}; }
+    catch (e) { return {}; }
+  }
+  function keepSaid(key, text) {
+    var o = readSaid(), ks;
+    o[key] = String(text || "").slice(0, 300);
+    ks = Object.keys(o);
+    while (ks.length > SAID_MAX) { delete o[ks.shift()]; }
+    try { localStorage.setItem(SAID_KEY, JSON.stringify(o)); } catch (e) {}
+  }
+  function saidFor(key) { var t = readSaid()[key]; return typeof t === "string" ? t : ""; }
+  function signal(kind, name, key, text) {
+    if (!registered()) return 0;
+    if (kind !== "notice" && kind !== "event") return 0;
+    if (typeof name !== "string" || typeof key !== "string" || !key) return 0;
+    if (kind === "notice" && (name === "automations" || C.BLOCKED_APPS[name])) return 0;   // AUTO-4, no loops
+    var N = root.orosNotifs;
+    if (!(N && typeof N.emit === "function")) return 0;
+    var said = typeof text === "string" ? text.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+    var sig = { kind: kind, name: name, key: key, text: said };
+    var data = read(), local = readLocal(), now = Date.now(), apps = installed(), l = lang(), n = 0;
+    var today = C.ymdOf(now);
+    if (local.day !== today) { local.day = today; local.cnt = {}; }
+    data.rules.forEach(function (rule) {
+      var rk = C.matches(rule, sig, now);
+      if (!rk || inboxHas("automations:" + rk)) return;
+      if ((local.cnt[rule.id] || 0) >= DAY_CAP) return;
+      local.cnt[rule.id] = (local.cnt[rule.id] || 0) + 1;
+      if (!C.runnable(rule, apps)) { log(rule, rk, now, "skip"); return; }
+      keepSaid(rk, said);
+      var txt = C.notice(rule, now, l, appName, said);
+      var id = N.emit({ ns: "automations", key: rk, type: "reminder", title: txt.title, body: txt.body,
+                        deepLink: C.pending(rule).length ? "automations:run:" + rk : "automations:open" });
+      log(rule, rk, now, id ? "sent" : "off");
+      n++;
+    });
+    writeLocal(local);
+    return n;
+  }
+  var events = {
+    // apps: window.parent.orosEvents.emit(name, key, text). Unknown
+    // names do nothing.
+    emit: function (name, key, text) {
+      if (C.EVENTS.indexOf(name) < 0) return 0;
+      return signal("event", name, String(key || "").slice(0, 200), text);
+    },
+    names: function () { return C.EVENTS.slice(); }
+  };
+
   // Do one action now (a tap in the app or on the notice is the
   // person's go-ahead). → true when a receiving app was opened.
-  function runAction(action, at) {
-    var c = C.call(action, at || Date.now(), lang(), C.from(lang()));
+  function runAction(action, at, said) {
+    var c = C.call(action, at || Date.now(), lang(), C.from(lang()), said);
     if (!c || installed().indexOf(c.app) < 0) return false;
     if (c.fn === "calendarNew") {
       if (typeof root.__orosOpenCalendarNew !== "function") return false;
@@ -185,8 +248,8 @@
     var rule = C.find(read(), key.split("@")[0]);
     if (typeof root.__orosOpenAt !== "function") return;
     if (!rule) { root.__orosOpenAt("automations", null); return; }
-    var acts = C.pending(rule), at = keyTime(key) || Date.now();
-    if (acts.length === 1 && runAction(acts[0], at)) { log(rule, key, at, "run"); return; }
+    var acts = C.pending(rule), at = keyTime(key) || Date.now(), said = saidFor(key);
+    if (acts.length === 1 && runAction(acts[0], at, said)) { log(rule, key, at, "run"); return; }
     root.__orosOpenAt("automations", { run: { r: rule.id, k: key, at: at } });
   }
   // "r…@202611041830" → that local moment.
@@ -197,12 +260,15 @@
   }
 
   root.orosAutomations = {
-    VERSION: "1.0.0",
+    VERSION: "1.1.0",
     rules: function () { return read(); },
     save: save,
     tick: tick,
     runAction: runAction,
     openRun: openRun,
+    signal: signal,
+    notice: function (ns, key, text) { return signal("notice", ns, key, text); },
+    said: saidFor,
     log: readLog,
     noteRun: function (ruleId, key, at) {
       var rule = C.find(read(), String(ruleId || ""));
@@ -212,5 +278,6 @@
     appName: appName,
     onChange: onChange
   };
+  root.orosEvents = events;
   registerSlice();
 })(window);

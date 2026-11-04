@@ -172,3 +172,109 @@ test("host: a due rule posts one notice and runs once on every device", () => {
     assert.ok(H.log().length >= 2);
   } finally { delete global.localStorage; }
 });
+
+// ---------- Wave A2: rules that follow what happens (BR-EV) ----------
+test("A2: notice and event triggers are cleaned; Passwords and the rules' own notices never", () => {
+  assert.deepEqual(C.cleanWhen({ t: "notice", app: "mail", word: "  Urgent \n" }), { t: "notice", app: "mail", word: "Urgent" });
+  assert.deepEqual(C.cleanWhen({ t: "notice", app: "" }), { t: "notice", app: "" });
+  assert.equal(C.cleanWhen({ t: "notice", app: "passwords" }), null);
+  assert.equal(C.cleanWhen({ t: "notice", app: "automations" }), null);
+  assert.deepEqual(C.cleanWhen({ t: "event", ev: "habits.done" }), { t: "event", ev: "habits.done" });
+  assert.equal(C.cleanWhen({ t: "event", ev: "passwords.open" }), null);
+  const r = C.cleanRule({ id: "s", m: 1, when: { t: "event", ev: "todo.done" }, "if": { wd: [1, 2], from: "09:00", to: "17:00" },
+    do: [{ a: "notify", text: "{text}" }] });
+  assert.deepEqual(r["if"], { wd: [1, 2], from: "09:00", to: "17:00" });
+  // a time rule keeps no condition; an empty condition is dropped
+  assert.equal(C.cleanRule({ id: "t", m: 1, when: { t: "day", at: "09:00" }, "if": { wd: [1] }, do: [{ a: "notify", text: "x" }] })["if"], undefined);
+  assert.equal(C.cleanRule({ id: "u", m: 1, when: { t: "event", ev: "todo.done" }, "if": { wd: [0, 1, 2, 3, 4, 5, 6], from: "9" },
+    do: [{ a: "notify", text: "x" }] })["if"], undefined);
+  assert.equal(C.nextAt(r.when, T0), 0);
+  assert.equal(C.due(r, T0, "", T0), null);
+});
+
+test("A2: matching is by app or event, folded word and the day/hour window; the key comes from the signal", () => {
+  const r = C.cleanRule({ id: "m1", m: 1, on: true, when: { t: "notice", app: "mail", word: "επειγον" },
+    "if": { wd: [3], from: "07:00", to: "09:00" }, do: [{ a: "todo", items: ["{text}"] }] });
+  const sig = { kind: "notice", name: "mail", key: "mail:abc", text: "Νίκος: ΕΠΕΊΓΟΝ συμβόλαιο" };
+  const k = C.matches(r, sig, T0);                            // Wed 08:00
+  assert.match(k, /^m1@s[0-9a-z]+$/);
+  assert.equal(C.matches(r, sig, T0), k);                     // same signal, same run
+  assert.notEqual(C.matches(r, Object.assign({}, sig, { key: "mail:def" }), T0), k);
+  assert.equal(C.matches(r, Object.assign({}, sig, { name: "feeds" }), T0), null);
+  assert.equal(C.matches(r, Object.assign({}, sig, { text: "hello" }), T0), null);
+  assert.equal(C.matches(r, sig, T0 + 2 * 3600000), null);    // 10:00, outside the hours
+  assert.equal(C.matches(r, sig, T0 + 86400000), null);       // Thursday
+  assert.equal(C.matches(Object.assign({}, r, { on: false }), sig, T0), null);
+  const any = C.cleanRule({ id: "m2", m: 1, on: true, when: { t: "notice", app: "" }, do: [{ a: "notify", text: "x" }] });
+  assert.ok(C.matches(any, { kind: "notice", name: "calendar", key: "c1", text: "" }, T0));
+  assert.equal(C.matches(any, { kind: "notice", name: "automations", key: "a1", text: "" }, T0), null);
+  assert.equal(C.matches(any, { kind: "notice", name: "passwords", key: "p1", text: "" }, T0), null);
+  assert.equal(C.matches(any, { kind: "event", name: "todo.done", key: "t1", text: "" }, T0), null);
+  // a window over midnight
+  assert.equal(C.inWindow({ from: "22:00", to: "06:00" }, new Date(2026, 10, 4, 23, 0).getTime()), true);
+  assert.equal(C.inWindow({ from: "22:00", to: "06:00" }, new Date(2026, 10, 4, 12, 0).getTime()), false);
+  // {text} fills notices and steps
+  assert.equal(C.notice(r, T0, "en", null, "Buy milk").body, "Tap to continue: add 1 to To-Do");
+  assert.deepEqual(C.call(r["do"][0], T0, "en", "x", "Contract").arg.addItems.items, [{ text: "Contract" }]);
+  assert.equal(C.whenText(r.when, "el", () => "Mail"), "Όταν έρχεται ειδοποίηση από: Mail με «επειγον»");
+});
+
+function fakeShell(apps) {
+  const store = {};
+  const inbox = [], emitted = [], opened = [];
+  const win = {
+    OrosAutoCore: C,
+    orosSync: { registerSlice: () => {}, markDirty: () => {} },
+    orosTodayEnv: { apps: () => apps.map((id) => ({ id, name: id })), lang: () => "en" },
+    orosNotifs: {
+      emit: (c) => { if (inbox.some((x) => x.dedupKey === c.ns + ":" + c.key)) return null;
+        inbox.push({ dedupKey: c.ns + ":" + c.key }); emitted.push(c); return "id" + emitted.length; },
+      getSlice: () => ({ items: inbox })
+    },
+    __orosOpenAt: (app, arg) => opened.push([app, arg])
+  };
+  global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); },
+    removeItem: (k) => { delete store[k]; } };
+  new Function("window", fs.readFileSync(path.join(__dirname, "..", "automations", "host.js"), "utf8"))(win);
+  return { win, H: win.orosAutomations, emitted, opened, store };
+}
+
+test("A2 host: an app event posts one notice, its text reaches the tap; unknown events and the day cap", () => {
+  const { win, H, emitted, opened, store } = fakeShell(["automations", "todo", "habits"]);
+  try {
+    const r1 = rule({ id: "e1", name: "Cheer", when: { t: "event", ev: "habits.done" }, do: [{ a: "notify", text: "Well done: {text}" }] });
+    const r2 = rule({ id: "e2", name: "Next", when: { t: "event", ev: "habits.done", word: "run" }, do: [{ a: "todo", items: ["Stretch after {text}"] }] });
+    H.save(C.put(C.put(C.empty(), r1, 1000).data, r2, 1001).data);
+    assert.equal(win.orosEvents.emit("habits.done", "habits:h1:2026-11-04", "Read"), 1);
+    assert.equal(emitted[0].body, "Well done: Read");
+    assert.equal(win.orosEvents.emit("habits.done", "habits:h1:2026-11-04", "Read"), 0);   // the same signal again
+    assert.equal(win.orosEvents.emit("habits.done", "habits:h2:2026-11-04", "Morning run"), 2);
+    const tap = emitted[2];
+    assert.match(tap.deepLink, /^automations:run:e2@s/);
+    H.openRun(tap.deepLink.split(":")[2]);
+    assert.deepEqual(opened[0], ["todo", { addItems: { from: "Automations", items: [{ text: "Stretch after Morning run" }] } }]);
+    assert.equal(win.orosEvents.emit("passwords.open", "x", "y"), 0);
+    assert.equal(win.orosEvents.emit("todo.done", "t1", "x"), 0);                 // no rule for it
+    for (let i = 0; i < 30; i++) win.orosEvents.emit("habits.done", "habits:n" + i, "Walk");
+    assert.equal(JSON.parse(store["oros-automations-local"]).cnt.e1, 20);           // 20 a day per rule
+    // a notice from Passwords never runs a rule, even an "any app" one
+    H.save(C.put(H.rules(), rule({ id: "n1", when: { t: "notice", app: "" }, do: [{ a: "notify", text: "x" }] }), 2000).data);
+    assert.equal(H.notice("passwords", "pw:1", "secret"), 0);
+    assert.equal(H.notice("automations", "automations:x", "loop"), 0);
+    assert.equal(H.notice("calendar", "calendar:ev1", "Dentist"), 1);
+  } finally { delete global.localStorage; }
+});
+
+test("A2 wiring: Notifications hands its own notices over; the apps send their events", () => {
+  const src = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const n = src("notifications.js");
+  assert.match(n, /A\.notice\(item\.ns, item\.dedupKey, item\.title \+ ' ' \+ item\.body\)/);
+  assert.match(n, /item\.ns !== 'automations' && item\.ns !== 'passwords'/);
+  for (const [f, ev] of [["todo/todo.js", "todo.done"], ["habits/habits.js", "habits.done"], ["water/water.js", "water.goal"], ["fitness/fitness.js", "fitness.done"]]) {
+    const s = src(f);
+    assert.ok(s.includes('orosEvent("' + ev + '"'), f + " sends " + ev);
+    assert.match(s, /p\.orosEvents\.emit\(name, key, text\)/);
+    assert.ok(C.EVENTS.includes(ev));
+  }
+  assert.doesNotMatch(src("passwords/passwords.js"), /orosEvents|orosEvent\(/);
+});

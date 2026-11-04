@@ -1844,7 +1844,14 @@
 
   // The tick: the checkbox and "Done" from the Today summary
   // (openSearchTarget { done }) run this one function.
+  // Automations wave A2 (BR-EV): tell the shell's event bus that
+  // something happened here; a rule may then post its notice. Only
+  // the event's name, a stable key and a short text leave this app.
+  function orosEvent(name, key, text) {
+    try { var p = window.parent; if (p && p !== window && p.orosEvents) p.orosEvents.emit(name, key, text); } catch (e) {}
+  }
   function setDone(item, done) {
+    if (done && !item.done) orosEvent("todo.done", "todo:" + item.id + ":" + Date.now().toString(36), item.text);
     item.done = !!done;
     touchField(item, "done");               // TD-3: the tick only
     if (item.done && currentView()) justDone[item.id] = 1;

@@ -37,6 +37,10 @@
       "f.on": "On",
       "w.day": "Every day or on some days", "w.month": "Every month", "w.year": "Every year", "w.once": "Once",
       "w.open": "When orOS opens (once a day)", "md.last": "The last day",
+      "w.notice": "When an app posts a notice", "w.event": "When something happens",
+      "f.app": "App", "f.anyApp": "Any app", "f.ev": "What", "f.word": "Only when it says (optional)",
+      "f.if": "Only on these days and hours (optional)", "f.from": "From", "f.to": "Until",
+      "ed.text": "{text} becomes the notice's or the task's text.",
       "ed.safe": "A notice shows by itself. Every other step opens its app filled in, and nothing is saved there until you save it.",
       "ed.ph": "In texts, {date}, {weekday}, {month} and {year} become the day of the run.",
       "a.notify": "Show a notice", "a.todo": "Add tasks to To-Do", "a.event": "Add an event to Calendar",
@@ -72,6 +76,10 @@
       "f.on": "Ενεργός",
       "w.day": "Κάθε μέρα ή κάποιες μέρες", "w.month": "Κάθε μήνα", "w.year": "Κάθε χρόνο", "w.once": "Μία φορά",
       "w.open": "Όταν ανοίγει το orOS (μία φορά τη μέρα)", "md.last": "Η τελευταία μέρα",
+      "w.notice": "Όταν μια εφαρμογή στέλνει ειδοποίηση", "w.event": "Όταν συμβαίνει κάτι",
+      "f.app": "Εφαρμογή", "f.anyApp": "Οποιαδήποτε εφαρμογή", "f.ev": "Τι", "f.word": "Μόνο όταν γράφει (προαιρετικό)",
+      "f.if": "Μόνο αυτές τις μέρες και ώρες (προαιρετικό)", "f.from": "Από", "f.to": "Έως",
+      "ed.text": "Το {text} γίνεται το κείμενο της ειδοποίησης ή της εργασίας.",
       "ed.safe": "Η ειδοποίηση εμφανίζεται μόνη της. Κάθε άλλο βήμα ανοίγει την εφαρμογή του συμπληρωμένη και δεν αποθηκεύεται τίποτα εκεί πριν το αποθηκεύσεις εσύ.",
       "ed.ph": "Στα κείμενα, τα {date}, {weekday}, {month} και {year} γίνονται η μέρα της εκτέλεσης.",
       "a.notify": "Εμφάνιση ειδοποίησης", "a.todo": "Εργασίες στο To-Do", "a.event": "Γεγονός στο Ημερολόγιο",
@@ -202,13 +210,13 @@
       li.dataset.id = r.id;
       var main = el("button", "rule");
       main.type = "button";
-      main.appendChild(el("span", "name", r.name || C.whenText(r.when, BASE)));
-      main.appendChild(el("span", "sub", C.whenText(r.when, BASE) + " → " +
+      main.appendChild(el("span", "name", r.name || C.whenText(r.when, BASE, appName)));
+      main.appendChild(el("span", "sub", C.whenText(r.when, BASE, appName) + " → " +
         r["do"].map(function (a) { return a.a === "notify" ? t("a.notify").toLowerCase() : C.actText(a, BASE, appName); }).join(", ")));
       var missing = "";
       r["do"].forEach(function (a) { var n = C.needs(a); if (n && apps.length && apps.indexOf(n) < 0 && !missing) missing = n; });
       if (missing) main.appendChild(el("span", "sub warn", t("needs", { app: missing })));
-      else if (r.on && r.when.t !== "open") {
+      else if (r.on && r.when.t !== "open" && r.when.t !== "notice" && r.when.t !== "event") {
         var nx = C.nextAt(r.when, now);
         main.appendChild(el("span", "sub dim", nx ? t("next", { when: fmtTime(nx) }) : t("never")));
       }
@@ -253,7 +261,7 @@
       var b = el("button", "rule");
       b.type = "button";
       b.appendChild(el("span", "name", tp.name));
-      b.appendChild(el("span", "sub", C.whenText(C.cleanWhen(tp.rule.when), BASE)));
+      b.appendChild(el("span", "sub", C.whenText(C.cleanWhen(tp.rule.when), BASE, appName)));
       b.addEventListener("click", function () { closeDlg($("tpl-dlg")); edit(null, tp.rule); });
       li.appendChild(b);
       ul.appendChild(li);
@@ -291,6 +299,35 @@
     var md = $("f-md");
     for (var i = 1; i <= 31; i++) md.appendChild(new Option(String(i), String(i)));
     md.appendChild(new Option(t("md.last"), "-1"));
+    var ev = $("f-ev");
+    C.EVENTS.forEach(function (n) { ev.appendChild(new Option(C.whenText({ t: "event", ev: n }, BASE), n)); });
+    var iw = $("if-wd");
+    WD_ORDER.forEach(function (n) {
+      var lab = el("label", "wdbox");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.value = String(n);
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", C.STRINGS[LANG] && C.STRINGS[LANG]["ws." + n] || C.STRINGS.en["ws." + n]));
+      iw.appendChild(lab);
+    });
+  }
+  // Apps that post notices: the installed ones Notifications knows,
+  // never Passwords or Automations itself.
+  function fillNoticeApps(cur) {
+    var sel = $("f-napp"), N = null;
+    try { N = window.parent && window.parent !== window ? window.parent.orosNotifs : null; } catch (e) { N = null; }
+    var known = [];
+    try { known = N && N.getKnownApps ? N.getKnownApps() : []; } catch (e) { known = []; }
+    var have = installed();
+    sel.textContent = "";
+    sel.appendChild(new Option(t("f.anyApp"), ""));
+    known.filter(function (id) { return !C.BLOCKED_APPS[id] && id !== APP_ID && (!have.length || have.indexOf(id) >= 0); })
+      .map(function (id) { return { id: id, name: appName(id) }; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, LANG); })
+      .forEach(function (x) { sel.appendChild(new Option(x.name, x.id)); });
+    if (cur && !sel.querySelector('option[value="' + cur.replace(/[^a-z0-9]/g, "") + '"]')) sel.appendChild(new Option(appName(cur), cur));
+    sel.value = cur || "";
   }
   function fillAddSelect() {
     var sel = $("f-add");
@@ -302,8 +339,14 @@
     $("wd-row").hidden = k !== "day";
     $("md-row").hidden = k !== "month";
     $("date-row").hidden = k !== "year" && k !== "once";
-    $("at-row").hidden = k === "open";
-    $("f-at").required = k !== "open";
+    var sig = k === "notice" || k === "event";
+    $("at-row").hidden = k === "open" || sig;
+    $("f-at").required = k !== "open" && !sig;
+    $("napp-row").hidden = k !== "notice";
+    $("ev-row").hidden = k !== "event";
+    $("word-row").hidden = !sig;
+    $("if-box").hidden = !sig;
+    $("ed-text").hidden = !sig;
   }
 
   function edit(id, preset) {
@@ -322,6 +365,15 @@
     var now = new Date();
     $("f-date").value = w.t === "once" ? w.date :
       w.t === "year" ? now.getFullYear() + "-" + w.date : C.ymdOf(Date.now());
+    fillNoticeApps(w.t === "notice" ? w.app || "" : "");
+    if (w.t === "event") $("f-ev").value = w.ev;
+    $("f-word").value = w.word || "";
+    var cond = src["if"] || {};
+    [].forEach.call($("if-wd").querySelectorAll("input"), function (cb) {
+      cb.checked = Array.isArray(cond.wd) && cond.wd.indexOf(+cb.value) >= 0;
+    });
+    $("f-from").value = cond.from || "";
+    $("f-to").value = cond.to || "";
     $("f-on").checked = src.on !== false;
     $("ed-del").hidden = !r;
     $("ed-err").hidden = true;
@@ -420,8 +472,14 @@
     } else if (k === "month") when = { t: "month", at: at, md: +$("f-md").value };
     else if (k === "year") when = { t: "year", at: at, date: String($("f-date").value).slice(5) };
     else if (k === "once") when = { t: "once", at: at, date: $("f-date").value };
+    else if (k === "notice") when = { t: "notice", app: $("f-napp").value, word: $("f-word").value.trim() };
+    else if (k === "event") when = { t: "event", ev: $("f-ev").value, word: $("f-word").value.trim() };
     else when = { t: "open" };
     var r = { name: $("f-name").value.trim(), on: $("f-on").checked, when: when };
+    if (k === "notice" || k === "event") {
+      r["if"] = { wd: [].filter.call($("if-wd").querySelectorAll("input"), function (c) { return c.checked; }).map(function (c) { return +c.value; }),
+                  from: $("f-from").value, to: $("f-to").value };
+    }
     if (editing.id) r.id = editing.id;
     r["do"] = editing.acts;
     return r;
@@ -466,20 +524,20 @@
 
   // ---------- 8. A run: one button per step ----------
   function showRun(rule, key, at) {
-    $("run-h").textContent = rule.name || C.whenText(rule.when, BASE);
+    $("run-h").textContent = rule.name || C.whenText(rule.when, BASE, appName);
     $("run-when").textContent = t("run.at", { when: fmtTime(at) });
     var ul = $("run-list"), h = host();
     ul.textContent = "";
     rule["do"].forEach(function (a) {
       var li = el("li", "act");
-      if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE) }))); ul.appendChild(li); return; }
+      if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE, h && h.said ? h.said(key) : "") }))); ul.appendChild(li); return; }
       var app = C.needs(a);
       li.appendChild(el("span", "grow", C.actText(a, BASE, appName)));
       var b = el("button", "chip pri", t("btn.do", { app: appName(app) }));
       b.type = "button";
       b.disabled = !h;
       b.addEventListener("click", function () {
-        if (h && h.runAction(a, at)) { if (rule.id !== "try") h.noteRun(rule.id, key, at); closeDlg($("run-dlg")); }
+        if (h && h.runAction(a, at, h.said ? h.said(key) : "")) { if (rule.id !== "try") h.noteRun(rule.id, key, at); closeDlg($("run-dlg")); }
       });
       li.appendChild(b);
       ul.appendChild(li);
