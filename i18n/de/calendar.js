@@ -55,6 +55,8 @@ orosPack("de", "calendar", {
  "ev.untitled": "(ohne Titel)",
  "exp.done": "Kalender exportiert (.ics)",
  "feed.ap.vx": "{name}: Impfdosis fällig",
+ "feed.budCard": "{n}: Kartenzahlung fällig",
+ "feed.budLoan": "{n}: Rate",
  "feed.crm.close": "Erwarteter Abschluss",
  "feed.crm.late": "Überfällig",
  "feed.cycle.period": "Periode",

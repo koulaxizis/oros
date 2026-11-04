@@ -1947,10 +1947,14 @@
       if (hour < 0 || new Date().getHours() < hour) return;
       raw = JSON.parse(localStorage.getItem(BUDGET_DATA_KEY));
     } catch (e) { return; }
-    if (!raw || !Array.isArray(raw.rec) || !raw.rec.length) return;
+    if (!raw) return;
     var today = sysYmd();
-    var due = Core.subsDue(raw, today);
-    if (!due.length) return;
+    var due = Array.isArray(raw.rec) && raw.rec.length ? Core.subsDue(raw, today) : [];
+    // RM-1: a loan's next installment and a card's unpaid statement
+    // (budget/loans.js, loaded by index.html), same hour, one notice each
+    var Loans = window.OrosBudgetLoans, debts = [];
+    try { debts = Loans && typeof Loans.remindersDue === "function" ? Loans.remindersDue(raw, today, Core) : []; } catch (e) { debts = []; }
+    if (!due.length && !debts.length) return;
     var N = window.orosNotifs;
     if (!(N && typeof N.emit === "function")) return;
     var cur = raw.set && typeof raw.set.cur === "string" && /^[A-Z]{3}$/.test(raw.set.cur) ? raw.set.cur : "EUR";
@@ -1972,6 +1976,18 @@
         title: title,
         body: name + ": " + fmt.format(d.a / 100) + " " + when,
         deepLink: "budget:sub:" + d.id
+      });
+    });
+    debts.forEach(function (d) {
+      var when = d.days === 0 ? window.t("n.today") : d.days === 1 ? window.t("n.tomorrow")
+               : tr("n.budget.on", { date: d.next.slice(8, 10) + "/" + d.next.slice(5, 7) });
+      N.emit({
+        ns: "budget",
+        key: d.key,
+        type: "reminder",
+        title: title,
+        body: tr(d.kind === "loan" ? "n.budget.loan" : "n.budget.card", { name: String(d.n || "").slice(0, 80), amount: fmt.format(d.a / 100), when: when }),
+        deepLink: "system:open:budget"
       });
     });
   }

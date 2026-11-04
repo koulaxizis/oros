@@ -187,7 +187,7 @@
       "feed.travel.day": "{name} · day {n}/{of}",
       "lbl.feed.meals": "Meals",
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
-      "lbl.feed.budget": "Budget",
+      "lbl.feed.budget": "Budget", "feed.budLoan": "{n}: installment", "feed.budCard": "{n}: card payment due",
       "lbl.feed.shelf": "Media Shelf", "lbl.feed.publish": "Publishing",
       "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
@@ -440,7 +440,7 @@
       "feed.travel.day": "{name} · μέρα {n}/{of}",
       "lbl.feed.meals": "Γεύματα",
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
-      "lbl.feed.budget": "Προϋπολογισμός",
+      "lbl.feed.budget": "Προϋπολογισμός", "feed.budLoan": "{n}: δόση", "feed.budCard": "{n}: λήξη πληρωμής κάρτας",
       "lbl.feed.shelf": "Το ράφι μου", "lbl.feed.publish": "Εκδόσεις",
       "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
@@ -2929,7 +2929,8 @@ function transientNote(title, body) {
       budgetCache.data = null;
       try {
         var d = JSON.parse(localStorage.getItem(BUDGET_DATA_KEY));
-        if (d && typeof d === "object" && Array.isArray(d.rec) && d.rec.length) budgetCache.data = d;
+        if (d && typeof d === "object" && ((Array.isArray(d.rec) && d.rec.length) || (Array.isArray(d.loan) && d.loan.length) ||
+            (Array.isArray(d.acc) && d.acc.some(function (a) { return a && a.cys; })))) budgetCache.data = d;
       } catch (e) {}
       budgetCache.when = now;
     }
@@ -2953,7 +2954,7 @@ function transientNote(title, body) {
     if (!F || !labelVisible("lbl-feed-budget")) return [];
     var d = budgetData();
     if (!d) return [];
-    return F.rowsOn(d, dateStr, todayYMD(), LB).map(function (r) {
+    var rows = F.rowsOn(d, dateStr, todayYMD(), LB).map(function (r) {
       return {
         id: "bud-" + r.id + "-" + dateStr,      // per-render key, never stored
         title: (r.name ? r.name + " " : "") + (r.k === "o" ? "\u2212" : "+") + budgetMoney(r.a, r.cur),
@@ -2963,6 +2964,22 @@ function transientNote(title, body) {
         _budgetRec: r.id
       };
     });
+    // RM-1: loan installments and card due days (budget/loans.js)
+    var Lns = window.OrosBudgetLoans;
+    if (Lns && typeof Lns.duesOn === "function") {
+      var cur = d.set && typeof d.set.cur === "string" && /^[A-Z]{3}$/.test(d.set.cur) ? d.set.cur : "EUR";
+      Lns.duesOn(d, dateStr, todayYMD()).forEach(function (r) {
+        rows.push({
+          id: "bud-" + r.kind + "-" + r.id + "-" + dateStr,
+          title: t(r.kind === "loan" ? "feed.budLoan" : "feed.budCard").replace("{n}", r.n || "") + (r.a ? " \u2212" + budgetMoney(r.a, cur) : ""),
+          labelId: "lbl-feed-budget",
+          start: null,
+          _feed: true,
+          _openAt: { app: "budget", target: {} }
+        });
+      });
+    }
+    return rows;
   }
 
   // Media Shelf read-only feed (shelf/feed.js, loaded by index.html):
