@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.22.02
+- **Picking apples works again on a tree left for a few days.** In Pet World's garden, one Pick now takes the ripe apples and frees the bed right away. Before, an apple tree nobody had picked for several days stayed "ready to pick" for one tap per missed day, so it looked stuck and then seemed to start over with Water.
+
 ## Version 5.22.01
 - **Check for updates finds system updates on orOS USB and Portable.** On orOS USB and the installed orOS, "Check for updates" now opens System › System update and checks for a new system there. Elsewhere it says so when you already have the newest version, instead of showing nothing.
 
