@@ -50,6 +50,16 @@
   var ABSENT_KEY     = "oros-vault-absent-at";    // ts of last "no manifest" probe
   var ABSENT_TTL_MS  = 60000;                     // absent-quiet window
   var DEBOUNCE_MS    = 3000;                      // auto-sync quiet period
+  // VD-SETTLE (2026-11-04): a big file goes up once it stops changing.
+  // Every upload of new content is a new object, and the old one stays
+  // in the cloud until a clean-up (VD-GC), so a 1.5 MB document saved
+  // every few seconds filled a 2 GB Dropbox in four weeks.
+  var SETTLE_BYTES   = 256 * 1024;                // smaller files go up as before
+  var SETTLE_MS      = 2 * 60 * 1000;             // quiet time a big file waits for
+  var SETTLE_MAX_MS  = 15 * 60 * 1000;            // a file that never stops changing still goes up
+  var FLUSH_REASONS  = { hide: true, manual: true }; // leaving the page sends everything now
+  var CHURN_KEY      = "oros-vault-churn";        // device-local: { since, f: { path: [uploads, bytes] } }
+  var CHURN_MAX      = 40;
   var MAX_SYNC_TRIES = 2;                         // conflict retry budget
   // VD-OD: files under DRIVE_ROOT (folders mirrored from computers and
   // phones by the orOS Drive app) stay in the cloud until opened, so a
@@ -713,8 +723,9 @@
   // rejects for a missing file (it never resolved null as the old
   // code expected), so the first deleted file made every later sync
   // fail — deletions never reached the cloud and nothing else did.
-  function pushCloud(lm, cloud, stats) {
+  function pushCloud(lm, cloud, stats, held) {
     var snap = getQueueMap();
+    held = held || {};
     var done = {};
     var cloudHashes = {};                          // content already stored as v2
     Object.keys(cloud.manifest.files).forEach(function (p) {
@@ -733,6 +744,7 @@
     if (cloud.rev === null) vaultKeys = null;
     var chain = loadVaultKeys(true).then(function () {});
     Object.keys(snap).forEach(function (path) {
+      if (held[path]) return;                      // VD-SETTLE: stays queued, goes up later
       chain = chain.then(function () {
         return FS().read(path).then(function (blob) {
           return blob.arrayBuffer().then(function (buf) {
@@ -748,7 +760,7 @@
               // cost one existence probe, not a transfer.
               return objectStored(hash, cloudHashes).then(function (stored) {
                 if (stored) return null;
-                sent.push([path, hash]);
+                sent.push([path, hash, blob.size]);
                 return uploadObject(buf, hash);
               }).then(function () {
                 cloudHashes[hash] = true;
@@ -798,6 +810,7 @@
               if (!still[h]) ST().deleteObject(OBJECTS_PREFIX + h).catch(function () {});
             });
             noteSent(sent);
+            noteChurn(sent);
             return res;
           });
       });
@@ -991,17 +1004,27 @@
             setRev(stats.failed === 0 ? cloud.rev : null);
             return { rev: cloud.rev, manifest: lm };
           }
-          return pushCloud(lm, cloud, stats).then(function (res) {
-            // Success: the conditional write landed on the rev we
-            // pulled. Probe the new rev once so REV_KEY stays an
-            // honest record; failure is non-fatal.
-            setLocalManifest(lm);
-            return ST().getRevision(MANIFEST_KEY).then(function (newRev) {
-              setRev((stats.failed === 0 && !getQueue().length) ? newRev : null);
-              return res;
-            }).catch(function () {
+          return settleHeld(getQueueMap(), reason, Date.now()).then(function (held) {
+            var waiting = Object.keys(held).length;
+            stats.waiting = waiting;
+            if (waiting) armSettle();
+            if (waiting === getQueue().length) {    // only big files still changing: no write now
+              setLocalManifest(lm);
               setRev(null);
-              return res;
+              return { rev: cloud.rev, manifest: lm };
+            }
+            return pushCloud(lm, cloud, stats, held).then(function (res) {
+              // Success: the conditional write landed on the rev we
+              // pulled. Probe the new rev once so REV_KEY stays an
+              // honest record; failure is non-fatal.
+              setLocalManifest(lm);
+              return ST().getRevision(MANIFEST_KEY).then(function (newRev) {
+                setRev((stats.failed === 0 && !getQueue().length) ? newRev : null);
+                return res;
+              }).catch(function () {
+                setRev(null);
+                return res;
+              });
             });
           });
         })
@@ -1048,6 +1071,81 @@
         emit("fail", reason + " — " + (err && err.message));
         throw err;
       });
+  }
+
+  // ---------- VD-SETTLE · big files wait until they stop changing ----------
+  // A queued file of SETTLE_BYTES or more that was written less than
+  // SETTLE_MS ago is left for a later sync: it stays queued, so it is
+  // still local work that no remote version overwrites (VD-4), and
+  // nothing about it changes except WHEN it goes up. A file held for
+  // SETTLE_MAX_MS goes up anyway, and leaving the page ("hide") or a
+  // manual sync sends everything at once. Deletions never wait (a
+  // missing file has no size), nor do small files.
+  var heldSince = {};                            // path → first sync that held it (memory)
+  var settleTimer = null;
+  function settleHeld(snap, reason, now) {
+    var held = {};
+    if (FLUSH_REASONS[reason]) { heldSince = {}; return Promise.resolve(held); }
+    var chain = Promise.resolve();
+    Object.keys(snap).forEach(function (path) {
+      var at = +snap[path] || 0;
+      if (!(now - at < SETTLE_MS) || (heldSince[path] && now - heldSince[path] >= SETTLE_MAX_MS)) {
+        delete heldSince[path];
+        return;
+      }
+      chain = chain.then(function () {
+        return FS().stat(path).then(function (st) {
+          if (!st || st.dir || !(+st.size >= SETTLE_BYTES)) { delete heldSince[path]; return; }
+          held[path] = true;
+          if (!heldSince[path]) heldSince[path] = now;
+        }, function () { delete heldSince[path]; });
+      });
+    });
+    return chain.then(function () { return held; });
+  }
+  function armSettle() {
+    if (settleTimer) clearTimeout(settleTimer);
+    function fire() {
+      settleTimer = null;
+      if (!getQueue().length || !usable()) return;
+      if (syncInFlight) { settleTimer = setTimeout(fire, 5000); return; }
+      sync("settle").catch(function () {});
+    }
+    settleTimer = setTimeout(fire, SETTLE_MS + 1000);
+  }
+
+  // Which files this device sent most (device-local, for Settings ›
+  // Sync › Unused files in the cloud): each upload of new content is
+  // one more object in the cloud.
+  function readChurn() {
+    var c = readJson(CHURN_KEY);
+    if (!c || typeof c !== "object" || !c.f || typeof c.f !== "object") c = { since: Date.now(), f: {} };
+    return c;
+  }
+  function noteChurn(sent) {
+    if (!sent.length) return;
+    try {
+      var c = readChurn();
+      sent.forEach(function (x) {
+        var e = Array.isArray(c.f[x[0]]) ? c.f[x[0]] : [0, 0];
+        c.f[x[0]] = [(+e[0] || 0) + 1, (+e[1] || 0) + (+x[2] || 0)];
+      });
+      var keys = Object.keys(c.f);
+      if (keys.length > CHURN_MAX) {
+        keys.sort(function (a, b) { return c.f[b][1] - c.f[a][1]; });
+        keys.slice(CHURN_MAX).forEach(function (k) { delete c.f[k]; });
+      }
+      writeJson(CHURN_KEY, c);
+    } catch (e) {}
+  }
+  // → [{ path, n, bytes }], most bytes first; since = when counting began
+  function churnTop(max) {
+    var c = readChurn();
+    var out = Object.keys(c.f).map(function (p) {
+      return { path: p, n: +c.f[p][0] || 0, bytes: +c.f[p][1] || 0 };
+    }).filter(function (e) { return e.n > 1; });
+    out.sort(function (a, b) { return b.bytes - a.bytes; });
+    return { since: +c.since || 0, top: out.slice(0, max || 3) };
   }
 
   // ---------- Debounced auto-sync ----------
@@ -1170,7 +1268,7 @@
       return ST().listInfo("");
     }).then(function (list) {
       var u = { files: 0, fileBytes: 0, objects: 0, stored: 0, unused: 0, unusedBytes: 0,
-                free: 0, freeBytes: 0, missing: 0, otherBytes: 0, hold: "" };
+                free: 0, freeBytes: 0, missing: 0, otherBytes: 0, hold: "", nextFreeAt: 0 };
       var free = [], have = {};
       Object.keys(cloud.files || {}).forEach(function (p) {
         var e = cloud.files[p];
@@ -1191,6 +1289,8 @@
           u.free++;
           u.freeBytes += size;
           free.push({ key: key, size: size });
+        } else if (at > 0 && (!u.nextFreeAt || at + GC_MIN_AGE_MS < u.nextFreeAt)) {
+          u.nextFreeAt = at + GC_MIN_AGE_MS;         // when the oldest young copy may go
         }
       });
       var found = 0;
@@ -1206,9 +1306,19 @@
 
   // What the vault holds; changes nothing.
   // → { files, fileBytes, objects, stored, unused, unusedBytes, free,
-  //     freeBytes, missing, otherBytes, hold: "" | "no-manifest" | "mismatch" }
+  //     freeBytes, missing, otherBytes, hold: "" | "no-manifest" | "mismatch",
+  //     nextFreeAt (ms, 0 = none), sentSince, sentMost [{ name, n, bytes }] }
+  // VD-SETTLE: also the files this device sent most often (name only,
+  // never the folder: the card shows it as plain text).
   function gcUsage() {
-    return gcScan(Date.now()).then(function (s) { return s.u; });
+    return gcScan(Date.now()).then(function (s) {
+      var c = churnTop(3);
+      s.u.sentSince = c.since;
+      s.u.sentMost = c.top.map(function (e) {
+        return { name: e.path.split("/").pop(), n: e.n, bytes: e.bytes };
+      });
+      return s.u;
+    });
   }
 
   // Put back a removed object the manifest names again, from this
@@ -1425,7 +1535,11 @@
     // VD-GC: clean-up of unused cloud objects, only when asked.
     usage: gcUsage,
     cleanUp: gcCleanUp,
-    cleanMinAgeDays: GC_MIN_AGE_DAYS
+    cleanMinAgeDays: GC_MIN_AGE_DAYS,
+    // VD-SETTLE: how big a file waits, and for how long.
+    settleBytes: SETTLE_BYTES,
+    settleMs: SETTLE_MS,
+    settleMaxMs: SETTLE_MAX_MS
   };
 
   // ---------- Boot ----------

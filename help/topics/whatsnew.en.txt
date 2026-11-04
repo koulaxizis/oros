@@ -1,8 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.30.01
+## Version 5.31.01
 - **See what you owe on a credit card.** When your bank does not say an account is a card, tick `This is a credit card` under it (in Banks, or in the card's own window in Overview › Accounts) and type its credit limit. The card's line then reads `Debt X · available Y`, and `Match` turns its balance into the debt, shown with a minus in red.
+
+## Version 5.31.00
+- **Your cloud fills up much more slowly.** Every time a file changes, a new encrypted copy goes to your cloud and the old one stays until you clean it up. Big files (256 KB or more) now go up once they have stopped changing for 2 minutes, or when you leave orOS, so far fewer old copies pile up. Nothing is lost while a file waits: it stays on this device and no other device can overwrite it.
+- **See what fills it.** Settings › Sync › Unused files in the cloud › `Check` now shows when the first old copies can be cleaned up and which files this device sent most often.
 
 ## Version 5.30.00
 - **Balance corrections you can see.** When you update a balance or match the bank, the difference is now written as a `Balance correction` on that day instead of changing the account's starting balance, so past months stay as they were. It shows in the account's entries but never counts as income or an expense; tap it to delete it or, if you remember what it was, make it an entry.

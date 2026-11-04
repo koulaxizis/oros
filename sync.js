@@ -1502,7 +1502,8 @@
   var PROVIDER_KEY = "oros-sync-provider";
   var CLOUD_ID_KEY = "oros-sync-cloud-id";
   var VAULT_CLOUD_KEYS = ["oros-vault-manifest", "oros-vault-rev", "oros-vault-absent-at",
-                          "oros-vault-seeded", "oros-vault-conflicts", "oros-vault-sent"];
+                          "oros-vault-seeded", "oros-vault-conflicts", "oros-vault-sent",
+                          "oros-vault-churn"];
   var PROVIDERS = { dropbox: dropboxProvider, webdav: webdavProvider };
 
   function pickProvider() {
