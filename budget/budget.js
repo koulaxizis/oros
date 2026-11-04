@@ -84,6 +84,13 @@
       "kp.result": "= {a}", "f.again": "Again today", "f.againOne": "Add {n}, {a}, again for today", "f.againDone": "Added again for today",
       "dlg.dup": "Duplicate",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete", "dlg.close": "Close",
+      "ub.title": "Update balance", "ub.q": "What does the account show now?", "ub.have": "I have", "ub.owe": "I owe",
+      "ub.amt": "Amount ({c})", "ub.same": "The same as in Budget", "ub.diff": "Difference {a}",
+      "ub.hint": "The difference is written as a balance correction today: it is not counted as income or an expense.",
+      "adj.row": "Balance correction", "adj.title": "Balance correction", "adj.deleted": "Correction deleted",
+      "adj.hint": "It only fixes the balance: it is not income or an expense and is not in any total. If you remember what it was, turn it into an entry.",
+      "adj.del": "Delete", "adj.toTx": "Make it an entry",
+      "ub.ok": "Balance checked", "ub.done": "Balance updated ({a})", "ub.auto": "{n} matched to the bank ({a})",
       "err.amount": "Type an amount, for example 12,50", "err.date": "Pick a date",
       "rec.tag": "Recurring",
       "toast.saved": "Saved", "toast.deleted": "Entry deleted", "toast.undo": "Undo",
@@ -125,6 +132,9 @@
       "exp.hint": "The orOS Spreadsheet opens the Excel file and the “other apps” CSV.",
       "col.date": "Date", "col.type": "Type", "col.cat": "Category", "col.amount": "Amount",
       "col.cur": "Currency", "col.note": "Note", "col.total": "Total", "sheet.tx": "Entries", "sheet.sum": "Summary",
+      "exp.prev": "Last year ({y})", "sheet.ye": "Year-end", "ye.title": "Year-end, {d}",
+      "ye.acc": "Account", "ye.bal": "Balance", "ye.loan": "Loan or debt", "ye.lent": "Lent", "ye.owed": "Borrowed",
+      "ye.left": "Left", "ye.int": "Interest paid in {y}",
       "pdf.title": "Budget report", "pdf.gen": "Created {d}", "pdf.bycat": "Expenses by category",
       "pdf.incat": "Income by category", "pdf.list": "Entries", "pdf.page": "Page {n}",
       "bk.done": "Backup saved", "bk.restored": "Backup merged: {n} new or newer items",
@@ -138,12 +148,21 @@
       "cy.rate": "Interest, % a year", "cy.hint": "Budget then shows what each statement asks for, what you paid and what is left by the due date, and roughly what interest it costs if not paid in full. Leave both days empty for an account without a cycle.",
       "cy.needDays": "Both days, from 1 to 31", "cy.needRate": "Interest: a yearly percentage from 0 to 100",
       "cy.feesCat": "Interest & fees", "cy.feeNote": "Card interest",
-      "iv.h": "Investment: crypto, gold, shares", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
+      "iv.h": "Investment or property: crypto, gold, shares, home, car", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
       "iv.kc": "Crypto", "iv.km": "Gold or silver", "iv.ks": "Shares, ETF or other", "iv.sym": "Which", "iv.gold": "gold or silver",
       "iv.qty": "Quantity", "iv.unit": "Unit", "iv.oz": "Troy ounces", "iv.g": "Grams", "iv.price": "Price per unit (optional)",
+      "iv.exFile": "Quantities from Coinbase or Binance",
+      "iv.exNone": "No Coinbase or Binance transaction history in that file, or nothing left in it.",
+      "iv.exPick": "Left in the {src} file, as of its last row. Pick one:",
+      "iv.exSet": "Quantity from the file: {q} {s}. Save to keep it.",
       "iv.hintC": "A symbol such as BTC, ETH or SOL, or the coin's CoinGecko id. The price comes from CoinGecko when online; type one to use when it can't be reached.",
       "iv.hintM": "\"gold\" or \"silver\": the price comes from CoinGecko (gold- and silver-backed tokens, one ounce each), so it is close to, not exactly, the market price. Platinum and others: type the price.",
       "iv.hintS": "Type the ticker and the price per share from your broker or bank; update it when you like. The account's balance (its starting balance plus transfers into it) is what you paid; Overview shows the value and the gain or loss.",
+      "pi.short": "Passive", "pi.toggle": "{c}: passive income", "pi.hint": "Counts as passive income: dividends, interest, rent, royalties",
+      "iv.kp": "Home, car or other valuable", "iv.what": "What it is (optional)", "iv.what.ph": "Flat in Athens, Fiat Panda…",
+      "iv.value": "Value", "iv.day": "Value on", "iv.rate": "Change a year, % (optional)",
+      "iv.hintP": "Its value on a day, from a valuation, an ad for similar ones or what you paid. A change a year moves it on by itself: about −15 for a car, +2 to +5 for a home. Update the value whenever you know better.",
+      "iv.needValue": "Type its value", "iv.needDay": "Pick the day of that value", "iv.needRate": "Change a year: a percentage from −100 to 100, such as -15",
       "iv.needSym": "Type what the account holds", "iv.needQty": "Quantity: a number above 0, such as 0.25", "iv.needPrice": "Type the price per unit", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
       "cy.guessDue": "Due day: when {n} of your payments came in.", "cy.guessStmt": "Statement day: about three weeks before it, as on most cards.",
       "cy.guessRate": "Interest: from the interest charged on {d}.", "cy.guessCheck": "Check them against a statement.", "cy.guessKept": "The fields you filled stay as they are.",
@@ -209,6 +228,13 @@
       "kp.result": "= {a}", "f.again": "Ξανά σήμερα", "f.againOne": "Πρόσθεσε ξανά για σήμερα: {n}, {a}", "f.againDone": "Προστέθηκε ξανά για σήμερα",
       "dlg.dup": "Διπλότυπο",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή", "dlg.close": "Κλείσιμο",
+      "ub.title": "Ενημέρωση υπολοίπου", "ub.q": "Τι δείχνει τώρα ο λογαριασμός;", "ub.have": "Έχω", "ub.owe": "Χρωστάω",
+      "ub.amt": "Ποσό ({c})", "ub.same": "Ίδιο με την εφαρμογή", "ub.diff": "Διαφορά {a}",
+      "ub.hint": "Η διαφορά γράφεται σήμερα ως διόρθωση υπολοίπου: δεν μετρά ως έσοδο ή έξοδο.",
+      "adj.row": "Διόρθωση υπολοίπου", "adj.title": "Διόρθωση υπολοίπου", "adj.deleted": "Η διόρθωση διαγράφηκε",
+      "adj.hint": "Διορθώνει μόνο το υπόλοιπο: δεν είναι έσοδο ή έξοδο και δεν μετρά σε κανένα σύνολο. Αν θυμηθείς τι ήταν, κάν' την κίνηση.",
+      "adj.del": "Διαγραφή", "adj.toTx": "Κάν' την κίνηση",
+      "ub.ok": "Το υπόλοιπο ελέγχθηκε", "ub.done": "Το υπόλοιπο ενημερώθηκε ({a})", "ub.auto": "{n}: ταίριαξε με την τράπεζα ({a})",
       "err.amount": "Γράψε ένα ποσό, π.χ. 12,50", "err.date": "Διάλεξε ημερομηνία",
       "rec.tag": "Πάγιο",
       "toast.saved": "Αποθηκεύτηκε", "toast.deleted": "Η κίνηση διαγράφηκε", "toast.undo": "Αναίρεση",
@@ -250,6 +276,9 @@
       "exp.hint": "Το Υπολογιστικό φύλλο του orOS ανοίγει το αρχείο Excel και το CSV «άλλες εφαρμογές».",
       "col.date": "Ημερομηνία", "col.type": "Τύπος", "col.cat": "Κατηγορία", "col.amount": "Ποσό",
       "col.cur": "Νόμισμα", "col.note": "Σημείωση", "col.total": "Σύνολο", "sheet.tx": "Κινήσεις", "sheet.sum": "Σύνοψη",
+      "exp.prev": "Πέρσι ({y})", "sheet.ye": "Τέλος έτους", "ye.title": "Τέλος έτους, {d}",
+      "ye.acc": "Λογαριασμός", "ye.bal": "Υπόλοιπο", "ye.loan": "Δάνειο ή χρέος", "ye.lent": "Δάνεισα", "ye.owed": "Δανείστηκα",
+      "ye.left": "Μένει", "ye.int": "Τόκοι που πληρώθηκαν το {y}",
       "pdf.title": "Αναφορά εσόδων και εξόδων", "pdf.gen": "Δημιουργήθηκε {d}", "pdf.bycat": "Έξοδα ανά κατηγορία",
       "pdf.incat": "Έσοδα ανά κατηγορία", "pdf.list": "Κινήσεις", "pdf.page": "Σελίδα {n}",
       "bk.done": "Το αντίγραφο αποθηκεύτηκε", "bk.restored": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία",
@@ -263,12 +292,21 @@
       "cy.rate": "Επιτόκιο, % τον χρόνο", "cy.hint": "Η εφαρμογή δείχνει τότε τι ζητά κάθε λογαριασμός της κάρτας, τι πλήρωσες και τι μένει ως τη λήξη, και περίπου τι τόκο κοστίζει αν δεν εξοφληθεί. Άφησε κενές και τις δύο ημέρες για λογαριασμό χωρίς κύκλο.",
       "cy.needDays": "Και οι δύο ημέρες, από 1 ως 31", "cy.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
       "cy.feesCat": "Τόκοι και χρεώσεις", "cy.feeNote": "Τόκοι κάρτας",
-      "iv.h": "Επένδυση: κρυπτονομίσματα, χρυσός, μετοχές", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
+      "iv.h": "Επένδυση ή περιουσία: κρυπτο, χρυσός, μετοχές, σπίτι, αυτοκίνητο", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
       "iv.kc": "Κρυπτονόμισμα", "iv.km": "Χρυσός ή ασήμι", "iv.ks": "Μετοχές, ETF ή άλλο", "iv.sym": "Ποιο", "iv.gold": "χρυσός ή ασήμι",
       "iv.qty": "Ποσότητα", "iv.unit": "Μονάδα", "iv.oz": "Ουγγιές", "iv.g": "Γραμμάρια", "iv.price": "Τιμή ανά μονάδα (προαιρετικό)",
+      "iv.exFile": "Ποσότητες από Coinbase ή Binance",
+      "iv.exNone": "Δεν βρέθηκε ιστορικό συναλλαγών Coinbase ή Binance σε αυτό το αρχείο, ή δεν έμεινε τίποτα.",
+      "iv.exPick": "Ό,τι μένει στο αρχείο {src}, ως την τελευταία του γραμμή. Διάλεξε:",
+      "iv.exSet": "Ποσότητα από το αρχείο: {q} {s}. Πάτα Αποθήκευση για να μείνει.",
       "iv.hintC": "Ένα σύμβολο όπως BTC, ETH ή SOL, ή το id του νομίσματος στο CoinGecko. Η τιμή έρχεται από το CoinGecko όταν υπάρχει σύνδεση· γράψε μία για όταν δεν απαντά.",
       "iv.hintM": "«χρυσός» ή «ασήμι»: η τιμή έρχεται από το CoinGecko (tokens με κάλυψη χρυσού και ασημιού, μία ουγγιά το καθένα), άρα είναι κοντά, όχι ακριβώς, στην τιμή της αγοράς. Πλατίνα και άλλα: γράψε την τιμή.",
       "iv.hintS": "Γράψε το σύμβολο και την τιμή ανά μετοχή από τον χρηματιστή ή την τράπεζά σου· άλλαξέ την όποτε θέλεις. Το υπόλοιπο του λογαριασμού (αρχικό υπόλοιπο συν μεταφορές προς αυτόν) είναι όσα πλήρωσες· η Σύνοψη δείχνει την αξία και το κέρδος ή τη ζημιά.",
+      "pi.short": "Παθητικό", "pi.toggle": "{c}: παθητικό εισόδημα", "pi.hint": "Μετρά ως παθητικό εισόδημα: μερίσματα, τόκοι, ενοίκια, πνευματικά δικαιώματα",
+      "iv.kp": "Σπίτι, αυτοκίνητο ή άλλο πολύτιμο", "iv.what": "Τι είναι (προαιρετικό)", "iv.what.ph": "Διαμέρισμα στην Αθήνα, Fiat Panda…",
+      "iv.value": "Αξία", "iv.day": "Αξία στις", "iv.rate": "Μεταβολή τον χρόνο, % (προαιρετικό)",
+      "iv.hintP": "Η αξία του σε μια ημέρα, από εκτίμηση, αγγελίες για παρόμοια ή όσα πλήρωσες. Η μεταβολή τον χρόνο την αλλάζει μόνη της: περίπου −15 για αυτοκίνητο, +2 ως +5 για σπίτι. Άλλαξε την αξία όποτε ξέρεις καλύτερα.",
+      "iv.needValue": "Γράψε την αξία του", "iv.needDay": "Διάλεξε την ημέρα αυτής της αξίας", "iv.needRate": "Μεταβολή τον χρόνο: ποσοστό από −100 ως 100, όπως -15",
       "iv.needSym": "Γράψε τι κρατά ο λογαριασμός", "iv.needQty": "Ποσότητα: αριθμός πάνω από 0, όπως 0,25", "iv.needPrice": "Γράψε την τιμή ανά μονάδα", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
       "cy.guessDue": "Ημέρα λήξης: τότε μπήκαν {n} από τις πληρωμές σου.", "cy.guessStmt": "Ημέρα κλεισίματος: περίπου τρεις εβδομάδες νωρίτερα, όπως στις περισσότερες κάρτες.",
       "cy.guessRate": "Επιτόκιο: από τους τόκους που χρεώθηκαν στις {d}.", "cy.guessCheck": "Έλεγξέ τα με έναν λογαριασμό της κάρτας.", "cy.guessKept": "Τα πεδία που συμπλήρωσες μένουν όπως είναι.",
@@ -655,6 +693,9 @@
     var y = Object.assign({}, x);
     if (!(typeof y.ic === "string" && IC_RE.test(y.ic))) delete y.ic;
     if (!(typeof y.p === "string" && ID_RE.test(y.p) && y.p !== x.id)) delete y.p;
+    // PI-1: pv = passive income (dividends, interest, rent, royalties),
+    // income categories only, written only when true
+    if (!(y.pv === true && x.k === "i")) delete y.pv;
     return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, y);
   }
   // limit = { id (category id | "all"), m, a (cents; 0 = no limit) }
@@ -712,6 +753,10 @@
     // INV-1: an investment held in the account (budget/invest.js)
     var INV0 = typeof window !== "undefined" && window.OrosBudgetInvest;
     if (INV0) INV0.clean(y);
+    // AC-1: am (match the bank by itself, written only when true) and
+    // chk (the day the balance was last checked or matched)
+    if (y.am !== true) delete y.am;
+    if (!(typeof y.chk === "string" && parseYmd(y.chk))) delete y.chk;
     return withExtras({ id: x.id, m: x.m, n: n, o: o, col: col }, y);
   }
   // transfer between two accounts = { id, m, d, a (cents > 0), f (from), t (to), n }.
@@ -725,6 +770,17 @@
     var y = Object.assign({}, x);
     if (!okCents(y.ta)) delete y.ta;
     return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, f: x.f, t: x.t, n: normText(x.n, NOTE_LEN) }, y);
+  }
+  // AC-2: balance correction = { id, m, a (signed cents, not 0, in the
+  // account's currency), ac (account id), d, n }: what "Update balance"
+  // and matching the bank write when the account already has entries.
+  // Like a transfer it moves only the balance: never income, never an
+  // expense, in no total, no report, no export, no other app.
+  function normAdj(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
+        !parseYmd(x.d) || !isInt(x.a) || !x.a || Math.abs(x.a) > MAX_CENTS ||
+        typeof x.ac !== "string" || !ID_RE.test(x.ac)) return null;
+    return withExtras({ id: x.id, m: x.m, a: x.a, ac: x.ac, d: x.d, n: normText(x.n, NOTE_LEN) }, x);
   }
   // Envelope assignment (since wave 10) = { id "<yyyymm>-<category id |
   // none>", m, a (signed cents), c (category id, "" = uncategorised),
@@ -814,7 +870,8 @@
     { key: "bnk",  tomb: "bnk",  norm: normBnk },    // since BK-2: after the others (an older version's place for it)
     { key: "bgt",  tomb: "bgt",  norm: normBgt },    // since C3 (flexible budgets): after bnk, the same reason
     { key: "loan", tomb: "loan", norm: normLoan },   // since C5 (loans and debts): after bgt, in name order
-    { key: "lpay", tomb: "lpay", norm: normLpay }    // since C5: a loan's repayments
+    { key: "lpay", tomb: "lpay", norm: normLpay },   // since C5: a loan's repayments
+    { key: "adj",  tomb: "adj",  norm: normAdj }     // since AC-2: balance corrections (after the others: an older version's place for it)
   ];
   // Flexible budgets (C3): budget/budgets.js cleans them; without it
   // (tests that load only this file) they ride along like a newer
@@ -835,10 +892,10 @@
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, adj: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], adj: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -935,7 +992,7 @@
       (kids[c.id] || []).sort(function (x, y) { return x.name.localeCompare(y.name) || cmpStr(x.id, y.id); })
         .forEach(function (k) { out.push(k); });
     });
-    out.forEach(function (c) { delete c.sp; });
+    out.forEach(function (c) { delete c.sp; if (stored[c.id] && stored[c.id].pv === true && c.k === "i") c.pv = true; });
     return out;
   }
   // { category id: its main category's id } for subcategories only.
@@ -1053,6 +1110,8 @@
       if (bal[x.f] !== undefined) bal[x.f] -= x.a;
       if (bal[x.t] !== undefined) bal[x.t] += x.a;
     });
+    // AC-2: balance corrections
+    (d.adj || []).forEach(function (x) { if (x.d <= upto && bal[x.ac] !== undefined) bal[x.ac] += x.a; });
     // loans and their repayments move money like transfers (C5)
     var L = typeof window !== "undefined" && window.OrosBudgetLoans;
     if (L) {
@@ -1312,6 +1371,9 @@
     rec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
   };
   var UI = {
+    lst: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>',
+    xfer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>',
+    scale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>',
@@ -1355,7 +1417,7 @@
     if (PLANUI) PLANUI.renderPlan($("plan"));
     if (LNUI) LNUI.render($("loans"));
   }
-  function renderOverview() { refreshPrices(); if (OVUI) OVUI.render($("overview")); }
+  function renderOverview() { refreshPrices(); autoMatch(); if (OVUI) OVUI.render($("overview")); }
 
   function renderToolbar() {
     $("month").textContent = monthLabel(viewMk);
@@ -1458,6 +1520,37 @@
     return true;
   }
 
+  // AC-2: a correction shows with "All" and its account's filter.
+  function adjMatches(x) {
+    if (filter !== "all" && filter !== "a:" + x.ac) return false;
+    if (query) {
+      var hay = (t("adj.row") + " " + x.n + " " + accName(x.ac) + " " + centsToInput(Math.abs(x.a), LANG)).toLowerCase();
+      if (hay.indexOf(query) < 0) return false;
+    }
+    return true;
+  }
+  function adjRow(x) {
+    var li = el("li");
+    var b = el("button", "tx adj " + (x.a > 0 ? "in" : "out"));
+    b.type = "button";
+    var ic = el("span", "sw cat-ic");
+    ic.style.setProperty("--cc", "var(--c8)");
+    ic.innerHTML = UI.scale;
+    ic.setAttribute("aria-hidden", "true");
+    b.appendChild(ic);
+    var mid = el("span", "tx-mid");
+    mid.appendChild(el("span", "tx-cat", t("adj.row")));
+    var an = accName(x.ac);
+    var sub = [an, x.n].filter(Boolean).join(" · ");
+    if (sub) mid.appendChild(el("span", "tx-note", sub));
+    b.appendChild(mid);
+    var a = findIn(data.acc, x.ac), am = (x.a > 0 ? "+" : "\u2212") + money(Math.abs(x.a), a && a.cur);
+    b.appendChild(el("span", "tx-amt", am));
+    b.setAttribute("aria-label", t("adj.row") + (an ? ", " + an : "") + ", " + am + ", " + dateShort(x.d));
+    b.addEventListener("click", function () { adjDialog(x.id); });
+    li.appendChild(b);
+    return li;
+  }
   function renderList() {
     var box = $("list");
     box.innerHTML = "";
@@ -1467,6 +1560,8 @@
       return (query || inbox || mkOf(x.d) === viewMk) && matches(x);
     }).concat(inbox ? [] : data.xfer.filter(function (x) {
       return (query || mkOf(x.d) === viewMk) && xferMatches(x);
+    })).concat(inbox ? [] : (data.adj || []).filter(function (x) {
+      return (query || mkOf(x.d) === viewMk) && adjMatches(x);
     }));
     rows.sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m || cmpStr(b.id, a.id); });
     var empty = $("list-empty"), found = $("list-found");
@@ -1491,6 +1586,7 @@
         group = el("ul", "day-list");
         box.appendChild(group);
       }
+      if (!x.k && !x.f) { group.appendChild(adjRow(x)); return; }   // AC-2: a correction, not in the day total
       if (!x.k) { group.appendChild(xferRow(x)); return; }   // a transfer: not in the day total
       if (x.k === "i") dayIn += x.a; else dayOut += x.a;
       group.appendChild(inbox ? inboxRow(x) : txRow(x));
@@ -2391,6 +2487,7 @@
         if (rc) nx.rc = rc;
         if (crm) nx.crm = crm;
         data.tx.push(nx);
+        if (pre && typeof pre.onSaved === "function") pre.onSaved();   // AC-2: a correction turned into this entry
         commit();
       }
       if (rcb) rcb.commit();
@@ -3045,11 +3142,25 @@
     var c = INV.cfg(a);
     if (!c) return null;
     var cu = a.cur || cur();
-    return { c: c, val: INV.value(a, pricesNow(), cu), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
+    return { c: c, val: INV.value(a, pricesNow(), cu, today), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
   }
   function investValue(a) {
     var i = investInfo(a);
     return i && i.val ? i.val.v : null;
+  }
+  // PI-1: passive income over the last 12 months (this one included)
+  // against all expenses then; null without a passive category.
+  function passiveStats() {
+    var pv = {};
+    cats().forEach(function (c) { if (c.pv) pv[c.id] = 1; });
+    if (!Object.keys(pv).length) return null;
+    var pm = pmNow(), from = mkAdd(mkOf(today), -11) + "-01", inc = 0, out = 0;
+    data.tx.forEach(function (x) {
+      if (x.d < from || x.d > today) return;
+      if (x.k === "o") out += x.a;
+      else if (pv[x.c] || (pm[x.c] && pv[pm[x.c]])) inc += x.a;
+    });
+    return { inc: inc, out: out, pct: out > 0 ? Math.round(inc / out * 100) : null, avg: Math.round(inc / 12) };
   }
   function refreshPrices(force) {
     if (!INV || pricesBusy || navigator.onLine === false) return;
@@ -3096,8 +3207,9 @@
   function shiftStart(id, diff, text) {
     var a = findIn(data.acc, id);
     if (!a || !diff || Math.abs(a.o + diff) > MAX_CENTS) return false;
-    var was = a.o;
+    var was = a.o, wasChk = a.chk;
     a.o = was + diff;
+    a.chk = today;
     a.m = stamp(a.m);
     commit();
     renderAll();
@@ -3105,11 +3217,220 @@
       var b = findIn(data.acc, id);
       if (!b) return;
       b.o = was;
+      if (wasChk) b.chk = wasChk; else delete b.chk;
       b.m = stamp(b.m);
       commit();
       renderAll();
     });
     return true;
+  }
+  // AC-2: does anything but the starting balance move this account?
+  function accUsed(id) {
+    function by(list, f) { return (list || []).some(f); }
+    return by(data.tx, function (x) { return x.ac === id; }) ||
+      by(data.xfer, function (x) { return x.f === id || x.t === id; }) ||
+      by(data.adj, function (x) { return x.ac === id; }) ||
+      by(data.loan, function (x) { return x && x.ac === id; }) ||
+      by(data.lpay, function (x) { return x && x.ac === id; });
+  }
+  // AC-2: the balance is diff away from what the person (or the bank)
+  // says on day d. A fresh account (nothing but a starting balance) has
+  // its starting balance changed; any other gets a balance correction
+  // on that day, so the past stays as it was and the correction can be
+  // seen, deleted or turned into an entry. Never income or an expense.
+  // With Undo. → true when done.
+  function correctBal(id, diff, text, d) {
+    var a = findIn(data.acc, id);
+    if (!a || !diff || !isInt(diff) || Math.abs(diff) > MAX_CENTS) return false;
+    if (!accUsed(id)) return shiftStart(id, diff, text);
+    var day = parseYmd(d) ? d : today;
+    var wasChk = a.chk, nid = newId();
+    if (!Array.isArray(data.adj)) data.adj = [];
+    untomb("adj", nid);
+    data.adj.push({ id: nid, m: stamp(0), a: diff, ac: id, d: day, n: "" });
+    a.chk = today;
+    a.m = stamp(a.m);
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      if (findIn(data.adj, nid)) {
+        data.adj = data.adj.filter(function (y) { return y.id !== nid; });
+        tombstone("adj", nid);
+      }
+      var b = findIn(data.acc, id);
+      if (b) { if (wasChk) b.chk = wasChk; else delete b.chk; b.m = stamp(b.m); }
+      commit();
+      renderAll();
+    });
+    return true;
+  }
+  function deleteAdj(id) {
+    var x = findIn(data.adj, id);
+    if (!x) return;
+    var copy = JSON.parse(JSON.stringify(x));
+    data.adj = data.adj.filter(function (y) { return y.id !== id; });
+    tombstone("adj", id);
+    commit();
+    renderAll();
+    undoToast(t("adj.deleted"), function () {
+      untomb("adj", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["adj:" + id] || 0));
+      if (!findIn(data.adj, id)) data.adj.push(copy);
+      commit();
+      renderAll();
+    });
+  }
+  // A correction the person now knows the reason for: it goes, and the
+  // New entry form opens with its amount, day and account. Cancel puts
+  // it back (it is only removed when the entry is saved).
+  function adjToEntry(id) {
+    var x = findIn(data.adj, id);
+    if (!x) return;
+    // the amount is in the account's currency, which the form picks for it
+    var pre = { k: x.a > 0 ? "i" : "o", a: Math.abs(x.a), d: x.d, ac: x.ac, n: x.n || "" };
+    pre.onSaved = function () {
+      if (!findIn(data.adj, id)) return;
+      data.adj = data.adj.filter(function (y) { return y.id !== id; });
+      tombstone("adj", id);
+    };
+    txDialog(null, pre);
+  }
+  function adjDialog(id) {
+    var x = findIn(data.adj, id);
+    if (!x) return;
+    var a = findIn(data.acc, x.ac), cu = a ? (a.cur || cur()) : cur();
+    var dlg = makeDialog("bd-adj", t("adj.title"));
+    dlg.classList.add("sheet");   // a bottom sheet on phones, like the account sheet
+    dlg.appendChild(el("p", "dlg-sub", (a ? a.n : t("acc.none")) + " · " + dateShort(x.d)));
+    dlg.appendChild(el("p", "adj-big " + (x.a > 0 ? "in" : "out"), (x.a > 0 ? "+" : "\u2212") + money(Math.abs(x.a), cu)));
+    dlg.appendChild(el("p", "hint", t("adj.hint")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("adj.del"), "danger", function () { dlg.close(); deleteAdj(id); }));
+    acts.appendChild(button(t("adj.toTx"), "", function () { dlg.close(); adjToEntry(id); }));
+    acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // AC-1: "Update balance": what the account shows now. The difference
+  // is a balance correction (AC-2; a fresh account's starting balance
+  // changes instead), never an income or an expense, with Undo.
+  function updateBalance(id) {
+    var a = findIn(data.acc, id);
+    if (!a) return;
+    var now = accBalAt(id, today) || 0, cu = accCurOf(id);
+    var dlg = makeDialog("bd-upd", t("ub.title"));
+    dlg.appendChild(el("p", "dlg-sub", a.n));
+    var form = el("form");
+    form.method = "dialog";
+    var owe = now < 0;
+    var sw = el("div", "seg");
+    sw.setAttribute("role", "radiogroup");
+    sw.setAttribute("aria-label", t("ub.q"));
+    var sb = {};
+    [["h", "ub.have"], ["o", "ub.owe"]].forEach(function (p) {
+      var b = el("button", "seg-btn " + (p[0] === "h" ? "in" : "out"), t(p[1]));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.addEventListener("click", function () { owe = p[0] === "o"; mark(); show(); });
+      sb[p[0]] = b;
+      sw.appendChild(b);
+    });
+    function mark() { sb.h.setAttribute("aria-checked", owe ? "false" : "true"); sb.o.setAttribute("aria-checked", owe ? "true" : "false"); }
+    mark();
+    form.appendChild(el("div", "dlg-lbl", t("ub.q")));
+    form.appendChild(sw);
+    var amt = el("input");
+    amt.inputMode = "decimal";
+    amt.autocomplete = "off";
+    amt.className = "amt-in";
+    amt.value = centsToInput(Math.abs(now), LANG);
+    form.appendChild(field(t("ub.amt", { c: cu }), amt, "bd-upd-a"));
+    var diffL = el("p", "hint ub-diff");
+    diffL.setAttribute("aria-live", "polite");
+    form.appendChild(diffL);
+    function val() {
+      var v = KP && KP.hasOp(amt.value) ? KP.calc(amt.value, parseAmount, MAX_CENTS) : (amt.value.trim() ? parseAmount(amt.value) : 0);
+      return v === null ? null : (owe ? -v : v);
+    }
+    function show() {
+      var v = val();
+      diffL.textContent = v === null ? "" : v === now ? t("ub.same") : t("ub.diff", { a: (v > now ? "+" : "\u2212") + money(Math.abs(v - now), cu) });
+    }
+    amt.addEventListener("input", show);
+    if (KP && touchFirst()) {
+      amt.inputMode = "none";
+      form.appendChild(KP.pad(amt, {
+        el: el, comma: decComma(LANG), label: t("kp.label"), back: t("kp.back"), div: t("kp.div"), mul: t("kp.mul"), eq: t("kp.eq"),
+        onChange: show,
+        onEquals: function () { var v = val(); if (v !== null) { amt.value = centsToInput(Math.abs(v), LANG); show(); } }
+      }));
+    }
+    show();
+    form.appendChild(el("p", "hint", t("ub.hint")));
+    var err = errLine();
+    form.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    var ok = button(t("dlg.save"), "primary", null);
+    ok.type = "submit";
+    acts.appendChild(ok);
+    form.appendChild(acts);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = val();
+      if (v === null || Math.abs(v) > MAX_CENTS) { showErr(err, t("err.amount"), amt); return; }
+      dlg.close();
+      var b = findIn(data.acc, id);
+      if (!b) return;
+      if (v === now) {
+        b.chk = today;
+        b.m = stamp(b.m);
+        commit();
+        renderAll();
+        showToast(t("ub.ok"));
+        return;
+      }
+      if (!correctBal(id, v - now, t("ub.done", { a: (v > now ? "+" : "\u2212") + money(Math.abs(v - now), cu) }))) showToast(t("err.amount"));
+    });
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    try { if (!touchFirst()) { amt.focus(); amt.select(); } } catch (x) {}
+  }
+  function setAutoMatch(id, on) {
+    var a = findIn(data.acc, id);
+    if (!a || !!a.am === !!on) return;
+    if (on) a.am = true; else delete a.am;
+    a.m = stamp(a.m);
+    commit();
+    renderAll();
+    if (on) autoMatch();
+  }
+  // Accounts with am: when the bank's last balance (BK-5) differs from
+  // Budget's on that day, a balance correction on that day makes them
+  // agree (AC-2), with Undo. A second pass finds nothing to do.
+  var autoBusy = false;
+  function autoMatch() {
+    if (autoBusy) return;
+    var bnk = Array.isArray(data.bnk) ? data.bnk : [];
+    var done = [];
+    data.acc.forEach(function (a) {
+      if (!a.am) return;
+      var cu = accCurOf(a.id), r = null;
+      bnk.forEach(function (x) { if (x && x.src !== "pp" && x.ac === a.id && x.bc === cu && typeof x.bb === "number" && x.bd && (!r || x.bd > r.bd)) r = x; });
+      if (!r) return;
+      var mine = accBalAt(a.id, r.bd);
+      if (mine === null || mine === r.bb) return;
+      done.push({ id: a.id, diff: r.bb - mine, n: a.n, cu: cu, d: r.bd });
+    });
+    if (!done.length) return;
+    autoBusy = true;
+    try {
+      done.forEach(function (d) {
+        correctBal(d.id, d.diff, t("ub.auto", { n: d.n, a: (d.diff > 0 ? "+" : "\u2212") + money(Math.abs(d.diff), d.cu) }), d.d);
+      });
+    } finally { autoBusy = false; }
   }
   function initBankLive() {
     if (!BANKLIVE) return;
@@ -3119,7 +3440,7 @@
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
       newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
-      accBalAt: accBalAt, accCur: accCurOf, shiftStart: shiftStart, money: money,
+      accBalAt: accBalAt, accCur: accCurOf, correct: correctBal, money: money,
       parseAmount: parseAmount, centsToInput: function (c) { return centsToInput(c, LANG); }
     });
   }
@@ -3136,7 +3457,7 @@
   function initPlan() {
     if (!PLANUI) return;
     PLANUI.init({
-      investValue: investValue,
+      investValue: investValue, passiveStats: passiveStats,
       lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch, errLine: errLine, showErr: showErr,
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       data: function () { return data; }, cats: cats, catName: catName, catCol: catCol, findIn: findIn, stamp: stamp,
@@ -3178,6 +3499,9 @@
       budgets: function () { return BGUI ? BGUI.current() : []; },
       loansCard: LNUI ? function (card) { LNUI.overviewCard(card); } : null,
       icon: function (k) { return UI[k] || ""; }, accDialog: accDialog,
+      // AC-1: the account sheet's actions
+      updateBalance: updateBalance, setAutoMatch: setAutoMatch, xferFrom: function (id) { xferDialog(null, id); },
+      newTxIn: function (id) { txDialog(null, { ac: id }); },
       // banks (budget/banklive.js): state, and an update now; a failed
       // bank opens Banks, where each one says why
       bankState: BANKLIVE && BANKLIVE.state ? BANKLIVE.state : null,
@@ -3193,8 +3517,8 @@
         return dateShort(ymdLocal(d)) + ", " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
       },
       // BK-7: the bank's balance on each account it fills, and Match
-      dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
-      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo,
+      dateShort: dateShort, accBalAt: accBalAt, correct: correctBal,
+      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo, passiveStats: passiveStats,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
@@ -3650,7 +3974,7 @@
     ivDet.open = !!(a && a.ivk);
     ivDet.appendChild(el("summary", "", t("iv.h")));
     var ivK = el("select");
-    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
+    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"], ["p", "iv.kp"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
     ivK.value = a && a.ivk ? a.ivk : "";
     var ivS = el("input"); ivS.maxLength = 60; ivS.autocomplete = "off"; ivS.value = a && a.ivs ? a.ivs : "";
     var ivQ = el("input"); ivQ.inputMode = "decimal"; ivQ.autocomplete = "off"; ivQ.value = a && a.ivq ? a.ivq : "";
@@ -3659,6 +3983,13 @@
     ivU.value = a && a.ivu === "g" ? "g" : "oz";
     var ivP = el("input"); ivP.inputMode = "decimal"; ivP.autocomplete = "off"; ivP.value = a && a.ivp ? centsToInput(a.ivp, LANG) : "";
     var ivSF = field(t("iv.sym"), ivS, "bd-acc-ivs"), ivUF = field(t("iv.unit"), ivU, "bd-acc-ivu");
+    // AS-1: a home, car or valuable: its value on a day and a yearly change
+    var ivD = el("input"); ivD.type = "date"; ivD.value = a && a.ivk === "p" && a.ivd ? a.ivd : today;
+    var ivR = el("input"); ivR.inputMode = "decimal"; ivR.autocomplete = "off"; ivR.placeholder = "-15";
+    ivR.value = a && a.ivr ? (a.ivr < 0 ? "-" : "") + centsToInput(Math.abs(a.ivr), LANG) : "";
+    var ivPF, ivDRow = el("div", "fld-row");
+    ivDRow.appendChild(field(t("iv.day"), ivD, "bd-acc-ivd"));
+    ivDRow.appendChild(field(t("iv.rate"), ivR, "bd-acc-ivr"));
     var ivHint = el("p", "hint");
     ivDet.appendChild(field(t("iv.kind"), ivK, "bd-acc-ivk"));
     ivDet.appendChild(ivSF);
@@ -3666,14 +3997,60 @@
     ivRow.appendChild(field(t("iv.qty"), ivQ, "bd-acc-ivq"));
     ivRow.appendChild(ivUF);
     ivDet.appendChild(ivRow);
-    ivDet.appendChild(field(t("iv.price"), ivP, "bd-acc-ivp"));
+    // EX-1: the quantity from an exchange's transaction file
+    var exBox = el("div", "iv-ex"), exOut = el("p", "hint");
+    exOut.setAttribute("aria-live", "polite");
+    var exB = button(t("iv.exFile"), "", function () {
+      var BK = window.OrosBudgetBank;
+      if (!INV || !BK) return;
+      localPick(".csv,text/csv").then(function (file) {
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) { exOut.textContent = t("iv.exNone"); return; }
+        return file.arrayBuffer().then(function (buf) {
+          var txt = BK.decode(new Uint8Array(buf), "auto").text;
+          var h = INV.exchangeHoldings(BK.parseCsv(txt, BK.guessSep(txt)));
+          exOut.textContent = "";
+          exList.innerHTML = "";
+          var syms = h ? Object.keys(h.q) : [];
+          if (!syms.length) { exOut.textContent = t("iv.exNone"); return; }
+          function pick(sym) {
+            var q = INV.qtyText(h.q[sym]);
+            if (!q) return;
+            ivS.value = sym;
+            ivQ.value = LANG === "el" ? q.replace(".", ",") : q;
+            exList.innerHTML = "";
+            exOut.textContent = t("iv.exSet", { q: ivQ.value, s: sym });
+          }
+          var mine = ivS.value.trim().toUpperCase();
+          if (mine && h.q[mine]) { pick(mine); return; }
+          exOut.textContent = t("iv.exPick", { src: h.src === "binance" ? "Binance" : "Coinbase" });
+          syms.slice(0, 30).forEach(function (sym) {
+            exList.appendChild(button(sym + " " + (LANG === "el" ? INV.qtyText(h.q[sym]).replace(".", ",") : INV.qtyText(h.q[sym])), "", function () { pick(sym); }));
+          });
+        });
+      }).catch(function () { exOut.textContent = t("iv.exNone"); });
+    });
+    exB.type = "button";
+    var exList = el("div", "iv-ex-list");
+    exBox.appendChild(exB);
+    exBox.appendChild(exOut);
+    exBox.appendChild(exList);
+    ivDet.appendChild(exBox);
+    ivPF = field(t("iv.price"), ivP, "bd-acc-ivp");
+    ivDet.appendChild(ivPF);
+    ivDet.appendChild(ivDRow);
     ivDet.appendChild(ivHint);
     function ivShow() {
       var k = ivK.value;
-      [ivSF, ivRow, ivP.parentNode, ivHint].forEach(function (x) { x.hidden = !k; });
+      [ivSF, ivRow, ivPF, ivHint].forEach(function (x) { x.hidden = !k; });
+      ivRow.hidden = !k || k === "p";
+      ivDRow.hidden = k !== "p";
       ivUF.hidden = k !== "m";
-      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : "AAPL";
-      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : "";
+      exBox.hidden = k !== "c";
+      ivSF.querySelector("label").textContent = t(k === "p" ? "iv.what" : "iv.sym");
+      ivPF.querySelector("label").textContent = t(k === "p" ? "iv.value" : "iv.price");
+      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : k === "p" ? t("iv.what.ph") : "AAPL";
+      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : k === "p" ? t("iv.hintP") : "";
     }
     ivK.addEventListener("change", ivShow);
     ivShow();
@@ -3702,7 +4079,16 @@
         cy = { cys: ds, cyd: dd, cyr: rr };
       }
       var iv = null;
-      if (ivK.value) {
+      if (ivK.value === "p") {
+        var pv0 = ivP.value.trim() ? parseAmount(ivP.value) : null;
+        if (!pv0) { ivDet.open = true; showErr(err, t("iv.needValue"), ivP); return; }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(ivD.value)) { ivDet.open = true; showErr(err, t("iv.needDay"), ivD); return; }
+        var rv0 = parseSigned(ivR.value);
+        if (rv0 === null || Math.abs(rv0) > 10000) { ivDet.open = true; showErr(err, t("iv.needRate"), ivR); return; }
+        iv = { ivk: "p", ivq: "1", ivp: pv0, ivd: ivD.value };
+        if (ivS.value.trim()) iv.ivs = ivS.value.trim().slice(0, 60);
+        if (rv0) iv.ivr = rv0;
+      } else if (ivK.value) {
         var qv = ivQ.value.trim(), sv = ivS.value.trim();
         if (!sv) { ivDet.open = true; showErr(err, t("iv.needSym"), ivS); return; }
         if (!INV || INV.qty(qv) === null) { ivDet.open = true; showErr(err, t("iv.needQty"), ivQ); return; }
@@ -3715,10 +4101,10 @@
         if (pv) { iv.ivp = pv; iv.ivd = a && a.ivp === pv && a.ivd ? a.ivd : today; }
       }
       function setIv(o2) {
-        ["ivd", "ivk", "ivp", "ivq", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
+        ["ivd", "ivk", "ivp", "ivq", "ivr", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
         if (iv) Object.keys(iv).sort().forEach(function (k) { o2[k] = iv[k]; });
       }
-      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd"].map(function (k) { return o2[k] || ""; }).join("|"); };
+      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd", "ivr"].map(function (k) { return o2[k] || ""; }).join("|"); };
       function setCy(o2) {
         delete o2.cys; delete o2.cyd; delete o2.cyr;
         if (cy) { o2.cyd = cy.cyd; if (cy.cyr) o2.cyr = cy.cyr; o2.cys = cy.cys; }
@@ -3777,14 +4163,14 @@
       renderAll();
     });
   }
-  function xferDialog(id) {
+  function xferDialog(id, fromId) {
     var x = id ? findIn(data.xfer, id) : null;
     if (id && !x) return;
     var list = accs();
     if (!x && list.length < 2) { showToast(t("xf.need")); return; }
     var dlg = makeDialog("bd-xf", t(x ? "xf.edit" : "xf.new"));
     var form = el("form");
-    var from = accSelect(x ? x.f : (lastAcc || list[0].id));
+    var from = accSelect(x ? x.f : (fromId && findIn(data.acc, fromId) ? fromId : (lastAcc || list[0].id)));
     var to = accSelect(x ? x.t : "");
     // "No account" makes no sense for a transfer, except to keep one whose account was deleted.
     [from, to].forEach(function (s, i) {
@@ -4080,6 +4466,25 @@
     }
     li.appendChild(inp);
     li.appendChild(del);
+    // PI-1: an income category can count as passive income
+    var pvB = null;
+    if (c.k === "i") {
+      pvB = el("button", "mini cat-pv" + (c.pv ? " on" : ""), t("pi.short"));
+      pvB.type = "button";
+      pvB.setAttribute("aria-pressed", c.pv ? "true" : "false");
+      pvB.setAttribute("aria-label", t("pi.toggle", { c: c.name }));
+      pvB.title = t("pi.hint");
+      pvB.addEventListener("click", function () {
+        var s = storedCat(c);
+        if (s.pv) delete s.pv; else s.pv = true;
+        s.m = stamp(s.m);
+        commit();
+        redraw();
+        renderAll();
+        var again = document.querySelector('#bd-cats [data-cat="' + c.id + '"] .cat-pv');
+        if (again) again.focus();
+      });
+    }
     // Main category: any main category of the same kind; one with
     // subcategories of its own stays a main one.
     var hasKids = list.some(function (y) { return y.p === c.id; });
@@ -4105,6 +4510,7 @@
       if (again) again.focus();
     });
     li.appendChild(ps);
+    if (pvB) li.appendChild(pvB);
     return li;
   }
 
@@ -4175,6 +4581,7 @@
   function periodOf(p) {
     if (p === "year") return { prefix: viewMk.slice(0, 4), label: viewMk.slice(0, 4), slug: viewMk.slice(0, 4) };
     if (p === "all") return { prefix: "", label: t("exp.all"), slug: "all" };
+    if (p === "prev") { var py = String(+today.slice(0, 4) - 1); return { prefix: py, label: py, slug: py }; }
     return { prefix: viewMk, label: monthLabel(viewMk), slug: viewMk };
   }
   function exportRows(prefix) {
@@ -4198,7 +4605,9 @@
     grp.setAttribute("aria-label", t("exp.period"));
     var pb = {};
     [["month", t("exp.month", { m: monthLabel(viewMk) })], ["year", t("exp.year", { y: viewMk.slice(0, 4) })],
-     ["all", t("exp.all")]].forEach(function (p) {
+     ["prev", t("exp.prev", { y: +today.slice(0, 4) - 1 })], ["all", t("exp.all")]].filter(function (p) {
+      return p[0] !== "prev" || viewMk.slice(0, 4) !== String(+today.slice(0, 4) - 1);
+    }).forEach(function (p) {
       var b = el("button", "seg-btn", p[1]);
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -4313,6 +4722,32 @@
       .sort(function (a, b) { return cmpStr(b.k, a.k) || b.a - a.a; });
   }
 
+  // YE-1: for a year's export (the accountant's): each account's balance
+  // at the end of that year (today for the current one), in its own
+  // currency, and each loan or debt left then, with the interest paid
+  // that year on a bank loan. → null for a month or everything.
+  function yearEnd(P) {
+    if (!P.prefix || P.prefix.length !== 4) return null;
+    var end = P.prefix + "-12-31" < today ? P.prefix + "-12-31" : today;
+    var start = P.prefix + "-01-01", bal = accBalances(data, end);
+    var accl = accs().map(function (a) { return { n: a.n, cur: accCur(a), bal: bal[a.id] || 0 }; });
+    var loans = [], L = window.OrosBudgetLoans;
+    if (L) {
+      var by = L.paysBy(data.lpay.filter(function (p) { return p.d <= end; }));
+      data.loan.forEach(function (l) {
+        if (l.d > end || l.wo) return;
+        var st = L.status(l, by[l.id], end), int = 0;
+        if (L.hasPlan(l)) {
+          var before = (by[l.id] || []).filter(function (p) { return p.d < start; });
+          int = L.split(l, by[l.id]).int - L.split(l, before).int;
+        }
+        if (st.left || int) loans.push({ n: l.n, k: l.k, left: st.left, int: int });
+      });
+      loans.sort(function (a, b) { return cmpStr(a.k, b.k) || cmpStr(a.n, b.n); });
+    }
+    return accl.length || loans.length ? { end: end, y: P.prefix, accs: accl, loans: loans } : null;
+  }
+
   function exportXlsx(rows, P) {
     loadLib("xlsx.full.min.js", function () {
       var X = window.XLSX;
@@ -4340,6 +4775,19 @@
       var wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, t("sheet.tx"));
       X.utils.book_append_sheet(wb, ws2, t("sheet.sum"));
+      var ye = yearEnd(P);
+      if (ye) {
+        var yt = [[t("ye.title", { d: dateShort(ye.end) })], [], [t("ye.acc"), t("col.cur"), t("ye.bal")]];
+        ye.accs.forEach(function (a) { yt.push([safeText(a.n), a.cur, a.bal / 100]); });
+        if (ye.loans.length) {
+          yt.push([]);
+          yt.push([t("ye.loan"), "", t("ye.left"), t("ye.int", { y: ye.y })]);
+          ye.loans.forEach(function (l) { yt.push([safeText(l.n), t(l.k === "l" ? "ye.lent" : "ye.owed"), l.left / 100, l.int / 100]); });
+        }
+        var ws3 = X.utils.aoa_to_sheet(yt);
+        ws3["!cols"] = [{ wch: 26 }, { wch: 12 }, { wch: 14 }, { wch: 20 }];
+        X.utils.book_append_sheet(wb, ws3, t("sheet.ye").slice(0, 31));
+      }
       var buf = X.write(wb, { bookType: "xlsx", type: "array" });
       var mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       saveBlob(new Blob([buf], { type: mime }), "oros-budget-" + P.slug + ".xlsx", mime, "Excel", ".xlsx");
@@ -4427,6 +4875,38 @@
       });
       y += 12;
     });
+    var ye = yearEnd(P);
+    if (ye) {
+      need(40 + 15 * Math.min(ye.accs.length, 3));
+      doc.setFontSize(12);
+      txt(t("ye.title", { d: dateShort(ye.end) }), M, y); y += 8;
+      doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 14;
+      doc.setFontSize(10);
+      ye.accs.forEach(function (a) {
+        need(16);
+        txt(a.n.length > 40 ? a.n.slice(0, 39) + "…" : a.n, M, y);
+        txt(money(a.bal, a.cur), W - M, y, { align: "right" });
+        y += 15;
+      });
+      if (ye.loans.length) {
+        y += 6;
+        need(30);
+        doc.setFontSize(9); doc.setTextColor(110);
+        txt(t("ye.loan"), M, y);
+        txt(t("ye.left"), W - M - 130, y, { align: "right" });
+        txt(t("ye.int", { y: ye.y }), W - M, y, { align: "right" });
+        doc.setTextColor(0); doc.setFontSize(10); y += 15;
+        ye.loans.forEach(function (l) {
+          need(16);
+          var nm = l.n + " · " + t(l.k === "l" ? "ye.lent" : "ye.owed");
+          txt(nm.length > 40 ? nm.slice(0, 39) + "…" : nm, M, y);
+          txt(money(l.left), W - M - 130, y, { align: "right" });
+          txt(l.int ? money(l.int) : "", W - M, y, { align: "right" });
+          y += 15;
+        });
+      }
+      y += 12;
+    }
     need(40);
     doc.setFontSize(12);
     txt(t("pdf.list"), M, y); y += 8;
@@ -4478,7 +4958,7 @@
   }
   function changedCount(a, b) {
     var n = 0;
-    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay"].forEach(function (k) {
+    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj"].forEach(function (k) {
       var idx = {};
       a[k].forEach(function (x) { idx[x.id] = JSON.stringify(x); });
       b[k].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });

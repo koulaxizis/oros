@@ -257,6 +257,23 @@ test("budget provider: recurring entries today and the next days, with the amoun
   assert.match(rows[1].text, /^−.*500\.00/);
 });
 
+test("budget provider: a loan installment and an unpaid card statement due soon (RM-1)", async () => {
+  globalThis.OrosBudgetPlan = req("budget/plan.js");
+  globalThis.OrosBudgetLoans = req("budget/loans.js");
+  try {
+    const data = { set: { cur: "EUR" }, rec: [],
+      acc: [{ id: "card", m: 1, n: "Visa", o: 0, col: 1, cyd: 5, cyr: 1825, cys: 10 }, { id: "bank", m: 1, n: "Alpha", o: 100000, col: 2 }],
+      tx: [{ id: "t1", m: 1, k: "o", a: 50000, c: "o-groc", d: "2026-10-01", n: "", ac: "card" }],
+      xfer: [{ id: "x1", m: 1, d: "2026-10-20", a: 20000, f: "bank", t: "card", n: "" }] };
+    const rows = await viaAgg(P.budget, ctx({ "oros-budget-data": data }, "2026-11-03"));
+    assert.deepEqual(rows.map((r) => [r.due, r.title, r.kind]), [["2026-11-05", "Card payment due, Visa", "event"]]);
+    assert.match(rows[0].text, /^−.*300\.00/);
+    // paid in full: nothing
+    data.xfer.push({ id: "x2", m: 1, d: "2026-11-02", a: 30000, f: "bank", t: "card", n: "" });
+    assert.deepEqual(await viaAgg(P.budget, ctx({ "oros-budget-data": data }, "2026-11-03")), []);
+  } finally { delete globalThis.OrosBudgetPlan; delete globalThis.OrosBudgetLoans; }
+});
+
 test("health provider: open reminder times of today with their time; a reading ticks them", async () => {
   const now = new Date(2026, 9, 12, 9, 0).getTime(), today = "2026-10-12";
   const data = { ty: [{ id: "bp", m: 1, r: [480, 1200] }, { id: "cgr", m: 1, n: "Steps", r: [600] }],

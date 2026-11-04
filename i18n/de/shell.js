@@ -548,6 +548,8 @@ orosPack("de", "shell", {
  "mxt.timeroff": "Ohne Timer",
  "n.andmore": "und {n} weitere",
  "n.budget.on": "am {date}",
+ "n.budget.loan": "Kreditrate, {name}: {amount} {when}",
+ "n.budget.card": "Kartenzahlung fällig, {name}: {amount} {when}",
  "n.budget.recurring": "Wiederkehrende Ausgabe",
  "n.chores.late.one": "{n} überfällig",
  "n.chores.late.other": "{n} überfällig",

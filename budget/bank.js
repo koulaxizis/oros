@@ -8,7 +8,7 @@
 //      dd/mm/yyyy · mm/dd/yyyy · yyyy-mm-dd · 14 Oct 2026)
 //   3. CSV: separator, header row, column guess, rows
 //   4. OFX / QFX, QIF, CAMT.053 (also .052 / .054), MT940 (and
-//      MT942), PayPal's activity CSV
+//      MT942), PayPal's activity CSV, Revolut's statement CSV
 //   5. Rules: match (longest "contains" wins), apply, re-run
 //   6. Plan: ids, duplicates (same id, FITID, or same account +
 //      date + amount + similar text), deleted earlier, skipped;
@@ -614,6 +614,45 @@
     }
     return out;
   }
+  // Revolut › Statement › Excel/CSV (personal accounts): Type, Product,
+  // Started Date, Completed Date, Description, Amount, Fee, Currency,
+  // State, Balance (column names in English in every app language).
+  // What left or reached the account is Amount − Fee, on the completed
+  // day. Pending rows wait; reverted, declined and failed ones moved no
+  // money. A top-up (money from the person's own card or bank) and an
+  // exchange between their own currency pockets are transfers.
+  var RV = { type: "type", prod: "product", start: "started date", done: "completed date", desc: "description",
+             amt: "amount", fee: "fee", cur: "currency", state: "state", bal: "balance" };
+  function revolutMap(head) {
+    if (!head || head.length < 8) return null;
+    var fl = head.map(fold), m = {};
+    Object.keys(RV).forEach(function (k) { m[k] = fl.indexOf(RV[k]); });
+    if (m.type < 0 || m.start < 0 || m.done < 0 || m.desc < 0 || m.amt < 0 || m.cur < 0 || m.state < 0) return null;
+    return m;
+  }
+  var RV_MOVE = /^(topup|top-up|exchange)$/;
+  function revolutItems(rows, start, m) {
+    var data = rows.slice(start), out = [];
+    var order = detectDateOrder(data.map(function (r) { return r[m.done] || r[m.start] || ""; }), "dmy");
+    var dec = detectDec(data.map(function (r) { return r[m.amt] || ""; }), ".");
+    function g(r, c) { return c >= 0 && c < r.length ? r[c] : ""; }
+    for (var i = 0; i < data.length && out.length < MAX_ROWS; i++) {
+      var r = data[i];
+      if (!r.some(function (v) { return String(v).trim(); })) continue;
+      var amt = parseMoney(g(r, m.amt), dec), fee = m.fee >= 0 ? parseMoney(g(r, m.fee), dec) : 0;
+      if (amt !== null && fee) amt -= Math.abs(fee);
+      var stt = fold(g(r, m.state)), ty = fold(g(r, m.type)).replace(/\s+/g, "_");
+      var it = { line: start + i + 1, d: parseDate(g(r, m.done) || g(r, m.start), order), amt: amt,
+                 text: clean(g(r, m.desc)) || clean(g(r, m.type)), fit: "", cur: String(g(r, m.cur)).toUpperCase().trim() };
+      if (stt === "pending") it.err = "pending";
+      else if (stt && stt !== "completed") it.err = "void";
+      else if (!it.d) it.err = "date";
+      else if (it.amt === null) it.err = "amount";
+      else if (RV_MOVE.test(ty)) it.err = "xfer";
+      out.push(it);
+    }
+    return out;
+  }
   function detectFormat(text, name) {
     var head = text.slice(0, 4000);
     if (/<(?:[\w.-]+:)?BkToCstmr(Stmt|AcctRpt|DbtCdtNtfctn)\b/.test(head) || /camt\.05[234]/.test(head)) return "camt";
@@ -853,7 +892,7 @@
     MAX_ROWS: MAX_ROWS, decode: decode, sniffLegacy: sniffLegacy, fold: fold, clean: clean,
     detectDec: detectDec, parseMoney: parseMoney, parseDate: parseDate, detectDateOrder: detectDateOrder,
     parseCsv: parseCsv, guessSep: guessSep, findHeader: findHeader, guessMap: guessMap, csvItems: csvItems,
-    headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
+    headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, revolutMap: revolutMap, revolutItems: revolutItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
     detectFormat: detectFormat, ruleMatches: ruleMatches, matchRule: matchRule, noteFor: noteFor, rerun: rerun,
     suggestQ: suggestQ, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, counts: counts
   };
