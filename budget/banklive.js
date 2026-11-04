@@ -33,7 +33,8 @@
   var S = {
     en: {
       webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
-      bankBal: "Bank balance {a} ({d})", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
+      bankBal: "Bank balance {a} ({d})", cardBal: "Debt {a} · available {v} ({d})", availBal: "Available {v} ({d})", availShort: "available {v}",
+      cardNoLimit: "Type the card's credit limit below to see the debt.", cardLimit: "Credit limit", limitBad: "Type the limit as an amount, e.g. 2000.", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
       balMatchHint: "Changes the account's starting balance so that Budget shows the bank's balance on that day",
       balMatched: "Starting balance changed by {a}",
       lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking), and so can PayPal Business. orOS only reads them and never makes payments. When a call goes through the orOS relay (always for PayPal), the data passes through it but is never stored or logged.",
@@ -68,7 +69,8 @@
     },
     el: {
       webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
-      bankBal: "Υπόλοιπο τράπεζας {a} ({d})", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
+      bankBal: "Υπόλοιπο τράπεζας {a} ({d})", cardBal: "Χρέος {a} · διαθέσιμο {v} ({d})", availBal: "Διαθέσιμο {v} ({d})", availShort: "διαθέσιμο {v}",
+      cardNoLimit: "Γράψε από κάτω το πιστωτικό όριο της κάρτας για να φανεί το χρέος.", cardLimit: "Πιστωτικό όριο", limitBad: "Γράψε το όριο ως ποσό, π.χ. 2000.", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
       balMatchHint: "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
       balMatched: "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking), και το ίδιο το PayPal Business. Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές. Όταν μια κλήση περνά από το relay του orOS (πάντα για το PayPal), τα δεδομένα περνούν αλλά δεν αποθηκεύονται ούτε καταγράφονται ποτέ.",
@@ -246,8 +248,9 @@
             // BK-5: the bank's own balance; a bank that won't give it
             // costs nothing (the entries are in already)
             return ask(use.la, { m: "GET", path: "/accounts/" + row.uid + "/balances" }).then(function (j) {
-              var b = K.balance(j);
-              if (b) bals[row.id] = { bb: b.a, bc: b.cu, bd: b.d || K.ymdOf(Date.now()) };
+              // BK-8: a card's debt and what is left to spend, both
+              var v = K.view(K.balance(j), K.available(j), row.cl || 0, K.isCard(row));
+              if (v) bals[row.id] = { bb: v.bb === null ? undefined : v.bb, ba: v.ba === null ? undefined : v.ba, bc: v.bc, bd: v.bd || K.ymdOf(Date.now()) };
             }, function () {});
           }, function (e) {
             var c = code(e);
@@ -303,6 +306,10 @@
           cu: ac.cur, ib: ac.ib, ih: ac.ih, la: pend.la, lf: old ? old.lf : "", nm: ac.name,
           ps: pend.ps === "business" ? "business" : "personal", sid: ses.sid, uid: ac.uid, vu: ses.vu
         };
+        // BK-8: the kind of account and a card's limit (the bank's, else
+        // the one typed here before)
+        if (ac.ty || (old && old.ty)) row.ty = ac.ty || old.ty;
+        if (ac.cl || (old && old.cl)) row.cl = ac.cl || old.cl;
         A.saveBnk(row);
         saved.push(row.id);
       });
@@ -345,9 +352,15 @@
   }
   // BK-5: the bank's balance next to Budget's, and "Match" when they differ
   function balRow(li, r, redraw) {
-    if (typeof r.bb !== "number" || !r.bc) return;
-    var line = el("div", "bk-meta bk-bal", t("bankBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }));
+    var card = K.isCard(r);
+    if (!r.bc || (typeof r.bb !== "number" && typeof r.ba !== "number")) return;
+    var hasB = typeof r.bb === "number", hasA = typeof r.ba === "number";
+    var txt = card && hasB && hasA ? t("cardBal", { a: A.money(r.bb, r.bc), v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
+            : !hasB ? t("availBal", { v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) }) + (card ? " " + t("cardNoLimit") : "")
+            : t("bankBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }) + (hasA ? " · " + t("availShort", { v: A.money(r.ba, r.bc) }) : "");
+    var line = el("div", "bk-meta bk-bal", txt);
     li.appendChild(line);
+    if (!hasB) return;
     if (!r.ac || A.accCur(r.ac) !== r.bc) return;
     var mine = A.accBalAt(r.ac, r.bd);
     if (mine === null || mine === r.bb) { if (mine === r.bb) line.appendChild(el("span", "bk-ok", " · " + t("balSame"))); return; }
@@ -358,6 +371,29 @@
     });
     b.title = t("balMatchHint");
     li.appendChild(b);
+  }
+  // BK-8: a card's credit limit, from the bank or typed here; with it
+  // the debt = available − limit, so the two always add up.
+  function limitRow(r, redraw) {
+    var inp = el("input");
+    inp.type = "text";
+    inp.inputMode = "decimal";
+    inp.autocomplete = "off";
+    inp.value = r.cl ? A.centsToInput(r.cl) : "";
+    inp.placeholder = "0";
+    inp.setAttribute("aria-label", t("cardLimit") + ": " + rowName(r));
+    inp.addEventListener("change", function () {
+      var v = inp.value.trim(), c = v ? A.parseAmount(v) : 0;
+      if (c === null) { inp.value = r.cl ? A.centsToInput(r.cl) : ""; A.showToast(t("limitBad")); return; }
+      var f = { cl: c || undefined };
+      if (typeof r.ba === "number") f.bb = c ? Math.min(0, r.ba - c) : undefined;
+      A.patchBnk(r.id, f);
+      redraw();
+    });
+    var row = el("div", "bk-bot bk-limit");
+    row.appendChild(el("span", "dlg-lbl", t("cardLimit")));
+    row.appendChild(inp);
+    return row;
   }
   function statusText(r) {
     var d = K.daysLeft(r, Date.now());
@@ -492,6 +528,7 @@
       li.appendChild(el("div", "bk-meta", meta));
       if (lastErr[r.id]) li.appendChild(el("div", "err", errText(lastErr[r.id])));
       balRow(li, r, redraw);
+      if (!isPP(r) && K.isCard(r)) li.appendChild(limitRow(r, redraw));
       var s = A.accSelect(r.ac);
       s.setAttribute("aria-label", t("fills") + ": " + rowName(r));
       s.addEventListener("change", function () { A.patchBnk(r.id, { ac: s.value }); });

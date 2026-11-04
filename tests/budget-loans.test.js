@@ -29,7 +29,7 @@ test("a loan and a repayment keep every field, in name order after id and m", ()
 test("status: paid, left, late, written off", () => {
   const l = loan({ due: "2026-11-01" });
   let s = L.status(l, [pay(), pay({ id: "p2", a: 2500, d: "2026-10-20" })], "2026-10-25");
-  assert.deepEqual(s, { paid: 5000, left: 5000, over: 0, pct: 50, state: "open", last: "2026-10-20" });
+  assert.deepEqual(s, { paid: 5000, left: 5000, over: 0, pct: 50, state: "open", last: "2026-10-20", int: 0, prin: 5000 });
   assert.equal(L.status(l, [], "2026-11-02").state, "late");
   assert.equal(L.status(l, [pay({ a: 12000 })], "2026-11-02").state, "paid");
   assert.equal(L.status(l, [pay({ a: 12000 })], "2026-11-02").over, 2000);
@@ -68,6 +68,38 @@ test("budget.js: loans move account balances; without loans.js they ride along",
   // a deleted loan stays deleted
   const del = Object.assign(NEW.emptyData(), { tombs: { "loan:l1": 5 } });
   assert.deepEqual(NEW.mergeBudget(merged, del).loan, []);
+});
+
+test("LN-I: interest, installment, split and schedule", () => {
+  const l = L.normLoan(loan({ k: "b", a: 1000000, d: "2026-01-15", nm: 120, r: 475 }));
+  const k = Object.keys(l).slice(2);
+  assert.deepEqual(k, k.slice().sort());                         // still in name order
+  assert.deepEqual(Object.keys(l), ["id", "m", "a", "ac", "crm", "d", "due", "ins", "k", "n", "nm", "nt", "r", "wo"]);
+  assert.equal(L.installment(l), 10485);                          // 10,000 at 4.75 % over 10 years
+  assert.equal(L.installment(Object.assign({}, l, { ins: 11000 })), 11000);
+  assert.equal(L.installment(Object.assign({}, l, { r: 0 })), 8334);
+  assert.equal(L.installment(loan()), 0);
+  assert.equal(L.normLoan(loan({ nm: 0, r: 475, ins: 5 })).r, undefined);   // no plan: nothing kept
+  assert.equal(L.normLoan(loan({ nm: 12, r: -1 })).r, 0);
+  const ps = [pay({ id: "p1", a: 10485, d: "2026-02-15" }), pay({ id: "p2", a: 10485, d: "2026-03-15" })];
+  const st = L.status(l, ps, "2026-04-01");
+  assert.equal(st.int, 3958 + 3932);
+  assert.equal(st.prin + st.int, st.paid);
+  assert.equal(st.left, 1000000 - st.prin);
+  // a skipped month: two months of interest on the next repayment; a second one that month is all principal
+  const sk = L.split(l, [pay({ id: "q1", a: 10485, d: "2026-03-10" }), pay({ id: "q2", a: 5000, d: "2026-03-20" })]);
+  assert.equal(sk.rows[0].int, Math.round(1000000 * (Math.pow(1 + 0.0475 / 12, 2) - 1)));
+  assert.equal(sk.rows[1].int, 0);
+  const sc = L.schedule(l, ps);
+  assert.equal(sc.rows.length, 118);
+  assert.equal(sc.rows[0].d, "2026-04-15");
+  assert.equal(sc.end, "2036-01-15");
+  assert.equal(sc.rows[sc.rows.length - 1].bal, 0);
+  assert.equal(L.schedule(Object.assign({}, l, { ins: 3000 }), []).never, true);   // less than the interest
+  // the loan is paid when the principal is: interest does not count towards it
+  const done = L.status(Object.assign({}, l, { a: 10000, nm: 1 }), [pay({ a: 10040, d: "2026-02-15" })], "2026-03-01");
+  assert.equal(done.state, "paid");
+  assert.equal(done.int, 40);
 });
 
 test("loansui: EN and EL have the same keys and every key in the code exists", () => {

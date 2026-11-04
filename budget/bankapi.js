@@ -87,7 +87,10 @@
     var d = String(s || "").replace(/[^A-Za-z0-9]/g, "");
     return d.length >= 4 ? d.slice(-4) : "";
   }
-  // POST /sessions answer → { sid, vu (ms), accts: [{ uid, ih, name, ib, cur }] }
+  // POST /sessions answer → { sid, vu (ms), accts: [{ uid, ih, name, ib, cur, ty, cl }] }
+  // ty: the bank's kind of account (ISO 20022 cash account type: CACC,
+  // CARD, LOAN, SVGS…, "" unknown); cl: a card's credit limit in cents
+  // (0 = not given).
   function session(json) {
     if (!json || typeof json !== "object" || !UUID_RE.test(str(json.session_id))) return null;
     var vu = Date.parse(json.access && json.access.valid_until);
@@ -101,10 +104,19 @@
         ih: clean(str(a.identification_hash), 120),
         name: clean(str(a.name) || str(a.product) || str(a.details), 40),
         ib: tail(num),
-        cur: /^[A-Z]{3}$/.test(str(a.currency)) ? a.currency : ""
+        cur: /^[A-Z]{3}$/.test(str(a.currency)) ? a.currency : "",
+        ty: /^[A-Z]{4}$/.test(str(a.cash_account_type)) ? a.cash_account_type : "",
+        cl: limitOf(a.credit_limit)
       });
     });
     return { sid: json.session_id, vu: isFinite(vu) ? vu : 0, accts: accts };
+  }
+
+  function limitOf(v) {
+    if (!v || typeof v !== "object") return 0;
+    var raw = String(v.amount == null ? "" : v.amount).trim().replace(/^-/, "");
+    var c = cents(raw);
+    return c && c > 0 ? c : 0;
   }
 
   // ---------- 4. Transactions ----------
@@ -138,6 +150,51 @@
       rank = r;
     });
     return best;
+  }
+  // BK-8: the AVAILABLE balance (what can still be spent; on a card the
+  // credit left), when the bank gives one: { a, cu, d, ty } | null.
+  var AVAIL_ORDER = ["ITAV", "CLAV", "FWAV"];
+  function available(json) {
+    var list = json && Array.isArray(json.balances) ? json.balances : [];
+    var best = null, rank = 99;
+    list.forEach(function (b) {
+      if (!b || typeof b !== "object" || !b.balance_amount || typeof b.balance_amount !== "object") return;
+      var r = AVAIL_ORDER.indexOf(str(b.balance_type));
+      if (r < 0 || (best && r >= rank)) return;
+      var raw = String(b.balance_amount.amount == null ? "" : b.balance_amount.amount).trim();
+      var neg = raw.charAt(0) === "-";
+      var c = cents(neg ? raw.slice(1) : raw);
+      var cu = str(b.balance_amount.currency);
+      if (c === null || !/^[A-Z]{3}$/.test(cu)) return;
+      if (b.credit_debit_indicator === "DBIT") neg = !neg;
+      var d = str(b.reference_date || b.last_change_date_time).slice(0, 10);
+      best = { a: neg ? -c : c, cu: cu, d: /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "", ty: str(b.balance_type) };
+      rank = r;
+    });
+    return best;
+  }
+  // BK-8: what a bank account shows, with a card's debt worked out.
+  // b = balance() (booked first), av = available(), cl = credit limit
+  // (cents, 0 unknown), card = the account is a card.
+  // → { bb (signed cents: a card's debt is negative), ba (available
+  //    cents or null), bc, bd, debt (bb is a computed debt) } | null
+  // A card with a limit: debt = available − limit (never above 0), so
+  // debt and available always add up to the limit. A card without a
+  // limit: the booked balance as the bank gives it, if it differs from
+  // the available one; otherwise the debt is unknown (null bb, only ba).
+  function view(b, av, cl, card) {
+    if (!b && !av) return null;
+    var cu = (av || b).cu, d = (av || b).d || (b && b.d) || "";
+    if (card && av && cl > 0) return { bb: Math.min(0, av.a - cl), ba: av.a, bc: cu, bd: d, debt: true };
+    var bookedIsAvail = !!(b && av && (AVAIL_ORDER.indexOf(b.ty) >= 0 || (b.a === av.a && card)));
+    if (card && bookedIsAvail) return { bb: null, ba: av.a, bc: cu, bd: d, debt: false };
+    var out = { bb: b ? b.a : (card ? null : av.a), ba: av && (!b || av.a !== b.a) ? av.a : null, bc: (b || av).cu, bd: (b || av).d || d, debt: false };
+    return out.bb === null && out.ba === null ? null : out;
+  }
+  function isCard(row) {
+    if (!row) return false;
+    if (row.ty) return row.ty === "CARD";
+    return /\b(card|credit|visa|mastercard|amex|diners)\b|κάρτα|πιστωτικ/i.test(String(row.nm || ""));
   }
   function partyName(p) { return p && typeof p === "object" ? clean(str(p.name), 80) : ""; }
   // One page of transactions → items for bank.js plan().
@@ -327,7 +384,7 @@
   var api = {
     COUNTRIES: COUNTRIES, REDIRECT: REDIRECT, REFRESH_MS: REFRESH_MS, WARN_DAYS: WARN_DAYS, MAX_PAGES: MAX_PAGES,
     banks: banks, newState: newState, authBody: authBody, session: session, tail: tail,
-    items: items, balance: balance, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
+    items: items, balance: balance, available: available, view: view, isCard: isCard, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
     daysLeft: daysLeft, needsRenew: needsRenew, due: due, matchLink: matchLink, ymdOf: ymdOf,
     PP_PAGE: PP_PAGE, ppStamp: ppStamp, ppWindows: ppWindows, ppPath: ppPath, ppPage: ppPage, ppKind: ppKind, ppItems: ppItems
   };

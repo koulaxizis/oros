@@ -36,7 +36,7 @@
       "ov.same": "The same as last month by this day", "ov.paceNone": "No expenses yet in this month or the one before.",
       "ov.dayTip": "Day {d}: {a}", "ov.dayTipPrev": "last month {a}", "ov.dayTipAvg": "average {a}",
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
-      "ov.bkBal": "Bank {a} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
       "ov.bkMatched": "Starting balance changed by {a}", "ov.bkUnmapped": "Your banks' balances show here once each bank fills a Budget account (Banks › Fills).", "ov.bkBanks": "Banks",
       "ov.acc": "Accounts", "ov.nw": "Net worth", "ov.accNone": "Add your cash, cards and bank accounts to see their balances here.",
       "ov.accAdd": "Accounts", "ov.accTip": "Show the entries of {a}",
@@ -69,7 +69,7 @@
       "ov.same": "Όσα και τον προηγούμενο μήνα ως σήμερα", "ov.paceNone": "Κανένα έξοδο ακόμη σε αυτόν ή στον προηγούμενο μήνα.",
       "ov.dayTip": "{d} του μήνα: {a}", "ov.dayTipPrev": "προηγούμενος {a}", "ov.dayTipAvg": "μέσος όρος {a}",
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
-      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
       "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}", "ov.bkUnmapped": "Τα υπόλοιπα των τραπεζών σου φαίνονται εδώ μόλις κάθε τράπεζα γεμίζει έναν λογαριασμό της εφαρμογής (Τράπεζες › Γεμίζει).", "ov.bkBanks": "Τράπεζες",
       "ov.acc": "Λογαριασμοί", "ov.nw": "Καθαρή θέση", "ov.accNone": "Πρόσθεσε μετρητά, κάρτες και τραπεζικούς λογαριασμούς για να βλέπεις εδώ τα υπόλοιπά τους.",
       "ov.accAdd": "Λογαριασμοί", "ov.accTip": "Οι κινήσεις του {a}",
@@ -276,9 +276,16 @@
   function bankLines(li, a, bnk) {
     if (!li || !A.accBalAt) return;
     bnk.forEach(function (r) {
-      if (r.ac !== a.id || typeof r.bb !== "number" || !r.bc || r.bc !== (a.cur || A.cur())) return;
+      if (r.ac !== a.id || !r.bc || r.bc !== (a.cur || A.cur())) return;
+      var hasB = typeof r.bb === "number", hasA = typeof r.ba === "number";
+      if (!hasB && !hasA) return;
       var line = el("div", "ov-bkline");
-      line.appendChild(el("span", "", t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) })));
+      // BK-8: a card shows its debt and what is left to spend
+      var txt = !hasB ? t("ov.bkAvail", { v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
+              : hasA ? t("ov.bkBoth", { a: A.money(r.bb, r.bc), v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
+              : t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) });
+      line.appendChild(el("span", "", txt));
+      if (!hasB) { li.appendChild(line); return; }
       var mine = A.accBalAt(a.id, r.bd);
       if (mine === r.bb) line.appendChild(el("span", "ov-bk-ok", " · " + t("ov.bkSame")));
       else if (mine !== null && A.shiftStart) {

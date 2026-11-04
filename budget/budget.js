@@ -750,8 +750,19 @@
       sid: x.sid, uid: x.uid,
       vu: isInt(x.vu) && x.vu > 0 && x.vu < 1e14 ? x.vu : 0 };
     // BK-5: the bank's last balance (signed cents, its currency, its date)
-    if (isInt(x.bb) && Math.abs(x.bb) <= MAX_CENTS && okCur3(x.bc) && parseYmd(x.bd)) { out.bb = x.bb; out.bc = x.bc; out.bd = x.bd; }
-    return withExtras(out, x, { bb: 1, bc: 1, bd: 1 });
+    // BK-8: ba = the available balance (a card: the credit left), with
+    // or without bb (a card whose debt is not known yet); cl = a card's
+    // credit limit (the bank's, or typed in Banks), ty = the bank's kind
+    // of account (CACC, CARD, LOAN…)
+    var okB = isInt(x.bb) && Math.abs(x.bb) <= MAX_CENTS, okA = isInt(x.ba) && Math.abs(x.ba) <= MAX_CENTS;
+    if ((okB || okA) && okCur3(x.bc) && parseYmd(x.bd)) {
+      if (okB) out.bb = x.bb;
+      out.bc = x.bc; out.bd = x.bd;
+      if (okA) out.ba = x.ba;          // after bd: where an older version (extras) puts it
+    }
+    if (isInt(x.cl) && x.cl > 0 && x.cl <= MAX_CENTS) out.cl = x.cl;
+    if (typeof x.ty === "string" && /^[A-Z]{4}$/.test(x.ty)) out.ty = x.ty;
+    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1 });
   }
 
   var COLLS = [
@@ -3001,7 +3012,8 @@
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
       newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
-      accBalAt: accBalAt, accCur: accCurOf, shiftStart: shiftStart, money: money
+      accBalAt: accBalAt, accCur: accCurOf, shiftStart: shiftStart, money: money,
+      parseAmount: parseAmount, centsToInput: function (c) { return centsToInput(c, LANG); }
     });
   }
 

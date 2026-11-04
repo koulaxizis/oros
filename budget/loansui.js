@@ -36,7 +36,13 @@
       "ln.reopen": "Open again", "ln.save": "Loan saved", "ln.del": "Delete loan", "ln.deleted": "Loan deleted",
       "ln.full": "Up to {n} loans", "ln.payFull": "Up to {n} repayments",
       "ln.needName": "Write who it is with", "ln.needDate": "Pick a date", "ln.needDue": "The due date must be on or after the date",
-      "ln.ov": "Loans", "ln.ovNone": "No open loans.", "ln.ovMore": "Plan"
+      "ln.ov": "Loans", "ln.ovNone": "No open loans.", "ln.ovMore": "Plan",
+      "ln.plan": "Monthly installments (a bank loan)", "ln.rate": "Interest, % a year", "ln.months": "Installments (months)",
+      "ln.ins": "Installment (optional)", "ln.insHint": "Empty: a fixed installment worked out from the amount, interest and months. Or type the one your bank gives.",
+      "ln.needMonths": "Installments: a number of months from 1 to 600", "ln.needRate": "Interest: a yearly percentage from 0 to 100",
+      "ln.inst": "Installment {a}", "ln.intPaid": "interest paid {a}", "ln.ends": "last installment {d}", "ln.never": "The installment does not cover the interest",
+      "ln.sched": "Installment schedule", "ln.schedT": "Schedule: {n}", "ln.sDate": "Date", "ln.sInt": "Interest", "ln.sPrin": "Principal", "ln.sBal": "Left",
+      "ln.sSum": "{n} installments to go, {i} interest in total", "ln.payInt": "{i} interest, {p} principal"
     },
     el: {
       "ln.h": "Δάνεια και χρέη", "ln.new": "Νέο δάνειο", "ln.edit": "Αλλαγή δανείου",
@@ -56,7 +62,13 @@
       "ln.reopen": "Άνοιξέ το ξανά", "ln.save": "Το δάνειο αποθηκεύτηκε", "ln.del": "Διαγραφή δανείου", "ln.deleted": "Το δάνειο διαγράφηκε",
       "ln.full": "Έως {n} δάνεια", "ln.payFull": "Έως {n} επιστροφές",
       "ln.needName": "Γράψε με ποιον είναι", "ln.needDate": "Διάλεξε ημερομηνία", "ln.needDue": "Η ημερομηνία επιστροφής πρέπει να είναι ίδια ή μετά την ημερομηνία",
-      "ln.ov": "Δάνεια", "ln.ovNone": "Κανένα ανοιχτό δάνειο.", "ln.ovMore": "Πλάνο"
+      "ln.ov": "Δάνεια", "ln.ovNone": "Κανένα ανοιχτό δάνειο.", "ln.ovMore": "Πλάνο",
+      "ln.plan": "Μηνιαίες δόσεις (τραπεζικό δάνειο)", "ln.rate": "Επιτόκιο, % τον χρόνο", "ln.months": "Δόσεις (μήνες)",
+      "ln.ins": "Δόση (προαιρετικό)", "ln.insHint": "Κενό: σταθερή δόση από το ποσό, το επιτόκιο και τους μήνες. Ή γράψε αυτή που δίνει η τράπεζα.",
+      "ln.needMonths": "Δόσεις: αριθμός μηνών από 1 ως 600", "ln.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
+      "ln.inst": "Δόση {a}", "ln.intPaid": "τόκοι που πληρώθηκαν {a}", "ln.ends": "τελευταία δόση {d}", "ln.never": "Η δόση δεν καλύπτει τον τόκο",
+      "ln.sched": "Πρόγραμμα δόσεων", "ln.schedT": "Πρόγραμμα: {n}", "ln.sDate": "Ημερομηνία", "ln.sInt": "Τόκος", "ln.sPrin": "Κεφάλαιο", "ln.sBal": "Μένει",
+      "ln.sSum": "{n} δόσεις ακόμα, {i} τόκοι συνολικά", "ln.payInt": "{i} τόκος, {p} κεφάλαιο"
     }
   };
   // orosI18n (../i18n.js): S[<pack language>] from the pack "budget".
@@ -153,7 +165,15 @@
     bar.appendChild(f);
     li.appendChild(bar);
     var bot = el("div", "ln-bot");
-    var info = [t("ln.paidOf", { a: A.money(st.paid), b: A.money(l.a) })];
+    var plan = L.hasPlan(l), open = st.state === "open" || st.state === "late";
+    var info = [plan ? t("ln.paidOf", { a: A.money(st.prin), b: A.money(l.a) }) : t("ln.paidOf", { a: A.money(st.paid), b: A.money(l.a) })];
+    if (plan) {
+      if (open) info.push(t("ln.inst", { a: A.money(L.installment(l)) }));
+      if (st.int) info.push(t("ln.intPaid", { a: A.money(st.int) }));
+      var sc = open ? L.schedule(l, L.paysBy(pays())[l.id]) : null;
+      if (sc && sc.never) info.push(t("ln.never"));
+      else if (sc && sc.end && !l.due) info.push(t("ln.ends", { d: A.dateShort(sc.end) }));
+    }
     var sl = stateLabel(l, st);
     if (sl) info.push(sl);
     var acc = l.ac ? A.accName(l.ac) : "";
@@ -165,6 +185,13 @@
       pb.setAttribute("aria-label", t("ln.payTitle", { n: l.n }));
       pb.addEventListener("click", function () { payDialog(l.id); });
       bot.appendChild(pb);
+      if (plan) {
+        var sb = el("button", "mini", t("ln.sched"));
+        sb.type = "button";
+        sb.setAttribute("aria-label", t("ln.schedT", { n: l.n }));
+        sb.addEventListener("click", function () { schedDialog(l.id); });
+        bot.appendChild(sb);
+      }
     }
     li.appendChild(bot);
     if (l.nt) li.appendChild(el("p", "hint ln-nt", l.nt));
@@ -218,6 +245,36 @@
       acc = accSelect(l ? l.ac : "");
       form.appendChild(A.field(t("ln.acc"), acc, "ln-ac"));
     }
+    // LN-I: a bank loan in monthly installments, with interest
+    var det = el("details", "ln-plan");
+    det.open = !!(l && L.hasPlan(l));
+    det.appendChild(el("summary", "", t("ln.plan")));
+    var r2 = el("div", "fld-row");
+    var rate = el("input"); rate.inputMode = "decimal"; rate.autocomplete = "off"; rate.placeholder = "0";
+    rate.value = l && L.hasPlan(l) ? A.centsToInput(l.r) : "";
+    var mon = el("input"); mon.inputMode = "numeric"; mon.autocomplete = "off"; mon.placeholder = "120";
+    mon.value = l && L.hasPlan(l) ? String(l.nm) : "";
+    r2.appendChild(A.field(t("ln.rate"), rate, "ln-r"));
+    r2.appendChild(A.field(t("ln.months"), mon, "ln-nm"));
+    det.appendChild(r2);
+    var ins = el("input"); ins.inputMode = "decimal"; ins.autocomplete = "off";
+    ins.value = l && L.hasPlan(l) && l.ins ? A.centsToInput(l.ins) : "";
+    det.appendChild(A.field(t("ln.ins") + " (" + A.cur() + ")", ins, "ln-ins"));
+    var insHint = el("p", "hint", t("ln.insHint"));
+    det.appendChild(insHint);
+    function rateOf(v) {                 // "" or "0" → 0; parseAmount refuses zero
+      v = v.trim();
+      if (!v || /^0+([.,]0*)?$/.test(v)) return 0;
+      return A.parseAmount(v);
+    }
+    function preview() {
+      var nm = parseInt(mon.value, 10), a0 = A.parseAmount(amt.value), rr = rateOf(rate.value);
+      if (!(nm > 0 && nm <= 600) || !a0 || rr === null || ins.value.trim()) { insHint.textContent = t("ln.insHint"); return; }
+      insHint.textContent = t("ln.insHint") + " " + t("ln.inst", { a: A.money(L.installment({ a: a0, nm: nm, r: rr || 0, ins: 0 })) });
+    }
+    [rate, mon, ins, amt].forEach(function (x) { x.addEventListener("input", preview); });
+    preview();
+    form.appendChild(det);
     var nt = el("input");
     nt.maxLength = 200;
     nt.value = l ? l.nt : "";
@@ -244,10 +301,20 @@
       if (a === null) { A.showErr(err, A.tt("err.amount"), amt); return; }
       if (!L.okYmd(d.value)) { A.showErr(err, t("ln.needDate"), d); return; }
       if (due.value && (!L.okYmd(due.value) || due.value < d.value)) { A.showErr(err, t("ln.needDue"), due); return; }
+      var nm = 0, rr = 0, insC = 0;
+      if (mon.value.trim()) {
+        nm = /^\d{1,3}$/.test(mon.value.trim()) ? parseInt(mon.value, 10) : 0;
+        if (!(nm >= 1 && nm <= 600)) { det.open = true; A.showErr(err, t("ln.needMonths"), mon); return; }
+        rr = rateOf(rate.value);     // "4,75" → 475 (hundredths of a percent)
+        if (rr === null || rr > 10000) { det.open = true; A.showErr(err, t("ln.needRate"), rate); return; }
+        insC = ins.value.trim() ? A.parseAmount(ins.value) : 0;
+        if (insC === null) { det.open = true; A.showErr(err, A.tt("err.amount"), ins); return; }
+      }
       var lid = l ? l.id : A.newId();
       var m = A.stamp(Math.max(l ? l.m : 0, D().tombs["loan:" + lid] || 0));
       var next = L.normLoan({ id: lid, m: m, a: a, ac: acc ? acc.value : (l ? l.ac : ""), crm: l ? l.crm : "", d: d.value,
-                              due: due.value, k: kind.value, n: n, nt: nt.value, wo: l ? l.wo : false });
+                              due: due.value, k: kind.value, n: n, nt: nt.value, wo: l ? l.wo : false,
+                              nm: nm, r: rr || 0, ins: insC || 0 });
       if (!next) { A.showErr(err, A.tt("err.amount"), amt); return; }
       D().loan = loans().filter(function (x) { return x.id !== lid; }).concat([next]);
       A.untomb("loan", lid);
@@ -268,11 +335,14 @@
     var st = L.status(l, mine, A.today());
     var dlg = A.makeDialog("bd-lpay", t("ln.payTitle", { n: l.n }));
     var form = el("form");
-    form.appendChild(el("p", "hint", t("ln.paidOf", { a: A.money(st.paid), b: A.money(l.a) }) + " · " + t("ln.left", { a: A.money(st.left) })));
+    var plan = L.hasPlan(l);
+    form.appendChild(el("p", "hint", t("ln.paidOf", { a: A.money(plan ? st.prin : st.paid), b: A.money(l.a) }) + " · " + t("ln.left", { a: A.money(st.left) })));
     var amt = el("input");
     amt.inputMode = "decimal";
     amt.autocomplete = "off";
-    amt.value = st.left ? A.centsToInput(st.left) : "";
+    // LN-I: the next installment (the last one: what is left with its interest)
+    var nextPay = plan ? (L.schedule(l, mine).rows[0] || null) : null;
+    amt.value = nextPay ? A.centsToInput(nextPay.pay) : st.left ? A.centsToInput(st.left) : "";
     form.appendChild(A.field(t("ln.amount") + " (" + A.cur() + ")", amt, "lp-a"));
     var d = el("input"); d.type = "date"; d.value = A.today();
     form.appendChild(A.field(t("ln.d"), d, "lp-d"));
@@ -290,7 +360,8 @@
       mine.slice().reverse().forEach(function (p) {
         var li = el("li");
         li.appendChild(el("span", "", A.dateShort(p.d)));
-        li.appendChild(el("span", "ln-pn", p.n));
+        var spl = plan ? L.split(l, mine).rows.filter(function (x) { return x.p.id === p.id; })[0] : null;
+        li.appendChild(el("span", "ln-pn", [p.n, spl && spl.int ? t("ln.payInt", { i: A.money(spl.int), p: A.money(spl.prin) }) : ""].filter(Boolean).join(" · ")));
         li.appendChild(el("span", "ln-pa", A.money(p.a)));
         var del = el("button", "icon-btn");
         del.type = "button";
@@ -329,6 +400,37 @@
     A.showDialog(dlg);
     amt.focus();
     amt.select();
+  }
+
+  // LN-I: what is still to come, one row a month
+  function schedDialog(id) {
+    var l = A.findIn(loans(), id);
+    if (!l || !L.hasPlan(l)) return;
+    var sc = L.schedule(l, L.paysBy(pays())[l.id]);
+    var dlg = A.makeDialog("bd-lsched", t("ln.schedT", { n: l.n }));
+    dlg.classList.add("wide");
+    if (sc.never) dlg.appendChild(el("p", "err", t("ln.never")));
+    var tot = 0;
+    sc.rows.forEach(function (r) { tot += r.int; });
+    if (sc.rows.length) dlg.appendChild(el("p", "hint", t("ln.sSum", { n: sc.rows.length, i: A.money(tot) }) + " · " + t("ln.inst", { a: A.money(L.installment(l)) })));
+    var wrap = el("div", "ln-sched");
+    var tb = el("table", "tbl");
+    var hr = el("tr");
+    ["ln.sDate", "ln.sInt", "ln.sPrin", "ln.sBal"].forEach(function (k) { var th = el("th", "", t(k)); th.scope = "col"; hr.appendChild(th); });
+    var th0 = el("thead"); th0.appendChild(hr); tb.appendChild(th0);
+    var body = el("tbody");
+    sc.rows.forEach(function (r) {
+      var tr = el("tr");
+      [A.dateShort(r.d), A.money(r.int), A.money(r.prin), A.money(r.bal)].forEach(function (v, i) { tr.appendChild(el(i ? "td" : "th", i ? "num" : "", v)); });
+      body.appendChild(tr);
+    });
+    tb.appendChild(body);
+    wrap.appendChild(tb);
+    dlg.appendChild(wrap);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(A.button(A.tt("dlg.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    A.showDialog(dlg);
   }
 
   function removePay(id) {
