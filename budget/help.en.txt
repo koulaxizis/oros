@@ -44,6 +44,8 @@ Accounts are optional. In the `More` menu, `Accounts` lets you add cash, a card 
 
 `Transfer` moves money between two accounts, `From` one `To` the other. A transfer shows as "Bank → Cash" and counts as neither income nor expense. The filter `Transfers only` lists them.
 
+A credit card can carry its monthly cycle. In the card's account window, open `Credit card: statement and due date` and type the statement day, the payment due day and, if you like, the yearly interest. Under the card in `Overview` › `Accounts`, Budget then shows the last statement (the card's debt on that day), what came in since (income booked to the card and transfers to it), what is left to pay by the due date and how many days remain, and turns it to a warning once the date has passed. With an interest rate it also shows roughly what the interest costs if the statement is not paid in full (what is left × the rate × the cycle's days / 365); your bank's figure can differ, since banks count from each purchase's date. `Add interest` opens a new expense on the card in the category `Interest & fees` (made the first time), filled with that estimate: type the amount on your statement.
+
 ## Envelopes
 Envelope budgeting (zero-based, as in YNAB) is optional. Open the `Plan` tab and press `Start envelope budgeting`. From then on:
 - `To be assigned` is the money that has no job yet: what your accounts held when you started, plus the income since, minus what you have assigned. Give it out until it reads 0.

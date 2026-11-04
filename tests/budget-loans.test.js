@@ -109,3 +109,42 @@ test("loansui: EN and EL have the same keys and every key in the code exists", (
   const used = [...src.matchAll(/t\("(ln\.[A-Za-z.]+)"\s*[,)]/g)].map((m) => m[1]);
   used.forEach((k) => assert.ok(k in tables.en, k));
 });
+
+test("CC-1: a credit card's cycle, what is left and the interest estimate", () => {
+  assert.equal(L.cardCfg({ cys: 10 }), null);
+  assert.deepEqual(L.cardCfg({ cys: 10, cyd: 5, cyr: 1650 }), { s: 10, d: 5, r: 1650 });
+  assert.deepEqual(L.cardCfg({ cys: 31, cyd: 20, cyr: -1 }), { s: 31, d: 20, r: 0 });
+  const acc = { cys: 10, cyd: 5, cyr: 1825 };           // statement on the 10th, due the 5th of the next month, 18.25 %
+  const bal = { "2026-10-10": -100000, "2026-09-10": 0, "2026-11-10": -50000 };
+  const balAt = (d) => bal[d] === undefined ? 0 : bal[d];
+  let inflowArgs = null;
+  const inflow = (from, to) => { inflowArgs = [from, to]; return 30000; };
+  const c = L.cardCycle(acc, "2026-10-25", balAt, inflow);
+  assert.deepEqual(inflowArgs, ["2026-10-10", "2026-10-25"]);
+  assert.equal(c.s, "2026-10-10");
+  assert.equal(c.due, "2026-11-05");
+  assert.equal(c.next, "2026-11-10");
+  assert.equal(c.stmt, 100000);
+  assert.equal(c.paid, 30000);
+  assert.equal(c.left, 70000);
+  assert.equal(c.est, Math.round(70000 * 0.1825 * 31 / 365));   // 1085
+  assert.equal(c.days, 11);
+  assert.equal(c.state, "open");
+  // before this month's statement day: the previous cycle
+  const e = L.cardCycle(acc, "2026-10-09", balAt, () => 0);
+  assert.equal(e.s, "2026-09-10");
+  assert.equal(e.state, "none");
+  // late, paid
+  assert.equal(L.cardCycle(acc, "2026-11-07", balAt, () => 0).state, "late");
+  assert.equal(L.cardCycle(acc, "2026-11-07", balAt, () => 200000).state, "paid");
+  assert.equal(L.cardCycle(acc, "2026-11-07", balAt, () => 200000).paid, 100000);
+  // a due day after the statement day falls in the same month; month ends clamp
+  const f = L.cardCycle({ cys: 31, cyd: 28 }, "2027-02-15", () => -1000, () => 0);
+  assert.equal(f.s, "2027-01-31");
+  assert.equal(f.due, "2027-02-28");
+  assert.equal(f.next, "2027-02-28");
+  assert.equal(f.est, 0);
+  const g = L.cardCycle({ cys: 1, cyd: 20 }, "2026-12-01", () => -1000, () => 0);
+  assert.equal(g.s, "2026-12-01");
+  assert.equal(g.due, "2026-12-20");
+});

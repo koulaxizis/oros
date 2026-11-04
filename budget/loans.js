@@ -184,9 +184,54 @@
     return mv;
   }
 
+  // ---------- CC-1: a credit card's monthly cycle ----------
+  // An account may carry cys (statement day 1…31), cyd (due day 1…31)
+  // and cyr (yearly interest in hundredths of a percent, 0…10000).
+  function cardCfg(a) {
+    if (!a || !isInt(a.cys) || a.cys < 1 || a.cys > 31 || !isInt(a.cyd) || a.cyd < 1 || a.cyd > 31) return null;
+    return { s: a.cys, d: a.cyd, r: isInt(a.cyr) && a.cyr >= 0 && a.cyr <= 10000 ? a.cyr : 0 };
+  }
+  function dayIn(y, m0, day) {            // a day of a month, clamped to its end
+    y += Math.floor(m0 / 12); m0 = ((m0 % 12) + 12) % 12;
+    var dim = new Date(Date.UTC(y, m0 + 1, 0)).getUTCDate();
+    return y + "-" + pad2(m0 + 1) + "-" + pad2(Math.min(day, dim));
+  }
+  function daysBetween(a, b) {
+    return Math.round((Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10)) -
+                       Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))) / 864e5);
+  }
+  // The cycle as of `today`: the last statement (on or before today),
+  // its due date, the next statement; what the statement asked for (the
+  // debt on the statement day), what came into the account since, what
+  // is left, and an estimate of the interest if that is not paid by the
+  // due date (left × rate × the cycle's days / 365). balAt(ymd) → the
+  // account's signed balance at the end of that day; inflow(from, to)
+  // → money in after `from`, up to `to`. → null without a cycle, else
+  // { s, due, next, stmt, paid, left, est, days (to the due date),
+  //   state "none" | "paid" | "open" | "late" }
+  function cardCycle(a, today, balAt, inflow) {
+    var c = cardCfg(a);
+    if (!c || !okYmd(today)) return null;
+    var y = +today.slice(0, 4), m0 = +today.slice(5, 7) - 1;
+    var s = dayIn(y, m0, c.s);
+    if (s > today) { m0 -= 1; s = dayIn(y, m0, c.s); }
+    var due = dayIn(y, m0, c.d);
+    if (due <= s) due = dayIn(y, m0 + 1, c.d);
+    var next = dayIn(y, m0 + 1, c.s);
+    var b = balAt(s);
+    var stmt = isInt(b) && b < 0 ? -b : 0;
+    var paid = stmt ? Math.max(0, inflow(s, today) || 0) : 0;
+    var left = Math.max(0, stmt - paid);
+    var est = left && c.r ? Math.round(left * c.r / 10000 * daysBetween(s, next) / 365) : 0;
+    var state = !stmt ? "none" : !left ? "paid" : today > due ? "late" : "open";
+    return { s: s, due: due, next: next, stmt: stmt, paid: Math.min(paid, stmt), left: left, est: est,
+             days: daysBetween(today, due), state: state };
+  }
+
   var api = { normLoan: normLoan, normPay: normPay, paysBy: paysBy, status: status, summary: summary,
               balanceMoves: balanceMoves, okYmd: okYmd,
-              hasPlan: hasPlan, installment: installment, split: split, schedule: schedule };
+              hasPlan: hasPlan, installment: installment, split: split, schedule: schedule,
+              cardCfg: cardCfg, cardCycle: cardCycle };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetLoans = api;
 })(typeof window !== "undefined" ? window : this);

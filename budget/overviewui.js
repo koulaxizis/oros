@@ -37,7 +37,10 @@
       "ov.dayTip": "Day {d}: {a}", "ov.dayTipPrev": "last month {a}", "ov.dayTipAvg": "average {a}",
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
       "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
-      "ov.bkMatched": "Starting balance changed by {a}", "ov.bkUnmapped": "Your banks' balances show here once each bank fills a Budget account (Banks › Fills).", "ov.bkBanks": "Banks",
+      "ov.bkMatched": "Starting balance changed by {a}",
+      "ov.cyStmt": "Statement {d}: {a}", "ov.cyNone": "Statement {d}: nothing to pay", "ov.cyPaid": "paid {a}", "ov.cyAll": "paid in full",
+      "ov.cyLeft": "{a} by {d}", "ov.cyDays": "{n} days left", "ov.cyToday": "due today", "ov.cyTomorrow": "due tomorrow", "ov.cyLate": "{a} not paid by {d}",
+      "ov.cyEst": "Interest if not paid in full: about {a}", "ov.cyFee": "Add interest", "ov.cyFeeTip": "Add the interest or fees on your card statement as an expense: {a}", "ov.bkUnmapped": "Your banks' balances show here once each bank fills a Budget account (Banks › Fills).", "ov.bkBanks": "Banks",
       "ov.acc": "Accounts", "ov.nw": "Net worth", "ov.accNone": "Add your cash, cards and bank accounts to see their balances here.",
       "ov.accAdd": "Accounts", "ov.accTip": "Show the entries of {a}",
       "ov.flowAll": "All accounts, {m}", "ov.flowAria": "in {i}, out {o}, difference {d}", "ov.noAcc": "Without an account",
@@ -70,7 +73,10 @@
       "ov.dayTip": "{d} του μήνα: {a}", "ov.dayTipPrev": "προηγούμενος {a}", "ov.dayTipAvg": "μέσος όρος {a}",
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
       "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
-      "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}", "ov.bkUnmapped": "Τα υπόλοιπα των τραπεζών σου φαίνονται εδώ μόλις κάθε τράπεζα γεμίζει έναν λογαριασμό της εφαρμογής (Τράπεζες › Γεμίζει).", "ov.bkBanks": "Τράπεζες",
+      "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
+      "ov.cyStmt": "Κλείσιμο {d}: {a}", "ov.cyNone": "Κλείσιμο {d}: τίποτα για πληρωμή", "ov.cyPaid": "πληρώθηκαν {a}", "ov.cyAll": "εξοφλήθηκε",
+      "ov.cyLeft": "{a} ως {d}", "ov.cyDays": "μένουν {n} ημέρες", "ov.cyToday": "λήγει σήμερα", "ov.cyTomorrow": "λήγει αύριο", "ov.cyLate": "{a} απλήρωτα από {d}",
+      "ov.cyEst": "Τόκος αν δεν εξοφληθεί: περίπου {a}", "ov.cyFee": "Πρόσθεσε τόκους", "ov.cyFeeTip": "Πρόσθεσε ως έξοδο τους τόκους ή τις χρεώσεις του λογαριασμού της κάρτας: {a}", "ov.bkUnmapped": "Τα υπόλοιπα των τραπεζών σου φαίνονται εδώ μόλις κάθε τράπεζα γεμίζει έναν λογαριασμό της εφαρμογής (Τράπεζες › Γεμίζει).", "ov.bkBanks": "Τράπεζες",
       "ov.acc": "Λογαριασμοί", "ov.nw": "Καθαρή θέση", "ov.accNone": "Πρόσθεσε μετρητά, κάρτες και τραπεζικούς λογαριασμούς για να βλέπεις εδώ τα υπόλοιπά τους.",
       "ov.accAdd": "Λογαριασμοί", "ov.accTip": "Οι κινήσεις του {a}",
       "ov.flowAll": "Όλοι οι λογαριασμοί, {m}", "ov.flowAria": "έσοδα {i}, έξοδα {o}, διαφορά {d}", "ov.noAcc": "Χωρίς λογαριασμό",
@@ -300,6 +306,38 @@
       li.appendChild(line);
     });
   }
+  // CC-1: a credit card's cycle under its account: the last statement,
+  // what was paid, what is left by the due date, the interest estimate.
+  function cycleLines(li, a) {
+    if (!li || !A.cardCycle) return;
+    var c = A.cardCycle(a.id);
+    if (!c) return;
+    var cu = a.cur || A.cur();
+    var line = el("div", "ov-bkline ov-cy" + (c.state === "late" ? " late" : ""));
+    var parts;
+    if (c.state === "none") parts = [t("ov.cyNone", { d: A.dateShort(c.s) })];
+    else {
+      parts = [t("ov.cyStmt", { d: A.dateShort(c.s), a: A.money(c.stmt, cu) })];
+      if (c.paid && c.left) parts.push(t("ov.cyPaid", { a: A.money(c.paid, cu) }));
+      if (c.state === "paid") parts.push(t("ov.cyAll"));
+      else if (c.state === "late") parts.push(t("ov.cyLate", { a: A.money(c.left, cu), d: A.dateShort(c.due) }));
+      else parts.push(t("ov.cyLeft", { a: A.money(c.left, cu), d: A.dateShort(c.due) }) + " (" + (c.days > 1 ? t("ov.cyDays", { n: c.days }) : c.days === 1 ? t("ov.cyTomorrow") : t("ov.cyToday")) + ")");
+    }
+    line.appendChild(el("span", "", parts.join(" · ")));
+    li.appendChild(line);
+    if (c.est || A.addCardFee) {
+      var l2 = el("div", "ov-bkline ov-cy");
+      if (c.est) l2.appendChild(el("span", "", t("ov.cyEst", { a: A.money(c.est, cu) })));
+      if (A.addCardFee) {
+        var b = el("button", "mini", t("ov.cyFee"));
+        b.type = "button";
+        b.setAttribute("aria-label", t("ov.cyFeeTip", { a: a.n }));
+        b.addEventListener("click", function () { A.addCardFee(a.id, c.est); });
+        l2.appendChild(b);
+      }
+      li.appendChild(l2);
+    }
+  }
   function cardAcc(card) {
     var list = A.accs();
     head(card, "acc", t("ov.acc"), list.length ? t("ov.open") : null, A.accountsDialog);
@@ -347,6 +385,7 @@
       row(a.n, a.col, A.money(bal[a.id], a.cur), bal[a.id] < 0, flows.by[a.id], function () { A.showFilter("a:" + a.id); },
           A.accDialog ? function () { A.accDialog(a.id); } : null);
       bankLines(ul.lastChild, a, bnk);
+      cycleLines(ul.lastChild, a);
     });
     if (flows.none.inc || flows.none.out) row(t("ov.noAcc"), 8, "", false, flows.none, null);
     card.appendChild(ul);
