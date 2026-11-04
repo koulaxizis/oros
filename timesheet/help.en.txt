@@ -22,11 +22,16 @@ On `Reports`, choose a `Period` (this week, last month, this year or `Custom`), 
 - `Export CSV` saves the report for a spreadsheet.
 - Inside orOS, `Open in Spreadsheet` opens the same rows as a new sheet in Spreadsheet, with totals under hours and amount.
 - `Create quote` turns the report into a new [Quote](app:quote): one line per billable project with a rate, with the hours as quantity and the hourly rate as price. The client is filled in when the period has only one. The quote takes Timesheet's currency, whatever it is.
-- `Create invoice` puts the same lines in a new invoice in [Invoices](app:invoices), in any currency. Check it there, then save or issue it.
+- `Create invoice` puts the same lines in a new invoice in [Invoices](app:invoices), in any currency. Check it there, then save or issue it. As soon as it is saved (a draft too), exactly those entries and extra charges are marked `Invoiced` here, so the same hours are never invoiced twice. Hover over the tick, or open an entry, to see the invoice's number and whether it is paid; `Open invoice` takes you there. If you delete or cancel the invoice, or credit it in full, they are not invoiced again. When the client is linked to a CRM customer, the invoice also gets the VAT number, address and email.
 - `Mark … as invoiced` marks all billable entries of the report as invoiced, so next time you can filter for `Not invoiced`. You can unmark them the same way.
+
+## To invoice
+The `To invoice` tab lists, per client, the billable time and extra charges that are not invoiced yet (`Not invoiced`), from all time and with the day of the oldest one. When [Invoices](app:invoices) is on this device, it also shows what was invoiced but is still unpaid, and how many of those invoices are overdue. `Create invoice` makes one invoice for all the client's time not invoiced yet; `Report` opens those entries on `Reports`. A timer that is still running is left out until you stop it.
 
 ## Projects and clients
 On `Projects`, add a `New project` or `New client`. A project has a `Name`, `Client`, `Colour`, `Hourly rate`, an optional `Hours budget` (e.g. 40 or 12:30) and `Billable`. With a budget, the project shows a bar of the hours used: it turns gold from 90 % and red when the budget is exceeded. Leave the rate empty to use the client's rate, or the default from `Settings`. A project with entries can't be deleted; tick `Archived` instead to hide it from the timer and keep its time.
+
+When [CRM](app:crm) is on this device, a client has a `CRM customer`: pick the customer it is (a new client takes the customer's name). Invoices made from Timesheet then carry the customer's VAT number, tax office, address and email, and the customer's page in CRM shows this client's hours.
 
 ## Day rate, minimum charge, overtime and extra charges
 Open a project (or a client, for all its projects without their own) on `Projects` and unfold `Day rate, minimum and overtime`. Choose `Per` `Day worked`, `Week` or `Month`, then any of:

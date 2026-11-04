@@ -163,7 +163,16 @@
       "extra.edit": "Edit extra charge: {d}, {a}", "extra.h": "Extra charges",
       "sum.time": "Work time", "sum.ot": "Overtime ({d})", "sum.min": "Up to the minimum charge (+{d})",
       "sum.ex": "Extra charges ({n})", "sum.total": "Total to charge",
-      "rep.partial": "A minimum per week or month counts only for whole weeks or months in the period: {n} left out (no minimum, no overtime)."
+      "rep.partial": "A minimum per week or month counts only for whole weeks or months in the period: {n} left out (no minimum, no overtime).",
+      "tab.bill": "To invoice", "ub.hint": "Billable time and extra charges not invoiced yet, from all time, per client. Unpaid invoices come from Invoices on this device.",
+      "ub.none": "Everything is invoiced.", "ub.open": "Not invoiced: {d} · {a}", "ub.since": "oldest from {d}",
+      "ub.unpaid": "Invoiced, unpaid: {a}", "ub.late": "{n} overdue", "ub.report": "Report",
+      "inv.on": "On invoice {n}", "inv.draft": "a draft invoice", "inv.away": "an invoice not on this device yet",
+      "inv.st.paid": "paid", "inv.st.unpaid": "unpaid", "inv.st.partial": "partly paid", "inv.st.overdue": "overdue", "inv.st.draft": "draft",
+      "inv.open": "Open invoice", "toast.invLinked": "Marked as invoiced: {n} · {num}", "inv.draftNum": "Draft invoice",
+      "toast.invGone": "Not invoiced again: {n} (their invoice was cancelled)",
+      "f.crm": "CRM customer", "f.crmNone": "Not linked", "f.crmAway": "Linked (not on this device)",
+      "f.crmHint": "Invoices made here then take the VAT number, address and email from CRM."
     },
     el: {
       "app": "Ώρες εργασίας", "settings": "Ρυθμίσεις",
@@ -280,7 +289,16 @@
       "extra.edit": "Επεξεργασία πρόσθετης χρέωσης: {d}, {a}", "extra.h": "Πρόσθετες χρεώσεις",
       "sum.time": "Χρόνος εργασίας", "sum.ot": "Υπερωρία ({d})", "sum.min": "Συμπλήρωση ελάχιστης χρέωσης (+{d})",
       "sum.ex": "Πρόσθετες χρεώσεις ({n})", "sum.total": "Σύνολο χρέωσης",
-      "rep.partial": "Το ελάχιστο ανά εβδομάδα ή μήνα μετράει μόνο για ολόκληρες εβδομάδες ή μήνες μέσα στην περίοδο: {n} έμειναν εκτός (χωρίς ελάχιστο και υπερωρία)."
+      "rep.partial": "Το ελάχιστο ανά εβδομάδα ή μήνα μετράει μόνο για ολόκληρες εβδομάδες ή μήνες μέσα στην περίοδο: {n} έμειναν εκτός (χωρίς ελάχιστο και υπερωρία).",
+      "tab.bill": "Προς τιμολόγηση", "ub.hint": "Χρεώσιμος χρόνος και πρόσθετες χρεώσεις που δεν έχουν τιμολογηθεί ακόμα, από πάντα, ανά πελάτη. Τα απλήρωτα τιμολόγια έρχονται από τα Τιμολόγια αυτής της συσκευής.",
+      "ub.none": "Όλα έχουν τιμολογηθεί.", "ub.open": "Ατιμολόγητα: {d} · {a}", "ub.since": "το παλαιότερο από {d}",
+      "ub.unpaid": "Τιμολογημένα, απλήρωτα: {a}", "ub.late": "{n} ληξιπρόθεσμα", "ub.report": "Αναφορά",
+      "inv.on": "Στο τιμολόγιο {n}", "inv.draft": "ένα πρόχειρο τιμολόγιο", "inv.away": "ένα τιμολόγιο που δεν υπάρχει ακόμα σε αυτή τη συσκευή",
+      "inv.st.paid": "πληρώθηκε", "inv.st.unpaid": "απλήρωτο", "inv.st.partial": "μερικώς πληρωμένο", "inv.st.overdue": "ληξιπρόθεσμο", "inv.st.draft": "πρόχειρο",
+      "inv.open": "Άνοιγμα τιμολογίου", "toast.invLinked": "Σημειώθηκαν ως τιμολογημένα: {n} · {num}", "inv.draftNum": "Πρόχειρο τιμολόγιο",
+      "toast.invGone": "Ξανά ατιμολόγητα: {n} (το τιμολόγιό τους ακυρώθηκε)",
+      "f.crm": "Πελάτης στο CRM", "f.crmNone": "Χωρίς σύνδεση", "f.crmAway": "Συνδεδεμένος (όχι σε αυτή τη συσκευή)",
+      "f.crmHint": "Τα τιμολόγια που φτιάχνεις από εδώ παίρνουν τότε ΑΦΜ, διεύθυνση και email από το CRM."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "timesheet", LANG);
@@ -319,6 +337,7 @@
     week:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3M8 13.5h2M14 13.5h2M8 17h2"/></svg>',
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+    bill:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"/></svg>'
   };
 
@@ -361,7 +380,7 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  var TABS = ["timer", "week", "report", "projects"];
+  var TABS = ["timer", "week", "report", "bill", "projects"];
   var GROUPS = ["project", "client", "task", "tag", "day"];
   var RANGES = ["thisWeek", "lastWeek", "thisMonth", "lastMonth", "thisYear", "custom"];
   function loadPrefs() {
@@ -520,6 +539,7 @@
                (x.task || "") === rec.task && JSON.stringify(x.tags || []) === JSON.stringify(rec.tags);
     if (same) return x;
     x.p = rec.p; x.desc = rec.desc; x.s = rec.s; x.e = rec.e; x.billed = rec.billed;
+    if (!x.billed) delete x.iv;              // T1: no longer on that invoice
     setTaskTags(x, rec);
     x.m = stamp(x.m);
     saveNow();
@@ -601,8 +621,10 @@
   function saveClient(id, rec) {
     var cur = id ? findIn(data.clients, id) : null;
     if (cur && !cur.del) {
-      if (cur.name === rec.name && cur.rate === rec.rate && sameBilling(cur, rec)) return cur.id;
+      if (cur.name === rec.name && cur.rate === rec.rate && sameBilling(cur, rec) &&
+          (cur.crm || "") === (rec.crm || "")) return cur.id;
       rec = keepExtras(cur, rec);
+      if (!rec.crm) delete rec.crm;
       rec.id = cur.id;
       rec.m = stamp(cur.m);
     } else {
@@ -641,6 +663,7 @@
       if (cur.d === rec.d && cur.p === rec.p && cur.c === rec.c && cur.desc === rec.desc &&
           cur.amt === rec.amt && cur.billed === rec.billed) return cur.id;
       rec = keepExtras(cur, rec);
+      if (!rec.billed) delete rec.iv;        // T1: no longer on that invoice
       rec.id = cur.id;
       rec.m = stamp(cur.m);
     } else {
@@ -675,11 +698,12 @@
   }
   // Invoiced marks on a set of entries; Undo puts each one back.
   function markBilled(ids, flag) {
-    var changed = [];
+    var changed = [], ivs = {};
     ids.forEach(function (id) {
       var x = findEntry(id) || findExtra(id);
       if (!x || x.billed === flag) return;
       x.billed = flag;
+      if (!flag && x.iv) { ivs[id] = x.iv; delete x.iv; }   // T1: unmarked = off its invoice
       x.m = stamp(x.m);
       changed.push(id);
     });
@@ -691,6 +715,7 @@
         var x = findEntry(id) || findExtra(id);
         if (!x) return;
         x.billed = flag ? 0 : 1;
+        if (ivs[id]) x.iv = ivs[id];
         x.m = stamp(x.m);
       });
       saveNow();
@@ -913,8 +938,8 @@
       if (x.billed) {
         var bl = el("span", "ent-billed");
         bl.innerHTML = UI.check;
-        bl.title = t("entry.billed");
-        bl.setAttribute("aria-label", t("entry.billed"));
+        bl.title = billedText(x);
+        bl.setAttribute("aria-label", bl.title);
         meta.appendChild(bl);
       }
       b.appendChild(meta);
@@ -962,8 +987,8 @@
       if (x.billed) {
         var bl = el("span", "ent-billed");
         bl.innerHTML = UI.check;
-        bl.title = t("entry.billed");
-        bl.setAttribute("aria-label", t("entry.billed"));
+        bl.title = billedText(x);
+        bl.setAttribute("aria-label", bl.title);
         meta.appendChild(bl);
       }
       b.appendChild(meta);
@@ -1251,8 +1276,8 @@
       if (x.billed) {
         var bl = el("span", "ent-billed");
         bl.innerHTML = UI.check;
-        bl.title = t("entry.billed");
-        bl.setAttribute("aria-label", t("entry.billed"));
+        bl.title = billedText(x);
+        bl.setAttribute("aria-label", bl.title);
         b.appendChild(bl);
       }
       b.setAttribute("aria-label", t("extra.edit", { d: x.desc || t("dlg.extra"), a: money(x.amt) }));
@@ -1368,6 +1393,7 @@
     if (tab === "timer") { renderRun(); renderDay(); }
     else if (tab === "week") renderWeek();
     else if (tab === "report") { renderFilters(); renderReport(); }
+    else if (tab === "bill") renderBill();
     else renderProjects();
   }
   function renderAll() { renderTab(); }
@@ -1462,6 +1488,22 @@
     return e - e % 60000;
   }
 
+  // T1: "Invoiced · On invoice INV-2026-0042 · paid".
+  function billedText(x) {
+    var s2 = x.iv ? invText(x.iv) : "";
+    return t("entry.billed") + (s2 ? " · " + s2 : "");
+  }
+  function invRow(form, iv) {
+    var row = el("div", "inv-row");
+    row.appendChild(el("span", "", invText(iv)));
+    if (invInfo(iv) && invoicesOpener()) {
+      var b = el("button", "mini-btn", t("inv.open"));
+      b.type = "button";
+      b.addEventListener("click", function () { openInvoice(iv); });
+      row.appendChild(b);
+    }
+    form.appendChild(row);
+  }
   function entryDialog(id, preset) {
     var x = id ? findEntry(id) : null;
     if (id && !x) return;
@@ -1579,6 +1621,7 @@
 
     var billed = checkRow(t("f.billed"), x ? x.billed : 0);
     if (!running) form.appendChild(billed.row);
+    if (x && x.billed && x.iv) invRow(form, x.iv);
 
     var left = [];
     if (!isNew) left.push(button(t("dlg.del"), "danger", function () { dlg.close(); deleteEntry(id); }));
@@ -1810,6 +1853,28 @@
     form.appendChild(field(t("f.rate") + " (" + data.prefs.cur + ")", rate,
       data.prefs.rate ? t("f.rateHint", { r: money(data.prefs.rate), src: t("src.default") }) : t("f.rateNone")));
     var bf = billingFields(form, c, "bill.hintC");
+    // T1 (BR-TS-CRM): the CRM customer it is, when CRM is on this device
+    var crmSel = document.createElement("select"), crmF = field(t("f.crm"), crmSel, t("f.crmHint"));
+    var crmNames = {};
+    crmF.hidden = true;
+    form.appendChild(crmF);
+    var fillCrm = function (list) {
+      crmSel.innerHTML = "";
+      var opt = function (v, label) { var o = el("option", "", label); o.value = v; crmSel.appendChild(o); };
+      opt("", t("f.crmNone"));
+      list.forEach(function (x) { crmNames[x.id] = x.name; opt(x.id, x.name + (x.afm ? " · " + x.afm : "")); });
+      if (c && c.crm && !crmNames[c.crm]) opt(c.crm, t("f.crmAway"));
+      crmSel.value = c && c.crm ? c.crm : "";
+      crmF.hidden = !list.length && !(c && c.crm);
+    };
+    if (c && c.crm) fillCrm([]);
+    if (hasKey(CRM_KEY)) loadOther("../crm/core.js", "OrosCrmCore", function (K) {
+      var d = K ? crmData() : null;
+      if (d && typeof K.customersForBilling === "function") fillCrm(K.customersForBilling(d));
+    });
+    crmSel.addEventListener("change", function () {   // a new client takes the customer's name
+      if (crmSel.value && !name.value.trim() && crmNames[crmSel.value]) name.value = crmNames[crmSel.value];
+    });
     var left = [];
     if (c) left.push(button(t("dlg.del"), "danger", function () { if (deleteClient(id)) dlg.close(); }));
     actions(form, left, c ? t("dlg.save") : t("dlg.add"));
@@ -1823,6 +1888,7 @@
       if (!bill) return;
       if (id && !C.client(data, id)) { dlg.close(); return; }
       var crec = Object.assign({ name: nm, rate: cents }, bill);
+      if (crmSel.value) crec.crm = crmSel.value;
       saveClient(id, crec);
       dlg.close();
       renderAll();
@@ -1863,6 +1929,7 @@
     form.appendChild(field(t("f.amount") + " (" + data.prefs.cur + ")", amt));
     var billed = checkRow(t("f.billed"), x ? x.billed : 0);
     form.appendChild(billed.row);
+    if (x && x.billed && x.iv) invRow(form, x.iv);
     var left = [];
     if (x) left.push(button(t("dlg.del"), "danger", function () { dlg.close(); deleteExtra(id); }));
     actions(form, left, x ? t("dlg.save") : t("dlg.add"));
@@ -2041,17 +2108,247 @@
   }
   // The same billable lines as Create quote, as a new prefilled
   // invoice in Invoices (any currency). Nothing is saved there until
-  // the user saves or issues. Marking time as invoiced stays here.
+  // the user saves or issues. T1 (BR-TS-INV): the invoice carries a
+  // batch ref; once a document made from it exists, invReconcile marks
+  // exactly these entries and extra charges as invoiced on it.
   function createInvoice() {
-    var p = invoicesOpener();
-    if (!p || !repState) return;
+    if (!repState) return;
     var f = repState.f;
-    var q = C.quoteLines(data, repState.keys[0], repState.keys[1],
-      { client: f.client, project: f.project, billed: f.billed, tag: f.tag }, Date.now(), LANG);
+    createInvoiceFor(repState.keys[0], repState.keys[1], { client: f.client, project: f.project, billed: f.billed, tag: f.tag });
+  }
+  function createInvoiceFor(fromKey, toKey, f) {
+    var p = invoicesOpener();
+    if (!p) return;
+    var q = C.quoteLines(data, fromKey, toKey, f, Date.now(), LANG);
     if (!q.items.length) { showToast(t("quote.none")); return; }
-    var payload = { items: q.items.slice(0, 50), cur: data.prefs.cur, ref: { app: "timesheet", id: "report" } };
-    if (q.client) payload.name = q.client;
-    p.__orosOpenAt("invoices", { "new": payload });
+    var ids = q.ids.filter(function (id) { var x = findEntry(id); return x && x.e !== 0; });
+    var cids = {};
+    ids.forEach(function (id) { var pr = C.project(data, findEntry(id).p); cids[pr ? pr.client : ""] = 1; });
+    q.exIds.forEach(function (id) { var x = findExtra(id); if (x) cids[C.extraClient(data, x)] = 1; });
+    var ck = Object.keys(cids), cl = ck.length === 1 ? C.client(data, ck[0]) : null;
+    var send = function (party) {
+      var batch = newId();
+      pendPut(C.pendAdd(pendGet(), batch, ids, q.exIds, Date.now()));
+      var payload = { items: q.items.slice(0, 50), cur: data.prefs.cur, ref: { app: "timesheet", id: batch } };
+      if (party) Object.keys(party).forEach(function (k) { if (party[k]) payload[k] = party[k]; });
+      else if (q.client) payload.name = q.client;
+      p.__orosOpenAt("invoices", { "new": payload });
+    };
+    if (!cl) { send(null); return; }
+    crmParty(cl, send);
+  }
+
+  // ---------- T1: Invoices link (BR-TS-INV) + CRM clients (BR-TS-CRM) ----------
+  // Timesheet only READS Invoices and CRM (their own cores, loaded on
+  // demand when this device has their data); it writes its own data.
+  var INV_KEY = "oros-invoices-data", CRM_KEY = "oros-crm-data";
+  var otherLoad = {}, foreign = {};
+  function hasKey(k) { try { return !!localStorage.getItem(k); } catch (e) { return false; } }
+  function loadOther(src, name, done) {
+    if (window[name]) { done(window[name]); return; }
+    var w = otherLoad[src];
+    if (w === "failed") { done(null); return; }
+    if (w) { w.push(done); return; }
+    w = otherLoad[src] = [done];
+    var sc = document.createElement("script");
+    sc.src = src + (XLSX_V ? "?v=" + XLSX_V : "");
+    sc.onload = sc.onerror = function () {
+      otherLoad[src] = window[name] ? null : "failed";
+      w.forEach(function (fn) { fn(window[name] || null); });
+    };
+    document.head.appendChild(sc);
+  }
+  function readForeign(key, parse) {
+    var raw = null;
+    try { raw = localStorage.getItem(key); } catch (e) {}
+    var f = foreign[key] || (foreign[key] = { raw: undefined, data: null });
+    if (raw !== f.raw) {
+      f.raw = raw;
+      try { f.data = raw ? parse(raw) : null; } catch (e) { f.data = null; }
+    }
+    return f.data;
+  }
+  function invData() {
+    var I = window.OrosInvoicesCore;
+    return I ? readForeign(INV_KEY, function (raw) { return I.parse(raw); }) : null;
+  }
+  function crmData() {
+    var K = window.OrosCrmCore;
+    return K && typeof K.norm === "function" ? readForeign(CRM_KEY, function (raw) { return K.norm(JSON.parse(raw)); }) : null;
+  }
+  function pendGet() {
+    try { return C.normPend(JSON.parse(localStorage.getItem(C.PEND_KEY) || "null"), Date.now()); } catch (e) { return {}; }
+  }
+  function pendPut(o) {
+    try {
+      if (Object.keys(o).length) localStorage.setItem(C.PEND_KEY, JSON.stringify(o));
+      else localStorage.removeItem(C.PEND_KEY);
+    } catch (e) {}
+  }
+  // true: deleted, cancelled or credited in full; false: it stands;
+  // null: not on this device (yet).
+  function invGone(I, inv, id) {
+    var d = I.anyId(inv.docs, id);
+    if (!d) return null;
+    if (d.del || d.st === "void") return true;
+    if (d.st !== "issued" || d.kind === "cred") return false;
+    var cr = 0;
+    I.creditsOf(inv, d.id).forEach(function (c) { cr += I.totals(c).pay; });
+    return cr > 0 && cr >= I.totals(d).pay;
+  }
+  // Number and state of an invoice, for the marks: null when unknown.
+  function invInfo(id) {
+    var I = window.OrosInvoicesCore, inv = I ? invData() : null;
+    var d = inv && id ? I.doc(inv, id) : null;
+    if (!d) return null;
+    return { id: d.id, num: d.num, st: I.status(inv, d, todayKey()) };
+  }
+  function invText(id) {
+    var i = invInfo(id);
+    if (!i) return id ? t("inv.away") : "";
+    if (!i.num) return t("inv.draft");
+    var st = t("inv.st." + i.st);
+    return t("inv.on", { n: i.num }) + (st.indexOf("inv.st.") ? " · " + st : "");
+  }
+  function openInvoice(id) {
+    var p = invoicesOpener();
+    if (p && id) p.__orosOpenAt("invoices", { invoice: id });
+  }
+  var invTimer = 0;
+  function invReconcileSoon() {
+    clearTimeout(invTimer);
+    invTimer = setTimeout(invReconcile, 300);
+  }
+  function invReconcile() {
+    if (!hasKey(INV_KEY)) return;
+    loadOther("../invoices/core.js", "OrosInvoicesCore", function (I) {
+      var inv = I ? invData() : null;
+      if (!inv || typeof I.bySrc !== "function") return;
+      var now = Date.now(), pend = pendGet();
+      var r = C.invLink(data, pend, {
+        doc: function (b) {
+          var l = I.bySrc(inv, "timesheet:" + b).sort(function (x, y) { return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0); });
+          return l.length ? l[0].id : "";
+        },
+        gone: function (id) { return invGone(I, inv, id); }
+      }, now);
+      var setN = 0, clearN = 0, num = "";
+      r.set.forEach(function (x) {
+        var e = findEntry(x.id) || findExtra(x.id);
+        if (!e) return;
+        e.billed = 1;
+        e.iv = x.iv;
+        e.m = stamp(e.m);
+        setN++;
+        if (!num) { var info = invInfo(x.iv); num = info && info.num ? info.num : t("inv.draftNum"); }
+      });
+      r.clear.forEach(function (id) {
+        var e = findEntry(id) || findExtra(id);
+        if (!e) return;
+        e.billed = 0;
+        delete e.iv;
+        e.m = stamp(e.m);
+        clearN++;
+      });
+      if (r.done.length || Object.keys(pend).length !== Object.keys(pendGet()).length) {
+        r.done.forEach(function (b) { delete pend[b]; });
+        pendPut(pend);
+      }
+      if (setN || clearN) saveNow();
+      renderAll();
+      if (setN) showToast(t("toast.invLinked", { n: setN, num: num }));
+      else if (clearN) showToast(t("toast.invGone", { n: clearN }));
+    });
+  }
+  // The invoice party of a client: its CRM customer (its own crm link,
+  // else the one CRM linked it to), else just its name.
+  function crmParty(c, done) {
+    if (!hasKey(CRM_KEY)) { done(c.crm ? { crm: c.crm, name: c.name } : { name: c.name }); return; }
+    loadOther("../crm/core.js", "OrosCrmCore", function (K) {
+      var d = K ? crmData() : null, cust = null;
+      if (d && typeof K.customersForBilling === "function") {
+        var id = c.crm;
+        if (!id && typeof K.linkOwner === "function") { var o = K.linkOwner(d, "tsc:" + c.id); id = o ? o.id : ""; }
+        if (id) cust = K.customersForBilling(d).filter(function (x) { return x.id === id; })[0] || null;
+      }
+      if (!cust) { done(c.crm ? { crm: c.crm, name: c.name } : { name: c.name }); return; }
+      done({ crm: cust.id, name: cust.name, afm: cust.afm, doy: cust.doy, job: cust.job, addr: cust.addr,
+             country: cust.country, email: cust.email, phone: cust.phone });
+    });
+  }
+
+  // ---------- T1: To invoice (unbilled time, unpaid invoices) ----------
+  function openByClient(I, inv, day) {
+    var docs = {};
+    var add = function (cid, id) { (docs[cid] || (docs[cid] = {}))[id] = 1; };
+    C.live(data.entries).forEach(function (x) {
+      if (x.billed && x.iv) { var pr = C.project(data, x.p); add(pr ? pr.client : "", x.iv); }
+    });
+    C.live(data.extras || []).forEach(function (x) { if (x.billed && x.iv) add(C.extraClient(data, x), x.iv); });
+    C.live(data.clients).forEach(function (c) {
+      if (c.crm) I.byCrm(inv, c.crm, day).rows.forEach(function (r) { add(c.id, r.id); });
+    });
+    var out = {};
+    Object.keys(docs).forEach(function (cid) {
+      var o = { cur: {}, late: 0 };
+      Object.keys(docs[cid]).forEach(function (id) {
+        var d = I.doc(inv, id);
+        if (!d) return;
+        var bal = I.balance(inv, d);
+        if (bal <= 0) return;
+        o.cur[d.cur] = (o.cur[d.cur] || 0) + bal;
+        if (I.status(inv, d, day) === "overdue") o.late++;
+      });
+      if (Object.keys(o.cur).length) out[cid] = o;
+    });
+    return out;
+  }
+  function renderBill() {
+    var now = Date.now(), tk = todayKey();
+    var rows = C.unbilled(data, tk, now), byCid = {};
+    rows.forEach(function (r) { byCid[r.cid] = r; });
+    var I = window.OrosInvoicesCore, inv = I ? invData() : null;
+    var open = inv ? openByClient(I, inv, tk) : {};
+    var cids = rows.map(function (r) { return r.cid; });
+    Object.keys(open).sort().forEach(function (cid) { if (cids.indexOf(cid) < 0) cids.push(cid); });
+    var host = $("bill-list");
+    host.innerHTML = "";
+    cids.forEach(function (cid) {
+      var c = C.client(data, cid), r = byCid[cid], o = open[cid];
+      var card = el("section", "ub-card");
+      card.appendChild(el("h3", "ub-name", c ? c.name : t("noClient")));
+      if (r) {
+        card.appendChild(el("p", "ub-open", t("ub.open", { d: dur(r.ms), a: money(r.amount) })));
+        if (r.since) card.appendChild(el("p", "ub-sub", t("ub.since", { d: shortDate(r.since) })));
+      }
+      if (o) {
+        var amts = Object.keys(o.cur).sort().map(function (k) { return C.fmtMoney(o.cur[k], k, LANG); }).join(" + ");
+        card.appendChild(el("p", "ub-unpaid" + (o.late ? " late" : ""),
+          t("ub.unpaid", { a: amts }) + (o.late ? " · " + t("ub.late", { n: o.late }) : "")));
+      }
+      var acts = el("div", "ub-acts");
+      if (r && invoicesOpener()) {
+        var bi = el("button", "mini-btn", t("rep.invoice"));
+        bi.type = "button";
+        bi.addEventListener("click", function () { createInvoiceFor("2000-01-01", tk, { client: cid || "-", billed: "open" }); });
+        acts.appendChild(bi);
+      }
+      if (r) {
+        var br = el("button", "mini-btn", t("ub.report"));
+        br.type = "button";
+        br.addEventListener("click", function () {
+          var rp = prefs.rep;
+          rp.range = "custom"; rp.from = r.since || C.monthStart(tk); rp.to = tk;
+          rp.client = cid || "-"; rp.project = ""; rp.bill = "bill"; rp.billed = "open"; rp.tag = "";
+          savePrefs();
+          setTab("report");
+        });
+        acts.appendChild(br);
+      }
+      if (acts.childNodes.length) card.appendChild(acts);
+      host.appendChild(card);
+    });
+    $("bill-empty").hidden = cids.length > 0;
   }
   function exportBackup() {
     saveText(C.toBackup(data), "oros-timesheet-backup-" + todayKey() + ".json", "application/json", ".json", "JSON");
@@ -2397,6 +2694,7 @@
     }
     if (JSON.stringify(data) === before) return;   // no toast (sync feedback = taskbar dot)
     renderAll();
+    invReconcileSoon();
   }
 
   // ---------- 13. Wiring & boot ----------
@@ -2416,7 +2714,7 @@
     iconBtn("wprev-btn", UI.left, t("wprev"));
     iconBtn("wnext-btn", UI.right, t("wnext"));
     iconBtn("set-btn", UI.gear, t("settings"));
-    var icons = { timer: UI.timer, week: UI.week, report: UI.chart, projects: UI.folder };
+    var icons = { timer: UI.timer, week: UI.week, report: UI.chart, bill: UI.bill, projects: UI.folder };
     TABS.forEach(function (k) {
       var b = $("tab-" + k);
       b.innerHTML = icons[k] + "<span></span>";
@@ -2532,9 +2830,12 @@
     }, 1000);
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) flushDesc();
-      else { drainInbox(); if (!document.querySelector("dialog[open]")) renderAll(); }
+      else { drainInbox(); invReconcileSoon(); if (!document.querySelector("dialog[open]")) renderAll(); }
     });
-    window.addEventListener("storage", function (ev) { if (ev.key === C.INBOX_KEY) drainInbox(); });
+    window.addEventListener("storage", function (ev) {
+      if (ev.key === C.INBOX_KEY) drainInbox();
+      if (ev.key === INV_KEY) invReconcileSoon();   // T1: an invoice was saved, issued, cancelled or paid
+    });
     window.addEventListener("pagehide", flushDesc);
     wireKeyboard();
   }
@@ -2611,6 +2912,7 @@
     setTab(prefs.tab);
     takeShellToggle();
     drainInbox();
+    invReconcileSoon();
   }
 
   boot();

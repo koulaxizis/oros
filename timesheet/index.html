@@ -19,6 +19,7 @@
       <button type="button" class="tab" role="tab" data-tab="timer" id="tab-timer"></button>
       <button type="button" class="tab" role="tab" data-tab="week" id="tab-week"></button>
       <button type="button" class="tab" role="tab" data-tab="report" id="tab-report"></button>
+      <button type="button" class="tab" role="tab" data-tab="bill" id="tab-bill"></button>
       <button type="button" class="tab" role="tab" data-tab="projects" id="tab-projects"></button>
     </nav>
     <span class="spacer"></span>
@@ -116,6 +117,13 @@
         <button type="button" class="wide-btn" id="rep-quote" hidden></button>
         <button type="button" class="wide-btn" id="rep-invoice" hidden></button>
       </div>
+    </section>
+
+    <!-- To invoice (T1): time not invoiced yet and unpaid invoices, per client -->
+    <section id="v-bill" class="view" role="tabpanel" hidden>
+      <p class="hint" data-i18n="ub.hint">Billable time and extra charges not invoiced yet, from all time, per client. Unpaid invoices come from Invoices on this device.</p>
+      <div id="bill-list"></div>
+      <p class="hint" id="bill-empty" data-i18n="ub.none">Everything is invoiced.</p>
     </section>
 
     <!-- Clients + projects -->

@@ -6,12 +6,15 @@
 //
 // Data (synced slice "timesheet", key oros-timesheet-data):
 //   { ver: 1,
-//     clients:  [ { id, name, rate, <billing>, m } | { id, m, del: 1 } ]
+//     clients:  [ { id, name, rate, <billing>, crm?, m } | { id, m, del: 1 } ]
+//               crm = the CRM customer it is (T1), written only when set
 //     projects: [ { id, name, client, color, rate, bill, arch, <billing>, m } | tomb ]
 //               <billing> = minH?, minAmt?, otH?, minPer?, otRate? (minimum
 //               charge and overtime, see normBilling)
-//     entries:  [ { id, p, desc, s, e, billed, m } | tomb ]
-//     extras:   [ { id, d, p, c, desc, amt, billed, m } | tomb ]
+//     entries:  [ { id, p, desc, s, e, billed, task?, tags?, iv?, m } | tomb ]
+//               iv = the Invoices document it went on (T1, BR-TS-INV),
+//               written only when set and meant only while billed
+//     extras:   [ { id, d, p, c, desc, amt, billed, iv?, m } | tomb ]
 //               extra charges (fuel, travel, …): written only when
 //               the list has a record, so data without one stays
 //               byte-identical to what older versions write
@@ -30,6 +33,7 @@
 //   3. Lookups + rates
 //   4. Time maths: day pieces, rounding, week grid, reports
 //   5. Parsing + formatting
+//   5b. Invoices link + unbilled time (T1)
 //   6. Export: CSV + JSON backup
 // ============================================================
 (function (root) {
@@ -117,6 +121,10 @@
   }
   function tomb(x) { return { id: x.id, m: x.m, del: 1 }; }
   function refId(v) { return typeof v === "string" && ID_RE.test(v) ? v : ""; }
+  // An id of another app's record (an Invoices document, a CRM
+  // customer): the shape those apps accept, nothing more is assumed.
+  var LINK_RE = /^[A-Za-z0-9_-]{1,60}$/;
+  function linkId(v) { return typeof v === "string" && LINK_RE.test(v) ? v : ""; }
 
   // Forward compatibility (as in Budget): a flat field this version
   // does not know rides along on its record, sorted by name, so a
@@ -124,11 +132,11 @@
   // (stripping would make two versions re-upload forever).
   var EXTRA_RE = /^[a-z][a-z0-9]{0,15}$/, EXTRA_MAX = 16;
   var KNOWN = {
-    client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
+    client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "crm", "m", "del"],
     project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget",
               "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
-    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "m", "del"],
-    extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "m", "del"]
+    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "iv", "m", "del"],
+    extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "iv", "m", "del"]
   };
   function withExtras(out, x, known) {
     var n = 0;
@@ -166,6 +174,9 @@
     if (!name) return null;
     var out = { id: x.id, name: name, rate: inRange(x.rate, LIM.rate) ? x.rate : 0 };
     normBilling(out, x);
+    // T1: the CRM customer this client is (BR-TS-CRM), written only when set
+    var crm = linkId(x.crm);
+    if (crm) out.crm = crm;
     out.m = x.m;
     return withExtras(out, x, KNOWN.client);
   }
@@ -219,6 +230,8 @@
     var task = cleanText(x.task, LIM.task), tags = normTags(x.tags);
     if (task) out.task = task;
     if (tags.length) out.tags = tags;
+    var iv = linkId(x.iv);        // T1: the Invoices document it went on (meant only while billed)
+    if (iv) out.iv = iv;
     out.m = x.m;
     return withExtras(out, x, KNOWN.entry);
   }
@@ -228,10 +241,14 @@
     if (!baseOk(x)) return null;
     if (x.del) return tomb(x);
     if (!validDay(x.d) || !inRange(x.amt, LIM.amt)) return null;
-    return withExtras({
+    var out = {
       id: x.id, d: x.d, p: refId(x.p), c: refId(x.c), desc: cleanText(x.desc, LIM.exDesc),
-      amt: x.amt, billed: x.billed ? 1 : 0, m: x.m
-    }, x, KNOWN.extra);
+      amt: x.amt, billed: x.billed ? 1 : 0
+    };
+    var iv = linkId(x.iv);        // T1: the Invoices document it went on (meant only while billed)
+    if (iv) out.iv = iv;
+    out.m = x.m;
+    return withExtras(out, x, KNOWN.extra);
   }
   // Fixed key order: two devices with the same prefs serialize alike.
   function normPrefs(p) {
@@ -860,6 +877,91 @@
   }
   function hhmm(ts) { var d = new Date(ts); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
 
+  // ---------- 5b. Invoices link + unbilled time (T1, BR-TS-INV) ----------
+  // "Create invoice" opens a prefilled invoice whose ref is
+  // { app: "timesheet", id: <batch> }; Invoices keeps it on the saved
+  // document as src "timesheet:<batch>" (Invoices wave 7). The ids of
+  // that invoice's entries and extra charges wait in a DEVICE-LOCAL
+  // list (PEND_KEY, never synced): once a document made from the batch
+  // exists (a draft too, so the same hours are not invoiced twice),
+  // they are marked invoiced with iv = the document's id, and that mark
+  // syncs like any edit. A document that is deleted, cancelled or
+  // credited in full takes its marks off again. An iv whose document
+  // this device does not know yet (Invoices not synced here) is left
+  // alone, so a slower device never undoes a mark.
+  var PEND_KEY = "oros-timesheet-invpend", PEND_MAX = 20, PEND_MS = 30 * DAY, PEND_IDS = 2000;
+  function pendIds(v) {
+    return Array.isArray(v) ? v.filter(function (x) { return typeof x === "string" && ID_RE.test(x); }).slice(0, PEND_IDS) : [];
+  }
+  // Pending batches: { <batch>: { at, ids, ex } }, at most PEND_MAX
+  // (the newest), each dropped 30 days after it was made.
+  function normPend(o, now) {
+    var out = {};
+    if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+    Object.keys(o).filter(function (k) { return ID_RE.test(k); }).forEach(function (k) {
+      var b = o[k];
+      if (!b || typeof b !== "object" || !isInt(b.at) || now - b.at > PEND_MS || b.at > now + DAY) return;
+      var ids = pendIds(b.ids), ex = pendIds(b.ex);
+      if (ids.length || ex.length) out[k] = { at: b.at, ids: ids, ex: ex };
+    });
+    Object.keys(out).sort(function (a, b) { return out[b].at - out[a].at || cmpStr(a, b); })
+      .slice(PEND_MAX).forEach(function (k) { delete out[k]; });
+    return out;
+  }
+  function pendAdd(pend, batch, ids, exIds, now) {
+    var o = normPend(pend, now);
+    if (ID_RE.test(batch)) o[batch] = { at: now, ids: pendIds(ids), ex: pendIds(exIds) };
+    return normPend(o, now);
+  }
+  // look.doc(batch) → the id of the document made from that batch, or "";
+  // look.gone(docId) → true (deleted, cancelled or credited in full),
+  // false (it stands), null (this device does not know it).
+  // → { set: [{ id, iv }], clear: [id], done: [batch] }
+  function invLink(data, pend, look, now) {
+    var out = { set: [], clear: [], done: [] }, seen = {}, gone = {};
+    var goneOf = function (id) { if (!(id in gone)) gone[id] = look.gone(id); return gone[id]; };
+    var p = normPend(pend, now);
+    Object.keys(p).sort(cmpStr).forEach(function (b) {
+      var doc = linkId(look.doc(b));
+      if (!doc || goneOf(doc) === true) return;
+      out.done.push(b);
+      p[b].ids.concat(p[b].ex).forEach(function (id) {
+        var x = byId(data.entries, id) || byId(data.extras || [], id);
+        if (!x || seen[id] || x.e === 0) return;
+        if (x.billed && x.iv && x.iv !== doc && goneOf(x.iv) !== true) return;   // on another invoice already
+        seen[id] = true;
+        if (!(x.billed && x.iv === doc)) out.set.push({ id: id, iv: doc });
+      });
+    });
+    live(data.entries).concat(live(data.extras || [])).forEach(function (x) {
+      if (x.iv && x.billed && !seen[x.id] && goneOf(x.iv) === true) out.clear.push(x.id);
+    });
+    return out;
+  }
+  // Billable time and extra charges not invoiced yet, per client (all
+  // time up to today, minimums and overtime as in Reports):
+  // [{ cid, ms, amount, since, n }], the largest amount first; since =
+  // the day of the oldest piece, n = entries + extra charges.
+  function unbilled(data, todayKey, now) {
+    var rep = report(data, "2000-01-01", todayKey, { bill: "bill", billed: "open", group: "client" }, now);
+    var since = {}, n = {};
+    var note = function (cid, day) {
+      if (!since[cid] || day < since[cid]) since[cid] = day;
+      n[cid] = (n[cid] || 0) + 1;
+    };
+    rep.ids.forEach(function (id) {
+      var x = byId(data.entries, id), p = x ? project(data, x.p) : null;
+      if (x) note(p ? p.client : "", dayKeyOf(x.s));
+    });
+    rep.exIds.forEach(function (id) {
+      var x = byId(data.extras || [], id);
+      if (x) note(extraClient(data, x), x.d);
+    });
+    return rep.rows.filter(function (r) { return r.billMs > 0 || r.amount > 0; }).map(function (r) {
+      return { cid: r.key, ms: r.billMs, amount: r.amount, since: since[r.key] || "", n: n[r.key] || 0 };
+    }).sort(function (a, b) { return b.amount - a.amount || b.ms - a.ms || cmpStr(a.cid, b.cid); });
+  }
+
   // ---------- 6. Export ----------
   // A text cell that Excel / LibreOffice would read as a formula gets
   // a leading apostrophe (CSV injection), then RFC 4180 quoting.
@@ -1423,7 +1525,8 @@
     parseDuration: parseDuration, parseMoney: parseMoney, fmtDur: fmtDur, fmtHours: fmtHours,
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
     csvCell: csvCell, toCsv: toCsv, toTable: toTable, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
-    readCsv: readCsv, importPlan: importPlan
+    readCsv: readCsv, importPlan: importPlan,
+    PEND_KEY: PEND_KEY, normPend: normPend, pendAdd: pendAdd, invLink: invLink, unbilled: unbilled, linkId: linkId
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

@@ -417,6 +417,22 @@ table.rep tfoot th, table.rep tfoot td { font-weight: 900; border-bottom: none; 
 .rep-acts { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
 .rep-acts .wide-btn { flex: 1 1 200px; }
 
+/* ---------- 7b. To invoice (T1) ---------- */
+#v-bill > .hint:first-child { margin-bottom: 12px; }
+.ub-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.ub-name { margin: 0 0 4px; font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+.ub-card p { margin: 2px 0; font-size: 13px; overflow-wrap: anywhere; }
+.ub-open { font-weight: 700; }
+.ub-sub { color: var(--text-dim); }
+.ub-unpaid.late { color: var(--danger); }
+.ub-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.inv-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 13px; color: var(--text-dim); }
+
 /* ---------- 8. Projects ---------- */
 .p-group { margin-bottom: 16px; }
 .p-head { margin-bottom: 6px; }
