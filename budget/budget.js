@@ -138,12 +138,16 @@
       "cy.rate": "Interest, % a year", "cy.hint": "Budget then shows what each statement asks for, what you paid and what is left by the due date, and roughly what interest it costs if not paid in full. Leave both days empty for an account without a cycle.",
       "cy.needDays": "Both days, from 1 to 31", "cy.needRate": "Interest: a yearly percentage from 0 to 100",
       "cy.feesCat": "Interest & fees", "cy.feeNote": "Card interest",
-      "iv.h": "Investment: crypto, gold, shares", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
+      "iv.h": "Investment or property: crypto, gold, shares, home, car", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
       "iv.kc": "Crypto", "iv.km": "Gold or silver", "iv.ks": "Shares, ETF or other", "iv.sym": "Which", "iv.gold": "gold or silver",
       "iv.qty": "Quantity", "iv.unit": "Unit", "iv.oz": "Troy ounces", "iv.g": "Grams", "iv.price": "Price per unit (optional)",
       "iv.hintC": "A symbol such as BTC, ETH or SOL, or the coin's CoinGecko id. The price comes from CoinGecko when online; type one to use when it can't be reached.",
       "iv.hintM": "\"gold\" or \"silver\": the price comes from CoinGecko (gold- and silver-backed tokens, one ounce each), so it is close to, not exactly, the market price. Platinum and others: type the price.",
       "iv.hintS": "Type the ticker and the price per share from your broker or bank; update it when you like. The account's balance (its starting balance plus transfers into it) is what you paid; Overview shows the value and the gain or loss.",
+      "iv.kp": "Home, car or other valuable", "iv.what": "What it is (optional)", "iv.what.ph": "Flat in Athens, Fiat Panda…",
+      "iv.value": "Value", "iv.day": "Value on", "iv.rate": "Change a year, % (optional)",
+      "iv.hintP": "Its value on a day, from a valuation, an ad for similar ones or what you paid. A change a year moves it on by itself: about −15 for a car, +2 to +5 for a home. Update the value whenever you know better.",
+      "iv.needValue": "Type its value", "iv.needDay": "Pick the day of that value", "iv.needRate": "Change a year: a percentage from −100 to 100, such as -15",
       "iv.needSym": "Type what the account holds", "iv.needQty": "Quantity: a number above 0, such as 0.25", "iv.needPrice": "Type the price per unit", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
       "cy.guessDue": "Due day: when {n} of your payments came in.", "cy.guessStmt": "Statement day: about three weeks before it, as on most cards.",
       "cy.guessRate": "Interest: from the interest charged on {d}.", "cy.guessCheck": "Check them against a statement.", "cy.guessKept": "The fields you filled stay as they are.",
@@ -263,12 +267,16 @@
       "cy.rate": "Επιτόκιο, % τον χρόνο", "cy.hint": "Η εφαρμογή δείχνει τότε τι ζητά κάθε λογαριασμός της κάρτας, τι πλήρωσες και τι μένει ως τη λήξη, και περίπου τι τόκο κοστίζει αν δεν εξοφληθεί. Άφησε κενές και τις δύο ημέρες για λογαριασμό χωρίς κύκλο.",
       "cy.needDays": "Και οι δύο ημέρες, από 1 ως 31", "cy.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
       "cy.feesCat": "Τόκοι και χρεώσεις", "cy.feeNote": "Τόκοι κάρτας",
-      "iv.h": "Επένδυση: κρυπτονομίσματα, χρυσός, μετοχές", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
+      "iv.h": "Επένδυση ή περιουσία: κρυπτο, χρυσός, μετοχές, σπίτι, αυτοκίνητο", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
       "iv.kc": "Κρυπτονόμισμα", "iv.km": "Χρυσός ή ασήμι", "iv.ks": "Μετοχές, ETF ή άλλο", "iv.sym": "Ποιο", "iv.gold": "χρυσός ή ασήμι",
       "iv.qty": "Ποσότητα", "iv.unit": "Μονάδα", "iv.oz": "Ουγγιές", "iv.g": "Γραμμάρια", "iv.price": "Τιμή ανά μονάδα (προαιρετικό)",
       "iv.hintC": "Ένα σύμβολο όπως BTC, ETH ή SOL, ή το id του νομίσματος στο CoinGecko. Η τιμή έρχεται από το CoinGecko όταν υπάρχει σύνδεση· γράψε μία για όταν δεν απαντά.",
       "iv.hintM": "«χρυσός» ή «ασήμι»: η τιμή έρχεται από το CoinGecko (tokens με κάλυψη χρυσού και ασημιού, μία ουγγιά το καθένα), άρα είναι κοντά, όχι ακριβώς, στην τιμή της αγοράς. Πλατίνα και άλλα: γράψε την τιμή.",
       "iv.hintS": "Γράψε το σύμβολο και την τιμή ανά μετοχή από τον χρηματιστή ή την τράπεζά σου· άλλαξέ την όποτε θέλεις. Το υπόλοιπο του λογαριασμού (αρχικό υπόλοιπο συν μεταφορές προς αυτόν) είναι όσα πλήρωσες· η Σύνοψη δείχνει την αξία και το κέρδος ή τη ζημιά.",
+      "iv.kp": "Σπίτι, αυτοκίνητο ή άλλο πολύτιμο", "iv.what": "Τι είναι (προαιρετικό)", "iv.what.ph": "Διαμέρισμα στην Αθήνα, Fiat Panda…",
+      "iv.value": "Αξία", "iv.day": "Αξία στις", "iv.rate": "Μεταβολή τον χρόνο, % (προαιρετικό)",
+      "iv.hintP": "Η αξία του σε μια ημέρα, από εκτίμηση, αγγελίες για παρόμοια ή όσα πλήρωσες. Η μεταβολή τον χρόνο την αλλάζει μόνη της: περίπου −15 για αυτοκίνητο, +2 ως +5 για σπίτι. Άλλαξε την αξία όποτε ξέρεις καλύτερα.",
+      "iv.needValue": "Γράψε την αξία του", "iv.needDay": "Διάλεξε την ημέρα αυτής της αξίας", "iv.needRate": "Μεταβολή τον χρόνο: ποσοστό από −100 ως 100, όπως -15",
       "iv.needSym": "Γράψε τι κρατά ο λογαριασμός", "iv.needQty": "Ποσότητα: αριθμός πάνω από 0, όπως 0,25", "iv.needPrice": "Γράψε την τιμή ανά μονάδα", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
       "cy.guessDue": "Ημέρα λήξης: τότε μπήκαν {n} από τις πληρωμές σου.", "cy.guessStmt": "Ημέρα κλεισίματος: περίπου τρεις εβδομάδες νωρίτερα, όπως στις περισσότερες κάρτες.",
       "cy.guessRate": "Επιτόκιο: από τους τόκους που χρεώθηκαν στις {d}.", "cy.guessCheck": "Έλεγξέ τα με έναν λογαριασμό της κάρτας.", "cy.guessKept": "Τα πεδία που συμπλήρωσες μένουν όπως είναι.",
@@ -3045,7 +3053,7 @@
     var c = INV.cfg(a);
     if (!c) return null;
     var cu = a.cur || cur();
-    return { c: c, val: INV.value(a, pricesNow(), cu), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
+    return { c: c, val: INV.value(a, pricesNow(), cu, today), live: !!INV.liveId(a), failed: pricesFailed && Date.now() - pricesFailed < 30 * 60000 };
   }
   function investValue(a) {
     var i = investInfo(a);
@@ -3650,7 +3658,7 @@
     ivDet.open = !!(a && a.ivk);
     ivDet.appendChild(el("summary", "", t("iv.h")));
     var ivK = el("select");
-    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
+    [["", "iv.none"], ["c", "iv.kc"], ["m", "iv.km"], ["s", "iv.ks"], ["p", "iv.kp"]].forEach(function (o) { var op = el("option", "", t(o[1])); op.value = o[0]; ivK.appendChild(op); });
     ivK.value = a && a.ivk ? a.ivk : "";
     var ivS = el("input"); ivS.maxLength = 60; ivS.autocomplete = "off"; ivS.value = a && a.ivs ? a.ivs : "";
     var ivQ = el("input"); ivQ.inputMode = "decimal"; ivQ.autocomplete = "off"; ivQ.value = a && a.ivq ? a.ivq : "";
@@ -3659,6 +3667,13 @@
     ivU.value = a && a.ivu === "g" ? "g" : "oz";
     var ivP = el("input"); ivP.inputMode = "decimal"; ivP.autocomplete = "off"; ivP.value = a && a.ivp ? centsToInput(a.ivp, LANG) : "";
     var ivSF = field(t("iv.sym"), ivS, "bd-acc-ivs"), ivUF = field(t("iv.unit"), ivU, "bd-acc-ivu");
+    // AS-1: a home, car or valuable: its value on a day and a yearly change
+    var ivD = el("input"); ivD.type = "date"; ivD.value = a && a.ivk === "p" && a.ivd ? a.ivd : today;
+    var ivR = el("input"); ivR.inputMode = "decimal"; ivR.autocomplete = "off"; ivR.placeholder = "-15";
+    ivR.value = a && a.ivr ? (a.ivr < 0 ? "-" : "") + centsToInput(Math.abs(a.ivr), LANG) : "";
+    var ivPF, ivDRow = el("div", "fld-row");
+    ivDRow.appendChild(field(t("iv.day"), ivD, "bd-acc-ivd"));
+    ivDRow.appendChild(field(t("iv.rate"), ivR, "bd-acc-ivr"));
     var ivHint = el("p", "hint");
     ivDet.appendChild(field(t("iv.kind"), ivK, "bd-acc-ivk"));
     ivDet.appendChild(ivSF);
@@ -3666,14 +3681,20 @@
     ivRow.appendChild(field(t("iv.qty"), ivQ, "bd-acc-ivq"));
     ivRow.appendChild(ivUF);
     ivDet.appendChild(ivRow);
-    ivDet.appendChild(field(t("iv.price"), ivP, "bd-acc-ivp"));
+    ivPF = field(t("iv.price"), ivP, "bd-acc-ivp");
+    ivDet.appendChild(ivPF);
+    ivDet.appendChild(ivDRow);
     ivDet.appendChild(ivHint);
     function ivShow() {
       var k = ivK.value;
-      [ivSF, ivRow, ivP.parentNode, ivHint].forEach(function (x) { x.hidden = !k; });
+      [ivSF, ivRow, ivPF, ivHint].forEach(function (x) { x.hidden = !k; });
+      ivRow.hidden = !k || k === "p";
+      ivDRow.hidden = k !== "p";
       ivUF.hidden = k !== "m";
-      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : "AAPL";
-      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : "";
+      ivSF.querySelector("label").textContent = t(k === "p" ? "iv.what" : "iv.sym");
+      ivPF.querySelector("label").textContent = t(k === "p" ? "iv.value" : "iv.price");
+      ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : k === "p" ? t("iv.what.ph") : "AAPL";
+      ivHint.textContent = k === "c" ? t("iv.hintC") : k === "m" ? t("iv.hintM") : k === "s" ? t("iv.hintS") : k === "p" ? t("iv.hintP") : "";
     }
     ivK.addEventListener("change", ivShow);
     ivShow();
@@ -3702,7 +3723,16 @@
         cy = { cys: ds, cyd: dd, cyr: rr };
       }
       var iv = null;
-      if (ivK.value) {
+      if (ivK.value === "p") {
+        var pv0 = ivP.value.trim() ? parseAmount(ivP.value) : null;
+        if (!pv0) { ivDet.open = true; showErr(err, t("iv.needValue"), ivP); return; }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(ivD.value)) { ivDet.open = true; showErr(err, t("iv.needDay"), ivD); return; }
+        var rv0 = parseSigned(ivR.value);
+        if (rv0 === null || Math.abs(rv0) > 10000) { ivDet.open = true; showErr(err, t("iv.needRate"), ivR); return; }
+        iv = { ivk: "p", ivq: "1", ivp: pv0, ivd: ivD.value };
+        if (ivS.value.trim()) iv.ivs = ivS.value.trim().slice(0, 60);
+        if (rv0) iv.ivr = rv0;
+      } else if (ivK.value) {
         var qv = ivQ.value.trim(), sv = ivS.value.trim();
         if (!sv) { ivDet.open = true; showErr(err, t("iv.needSym"), ivS); return; }
         if (!INV || INV.qty(qv) === null) { ivDet.open = true; showErr(err, t("iv.needQty"), ivQ); return; }
@@ -3715,10 +3745,10 @@
         if (pv) { iv.ivp = pv; iv.ivd = a && a.ivp === pv && a.ivd ? a.ivd : today; }
       }
       function setIv(o2) {
-        ["ivd", "ivk", "ivp", "ivq", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
+        ["ivd", "ivk", "ivp", "ivq", "ivr", "ivs", "ivu"].forEach(function (k) { delete o2[k]; });
         if (iv) Object.keys(iv).sort().forEach(function (k) { o2[k] = iv[k]; });
       }
-      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd"].map(function (k) { return o2[k] || ""; }).join("|"); };
+      var ivKey = function (o2) { return ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd", "ivr"].map(function (k) { return o2[k] || ""; }).join("|"); };
       function setCy(o2) {
         delete o2.cys; delete o2.cyd; delete o2.cyr;
         if (cy) { o2.cyd = cy.cyd; if (cy.cyr) o2.cyr = cy.cyr; o2.cys = cy.cys; }

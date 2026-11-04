@@ -10,6 +10,11 @@
 //   ivu  metal unit: "oz" (troy ounce) or "g"; absent = oz
 //   ivp  a price typed by hand, cents per unit in the account's currency
 //   ivd  the day of that price
+//   ivr  (kind "p" only) yearly change in hundredths of a percent,
+//        −10000…10000: a car −1500 (−15 % a year), a home +300
+// Kind "p" (AS-1): a home, a car or anything of value with no market
+// price: ivq "1", ivs an optional description, ivp its value on ivd,
+// and the value today = ivp × (1 + ivr) ^ (years since ivd).
 // The account's balance stays what was paid (its starting balance and
 // the transfers into it); its value is quantity × price. Live prices
 // come from CoinGecko's free public API (no key) for crypto and for
@@ -19,7 +24,7 @@
 (function (root) {
   "use strict";
 
-  var KINDS = { c: 1, m: 1, s: 1 };
+  var KINDS = { c: 1, m: 1, s: 1, p: 1 };
   var SYM_RE = /^[\p{L}\p{N} ._-]{1,60}$/u;
   var QTY_RE = /^\d{1,12}([.,]\d{1,12})?$/;
   var OZ_G = 31.1034768;
@@ -48,6 +53,15 @@
   // Clean an account's investment extras in place (y is a copy of the
   // stored account). Without a valid kind and quantity all are dropped.
   function clean(y) {
+    if (y.ivk === "p") {                      // AS-1: a value typed on a day
+      if (typeof y.ivs !== "string" || !SYM_RE.test(y.ivs.trim())) delete y.ivs; else y.ivs = y.ivs.trim();
+      y.ivq = "1";
+      if (!(isInt(y.ivr) && y.ivr >= -10000 && y.ivr <= 10000 && y.ivr !== 0)) delete y.ivr;
+      delete y.ivu;
+      if (!(isInt(y.ivp) && y.ivp > 0 && y.ivp <= 100000000000 && okYmd(y.ivd))) { ["ivk", "ivs", "ivq", "ivp", "ivd", "ivr"].forEach(function (k) { delete y[k]; }); }
+      return y;
+    }
+    delete y.ivr;
     var ok = KINDS[y.ivk] && typeof y.ivs === "string" && SYM_RE.test(y.ivs.trim()) && qty(y.ivq) !== null;
     if (!ok) { ["ivk", "ivs", "ivq", "ivu", "ivp", "ivd"].forEach(function (k) { delete y[k]; }); return y; }
     y.ivs = y.ivs.trim();
@@ -59,6 +73,7 @@
   }
   function cfg(a) {
     if (!a || !KINDS[a.ivk]) return null;
+    if (a.ivk === "p") return isInt(a.ivp) && a.ivp > 0 && okYmd(a.ivd) ? { k: "p", s: typeof a.ivs === "string" ? a.ivs : "", q: 1, u: "", p: a.ivp, d: a.ivd, r: isInt(a.ivr) ? a.ivr : 0 } : null;
     var q = qty(a.ivq);
     if (q === null || typeof a.ivs !== "string") return null;
     return { k: a.ivk, s: a.ivs, q: q, u: a.ivk === "m" ? (a.ivu === "g" ? "g" : "oz") : "", p: a.ivp || 0, d: a.ivd || "" };
@@ -93,9 +108,15 @@
   // (a live one per ounce for metals, converted for grams), else the
   // typed price. cache = { t, cur, p: { id: cents } } → { v, px, src
   // ("live" | "hand"), t | d } | null (no price yet)
-  function value(a, cache, cur) {
+  function value(a, cache, cur, today) {
     var c = cfg(a);
     if (!c) return null;
+    if (c.k === "p") {
+      var yrs = today && okYmd(today) && today > c.d ? (Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10)) -
+                Date.UTC(+c.d.slice(0, 4), +c.d.slice(5, 7) - 1, +c.d.slice(8, 10))) / 864e5 / 365.25 : 0;
+      var v = c.r ? Math.round(c.p * Math.pow(1 + c.r / 10000, yrs)) : c.p;
+      return { v: v, px: v, src: "hand", t: 0, d: c.d, r: c.r };
+    }
     var id = liveId(a), px = 0, src = "", t = 0;
     if (id && cache && cache.p && cache.cur === cur && cache.p[id] > 0) { px = cache.p[id]; src = "live"; t = cache.t || 0; }
     if (px && c.u === "g") px = px / OZ_G;

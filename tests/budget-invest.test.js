@@ -39,3 +39,15 @@ test("INV-1: value = quantity × price, live first, grams of metal, else the typ
 test("INV-1: a metal named in Greek is kept", () => {
   assert.equal(I.clean({ ivk: "m", ivs: "χρυσός", ivq: "10" }).ivs, "χρυσός");
 });
+
+test("AS-1: a home, a car or a valuable: a value on a day, with a yearly change", () => {
+  assert.deepEqual(I.clean({ ivk: "p", ivs: " Fiat Panda ", ivq: "7", ivu: "g", ivp: 1000000, ivd: "2025-11-04", ivr: -1500 }),
+    { ivk: "p", ivs: "Fiat Panda", ivq: "1", ivp: 1000000, ivd: "2025-11-04", ivr: -1500 });
+  assert.deepEqual(I.clean({ ivk: "p", ivq: "1", ivp: 1000000 }), {});                     // no day
+  assert.deepEqual(I.clean({ ivk: "p", ivp: 5000, ivd: "2026-01-01", ivr: 0 }), { ivk: "p", ivq: "1", ivp: 5000, ivd: "2026-01-01" });
+  const car = { ivk: "p", ivq: "1", ivp: 1000000, ivd: "2025-11-04", ivr: -1500 };
+  assert.equal(I.value(car, null, "EUR", "2025-11-04").v, 1000000);
+  assert.ok(Math.abs(I.value(car, null, "EUR", "2026-11-04").v - 850000) < 300);           // one year (365 of 365.25 days)
+  assert.equal(I.value({ ivk: "p", ivq: "1", ivp: 20000000, ivd: "2026-01-01" }, null, "EUR", "2030-01-01").v, 20000000);
+  assert.equal(I.liveId(car), "");
+});
