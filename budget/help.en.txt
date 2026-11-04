@@ -98,6 +98,8 @@ From the `More` menu (the three dots), `Categories` lets you add your own (`New 
 
 Every category can have an icon (tap the second square) and can sit under a main category of the same kind, one level deep: pick `Under Eating out` for Coffee and it shows as `Eating out › Coffee`. Totals, monthly limits, envelopes and charts count a subcategory in its main category too; a limit or budget on a subcategory counts only that one. In `Charts`, tapping a main category with subcategories opens them, and `All categories` goes back. Deleting a main category makes its subcategories main ones again.
 
+An income category can count as passive income: press `Passive` beside it in `Categories` (for dividends, interest, rent, royalties). Then `Overview` › `Accounts` and the net worth chart in `Charts` show your passive income over the last 12 months, a month on average, and what part of your expenses it covers.
+
 `Currency` sets the main currency, the one every total is in (see Currencies). Changing it doesn't convert the amounts already there.
 
 ## Sync and backup

@@ -144,6 +144,7 @@
       "iv.hintC": "A symbol such as BTC, ETH or SOL, or the coin's CoinGecko id. The price comes from CoinGecko when online; type one to use when it can't be reached.",
       "iv.hintM": "\"gold\" or \"silver\": the price comes from CoinGecko (gold- and silver-backed tokens, one ounce each), so it is close to, not exactly, the market price. Platinum and others: type the price.",
       "iv.hintS": "Type the ticker and the price per share from your broker or bank; update it when you like. The account's balance (its starting balance plus transfers into it) is what you paid; Overview shows the value and the gain or loss.",
+      "pi.short": "Passive", "pi.toggle": "{c}: passive income", "pi.hint": "Counts as passive income: dividends, interest, rent, royalties",
       "iv.kp": "Home, car or other valuable", "iv.what": "What it is (optional)", "iv.what.ph": "Flat in Athens, Fiat Panda…",
       "iv.value": "Value", "iv.day": "Value on", "iv.rate": "Change a year, % (optional)",
       "iv.hintP": "Its value on a day, from a valuation, an ad for similar ones or what you paid. A change a year moves it on by itself: about −15 for a car, +2 to +5 for a home. Update the value whenever you know better.",
@@ -273,6 +274,7 @@
       "iv.hintC": "Ένα σύμβολο όπως BTC, ETH ή SOL, ή το id του νομίσματος στο CoinGecko. Η τιμή έρχεται από το CoinGecko όταν υπάρχει σύνδεση· γράψε μία για όταν δεν απαντά.",
       "iv.hintM": "«χρυσός» ή «ασήμι»: η τιμή έρχεται από το CoinGecko (tokens με κάλυψη χρυσού και ασημιού, μία ουγγιά το καθένα), άρα είναι κοντά, όχι ακριβώς, στην τιμή της αγοράς. Πλατίνα και άλλα: γράψε την τιμή.",
       "iv.hintS": "Γράψε το σύμβολο και την τιμή ανά μετοχή από τον χρηματιστή ή την τράπεζά σου· άλλαξέ την όποτε θέλεις. Το υπόλοιπο του λογαριασμού (αρχικό υπόλοιπο συν μεταφορές προς αυτόν) είναι όσα πλήρωσες· η Σύνοψη δείχνει την αξία και το κέρδος ή τη ζημιά.",
+      "pi.short": "Παθητικό", "pi.toggle": "{c}: παθητικό εισόδημα", "pi.hint": "Μετρά ως παθητικό εισόδημα: μερίσματα, τόκοι, ενοίκια, πνευματικά δικαιώματα",
       "iv.kp": "Σπίτι, αυτοκίνητο ή άλλο πολύτιμο", "iv.what": "Τι είναι (προαιρετικό)", "iv.what.ph": "Διαμέρισμα στην Αθήνα, Fiat Panda…",
       "iv.value": "Αξία", "iv.day": "Αξία στις", "iv.rate": "Μεταβολή τον χρόνο, % (προαιρετικό)",
       "iv.hintP": "Η αξία του σε μια ημέρα, από εκτίμηση, αγγελίες για παρόμοια ή όσα πλήρωσες. Η μεταβολή τον χρόνο την αλλάζει μόνη της: περίπου −15 για αυτοκίνητο, +2 ως +5 για σπίτι. Άλλαξε την αξία όποτε ξέρεις καλύτερα.",
@@ -663,6 +665,9 @@
     var y = Object.assign({}, x);
     if (!(typeof y.ic === "string" && IC_RE.test(y.ic))) delete y.ic;
     if (!(typeof y.p === "string" && ID_RE.test(y.p) && y.p !== x.id)) delete y.p;
+    // PI-1: pv = passive income (dividends, interest, rent, royalties),
+    // income categories only, written only when true
+    if (!(y.pv === true && x.k === "i")) delete y.pv;
     return withExtras({ id: x.id, m: x.m, k: x.k, name: name, col: col }, y);
   }
   // limit = { id (category id | "all"), m, a (cents; 0 = no limit) }
@@ -943,7 +948,7 @@
       (kids[c.id] || []).sort(function (x, y) { return x.name.localeCompare(y.name) || cmpStr(x.id, y.id); })
         .forEach(function (k) { out.push(k); });
     });
-    out.forEach(function (c) { delete c.sp; });
+    out.forEach(function (c) { delete c.sp; if (stored[c.id] && stored[c.id].pv === true && c.k === "i") c.pv = true; });
     return out;
   }
   // { category id: its main category's id } for subcategories only.
@@ -3059,6 +3064,20 @@
     var i = investInfo(a);
     return i && i.val ? i.val.v : null;
   }
+  // PI-1: passive income over the last 12 months (this one included)
+  // against all expenses then; null without a passive category.
+  function passiveStats() {
+    var pv = {};
+    cats().forEach(function (c) { if (c.pv) pv[c.id] = 1; });
+    if (!Object.keys(pv).length) return null;
+    var pm = pmNow(), from = mkAdd(mkOf(today), -11) + "-01", inc = 0, out = 0;
+    data.tx.forEach(function (x) {
+      if (x.d < from || x.d > today) return;
+      if (x.k === "o") out += x.a;
+      else if (pv[x.c] || (pm[x.c] && pv[pm[x.c]])) inc += x.a;
+    });
+    return { inc: inc, out: out, pct: out > 0 ? Math.round(inc / out * 100) : null, avg: Math.round(inc / 12) };
+  }
   function refreshPrices(force) {
     if (!INV || pricesBusy || navigator.onLine === false) return;
     var byCur = {};
@@ -3144,7 +3163,7 @@
   function initPlan() {
     if (!PLANUI) return;
     PLANUI.init({
-      investValue: investValue,
+      investValue: investValue, passiveStats: passiveStats,
       lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field, swatch: swatch, errLine: errLine, showErr: showErr,
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       data: function () { return data; }, cats: cats, catName: catName, catCol: catCol, findIn: findIn, stamp: stamp,
@@ -3202,7 +3221,7 @@
       },
       // BK-7: the bank's balance on each account it fills, and Match
       dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
-      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo,
+      cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo, passiveStats: passiveStats,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
@@ -4110,6 +4129,25 @@
     }
     li.appendChild(inp);
     li.appendChild(del);
+    // PI-1: an income category can count as passive income
+    var pvB = null;
+    if (c.k === "i") {
+      pvB = el("button", "mini cat-pv" + (c.pv ? " on" : ""), t("pi.short"));
+      pvB.type = "button";
+      pvB.setAttribute("aria-pressed", c.pv ? "true" : "false");
+      pvB.setAttribute("aria-label", t("pi.toggle", { c: c.name }));
+      pvB.title = t("pi.hint");
+      pvB.addEventListener("click", function () {
+        var s = storedCat(c);
+        if (s.pv) delete s.pv; else s.pv = true;
+        s.m = stamp(s.m);
+        commit();
+        redraw();
+        renderAll();
+        var again = document.querySelector('#bd-cats [data-cat="' + c.id + '"] .cat-pv');
+        if (again) again.focus();
+      });
+    }
     // Main category: any main category of the same kind; one with
     // subcategories of its own stays a main one.
     var hasKids = list.some(function (y) { return y.p === c.id; });
@@ -4135,6 +4173,7 @@
       if (again) again.focus();
     });
     li.appendChild(ps);
+    if (pvB) li.appendChild(pvB);
     return li;
   }
 

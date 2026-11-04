@@ -39,7 +39,7 @@
       "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
       "ov.bkMatched": "Starting balance changed by {a}",
       "ov.cyStmt": "Statement {d}: {a}",
-      "ov.ivPaid": "paid {a}", "ov.asOn": "valued {a} on {d}", "ov.asRate": "{r} % a year", "ov.ivPx": "{q} {s} at {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "g", "ov.ivOld": "last saved price",
+      "ov.ivPaid": "paid {a}", "ov.pi": "Passive income {m} a month, {p} % of your expenses (12 months)", "ov.piNoOut": "Passive income {m} a month (12 months)", "ov.asOn": "valued {a} on {d}", "ov.asRate": "{r} % a year", "ov.ivPx": "{q} {s} at {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "g", "ov.ivOld": "last saved price",
       "ov.ivLoading": "Getting the price…", "ov.ivNoPrice": "No price: CoinGecko can't be reached. Type a price in the account.", "ov.ivType": "Type a price in the account to see its value.", "ov.cyNone": "Statement {d}: nothing to pay", "ov.cyPaid": "paid {a}", "ov.cyAll": "paid in full",
       "ov.cyLeft": "{a} by {d}", "ov.cyDays": "{n} days left", "ov.cyToday": "due today", "ov.cyTomorrow": "due tomorrow", "ov.cyLate": "{a} not paid by {d}",
       "ov.cyEst": "Interest if not paid in full: about {a}", "ov.cyFee": "Add interest", "ov.cyFeeTip": "Add the interest or fees on your card statement as an expense: {a}", "ov.bkUnmapped": "Your banks' balances show here once each bank fills a Budget account (Banks › Fills).", "ov.bkBanks": "Banks",
@@ -77,7 +77,7 @@
       "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
       "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       "ov.cyStmt": "Κλείσιμο {d}: {a}",
-      "ov.ivPaid": "πληρώθηκαν {a}", "ov.asOn": "αξία {a} στις {d}", "ov.asRate": "{r} % τον χρόνο", "ov.ivPx": "{q} {s} προς {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "γρ.", "ov.ivOld": "τελευταία αποθηκευμένη τιμή",
+      "ov.ivPaid": "πληρώθηκαν {a}", "ov.pi": "Παθητικό εισόδημα {m} τον μήνα, {p} % των εξόδων σου (12 μήνες)", "ov.piNoOut": "Παθητικό εισόδημα {m} τον μήνα (12 μήνες)", "ov.asOn": "αξία {a} στις {d}", "ov.asRate": "{r} % τον χρόνο", "ov.ivPx": "{q} {s} προς {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "γρ.", "ov.ivOld": "τελευταία αποθηκευμένη τιμή",
       "ov.ivLoading": "Παίρνω την τιμή…", "ov.ivNoPrice": "Χωρίς τιμή: το CoinGecko δεν απαντά. Γράψε μια τιμή στον λογαριασμό.", "ov.ivType": "Γράψε μια τιμή στον λογαριασμό για να δεις την αξία του.", "ov.cyNone": "Κλείσιμο {d}: τίποτα για πληρωμή", "ov.cyPaid": "πληρώθηκαν {a}", "ov.cyAll": "εξοφλήθηκε",
       "ov.cyLeft": "{a} ως {d}", "ov.cyDays": "μένουν {n} ημέρες", "ov.cyToday": "λήγει σήμερα", "ov.cyTomorrow": "λήγει αύριο", "ov.cyLate": "{a} απλήρωτα από {d}",
       "ov.cyEst": "Τόκος αν δεν εξοφληθεί: περίπου {a}", "ov.cyFee": "Πρόσθεσε τόκους", "ov.cyFeeTip": "Πρόσθεσε ως έξοδο τους τόκους ή τις χρεώσεις του λογαριασμού της κάρτας: {a}", "ov.bkUnmapped": "Τα υπόλοιπα των τραπεζών σου φαίνονται εδώ μόλις κάθε τράπεζα γεμίζει έναν λογαριασμό της εφαρμογής (Τράπεζες › Γεμίζει).", "ov.bkBanks": "Τράπεζες",
@@ -389,6 +389,8 @@
     fl.setAttribute("aria-label", t("ov.flowAll", { m: A.monthLabel(mk) }) + ": " + flowAria(all));
     top.appendChild(fl);
     card.appendChild(top);
+    var ps = A.passiveStats ? A.passiveStats() : null;     // PI-1
+    if (ps) card.appendChild(el("p", "hint ov-pi", ps.pct === null ? t("ov.piNoOut", { m: A.money(ps.avg) }) : t("ov.pi", { m: A.money(ps.avg), p: ps.pct })));
     var bal = A.balNow();
     var ul = el("ul", "ov-rows ov-accs");
     function row(name, col, balTxt, neg, f, onClick, onEdit) {
