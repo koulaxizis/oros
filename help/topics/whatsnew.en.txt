@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.27.00
+- **Investments in Budget: crypto, gold, silver and shares.** An account can now hold an investment. Pick what it holds and type the quantity; its balance stays what you paid. The Overview shows its value, what you paid and your gain or loss, and the value counts in your net worth. Crypto, gold and silver take live prices from CoinGecko when online; for shares, ETFs and anything else, type the price from your broker.
+
 ## Version 5.26.00
 - **Your credit card's cycle in Budget.** Give a card account its statement day, payment due day and, if you like, its interest rate. The Overview then shows the last statement, what you paid, what is left by the due date and roughly what interest it costs if not paid in full. `Add interest` records the interest or fees on your statement as an expense, in a new `Interest & fees` category.
 - **Budget works out the numbers you don't know.** For a loan, type the installment with the months or with the interest and Budget works out the other; `Find in my entries` picks the installment from the monthly payments your bank updates bring. For a card, `Guess from my entries` fills the due day, statement day and rate from your payments and interest entries.
