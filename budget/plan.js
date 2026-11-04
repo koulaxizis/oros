@@ -279,6 +279,8 @@
         bal[x.t] += v === null ? x.a : v;
       }
     });
+    // AC-2: balance corrections, already in the account's currency
+    (d.adj || []).forEach(function (x) { if (x && x.d <= upto && bal[x.ac] !== undefined) bal[x.ac] += x.a; });
     // loans and their repayments (budget/loans.js), like transfers
     var L = typeof root !== "undefined" && root && root.OrosBudgetLoans;
     if (L) {

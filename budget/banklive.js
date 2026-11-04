@@ -35,7 +35,7 @@
       webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
       bankBal: "Bank balance {a} ({d})", cardBal: "Debt {a} · available {v} ({d})", availBal: "Available {v} ({d})", availShort: "available {v}",
       cardNoLimit: "Type the card's credit limit below to see the debt.", cardLimit: "Credit limit", limitBad: "Type the limit as an amount, e.g. 2000.", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
-      balMatchHint: "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      balMatchHint: "Writes a balance correction on that day so that Budget shows the bank's balance (not income or an expense)",
       balMatched: "Starting balance changed by {a}",
       lvTitle: "Banks", lvIntro: "Your bank accounts can fill Budget by themselves, through Enable Banking (open banking), and so can PayPal Business. orOS only reads them and never makes payments. When a call goes through the orOS relay (always for PayPal), the data passes through it but is never stored or logged.",
       lvNoShell: "Open Budget inside orOS to connect a bank.",
@@ -71,7 +71,7 @@
       webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
       bankBal: "Υπόλοιπο τράπεζας {a} ({d})", cardBal: "Χρέος {a} · διαθέσιμο {v} ({d})", availBal: "Διαθέσιμο {v} ({d})", availShort: "διαθέσιμο {v}",
       cardNoLimit: "Γράψε από κάτω το πιστωτικό όριο της κάρτας για να φανεί το χρέος.", cardLimit: "Πιστωτικό όριο", limitBad: "Γράψε το όριο ως ποσό, π.χ. 2000.", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
-      balMatchHint: "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      balMatchHint: "Γράφει διόρθωση υπολοίπου εκείνη τη μέρα ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας (όχι έσοδο ή έξοδο)",
       balMatched: "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       lvTitle: "Τράπεζες", lvIntro: "Οι τραπεζικοί σου λογαριασμοί μπορούν να γεμίζουν μόνοι τους την εφαρμογή, μέσω του Enable Banking (open banking), και το ίδιο το PayPal Business. Το orOS μόνο τους διαβάζει και δεν κάνει ποτέ πληρωμές. Όταν μια κλήση περνά από το relay του orOS (πάντα για το PayPal), τα δεδομένα περνούν αλλά δεν αποθηκεύονται ούτε καταγράφονται ποτέ.",
       lvNoShell: "Άνοιξε την εφαρμογή μέσα στο orOS για να συνδέσεις τράπεζα.",
@@ -367,7 +367,7 @@
     var diff = r.bb - mine;
     line.appendChild(el("span", "", " · " + t("balBudget", { a: A.money(mine, r.bc) })));
     var b = A.button(t("balMatch"), "mini", function () {
-      if (A.shiftStart(r.ac, diff, t("balMatched", { a: A.money(diff, r.bc) }))) redraw();
+      if (A.correct(r.ac, diff, t("balMatched", { a: A.money(diff, r.bc) }), r.bd)) redraw();
     });
     b.title = t("balMatchHint");
     li.appendChild(b);

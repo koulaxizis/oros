@@ -329,6 +329,9 @@ button:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
 .tx-amt { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
 .tx.in .tx-amt { color: var(--in-ink); }
 .tx.xf .tx-amt { color: var(--text-dim); }
+/* AC-2: a balance correction is neither income nor an expense */
+.tx.adj .tx-amt, .tx.adj .tx-cat { color: var(--text-dim); }
+.tx.adj .tx-cat { font-style: italic; }
 #rec-add { margin-bottom: 12px; }
 #rec { margin-top: 4px; }
 #rec .tx-note { white-space: normal; }
@@ -1106,3 +1109,8 @@ div.ov-acc:hover { background: none; }
   dialog.mm-dlg.sheet { margin: auto 0 0; width: 100vw; max-width: 100vw; max-height: 88vh; border-radius: 16px 16px 0 0;
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); border-bottom: none; }
 }
+
+/* ---------- AC-2: balance correction ---------- */
+.adj-big { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; margin: 4px 0 8px; }
+.adj-big.out { color: var(--over); }
+.adj-big.in { color: var(--in-ink); }

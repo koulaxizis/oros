@@ -36,7 +36,7 @@
       "ov.same": "The same as last month by this day", "ov.paceNone": "No expenses yet in this month or the one before.",
       "ov.dayTip": "Day {d}: {a}", "ov.dayTipPrev": "last month {a}", "ov.dayTipAvg": "average {a}",
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
-      "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Writes a balance correction on that day so that Budget shows the bank's balance (not income or an expense)",
       "ov.bkMatched": "Starting balance changed by {a}",
       "ov.cyStmt": "Statement {d}: {a}",
       "ov.ivPaid": "paid {a}", "ov.pi": "Passive income {m} a month, {p} % of your expenses (12 months)", "ov.piNoOut": "Passive income {m} a month (12 months)", "ov.asOn": "valued {a} on {d}", "ov.asRate": "{r} % a year", "ov.ivPx": "{q} {s} at {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "g", "ov.ivOld": "last saved price",
@@ -62,7 +62,7 @@
       "ov.stFlow": "this month +{i} · −{o}", "ov.stDue": "{a} by {d} · in {n} days", "ov.stChk": "Checked {d}", "ov.stBank": "Bank says {a}",
       "ov.sheetTip": "{a}: entries, update the balance, transfer, edit",
       "ov.shEntries": "Entries", "ov.shNew": "New entry", "ov.shUpd": "Update balance", "ov.shXfer": "Transfer", "ov.shEdit": "Edit",
-      "ov.shAuto": "Match the bank by itself", "ov.shAutoHint": "When the bank's balance differs, Budget changes the starting balance so the two agree, and says so (with Undo).",
+      "ov.shAuto": "Match the bank by itself", "ov.shAutoHint": "When the bank's balance differs, Budget writes a balance correction so the two agree, and says so (with Undo).",
       "ov.open": "More",
       "ov.lessAll": "{a} less than the month before", "ov.moreAll": "{a} more than the month before", "ov.sameAll": "The same as the month before"
     },
@@ -80,7 +80,7 @@
       "ov.same": "Όσα και τον προηγούμενο μήνα ως σήμερα", "ov.paceNone": "Κανένα έξοδο ακόμη σε αυτόν ή στον προηγούμενο μήνα.",
       "ov.dayTip": "{d} του μήνα: {a}", "ov.dayTipPrev": "προηγούμενος {a}", "ov.dayTipAvg": "μέσος όρος {a}",
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
-      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Γράφει διόρθωση υπολοίπου εκείνη τη μέρα ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας (όχι έσοδο ή έξοδο)",
       "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       "ov.cyStmt": "Κλείσιμο {d}: {a}",
       "ov.ivPaid": "πληρώθηκαν {a}", "ov.pi": "Παθητικό εισόδημα {m} τον μήνα, {p} % των εξόδων σου (12 μήνες)", "ov.piNoOut": "Παθητικό εισόδημα {m} τον μήνα (12 μήνες)", "ov.asOn": "αξία {a} στις {d}", "ov.asRate": "{r} % τον χρόνο", "ov.ivPx": "{q} {s} προς {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "γρ.", "ov.ivOld": "τελευταία αποθηκευμένη τιμή",
@@ -106,7 +106,7 @@
       "ov.stFlow": "αυτόν τον μήνα +{i} · −{o}", "ov.stDue": "{a} ως {d} · σε {n} μέρες", "ov.stChk": "Ελέγχθηκε {d}", "ov.stBank": "Η τράπεζα λέει {a}",
       "ov.sheetTip": "{a}: κινήσεις, ενημέρωση υπολοίπου, μεταφορά, επεξεργασία",
       "ov.shEntries": "Κινήσεις", "ov.shNew": "Νέα κίνηση", "ov.shUpd": "Ενημέρωση υπολοίπου", "ov.shXfer": "Μεταφορά", "ov.shEdit": "Επεξεργασία",
-      "ov.shAuto": "Ταίριασμα με την τράπεζα αυτόματα", "ov.shAutoHint": "Όταν το υπόλοιπο της τράπεζας διαφέρει, η εφαρμογή αλλάζει το αρχικό υπόλοιπο ώστε να συμφωνούν, και το λέει (με Αναίρεση).",
+      "ov.shAuto": "Ταίριασμα με την τράπεζα αυτόματα", "ov.shAutoHint": "Όταν το υπόλοιπο της τράπεζας διαφέρει, η εφαρμογή γράφει διόρθωση υπολοίπου ώστε να συμφωνούν, και το λέει (με Αναίρεση).",
       "ov.open": "Περισσότερα",
       "ov.lessAll": "{a} λιγότερα από τον προηγούμενο μήνα", "ov.moreAll": "{a} περισσότερα από τον προηγούμενο μήνα", "ov.sameAll": "Όσα και τον προηγούμενο μήνα"
     }
@@ -310,13 +310,13 @@
       if (!hasB) { li.appendChild(line); return; }
       var mine = A.accBalAt(a.id, r.bd);
       if (mine === r.bb) line.appendChild(el("span", "ov-bk-ok", " · " + t("ov.bkSame")));
-      else if (mine !== null && A.shiftStart) {
+      else if (mine !== null && A.correct) {
         var diff = r.bb - mine;
         var b = el("button", "mini", t("ov.bkMatch"));
         b.type = "button";
         b.title = t("ov.bkMatchHint");
         b.setAttribute("aria-label", t("ov.bkMatch") + ": " + a.n + ", " + t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }));
-        b.addEventListener("click", function () { A.shiftStart(a.id, diff, t("ov.bkMatched", { a: A.money(diff, r.bc) })); });
+        b.addEventListener("click", function () { A.correct(a.id, diff, t("ov.bkMatched", { a: A.money(diff, r.bc) }), r.bd); });
         line.appendChild(b);
       }
       li.appendChild(line);

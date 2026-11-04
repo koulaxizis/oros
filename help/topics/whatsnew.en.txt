@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.30.00
+- **Balance corrections you can see.** When you update a balance or match the bank, the difference is now written as a `Balance correction` on that day instead of changing the account's starting balance, so past months stay as they were. It shows in the account's entries but never counts as income or an expense; tap it to delete it or, if you remember what it was, make it an entry.
+
 ## Version 5.29.00
 - **Clearer accounts in Budget, made for the phone.** The Overview groups your accounts into money, cards, and investments and things of value, each with its total, and shows what you have and what you owe. Each account has its balance and one line about what matters now: a card payment due, an investment's gain, the bank showing another balance. Tap an account for big buttons: new entry, entries, update balance, transfer, edit.
 - **Update a balance in seconds.** `Update balance` asks what the account shows now; the difference goes into its starting balance, never into your expenses, with Undo.
