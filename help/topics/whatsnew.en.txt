@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.32.01
+- **See what you owe on a credit card.** When your bank does not say an account is a card, tick `This is a credit card` under it (in Banks, or in the card's own window in Overview › Accounts) and type its credit limit. The card's line then reads `Debt X · available Y`, and `Match` turns its balance into the debt, shown with a minus in red.
+
 ## Version 5.32.00
 - **New app: Automations.** Make rules that run at a time you choose: every day or on some days, every month (also the last day), every year, once, or when orOS opens. A rule can show a notice, or open To-Do, Calendar, Notes, Mail, Budget, Time or the Assistant already filled in, so you only check and save. A rule runs once even if orOS is open on several devices. Ten ready-made rules get you started, such as bills at the start of the month or a weekly plan on Monday. Passwords is never part of a rule.
 

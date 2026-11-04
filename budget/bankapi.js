@@ -191,10 +191,32 @@
     var out = { bb: b ? b.a : (card ? null : av.a), ba: av && (!b || av.a !== b.a) ? av.a : null, bc: (b || av).cu, bd: (b || av).d || d, debt: false };
     return out.bb === null && out.ba === null ? null : out;
   }
+  // CD-1: ck = the person's own answer (1 a card, 2 not a card) wins
+  // over the bank's kind of account and its name.
   function isCard(row) {
     if (!row) return false;
+    if (row.ck === 1) return true;
+    if (row.ck === 2) return false;
     if (row.ty) return row.ty === "CARD";
     return /\b(card|credit|visa|mastercard|amex|diners)\b|κάρτα|πιστωτικ/i.test(String(row.nm || ""));
+  }
+  // CD-1: a stored bank reading seen again after "card" or the limit
+  // changed, the way view() would have read it (the next update reads
+  // the bank itself). → { bb, ba } (undefined = unknown) | null
+  // Not a card: ba holds the available amount only when it differed
+  // from the booked one (or there was no booked one), so it is kept as
+  // it is. A card: the available amount is ba, or bb when ba is absent
+  // (booked and available were the same); with a limit the debt is
+  // available − limit, without one a negative booked balance the bank
+  // gave stays the debt and anything else is unknown.
+  function recard(row) {
+    if (!row) return null;
+    var hasB = typeof row.bb === "number", hasA = typeof row.ba === "number";
+    if (!hasB && !hasA) return null;
+    if (!isCard(row)) return { bb: hasB ? row.bb : (hasA ? row.ba : undefined), ba: hasA ? row.ba : undefined };
+    var av = hasA ? row.ba : row.bb;
+    if (row.cl > 0) return { bb: Math.min(0, av - row.cl), ba: av };
+    return { bb: hasA && hasB && row.bb < 0 && row.bb !== row.ba ? row.bb : undefined, ba: av };
   }
   function partyName(p) { return p && typeof p === "object" ? clean(str(p.name), 80) : ""; }
   // One page of transactions → items for bank.js plan().
@@ -384,7 +406,7 @@
   var api = {
     COUNTRIES: COUNTRIES, REDIRECT: REDIRECT, REFRESH_MS: REFRESH_MS, WARN_DAYS: WARN_DAYS, MAX_PAGES: MAX_PAGES,
     banks: banks, newState: newState, authBody: authBody, session: session, tail: tail,
-    items: items, balance: balance, available: available, view: view, isCard: isCard, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
+    items: items, balance: balance, available: available, view: view, isCard: isCard, recard: recard, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
     daysLeft: daysLeft, needsRenew: needsRenew, due: due, matchLink: matchLink, ymdOf: ymdOf,
     PP_PAGE: PP_PAGE, ppStamp: ppStamp, ppWindows: ppWindows, ppPath: ppPath, ppPage: ppPage, ppKind: ppKind, ppItems: ppItems
   };
