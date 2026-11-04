@@ -11,6 +11,8 @@ Eine Liste hat ihr eigenes Aussehen (`Klassisch`, `Warm`, `Dunkel` oder `Schlich
 
 `Sekunden zwischen Nachrichten` und `Nachrichten pro Tag (höchstens)` halten dich unter den Limits deines Anbieters. Das Passwort oder der API-Schlüssel eines Anbieters bleibt versiegelt auf dem Gerät, auf dem du es eingegeben hast, und wird nie synchronisiert: gib es auf jedem sendenden Gerät einmal ein.
 
+Ein gewöhnliches Postfach ist nicht für Massenversand gemacht und hat stündliche Grenzen, die sein Anbieter festlegt. Proton Mail sendet über SMTP nur in bezahlten Tarifen mit eigener Domain: erstelle in Protons Einstellungen ein SMTP-Token und nutze es als Passwort (Vorgabe `Proton Mail`, absichtlich langsam). Hosting-Mail (cPanel, Plesk) erlaubt oft einige hundert Nachrichten pro Stunde: frag deinen Hoster. Für Listen mit Hunderten Personen ist ein Versanddienst mit eigener Domain (Brevo, MailerSend, SMTP2GO…) am zuverlässigsten. Was du auch nutzt, stelle `Sekunden zwischen Nachrichten` und `Nachrichten pro Tag` unter seine Grenzen; eine Ausgabe an 340 Personen mit 10 Sekunden Abstand dauert etwa eine Stunde, bei offenem orOS.
+
 ## Versand über die API eines Anbieters
 Für Brevo, Postmark, SendGrid und Mailgun stellst du im Versandkonto `Verbindung` auf `HTTP-API` und fügst den API-Schlüssel des Anbieters ein (Mailgun braucht auch seine Versanddomain). Dann:
 - Bis zu 10 Nachrichten gehen in einem Aufruf raus statt einzeln.
@@ -26,6 +28,13 @@ Der Schlüssel braucht die Berechtigung zum Senden und zum Lesen von Rückläufe
 - `Bestätigt per E-Mail`: sie bekommt eine Bestätigungsanfrage und erhält Ausgaben erst nach der Bestätigung.
 
 Ein Import bringt nie jemanden zurück, der sich abgemeldet hat. `Endgültig löschen` entfernt eine Person und behält nur einen Fingerabdruck der Adresse, damit sie nicht versehentlich wieder importiert wird. `Ihre Daten (JSON)` speichert alles, was über eine Person gespeichert ist.
+
+`CSV importieren` liest auch Exporte von MailerLite und anderen Diensten:
+- `Was die Datei enthält`: Hat die Datei eine Statusspalte, behält jede Zeile ihren Status; sonst wählst du ihn. MailerLite exportiert einen Status pro Datei (aktiv, abgemeldet, unzustellbar, Junk), also importiere jede Datei einmal.
+- Abgemeldete, unzustellbare und Junk-Adressen werden nie hinzugefügt. Sie kommen nur als Fingerabdruck auf die Sperrliste, damit kein späterer Import sie hinzufügt, und wer jetzt auf der Liste ist, gilt als ausgetreten.
+- Das Anmeldedatum aus der Datei bleibt erhalten, und die `Einwilligungsnotiz` (oder die eigene Quellspalte der Datei, etwa der Name des Formulars) bleibt bei jeder Person als Nachweis, wie sie sich angemeldet hat. Beides steht bei der Person und in `Ihre Daten (JSON)`.
+- `Weitere Spalten`: Gib für eine Spalte einen Tag ein, und alle mit einem Wert dort (nicht leer, nicht 0) bekommen ihn. Shop-Spalten wie die Zahl der Bestellungen schlagen den Tag „Kunde“ vor; mehrere Spalten können denselben Tag geben. Eine leer gelassene Spalte wird nicht importiert, so bleiben Daten, die Newsletter nicht braucht (Telefon, Stadt, Ausgaben), draußen.
+- `Rückgängig` in der Meldung direkt danach entfernt die hinzugefügten Personen und gibt den als ausgetreten markierten ihren alten Stand zurück; die Sperrliste behält, was hinzukam.
 
 ## Liste aufräumen
 `Aufräumen…` hält eine Liste frei von Leuten, die sie nie lesen werden. Newsletter misst keine Öffnungen, deshalb löscht es nur Leute, die nie bestätigt haben (standardmäßig 30 Tage nach der Bestätigungsanfrage), und Leute, die gegangen sind: abgemeldet, unzustellbar oder als Spam gemeldet (90 Tage danach). Aktive Abonnenten werden nie gelöscht. Wer gegangen ist, wird endgültig gelöscht, wie mit `Endgültig löschen`; wer nie bestätigt hat, kann wieder eingeladen werden. Es läuft einmal am Tag, solange orOS offen ist, auf einem Gerät pro Liste: dem, das die Liste versendet (`Auf diesem Gerät ausführen` wählt ein anderes). Mehr als 200 Personen oder mehr als ein Fünftel der Liste auf einmal warten auf dich: der Dialog zeigt, wer gehen würde, `Sie exportieren (CSV)` speichert sie vorher und `Jetzt aufräumen` löscht sie. Aktive Abonnenten ohne Lebenszeichen seit 12 Monaten (6, 12, 24 oder nie; ein Lebenszeichen ist eine Anmeldung oder Bestätigung, da Öffnungen nicht gezählt werden) bekommen eine E-Mail „Willst du ihn noch?“ vom selben Gerät, höchstens 20 am Tag (oder 5 % der Liste), die ältesten zuerst. Wer mit der vorbereiteten E-Mail antwortet, bleibt auf der Liste, auch nach Ablauf der Frist; wer nicht innerhalb von 30 Tagen antwortet, wird abgemeldet und später gelöscht wie alle, die gegangen sind.
@@ -55,6 +64,26 @@ Das Aussehen jeder Liste stellst du auf der Listenkarte ein (`Bearbeiten`): Them
 
 `Vorschau` zeigt die Ausgabe auf einem Handy und einem Desktop (und in jeder Sprache), `Test senden` schickt sie an dich, und `Prüfen` listet, was vor dem Senden behoben werden muss.
 
+## Ausgaben in eigenem HTML
+`Neu` › `Aus HTML-Datei…` öffnet eine anderswo gemachte E-Mail (eine Vorlage, einen für dich geschriebenen Entwurf, eine aus einem anderen Dienst gespeicherte Kampagne) als HTML-Ausgabe. Sie wird nach der Bereinigung so gesendet, wie sie ist: Tabellen, Inline-Stile, Links und https-Bilder bleiben; Skripte, Formulare, externe Stylesheets und Tracking-Pixel (Bilder mit 1 × 1 Pixel) werden entfernt. Der Titel des HTML wird zum Betreff.
+- Ein Link auf `{$unsubscribe}` oder `{{UNSUBSCRIBE}}` wird zum Abmeldelink der Liste. Ohne ihn wird die Fußzeile der Liste (deine Adresse und der Abmeldelink) darunter angefügt.
+- `{first}` und `{name}` funktionieren wie in anderen Ausgaben. Jeder andere `{{SLOT}}`, der im HTML oder im Nur-Text bleibt, hält das Senden an, bis du ihn füllst.
+- `Nur-Text` ist der reine Textteil der E-Mail. Bleibt er leer, wird er beim Senden aus dem HTML erstellt; mit `.txt-Datei öffnen` oder `Aus dem HTML erstellen` kannst du ihn bearbeiten.
+- `Als Vorlage speichern` behält das HTML als eine deiner Vorlagen, zum Beispiel dein eigenes Monatsdesign.
+
+## Gutscheine
+`Weitere Blöcke` › `Gutschein` fügt einer Ausgabe einen Rabattcode hinzu: den `Code`, Prozent oder einen Betrag von der Bestellung, den letzten gültigen Tag, optional einen Mindestbestellwert, Text und Schaltfläche. In einer HTML-Ausgabe macht `+ Gutschein` unter dem HTML dasselbe, und `{{COUPON}}` markiert, wo der Code steht.
+- Mit einem WooCommerce-Shop, der unter [Einstellungen](app:settings) › `Verbundene Dienste` verbunden ist, wähle ihn als `Shop` des Gutscheins. `Im Shop anlegen` legt den Code dort an; `Prüfen` erinnert dich, falls nicht.
+- `Ein Code pro Leser` gibt jedem einen eigenen Code, einmal nutzbar und nur mit seiner Adresse. Jeder Code wird kurz vor dem Versand der E-Mail dieser Person im Shop angelegt; lehnt der Shop ab, pausiert die Ausgabe und niemand bekommt einen Code, der nicht funktioniert. Eine Willkommens-Vorlage mit so einem Gutschein gibt jedem neuen Abonnenten seinen eigenen Willkommenscode.
+- Ohne Shop lege den Code vor dem Versand selbst in deinem Shop an.
+- orOS kann Gutscheine in deinem Shop nur suchen und anlegen, nie ändern oder löschen.
+
+## Käufe und Segmente
+Mit einem verbundenen WooCommerce-Shop liest `Abonnenten` › `Käufe aus dem Shop` die bezahlten Bestellungen des Shops (in Bearbeitung und abgeschlossen; im Shop wird nichts geschrieben) und speichert für jeden Abonnenten mit derselben E-Mail die Zahl der Bestellungen, die Ausgaben und die erste und letzte Bestellung. Sie bleiben auf deinen Geräten und werden mit der Liste synchronisiert. Lies sie erneut, wann immer du sie aktuell brauchst.
+- Die Regeln `Käufe` eines Segments wählen Personen nach Bestellungen (noch keine, genau eine, mindestens eine, mindestens eine Zahl), nach Ausgaben und danach, wie lange die letzte Bestellung her ist.
+- `Fertig: frühere Kunden zurückgewinnen` füllt die Regeln für alle, die früher gekauft haben, aber nicht in den letzten 12 Monaten. `Neu` › `Frühere Kunden zurückgewinnen` ist ein passendes Layout mit einem Gutschein, der jedem Leser einen eigenen Code gibt (mit verbundenem Shop). Du sendest es selbst an dieses Segment.
+- Öffnungen und Klicks werden nie gezählt, darum gibt es keinen Umsatz pro Ausgabe.
+
 ## Schreiben mit dem Assistenten
 Sag dem [Assistenten](app:assistant) Stück für Stück, was hineinkommt, so wie es bei dir ankommt: „füge das Interview von diesem Link hinzu", „eine kurze Notiz, dass die Messe am Freitag beginnt, mit einem Button zum Programm". Er antwortet mit einer Karte mit den Blöcken (Überschrift, Text, Zitat, Button, Liste, Trennlinie, Abstand, Bild, Bild und Text, Produkte; ein Banner ist ein Bild mit Link). `In Newsletter öffnen` fragt, in welchen Entwurf sie kommen, oder beginnt einen neuen; ein offener Entwurf nimmt sie sofort auf. Jeder Block kommt an seinen Platz: zuerst das Hauptthema, dann Neuigkeiten, Produkte, Banner und Angebote und zuletzt ein Abschluss, alles vor der Fußzeile; Blöcke, die du selbst gesetzt hast, bleiben, wo sie sind. `Rückgängig` in der Meldung nimmt sie wieder heraus. Bilder werden von ihrer Webadresse kopiert, wenn die Seite es erlaubt; sonst sagt es die Meldung, und du wählst das Bild in seinem Block. „Unsere neueste Ausgabe“ kommt aus deinem eigenen Shop (Einstellungen › Verbundene Dienste): Newsletter liest die neuesten Produkte beim Hinzufügen selbst, mit Preisen und Bildern. Produkte anderer Verlage kommen von deren Seiten, mit ihren eigenen Links. Vor deiner Wahl wird nichts hinzugefügt, und der Assistent sendet nie: Du sendest wie immer von hier. Wenn du ihm sagst, dass die Ausgabe fertig ist, öffnet seine Karte `Prüfung öffnen` hier die Prüfung des Entwurfs: was fehlt, und wenn nichts fehlt, den Sendebildschirm, wo du auf Senden tippst.
 
@@ -64,6 +93,17 @@ Sag dem [Assistenten](app:assistant) Stück für Stück, was hineinkommt, so wie
 Eine geplante Ausgabe geht von dem Gerät raus, auf dem sie geplant wurde, wo die Passwörter liegen. Öffne sie für `Planung aufheben` oder `Jetzt senden`.
 
 >! orOS muss offen sein: ist orOS geschlossen, wird nichts gesendet, und eine geplante Ausgabe beginnt beim nächsten Öffnen von orOS auf diesem Gerät. Ein Tab im Hintergrund sendet langsamer.
+
+Nach dem Versand zeigt die Seite einer Ausgabe, wie viele Nachrichten gesendet und nicht zugestellt wurden und wie viele Personen der Liste sich abgemeldet haben, unzustellbar waren oder sie als Spam markiert haben, vom Start bis 14 Tage danach. Öffnungen und Klicks werden nie gezählt.
+
+## Ausgabe aus einem Produkt
+Mit verbundenem Shop startet `Neu` › `Aus einem Produkt…` eine Ausgabe für eine Neuerscheinung oder Vorbestellung: wähle ein oder mehrere Produkte, und sie kommen als Produktblock (Bild, Text, Preis und eine Schaltfläche zur Produktseite) unter eine Überschrift und einen kurzen Gruß, mit dem Namen des ersten Produkts als Betreff. Füge bei Bedarf einen Gutschein über `Weitere Blöcke` hinzu.
+
+## Willkommens-E-Mail
+Unter `Bearbeiten` einer Liste wählt `Willkommens-E-Mail` eine deiner Vorlagen. Wer sich über das Formular oder per E-Mail anmeldet, bekommt sie nach der Bestätigung einmal, vom Gerät, das die Liste sendet. Wer schon auf der Liste ist, importiert oder von Hand hinzugefügt wurde, bekommt sie nicht, ebenso wenig wer vor mehr als 30 Tagen bestätigt hat. Mit `Keine` hörst du auf.
+
+## Meldung, wenn eine Ausgabe rausgeht
+Unter `Bearbeiten` einer Liste nimmt `Wenn eine Ausgabe rausgeht, benachrichtigen` eine https-Adresse, zum Beispiel das Broadcast-Plugin deiner Website, das die Neuigkeit dann auf Viber postet. Wenn eine Ausgabe gesendet wurde, schickt orOS über das orOS-Relay eine kurze Meldung dorthin: Name der Liste, Betreff, wie viele sie bekommen haben, wann, die Kennung der Ausgabe und die Sprache der Liste, nie Abonnentendaten. Jede Meldung ist mit dem `Meldungsschlüssel` signiert (Header `X-Oros-Signature: sha256=` HMAC-SHA256 aus dem Wert von `X-Oros-Timestamp`, einem Punkt und dem Inhalt), damit der Empfänger prüfen kann, dass sie von dir kommt. Kommt sie nicht an, wird sie nach 1 und 10 Minuten erneut versucht, danach bekommst du eine Benachrichtigung.
 
 ## RSS per E-Mail
 Auf einer Listenkarte macht `RSS per E-Mail` aus einem Blog- oder News-Feed Ausgaben. Wähle einen deiner Feeds im [Reader](app:feeds) oder gib eine beliebige Feed-Adresse ein, wähle jeden Tag, jede Woche oder jeden Monat und die Uhrzeit, und wie viele Artikel hineinkommen. Jede Ausgabe listet die neuen Artikel mit Bild, ein paar Zeilen und einer Schaltfläche `Weiterlesen`.
@@ -89,7 +129,12 @@ In `Anmeldelink` macht `Formular einrichten` ein Formular für deine eigene Webs
 
 Ist das Formular an, hat jede Ausgabe auch einen Ein-Klick-Abmeldelink, und Gmail und andere Mail-Apps zeigen ihren eigenen Abmelden-Knopf.
 
+Auch ohne Formular auf deiner Website bietet `Prüfen` `Abmeldung mit einem Klick einschalten` an, wenn eine Liste sie nicht hat: die Liste wird beim Relay genauso angemeldet, und jede Ausgabe bekommt den Ein-Klick-Link.
+
 >! Anmeldungen werden auf einem Gerät abgeholt, dem, das das Formular eingerichtet hat. Mit `Hier abholen` änderst du das. `Formular ausschalten` löscht, was das Relay hält, und die Ein-Klick-Links in schon versendeten Ausgaben funktionieren nicht mehr; der Weg per E-Mail funktioniert weiter.
+
+### Anmeldungen an der Kasse deines Shops
+Das Plugin orOS Connect für WordPress fügt der WooCommerce-Kasse ein nicht vorausgewähltes Kästchen hinzu, das an dieses Formular sendet. Trage denselben `Shop-Schlüssel (Anmeldungen an der Kasse)` hier und in orOS Connect ein (`Neuer Schlüssel` erzeugt einen), und wer das Kästchen ankreuzt, wird sofort Abonnent, mit der Quelle `Shop-Kasse`, ohne Bestätigungs-E-Mail: das Ankreuzen eines nicht vorausgewählten Kästchens ist die Einwilligung, und der Shop speichert sie mit der Bestellung. Das Relay sieht den Schlüssel nie; es reicht nur die Signatur des Shops weiter, und eine Anmeldung mit falscher Signatur oder älter als 15 Minuten wird wie jede andere per E-Mail bestätigt. Wer sich abgemeldet hatte und das Kästchen wieder ankreuzt, ist wieder angemeldet; durch einen Import kommt niemand je zurück.
 
 ## Eine orOS-Datei speichern und öffnen
 In `Einstellungen` speichert unter `Daten` die Option `orOS-Datei (.orosnewsletter)` deine Listen, Abonnenten, Ausgaben (mit ihren Bildern), Segmente, Vorlagen, RSS-Feeds und Versandkonten als eine `.orosnewsletter`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder eine Kopie zu behalten. Passwörter, API-Schlüssel, SMTP-Benutzernamen, die Schlüssel des Anmeldeformulars, die Verknüpfungen zu E-Mail-Plattformen und der Versandfortschritt bleiben auf diesem Gerät; eine geplante oder gerade gesendete Ausgabe wird als Entwurf gespeichert, und RSS-Feeds als aus. Die Datei ist ein normales ZIP: entpackt enthält sie alles als `content.json`, die Bilder in `media/` sowie `preview/issues.md` und pro Liste eine `preview/subscribers-….csv` für andere Programme. Sie enthält die E-Mail-Adressen deiner Abonnenten und ist nicht verschlüsselt, also bewahre sie sicher auf.

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.21.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.22.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7010,12 +7010,25 @@
     });
   }
 
+  // UPD-SYS: on orOS USB and orOS Portable orOS comes with the system,
+  // so the System extension's System update is the real check
+  // (data-oros-sys-update, event "oros-sys-update"). Elsewhere the
+  // service worker is asked, and "nothing new" is said too.
   function scCheckUpdates() {
+    if (document.documentElement.hasAttribute("data-oros-sys-update")) {
+      document.dispatchEvent(new CustomEvent("oros-sys-update"));
+      return;
+    }
     if (!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.getRegistration()
-      .then(function (r) { return r ? r.update() : null; })
-      .catch(function () {});
     setSyncMsgRaw("dim", window.t("update.checking"));
+    navigator.serviceWorker.getRegistration()
+      .then(function (r) {
+        if (!r) return;
+        return r.update().then(function () {
+          if (!r.installing && !r.waiting) setSyncMsgRaw("ok", window.t("update.none").replace("{v}", APP_VERSION));
+        });
+      })
+      .catch(function () {});
   }
 
   function scToggleLang() { setLangUser(langNext()); }

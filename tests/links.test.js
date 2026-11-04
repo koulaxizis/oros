@@ -145,7 +145,24 @@ const CASES = [
   [{ m: "GET", path: "/rs/balances?name=Anna" }, "query"],
   [{ m: "GET", path: "/rs/report?date_start=2026-1-1" }, "query"],
   [{ m: "POST", path: "/rs/balances", body: { name: "x" } }, "path"],
-  [{ m: "GET", path: "/rs/ledger" }, "path"]
+  [{ m: "GET", path: "/rs/ledger" }, "path"],
+  // Newsletter N1: coupons, looked up and created only
+  [{ m: "GET", path: "/coupons?code=NEWS-10" }, ""],
+  [{ m: "GET", path: "/coupons?search=a" }, "query"],
+  [{ m: "GET", path: "/coupons?code=a" }, "query"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "NEWS-10", discount_type: "percent", amount: "10", date_expires: "2026-12-31T23:59:59" }] } }, ""],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "W-AB12CD", discount_type: "fixed_cart", amount: "5.50", date_expires: "2026-12-31T23:59:59",
+    minimum_amount: "20", individual_use: true, usage_limit: 1, usage_limit_per_user: 1, email_restrictions: ["ann@example.gr"], description: "orOS Newsletter" }] } }, ""],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "X-1", discount_type: "percent", amount: "150", date_expires: "2026-12-31T23:59:59" }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "NEWS-10", discount_type: "percent", amount: "0", date_expires: "2026-12-31T23:59:59" }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "NEWS-10", discount_type: "percent", amount: "10" }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "NEWS-10", discount_type: "fixed_product", amount: "10", date_expires: "2026-12-31T23:59:59" }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "NEWS-10", discount_type: "percent", amount: "10", date_expires: "2026-12-31T23:59:59", free_shipping: true }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [{ code: "NEWS-10", discount_type: "percent", amount: "10", date_expires: "2026-12-31T23:59:59", email_restrictions: ["a@x.gr", "b@x.gr"] }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { update: [{ id: 5, amount: "90" }] } }, "body"],
+  [{ m: "POST", path: "/coupons/batch", body: { create: [], delete: [5] } }, "body"],
+  [{ m: "POST", path: "/coupons", body: { code: "NEWS-10" } }, "path"],
+  [{ m: "PUT", path: "/coupons/5", body: { amount: "90" } }, "path"]
 ];
 test("checkReq (app) and checkExtReq (relay) agree on every case", () => {
   for (const [r, want] of CASES) {
