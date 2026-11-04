@@ -412,3 +412,14 @@ dl.info dd { overflow-wrap: anywhere; }
 @media (max-width: 380px) {
   .rc-n { font-size: 21px; }
 }
+
+/* Artists worldwide (wave 6a) */
+.pill.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink, #111); }
+.chip.static { cursor: default; display: inline-flex; align-items: center; }
+.chip.past { opacity: 0.72; }
+.mb-bio { max-width: 72ch; margin: 4px 0 8px; }
+.mb-bio .bio-x { margin: 0 0 4px; line-height: 1.55; overflow-wrap: anywhere; }
+.mb-bio .bio-x.clamp { display: -webkit-box; -webkit-line-clamp: 4; line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.mb-row .row-main { cursor: pointer; }
+.mb-credit { margin: 24px 0 8px; }
+.mb-bio .link { min-height: 36px; display: inline-flex; align-items: center; }

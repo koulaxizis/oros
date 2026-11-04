@@ -87,6 +87,15 @@ The device gets the song's own https address, so free music and songs from your 
 ## Import from Spotify
 `Import from Spotify` (under **+**) reads your own Spotify data. In Spotify, go to Account › Privacy settings › Download your data; Spotify sends a ZIP file by e-mail. Choose that ZIP (or the Playlist and YourLibrary .json files in it), or a CSV from Exportify or TuneMyMusic. Each Spotify playlist becomes a playlist here with the songs Music can play (songs on this device, on your servers, or already in your music), and your Spotify liked songs become likes. The songs that were not found are listed, and you can copy the list. `Look for the missing songs on Jamendo and your servers` sends each missing song's title and artist there and adds only exact matches.
 
+## Artists worldwide
+Turn on `Artist pages online (MusicBrainz, Wikipedia)` in the settings (or `Turn on` under `Artists worldwide` in Search) and Search also finds any artist in the world. An artist's page has a photo, a short bio from Wikipedia in your language when there is one, the genres, the members (or the bands a person played in) and the whole discography from MusicBrainz: albums, singles and EPs, live albums and compilations, with covers from the Cover Art Archive.
+
+**What plays.** orOS plays only music that is free to play: your own files, your servers, and the free catalogues (Internet Archive with its Live Music Archive, Jamendo, Openverse with Wikimedia Commons, ccMixter). `Free to play here` on the page lists the songs of that artist found there; an album's page plays the songs found there and greys out the rest. A greyed song, and the `Listen in full` links on the page, open the artist's official site, Bandcamp or the store where it can be heard in full. There are no 30-second previews and no YouTube links.
+
+`Follow` keeps an artist under `Artists you follow` on Home and in Your library › Artists, on all your devices. `Artist page` on a song's ⋯ menu, or on an artist of your library, opens that artist's worldwide page.
+
+What is sent: the words you search for, the artist's MusicBrainz and Wikidata ids and the Wikipedia title; nothing about your music or what you play. Answers are kept on this device for up to 30 days.
+
 ## Covers and other apps
 `Find missing covers online` in the settings, or `Find cover online` on an album's ⋯ button, asks MusicBrainz and the Cover Art Archive for covers of albums that have none; only the album and artist names are sent. An album's ⋯ button also has `Add to Media Shelf`. `Use in Montage` on a song opens it in Montage: a song of this device as it is, a free song whose licence allows changes saved first to `Files › Music › Free music`, with its credit copied for your video.
 
