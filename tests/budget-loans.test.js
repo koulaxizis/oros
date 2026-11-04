@@ -148,3 +148,33 @@ test("CC-1: a credit card's cycle, what is left and the interest estimate", () =
   assert.equal(g.s, "2026-12-01");
   assert.equal(g.due, "2026-12-20");
 });
+
+test("LN-F: rate and months from what the person knows, series and a card cycle from entries", () => {
+  assert.equal(L.solveRate(1000000, 10485, 120), 475);
+  assert.equal(L.solveRate(1000000, 8000, 120), null);            // never pays it off
+  assert.equal(L.solveRate(120000, 10000, 12), 0);
+  assert.equal(L.solveMonths(1000000, 10485, 475), 120);
+  assert.equal(L.solveMonths(1000000, 3000, 475), null);          // does not cover the interest
+  assert.equal(L.solveMonths(120000, 10000, 0), 12);
+  const tx = [
+    { k: "o", a: 10485, d: "2026-07-15", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ 4471" },
+    { k: "o", a: 10485, d: "2026-08-14", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ 4472", ac: "bank" },
+    { k: "o", a: 10485, d: "2026-09-15", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ 4473", ac: "bank" },
+    { k: "o", a: 1599, d: "2026-08-03", n: "Netflix" }, { k: "o", a: 1599, d: "2026-09-03", n: "Netflix" },
+    { k: "o", a: 1599, d: "2026-10-03", n: "Netflix" }, { k: "o", a: 1599, d: "2026-11-03", n: "Netflix" },
+    { k: "o", a: 5000, d: "2026-09-01", n: "Groceries" }, { k: "o", a: 9000, d: "2026-10-01", n: "Groceries" },
+    { k: "i", a: 10485, d: "2026-10-15", n: "ΔΟΣΗ ΔΑΝΕΙΟΥ" }
+  ];
+  const s = L.findSeries(tx);
+  assert.deepEqual(s.map((x) => [x.key, x.count, x.a, x.day, x.loanish]),
+    [["δοση δανειου", 3, 10485, 15, true], ["netflix", 4, 1599, 3, false]]);
+  assert.equal(s[0].first, "2026-07-15");
+  assert.equal(s[0].ac, "bank");
+  // card: payments around the 5th, interest of €12.40 on a €1,000 debt → 14.88 %
+  const g = L.guessCycle([{ d: "2026-08-05", a: 1 }, { d: "2026-09-05", a: 1 }, { d: "2026-10-06", a: 1 }],
+    [{ d: "2026-10-12", a: 1240 }], (d) => (d === "2026-10-11" ? -100000 : 0));
+  assert.deepEqual([g.cyd, g.cys, g.cyr], [5, 15, 1488]);
+  assert.equal(g.from.rate, "2026-10-12");
+  assert.equal(L.guessCycle([], [], () => 0), null);
+  assert.ok(L.INTEREST.test("ΤΟΚΟΙ ΠΕΡΙΟΔΟΥ") && L.INTEREST.test("Interest charge"));
+});

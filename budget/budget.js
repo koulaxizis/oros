@@ -138,6 +138,9 @@
       "cy.rate": "Interest, % a year", "cy.hint": "Budget then shows what each statement asks for, what you paid and what is left by the due date, and roughly what interest it costs if not paid in full. Leave both days empty for an account without a cycle.",
       "cy.needDays": "Both days, from 1 to 31", "cy.needRate": "Interest: a yearly percentage from 0 to 100",
       "cy.feesCat": "Interest & fees", "cy.feeNote": "Card interest",
+      "cy.guess": "Guess from my entries", "cy.guessNone": "Nothing to go on yet: payments to this card and its interest entries show the cycle once bank updates or imports bring them.",
+      "cy.guessDue": "Due day: when {n} of your payments came in.", "cy.guessStmt": "Statement day: about three weeks before it, as on most cards.",
+      "cy.guessRate": "Interest: from the interest charged on {d}.", "cy.guessCheck": "Check them against a statement.", "cy.guessKept": "The fields you filled stay as they are.",
       "acc.hint": "Pick an account in an entry to keep its balance. Entries without an account still count in the totals.",
       "acc.empty": "No accounts yet: Budget works without them too.", "acc.none": "No account",
       "acc.bal": "Balances today", "acc.deleted": "Account deleted", "acc.full": "Up to {n} accounts",
@@ -254,6 +257,9 @@
       "cy.rate": "Επιτόκιο, % τον χρόνο", "cy.hint": "Η εφαρμογή δείχνει τότε τι ζητά κάθε λογαριασμός της κάρτας, τι πλήρωσες και τι μένει ως τη λήξη, και περίπου τι τόκο κοστίζει αν δεν εξοφληθεί. Άφησε κενές και τις δύο ημέρες για λογαριασμό χωρίς κύκλο.",
       "cy.needDays": "Και οι δύο ημέρες, από 1 ως 31", "cy.needRate": "Επιτόκιο: ετήσιο ποσοστό από 0 ως 100",
       "cy.feesCat": "Τόκοι και χρεώσεις", "cy.feeNote": "Τόκοι κάρτας",
+      "cy.guess": "Βρες τα από τις κινήσεις μου", "cy.guessNone": "Δεν υπάρχει ακόμα από πού: οι πληρωμές προς την κάρτα και οι τόκοι της δείχνουν τον κύκλο όταν τους φέρουν οι ενημερώσεις ή οι εισαγωγές της τράπεζας.",
+      "cy.guessDue": "Ημέρα λήξης: τότε μπήκαν {n} από τις πληρωμές σου.", "cy.guessStmt": "Ημέρα κλεισίματος: περίπου τρεις εβδομάδες νωρίτερα, όπως στις περισσότερες κάρτες.",
+      "cy.guessRate": "Επιτόκιο: από τους τόκους που χρεώθηκαν στις {d}.", "cy.guessCheck": "Έλεγξέ τα με έναν λογαριασμό της κάρτας.", "cy.guessKept": "Τα πεδία που συμπλήρωσες μένουν όπως είναι.",
       "acc.hint": "Διάλεξε λογαριασμό σε μια κίνηση για να κρατάς το υπόλοιπό του. Οι κινήσεις χωρίς λογαριασμό μετρούν κανονικά στα σύνολα.",
       "acc.empty": "Δεν υπάρχουν λογαριασμοί: η εφαρμογή δουλεύει και χωρίς αυτούς.", "acc.none": "Χωρίς λογαριασμό",
       "acc.bal": "Υπόλοιπα σήμερα", "acc.deleted": "Ο λογαριασμός διαγράφηκε", "acc.full": "Έως {n} λογαριασμοί",
@@ -3550,6 +3556,32 @@
     cyDet.appendChild(cyRow);
     cyDet.appendChild(field(t("cy.rate"), cyR, "bd-acc-cyr"));
     cyDet.appendChild(el("p", "hint", t("cy.hint")));
+    // LN-F: guess the cycle from the card's own entries (payments in,
+    // interest charged), filling only the empty fields
+    var LNS = window.OrosBudgetLoans;
+    if (a && LNS && LNS.guessCycle) {
+      var gB = button(t("cy.guess"), "mini", null);
+      gB.type = "button";
+      var gOut = el("p", "hint");
+      gB.addEventListener("click", function () {
+        var from = ymdLocal(new Date(Date.now() - 200 * 864e5)), ins = [], intr = [];
+        data.tx.forEach(function (x) {
+          if (x.ac !== a.id || x.d < from) return;
+          if (x.k === "i") ins.push(x);
+          else if (LNS.INTEREST.test(x.n || "") || x.c === FEES_CAT) intr.push(x);
+        });
+        data.xfer.forEach(function (x) { if (x.t === a.id && x.d >= from) ins.push(x); });
+        var g = LNS.guessCycle(ins, intr, function (d) { return accBalAt(a.id, d); });
+        if (!g) { gOut.textContent = t("cy.guessNone"); return; }
+        var said = [];
+        if (g.cyd && !cyD.value.trim()) { cyD.value = String(g.cyd); said.push(t("cy.guessDue", { n: g.from.due })); }
+        if (g.cys && !cyS.value.trim()) { cyS.value = String(g.cys); said.push(t("cy.guessStmt")); }
+        if (g.cyr && !cyR.value.trim()) { cyR.value = centsToInput(g.cyr, LANG); said.push(t("cy.guessRate", { d: dateShort(g.from.rate) })); }
+        gOut.textContent = said.length ? said.join(" ") + " " + t("cy.guessCheck") : t("cy.guessKept");
+      });
+      cyDet.appendChild(gB);
+      cyDet.appendChild(gOut);
+    }
     form.appendChild(cyDet);
     form.appendChild(err);
     var acts = el("div", "dlg-actions");
