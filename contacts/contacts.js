@@ -123,6 +123,7 @@
       "ct.del.yes": "Delete",
       "ct.del.done": "Contact deleted",
       "ct.err.name": "Give a name (or a company) first",
+      "ct.err.store": "Not saved: this browser's storage is full. Free some space (Settings › Device info) and save again.",
       "ct.none": "No contacts yet",
       "ct.search.none": "No contacts found",
       "ct.export.done": "Contacts exported (.vcf)",
@@ -441,6 +442,7 @@
       "ct.del.yes": "Διαγραφή",
       "ct.del.done": "Η επαφή διαγράφηκε",
       "ct.err.name": "Δώσε πρώτα ένα όνομα (ή εταιρεία)",
+      "ct.err.store": "Δεν αποθηκεύτηκε: ο χώρος του browser είναι γεμάτος. Ελευθέρωσε χώρο (Ρυθμίσεις › Πληροφορίες συσκευής) και αποθήκευσε ξανά.",
       "ct.none": "Καμία επαφή ακόμα",
       "ct.search.none": "Καμία επαφή δεν βρέθηκε",
       "ct.export.done": "Οι επαφές εξήχθησαν (.vcf)",
@@ -875,9 +877,7 @@
         }
       }
     });
-    if (changed) {
-      try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
-    }
+    if (changed) storeState();
   }
 
   function sanitizeLabel(l) {
@@ -1042,6 +1042,7 @@
     var rawText = null;
     try {
       rawText = localStorage.getItem(DATA_KEY);
+      seenText = rawText;
       var d = JSON.parse(rawText);
       // CT-3: stored text that is not a contacts object would be
       // overwritten by the first save — keep a verbatim rescue copy
@@ -1084,12 +1085,15 @@
   }
   // CT-PF: every write goes through here, so this is where each
   // contact's changed fields get their own stamp (merge.js restamp):
-  // the copy about to be stored is compared with the stored one.
+  // the copy about to be stored is compared with the stored one as
+  // this window last read or wrote it (CT-SW: what another window
+  // stored since then is not this window's change; adoptStored joins
+  // it after the stamps, so each side's change keeps its own stamp).
   function stampContacts() {
     if (!MG) return;
     var prev = {};
     try {
-      var d = JSON.parse(localStorage.getItem(DATA_KEY));
+      var d = JSON.parse(seenText !== null ? seenText : localStorage.getItem(DATA_KEY));
       (d && Array.isArray(d.contacts) ? d.contacts : []).forEach(function (c) {
         var sc = sanitizeContact(c);
         if (sc) prev[sc.id] = sc;
@@ -1102,11 +1106,82 @@
       MG.restamp(p, c, now);
     });
   }
+  // CT-SW — A SECOND WINDOW NEVER ERASES A CONTACT. Every window of
+  // Contacts (orOS, the single app "orOS Contacts", another tab, a
+  // hidden or background frame) keeps the contacts in memory and
+  // wrote that copy whole on each save. A window opened before another
+  // one saved a new contact still had the older list, and its next
+  // save wrote it over the new contact; with no sync in between the
+  // contact was gone everywhere (Chris 2026-11-03: saved on the phone,
+  // closed before sync, lost). Now each window remembers the stored
+  // text it last read or wrote (seenText). Before a write, and when
+  // another window writes (storage event), what changed in storage
+  // since then is joined into memory with the sync merge
+  // (mergeContacts: union by id, per-field stamps, tombstones), so a
+  // contact added, edited or deleted elsewhere is kept as it was
+  // there, and what this window itself removed stays removed.
+  var seenText = null;
+  function adoptStored() {
+    var raw = null, d = null;
+    try { raw = localStorage.getItem(DATA_KEY); } catch (e) { return false; }
+    if (raw === null || raw === seenText) return false;
+    try { d = JSON.parse(raw); } catch (e) { return false; }
+    if (!d || typeof d !== "object" || !Array.isArray(d.contacts)) return false;
+    var was = null;
+    try { was = seenText ? JSON.parse(seenText) : null; } catch (e) { was = null; }
+    var seenC = {}, seenL = {};
+    (was && Array.isArray(was.contacts) ? was.contacts : []).forEach(function (c) {
+      var sc = sanitizeContact(c);
+      if (sc) seenC[sc.id] = JSON.stringify(sc);
+    });
+    (was && Array.isArray(was.labels) ? was.labels : []).forEach(function (l) {
+      var sl = sanitizeLabel(l);
+      if (sl) seenL[sl.id] = JSON.stringify(sl);
+    });
+    // Only what another writer changed: an entry still as this window
+    // last saw it is this window's to keep or to have removed.
+    var other = {
+      contacts: d.contacts.map(sanitizeContact).filter(function (c) {
+        return c && seenC[c.id] !== JSON.stringify(c);
+      }),
+      labels: (Array.isArray(d.labels) ? d.labels : []).map(sanitizeLabel).filter(function (l) {
+        return l && seenL[l.id] !== JSON.stringify(l);
+      }),
+      deleted: (Array.isArray(d.deleted) ? d.deleted : []).map(sanitizeTomb).filter(Boolean)
+    };
+    if (sanitizeDav(d.dav)) other.dav = sanitizeDav(d.dav);
+    var m = mergeContacts(JSON.parse(JSON.stringify(state)), other);
+    state.contacts = m.contacts.map(sanitizeContact).filter(Boolean);
+    var ml = m.labels.map(sanitizeLabel).filter(Boolean);
+    if (ml.length) state.labels = ml;
+    state.deleted = m.deleted.map(sanitizeTomb).filter(Boolean);
+    setDav(m.dav);
+    seenText = raw;
+    return true;
+  }
+  // The one place the stored copy is written. False: the browser
+  // refused (storage full); memory then holds what storage does not.
+  function storeState() {
+    var text = JSON.stringify(state);
+    try { localStorage.setItem(DATA_KEY, text); } catch (e) {
+      try { console.error("contacts: could not store the contacts:", e); } catch (e2) {}
+      return false;
+    }
+    seenText = text;
+    return true;
+  }
+  // CT-SW: false = not stored. The person is told (no silent loss);
+  // Save keeps its window open (see ct-save).
   function saveState() {
     stampContacts();
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {}
+    adoptStored();
+    if (!storeState()) {
+      notifyTransient(t("ct.err.store"));
+      return false;
+    }
     markDirty();
     cdKick();            // CardDAV: the change goes to the server soon
+    return true;
   }
 
   // Shell sync bridge — canonical __orosSyncApi funnel (Part VII).
@@ -3130,7 +3205,15 @@ document.addEventListener("keydown", function (e) {
       return d.id !== clean.id;
     });
 
-    saveState();
+    if (!saveState()) {
+      // CT-SW: nothing reached storage. Memory goes back to the stored
+      // copy and the window stays open with what was typed, so the
+      // person can free space and press Save again.
+      loadState();
+      renderChips();
+      renderList();
+      return;
+    }
     $("ct-dlg").close();
     renderChips();
     renderList();
@@ -5829,9 +5912,14 @@ document.addEventListener("keydown", function (e) {
       state.deleted = data.deleted.map(sanitizeTomb).filter(Boolean);
     }
     if (Array.isArray(data.contacts)) setDav(data.dav);
-    try { localStorage.setItem(DATA_KEY, JSON.stringify(state)); } catch (e) {
-      console.error("contacts: could not store synced data:", e);
-    }
+    storeState();
+    redrawData();
+    cdKick();            // CardDAV: what another device changed goes to the server too
+    // info.merged → sync dot (taskbar), not toast (Wave 11 doctrine)
+  }
+  // Open card, label list, edit window labels, chips and list drawn
+  // again from the data in memory (dialogs stay open, typed text kept).
+  function redrawData() {
     if ($("ct-view") && viewCardId) {
       var vc = contactById(viewCardId);
       if (vc) openViewCard(vc); else closeViewCard();
@@ -5843,9 +5931,16 @@ document.addEventListener("keydown", function (e) {
     if ($("ct-dlg") && $("ct-dlg").open) renderDlgLabels();
     renderChips();
     renderList();
-    cdKick();            // CardDAV: what another device changed goes to the server too
-    // info.merged → sync dot (taskbar), not toast (Wave 11 doctrine)
   }
+
+  // CT-SW: another window of this browser saved contacts (the single
+  // app next to orOS, a second tab). Its changes are joined into this
+  // window's memory at once, so this window shows them and can never
+  // write an older list over them. Nothing is written here.
+  window.addEventListener("storage", function (e) {
+    if (e.key !== DATA_KEY || e.storageArea !== localStorage) return;
+    if (adoptStored()) redrawData();
+  });
 
   // Edits made in the phone's contacts app (BR-PHONE v2): phone.js
   // writes them to the blob, then this open copy re-reads it the way
