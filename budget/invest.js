@@ -131,8 +131,63 @@
     return out.sort();
   }
 
+  // EX-1: what an exchange's transaction file says you hold, per asset.
+  // rows = the file's CSV rows (bank.js parseCsv). Coinbase › Reports ›
+  // Transaction history: "Transaction Type", "Asset", "Quantity
+  // Transacted" (older files write sells and sends as positive; a
+  // Convert names what it bought in its Notes, "Converted 0.01 BTC to
+  // 300 USDC"). Binance › Orders › Transaction history: "Coin",
+  // "Change" (signed; moves between its own wallets cancel out).
+  // → { src: "coinbase" | "binance", q: { BTC: 0.25, … } } (assets left
+  // above zero, upper case) | null when the file is neither.
+  var CB_OUT = /sell|send|withdraw|convert/;
+  function exchangeHoldings(rows) {
+    if (!Array.isArray(rows)) return null;
+    function norm(h) { return String(h || "").trim().toLowerCase().replace(/[\s_]+/g, " "); }
+    function num(v) { var n = parseFloat(String(v || "").replace(/[^\d.eE+-]/g, "")); return isFinite(n) ? n : 0; }
+    var src = "", hi = -1, col = {};
+    for (var i = 0; i < Math.min(rows.length, 40) && !src; i++) {
+      var h = (rows[i] || []).map(norm);
+      if (h.indexOf("asset") >= 0 && h.indexOf("quantity transacted") >= 0 && h.indexOf("transaction type") >= 0) {
+        src = "coinbase"; hi = i;
+        col = { a: h.indexOf("asset"), q: h.indexOf("quantity transacted"), t: h.indexOf("transaction type"), n: h.indexOf("notes") };
+      } else if (h.indexOf("coin") >= 0 && h.indexOf("change") >= 0 && h.indexOf("operation") >= 0) {
+        src = "binance"; hi = i;
+        col = { a: h.indexOf("coin"), q: h.indexOf("change") };
+      }
+    }
+    if (!src) return null;
+    var q = {};
+    function add(sym, v) {
+      sym = String(sym || "").trim().toUpperCase();
+      if (!sym || sym.length > 20 || !v) return;
+      q[sym] = (q[sym] || 0) + v;
+    }
+    for (var r = hi + 1; r < rows.length && r < hi + 100001; r++) {
+      var row = rows[r] || [], v = num(row[col.q]);
+      if (src === "coinbase") {
+        var ty = String(row[col.t] || "").toLowerCase();
+        if (/staking transfer|unstaking transfer/.test(ty)) continue;      // between its own wallets
+        if (v > 0 && CB_OUT.test(ty)) v = -v;
+        add(row[col.a], v);
+        if (/convert/.test(ty) && col.n >= 0) {
+          var m = /converted\s+[\d.,]+\s+\S+\s+to\s+([\d.,]+)\s+(\S+)/i.exec(String(row[col.n] || ""));
+          if (m) add(m[2], num(m[1].replace(/,/g, "")));
+        }
+      } else add(row[col.a], v);
+    }
+    var out = {};
+    Object.keys(q).sort().forEach(function (k) { var v = Math.round(q[k] * 1e10) / 1e10; if (v > 0) out[k] = v; });
+    return { src: src, q: out };
+  }
+  // A quantity as the account window writes it: up to 10 decimals.
+  function qtyText(v) {
+    var s = (Math.round(v * 1e10) / 1e10).toFixed(10).replace(/0+$/, "").replace(/\.$/, "");
+    return QTY_RE.test(s) ? s : "";
+  }
+
   var api = { clean: clean, cfg: cfg, qty: qty, liveId: liveId, liveIds: liveIds, priceUrl: priceUrl,
-              parsePrices: parsePrices, value: value, metalOf: metalOf, COINS: COINS, OZ_G: OZ_G };
+              parsePrices: parsePrices, value: value, metalOf: metalOf, exchangeHoldings: exchangeHoldings, qtyText: qtyText, COINS: COINS, OZ_G: OZ_G };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetInvest = api;
 })(typeof window !== "undefined" ? window : this);

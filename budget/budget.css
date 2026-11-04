@@ -1009,6 +1009,8 @@ div.ov-accrow:hover { background: none; }
 /* LN-I: interest plan and schedule */
 .ln-plan, .acc-cy { margin: 4px 0 8px; }
 .ln-plan > summary, .acc-cy > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--text-dim); }
+.iv-ex { margin: 4px 0 8px; }
+.iv-ex-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .ln-sched { overflow-x: auto; max-height: 60vh; overflow-y: auto; margin: 6px 0 10px; }
 .ln-sched table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ln-sched th, .ln-sched td { padding: 4px 5px; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: left; }

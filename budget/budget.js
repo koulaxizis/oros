@@ -125,6 +125,9 @@
       "exp.hint": "The orOS Spreadsheet opens the Excel file and the “other apps” CSV.",
       "col.date": "Date", "col.type": "Type", "col.cat": "Category", "col.amount": "Amount",
       "col.cur": "Currency", "col.note": "Note", "col.total": "Total", "sheet.tx": "Entries", "sheet.sum": "Summary",
+      "exp.prev": "Last year ({y})", "sheet.ye": "Year-end", "ye.title": "Year-end, {d}",
+      "ye.acc": "Account", "ye.bal": "Balance", "ye.loan": "Loan or debt", "ye.lent": "Lent", "ye.owed": "Borrowed",
+      "ye.left": "Left", "ye.int": "Interest paid in {y}",
       "pdf.title": "Budget report", "pdf.gen": "Created {d}", "pdf.bycat": "Expenses by category",
       "pdf.incat": "Income by category", "pdf.list": "Entries", "pdf.page": "Page {n}",
       "bk.done": "Backup saved", "bk.restored": "Backup merged: {n} new or newer items",
@@ -141,6 +144,10 @@
       "iv.h": "Investment or property: crypto, gold, shares, home, car", "iv.kind": "What the account holds", "iv.none": "Money (not an investment)",
       "iv.kc": "Crypto", "iv.km": "Gold or silver", "iv.ks": "Shares, ETF or other", "iv.sym": "Which", "iv.gold": "gold or silver",
       "iv.qty": "Quantity", "iv.unit": "Unit", "iv.oz": "Troy ounces", "iv.g": "Grams", "iv.price": "Price per unit (optional)",
+      "iv.exFile": "Quantities from Coinbase or Binance",
+      "iv.exNone": "No Coinbase or Binance transaction history in that file, or nothing left in it.",
+      "iv.exPick": "Left in the {src} file, as of its last row. Pick one:",
+      "iv.exSet": "Quantity from the file: {q} {s}. Save to keep it.",
       "iv.hintC": "A symbol such as BTC, ETH or SOL, or the coin's CoinGecko id. The price comes from CoinGecko when online; type one to use when it can't be reached.",
       "iv.hintM": "\"gold\" or \"silver\": the price comes from CoinGecko (gold- and silver-backed tokens, one ounce each), so it is close to, not exactly, the market price. Platinum and others: type the price.",
       "iv.hintS": "Type the ticker and the price per share from your broker or bank; update it when you like. The account's balance (its starting balance plus transfers into it) is what you paid; Overview shows the value and the gain or loss.",
@@ -255,6 +262,9 @@
       "exp.hint": "Το Υπολογιστικό φύλλο του orOS ανοίγει το αρχείο Excel και το CSV «άλλες εφαρμογές».",
       "col.date": "Ημερομηνία", "col.type": "Τύπος", "col.cat": "Κατηγορία", "col.amount": "Ποσό",
       "col.cur": "Νόμισμα", "col.note": "Σημείωση", "col.total": "Σύνολο", "sheet.tx": "Κινήσεις", "sheet.sum": "Σύνοψη",
+      "exp.prev": "Πέρσι ({y})", "sheet.ye": "Τέλος έτους", "ye.title": "Τέλος έτους, {d}",
+      "ye.acc": "Λογαριασμός", "ye.bal": "Υπόλοιπο", "ye.loan": "Δάνειο ή χρέος", "ye.lent": "Δάνεισα", "ye.owed": "Δανείστηκα",
+      "ye.left": "Μένει", "ye.int": "Τόκοι που πληρώθηκαν το {y}",
       "pdf.title": "Αναφορά εσόδων και εξόδων", "pdf.gen": "Δημιουργήθηκε {d}", "pdf.bycat": "Έξοδα ανά κατηγορία",
       "pdf.incat": "Έσοδα ανά κατηγορία", "pdf.list": "Κινήσεις", "pdf.page": "Σελίδα {n}",
       "bk.done": "Το αντίγραφο αποθηκεύτηκε", "bk.restored": "Το αντίγραφο ενώθηκε: {n} νέα ή νεότερα στοιχεία",
@@ -271,6 +281,10 @@
       "iv.h": "Επένδυση ή περιουσία: κρυπτο, χρυσός, μετοχές, σπίτι, αυτοκίνητο", "iv.kind": "Τι κρατά ο λογαριασμός", "iv.none": "Χρήματα (όχι επένδυση)",
       "iv.kc": "Κρυπτονόμισμα", "iv.km": "Χρυσός ή ασήμι", "iv.ks": "Μετοχές, ETF ή άλλο", "iv.sym": "Ποιο", "iv.gold": "χρυσός ή ασήμι",
       "iv.qty": "Ποσότητα", "iv.unit": "Μονάδα", "iv.oz": "Ουγγιές", "iv.g": "Γραμμάρια", "iv.price": "Τιμή ανά μονάδα (προαιρετικό)",
+      "iv.exFile": "Ποσότητες από Coinbase ή Binance",
+      "iv.exNone": "Δεν βρέθηκε ιστορικό συναλλαγών Coinbase ή Binance σε αυτό το αρχείο, ή δεν έμεινε τίποτα.",
+      "iv.exPick": "Ό,τι μένει στο αρχείο {src}, ως την τελευταία του γραμμή. Διάλεξε:",
+      "iv.exSet": "Ποσότητα από το αρχείο: {q} {s}. Πάτα Αποθήκευση για να μείνει.",
       "iv.hintC": "Ένα σύμβολο όπως BTC, ETH ή SOL, ή το id του νομίσματος στο CoinGecko. Η τιμή έρχεται από το CoinGecko όταν υπάρχει σύνδεση· γράψε μία για όταν δεν απαντά.",
       "iv.hintM": "«χρυσός» ή «ασήμι»: η τιμή έρχεται από το CoinGecko (tokens με κάλυψη χρυσού και ασημιού, μία ουγγιά το καθένα), άρα είναι κοντά, όχι ακριβώς, στην τιμή της αγοράς. Πλατίνα και άλλα: γράψε την τιμή.",
       "iv.hintS": "Γράψε το σύμβολο και την τιμή ανά μετοχή από τον χρηματιστή ή την τράπεζά σου· άλλαξέ την όποτε θέλεις. Το υπόλοιπο του λογαριασμού (αρχικό υπόλοιπο συν μεταφορές προς αυτόν) είναι όσα πλήρωσες· η Σύνοψη δείχνει την αξία και το κέρδος ή τη ζημιά.",
@@ -3700,6 +3714,45 @@
     ivRow.appendChild(field(t("iv.qty"), ivQ, "bd-acc-ivq"));
     ivRow.appendChild(ivUF);
     ivDet.appendChild(ivRow);
+    // EX-1: the quantity from an exchange's transaction file
+    var exBox = el("div", "iv-ex"), exOut = el("p", "hint");
+    exOut.setAttribute("aria-live", "polite");
+    var exB = button(t("iv.exFile"), "", function () {
+      var BK = window.OrosBudgetBank;
+      if (!INV || !BK) return;
+      localPick(".csv,text/csv").then(function (file) {
+        if (!file) return;
+        if (file.size > 20 * 1024 * 1024) { exOut.textContent = t("iv.exNone"); return; }
+        return file.arrayBuffer().then(function (buf) {
+          var txt = BK.decode(new Uint8Array(buf), "auto").text;
+          var h = INV.exchangeHoldings(BK.parseCsv(txt, BK.guessSep(txt)));
+          exOut.textContent = "";
+          exList.innerHTML = "";
+          var syms = h ? Object.keys(h.q) : [];
+          if (!syms.length) { exOut.textContent = t("iv.exNone"); return; }
+          function pick(sym) {
+            var q = INV.qtyText(h.q[sym]);
+            if (!q) return;
+            ivS.value = sym;
+            ivQ.value = LANG === "el" ? q.replace(".", ",") : q;
+            exList.innerHTML = "";
+            exOut.textContent = t("iv.exSet", { q: ivQ.value, s: sym });
+          }
+          var mine = ivS.value.trim().toUpperCase();
+          if (mine && h.q[mine]) { pick(mine); return; }
+          exOut.textContent = t("iv.exPick", { src: h.src === "binance" ? "Binance" : "Coinbase" });
+          syms.slice(0, 30).forEach(function (sym) {
+            exList.appendChild(button(sym + " " + (LANG === "el" ? INV.qtyText(h.q[sym]).replace(".", ",") : INV.qtyText(h.q[sym])), "", function () { pick(sym); }));
+          });
+        });
+      }).catch(function () { exOut.textContent = t("iv.exNone"); });
+    });
+    exB.type = "button";
+    var exList = el("div", "iv-ex-list");
+    exBox.appendChild(exB);
+    exBox.appendChild(exOut);
+    exBox.appendChild(exList);
+    ivDet.appendChild(exBox);
     ivPF = field(t("iv.price"), ivP, "bd-acc-ivp");
     ivDet.appendChild(ivPF);
     ivDet.appendChild(ivDRow);
@@ -3710,6 +3763,7 @@
       ivRow.hidden = !k || k === "p";
       ivDRow.hidden = k !== "p";
       ivUF.hidden = k !== "m";
+      exBox.hidden = k !== "c";
       ivSF.querySelector("label").textContent = t(k === "p" ? "iv.what" : "iv.sym");
       ivPF.querySelector("label").textContent = t(k === "p" ? "iv.value" : "iv.price");
       ivS.placeholder = k === "c" ? "BTC" : k === "m" ? t("iv.gold") : k === "p" ? t("iv.what.ph") : "AAPL";
@@ -4244,6 +4298,7 @@
   function periodOf(p) {
     if (p === "year") return { prefix: viewMk.slice(0, 4), label: viewMk.slice(0, 4), slug: viewMk.slice(0, 4) };
     if (p === "all") return { prefix: "", label: t("exp.all"), slug: "all" };
+    if (p === "prev") { var py = String(+today.slice(0, 4) - 1); return { prefix: py, label: py, slug: py }; }
     return { prefix: viewMk, label: monthLabel(viewMk), slug: viewMk };
   }
   function exportRows(prefix) {
@@ -4267,7 +4322,9 @@
     grp.setAttribute("aria-label", t("exp.period"));
     var pb = {};
     [["month", t("exp.month", { m: monthLabel(viewMk) })], ["year", t("exp.year", { y: viewMk.slice(0, 4) })],
-     ["all", t("exp.all")]].forEach(function (p) {
+     ["prev", t("exp.prev", { y: +today.slice(0, 4) - 1 })], ["all", t("exp.all")]].filter(function (p) {
+      return p[0] !== "prev" || viewMk.slice(0, 4) !== String(+today.slice(0, 4) - 1);
+    }).forEach(function (p) {
       var b = el("button", "seg-btn", p[1]);
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -4382,6 +4439,32 @@
       .sort(function (a, b) { return cmpStr(b.k, a.k) || b.a - a.a; });
   }
 
+  // YE-1: for a year's export (the accountant's): each account's balance
+  // at the end of that year (today for the current one), in its own
+  // currency, and each loan or debt left then, with the interest paid
+  // that year on a bank loan. → null for a month or everything.
+  function yearEnd(P) {
+    if (!P.prefix || P.prefix.length !== 4) return null;
+    var end = P.prefix + "-12-31" < today ? P.prefix + "-12-31" : today;
+    var start = P.prefix + "-01-01", bal = accBalances(data, end);
+    var accl = accs().map(function (a) { return { n: a.n, cur: accCur(a), bal: bal[a.id] || 0 }; });
+    var loans = [], L = window.OrosBudgetLoans;
+    if (L) {
+      var by = L.paysBy(data.lpay.filter(function (p) { return p.d <= end; }));
+      data.loan.forEach(function (l) {
+        if (l.d > end || l.wo) return;
+        var st = L.status(l, by[l.id], end), int = 0;
+        if (L.hasPlan(l)) {
+          var before = (by[l.id] || []).filter(function (p) { return p.d < start; });
+          int = L.split(l, by[l.id]).int - L.split(l, before).int;
+        }
+        if (st.left || int) loans.push({ n: l.n, k: l.k, left: st.left, int: int });
+      });
+      loans.sort(function (a, b) { return cmpStr(a.k, b.k) || cmpStr(a.n, b.n); });
+    }
+    return accl.length || loans.length ? { end: end, y: P.prefix, accs: accl, loans: loans } : null;
+  }
+
   function exportXlsx(rows, P) {
     loadLib("xlsx.full.min.js", function () {
       var X = window.XLSX;
@@ -4409,6 +4492,19 @@
       var wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, t("sheet.tx"));
       X.utils.book_append_sheet(wb, ws2, t("sheet.sum"));
+      var ye = yearEnd(P);
+      if (ye) {
+        var yt = [[t("ye.title", { d: dateShort(ye.end) })], [], [t("ye.acc"), t("col.cur"), t("ye.bal")]];
+        ye.accs.forEach(function (a) { yt.push([safeText(a.n), a.cur, a.bal / 100]); });
+        if (ye.loans.length) {
+          yt.push([]);
+          yt.push([t("ye.loan"), "", t("ye.left"), t("ye.int", { y: ye.y })]);
+          ye.loans.forEach(function (l) { yt.push([safeText(l.n), t(l.k === "l" ? "ye.lent" : "ye.owed"), l.left / 100, l.int / 100]); });
+        }
+        var ws3 = X.utils.aoa_to_sheet(yt);
+        ws3["!cols"] = [{ wch: 26 }, { wch: 12 }, { wch: 14 }, { wch: 20 }];
+        X.utils.book_append_sheet(wb, ws3, t("sheet.ye").slice(0, 31));
+      }
       var buf = X.write(wb, { bookType: "xlsx", type: "array" });
       var mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
       saveBlob(new Blob([buf], { type: mime }), "oros-budget-" + P.slug + ".xlsx", mime, "Excel", ".xlsx");
@@ -4496,6 +4592,38 @@
       });
       y += 12;
     });
+    var ye = yearEnd(P);
+    if (ye) {
+      need(40 + 15 * Math.min(ye.accs.length, 3));
+      doc.setFontSize(12);
+      txt(t("ye.title", { d: dateShort(ye.end) }), M, y); y += 8;
+      doc.setDrawColor(200); doc.line(M, y, W - M, y); y += 14;
+      doc.setFontSize(10);
+      ye.accs.forEach(function (a) {
+        need(16);
+        txt(a.n.length > 40 ? a.n.slice(0, 39) + "…" : a.n, M, y);
+        txt(money(a.bal, a.cur), W - M, y, { align: "right" });
+        y += 15;
+      });
+      if (ye.loans.length) {
+        y += 6;
+        need(30);
+        doc.setFontSize(9); doc.setTextColor(110);
+        txt(t("ye.loan"), M, y);
+        txt(t("ye.left"), W - M - 130, y, { align: "right" });
+        txt(t("ye.int", { y: ye.y }), W - M, y, { align: "right" });
+        doc.setTextColor(0); doc.setFontSize(10); y += 15;
+        ye.loans.forEach(function (l) {
+          need(16);
+          var nm = l.n + " · " + t(l.k === "l" ? "ye.lent" : "ye.owed");
+          txt(nm.length > 40 ? nm.slice(0, 39) + "…" : nm, M, y);
+          txt(money(l.left), W - M - 130, y, { align: "right" });
+          txt(l.int ? money(l.int) : "", W - M, y, { align: "right" });
+          y += 15;
+        });
+      }
+      y += 12;
+    }
     need(40);
     doc.setFontSize(12);
     txt(t("pdf.list"), M, y); y += 8;
