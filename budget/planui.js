@@ -718,8 +718,8 @@
     if (!D().acc.length) { box.appendChild(el("p", "hint", t("nwNone"))); return; }
     var months = [];
     for (var i = 11; i >= 0; i--) months.push(A.mkAdd(A.viewMk(), -i));
-    var rows = P.netWorthSeries(D(), months, A.today(), A.cur(), A.fx);
-    var now = P.netWorth(D(), A.today(), A.cur(), A.fx);
+    var rows = P.netWorthSeries(D(), months, A.today(), A.cur(), A.fx, A.investValue);
+    var now = P.netWorth(D(), A.today(), A.cur(), A.fx, A.investValue);
     box.appendChild(el("p", "nw-now" + (now.tot < 0 ? " neg" : ""), t("nwNow", { a: A.money(now.tot) })));
     var W = A.chartWidth(box), H = 180, L = 46, Rm = 10, T = 12, B = 24;
     var lo = 0, hi = 0;

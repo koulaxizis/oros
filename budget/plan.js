@@ -289,8 +289,11 @@
   }
   // Sum of the balances in the main currency. missing = accounts whose
   // currency has no rate (left out).
-  function netWorth(d, upto, main, fx) {
+  // val (INV-1, optional): an account's value today (an investment:
+  // quantity × price) in its currency, or null to keep its balance.
+  function netWorth(d, upto, main, fx, val) {
     var bal = balancesFx(d, upto, main, fx), tot = 0, missing = [];
+    if (val) (d.acc || []).forEach(function (a) { var v = val(a); if (typeof v === "number" && isFinite(v)) bal[a.id] = v; });
     (d.acc || []).forEach(function (a) {
       var c = accCur(a, main);
       var v = c === main ? bal[a.id] : (fx ? fx(bal[a.id], c, main) : null);
@@ -300,11 +303,11 @@
   }
   // Net worth at the end of each month in `months` (ascending);
   // today's month ends today.
-  function netWorthSeries(d, months, today, main, fx) {
+  function netWorthSeries(d, months, today, main, fx, val) {
     return months.map(function (mk) {
       var end = lastDay(mk);
       if (end > today) end = today;
-      var r = netWorth(d, end, main, fx);
+      var r = netWorth(d, end, main, fx, end === today ? val : null);   // past months: what was paid
       return { mk: mk, tot: r.tot, missing: r.missing.length };
     });
   }
