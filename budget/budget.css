@@ -1045,5 +1045,9 @@ div.ov-accrow:hover { background: none; }
 .ov-acc-li > .ov-row { flex: 1 1 auto; min-width: 0; }
 .ov-acc-edit { flex-shrink: 0; }
 .ov-acc-edit svg { width: 16px; height: 16px; }
+.ov-acc-li { flex-wrap: wrap; }
+.ov-acc-li > .ov-row { flex-basis: 0; }
+.ov-bkline { flex: 1 0 100%; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; color: var(--text-dim); padding: 0 8px 6px; }
+.ov-bk-ok { color: var(--text-dim); }
 .ov-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
 .ov-bk-when { flex: 1 1 140px; min-width: 0; }
