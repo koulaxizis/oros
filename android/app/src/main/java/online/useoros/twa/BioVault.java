@@ -92,6 +92,16 @@ final class BioVault {
     // ---- what this phone can do ----
     /** ok | none (nothing enrolled) | no-hw | no-lock | old (Android 8 or older). */
     static String can(Context c) {
+        try {
+            return canNow(c);
+        } catch (RuntimeException e) {
+            // e.g. SecurityException without USE_BIOMETRIC: answer, never
+            // leave the page waiting
+            return "no-hw";
+        }
+    }
+
+    private static String canNow(Context c) {
         if (Build.VERSION.SDK_INT < 28) return "old";
         KeyguardManager km = (KeyguardManager) c.getSystemService(Context.KEYGUARD_SERVICE);
         if (km == null || !km.isDeviceSecure()) return "no-lock";
