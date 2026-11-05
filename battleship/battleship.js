@@ -983,7 +983,6 @@
         b.type = "button";
         b.tabIndex = -1;
         b.setAttribute("data-q", String(r * N + k));
-        b.setAttribute("role", "gridcell");
         grid.appendChild(b);
       }
     }

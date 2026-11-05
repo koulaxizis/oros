@@ -1549,9 +1549,15 @@
         });
       });
     $("size-seg").classList.toggle("fixed", prefs.mode !== "f");
+    [].forEach.call(document.querySelectorAll("#size-seg .seg-btn"), function (b) {
+      // a fixed size still answers a tap with a toast that says why
+      if (prefs.mode !== "f" && !b.classList.contains("active")) b.setAttribute("aria-disabled", "true");
+      else b.removeAttribute("aria-disabled");
+    });
     var tb = $("theme-btn");
     tb.lastChild.textContent = imp ? t("lib.short") : themeName(game);
     tb.classList.toggle("fixed", prefs.mode === "d");
+    if (prefs.mode === "d") tb.setAttribute("aria-disabled", "true"); else tb.removeAttribute("aria-disabled");
     $("new-btn").disabled = prefs.mode === "d";
     $("lib-btn").classList.toggle("on", imp);
   }

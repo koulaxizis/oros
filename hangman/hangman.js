@@ -623,7 +623,11 @@
       box.innerHTML = "";
       box.setAttribute("data-w", game.lang + game.word.length);
       box.style.setProperty("--n", String(r.length));
-      for (var i = 0; i < r.length; i++) box.appendChild(el("span", "slot"));
+      for (var i = 0; i < r.length; i++) {
+        var sl = el("span", "slot");
+        sl.setAttribute("role", "img");                 // a named letter slot (aria-label below)
+        box.appendChild(sl);
+      }
     }
     box.setAttribute("aria-label", t("word.label", { n: r.length }));
     for (var j = 0; j < r.length; j++) {
