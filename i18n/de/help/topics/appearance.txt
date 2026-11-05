@@ -122,7 +122,20 @@ In den `Einstellungen` › `Barrierefreiheit`, für orOS und jede App:
 
 Diese drei bleiben auf diesem Gerät: ein Handy und ein großer Bildschirm brauchen oft eine andere Größe.
 
+## Dein Name
+Unter Einstellungen › Darstellung › `Dein Name` schreibst du, wie orOS dich nennen soll. Anfangs ist das Feld leer. Mit einem Namen begrüßen dich [Heute](app:today) und die Startseite damit, zum Beispiel `Guten Abend, Maria`. Der Name bleibt auf deinen Geräten: Mit eingeschalteter [Synchronisierung](help:t/sync) geht er verschlüsselt auf deine anderen Geräte, wie deine übrigen Einstellungen. Er geht nie an den [Assistenten](app:assistant) oder sonstwohin. Leere das Feld, um ihn zu entfernen.
+
+## Die Startseite
+Die Startseite ist eine Startseite fürs Web: die Uhrzeit, ein Suchfeld, deine Favoriten aus [Lesezeichen](app:bookmarks) und ein Link zu orOS. Öffne sie unter [useoros.online/startpage/](https://useoros.online/startpage/) und mach sie zur Startseite deines Browsers, auch auf dem Handy.
+- Gib Wörter ein und drücke [[Enter]], um mit DuckDuckGo zu suchen, oder gib eine Adresse wie `wikipedia.org` ein, um dorthin zu gehen.
+- Beginne mit `oros ` (zum Beispiel `oros Zahnarzt`), um in deinen Apps und Daten in orOS zu suchen.
+- Deine Favoriten sind die Lesezeichen mit Stern in Lesezeichen. `Alle Lesezeichen` öffnet die App.
+- In orOS Portable und auf dem orOS USB öffnet `Neues Tor-Fenster` den Tor Browser für privates Surfen.
+- Mit eingeschalteter [Bildschirmsperre](help:t/privacy) zeigt die Seite weder deinen Namen noch deine Favoriten.
+
+Die Seite liest nur, was orOS schon auf diesem Gerät hat. Was du eingibst, geht nirgendwohin, bis du suchst, und dann nur an DuckDuckGo.
+
 ## Was dir auf andere Geräte folgt
-Mit eingeschalteter [Synchronisierung](help:t/sync) gehen deine Sprache, dein Design, Skin, Hintergrundbild (auch `Eigenes`) und die angeheftete Wetterstadt auch auf deine anderen Geräte.
+Mit eingeschalteter [Synchronisierung](help:t/sync) gehen deine Sprache, dein Design, Skin, Hintergrundbild (auch `Eigenes`), dein Name und die angeheftete Wetterstadt auch auf deine anderen Geräte.
 
 Die Einstellungen der saisonalen Deko gehen ebenfalls mit. Das Dock und seine Einstellungen, die Optionen zur Barrierefreiheit, eine Deko, die du ausprobierst oder behalten hast, und `Für heute ausblenden` bleiben auf diesem Gerät.

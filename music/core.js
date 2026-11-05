@@ -31,7 +31,7 @@
   var DATA_VER = 1;
   var PL_RE = /^p[0-9a-z]{10,14}$/;
   var KEY_RE = /^[a-z]{1,3}:[0-9a-z]{6,40}$/;
-  var LIM = { text: 200, likes: 20000, pls: 500, items: 5000, plName: 100, queue: 10000, up: 500, hist: 2000 };
+  var LIM = { text: 200, follows: 2000, likes: 20000, pls: 500, items: 5000, plName: 100, queue: 10000, up: 500, hist: 2000 };
   var DAY = 86400000;
   var AUDIO_EXT = /\.(mp3|m4a|m4b|aac|mp4|ogg|oga|opus|flac|wav|wave|weba|webm)$/i;
   var REPEAT = ["off", "all", "one"];
@@ -573,6 +573,15 @@
   //   user's own server is { k "sv:…", s "sv", sh server id, ii item id
   //   on that server, ai? / ri? album / artist id, ca? cover id }: no
   //   address (it needs the login, which stays on the device).
+  //   Since wave 6a (artists.js): fa: [follow] = artists the person
+  //   follows, follow = { k MusicBrainz artist id, m, on 1|0, n name,
+  //   im? https photo }. Merged like likes (newest m per k, tie: larger
+  //   JSON; unfollows pruned after a year); written only when it holds
+  //   an entry, so data without follows keeps its exact old form. An
+  //   older device drops the list on its own save; the union here
+  //   keeps every follow (a transient re-upload until it updates).
+  var MBID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  var IMG_RE = /^https:\/\/(upload\.wikimedia\.org|commons\.wikimedia\.org|coverartarchive\.org)\/[^\s"'<>]{1,600}$/;
   var SRC_RE = /^(ia|ov|cc|jm|ln)$/;
   var SH_RE = /^[0-9a-z]{6,14}$/;
   var SID_RE = /^[A-Za-z0-9._-]{1,100}$/;
@@ -623,6 +632,12 @@
     (Array.isArray(r.it) ? r.it : []).forEach(function (x) { var y = normRef(x); if (y && it.length < LIM.items) it.push(y); });
     return { id: r.id, m: r.m, n: clean(r.n, LIM.plName) || "Playlist", it: it };
   }
+  function normFollow(r) {
+    if (!r || typeof r !== "object" || typeof r.k !== "string" || !MBID_RE.test(r.k) || !isStamp(r.m)) return null;
+    var o = { k: r.k, m: r.m, on: r.on === 0 ? 0 : 1, n: clean(r.n) || "?" };
+    if (typeof r.im === "string" && IMG_RE.test(r.im)) o.im = r.im;
+    return o;
+  }
   // LWW by m; equal m: the larger canonical JSON wins (R26).
   function pick(a, b) {
     if (!a) return b; if (!b) return a;
@@ -632,8 +647,9 @@
   function emptyData() { return { ver: DATA_VER, likes: [], pls: [], tombs: {} }; }
   function mergeMusic(A, B) {
     var a = A && typeof A === "object" ? A : {}, b = B && typeof B === "object" ? B : {};
-    var likes = {}, pls = {}, tombs = {};
+    var likes = {}, pls = {}, tombs = {}, fa = {};
     [a, b].forEach(function (s) {
+      if (Array.isArray(s.fa)) s.fa.forEach(function (r) { var x = normFollow(r); if (x) fa[x.k] = pick(fa[x.k], x); });
       if (Array.isArray(s.likes)) s.likes.forEach(function (r) { var x = normLike(r); if (x) likes[x.k] = pick(likes[x.k], x); });
       if (Array.isArray(s.pls)) s.pls.forEach(function (r) { var x = normPl(r); if (x) pls[x.id] = pick(pls[x.id], x); });
       if (s.tombs && typeof s.tombs === "object") Object.keys(s.tombs).forEach(function (id) {
@@ -645,6 +661,7 @@
     Object.keys(likes).forEach(function (k) { if (likes[k].m > newest) newest = likes[k].m; });
     Object.keys(pls).forEach(function (k) { if (pls[k].m > newest) newest = pls[k].m; });
     Object.keys(tombs).forEach(function (k) { if (tombs[k] > newest) newest = tombs[k]; });
+    Object.keys(fa).forEach(function (k) { if (fa[k].m > newest) newest = fa[k].m; });
     var keep = newest - 365 * DAY;
     // Unliked entries and tombstones older than a year are dropped.
     var outLikes = Object.keys(likes).sort(cmpStr).map(function (k) { return likes[k]; })
@@ -656,7 +673,11 @@
     if (outPls.length > LIM.pls) outPls = outPls.slice(0, LIM.pls);
     var outTombs = {};
     Object.keys(tombs).sort(cmpStr).forEach(function (id) { if (tombs[id] >= keep) outTombs[id] = tombs[id]; });
-    return { ver: DATA_VER, likes: outLikes, pls: outPls, tombs: outTombs };
+    var out = { ver: DATA_VER, likes: outLikes, pls: outPls, tombs: outTombs };
+    var outFa = Object.keys(fa).sort(cmpStr).map(function (k) { return fa[k]; }).filter(function (f) { return f.on || f.m >= keep; });
+    if (outFa.length > LIM.follows) outFa = outFa.sort(function (x, y) { return y.m - x.m || cmpStr(x.k, y.k); }).slice(0, LIM.follows).sort(function (x, y) { return cmpStr(x.k, y.k); });
+    if (outFa.length) out.fa = outFa;
+    return out;
   }
   function canon(d) { return mergeMusic(d, d); }
 
@@ -676,6 +697,22 @@
     c.likes = c.likes.filter(function (l) { return l.k !== r.k; });
     c.likes.push(normLike(Object.assign({}, r, { m: now, on: on ? 1 : 0 })));
     return canon(c);
+  }
+  // Followed artists (wave 6a).
+  function isFollowed(d, id) {
+    var f = (d && d.fa || []).filter(function (x) { return x.k === id; })[0];
+    return !!(f && f.on);
+  }
+  function followed(d, lang) {
+    var c = collator(lang);
+    return (d && d.fa || []).filter(function (x) { return x.on; }).slice().sort(function (x, y) { return c.compare(x.n, y.n) || cmpStr(x.k, y.k); });
+  }
+  function setFollow(d, artist, on, now) {
+    var o = copy(d);
+    var f = normFollow({ k: artist && artist.id, m: now, on: on ? 1 : 0, n: artist && artist.n, im: artist && artist.im });
+    if (!f) return o;
+    o.fa = (o.fa || []).filter(function (x) { return x.k !== f.k; }).concat([f]);
+    return canon(o);
   }
   function findPl(d, id) { return (d.pls || []).filter(function (p) { return p.id === id; })[0] || null; }
   function addPl(d, name, refs, now, rnd) {
@@ -1125,13 +1162,14 @@
   }
 
   var api = {
-    VERSION: "1.5.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.6.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
     parseFlac: parseFlac, parseOgg: parseOgg, parseMp4: parseMp4, mp4Box: mp4Box, parseWav: parseWav,
     readTags: readTags, trackKey: trackKey, albumKey: albumKey, artistKey: artistKey, isAudioName: isAudioName,
-    emptyData: emptyData, mergeMusic: mergeMusic, canon: canon, normRef: normRef,
+    emptyData: emptyData, mergeMusic: mergeMusic, canon: canon, normRef: normRef, MBID_RE: MBID_RE,
+    isFollowed: isFollowed, followed: followed, setFollow: setFollow,
     isLiked: isLiked, likedList: likedList, setLike: setLike, findPl: findPl, addPl: addPl, renamePl: renamePl,
     addToPl: addToPl, removeFromPl: removeFromPl, movePl: movePl, deletePl: deletePl,
     emptyQueue: emptyQueue, normQueue: normQueue, qStart: qStart, qNext: qNext, qPrev: qPrev, qShuffle: qShuffle,

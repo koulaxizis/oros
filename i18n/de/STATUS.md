@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 39135 of 39389 (99%)
+- Strings: 39317 of 39586 (99%)
 - Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
@@ -22,7 +22,7 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
-| budget | 90% | 949 / 1054 |
+| budget | 90% | 974 / 1080 |
 | calculator | 100% | 166 / 166 |
 | calendar | 98% | 432 / 440 |
 | capture | 100% | 54 / 54 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 54 / 54 |
-| gamecenter | 100% | 110 / 110 |
+| gamecenter | 100% | 113 / 113 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 57 / 57 |
 | google-import | 100% | 9 / 9 |
@@ -88,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | montage | 100% | 378 / 378 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 100% | 433 / 433 |
+| music | 100% | 512 / 512 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
 | newsletter | 99% | 1003 / 1008 |
@@ -103,7 +103,7 @@ text is still written in the code. They switch over wave by wave
 | photolab | 100% | 781 / 781 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
-| podcasts | 100% | 290 / 290 |
+| podcasts | 100% | 348 / 348 |
 | pong | 100% | 64 / 64 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
@@ -119,12 +119,12 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 881 / 892 |
+| settings | 98% | 885 / 896 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1087 / 1091 |
+| shell | 99% | 1093 / 1097 |
 | signature | 100% | 219 / 219 |
-| simon | 100% | 49 / 49 |
+| simon | 100% | 52 / 52 |
 | sky | 100% | 383 / 383 |
 | slider | 100% | 37 / 37 |
 | slides | 100% | 427 / 427 |
@@ -134,6 +134,7 @@ text is still written in the code. They switch over wave by wave
 | split | 100% | 356 / 356 |
 | spot | 100% | 54 / 54 |
 | spreadsheet | 82% | 409 / 495 |
+| startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
 | stock | 100% | 694 / 694 |
 | storage | 100% | 179 / 179 |
@@ -146,7 +147,7 @@ text is still written in the code. They switch over wave by wave
 | tictactoe | 100% | 53 / 53 |
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 293 / 293 |
-| today | 100% | 91 / 91 |
+| today | 100% | 94 / 94 |
 | todo | 100% | 259 / 259 |
 | together | 100% | 303 / 303 |
 | travel | 100% | 555 / 555 |
@@ -157,7 +158,7 @@ text is still written in the code. They switch over wave by wave
 | wallpaper | 100% | 71 / 71 |
 | water | 100% | 94 / 94 |
 | weather | 100% | 186 / 186 |
-| whack | 100% | 49 / 49 |
+| whack | 100% | 50 / 50 |
 | wheel | 100% | 107 / 107 |
 | whiteboard | 100% | 195 / 195 |
 | wiki | 100% | 404 / 404 |

@@ -2,7 +2,7 @@
 Podcasts lets you follow your favourite shows, see new episodes, build an `Up next` queue and download episodes for listening offline. The player keeps going after you close the app.
 
 ## Getting started
-Open `Discover`, search for a podcast and press `Subscribe`. You can also paste an address into `Feed, website or Apple Podcasts address` and press `Add`. The **+** button at the top (`Add podcast`) takes you straight there.
+Open `Discover`, search for a podcast and press `Subscribe`. You can also paste an address into `Feed, website, Apple Podcasts or Spotify address` and press `Add`. The **+** button at the top (`Add podcast`) takes you straight there.
 
 The tabs:
 - `Listening`: what's playing, the `Up next` queue and `Continue listening`.
@@ -10,6 +10,15 @@ The tabs:
 - `Library`: your podcasts, with a badge for new episodes. Tap one to open its page. `Search all episodes` finds an episode in any of your podcasts, and `Statistics` shows how long you listened (counted on this device).
 - `Downloads`: episodes saved on this device.
 - `Discover`: search, add by address and OPML, and browsing like the Radio: `Popular` (the top 100 of a country, with sub-genre chips), `Genres`, `Countries` and `Surprise me` (a random popular podcast starts playing). Tap a podcast's name to try it before you subscribe: its episodes play, but nothing is saved or synced until you press `Subscribe`. The lists come from the Apple Podcasts charts.
+
+## Find podcasts
+In `Discover`, choose where your words are searched under the field: `Everything`, `Title`, `Hosts & publishers` (a presenter, an author or a network), `Topics` (keywords) or `Tags`. The `Filters` button opens `Genre`, `Country (Apple Podcasts store)`, `Sort` (`Best match`, `Newest episode`, `Most episodes`, `A–Z`), `Hide explicit podcasts` and `Hide podcasts I follow`; a number on the button shows how many are on, and `Clear filters` resets them. Filters are kept on this device.
+
+Above the results, chips narrow the list without a new search: `Catalog` (Apple Podcasts, fyyd, gpodder.net), `Genre` and `Host / publisher`. When you try a podcast, `More from …` lists other shows by the same host or publisher. Your last searches appear under `Recent`; `Clear` removes them.
+
+Paste a Spotify show link (`open.spotify.com/show/…`) into the search field: orOS reads the show's name from Spotify and looks for it in the open catalogs, the same name first. Shows that publish RSS elsewhere can be followed; shows that are only on Spotify have no RSS, and the app says so.
+
+`Tags` next to `Popular`, `Genres` and `Countries` shows the most used tags from gpodder.net; tap one to see its podcasts. Genre and country come from the Apple Podcasts catalog, so with `fyyd only` in Settings they are checked on the results here instead.
 
 ## Listen
 Press the play button on any episode. The player bar at the bottom has skip back, play/pause and skip forward; tap the episode's name there to open the full player with `Playback speed`, `Sleep timer`, chapters, `Show notes`, `Next in queue` and `Stop`. The sleep timer stops after 5 to 60 minutes or at the `End of episode`.
@@ -41,7 +50,7 @@ The device gets the episode's own address: a downloaded copy cannot go, and a TV
 Choose `Download` from an episode's menu. The `Downloads` tab shows how much space they take and how much is free. `Keep downloads safe from automatic clean-up` asks the browser to keep them; `Delete played downloads` tidies up.
 
 ## Settings
-The gear button opens `Settings`: default speed, `Skip back` and `Skip forward` amounts, `Play the next episode in the queue`, `Delete downloads after they are played`, and which catalog `Catalog search` uses (`Apple Podcasts and fyyd`, one of them, or off).
+The gear button opens `Settings`: default speed, `Skip back` and `Skip forward` amounts, `Play the next episode in the queue`, `Delete downloads after they are played`, and which catalog `Catalog search` uses (`All catalogs (Apple Podcasts, fyyd, gpodder.net, Podcast Index with your key)`, Apple Podcasts or fyyd only, or off). `Podcast Index (your own key)…` adds the largest open catalog: get a free key and secret at podcastindex.org and enter them; they stay sealed on this device, are never synced and never go into a backup or orOS file.
 
 ### Skip silence and voice boost
 `Skip silence` plays the quiet stretches between words faster, so episodes take less time; the full player shows how much time it saved, and `Statistics` adds it up. `Voice boost` evens out the volume and makes voices clearer, handy in a noisy room. Turn them on in `Settings` or with the two buttons in the full player.

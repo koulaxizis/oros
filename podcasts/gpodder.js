@@ -329,23 +329,26 @@
       });
     });
   }
-  function savePass(pass) {
+  // slot: "gpodder" (the sync password) or "podcastindex" (the
+  // person's own Podcast Index key + secret, PC-FIND 2026-11-04).
+  function slotOf(slot) { return slot === "podcastindex" ? "podcastindex" : "gpodder"; }
+  function savePass(pass, slot) {
     return deviceKey().then(function (key) {
       var iv = root.crypto.getRandomValues(new Uint8Array(12));
       return root.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(pass)).then(function (sealed) {
-        return idb("readwrite", function (s) { s.put({ iv: iv.buffer, data: sealed }, "gpodder"); });
+        return idb("readwrite", function (s) { s.put({ iv: iv.buffer, data: sealed }, slotOf(slot)); });
       });
     }).then(function () { return true; }, function () { return false; });
   }
-  function loadPass() {
-    return idb("readonly", function (s) { return s.get("gpodder"); }).then(function (rec) {
+  function loadPass(slot) {
+    return idb("readonly", function (s) { return s.get(slotOf(slot)); }).then(function (rec) {
       if (!rec) return "";
       return deviceKey().then(function (key) {
         return root.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, key, rec.data);
       }).then(function (plain) { return new TextDecoder().decode(plain); });
     }).catch(function () { return ""; });
   }
-  function dropPass() { return idb("readwrite", function (s) { s.delete("gpodder"); }).catch(function () {}); }
+  function dropPass(slot) { return idb("readwrite", function (s) { s.delete(slotOf(slot)); }).catch(function () {}); }
 
   var api = {
     CHUNK: CHUNK, normServer: normServer, normConfig: normConfig, ready: ready, urls: urls, basicAuth: basicAuth,

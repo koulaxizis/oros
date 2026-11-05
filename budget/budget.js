@@ -173,7 +173,8 @@
       "f.acc": "Account", "f.crm": "Partner in CRM", "err.name": "Write a name", "err.open": "Type a balance, for example -120,50",
       "xf.btn": "Transfer", "xf.new": "Transfer between accounts", "xf.edit": "Edit transfer",
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
-      "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
+      "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts", "flt.noAcc": "Without an account",
+      "na.gone": "{n} duplicates removed", "na.moved": "{n} entries moved to an account",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
       "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
       "menu.bank": "Import bank statement", "menu.banks": "Banks (automatic)", "menu.rules": "Rules",
@@ -317,7 +318,8 @@
       "f.acc": "Λογαριασμός", "f.crm": "Συνεργάτης στο CRM", "err.name": "Γράψε ένα όνομα", "err.open": "Γράψε ένα ποσό, για παράδειγμα -120,50",
       "xf.btn": "Μεταφορά", "xf.new": "Μεταφορά μεταξύ λογαριασμών", "xf.edit": "Επεξεργασία μεταφοράς",
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
-      "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
+      "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί", "flt.noAcc": "Χωρίς λογαριασμό",
+      "na.gone": "Σβήστηκαν {n} διπλές", "na.moved": "{n} κινήσεις μπήκαν σε λογαριασμό",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
       "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
       "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.banks": "Τράπεζες (αυτόματα)", "menu.rules": "Κανόνες",
@@ -853,7 +855,9 @@
     }
     if (isInt(x.cl) && x.cl > 0 && x.cl <= MAX_CENTS) out.cl = x.cl;
     if (typeof x.ty === "string" && /^[A-Z]{4}$/.test(x.ty)) out.ty = x.ty;
-    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1 });
+    // CD-1: ck = the person says it is a credit card (1) or not (2)
+    if (x.ck === 1 || x.ck === 2) out.ck = x.ck;
+    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1, ck: 1 });
   }
 
   var COLLS = [
@@ -1489,6 +1493,8 @@
     if (data.acc.length || data.xfer.length) {
       var g3 = el("optgroup"); g3.label = t("flt.accs");
       accs().forEach(function (a) { var o = el("option", "", a.n); o.value = "a:" + a.id; g3.appendChild(o); });
+      // NA-3: entries without an account (or of one that is gone)
+      if (data.acc.length) { var on0 = el("option", "", t("flt.noAcc")); on0.value = "a:"; g3.appendChild(on0); }
       var ox = el("option", "", t("flt.xfer")); ox.value = "k:t"; g3.appendChild(ox);
       sel.appendChild(g3);
     }
@@ -1503,7 +1509,8 @@
     if (filter === "inbox" && !inInbox(x)) return false;
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
     if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2) && (!x.c || !catById(x.c) || catById(x.c).p !== filter.slice(2))) return false;
-    if (filter.indexOf("a:") === 0 && (x.ac || "") !== filter.slice(2)) return false;
+    if (filter === "a:" && x.ac && findIn(data.acc, x.ac)) return false;
+    if (filter.indexOf("a:") === 0 && filter !== "a:" && (x.ac || "") !== filter.slice(2)) return false;
     if (query) {
       var hay = (x.n + " " + catName(x.c) + " " + accName(x.ac) + " " + centsToInput(x.a, LANG)).toLowerCase();
       if (hay.indexOf(query) < 0) return false;
@@ -2749,22 +2756,93 @@
   // Entries from Stripe / Invoice Ninja (budget/payments.js): one write; Undo
   // deletes them again (tombstones, like a delete).
   var PAY = window.OrosBudgetPay || null;
-  function addEntries(rows, doneText) {
-    var ids = [];
+  // NA-2: `moves` { <entry id>: <account id> } puts entries that had no
+  // account into the account a bank reading found them in, in the same
+  // write (and the same Undo).
+  function addEntries(rows, doneText, moves) {
+    var ids = [], moved = [];
     rows.forEach(function (r) {
       if (findIn(data.tx, r.id)) return;
       data.tx.push(Object.assign({}, r, { m: stamp(data.tombs["tx:" + r.id] || 0) }));
       ids.push(r.id);
     });
-    if (!ids.length) return;
+    Object.keys(moves || {}).forEach(function (id) {
+      var x = findIn(data.tx, id), ac = moves[id];
+      if (!x || (x.ac && findIn(data.acc, x.ac)) || !findIn(data.acc, ac)) return;
+      moved.push({ id: id, was: x.ac || "" });
+      x.ac = ac;
+      x.m = stamp(x.m);
+    });
+    if (!ids.length && !moved.length) return;
     commit();
     renderAll();
-    undoToast(doneText, function () {
+    undoToast(ids.length ? doneText : t("na.moved", { n: moved.length }), function () {
       data.tx = data.tx.filter(function (y) { return ids.indexOf(y.id) < 0; });
       ids.forEach(function (id) { tombstone("tx", id); });
+      moved.forEach(function (w) {
+        var x = findIn(data.tx, w.id);
+        if (!x) return;
+        if (w.was) x.ac = w.was; else delete x.ac;
+        x.m = stamp(x.m);
+      });
       commit();
       renderAll();
     });
+  }
+  // NA-1 (Chris 2026-11-04): entries without an account, from the
+  // Overview. `dups` [{ id, twin }]: the entry is the same money as
+  // `twin` (in an account): it goes, and what only it had (category,
+  // note, receipt, CRM partner) moves to the twin first. `moves`
+  // { <entry id>: <account id> }: the entry goes into that account.
+  // One write, one Undo (tombstones newer than the delete, sync-safe).
+  var NA_KEEP = ["c", "n", "rc", "crm"];
+  function fixNoAcc(dups, moves) {
+    var gone = [], twins = [], moved = [];
+    (dups || []).forEach(function (p) {
+      var x = findIn(data.tx, p.id), y = findIn(data.tx, p.twin);
+      if (!x || !y || x === y || (x.ac && findIn(data.acc, x.ac)) || !y.ac || !findIn(data.acc, y.ac)) return;
+      if (x.a !== y.a || x.k !== y.k || x.d !== y.d) return;
+      var before = JSON.parse(JSON.stringify(y)), changed = false;
+      NA_KEEP.forEach(function (f) {
+        if (x[f] && !y[f]) { y[f] = JSON.parse(JSON.stringify(x[f])); changed = true; }
+      });
+      if (changed) { y.m = stamp(y.m); twins.push(before); }
+      gone.push(JSON.parse(JSON.stringify(x)));
+      data.tx = data.tx.filter(function (z) { return z.id !== x.id; });
+      tombstone("tx", x.id);
+    });
+    Object.keys(moves || {}).forEach(function (id) {
+      var x = findIn(data.tx, id), ac = moves[id];
+      if (!x || (x.ac && findIn(data.acc, x.ac)) || !findIn(data.acc, ac)) return;
+      moved.push({ id: id, was: x.ac || "" });
+      x.ac = ac;
+      x.m = stamp(x.m);
+    });
+    if (!gone.length && !moved.length) return 0;
+    commit();
+    renderAll();
+    undoToast(gone.length ? t("na.gone", { n: gone.length }) : t("na.moved", { n: moved.length }), function () {
+      gone.forEach(function (c) {
+        untomb("tx", c.id);
+        c.m = stamp(Math.max(c.m, data.tombs["tx:" + c.id] || 0));
+        if (!findIn(data.tx, c.id)) data.tx.push(c);
+      });
+      twins.forEach(function (b) {
+        var y = findIn(data.tx, b.id);
+        if (!y) return;
+        NA_KEEP.forEach(function (f) { if (b[f] === undefined) delete y[f]; else y[f] = b[f]; });
+        y.m = stamp(y.m);
+      });
+      moved.forEach(function (w) {
+        var x = findIn(data.tx, w.id);
+        if (!x) return;
+        if (w.was) x.ac = w.was; else delete x.ac;
+        x.m = stamp(x.m);
+      });
+      commit();
+      renderAll();
+    });
+    return gone.length + moved.length;
   }
   function initPay() {
     if (!PAY) return;
@@ -3502,6 +3580,9 @@
       // AC-1: the account sheet's actions
       updateBalance: updateBalance, setAutoMatch: setAutoMatch, xferFrom: function (id) { xferDialog(null, id); },
       newTxIn: function (id) { txDialog(null, { ac: id }); },
+      // NA-1: entries without an account (twins found by bank.js)
+      noAccount: window.OrosBudgetBank ? function (mk) { return window.OrosBudgetBank.noAccount(data.tx, mk, data.acc.map(function (a) { return a.id; })); } : null,
+      fixNoAcc: fixNoAcc, accName: accName, accSelect: accSelect, field: field,
       // banks (budget/banklive.js): state, and an update now; a failed
       // bank opens Banks, where each one says why
       bankState: BANKLIVE && BANKLIVE.state ? BANKLIVE.state : null,
@@ -3520,6 +3601,9 @@
       dateShort: dateShort, accBalAt: accBalAt, correct: correctBal,
       cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo, passiveStats: passiveStats,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
+      // CD-1: a card's debt: is a bank account a card, its switch and limit
+      isCardRow: BANKLIVE && BANKLIVE.isCard ? BANKLIVE.isCard : null,
+      bankCardRows: BANKLIVE && BANKLIVE.cardRows ? BANKLIVE.cardRows : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin
