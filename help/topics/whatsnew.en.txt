@@ -1,7 +1,7 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.45.01
+## Version 5.45.02
 - **Autofill on the phone: the settings button works again, and errors show.** In Passwords › Menu › `Autofill on this phone`, `Open Android settings` opens Android's autofill choice at once, also while the phone is still making its keys. If the phone cannot make them, the dialog says so instead of waiting on "Preparing this phone's keys…".
 
 ## Version 5.45.00
