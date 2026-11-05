@@ -1125,8 +1125,8 @@
       return loadFeed(u).then(function (r) { return { list: r.songs, more: false, extra: { n: r.feed.title, art: r.feed.icon, site: r.feed.site } }; });
     };
   }
-  function feedDlg() {
-    promptDlg(t("sv.feedAdd"), t("feed.ph"), "https://", t("feed.add"), function (u) {
+  function feedDlg(pre) {
+    promptDlg(t("sv.feedAdd"), t("feed.ph"), typeof pre === "string" ? pre : "https://", t("feed.add"), function (u) {
       u = /^https?:\/\//i.test(u) ? u : "https://" + u;
       loadFeed(u).then(function (r) {
         if (!r.songs.length) { showToast(t("feed.none")); return; }
@@ -3620,7 +3620,9 @@
   // { ia } (an Internet Archive album) | { jm } (a Jamendo album) |
   // { playPath } (a song already under the music folder, from Files) |
   // { openFile: { token } } (a song from elsewhere: Files' "Open with",
-  // shell fileopen.js; copied into the music folder, then played).
+  // shell fileopen.js; copied into the music folder, then played) |
+  // { shuffleAll: true } (orOS Music icon shortcut: every song here,
+  // shuffled) | { addUrl: { url } } (a link shared to orOS Music).
   function playPath(p) {
     // A scan already running (the one at boot) may have started before
     // the file came in: then one more scan picks it up.
@@ -3644,8 +3646,28 @@
       return playPath(r.paths[0]);
     }, function () { showToast(t("toast.cant")); });
   }
+  // A shared link: a song plays at once (nothing is saved; Like keeps
+  // it), a playlist file or anything else opens the Import or the Add a
+  // feed dialog filled in, so nothing is added before a tap.
+  function addUrlTarget(o) {
+    var u = o && typeof o.url === "string" ? o.url.trim().slice(0, 1000) : "";
+    if (!/^https?:\/\/[^\s]+$/i.test(u) || !SV) { showToast(t("toast.cant")); return; }
+    var bare = u.split(/[?#]/)[0];
+    if (SV.AUDIO_RE.test(bare)) {
+      var r = SV.linkRef({ u: u });
+      if (r) playRows([r], 0, { kind: "song", id: r.k, n: r.t }, false);
+      else showToast(t("toast.cant"));
+    } else if (SV.LIST_RE.test(bare)) promptDlg(t("sv.import"), t("imp.urlPh"), u, t("imp.go"), importUrl, 1000);
+    else feedDlg(u);
+  }
   function openTarget(tg) {
     if (!H || !tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
+    if (tg.addUrl && typeof tg.addUrl === "object") { addUrlTarget(tg.addUrl); return; }
+    if (tg.shuffleAll === true) {
+      // (No songs yet: Home shows how to add them.)
+      if (tracks.length) playRows(tracks, -1, { kind: "all", id: "", n: t("now.lib") }, true);
+      return;
+    }
     if (tg.openFile && typeof tg.openFile === "object") { openFileTarget(tg.openFile); return; }
     if (typeof tg.playPath === "string") {
       if (tg.playPath.indexOf(LIB.ROOT + "/") === 0) playPath(tg.playPath);

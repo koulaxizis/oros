@@ -269,6 +269,29 @@ test("wave 5: business — invoice and customer shares; shortcuts reach their re
   ].forEach(([f, re]) => assert.match(read(f), re, f));
 });
 
+test("orOS Music: liked and shuffle shortcuts, audio links shared in, songs open with it (never with the whole orOS)", () => {
+  const now = new Date(2026, 10, 5, 22, 0);
+  assert.equal(S.nameOf("music", "el"), "orOS Μουσική");
+  assert.deepEqual(S.APPS.music.shortcuts.map((x) => x.do), ["liked", "shuffle"]);
+  assert.deepEqual(S.shareTarget("music", { url: "https://cdn.example.org/a.mp3", title: "", text: "" }, now),
+    { app: "music", target: { addUrl: { url: "https://cdn.example.org/a.mp3" } } });
+  assert.deepEqual(S.shareTarget("music", S.shareFromSearch("?share-text=" + encodeURIComponent("listen https://radio.example.org/list.m3u")), now),
+    { app: "music", target: { addUrl: { url: "https://radio.example.org/list.m3u" } } });
+  assert.equal(S.shareTarget("music", { url: "", title: "", text: "no link" }, now), null);
+  const m = S.manifestFor("music", F.table(), BASE);
+  assert.equal(m.file_handlers[0].action, "/music/solo.html?file-open=music");
+  assert.deepEqual(m.file_handlers[0].accept["audio/mpeg"], [".mp3"]);
+  assert.ok(m.file_handlers[0].accept["audio/flac"].includes(".flac"));
+  const acc = m.share_target.params.files[0].accept;
+  assert.equal(new Set(acc).size, acc.length);              // each type once
+  // The whole orOS still never takes songs over in the system's "Open with"
+  assert.ok(!F.manifestHandlers().some((h) => /file-open=music$/.test(h.action)));
+  assert.ok(F.soloTakes("music", ".FLAC") && F.soloTakes("music", ".mp3") && !F.soloTakes("music", ".txt") && !F.soloTakes("notes", ".mp3"));
+  assert.ok(F.soloTakes("notes", ".md"));
+  [["music/music.js", /if \(tg\.addUrl && typeof tg\.addUrl === "object"\)/], ["music/music.js", /if \(tg\.shuffleAll === true\)/],
+   ["music/music.js", /else if \(tg\.liked\)/], ["music/music.js", /SV\.AUDIO_RE\.test\(bare\)/]].forEach(([f, re]) => assert.match(read(f), re, f));
+});
+
 test("wave 6: orOS Games — every game in one app, Daily shortcuts, .pgn through Chess", () => {
   assert.equal(S.nameOf("gamecenter", "el"), "orOS Παιχνίδια");
   assert.deepEqual(S.APPS.gamecenter.shortcuts.map((x) => x.target.play), ["wordle", "crossword", "sudoku", "chess"]);

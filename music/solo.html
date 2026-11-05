@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-V7tVuDc4F2A3uaMmZK/LTfob28FS05VE1vromtSopsQ='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- The installed single app "orOS Music" (solo.js): its own manifest,
+       icon and window; the page frames the orOS shell in solo mode. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>orOS Music</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#1b1a18">
+  <link rel="icon" href="/icons/solo/music.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/solo/music-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="orOS Music">
+  <style>html,body{margin:0;height:100%;overflow:hidden;background:#14120d}#solo-frame{display:block;border:0;width:100%;height:100%}</style>
+</head>
+<body>
+  <script src="/i18n.js" data-app="solo"></script>
+  <script src="/solo.js"></script>
+  <script>window.orosSolo.hostBoot(window);</script>
+</body>
+</html>
