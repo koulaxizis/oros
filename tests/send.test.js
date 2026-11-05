@@ -50,10 +50,10 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "kanban", "slides", "wiki", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools", "textcase"]);
+    ["todo", "writer", "mail", "kanban", "slides", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools", "textcase"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
-  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "assistant"]);
-  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "mindmap", "flashcards", "texttools"]);
+  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "diary", "assistant"]);
+  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "diary", "mindmap", "flashcards", "texttools"]);
   assert.deepEqual(C.appsFor("table", { rows: [["a"]] }, ALL, ""), ["writer", "mail", "spreadsheet", "texttools"]);
   assert.deepEqual(C.appsFor("text", { text: "" }, ALL, ""), []);
 });
@@ -132,12 +132,21 @@ test("every receiver's app code takes the target it is sent", () => {
     prompter: ["prompter/prompter.js", ["tg.newPrompt", "tg.newPrompt.text"]],
     layout: ["layout/layout.js", ["placeImage"]],
     flashcards: ["flashcards/app.js", ["target.make", "FlashcardsMake"]],
-    typing: ["typing/app.js", ["target.addText", "target.addText.text"]]
+    typing: ["typing/app.js", ["target.addText", "target.addText.text"]],
+    // wave A3
+    contacts: ["contacts/contacts.js", ["target.cardText", "ctx.text"]],
+    maps: [["maps/maps.js", "maps/tracks.js"], ["target.asNew", "x.query", "pendingTarget"]],
+    invoices: ["invoices/invoices.js", ['tg["new"]', "prefillNew"]],
+    diary: ["diary/diary.js", ["target.write", "w.date", "w.text"]]
   };
-  assert.deepEqual(Object.keys(need).sort(), Object.keys(C.RECEIVERS).sort());
+  // Calendar and Budget open through the shell's openers (C.via), tested
+  // in tests/send-detect.test.js.
+  const via = Object.keys(C.RECEIVERS).filter((id) => C.via(id));
+  assert.deepEqual(via.sort(), ["budget", "calendar"]);
+  assert.deepEqual(Object.keys(need).concat(via).sort(), Object.keys(C.RECEIVERS).sort());
   for (const app of Object.keys(need)) {
     const [file, keys] = need[app];
-    const s = src(file);
+    const s = [].concat(file).map(src).join("\n");
     assert.match(s, /window\.__orosOpenAt\s*=/, app + " has a live deep-link receiver");
     assert.match(s, new RegExp("__orosTakeTarget\\(\\s*['\"]" + app + "['\"]"), app + " takes a staged target at boot");
     for (const k of keys) assert.ok(s.includes(k), app + " reads " + k);

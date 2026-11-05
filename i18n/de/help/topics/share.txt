@@ -58,6 +58,8 @@ Hast du statt eines Links eine Datei bekommen, öffne den Link darin oder nutze 
 
 Das Fenster zeigt nur die Apps, die es annehmen können: Text geht an Notizen, Aufgaben (eine Aufgabe pro Zeile), Texteditor, Mail, Wiki, den Assistenten, Textwerkzeuge, Groß/Klein, Folien (jede Überschrift wird eine Folie), Mindmap, Kanban (eine Karte pro Zeile), Schreibimpulse (als neuer Impuls) und, bei einer kurzen Zeile, Etiketten; ein Link geht auch an Lesezeichen; eine Tabelle geht an den Texteditor als Tabelle, an Tabelle als neues Blatt und an Mail. Die App öffnet sich mit dem ausgefüllten Inhalt, und nichts wird gespeichert, bis du es dort speicherst. `An jemanden senden…` im selben Fenster erstellt einen Link für eine andere Person, wie oben beschrieben.
 
+orOS liest den Text außerdem auf deinem Gerät und stellt die passende App an den Anfang: ein Tag oder eine Uhrzeit öffnet einen neuen Termin im [Kalender](app:calendar), ein Betrag in Euro (bei einem Beleg die Summe) eine neue Ausgabe im [Budget](app:budget), eine Telefonnummer oder E-Mail einen neuen Kontakt in [Kontakte](app:contacts) und eine Adresse eine Suche in [Karten](app:maps). Zeilen mit Beträgen können ein Rechnungsentwurf in [Rechnungen](app:invoices) werden, und jeder Text kann in den heutigen längeren Eintrag im [Ein-Satz-Tagebuch](app:diary). Diese Apps erscheinen nur, wenn der Text enthält, was sie brauchen, und nichts wird gespeichert, bis du es dort speicherst.
+
 ## Datenschutz
 Ein einfacher Link trägt die Sache im Teil nach dem #-Zeichen, den Browser nie an einen Server senden. Kein orOS-Server sieht sie, und nichts wird irgendwo gespeichert außer im Link.
 

@@ -34,8 +34,21 @@
   var HM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
   var YMD_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
   var MD_RE = /^(\d{2})-(\d{2})$/;
-  var WHEN = ["day", "month", "year", "once", "open"];
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask"];
+  var WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
+  // Wave A2 (BR-EV): what apps tell the shell's event bus. A new event =
+  // one name here + an orosEvent() call in that app + its words.
+  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done"];
+  var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness" };
+  var WORD_MAX = 60;
+  var SIG_KEY_MAX = 200;
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook"];
+  // Wave A5: steps that leave the device by themselves (AUTO-2 "each
+  // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
+  // POST to the person's own webhook (n8n, Home Assistant, Make…).
+  // `ok` holds the address the person allowed; a changed address
+  // is not allowed until they tick it again. Only https.
+  var OUT = { push: true, hook: true };
+  var URL_MAX = 500;
   // Apps an action needs (the shell offers the action only when it is installed).
   var NEEDS = { todo: "todo", event: "calendar", note: "notes", mail: "mail", budget: "budget",
                 timer: "time", ask: "assistant" };
@@ -65,6 +78,23 @@
   function cleanWhen(w) {
     if (!w || typeof w !== "object" || WHEN.indexOf(w.t) < 0) return null;
     if (w.t === "open") return { t: "open" };
+    if (w.t === "notice") {
+      // A notice from one app ("" = any app), maybe with a word in it.
+      // Passwords never (AUTO-4); the rules' own notices never (no loops).
+      var app = typeof w.app === "string" ? w.app : "";
+      if (app && (!APP_RE.test(app) || BLOCKED_APPS[app] || app === "automations")) return null;
+      var nw = { t: "notice", app: app };
+      var word = line(w.word, WORD_MAX);
+      if (word) nw.word = word;
+      return nw;
+    }
+    if (w.t === "event") {
+      if (EVENTS.indexOf(w.ev) < 0) return null;
+      var ew = { t: "event", ev: w.ev };
+      var eword = line(w.word, WORD_MAX);
+      if (eword) ew.word = eword;
+      return ew;
+    }
     var at = HM_RE.test(w.at) ? w.at : "09:00";
     if (w.t === "day") {
       var wd = [];
@@ -135,8 +165,48 @@
       var min = int(x.min, 1, 6000);
       return min === null ? null : { a: a, min: min, label: line(x.label, 40) };
     }
+    if (OUT[a]) {
+      var url = cleanUrl(x.url);
+      if (!url) return null;
+      var o2 = { a: a, url: url, text: line(x.text, 300) };
+      if (a === "push") o2.svc = x.svc === "gotify" ? "gotify" : "ntfy";
+      if (x.ok === url) o2.ok = url;
+      return o2;
+    }
     var q = str(x.text, TEXT_MAX).trim();           // ask
     return q ? { a: a, text: q } : null;
+  }
+
+  // https only, no user:password@, no fragment; ntfy wants a topic.
+  function cleanUrl(v) {
+    if (typeof v !== "string") return "";
+    var s = v.trim();
+    if (!s || s.length > URL_MAX || !/^https:\/\/[^\s\/?#@]+(\/[^\s#]*)?$/i.test(s)) return "";
+    return s;
+  }
+  function hostOf(url) { var m = /^https:\/\/([^\/?#]+)/i.exec(url || ""); return m ? m[1].toLowerCase() : ""; }
+  // The request a push / hook step makes (pure, so the editor shows
+  // exactly what leaves and the tests check it) → { url, method,
+  // headers, body } or null when the step is not allowed yet.
+  function outbound(action, rule, at, lang, said) {
+    var a = cleanAction(action);
+    if (!a || !OUT[a.a] || a.ok !== a.url) return null;
+    var title = line(rule && rule.name, NAME_MAX) || "orOS";
+    var text = fill(a.text || "", at, lang, said).slice(0, 1000);
+    if (a.a === "hook") {
+      return { url: a.url, method: "POST", headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ source: "orOS", rule: title, at: new Date(at).toISOString(), text: text }) };
+    }
+    if (a.svc === "gotify") {
+      return { url: a.url, method: "POST", headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ title: title, message: text || title, priority: 5 }) };
+    }
+    // ntfy: the message is the body, the title in the query (UTF-8 safe)
+    return { url: a.url + (a.url.indexOf("?") < 0 ? "?" : "&") + "title=" + encodeURIComponent(title), method: "POST",
+             headers: { "Content-Type": "text/plain" }, body: text || title };
+  }
+  function outSteps(rule) {
+    return (rule && rule["do"] || []).filter(function (a) { return OUT[a.a]; });
   }
 
   function cleanRule(raw) {
@@ -150,8 +220,66 @@
     });
     if (!acts.length) return null;
     var r = { id: raw.id, m: ms(raw.m), name: line(raw.name, NAME_MAX), on: raw.on !== false, when: when };
+    if (when.t === "notice" || when.t === "event") {
+      var cond = cleanIf(raw["if"]);
+      if (cond) r["if"] = cond;
+    }
     r["do"] = acts;
     return r;
+  }
+  // "Only on these days, between these hours" for rules that follow
+  // something that happens (wave A2). from > to spans midnight.
+  function cleanIf(c) {
+    if (!c || typeof c !== "object") return null;
+    var out = {}, wd = [];
+    (Array.isArray(c.wd) ? c.wd : []).forEach(function (x) {
+      var n = int(x, 0, 6);
+      if (n !== null && wd.indexOf(n) < 0) wd.push(n);
+    });
+    wd.sort();
+    if (wd.length && wd.length < 7) out.wd = wd;
+    if (HM_RE.test(c.from) && HM_RE.test(c.to) && c.from !== c.to) { out.from = c.from; out.to = c.to; }
+    return out.wd || out.from ? out : null;
+  }
+  function inWindow(cond, now) {
+    if (!cond) return true;
+    var d = new Date(now);
+    if (cond.wd && cond.wd.indexOf(d.getDay()) < 0) return false;
+    if (cond.from) {
+      var m = d.getHours() * 60 + d.getMinutes(), a = hm(cond.from), b = hm(cond.to);
+      var lo = a[0] * 60 + a[1], hi = b[0] * 60 + b[1];
+      if (lo < hi ? m < lo || m >= hi : m < lo && m >= hi) return false;
+    }
+    return true;
+  }
+  // Folding for the word match: lower case, no accents, final σ.
+  function fold(s) {
+    s = String(s || "").toLowerCase();
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.replace(/\u03c2/g, "\u03c3");
+  }
+  // FNV-1a, 32 bits, base 36: a short stable name for a signal's key.
+  function hash(s) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return h.toString(36);
+  }
+  // Does this rule follow this signal? sig = { kind: "notice" | "event",
+  // name: the notice's app (ns) or the event's name, key: its stable key,
+  // text }. → the run's key "<ruleId>@s<hash>" or null. The key comes
+  // from the signal's own key, so every device that sees the same
+  // signal names the same run (AUTO-3).
+  function matches(rule, sig, now) {
+    if (!rule || !rule.on || !sig || typeof sig.key !== "string" || !sig.key) return null;
+    var w0 = rule.when;
+    if (w0.t !== sig.kind) return null;
+    if (w0.t === "notice") {
+      if (sig.name === "automations" || BLOCKED_APPS[sig.name]) return null;
+      if (w0.app && w0.app !== sig.name) return null;
+    } else if (w0.ev !== sig.name) return null;
+    if (w0.word && fold(sig.text).indexOf(fold(w0.word)) < 0) return null;
+    if (!inWindow(rule["if"], now)) return null;
+    return rule.id + "@s" + hash(sig.kind + "|" + sig.name + "|" + sig.key.slice(0, SIG_KEY_MAX));
   }
 
   function newer(a, b) {
@@ -232,8 +360,9 @@
 
   // The latest planned moment at or before `now` (0 = none). Walks back
   // day by day over 400 days at most, so every kind has one code path.
+  function timed(when) { return !!when && when.t !== "open" && when.t !== "notice" && when.t !== "event"; }
   function lastAt(when, now) {
-    if (!when || when.t === "open") return 0;
+    if (!timed(when)) return 0;
     if (when.t === "once") {
       var p = YMD_RE.exec(when.date), t1 = atDay(+p[1], +p[2] - 1, +p[3], when.at);
       return t1 <= now ? t1 : 0;
@@ -250,7 +379,7 @@
   }
   // The next planned moment after `now` (0 = none), for the list.
   function nextAt(when, now) {
-    if (!when || when.t === "open") return 0;
+    if (!timed(when)) return 0;
     if (when.t === "once") {
       var p = YMD_RE.exec(when.date), t1 = atDay(+p[1], +p[2] - 1, +p[3], when.at);
       return t1 > now ? t1 : 0;
@@ -290,6 +419,7 @@
       var k = rule.id + "@" + ymdOf(now).replace(/-/g, "");
       return done === k || !bootAt ? null : { key: k, at: bootAt, late: false };
     }
+    if (!timed(rule.when)) return null;                // notice / event rules run from signals
     var at = lastAt(rule.when, now);
     if (!at || now - at > CATCH_UP_MS) return null;
     if (rule.m && at < rule.m - 60000) return null;      // made or changed after that moment
@@ -317,6 +447,7 @@
       "act.todo": "add {n} to To-Do", "act.event": "add to Calendar", "act.note": "add a note",
       "act.mail": "write an e-mail", "act.budget": "add to Budget", "act.open": "open {app}",
       "act.timer": "start a {n} min timer", "act.ask": "ask the Assistant",
+      "act.push": "a push to your phone through {host}", "act.hook": "a webhook to {host}",
       "tpl.week-plan": "Plan the week",
       "tpl.week-plan.text": "A new week starts. Have a look at your calendar and tasks.",
       "tpl.evening": "End of the day", "tpl.evening.text": "How was your day? Write one sentence about it.",
@@ -331,7 +462,15 @@
       "tpl.weekly-review": "Weekly review", "tpl.weekly-review.title": "Week review {date}",
       "tpl.weekly-review.text": "What went well:\n\nWhat to change:\n\nNext week:\n",
       "tpl.open-today": "Summary when orOS opens",
-      "from": "Automations"
+      "from": "Automations",
+      "when.notice": "When any app posts a notice", "when.noticeApp": "When {app} posts a notice",
+      "when.word": " with \u201c{word}\u201d",
+      "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
+      "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
+      "tpl.mail-todo": "Urgent e-mail to To-Do", "tpl.mail-todo.word": "urgent", "tpl.mail-todo.item": "{text}",
+      "tpl.habit-cheer": "Cheer for a habit", "tpl.habit-cheer.text": "Well done: {text}. Keep the streak going.",
+      "tpl.workout-log": "After a workout", "tpl.workout-log.text": "Workout done: {text}. Drink some water.",
+      "tpl.water-goal": "Water goal reached", "tpl.water-goal.text": "You drank {text} today. Well done."
     },
     el: {
       "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη", "wd.4": "Πέμπτη",
@@ -346,6 +485,7 @@
       "act.todo": "{n} στο To-Do", "act.event": "στο Ημερολόγιο", "act.note": "νέα σημείωση",
       "act.mail": "νέο e-mail", "act.budget": "στον Προϋπολογισμό", "act.open": "άνοιγμα: {app}",
       "act.timer": "χρονόμετρο {n} λεπτών", "act.ask": "ερώτηση στον Βοηθό",
+      "act.push": "ειδοποίηση στο κινητό μέσω {host}", "act.hook": "webhook προς {host}",
       "tpl.week-plan": "Πρόγραμμα εβδομάδας",
       "tpl.week-plan.text": "Ξεκινά νέα εβδομάδα. Ρίξε μια ματιά στο ημερολόγιο και στις εργασίες σου.",
       "tpl.evening": "Τέλος της μέρας", "tpl.evening.text": "Πώς ήταν η μέρα σου; Γράψε μια πρόταση γι' αυτήν.",
@@ -360,7 +500,15 @@
       "tpl.weekly-review": "Εβδομαδιαία ανασκόπηση", "tpl.weekly-review.title": "Ανασκόπηση εβδομάδας {date}",
       "tpl.weekly-review.text": "Τι πήγε καλά:\n\nΤι να αλλάξω:\n\nΤην επόμενη εβδομάδα:\n",
       "tpl.open-today": "Σύνοψη όταν ανοίγει το orOS",
-      "from": "Αυτοματισμοί"
+      "from": "Αυτοματισμοί",
+      "when.notice": "Όταν οποιαδήποτε εφαρμογή στέλνει ειδοποίηση", "when.noticeApp": "Όταν έρχεται ειδοποίηση από: {app}",
+      "when.word": " με \u00ab{word}\u00bb",
+      "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
+      "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
+      "tpl.mail-todo": "Επείγον e-mail στο To-Do", "tpl.mail-todo.word": "επείγον", "tpl.mail-todo.item": "{text}",
+      "tpl.habit-cheer": "Μπράβο για μια συνήθεια", "tpl.habit-cheer.text": "Μπράβο: {text}. Συνέχισε το σερί.",
+      "tpl.workout-log": "Μετά την προπόνηση", "tpl.workout-log.text": "Η προπόνηση τελείωσε: {text}. Πιες λίγο νερό.",
+      "tpl.water-goal": "Ο στόχος για νερό", "tpl.water-goal.text": "Ήπιες {text} σήμερα. Μπράβο."
     }
   };
   // The table for a language: a pack language through orosI18n (in a
@@ -377,9 +525,10 @@
   function sub(s, o) { return s.replace(/\{(\w+)\}/g, function (all, k) { return o[k] !== undefined ? o[k] : all; }); }
 
   // ---------- Placeholders: {date} {weekday} {month} {year} ----------
-  function fill(text, at, lang) {
+  function fill(text, at, lang, said) {
     var d = new Date(at);
-    return String(text).replace(/\{(date|weekday|month|year)\}/g, function (all, k) {
+    return String(text).replace(/\{(date|weekday|month|year|text)\}/g, function (all, k) {
+      if (k === "text") return typeof said === "string" ? said : "";
       if (k === "date") return d.getDate() + "/" + (d.getMonth() + 1) + "/" + d.getFullYear();
       if (k === "weekday") return w(lang, "wd." + d.getDay());
       if (k === "month") return w(lang, "mo." + d.getMonth());
@@ -391,10 +540,10 @@
   // → { fn: "openAt" | "calendarNew" | "budgetNew" | "openApp", app, arg }
   // or null. `at` is the planned moment of the run (placeholders and
   // dates), `from` the source label the receiver shows.
-  function call(action, at, lang, from) {
+  function call(action, at, lang, from, said) {
     var a = cleanAction(action);
-    if (!a || a.a === "notify") return null;
-    var f = function (s) { return fill(s, at, lang); };
+    if (!a || a.a === "notify" || OUT[a.a]) return null;
+    var f = function (s) { return fill(s, at, lang, said); };
     if (a.a === "todo") {
       var add = { from: from, items: a.items.map(function (s) { return { text: f(s).slice(0, LINE_MAX) }; }) };
       if (a.newList) add.newList = f(a.newList).slice(0, 60);
@@ -436,9 +585,14 @@
   }
 
   // ---------- Words for the list and the notice ----------
-  function whenText(when, lang) {
+  function whenText(when, lang, appName) {
     var at = when.at ? sub(w(lang, "when.at"), { at: when.at }) : "";
     if (when.t === "open") return w(lang, "when.open");
+    if (when.t === "notice") {
+      var nt = when.app ? sub(w(lang, "when.noticeApp"), { app: appName ? appName(when.app) : when.app }) : w(lang, "when.notice");
+      return nt + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
+    }
+    if (when.t === "event") return w(lang, "ev." + when.ev) + (when.word ? sub(w(lang, "when.word"), { word: when.word }) : "");
     if (when.t === "day") {
       if (!when.wd.length) return w(lang, "when.day") + at;
       var order = [1, 2, 3, 4, 5, 6, 0].filter(function (n) { return when.wd.indexOf(n) >= 0; });
@@ -453,20 +607,22 @@
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
     if (a.a === "open") return sub(w(lang, "act.open"), { app: appName ? appName(a.app) : a.app });
     if (a.a === "timer") return sub(w(lang, "act.timer"), { n: a.min });
+    if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);
   }
   // The notice for one run → { title, body }.
-  function notice(rule, at, lang, appName) {
+  function notice(rule, at, lang, appName, said) {
     var parts = [], rest = [];
     rule["do"].forEach(function (a) {
-      if (a.a === "notify") parts.push(fill(a.text, at, lang));
+      if (a.a === "notify") parts.push(fill(a.text, at, lang, said));
+      else if (OUT[a.a]) parts.push(actText(a, lang, appName));
       else rest.push(actText(a, lang, appName));
     });
     if (rest.length) parts.push(sub(w(lang, "notice.tap"), { what: rest.join(", ") }));
     return { title: rule.name || whenText(rule.when, lang), body: parts.join("\n").slice(0, 500) };
   }
   function pending(rule) {
-    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify"; });
+    return (rule && rule["do"] || []).filter(function (a) { return a.a !== "notify" && !OUT[a.a]; });
   }
 
   // ---------- Ready-made rules (templates) ----------
@@ -489,7 +645,14 @@
       "do": [{ a: "timer", min: 50, label: "@tpl.focus.label" }] },
     { id: "weekly-review", when: { t: "day", at: "18:00", wd: [0] },
       "do": [{ a: "note", title: "@tpl.weekly-review.title", text: "@tpl.weekly-review.text" }] },
-    { id: "open-today", when: { t: "open" }, "do": [{ a: "open", app: "today" }] }
+    { id: "open-today", when: { t: "open" }, "do": [{ a: "open", app: "today" }] },
+    // wave A2: rules that follow what happens
+    { id: "mail-todo", when: { t: "notice", app: "mail", word: "@tpl.mail-todo.word" },
+      "do": [{ a: "todo", items: "@tpl.mail-todo.item" }] },
+    { id: "habit-cheer", when: { t: "event", ev: "habits.done" }, "do": [{ a: "notify", text: "@tpl.habit-cheer.text" }] },
+    { id: "workout-log", when: { t: "event", ev: "fitness.done" },
+      "do": [{ a: "notify", text: "@tpl.workout-log.text" }, { a: "open", app: "water" }] },
+    { id: "water-goal", when: { t: "event", ev: "water.goal" }, "do": [{ a: "notify", text: "@tpl.water-goal.text" }] }
   ];
   function pick(v, lang, k) {
     if (typeof v !== "string" || v.charAt(0) !== "@") return v;
@@ -502,6 +665,7 @@
     TEMPLATES.forEach(function (x) { if (x.id === id) tp = x; });
     if (!tp) return null;
     var r = { name: w(lang, "tpl." + id), on: true, when: JSON.parse(JSON.stringify(tp.when)) };
+    if (r.when.word) r.when.word = pick(r.when.word, lang, "word");
     r["do"] = tp["do"].map(function (a) {
       var o = {};
       Object.keys(a).forEach(function (k) { o[k] = pick(a[k], lang, k); });
@@ -522,6 +686,8 @@
     put: put, remove: remove, setOn: setOn, find: find,
     lastAt: lastAt, nextAt: nextAt, due: due, fill: fill, call: call, needs: needs, runnable: runnable,
     whenText: whenText, actText: actText, notice: notice, pending: pending,
+    OUT: OUT, cleanUrl: cleanUrl, hostOf: hostOf, outbound: outbound, outSteps: outSteps,
+    EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
     templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

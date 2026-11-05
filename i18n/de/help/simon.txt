@@ -12,7 +12,8 @@ Drückst du ein falsches Feld, ist das Spiel vorbei, und das Feld, das richtig g
 
 ## Bedienung
 - Tippe oder klicke auf ein Feld; es zählt, sobald du es berührst.
-- `Neues Spiel (N)` beendet das laufende Spiel (seine Punkte zählen trotzdem) und bereitet ein neues vor. Auch wenn du Felder oder Modus änderst oder die App mitten im Spiel verlässt, endet es.
+- `Neues Spiel (N)` beendet das laufende Spiel (seine Punkte zählen trotzdem) und bereitet ein neues vor. Auch wenn du Felder oder Modus änderst, endet es.
+- Verlässt du die App mitten im Spiel, bleibt das Spiel erhalten. Kommst du zurück oder öffnest orOS wieder, wartet es auf die Runde, die du gespielt hast: Drück in der Mitte auf `Weiter`, und Simon spielt diese Runde noch einmal vom ersten Schritt an.
 - Der Ton ist am Anfang an, weil die Töne beim Merken helfen. Der Lautsprecher-Knopf schaltet ihn aus oder an.
 - Tasten: [[Space]] startet ein Spiel, [[1]] bis [[4]] (oder [[1]] bis [[6]]) drücken die Felder nach Zahl, und [[N]] ist ein neues Spiel.
 

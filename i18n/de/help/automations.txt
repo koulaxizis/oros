@@ -12,6 +12,24 @@ Mit Automatisierungen erledigt orOS Dinge für dich im richtigen Moment. Eine Re
 - `Jedes Jahr` und `Einmal`: Wähle das `Datum`.
 - `Wenn orOS geöffnet wird (einmal am Tag)`: beim ersten Öffnen von orOS an jedem Tag.
 
+## Wenn etwas passiert
+Eine Regel kann statt einer Uhrzeit auch etwas folgen, das passiert:
+- `Wenn eine App eine Mitteilung sendet`: eine Mitteilung einer App (zum Beispiel Mail oder Kalender) oder jeder App. Mit `Nur wenn darin steht` zählen nur Mitteilungen mit diesem Wort (Groß- und Kleinschreibung und Akzente spielen keine Rolle).
+- `Wenn etwas passiert`: du erledigst eine Aufgabe in To-Do, hakst eine Gewohnheit ab, erreichst dein Wasserziel oder beendest ein Training.
+- `Nur an diesen Tagen und Uhrzeiten` beschränkt sie zum Beispiel auf Werktage von 9:00 bis 17:00.
+
+In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte: die Aufgabe, die Gewohnheit, das Training oder der Text der Mitteilung. So eine Regel läuft einmal für alles, was passiert, höchstens 20-mal am Tag, und nur auf dem Gerät, auf dem es passiert ist. Mitteilungen von Passwörter starten nie eine Regel, und nichts aus Passwörter wird je gelesen.
+
+## Außerhalb von orOS
+Zwei Schritte verlassen orOS von selbst, wenn die Regel läuft:
+- `Push aufs Handy`: über [ntfy](https://ntfy.sh) (kostenlos, ohne Konto; wähle ein Thema, das niemand errät, oder deinen eigenen Server) oder deinen eigenen Gotify-Server. Installiere die App ntfy oder Gotify auf dem Handy und abonniere dasselbe Thema.
+- `An einen Webhook senden`: eine kleine JSON-Nachricht (`source`, `rule`, `at`, `text`) an dein eigenes n8n, Home Assistant (eine Automation mit Webhook-Auslöser), Make oder Ähnliches. Der Server muss https nutzen und Anfragen von orOS annehmen (CORS; ntfy tut das).
+
+Unter jedem siehst du genau, was gesendet wird, und nichts geht raus, bevor du `Diese Regel darf das von selbst…` für diese Adresse abhakst; änderst du die Adresse, hakst du es erneut ab. Nur das Gerät, das die Regel ausführt, sendet, einmal. Halte die Adresse geheim: Wer sie hat, kann an dein Thema oder deinen Webhook senden. Der Assistent schlägt Regeln vor, aber nie diese zwei Schritte.
+
+## Den Assistenten fragen
+Sag dem [Assistenten](app:assistant), was du willst, zum Beispiel „erinnere mich jeden Montag um 8 an den Müll" oder „wenn eine dringende E-Mail kommt, setz sie in To-Do". Er schreibt die Regel und zeigt sie auf einer Karte; `In Automatisierungen öffnen` öffnet sie hier als neue Regel, und nichts wird gespeichert, bevor du auf Speichern tippst. Frag ihn „warum ist das gelaufen?", und wenn du ihn Automatisierungen lesen lässt, sieht er deine Regeln und die letzten Läufe auf diesem Gerät an (nie, was ein Hinweis sagte) und erklärt sie oder schlägt eine bessere Regel vor. Passwörter sieht er nie.
+
 ## Was eine Regel tut
 - `Mitteilung zeigen` erscheint von selbst bei den Mitteilungen, wie jede Erinnerung.
 - Jeder andere Schritt braucht dein Okay: Die Mitteilung sagt, was ein Tippen tut, und das Tippen öffnet diese App ausgefüllt (To-Do, Kalender, Notizen, Mail, Budget, Zeit oder der Assistent). Dort wird nichts gespeichert, bevor du es speicherst.

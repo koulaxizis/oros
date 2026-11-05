@@ -58,6 +58,8 @@ If you got a file instead of a link, open the link inside it, or use `Open a fil
 
 The window lists only the apps that can take it: text goes to Notes, To-Do (one task per line), Writer, Mail, Wiki, the Assistant, Text Tools, Case Converter, Slides (each heading becomes a slide), Mind map, Kanban (one card per line), Prompter (as a new prompt) and, for one short line, Label Maker; a link also goes to Bookmarks; a table goes to Writer as a table, to Spreadsheet as a new sheet, and to Mail. The app opens with it filled in, and nothing is saved until you save it there. `Send to someone…` in the same window makes a link for another person, as described above.
 
+orOS also reads the text on your device and puts the app that fits first: a day or a time opens a new event in [Calendar](app:calendar), an amount in euro (a receipt's total when it has one) a new expense in [Budget](app:budget), a phone or e-mail a new contact in [Contacts](app:contacts), and an address a search in [Maps](app:maps). Lines with amounts can become a draft invoice in [Invoices](app:invoices), and any text can go to today's longer entry in [One-Sentence Diary](app:diary). These apps show only when the text holds what they need, and nothing is saved until you save it there.
+
 ## Privacy
 A plain link carries the item in the part after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.
 

@@ -244,6 +244,31 @@
     return b;
   }
 
+  // Your name (ME v1, shell.js): saved when the field is left or Enter
+  // is pressed, so a repaint never takes the field away while typing.
+  function secMe(host, me) {
+    var c = card(t("a.me"), "me");
+    var box = el("div", "dav-field");
+    var inp = el("input");
+    inp.id = "f-me-name";
+    inp.type = "text";
+    inp.autocomplete = "off";
+    inp.maxLength = me.max || 40;
+    inp.value = me.name || "";
+    inp.placeholder = t("a.me.ph");
+    inp.setAttribute("aria-label", t("a.me"));
+    inp.setAttribute("aria-describedby", "f-me-hint");
+    inp.setAttribute("data-k", "me:name");
+    inp.addEventListener("change", function () { set("me:name", inp.value); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
+    box.appendChild(inp);
+    c.appendChild(box);
+    var h = el("p", "hint", t("a.me.hint"));
+    h.id = "f-me-hint";
+    c.appendChild(h);
+    host.appendChild(c);
+  }
+
   // ---------- 4. Section: Appearance ----------
   function secAppearance(host, s) {
     var c1 = card(t("a.theme"), "theme");
@@ -299,6 +324,8 @@
     c3.appendChild(grid);
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     host.appendChild(c3);
+
+    if (s.me) secMe(host, s.me);
 
     if (s.seasonal) secSeasonal(host, s.seasonal);
 

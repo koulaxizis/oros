@@ -16,7 +16,7 @@ The last 10 seconds run a little faster. When the time is up, a window shows you
 - [[Space]] starts a round.
 - [[N]] starts a round, or stops the one that's running (`Stop the round (N)`). A stopped round doesn't count.
 
-If you switch to another app, the round pauses and resumes after a short countdown. Closing the app drops the round.
+If you switch to another app, the round pauses and resumes after a short countdown. If you close the app or orOS mid-round, the round is kept: it opens paused, and `Continue` (Space) carries on after the countdown. Moles that were up when it paused do not come back.
 
 ## Levels and scoring
 `Easy`, `Medium` and `Hard` change how long a mole stays up and how many can be up at once; `Easy` has no hedgehog. Finish or stop a round before changing the level. `Records` shows your best score and the number of rounds for each level.

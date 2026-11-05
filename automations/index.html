@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=automations" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Automations · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=5.32.01">
-  <link rel="stylesheet" href="app.css?v=5.32.01">
+  <link rel="stylesheet" href="../fonts.css?v=5.38.00">
+  <link rel="stylesheet" href="app.css?v=5.38.00">
 </head>
 <body>
 
@@ -58,7 +58,23 @@
             <option value="year" data-i18n="w.year">Every year</option>
             <option value="once" data-i18n="w.once">Once</option>
             <option value="open" data-i18n="w.open">When orOS opens (once a day)</option>
+            <option value="notice" data-i18n="w.notice">When an app posts a notice</option>
+            <option value="event" data-i18n="w.event">When something happens</option>
           </select></label>
+        <label class="fld" id="napp-row"><span data-i18n="f.app">App</span>
+          <select id="f-napp"></select></label>
+        <label class="fld" id="ev-row"><span data-i18n="f.ev">What</span>
+          <select id="f-ev"></select></label>
+        <label class="fld" id="word-row"><span data-i18n="f.word">Only when it says (optional)</span>
+          <input type="text" id="f-word" maxlength="60"></label>
+        <div id="if-box">
+          <p class="small" data-i18n="f.if">Only on these days and hours (optional)</p>
+          <div id="if-wd" class="wd" role="group" data-i18n-aria="f.if"></div>
+          <div class="row wrap">
+            <label class="fld"><span data-i18n="f.from">From</span> <input type="time" id="f-from"></label>
+            <label class="fld"><span data-i18n="f.to">Until</span> <input type="time" id="f-to"></label>
+          </div>
+        </div>
         <div id="wd-row" class="wd" role="group" data-i18n-aria="f.days"></div>
         <label class="fld" id="md-row"><span data-i18n="f.md">Day of the month</span>
           <select id="f-md"></select></label>
@@ -78,6 +94,7 @@
         </div>
         <p class="hint small" data-i18n="ed.safe">A notice shows by itself. Every other step opens its app filled in, and nothing is saved there until you save it.</p>
         <p class="hint small" data-i18n="ed.ph">In texts, {date}, {weekday}, {month} and {year} become the day of the run.</p>
+        <p class="hint small" id="ed-text" data-i18n="ed.text">{text} becomes the notice's or the task's text.</p>
       </fieldset>
 
       <label class="check"><input type="checkbox" id="f-on" checked> <span data-i18n="f.on">On</span></label>
@@ -101,9 +118,9 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.32.01" data-app="automations"></script>
-  <script src="core.js?v=5.32.01"></script>
-  <script src="app.js?v=5.32.01"></script>
+  <script src="../i18n.js?v=5.38.00" data-app="automations"></script>
+  <script src="core.js?v=5.38.00"></script>
+  <script src="app.js?v=5.38.00"></script>
 
 </body>
 </html>

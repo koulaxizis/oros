@@ -1660,10 +1660,10 @@
 
     if (cwd === ROOT || view !== "files") return;
 
-    var rest = cwd.slice(ROOT.length + 1).split("/");
-    var acc = ROOT;
-    rest.forEach(function (seg, i) {
-      acc = join(acc, seg);
+    // Each crumb keeps its own path (CORE.crumbs); a shared loop
+    // variable made every crumb open the current folder.
+    var list = CORE.crumbs(cwd);
+    list.slice(1).forEach(function (c, i) {
       var sep = document.createElement("span");
       sep.className = "crumb-sep";
       sep.textContent = "/";
@@ -1671,10 +1671,10 @@
 
       var crumb = document.createElement("button");
       crumb.type = "button";
-      var last = (i === rest.length - 1);
+      var last = (i === list.length - 2);
       crumb.className = "crumb" + (last ? " current" : "");
-      crumb.textContent = seg;
-      if (!last) crumb.addEventListener("click", function () { navigate(acc); });
+      crumb.textContent = c.name;
+      if (!last) crumb.addEventListener("click", function () { navigate(c.path); });
       host.appendChild(crumb);
     });
   }

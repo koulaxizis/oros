@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>Start · orOS</title>
+  <link rel="stylesheet" href="../fonts.css?v=5.38.00">
+  <link rel="stylesheet" href="startpage.css?v=5.38.00">
+</head>
+<body>
+  <main id="page">
+    <header id="hello">
+      <div id="clock" aria-hidden="true"></div>
+      <p id="greet"></p>
+    </header>
+
+    <form id="find" role="search" autocomplete="off">
+      <label for="q" id="q-label" class="sr-only"></label>
+      <div class="field">
+        <span class="ico" id="q-ico" aria-hidden="true"></span>
+        <input id="q" type="search" enterkeyhint="go" spellcheck="false" autocapitalize="off">
+      </div>
+      <p id="q-hint" class="hint"></p>
+    </form>
+
+    <section id="favs" aria-labelledby="favs-h">
+      <div class="sec-head">
+        <h2 id="favs-h"></h2>
+        <a id="all-link" href="../?open=bookmarks"></a>
+      </div>
+      <ul id="fav-grid"></ul>
+      <p id="favs-empty" class="hint" hidden></p>
+    </section>
+
+    <nav id="acts">
+      <button type="button" id="tor-btn" class="act tor" hidden></button>
+      <a id="oros-link" class="act" href="../"></a>
+    </nav>
+  </main>
+  <script src="startpage.js?v=5.38.00"></script>
+</body>
+</html>
