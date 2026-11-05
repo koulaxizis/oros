@@ -2673,8 +2673,16 @@ function start(){
   consumeDeepLink();
   // Single app (solo.js) icon shortcut { play: "last" }: the most
   // recent station again.
+  // { tag }: stations of a genre (Music's artist pages, wave 6c).
   window.__orosOpenAt = function (t) {
     if (t && t.play === "last" && state.recents && state.recents[0]) playStation(state.recents[0]);
+    else if (t && typeof t.tag === "string") {
+      var tag = t.tag.toLowerCase().replace(/[^\p{L}\p{N} &'+-]/gu, "").trim().slice(0, 40);
+      if (!tag) return;
+      state.parent = { type: "genre", tag: tag, name: tag };
+      state.viewMode = "stations";
+      renderMain();
+    }
   };
   try {
     if (window.parent && window.parent !== window && typeof window.parent.__orosTakeTarget === "function")

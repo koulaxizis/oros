@@ -7,7 +7,8 @@
 // Hits:
 //   - one per playlist (name; number of songs as text);
 //   - one per song this device has (title; artist · album as text);
-//   - one per album (album name; artist as text).
+//   - one per album (album name; artist as text);
+//   - one per followed artist (name), target { mbartist, n }.
 // Liked songs that are not on this device are left out (nothing to
 // play). The IndexedDB is opened WITHOUT a version: a device that
 // never ran Music has no database, and the upgrade is aborted so
@@ -24,8 +25,8 @@
 
   // Shares the "music" pack with music.js (same key = same English).
   var TXT = {
-    en: { "srch.pl": "Playlist", "srch.plText.one": "Playlist · 1 song", "srch.plText": "Playlist · {n} songs", "srch.album": "Album · {a}" },
-    el: { "srch.pl": "Λίστα", "srch.plText.one": "Λίστα · 1 τραγούδι", "srch.plText": "Λίστα · {n} τραγούδια", "srch.album": "Άλμπουμ · {a}" }
+    en: { "srch.pl": "Playlist", "srch.plText.one": "Playlist · 1 song", "srch.plText": "Playlist · {n} songs", "srch.album": "Album · {a}", "srch.artist": "Artist you follow" },
+    el: { "srch.pl": "Λίστα", "srch.plText.one": "Λίστα · 1 τραγούδι", "srch.plText": "Λίστα · {n} τραγούδια", "srch.album": "Άλμπουμ · {a}", "srch.artist": "Καλλιτέχνης που ακολουθείς" }
   };
   // orosI18n (../i18n.js, in the shell): the full language code, a pack
   // language included; the music pack is fetched by music/host.js.
@@ -97,6 +98,11 @@
       out.push({ id: p.id, title: str(p.n) || L["srch.pl"],
         text: n === 1 ? L["srch.plText.one"] : L["srch.plText"].replace("{n}", n),
         target: { pl: p.id } });
+    });
+    // Followed artists (wave 6c): their worldwide page.
+    (d && Array.isArray(d.fa) ? d.fa : []).forEach(function (f) {
+      if (!f || f.on !== 1 || typeof f.k !== "string" || !/^[0-9a-f-]{36}$/.test(f.k)) return;
+      out.push({ id: "fa:" + f.k, title: str(f.n) || "?", text: L["srch.artist"], target: { mbartist: f.k, n: str(f.n) } });
     });
     var seenSong = {}, albums = {};
     list.forEach(function (r) {
