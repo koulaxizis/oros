@@ -47,7 +47,7 @@ test("android: the page asks for permission with the scheme the release build de
 });
 
 test("android: single-app flavours (wave 7) keep orOS untouched and drop the phone bridge", () => {
-  const { buildSolo, soloApps, REMOVE_NODES } = require(path.join(ROOT, "android", "tools", "gen.js"));
+  const { buildSolo, soloApps, REMOVE_NODES, AF_NODES } = require(path.join(ROOT, "android", "tools", "gen.js"));
   const S = require(path.join(ROOT, "solo.js"));
   const apps = soloApps();
   const pkgs = Object.values(apps);
@@ -69,7 +69,11 @@ test("android: single-app flavours (wave 7) keep orOS untouched and drop the pho
     for (const p of ["READ_CONTACTS", "WRITE_CALENDAR", "health.READ_STEPS", "SCHEDULE_EXACT_ALARM"]) {
       assert.match(x, new RegExp('android\\.permission\\.' + p.replace(".", "\\.") + '" tools:node="remove"'), id + " " + p);
     }
-    REMOVE_NODES.forEach(([tag, name]) => assert.ok(x.includes(`<${tag} android:name="${name}" tools:node="remove" />`), id + " " + name));
+    // orOS Passwords keeps its autofill (PW-AF2/3, v10); nothing else does.
+    REMOVE_NODES.forEach(([tag, name]) => {
+      const kept = id === "passwords" && AF_NODES.some((a) => a[0] === tag && a[1] === name);
+      assert.equal(x.includes(`<${tag} android:name="${name}" tools:node="remove" />`), !kept, id + " " + name);
+    });
     (web.file_handlers || []).forEach((h, i) => assert.ok(x.includes(`android:name="FileHandlingActivity${i}" tools:node="remove"`)));
     assert.match(x, /<activity android:name="\.LauncherActivity"\n\s+tools:node="replace"/);
     assert.ok(x.includes(`android:pathPrefix="/${id}/"`), id + " links");

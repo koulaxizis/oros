@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.45.00
+- **Autofill in the orOS Passwords app too.** The single app "orOS Passwords" on Android now fills logins, 2FA codes, cards and addresses in other apps and browsers, like the orOS app: `Menu` › `Autofill on this phone`, then choose it in Android's settings. Logins you save in other apps open in its editor. Update the app to get it.
+
 ## Version 5.44.01
 - **Fingerprint unlock works on the phone.** The Android apps lacked the permission to use the fingerprint reader, so Passwords › Menu › `Fingerprint unlock` stayed on "Asking the phone…". Update the orOS app or orOS Passwords to get it. If the app does not answer, the dialog now says so after a few seconds instead of waiting.
 

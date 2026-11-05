@@ -255,6 +255,10 @@ public class PhoneBridge {
                         sendSavesNow();
                     }
                     if (BIO) send(BioVault.state(app));
+                    if (BIO && !FULL) {
+                        send(afStateMsg());
+                        sendSavesNow();
+                    }
                 });
             });
         }
@@ -305,6 +309,27 @@ public class PhoneBridge {
             send(o);
         } catch (JSONException ignored) {
         }
+    }
+
+    /** orOS Passwords (the single app): fingerprint unlock (PW-BIO) and
+     *  autofill (PW-AF2/3) only, nothing of Contacts, Calendar… */
+    static boolean soloTakes(String t, JSONObject m) {
+        if ("pw-bio".equals(t) || "af-keys".equals(t) || "af-index".equals(t) || "af-state".equals(t)) return true;
+        if ("clear".equals(t)) return "af".equals(m.optString("what"));
+        if ("applied".equals(t)) return "af-save".equals(m.optString("what"));
+        return false;
+    }
+
+    /** {t:"af-state", af, pkg} (v10): autofill without the full state. */
+    private JSONObject afStateMsg() {
+        JSONObject o = new JSONObject();
+        try {
+            o.put("t", "af-state");
+            o.put("af", afState());
+            o.put("pkg", app.getPackageName());
+        } catch (JSONException ignored) {
+        }
+        return o;
     }
 
     /** PW-BIO: BioActivity's answer (and the new state) to the page. */
@@ -423,7 +448,7 @@ public class PhoneBridge {
         }
         String t = m.optString("t");
         // A single app takes only Passwords' fingerprint unlock.
-        if (!FULL && !(BIO && "pw-bio".equals(t))) return;
+        if (!FULL && !(BIO && soloTakes(t, m))) return;
         String what = "clear".equals(t) ? m.optString("what") : t;
         long seq = m.optLong("seq", 0);
         try {
@@ -546,6 +571,9 @@ public class PhoneBridge {
                     }
                     return;
                 }
+                case "af-state":
+                    send(afStateMsg());
+                    return;
                 case "af-keys": {
                     AfVault.ensureKeys();
                     JSONObject o = new JSONObject();
@@ -575,7 +603,7 @@ public class PhoneBridge {
                     if ("af".equals(what)) {
                         AfVault.clear(app);
                         AfVault.deleteKeys();
-                        send(state());
+                        send(FULL ? state() : afStateMsg());
                         return;
                     }
                     if ("contacts".equals(what) && granted(CONTACTS_PERMS)) new ContactsWriter(app).clear();
