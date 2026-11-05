@@ -1,4 +1,5 @@
 orosPack("de", "spot", {
+ "app.name": "Finde den Unterschied",
  "btn.hint": "Tipp (H): +10 s",
  "btn.new": "Neue Bilder (N)",
  "btn.sfxOff": "Ton aus",

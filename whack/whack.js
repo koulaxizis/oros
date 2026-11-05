@@ -74,6 +74,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Whack-a-Mole",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "btn.new": "New round (N)",
       "btn.stop": "Stop the round (N)",
@@ -122,6 +123,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Χτύπα τον τυφλοπόντικα",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "btn.new": "Νέος γύρος (N)",
       "btn.stop": "Διακοπή γύρου (N)",
@@ -842,6 +844,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

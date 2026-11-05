@@ -153,7 +153,7 @@
     },
     el: {
       "level.label": "Μέγεθος",
-      "app.name": "Flow Free",
+      "app.name": "Ένωσε τα χρώματα",
       "lv.d": "Ημέρας",
       "btn.daily": "Γρίφος της ημέρας",
       "btn.games": "Όλα τα παιχνίδια",
@@ -1585,6 +1585,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

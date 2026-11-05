@@ -130,6 +130,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Breakout",
       "pow.on": "Power-ups", "pow.off": "No power-ups",
       "btn.pause": "Pause (P)", "btn.resume": "Resume (P)",
       "btn.new": "New game (N)",
@@ -179,6 +180,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Τουβλάκια",
       "pow.on": "Ενισχύσεις", "pow.off": "Χωρίς ενισχύσεις",
       "btn.pause": "Παύση (P)", "btn.resume": "Συνέχεια (P)",
       "btn.new": "Νέο παιχνίδι (N)",
@@ -1150,6 +1152,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

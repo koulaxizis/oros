@@ -62,6 +62,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Dots & Boxes",
       "mode.ai": "vs Computer", "mode.duo": "2 players",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "first.you": "You start", "first.ai": "Computer starts", "first.alt": "Take turns",
@@ -106,6 +107,7 @@
       "toast.over": "The game is over: start a new one (N)"
     },
     el: {
+      "app.name": "Τελείες & Κουτιά",
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "first.you": "Ξεκινάς εσύ", "first.ai": "Ξεκινά ο υπολογιστής", "first.alt": "Εναλλάξ",
@@ -1026,6 +1028,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

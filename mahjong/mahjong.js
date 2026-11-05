@@ -70,6 +70,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Mahjong",
       "lay.turtle": "Turtle", "lay.pyramid": "Pyramid", "lay.fortress": "Fortress",
       "btn.new": "New game (N)",
       "btn.undo": "Undo (U)",
@@ -129,6 +130,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Μαντζόνγκ",
       "lay.turtle": "Χελώνα", "lay.pyramid": "Πυραμίδα", "lay.fortress": "Φρούριο",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.undo": "Αναίρεση (U)",
@@ -1212,6 +1214,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

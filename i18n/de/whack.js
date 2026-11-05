@@ -1,4 +1,5 @@
 orosPack("de", "whack", {
+ "app.name": "Hau den Maulwurf",
  "board.label": "Neun Löcher",
  "btn.again": "Nochmal",
  "btn.new": "Neue Runde (N)",

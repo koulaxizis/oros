@@ -1,4 +1,5 @@
 orosPack("de", "hexagon", {
+ "app.name": "Hexagon-Puzzle",
  "board.label": "Sechseck-Brett. Pfeile bewegen, Enter nimmt ein Teil auf oder legt es ab",
  "btn.hint": "Tipp (H)",
  "btn.new": "Neues Puzzle (N)",
