@@ -1,0 +1,65 @@
+/* ============================================================
+   orOS gamekit/landscape.css: the shared phone-landscape layout
+   (games audit F1, 2026-11-05). Loaded by every game after its own
+   stylesheet:
+
+     <link rel="stylesheet" href="../gamekit/landscape.css">
+
+   On a phone held sideways (landscape, at most 520 px high) the
+   toolbar, the status line and anything else outside <main> move
+   into a column on the left, and <main> (the board) gets the whole
+   height on the right. Every game sizes its board from <main>, so
+   nothing else changes. Above 520 px high nothing here applies.
+   The toolbar gets the height the other strips leave and scrolls
+   instead of clipping when the column is full.
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 520px) {
+  body {
+    display: grid;
+    grid-template-columns: minmax(176px, 34%) minmax(0, 1fr);
+    /* toolbar (shrinks and scrolls when the column is full), up to three
+       more strips (status, clue, keyboard), then the spare height */
+    grid-template-rows: minmax(0, auto) auto auto auto 1fr;
+  }
+  body > * { grid-column: 1; min-width: 0; }
+  body > main {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    min-height: 0;
+    height: 100%;
+  }
+
+  /* Toolbar: one column of wrapped strips, scrolling when it must. */
+  #toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-bottom: 0;
+    padding-left: calc(8px + env(safe-area-inset-left, 0px));
+  }
+  #toolbar .tb-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    overflow-x: visible;
+    gap: 6px;
+  }
+  #toolbar .seg { flex-wrap: wrap; }
+  #toolbar .spacer { display: none; }
+
+  /* Status line: the scores side by side, the message on its own line. */
+  body > #status {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: 4px;
+    padding-left: calc(8px + env(safe-area-inset-left, 0px));
+  }
+  body > #status > :not(.side):not(.stat) {
+    order: 9;
+    flex: 1 0 100%;
+    text-align: center;
+  }
+}

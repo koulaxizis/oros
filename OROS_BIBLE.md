@@ -2771,6 +2771,7 @@ Plan: thread "Συνδέστε όλες τις εφαρμογές του orOS" (
   - single-thumb reach; touch targets ≥44px; safe-area `env()` insets; breakpoints 480/420/360;
   - long-press 450ms as the touch twin of right-click menus (every right-click/Alt-click feature needs a touch path).
   - **Toolbars wider than a phone scroll horizontally** (single strip, hidden scrollbar), never clip.
+  - **Games on a phone held sideways (games audit F1, 2026-11-05):** every game loads `gamekit/landscape.css` right after its own stylesheet. Under `(orientation: landscape) and (max-height: 520px)` the body becomes a two-column grid: the toolbar (wrapped strips, vertical scroll when the column is full), the status line and any other strip outside `<main>` (clue, on-screen keyboard; at most four) on the left, `<main>` on the right at full height. Games size their board from `<main>`, so no game script changes. A new game keeps the shape `body > header#toolbar … main` and adds the link (`tests/gamekit.test.js`); `.github/qa/landscape.js` (quality shard 3) checks every game at 740x360 (board area ≥ 95% high and ≥ 55% wide, toolbar beside it, no sideways scroll, no page error). Battleship's ship dock scrolls in that layout.
 - **Desktop:** ≥1024px split views allowed.
 - **Editor toolbars:** formatting buttons `preventDefault()` on `mousedown` so the editor keeps focus and selection (touch collapsed it).
 - **DOM stability:** don't rebuild a container on click when a dblclick may follow (the 2nd click lands on a new node → no dblclick). Update classes in place.

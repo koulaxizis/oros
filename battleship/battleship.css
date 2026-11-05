@@ -335,6 +335,11 @@ button, select {
 /* ---------- 5. Dock: the ships to place + actions ---------- */
 #dock { gap: 8px; }
 #boards.side #dock { width: min(250px, 34vw); }
+/* phone landscape (gamekit/landscape.css): the dock beside the sea scrolls
+   instead of running off the bottom of the screen */
+@media (orientation: landscape) and (max-height: 520px) {
+  #boards.side #dock { width: 200px; max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior: contain; }
+}
 #boards.stack { width: 100%; }
 #boards.stack #dock { width: 100%; max-width: 480px; }
 #ships {
