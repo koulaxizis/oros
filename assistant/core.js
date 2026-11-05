@@ -2079,7 +2079,7 @@
       description: "Do one thing for the user in an orOS app when they press the card's button: " +
         "timer (minutes and/or seconds, label?: starts a countdown in Time) · alarm (at HH:MM, label?, daily?: fills Time's alarm form; the user presses Add) · " +
         "open (ref: an item from search_data or create_items, or app: an app's id; with app layout, page shows that page of the open document) · " +
-        "play (ref: a Music track, a Radio station or a Podcasts episode found with search_data) · " +
+        "play (ref: a Music track, a Radio station or a Podcasts episode found with search_data; a followed Music artist plays its artist radio) · " +
         "directions (to: an address or place name, or lat+lon; mode car|bike|foot: the route from the user's location in Maps). " +
         "Nothing happens before the press, so say it is ready, never that it is done. One action per call.",
       params: {
@@ -4028,10 +4028,11 @@
     var target = r.target === undefined ? null : JSON.parse(JSON.stringify(r.target));
     if (kind === "play") {
       var ok = PLAY_APPS[r.app] && (r.app === "radio" ? typeof target === "string" && !!target :
-        r.app === "music" ? isObj(target) && typeof target.track === "string" :
+        r.app === "music" ? isObj(target) && (typeof target.track === "string" || typeof target.mbartist === "string") :
         isObj(target) && typeof target.show === "string" && typeof target.ep === "string");
-      if (!ok) return bad("play takes a Music track, a Radio station or a Podcasts episode (search_data in that app); open other items with open.");
+      if (!ok) return bad("play takes a Music track, a Radio station or a Podcasts episode (search_data in that app), or a Music artist you follow (artist radio); open other items with open.");
       if (r.app === "podcasts") target.play = true;
+      if (r.app === "music" && typeof target.mbartist === "string") target.radio = 1;
     }
     out.app = r.app;
     out.call = { fn: "assistOpen", args: [r.app, target] };

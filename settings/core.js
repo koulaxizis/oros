@@ -18,7 +18,7 @@
   // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
-    theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all",
+    theme: "all", skin: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
     multitask: "device", pcfiles: "device", a11y: "device", lock: "device", osk: "device", widgets: "device", backupenc: "device", caldav: "device"
@@ -38,6 +38,7 @@
     ["theme", "appearance", "a.theme"],
     ["skin", "appearance", "a.skin"],
     ["wallpaper", "appearance", "a.wallpaper"],
+    ["me", "appearance", "a.me"],
     ["seasonal", "appearance", "z.on", "z.title", null, "seasonal"],
     ["seasonal-motion", "appearance", "z.motion", "z.title", "z.on", "seasonal"],
     ["seasonal-amount", "appearance", "z.amount", "z.title", "z.on", "seasonal"],
@@ -161,6 +162,8 @@
       "a.wallpaper.make": "Make your own in Wallpaper Generator",
       "a.wallpaper.sugg": "Suggested for this colour",
       "a.wallpaper.hint": "★ marks the wallpaper suggested for your system colour. A new colour brings its own wallpaper, until you pick a wallpaper yourself.",
+      "a.me": "Your name", "a.me.ph": "What should orOS call you?",
+      "a.me.hint": "Only for greetings, in Today and on the Start page. It stays on your devices (synced encrypted) and never goes to the Assistant or anywhere else. Leave it empty for none.",
       "a.pet": "Screen pet",
       "a.pet.hint": "A tiny companion on your desktop. Feed it, pet it, let it sleep.",
       "z.title": "Seasonal decorations", "z.on": "Decorate the desktop in season",
@@ -730,6 +733,7 @@
       "w.theme": "dark light mode night day",
       "w.skin": "colour color accent palette skin",
       "w.wallpaper": "background desktop picture image",
+      "w.me": "name greeting nickname call me personal",
       "w.seasonal": "christmas snow holiday festive decorations halloween easter",
       "w.seasonal-motion": "animation moving still reduce motion",
       "w.seasonal-amount": "how much more less",
@@ -846,6 +850,8 @@
       "a.wallpaper.make": "Φτιάξε τη δική σου στη Γεννήτρια ταπετσαρίας",
       "a.wallpaper.sugg": "Προτείνεται για αυτό το χρώμα",
       "a.wallpaper.hint": "Το ★ δείχνει την ταπετσαρία που προτείνεται για το χρώμα συστήματος. Ένα νέο χρώμα φέρνει τη δική του ταπετσαρία, μέχρι να διαλέξεις εσύ ταπετσαρία.",
+      "a.me": "Πώς να σε λέω", "a.me.ph": "Πώς να σε φωνάζει το orOS;",
+      "a.me.hint": "Μόνο για τον χαιρετισμό, στο Σήμερα και στην Αρχική σελίδα. Μένει στις συσκευές σου (συγχρονίζεται κρυπτογραφημένο) και δεν πηγαίνει ποτέ στον Βοηθό ή αλλού. Άφησέ το κενό αν δεν θέλεις.",
       "a.pet": "Συντροφάκι",
       "a.pet.hint": "Ένας μικρός σύντροφος στην επιφάνεια εργασίας. Τάισέ το, χάιδεψέ το, άφησέ το να κοιμηθεί.",
       "z.title": "Θεματική διακόσμηση", "z.on": "Διακόσμηση του desktop στις γιορτές",
@@ -1414,6 +1420,7 @@
       "w.theme": "σκοτεινό φωτεινό λειτουργία νύχτα μέρα σκούρο ανοιχτό",
       "w.skin": "χρώμα χρώματα παλέτα απόχρωση",
       "w.wallpaper": "φόντο επιφάνεια εργασίας εικόνα",
+      "w.me": "όνομα χαιρετισμός παρατσούκλι προσωπικό",
       "w.seasonal": "χριστούγεννα χιόνι γιορτές στολισμός διακόσμηση πάσχα απόκριες",
       "w.seasonal-motion": "κίνηση κινούμενα ακίνητα",
       "w.seasonal-amount": "πόσα περισσότερα λιγότερα ποσότητα",

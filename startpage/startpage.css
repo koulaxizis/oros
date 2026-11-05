@@ -1,0 +1,68 @@
+/* orOS Start page (startpage/), SP-1. Dark and light from oros-theme;
+   no shell, so the palette is the page's own (shell dark/light). */
+:root {
+  --bg: #0f1115; --panel: #171c24; --field: #1a1d24; --border: #262c38;
+  --text: #e8eaf0; --dim: #a3a9b6; --link: #8fbcf5; --link-hover: #b9d6fa;
+  --tor-bg: #2d1f4a; --tor-border: #4b3577; --tor-text: #e6dcff; --tor-dim: #b9acd6;
+  --gold: #d4af37;
+}
+[data-theme="light"] {
+  --bg: #f5f6f8; --panel: #ffffff; --field: #ffffff; --border: #d6d9df;
+  --text: #1a1d24; --dim: #565b66; --link: #1c5fb8; --link-hover: #15468a;
+  --tor-bg: #efe9ff; --tor-border: #c9b8f5; --tor-text: #3b2580; --tor-dim: #5b4a94;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); }
+body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.4; }
+a { color: var(--link); text-decoration: none; }
+a:hover { color: var(--link-hover); text-decoration: underline; }
+:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+#page { max-width: 920px; margin: 0 auto; padding: 56px 24px 32px; display: flex; flex-direction: column; align-items: center; gap: 32px; }
+#hello { text-align: center; }
+#clock { font-size: 56px; font-weight: 600; letter-spacing: -1px; line-height: 1.1; }
+#greet { margin: 6px 0 0; color: var(--dim); font-size: 16px; }
+
+#find { width: min(640px, 100%); display: flex; flex-direction: column; gap: 6px; }
+.field { height: 52px; background: var(--field); border: 1px solid var(--border); border-radius: 26px; display: flex; align-items: center; gap: 12px; padding: 0 20px; }
+.field:focus-within { border-color: var(--link); }
+.ico { color: var(--dim); display: flex; }
+#q { flex: 1; min-width: 0; height: 100%; background: transparent; border: 0; color: var(--text); font: inherit; font-size: 16px; outline: none; }
+#q::placeholder { color: var(--dim); }
+#q::-webkit-search-cancel-button { cursor: pointer; }
+.hint { margin: 0; color: var(--dim); font-size: 13px; }
+#q-hint { padding-left: 20px; }
+
+#favs { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sec-head h2 { margin: 0; font-size: 15px; font-weight: 600; }
+#all-link { font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; }
+#fav-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; }
+#fav-grid a { height: 96px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 0 8px; color: var(--text); }
+#fav-grid a:hover { border-color: var(--link); text-decoration: none; }
+.fav-ico { width: 36px; height: 36px; border-radius: 10px; color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.fav-name { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.act { min-height: 44px; padding: 0 18px; border-radius: 22px; background: var(--panel); border: 1px solid var(--border); color: var(--text); display: inline-flex; align-items: center; gap: 10px; font: inherit; font-size: 14px; cursor: pointer; }
+.act:hover { border-color: var(--link); text-decoration: none; color: var(--text); }
+.act.tor { background: var(--tor-bg); border-color: var(--tor-border); color: var(--tor-text); }
+.act-hint { color: var(--tor-dim); font-size: 12px; }
+#oros-link::before { content: ""; width: 16px; height: 16px; border-radius: 4px; background: var(--gold); }
+
+@media (max-width: 600px) {
+  #page { padding: 32px 16px 24px; gap: 24px; }
+  #clock { font-size: 44px; }
+  #greet { font-size: 14px; }
+  .field { height: 48px; padding: 0 16px; }
+  #fav-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  #fav-grid a { height: 80px; border-radius: 12px; gap: 6px; padding: 0 4px; }
+  .fav-ico { width: 32px; height: 32px; font-size: 14px; }
+  .fav-name { font-size: 11px; }
+  #acts { width: 100%; flex-direction: column; }
+  .act { width: 100%; min-height: 48px; }
+  .act-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+[hidden] { display: none !important; }
