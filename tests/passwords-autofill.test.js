@@ -23,7 +23,13 @@ const F = require(path.join(ROOT, "extension/pmfill.js"));
 
 const NOW = Date.UTC(2026, 10, 1, 12);
 const SECRET = "JBSWY3DPEHPK3PXP";
-function entry(o) { return PC.normEntry(Object.assign(PC.blankEntry(NOW), { id: PC.newId() }, o), NOW); }
+// Fixed ids: a random id could hold a checked secret ("0000", "4111")
+// and fail "names hold no secrets" by chance.
+let seq = 0;
+function entry(o) {
+  const id = "abcdefabcdef" + (++seq).toString(6).replace(/[0-5]/g, (d) => "abcdef"[d]).padStart(4, "a");
+  return PC.normEntry(Object.assign(PC.blankEntry(NOW), { id }, o), NOW);
+}
 function sample() {
   return [
     entry({ title: "Bank", user: "maria", pw: "s3cret-pw", totp: SECRET, notes: "do not send", hist: [{ pw: "old-pw", at: NOW }],
