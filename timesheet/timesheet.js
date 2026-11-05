@@ -163,7 +163,43 @@
       "extra.edit": "Edit extra charge: {d}, {a}", "extra.h": "Extra charges",
       "sum.time": "Work time", "sum.ot": "Overtime ({d})", "sum.min": "Up to the minimum charge (+{d})",
       "sum.ex": "Extra charges ({n})", "sum.total": "Total to charge",
-      "rep.partial": "A minimum per week or month counts only for whole weeks or months in the period: {n} left out (no minimum, no overtime)."
+      "rep.partial": "A minimum per week or month counts only for whole weeks or months in the period: {n} left out (no minimum, no overtime).",
+      "tab.bill": "To invoice", "ub.hint": "Billable time and extra charges not invoiced yet, from all time, per client. Unpaid invoices come from Invoices on this device.",
+      "ub.none": "Everything is invoiced.", "ub.open": "Not invoiced: {d} · {a}", "ub.since": "oldest from {d}",
+      "ub.unpaid": "Invoiced, unpaid: {a}", "ub.late": "{n} overdue", "ub.report": "Report",
+      "inv.on": "On invoice {n}", "inv.draft": "a draft invoice", "inv.away": "an invoice not on this device yet",
+      "inv.st.paid": "paid", "inv.st.unpaid": "unpaid", "inv.st.partial": "partly paid", "inv.st.overdue": "overdue", "inv.st.draft": "draft",
+      "inv.open": "Open invoice", "toast.invLinked": "Marked as invoiced: {n} · {num}", "inv.draftNum": "Draft invoice",
+      "toast.invGone": "Not invoiced again: {n} (their invoice was cancelled)",
+      "f.crm": "CRM customer", "f.crmNone": "Not linked", "f.crmAway": "Linked (not on this device)",
+      "f.crmHint": "Invoices made here then take the VAT number, address and email from CRM.",
+      "cal.h": "From your calendar", "cal.untitled": "(untitled)", "cal.log": "Log",
+      "cal.logA": "Log the time of {t}", "cal.skip": "Not work time: hide {t}",
+      "f.fee": "Fixed fee", "f.feeHint": "For a job at an agreed price: its hours are tracked but not charged by the hour. Empty: charged by the hour.",
+      "fee.add": "Add the fee as an extra charge", "fee.added": "Fee added as an extra charge on {d}", "fee.desc": "Fixed fee: {p}",
+      "proj.fee": "fixed fee {a}", "proj.eff": "{r}/h effective",
+      "pkg.of.w": "This week: {d} of {b} h ({p} %)", "pkg.of.m": "This month: {d} of {b} h ({p} %)", "pkg.over": "{d} over the package", "pkg.near": "The package is almost used",
+      "f.km": "Mileage (distance × rate)", "f.kmDist": "Distance (km)", "f.kmRate": "Rate per km", "ex.km": "{k} km",
+      "toast.badKm": "Enter a distance in km, e.g. 12,5",
+      "bud.send": "Add to Budget", "bud.again": "Send to Budget again", "bud.sent": "Sent to Budget",
+      "toast.budFail": "Budget couldn't take it. Is Budget installed?",
+      "rep.pdf": "Timesheet PDF", "rep.pdfMail": "Email the PDF", "pdf.title": "Timesheet", "pdf.client": "Client",
+      "pdf.period": "Period", "pdf.date": "Date", "pdf.time": "Time", "pdf.hours": "Hours", "pdf.project": "Project",
+      "pdf.desc": "Description", "pdf.amount": "Amount", "pdf.total": "Total", "pdf.made": "Made with orOS Timesheet",
+      "toast.pdfFail": "The PDF couldn't be made (is the app fully loaded?)",
+      "rep.ics": "Export calendar (.ics)",
+      "imp.aw": "Your time at the computer becomes suggested entries of 15 minutes or more (breaks under 5 minutes are joined), each named after the window used most. They have no project: assign one afterwards, or delete the ones that weren't work.",
+      "acc.btn": "Import from an account (Toggl, Clockify, Harvest, Kimai)", "acc.title": "Import from an account",
+      "acc.intro": "Bring your time entries from Toggl Track, Clockify, Harvest or Kimai, with their projects and clients. orOS only reads: nothing changes there. Importing the same time again, or its CSV export, adds nothing.",
+      "acc.none": "Connect Toggl Track, Clockify, Harvest or Kimai in Settings › Connected services first.",
+      "acc.settings": "Open Connected services", "acc.acct": "Account", "acc.from": "From", "acc.to": "To",
+      "acc.range": "Up to one year at a time.", "acc.read": "Read", "acc.reading": "Reading… {n} entries",
+      "acc.badRange": "Pick a period of up to one year, From before To.", "acc.nothing": "Nothing to import in that period",
+      "acc.err.auth": "{p} refused the token. Check it in Settings › Connected services.",
+      "acc.err.keys": "This device doesn't have the account's token yet. Enter it in Settings › Connected services.",
+      "acc.err.offline": "You're offline.", "acc.err.busy": "{p} asks to slow down. Try again in a minute.",
+      "acc.err.other": "Couldn't reach {p}. Try again later.",
+      "mail.subj": "Timesheet {r}", "mail.body": "Hello,\n\nattached is the timesheet for {r}: {h} hours."
     },
     el: {
       "app": "Ώρες εργασίας", "settings": "Ρυθμίσεις",
@@ -280,7 +316,43 @@
       "extra.edit": "Επεξεργασία πρόσθετης χρέωσης: {d}, {a}", "extra.h": "Πρόσθετες χρεώσεις",
       "sum.time": "Χρόνος εργασίας", "sum.ot": "Υπερωρία ({d})", "sum.min": "Συμπλήρωση ελάχιστης χρέωσης (+{d})",
       "sum.ex": "Πρόσθετες χρεώσεις ({n})", "sum.total": "Σύνολο χρέωσης",
-      "rep.partial": "Το ελάχιστο ανά εβδομάδα ή μήνα μετράει μόνο για ολόκληρες εβδομάδες ή μήνες μέσα στην περίοδο: {n} έμειναν εκτός (χωρίς ελάχιστο και υπερωρία)."
+      "rep.partial": "Το ελάχιστο ανά εβδομάδα ή μήνα μετράει μόνο για ολόκληρες εβδομάδες ή μήνες μέσα στην περίοδο: {n} έμειναν εκτός (χωρίς ελάχιστο και υπερωρία).",
+      "tab.bill": "Προς τιμολόγηση", "ub.hint": "Χρεώσιμος χρόνος και πρόσθετες χρεώσεις που δεν έχουν τιμολογηθεί ακόμα, από πάντα, ανά πελάτη. Τα απλήρωτα τιμολόγια έρχονται από τα Τιμολόγια αυτής της συσκευής.",
+      "ub.none": "Όλα έχουν τιμολογηθεί.", "ub.open": "Ατιμολόγητα: {d} · {a}", "ub.since": "το παλαιότερο από {d}",
+      "ub.unpaid": "Τιμολογημένα, απλήρωτα: {a}", "ub.late": "{n} ληξιπρόθεσμα", "ub.report": "Αναφορά",
+      "inv.on": "Στο τιμολόγιο {n}", "inv.draft": "ένα πρόχειρο τιμολόγιο", "inv.away": "ένα τιμολόγιο που δεν υπάρχει ακόμα σε αυτή τη συσκευή",
+      "inv.st.paid": "πληρώθηκε", "inv.st.unpaid": "απλήρωτο", "inv.st.partial": "μερικώς πληρωμένο", "inv.st.overdue": "ληξιπρόθεσμο", "inv.st.draft": "πρόχειρο",
+      "inv.open": "Άνοιγμα τιμολογίου", "toast.invLinked": "Σημειώθηκαν ως τιμολογημένα: {n} · {num}", "inv.draftNum": "Πρόχειρο τιμολόγιο",
+      "toast.invGone": "Ξανά ατιμολόγητα: {n} (το τιμολόγιό τους ακυρώθηκε)",
+      "f.crm": "Πελάτης στο CRM", "f.crmNone": "Χωρίς σύνδεση", "f.crmAway": "Συνδεδεμένος (όχι σε αυτή τη συσκευή)",
+      "f.crmHint": "Τα τιμολόγια που φτιάχνεις από εδώ παίρνουν τότε ΑΦΜ, διεύθυνση και email από το CRM.",
+      "cal.h": "Από το ημερολόγιό σου", "cal.untitled": "(χωρίς τίτλο)", "cal.log": "Καταγραφή",
+      "cal.logA": "Καταγραφή του χρόνου του {t}", "cal.skip": "Δεν είναι χρόνος εργασίας: απόκρυψη του {t}",
+      "f.fee": "Σταθερή αμοιβή", "f.feeHint": "Για δουλειά σε συμφωνημένη τιμή: οι ώρες της μετριούνται αλλά δεν χρεώνονται με την ώρα. Κενό: χρέωση με την ώρα.",
+      "fee.add": "Προσθήκη της αμοιβής ως πρόσθετη χρέωση", "fee.added": "Η αμοιβή μπήκε ως πρόσθετη χρέωση στις {d}", "fee.desc": "Σταθερή αμοιβή: {p}",
+      "proj.fee": "σταθερή αμοιβή {a}", "proj.eff": "πραγματικά {r}/ώρα",
+      "pkg.of.w": "Αυτή την εβδομάδα: {d} από {b} ώρες ({p} %)", "pkg.of.m": "Αυτόν τον μήνα: {d} από {b} ώρες ({p} %)", "pkg.over": "{d} πάνω από το πακέτο", "pkg.near": "Το πακέτο σχεδόν τελείωσε",
+      "f.km": "Χιλιόμετρα (απόσταση × τιμή)", "f.kmDist": "Απόσταση (km)", "f.kmRate": "Τιμή ανά km", "ex.km": "{k} km",
+      "toast.badKm": "Γράψε απόσταση σε km, π.χ. 12,5",
+      "bud.send": "Προσθήκη στα Έσοδα & Έξοδα", "bud.again": "Ξανά στα Έσοδα & Έξοδα", "bud.sent": "Στάλθηκε στα Έσοδα & Έξοδα",
+      "toast.budFail": "Τα Έσοδα & Έξοδα δεν το δέχτηκαν. Είναι εγκατεστημένα;",
+      "rep.pdf": "PDF ωρών", "rep.pdfMail": "Email με το PDF", "pdf.title": "Φύλλο ωρών", "pdf.client": "Πελάτης",
+      "pdf.period": "Περίοδος", "pdf.date": "Ημερομηνία", "pdf.time": "Ώρα", "pdf.hours": "Ώρες", "pdf.project": "Έργο",
+      "pdf.desc": "Περιγραφή", "pdf.amount": "Ποσό", "pdf.total": "Σύνολο", "pdf.made": "Με τις Ώρες εργασίας του orOS",
+      "toast.pdfFail": "Το PDF δεν έγινε (έχει φορτώσει πλήρως η εφαρμογή;)",
+      "rep.ics": "Εξαγωγή ημερολογίου (.ics)",
+      "imp.aw": "Ο χρόνος σου στον υπολογιστή γίνεται προτεινόμενες καταγραφές 15 λεπτών και πάνω (διαλείμματα κάτω από 5 λεπτά ενώνονται), με το όνομα του παραθύρου που χρησιμοποιήθηκε περισσότερο. Δεν έχουν έργο: όρισέ το μετά ή διάγραψε όσες δεν ήταν δουλειά.",
+      "acc.btn": "Εισαγωγή από λογαριασμό (Toggl, Clockify, Harvest, Kimai)", "acc.title": "Εισαγωγή από λογαριασμό",
+      "acc.intro": "Φέρε τις καταγραφές σου από το Toggl Track, το Clockify, το Harvest ή το Kimai, με τα έργα και τους πελάτες τους. Το orOS μόνο διαβάζει: εκεί δεν αλλάζει τίποτα. Αν φέρεις ξανά τον ίδιο χρόνο, ή την εξαγωγή του σε CSV, δεν προστίθεται τίποτα.",
+      "acc.none": "Σύνδεσε πρώτα το Toggl Track, το Clockify, το Harvest ή το Kimai στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "acc.settings": "Άνοιγμα Συνδεδεμένων υπηρεσιών", "acc.acct": "Λογαριασμός", "acc.from": "Από", "acc.to": "Έως",
+      "acc.range": "Έως έναν χρόνο κάθε φορά.", "acc.read": "Ανάγνωση", "acc.reading": "Ανάγνωση… {n} καταγραφές",
+      "acc.badRange": "Διάλεξε περίοδο έως έναν χρόνο, με το Από πριν από το Έως.", "acc.nothing": "Δεν υπάρχει κάτι για εισαγωγή σε αυτή την περίοδο",
+      "acc.err.auth": "Το {p} απέρριψε το token. Έλεγξέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "acc.err.keys": "Αυτή η συσκευή δεν έχει ακόμα το token του λογαριασμού. Πέρασέ το στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες.",
+      "acc.err.offline": "Είσαι εκτός σύνδεσης.", "acc.err.busy": "Το {p} ζητά να πάμε πιο αργά. Δοκίμασε ξανά σε ένα λεπτό.",
+      "acc.err.other": "Δεν ήταν δυνατή η σύνδεση με το {p}. Δοκίμασε αργότερα.",
+      "mail.subj": "Φύλλο ωρών {r}", "mail.body": "Καλησπέρα,\n\nσας στέλνω συνημμένο το φύλλο ωρών για {r}: {h} ώρες."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "timesheet", LANG);
@@ -319,6 +391,8 @@
     week:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9.5h18M8 3v3M16 3v3M8 13.5h2M14 13.5h2M8 17h2"/></svg>',
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+    bill:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17 19 7"/></svg>'
   };
 
@@ -361,7 +435,7 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  var TABS = ["timer", "week", "report", "projects"];
+  var TABS = ["timer", "week", "report", "bill", "projects"];
   var GROUPS = ["project", "client", "task", "tag", "day"];
   var RANGES = ["thisWeek", "lastWeek", "thisMonth", "lastMonth", "thisYear", "custom"];
   function loadPrefs() {
@@ -373,6 +447,7 @@
     prefs = {
       tab: TABS.indexOf(v.tab) >= 0 ? v.tab : "timer",
       lastP: str(v.lastP),
+      kmr: C.inRange(v.kmr, C.LIM.kmr) ? v.kmr : 0,       // T3: the last rate per km (this device)
       rep: {
         range: RANGES.indexOf(r.range) >= 0 ? r.range : "thisMonth",
         from: C.validDay(r.from) ? r.from : "",
@@ -413,11 +488,12 @@
   // ---------- 3. Edits ----------
   // Start: every running timer stops first (one at a time), then a
   // new entry opens with the draft's project and description.
-  function startTimer(p, desc, from) {
+  function startTimer(p, desc, from, src) {
     var now = Date.now();
     stopAll(now, true);
     var id = newId();
     var x = { id: id, p: p || "", desc: C.cleanText(desc, C.LIM.desc), s: now, e: 0, billed: 0, m: now };
+    if (C.srcKey(src)) x.src = src;          // T2: the task, card or event it is for
     // "Continue" keeps the task and tags of the entry it continues.
     if (from && from.task) x.task = from.task;
     if (from && from.tags && from.tags.length) x.tags = from.tags.slice();
@@ -466,7 +542,7 @@
   }
   function resume(x) {
     var p = C.project(data, x.p) ? x.p : "";
-    startTimer(p, x.desc, p === x.p ? x : { tags: x.tags });
+    startTimer(p, x.desc, p === x.p ? x : { tags: x.tags }, p === x.p ? x.src : "");
   }
 
   // The running entry follows the timer fields as they change.
@@ -508,6 +584,7 @@
   function addEntry(rec) {
     var now = Date.now();
     var x = { id: newId(), p: rec.p, desc: rec.desc, s: rec.s, e: rec.e, billed: rec.billed, m: now };
+    if (C.srcKey(rec.src)) x.src = rec.src;
     setTaskTags(x, rec);
     data.entries.push(x);
     saveNow();
@@ -520,6 +597,7 @@
                (x.task || "") === rec.task && JSON.stringify(x.tags || []) === JSON.stringify(rec.tags);
     if (same) return x;
     x.p = rec.p; x.desc = rec.desc; x.s = rec.s; x.e = rec.e; x.billed = rec.billed;
+    if (!x.billed) delete x.iv;              // T1: no longer on that invoice
     setTaskTags(x, rec);
     x.m = stamp(x.m);
     saveNow();
@@ -558,7 +636,7 @@
     var out = {};
     Object.keys(cur).forEach(function (k) { out[k] = cur[k]; });
     Object.keys(rec).forEach(function (k) { out[k] = rec[k]; });
-    if (!out.budget) delete out.budget;
+    ["budget", "fee", "km", "kmr"].forEach(function (k) { if (!out[k]) delete out[k]; });
     return out;
   }
   function sameBilling(a, b) { return JSON.stringify(C.billingPart(a)) === JSON.stringify(C.billingPart(b)); }
@@ -567,7 +645,7 @@
     if (cur && !cur.del) {
       var same = cur.name === rec.name && cur.client === rec.client && cur.color === rec.color &&
                  cur.rate === rec.rate && cur.bill === rec.bill && cur.arch === rec.arch &&
-                 (cur.budget || 0) === (rec.budget || 0) && sameBilling(cur, rec);
+                 (cur.budget || 0) === (rec.budget || 0) && (cur.fee || 0) === (rec.fee || 0) && sameBilling(cur, rec);
       if (same) return cur.id;
       rec = keepExtras(cur, rec);
       rec.id = cur.id;
@@ -601,8 +679,10 @@
   function saveClient(id, rec) {
     var cur = id ? findIn(data.clients, id) : null;
     if (cur && !cur.del) {
-      if (cur.name === rec.name && cur.rate === rec.rate && sameBilling(cur, rec)) return cur.id;
+      if (cur.name === rec.name && cur.rate === rec.rate && sameBilling(cur, rec) &&
+          (cur.crm || "") === (rec.crm || "")) return cur.id;
       rec = keepExtras(cur, rec);
+      if (!rec.crm) delete rec.crm;
       rec.id = cur.id;
       rec.m = stamp(cur.m);
     } else {
@@ -639,8 +719,10 @@
     var cur = id ? findExtra(id) : null;
     if (cur) {
       if (cur.d === rec.d && cur.p === rec.p && cur.c === rec.c && cur.desc === rec.desc &&
-          cur.amt === rec.amt && cur.billed === rec.billed) return cur.id;
+          cur.amt === rec.amt && cur.billed === rec.billed && (cur.km || 0) === (rec.km || 0) &&
+          (cur.kmr || 0) === (rec.kmr || 0) && (rec.bud === undefined || (cur.bud || 0) === rec.bud)) return cur.id;
       rec = keepExtras(cur, rec);
+      if (!rec.billed) delete rec.iv;        // T1: no longer on that invoice
       rec.id = cur.id;
       rec.m = stamp(cur.m);
     } else {
@@ -675,11 +757,12 @@
   }
   // Invoiced marks on a set of entries; Undo puts each one back.
   function markBilled(ids, flag) {
-    var changed = [];
+    var changed = [], ivs = {};
     ids.forEach(function (id) {
       var x = findEntry(id) || findExtra(id);
       if (!x || x.billed === flag) return;
       x.billed = flag;
+      if (!flag && x.iv) { ivs[id] = x.iv; delete x.iv; }   // T1: unmarked = off its invoice
       x.m = stamp(x.m);
       changed.push(id);
     });
@@ -691,6 +774,7 @@
         var x = findEntry(id) || findExtra(id);
         if (!x) return;
         x.billed = flag ? 0 : 1;
+        if (ivs[id]) x.iv = ivs[id];
         x.m = stamp(x.m);
       });
       saveNow();
@@ -913,8 +997,8 @@
       if (x.billed) {
         var bl = el("span", "ent-billed");
         bl.innerHTML = UI.check;
-        bl.title = t("entry.billed");
-        bl.setAttribute("aria-label", t("entry.billed"));
+        bl.title = billedText(x);
+        bl.setAttribute("aria-label", bl.title);
         meta.appendChild(bl);
       }
       b.appendChild(meta);
@@ -934,6 +1018,73 @@
     });
     $("entries-empty").hidden = list.length > 0;
     renderDayExtras();
+    renderCalSugg();
+  }
+  // T2: the day's Calendar events that are over and have no time
+  // logged, each with "Log" (the prefilled dialog) and "Dismiss"
+  // (device-local, never synced).
+  var CAL_KEY = "oros-calendar-data", CALSKIP_KEY = "oros-timesheet-calskip";
+  function calSkip() {
+    try { var v = JSON.parse(localStorage.getItem(CALSKIP_KEY) || "[]"); return Array.isArray(v) ? v.filter(function (k) { return typeof k === "string"; }) : []; }
+    catch (e) { return []; }
+  }
+  function calSkipAdd(key) {
+    var v = calSkip().filter(function (k) { return k !== key; });
+    v.push(key);
+    try { localStorage.setItem(CALSKIP_KEY, JSON.stringify(v.slice(-300))); } catch (e) {}
+  }
+  function calEventsOn(day) {
+    var O = window.OrosCalOccur, out = [];
+    var cal = O ? readForeign(CAL_KEY, function (raw) { return JSON.parse(raw); }) : null;
+    if (!cal || typeof O.eventsOn !== "function") return out;
+    O.eventsOn(cal, day).forEach(function (ev) {
+      var inst = typeof O.instanceOn === "function" ? O.instanceOn(ev, day) : null;
+      if (!inst || typeof inst.start !== "string" || typeof inst.end !== "string" || !inst.start || !inst.end) return;
+      var dEnd = typeof inst.dateEnd === "string" && inst.dateEnd ? inst.dateEnd : inst.date;
+      var hm = function (d, s) { var p = s.split(":"); var k = C.keyDate(d); return k ? k.getTime() + (+p[0] * 60 + +p[1]) * 60000 : NaN; };
+      var s = hm(inst.date, inst.start), e = hm(dEnd, inst.end);
+      if (!(e > s)) return;
+      out.push({ key: "cal:" + ev.id + ":" + (inst.occ || inst.date), title: typeof ev.title === "string" ? ev.title : "", s: s, e: e });
+    });
+    return out;
+  }
+  function renderCalSugg() {
+    var host = $("cal-sugg"), head = $("cal-h");
+    if (!host) return;
+    host.innerHTML = "";
+    var list = [];
+    if (hasKey(CAL_KEY)) {
+      if (!window.OrosCalOccur) {
+        loadOther("../calendar/occur.js", "OrosCalOccur", function (O) { if (O && tab === "timer") renderCalSugg(); });
+      } else {
+        var skip = {};
+        calSkip().forEach(function (k) { skip[k] = 1; });
+        list = C.calSuggest(data, calEventsOn(dayKey), skip, Date.now());
+      }
+    }
+    head.hidden = host.hidden = !list.length;
+    list.forEach(function (v) {
+      var li = el("li", "cal-row");
+      var txt = el("span", "cal-txt");
+      txt.appendChild(el("span", "cal-t", v.title || t("cal.untitled")));
+      txt.appendChild(el("small", "", C.hhmm(v.s) + "–" + C.hhmm(v.e) + " · " + dur(v.e - v.s)));
+      li.appendChild(txt);
+      var add = el("button", "mini-btn", t("cal.log"));
+      add.type = "button";
+      add.setAttribute("aria-label", t("cal.logA", { t: v.title || t("cal.untitled") }));
+      add.addEventListener("click", function () {
+        entryDialog(null, { p: projectFor(v.title, ""), desc: v.title, s: v.s, e: v.e, src: v.key });
+      });
+      li.appendChild(add);
+      var no = el("button", "icon-btn cal-no");
+      no.type = "button";
+      no.innerHTML = UI.close;
+      no.setAttribute("aria-label", t("cal.skip", { t: v.title || t("cal.untitled") }));
+      no.title = no.getAttribute("aria-label");
+      no.addEventListener("click", function () { calSkipAdd(v.key); renderCalSugg(); });
+      li.appendChild(no);
+      host.appendChild(li);
+    });
   }
   // The day's extra charges, under its entries.
   function extraLabel(x) {
@@ -954,7 +1105,7 @@
       b.appendChild(dot);
       var txt = el("span", "ent-txt");
       txt.appendChild(el("span", "ent-p", x.desc || t("dlg.extra")));
-      var who = extraLabel(x);
+      var who = [x.km ? t("ex.km", { k: C.fmtKm(x.km, LANG) }) : "", extraLabel(x)].filter(Boolean).join(" · ");
       if (who) txt.appendChild(el("span", "ent-d", who));
       b.appendChild(txt);
       var meta = el("span", "ent-meta");
@@ -962,8 +1113,8 @@
       if (x.billed) {
         var bl = el("span", "ent-billed");
         bl.innerHTML = UI.check;
-        bl.title = t("entry.billed");
-        bl.setAttribute("aria-label", t("entry.billed"));
+        bl.title = billedText(x);
+        bl.setAttribute("aria-label", bl.title);
         meta.appendChild(bl);
       }
       b.appendChild(meta);
@@ -1183,6 +1334,10 @@
     $("rep-empty").hidden = rep.rows.length > 0;
     renderRepSum(rep);
     $("rep-csv").disabled = !rep.rows.length;
+    $("rep-pdf").disabled = !rep.rows.length;
+    $("rep-ics").disabled = !rep.ids.length;
+    $("rep-pdfmail").hidden = !mailShell();
+    $("rep-pdfmail").disabled = !rep.rows.length;
     // Open in Spreadsheet (BR-S1): shown only inside orOS.
     $("rep-sheet").hidden = !invoicesOpener();
     $("rep-sheet").disabled = !rep.rows.length;
@@ -1251,8 +1406,8 @@
       if (x.billed) {
         var bl = el("span", "ent-billed");
         bl.innerHTML = UI.check;
-        bl.title = t("entry.billed");
-        bl.setAttribute("aria-label", t("entry.billed"));
+        bl.title = billedText(x);
+        bl.setAttribute("aria-label", bl.title);
         b.appendChild(bl);
       }
       b.setAttribute("aria-label", t("extra.edit", { d: x.desc || t("dlg.extra"), a: money(x.amt) }));
@@ -1283,7 +1438,11 @@
     txt.appendChild(el("span", "p-name", p.name));
     var bits = [];
     if (!p.bill) bits.push(t("proj.nobill"));
-    else {
+    else if (p.fee) {                         // T3: fixed fee and the hourly rate it makes
+      bits.push(t("proj.fee", { a: money(p.fee) }));
+      var eff = C.effRate(data, p.id, Date.now());
+      if (eff && eff.rate) bits.push(t("proj.eff", { r: money(eff.rate) }));
+    } else {
       var rate = p.minAmt ? p.rate : C.rateOf(data, p.id);
       if (rate) bits.push(t("proj.rate", { r: money(rate) }));
     }
@@ -1292,21 +1451,34 @@
     if (totals[p.id] && !use) bits.push(t("proj.total", { d: dur(totals[p.id]) }));
     if (bits.length) txt.appendChild(el("span", "p-sub", bits.join(" · ")));
     if (use) {
-      var bw = el("span", "p-budget " + use.state);
-      var bar = el("span", "p-bar");
-      var fill = el("i", "");
-      fill.style.width = Math.min(100, use.pct) + "%";
-      bar.appendChild(fill);
-      bw.appendChild(bar);
       var btxt = t("budget.of", { d: dur(use.ms), b: budgetText(use.budgetMs / 60000), p: use.pct });
       if (use.state === "over") btxt += " · " + t("budget.over", { d: dur(use.ms - use.budgetMs) });
       else if (use.state === "near") btxt += " · " + t("budget.near");
-      bw.appendChild(el("span", "p-btxt", btxt));
-      txt.appendChild(bw);
+      txt.appendChild(useBar(use.state, use.pct, btxt));
     }
+    var pk = p.bill ? C.pkgUse(data, "p", p.id, todayKey(), Date.now()) : null;
+    if (pk) txt.appendChild(useBar(pk.state, pk.pct, pkgText(pk, p)));
     b.appendChild(txt);
     b.addEventListener("click", function () { projectDialog(p.id); });
     return b;
+  }
+  // A bar of hours used (a budget, or a package's period).
+  function useBar(state, pct, text) {
+    var bw = el("span", "p-budget " + state);
+    var bar = el("span", "p-bar");
+    var fill = el("i", "");
+    fill.style.width = Math.min(100, pct) + "%";
+    bar.appendChild(fill);
+    bw.appendChild(bar);
+    bw.appendChild(el("span", "p-btxt", text));
+    return bw;
+  }
+  // T3: "This month: 12:30 of 20 h (63 %) · …" for a retainer.
+  function pkgText(pk, rec) {
+    var s = t("pkg.of." + rec.minPer, { d: dur(pk.ms), b: budgetText(pk.inclMs / 60000), p: pk.pct });
+    if (pk.state === "over") s += " · " + t("pkg.over", { d: dur(pk.ms - pk.inclMs) });
+    else if (pk.state === "near") s += " · " + t("pkg.near");
+    return s;
   }
   function renderProjects() {
     var totals = projTotals(), host = $("plist"), arch = $("parch-list");
@@ -1326,6 +1498,8 @@
         if (C.hasBilling(c)) hb.appendChild(el("small", "", billingText(c)));
         hb.addEventListener("click", function () { clientDialog(c.id); });
         head.appendChild(hb);
+        var cpk = C.pkgUse(data, "c", c.id, todayKey(), Date.now());
+        if (cpk) head.appendChild(useBar(cpk.state, cpk.pct, pkgText(cpk, c)));
       } else head.appendChild(el("span", "p-client plain", t("noClient")));
       box.appendChild(head);
       var mine = projects.filter(function (p) { return c ? p.client === c.id : !C.client(data, p.client); });
@@ -1368,6 +1542,7 @@
     if (tab === "timer") { renderRun(); renderDay(); }
     else if (tab === "week") renderWeek();
     else if (tab === "report") { renderFilters(); renderReport(); }
+    else if (tab === "bill") renderBill();
     else renderProjects();
   }
   function renderAll() { renderTab(); }
@@ -1462,6 +1637,22 @@
     return e - e % 60000;
   }
 
+  // T1: "Invoiced · On invoice INV-2026-0042 · paid".
+  function billedText(x) {
+    var s2 = x.iv ? invText(x.iv) : "";
+    return t("entry.billed") + (s2 ? " · " + s2 : "");
+  }
+  function invRow(form, iv) {
+    var row = el("div", "inv-row");
+    row.appendChild(el("span", "", invText(iv)));
+    if (invInfo(iv) && invoicesOpener()) {
+      var b = el("button", "mini-btn", t("inv.open"));
+      b.type = "button";
+      b.addEventListener("click", function () { openInvoice(iv); });
+      row.appendChild(b);
+    }
+    form.appendChild(row);
+  }
   function entryDialog(id, preset) {
     var x = id ? findEntry(id) : null;
     if (id && !x) return;
@@ -1476,7 +1667,7 @@
     var sel = el("select");
     fillProjectSelect(sel, x ? x.p : (preset && preset.p) || prefs.lastP || "", false);
     form.appendChild(field(t("f.project"), sel));
-    var desc = input("text", x ? x.desc : "");
+    var desc = input("text", x ? x.desc : (preset && typeof preset.desc === "string" ? preset.desc : ""));
     desc.maxLength = C.LIM.desc;
     form.appendChild(field(t("f.desc"), desc));
 
@@ -1530,6 +1721,7 @@
 
     var e0 = x ? (running ? 0 : (x.e || Math.max(Date.now(), x.s + 60000))) : defaultEnd(dayKey);
     var s0 = x ? x.s : Math.max(C.dayStart(dayKey), e0 - C.HOUR);
+    if (!x && preset && C.isInt(preset.s) && C.isInt(preset.e) && preset.e > preset.s) { s0 = preset.s; e0 = preset.e; }
     var sd = input("date", C.dayKeyOf(s0)), st = input("time", C.hhmm(s0));
     var r1 = el("div", "fld-row");
     r1.appendChild(field(t("f.sdate"), sd));
@@ -1579,6 +1771,7 @@
 
     var billed = checkRow(t("f.billed"), x ? x.billed : 0);
     if (!running) form.appendChild(billed.row);
+    if (x && x.billed && x.iv) invRow(form, x.iv);
 
     var left = [];
     if (!isNew) left.push(button(t("dlg.del"), "danger", function () { dlg.close(); deleteEntry(id); }));
@@ -1606,6 +1799,7 @@
         billed: running ? 0 : (billed.box.checked ? 1 : 0),
         task: C.cleanText(task.value, C.LIM.task), tags: C.parseTags(tags.value)
       };
+      if (isNew && preset && C.srcKey(preset.src)) rec.src = preset.src;
       var cur = isNew ? null : findEntry(id);
       if (!isNew && !cur) { dlg.close(); return; }          // deleted elsewhere meanwhile
       if (!isNew && cur.e !== 0 && running) { dlg.close(); renderAll(); return; }   // stopped elsewhere
@@ -1695,6 +1889,19 @@
     budget.autocomplete = "off";
     budget.placeholder = "0";
     form.appendChild(field(t("f.budget"), budget, t("f.budgetHint")));
+    var fee = moneyIn(p && p.fee ? p.fee : 0);
+    form.appendChild(field(t("f.fee") + " (" + data.prefs.cur + ")", fee, t("f.feeHint")));
+    if (p && p.fee) {                          // T3: the fee as an extra charge, once
+      var fx = C.feeExtra(data, p.id);
+      if (fx) form.appendChild(el("p", "hint", t("fee.added", { d: shortDate(fx.d) })));
+      else {
+        var fb = button(t("fee.add"), "mini-btn", function () {
+          dlg.close();
+          extraDialog(null, { d: todayKey(), p: p.id, desc: t("fee.desc", { p: p.name }), amt: p.fee, fee: 1 });
+        });
+        form.appendChild(fb);
+      }
+    }
     var bill = checkRow(t("f.billable"), p ? p.bill : 1);
     form.appendChild(bill.row);
     var bf = billingFields(form, p, "bill.hintP");
@@ -1712,6 +1919,8 @@
       if (isNaN(cents) || !C.inRange(cents, C.LIM.rate)) { showToast(t("toast.badMoney")); rate.focus(); return; }
       var mins = C.parseHours(budget.value);
       if (isNaN(mins) || !C.inRange(mins, C.LIM.budget)) { showToast(t("toast.badHours")); budget.focus(); return; }
+      var feeC = C.parseMoney(fee.value);
+      if (isNaN(feeC) || !C.inRange(feeC, C.LIM.fee)) { showToast(t("toast.badMoney")); fee.focus(); return; }
       var bpart = bf.read();
       if (!bpart) return;
       var picked = colorBox.querySelector("input:checked");
@@ -1720,7 +1929,8 @@
         name: nm, client: cli.value, color: picked ? +picked.value : 0, rate: cents,
         bill: bill.box.checked ? 1 : 0, arch: p && arch.box.checked ? 1 : 0
       };
-      if (mins) prec.budget = mins;
+      prec.budget = mins;                    // 0 clears it (keepExtras)
+      prec.fee = feeC;
       Object.assign(prec, bpart);
       var newPid = saveProject(id, prec);
       dlg.close();
@@ -1810,6 +2020,28 @@
     form.appendChild(field(t("f.rate") + " (" + data.prefs.cur + ")", rate,
       data.prefs.rate ? t("f.rateHint", { r: money(data.prefs.rate), src: t("src.default") }) : t("f.rateNone")));
     var bf = billingFields(form, c, "bill.hintC");
+    // T1 (BR-TS-CRM): the CRM customer it is, when CRM is on this device
+    var crmSel = document.createElement("select"), crmF = field(t("f.crm"), crmSel, t("f.crmHint"));
+    var crmNames = {};
+    crmF.hidden = true;
+    form.appendChild(crmF);
+    var fillCrm = function (list) {
+      crmSel.innerHTML = "";
+      var opt = function (v, label) { var o = el("option", "", label); o.value = v; crmSel.appendChild(o); };
+      opt("", t("f.crmNone"));
+      list.forEach(function (x) { crmNames[x.id] = x.name; opt(x.id, x.name + (x.afm ? " · " + x.afm : "")); });
+      if (c && c.crm && !crmNames[c.crm]) opt(c.crm, t("f.crmAway"));
+      crmSel.value = c && c.crm ? c.crm : "";
+      crmF.hidden = !list.length && !(c && c.crm);
+    };
+    if (c && c.crm) fillCrm([]);
+    if (hasKey(CRM_KEY)) loadOther("../crm/core.js", "OrosCrmCore", function (K) {
+      var d = K ? crmData() : null;
+      if (d && typeof K.customersForBilling === "function") fillCrm(K.customersForBilling(d));
+    });
+    crmSel.addEventListener("change", function () {   // a new client takes the customer's name
+      if (crmSel.value && !name.value.trim() && crmNames[crmSel.value]) name.value = crmNames[crmSel.value];
+    });
     var left = [];
     if (c) left.push(button(t("dlg.del"), "danger", function () { if (deleteClient(id)) dlg.close(); }));
     actions(form, left, c ? t("dlg.save") : t("dlg.add"));
@@ -1823,6 +2055,7 @@
       if (!bill) return;
       if (id && !C.client(data, id)) { dlg.close(); return; }
       var crec = Object.assign({ name: nm, rate: cents }, bill);
+      if (crmSel.value) crec.crm = crmSel.value;
       saveClient(id, crec);
       dlg.close();
       renderAll();
@@ -1832,8 +2065,31 @@
     openDialog(dlg, c ? null : name);
   }
 
+  // T3 (BR-TS-BUD): Budget's prefill bridge (BR-B1), inside orOS only.
+  function budgetApi() {
+    try { return typeof window.parent.__orosOpenBudgetNew === "function" ? window.parent.__orosOpenBudgetNew : null; }
+    catch (e) { return null; }
+  }
+  // Hands an extra charge to Budget as a prefilled expense (nothing is
+  // saved there before the user saves it). Marked bud:1 only when
+  // Budget took the prefill; false → a toast and no mark.
+  function sendToBudget(id) {
+    var fn = budgetApi(), x = findExtra(id);
+    if (!fn || !x) return;
+    var ok = false;
+    try { ok = fn(C.budgetPrefill(data, x)) !== false; } catch (e) { ok = false; }
+    if (!ok) { showToast(t("toast.budFail")); return; }
+    if (!x.bud) {
+      var rec = keepExtras(x, { bud: 1 });
+      rec.m = stamp(x.m);
+      replaceIn(extrasList(), rec);
+      saveNow();
+      renderAll();
+    }
+  }
   // An extra charge: date, project (or just a client), what it is
-  // for and the amount. preset: { d, p }.
+  // for and the amount (or a mileage: km × rate per km). preset:
+  // { d, p, desc?, amt?, fee? } (fee: a project's fixed fee, T3).
   function extraDialog(id, preset) {
     var x = id ? findExtra(id) : null;
     if (id && !x) return;
@@ -1859,23 +2115,62 @@
     var desc = input("text", x ? x.desc : "");
     desc.maxLength = C.LIM.exDesc;
     form.appendChild(field(t("f.exDesc"), desc, t("f.exDescHint")));
-    var amt = moneyIn(x ? x.amt : 0);
+    if (!x && preset && preset.desc) desc.value = C.cleanText(preset.desc, C.LIM.exDesc);
+    // T3: mileage, km × rate per km (the last rate is remembered on this device)
+    var isFee = x ? x.fee === 1 : !!(preset && preset.fee);
+    var kmRow = checkRow(t("f.km"), x && x.km ? 1 : 0);
+    var kmIn = input("text", x && x.km ? C.fmtKm(x.km, LANG) : "");
+    kmIn.inputMode = "decimal";
+    kmIn.autocomplete = "off";
+    kmIn.placeholder = "0";
+    var kmF = field(t("f.kmDist"), kmIn);
+    var kmr = moneyIn(x && x.kmr ? x.kmr : (prefs.kmr || 0));
+    var kmrF = field(t("f.kmRate") + " (" + data.prefs.cur + ")", kmr);
+    if (!isFee) { form.appendChild(kmRow.row); form.appendChild(kmF); form.appendChild(kmrF); }
+    var amt = moneyIn(x ? x.amt : (preset && preset.amt) || 0);
     form.appendChild(field(t("f.amount") + " (" + data.prefs.cur + ")", amt));
+    var kmCalc = function () {
+      var a = C.kmAmount(C.parseKm(kmIn.value), C.parseMoney(kmr.value));
+      if (kmRow.box.checked) amt.value = isNaN(a) ? "" : C.moneyInput(a, LANG);
+    };
+    var kmShow = function () {
+      kmF.hidden = kmrF.hidden = !kmRow.box.checked;
+      amt.readOnly = kmRow.box.checked;
+      kmCalc();
+    };
+    kmRow.box.addEventListener("change", kmShow);
+    kmIn.addEventListener("input", kmCalc);
+    kmr.addEventListener("input", kmCalc);
+    kmShow();
     var billed = checkRow(t("f.billed"), x ? x.billed : 0);
     form.appendChild(billed.row);
+    if (x && x.billed && x.iv) invRow(form, x.iv);
+    if (x && x.bud) form.appendChild(el("p", "hint", t("bud.sent")));
     var left = [];
     if (x) left.push(button(t("dlg.del"), "danger", function () { dlg.close(); deleteExtra(id); }));
+    if (x && !isFee && budgetApi()) left.push(button(t(x.bud ? "bud.again" : "bud.send"), "", function () { dlg.close(); sendToBudget(id); }));
     actions(form, left, x ? t("dlg.save") : t("dlg.add"));
     form.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (!C.validDay(day.value)) { day.focus(); return; }
       var d = C.cleanText(desc.value, C.LIM.exDesc);
       if (!d) { showToast(t("toast.badDesc")); desc.focus(); return; }
-      var cents = C.parseMoney(amt.value);
+      var km = 0, kmc = 0, cents;
+      if (kmRow.box.checked && !isFee) {
+        km = C.parseKm(kmIn.value);
+        if (isNaN(km)) { showToast(t("toast.badKm")); kmIn.focus(); return; }
+        kmc = C.parseMoney(kmr.value);
+        if (isNaN(kmc) || !C.inRange(kmc, C.LIM.kmr)) { showToast(t("toast.badMoney")); kmr.focus(); return; }
+        cents = C.kmAmount(km, kmc);
+        prefs.kmr = kmc;
+        savePrefs();
+      } else cents = C.parseMoney(amt.value);
       if (isNaN(cents) || !C.inRange(cents, C.LIM.amt)) { showToast(t("toast.badMoney")); amt.focus(); return; }
       if (id && !findExtra(id)) { dlg.close(); return; }     // deleted elsewhere meanwhile
-      saveExtra(id, { d: day.value, p: sel.value, c: sel.value ? "" : cli.value, desc: d, amt: cents,
-                      billed: billed.box.checked ? 1 : 0 });
+      var xrec = { d: day.value, p: sel.value, c: sel.value ? "" : cli.value, desc: d, amt: cents,
+                   billed: billed.box.checked ? 1 : 0, km: km, kmr: kmc };
+      if (!x && isFee) xrec.fee = 1;
+      saveExtra(id, xrec);
       dlg.close();
       renderAll();
       showToast(t("toast.saved"));
@@ -1952,6 +2247,7 @@
       });
     }
     form.appendChild(button(window.OrosTimesheetImport ? t("set.import2") : t("set.import"), "block", function () { dlg.close(); importCsv(); }));
+    if (linksApi()) form.appendChild(button(t("acc.btn"), "block", function () { dlg.close(); accountImport(); }));
 
     actions(form, [], t("dlg.save"));
     form.addEventListener("submit", function (ev) {
@@ -1977,17 +2273,18 @@
     if (window.orosDialog) return window.orosDialog;
     try { return window.parent.orosDialog || null; } catch (e) { return null; }
   }
+  // text: a string, or a Blob (the T3 PDF).
   function saveText(text, name, mime, ext, desc) {
-    var host = dialogHost();
+    var host = dialogHost(), isBlob = typeof Blob !== "undefined" && text instanceof Blob;
     var types = [{ description: desc }];
     types[0].accept = {};
     types[0].accept[mime] = [ext];
     if (host && typeof host.saveFile === "function") {
-      host.saveFile({ text: text, filename: name, mime: mime, types: types })
+      host.saveFile(isBlob ? { blob: text, filename: name, mime: mime, types: types } : { text: text, filename: name, mime: mime, types: types })
         .then(function (r) { if (r && r.ok) showToast(t("toast.exported")); });
       return;
     }
-    var url = URL.createObjectURL(new Blob([text], { type: mime }));
+    var url = URL.createObjectURL(isBlob ? text : new Blob([text], { type: mime }));
     var a = document.createElement("a");
     a.href = url;
     a.download = name;
@@ -2016,6 +2313,145 @@
     var slug = a === b ? a : a.slice(0, 4) === b.slice(0, 4) ? a + "–" + b.slice(5) : a.replace(/-/g, "") + "–" + b.replace(/-/g, "");
     p.__orosOpenAt("spreadsheet", { newSheet: { name: t("app") + " " + slug, rows: [head].concat(rows), sum: [4, 12] } });
   }
+  // ---------- T3: the client's timesheet as a PDF ----------
+  // The report's rows (as in the CSV) on A4: client, period, one row
+  // per entry with day, times, hours, project and description, amounts
+  // when the report charges anything, totals. Saved, or attached to a
+  // new Mail message (inside orOS, when Mail has an account).
+  var pdfFonts = null;
+  function pdfFontsLoad(done) {
+    if (pdfFonts) { done(pdfFonts); return; }
+    var get = function (path) {
+      return fetch(path).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (buf) {
+        var bytes = new Uint8Array(buf), bin = "";
+        for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+        return btoa(bin);
+      });
+    };
+    Promise.all([get("../vendor/noto/NotoSans-Regular.ttf"), get("../vendor/noto/NotoSans-Bold.ttf")])
+      .then(function (r) { pdfFonts = { reg: r[0], bold: r[1] }; done(pdfFonts); })
+      .catch(function () { done(null); });
+  }
+  function pdfMake(done) {
+    if (!repState) { done(null); return; }
+    loadOther("../vendor/jspdf.umd.min.js", "jspdf", function (J) {
+      if (!J || !J.jsPDF) { done(null); return; }
+      pdfFontsLoad(function (f) {
+        if (!f) { done(null); return; }
+        try { done(pdfBuild(J.jsPDF, f)); } catch (e) { done(null); }
+      });
+    });
+  }
+  function pdfWho() {
+    var f = repState.f, c = f.client && f.client !== "-" ? C.client(data, f.client) : null;
+    var p = !c && f.project && f.project !== "-" ? C.project(data, f.project) : null;
+    if (!c && p) c = C.projectClient(data, p);
+    return { c: c, p: p };
+  }
+  function pdfName() {
+    var who = pdfWho(), n = who.c ? who.c.name : (who.p ? who.p.name : "");
+    n = n.replace(/[\\\/:*?\x22<>|\u0000-\u001f]+/g, " ").trim();
+    return (t("pdf.title") + (n ? " " + n : "") + " " + repState.keys[0] + "_" + repState.keys[1]).slice(0, 100) + ".pdf";
+  }
+  function pdfBuild(jsPDF, f) {
+    var a = repState.keys[0], b = repState.keys[1], now = Date.now();
+    var rows = C.exportRows(data, a, b, repState.f, now, LANG);
+    var charged = rows.some(function (r) { return r.amount > 0; });
+    var doc = new jsPDF({ unit: "mm", format: "a4" });
+    doc.addFileToVFS("NotoSans-Regular.ttf", f.reg);
+    doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+    doc.addFileToVFS("NotoSans-Bold.ttf", f.bold);
+    doc.addFont("NotoSans-Bold.ttf", "NotoSans", "bold");
+    var W = 210, M = 14, y = 18;
+    var cols = charged ? [[M, 22], [M + 22, 24], [M + 46, 14], [M + 64, 34], [M + 98, 60], [M + 158, 24]]
+                       : [[M, 22], [M + 22, 24], [M + 46, 14], [M + 64, 40], [M + 104, 78]];
+    var who = pdfWho();
+    doc.setFont("NotoSans", "bold"); doc.setFontSize(16);
+    doc.text(t("pdf.title"), M, y); y += 8;
+    doc.setFont("NotoSans", "normal"); doc.setFontSize(10);
+    if (who.c) { doc.text(t("pdf.client") + ": " + who.c.name, M, y); y += 5; }
+    if (who.p) { doc.text(t("pdf.project") + ": " + who.p.name, M, y); y += 5; }
+    doc.text(t("pdf.period") + ": " + C.fmtRange(a, b, LANG), M, y); y += 8;
+    var head = function () {
+      doc.setFont("NotoSans", "bold"); doc.setFontSize(9);
+      var hs = [t("pdf.date"), t("pdf.time"), t("pdf.hours"), t("pdf.project"), t("pdf.desc"), t("pdf.amount")];
+      cols.forEach(function (c, i) {
+        if (i === 2 || i === 5) doc.text(hs[i], c[0] + c[1] - 1, y, { align: "right" }); else doc.text(hs[i], c[0], y);
+      });
+      y += 2; doc.setLineWidth(0.3); doc.line(M, y, W - M, y); y += 4.5;
+      doc.setFont("NotoSans", "normal");
+    };
+    head();
+    var totMs = 0, totAmt = 0;
+    rows.forEach(function (r) {
+      var timed = !r.ex && !r.top;
+      var descTxt = [r.desc, r.task].filter(Boolean).join(" · ");
+      var desc = doc.splitTextToSize(descTxt || "", cols[4][1] - 2);
+      var proj = doc.splitTextToSize(r.p || "", cols[3][1] - 2);
+      var h = Math.max(1, desc.length, proj.length) * 4;
+      if (y + h > 280) { doc.addPage(); y = 18; head(); }
+      doc.text(C.fmtRange(r.k, r.k, LANG), cols[0][0], y);
+      if (timed) doc.text(C.hhmm(r.s) + "–" + C.endText(r), cols[1][0], y);
+      if (!r.ex) doc.text(C.fmtDur(r.ms), cols[2][0] + cols[2][1] - 1, y, { align: "right" });
+      doc.text(proj, cols[3][0], y);
+      doc.text(desc, cols[4][0], y);
+      if (charged) doc.text(money(r.amount), cols[5][0] + cols[5][1] - 1, y, { align: "right" });
+      if (!r.ex) totMs += r.ms;
+      totAmt += r.amount;
+      y += h + 1.5;
+    });
+    if (y > 270) { doc.addPage(); y = 18; }
+    doc.setLineWidth(0.3); doc.line(M, y - 2, W - M, y - 2); y += 3;
+    doc.setFont("NotoSans", "bold");
+    doc.text(t("pdf.total"), cols[0][0], y);
+    doc.text(C.fmtDur(totMs), cols[2][0] + cols[2][1] - 1, y, { align: "right" });
+    if (charged) doc.text(money(totAmt), cols[5][0] + cols[5][1] - 1, y, { align: "right" });
+    doc.setFont("NotoSans", "normal"); doc.setFontSize(8);
+    var n = doc.getNumberOfPages();
+    for (var i = 1; i <= n; i++) {
+      doc.setPage(i);
+      doc.text(t("pdf.made") + (n > 1 ? " · " + i + "/" + n : ""), M, 290);
+    }
+    return { blob: doc.output("blob"), hours: totMs };
+  }
+  // T5: the report's entries as calendar events (.ics), for any calendar app.
+  function exportIcs() {
+    if (!repState) return;
+    var text = C.toIcs(data, repState.keys[0], repState.keys[1], repState.f, Date.now(), LANG);
+    saveText(text, "oros-timesheet-" + repState.keys[0] + "_" + repState.keys[1] + ".ics", "text/calendar", ".ics", "iCalendar");
+  }
+  function exportPdf() {
+    pdfMake(function (r) {
+      if (!r) { showToast(t("toast.pdfFail")); return; }
+      saveText(r.blob, pdfName(), "application/pdf", ".pdf", "PDF");
+    });
+  }
+  function mailShell() {
+    try {
+      var p = window.parent;
+      if (p === window || typeof p.__orosOpenAt !== "function") return null;
+      var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      return d && Array.isArray(d.accounts) && d.accounts.length ? p : null;
+    } catch (e) { return null; }
+  }
+  function mailPdf() {
+    var p = mailShell();
+    if (!p) return;
+    pdfMake(function (r) {
+      if (!r) { showToast(t("toast.pdfFail")); return; }
+      var fr = new FileReader();
+      fr.onload = function () {
+        var b64 = String(fr.result || "").replace(/^data:[^,]*,/, "");
+        var range = C.fmtRange(repState.keys[0], repState.keys[1], LANG);
+        p.__orosOpenAt("mail", { compose: {
+          to: "", subject: t("mail.subj", { r: range }).slice(0, 300),
+          body: t("mail.body", { r: range, h: C.fmtDur(r.hours) }),
+          attach: [{ name: pdfName(), type: "application/pdf", b64: b64 }]
+        } });
+      };
+      fr.readAsDataURL(r.blob);
+    });
+  }
   function quoteBridge() {
     try { return typeof window.parent.__orosOpenQuoteNew === "function" ? window.parent.__orosOpenQuoteNew : null; }
     catch (e) { return null; }
@@ -2041,17 +2477,247 @@
   }
   // The same billable lines as Create quote, as a new prefilled
   // invoice in Invoices (any currency). Nothing is saved there until
-  // the user saves or issues. Marking time as invoiced stays here.
+  // the user saves or issues. T1 (BR-TS-INV): the invoice carries a
+  // batch ref; once a document made from it exists, invReconcile marks
+  // exactly these entries and extra charges as invoiced on it.
   function createInvoice() {
-    var p = invoicesOpener();
-    if (!p || !repState) return;
+    if (!repState) return;
     var f = repState.f;
-    var q = C.quoteLines(data, repState.keys[0], repState.keys[1],
-      { client: f.client, project: f.project, billed: f.billed, tag: f.tag }, Date.now(), LANG);
+    createInvoiceFor(repState.keys[0], repState.keys[1], { client: f.client, project: f.project, billed: f.billed, tag: f.tag });
+  }
+  function createInvoiceFor(fromKey, toKey, f) {
+    var p = invoicesOpener();
+    if (!p) return;
+    var q = C.quoteLines(data, fromKey, toKey, f, Date.now(), LANG);
     if (!q.items.length) { showToast(t("quote.none")); return; }
-    var payload = { items: q.items.slice(0, 50), cur: data.prefs.cur, ref: { app: "timesheet", id: "report" } };
-    if (q.client) payload.name = q.client;
-    p.__orosOpenAt("invoices", { "new": payload });
+    var ids = q.ids.filter(function (id) { var x = findEntry(id); return x && x.e !== 0; });
+    var cids = {};
+    ids.forEach(function (id) { var pr = C.project(data, findEntry(id).p); cids[pr ? pr.client : ""] = 1; });
+    q.exIds.forEach(function (id) { var x = findExtra(id); if (x) cids[C.extraClient(data, x)] = 1; });
+    var ck = Object.keys(cids), cl = ck.length === 1 ? C.client(data, ck[0]) : null;
+    var send = function (party) {
+      var batch = newId();
+      pendPut(C.pendAdd(pendGet(), batch, ids, q.exIds, Date.now()));
+      var payload = { items: q.items.slice(0, 50), cur: data.prefs.cur, ref: { app: "timesheet", id: batch } };
+      if (party) Object.keys(party).forEach(function (k) { if (party[k]) payload[k] = party[k]; });
+      else if (q.client) payload.name = q.client;
+      p.__orosOpenAt("invoices", { "new": payload });
+    };
+    if (!cl) { send(null); return; }
+    crmParty(cl, send);
+  }
+
+  // ---------- T1: Invoices link (BR-TS-INV) + CRM clients (BR-TS-CRM) ----------
+  // Timesheet only READS Invoices and CRM (their own cores, loaded on
+  // demand when this device has their data); it writes its own data.
+  var INV_KEY = "oros-invoices-data", CRM_KEY = "oros-crm-data";
+  var otherLoad = {}, foreign = {};
+  function hasKey(k) { try { return !!localStorage.getItem(k); } catch (e) { return false; } }
+  function loadOther(src, name, done) {
+    if (window[name]) { done(window[name]); return; }
+    var w = otherLoad[src];
+    if (w === "failed") { done(null); return; }
+    if (w) { w.push(done); return; }
+    w = otherLoad[src] = [done];
+    var sc = document.createElement("script");
+    sc.src = src + (XLSX_V ? "?v=" + XLSX_V : "");
+    sc.onload = sc.onerror = function () {
+      otherLoad[src] = window[name] ? null : "failed";
+      w.forEach(function (fn) { fn(window[name] || null); });
+    };
+    document.head.appendChild(sc);
+  }
+  function readForeign(key, parse) {
+    var raw = null;
+    try { raw = localStorage.getItem(key); } catch (e) {}
+    var f = foreign[key] || (foreign[key] = { raw: undefined, data: null });
+    if (raw !== f.raw) {
+      f.raw = raw;
+      try { f.data = raw ? parse(raw) : null; } catch (e) { f.data = null; }
+    }
+    return f.data;
+  }
+  function invData() {
+    var I = window.OrosInvoicesCore;
+    return I ? readForeign(INV_KEY, function (raw) { return I.parse(raw); }) : null;
+  }
+  function crmData() {
+    var K = window.OrosCrmCore;
+    return K && typeof K.norm === "function" ? readForeign(CRM_KEY, function (raw) { return K.norm(JSON.parse(raw)); }) : null;
+  }
+  function pendGet() {
+    try { return C.normPend(JSON.parse(localStorage.getItem(C.PEND_KEY) || "null"), Date.now()); } catch (e) { return {}; }
+  }
+  function pendPut(o) {
+    try {
+      if (Object.keys(o).length) localStorage.setItem(C.PEND_KEY, JSON.stringify(o));
+      else localStorage.removeItem(C.PEND_KEY);
+    } catch (e) {}
+  }
+  // true: deleted, cancelled or credited in full; false: it stands;
+  // null: not on this device (yet).
+  function invGone(I, inv, id) {
+    var d = I.anyId(inv.docs, id);
+    if (!d) return null;
+    if (d.del || d.st === "void") return true;
+    if (d.st !== "issued" || d.kind === "cred") return false;
+    var cr = 0;
+    I.creditsOf(inv, d.id).forEach(function (c) { cr += I.totals(c).pay; });
+    return cr > 0 && cr >= I.totals(d).pay;
+  }
+  // Number and state of an invoice, for the marks: null when unknown.
+  function invInfo(id) {
+    var I = window.OrosInvoicesCore, inv = I ? invData() : null;
+    var d = inv && id ? I.doc(inv, id) : null;
+    if (!d) return null;
+    return { id: d.id, num: d.num, st: I.status(inv, d, todayKey()) };
+  }
+  function invText(id) {
+    var i = invInfo(id);
+    if (!i) return id ? t("inv.away") : "";
+    if (!i.num) return t("inv.draft");
+    var st = t("inv.st." + i.st);
+    return t("inv.on", { n: i.num }) + (st.indexOf("inv.st.") ? " · " + st : "");
+  }
+  function openInvoice(id) {
+    var p = invoicesOpener();
+    if (p && id) p.__orosOpenAt("invoices", { invoice: id });
+  }
+  var invTimer = 0;
+  function invReconcileSoon() {
+    clearTimeout(invTimer);
+    invTimer = setTimeout(invReconcile, 300);
+  }
+  function invReconcile() {
+    if (!hasKey(INV_KEY)) return;
+    loadOther("../invoices/core.js", "OrosInvoicesCore", function (I) {
+      var inv = I ? invData() : null;
+      if (!inv || typeof I.bySrc !== "function") return;
+      var now = Date.now(), pend = pendGet();
+      var r = C.invLink(data, pend, {
+        doc: function (b) {
+          var l = I.bySrc(inv, "timesheet:" + b).sort(function (x, y) { return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0); });
+          return l.length ? l[0].id : "";
+        },
+        gone: function (id) { return invGone(I, inv, id); }
+      }, now);
+      var setN = 0, clearN = 0, num = "";
+      r.set.forEach(function (x) {
+        var e = findEntry(x.id) || findExtra(x.id);
+        if (!e) return;
+        e.billed = 1;
+        e.iv = x.iv;
+        e.m = stamp(e.m);
+        setN++;
+        if (!num) { var info = invInfo(x.iv); num = info && info.num ? info.num : t("inv.draftNum"); }
+      });
+      r.clear.forEach(function (id) {
+        var e = findEntry(id) || findExtra(id);
+        if (!e) return;
+        e.billed = 0;
+        delete e.iv;
+        e.m = stamp(e.m);
+        clearN++;
+      });
+      if (r.done.length || Object.keys(pend).length !== Object.keys(pendGet()).length) {
+        r.done.forEach(function (b) { delete pend[b]; });
+        pendPut(pend);
+      }
+      if (setN || clearN) saveNow();
+      renderAll();
+      if (setN) showToast(t("toast.invLinked", { n: setN, num: num }));
+      else if (clearN) showToast(t("toast.invGone", { n: clearN }));
+    });
+  }
+  // The invoice party of a client: its CRM customer (its own crm link,
+  // else the one CRM linked it to), else just its name.
+  function crmParty(c, done) {
+    if (!hasKey(CRM_KEY)) { done(c.crm ? { crm: c.crm, name: c.name } : { name: c.name }); return; }
+    loadOther("../crm/core.js", "OrosCrmCore", function (K) {
+      var d = K ? crmData() : null, cust = null;
+      if (d && typeof K.customersForBilling === "function") {
+        var id = c.crm;
+        if (!id && typeof K.linkOwner === "function") { var o = K.linkOwner(d, "tsc:" + c.id); id = o ? o.id : ""; }
+        if (id) cust = K.customersForBilling(d).filter(function (x) { return x.id === id; })[0] || null;
+      }
+      if (!cust) { done(c.crm ? { crm: c.crm, name: c.name } : { name: c.name }); return; }
+      done({ crm: cust.id, name: cust.name, afm: cust.afm, doy: cust.doy, job: cust.job, addr: cust.addr,
+             country: cust.country, email: cust.email, phone: cust.phone });
+    });
+  }
+
+  // ---------- T1: To invoice (unbilled time, unpaid invoices) ----------
+  function openByClient(I, inv, day) {
+    var docs = {};
+    var add = function (cid, id) { (docs[cid] || (docs[cid] = {}))[id] = 1; };
+    C.live(data.entries).forEach(function (x) {
+      if (x.billed && x.iv) { var pr = C.project(data, x.p); add(pr ? pr.client : "", x.iv); }
+    });
+    C.live(data.extras || []).forEach(function (x) { if (x.billed && x.iv) add(C.extraClient(data, x), x.iv); });
+    C.live(data.clients).forEach(function (c) {
+      if (c.crm) I.byCrm(inv, c.crm, day).rows.forEach(function (r) { add(c.id, r.id); });
+    });
+    var out = {};
+    Object.keys(docs).forEach(function (cid) {
+      var o = { cur: {}, late: 0 };
+      Object.keys(docs[cid]).forEach(function (id) {
+        var d = I.doc(inv, id);
+        if (!d) return;
+        var bal = I.balance(inv, d);
+        if (bal <= 0) return;
+        o.cur[d.cur] = (o.cur[d.cur] || 0) + bal;
+        if (I.status(inv, d, day) === "overdue") o.late++;
+      });
+      if (Object.keys(o.cur).length) out[cid] = o;
+    });
+    return out;
+  }
+  function renderBill() {
+    var now = Date.now(), tk = todayKey();
+    var rows = C.unbilled(data, tk, now), byCid = {};
+    rows.forEach(function (r) { byCid[r.cid] = r; });
+    var I = window.OrosInvoicesCore, inv = I ? invData() : null;
+    var open = inv ? openByClient(I, inv, tk) : {};
+    var cids = rows.map(function (r) { return r.cid; });
+    Object.keys(open).sort().forEach(function (cid) { if (cids.indexOf(cid) < 0) cids.push(cid); });
+    var host = $("bill-list");
+    host.innerHTML = "";
+    cids.forEach(function (cid) {
+      var c = C.client(data, cid), r = byCid[cid], o = open[cid];
+      var card = el("section", "ub-card");
+      card.appendChild(el("h3", "ub-name", c ? c.name : t("noClient")));
+      if (r) {
+        card.appendChild(el("p", "ub-open", t("ub.open", { d: dur(r.ms), a: money(r.amount) })));
+        if (r.since) card.appendChild(el("p", "ub-sub", t("ub.since", { d: shortDate(r.since) })));
+      }
+      if (o) {
+        var amts = Object.keys(o.cur).sort().map(function (k) { return C.fmtMoney(o.cur[k], k, LANG); }).join(" + ");
+        card.appendChild(el("p", "ub-unpaid" + (o.late ? " late" : ""),
+          t("ub.unpaid", { a: amts }) + (o.late ? " · " + t("ub.late", { n: o.late }) : "")));
+      }
+      var acts = el("div", "ub-acts");
+      if (r && invoicesOpener()) {
+        var bi = el("button", "mini-btn", t("rep.invoice"));
+        bi.type = "button";
+        bi.addEventListener("click", function () { createInvoiceFor("2000-01-01", tk, { client: cid || "-", billed: "open" }); });
+        acts.appendChild(bi);
+      }
+      if (r) {
+        var br = el("button", "mini-btn", t("ub.report"));
+        br.type = "button";
+        br.addEventListener("click", function () {
+          var rp = prefs.rep;
+          rp.range = "custom"; rp.from = r.since || C.monthStart(tk); rp.to = tk;
+          rp.client = cid || "-"; rp.project = ""; rp.bill = "bill"; rp.billed = "open"; rp.tag = "";
+          savePrefs();
+          setTab("report");
+        });
+        acts.appendChild(br);
+      }
+      if (acts.childNodes.length) card.appendChild(acts);
+      host.appendChild(card);
+    });
+    $("bill-empty").hidden = cids.length > 0;
   }
   function exportBackup() {
     saveText(C.toBackup(data), "oros-timesheet-backup-" + todayKey() + ".json", "application/json", ".json", "JSON");
@@ -2139,7 +2805,7 @@
   // vendored SheetJS, loaded only when an .xlsx is picked). The same
   // preview; the toast now has Undo (tombstones, see import.js).
   var IMPORT_MAX_BYTES = 10 * 1024 * 1024;
-  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest", kimai: "Kimai", tempo: "Jira Tempo" };
+  var SOURCES = { toggl: "Toggl Track", clockify: "Clockify", harvest: "Harvest", kimai: "Kimai", tempo: "Jira Tempo", activitywatch: "ActivityWatch" };
   var IMPX = window.OrosTimesheetImport;
   function importCsv() {
     var host = dialogHost(), acc = IMPX ? IMPX.ACCEPT : ".csv,text/csv,text/plain";
@@ -2152,6 +2818,17 @@
   // Also the handle for tests / a file opened with orOS (Promise)
   function importFile(file) {
     if (file.size > IMPORT_MAX_BYTES) { showToast(t(IMPX ? "imp.bad2" : "imp.bad1")); return Promise.resolve(false); }
+    // T5: an ActivityWatch export (JSON) → suggested entries
+    if (/\.json$/i.test(file.name || "") || file.type === "application/json") {
+      return file.text().then(function (text) {
+        var obj = null;
+        try { obj = JSON.parse(text); } catch (e) {}
+        var plan = obj ? C.awPlan(obj, data) : null;
+        if (!plan) { showToast(t("imp.bad2")); return false; }
+        importPreview(function () { return C.awPlan(obj, data); }, plan);
+        return true;
+      });
+    }
     var order = LANG === "en" ? "mdy" : "dmy";
     if (!IMPX || !window.OrosImportKit) {
       return file.text().then(function (text) {
@@ -2185,6 +2862,92 @@
     });
     return xlsxWait;
   }
+  // ---------- T5: import from a time tracker account ----------
+  // Toggl Track, Clockify, Harvest or Kimai, connected in Settings ›
+  // Connected services (the shell's orosLinks keeps the account and its
+  // token; this app never sees a key). links/timesheet.js turns the
+  // answers into the tracker's own export, so the same preview, ids,
+  // Undo and "adds only" rules as importing that file.
+  function linksApi() {
+    try { var p = window.parent; return p && p !== window && p.orosLinks && typeof p.orosLinks.call === "function" ? p.orosLinks : null; }
+    catch (e) { return null; }
+  }
+  var ACC_PLATS = ["toggl", "clockify", "harvest", "kimai"];
+  function accountImport() {
+    var Lk = linksApi();
+    if (!Lk) return;
+    var accts = Lk.list().filter(function (a) { return ACC_PLATS.indexOf(a.p) >= 0; });
+    var dlg = makeDialog("ts-acc", t("acc.title"));
+    var form = el("form");
+    form.method = "dialog";
+    form.appendChild(el("p", "hint", t("acc.intro")));
+    if (!accts.length) {
+      form.appendChild(el("p", "hint", t("acc.none")));
+      actions(form, [button(t("acc.settings"), "", function () {
+        dlg.close();
+        try { window.parent.__orosOpenAt("settings", { section: "services" }); } catch (e) {}
+      })], t("dlg.cancel"));
+      form.addEventListener("submit", function (ev) { ev.preventDefault(); dlg.close(); });
+      dlg.appendChild(form);
+      openDialog(dlg, null);
+      return;
+    }
+    var sel = el("select");
+    fillSelect(sel, accts.map(function (a) { return [a.id, (SOURCES[a.p] || a.p) + " · " + a.name]; }), accts[0].id);
+    form.appendChild(field(t("acc.acct"), sel));
+    var tk = todayKey();
+    var from = input("date", C.addDays(C.monthStart(C.addDays(C.monthStart(tk), -1)), 0));
+    var to = input("date", tk);
+    form.appendChild(field(t("acc.from"), from));
+    form.appendChild(field(t("acc.to"), to, t("acc.range")));
+    var status = el("p", "hint", "");
+    status.setAttribute("aria-live", "polite");
+    form.appendChild(status);
+    actions(form, [], t("acc.read"));
+    var go = form.querySelector("button[type=submit]");
+    form.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var a = accts.filter(function (x) { return x.id === sel.value; })[0];
+      if (!a || go.disabled) return;
+      loadOther("../links/timesheet.js", "OrosLinksTimesheet", function (M) {
+        if (!M) { status.textContent = t("acc.err.other"); return; }
+        if (!M.okRange(from.value, to.value)) { status.textContent = t("acc.badRange"); from.focus(); return; }
+        go.disabled = true;
+        status.textContent = t("acc.reading", { n: 0 });
+        var got = {}, f = from.value, tt = to.value;
+        var step = function (reqs) {
+          return Lk.call(a.id, reqs).then(function (res) {
+            var bad = "";
+            res.forEach(function (x) { if (!bad) bad = Lk.statusCode(x); });
+            if (bad) { var e = new Error(bad); e.code = bad; throw e; }
+            var r = M.next(a.p, f, tt, got, res.map(function (x) { return x.data; }));
+            status.textContent = t("acc.reading", { n: M.count(got) });
+            if (r.bad) { var e2 = new Error("other"); e2.code = "other"; throw e2; }
+            return r.done ? got : step(r.reqs);
+          });
+        };
+        step(M.first(a.p, f, tt)).then(function () {
+          var tb = M.table(a.p, got), order = "dmy";
+          var replan = tb.rows
+            ? function (o, u) { return IMPX ? IMPX.planRows(tb.rows, data, "dmy", u || "") : null; }
+            : function () { return C.importPlan(tb.csv, data, order); };
+          var plan = replan("dmy", "");
+          dlg.close();
+          if (!plan) { showToast(t("acc.nothing")); return; }
+          plan.ambiguous = false;
+          importPreview(replan, plan);
+        }, function (e) {
+          go.disabled = false;
+          var c = e && e.code;
+          status.textContent = t(c === "auth" || c === "keys" || c === "offline" || c === "busy" ? "acc.err." + c : "acc.err.other",
+                                 { p: SOURCES[a.p] || a.p });
+        });
+      });
+    });
+    dlg.appendChild(form);
+    openDialog(dlg, null);
+  }
+
   // replan(order, user) → a fresh plan against the data as it is now
   function importPreview(replan, plan) {
     var dlg = makeDialog("ts-import", t("imp.title", { src: SOURCES[plan.source] || plan.source }));
@@ -2208,6 +2971,7 @@
     }
     if (plan.source === "harvest") form.appendChild(el("p", "hint", t("imp.harvest")));
     if (plan.source === "kimai" || plan.source === "tempo") form.appendChild(el("p", "hint", t("imp." + plan.source)));
+    if (plan.source === "activitywatch") form.appendChild(el("p", "hint", t("imp.aw")));
     form.appendChild(el("p", "hint", t("imp.hint")));
     actions(form, [], t("imp.go"));
     var go = form.querySelector("button[type=submit]");
@@ -2397,6 +3161,7 @@
     }
     if (JSON.stringify(data) === before) return;   // no toast (sync feedback = taskbar dot)
     renderAll();
+    invReconcileSoon();
   }
 
   // ---------- 13. Wiring & boot ----------
@@ -2416,7 +3181,7 @@
     iconBtn("wprev-btn", UI.left, t("wprev"));
     iconBtn("wnext-btn", UI.right, t("wnext"));
     iconBtn("set-btn", UI.gear, t("settings"));
-    var icons = { timer: UI.timer, week: UI.week, report: UI.chart, projects: UI.folder };
+    var icons = { timer: UI.timer, week: UI.week, report: UI.chart, bill: UI.bill, projects: UI.folder };
     TABS.forEach(function (k) {
       var b = $("tab-" + k);
       b.innerHTML = icons[k] + "<span></span>";
@@ -2436,12 +3201,16 @@
     $("add-extra").innerHTML = UI.plus + "<span></span>";
     $("add-extra").lastChild.textContent = t("add.extra");
     $("extras-h").textContent = t("extra.h");
+    $("cal-h").textContent = t("cal.h");
     $("rep-extras-h").textContent = t("extra.h");
     $("add-project").innerHTML = UI.plus + "<span></span>";
     $("add-project").lastChild.textContent = t("add.project");
     $("add-client").innerHTML = UI.plus + "<span></span>";
     $("add-client").lastChild.textContent = t("add.client");
     $("rep-csv").textContent = t("rep.csv");
+    $("rep-pdf").textContent = t("rep.pdf");
+    $("rep-ics").textContent = t("rep.ics");
+    $("rep-pdfmail").textContent = t("rep.pdfMail");
     $("rep-sheet").textContent = t("rep.sheet");
     $("rep-quote").textContent = t("rep.quote");
     $("rep-invoice").textContent = t("rep.invoice");
@@ -2502,6 +3271,9 @@
       });
     });
     $("rep-csv").addEventListener("click", exportCsv);
+    $("rep-pdf").addEventListener("click", exportPdf);
+    $("rep-ics").addEventListener("click", exportIcs);
+    $("rep-pdfmail").addEventListener("click", mailPdf);
     $("rep-sheet").addEventListener("click", openInSheet);
     $("rep-quote").addEventListener("click", createQuote);
     $("rep-invoice").addEventListener("click", createInvoice);
@@ -2532,9 +3304,12 @@
     }, 1000);
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) flushDesc();
-      else { drainInbox(); if (!document.querySelector("dialog[open]")) renderAll(); }
+      else { drainInbox(); invReconcileSoon(); if (!document.querySelector("dialog[open]")) renderAll(); }
     });
-    window.addEventListener("storage", function (ev) { if (ev.key === C.INBOX_KEY) drainInbox(); });
+    window.addEventListener("storage", function (ev) {
+      if (ev.key === C.INBOX_KEY) drainInbox();
+      if (ev.key === INV_KEY) invReconcileSoon();   // T1: an invoice was saved, issued, cancelled or paid
+    });
     window.addEventListener("pagehide", flushDesc);
     wireKeyboard();
   }
@@ -2611,6 +3386,7 @@
     setTab(prefs.tab);
     takeShellToggle();
     drainInbox();
+    invReconcileSoon();
   }
 
   boot();
@@ -2618,8 +3394,10 @@
   // Universal search deep link (shell __orosOpenAt / __orosTakeTarget):
   // target { entry } | { project } | { client } | { day } (Calendar
   // feed row, Wave 4: the Timer tab on that day) | { startTimer: { title,
-  // note? } } (Calendar's "Track time" on an event: the user's own click
-  // there, like pressing Start). An entry: the Timer tab on its day,
+  // note?, project?, src? } } (Calendar's, To-Do's and Kanban's "Track
+  // time": the user's own click there, like pressing Start; project is a
+  // name hint, src "todo:|kanban:|cal:<id>" is kept on the entry, T2)
+  // | { logTime: { title, s, e, src? } } (Calendar's "Log time"). An entry: the Timer tab on its day,
   // then its dialog; a project or a client: the Projects tab, then its
   // dialog. startTimer: the Timer tab; with no timer running, a new one
   // starts with the title (≤ 200, " · note" appended) as its description
@@ -2635,6 +3413,7 @@
     if (t.toggle) { window.__orosTimesheetToggle(); return; }
     if (t.newEntry) { setTab("timer"); entryDialog(null, null); return; }
     if (t.startTimer && typeof t.startTimer === "object") { startFromTarget(t.startTimer); return; }
+    if (t.logTime && typeof t.logTime === "object") { logFromTarget(t.logTime); return; }
     if (typeof t.entry === "string") {
       var x = findEntry(t.entry);
       if (!x) return;
@@ -2664,12 +3443,33 @@
       return;
     }
     var note = C.cleanText(typeof st.note === "string" ? st.note : "", C.LIM.desc);
-    var key = title.toLowerCase(), pid = "";
-    C.live(data.projects).forEach(function (p) {
-      if (!pid && !p.arch && String(p.name || "").trim().toLowerCase() === key) pid = p.id;
-    });
-    startTimer(pid, note ? title + " · " + note : title);
+    var pid = projectFor(title, st.project);
+    startTimer(pid, note ? title + " · " + note : title, null, st.src);
     showToast(t("toast.started", { p: pid ? projLabel(pid) : title }));
+  }
+  // The project a task, card or event means: one named like its title,
+  // else like the hint (its To-Do list, Kanban board); not archived.
+  function projectFor(title, hint) {
+    var pid = "";
+    [title, typeof hint === "string" ? hint : ""].forEach(function (n) {
+      var key = String(n || "").trim().toLowerCase();
+      if (!key || pid) return;
+      C.live(data.projects).forEach(function (p) {
+        if (!pid && !p.arch && String(p.name || "").trim().toLowerCase() === key) pid = p.id;
+      });
+    });
+    return pid;
+  }
+  // T2 (BR-TS-SRC): { logTime: { title, s, e, src?, project? } } — an
+  // event that is over, as a prefilled "Add time" dialog (nothing is
+  // saved until Add).
+  function logFromTarget(lt) {
+    var title = C.cleanText(typeof lt.title === "string" ? lt.title : "", C.LIM.desc);
+    if (!C.isInt(lt.s) || !C.isInt(lt.e) || lt.e <= lt.s || lt.e - lt.s > C.MAX_SPAN) return;
+    setTab("timer");
+    goDay(C.dayKeyOf(lt.s) > todayKey() ? todayKey() : C.dayKeyOf(lt.s));
+    entryDialog(null, { p: projectFor(title, lt.project), desc: title, s: lt.s, e: Math.min(lt.e, Date.now()),
+                        src: C.srcKey(lt.src) ? lt.src : "" });
   }
   window.__orosOpenAt = openSearchTarget;
   try {

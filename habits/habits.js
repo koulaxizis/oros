@@ -717,9 +717,16 @@
   // Yes / no tick for a habit/day. Completion = entity with !del.
   // Un-complete = tombstone (LWW merge friendly). Re-complete =
   // resurrect with fresh mtime (model.js setTick).
+  // Automations wave A2 (BR-EV): tell the shell's event bus that
+  // something happened here; a rule may then post its notice. Only
+  // the event's name, a stable key and a short text leave this app.
+  function orosEvent(name, key, text) {
+    try { var p = window.parent; if (p && p !== window && p.orosEvents) p.orosEvents.emit(name, key, text); } catch (e) {}
+  }
   function toggleComp(habit, d) {
-    M.setTick(db, habit.id, dateKey(d), undefined, Date.now());
+    var c = M.setTick(db, habit.id, dateKey(d), undefined, Date.now());
     save();
+    if (c && !c.del) orosEvent("habits.done", "habits:" + habit.id + ":" + dateKey(d), habit.name);
   }
   function quickAdd(habit, dateK, sign) {
     if (!isNum(habit)) return;

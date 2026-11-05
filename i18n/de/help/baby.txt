@@ -35,6 +35,7 @@ Unter `Wachstum` trägt `Messung hinzufügen` Gewicht, Größe und Kopfumfang ei
 
 ## Meilensteine
 Hake die vorgegebenen Meilensteine ab, wenn sie passieren, oder füg mit `Hinzufügen` eigene hinzu. Du kannst auch `Impfungen` und `Arztbesuche` eintragen.
+In einer Impfung oder einem Arztbesuch öffnet `Den nächsten im Kalender eintragen` einen neuen Termin im [Kalender](app:calendar) mit dem Namen deines Kindes und worum es geht; wähl dort den Tag und speichere.
 
 ## Erinnerungen und Kalender
 In den `Einstellungen` gibt es unter `Erinnerungen auf diesem Gerät` zwei optionale Erinnerungen, beide anfangs aus:

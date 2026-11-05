@@ -42,7 +42,7 @@
     var lang = ctx.lang, cur = function (map, f) { return Object.keys(map).sort().map(function (k) { return f(map[k], k); }).join(" · "); };
     data.cust.forEach(function (c) {
       var links = C.linksOf(data, c);
-      if (!links.length) return;
+      if (!links.length && !(ts && (ts.clients || []).some(function (k) { return k && !k.del && k.crm === c.id; }))) return;
       var x;
       try {
         x = OV.build({ data: data, cust: c, today: ctx.today, nowMs: ctx.now, links: links, inv: inv, I: I, alsoInv: [],

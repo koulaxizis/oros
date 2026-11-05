@@ -19,6 +19,8 @@ The `Card` dialog saves as you type. It has:
 - `Lane`: a free name such as "Team A", used by swimlanes (see below).
 - `Attachments` and `Cover`: see below.
 
+`Track time` (when [Timesheet](app:timesheet) is installed) starts a timer there named after the card, with the project named like the card or the board if you have one; a timer already running is left alone. The card then shows `Time tracked`, the total Timesheet holds for it.
+
 `Duplicate` makes a copy of the card. `Delete` asks first, and the message that follows has an `Undo` button for a few seconds.
 
 ## Columns and boards

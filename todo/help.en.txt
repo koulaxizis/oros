@@ -127,6 +127,7 @@ If your tasks live on your own server (Nextcloud Tasks, Radicale, Baïkal, mailb
 - [[Esc]] closes the quick menu, the sort or label filter menu, the open window, or ends a selection.
 
 ## Tips
+- `Track time` in a task's window (when [Timesheet](app:timesheet) is installed) starts a timer there named after the task, with the project named like the task or the list if you have one; a timer already running is left alone. The window then shows `Time tracked`, the total Timesheet holds for the task.
 - Tasks with a due date that aren't done show up in [Calendar](app:calendar) on their day, and the Calendar entry opens the list here. They also show in Today, with a button that ticks them here.
 - Other apps can send items here, such as the shopping list from [Meal Planner](app:meals). An `Add to To-Do` window shows them with a `List` picker; items already on that list start unticked, and nothing is saved until you press `Add`.
 - orOS can remind you when tasks are due or overdue; see [Notifications](help:t/notifications).

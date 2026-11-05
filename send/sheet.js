@@ -11,7 +11,8 @@
 //            sender's own "Send to someone" item { kind, data } for
 //            share/, shown as one more button that calls env.share)
 //   env  = { apps: [{ id, name }], icon(id) → Node|null, self, from,
-//            openAt(app, target), share(item) }
+//            openAt(app, target), share(item),
+//            calendarNew(p), budgetNew(p) }   (wave A3: BR-W8 / BR-B1)
 // Nothing is stored, nothing is synced. Text through textContent only;
 // the icons are the shell's own constant SVG nodes.
 // ES5, like the shell. Strings EN/EL here.
@@ -141,7 +142,13 @@
         var tg = C.target(id, kind, d, env.from);
         dlg.close();
         if (!tg) { toast(T("failed")); return; }
-        try { env.openAt(id, tg); } catch (e) { toast(T("failed")); }
+        // Calendar and Budget open through the shell's own openers
+        // (BR-W8, BR-B1); every other app through __orosOpenAt.
+        var via = C.via ? C.via(id) : "";
+        try {
+          if (via) { if (typeof env[via] !== "function" || env[via](tg) === false) toast(T("failed")); }
+          else env.openAt(id, tg);
+        } catch (e) { toast(T("failed")); }
       });
       grid.appendChild(b);
     });

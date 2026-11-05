@@ -115,6 +115,7 @@
       "dlg.head": "Head (cm)", "dlg.grNote": "Fill in any of the three.",
       "dlg.ms": "Milestone", "dlg.vac": "Vaccine", "dlg.doc": "Doctor visit", "dlg.label": "What",
       "dlg.vacName": "Vaccine", "dlg.docName": "Reason / doctor", "dlg.unset": "Remove",
+      "dlg.toCal": "Book the next one in Calendar",
       "dlg.settings": "Settings", "set.units": "Units", "set.wu": "Weight", "set.tu": "Temperature", "set.vu": "Volume",
       "set.data": "Data", "set.csv": "Export log (CSV)", "set.gcsv": "Export growth (CSV)", "set.backup": "Back up (JSON)",
       "set.restore": "Restore from backup", "set.restoreNote": "A restore merges: it adds and updates, it never removes what is here.",
@@ -218,6 +219,7 @@
       "dlg.head": "Περίμετρος κεφαλής (cm)", "dlg.grNote": "Συμπλήρωσε όποιο από τα τρία έχεις.",
       "dlg.ms": "Ορόσημο", "dlg.vac": "Εμβόλιο", "dlg.doc": "Επίσκεψη", "dlg.label": "Τι",
       "dlg.vacName": "Εμβόλιο", "dlg.docName": "Λόγος / γιατρός", "dlg.unset": "Αφαίρεση",
+      "dlg.toCal": "Κλείσε το επόμενο στο Ημερολόγιο",
       "dlg.settings": "Ρυθμίσεις", "set.units": "Μονάδες", "set.wu": "Βάρος", "set.tu": "Θερμοκρασία", "set.vu": "Όγκος",
       "set.data": "Δεδομένα", "set.csv": "Εξαγωγή καταγραφών (CSV)", "set.gcsv": "Εξαγωγή ανάπτυξης (CSV)", "set.backup": "Αντίγραφο ασφαλείας (JSON)",
       "set.restore": "Επαναφορά από αντίγραφο", "set.restoreNote": "Η επαναφορά συγχωνεύει: προσθέτει και ενημερώνει, δεν σβήνει τίποτα από όσα υπάρχουν.",
@@ -549,6 +551,14 @@
     return list.length ? list[list.length - 1] : null;     // the youngest
   }
   function kidId() { var k = kid(); return k ? k.id : ""; }
+  function calendarHere() {
+    try {
+      var p = window.parent;
+      if (!p || p === window || typeof p.__orosOpenCalendarNew !== "function") return false;
+      return typeof p.orosAssistInstalled !== "function" ||
+        p.orosAssistInstalled().some(function (a) { return a && a.id === "calendar"; });
+    } catch (e) { return false; }
+  }
   function findEv(id) { return C.findIn(data.ev, id); }
 
   // ---------- 3. Edits ----------
@@ -2053,6 +2063,16 @@
     form.appendChild(field(t("dlg.date"), day));
     var nt = textInput(cur ? cur.nt : "", C.LIM.text);
     form.appendChild(field(t("dlg.note"), nt));
+    // Wave A4: the next vaccine or visit goes to Calendar (its New
+    // event form, prefilled; the person picks the day and saves).
+    if ((type === "vac" || type === "doc") && calendarHere()) {
+      form.appendChild(button(t("dlg.toCal"), "block", function () {
+        var k = kid(), what = label ? C.cleanText(label.value, C.LIM.text) : "";
+        var title = (k ? k.n + " \u00b7 " : "") + (what || t("dlg." + type));
+        dlg.close();
+        try { window.parent.__orosOpenCalendarNew({ date: todayKey(), title: title.slice(0, 80) }); } catch (e) {}
+      }));
+    }
     actions(form, dlg, cur ? t("dlg.save") : t("dlg.add"), cur ? function () { removeRec("mk", cur.id); } : null);
     if (cur && key) form.querySelector(".dlg-btn.danger").textContent = t("dlg.unset");
     form.addEventListener("submit", function (e) {

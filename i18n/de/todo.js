@@ -1,4 +1,6 @@
 orosPack("de", "todo", {
+ "item.track": "Zeit erfassen",
+ "item.tsSpent": "Erfasste Zeit: {t}",
  "srch.labels": "Labels: ",
  "srch.done": "Erledigt",
  "srch.prio": "Priorität {n}",

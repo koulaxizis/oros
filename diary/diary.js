@@ -155,7 +155,8 @@
       "lock.note": "Forgot the PIN? It lives only on this device: clearing orOS's site data removes it (and every other local setting); with sync on, your days come back from the cloud.",
       // Everyday interop: Mood's feelings of the day, a hand-over from Mood
       "mood.lbl": "Mood", "mood.open": "Open Mood for this day: {list}",
-      "draft.note": "From Mood, not saved yet: edit it, or keep it as it is.",
+      "dayline.lbl": "Your day", "dayline.add": "Add to the page",
+      "draft.note": "Not saved yet: edit it, or keep it as it is.",
       "draft.keep": "Keep", "draft.drop": "Discard"
     },
     el: {
@@ -254,7 +255,8 @@
       "lock.wrong": "Λάθος PIN", "lock.wait": "Πολλές προσπάθειες. Περίμενε {n} δευτ.", "lock.unsupported": "Αυτό το πρόγραμμα περιήγησης δεν μπορεί να ελέγξει PIN εδώ",
       "lock.note": "Ξέχασες το PIN; Υπάρχει μόνο σε αυτή τη συσκευή: η διαγραφή των δεδομένων ιστότοπου του orOS το αφαιρεί (μαζί με κάθε άλλη τοπική ρύθμιση)· με ενεργό συγχρονισμό, οι μέρες σου επιστρέφουν από το cloud.",
       "mood.lbl": "Διάθεση", "mood.open": "Άνοιγμα της Διάθεσης γι' αυτή τη μέρα: {list}",
-      "draft.note": "Από τη Διάθεση, δεν έχει αποθηκευτεί ακόμα: άλλαξέ το ή κράτα το όπως είναι.",
+      "dayline.lbl": "Η μέρα σου", "dayline.add": "Πρόσθεσε στη σελίδα",
+      "draft.note": "Δεν έχει αποθηκευτεί ακόμα: άλλαξέ το ή κράτα το όπως είναι.",
       "draft.keep": "Κράτα το", "draft.drop": "Απόρριψη"
     }
   };
@@ -486,6 +488,7 @@
     renderEmojis();
     renderLate();
     renderMoodDay();
+    renderDayLine();
     renderLong();
     renderOtd();
     renderStats();
@@ -1088,6 +1091,25 @@
       b.appendChild(it);
     });
     setLabel(b, t("mood.open", { list: list.map(function (m) { return m.label; }).join(", ") }));
+  }
+  // ---- Your day (wave A4): habits ticked, water, workouts… read-only ----
+  function dayItems() {
+    var D = window.OrosDiaryDay;
+    if (!D) return [];
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem("oros-habits-data") || "null"); } catch (e) { raw = null; }
+    return D.items(day, LANG, { habits: raw, core: window.OrosHabitsCore || null, feeds: window.orosHabitFeeds || null });
+  }
+  function renderDayLine() {
+    var box = $("day-line");
+    if (!box) return;
+    var list = dayItems();
+    box.hidden = !list.length;
+    $("day-line-txt").textContent = list.length ? t("dayline.lbl") + ": " + list.map(function (x) { return x.text; }).join(" \u00b7 ") : "";
+  }
+  function addDayLine() {
+    var D = window.OrosDiaryDay, b = D ? D.block(dayItems(), t("dayline.lbl")) : "";
+    if (b) applyWrite({ date: day, text: b });
   }
   function openMoodDay() {
     var p = moodApi();
@@ -2184,6 +2206,7 @@
     $("long-keep").addEventListener("click", keepDraft);
     $("long-drop").addEventListener("click", function () { dropDraft(); renderLong(); });
     $("mood-day").addEventListener("click", openMoodDay);
+    $("day-line-add").addEventListener("click", addDayLine);
     window.addEventListener("storage", function (e) { if (e.key === MOOD_KEY || e.key === null) renderMoodDay(); });
     $("loc-btn").addEventListener("click", function () { if ($("loc-edit").hidden) openLocEdit(); else closeLocEdit(); });
     $("loc-geo").addEventListener("click", useMyPosition);

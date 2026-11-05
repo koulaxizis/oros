@@ -1193,6 +1193,17 @@
     // the bell never misses anything, sleep is respected).
     if (!isQuietHour(now)) fireToast(item, false);
     updateBadge();
+    // Automations wave A2 (BR-EV): a rule may follow this notice. Only
+    // notices posted on THIS device; never the rules' own (no loops)
+    // and never Passwords (AUTO-4, also checked by the host).
+    if (item.ns !== 'automations' && item.ns !== 'passwords') {
+      setTimeout(function () {
+        try {
+          var A = window.orosAutomations;
+          if (A && typeof A.notice === 'function') A.notice(item.ns, item.dedupKey, item.title + ' ' + item.body);
+        } catch (e) {}
+      }, 0);
+    }
     return item.id;
   }
   

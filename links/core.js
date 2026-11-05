@@ -270,6 +270,48 @@
       probe: { m: "POST", path: "/search", body: { filter: { property: "object", value: "page" }, page_size: 1 } },
       relayOnly: true
     },
+    // Time trackers (Timesheet T5): time entries, projects and clients
+    // into Timesheet, read-only, each with the person's own token.
+    // Toggl Track (API v9, Basic token:api_token).
+    toggl: {
+      name: "Toggl Track",
+      site: false,
+      host: "api.track.toggl.com",
+      root: "/api/v9",
+      keys: [{ k: "key", re: /^[a-f0-9]{32}$/ }],
+      apps: ["timesheet"],
+      probe: "/me"
+    },
+    // Clockify (API v1, header X-Api-Key): the user's own entries.
+    clockify: {
+      name: "Clockify",
+      site: false,
+      host: "api.clockify.me",
+      root: "/api/v1",
+      keys: [{ k: "key", re: /^[A-Za-z0-9+\/=_-]{30,100}$/ }],
+      apps: ["timesheet"],
+      probe: "/user"
+    },
+    // Harvest (API v2): a personal access token (key) and the account
+    // id (token, sent as the header Harvest-Account-Id).
+    harvest: {
+      name: "Harvest",
+      site: false,
+      host: "api.harvestapp.com",
+      root: "/v2",
+      keys: [{ k: "key", re: /^[0-9]{3,12}\.pt\.[A-Za-z0-9_-]{30,200}$/ }, { k: "token", re: /^[0-9]{3,12}$/ }],
+      apps: ["timesheet"],
+      probe: "/users/me"
+    },
+    // Kimai 2 (the person's own install or kimai.cloud): an API token (Bearer).
+    kimai: {
+      name: "Kimai",
+      site: true,
+      root: "/api",
+      keys: [{ k: "key", re: /^[A-Za-z0-9_-]{16,128}$/ }],
+      apps: ["timesheet"],
+      probe: "/version"
+    },
     // Newsletter wave E4: products from a Shopify shop through its
     // Storefront API (GraphQL, the public Storefront access token the
     // shop owner makes in a Headless or custom app). Read-only by
@@ -470,6 +512,9 @@
       IN_ACTIVE = /^active$/;
   // Todoist (wave 6A): opaque page cursors (base64; "+", "/", "=" escaped)
   var LIM200 = /^([1-9]|[1-9][0-9]|1[0-9]{2}|200)$/, PER50 = /^([1-9]|[1-4][0-9]|50)$/;
+  // Time trackers (Timesheet T5): days, timestamps, ids
+  var TT_ISOZ = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, TT_LDT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
+      TT_HEX24 = "[0-9a-f]{24}", TT_TRUE = /^true$/, TT_PER2000 = /^([1-9][0-9]{0,2}|1[0-9]{3}|2000)$/;
   // Notion (wave 6D): ids and page cursors are UUIDs
   var NT_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   // Trello and GitHub (wave 6B): fixed field lists
@@ -744,6 +789,24 @@
       ["GET", /^\/collections\/childrens$/, {}, null],
       ["GET", /^\/raindrops\/0$/, { perpage: PER50, page: NUM }, null]
     ],
+    toggl: [
+      ["GET", /^\/me$/, null, null],
+      ["GET", /^\/me\/(projects|clients)$/, null, null],
+      ["GET", /^\/me\/time_entries$/, { start_date: DAY, end_date: DAY }, null]
+    ],
+    clockify: [
+      ["GET", /^\/user$/, null, null],
+      ["GET", new RegExp("^\\/workspaces\\/" + TT_HEX24 + "\\/user\\/" + TT_HEX24 + "\\/time-entries$"),
+        { start: TT_ISOZ, end: TT_ISOZ, page: NUM, "page-size": LIM1000, hydrated: TT_TRUE }, null]
+    ],
+    harvest: [
+      ["GET", /^\/users\/me$/, null, null],
+      ["GET", /^\/time_entries$/, { from: DAY, to: DAY, page: NUM, per_page: TT_PER2000 }, null]
+    ],
+    kimai: [
+      ["GET", /^\/version$/, null, null],
+      ["GET", /^\/timesheets$/, { begin: TT_LDT, end: TT_LDT, size: LIM500, page: NUM, full: TT_TRUE }, null]
+    ],
     shopify: [
       ["POST", /^\/graphql\.json$/, null, { query: "=sf_shop|sf_products|sf_nodes", variables: "sfvars" }, "sfq"]
     ],
@@ -874,12 +937,17 @@
     if (p === "raindrop") return ["Authorization", "Bearer " + keys.key];
     if (p === "notion") return ["Authorization", "Bearer " + keys.key];
     if (p === "shopify") return ["X-Shopify-Storefront-Access-Token", keys.key];
+    if (p === "toggl") return ["Authorization", "Basic " + btoa(keys.key + ":api_token")];
+    if (p === "clockify") return ["X-Api-Key", keys.key];
+    if (p === "harvest") return ["Authorization", "Bearer " + keys.key];
+    if (p === "kimai") return ["Authorization", "Bearer " + keys.key];
     if (p === "ebank") return ["Authorization", "Bearer " + keys.jwt];   // signed on the device (links/host.js)
     return null;
   }
   // Headers a platform needs besides the key (no secrets here).
-  function extraHeaders(p, acct) {
+  function extraHeaders(p, acct, keys) {
     if (p === "ininja") return { "X-Requested-With": "XMLHttpRequest" };
+    if (p === "harvest" && keys && keys.token) return { "Harvest-Account-Id": keys.token };
     if (p === "odoo" && acct && acct.db) return { "X-Odoo-Database": acct.db };
     return {};
   }
