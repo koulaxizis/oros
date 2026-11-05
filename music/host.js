@@ -22,7 +22,9 @@
 //     pause, previous, next, seek);
 //   - the tray chip (play/pause) on the shell bar;
 //   - audio focus: Radio or Podcasts starting pauses the music, and
-//     music starting pauses them.
+//     music starting pauses them;
+//   - ListenBrainz listens with the person's own token (lb.js, loaded
+//     only when this device has an account; wave 6d).
 // Songs on the orOS disk play from a blob: URL read through
 // window.orosFS, so they play offline. The slice changes only when
 // the user likes a song or edits a playlist: playing never uploads.
@@ -273,6 +275,42 @@
     return svWait;
   }
 
+  // ListenBrainz with my own account (lb.js, wave 6d): loaded only
+  // when this device has an account set; "playing now" when a song
+  // starts, a listen after half of it or four minutes.
+  var LB_PREF = "oros-music-lb", lbWait = null, lbNow = false, lbDone = false, lbAt = 0;
+  var lbSet = (function () { try { return !!w.localStorage.getItem(LB_PREF); } catch (e) { return false; } })();
+  try { w.addEventListener("storage", function (e) { if (!e || e.key === LB_PREF || e.key === null) { try { lbSet = !!w.localStorage.getItem(LB_PREF); } catch (x) { lbSet = false; } } }); } catch (e) {}
+  function lbLib() {
+    if (w.OrosMusicLB) return Promise.resolve(w.OrosMusicLB);
+    if (lbWait) return lbWait;
+    lbWait = new Promise(function (resolve, reject) {
+      var s = doc.createElement("script");
+      s.src = hostSrc ? hostSrc.replace(/host\.js(\?|$)/, "lb.js$1") : "music/lb.js";
+      s.onload = function () {
+        var L = w.OrosMusicLB;
+        if (!L) { lbWait = null; reject(new Error("lb")); return; }
+        var m = /[?&]v=([0-9.]{1,20})/.exec(hostSrc || "");
+        L.setVersion(m ? m[1] : "");
+        resolve(L);
+      };
+      s.onerror = function () { lbWait = null; s.remove(); reject(new Error("lb")); };
+      doc.head.appendChild(s);
+    });
+    return lbWait;
+  }
+  function lbReset() { lbNow = false; lbDone = false; lbAt = Date.now(); }
+  function lbTick() {
+    if (!lbSet || !cur || lbDone) return;
+    var item = cur;
+    if (!lbNow) { lbNow = true; lbLib().then(function (L) { return L.send("playing_now", item); }).catch(function () {}); }
+    var d = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : item.d || 0;
+    if (!w.OrosMusicLB || local.pos < w.OrosMusicLB.listenAt(d)) return;
+    lbDone = true;
+    var at = lbAt;
+    lbLib().then(function (L) { return L.send("single", Object.assign({}, item, { d: item.d || Math.round(d) }), at); }).catch(function () {});
+  }
+
   // ---------- Sound: equalizer, ReplayGain, volume ----------
   var SOUND_KEY = "oros-music-sound";
   var sound = (function () { try { return C.normSound(JSON.parse(w.localStorage.getItem(SOUND_KEY) || "null")); } catch (e) { return C.normSound(null); } })();
@@ -401,6 +439,7 @@
     setQueue(r.q);
     cur = r.item;
     counted = false;
+    lbReset();
     fails = 0;
     flags.error = ""; flags.buffering = false;
     local.pos = 0;
@@ -468,6 +507,7 @@
     dropNext();
     cur = item;
     counted = false;
+    lbReset();
     flags.error = ""; flags.buffering = true;
     try { audio.pause(); } catch (e) {}
     media();
@@ -605,6 +645,7 @@
     if (!cur) return;
     local.pos = audio.currentTime || 0;
     if (!counted && local.pos >= 30) countPlay();
+    lbTick();
     saveLocal();
     posState();
     nearEnd();

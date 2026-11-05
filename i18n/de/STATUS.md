@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 39006 of 39253 (99%)
+- Strings: 39087 of 39342 (99%)
 - Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
@@ -22,9 +22,9 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
-| budget | 89% | 881 / 983 |
+| budget | 90% | 955 / 1061 |
 | calculator | 100% | 166 / 166 |
-| calendar | 98% | 430 / 438 |
+| calendar | 98% | 432 / 440 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 54 / 54 |
-| gamecenter | 100% | 110 / 110 |
+| gamecenter | 100% | 113 / 113 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 57 / 57 |
 | google-import | 100% | 9 / 9 |
@@ -119,10 +119,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 881 / 888 |
+| settings | 98% | 881 / 892 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1085 / 1089 |
+| shell | 99% | 1087 / 1091 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -174,6 +174,7 @@ These show English until fixed (usually the English text changed).
 - de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
+- de/help/budget.txt: links or key caps differ from budget/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt

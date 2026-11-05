@@ -87,6 +87,20 @@ The device gets the song's own https address, so free music and songs from your 
 ## Import from Spotify
 `Import from Spotify` (under **+**) reads your own Spotify data. In Spotify, go to Account › Privacy settings › Download your data; Spotify sends a ZIP file by e-mail. Choose that ZIP (or the Playlist and YourLibrary .json files in it), or a CSV from Exportify or TuneMyMusic. Each Spotify playlist becomes a playlist here with the songs Music can play (songs on this device, on your servers, or already in your music), and your Spotify liked songs become likes. The songs that were not found are listed, and you can copy the list. `Look for the missing songs on Jamendo and your servers` sends each missing song's title and artist there and adds only exact matches.
 
+## Artists worldwide
+Turn on `Artist pages online (MusicBrainz, Wikipedia)` in the settings (or `Turn on` under `Artists worldwide` in Search) and Search also finds any artist in the world. An artist's page has a photo, a short bio from Wikipedia in your language when there is one, the genres, the members (or the bands a person played in) and the whole discography from MusicBrainz: albums, singles and EPs, live albums and compilations, with covers from the Cover Art Archive.
+
+**What plays.** orOS plays only music that is free to play: your own files, your servers, and the free catalogues (Internet Archive with its Live Music Archive, Jamendo, Openverse with Wikimedia Commons, ccMixter). `Free to play here` on the page lists the songs of that artist found there; an album's page plays the songs found there and greys out the rest. A greyed song, and the `Listen in full` links on the page, open the artist's official site, Bandcamp or the store where it can be heard in full. There are no 30-second previews and no YouTube links.
+
+`Follow` keeps an artist under `Artists you follow` on Home and in Your library › Artists, on all your devices. `Artist page` on a song's ⋯ menu, or on an artist of your library, opens that artist's worldwide page.
+
+What is sent: the words you search for, the artist's MusicBrainz and Wikidata ids and the Wikipedia title; nothing about your music or what you play. Answers are kept on this device for up to 30 days.
+
+**Discover.** With the switch on, Home also has `New from artists you follow`, `Top artists this week` and `Fresh releases` (ListenBrainz, open data of the MetaBrainz Foundation). An artist's page adds `Fans also like` and a button for radio stations of the artist's genre in Radio. `Artist radio` (the antenna button) plays a shuffled queue of free songs by this artist and by up to six artists their fans also like. Ask the Assistant to play an artist you follow and it starts that artist radio.
+
+## ListenBrainz
+`ListenBrainz account…` in the settings connects your own free ListenBrainz account: paste your user token from listenbrainz.org › Settings. The token stays on this device, locked, and goes only to ListenBrainz; each device is connected on its own. With `Send what I listen to` on, a song counts after half of it or four minutes, and its title, artist, album, length and source go to your ListenBrainz profile; songs heard offline are sent later. `From your ListenBrainz` on Home shows the playlists ListenBrainz makes for you (such as Weekly Jams) and your own: songs that are on this device play, `Save the songs that play here as a playlist` keeps them, and the others show where they can be heard in full. `Disconnect this device` deletes the token here.
+
 ## Covers and other apps
 `Find missing covers online` in the settings, or `Find cover online` on an album's ⋯ button, asks MusicBrainz and the Cover Art Archive for covers of albums that have none; only the album and artist names are sent. An album's ⋯ button also has `Add to Media Shelf`. `Use in Montage` on a song opens it in Montage: a song of this device as it is, a free song whose licence allows changes saved first to `Files › Music › Free music`, with its credit copied for your video.
 

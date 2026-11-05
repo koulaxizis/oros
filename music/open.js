@@ -223,6 +223,9 @@
   function ovUrl(o) {
     o = o || {};
     var p = { page_size: PAGE.ov, page: Math.max(1, o.page || 1), category: "music", mature: "false" };
+    // One of Openverse's own sources (wave 6a: "wikimedia_audio" for
+    // Commons recordings, which carry no music category).
+    if (/^[a-z_]{1,30}$/.test(o.source || "")) { p.source = o.source; delete p.category; }
     if (o.creator) p.creator = String(o.creator).slice(0, 120);
     else if (o.q) p.q = String(o.q).slice(0, 200);
     if (o.tags) p.tags = String(o.tags).slice(0, 120);
@@ -518,7 +521,7 @@
   function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
   var api = {
-    VERSION: "1.1.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.2.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf,

@@ -16,7 +16,7 @@ Die letzten 10 Sekunden laufen etwas schneller. Wenn die Zeit um ist, zeigt ein 
 - [[Space]] startet eine Runde.
 - [[N]] startet eine Runde oder stoppt die laufende (`Runde stoppen (N)`). Eine gestoppte Runde zählt nicht.
 
-Wechselst du zu einer anderen App, pausiert die Runde und geht nach einem kurzen Countdown weiter. Schließt du die App, ist die Runde weg.
+Wechselst du zu einer anderen App, pausiert die Runde und geht nach einem kurzen Countdown weiter. Schließt du die App oder orOS mitten in der Runde, bleibt sie erhalten: Sie öffnet pausiert, und `Weiter` (Leertaste) geht nach dem Countdown weiter. Maulwürfe, die beim Pausieren oben waren, kommen nicht zurück.
 
 ## Stufen und Punkte
 `Leicht`, `Mittel` und `Schwer` ändern, wie lange ein Maulwurf oben bleibt und wie viele gleichzeitig oben sein können; `Leicht` hat keinen Igel. Beende oder stoppe eine Runde, bevor du die Stufe änderst. `Rekorde` zeigt deine beste Punktzahl und die Zahl der Runden für jede Stufe.

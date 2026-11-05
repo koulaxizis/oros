@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.32.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.36.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -3379,6 +3379,7 @@
         openFromLaunchParam();
         searchFromLaunchParam();
         deliverShare();
+        gameResumeStart();
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
@@ -3526,6 +3527,80 @@
         return;
       }
     }
+  }
+
+  // GR-1 (games resume, 2026-11-04): every game keeps its game in
+  // progress in its own device-local session and reopens it by itself,
+  // but a restart of orOS lands on the desktop, so the game looked
+  // lost. GAME_LAST (device-local, never synced) names the game that
+  // is in front: written when a Games app comes to the front, removed
+  // when the person goes to the desktop or to another app. Closing the
+  // tab or the app with a game in front leaves it, and the next start
+  // reopens that game, if gamekit/resume.js says a game is under way
+  // there (Jigsaw, kept in IndexedDB, cannot be told: it reopens).
+  // Never over a launch link, a share, a file or a tour; never in a
+  // single-app window (that window IS the app). Once: a game reopened
+  // this way carries `a: 1` until it has stayed 15 s in front, so a
+  // game that takes orOS down as it opens is not reopened again.
+  var GAME_LAST = "oros-games-last";
+  var GAME_SETTLE_MS = 15000;
+  var gameSettle = null;
+  function gameLastRead() {
+    try {
+      var r = JSON.parse(localStorage.getItem(GAME_LAST) || "null");
+      return (r && typeof r === "object" && typeof r.id === "string") ? r : null;
+    } catch (e) { return null; }
+  }
+  function gameLastNote(app, auto) {
+    if (SOLO) return;
+    if (gameSettle) { clearTimeout(gameSettle); gameSettle = null; }
+    try {
+      if (app && app.category === "Games" && app.type === "internal") {
+        var rec = { id: app.id, at: Date.now() };
+        if (auto) rec.a = 1;
+        localStorage.setItem(GAME_LAST, JSON.stringify(rec));
+        if (auto) gameSettle = setTimeout(function () {
+          gameSettle = null;
+          if (state.running && state.running.id === app.id) gameLastNote(app, false);
+        }, GAME_SETTLE_MS);
+      } else {
+        localStorage.removeItem(GAME_LAST);
+      }
+    } catch (e) {}
+  }
+  function gameResumeModule() {
+    if (window.orosResume) return Promise.resolve(window.orosResume);
+    return new Promise(function (resolve) {
+      var s = document.createElement("script");
+      s.src = "gamekit/resume.js?v=" + APP_VERSION;
+      s.onload = function () { resolve(window.orosResume || null); };
+      s.onerror = function () { resolve(null); };
+      document.head.appendChild(s);
+    });
+  }
+  function gameResumeStart() {
+    if (SOLO) return;
+    var rec = gameLastRead();
+    if (!rec) return;
+    if (rec.a) { try { localStorage.removeItem(GAME_LAST); } catch (e) {} return; }
+    var app = null;
+    for (var i = 0; i < state.apps.length; i++) {
+      if (state.apps[i].id === rec.id) { app = state.apps[i]; break; }
+    }
+    if (!app || app.category !== "Games" || app.type !== "internal") return;
+    lateWhen(function () {
+      gameResumeModule().then(function (R) {
+        if (!R || R.GAMES.indexOf(app.id) < 0) return;
+        var read = function (k) { return JSON.parse(localStorage.getItem(k) || "null"); };
+        if (R.inProgress(app.id, read) === false) return;
+        var tour = false;
+        try { tour = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) {}
+        // Something else opened meanwhile (a link, a share, a file, a tap).
+        if (state.running || late.open || tour) return;
+        openApp(app);
+        gameLastNote(app, true);
+      });
+    });
   }
 
   // "oros <words>" in the browser's address bar (Send to orOS add-on,
@@ -5788,6 +5863,77 @@
     // re-mark dirty, or pull → set → push → pull → … infinite loop.
   }
 
+  // ---------- ME v1: your name (Settings › Appearance) ----------
+  // Optional, empty by default. Greets you on Today and the Start page
+  // (startpage/). Device storage "oros-me", slice "me", synced
+  // encrypted like every slice; never read by the Assistant and never
+  // sent anywhere else. Per-field LWW as SEASONAL v1 (Part IV):
+  // { ver:1, f:{ name:{ v, t } } }, t moves only at the user's change.
+  var ME_KEY = "oros-me";
+  var ME_MAX = 40;
+  var ME_FIELD_RE = /^[a-z][a-z0-9]{0,15}$/;
+  function meClean(v) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, ME_MAX) : "";
+  }
+  // Canonical form: fields sorted, small primitives only (a newer
+  // bundle's fields are kept as they came).
+  function meNorm(d) {
+    var src = (d && typeof d === "object" && d.f && typeof d.f === "object") ? d.f : {};
+    var f = {};
+    Object.keys(src).filter(function (k) { return ME_FIELD_RE.test(k); }).sort().slice(0, 32).forEach(function (k) {
+      var e = src[k];
+      if (!e || typeof e !== "object") return;
+      var v = e.v;
+      if (k === "name") { if (typeof v !== "string" || meClean(v) !== v) return; }
+      else if (!(typeof v === "boolean" || (typeof v === "number" && isFinite(v)) || (typeof v === "string" && v.length <= 120))) return;
+      f[k] = { v: v, t: (typeof e.t === "number" && isFinite(e.t) && e.t >= 0) ? Math.floor(e.t) : 0 };
+    });
+    return { ver: 1, f: f };
+  }
+  function meMerge(a, b) {
+    var A = meNorm(a), B = meNorm(b), f = {};
+    Object.keys(A.f).concat(Object.keys(B.f)).forEach(function (k) {
+      var p = A.f[k], q = B.f[k];
+      if (!p || !q) { f[k] = p || q; return; }
+      if (p.t !== q.t) f[k] = p.t > q.t ? p : q;
+      else f[k] = JSON.stringify(p) >= JSON.stringify(q) ? p : q;
+    });
+    return meNorm({ f: f });
+  }
+  function meRead() {
+    try { return meNorm(JSON.parse(localStorage.getItem(ME_KEY) || "null")); }
+    catch (e) { return meNorm(null); }
+  }
+  function meWrite(d) {
+    try { localStorage.setItem(ME_KEY, JSON.stringify(meNorm(d))); return true; }
+    catch (e) { scToast("err", window.t("me.savefail")); return false; }
+  }
+  function meName() { var e = meRead().f.name; return e ? e.v : ""; }
+  function meSliceGet() {
+    var raw = null;
+    try { raw = localStorage.getItem(ME_KEY); } catch (e) {}
+    return raw ? meRead() : null;          // a fresh device sends nothing
+  }
+  function meSliceSet(data) {
+    if (!data) return;
+    meWrite(data);                         // pulled: never markDirty
+    settingsNotify();
+  }
+  function meSetName(v) {
+    var d = meRead(), cur = d.f.name, name = meClean(v);
+    if ((cur ? cur.v : "") === name) return;
+    d.f.name = { v: name, t: Math.max(Date.now(), cur ? cur.t + 1 : 0) };
+    if (!meWrite(d)) return;
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+    settingsNotify();
+  }
+  function registerMeSlice() {
+    if (window.orosSync && typeof window.orosSync.registerSlice === "function") {
+      window.orosSync.registerSlice("me", meSliceGet, meSliceSet, ME_KEY, meMerge);
+    }
+  }
+  window.orosMe = { name: meName };
+
   function registerShellSlice() {
     if (window.orosSync) {
       // SH-D1: stamps first (first-run migration + parked-legacy
@@ -7549,6 +7695,9 @@
         { name: "Cover Art Archive", url: "https://coverartarchive.org/",
           by: "MetaBrainz Foundation and Internet Archive", lic: { k: "cr.lic.cover-art" },
           k: "cr.cover-art" },
+        { name: "ListenBrainz", url: "https://listenbrainz.org/",
+          by: "MetaBrainz Foundation", lic: "CC0 (data)",
+          k: "cr.listenbrainz" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { k: "cr.lic.anthropic-openai" },
           k: "cr.anthropic-openai" },
@@ -8064,7 +8213,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
@@ -8774,6 +8923,7 @@
 
   function initSyncIntegration() {
     registerShellSlice();
+    registerMeSlice();
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
@@ -10476,6 +10626,7 @@
       install: !!state.deferredPrompt,
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
+      me: { name: meName(), max: ME_MAX },
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       menu: settingsMenuApps(),
@@ -10526,6 +10677,7 @@
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
+      case "me:name":      meSetName(value); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
@@ -11280,6 +11432,7 @@
     }
     var prev = state.running;
     state.running = app;
+    gameLastNote(app, false);   // GR-1
     if (appAway()) backArm();
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     if (mtActive()) mtSwitch(prev, app, at);
@@ -11304,6 +11457,7 @@
     var prev = state.running;
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
+    gameLastNote(null, false);   // GR-1
     document.body.classList.remove("app-running");
     if (!(mtActive() && mtLeave(prev))) frameGo(document.getElementById("app-frame"), "about:blank");
     mtChanged();
