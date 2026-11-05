@@ -2204,16 +2204,17 @@
   // where they check and save it; nothing is saved by this call.
   // Passwords is never a source or a target (AUTO-4).
   var RULE_WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
-  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask"];
+  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print"];
   var TOOL_RULE = {
     name: "propose_rule",
     description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
       "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
       "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
-      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends; word optional). " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; word optional, matched in the file name). " +
       "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
       "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
-      "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant). " +
+      "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant), " +
+      "file (to: scanpdf, files or invoices: hand the new file to that app) and print (print the new file on the computer), both only after a bridge.* event. " +
       "Texts may use {date}, {weekday}, {month}, {year}, and {text} = the notice or event's words. " +
       "The user sees the rule on a card and opens it in Automations, where they check and save it; nothing is saved or run by this call, so never say it is set. " +
       "Passwords can never be used.",
@@ -2228,7 +2229,7 @@
           day_of_month: { type: "number" },
           date: { type: "string" },
           app: { type: "string", description: "notice: the app id the notice comes from." },
-          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done"] },
+          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "bridge.pdf", "bridge.photo", "bridge.file"] },
           word: { type: "string" },
           only_days: { type: "array", items: { type: "number" } },
           from: { type: "string" },
@@ -4374,7 +4375,11 @@
       else if (a.a === "budget") { a.amount = typeof x.amount === "number" ? Math.round(x.amount * 100) : 0; a.k = x.income ? "i" : "o"; a.note = x.note; }
       else if (a.a === "open") a.app = x.app;
       else if (a.a === "timer") { a.min = x.minutes; a.label = x.label; }
+      else if (a.a === "file") a.to = x.to || x.app;
       var c = AC.cleanAction(a);
+      if (c && AC.FILE_ACTS && AC.FILE_ACTS[c.a] && !(when.t === "event" && AC.bridgeEvent(when.ev))) {
+        bad.push("step " + (i + 1) + " (" + c.a + ") needs a bridge.pdf, bridge.photo or bridge.file event."); return;
+      }
       if (!c) { bad.push("step " + (i + 1) + " (" + String(x["do"] || "?").slice(0, 20) + ") is missing what it needs."); return; }
       var need = AC.needs(c);
       if (need && has && !has(need)) { bad.push("step " + (i + 1) + " needs the app " + need + ", which is not installed."); return; }

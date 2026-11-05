@@ -13,7 +13,12 @@
 //        | { t: "once",  at, date: "YYYY-MM-DD" }
 //        | { t: "open" }                          (orOS opens, once a day)
 //   action = { a: "notify" | "todo" | "event" | "note" | "mail" |
-//              "budget" | "open" | "timer" | "ask", …fields }
+//              "budget" | "open" | "timer" | "ask" | "push" | "hook" |
+//              "file" | "print", …fields }
+//   file / print (item 25, BR-EV-BRIDGE): only in a rule that follows a
+//   new file in a folder orOS Bridge watches (when.ev "bridge.*"); the
+//   run keeps that file's key (host.js) and the tap opens the file in
+//   the app named (Scan PDF, Files, Invoices) or prints it.
 // AUTO-1: a rule is data from a fixed list of actions, never code.
 // Every action except "notify" only opens the receiving app with a
 // prefill through its existing bridge (BR-W8-6): nothing is written
@@ -37,11 +42,19 @@
   var WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
   // Wave A2 (BR-EV): what apps tell the shell's event bus. A new event =
   // one name here + an orosEvent() call in that app + its words.
-  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done"];
-  var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness" };
+  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done", "bridge.pdf", "bridge.photo", "bridge.file"];
+  var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness",
+                    "bridge.pdf": "automations", "bridge.photo": "automations", "bridge.file": "automations" };
+  // Item 25 (BR-EV-BRIDGE): orOS Bridge's watched folders on a computer
+  // (automations/bridge.js). bridge.file = any new file; a PDF or a
+  // photo also gives its own event.
+  function bridgeEvent(ev) { return typeof ev === "string" && ev.indexOf("bridge.") === 0 && EVENTS.indexOf(ev) >= 0; }
+  // Where "open the file" can send it, and the deep link each app takes.
+  var FILE_TO = ["scanpdf", "files", "invoices"];
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print"];
+  var FILE_ACTS = { file: true, print: true };
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
   // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
   // POST to the person's own webhook (n8n, Home Assistant, Make…).
@@ -165,6 +178,8 @@
       var min = int(x.min, 1, 6000);
       return min === null ? null : { a: a, min: min, label: line(x.label, 40) };
     }
+    if (a === "file") return FILE_TO.indexOf(x.to) >= 0 ? { a: a, to: x.to } : null;
+    if (a === "print") return { a: a };
     if (OUT[a]) {
       var url = cleanUrl(x.url);
       if (!url) return null;
@@ -213,9 +228,10 @@
     if (!raw || typeof raw !== "object" || typeof raw.id !== "string" || !ID_RE.test(raw.id)) return null;
     var when = cleanWhen(raw.when);
     if (!when) return null;
-    var acts = [];
+    var acts = [], withFile = when.t === "event" && bridgeEvent(when.ev);
     (Array.isArray(raw["do"]) ? raw["do"] : []).forEach(function (x) {
       var c = cleanAction(x);
+      if (c && FILE_ACTS[c.a] && !withFile) return;   // a file step needs a file: only after a bridge.* event
       if (c && acts.length < MAX_ACTIONS) acts.push(c);
     });
     if (!acts.length) return null;
@@ -467,10 +483,20 @@
       "when.word": " with \u201c{word}\u201d",
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
+      "ev.bridge.pdf": "When a new PDF lands in a folder on my computer",
+      "ev.bridge.photo": "When a new photo lands in a folder on my computer",
+      "ev.bridge.file": "When any new file lands in a folder on my computer",
+      "act.file": "open the file in {app}", "act.print": "print the file",
+      "file.none": "This step needs a file that orOS Bridge reported on this computer.",
+      "file.off": "orOS Bridge is not running on this computer, or this file is on another computer.",
+      "file.gone": "The file was changed or moved since it arrived.", "file.big": "The file is too large to open in orOS.",
+      "file.printed": "Sent to the printer: {name}", "file.noprint": "This computer could not print the file.",
       "tpl.mail-todo": "Urgent e-mail to To-Do", "tpl.mail-todo.word": "urgent", "tpl.mail-todo.item": "{text}",
       "tpl.habit-cheer": "Cheer for a habit", "tpl.habit-cheer.text": "Well done: {text}. Keep the streak going.",
       "tpl.workout-log": "After a workout", "tpl.workout-log.text": "Workout done: {text}. Drink some water.",
-      "tpl.water-goal": "Water goal reached", "tpl.water-goal.text": "You drank {text} today. Well done."
+      "tpl.water-goal": "Water goal reached", "tpl.water-goal.text": "You drank {text} today. Well done.",
+      "tpl.scan-in": "New scan into Scan PDF", "tpl.scan-in.text": "New PDF on your computer: {text}",
+      "tpl.photo-in": "New photo into Files", "tpl.photo-in.text": "New photo on your computer: {text}"
     },
     el: {
       "wd.0": "Κυριακή", "wd.1": "Δευτέρα", "wd.2": "Τρίτη", "wd.3": "Τετάρτη", "wd.4": "Πέμπτη",
@@ -505,10 +531,20 @@
       "when.word": " με \u00ab{word}\u00bb",
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
+      "ev.bridge.pdf": "Όταν μπαίνει νέο PDF σε φάκελο του υπολογιστή μου",
+      "ev.bridge.photo": "Όταν μπαίνει νέα φωτογραφία σε φάκελο του υπολογιστή μου",
+      "ev.bridge.file": "Όταν μπαίνει οποιοδήποτε νέο αρχείο σε φάκελο του υπολογιστή μου",
+      "act.file": "άνοιγμα του αρχείου στο {app}", "act.print": "εκτύπωση του αρχείου",
+      "file.none": "Αυτό το βήμα χρειάζεται ένα αρχείο που ανέφερε το orOS Bridge σε αυτόν τον υπολογιστή.",
+      "file.off": "Το orOS Bridge δεν τρέχει σε αυτόν τον υπολογιστή ή το αρχείο είναι σε άλλον υπολογιστή.",
+      "file.gone": "Το αρχείο άλλαξε ή μετακινήθηκε αφότου ήρθε.", "file.big": "Το αρχείο είναι πολύ μεγάλο για να ανοίξει στο orOS.",
+      "file.printed": "Στάλθηκε στον εκτυπωτή: {name}", "file.noprint": "Αυτός ο υπολογιστής δεν μπόρεσε να εκτυπώσει το αρχείο.",
       "tpl.mail-todo": "Επείγον e-mail στο To-Do", "tpl.mail-todo.word": "επείγον", "tpl.mail-todo.item": "{text}",
       "tpl.habit-cheer": "Μπράβο για μια συνήθεια", "tpl.habit-cheer.text": "Μπράβο: {text}. Συνέχισε το σερί.",
       "tpl.workout-log": "Μετά την προπόνηση", "tpl.workout-log.text": "Η προπόνηση τελείωσε: {text}. Πιες λίγο νερό.",
-      "tpl.water-goal": "Ο στόχος για νερό", "tpl.water-goal.text": "Ήπιες {text} σήμερα. Μπράβο."
+      "tpl.water-goal": "Ο στόχος για νερό", "tpl.water-goal.text": "Ήπιες {text} σήμερα. Μπράβο.",
+      "tpl.scan-in": "Νέα σάρωση στο Scan PDF", "tpl.scan-in.text": "Νέο PDF στον υπολογιστή σου: {text}",
+      "tpl.photo-in": "Νέα φωτογραφία στα Αρχεία", "tpl.photo-in.text": "Νέα φωτογραφία στον υπολογιστή σου: {text}"
     }
   };
   // The table for a language: a pack language through orosI18n (in a
@@ -567,11 +603,14 @@
                arg: { k: a.k, a: a.amount, d: ymdOf(at), n: f(a.note).slice(0, 500), src: "automations" } };
     }
     if (a.a === "open") return { fn: "openApp", app: a.app, arg: null };
+    if (a.a === "file") return { fn: "bridgeFile", app: a.to, arg: { to: a.to } };
+    if (a.a === "print") return { fn: "bridgePrint", app: "", arg: null };
     if (a.a === "timer") return { fn: "openAt", app: "time", arg: { timer: { sec: a.min * 60, label: f(a.label).slice(0, 40) } } };
     return { fn: "openAt", app: "assistant", arg: { ask: f(a.text).slice(0, 2000) } };
   }
   function needs(action) {
     if (!action) return "";
+    if (action.a === "file") return FILE_TO.indexOf(action.to) >= 0 ? action.to : "";
     return action.a === "open" ? action.app : NEEDS[action.a] || "";
   }
   // Can this rule run on a device with these apps? (AUTO-5)
@@ -607,6 +646,7 @@
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
     if (a.a === "open") return sub(w(lang, "act.open"), { app: appName ? appName(a.app) : a.app });
     if (a.a === "timer") return sub(w(lang, "act.timer"), { n: a.min });
+    if (a.a === "file") return sub(w(lang, "act.file"), { app: appName ? appName(a.to) : a.to });
     if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);
   }
@@ -652,7 +692,12 @@
     { id: "habit-cheer", when: { t: "event", ev: "habits.done" }, "do": [{ a: "notify", text: "@tpl.habit-cheer.text" }] },
     { id: "workout-log", when: { t: "event", ev: "fitness.done" },
       "do": [{ a: "notify", text: "@tpl.workout-log.text" }, { a: "open", app: "water" }] },
-    { id: "water-goal", when: { t: "event", ev: "water.goal" }, "do": [{ a: "notify", text: "@tpl.water-goal.text" }] }
+    { id: "water-goal", when: { t: "event", ev: "water.goal" }, "do": [{ a: "notify", text: "@tpl.water-goal.text" }] },
+    // item 25: folders orOS Bridge watches
+    { id: "scan-in", when: { t: "event", ev: "bridge.pdf" },
+      "do": [{ a: "notify", text: "@tpl.scan-in.text" }, { a: "file", to: "scanpdf" }] },
+    { id: "photo-in", when: { t: "event", ev: "bridge.photo" },
+      "do": [{ a: "notify", text: "@tpl.photo-in.text" }, { a: "file", to: "files" }] }
   ];
   function pick(v, lang, k) {
     if (typeof v !== "string" || v.charAt(0) !== "@") return v;
@@ -687,7 +732,7 @@
     lastAt: lastAt, nextAt: nextAt, due: due, fill: fill, call: call, needs: needs, runnable: runnable,
     whenText: whenText, actText: actText, notice: notice, pending: pending,
     OUT: OUT, cleanUrl: cleanUrl, hostOf: hostOf, outbound: outbound, outSteps: outSteps,
-    EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
+    EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, bridgeEvent: bridgeEvent, FILE_TO: FILE_TO.slice(), FILE_ACTS: FILE_ACTS, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
     templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;

@@ -111,6 +111,9 @@
       "dlg.deleteFileMsg":   "Move \"{name}\" to Trash? You can restore it for 30 days.",
       "dlg.deleteFolderMsg": "Move \"{name}\" and everything inside it to Trash? You can restore it for 30 days.",
       "dlg.deleteMultiMsg":  "Move {n} selected items to Trash? You can restore them for 30 days.",
+      "dlg.inTitle":   "Add to Files",
+      "dlg.inMsg":     "Add \"{name}\" from orOS Automations to the folder \"{dir}\"?",
+      "dlg.inOk":      "Add",
       "dlg.overwriteTitle": "Already exists",
       "dlg.overwriteMsg":   "\"{name}\" already exists in this folder. Overwrite it?",
       "dlg.overwriteOk":    "Overwrite",
@@ -340,6 +343,9 @@
       "dlg.deleteFileMsg":   "Μεταφορά του «{name}» στον Κάδο; Η επαναφορά είναι δυνατή για 30 ημέρες.",
       "dlg.deleteFolderMsg": "Μεταφορά του «{name}» και όλων των περιεχομένων του στον Κάδο; Η επαναφορά είναι δυνατή για 30 ημέρες.",
       "dlg.deleteMultiMsg":  "Μεταφορά {n} επιλεγμένων στοιχείων στον Κάδο; Η επαναφορά είναι δυνατή για 30 ημέρες.",
+      "dlg.inTitle":   "Προσθήκη στα Αρχεία",
+      "dlg.inMsg":     "Να προστεθεί το «{name}» από τους Αυτοματισμούς του orOS στον φάκελο «{dir}»;",
+      "dlg.inOk":      "Προσθήκη",
       "dlg.overwriteTitle": "Υπάρχει ήδη",
       "dlg.overwriteMsg":   "Το «{name}» υπάρχει ήδη σε αυτόν τον φάκελο. Να αντικατασταθεί;",
       "dlg.overwriteOk":    "Αντικατάσταση",
@@ -5255,6 +5261,9 @@
   // target { path, dir }. A folder opens; a file opens its folder and
   // its preview. Paths outside the disk root are ignored.
   function openSearchTarget(t) {
+    // Automations (item 25): { importFile: { token, name } }, a file from a
+    // folder orOS Bridge watches. Added to the open folder only after Add.
+    if (t && t.importFile && typeof t.importFile.token === "string") { takeIncoming(t.importFile.token); return; }
     // Single app (solo.js) icon shortcut { newFolder: true }.
     if (t && t.newFolder === true) {
       if (isAvailable() && !document.querySelector("dialog[open]")) openNameDialog("folder");
@@ -5274,6 +5283,44 @@
     openPreview(p);
   }
   window.__orosOpenAt = openSearchTarget;
+
+  function takeIncoming(token) {
+    var file = null;
+    try {
+      var p = window.parent;
+      if (p && p !== window && typeof p.__orosTakeFile === "function") file = p.__orosTakeFile(token.slice(0, 200));
+    } catch (e) { file = null; }
+    if (!file || typeof file.size !== "number" || !isAvailable()) return;
+    var stale = $("dlg-incoming");
+    if (stale) stale.remove();
+    var dir = cwd, dirName = dir === ROOT ? t("tree.root") : dir.slice(dir.lastIndexOf("/") + 1);
+    var dlg = document.createElement("dialog");
+    dlg.id = "dlg-incoming";
+    dlg.className = "f-dialog";
+    var title = document.createElement("h3");
+    title.textContent = t("dlg.inTitle");
+    var body = document.createElement("p");
+    body.textContent = t("dlg.inMsg").split("{name}").join(String(file.name || "")).split("{dir}").join(dirName);
+    var row = document.createElement("div");
+    row.className = "dlg-row";
+    var ok = document.createElement("button");
+    ok.type = "button";
+    ok.className = "primary";
+    ok.textContent = t("dlg.inOk");
+    var no = document.createElement("button");
+    no.type = "button";
+    no.textContent = t("dlg.cancel");
+    ok.addEventListener("click", function () { dlg.close(); dlg.remove(); importFilesList([file], dir); });
+    no.addEventListener("click", function () { dlg.close(); dlg.remove(); });
+    dlg.addEventListener("cancel", function () { dlg.remove(); });
+    row.appendChild(ok);
+    row.appendChild(no);
+    dlg.appendChild(title);
+    dlg.appendChild(body);
+    dlg.appendChild(row);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
 
   function ensureHeaderAndStorage() {
     var bar = $("bar");

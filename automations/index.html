@@ -15,6 +15,7 @@
   <header id="toolbar">
     <h1 id="title" data-i18n="app.name">Automations</h1>
     <span class="grow"></span>
+    <button type="button" id="pc-btn" class="chip" data-i18n="btn.pc">Computer folders</button>
     <button type="button" id="tpl-btn" class="chip" data-i18n="btn.templates">Ready-made</button>
     <button type="button" id="new-btn" class="chip pri" data-i18n="btn.new">New rule</button>
   </header>
@@ -116,6 +117,27 @@
     <div class="row end"><button type="button" class="chip" data-close data-i18n="btn.close">Close</button></div>
   </dialog>
 
+  <dialog id="pc-dlg" aria-labelledby="pc-h">
+    <h2 id="pc-h" data-i18n="pc.title">Folders on this computer</h2>
+    <p class="hint" data-i18n="pc.hint">With orOS Bridge on this computer, a new PDF or photo in a folder you choose can start a rule: open it in Scan PDF, Files or Invoices, or print it. Only you choose the folders, on this computer.</p>
+    <label class="check"><input type="checkbox" id="pc-on"> <span data-i18n="pc.on">Watch folders on this computer</span></label>
+    <p id="pc-status" class="hint" role="status"></p>
+    <div id="pc-pair" class="row wrap" hidden>
+      <button type="button" id="pc-pair-btn" class="chip" data-i18n="pc.pairBtn">Show a code in orOS Bridge</button>
+      <label class="fld"><span data-i18n="pc.code">The 6-digit code orOS Bridge shows</span>
+        <input type="text" id="pc-code" inputmode="numeric" maxlength="7" autocomplete="off"></label>
+      <button type="button" id="pc-code-btn" class="chip pri" data-i18n="pc.connect">Connect</button>
+    </div>
+    <div id="pc-folders-box" hidden>
+      <ul id="pc-folders" class="acts"></ul>
+      <div class="row wrap">
+        <button type="button" id="pc-add" class="chip pri" data-i18n="pc.add">Add folder…</button>
+      </div>
+      <p class="hint small" data-i18n="pc.addHint">The folder chooser opens on the computer orOS Bridge runs on.</p>
+    </div>
+    <p id="pc-get" class="hint small" hidden><a href="https://github.com/koulaxizis/oros-bridge/releases/latest" target="_blank" rel="noopener noreferrer" data-i18n="pc.get">Get orOS Bridge (free) for Windows or Linux</a></p>
+    <div class="row end"><button type="button" class="chip" data-close data-i18n="btn.close">Close</button></div>
+  </dialog>
   <div id="toast" role="status"></div>
 
   <script src="../i18n.js?v=5.38.00" data-app="automations"></script>

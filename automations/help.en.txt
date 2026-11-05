@@ -20,6 +20,13 @@ A rule can also follow what happens instead of a time:
 
 In its texts, `{text}` becomes what the notice or the event said: the task, the habit, the workout or the notice's text. Such a rule runs once for each thing that happens, at most 20 times a day, and only on the device where it happened. Notices from Passwords never start a rule, and nothing of Passwords is ever read.
 
+## Folders on your computer
+With [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (free, Windows and Linux) running on your computer, a rule can follow a folder there, for example the folder your scanner saves into or your Downloads.
+- Press `Computer folders`, tick `Watch folders on this computer` and connect to Bridge with the code it shows. Then `Add folder…` opens the folder chooser on the computer; only you pick the folders, and `Stop watching` lets one go.
+- The events `When a new PDF lands in a folder on my computer`, `… a new photo …` and `… any new file …` start a rule. `{text}` is the file's name and `Only when it says` looks at the name. Files that were already there are never reported, and files that arrived while orOS was closed come the next time it opens.
+- Two steps work only after such an event: `Open the file in an app` hands it to Scan PDF, Files or Invoices, and `Print the file` sends it to the computer's printer. Both wait for your tap, and nothing is saved in Files or Invoices until you confirm it there.
+- The ready-made rules `New scan into Scan PDF` and `New photo into Files` are a good start. Bridge only reads files in the folders you picked, never subfolders or links.
+
 ## Outside orOS
 Two steps leave orOS by themselves when the rule runs:
 - `Push to my phone`: a push through [ntfy](https://ntfy.sh) (free, no account; pick a topic nobody can guess, or your own server) or your own Gotify server. Install the ntfy or Gotify app on the phone and subscribe to the same topic.
