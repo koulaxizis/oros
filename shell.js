@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.36.02";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.37.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7665,6 +7665,12 @@
         { name: "gpodder.net / Nextcloud GPodder Sync", url: "https://gpodder.net/",
           by: "gpodder.net; Nextcloud GPodder Sync contributors", lic: { k: "cr.lic.gpodder-net" },
           k: "cr.gpodder-net" },
+        { name: "Podcast Index", url: "https://podcastindex.org/",
+          by: "Podcast Index LLC", lic: { k: "cr.lic.podcast-index" },
+          k: "cr.podcast-index" },
+        { name: "Spotify oEmbed", url: "https://developer.spotify.com/documentation/embeds/reference/oembed",
+          by: "Spotify AB", lic: { k: "cr.lic.spotify-oembed" },
+          k: "cr.spotify-oembed" },
         { name: "Wiktionary", url: "https://en.wiktionary.org/",
           by: "Wiktionary editors, Wikimedia Foundation", lic: "CC BY-SA 4.0 (text)",
           k: "cr.wiktionary" },
