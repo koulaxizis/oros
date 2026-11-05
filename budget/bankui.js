@@ -42,7 +42,7 @@
       why_date: "no date", why_amount: "no amount", why_zero: "zero amount", why_cur: "another currency ({c})",
       why_pending: "not booked yet", why_memo: "a hold or note, no money moved", why_void: "cancelled or declined",
       dup_inv: "Already here from Invoices", dup_xfer: "Already here as a transfer between your accounts",
-      dup_pp: "Already here from PayPal (the same payment)",
+      dup_pp: "Already here from PayPal (the same payment)", dup_noacc: "Already here without an account: it goes into this account",
       rule: "Rule: {q}", always: "Always do this", learned: "As before for this name",
       more: "Showing the first {s} of {n} rows. Import takes every ticked row.",
       go: "Import {n}", go0: "Import", done: "Imported {n} entries", doneU: "Imported {n} entries · {u} without a category",
@@ -98,7 +98,7 @@
       why_date: "χωρίς ημερομηνία", why_amount: "χωρίς ποσό", why_zero: "μηδενικό ποσό", why_cur: "άλλο νόμισμα ({c})",
       why_pending: "δεν έχει λογιστικοποιηθεί ακόμα", why_memo: "δέσμευση ή σημείωση, δεν κινήθηκαν χρήματα", why_void: "ακυρώθηκε ή απορρίφθηκε",
       dup_inv: "Υπάρχει ήδη από τα Τιμολόγια", dup_xfer: "Υπάρχει ήδη ως μεταφορά μεταξύ των λογαριασμών σου",
-      dup_pp: "Υπάρχει ήδη από το PayPal (η ίδια πληρωμή)",
+      dup_pp: "Υπάρχει ήδη από το PayPal (η ίδια πληρωμή)", dup_noacc: "Υπάρχει ήδη χωρίς λογαριασμό: μπαίνει σε αυτόν τον λογαριασμό",
       rule: "Κανόνας: {q}", always: "Πάντα έτσι", learned: "Όπως παλιότερα για αυτό το όνομα",
       more: "Φαίνονται οι πρώτες {s} από {n} γραμμές. Η εισαγωγή παίρνει όλες τις επιλεγμένες.",
       go: "Εισαγωγή {n}", go0: "Εισαγωγή", done: "Εισήχθησαν {n} κινήσεις", doneU: "Εισήχθησαν {n} κινήσεις · {u} χωρίς κατηγορία",
@@ -708,8 +708,8 @@
     }
 
     function doImport() {
-      var rows = B.entries(st.plan, st.ac, st.fmt === "paypal");
-      if (!rows.length) return;
+      var rows = B.entries(st.plan, st.ac, st.fmt === "paypal"), ad = B.adopts(st.plan, st.ac);
+      if (!rows.length && !Object.keys(ad).length) return;
       var nm = A.normText(profName.value, 30);
       if (nm) {
         var p = { id: st.prof || "", n: nm, ac: st.ac, sig: st.sig, enc: st.enc };
@@ -722,7 +722,7 @@
       }
       var u = rows.filter(function (x) { return !x.c; }).length;
       dlg.close();
-      A.addEntries(rows, u ? t("doneU", { n: rows.length, u: u }) : t("done", { n: rows.length }));
+      A.addEntries(rows, u ? t("doneU", { n: rows.length, u: u }) : t("done", { n: rows.length }), ad);
     }
 
     profSel.addEventListener("change", function () {
