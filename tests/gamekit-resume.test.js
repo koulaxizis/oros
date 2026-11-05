@@ -12,9 +12,8 @@ function reader(map) {
 }
 const one = (id, s) => R.inProgress(id, reader({ ["oros-" + id + "-session"]: s }));
 
-// Games with no session of their own (yet): Simon Says and Whack-a-Mole
-// (wave GR-2), and the Game Center itself.
-const NO_SESSION = ["simon", "whack", "gamecenter"];
+// The Game Center is the only Games app with no game of its own.
+const NO_SESSION = ["gamecenter"];
 
 test("resume: every game in apps.json is known, and each one keeps a session", () => {
   const apps = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "apps.json"), "utf8")).apps;
@@ -62,6 +61,9 @@ test("resume: each game's own test", () => {
   assert.equal(one("memory", { done: false, moves: 0, open: [] }), false);
   assert.equal(one("memory", { done: false, moves: 0, open: [3] }), true);
   assert.equal(one("g2048", { moves: 2, over: false }), true);
+  assert.equal(one("simon", { pads: 4, mode: "c", seq: [] }), false);
+  assert.equal(one("simon", { pads: 4, mode: "c", seq: [2, 0] }), true);
+  assert.equal(one("whack", { level: "e", ev: [], i: 0, acc: 9000, score: 3 }), true);
   assert.equal(one("g2048", { moves: 2, over: true }), false);
   assert.equal(one("wordle", { "en:d": { done: true, guesses: ["crane"] }, "el:f": { done: false, guesses: [] } }), false);
   assert.equal(one("wordle", { "en:f": { done: false, guesses: ["crane"] } }), true);
@@ -84,6 +86,8 @@ test("resume: each game's own test", () => {
   assert.equal(one("rps", { done: false, rounds: 2 }), true);
   assert.equal(one("hangman", { en: { done: false, guessed: ["e"] } }), true);
   assert.equal(one("hangman", { en: { done: false, guessed: [] } }), false);
+  assert.equal(one("hangman", { en: { lang: "en", word: "CHUCK", guessed: "", done: false } }), false);
+  assert.equal(one("hangman", { en: { lang: "en", word: "CHUCK", guessed: "EA", done: false } }), true);
   assert.equal(one("nonogram", { done: false, hints: 0, c: [0, 0, 0] }), false);
   assert.equal(one("nonogram", { done: false, hints: 0, c: [0, 1, 0] }), true);
   assert.equal(one("backgammon", { phase: "roll", turn: -1 }), false);

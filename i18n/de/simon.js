@@ -1,6 +1,7 @@
 orosPack("de", "simon", {
  "board.label": "Simons Felder",
  "btn.new": "Neues Spiel (N)",
+ "btn.resume": "Weiter",
  "btn.sfxOff": "Ton aus",
  "btn.sfxOn": "Ton an",
  "btn.start": "Start",
@@ -8,6 +9,7 @@ orosPack("de", "simon", {
  "confirm.no": "Abbrechen",
  "confirm.reset": "Rekorde und Spielzähler auf allen Geräten löschen?",
  "confirm.yes": "Zurücksetzen",
+ "hub.resume": "Weiter mit Runde {n} (Leertaste)",
  "hub.start": "Start (Space)",
  "live.over": "Falsches Feld. Punkte: {n}",
  "live.round": "Runde {n}: zuschauen",
@@ -45,6 +47,7 @@ orosPack("de", "simon", {
  "toast.wait": "Erst zuschauen: Simon spielt",
  "turn.idle": "Drück auf Start",
  "turn.over": "Spiel vorbei",
+ "turn.paused": "Runde {n} gespeichert. Drück auf Weiter",
  "turn.show": "Simon sagt…",
  "turn.you": "Du bist dran",
  "turn.youRev": "Du bist dran, rückwärts"
