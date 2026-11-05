@@ -511,6 +511,15 @@ const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"
   ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".QuickBarWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"], ["service", ".QuickTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"],
   ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"]];
+// orOS Passwords keeps its autofill (PW-AF2/3: the service, the
+// confirm screen, and the one link that opens Android's autofill
+// setting); every other single or page app removes them.
+const AF_NODES = [["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"], ["activity", ".PermissionActivity"]];
+function soloNodes(id, opt) {
+  const pw = BIO_APPS.includes(id) && opt.widget;
+  if (!pw) return REMOVE_NODES.concat([["activity", ".BioActivity"]]);
+  return REMOVE_NODES.filter((n) => !AF_NODES.some((a) => a[0] === n[0] && a[1] === n[1]));
+}
 // Single apps that keep BioActivity (PW-BIO): fingerprint unlock is
 // Passwords' alone; every other flavour removes it.
 const BIO_APPS = ["passwords"];
@@ -602,7 +611,7 @@ ${REMOVE_PERMS.concat(BIO_APPS.includes(id) && opt.widget ? [] : ["USE_BIOMETRIC
         <meta-data android:name="web_manifest_url" android:value="https://${HOST}/${opt.dir}/manifest.webmanifest"
             tools:replace="android:value" />
 ${launcher}${aliases}${mainAliases}
-${REMOVE_NODES.concat(BIO_APPS.includes(id) && opt.widget ? [] : [["activity", ".BioActivity"]]).map((n) => `
+${soloNodes(id, opt).map((n) => `
         <${n[0]} android:name="${n[1]}" tools:node="remove" />`).join("")}
 ${opt.widget ? `
         <!-- The app's own widget (wave 7b): its icon and shortcuts. -->
@@ -659,4 +668,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { build, buildSolo, buildPage, soloApps, pageApps, flavours, REMOVE_NODES, BIO_APPS };
+module.exports = { build, buildSolo, buildPage, soloApps, pageApps, flavours, REMOVE_NODES, BIO_APPS, AF_NODES };

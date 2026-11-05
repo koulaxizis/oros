@@ -23,6 +23,8 @@ public class PermissionActivity extends Activity {
         super.onCreate(savedInstanceState);
         Uri data = getIntent().getData();
         kind = data != null ? data.getHost() : null;
+        // orOS Passwords (the single app) opens only the autofill screen.
+        if (!PhoneBridge.FULL && !"autofill".equals(kind)) { finish(); return; }
         if ("reminders".equals(kind)) { reminders(); return; }
         if ("install".equals(kind)) { install(data); return; }
         if ("drive".equals(kind)) { drive(); return; }

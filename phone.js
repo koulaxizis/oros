@@ -57,6 +57,8 @@
 //                 the page opens next, inside a tap)
 //               {t:"pw-bio", op:"clear", kid}  (v9: the secret for kid
 //                 removed; the key too when none is left)
+//               {t:"af-state"}                 (v10: autofill state only;
+//                 the single app "orOS Passwords" has no full state)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
 //                widgets, wcal, wtodo, health, drive, app}  (drive: the
 //                orOS Drive app is installed, DRIVE-APP; widgets, wcal,
@@ -82,6 +84,12 @@
 //               {t:"pw-bio", op:"fail", n, code}  (v9: cancel | lockout |
 //                 invalidated (a new fingerprint: everything removed) |
 //                 none (no secret for kid) | failed)
+//               {t:"af-state", af, pkg}        (v10: what "state" carries
+//                 in af, plus the package for the autofill-setting link)
+// The single app "orOS Passwords" (v10): its top page (solo.js host)
+// relays only pw-bio and the autofill rows above (af-keys, af-index,
+// af-state, af-save, clear/applied/done/error for af); this file then
+// talks through window.parent.__orosSoloHost.bio.
 // Exposes window.orosPhone and, under Node, module.exports.
 // ============================================================
 (function (root) {
@@ -1026,6 +1034,7 @@
 
   var port = null, appState = null, seq = 0, lastSent = {}, listeners = [], timer = null;
   var afKeys = null;   // PW-AF2: {idx, names} public keys from the app, this page only
+  var afSolo = null, afPkg = "";   // v10: the single app's autofill state (no appState there)
 
   // Passwords: unlock with fingerprint or face (PW-BIO, v9). The app
   // keeps a 32-byte secret per vault sealed in its Keystore; Passwords
@@ -1099,7 +1108,9 @@
   (function () {
     var h = bioHost();
     if (!h || typeof h.listen !== "function") return;
-    h.listen(function (m) { if (m && m.t === "pw-bio") bioIn(m); });
+    // The same handler as the orOS app's port; the top page lets
+    // through only pw-bio and the autofill rows (solo.js).
+    h.listen(function (m) { if (m && typeof m === "object") onAppMessage({ data: JSON.stringify(m) }); });
   })();
 
   function prefs() {
@@ -1317,7 +1328,7 @@
       try { root.__orosPwSave({ url: x.url, app: x.app, user: x.user, pw: x.pw, title: x.title }); } catch (e) {}
       refs.push(x.ref);
     });
-    if (refs.length) send({ t: "applied", what: "af-save", refs: refs });
+    if (refs.length) bioSend({ t: "applied", what: "af-save", refs: refs });
   }
 
   // Reminders (v3): the next 48 hours, worked out here from the
@@ -1428,13 +1439,18 @@
       var k1 = typeof m.idx === "string" ? m.idx : "", k2 = typeof m.names === "string" ? m.names : "";
       var B64 = /^[A-Za-z0-9+/]+={0,2}$/;
       afKeys = B64.test(k1) && B64.test(k2) && k1.length < 1200 && k2.length < 1200 && k1 !== k2 ? { idx: k1, names: k2 } : null;
-      if (appState) appState.af = afState(m.af);
+      setAf(afState(m.af));
+      emit();
+    } else if (m.t === "af-state") {
+      setAf(afState(m.af));
+      if (typeof m.pkg === "string" && BIO_PKG.test(m.pkg)) afPkg = m.pkg;
       emit();
     } else if (m.t === "done" && m.what === "af-index") {
-      if (appState) appState.af = afState(m.af);
+      setAf(afState(m.af));
       emit();
     } else if (m.t === "error" && m.what === "af-index") {
-      if (appState && appState.af) appState.af.err = String(m.msg || "error").slice(0, 120);
+      var a0 = appState ? appState.af : afSolo;
+      if (a0) a0.err = String(m.msg || "error").slice(0, 120);
       emit();
     } else if (m.t === "health-in") {
       takeHealth(m);
@@ -1455,6 +1471,7 @@
     }
   }
 
+  function setAf(a) { if (appState) appState.af = a; else afSolo = a; }
   // PW-AF2: what the app says about Passwords autofill on this phone.
   function afState(a) {
     if (!a || typeof a !== "object") return null;
@@ -1595,20 +1612,27 @@
       if (!port || !PERM_URL[kind]) return;
       root.location.href = PERM_URL[kind];
     },
-    refresh: function () { send({ t: "state" }); },
+    refresh: function () { if (port) send({ t: "state" }); else bioSend({ t: "af-state" }); },
     // Passwords autofill (PW-AF2). The Passwords app seals its lists
     // with the keys from afKeys() (passwords/afindex.js) and hands them
     // over; this file never sees a value.
-    afInfo: function () { return appState && appState.af ? appState.af : null; },
+    // The orOS app (port), or the single app "orOS Passwords" (v10,
+    // through its top page).
+    afAvailable: function () { var h = bioHost(); return !!port || !!(h && h.available()); },
+    afInfo: function () { return (appState ? appState.af : afSolo) || null; },
     afKeys: function () { return afKeys; },
-    afAskKeys: function () { return send({ t: "af-keys" }); },
+    afAskKeys: function () { return bioSend({ t: "af-keys" }); },
     afSend: function (sealed) {
       if (!sealed || !sealed.idx || !sealed.names) return false;
-      return send({ t: "af-index", seq: ++seq, idx: sealed.idx, names: sealed.names, at: Date.now() });
+      return bioSend({ t: "af-index", seq: ++seq, idx: sealed.idx, names: sealed.names, at: Date.now() });
     },
-    afClear: function () { afKeys = null; return send({ t: "clear", what: "af" }); },
+    afClear: function () { afKeys = null; return bioSend({ t: "clear", what: "af" }); },
     // Must run inside a click (an intent: link, like askPermission).
-    afSettings: function () { if (port) root.location.href = PERM_URL.autofill; },
+    afSettings: function () {
+      if (port) { root.location.href = PERM_URL.autofill; return; }
+      var h = bioHost();
+      if (h && afPkg) h.go("intent://autofill#Intent;scheme=oros-permission;package=" + afPkg + ";end");
+    },
     // Passwords: unlock with fingerprint or face (PW-BIO, v9). Works in
     // the orOS app and in the single app "orOS Passwords".
     bio: {

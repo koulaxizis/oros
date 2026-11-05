@@ -1004,11 +1004,18 @@
     // of Contacts, Calendar, reminders… ever reaches a single app.
     // Same port rule as phone.js: posted by the browser itself (no
     // source window), the newest one wins.
+    // v10: Passwords' autofill too (PW-AF2/3): the fill lists it seals,
+    // logins to save, and the autofill state. Nothing else either way.
     var bioPort = null, bioFn = null;
-    function bioMsg(raw) {
+    var TO_APP = { "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1 };
+    var TO_PAGE = { "pw-bio": 1, "af-keys": 1, "af-state": 1, "af-save": 1 };
+    function bioMsg(raw, toApp) {
       var m = null;
       try { m = JSON.parse(typeof raw === "string" ? raw : ""); } catch (e) { return null; }
-      return m && typeof m === "object" && m.t === "pw-bio" ? m : null;
+      if (!m || typeof m !== "object" || typeof m.t !== "string") return null;
+      if ((toApp ? TO_APP : TO_PAGE)[m.t] === 1) return m;
+      if (toApp) return (m.t === "clear" && m.what === "af") || (m.t === "applied" && m.what === "af-save") ? m : null;
+      return (m.t === "done" || m.t === "error") && m.what === "af-index" ? m : null;
     }
     if (id === "passwords") {
       win.addEventListener("message", function (ev) {
@@ -1016,10 +1023,13 @@
         if (bioPort) { try { bioPort.onmessage = null; bioPort.close(); } catch (e) {} }
         bioPort = ev.ports[0];
         bioPort.onmessage = function (e) {
-          var m = bioMsg(e.data);
+          var m = bioMsg(e.data, false);
           if (m && bioFn) { try { bioFn(m); } catch (x) {} }
         };
-        try { bioPort.postMessage(JSON.stringify({ t: "pw-bio", op: "state" })); } catch (e) {}
+        try {
+          bioPort.postMessage(JSON.stringify({ t: "pw-bio", op: "state" }));
+          bioPort.postMessage(JSON.stringify({ t: "af-state" }));
+        } catch (e) {}
       });
     }
 
@@ -1030,14 +1040,17 @@
       bio: id !== "passwords" ? null : {
         available: function () { return !!bioPort; },
         send: function (obj) {
-          var m = bioMsg(JSON.stringify(obj || null));
+          var m = bioMsg(JSON.stringify(obj || null), true);
           if (!bioPort || !m) return false;
           try { bioPort.postMessage(JSON.stringify(m)); return true; } catch (e) { return false; }
         },
         // The intent link must open from this top page (the tap in the
-        // frame counts here too); only the two PW-BIO links.
+        // frame counts here too); only the two PW-BIO links and the one
+        // that opens Android's autofill setting.
         go: function (url) {
-          if (/^intent:\/\/(seal|open)\?n=[0-9a-f]{32}#Intent;scheme=oros-bio;package=online\.useoros\.(twa|passwords);end$/.test(String(url))) win.location.href = url;
+          url = String(url);
+          if (/^intent:\/\/(seal|open)\?n=[0-9a-f]{32}#Intent;scheme=oros-bio;package=online\.useoros\.(twa|passwords);end$/.test(url)
+              || /^intent:\/\/autofill#Intent;scheme=oros-permission;package=online\.useoros\.passwords;end$/.test(url)) win.location.href = url;
         },
         // The newest shell frame listens (a reload registers again).
         listen: function (fn) { bioFn = typeof fn === "function" ? fn : null; }

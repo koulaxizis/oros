@@ -2530,7 +2530,11 @@
   // switch is in the app's device-local options (passwords.js prefs.af).
   var afTimer = null, afBusy = false;
   function phone() {
-    try { var p = window.parent && window.parent !== window ? window.parent.orosPhone : null; return p && p.available && p.available() && p.afSend ? p : null; }
+    // The orOS app, or the single app "orOS Passwords" (afAvailable, v10).
+    try {
+      var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
+      return p && p.afSend && (p.afAvailable ? p.afAvailable() : p.available && p.available()) ? p : null;
+    }
     catch (e) { return null; }
   }
   function afOn() { return !!(app() && app().prefs().af); }

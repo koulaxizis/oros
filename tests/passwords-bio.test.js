@@ -123,11 +123,15 @@ test("PW-BIO bridge (phone.js v9): announce first, then the intent from the tap;
   assert.match(ph, /bio: \{\s*available:/);
 });
 
-test("PW-BIO single app: solo.js relays only pw-bio, and only for Passwords", () => {
+test("PW-BIO single app: solo.js relays only pw-bio and autofill, and only for Passwords", () => {
   const so = read("solo.js");
   assert.match(so, /if \(id === "passwords"\) \{\s*win\.addEventListener\("message"/);
   assert.match(so, /if \(!ev\.ports \|\| !ev\.ports\[0\] \|\| ev\.source\) return;/, "only a port the browser posted");
-  assert.match(so, /m\.t === "pw-bio" \? m : null/);
+  assert.match(so, /var TO_APP = \{ "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1 \};/);
+  assert.match(so, /var TO_PAGE = \{ "pw-bio": 1, "af-keys": 1, "af-state": 1, "af-save": 1 \};/);
+  assert.match(so, /\(m\.t === "clear" && m\.what === "af"\) \|\| \(m\.t === "applied" && m\.what === "af-save"\)/);
+  assert.match(so, /\(m\.t === "done" \|\| m\.t === "error"\) && m\.what === "af-index"/);
+  assert.match(so, /\^intent:\\\/\\\/autofill#Intent;scheme=oros-permission;package=online\\\.useoros\\\.passwords;end\$/);
   assert.match(so, /bio: id !== "passwords" \? null :/);
   assert.match(so, /\^intent:\\\/\\\/\(seal\|open\)\\\?n=\[0-9a-f\]\{32\}#Intent;scheme=oros-bio;package=online\\\.useoros\\\.\(twa\|passwords\);end\$/);
   // the frame's phone.js listens there
@@ -179,7 +183,10 @@ test("PW-BIO Android: BioActivity in the orOS app and orOS Passwords only, its o
   assert.ok(!/DEVICE_CREDENTIAL|setDeviceCredentialAllowed/.test(bioAct), "never the screen PIN");
   const br = read(...JAVA, "PhoneBridge.java");
   assert.match(br, /static final boolean FULL = "oros"\.equals\(BuildConfig\.FLAVOR\);/);
-  assert.match(br, /if \(!FULL && !\(BIO && "pw-bio"\.equals\(t\)\)\) return;/, "a single app takes nothing else");
+  assert.match(br, /if \(!FULL && !\(BIO && soloTakes\(t, m\)\)\) return;/, "a single app takes nothing else");
+  const takes = /static boolean soloTakes\(String t, JSONObject m\) \{([\s\S]*?)\n    \}/.exec(br)[1];
+  assert.ok(!/"state"|contacts|calendar|reminders|health|ticks/.test(takes.replace(/"af-state"/g, "")), "only pw-bio and autofill");
+  assert.match(read(...JAVA, "PermissionActivity.java"), /if \(!PhoneBridge\.FULL && !"autofill"\.equals\(kind\)\) \{ finish\(\); return; \}/);
   assert.match(br, /case "pw-bio": \{/);
 
   for (const dir of ["values", "values-el", "values-de"]) {
