@@ -11,7 +11,8 @@
 //   - the Game Center: the "Continue" row.
 //
 // API (window.orosResume, or module.exports in Node):
-//   GAMES                        the ids that keep a session
+//   GAMES                        the ids that keep a session (every
+//                                Games app but the Game Center)
 //   inProgress(id, read) → true | false | null
 //       read(key) → the parsed JSON of a localStorage key, or null.
 //       null = this file cannot tell (Jigsaw keeps its game in
@@ -83,7 +84,13 @@
     },
     battleship: function (s) { return s.phase === "play" && arr(s.myShots).length > 0; },
     rps: function (s) { return !s.done && num(s.rounds) > 0; },
-    hangman: function (s) { return anyEntry(s, function (e) { return !e.done && arr(e.guessed).length > 0; }); },
+    // guessed is the string of letters tried ("EA"); an array is read too
+    hangman: function (s) {
+      return anyEntry(s, function (e) {
+        var g = typeof e.guessed === "string" ? e.guessed : arr(e.guessed);
+        return !e.done && g.length > 0;
+      });
+    },
     flow: movesCount,
     nonogram: function (s) {
       if (s.done) return false;
@@ -100,6 +107,10 @@
     // once a move was made (undo positions) or after 15 s of play.
     solitaire: function (s) { return anyEntry(s, function (e) { return arr(e.u).length > 0 || num(e.t) > 15000; }); },
     crossword: function (s) { return anyEntry(s, function (e) { return !e.done && (crosswordTyped(e) || num(e.ms) > 15000); }); },
+    // GR-2: Simon keeps {pads, mode, seq} from the first round; Whack-a-Mole
+    // keeps a round only while it is paused (removed when it ends).
+    simon: function (s) { return Array.isArray(s.seq) && s.seq.length > 0; },
+    whack: present,
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);

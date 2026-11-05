@@ -7,7 +7,8 @@
 //   - mole +1, golden mole +3 (rare, shorter); empty hole: nothing
 //   - the last 10 seconds run a little faster
 //   - the round pauses while the app is hidden and resumes after a
-//     3-2-1 countdown; closing the app drops the round (not counted)
+//     3-2-1 countdown; closed mid-round, it is kept (GR-2) and reopens
+//     paused: Continue (Space) resumes it after the countdown
 //   - tap / click (on press, not release) or keys 1–9 laid out like a
 //     numeric keypad; Space starts, N stops or starts a round
 // Data:
@@ -15,7 +16,9 @@
 //     (and when) and the rounds played, as per-device rows (each device
 //     only grows its own row; merge = per-row join) + a reset stamp br
 //   - device-local (R10): oros-whack-prefs (level), oros-whack-device
-//     (row id), oros-whack-sfx (sound on/off)
+//     (row id), oros-whack-sfx (sound on/off), oros-whack-session
+//     (GR-2: the round in progress {level, ev, i, acc, score, hits,
+//     seen, hogs}, written when it pauses, removed when it ends)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Round model (schedule, scoring, keys)
@@ -37,6 +40,7 @@
   var PREFS_KEY   = "oros-whack-prefs";
   var DEVICE_KEY  = "oros-whack-device";
   var SFX_KEY     = "oros-whack-sfx";
+  var SESSION_KEY = "oros-whack-session";
   var DATA_VER    = 1;
 
   var LEVELS = ["e", "m", "h"];
@@ -84,6 +88,7 @@
       "turn.ready": "Get ready…",
       "turn.go": "Go!",
       "turn.paused": "Paused",
+      "btn.resume": "Continue",
       "turn.over": "Time's up!",
       "board.label": "Nine holes",
       "hole.label": "Hole {n}",
@@ -131,6 +136,7 @@
       "turn.ready": "Ετοιμάσου…",
       "turn.go": "Πάμε!",
       "turn.paused": "Παύση",
+      "btn.resume": "Συνέχεια",
       "turn.over": "Τέλος χρόνου!",
       "board.label": "Εννέα τρύπες",
       "hole.label": "Τρύπα {n}",
@@ -388,7 +394,8 @@
 
   // ---------- 5. Round flow ----------
   // state: idle → count (3-2-1) → run ⇄ paused (hidden; resumes via
-  // count) → over. Nothing of a round is saved: it is 30 seconds long.
+  // count) → over. A paused round is saved (GR-2) and reopens paused;
+  // the moles that were up when it paused are not brought back.
   var round = null;         // { level, ev, i, acc, runFrom, score, hits, seen, hogs }
   var state = "idle";
   var holes = [];           // per hole: { e: pop-up, hit } or null
@@ -400,7 +407,40 @@
     return round ? round.acc + (round.runFrom ? nowMs() - round.runFrom : 0) : 0;
   }
 
+  // ---------- 5a. Session (GR-2) ----------
+  function saveSession() {
+    try {
+      if (round && state === "paused") {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          level: round.level, ev: round.ev, i: round.i, acc: Math.round(round.acc),
+          score: round.score, hits: round.hits, seen: round.seen, hogs: round.hogs }));
+      } else {
+        localStorage.removeItem(SESSION_KEY);
+      }
+    } catch (e) {}
+  }
+  function natUpTo(v, max) { return typeof v === "number" && Math.floor(v) === v && v >= 0 && v <= max; }
+  // A stored round, checked field by field; anything off drops it.
+  function readSession() {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { s = null; }
+    if (!s || typeof s !== "object" || LEVELS.indexOf(s.level) < 0 || !Array.isArray(s.ev) ||
+        s.ev.length > 400 || !natUpTo(s.i, s.ev.length) || !natUpTo(s.acc, ROUND_MS - 1) ||
+        !natUpTo(s.score, MAX_SCORE) || !natUpTo(s.hits, 400) || !natUpTo(s.seen, 400) ||
+        !natUpTo(s.hogs, 400)) return null;
+    var ev = [];
+    for (var j = 0; j < s.ev.length; j++) {
+      var e = s.ev[j];
+      if (!e || typeof e !== "object" || !natUpTo(e.t, ROUND_MS) || !natUpTo(e.h, HOLES - 1) ||
+          ["m", "g", "x"].indexOf(e.k) < 0 || !natUpTo(e.up, ROUND_MS)) return null;
+      ev.push({ t: e.t, h: e.h, k: e.k, up: e.up });
+    }
+    return { level: s.level, ev: ev, i: s.i, acc: s.acc, runFrom: 0, score: s.score,
+             hits: s.hits, seen: s.seen, hogs: s.hogs };
+  }
+
   function start() {
+    if (state === "paused") { countdown(); return; }   // Continue
     if (busy()) return;
     closeDialogs();
     round = { level: prefs.level, ev: schedule(prefs.level, rand), i: 0, acc: 0, runFrom: 0,
@@ -438,6 +478,8 @@
     if (state === "run" || state === "count") {
       clearTimeout(countTimer);
       state = "paused";
+      for (var h = 0; h < HOLES; h++) if (holes[h]) hideHole(h);
+      saveSession();
       live(t("live.paused"));
       renderAll();
     }
@@ -450,6 +492,7 @@
     cancelAnimationFrame(raf);
     state = "idle";
     round = null;
+    saveSession();
     clearHoles();
     renderAll();
     showToast(t("toast.stopped"));
@@ -525,6 +568,7 @@
     round.acc = ROUND_MS;
     round.runFrom = 0;
     state = "over";
+    saveSession();
     for (var h = 0; h < HOLES; h++) if (holes[h]) hideHole(h);
     var rec = countRound(round.level, round.score);
     renderAll();
@@ -579,12 +623,12 @@
 
   function renderOverlay() {
     var ov = $("overlay"), sb = $("start-btn"), cn = $("count");
-    var showStart = state === "idle" || state === "over";
+    var showStart = state === "idle" || state === "over" || state === "paused";
     ov.hidden = state === "run";
     sb.hidden = !showStart;
     cn.hidden = showStart;
-    sb.innerHTML = UI_ICONS.play + '<span>' + t(state === "over" ? "btn.again" : "btn.start") + '</span><kbd>Space</kbd>';
-    cn.textContent = state === "count" ? String(countN) : (state === "paused" ? "❚❚" : "");
+    sb.innerHTML = UI_ICONS.play + '<span>' + t(state === "over" ? "btn.again" : state === "paused" ? "btn.resume" : "btn.start") + '</span><kbd>Space</kbd>';
+    cn.textContent = state === "count" ? String(countN) : "";
     $("field").classList.toggle("dim", state !== "run");
   }
 
@@ -860,7 +904,7 @@
       if (h >= 0) { e.preventDefault(); whack(h); return; }
       if (e.shiftKey) return;
       if (e.code === "KeyN") { e.preventDefault(); if (busy()) stop(); else start(); return; }
-      if (e.code === "Space" && !busy()) {
+      if (e.code === "Space" && (!busy() || state === "paused")) {
         // a focused toolbar or dialog button keeps its own Space
         var a = document.activeElement;
         if (a && a.tagName === "BUTTON" && a.id !== "start-btn" &&
@@ -990,6 +1034,8 @@
       else if (state === "paused") countdown();
     });
 
+    window.addEventListener("pagehide", function () { pause(); });
+
     wireKeyboard();
   }
 
@@ -1004,6 +1050,15 @@
     registerSync();
     inheritPalette();
     watchPalette();
+    // GR-2: a round closed mid-play comes back paused, on its level.
+    var r = readSession();
+    if (r) {
+      round = r;
+      state = "paused";
+      prefs.level = r.level;
+      savePrefs();
+      clearHoles();
+    }
     renderAll();
   }
 

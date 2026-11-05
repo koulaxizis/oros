@@ -2,6 +2,7 @@ orosPack("de", "whack", {
  "board.label": "Neun Löcher",
  "btn.again": "Nochmal",
  "btn.new": "Neue Runde (N)",
+ "btn.resume": "Weiter",
  "btn.sfxOff": "Ton aus",
  "btn.sfxOn": "Ton an",
  "btn.start": "Start",

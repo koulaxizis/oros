@@ -12,9 +12,10 @@
 //     only grows its own row; merge = per-row join) + a reset stamp br
 //   - device-local (R10): oros-simon-prefs (pads, mode),
 //     oros-simon-device (row id), oros-simon-sfx (sound; ON unless
-//     turned off: the tones are part of the game)
-//   - a game in progress is not saved: the sequence has to be shown
-//     from the start, so leaving ends it
+//     turned off: the tones are part of the game),
+//     oros-simon-session (GR-2: the game in progress, {pads, mode,
+//     seq}; saved at the start of every round, reopened paused: the
+//     hub's Continue plays the current round again from its start)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Game model (sequence, expected pad, tempo)
@@ -36,6 +37,7 @@
   var PREFS_KEY   = "oros-simon-prefs";
   var DEVICE_KEY  = "oros-simon-device";
   var SFX_KEY     = "oros-simon-sfx";
+  var SESSION_KEY = "oros-simon-session";
   var DATA_VER    = 1;
 
   var PADS = [4, 6];
@@ -65,6 +67,9 @@
       "btn.stats": "Records",
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off",
       "btn.start": "Start",
+      "btn.resume": "Continue",
+      "hub.resume": "Continue round {n} (Space)",
+      "turn.paused": "Round {n} kept. Press Continue",
       "hub.start": "Start (Space)",
       "st.round": "Round", "st.best": "Best",
       "turn.idle": "Press Start",
@@ -108,6 +113,9 @@
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
       "btn.start": "Έναρξη",
+      "btn.resume": "Συνέχεια",
+      "hub.resume": "Συνέχεια στον γύρο {n} (Space)",
+      "turn.paused": "Ο γύρος {n} κρατήθηκε. Πάτα Συνέχεια",
       "hub.start": "Έναρξη (Space)",
       "st.round": "Γύρος", "st.best": "Ρεκόρ",
       "turn.idle": "Πάτα Έναρξη",
@@ -360,8 +368,10 @@
   function prefKey() { return prefs.mode + prefs.pads; }
 
   // ---------- 5. Game flow ----------
-  // game = { pads, mode, seq: [pad…], phase: "idle"|"show"|"input"|"over",
-  //          k: answers given this round, score }
+  // game = { pads, mode, seq: [pad…], phase: "idle"|"show"|"input"|
+  //          "paused"|"over", k: answers given this round, score }
+  // "paused" (GR-2): a game reopened from the session, or hidden mid-round;
+  // Continue plays the current round again from its first step.
   var game = null;
   var timers = [];
   var lit = -1;            // pad lit right now (-1: none)
@@ -375,14 +385,52 @@
   }
 
   function playing() { return !!(game && (game.phase === "show" || game.phase === "input")); }
+  function underway() { return playing() || !!(game && game.phase === "paused"); }
+
+  // ---------- 5a. Session (GR-2) ----------
+  function saveSession() {
+    try {
+      if (game && game.seq.length && (playing() || game.phase === "paused")) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ pads: game.pads, mode: game.mode, seq: game.seq }));
+      } else {
+        localStorage.removeItem(SESSION_KEY);
+      }
+    } catch (e) {}
+  }
+  // A stored session, checked: pads and mode known, 1–MAX_SEQ steps,
+  // every step a pad of that board. Anything else is dropped.
+  function readSession() {
+    var s = null;
+    try { s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch (e) { s = null; }
+    if (!s || typeof s !== "object" || PADS.indexOf(s.pads) < 0 || MODES.indexOf(s.mode) < 0 ||
+        !Array.isArray(s.seq) || !s.seq.length || s.seq.length > MAX_SEQ) return null;
+    for (var i = 0; i < s.seq.length; i++) {
+      var p = s.seq[i];
+      if (typeof p !== "number" || Math.floor(p) !== p || p < 0 || p >= s.pads) return null;
+    }
+    return { pads: s.pads, mode: s.mode, seq: s.seq.slice(), phase: "paused", k: 0, score: s.seq.length - 1 };
+  }
+  // Hidden mid-round (another app, the tab in the background): stop
+  // the sequence; Continue plays the round again.
+  function pause() {
+    if (!playing()) return;
+    clearTimers();
+    lightPad(-1);
+    game.phase = "paused";
+    game.k = 0;
+    saveSession();
+    renderAll(false);
+  }
 
   // A game in progress is never dropped silently: it ends and counts.
   function endRunning(announce) {
-    if (!playing()) return;
+    if (!underway()) return;
     var score = game.seq.length - 1;
     clearTimers();
     lightPad(-1);
     countGame(game.mode + game.pads, score);
+    game.phase = "over";
+    saveSession();
     if (announce) showToast(t("toast.ended", { n: score }));
   }
 
@@ -397,6 +445,7 @@
 
   function start() {
     if (playing()) return;
+    if (game && game.phase === "paused") { game.k = 0; showSequence(); return; }
     if (!game || game.phase === "over" || game.pads !== prefs.pads || game.mode !== prefs.mode) {
       game = fresh();
       missed = -1;
@@ -409,6 +458,7 @@
     game.seq = extend(game.seq, game.pads);
     game.k = 0;
     showSequence();
+    saveSession();
   }
 
   function showSequence() {
@@ -450,6 +500,7 @@
     missed = expectedPad(game.seq, game.mode, game.k);
     game.phase = "over";
     game.score = game.seq.length - 1;
+    saveSession();
     buzz();
     var rec = countGame(game.mode + game.pads, game.score);
     live(t("live.over", { n: game.score }));
@@ -494,6 +545,7 @@
     $("round").textContent = String(game.phase === "idle" ? 0 : game.seq.length);
     $("best").textContent = String(totals(game.mode + game.pads).n);
     var txt = { idle: t("turn.idle"), show: t("turn.show"), over: t("turn.over"),
+                paused: t("turn.paused", { n: game.seq.length }),
                 input: t(game.mode === "r" ? "turn.youRev" : "turn.you") }[game.phase];
     $("turn").textContent = txt;
     $("turn").className = game.phase;
@@ -553,11 +605,12 @@
     }
     var hub = $("hub");
     if (!hub) return;
-    var canStart = !playing();
-    hub.textContent = canStart ? t("btn.start") : String(game.seq.length);
+    var canStart = !playing(), resume = game.phase === "paused";
+    var tip = resume ? t("hub.resume", { n: game.seq.length }) : t("hub.start");
+    hub.textContent = resume ? t("btn.resume") : canStart ? t("btn.start") : String(game.seq.length);
     hub.classList.toggle("go", canStart);
-    hub.setAttribute("aria-label", canStart ? t("hub.start") : t("st.round") + " " + game.seq.length);
-    hub.title = canStart ? t("hub.start") : "";
+    hub.setAttribute("aria-label", canStart ? tip : t("st.round") + " " + game.seq.length);
+    hub.title = canStart ? tip : "";
     if (canStart) hub.removeAttribute("aria-disabled");
     else hub.setAttribute("aria-disabled", "true");
   }
@@ -913,8 +966,11 @@
     if (window.ResizeObserver) new ResizeObserver(relayout).observe($("board-wrap"));
     else window.addEventListener("resize", relayout);
 
-    // Leaving the app mid-game ends it (it cannot be resumed) and counts it.
-    window.addEventListener("pagehide", function () { endRunning(false); });
+    // GR-2: leaving mid-game keeps it (session); hidden, it pauses.
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") pause();
+    });
+    window.addEventListener("pagehide", function () { pause(); saveSession(); });
 
     wireKeyboard();
   }
@@ -929,7 +985,9 @@
     registerSync();
     inheritPalette();
     watchPalette();
-    game = fresh();
+    game = readSession();
+    if (game) { prefs.pads = game.pads; prefs.mode = game.mode; savePrefs(); }
+    else game = fresh();
     renderAll(true);
   }
 
