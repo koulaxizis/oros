@@ -65,6 +65,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Memory",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard", "level.x": "Expert",
       "mode.solo": "Solo", "mode.duo": "2 players",
       "set.shapes": "Shapes", "set.icons": "Icons", "set.letters": "Letters",
@@ -113,7 +114,8 @@
       "letter": "Letter {c}"
     },
     el: {
-      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο", "level.x": "Expert",
+      "app.name": "Μνήμη",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο", "level.x": "Πολύ δύσκολο",
       "mode.solo": "Μόνος", "mode.duo": "2 παίκτες",
       "set.shapes": "Σχήματα", "set.icons": "Εικονίδια", "set.letters": "Γράμματα",
       "set.label": "Σύμβολα",
@@ -919,6 +921,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

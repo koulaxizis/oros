@@ -63,6 +63,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Snake",
       "speed.s": "Slow", "speed.n": "Normal", "speed.f": "Fast",
       "walls.on": "Walls", "walls.off": "No walls",
       "btn.pause": "Pause (Space)", "btn.resume": "Resume (Space)",
@@ -107,6 +108,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Φιδάκι",
       "speed.s": "Αργά", "speed.n": "Κανονικά", "speed.f": "Γρήγορα",
       "walls.on": "Τοίχοι", "walls.off": "Χωρίς τοίχους",
       "btn.pause": "Παύση (Space)", "btn.resume": "Συνέχεια (Space)",
@@ -908,6 +910,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

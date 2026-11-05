@@ -60,6 +60,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Lights Out",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "btn.undo": "Undo (U)",
       "btn.hint": "Hint (H)",
@@ -108,6 +109,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Σβήσε τα φώτα",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "btn.undo": "Αναίρεση (U)",
       "btn.hint": "Υπόδειξη (H)",
@@ -841,6 +843,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

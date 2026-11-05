@@ -79,6 +79,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Reversi",
       "mode.ai": "vs Computer", "mode.duo": "2 players",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "color.b": "You: black", "color.w": "You: white",
@@ -126,6 +127,7 @@
       "toast.over": "The game is over: start a new one (N)"
     },
     el: {
+      "app.name": "Ρεβέρσι",
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "color.b": "Εσύ: μαύρα", "color.w": "Εσύ: λευκά",
@@ -1032,6 +1034,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

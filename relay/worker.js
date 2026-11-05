@@ -5,6 +5,7 @@ import { purgeShares } from "./share.js";
 export { RemoteRoom } from "./remote.js";
 export { PushBox } from "./push.js";
 export { HouseBox } from "./house.js";
+export { HookBox } from "./hook.js";
 
 function connectFn(host, port, mode) {
   return connect({ hostname: host, port: port },

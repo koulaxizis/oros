@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Game Center · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.39.00">
-  <link rel="stylesheet" href="gamecenter.css?v=5.39.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.41.00">
+  <link rel="stylesheet" href="gamecenter.css?v=5.41.00">
 
 </head>
 <body>
@@ -71,16 +71,29 @@
       </details>
     </section>
 
+    <!-- This device: optional vibration in the games (games audit F8) -->
+    <section class="block" id="dev-block" aria-labelledby="dev-h" hidden>
+      <div class="block-head">
+        <h2 id="dev-h" data-i18n="dev.title">On this device</h2>
+      </div>
+      <label class="switch-row" for="hap-box">
+        <input type="checkbox" id="hap-box">
+        <span data-i18n="hap.label">Vibrate on moves, mistakes and wins</span>
+      </label>
+      <p class="block-note" data-i18n="hap.note">Only on this device, in every game. The game sounds have their own switch in each game.</p>
+    </section>
+
     <p id="foot" data-i18n="foot.note">Everything here is read from the games' own data on this device, which syncs with each game. Nothing extra is stored.</p>
   </main>
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.39.00" data-app="gamecenter"></script>
-  <script src="../gamekit/daily.js?v=5.39.00"></script>
-  <script src="../gamekit/resume.js?v=5.39.00"></script>
-  <script src="core.js?v=5.39.00"></script>
-  <script src="gamecenter.js?v=5.39.00"></script>
+  <script src="../i18n.js?v=5.41.00" data-app="gamecenter"></script>
+  <script src="../gamekit/daily.js?v=5.41.00"></script>
+  <script src="../gamekit/resume.js?v=5.41.00"></script>
+  <script src="../gamekit/haptics.js?v=5.41.00"></script>
+  <script src="core.js?v=5.41.00"></script>
+  <script src="gamecenter.js?v=5.41.00"></script>
 
 </body>
 </html>

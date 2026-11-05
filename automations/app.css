@@ -29,6 +29,7 @@ html, body {
 
 #toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
@@ -143,3 +144,9 @@ legend { padding: 0 4px; font-weight: 700; }
 .act pre.sends { margin: 4px 0 0; padding: 8px; border-radius: 8px; background: var(--surface-2, rgba(127,127,127,.12));
   font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9em; overflow: auto; }
 .act .hint.warn { color: var(--danger, #b3261e); }
+/* Bridge sensor: folders on this computer */
+#pc-folders { list-style: none; padding: 0; margin: 8px 0; }
+#pc-folders li { display: flex; flex-direction: row; align-items: center; gap: 8px; text-align: start; padding: 8px 10px; }
+#pc-folders .path { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+#pc-folders li button { flex: none; }
+#pc-pair input { width: 8em; }

@@ -14,11 +14,12 @@ Press `Start`. Pieces click together when you drop them near their place or next
 
 ## Controls
 - Drag a piece to move it. With rotation on, tap or click a piece to turn it 90°.
+- No dragging needed: tap or click a piece to pick it up (it gets a gold rim), then tap the spot on the table where it should go. Tap it again, or press [[Esc]], to let go.
 - Drag the empty table to move around; pinch or use the mouse wheel to zoom.
 - Helpers on the toolbar: `Preview the picture (P)`, `Faint picture in the frame (G)`, `Edge pieces only (E)` and `Tidy loose pieces to the side (T)`.
 - Zoom buttons: `Zoom out (−)`, `Whole table (0)` and `Zoom in (+)`.
 
-Keys: [[N]] new puzzle, [[P]] preview, [[G]] faint picture, [[E]] edge pieces, [[T]] tidy, [[+]] / [[−]] zoom, [[0]] whole table.
+Keys: [[N]] new puzzle, [[P]] preview, [[G]] faint picture, [[E]] edge pieces, [[T]] tidy, [[+]] / [[−]] zoom, [[0]] whole table. With the keyboard alone: `]` / `[` pick the next / previous loose piece, the arrow keys move it (with [[Shift]] a whole piece at a time), [[Enter]] puts it down, [[R]] turns it, [[Esc]] lets go.
 
 ## Levels and scoring
 `Records` shows, for each number of pieces, your best time and how many puzzles you've solved. `Reset records` clears them.

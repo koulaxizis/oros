@@ -7,14 +7,15 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=automations" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Automations · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=5.39.00">
-  <link rel="stylesheet" href="app.css?v=5.39.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.41.00">
+  <link rel="stylesheet" href="app.css?v=5.41.00">
 </head>
 <body>
 
   <header id="toolbar">
     <h1 id="title" data-i18n="app.name">Automations</h1>
     <span class="grow"></span>
+    <button type="button" id="pc-btn" class="chip" data-i18n="btn.pc">Computer folders</button>
     <button type="button" id="tpl-btn" class="chip" data-i18n="btn.templates">Ready-made</button>
     <button type="button" id="new-btn" class="chip pri" data-i18n="btn.new">New rule</button>
   </header>
@@ -28,6 +29,21 @@
         <p data-i18n="empty">No rules yet. A rule says when something happens and what orOS does then. Start from a ready-made one or make your own.</p>
         <button type="button" id="empty-tpl" class="chip pri" data-i18n="btn.templates">Ready-made</button>
       </div>
+    </section>
+    <section aria-labelledby="wh-h" id="wh-sec">
+      <h2 id="wh-h" data-i18n="wh.title">Incoming webhook</h2>
+      <p class="hint" data-i18n="wh.hint">An address other services (n8n, Home Assistant, a form) can post a small JSON to. A rule with "When a webhook arrives" then runs on this device.</p>
+      <div id="wh-on" hidden>
+        <label class="fld"><span data-i18n="wh.url">Your address (keep it secret)</span><input id="wh-url" type="text" readonly spellcheck="false"></label>
+        <p class="hint" id="wh-exp"></p>
+        <div class="row wrap">
+          <button type="button" id="wh-copy" class="chip pri" data-i18n="wh.copy">Copy address</button>
+          <button type="button" id="wh-rot" class="chip" data-i18n="wh.rot">New address</button>
+          <button type="button" id="wh-off" class="chip del" data-i18n="wh.off">Turn off</button>
+        </div>
+      </div>
+      <button type="button" id="wh-start" class="chip" data-i18n="wh.start">Turn on</button>
+      <p class="hint" data-i18n="wh.privacy">What arrives is encrypted on the relay to a key only this device has, kept until this device picks it up, and never logged. The relay sees it in plain text as it arrives.</p>
     </section>
     <section aria-labelledby="log-h">
       <h2 id="log-h" data-i18n="sec.log">Recent runs on this device</h2>
@@ -116,11 +132,32 @@
     <div class="row end"><button type="button" class="chip" data-close data-i18n="btn.close">Close</button></div>
   </dialog>
 
+  <dialog id="pc-dlg" aria-labelledby="pc-h">
+    <h2 id="pc-h" data-i18n="pc.title">Folders on this computer</h2>
+    <p class="hint" data-i18n="pc.hint">With orOS Bridge on this computer, a new PDF or photo in a folder you choose can start a rule: open it in Scan PDF, Files or Invoices, or print it. Only you choose the folders, on this computer.</p>
+    <label class="check"><input type="checkbox" id="pc-on"> <span data-i18n="pc.on">Watch folders on this computer</span></label>
+    <p id="pc-status" class="hint" role="status"></p>
+    <div id="pc-pair" class="row wrap" hidden>
+      <button type="button" id="pc-pair-btn" class="chip" data-i18n="pc.pairBtn">Show a code in orOS Bridge</button>
+      <label class="fld"><span data-i18n="pc.code">The 6-digit code orOS Bridge shows</span>
+        <input type="text" id="pc-code" inputmode="numeric" maxlength="7" autocomplete="off"></label>
+      <button type="button" id="pc-code-btn" class="chip pri" data-i18n="pc.connect">Connect</button>
+    </div>
+    <div id="pc-folders-box" hidden>
+      <ul id="pc-folders" class="acts"></ul>
+      <div class="row wrap">
+        <button type="button" id="pc-add" class="chip pri" data-i18n="pc.add">Add folder…</button>
+      </div>
+      <p class="hint small" data-i18n="pc.addHint">The folder chooser opens on the computer orOS Bridge runs on.</p>
+    </div>
+    <p id="pc-get" class="hint small" hidden><a href="https://github.com/koulaxizis/oros-bridge/releases/latest" target="_blank" rel="noopener noreferrer" data-i18n="pc.get">Get orOS Bridge (free) for Windows or Linux</a></p>
+    <div class="row end"><button type="button" class="chip" data-close data-i18n="btn.close">Close</button></div>
+  </dialog>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.39.00" data-app="automations"></script>
-  <script src="core.js?v=5.39.00"></script>
-  <script src="app.js?v=5.39.00"></script>
+  <script src="../i18n.js?v=5.41.00" data-app="automations"></script>
+  <script src="core.js?v=5.41.00"></script>
+  <script src="app.js?v=5.41.00"></script>
 
 </body>
 </html>

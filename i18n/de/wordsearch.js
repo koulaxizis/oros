@@ -1,4 +1,5 @@
 orosPack("de", "wordsearch", {
+ "app.name": "Wortsuche",
  "btn.hint": "Hinweis (H)",
  "btn.new": "Neues Rätsel (Shift+N)",
  "btn.stats": "Statistik",

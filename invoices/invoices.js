@@ -4370,8 +4370,20 @@
   //   { openFile: { token } } "Open with" an .orosinvoices file
   //                           (fileopen.js): the File taken once with
   //                           window.parent.__orosTakeFile(token)
+  //   { importPdf: { token } }  Automations (item 25): a PDF from a folder
+  //                           orOS Bridge watches, read like Import PDF
+  //                           (its preview; nothing is saved before Import)
   function openTarget(tg) {
     if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
+    if (tg && tg.importPdf && typeof tg.importPdf.token === "string") {
+      var pf = null;
+      try {
+        var sh = window.parent;
+        if (sh && sh !== window && typeof sh.__orosTakeFile === "function") pf = sh.__orosTakeFile(tg.importPdf.token.slice(0, 200));
+      } catch (e) { pf = null; }
+      if (pf && window.OrosInvoicesPdfIn && !document.querySelector("dialog[open]")) window.OrosInvoicesPdfIn.importFiles(pdfInApi(), [pf]);
+      return;
+    }
     if (!tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg["new"]) { prefillNew(tg["new"]); return; }
     // Single app: a blank invoice or receipt (icon shortcuts), or a

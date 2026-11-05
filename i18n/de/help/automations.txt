@@ -22,12 +22,25 @@ In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte
 
 Der Schritt `Timesheet-Timer` startet in [Timesheet](app:timesheet) einen Timer mit dem Titel, den du angibst (und dem Projekt dieses Namens, falls vorhanden), oder stoppt den laufenden Timer. Ein Start stoppt nie einen Timer, der schon läuft. Wie jeder Schritt läuft er, wenn du auf die Mitteilung der Regel tippst.
 
+## Ordner auf deinem Computer
+Läuft [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (kostenlos, Windows und Linux) auf deinem Computer, kann eine Regel einem Ordner dort folgen, zum Beispiel dem Ordner, in den dein Scanner speichert, oder deinen Downloads.
+- Drücke `Computer-Ordner`, hake `Ordner auf diesem Computer beobachten` an und verbinde dich mit dem Code, den Bridge zeigt. Dann öffnet `Ordner hinzufügen…` die Ordnerauswahl auf dem Computer; nur du wählst die Ordner, und `Nicht mehr beobachten` gibt einen frei.
+- Die Ereignisse `Wenn ein neues PDF in einem Ordner auf meinem Computer landet`, `… ein neues Foto …` und `… eine neue Datei …` starten eine Regel. `{text}` ist der Dateiname, und `Nur wenn darin steht` schaut auf den Namen. Dateien, die schon da waren, werden nie gemeldet; Dateien, die kamen, während orOS zu war, kommen beim nächsten Öffnen.
+- Zwei Schritte gibt es nur nach so einem Ereignis: `Die Datei in einer App öffnen` gibt sie an Scan PDF, Dateien oder Rechnungen, und `Die Datei drucken` schickt sie an den Drucker des Computers. Beide warten auf deinen Tipp, und in Dateien oder Rechnungen wird nichts gespeichert, bevor du es dort bestätigst.
+- Die fertigen Regeln `Neuer Scan in Scan PDF` und `Neues Foto in Dateien` sind ein guter Anfang. Bridge liest nur Dateien in den Ordnern, die du gewählt hast, nie Unterordner oder Verknüpfungen.
+
 ## Außerhalb von orOS
 Zwei Schritte verlassen orOS von selbst, wenn die Regel läuft:
 - `Push aufs Handy`: über [ntfy](https://ntfy.sh) (kostenlos, ohne Konto; wähle ein Thema, das niemand errät, oder deinen eigenen Server) oder deinen eigenen Gotify-Server. Installiere die App ntfy oder Gotify auf dem Handy und abonniere dasselbe Thema.
 - `An einen Webhook senden`: eine kleine JSON-Nachricht (`source`, `rule`, `at`, `text`) an dein eigenes n8n, Home Assistant (eine Automation mit Webhook-Auslöser), Make oder Ähnliches. Der Server muss https nutzen und Anfragen von orOS annehmen (CORS; ntfy tut das).
 
 Unter jedem siehst du genau, was gesendet wird, und nichts geht raus, bevor du `Diese Regel darf das von selbst…` für diese Adresse abhakst; änderst du die Adresse, hakst du es erneut ab. Nur das Gerät, das die Regel ausführt, sendet, einmal. Halte die Adresse geheim: Wer sie hat, kann an dein Thema oder deinen Webhook senden. Der Assistent schlägt Regeln vor, aber nie diese zwei Schritte.
+
+## Eingehender Webhook
+`Einschalten` unter Eingehender Webhook gibt diesem Gerät eine geheime Adresse. Jeder Dienst, der Webanfragen senden kann (n8n, Home Assistant, ein Formular, ein Skript), kann dort ein kleines JSON-Objekt (bis 4 KB) per POST abliefern, und hier läuft eine Regel mit `Wenn ein Webhook ankommt`; `{text}` wird das Feld `text` oder `message` des JSON oder das ganze JSON. orOS holt Angekommenes alle paar Minuten ab, solange es offen ist; eine Nachricht kann also warten, bis du orOS öffnest.
+- Das Relay verschlüsselt Angekommenes sofort mit einem Schlüssel, den nur dieses Gerät hat, und behält es, bis dieses Gerät es abholt (höchstens 100 Nachrichten). Es sieht die Nachricht im Klartext, während sie ankommt, und speichert oder protokolliert sie nie so.
+- `Neue Adresse` beendet die alte sofort; `Ausschalten` löscht das Postfach. Nach 7 Tagen ohne orOS auf diesem Gerät hört die Adresse von selbst auf.
+- Die Adresse gilt nur für dieses Gerät; schalte sie auf jedem Gerät ein, das reagieren soll.
 
 ## Den Assistenten fragen
 Sag dem [Assistenten](app:assistant), was du willst, zum Beispiel „erinnere mich jeden Montag um 8 an den Müll" oder „wenn eine dringende E-Mail kommt, setz sie in To-Do". Er schreibt die Regel und zeigt sie auf einer Karte; `In Automatisierungen öffnen` öffnet sie hier als neue Regel, und nichts wird gespeichert, bevor du auf Speichern tippst. Frag ihn „warum ist das gelaufen?", und wenn du ihn Automatisierungen lesen lässt, sieht er deine Regeln und die letzten Läufe auf diesem Gerät an (nie, was ein Hinweis sagte) und erklärt sie oder schlägt eine bessere Regel vor. Passwörter sieht er nie.

@@ -57,4 +57,9 @@
     <string name="af_save_desc">Κωδικοί orOS. Ελέγχεις τον λογαριασμό στο orOS και πατάς Αποθήκευση εκεί.</string>
     <string name="af_save_later">Άνοιξε το orOS για να ολοκληρωθεί η αποθήκευση στους Κωδικούς.</string>
     <string name="af_save_failed">Το orOS δεν μπόρεσε να κρατήσει αυτόν τον λογαριασμό.</string>
+    <!-- Passwords: unlock with fingerprint or face (PW-BIO, BioActivity) -->
+    <string name="bio_title">Ξεκλείδωμα Κωδικών orOS</string>
+    <string name="bio_title_on">Ενεργοποίηση ξεκλειδώματος με δακτυλικό</string>
+    <string name="bio_sub">Με το δακτυλικό ή το πρόσωπό σου</string>
+    <string name="bio_use_pw">Κύριος κωδικός</string>
 </resources>

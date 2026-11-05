@@ -50,6 +50,13 @@
 //               {t:"clear", what:"af"}         (v8: copies and keys removed)
 //               {t:"applied", what:"af-save", refs}  (v8, PW-AF3: logins
 //                 to save handed to Passwords)
+//               {t:"pw-bio", op:"state"}       (v9, PW-BIO: can this phone
+//                 unlock Passwords with a fingerprint or face?)
+//               {t:"pw-bio", op:"want", act:"seal"|"open", kid, n}  (v9:
+//                 announces the intent://<act>?n=<n> (scheme oros-bio)
+//                 the page opens next, inside a tap)
+//               {t:"pw-bio", op:"clear", kid}  (v9: the secret for kid
+//                 removed; the key too when none is left)
 //   app → page: {t:"state", v, contacts, calendar, reminders, exact,
 //                widgets, wcal, wtodo, health, drive, app}  (drive: the
 //                orOS Drive app is installed, DRIVE-APP; widgets, wcal,
@@ -66,6 +73,15 @@
 //               {t:"done", what, seq, added, updated, removed}  (what
 //                 "af-index" carries af: {svc, keys, stored, at})
 //               {t:"error", what, seq, msg}
+//               {t:"pw-bio", op:"state", can, kids, pkg}  (v9: can = ok |
+//                 none (no fingerprint or face set up) | no-hw | no-lock
+//                 | old (Android 8 or older); kids: vaults with a secret
+//                 here; pkg: the package for the intent)
+//               {t:"pw-bio", op:"key", n, d}   (v9: the 32-byte secret,
+//                 base64, after the fingerprint or face)
+//               {t:"pw-bio", op:"fail", n, code}  (v9: cancel | lockout |
+//                 invalidated (a new fingerprint: everything removed) |
+//                 none (no secret for kid) | failed)
 // Exposes window.orosPhone and, under Node, module.exports.
 // ============================================================
 (function (root) {
@@ -1011,6 +1027,81 @@
   var port = null, appState = null, seq = 0, lastSent = {}, listeners = [], timer = null;
   var afKeys = null;   // PW-AF2: {idx, names} public keys from the app, this page only
 
+  // Passwords: unlock with fingerprint or face (PW-BIO, v9). The app
+  // keeps a 32-byte secret per vault sealed in its Keystore; Passwords
+  // (passwords/pmapp.js) asks for it, the app shows Android's prompt
+  // (fingerprint or face only) and answers with the secret, which
+  // opens the vault key that Passwords keeps wrapped on this device.
+  // In the single app "orOS Passwords" the port belongs to its top page
+  // (solo.js host), which relays only these messages; this file then
+  // talks through window.parent.__orosSoloHost.bio.
+  var bioInfo = null;  // {can, kids, pkg} from the app
+  var bioWait = null;  // the one request in flight: {n, ok, no, timer}
+  var BIO_PKG = /^online\.useoros\.(twa|passwords)$/;
+  var BIO_KID = /^[0-9a-f]{24}$/;
+  var BIO_CAN = ["ok", "none", "no-hw", "no-lock", "old"];
+  var BIO_MS = 180000;
+  function bioHost() {
+    try {
+      var h = root.parent && root.parent !== root ? root.parent.__orosSoloHost : null;
+      return h && h.bio && typeof h.bio.available === "function" ? h.bio : null;
+    } catch (e) { return null; }
+  }
+  function bioSend(obj) {
+    if (port) return send(obj);
+    var h = bioHost();
+    return !!(h && h.available() && h.send(obj));
+  }
+  function bioIn(m) {
+    if (m.op === "state") {
+      bioInfo = {
+        can: BIO_CAN.indexOf(m.can) >= 0 ? m.can : "old",
+        kids: (Array.isArray(m.kids) ? m.kids : []).filter(function (k) { return typeof k === "string" && BIO_KID.test(k); }).slice(0, 16),
+        pkg: typeof m.pkg === "string" && BIO_PKG.test(m.pkg) ? m.pkg : ""
+      };
+      emit();
+      return;
+    }
+    if ((m.op !== "key" && m.op !== "fail") || !bioWait || m.n !== bioWait.n) return;
+    var w = bioWait;
+    bioWait = null;
+    clearTimeout(w.timer);
+    if (m.op === "key" && typeof m.d === "string" && /^[A-Za-z0-9+/]{43}=$/.test(m.d)) w.ok(m.d);
+    else w.no(new Error("bio-" + (/^[a-z-]{1,20}$/.test(m.code) ? m.code : "failed")));
+    bioSend({ t: "pw-bio", op: "state" });
+  }
+  function bioNonce() {
+    var b = new Uint8Array(16), s = "";
+    root.crypto.getRandomValues(b);
+    for (var i = 0; i < b.length; i++) s += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return s;
+  }
+  // act "seal": a new secret for vault kid (resolves it, base64);
+  // act "open": the secret kept for kid. Must run inside a tap: Chrome
+  // opens the app's prompt screen for an intent: link only on a user
+  // gesture. The app takes the request only when the "want" with the
+  // same one-time n came first over the port.
+  function bioAsk(act, kid) {
+    if (!bioInfo || !bioInfo.pkg || bioInfo.can !== "ok" || !BIO_KID.test(String(kid))) return Promise.reject(new Error("bio-unavailable"));
+    if (bioWait) { clearTimeout(bioWait.timer); bioWait.no(new Error("bio-cancel")); bioWait = null; }
+    var n = bioNonce(), url = "intent://" + act + "?n=" + n + "#Intent;scheme=oros-bio;package=" + bioInfo.pkg + ";end";
+    return new Promise(function (ok, no) {
+      if (!bioSend({ t: "pw-bio", op: "want", act: act, kid: kid, n: n })) { no(new Error("bio-unavailable")); return; }
+      bioWait = { n: n, ok: ok, no: no, timer: setTimeout(function () {
+        if (bioWait && bioWait.n === n) { bioWait = null; no(new Error("bio-timeout")); }
+      }, BIO_MS) };
+      var h = port ? null : bioHost();
+      if (h) h.go(url);
+      else root.location.href = url;
+    });
+  }
+  // The single app: listen to what its top page relays.
+  (function () {
+    var h = bioHost();
+    if (!h || typeof h.listen !== "function") return;
+    h.listen(function (m) { if (m && m.t === "pw-bio") bioIn(m); });
+  })();
+
   function prefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREF_KEY) || "{}");
@@ -1331,6 +1422,8 @@
       };
       emit();
       pushAll(true);
+    } else if (m.t === "pw-bio") {
+      bioIn(m);
     } else if (m.t === "af-keys") {
       var k1 = typeof m.idx === "string" ? m.idx : "", k2 = typeof m.names === "string" ? m.names : "";
       var B64 = /^[A-Za-z0-9+/]+={0,2}$/;
@@ -1516,6 +1609,16 @@
     afClear: function () { afKeys = null; return send({ t: "clear", what: "af" }); },
     // Must run inside a click (an intent: link, like askPermission).
     afSettings: function () { if (port) root.location.href = PERM_URL.autofill; },
+    // Passwords: unlock with fingerprint or face (PW-BIO, v9). Works in
+    // the orOS app and in the single app "orOS Passwords".
+    bio: {
+      available: function () { var h = bioHost(); return !!port || !!(h && h.available()); },
+      info: function () { return bioInfo; },
+      refresh: function () { return bioSend({ t: "pw-bio", op: "state" }); },
+      seal: function (kid) { return bioAsk("seal", kid); },
+      open: function (kid) { return bioAsk("open", kid); },
+      clear: function (kid) { return BIO_KID.test(String(kid)) && bioSend({ t: "pw-bio", op: "clear", kid: kid }); }
+    },
     // Returns an "off" function: an app frame calls it when it closes.
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};

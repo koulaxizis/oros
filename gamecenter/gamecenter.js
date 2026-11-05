@@ -90,6 +90,9 @@
       "stats.open": "Open {g}",
       "stats.unplayed": "Not played yet ({n})",
       "foot.note": "Everything here is read from the games' own data on this device, which syncs with each game. Nothing extra is stored.",
+      "dev.title": "On this device",
+      "hap.label": "Vibrate on moves, mistakes and wins",
+      "hap.note": "Only on this device, in every game. The game sounds have their own switch in each game.",
       "toast.missing": "{g} is not installed. Add it from the App Store in Settings.",
       "a.first": "First win", "d.first": "Win or solve any game.",
       "a.daily1": "First daily", "d.daily1": "Solve a Daily challenge.",
@@ -153,6 +156,9 @@
       "stats.open": "Άνοιγμα: {g}",
       "stats.unplayed": "Δεν παίχτηκαν ακόμα ({n})",
       "foot.note": "Όλα όσα βλέπεις εδώ διαβάζονται από τα δεδομένα των ίδιων των παιχνιδιών σε αυτή τη συσκευή, που συγχρονίζονται με κάθε παιχνίδι. Δεν αποθηκεύεται τίποτα επιπλέον.",
+      "dev.title": "Σε αυτή τη συσκευή",
+      "hap.label": "Δόνηση σε κινήσεις, λάθη και νίκες",
+      "hap.note": "Μόνο σε αυτή τη συσκευή, σε όλα τα παιχνίδια. Οι ήχοι έχουν τον δικό τους διακόπτη μέσα σε κάθε παιχνίδι.",
       "toast.missing": "Το «{g}» δεν είναι εγκατεστημένο. Πρόσθεσέ το από το App Store στις Ρυθμίσεις.",
       "a.first": "Πρώτη νίκη", "d.first": "Κέρδισε ή λύσε οποιοδήποτε παιχνίδι.",
       "a.daily1": "Πρώτη ημερήσια", "d.daily1": "Λύσε μια ημερήσια πρόκληση.",
@@ -577,6 +583,18 @@
     renderTimer = setTimeout(render, 150);
   }
 
+  // F8: the vibration switch, shown only where the browser can vibrate.
+  function wireHaptics() {
+    var H = window.orosHaptics, box = $("hap-box");
+    if (!H || !H.supported()) return;
+    $("dev-block").hidden = false;
+    box.checked = H.enabled();
+    box.addEventListener("change", function () {
+      H.set(box.checked);
+      if (box.checked) H.cue("win");             // a taste of it
+    });
+  }
+
   function boot() {
     applyI18n();
     inheritPalette();
@@ -584,6 +602,7 @@
     wireKeyboard();
     render();
     $("all-find").addEventListener("input", filterAll);
+    wireHaptics();
     // A game's data changed (synced in, or the game was played in
     // another window): the numbers follow.
     window.addEventListener("storage", function (e) {

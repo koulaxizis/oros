@@ -1,4 +1,5 @@
 orosPack("de", "snake", {
+ "app.name": "Snake",
  "board.label": "Snake-Feld, {n} mal {n}, {m}",
  "btn.again": "Nochmal",
  "btn.new": "Neues Spiel (N)",

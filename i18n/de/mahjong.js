@@ -1,4 +1,5 @@
 orosPack("de", "mahjong", {
+ "app.name": "Mahjong",
  "board.label": "Mahjong-Brett, {lay}",
  "btn.hint": "Tipp (H)",
  "btn.new": "Neues Spiel (N)",

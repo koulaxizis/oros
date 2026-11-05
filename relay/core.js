@@ -16,6 +16,8 @@
 //           POST /v1  { op: "shr", act, id, ... }  (share links with an expiry, see share.js)
 //           /s/<id>/<i> PUT / GET one encrypted piece of a shared item (share.js)
 //           POST /v1  { op: "push", act, id, tok, ... }  (notifications with orOS closed, see push.js)
+//           POST /v1  { op: "hook", act, id, tok, ... }  (Automations: incoming webhooks, see hook.js)
+//           /wh/<id>.<sec> POST one small JSON for a device's Automations (hook.js)
 //           /h/<box>/... a household's encrypted shared documents (household apps, see house.js)
 //           /dav      WebDAV pass-through, target in X-Oros-Target (Sync through WebDAV, see dav.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
@@ -38,6 +40,7 @@ import { validPush, runPush, PushError } from "./push.js";
 import { handleDav } from "./dav.js";
 import { handleHouse } from "./house.js";
 import { validOasa, runOasa, OasaError } from "./oasa.js";
+import { validHookIn, runHookIn, handleHookIn, HookError } from "./hook.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -49,7 +52,7 @@ export const LIMITS = {
 const PORTS = { 993: "tls", 143: "starttls" };
 const SMTP_PORTS = { 465: "tls", 587: "starttls" };
 const OPS = { check: 1, folders: 1, list: 1, fetch: 1, flag: 1, web: 1, canva: 1, smtpcheck: 1, send: 1,
-              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, push: 1, oasa: 1 };
+              move: 1, expunge: 1, create: 1, rename: 1, delete: 1, search: 1, draft: 1, sieve: 1, nl: 1, nlhook: 1, papi: 1, ext: 1, crmf: 1, shr: 1, push: 1, oasa: 1, hook: 1 };
 const SIEVE_PORT = 4190;
 
 // ---------- validation ----------
@@ -103,6 +106,7 @@ export function validRequest(b, env, now) {
   if (b.op === "papi") return validPapi(b);   // Newsletter: provider HTTP APIs
   if (b.op === "ext") return validExt(b);     // Connected services: a person's own shop
   if (b.op === "push") return validPush(b);   // Notifications with orOS closed
+  if (b.op === "hook") return validHookIn(b); // Automations: incoming webhooks
   if (b.op === "oasa") return validOasa(b);   // Maps: live bus arrivals in Athens (OASA)
   const bad = validAccount(b.acct);
   if (bad) return bad;
@@ -214,6 +218,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   if (url.pathname.startsWith("/crm/")) {
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return crmPage(429, "en", "busy");
     return handleCrmForm(request, env, url, now || Date.now());
+  }
+
+  // Automations' incoming webhooks (relay/hook.js): any sender, POST only,
+  // no Origin check, no CORS, nothing in the answer but the status.
+  if (url.pathname.startsWith("/wh/")) {
+    return handleHookIn(request, env, url, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
   // Studio Remote's meeting rooms (relay/remote.js): WebSockets from orOS only.
@@ -350,6 +360,16 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     } catch (e) {
       if (e instanceof ShrError) return fail(e.status, e.code, e.message, okOrigin);
       return fail(503, "nostore", "storage failed", okOrigin);           // a D1 failure; never its text
+    }
+  }
+
+  if (b.op === "hook") {
+    try {
+      const data = await runHookIn(b, env, now || Date.now(), request.headers.get("CF-Connecting-IP") || "");
+      return json(200, { ok: true, data }, okOrigin);
+    } catch (e) {
+      if (e instanceof HookError) return fail(e.status, e.code, e.code, okOrigin);
+      return fail(503, "nostore", "hook failed", okOrigin);            // never its text
     }
   }
 

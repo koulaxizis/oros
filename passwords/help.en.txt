@@ -83,6 +83,13 @@ Delete an export that is not encrypted, and any picture of those QR codes, as so
 - A new fingerprint or face on the phone turns autofill off for safety: open Passwords and turn it on again. Turning it off removes the phone's copy and keys.
 - Saving: when autofill is on, Android offers `Save to orOS Passwords?` after you sign in or sign up somewhere new. A yes opens orOS with the login in the Passwords editor (unlock first if needed); it is stored only when you press `Save` there. Until then the phone keeps it sealed for at most a day.
 
+## Unlock with fingerprint or face on Android
+- In the orOS app for Android and in the "orOS Passwords" app, `Menu` › `Fingerprint unlock` lets you open the vault with your fingerprint or face instead of typing the master password. Type the master password, press `Turn on for this phone` and touch the sensor or look at the phone.
+- From then on the locked vault shows `Unlock with fingerprint or face`. The master password always works below it, and it stays the only key on your other devices.
+- Only a fingerprint or face counts, never the screen PIN or pattern. The phone keeps a copy of the vault key locked with a key inside Android that only your fingerprint or face opens; the copy never leaves the phone and never syncs.
+- So you don't forget it, orOS asks for the master password every 14 days, and once after you change it or the recovery key on any device.
+- A new fingerprint or face on the phone turns fingerprint unlock off for safety; turn it on again in `Menu`. Turning it off removes the phone's copy. It needs Android 9 or newer and a screen lock.
+
 ## Locking and the clipboard
 The vault locks itself after 5 minutes without use and as soon as you leave the app or switch to another tab. Change both in `⋯`, `Lock settings`. The padlock button locks it at once.
 
