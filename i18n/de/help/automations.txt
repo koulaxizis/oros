@@ -27,6 +27,12 @@ Zwei Schritte verlassen orOS von selbst, wenn die Regel läuft:
 
 Unter jedem siehst du genau, was gesendet wird, und nichts geht raus, bevor du `Diese Regel darf das von selbst…` für diese Adresse abhakst; änderst du die Adresse, hakst du es erneut ab. Nur das Gerät, das die Regel ausführt, sendet, einmal. Halte die Adresse geheim: Wer sie hat, kann an dein Thema oder deinen Webhook senden. Der Assistent schlägt Regeln vor, aber nie diese zwei Schritte.
 
+## Eingehender Webhook
+`Einschalten` unter Eingehender Webhook gibt diesem Gerät eine geheime Adresse. Jeder Dienst, der Webanfragen senden kann (n8n, Home Assistant, ein Formular, ein Skript), kann dort ein kleines JSON-Objekt (bis 4 KB) per POST abliefern, und hier läuft eine Regel mit `Wenn ein Webhook ankommt`; `{text}` wird das Feld `text` oder `message` des JSON oder das ganze JSON. orOS holt Angekommenes alle paar Minuten ab, solange es offen ist; eine Nachricht kann also warten, bis du orOS öffnest.
+- Das Relay verschlüsselt Angekommenes sofort mit einem Schlüssel, den nur dieses Gerät hat, und behält es, bis dieses Gerät es abholt (höchstens 100 Nachrichten). Es sieht die Nachricht im Klartext, während sie ankommt, und speichert oder protokolliert sie nie so.
+- `Neue Adresse` beendet die alte sofort; `Ausschalten` löscht das Postfach. Nach 7 Tagen ohne orOS auf diesem Gerät hört die Adresse von selbst auf.
+- Die Adresse gilt nur für dieses Gerät; schalte sie auf jedem Gerät ein, das reagieren soll.
+
 ## Den Assistenten fragen
 Sag dem [Assistenten](app:assistant), was du willst, zum Beispiel „erinnere mich jeden Montag um 8 an den Müll" oder „wenn eine dringende E-Mail kommt, setz sie in To-Do". Er schreibt die Regel und zeigt sie auf einer Karte; `In Automatisierungen öffnen` öffnet sie hier als neue Regel, und nichts wird gespeichert, bevor du auf Speichern tippst. Frag ihn „warum ist das gelaufen?", und wenn du ihn Automatisierungen lesen lässt, sieht er deine Regeln und die letzten Läufe auf diesem Gerät an (nie, was ein Hinweis sagte) und erklärt sie oder schlägt eine bessere Regel vor. Passwörter sieht er nie.
 

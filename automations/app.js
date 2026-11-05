@@ -51,6 +51,12 @@
       "x.urlHintHook": "Your webhook's address, for example Home Assistant https://…/api/webhook/<id> or n8n. The server must accept requests from orOS (CORS).",
       "x.allow": "Let this rule send this to {host} by itself", "x.sends": "What it sends:", "x.notAllowed": "Not sent until you tick it.",
       "log.outErr": "Push or webhook not delivered",
+      "wh.title": "Incoming webhook", "wh.hint": "An address other services (n8n, Home Assistant, a form) can post a small JSON to. A rule with \u201cWhen a webhook arrives\u201d then runs on this device.",
+      "wh.url": "Your address (keep it secret)", "wh.copy": "Copy address", "wh.rot": "New address", "wh.off": "Turn off", "wh.start": "Turn on",
+      "wh.privacy": "What arrives is encrypted on the relay to a key only this device has, kept until this device picks it up, and never logged. The relay sees it in plain text as it arrives.",
+      "wh.exp": "Renewed by itself while orOS is used; it stops after 7 days without orOS on this device.", "wh.copied": "Address copied",
+      "wh.rotAsk": "The old address stops working at once and anything waiting is deleted. Make a new one?",
+      "wh.err": "The relay could not be reached. Try again later.",
       "x.text": "Text", "x.items": "Tasks, one per line", "x.newList": "In a new list named (optional)",
       "x.title": "Title", "x.off": "Days after the run", "x.start": "Start time (optional)", "x.to": "To (optional)",
       "x.subject": "Subject", "x.body": "Message", "x.kind": "Kind", "x.out": "Expense", "x.in": "Income",
@@ -95,6 +101,12 @@
       "x.urlHintHook": "Η διεύθυνση του webhook σου, π.χ. Home Assistant https://…/api/webhook/<id> ή n8n. Ο server πρέπει να δέχεται αιτήματα από το orOS (CORS).",
       "x.allow": "Να το στέλνει μόνος του αυτός ο κανόνας στο {host}", "x.sends": "Τι στέλνει:", "x.notAllowed": "Δεν στέλνεται πριν το τσεκάρεις.",
       "log.outErr": "Η ειδοποίηση ή το webhook δεν παραδόθηκε",
+      "wh.title": "Εισερχόμενο webhook", "wh.hint": "Μια διεύθυνση όπου άλλες υπηρεσίες (n8n, Home Assistant, μια φόρμα) στέλνουν ένα μικρό JSON. Τότε τρέχει σε αυτή τη συσκευή ένας κανόνας με «Όταν έρχεται webhook».",
+      "wh.url": "Η διεύθυνσή σου (κράτα τη μυστική)", "wh.copy": "Αντιγραφή διεύθυνσης", "wh.rot": "Νέα διεύθυνση", "wh.off": "Απενεργοποίηση", "wh.start": "Ενεργοποίηση",
+      "wh.privacy": "Ό,τι φτάνει κρυπτογραφείται στο relay με κλειδί που έχει μόνο αυτή η συσκευή, μένει εκεί μέχρι να το πάρει η συσκευή και δεν καταγράφεται ποτέ. Το relay το βλέπει σε απλό κείμενο τη στιγμή που φτάνει.",
+      "wh.exp": "Ανανεώνεται μόνο του όσο χρησιμοποιείς το orOS· σταματά μετά από 7 μέρες χωρίς orOS σε αυτή τη συσκευή.", "wh.copied": "Η διεύθυνση αντιγράφηκε",
+      "wh.rotAsk": "Η παλιά διεύθυνση σταματά αμέσως και ό,τι περιμένει διαγράφεται. Να φτιαχτεί νέα;",
+      "wh.err": "Το relay δεν απαντά. Δοκίμασε ξανά αργότερα.",
       "x.text": "Κείμενο", "x.items": "Εργασίες, μία σε κάθε γραμμή", "x.newList": "Σε νέα λίστα με όνομα (προαιρετικό)",
       "x.title": "Τίτλος", "x.off": "Μέρες μετά την εκτέλεση", "x.start": "Ώρα έναρξης (προαιρετικό)", "x.to": "Προς (προαιρετικό)",
       "x.subject": "Θέμα", "x.body": "Μήνυμα", "x.kind": "Είδος", "x.out": "Έξοδο", "x.in": "Έσοδο",
@@ -640,9 +652,49 @@
     } catch (e) { /* standalone */ }
   }
 
+  // ---------- 9b. Incoming webhook (wave A5): the shell's orosHookIn ----------
+  function hookApi() {
+    try { var p = window.parent; return p && p !== window && p.orosHookIn ? p.orosHookIn : null; } catch (e) { return null; }
+  }
+  function renderHook() {
+    var H = hookApi(), sec = $("wh-sec");
+    sec.hidden = !H;
+    if (!H) return;
+    var st = H.state();
+    $("wh-on").hidden = !st.on;
+    $("wh-start").hidden = st.on;
+    $("wh-url").value = st.url;
+    $("wh-exp").textContent = st.on ? t("wh.exp") : "";
+  }
+  function hookDo(fn) {
+    var H = hookApi();
+    if (!H) return;
+    var btns = ["wh-start", "wh-rot", "wh-off"].map($);
+    btns.forEach(function (b) { b.disabled = true; });
+    Promise.resolve().then(function () { return fn(H); }).catch(function () { toast(t("wh.err")); })
+      .then(function () { btns.forEach(function (b) { b.disabled = false; }); renderHook(); });
+  }
+  function wireHook() {
+    $("wh-start").addEventListener("click", function () { hookDo(function (H) { return H.on(); }); });
+    $("wh-off").addEventListener("click", function () { hookDo(function (H) { return H.off(); }); });
+    $("wh-rot").addEventListener("click", function () {
+      if (!window.confirm(t("wh.rotAsk"))) return;
+      hookDo(function (H) { return H.rotate(); });
+    });
+    $("wh-copy").addEventListener("click", function () {
+      var v = $("wh-url").value;
+      var done = function () { toast(t("wh.copied")); };
+      try { navigator.clipboard.writeText(v).then(done, function () { $("wh-url").select(); }); } catch (e) { $("wh-url").select(); }
+    });
+    var H = hookApi();
+    if (H && H.onChange) H.onChange(renderHook);
+    renderHook();
+  }
+
   // ---------- 10. Wiring + boot ----------
   function wire() {
     $("new-btn").addEventListener("click", function () { edit(null); });
+    wireHook();
     $("tpl-btn").addEventListener("click", showTemplates);
     $("empty-tpl").addEventListener("click", showTemplates);
     $("f-when").addEventListener("change", showWhen);
