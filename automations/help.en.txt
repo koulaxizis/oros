@@ -12,6 +12,24 @@ Automations lets orOS do things for you at the right moment. A rule says when so
 - `Every year` and `Once`: pick the `Date`.
 - `When orOS opens (once a day)`: the first time you open orOS each day.
 
+## When something happens
+A rule can also follow what happens instead of a time:
+- `When an app posts a notice`: a notice from one app (for example Mail or Calendar) or from any app. With `Only when it says`, only notices with that word count (capitals and accents do not matter).
+- `When something happens`: you finish a task in To-Do, tick a habit, reach your water goal or finish a workout.
+- `Only on these days and hours` keeps it to, say, weekdays from 9:00 to 17:00.
+
+In its texts, `{text}` becomes what the notice or the event said: the task, the habit, the workout or the notice's text. Such a rule runs once for each thing that happens, at most 20 times a day, and only on the device where it happened. Notices from Passwords never start a rule, and nothing of Passwords is ever read.
+
+## Outside orOS
+Two steps leave orOS by themselves when the rule runs:
+- `Push to my phone`: a push through [ntfy](https://ntfy.sh) (free, no account; pick a topic nobody can guess, or your own server) or your own Gotify server. Install the ntfy or Gotify app on the phone and subscribe to the same topic.
+- `Send to a webhook`: a small JSON message (`source`, `rule`, `at`, `text`) to your own n8n, Home Assistant (an automation with a Webhook trigger), Make or similar. The server must use https and accept requests from orOS (CORS; ntfy does).
+
+Under each one you see exactly what is sent, and nothing leaves until you tick `Let this rule send this…` for that address; change the address and you tick it again. Only the device that runs the rule sends it, once. Keep the address secret: anyone who has it can post to your topic or webhook. The Assistant can suggest rules but never these two steps.
+
+## Ask the Assistant
+Tell the [Assistant](app:assistant) what you want, for example "every Monday at 8 remind me to put the bins out" or "when an urgent mail comes, add it to To-Do". It writes the rule and shows it on a card; `Open in Automations` opens it here as a new rule, and nothing is saved until you press Save. Ask it "why did this run?" and, if you let it read Automations, it looks at your rules and the recent runs on this device (never what a notice said) and explains, or suggests a better rule. It never sees Passwords.
+
 ## What a rule does
 - `Show a notice` appears by itself in the notifications, like any reminder.
 - Every other step needs your go-ahead: the notice says what a tap does, and the tap opens that app filled in (To-Do, Calendar, Notes, Mail, Budget, Time or the Assistant). Nothing is saved in that app until you save it there.

@@ -1759,6 +1759,7 @@
       "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +
       "crm with partner answers 'what is open with X?' for one partner. " +
+      "automations lists every rule in words (with a ref; on or off) and this device's recent runs: when, which rule, whether it was a time or something that happened, and what came of it (notice shown, notices off, skipped because an app is missing, opened); use it for 'why did this run?' and to suggest a better rule with propose_rule. " +
       "The user sees the summary first and may hold it back.",
     params: {
       type: "object",
@@ -2195,6 +2196,56 @@
       }
     };
   }
+
+  // Wave A6: a rule for the Automations app (automations/core.js),
+  // written from a description ("every Monday at 8 remind me of the
+  // bins", "when an urgent mail comes, add it to To-Do"). The user
+  // sees it in plain words and opens it in the Automations editor,
+  // where they check and save it; nothing is saved by this call.
+  // Passwords is never a source or a target (AUTO-4).
+  var RULE_WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
+  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask"];
+  var TOOL_RULE = {
+    name: "propose_rule",
+    description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
+      "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
+      "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends; word optional). " +
+      "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
+      "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
+      "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant). " +
+      "Texts may use {date}, {weekday}, {month}, {year}, and {text} = the notice or event's words. " +
+      "The user sees the rule on a card and opens it in Automations, where they check and save it; nothing is saved or run by this call, so never say it is set. " +
+      "Passwords can never be used.",
+    params: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "A short name for the rule, in the user's language." },
+        when: { type: "object", properties: {
+          type: { type: "string", "enum": RULE_WHEN.slice() },
+          at: { type: "string", description: "HH:MM, 24 hours." },
+          weekdays: { type: "array", items: { type: "number" }, description: "day: 0 Sunday … 6 Saturday; empty = every day." },
+          day_of_month: { type: "number" },
+          date: { type: "string" },
+          app: { type: "string", description: "notice: the app id the notice comes from." },
+          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done"] },
+          word: { type: "string" },
+          only_days: { type: "array", items: { type: "number" } },
+          from: { type: "string" },
+          to: { type: "string" }
+        }, required: ["type"] },
+        steps: { type: "array", description: "At most 8 steps, in order.", items: { type: "object", properties: {
+          "do": { type: "string", "enum": RULE_DO.slice() },
+          text: { type: "string" }, items: { type: "array", items: { type: "string" } }, list: { type: "string" },
+          title: { type: "string" }, days_later: { type: "number" }, start: { type: "string" },
+          subject: { type: "string" }, body: { type: "string" }, to: { type: "string" },
+          amount: { type: "number" }, income: { type: "boolean" }, note: { type: "string" },
+          app: { type: "string" }, minutes: { type: "number" }, label: { type: "string" }
+        }, required: ["do"] } }
+      },
+      required: ["when", "steps"]
+    }
+  };
 
   // Chat compose N1: blocks for a newsletter issue (newsletter/core.js
   // asAdd). The user picks the draft in Newsletter; nothing is added
@@ -2990,6 +3041,7 @@
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
     if (opts.cover) out.push(TOOL_COVER);
+    if (opts.rules && autoCore()) out.push(TOOL_RULE);
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
     else if (opts.page) out.push(TOOL_PAGE);
     return out;
@@ -3316,6 +3368,9 @@
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
+    }
+    if (!opts.builtin && opts.rules) {
+      lines.push("When the user wants something to happen by itself, on a schedule or when something happens in orOS (\"every Monday remind me…\", \"when an urgent mail comes, add a task\", \"after a workout tell me to drink water\"), offer a rule with propose_rule. The user opens it in Automations and saves it there; nothing is set before that, so never say it is set. If the user wants something a rule cannot do, say so plainly.");
     }
     if (!opts.builtin && opts.cover) {
       lines.push("For a book cover (front, spine and back for print), call book_cover with the details the user gave and the attached pictures: the front picture and, when there is one, the publisher's logo. The user opens it in Layout and edits it there; never say it was made.");
@@ -4285,6 +4340,55 @@
     return { ok: true, app: app, nm: d.nm, steps: d.steps, view: d.steps.map(function (st) { return SH.words(app, st); }) };
   }
 
+  // ---------- 12b. Automation rules (wave A6) ----------
+  function autoCore() {
+    if (typeof module !== "undefined" && module.exports) { try { return require("../automations/core.js"); } catch (e) { return null; } }
+    return root.OrosAutoCore || null;
+  }
+  // propose_rule arguments → { ok, rule } (checked by the Automations
+  // app's own cleanRule, id "new") or { ok: false, err } (in English,
+  // for the model). has(app): the app is installed.
+  function normRule(args, has) {
+    var AC = autoCore();
+    if (!AC) return { ok: false, err: "automations are not available." };
+    if (has && !has("automations")) return { ok: false, err: "the Automations app is not installed." };
+    args = args && typeof args === "object" ? args : {};
+    var wn = args.when && typeof args.when === "object" ? args.when : {};
+    var steps = Array.isArray(args.steps) ? args.steps : [];
+    var mentions = [wn.app].concat(steps.map(function (x) { return x && x.app; }));
+    if (mentions.some(function (a) { return typeof a === "string" && AC.BLOCKED_APPS[a.toLowerCase()]; })) return { ok: false, err: "Passwords can never be used in a rule." };
+    var when = { t: wn.type, at: wn.at, wd: wn.weekdays, md: wn.day_of_month, date: wn.date, app: wn.app || "", ev: wn.event, word: wn.word };
+    if (!AC.cleanWhen(when)) return { ok: false, err: "when is not valid (check type, at, date, day_of_month, app or event)." };
+    if (when.t === "notice" && when.app && has && !has(when.app)) return { ok: false, err: "the app " + when.app + " is not installed." };
+    if (!steps.length) return { ok: false, err: "give at least one step." };
+    if (steps.length > AC.MAX_ACTIONS) return { ok: false, err: "at most " + AC.MAX_ACTIONS + " steps." };
+    var acts = [], bad = [];
+    steps.forEach(function (x, i) {
+      x = x && typeof x === "object" ? x : {};
+      var a = { a: x["do"] };
+      if (a.a === "notify" || a.a === "ask") a.text = x.text;
+      else if (a.a === "todo") { a.items = x.items; if (x.list) a.newList = x.list; }
+      else if (a.a === "event") { a.title = x.title; a.off = x.days_later; a.start = x.start; }
+      else if (a.a === "note") { a.title = x.title; a.text = x.text; }
+      else if (a.a === "mail") { a.subject = x.subject; a.body = x.body; a.to = x.to; }
+      else if (a.a === "budget") { a.amount = typeof x.amount === "number" ? Math.round(x.amount * 100) : 0; a.k = x.income ? "i" : "o"; a.note = x.note; }
+      else if (a.a === "open") a.app = x.app;
+      else if (a.a === "timer") { a.min = x.minutes; a.label = x.label; }
+      var c = AC.cleanAction(a);
+      if (!c) { bad.push("step " + (i + 1) + " (" + String(x["do"] || "?").slice(0, 20) + ") is missing what it needs."); return; }
+      var need = AC.needs(c);
+      if (need && has && !has(need)) { bad.push("step " + (i + 1) + " needs the app " + need + ", which is not installed."); return; }
+      acts.push(c);
+    });
+    if (bad.length) return { ok: false, err: bad.join(" ") };
+    var raw = { id: "new", name: args.name, on: true, when: when, "do": acts };
+    if (when.t === "notice" || when.t === "event") raw["if"] = { wd: wn.only_days, from: wn.from, to: wn.to };
+    var rule = AC.cleanRule(raw);
+    if (!rule) return { ok: false, err: "the rule is not valid." };
+    delete rule.m;
+    return { ok: true, rule: rule };
+  }
+
   // ---------- Misc ----------
   function chatTitle(text) {
     var s = squash(text);
@@ -4323,7 +4427,7 @@
     searchReq: searchReq, searchParse: searchParse, pageReq: pageReq, pageParse: pageParse, pagePart: pagePart, PAGE_PARTS: PAGE_PARTS, siteOf: siteOf, pageAllowed: pageAllowed, webResult: webResult,
     BRIEF_MAX: BRIEF_MAX, briefPlan: briefPlan, briefKeep: briefKeep, briefText: briefText,
 normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: readAppTool, EDIT_APP: EDIT_APP,
-        normAutomation: normAutomation, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
+        normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
     normHouse: normHouse, houseReport: houseReport, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,

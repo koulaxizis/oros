@@ -15,6 +15,12 @@
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
+//           POST /v1 { op: "ext", p: "toggl" | "clockify", key, reqs: [...] }, { p: "harvest", key, token (the account id), reqs }
+//   Toggl https://api.track.toggl.com/api/v9<path> (Basic key:api_token), Clockify
+//   https://api.clockify.me/api/v1<path> (X-Api-Key), Harvest https://api.harvestapp.com/v2<path>
+//   (Bearer + Harvest-Account-Id), all read-only: the user's time entries (Timesheet T5)
+//           POST /v1 { op: "ext", p: "kimai", host, base, key, reqs: [...] }
+//   Kimai https://<host><base>/api<path> (Bearer), read-only: the user's timesheets
 //   MailerLite https://connect.mailerlite.com/api<path> (Bearer),
 //   Mailchimp https://<dc>.api.mailchimp.com/3.0<path> (dc = the key's
 //   suffix, Basic), Brevo https://api.brevo.com/v3<path> (header api-key),
@@ -226,6 +232,9 @@ const WHOLE = {
 };
 const ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
 
+// Time trackers (Timesheet T5): days, timestamps, ids
+const TT_ISOZ = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/, TT_LDT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
+      TT_HEX24 = "[0-9a-f]{24}", TT_TRUE = /^true$/, TT_PER2000 = /^([1-9][0-9]{0,2}|1[0-9]{3}|2000)$/;
 export const PLATFORMS = {
   woo: {
     root: "/wp-json/wc/v3",
@@ -483,6 +492,50 @@ export const PLATFORMS = {
       ["GET", /^\/blocks\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/children$/, { page_size: PER, start_cursor: NT_ID }, null],
       // a database's rows (wave 6E): a POST that reads, no filter or sort
       ["POST", /^\/databases\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/query$/, null, { page_size: "nlim", start_cursor: "ncur" }, null]
+    ]
+  },
+  // Time trackers (Timesheet T5), read-only: time entries into Timesheet
+  toggl: {
+    root: "/api/v9",
+    host: "api.track.toggl.com",
+    keys: { key: /^[a-f0-9]{32}$/ },
+    auth: (b) => ["Authorization", "Basic " + btoa(b.key + ":api_token")],
+    allow: [
+      ["GET", /^\/me$/, null, null],
+      ["GET", /^\/me\/(projects|clients)$/, null, null],
+      ["GET", /^\/me\/time_entries$/, { start_date: DAY, end_date: DAY }, null]
+    ]
+  },
+  clockify: {
+    root: "/api/v1",
+    host: "api.clockify.me",
+    keys: { key: /^[A-Za-z0-9+\/=_-]{30,100}$/ },
+    auth: (b) => ["X-Api-Key", b.key],
+    allow: [
+      ["GET", /^\/user$/, null, null],
+      ["GET", new RegExp("^\\/workspaces\\/" + TT_HEX24 + "\\/user\\/" + TT_HEX24 + "\\/time-entries$"),
+        { start: TT_ISOZ, end: TT_ISOZ, page: NUM, "page-size": LIM1000, hydrated: TT_TRUE }, null]
+    ]
+  },
+  harvest: {
+    root: "/v2",
+    host: "api.harvestapp.com",
+    keys: { key: /^[0-9]{3,12}\.pt\.[A-Za-z0-9_-]{30,200}$/, token: /^[0-9]{3,12}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    extraOf: (b) => ({ "Harvest-Account-Id": b.token }),
+    allow: [
+      ["GET", /^\/users\/me$/, null, null],
+      ["GET", /^\/time_entries$/, { from: DAY, to: DAY, page: NUM, per_page: TT_PER2000 }, null]
+    ]
+  },
+  // Kimai 2: the person's own install (or kimai.cloud), host checked like WooCommerce's
+  kimai: {
+    root: "/api",
+    keys: { key: /^[A-Za-z0-9_-]{16,128}$/ },
+    auth: (b) => ["Authorization", "Bearer " + b.key],
+    allow: [
+      ["GET", /^\/version$/, null, null],
+      ["GET", /^\/timesheets$/, { begin: TT_LDT, end: TT_LDT, size: LIM500, page: NUM, full: TT_TRUE }, null]
     ]
   }
 };

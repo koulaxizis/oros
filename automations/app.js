@@ -37,11 +37,20 @@
       "f.on": "On",
       "w.day": "Every day or on some days", "w.month": "Every month", "w.year": "Every year", "w.once": "Once",
       "w.open": "When orOS opens (once a day)", "md.last": "The last day",
+      "w.notice": "When an app posts a notice", "w.event": "When something happens",
+      "f.app": "App", "f.anyApp": "Any app", "f.ev": "What", "f.word": "Only when it says (optional)",
+      "f.if": "Only on these days and hours (optional)", "f.from": "From", "f.to": "Until",
+      "ed.text": "{text} becomes the notice's or the task's text.",
       "ed.safe": "A notice shows by itself. Every other step opens its app filled in, and nothing is saved there until you save it.",
       "ed.ph": "In texts, {date}, {weekday}, {month} and {year} become the day of the run.",
       "a.notify": "Show a notice", "a.todo": "Add tasks to To-Do", "a.event": "Add an event to Calendar",
       "a.note": "Write a note", "a.mail": "Write an e-mail", "a.budget": "Add to Budget", "a.open": "Open an app",
       "a.timer": "Start a timer", "a.ask": "Ask the Assistant",
+      "a.push": "Push to my phone (ntfy, Gotify)", "a.hook": "Send to a webhook (n8n, Home Assistant…)",
+      "x.svc": "Service", "x.url": "Address (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/your-secret-topic · Gotify: https://your-server/message?token=…",
+      "x.urlHintHook": "Your webhook's address, for example Home Assistant https://…/api/webhook/<id> or n8n. The server must accept requests from orOS (CORS).",
+      "x.allow": "Let this rule send this to {host} by itself", "x.sends": "What it sends:", "x.notAllowed": "Not sent until you tick it.",
+      "log.outErr": "Push or webhook not delivered",
       "x.text": "Text", "x.items": "Tasks, one per line", "x.newList": "In a new list named (optional)",
       "x.title": "Title", "x.off": "Days after the run", "x.start": "Start time (optional)", "x.to": "To (optional)",
       "x.subject": "Subject", "x.body": "Message", "x.kind": "Kind", "x.out": "Expense", "x.in": "Income",
@@ -53,7 +62,7 @@
       "next": "Next: {when}", "never": "Will not run again", "needs": "Needs {app}, which is not installed here",
       "run.notice": "Notice: {text}", "run.at": "Run of {when}", "run.none": "This rule has no other step.",
       "log.sent": "Ran", "log.late": "Ran late", "log.off": "Notices are off", "log.skip": "Skipped: an app is missing",
-      "log.run": "You opened it", "gone": "This rule was deleted.",
+      "log.run": "You opened it", "gone": "This rule was deleted.", "badRule": "This rule cannot be opened here.",
       "conf.del": "Delete this rule?"
     },
     el: {
@@ -72,11 +81,20 @@
       "f.on": "Ενεργός",
       "w.day": "Κάθε μέρα ή κάποιες μέρες", "w.month": "Κάθε μήνα", "w.year": "Κάθε χρόνο", "w.once": "Μία φορά",
       "w.open": "Όταν ανοίγει το orOS (μία φορά τη μέρα)", "md.last": "Η τελευταία μέρα",
+      "w.notice": "Όταν μια εφαρμογή στέλνει ειδοποίηση", "w.event": "Όταν συμβαίνει κάτι",
+      "f.app": "Εφαρμογή", "f.anyApp": "Οποιαδήποτε εφαρμογή", "f.ev": "Τι", "f.word": "Μόνο όταν γράφει (προαιρετικό)",
+      "f.if": "Μόνο αυτές τις μέρες και ώρες (προαιρετικό)", "f.from": "Από", "f.to": "Έως",
+      "ed.text": "Το {text} γίνεται το κείμενο της ειδοποίησης ή της εργασίας.",
       "ed.safe": "Η ειδοποίηση εμφανίζεται μόνη της. Κάθε άλλο βήμα ανοίγει την εφαρμογή του συμπληρωμένη και δεν αποθηκεύεται τίποτα εκεί πριν το αποθηκεύσεις εσύ.",
       "ed.ph": "Στα κείμενα, τα {date}, {weekday}, {month} και {year} γίνονται η μέρα της εκτέλεσης.",
       "a.notify": "Εμφάνιση ειδοποίησης", "a.todo": "Εργασίες στο To-Do", "a.event": "Γεγονός στο Ημερολόγιο",
       "a.note": "Νέα σημείωση", "a.mail": "Νέο e-mail", "a.budget": "Καταχώριση στον Προϋπολογισμό", "a.open": "Άνοιγμα εφαρμογής",
       "a.timer": "Έναρξη χρονομέτρου", "a.ask": "Ερώτηση στον Βοηθό",
+      "a.push": "Ειδοποίηση στο κινητό (ntfy, Gotify)", "a.hook": "Αποστολή σε webhook (n8n, Home Assistant…)",
+      "x.svc": "Υπηρεσία", "x.url": "Διεύθυνση (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/το-μυστικό-σου-θέμα · Gotify: https://ο-server-σου/message?token=…",
+      "x.urlHintHook": "Η διεύθυνση του webhook σου, π.χ. Home Assistant https://…/api/webhook/<id> ή n8n. Ο server πρέπει να δέχεται αιτήματα από το orOS (CORS).",
+      "x.allow": "Να το στέλνει μόνος του αυτός ο κανόνας στο {host}", "x.sends": "Τι στέλνει:", "x.notAllowed": "Δεν στέλνεται πριν το τσεκάρεις.",
+      "log.outErr": "Η ειδοποίηση ή το webhook δεν παραδόθηκε",
       "x.text": "Κείμενο", "x.items": "Εργασίες, μία σε κάθε γραμμή", "x.newList": "Σε νέα λίστα με όνομα (προαιρετικό)",
       "x.title": "Τίτλος", "x.off": "Μέρες μετά την εκτέλεση", "x.start": "Ώρα έναρξης (προαιρετικό)", "x.to": "Προς (προαιρετικό)",
       "x.subject": "Θέμα", "x.body": "Μήνυμα", "x.kind": "Είδος", "x.out": "Έξοδο", "x.in": "Έσοδο",
@@ -88,7 +106,7 @@
       "next": "Επόμενη: {when}", "never": "Δεν θα ξανατρέξει", "needs": "Χρειάζεται το {app}, που δεν είναι εγκατεστημένο εδώ",
       "run.notice": "Ειδοποίηση: {text}", "run.at": "Εκτέλεση της {when}", "run.none": "Αυτός ο κανόνας δεν έχει άλλο βήμα.",
       "log.sent": "Έτρεξε", "log.late": "Έτρεξε με καθυστέρηση", "log.off": "Οι ειδοποιήσεις είναι κλειστές", "log.skip": "Παραλείφθηκε: λείπει εφαρμογή",
-      "log.run": "Το άνοιξες", "gone": "Αυτός ο κανόνας διαγράφηκε.",
+      "log.run": "Το άνοιξες", "gone": "Αυτός ο κανόνας διαγράφηκε.", "badRule": "Αυτός ο κανόνας δεν ανοίγει εδώ.",
       "conf.del": "Διαγραφή αυτού του κανόνα;"
     }
   };
@@ -202,13 +220,13 @@
       li.dataset.id = r.id;
       var main = el("button", "rule");
       main.type = "button";
-      main.appendChild(el("span", "name", r.name || C.whenText(r.when, BASE)));
-      main.appendChild(el("span", "sub", C.whenText(r.when, BASE) + " → " +
+      main.appendChild(el("span", "name", r.name || C.whenText(r.when, BASE, appName)));
+      main.appendChild(el("span", "sub", C.whenText(r.when, BASE, appName) + " → " +
         r["do"].map(function (a) { return a.a === "notify" ? t("a.notify").toLowerCase() : C.actText(a, BASE, appName); }).join(", ")));
       var missing = "";
       r["do"].forEach(function (a) { var n = C.needs(a); if (n && apps.length && apps.indexOf(n) < 0 && !missing) missing = n; });
       if (missing) main.appendChild(el("span", "sub warn", t("needs", { app: missing })));
-      else if (r.on && r.when.t !== "open") {
+      else if (r.on && r.when.t !== "open" && r.when.t !== "notice" && r.when.t !== "event") {
         var nx = C.nextAt(r.when, now);
         main.appendChild(el("span", "sub dim", nx ? t("next", { when: fmtTime(nx) }) : t("never")));
       }
@@ -253,7 +271,7 @@
       var b = el("button", "rule");
       b.type = "button";
       b.appendChild(el("span", "name", tp.name));
-      b.appendChild(el("span", "sub", C.whenText(C.cleanWhen(tp.rule.when), BASE)));
+      b.appendChild(el("span", "sub", C.whenText(C.cleanWhen(tp.rule.when), BASE, appName)));
       b.addEventListener("click", function () { closeDlg($("tpl-dlg")); edit(null, tp.rule); });
       li.appendChild(b);
       ul.appendChild(li);
@@ -291,6 +309,35 @@
     var md = $("f-md");
     for (var i = 1; i <= 31; i++) md.appendChild(new Option(String(i), String(i)));
     md.appendChild(new Option(t("md.last"), "-1"));
+    var ev = $("f-ev");
+    C.EVENTS.forEach(function (n) { ev.appendChild(new Option(C.whenText({ t: "event", ev: n }, BASE), n)); });
+    var iw = $("if-wd");
+    WD_ORDER.forEach(function (n) {
+      var lab = el("label", "wdbox");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.value = String(n);
+      lab.appendChild(cb);
+      lab.appendChild(el("span", "", C.STRINGS[LANG] && C.STRINGS[LANG]["ws." + n] || C.STRINGS.en["ws." + n]));
+      iw.appendChild(lab);
+    });
+  }
+  // Apps that post notices: the installed ones Notifications knows,
+  // never Passwords or Automations itself.
+  function fillNoticeApps(cur) {
+    var sel = $("f-napp"), N = null;
+    try { N = window.parent && window.parent !== window ? window.parent.orosNotifs : null; } catch (e) { N = null; }
+    var known = [];
+    try { known = N && N.getKnownApps ? N.getKnownApps() : []; } catch (e) { known = []; }
+    var have = installed();
+    sel.textContent = "";
+    sel.appendChild(new Option(t("f.anyApp"), ""));
+    known.filter(function (id) { return !C.BLOCKED_APPS[id] && id !== APP_ID && (!have.length || have.indexOf(id) >= 0); })
+      .map(function (id) { return { id: id, name: appName(id) }; })
+      .sort(function (a, b) { return a.name.localeCompare(b.name, LANG); })
+      .forEach(function (x) { sel.appendChild(new Option(x.name, x.id)); });
+    if (cur && !sel.querySelector('option[value="' + cur.replace(/[^a-z0-9]/g, "") + '"]')) sel.appendChild(new Option(appName(cur), cur));
+    sel.value = cur || "";
   }
   function fillAddSelect() {
     var sel = $("f-add");
@@ -302,8 +349,14 @@
     $("wd-row").hidden = k !== "day";
     $("md-row").hidden = k !== "month";
     $("date-row").hidden = k !== "year" && k !== "once";
-    $("at-row").hidden = k === "open";
-    $("f-at").required = k !== "open";
+    var sig = k === "notice" || k === "event";
+    $("at-row").hidden = k === "open" || sig;
+    $("f-at").required = k !== "open" && !sig;
+    $("napp-row").hidden = k !== "notice";
+    $("ev-row").hidden = k !== "event";
+    $("word-row").hidden = !sig;
+    $("if-box").hidden = !sig;
+    $("ed-text").hidden = !sig;
   }
 
   function edit(id, preset) {
@@ -322,6 +375,15 @@
     var now = new Date();
     $("f-date").value = w.t === "once" ? w.date :
       w.t === "year" ? now.getFullYear() + "-" + w.date : C.ymdOf(Date.now());
+    fillNoticeApps(w.t === "notice" ? w.app || "" : "");
+    if (w.t === "event") $("f-ev").value = w.ev;
+    $("f-word").value = w.word || "";
+    var cond = src["if"] || {};
+    [].forEach.call($("if-wd").querySelectorAll("input"), function (cb) {
+      cb.checked = Array.isArray(cond.wd) && cond.wd.indexOf(+cb.value) >= 0;
+    });
+    $("f-from").value = cond.from || "";
+    $("f-to").value = cond.to || "";
     $("f-on").checked = src.on !== false;
     $("ed-del").hidden = !r;
     $("ed-err").hidden = true;
@@ -407,9 +469,61 @@
         inp = field(li, t("x.label"), textIn(a.label, 40)); inp.addEventListener("input", set("label"));
       } else if (a.a === "ask") {
         inp = field(li, t("x.question"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
+      } else if (C.OUT[a.a]) {
+        outFields(li, a);
       }
       ul.appendChild(li);
     });
+  }
+
+  // Wave A5: a push / webhook step shows exactly what leaves and is sent
+  // only after the person ticks "let it send" for this address (ok).
+  function outFields(li, a) {
+    if (a.a === "push") {
+      var sv = el("select");
+      sv.appendChild(new Option("ntfy", "ntfy"));
+      sv.appendChild(new Option("Gotify", "gotify"));
+      sv.value = a.svc === "gotify" ? "gotify" : "ntfy";
+      a.svc = sv.value;
+      field(li, t("x.svc"), sv).addEventListener("change", function (ev) { a.svc = ev.target.value; showOut(); });
+    }
+    var url = field(li, t("x.url"), textIn(a.url, 500, "url"));
+    url.placeholder = "https://";
+    url.autocomplete = "off";
+    url.spellcheck = false;
+    li.appendChild(el("p", "hint", t(a.a === "push" ? "x.urlHintPush" : "x.urlHintHook")));
+    var txt = field(li, t("x.text"), area(a.text, 300, 2));
+    var lab = el("label", "row allow");
+    var cb = el("input");
+    cb.type = "checkbox";
+    var cap = el("span");
+    lab.appendChild(cb);
+    lab.appendChild(cap);
+    li.appendChild(lab);
+    li.appendChild(el("p", "hint", t("x.sends")));
+    var pre = el("pre", "sends");
+    li.appendChild(pre);
+    var warn = el("p", "hint warn", t("x.notAllowed"));
+    li.appendChild(warn);
+    function showOut() {
+      var u = C.cleanUrl(a.url || "");
+      if (a.ok && a.ok !== u) delete a.ok;
+      cb.checked = !!u && a.ok === u;
+      cb.disabled = !u;
+      cap.textContent = t("x.allow", { host: u ? C.hostOf(u) : "…" });
+      var q = u ? C.outbound(Object.assign({}, a, { url: u, ok: u }), { name: $("f-name").value.trim() }, Date.now(), BASE, "…") : null;
+      pre.textContent = q ? q.method + " " + C.hostOf(q.url) + "\n" + q.body : "";
+      pre.hidden = !q;
+      warn.hidden = cb.checked || !u;
+    }
+    url.addEventListener("input", function (ev) { a.url = ev.target.value.trim(); showOut(); });
+    txt.addEventListener("input", function (ev) { a.text = ev.target.value; showOut(); });
+    cb.addEventListener("change", function () {
+      var u = C.cleanUrl(a.url || "");
+      if (cb.checked && u) a.ok = u; else delete a.ok;
+      showOut();
+    });
+    showOut();
   }
 
   function draft() {
@@ -420,8 +534,14 @@
     } else if (k === "month") when = { t: "month", at: at, md: +$("f-md").value };
     else if (k === "year") when = { t: "year", at: at, date: String($("f-date").value).slice(5) };
     else if (k === "once") when = { t: "once", at: at, date: $("f-date").value };
+    else if (k === "notice") when = { t: "notice", app: $("f-napp").value, word: $("f-word").value.trim() };
+    else if (k === "event") when = { t: "event", ev: $("f-ev").value, word: $("f-word").value.trim() };
     else when = { t: "open" };
     var r = { name: $("f-name").value.trim(), on: $("f-on").checked, when: when };
+    if (k === "notice" || k === "event") {
+      r["if"] = { wd: [].filter.call($("if-wd").querySelectorAll("input"), function (c) { return c.checked; }).map(function (c) { return +c.value; }),
+                  from: $("f-from").value, to: $("f-to").value };
+    }
     if (editing.id) r.id = editing.id;
     r["do"] = editing.acts;
     return r;
@@ -466,20 +586,20 @@
 
   // ---------- 8. A run: one button per step ----------
   function showRun(rule, key, at) {
-    $("run-h").textContent = rule.name || C.whenText(rule.when, BASE);
+    $("run-h").textContent = rule.name || C.whenText(rule.when, BASE, appName);
     $("run-when").textContent = t("run.at", { when: fmtTime(at) });
     var ul = $("run-list"), h = host();
     ul.textContent = "";
     rule["do"].forEach(function (a) {
       var li = el("li", "act");
-      if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE) }))); ul.appendChild(li); return; }
+      if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE, h && h.said ? h.said(key) : "") }))); ul.appendChild(li); return; }
       var app = C.needs(a);
       li.appendChild(el("span", "grow", C.actText(a, BASE, appName)));
       var b = el("button", "chip pri", t("btn.do", { app: appName(app) }));
       b.type = "button";
       b.disabled = !h;
       b.addEventListener("click", function () {
-        if (h && h.runAction(a, at)) { if (rule.id !== "try") h.noteRun(rule.id, key, at); closeDlg($("run-dlg")); }
+        if (h && h.runAction(a, at, h.said ? h.said(key) : "")) { if (rule.id !== "try") h.noteRun(rule.id, key, at); closeDlg($("run-dlg")); }
       });
       li.appendChild(b);
       ul.appendChild(li);
@@ -490,7 +610,7 @@
 
   // ---------- 9. Deep link ----------
   // { run: { r, k, at } } from a notice with several steps;
-  // { rule: id } from search.
+  // { rule: id } from search; { newRule } from the Assistant.
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     if (target.run && typeof target.run.r === "string") {
@@ -500,7 +620,15 @@
       showRun(r, typeof target.run.k === "string" ? target.run.k.slice(0, 90) : "", at);
       return;
     }
-    if (typeof target.rule === "string" && C.find(rules(), target.rule)) edit(target.rule);
+    if (typeof target.rule === "string" && C.find(rules(), target.rule)) { edit(target.rule); return; }
+    // { newRule } from the Assistant (wave A6): checked again here and
+    // opened in the editor as a new rule; nothing is saved until Save.
+    if (target.newRule && typeof target.newRule === "object") {
+      var nr = C.cleanRule(Object.assign({}, target.newRule, { id: "new" }));
+      // An address is allowed only by the person, here (wave A5).
+      if (nr) nr["do"].forEach(function (a) { delete a.ok; });
+      if (nr) edit(null, nr); else toast(t("badRule"));
+    }
   };
   function takePending() {
     try {

@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>One-Sentence Diary · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.37.01">
-  <link rel="stylesheet" href="diary.css?v=5.37.01">
+  <link rel="stylesheet" href="../fonts.css?v=5.39.00">
+  <link rel="stylesheet" href="diary.css?v=5.39.00">
 
 </head>
 <body>
@@ -44,6 +44,11 @@
       </div>
       <!-- The feelings Mood logged this day (read-only; opens Mood there) -->
       <button type="button" id="mood-day" class="mood-day" hidden></button>
+      <!-- Wave A4: what else happened this day (habits, water, workouts…; read-only) -->
+      <div id="day-line" class="day-line" hidden>
+        <span id="day-line-txt"></span>
+        <button type="button" id="day-line-add" class="link-btn" data-i18n="dayline.add">Add to the page</button>
+      </div>
 
       <div id="late" class="late" hidden>
         <span id="late-lbl" data-i18n="late.q">After midnight. This line is for:</span>
@@ -274,16 +279,23 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.37.01" data-app="diary,recordpkg"></script>
-  <script src="../atelier/zip.js?v=5.37.01"></script>
-  <script src="../importkit.js?v=5.37.01"></script>
-  <script src="core.js?v=5.37.01"></script>
-  <script src="journal.js?v=5.37.01"></script>
-  <script src="import.js?v=5.37.01"></script>
-  <script src="../bundle.js?v=5.37.01"></script>
-  <script src="../recordpkg.js?v=5.37.01"></script>
-  <script src="package.js?v=5.37.01"></script>
-  <script src="diary.js?v=5.37.01"></script>
+  <script src="../i18n.js?v=5.39.00" data-app="diary,recordpkg"></script>
+  <script src="../atelier/zip.js?v=5.39.00"></script>
+  <script src="../importkit.js?v=5.39.00"></script>
+  <script src="../habits/core.js?v=5.39.00"></script>
+  <script src="../water/core.js?v=5.39.00"></script>
+  <script src="../fitness/core.js?v=5.39.00"></script>
+  <script src="../zen/core.js?v=5.39.00"></script>
+  <script src="../typing/due.js?v=5.39.00"></script>
+  <script src="../habits/steps.js?v=5.39.00"></script>
+  <script src="dayline.js?v=5.39.00"></script>
+  <script src="core.js?v=5.39.00"></script>
+  <script src="journal.js?v=5.39.00"></script>
+  <script src="import.js?v=5.39.00"></script>
+  <script src="../bundle.js?v=5.39.00"></script>
+  <script src="../recordpkg.js?v=5.39.00"></script>
+  <script src="package.js?v=5.39.00"></script>
+  <script src="diary.js?v=5.39.00"></script>
 
 </body>
 </html>

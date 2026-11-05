@@ -38,7 +38,7 @@ orosPack("de", "diary", {
  "count.left": "noch {n}",
  "draft.drop": "Verwerfen",
  "draft.keep": "Behalten",
- "draft.note": "Aus Stimmung, noch nicht gespeichert: bearbeite es oder behalte es, wie es ist.",
+ "draft.note": "Noch nicht gespeichert: bearbeite es oder behalte es, wie es ist.",
  "emoji.none": "Kein Emoji",
  "emoji.pick": "Emoji {e}",
  "f.emoji": "Emoji des Tages",
@@ -232,5 +232,7 @@ orosPack("de", "diary", {
  "wx.offline": "Das Wetter braucht Internet",
  "wx.remove": "Wetter entfernen",
  "year.count": "{n} Tage",
- "year.empty": "In diesem Jahr noch keine Zeilen."
+ "year.empty": "In diesem Jahr noch keine Zeilen.",
+ "dayline.lbl": "Dein Tag",
+ "dayline.add": "Zur Seite hinzufügen"
 });

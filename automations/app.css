@@ -137,3 +137,9 @@ legend { padding: 0 4px; font-weight: 700; }
 }
 
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+/* wave A5: what a push / webhook step sends */
+.act .allow { gap: 8px; align-items: center; margin-top: 10px; }
+.act .allow input { width: 22px; height: 22px; flex: none; }
+.act pre.sends { margin: 4px 0 0; padding: 8px; border-radius: 8px; background: var(--surface-2, rgba(127,127,127,.12));
+  font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 9em; overflow: auto; }
+.act .hint.warn { color: var(--danger, #b3261e); }

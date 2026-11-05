@@ -386,7 +386,7 @@
     var headers = { Accept: "application/json" };
     if (a.p === "woo" && how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
     else { var h = L.authHeader(a.p, keys); headers[h[0]] = h[1]; }
-    var ex = L.extraHeaders(a.p, a);
+    var ex = L.extraHeaders(a.p, a, keys);
     Object.keys(ex).forEach(function (k) { headers[k] = ex[k]; });
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
