@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.34.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.35.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7624,6 +7624,9 @@
         { name: "Cover Art Archive", url: "https://coverartarchive.org/",
           by: "MetaBrainz Foundation and Internet Archive", lic: { k: "cr.lic.cover-art" },
           k: "cr.cover-art" },
+        { name: "ListenBrainz", url: "https://listenbrainz.org/",
+          by: "MetaBrainz Foundation", lic: "CC0 (data)",
+          k: "cr.listenbrainz" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { k: "cr.lic.anthropic-openai" },
           k: "cr.anthropic-openai" },
@@ -8139,7 +8142,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
