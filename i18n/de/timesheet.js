@@ -328,6 +328,7 @@ orosPack("de", "timesheet", {
  "thisWeek": "Diese Woche",
  "toast.added": "{d} hinzugefügt",
  "toast.alreadyRunning": "Es läuft schon ein Timer. Stopp ihn zuerst.",
+ "toast.noneRunning": "Es läuft kein Timer.",
  "toast.badDesc": "Gib an, wofür die Kosten sind",
  "toast.badDur": "Diese Dauer ist nicht lesbar",
  "toast.badFile": "Das ist keine Sicherung der Zeiterfassung",

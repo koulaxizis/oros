@@ -2204,16 +2204,17 @@
   // where they check and save it; nothing is saved by this call.
   // Passwords is never a source or a target (AUTO-4).
   var RULE_WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
-  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask"];
+  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "track"];
   var TOOL_RULE = {
     name: "propose_rule",
     description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
       "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
       "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
-      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends; word optional). " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, timesheet.start / timesheet.stop = a Timesheet timer starts / stops; word optional). " +
       "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
       "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
-      "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant). " +
+      "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant), " +
+      "track (a Timesheet timer: title = what is worked on, project = one of the user's project names, optional; or stop true = stop the running timer). " +
       "Texts may use {date}, {weekday}, {month}, {year}, and {text} = the notice or event's words. " +
       "The user sees the rule on a card and opens it in Automations, where they check and save it; nothing is saved or run by this call, so never say it is set. " +
       "Passwords can never be used.",
@@ -2228,7 +2229,7 @@
           day_of_month: { type: "number" },
           date: { type: "string" },
           app: { type: "string", description: "notice: the app id the notice comes from." },
-          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done"] },
+          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "timesheet.start", "timesheet.stop"] },
           word: { type: "string" },
           only_days: { type: "array", items: { type: "number" } },
           from: { type: "string" },
@@ -2240,7 +2241,8 @@
           title: { type: "string" }, days_later: { type: "number" }, start: { type: "string" },
           subject: { type: "string" }, body: { type: "string" }, to: { type: "string" },
           amount: { type: "number" }, income: { type: "boolean" }, note: { type: "string" },
-          app: { type: "string" }, minutes: { type: "number" }, label: { type: "string" }
+          app: { type: "string" }, minutes: { type: "number" }, label: { type: "string" },
+          project: { type: "string" }, stop: { type: "boolean" }
         }, required: ["do"] } }
       },
       required: ["when", "steps"]
@@ -4374,6 +4376,7 @@
       else if (a.a === "budget") { a.amount = typeof x.amount === "number" ? Math.round(x.amount * 100) : 0; a.k = x.income ? "i" : "o"; a.note = x.note; }
       else if (a.a === "open") a.app = x.app;
       else if (a.a === "timer") { a.min = x.minutes; a.label = x.label; }
+      else if (a.a === "track") { if (x.stop === true) a.stop = true; else { a.title = x.title; a.project = x.project; } }
       var c = AC.cleanAction(a);
       if (!c) { bad.push("step " + (i + 1) + " (" + String(x["do"] || "?").slice(0, 20) + ") is missing what it needs."); return; }
       var need = AC.needs(c);

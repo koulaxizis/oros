@@ -884,6 +884,7 @@ orosPack("de", "assistant", {
  "tv.k.ticket": "Ticket",
  "tv.k.train": "Zug",
  "uncat": "Ohne Kategorie",
+ "toInv": "Abzurechnen",
  "v.album": "Album",
  "v.book": "Buch",
  "v.deworm": "Entwurmung",

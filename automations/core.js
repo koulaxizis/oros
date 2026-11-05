@@ -13,7 +13,8 @@
 //        | { t: "once",  at, date: "YYYY-MM-DD" }
 //        | { t: "open" }                          (orOS opens, once a day)
 //   action = { a: "notify" | "todo" | "event" | "note" | "mail" |
-//              "budget" | "open" | "timer" | "ask", …fields }
+//              "budget" | "open" | "timer" | "ask" | "push" | "hook" |
+//              "track" (Timesheet T4: { title, project? } | { stop: true }), …fields }
 // AUTO-1: a rule is data from a fixed list of actions, never code.
 // Every action except "notify" only opens the receiving app with a
 // prefill through its existing bridge (BR-W8-6): nothing is written
@@ -39,9 +40,13 @@
   // one name here + an orosEvent() call in that app + its words.
   var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done"];
   var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness" };
+  // Timesheet T4: a timer starts or stops (timesheet.js startTimer /
+  // stopEntry; key timesheet:<entry>:s|e, text "project · description").
+  EVENTS.push("timesheet.start", "timesheet.stop");
+  EVENT_APP["timesheet.start"] = EVENT_APP["timesheet.stop"] = "timesheet";
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "track"];
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
   // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
   // POST to the person's own webhook (n8n, Home Assistant, Make…).
@@ -51,7 +56,7 @@
   var URL_MAX = 500;
   // Apps an action needs (the shell offers the action only when it is installed).
   var NEEDS = { todo: "todo", event: "calendar", note: "notes", mail: "mail", budget: "budget",
-                timer: "time", ask: "assistant" };
+                timer: "time", ask: "assistant", track: "timesheet" };
   // AUTO-4: never offered, never run.
   var BLOCKED_APPS = { passwords: true };
 
@@ -164,6 +169,17 @@
     if (a === "timer") {
       var min = int(x.min, 1, 6000);
       return min === null ? null : { a: a, min: min, label: line(x.label, 40) };
+    }
+    // Timesheet T4: start a Timesheet timer (title ≤ 200, project = a
+    // name hint, as Calendar's "Track time") or stop the running one.
+    if (a === "track") {
+      if (x.stop === true) return { a: a, stop: true };
+      var tt = line(x.title, 200);
+      if (!tt) return null;
+      var tr = { a: a, title: tt };
+      var pj = line(x.project, 80);
+      if (pj) tr.project = pj;
+      return tr;
     }
     if (OUT[a]) {
       var url = cleanUrl(x.url);
@@ -447,6 +463,7 @@
       "act.todo": "add {n} to To-Do", "act.event": "add to Calendar", "act.note": "add a note",
       "act.mail": "write an e-mail", "act.budget": "add to Budget", "act.open": "open {app}",
       "act.timer": "start a {n} min timer", "act.ask": "ask the Assistant",
+      "act.track": "Timesheet: start \u201c{t}\u201d", "act.trackStop": "Timesheet: stop the timer",
       "act.push": "a push to your phone through {host}", "act.hook": "a webhook to {host}",
       "tpl.week-plan": "Plan the week",
       "tpl.week-plan.text": "A new week starts. Have a look at your calendar and tasks.",
@@ -467,6 +484,7 @@
       "when.word": " with \u201c{word}\u201d",
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
+      "ev.timesheet.start": "When I start a Timesheet timer", "ev.timesheet.stop": "When I stop a Timesheet timer",
       "tpl.mail-todo": "Urgent e-mail to To-Do", "tpl.mail-todo.word": "urgent", "tpl.mail-todo.item": "{text}",
       "tpl.habit-cheer": "Cheer for a habit", "tpl.habit-cheer.text": "Well done: {text}. Keep the streak going.",
       "tpl.workout-log": "After a workout", "tpl.workout-log.text": "Workout done: {text}. Drink some water.",
@@ -485,6 +503,7 @@
       "act.todo": "{n} στο To-Do", "act.event": "στο Ημερολόγιο", "act.note": "νέα σημείωση",
       "act.mail": "νέο e-mail", "act.budget": "στον Προϋπολογισμό", "act.open": "άνοιγμα: {app}",
       "act.timer": "χρονόμετρο {n} λεπτών", "act.ask": "ερώτηση στον Βοηθό",
+      "act.track": "Timesheet: έναρξη «{t}»", "act.trackStop": "Timesheet: διακοπή χρονομέτρου",
       "act.push": "ειδοποίηση στο κινητό μέσω {host}", "act.hook": "webhook προς {host}",
       "tpl.week-plan": "Πρόγραμμα εβδομάδας",
       "tpl.week-plan.text": "Ξεκινά νέα εβδομάδα. Ρίξε μια ματιά στο ημερολόγιο και στις εργασίες σου.",
@@ -505,6 +524,7 @@
       "when.word": " με \u00ab{word}\u00bb",
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
+      "ev.timesheet.start": "Όταν ξεκινώ χρονόμετρο στο Timesheet", "ev.timesheet.stop": "Όταν σταματώ χρονόμετρο στο Timesheet",
       "tpl.mail-todo": "Επείγον e-mail στο To-Do", "tpl.mail-todo.word": "επείγον", "tpl.mail-todo.item": "{text}",
       "tpl.habit-cheer": "Μπράβο για μια συνήθεια", "tpl.habit-cheer.text": "Μπράβο: {text}. Συνέχισε το σερί.",
       "tpl.workout-log": "Μετά την προπόνηση", "tpl.workout-log.text": "Η προπόνηση τελείωσε: {text}. Πιες λίγο νερό.",
@@ -568,6 +588,12 @@
     }
     if (a.a === "open") return { fn: "openApp", app: a.app, arg: null };
     if (a.a === "timer") return { fn: "openAt", app: "time", arg: { timer: { sec: a.min * 60, label: f(a.label).slice(0, 40) } } };
+    if (a.a === "track") {
+      if (a.stop) return { fn: "openAt", app: "timesheet", arg: { stopTimer: true } };
+      var st = { title: f(a.title).slice(0, 200) };
+      if (a.project) st.project = a.project;
+      return { fn: "openAt", app: "timesheet", arg: { startTimer: st } };
+    }
     return { fn: "openAt", app: "assistant", arg: { ask: f(a.text).slice(0, 2000) } };
   }
   function needs(action) {
@@ -607,6 +633,7 @@
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
     if (a.a === "open") return sub(w(lang, "act.open"), { app: appName ? appName(a.app) : a.app });
     if (a.a === "timer") return sub(w(lang, "act.timer"), { n: a.min });
+    if (a.a === "track") return a.stop ? w(lang, "act.trackStop") : sub(w(lang, "act.track"), { t: a.title });
     if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);
   }
