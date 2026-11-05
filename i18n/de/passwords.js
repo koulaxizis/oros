@@ -59,6 +59,7 @@ orosPack("de", "passwords", {
  "bio.title": "Mit Fingerabdruck oder Gesicht entsperren",
  "bio.unlock": "Mit Fingerabdruck oder Gesicht entsperren",
  "bio.wait": "Frage das Handy…",
+ "bio.update": "Die orOS-App auf diesem Handy antwortet noch nicht. Aktualisiere sie (F-Droid, Obtainium oder das APK von der orOS-Seite), öffne sie erneut und versuche es noch einmal.",
  "m.bio": "Entsperren per Fingerabdruck",
  "btn.copy": "Kopieren",
  "btn.hide": "Verbergen",
