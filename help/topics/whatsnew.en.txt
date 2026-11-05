@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.38.00
+- **Automations follow what happens.** A rule can now start when a notice arrives (from one app or any app, only when it has a word you choose) or when you finish a task, tick a habit, reach your water goal or finish a workout, limited to some days and hours if you like. `{text}` puts what happened into its steps.
+- **Push to your phone and webhooks.** Two new steps send by themselves when a rule runs: a push through ntfy or your own Gotify, and a small JSON message to your own n8n, Home Assistant or similar. You see exactly what is sent and allow each address once.
+- **The Assistant writes rules.** Ask it "every Monday at 8 remind me of the bins" or "when an urgent mail comes, add it to To-Do": it shows the rule on a card and opens it in Automations, where you save it. Ask "why did this run?" and, if you let it read Automations, it explains from your rules and recent runs.
+- **Send to… picks the right app.** Text with a date goes to Calendar first, an amount to Budget, a contact card to Contacts, an address to Maps; Invoices and Diary take text too.
+- **Diary shows your day**: the habits you ticked, water, workouts, Micro-Zen and typing, with one tap to add them to the page. **Baby** can book the next vaccine or doctor visit in Calendar.
+
 ## Version 5.37.01
 - **Files: the path at the top works again.** In a folder two or more levels deep (for example Files / Documents / Work / 2026), tapping a folder in the middle of the path did nothing. Now every part of the path opens the folder it names.
 
