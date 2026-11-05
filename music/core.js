@@ -1161,8 +1161,41 @@
     return st;
   }
 
+  // ---------- Recovery of a stream that stopped (host.js) ----------
+  // Jamendo's audio addresses are signed and go stale after a while, so
+  // a long queue can reach a song whose address no longer plays. The
+  // track id is in the address ("trackid=") or the page ("/track/<id>");
+  // radios have none (their address does not go stale).
+  function jmTrackId(item) {
+    if (!item || item.s !== "jm") return "";
+    var m = /[?&]trackid=([0-9]{1,12})(&|$)/.exec(String(item.u || ""));
+    if (m) return m[1];
+    m = /^https:\/\/(?:www\.)?jamendo\.com\/track\/([0-9]{1,12})(\/|$)/.exec(String(item.pg || ""));
+    return m ? m[1] : "";
+  }
+  // The fresh https audio address of track `id` in a Jamendo tracks
+  // answer, else "".
+  function jmFreshAudio(j, id) {
+    var h = j && j.headers, list = j && j.results;
+    if (!h || h.status !== "success" || !Array.isArray(list)) return "";
+    for (var i = 0; i < list.length; i++) {
+      var x = list[i];
+      if (x && String(x.id) === String(id) && typeof x.audio === "string" && /^https:\/\/[^\s"'<>]+$/i.test(x.audio)) return x.audio;
+    }
+    return "";
+  }
+  // What to do when the song playing stops with an error: "retry" (a
+  // stream gets two more tries, with a fresh address), "wait" (offline:
+  // go on when the network is back), else "skip". tries = tries used.
+  function failStep(item, tries, online) {
+    var remote = !!(item && !item.p && /^https:\/\//i.test(String(item.u || "")));
+    if (!remote) return "skip";
+    if (online === false) return "wait";
+    return tries < 2 ? "retry" : "skip";
+  }
+
   var api = {
-    VERSION: "1.6.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.7.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -1180,7 +1213,7 @@
     byTrackNo: byTrackNo, collator: collator,
     parseLrc: parseLrc, lrcAt: lrcAt, lrclibPick: lrclibPick,
     EQ_HZ: EQ_HZ, EQ_PRESETS: EQ_PRESETS, SLEEP_MIN: SLEEP_MIN, normSound: normSound, rgFactor: rgFactor, eqPreamp: eqPreamp,
-    fadeOut: fadeOut, fadeIn: fadeIn, normStats: normStats, addStat: addStat, STAT: STAT
+    fadeOut: fadeOut, fadeIn: fadeIn, jmTrackId: jmTrackId, jmFreshAudio: jmFreshAudio, failStep: failStep, normStats: normStats, addStat: addStat, STAT: STAT
   };
   root.OrosMusicCore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = { OrosMusicCore: api };

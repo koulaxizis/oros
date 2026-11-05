@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.1.0)
+// orOS Music — host.js (player + data owner, v1.2.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -180,6 +180,10 @@
     el._blob = ""; el._same = false; el._rg = 1; el._fade = 1; el._node = null; el._gain = null;
     try { doc.body.appendChild(el); } catch (e) {}
     evs.forEach(function (x) { el.addEventListener(x[0], x[1]); });
+    // The next song, loaded early, that cannot load: it is never moved
+    // on to (that stopped the music), and not loaded again; the queue
+    // then loads it the normal way, which recovers or skips it.
+    el.addEventListener("error", function () { if (nx && nx.el === el && el !== audio) badNext(); });
     decks.push(el);
     return el;
   }
@@ -197,6 +201,9 @@
   var counted = false;       // this play is in the history already
   var fails = 0;             // songs in a row that could not play
   var wantPlay = false;      // the user asked for sound (an error then skips on)
+  var rec = { k: "", n: 0 }; // tries used on the song that stopped with an error
+  var failSeq = -1;          // the load an error was handled for (one per load)
+  var offWait = "";          // key of the stream waiting for the network
 
   function fs() { return w.orosFS || null; }
   function sameOrigin(u) { return /^blob:/.test(u) || u.indexOf(w.location.origin + "/") === 0; }
@@ -384,10 +391,16 @@
   var nxSeq = 0;
   var fade = { el: null, iv: 0 };
   var sleep = { at: 0, end: 0 }, sleepFade = 1, sleepIv = 0;
+  function badNext() {
+    if (!nx) return;
+    var el = nx.el;
+    nx.el = null; nx.ready = false; nx.bad = true;
+    if (el && el !== audio && el !== fade.el) clearDeck(el);
+  }
   function dropNext() {
     if (!nx) return;
     nxSeq++;
-    if (nx.el !== audio) clearDeck(nx.el);
+    if (nx.el && nx.el !== audio) clearDeck(nx.el);
     nx = null;
   }
   function stopFade() {
@@ -429,6 +442,7 @@
   function useNext(sec) {
     var n = nx;
     if (!n || !n.ready) return false;
+    if (n.el.error) { badNext(); return false; }
     var r = C.qNext(local.q, false);
     if (!r.item || r.item.k !== n.item.k) { dropNext(); return false; }
     nx = null;
@@ -461,7 +475,7 @@
     media();
     var p;
     try { p = audio.play(); } catch (e) { p = null; }
-    Promise.resolve(p).catch(function (err) { flags.error = (err && err.name) || "play"; host.notify("error"); });
+    Promise.resolve(p).catch(function (err) { playFailed(err); });
     chip();
     host.notify("load");
     return true;
@@ -529,10 +543,8 @@
       return autoplay ? play() : true;
     }, function () {
       if (my !== loadSeq) return false;
-      flags.error = "missing"; flags.buffering = false;
-      host.notify("error");
-      chip();
-      if (autoplay) skipBroken();
+      if (autoplay) wantPlay = true;
+      fail("missing");
       return false;
     });
   }
@@ -547,16 +559,83 @@
   function play() {
     if (!cur) return Promise.resolve(false);
     wantPlay = true;
+    failSeq = -1;   // a tap on play is a new try, also after an error
     focusTake();
     if (ctx && ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
     var p;
     try { p = audio.play(); } catch (e) { p = null; }
     return Promise.resolve(p).then(function () { return true; }, function (err) {
-      flags.error = (err && err.name) || "play";
-      host.notify("error");
+      playFailed(err);
       return false;
     });
   }
+  // play() refused: NotAllowedError = no sound allowed without a tap
+  // (the app shows the play button); AbortError = a newer load took
+  // over; anything else = the song cannot play (its "error" event
+  // usually comes too: fail() handles one load only once).
+  function playFailed(err) {
+    var name = (err && err.name) || "play";
+    if (name === "AbortError") return;
+    if (name === "NotAllowedError") { flags.error = name; flags.buffering = false; chip(); host.notify("error"); return; }
+    fail(name);
+  }
+  // ---------- Recovery: the song stopped with an error ----------
+  // A stream gets two more tries (Jamendo with a fresh address, since
+  // its addresses go stale), from where it stopped; offline it waits
+  // for the network; else it is skipped, like other players do. The
+  // notice ("cannot play here") shows only when it gives up.
+  function fail(kind) {
+    if (!cur || failSeq === loadSeq) return;
+    failSeq = loadSeq;
+    var item = cur, my = loadSeq;
+    flags.buffering = false;
+    if (!wantPlay) { flags.error = kind; chip(); host.notify("error"); return; }
+    if (rec.k !== item.k) rec = { k: item.k, n: 0 };
+    var step = C.failStep(item, rec.n, w.navigator.onLine);
+    if (step === "wait") { offWait = item.k; flags.buffering = true; chip(); host.notify("buffer"); return; }
+    if (step === "retry") {
+      rec.n++;
+      flags.buffering = true; host.notify("buffer");
+      var at = local.pos || 0;
+      freshUrl(item).then(function (u) {
+        if (my !== loadSeq || cur !== item || !wantPlay) return;
+        if (u && u !== item.u) { item.u = u; saveLocal(); }
+        load(item, at, true);
+      });
+      return;
+    }
+    flags.error = kind; chip(); host.notify("error");
+    skipBroken();
+  }
+  // Same public client id as open.js (Chris's, registered 2026-10-16).
+  var JM_CLIENT = "e04c6e83";
+  function freshUrl(item) {
+    var id = C.jmTrackId(item);
+    if (!id || typeof w.fetch !== "function") return Promise.resolve(item.u);
+    var ac = typeof w.AbortController === "function" ? new w.AbortController() : null;
+    var tm = ac ? w.setTimeout(function () { ac.abort(); }, 8000) : 0;
+    var url = "https://api.jamendo.com/v3.0/tracks/?client_id=" + JM_CLIENT + "&format=json&audioformat=mp32&id=" + id;
+    return w.fetch(url, ac ? { signal: ac.signal, credentials: "omit" } : { credentials: "omit" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { w.clearTimeout(tm); return C.jmFreshAudio(j, id) || item.u; }, function () { w.clearTimeout(tm); return item.u; });
+  }
+  // A stream that waits for data for 30 s while online (the server or
+  // the connection hung without an error) is handled like an error.
+  var stallT = 0;
+  function stallClear() { if (stallT) { w.clearTimeout(stallT); stallT = 0; } }
+  function stallArm() {
+    stallClear();
+    var my = loadSeq;
+    stallT = w.setTimeout(function () {
+      stallT = 0;
+      if (my === loadSeq && cur && wantPlay && flags.buffering && !audio.paused) fail("stall");
+    }, 30000);
+  }
+  w.addEventListener("online", function () {
+    if (!offWait || !cur || cur.k !== offWait || !wantPlay) { offWait = ""; return; }
+    offWait = "";
+    load(cur, local.pos || 0, true);
+  });
   function pause() { wantPlay = false; stopFade(); try { audio.pause(); } catch (e) {} }
   function seekTo(t) {
     if (!cur) return;
@@ -658,18 +737,17 @@
     }
     posState();
   });
-  on("pause", function () { saveLocal(true); chip(); host.notify("pause"); });
-  on("playing", function () { flags.buffering = false; flags.error = ""; fails = 0; chip(); host.notify("play"); });
+  on("pause", function () { stallClear(); saveLocal(true); chip(); host.notify("pause"); });
+  on("playing", function () { stallClear(); flags.buffering = false; flags.error = ""; fails = 0; offWait = ""; chip(); host.notify("play"); });
   on("play", function () { hookOthers(); });
-  on("waiting", function () { flags.buffering = true; host.notify("buffer"); });
+  on("waiting", function () { flags.buffering = true; stallArm(); host.notify("buffer"); });
   on("canplay", function () { flags.buffering = false; host.notify("buffer"); });
   on("error", function () {
     if (!cur || !audio.getAttribute("src")) return;
-    flags.error = "media"; flags.buffering = false;
-    chip(); host.notify("error");
-    if (wantPlay) skipBroken();
+    fail("media");
   });
   on("ended", function () {
+    rec = { k: "", n: 0 };
     countPlay();
     if (sleep.end) { sleepAtEnd(); return; }
     advance(false);
