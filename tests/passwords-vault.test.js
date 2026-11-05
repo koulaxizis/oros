@@ -280,7 +280,7 @@ test("pmcore merge: per-item LWW, equal mtime tie-break, tombstones, symmetric/a
   assert.deepEqual(prev.hist.map((h) => h.pw), ["p6", "p5", "p4", "p3", "p2"]);
 });
 
-test("source rules: no Math.random, no console output, no innerHTML, only the vault key in localStorage", () => {
+test("source rules: no Math.random, no console output, no innerHTML, only the vault key (and PW-BIO's wrapped copy) in localStorage", () => {
   const fs = require("fs");
   for (const f of ["pmcrypto.js", "pmcore.js", "kdbx.js", "pmapp.js"]) {
     const src = fs.readFileSync(path.join(DIR, f), "utf8").replace(/\/\/.*$/gm, "");
@@ -289,7 +289,8 @@ test("source rules: no Math.random, no console output, no innerHTML, only the va
     assert.ok(!/innerHTML|outerHTML|insertAdjacentHTML|document\.write/.test(src), f + ": HTML injection sink");
     assert.ok(!/eval\(|new Function/.test(src), f + ": eval");
     const sets = src.match(/localStorage\.setItem\(([^,]+),/g) || [];
-    sets.forEach((s) => assert.equal(s, "localStorage.setItem(VAULT_KEY,", f));
+    // BIO_KEY (PW-BIO): the vault key wrapped with the phone's secret, this device only
+    sets.forEach((s) => assert.ok(s === "localStorage.setItem(VAULT_KEY," || s === "localStorage.setItem(BIO_KEY,", f + ": " + s));
     assert.ok(!/sessionStorage|indexedDB/.test(src), f + ": other storage");
   }
 });

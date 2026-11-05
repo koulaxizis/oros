@@ -8,14 +8,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Crossword · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.38.00">
-  <link rel="stylesheet" href="crossword.css?v=5.38.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.41.00">
+  <link rel="stylesheet" href="crossword.css?v=5.41.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=5.41.00">
 
 </head>
 <body>
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Crossword</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="lang-seg" role="group">
         <button type="button" class="seg-btn" data-lang="en" data-i18n="lang.en">EN</button>
@@ -42,38 +44,39 @@
   </header>
 
   <!-- Status: which puzzle, words placed, time -->
-  <div id="status">
+  <aside id="status">
     <span id="info"></span>
     <span id="count"></span>
     <span id="clock"><span id="clock-ico"></span><strong id="time">0:00</strong></span>
-  </div>
+  </aside>
 
   <!-- Imported crosswords: the clue of the current word -->
-  <div id="clue" hidden></div>
+  <div id="clue" role="region" hidden></div>
 
   <main id="play">
     <div id="grid-wrap">
       <div id="grid" role="grid" tabindex="0"></div>
     </div>
-    <aside id="words">
+    <aside id="words" tabindex="0">
       <p id="words-intro"></p>
       <div id="word-groups"></div>
     </aside>
   </main>
 
-  <div id="kb" role="group"></div>
+  <div id="kb" role="region"></div>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
   <!-- Word lists are shared with Word Search (precached there) -->
-  <script src="../i18n.js?v=5.38.00" data-app="crossword"></script>
-  <script src="../wordsearch/words-en.js?v=5.38.00"></script>
-  <script src="../wordsearch/words-el.js?v=5.38.00"></script>
-  <script src="../gamekit/daily.js?v=5.38.00"></script>
-  <script src="../importkit.js?v=5.38.00"></script>
-  <script src="import.js?v=5.38.00"></script>
-  <script src="crossword.js?v=5.38.00"></script>
+  <script src="../i18n.js?v=5.41.00" data-app="crossword"></script>
+  <script src="../gamekit/haptics.js?v=5.41.00"></script>
+  <script src="../wordsearch/words-en.js?v=5.41.00"></script>
+  <script src="../wordsearch/words-el.js?v=5.41.00"></script>
+  <script src="../gamekit/daily.js?v=5.41.00"></script>
+  <script src="../importkit.js?v=5.41.00"></script>
+  <script src="import.js?v=5.41.00"></script>
+  <script src="crossword.js?v=5.41.00"></script>
 
 </body>
 </html>

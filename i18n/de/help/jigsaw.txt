@@ -14,11 +14,12 @@ Drücke `Starten`. Teile rasten ein, wenn du sie nahe an ihrem Platz oder neben 
 
 ## Steuerung
 - Zieh ein Teil, um es zu bewegen. Mit Drehen tippst oder klickst du auf ein Teil, um es um 90° zu drehen.
+- Ohne Ziehen: Tippe oder klicke auf ein Teil, um es aufzunehmen (es bekommt einen goldenen Rand), und tippe dann auf die Stelle des Tischs, wo es hin soll. Tippe es noch einmal an oder drück [[Esc]], um es loszulassen.
 - Zieh den leeren Tisch, um dich zu bewegen; zoome mit zwei Fingern oder dem Mausrad.
 - Helfer in der Werkzeugleiste: `Bild ansehen (P)`, `Blasses Bild im Rahmen (G)`, `Nur Randteile (E)` und `Lose Teile an den Rand räumen (T)`.
 - Zoom-Tasten: `Verkleinern (−)`, `Ganzer Tisch (0)` und `Vergrößern (+)`.
 
-Tasten: [[N]] neues Puzzle, [[P]] Bild ansehen, [[G]] blasses Bild, [[E]] Randteile, [[T]] aufräumen, [[+]] / [[−]] Zoom, [[0]] ganzer Tisch.
+Tasten: [[N]] neues Puzzle, [[P]] Bild ansehen, [[G]] blasses Bild, [[E]] Randteile, [[T]] aufräumen, [[+]] / [[−]] Zoom, [[0]] ganzer Tisch. Nur mit der Tastatur: `]` / `[` nehmen das nächste / vorige lose Teil auf, die Pfeiltasten bewegen es (mit [[Shift]] ein ganzes Teil weit), [[Enter]] legt es ab, [[R]] dreht es, [[Esc]] lässt es los.
 
 ## Stufen und Wertung
 `Rekorde` zeigt für jede Teilezahl deine Bestzeit und wie viele Puzzles du gelöst hast. `Rekorde zurücksetzen` löscht sie.

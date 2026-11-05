@@ -154,7 +154,7 @@
       "btn.opts": "Επιλογές",
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
-      "level.e": "Εύκολο", "level.m": "Μέτριο", "level.h": "Δύσκολο",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "st.mine": "Δικά σου", "st.theirs": "Εχθρικά",
       "cap.enemy": "Εχθρικά νερά",
       "cap.mine": "Ο στόλος σου",
@@ -983,7 +983,6 @@
         b.type = "button";
         b.tabIndex = -1;
         b.setAttribute("data-q", String(r * N + k));
-        b.setAttribute("role", "gridcell");
         grid.appendChild(b);
       }
     }
@@ -1290,6 +1289,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

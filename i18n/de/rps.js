@@ -1,4 +1,5 @@
 orosPack("de", "rps", {
+ "app.name": "Schere, Stein, Papier",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",
  "btn.sfxOn": "Ton an",

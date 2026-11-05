@@ -1,4 +1,5 @@
 orosPack("de", "dots", {
+ "app.name": "Käsekästchen",
  "board.label": "Spielfeld, {n}×{n} Kästchen",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

@@ -70,6 +70,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Hangman",
       "btn.new": "New word (Shift+N)",
       "btn.stats": "Records",
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off",
@@ -117,12 +118,13 @@
       "toast.noWords": "The word list did not load"
     },
     el: {
+      "app.name": "Κρεμάλα",
       "btn.new": "Νέα λέξη (Shift+N)",
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
       "lang.en": "EN", "lang.el": "ΕΛ",
       "lang.enLong": "Αγγλικές λέξεις", "lang.elLong": "Ελληνικές λέξεις",
-      "level.e": "Εύκολο", "level.m": "Μέτριο", "level.h": "Δύσκολο",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "levelLen.e": "5–6 γράμματα", "levelLen.m": "7–8 γράμματα", "levelLen.h": "9–10 γράμματα",
       "st.misses": "Λάθη",
       "st.streak": "Σερί",
@@ -623,7 +625,11 @@
       box.innerHTML = "";
       box.setAttribute("data-w", game.lang + game.word.length);
       box.style.setProperty("--n", String(r.length));
-      for (var i = 0; i < r.length; i++) box.appendChild(el("span", "slot"));
+      for (var i = 0; i < r.length; i++) {
+        var sl = el("span", "slot");
+        sl.setAttribute("role", "img");                 // a named letter slot (aria-label below)
+        box.appendChild(sl);
+      }
     }
     box.setAttribute("aria-label", t("word.label", { n: r.length }));
     for (var j = 0; j < r.length; j++) {
@@ -859,6 +865,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

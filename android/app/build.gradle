@@ -85,11 +85,11 @@ android {
             // next to the real app.
             applicationIdSuffix '.debug'
             resValue 'string', 'account_type', 'online.useoros.twa.debug.account'
-            manifestPlaceholders = [permissionScheme: 'oros-permission-debug']
+            manifestPlaceholders = [permissionScheme: 'oros-permission-debug', bioScheme: 'oros-bio-debug']
         }
         release {
             resValue 'string', 'account_type', 'online.useoros.twa.account'
-            manifestPlaceholders = [permissionScheme: 'oros-permission']
+            manifestPlaceholders = [permissionScheme: 'oros-permission', bioScheme: 'oros-bio']
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (ks) signingConfig signingConfigs.release

@@ -997,10 +997,51 @@
       });
     }
 
+    // "orOS Passwords" in its Android package (PW-BIO, BR-PHONE v9):
+    // the app's postMessage port reaches this top page, not the shell
+    // in the frame. Only Passwords' fingerprint unlock travels on it,
+    // both ways ({t:"pw-bio"}); everything else is dropped, so nothing
+    // of Contacts, Calendar, reminders… ever reaches a single app.
+    // Same port rule as phone.js: posted by the browser itself (no
+    // source window), the newest one wins.
+    var bioPort = null, bioFn = null;
+    function bioMsg(raw) {
+      var m = null;
+      try { m = JSON.parse(typeof raw === "string" ? raw : ""); } catch (e) { return null; }
+      return m && typeof m === "object" && m.t === "pw-bio" ? m : null;
+    }
+    if (id === "passwords") {
+      win.addEventListener("message", function (ev) {
+        if (!ev.ports || !ev.ports[0] || ev.source) return;
+        if (bioPort) { try { bioPort.onmessage = null; bioPort.close(); } catch (e) {} }
+        bioPort = ev.ports[0];
+        bioPort.onmessage = function (e) {
+          var m = bioMsg(e.data);
+          if (m && bioFn) { try { bioFn(m); } catch (x) {} }
+        };
+        try { bioPort.postMessage(JSON.stringify({ t: "pw-bio", op: "state" })); } catch (e) {}
+      });
+    }
+
     // What the shell in the frame asks of the top page.
     win.__orosSoloHost = {
       v: 1,
       id: id,
+      bio: id !== "passwords" ? null : {
+        available: function () { return !!bioPort; },
+        send: function (obj) {
+          var m = bioMsg(JSON.stringify(obj || null));
+          if (!bioPort || !m) return false;
+          try { bioPort.postMessage(JSON.stringify(m)); return true; } catch (e) { return false; }
+        },
+        // The intent link must open from this top page (the tap in the
+        // frame counts here too); only the two PW-BIO links.
+        go: function (url) {
+          if (/^intent:\/\/(seal|open)\?n=[0-9a-f]{32}#Intent;scheme=oros-bio;package=online\.useoros\.(twa|passwords);end$/.test(String(url))) win.location.href = url;
+        },
+        // The newest shell frame listens (a reload registers again).
+        listen: function (fn) { bioFn = typeof fn === "function" ? fn : null; }
+      },
       title: function (t) {
         t = String(t || "").slice(0, 120);
         if (t) doc.title = t;

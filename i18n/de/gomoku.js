@@ -1,4 +1,5 @@
 orosPack("de", "gomoku", {
+ "app.name": "Gomoku",
  "board.label": "Gomoku-Brett, 15 mal 15",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

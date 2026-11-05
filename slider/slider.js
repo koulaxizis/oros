@@ -57,6 +57,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Number Slider",
       "btn.new": "New game (N)",
       "btn.stats": "Records",
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off",
@@ -94,6 +95,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Συρόμενοι αριθμοί",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
@@ -754,6 +756,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

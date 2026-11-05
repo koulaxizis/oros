@@ -41,6 +41,7 @@ orosPack("de", "calendar", {
  "ev.field.title": "Titel",
  "ev.field.tz": "Zeitzone",
  "ev.field.when": "Uhrzeit",
+ "ev.logTime": "Zeit eintragen",
  "ev.mail": "E-Mail",
  "ev.moved": "Verschoben",
  "ev.none": "Keine Termine",

@@ -1,4 +1,5 @@
 orosPack("de", "wordle", {
+ "app.name": "Wordle",
  "board.label": "Versuche",
  "btn.games": "Alle Spiele",
  "btn.new": "Neues Wort (Shift+N)",

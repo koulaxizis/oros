@@ -20,13 +20,19 @@ The `Week` tab shows a grid of hours per project and day, with totals. Tap or cl
 On `Reports`, choose a `Period` (this week, last month, this year or `Custom`), then filter by `Client`, `Project`, `Billable`, `Invoiced` and `Tag` (once you use tags), and `Group by` project, client, task, tag or day. An entry with several tags counts under each tag; the total counts it once. You see `Hours`, `Billable` hours and the `Amount`.
 
 - `Export CSV` saves the report for a spreadsheet.
+- `Timesheet PDF` saves the report as a page to send a client: the client (or project) you filtered by, the period, one row per entry with its day, times, hours, project and description, the amounts when the report charges anything, and the totals. Inside orOS, when [Mail](app:mail) has an account, `Email the PDF` opens a new message with it attached; nothing is sent until you press Send.
 - Inside orOS, `Open in Spreadsheet` opens the same rows as a new sheet in Spreadsheet, with totals under hours and amount.
 - `Create quote` turns the report into a new [Quote](app:quote): one line per billable project with a rate, with the hours as quantity and the hourly rate as price. The client is filled in when the period has only one. The quote takes Timesheet's currency, whatever it is.
-- `Create invoice` puts the same lines in a new invoice in [Invoices](app:invoices), in any currency. Check it there, then save or issue it.
+- `Create invoice` puts the same lines in a new invoice in [Invoices](app:invoices), in any currency. Check it there, then save or issue it. As soon as it is saved (a draft too), exactly those entries and extra charges are marked `Invoiced` here, so the same hours are never invoiced twice. Hover over the tick, or open an entry, to see the invoice's number and whether it is paid; `Open invoice` takes you there. If you delete or cancel the invoice, or credit it in full, they are not invoiced again. When the client is linked to a CRM customer, the invoice also gets the VAT number, address and email.
 - `Mark … as invoiced` marks all billable entries of the report as invoiced, so next time you can filter for `Not invoiced`. You can unmark them the same way.
+
+## To invoice
+The `To invoice` tab lists, per client, the billable time and extra charges that are not invoiced yet (`Not invoiced`), from all time and with the day of the oldest one. When [Invoices](app:invoices) is on this device, it also shows what was invoiced but is still unpaid, and how many of those invoices are overdue. `Create invoice` makes one invoice for all the client's time not invoiced yet; `Report` opens those entries on `Reports`. A timer that is still running is left out until you stop it.
 
 ## Projects and clients
 On `Projects`, add a `New project` or `New client`. A project has a `Name`, `Client`, `Colour`, `Hourly rate`, an optional `Hours budget` (e.g. 40 or 12:30) and `Billable`. With a budget, the project shows a bar of the hours used: it turns gold from 90 % and red when the budget is exceeded. Leave the rate empty to use the client's rate, or the default from `Settings`. A project with entries can't be deleted; tick `Archived` instead to hide it from the timer and keep its time.
+
+When [CRM](app:crm) is on this device, a client has a `CRM customer`: pick the customer it is (a new client takes the customer's name). Invoices made from Timesheet then carry the customer's VAT number, tax office, address and email, and the customer's page in CRM shows this client's hours.
 
 ## Day rate, minimum charge, overtime and extra charges
 Open a project (or a client, for all its projects without their own) on `Projects` and unfold `Day rate, minimum and overtime`. Choose `Per` `Day worked`, `Week` or `Month`, then any of:
@@ -41,6 +47,12 @@ For example a day rate of 100 € with overtime after 8 hours at 15 €/h: 3 hou
 
 `Add an extra charge` under the day's entries records a cost beyond the hours, such as fuel or work away from the office: a `Date`, a `Project` (or just a client), `What it is for` and the `Amount`. Extra charges show under the day's entries, are added to the report's amount and listed under it (tap one to edit it), come into the CSV as rows without times, and become their own lines in `Create quote` and `Create invoice`. `Mark … as invoiced` marks them too.
 
+## Packages, fixed fees and mileage
+- **Monthly package (retainer).** Say a client pays 1.000 € a month for up to 20 hours, and 60 €/h after that. Open the client, unfold `Day rate, minimum and overtime`, choose `Per` `Month`, then `Minimum charge (day rate)` 1000, `Overtime after (hours)` 20 and `Overtime hourly rate` 60, and leave the client's `Hourly rate` empty. `Projects` then shows a bar under the client: "This month: 12:30 of 20 h". It turns gold from 80 % and red when the package is used up. A weekly package works the same way with `Week`. For a block of prepaid hours that isn't per month, use the project's `Hours budget`.
+- **Fixed fee.** For a job at an agreed price, fill in the project's `Fixed fee`. Its hours are still tracked but not charged by the hour, and `Projects` shows what the fee works out to per hour ("80,00 €/h effective"). `Add the fee as an extra charge` in the project's window puts the fee in once, so it goes on the invoice and is marked invoiced with it.
+- **Mileage.** In `New extra charge`, tick `Mileage (distance × rate)` and fill in the `Distance (km)` and the `Rate per km`: the amount is worked out for you, and this device remembers the rate for next time.
+- **Budget.** Inside orOS, an extra charge's window has `Add to Budget`: it opens a new expense in [Budget](app:budget) with the amount, day and description (mileage as transport); nothing is saved there until you save it. Afterwards the window says `Sent to Budget` and offers `Send to Budget again`.
+
 ## Settings
 The gear button opens `Settings`: `Currency`, `Default hourly rate`, a `Daily goal` (shown as a bar under the day) and `Rounding in reports`. Rounding only changes reports and CSV; your entries keep their exact times.
 
@@ -49,6 +61,12 @@ Tick `Ask about time away while a timer runs` and set `Away for at least (minute
 
 ### Move from another app
 `Import from another app` in `Settings` brings in an export from Toggl Track, Clockify, Harvest, Kimai or Jira Tempo, as CSV or Excel (.xlsx), with tasks and tags. First you see what the file holds: new entries, entries already here, new projects and clients, and rows that could not be read. Nothing changes until you tap `Import`.
+
+The same button also reads an **ActivityWatch** export (in ActivityWatch: Settings › Export all buckets as JSON). Your time at the computer becomes suggested entries of 15 minutes or more, each named after the window you used most; breaks under 5 minutes are joined. They come without a project: assign one afterwards, or delete the ones that weren't work.
+
+`Import from an account (Toggl, Clockify, Harvest, Kimai)` reads your entries straight from the tracker, for a period of up to a year, once you have connected it in Settings › Connected services with your own token. You see the same preview as for a file, and the same rules hold: it only adds, entries you deleted here stay deleted, and the same time read again (or imported from its CSV) adds nothing. orOS only reads: nothing changes in the tracker.
+
+`Export calendar (.ics)` on `Reports` saves the report's entries as calendar events, for any calendar app. Each entry keeps the same identity, so exporting again updates the events instead of doubling them.
 - Importing only adds entries. The same file twice adds nothing, and entries you delete stay deleted if you import again.
 - Projects and clients with the same name as yours are joined to them.
 - If the dates could be either way round, choose Day/Month or Month/Day in `Dates in the file`.
@@ -81,7 +99,8 @@ In [Time](app:time) → `Pomodoro`, pick a project under `Log focus in Timesheet
 
 ## Tips
 - [Calendar](app:calendar) can show your time under the `Work time` chip: one row per project per day, such as "Website · 2:15". Tapping a row opens that day here.
-- `Track time` on an event in [Calendar](app:calendar) starts a timer here named after the event (with the project of the same name, if you have one). If a timer is already running, it keeps running.
+- `Track time` on an event in [Calendar](app:calendar), a task in [To-Do](app:todo) or a card in [Kanban](app:kanban) starts a timer here named after it, with the project of the same name if you have one (for a task or card, also the project named like its list or board). If a timer is already running, it keeps running. The task or card then shows the time tracked for it.
+- `From your calendar` on the Timer tab lists the day's timed events that are over and have no time logged yet. `Log` opens `Add time` with the event's start and end filled in; nothing is saved until you press `Add`. The X hides an event that wasn't work time (on this device only). An event that an entry was logged from, or that your entries already cover for half its length, isn't listed. `Log time` on an event that's over in [Calendar](app:calendar) does the same.
 - You don't need a project to start: time without a project is kept, and you can assign it later.
 - If timers were started on two devices at once, both keep running and you can stop each one.
 

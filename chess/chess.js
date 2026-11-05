@@ -84,6 +84,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Chess",
       "mode.ai": "vs Computer", "mode.duo": "2 players",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "side.w": "As white", "side.b": "As black", "side.r": "Random side",
@@ -366,6 +367,7 @@
       "th.collinearMove": "Collinear move", "th.enPassant": "En passant", "th.underPromotion": "Underpromotion"
     },
     el: {
+      "app.name": "Σκάκι",
       "mode.ai": "Με υπολογιστή", "mode.duo": "2 παίκτες",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "side.w": "Με λευκά", "side.b": "Με μαύρα", "side.r": "Τυχαία",
@@ -4809,6 +4811,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -5064,6 +5067,7 @@
     $("side-select").setAttribute("aria-label", t("side.label"));
     $("side-select").title = t("side.label");
     $("moves").setAttribute("aria-label", t("moves.title"));
+    $("moves-wrap").setAttribute("aria-label", t("moves.title"));
   }
 
   function paintStatic() {

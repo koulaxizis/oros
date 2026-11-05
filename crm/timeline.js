@@ -123,6 +123,8 @@
     var d = x.ts;
     if (!d) return;
     var cl = ids(x, "tsc");
+    // Timesheet T1 (BR-TS-CRM): a client that names this customer itself
+    (d.clients || []).forEach(function (c) { if (c && !c.del && c.crm === x.cust.id && cl.indexOf(c.id) < 0) cl.push(c.id); });
     if (!cl.length) return;
     var proj = {};
     (d.projects || []).forEach(function (p) { if (p && !p.del && cl.indexOf(p.client) >= 0) proj[p.id] = p.client; });

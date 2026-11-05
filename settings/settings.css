@@ -572,6 +572,10 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .svc-mark.m-pdrive { background: #1a7f4b; }
 .svc-mark.m-odoo { background: #714b67; }
 .svc-mark.m-todoist { background: #e44332; }
+.svc-mark.m-toggl { background: #a33fa0; }
+.svc-mark.m-clockify { background: #03a9f4; }
+.svc-mark.m-harvest { background: #e8590c; }
+.svc-mark.m-kimai { background: #2c6e9b; }
 .svc-mark.m-trello { background: #0079bf; }
 .svc-mark.m-github { background: #24292f; }
 .svc-mark.m-notion { background: #37352f; }
