@@ -45,7 +45,8 @@
       "ed.ph": "In texts, {date}, {weekday}, {month} and {year} become the day of the run.",
       "a.notify": "Show a notice", "a.todo": "Add tasks to To-Do", "a.event": "Add an event to Calendar",
       "a.note": "Write a note", "a.mail": "Write an e-mail", "a.budget": "Add to Budget", "a.open": "Open an app",
-      "a.timer": "Start a timer", "a.ask": "Ask the Assistant",
+      "a.timer": "Start a timer", "a.ask": "Ask the Assistant", "a.track": "Timesheet timer",
+      "x.trackDo": "Do", "x.trackStart": "Start a timer", "x.trackStop": "Stop the running timer", "x.project": "Project (name, optional)",
       "a.push": "Push to my phone (ntfy, Gotify)", "a.hook": "Send to a webhook (n8n, Home Assistant…)",
       "x.svc": "Service", "x.url": "Address (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/your-secret-topic · Gotify: https://your-server/message?token=…",
       "x.urlHintHook": "Your webhook's address, for example Home Assistant https://…/api/webhook/<id> or n8n. The server must accept requests from orOS (CORS).",
@@ -114,7 +115,8 @@
       "ed.ph": "Στα κείμενα, τα {date}, {weekday}, {month} και {year} γίνονται η μέρα της εκτέλεσης.",
       "a.notify": "Εμφάνιση ειδοποίησης", "a.todo": "Εργασίες στο To-Do", "a.event": "Γεγονός στο Ημερολόγιο",
       "a.note": "Νέα σημείωση", "a.mail": "Νέο e-mail", "a.budget": "Καταχώριση στον Προϋπολογισμό", "a.open": "Άνοιγμα εφαρμογής",
-      "a.timer": "Έναρξη χρονομέτρου", "a.ask": "Ερώτηση στον Βοηθό",
+      "a.timer": "Έναρξη χρονομέτρου", "a.ask": "Ερώτηση στον Βοηθό", "a.track": "Χρονόμετρο Timesheet",
+      "x.trackDo": "Τι να γίνει", "x.trackStart": "Έναρξη χρονομέτρου", "x.trackStop": "Διακοπή του χρονομέτρου που μετράει", "x.project": "Έργο (όνομα, προαιρετικά)",
       "a.push": "Ειδοποίηση στο κινητό (ntfy, Gotify)", "a.hook": "Αποστολή σε webhook (n8n, Home Assistant…)",
       "x.svc": "Υπηρεσία", "x.url": "Διεύθυνση (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/το-μυστικό-σου-θέμα · Gotify: https://ο-server-σου/message?token=…",
       "x.urlHintHook": "Η διεύθυνση του webhook σου, π.χ. Home Assistant https://…/api/webhook/<id> ή n8n. Ο server πρέπει να δέχεται αιτήματα από το orOS (CORS).",
@@ -520,6 +522,20 @@
         inp = field(li, t("x.min"), textIn(a.min || 25, 0, "number")); inp.min = "1"; inp.max = "6000";
         inp.addEventListener("input", function (ev) { a.min = Math.floor(+ev.target.value) || 0; });
         inp = field(li, t("x.label"), textIn(a.label, 40)); inp.addEventListener("input", set("label"));
+      } else if (a.a === "track") {
+        var md = el("select");
+        md.appendChild(new Option(t("x.trackStart"), "start"));
+        md.appendChild(new Option(t("x.trackStop"), "stop"));
+        md.value = a.stop ? "stop" : "start";
+        var tbox = el("div");
+        field(li, t("x.trackDo"), md).addEventListener("change", function (ev) {
+          if (ev.target.value === "stop") a.stop = true; else delete a.stop;
+          tbox.hidden = !!a.stop;
+        });
+        li.appendChild(tbox);
+        tbox.hidden = !!a.stop;
+        inp = field(tbox, t("x.title"), textIn(a.title, 200)); inp.addEventListener("input", set("title"));
+        inp = field(tbox, t("x.project"), textIn(a.project, 80)); inp.addEventListener("input", set("project"));
       } else if (a.a === "ask") {
         inp = field(li, t("x.question"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
       } else if (a.a === "file") {

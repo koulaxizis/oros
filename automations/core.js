@@ -14,7 +14,7 @@
 //        | { t: "open" }                          (orOS opens, once a day)
 //   action = { a: "notify" | "todo" | "event" | "note" | "mail" |
 //              "budget" | "open" | "timer" | "ask" | "push" | "hook" |
-//              "file" | "print", …fields }
+//              "file" | "print" | "track" (Timesheet T4: { title, project? } | { stop: true }), …fields }
 //   file / print (item 25, BR-EV-BRIDGE): only in a rule that follows a
 //   new file in a folder orOS Bridge watches (when.ev "bridge.*"); the
 //   run keeps that file's key (host.js) and the tap opens the file in
@@ -52,9 +52,13 @@
   function bridgeEvent(ev) { return typeof ev === "string" && ev.indexOf("bridge.") === 0 && EVENTS.indexOf(ev) >= 0; }
   // Where "open the file" can send it, and the deep link each app takes.
   var FILE_TO = ["scanpdf", "files", "invoices"];
+  // Timesheet T4: a timer starts or stops (timesheet.js startTimer /
+  // stopEntry; key timesheet:<entry>:s|e, text "project · description").
+  EVENTS.push("timesheet.start", "timesheet.stop");
+  EVENT_APP["timesheet.start"] = EVENT_APP["timesheet.stop"] = "timesheet";
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track"];
   var FILE_ACTS = { file: true, print: true };
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
   // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
@@ -65,7 +69,7 @@
   var URL_MAX = 500;
   // Apps an action needs (the shell offers the action only when it is installed).
   var NEEDS = { todo: "todo", event: "calendar", note: "notes", mail: "mail", budget: "budget",
-                timer: "time", ask: "assistant" };
+                timer: "time", ask: "assistant", track: "timesheet" };
   // AUTO-4: never offered, never run.
   var BLOCKED_APPS = { passwords: true };
 
@@ -178,6 +182,17 @@
     if (a === "timer") {
       var min = int(x.min, 1, 6000);
       return min === null ? null : { a: a, min: min, label: line(x.label, 40) };
+    }
+    // Timesheet T4: start a Timesheet timer (title ≤ 200, project = a
+    // name hint, as Calendar's "Track time") or stop the running one.
+    if (a === "track") {
+      if (x.stop === true) return { a: a, stop: true };
+      var tt = line(x.title, 200);
+      if (!tt) return null;
+      var tr = { a: a, title: tt };
+      var pj = line(x.project, 80);
+      if (pj) tr.project = pj;
+      return tr;
     }
     if (a === "file") return FILE_TO.indexOf(x.to) >= 0 ? { a: a, to: x.to } : null;
     if (a === "print") return { a: a };
@@ -464,6 +479,7 @@
       "act.todo": "add {n} to To-Do", "act.event": "add to Calendar", "act.note": "add a note",
       "act.mail": "write an e-mail", "act.budget": "add to Budget", "act.open": "open {app}",
       "act.timer": "start a {n} min timer", "act.ask": "ask the Assistant",
+      "act.track": "Timesheet: start \u201c{t}\u201d", "act.trackStop": "Timesheet: stop the timer",
       "act.push": "a push to your phone through {host}", "act.hook": "a webhook to {host}",
       "tpl.week-plan": "Plan the week",
       "tpl.week-plan.text": "A new week starts. Have a look at your calendar and tasks.",
@@ -484,6 +500,7 @@
       "when.word": " with \u201c{word}\u201d",
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
+      "ev.timesheet.start": "When I start a Timesheet timer", "ev.timesheet.stop": "When I stop a Timesheet timer",
       "ev.webhook.in": "When a webhook arrives",
       "ev.bridge.pdf": "When a new PDF lands in a folder on my computer",
       "ev.bridge.photo": "When a new photo lands in a folder on my computer",
@@ -513,6 +530,7 @@
       "act.todo": "{n} στο To-Do", "act.event": "στο Ημερολόγιο", "act.note": "νέα σημείωση",
       "act.mail": "νέο e-mail", "act.budget": "στον Προϋπολογισμό", "act.open": "άνοιγμα: {app}",
       "act.timer": "χρονόμετρο {n} λεπτών", "act.ask": "ερώτηση στον Βοηθό",
+      "act.track": "Timesheet: έναρξη «{t}»", "act.trackStop": "Timesheet: διακοπή χρονομέτρου",
       "act.push": "ειδοποίηση στο κινητό μέσω {host}", "act.hook": "webhook προς {host}",
       "tpl.week-plan": "Πρόγραμμα εβδομάδας",
       "tpl.week-plan.text": "Ξεκινά νέα εβδομάδα. Ρίξε μια ματιά στο ημερολόγιο και στις εργασίες σου.",
@@ -533,6 +551,7 @@
       "when.word": " με \u00ab{word}\u00bb",
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
+      "ev.timesheet.start": "Όταν ξεκινώ χρονόμετρο στο Timesheet", "ev.timesheet.stop": "Όταν σταματώ χρονόμετρο στο Timesheet",
       "ev.webhook.in": "Όταν έρχεται webhook",
       "ev.bridge.pdf": "Όταν μπαίνει νέο PDF σε φάκελο του υπολογιστή μου",
       "ev.bridge.photo": "Όταν μπαίνει νέα φωτογραφία σε φάκελο του υπολογιστή μου",
@@ -609,6 +628,12 @@
     if (a.a === "file") return { fn: "bridgeFile", app: a.to, arg: { to: a.to } };
     if (a.a === "print") return { fn: "bridgePrint", app: "", arg: null };
     if (a.a === "timer") return { fn: "openAt", app: "time", arg: { timer: { sec: a.min * 60, label: f(a.label).slice(0, 40) } } };
+    if (a.a === "track") {
+      if (a.stop) return { fn: "openAt", app: "timesheet", arg: { stopTimer: true } };
+      var st = { title: f(a.title).slice(0, 200) };
+      if (a.project) st.project = a.project;
+      return { fn: "openAt", app: "timesheet", arg: { startTimer: st } };
+    }
     return { fn: "openAt", app: "assistant", arg: { ask: f(a.text).slice(0, 2000) } };
   }
   function needs(action) {
@@ -649,6 +674,7 @@
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
     if (a.a === "open") return sub(w(lang, "act.open"), { app: appName ? appName(a.app) : a.app });
     if (a.a === "timer") return sub(w(lang, "act.timer"), { n: a.min });
+    if (a.a === "track") return a.stop ? w(lang, "act.trackStop") : sub(w(lang, "act.track"), { t: a.title });
     if (a.a === "file") return sub(w(lang, "act.file"), { app: appName ? appName(a.to) : a.to });
     if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);

@@ -308,6 +308,16 @@
     if (rep.rows.length > MAX_PROJECTS) out.more_projects = rep.rows.length - MAX_PROJECTS;
     var run = core.running(data);
     if (run.length) out.running = run.map(function (x) { var p = core.project(data, x.p); return p ? p.name : ""; }).slice(0, 5);
+    // Timesheet T4: what is still to invoice, all time (the To invoice tab)
+    if (typeof core.unbilled === "function") {
+      var un = core.unbilled(data, ymdOf(now), now), ums = 0, uamt = 0;
+      un.forEach(function (r) { ums += r.ms; uamt += r.amount; });
+      if (un.length && (ums > 0 || uamt > 0)) {
+        out.to_invoice = { hours: hours(ums), amount: money(uamt), clients: un.length };
+        var oldest = un.reduce(function (m, r) { return r.since && (!m || r.since < m) ? r.since : m; }, "");
+        if (oldest) out.to_invoice.since = oldest;
+      }
+    }
     return out;
   }
 
@@ -898,7 +908,7 @@
   var L = {
     en: { inc: "Income", exp: "Expenses", net: "Balance", ent: "entries", h: "h", bill: "billable",
           open: "open", done: "done", late: "late", today: "due today", none: "Nothing in this period.",
-          run: "Running now", more: "+{n} more", uncat: "Uncategorized",
+          run: "Running now", more: "+{n} more", uncat: "Uncategorized", toInv: "To invoice",
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
           orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up",
@@ -911,7 +921,7 @@
           "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
-          run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία",
+          run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία", toInv: "Προς τιμολόγηση",
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
           orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Σύμβαση", next: "Επόμενο follow-up",
@@ -952,6 +962,8 @@
       });
       more(s.more_projects);
       if (s.running) out.push(w.run + ": " + s.running.join(", "));
+      if (s.to_invoice) out.push(w.toInv + ": " + (s.to_invoice.hours ? s.to_invoice.hours.toFixed(2) + " " + w.h : "") +
+                                 (s.to_invoice.hours && s.to_invoice.amount ? " · " : "") + (s.to_invoice.amount ? amt(s.to_invoice.amount, s.currency) : ""));
       if (!s.entries) out.push(w.none);
     } else if (s.app === "todo" && Array.isArray(s.lists)) {
       out.push(s.open + " " + w.open + " · " + s.overdue + " " + w.late + " · " + s.due_today + " " + w.today + " · " + s.done + " " + w.done);

@@ -1,17 +1,21 @@
 // ============================================================
-// orOS Timesheet — Today provider (v1.0.0)
+// orOS Timesheet — Today provider (v1.1.0)
 // Loaded by the shell (today/host.js) through apps.json "today".
 // Read-only: reads oros-timesheet-data, never writes. Nothing in
 // Timesheet is "due", so it gives top lines only (timesheet/core.js:
 // running, dayTotals): a timer that is running, and the time tracked
 // today against the daily goal when there is one. Opens Timesheet on
-// today (its own __orosOpenAt: { day }).
+// today (its own __orosOpenAt: { day }). T4 (v1.1.0): what is still
+// to invoice (core.unbilled, the To invoice tab's own sums) as one
+// more top line when it has an amount, opening that tab ({ tab: "bill" }).
 // ============================================================
 (function (root) {
   "use strict";
   var W = {
-    en: { run: "Timer running since {t}", noproj: "no project", day: "Tracked today: {d}", goal: "Tracked today: {d} of {g}" },
-    el: { run: "Το χρονόμετρο μετράει από τις {t}", noproj: "χωρίς έργο", day: "Σήμερα: {d}", goal: "Σήμερα: {d} από {g}" }
+    en: { run: "Timer running since {t}", noproj: "no project", day: "Tracked today: {d}", goal: "Tracked today: {d} of {g}",
+          bill: "To invoice: {d}", bill1: "1 client", billN: "{n} clients" },
+    el: { run: "Το χρονόμετρο μετράει από τις {t}", noproj: "χωρίς έργο", day: "Σήμερα: {d}", goal: "Σήμερα: {d} από {g}",
+          bill: "Προς τιμολόγηση: {d}", bill1: "1 πελάτης", billN: "{n} πελάτες" }
   };
 
   var PROVIDER = {
@@ -36,6 +40,18 @@
       if (ms > 0 || goal) {
         out.push({ id: "day", kind: "info", target: { day: ctx.today },
                    title: goal ? w.goal.replace("{d}", C.fmtDur(ms)).replace("{g}", C.fmtDur(goal)) : w.day.replace("{d}", C.fmtDur(ms)) });
+      }
+      if (typeof C.unbilled === "function") {
+        var un = C.unbilled(data, ctx.today, ctx.now), bms = 0, amt = 0;
+        un.forEach(function (r) { bms += r.ms; amt += r.amount; });
+        // only when something is charged: time tracked without rates
+        // (personal use) is not "to invoice"
+        if (un.length && amt > 0) {
+          var cur = data.prefs && data.prefs.cur || "EUR";
+          var what = [bms > 0 ? C.fmtDur(bms) : "", amt > 0 ? C.fmtMoney(amt, cur, ctx.lang) : ""].filter(Boolean).join(" · ");
+          out.push({ id: "bill", kind: "info", target: { tab: "bill" }, title: w.bill.replace("{d}", what),
+                     text: un.length === 1 ? w.bill1 : w.billN.replace("{n}", un.length) });
+        }
       }
       return out;
     }

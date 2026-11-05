@@ -133,7 +133,7 @@
       "imp.tempo": "Project Name → project · Account Customer → client · issue key and summary → task · Work Description → description. A work date without a time is placed from 09:00, one entry after another.",
       "imp.undone": "Import undone",
       "toast.save": "Could not save: storage is full", "toast.started": "Started: {p}",
-      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.alreadyRunning": "A timer is already running. Stop it first.", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
+      "toast.stopped": "Stopped: {p}, {d}", "toast.started": "Started: {p}", "toast.alreadyRunning": "A timer is already running. Stop it first.", "toast.noneRunning": "No timer is running.", "toast.added": "Added {d}", "toast.deleted": "Entry deleted",
       "toast.saved": "Saved", "toast.undo": "Undo", "toast.badTime": "The end must be after the start",
       "toast.badDur": "Could not read that duration", "toast.badMoney": "Could not read that amount",
       "toast.badName": "Give it a name", "toast.overlap": "Saved. It overlaps another entry.",
@@ -286,7 +286,7 @@
       "imp.tempo": "Project Name → έργο · Account Customer → πελάτης · κλειδί και τίτλος θέματος → εργασία · Work Description → περιγραφή. Μια μέρα χωρίς ώρα μπαίνει από τις 09:00, η μία καταγραφή μετά την άλλη.",
       "imp.undone": "Η εισαγωγή αναιρέθηκε",
       "toast.save": "Η αποθήκευση απέτυχε: ο χώρος γέμισε", "toast.started": "Ξεκίνησε: {p}",
-      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.alreadyRunning": "Ήδη μετράει ένα χρονόμετρο. Σταμάτησέ το πρώτα.", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
+      "toast.stopped": "Σταμάτησε: {p}, {d}", "toast.started": "Ξεκίνησε: {p}", "toast.alreadyRunning": "Ήδη μετράει ένα χρονόμετρο. Σταμάτησέ το πρώτα.", "toast.noneRunning": "Δεν μετράει κανένα χρονόμετρο.", "toast.added": "Προστέθηκε {d}", "toast.deleted": "Η καταγραφή διαγράφηκε",
       "toast.saved": "Αποθηκεύτηκε", "toast.undo": "Αναίρεση", "toast.badTime": "Η λήξη πρέπει να είναι μετά την έναρξη",
       "toast.badDur": "Δεν κατάλαβα αυτή τη διάρκεια", "toast.badMoney": "Δεν κατάλαβα αυτό το ποσό",
       "toast.badName": "Δώσε ένα όνομα", "toast.overlap": "Αποθηκεύτηκε. Επικαλύπτεται με άλλη καταγραφή.",
@@ -486,6 +486,16 @@
   }
 
   // ---------- 3. Edits ----------
+  // T4 (BR-EV): tell the shell's event bus that a timer started or
+  // stopped; an Automations rule may then post its notice. Only the
+  // event's name, the entry's key and "project · description" leave.
+  function orosEvent(name, key, text) {
+    try { var w = window.parent; if (w && w !== window && w.orosEvents) w.orosEvents.emit(name, key, text); } catch (e) {}
+  }
+  function evText(x) {
+    var p = C.project(data, x.p);
+    return [p ? p.name : "", x.desc || ""].filter(Boolean).join(" · ");
+  }
   // Start: every running timer stops first (one at a time), then a
   // new entry opens with the draft's project and description.
   function startTimer(p, desc, from, src) {
@@ -498,6 +508,7 @@
     if (from && from.task) x.task = from.task;
     if (from && from.tags && from.tags.length) x.tags = from.tags.slice();
     data.entries.push(x);
+    orosEvent("timesheet.start", "timesheet:" + id + ":s", evText(x));
     prefs.lastP = p || "";
     savePrefs();
     saveNow();
@@ -510,6 +521,7 @@
     if (e - x.s > C.MAX_SPAN) e = x.s + C.MAX_SPAN;
     x.e = e;
     x.m = stamp(x.m);
+    orosEvent("timesheet.stop", "timesheet:" + x.id + ":e", evText(x));
     if (!quiet) showToast(t("toast.stopped", { p: projLabel(x.p), d: dur(x.e - x.s) }));
   }
   function stopAll(now, quiet) {
@@ -3397,7 +3409,9 @@
   // note?, project?, src? } } (Calendar's, To-Do's and Kanban's "Track
   // time": the user's own click there, like pressing Start; project is a
   // name hint, src "todo:|kanban:|cal:<id>" is kept on the entry, T2)
-  // | { logTime: { title, s, e, src? } } (Calendar's "Log time"). An entry: the Timer tab on its day,
+  // | { logTime: { title, s, e, src? } } (Calendar's "Log time")
+  // | { stopTimer: true } (Automations' "Stop the Timesheet timer", T4)
+  // | { tab: "bill" } (Today's "To invoice" line, T4). An entry: the Timer tab on its day,
   // then its dialog; a project or a client: the Projects tab, then its
   // dialog. startTimer: the Timer tab; with no timer running, a new one
   // starts with the title (≤ 200, " · note" appended) as its description
@@ -3414,6 +3428,10 @@
     if (t.newEntry) { setTab("timer"); entryDialog(null, null); return; }
     if (t.startTimer && typeof t.startTimer === "object") { startFromTarget(t.startTimer); return; }
     if (t.logTime && typeof t.logTime === "object") { logFromTarget(t.logTime); return; }
+    // T4: an Automations "Stop the Timesheet timer" step; Today's
+    // "To invoice" line opens its tab.
+    if (t.stopTimer === true) { stopFromTarget(); return; }
+    if (t.tab === "bill") { setTab("bill"); return; }
     if (typeof t.entry === "string") {
       var x = findEntry(t.entry);
       if (!x) return;
@@ -3432,6 +3450,15 @@
       setTab("timer");
       goDay(t.day);
     }
+  }
+  function stopFromTarget() {
+    setTab("timer");
+    goDay(todayKey());
+    if (!C.running(data).length) { showToast(t("toast.noneRunning")); return; }
+    stopAll(Date.now(), false);
+    saveNow();
+    renderAll();
+    live(t("live.stopped"));
   }
   function startFromTarget(st) {
     var title = C.cleanText(typeof st.title === "string" ? st.title : "", 200);
