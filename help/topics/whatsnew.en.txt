@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.44.01
+- **Fingerprint unlock works on the phone.** The Android apps lacked the permission to use the fingerprint reader, so Passwords › Menu › `Fingerprint unlock` stayed on "Asking the phone…". Update the orOS app or orOS Passwords to get it. If the app does not answer, the dialog now says so after a few seconds instead of waiting.
+
 ## Version 5.44.00
 - **Automations follow your Timesheet timers.** A rule can start when you start or stop a timer in Timesheet, and the new **Timesheet timer** step starts a timer with a title (and the project of that name) or stops the running one, for example every weekday at 18:00. The Assistant can write such rules too.
 - **What is still to invoice, in Today.** Once something you tracked has a price, Today shows the hours, the amount and how many clients are waiting for an invoice; a tap opens Timesheet's To invoice tab. The Assistant sees it in your Timesheet summary.

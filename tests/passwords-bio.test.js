@@ -142,18 +142,25 @@ test("PW-BIO Android: BioActivity in the orOS app and orOS Passwords only, its o
   const act = /<activity android:name="\.BioActivity"[\s\S]*?<\/activity>/.exec(main)[0];
   assert.match(act, /android:exported="true"/);
   assert.match(act, /<data android:scheme="\$\{bioScheme\}" \/>/);
+  // BiometricManager.canAuthenticate and BiometricPrompt throw a
+  // SecurityException without it (the phone never answered "state").
+  const PERM = '<uses-permission android:name="android.permission.USE_BIOMETRIC" />';
+  const NOPERM = '<uses-permission android:name="android.permission.USE_BIOMETRIC" tools:node="remove" />';
+  assert.ok(main.includes(PERM), "USE_BIOMETRIC in the orOS app");
   const apps = gen.soloApps();
   for (const id of Object.keys(apps)) {
     const m = JSON.parse(read(id, "manifest.webmanifest"));
     const x = gen.buildSolo(id, apps[id], m, JSON.parse(read("manifest.webmanifest")))["AndroidManifest.xml"];
     const removed = x.includes('<activity android:name=".BioActivity" tools:node="remove" />');
     assert.equal(removed, id !== "passwords", id);
+    assert.equal(x.includes(NOPERM), id !== "passwords", id + " USE_BIOMETRIC");
   }
   const pages = gen.pageApps();
   for (const id of Object.keys(pages)) {
     const m = JSON.parse(read(pages[id].page, "manifest.webmanifest"));
     const x = gen.buildPage(id, pages[id], m, JSON.parse(read("manifest.webmanifest")))["AndroidManifest.xml"];
     assert.ok(x.includes('<activity android:name=".BioActivity" tools:node="remove" />'), id);
+    assert.ok(x.includes(NOPERM), id + " USE_BIOMETRIC");
   }
   const gradle = read("android", "app", "build.gradle");
   assert.match(gradle, /bioScheme: 'oros-bio-debug'/);

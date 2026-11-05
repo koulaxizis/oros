@@ -122,6 +122,7 @@
       "bio.doneOn": "Fingerprint unlock is on for this phone.",
       "bio.doneOff": "Fingerprint unlock is off: the copy on this phone was removed.",
       "bio.wait": "Asking the phone…",
+      "bio.update": "The orOS app on this phone does not answer yet. Update it (F-Droid, Obtainium or the APK from the orOS site), open it again and try once more.",
       "bio.can.none": "Add a fingerprint or face in Android's settings first.",
       "bio.can.no-hw": "This phone has no fingerprint or face unlock that Android counts as strong.",
       "bio.can.no-lock": "Set a screen lock on this phone first.",
@@ -366,6 +367,7 @@
       "bio.doneOn": "Το ξεκλείδωμα με δακτυλικό ενεργοποιήθηκε σε αυτό το κινητό.",
       "bio.doneOff": "Το ξεκλείδωμα με δακτυλικό απενεργοποιήθηκε: το αντίγραφο του κινητού διαγράφηκε.",
       "bio.wait": "Ρωτάω το κινητό…",
+      "bio.update": "Η εφαρμογή orOS σε αυτό το κινητό δεν απαντά ακόμη. Ενημέρωσέ την (F-Droid, Obtainium ή το APK από τη σελίδα του orOS), άνοιξέ την ξανά και δοκίμασε πάλι.",
       "bio.can.none": "Πρόσθεσε πρώτα δακτυλικό ή πρόσωπο στις ρυθμίσεις του Android.",
       "bio.can.no-hw": "Αυτό το κινητό δεν έχει ξεκλείδωμα με δακτυλικό ή πρόσωπο που το Android θεωρεί ισχυρό.",
       "bio.can.no-lock": "Βάλε πρώτα κλείδωμα οθόνης στο κινητό.",
@@ -2736,7 +2738,7 @@
     var err = d.error();
     function show() {
       var info = p.bio.info(), r = bioRec(), has = !!(r && r.kid === k && info && info.kids.indexOf(k) >= 0);
-      st.textContent = !info ? t("bio.wait") : info.can !== "ok" ? t("bio.can." + info.can) : has ? t("bio.isOn", { d: fmtDate(r.at) }) : "";
+      st.textContent = !info ? t(slow ? "bio.update" : "bio.wait") : info.can !== "ok" ? t("bio.can." + info.can) : has ? t("bio.isOn", { d: fmtDate(r.at) }) : "";
       form.hidden = !info || info.can !== "ok" || has;
       offB.hidden = !r && !(info && info.kids.indexOf(k) >= 0);
     }
@@ -2768,7 +2770,9 @@
     });
     offB.addEventListener("click", function () { bioOff(k); toast(t("bio.doneOff")); p.bio.refresh(); show(); });
     var off = p.onChange(show);
-    d.onClose(function () { off(); pw.value = ""; });
+    // An app from before PW-BIO never answers: say so instead of waiting.
+    var slow = false, slowT = setTimeout(function () { slow = true; show(); }, 4000);
+    d.onClose(function () { off(); clearTimeout(slowT); pw.value = ""; });
     p.bio.refresh();
     show();
     d.actions(t("d.close"));

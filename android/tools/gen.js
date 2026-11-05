@@ -134,6 +134,9 @@ function build(manifest) {
     <uses-sdk tools:overrideLibrary="androidx.health.connect.client" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Passwords' fingerprint unlock (PW-BIO) and autofill (PW-AF2):
+         BiometricManager and BiometricPrompt throw without it. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Reminders (BR-PHONE v3): exact times when the person allows it,
          and re-arming after a reboot. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -592,7 +595,7 @@ function buildOverlay(id, pkg, m, main, opt) {
      Overlay for the "${id}" flavour (${pkg}), merged over app/src/main. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-${REMOVE_PERMS.map((p) => `
+${REMOVE_PERMS.concat(BIO_APPS.includes(id) && opt.widget ? [] : ["USE_BIOMETRIC"]).map((p) => `
     <uses-permission android:name="android.permission.${p}" tools:node="remove" />`).join("")}
 
     <application>
