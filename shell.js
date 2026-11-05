@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.34.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.35.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -7624,6 +7624,9 @@
         { name: "Cover Art Archive", url: "https://coverartarchive.org/",
           by: "MetaBrainz Foundation and Internet Archive", lic: { k: "cr.lic.cover-art" },
           k: "cr.cover-art" },
+        { name: "ListenBrainz", url: "https://listenbrainz.org/",
+          by: "MetaBrainz Foundation", lic: "CC0 (data)",
+          k: "cr.listenbrainz" },
         { name: "Anthropic, OpenAI, Google Gemini, Mistral, OpenRouter, Ollama, LM Studio", url: "https://www.anthropic.com/",
           by: "Each provider", lic: { k: "cr.lic.anthropic-openai" },
           k: "cr.anthropic-openai" },

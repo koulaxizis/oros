@@ -1,6 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.35.00
+- **A page for any artist in the world, in Music.** Turn on `Artist pages online` in Music's settings, then search for any artist: you get their photo, a short bio from Wikipedia, members, genres and the whole discography from MusicBrainz. Songs play only where they are free (your own files and servers, Jamendo, the Internet Archive, Openverse, ccMixter); for the rest, `Listen in full` links to where you can hear them. Follow artists and they show on Home on all your devices.
+- **Discover in Music.** Home shows the week's top artists and fresh releases. An artist page shows `Fans also like`, plays an artist radio of free songs from them and similar artists, and opens Radio stations of their genre.
+- **Your own ListenBrainz.** Paste your ListenBrainz token in Music's settings: the songs you play are saved to your profile, and your Weekly Jams and own playlists show on Home. The token stays sealed on this device and goes only to ListenBrainz.
+
 ## Version 5.34.00
 - **Simon Says and Whack-a-Mole carry on too.** Leave either one in the middle of a game, or close orOS, and it waits where you stopped: Simon on the round you were playing (press `Continue` and it plays that round again), Whack-a-Mole paused with the time it had left.
 - **Hangman** now shows up in Game Center's `Continue` row when a word is under way.
