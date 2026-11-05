@@ -2195,15 +2195,17 @@
     { id: "shop", ps: ["woo", "shopify", "tol", "ininja", "stripe", "paypal", "ebank"] },
     { id: "mail", ps: ["mlite", "mchimp", "brevo"] },
     { id: "crm", ps: ["hubspot", "pdrive", "odoo"] },
-    { id: "work", ps: ["todoist", "trello", "github", "notion", "raindrop"] }
+    { id: "work", ps: ["todoist", "trello", "github", "notion", "raindrop", "toggl", "clockify", "harvest", "kimai"] }
   ];
   // monogram per service; its brand colour is in settings.css (.svc-mark.m-<id>)
   var SVC_MARK = {
     woo: "Wo", shopify: "Sh", tol: "t", ininja: "IN", stripe: "S", mlite: "ML", mchimp: "M", brevo: "B",
-    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R", ebank: "EB", paypal: "PP"
+    hubspot: "H", pdrive: "P", odoo: "O", todoist: "Td", trello: "Tr", github: "GH", notion: "N", raindrop: "R", ebank: "EB", paypal: "PP",
+    toggl: "Tg", clockify: "Cl", harvest: "Hv", kimai: "K"
   };
-  // platforms with a second secret (Trello's token, PayPal's Secret)
-  function twoKeys(p) { return p === "trello" || p === "paypal"; }
+  // platforms with a second secret (Trello's token, PayPal's Secret,
+  // Harvest's account id)
+  function twoKeys(p) { return p === "trello" || p === "paypal" || p === "harvest"; }
   // a platform's own name for a key field ("Client ID"), else the plain one
   function keyLabel(p, k) { var s = t("v." + k + "." + p); return s === "v." + k + "." + p ? t("v." + k) : s; }
   function svcMark(p, name) {

@@ -6,12 +6,21 @@
 //
 // Data (synced slice "timesheet", key oros-timesheet-data):
 //   { ver: 1,
-//     clients:  [ { id, name, rate, <billing>, m } | { id, m, del: 1 } ]
-//     projects: [ { id, name, client, color, rate, bill, arch, <billing>, m } | tomb ]
+//     clients:  [ { id, name, rate, <billing>, crm?, m } | { id, m, del: 1 } ]
+//               crm = the CRM customer it is (T1), written only when set
+//     projects: [ { id, name, client, color, rate, bill, arch, budget?, fee?, <billing>, m } | tomb ]
+//               fee = a fixed fee in cents (T3): its time is not charged
+//               by the hour; the fee goes on as an extra charge (fee: 1)
 //               <billing> = minH?, minAmt?, otH?, minPer?, otRate? (minimum
 //               charge and overtime, see normBilling)
-//     entries:  [ { id, p, desc, s, e, billed, m } | tomb ]
-//     extras:   [ { id, d, p, c, desc, amt, billed, m } | tomb ]
+//     entries:  [ { id, p, desc, s, e, billed, task?, tags?, iv?, m } | tomb ]
+//               iv = the Invoices document it went on (T1, BR-TS-INV),
+//               written only when set and meant only while billed;
+//               src = what it was for (T2): "todo:<id>", "kanban:<id>",
+//               "cal:<event>:<day>", written only when set
+//     extras:   [ { id, d, p, c, desc, amt, billed, iv?, km?, kmr?, fee?, bud?, m } | tomb ]
+//               km/kmr = mileage (distance, cents per km), fee = a
+//               project's fixed fee, bud = sent to Budget (T3)
 //               extra charges (fuel, travel, …): written only when
 //               the list has a record, so data without one stays
 //               byte-identical to what older versions write
@@ -30,6 +39,9 @@
 //   3. Lookups + rates
 //   4. Time maths: day pieces, rounding, week grid, reports
 //   5. Parsing + formatting
+//   5b. Invoices link + unbilled time (T1)
+//   5c. Time from tasks, cards and events (T2)
+//   5d. Packages, fixed fees, mileage, Budget (T3); .ics (T5)
 //   6. Export: CSV + JSON backup
 // ============================================================
 (function (root) {
@@ -51,7 +63,10 @@
     budget: [0, 6000000],            // minutes per project (100.000 h), 0 = no budget
     minH: [0, 44640],                // minimum minutes per period (31 days), 0 = none; also otH
     minAmt: [0, 100000000],          // minimum amount per period in cents (a day rate), 0 = none
-    exDesc: 200, amt: [1, 100000000] // extra charge: text, cents (1.000.000,00 max)
+    exDesc: 200, amt: [1, 100000000], // extra charge: text, cents (1.000.000,00 max)
+    fee: [0, 100000000],             // T3: a project's fixed fee in cents, 0 = none
+    km: [0.1, 100000],               // T3: a mileage charge's distance (one decimal)
+    kmr: [1, 100000]                 // T3: its rate in cents per km
   };
   var MIN_PERS = ["d", "w", "m"];    // the minimum applies per day, week or month
   var ROUNDS = [0, 5, 6, 10, 15, 30, 60];
@@ -117,6 +132,14 @@
   }
   function tomb(x) { return { id: x.id, m: x.m, del: 1 }; }
   function refId(v) { return typeof v === "string" && ID_RE.test(v) ? v : ""; }
+  // An id of another app's record (an Invoices document, a CRM
+  // customer): the shape those apps accept, nothing more is assumed.
+  var LINK_RE = /^[A-Za-z0-9_-]{1,60}$/;
+  function linkId(v) { return typeof v === "string" && LINK_RE.test(v) ? v : ""; }
+  // T2 (BR-TS-SRC): what an entry was for, "todo:<task>", "kanban:<card>"
+  // or "cal:<event>:<occurrence day>".
+  var SRC_RE = /^(todo|kanban|cal):[A-Za-z0-9_.:-]{1,90}$/;
+  function srcKey(v) { return typeof v === "string" && SRC_RE.test(v) ? v : ""; }
 
   // Forward compatibility (as in Budget): a flat field this version
   // does not know rides along on its record, sorted by name, so a
@@ -124,11 +147,11 @@
   // (stripping would make two versions re-upload forever).
   var EXTRA_RE = /^[a-z][a-z0-9]{0,15}$/, EXTRA_MAX = 16;
   var KNOWN = {
-    client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
+    client:  ["id", "name", "rate", "minH", "minAmt", "otH", "minPer", "otRate", "crm", "m", "del"],
     project: ["id", "name", "client", "color", "rate", "bill", "arch", "budget",
-              "minH", "minAmt", "otH", "minPer", "otRate", "m", "del"],
-    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "m", "del"],
-    extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "m", "del"]
+              "minH", "minAmt", "otH", "minPer", "otRate", "fee", "m", "del"],
+    entry:   ["id", "p", "desc", "s", "e", "billed", "task", "tags", "iv", "src", "m", "del"],
+    extra:   ["id", "d", "p", "c", "desc", "amt", "billed", "iv", "km", "kmr", "fee", "bud", "m", "del"]
   };
   function withExtras(out, x, known) {
     var n = 0;
@@ -166,6 +189,9 @@
     if (!name) return null;
     var out = { id: x.id, name: name, rate: inRange(x.rate, LIM.rate) ? x.rate : 0 };
     normBilling(out, x);
+    // T1: the CRM customer this client is (BR-TS-CRM), written only when set
+    var crm = linkId(x.crm);
+    if (crm) out.crm = crm;
     out.m = x.m;
     return withExtras(out, x, KNOWN.client);
   }
@@ -183,6 +209,7 @@
     };
     // Written only when set, so records without one stay byte-identical.
     if (inRange(x.budget, LIM.budget) && x.budget > 0) out.budget = x.budget;
+    if (inRange(x.fee, LIM.fee) && x.fee > 0) out.fee = x.fee;      // T3: fixed fee, time not charged by the hour
     normBilling(out, x);
     out.m = x.m;
     return withExtras(out, x, KNOWN.project);
@@ -219,6 +246,10 @@
     var task = cleanText(x.task, LIM.task), tags = normTags(x.tags);
     if (task) out.task = task;
     if (tags.length) out.tags = tags;
+    var iv = linkId(x.iv);        // T1: the Invoices document it went on (meant only while billed)
+    if (iv) out.iv = iv;
+    var src = srcKey(x.src);      // T2: the To-Do task, Kanban card or Calendar event it was for
+    if (src) out.src = src;
     out.m = x.m;
     return withExtras(out, x, KNOWN.entry);
   }
@@ -228,10 +259,24 @@
     if (!baseOk(x)) return null;
     if (x.del) return tomb(x);
     if (!validDay(x.d) || !inRange(x.amt, LIM.amt)) return null;
-    return withExtras({
+    var out = {
       id: x.id, d: x.d, p: refId(x.p), c: refId(x.c), desc: cleanText(x.desc, LIM.exDesc),
-      amt: x.amt, billed: x.billed ? 1 : 0, m: x.m
-    }, x, KNOWN.extra);
+      amt: x.amt, billed: x.billed ? 1 : 0
+    };
+    var iv = linkId(x.iv);        // T1: the Invoices document it went on (meant only while billed)
+    if (iv) out.iv = iv;
+    // T3: a mileage charge keeps its distance and rate per km (amt is
+    // what was charged: km × kmr, rounded); fee marks a project's fixed
+    // fee; bud marks one sent to Budget. Each only when set.
+    if (typeof x.km === "number" && isFinite(x.km) && x.km >= LIM.km[0] && x.km <= LIM.km[1] &&
+        Math.abs(Math.round(x.km * 10) - x.km * 10) < 1e-9 && inRange(x.kmr, LIM.kmr)) {
+      out.km = Math.round(x.km * 10) / 10;
+      out.kmr = x.kmr;
+    }
+    if (x.fee === 1) out.fee = 1;
+    if (x.bud === 1) out.bud = 1;
+    out.m = x.m;
+    return withExtras(out, x, KNOWN.extra);
   }
   // Fixed key order: two devices with the same prefs serialize alike.
   function normPrefs(p) {
@@ -506,6 +551,7 @@
   // without one charges its day rate and overtime alone.
   function chargeRate(data, pid) {
     var p = project(data, pid);
+    if (p && p.fee) return 0;              // T3: a fixed-fee project's time is not charged by the hour
     return p && hasBilling(p) && p.minAmt ? p.rate : rateOf(data, pid);
   }
   // The report's pieces in the range and filter, oldest first, each
@@ -860,6 +906,230 @@
   }
   function hhmm(ts) { var d = new Date(ts); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
 
+  // ---------- 5b. Invoices link + unbilled time (T1, BR-TS-INV) ----------
+  // "Create invoice" opens a prefilled invoice whose ref is
+  // { app: "timesheet", id: <batch> }; Invoices keeps it on the saved
+  // document as src "timesheet:<batch>" (Invoices wave 7). The ids of
+  // that invoice's entries and extra charges wait in a DEVICE-LOCAL
+  // list (PEND_KEY, never synced): once a document made from the batch
+  // exists (a draft too, so the same hours are not invoiced twice),
+  // they are marked invoiced with iv = the document's id, and that mark
+  // syncs like any edit. A document that is deleted, cancelled or
+  // credited in full takes its marks off again. An iv whose document
+  // this device does not know yet (Invoices not synced here) is left
+  // alone, so a slower device never undoes a mark.
+  var PEND_KEY = "oros-timesheet-invpend", PEND_MAX = 20, PEND_MS = 30 * DAY, PEND_IDS = 2000;
+  function pendIds(v) {
+    return Array.isArray(v) ? v.filter(function (x) { return typeof x === "string" && ID_RE.test(x); }).slice(0, PEND_IDS) : [];
+  }
+  // Pending batches: { <batch>: { at, ids, ex } }, at most PEND_MAX
+  // (the newest), each dropped 30 days after it was made.
+  function normPend(o, now) {
+    var out = {};
+    if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+    Object.keys(o).filter(function (k) { return ID_RE.test(k); }).forEach(function (k) {
+      var b = o[k];
+      if (!b || typeof b !== "object" || !isInt(b.at) || now - b.at > PEND_MS || b.at > now + DAY) return;
+      var ids = pendIds(b.ids), ex = pendIds(b.ex);
+      if (ids.length || ex.length) out[k] = { at: b.at, ids: ids, ex: ex };
+    });
+    Object.keys(out).sort(function (a, b) { return out[b].at - out[a].at || cmpStr(a, b); })
+      .slice(PEND_MAX).forEach(function (k) { delete out[k]; });
+    return out;
+  }
+  function pendAdd(pend, batch, ids, exIds, now) {
+    var o = normPend(pend, now);
+    if (ID_RE.test(batch)) o[batch] = { at: now, ids: pendIds(ids), ex: pendIds(exIds) };
+    return normPend(o, now);
+  }
+  // look.doc(batch) → the id of the document made from that batch, or "";
+  // look.gone(docId) → true (deleted, cancelled or credited in full),
+  // false (it stands), null (this device does not know it).
+  // → { set: [{ id, iv }], clear: [id], done: [batch] }
+  function invLink(data, pend, look, now) {
+    var out = { set: [], clear: [], done: [] }, seen = {}, gone = {};
+    var goneOf = function (id) { if (!(id in gone)) gone[id] = look.gone(id); return gone[id]; };
+    var p = normPend(pend, now);
+    Object.keys(p).sort(cmpStr).forEach(function (b) {
+      var doc = linkId(look.doc(b));
+      if (!doc || goneOf(doc) === true) return;
+      out.done.push(b);
+      p[b].ids.concat(p[b].ex).forEach(function (id) {
+        var x = byId(data.entries, id) || byId(data.extras || [], id);
+        if (!x || seen[id] || x.e === 0) return;
+        if (x.billed && x.iv && x.iv !== doc && goneOf(x.iv) !== true) return;   // on another invoice already
+        seen[id] = true;
+        if (!(x.billed && x.iv === doc)) out.set.push({ id: id, iv: doc });
+      });
+    });
+    live(data.entries).concat(live(data.extras || [])).forEach(function (x) {
+      if (x.iv && x.billed && !seen[x.id] && goneOf(x.iv) === true) out.clear.push(x.id);
+    });
+    return out;
+  }
+  // Billable time and extra charges not invoiced yet, per client (all
+  // time up to today, minimums and overtime as in Reports):
+  // [{ cid, ms, amount, since, n }], the largest amount first; since =
+  // the day of the oldest piece, n = entries + extra charges.
+  function unbilled(data, todayKey, now) {
+    var rep = report(data, "2000-01-01", todayKey, { bill: "bill", billed: "open", group: "client" }, now);
+    var since = {}, n = {};
+    var note = function (cid, day) {
+      if (!since[cid] || day < since[cid]) since[cid] = day;
+      n[cid] = (n[cid] || 0) + 1;
+    };
+    rep.ids.forEach(function (id) {
+      var x = byId(data.entries, id), p = x ? project(data, x.p) : null;
+      if (x) note(p ? p.client : "", dayKeyOf(x.s));
+    });
+    rep.exIds.forEach(function (id) {
+      var x = byId(data.extras || [], id);
+      if (x) note(extraClient(data, x), x.d);
+    });
+    return rep.rows.filter(function (r) { return r.billMs > 0 || r.amount > 0; }).map(function (r) {
+      return { cid: r.key, ms: r.billMs, amount: r.amount, since: since[r.key] || "", n: n[r.key] || 0 };
+    }).sort(function (a, b) { return b.amount - a.amount || b.ms - a.ms || cmpStr(a.cid, b.cid); });
+  }
+
+  // ---------- 5c. Time from tasks, cards and events (T2, BR-TS-SRC) ----------
+  // Tracked time per source key: { "todo:<id>": ms, … } for the keys
+  // that start with `prefix` ("" = every key). A running entry counts
+  // up to now.
+  function timeBySrc(data, prefix, now) {
+    var out = {};
+    data.entries.forEach(function (x) {
+      if (x.del || !x.src || (prefix && x.src.indexOf(prefix) !== 0)) return;
+      out[x.src] = (out[x.src] || 0) + (endOf(x, now) - x.s);
+    });
+    return out;
+  }
+  // Calendar events of a day that ended and have no time logged:
+  // evs = [{ key, title, s, e }] (timed occurrences, ms); left out are
+  // those not over yet, those dismissed (skip = { key: 1 }), those an
+  // entry names (src) and those already covered for half their length
+  // or more by entries (a timer started from the event, say).
+  function calSuggest(data, evs, skip, now) {
+    var named = timeBySrc(data, "cal:", now);
+    return (evs || []).filter(function (v) {
+      if (!v || !srcKey(v.key) || !isInt(v.s) || !isInt(v.e) || v.e <= v.s || v.e > now) return false;
+      if ((skip && skip[v.key]) || named[v.key]) return false;
+      var cov = 0;
+      data.entries.forEach(function (x) {
+        if (x.del) return;
+        var a = Math.max(x.s, v.s), b = Math.min(endOf(x, now), v.e);
+        if (b > a) cov += b - a;
+      });
+      return cov * 2 < v.e - v.s;
+    }).sort(function (a, b) { return a.s - b.s || cmpStr(a.key, b.key); });
+  }
+
+  // ---------- 5d. Packages, fixed fees, mileage (T3) ----------
+  // A retainer is a client's or project's minimum charge per week or
+  // month (normBilling) with hours included (otH, else minH): the
+  // period's fee covers them and overtime is charged after them.
+  // → null, or { from, to, ms (this period, rounded as in reports),
+  //   inclMs, pct, state: "ok" | "near" (80 % or more) | "over" }.
+  function pkgUse(data, kind, id, todayKey, now) {
+    var rec = kind === "c" ? client(data, id) : project(data, id);
+    if (!rec || !hasBilling(rec) || rec.minPer === "d") return null;
+    var incl = rec.otH || rec.minH || 0;
+    if (!incl) return null;
+    var from = periodOf(todayKey, rec.minPer), to = periodEnd(from, rec.minPer), key = kind + id, ms = 0;
+    piecesIn(data, from, to, now).forEach(function (pc) {
+      if (!billable(data, pc.x.p)) return;
+      var b = billingOf(data, project(data, pc.x.p));
+      if (b && b.key === key) ms += roundMs(pc.e - pc.s, data.prefs.round, data.prefs.rup);
+    });
+    var inclMs = incl * 60000, pct = Math.floor(ms / inclMs * 100);
+    return { from: from, to: to, ms: ms, inclMs: inclMs, pct: pct,
+             state: ms > inclMs ? "over" : (pct >= 80 ? "near" : "ok") };
+  }
+  // A fixed-fee project: the fee, its time (all time, exact) and the
+  // hourly rate that makes: fee / hours. null without a fee.
+  function effRate(data, pid, now) {
+    var p = project(data, pid);
+    if (!p || !p.fee) return null;
+    var ms = 0;
+    data.entries.forEach(function (x) { if (!x.del && x.p === pid) ms += endOf(x, now) - x.s; });
+    return { fee: p.fee, ms: ms, rate: ms >= 60000 ? Math.round(p.fee * HOUR / ms) : 0 };
+  }
+  // The fixed fee already added as an extra charge (fee: 1), or null.
+  function feeExtra(data, pid) {
+    var hit = null;
+    (data.extras || []).forEach(function (x) { if (!x.del && x.fee === 1 && x.p === pid && (!hit || x.d > hit.d)) hit = x; });
+    return hit;
+  }
+  // Mileage: km (one decimal) × cents per km, rounded; NaN when out of range.
+  function kmAmount(km, kmr) {
+    if (!(typeof km === "number" && km >= LIM.km[0] && km <= LIM.km[1]) || !inRange(kmr, LIM.kmr)) return NaN;
+    var a = Math.round(Math.round(km * 10) * kmr / 10);
+    return inRange(a, LIM.amt) ? a : NaN;
+  }
+  // 12.5 → "12,5" (el, de…) or "12.5" (en).
+  function fmtKm(km, lang) {
+    var v = String(Math.round(km * 10) / 10);
+    return comma(lang) ? v.replace(".", ",") : v;
+  }
+  // "12,5" / "12.5" / "120" → 12.5 (one decimal) or NaN.
+  function parseKm(text) {
+    var v = String(text || "").trim().replace(",", ".");
+    if (!/^\d{1,6}(\.\d)?$/.test(v)) return NaN;
+    var n = Math.round(parseFloat(v) * 10) / 10;
+    return n >= LIM.km[0] && n <= LIM.km[1] ? n : NaN;
+  }
+  // What Budget gets for an extra charge (BR-B1 prefill, BR-TS-BUD):
+  // an expense on its day with its description and client, travel when
+  // it is mileage. → { k, a, d, n, c?, src }
+  function budgetPrefill(data, x) {
+    var c = client(data, extraClient(data, x));
+    var n = cleanText([x.desc, c ? c.name : ""].filter(Boolean).join(" · "), 500);
+    var out = { k: "o", a: x.amt, d: x.d, n: n };
+    if (x.km) out.c = "o-trans";
+    out.src = "timesheet";
+    if (c && c.crm) out.crm = c.crm;
+    return out;
+  }
+
+  // T5: the entries of a report (range and filter, ended ones) as an
+  // iCalendar file: one event each, UTC times, the same UID every
+  // time (the entry id), so a calendar app updates instead of doubling.
+  function icsText(v) {
+    return String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  }
+  function icsFold(line) {
+    var out = [], cur = "", n = 0;
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i], b = unescape(encodeURIComponent(ch)).length;
+      if (n + b > (out.length ? 74 : 75)) { out.push(cur); cur = ""; n = 0; }
+      cur += ch; n += b;
+    }
+    out.push(cur);
+    return out.join("\r\n ");
+  }
+  function icsStamp(ms) {
+    var d = new Date(ms);
+    return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" +
+           pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + pad(d.getUTCSeconds()) + "Z";
+  }
+  function toIcs(data, fromKey, toKey, f, now, lang) {
+    f = f || {};
+    var w = words(lang), lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//orOS//Timesheet//EN", "CALSCALE:GREGORIAN"];
+    var a = dayStart(fromKey), b = dayStart(addDays(toKey, 1));
+    data.entries.filter(function (x) {
+      return !x.del && x.e !== 0 && x.s >= a && x.s < b && matches(data, x, f);
+    }).sort(function (x, y) { return x.s - y.s || cmpStr(x.id, y.id); }).forEach(function (x) {
+      var p = project(data, x.p), c = p ? projectClient(data, p) : null;
+      var sum = [p ? p.name : "", x.desc].filter(Boolean).join(" · ") || w.noProject;
+      var det = [c ? c.name : "", x.task || "", (x.tags || []).join(", ")].filter(Boolean).join("\n");
+      lines.push("BEGIN:VEVENT", "UID:" + x.id + "@timesheet.useoros.online", "DTSTAMP:" + icsStamp(now),
+                 "DTSTART:" + icsStamp(x.s), "DTEND:" + icsStamp(x.e), icsFold("SUMMARY:" + icsText(sum)));
+      if (det) lines.push(icsFold("DESCRIPTION:" + icsText(det)));
+      lines.push("END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    return lines.join("\r\n") + "\r\n";
+  }
+
   // ---------- 6. Export ----------
   // A text cell that Excel / LibreOffice would read as a formula gets
   // a leading apostrophe (CSV injection), then RFC 4180 quoting.
@@ -989,7 +1259,7 @@
       noteClient(p ? p.client : "");
       var rate = chargeRate(data, r.pid), b = billingOf(data, p);
       // a day-rate project without an hourly rate: the minimum line says it all
-      if (rate || !(b && b.src.minAmt)) items.push({ d: nameOf(r.pid) + " · " + range, q: hrs(r.ms), p: rate / 100 });
+      if (!(p && p.fee) && (rate || !(b && b.src.minAmt))) items.push({ d: nameOf(r.pid) + " · " + range, q: hrs(r.ms), p: rate / 100 });
       if (r.ot) items.push({ d: nameOf(r.pid) + " · " + w["exp.overtime"] + " · " + range, q: hrs(r.ot), p: r.otRate / 100 });
     });
     // Top-ups: hours at a rate (per owner and rate), or an amount per
@@ -1312,6 +1582,75 @@
     };
   }
 
+  // ---------- ActivityWatch (T5) ----------
+  // An ActivityWatch export (Settings › Export all buckets as JSON):
+  // { buckets: { "aw-watcher-afk_<host>": { events }, "aw-watcher-window_<host>": { events } } }.
+  // The time at the computer (afk "not-afk" events, gaps under
+  // AW_GAP merged) becomes suggested entries of AW_MIN or more, each
+  // named after the window it spent the most time in ("App · title").
+  // No project: the person sorts them out after the preview. The ids
+  // come from the block's start and end, so the same export twice adds
+  // nothing, and a deleted suggestion stays deleted (m = 1, Wave 5).
+  // → the shape of importPlan, source "activitywatch", or null.
+  var AW_GAP = 5 * 60000, AW_MIN = 15 * 60000, AW_MAX_EVENTS = 200000;
+  function awEvents(b) {
+    var out = [];
+    (b && Array.isArray(b.events) ? b.events : []).slice(0, AW_MAX_EVENTS).forEach(function (ev) {
+      var s = ev ? Date.parse(ev.timestamp) : NaN, d = ev ? +ev.duration : NaN;
+      if (!isFinite(s) || !(d > 0)) return;
+      out.push({ s: s, e: s + Math.round(d * 1000), data: ev.data && typeof ev.data === "object" ? ev.data : {} });
+    });
+    return out.sort(function (x, y) { return x.s - y.s; });
+  }
+  function awPlan(obj, data) {
+    var bk = obj && typeof obj === "object" && obj.buckets && typeof obj.buckets === "object" ? obj.buckets : null;
+    if (!bk) return null;
+    var afk = [], win = [];
+    Object.keys(bk).forEach(function (k) {
+      var b = bk[k] || {}, type = String(b.type || "");
+      if (type === "afkstatus" || /^aw-watcher-afk/.test(k)) afk = afk.concat(awEvents(b));
+      else if (type === "currentwindow" || /^aw-watcher-window/.test(k)) win = win.concat(awEvents(b));
+    });
+    if (!afk.length && !win.length) return null;
+    afk.sort(function (x, y) { return x.s - y.s; });
+    win.sort(function (x, y) { return x.s - y.s; });
+    var src = afk.length ? afk.filter(function (x) { return x.data.status === "not-afk"; }) : win;
+    var blocks = [];
+    src.forEach(function (x) {
+      var last = blocks[blocks.length - 1];
+      if (last && x.s - last.e <= AW_GAP && dayKeyOf(x.s) === dayKeyOf(last.s)) last.e = Math.max(last.e, x.e);
+      else blocks.push({ s: x.s, e: x.e });
+    });
+    var have = {};
+    data.entries.forEach(function (x) { have[x.id] = 1; });
+    var add = [], dup = 0, fresh = 0, bad = 0, from = "", to = "", wi = 0;
+    blocks.forEach(function (bl) {
+      if (bl.e - bl.s < AW_MIN) return;
+      if (bl.e - bl.s > MAX_SPAN || bl.s < MIN_TS || bl.s > MAX_TS) { bad++; return; }
+      var by = {};
+      while (wi < win.length && win[wi].e <= bl.s) wi++;
+      for (var j = wi; j < win.length && win[j].s < bl.e; j++) {
+        var w = win[j], ms = Math.min(w.e, bl.e) - Math.max(w.s, bl.s);
+        if (ms <= 0) continue;
+        var app = cleanText(w.data.app, 40), title = cleanText(w.data.title, 120);
+        var k = app + "\u0001" + title;
+        by[k] = (by[k] || 0) + ms;
+      }
+      var top = Object.keys(by).sort(function (a, b) { return by[b] - by[a] || cmpStr(a, b); })[0] || "";
+      var desc = top ? top.split("\u0001").filter(Boolean).join(" · ") : "";
+      var id = hashId("aw", bl.s + "\u0001" + bl.e);
+      var k1 = dayKeyOf(bl.s), k2 = dayKeyOf(bl.e - 1);
+      if (!from || k1 < from) from = k1;
+      if (!to || k2 > to) to = k2;
+      if (have[id]) { dup++; return; }
+      fresh++;
+      add.push({ id: id, p: "", desc: cleanText(desc, LIM.desc), s: bl.s, e: bl.e, billed: 0, m: 1 });
+    });
+    return { source: "activitywatch", order: "dmy", ambiguous: false, rows: blocks.length, bad: bad,
+             fresh: fresh, dup: dup, from: from, to: to,
+             add: { ver: DATA_VER, clients: [], projects: [], entries: add, prefs: data.prefs, pm: 0 } };
+  }
+
   // ---------- Time away (Wave 46, idle detection) ----------
   // The shell watches for time away while a timer runs (the Idle
   // Detection API in Chromium after the user allows it, and on every
@@ -1423,7 +1762,11 @@
     parseDuration: parseDuration, parseMoney: parseMoney, fmtDur: fmtDur, fmtHours: fmtHours,
     fmtMoney: fmtMoney, moneyInput: moneyInput, hhmm: hhmm,
     csvCell: csvCell, toCsv: toCsv, toTable: toTable, quoteLines: quoteLines, fmtRange: fmtRange, toBackup: toBackup, fromBackup: fromBackup,
-    readCsv: readCsv, importPlan: importPlan
+    readCsv: readCsv, importPlan: importPlan,
+    PEND_KEY: PEND_KEY, normPend: normPend, pendAdd: pendAdd, invLink: invLink, unbilled: unbilled, linkId: linkId,
+    srcKey: srcKey, timeBySrc: timeBySrc, calSuggest: calSuggest,
+    pkgUse: pkgUse, effRate: effRate, feeExtra: feeExtra, kmAmount: kmAmount, parseKm: parseKm, fmtKm: fmtKm,
+    budgetPrefill: budgetPrefill, endText: endText, toIcs: toIcs, awPlan: awPlan
   };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;

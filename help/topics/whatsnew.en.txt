@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.39.00
+- **Timesheet marks what you invoiced.** An invoice made from Timesheet marks exactly its hours and extra charges as invoiced once Invoices saves it, and takes the marks off again if the invoice is deleted, voided or fully credited. The new **To invoice** tab shows, per client, the time and charges not invoiced yet and the unpaid invoices. A client can be linked to a CRM customer, so the invoice gets the tax details.
+- **Track time from your tasks.** To-Do tasks and Kanban cards have **Track time** and show the time tracked on them. In the Calendar, **Log time** turns an ended event into an entry, and the Timer tab lists ended events with no time logged.
+- **Packages, fixed fees and mileage.** A monthly or weekly package shows a bar of hours used. A fixed-fee project shows what it makes per hour. An extra charge can be kilometres × rate, and can go to Income & Expenses with one tap.
+- **Client timesheet PDF.** Reports makes a PDF for the client, and inside orOS you can email it straight from Mail.
+- **Bring your time from Toggl, Clockify, Harvest or Kimai.** Add your own token in Settings › Connected services and Timesheet reads your entries, read-only, with a preview and Undo. Time you already imported from a CSV never counts twice. ActivityWatch exports (.json) can be imported too, and Reports saves a calendar file (.ics).
+
 ## Version 5.38.00
 - **Automations follow what happens.** A rule can now start when a notice arrives (from one app or any app, only when it has a word you choose) or when you finish a task, tick a habit, reach your water goal or finish a workout, limited to some days and hours if you like. `{text}` puts what happened into its steps.
 - **Push to your phone and webhooks.** Two new steps send by themselves when a rule runs: a push through ntfy or your own Gotify, and a small JSON message to your own n8n, Home Assistant or similar. You see exactly what is sent and allow each address once.

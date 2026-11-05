@@ -127,6 +127,7 @@
       "ev.delete": "Delete event",
       "ev.qr": "QR code",
       "ev.track": "Track time",
+      "ev.logTime": "Log time",
       "ev.mail": "Email",
       "ev.share": "Send…",
       "ev.delete.confirm": "Delete this event?",
@@ -380,6 +381,7 @@
       "ev.delete": "Διαγραφή συμβάντος",
       "ev.qr": "Κωδικός QR",
       "ev.track": "Χρονομέτρηση",
+      "ev.logTime": "Καταγραφή χρόνου",
       "ev.mail": "Email",
       "ev.share": "Αποστολή…",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
@@ -5069,11 +5071,37 @@ function transientNote(title, body) {
   }
   if ($("ev-track")) {
     $("ev-track").addEventListener("click", function () {
-      var p = shellOpenAt(), title = dlgTrack;
-      if (!p || !title) return;
+      var p = shellOpenAt(), tr = dlgTrack;
+      if (!p || !tr) return;
       $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
-      p.__orosOpenAt("timesheet", { startTimer: { title: title } });
+      p.__orosOpenAt("timesheet", { startTimer: { title: tr.title, src: tr.src } });
     });
+  }
+  // Timesheet T2 (BR-TS-SRC): "Log time" opens a Timesheet entry
+  // prefilled with an ENDED occurrence's own start and end (nothing is
+  // saved until the user saves it there). src "cal:<id>:<occ>" lets
+  // Timesheet stop suggesting that occurrence once it is logged.
+  if ($("ev-log")) {
+    $("ev-log").addEventListener("click", function () {
+      var p = shellOpenAt(), tr = dlgTrack;
+      if (!p || !tr || !tr.log) return;
+      $("ev-dlg").close();
+      p.__orosOpenAt("timesheet", { logTime: { title: tr.title, s: tr.log.s, e: tr.log.e, src: tr.src } });
+    });
+  }
+  // Start and end (ms, this device's clock) of a timed occurrence that
+  // is over, or null (all-day, not ended yet, broken times).
+  function trackSpan(e, occ) {
+    var inst;
+    try { inst = OCC.instance(e, occ || e.date); } catch (err) { return null; }
+    if (!inst || !/^\d{2}:\d{2}$/.test(inst.start || "") || !/^\d{2}:\d{2}$/.test(inst.end || "")) return null;
+    var at = function (d, hm) {
+      var a = String(d).split("-"), b = hm.split(":");
+      return new Date(+a[0], +a[1] - 1, +a[2], +b[0], +b[1]).getTime();
+    };
+    var s = at(inst.date, inst.start), en = at(inst.dateEnd || inst.date, inst.end);
+    if (!(en > s) || en > Date.now() || en - s > 7 * 86400000) return null;
+    return { s: s, e: en };
   }
 
   // Mail: "Email" writes a message about the SAVED event (orOS Mail
@@ -5195,9 +5223,13 @@ function transientNote(title, body) {
     var qrBtn = $("ev-qr");
     if (qrBtn) qrBtn.hidden = !(dlgQr && shellOpenAt());
     dlgTrack = existing && tsInstalled && shellOpenAt()
-      ? String(existing.title || t("ev.untitled")).replace(/\s+/g, " ").trim().slice(0, 200) : null;
+      ? { title: String(existing.title || t("ev.untitled")).replace(/\s+/g, " ").trim().slice(0, 200),
+          src: "cal:" + existing.id + ":" + (occ || existing.date),
+          log: trackSpan(existing, occ) } : null;
     var trackBtn = $("ev-track");
     if (trackBtn) trackBtn.hidden = !dlgTrack;
+    var logBtn = $("ev-log");
+    if (logBtn) logBtn.hidden = !(dlgTrack && dlgTrack.log);
     dlgMail = existing && shellOpenAt() && mailReady()
       ? mailFromEvent(localView(existing, occ), occ ? OCC.instance(existing, occ).date : OCC.instance(existing, existing.date).date) : null;
     dlgShare = existing && shareApi() ? sharePayload(existing, occ) : null;

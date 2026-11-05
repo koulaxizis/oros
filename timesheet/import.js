@@ -45,7 +45,8 @@
   var MAX_ROWS = 20000;
   var MAX_SHEETS = 10;
   var HOUR = 3600000, DAY = 86400000;
-  var ACCEPT = ".csv,.tsv,.txt,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  // .json: an ActivityWatch export (Timesheet T5, core.awPlan)
+  var ACCEPT = ".csv,.tsv,.txt,.xlsx,.json,text/csv,text/plain,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
   var SRC_NAME = { kimai: "Kimai", tempo: "Jira Tempo" };
   var MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 

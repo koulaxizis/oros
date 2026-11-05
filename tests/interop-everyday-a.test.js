@@ -63,7 +63,7 @@ test("meals → Budget: shell-guarded button, BR-B1 payload, EN/EL, help", () =>
 test("calendar → Timesheet: Track time sends startTimer, only with Timesheet installed", () => {
   const s = src("calendar/calendar.js"), h = src("calendar/index.html");
   assert.match(h, /id="ev-track" type="button" class="btn" data-i18n="ev\.track" hidden/);
-  assert.match(s, /p\.__orosOpenAt\("timesheet", \{ startTimer: \{ title: title \} \}\)/);
+  assert.match(s, /p\.__orosOpenAt\("timesheet", \{ startTimer: \{ title: tr\.title, src: tr\.src \} \}\)/);   // T2 adds src
   assert.match(s, /window\.parent\.orosAssistInstalled/);
   assert.match(s, /a && a\.id === "timesheet"/);
   assert.match(s, /dlgTrack = existing && tsInstalled && shellOpenAt\(\)/);
@@ -75,7 +75,7 @@ test("calendar → Timesheet: Track time sends startTimer, only with Timesheet i
 
 test("timesheet receives startTimer: documented, never stops a running timer", () => {
   const s = src("timesheet/timesheet.js");
-  assert.match(s, /\{ startTimer: \{ title,\n\s*\/\/ note\? \} \}/, "documented in the target comment");
+  assert.match(s, /\{ startTimer: \{ title,\n\s*\/\/ note\?, project\?, src\? \} \}/, "documented in the target comment");
   assert.match(s, /if \(t\.startTimer && typeof t\.startTimer === "object"\) \{ startFromTarget\(t\.startTimer\); return; \}/);
   const i = s.indexOf("function startFromTarget"), body = s.slice(i, s.indexOf("window.__orosOpenAt = openSearchTarget", i));
   assert.match(body, /cleanText\([^)]*, 200\)/, "title ≤ 200");
