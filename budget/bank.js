@@ -828,10 +828,14 @@
   function plan(items, ctx) {
     var tx = ctx.tx || [], tombs = ctx.tombs || {}, ac = ctx.ac || "";
     var learnt = ctx.learn === false ? null : learnMap(tx);
-    var byId = {}, byFit = {}, byKey = {};
+    var byId = {}, byFit = {}, byKey = {}, noFit = {};
     tx.forEach(function (x) {
       byId[x.id] = x;
       if (x.fit && (x.ac || "") === ac) byFit[x.fit] = x;
+      // NA-2: read for an account, an entry WITHOUT an account (read
+      // before the bank had its account, or a file imported without
+      // one) is the same money: found as a twin and moved there
+      if (ac && x.fit && !x.ac) noFit[x.fit] = x;
       var key = (x.ac || "") + "|" + x.d + "|" + x.k + "|" + x.a;
       (byKey[key] = byKey[key] || []).push(x);
     });
@@ -858,14 +862,21 @@
       if (byId[row.id]) { row.st = "same"; row.on = false; used[row.id] = 1; return row; }
       if (("tx:" + row.id) in tombs) { row.st = "gone"; row.on = false; return row; }
       var twin = it.fit && byFit[it.fit] && !used[byFit[it.fit].id] ? byFit[it.fit] : null;
-      if (!twin) {
-        (byKey[ac + "|" + it.d + "|" + row.k + "|" + row.a] || []).some(function (x) {
+      var keyTwin = function (k) {
+        var hit = null;
+        (byKey[k + "|" + it.d + "|" + row.k + "|" + row.a] || []).some(function (x) {
           if (used[x.id] || !similar(x.ot || x.n, row.text)) return false;
-          twin = x;
+          hit = x;
           return true;
         });
+        return hit;
+      };
+      if (!twin) twin = keyTwin(ac);
+      if (!twin && ac) {
+        twin = it.fit && noFit[it.fit] && !used[noFit[it.fit].id] && noFit[it.fit].k === row.k && noFit[it.fit].a === row.a ? noFit[it.fit] : keyTwin("");
+        if (twin) row.adopt = 1;
       }
-      if (twin) { used[twin.id] = 1; row.st = "dup"; row.on = false; row.why = twin.id; return row; }
+      if (twin) { used[twin.id] = 1; row.st = "dup"; row.on = false; row.why = twin.id; if (row.adopt) row.dk = "noacc"; return row; }
       var cross = crossTwin(row, ctx, ac, used);
       if (cross) { used[cross.x.id] = 1; row.st = "dup"; row.on = false; row.why = cross.x.id; row.dk = cross.dk; }
       return row;
@@ -882,6 +893,40 @@
       return x;
     });
   }
+  // NA-2: the entries without an account that a reading for account
+  // `ac` found as its own (plan rows with adopt): { <entry id>: ac }.
+  function adopts(rows, ac) {
+    var out = {};
+    if (!ac) return out;
+    (rows || []).forEach(function (r) { if (r.adopt && r.why) out[r.why] = ac; });
+    return out;
+  }
+  // NA-1: entries of month `mk` without an account (no ac, or an
+  // account that is gone) and, for each, its twin in an account: same
+  // day, kind and amount, and the same bank FITID or a similar text.
+  // An account entry is the twin of one entry at most.
+  // → { dups: [{ x, twin }], rest: [x] }
+  function noAccount(txs, mk, accIds) {
+    var known = {}, byKey = {}, used = {}, dups = [], rest = [];
+    (accIds || []).forEach(function (id) { known[id] = 1; });
+    (txs || []).forEach(function (x) {
+      if (!x || !x.ac || !known[x.ac]) return;
+      var key = x.d + "|" + x.k + "|" + x.a;
+      (byKey[key] = byKey[key] || []).push(x);
+    });
+    (txs || []).forEach(function (x) {
+      if (!x || typeof x.d !== "string" || x.d.slice(0, 7) !== mk) return;
+      if (x.ac && known[x.ac]) return;
+      var twin = null;
+      (byKey[x.d + "|" + x.k + "|" + x.a] || []).some(function (y) {
+        if (used[y.id]) return false;
+        if (x.fit && y.fit ? x.fit === y.fit : similar(x.ot || x.n, y.ot || y.n)) { twin = y; return true; }
+        return false;
+      });
+      if (twin) { used[twin.id] = 1; dups.push({ x: x, twin: twin }); } else rest.push(x);
+    });
+    return { dups: dups, rest: rest };
+  }
   function counts(rows) {
     var c = { "new": 0, dup: 0, same: 0, gone: 0, skip: 0, on: 0 };
     rows.forEach(function (r) { c[r.st]++; if (r.on) c.on++; });
@@ -894,7 +939,7 @@
     parseCsv: parseCsv, guessSep: guessSep, findHeader: findHeader, guessMap: guessMap, csvItems: csvItems,
     headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, revolutMap: revolutMap, revolutItems: revolutItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
     detectFormat: detectFormat, ruleMatches: ruleMatches, matchRule: matchRule, noteFor: noteFor, rerun: rerun,
-    suggestQ: suggestQ, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, counts: counts
+    suggestQ: suggestQ, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, adopts: adopts, noAccount: noAccount, counts: counts
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetBank = api;

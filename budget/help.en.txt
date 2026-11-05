@@ -43,7 +43,7 @@ On `Limits`, `Set limit` gives an expense category a monthly limit, and `All exp
 Rent, salary, subscriptions: on `Recurring`, add them once with `Every week`, `Every month` or `Every year`, a `First date` and an optional `Last date`. When Budget is open, each one becomes a normal entry on its day, marked `Recurring`. Deleting a recurring entry stops new ones; entries already added stay. Upcoming recurring entries also show in [Calendar](app:calendar) under `Budget`; tap one to open it here.
 
 ## Accounts and transfers
-Accounts are optional. In the `More` menu, `Accounts` lets you add cash, a card or a bank account with a `Starting balance` (a minus sign for a debt). Pick an account in an entry or a recurring entry to keep its balance; `Balances today` shows under the totals. Entries without an account still count in the totals.
+Accounts are optional. In the `More` menu, `Accounts` lets you add cash, a card or a bank account with a `Starting balance` (a minus sign for a debt). Pick an account in an entry or a recurring entry to keep its balance; `Balances today` shows under the totals. Entries without an account still count in the totals. In Overview › Accounts, tap `Without an account` to see them: `Remove N duplicates` removes copies of entries already in an account (usually a bank read twice), and the rest can go into an account you pick. Entries has a `Without an account` filter too.
 
 `Transfer` moves money between two accounts, `From` one `To` the other. A transfer shows as "Bank → Cash" and counts as neither income nor expense. The filter `Transfers only` lists them.
 

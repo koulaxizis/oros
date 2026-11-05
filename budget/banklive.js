@@ -222,7 +222,7 @@
     var rows = live(), now = Date.now();
     if (!rows.length) return Promise.resolve({ n: 0, errs: {} });
     busy = true;
-    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {}, bals = {}, moves = {};
+    var D = A.data(), add = [], seenIds = {}, lfs = {}, errs = {}, bals = {}, moves = {}, adopt = {};
     var tx = D.tx.slice();
     return checkKeys().then(function () {
       return rows.reduce(function (p, row) {
@@ -241,6 +241,14 @@
               seenIds[x.id] = 1;
               add.push(x);
               tx.push(Object.assign({ m: 0 }, x));     // later accounts see these too (transfers, PayPal)
+            });
+            // NA-2: entries without an account this reading found as its
+            // own go into its account (later rows no longer take them)
+            var ad = B.adopts(plan, row.ac);
+            Object.keys(ad).forEach(function (id) {
+              if (adopt[id]) return;
+              adopt[id] = ad[id];
+              tx = tx.map(function (y) { return y.id === id ? Object.assign({}, y, { ac: ad[id] }) : y; });
             });
             var lb = K.lastBooked(its);
             if (lb && lb > (row.lf || "")) lfs[row.id] = lb;
@@ -265,7 +273,7 @@
       Object.keys(moves).forEach(function (id) { A.patchBnk(id, { la: moves[id] }); });
       Object.keys(lfs).forEach(function (id) { A.patchBnk(id, { lf: lfs[id] }); });
       Object.keys(bals).forEach(function (id) { A.patchBnk(id, bals[id]); });
-      if (add.length) A.addEntries(add, t("got", { n: add.length }));
+      if (add.length || Object.keys(adopt).length) A.addEntries(add, t("got", { n: add.length }), adopt);
       else if (!auto && !Object.keys(errs).length) A.showToast(t("gotNone"));
       A.renderAll();
       return { n: add.length, errs: errs };
