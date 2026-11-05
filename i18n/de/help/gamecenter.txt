@@ -2,6 +2,7 @@
 Alle deine Spiele an einem Ort: die heutigen Tagesrätsel, deine Erfolge und die Statistik jedes Spiels, das du gespielt hast.
 
 ## So geht's
+- `Weiterspielen` (oben, nur wenn es etwas gibt) zeigt die Spiele, die du auf diesem Gerät mitten in einer Partie verlassen hast. Tippe auf eines, um dort weiterzumachen, wo du aufgehört hast. Jedes Spiel merkt sich die laufende Partie selbst, und wenn du orOS schließt, während ein Spiel auf dem Bildschirm ist, öffnet orOS beim nächsten Start dieses Spiel wieder.
 - `Heutige Tagesrätsel` zeigt die sechs Spiele mit einem Tagesrätsel: Wordle, Kreuzworträtsel, Sudoku, Nonogramm, Flow Free und Minesweeper. Jede Karte zeigt, ob das heutige Rätsel gelöst, nicht gelöst oder noch offen ist, und deine Serie in diesem Spiel. `Spielen` öffnet das Spiel direkt mit dem heutigen Rätsel; ist es erledigt, zeigt `Ansehen` dein Ergebnis.
 - `Alle Spiele` zeigt jedes Spiel, in Gruppen: Rätsel, Wortspiele, Karten und Steine, Brettspiele und zu zweit sowie Arcade, und wie oft du jedes gespielt hast (`Neu`, wenn nie). Tippe auf ein Spiel, um es zu spielen. Tippe in `Spiel suchen`, um die Liste nach Namen einzugrenzen.
 - Die Zeile unter dem Titel zeigt deine tägliche Serie: die Tage in Folge, an denen du mindestens ein Tagesrätsel gelöst hast.
@@ -12,6 +13,8 @@ Die Schaltfläche `Alle Spiele` jedes Spiels (in seiner Statistik und nach einem
 
 ## Synchronisierung
 Das Spielecenter speichert keine eigenen Daten. Es liest die Aufzeichnungen, die jedes Spiel ohnehin führt, und diese werden mit jedem Spiel über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Erfolge werden jedes Mal aus diesen Aufzeichnungen berechnet, sie folgen dir also auf jedes Gerät und kommen zurück, wenn die Aufzeichnungen eines Spiels zurückkommen.
+
+Eine laufende Partie bleibt auf dem Gerät, auf dem du spielst, und wird nicht synchronisiert, damit sie nicht bei jedem Zug hochgeladen wird. Spiele sie dort zu Ende; das Ergebnis wird danach wie jedes andere synchronisiert.
 
 >! Wenn du die Aufzeichnungen eines Spiels zurücksetzt, verschwinden auch die Erfolge, die daraus stammen.
 

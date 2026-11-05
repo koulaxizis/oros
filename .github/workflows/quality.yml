@@ -63,6 +63,9 @@ jobs:
       - name: Every app with multitasking on (experimental switch)
         if: success() || failure()
         run: node .github/qa/multitask.js --shard ${{ matrix.shard }}/4 --out qa-mt-${{ matrix.shard }}.json
+      - name: Every game carries on where it was left (resume.js, GR-2)
+        if: matrix.shard == 3 && (success() || failure())
+        run: node .github/qa/resume.js --out qa-resume-3.json
       - name: On-screen keyboard on a touch screen
         if: matrix.shard == 1 && (success() || failure())
         run: node .github/qa/osk.js --out qa-osk-1.json
