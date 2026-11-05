@@ -424,6 +424,22 @@
              tooMany: out.length > maxFiles, tooBig: total > maxTotal };
   }
 
+  // ---------- Breadcrumbs ----------
+  // [{ name, path }] from the disk root down to p, one entry per folder.
+  // Each entry carries its own path, so a click handler bound to an
+  // entry opens that folder (a shared accumulator opened the current one).
+  function crumbs(p) {
+    var out = [{ name: "", path: ROOT }];
+    if (typeof p !== "string" || p.indexOf(ROOT + "/") !== 0) return out;
+    var path = ROOT;
+    p.slice(ROOT.length + 1).split("/").forEach(function (seg) {
+      if (!seg) return;
+      path += "/" + seg;
+      out.push({ name: seg, path: path });
+    });
+    return out;
+  }
+
   // ---------- Thumbnails ----------
   var THUMB_MAX = 20 * 1024 * 1024;
   var THUMB_IMG = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "avif"];
@@ -449,7 +465,8 @@
     TEXT_MAX: TEXT_MAX, PDF_MAX: PDF_MAX, PDF_PAGES: PDF_PAGES,
     crc32: crc32, shouldStore: shouldStore, zipNameFor: zipNameFor, zipBuild: zipBuild,
     zipSafePath: zipSafePath, extractPlan: extractPlan,
-    thumbKind: thumbKind, THUMB_MAX: THUMB_MAX
+    thumbKind: thumbKind, THUMB_MAX: THUMB_MAX,
+    crumbs: crumbs
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosFilesCore = api;
