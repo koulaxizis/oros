@@ -69,6 +69,9 @@ public class PhoneBridge {
     private final Context app;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    /** Autofill key creation (RSA 3072, seconds on some phones) runs
+     *  here, so state answers and the settings link never wait on it. */
+    private final ExecutorService keyIo = Executors.newSingleThreadExecutor();
     private final Callback callback = new Callback();
 
     @Nullable private KeptTwaLauncher launcher;
@@ -318,6 +321,32 @@ public class PhoneBridge {
         if ("clear".equals(t)) return "af".equals(m.optString("what"));
         if ("applied".equals(t)) return "af-save".equals(m.optString("what"));
         return false;
+    }
+
+    /** {t:"af-keys", idx, names, af}, the keys made once; a failure
+     *  answers {t:"error", what:"af-keys", msg} so the page stops waiting. */
+    private void sendAfKeys() {
+        try {
+            AfVault.ensureKeys();
+            JSONObject o = new JSONObject();
+            o.put("t", "af-keys");
+            o.put("idx", AfVault.publicKey(AfVault.ALIAS_INDEX));
+            o.put("names", AfVault.publicKey(AfVault.ALIAS_NAMES));
+            o.put("af", afState());
+            diag("autofill keys sent");
+            send(o);
+        } catch (Exception e) {
+            Log.w(TAG, "autofill keys failed", e);
+            diag("af-keys failed: " + e);
+            JSONObject err = new JSONObject();
+            try {
+                err.put("t", "error");
+                err.put("what", "af-keys");
+                err.put("msg", String.valueOf(e.getMessage()));
+            } catch (JSONException ignored) {
+            }
+            send(err);
+        }
     }
 
     /** {t:"af-state", af, pkg} (v10): autofill without the full state. */
@@ -574,17 +603,9 @@ public class PhoneBridge {
                 case "af-state":
                     send(afStateMsg());
                     return;
-                case "af-keys": {
-                    AfVault.ensureKeys();
-                    JSONObject o = new JSONObject();
-                    o.put("t", "af-keys");
-                    o.put("idx", AfVault.publicKey(AfVault.ALIAS_INDEX));
-                    o.put("names", AfVault.publicKey(AfVault.ALIAS_NAMES));
-                    o.put("af", afState());
-                    diag("autofill keys sent");
-                    send(o);
+                case "af-keys":
+                    keyIo.execute(this::sendAfKeys);
                     return;
-                }
                 case "af-index": {
                     JSONObject idx = m.optJSONObject("idx"), names = m.optJSONObject("names");
                     if (!AfVault.validBlob(idx) || !AfVault.validBlob(names)) throw new IllegalArgumentException("bad blob");
