@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.34.00
+- **Simon Says and Whack-a-Mole carry on too.** Leave either one in the middle of a game, or close orOS, and it waits where you stopped: Simon on the round you were playing (press `Continue` and it plays that round again), Whack-a-Mole paused with the time it had left.
+- **Hangman** now shows up in Game Center's `Continue` row when a word is under way.
+
+## Version 5.33.00
+- **Games carry on where you left them.** If you close orOS, the tab or the app in the middle of a game, the next time you open orOS that game opens again, at the same point. Game Center has a new `Continue` row at the top with every game you left unfinished on this device. A game in progress stays on the device where you play it, so it never uploads at every move.
+
 ## Version 5.32.01
 - **See what you owe on a credit card.** When your bank does not say an account is a card, tick `This is a credit card` under it (in Banks, or in the card's own window in Overview › Accounts) and type its credit limit. The card's line then reads `Debt X · available Y`, and `Match` turns its balance into the debt, shown with a minus in red.
 
