@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.43.00
+- **Folders on your computer can start rules.** With orOS Bridge 0.11 on your Windows or Linux computer, press `Computer folders` in Automations and pick a folder there, for example where your scanner saves. A new PDF, photo or other file in it starts rules with "When a new PDF lands in a folder on my computer" and the like; one tap opens it in Scan PDF, Files or Invoices, or prints it. Only you pick the folders, files already there are never reported, and nothing is kept in Files or Invoices until you confirm it. Ready-made: `New scan into Scan PDF`, `New photo into Files`.
+
 ## Version 5.42.00
 - **Rules that start from outside.** In Automations, turn on `Incoming webhook` and you get a private address. When your Home Assistant, n8n, a script or any service sends a small JSON to it, rules with the trigger "When a webhook arrives" run, and `{text}` holds the message's `text` or `message`. The message is encrypted on the orOS relay to this device at once and fetched every few minutes while orOS is open; the relay sees the text as it arrives but keeps only the encrypted copy, for at most 7 days. `New address` stops the old one, `Turn off` erases everything.
 

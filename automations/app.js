@@ -69,7 +69,26 @@
       "run.notice": "Notice: {text}", "run.at": "Run of {when}", "run.none": "This rule has no other step.",
       "log.sent": "Ran", "log.late": "Ran late", "log.off": "Notices are off", "log.skip": "Skipped: an app is missing",
       "log.run": "You opened it", "gone": "This rule was deleted.", "badRule": "This rule cannot be opened here.",
-      "conf.del": "Delete this rule?"
+      "conf.del": "Delete this rule?",
+      "a.file": "Open the file in an app", "a.print": "Print the file",
+      "x.fileTo": "Open in", "x.printHint": "It prints on the computer the file arrived on, with that computer's printer.",
+      "x.fileHint": "The file opens there and nothing is saved until you save it.",
+      "btn.pc": "Computer folders", "pc.title": "Folders on this computer",
+      "pc.hint": "With orOS Bridge on this computer, a new PDF or photo in a folder you choose can start a rule: open it in Scan PDF, Files or Invoices, or print it. Only you choose the folders, on this computer.",
+      "pc.on": "Watch folders on this computer", "pc.st.off": "Off on this device.",
+      "pc.st.nobridge": "orOS Bridge is not running on this computer. Start it, or get it below.",
+      "pc.st.old": "Update orOS Bridge to 0.11 or newer to watch folders.",
+      "pc.st.pair": "Connect orOS once: press the button, then type the code orOS Bridge shows.",
+      "pc.st.ok": "Connected. orOS hears about new files in these folders:", "pc.st.wait": "Looking for orOS Bridge…",
+      "pc.none": "No folder yet.", "pc.missing": "not there now", "pc.stop": "Stop watching",
+      "pc.pairBtn": "Show a code in orOS Bridge", "pc.code": "The 6-digit code orOS Bridge shows", "pc.connect": "Connect",
+      "pc.badCode": "That code did not work. Ask for a new one.", "pc.add": "Add folder…",
+      "pc.addHint": "The folder chooser opens on the computer orOS Bridge runs on.",
+      "pc.picking": "Choose the folder in the window that opened on the computer.",
+      "pc.noDialog": "This computer has no folder chooser for orOS Bridge. Add the folder in orOS Bridge's own window.",
+      "pc.added": "Added: {path}", "pc.get": "Get orOS Bridge (free) for Windows or Linux",
+      "pc.err": "orOS Bridge did not answer. Try again.",
+      "err.fileWhen": "Opening or printing a file needs “When a new … lands in a folder on my computer” above."
     },
     el: {
       "app.name": "Αυτοματισμοί",
@@ -119,7 +138,26 @@
       "run.notice": "Ειδοποίηση: {text}", "run.at": "Εκτέλεση της {when}", "run.none": "Αυτός ο κανόνας δεν έχει άλλο βήμα.",
       "log.sent": "Έτρεξε", "log.late": "Έτρεξε με καθυστέρηση", "log.off": "Οι ειδοποιήσεις είναι κλειστές", "log.skip": "Παραλείφθηκε: λείπει εφαρμογή",
       "log.run": "Το άνοιξες", "gone": "Αυτός ο κανόνας διαγράφηκε.", "badRule": "Αυτός ο κανόνας δεν ανοίγει εδώ.",
-      "conf.del": "Διαγραφή αυτού του κανόνα;"
+      "conf.del": "Διαγραφή αυτού του κανόνα;",
+      "a.file": "Άνοιγμα του αρχείου σε εφαρμογή", "a.print": "Εκτύπωση του αρχείου",
+      "x.fileTo": "Άνοιγμα στο", "x.printHint": "Εκτυπώνεται στον υπολογιστή όπου ήρθε το αρχείο, με τον εκτυπωτή του.",
+      "x.fileHint": "Το αρχείο ανοίγει εκεί και δεν αποθηκεύεται τίποτα πριν το αποθηκεύσεις εσύ.",
+      "btn.pc": "Φάκελοι υπολογιστή", "pc.title": "Φάκελοι σε αυτόν τον υπολογιστή",
+      "pc.hint": "Με το orOS Bridge σε αυτόν τον υπολογιστή, ένα νέο PDF ή μια νέα φωτογραφία σε φάκελο που διαλέγεις μπορεί να ξεκινήσει έναν κανόνα: να ανοίξει στο Scan PDF, στα Αρχεία ή στα Τιμολόγια, ή να εκτυπωθεί. Τους φακέλους τους διαλέγεις μόνο εσύ, σε αυτόν τον υπολογιστή.",
+      "pc.on": "Παρακολούθηση φακέλων σε αυτόν τον υπολογιστή", "pc.st.off": "Κλειστό σε αυτή τη συσκευή.",
+      "pc.st.nobridge": "Το orOS Bridge δεν τρέχει σε αυτόν τον υπολογιστή. Άνοιξέ το ή κατέβασέ το παρακάτω.",
+      "pc.st.old": "Ενημέρωσε το orOS Bridge στο 0.11 ή νεότερο για να παρακολουθεί φακέλους.",
+      "pc.st.pair": "Σύνδεσε το orOS μία φορά: πάτα το κουμπί και γράψε τον κωδικό που δείχνει το orOS Bridge.",
+      "pc.st.ok": "Συνδέθηκε. Το orOS μαθαίνει για νέα αρχεία σε αυτούς τους φακέλους:", "pc.st.wait": "Αναζήτηση του orOS Bridge…",
+      "pc.none": "Κανένας φάκελος ακόμα.", "pc.missing": "δεν υπάρχει τώρα", "pc.stop": "Διακοπή",
+      "pc.pairBtn": "Δείξε κωδικό στο orOS Bridge", "pc.code": "Ο 6ψήφιος κωδικός που δείχνει το orOS Bridge", "pc.connect": "Σύνδεση",
+      "pc.badCode": "Ο κωδικός δεν δούλεψε. Ζήτα νέο.", "pc.add": "Προσθήκη φακέλου…",
+      "pc.addHint": "Ο επιλογέας φακέλων ανοίγει στον υπολογιστή όπου τρέχει το orOS Bridge.",
+      "pc.picking": "Διάλεξε τον φάκελο στο παράθυρο που άνοιξε στον υπολογιστή.",
+      "pc.noDialog": "Αυτός ο υπολογιστής δεν έχει επιλογέα φακέλων για το orOS Bridge. Πρόσθεσε τον φάκελο από το παράθυρο του orOS Bridge.",
+      "pc.added": "Προστέθηκε: {path}", "pc.get": "Κατέβασε το orOS Bridge (δωρεάν) για Windows ή Linux",
+      "pc.err": "Το orOS Bridge δεν απάντησε. Δοκίμασε ξανά.",
+      "err.fileWhen": "Το άνοιγμα ή η εκτύπωση αρχείου χρειάζεται επάνω το «Όταν μπαίνει νέο … σε φάκελο του υπολογιστή μου»."
     }
   };
   function appLang() {
@@ -297,8 +335,10 @@
 
   function actionChoices() {
     var apps = installed();
+    var withFile = $("f-when").value === "event" && C.bridgeEvent($("f-ev").value);
     return C.ACTIONS.filter(function (a) {
-      var need = a === "open" ? "" : C.needs({ a: a });
+      if (C.FILE_ACTS[a]) return withFile;           // item 25: only after a new file on the computer
+      var need = a === "open" || a === "file" ? "" : C.needs({ a: a });
       return !need || !apps.length || apps.indexOf(need) >= 0;
     });
   }
@@ -369,6 +409,7 @@
     $("word-row").hidden = !sig;
     $("if-box").hidden = !sig;
     $("ed-text").hidden = !sig;
+    fillAddSelect();
   }
 
   function edit(id, preset) {
@@ -481,6 +522,16 @@
         inp = field(li, t("x.label"), textIn(a.label, 40)); inp.addEventListener("input", set("label"));
       } else if (a.a === "ask") {
         inp = field(li, t("x.question"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
+      } else if (a.a === "file") {
+        var fs = el("select"), have = installed();
+        C.FILE_TO.filter(function (id) { return !have.length || have.indexOf(id) >= 0; })
+          .forEach(function (id) { fs.appendChild(new Option(appName(id), id)); });
+        if (a.to && !fs.querySelector('option[value="' + a.to.replace(/[^a-z]/g, "") + '"]')) fs.appendChild(new Option(appName(a.to), a.to));
+        if (a.to) fs.value = a.to; else a.to = fs.value;
+        field(li, t("x.fileTo"), fs).addEventListener("change", set("to"));
+        li.appendChild(el("p", "hint", t("x.fileHint")));
+      } else if (a.a === "print") {
+        li.appendChild(el("p", "hint", t("x.printHint")));
       } else if (C.OUT[a.a]) {
         outFields(li, a);
       }
@@ -563,6 +614,8 @@
     if ((r.when.t === "year" || r.when.t === "once") && !C.cleanWhen(r.when)) return t("err.date");
     var bad = r["do"].some(function (a) { return !C.cleanAction(a); });
     if (!r["do"].length || bad) return t("err.acts");
+    var fileWhen = r.when.t === "event" && C.bridgeEvent(r.when.ev);
+    if (!fileWhen && r["do"].some(function (a) { return C.FILE_ACTS[a.a]; })) return t("err.fileWhen");
     return "";
   }
   function onSave(ev) {
@@ -607,17 +660,100 @@
       if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE, h && h.said ? h.said(key) : "") }))); ul.appendChild(li); return; }
       var app = C.needs(a);
       li.appendChild(el("span", "grow", C.actText(a, BASE, appName)));
-      var b = el("button", "chip pri", t("btn.do", { app: appName(app) }));
+      var b = el("button", "chip pri", a.a === "print" ? t("a.print") : t("btn.do", { app: appName(app) }));
       b.type = "button";
       b.disabled = !h;
       b.addEventListener("click", function () {
-        if (h && h.runAction(a, at, h.said ? h.said(key) : "")) { if (rule.id !== "try") h.noteRun(rule.id, key, at); closeDlg($("run-dlg")); }
+        if (h && h.runAction(a, at, h.said ? h.said(key) : "", key)) { if (rule.id !== "try") h.noteRun(rule.id, key, at); closeDlg($("run-dlg")); }
       });
       li.appendChild(b);
       ul.appendChild(li);
     });
     if (!C.pending(rule).length) ul.appendChild(el("li", "hint", t("run.none")));
     openDlg($("run-dlg"));
+  }
+
+  // ---------- 8b. Folders on this computer (item 25, orOS Bridge) ----------
+  var pcOff = null;
+  function bw(done) {
+    var h = host();
+    if (!h || typeof h.bridge !== "function") { done(null); return; }
+    h.bridge().then(done, function () { done(null); });
+  }
+  function pcShow(W, st) {
+    $("pc-on").checked = !!(W && W.on());
+    $("pc-status").textContent = t("pc.st." + (st || "off"));
+    $("pc-pair").hidden = st !== "pair";
+    $("pc-get").hidden = st !== "nobridge" && st !== "old";
+    $("pc-folders-box").hidden = st !== "ok";
+    if (st === "ok") pcFolders(W);
+  }
+  function pcList(list, W) {
+    var ul = $("pc-folders");
+    ul.textContent = "";
+    if (!list.length) { ul.appendChild(el("li", "hint", t("pc.none"))); return; }
+    list.forEach(function (f) {
+      var li = el("li", "act row");
+      li.appendChild(el("span", "grow path", f.path + (f.ok ? "" : " (" + t("pc.missing") + ")")));
+      var b = el("button", "chip small", t("pc.stop"));
+      b.type = "button";
+      b.addEventListener("click", function () {
+        b.disabled = true;
+        W.remove(f.path).then(function (l) { pcList(l, W); }, function () { b.disabled = false; toast(t("pc.err")); });
+      });
+      li.appendChild(b);
+      ul.appendChild(li);
+    });
+  }
+  function pcFolders(W) { W.folders().then(function (l) { pcList(l, W); }, function () {}); }
+  function openPc() {
+    openDlg($("pc-dlg"));
+    $("pc-status").textContent = t("pc.st.wait");
+    bw(function (W) {
+      if (!W) { $("pc-on").disabled = true; $("pc-status").textContent = t("standalone"); return; }
+      if (pcOff) pcOff();
+      pcOff = W.onStatus(function (st) { pcShow(W, st); });
+      if (!W.on()) { pcShow(W, "off"); return; }
+      W.connect().then(function (st) { pcShow(W, st); });
+    });
+  }
+  function wirePc() {
+    $("pc-btn").addEventListener("click", openPc);
+    $("pc-on").addEventListener("change", function () {
+      var on = $("pc-on").checked;
+      bw(function (W) {
+        if (!W) return;
+        if (on) $("pc-status").textContent = t("pc.st.wait");
+        W.setOn(on).then(function (st) { pcShow(W, st); });
+      });
+    });
+    $("pc-pair-btn").addEventListener("click", function () {
+      bw(function (W) { if (W) W.pair().then(function () { $("pc-code").focus(); }, function () { toast(t("pc.err")); }); });
+    });
+    $("pc-code-btn").addEventListener("click", function () {
+      var code = $("pc-code").value;
+      bw(function (W) {
+        if (!W) return;
+        W.sendCode(code).then(function () { $("pc-code").value = ""; pcShow(W, "ok"); }, function () { toast(t("pc.badCode")); });
+      });
+    });
+    $("pc-add").addEventListener("click", function () {
+      var b = $("pc-add");
+      bw(function (W) {
+        if (!W) return;
+        b.disabled = true;
+        toast(t("pc.picking"));
+        W.pick(LANG).then(function (r) {
+          b.disabled = false;
+          pcList(r.folders, W);
+          if (r.folder) toast(t("pc.added", { path: r.folder }));
+        }, function (e) {
+          b.disabled = false;
+          toast(t(e && e.code === "nodialog" ? "pc.noDialog" : "pc.err"));
+        });
+      });
+    });
+    window.addEventListener("pagehide", function () { if (pcOff) try { pcOff(); } catch (e) {} });
   }
 
   // ---------- 9. Deep link ----------
@@ -698,6 +834,8 @@
     $("tpl-btn").addEventListener("click", showTemplates);
     $("empty-tpl").addEventListener("click", showTemplates);
     $("f-when").addEventListener("change", showWhen);
+    $("f-ev").addEventListener("change", fillAddSelect);
+    wirePc();
     $("add-act").addEventListener("click", function () {
       if (editing.acts.length >= C.MAX_ACTIONS) return;
       var a = { a: $("f-add").value };

@@ -31,6 +31,8 @@
   var SAID_KEY = "oros-automations-said";       // device-local: what a signal run said, for its tap
   var SAID_MAX = 50;
   var DAY_CAP = 20;                              // signal runs per rule per day on this device
+  var REF_KEY = "oros-automations-ref";          // device-local: the file a bridge.* run is about (item 25)
+  var REF_MAX = 50;
   var bootAt = Date.now();
   var listeners = [];
 
@@ -208,7 +210,25 @@
     try { localStorage.setItem(SAID_KEY, JSON.stringify(o)); } catch (e) {}
   }
   function saidFor(key) { var t = readSaid()[key]; return typeof t === "string" ? t : ""; }
-  function signal(kind, name, key, text) {
+  // Item 25: { bridge: <file key>, name, kind, size } of a bridge.* run,
+  // kept on this device for the tap (the file is on this computer only).
+  function readRefs() {
+    try { var o = JSON.parse(localStorage.getItem(REF_KEY)); return o && typeof o === "object" ? o : {}; }
+    catch (e) { return {}; }
+  }
+  function keepRef(key, ref) {
+    if (!ref || typeof ref.bridge !== "string" || !/^[0-9a-f]{16}$/.test(ref.bridge)) return;
+    var name = typeof ref.name === "string" ? ref.name.replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 255) : "";
+    if (!name) return;
+    var o = readRefs(), ks;
+    o[key] = { bridge: ref.bridge, name: name, kind: ["pdf", "image"].indexOf(ref.kind) >= 0 ? ref.kind : "other",
+               size: typeof ref.size === "number" && ref.size >= 0 ? Math.floor(ref.size) : 0 };
+    ks = Object.keys(o);
+    while (ks.length > REF_MAX) { delete o[ks.shift()]; }
+    try { localStorage.setItem(REF_KEY, JSON.stringify(o)); } catch (e) {}
+  }
+  function refFor(key) { var r = readRefs()[String(key || "")]; return r && typeof r === "object" ? r : null; }
+  function signal(kind, name, key, text, ref) {
     if (!registered()) return 0;
     if (kind !== "notice" && kind !== "event") return 0;
     if (typeof name !== "string" || typeof key !== "string" || !key) return 0;
@@ -227,6 +247,7 @@
       local.cnt[rule.id] = (local.cnt[rule.id] || 0) + 1;
       if (!C.runnable(rule, apps)) { log(rule, rk, now, "skip"); return; }
       keepSaid(rk, said);
+      if (ref && C.bridgeEvent(name)) keepRef(rk, ref);
       var txt = C.notice(rule, now, l, appName, said);
       var id = N.emit({ ns: "automations", key: rk, type: "reminder", title: txt.title, body: txt.body,
                         deepLink: C.pending(rule).length ? "automations:run:" + rk : "automations:open" });
@@ -248,9 +269,11 @@
   };
 
   // Do one action now (a tap in the app or on the notice is the
-  // person's go-ahead). → true when a receiving app was opened.
-  function runAction(action, at, said) {
+  // person's go-ahead). → true when a receiving app was opened (or, for
+  // a file step, its reading started). key = the run, for a file step.
+  function runAction(action, at, said, key) {
     var c = C.call(action, at || Date.now(), lang(), C.from(lang()), said);
+    if (c && (c.fn === "bridgeFile" || c.fn === "bridgePrint")) return fileStep(c, refFor(key));
     if (!c || installed().indexOf(c.app) < 0) return false;
     if (c.fn === "calendarNew") {
       if (typeof root.__orosOpenCalendarNew !== "function") return false;
@@ -262,6 +285,61 @@
     root.__orosOpenAt(c.app, c.arg);
     return true;
   }
+  // ---------- Item 25: the file a bridge.* run is about ----------
+  var FILE_TARGET = {
+    scanpdf: function (tok) { return { openFile: { token: tok } }; },
+    files: function (tok, f) { return { importFile: { token: tok, name: f.name } }; },
+    invoices: function (tok) { return { importPdf: { token: tok } }; }
+  };
+  // Words in core.js STRINGS ("file.*", every language with them).
+  function fileSay(k, o) {
+    var S0 = C.STRINGS, tb = S0[lang()] || S0.en, s = tb["file." + k] || S0.en["file." + k] || "";
+    s = s.replace("{name}", o && o.name ? o.name : "");
+    var N = root.orosNotifs;
+    try { if (N && typeof N.transient === "function") N.transient({ ns: "automations", title: s }); } catch (e) {}
+  }
+  function errKey(e) {
+    var c = e && e.code;
+    if (c === "changed" || c === "notfound") return "gone";
+    if (c === "toolarge") return "big";
+    return "off";
+  }
+  function fileStep(c, ref) {
+    if (!ref) { fileSay("none"); return false; }
+    var go = function (W) {
+      if (c.fn === "bridgePrint") {
+        W.print(ref).then(function () { fileSay("printed", ref); },
+          function (e) { fileSay(e && (e.code === "noapp" || e.code === "failed") ? "noprint" : errKey(e)); });
+        return;
+      }
+      if (installed().indexOf(c.app) < 0 || !FILE_TARGET[c.app]) return;
+      W.readFile(ref).then(function (file) {
+        var F = root.orosFileOpen, tok = F && typeof F.hand === "function" ? F.hand(file) : "";
+        if (!tok || typeof root.__orosOpenAt !== "function") return;
+        root.__orosOpenAt(c.app, FILE_TARGET[c.app](tok, file));
+      }, function (e) { fileSay(errKey(e)); });
+    };
+    bridge().then(go, function () { fileSay("off"); });
+    return true;
+  }
+  // automations/bridge.js, loaded on first use (or at start when on)
+  var bridgeLoad = null;
+  function bridge() {
+    if (root.orosBridgeWatch) return Promise.resolve(root.orosBridgeWatch);
+    if (!bridgeLoad) {
+      bridgeLoad = new Promise(function (resolve, reject) {
+        var s = document.createElement("script");
+        var v = (document.querySelector('script[src*="automations/host.js"]') || {}).src || "";
+        var m = /[?&]v=([^&#]+)/.exec(v);
+        s.src = "automations/bridge.js" + (m ? "?v=" + m[1] : "");
+        s.onload = function () { root.orosBridgeWatch ? resolve(root.orosBridgeWatch) : reject(new Error("bridge")); };
+        s.onerror = function () { bridgeLoad = null; reject(new Error("bridge")); };
+        document.head.appendChild(s);
+      });
+    }
+    return bridgeLoad;
+  }
+
   // The notice's deep link: one action → straight to it; several →
   // the app's run sheet, one button each.
   function openRun(key) {
@@ -270,7 +348,7 @@
     if (typeof root.__orosOpenAt !== "function") return;
     if (!rule) { root.__orosOpenAt("automations", null); return; }
     var acts = C.pending(rule), at = keyTime(key) || Date.now(), said = saidFor(key);
-    if (acts.length === 1 && runAction(acts[0], at, said)) { log(rule, key, at, "run"); return; }
+    if (acts.length === 1 && runAction(acts[0], at, said, key)) { log(rule, key, at, "run"); return; }
     root.__orosOpenAt("automations", { run: { r: rule.id, k: key, at: at } });
   }
   // "r…@202611041830" → that local moment.
@@ -288,6 +366,7 @@
     runAction: runAction,
     openRun: openRun,
     signal: signal,
+    bridge: bridge,
     notice: function (ns, key, text) { return signal("notice", ns, key, text); },
     said: saidFor,
     log: readLog,
@@ -301,4 +380,7 @@
   };
   root.orosEvents = events;
   registerSlice();
+  // Item 25: folders on this computer, when the person turned them on here
+  try { var bw = JSON.parse(localStorage.getItem("oros-bridge-watch")); if (bw && bw.on) setTimeout(function () { bridge().then(null, function () {}); }, 3000); }
+  catch (e) {}
 })(window);

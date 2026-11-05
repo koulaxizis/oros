@@ -20,6 +20,13 @@ Eine Regel kann statt einer Uhrzeit auch etwas folgen, das passiert:
 
 In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte: die Aufgabe, die Gewohnheit, das Training oder der Text der Mitteilung. So eine Regel läuft einmal für alles, was passiert, höchstens 20-mal am Tag, und nur auf dem Gerät, auf dem es passiert ist. Mitteilungen von Passwörter starten nie eine Regel, und nichts aus Passwörter wird je gelesen.
 
+## Ordner auf deinem Computer
+Läuft [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (kostenlos, Windows und Linux) auf deinem Computer, kann eine Regel einem Ordner dort folgen, zum Beispiel dem Ordner, in den dein Scanner speichert, oder deinen Downloads.
+- Drücke `Computer-Ordner`, hake `Ordner auf diesem Computer beobachten` an und verbinde dich mit dem Code, den Bridge zeigt. Dann öffnet `Ordner hinzufügen…` die Ordnerauswahl auf dem Computer; nur du wählst die Ordner, und `Nicht mehr beobachten` gibt einen frei.
+- Die Ereignisse `Wenn ein neues PDF in einem Ordner auf meinem Computer landet`, `… ein neues Foto …` und `… eine neue Datei …` starten eine Regel. `{text}` ist der Dateiname, und `Nur wenn darin steht` schaut auf den Namen. Dateien, die schon da waren, werden nie gemeldet; Dateien, die kamen, während orOS zu war, kommen beim nächsten Öffnen.
+- Zwei Schritte gibt es nur nach so einem Ereignis: `Die Datei in einer App öffnen` gibt sie an Scan PDF, Dateien oder Rechnungen, und `Die Datei drucken` schickt sie an den Drucker des Computers. Beide warten auf deinen Tipp, und in Dateien oder Rechnungen wird nichts gespeichert, bevor du es dort bestätigst.
+- Die fertigen Regeln `Neuer Scan in Scan PDF` und `Neues Foto in Dateien` sind ein guter Anfang. Bridge liest nur Dateien in den Ordnern, die du gewählt hast, nie Unterordner oder Verknüpfungen.
+
 ## Außerhalb von orOS
 Zwei Schritte verlassen orOS von selbst, wenn die Regel läuft:
 - `Push aufs Handy`: über [ntfy](https://ntfy.sh) (kostenlos, ohne Konto; wähle ein Thema, das niemand errät, oder deinen eigenen Server) oder deinen eigenen Gotify-Server. Installiere die App ntfy oder Gotify auf dem Handy und abonniere dasselbe Thema.
