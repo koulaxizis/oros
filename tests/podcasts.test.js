@@ -873,3 +873,12 @@ test("find: Podcast Index with the person's own key", () => {
   if (g) assert.equal(C.refineHits(r, { g: g.id }).length, 1);
   assert.equal(C.refineHits(r, { g: "1303" }).length, 0);
 });
+
+test("parseDate: named zones Date.parse rejects (EET/EEST, Greek feeds)", () => {
+  assert.equal(C.parseDate("Thu, 29 Oct 2026 17:00:00 EET"), Date.UTC(2026, 9, 29, 15, 0, 0));
+  assert.equal(C.parseDate("Thu, 22 Oct 2026 13:00:00 EEST"), Date.UTC(2026, 9, 22, 10, 0, 0));
+  assert.equal(C.parseDate("Mon, 06 Jul 2026 09:30:00 CEST"), Date.UTC(2026, 6, 6, 7, 30, 0));
+  assert.equal(C.parseDate("Thu, 29 Oct 2026 17:00:00 GMT"), Date.UTC(2026, 9, 29, 17, 0, 0));
+  assert.equal(C.parseDate("Thu, 29 Oct 2026 17:00:00 +0200"), Date.UTC(2026, 9, 29, 15, 0, 0));
+  assert.equal(C.parseDate("Thu, 29 Oct 2026 17:00:00 XYZ"), 0);
+});

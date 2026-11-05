@@ -46,16 +46,21 @@
   // The shared transport resolves any HTTP status; here a non-2xx
   // answer is an error ("gone" for 404/410) and feed bodies are text.
   function httpErr(status) { return status === 404 || status === 410 ? "gone" : "http"; }
+  // Feeds without CORS go through the relay: the one set in Mail, else
+  // the default relay (as Mail itself and Reader do). Without the default
+  // a device that never opened Mail's relay settings loaded no such feed.
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
+  function relayOpts() { return { relay: function () { return FF.relayUrl() || DEFAULT_RELAY; } }; }
   var NET = FF && FC && {
-    relayAvailable: function () { return FF.relayAvailable(); },
+    relayAvailable: function () { return FF.relayAvailable(relayOpts()); },
     fetchOne: function (url) {
-      return FF.fetchOne(url).then(function (r) {
+      return FF.fetchOne(url, relayOpts()).then(function (r) {
         if (r.status < 200 || r.status >= 300) throw { code: httpErr(r.status), status: r.status };
         return r;
       });
     },
     fetchFeeds: function (reqs) {
-      return FF.fetchFeeds(reqs).then(function (res) {
+      return FF.fetchFeeds(reqs, relayOpts()).then(function (res) {
         return res.map(function (r) {
           if (!r || r.err || r.status === 304) return r;
           if (r.status < 200 || r.status >= 300 || !r.bytes) return { url: r.url, err: httpErr(r.status), via: r.via };
@@ -92,6 +97,9 @@
       "empty.new": "No new episodes.", "empty.lib": "No podcasts yet.", "empty.libBtn": "Find a podcast",
       "empty.dl": "No downloads. Downloaded episodes play without a connection.",
       "empty.eps": "No episodes here.",
+      "eps.loading": "Loading episodes…", "eps.err": "The episodes could not be loaded. The podcast's server did not answer.",
+      "eps.gone": "This feed no longer exists at its address.", "eps.big": "This feed is too large to load through the relay.",
+      "eps.parse": "This feed could not be read.",
       "ep.play": "Play", "ep.pause": "Pause", "ep.resume": "Resume", "ep.left": "{t} left", "ep.played": "Played",
       "ep.next": "Play next", "ep.last": "Add to queue", "ep.unqueue": "Remove from queue",
       "ep.markPlayed": "Mark as played", "ep.markUnplayed": "Mark as unplayed",
@@ -219,6 +227,9 @@
       "empty.new": "Δεν υπάρχουν νέα επεισόδια.", "empty.lib": "Δεν έχεις ακόμη podcasts.", "empty.libBtn": "Βρες ένα podcast",
       "empty.dl": "Καμία λήψη. Τα κατεβασμένα επεισόδια παίζουν χωρίς σύνδεση.",
       "empty.eps": "Κανένα επεισόδιο εδώ.",
+      "eps.loading": "Φόρτωση επεισοδίων…", "eps.err": "Δεν ήταν δυνατή η φόρτωση των επεισοδίων. Ο server του podcast δεν απάντησε.",
+      "eps.gone": "Αυτό το feed δεν υπάρχει πια στη διεύθυνσή του.", "eps.big": "Αυτό το feed είναι πολύ μεγάλο για να φορτωθεί μέσω του relay.",
+      "eps.parse": "Δεν ήταν δυνατή η ανάγνωση αυτού του feed.",
       "ep.play": "Αναπαραγωγή", "ep.pause": "Παύση", "ep.resume": "Συνέχεια", "ep.left": "απομένουν {t}", "ep.played": "Ακούστηκε",
       "ep.next": "Παίξε μετά", "ep.last": "Στην ουρά", "ep.unqueue": "Έξω από την ουρά",
       "ep.markPlayed": "Σήμανση ως ακουσμένο", "ep.markUnplayed": "Σήμανση ως μη ακουσμένο",
@@ -492,6 +503,9 @@
   var feeds = {};
   var epIndex = {};          // epId → { ep, sid }
   var refreshing = false, lastRefresh = 0;
+  // Device-local, in memory: why a show's feed could not be loaded on the
+  // last try (showId → code), and single shows asked while a refresh ran.
+  var feedErr = {}, tried = {}, waiting = [];
   function indexFeed(rec) {
     (rec.eps || []).forEach(function (e) { epIndex[e.id] = { ep: e, sid: rec.id }; });
   }
@@ -560,7 +574,12 @@
   }
 
   function refresh(force, only) {
-    if (refreshing || !H) return Promise.resolve();
+    if (!H) return Promise.resolve();
+    if (refreshing) {
+      // A show opened or added during a refresh is fetched right after it.
+      if (only && waiting.indexOf(only) < 0) waiting.push(only);
+      return Promise.resolve();
+    }
     var shows = D().shows.filter(function (s) {
       if (only && s.id !== only) return false;
       var r = feeds[s.id];
@@ -569,7 +588,13 @@
       return !r || now() - r.at > REFRESH_GAP * 60000;
     });
     if (!shows.length) { if (force === true && !only) showToast(t("toast.refreshed")); return Promise.resolve(); }
-    if (navigator.onLine === false) { if (force === true) showToast(t("toast.offline")); return Promise.resolve(); }
+    if (navigator.onLine === false) {
+      shows.forEach(function (s) { if (!feeds[s.id]) feedErr[s.id] = "offline"; });
+      if (force === true) showToast(t("toast.offline"));
+      if (only) renderAll();
+      return Promise.resolve();
+    }
+    shows.forEach(function (s) { tried[s.id] = 1; delete feedErr[s.id]; });
     refreshing = true;
     paintRefresh();
     var before = countNew();
@@ -580,22 +605,47 @@
       var errs = 0;
       res.forEach(function (r, i) {
         var s = shows[i];
-        if (!r || r.err) { errs++; return; }
-        if (r.status === 304 && feeds[s.id]) { feeds[s.id].at = now(); ST.putFeed(feeds[s.id]); return; }
-        var parsed = parseText(r.text, s.url);
-        if (!parsed) { errs++; return; }
-        var rec = cacheFeed(s.id, parsed, r);
-        afterFeed(s.id, rec);
-        if (s.ntf && typeof H.announce === "function") H.announce(s.id, rec.eps);
+        // One feed that breaks never stops the others or the refresh.
+        try {
+          if (!r || r.err) { errs++; feedErr[s.id] = (r && r.err) || "http"; return; }
+          if (r.status === 304) {
+            if (feeds[s.id]) { feeds[s.id].at = now(); ST.putFeed(feeds[s.id]); }
+            else { errs++; feedErr[s.id] = "http"; }
+            return;
+          }
+          var parsed = parseText(r.text, s.url);
+          if (!parsed) { errs++; feedErr[s.id] = "parse"; return; }
+          var rec = cacheFeed(s.id, parsed, r);
+          afterFeed(s.id, rec);
+          if (s.ntf && typeof H.announce === "function") H.announce(s.id, rec.eps);
+        } catch (e) { errs++; if (!feeds[s.id]) feedErr[s.id] = "parse"; }
       });
       lastRefresh = now();
+      return errs;
+    }, function (e) {
+      shows.forEach(function (s) { if (!feeds[s.id]) feedErr[s.id] = (e && e.code) || "http"; });
+      return -1;
+    }).then(function (errs) {
       refreshing = false;
       paintRefresh();
       renderAll();
-      var gained = countNew() - before;
-      if (force === true && !only) showToast(errs ? t("toast.refreshErr", { n: errs }) : gained > 0 ? t("toast.newEps", { n: gained }) : t("toast.refreshed"));
-      autoDownload();
-    }, function () { refreshing = false; paintRefresh(); });
+      if (errs >= 0) {
+        var gained = countNew() - before;
+        if (force === true && !only) showToast(errs ? t("toast.refreshErr", { n: errs }) : gained > 0 ? t("toast.newEps", { n: gained }) : t("toast.refreshed"));
+        else if (force === true && errs && feeds[only]) showToast(feedErrText(feedErr[only]));
+        autoDownload();
+      }
+    }).catch(function () { refreshing = false; paintRefresh(); }).then(function () {
+      if (!waiting.length) return;
+      var next = waiting.shift();
+      return refresh(true, next);
+    });
+  }
+  // Why a show's episodes could not be loaded, for the show page.
+  function feedErrText(code) {
+    return code === "offline" ? t("toast.offline") : code === "gone" ? t("eps.gone") :
+      code === "too-big" || code === "budget" ? t("eps.big") : code === "parse" ? t("eps.parse") :
+      code === "norelay" || code === "cors" ? t("toast.needRelay") : t("eps.err");
   }
   function countNew() { return C.newEpisodes(D(), cacheView(), now()).length; }
   function cacheView() {
@@ -1089,7 +1139,17 @@
     so.addEventListener("change", function () { prefs.sortOld[sid] = so.value === "old" ? 1 : 0; savePrefs(); renderAll(); });
     bar.appendChild(so);
     main.appendChild(bar);
-    if (!rec) { empty(main, t("pl.buffer")); return; }
+    if (!rec) {
+      if (feedErr[sid]) {
+        empty(main, feedErrText(feedErr[sid]), t("btn.retry"), function () { delete feedErr[sid]; delete tried[sid]; refresh(true, sid); renderAll(); });
+        return;
+      }
+      // Nothing cached yet: fetch it now instead of waiting for the next round.
+      if (!tried[sid] && !refreshing) refresh(true, sid);
+      else if (refreshing && waiting.indexOf(sid) < 0) waiting.push(sid);
+      empty(main, t("eps.loading"));
+      return;
+    }
     var eps = prefs.filter === "dl" ? rec.eps.filter(function (e) { return files[e.id]; }) :
       C.filterEpisodes(D(), sid, rec.eps.map(function (e) { return { id: e.id, pub: e.pub }; }), prefs.filter).map(function (e) { return epIndex[e.id].ep; });
     if (oldFirst) eps = eps.slice().reverse();

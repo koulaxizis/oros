@@ -122,7 +122,20 @@ In `Settings` › `Accessibility`, for orOS and every app:
 
 These three stay on this device: a phone and a large screen often need a different size.
 
+## Your name
+In Settings › Appearance › `Your name` you can type what orOS should call you. It is empty at first. With a name, [Today](app:today) and the Start page greet you with it, for example `Good evening, Maria`. The name stays on your devices: with [sync](help:t/sync) on it goes to your other devices encrypted, like your other settings. It never goes to the [Assistant](app:assistant) or anywhere else. Empty the field to remove it.
+
+## The Start page
+The Start page is a home page for the web: the time, a search field, your favourites from [Bookmarks](app:bookmarks) and a link to orOS. Open it at [useoros.online/startpage/](https://useoros.online/startpage/) and make it your browser's home page, on a phone too.
+- Type words and press [[Enter]] to search with DuckDuckGo, or type an address such as `wikipedia.org` to go there.
+- Start with `oros ` (for example `oros dentist`) to search your apps and data in orOS.
+- Your favourites are the bookmarks with a star in Bookmarks. `All bookmarks` opens the app.
+- On orOS Portable and the orOS USB, `New Tor window` opens Tor Browser for private browsing.
+- With the [screen lock](help:t/privacy) on, the page shows neither your name nor your favourites.
+
+The page only reads what orOS already keeps on this device. Nothing you type goes anywhere until you search, and then only to DuckDuckGo.
+
 ## What follows you to other devices
-With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`) and the pinned weather city go to your other devices too.
+With [sync](help:t/sync) on, your language, theme, skin, wallpaper (including `Mine`), your name and the pinned weather city go to your other devices too.
 
 The seasonal decoration settings go too. The Dock and its settings, the accessibility options, a decoration you are trying or kept, and `Hide for today` stay on this device.

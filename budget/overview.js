@@ -164,7 +164,9 @@
   function accGroup(a, bnk) {
     if (!a) return "cash";
     if (a.ivk) return "inv";
-    if (a.cys || (bnk || []).some(function (r) { return r && r.ac === a.id && typeof r.cl === "number" && r.cl > 0; })) return "card";
+    // a card: a cycle, a bank row with a credit limit, or one the person
+    // marked as a credit card (CD-1, ck 1) or the bank calls CARD
+    if (a.cys || (bnk || []).some(function (r) { return r && r.ac === a.id && ((typeof r.cl === "number" && r.cl > 0) || r.ck === 1 || (r.ty === "CARD" && r.ck !== 2)); })) return "card";
     return "cash";
   }
   // What you have and what you owe: the sums of the positive and the

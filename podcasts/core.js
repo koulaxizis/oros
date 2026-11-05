@@ -234,6 +234,10 @@
   }
 
   // ---------- 5. Feed: show + episodes ----------
+  // Offsets in minutes of zone names feeds use (= feeds/core.js ZONES).
+  var ZONES = { GMT: 0, UTC: 0, WET: 0, WEST: 60, BST: 60, CET: 60, CEST: 120, EET: 120, EEST: 180, MSK: 180,
+                IST: 330, JST: 540, AEST: 600, AEDT: 660, EST: -300, EDT: -240, CST: -360, CDT: -300,
+                MST: -420, MDT: -360, PST: -480, PDT: -420 };
   function parseDate(s) {
     s = clean(s, 80);
     if (!s) return 0;
@@ -246,6 +250,11 @@
       var y = +m[3]; if (y < 100) y += y < 70 ? 2000 : 1900;
       var tz = m[7] || "GMT";
       if (tz === "UT" || tz === "Z") tz = "GMT";
+      // Named zones Date.parse does not know (EET, EEST, CEST…) become offsets.
+      if (/^[A-Z]+$/.test(tz) && ZONES[tz] !== undefined) {
+        var off = ZONES[tz], a = Math.abs(off);
+        tz = (off < 0 ? "-" : "+") + ("0" + Math.floor(a / 60)).slice(-2) + ("0" + a % 60).slice(-2);
+      }
       t = Date.parse(m[1] + " " + m[2] + " " + y + " " + (m[4] || "0") + ":" + (m[5] || "00") + ":" + (m[6] || "00") + " " + tz);
       if (isNaN(t)) return 0;
     }

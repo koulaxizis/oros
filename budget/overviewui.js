@@ -36,7 +36,7 @@
       "ov.same": "The same as last month by this day", "ov.paceNone": "No expenses yet in this month or the one before.",
       "ov.dayTip": "Day {d}: {a}", "ov.dayTipPrev": "last month {a}", "ov.dayTipAvg": "average {a}",
       "ov.day": "Day", "ov.ahead.pace": "This month has not started yet.",
-      "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Changes the account's starting balance so that Budget shows the bank's balance on that day",
+      "ov.bkBal": "Bank {a} ({d})", "ov.bkBoth": "Bank {a} · available {v} ({d})", "ov.bkAvail": "Bank: available {v} ({d})", "ov.bkDebt": "Card debt {a} · available {v} ({d})", "ov.bkDebt1": "Card debt {a} ({d})", "ov.bkNoLim": "Available {v} ({d}). Type the credit limit below to see the debt.", "ov.bkSame": "same", "ov.bkMatch": "Match", "ov.bkMatchHint": "Writes a balance correction on that day so that Budget shows the bank's balance (not income or an expense)",
       "ov.bkMatched": "Starting balance changed by {a}",
       "ov.cyStmt": "Statement {d}: {a}",
       "ov.ivPaid": "paid {a}", "ov.pi": "Passive income {m} a month, {p} % of your expenses (12 months)", "ov.piNoOut": "Passive income {m} a month (12 months)", "ov.asOn": "valued {a} on {d}", "ov.asRate": "{r} % a year", "ov.ivPx": "{q} {s} at {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "g", "ov.ivOld": "last saved price",
@@ -59,10 +59,10 @@
       "ov.upBtn": "Move up: {c}", "ov.downBtn": "Move down: {c}", "ov.reset": "Default order", "ov.saveDone": "Overview saved",
       "ov.gCash": "Money", "ov.gCard": "Cards", "ov.gInv": "Investments and things of value",
       "ov.have": "I have {a}", "ov.owe": "I owe {a}",
-      "ov.stFlow": "this month +{i} · −{o}", "ov.stDue": "{a} by {d} · in {n} days", "ov.stChk": "Checked {d}", "ov.stBank": "Bank says {a}",
+      "ov.stFlow": "this month +{i} · −{o}", "ov.stDue": "{a} by {d} · in {n} days", "ov.stChk": "Checked {d}", "ov.stBank": "Bank says {a}", "ov.stDebt": "Debt {a} · available {v}", "ov.stDebt1": "Debt {a}", "ov.stNoLim": "Available {v} · add the limit to see the debt",
       "ov.sheetTip": "{a}: entries, update the balance, transfer, edit",
       "ov.shEntries": "Entries", "ov.shNew": "New entry", "ov.shUpd": "Update balance", "ov.shXfer": "Transfer", "ov.shEdit": "Edit",
-      "ov.shAuto": "Match the bank by itself", "ov.shAutoHint": "When the bank's balance differs, Budget changes the starting balance so the two agree, and says so (with Undo).",
+      "ov.shAuto": "Match the bank by itself", "ov.shAutoHint": "When the bank's balance differs, Budget writes a balance correction so the two agree, and says so (with Undo).",
       "ov.open": "More",
       "ov.lessAll": "{a} less than the month before", "ov.moreAll": "{a} more than the month before", "ov.sameAll": "The same as the month before"
     },
@@ -80,7 +80,7 @@
       "ov.same": "Όσα και τον προηγούμενο μήνα ως σήμερα", "ov.paceNone": "Κανένα έξοδο ακόμη σε αυτόν ή στον προηγούμενο μήνα.",
       "ov.dayTip": "{d} του μήνα: {a}", "ov.dayTipPrev": "προηγούμενος {a}", "ov.dayTipAvg": "μέσος όρος {a}",
       "ov.day": "Μέρα", "ov.ahead.pace": "Αυτός ο μήνας δεν έχει αρχίσει ακόμη.",
-      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Αλλάζει το αρχικό υπόλοιπο του λογαριασμού ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας εκείνη τη μέρα",
+      "ov.bkBal": "Τράπεζα {a} ({d})", "ov.bkBoth": "Τράπεζα {a} · διαθέσιμο {v} ({d})", "ov.bkAvail": "Τράπεζα: διαθέσιμο {v} ({d})", "ov.bkDebt": "Χρέος κάρτας {a} · διαθέσιμο {v} ({d})", "ov.bkDebt1": "Χρέος κάρτας {a} ({d})", "ov.bkNoLim": "Διαθέσιμο {v} ({d}). Γράψε από κάτω το πιστωτικό όριο για να φανεί το χρέος.", "ov.bkSame": "ίδιο", "ov.bkMatch": "Ταίριαξε", "ov.bkMatchHint": "Γράφει διόρθωση υπολοίπου εκείνη τη μέρα ώστε η εφαρμογή να δείχνει το υπόλοιπο της τράπεζας (όχι έσοδο ή έξοδο)",
       "ov.bkMatched": "Το αρχικό υπόλοιπο άλλαξε κατά {a}",
       "ov.cyStmt": "Κλείσιμο {d}: {a}",
       "ov.ivPaid": "πληρώθηκαν {a}", "ov.pi": "Παθητικό εισόδημα {m} τον μήνα, {p} % των εξόδων σου (12 μήνες)", "ov.piNoOut": "Παθητικό εισόδημα {m} τον μήνα (12 μήνες)", "ov.asOn": "αξία {a} στις {d}", "ov.asRate": "{r} % τον χρόνο", "ov.ivPx": "{q} {s} προς {p} ({w})", "ov.ivOz": "oz", "ov.ivG": "γρ.", "ov.ivOld": "τελευταία αποθηκευμένη τιμή",
@@ -103,10 +103,10 @@
       "ov.upBtn": "Πάνω: {c}", "ov.downBtn": "Κάτω: {c}", "ov.reset": "Αρχική σειρά", "ov.saveDone": "Η σύνοψη αποθηκεύτηκε",
       "ov.gCash": "Χρήματα", "ov.gCard": "Κάρτες", "ov.gInv": "Επενδύσεις και περιουσία",
       "ov.have": "Έχω {a}", "ov.owe": "Χρωστάω {a}",
-      "ov.stFlow": "αυτόν τον μήνα +{i} · −{o}", "ov.stDue": "{a} ως {d} · σε {n} μέρες", "ov.stChk": "Ελέγχθηκε {d}", "ov.stBank": "Η τράπεζα λέει {a}",
+      "ov.stFlow": "αυτόν τον μήνα +{i} · −{o}", "ov.stDue": "{a} ως {d} · σε {n} μέρες", "ov.stChk": "Ελέγχθηκε {d}", "ov.stBank": "Η τράπεζα λέει {a}", "ov.stDebt": "Χρέος {a} · διαθέσιμο {v}", "ov.stDebt1": "Χρέος {a}", "ov.stNoLim": "Διαθέσιμο {v} · βάλε το όριο για το χρέος",
       "ov.sheetTip": "{a}: κινήσεις, ενημέρωση υπολοίπου, μεταφορά, επεξεργασία",
       "ov.shEntries": "Κινήσεις", "ov.shNew": "Νέα κίνηση", "ov.shUpd": "Ενημέρωση υπολοίπου", "ov.shXfer": "Μεταφορά", "ov.shEdit": "Επεξεργασία",
-      "ov.shAuto": "Ταίριασμα με την τράπεζα αυτόματα", "ov.shAutoHint": "Όταν το υπόλοιπο της τράπεζας διαφέρει, η εφαρμογή αλλάζει το αρχικό υπόλοιπο ώστε να συμφωνούν, και το λέει (με Αναίρεση).",
+      "ov.shAuto": "Ταίριασμα με την τράπεζα αυτόματα", "ov.shAutoHint": "Όταν το υπόλοιπο της τράπεζας διαφέρει, η εφαρμογή γράφει διόρθωση υπολοίπου ώστε να συμφωνούν, και το λέει (με Αναίρεση).",
       "ov.open": "Περισσότερα",
       "ov.lessAll": "{a} λιγότερα από τον προηγούμενο μήνα", "ov.moreAll": "{a} περισσότερα από τον προηγούμενο μήνα", "ov.sameAll": "Όσα και τον προηγούμενο μήνα"
     }
@@ -302,26 +302,33 @@
       var hasB = typeof r.bb === "number", hasA = typeof r.ba === "number";
       if (!hasB && !hasA) return;
       var line = el("div", "ov-bkline");
-      // BK-8: a card shows its debt and what is left to spend
-      var txt = !hasB ? t("ov.bkAvail", { v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
+      // BK-8: a card shows its debt and what is left to spend; CD-1:
+      // the debt by that name, and what is missing when it is unknown
+      var card = isCardRow(r);
+      var txt = card && hasB ? (hasA ? t("ov.bkDebt", { a: A.money(-r.bb, r.bc), v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) }) : t("ov.bkDebt1", { a: A.money(-r.bb, r.bc), d: A.dateShort(r.bd) }))
+              : card ? t("ov.bkNoLim", { v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
+              : !hasB ? t("ov.bkAvail", { v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
               : hasA ? t("ov.bkBoth", { a: A.money(r.bb, r.bc), v: A.money(r.ba, r.bc), d: A.dateShort(r.bd) })
               : t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) });
       line.appendChild(el("span", "", txt));
       if (!hasB) { li.appendChild(line); return; }
       var mine = A.accBalAt(a.id, r.bd);
       if (mine === r.bb) line.appendChild(el("span", "ov-bk-ok", " · " + t("ov.bkSame")));
-      else if (mine !== null && A.shiftStart) {
+      else if (mine !== null && A.correct) {
         var diff = r.bb - mine;
         var b = el("button", "mini", t("ov.bkMatch"));
         b.type = "button";
         b.title = t("ov.bkMatchHint");
         b.setAttribute("aria-label", t("ov.bkMatch") + ": " + a.n + ", " + t("ov.bkBal", { a: A.money(r.bb, r.bc), d: A.dateShort(r.bd) }));
-        b.addEventListener("click", function () { A.shiftStart(a.id, diff, t("ov.bkMatched", { a: A.money(diff, r.bc) })); });
+        b.addEventListener("click", function () { A.correct(a.id, diff, t("ov.bkMatched", { a: A.money(diff, r.bc) }), r.bd); });
         line.appendChild(b);
       }
       li.appendChild(line);
     });
   }
+  // CD-1: is a bank row a credit card (the person's answer, the bank's
+  // kind of account, its name)
+  function isCardRow(r) { return !!(A.isCardRow && A.isCardRow(r)); }
   // CC-1: a credit card's cycle under its account: the last statement,
   // what was paid, what is left by the due date, the interest estimate.
   function cycleLines(li, a) {
@@ -411,6 +418,18 @@
       return { text: (gain >= 0 ? "+" : "\u2212") + A.money(Math.abs(gain), cu) + (pct !== null ? " (" + (pct >= 0 ? "+" : "\u2212") + String(Math.abs(pct)).replace(".", A.lang === "el" ? "," : ".") + " %)" : ""),
                cls: gain >= 0 ? "good" : "over" };
     }
+    // CD-1: a card a bank fills: its debt and what is left to spend,
+    // always, so the debt is found where the card is
+    for (var j = 0; j < bnk.length; j++) {
+      var cr = bnk[j];
+      if (cr.ac !== a.id || cr.bc !== cu || !isCardRow(cr)) continue;
+      if (typeof cr.bb === "number") {
+        var off = A.accBalAt ? A.accBalAt(a.id, cr.bd) : null;
+        return { text: typeof cr.ba === "number" ? t("ov.stDebt", { a: A.money(-cr.bb, cu), v: A.money(cr.ba, cu) }) : t("ov.stDebt1", { a: A.money(-cr.bb, cu) }),
+                 cls: off !== null && off !== cr.bb ? "warn" : "" };
+      }
+      if (typeof cr.ba === "number") return { text: t("ov.stNoLim", { v: A.money(cr.ba, cu) }), cls: "warn" };
+    }
     for (var i = 0; i < bnk.length; i++) {
       var r = bnk[i];
       if (r.ac !== a.id || r.bc !== cu || typeof r.bb !== "number" || !A.accBalAt) continue;
@@ -435,6 +454,10 @@
     var det = el("div", "sh-det");
     var bnk = (D().bnk || []).filter(function (r) { return r && r.src !== "pp"; });
     bankLines(det, a, bnk);
+    // CD-1: "This is a credit card" and its limit, right here
+    if (A.bankCardRows) bnk.forEach(function (r) {
+      if (r.ac === a.id) A.bankCardRows(det, r, function () { if (!dlg.open) return; dlg.close(); accSheet(a.id); });
+    });
     cycleLines(det, a);
     investLines(det, a, iv, bal[a.id]);
     var mk = A.viewMk(), f = O.perAccount(D().tx, mk, [a.id]).by[a.id] || { inc: 0, out: 0 };
