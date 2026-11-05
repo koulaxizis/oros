@@ -3944,7 +3944,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - Pet Health Book EL: "Βήχας της κυνοτροφείου" → "του κυνοτροφείου".
 - Garage EL `log.sent`: "στάλθηκε στο Budget" → «Έσοδα & Έξοδα».
 - Media Shelf EL: tab "Wishlist" untranslated.
-- Xeri EL middle level "Μέτριο" vs "Μεσαίο" elsewhere; Memory EL level "Expert" untranslated.
+- ~~Xeri EL middle level "Μέτριο" vs "Μεσαίο" elsewhere; Memory EL level "Expert" untranslated.~~ Fixed by games audit F7 (2026-11-05): every game says «Μεσαίο» (Minesweeper keeps its own Αρχάριος / Μέτριος / Έμπειρος), Memory's fourth level is «Πολύ δύσκολο» like Sudoku's.
 - Crossword: cannot use Word Search user themes (comment says it can).
 - Radio: empty Favourites text says "tap the heart on any station", but cards have no heart.
 - Podcasts: mini player skip tooltips always say 15 s / 30 s regardless of settings.
@@ -3954,7 +3954,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 - Meals EL `toast.importBad` says "Meal Planner"; Characters MD export headings always English; Names: Enter/Space on a focused mode tab does nothing; Pixel: size/seed change silently drops hand painting.
 - Quote: reminders treat Sent/Accepted quotes with no due date as due (empty date compares early); PDF fallback prints US dates in EN.
 - ~~Calculator: Troll-mode wrong answers saved/synced with no visible mark (`lied` stored, not shown).~~ Fixed by TR-1 (2026-10-22): Troll mode no longer changes answers; old `lied` entries show `≈`.
-- Gomoku records vs-computer games after undo, Chess does not; Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options.
+- Gomoku records vs-computer games after undo, Chess does not; ~~Sudoku EL "Ρυθμίσεις" vs Wordle "Επιλογές" for Options~~ (F7 2026-11-05: Sudoku says «Επιλογές» like Wordle and Battleship).
 
 ## Part X-B — Troubleshooting (known symptoms → cause → fix)
 

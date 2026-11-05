@@ -179,7 +179,7 @@
       "toast.wait@net": "Wait: your opponent is playing"
     },
     el: {
-      "level.e": "Εύκολο", "level.m": "Μέτριο", "level.h": "Δύσκολο",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "btn.opts": "Κανόνες",
       "btn.new": "Νέα παρτίδα (N)",
       "btn.stats": "Ρεκόρ",

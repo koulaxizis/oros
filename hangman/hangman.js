@@ -124,7 +124,7 @@
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
       "lang.en": "EN", "lang.el": "ΕΛ",
       "lang.enLong": "Αγγλικές λέξεις", "lang.elLong": "Ελληνικές λέξεις",
-      "level.e": "Εύκολο", "level.m": "Μέτριο", "level.h": "Δύσκολο",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "levelLen.e": "5–6 γράμματα", "levelLen.m": "7–8 γράμματα", "levelLen.h": "9–10 γράμματα",
       "st.misses": "Λάθη",
       "st.streak": "Σερί",

@@ -115,7 +115,7 @@
     },
     el: {
       "app.name": "Μνήμη",
-      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο", "level.x": "Expert",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο", "level.x": "Πολύ δύσκολο",
       "mode.solo": "Μόνος", "mode.duo": "2 παίκτες",
       "set.shapes": "Σχήματα", "set.icons": "Εικονίδια", "set.letters": "Γράμματα",
       "set.label": "Σύμβολα",
