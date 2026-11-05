@@ -153,7 +153,7 @@
     },
     el: {
       "level.label": "Μέγεθος",
-      "app.name": "Flow Free",
+      "app.name": "Ένωσε τα χρώματα",
       "lv.d": "Ημέρας",
       "btn.daily": "Γρίφος της ημέρας",
       "btn.games": "Όλα τα παιχνίδια",
