@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.37.01
+- **Files: the path at the top works again.** In a folder two or more levels deep (for example Files / Documents / Work / 2026), tapping a folder in the middle of the path did nothing. Now every part of the path opens the folder it names.
+
 ## Version 5.37.00
 - **Find podcasts more easily.** In Podcasts › Discover, choose where your words are searched: `Everything`, `Title`, `Hosts & publishers`, `Topics` or `Tags`. `Filters` adds genre, country, sort (newest episode, most episodes, A–Z), hide explicit podcasts and hide the ones you already follow. Chips above the results narrow them by catalog, genre and host or publisher, a podcast you try offers `More from …`, your recent searches come back with one tap, and the new `Tags` view lists the most used podcast tags.
 - **Spotify links.** Paste a Spotify show link into the search field: orOS finds the same show in the open catalogs so you can follow its RSS feed, or tells you that it is probably only on Spotify.
