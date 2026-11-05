@@ -1,6 +1,13 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.40.00
+- **Games fit a phone held sideways.** On a phone turned sideways the board takes the right side and the buttons and score stack on the left, so Tetris, Battleship and the board games are playable in landscape. Upright on a narrow phone, toolbar buttons wrap onto a second line instead of hiding past the edge.
+- **Vibration in games, if you want it.** Game Center › On this device has a switch that makes every game vibrate lightly on moves, a little longer on mistakes and with a short pattern on wins. It is off until you turn it on, and appears only on a touch device that can vibrate.
+- **Jigsaw without dragging.** Tap a piece, then tap where it goes. With a keyboard, `]` and `[` pick a loose piece, the arrows move it, Enter drops it, R turns it and Esc lets go.
+- **Clearer for screen readers.** Every game has a proper title and page regions, and the Battleship, Minesweeper, Hangman and Rock Paper Scissors boards read correctly. Buttons that a mode locks say so instead of looking broken.
+- **Greek wording.** The middle level is «Μεσαίο» in every game, Memory's hardest level is «Πολύ δύσκολο», Sudoku's menu is «Επιλογές», and the Greek name of Flow is «Ένωσε τα χρώματα» everywhere.
+
 ## Version 5.39.00
 - **Timesheet marks what you invoiced.** An invoice made from Timesheet marks exactly its hours and extra charges as invoiced once Invoices saves it, and takes the marks off again if the invoice is deleted, voided or fully credited. The new **To invoice** tab shows, per client, the time and charges not invoiced yet and the unpaid invoices. A client can be linked to a CRM customer, so the invoice gets the tax details.
 - **Track time from your tasks.** To-Do tasks and Kanban cards have **Track time** and show the time tracked on them. In the Calendar, **Log time** turns an ended event into an entry, and the Timer tab lists ended events with no time logged.

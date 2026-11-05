@@ -1,4 +1,5 @@
 orosPack("de", "reversi", {
+ "app.name": "Reversi",
  "board.label": "Reversi-Brett",
  "btn.hintsOff": "Hinweise aus (H)",
  "btn.hintsOn": "Hinweise an (H)",

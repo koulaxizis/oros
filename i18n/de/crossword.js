@@ -1,4 +1,5 @@
 orosPack("de", "crossword", {
+ "app.name": "Kreuzworträtsel",
  "btn.check": "Prüfen und aufdecken",
  "btn.games": "Alle Spiele",
  "btn.lib": "Importierte Kreuzworträtsel: .puz / .ipuz-Datei öffnen oder importieren",

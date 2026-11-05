@@ -1,4 +1,5 @@
 orosPack("de", "slider", {
+ "app.name": "Schiebepuzzle",
  "board.label": "Puzzle, {n} mal {n}",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

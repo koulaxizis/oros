@@ -70,6 +70,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Hexagon Puzzle",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "level.label": "Level",
       "btn.rot": "Turn right (R)",
@@ -127,6 +128,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Εξάγωνα",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "level.label": "Επίπεδο",
       "btn.rot": "Στροφή δεξιά (R)",
@@ -1279,6 +1281,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

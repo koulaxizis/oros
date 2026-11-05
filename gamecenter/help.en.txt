@@ -8,6 +8,7 @@ All your games in one place: today's daily puzzles, your achievements and the st
 - The line under the title shows your daily streak: the days in a row on which you solved at least one daily puzzle.
 - `Achievements` lists goals such as a first win, a 7-day daily streak or solving all six dailies on one day. A trophy marks the ones you've reached; the others show how far you are.
 - `Statistics` lists every game you've played, most played first: games played, won or solved, dailies solved, streak, best time and best score, where the game has them. Tap a game's name to open it. Games you haven't played yet are listed at the bottom.
+- `On this device` (on a phone or tablet that can vibrate, such as Android) has `Vibrate on moves, mistakes and wins`: off at first, it makes every game give a short buzz when you move, a longer one for a mistake and a little pattern when you win. It stays on this device only; each game's sound button is separate.
 
 Each game's `All games` button (in its statistics, and after a daily puzzle) brings you here, to that game's row.
 

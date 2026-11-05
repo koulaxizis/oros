@@ -144,7 +144,7 @@
       "toast.noMore": "No more moves: press Done (Enter)",
       "toast.pick": "Pick one of your checkers that can move",
       "toast.wait": "The computer is playing",
-      "game.name": "Backgammon", "btn.net": "Play on two devices",
+      "actions.label": "Dice and moves", "game.name": "Backgammon", "btn.net": "Play on two devices",
       "side.friend": "Opponent", "turn.friend": "Opponent is moving…", "turn.friendRoll": "Opponent rolls…",
       "res.friend": "Your opponent wins", "toast.friend": "It's your opponent's turn",
       "net.hostNew": "The device that showed the code starts the next game", "res.seriesNet": "You – opponent",
@@ -221,7 +221,7 @@
       "toast.noMore": "Δεν υπάρχουν άλλες κινήσεις: πάτα Τέλος (Enter)",
       "toast.pick": "Διάλεξε ένα δικό σου πούλι που κινείται",
       "toast.wait": "Παίζει ο υπολογιστής",
-      "game.name": "Τάβλι", "btn.net": "Παιχνίδι σε δύο συσκευές",
+      "actions.label": "Ζάρια και κινήσεις", "game.name": "Τάβλι", "btn.net": "Παιχνίδι σε δύο συσκευές",
       "side.friend": "Αντίπαλος", "turn.friend": "Παίζει ο αντίπαλος…", "turn.friendRoll": "Ο αντίπαλος ρίχνει…",
       "res.friend": "Κέρδισε ο αντίπαλος", "toast.friend": "Είναι η σειρά του αντιπάλου",
       "net.hostNew": "Το επόμενο παιχνίδι το ξεκινά η συσκευή που έδειξε τον κωδικό", "res.seriesNet": "Εσύ – αντίπαλος",
@@ -1672,6 +1672,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
@@ -2047,6 +2048,7 @@
       n.textContent = t(n.getAttribute("data-i18n"));
     });
     $("board").setAttribute("aria-label", t("board.label"));
+    $("actions").setAttribute("aria-label", t("actions.label"));
   }
 
   function paintStatic() {

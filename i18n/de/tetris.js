@@ -1,4 +1,5 @@
 orosPack("de", "tetris", {
+ "app.name": "Tetris",
  "board.label": "Tetris-Feld, 10 mal 20, Level {l}",
  "btn.again": "Nochmal",
  "btn.go": "Weiter",

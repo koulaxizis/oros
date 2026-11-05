@@ -1,4 +1,5 @@
 orosPack("de", "simon", {
+ "app.name": "Simon sagt",
  "board.label": "Simons Felder",
  "btn.new": "Neues Spiel (N)",
  "btn.resume": "Weiter",

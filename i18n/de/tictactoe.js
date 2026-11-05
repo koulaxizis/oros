@@ -1,4 +1,5 @@
 orosPack("de", "tictactoe", {
+ "app.name": "Tic-Tac-Toe",
  "board.label": "Spielbrett, 3 mal 3",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

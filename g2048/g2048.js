@@ -69,6 +69,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "2048",
       "btn.new": "New game (N)",
       "btn.undo": "Undo (U)",
       "btn.stats": "Records",
@@ -122,6 +123,7 @@
       "toast.timeUp": "Time's up: start a new game (N)"
     },
     el: {
+      "app.name": "2048",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.undo": "Αναίρεση (U)",
       "btn.stats": "Ρεκόρ",
@@ -946,6 +948,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

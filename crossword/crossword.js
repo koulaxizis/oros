@@ -100,6 +100,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Crossword",
       "btn.new": "New puzzle (Shift+N)",
       "btn.check": "Check and reveal",
       "btn.stats": "Statistics",
@@ -253,6 +254,7 @@
       "res.bestI": "Best time"
     },
     el: {
+      "app.name": "Σταυρόλεξο",
       "btn.new": "Νέο σταυρόλεξο (Shift+N)",
       "btn.check": "Έλεγχος και αποκάλυψη",
       "btn.stats": "Στατιστικά",
@@ -1347,6 +1349,7 @@
 
   function typeLetter(l) {
     if (!gate()) return;
+    if (window.orosHaptics) window.orosHaptics.cue("key");     // F8
     var ix = game.cur;
     if (!locked(ix)) writeCell(ix, l);
     var nx = stepInWord(ix, 1);
@@ -1439,6 +1442,7 @@
 
   function finish() {
     var sec = elapsed() / 1000;
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopClock();
     game.done = true;
     game.bad = [];
@@ -1549,9 +1553,15 @@
         });
       });
     $("size-seg").classList.toggle("fixed", prefs.mode !== "f");
+    [].forEach.call(document.querySelectorAll("#size-seg .seg-btn"), function (b) {
+      // a fixed size still answers a tap with a toast that says why
+      if (prefs.mode !== "f" && !b.classList.contains("active")) b.setAttribute("aria-disabled", "true");
+      else b.removeAttribute("aria-disabled");
+    });
     var tb = $("theme-btn");
     tb.lastChild.textContent = imp ? t("lib.short") : themeName(game);
     tb.classList.toggle("fixed", prefs.mode === "d");
+    if (prefs.mode === "d") tb.setAttribute("aria-disabled", "true"); else tb.removeAttribute("aria-disabled");
     $("new-btn").disabled = prefs.mode === "d";
     $("lib-btn").classList.toggle("on", imp);
   }
@@ -2411,6 +2421,7 @@
       b.title = t("size." + s);
     });
     $("words").setAttribute("aria-label", t("words.label"));
+    $("clue").setAttribute("aria-label", t("clues.label"));
     $("words-intro").textContent = t("words.intro");
     $("kb").setAttribute("aria-label", t("kb.label"));
     $("clock").title = t("st.time");

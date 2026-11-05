@@ -179,7 +179,7 @@
       "toast.wait@net": "Wait: your opponent is playing"
     },
     el: {
-      "level.e": "Εύκολο", "level.m": "Μέτριο", "level.h": "Δύσκολο",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "btn.opts": "Κανόνες",
       "btn.new": "Νέα παρτίδα (N)",
       "btn.stats": "Ρεκόρ",
@@ -1361,6 +1361,7 @@
     try { return localStorage.getItem(SFX_KEY) === "1"; } catch (e) { return false; }
   }
   function sfx() {
+    if (window.orosHaptics) window.orosHaptics.cue("card");   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;
