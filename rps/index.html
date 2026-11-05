@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Rock Paper Scissors</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -38,11 +39,11 @@
   </header>
 
   <!-- Status: your score, round / streak, the computer's score -->
-  <div id="status">
+  <aside id="status">
     <span class="side" id="side-you"><span id="name-you" data-i18n="name.you">You</span><strong id="score-you">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="side" id="side-cpu"><strong id="score-cpu">0</strong><span id="name-cpu" data-i18n="name.cpu">Computer</span></span>
-  </div>
+  </aside>
 
   <main id="arena">
     <div id="hands">

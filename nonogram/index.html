@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Nonogram</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="size-seg" role="group">
         <button type="button" class="seg-btn" data-size="5">5×5</button>
@@ -41,11 +42,11 @@
   </header>
 
   <!-- Status: time, message, best time -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.time">Time</span><strong id="time">0:00</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="best">–</strong><span data-i18n="st.best">Best</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="pic" tabindex="0"></div>

@@ -65,6 +65,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Memory",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard", "level.x": "Expert",
       "mode.solo": "Solo", "mode.duo": "2 players",
       "set.shapes": "Shapes", "set.icons": "Icons", "set.letters": "Letters",
@@ -113,6 +114,7 @@
       "letter": "Letter {c}"
     },
     el: {
+      "app.name": "Μνήμη",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο", "level.x": "Expert",
       "mode.solo": "Μόνος", "mode.duo": "2 παίκτες",
       "set.shapes": "Σχήματα", "set.icons": "Εικονίδια", "set.letters": "Γράμματα",

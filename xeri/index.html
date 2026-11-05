@@ -18,6 +18,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="game.name">Xeri</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -36,11 +37,11 @@
   </header>
 
   <!-- Status: match points of both sides + whose turn -->
-  <div id="status">
+  <aside id="status">
     <span class="side" id="side0"><span id="name0"></span><strong id="score0">0</strong></span>
     <span id="turn"></span>
     <span class="side" id="side1"><strong id="score1">0</strong><span id="name1"></span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap" class="felt">
     <div id="board">

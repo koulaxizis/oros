@@ -75,6 +75,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Mastermind",
       "btn.new": "New game (N)",
       "btn.help": "How to play",
       "btn.stats": "Records",
@@ -138,6 +139,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Σπάσε τον κωδικό",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.help": "Πώς παίζεται",
       "btn.stats": "Ρεκόρ",

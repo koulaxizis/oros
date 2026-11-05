@@ -1,4 +1,5 @@
 orosPack("de", "breakout", {
+ "app.name": "Breakout",
  "board.label": "Breakout-Feld, Level {l}, noch {b} Steine",
  "btn.again": "Nochmal",
  "btn.go": "Weiter",

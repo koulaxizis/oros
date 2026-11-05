@@ -1,4 +1,5 @@
 orosPack("de", "solitaire", {
+ "app.name": "Solitär",
  "board.label": "Kartentisch: {v}",
  "btn.games": "Alle Spiele",
  "btn.hint": "Tipp (H)",

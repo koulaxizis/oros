@@ -88,6 +88,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Word Search",
       "btn.new": "New puzzle (Shift+N)",
       "btn.hint": "Hint (H)",
       "btn.stats": "Statistics",
@@ -183,6 +184,7 @@
       "toast.fewFit": "Only {n} of the theme's words fit this grid"
     },
     el: {
+      "app.name": "Κρυπτόλεξο",
       "btn.new": "Νέο κρυπτόλεξο (Shift+N)",
       "btn.hint": "Βοήθεια (H)",
       "btn.stats": "Στατιστικά",

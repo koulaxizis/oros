@@ -1,4 +1,5 @@
 orosPack("de", "bubble", {
+ "app.name": "Bubble Shooter",
  "board.label": "Spielfeld: {n} Blasen, Ziel {a}°. Schuss {c}, nächste {x}",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

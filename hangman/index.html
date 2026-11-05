@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Hangman</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="lang-seg" role="group">
         <button type="button" class="seg-btn" data-lang="en" data-i18n="lang.en">EN</button>
@@ -37,18 +38,18 @@
   </header>
 
   <!-- Status: misses, hint, streak -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><strong id="misses">0/6</strong><span data-i18n="st.misses">Misses</span></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="streak">0</strong><span data-i18n="st.streak">Streak</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="figure" aria-hidden="true"></div>
     <div id="word" role="group"></div>
   </main>
 
-  <div id="kb" role="group"></div>
+  <div id="kb" role="region"></div>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>

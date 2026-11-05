@@ -70,6 +70,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Mahjong",
       "lay.turtle": "Turtle", "lay.pyramid": "Pyramid", "lay.fortress": "Fortress",
       "btn.new": "New game (N)",
       "btn.undo": "Undo (U)",
@@ -129,6 +130,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Μαντζόνγκ",
       "lay.turtle": "Χελώνα", "lay.pyramid": "Πυραμίδα", "lay.fortress": "Φρούριο",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.undo": "Αναίρεση (U)",

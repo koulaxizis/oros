@@ -87,6 +87,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Solitaire",
       "v.k": "Klondike", "v.f": "FreeCell", "v.s": "Spider", "v.p": "Pyramid",
       "pile.pyr": "Pyramid row {r}, card {k}",
       "pile.discard": "Removed cards",
@@ -178,6 +179,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Πασιέντζα",
       "v.k": "Κλοντάικ", "v.f": "FreeCell", "v.s": "Αράχνη", "v.p": "Πυραμίδα",
       "pile.pyr": "Πυραμίδα, σειρά {r}, φύλλο {k}",
       "pile.discard": "Φύλλα που βγήκαν",

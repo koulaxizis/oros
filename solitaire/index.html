@@ -18,6 +18,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Solitaire</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="variant-seg" role="group">
         <button type="button" class="seg-btn" data-v="k" data-i18n="v.k">Klondike</button>
@@ -37,12 +38,12 @@
   </header>
 
   <!-- Status: moves, mode / deal, time, score -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.moves">Moves</span><strong id="moves">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat" id="time-stat"><strong id="time">0:00</strong></span>
     <span class="stat" id="score-stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
-  </div>
+  </aside>
 
   <main id="board-wrap" class="felt">
     <div id="board" role="group"></div>

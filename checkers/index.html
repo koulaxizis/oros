@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Checkers</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="mode-seg" role="group">
         <button type="button" class="seg-btn" data-mode="ai" data-i18n="mode.ai">vs Computer</button>
@@ -42,11 +43,11 @@
   </header>
 
   <!-- Status: black on the left, white on the right; turn in the middle -->
-  <div id="status">
+  <aside id="status">
     <span class="side" id="side0"><i class="pc p1" aria-hidden="true"></i><span id="name0"></span><strong id="score0">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="side" id="side1"><strong id="score1">0</strong><span id="name1"></span><i class="pc p2" aria-hidden="true"></i></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="board"></div>

@@ -1,4 +1,5 @@
 orosPack("de", "memory", {
+ "app.name": "Memory",
  "board.label": "Karten",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

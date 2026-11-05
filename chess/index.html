@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Chess</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="mode-seg" role="group">
         <button type="button" class="seg-btn" data-mode="ai" data-i18n="mode.ai">vs Computer</button>
@@ -47,11 +48,11 @@
   </header>
 
   <!-- Status: the two sides (material lead), whose turn / result -->
-  <div id="status">
+  <aside id="status">
     <span class="side" id="side-w"><i class="chip w" aria-hidden="true"></i><span id="name-w"></span><em id="adv-w"></em><b class="clk" id="clk-w" hidden></b></span>
     <span id="turn" aria-live="polite"></span>
     <span class="side" id="side-b"><b class="clk" id="clk-b" hidden></b><em id="adv-b"></em><span id="name-b"></span><i class="chip b" aria-hidden="true"></i></span>
-  </div>
+  </aside>
 
   <main id="play">
     <div id="board-wrap">

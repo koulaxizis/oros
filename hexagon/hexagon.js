@@ -70,6 +70,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Hexagon Puzzle",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "level.label": "Level",
       "btn.rot": "Turn right (R)",
@@ -127,6 +128,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Εξάγωνα",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "level.label": "Επίπεδο",
       "btn.rot": "Στροφή δεξιά (R)",

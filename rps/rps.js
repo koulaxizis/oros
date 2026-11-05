@@ -66,6 +66,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Rock Paper Scissors",
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "fmt.3": "First to 3", "fmt.5": "First to 5", "fmt.0": "Endless",
       "name.you": "You", "name.cpu": "Computer", "vs": "vs",
@@ -112,6 +113,7 @@
       "toast.fresh": "Nothing to restart: the match has not begun"
     },
     el: {
+      "app.name": "Πέτρα, ψαλίδι, χαρτί",
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "fmt.3": "Όποιος φτάσει 3", "fmt.5": "Όποιος φτάσει 5", "fmt.0": "Χωρίς τέλος",
       "name.you": "Εσύ", "name.cpu": "Υπολογιστής", "vs": "εναντίον",

@@ -1,4 +1,5 @@
 orosPack("de", "lightsout", {
+ "app.name": "Lights Out",
  "board.label": "Lichter, {n} mal {n}",
  "btn.hint": "Tipp (H)",
  "btn.new": "Neues Rätsel (N)",

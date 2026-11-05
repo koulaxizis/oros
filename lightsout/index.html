@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Lights Out</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -36,11 +37,11 @@
   </header>
 
   <!-- Status: presses (and the minimum), lights left, time -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.moves">Moves</span><strong id="moves">0</strong><span class="par"><span data-i18n="st.par">min</span> <b id="par">0</b></span></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="time">0:00</strong><span data-i18n="st.time">Time</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="board"></div>

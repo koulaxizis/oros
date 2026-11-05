@@ -1,4 +1,5 @@
 orosPack("de", "pong", {
+ "app.name": "Pong",
  "board.label": "Pong-Feld, {a} {s0}, {b} {s1}",
  "btn.again": "Nochmal",
  "btn.go": "Weiter",

@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Flow Free</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="5">5×5</button>
@@ -39,11 +40,11 @@
   </header>
 
   <!-- Status: lines joined, filled share, time -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.flows">Lines</span><strong id="flows">0/0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="time">0:00</strong><span data-i18n="st.time">Time</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <svg id="board" tabindex="0" role="application" xmlns="http://www.w3.org/2000/svg"></svg>

@@ -100,6 +100,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Crossword",
       "btn.new": "New puzzle (Shift+N)",
       "btn.check": "Check and reveal",
       "btn.stats": "Statistics",
@@ -253,6 +254,7 @@
       "res.bestI": "Best time"
     },
     el: {
+      "app.name": "Σταυρόλεξο",
       "btn.new": "Νέο σταυρόλεξο (Shift+N)",
       "btn.check": "Έλεγχος και αποκάλυψη",
       "btn.stats": "Στατιστικά",
@@ -2417,6 +2419,7 @@
       b.title = t("size." + s);
     });
     $("words").setAttribute("aria-label", t("words.label"));
+    $("clue").setAttribute("aria-label", t("clues.label"));
     $("words-intro").textContent = t("words.intro");
     $("kb").setAttribute("aria-label", t("kb.label"));
     $("clock").title = t("st.time");

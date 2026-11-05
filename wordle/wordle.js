@@ -75,6 +75,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Wordle",
       "btn.new": "New word (Shift+N)",
       "btn.opts": "Options",
       "btn.stats": "Statistics",
@@ -145,6 +146,7 @@
       "toast.noWords": "The word list did not load"
     },
     el: {
+      "app.name": "Λεξούλα",
       "btn.new": "Νέα λέξη (Shift+N)",
       "btn.opts": "Επιλογές",
       "btn.stats": "Στατιστικά",

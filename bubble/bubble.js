@@ -84,6 +84,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Bubble Shooter",
       "lv.l1": "Easy", "lv.l2": "Normal", "lv.l3": "Hard",
       "btn.new": "New game (N)",
       "btn.swap": "Swap bubbles (S)",
@@ -131,6 +132,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Φούσκες",
       "lv.l1": "Εύκολο", "lv.l2": "Κανονικό", "lv.l3": "Δύσκολο",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.swap": "Αλλαγή φούσκας (S)",

@@ -104,6 +104,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Tetris",
       "start.n": "Level {n}",
       "btn.pause": "Pause (P)", "btn.resume": "Resume (P)",
       "btn.new": "New game (N)",
@@ -156,6 +157,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Τέτρις",
       "start.n": "Επίπεδο {n}",
       "btn.pause": "Παύση (P)", "btn.resume": "Συνέχεια (P)",
       "btn.new": "Νέο παιχνίδι (N)",

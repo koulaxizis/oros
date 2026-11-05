@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Whack-a-Mole</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -33,11 +34,11 @@
   </header>
 
   <!-- Status: score, message, time left -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.score">Score</span><strong id="score">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="time">0:30</strong><span data-i18n="st.time">Time</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="field">

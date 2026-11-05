@@ -1,4 +1,5 @@
 orosPack("de", "checkers", {
+ "app.name": "Dame",
  "board.label": "Dame-Brett",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

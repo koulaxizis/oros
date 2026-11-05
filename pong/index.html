@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Pong</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="mode-seg" role="group">
         <button type="button" class="seg-btn" data-mode="ai" data-i18n="mode.ai">vs Computer</button>
@@ -42,11 +43,11 @@
   </header>
 
   <!-- Status: player 1 score, message, player 2 score -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span class="dot"></span><span class="lab" id="lab0"></span><strong id="sc0">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="sc1">0</strong><span class="lab" id="lab1"></span><span class="dot p2"></span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="field">

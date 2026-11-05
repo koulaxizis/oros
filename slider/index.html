@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Number Slider</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="size-seg" role="group">
         <button type="button" class="seg-btn" data-size="3">3×3</button>
@@ -33,11 +34,11 @@
   </header>
 
   <!-- Status: moves, hint, time -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.moves">Moves</span><strong id="moves">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="time">0:00</strong><span data-i18n="st.time">Time</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="board"></div>

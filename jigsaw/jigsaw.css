@@ -219,6 +219,8 @@ html[data-theme="light"] #frame { background: rgba(0, 0, 0, 0.05); }
 }
 .pc.lift { will-change: transform; }
 .pc.shadow { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.45)); }
+/* picked up by a tap or the keyboard (F6): a gold rim until it is put down */
+.pc.picked { filter: drop-shadow(0 0 2px var(--accent)) drop-shadow(0 0 2px var(--accent)); }
 .pc.turning { transition: transform 0.16s ease-out; }
 .pc.glide { transition: transform 0.5s ease-in-out; }
 

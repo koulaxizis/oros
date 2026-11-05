@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Crossword</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="lang-seg" role="group">
         <button type="button" class="seg-btn" data-lang="en" data-i18n="lang.en">EN</button>
@@ -43,14 +44,14 @@
   </header>
 
   <!-- Status: which puzzle, words placed, time -->
-  <div id="status">
+  <aside id="status">
     <span id="info"></span>
     <span id="count"></span>
     <span id="clock"><span id="clock-ico"></span><strong id="time">0:00</strong></span>
-  </div>
+  </aside>
 
   <!-- Imported crosswords: the clue of the current word -->
-  <div id="clue" hidden></div>
+  <div id="clue" role="region" hidden></div>
 
   <main id="play">
     <div id="grid-wrap">
@@ -62,7 +63,7 @@
     </aside>
   </main>
 
-  <div id="kb" role="group"></div>
+  <div id="kb" role="region"></div>
 
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>

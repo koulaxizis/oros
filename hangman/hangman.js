@@ -70,6 +70,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Hangman",
       "btn.new": "New word (Shift+N)",
       "btn.stats": "Records",
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off",
@@ -117,6 +118,7 @@
       "toast.noWords": "The word list did not load"
     },
     el: {
+      "app.name": "Κρεμάλα",
       "btn.new": "Νέα λέξη (Shift+N)",
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",

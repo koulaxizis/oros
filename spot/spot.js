@@ -78,6 +78,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Spot the Difference",
       "lv.l1": "Easy · 5", "lv.l2": "Medium · 7", "lv.l3": "Hard · 10",
       "lvn.l1": "Easy", "lvn.l2": "Medium", "lvn.l3": "Hard",
       "btn.new": "New pictures (N)",
@@ -124,6 +125,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Βρες τις διαφορές",
       "lv.l1": "Εύκολο · 5", "lv.l2": "Μέτριο · 7", "lv.l3": "Δύσκολο · 10",
       "lvn.l1": "Εύκολο", "lvn.l2": "Μέτριο", "lvn.l3": "Δύσκολο",
       "btn.new": "Νέες εικόνες (N)",

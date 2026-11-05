@@ -57,6 +57,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Number Slider",
       "btn.new": "New game (N)",
       "btn.stats": "Records",
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off",
@@ -94,6 +95,7 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Συρόμενοι αριθμοί",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",

@@ -1,4 +1,5 @@
 orosPack("de", "chess", {
+ "app.name": "Schach",
  "board.label": "Schachbrett",
  "btn.flip": "Brett drehen (F)",
  "btn.new": "Neue Partie (N)",

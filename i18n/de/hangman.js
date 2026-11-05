@@ -1,4 +1,5 @@
 orosPack("de", "hangman", {
+ "app.name": "Galgenmännchen",
  "btn.new": "Neues Wort (Shift+N)",
  "btn.sfxOff": "Ton aus",
  "btn.sfxOn": "Ton an",

@@ -69,6 +69,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "2048",
       "btn.new": "New game (N)",
       "btn.undo": "Undo (U)",
       "btn.stats": "Records",
@@ -122,6 +123,7 @@
       "toast.timeUp": "Time's up: start a new game (N)"
     },
     el: {
+      "app.name": "2048",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.undo": "Αναίρεση (U)",
       "btn.stats": "Ρεκόρ",

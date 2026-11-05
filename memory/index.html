@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Memory</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -43,7 +44,7 @@
   </header>
 
   <!-- Status: solo (moves · time · best) or duo (two scores + turn) -->
-  <div id="status">
+  <aside id="status">
     <div id="solo-stats">
       <span class="stat"><small data-i18n="stat.moves">Moves</small><strong id="moves">0</strong></span>
       <span class="stat"><small data-i18n="stat.time">Time</small><strong id="time">00:00</strong></span>
@@ -53,7 +54,7 @@
       <span class="player" id="p0"><small data-i18n="player.1">Player 1</small><strong id="score0">0</strong></span>
       <span class="player" id="p1"><small data-i18n="player.2">Player 2</small><strong id="score1">0</strong></span>
     </div>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="board"></div>

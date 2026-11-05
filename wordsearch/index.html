@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Word Search</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="lang-seg" role="group">
         <button type="button" class="seg-btn" data-lang="en" data-i18n="lang.en">EN</button>
@@ -42,11 +43,11 @@
   </header>
 
   <!-- Status: which puzzle, words found, time -->
-  <div id="status">
+  <aside id="status">
     <span id="info"></span>
     <span id="count"></span>
     <span id="clock"><span id="clock-ico"></span><strong id="time">0:00</strong></span>
-  </div>
+  </aside>
 
   <main id="play">
     <div id="grid-wrap">

@@ -17,6 +17,7 @@
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Spot the Difference</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="lv-seg" role="group">
         <button type="button" class="seg-btn" data-lv="l1" data-i18n="lv.l1">Easy · 5</button>
@@ -34,11 +35,11 @@
   </header>
 
   <!-- Status: time, message, found -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><span data-i18n="st.time">Time</span><strong id="time">0:00</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="found">0/5</strong><span data-i18n="st.found">Found</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="pics">
