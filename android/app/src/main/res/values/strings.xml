@@ -59,4 +59,9 @@
     <string name="af_save_desc">orOS Passwords. You check the login in orOS and press Save there.</string>
     <string name="af_save_later">Open orOS to finish saving this login in Passwords.</string>
     <string name="af_save_failed">orOS could not keep this login.</string>
+    <!-- Passwords: unlock with fingerprint or face (PW-BIO, BioActivity) -->
+    <string name="bio_title">Unlock orOS Passwords</string>
+    <string name="bio_title_on">Turn on fingerprint unlock</string>
+    <string name="bio_sub">Use your fingerprint or face</string>
+    <string name="bio_use_pw">Use master password</string>
 </resources>

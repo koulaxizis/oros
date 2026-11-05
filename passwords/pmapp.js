@@ -111,6 +111,29 @@
       "af.apps": "Apps: add androidapp://<package name> as a site of a login, or pick the login once from the app.",
       "af.err": "The phone could not keep the copy: {e}",
       "af.offDone": "Autofill is off: the phone's copy and keys were removed.",
+      "m.bio": "Fingerprint unlock",
+      "bio.title": "Unlock with fingerprint or face",
+      "bio.text": "Open Passwords on this phone with your fingerprint or face instead of typing the master password. The master password stays the key to your vault: it still works here and on your other devices. This phone keeps a copy of the vault key, locked with a key inside Android that only your fingerprint or face opens; the copy never leaves this phone and never syncs. orOS asks for the master password every 14 days and once after it changes, so you keep remembering it.",
+      "bio.on": "Turn on for this phone",
+      "bio.pw": "Master password",
+      "bio.pwHint": "Type it, then press Turn on and touch the sensor or look at the phone.",
+      "bio.off": "Turn off",
+      "bio.isOn": "On for this phone since {d}",
+      "bio.doneOn": "Fingerprint unlock is on for this phone.",
+      "bio.doneOff": "Fingerprint unlock is off: the copy on this phone was removed.",
+      "bio.wait": "Asking the phone…",
+      "bio.can.none": "Add a fingerprint or face in Android's settings first.",
+      "bio.can.no-hw": "This phone has no fingerprint or face unlock that Android counts as strong.",
+      "bio.can.no-lock": "Set a screen lock on this phone first.",
+      "bio.can.old": "This needs Android 9 or newer.",
+      "bio.unlock": "Unlock with fingerprint or face",
+      "bio.days": "Type your master password: orOS asks for it every 14 days, so you keep remembering it. Then your fingerprint works again.",
+      "bio.changed": "The master password changed: type it once here, then your fingerprint works again.",
+      "bio.err.lockout": "Too many tries. Use your master password, or try again later.",
+      "bio.err.invalidated": "A new fingerprint or face was added to this phone, so fingerprint unlock was turned off. Turn it on again in More.",
+      "bio.err.none": "This phone no longer has its copy, so fingerprint unlock was turned off. Turn it on again in More.",
+      "bio.err.timeout": "The phone did not answer. Try again.",
+      "bio.err.failed": "Fingerprint unlock did not work. Use your master password.",
       "save.new": "New login from {site}. Check it and press Save to keep it.",
       "save.update": "New password from {site}. Press Save to keep it; the old one stays in the history.",
       "save.same": "The login for {site} is already saved.",
@@ -332,6 +355,29 @@
       "af.apps": "Εφαρμογές: πρόσθεσε androidapp://<όνομα πακέτου> ως ιστότοπο ενός λογαριασμού, ή διάλεξε τον λογαριασμό μία φορά μέσα από την εφαρμογή.",
       "af.err": "Το κινητό δεν μπόρεσε να κρατήσει το αντίγραφο: {e}",
       "af.offDone": "Η αυτόματη συμπλήρωση απενεργοποιήθηκε: το αντίγραφο και τα κλειδιά του κινητού διαγράφηκαν.",
+      "m.bio": "Ξεκλείδωμα με δακτυλικό",
+      "bio.title": "Ξεκλείδωμα με δακτυλικό ή πρόσωπο",
+      "bio.text": "Άνοιγε τους Κωδικούς σε αυτό το κινητό με το δακτυλικό ή το πρόσωπό σου, χωρίς να γράφεις τον κύριο κωδικό. Ο κύριος κωδικός μένει το κλειδί της κρύπτης σου: δουλεύει πάντα εδώ και στις άλλες συσκευές σου. Το κινητό κρατά ένα αντίγραφο του κλειδιού της κρύπτης, κλειδωμένο με ένα κλειδί μέσα στο Android που ανοίγει μόνο με το δακτυλικό ή το πρόσωπό σου· το αντίγραφο δεν φεύγει ποτέ από το κινητό και δεν συγχρονίζεται. Το orOS ζητά τον κύριο κωδικό κάθε 14 μέρες και μία φορά αφού αλλάξει, για να μην τον ξεχάσεις.",
+      "bio.on": "Ενεργοποίηση σε αυτό το κινητό",
+      "bio.pw": "Κύριος κωδικός",
+      "bio.pwHint": "Γράψ' τον, πάτησε Ενεργοποίηση και άγγιξε τον αισθητήρα ή κοίτα το κινητό.",
+      "bio.off": "Απενεργοποίηση",
+      "bio.isOn": "Ενεργό σε αυτό το κινητό από {d}",
+      "bio.doneOn": "Το ξεκλείδωμα με δακτυλικό ενεργοποιήθηκε σε αυτό το κινητό.",
+      "bio.doneOff": "Το ξεκλείδωμα με δακτυλικό απενεργοποιήθηκε: το αντίγραφο του κινητού διαγράφηκε.",
+      "bio.wait": "Ρωτάω το κινητό…",
+      "bio.can.none": "Πρόσθεσε πρώτα δακτυλικό ή πρόσωπο στις ρυθμίσεις του Android.",
+      "bio.can.no-hw": "Αυτό το κινητό δεν έχει ξεκλείδωμα με δακτυλικό ή πρόσωπο που το Android θεωρεί ισχυρό.",
+      "bio.can.no-lock": "Βάλε πρώτα κλείδωμα οθόνης στο κινητό.",
+      "bio.can.old": "Χρειάζεται Android 9 ή νεότερο.",
+      "bio.unlock": "Ξεκλείδωμα με δακτυλικό ή πρόσωπο",
+      "bio.days": "Γράψε τον κύριο κωδικό: το orOS τον ζητά κάθε 14 μέρες, για να μην τον ξεχάσεις. Μετά το δακτυλικό δουλεύει ξανά.",
+      "bio.changed": "Ο κύριος κωδικός άλλαξε: γράψ' τον μία φορά εδώ και μετά το δακτυλικό δουλεύει ξανά.",
+      "bio.err.lockout": "Πάρα πολλές προσπάθειες. Γράψε τον κύριο κωδικό ή δοκίμασε αργότερα.",
+      "bio.err.invalidated": "Προστέθηκε νέο δακτυλικό ή πρόσωπο στο κινητό, άρα το ξεκλείδωμα με δακτυλικό απενεργοποιήθηκε. Ενεργοποίησέ το ξανά από το Περισσότερα.",
+      "bio.err.none": "Το κινητό δεν έχει πια το αντίγραφό του, άρα το ξεκλείδωμα με δακτυλικό απενεργοποιήθηκε. Ενεργοποίησέ το ξανά από το Περισσότερα.",
+      "bio.err.timeout": "Το κινητό δεν απάντησε. Δοκίμασε ξανά.",
+      "bio.err.failed": "Το ξεκλείδωμα με δακτυλικό δεν πέτυχε. Γράψε τον κύριο κωδικό.",
       "save.new": "Νέος λογαριασμός από {site}. Έλεγξέ τον και πάτα Αποθήκευση για να τον κρατήσεις.",
       "save.update": "Νέος κωδικός από {site}. Πάτα Αποθήκευση για να τον κρατήσεις· ο παλιός μένει στο ιστορικό.",
       "save.same": "Ο λογαριασμός για {site} είναι ήδη αποθηκευμένος.",
@@ -869,6 +915,10 @@
     card.appendChild(go);
     var rk = btn(t("lock.useRk"), "link-btn");
     card.appendChild(rk);
+    // PW-BIO: fingerprint or face first, the master password below it.
+    var bioBox = el("div", "pv-bio-box");
+    card.insertBefore(bioBox, card.children[2]);
+    bioLockBox(bioBox, primary(), startSession, function (msg) { err.textContent = msg; err.hidden = !msg; });
     pw.addEventListener("keydown", function (e) { if (e.key === "Enter") go.click(); });
     go.addEventListener("click", function () {
       if (!pw.value) { pw.focus(); return; }
@@ -876,6 +926,7 @@
       go.disabled = true; go.textContent = t("lock.busy"); err.hidden = true;
       PV.unlock(V, k, pw.value).then(function (s) {
         pw.value = "";
+        bioTyped(k);
         startSession(s);
       }, function (e) {
         go.disabled = false; go.textContent = t("lock.go");
@@ -887,7 +938,8 @@
     });
     rk.addEventListener("click", recoveryDialog);
     root.appendChild(card);
-    setTimeout(function () { try { pw.focus(); } catch (e) {} }, 0);
+    // With the fingerprint button the phone's keyboard stays down.
+    if (!bioReady(primary())) setTimeout(function () { try { pw.focus(); } catch (e) {} }, 0);
   }
 
   function startSession(s) {
@@ -926,6 +978,7 @@
           writeStored(next); slice = next; markDirty();
         }).then(function () {
           key.value = p1.value = p2.value = "";
+          bioTyped(k);
           done(true);
           toast(t("cpw.done"));
           startSession(r.session);
@@ -2092,7 +2145,7 @@
     list.setAttribute("role", "menu");
     [["m.import", importDialog], ["m.export", exportDialog], ["m.changePw", changePwDialog],
      ["m.newRk", newRkDialog], ["m.settings", settingsDialog], ["m.delete", deleteVaultDialog],
-     ["m.lock", function () { lock(false); toast(t("locked")); }]].concat(phone() ? [["m.autofill", autofillDialog]] : []).forEach(function (it) {
+     ["m.lock", function () { lock(false); toast(t("locked")); }]].concat(phone() ? [["m.autofill", autofillDialog]] : []).concat(bio() ? [["m.bio", bioDialog]] : []).forEach(function (it) {
       var b = btn(t(it[0]), "pv-menu-item" + (it[0] === "m.delete" ? " danger" : ""), function () { d.close(); it[1](); });
       b.setAttribute("role", "menuitem");
       list.appendChild(b);
@@ -2422,6 +2475,7 @@
         });
       }).then(function () {
         cur.value = p1.value = p2.value = "";
+        bioTyped(k);
         done(true); toast(t("cpw.done"));
       }).catch(function (e) {
         err(e && e.message === "wrong-password" ? t("lock.wrong") : errText(e));
@@ -2442,7 +2496,7 @@
         return enqueue(function () {
           var next = PV.withVault(readStored(), k, r.vault);
           writeStored(next); slice = next; markDirty();
-        }).then(function () { cur.value = ""; done(true); showRecovery(r.recovery); });
+        }).then(function () { cur.value = ""; bioTyped(k); done(true); showRecovery(r.recovery); });
       }).catch(function (e) {
         err(e && e.message === "wrong-password" ? t("lock.wrong") : errText(e));
         done(false);
@@ -2582,6 +2636,140 @@
     var off = p.onChange(show);
     d.onClose(off);
     p.refresh();
+    show();
+    d.actions(t("d.close"));
+  }
+
+  // ---------- 9c. Unlock with fingerprint or face (PW-BIO) ----------
+  // Inside the orOS Android app and the single app "orOS Passwords"
+  // (phone.js orosPhone.bio). The vault key is kept on this device
+  // wrapped with a secret the app holds in its Keystore and gives back
+  // only after the person's fingerprint or face (pmcrypto.js section 7);
+  // the record is in this device's storage only (BIO_KEY, never synced).
+  // The master password stays: it turns this on, it is asked every
+  // 14 days and once after it changed, and it always works.
+  var BIO_KEY = "oros-passwords-bio";
+  function bio() {
+    try {
+      var p = window.parent && window.parent !== window ? window.parent.orosPhone : null;
+      return p && p.bio && p.bio.available() ? p : null;
+    } catch (e) { return null; }
+  }
+  function bioRec() {
+    try { return PV.bioNorm(JSON.parse(localStorage.getItem(BIO_KEY) || "null")); } catch (e) { return null; }
+  }
+  function bioStore(r) {
+    try { if (r) localStorage.setItem(BIO_KEY, JSON.stringify(r)); else localStorage.removeItem(BIO_KEY); } catch (e) {}
+  }
+  // The app knows a secret for this vault, and the record can open it.
+  function bioReady(k) {
+    var p = bio(), info = p && p.bio.info();
+    return !!(info && info.can === "ok" && info.kids.indexOf(k) >= 0 && PV.bioCheck(bioRec(), vaultOf(k), k, Date.now()) === "ok");
+  }
+  function bioOff(k) {
+    var p = bio();
+    bioStore(null);
+    if (p && k) p.bio.clear(k);
+  }
+  // Errors that end fingerprint unlock on this phone remove the record.
+  function bioFail(e, k, show) {
+    var code = (e && e.message || "").replace(/^bio-/, "");
+    if (code === "cancel") return;
+    if (code === "invalidated" || code === "none" || code === "wrong") { bioOff(k); show(t(code === "invalidated" ? "bio.err.invalidated" : "bio.err.none")); return; }
+    show(t(code === "lockout" ? "bio.err.lockout" : code === "timeout" ? "bio.err.timeout" : "bio.err.failed"));
+  }
+  // The master password opened the vault: the 14 days and the password
+  // version count from now.
+  function bioTyped(k) {
+    var r = bioRec();
+    if (r && r.kid === k) bioStore(PV.bioTyped(r, vaultOf(k), Date.now()));
+    else if (r) bioStore(null);                  // another vault: that copy is useless
+  }
+  // The lock screen's part: the button, or why the password is asked.
+  function bioLockBox(box, k, onSession, showErr) {
+    var p = bio();
+    var why = p ? PV.bioCheck(bioRec(), vaultOf(k), k, Date.now()) : "none";
+    function fill() {
+      clear(box);
+      if (!bio()) return;
+      if (why === "days" || why === "changed") { box.appendChild(el("p", "hint", t("bio." + why))); return; }
+      if (!bioReady(k)) return;
+      var b = btn(t("bio.unlock"), "act primary wide pv-bio", function () {
+        b.disabled = true;
+        bio().bio.open(k).then(function (d64) {
+          var d = PV.unb64(d64);
+          b.textContent = t("lock.busy");
+          return PV.bioUnlock(bioRec(), k, d);
+        }).then(function (s) {
+          var r = bioRec();
+          if (r) { r.at = Date.now(); bioStore(r); }
+          onSession(s);
+        }, function (e) {
+          b.disabled = false; b.textContent = t("bio.unlock");
+          bioFail(e, k, showErr);
+          fill();
+        });
+      });
+      box.appendChild(b);
+    }
+    fill();
+    if (p && !p.bio.info()) p.bio.refresh();
+    var off = p ? p.onChange(function () { if (!document.body.contains(box)) { off(); return; } if (!box.querySelector("button:disabled")) fill(); }) : null;
+  }
+  function bioDialog() {
+    var p = bio();
+    if (!p || !session) return;
+    var k = session.kid;
+    var d = dialog(t("bio.title"));
+    d.body.appendChild(el("p", "hint", t("bio.text")));
+    var st = el("p", "hint"); st.setAttribute("role", "status");
+    d.body.appendChild(st);
+    var form = el("div");
+    var pw = secretInput(null, "current-password");
+    form.appendChild(labelled(t("bio.pw"), showable(pw)));
+    form.appendChild(el("p", "hint", t("bio.pwHint")));
+    var on = btn(t("bio.on"), "act primary");
+    form.appendChild(on);
+    d.body.appendChild(form);
+    var offB = btn(t("bio.off"), "act danger");
+    d.body.appendChild(offB);
+    var err = d.error();
+    function show() {
+      var info = p.bio.info(), r = bioRec(), has = !!(r && r.kid === k && info && info.kids.indexOf(k) >= 0);
+      st.textContent = !info ? t("bio.wait") : info.can !== "ok" ? t("bio.can." + info.can) : has ? t("bio.isOn", { d: fmtDate(r.at) }) : "";
+      form.hidden = !info || info.can !== "ok" || has;
+      offB.hidden = !r && !(info && info.kids.indexOf(k) >= 0);
+    }
+    pw.addEventListener("keydown", function (e) { if (e.key === "Enter") on.click(); });
+    // One tap: the phone's prompt opens at once (it needs the tap), the
+    // master password is checked with the secret it gives back.
+    on.addEventListener("click", function () {
+      if (!pw.value) { pw.focus(); return; }
+      if (!session || session.kid !== k) return;
+      var V = vaultOf(k), secret = pw.value;
+      on.disabled = true; err("");
+      p.bio.seal(k).then(function (d64) {
+        on.textContent = t("lock.busy");
+        return PV.bioEnable(V, k, secret, PV.unb64(d64));
+      }).then(function (r) {
+        secret = null; pw.value = "";
+        bioStore(r);
+        on.disabled = false; on.textContent = t("bio.on");
+        toast(t("bio.doneOn"));
+        p.bio.refresh();
+        show();
+      }, function (e) {
+        secret = null;
+        on.disabled = false; on.textContent = t("bio.on");
+        if (e && e.message === "wrong-password") { p.bio.clear(k); err(t("lock.wrong")); pw.select(); return; }
+        bioFail(e, k, err);
+        show();
+      });
+    });
+    offB.addEventListener("click", function () { bioOff(k); toast(t("bio.doneOff")); p.bio.refresh(); show(); });
+    var off = p.onChange(show);
+    d.onClose(function () { off(); pw.value = ""; });
+    p.bio.refresh();
     show();
     d.actions(t("d.close"));
   }
