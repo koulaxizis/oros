@@ -725,7 +725,10 @@ A full queue never drops older items.
 
 A wrong `tok`, a missing box and an expired box all answer 404 `gone`.
 The op never carries the address secret, only its hash at `new` and
-`rot`. The box's alarm erases it at expiry. Without the `HOOK` binding
+`rot`. The box's alarm erases it at expiry. Only `new` creates the
+box's tables; every other request to an unknown id only reads
+`sqlite_master` and writes nothing, and an erased box keeps no schema,
+so random `/wh/` addresses cannot fill Durable Object storage. Without the `HOOK` binding
 the op answers 503 `nohook` and `/wh/` answers 503. Tests:
 `tests/hook-relay.test.js`.
 

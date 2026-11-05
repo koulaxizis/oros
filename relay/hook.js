@@ -204,6 +204,7 @@ export async function encrypt(plain, p256dh, auth) {
 
 // ---------- the box ----------
 const SQL = {
+  has: "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'meta'",
   meta: "CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)",
   items: "CREATE TABLE IF NOT EXISTS items (i INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, ct TEXT NOT NULL)",
   getMeta: "SELECT v FROM meta WHERE k = 'box'",
@@ -220,10 +221,13 @@ export class HookBox {
     this.state = state;
     this.env = env;
     this.sql = state.storage.sql;
-    this.sql.exec(SQL.meta);
-    this.sql.exec(SQL.items);
+    // No schema here: a box exists only after "new". Anything else that
+    // reaches an unknown id reads sqlite_master and writes nothing, so
+    // random /wh/ addresses cannot leave empty Durable Objects behind.
   }
+  exists() { return this.sql.exec(SQL.has).toArray().length > 0; }
   meta() {
+    if (!this.exists()) return null;
     const r = this.sql.exec(SQL.getMeta).toArray()[0];
     if (!r) return null;
     try { return JSON.parse(r.v); } catch (e) { return null; }
@@ -231,9 +235,7 @@ export class HookBox {
   saveMeta(m) { this.sql.exec(SQL.putMeta, JSON.stringify(m)); }
   async wipe() {
     await this.state.storage.deleteAlarm();
-    await this.state.storage.deleteAll();
-    this.sql.exec(SQL.meta);
-    this.sql.exec(SQL.items);
+    await this.state.storage.deleteAll();     // the schema goes too; only "new" makes it again
   }
   async fetch(request) {
     let b;
@@ -250,6 +252,8 @@ export class HookBox {
     const th = await sha256hex(String(b.tok || ""));
     if (b.act === "new") {
       if (m && !sameText(m.th, th)) return { ok: false, code: "gone" };
+      this.sql.exec(SQL.meta);
+      this.sql.exec(SQL.items);
       const nm = { th: th, wh: b.wh, key: b.key, auth: b.auth, exp: now + HOOK_LIMITS.lifeMs, min: [now, 0], day: [now, 0] };
       this.state.storage.transactionSync(() => { this.sql.exec(SQL.clear); this.saveMeta(nm); });
       await this.state.storage.setAlarm(nm.exp);
@@ -295,7 +299,8 @@ export class HookBox {
 
   async alarm() {
     const m = this.meta();
-    if (!m || Date.now() >= m.exp) { await this.wipe(); return; }
+    if (!m) { if (this.exists()) await this.wipe(); return; }
+    if (Date.now() >= m.exp) { await this.wipe(); return; }
     await this.state.storage.setAlarm(m.exp);      // renewed since: wait for the new expiry
   }
 }

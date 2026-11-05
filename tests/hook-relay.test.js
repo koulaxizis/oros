@@ -17,11 +17,15 @@ const ORIGIN = "https://useoros.online";
 const b64u = (u) => Buffer.from(u).toString("base64url");
 
 function fakeStorage() {
-  const st = { meta: new Map(), items: new Map(), seq: 0, alarm: null, wiped: 0 };
+  const st = { meta: new Map(), items: new Map(), seq: 0, alarm: null, wiped: 0, tables: new Set(), writes: 0 };
   const res = (a) => ({ toArray: () => a });
   st.sql = {
     exec(q, ...v) {
-      if (q.startsWith("CREATE")) return res([]);
+      if (q.startsWith("SELECT name FROM sqlite_master")) return res(st.tables.has("meta") ? [{ name: "meta" }] : []);
+      st.writes += /^(CREATE|INSERT|DELETE)/.test(q) ? 1 : 0;
+      if (q.startsWith("CREATE")) { st.tables.add(/TABLE IF NOT EXISTS (\w+)/.exec(q)[1]); return res([]); }
+      const tb = /(?:FROM|INTO) (\w+)/.exec(q);
+      if (tb && !st.tables.has(tb[1])) throw new Error("no such table: " + tb[1]);
       if (q.startsWith("SELECT v FROM meta")) return res(st.meta.has("box") ? [{ v: st.meta.get("box") }] : []);
       if (q.startsWith("INSERT OR REPLACE INTO meta")) { st.meta.set("box", v[0]); return res([]); }
       if (q === "DELETE FROM items") { st.items.clear(); return res([]); }
@@ -34,9 +38,9 @@ function fakeStorage() {
   };
   st.storage = {
     sql: st.sql,
-    setAlarm(t) { st.alarm = t; },
+    setAlarm(t) { st.alarm = t; st.writes++; },
     deleteAlarm() { st.alarm = null; },
-    deleteAll() { st.meta.clear(); st.items.clear(); st.seq = 0; st.wiped++; },
+    deleteAll() { st.meta.clear(); st.items.clear(); st.tables.clear(); st.seq = 0; st.wiped++; },
     transactionSync(fn) { return fn(); }
   };
   return st;
@@ -179,4 +183,34 @@ test("the op is checked before the box sees it, and no answer carries a secret",
   const none = await op({ env: { ALLOWED_ORIGINS: ORIGIN } }, { act: "pull", id: d.id, tok: d.tok }, T);
   assert.equal(none.status, 503);
   assert.equal(none.j.error.code, "nohook");
+});
+
+test("an unknown or expired box writes nothing: in, pull, renew, ack, rot, del, alarm", async () => {
+  const w = world(), d = await device(), now = Date.UTC(2026, 10, 5, 12);
+  assert.equal((await post(w, d, { text: "x" }, now)).status, 404);
+  for (const act of ["pull", "renew", "ack", "rot", "del"]) {
+    const r = await op(w, { act, id: d.id, tok: d.tok, wh: d.wh, ids: [1] }, now);
+    assert.equal(r.j.error && r.j.error.code, "gone", act);
+  }
+  const b = w.boxes.get(d.id);
+  await b.box.alarm();
+  assert.equal(b.st.writes, 0);
+  assert.equal(b.st.tables.size, 0);
+  assert.equal(b.st.alarm, null);
+  // A real box made and then deleted leaves no schema behind.
+  assert.equal((await start(w, d, now)).j.ok, true);
+  assert.ok(b.st.tables.has("meta"));
+  assert.equal((await op(w, { act: "del", id: d.id, tok: d.tok }, now)).j.ok, true);
+  assert.equal(b.st.tables.size, 0);
+  const n = b.st.writes;
+  assert.equal((await post(w, d, { text: "x" }, now)).status, 404);
+  assert.equal((await op(w, { act: "pull", id: d.id, tok: d.tok }, now)).j.error.code, "gone");
+  assert.equal(b.st.writes, n);
+  // An expired box is wiped once and then stays empty.
+  const e = await device();
+  assert.equal((await start(w, e, now)).j.ok, true);
+  const late = now + K.HOOK_LIMITS.lifeMs + 1;
+  assert.equal((await post(w, e, { text: "x" }, late)).status, 404);
+  const eb = w.boxes.get(e.id);
+  assert.equal(eb.st.tables.size, 0);
 });
