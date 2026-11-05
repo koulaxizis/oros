@@ -684,6 +684,7 @@
   // precached) are loaded into the shell on the first check. Nothing is
   // written to the feed cache or the slice: the app refreshes on open.
   var BG_EVERY = 3 * 3600000, bgBusy = false, libP = null;
+  var BG_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js
   function feedsLib() {
     var ok = function () { return w.orosFeedsCore && w.orosFeedsFetch ? { FC: w.orosFeedsCore, F: w.orosFeedsFetch } : null; };
     if (ok()) return Promise.resolve(ok());
@@ -717,7 +718,9 @@
     var done = function () { bgBusy = false; };
     feedsLib().then(function (lib) {
       if (!lib) return;
-      return lib.F.fetchFeeds(shows.map(function (s) { return { url: s.url }; })).then(function (res) {
+      // The relay set in Mail, else the default one (= podcasts.js NET).
+      var relay = function () { return lib.F.relayUrl() || BG_RELAY; };
+      return lib.F.fetchFeeds(shows.map(function (s) { return { url: s.url }; }), { relay: relay }).then(function (res) {
         res.forEach(function (r, i) {
           if (!r || r.err || r.status < 200 || r.status > 299 || !r.bytes) return;
           var text = lib.FC.decodeBytes(r.bytes, r.type);
