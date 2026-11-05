@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 39330 of 39599 (99%)
+- Strings: 39498 of 39767 (99%)
 - Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
@@ -17,34 +17,34 @@ text is still written in the code. They switch over wave by wave
 | aura | 100% | 84 / 84 |
 | automations | 100% | 204 / 204 |
 | baby | 100% | 341 / 341 |
-| backgammon | 100% | 91 / 91 |
+| backgammon | 100% | 92 / 92 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 234 / 234 |
-| breakout | 100% | 55 / 55 |
-| bubble | 100% | 53 / 53 |
+| breakout | 100% | 56 / 56 |
+| bubble | 100% | 54 / 54 |
 | budget | 90% | 974 / 1080 |
 | calculator | 100% | 166 / 166 |
-| calendar | 98% | 432 / 440 |
+| calendar | 98% | 433 / 441 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
 | certificates | 100% | 391 / 391 |
 | characters | 100% | 89 / 89 |
-| checkers | 100% | 72 / 72 |
-| chess | 100% | 405 / 405 |
+| checkers | 100% | 73 / 73 |
+| chess | 100% | 406 / 406 |
 | chores | 100% | 207 / 207 |
 | commands | English for now | 81 / 81 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 334 / 334 |
 | converter | 100% | 68 / 68 |
 | crm | 100% | 637 / 637 |
-| crossword | 100% | 170 / 170 |
+| crossword | 100% | 171 / 171 |
 | cycle | 100% | 203 / 203 |
 | designkit | 100% | 174 / 174 |
 | device | 100% | 124 / 124 |
 | diary | 100% | 236 / 236 |
 | dice | 100% | 52 / 52 |
-| dots | 100% | 54 / 54 |
+| dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
@@ -53,33 +53,33 @@ text is still written in the code. They switch over wave by wave
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
-| g2048 | 100% | 54 / 54 |
-| gamecenter | 100% | 113 / 113 |
+| g2048 | 100% | 55 / 55 |
+| gamecenter | 100% | 116 / 116 |
 | garage | 100% | 437 / 437 |
-| gomoku | 100% | 57 / 57 |
+| gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
 | habits | 100% | 173 / 173 |
-| hangman | 100% | 52 / 52 |
+| hangman | 100% | 53 / 53 |
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
-| hexagon | 100% | 59 / 59 |
+| hexagon | 100% | 60 / 60 |
 | household | 99% | 142 / 143 |
 | invoices | 97% | 656 / 670 |
-| jigsaw | 100% | 85 / 85 |
-| kanban | 100% | 274 / 274 |
+| jigsaw | 100% | 90 / 90 |
+| kanban | 100% | 276 / 276 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 953 / 961 |
 | library | 100% | 323 / 323 |
-| lightsout | 100% | 51 / 51 |
+| lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 182 / 182 |
-| mahjong | 100% | 69 / 69 |
+| mahjong | 100% | 70 / 70 |
 | mail | 100% | 496 / 496 |
-| mancala | 100% | 60 / 60 |
+| mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
-| mastermind | 100% | 73 / 73 |
+| mastermind | 100% | 74 / 74 |
 | meals | 100% | 464 / 464 |
-| memory | 100% | 76 / 76 |
+| memory | 100% | 77 / 77 |
 | mindmap | 100% | 285 / 285 |
 | minesweeper | 100% | 75 / 75 |
 | minimalism | 100% | 1492 / 1492 |
@@ -96,7 +96,7 @@ text is still written in the code. They switch over wave by wave
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 184 / 184 |
-| passwords | 99% | 439 / 440 |
+| passwords | 99% | 462 / 463 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
@@ -104,7 +104,7 @@ text is still written in the code. They switch over wave by wave
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 348 / 348 |
-| pong | 100% | 64 / 64 |
+| pong | 100% | 65 / 65 |
 | prompter | 100% | 332 / 332 |
 | pubdomain | 100% | 120 / 120 |
 | publish | 100% | 418 / 418 |
@@ -114,25 +114,25 @@ text is still written in the code. They switch over wave by wave
 | recipes | 100% | 176 / 176 |
 | recordpkg | 100% | 21 / 21 |
 | remote-play | 100% | 35 / 35 |
-| reversi | 100% | 60 / 60 |
+| reversi | 100% | 61 / 61 |
 | ringtones | 100% | 107 / 107 |
-| rps | 100% | 59 / 59 |
+| rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 885 / 896 |
+| settings | 98% | 903 / 914 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1093 / 1097 |
 | signature | 100% | 219 / 219 |
-| simon | 100% | 52 / 52 |
+| simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
-| slider | 100% | 37 / 37 |
+| slider | 100% | 38 / 38 |
 | slides | 100% | 427 / 427 |
-| snake | 100% | 52 / 52 |
-| solitaire | 100% | 102 / 102 |
+| snake | 100% | 53 / 53 |
+| solitaire | 100% | 103 / 103 |
 | solo | English for now | 89 / 89 |
 | split | 100% | 356 / 356 |
-| spot | 100% | 54 / 54 |
+| spot | 100% | 55 / 55 |
 | spreadsheet | 82% | 409 / 495 |
 | startpage | English for now | 0 / 14 |
 | stickies | 100% | 124 / 124 |
@@ -141,14 +141,14 @@ text is still written in the code. They switch over wave by wave
 | studio | 100% | 555 / 555 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
-| tetris | 100% | 59 / 59 |
+| tetris | 100% | 60 / 60 |
 | textcase | 100% | 91 / 91 |
 | texttools | 100% | 315 / 315 |
-| tictactoe | 100% | 53 / 53 |
+| tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
-| timesheet | 100% | 293 / 293 |
+| timesheet | 100% | 378 / 378 |
 | today | 100% | 94 / 94 |
-| todo | 100% | 259 / 259 |
+| todo | 100% | 261 / 261 |
 | together | 100% | 303 / 303 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |
@@ -158,12 +158,12 @@ text is still written in the code. They switch over wave by wave
 | wallpaper | 100% | 71 / 71 |
 | water | 100% | 94 / 94 |
 | weather | 100% | 186 / 186 |
-| whack | 100% | 50 / 50 |
+| whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
 | whiteboard | 100% | 195 / 195 |
 | wiki | 100% | 404 / 404 |
-| wordle | 100% | 76 / 76 |
-| wordsearch | 100% | 111 / 111 |
+| wordle | 100% | 77 / 77 |
+| wordsearch | 100% | 112 / 112 |
 | writer | 100% | 387 / 387 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |

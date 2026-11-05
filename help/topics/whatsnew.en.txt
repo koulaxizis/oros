@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.42.00
+- **Rules that start from outside.** In Automations, turn on `Incoming webhook` and you get a private address. When your Home Assistant, n8n, a script or any service sends a small JSON to it, rules with the trigger "When a webhook arrives" run, and `{text}` holds the message's `text` or `message`. The message is encrypted on the orOS relay to this device at once and fetched every few minutes while orOS is open; the relay sees the text as it arrives but keeps only the encrypted copy, for at most 7 days. `New address` stops the old one, `Turn off` erases everything.
+
 ## Version 5.41.00
 - **Open Passwords with your fingerprint or face on Android.** In the orOS app and in the "orOS Passwords" app, `Menu` › `Fingerprint unlock` lets you open the vault with your fingerprint or face instead of typing the master password. Only a fingerprint or face counts, never the screen PIN. The master password stays the key: it always works, it is asked every 14 days and once after you change it, and the phone's copy never leaves the phone or syncs. Update the Android app to get it.
 
