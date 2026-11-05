@@ -2290,6 +2290,12 @@
     woChanged(x, true);
   }
 
+  // Automations wave A2 (BR-EV): tell the shell's event bus that
+  // something happened here; a rule may then post its notice. Only
+  // the event's name, a stable key and a short text leave this app.
+  function orosEvent(name, key, text) {
+    try { var p = window.parent; if (p && p !== window && p.orosEvents) p.orosEvents.emit(name, key, text); } catch (e) {}
+  }
   function finishWorkout(id) {
     var w = findRow("wo", id);
     if (!w) return;
@@ -2307,6 +2313,7 @@
       touch(x);
       var notes = x.pl ? advancePlan(x) : null;
       saveNow(false);
+      orosEvent("fitness.done", "fitness:" + x.id, x.ti || "");
       stopRest();
       editId = null;
       render();

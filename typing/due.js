@@ -171,7 +171,7 @@
   else if (root) {
     root.TypingDue = API;
     // Habits loads this file for its feed row.
-    if (root.document && /\/habits\//.test(String(root.location && root.location.pathname))) {
+    if (root.document && /\/(habits|diary)\//.test(String(root.location && root.location.pathname))) {
       var feeds = root.orosHabitFeeds = root.orosHabitFeeds || [];
       for (var i = 0; i < feeds.length; i++) if (feeds[i] && feeds[i].id === FEED.id) return;
       feeds.push(FEED);

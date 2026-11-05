@@ -102,3 +102,4 @@ In `Tagebuch-Einstellungen` speichert `orOS-Datei (.orosdiary)` die Zeile, den l
 > Schreib das Erste, was dir einfällt. Ein ehrlicher Satz ist mehr wert als eine lange Seite, die du nie schreibst.
 - Unter dem Datum zeigt eine leise Zeile die Gefühle, die du an diesem Tag in [Stimmung](app:mood) eingetragen hast; tippe darauf, um sie dort zu sehen.
 - `Darüber schreiben` bei einem Eintrag in Stimmung öffnet hier dessen Tag mit ausgefülltem längerem Eintrag; gespeichert wird er erst, wenn du ihn bearbeitest oder auf `Behalten` tippst.
+- `Dein Tag` unter dem Datum zeigt, was du an diesem Tag auf diesem Gerät sonst noch getan hast: die abgehakten Gewohnheiten und, aus den Zeilen von [Gewohnheiten](app:habits), Wasser, Trainings, Micro-Zen, Tippübungen und Schritte. `Zur Seite hinzufügen` setzt sie in den längeren Eintrag; gespeichert wird erst, wenn du ihn behältst.

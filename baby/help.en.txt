@@ -35,6 +35,7 @@ In `Growth`, `Add measurement` records weight, length and head size (fill in any
 
 ## Milestones
 Tick the ready milestones as they happen, or `Add` your own. You can also record `Vaccines` and `Doctor visits`.
+In a vaccine or doctor visit, `Book the next one in Calendar` opens a new [Calendar](app:calendar) event with your child's name and what it is; pick the day there and save.
 
 ## Reminders and Calendar
 In `Settings`, `Reminders on this device` has two optional reminders, both off at first:

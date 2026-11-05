@@ -24,6 +24,14 @@
 //   appsFor(kind, data, installed, self) → app ids, in ORDER
 //   target(app, kind, data, from)     → deep-link target | null
 //   summary(kind, data, lang)         → one line for the sheet's head
+//   via(app)                          → "" (the shell's __orosOpenAt) or
+//                                       "calendarNew" / "budgetNew" (the
+//                                       shell's own BR-W8 / BR-B1 openers)
+// Wave A3 ("everything talks"): Calendar, Budget, Contacts, Maps,
+// Invoices and Diary take a text too. The first four only when
+// send/detect.js finds what they need in it (a day or time, an amount
+// in euro, a phone or e-mail, an address), and then they come first
+// in the sheet (SMART).
 // ============================================================
 (function (root) {
   "use strict";
@@ -55,6 +63,33 @@
   var PROMPT_MAX = 8000;         // a Prompter prompt
   var MAKE_MAX = 200000;         // Flashcards' text cap (flashcards/make.js)
   var TYPING_MAX = 20000;        // Typing Tutor's My texts cap (typing/texts.js)
+  var CARD_MAX = 4000;           // Contacts' cardText cap (contacts.js)
+  var CAL_NOTE = 500;            // Calendar's note field
+  var DIARY_MAX = 20000;         // a Diary entry handed over
+  var INV_LINES = 50;            // Invoices' prefill lines (invoices/core.js)
+
+  function DT() { return root.OrosSendDetect || null; }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function todayYmd() { var t = new Date(); return t.getFullYear() + "-" + pad2(t.getMonth() + 1) + "-" + pad2(t.getDate()); }
+  // What send/detect.js finds in an item's text, once per item.
+  var seen = { key: null, val: null };
+  function found(kind, d) {
+    var D = DT();
+    if (!D) return { event: null, amount: null, card: null, address: "" };
+    var x = asText(kind, d), key = kind + "\u0000" + x.title + "\u0000" + x.text;
+    if (seen.key === key) return seen.val;
+    var v = D.all(x.text, todayYmd());
+    seen = { key: key, val: v };
+    return v;
+  }
+  function itemLines(kind, d) {
+    if (kind === "items") return d.items.map(function (it) { return it.text + (it.note ? " " + it.note.replace(/\s+/g, " ") : ""); });
+    return asText(kind, d).text.split("\n");
+  }
+  function invLines(kind, d) {
+    var D = DT();
+    return D ? D.amounts(itemLines(kind, d)).slice(0, INV_LINES) : [];
+  }
 
   // Control characters other than tab / newline, and U+2028/2029.
   var CTRL = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u2028\u2029]/g;
@@ -359,6 +394,79 @@
       kinds: ["text"],
       build: function (k, d) { return { addText: { title: d.title, text: d.text.slice(0, TYPING_MAX) } }; }
     },
+    // ---- Wave A3 ----
+    // A day / time in the text → Calendar's New event form (BR-W8,
+    // __orosOpenCalendarNew): that day, the time, the place, the line's
+    // other words as the title (else the item's title), the rest of the
+    // text as the note.
+    calendar: {
+      kinds: ["text", "link", "items"],
+      via: "calendarNew",
+      ok: function (k, d) { return !!found(k, d).event; },
+      build: function (k, d) {
+        var ev = found(k, d).event, x = asText(k, d);
+        var t = { date: ev.date, title: line(ev.title || x.title || ev.line, 80) };
+        if (ev.start) t.start = ev.start;
+        if (ev.end) t.end = ev.end;
+        if (ev.dateEnd) t.dateEnd = ev.dateEnd;
+        if (ev.location) t.location = line(ev.location, 150);
+        var rest = x.text.split("\n").filter(function (l) { return l.replace(/\s+/g, " ").trim() !== ev.line; }).join("\n").trim();
+        if (rest) t.note = rest.slice(0, CAL_NOTE);
+        return t;
+      }
+    },
+    // An amount in euro → Budget's New expense (BR-B1,
+    // __orosOpenBudgetNew): the receipt's total when it names one,
+    // the words around it as the note. Income or expense is the
+    // person's choice in the form (expense first).
+    budget: {
+      kinds: ["text", "items"],
+      via: "budgetNew",
+      ok: function (k, d) { return !!found(k, d).amount; },
+      build: function (k, d) {
+        var a = found(k, d).amount, x = asText(k, d);
+        return { k: "o", a: a.cents, n: line(a.note || x.title, 500), src: "send" };
+      }
+    },
+    // A phone or e-mail → a NEW contact read like a business card
+    // (Contacts { cardText }, contacts/cardtext.js).
+    contacts: {
+      kinds: ["text"],
+      ok: function (k, d) { var c = found(k, d).card; return !!(c && (c.phones.length || c.emails.length)); },
+      build: function (k, d) { return { cardText: { text: d.text.slice(0, CARD_MAX) } }; }
+    },
+    // An address → Maps searches it ({ asNew: { name, query } }); the
+    // person picks the hit and saves the place there.
+    maps: {
+      kinds: ["text"],
+      ok: function (k, d) { return !!found(k, d).address; },
+      build: function (k, d) {
+        var a = found(k, d).address;
+        return { asNew: { name: line(d.title || a, 120), query: line(a, 200) } };
+      }
+    },
+    // Lines with amounts → a draft invoice, one line each, quantity 1
+    // (BR-INV-NEW; prices in euro, not cents).
+    invoices: {
+      kinds: ["items", "text"],
+      ok: function (k, d) { return invLines(k, d).length > 0; },
+      build: function (k, d) {
+        var t = { "new": { items: invLines(k, d).map(function (l) { return { d: line(l.text, 200), q: 1, p: l.cents / 100 }; }) } };
+        var x = asText(k, d);
+        if (x.title) t["new"].notes = line(x.title, 500);
+        return t;
+      }
+    },
+    // Any text → today's longer Diary entry as an unsaved draft
+    // (Diary { write: { date, text } }, BR-SEND-9).
+    diary: {
+      kinds: ["text", "link", "items"],
+      build: function (k, d) {
+        var x = asText(k, d);
+        var text = (x.title && x.text.indexOf(x.title) !== 0 ? x.title + "\n\n" : "") + x.text;
+        return { write: { date: todayYmd(), text: text.slice(0, DIARY_MAX) } };
+      }
+    },
     labels: {
       kinds: ["text"],
       // A label is one short line.
@@ -367,8 +475,11 @@
     }
   };
   // The sheet's order: the everyday places first.
-  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "wiki", "mindmap", "prompter",
+  var ORDER = ["notes", "todo", "writer", "mail", "kanban", "slides", "bookmarks", "spreadsheet", "invoices", "wiki", "diary", "mindmap", "prompter",
     "flashcards", "typing", "layout", "assistant", "texttools", "textcase", "labels"];
+  // Shown before ORDER: they take an item only when it holds what they
+  // need, so when they show they are the likely pick.
+  var SMART = ["calendar", "budget", "contacts", "maps"];
 
   function accepts(app, kind, d) {
     if (!own(RECEIVERS, app)) return false;
@@ -383,13 +494,14 @@
     if (!d) return [];
     var have = {};
     (installed || []).forEach(function (id) { have[id] = true; });
-    return ORDER.filter(function (id) { return have[id] && id !== self && accepts(id, kind, d); });
+    return SMART.concat(ORDER).filter(function (id) { return have[id] && id !== self && accepts(id, kind, d); });
   }
   function target(app, kind, data, from) {
     var d = norm(kind, data);
     if (!d || !accepts(app, kind, d)) return null;
     return RECEIVERS[app].build(kind, d, from || "");
   }
+  function via(app) { return own(RECEIVERS, app) && RECEIVERS[app].via ? RECEIVERS[app].via : ""; }
 
   // ---------- 4. Summary line ----------
   var S = {
@@ -413,8 +525,8 @@
   }
 
   var API = {
-    KINDS: KINDS, ORDER: ORDER, RECEIVERS: RECEIVERS,
-    norm: norm, accepts: accepts, appsFor: appsFor, target: target, summary: summary
+    KINDS: KINDS, ORDER: ORDER, SMART: SMART, RECEIVERS: RECEIVERS,
+    norm: norm, accepts: accepts, appsFor: appsFor, target: target, via: via, summary: summary
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosSendCore = API;

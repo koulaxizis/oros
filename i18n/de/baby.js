@@ -338,5 +338,6 @@ orosPack("de", "baby", {
  "wk.feeds": "Mahlzeiten",
  "wk.nappies": "Windeln",
  "wk.sleep": "Schlaf",
- "yesterday": "Gestern"
+ "yesterday": "Gestern",
+ "dlg.toCal": "Den nächsten im Kalender eintragen"
 });
