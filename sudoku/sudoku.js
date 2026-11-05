@@ -243,7 +243,7 @@
       "lib.broken": "This puzzle cannot be solved"
     },
     el: {
-      "lv.e": "Εύκολο", "lv.m": "Μέτριο", "lv.h": "Δύσκολο", "lv.x": "Πολύ δύσκολο", "lv.k": "Κίλερ",
+      "lv.e": "Εύκολο", "lv.m": "Μεσαίο", "lv.h": "Δύσκολο", "lv.x": "Πολύ δύσκολο", "lv.k": "Κίλερ",
       "lv.d": "Ημέρας",
       "app.name": "Σουντόκου",
       "btn.daily": "Σουντόκου της ημέρας",
@@ -269,7 +269,7 @@
       "toast.dailyGone": "Το σουντόκου της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "btn.new": "Νέο σουντόκου",
       "btn.stats": "Ρεκόρ",
-      "btn.opts": "Ρυθμίσεις",
+      "btn.opts": "Επιλογές",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
       "pad.digit": "Ψηφίο {d}, απομένουν {n}",
       "pad.undo": "Αναίρεση (U)", "pad.redo": "Επανάληψη (R)", "pad.erase": "Σβήσιμο (Backspace)",
@@ -303,7 +303,7 @@
       "stats.head": "Καλύτερος χρόνος · λυμένα · χωρίς βοήθεια",
       "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο",
-      "opts.title": "Ρυθμίσεις",
+      "opts.title": "Επιλογές",
       "opts.mist": "Εμφάνιση λαθών",
       "opts.mistSub": "Ένα ψηφίο που δεν ταιριάζει στη λύση γίνεται κόκκινο",
       "opts.auto": "Αυτόματο σβήσιμο σημειώσεων",
@@ -2224,6 +2224,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

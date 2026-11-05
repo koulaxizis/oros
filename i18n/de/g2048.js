@@ -1,4 +1,5 @@
 orosPack("de", "g2048", {
+ "app.name": "2048",
  "board.label": "2048-Spielfeld, {n} mal {n}",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

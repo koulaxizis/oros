@@ -1,6 +1,29 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.43.00
+- **Folders on your computer can start rules.** With orOS Bridge 0.11 on your Windows or Linux computer, press `Computer folders` in Automations and pick a folder there, for example where your scanner saves. A new PDF, photo or other file in it starts rules with "When a new PDF lands in a folder on my computer" and the like; one tap opens it in Scan PDF, Files or Invoices, or prints it. Only you pick the folders, files already there are never reported, and nothing is kept in Files or Invoices until you confirm it. Ready-made: `New scan into Scan PDF`, `New photo into Files`.
+
+## Version 5.42.00
+- **Rules that start from outside.** In Automations, turn on `Incoming webhook` and you get a private address. When your Home Assistant, n8n, a script or any service sends a small JSON to it, rules with the trigger "When a webhook arrives" run, and `{text}` holds the message's `text` or `message`. The message is encrypted on the orOS relay to this device at once and fetched every few minutes while orOS is open; the relay sees the text as it arrives but keeps only the encrypted copy, for at most 7 days. `New address` stops the old one, `Turn off` erases everything.
+
+## Version 5.41.00
+- **Open Passwords with your fingerprint or face on Android.** In the orOS app and in the "orOS Passwords" app, `Menu` › `Fingerprint unlock` lets you open the vault with your fingerprint or face instead of typing the master password. Only a fingerprint or face counts, never the screen PIN. The master password stays the key: it always works, it is asked every 14 days and once after you change it, and the phone's copy never leaves the phone or syncs. Update the Android app to get it.
+
+## Version 5.40.00
+- **Games fit a phone held sideways.** On a phone turned sideways the board takes the right side and the buttons and score stack on the left, so Tetris, Battleship and the board games are playable in landscape. Upright on a narrow phone, toolbar buttons wrap onto a second line instead of hiding past the edge.
+- **Vibration in games, if you want it.** Game Center › On this device has a switch that makes every game vibrate lightly on moves, a little longer on mistakes and with a short pattern on wins. It is off until you turn it on, and appears only on a touch device that can vibrate.
+- **Jigsaw without dragging.** Tap a piece, then tap where it goes. With a keyboard, `]` and `[` pick a loose piece, the arrows move it, Enter drops it, R turns it and Esc lets go.
+- **Clearer for screen readers.** Every game has a proper title and page regions, and the Battleship, Minesweeper, Hangman and Rock Paper Scissors boards read correctly. Buttons that a mode locks say so instead of looking broken.
+- **Greek wording.** The middle level is «Μεσαίο» in every game, Memory's hardest level is «Πολύ δύσκολο», Sudoku's menu is «Επιλογές», and the Greek name of Flow is «Ένωσε τα χρώματα» everywhere.
+
+## Version 5.39.00
+- **Timesheet marks what you invoiced.** An invoice made from Timesheet marks exactly its hours and extra charges as invoiced once Invoices saves it, and takes the marks off again if the invoice is deleted, voided or fully credited. The new **To invoice** tab shows, per client, the time and charges not invoiced yet and the unpaid invoices. A client can be linked to a CRM customer, so the invoice gets the tax details.
+- **Track time from your tasks.** To-Do tasks and Kanban cards have **Track time** and show the time tracked on them. In the Calendar, **Log time** turns an ended event into an entry, and the Timer tab lists ended events with no time logged.
+- **Packages, fixed fees and mileage.** A monthly or weekly package shows a bar of hours used. A fixed-fee project shows what it makes per hour. An extra charge can be kilometres × rate, and can go to Income & Expenses with one tap.
+- **Client timesheet PDF.** Reports makes a PDF for the client, and inside orOS you can email it straight from Mail.
+- **Bring your time from Toggl, Clockify, Harvest or Kimai.** Add your own token in Settings › Connected services and Timesheet reads your entries, read-only, with a preview and Undo. Time you already imported from a CSV never counts twice. ActivityWatch exports (.json) can be imported too, and Reports saves a calendar file (.ics).
+
 ## Version 5.38.00
 - **Automations follow what happens.** A rule can now start when a notice arrives (from one app or any app, only when it has a word you choose) or when you finish a task, tick a habit, reach your water goal or finish a workout, limited to some days and hours if you like. `{text}` puts what happened into its steps.
 - **Push to your phone and webhooks.** Two new steps send by themselves when a rule runs: a push through ntfy or your own Gotify, and a small JSON message to your own n8n, Home Assistant or similar. You see exactly what is sent and allow each address once.

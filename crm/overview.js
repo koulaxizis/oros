@@ -137,7 +137,8 @@
     if (!T || !d) return [];
     var ids = x.links.filter(function (l) { return l.k === "tsc"; }).map(function (l) { return l.v; });
     var cur = (d.prefs && d.prefs.cur) || "EUR";
-    return (d.clients || []).filter(function (c) { return !c.del && ids.indexOf(c.id) >= 0; }).map(function (c) {
+    // Timesheet T1 (BR-TS-CRM): a client that names this customer itself counts too
+    return (d.clients || []).filter(function (c) { return !c.del && (ids.indexOf(c.id) >= 0 || c.crm === x.cust.id); }).map(function (c) {
       var r = T.report(d, "2000-01-01", x.today, { client: c.id, bill: "bill", billed: "open" }, x.nowMs);
       return { id: c.id, name: c.name, ms: r.total.billMs, amount: r.total.amount, cur: cur };
     });

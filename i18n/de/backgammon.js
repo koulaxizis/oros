@@ -5,6 +5,7 @@ orosPack("de", "backgammon", {
  "act.rollKey": "Würfeln (Space)",
  "act.undo": "Zurück",
  "act.undoKey": "Letzten Schritt zurücknehmen (Z)",
+ "actions.label": "Würfel und Züge",
  "board.label": "Backgammon-Brett. Pfeiltasten wählen einen Stein oder ein Ziel, Enter zieht, Space würfelt.",
  "btn.net": "Auf zwei Geräten spielen",
  "btn.new": "Neues Spiel (N)",

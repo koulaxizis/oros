@@ -75,6 +75,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Mastermind",
       "btn.new": "New game (N)",
       "btn.help": "How to play",
       "btn.stats": "Records",
@@ -138,13 +139,14 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
+      "app.name": "Σπάσε τον κωδικό",
       "btn.new": "Νέο παιχνίδι (N)",
       "btn.help": "Πώς παίζεται",
       "btn.stats": "Ρεκόρ",
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός",
       "btn.del": "Σβήσιμο", "btn.check": "Έλεγχος",
       "btn.delLong": "Σβήσιμο πιονιού (Backspace)", "btn.checkLong": "Έλεγχος της πρόβλεψης (Enter)",
-      "level.e": "Εύκολο", "level.m": "Μέτριο", "level.h": "Δύσκολο",
+      "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "levelSub.e": "4 πιόνια, 6 χρώματα, χωρίς επαναλήψεις",
       "levelSub.m": "4 πιόνια, 6 χρώματα, με επαναλήψεις",
       "levelSub.h": "5 πιόνια, 8 χρώματα, με επαναλήψεις",
@@ -954,6 +956,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

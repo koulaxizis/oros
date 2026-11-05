@@ -1,4 +1,5 @@
 orosPack("de", "mancala", {
+ "app.name": "Mancala",
  "board.label": "Mancala-Brett",
  "btn.new": "Neues Spiel (N)",
  "btn.sfxOff": "Ton aus",

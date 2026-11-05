@@ -110,6 +110,8 @@
       "card.delete":      "Delete",
       "card.duplicate":   "Duplicate",
       "card.send":        "Send…",
+      "card.track":       "Track time",
+      "card.tsSpent":     "Time tracked: {t}",
       "col.send":         "Send cards…",
       "send.none":        "This column has no cards to send.",
       "add.title":        "Add {n} cards",
@@ -341,6 +343,8 @@
       "card.delete":      "Διαγραφή",
       "card.duplicate":   "Αντίγραφο",
       "card.send":        "Αποστολή…",
+      "card.track":       "Χρονομέτρηση",
+      "card.tsSpent":     "Χρόνος που καταγράφηκε: {t}",
       "col.send":         "Στείλε τις κάρτες…",
       "send.none":        "Αυτή η στήλη δεν έχει κάρτες για αποστολή.",
       "add.title":        "Προσθήκη {n} καρτών",
@@ -2538,6 +2542,7 @@
     renderAtt(card);
     renderCover(card);
     $("c-lbl-picker").hidden = true;
+    renderTsSpent(card);
 
     $("dlg-card").showModal();
     setTimeout(function () { $("c-text").focus(); }, 50);
@@ -5730,6 +5735,52 @@
 
   // "Send to an app", sending side: the card open in the dialog (its
   // subtasks go under its notes), or every card of a column.
+  // Timesheet T2 (BR-TS-SRC): "Track time" starts a Timesheet timer
+  // for the SAVED card (__orosOpenAt("timesheet", { startTimer: { title,
+  // project: board name (a hint), src: "kanban:<card id>" } }), the
+  // user's own click; a running timer is kept. The dialog shows the
+  // time Timesheet holds for the card (read-only: entries whose src
+  // names it). Inside orOS only, when Timesheet is installed.
+  var TS_KEY = "oros-timesheet-data";
+  function tsApi() {
+    try {
+      var p = window.parent;
+      if (p === window || typeof p.__orosOpenAt !== "function" || typeof p.orosAssistInstalled !== "function") return null;
+      return p.orosAssistInstalled().some(function (a) { return a && a.id === "timesheet"; }) ? p : null;
+    } catch (e) { return null; }
+  }
+  function tsSpent(src) {
+    var raw = null, ms = 0, now = Date.now();
+    try { raw = JSON.parse(localStorage.getItem(TS_KEY) || "null"); } catch (e) { return 0; }
+    ((raw && Array.isArray(raw.entries)) ? raw.entries : []).forEach(function (x) {
+      if (!x || x.del || x.src !== src || typeof x.s !== "number" || typeof x.e !== "number") return;
+      var e = x.e === 0 ? Math.max(now, x.s) : x.e;
+      if (e > x.s) ms += e - x.s;
+    });
+    return ms;
+  }
+  function tsDur(ms) {
+    var m = Math.round(ms / 60000), h = Math.floor(m / 60);
+    return h ? h + ":" + (m % 60 < 10 ? "0" : "") + (m % 60) + " h" : m + " min";
+  }
+  function renderTsSpent(card) {
+    var box = $("c-ts-spent"), btn = $("c-track");
+    var on = !!(card && card.id && tsApi());
+    if (btn) btn.hidden = !on;
+    if (!box) return;
+    var ms = on ? tsSpent("kanban:" + card.id) : 0;
+    box.hidden = !(ms >= 60000);
+    box.textContent = ms >= 60000 ? t("card.tsSpent", { t: tsDur(ms) }) : "";
+  }
+  function trackCard() {
+    var p = tsApi(), card = editingCard(), board = currentBoard();
+    if (!p || !card || !card.id) return;
+    $("dlg-card").close();         // commits the dialog's edits first
+    var title = String(card.text || "").replace(/\s+/g, " ").trim().slice(0, 200);
+    if (!title) return;
+    p.__orosOpenAt("timesheet", { startTimer: { title: title, project: board && board.name ? String(board.name) : "", src: "kanban:" + card.id } });
+  }
+
   function sendApi() {
     try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
     catch (e) { return null; }
@@ -6003,6 +6054,8 @@
     if (dupBtn) {
       dupBtn.addEventListener("click", duplicateCard);
     }
+    var cTrack = $("c-track");
+    if (cTrack) cTrack.addEventListener("click", trackCard);
     // Send to an app (BR-SEND): only inside orOS
     var cSend = $("c-send"), colSend = $("col-send");
     if (sendApi()) {

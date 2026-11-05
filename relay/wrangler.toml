@@ -35,6 +35,17 @@ class_name = "HouseBox"
 tag = "house-v1"
 new_sqlite_classes = ["HouseBox"]
 
+# Automations' incoming webhooks (hook.js): one box per device that
+# turned it on, holding only items encrypted to that device's key until
+# it pulls and acks them. Wipes itself 7 days after the last renew.
+[[durable_objects.bindings]]
+name = "HOOK"
+class_name = "HookBox"
+
+[[migrations]]
+tag = "hook-v1"
+new_sqlite_classes = ["HookBox"]
+
 # Newsletter's public sign-up forms and one-click unsubscribes
 # (newsletter.js). Declared here: a binding added only in the dashboard is
 # replaced on the next deploy from main.

@@ -9,6 +9,7 @@
 //   4. Vault life: create, unlock, recovery key, password change
 //   5. Blobs: seal a snapshot (random IV) or a merge (derived IV)
 //   6. Slice: normalise + the pure sync merge (no keys needed)
+//   7. Unlock with fingerprint or face on a phone (PW-BIO)
 // Never logs, stores or returns a secret it was not asked for.
 // ============================================================
 (function (root) {
@@ -515,6 +516,76 @@
     return mergeSlice(slice, part);
   }
 
+  // ---------- 7. Unlock with fingerprint or face (PW-BIO) ----------
+  // The master password stays the root: on one phone VK is also kept
+  // wrapped with a 32-byte device secret D, which the orOS Android app
+  // keeps sealed in its Keystore (fingerprint or face only, per use,
+  // gone when a new fingerprint is added) and hands back after the
+  // person's fingerprint or face. The record lives in this device's
+  // storage only and never syncs:
+  //   { v: 1, kid, ct, iv, kt (vault.kt when the password was last
+  //     typed), pw (when the master password was last typed), at }
+  // The master password is asked again after BIO_DAYS, and once after
+  // the master password or recovery key changed anywhere (kt).
+  var BIO_DAYS = 14;
+  function aadBio(kid) { return "oros-pm/1/bio/" + kid; }
+  function bioKey(d, usage) {
+    if (!(d instanceof Uint8Array) || d.length !== 32) return Promise.reject(new Error("bad-key"));
+    return aesKey(d, [usage]);
+  }
+  // Opens VK with the master password and wraps it with D. Resolves
+  // the record to store; D and VK are wiped.
+  function bioEnable(vault, kid, password, d, opts) {
+    var now = (opts && opts.now) || Date.now();
+    return openVK(vault, kid, { password: password }).then(function (vk) {
+      return bioKey(d, "encrypt").then(function (key) {
+        var iv = random(12);
+        return gcmEncrypt(key, iv, vk, aadBio(kid)).then(function (ct) {
+          wipe(vk); wipe(d);
+          return { v: 1, kid: kid, ct: b64(ct), iv: b64(iv), kt: vault.kt || 0, pw: now, at: now };
+        });
+      }).then(null, function (e) { wipe(vk); wipe(d); throw e; });
+    }, function (e) { wipe(d); throw e; });
+  }
+  // D from the phone → the session; D and VK are wiped.
+  function bioUnlock(rec, kid, d) {
+    if (!rec || rec.kid !== kid) { wipe(d); return Promise.reject(new Error("bio-none")); }
+    return bioKey(d, "decrypt").then(function (key) {
+      wipe(d);
+      return gcmDecrypt(key, unb64(rec.iv), unb64(rec.ct), aadBio(kid))
+        .then(null, function () { throw new Error("bio-wrong"); });
+    }, function (e) { wipe(d); throw e; }).then(function (vk) { return sessionFromVK(vk, kid); });
+  }
+  // A stored record, cleaned (null when it is not one).
+  function bioNorm(r) {
+    if (!r || typeof r !== "object" || r.v !== 1) return null;
+    var B = /^[A-Za-z0-9+/]+={0,2}$/;
+    if (typeof r.kid !== "string" || !/^[0-9a-f]{24}$/.test(r.kid)) return null;
+    if (typeof r.ct !== "string" || !B.test(r.ct) || r.ct.length > 200) return null;
+    if (typeof r.iv !== "string" || !B.test(r.iv) || r.iv.length !== 16) return null;
+    var num = function (x) { return typeof x === "number" && isFinite(x) && x >= 0 ? x : 0; };
+    return { v: 1, kid: r.kid, ct: r.ct, iv: r.iv, kt: num(r.kt), pw: num(r.pw), at: num(r.at) };
+  }
+  // What the lock screen may offer for vault `kid`:
+  //   "ok"      fingerprint or face
+  //   "none"    no record for this vault (another vault, or off)
+  //   "changed" the master password or recovery key changed since
+  //   "days"    the master password was last typed BIO_DAYS ago
+  function bioCheck(rec, vault, kid, now) {
+    rec = bioNorm(rec);
+    if (!rec || !vault || rec.kid !== kid) return "none";
+    if ((vault.kt || 0) !== rec.kt) return "changed";
+    if ((now || Date.now()) - rec.pw > BIO_DAYS * 86400000) return "days";
+    return "ok";
+  }
+  // The master password opened the vault: the record counts from now.
+  function bioTyped(rec, vault, now) {
+    rec = bioNorm(rec);
+    if (!rec || !vault) return rec;
+    rec.kt = vault.kt || 0; rec.pw = now || Date.now();
+    return rec;
+  }
+
   var PmVault = {
     version: "2.0.0", V: V, KDF_ARGON: KDF_ARGON, PBKDF2_ITER: PBKDF2_ITER, BOUNDS: BOUNDS,
     b64: b64, unb64: unb64, hex: hex, utf8: utf8, canon: canon, random: random, concat: concat, wipe: wipe,
@@ -524,7 +595,8 @@
     rewrap: rewrap, newRecovery: newRecovery,
     seal: seal, sealMerge: sealMerge, mergeId: mergeId, openBlob: openBlob,
     empty: empty, normSlice: normSlice, isFuture: isFuture, mergeSlice: mergeSlice, primaryKid: primaryKid,
-    withVault: withVault, withGone: withGone
+    withVault: withVault, withGone: withGone,
+    BIO_DAYS: BIO_DAYS, bioEnable: bioEnable, bioUnlock: bioUnlock, bioNorm: bioNorm, bioCheck: bioCheck, bioTyped: bioTyped
   };
 
   if (NODE) module.exports = PmVault;

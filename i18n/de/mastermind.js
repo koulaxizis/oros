@@ -1,4 +1,5 @@
 orosPack("de", "mastermind", {
+ "app.name": "Mastermind",
  "board.label": "Tipps",
  "btn.check": "Prüfen",
  "btn.checkLong": "Tipp prüfen (Enter)",

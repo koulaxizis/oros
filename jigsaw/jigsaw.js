@@ -76,6 +76,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Jigsaw",
       "btn.new": "New puzzle (N)",
       "btn.preview": "Preview the picture (P)",
       "btn.ghost": "Faint picture in the frame (G)",
@@ -143,6 +144,8 @@
       "confirm.no": "Cancel",
       "live.joined": "Pieces joined",
       "live.placed": "In place",
+      "live.picked": "Piece picked up: tap a spot on the table to put it there, or move it with the arrow keys and put it down with Enter",
+      "live.dropped": "Piece put down",
       "live.edgesOn": "Only the edge pieces are shown",
       "live.edgesOff": "All pieces are shown",
       "toast.reset": "Records reset",
@@ -160,9 +163,12 @@
       "toast.save": "Could not save: storage is full",
       "toast.noPuzzle": "Start a puzzle first",
       "toast.noTidy": "Nothing to tidy: every piece is in a group",
+      "toast.noLoose": "Every piece is in its place",
+      "toast.noRot": "This puzzle has no rotated pieces",
       "toast.solved": "Solved! Start a new puzzle (N)"
     },
     el: {
+      "app.name": "Παζλ",
       "btn.new": "Νέο παζλ (N)",
       "btn.preview": "Προεπισκόπηση της εικόνας (P)",
       "btn.ghost": "Αχνή εικόνα στο πλαίσιο (G)",
@@ -230,6 +236,8 @@
       "confirm.no": "Άκυρο",
       "live.joined": "Τα κομμάτια ενώθηκαν",
       "live.placed": "Στη θέση του",
+      "live.picked": "Το κομμάτι σηκώθηκε: πάτα ένα σημείο του τραπεζιού για να το αφήσεις εκεί, ή μετακίνησέ το με τα βέλη και άφησέ το με Enter",
+      "live.dropped": "Το κομμάτι αφέθηκε",
       "live.edgesOn": "Φαίνονται μόνο τα κομμάτια της άκρης",
       "live.edgesOff": "Φαίνονται όλα τα κομμάτια",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν",
@@ -247,6 +255,8 @@
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "toast.noPuzzle": "Ξεκίνα πρώτα ένα παζλ",
       "toast.noTidy": "Τίποτα για τακτοποίηση: όλα τα κομμάτια είναι σε ομάδες",
+      "toast.noLoose": "Όλα τα κομμάτια είναι στη θέση τους",
+      "toast.noRot": "Σε αυτό το παζλ τα κομμάτια δεν γυρίζουν",
       "toast.solved": "Λύθηκε! Ξεκίνα νέο παζλ (N)"
     }
   };
@@ -1423,6 +1433,7 @@
     cur = { G: G, M: M, P: P, E: E, imgRec: imgRec, bitmap: bitmap, url: URL.createObjectURL(imgRec.blob),
             els: els, paths: paths, size: size, pad: pad };
     maxZ = 0;
+    sel = -1;
     P.forEach(function (p) { maxZ = Math.max(maxZ, p.z); });
     // world: the table and the frame
     var world = $("world");
@@ -1435,7 +1446,7 @@
     fr.style.height = (M.rows * s) + "px";
     fr.style.borderWidth = Math.max(1, Math.round(s / 40)) + "px";
     $("ghost").src = cur.url;
-    $("stage").setAttribute("aria-label", t("table.label", { n: G.n }));
+    $("world").setAttribute("aria-label", t("table.label", { n: G.n }));
     P.forEach(function (p, i) { placeEl(i); });
     applyEdges();
     fitView();
@@ -1451,6 +1462,7 @@
   function clearPuzzle() {
     if (cur && cur.url) URL.revokeObjectURL(cur.url);
     cur = null;
+    sel = -1;
     $("pieces").textContent = "";
     $("ghost").removeAttribute("src");
     renderAll();
@@ -1527,6 +1539,36 @@
   var gest = null;        // { kind: "piece" | "pan" | "pinch", … }
   var dirty = {};         // piece ids to repaint on the next frame
   var raf = 0;
+  // Without dragging (games audit F6, WCAG 2.5.7 / 2.1.1): a tap on a
+  // piece picks it up (its group), a tap on the table puts it there;
+  // [ and ] pick the previous / next loose piece, the arrows move it,
+  // Enter or Space puts it down, R turns it, Esc lets go.
+  var sel = -1;           // the picked-up piece, or -1
+
+  function setSel(id) {
+    if (sel >= 0 && cur && cur.P[sel]) {
+      members(cur.P, cur.P[sel].g).forEach(function (i) { if (cur.els[i]) cur.els[i].classList.remove("picked"); });
+    }
+    sel = cur && id >= 0 && cur.P[id] && !cur.G.done && !isPlaced(cur.P, cur.M, id) ? id : -1;
+    if (sel < 0) return;
+    var ids = members(cur.P, cur.P[sel].g);
+    ids.forEach(function (i) { cur.P[i].z = ++maxZ; cur.els[i].classList.add("picked"); dirty[i] = 1; });
+    schedule();
+    live(t("live.picked"));
+  }
+
+  // Move the picked-up group by (dx, dy) world units; `drop` snaps it.
+  function shiftSel(dx, dy, drop) {
+    var g = cur.P[sel].g, ids = members(cur.P, g);
+    var sh = clampShift(cur.P, cur.M, ids, dx, dy);
+    ids.forEach(function (i) { cur.P[i].x += sh[0]; cur.P[i].y += sh[1]; dirty[i] = 1; });
+    schedule();
+    startTimer();
+    if (!drop) { saveSoon(); return; }
+    setSel(-1);
+    live(t("live.dropped"));
+    afterDrop(g);
+  }
 
   function stagePt(e) {
     var r = $("stage").getBoundingClientRect();
@@ -1574,7 +1616,8 @@
                moved: false, t0: Date.now(), touch: e.pointerType !== "mouse" };
       startTimer();
     } else {
-      gest = { kind: "pan", pid: e.pointerId, lx: pt.x, ly: pt.y };
+      gest = { kind: "pan", pid: e.pointerId, lx: pt.x, ly: pt.y, sx: pt.x, sy: pt.y, moved: false,
+               touch: e.pointerType !== "mouse" };
     }
   }
 
@@ -1598,12 +1641,16 @@
     var dx = pt.x - gest.lx, dy = pt.y - gest.ly;
     gest.lx = pt.x; gest.ly = pt.y;
     if (gest.kind === "pan") {
+      if (!gest.moved && gest.sx != null && dist(pt.x, pt.y, gest.sx, gest.sy) > (gest.touch ? 10 : 5)) gest.moved = true;
       view.tx += dx; view.ty += dy; view.fit = false;
       clampView();
       applyView();
       return;
     }
-    if (!gest.moved && dist(pt.x, pt.y, gest.sx, gest.sy) > (gest.touch ? 10 : 5)) gest.moved = true;
+    if (!gest.moved && dist(pt.x, pt.y, gest.sx, gest.sy) > (gest.touch ? 10 : 5)) {
+      gest.moved = true;
+      if (sel >= 0) setSel(-1);                      // a drag takes over from a pick-up
+    }
     if (!gest.moved) return;
     var sh = clampShift(cur.P, cur.M, gest.ids, dx / view.z, dy / view.z);
     gest.ids.forEach(function (i) { cur.P[i].x += sh[0]; cur.P[i].y += sh[1]; dirty[i] = 1; });
@@ -1622,8 +1669,14 @@
       return;
     }
     if (e.pointerId !== gest.pid) return;
-    if (gest.kind === "piece") endPiece(e.type !== "pointercancel");
-    else gest = null;
+    if (gest.kind === "piece") { endPiece(e.type !== "pointercancel"); return; }
+    var pan = gest;
+    gest = null;
+    // a tap on the table puts the picked-up piece there
+    if (pan.kind === "pan" && pan.sx != null && !pan.moved && e.type === "pointerup" && sel >= 0 && cur && !cur.G.done) {
+      var at = stagePt(e);
+      shiftSel((at.x - view.tx) / view.z - cur.P[sel].x, (at.y - view.ty) / view.z - cur.P[sel].y, true);
+    }
   }
 
   function endPiece(commit) {
@@ -1632,11 +1685,14 @@
     gs.ids.forEach(function (i) { cur.els[i].classList.remove("lift", "shadow"); });
     if (!commit) { saveSoon(); return; }
     if (!gs.moved) {
+      var again = sel >= 0 && cur.P[sel].g === gs.g;
       if (cur.G.rot && Date.now() - gs.t0 < 600) {
         rotateGroup(cur.P, cur.M, gs.g, gs.id);
         turnAnim(gs.ids);
         afterDrop(cur.P[gs.id].g);
       }
+      // a tap picks the piece up; a second tap on it (no rotation) lets go
+      if (cur && !cur.G.done) setSel(again && !cur.G.rot ? -1 : gs.id);
       saveSoon();
       return;
     }
@@ -1653,6 +1709,7 @@
     var res = snapGroup(cur.P, cur.M, g);
     cur.P.forEach(function (p, i) { dirty[i] = 1; });
     schedule();
+    if (res.joined || res.placed) if (window.orosHaptics) window.orosHaptics.cue("join");   // F8
     if (res.joined) live(t("live.joined"));
     else if (res.placed) live(t("live.placed"));
     if (res.joined && prefs.edges) applyEdges();
@@ -1682,13 +1739,37 @@
     }, { passive: false });
   }
 
+  // [ / ]: the previous / next loose piece (one per group, in id order).
+  function pickNext(step) {
+    var P = cur.P, n = P.length, from = sel >= 0 ? sel : (step > 0 ? -1 : n), cg = sel >= 0 ? P[sel].g : null;
+    for (var k = 1; k <= n; k++) {
+      var i = ((from + step * k) % n + n) % n;
+      if (cur.els[i].hidden || isPlaced(P, cur.M, i) || P[i].g === cg) continue;
+      if (members(P, P[i].g)[0] !== i) continue;     // one stop per group
+      setSel(i);
+      return;
+    }
+    showToast(t("toast.noLoose"));
+  }
+  function turnSel() {
+    if (!cur.G.rot) { showToast(t("toast.noRot")); return; }
+    if (sel < 0) pickNext(1);
+    if (sel < 0) return;
+    var g = cur.P[sel].g;
+    rotateGroup(cur.P, cur.M, g, sel);
+    turnAnim(members(cur.P, g));
+    var keep = sel;
+    afterDrop(g);
+    if (cur && !cur.G.done) setSel(keep);
+  }
+
   function wireKeyboard() {
     document.addEventListener("keydown", function (e) {
       if (e.altKey || e.ctrlKey || e.metaKey) return;          // never steal OS combos
       if (document.querySelector("dialog[open]")) return;
       var tag = (document.activeElement && document.activeElement.tagName) || "";
       if (tag === "SELECT" || tag === "INPUT" || tag === "TEXTAREA") return;
-      if (e.repeat) return;
+      if (e.repeat && !/^Arrow/.test(e.code)) return;
       var c = e.code, act = null;
       if (c === "KeyN") act = newPuzzle;
       else if (c === "KeyP") act = previewDialog;
@@ -1698,7 +1779,21 @@
       else if (c === "Digit0" || c === "Numpad0") act = function () { if (needPuzzle()) fitView(); };
       else if (c === "Equal" || c === "NumpadAdd") act = function () { if (needPuzzle()) zoomStep(1.25); };
       else if (c === "Minus" || c === "NumpadSubtract") act = function () { if (needPuzzle()) zoomStep(0.8); };
-      if (!act || (e.shiftKey && c !== "Equal")) return;
+      else if (c === "BracketRight" || c === "BracketLeft") act = function () { if (needPuzzle()) pickNext(c === "BracketRight" ? 1 : -1); };
+      else if (c === "KeyR") act = function () { if (needPuzzle()) turnSel(); };
+      else if (c === "Escape" && sel >= 0) act = function () { setSel(-1); };
+      else if (/^Arrow/.test(c) && cur && !cur.G.done) {
+        var u = cur.M.s * (e.shiftKey ? 1 : 0.25);
+        act = function () {
+          if (sel < 0) pickNext(1);                    // R28: the arrows start with the first loose piece
+          if (sel < 0) return;
+          shiftSel(c === "ArrowLeft" ? -u : c === "ArrowRight" ? u : 0, c === "ArrowUp" ? -u : c === "ArrowDown" ? u : 0, false);
+        };
+      } else if ((c === "Enter" || c === "Space" || c === "NumpadEnter") && sel >= 0 &&
+                 (tag === "BODY" || tag === "MAIN" || $("stage").contains(document.activeElement))) {
+        act = function () { shiftSel(0, 0, true); };
+      }
+      if (!act || (e.shiftKey && c !== "Equal" && !/^Arrow/.test(c))) return;
       e.preventDefault();
       act();
     });
@@ -1738,6 +1833,7 @@
   }
 
   function solved() {
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopTimer();
     var G = cur.G;
     G.done = 1;

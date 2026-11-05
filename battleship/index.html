@@ -8,14 +8,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Battleship · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.38.00">
-  <link rel="stylesheet" href="battleship.css?v=5.38.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.41.00">
+  <link rel="stylesheet" href="battleship.css?v=5.41.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=5.41.00">
 
 </head>
 <body>
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="game.name">Battleship</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -34,21 +36,21 @@
   </header>
 
   <!-- Status: your ships afloat, whose turn, enemy ships afloat -->
-  <div id="status">
+  <aside id="status">
     <span class="stat"><strong id="mine-left">5</strong><span data-i18n="st.mine">Your ships</span></span>
     <span id="turn" aria-live="polite"></span>
     <span class="stat"><strong id="theirs-left">5</strong><span data-i18n="st.theirs">Enemy ships</span></span>
-  </div>
+  </aside>
 
   <main id="board-wrap">
     <div id="boards">
       <section class="panel" id="panel-enemy">
         <div class="cap" id="cap-enemy"></div>
-        <div class="grid" id="grid-enemy" role="grid"></div>
+        <div class="grid" id="grid-enemy" role="group"></div>
       </section>
       <section class="panel" id="panel-mine">
         <div class="cap" id="cap-mine"></div>
-        <div class="grid" id="grid-mine" role="grid"></div>
+        <div class="grid" id="grid-mine" role="group"></div>
       </section>
       <section class="panel" id="dock">
         <div class="cap" id="cap-dock"></div>
@@ -66,11 +68,13 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.38.00" data-app="battleship,remote-play"></script>
-  <script src="../qr/qr-encode.js?v=5.38.00"></script>
-  <script src="../remote-link.js?v=5.38.00"></script>
-  <script src="../remote-play.js?v=5.38.00"></script>
-  <script src="battleship.js?v=5.38.00"></script>
+  <script src="../i18n.js?v=5.41.00" data-app="battleship,remote-play"></script>
+
+  <script src="../gamekit/haptics.js?v=5.41.00"></script>
+  <script src="../qr/qr-encode.js?v=5.41.00"></script>
+  <script src="../remote-link.js?v=5.41.00"></script>
+  <script src="../remote-play.js?v=5.41.00"></script>
+  <script src="battleship.js?v=5.41.00"></script>
 
 </body>
 </html>

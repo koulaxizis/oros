@@ -2210,7 +2210,7 @@
     description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
       "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
       "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
-      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; word optional, matched in the file name). " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; word optional, matched in the file name for bridge.*). " +
       "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
       "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
       "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant), " +
@@ -2229,7 +2229,7 @@
           day_of_month: { type: "number" },
           date: { type: "string" },
           app: { type: "string", description: "notice: the app id the notice comes from." },
-          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "bridge.pdf", "bridge.photo", "bridge.file"] },
+          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file"] },
           word: { type: "string" },
           only_days: { type: "array", items: { type: "number" } },
           from: { type: "string" },

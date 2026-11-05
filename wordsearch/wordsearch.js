@@ -88,6 +88,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Word Search",
       "btn.new": "New puzzle (Shift+N)",
       "btn.hint": "Hint (H)",
       "btn.stats": "Statistics",
@@ -183,6 +184,7 @@
       "toast.fewFit": "Only {n} of the theme's words fit this grid"
     },
     el: {
+      "app.name": "Κρυπτόλεξο",
       "btn.new": "Νέο κρυπτόλεξο (Shift+N)",
       "btn.hint": "Βοήθεια (H)",
       "btn.stats": "Στατιστικά",
@@ -191,7 +193,7 @@
       "lang.enLong": "Αγγλικές λέξεις", "lang.elLong": "Ελληνικές λέξεις",
       "mode.d": "Ημέρας", "mode.f": "Ελεύθερο",
       "size.e": "Εύκολο, 8×8: οριζόντια και κάθετα",
-      "size.m": "Μέτριο, 12×12: και διαγώνια",
+      "size.m": "Μεσαίο, 12×12: και διαγώνια",
       "size.h": "Δύσκολο, 15×15: και ανάποδα",
       "sizeShort.e": "8×8", "sizeShort.m": "12×12", "sizeShort.h": "15×15",
       "theme.random": "Τυχαίες λέξεις",
@@ -970,11 +972,13 @@
     else saveSessions();
     renderAll();
     live(t("live.found", { w: game.words[i].w, f: game.found.length, k: game.words.length }));
+    if (window.orosHaptics) window.orosHaptics.cue("found");   // F8
     pulseWord(i);
   }
 
   function finish() {
     var sec = elapsed() / 1000;
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopClock();
     game.done = true;
     saveSessions();
@@ -1118,9 +1122,15 @@
         });
       });
     $("size-seg").classList.toggle("fixed", prefs.mode === "d");
+    [].forEach.call(document.querySelectorAll("#size-seg .seg-btn"), function (b) {
+      // a fixed size still answers a tap with a toast that says why
+      if (prefs.mode === "d" && !b.classList.contains("active")) b.setAttribute("aria-disabled", "true");
+      else b.removeAttribute("aria-disabled");
+    });
     var tb = $("theme-btn");
     tb.lastChild.textContent = themeName(game);
     tb.classList.toggle("fixed", prefs.mode === "d");
+    if (prefs.mode === "d") tb.setAttribute("aria-disabled", "true"); else tb.removeAttribute("aria-disabled");
     $("new-btn").disabled = prefs.mode === "d";
   }
 

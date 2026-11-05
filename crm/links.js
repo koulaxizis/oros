@@ -66,7 +66,10 @@
         });
       }
     }
-    if (s.ts) alive(s.ts.clients).forEach(function (x) { add({ k: "tsc", id: x.id, name: str(x.name, 120) }); });
+    if (s.ts) alive(s.ts.clients).forEach(function (x) {
+      if (x.crm) return;                         // Timesheet links it itself (T1, BR-TS-CRM)
+      add({ k: "tsc", id: x.id, name: str(x.name, 120) });
+    });
     if (s.inv) alive(s.inv.clients).forEach(function (x) {
       if (x.crm) return;                         // Invoices links it itself
       add({ k: "inv", id: x.id, name: str(x.name, 120), afm: str(x.afm, 20), email: str(x.email, 120), phone: str(x.phone, 40) });

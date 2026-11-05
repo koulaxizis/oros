@@ -20,13 +20,19 @@ Der Tab `Woche` zeigt ein Raster mit Stunden pro Projekt und Tag, mit Summen. Ti
 Wähle unter `Berichte` einen `Zeitraum` (diese Woche, letzter Monat, dieses Jahr oder `Benutzerdefiniert`), filtere dann nach `Kunde`, `Projekt`, `Abrechenbar`, `Abgerechnet` und `Tag` (sobald du Tags nutzt) und `Gruppieren nach` Projekt, Kunde, Aufgabe, Tag oder Datum. Ein Eintrag mit mehreren Tags zählt unter jedem Tag; die Summe zählt ihn einmal. Du siehst `Stunden`, `Abrechenbar` (die abrechenbaren Stunden) und den `Betrag`.
 
 - `CSV exportieren` speichert den Bericht für eine Tabellenkalkulation.
+- `Stundenzettel als PDF` speichert den Bericht als Seite für den Kunden: der gefilterte Kunde (oder das Projekt), der Zeitraum, eine Zeile pro Eintrag mit Tag, Uhrzeit, Stunden, Projekt und Beschreibung, die Beträge, wenn der Bericht etwas berechnet, und die Summen. In orOS öffnet `PDF per E-Mail senden` eine neue Nachricht mit dem PDF im Anhang, wenn [Mail](app:mail) ein Konto hat; gesendet wird erst, wenn du auf Senden drückst.
 - Innerhalb von orOS öffnet `In Tabelle öffnen` dieselben Zeilen als neues Blatt in Tabelle, mit Summen unter Stunden und Betrag.
 - `Angebot erstellen` macht aus dem Bericht ein neues [Angebot](app:quote): eine Zeile pro abrechenbarem Projekt mit Satz, mit den Stunden als Menge und dem Stundensatz als Preis. Der Kunde wird eingetragen, wenn der Zeitraum nur einen hat. Das Angebot übernimmt die Währung der Zeiterfassung, egal welche.
-- `Rechnung erstellen` übernimmt dieselben Zeilen in eine neue Rechnung in [Rechnungen](app:invoices), in jeder Währung. Prüfe sie dort, dann speichere oder stelle sie aus.
+- `Rechnung erstellen` übernimmt dieselben Zeilen in eine neue Rechnung in [Rechnungen](app:invoices), in jeder Währung. Prüfe sie dort, dann speichere oder stelle sie aus. Sobald sie gespeichert ist (auch als Entwurf), werden genau diese Einträge und Zusatzkosten hier als `Abgerechnet` markiert, damit dieselben Stunden nie zweimal abgerechnet werden. Fahre über das Häkchen oder öffne einen Eintrag, um Nummer und Zahlungsstand der Rechnung zu sehen; `Rechnung öffnen` bringt dich hin. Löschst oder stornierst du die Rechnung oder schreibst sie voll gut, sind sie wieder nicht abgerechnet. Ist der Kunde mit einem CRM-Kunden verknüpft, bekommt die Rechnung auch USt-IdNr., Adresse und E-Mail.
 - `… als abgerechnet markieren` markiert alle abrechenbaren Einträge des Berichts als abgerechnet, damit du das nächste Mal nach `Nicht abgerechnet` filtern kannst. Auf dieselbe Weise hebst du die Markierung wieder auf.
+
+## Abzurechnen
+Der Tab `Abzurechnen` zeigt pro Kunde die abrechenbare Zeit und die Zusatzkosten, die noch nicht abgerechnet sind (`Nicht abgerechnet`), seit jeher und mit dem Tag des ältesten Eintrags. Sind [Rechnungen](app:invoices) auf diesem Gerät, zeigt er auch, was abgerechnet, aber noch unbezahlt ist, und wie viele dieser Rechnungen überfällig sind. `Rechnung erstellen` macht eine Rechnung für die ganze noch nicht abgerechnete Zeit des Kunden; `Bericht` öffnet diese Einträge unter `Berichte`. Ein noch laufender Timer bleibt außen vor, bis du ihn stoppst.
 
 ## Projekte und Kunden
 Lege unter `Projekte` ein `Neues Projekt` oder einen Kunden (`Neuer Kunde`) an. Ein Projekt hat `Name`, `Kunde`, `Farbe`, `Stundensatz`, ein optionales `Stundenbudget` (z. B. 40 oder 12:30) und `Abrechenbar`. Mit Budget zeigt das Projekt einen Balken der verbrauchten Stunden: Er wird ab 90 % golden und rot, wenn das Budget überschritten ist. Lass den Satz leer, um den Satz des Kunden zu nutzen oder den Standard aus den `Einstellungen`. Ein Projekt mit Einträgen lässt sich nicht löschen; kreuze stattdessen `Archiviert` an, um es im Timer auszublenden und seine Zeit zu behalten.
+
+Ist [CRM](app:crm) auf diesem Gerät, hat ein Kunde ein Feld `Kunde im CRM`: Wähle den passenden Kunden (ein neuer Kunde übernimmt dessen Namen). Rechnungen aus der Zeiterfassung tragen dann USt-IdNr., Finanzamt, Adresse und E-Mail des Kunden, und seine Seite im CRM zeigt die Stunden dieses Kunden.
 
 ## Tagessatz, Mindestabrechnung, Überstunden und Zusatzkosten
 Öffne unter `Projekte` ein Projekt (oder einen Kunden, für alle seine Projekte ohne eigene Angaben) und klappe `Tagessatz, Minimum und Überstunden` auf. Wähle `Pro` `Arbeitstag`, `Woche` oder `Monat`, dann beliebig:
@@ -41,6 +47,12 @@ Beispiel: Tagessatz 100 € mit Überstunden ab 8 Stunden zu 15 €/h: 3 oder 8 
 
 `Zusatzkosten hinzufügen` unter den Einträgen des Tages erfasst Kosten neben den Stunden, etwa Benzin oder Arbeit außer Haus: `Datum`, `Projekt` (oder nur ein Kunde), `Wofür` und `Betrag`. Zusatzkosten stehen unter den Einträgen des Tages, zählen zum Betrag des Berichts und werden darunter aufgelistet (tippe eine an, um sie zu bearbeiten), kommen als Zeilen ohne Uhrzeiten ins CSV und werden eigene Zeilen in `Angebot erstellen` und `Rechnung erstellen`. `… als abgerechnet markieren` markiert sie mit.
 
+## Pakete, Pauschalen und Kilometer
+- **Monatspaket.** Angenommen, ein Kunde zahlt 1.000 € im Monat für bis zu 20 Stunden und danach 60 €/h. Öffne den Kunden, klappe `Tagessatz, Minimum und Überstunden` auf, wähle `Pro` `Monat` und trage `Mindestbetrag (Tagessatz)` 1000, `Überstunden ab (Stunden)` 20 und `Stundensatz für Überstunden` 60 ein; lass den Stundensatz des Kunden leer. Unter `Projekte` erscheint dann ein Balken unter dem Kunden: „Diesen Monat: 12:30 von 20 h“. Er wird ab 80 % golden und rot, wenn das Paket aufgebraucht ist. Ein Wochenpaket geht genauso mit `Woche`. Für einen Block vorausbezahlter Stunden, der nicht monatlich ist, nimm das `Stundenbudget` des Projekts.
+- **Pauschalhonorar.** Für einen Auftrag zum vereinbarten Preis trage beim Projekt das `Pauschalhonorar` ein. Seine Stunden werden weiter erfasst, aber nicht nach Stunden berechnet, und `Projekte` zeigt, was das Honorar pro Stunde ergibt („effektiv 80,00 €/h“). `Honorar als Zusatzkosten hinzufügen` im Projektfenster trägt das Honorar einmal ein, damit es auf die Rechnung kommt und mit ihr als abgerechnet markiert wird.
+- **Kilometer.** Kreuze unter `Neue Zusatzkosten` `Kilometer (Strecke × Satz)` an und trage `Strecke (km)` und `Satz pro km` ein: Der Betrag wird berechnet, und dieses Gerät merkt sich den Satz für das nächste Mal.
+- **Budget.** In orOS hat das Fenster einer Zusatzkostenposition `Zu Budget hinzufügen`: Es öffnet in [Budget](app:budget) eine neue Ausgabe mit Betrag, Tag und Beschreibung (Kilometer als Verkehr); dort wird erst gespeichert, wenn du speicherst. Danach zeigt das Fenster `An Budget gesendet` und bietet `Erneut an Budget senden`.
+
 ## Einstellungen
 Die Zahnrad-Schaltfläche öffnet die `Einstellungen`: `Währung`, `Standard-Stundensatz`, ein `Tagesziel` (als Balken unter dem Tag angezeigt) und `Rundung in Berichten`. Die Rundung ändert nur Berichte und CSV; deine Einträge behalten die genauen Zeiten.
 
@@ -49,6 +61,12 @@ Kreuze `Bei laufendem Timer nach Abwesenheit fragen` an und stelle `Abwesend min
 
 ### Umzug aus einer anderen App
 `Aus anderer App importieren` in den `Einstellungen` holt einen Export aus Toggl Track, Clockify, Harvest, Kimai oder Jira Tempo, als CSV oder Excel (.xlsx), mit Aufgaben und Tags. Zuerst siehst du, was die Datei enthält: neue Einträge, schon vorhandene Einträge, neue Projekte und Kunden und Zeilen, die nicht lesbar waren. Nichts ändert sich, bis du auf `Importieren` tippst.
+
+Derselbe Knopf liest auch einen **ActivityWatch**-Export (in ActivityWatch: Settings › Export all buckets as JSON). Deine Zeit am Computer wird zu vorgeschlagenen Einträgen ab 15 Minuten, benannt nach dem meistgenutzten Fenster; Pausen unter 5 Minuten werden zusammengefügt. Sie kommen ohne Projekt: Ordne eins zu oder lösche, was keine Arbeit war.
+
+`Aus einem Konto importieren (Toggl, Clockify, Harvest, Kimai)` liest deine Einträge direkt aus dem Dienst, für bis zu ein Jahr, sobald du ihn unter Einstellungen › Verbundene Dienste mit deinem eigenen Token verbunden hast. Du siehst dieselbe Vorschau wie bei einer Datei, und es gelten dieselben Regeln: Es wird nur hinzugefügt, hier Gelöschtes bleibt gelöscht, und dieselbe Zeit noch einmal (oder aus ihrem CSV-Export) fügt nichts hinzu. orOS liest nur: Im Dienst ändert sich nichts.
+
+`Kalender exportieren (.ics)` unter `Berichte` speichert die Einträge des Berichts als Kalendertermine für jede Kalender-App. Jeder Eintrag behält dieselbe Kennung, ein neuer Export aktualisiert die Termine also, statt sie zu verdoppeln.
 - Der Import fügt nur Einträge hinzu. Dieselbe Datei ein zweites Mal fügt nichts hinzu, und gelöschte Einträge bleiben bei einem neuen Import gelöscht.
 - Projekte und Kunden mit demselben Namen wie deine werden mit ihnen zusammengeführt.
 - Wenn die Datumsangaben in beide Richtungen passen könnten, wähle Tag/Monat oder Monat/Tag unter `Datumsformat in der Datei`.
@@ -81,7 +99,8 @@ Wähle in [Zeit](app:time) → `Pomodoro` unter `Fokus in der Zeiterfassung erfa
 
 ## Tipps
 - [Kalender](app:calendar) kann deine Zeit unter dem Chip `Arbeitszeit` zeigen: eine Zeile pro Projekt und Tag, etwa „Website · 2:15“. Ein Tipp auf eine Zeile öffnet diesen Tag hier.
-- `Zeit erfassen` bei einem Termin im [Kalender](app:calendar) startet hier einen Timer mit dem Namen des Termins (mit dem gleichnamigen Projekt, falls du eins hast). Läuft schon ein Timer, läuft er weiter.
+- `Zeit erfassen` bei einem Termin im [Kalender](app:calendar), einer Aufgabe in [To-Do](app:todo) oder einer Karte in [Kanban](app:kanban) startet hier einen Timer mit ihrem Namen, mit dem gleichnamigen Projekt, falls du eins hast (bei Aufgabe oder Karte auch dem Projekt, das wie ihre Liste oder ihr Board heißt). Läuft schon ein Timer, läuft er weiter. Die Aufgabe oder Karte zeigt danach die für sie erfasste Zeit.
+- `Aus deinem Kalender` im Timer zeigt die Termine des Tages mit Uhrzeit, die vorbei sind und noch keine erfasste Zeit haben. `Eintragen` öffnet `Zeit eintragen` mit Beginn und Ende des Termins; gespeichert wird erst, wenn du `Hinzufügen` drückst. Das X blendet einen Termin aus, der keine Arbeitszeit war (nur auf diesem Gerät). Ein Termin, aus dem schon ein Eintrag stammt oder den deine Einträge zur Hälfte abdecken, erscheint nicht. `Zeit eintragen` bei einem vergangenen Termin im [Kalender](app:calendar) macht dasselbe.
 - Zum Starten brauchst du kein Projekt: Zeit ohne Projekt wird gespeichert, und du kannst sie später zuordnen.
 - Wurden auf zwei Geräten gleichzeitig Timer gestartet, laufen beide weiter und du kannst jeden einzeln stoppen.
 

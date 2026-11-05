@@ -78,6 +78,7 @@
 
   var STRINGS = {
     en: {
+      "app.name": "Spot the Difference",
       "lv.l1": "Easy · 5", "lv.l2": "Medium · 7", "lv.l3": "Hard · 10",
       "lvn.l1": "Easy", "lvn.l2": "Medium", "lvn.l3": "Hard",
       "btn.new": "New pictures (N)",
@@ -124,8 +125,9 @@
       "toast.save": "Could not save: storage is full"
     },
     el: {
-      "lv.l1": "Εύκολο · 5", "lv.l2": "Μέτριο · 7", "lv.l3": "Δύσκολο · 10",
-      "lvn.l1": "Εύκολο", "lvn.l2": "Μέτριο", "lvn.l3": "Δύσκολο",
+      "app.name": "Βρες τις διαφορές",
+      "lv.l1": "Εύκολο · 5", "lv.l2": "Μεσαίο · 7", "lv.l3": "Δύσκολο · 10",
+      "lvn.l1": "Εύκολο", "lvn.l2": "Μεσαίο", "lvn.l3": "Δύσκολο",
       "btn.new": "Νέες εικόνες (N)",
       "btn.hint": "Βοήθεια (H): +10 δλ",
       "btn.stats": "Ρεκόρ",
@@ -1165,6 +1167,7 @@
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
   function sfx(kind) {
+    if (window.orosHaptics) window.orosHaptics.cue(kind);   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

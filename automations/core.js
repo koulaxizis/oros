@@ -42,8 +42,9 @@
   var WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
   // Wave A2 (BR-EV): what apps tell the shell's event bus. A new event =
   // one name here + an orosEvent() call in that app + its words.
-  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done", "bridge.pdf", "bridge.photo", "bridge.file"];
+  var EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file"];
   var EVENT_APP = { "todo.done": "todo", "habits.done": "habits", "water.goal": "water", "fitness.done": "fitness",
+                    "webhook.in": "automations",   // wave A5: automations/hookin.js
                     "bridge.pdf": "automations", "bridge.photo": "automations", "bridge.file": "automations" };
   // Item 25 (BR-EV-BRIDGE): orOS Bridge's watched folders on a computer
   // (automations/bridge.js). bridge.file = any new file; a PDF or a
@@ -483,6 +484,7 @@
       "when.word": " with \u201c{word}\u201d",
       "ev.todo.done": "When I finish a task", "ev.habits.done": "When I tick a habit",
       "ev.water.goal": "When I reach my water goal", "ev.fitness.done": "When I finish a workout",
+      "ev.webhook.in": "When a webhook arrives",
       "ev.bridge.pdf": "When a new PDF lands in a folder on my computer",
       "ev.bridge.photo": "When a new photo lands in a folder on my computer",
       "ev.bridge.file": "When any new file lands in a folder on my computer",
@@ -531,6 +533,7 @@
       "when.word": " με \u00ab{word}\u00bb",
       "ev.todo.done": "Όταν τελειώνω μια εργασία", "ev.habits.done": "Όταν τσεκάρω μια συνήθεια",
       "ev.water.goal": "Όταν φτάνω τον στόχο για νερό", "ev.fitness.done": "Όταν τελειώνω μια προπόνηση",
+      "ev.webhook.in": "Όταν έρχεται webhook",
       "ev.bridge.pdf": "Όταν μπαίνει νέο PDF σε φάκελο του υπολογιστή μου",
       "ev.bridge.photo": "Όταν μπαίνει νέα φωτογραφία σε φάκελο του υπολογιστή μου",
       "ev.bridge.file": "Όταν μπαίνει οποιοδήποτε νέο αρχείο σε φάκελο του υπολογιστή μου",

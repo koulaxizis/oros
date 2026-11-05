@@ -8,14 +8,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Rock Paper Scissors · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.38.00">
-  <link rel="stylesheet" href="rps.css?v=5.38.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.41.00">
+  <link rel="stylesheet" href="rps.css?v=5.41.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=5.41.00">
 
 </head>
 <body>
 
   <!-- Toolbar: one line on a wide screen, two scrolling strips on a phone -->
   <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Rock Paper Scissors</h1>
     <div class="tb-row" id="tb-a">
       <div class="seg" id="level-seg" role="group">
         <button type="button" class="seg-btn" data-level="e" data-i18n="level.e">Easy</button>
@@ -37,17 +39,17 @@
   </header>
 
   <!-- Status: your score, round / streak, the computer's score -->
-  <div id="status">
+  <aside id="status">
     <span class="side" id="side-you"><span id="name-you" data-i18n="name.you">You</span><strong id="score-you">0</strong></span>
     <span id="turn" aria-live="polite"></span>
     <span class="side" id="side-cpu"><strong id="score-cpu">0</strong><span id="name-cpu" data-i18n="name.cpu">Computer</span></span>
-  </div>
+  </aside>
 
   <main id="arena">
     <div id="hands">
-      <div class="hand you" id="hand-you"><div class="hand-art" id="art-you"></div><div class="hand-name" id="label-you"></div></div>
+      <div class="hand you" id="hand-you" role="group"><div class="hand-art" id="art-you"></div><div class="hand-name" id="label-you"></div></div>
       <div id="vs" data-i18n="vs">vs</div>
-      <div class="hand cpu" id="hand-cpu"><div class="hand-art" id="art-cpu"></div><div class="hand-name" id="label-cpu"></div></div>
+      <div class="hand cpu" id="hand-cpu" role="group"><div class="hand-art" id="art-cpu"></div><div class="hand-name" id="label-cpu"></div></div>
     </div>
     <div id="verdict"></div>
     <div id="picks" role="group"></div>
@@ -56,8 +58,10 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.38.00" data-app="rps"></script>
-  <script src="rps.js?v=5.38.00"></script>
+  <script src="../i18n.js?v=5.41.00" data-app="rps"></script>
+
+  <script src="../gamekit/haptics.js?v=5.41.00"></script>
+  <script src="rps.js?v=5.41.00"></script>
 
 </body>
 </html>
