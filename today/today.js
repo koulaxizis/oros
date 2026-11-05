@@ -59,6 +59,7 @@
   var I18N = {
     en: {
       app: "Today", refresh: "Refresh", settings: "Settings", close: "Close",
+      "hello.morning": "Good morning, {name}", "hello.afternoon": "Good afternoon, {name}", "hello.evening": "Good evening, {name}",
       overdue: "Overdue", today: "Today", soon: "Coming up", tomorrow: "Tomorrow",
       late1: "1 day late", lateN: "{n} days late", allDay: "all day",
       more: "and {n} more in {app}",
@@ -105,6 +106,7 @@
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
+      "hello.morning": "Καλημέρα, {name}", "hello.afternoon": "Καλό απόγευμα, {name}", "hello.evening": "Καλησπέρα, {name}",
       overdue: "Εκπρόθεσμα", today: "Σήμερα", soon: "Έρχονται", tomorrow: "Αύριο",
       late1: "1 μέρα καθυστέρηση", lateN: "{n} μέρες καθυστέρηση", allDay: "όλη μέρα",
       more: "και {n} ακόμα στο «{app}»",
@@ -270,12 +272,26 @@
     return n;
   }
 
+  // " · Good evening, <name>" when Settings › Appearance › Your name is
+  // set (ME v1, the shell's orosMe), else "". Never in the briefing.
+  function hello() {
+    var name = "";
+    try {
+      var P = parentWin();
+      if (P && P.orosMe && typeof P.orosMe.name === "function") name = String(P.orosMe.name() || "");
+    } catch (e) { name = ""; }
+    if (!name) return "";
+    var h = new Date().getHours();
+    var k = h >= 5 && h < 12 ? "morning" : (h >= 12 && h < 18 ? "afternoon" : "evening");
+    return " · " + t("hello." + k, { name: name });
+  }
+
   function render() {
     var res = last, main = $("main");
     if (!res) return;
     var keepScroll = main.scrollTop;
     main.textContent = "";
-    $("date").textContent = dateLong(res.today);
+    $("date").textContent = dateLong(res.today) + hello();
     var H = host(), set = H ? H.settings() : null;
     if (oldDay && oldDay !== res.today) {
       main.appendChild(el("div", "note", t("oldNote", { d: dateLong(oldDay) })));

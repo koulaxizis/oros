@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.36.00
+- **A Start page for the web.** `useoros.online/startpage/` shows the clock, a search field (DuckDuckGo, a web address, or start with `oros ` to search inside orOS), the favourites you starred in Bookmarks with a link to the app, and a link back to orOS. Make it your browser's home page on any computer or phone. On orOS Portable and USB the Internet button will open it, with a `New Tor window` button, after their next update.
+- **Your name.** Settings › Appearance › Your name: if you fill it in, Today and the Start page greet you by name. It stays on your devices and syncs encrypted between them; it is never sent to the Assistant. With the screen lock set up, the Start page shows neither the name nor the favourites.
+
 ## Version 5.35.00
 - **A page for any artist in the world, in Music.** Turn on `Artist pages online` in Music's settings, then search for any artist: you get their photo, a short bio from Wikipedia, members, genres and the whole discography from MusicBrainz. Songs play only where they are free (your own files and servers, Jamendo, the Internet Archive, Openverse, ccMixter); for the rest, `Listen in full` links to where you can hear them. Follow artists and they show on Home on all your devices.
 - **Discover in Music.** Home shows the week's top artists and fresh releases. An artist page shows `Fans also like`, plays an artist radio of free songs from them and similar artists, and opens Radio stations of their genre.
