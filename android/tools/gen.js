@@ -336,6 +336,24 @@ ${aliases}
             </intent-filter>
         </activity>
 
+        <!-- Passwords: unlock with fingerprint or face (PW-BIO). Opened by
+             the page from a tap ("intent://open?n=…#Intent;scheme=oros-bio;…");
+             acts only on the request the page announced over the bridge.
+             The orOS app and the single app "orOS Passwords" only. -->
+        <activity android:name=".BioActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="\${bioScheme}" />
+            </intent-filter>
+        </activity>
+
         <!-- Reminders the page handed over (Clock alarms, Water, To-Do):
              rings them, and re-arms them when Android forgot them. -->
         <receiver android:name=".ReminderReceiver" android:exported="false">
@@ -490,6 +508,9 @@ const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"
   ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".QuickBarWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"], ["service", ".QuickTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"],
   ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"]];
+// Single apps that keep BioActivity (PW-BIO): fingerprint unlock is
+// Passwords' alone; every other flavour removes it.
+const BIO_APPS = ["passwords"];
 
 function soloApps() {
   return JSON.parse(fs.readFileSync(SOLO_LIST, "utf8")).apps;
@@ -578,7 +599,7 @@ ${REMOVE_PERMS.map((p) => `
         <meta-data android:name="web_manifest_url" android:value="https://${HOST}/${opt.dir}/manifest.webmanifest"
             tools:replace="android:value" />
 ${launcher}${aliases}${mainAliases}
-${REMOVE_NODES.map((n) => `
+${REMOVE_NODES.concat(BIO_APPS.includes(id) && opt.widget ? [] : [["activity", ".BioActivity"]]).map((n) => `
         <${n[0]} android:name="${n[1]}" tools:node="remove" />`).join("")}
 ${opt.widget ? `
         <!-- The app's own widget (wave 7b): its icon and shortcuts. -->
@@ -635,4 +656,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { build, buildSolo, buildPage, soloApps, pageApps, flavours, REMOVE_NODES };
+module.exports = { build, buildSolo, buildPage, soloApps, pageApps, flavours, REMOVE_NODES, BIO_APPS };

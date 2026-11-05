@@ -44,6 +44,10 @@ import java.util.concurrent.Executors;
  * page as {t:"ticks"} (AgendaWidgets). v8: Passwords autofill (PW-AF2,
  * AfVault): the page asks for two Keystore public keys and hands over
  * its sealed fill lists; this side never sees the vault or its key.
+ * v9: Passwords unlock with fingerprint or face (PW-BIO, BioVault,
+ * BioActivity), also in the single app "orOS Passwords": there the
+ * port belongs to its top page (solo.js), which relays only
+ * {t:"pw-bio"}, and this side takes nothing else either.
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -53,6 +57,11 @@ public class PhoneBridge {
     private static final int MAX_ITEMS = 20000;
     /** The page shows this when the person turned a kind off in Settings › Accounts › orOS. */
     static final String SYNC_OFF = "sync is off in Android Settings › Accounts › orOS";
+
+    /** The orOS app itself: every part of the bridge. */
+    static final boolean FULL = "oros".equals(BuildConfig.FLAVOR);
+    /** Fingerprint unlock for Passwords: the orOS app and "orOS Passwords". */
+    static final boolean BIO = FULL || "passwords".equals(BuildConfig.FLAVOR);
 
     static final String[] CONTACTS_PERMS = {Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS};
     static final String[] CALENDAR_PERMS = {Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR};
@@ -238,10 +247,14 @@ public class PhoneBridge {
                 channelReady = true;
                 // The first message hands the page its port (phone.js).
                 // state() asks Health Connect: off the main thread.
+                // A single app only answers Passwords' fingerprint unlock.
                 io.execute(() -> {
-                    send(state());
-                    sendTicksNow();
-                    sendSavesNow();
+                    if (FULL) {
+                        send(state());
+                        sendTicksNow();
+                        sendSavesNow();
+                    }
+                    if (BIO) send(BioVault.state(app));
                 });
             });
         }
@@ -292,6 +305,11 @@ public class PhoneBridge {
             send(o);
         } catch (JSONException ignored) {
         }
+    }
+
+    /** PW-BIO: BioActivity's answer (and the new state) to the page. */
+    void sendBio(JSONObject msg) {
+        send(msg);
     }
 
     /** Called by PermissionActivity after Android answered. */
@@ -404,6 +422,8 @@ public class PhoneBridge {
             return;
         }
         String t = m.optString("t");
+        // A single app takes only Passwords' fingerprint unlock.
+        if (!FULL && !(BIO && "pw-bio".equals(t))) return;
         String what = "clear".equals(t) ? m.optString("what") : t;
         long seq = m.optLong("seq", 0);
         try {
@@ -510,6 +530,20 @@ public class PhoneBridge {
                     OrosAccount.synced(app, authority);
                     send(done);
                     sendChanges(t);
+                    return;
+                }
+                case "pw-bio": {
+                    if (!BIO) return;
+                    String op = m.optString("op"), kid = m.optString("kid");
+                    if ("want".equals(op)) {
+                        BioVault.announce(m.optString("act"), kid, m.optString("n"));
+                        diag("fingerprint request " + m.optString("act"));
+                    } else if ("clear".equals(op)) {
+                        BioVault.clear(app, kid);
+                        send(BioVault.state(app));
+                    } else if ("state".equals(op)) {
+                        send(BioVault.state(app));
+                    }
                     return;
                 }
                 case "af-keys": {
