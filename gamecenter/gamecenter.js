@@ -14,6 +14,8 @@
 //   - deep link __orosOpenAt("gamecenter", { game: "<id>" }) (the
 //     "All games" link in each game) scrolls to that game's row;
 //     { all: true } scrolls to the All games section
+//   - "Continue" (GR-1): the games with a game in progress on this
+//     device, from their own sessions through gamekit/resume.js
 // Data: none (no synced slice, no device-local keys).
 // Sections:
 //   1. Constants, i18n, helpers
@@ -27,6 +29,7 @@
 
   var CORE = window.orosGameCore;
   var DK = window.orosDaily || null;
+  var RESUME = window.orosResume || null;   // gamekit/resume.js (GR-1)
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -59,6 +62,9 @@
       "all.note": "{n} games",
       "all.find": "Find a game",
       "all.none": "No game by that name.",
+      "cont.title": "Continue",
+      "cont.note": "Games in progress on this device",
+      "cont.sub": "In progress",
       "all.played": "Played {n}",
       "all.new": "New",
       "all.g.puzzle": "Puzzles",
@@ -119,6 +125,9 @@
       "all.note": "{n} παιχνίδια",
       "all.find": "Βρες παιχνίδι",
       "all.none": "Δεν υπάρχει παιχνίδι με αυτό το όνομα.",
+      "cont.title": "Συνέχεια",
+      "cont.note": "Παρτίδες σε εξέλιξη σε αυτή τη συσκευή",
+      "cont.sub": "Σε εξέλιξη",
       "all.played": "Παίχτηκε {n}",
       "all.new": "Νέο",
       "all.g.puzzle": "Γρίφοι",
@@ -269,6 +278,7 @@
     APPS = installed();
     var day = today(), sum = CORE.summarize(readJSON, day);
     renderHead(sum, day);
+    renderCont();
     renderToday(sum);
     renderAll(sum);
     renderAch(sum);
@@ -284,6 +294,34 @@
     var line = !sum.daily.days ? t("sub.none") :
       t(sum.daily.cur === 1 ? "sub.streak1" : "sub.streak", { n: sum.daily.cur, b: sum.daily.best });
     $("sub").textContent = date + " · " + line;
+  }
+
+  // Continue (GR-1): the games with a game under way in their own
+  // device-local session, read-only. Opening one resumes it.
+  function renderCont() {
+    var ids = [];
+    try { ids = RESUME ? RESUME.list(readJSON) : []; } catch (e) { ids = []; }
+    if (APPS) ids = ids.filter(canOpen);
+    var grid = $("cont-grid");
+    grid.textContent = "";
+    $("cont-block").hidden = !ids.length;
+    $("cont-note").textContent = t("cont.note");
+    ids.forEach(function (id) {
+      var nm = nameOf(id), li = el("li", "all-item"), b = el("button", "all-tile");
+      b.type = "button";
+      var ico = el("span", "all-ico"), svg = iconOf(id);
+      if (svg) ico.innerHTML = svg;              // static shell icon, not data
+      else ico.textContent = nm.charAt(0);
+      b.appendChild(ico);
+      var txt = el("span", "all-txt");
+      txt.appendChild(el("span", "all-name", nm));
+      txt.appendChild(el("span", "all-sub", t("cont.sub")));
+      b.appendChild(txt);
+      b.setAttribute("aria-label", nm + ", " + t("cont.sub"));
+      b.addEventListener("click", function () { openGame(id, null); });
+      li.appendChild(b);
+      grid.appendChild(li);
+    });
   }
 
   function renderToday(sum) {
@@ -549,7 +587,7 @@
     // A game's data changed (synced in, or the game was played in
     // another window): the numbers follow.
     window.addEventListener("storage", function (e) {
-      if (!e.key || /^oros-[a-z0-9]+-data$/.test(e.key) || e.key === "oros-lang") renderSoon();
+      if (!e.key || /^oros-[a-z0-9]+-(data|session)$/.test(e.key) || e.key === "oros-lang") renderSoon();
     });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible") render();

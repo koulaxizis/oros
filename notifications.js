@@ -22,7 +22,7 @@
   // mirrored arrays). "time" (alarms) and "system" (sync/version/
   // sc results) joined the toggleable universe: suppression is a
   // user decision there too.
-  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps', 'meals', 'flashcards', 'together', 'household', 'typing'];
+  const KNOWN_APPS = ['calendar', 'cycle', 'mood', 'todo', 'habits', 'time', 'system', 'weather', 'notes', 'quote', 'contacts', 'files', 'kanban', 'prompter', 'storage', 'spreadsheet', 'minimalism', 'television', 'plants', 'water', 'budget', 'health', 'garage', 'stock', 'petcare', 'feeds', 'travel', 'baby', 'chores', 'timesheet', 'shelf', 'mail', 'today', 'diary', 'stickies', 'crm', 'invoices', 'newsletter', 'maps', 'meals', 'flashcards', 'together', 'household', 'typing', 'automations'];
 
   // ——— Runtime state ———
   // NOT-R3: intervalId/pendingToasts/lastFireTimestamp removed —
@@ -639,6 +639,14 @@
     // the Today tab (it is built afresh when it opens).
     today:    function (ymd) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(ymd)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('today', { day: String(ymd) });
+    },
+    // Automations — "automations:run:<ruleId>@<when>": a run with steps
+    // opens the step (one) or the run sheet (several), through
+    // automations/host.js; "automations:open" just opens the app.
+    automations: function (key) {
+      if (key === 'open') { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('automations', null); return; }
+      var A = window.orosAutomations;
+      if (/^[A-Za-z0-9_-]{1,64}@\d{8,12}$/.test(String(key)) && A && typeof A.openRun === 'function') A.openRun(String(key));
     },
     // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
     // with that note in front (its editor on a phone).

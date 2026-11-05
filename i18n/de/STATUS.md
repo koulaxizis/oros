@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 38540 of 38770 (99%)
-- Help pages: 152 of 152 (100%)
+- Strings: 39087 of 39342 (99%)
+- Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -12,18 +12,19 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1654 / 1654 |
+| assistant | 100% | 1741 / 1741 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
+| automations | 100% | 152 / 152 |
 | baby | 100% | 340 / 340 |
 | backgammon | 100% | 91 / 91 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 55 / 55 |
 | bubble | 100% | 53 / 53 |
-| budget | 89% | 791 / 881 |
+| budget | 90% | 955 / 1061 |
 | calculator | 100% | 166 / 166 |
-| calendar | 98% | 430 / 438 |
+| calendar | 98% | 432 / 440 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -34,7 +35,7 @@ text is still written in the code. They switch over wave by wave
 | chores | 100% | 207 / 207 |
 | commands | English for now | 81 / 81 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 333 / 333 |
+| contacts | 100% | 334 / 334 |
 | converter | 100% | 68 / 68 |
 | crm | 100% | 637 / 637 |
 | crossword | 100% | 170 / 170 |
@@ -53,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 54 / 54 |
-| gamecenter | 100% | 110 / 110 |
+| gamecenter | 100% | 113 / 113 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 57 / 57 |
 | google-import | 100% | 9 / 9 |
@@ -65,7 +66,7 @@ text is still written in the code. They switch over wave by wave
 | household | 99% | 142 / 143 |
 | invoices | 97% | 656 / 670 |
 | jigsaw | 100% | 85 / 85 |
-| kanban | 100% | 273 / 273 |
+| kanban | 100% | 274 / 274 |
 | labels | 100% | 88 / 88 |
 | layout | 99% | 953 / 961 |
 | library | 100% | 323 / 323 |
@@ -90,7 +91,7 @@ text is still written in the code. They switch over wave by wave
 | music | 100% | 433 / 433 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
-| newsletter | 100% | 873 / 873 |
+| newsletter | 99% | 1003 / 1008 |
 | nonogram | 100% | 70 / 70 |
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
@@ -118,10 +119,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 59 / 59 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 881 / 888 |
+| settings | 98% | 881 / 892 |
 | share | 100% | 184 / 184 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1080 / 1084 |
+| shell | 99% | 1087 / 1091 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 49 / 49 |
 | sky | 100% | 383 / 383 |
@@ -170,8 +171,10 @@ text is still written in the code. They switch over wave by wave
 
 These show English until fixed (usually the English text changed).
 
+- de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
+- de/help/budget.txt: links or key caps differ from budget/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt

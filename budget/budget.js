@@ -86,7 +86,10 @@
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.delete": "Delete", "dlg.close": "Close",
       "ub.title": "Update balance", "ub.q": "What does the account show now?", "ub.have": "I have", "ub.owe": "I owe",
       "ub.amt": "Amount ({c})", "ub.same": "The same as in Budget", "ub.diff": "Difference {a}",
-      "ub.hint": "The difference changes the account's starting balance: it is not counted as income or an expense.",
+      "ub.hint": "The difference is written as a balance correction today: it is not counted as income or an expense.",
+      "adj.row": "Balance correction", "adj.title": "Balance correction", "adj.deleted": "Correction deleted",
+      "adj.hint": "It only fixes the balance: it is not income or an expense and is not in any total. If you remember what it was, turn it into an entry.",
+      "adj.del": "Delete", "adj.toTx": "Make it an entry",
       "ub.ok": "Balance checked", "ub.done": "Balance updated ({a})", "ub.auto": "{n} matched to the bank ({a})",
       "err.amount": "Type an amount, for example 12,50", "err.date": "Pick a date",
       "rec.tag": "Recurring",
@@ -170,7 +173,8 @@
       "f.acc": "Account", "f.crm": "Partner in CRM", "err.name": "Write a name", "err.open": "Type a balance, for example -120,50",
       "xf.btn": "Transfer", "xf.new": "Transfer between accounts", "xf.edit": "Edit transfer",
       "xf.from": "From", "xf.to": "To", "xf.need": "Make two accounts first", "xf.deleted": "Transfer deleted",
-      "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts",
+      "err.same": "Pick two different accounts", "flt.xfer": "Transfers only", "flt.accs": "Accounts", "flt.noAcc": "Without an account",
+      "na.gone": "{n} duplicates removed", "na.moved": "{n} entries moved to an account",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
       "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
       "menu.bank": "Import bank statement", "menu.banks": "Banks (automatic)", "menu.rules": "Rules",
@@ -227,7 +231,10 @@
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.delete": "Διαγραφή", "dlg.close": "Κλείσιμο",
       "ub.title": "Ενημέρωση υπολοίπου", "ub.q": "Τι δείχνει τώρα ο λογαριασμός;", "ub.have": "Έχω", "ub.owe": "Χρωστάω",
       "ub.amt": "Ποσό ({c})", "ub.same": "Ίδιο με την εφαρμογή", "ub.diff": "Διαφορά {a}",
-      "ub.hint": "Η διαφορά αλλάζει το αρχικό υπόλοιπο του λογαριασμού: δεν μετρά ως έσοδο ή έξοδο.",
+      "ub.hint": "Η διαφορά γράφεται σήμερα ως διόρθωση υπολοίπου: δεν μετρά ως έσοδο ή έξοδο.",
+      "adj.row": "Διόρθωση υπολοίπου", "adj.title": "Διόρθωση υπολοίπου", "adj.deleted": "Η διόρθωση διαγράφηκε",
+      "adj.hint": "Διορθώνει μόνο το υπόλοιπο: δεν είναι έσοδο ή έξοδο και δεν μετρά σε κανένα σύνολο. Αν θυμηθείς τι ήταν, κάν' την κίνηση.",
+      "adj.del": "Διαγραφή", "adj.toTx": "Κάν' την κίνηση",
       "ub.ok": "Το υπόλοιπο ελέγχθηκε", "ub.done": "Το υπόλοιπο ενημερώθηκε ({a})", "ub.auto": "{n}: ταίριαξε με την τράπεζα ({a})",
       "err.amount": "Γράψε ένα ποσό, π.χ. 12,50", "err.date": "Διάλεξε ημερομηνία",
       "rec.tag": "Πάγιο",
@@ -311,7 +318,8 @@
       "f.acc": "Λογαριασμός", "f.crm": "Συνεργάτης στο CRM", "err.name": "Γράψε ένα όνομα", "err.open": "Γράψε ένα ποσό, για παράδειγμα -120,50",
       "xf.btn": "Μεταφορά", "xf.new": "Μεταφορά μεταξύ λογαριασμών", "xf.edit": "Επεξεργασία μεταφοράς",
       "xf.from": "Από", "xf.to": "Προς", "xf.need": "Φτιάξε πρώτα δύο λογαριασμούς", "xf.deleted": "Η μεταφορά διαγράφηκε",
-      "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί",
+      "err.same": "Διάλεξε δύο διαφορετικούς λογαριασμούς", "flt.xfer": "Μόνο μεταφορές", "flt.accs": "Λογαριασμοί", "flt.noAcc": "Χωρίς λογαριασμό",
+      "na.gone": "Σβήστηκαν {n} διπλές", "na.moved": "{n} κινήσεις μπήκαν σε λογαριασμό",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
       "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
       "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.banks": "Τράπεζες (αυτόματα)", "menu.rules": "Κανόνες",
@@ -765,6 +773,17 @@
     if (!okCents(y.ta)) delete y.ta;
     return withExtras({ id: x.id, m: x.m, d: x.d, a: x.a, f: x.f, t: x.t, n: normText(x.n, NOTE_LEN) }, y);
   }
+  // AC-2: balance correction = { id, m, a (signed cents, not 0, in the
+  // account's currency), ac (account id), d, n }: what "Update balance"
+  // and matching the bank write when the account already has entries.
+  // Like a transfer it moves only the balance: never income, never an
+  // expense, in no total, no report, no export, no other app.
+  function normAdj(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
+        !parseYmd(x.d) || !isInt(x.a) || !x.a || Math.abs(x.a) > MAX_CENTS ||
+        typeof x.ac !== "string" || !ID_RE.test(x.ac)) return null;
+    return withExtras({ id: x.id, m: x.m, a: x.a, ac: x.ac, d: x.d, n: normText(x.n, NOTE_LEN) }, x);
+  }
   // Envelope assignment (since wave 10) = { id "<yyyymm>-<category id |
   // none>", m, a (signed cents), c (category id, "" = uncategorised),
   // mk "YYYY-MM" }: one per envelope and month (LWW, never summed).
@@ -836,7 +855,9 @@
     }
     if (isInt(x.cl) && x.cl > 0 && x.cl <= MAX_CENTS) out.cl = x.cl;
     if (typeof x.ty === "string" && /^[A-Z]{4}$/.test(x.ty)) out.ty = x.ty;
-    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1 });
+    // CD-1: ck = the person says it is a credit card (1) or not (2)
+    if (x.ck === 1 || x.ck === 2) out.ck = x.ck;
+    return withExtras(out, x, { bb: 1, bc: 1, bd: 1, ba: 1, cl: 1, ty: 1, ck: 1 });
   }
 
   var COLLS = [
@@ -853,7 +874,8 @@
     { key: "bnk",  tomb: "bnk",  norm: normBnk },    // since BK-2: after the others (an older version's place for it)
     { key: "bgt",  tomb: "bgt",  norm: normBgt },    // since C3 (flexible budgets): after bnk, the same reason
     { key: "loan", tomb: "loan", norm: normLoan },   // since C5 (loans and debts): after bgt, in name order
-    { key: "lpay", tomb: "lpay", norm: normLpay }    // since C5: a loan's repayments
+    { key: "lpay", tomb: "lpay", norm: normLpay },   // since C5: a loan's repayments
+    { key: "adj",  tomb: "adj",  norm: normAdj }     // since AC-2: balance corrections (after the others: an older version's place for it)
   ];
   // Flexible budgets (C3): budget/budgets.js cleans them; without it
   // (tests that load only this file) they ride along like a newer
@@ -874,10 +896,10 @@
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, adj: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], adj: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -1092,6 +1114,8 @@
       if (bal[x.f] !== undefined) bal[x.f] -= x.a;
       if (bal[x.t] !== undefined) bal[x.t] += x.a;
     });
+    // AC-2: balance corrections
+    (d.adj || []).forEach(function (x) { if (x.d <= upto && bal[x.ac] !== undefined) bal[x.ac] += x.a; });
     // loans and their repayments move money like transfers (C5)
     var L = typeof window !== "undefined" && window.OrosBudgetLoans;
     if (L) {
@@ -1469,6 +1493,8 @@
     if (data.acc.length || data.xfer.length) {
       var g3 = el("optgroup"); g3.label = t("flt.accs");
       accs().forEach(function (a) { var o = el("option", "", a.n); o.value = "a:" + a.id; g3.appendChild(o); });
+      // NA-3: entries without an account (or of one that is gone)
+      if (data.acc.length) { var on0 = el("option", "", t("flt.noAcc")); on0.value = "a:"; g3.appendChild(on0); }
       var ox = el("option", "", t("flt.xfer")); ox.value = "k:t"; g3.appendChild(ox);
       sel.appendChild(g3);
     }
@@ -1483,7 +1509,8 @@
     if (filter === "inbox" && !inInbox(x)) return false;
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
     if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2) && (!x.c || !catById(x.c) || catById(x.c).p !== filter.slice(2))) return false;
-    if (filter.indexOf("a:") === 0 && (x.ac || "") !== filter.slice(2)) return false;
+    if (filter === "a:" && x.ac && findIn(data.acc, x.ac)) return false;
+    if (filter.indexOf("a:") === 0 && filter !== "a:" && (x.ac || "") !== filter.slice(2)) return false;
     if (query) {
       var hay = (x.n + " " + catName(x.c) + " " + accName(x.ac) + " " + centsToInput(x.a, LANG)).toLowerCase();
       if (hay.indexOf(query) < 0) return false;
@@ -1500,6 +1527,37 @@
     return true;
   }
 
+  // AC-2: a correction shows with "All" and its account's filter.
+  function adjMatches(x) {
+    if (filter !== "all" && filter !== "a:" + x.ac) return false;
+    if (query) {
+      var hay = (t("adj.row") + " " + x.n + " " + accName(x.ac) + " " + centsToInput(Math.abs(x.a), LANG)).toLowerCase();
+      if (hay.indexOf(query) < 0) return false;
+    }
+    return true;
+  }
+  function adjRow(x) {
+    var li = el("li");
+    var b = el("button", "tx adj " + (x.a > 0 ? "in" : "out"));
+    b.type = "button";
+    var ic = el("span", "sw cat-ic");
+    ic.style.setProperty("--cc", "var(--c8)");
+    ic.innerHTML = UI.scale;
+    ic.setAttribute("aria-hidden", "true");
+    b.appendChild(ic);
+    var mid = el("span", "tx-mid");
+    mid.appendChild(el("span", "tx-cat", t("adj.row")));
+    var an = accName(x.ac);
+    var sub = [an, x.n].filter(Boolean).join(" · ");
+    if (sub) mid.appendChild(el("span", "tx-note", sub));
+    b.appendChild(mid);
+    var a = findIn(data.acc, x.ac), am = (x.a > 0 ? "+" : "\u2212") + money(Math.abs(x.a), a && a.cur);
+    b.appendChild(el("span", "tx-amt", am));
+    b.setAttribute("aria-label", t("adj.row") + (an ? ", " + an : "") + ", " + am + ", " + dateShort(x.d));
+    b.addEventListener("click", function () { adjDialog(x.id); });
+    li.appendChild(b);
+    return li;
+  }
   function renderList() {
     var box = $("list");
     box.innerHTML = "";
@@ -1509,6 +1567,8 @@
       return (query || inbox || mkOf(x.d) === viewMk) && matches(x);
     }).concat(inbox ? [] : data.xfer.filter(function (x) {
       return (query || mkOf(x.d) === viewMk) && xferMatches(x);
+    })).concat(inbox ? [] : (data.adj || []).filter(function (x) {
+      return (query || mkOf(x.d) === viewMk) && adjMatches(x);
     }));
     rows.sort(function (a, b) { return cmpStr(b.d, a.d) || b.m - a.m || cmpStr(b.id, a.id); });
     var empty = $("list-empty"), found = $("list-found");
@@ -1533,6 +1593,7 @@
         group = el("ul", "day-list");
         box.appendChild(group);
       }
+      if (!x.k && !x.f) { group.appendChild(adjRow(x)); return; }   // AC-2: a correction, not in the day total
       if (!x.k) { group.appendChild(xferRow(x)); return; }   // a transfer: not in the day total
       if (x.k === "i") dayIn += x.a; else dayOut += x.a;
       group.appendChild(inbox ? inboxRow(x) : txRow(x));
@@ -2433,6 +2494,7 @@
         if (rc) nx.rc = rc;
         if (crm) nx.crm = crm;
         data.tx.push(nx);
+        if (pre && typeof pre.onSaved === "function") pre.onSaved();   // AC-2: a correction turned into this entry
         commit();
       }
       if (rcb) rcb.commit();
@@ -2694,22 +2756,93 @@
   // Entries from Stripe / Invoice Ninja (budget/payments.js): one write; Undo
   // deletes them again (tombstones, like a delete).
   var PAY = window.OrosBudgetPay || null;
-  function addEntries(rows, doneText) {
-    var ids = [];
+  // NA-2: `moves` { <entry id>: <account id> } puts entries that had no
+  // account into the account a bank reading found them in, in the same
+  // write (and the same Undo).
+  function addEntries(rows, doneText, moves) {
+    var ids = [], moved = [];
     rows.forEach(function (r) {
       if (findIn(data.tx, r.id)) return;
       data.tx.push(Object.assign({}, r, { m: stamp(data.tombs["tx:" + r.id] || 0) }));
       ids.push(r.id);
     });
-    if (!ids.length) return;
+    Object.keys(moves || {}).forEach(function (id) {
+      var x = findIn(data.tx, id), ac = moves[id];
+      if (!x || (x.ac && findIn(data.acc, x.ac)) || !findIn(data.acc, ac)) return;
+      moved.push({ id: id, was: x.ac || "" });
+      x.ac = ac;
+      x.m = stamp(x.m);
+    });
+    if (!ids.length && !moved.length) return;
     commit();
     renderAll();
-    undoToast(doneText, function () {
+    undoToast(ids.length ? doneText : t("na.moved", { n: moved.length }), function () {
       data.tx = data.tx.filter(function (y) { return ids.indexOf(y.id) < 0; });
       ids.forEach(function (id) { tombstone("tx", id); });
+      moved.forEach(function (w) {
+        var x = findIn(data.tx, w.id);
+        if (!x) return;
+        if (w.was) x.ac = w.was; else delete x.ac;
+        x.m = stamp(x.m);
+      });
       commit();
       renderAll();
     });
+  }
+  // NA-1 (Chris 2026-11-04): entries without an account, from the
+  // Overview. `dups` [{ id, twin }]: the entry is the same money as
+  // `twin` (in an account): it goes, and what only it had (category,
+  // note, receipt, CRM partner) moves to the twin first. `moves`
+  // { <entry id>: <account id> }: the entry goes into that account.
+  // One write, one Undo (tombstones newer than the delete, sync-safe).
+  var NA_KEEP = ["c", "n", "rc", "crm"];
+  function fixNoAcc(dups, moves) {
+    var gone = [], twins = [], moved = [];
+    (dups || []).forEach(function (p) {
+      var x = findIn(data.tx, p.id), y = findIn(data.tx, p.twin);
+      if (!x || !y || x === y || (x.ac && findIn(data.acc, x.ac)) || !y.ac || !findIn(data.acc, y.ac)) return;
+      if (x.a !== y.a || x.k !== y.k || x.d !== y.d) return;
+      var before = JSON.parse(JSON.stringify(y)), changed = false;
+      NA_KEEP.forEach(function (f) {
+        if (x[f] && !y[f]) { y[f] = JSON.parse(JSON.stringify(x[f])); changed = true; }
+      });
+      if (changed) { y.m = stamp(y.m); twins.push(before); }
+      gone.push(JSON.parse(JSON.stringify(x)));
+      data.tx = data.tx.filter(function (z) { return z.id !== x.id; });
+      tombstone("tx", x.id);
+    });
+    Object.keys(moves || {}).forEach(function (id) {
+      var x = findIn(data.tx, id), ac = moves[id];
+      if (!x || (x.ac && findIn(data.acc, x.ac)) || !findIn(data.acc, ac)) return;
+      moved.push({ id: id, was: x.ac || "" });
+      x.ac = ac;
+      x.m = stamp(x.m);
+    });
+    if (!gone.length && !moved.length) return 0;
+    commit();
+    renderAll();
+    undoToast(gone.length ? t("na.gone", { n: gone.length }) : t("na.moved", { n: moved.length }), function () {
+      gone.forEach(function (c) {
+        untomb("tx", c.id);
+        c.m = stamp(Math.max(c.m, data.tombs["tx:" + c.id] || 0));
+        if (!findIn(data.tx, c.id)) data.tx.push(c);
+      });
+      twins.forEach(function (b) {
+        var y = findIn(data.tx, b.id);
+        if (!y) return;
+        NA_KEEP.forEach(function (f) { if (b[f] === undefined) delete y[f]; else y[f] = b[f]; });
+        y.m = stamp(y.m);
+      });
+      moved.forEach(function (w) {
+        var x = findIn(data.tx, w.id);
+        if (!x) return;
+        if (w.was) x.ac = w.was; else delete x.ac;
+        x.m = stamp(x.m);
+      });
+      commit();
+      renderAll();
+    });
+    return gone.length + moved.length;
   }
   function initPay() {
     if (!PAY) return;
@@ -3169,8 +3302,97 @@
     });
     return true;
   }
+  // AC-2: does anything but the starting balance move this account?
+  function accUsed(id) {
+    function by(list, f) { return (list || []).some(f); }
+    return by(data.tx, function (x) { return x.ac === id; }) ||
+      by(data.xfer, function (x) { return x.f === id || x.t === id; }) ||
+      by(data.adj, function (x) { return x.ac === id; }) ||
+      by(data.loan, function (x) { return x && x.ac === id; }) ||
+      by(data.lpay, function (x) { return x && x.ac === id; });
+  }
+  // AC-2: the balance is diff away from what the person (or the bank)
+  // says on day d. A fresh account (nothing but a starting balance) has
+  // its starting balance changed; any other gets a balance correction
+  // on that day, so the past stays as it was and the correction can be
+  // seen, deleted or turned into an entry. Never income or an expense.
+  // With Undo. → true when done.
+  function correctBal(id, diff, text, d) {
+    var a = findIn(data.acc, id);
+    if (!a || !diff || !isInt(diff) || Math.abs(diff) > MAX_CENTS) return false;
+    if (!accUsed(id)) return shiftStart(id, diff, text);
+    var day = parseYmd(d) ? d : today;
+    var wasChk = a.chk, nid = newId();
+    if (!Array.isArray(data.adj)) data.adj = [];
+    untomb("adj", nid);
+    data.adj.push({ id: nid, m: stamp(0), a: diff, ac: id, d: day, n: "" });
+    a.chk = today;
+    a.m = stamp(a.m);
+    commit();
+    renderAll();
+    undoToast(text, function () {
+      if (findIn(data.adj, nid)) {
+        data.adj = data.adj.filter(function (y) { return y.id !== nid; });
+        tombstone("adj", nid);
+      }
+      var b = findIn(data.acc, id);
+      if (b) { if (wasChk) b.chk = wasChk; else delete b.chk; b.m = stamp(b.m); }
+      commit();
+      renderAll();
+    });
+    return true;
+  }
+  function deleteAdj(id) {
+    var x = findIn(data.adj, id);
+    if (!x) return;
+    var copy = JSON.parse(JSON.stringify(x));
+    data.adj = data.adj.filter(function (y) { return y.id !== id; });
+    tombstone("adj", id);
+    commit();
+    renderAll();
+    undoToast(t("adj.deleted"), function () {
+      untomb("adj", id);
+      copy.m = stamp(Math.max(copy.m, data.tombs["adj:" + id] || 0));
+      if (!findIn(data.adj, id)) data.adj.push(copy);
+      commit();
+      renderAll();
+    });
+  }
+  // A correction the person now knows the reason for: it goes, and the
+  // New entry form opens with its amount, day and account. Cancel puts
+  // it back (it is only removed when the entry is saved).
+  function adjToEntry(id) {
+    var x = findIn(data.adj, id);
+    if (!x) return;
+    // the amount is in the account's currency, which the form picks for it
+    var pre = { k: x.a > 0 ? "i" : "o", a: Math.abs(x.a), d: x.d, ac: x.ac, n: x.n || "" };
+    pre.onSaved = function () {
+      if (!findIn(data.adj, id)) return;
+      data.adj = data.adj.filter(function (y) { return y.id !== id; });
+      tombstone("adj", id);
+    };
+    txDialog(null, pre);
+  }
+  function adjDialog(id) {
+    var x = findIn(data.adj, id);
+    if (!x) return;
+    var a = findIn(data.acc, x.ac), cu = a ? (a.cur || cur()) : cur();
+    var dlg = makeDialog("bd-adj", t("adj.title"));
+    dlg.classList.add("sheet");   // a bottom sheet on phones, like the account sheet
+    dlg.appendChild(el("p", "dlg-sub", (a ? a.n : t("acc.none")) + " · " + dateShort(x.d)));
+    dlg.appendChild(el("p", "adj-big " + (x.a > 0 ? "in" : "out"), (x.a > 0 ? "+" : "\u2212") + money(Math.abs(x.a), cu)));
+    dlg.appendChild(el("p", "hint", t("adj.hint")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("adj.del"), "danger", function () { dlg.close(); deleteAdj(id); }));
+    acts.appendChild(button(t("adj.toTx"), "", function () { dlg.close(); adjToEntry(id); }));
+    acts.appendChild(button(t("dlg.close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
   // AC-1: "Update balance": what the account shows now. The difference
-  // moves the starting balance (never an income or an expense), with Undo.
+  // is a balance correction (AC-2; a fresh account's starting balance
+  // changes instead), never an income or an expense, with Undo.
   function updateBalance(id) {
     var a = findIn(data.acc, id);
     if (!a) return;
@@ -3247,7 +3469,7 @@
         showToast(t("ub.ok"));
         return;
       }
-      if (!shiftStart(id, v - now, t("ub.done", { a: (v > now ? "+" : "\u2212") + money(Math.abs(v - now), cu) }))) showToast(t("err.amount"));
+      if (!correctBal(id, v - now, t("ub.done", { a: (v > now ? "+" : "\u2212") + money(Math.abs(v - now), cu) }))) showToast(t("err.amount"));
     });
     dlg.appendChild(form);
     document.body.appendChild(dlg);
@@ -3264,8 +3486,8 @@
     if (on) autoMatch();
   }
   // Accounts with am: when the bank's last balance (BK-5) differs from
-  // Budget's on that day, the starting balance moves so they agree,
-  // with Undo. A second pass finds nothing to do.
+  // Budget's on that day, a balance correction on that day makes them
+  // agree (AC-2), with Undo. A second pass finds nothing to do.
   var autoBusy = false;
   function autoMatch() {
     if (autoBusy) return;
@@ -3278,13 +3500,13 @@
       if (!r) return;
       var mine = accBalAt(a.id, r.bd);
       if (mine === null || mine === r.bb) return;
-      done.push({ id: a.id, diff: r.bb - mine, n: a.n, cu: cu });
+      done.push({ id: a.id, diff: r.bb - mine, n: a.n, cu: cu, d: r.bd });
     });
     if (!done.length) return;
     autoBusy = true;
     try {
       done.forEach(function (d) {
-        shiftStart(d.id, d.diff, t("ub.auto", { n: d.n, a: (d.diff > 0 ? "+" : "\u2212") + money(Math.abs(d.diff), d.cu) }));
+        correctBal(d.id, d.diff, t("ub.auto", { n: d.n, a: (d.diff > 0 ? "+" : "\u2212") + money(Math.abs(d.diff), d.cu) }), d.d);
       });
     } finally { autoBusy = false; }
   }
@@ -3296,7 +3518,7 @@
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
       newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
-      accBalAt: accBalAt, accCur: accCurOf, shiftStart: shiftStart, money: money,
+      accBalAt: accBalAt, accCur: accCurOf, correct: correctBal, money: money,
       parseAmount: parseAmount, centsToInput: function (c) { return centsToInput(c, LANG); }
     });
   }
@@ -3358,6 +3580,9 @@
       // AC-1: the account sheet's actions
       updateBalance: updateBalance, setAutoMatch: setAutoMatch, xferFrom: function (id) { xferDialog(null, id); },
       newTxIn: function (id) { txDialog(null, { ac: id }); },
+      // NA-1: entries without an account (twins found by bank.js)
+      noAccount: window.OrosBudgetBank ? function (mk) { return window.OrosBudgetBank.noAccount(data.tx, mk, data.acc.map(function (a) { return a.id; })); } : null,
+      fixNoAcc: fixNoAcc, accName: accName, accSelect: accSelect, field: field,
       // banks (budget/banklive.js): state, and an update now; a failed
       // bank opens Banks, where each one says why
       bankState: BANKLIVE && BANKLIVE.state ? BANKLIVE.state : null,
@@ -3373,9 +3598,12 @@
         return dateShort(ymdLocal(d)) + ", " + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
       },
       // BK-7: the bank's balance on each account it fills, and Match
-      dateShort: dateShort, accBalAt: accBalAt, shiftStart: shiftStart,
+      dateShort: dateShort, accBalAt: accBalAt, correct: correctBal,
       cardCycle: cardCycle, addCardFee: addCardFee, investValue: investValue, investInfo: investInfo, passiveStats: passiveStats,
       banksOpen: BANKLIVE ? function () { BANKLIVE.open(); } : null,
+      // CD-1: a card's debt: is a bank account a card, its switch and limit
+      isCardRow: BANKLIVE && BANKLIVE.isCard ? BANKLIVE.isCard : null,
+      bankCardRows: BANKLIVE && BANKLIVE.cardRows ? BANKLIVE.cardRows : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin
@@ -4814,7 +5042,7 @@
   }
   function changedCount(a, b) {
     var n = 0;
-    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay"].forEach(function (k) {
+    ["tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj"].forEach(function (k) {
       var idx = {};
       a[k].forEach(function (x) { idx[x.id] = JSON.stringify(x); });
       b[k].forEach(function (x) { if (idx[x.id] !== JSON.stringify(x)) n++; });

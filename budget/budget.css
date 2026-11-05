@@ -329,6 +329,9 @@ button:focus-visible, [tabindex]:focus-visible, summary:focus-visible {
 .tx-amt { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; flex-shrink: 0; }
 .tx.in .tx-amt { color: var(--in-ink); }
 .tx.xf .tx-amt { color: var(--text-dim); }
+/* AC-2: a balance correction is neither income nor an expense */
+.tx.adj .tx-amt, .tx.adj .tx-cat { color: var(--text-dim); }
+.tx.adj .tx-cat { font-style: italic; }
 #rec-add { margin-bottom: 12px; }
 #rec { margin-top: 4px; }
 #rec .tx-note { white-space: normal; }
@@ -652,11 +655,15 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .bk-bot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; padding-left: 28px; }
 .bk-bot select { flex: 1 1 160px; min-width: 0; }
 .bk-limit input { flex: 1 1 120px; min-width: 0; width: auto; }
+/* CD-1: "This is a credit card" (Banks, and the account's sheet) */
+.bk-card-sw { display: flex; align-items: center; gap: 10px; margin-top: 6px; padding-left: 28px; min-height: 44px; font-size: 14px; cursor: pointer; }
+.bk-card-sw input { width: 22px; height: 22px; min-height: 22px; flex-shrink: 0; margin: 0; }
+.sh-det .bk-card-sw, .sh-det .bk-bot { padding: 0 8px; margin: 0 0 8px; }
 .bk-rule { font-size: 12px; color: var(--text-dim); flex: 1 1 100%; overflow-wrap: anywhere; }
 .bk-rules .tx-note { white-space: normal; }
 @media (max-width: 480px) {
   .bk-dlg { width: calc(100vw - 20px) !important; }
-  .bk-bot, .inbox-bot { padding-left: 0; }
+  .bk-bot, .inbox-bot, .bk-card-sw { padding-left: 0; }
 }
 .bk-bot .dlg-btn { flex: 0 0 auto; }
 @media (pointer: coarse) {
@@ -1106,3 +1113,18 @@ div.ov-acc:hover { background: none; }
   dialog.mm-dlg.sheet { margin: auto 0 0; width: 100vw; max-width: 100vw; max-height: 88vh; border-radius: 16px 16px 0 0;
     padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); border-bottom: none; }
 }
+
+/* ---------- AC-2: balance correction ---------- */
+.adj-big { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; margin: 4px 0 8px; }
+.adj-big.out { color: var(--over); }
+.adj-big.in { color: var(--in-ink); }
+
+/* NA-1: entries without an account (Overview sheet) */
+.na-h { font-size: 15px; margin: 14px 0 4px; }
+.na-list { list-style: none; margin: 6px 0; padding: 0; max-height: 40vh; overflow-y: auto; border-top: 1px solid var(--border); }
+.na-row { display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--border); min-width: 0; }
+.na-m { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.na-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.na-s { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.na-v { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.na-v.neg { color: var(--over); }

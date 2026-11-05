@@ -177,6 +177,10 @@ test("net worth: balances in their own currency, converted to the main one", () 
   // all in the main currency: same as the old balances
   const d2 = D({ acc: [{ id: "a", n: "A", o: 5 }], tx: [tx("t", "2026-01-01", 7, "i", "", { ac: "a" })] });
   assert.equal(P.balancesFx(d2, "2026-12-31", "EUR", null).a, 12);
+  // AC-2: a balance correction, in the account's currency, from its day
+  const d3 = { acc: [{ id: "a", o: 100 }], tx: [], xfer: [], adj: [{ id: "j", a: -30, ac: "a", d: "2026-11-02" }] };
+  assert.equal(P.balancesFx(d3, "2026-11-01", "EUR", null).a, 100);
+  assert.equal(P.balancesFx(d3, "2026-11-02", "EUR", null).a, 70);
 });
 
 // ---------- currencies (units/core.js, shared with Unit Converter) ----------
