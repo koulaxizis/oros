@@ -1,18 +1,33 @@
 /* ============================================================
-   orOS gamekit/landscape.css: the shared phone-landscape layout
-   (games audit F1, 2026-11-05). Loaded by every game after its own
-   stylesheet:
+   orOS gamekit/layout.css: the shared phone layout of the games
+   (games audit F1 + F2, 2026-11-05). Loaded by every game after its
+   own stylesheet:
 
-     <link rel="stylesheet" href="../gamekit/landscape.css">
+     <link rel="stylesheet" href="../gamekit/layout.css">
 
-   On a phone held sideways (landscape, at most 520 px high) the
+   F2, phone upright (up to 920 px wide): a toolbar strip that does
+   not fit wraps onto a second line instead of scrolling sideways
+   with a hidden scrollbar, so no control sits unseen past the edge.
+   A segmented group moves as a whole. Games are sized by the width
+   of an upright phone, so the extra line costs the board nothing or
+   very little.
+
+   F1, phone held sideways (landscape, at most 520 px high): the
    toolbar, the status line and anything else outside <main> move
    into a column on the left, and <main> (the board) gets the whole
    height on the right. Every game sizes its board from <main>, so
-   nothing else changes. Above 520 px high nothing here applies.
-   The toolbar gets the height the other strips leave and scrolls
-   instead of clipping when the column is full.
+   nothing else changes. The toolbar gets the height the other
+   strips leave and scrolls instead of clipping when the column is
+   full.
    ============================================================ */
+@media (max-width: 920px) and (orientation: portrait) {
+  #toolbar .tb-row {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 6px;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 520px) {
   body {
     display: grid;

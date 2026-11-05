@@ -66,9 +66,9 @@ jobs:
       - name: Every game carries on where it was left (resume.js, GR-2)
         if: matrix.shard == 3 && (success() || failure())
         run: node .github/qa/resume.js --out qa-resume-3.json
-      - name: Every game in phone landscape (landscape.js, games audit F1)
+      - name: Every game on a phone, upright and sideways (gamelayout.js, games audit F1/F2)
         if: matrix.shard == 3 && (success() || failure())
-        run: node .github/qa/landscape.js --out qa-landscape-3.json
+        run: node .github/qa/gamelayout.js --out qa-gamelayout-3.json
       - name: On-screen keyboard on a touch screen
         if: matrix.shard == 1 && (success() || failure())
         run: node .github/qa/osk.js --out qa-osk-1.json

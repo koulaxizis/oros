@@ -62,9 +62,9 @@ test("gamekit: times and the share text", () => {
   assert.equal(D.shareOnMobile(), false);
 });
 
-// Games audit F1 (2026-11-05): every game loads the shared phone-landscape
+// Games audit F1/F2 (2026-11-05): every game loads the shared phone
 // layout right after its own stylesheet, so the game's rules can't undo it.
-test("gamekit: every game loads gamekit/landscape.css after its own stylesheet", () => {
+test("gamekit: every game loads gamekit/layout.css after its own stylesheet", () => {
   const fs = require("fs");
   const path = require("path");
   const root = path.join(__dirname, "..");
@@ -74,10 +74,10 @@ test("gamekit: every game loads gamekit/landscape.css after its own stylesheet",
   for (const g of games) {
     const html = fs.readFileSync(path.join(root, g.url, "index.html"), "utf8");
     const own = html.search(new RegExp('<link rel="stylesheet" href="' + g.id + '\\.css'));
-    const shared = html.search(/<link rel="stylesheet" href="\.\.\/gamekit\/landscape\.css/);
+    const shared = html.search(/<link rel="stylesheet" href="\.\.\/gamekit\/layout\.css/);
     assert.ok(own >= 0, g.id + ": own stylesheet");
-    assert.ok(shared > own, g.id + ": gamekit/landscape.css after " + g.id + ".css");
+    assert.ok(shared > own, g.id + ": gamekit/layout.css after " + g.id + ".css");
   }
-  const css = fs.readFileSync(path.join(root, "gamekit", "landscape.css"), "utf8");
+  const css = fs.readFileSync(path.join(root, "gamekit", "layout.css"), "utf8");
   assert.match(css, /@media \(orientation: landscape\) and \(max-height: 520px\)/);
 });

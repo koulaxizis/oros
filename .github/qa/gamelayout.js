@@ -1,22 +1,24 @@
-// orOS quality gate: every game is playable on a phone held sideways
-// (games audit F1, gamekit/landscape.css). CI / local tool only.
+// orOS quality gate: the phone layout of every game (games audit F1 + F2,
+// gamekit/layout.css). CI / local tool only.
 //
 // For each game of apps.json (category Games, the Game Center aside),
-// standalone and offline, at 740 x 360 on a touch screen, in Greek (the
-// longer words):
+// standalone and offline, on a touch screen, in Greek (the longer words):
+//   at 740 x 360 (a phone held sideways)
 //   1. <main> (the board) is to the right of the controls and gets the
 //      whole height: at least 95% of the screen high, 55% wide;
-//   2. the page does not scroll sideways;
-//   3. no page errors.
+//   at 360 x 780 (a phone upright)
+//   2. no toolbar control lies past the edge of the screen;
+//   both
+//   3. the page does not scroll sideways, and no page errors.
 //
-// Usage: node .github/qa/landscape.js [--only id,id] [--out file.json]
+// Usage: node .github/qa/gamelayout.js [--only id,id] [--out file.json]
 "use strict";
 
 const fs = require("fs");
 const path = require("path");
 const QA = require("./smoke.js");
 
-const W = 740, H = 360;
+const W = 740, H = 360, PW = 360, PH = 780;
 
 async function main() {
   const args = QA.parseArgs(process.argv.slice(2));
@@ -27,8 +29,8 @@ async function main() {
   const base = "http://127.0.0.1:" + srv.address().port + "/";
   const browser = await chromium.launch(QA.launchOptions());
   const problems = [];
-  for (const g of games) {
-    const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1,
+  for (const g of games) for (const [vw, vh] of [[W, H], [PW, PH]]) {
+    const ctx = await browser.newContext({ viewport: { width: vw, height: vh }, deviceScaleFactor: 1,
       isMobile: true, hasTouch: true, serviceWorkers: "block" });
     await ctx.route(/^https?:\/\/(?!127\.0\.0\.1[:/])/, (r) => r.abort("internetdisconnected"));
     await ctx.addInitScript(() => {
@@ -44,24 +46,31 @@ async function main() {
         const main = document.querySelector("body > main"), tb = document.getElementById("toolbar");
         const r = main ? main.getBoundingClientRect() : null, t = tb ? tb.getBoundingClientRect() : null;
         const de = document.documentElement;
-        return { main: r && [r.left, r.width, r.height], tbRight: t && t.right,
+        const past = tb ? [...tb.querySelectorAll("button, select")].filter((e) => {
+          const q = e.getBoundingClientRect();
+          return q.width > 0 && (q.right > innerWidth + 1 || q.left < -1);
+        }).map((e) => e.id || e.getAttribute("data-i18n") || e.className) : [];
+        return { main: r && [r.left, r.width, r.height], tbRight: t && t.right, past,
           sideways: Math.max(de.scrollWidth, document.body.scrollWidth) > de.clientWidth + 1 };
       });
+      const at = " (" + vw + "x" + vh + ")";
       if (!m.main) problems.push(g.id + ": no body > main");
-      else {
+      else if (vw === PW) {
+        if (m.past.length) problems.push(g.id + ": toolbar controls past the screen edge" + at + ": " + m.past.join(", "));
+      } else {
         if (m.main[2] < H * 0.95) problems.push(g.id + ": board area only " + Math.round(m.main[2]) + " px high of " + H);
         if (m.main[1] < W * 0.55) problems.push(g.id + ": board area only " + Math.round(m.main[1]) + " px wide of " + W);
         if (m.tbRight != null && m.tbRight > m.main[0] + 1) problems.push(g.id + ": toolbar is not beside the board");
       }
-      if (m.sideways) problems.push(g.id + ": the page scrolls sideways");
+      if (m.sideways) problems.push(g.id + ": the page scrolls sideways" + at);
     } catch (e) {
       problems.push(g.id + ": load " + String(e.message || e).split("\n")[0]);
     }
     for (const e of errors) problems.push(g.id + ": page error " + e);
     await ctx.close().catch(() => {});
-    process.stdout.write(g.id + " ");
+    if (vw === W) process.stdout.write(g.id + " ");
   }
-  const md = ["", "### orOS games in phone landscape (" + W + " x " + H + ")", "",
+  const md = ["", "### orOS games on a phone (" + W + " x " + H + " sideways, " + PW + " x " + PH + " upright)", "",
     games.length + " games checked. Problems: " + problems.length + ".", ""]
     .concat(problems.length ? ["```"].concat(problems, ["```", ""]) : []).join("\n");
   console.log(md);
