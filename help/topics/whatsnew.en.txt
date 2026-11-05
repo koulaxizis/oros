@@ -1,6 +1,17 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.37.01
+- **Files: the path at the top works again.** In a folder two or more levels deep (for example Files / Documents / Work / 2026), tapping a folder in the middle of the path did nothing. Now every part of the path opens the folder it names.
+
+## Version 5.37.00
+- **Find podcasts more easily.** In Podcasts › Discover, choose where your words are searched: `Everything`, `Title`, `Hosts & publishers`, `Topics` or `Tags`. `Filters` adds genre, country, sort (newest episode, most episodes, A–Z), hide explicit podcasts and hide the ones you already follow. Chips above the results narrow them by catalog, genre and host or publisher, a podcast you try offers `More from …`, your recent searches come back with one tap, and the new `Tags` view lists the most used podcast tags.
+- **Spotify links.** Paste a Spotify show link into the search field: orOS finds the same show in the open catalogs so you can follow its RSS feed, or tells you that it is probably only on Spotify.
+- **More catalogs.** "All catalogs" in Podcasts settings now also searches gpodder.net, and Podcast Index (the largest open podcast catalog) with your own free key, kept sealed on your device.
+
+## Version 5.36.02
+- **Budget: entries without an account, sorted out.** When a bank was read before it had its account in Budget, its entries came in twice once it had one: once in the account and once under `Without an account`, so the month's totals counted them twice. Banks now find such a copy and put it into the account instead. In Overview › Accounts, tap `Without an account`: copies of entries already in an account go with `Remove N duplicates` (the entry in the account stays and keeps any category, note or receipt only the copy had), and the rest go into an account you pick. Entries also has a `Without an account` filter.
+
 ## Version 5.36.01
 - **Podcasts load their episodes again.** Some podcasts (for example the Sacred Belt shows) stayed on "Loading…" forever or showed "No podcast feed found", because their site blocks browsers and Podcasts only used a relay typed in Mail's settings. Now it uses orOS's own relay when you have not set one. If a podcast still cannot be loaded, its page says why and has a `Try again` button. Episode dates in Greek time (EET/EEST) now show correctly.
 

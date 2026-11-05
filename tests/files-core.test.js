@@ -162,3 +162,17 @@ test("safe paths and unique names", () => {
   assert.equal(C.uniqueName("a.txt", ["a.txt", "a (1).txt"]), "a (2).txt");
   assert.equal(C.uniqueName("b", []), "b");
 });
+
+test("breadcrumbs: every crumb carries its own folder path", () => {
+  assert.deepEqual(C.crumbs("/internal"), [{ name: "", path: "/internal" }]);
+  assert.deepEqual(C.crumbs("/internal/Έγγραφα/Α & Β/2026"), [
+    { name: "", path: "/internal" },
+    { name: "Έγγραφα", path: "/internal/Έγγραφα" },
+    { name: "Α & Β", path: "/internal/Έγγραφα/Α & Β" },
+    { name: "2026", path: "/internal/Έγγραφα/Α & Β/2026" }
+  ]);
+  assert.deepEqual(C.crumbs("/internal/a//b/").map((c) => c.path),
+    ["/internal", "/internal/a", "/internal/a/b"]);
+  assert.deepEqual(C.crumbs("/elsewhere/x"), [{ name: "", path: "/internal" }]);
+  assert.deepEqual(C.crumbs(null), [{ name: "", path: "/internal" }]);
+});
