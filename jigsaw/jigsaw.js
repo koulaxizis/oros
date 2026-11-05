@@ -1709,6 +1709,7 @@
     var res = snapGroup(cur.P, cur.M, g);
     cur.P.forEach(function (p, i) { dirty[i] = 1; });
     schedule();
+    if (res.joined || res.placed) if (window.orosHaptics) window.orosHaptics.cue("join");   // F8
     if (res.joined) live(t("live.joined"));
     else if (res.placed) live(t("live.placed"));
     if (res.joined && prefs.edges) applyEdges();
@@ -1832,6 +1833,7 @@
   }
 
   function solved() {
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopTimer();
     var G = cur.G;
     G.done = 1;

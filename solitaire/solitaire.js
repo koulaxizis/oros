@@ -1171,6 +1171,7 @@
   }
 
   function commit(next, msg) {
+    if (window.orosHaptics) window.orosHaptics.cue("move");    // F8
     undoStack.push(game);
     game = next;
     hint = null;
@@ -1260,6 +1261,7 @@
 
   var lastWin = null;
   function finish() {
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopAuto();
     stopClock();
     won = true;

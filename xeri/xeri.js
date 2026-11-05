@@ -1361,6 +1361,7 @@
     try { return localStorage.getItem(SFX_KEY) === "1"; } catch (e) { return false; }
   }
   function sfx() {
+    if (window.orosHaptics) window.orosHaptics.cue("card");   // F8: optional vibration, its own switch
     if (!sfxOn()) return;
     try {
       var AC = window.AudioContext || window.webkitAudioContext;

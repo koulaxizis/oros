@@ -8,6 +8,7 @@ Alle deine Spiele an einem Ort: die heutigen Tagesrätsel, deine Erfolge und die
 - Die Zeile unter dem Titel zeigt deine tägliche Serie: die Tage in Folge, an denen du mindestens ein Tagesrätsel gelöst hast.
 - `Erfolge` listet Ziele wie den ersten Sieg, eine 7-Tage-Serie bei Tagesrätseln oder alle sechs Tagesrätsel an einem Tag. Ein Pokal markiert die erreichten; die anderen zeigen, wie weit du bist.
 - `Statistik` listet jedes Spiel, das du gespielt hast, die meistgespielten zuerst: gespielte, gewonnene oder gelöste Spiele, gelöste Tagesrätsel, Serie, Bestzeit und Highscore, soweit das Spiel sie hat. Tippe auf den Namen eines Spiels, um es zu öffnen. Noch nicht gespielte Spiele stehen ganz unten.
+- `Auf diesem Gerät` (auf einem Handy oder Tablet, das vibrieren kann, etwa Android) hat `Vibrieren bei Zügen, Fehlern und Siegen`: anfangs aus; eingeschaltet gibt jedes Spiel bei einem Zug ein kurzes Summen, bei einem Fehler ein längeres und beim Sieg ein kleines Muster. Es gilt nur auf diesem Gerät; der Ton-Knopf jedes Spiels ist davon getrennt.
 
 Die Schaltfläche `Alle Spiele` jedes Spiels (in seiner Statistik und nach einem Tagesrätsel) bringt dich hierher, zur Zeile dieses Spiels.
 

@@ -972,11 +972,13 @@
     else saveSessions();
     renderAll();
     live(t("live.found", { w: game.words[i].w, f: game.found.length, k: game.words.length }));
+    if (window.orosHaptics) window.orosHaptics.cue("found");   // F8
     pulseWord(i);
   }
 
   function finish() {
     var sec = elapsed() / 1000;
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopClock();
     game.done = true;
     saveSessions();

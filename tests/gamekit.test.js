@@ -81,3 +81,26 @@ test("gamekit: every game loads gamekit/layout.css after its own stylesheet", ()
   const css = fs.readFileSync(path.join(root, "gamekit", "layout.css"), "utf8");
   assert.match(css, /@media \(orientation: landscape\) and \(max-height: 520px\)/);
 });
+
+// Games audit F8 (2026-11-05): optional vibration, off by default.
+test("gamekit: haptics patterns, off by default, and every game wired", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const H = require("../gamekit/haptics.js");
+  assert.equal(H.KEY, "oros-games-haptics");
+  assert.deepEqual(H.pattern("win"), [25, 50, 25, 50, 60]);
+  assert.deepEqual(H.pattern("miss"), [70]);
+  assert.deepEqual(H.pattern("drop"), [12]);
+  assert.deepEqual(H.pattern("tick"), []);          // a game clock is not a move
+  assert.equal(H.enabled(), false);                 // no window, no switch: nothing buzzes
+  const root = path.join(__dirname, "..");
+  const apps = JSON.parse(fs.readFileSync(path.join(root, "apps.json"), "utf8")).apps;
+  for (const g of apps.filter((a) => a.category === "Games")) {
+    const html = fs.readFileSync(path.join(root, g.url, "index.html"), "utf8");
+    assert.match(html, /<script src="\.\.\/gamekit\/haptics\.js/, g.id + " loads gamekit/haptics.js");
+    if (g.id === "gamecenter") continue;
+    const js = fs.readdirSync(path.join(root, g.url)).filter((f) => f.endsWith(".js"))
+      .map((f) => fs.readFileSync(path.join(root, g.url, f), "utf8")).join("\n");
+    assert.match(js, /window\.orosHaptics\.cue\(/, g.id + " calls orosHaptics.cue");
+  }
+});

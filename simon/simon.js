@@ -489,6 +489,7 @@
     lightPad(p);
     later(function () { lightPad(-1); }, PRESS_MS);
     if (p !== expectedPad(game.seq, game.mode, game.k)) { gameOver(); return; }
+    if (window.orosHaptics) window.orosHaptics.cue("press");   // F8
     tone(p, PRESS_MS / 1000);
     game.k++;
     if (game.k < game.seq.length) return;
@@ -499,6 +500,7 @@
   }
 
   function gameOver() {
+    if (window.orosHaptics) window.orosHaptics.cue("miss");    // F8
     missed = expectedPad(game.seq, game.mode, game.k);
     game.phase = "over";
     game.score = game.seq.length - 1;

@@ -1349,6 +1349,7 @@
 
   function typeLetter(l) {
     if (!gate()) return;
+    if (window.orosHaptics) window.orosHaptics.cue("key");     // F8
     var ix = game.cur;
     if (!locked(ix)) writeCell(ix, l);
     var nx = stepInWord(ix, 1);
@@ -1441,6 +1442,7 @@
 
   function finish() {
     var sec = elapsed() / 1000;
+    if (window.orosHaptics) window.orosHaptics.cue("win");     // F8
     stopClock();
     game.done = true;
     game.bad = [];
