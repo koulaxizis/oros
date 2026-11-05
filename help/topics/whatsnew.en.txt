@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.41.00
+- **Open Passwords with your fingerprint or face on Android.** In the orOS app and in the "orOS Passwords" app, `Menu` › `Fingerprint unlock` lets you open the vault with your fingerprint or face instead of typing the master password. Only a fingerprint or face counts, never the screen PIN. The master password stays the key: it always works, it is asked every 14 days and once after you change it, and the phone's copy never leaves the phone or syncs. Update the Android app to get it.
+
 ## Version 5.40.00
 - **Games fit a phone held sideways.** On a phone turned sideways the board takes the right side and the buttons and score stack on the left, so Tetris, Battleship and the board games are playable in landscape. Upright on a narrow phone, toolbar buttons wrap onto a second line instead of hiding past the edge.
 - **Vibration in games, if you want it.** Game Center › On this device has a switch that makes every game vibrate lightly on moves, a little longer on mistakes and with a short pattern on wins. It is off until you turn it on, and appears only on a touch device that can vibrate.
