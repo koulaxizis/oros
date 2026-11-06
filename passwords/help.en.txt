@@ -68,6 +68,8 @@ Two-factor apps: each code goes to the one entry with the same site and account 
 - LastPass Authenticator: its export to a file (`.json`).
 - Any other app that can save a `.txt` with one `otpauth://` link per line.
 
+If a file arrives empty (some phones' file pickers hand over nothing), copy it to Downloads and choose it from there, or open it in a text app, copy all of it and paste it into `Link of the QR code, or the text of an export file`, then press `Read`.
+
 ### Moving codes from Microsoft Authenticator or Authy
 Microsoft Authenticator and Authy keep their codes to themselves: neither can export them, and reading them out of the phone needs root, which orOS does not do. Move them one account at a time; it takes a minute per site:
 1. On the website, open its security or two-factor settings and choose to set up an authenticator app again (often `Add a device`, `Change authenticator app`, or turning two-factor sign-in off and on).

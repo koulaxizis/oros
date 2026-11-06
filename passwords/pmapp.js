@@ -144,7 +144,8 @@
       "imp.filePw": "Password of the export file",
       "imp.ga": "Google Authenticator",
       "imp.gaHint": "In Google Authenticator use Transfer accounts, then Export accounts. Choose a screenshot of each QR code, scan it with the camera, or paste its otpauth-migration:// link. Add the QR codes one after another, then import.",
-      "imp.link": "Link of the QR code", "imp.read": "Read",
+      "imp.link": "Link of the QR code, or the text of an export file", "imp.read": "Read",
+      "err.zero": "The file arrived empty (0 bytes), so this device's file picker did not hand it over. Copy the file to Downloads and choose it from there, or open it in a text app, copy all of it and paste it into \u201cLink of the QR code, or the text of an export file\u201d below.",
       "imp.from": "Read from {s}.", "imp.src.csv": "a CSV file", "imp.src.otp": "a two-factor link",
       "imp.src.list": "a list of two-factor links",
       "imp.otpApps": "Two-factor apps: a backup or export of Aegis, 2FAS, Proton Authenticator, Ente Auth, Bitwarden Authenticator, andOTP, FreeOTP+, Stratum (Authenticator Pro) or LastPass Authenticator, with or without its password, or a .txt file of otpauth:// links. Google Authenticator: the QR codes below. Microsoft Authenticator and Authy have no export: see Help, \u201cMoving codes from Microsoft Authenticator or Authy\u201d.",
@@ -392,7 +393,8 @@
       "imp.filePw": "Κωδικός του αρχείου εξαγωγής",
       "imp.ga": "Google Authenticator",
       "imp.gaHint": "Στο Google Authenticator πήγαινε στη Μεταφορά λογαριασμών και μετά στην Εξαγωγή λογαριασμών. Διάλεξε ένα στιγμιότυπο οθόνης κάθε κωδικού QR, σάρωσέ τον με την κάμερα ή επικόλλησε τον σύνδεσμο otpauth-migration://. Πρόσθεσε τους κωδικούς QR τον έναν μετά τον άλλον και μετά κάνε την εισαγωγή.",
-      "imp.link": "Σύνδεσμος του κωδικού QR", "imp.read": "Ανάγνωση",
+      "imp.link": "Σύνδεσμος του κωδικού QR ή το κείμενο ενός αρχείου εξαγωγής", "imp.read": "Ανάγνωση",
+      "err.zero": "Το αρχείο έφτασε άδειο (0 bytes), άρα η επιλογή αρχείων αυτής της συσκευής δεν το παρέδωσε. Αντίγραψε το αρχείο στις Λήψεις και διάλεξέ το από εκεί, ή άνοιξέ το με μια εφαρμογή κειμένου, αντίγραψε όλο το κείμενο και επικόλλησέ το παρακάτω, στο «Σύνδεσμος του κωδικού QR ή το κείμενο ενός αρχείου εξαγωγής».",
       "imp.from": "Διαβάστηκε από {s}.", "imp.src.csv": "αρχείο CSV", "imp.src.otp": "σύνδεσμο δύο βημάτων",
       "imp.src.list": "λίστα συνδέσμων δύο βημάτων",
       "imp.otpApps": "Εφαρμογές δύο βημάτων: ένα αντίγραφο ή μια εξαγωγή από Aegis, 2FAS, Proton Authenticator, Ente Auth, Bitwarden Authenticator, andOTP, FreeOTP+, Stratum (Authenticator Pro) ή LastPass Authenticator, με ή χωρίς τον κωδικό του, ή ένα αρχείο .txt με συνδέσμους otpauth://. Google Authenticator: οι κωδικοί QR παρακάτω. Το Microsoft Authenticator και το Authy δεν έχουν εξαγωγή: δες τη Βοήθεια, «Μεταφορά κωδικών από Microsoft Authenticator ή Authy».",
@@ -624,7 +626,7 @@
                 "storage-full": "err.storage", "no-wasm": "lock.noWasm", "no-argon2": "lock.noWasm",
                 "bad-kdf": "lock.newer", "future": "lock.newer",
                 "encrypted-proton": "err.encProton", "encrypted-aegis": "err.encAegis", "encrypted-2fas": "err.enc2fas",
-                "encrypted-dashlane": "err.encDashlane", "hotp": "e.hotp", "toobig": "err.toobig", "no-memory": "err.noMemory" };
+                "encrypted-dashlane": "err.encDashlane", "hotp": "e.hotp", "toobig": "err.toobig", "no-memory": "err.noMemory", "zero": "err.zero" };
     return t(map[m] || "err.generic");
   }
 
@@ -2266,9 +2268,29 @@
       res = null;
     }
     d.onClose(forget);
+    // a scanned / pasted otpauth(-migration) link, or the pasted text of
+    // an export file (when the phone's file picker hands over nothing)
     function fromText(text) {
-      if (!/^otpauth(-migration)?:\/\//i.test(String(text).trim())) { err(t("scan.notOtp")); return; }
-      take(OI.parseText(text));
+      var v = String(text).trim();
+      if (/^otpauth(-migration)?:\/\//i.test(v)) { take(OI.parseText(v)); return; }
+      if (!/^[\[{]/.test(v) && !/[\r\n]/.test(v)) { err(t("scan.notOtp")); return; }
+      var r = OI.parseText(v, "pasted");
+      v = null;
+      if (r && (r.locked || r.kdbx)) {
+        if (r.kdbx) { err(t("err.format")); return; }
+        askPassword(r);
+        return;
+      }
+      take(r);
+    }
+    function askPassword(r) {
+      res = null; locked = r;
+      kpwBox.firstChild.textContent = t("imp.filePw");
+      kfLabel.hidden = kfRow.hidden = true;
+      kx.hidden = false; qr.hidden = true;
+      go.textContent = t("imp.open");
+      err("");
+      try { kpw.focus(); } catch (e) {}
     }
     function take(r) {
       if (!r || r.error) { err(errText(new Error(r ? r.error : "format"))); return; }
