@@ -194,3 +194,9 @@ test("android: Calendar and To-Do widgets (BR-PHONE v7) are the orOS app's own, 
   assert.match(ag, /"phone-done"/);
   assert.match(java("PhoneBridge.java"), /AgendaWidgets\.taken\(app, refs\)/);
 });
+
+test("android: the orOS APK's launcher icon and splash are the gold logo (icons/icon-192/512.png)", () => {
+  const res = path.join(ROOT, "android", "app", "src", "main", "res");
+  assert.ok(fs.readFileSync(path.join(res, "mipmap-xxxhdpi", "ic_launcher.png")).equals(fs.readFileSync(path.join(ROOT, "icons", "icon-192.png"))));
+  assert.ok(fs.readFileSync(path.join(res, "drawable-xxxhdpi", "splash.png")).equals(fs.readFileSync(path.join(ROOT, "icons", "icon-512.png"))));
+});
