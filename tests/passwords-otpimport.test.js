@@ -271,3 +271,11 @@ test("Nothing is executed or evaluated: hostile names stay text, huge KDF settin
   const ente = { version: 1, kdfParams: { memLimit: 1024, opsLimit: 1, salt: "AAAAAAAAAAAAAAAAAAAAAA==" }, encryptedData: "AA==", encryptionNonce: "AA==" };
   await assert.rejects(I.unlock(I.parseText(JSON.stringify(ente)), "x", NOW), { message: "kdf-params" });
 });
+
+test("An empty file (0 bytes) is told apart; the pasted text of an export reads like the file", async () => {
+  assert.equal((await I.parse({ name: "proton_authenticator_backup.json", bytes: new Uint8Array(0) }, NOW)).error, "zero");
+  const j = JSON.stringify({ version: 1, entries: [{ id: "x", content: { uri: "otpauth://totp/me%40mail.com?secret=" + S1, entry_type: "Totp", name: "me@mail.com" }, note: null }] });
+  const r = I.parseText(j, "pasted", NOW);
+  assert.equal(r.source, "protonauth"); assert.equal(r.codes.length, 1); assert.equal(r.codes[0].account, "me@mail.com");
+  assert.equal(I.parseText(JSON.stringify({ version: 1, salt: "AAAA", content: "BBBB" }), "pasted", NOW).locked, "protonauth");
+});

@@ -1225,7 +1225,9 @@
     now = now || Date.now();
     if (typeof input === "string") return Promise.resolve(parseText(input, "", now));
     var bytes = input && input.bytes, name = s(input && input.name);
-    if (!bytes || !bytes.length) return Promise.resolve({ error: "empty" });
+    // 0 bytes: the phone handed over an empty file (some file pickers
+    // do); told apart from an export with nothing in it
+    if (!bytes || !bytes.length) return Promise.resolve({ error: "zero" });
     var p;
     try {
       if (bytes.length >= 8 && bytes[0] === 0x03 && bytes[1] === 0xd9 && bytes[2] === 0xa2 && bytes[3] === 0x9a) {
