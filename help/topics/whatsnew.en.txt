@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.45.01
+- **Music keeps playing when a song stops.** A free song that stopped with "This song cannot play here." (often a Jamendo song deep into a long list, whose address had gone stale) stopped the music. Now Music asks for the song again and goes on from where it stopped; without a network it waits and goes on when the network is back; only a song that still cannot play is skipped.
+
 ## Version 5.45.00
 - **Autofill in the orOS Passwords app too.** The single app "orOS Passwords" on Android now fills logins, 2FA codes, cards and addresses in other apps and browsers, like the orOS app: `Menu` › `Autofill on this phone`, then choose it in Android's settings. Logins you save in other apps open in its editor. Update the app to get it.
 
