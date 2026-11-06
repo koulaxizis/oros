@@ -97,6 +97,7 @@
       "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Openverse and ccMixter. Every song shows its licence.",
       "home.genres": "Free music by genre", "kind.free": "Free music", "home.moods": "Moods (Jamendo)", "kind.mood": "Mood",
       "o.title": "Free music online", "o.all": "All", "o.loading": "Loading…", "o.more": "Show more", "o.none": "Nothing found here.",
+      "o.fromQueue": "The list did not load this time. These are the songs playing from here.",
       "o.err": "No answer from {s}.", "o.busy": "Too many requests to {s}. Try again in a minute.", "o.offline": "You are offline.",
       "o.retry": "Try again", "o.closed": "This item has no open licence, so Music does not play it.", "o.wait": "Searching online…",
       "o.albums": "Albums · {s}", "o.songs": "Songs · {s}",
@@ -258,6 +259,7 @@
       "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Openverse και ccMixter. Κάθε τραγούδι δείχνει την άδειά του.",
       "home.genres": "Ελεύθερη μουσική ανά είδος", "kind.free": "Ελεύθερη μουσική", "home.moods": "Διάθεση (Jamendo)", "kind.mood": "Διάθεση",
       "o.title": "Ελεύθερη μουσική online", "o.all": "Όλα", "o.loading": "Φόρτωση…", "o.more": "Δείξε περισσότερα", "o.none": "Δεν βρέθηκε τίποτα εδώ.",
+      "o.fromQueue": "Η λίστα δεν φόρτωσε αυτή τη φορά. Αυτά είναι τα τραγούδια που παίζουν από εδώ.",
       "o.err": "Δεν ήρθε απάντηση από {s}.", "o.busy": "Πολλά αιτήματα προς {s}. Δοκίμασε ξανά σε ένα λεπτό.", "o.offline": "Δεν υπάρχει σύνδεση.",
       "o.retry": "Δοκίμασε ξανά", "o.closed": "Αυτό δεν έχει ανοιχτή άδεια, οπότε η Μουσική δεν το παίζει.", "o.wait": "Αναζήτηση online…",
       "o.albums": "Άλμπουμ · {s}", "o.songs": "Τραγούδια · {s}",
@@ -577,6 +579,22 @@
   function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.albums, more: r.more }; }); }; }
   function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
   function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
+  // Jamendo songs asked in more than one way (a mood, MU-MOOD2): page 1
+  // goes down the list until one way answers with songs, later pages
+  // keep that way.
+  function fJmTry(qs) {
+    var at = 0;
+    return function (page) {
+      var go = function (i) {
+        return O.jmTracks(Object.assign({}, qs[i], { page: page })).then(function (r) {
+          if (page === 1 && !r.tracks.length && i + 1 < qs.length) return go(i + 1);
+          at = i;
+          return { list: r.tracks, more: r.more };
+        });
+      };
+      return go(page === 1 ? 0 : at);
+    };
+  }
   function fJm(o) {
     return function (page) {
       var q = Object.assign({}, o, { page: page });
@@ -2641,9 +2659,10 @@
       var mn = O.moodName(mo.id, LANG);
       src = { kind: "omood", id: mo.id, n: mn };
       k = "m|jm|" + mo.id;
-      f = feed(k, fJm({ mood: mo.id, order: "popularity_month" }));
+      f = feed(k, typeof O.jmMoodQueries === "function" ? fJmTry(O.jmMoodQueries(mo.id)) : fJm({ mood: mo.id, order: "popularity_month" }));
       pageHead(m, cover("", "mood" + mo.id, "big", I.globe), t("kind.mood"), mn, el("div", "ph-sub dim", srcName("jm")), f.list, src);
       m.appendChild(rowList(f.list, { src: src }));
+      if (!f.busy && !f.list.length && playingQueue(m, src)) return;
       feedStatus(m, k, srcName("jm"));
     } else if (v.kind === "ia" || v.kind === "jm") {
       var sk0 = v.kind;
@@ -2684,6 +2703,25 @@
       else m.appendChild(rowList(f.list, { src: src, noArtist: true }));
       feedStatus(m, k, srcName(sk));
     }
+  }
+  // A page of an open catalogue that answers with no songs while its
+  // songs are playing (MU-MOOD2): the songs of the queue instead of
+  // "Nothing found here", with a way to ask again.
+  function playingQueue(m, src) {
+    if (!isPlayingFrom(src)) return false;
+    var st = H.getState(), up = H.upcoming(100), n = 0;
+    var p = el("div", "o-note");
+    p.appendChild(el("span", "dim small", t("o.fromQueue")));
+    p.appendChild(button(t("o.retry"), "pill small-pill", function () {
+      Object.keys(feeds).forEach(function (k) { if (k === "m|jm|" + src.id && !feeds[k].busy) delete feeds[k]; });
+      renderKeepScroll();
+    }));
+    m.appendChild(p);
+    var ul = el("ul", "rows");
+    ul.appendChild(qRow(st.cur, -1, true));
+    up.next.forEach(function (it) { ul.appendChild(qRow(it, n++, false)); });
+    m.appendChild(ul);
+    return true;
   }
   function oArtistLink(r, cls) {
     var id = oArtistId(r);
