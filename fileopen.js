@@ -217,8 +217,14 @@
   // wave 2). Not in the manifest: orOS does not take these over in the
   // system's "Open with". Music copies a song from elsewhere into its
   // folder (Files passes { playPath } for a song already there).
+  // solo: the same types with their MIME types for the single app
+  // "orOS Music" only (solo.js manifestFor via table()): the system's
+  // "Open with" offers orOS Music for songs, never the whole orOS.
   var INSIDE = [
-    { app: "music", exts: [".mp3", ".m4a", ".m4b", ".aac", ".ogg", ".oga", ".opus", ".flac", ".wav", ".wave", ".weba"] },
+    { app: "music", max: 500 * 1024 * 1024, exts: [".mp3", ".m4a", ".m4b", ".aac", ".ogg", ".oga", ".opus", ".flac", ".wav", ".wave", ".weba"],
+      solo: { "audio/mpeg": [".mp3"], "audio/mp4": [".m4a", ".m4b"], "audio/x-m4a": [".m4a"], "audio/aac": [".aac"],
+              "audio/ogg": [".ogg", ".oga", ".opus"], "audio/opus": [".opus"], "audio/flac": [".flac"],
+              "audio/wav": [".wav", ".wave"], "audio/x-wav": [".wav"], "audio/webm": [".weba"] } },
     // Web and data files stay out of the system's "Open with" (BR-FO-2);
     // inside orOS, Files can open them in Pad (as text, never run).
     { app: "pad", path: "openPath", exts: [".js", ".mjs", ".cjs", ".json", ".jsonc", ".webmanifest", ".html", ".htm", ".xhtml", ".vue", ".svelte"] }
@@ -295,6 +301,14 @@
     var out = appsFor(ext);
     INSIDE.forEach(function (h) { if (h.exts.indexOf(ext) !== -1 && out.indexOf(h.app) === -1) out.push(h.app); });
     return out;
+  }
+  // The single app "solo" opens files of this type itself: its own
+  // table types, or its INSIDE types that it takes on its own (solo).
+  function soloTakes(solo, ext) {
+    ext = String(ext || "").toLowerCase();
+    if (!solo || !ext) return false;
+    if (appsFor(ext).indexOf(solo) !== -1) return true;
+    return INSIDE.some(function (h) { return h.app === solo && h.solo && h.exts.indexOf(ext) !== -1; });
   }
   // Same as choose(), with insideFor(): { app } | { ask } | null.
   function chooseInside(name, prefs) {
@@ -419,8 +433,10 @@
     manifestHandlers: manifestHandlers, shareTarget: shareTarget, shareAccept: shareAccept,
     // The whole table, copied (the single apps' manifests, solo.js).
     table: function () {
-      return HANDLERS.map(function (h) { return { app: h.app, accept: JSON.parse(JSON.stringify(h.accept)) }; });
+      return HANDLERS.map(function (h) { return { app: h.app, accept: JSON.parse(JSON.stringify(h.accept)) }; })
+        .concat(INSIDE.filter(function (h) { return h.solo; }).map(function (h) { return { app: h.app, accept: JSON.parse(JSON.stringify(h.solo)) }; }));
     },
+    soloTakes: soloTakes,
     shareIdFromUrl: shareIdFromUrl, SHARE_INBOX: SHARE_INBOX, textKey: textKey, TEXT_MAX: TEXT_MAX, str: str
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
@@ -576,6 +592,8 @@
   // MAX_BYTES (also while the person still has to choose an app).
   function maxFor(app) {
     for (var i = 0; app && i < HANDLERS.length; i++) if (HANDLERS[i].app === app && HANDLERS[i].max) return HANDLERS[i].max;
+    // Songs opened in orOS Music (a long mix or a FLAC album side).
+    for (var j = 0; app && j < INSIDE.length; j++) if (INSIDE[j].app === app && INSIDE[j].max) return INSIDE[j].max;
     return MAX_BYTES;
   }
 
@@ -589,7 +607,7 @@
   function deliver(file) {
     if (!file) return;
     var solo = soloApp(), ext = extOf(file.name);
-    var c = (solo && ext && appsFor(ext).indexOf(solo) !== -1) ? { app: solo } : choose(file.name, loadPrefs());
+    var c = soloTakes(solo, ext) ? { app: solo } : choose(file.name, loadPrefs());
     if (!c) { notice(T("unknown")); return; }
     if (file.size > maxFor(c.app)) { notice(T("big")); return; }
     if (c.app) openWith(c.app, file);

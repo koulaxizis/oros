@@ -1,0 +1,149 @@
+{
+  "name": "orOS Music",
+  "short_name": "Music",
+  "description": "orOS Music: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "id": "/music/solo.html",
+  "start_url": "/music/solo.html",
+  "scope": "/music/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14120d",
+  "theme_color": "#1b1a18",
+  "icons": [
+    {
+      "src": "/icons/solo/music.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/music-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/music-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/solo/music-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "shortcuts": [
+    {
+      "name": "Liked songs",
+      "short_name": "Liked songs",
+      "url": "/music/solo.html?do=liked",
+      "icons": [
+        {
+          "src": "/icons/solo/music-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Shuffle my music",
+      "short_name": "Shuffle my music",
+      "url": "/music/solo.html?do=shuffle",
+      "icons": [
+        {
+          "src": "/icons/solo/music-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/music/solo.html?file-open=music",
+      "accept": {
+        "audio/mpeg": [
+          ".mp3"
+        ],
+        "audio/mp4": [
+          ".m4a",
+          ".m4b"
+        ],
+        "audio/x-m4a": [
+          ".m4a"
+        ],
+        "audio/aac": [
+          ".aac"
+        ],
+        "audio/ogg": [
+          ".ogg",
+          ".oga",
+          ".opus"
+        ],
+        "audio/opus": [
+          ".opus"
+        ],
+        "audio/flac": [
+          ".flac"
+        ],
+        "audio/wav": [
+          ".wav",
+          ".wave"
+        ],
+        "audio/x-wav": [
+          ".wav"
+        ],
+        "audio/webm": [
+          ".weba"
+        ]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/music/solo.html?share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "audio/mpeg",
+            ".mp3",
+            "audio/mp4",
+            ".m4a",
+            ".m4b",
+            "audio/x-m4a",
+            "audio/aac",
+            ".aac",
+            "audio/ogg",
+            ".ogg",
+            ".oga",
+            ".opus",
+            "audio/opus",
+            "audio/flac",
+            ".flac",
+            "audio/wav",
+            ".wav",
+            ".wave",
+            "audio/x-wav",
+            "audio/webm",
+            ".weba"
+          ]
+        }
+      ]
+    }
+  }
+}

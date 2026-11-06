@@ -104,5 +104,8 @@ What is sent: the words you search for, the artist's MusicBrainz and Wikidata id
 ## Covers and other apps
 `Find missing covers online` in the settings, or `Find cover online` on an album's ⋯ button, asks MusicBrainz and the Cover Art Archive for covers of albums that have none; only the album and artist names are sent. An album's ⋯ button also has `Add to Media Shelf`. `Use in Montage` on a song opens it in Montage: a song of this device as it is, a free song whose licence allows changes saved first to `Files › Music › Free music`, with its credit copied for your video.
 
+## orOS Music on its own
+Music can also be installed as its own app, orOS Music, with its own icon and window: Settings › Single apps, or on Android the APK `oros-music.apk` (also in the orOS F-Droid repository). It uses the same songs, likes and playlists as Music in orOS on the same device. Music keeps playing with the app in the background or the screen off, with the song and its buttons in the notification and on the lock screen. Long-press the icon for `Liked songs` or `Shuffle my music`. Songs open with orOS Music from a file manager (they are copied into `Files › Music` and play), and a link shared to it plays a song at once, or opens Import for a playlist file (M3U, PLS, XSPF) or Add a music feed for any other address; nothing is added before you tap.
+
 ## Keys
 Space plays or pauses, ← and → move 10 seconds, Shift+← and Shift+→ go to the previous or next song, S turns shuffle on or off, R changes repeat and L likes the song.

@@ -158,6 +158,14 @@
     radio: {
       shortcuts: [{ do: "last", target: { play: "last" } }]
     },
+    // Music (2026-11-05): an audio link shared in plays (a song),
+    // becomes a playlist (.m3u/.pls/.xspf) or a music feed; songs open
+    // with it (fileopen.js INSIDE "solo" types).
+    music: {
+      shortcuts: [{ do: "liked", target: { liked: 1 } },
+                  { do: "shuffle", target: { shuffleAll: true } }],
+      share: "audio"
+    },
     photolab: {
       // (no "Open a picture": a file picker needs a tap inside the page)
       shortcuts: [{ do: "new", target: { newPic: true } }]
@@ -258,6 +266,9 @@
           "sc.podcasts.find": "Find a podcast",
           "name.radio": "orOS Radio",
           "sc.radio.last": "Play the last station",
+          "name.music": "orOS Music",
+          "sc.music.liked": "Liked songs",
+          "sc.music.shuffle": "Shuffle my music",
           "name.photolab": "orOS Photo Lab",
           "sc.photolab.new": "New picture",
           "name.invoices": "orOS Invoices",
@@ -347,6 +358,9 @@
           "sc.podcasts.find": "Εύρεση podcast",
           "name.radio": "orOS Ραδιόφωνο",
           "sc.radio.last": "Ο τελευταίος σταθμός",
+          "name.music": "orOS Μουσική",
+          "sc.music.liked": "Αγαπημένα τραγούδια",
+          "sc.music.shuffle": "Τυχαία από τη μουσική μου",
           "name.photolab": "orOS Εργαστήριο εικόνας",
           "sc.photolab.new": "Νέα εικόνα",
           "name.invoices": "orOS Τιμολόγια",
@@ -565,6 +579,10 @@
     if (kind === "feed" || kind === "podcast") {
       return url ? { app: id, target: { add: { url: url } } } : null;
     }
+    if (kind === "audio") {
+      // Music: the link only; the app decides (song, playlist, feed).
+      return url ? { app: id, target: { addUrl: { url: url } } } : null;
+    }
     if (kind === "mail") {
       return bodyText.trim() || title ? { app: id, target: { compose: { subject: (title || firstLine).slice(0, 300), body: bodyText.slice(0, 20000) } } } : null;
     }
@@ -633,7 +651,7 @@
       if (h.app !== id && (a.files || []).indexOf(h.app) < 0) return;
       Object.keys(h.accept).forEach(function (mime) {
         accept[mime] = h.accept[mime].slice();
-        exts = exts.concat(mime, h.accept[mime]);
+        [mime].concat(h.accept[mime]).forEach(function (x) { if (exts.indexOf(x) < 0) exts.push(x); });
       });
     });
     if (Object.keys(accept).length) {

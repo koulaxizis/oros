@@ -34,6 +34,7 @@
     "photolab": "online.useoros.photolab",
     "invoices": "online.useoros.invoices",
     "crm": "online.useoros.crm",
-    "timesheet": "online.useoros.timesheet"
+    "timesheet": "online.useoros.timesheet",
+    "music": "online.useoros.music"
   }
 }

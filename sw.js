@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v5.45.02";
+var CACHE_VERSION = "oros-v5.46.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -303,6 +303,8 @@ var PRECACHE_URLS = [
   "podcasts/manifest.webmanifest",
   "radio/solo.html",
   "radio/manifest.webmanifest",
+  "music/solo.html",
+  "music/manifest.webmanifest",
   "photolab/solo.html",
   "photolab/manifest.webmanifest",
   "invoices/solo.html",
@@ -429,6 +431,10 @@ var PRECACHE_URLS = [
   "icons/solo/radio-192.png",
   "icons/solo/radio-512.png",
   "icons/solo/radio-maskable-512.png",
+  "icons/solo/music.svg",
+  "icons/solo/music-192.png",
+  "icons/solo/music-512.png",
+  "icons/solo/music-maskable-512.png",
   "icons/solo/photolab.svg",
   "icons/solo/photolab-192.png",
   "icons/solo/photolab-512.png",
