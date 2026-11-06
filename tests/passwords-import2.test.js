@@ -212,7 +212,7 @@ test("Bitwarden JSON still goes through pmcore (and an encrypted one is refused)
 });
 
 // ---------- two-factor apps ----------
-test("Aegis: plain export → codes (HOTP / Steam counted as unsupported); encrypted waits for its password", () => {
+test("Aegis: plain export → codes (HOTP counted as unsupported, Steam Guard read); encrypted waits for its password", () => {
   const j = { version: 1, header: { slots: null, params: null }, db: { version: 3, entries: [
     { type: "totp", uuid: "a", name: "ann@example.org", issuer: "GitHub", note: "", info: { secret: SECRET, algo: "SHA1", digits: 6, period: 30 } },
     { type: "totp", uuid: "b", name: "x", issuer: "Bank", info: { secret: SECRET2, algo: "SHA256", digits: 8, period: 60 } },
@@ -221,8 +221,9 @@ test("Aegis: plain export → codes (HOTP / Steam counted as unsupported); encry
   ] } };
   const r = I.parseText(JSON.stringify(j), "aegis-export.json", NOW);
   assert.equal(r.source, "aegis");
-  assert.equal(r.codes.length, 2);
-  assert.equal(r.unsupported, 2);
+  assert.equal(r.codes.length, 3);
+  assert.equal(r.unsupported, 1);
+  assert.equal(r.codes[2].uri, "otpauth://totp/Steam:s?secret=" + SECRET + "&issuer=Steam&digits=5&encoder=steam");
   assert.equal(r.codes[0].uri, "otpauth://totp/GitHub:ann%40example.org?secret=" + SECRET + "&issuer=GitHub");
   assert.equal(r.codes[1].uri, "otpauth://totp/Bank:x?secret=" + SECRET2 + "&issuer=Bank&algorithm=SHA256&digits=8&period=60");
   const p = PC.parseOtp(r.codes[1].uri);

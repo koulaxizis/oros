@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Passwords — import.js (more sources for Import, v1.1.0)
+// orOS Passwords — import.js (more sources for Import, v1.2.0)
 // Reads an export of another password manager or two-factor app and
 // turns it into vault entries (pmcore.js shape). Pure: no DOM, no
 // storage, no logging; pmapp.js runs the picker, the preview, the
@@ -32,7 +32,15 @@
 //   gauth      Google Authenticator "Transfer accounts" QR:
 //              otpauth-migration://offline?data=… (protobuf
 //              MigrationPayload, read by a small hand-written reader).
-//   otpauth    one otpauth://totp/ link.
+//   otpauth    one otpauth://totp/ (or steam://) link.
+//   PW-OTP3 (two-factor apps): protonauth (Proton Authenticator .json,
+//              plain or with a password), ente (Ente Auth plain text or
+//              encrypted export), otplist (.txt of otpauth:// links),
+//              andotp (.json, .json.aes), freeotp (FreeOTP+ .json),
+//              stratum (Stratum / Authenticator Pro .json, .authpro),
+//              lastpassauth (LastPass Authenticator .json); code-only
+//              Bitwarden items (Bitwarden Authenticator) become codes.
+//              Steam Guard codes come from every app that has them.
 //   bitwarden, csv (Chrome, Edge, Firefox, KeePassXC, 1Password,
 //              Bitwarden CSV) go through PmCore.fromBitwarden and
 //              PmCore.fromCsv as before; keepass is read by kdbx.js in
@@ -44,7 +52,8 @@
 //     trashed, attachments, recycled, types: { login, note, … },
 //     batch?: { index, size, id }, plain: true (an unencrypted file) }
 //   or { kdbx: true } (pmapp asks for the KeePass password) or
-//   { locked: "bitwarden" | "aegis" | "2fas", data } (an export with a
+//   { locked: "bitwarden" | "aegis" | "2fas" | "protonauth" | "ente" |
+//     "andotp" | "stratum", data } (an export with a
 //   password: unlock(locked, password) → Promise<result>) or
 //   { error: "json" | "format" | "empty" | "encrypted" (Bitwarden) |
 //     "encrypted-proton" | "encrypted-aegis" | "encrypted-2fas" |
@@ -148,18 +157,23 @@
   // ---------- two-factor codes ----------
   var ALGO = { "SHA1": "SHA1", "SHA256": "SHA256", "SHA512": "SHA512" };
   // → code or null (counted as unsupported by the caller)
+  // o.steam: a Steam Guard code (5 characters); stored as
+  // otpauth://totp/…&digits=5&encoder=steam (KeePassXC's form), which
+  // builds before 5.47 refuse (digits) instead of showing a wrong code.
   function makeCode(o) {
     var secret = s(o.secret).toUpperCase().replace(/[\s=-]/g, "");
     var algo = ALGO[s(o.algo || "SHA1").toUpperCase().replace(/[^A-Z0-9]/g, "")];
-    var digits = o.digits ? parseInt(o.digits, 10) : 6;
+    var steam = !!o.steam;
+    var digits = steam ? 5 : o.digits ? parseInt(o.digits, 10) : 6;
     var period = o.period ? parseInt(o.period, 10) : 30;
-    if (!algo || !(digits >= 6 && digits <= 8) || !(period >= 15 && period <= 120)) return null;
-    var issuer = kit().clean(o.issuer, 200), account = kit().clean(o.account, 200);
+    if (steam) algo = "SHA1";
+    if (!algo || !(steam || (digits >= 6 && digits <= 8)) || !(period >= 15 && period <= 120)) return null;
+    var issuer = kit().clean(o.issuer || (steam ? "Steam" : ""), 200), account = kit().clean(o.account, 200);
     if (issuer && account.toLowerCase().indexOf(issuer.toLowerCase() + ":") === 0) account = account.slice(issuer.length + 1).trim();
     var label = encodeURIComponent(issuer) + (issuer ? ":" : "") + encodeURIComponent(account);
     var uri = "otpauth://totp/" + label + "?secret=" + secret + (issuer ? "&issuer=" + encodeURIComponent(issuer) : "") +
               (algo !== "SHA1" ? "&algorithm=" + algo : "") + (digits !== 6 ? "&digits=" + digits : "") +
-              (period !== 30 ? "&period=" + period : "");
+              (period !== 30 ? "&period=" + period : "") + (steam ? "&encoder=steam" : "");
     var p = core().parseOtp(uri);
     if (p.error) return null;
     var b32 = core().base32Encode(p.secret);
@@ -175,14 +189,44 @@
     res.codes.push(c);
   }
 
+  // One otpauth://totp/ (or steam://) link → pushCode; extra = { account,
+  // issuer, notes, tags } from the file around the link.
+  function pushUri(res, uri, extra) {
+    extra = extra || {};
+    var p = core().parseOtp(s(uri).trim());
+    if (p.error) { res.unsupported++; return; }
+    var q = /\?/.test(uri) ? s(uri).split("?")[1] : "";
+    var get = function (k) { var m = new RegExp("(?:^|&)" + k + "=([^&#]*)", "i").exec(q || ""); return m ? m[1] : ""; };
+    var secret = core().base32Encode(p.secret);
+    wipe(p.secret);
+    pushCode(res, { secret: secret, issuer: p.issuer || extra.issuer, account: p.account || extra.account,
+                    algo: p.steam ? "SHA1" : (get("algorithm") || "SHA1"), digits: p.digits, period: p.period,
+                    steam: p.steam, notes: extra.notes, tags: extra.tags });
+  }
   // A single otpauth://totp/ link.
   function fromOtpauth(text) {
-    var res = newResult("otpauth"), p = core().parseOtp(text);
-    if (p.error) { res.unsupported++; return res; }
-    var q = /[?&]/.test(text) ? text.split("?")[1] : "";
-    var get = function (k) { var m = new RegExp("(?:^|&)" + k + "=([^&#]*)", "i").exec(q || ""); return m ? m[1] : ""; };
-    pushCode(res, { secret: core().base32Encode(p.secret), issuer: p.issuer, account: p.account,
-                    algo: (get("algorithm") || "SHA1"), digits: p.digits, period: p.period });
+    var res = newResult("otpauth");
+    pushUri(res, text);
+    return res;
+  }
+  // A text file of links, one per line or separated by commas: Ente
+  // Auth's plain export (with its codeDisplay: tags, trashed), Aegis /
+  // FreeOTP+ / 2FAS "URI list" exports and the like. HOTP and other
+  // kinds are counted as unsupported.
+  function fromOtpList(text, name) {
+    var links = s(text).split(/[\r\n,]+/).map(function (x) { return x.trim(); }).filter(Boolean);
+    var res = newResult(/ente/i.test(s(name)) || /[?&]codeDisplay=/.test(text) ? "ente" : "otplist");
+    links.forEach(function (l) {
+      if (!/^(otpauth|steam):\/\//i.test(l)) { res.skipped++; return; }
+      var extra = {}, m = /[?&]codeDisplay=([^&#]*)/.exec(l);
+      if (m) {
+        var cd = null;
+        try { cd = kit().json(decodeURIComponent(m[1])); } catch (e) { cd = null; }
+        if (isObj(cd) && cd.trashed === true) { res.trashed++; return; }
+        if (isObj(cd)) extra.tags = arr(cd.tags).map(s).filter(Boolean);
+      }
+      pushUri(res, l, extra);
+    });
     return res;
   }
 
@@ -277,11 +321,12 @@
     arr(j.db && j.db.entries).forEach(function (en) {
       if (!isObj(en)) { res.skipped++; return; }
       var info = isObj(en.info) ? en.info : {};
-      if (low(en.type) !== "totp") { res.unsupported++; return; }
+      var ty = low(en.type);
+      if (ty !== "totp" && ty !== "steam") { res.unsupported++; return; }
       var tags = arr(en.groups).map(function (g) { return groups[g] || ""; });
       if (en.group) tags.push(s(en.group));
       pushCode(res, { secret: info.secret, issuer: en.issuer, account: en.name, algo: info.algo,
-                      digits: info.digits, period: info.period, notes: en.note, tags: tags });
+                      digits: info.digits, period: info.period, notes: en.note, tags: tags, steam: ty === "steam" });
     });
     return res;
   }
@@ -296,10 +341,94 @@
     list.forEach(function (sv) {
       if (!isObj(sv)) { res.skipped++; return; }
       var otp = isObj(sv.otp) ? sv.otp : {};
-      if (otp.tokenType && low(otp.tokenType) !== "totp") { res.unsupported++; return; }
+      var tt = low(otp.tokenType || "totp");
+      if (tt !== "totp" && tt !== "steam") { res.unsupported++; return; }
       pushCode(res, { secret: sv.secret, issuer: otp.issuer || sv.name, account: otp.account || otp.label || "",
-                      algo: otp.algorithm, digits: otp.digits, period: otp.period,
+                      algo: otp.algorithm, digits: otp.digits, period: otp.period, steam: tt === "steam",
                       tags: sv.groupId && groups[sv.groupId] ? [groups[sv.groupId]] : [] });
+    });
+    return res;
+  }
+
+  // ---------- more two-factor apps (PW-OTP3) ----------
+  // Proton Authenticator .json: { version, entries: [{ content: { uri,
+  // name, entry_type }, note }] }; Steam entries are steam://SECRET.
+  function fromProtonAuth(j) {
+    var res = newResult("protonauth");
+    arr(j.entries).forEach(function (en) {
+      var c = isObj(en) && isObj(en.content) ? en.content : null;
+      if (!c || typeof c.uri !== "string") { res.skipped++; return; }
+      pushUri(res, c.uri, { account: s(c.name), notes: s(en.note) });
+    });
+    return res;
+  }
+  // andOTP .json: [{ secret, issuer, label, digits, type, algorithm,
+  // period, tags }]; older versions put "Issuer - Name" into label.
+  function fromAndOtp(list) {
+    var res = newResult("andotp");
+    list.forEach(function (o) {
+      if (!isObj(o) || typeof o.secret !== "string") { res.skipped++; return; }
+      var ty = low(o.type || "totp");
+      if (ty !== "totp" && ty !== "steam") { res.unsupported++; return; }
+      var issuer = s(o.issuer), account = s(o.label);
+      if (!("issuer" in o)) { var parts = account.split(" - "); if (parts.length > 1) { issuer = parts[0]; account = parts.slice(1).join(" - "); } }
+      pushCode(res, { secret: o.secret, issuer: issuer, account: account, algo: o.algorithm, digits: o.digits,
+                      period: o.period, steam: ty === "steam", tags: arr(o.tags) });
+    });
+    return res;
+  }
+  // FreeOTP+ .json: { tokens: [{ algo, digits, issuerExt, label, period,
+  // secret: [signed bytes], type }] }.
+  function fromFreeOtp(j) {
+    var res = newResult("freeotp");
+    arr(j.tokens).forEach(function (t) {
+      if (!isObj(t) || !Array.isArray(t.secret)) { res.skipped++; return; }
+      if (low(t.type || "totp") !== "totp") { res.unsupported++; return; }
+      if (!t.secret.length || t.secret.length > 1024 || !t.secret.every(function (n) { return intIn(n, -128, 255); })) { res.unsupported++; return; }
+      var raw = new Uint8Array(t.secret.map(function (n) { return n & 255; }));
+      var secret = core().base32Encode(raw);
+      wipe(raw);
+      pushCode(res, { secret: secret, issuer: s(t.issuerExt || t.issuerInt), account: s(t.label), algo: t.algo,
+                      digits: t.digits, period: t.period });
+    });
+    return res;
+  }
+  // Stratum (formerly Authenticator Pro) .json: { Authenticators: [{
+  // Type (2 TOTP, 4 Steam), Issuer, Username, Secret, Algorithm (0 SHA1,
+  // 1 SHA256, 2 SHA512), Digits, Period }], Categories,
+  // AuthenticatorCategories } (categories → tags).
+  var STRATUM_ALGO = { 0: "SHA1", 1: "SHA256", 2: "SHA512" };
+  function fromStratum(j) {
+    var res = newResult("stratum"), cats = {}, tagsOf = {};
+    arr(j.Categories).forEach(function (c) { if (isObj(c) && c.Id != null) cats[c.Id] = s(c.Name); });
+    arr(j.AuthenticatorCategories).forEach(function (l) {
+      if (!isObj(l) || !cats[l.CategoryId]) return;
+      var k = s(l.AuthenticatorSecret);
+      (tagsOf[k] = tagsOf[k] || []).push(cats[l.CategoryId]);
+    });
+    arr(j.Authenticators).forEach(function (a) {
+      if (!isObj(a) || typeof a.Secret !== "string") { res.skipped++; return; }
+      if (a.Type !== 2 && a.Type !== 4) { res.unsupported++; return; }
+      pushCode(res, { secret: a.Secret, issuer: s(a.Issuer), account: s(a.Username), algo: STRATUM_ALGO[a.Algorithm] || "?",
+                      digits: a.Digits, period: a.Period, steam: a.Type === 4, tags: tagsOf[a.Secret] || [] });
+    });
+    return res;
+  }
+  // LastPass Authenticator export .json: { version, accounts: [{
+  // issuerName, userName, secret, digits, timeStep, algorithm,
+  // folderData: { folderId } }], folders: [{ id, name }] }.
+  function isLastPassAuth(j) {
+    return Array.isArray(j.accounts) && j.accounts.some(function (a) { return isObj(a) && typeof a.secret === "string" && ("issuerName" in a || "userName" in a); });
+  }
+  function fromLastPassAuth(j) {
+    var res = newResult("lastpassauth"), folders = {};
+    arr(j.folders).forEach(function (f) { if (isObj(f) && f.id != null) folders[f.id] = s(f.name); });
+    j.accounts.forEach(function (a) {
+      if (!isObj(a) || typeof a.secret !== "string") { res.skipped++; return; }
+      var fid = isObj(a.folderData) ? a.folderData.folderId : null;
+      pushCode(res, { secret: a.secret, issuer: s(a.issuerName || a.originalIssuerName), account: s(a.userName || a.originalUserName),
+                      algo: a.algorithm, digits: a.digits, period: a.timeStep,
+                      tags: fid != null && folders[fid] && fid !== 0 ? [folders[fid]] : [] });
     });
     return res;
   }
@@ -641,9 +770,9 @@
   function cat(a, b) { var o = new Uint8Array(a.length + b.length); o.set(a); o.set(b, a.length); return o; }
   function bad(code) { return new Error(code); }
   function intIn(v, lo, hi) { return typeof v === "number" && Math.floor(v) === v && v >= lo && v <= hi; }
-  function pbkdf2(pw, salt, iter, bytes) {
+  function pbkdf2(pw, salt, iter, bytes, hash) {
     return subtle().importKey("raw", pw, "PBKDF2", false, ["deriveBits"]).then(function (k) {
-      return subtle().deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: salt, iterations: iter }, k, bytes * 8);
+      return subtle().deriveBits({ name: "PBKDF2", hash: hash || "SHA-256", salt: salt, iterations: iter }, k, bytes * 8);
     }).then(u8);
   }
   function hmac(key, data) {
@@ -651,10 +780,104 @@
       return subtle().sign("HMAC", k, data);
     }).then(u8);
   }
-  function gcmOpen(key, iv, data) {   // data = ciphertext + 16-byte tag
+  function gcmOpen(key, iv, data, aad) {   // data = ciphertext + 16-byte tag
     return subtle().importKey("raw", key, "AES-GCM", false, ["decrypt"]).then(function (k) {
-      return subtle().decrypt({ name: "AES-GCM", iv: iv, tagLength: 128 }, k, data);
+      var alg = { name: "AES-GCM", iv: iv, tagLength: 128 };
+      if (aad) alg.additionalData = aad;
+      return subtle().decrypt(alg, k, data);
     }).then(u8, function () { throw bad("wrong-password"); });
+  }
+  function argon2id(pw, salt, t, mKiB, p) {
+    return vaultLib().loadArgon2().then(function (A) {
+      return A.argon2id({ password: pw, salt: salt, iterations: t, parallelism: p, memorySize: mKiB, hashLength: 32, outputType: "binary" });
+    }).then(u8, function (e) {
+      if (e && /^(no-wasm|no-argon2)$/.test(e.message)) throw e;
+      throw bad("no-memory");   // the browser could not give Argon2 its memory
+    });
+  }
+
+  // XChaCha20-Poly1305 "secretstream" (libsodium), for Ente Auth's
+  // encrypted export: HChaCha20 subkey, ChaCha20 (RFC 8439 block, 32-bit
+  // counter), Poly1305 with BigInt. Only opening, one message.
+  function rotl(a, b) { return (a << b) | (a >>> (32 - b)); }
+  function chachaRounds(x) {
+    function qr(a, b, c, d) {
+      x[a] = (x[a] + x[b]) | 0; x[d] = rotl(x[d] ^ x[a], 16);
+      x[c] = (x[c] + x[d]) | 0; x[b] = rotl(x[b] ^ x[c], 12);
+      x[a] = (x[a] + x[b]) | 0; x[d] = rotl(x[d] ^ x[a], 8);
+      x[c] = (x[c] + x[d]) | 0; x[b] = rotl(x[b] ^ x[c], 7);
+    }
+    for (var i = 0; i < 10; i++) {
+      qr(0, 4, 8, 12); qr(1, 5, 9, 13); qr(2, 6, 10, 14); qr(3, 7, 11, 15);
+      qr(0, 5, 10, 15); qr(1, 6, 11, 12); qr(2, 7, 8, 13); qr(3, 4, 9, 14);
+    }
+  }
+  function le32(b, i) { return b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24); }
+  function chachaState(key, words) {   // words: 4 more (counter + nonce, or HChaCha input)
+    var st = new Int32Array(16);
+    st[0] = 0x61707865; st[1] = 0x3320646e; st[2] = 0x79622d32; st[3] = 0x6b206574;
+    for (var i = 0; i < 8; i++) st[4 + i] = le32(key, i * 4);
+    for (i = 0; i < 4; i++) st[12 + i] = words[i];
+    return st;
+  }
+  function hchacha(key, n16) {
+    var x = chachaState(key, [le32(n16, 0), le32(n16, 4), le32(n16, 8), le32(n16, 12)]);
+    chachaRounds(x);
+    var out = new Uint8Array(32), w = [0, 1, 2, 3, 12, 13, 14, 15];
+    for (var i = 0; i < 8; i++) for (var k = 0; k < 4; k++) out[i * 4 + k] = (x[w[i]] >>> (8 * k)) & 255;
+    x.fill(0);
+    return out;
+  }
+  // ChaCha20 IETF: data XOR keystream from block counter ctr.
+  function chachaXor(key, nonce12, ctr, data) {
+    var out = new Uint8Array(data.length), st = chachaState(key, [ctr, le32(nonce12, 0), le32(nonce12, 4), le32(nonce12, 8)]);
+    var x = new Int32Array(16), ks = new Uint8Array(64);
+    for (var off = 0; off < data.length; off += 64) {
+      x.set(st); chachaRounds(x);
+      for (var i = 0; i < 16; i++) { var v = (x[i] + st[i]) | 0; ks[i * 4] = v & 255; ks[i * 4 + 1] = (v >>> 8) & 255; ks[i * 4 + 2] = (v >>> 16) & 255; ks[i * 4 + 3] = (v >>> 24) & 255; }
+      for (i = 0; i < 64 && off + i < data.length; i++) out[off + i] = data[off + i] ^ ks[i];
+      st[12] = (st[12] + 1) | 0;
+    }
+    x.fill(0); ks.fill(0); st.fill(0);
+    return out;
+  }
+  function leBig(b) { var n = BigInt(0); for (var i = b.length - 1; i >= 0; i--) n = (n << BigInt(8)) | BigInt(b[i]); return n; }
+  function poly1305(key32, msg) {
+    var r = leBig(key32.subarray(0, 16)) & BigInt("0x0ffffffc0ffffffc0ffffffc0fffffff");
+    var sK = leBig(key32.subarray(16, 32)), P = (BigInt(1) << BigInt(130)) - BigInt(5), acc = BigInt(0);
+    for (var i = 0; i < msg.length; i += 16) {
+      var blk = msg.subarray(i, Math.min(i + 16, msg.length));
+      acc = ((acc + (leBig(blk) | (BigInt(1) << BigInt(8 * blk.length)))) * r) % P;
+    }
+    acc = (acc + sK) & ((BigInt(1) << BigInt(128)) - BigInt(1));
+    var out = new Uint8Array(16);
+    for (i = 0; i < 16; i++) { out[i] = Number(acc & BigInt(255)); acc >>= BigInt(8); }
+    return out;
+  }
+  function le64(n) { var b = new Uint8Array(8); for (var i = 0; i < 8; i++) { b[i] = n % 256; n = Math.floor(n / 256); } return b; }
+  // → plaintext bytes; throws wrong-password when the tag does not match.
+  function secretstreamOpen(key, header, c) {
+    if (header.length !== 24 || c.length < 17) throw bad("bad-file");
+    var k = hchacha(key, header.subarray(0, 16)), nonce = new Uint8Array(12);
+    nonce[0] = 1; nonce.set(header.subarray(16, 24), 4);
+    var mlen = c.length - 17, block0 = chachaXor(k, nonce, 0, new Uint8Array(64));
+    var tagBlock = new Uint8Array(64); tagBlock[0] = c[0];
+    tagBlock = chachaXor(k, nonce, 1, tagBlock);
+    var tag = tagBlock[0];
+    tagBlock[0] = c[0];
+    // libsodium pads with (0x10 - 64 + mlen) & 0xf bytes, i.e. mlen % 16
+    // (an operator-precedence quirk every reader has to copy)
+    var ct = c.subarray(1, 1 + mlen), pad = mlen % 16;
+    var mac = new Uint8Array(64 + mlen + pad + 16);
+    mac.set(tagBlock, 0); mac.set(ct, 64); mac.set(le64(0), 64 + mlen + pad); mac.set(le64(64 + mlen), 64 + mlen + pad + 8);
+    var want = poly1305(block0.subarray(0, 32), mac), got = c.subarray(1 + mlen), diff = 0;
+    for (var i = 0; i < 16; i++) diff |= want[i] ^ got[i];
+    block0.fill(0);
+    if (diff) { k.fill(0); throw bad("wrong-password"); }
+    if (tag !== 3) { k.fill(0); throw bad("bad-file"); }   // one FINAL message only
+    var m = chachaXor(k, nonce, 2, ct);
+    k.fill(0);
+    return m;
   }
 
   // scrypt (RFC 7914), for Aegis. Salsa20/8 on little-endian words.
@@ -794,6 +1017,87 @@
       return from2fas({ services: list, groups: j.groups });
     });
   }
+  // Proton Authenticator: Argon2id (t 2, 19 MiB, p 1) → AES-256-GCM,
+  // content = nonce (12) + ciphertext + tag, AAD fixed by the app.
+  function unlockProtonAuth(j, pw) {
+    var salt = b64(j.salt), content = b64(j.content);
+    if (!salt || salt.length < 8 || !content || content.length < 29) return Promise.reject(bad("bad-file"));
+    return argon2id(pw, salt, 2, 19 * 1024, 1).then(function (key) {
+      return gcmOpen(key, content.subarray(0, 12), content.subarray(12), utf8b("proton.authenticator.export.v1"))
+        .then(function (b) { key.fill(0); return b; }, function (e) { key.fill(0); throw e; });
+    }).then(function (b) {
+      var inner = kit().json(utf8(b)); b.fill(0);
+      if (!isObj(inner) || !Array.isArray(inner.entries)) throw bad("bad-file");
+      return fromProtonAuth(inner);
+    });
+  }
+  // Ente Auth: Argon2id (libsodium crypto_pwhash: memLimit bytes,
+  // opsLimit passes, 1 lane) → XChaCha20-Poly1305 secretstream; inside,
+  // one otpauth:// link per line.
+  function unlockEnte(j, pw) {
+    var kp = j.kdfParams, salt = b64(kp.salt), data = b64(j.encryptedData), header = b64(j.encryptionNonce);
+    if (j.version !== 1) return Promise.reject(bad("format"));
+    if (!intIn(kp.memLimit, 8192, 1024 * 1024 * 1024) || !intIn(kp.opsLimit, 1, 64)) return Promise.reject(bad("kdf-params"));
+    if (!salt || salt.length < 8 || !data || !header) return Promise.reject(bad("bad-file"));
+    return argon2id(pw, salt, kp.opsLimit, Math.floor(kp.memLimit / 1024), 1).then(function (key) {
+      var m;
+      try { m = secretstreamOpen(key, header, data); } finally { key.fill(0); }
+      var txt = utf8(m); m.fill(0);
+      return fromOtpList(txt, "ente");
+    });
+  }
+  // andOTP .json.aes. New format: iterations (4, big endian) + salt (12)
+  // + nonce (12) + ciphertext + tag, PBKDF2-SHA1 → AES-256-GCM. Old
+  // format: nonce + ciphertext + tag with SHA-256(password) as the key.
+  function unlockAndOtp(j, pw) {
+    var b = j.bytes;
+    if (!b || b.length < 4 + 12 + 12 + 16) return Promise.reject(bad("bad-file"));
+    var iter = ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]) >>> 0;
+    function done(x) {
+      var list = kit().json(utf8(x)); x.fill(0);
+      if (!Array.isArray(list)) throw bad("bad-file");
+      return fromAndOtp(list);
+    }
+    function old() {
+      return subtle().digest("SHA-256", pw).then(function (k) {
+        k = u8(k);
+        return gcmOpen(k, b.subarray(0, 12), b.subarray(12)).then(function (x) { k.fill(0); return x; }, function (e) { k.fill(0); throw e; });
+      }).then(done);
+    }
+    if (iter < 1 || iter > 10000000) return old();
+    return pbkdf2(pw, b.subarray(4, 16), iter, 32, "SHA-1").then(function (k) {
+      return gcmOpen(k, b.subarray(16, 28), b.subarray(28)).then(function (x) { k.fill(0); return x; }, function (e) { k.fill(0); throw e; });
+    }).then(done, function (e) {
+      if (e && e.message === "wrong-password") return old().catch(function () { throw bad("wrong-password"); });
+      throw e;
+    });
+  }
+  // Stratum / Authenticator Pro encrypted backup. "AUTHENTICATORPRO" +
+  // salt (16) + iv (12) + AES-256-GCM, key Argon2id (t 3, 64 MiB, p 4);
+  // legacy "AuthenticatorPro" + salt (20) + iv (16) + AES-256-CBC, key
+  // PBKDF2-SHA1 64,000.
+  function unlockStratum(j, pw) {
+    var b = j.bytes, legacy = j.legacy, p;
+    if (!b || b.length < 16 + 20 + 16 + 16) return Promise.reject(bad("bad-file"));
+    if (!legacy) {
+      p = argon2id(pw, b.subarray(16, 32), 3, 64 * 1024, 4).then(function (k) {
+        return gcmOpen(k, b.subarray(32, 44), b.subarray(44)).then(function (x) { k.fill(0); return x; }, function (e) { k.fill(0); throw e; });
+      });
+    } else {
+      p = pbkdf2(pw, b.subarray(16, 36), 64000, 32, "SHA-1").then(function (k) {
+        return subtle().importKey("raw", k, "AES-CBC", false, ["decrypt"]).then(function (ck) {
+          k.fill(0);
+          return subtle().decrypt({ name: "AES-CBC", iv: b.subarray(36, 52) }, ck, b.subarray(52));
+        }).then(u8, function () { throw bad("wrong-password"); });
+      });
+    }
+    return p.then(function (x) {
+      var inner = kit().json(utf8(x)); x.fill(0);
+      if (!isObj(inner) || !Array.isArray(inner.Authenticators)) throw bad(legacy ? "wrong-password" : "bad-file");
+      return fromStratum(inner);
+    });
+  }
+
   // → Promise<result> (the same shape as parse); plain: false.
   function unlock(locked, password, now) {
     now = now || Date.now();
@@ -804,15 +1108,20 @@
     try {
       p = locked.locked === "bitwarden" ? unlockBitwarden(j, pw, now) :
           locked.locked === "aegis" ? unlockAegis(j, pw, now) :
-          locked.locked === "2fas" ? unlock2fas(j, pw, now) : Promise.reject(bad("format"));
+          locked.locked === "2fas" ? unlock2fas(j, pw, now) :
+          locked.locked === "protonauth" ? unlockProtonAuth(j, pw) :
+          locked.locked === "ente" ? unlockEnte(j, pw) :
+          locked.locked === "andotp" ? unlockAndOtp(j, pw) :
+          locked.locked === "stratum" ? unlockStratum(j, pw) : Promise.reject(bad("format"));
     } catch (e) { p = Promise.reject(bad("bad-file")); }
     return p.then(function (r) {
       wipe(pw);
+      if (j.bytes) { wipe(j.bytes); j.bytes = null; }
       if (r && !r.error) r.plain = false;
       return r;
     }, function (e) {
       wipe(pw);
-      throw bad(e && /^(no-key|wrong-password|kdf-params|bad-file|no-wasm|no-argon2|format)$/.test(e.message) ? e.message : "bad-file");
+      throw bad(e && /^(no-key|wrong-password|kdf-params|bad-file|no-wasm|no-argon2|no-memory|format)$/.test(e.message) ? e.message : "bad-file");
     });
   }
 
@@ -827,6 +1136,14 @@
       return { error: "encrypted" };
     }
     if (Array.isArray(j.records)) return fromKeeperJson(j, now);
+    // two-factor apps (PW-OTP3)
+    if (typeof j.salt === "string" && typeof j.content === "string" && j.version != null && !("data" in j)) return { locked: "protonauth", data: j };
+    if (Array.isArray(j.entries) && j.entries.some(function (en) { return isObj(en) && isObj(en.content) && typeof en.content.uri === "string"; }))
+      return fromProtonAuth(j);
+    if (isObj(j.kdfParams) && typeof j.encryptedData === "string" && typeof j.encryptionNonce === "string") return { locked: "ente", data: j };
+    if (Array.isArray(j.tokens) && j.tokens.some(function (t) { return isObj(t) && Array.isArray(t.secret); })) return fromFreeOtp(j);
+    if (Array.isArray(j.Authenticators)) return fromStratum(j);
+    if (isLastPassAuth(j)) return fromLastPassAuth(j);
     if (isObj(j.vaults) && !Array.isArray(j.items)) return fromProtonJson(j, now);
     if (j.db !== undefined && isObj(j.header)) return fromAegis(j);
     if (Array.isArray(j.services) || typeof j.servicesEncrypted === "string") return from2fas(j);
@@ -848,13 +1165,18 @@
     var head = t.slice(0, 64).trim();
     if (/^-----BEGIN PGP/.test(head) || /\.pgp$/i.test(s(name))) return { error: "encrypted-proton" };
     if (/^otpauth-migration:\/\//i.test(head)) return fromMigration(t.trim());
-    if (/^otpauth:\/\//i.test(head)) return /^otpauth:\/\/hotp\//i.test(head) ? { error: "hotp" } : fromOtpauth(t.trim());
+    if (/^(otpauth|steam):\/\//i.test(head)) {
+      // one link (pasted or scanned), or a file of links (Ente, URI lists)
+      if (!/[\r\n,]\s*\S/.test(t.trim())) return /^otpauth:\/\/hotp\//i.test(head) ? { error: "hotp" } : fromOtpauth(t.trim());
+      return fromOtpList(t, name);
+    }
     if (/^<(\?xml|KeePassFile)/i.test(head)) {
       try { return fromEntries("keepassxml", kdbx().readXml(t, { now: now })); }
       catch (e) { return { error: e && e.message === "not-kdbx" ? "format" : "bad-file" }; }
     }
     if (/^[\[{]/.test(head)) {
       var j = kit().json(t);
+      if (Array.isArray(j) && j.some(function (o) { return isObj(o) && typeof o.secret === "string" && "type" in o; })) return fromAndOtp(j);
       return j === null ? { error: "json" } : fromJson(j, now);
     }
     var tb = table(t);
@@ -912,6 +1234,12 @@
       if (/\.dash$/i.test(name) || (bytes[0] === 0x44 && bytes[1] === 0x41 && bytes[2] === 0x53 && bytes[3] === 0x48)) {
         wipe(bytes); return Promise.resolve({ error: "encrypted-dashlane" });
       }
+      // Stratum / Authenticator Pro encrypted backup, andOTP .json.aes:
+      // binary, opened with the file's password (bytes kept until then)
+      var magic = String.fromCharCode.apply(null, Array.prototype.slice.call(bytes, 0, 16));
+      if (magic === "AUTHENTICATORPRO" || magic === "AuthenticatorPro")
+        return Promise.resolve({ locked: "stratum", data: { bytes: bytes, legacy: magic !== "AUTHENTICATORPRO" } });
+      if (/\.aes$/i.test(name) && bytes[0] !== 0x7b && bytes[0] !== 0x5b) return Promise.resolve({ locked: "andotp", data: { bytes: bytes } });
       if (kit().isZip(bytes)) p = fromZip(bytes, now);
       else p = Promise.resolve(parseText(kit().text(bytes), name, now));
     } catch (e) { p = Promise.resolve({ error: "format" }); }
@@ -926,6 +1254,13 @@
     arr(r.entries).forEach(function (e) {
       var x = JSON.parse(JSON.stringify(e));
       x.id = "";
+      // Bitwarden Authenticator exports logins that hold only a code:
+      // they become two-factor codes (attached to a matching login or a
+      // "2FA code" entry), like every other authenticator's
+      if (source === "bitwarden" && x.totp && !x.pw && !x.notes && !arr(x.urls).length && !arr(x.fields).length) {
+        pushUri(res, x.totp, { issuer: x.title, account: x.user });
+        return;
+      }
       var k = kinds() ? kinds().kindOf(x) : "login";
       push(res, x, "", k === "address" ? "identity" : k);
     });
@@ -1043,7 +1378,7 @@
   }
 
   var API = {
-    version: "1.1.0", MAX_ITEMS: MAX_ITEMS,
+    version: "1.2.0", MAX_ITEMS: MAX_ITEMS,
     parse: parse, parseText: parseText, unlock: unlock, scrypt: scrypt, fromEntries: fromEntries, mergeResults: mergeResults,
     apply: apply, undo: undo, hexId: hexId, pbFields: pbFields
   };

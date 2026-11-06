@@ -31,7 +31,7 @@ A login made from a card or an identity of another app (fields such as `Number` 
 ## Two-factor codes
 Put the secret a website gives you for an authenticator app into `Two-factor secret or otpauth:// link`: the text code, or the whole otpauth:// link. `Scan QR` reads the QR code with the camera, or from a picture with `Choose a picture`. The entry then shows the current code and the seconds it has left; `Copy` copies it.
 
-A `2FA code` is an account whose two-factor code you keep here without its password, as in an authenticator app: the service, the account and the secret. Scanning the service's QR code fills in the service and the account. Codes that you import from Aegis, 2FAS or Google Authenticator and that match no entry become 2FA codes.
+A `2FA code` is an account whose two-factor code you keep here without its password, as in an authenticator app: the service, the account and the secret. Scanning the service's QR code fills in the service and the account. Codes that you import from an authenticator app and that match no entry become 2FA codes.
 
 `Codes` at the top shows every two-factor code of the vault in one list, with the seconds each one has left. Type in the search to find one, and tap a code to copy it. In its last 5 seconds a code also shows the next one, and a tap copies the next one, so it is still valid when you paste it. `›` opens the entry.
 
@@ -39,7 +39,7 @@ A `2FA code` is an account whose two-factor code you keep here without its passw
 
 Your codes and your passwords are in the same vault: one master password opens both. That is simpler, but a separate authenticator app keeps the second step apart; `Export` can copy your codes to Aegis or 2FAS.
 
-Codes from a counter (HOTP) are not supported.
+Codes from a counter (HOTP) are not supported. Steam Guard codes (5 letters and digits) work like the others, but autofill on the phone does not fill them.
 
 ## Import and export
 `⋯` then `Import` brings entries and two-factor codes from another app. Press `Choose file`: the app is recognised by itself. Entries that are already in the vault (same title, username, password and first website) are skipped, and you see what was found and how many are new before you import. `Undo` in the message after the import takes it all back.
@@ -55,10 +55,26 @@ Codes from a counter (HOTP) are not supported.
 - Zoho Vault: export your secrets as a CSV (not the encrypted kind). Folders and tags become tags.
 - Chrome, Edge, Firefox, KeePassXC: their CSV export.
 
-Two-factor apps: each code goes to the one entry with the same site and account that has no code yet; otherwise it becomes an entry of its own. A code whose secret is already in the vault is skipped. Only time-based codes (TOTP) come; counter-based (HOTP) and Steam codes are left out.
+Two-factor apps: each code goes to the one entry with the same site and account that has no code yet; otherwise it becomes an entry of its own. A code whose secret is already in the vault is skipped. Time-based codes (TOTP) and Steam Guard codes come; counter-based codes (HOTP) are left out.
 - Aegis: Settings › Import & Export › Export. If the backup is encrypted, type the Aegis password.
 - 2FAS: Settings › 2FAS Backup › Export to file (`.2fas`). If it has a password, type it.
 - Google Authenticator: Transfer accounts › Export accounts shows one or more QR codes. Under `Google Authenticator` choose a screenshot of each, scan it with `Use the camera`, or paste its `otpauth-migration://` link and press `Read`. Add them one after another, then import.
+- Proton Authenticator: Settings › Export, a `.json`. If you gave it a password, type it.
+- Ente Auth: Settings › Data › Export codes, as `Plain text` (a `.txt`) or `Encrypted` (then type its password). The HTML kind can't be read.
+- Bitwarden Authenticator: Settings › Export, as `.json` or `.csv`.
+- andOTP: Backups, a plain `.json` or an encrypted `.json.aes` (type its password).
+- FreeOTP+: Export, as JSON (or as a list of URIs).
+- Stratum (Authenticator Pro): Backup, a `.json`, or a `.authpro` with a password (type it).
+- LastPass Authenticator: its export to a file (`.json`).
+- Any other app that can save a `.txt` with one `otpauth://` link per line.
+
+### Moving codes from Microsoft Authenticator or Authy
+Microsoft Authenticator and Authy keep their codes to themselves: neither can export them, and reading them out of the phone needs root, which orOS does not do. Move them one account at a time; it takes a minute per site:
+1. On the website, open its security or two-factor settings and choose to set up an authenticator app again (often `Add a device`, `Change authenticator app`, or turning two-factor sign-in off and on).
+2. In orOS, `New` › `2FA code` (or open that site's login) and `Scan QR`, or paste the text secret the site shows.
+3. Type the code orOS shows into the website to confirm it.
+4. Only when the website has accepted the code from orOS, remove that account from Microsoft Authenticator or Authy.
+Sign-in approvals of a Microsoft account itself (tap a number in the app) are not codes and can't be moved; for those keep Microsoft Authenticator, or set up a code-based authenticator app in that Microsoft account's security settings.
 
 Delete an export that is not encrypted, and any picture of those QR codes, as soon as you have imported it. A file with a password is opened on your device only; the password is not kept. Nothing leaves your device while importing.
 

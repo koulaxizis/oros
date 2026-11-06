@@ -196,11 +196,15 @@
     var s = String(input == null ? "" : input).trim();
     if (!s) return { error: "empty" };
     var o = { algo: "SHA-1", digits: 6, period: 30, issuer: "", account: "" };
-    if (/^otpauth:/i.test(s)) {
+    // Steam Guard: "steam://SECRET" (Bitwarden, Proton Authenticator)
+    var st = /^steam:\/\/([A-Za-z2-7=\s-]+)\/?$/i.exec(s);
+    if (st) { s = st[1]; o.steam = true; o.digits = 5; o.issuer = "Steam"; }
+    else if (/^otpauth:/i.test(s)) {
       var m = s.match(/^otpauth:\/\/([a-z]+)\/([^?#]*)(?:\?([^#]*))?/i);
       if (!m) return { error: "bad" };
-      if (m[1].toLowerCase() === "hotp") return { error: "hotp" };
-      if (m[1].toLowerCase() !== "totp") return { error: "bad" };
+      var type = m[1].toLowerCase();
+      if (type === "hotp") return { error: "hotp" };
+      if (type !== "totp" && type !== "steam") return { error: "bad" };
       var label = dec(m[2]), q = {};
       (m[3] || "").split("&").forEach(function (p) {
         var k = p.indexOf("=");
@@ -214,7 +218,12 @@
         if (!a) return { error: "algo" };
         o.algo = a;
       }
-      if (q.digits) { o.digits = parseInt(q.digits, 10); if (!(o.digits >= 6 && o.digits <= 8)) return { error: "digits" }; }
+      // Steam Guard as otpauth://steam/… (Ente, Aegis) or encoder=steam
+      // (KeePassXC; what orOS stores, with digits=5 so that builds
+      // before 5.47 show no code instead of a wrong one)
+      o.steam = type === "steam" || String(q.encoder || "").toLowerCase() === "steam";
+      if (o.steam) o.digits = 5;
+      else if (q.digits) { o.digits = parseInt(q.digits, 10); if (!(o.digits >= 6 && o.digits <= 8)) return { error: "digits" }; }
       if (q.period) { o.period = parseInt(q.period, 10); if (!(o.period >= 15 && o.period <= 120)) return { error: "period" }; }
       s = q.secret || "";
     }
@@ -224,7 +233,9 @@
     return o;
   }
 
-  function hotp(key, counter, algo, digits) {
+  var STEAM_CHARS = "23456789BCDFGHJKMNPQRTVWXY";
+  // steam: 5 characters of the Steam Guard alphabet instead of digits
+  function hotp(key, counter, algo, digits, steam) {
     var msg = new Uint8Array(8), c = counter;
     for (var i = 7; i >= 0; i--) { msg[i] = c % 256; c = Math.floor(c / 256); }
     return subtle().importKey("raw", key, { name: "HMAC", hash: algo }, false, ["sign"]).then(function (k) {
@@ -232,6 +243,11 @@
     }).then(function (sig) {
       var h = new Uint8Array(sig), off = h[h.length - 1] & 15;
       var bin = ((h[off] & 127) << 24) | (h[off + 1] << 16) | (h[off + 2] << 8) | h[off + 3];
+      if (steam) {
+        var sc = "";
+        for (var j = 0; j < 5; j++) { sc += STEAM_CHARS[bin % 26]; bin = Math.floor(bin / 26); }
+        return sc;
+      }
       var code = String(bin % Math.pow(10, digits));
       while (code.length < digits) code = "0" + code;
       return code;
@@ -241,7 +257,7 @@
   function totp(otp, nowMs) {
     var t = Math.floor((nowMs == null ? Date.now() : nowMs) / 1000);
     var counter = Math.floor(t / otp.period);
-    return hotp(otp.secret, counter, otp.algo, otp.digits).then(function (code) {
+    return hotp(otp.secret, counter, otp.algo, otp.digits, !!otp.steam).then(function (code) {
       return { code: code, left: otp.period - (t % otp.period), period: otp.period };
     });
   }
