@@ -545,11 +545,14 @@
   }
   // Answers of the open catalogues, kept while the app is open so a
   // re-render shows them at once: key -> { list, page, more, busy, err, extra }.
+  // auto = keep asking for the next page by itself until this many
+  // items are in (an artist page shows the whole discography); past it
+  // "Show more" asks for the rest.
   var feeds = {}, feedN = 0;
-  function feed(key, fetcher) {
+  function feed(key, fetcher, auto) {
     var f = feeds[key];
     if (!f) {
-      f = feeds[key] = { list: [], page: 0, more: true, busy: false, err: "", extra: null, fetcher: fetcher, n: ++feedN };
+      f = feeds[key] = { list: [], page: 0, more: true, busy: false, err: "", extra: null, fetcher: fetcher, n: ++feedN, auto: auto || 0 };
       var ks = Object.keys(feeds);
       if (ks.length > 60) ks.sort(function (a, b) { return feeds[a].n - feeds[b].n; }).slice(0, ks.length - 60).forEach(function (k) { if (!feeds[k].busy) delete feeds[k]; });
       feedMore(key);
@@ -569,6 +572,7 @@
       f.more = !!(r && r.more) && got.length > 0;
       if (r && r.extra) f.extra = r.extra;
       renderKeepScroll();
+      if (f.more && f.auto && f.list.length < f.auto && feeds[key] === f) feedMore(key);
     }, function (e) {
       f.busy = false; f.err = (e && e.code) || "net";
       renderKeepScroll();
@@ -2674,16 +2678,52 @@
     } else if (v.kind === "oartist") {
       var i = v.id.indexOf("|"), sk = v.id.slice(0, i), who = v.id.slice(i + 1);
       if (!O.SOURCES[sk] || !who) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
+      if (sk === "jm") { renderJmArtist(m, v, who); return; }
       var an = v.n || who;
       src = { kind: "oartist", id: v.id, n: an };
       k = "a|" + v.id;
-      f = feed(k, sk === "ia" ? fIa({ creator: who }) : sk === "cc" ? fCc({ user: who }) : sk === "jm" ? fJm({ artist: who }) : fOv({ creator: who }));
-      pageHead(m, cover("", an, "big round", I.user), t("kind.artist") + " · " + srcName(sk), an, null, sk === "ia" ? null : f.list, src,
+      // The whole list loads by itself up to a few pages (ART_AUTO).
+      f = feed(k, sk === "ia" ? fIa({ creator: who }) : sk === "cc" ? fCc({ user: who }) : fOv({ creator: who }), ART_AUTO[sk]);
+      pageHead(m, cover("", an, "big round", I.user), t("kind.artist") + " · " + srcName(sk), an,
+        f.list.length ? el("div", "ph-sub dim", sk === "ia" ? nAlbums(f.list.length) : nSongs(f.list.length)) : null, sk === "ia" ? null : f.list, src,
         A ? [button(t("mb.page"), "pill", function () { findArtist(an); })] : null);
       if (sk === "ia") { var ga = el("div", "grid"); f.list.forEach(function (a) { ga.appendChild(oAlbumCard(a)); }); m.appendChild(ga); }
       else m.appendChild(rowList(f.list, { src: src, noArtist: true }));
       feedStatus(m, k, srcName(sk));
     }
+  }
+  // How many items an artist page of each open catalogue loads by
+  // itself (calls of 200 for Jamendo, 20-24 for the others).
+  var ART_AUTO = { jm: 2000, ia: 96, cc: 200, ov: 200 };
+  // A Jamendo artist: picture, every album (newest first) and every
+  // song (most played first), each list paged in by itself.
+  function renderJmArtist(m, v, who) {
+    var id = "jm|" + who, ki = "a|" + id + "|info", ka = "a|" + id + "|albums", k = "a|" + id;
+    var fi = feed(ki, fOne(function () { return O.jmArtist(who); }));
+    var fa = feed(ka, fJm({ artist: who, albums: true, limit: 200, order: "releasedate_desc" }), ART_AUTO.jm);
+    var f = feed(k, fJm({ artist: who, limit: 200 }), ART_AUTO.jm);
+    var info = fi.extra || {};
+    var an = info.n || v.n || who;
+    var src = { kind: "oartist", id: id, n: an };
+    var sub = el("div", "ph-sub dim", [fa.list.length ? nAlbums(fa.list.length) : "", f.list.length ? nSongs(f.list.length) : ""].filter(Boolean).join(" · "));
+    var extra = [];
+    if (A) extra.push(button(t("mb.page"), "pill", function () { findArtist(an); }));
+    extra.push(button(t("more"), "icon-btn", function () {
+      var items = [[t("m.source", { s: srcName("jm") }), function () { openExt(info.pg || "https://www.jamendo.com/artist/" + encodeURIComponent(who)); }]];
+      if (info.web) items.push([t("mb.l.home"), function () { openExt(info.web); }]);
+      menuDlg(items, an, srcName("jm"));
+    }, I.more));
+    pageHead(m, cover(info.art || "", an, "big round", I.user), t("kind.artist") + " · " + srcName("jm"), an, sub, f.list.length ? f.list : null, src, extra);
+    m.appendChild(el("h2", "sub-h", t("o.albums", { s: srcName("jm") })));
+    if (fa.list.length) {
+      var g = el("div", "grid");
+      fa.list.forEach(function (a) { g.appendChild(oAlbumCard(Object.assign({}, a, { a: a.y || "" }))); });
+      m.appendChild(g);
+    }
+    feedStatus(m, ka, srcName("jm"));
+    m.appendChild(el("h2", "sub-h", t("o.songs", { s: srcName("jm") })));
+    if (f.list.length) m.appendChild(rowList(f.list, { src: src, noArtist: true }));
+    feedStatus(m, k, srcName("jm"));
   }
   function oArtistLink(r, cls) {
     var id = oArtistId(r);
@@ -2971,6 +3011,9 @@
     var tx = el("div", "fp-text");
     var tt = el("div", "fp-t"), ta = el("div", "fp-a");
     tx.appendChild(tt); tx.appendChild(ta);
+    // The artist's name opens the artist's page under this window, so
+    // the window steps aside (capture: the link stops the click itself).
+    ta.addEventListener("click", function (e) { if (e.target && e.target.closest && e.target.closest("button.link")) dlg.close(); }, true);
     meta.appendChild(tx);
     var like = button(t("like"), "icon-btn like", function () { var c = H.getState().cur; if (c) { toggleLike(c); dlg._paint(true); } }, I.heart);
     meta.appendChild(like);

@@ -272,6 +272,22 @@ test("Jamendo album, albums and radios", () => {
   assert.equal(O.moodOf("happy").el, "Χαρούμενη");
 });
 
+test("Jamendo artist page: 200 rows a call, the artist's card, a full page means more", () => {
+  assert.match(O.jmTracksUrl({ artist: "7907", limit: 200, page: 3 }), /&limit=200&offset=400&.*&artist_id=7907&order=popularity_total$/);
+  assert.match(O.jmAlbumsUrl({ artist: "7907", limit: 500 }), /&limit=200&offset=0&/);
+  assert.match(O.jmTracksUrl({ limit: "x" }), /&limit=20&offset=0&/);
+  assert.equal(O.jmArtistUrl("7907"), "https://api.jamendo.com/v3.0/artists/?client_id=e04c6e83&format=json&id=7907");
+  const full = { headers: { status: "success" }, results: Array.from({ length: 200 }, (_, i) => Object.assign({}, JM_TRACK, { id: String(1000 + i) })) };
+  assert.equal(O.jmParseTracks(full, 200).more, true);
+  assert.equal(O.jmParseTracks({ headers: { status: "success" }, results: full.results.slice(0, 120) }, 200).more, false);
+  assert.equal(O.jmParseTracks({ headers: { status: "success" }, results: full.results.slice(0, 20) }).more, true);
+  const ar = O.jmParseArtist({ headers: { status: "success" }, results: [{ id: "7907", name: "Nikos Sea", website: "https://nikossea.example",
+    image: "https://usercontent.jamendo.com?type=artist&id=7907", shareurl: "https://www.jamendo.com/artist/7907" }] });
+  assert.deepEqual(ar, { s: "jm", id: "7907", n: "Nikos Sea", art: "https://usercontent.jamendo.com?type=artist&id=7907", pg: "https://www.jamendo.com/artist/7907", web: "https://nikossea.example" });
+  assert.equal(O.jmParseArtist({ headers: { status: "success" }, results: [{ id: "7", name: "X", website: "javascript:alert(1)" }] }).web, undefined);
+  assert.throws(() => O.jmParseArtist({ headers: { status: "success" }, results: [] }), (e) => e.code === "closed");
+});
+
 test("Jamendo songs keep their album and artist ids through the sync slice", () => {
   const a = O.jmParseTracks({ headers: { status: "success" }, results: [JM_TRACK] }).tracks[0];
   let d = C.setLike(C.emptyData(), a, true, 10);
