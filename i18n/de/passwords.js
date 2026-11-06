@@ -23,7 +23,7 @@ orosPack("de", "passwords", {
  "addon": "Um Logins auf Websites auszufüllen und zu speichern, installiere das orOS-Browser-Add-on (useoros.online/download).",
  "af.apps": "Apps: füge androidapp://<Paketname> als Website eines Logins hinzu, oder wähle das Login einmal aus der App heraus.",
  "af.at": "Kopie auf dem Handy aktualisiert {d}",
- "af.err": "Das Handy konnte die Kopie nicht behalten: {e}",
+ "af.err": "Automatisches Ausfüllen auf dem Handy fehlgeschlagen: {e}",
  "af.never": "Noch keine Kopie auf dem Handy.",
  "af.offDone": "Ausfüllen ist aus: Kopie und Schlüssel auf dem Handy wurden entfernt.",
  "af.on": "Ausfüllen auf diesem Handy verwenden",

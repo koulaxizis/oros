@@ -1015,7 +1015,7 @@
       if (!m || typeof m !== "object" || typeof m.t !== "string") return null;
       if ((toApp ? TO_APP : TO_PAGE)[m.t] === 1) return m;
       if (toApp) return (m.t === "clear" && m.what === "af") || (m.t === "applied" && m.what === "af-save") ? m : null;
-      return (m.t === "done" || m.t === "error") && m.what === "af-index" ? m : null;
+      return (m.t === "done" && m.what === "af-index") || (m.t === "error" && (m.what === "af-index" || m.what === "af-keys")) ? m : null;
     }
     if (id === "passwords") {
       win.addEventListener("message", function (ev) {

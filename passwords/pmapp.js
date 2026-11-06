@@ -109,7 +109,7 @@
       "af.never": "No copy on the phone yet.",
       "af.wait": "Preparing this phone's keys…",
       "af.apps": "Apps: add androidapp://<package name> as a site of a login, or pick the login once from the app.",
-      "af.err": "The phone could not keep the copy: {e}",
+      "af.err": "Autofill on this phone failed: {e}",
       "af.offDone": "Autofill is off: the phone's copy and keys were removed.",
       "m.bio": "Fingerprint unlock",
       "bio.title": "Unlock with fingerprint or face",
@@ -354,7 +354,7 @@
       "af.never": "Δεν υπάρχει ακόμη αντίγραφο στο κινητό.",
       "af.wait": "Ετοιμάζονται τα κλειδιά του κινητού…",
       "af.apps": "Εφαρμογές: πρόσθεσε androidapp://<όνομα πακέτου> ως ιστότοπο ενός λογαριασμού, ή διάλεξε τον λογαριασμό μία φορά μέσα από την εφαρμογή.",
-      "af.err": "Το κινητό δεν μπόρεσε να κρατήσει το αντίγραφο: {e}",
+      "af.err": "Η αυτόματη συμπλήρωση στο κινητό απέτυχε: {e}",
       "af.offDone": "Η αυτόματη συμπλήρωση απενεργοποιήθηκε: το αντίγραφο και τα κλειδιά του κινητού διαγράφηκαν.",
       "m.bio": "Ξεκλείδωμα με δακτυλικό",
       "bio.title": "Ξεκλείδωμα με δακτυλικό ή πρόσωπο",
@@ -2625,8 +2625,8 @@
       var info = p.afInfo() || {};
       var lines = [];
       if (c.checked) {
-        if (!p.afKeys() && !info.stored) lines.push(t("af.wait"));
-        else if (info.err) lines.push(t("af.err", { e: info.err }));
+        if (info.err) lines.push(t("af.err", { e: info.err }));
+        else if (!p.afKeys() && !info.stored) lines.push(t("af.wait"));
         else lines.push(info.at ? t("af.at", { d: fmtDate(info.at) }) : t("af.never"));
         lines.push(info.svc ? t("af.svc.yes") : t("af.svc.no"));
       }
@@ -2642,6 +2642,9 @@
     var off = p.onChange(show);
     d.onClose(off);
     p.refresh();
+    // On already, but this page has no keys yet (a new start of the app):
+    // ask now, so the dialog does not wait for the next vault change.
+    if (c.checked && !p.afKeys()) { p.afAskKeys(); afSoon(); }
     show();
     d.actions(t("d.close"));
   }
