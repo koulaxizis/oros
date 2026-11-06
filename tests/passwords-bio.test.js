@@ -130,7 +130,14 @@ test("PW-BIO single app: solo.js relays only pw-bio and autofill, and only for P
   assert.match(so, /var TO_APP = \{ "pw-bio": 1, "af-keys": 1, "af-index": 1, "af-state": 1 \};/);
   assert.match(so, /var TO_PAGE = \{ "pw-bio": 1, "af-keys": 1, "af-state": 1, "af-save": 1 \};/);
   assert.match(so, /\(m\.t === "clear" && m\.what === "af"\) \|\| \(m\.t === "applied" && m\.what === "af-save"\)/);
-  assert.match(so, /\(m\.t === "done" \|\| m\.t === "error"\) && m\.what === "af-index"/);
+  assert.match(so, /\(m\.t === "done" && m\.what === "af-index"\) \|\| \(m\.t === "error" && \(m\.what === "af-index" \|\| m\.what === "af-keys"\)\)/);
+  // Key creation runs off the message queue and a failure reaches the page.
+  const pb = fs.readFileSync(path.join(__dirname, "..", "android/app/src/main/java/online/useoros/twa/PhoneBridge.java"), "utf8");
+  assert.match(pb, /case "af-keys":\s*keyIo\.execute\(this::sendAfKeys\);/);
+  assert.match(pb, /err\.put\("what", "af-keys"\)/);
+  // The settings link never waits for the first af-state answer.
+  const ph = fs.readFileSync(path.join(__dirname, "..", "phone.js"), "utf8");
+  assert.match(ph, /afPkg \|\| "online\.useoros\.passwords"/);
   assert.match(so, /\^intent:\\\/\\\/autofill#Intent;scheme=oros-permission;package=online\\\.useoros\\\.passwords;end\$/);
   assert.match(so, /bio: id !== "passwords" \? null :/);
   assert.match(so, /\^intent:\\\/\\\/\(seal\|open\)\\\?n=\[0-9a-f\]\{32\}#Intent;scheme=oros-bio;package=online\\\.useoros\\\.\(twa\|passwords\);end\$/);

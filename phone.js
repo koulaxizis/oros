@@ -1448,9 +1448,10 @@
     } else if (m.t === "done" && m.what === "af-index") {
       setAf(afState(m.af));
       emit();
-    } else if (m.t === "error" && m.what === "af-index") {
+    } else if (m.t === "error" && (m.what === "af-index" || m.what === "af-keys")) {
       var a0 = appState ? appState.af : afSolo;
-      if (a0) a0.err = String(m.msg || "error").slice(0, 120);
+      if (!a0) { a0 = afState({}); setAf(a0); }
+      a0.err = String(m.msg || "error").slice(0, 120);
       emit();
     } else if (m.t === "health-in") {
       takeHealth(m);
@@ -1631,7 +1632,9 @@
     afSettings: function () {
       if (port) { root.location.href = PERM_URL.autofill; return; }
       var h = bioHost();
-      if (h && afPkg) h.go("intent://autofill#Intent;scheme=oros-permission;package=" + afPkg + ";end");
+      // The single app is always orOS Passwords: the link must not wait
+      // for its first af-state answer.
+      if (h) h.go("intent://autofill#Intent;scheme=oros-permission;package=" + (afPkg || "online.useoros.passwords") + ";end");
     },
     // Passwords: unlock with fingerprint or face (PW-BIO, v9). Works in
     // the orOS app and in the single app "orOS Passwords".
