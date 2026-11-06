@@ -1,12 +1,13 @@
 // ============================================================
 // orOS Passwords — two-factor codes out to Aegis and 2FAS
-// (PmOtpExport, v1.0.0, PW-OTP2)
+// (PmOtpExport, v1.1.0, PW-OTP2; Steam Guard codes since PW-OTP3)
 // Pure logic, no DOM: the app (pmapp.js) and the tests
 // (tests/passwords-otp.test.js) load this same file. Works on
 // DECRYPTED entries in memory only; it stores and logs nothing.
 //   codes(entries)            → [{ issuer, account, secret (base32),
 //                                  algo "SHA1|SHA256|SHA512", digits,
-//                                  period, uri }] (valid TOTP only,
+//                                  period, steam, uri }] (valid TOTP
+//                                  and Steam Guard only,
 //                                  sorted, one per secret + account)
 //   toAegis(entries, password, deps) → Promise<JSON text>: an Aegis
 //       encrypted vault (version 1, db version 2): a random master key
@@ -51,10 +52,11 @@
       seen[key] = 1;
       var algo = ALGO_OUT[o.algo] || "SHA1";
       var label = encodeURIComponent(issuer) + (issuer ? ":" : "") + encodeURIComponent(account);
-      out.push({ issuer: issuer, account: account, secret: secret, algo: algo, digits: o.digits, period: o.period,
+      var steam = !!o.steam;
+      out.push({ issuer: issuer, account: account, secret: secret, algo: algo, digits: o.digits, period: o.period, steam: steam,
                  uri: "otpauth://totp/" + label + "?secret=" + secret + (issuer ? "&issuer=" + encodeURIComponent(issuer) : "") +
                       (algo !== "SHA1" ? "&algorithm=" + algo : "") + (o.digits !== 6 ? "&digits=" + o.digits : "") +
-                      (o.period !== 30 ? "&period=" + o.period : "") });
+                      (o.period !== 30 ? "&period=" + o.period : "") + (steam ? "&encoder=steam" : "") });
     });
     return out.sort(function (a, b) {
       return (a.issuer || a.account).toLowerCase().localeCompare((b.issuer || b.account).toLowerCase());
@@ -76,7 +78,7 @@
     if (!password) return Promise.reject(new Error("no-key"));
     if (!deps || typeof deps.scrypt !== "function") return Promise.reject(new Error("no-kdf"));
     var db = JSON.stringify({ version: 2, entries: list.map(function (c) {
-      return { type: "totp", uuid: uuid(), name: c.account, issuer: c.issuer, group: null, note: "", favorite: false,
+      return { type: c.steam ? "steam" : "totp", uuid: uuid(), name: c.account, issuer: c.issuer, group: null, note: "", favorite: false,
                icon: null, info: { secret: c.secret, algo: c.algo, digits: c.digits, period: c.period } };
     }) });
     var mk = rnd(32), salt = rnd(32), kn = rnd(12), dn = rnd(12);
@@ -111,7 +113,7 @@
         return {
           name: name, secret: c.secret, updatedAt: now,
           otp: { label: c.issuer ? c.issuer + ":" + c.account : c.account, account: c.account, issuer: c.issuer,
-                 digits: c.digits, period: c.period, algorithm: c.algo, tokenType: "TOTP", source: "Link" },
+                 digits: c.digits, period: c.period, algorithm: c.algo, tokenType: c.steam ? "STEAM" : "TOTP", source: "Link" },
           order: { position: i },
           icon: { selected: "Label", label: { text: name.slice(0, 2).toUpperCase(), backgroundColor: "Default" },
                   iconCollection: { id: "a5b3fb65-4ec5-43e6-8ec1-49e24ca9e7ad" } }
@@ -121,7 +123,7 @@
     });
   }
 
-  var API = { version: "1.0.0", codes: codes, toAegis: toAegis, to2fas: to2fas, AEGIS_KDF: AEGIS_KDF };
+  var API = { version: "1.1.0", codes: codes, toAegis: toAegis, to2fas: to2fas, AEGIS_KDF: AEGIS_KDF };
   if (NODE) module.exports = API;
   else root.PmOtpExport = API;
 })(typeof window !== "undefined" ? window : this);

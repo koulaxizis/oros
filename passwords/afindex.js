@@ -88,7 +88,8 @@
         var o = null;
         if (e.totp) {
           var p = PC.parseOtp(e.totp);
-          if (!p.error) o = { k: b64(p.secret), a: p.algo, d: p.digits, n: p.period };
+          // Steam Guard codes stay out: the phone computes digits only
+          if (!p.error && !p.steam) o = { k: b64(p.secret), a: p.algo, d: p.digits, n: p.period };
         }
         var pw = k === "otp" ? "" : str(e.pw);
         if (!e.user && !pw && !o) return;

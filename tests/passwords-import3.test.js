@@ -180,8 +180,9 @@ test("2FAS backup with a password opens with it (PBKDF2 + AES-GCM)", async () =>
   await assert.rejects(I.unlock(locked, "4321", NOW), { message: "wrong-password" });
   const r = await I.unlock(locked, "1234", NOW);
   assert.equal(r.source, "2fas");
-  assert.equal(r.codes.length, 1);
-  assert.equal(r.unsupported, 1);
+  assert.equal(r.codes.length, 2);   // Steam Guard is read since PW-OTP3
+  assert.equal(r.unsupported, 0);
+  assert.match(r.codes[1].uri, /&digits=5&encoder=steam$/);
   assert.deepEqual(r.codes[0].tags, ["Work"]);
   const a = I.apply(vault([{ title: "Proton", user: "me@proton.me", pw: "x", urls: ["https://proton.me"] }]), r, { now: NOW });
   assert.equal(a.attached, 1);

@@ -146,6 +146,8 @@
       "imp.gaHint": "In Google Authenticator use Transfer accounts, then Export accounts. Choose a screenshot of each QR code, scan it with the camera, or paste its otpauth-migration:// link. Add the QR codes one after another, then import.",
       "imp.link": "Link of the QR code", "imp.read": "Read",
       "imp.from": "Read from {s}.", "imp.src.csv": "a CSV file", "imp.src.otp": "a two-factor link",
+      "imp.src.list": "a list of two-factor links",
+      "imp.otpApps": "Two-factor apps: a backup or export of Aegis, 2FAS, Proton Authenticator, Ente Auth, Bitwarden Authenticator, andOTP, FreeOTP+, Stratum (Authenticator Pro) or LastPass Authenticator, with or without its password, or a .txt file of otpauth:// links. Google Authenticator: the QR codes below. Microsoft Authenticator and Authy have no export: see Help, \u201cMoving codes from Microsoft Authenticator or Authy\u201d.",
       "imp.found": "Found: {list}.",
       "imp.k.login": "{n} logins", "imp.k.note": "{n} notes", "imp.k.card": "{n} cards", "imp.k.identity": "{n} identities",
       "imp.k.alias": "{n} aliases", "imp.k.other": "{n} other items", "imp.k.code": "{n} two-factor codes",
@@ -179,6 +181,7 @@
       "err.enc2fas": "This 2FAS backup has a password. Export again from 2FAS without a password, import that file, then delete it.",
       "err.encDashlane": "This Dashlane file (.dash) is encrypted. Export from Dashlane as CSV, import the ZIP, then delete it.",
       "err.toobig": "This file is too large.",
+      "err.noMemory": "This device could not give the file's key derivation the memory it needs. Open the file on a computer, or export again without a password, import that file, then delete it.",
       "exp.title": "Export passwords", "exp.kdbx": "KeePass (.kdbx 4, encrypted) — recommended",
       "exp.bw": "Bitwarden (.json, NOT encrypted)",
       "exp.kdbxPw": "Password for the file", "exp.kdbxHint": "KeePass and KeePassXC open the file with this password. It can be your master password or a new one.",
@@ -391,6 +394,8 @@
       "imp.gaHint": "Στο Google Authenticator πήγαινε στη Μεταφορά λογαριασμών και μετά στην Εξαγωγή λογαριασμών. Διάλεξε ένα στιγμιότυπο οθόνης κάθε κωδικού QR, σάρωσέ τον με την κάμερα ή επικόλλησε τον σύνδεσμο otpauth-migration://. Πρόσθεσε τους κωδικούς QR τον έναν μετά τον άλλον και μετά κάνε την εισαγωγή.",
       "imp.link": "Σύνδεσμος του κωδικού QR", "imp.read": "Ανάγνωση",
       "imp.from": "Διαβάστηκε από {s}.", "imp.src.csv": "αρχείο CSV", "imp.src.otp": "σύνδεσμο δύο βημάτων",
+      "imp.src.list": "λίστα συνδέσμων δύο βημάτων",
+      "imp.otpApps": "Εφαρμογές δύο βημάτων: ένα αντίγραφο ή μια εξαγωγή από Aegis, 2FAS, Proton Authenticator, Ente Auth, Bitwarden Authenticator, andOTP, FreeOTP+, Stratum (Authenticator Pro) ή LastPass Authenticator, με ή χωρίς τον κωδικό του, ή ένα αρχείο .txt με συνδέσμους otpauth://. Google Authenticator: οι κωδικοί QR παρακάτω. Το Microsoft Authenticator και το Authy δεν έχουν εξαγωγή: δες τη Βοήθεια, «Μεταφορά κωδικών από Microsoft Authenticator ή Authy».",
       "imp.found": "Βρέθηκαν: {list}.",
       "imp.k.login": "{n} συνδέσεις", "imp.k.note": "{n} σημειώσεις", "imp.k.card": "{n} κάρτες", "imp.k.identity": "{n} ταυτότητες",
       "imp.k.alias": "{n} ψευδώνυμα", "imp.k.other": "{n} άλλα στοιχεία", "imp.k.code": "{n} κωδικοί δύο βημάτων",
@@ -424,6 +429,7 @@
       "err.enc2fas": "Αυτό το αντίγραφο του 2FAS έχει κωδικό. Κάνε ξανά εξαγωγή από το 2FAS χωρίς κωδικό, εισήγαγε εκείνο το αρχείο και μετά διάγραψέ το.",
       "err.encDashlane": "Αυτό το αρχείο του Dashlane (.dash) είναι κρυπτογραφημένο. Κάνε εξαγωγή από το Dashlane ως CSV, εισήγαγε το ZIP και μετά διάγραψέ το.",
       "err.toobig": "Αυτό το αρχείο είναι πολύ μεγάλο.",
+      "err.noMemory": "Αυτή η συσκευή δεν μπόρεσε να δώσει στο κλειδί του αρχείου τη μνήμη που χρειάζεται. Άνοιξε το αρχείο σε υπολογιστή, ή κάνε ξανά εξαγωγή χωρίς κωδικό, εισήγαγε εκείνο το αρχείο και μετά διάγραψέ το.",
       "exp.title": "Εξαγωγή κωδικών", "exp.kdbx": "KeePass (.kdbx 4, κρυπτογραφημένο) — προτείνεται",
       "exp.bw": "Bitwarden (.json, ΜΗ κρυπτογραφημένο)",
       "exp.kdbxPw": "Κωδικός για το αρχείο", "exp.kdbxHint": "Το KeePass και το KeePassXC ανοίγουν το αρχείο με αυτόν τον κωδικό. Μπορεί να είναι ο κύριος κωδικός σου ή καινούργιος.",
@@ -618,7 +624,7 @@
                 "storage-full": "err.storage", "no-wasm": "lock.noWasm", "no-argon2": "lock.noWasm",
                 "bad-kdf": "lock.newer", "future": "lock.newer",
                 "encrypted-proton": "err.encProton", "encrypted-aegis": "err.encAegis", "encrypted-2fas": "err.enc2fas",
-                "encrypted-dashlane": "err.encDashlane", "hotp": "e.hotp", "toobig": "err.toobig" };
+                "encrypted-dashlane": "err.encDashlane", "hotp": "e.hotp", "toobig": "err.toobig", "no-memory": "err.noMemory" };
     return t(map[m] || "err.generic");
   }
 
@@ -1302,8 +1308,7 @@
         lastStep = step;
         PC.totp(o, now).then(function (r) {
           cur = r.code;
-          code.textContent = r.code.length === 6 ? r.code.slice(0, 3) + " " + r.code.slice(3) :
-                             r.code.slice(0, 4) + " " + r.code.slice(4);
+          code.textContent = fmtCode(r.code);
         });
       }
     }
@@ -2165,8 +2170,9 @@
                     nordpass: "NordPass", enpass: "Enpass", apple: "Apple Passwords", aegis: "Aegis", "2fas": "2FAS",
                     gauth: "Google Authenticator", bitwarden: "Bitwarden", keepass: "KeePass", chrome: "Chrome / Edge",
                     firefox: "Firefox", keepassxc: "KeePassXC", keeper: "Keeper", roboform: "RoboForm",
-                    zoho: "Zoho Vault", keepassxml: "KeePass (XML)" };
-  var IMPORT_ACCEPT = ".json,.csv,.zip,.1pux,.kdbx,.xml,.2fas,.txt,.pgp,.dash,application/json,text/csv,application/zip";
+                    zoho: "Zoho Vault", keepassxml: "KeePass (XML)", protonauth: "Proton Authenticator", ente: "Ente Auth",
+                    andotp: "andOTP", freeotp: "FreeOTP+", stratum: "Stratum (Authenticator Pro)", lastpassauth: "LastPass Authenticator" };
+  var IMPORT_ACCEPT = ".json,.csv,.zip,.1pux,.kdbx,.xml,.2fas,.txt,.pgp,.dash,.aes,.authpro,.bin,application/json,text/csv,text/plain,application/zip";
   var IMPORT_MAX = 50 * 1024 * 1024;
   // KeePass (kdbx.js, 38 KB) only for Import and Export: loaded on
   // demand, not at the first open.
@@ -2193,6 +2199,7 @@
     var d = dialog(t("imp.title"));
     d.body.appendChild(el("p", "hint", t("imp.text")));
     d.body.appendChild(el("p", "hint", t("imp.sources")));
+    d.body.appendChild(el("p", "hint", t("imp.otpApps")));
     // KeePass: its password and key file, shown once a .kdbx is chosen;
     // an encrypted Bitwarden / Aegis / 2FAS file: its password only
     var kx = el("div", "pv-kx"); kx.hidden = true;
@@ -2254,6 +2261,7 @@
     function forget() {
       if (kdbxBytes) { kdbxBytes.fill(0); kdbxBytes = null; }
       if (keyFile) { keyFile.fill(0); keyFile = null; }
+      if (locked && locked.data && locked.data.bytes) locked.data.bytes.fill(0);   // andOTP / Stratum files
       locked = null;
       res = null;
     }
@@ -2275,7 +2283,7 @@
       clear(status);
       if (!res) return;
       var pv = OI.apply(snap || PC.emptySnap(), res, { now: Date.now() });
-      line(t("imp.from", { s: SRC_NAMES[res.source] || t(res.source === "otpauth" ? "imp.src.otp" : "imp.src.csv") }));
+      line(t("imp.from", { s: SRC_NAMES[res.source] || t(res.source === "otpauth" ? "imp.src.otp" : res.source === "otplist" ? "imp.src.list" : "imp.src.csv") }));
       var kinds = [];
       ["login", "note", "card", "identity", "alias", "other"].forEach(function (k) {
         if (res.types[k]) kinds.push(t((res.types[k] === 1 ? "imp.k1." : "imp.k.") + k, { n: res.types[k] }));

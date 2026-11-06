@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.47.00
+- **Bring your 2FA codes from more authenticator apps.** Passwords › `⋯` › `Import` now also reads Proton Authenticator, Ente Auth, Bitwarden Authenticator, andOTP, FreeOTP+, Stratum (Authenticator Pro) and LastPass Authenticator, with or without the file's password, and any `.txt` file with one `otpauth://` link per line. Steam Guard codes come too and show their 5 letters. Microsoft Authenticator and Authy cannot export their codes; Help › Passwords › "Moving codes from Microsoft Authenticator or Authy" shows how to move them one site at a time.
+
 ## Version 5.46.01
 - **The orOS Android app has the gold logo.** The orOS app's icon on the phone (and the picture it shows while it starts) still had the old, paler gold. It now has the same gold logo as orOS itself, and so do the pictures of every orOS app in the orOS F-Droid repository. Update the app (`oros.apk` or the orOS F-Droid repository) to get it.
 
