@@ -1,7 +1,8 @@
 // Builds the orOS logo PNGs from icon.svg: icons/icon-192/512.png (any),
 // icons/icon-maskable-192/512.png (full-bleed square, logo scaled to 0.617
 // so it stays well inside the 80% safe circle) and the browser add-on's
-// extension/icons/icon-16/32/48/128.png.
+// extension/icons/icon-16/32/48/128.png, and copies icon-192/512 to the
+// orOS Android app's launcher icon and splash (android/app/src/main/res).
 // Run after changing icon.svg:  node tools/brand-icons.js
 // (needs Playwright's Chromium; the PNGs are committed, nothing runs at
 // page load).
@@ -37,6 +38,11 @@ const JOBS = [
   ["extension/icons/icon-128.png", SRC, 128],
 ];
 
+const ANDROID = [
+  ["icons/icon-192.png", "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"],
+  ["icons/icon-512.png", "android/app/src/main/res/drawable-xxxhdpi/splash.png"],
+];
+
 (async () => {
   const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "/opt/node22/lib/node_modules/playwright");
   const browser = await chromium.launch();
@@ -49,4 +55,10 @@ const JOBS = [
     console.log("icon:", name);
   }
   await browser.close();
+  // The orOS APK shows the same logo: its launcher icon and splash are
+  // the "any" PNGs (tests/android.test.js checks they stay identical).
+  for (const [from, to] of ANDROID) {
+    fs.copyFileSync(path.join(ROOT, from), path.join(ROOT, to));
+    console.log("icon:", to);
+  }
 })();

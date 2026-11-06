@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.46.01
+- **The orOS Android app has the gold logo.** The orOS app's icon on the phone (and the picture it shows while it starts) still had the old, paler gold. It now has the same gold logo as orOS itself, and so do the pictures of every orOS app in the orOS F-Droid repository. Update the app (`oros.apk` or the orOS F-Droid repository) to get it.
+
 ## Version 5.46.00
 - **orOS Music, on its own and as an Android app.** Music installs as its own app, orOS Music, with its own icon and window (Settings › Single apps, or the APK `oros-music.apk` and the orOS F-Droid repository on Android). It plays your songs and free music in the background and with the screen off, with the song and its buttons on the lock screen; long-press the icon for `Liked songs` or `Shuffle my music`. Songs open with it from a file manager, and a link shared to it plays a song or opens Import or Add a music feed, filled in. Same songs, likes and playlists as Music in orOS.
 

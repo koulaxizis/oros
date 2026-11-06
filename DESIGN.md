@@ -5,7 +5,7 @@ Design language for orOS (useoros.online): the shell, every app, the installers'
 ## Identity
 
 - "A static operating system in your browser": Linux-desktop feel, offline-first, mobile-first, free and open for anyone.
-- Logo: gold triangle in the skin gold `#d4af37` (decision of Christos, 2026-10-31: the logo follows the skin; the older logo gold `#c8a96e` is retired). The PNG icons are built from `icon.svg` by `node tools/brand-icons.js` (app and add-on icons) and `node tools/solo-icons.js` (single apps); never edit them by hand.
+- Logo: gold triangle in the skin gold `#d4af37` (decision of Christos, 2026-10-31: the logo follows the skin; the older logo gold `#c8a96e` is retired). The PNG icons are built from `icon.svg` by `node tools/brand-icons.js` (app, add-on and orOS Android launcher/splash icons) and `node tools/solo-icons.js` (single apps); never edit them by hand.
 - Public product: nothing tied to Christos, Glarolykoi or his accounts unless he asks.
 
 ## Skins and theme
