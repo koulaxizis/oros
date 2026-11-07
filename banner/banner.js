@@ -156,6 +156,23 @@
       "stats.march": "March", "stats.marchRow": "Marches · best",
       "last.title": "Last battles", "last.won": "Won", "last.lost": "Lost", "last.hot": "{s} won",
       "last.replay": "Replay", "last.replayLabel": "Replay battle {seed}", "last.turn": "turn {n}",
+      "btn.puzzles": "Puzzles", "btn.decks": "My decks",
+      "pz.title": "Puzzles", "pz.intro": "Twenty battles to win in one turn: break the red Keep before you end your turn. Undo takes back a step, and ending the turn starts the puzzle again.",
+      "pz.solved": "Solved: {n} of {m}", "pz.label": "Puzzle {n}", "pz.labelDone": "Puzzle {n}, solved", "pz.tag": "Puzzle {n}",
+      "pz.goal": "Break the red Keep this turn.", "pz.won": "Puzzle {n} solved!", "pz.fail": "The Keep still stands",
+      "pz.failNote": "Look again at what each card and tile does: the way through is there.", "pz.retry": "Try again",
+      "pz.back": "Look at the board", "pz.next": "Puzzle {n}", "pz.all": "All puzzles",
+      "dk.title": "My decks", "dk.none": "No decks of your own yet. Make one from a ready-made deck or from nothing, or add one from a code.",
+      "dk.new": "New deck", "dk.add": "Add from a code", "dk.addGo": "Add", "dk.edit": "Edit", "dk.editLabel": "Edit {n}",
+      "dk.share": "Share", "dk.shareLabel": "Share the code of {n}", "dk.copied": "Deck code copied",
+      "dk.editTitle": "Edit deck", "dk.name": "Name", "dk.from": "Start from", "dk.empty": "Nothing",
+      "dk.count": "{n} of {m} cards", "dk.need": "A deck has exactly {m} cards, at most {c} of each.",
+      "dk.plus": "One more {k}", "dk.minus": "One less {k}", "dk.save": "Save", "dk.saved": "Deck saved",
+      "dk.del": "Delete", "dk.delAsk": "Delete the deck \u201c{n}\u201d? Its code still works for anyone who has it.", "dk.deleted": "Deck deleted",
+      "dk.codeAsk": "Deck code", "dk.bad": "This is not a deck code. A code starts with b and has 17 letters and digits.",
+      "dk.added": "Deck added", "dk.have": "You have this deck already: {n}", "dk.max": "You can keep {n} decks.",
+      "dk.defName": "My deck {n}", "dk.pick": "{s}: one of your decks", "dk.pickNone": "Or one of my decks…",
+      "dk.cardsOwn": "Your own deck of 20 cards.", "deck.own": "Own deck",
       "btn.daily": "Daily battle", "daily.label": "Daily",
       "daily.title": "Daily battle #{n}", "daily.tag": "Daily #{n}",
       "daily.won": "Won on turn {t}", "daily.lost": "Lost on turn {t}",
@@ -259,6 +276,23 @@
       "stats.march": "Πορεία", "stats.marchRow": "Πορείες · καλύτερη",
       "last.title": "Τελευταίες μάχες", "last.won": "Νίκη", "last.lost": "Ήττα", "last.hot": "Κέρδισε ο {s}",
       "last.replay": "Ξανά", "last.replayLabel": "Ξανά η μάχη {seed}", "last.turn": "γύρος {n}",
+      "btn.puzzles": "Γρίφοι", "btn.decks": "Οι τράπουλές μου",
+      "pz.title": "Γρίφοι", "pz.intro": "Είκοσι μάχες για να τις κερδίσεις σε έναν γύρο: σπάσε το κόκκινο Κάστρο πριν τελειώσεις τον γύρο σου. Η Αναίρεση παίρνει πίσω ένα βήμα, και το τέλος του γύρου ξεκινά τον γρίφο από την αρχή.",
+      "pz.solved": "Λύθηκαν: {n} από {m}", "pz.label": "Γρίφος {n}", "pz.labelDone": "Γρίφος {n}, λύθηκε", "pz.tag": "Γρίφος {n}",
+      "pz.goal": "Σπάσε το κόκκινο Κάστρο σε αυτόν τον γύρο.", "pz.won": "Ο γρίφος {n} λύθηκε!", "pz.fail": "Το Κάστρο στέκεται ακόμα",
+      "pz.failNote": "Δες ξανά τι κάνει κάθε κάρτα και κάθε πλακίδιο: ο δρόμος υπάρχει.", "pz.retry": "Ξανά από την αρχή",
+      "pz.back": "Δες το πεδίο", "pz.next": "Γρίφος {n}", "pz.all": "Όλοι οι γρίφοι",
+      "dk.title": "Οι τράπουλές μου", "dk.none": "Δεν έχεις ακόμα δικές σου τράπουλες. Φτιάξε μία από μια έτοιμη τράπουλα ή από το μηδέν, ή πρόσθεσε μία από έναν κωδικό.",
+      "dk.new": "Νέα τράπουλα", "dk.add": "Προσθήκη από κωδικό", "dk.addGo": "Προσθήκη", "dk.edit": "Αλλαγή", "dk.editLabel": "Αλλαγή: {n}",
+      "dk.share": "Κοινοποίηση", "dk.shareLabel": "Κοινοποίηση του κωδικού: {n}", "dk.copied": "Ο κωδικός της τράπουλας αντιγράφηκε",
+      "dk.editTitle": "Αλλαγή τράπουλας", "dk.name": "Όνομα", "dk.from": "Ξεκίνα από", "dk.empty": "Τίποτα",
+      "dk.count": "{n} από {m} κάρτες", "dk.need": "Μια τράπουλα έχει ακριβώς {m} κάρτες, ως {c} από την καθεμία.",
+      "dk.plus": "Μία ακόμα: {k}", "dk.minus": "Μία λιγότερη: {k}", "dk.save": "Αποθήκευση", "dk.saved": "Η τράπουλα αποθηκεύτηκε",
+      "dk.del": "Διαγραφή", "dk.delAsk": "Να διαγραφεί η τράπουλα «{n}»; Ο κωδικός της δουλεύει ακόμα για όποιον τον έχει.", "dk.deleted": "Η τράπουλα διαγράφηκε",
+      "dk.codeAsk": "Κωδικός τράπουλας", "dk.bad": "Αυτός δεν είναι κωδικός τράπουλας. Ένας κωδικός αρχίζει από b και έχει 17 γράμματα και ψηφία.",
+      "dk.added": "Η τράπουλα προστέθηκε", "dk.have": "Την έχεις ήδη αυτή την τράπουλα: {n}", "dk.max": "Μπορείς να κρατάς ως {n} τράπουλες.",
+      "dk.defName": "Τράπουλα {n}", "dk.pick": "{s}: μία από τις τράπουλές σου", "dk.pickNone": "Ή μία από τις τράπουλές μου…",
+      "dk.cardsOwn": "Η δική σου τράπουλα των 20 καρτών.", "deck.own": "Δική μου τράπουλα",
       "btn.daily": "Μάχη της ημέρας", "daily.label": "Ημέρας",
       "daily.title": "Μάχη της ημέρας #{n}", "daily.tag": "Ημέρας #{n}",
       "daily.won": "Νίκη στον γύρο {t}", "daily.lost": "Ήττα στον γύρο {t}",
@@ -339,13 +373,37 @@
   // last (5.66.00): the last LAST_N battles on all devices, newest first:
   // [{ a: end time (ms), m: e|m|h computer, p two players, d Daily,
   //    r March, w: 1 Blue won | 0, t: turn, s: battle code, k: [deck, deck] }]
-  // A union by (a, s), newest LAST_N kept, from br on.
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  // A union by (a, s), newest LAST_N kept, from br on. c (5.68.00,
+  // optional): [code | "", code | ""], a side's own deck by its share code.
+  // pz (5.68.00): solved puzzles { "<1…PUZZLE_N>": b }, a per-key max
+  // epoch, from br on.
+  // decks (5.68.00): own decks { "<id>": { n: name, c: share code, m: changed (ms) }
+  // | { m, x: 1 } removed }; the later m wins (equal: the larger JSON),
+  // the newest DECKS_KEEP entries kept. Records' reset leaves decks.
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], pz: {}, decks: {} }; }
+  var PUZZLE_N = 20, DECKS_MAX = 12, DECKS_KEEP = 60, NAME_MAX = 24;
+  function cleanName(n) {
+    return typeof n === "string" ? n.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, NAME_MAX) : "";
+  }
+  function deckIdOk(id) { return /^[a-z0-9]{4,24}$/.test(id); }
+  function normDeck(v) {
+    if (!v || typeof v !== "object" || !isInt(v.m) || v.m <= 0 || v.m > 1e13) return null;
+    if (v.x === 1) return { m: v.m, x: 1 };
+    var n = cleanName(v.n);
+    if (!n || typeof v.c !== "string" || !E.deckFromCode(v.c)) return null;
+    return { n: n, c: E.deckCode(E.deckFromCode(v.c)), m: v.m };
+  }
+  function codeOk(c) { return c === "" || (typeof c === "string" && !!E.deckFromCode(c) && E.deckCode(E.deckFromCode(c)) === c); }
   function normLast(v) {
     if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["e", "m", "h", "p", "d", "r"].indexOf(v.m) < 0 ||
         (v.w !== 0 && v.w !== 1) || !isInt(v.t) || v.t < 1 || v.t > MAX_TURNS || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s) ||
         !Array.isArray(v.k) || v.k.length !== 2 || v.k.some(function (d) { return E.DECK_IDS.indexOf(d) < 0; })) return null;
-    return { a: v.a, m: v.m, w: v.w, t: v.t, s: v.s, k: [v.k[0], v.k[1]] };
+    var out = { a: v.a, m: v.m, w: v.w, t: v.t, s: v.s, k: [v.k[0], v.k[1]] };
+    if (v.c !== undefined) {
+      if (!Array.isArray(v.c) || v.c.length !== 2 || !v.c.every(codeOk)) return null;
+      if (v.c[0] || v.c[1]) out.c = [v.c[0], v.c[1]];
+    }
+    return out;
   }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
@@ -427,7 +485,31 @@
     });
     Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
     last.sort(function (x, y) { return (y.a - x.a) || cmpStr(x.s, y.s) || cmpStr(JSON.stringify(x), JSON.stringify(y)); });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
+    var pz = {};
+    [a.pz, b.pz].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!/^\d{1,2}$/.test(k) || +k < 1 || +k > PUZZLE_N || !isInt(m[k]) || m[k] < br) return;
+        if (pz[+k] === undefined || m[k] > pz[+k]) pz[+k] = m[k];
+      });
+    });
+    var spz = {};
+    Object.keys(pz).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { spz[k] = pz[k]; });
+    var dk = {};
+    [a.decks, b.decks].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (id) {
+        if (!deckIdOk(id)) return;
+        var v = normDeck(m[id]);
+        if (!v) return;
+        var cur = dk[id];
+        if (!cur || v.m > cur.m || (v.m === cur.m && cmpStr(JSON.stringify(v), JSON.stringify(cur)) > 0)) dk[id] = v;
+      });
+    });
+    var ids = Object.keys(dk).sort(function (x, y) { return (dk[y].m - dk[x].m) || cmpStr(x, y); }).slice(0, DECKS_KEEP).sort(cmpStr);
+    var sdk = {};
+    ids.forEach(function (id) { sdk[id] = dk[id]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N), pz: spz, decks: sdk };
   }
   // [battles, won] for a key, all devices.
   function totals(key) {
@@ -474,7 +556,7 @@
   // One battle ended (or was left): +1 battle, +1 won when Blue won
   // against the computer.
   function count(key, won) {
-    if (game && (game.opts.day !== undefined || game.opts.march !== undefined)) return;   // Daily: days; March: its own row
+    if (game && (game.opts.day !== undefined || game.opts.march !== undefined || game.opts.puzzle !== undefined)) return;   // Daily: days; March: its own row; puzzles: pz
     var row = data.rows[deviceId];
     if (!row || row.b < data.br) row = { b: data.br, s: {} };
     row = { b: row.b, s: JSON.parse(JSON.stringify(row.s)) };
@@ -496,8 +578,8 @@
       if (p && typeof p === "object") {
         if (p.mode === "ai" || p.mode === "hot") prefs.mode = p.mode;
         if (E.LEVELS.indexOf(p.lv) >= 0) prefs.lv = p.lv;
-        if (DECK_CHOICES.indexOf(p.d0) >= 0) prefs.d0 = p.d0;
-        if (DECK_CHOICES.indexOf(p.d1) >= 0) prefs.d1 = p.d1;
+        if (DECK_CHOICES.indexOf(p.d0) >= 0 || ownChoice(p.d0)) prefs.d0 = p.d0;
+        if (DECK_CHOICES.indexOf(p.d1) >= 0 || ownChoice(p.d1)) prefs.d1 = p.d1;
         prefs.tour = p.tour === true;
       }
     } catch (e) {}
@@ -510,7 +592,9 @@
   //   g: engine state,
   //   opts: { mode: "ai" | "hot", lv: e|m|h (computer), seed, d: [deck choice, deck choice] (r = random),
   //           day: the Daily battle's day (absent in a free battle),
-  //           march: the March battle's number 0…7 (its deck is in oros-banner-march) },
+  //           march: the March battle's number 0…7 (its deck is in oros-banner-march),
+  //           own: [code | "", code | ""] a side's own deck by its share code (5.68.00),
+  //           puzzle: the puzzle's number 1…PUZZLE_N, seed "pz<n>" (5.68.00) },
   //   counted: bool   the battle is in the records
   //   done: bool      the battle is over
   //   pass: bool      two players: the hand stays hidden until the device is passed
@@ -528,6 +612,9 @@
     if (!Array.isArray(o.d) || o.d.length !== 2 || o.d.some(function (d) { return DECK_CHOICES.indexOf(d) < 0; })) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || o.mode !== "ai" || o.lv !== DAILY_LV)) return false;
     if (o.march !== undefined && (!isInt(o.march) || o.march < 0 || o.march >= MARCH_N || o.mode !== "ai" || o.day !== undefined)) return false;
+    if (o.own !== undefined && (!Array.isArray(o.own) || o.own.length !== 2 || !o.own.every(codeOk) || o.day !== undefined || o.march !== undefined)) return false;
+    if (o.puzzle !== undefined && (!isInt(o.puzzle) || o.puzzle < 1 || o.puzzle > PUZ.length || o.mode !== "ai" ||
+        o.seed !== "pz" + o.puzzle || o.day !== undefined || o.march !== undefined || o.own !== undefined || s.g.side !== 0)) return false;
     return true;
   }
   function loadSession() {
@@ -564,7 +651,9 @@
   function rowKey() { return game.opts.mode === "hot" ? "p" : game.opts.lv; }
   // Under way once the person made a move (the computer's opening
   // moves alone do not count), like gamekit/resume.js.
-  function inProgressOf(g) { return !!(g && !g.done && g.g.over < 0 && (g.me === undefined ? g.g.n > 0 : g.me === true)); }
+  function inProgressOf(g) {
+    return !!(g && !g.done && g.g.over < 0 && g.opts.puzzle === undefined && (g.me === undefined ? g.g.n > 0 : g.me === true));
+  }
   function deckOf(choice, seed, side) {
     if (E.DECK_IDS.indexOf(choice) >= 0) return choice;
     return E.DECK_IDS[E.hashStr("banner:" + seed + ":deckpick:" + side) % E.DECK_IDS.length];
@@ -574,7 +663,16 @@
     if (o.mode === "ai") o.lv = E.LEVELS.indexOf(opts.lv) >= 0 ? opts.lv : "m";
     if (opts.day !== undefined) o.day = opts.day;
     if (opts.march !== undefined) o.march = opts.march;
-    var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)], undefined, opts.list ? [opts.list, null] : null);
+    if (opts.puzzle !== undefined) {
+      o.puzzle = opts.puzzle;
+      return { g: E.puzzleBattle(PUZ[o.puzzle - 1], o.puzzle), opts: o, counted: false, done: false, pass: false, me: false };
+    }
+    var lists = opts.list ? [opts.list, null] : null;
+    if (opts.own && (opts.own[0] || opts.own[1])) {
+      o.own = [opts.own[0] || "", opts.own[1] || ""];
+      lists = [E.deckFromCode(o.own[0]), E.deckFromCode(o.own[1])];
+    }
+    var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)], undefined, lists);
     return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot", me: false };
   }
   function aiSide() { return game && game.opts.mode === "ai" ? 1 : -1; }
@@ -606,6 +704,7 @@
   // Do one action of the person; false when it was not allowed.
   function doAct(a) {
     if (!humanTurn()) return false;
+    if (a.t === "end" && game.opts.puzzle !== undefined) { puzzleFail(); return true; }
     var before = E.clone(st);
     var ev = E.act(st, a);
     if (!ev) return false;
@@ -682,7 +781,10 @@
   }
   function finish() {
     stopAI();
-    if (!game.counted) {
+    if (!game.counted && game.opts.puzzle !== undefined) {
+      game.counted = true;
+      if (st.over === 0) solvePuzzle(game.opts.puzzle);
+    } else if (!game.counted) {
       game.counted = true;
       count(rowKey(), game.opts.mode === "ai" && st.over === 0);
       if (game.opts.day !== undefined) countDaily(game.opts.day, st.over === 0, st.rt[0], st.keep[0]);
@@ -1064,9 +1166,11 @@
     db.hidden = !DK;
     db.classList.toggle("due", !!DK && !data.days[today()]);
     db.classList.toggle("on", dly && !game.done);
-    var mch = game.opts.march !== undefined;
-    $("tag").hidden = !dly && !mch;
-    $("tag").textContent = dly ? t("daily.tag", { n: game.opts.day + 1 }) : (mch ? t("march.tag", { n: game.opts.march + 1, m: MARCH_N }) : "");
+    var mch = game.opts.march !== undefined, pzl = game.opts.puzzle !== undefined;
+    $("tag").hidden = !dly && !mch && !pzl;
+    $("tag").textContent = dly ? t("daily.tag", { n: game.opts.day + 1 }) : (mch ? t("march.tag", { n: game.opts.march + 1, m: MARCH_N }) :
+      (pzl ? t("pz.tag", { n: game.opts.puzzle }) : ""));
+    $("puzzle-btn").classList.toggle("on", pzl && !game.done);
     $("march-btn").classList.toggle("on", !!(march && !march.over));
   }
   var GS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">';
@@ -1186,18 +1290,53 @@
     return wrap;
   }
   function deckKey(d) { return d === "r" ? "random" : d; }
+  // A side's deck: a ready-made one, Random, or one of the own decks
+  // (the list under it, when there are any).
   function deckField(label, cur, onPick) {
-    var note = el("div", "dlg-note", t("deck." + deckKey(cur) + ".note"));
-    var f = segField(label, DECK_CHOICES, cur, "", function (v) { onPick(v); note.textContent = t("deck." + deckKey(v) + ".note"); });
+    var own = ownChoice(cur);
+    function noteOf(v) { return ownChoice(v) ? t("dk.cardsOwn") : t("deck." + deckKey(v) + ".note"); }
+    var note = el("div", "dlg-note", noteOf(cur));
+    var f = segField(label, DECK_CHOICES, own ? "" : cur, "", function (v) {
+      if (sel) sel.value = "";
+      onPick(v);
+      note.textContent = noteOf(v);
+    });
     [].forEach.call(f.querySelectorAll(".seg-btn"), function (b, n) { b.textContent = t("deck." + deckKey(DECK_CHOICES[n])); });
+    var ids = ownIds(), sel = null;
+    if (ids.length) {
+      sel = el("select", "dlg-select");
+      sel.setAttribute("aria-label", t("dk.pick", { s: label }));
+      sel.appendChild(el("option", "", t("dk.pickNone")));
+      sel.lastChild.value = "";
+      ids.forEach(function (id) { var o = el("option", "", data.decks[id].n); o.value = "o:" + id; sel.appendChild(o); });
+      sel.value = own ? cur : "";
+      sel.addEventListener("change", function () {
+        var v = sel.value || "r";
+        [].forEach.call(f.querySelectorAll(".seg-btn"), function (b, n) {
+          var on = !sel.value && DECK_CHOICES[n] === "r";
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        onPick(v);
+        note.textContent = noteOf(v);
+      });
+      f.appendChild(sel);
+    }
     f.appendChild(note);
     return f;
+  }
+  // [deck choices for the engine, own codes] from two picks.
+  function pickDecks(d0, d1) {
+    var d = [d0, d1], own = ["", ""];
+    [0, 1].forEach(function (s) { var o = ownChoice(d[s]); if (o) { own[s] = o.c; d[s] = "r"; } else if (DECK_CHOICES.indexOf(d[s]) < 0) d[s] = "r"; });
+    return { d: d, own: own[0] || own[1] ? own : null };
   }
 
   function newDialog() {
     cancelTourWait();
     if (guardLeave(newDialog)) return;
-    var o = { mode: prefs.mode, lv: prefs.lv, d0: prefs.d0, d1: prefs.d1 };
+    var o = { mode: prefs.mode, lv: prefs.lv, d0: ownChoice(prefs.d0) || DECK_CHOICES.indexOf(prefs.d0) >= 0 ? prefs.d0 : "r",
+      d1: ownChoice(prefs.d1) || DECK_CHOICES.indexOf(prefs.d1) >= 0 ? prefs.d1 : "r" };
     var dlg = makeDialog("bn-new");
     dlg.appendChild(el("div", "dlg-title", t("new.title")));
     var note = el("div", "dlg-note", t("mode." + o.mode + ".note"));
@@ -1230,7 +1369,8 @@
       prefs.mode = o.mode; prefs.lv = o.lv; prefs.d0 = o.d0; prefs.d1 = o.d1;
       savePrefs();
       dlg.close();
-      startGame({ mode: o.mode, lv: o.lv, seed: cleanSeed(seed.value) || newSeed(), d: [o.d0, o.d1] });
+      var pk = pickDecks(o.d0, o.d1);
+      startGame({ mode: o.mode, lv: o.lv, seed: cleanSeed(seed.value) || newSeed(), d: pk.d, own: pk.own });
     });
     acts.appendChild(go);
     dlg.appendChild(acts);
@@ -1328,7 +1468,7 @@
     var acts = el("div", "dlg-actions wrap");
     acts.appendChild(button(t("res.same"), "", function () {
       dlg.close();
-      startGame({ mode: game.opts.mode, lv: game.opts.lv, seed: game.opts.seed, d: game.opts.d });
+      startGame({ mode: game.opts.mode, lv: game.opts.lv, seed: game.opts.seed, d: game.opts.d, own: game.opts.own });
     }));
     var nb = button(t("res.new"), "primary", function () { dlg.close(); newDialog(); });
     acts.appendChild(nb);
@@ -1362,7 +1502,11 @@
     dlg.appendChild(row(t("march.title"), mt[0] ? mt[0] + " · " + bestMarch() + "/" + MARCH_N : "–"));
     if ((data.last || []).length) empty = false;
     lastBattles(dlg);
-    if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    var solved = Object.keys(data.pz).length;
+    if (solved) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("pz.title")));
+    dlg.appendChild(row(t("pz.title"), solved + " / " + PUZ.length));
+    if (game && game.opts.day === undefined && game.opts.puzzle === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
     hubLink(acts, dlg);
     var reset = button(t("stats.reset"), "danger", function () {
@@ -1482,6 +1626,7 @@
     if (!game) return;
     if (game.opts.day !== undefined) dailyDialog(game.opts.day);
     else if (game.opts.march !== undefined) marchDialog();
+    else if (game.opts.puzzle !== undefined) puzzleDone();
     else resultDialog();
   }
 
@@ -1489,11 +1634,20 @@
   // A battle ended: into Last battles (once per battle).
   function logBattle() {
     var m = game.opts.day !== undefined ? "d" : (game.opts.march !== undefined ? "r" : (game.opts.mode === "hot" ? "p" : game.opts.lv));
-    var v = normLast({ a: Date.now(), m: m, w: st.over === 0 ? 1 : 0, t: Math.max(1, st.rt[0]), s: game.opts.seed, k: st.decks.slice() });
+    var v = normLast({ a: Date.now(), m: m, w: st.over === 0 ? 1 : 0, t: Math.max(1, st.rt[0]), s: game.opts.seed, k: st.decks.slice(),
+      c: game.opts.own ? game.opts.own.slice() : undefined });
     if (!v) return;
     data.last = [v].concat(data.last || []);
     data = mergeBanner(data, data);
     save();
+  }
+  // A side's deck in Last battles: its ready-made deck, or the name of
+  // the own deck with that code (else "Own deck").
+  function deckLabel(v, s) {
+    var c = v.c && v.c[s];
+    if (!c) return t("deck." + v.k[s]);
+    var id = ownByCode(c);
+    return id ? data.decks[id].n : t("deck.own");
   }
   // Records › Last battles: how each ended, with its code to replay (a
   // March battle replays with the starting deck, as a free battle).
@@ -1509,12 +1663,12 @@
       var what = v.m === "p" ? t("last.hot", { s: sideName(v.w ? 0 : 1) }) : t(v.w ? "last.won" : "last.lost");
       tx.appendChild(el("div", "nm", kind + " · " + what + " · " + t("last.turn", { n: v.t })));
       tx.appendChild(el("div", "fx", (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") +
-        t("deck." + v.k[0]) + " · " + t("deck." + v.k[1]) + " · " + v.s));
+        deckLabel(v, 0) + " · " + deckLabel(v, 1) + " · " + v.s));
       r.appendChild(tx);
       var b = button(t("last.replay"), "", function () {
         dlg.close();
         var go = function () {
-          startGame({ mode: v.m === "p" ? "hot" : "ai", lv: E.LEVELS.indexOf(v.m) >= 0 ? v.m : "m", seed: v.s, d: v.k.slice() });
+          startGame({ mode: v.m === "p" ? "hot" : "ai", lv: E.LEVELS.indexOf(v.m) >= 0 ? v.m : "m", seed: v.s, d: v.k.slice(), own: v.c ? v.c.slice() : null });
         };
         if (!guardLeave(go)) go();
       });
@@ -1523,6 +1677,298 @@
       box.appendChild(r);
     });
     dlg.appendChild(box);
+  }
+
+  // ---------- Puzzles ----------
+  // banner/puzzles.js: PUZZLE_N "win this turn" positions. Ending the
+  // turn is a failed try (nothing is counted); breaking the Keep marks
+  // the puzzle solved in pz (synced).
+  var PUZ = (window.BannerPuzzles && window.BannerPuzzles.LIST) || [];
+  function solvePuzzle(n) {
+    if (data.pz[n] !== undefined && data.pz[n] >= data.br) return;
+    data.pz[n] = data.br;
+    data = mergeBanner(data, data);
+    save();
+  }
+  function startPuzzle(n) {
+    if (n < 1 || n > PUZ.length) return;
+    startGame({ mode: "ai", lv: "m", seed: "pz" + n, d: ["iron", "iron"], puzzle: n });
+    setMsg(t("pz.goal"));
+  }
+  function puzzlesDialog() {
+    if (document.querySelector("dialog[open]")) return;
+    var dlg = makeDialog("bn-puzzles");
+    dlg.appendChild(el("div", "dlg-title", t("pz.title")));
+    dlg.appendChild(el("div", "dlg-msg", t("pz.intro")));
+    dlg.appendChild(el("div", "dlg-note", t("pz.solved", { n: Object.keys(data.pz).length, m: PUZ.length })));
+    var grid = el("div", "pz-grid"), first = null;
+    PUZ.forEach(function (p, j) {
+      var n = j + 1, done = data.pz[n] !== undefined;
+      var b = el("button", "pz-btn" + (done ? " done" : "") + (game && game.opts.puzzle === n && !game.done ? " now" : ""), String(n));
+      b.type = "button";
+      b.setAttribute("aria-label", t(done ? "pz.labelDone" : "pz.label", { n: n }));
+      b.addEventListener("click", function () {
+        dlg.close();
+        var go = function () { startPuzzle(n); };
+        if (!guardLeave(go)) go();
+      });
+      if (!first && !done) first = b;
+      grid.appendChild(b);
+    });
+    dlg.appendChild(grid);
+    var acts = el("div", "dlg-actions");
+    var close = button(t("stats.close"), "", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (first || close).focus();
+  }
+  function puzzleFail() {
+    var n = game.opts.puzzle;
+    sfx("end");
+    var dlg = makeDialog("bn-pzfail");
+    dlg.appendChild(el("div", "dlg-hero lost", t("pz.fail")));
+    dlg.appendChild(el("div", "dlg-msg", t("pz.failNote")));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("pz.all"), "", function () { dlg.close(); setTimeout(puzzlesDialog, 0); }));
+    acts.appendChild(button(t("pz.back"), "", function () { dlg.close(); }));
+    var again = button(t("pz.retry"), "primary", function () { dlg.close(); startPuzzle(n); });
+    acts.appendChild(again);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    again.focus();
+  }
+  function puzzleDone() {
+    var n = game.opts.puzzle;
+    var dlg = makeDialog("bn-pzdone");
+    dlg.appendChild(el("div", "dlg-hero", t("pz.won", { n: n })));
+    dlg.appendChild(el("div", "dlg-note", t("pz.solved", { n: Object.keys(data.pz).length, m: PUZ.length })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("pz.all"), "", function () { dlg.close(); setTimeout(puzzlesDialog, 0); }));
+    var next = null;
+    for (var k = 1; k <= PUZ.length && !next; k++) { var c = (n + k - 1) % PUZ.length + 1; if (data.pz[c] === undefined) next = c; }
+    var go = button(next ? t("pz.next", { n: next }) : t("stats.close"), "primary", function () { dlg.close(); if (next) startPuzzle(next); });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    go.focus();
+  }
+
+  // ---------- Own decks ----------
+  // An own deck is chosen as "o:<id>" (prefs); a battle keeps its share
+  // code (opts.own), so it plays the same even if the deck changes later.
+  function ownIds() {
+    return Object.keys(data.decks).filter(function (id) { return !data.decks[id].x; })
+      .sort(function (x, y) { return cmpStr(data.decks[x].n.toLowerCase(), data.decks[y].n.toLowerCase()) || cmpStr(x, y); });
+  }
+  function ownChoice(v) {
+    if (typeof v !== "string" || v.slice(0, 2) !== "o:") return null;
+    var d = data && data.decks[v.slice(2)];
+    return d && !d.x ? d : null;
+  }
+  function ownByCode(c) {
+    var ids = ownIds();
+    for (var k = 0; k < ids.length; k++) if (data.decks[ids[k]].c === c) return ids[k];
+    return null;
+  }
+  function newDeckId() {
+    var id;
+    do { id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); } while (data.decks[id]);
+    return id;
+  }
+  function putDeck(id, n, c) {
+    data.decks[id] = { n: cleanName(n) || t("dk.defName", { n: ownIds().length + 1 }), c: c, m: Math.max(Date.now(), data.decks[id] ? data.decks[id].m + 1 : 0) };
+    data = mergeBanner(data, data);
+    save();
+  }
+  function dropDeck(id) {
+    if (!data.decks[id]) return;
+    data.decks[id] = { m: Math.max(Date.now(), data.decks[id].m + 1), x: 1 };
+    data = mergeBanner(data, data);
+    save();
+  }
+  function shareCode(code, name) {
+    var text = name + ": " + code;
+    if (DK && DK.share) {
+      DK.share(text, "orOS " + t("app.name")).then(function (how) {
+        if (how === "copied") showToast(t("dk.copied"));
+        else if (how === "shared") live(t("toast.shared"));
+        else if (how === "failed") showToast(t("toast.copyFail"));
+      });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { showToast(t("dk.copied")); }, function () { showToast(t("toast.copyFail")); });
+    } else showToast(t("toast.copyFail"));
+  }
+  function decksDialog() {
+    if (document.querySelector("dialog[open]")) return;
+    var dlg = makeDialog("bn-decks");
+    dlg.appendChild(el("div", "dlg-title", t("dk.title")));
+    var ids = ownIds();
+    if (!ids.length) dlg.appendChild(el("div", "dlg-msg", t("dk.none")));
+    var box = el("div", "lr-list");
+    ids.forEach(function (id) {
+      var d = data.decks[id];
+      var r = el("div", "lr-row");
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", d.n));
+      tx.appendChild(el("div", "fx", d.c));
+      r.appendChild(tx);
+      var cp = button(t("dk.share"), "", function () { shareCode(d.c, d.n); });
+      cp.setAttribute("aria-label", t("dk.shareLabel", { n: d.n }));
+      r.appendChild(cp);
+      var ed = button(t("dk.edit"), "", function () { dlg.close(); deckEditor(id); });
+      ed.setAttribute("aria-label", t("dk.editLabel", { n: d.n }));
+      r.appendChild(ed);
+      box.appendChild(r);
+    });
+    if (ids.length) dlg.appendChild(box);
+    if (ids.length >= DECKS_MAX) dlg.appendChild(el("div", "dlg-note", t("dk.max", { n: DECKS_MAX })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("stats.close"), "", function () { dlg.close(); }));
+    var add = button(t("dk.add"), "", function () { dlg.close(); importDialog(); });
+    add.disabled = ids.length >= DECKS_MAX;
+    acts.appendChild(add);
+    var mk = button(t("dk.new"), "primary", function () { dlg.close(); deckEditor(null); });
+    mk.disabled = ids.length >= DECKS_MAX;
+    acts.appendChild(mk);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (mk.disabled ? acts.firstChild : mk).focus();
+  }
+  function nameField(cur) {
+    var wrap = el("label", "dlg-field");
+    wrap.appendChild(el("span", "dlg-label", t("dk.name")));
+    var inp = el("input", "dlg-input");
+    inp.type = "text";
+    inp.maxLength = NAME_MAX;
+    inp.autocomplete = "off";
+    inp.value = cur || "";
+    wrap.appendChild(inp);
+    return { wrap: wrap, inp: inp };
+  }
+  function importDialog() {
+    var dlg = makeDialog("bn-import");
+    dlg.appendChild(el("div", "dlg-title", t("dk.add")));
+    var wrap = el("label", "dlg-field");
+    wrap.appendChild(el("span", "dlg-label", t("dk.codeAsk")));
+    var inp = el("input", "dlg-input");
+    inp.type = "text";
+    inp.maxLength = 40;
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    wrap.appendChild(inp);
+    dlg.appendChild(wrap);
+    var nf = nameField("");
+    dlg.appendChild(nf.wrap);
+    var msg = el("div", "dlg-note", "");
+    dlg.appendChild(msg);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); decksDialog(); }));
+    acts.appendChild(button(t("dk.addGo"), "primary", function () {
+      // a shared line is "name: code"; the name is taken when none is typed
+      var colon = inp.value.lastIndexOf(":");
+      var list = E.deckFromCode(colon >= 0 ? inp.value.slice(colon + 1) : inp.value);
+      var name = nf.inp.value.trim() || (colon > 0 ? inp.value.slice(0, colon) : "");
+      if (!list) { msg.textContent = t("dk.bad"); inp.focus(); return; }
+      var code = E.deckCode(list), have = ownByCode(code);
+      dlg.close();
+      if (have) { showToast(t("dk.have", { n: data.decks[have].n })); decksDialog(); return; }
+      putDeck(newDeckId(), name, code);
+      showToast(t("dk.added"));
+      decksDialog();
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    inp.focus();
+  }
+  // The deck editor: every card with − and +; Save when the deck has
+  // DECK_SIZE cards (at most COPY_MAX of each).
+  function deckEditor(id) {
+    var old = id ? data.decks[id] : null;
+    var list = old ? E.deckFromCode(old.c) : E.deckList("iron");
+    var dlg = makeDialog("bn-deck");
+    dlg.setAttribute("data-modal", "1");
+    dlg.appendChild(el("div", "dlg-title", old ? t("dk.editTitle") : t("dk.new")));
+    var nf = nameField(old ? old.n : "");
+    dlg.appendChild(nf.wrap);
+    var head = el("div", "dk-head");
+    var cnt = el("strong", "dk-count", "");
+    head.appendChild(cnt);
+    dlg.appendChild(head);
+    var counts = {};
+    function setList(l) { counts = {}; l.forEach(function (k) { counts[k] = (counts[k] || 0) + 1; }); }
+    setList(list);
+    if (!old) {
+      var f = segField(t("dk.from"), E.DECK_IDS.concat(["0"]), "iron", "", function (v) { setList(v === "0" ? [] : E.deckList(v)); paint(); });
+      [].forEach.call(f.querySelectorAll(".seg-btn"), function (b, n) { b.textContent = n < E.DECK_IDS.length ? t("deck." + E.DECK_IDS[n]) : t("dk.empty"); });
+      dlg.appendChild(f);
+    }
+    var box = el("div", "dk-list"), rows = {};
+    E.CODE_ORDER.forEach(function (k) {
+      var c = E.card(k);
+      var r = el("div", "dk-row");
+      r.appendChild(el("span", "cost", String(c.c)));
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", cardName(k)));
+      tx.appendChild(el("div", "fx", c.t === "u" ? t("unit.line", { c: c.c, a: c.atk, h: c.hp, m: c.mv }) + (c.kw ? " · " + t("kw." + c.kw).split(":")[0] : "") : t("tx." + k)));
+      r.appendChild(tx);
+      var minus = button("−", "dk-step", function () { if (counts[k]) { counts[k]--; paint(); } });
+      minus.setAttribute("aria-label", t("dk.minus", { k: cardName(k) }));
+      var n = el("span", "dk-n", "0");
+      var plus = button("+", "dk-step", function () { counts[k] = (counts[k] || 0) + 1; paint(); });
+      plus.setAttribute("aria-label", t("dk.plus", { k: cardName(k) }));
+      r.appendChild(minus);
+      r.appendChild(n);
+      r.appendChild(plus);
+      rows[k] = { r: r, n: n, minus: minus, plus: plus };
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+    var note = el("div", "dlg-note", t("dk.need", { m: E.DECK_SIZE, c: E.COPY_MAX }));
+    dlg.appendChild(note);
+    var acts = el("div", "dlg-actions wrap");
+    if (old) acts.appendChild(button(t("dk.del"), "danger", function () {
+      dlg.close();
+      confirmDialog(t("dk.delAsk", { n: old.n }), function () { dropDeck(id); showToast(t("dk.deleted")); decksDialog(); }, t("dk.del"));
+    }));
+    acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); decksDialog(); }));
+    var saveB = button(t("dk.save"), "primary", function () {
+      var l = cur();
+      if (!E.deckOk(l)) return;
+      dlg.close();
+      putDeck(id || newDeckId(), nf.inp.value, E.deckCode(l));
+      showToast(t("dk.saved"));
+      decksDialog();
+    });
+    acts.appendChild(saveB);
+    dlg.appendChild(acts);
+    function cur() {
+      var l = [];
+      E.CODE_ORDER.forEach(function (k) { for (var j = 0; j < (counts[k] || 0); j++) l.push(k); });
+      return l;
+    }
+    function paint() {
+      var total = cur().length;
+      cnt.textContent = t("dk.count", { n: total, m: E.DECK_SIZE });
+      cnt.classList.toggle("ok", total === E.DECK_SIZE);
+      E.CODE_ORDER.forEach(function (k) {
+        var v = counts[k] || 0, x = rows[k];
+        x.n.textContent = String(v);
+        x.r.classList.toggle("in", v > 0);
+        x.minus.disabled = !v;
+        x.plus.disabled = v >= E.COPY_MAX || total >= E.DECK_SIZE;
+      });
+      saveB.disabled = !E.deckOk(cur());
+    }
+    paint();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    nf.inp.focus();
   }
 
   // ---------- March ----------
@@ -1839,6 +2285,8 @@
     undo:   SVG + '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
     daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 20v-6l3 1.5L9 17"/></svg>',
     march:  SVG + '<path d="M4 21V4"/><path d="M4 4h9l-1.5 3L13 10H4"/><path d="M14 21l3-6 3 6M15 19h4"/></svg>',
+    puzzle: SVG + '<path d="M10 3h4v3a2 2 0 1 0 4 0V3h3v7h-3a2 2 0 1 0 0 4h3v7h-7v-3a2 2 0 1 0-4 0v3H3v-7h3a2 2 0 1 0 0-4H3V3z"/></svg>',
+    decks:  SVG + '<rect x="7" y="3" width="13" height="16" rx="2"/><path d="M4 7v12a2 2 0 0 0 2 2h10"/><path d="M11 9h5M11 13h5"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -1915,7 +2363,8 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["daily-btn", "daily", "btn.daily"], ["march-btn", "march", "btn.march"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["daily-btn", "daily", "btn.daily"], ["march-btn", "march", "btn.march"],
+     ["puzzle-btn", "puzzle", "btn.puzzles"], ["decks-btn", "decks", "btn.decks"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1930,6 +2379,8 @@
     $("stats-btn").addEventListener("click", statsDialog);
     $("daily-btn").addEventListener("click", openDaily);
     $("march-btn").addEventListener("click", marchDialog);
+    $("puzzle-btn").addEventListener("click", puzzlesDialog);
+    $("decks-btn").addEventListener("click", decksDialog);
     // Deep link from the Game Center: { daily: true } opens today's battle.
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("sfx-btn").addEventListener("click", function () {
