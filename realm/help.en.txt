@@ -45,11 +45,14 @@ When you hold three quarters of the island, the computer offers to give up. `Acc
 
 `Records` shows your wins and losses against the computer for each level and island size, and the code of the island you are playing.
 
+## Campaign
+`Campaign` (the flag button) has 12 islands of rising difficulty, from one Easy computer on a small island to five Hard computers on a large one. Island 1 is open; winning an island opens the next. A win earns stars by rounds: 3 stars when you win within the island's par, 2 stars within one and a half times the par, 1 star otherwise. Each island shows your best result, and you can play any open island again to earn more stars. Every island has been won by the Hard computer playing your side. Campaign games do not count in your records vs the computer, and `Reset records` leaves the campaign alone.
+
 ## Daily island
 `Daily island` (the calendar button) gives everyone the same island each day: a Medium island, you against 3 Medium computers. The computers answer the same moves the same way on every device, so you can compare results with friends. You get one try a day; the button shows a dot while today's island is not played yet. The result window shows whether you won and in how many rounds, how much of the island you held at the end, and your streak of won days. `Share` sends a short line without spoilers. The Daily island also counts in your records and in the [Game Center](help:a/gamecenter), and `Records` shows your daily results too.
 
 ## Sync
-Your wins and losses against the computer (one person against computer sides) and your Daily island results sync between your devices through [orOS sync](help:t/sync), adding up the games from every device. The game in progress, your options and the sound setting stay on this device, and an unfinished game continues where you left it. `Reset records` clears the records on every device.
+Your wins and losses against the computer (one person against computer sides) your Daily island results and your campaign progress sync between your devices through [orOS sync](help:t/sync), adding up the games from every device. The game in progress, your options and the sound setting stay on this device, and an unfinished game continues where you left it. `Reset records` clears the records on every device.
 
 ## Tips
 - Mills pay for themselves in a few turns. Build them early, while your border is quiet.

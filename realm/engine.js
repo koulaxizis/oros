@@ -207,6 +207,86 @@
     return st;
   }
 
+  // ---------- Drawn islands (campaign, W3; the map editor, W4) ----------
+  // layout = { size "s"|"m"|"l", rows: [H strings of W chars],
+  //            objs?: [[r, c, kind]], gold?: [per side] }
+  //   rows: "." sea, "_" free land, "t" Thicket on free land, "0".."5"
+  //   land of that side. objs: "hall" | "tower" | "fort" | "mill" |
+  //   "u1".."u4" on a side's land, "thicket" | "ruin" on free land.
+  //   A region without a Hall gets one (settle); every Hall starts with
+  //   gold[side] (default START_GOLD).
+  // → a state like makeMap's, or null when the layout is not usable:
+  //   wrong size, an unknown char, a side without land or a region of
+  //   2+ cells, land on the grid edge, or land in more than one piece.
+  var LAYOUT_OBJ = { hall: O.HALL, tower: O.TOWER, fort: O.FORT, mill: O.MILL, u1: O.U1, u2: O.U2,
+    u3: O.U3, u4: O.U4, thicket: O.THICKET, ruin: O.RUIN };
+  function fromLayout(layout, sides, seed) {
+    if (!layout || !SIZES[layout.size] || !Array.isArray(layout.rows) || !Array.isArray(sides) ||
+        sides.length < 2 || sides.length > MAX_SIDES) return null;
+    var spec = SIZES[layout.size], W = spec.W, H = spec.H, n = W * H;
+    if (layout.rows.length !== H) return null;
+    var st = { v: 1, W: W, H: H, size: layout.size, seed: String(seed || "drawn").slice(0, 64),
+      land: [], own: [], obj: [], done: [], gold: [] };
+    for (var r = 0; r < H; r++) {
+      var row = layout.rows[r];
+      if (typeof row !== "string" || row.length !== W) return null;
+      for (var c = 0; c < W; c++) {
+        var ch = row.charAt(c), side = "012345".indexOf(ch);
+        var land = ch !== ".";
+        if (!land) { st.land.push(0); st.own.push(-1); st.obj.push(0); }
+        else if (ch === "_" || ch === "t") { st.land.push(1); st.own.push(-1); st.obj.push(ch === "t" ? O.THICKET : 0); }
+        else if (side >= 0 && side < sides.length) { st.land.push(1); st.own.push(side); st.obj.push(0); }
+        else return null;
+        if (land && (r === 0 || c === 0 || r === H - 1 || c === W - 1)) return null;
+        st.done.push(0); st.gold.push(0);
+      }
+    }
+    var objs = Array.isArray(layout.objs) ? layout.objs : [];
+    for (var k = 0; k < objs.length; k++) {
+      var o = objs[k];
+      if (!Array.isArray(o) || !isInt(o[0]) || !isInt(o[1]) || o[0] < 0 || o[0] >= H || o[1] < 0 || o[1] >= W ||
+          !LAYOUT_OBJ.hasOwnProperty(o[2])) return null;
+      var at = o[0] * W + o[1], code = LAYOUT_OBJ[o[2]];
+      if (!st.land[at]) return null;
+      var free = code === O.THICKET || code === O.RUIN;
+      if (free !== (st.own[at] < 0)) return null;
+      st.obj[at] = code;
+    }
+    // one piece of land
+    var first = st.land.indexOf(1);
+    if (first < 0) return null;
+    var dist = bfsDist(st, [first]);
+    for (var q = 0; q < n; q++) if (st.land[q] && dist[q] < 0) return null;
+    st.sides = sides.map(function (sd) {
+      return { k: sd.k === "c" ? "c" : "h", lv: LEVELS.indexOf(sd.lv) >= 0 ? sd.lv : "m", out: false };
+    });
+    st.turn = 0; st.round = 1; st.rng = hashStr("thicket:" + st.seed) >>> 0;
+    st.acts = 0; st.over = -1; st.nos = 0;
+    settle(st, -1);
+    var gold = Array.isArray(layout.gold) ? layout.gold : [];
+    for (var s2 = 0; s2 < sides.length; s2++) {
+      var regs = regions(st, s2).filter(function (reg) { return reg.length >= 2; });
+      if (!regs.length) return null;
+      var g = isInt(gold[s2]) && gold[s2] >= 0 && gold[s2] <= 999 ? gold[s2] : START_GOLD;
+      regs.forEach(function (reg) { var h = hallOf(st, reg); if (h >= 0) st.gold[h] = g; });
+    }
+    beginTurn(st);
+    return st;
+  }
+  // The rows of a state's island as drawn (sides' land as digits).
+  function toRows(st) {
+    var rows = [];
+    for (var r = 0; r < st.H; r++) {
+      var line = "";
+      for (var c = 0; c < st.W; c++) {
+        var i = r * st.W + c;
+        line += !st.land[i] ? "." : st.own[i] >= 0 ? String(st.own[i]) : st.obj[i] === O.THICKET ? "t" : "_";
+      }
+      rows.push(line);
+    }
+    return rows;
+  }
+
   function bfsDist(st, from) {
     var n = st.W * st.H, dist = [], q = [];
     for (var i = 0; i < n; i++) dist.push(-1);
@@ -945,7 +1025,7 @@
     UNIT_COST: UNIT_COST, UNIT_UPKEEP: UNIT_UPKEEP, TOWER_COST: TOWER_COST, FORT_COST: FORT_COST,
     MILL_GAIN: MILL_GAIN, MOVE_STEPS: MOVE_STEPS, SURRENDER_SHARE: SURRENDER_SHARE,
     hashStr: hashStr, stream: stream, step: step,
-    makeMap: makeMap, neighbours: neighbours, around: around, regionOf: regionOf, regions: regions, hallOf: hallOf,
+    makeMap: makeMap, fromLayout: fromLayout, toRows: toRows, START_GOLD: START_GOLD, neighbours: neighbours, around: around, regionOf: regionOf, regions: regions, hallOf: hallOf,
     regionInfo: regionInfo, costOf: costOf, millCost: millCost, defence: defence,
     isUnit: isUnit, tierOf: tierOf, strengthOf: strengthOf, upkeepOf: upkeepOf,
     targets: targets, move: move, canBuy: canBuy, buyCells: buyCells, buy: buy,
