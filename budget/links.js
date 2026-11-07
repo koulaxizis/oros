@@ -17,9 +17,9 @@
 //     date only (your category, note and account stay); a source
 //     record that is gone removes the entry unless you edited it
 //     afterwards.
-// A source row: { key, m, a, d, n, k?, c?, crm? } or { key, m, del: 1 };
+// A source row: { key, m, a, d, n, k?, c?, dm?, crm? } or { key, m, del: 1 };
 // k "o" makes an expense (default "i", income), c is the category a
-// new entry gets (default i-free / o-other).
+// new entry gets (default i-free / o-other), dm its area (PL-2).
 //
 // Pure (Node tests, window.OrosBudgetLinks):
 //   invoiceRows(inv, cur) → rows of Invoices payments marked `ab` (made
@@ -189,6 +189,7 @@
       if (!tx) {
         var x = { id: id, m: r.m, d: r.d, a: r.a, k: k, c: typeof r.c === "string" && r.c ? r.c : (k === "o" ? "o-other" : "i-free"), n: r.n, src: src };
         if (r.crm) x.crm = r.crm;
+        if (typeof r.dm === "string" && /^[a-z0-9-]{1,64}$/.test(r.dm)) x.dm = r.dm;   // PL-2: the area a new entry gets
         put.push(x);
         return;
       }

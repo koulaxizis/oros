@@ -43,6 +43,7 @@
       "shop.same": "{name}: nothing new.",
       "shop.check": "{name}, {mk}: the shop's total for {kind} is {want}, the records read add up to {got}.",
       "shop.checkOk": "Monthly totals match the shop's to the cent.",
+      "shop.area": "Area of the shop's entries", "shop.noArea": "No area",
       "shop.kindI": "income", "shop.kindO": "costs", "shop.stopped": "Not kept here any more: {name}. Its entries stay.",
       "shop.err.nopl": "This shop doesn't answer as Production Ledger. Install it (1.0 or later) and turn on its orOS module.",
       "shop.err.cur": "The shop's currency ({c}) is not Budget's ({cur}): nothing read.",
@@ -67,6 +68,7 @@
       "shop.same": "{name}: τίποτα νέο.",
       "shop.check": "{name}, {mk}: το σύνολο του καταστήματος για {kind} είναι {want}, οι εγγραφές που διαβάστηκαν κάνουν {got}.",
       "shop.checkOk": "Τα σύνολα των μηνών συμφωνούν με του καταστήματος στο λεπτό.",
+      "shop.area": "Τομέας των εγγραφών του καταστήματος", "shop.noArea": "Χωρίς τομέα",
       "shop.kindI": "έσοδα", "shop.kindO": "κόστη", "shop.stopped": "Δεν κρατιέται πια εδώ: {name}. Οι εγγραφές του μένουν.",
       "shop.err.nopl": "Αυτό το κατάστημα δεν απαντά ως Production Ledger. Εγκατάστησέ το (1.0 ή νεότερο) και άνοιξε τη λειτουργία orOS.",
       "shop.err.cur": "Το νόμισμα του καταστήματος ({c}) δεν είναι αυτό της εφαρμογής ({cur}): δεν διαβάστηκε τίποτα.",
@@ -187,6 +189,8 @@
     var tag = L().shopTag(acct.site);
     var p = !tag ? Promise.reject(fail("site")) : readAll(acct, onPage).then(function (got) {
       var rows = L().shopRows(got.recs, tag, cats());
+      var dm = A.set().pld || "";                 // PL-2: the area new shop entries get
+      if (dm && A.areas().some(function (x) { return x.id === dm; })) rows.forEach(function (r) { if (!r.del) r.dm = dm; });
       var o = 0, e = 0;
       rows.forEach(function (r) { if (!r.del) { if (/-o\d+$/.test(r.key)) o++; else e++; } });
       var res = { n: A.apply(rows), o: o, e: e, bad: L().shopCheck(got.recs, got.months) };
@@ -273,6 +277,16 @@
     r2.appendChild(A.field(t("shop.catIn"), cIn, "bd-shop-cin"));
     r2.appendChild(A.field(t("shop.catOut"), cOut, "bd-shop-cout"));
     dlg.appendChild(r2);
+    // PL-2: the area of the shop's entries (bank lines of another area
+    // are never taken for the shop's money)
+    var areaSel = null, areas = A.areas();
+    if (areas.length) {
+      areaSel = el("select");
+      var o0 = el("option", "", t("shop.noArea")); o0.value = ""; areaSel.appendChild(o0);
+      areas.forEach(function (x) { var o = el("option", "", x.n); o.value = x.id; areaSel.appendChild(o); });
+      areaSel.value = A.set().pld && areas.some(function (x) { return x.id === A.set().pld; }) ? A.set().pld : "";
+      dlg.appendChild(A.field(t("shop.area"), areaSel, "bd-shop-area"));
+    }
     var msg = el("div", "pay-msg");
     msg.setAttribute("aria-live", "polite");
     dlg.appendChild(msg);
@@ -282,7 +296,7 @@
       if (busy) return;
       var was = chosen();
       var ids = boxes.filter(function (b) { return b.cb.checked; }).map(function (b) { return b.a.id; }).slice(0, 5);
-      A.saveSet({ pl: ids.join(" "), plci: cIn.value === "i-free" ? "" : cIn.value, plco: cOut.value === "o-other" ? "" : cOut.value });
+      A.saveSet({ pl: ids.join(" "), plci: cIn.value === "i-free" ? "" : cIn.value, plco: cOut.value === "o-other" ? "" : cOut.value, pld: areaSel ? areaSel.value : (A.set().pld || "") });
       msg.textContent = "";
       boxes.forEach(function (b) { if (was.indexOf(b.a.id) >= 0 && ids.indexOf(b.a.id) < 0) line(t("shop.stopped", { name: b.a.name })); });
       busy = true;

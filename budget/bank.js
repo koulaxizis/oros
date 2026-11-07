@@ -684,6 +684,22 @@
     });
     return best;
   }
+  // Areas (PL-2): the area whose word is found in the bank's text; the
+  // longest word wins, then the area id (the same on every device).
+  // areas = [{ id, q: "viva, stripe, box now" }] → id | "".
+  function matchArea(areas, text) {
+    var t0 = fold(text), best = "", bl = 0;
+    if (!t0) return "";
+    (areas || []).forEach(function (ar) {
+      if (!ar || typeof ar.id !== "string" || typeof ar.q !== "string") return;
+      ar.q.split(",").forEach(function (w) {
+        var f = fold(w);
+        if (f.length < 2 || t0.indexOf(f) < 0) return;
+        if (f.length > bl || (f.length === bl && ar.id < best)) { best = ar.id; bl = f.length; }
+      });
+    });
+    return best;
+  }
   function noteFor(text, r) {
     var base = r && r.py ? r.py : text;
     return clean(base + (r && r.nt ? " · " + r.nt : ""), NOTE_LEN);
@@ -783,8 +799,9 @@
     (ctx.tx || []).some(function (x) {
       if (used[x.id] || x.a !== row.a || x.k !== row.k) return false;
       if (row.k === "i" && x.src === "invoices" && dayGap(x.d, row.d) <= 10) { hit = { x: x, dk: "inv" }; return true; }
-      // a shop's order paid by bank transfer, or a ledger cost paid from the bank
-      if (x.src === "pl" && dayGap(x.d, row.d) <= 10) { hit = { x: x, dk: "shop" }; return true; }
+      // a shop's order paid by bank transfer, or a ledger cost paid from the
+      // bank (not a line whose words put it in another area than the shop's)
+      if (x.src === "pl" && dayGap(x.d, row.d) <= 10 && !(row.dm && ctx.plArea && row.dm !== ctx.plArea)) { hit = { x: x, dk: "shop" }; return true; }
       if (x.src === "bank" && dayGap(x.d, row.d) <= 4 &&
           (ctx.pp ? !x.pp && PAYPAL_RE.test(fold(x.ot || x.n)) : x.pp === 1 && PAYPAL_RE.test(fold(row.text)))) {
         hit = { x: x, dk: "pp" };
@@ -796,7 +813,7 @@
     // A payment provider's or courier's payout (Viva, Stripe, PayPal, BOX
     // NOW / Allover cash on delivery) while shop records are here: the
     // orders in it are already income, one by one (Production Ledger).
-    if (row.k === "i" && !ctx.pp && PAYOUT_RE.test(fold(row.text)) && (ctx.tx || []).some(function (x) {
+    if (row.k === "i" && !ctx.pp && !(row.dm && ctx.plArea && row.dm !== ctx.plArea) && PAYOUT_RE.test(fold(row.text)) && (ctx.tx || []).some(function (x) {
       return x.src === "pl" && x.k === "i" && x.d <= row.d && dayGap(x.d, row.d) <= 31;
     })) return { x: null, dk: "payout" };
     if (!ac) return hit;
@@ -874,6 +891,8 @@
       row.rule = r ? r.id : "";
       if (!r && learnt) { row.c = learned(learnt, row.k, row.text); if (row.c) row.learn = 1; }
       row.n = noteFor(row.text, r);
+      var dm = matchArea(ctx.areas, row.text);
+      if (dm) row.dm = dm;
       if (byId[row.id]) { row.st = "same"; row.on = false; used[row.id] = 1; return row; }
       if (("tx:" + row.id) in tombs) { row.st = "gone"; row.on = false; return row; }
       var twin = it.fit && byFit[it.fit] && !used[byFit[it.fit].id] ? byFit[it.fit] : null;
@@ -908,6 +927,7 @@
       if (r.text) x.ot = r.text;
       if (r.fit) x.fit = r.fit;
       if (pp) x.pp = 1;
+      if (r.dm) x.dm = r.dm;
       return x;
     });
   }
@@ -957,7 +977,7 @@
     parseCsv: parseCsv, guessSep: guessSep, findHeader: findHeader, guessMap: guessMap, csvItems: csvItems,
     headerSig: headerSig, parseOfx: parseOfx, parseMt940: parseMt940, paypalMap: paypalMap, paypalItems: paypalItems, revolutMap: revolutMap, revolutItems: revolutItems, parseQif: parseQif, qifDates: qifDates, parseCamt: parseCamt,
     detectFormat: detectFormat, ruleMatches: ruleMatches, matchRule: matchRule, noteFor: noteFor, rerun: rerun,
-    suggestQ: suggestQ, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, adopts: adopts, noAccount: noAccount, counts: counts
+    suggestQ: suggestQ, matchArea: matchArea, merchantKey: merchantKey, learnMap: learnMap, learned: learned, bankId: bankId, similar: similar, plan: plan, entries: entries, adopts: adopts, noAccount: noAccount, counts: counts
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosBudgetBank = api;

@@ -1135,3 +1135,8 @@ div.ov-acc:hover { background: none; }
 .na-s { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .na-v { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .na-v.neg { color: var(--over); }
+
+/* Areas (PL-2) */
+#bd-areas .ar-row { border-top: 1px solid var(--border); padding: 10px 0 6px; }
+#bd-areas .ar-row .mini { margin-top: 4px; }
+#bd-areas .ar-list { margin-bottom: 10px; }

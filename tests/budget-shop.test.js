@@ -131,3 +131,36 @@ test("bank import: a payout of Viva, Stripe or the courier while shop orders are
   // a payout before any shop order: plain income
   assert.equal(K.plan([{ d: "2026-11-20", amt: 9935, text: "VIVA WALLET" }], { ac: "", tx })[0].st, "new");
 });
+
+const O = require(path.join(__dirname, "..", "budget/overview.js"));
+const AREAS = [{ id: "pub", q: "viva, stripe, box now, τυπογραφειο" }, { id: "snd", q: "studio, ηχοληψια" }, { id: "per", q: "σκλαβενιτης" }];
+
+test("areas: a bank line goes to the area of the longest word found in it", () => {
+  assert.equal(K.matchArea(AREAS, "VIVA WALLET PAYOUT"), "pub");
+  assert.equal(K.matchArea(AREAS, "Αμοιβή ηχοληψίας Studio 9"), "snd");
+  assert.equal(K.matchArea(AREAS, "ΣΚΛΑΒΕΝΙΤΗΣ ΑΕ"), "per");
+  assert.equal(K.matchArea(AREAS, "ΚΑΤΙ ΑΛΛΟ"), "");
+  assert.equal(K.matchArea([{ id: "a", q: "box" }, { id: "b", q: "box now" }], "BOX NOW 123"), "b");
+  assert.equal(K.matchArea(null, "x"), "");
+});
+
+test("areas: imported lines carry their area; another area's line is never the shop's money", () => {
+  const tx = L.plan(budget(), "pl", L.shopRows([P1, P2, SH], TAG, {})).put;
+  const items = [
+    { d: "2026-12-08", amt: 9935, text: "VIVA WALLET PAYOUT 0812" },
+    { d: "2026-12-04", amt: 2426, text: "STUDIO 9 ΗΧΟΛΗΨΙΑ" },          // same amount as order 812, but sound engineering
+    { d: "2026-12-04", amt: 2426, text: "ΕΜΒΑΣΜΑ" }                      // no area: may be the order
+  ];
+  const r = K.plan(items, { ac: "", tx, areas: AREAS, plArea: "pub" });
+  assert.deepEqual(r.map((x) => [x.st, x.dk || "", x.dm || ""]), [["dup", "payout", "pub"], ["new", "", "snd"], ["dup", "shop", ""]]);
+  const e = K.entries([Object.assign({}, r[1], { on: true })], "", false);
+  assert.equal(e[0].dm, "snd");
+});
+
+test("areas: shop entries get the shop's area when made; per-area month totals", () => {
+  const rows = L.shopRows([P1, E1], TAG, {}).map((r) => Object.assign(r, { dm: "pub" }));
+  const p = L.plan(budget(), "pl", rows);
+  assert.deepEqual(p.put.map((x) => x.dm), ["pub", "pub"]);
+  const f = O.perArea(p.put.concat([{ d: "2026-12-10", k: "o", a: 500, dm: "gone" }, { d: "2026-11-10", k: "o", a: 9, dm: "pub" }]), "2026-12", ["pub", "snd"]);
+  assert.deepEqual(f, { by: { pub: { inc: 1272, out: 12400 }, snd: { inc: 0, out: 0 } }, none: { inc: 0, out: 500 } });
+});
