@@ -1,0 +1,80 @@
+# Banner
+Banner ist eine rundenbasierte Kartenschlacht auf einem kleinen Feld aus 5 mal 7 Feldern. Jede Seite spielt Karten aus ihrem Stapel: Eine Karte stellt eine Einheit aufs Feld, ändert ein Feld oder wirkt einen Zauber. Die Hand ist das Kartenspiel, und wo deine Einheiten stehen, ist das Brettspiel.
+
+## So gewinnst du
+Jede Seite hat eine Burg mit 15 Leben in der Mitte ihrer Grundreihe: Blau unten, Rot oben. Du gewinnst, wenn du die andere Burg zerstörst.
+
+Es gibt drei Heiligtümer, die Fahnen in der mittleren Reihe. Du gewinnst auch, wenn du zu Beginn von drei deiner Züge in Folge alle drei hältst. Ein Heiligtum hältst du, solange eine deiner Einheiten darauf steht.
+
+Ab dem 15. Zug einer Seite verliert ihre eigene Burg zu Beginn ihres Zuges 1 Leben, dann 2, dann 3 und so weiter. So endet jede Schlacht.
+
+## Ein Zug
+1. Du ziehst 2 Karten (nicht im ersten Zug der Schlacht). Du beginnst mit 4 Karten und kannst 6 halten. Eine Karte, die auf eine volle Hand kommt, geht verloren. Ist dein Stapel leer, wird dein Ablagestapel gemischt und wieder dein Stapel.
+2. Du bekommst Energie: 1 in deinem ersten Zug, jeden Zug eine mehr bis 6, und 1 mehr für jedes Heiligtum, das du hältst. Energie, die du nicht nutzt, verfällt am Ende des Zuges.
+3. Du spielst Karten, solange deine Energie reicht. Die Zahl oben links auf einer Karte sind ihre Kosten.
+4. Jede deiner Einheiten darf einmal ziehen und einmal angreifen, in beliebiger Reihenfolge.
+5. `Zug beenden` (oder [[E]]) gibt den Zug an die andere Seite.
+
+## Karten
+- **Einheiten** haben Angriff, Leben und Bewegung. Eine Einheit kommt in deine Grundreihe oder auf ein Feld neben einer deiner Einheiten, auf deiner Hälfte oder in der mittleren Reihe. Eine neue Einheit wartet einen Zug, bevor sie handeln kann, außer sie hat Ansturm.
+- **Felder** ändern den Boden für immer. Sie kommen nicht auf eine Burg, ein Heiligtum oder die Grundreihe der anderen Seite, und ein Felsen oder Wasser schneidet nie den Weg zwischen den Burgen ab.
+- **Zauber** wirken einmal und kommen auf den Ablagestapel.
+
+Halte eine Karte oder ein Feld gedrückt (oder drücke [[I]] auf dem Feld), um zu lesen, was es tut.
+
+## Kämpfen
+Tippe auf eine deiner Einheiten. Die hellen Felder zeigen, wohin sie ziehen kann, die roten, was sie treffen kann. Tippe auf eines davon. Eine Einheit greift eine Einheit oder die Burg neben sich an.
+
+Der Schaden ist der Angriff des Angreifers, +1 auf einem Turm und +1 unter Sammeln, dann −1, wenn das Ziel im Wald steht, und −1, wenn neben dem Ziel eine befreundete Wache steht. Er ist immer mindestens 1. Eine Einheit, die einen Treffer von einer Einheit nebenan übersteht, schlägt zurück. Es gibt keine Würfel: Der Zufall kommt nur aus dem Mischen und dem Feld, und beides kommt aus dem Schlachtcode.
+
+Eigenschaften:
+- **Reichweite:** greift 2 Felder weit in gerader Linie an, nicht hinter einem Felsen.
+- **Wache:** Deine Einheiten daneben nehmen 1 Schaden weniger.
+- **Ansturm:** kann im Zug, in dem sie gespielt wird, ziehen und angreifen.
+- **Klettern:** überquert Felsen und Wasser.
+- **Heilung:** heilt am Ende deines Zuges 1 bei jeder deiner Einheiten daneben.
+
+## Felder
+- **Wald:** Eine Einheit darin nimmt 1 Schaden weniger.
+- **Felsen:** versperrt den Weg (Klettern kommt durch).
+- **Wasser und Teich:** Nur Klettern kommt durch. Eine **Brücke** auf dem Wasser macht es passierbar.
+- **Turm:** +1 Angriff für die Einheit darauf.
+- **Sumpf:** Eine Einheit, die hineingeht, bleibt stehen und kann in ihrem nächsten Zug nicht ziehen.
+- **Quelle:** heilt am Ende ihres Zuges 1 bei der Einheit darauf.
+- **Straße:** +1 Bewegung für eine Einheit, die von hier aus zieht.
+
+## Zauber
+- **Funke:** 2 Schaden an einer feindlichen Einheit.
+- **Sammeln:** Deine Einheiten haben in diesem Zug +1 Angriff.
+- **Rückruf:** Eine deiner Einheiten kehrt auf deine Hand zurück.
+- **Heilen:** heilt eine deiner Einheiten um 3.
+- **Eile:** Eine deiner Einheiten darf in diesem Zug noch einmal ziehen und angreifen.
+- **Beben:** macht ein Feld wieder zu flachem Boden.
+- **Sturm:** 1 Schaden an jeder feindlichen Einheit.
+- **Befestigen:** Deine Burg bekommt 3 Leben zurück (höchstens 15).
+
+## Stapel
+Es gibt vier fertige Stapel mit je 20 Karten, und alle Karten sind von Anfang an offen:
+- **Eisen:** Wachen, Türme und zähe Einheiten.
+- **Dorn:** Wälder, Heiler und große Tiere.
+- **Flut:** schnelle Einheiten, Wasser und Eile.
+- **Glut:** Zauber, Ansturm und ein Lindwurm.
+
+Bei `Zufall` wählt der Schlachtcode den Stapel.
+
+## Eine neue Schlacht
+`Neue Schlacht` (oder [[N]]) fragt nach dem Gegner:
+- **Computer:** Du bist Blau. `Leicht` spielt die erste Karte, die es kann, und zieht auf deine Burg zu, `Mittel` wägt jeden Spielzug seines Zuges ab, und `Schwer` schaut auch auf deine beste Antwort.
+- **Zwei Spieler:** Blau und Rot an einem Gerät. Am Ende jedes Zuges wird die Hand verdeckt, und wer als Nächstes dran ist, tippt auf `Meine Hand zeigen`, sobald er das Gerät hat.
+
+Wähle die Stapel und gib einen Schlachtcode ein, um dasselbe Feld und dasselbe Mischen noch einmal zu spielen, oder lass ihn leer für eine neue Schlacht. Jede Schlacht zeigt am Ende ihren Code, mit `Dieselbe Schlacht noch einmal`. Startest du eine neue Schlacht, während eine läuft, zählt die laufende als verloren.
+
+## Rückgängig und Tasten
+`Rückgängig` (oder [[Z]]) nimmt Schritt für Schritt zurück, was du in diesem Zug getan hast, bis du ihn beendest.
+
+Tasten: [[1]] bis [[6]] wählen eine Karte von deiner Hand. Auf dem Feld bewegen die Pfeiltasten den Cursor, [[Enter]] handelt auf dem Feld darunter, und [[I]] liest es. [[Esc]] lässt die gewählte Karte oder Einheit los.
+
+## Bilanz und Synchronisierung
+`Bilanz` zeigt deine Schlachten und Siege gegen jede Computerstufe und deine Schlachten zu zweit. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Schlachten aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Schlacht und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Schlacht geht dort weiter, wo du sie verlassen hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+
+Banner ist ein eigenes Spiel: Seine Regeln, Karten und Zeichnungen wurden für orOS gemacht.

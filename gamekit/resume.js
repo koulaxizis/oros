@@ -117,6 +117,12 @@
       var g = obj(s.g);
       return !!g && !s.done && num(g.over) < 0 && num(g.acts) > 0;
     },
+    // Banner: {g: engine state, opts, counted, done, pass}; under way
+    // after the first action of either side, until the battle is over.
+    banner: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.done && num(g.over) < 0 && num(g.n) > 0;
+    },
     // Crypt: {g: engine state, opts, cp, done}; under way after the
     // first turn, until the run is over (a fall in Gentle with a save
     // point still waits for the choice, so it is under way too).

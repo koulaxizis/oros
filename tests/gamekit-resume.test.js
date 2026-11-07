@@ -109,6 +109,11 @@ test("resume: each game's own test", () => {
   assert.equal(one("realm", { g: { over: -1, acts: 5 }, u: [], done: false }), true);
   assert.equal(one("realm", { g: { over: 1, acts: 40 }, u: [], done: true }), false);
   assert.equal(one("realm", { g: { over: -1, acts: 40 }, u: [], done: true }), false);
+  // Banner: under way after the first action, until the battle is over
+  assert.equal(one("banner", { g: { over: -1, n: 0 }, done: false }), false);
+  assert.equal(one("banner", { g: { over: -1, n: 5 }, done: false }), true);
+  assert.equal(one("banner", { g: { over: 1, n: 90 }, done: true }), false);
+  assert.equal(one("banner", { g: { over: -1, n: 5 }, done: true }), false);
   // Crypt: under way after the first turn, until the run is over
   assert.equal(one("crypt", { g: { over: -1, turn: 0 }, done: false }), false);
   assert.equal(one("crypt", { g: { over: -1, turn: 12 }, done: false }), true);

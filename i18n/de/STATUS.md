@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 40139 of 40412 (99%)
-- Help pages: 155 of 155 (100%)
+- Strings: 40312 of 40585 (99%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -18,6 +18,7 @@ text is still written in the code. They switch over wave by wave
 | automations | 100% | 258 / 258 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
+| banner | 100% | 172 / 172 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 56 / 56 |
@@ -55,7 +56,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 120 / 120 |
+| gamecenter | 100% | 121 / 121 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -177,6 +178,7 @@ These show English until fixed (usually the English text changed).
 - de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
+- de/shell: unknown key app.banner
 - de/help/budget.txt: links or key caps differ from budget/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt

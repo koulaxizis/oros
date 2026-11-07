@@ -1,0 +1,80 @@
+# Banner
+Banner is a turn-based card battle on a small board of 5 by 7 tiles. Each side plays cards from its deck: a card puts a unit on the board, changes a tile, or casts a spell. The hand is the card game, and where your units stand is the board game.
+
+## How to win
+Each side has a Keep with 15 Health in the middle of its home row: Blue at the bottom, Red at the top. You win when you break the other Keep.
+
+There are three shrines, the flags on the middle row. You also win when you hold all three at the start of three of your turns in a row. You hold a shrine while one of your units stands on it.
+
+From a side's 15th turn, its own Keep loses 1 Health at the start of its turn, then 2, then 3 and so on. So every battle ends.
+
+## A turn
+1. You draw 2 cards (not on the first turn of the battle). You start with 4 cards, and you can hold 6. A card drawn into a full hand is lost. When your deck is empty, your discard pile is shuffled back into it.
+2. You get energy: 1 on your first turn, one more each turn up to 6, and 1 more for each shrine you hold. Energy you do not use is gone at the end of the turn.
+3. You play cards while you have the energy for them. The number at the top left of a card is its cost.
+4. Each of your units may move once and attack once, in either order.
+5. `End turn` (or [[E]]) passes the turn to the other side.
+
+## Cards
+- **Units** have Attack, Health and Move. A unit goes on your home row, or on a tile next to one of your units on your half of the board or the middle row. A new unit waits a turn before it can act, unless it has Charge.
+- **Tiles** change the ground for good. They cannot go on a Keep, a shrine or the other side's home row, and a rock or water can never cut off the way between the Keeps.
+- **Spells** act once and go to the discard pile.
+
+Hold a card or a tile (or press [[I]] on the board) to read what it does.
+
+## Fighting
+Tap one of your units. The light tiles are where it can go, and the red ones are what it can hit. Tap one of them. A unit attacks a unit or the Keep next to it.
+
+Damage is the attacker's Attack, +1 if it stands on a tower and +1 under Rally, then −1 if the target is in a wood and −1 if a friendly Guard stands next to the target. It is always at least 1. A unit that survives a hit from a unit next to it hits back. There are no dice: chance comes only from the shuffle and the board, and both come from the battle code.
+
+Keywords:
+- **Reach:** attacks 2 tiles away in a straight line, not past a rock.
+- **Guard:** your units next to it take 1 less damage.
+- **Charge:** can move and attack on the turn it is played.
+- **Climb:** passes rocks and water.
+- **Heal:** at the end of your turn, heals 1 to each of your units next to it.
+
+## Tiles
+- **Wood:** a unit in it takes 1 less damage.
+- **Rock:** blocks the way (Climb passes).
+- **Water and Pond:** only Climb passes. A **Bridge** on water makes it passable.
+- **Tower:** +1 Attack for the unit on it.
+- **Mire:** a unit that walks in stops, and cannot move on its next turn.
+- **Spring:** heals 1 to the unit on it at the end of its turn.
+- **Road:** +1 Move for a unit that starts its move on it.
+
+## Spells
+- **Spark:** 2 damage to an enemy unit.
+- **Rally:** your units get +1 Attack this turn.
+- **Recall:** one of your units goes back to your hand.
+- **Mend:** heals one of your units by 3.
+- **Haste:** one of your units may move and attack again this turn.
+- **Quake:** turns a tile back to plain ground.
+- **Storm:** 1 damage to every enemy unit.
+- **Fortify:** your Keep gets 3 Health back (at most 15).
+
+## Decks
+There are four ready-made decks of 20 cards, and every card is open from the start:
+- **Iron:** guards, towers and tough units.
+- **Thorn:** woods, healers and big beasts.
+- **Tide:** fast units, water and haste.
+- **Ember:** spells, charges and a drake.
+
+`Random` lets the battle code choose a deck.
+
+## A new battle
+`New battle` (or [[N]]) asks who you play against:
+- **Computer:** you are Blue. `Easy` plays the first card it can and walks toward your Keep, `Medium` weighs every play of its turn, and `Hard` also looks at your best answer.
+- **Two players:** Blue and Red on one device. At the end of each turn the hand is hidden, and the next player taps `Show my hand` when they have the device.
+
+Pick the decks, and type a battle code to play the same board and shuffle again, or leave it empty for a new battle. Each battle shows its code when it ends, with `Same battle again`. Starting a new battle while one is in progress counts that one as a loss.
+
+## Undo and keys
+`Undo` (or [[Z]]) takes back what you did in this turn, step by step, until you end it.
+
+Keys: [[1]] to [[6]] pick a card from your hand. On the board, the arrow keys move the cursor, [[Enter]] acts on the tile under it, and [[I]] reads it. [[Esc]] lets go of the chosen card or unit.
+
+## Records and sync
+`Records` shows your battles and wins against each computer level, and your two-player battles. They sync between your devices through [orOS sync](help:t/sync), adding up the battles from every device, and they count in the [Game Center](help:a/gamecenter). The battle in progress and the sound setting stay on this device, and an unfinished battle continues where you left it. `Reset records` clears the records on every device.
+
+Banner is an original game: its rules, cards and drawings are made for orOS.
