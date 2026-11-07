@@ -259,6 +259,8 @@ export const PLATFORMS = {
       // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
       ["GET", /^\/rs\/balances$/, null, null],
       ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],
+      // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
+      ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Newsletter N1: coupons, looked up by code and created (never changed or deleted)
       ["GET", /^\/coupons$/, { code: CPN_CODE }, null],
       ["POST", /^\/coupons\/batch$/, null, { create: "cpns" }]

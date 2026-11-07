@@ -725,12 +725,19 @@
   // not the default.
   var MK_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
   var OV_SET_RE = /^-?[a-z]{2,8}(,-?[a-z]{2,8}){0,15}$/;
+  var PL_SET_RE = /^[a-z0-9]{8,24}( [a-z0-9]{8,24}){0,4}$/;
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
     var y = Object.assign({}, x);
     if (y.env !== true) delete y.env;
     if (!(typeof y.envs === "string" && MK_RE.test(y.envs))) delete y.envs;
     if (!(typeof y.ov === "string" && OV_SET_RE.test(y.ov))) delete y.ov;
+    // PL-1: pl = the Connected services shop accounts (space-separated
+    // ids) whose Production Ledger records Budget keeps (budget/shop.js);
+    // plci / plco = the category new shop income / expense entries get.
+    if (!(typeof y.pl === "string" && PL_SET_RE.test(y.pl))) delete y.pl;
+    if (!(typeof y.plci === "string" && ID_RE.test(y.plci))) delete y.plci;
+    if (!(typeof y.plco === "string" && ID_RE.test(y.plco))) delete y.plco;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
@@ -3898,12 +3905,34 @@
     return made.length;
   }
 
-  // Linked entries (budget/links.js, BR-B3): income another app keeps
-  // here for you (Invoices payments). Read-only on the source's data;
-  // fixed ids and the source's m, so every device writes the same.
+  // Linked entries (budget/links.js, BR-B3): entries another app keeps
+  // here for you (Invoices payments; a shop's records, budget/shop.js).
+  // Read-only on the source's data; fixed ids and the source's m, so
+  // every device writes the same.
   var SOURCES = [
     { src: "invoices", key: "oros-invoices-data", rows: function (o) { return window.OrosBudgetLinks.invoiceRows(o, cur()); } }
   ];
+  // One source's rows → put / drop here; returns how many changed
+  // (no commit: the caller writes once).
+  function applyLinked(src, rows) {
+    var n = 0;
+    var p = window.OrosBudgetLinks.plan(data, src, rows);
+    p.put.forEach(function (x) {
+      if (x.k === "o" && x.c && !findIn(data.cats, x.c) && !SEED_BY_ID[x.c]) x.c = "o-other";
+      if (x.k === "i" && x.c && !findIn(data.cats, x.c) && !SEED_BY_ID[x.c]) x.c = "i-free";
+      var tx = normTx(x);
+      if (!tx) return;
+      var i = data.tx.findIndex(function (y) { return y.id === tx.id; });
+      if (i >= 0) data.tx[i] = tx; else data.tx.push(tx);
+      n++;
+    });
+    p.drop.forEach(function (x) {
+      data.tx = data.tx.filter(function (y) { return y.id !== x.id; });
+      data.tombs["tx:" + x.id] = Math.max(data.tombs["tx:" + x.id] || 0, x.m);
+      n++;
+    });
+    return n;
+  }
   function linkSources() {
     if (!window.OrosBudgetLinks) return 0;
     var n = 0;
@@ -3911,22 +3940,40 @@
       var o = null;
       try { o = JSON.parse(localStorage.getItem(s.key) || "null"); } catch (e) { o = null; }
       if (!o || typeof o !== "object") return;
-      var p = window.OrosBudgetLinks.plan(data, s.src, s.rows(o));
-      p.put.forEach(function (x) {
-        var tx = normTx(x);
-        if (!tx) return;
-        var i = data.tx.findIndex(function (y) { return y.id === tx.id; });
-        if (i >= 0) data.tx[i] = tx; else data.tx.push(tx);
-        n++;
-      });
-      p.drop.forEach(function (x) {
-        data.tx = data.tx.filter(function (y) { return y.id !== x.id; });
-        data.tombs["tx:" + x.id] = Math.max(data.tombs["tx:" + x.id] || 0, x.m);
-        n++;
-      });
+      n += applyLinked(s.src, s.rows(o));
     });
     if (n) commit();
     return n;
+  }
+
+  // Shop records (budget/shop.js, PL-1): read from the shop (Production
+  // Ledger's /pl/records) while Budget is open; the rows go through
+  // applyLinked like any linked source (src "pl").
+  var SHOP = window.OrosBudgetShop || null;
+  function initShop() {
+    if (!SHOP || !window.OrosBudgetLinks) return;
+    SHOP.init({
+      lang: LANG, el: el, button: button, makeDialog: makeDialog, field: field,
+      showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
+      catSelect: catSelect, money: function (c) { return money(c); }, cur: cur,
+      today: function () { return today; },
+      set: function () { return data.set; },
+      saveSet: function (patch) {
+        var y = Object.assign({}, data.set, patch);
+        Object.keys(y).forEach(function (k) { if (y[k] === "") delete y[k]; });
+        y.m = stamp(data.set.m);
+        var nx = normSet(y);
+        if (!nx) return;
+        data.set = nx;
+        commit();
+      },
+      apply: function (rows) {
+        var n = applyLinked("pl", rows);
+        if (n) { commit(); if (!document.querySelector("dialog[open]")) renderAll(); }
+        return n;
+      },
+      refresh: function () { renderAll(); }
+    });
   }
 
   // Categories manager
@@ -5311,6 +5358,7 @@
     $("flt").addEventListener("change", function () { filter = $("flt").value; renderList(); });
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
                  stripe: function () { if (PAY) PAY.open(); },
+                 shop: function () { if (SHOP) SHOP.open(); },
                  bank: function () { if (BANKUI) BANKUI.open(); }, banks: function () { if (BANKLIVE) BANKLIVE.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); },
                  osave: function () { if (recFile) recFile.save(); }, oopen: function () { if (recFile) recFile.open(); },
                  ofolder: function () { if (recFile) recFile.openFolder(); } };
@@ -5326,6 +5374,8 @@
     if (appBtn) appBtn.hidden = !(BANKUI && window.OrosBudgetImport);
     var payBtn = document.querySelector('#menu [data-act="stripe"]');
     if (payBtn) { payBtn.hidden = !(PAY && PAY.has()); if (PAY) payBtn.textContent = PAY.label(); }
+    var shopBtn = document.querySelector('#menu [data-act="shop"]');
+    if (shopBtn) { shopBtn.hidden = !(SHOP && SHOP.has()); if (SHOP) shopBtn.textContent = SHOP.label(); }
     [].forEach.call(document.querySelectorAll("#menu [data-act]"), function (b) {
       b.addEventListener("click", function () { closeMenu(); acts[b.getAttribute("data-act")](); });
     });
@@ -5350,6 +5400,7 @@
       if (document.visibilityState !== "visible") return;
       tick();
       if (linkSources()) renderAll();
+      if (SHOP) SHOP.auto();
     });
     // A source app (Invoices) saved on this device while Budget is open
     window.addEventListener("storage", function (e) {
@@ -5444,6 +5495,7 @@
     load();
     loadPrefs();
     initPay();
+    initShop();
     initBank();
     initBankLive();
     loadFx();
@@ -5460,6 +5512,7 @@
     materialize(true);
     linkSources();
     renderAll();
+    if (SHOP) SHOP.auto();
     if (usesFx()) refreshFx(false);
     takeStagedNew();
     takeTarget();

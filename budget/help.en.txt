@@ -129,7 +129,7 @@ From the `More` menu:
 - **Columns.** For a CSV, Budget finds the date, the description and the amount itself, including Greek files (`1.234,56`, `dd/mm/yyyy`, a `Χ/Π` marker, Windows-1253 text). If something is off, open `Columns and format`: pick the columns, one `Amount` column or separate `Debit` and `Credit` columns, the date order, the number format, the text encoding, or reverse the signs.
 - **Bank profile.** Type a name in `Remember as` (for example "Eurobank") and the columns and the `Budget account` are remembered on all your devices. The next file from that bank is recognised by itself.
 - **Preview.** Every row shows `New`, `Looks like an entry already here` (same account, date and amount with a similar description, or the same bank transaction id), `Already imported`, `Deleted here earlier` or `Skipped` (no date, no amount, another currency). Only ticked rows are imported; you can tick a duplicate if it really is a second one.
-- **Already here another way.** A row is left unticked when the same money is already in Budget: `Already here from Invoices` (a payment Invoices recorded, same amount within 10 days), `Already here as a transfer between your accounts` (a transfer that left or reached this account within 3 days) or `Already here from PayPal` (see below).
+- **Already here another way.** A row is left unticked when the same money is already in Budget: `Already here from Invoices` (a payment Invoices recorded, same amount within 10 days), `Already here as a transfer between your accounts` (a transfer that left or reached this account within 3 days) `Already here from PayPal` (see below), `Already here from the shop` (a shop order or cost of the same amount within 10 days) or `A payout of shop sales` (a payout from Viva, Stripe, PayPal, BOX NOW or Allover while shop orders are here: see Shop records).
 - **PayPal.** On paypal.com › `Activity` › `Download`, pick CSV. Budget recognises the file by itself, in English or Greek. Each payment comes in with the name of the shop; one in another currency comes in with the amount that left in your Budget currency; income comes in after PayPal's fee. Holds, pending payments and money that only moves between PayPal and your own card or bank are skipped. Your bank shows a PayPal payment again as "PAYPAL *…": whichever of the two files you import second marks that line `Already here from PayPal`, so it is not counted twice.
 - **Revolut.** In the Revolut app, open the account › `…` › `Statement`, pick `Excel` (a CSV) and the months. Budget recognises the file by itself: each entry comes in on the day it was completed, with Revolut's fee taken off; pending, reverted and declined ones, top-ups from your own card and exchanges between your currencies are skipped. Entries in another currency than Budget's are skipped, as with any file: import each currency into its own Budget account.
 - **N26.** In the N26 app or web, `Downloads` › `Bank statements` › CSV: the columns are found by themselves.
@@ -181,6 +181,17 @@ When imported entries have no category, a bar above the list says how many. Tap 
 - From Invoice Ninja, each payment received becomes income, less what was refunded from it.
 - Only Budget's currency comes in; the others are counted and left out.
 - A second import adds only what is new. An entry you delete here doesn't come back. `Undo` takes back the whole import. orOS only reads Stripe and Invoice Ninja.
+
+## Shop records
+If your WooCommerce shop runs Production Ledger (a Noxpress plugin, with its orOS module on), `More` › `Shop records` keeps the shop's money here by itself. Connect the shop in [Settings](app:settings) › `Connected services` (a read key is enough), tick it, pick the categories and press `Save and read now`.
+
+- Each paid order becomes one income entry: products and shipping, VAT included, on the day it was paid (pre-orders too). The note has the order number and how it was paid.
+- Each cost written in Production Ledger (printing, shipping invoices, fees…) becomes an expense, net plus VAT, with the supplier and the invoice number. An off-site sale written there becomes income.
+- A cancelled or refunded order, or a cost deleted or marked historical there, leaves here by itself. A change of amount or date follows; your category, note and account stay. An entry you delete here doesn't come back.
+- Budget reads the shop when it opens and when you come back to it, at most every 6 hours, and every time you press `Save and read now`. Each read checks every month's totals against the shop's own, to the cent, and tells you if one differs.
+- When you then import a bank statement, a bank transfer for an order, a cost you paid from the bank, and the payouts of Viva, Stripe, PayPal or the courier (cash on delivery) are left unticked: that money is already here, order by order. You can still tick one that really is something else.
+- Don't also import the shop's Stripe account with `Import from Stripe or Invoice Ninja`: its charges are the same orders.
+- Unticking a shop stops reading it; its entries stay. orOS only reads the shop.
 
 ## Keyboard shortcuts
 - [[N]] opens a new entry.

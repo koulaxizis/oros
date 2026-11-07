@@ -141,6 +141,17 @@ Wenn importierte Einträge keine Kategorie haben, sagt eine Leiste über der Lis
 - Nur die Währung von Budget kommt herein; die anderen werden gezählt und draußen gelassen.
 - Ein zweiter Import fügt nur Neues hinzu. Ein Eintrag, den du hier löschst, kommt nicht zurück. `Rückgängig` nimmt den ganzen Import zurück. orOS liest Stripe und Invoice Ninja nur.
 
+## Ladenbuchungen
+Wenn dein WooCommerce-Shop Production Ledger nutzt (ein Noxpress-Plugin, mit eingeschaltetem orOS-Modul), hält `Mehr` › `Ladenbuchungen` das Geld des Shops von selbst hier. Verbinde den Shop in den [Einstellungen](app:settings) › `Verbundene Dienste` (ein Leseschlüssel reicht), hake ihn an, wähle die Kategorien und tippe auf `Speichern und jetzt lesen`.
+
+- Jede bezahlte Bestellung wird ein Einnahmeeintrag: Produkte und Versand, mit MwSt., am Tag der Zahlung (auch Vorbestellungen). Die Notiz enthält die Bestellnummer und die Zahlungsart.
+- Jede in Production Ledger erfasste Ausgabe (Druck, Versandrechnungen, Gebühren …) wird eine Ausgabe, netto plus MwSt., mit Lieferant und Rechnungsnummer. Ein Verkauf außerhalb des Shops wird eine Einnahme.
+- Eine stornierte oder erstattete Bestellung, oder eine dort gelöschte oder als historisch markierte Ausgabe, verschwindet hier von selbst. Ändern sich Betrag oder Datum, folgt der Eintrag; deine Kategorie, Notiz und dein Konto bleiben. Ein hier gelöschter Eintrag kommt nicht zurück.
+- Budget liest den Shop beim Öffnen und wenn du zurückkommst, höchstens alle 6 Stunden, und bei jedem `Speichern und jetzt lesen`. Jedes Lesen vergleicht die Monatssummen centgenau mit denen des Shops und sagt dir, wenn eine abweicht.
+- Importierst du danach einen Kontoauszug, bleiben eine Überweisung für eine Bestellung, eine von der Bank bezahlte Ausgabe und die Auszahlungen von Viva, Stripe, PayPal oder dem Kurierdienst (Nachnahme) nicht angehakt: Dieses Geld ist schon hier, Bestellung für Bestellung. Du kannst eine anhaken, wenn sie wirklich etwas anderes ist.
+- Importiere das Stripe-Konto des Shops nicht zusätzlich mit `Aus Stripe oder Invoice Ninja importieren`: Seine Zahlungen sind dieselben Bestellungen.
+- Nimmst du den Haken bei einem Shop weg, wird er nicht mehr gelesen; seine Einträge bleiben. orOS liest den Shop nur.
+
 ## Tastenkürzel
 - [[N]] öffnet einen neuen Eintrag.
 - [[←]] / [[→]] wechseln zum vorherigen oder nächsten Monat (wenn du nicht gerade tippst).

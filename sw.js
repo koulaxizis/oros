@@ -1456,6 +1456,7 @@ var PRECACHE_URLS = [
   "invoices/acctpack.js",
   "invoices/pdfin.js",
   "budget/links.js",
+  "budget/shop.js",
   "split/package.js",
   "diary/package.js",
   "health/package.js",
