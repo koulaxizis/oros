@@ -58,6 +58,12 @@
    ]
   },
   {
+   "app": "banner",
+   "files": [
+    "banner/banner.js"
+   ]
+  },
+  {
    "app": "battleship",
    "files": [
     "battleship/battleship.js"

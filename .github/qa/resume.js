@@ -68,6 +68,13 @@ const PLAY = {
     await tap(p, "#end-btn");
     for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(300);
   },
+  // Banner: close the first-run tour, then end the first turn
+  banner: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, "#end-btn");
+    for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // Crypt: close the first-run "How to play", then wait a few turns
   crypt: async (p, inProg) => {
     await p.waitForTimeout(700);

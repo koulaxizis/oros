@@ -31,6 +31,7 @@ Mail app (browser) ──HTTPS/JSON──▶ relay (Worker) ──IMAP over TLS�
 | `push.js` | Notifications with orOS closed (op `push`): one Durable Object per device holding its encrypted reminders, sent by Web Push at their time (see below) |
 | `house.js` | Households (`/h/<box>`): one Durable Object per household holding only encrypted shared documents, invites, join requests and key envelopes, with live notices over a WebSocket (see below) |
 | `hook.js` | Automations' incoming webhooks (`/wh/<id>.<sec>`, op `hook`): one Durable Object per device holding what arrived, encrypted to that device's key, until it pulls and acks it (see below) |
+| `gate.js` | orOS Gate: Claude (a claude.ai custom connector) reads a person's orOS through their own open device: MCP over Streamable HTTP at `/mcp`, OAuth 2.1 + PKCE, one Durable Object per gate that passes calls to the device's WebSocket and stores nothing of the answers (see below) |
 | `dav.js` | Sync through WebDAV: `/dav` passes one WebDAV request to the user's own server when that server sends no CORS headers (see below) |
 | `wrangler.toml` | Worker name and `ALLOWED_ORIGINS` |
 
@@ -738,6 +739,57 @@ box's tables; every other request to an unknown id only reads
 so random `/wh/` addresses cannot fill Durable Object storage. Without the `HOOK` binding
 the op answers 503 `nohook` and `/wh/` answers 503. Tests:
 `tests/hook-relay.test.js`.
+
+## orOS Gate (`/mcp`, `/gate/`)
+
+Claude reads a person's orOS through their own open orOS, read-only in
+phase 1. The person adds `https://<this worker>/mcp` as a custom
+connector in claude.ai; nothing else is configured here. Contract:
+OROS_BIBLE.md, BR-GATE.
+
+One Durable Object (`GateBox`, binding `GATE`, SQLite, key-value API)
+per gate, addressed by a 22-character id the device made. It keeps only
+SHA-256 hashes: of the device token, of each authorization code, access
+and refresh token (`t:<hash>`), plus the last-use time and a minute
+counter. No orOS data, no request or answer, nothing logged.
+
+- **Public routes** (Claude's servers call them, no Origin check, 120
+  per IP a minute per isolate): `/.well-known/oauth-protected-resource`
+  (also `/mcp` suffix) and `/.well-known/oauth-authorization-server`;
+  `POST /gate/register` (dynamic client registration, public clients
+  only, stateless: the client id is not stored); `GET /gate/authorize`
+  (only `response_type=code`, `code_challenge_method=S256`, a
+  `redirect_uri` from the exact list `REDIRECTS`, the claude.ai and
+  claude.com MCP callbacks) answers 302 to `https://useoros.online/?gate=…`,
+  where the person allows it; `POST /gate/token` (`authorization_code`
+  with the PKCE verifier and the same redirect, a code is single-use;
+  `refresh_token` rotates); `POST /mcp` (Bearer `<id>.<secret>`; 401
+  with `WWW-Authenticate: Bearer resource_metadata=…` otherwise).
+- **MCP:** JSON-RPC 2.0, `initialize`, `ping`, `tools/list`,
+  `tools/call`, notifications get 202. Tools: `list_apps`,
+  `search_data`, `app_summary`, `budget_lines` (all `readOnlyHint`).
+  The relay only describes them; the device checks every call again.
+- **From orOS only** (allowed origins): `POST /gate/dev` `{ act: new |
+  code | revoke | info | del }` with the device token, and `GET
+  /gate/ws/<id>` with the subprotocols `gt1` and `t.<token>`. One socket
+  per gate: a newer one closes the older (4001); `del` wipes the box and
+  closes it (4004).
+- **Limits (`GATE_LIMITS`):** request 64 KB, an answer from the device
+  900 KB, 25 s for the device to answer, 60 tool calls a minute per
+  gate, codes 5 minutes, access tokens 1 hour, refresh tokens 30 days
+  (renewed on use), 40 live tokens per gate, a gate nobody used for 180
+  days wipes itself (alarm).
+- **Errors** never carry exception text. No device online answers a
+  tool error ("orOS is not open"), not an HTTP error, so Claude can say
+  so.
+
+The answer passes through this Worker's memory as plain text on its way
+to Claude; that is the price of a live gate (the alternative, an
+encrypted nightly snapshot, is to be revisited after 2027-01-01). Tests:
+`tests/gate-relay.test.js` (relay) and `tests/gate-core.test.js` (device).
+`GateBox` is declared at the top level of `wrangler.toml` (binding plus
+a `new_sqlite_classes` migration `gate-v1`), so the normal deploy from
+`main` creates it.
 
 ## Sync through WebDAV: pass-through (`/dav`)
 

@@ -832,6 +832,7 @@ orosPack("de", "settings", {
  "w.solo": "installieren einzelne app apk android",
  "w.solo-updates": "f-droid obtainium aktualisierungen paketquelle",
  "w.services": "woocommerce shopify api schlüssel integrationen",
+ "w.gate": "claude ki mcp gate tor connector anthropic lesen zugriff",
  "w.hc": "gesundheit schritte schlaf android",
  "w.version": "version nummer",
  "w.updates": "aktualisieren update neue version",
