@@ -1,8 +1,12 @@
 # Spielecenter
-Alle deine Spiele an einem Ort: die heutigen Tagesrätsel, deine Erfolge und die Statistik jedes Spiels, das du gespielt hast.
+Alle deine Spiele an einem Ort: die heutigen Herausforderungen, die heutigen Tagesrätsel, deine Erfolge und die Statistik jedes Spiels, das du gespielt hast.
 
 ## So geht's
 - `Weiterspielen` (oben, nur wenn es etwas gibt) zeigt die Spiele, die du auf diesem Gerät mitten in einer Partie verlassen hast. Tippe auf eines, um dort weiterzumachen, wo du aufgehört hast. Jedes Spiel merkt sich die laufende Partie selbst, und wenn du orOS schließt, während ein Spiel auf dem Bildschirm ist, öffnet orOS beim nächsten Start dieses Spiel wieder.
+- `Heutige Herausforderungen` gibt dir bis zu drei kleine Ziele am Tag, nur in Spielen, die du schon gespielt hast: zum Beispiel `Gewinne ein Spiel` in Reversi, `Schlage deinen Rekord` in Tetris oder `Beende 3 Spiele` in Snake. Jeder bekommt andere Ziele, aber alle deine Geräte zeigen an diesem Tag dieselben. Jede Karte zeigt, wie weit du bist; `Spielen` öffnet das Spiel. Ein Ziel zählt ab dem Moment, in dem die Ziele des Tages erstellt wurden, spiele also danach. Die Zeile oben sagt, wie viele geschafft sind, und deine Serie: die Tage in Folge, an denen du alle geschafft hast.
+  - `Nicht dieses Spiel` auf einer Karte: Dieses Spiel bekommt ab morgen keine Herausforderungen mehr. Die ausgelassenen Spiele stehen unter den Karten, jedes mit `Wieder aufnehmen`.
+  - Eine Erinnerung kommt einmal am Tag um 18:00, nur solange ein Ziel offen ist. `Erinnerung stummschalten` schaltet sie auf allen deinen Geräten aus (derselbe Schalter wie Spielecenter unter [Einstellungen › Benachrichtigungen](help:t/notifications)); `Erinnerung einschalten` holt sie zurück.
+  - `Herausforderungen ausblenden` nimmt den Bereich, die Ziele und die Erinnerung weg; `Einschalten` holt sie zurück.
 - `Heutige Tagesrätsel` zeigt die sechs Spiele mit einem Tagesrätsel (Wordle, Kreuzworträtsel, Sudoku, Nonogramm, Flow Free und Minesweeper), die Insel des Tages aus Ländereien, an diesem Tag für alle dieselbe Strategiepartie, die Schlacht des Tages aus Banner, für alle dieselbe Kartenschlacht gegen Mittel, und die Gruft des Tages, für alle derselbe Abstieg über fünf Ebenen. Jede Karte zeigt, ob das heutige Rätsel gelöst, nicht gelöst oder noch offen ist, und deine Serie in diesem Spiel. `Spielen` öffnet das Spiel direkt mit dem heutigen Rätsel; ist es erledigt, zeigt `Ansehen` dein Ergebnis.
 - `Alle Spiele` zeigt jedes Spiel, in Gruppen: Rätsel, Wortspiele, Karten und Steine, Brettspiele und zu zweit, Arcade, Strategie sowie RPG und Abenteuer, und wie oft du jedes gespielt hast (`Neu`, wenn nie). Tippe auf ein Spiel, um es zu spielen. Tippe in `Spiel suchen`, um die Liste nach Namen einzugrenzen.
 - Die Zeile unter dem Titel zeigt deine tägliche Serie: die Tage in Folge, an denen du mindestens ein Tagesrätsel gelöst hast.
@@ -13,7 +17,7 @@ Alle deine Spiele an einem Ort: die heutigen Tagesrätsel, deine Erfolge und die
 Die Schaltfläche `Alle Spiele` jedes Spiels (in seiner Statistik und nach einem Tagesrätsel) bringt dich hierher, zur Zeile dieses Spiels.
 
 ## Synchronisierung
-Das Spielecenter speichert keine eigenen Daten. Es liest die Aufzeichnungen, die jedes Spiel ohnehin führt, und diese werden mit jedem Spiel über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Erfolge werden jedes Mal aus diesen Aufzeichnungen berechnet, sie folgen dir also auf jedes Gerät und kommen zurück, wenn die Aufzeichnungen eines Spiels zurückkommen.
+Das Spielecenter speichert fast keine eigenen Daten: Nur die täglichen Herausforderungen führen eine kleine Liste (die Ziele des Tages, die ausgelassenen Spiele, ob der Bereich ausgeblendet ist), die wie alles andere synchronisiert wird. Für den Rest liest es die Aufzeichnungen, die jedes Spiel ohnehin führt, und diese werden mit jedem Spiel über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Erfolge werden jedes Mal aus diesen Aufzeichnungen berechnet, sie folgen dir also auf jedes Gerät und kommen zurück, wenn die Aufzeichnungen eines Spiels zurückkommen.
 
 Eine laufende Partie bleibt auf dem Gerät, auf dem du spielst, und wird nicht synchronisiert, damit sie nicht bei jedem Zug hochgeladen wird. Spiele sie dort zu Ende; das Ergebnis wird danach wie jedes andere synchronisiert.
 

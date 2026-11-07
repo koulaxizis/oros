@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 40360 of 40668 (99%)
+- Strings: 40439 of 40712 (99%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -56,7 +56,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 121 / 121 |
+| gamecenter | 100% | 148 / 148 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -122,10 +122,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 95% | 904 / 942 |
+| settings | 98% | 944 / 955 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
-| shell | 98% | 1096 / 1108 |
+| shell | 99% | 1108 / 1112 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
@@ -179,6 +179,7 @@ These show English until fixed (usually the English text changed).
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
 - de/help/budget.txt: links or key caps differ from budget/help.en.txt
+- de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
 - de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt

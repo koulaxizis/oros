@@ -299,7 +299,7 @@
   var data = null;
   var deviceId = null;
 
-  // days (5.62.00, older data has none): one Daily battle per calendar
+  // days (5.64.00, older data has none): one Daily battle per calendar
   // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
   // { "<day>": { b, w: 1 won | 0 lost, t: own turns, k: own Keep left } }.
   // The newer epoch wins; equal epochs keep the better result (won,
@@ -457,6 +457,8 @@
   //   counted: bool   the battle is in the records
   //   done: bool      the battle is over
   //   pass: bool      two players: the hand stays hidden until the device is passed
+  //   me: bool        a person has made a move (a battle where only the
+  //                   computer has moved, as Red starting, is not under way)
   // }
   // Against the computer the person plays Blue (side 0).
   var game = null;
@@ -477,6 +479,7 @@
         s.counted = s.counted === true;
         s.done = s.done === true;
         s.pass = s.pass === true && s.opts.mode === "hot";
+        if (s.me !== undefined) s.me = s.me === true;
         return s;
       }
     } catch (e) {}
@@ -501,7 +504,9 @@
   var lastMsg = "";
 
   function rowKey() { return game.opts.mode === "hot" ? "p" : game.opts.lv; }
-  function inProgressOf(g) { return !!(g && !g.done && g.g.over < 0 && g.g.n > 0); }
+  // Under way once the person made a move (the computer's opening
+  // moves alone do not count), like gamekit/resume.js.
+  function inProgressOf(g) { return !!(g && !g.done && g.g.over < 0 && (g.me === undefined ? g.g.n > 0 : g.me === true)); }
   function deckOf(choice, seed, side) {
     if (E.DECK_IDS.indexOf(choice) >= 0) return choice;
     return E.DECK_IDS[E.hashStr("banner:" + seed + ":deckpick:" + side) % E.DECK_IDS.length];
@@ -511,7 +516,7 @@
     if (o.mode === "ai") o.lv = E.LEVELS.indexOf(opts.lv) >= 0 ? opts.lv : "m";
     if (opts.day !== undefined) o.day = opts.day;
     var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)]);
-    return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot" };
+    return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot", me: false };
   }
   function aiSide() { return game && game.opts.mode === "ai" ? 1 : -1; }
   function humanTurn() { return !!(game && !game.done && st.over < 0 && st.side !== aiSide() && !game.pass); }
@@ -544,6 +549,7 @@
     var before = E.clone(st);
     var ev = E.act(st, a);
     if (!ev) return false;
+    game.me = true;
     if (a.t === "end") undo = [];
     else { undo.push(before); if (undo.length > UNDO_MAX) undo.shift(); }
     sel = null;
@@ -1331,7 +1337,7 @@
   }
   // A Daily battle left before its end counts as lost where it was.
   function leaveDaily() {
-    if (game && game.opts.day !== undefined && !game.done && st && st.over < 0 && st.n > 0) {
+    if (game && game.opts.day !== undefined && st && inProgressOf(game)) {
       countDaily(game.opts.day, false, st.rt[0], st.keep[0]);
       game.done = true;
       game.counted = true;

@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Game Center · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.61.00">
-  <link rel="stylesheet" href="gamecenter.css?v=5.61.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.63.00">
+  <link rel="stylesheet" href="gamecenter.css?v=5.63.00">
 
 </head>
 <body>
@@ -29,6 +29,27 @@
       <ul class="all-grid" id="cont-grid"></ul>
     </section>
 
+    <!-- Daily challenges (CH-1): three small goals a day in games already played -->
+    <section class="block" id="chal-block" aria-labelledby="chal-h" hidden>
+      <div class="block-head">
+        <h2 id="chal-h" data-i18n="chal.title">Today's challenges</h2>
+        <span class="block-note" id="chal-note"></span>
+      </div>
+      <div id="chal-grid"></div>
+      <p id="chal-empty" class="empty" hidden data-i18n="chal.empty">Play any game once and three small goals for the games you play show up here every day.</p>
+      <p id="chal-off" class="block-note" hidden>
+        <span data-i18n="chal.hidden">Daily challenges are off.</span>
+        <button type="button" class="chal-link" id="chal-show" data-i18n="chal.show">Turn on</button>
+      </p>
+      <div id="chal-tools">
+        <p id="chal-left" class="block-note" hidden></p>
+        <p id="chal-mute-note" class="block-note"></p>
+        <div class="chal-acts">
+          <button type="button" class="chal-act" id="chal-mute"></button>
+          <button type="button" class="chal-act" id="chal-hide" data-i18n="chal.hide">Hide challenges</button>
+        </div>
+      </div>
+    </section>
     <!-- Today: the six Daily challenges -->
     <section class="block" id="today-block" aria-labelledby="today-h">
       <div class="block-head">
@@ -88,12 +109,12 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.61.00" data-app="gamecenter"></script>
-  <script src="../gamekit/daily.js?v=5.61.00"></script>
-  <script src="../gamekit/resume.js?v=5.61.00"></script>
-  <script src="../gamekit/haptics.js?v=5.61.00"></script>
-  <script src="core.js?v=5.61.00"></script>
-  <script src="gamecenter.js?v=5.61.00"></script>
+  <script src="../i18n.js?v=5.63.00" data-app="gamecenter"></script>
+  <script src="../gamekit/daily.js?v=5.63.00"></script>
+  <script src="../gamekit/resume.js?v=5.63.00"></script>
+  <script src="../gamekit/haptics.js?v=5.63.00"></script>
+  <script src="core.js?v=5.63.00"></script>
+  <script src="gamecenter.js?v=5.63.00"></script>
 
 </body>
 </html>

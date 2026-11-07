@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.62.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.64.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1555,6 +1555,7 @@
       tickSafe("parkCheckTick", parkCheckTickThrottled);   // Maps: parking reminder (60s throttle)
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
+      tickSafe("challengesTick", challengesTickThrottled); // Game Center: daily challenges notice (60s throttle)
       tickSafe("autoTick", autoTickThrottled);             // Automations: due rules (30s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
       tickSafe("stickiesTick", stickiesTick);              // Sticky Notes: ring + fade on the desktop (cheap, 1/s)
@@ -1611,6 +1612,18 @@
     todayLastTick = now;
     var T = window.orosToday;
     if (T && typeof T.tick === "function") T.tick();
+  }
+  // Game Center daily challenges (gamecenter/host.js, CH-1): the
+  // module owns the rule (from 18:00, once a day, only with a goal
+  // still open); the shell only gives it the clock. A stale
+  // index.html without the module → silent.
+  var challengesLastTick = 0;
+  function challengesTickThrottled() {
+    var now = Date.now();
+    if (now - challengesLastTick < 60000) return;
+    challengesLastTick = now;
+    var H = window.orosChallenges;
+    if (H && typeof H.tick === "function") H.tick();
   }
   // Automations (automations/host.js): the module owns the rules and
   // the once-per-run record; the shell only gives it the clock. A

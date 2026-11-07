@@ -345,7 +345,8 @@
   {
    "app": "gamecenter",
    "files": [
-    "gamecenter/gamecenter.js"
+    "gamecenter/gamecenter.js",
+    "gamecenter/host.js"
    ]
   },
   {

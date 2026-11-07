@@ -1,8 +1,12 @@
 # Game Center
-All your games in one place: today's daily puzzles, your achievements and the statistics of every game you've played.
+All your games in one place: today's challenges, today's daily puzzles, your achievements and the statistics of every game you've played.
 
 ## How to use
 - `Continue` (at the top, only when there is one) lists the games you left in the middle of a game on this device. Tap one to carry on where you stopped. Every game keeps its game in progress on its own, and if you close orOS while a game is on screen, orOS opens that game again the next time it starts.
+- `Today's challenges` gives you up to three small goals a day, only in games you have already played: for example `Win one game` in Reversi, `Beat your best score` in Tetris or `Finish 3 games` of Snake. Everyone gets other goals, but your devices all show the same ones that day. Each card shows how far you are; `Play` opens the game. A goal counts from the moment the day's goals were made, so play after that. The line at the top says how many are done and your challenge streak: the days in a row on which you finished all of them.
+  - `Not this game` on a card: that game gets no more challenges from tomorrow. The games you left out are listed under the cards, each with `Put back`.
+  - A reminder comes once a day at 18:00, only while a goal is still open. `Mute the reminder` turns it off on all your devices (the same switch as Game Center in [Settings › Notifications](help:t/notifications)); `Turn the reminder on` brings it back.
+  - `Hide challenges` takes the section, the goals and the reminder away; `Turn on` brings them back.
 - `Today's dailies` shows the six games with a daily puzzle (Wordle, Crossword, Sudoku, Nonogram, Flow Free and Minesweeper), Realm's Daily island, the same strategy game for everyone that day, Banner's Daily battle, the same card battle for everyone against Medium, and Crypt's Daily crypt, the same five-floor descent for everyone. Each card says whether today's puzzle is solved, not solved or still open, and your streak in that game. `Play` opens the game straight on today's puzzle; once it's done, `See` shows your result.
 - `All games` lists every game, grouped into puzzles, word games, cards and tiles, board and two-player games, arcade games, strategy games and RPG and adventure games, and says how often you've played each one (`New` if never). Tap a game to play it. Type in `Find a game` to narrow the list by name.
 - The line under the title shows your daily streak: the days in a row on which you solved at least one daily puzzle.
@@ -13,7 +17,7 @@ All your games in one place: today's daily puzzles, your achievements and the st
 Each game's `All games` button (in its statistics, and after a daily puzzle) brings you here, to that game's row.
 
 ## Sync
-The Game Center keeps no data of its own. It reads the records each game already keeps, and those sync between your devices through [orOS sync](help:t/sync) with each game. Achievements are worked out from those records every time, so they follow you to every device and come back if a game's records come back.
+The Game Center keeps almost no data of its own: only the daily challenges keep a small record (the day's goals, the games you left out, whether the section is hidden), which syncs like everything else. For the rest it reads the records each game already keeps, and those sync between your devices through [orOS sync](help:t/sync) with each game. Achievements are worked out from those records every time, so they follow you to every device and come back if a game's records come back.
 
 A game in progress stays on the device where you play it and does not sync, so it never uploads at every move. Finish it there; the result then syncs like any other.
 
