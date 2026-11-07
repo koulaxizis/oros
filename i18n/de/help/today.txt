@@ -47,12 +47,16 @@ Eine Zeile erscheint nur an einer Stelle: Ist das Widget `Aufgaben` auf dem Bild
 - [Stammbaum](app:familytree): Todestage von heute und den nächsten drei Tagen.
 - [Mond & Himmel](app:sky): die Hauptmondphasen, Tagundnachtgleichen und Sonnenwenden, Höhepunkte von Meteorströmen und Finsternisse; die heutigen als Zeilen oben.
 - Der Geburtstag des Bildschirm-Haustiers kommt mit dem Kalender, außer du hast den Kalender-Feed des Haustiers auf diesem Gerät ausgeschaltet.
+- [Spielecenter](app:gamecenter): eine Zeile oben, wie viele der heutigen Spiel-Herausforderungen geschafft sind.
 - [Mail](app:mail): nur die Zahl der ungelesenen Nachrichten im Posteingang jedes Kontos, nie ein Absender oder Betreff. Mail-Zeilen haben keinen Assistenten-Button; in Mail selbst kannst du trotzdem zu einer Nachricht fragen.
 
 ## Die tägliche Benachrichtigung
 Beim ersten Öffnen von orOS jeden Tag nach der Startzeit (06:00, außer du änderst sie) hinterlässt Heute eine Benachrichtigung in der Glocke, wenn etwas überfällig oder heute fällig ist. Sie zeigt nur Zahlen, zum Beispiel „2 überfällig · 1 heute“, nie die Namen deiner Aufgaben. Sie öffnet diese Seite.
 
 Die Benachrichtigung kommt einmal am Tag, auch mit mehreren Geräten: Alle sehen dieselbe. Ist die Synchronisierung an, wartet sie, bis deine Daten synchronisiert sind, damit sie nie den Stand von gestern meldet. An einem Tag ohne Überfälliges oder Fälliges kommt keine Benachrichtigung.
+
+## Vorschlag der Woche
+Einmal pro Woche, ab Montag 10:00, schlägt dir orOS eine App oder ein Spiel vor, das du auf keinem deiner Geräte je geöffnet hast: eine Benachrichtigung in der Glocke und eine Karte oben in Heute, mit dem, was es kann. `Ausprobieren` öffnet es. `Nicht für mich` heißt, diese App wird nie wieder vorgeschlagen. `Vorschläge stummschalten` beendet die Benachrichtigung und die Karte auf allen deinen Geräten; du schaltest sie mit `Wöchentlicher App-Vorschlag` unter [Einstellungen › Benachrichtigungen](help:t/notifications) wieder ein. Alle deine Geräte bekommen in dieser Woche denselben Vorschlag, und Apps, die du schon nutzt, die System-Apps und Apps, die ein eigenes Konto brauchen, werden nie vorgeschlagen. Wenn du alles ausprobiert hast, kommt nichts mehr.
 
 ## Den Assistenten fragen
 Ist der [Assistent](app:assistant) eingerichtet, haben die Zeilen einen Sprechblasen-Button, `Den Assistenten dazu fragen`. Er öffnet den Assistenten mit einer schon getippten Frage zu dieser Zeile. Nichts wird gesendet, bevor du dort auf `Senden` drückst. Der Button folgt der Erlaubnis des Assistenten für jede App, er erscheint also nie für eine App, die der Assistent nicht lesen darf.

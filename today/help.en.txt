@@ -47,12 +47,16 @@ A row shows in one place only: with the `To-dos` widget on the screen, To-Do tas
 - [Family Tree](app:familytree): death anniversaries of today and the next three days.
 - [Moon & Sky](app:sky): main moon phases, equinoxes and solstices, meteor shower peaks and eclipses; today's as top lines.
 - The screen pet's birthday comes with the Calendar, unless you turned off the pet's Calendar feed on this device.
+- [Game Center](app:gamecenter): a top line with how many of today's game challenges are done.
 - [Mail](app:mail): only the number of unread messages in each account's Inbox, never a sender or a subject. Mail rows have no Assistant button; inside Mail you can still ask about one message.
 
 ## The daily notice
 On your first open of orOS each day after the start time (06:00 unless you change it), Today leaves one notice in the bell when something is late or due today. It only shows numbers, for example "2 overdue · 1 today", never the names of your tasks. Opening it brings you here.
 
 The notice comes once a day, even with several devices: they all see the same one. When sync is on, it waits until your data has synced, so it never announces yesterday's state. On a day with nothing late or due, no notice comes.
+
+## Suggestion of the week
+Once a week, from Monday 10:00, orOS suggests one app or game you have never opened on any of your devices: a notice in the bell and a card at the top of Today, with what it does. `Try it` opens it. `Not for me` means that app is never suggested again. `Mute suggestions` stops the notice and the card on all your devices; turn them back on with `Weekly app suggestion` in [Settings › Notifications](help:t/notifications). Your devices all get the same suggestion that week, and apps you already use, the system apps and apps that need an account of your own are never suggested. When you have tried everything, nothing comes.
 
 ## Ask the Assistant
 When the [Assistant](app:assistant) is set up, rows have a speech-bubble button, `Ask the Assistant about this`. It opens the Assistant with a question about that row already typed. Nothing is sent until you press `Send` there. The button follows the Assistant's own permission for each app, so it never appears for an app the Assistant may not read.

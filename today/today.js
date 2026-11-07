@@ -59,6 +59,11 @@
   var I18N = {
     en: {
       app: "Today", refresh: "Refresh", settings: "Settings", close: "Close",
+      "disc.title": "Suggestion of the week", "disc.game": "A game you have not played yet.",
+      "disc.app": "An app you have not opened yet.", "disc.open": "Open", "disc.try": "Try it",
+      "disc.opened": "You opened it this week.", "disc.no": "Not for me", "disc.mute": "Mute suggestions",
+      "disc.noDone": "{app} will not be suggested again.",
+      "disc.muted": "No more weekly suggestions. Turn them back on in Settings › Notifications.",
       "hello.morning": "Good morning, {name}", "hello.afternoon": "Good afternoon, {name}", "hello.evening": "Good evening, {name}",
       overdue: "Overdue", today: "Today", soon: "Coming up", tomorrow: "Tomorrow",
       late1: "1 day late", lateN: "{n} days late", allDay: "all day",
@@ -106,6 +111,11 @@
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
+      "disc.title": "Πρόταση της εβδομάδας", "disc.game": "Ένα παιχνίδι που δεν έχεις παίξει ακόμα.",
+      "disc.app": "Μια εφαρμογή που δεν έχεις ανοίξει ακόμα.", "disc.open": "Άνοιγμα", "disc.try": "Δοκίμασέ το",
+      "disc.opened": "Το άνοιξες αυτή την εβδομάδα.", "disc.no": "Δεν με ενδιαφέρει", "disc.mute": "Σίγαση προτάσεων",
+      "disc.noDone": "Το «{app}» δεν θα προταθεί ξανά.",
+      "disc.muted": "Τέλος οι εβδομαδιαίες προτάσεις. Τις ξανανοίγεις στις Ρυθμίσεις › Ειδοποιήσεις.",
       "hello.morning": "Καλημέρα, {name}", "hello.afternoon": "Καλό απόγευμα, {name}", "hello.evening": "Καλησπέρα, {name}",
       overdue: "Εκπρόθεσμα", today: "Σήμερα", soon: "Έρχονται", tomorrow: "Αύριο",
       late1: "1 μέρα καθυστέρηση", lateN: "{n} μέρες καθυστέρηση", allDay: "όλη μέρα",
@@ -182,6 +192,49 @@
   };
 
   function host() { var p = parentWin(); try { return p && p.orosToday ? p.orosToday : null; } catch (e) { return null; } }
+  // Weekly app suggestion (CH-2, discover/host.js in the shell).
+  function discHost() { var p = parentWin(); try { return p && p.orosDiscover ? p.orosDiscover : null; } catch (e) { return null; } }
+  var disc = null;
+  function discCard() {
+    if (!disc || editing) return null;
+    var D = discHost(), d = disc;
+    var box = el("section", "disc");
+    box.setAttribute("aria-label", t("disc.title"));
+    var head = el("div", "disc-head");
+    head.appendChild(iconFor(d.id));
+    var txt = el("div", "disc-txt");
+    txt.appendChild(el("span", "disc-kicker", t("disc.title")));
+    txt.appendChild(el("strong", "disc-name", d.name));
+    txt.appendChild(el("span", "disc-line", d.opened ? t("disc.opened") : (d.line || t(d.game ? "disc.game" : "disc.app"))));
+    head.appendChild(txt);
+    box.appendChild(head);
+    var acts = el("div", "disc-acts");
+    var open = el("button", "txt-btn primary", d.opened ? t("disc.open") : t("disc.try"));
+    open.type = "button";
+    open.addEventListener("click", function () {
+      var p = parentWin();
+      try { if (p && typeof p.__orosOpenApp === "function") p.__orosOpenApp(d.id); } catch (e) {}
+    });
+    acts.appendChild(open);
+    if (!d.opened) {
+      var no = el("button", "txt-btn", t("disc.no"));
+      no.type = "button";
+      no.addEventListener("click", function () {
+        if (D && D.notForMe(d.id)) toast(t("disc.noDone", { app: d.name }));
+        refresh();
+      });
+      acts.appendChild(no);
+    }
+    var mute = el("button", "txt-btn", t("disc.mute"));
+    mute.type = "button";
+    mute.addEventListener("click", function () {
+      if (D && D.mute(true)) toast(t("disc.muted"));
+      refresh();
+    });
+    acts.appendChild(mute);
+    box.appendChild(acts);
+    return box;
+  }
   function env() { var p = parentWin(); try { return p && p.orosTodayEnv ? p.orosTodayEnv : null; } catch (e) { return null; } }
 
   function dateLong(ymd) {
@@ -240,8 +293,12 @@
   function refresh() {
     var H = host(), my = ++seq;
     if (!H) { renderNoShell(); return; }
-    H.build().then(function (res) {
+    var D = discHost(), dp = Promise.resolve(null);
+    try { if (D) dp = D.state().then(null, function () { return null; }); } catch (e) {}
+    Promise.all([H.build(), dp]).then(function (both) {
+      var res = both[0];
       if (my !== seq) return;
+      disc = both[1];
       last = res;
       assist = assistState(res);
       $("brief-btn").hidden = !canBrief();
@@ -297,6 +354,8 @@
       main.appendChild(el("div", "note", t("oldNote", { d: dateLong(oldDay) })));
     }
     if (set && !set.on.v) main.appendChild(el("div", "note", t("off")));
+    var dc = discCard();
+    if (dc) main.appendChild(dc);
     var on = L.ids(layout);
     var parts = L.distribute(res.groups, on);
     // "Nothing for today": nothing late or due today in any widget.

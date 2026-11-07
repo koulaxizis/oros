@@ -146,5 +146,12 @@ orosPack("de", "gamecenter", {
  "chal.w": "Gewinne ein Spiel",
  "n.body": "{n} von {k} noch offen. Tippe zum Spielen.",
  "n.body1": "Eine Herausforderung ist noch offen. Tippe zum Spielen.",
- "n.title": "Heutige Herausforderungen"
+ "n.title": "Heutige Herausforderungen",
+ "a.chal7": "Herausforderungswoche",
+ "d.chal7": "Schaffe alle Herausforderungen des Tages 7 Tage in Folge.",
+ "a.chal30": "Herausforderungsjäger",
+ "d.chal30": "Schaffe alle Herausforderungen des Tages an 30 Tagen.",
+ "t.title": "Spiel-Herausforderungen",
+ "t.text": "{n} von {k} geschafft",
+ "t.all": "Alle geschafft"
 });

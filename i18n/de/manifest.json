@@ -35,6 +35,7 @@
   "device.js",
   "diary.js",
   "dice.js",
+  "discover.js",
   "dots.js",
   "enrichui.js",
   "familytree.js",

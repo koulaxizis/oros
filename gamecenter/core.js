@@ -12,7 +12,8 @@
 //           in ms (0 = none), sc best score (-1 = none), cur / best
 //           streak (-1 = none), dn dailies solved (-1 = no Daily),
 //           today 0 not yet | 1 solved | 2 lost (Daily games only) }
-//   achievements(sum) → [{ id, done, have, need }]
+//   achievements(sum, ch?) → [{ id, done, have, need }]; ch = the
+//     daily challenges' { best, days } (C3), absent = 0
 //   GROUPS → [{ id, games: [<id>] }]: every game once, by kind
 //
 // Each game's adapter follows that game's schema in OROS_BIBLE.md
@@ -425,11 +426,15 @@
     ["speedy",   function (s) { return [s.x.fastSudoku ? 1 : 0, 1]; }],
     ["variety",  function (s) { return [s.tot.wonGames, 10]; }],
     ["played100", function (s) { return [s.tot.p, 100]; }],
-    ["wins250",  function (s) { return [s.tot.w, 250]; }]
+    ["wins250",  function (s) { return [s.tot.w, 250]; }],
+    // Daily challenges (C3, 5.63.00): ch = { best, days } from
+    // gamecenter/challenge.js records(), or nothing (0).
+    ["chal7",    function (s, ch) { return [ch ? ch.best : 0, 7]; }],
+    ["chal30",   function (s, ch) { return [ch ? ch.days : 0, 30]; }]
   ];
-  function achievements(sum) {
+  function achievements(sum, ch) {
     return ACH.map(function (a) {
-      var r = a[1](sum), need = r[1], have = Math.max(0, Math.min(need, r[0]));
+      var r = a[1](sum, ch || null), need = r[1], have = Math.max(0, Math.min(need, r[0]));
       return { id: a[0], done: have >= need, have: have, need: need };
     });
   }
