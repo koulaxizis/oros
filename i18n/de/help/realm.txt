@@ -35,7 +35,7 @@ Dickicht wächst auf Land, um das sich niemand kümmert. Eine Ruine wird in der 
 ## Spieloptionen
 `Neues Spiel (N)` fragt nach der Inselgröße (`Klein`, `Mittel`, `Groß`), wie viele Personen und wie viele Computer-Seiten spielen (insgesamt 2 bis 6 Seiten) und nach der Stufe des Computers (`Leicht`, `Mittel`, `Schwer`).
 
-Jede Insel hat einen Code. Gib einen Code ein, um dieselbe Insel noch einmal zu spielen, oder lass das Feld leer für eine neue. `Dieselbe Insel noch mal` im Ergebnisfenster spielt die letzte Insel erneut.
+Jede Insel hat einen Code. Gib einen Code ein, um dieselbe Insel noch einmal zu spielen, oder lass das Feld leer für eine neue. Das Feld nimmt auch den Code einer gezeichneten Insel (siehe Insel-Editor unten), sogar eine ganze geteilte Zeile mit dem Code am Ende. `Dieselbe Insel noch mal` im Ergebnisfenster spielt die letzte Insel erneut.
 
 Spielen mehrere Personen, beginnt der Zug jeder Person mit dem Bildschirm `Gerät weitergeben`, damit niemand die Züge der anderen sieht.
 
@@ -44,6 +44,19 @@ Hältst du drei Viertel der Insel, bietet der Computer an aufzugeben. `Annehmen`
 `Schnelle Computerzüge` spielt die Züge des Computers auf einmal statt einzeln. Ein Tippen auf die Karte während eines Computerzugs springt ebenfalls an dessen Ende.
 
 `Bilanz` zeigt deine Siege und Niederlagen gegen den Computer für jede Stufe und Inselgröße sowie den Code der Insel, die du spielst.
+
+## Insel-Editor
+`Insel zeichnen` im Fenster `Neues Spiel (N)` öffnet den Editor mit deiner letzten Zeichnung oder mit der Insel, die du gerade spielst. Das Spiel wartet so lange und geht weiter, wenn du den Editor schließt.
+
+Wähle unten einen Pinsel (oder drücke [[1]] bis [[9]]) und tippe Felder auf der Karte an (Ziehen verschiebt die Karte wie im Spiel):
+- `Meer`, `Land` und `Dickicht` malen den Boden. Der Kartenrand bleibt immer Meer.
+- Die Startfelder von `Start Blau` bis `Start Himmelblau` zeigen, wo jede Seite beginnt. Blau bist du. Jede Seite braucht mindestens 2 benachbarte Felder, und ihre Region bekommt ein Rathaus und Startgold.
+
+Die Statuszeile sagt, ob die Insel spielbereit ist: Das Land muss ein Stück sein, und es braucht mindestens 2 Seiten. [[Z]] nimmt den letzten Strich zurück.
+
+`Inseloptionen` (die drei Punkte) beginnt eine neue Zeichnung (`Leere Insel` oder `Zufällige Insel`, in der gewählten Größe), zeigt den Inselcode mit `Code kopieren` oder `Code teilen` und lädt einen Code, den dir jemand geschickt hat. `Spielen` fragt, wie viele Seiten Menschen sind und welche Computerstufe gilt, und startet die Insel. Der Code ist auch der Inselcode in der `Bilanz`, so kann jeder deine Insel über `Neues Spiel (N)` spielen.
+
+Deine Zeichnung bleibt auf diesem Gerät, bis du eine neue beginnst.
 
 ## Feldzug
 `Feldzug` (die Fahnen-Taste) hat 12 Inseln mit steigender Schwierigkeit, von einem Computer auf Leicht auf einer kleinen Insel bis zu fünf Computern auf Schwer auf einer großen. Insel 1 ist offen; wer eine Insel gewinnt, öffnet die nächste. Ein Sieg bringt Sterne nach Runden: 3 Sterne, wenn du innerhalb der Rundenvorgabe der Insel gewinnst, 2 Sterne bis zur Hälfte mehr Runden, sonst 1 Stern. Jede Insel zeigt dein bestes Ergebnis, und du kannst jede offene Insel noch einmal spielen, um mehr Sterne zu holen. Jede Insel hat der Computer auf Schwer auf deiner Seite gewonnen. Feldzug-Spiele zählen nicht in deiner Bilanz gegen den Computer, und `Bilanz zurücksetzen` lässt den Feldzug in Ruhe.

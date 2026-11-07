@@ -35,7 +35,7 @@ Thicket grows on land nobody looks after. A Ruin becomes Thicket at the next rou
 ## Game options
 `New game (N)` asks for the island size (`Small`, `Medium`, `Large`), how many people and how many computer sides play (2 to 6 sides in all), and the computer level (`Easy`, `Medium`, `Hard`).
 
-Every island has a code. Type a code to play the same island again, or leave it empty for a new one. `Same island again` in the result window replays the last island.
+Every island has a code. Type a code to play the same island again, or leave it empty for a new one. The field also takes the code of a drawn island (see Island editor below), or a whole shared line with the code at its end. `Same island again` in the result window replays the last island.
 
 With more than one person, each person's turn starts with a `Pass the device` screen, so nobody sees another player's moves.
 
@@ -44,6 +44,19 @@ When you hold three quarters of the island, the computer offers to give up. `Acc
 `Fast computer turns` plays the computer's moves at once instead of one by one. Tapping the map during a computer turn also skips to the end of it.
 
 `Records` shows your wins and losses against the computer for each level and island size, and the code of the island you are playing.
+
+## Island editor
+`Draw an island` in the `New game (N)` window opens the editor on your last drawing, or on the island you are playing. The game waits meanwhile and goes on when you close the editor.
+
+Choose a brush in the bar at the bottom (or press [[1]] to [[9]]), then tap cells on the map (drag moves the map as in the game):
+- `Sea`, `Land` and `Thicket` paint the ground. The edge of the map always stays sea.
+- `Blue start` to `Sky start` mark where each side begins. Blue is you. A side needs at least 2 cells next to each other, and their region gets a Hall and starting gold.
+
+The status line says whether the island is ready to play: the land must be one piece and at least 2 sides must be drawn. [[Z]] takes back the last stroke.
+
+`Island options` (the three dots) starts a new drawing (`Blank island` or `Random island`, in the size you choose), shows the island code with `Copy code` or `Share code`, and loads a code someone sent you. `Play` asks how many of the sides are people and the computer level, then starts the island. The code is also the island's code in `Records`, so anyone can play your island from `New game (N)`.
+
+Your drawing is kept on this device until you start another one.
 
 ## Campaign
 `Campaign` (the flag button) has 12 islands of rising difficulty, from one Easy computer on a small island to five Hard computers on a large one. Island 1 is open; winning an island opens the next. A win earns stars by rounds: 3 stars when you win within the island's par, 2 stars within one and a half times the par, 1 star otherwise. Each island shows your best result, and you can play any open island again to earn more stars. Every island has been won by the Hard computer playing your side. Campaign games do not count in your records vs the computer, and `Reset records` leaves the campaign alone.

@@ -17,6 +17,9 @@
 //     try; result, streak and a spoiler-free share line
 //   - Campaign (W3): 12 drawn islands of rising difficulty
 //     (realm/campaign.js), unlocked one by one, 1-3 stars by rounds
+//   - Map editor (W4): draw an island (sea, land, Thicket, up to six
+//     sides), play it, share it as a short island code; the New game
+//     dialog's island code field takes these codes too
 // Data:
 //   - synced slice "realm" (oros-realm-data): results vs the computer
 //     per level and island size as per-device counter rows (each
@@ -28,7 +31,8 @@
 //   - device-local (R10): oros-realm-prefs (new-game options, fast
 //     turns, tour seen), oros-realm-session (the game in progress and
 //     the undo steps of the current turn), oros-realm-device (counter
-//     row id), oros-realm-sfx (sound on/off)
+//     row id), oros-realm-sfx (sound on/off), oros-realm-draft (the
+//     island in the editor)
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Synced records: load / save / normalize / merge (R5, R26)
@@ -54,6 +58,8 @@
   var SESSION_KEY = "oros-realm-session";
   var DEVICE_KEY  = "oros-realm-device";
   var SFX_KEY     = "oros-realm-sfx";
+  var DRAFT_KEY   = "oros-realm-draft";
+  var BRUSHES = [".", "_", "t", "0", "1", "2", "3", "4", "5"];
   var DATA_VER    = 1;
 
   var LEVELS = E.LEVELS;               // e, m, h
@@ -116,6 +122,20 @@
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "stats.title": "Records vs computer", "stats.head": "Won · lost", "stats.reset": "Reset records",
       "stats.close": "Close", "stats.code": "This island's code: {seed}",
+      "btn.edit": "Draw an island", "btn.edExit": "Close the editor", "btn.edMenu": "Island options",
+      "ed.title": "Editor", "ed.play": "Play",
+      "ed.b.0": "Sea", "ed.b.1": "Land", "ed.b.2": "Thicket", "ed.side": "{color} start",
+      "ed.ready": "Ready to play: {n} sides", "ed.err.edge": "The edge of the map stays sea",
+      "ed.err.pieces": "The land must be one piece", "ed.err.sides": "Draw at least 2 sides (Blue is you)",
+      "ed.err.small": "Every side needs 2 cells next to each other", "ed.err.bad": "This island cannot be read",
+      "ed.edge": "The edge of the map stays sea", "ed.brush": "Brush: {b}",
+      "ed.menu": "Island options", "ed.size": "Size for a new island", "ed.blank": "Blank island",
+      "ed.random": "Random island", "ed.share": "Share code", "ed.copy": "Copy code",
+      "ed.code": "Island code", "ed.load": "Load", "ed.codeHint": "Paste an island code",
+      "ed.badCode": "That is not a whole island code: check it and try again",
+      "ed.loaded": "Island loaded", "ed.shareText": "My Realm island in orOS: {code}",
+      "ed.playTitle": "Play this island", "ed.playNote": "{n} sides. Blue is you; the other sides are people or computers.",
+      "ed.cleared": "New island in the editor", "ed.sides": "{n} sides",
       "btn.camp": "Campaign", "camp.title": "Campaign",
       "camp.note": "Win an island to open the next one. Fewer rounds earn more stars.",
       "camp.island": "Island {n}", "camp.locked": "Locked", "camp.open": "Not won yet",
@@ -197,6 +217,20 @@
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "stats.title": "Ρεκόρ με υπολογιστή", "stats.head": "Νίκες · ήττες", "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο", "stats.code": "Κωδικός αυτού του νησιού: {seed}",
+      "btn.edit": "Σχεδίασε νησί", "btn.edExit": "Κλείσιμο επεξεργαστή", "btn.edMenu": "Επιλογές νησιού",
+      "ed.title": "Επεξεργαστής", "ed.play": "Παίξε",
+      "ed.b.0": "Θάλασσα", "ed.b.1": "Στεριά", "ed.b.2": "Λόχμη", "ed.side": "Αφετηρία: {color}",
+      "ed.ready": "Έτοιμο για παιχνίδι: {n} πλευρές", "ed.err.edge": "Η άκρη του χάρτη μένει θάλασσα",
+      "ed.err.pieces": "Η στεριά πρέπει να είναι ενιαία", "ed.err.sides": "Σχεδίασε τουλάχιστον 2 πλευρές (η μπλε είσαι εσύ)",
+      "ed.err.small": "Κάθε πλευρά θέλει 2 κελιά το ένα δίπλα στο άλλο", "ed.err.bad": "Αυτό το νησί δεν διαβάζεται",
+      "ed.edge": "Η άκρη του χάρτη μένει θάλασσα", "ed.brush": "Πινέλο: {b}",
+      "ed.menu": "Επιλογές νησιού", "ed.size": "Μέγεθος για νέο νησί", "ed.blank": "Κενό νησί",
+      "ed.random": "Τυχαίο νησί", "ed.share": "Κοινοποίηση κωδικού", "ed.copy": "Αντιγραφή κωδικού",
+      "ed.code": "Κωδικός νησιού", "ed.load": "Φόρτωση", "ed.codeHint": "Επικόλλησε έναν κωδικό νησιού",
+      "ed.badCode": "Αυτός δεν είναι ολόκληρος κωδικός νησιού: έλεγξέ τον και δοκίμασε ξανά",
+      "ed.loaded": "Το νησί φορτώθηκε", "ed.shareText": "Το νησί μου στην Επικράτεια του orOS: {code}",
+      "ed.playTitle": "Παίξε αυτό το νησί", "ed.playNote": "{n} πλευρές. Η μπλε είσαι εσύ· οι άλλες είναι άτομα ή υπολογιστής.",
+      "ed.cleared": "Νέο νησί στον επεξεργαστή", "ed.sides": "{n} πλευρές",
       "btn.camp": "Εκστρατεία", "camp.title": "Εκστρατεία",
       "camp.note": "Κέρδισε ένα νησί για να ανοίξει το επόμενο. Με λιγότερους γύρους παίρνεις περισσότερα αστέρια.",
       "camp.island": "Νησί {n}", "camp.locked": "Κλειδωμένο", "camp.open": "Δεν κερδήθηκε ακόμα",
@@ -269,6 +303,11 @@
     crypto.getRandomValues(buf);
     for (var i = 0; i < 6; i++) s += abc.charAt(buf[i] % abc.length);
     return s;
+  }
+  // The island code in a typed or pasted text (a shared line ends with it).
+  function codeIn(text) {
+    var m = /r1[a-z0-9]{6,}$/.exec(String(text || "").replace(/\s+/g, "").toLowerCase());
+    return m ? m[0] : "";
   }
   function cleanSeed(s) {
     return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
@@ -508,7 +547,8 @@
   //   g: engine state,
   //   u: [engine state…]   undo steps of the current turn (≤ 40)
   //   opts: { size, people, comps, lv, seed, day?, camp? },
-  //         day: the Daily island; camp: a campaign island id
+  //         day: the Daily island; camp: a campaign island id;
+  //         map: an island code (a drawn island, W4)
   //   done: bool           the game is over for this device's records
   // }
   var game = null;
@@ -520,6 +560,10 @@
         !isInt(o.people) || !isInt(o.comps) || o.people < 1 || o.people + o.comps > 6 || o.people + o.comps < 2) return false;
     if (s.g.sides.length !== o.people + o.comps) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || o.people !== 1)) return false;
+    if (o.map !== undefined) {
+      var lay = typeof o.map === "string" ? E.decodeLayout(o.map) : null;
+      if (!lay || lay.size !== o.size || E.sidesIn(lay.rows) !== o.people + o.comps || o.camp !== undefined || o.day !== undefined) return false;
+    }
     if (o.camp !== undefined) {
       var isl = CAMP && CAMP.byId(o.camp);
       if (!isl || o.people !== 1 || o.comps !== isl.opp.length || o.day !== undefined) return false;
@@ -563,11 +607,17 @@
     if (humans() === 1) return t("side.you");
     return t("side.person", { color: color });
   }
-  function humanTurn() { return st && st.over < 0 && !game.done && st.sides[st.turn].k === "h"; }
+  function humanTurn() { return !ed && st && st.over < 0 && !game.done && st.sides[st.turn].k === "h"; }
   function inProgress() { return inProgressOf(game); }
   function inProgressOf(g) { return !!(g && !g.done && g.g.over < 0 && g.g.acts > 0); }
 
   function makeGame(opts) {
+    if (opts.map !== undefined) {
+      var ms = [];
+      for (var a = 0; a < opts.people; a++) ms.push({ k: "h", lv: opts.lv });
+      for (var b = 0; b < opts.comps; b++) ms.push({ k: "c", lv: opts.lv });
+      return { g: E.fromLayout(E.decodeLayout(opts.map), ms, "m" + E.hashStr(opts.map).toString(36)), u: [], opts: opts, done: false };
+    }
     if (opts.camp !== undefined) {
       var isl = CAMP.byId(opts.camp), cs = [{ k: "h", lv: "m" }];
       isl.opp.forEach(function (lv) { cs.push({ k: "c", lv: lv }); });
@@ -581,6 +631,7 @@
 
   // A game in progress is never lost silently: Undo toast (R14).
   function startGame(opts) {
+    leaveEditor();
     var prev = inProgress() ? JSON.parse(JSON.stringify(game)) : null;
     cancelAi();
     game = makeGame(opts);
@@ -618,7 +669,7 @@
     if (regs.length) region = E.hallOf(st, regs[0]) >= 0 ? E.hallOf(st, regs[0]) : regs[0][0];
   }
   function regionCells() {
-    if (region < 0 || st.own[region] !== st.turn) return [];
+    if (ed || region < 0 || st.own[region] !== st.turn) return [];
     return E.regionOf(st, region);
   }
 
@@ -631,6 +682,7 @@
   function tapCell(i) {
     if (!st || i < 0) return;
     cursor = i;
+    if (ed) { edPaint(i); return; }
     if (game.done || st.over >= 0) { showToast(t("toast.over")); return; }      // R28
     if (!humanTurn()) { skipAi(); showToast(t("toast.wait")); return; }
     var side = st.turn;
@@ -720,8 +772,9 @@
     }
   }
 
-  function canUndo() { return humanTurn() && game.u.length > 0; }
+  function canUndo() { return ed ? ed.u.length > 0 : humanTurn() && game.u.length > 0; }
   function undo() {
+    if (ed) { edUndo(); return; }
     if (!canUndo()) { showToast(t("btn.undoNone")); return; }             // R28
     game.g = game.u.pop();
     st = game.g;
@@ -750,6 +803,7 @@
 
   // End the human's turn, then let the flow run (computers, the next person).
   function endTurn() {
+    if (ed) { edPlayDialog(); return; }
     if (!humanTurn()) { showToast(game.done || st.over >= 0 ? t("toast.over") : t("toast.wait")); return; }
     nextTurn();
   }
@@ -894,7 +948,7 @@
   function landBox() {
     var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     for (var i = 0; i < st.land.length; i++) {
-      if (!st.land[i]) continue;
+      if (!st.land[i] && !ed) continue;
       var p = center(i);
       x0 = Math.min(x0, p.x - 1); x1 = Math.max(x1, p.x + 1);
       y0 = Math.min(y0, p.y - 1); y1 = Math.max(y1, p.y + 1);
@@ -913,7 +967,7 @@
       view.scale = Math.max(fit, 34 / SQ3);
       view.ox = cw / 2 - ((b.x0 + b.x1) / 2) * view.scale;
       view.oy = ch / 2 - ((b.y0 + b.y1) / 2) * view.scale;
-      if (view.scale > fit + 0.01) centerOn(humanTurn() ? region : -1);
+      if (view.scale > fit + 0.01 && !ed) centerOn(humanTurn() ? region : -1);
     }
     clampView();
     draw();
@@ -1013,7 +1067,17 @@
     if (humanTurn()) E.readyUnits(st).forEach(function (x) { ready[x] = true; });
     // 1. cells
     for (var i = 0; i < n; i++) {
-      if (!st.land[i]) continue;
+      if (!st.land[i]) {
+        if (!ed) continue;
+        var ps = toScreen(center(i));
+        hexPath(ps, s * 0.98);
+        ctx.strokeStyle = colors["--rm-line"];
+        ctx.globalAlpha = 0.35;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        continue;
+      }
       var p = toScreen(center(i));
       if (p.x < -s * 2 || p.y < -s * 2 || p.x > cw + s * 2 || p.y > ch + s * 2) continue;
       hexPath(p, s * 0.98);
@@ -1295,12 +1359,14 @@
       if ((e.ctrlKey || e.metaKey) && e.code === "KeyZ" && !e.shiftKey) { e.preventDefault(); undo(); return; }
       if (e.ctrlKey || e.metaKey) return;               // never steal OS combos
       if (e.shiftKey && e.code !== "Equal") return;     // Shift only for "+"
-      if (e.code === "KeyN") { e.preventDefault(); newDialog(); return; }
+      if (e.code === "KeyN") { e.preventDefault(); if (!ed) newDialog(); return; }
       if (e.code === "KeyZ") { e.preventDefault(); undo(); return; }
       if (e.code === "KeyE") { e.preventDefault(); endTurn(); return; }
       if (e.code === "Escape") { if (armed || sel >= 0) { clearSel(); renderAll(); } return; }
       if (e.code === "Equal" || e.code === "NumpadAdd") { e.preventDefault(); zoomBy(1.2); return; }
       if (e.code === "Minus" || e.code === "NumpadSubtract") { e.preventDefault(); zoomBy(1 / 1.2); return; }
+      var d9 = /^(Digit|Numpad)([1-9])$/.exec(e.code);
+      if (d9 && ed) { e.preventDefault(); setBrush(+d9[2] - 1); return; }
       var dg = /^(Digit|Numpad)([1-7])$/.exec(e.code);
       if (dg) { e.preventDefault(); arm(KINDS[+dg[2] - 1]); return; }
       if (document.activeElement !== canvas) return;
@@ -1330,18 +1396,35 @@
     u.disabled = !ok;
     u.title = t(ok ? "btn.undo" : "btn.undoNone");
     u.setAttribute("aria-label", u.title);
-    $("end-btn").disabled = !humanTurn();
+    $("end-btn").disabled = !ed && !humanTurn();
+    $("end-btn").textContent = t(ed ? "ed.play" : "btn.end");
+    $("end-btn").title = t(ed ? "ed.play" : "btn.endKey");
+    ["new-btn", "camp-btn", "daily-btn", "stats-btn"].forEach(function (id) { if (ed) $(id).hidden = true; });
+    if (!ed) { $("new-btn").hidden = false; $("stats-btn").hidden = false; }
+    $("edx-btn").hidden = !ed;
+    $("edm-btn").hidden = !ed;
     var cb = $("camp-btn");
-    cb.hidden = !CAMP;
+    cb.hidden = !CAMP || !!ed;
     cb.classList.toggle("on", !!(game && game.opts.camp !== undefined && !game.done));
     var db = $("daily-btn");
-    db.hidden = !DK;
+    db.hidden = !DK || !!ed;
     db.classList.toggle("due", !!DK && !data.days[today()]);
     db.classList.toggle("on", !!(game && game.opts.day !== undefined && !game.done));
     paintSfxBtn();
   }
   function renderStatus() {
     if (!st) return;
+    if (ed) {
+      var bi = BRUSHES.indexOf(ed.brush);
+      $("sw").style.background = bi >= 3 ? SIDE_COLORS[bi - 3] : (bi === 0 ? colors["--rm-sea"] : colors["--rm-land"]);
+      $("turn").textContent = t("ed.title") + " · " + t("new.size." + ed.size);
+      $("round").textContent = t("ed.brush", { b: brushName(bi) });
+      var pr = edProblem();
+      $("gold").textContent = pr ? t("ed.err." + pr) : t("ed.ready", { n: E.sidesIn(E.compactRows(ed.rows)) });
+      $("net").textContent = "";
+      $("net").classList.toggle("neg", !!pr);
+      return;
+    }
     var who = st.over >= 0 ? st.over : st.turn;
     $("sw").style.background = SIDE_COLORS[who];
     var txt;
@@ -1365,6 +1448,12 @@
     }
   }
   function renderBuyBar() {
+    $("buybar").hidden = !!ed;
+    $("edbar").hidden = !ed;
+    if (ed) {
+      BRUSHES.forEach(function (b, k) { $("br-" + k).setAttribute("aria-pressed", ed.brush === b ? "true" : "false"); });
+      return;
+    }
     var info = humanTurn() && regionCells().length ? E.regionInfo(st, region) : null;
     KINDS.forEach(function (k) {
       var b = $("buy-" + k);
@@ -1464,7 +1553,7 @@
     seedWrap.appendChild(el("span", "dlg-label", t("new.seed")));
     var seed = el("input", "dlg-input");
     seed.type = "text";
-    seed.maxLength = 16;
+    seed.maxLength = 2600;
     seed.autocomplete = "off";
     seed.spellcheck = false;
     seed.value = o.seed || "";
@@ -1478,16 +1567,25 @@
     fastWrap.appendChild(el("span", "", t("new.fast")));
     dlg.appendChild(fastWrap);
     dlg.appendChild(note);
-    var acts = el("div", "dlg-actions");
+    var acts = el("div", "dlg-actions wrap");
     acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("btn.edit"), "", function () { dlg.close(); openEditor(); }));
     var go = button(t("new.start"), "primary", function () {
       if (o.people + o.comps < 2 || o.people + o.comps > 6) { showToast(t("new.count")); return; }
+      var raw = codeIn(seed.value);
+      var lay = raw ? E.decodeLayout(raw) : null;
+      if (!lay && raw.length > 16) { showToast(t("ed.badCode")); return; }
+      if (lay && E.layoutProblem(lay)) { showToast(t("ed.err." + E.layoutProblem(lay))); return; }
       prefs.size = o.size; prefs.people = o.people; prefs.comps = o.comps; prefs.lv = o.lv;
       prefs.fast = fast.checked;
       savePrefs();
-      var sd = cleanSeed(seed.value) || newSeed();
       dlg.close();
-      startGame({ size: o.size, people: o.people, comps: o.comps, lv: o.lv, seed: sd });
+      if (lay) {
+        var ns = E.sidesIn(lay.rows), pp = Math.min(o.people, ns);
+        startGame({ size: lay.size, people: pp, comps: ns - pp, lv: o.lv, seed: "map", map: raw });
+        return;
+      }
+      startGame({ size: o.size, people: o.people, comps: o.comps, lv: o.lv, seed: cleanSeed(seed.value) || newSeed() });
     });
     acts.appendChild(go);
     dlg.appendChild(acts);
@@ -1519,7 +1617,7 @@
     if (hs === 1 && game.opts.comps) {
       dlg.appendChild(row(t("stats.head") + " · " + t("new.size." + game.opts.size), totals(game.opts.lv, game.opts.size).join(" · ")));
     }
-    dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.map || game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
     acts.appendChild(button(t("res.close"), "", function () { dlg.close(); }));
     acts.appendChild(button(t("res.same"), "", function () {
@@ -1553,7 +1651,7 @@
     dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
     if (CAMP) dlg.appendChild(row(t("camp.title"), campSummary()));
     if (game && game.opts.day === undefined && game.opts.camp === undefined) {
-      dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+      dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.map || game.opts.seed })));
     }
     var acts = el("div", "dlg-actions");
     hubLink(acts, dlg);
@@ -1570,6 +1668,211 @@
     dlg.showModal();
     close.focus();
   }
+  // ---------- Map editor (W4) ----------
+  // ed = { size, rows: [H strings], brush: one of BRUSHES, u: [rows…] }.
+  // While it is open st is a preview of the drawing; the game waits
+  // in game.g (its computer turns pause) and resumes on close.
+  var ed = null;
+  function brushName(k) { return k >= 3 ? t("ed.side", { color: t("color." + (k - 3)) }) : t("ed.b." + k); }
+  function rowsOk(size, rows) {
+    var spec = E.SIZES[size];
+    if (!spec || !Array.isArray(rows) || rows.length !== spec.H) return false;
+    for (var r = 0; r < rows.length; r++) {
+      if (typeof rows[r] !== "string" || rows[r].length !== spec.W || /[^._t0-5]/.test(rows[r])) return false;
+      for (var c = 0; c < spec.W; c++) {
+        if ((r === 0 || c === 0 || r === spec.H - 1 || c === spec.W - 1) && rows[r].charAt(c) !== ".") return false;
+      }
+    }
+    return true;
+  }
+  function loadDraft() {
+    try {
+      var d = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (d && rowsOk(d.size, d.rows)) return { size: d.size, rows: d.rows.slice(), brush: BRUSHES.indexOf(d.brush) >= 0 ? d.brush : "_", u: [] };
+    } catch (e) {}
+    return null;
+  }
+  function saveDraft() {
+    if (!ed) return;
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ size: ed.size, rows: ed.rows, brush: ed.brush })); }
+    catch (e) { showToast(t("toast.save")); }
+  }
+  // A drawable preview: the drawing as a state the map view can show.
+  function edState() {
+    var spec = E.SIZES[ed.size], g = { v: 1, W: spec.W, H: spec.H, size: ed.size, seed: "", land: [], own: [], obj: [],
+      done: [], gold: [], sides: [], turn: 0, round: 1, rng: 0, acts: 0, over: -1, nos: 0 };
+    ed.rows.join("").split("").forEach(function (ch) {
+      var d = "012345".indexOf(ch);
+      g.land.push(ch === "." ? 0 : 1);
+      g.own.push(d);
+      g.obj.push(ch === "t" ? O.THICKET : 0);
+      g.done.push(0); g.gold.push(0);
+    });
+    for (var k = 0; k < 6; k++) g.sides.push({ k: "h", lv: "m", out: false });
+    return g;
+  }
+  function edProblem() { return E.layoutProblem({ size: ed.size, rows: E.compactRows(ed.rows) }); }
+  // Open the editor on the last drawing, or on the island being played.
+  function openEditor() {
+    cancelAi();
+    clearSel();
+    ed = loadDraft();
+    if (!ed) {
+      var g = game.g, rows = E.toRows(g);
+      ed = { size: g.size, rows: rows, brush: "_", u: [] };
+    }
+    st = edState();
+    saveDraft();
+    fitView(true);
+    renderAll();
+    live(t("ed.title") + ". " + t("ed.brush", { b: brushName(BRUSHES.indexOf(ed.brush)) }));
+  }
+  // Back to the game (the drawing stays for next time).
+  function closeEditor() {
+    if (!ed) return;
+    leaveEditor();
+    clearSel();
+    fitView(true);
+    if (humanTurn()) pickRegion();
+    renderAll();
+    continueFlow(false);
+  }
+  function leaveEditor() {
+    if (!ed) return;
+    saveDraft();
+    ed = null;
+    st = game.g;
+  }
+  function setBrush(k) {
+    if (!ed || k < 0 || k >= BRUSHES.length) return;
+    ed.brush = BRUSHES[k];
+    saveDraft();
+    renderAll();
+    live(t("ed.brush", { b: brushName(k) }));
+  }
+  function edPush() {
+    ed.u.push(ed.rows.slice());
+    if (ed.u.length > UNDO_MAX) ed.u.shift();
+  }
+  function edSet(rows, size) {
+    ed.u.push({ rows: ed.rows.slice(), size: ed.size });
+    if (ed.u.length > UNDO_MAX) ed.u.shift();
+    ed.rows = rows;
+    if (size) ed.size = size;
+    st = edState();
+    saveDraft();
+    fitView(true);
+    renderAll();
+  }
+  function edPaint(i) {
+    var spec = E.SIZES[ed.size], r = Math.floor(i / spec.W), c = i % spec.W;
+    if (ed.brush !== "." && (r === 0 || c === 0 || r === spec.H - 1 || c === spec.W - 1)) { shake(); showToast(t("ed.edge")); return; }
+    if (ed.rows[r].charAt(c) === ed.brush) return;
+    edPush();
+    ed.rows[r] = ed.rows[r].slice(0, c) + ed.brush + ed.rows[r].slice(c + 1);
+    st = edState();
+    saveDraft();
+    sfx("select");
+    renderAll();
+  }
+  function edUndo() {
+    if (!ed || !ed.u.length) return;
+    var u = ed.u.pop();
+    if (Array.isArray(u)) ed.rows = u;
+    else { ed.rows = u.rows; ed.size = u.size; }
+    st = edState();
+    if (!Array.isArray(u)) fitView(true);
+    saveDraft();
+    renderAll();
+  }
+  function edCode() { return E.encodeLayout({ size: ed.size, rows: E.compactRows(ed.rows) }); }
+  function edPlayDialog() {
+    var pr = edProblem();
+    if (pr) { shake(); showToast(t("ed.err." + pr)); return; }
+    var rows = E.compactRows(ed.rows), n = E.sidesIn(rows);
+    var o = { people: 1, lv: prefs.lv };
+    var dlg = makeDialog("rm-edplay");
+    dlg.appendChild(el("div", "dlg-title", t("ed.playTitle")));
+    dlg.appendChild(el("div", "dlg-msg", t("ed.playNote", { n: n })));
+    var pf = selectField(t("new.people"), 1, n, 1, function (v) { o.people = v; lvf.hidden = v >= n; });
+    dlg.appendChild(pf.wrap);
+    var lvf = segField(t("new.level"), LEVELS, o.lv, "level.", function (v) { o.lv = v; });
+    dlg.appendChild(lvf);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); }));
+    var go = button(t("new.start"), "primary", function () {
+      var code = edCode();
+      dlg.close();
+      startGame({ size: ed.size, people: o.people, comps: n - o.people, lv: o.lv, seed: "map", map: code });
+    });
+    acts.appendChild(go);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    go.focus();
+  }
+  function edMenuDialog() {
+    var dlg = makeDialog("rm-edmenu");
+    dlg.appendChild(el("div", "dlg-title", t("ed.menu")));
+    var o = { size: ed.size };
+    dlg.appendChild(segField(t("ed.size"), SIZES, o.size, "new.size.", function (v) { o.size = v; }));
+    var row1 = el("div", "dlg-actions wrap");
+    row1.appendChild(button(t("ed.blank"), "", function () { dlg.close(); edSet(E.blankRows(o.size), o.size); live(t("ed.cleared")); }));
+    row1.appendChild(button(t("ed.random"), "", function () {
+      dlg.close();
+      var n = Math.max(2, Math.min(6, E.sidesIn(E.compactRows(ed.rows)) || 3)), sides = [];
+      for (var k = 0; k < n; k++) sides.push({ k: "h", lv: "m" });
+      edSet(E.toRows(E.makeMap({ size: o.size, seed: newSeed(), sides: sides })), o.size);
+      live(t("ed.cleared"));
+    }));
+    dlg.appendChild(row1);
+    dlg.appendChild(el("div", "dlg-sub", t("ed.code")));
+    var pr = edProblem();
+    if (!pr) {
+      var code = edCode();
+      dlg.appendChild(el("div", "dlg-code", code));
+      var row2 = el("div", "dlg-actions wrap");
+      row2.appendChild(button(DK && DK.shareOnMobile() ? t("ed.share") : t("ed.copy"), "", function () {
+        var text = t("ed.shareText", { code: code });
+        var done = function (how) {
+          if (how === "copied") showToast(t("toast.copied"));
+          else if (how === "shared") live(t("toast.shared"));
+          else if (how === "failed") showToast(t("toast.copyFail"));
+        };
+        if (DK) DK.share(text, "orOS " + t("app.name")).then(done);
+        else if (navigator.clipboard) navigator.clipboard.writeText(text).then(function () { done("copied"); }, function () { done("failed"); });
+        else done("failed");
+      }));
+      dlg.appendChild(row2);
+    } else dlg.appendChild(el("div", "dlg-note bad", t("ed.err." + pr)));
+    var row3 = el("div", "dlg-row2");
+    var inp = el("input", "dlg-input");
+    inp.type = "text";
+    inp.autocomplete = "off";
+    inp.spellcheck = false;
+    inp.maxLength = 2600;
+    inp.placeholder = t("ed.codeHint");
+    inp.setAttribute("aria-label", t("ed.codeHint"));
+    row3.appendChild(inp);
+    row3.appendChild(button(t("ed.load"), "", function () {
+      var raw = codeIn(inp.value);
+      var lay = raw ? E.decodeLayout(raw) : null;
+      if (!lay || !rowsOk(lay.size, lay.rows)) { showToast(t("ed.badCode")); return; }
+      dlg.close();
+      edSet(lay.rows, lay.size);
+      live(t("ed.loaded"));
+    }));
+    dlg.appendChild(row3);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("btn.edExit"), "", function () { dlg.close(); closeEditor(); }));
+    var close = button(t("res.close"), "primary", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    close.focus();
+  }
+
   // ---------- Campaign ----------
   function starText(n) { var x = ""; for (var k = 1; k <= 3; k++) x += k <= n ? "★" : "☆"; return x; }
   function campSummary() {
@@ -1896,6 +2199,10 @@
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
     zin:    SVG + '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>',
     zout:   SVG + '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>',
+    edit:   SVG + '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    close:  SVG + '<path d="M18 6 6 18M6 6l12 12"/></svg>',
+    more:   SVG + '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>',
+    tree:   SVG + '<path d="M12 3 6 13h12z"/><path d="M12 13v8"/></svg>',
     camp:   SVG + '<path d="M5 21V4"/><path d="M5 4h11l-2 3.5L16 11H5"/></svg>',
     daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
     center: SVG + '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>',
@@ -1981,6 +2288,7 @@
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["stats-btn", "stats", "btn.stats"],
      ["camp-btn", "camp", "btn.camp"], ["daily-btn", "daily", "btn.daily"],
+     ["edx-btn", "close", "btn.edExit"], ["edm-btn", "more", "btn.edMenu"],
      ["zin-btn", "zin", "btn.zoomIn"], ["zout-btn", "zout", "btn.zoomOut"], ["center-btn", "center", "btn.center"]
     ].forEach(function (x) {
       var b = $(x[0]);
@@ -1993,6 +2301,19 @@
       b.querySelector(".ic").innerHTML = UI_ICONS[k];
       b.querySelector(".nm").textContent = t("kind." + k);
     });
+    BRUSHES.forEach(function (br, k) {
+      var b = $("br-" + k), ic = b.querySelector(".ic");
+      if (k === 2) ic.innerHTML = UI_ICONS.tree;
+      else {
+        var sw = document.createElement("span");
+        sw.className = "sw-b" + (k === 0 ? " sea" : k === 1 ? " land" : "");
+        if (k >= 3) sw.style.background = SIDE_COLORS[k - 3];
+        ic.appendChild(sw);
+      }
+      b.querySelector(".nm").textContent = k >= 3 ? t("color." + (k - 3)) : t("ed.b." + k);
+      b.setAttribute("aria-label", brushName(k) + " (" + (k + 1) + ")");
+      b.title = b.getAttribute("aria-label");
+    });
     paintSfxBtn();
   }
   function wire() {
@@ -2002,6 +2323,9 @@
     $("stats-btn").addEventListener("click", statsDialog);
     $("daily-btn").addEventListener("click", openDaily);
     $("camp-btn").addEventListener("click", campDialog);
+    $("edx-btn").addEventListener("click", closeEditor);
+    $("edm-btn").addEventListener("click", edMenuDialog);
+    BRUSHES.forEach(function (br, k) { $("br-" + k).addEventListener("click", function () { setBrush(k); }); });
     // Deep link from the Game Center: { daily: true } opens today's island.
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("zin-btn").addEventListener("click", function () { zoomBy(1.25); });
@@ -2020,6 +2344,7 @@
     // Save on the way out (R10 session).
     document.addEventListener("visibilitychange", function () {
       if (document.hidden && game) saveSession();
+      if (document.hidden && ed) saveDraft();
       if (!document.hidden && game) renderToolbar();   // the Daily dot after midnight
     });
     window.addEventListener("pagehide", function () { if (game) saveSession(); });
