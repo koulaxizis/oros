@@ -129,6 +129,14 @@ In der Vorschau:
 ## Regeln
 `Mehr` › `Regeln`: „wenn die Beschreibung LIDL enthält → Lebensmittel“. Eine Regel kann auch auf einen Betragsbereich achten (`Betrag ab`, `Betrag bis`), den Eintrag umbenennen (`Umbenennen in`) und eine Notiz hinzufügen. Passen mehrere Regeln, gewinnt die mit dem längsten Text. `Auf Einträge ohne Kategorie anwenden` wendet sie auf das an, was schon hier ist; `Rückgängig` macht es rückgängig.
 
+## Bereiche
+Wenn ein Bankkonto Geld aus mehreren Teilen deines Lebens trägt (ein Geschäft, ein zweiter Job, Privates), hält `Mehr` › `Bereiche` sie auseinander. Gib jedem Bereich einen Namen und die Wörter, die eine Bankzeile hineinlegen, durch Kommas getrennt (zum Beispiel `viva, stripe, box now, druckerei`). Beim Import eines Kontoauszugs kommt jede Zeile in den Bereich, dessen Wort sie enthält; passen mehrere, gewinnt das längste. Eine Zeile, zu der kein Wort passt, bleibt ohne Bereich.
+
+- `Einträge` › der Filter › `Ohne Bereich` zeigt, was du noch zuordnen musst: Öffne einen Eintrag und wähle seinen `Bereich`. Deine Wahl bleibt; ein späterer Import ändert sie nicht.
+- Sobald es Bereiche gibt, hat jedes Eintragsformular ein Feld `Bereich`. Die Karte `Bereiche` in der Übersicht zeigt Einnahmen, Ausgaben und Differenz jedes Bereichs im Monat; ein Tippen zeigt seine Einträge.
+- Mit den `Ladenbuchungen` (unten) wählst du dort den Bereich des Shops: Seine Bestellungen und Kosten bekommen ihn, und eine Bankzeile, die ihre Wörter in einen anderen Bereich legen, gilt nie als Geld des Shops.
+- Löschst du einen Bereich, bleiben seine Einträge; sie erscheinen ohne Bereich.
+
 ## Importe ohne Kategorie
 Wenn importierte Einträge keine Kategorie haben, sagt eine Leiste über der Liste, wie viele. Tippe darauf oder wähle `Importiert, ohne Kategorie` im Menü neben der Suche: Du siehst sie aus jedem Monat, jeden mit seiner Kategorie direkt daneben. `Regeln anwenden` und `Regel…` helfen dir, sie schneller abzuarbeiten.
 

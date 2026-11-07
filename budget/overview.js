@@ -127,11 +127,24 @@
     return { by: by, none: none };
   }
 
+  // PL-2: the same per area: { by: { <area id>: { inc, out } }, none }
+  // (none = no area, or one that is gone).
+  function perArea(txs, mk, areaIds) {
+    var known = {}, by = {}, none = { inc: 0, out: 0 };
+    (areaIds || []).forEach(function (id) { known[id] = 1; by[id] = { inc: 0, out: 0 }; });
+    txs.forEach(function (x) {
+      if (x.d.slice(0, 7) !== mk) return;
+      var r = x.dm && known[x.dm] ? by[x.dm] : none;
+      if (x.k === "i") r.inc += x.a; else r.out += x.a;
+    });
+    return { by: by, none: none };
+  }
+
   // Overview cards and their order. set.ov (synced) is a list such as
   // "pace,safe,-acc,lim": every known card once, "-" = hidden. Unknown
   // names are kept at their place (a newer Budget's cards), missing
   // known ones are added at the end, shown.
-  var CARDS = ["safe", "pace", "acc", "lim", "up", "goal", "loan", "top"];   // loan since C5
+  var CARDS = ["safe", "pace", "acc", "lim", "up", "goal", "loan", "top", "area"];   // loan since C5, area since PL-2
   var OV_RE = /^-?[a-z]{2,8}$/;
   function cardList(ov) {
     var seen = {}, out = [];
@@ -179,7 +192,7 @@
 
   var api = {
     CARDS: CARDS, daysIn: daysIn, cumulative: cumulative, pace: pace, upcoming: upcoming, safe: safe,
-    topCats: topCats, perAccount: perAccount, cardList: cardList, cardString: cardString, normOv: normOv,
+    topCats: topCats, perAccount: perAccount, perArea: perArea, cardList: cardList, cardString: cardString, normOv: normOv,
     GROUPS: GROUPS, accGroup: accGroup, haveOwe: haveOwe
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

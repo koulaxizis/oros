@@ -616,7 +616,7 @@
       var D = A.data();
       st.ac = acSel ? acSel.value : "";
       st.plan = B.plan(st.items, { tx: D.tx, tombs: D.tombs, ac: st.ac, cur: A.cur(), fileCur: st.fileCur, rules: D.rule,
-                               xfer: D.xfer, pp: st.fmt === "paypal" });
+                               xfer: D.xfer, pp: st.fmt === "paypal", areas: D.area, plArea: (D.set && D.set.pld) || "" });
       st.plan.forEach(function (r) {
         var o = r.id && st.over[r.id];
         if (!o) return;

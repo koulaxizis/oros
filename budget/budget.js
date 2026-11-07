@@ -177,7 +177,11 @@
       "na.gone": "{n} duplicates removed", "na.moved": "{n} entries moved to an account",
       "xf.aria": "Transfer {a} from {f} to {t}, {d}", "col.acc": "Account",
       "exp.sheet": "Open in Spreadsheet", "exp.sheetCap": "Only the first {n} entries fit in one sheet",
-      "menu.bank": "Import bank statement", "menu.banks": "Banks (automatic)", "menu.rules": "Rules",
+      "menu.bank": "Import bank statement", "menu.banks": "Banks (automatic)", "menu.rules": "Rules", "menu.areas": "Areas",
+      "ar.title": "Areas", "ar.hint": "An area is a part of your life or work that entries belong to: publishing, a second job, personal. Its words put a bank line in it when you import a statement (for example: viva, stripe, box now; the longest word found wins). A line that no word fits waits under Without an area in Entries for you to pick one; what you pick stays.",
+      "ar.name": "Name", "ar.words": "Words in the bank's text", "ar.words.ph": "viva, stripe, box now", "ar.add": "New area", "ar.del": "Delete area",
+      "ar.saved": "Areas saved", "ar.full": "Up to 12 areas", "ar.keep": "Entries of a deleted area stay, without an area.",
+      "f.area": "Area", "ar.none": "No area", "flt.areas": "Areas", "flt.noArea": "Without an area ({n})",
       "flt.inbox": "Imported, no category ({n})", "inbox.bar": "{n} imported entries without a category",
       "inbox.hint": "Pick a category for each one. Next time a rule can do it for you.",
       "inbox.run": "Apply rules", "inbox.rule": "Rule…", "inbox.done": "Category set",
@@ -322,7 +326,11 @@
       "na.gone": "Σβήστηκαν {n} διπλές", "na.moved": "{n} κινήσεις μπήκαν σε λογαριασμό",
       "xf.aria": "Μεταφορά {a} από {f} προς {t}, {d}", "col.acc": "Λογαριασμός",
       "exp.sheet": "Άνοιγμα στα Λογιστικά φύλλα", "exp.sheetCap": "Χωρούν μόνο οι πρώτες {n} κινήσεις σε ένα φύλλο",
-      "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.banks": "Τράπεζες (αυτόματα)", "menu.rules": "Κανόνες",
+      "menu.bank": "Εισαγωγή κίνησης λογαριασμού", "menu.banks": "Τράπεζες (αυτόματα)", "menu.rules": "Κανόνες", "menu.areas": "Τομείς",
+      "ar.title": "Τομείς", "ar.hint": "Τομέας είναι ένα κομμάτι της ζωής ή της δουλειάς σου στο οποίο ανήκουν κινήσεις: εκδόσεις, μια δεύτερη δουλειά, προσωπικά. Οι λέξεις του βάζουν μια γραμμή της τράπεζας σε αυτόν όταν φέρνεις κίνηση (για παράδειγμα: viva, stripe, box now· κερδίζει η μεγαλύτερη λέξη που βρέθηκε). Μια γραμμή που δεν ταιριάζει σε καμία λέξη περιμένει στο «Χωρίς τομέα» στις Κινήσεις να διαλέξεις εσύ· ό,τι διαλέξεις μένει.",
+      "ar.name": "Όνομα", "ar.words": "Λέξεις στο κείμενο της τράπεζας", "ar.words.ph": "viva, stripe, box now, τυπογραφείο", "ar.add": "Νέος τομέας", "ar.del": "Διαγραφή τομέα",
+      "ar.saved": "Οι τομείς αποθηκεύτηκαν", "ar.full": "Έως 12 τομείς", "ar.keep": "Οι κινήσεις ενός τομέα που διαγράφεται μένουν, χωρίς τομέα.",
+      "f.area": "Τομέας", "ar.none": "Χωρίς τομέα", "flt.areas": "Τομείς", "flt.noArea": "Χωρίς τομέα ({n})",
       "flt.inbox": "Εισαγόμενες χωρίς κατηγορία ({n})", "inbox.bar": "{n} εισαγόμενες κινήσεις χωρίς κατηγορία",
       "inbox.hint": "Διάλεξε κατηγορία για την καθεμία. Την επόμενη φορά μπορεί να το κάνει ένας κανόνας.",
       "inbox.run": "Εφαρμογή κανόνων", "inbox.rule": "Κανόνας…", "inbox.done": "Η κατηγορία μπήκε",
@@ -641,6 +649,8 @@
     // Since BK-1: pp 1 = the row came from a PayPal activity file (the
     // bank's "PAYPAL *…" line for the same money is then a duplicate).
     if (y.pp !== 1) delete y.pp;
+    // PL-2: dm = the entry's area (an `area` id)
+    if (!(typeof y.dm === "string" && ID_RE.test(y.dm))) delete y.dm;
     return y;
   }
   var CUR3_RE = /^[A-Z]{3}$/;
@@ -738,6 +748,8 @@
     if (!(typeof y.pl === "string" && PL_SET_RE.test(y.pl))) delete y.pl;
     if (!(typeof y.plci === "string" && ID_RE.test(y.plci))) delete y.plci;
     if (!(typeof y.plco === "string" && ID_RE.test(y.plco))) delete y.plco;
+    // PL-2: pld = the area new shop entries get
+    if (!(typeof y.pld === "string" && ID_RE.test(y.pld))) delete y.pld;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
@@ -785,6 +797,20 @@
   // and matching the bank write when the account already has entries.
   // Like a transfer it moves only the balance: never income, never an
   // expense, in no total, no report, no export, no other app.
+  // Area (PL-2, Chris 2026-11-07 «Κανόνες + ερώτηση»): a part of life
+  // or work that entries belong to (publishing, sound engineering,
+  // personal…) = { id, m, col (0–8), n (≤ 40), q (words that put a bank
+  // line in it, comma-separated, ≤ 300) }. Entries carry it as `dm`.
+  // Keys in name order after id, m (what an older version's carry-
+  // forward of an unknown collection writes).
+  var AREA_Q = 300;
+  function normArea(x) {
+    if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m)) return null;
+    var n = normText(x.n, 40);
+    if (!n) return null;
+    var col = isInt(x.col) && x.col >= 0 && x.col < COLOR_SLOTS ? x.col : 8;
+    return withExtras({ id: x.id, m: x.m, col: col, n: n, q: normText(x.q, AREA_Q) }, x);
+  }
   function normAdj(x) {
     if (!x || typeof x !== "object" || typeof x.id !== "string" || !ID_RE.test(x.id) || !okStamp(x.m) ||
         !parseYmd(x.d) || !isInt(x.a) || !x.a || Math.abs(x.a) > MAX_CENTS ||
@@ -882,7 +908,8 @@
     { key: "bgt",  tomb: "bgt",  norm: normBgt },    // since C3 (flexible budgets): after bnk, the same reason
     { key: "loan", tomb: "loan", norm: normLoan },   // since C5 (loans and debts): after bgt, in name order
     { key: "lpay", tomb: "lpay", norm: normLpay },   // since C5: a loan's repayments
-    { key: "adj",  tomb: "adj",  norm: normAdj }     // since AC-2: balance corrections (after the others: an older version's place for it)
+    { key: "adj",  tomb: "adj",  norm: normAdj },    // since AC-2: balance corrections (after the others: an older version's place for it)
+    { key: "area", tomb: "area", norm: normArea }    // since PL-2: areas of life / work (after adj: an older version's place for it)
   ];
   // Flexible budgets (C3): budget/budgets.js cleans them; without it
   // (tests that load only this file) they ride along like a newer
@@ -903,10 +930,10 @@
   // Known prefixes tx/cat/rec; a newer version's collection "<key>"
   // uses the tombstone prefix "<key>:" (2–8 lowercase letters).
   var TOMB_RE = /^[a-z]{2,8}:[a-z0-9-]{1,64}$/;
-  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, adj: 1, set: 1, tombs: 1 };
+  var KNOWN_TOP = { ver: 1, tx: 1, cats: 1, cat: 1, bud: 1, rec: 1, acc: 1, xfer: 1, asg: 1, goal: 1, rule: 1, prof: 1, bnk: 1, bgt: 1, loan: 1, lpay: 1, adj: 1, area: 1, set: 1, tombs: 1 };
   var OTHER_RE = /^[a-z]{2,8}$/;
 
-  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], adj: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
+  function emptyData() { return { ver: DATA_VER, tx: [], cats: [], bud: [], rec: [], acc: [], xfer: [], asg: [], goal: [], prof: [], rule: [], bnk: [], bgt: [], loan: [], lpay: [], adj: [], area: [], set: { m: 0, cur: "EUR" }, tombs: {} }; }
 
   function laterOf(a, b) {
     if (!a) return b;
@@ -1505,6 +1532,13 @@
       var ox = el("option", "", t("flt.xfer")); ox.value = "k:t"; g3.appendChild(ox);
       sel.appendChild(g3);
     }
+    // PL-2: areas, and the entries still without one (the review list)
+    if (data.area.length) {
+      var g4 = el("optgroup"); g4.label = t("flt.areas");
+      areas().forEach(function (a) { var o = el("option", "", a.n); o.value = "r:" + a.id; g4.appendChild(o); });
+      var or0 = el("option", "", t("flt.noArea", { n: noAreaCount() })); or0.value = "r:"; g4.appendChild(or0);
+      sel.appendChild(g4);
+    }
     sel.value = prev;
     if (sel.value !== prev) { filter = "all"; sel.value = "all"; }
   }
@@ -1512,8 +1546,13 @@
   // Imported from a bank and still without a category (the "inbox").
   function inInbox(x) { return (x.src === "bank" || x.src === "imp") && !x.c; }
   function inboxCount() { var n = 0; data.tx.forEach(function (x) { if (inInbox(x)) n++; }); return n; }
+  // PL-2: areas by name; an entry's area that is gone counts as none.
+  function areas() { return data.area.slice().sort(function (a, b) { return cmpStr(a.n.toLowerCase(), b.n.toLowerCase()) || cmpStr(a.id, b.id); }); }
+  function areaOf(x) { return x.dm && findIn(data.area, x.dm) ? x.dm : ""; }
+  function noAreaCount() { var n = 0; data.tx.forEach(function (x) { if (!areaOf(x)) n++; }); return n; }
   function matches(x) {
     if (filter === "inbox" && !inInbox(x)) return false;
+    if (filter.indexOf("r:") === 0 && areaOf(x) !== filter.slice(2)) return false;
     if (filter.indexOf("k:") === 0 && x.k !== filter.slice(2)) return false;
     if (filter.indexOf("c:") === 0 && x.c !== filter.slice(2) && (!x.c || !catById(x.c) || catById(x.c).p !== filter.slice(2))) return false;
     if (filter === "a:" && x.ac && findIn(data.acc, x.ac)) return false;
@@ -2211,6 +2250,7 @@
   // remembers the last one you used for each kind.
   var lastCat = { o: "o-groc", i: "i-salary" };
   var lastAcc = "";   // session only: the account you used last
+  var lastArea = "";  // session only: the area you picked last (PL-2)
   function accSelect(selected) {
     var sel = el("select");
     var none = el("option", "", t("acc.none")); none.value = ""; sel.appendChild(none);
@@ -2425,6 +2465,15 @@
     if (accSel) form.appendChild(field(t("f.acc"), accSel, "bd-acc"));
     var crmSel = crmSelect(x ? x.crm || "" : (pre && pre.crm) || "");
     if (crmSel) form.appendChild(field(t("f.crm"), crmSel, "bd-crm"));
+    var areaSel = null;                           // PL-2
+    if (data.area.length) {
+      areaSel = el("select");
+      var oa0 = el("option", "", t("ar.none")); oa0.value = ""; areaSel.appendChild(oa0);
+      areas().forEach(function (a) { var o = el("option", "", a.n); o.value = a.id; areaSel.appendChild(o); });
+      areaSel.value = x ? areaOf(x) : (filter.indexOf("r:") === 0 && findIn(data.area, filter.slice(2)) ? filter.slice(2) : lastArea);
+      if (areaSel.selectedIndex < 0) areaSel.value = "";
+      form.appendChild(field(t("f.area"), areaSel, "bd-area"));
+    }
     form.appendChild(field(t("f.note"), note, "bd-note"));
     // Earlier notes as suggestions; picking one on a new entry fills
     // the category and amount of its latest use (C6).
@@ -2480,13 +2529,16 @@
       if (!rcb && cur0) rc = cur0.rc || "";
       // Without CRM partners the field is absent and an entry keeps its partner.
       var crm = crmSel ? crmSel.value : (cur0 ? cur0.crm || "" : (pre && pre.crm) || "");
+      // Without areas the field is absent and an entry keeps its area.
+      var dm = areaSel ? areaSel.value : (cur0 ? cur0.dm || "" : "");
       var offer = cur0 && cur0.c !== c ? learnOffer(cur0, c) : null;
       if (cur0) {
         if (cur0.d !== date.value || cur0.a !== cents || cur0.k !== k || cur0.c !== c || cur0.n !== n || (cur0.ac || "") !== ac ||
-            (cur0.oc || "") !== oc || (cur0.oa || 0) !== oa || (cur0.rc || "") !== rc || (cur0.crm || "") !== crm) {
+            (cur0.oc || "") !== oc || (cur0.oa || 0) !== oa || (cur0.rc || "") !== rc || (cur0.crm || "") !== crm || (cur0.dm || "") !== dm) {
           cur0.d = date.value; cur0.a = cents; cur0.k = k; cur0.c = c; cur0.n = n;
           if (ac) cur0.ac = ac; else delete cur0.ac;
           if (crm) cur0.crm = crm; else delete cur0.crm;
+          if (dm) cur0.dm = dm; else delete cur0.dm;
           if (oc) { cur0.oc = oc; cur0.oa = oa; } else { delete cur0.oc; delete cur0.oa; }
           if (rc) cur0.rc = rc; else delete cur0.rc;
           cur0.m = stamp(cur0.m);
@@ -2500,6 +2552,7 @@
         if (oc) { nx.oc = oc; nx.oa = oa; }
         if (rc) nx.rc = rc;
         if (crm) nx.crm = crm;
+        if (dm) nx.dm = dm;
         data.tx.push(nx);
         if (pre && typeof pre.onSaved === "function") pre.onSaved();   // AC-2: a correction turned into this entry
         commit();
@@ -2507,6 +2560,7 @@
       if (rcb) rcb.commit();
       lastCat[k] = c;
       if (accSel) lastAcc = ac;
+      if (areaSel) lastArea = dm;
       dlg.close();
       if (k === "o") checkLimits(date.value, c);
       live(t("live.saved"));
@@ -3612,6 +3666,7 @@
       isCardRow: BANKLIVE && BANKLIVE.isCard ? BANKLIVE.isCard : null,
       bankCardRows: BANKLIVE && BANKLIVE.cardRows ? BANKLIVE.cardRows : null,
       accs: accs, balNow: balNow, fx: fx, accBalanceMain: accBalanceMain, accountsDialog: accountsDialog,
+      areas: function () { return areas(); }, areasDialog: areasDialog,
       recDialog: recDialog, goalDialog: PLANUI ? function (id) { PLANUI.goalDialog(id); } : null, showFilter: showFilter,
       chartWidth: chartWidth, niceStep: niceStep, sv: sv, svText: svText, hit: hit, hideTip: hideTip, tableTwin: tableTwin
     });
@@ -3958,6 +4013,7 @@
       catSelect: catSelect, money: function (c) { return money(c); }, cur: cur,
       today: function () { return today; },
       set: function () { return data.set; },
+      areas: function () { return areas(); },
       saveSet: function (patch) {
         var y = Object.assign({}, data.set, patch);
         Object.keys(y).forEach(function (k) { if (y[k] === "") delete y[k]; });
@@ -3978,6 +4034,83 @@
 
   // Categories manager
   // Accounts: list with today's balance, new account, transfer.
+  // Areas (PL-2): name and the words that put a bank line in each, all
+  // in one dialog; Save writes only what changed (stamped there), a
+  // removed area is tombstoned and its entries keep a dangling `dm`
+  // that reads as "no area" (nothing else is rewritten).
+  var MAX_AREAS = 12;
+  function areasDialog() {
+    var dlg = makeDialog("bd-areas", t("ar.title"));
+    dlg.appendChild(el("p", "hint", t("ar.hint")));
+    var list = el("div", "ar-list");
+    dlg.appendChild(list);
+    var rows = [];
+    function addRow(a) {
+      var box = el("div", "ar-row");
+      var n = el("input"); n.maxLength = 40; n.autocomplete = "off"; n.value = a ? a.n : "";
+      var q = el("input"); q.maxLength = AREA_Q; q.autocomplete = "off"; q.placeholder = t("ar.words.ph"); q.value = a ? a.q : "";
+      var i = rows.length;
+      box.appendChild(field(t("ar.name"), n, "bd-ar-n" + i));
+      box.appendChild(field(t("ar.words"), q, "bd-ar-q" + i));
+      var row = { a: a, n: n, q: q, gone: false, box: box };
+      var del = button(t("ar.del"), "danger mini", function () { row.gone = true; box.hidden = true; addBtn.disabled = liveRows().length >= MAX_AREAS; });
+      box.appendChild(del);
+      rows.push(row);
+      list.appendChild(box);
+      return row;
+    }
+    function liveRows() { return rows.filter(function (r) { return !r.gone; }); }
+    areas().forEach(addRow);
+    var addBtn = button(t("ar.add"), "", function () {
+      if (liveRows().length >= MAX_AREAS) { showErr(err, t("ar.full")); return; }
+      addRow(null).n.focus();
+      addBtn.disabled = liveRows().length >= MAX_AREAS;
+    });
+    addBtn.disabled = liveRows().length >= MAX_AREAS;
+    dlg.appendChild(addBtn);
+    dlg.appendChild(el("p", "hint", t("ar.keep")));
+    var err = errLine();
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("dlg.save"), "primary", function () {
+      var bad = null;
+      liveRows().forEach(function (r) { if (!bad && !normText(r.n.value, 40) && (r.a || normText(r.q.value, AREA_Q))) bad = r.n; });
+      if (bad) { showErr(err, t("err.name"), bad); return; }
+      var changed = 0, used = {};
+      data.area.forEach(function (a) { used[a.col] = 1; });
+      rows.forEach(function (r) {
+        var n = normText(r.n.value, 40), q = normText(r.q.value, AREA_Q);
+        if (r.gone || (!r.a && !n)) {
+          if (r.a) { data.area = data.area.filter(function (y) { return y.id !== r.a.id; }); tombstone("area", r.a.id); changed++; }
+          return;
+        }
+        if (r.a) {
+          var cur0 = findIn(data.area, r.a.id);
+          if (!cur0 || (cur0.n === n && cur0.q === q)) return;
+          cur0.n = n; cur0.q = q; cur0.m = stamp(cur0.m);
+          changed++;
+          return;
+        }
+        var col = 0;
+        while (col < 8 && used[col]) col++;
+        used[col] = 1;
+        var id = newId();
+        data.area.push({ id: id, m: stamp(data.tombs["area:" + id] || 0), col: col, n: n, q: q });
+        changed++;
+      });
+      dlg.close();
+      if (!changed) return;
+      commit();
+      renderAll();
+      localToast(t("ar.saved"));
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    var first = rows.length ? rows[0].n : null;
+    if (first) first.focus(); else addBtn.focus();
+  }
   function accountsDialog() {
     var dlg = makeDialog("bd-accs", t("acc.title"));
     var body = el("div");
@@ -5359,6 +5492,7 @@
     var acts = { accounts: accountsDialog, cats: catsDialog, export: exportDialog, backup: backup, restore: restore, currency: currencyDialog,
                  stripe: function () { if (PAY) PAY.open(); },
                  shop: function () { if (SHOP) SHOP.open(); },
+                 areas: function () { areasDialog(); },
                  bank: function () { if (BANKUI) BANKUI.open(); }, banks: function () { if (BANKLIVE) BANKLIVE.open(); }, apps: function () { if (BANKUI) BANKUI.open(); }, rules: function () { if (BANKUI) BANKUI.rules(); },
                  osave: function () { if (recFile) recFile.save(); }, oopen: function () { if (recFile) recFile.open(); },
                  ofolder: function () { if (recFile) recFile.openFolder(); } };

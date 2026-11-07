@@ -324,7 +324,7 @@ test("collections of a newer version merge LWW with their own tombstones", () =>
   assert.equal(ab.plan.length, 1);
   assert.equal(ab.tombs["wish:card"], 6);
   // key order is canonical whatever the order of the inputs
-  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj", "plan", "wish", "set", "tombs"]);
+  assert.deepEqual(Object.keys(ab), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj", "area", "plan", "wish", "set", "tombs"]);
   // not a collection: bad name, not an array, bad items
   const n = B.mergeBudget(D({ BAD: [{ id: "x", m: 1 }], toolongname: [{ id: "x", m: 1 }], obj: { a: 1 }, zz: [null, { id: "UP", m: 1 }, { id: "ok", m: -1 }] }), B.emptyData());
   assert.equal("BAD" in n || "toolongname" in n || "obj" in n, false);
@@ -421,7 +421,7 @@ test("accounts and transfers: merge stays canonical, deletes stick", () => {
   assert.equal(canon(B.mergeBudget(ab, ab)), canon(ab));
   assert.equal(ab.acc[0].n, "Wallet");
   assert.deepEqual(ab.xfer, []);
-  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj", "set", "tombs"]);
+  assert.deepEqual(Object.keys(B.emptyData()), ["ver", "tx", "cats", "bud", "rec", "acc", "xfer", "asg", "goal", "prof", "rule", "bnk", "bgt", "loan", "lpay", "adj", "area", "set", "tombs"]);
 });
 
 test("CRM partner on an entry (BR-CRM-LINK): kept when valid, only when set, and through the prefill", () => {
@@ -434,4 +434,23 @@ test("CRM partner on an entry (BR-CRM-LINK): kept when valid, only when set, and
   const a = D({ tx: [tx("t1", 1)] }), b = D({ tx: [tx("t1", 2, { crm: "cust001" })] });
   assert.equal(B.mergeBudget(a, b).tx[0].crm, "cust001");
   assert.equal(canon(B.mergeBudget(a, b)), canon(B.mergeBudget(b, a)));
+});
+
+// ---------- areas (PL-2) ----------
+test("areas: a synced collection in name order, entries keep their area as dm", () => {
+  const a1 = { id: "ar1", m: 5, n: " Εκδόσεις ", q: "viva, stripe", col: 2 };
+  const a2 = { id: "ar2", m: 6, n: "Ηχοληψία", q: "", col: 3 };
+  const d = D({ area: [a2, a1], tx: [tx("t1", 9, { dm: "ar1" }), tx("t2", 9, { dm: "BAD ID" })] });
+  const out = B.mergeBudget(d, d);
+  assert.deepEqual(out.area.map((x) => Object.keys(x)), [["id", "m", "col", "n", "q"], ["id", "m", "col", "n", "q"]]);
+  assert.deepEqual(out.area.map((x) => [x.id, x.n]), [["ar1", "Εκδόσεις"], ["ar2", "Ηχοληψία"]]);
+  assert.equal(out.tx[0].dm, "ar1");
+  assert.equal(out.tx[1].dm, undefined);
+  assert.equal(canon(B.mergeBudget(out, out)), canon(out));
+  // a deleted area stays deleted; a nameless one is dropped
+  const gone = B.mergeBudget(out, Object.assign({}, out, { area: [a2, { id: "ar3", m: 7, n: " " }], tombs: { "area:ar1": 10 } }));
+  assert.deepEqual(gone.area.map((x) => x.id), ["ar2"]);
+  // an older version's copy (area unknown to it, carried as extras in name order) merges to the same bytes
+  const older = JSON.parse(canon(out));
+  assert.equal(canon(B.mergeBudget(older, out)), canon(B.mergeBudget(out, older)));
 });

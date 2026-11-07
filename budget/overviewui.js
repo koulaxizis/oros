@@ -60,6 +60,7 @@
       "ov.upSum": "In {i} · out {o}",
       "ov.goal": "Savings goals", "ov.goalNone": "A trip, a new laptop, a safety net: set a target and see how close you are.",
       "ov.goalNew": "New goal", "ov.accEdit": "Rename or change {a}", "ov.accNew": "New account", "ov.bkNow": "Update from banks", "ov.bkBusy": "Updating…", "ov.bkLast": "Last update {d}", "ov.bkNever": "Not updated on this device yet", "ov.bkWeb": "Banks update only at useoros.online", "ov.loan": "Loans and debts",
+      "ov.area": "Areas", "ov.areaNone": "Without an area",
       "ov.top": "Where the money went", "ov.topNone": "No expenses this month.", "ov.new": "new",
       "ov.up%": "{p}% more than last month", "ov.down%": "{p}% less than last month", "ov.new.aria": "Nothing in this category last month",
       "ov.edit": "Edit the overview", "ov.editHint": "Pick the cards to show and their order. It applies on all your devices.",
@@ -111,6 +112,7 @@
       "ov.upSum": "Έσοδα {i} · έξοδα {o}",
       "ov.goal": "Στόχοι αποταμίευσης", "ov.goalNone": "Ένα ταξίδι, ένας νέος υπολογιστής, ένα αποθεματικό: βάλε στόχο και δες πόσο κοντά είσαι.",
       "ov.goalNew": "Νέος στόχος", "ov.accEdit": "Όνομα και ρυθμίσεις: {a}", "ov.accNew": "Νέος λογαριασμός", "ov.bkNow": "Ενημέρωση από τράπεζες", "ov.bkBusy": "Ενημέρωση…", "ov.bkLast": "Τελευταία ενημέρωση {d}", "ov.bkNever": "Δεν έχει γίνει ακόμα ενημέρωση σε αυτή τη συσκευή", "ov.bkWeb": "Οι τράπεζες ενημερώνονται μόνο στο useoros.online", "ov.loan": "Δάνεια και χρέη",
+      "ov.area": "Τομείς", "ov.areaNone": "Χωρίς τομέα",
       "ov.top": "Πού πήγαν τα χρήματα", "ov.topNone": "Κανένα έξοδο αυτόν τον μήνα.", "ov.new": "νέα",
       "ov.up%": "{p}% περισσότερα από τον προηγούμενο μήνα", "ov.down%": "{p}% λιγότερα από τον προηγούμενο μήνα", "ov.new.aria": "Τίποτα σε αυτή την κατηγορία τον προηγούμενο μήνα",
       "ov.edit": "Προσαρμογή σύνοψης", "ov.editHint": "Διάλεξε ποιες κάρτες φαίνονται και με ποια σειρά. Ισχύει σε όλες τις συσκευές σου.",
@@ -138,8 +140,8 @@
   function D() { return A.data(); }
   function lastDayOf(mk) { return mk + "-" + (O.daysIn(mk) < 10 ? "0" : "") + O.daysIn(mk); }
 
-  var TITLE = { safe: "ov.safe", pace: "ov.pace", acc: "ov.acc", lim: "ov.lim", up: "ov.up", goal: "ov.goal", loan: "ov.loan", top: "ov.top" };
-  var BUILD = { safe: cardSafe, pace: cardPace, acc: cardAcc, lim: cardLim, up: cardUp, goal: cardGoal, loan: cardLoan, top: cardTop };
+  var TITLE = { safe: "ov.safe", pace: "ov.pace", acc: "ov.acc", lim: "ov.lim", up: "ov.up", goal: "ov.goal", loan: "ov.loan", top: "ov.top", area: "ov.area" };
+  var BUILD = { safe: cardSafe, pace: cardPace, acc: cardAcc, lim: cardLim, up: cardUp, goal: cardGoal, loan: cardLoan, top: cardTop, area: cardArea };
 
   function render(box) {
     A.hideTip();
@@ -147,7 +149,7 @@
     var grid = el("div", "ov-grid");
     box.appendChild(grid);
     O.cardList(D().set.ov).forEach(function (c) {
-      if (!c.on || !BUILD[c.id] || (c.id === "loan" && !A.loansCard)) return;
+      if (!c.on || !BUILD[c.id] || (c.id === "loan" && !A.loansCard) || (c.id === "area" && !(A.areas && A.areas().length))) return;
       var card = el("section", "card ov-card ovc-" + c.id);
       card.setAttribute("aria-labelledby", "ov-h-" + c.id);
       grid.appendChild(card);
@@ -818,6 +820,33 @@
   }
 
   // ---------- where the money went ----------
+  // PL-2: the month's income, expenses and difference per area; the
+  // entries without one are a tap away (Entries › Without an area).
+  function cardArea(card) {
+    var list = A.areas();
+    head(card, "area", t("ov.area"), t("ov.open"), A.areasDialog);
+    var mk = A.viewMk(), f = O.perArea(D().tx, mk, list.map(function (a) { return a.id; }));
+    card.appendChild(el("p", "ov-k ov-mk", t("ov.flowAll", { m: A.monthLabel(mk) })));
+    var ul = el("ul", "ov-rows ov-accs");
+    function row(name, col, fl, filter) {
+      var li = el("li");
+      var b = el("button", "ov-row ov-acc");
+      b.type = "button";
+      if (col !== null) b.appendChild(A.swatch(col));
+      var mid = el("span", "ov-acc-m");
+      mid.appendChild(el("span", "ov-acc-n", name));
+      var line = flowLine(fl);
+      mid.appendChild(line);
+      b.appendChild(mid);
+      b.setAttribute("aria-label", name + ": " + flowAria(fl));
+      b.addEventListener("click", function () { A.showFilter(filter); });
+      li.appendChild(b);
+      ul.appendChild(li);
+    }
+    list.forEach(function (a) { row(a.n, a.col, f.by[a.id], "r:" + a.id); });
+    if (f.none.inc || f.none.out) row(t("ov.areaNone"), null, f.none, "r:");
+    card.appendChild(ul);
+  }
   function cardTop(card) {
     var mk = A.viewMk();
     head(card, "top", t("ov.top"), t("ov.open"), function () { A.setTab("charts"); });

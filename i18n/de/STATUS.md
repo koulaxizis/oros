@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 40312 of 40585 (99%)
+- Strings: 40332 of 40605 (99%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -23,7 +23,7 @@ text is still written in the code. They switch over wave by wave
 | bookmarks | 100% | 234 / 234 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
-| budget | 90% | 1007 / 1113 |
+| budget | 90% | 1026 / 1132 |
 | calculator | 100% | 166 / 166 |
 | calendar | 98% | 433 / 441 |
 | capture | 100% | 54 / 54 |
@@ -125,7 +125,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 98% | 903 / 914 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1095 / 1099 |
+| shell | 99% | 1096 / 1100 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |
@@ -178,7 +178,6 @@ These show English until fixed (usually the English text changed).
 - de/budget: unknown key cy.guess
 - de/passwords: af.apps must keep the same HTML tags as English
 - de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
-- de/shell: unknown key app.banner
 - de/help/budget.txt: links or key caps differ from budget/help.en.txt
 - de/help/studio.txt: links or key caps differ from studio/help.en.txt
 - de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
