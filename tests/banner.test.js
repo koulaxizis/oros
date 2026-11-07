@@ -14,8 +14,8 @@ const D = require("../banner/cards.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "banner/banner.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var ROW_KEYS = ['e','m','h','p']; var E = { KEEP_HP: 15 }; var MAX_DAY = 100000; var MAX_TURNS = 999;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "mergeBanner"].forEach((name) => {
+  const parts = ["var DATA_VER = 1; var ROW_KEYS = ['e','m','h','p','a']; var E = { KEEP_HP: 15, DECK_IDS: ['iron','thorn','tide','ember'] }; var MAX_DAY = 100000; var MAX_TURNS = 999; var MARCH_N = 8; var LAST_N = 10;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normLast", "normDay", "dayKeyOk", "dayBetter", "mergeBanner"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
@@ -383,4 +383,47 @@ test("banner: the Daily battle is the same for everyone on a day", () => {
   assert.notEqual(seed, K.seedOf("banner", 301));
   assert.notEqual(seed, K.seedOf("crypt", 300));
   assert.ok(SRC.includes('DK.seedOf("banner", day)'));
+});
+
+test("banner: March rows keep [marches, best of 8] and merge as a join", () => {
+  const A = { br: 0, rows: { a: { b: 0, s: { a: [2, 5] } } } };
+  const B = { br: 0, rows: { a: { b: 0, s: { a: [3, 4], m: [1, 0] } } } };
+  const ab = R.mergeBanner(A, B);
+  assert.equal(J(ab), J(R.mergeBanner(B, A)));
+  assert.deepEqual(ab.rows.a.s.a, [3, 5]);
+  const junk = R.mergeBanner({ br: 0, rows: { x: { b: 0, s: { a: [0, 0] } }, y: { b: 0, s: { a: [1, 9] } } } }, null);
+  assert.deepEqual(junk.rows, {}, "no march, or a best above 8, is refused");
+});
+
+test("banner: Last battles are a union of the newest 10, from the reset on", () => {
+  const one = (a, s, m, w) => ({ a, m: m || "m", w: w === undefined ? 1 : w, t: 7, s, k: ["iron", "tide"] });
+  const A = { br: 1000, rows: {}, last: [one(5000, "aa"), one(4000, "bb", "p", 0), one(900, "old")] };
+  const B = { br: 1000, rows: {}, last: [one(5000, "aa"), one(4500, "cc", "r"), one(3000, "dd", "d", 0)] };
+  const ab = R.mergeBanner(A, B);
+  assert.equal(J(ab), J(R.mergeBanner(B, A)));
+  assert.equal(J(R.mergeBanner(ab, ab)), J(ab));
+  assert.deepEqual(ab.last.map((v) => v.s), ["aa", "cc", "bb", "dd"], "newest first, once each, none before the reset");
+  const many = { br: 0, rows: {}, last: [] };
+  for (let i = 1; i <= 14; i++) many.last.push(one(i * 10, "s" + i));
+  assert.equal(R.mergeBanner(many, null).last.length, 10);
+  assert.equal(R.mergeBanner(many, null).last[0].s, "s14");
+  const junk = R.mergeBanner({ br: 0, rows: {}, last: [one(10, "A!"), one(10, "ok", "x"), one(10, "ok", "m", 2),
+    { a: 10, m: "m", w: 1, t: 0, s: "ok", k: ["iron", "tide"] }, { a: 10, m: "m", w: 1, t: 3, s: "ok", k: ["iron", "gold"] }, "no"] }, null);
+  assert.deepEqual(junk.last, [], "bad codes, modes, flags, turns and decks are refused");
+  assert.deepEqual(R.mergeBanner({ br: 0, rows: {} }, null).last, [], "older data without last");
+});
+
+test("banner: a March deck list replaces the starter deck only when it is valid", () => {
+  const list = E.deckList("iron").concat(["dragon", "spark"]);
+  assert.ok(E.listOk(list));
+  const st = E.newBattle("m1", ["iron", "ember"], 0, [list, null]);
+  assert.equal(st.hand[0].length + st.deck[0].length, list.length);
+  assert.equal(st.hand[1].length + st.deck[1].length, E.deckList("ember").length);
+  assert.ok(!E.listOk(list.slice(0, E.MARCH_MIN - 1)), "too few cards");
+  assert.ok(!E.listOk(new Array(E.MARCH_MAX + 1).fill("spark")), "too many cards");
+  assert.ok(!E.listOk(list.concat(["constructor"])), "not a card");
+  assert.equal(E.card("constructor"), null);
+  assert.equal(E.card("__proto__"), null);
+  const bad = E.newBattle("m1", ["iron", "ember"], 0, [["spark"], null]);
+  assert.equal(bad.hand[0].length + bad.deck[0].length, E.deckList("iron").length, "a broken list falls back to the starter deck");
 });

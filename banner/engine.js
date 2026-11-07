@@ -90,7 +90,7 @@
   function ownRows(side, y) { return side === 0 ? y >= 3 : y <= 3; }
   function isKeep(i) { return i === KEEPS[0] || i === KEEPS[1]; }
   function isShrine(i) { return SHRINES.indexOf(i) >= 0; }
-  function card(k) { return CARDS[k] || null; }
+  function card(k) { return typeof k === "string" && Object.prototype.hasOwnProperty.call(CARDS, k) ? CARDS[k] : null; }
 
   // ---------- Board ----------
   // Ground passes plain, wood, bridge, tower, mire, spring, road; rock
@@ -157,8 +157,13 @@
   }
 
   // A new battle. decks: [id, id] (DECK_IDS); first: the side that
-  // starts (0 | 1, default from the seed).
-  function newBattle(seed, decks, first) {
+  // starts (0 | 1, default from the seed); lists (March, 5.66.00):
+  // [cards | null, cards | null], a side's own card list in place of
+  // its deck's (MARCH_MIN–MARCH_MAX known cards; decks[s] stays the
+  // deck it grew from).
+  var MARCH_MIN = 15, MARCH_MAX = 30;
+  function listOk(l) { return Array.isArray(l) && l.length >= MARCH_MIN && l.length <= MARCH_MAX && l.every(function (k) { return !!card(k); }); }
+  function newBattle(seed, decks, first, lists) {
     seed = String(seed);
     var dk = [0, 1].map(function (s) { return DECK_IDS.indexOf(decks && decks[s]) >= 0 ? decks[s] : DECK_IDS[s]; });
     var st = { v: 1, seed: seed, decks: dk, map: makeBoard(seed), keep: [KEEP_HP, KEEP_HP], hand: [[], []], deck: [], units: [],
@@ -166,7 +171,7 @@
       turn: 1, rt: [0, 0], en: [0, 0], hold: [0, 0], rally: [0, 0], tired: [0, 0], disc: [[], []], rng: [0, 0], nid: 1, n: 0, over: -1, why: "" };
     for (var s = 0; s < 2; s++) {
       var r = { s: hashStr("banner:" + seed + ":deck:" + s) || 1 };
-      st.deck.push(shuffle(deckList(dk[s]), r));
+      st.deck.push(shuffle(lists && listOk(lists[s]) ? lists[s].slice() : deckList(dk[s]), r));
       st.rng[s] = r.s;
       st.hand[s] = st.deck[s].splice(0, HAND_START);
     }
@@ -678,6 +683,7 @@
     KEEPS: KEEPS, SHRINES: SHRINES, LEVELS: LEVELS, CARDS: CARDS, DECKS: DECKS, DECK_IDS: DECK_IDS, TILE_OF: TILE_OF,
     hashStr: hashStr, xy: xy, idx: idx, step: step, dist: dist, card: card, isKeep: isKeep, isShrine: isShrine,
     passable: passable, pathOk: pathOk, makeBoard: makeBoard, deckList: deckList, newBattle: newBattle,
+    MARCH_MIN: MARCH_MIN, MARCH_MAX: MARCH_MAX, listOk: listOk,
     unitAt: unitAt, unitById: unitById, shrinesHeld: shrinesHeld, guarded: guarded, atkOf: atkOf, dmgTo: dmgTo,
     moves: moves, attacks: attacks, targets: targets, legal: legal, act: act, valid: valid, clone: clone,
     evaluate: evaluate, aiAction: aiAction, finishTurn: finishTurn

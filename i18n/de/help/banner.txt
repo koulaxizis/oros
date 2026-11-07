@@ -74,12 +74,15 @@ Wähle die Stapel und gib einen Schlachtcode ein, um dasselbe Feld und dasselbe 
 
 Am Ende siehst du, ob du gewonnen hast, in welchem Zug sie endete, was von deiner Burg übrig ist, und deine Serie gewonnener Tage. `Teilen` kopiert eine Zeile ohne Spoiler: fünf Quadrate für deine Burg und den Zug. Die Schlacht des Tages erscheint auch im [Game Center](help:a/gamecenter) unter den heutigen Tagesrätseln. Schlachten des Tages zählen in der `Bilanz` nicht bei den Computerstufen; sie haben dort eine eigene Zeile.
 
+## Feldzug
+`Feldzug` (die Fahnentaste) sind acht Schlachten in Folge gegen den Computer, jede stärker: drei auf Leicht, drei auf Mittel, dann zwei auf Schwer. Wähle einen Startstapel. Nach jedem Sieg nimmst du 1 von 3 Karten in deinen Stapel auf, entfernst eine Karte oder lässt den Stapel, wie er ist (ein Stapel hat 15 bis 30 Karten). Eine Niederlage beendet den Feldzug. Verlässt du eine Feldzugschlacht vor dem Ende oder startest eine andere Schlacht, zählt sie als verloren. Ein Feldzug geht auf diesem Gerät von Schlacht zu Schlacht weiter, und die `Bilanz` zeigt deine Feldzüge und deinen besten.
+
 ## Rückgängig und Tasten
 `Rückgängig` (oder [[Z]]) nimmt Schritt für Schritt zurück, was du in diesem Zug getan hast, bis du ihn beendest.
 
 Tasten: [[1]] bis [[6]] wählen eine Karte von deiner Hand. Auf dem Feld bewegen die Pfeiltasten den Cursor, [[Enter]] handelt auf dem Feld darunter, und [[I]] liest es. [[Esc]] lässt die gewählte Karte oder Einheit los.
 
 ## Bilanz und Synchronisierung
-`Bilanz` zeigt deine Schlachten und Siege gegen jede Computerstufe und deine Schlachten zu zweit. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Schlachten aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Schlacht und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Schlacht geht dort weiter, wo du sie verlassen hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+`Bilanz` zeigt deine Schlachten und Siege gegen jede Computerstufe, deine Schlachten zu zweit und deine Feldzüge. `Letzte Schlachten` listet deine 10 letzten Schlachten mit ihren Codes, und `Nochmal` spielt eine davon erneut (eine Feldzugschlacht als freie Schlacht mit den Startstapeln). Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Schlachten aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Schlacht und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Schlacht geht dort weiter, wo du sie verlassen hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
 
 Banner ist ein eigenes Spiel: Seine Regeln, Karten und Zeichnungen wurden für orOS gemacht.

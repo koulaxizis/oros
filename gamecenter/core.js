@@ -335,11 +335,12 @@
     },
     // Banner: "<level>" (e, m, h; p two players) → [battles, won];
     // two-player battles count as played, never as won; days{day: {w, t, k}}
-    // the Daily battle (solved = won; not in battles and wins)
+    // the Daily battle (solved = won; not in battles and wins); "a" is
+    // the March [marches, best], not battles, so it is left out
     banner: function (d, S, X, today) {
       S.w = 0;
       eachCell(d, function (k, v) {
-        if (!Array.isArray(v) || v.length < 2) return;
+        if (k === "a" || !Array.isArray(v) || v.length < 2) return;
         S.p += nat(v[0]);
         if (k === "p") return;
         S.w += nat(v[1]);

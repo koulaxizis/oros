@@ -16,6 +16,9 @@
 //   - Daily battle (W2): the same board, decks and shuffle for everyone
 //     each day (gamekit/daily.js) against Medium, one try; result,
 //     streak and a spoiler-free share line
+//   - March (W3): a run of 8 battles against a stronger computer each
+//     time; after each win add 1 of 3 cards to your deck or remove
+//     one; one loss ends it. Last battles: the last 10, with Replay
 // Data:
 //   - synced slice "banner" (oros-banner-data): battles and wins per
 //     computer level and two-player battles, as per-device counter rows
@@ -49,8 +52,11 @@
   var SESSION_KEY = "oros-banner-session";
   var DEVICE_KEY  = "oros-banner-device";
   var SFX_KEY     = "oros-banner-sfx";
+  var MARCH_KEY   = "oros-banner-march";
   var DATA_VER    = 1;
-  var ROW_KEYS = ["e", "m", "h", "p"];   // computer Easy, Medium, Hard; p two players
+  var ROW_KEYS = ["e", "m", "h", "p", "a"];   // computer Easy, Medium, Hard; p two players; a March [marches, best]
+  var MARCH_N = 8;                       // battles in a March
+  var LAST_N = 10;                       // Last battles kept
   var AI_MS = 420;                       // one computer action
   var HOLD_MS = 450;                     // a hold opens the info
   var UNDO_MAX = 60;
@@ -137,6 +143,19 @@
       "stats.title": "Records", "stats.head": "Battles · won", "stats.hot": "Two players", "stats.hotRow": "Battles",
       "stats.reset": "Reset records", "stats.close": "Close", "stats.code": "This battle: {seed}",
       "info.close": "Close",
+      "btn.march": "March", "march.title": "March", "march.intro": "Eight battles in a row, each against a stronger computer: Easy, then Medium, then Hard. After each win add 1 of 3 cards to your deck, or remove one. One loss ends the march.",
+      "march.deck": "Starting deck", "march.start": "Start a march", "march.next": "Battle {n} of {m}", "march.go": "Fight",
+      "march.resume": "Back to the battle", "march.giveUp": "End this march", "march.giveUpAsk": "End this march? It counts with the battles you have won so far.",
+      "march.cards": "Your deck: {n} cards", "march.best": "Best march: {n} of {m}", "march.none": "No march yet",
+      "march.won": "March won: all {m} battles!", "march.lost": "The march ends: {n} of {m} won",
+      "march.pick": "Battle won! Add a card", "march.pickNote": "Or remove one card from your deck ({n} cards now).",
+      "march.remove": "Remove a card instead", "march.removeTitle": "Remove one card", "march.skip": "Keep the deck as it is",
+      "march.foe": "Against: {d} · {lv}", "march.leave": "Leave this march battle? The march ends here.",
+      "march.leaveYes": "Leave it", "march.leaveNo": "Keep playing", "march.tag": "March {n}/{m}",
+      "march.add": "Add {k}", "march.drop": "Remove {k} ({n} in the deck)",
+      "stats.march": "March", "stats.marchRow": "Marches · best",
+      "last.title": "Last battles", "last.won": "Won", "last.lost": "Lost", "last.hot": "{s} won",
+      "last.replay": "Replay", "last.replayLabel": "Replay battle {seed}", "last.turn": "turn {n}",
       "btn.daily": "Daily battle", "daily.label": "Daily",
       "daily.title": "Daily battle #{n}", "daily.tag": "Daily #{n}",
       "daily.won": "Won on turn {t}", "daily.lost": "Lost on turn {t}",
@@ -227,6 +246,19 @@
       "stats.title": "Ρεκόρ", "stats.head": "Μάχες · νίκες", "stats.hot": "Δύο παίκτες", "stats.hotRow": "Μάχες",
       "stats.reset": "Μηδενισμός ρεκόρ", "stats.close": "Κλείσιμο", "stats.code": "Αυτή η μάχη: {seed}",
       "info.close": "Κλείσιμο",
+      "btn.march": "Πορεία", "march.title": "Πορεία", "march.intro": "Οκτώ μάχες στη σειρά, κάθε φορά με πιο δυνατό υπολογιστή: Εύκολο, μετά Μέτριο, μετά Δύσκολο. Μετά από κάθε νίκη πρόσθεσε 1 από 3 κάρτες στην τράπουλά σου ή βγάλε μία. Μία ήττα τελειώνει την πορεία.",
+      "march.deck": "Τράπουλα εκκίνησης", "march.start": "Ξεκίνα πορεία", "march.next": "Μάχη {n} από {m}", "march.go": "Στη μάχη",
+      "march.resume": "Πίσω στη μάχη", "march.giveUp": "Τέλος της πορείας", "march.giveUpAsk": "Να τελειώσει η πορεία; Μετρά με όσες μάχες έχεις κερδίσει ως τώρα.",
+      "march.cards": "Η τράπουλά σου: {n} κάρτες", "march.best": "Καλύτερη πορεία: {n} από {m}", "march.none": "Καμία πορεία ακόμα",
+      "march.won": "Νίκη στην πορεία: και οι {m} μάχες!", "march.lost": "Η πορεία τελείωσε: {n} από {m} νίκες",
+      "march.pick": "Νίκη! Πρόσθεσε μια κάρτα", "march.pickNote": "Ή βγάλε μία κάρτα από την τράπουλά σου (τώρα έχει {n}).",
+      "march.remove": "Βγάλε καλύτερα μια κάρτα", "march.removeTitle": "Βγάλε μία κάρτα", "march.skip": "Άφησε την τράπουλα όπως είναι",
+      "march.foe": "Αντίπαλος: {d} · {lv}", "march.leave": "Να αφήσεις αυτή τη μάχη της πορείας; Η πορεία τελειώνει εδώ.",
+      "march.leaveYes": "Άφησέ την", "march.leaveNo": "Συνέχισε", "march.tag": "Πορεία {n}/{m}",
+      "march.add": "Πρόσθεσε: {k}", "march.drop": "Βγάλε: {k} ({n} στην τράπουλα)",
+      "stats.march": "Πορεία", "stats.marchRow": "Πορείες · καλύτερη",
+      "last.title": "Τελευταίες μάχες", "last.won": "Νίκη", "last.lost": "Ήττα", "last.hot": "Κέρδισε ο {s}",
+      "last.replay": "Ξανά", "last.replayLabel": "Ξανά η μάχη {seed}", "last.turn": "γύρος {n}",
       "btn.daily": "Μάχη της ημέρας", "daily.label": "Ημέρας",
       "daily.title": "Μάχη της ημέρας #{n}", "daily.tag": "Ημέρας #{n}",
       "daily.won": "Νίκη στον γύρο {t}", "daily.lost": "Ήττα στον γύρο {t}",
@@ -304,7 +336,17 @@
   // { "<day>": { b, w: 1 won | 0 lost, t: own turns, k: own Keep left } }.
   // The newer epoch wins; equal epochs keep the better result (won,
   // then fewer turns, then more Keep: a total order, so a join).
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+  // last (5.66.00): the last LAST_N battles on all devices, newest first:
+  // [{ a: end time (ms), m: e|m|h computer, p two players, d Daily,
+  //    r March, w: 1 Blue won | 0, t: turn, s: battle code, k: [deck, deck] }]
+  // A union by (a, s), newest LAST_N kept, from br on.
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function normLast(v) {
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["e", "m", "h", "p", "d", "r"].indexOf(v.m) < 0 ||
+        (v.w !== 0 && v.w !== 1) || !isInt(v.t) || v.t < 1 || v.t > MAX_TURNS || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s) ||
+        !Array.isArray(v.k) || v.k.length !== 2 || v.k.some(function (d) { return E.DECK_IDS.indexOf(d) < 0; })) return null;
+    return { a: v.a, m: v.m, w: v.w, t: v.t, s: v.s, k: [v.k[0], v.k[1]] };
+  }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
         !isInt(v.t) || v.t < 1 || v.t > MAX_TURNS || !isInt(v.k) || v.k < 0 || v.k > E.KEEP_HP || (v.w === 1 && v.k < 1)) return null;
@@ -321,7 +363,8 @@
     var s = {}, any = false;
     ROW_KEYS.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 2 && v.every(function (x) { return isInt(x) && x >= 0; }) && v[1] <= v[0] && (k !== "p" || v[1] === 0)) {
+      if (Array.isArray(v) && v.length === 2 && v.every(function (x) { return isInt(x) && x >= 0; }) &&
+          (k === "a" ? v[0] >= 1 && v[1] <= MARCH_N : v[1] <= v[0]) && (k !== "p" || v[1] === 0)) {
         s[k] = [v[0], v[1]];
         any = true;
       }
@@ -371,7 +414,20 @@
     });
     var sd = {};
     Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
+    var seen = {}, last = [];
+    [a.last, b.last].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (x) {
+        var v = normLast(x);
+        if (!v || v.a < br) return;
+        var key = v.a + ":" + v.s;
+        // the same battle twice: keep one, by a fixed order
+        if (!seen[key] || cmpStr(JSON.stringify(v), JSON.stringify(seen[key])) > 0) seen[key] = v;
+      });
+    });
+    Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
+    last.sort(function (x, y) { return (y.a - x.a) || cmpStr(x.s, y.s) || cmpStr(JSON.stringify(x), JSON.stringify(y)); });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
   }
   // [battles, won] for a key, all devices.
   function totals(key) {
@@ -418,7 +474,7 @@
   // One battle ended (or was left): +1 battle, +1 won when Blue won
   // against the computer.
   function count(key, won) {
-    if (game && game.opts.day !== undefined) return;   // a Daily battle counts only in days
+    if (game && (game.opts.day !== undefined || game.opts.march !== undefined)) return;   // Daily: days; March: its own row
     var row = data.rows[deviceId];
     if (!row || row.b < data.br) row = { b: data.br, s: {} };
     row = { b: row.b, s: JSON.parse(JSON.stringify(row.s)) };
@@ -453,7 +509,8 @@
   // game = {
   //   g: engine state,
   //   opts: { mode: "ai" | "hot", lv: e|m|h (computer), seed, d: [deck choice, deck choice] (r = random),
-  //           day: the Daily battle's day (absent in a free battle) },
+  //           day: the Daily battle's day (absent in a free battle),
+  //           march: the March battle's number 0…7 (its deck is in oros-banner-march) },
   //   counted: bool   the battle is in the records
   //   done: bool      the battle is over
   //   pass: bool      two players: the hand stays hidden until the device is passed
@@ -470,6 +527,7 @@
     if (o.mode === "ai" && E.LEVELS.indexOf(o.lv) < 0) return false;
     if (!Array.isArray(o.d) || o.d.length !== 2 || o.d.some(function (d) { return DECK_CHOICES.indexOf(d) < 0; })) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || o.mode !== "ai" || o.lv !== DAILY_LV)) return false;
+    if (o.march !== undefined && (!isInt(o.march) || o.march < 0 || o.march >= MARCH_N || o.mode !== "ai" || o.day !== undefined)) return false;
     return true;
   }
   function loadSession() {
@@ -515,7 +573,8 @@
     var o = { mode: opts.mode === "hot" ? "hot" : "ai", seed: opts.seed, d: [opts.d[0], opts.d[1]] };
     if (o.mode === "ai") o.lv = E.LEVELS.indexOf(opts.lv) >= 0 ? opts.lv : "m";
     if (opts.day !== undefined) o.day = opts.day;
-    var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)]);
+    if (opts.march !== undefined) o.march = opts.march;
+    var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)], undefined, opts.list ? [opts.list, null] : null);
     return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot", me: false };
   }
   function aiSide() { return game && game.opts.mode === "ai" ? 1 : -1; }
@@ -527,6 +586,7 @@
   function startGame(opts) {
     stopAI();
     leaveDaily();
+    leaveMarch();
     if (game && inProgressOf(game) && !game.counted) count(rowKey(), false);
     game = makeGame(opts);
     st = game.g;
@@ -626,12 +686,14 @@
       game.counted = true;
       count(rowKey(), game.opts.mode === "ai" && st.over === 0);
       if (game.opts.day !== undefined) countDaily(game.opts.day, st.over === 0, st.rt[0], st.keep[0]);
+      logBattle();
+      if (game.opts.march !== undefined) marchResult(st.over === 0);
     }
     game.done = true;
     saveSession();
     sfx(game.opts.mode === "ai" && st.over !== 0 ? "end" : "win");
     renderAll();
-    setTimeout(game.opts.day !== undefined ? function () { dailyDialog(game.opts.day); } : resultDialog, 500);
+    setTimeout(endDialog, 500);
   }
 
   // ---------- 5. Board view ----------
@@ -1002,8 +1064,10 @@
     db.hidden = !DK;
     db.classList.toggle("due", !!DK && !data.days[today()]);
     db.classList.toggle("on", dly && !game.done);
-    $("tag").hidden = !dly;
-    $("tag").textContent = dly ? t("daily.tag", { n: game.opts.day + 1 }) : "";
+    var mch = game.opts.march !== undefined;
+    $("tag").hidden = !dly && !mch;
+    $("tag").textContent = dly ? t("daily.tag", { n: game.opts.day + 1 }) : (mch ? t("march.tag", { n: game.opts.march + 1, m: MARCH_N }) : "");
+    $("march-btn").classList.toggle("on", !!(march && !march.over));
   }
   var GS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">';
   var KIND_ICON = {
@@ -1132,12 +1196,7 @@
 
   function newDialog() {
     cancelTourWait();
-    // Today's battle under way: leaving it uses the one try.
-    if (game && game.opts.day !== undefined && inProgressOf(game)) {
-      confirmDialog(t("daily.leave"), function () { leaveDaily(); saveSession(); renderAll(); newDialog(); },
-        t("daily.leaveYes"), t("daily.leaveNo"));
-      return;
-    }
+    if (guardLeave(newDialog)) return;
     var o = { mode: prefs.mode, lv: prefs.lv, d0: prefs.d0, d1: prefs.d1 };
     var dlg = makeDialog("bn-new");
     dlg.appendChild(el("div", "dlg-title", t("new.title")));
@@ -1297,6 +1356,12 @@
     if (ds.n) empty = false;
     dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
     dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    var mt = totals("a");
+    if (mt[0]) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.march") + " · " + t("stats.marchRow")));
+    dlg.appendChild(row(t("march.title"), mt[0] ? mt[0] + " · " + bestMarch() + "/" + MARCH_N : "–"));
+    if ((data.last || []).length) empty = false;
+    lastBattles(dlg);
     if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
     hubLink(acts, dlg);
@@ -1351,6 +1416,7 @@
     var d = today();
     if (data.days[d]) { dailyDialog(d); return; }
     if (game && game.opts.day === d && !game.done) return;
+    if (guardLeave(openDaily)) return;
     startGame(dailyOpts(d));
     showToast(t("daily.rules"));
     live(t("daily.rules"));
@@ -1395,6 +1461,261 @@
   function hubLink(acts, dlg) {
     if (!DK || !DK.hasHub()) return;
     acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("banner"); }));
+  }
+
+  // A battle of the Daily or of a March under way: leaving it asks
+  // first (it ends that try). Returns true when it asked.
+  function guardLeave(then) {
+    if (!game || !inProgressOf(game)) return false;
+    if (game.opts.day !== undefined) {
+      confirmDialog(t("daily.leave"), function () { leaveDaily(); saveSession(); renderAll(); then(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+      return true;
+    }
+    if (game.opts.march !== undefined) {
+      confirmDialog(t("march.leave"), function () { leaveMarch(); saveSession(); renderAll(); then(); }, t("march.leaveYes"), t("march.leaveNo"));
+      return true;
+    }
+    return false;
+  }
+  // The end of a battle: the Daily result, the March step, or the result.
+  function endDialog() {
+    if (!game) return;
+    if (game.opts.day !== undefined) dailyDialog(game.opts.day);
+    else if (game.opts.march !== undefined) marchDialog();
+    else resultDialog();
+  }
+
+  // ---------- Last battles ----------
+  // A battle ended: into Last battles (once per battle).
+  function logBattle() {
+    var m = game.opts.day !== undefined ? "d" : (game.opts.march !== undefined ? "r" : (game.opts.mode === "hot" ? "p" : game.opts.lv));
+    var v = normLast({ a: Date.now(), m: m, w: st.over === 0 ? 1 : 0, t: Math.max(1, st.rt[0]), s: game.opts.seed, k: st.decks.slice() });
+    if (!v) return;
+    data.last = [v].concat(data.last || []);
+    data = mergeBanner(data, data);
+    save();
+  }
+  // Records › Last battles: how each ended, with its code to replay (a
+  // March battle replays with the starting deck, as a free battle).
+  function lastBattles(dlg) {
+    var list = data.last || [];
+    if (!list.length) return;
+    dlg.appendChild(el("div", "dlg-sub", t("last.title")));
+    var box = el("div", "lr-list");
+    list.forEach(function (v) {
+      var r = el("div", "lr-row");
+      var tx = el("div", "lr-tx");
+      var kind = v.m === "p" ? t("mode.hot") : v.m === "d" ? t("daily.label") : v.m === "r" ? t("march.title") : t("lv." + v.m);
+      var what = v.m === "p" ? t("last.hot", { s: sideName(v.w ? 0 : 1) }) : t(v.w ? "last.won" : "last.lost");
+      tx.appendChild(el("div", "nm", kind + " · " + what + " · " + t("last.turn", { n: v.t })));
+      tx.appendChild(el("div", "fx", (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") +
+        t("deck." + v.k[0]) + " · " + t("deck." + v.k[1]) + " · " + v.s));
+      r.appendChild(tx);
+      var b = button(t("last.replay"), "", function () {
+        dlg.close();
+        var go = function () {
+          startGame({ mode: v.m === "p" ? "hot" : "ai", lv: E.LEVELS.indexOf(v.m) >= 0 ? v.m : "m", seed: v.s, d: v.k.slice() });
+        };
+        if (!guardLeave(go)) go();
+      });
+      b.setAttribute("aria-label", t("last.replayLabel", { seed: v.s }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+  }
+
+  // ---------- March ----------
+  // march = { v: 1, seed, d: starting deck, list: [cards], n: battles won,
+  //           over: bool, pick: [3 cards] | null (the choice after a win) }
+  // Device-local (oros-banner-march, like the session); its end goes
+  // into the "a" row: [marches, best].
+  var march = null;
+  function validMarch(m) {
+    return !!(m && typeof m === "object" && m.v === 1 && typeof m.seed === "string" && /^[a-z0-9]{1,16}$/.test(m.seed) &&
+      E.DECK_IDS.indexOf(m.d) >= 0 && E.listOk(m.list) && isInt(m.n) && m.n >= 0 && m.n <= MARCH_N && typeof m.over === "boolean" &&
+      (m.pick === null || (Array.isArray(m.pick) && m.pick.length === 3 && m.pick.every(function (k) { return !!E.card(k); }))) &&
+      (m.n < MARCH_N || m.over));
+  }
+  function loadMarch() {
+    try { var m = JSON.parse(localStorage.getItem(MARCH_KEY) || "null"); march = validMarch(m) ? m : null; } catch (e) { march = null; }
+  }
+  function saveMarch() {
+    try {
+      if (march) localStorage.setItem(MARCH_KEY, JSON.stringify(march));
+      else localStorage.removeItem(MARCH_KEY);
+    } catch (e) { showToast(t("toast.save")); }
+  }
+  function bestMarch() {
+    var best = 0;
+    Object.keys(data.rows).forEach(function (id) { var v = data.rows[id].s.a; if (v && v[1] > best) best = v[1]; });
+    return best;
+  }
+  // Battle n of the march: its code, the computer's deck and level.
+  function marchLevel(n) { return n < 3 ? "e" : (n < 6 ? "m" : "h"); }
+  function marchOpts(n) {
+    var seed = cleanSeed(march.seed + "m" + n);
+    var foe = E.DECK_IDS[E.hashStr("banner:" + seed + ":foe") % E.DECK_IDS.length];
+    return { mode: "ai", lv: marchLevel(n), seed: seed, d: [march.d, foe], march: n, list: march.list };
+  }
+  // Three cards to choose from after a win, from the battle's code.
+  var DRAFT = Object.keys(E.CARDS);
+  function draftOf(n) {
+    var h = E.hashStr("banner:" + march.seed + ":draft:" + n), out = [];
+    for (var k = 0; out.length < 3 && k < 50; k++) {
+      h = (Math.imul(h, 1103515245) + 12345) >>> 0;
+      var c = DRAFT[h % DRAFT.length];
+      if (out.indexOf(c) < 0) out.push(c);
+    }
+    return out;
+  }
+  function endMarch() {
+    if (!march || march.over) return;
+    march.over = true;
+    march.pick = null;
+    var row = data.rows[deviceId];
+    if (!row || row.b < data.br) row = { b: data.br, s: {} };
+    row = { b: row.b, s: JSON.parse(JSON.stringify(row.s)) };
+    var v = row.s.a ? row.s.a.slice() : [0, 0];
+    v[0]++;
+    v[1] = Math.max(v[1], march.n);
+    row.s.a = v;
+    data.rows[deviceId] = row;
+    data = mergeBanner(data, data);
+    save();
+    saveMarch();
+  }
+  function marchResult(won) {
+    if (!march || march.over || game.opts.march !== march.n) return;
+    if (won) {
+      march.n++;
+      if (march.n >= MARCH_N) endMarch();
+      else { march.pick = draftOf(march.n); saveMarch(); }
+    } else endMarch();
+  }
+  // A March battle left before its end counts as lost: the march ends.
+  function leaveMarch() {
+    if (game && game.opts.march !== undefined && st && inProgressOf(game)) {
+      game.done = true;
+      game.counted = true;
+      stopAI();
+      logBattle();
+      marchResult(false);
+    }
+  }
+  function startMarch(d) {
+    march = { v: 1, seed: newSeed(), d: d, list: E.deckList(d), n: 0, over: false, pick: null };
+    saveMarch();
+    startGame(marchOpts(0));
+  }
+  function marchPath() {
+    var path = el("div", "mp-path");
+    for (var k = 0; k < MARCH_N; k++) {
+      var cls = k < march.n ? "done" : (k === march.n && !march.over ? "now" : (march.over && k === march.n ? "lost" : ""));
+      var dot = el("span", "mp-dot " + cls + " lv-" + marchLevel(k), String(k + 1));
+      path.appendChild(dot);
+    }
+    return path;
+  }
+  function marchDialog() {
+    if (document.querySelector("dialog[open]")) return;
+    var dlg = makeDialog("bn-march");
+    dlg.appendChild(el("div", "dlg-title", t("march.title")));
+    var acts = el("div", "dlg-actions wrap");
+    if (march && !march.over && march.pick) {
+      // the choice after a win
+      dlg.appendChild(el("div", "dlg-hero", t("march.pick")));
+      dlg.appendChild(marchPath());
+      var picks = el("div", "mp-picks");
+      march.pick.forEach(function (k) {
+        var c = E.card(k);
+        var b = el("button", "mp-card");
+        b.type = "button";
+        b.appendChild(el("span", "cost", String(c.c)));
+        b.appendChild(el("span", "nm", cardName(k)));
+        b.appendChild(el("span", "tx", c.t === "u" ? t("unit.line", { c: c.c, a: c.atk, h: c.hp, m: c.mv }) + (c.kw ? " · " + t("kw." + c.kw) : "") : t("tx." + k)));
+        b.setAttribute("aria-label", t("march.add", { k: cardName(k) }));
+        b.addEventListener("click", function () {
+          if (march.list.length < E.MARCH_MAX) march.list.push(k);
+          march.pick = null; saveMarch(); dlg.close(); marchDialog();
+        });
+        picks.appendChild(b);
+      });
+      dlg.appendChild(picks);
+      dlg.appendChild(el("div", "dlg-note", t("march.pickNote", { n: march.list.length })));
+      if (march.list.length > E.MARCH_MIN) acts.appendChild(button(t("march.remove"), "", function () { dlg.close(); removeDialog(); }));
+      acts.appendChild(button(t("march.skip"), "", function () { march.pick = null; saveMarch(); dlg.close(); marchDialog(); }));
+    } else if (march && !march.over) {
+      var n = march.n, o = marchOpts(n);
+      dlg.appendChild(el("div", "dlg-sub", t("march.next", { n: n + 1, m: MARCH_N })));
+      dlg.appendChild(marchPath());
+      dlg.appendChild(row(t("deck." + march.d), t("march.cards", { n: march.list.length })));
+      dlg.appendChild(el("div", "dlg-note", t("march.foe", { d: t("deck." + o.d[1]), lv: t("lv." + o.lv) })));
+      acts.appendChild(button(t("march.giveUp"), "danger", function () {
+        dlg.close();
+        confirmDialog(t("march.giveUpAsk"), function () { leaveMarch(); endMarch(); saveSession(); renderAll(); marchDialog(); });
+      }));
+      var here = game && game.opts.march === n && !game.done;
+      var go = button(here ? t("march.resume") : t("march.go"), "primary", function () {
+        dlg.close();
+        if (here) return;
+        var fight = function () { startGame(marchOpts(march.n)); };
+        if (!guardLeave(fight)) fight();
+      });
+      acts.appendChild(go);
+    } else {
+      if (march && march.over) {
+        dlg.appendChild(el("div", "dlg-hero" + (march.n >= MARCH_N ? "" : " lost"), march.n >= MARCH_N ? t("march.won", { m: MARCH_N }) : t("march.lost", { n: march.n, m: MARCH_N })));
+        dlg.appendChild(marchPath());
+      }
+      dlg.appendChild(el("div", "dlg-msg", t("march.intro")));
+      var b0 = bestMarch();
+      dlg.appendChild(row(t("stats.march"), totals("a")[0] ? t("march.best", { n: b0, m: MARCH_N }) : t("march.none")));
+      var pickD = { d: E.DECK_IDS.indexOf(prefs.d0) >= 0 ? prefs.d0 : "iron" };
+      var f = segField(t("march.deck"), E.DECK_IDS, pickD.d, "", function (v) { pickD.d = v; note.textContent = t("deck." + v + ".note"); });
+      [].forEach.call(f.querySelectorAll(".seg-btn"), function (b, i) { b.textContent = t("deck." + E.DECK_IDS[i]); });
+      var note = el("div", "dlg-note", t("deck." + pickD.d + ".note"));
+      f.appendChild(note);
+      dlg.appendChild(f);
+      acts.appendChild(button(t("stats.close"), "", function () { dlg.close(); }));
+      acts.appendChild(button(t("march.start"), "primary", function () {
+        dlg.close();
+        var begin = function () { startMarch(pickD.d); };
+        if (!guardLeave(begin)) begin();
+      }));
+    }
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    var p = dlg.querySelector(".mp-card, .dlg-btn.primary");
+    if (p) p.focus();
+  }
+  function removeDialog() {
+    var dlg = makeDialog("bn-remove");
+    dlg.appendChild(el("div", "dlg-title", t("march.removeTitle")));
+    dlg.appendChild(el("div", "dlg-note", t("march.cards", { n: march.list.length })));
+    var counts = {};
+    march.list.forEach(function (k) { counts[k] = (counts[k] || 0) + 1; });
+    var box = el("div", "lr-list");
+    Object.keys(counts).sort(function (x, y) { return (E.card(x).c - E.card(y).c) || cmpStr(cardName(x), cardName(y)); }).forEach(function (k) {
+      var r = el("div", "lr-row");
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", cardName(k) + " × " + counts[k]));
+      r.appendChild(tx);
+      var b = button("−", "", function () {
+        march.list.splice(march.list.indexOf(k), 1);
+        march.pick = null; saveMarch(); dlg.close(); marchDialog();
+      });
+      b.setAttribute("aria-label", t("march.drop", { k: cardName(k), n: counts[k] }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); marchDialog(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   function confirmDialog(msg, onYes, yesLabel, noLabel) {
@@ -1517,6 +1838,7 @@
     new:    SVG + '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     undo:   SVG + '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
     daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 20v-6l3 1.5L9 17"/></svg>',
+    march:  SVG + '<path d="M4 21V4"/><path d="M4 4h9l-1.5 3L13 10H4"/><path d="M14 21l3-6 3 6M15 19h4"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -1593,7 +1915,7 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["daily-btn", "daily", "btn.daily"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["daily-btn", "daily", "btn.daily"], ["march-btn", "march", "btn.march"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1607,6 +1929,7 @@
     $("end-btn").addEventListener("click", endTurn);
     $("stats-btn").addEventListener("click", statsDialog);
     $("daily-btn").addEventListener("click", openDaily);
+    $("march-btn").addEventListener("click", marchDialog);
     // Deep link from the Game Center: { daily: true } opens today's battle.
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("sfx-btn").addEventListener("click", function () {
@@ -1631,6 +1954,7 @@
     load();
     ensureDeviceId();
     loadPrefs();
+    loadMarch();
     applyI18n();
     paintStatic();
     wire();
@@ -1649,7 +1973,7 @@
     resize();
     renderAll();
     if (daily) setTimeout(openDaily, 300);
-    else if (st.over >= 0) setTimeout(game.opts.day !== undefined ? function () { dailyDialog(game.opts.day); } : resultDialog, 300);
+    else if (st.over >= 0) setTimeout(endDialog, 300);
     else {
       maybeTour();
       if (st.side === aiSide()) runAI();
