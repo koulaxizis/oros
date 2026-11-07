@@ -18,6 +18,8 @@
 //     and a spoiler-free share line
 //   - shrines on floors 3, 6 and 9 (W3): heal, lift curses, buy one
 //     of three items with gold; Records › Last runs with replay
+//   - W4: ten lore pages (one per floor, a journal in Records), the
+//     Mystic (an L-shaped backpack, more Focus) and Endless mode
 // Data:
 //   - synced slice "crypt" (oros-crypt-data): runs, wins and the
 //     deepest floor per mode as per-device counter rows (each device
@@ -84,6 +86,24 @@
       "mode.g": "Gentle", "mode.r": "Grim",
       "mode.g.note": "More Health, a potion to start, and a save point on floors 4, 7 and 10.",
       "mode.r.note": "One life: a fall ends the run.",
+      "mode.e": "Endless",
+      "mode.e.note": "One life. With the Warden's key the stairs on floor 10 go on down, as deep as you can: your deepest floor is your score.",
+      "new.hero": "Hero", "hero.f": "Fighter", "hero.m": "Mystic",
+      "hero.f.note": "A full backpack, a dagger and a buckler.",
+      "hero.m.note": "An L-shaped backpack, 3 more Focus, a dagger and a Bolt rune.",
+      "pack.blocked": "Not part of the backpack",
+      "ev.lore": "A page: {t}", "lore.head": "Pages found", "lore.count": "{n} of 10", "lore.read": "Read",
+      "lore.page": "Page {n}", "lore.missing": "Not found yet", "lore.close": "Close",
+      "lore.t1": "The mason's note", "lore.1": "We cut this crypt for one family and their bell. The bell was to ring once, at the last burial. Nobody told us who would ring it.",
+      "lore.t2": "A tally on the wall", "lore.2": "Forty-one steps to the first landing. I counted them going down. I will count them again going up, if the rats let me.",
+      "lore.t3": "The shrine keeper", "lore.3": "Leave a coin, take a mercy. The stone does not care who you are, only that no one is watching when you ask.",
+      "lore.t4": "Bones that walk", "lore.4": "The dead here were buried with their swords. That was the family's wish. It was a poor wish.",
+      "lore.t5": "On the bell", "lore.5": "When the first ghoul woke it rang its bell, and every sleeper woke with it. Walk softly near the ones who carry bells.",
+      "lore.t6": "The archers' song", "lore.6": "Stand in my row and I will find you. Stand beside me and I will run. Every archer down here learned the same song.",
+      "lore.t7": "The stone guards", "lore.7": "The stone guards were set to watch the long halls. They move only when they lose sight of you. Do not let them.",
+      "lore.t8": "A warning in chalk", "lore.8": "Not every chest wants to be opened. Some want to open you.",
+      "lore.t9": "The Warden", "lore.9": "The family left one servant behind with the key. It has not slept since. When it tires of waiting, it calls the bones.",
+      "lore.t10": "The last page", "lore.10": "If you are reading this, the key is in your hand or it never will be. Go up. Tell them the bell can stop ringing now.",
       "t.b": "Blade", "t.w": "Ward", "t.r": "Rune", "t.c": "Charm", "t.p": "Potion", "t.s": "Scroll",
       "it.dagger": "Dagger", "it.sword": "Short sword", "it.hatchet": "Hatchet", "it.spear": "Spear",
       "it.mace": "Mace", "it.sabre": "Sabre", "it.pick": "War pick", "it.great": "Greatsword",
@@ -191,6 +211,24 @@
       "mode.g": "Ήπιο", "mode.r": "Σκληρό",
       "mode.g.note": "Περισσότερη ζωή, ένα φίλτρο για αρχή και σημείο αποθήκευσης στους ορόφους 4, 7 και 10.",
       "mode.r.note": "Μία ζωή: αν πέσεις, η κάθοδος τελειώνει.",
+      "mode.e": "Ατέρμονο",
+      "mode.e.note": "Μία ζωή. Με το κλειδί του Φύλακα η σκάλα του ορόφου 10 συνεχίζει προς τα κάτω, όσο βαθιά αντέξεις: ο βαθύτερος όροφος είναι το σκορ σου.",
+      "new.hero": "Ήρωας", "hero.f": "Πολεμιστής", "hero.m": "Μύστης",
+      "hero.f.note": "Γεμάτο σακίδιο, ένα στιλέτο και μια ασπιδούλα.",
+      "hero.m.note": "Σακίδιο σε σχήμα L, 3 Συγκέντρωση παραπάνω, ένα στιλέτο και ένας Ρούνος κεραυνού.",
+      "pack.blocked": "Δεν ανήκει στο σακίδιο",
+      "ev.lore": "Μια σελίδα: {t}", "lore.head": "Σελίδες που βρήκες", "lore.count": "{n} από 10", "lore.read": "Διάβασε",
+      "lore.page": "Σελίδα {n}", "lore.missing": "Δεν βρέθηκε ακόμα", "lore.close": "Κλείσιμο",
+      "lore.t1": "Το σημείωμα του χτίστη", "lore.1": "Σκάψαμε αυτή την κρύπτη για μία οικογένεια και την καμπάνα της. Η καμπάνα θα χτυπούσε μία φορά, στην τελευταία ταφή. Κανείς δεν μας είπε ποιος θα τη χτυπούσε.",
+      "lore.t2": "Χαραγμένο στον τοίχο", "lore.2": "Σαράντα ένα σκαλιά ως το πρώτο πλατύσκαλο. Τα μέτρησα κατεβαίνοντας. Θα τα μετρήσω ξανά ανεβαίνοντας, αν με αφήσουν οι αρουραίοι.",
+      "lore.t3": "Ο φύλακας του ιερού", "lore.3": "Άφησε ένα νόμισμα, πάρε ένα έλεος. Την πέτρα δεν τη νοιάζει ποιος είσαι, μόνο να μη σε βλέπει κανείς όταν ζητάς.",
+      "lore.t4": "Κόκαλα που περπατούν", "lore.4": "Οι νεκροί εδώ θάφτηκαν με τα σπαθιά τους. Έτσι το ήθελε η οικογένεια. Κακή επιθυμία.",
+      "lore.t5": "Για την καμπάνα", "lore.5": "Όταν ξύπνησε ο πρώτος βρικόλακας, χτύπησε την καμπάνα του και ξύπνησαν μαζί του όλοι όσοι κοιμούνταν. Πάτα σιγά κοντά σε όσους κρατούν καμπάνες.",
+      "lore.t6": "Το τραγούδι των τοξοτών", "lore.6": "Στάσου στη γραμμή μου και θα σε βρω. Στάσου δίπλα μου και θα φύγω. Όλοι οι τοξότες εδώ κάτω έμαθαν το ίδιο τραγούδι.",
+      "lore.t7": "Οι πέτρινοι φρουροί", "lore.7": "Οι πέτρινοι φρουροί μπήκαν να προσέχουν τους μακριούς διαδρόμους. Κινούνται μόνο όταν σε χάνουν από τα μάτια τους. Μην τους αφήσεις.",
+      "lore.t8": "Προειδοποίηση με κιμωλία", "lore.8": "Δεν θέλει κάθε σεντούκι να το ανοίξεις. Κάποια θέλουν να ανοίξουν εσένα.",
+      "lore.t9": "Ο Φύλακας", "lore.9": "Η οικογένεια άφησε πίσω έναν υπηρέτη με το κλειδί. Από τότε δεν έχει κοιμηθεί. Όταν βαριέται να περιμένει, καλεί τα κόκαλα.",
+      "lore.t10": "Η τελευταία σελίδα", "lore.10": "Αν διαβάζεις αυτό, το κλειδί είναι στο χέρι σου ή δεν θα είναι ποτέ. Ανέβα. Πες τους ότι η καμπάνα μπορεί να σταματήσει τώρα.",
       "t.b": "Λεπίδα", "t.w": "Προστασία", "t.r": "Ρούνος", "t.c": "Φυλαχτό", "t.p": "Φίλτρο", "t.s": "Πάπυρος",
       "it.dagger": "Στιλέτο", "it.sword": "Κοντό σπαθί", "it.hatchet": "Τσεκουράκι", "it.spear": "Δόρυ",
       "it.mace": "Κορύνη", "it.sabre": "Σπάθα", "it.pick": "Πολεμικός κασμάς", "it.great": "Μεγάλο σπαθί",
@@ -343,15 +381,20 @@
   // then deeper, then fewer turns: a total order, so a join).
   // last (5.56.00): the last 10 runs of every device,
   // [{ a: end time ms, m: g|r|d (d = Daily), f: floor, w: 1 out | 0,
-  //    c: what ended it (monster kind, "trap", "left", "" when out), s: seed }].
+  //    c: what ended it (monster kind, "trap", "left", "" when out), s: seed,
+  //    h: "m" for the Mystic (5.57.00) }]; m is also "e" (Endless, 5.57.00).
   // Union by a + s, newest first, the first 10: a join; entries older
   // than the reset stamp br drop.
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  // lore (5.57.00): the numbers of the lore pages found (1–10), sorted;
+  // a union, so a join. Never cleared by Reset records.
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], lore: [] }; }
   function normLast(v) {
-    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "r", "d"].indexOf(v.m) < 0 ||
-        !isInt(v.f) || v.f < 1 || v.f > E.FLOORS || (v.w !== 0 && v.w !== 1) || typeof v.c !== "string" ||
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "r", "e", "d"].indexOf(v.m) < 0 ||
+        !isInt(v.f) || v.f < 1 || v.f > (v.m === "e" ? E.MAX_FLOOR : E.FLOORS) || (v.h !== undefined && v.h !== "m") || (v.w !== 0 && v.w !== 1) || typeof v.c !== "string" ||
         !/^[a-z]{0,8}$/.test(v.c) || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
-    return { a: v.a, m: v.m, f: v.f, w: v.w, c: v.c, s: v.s };
+    var out = { a: v.a, m: v.m, f: v.f, w: v.w, c: v.c, s: v.s };
+    if (v.h === "m") out.h = "m";
+    return out;
   }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
@@ -369,7 +412,7 @@
     var s = {}, any = false;
     MODES.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0; }) && v[2] <= E.FLOORS) {
+      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0; }) && v[2] <= (k === "e" ? E.MAX_FLOOR : E.FLOORS)) {
         s[k] = [v[0], v[1], v[2]];
         any = true;
       }
@@ -436,7 +479,12 @@
     });
     Object.keys(seenRun).forEach(function (k) { last.push(seenRun[k]); });
     last.sort(function (x, y) { return (y.a - x.a) || cmpStr(x.s, y.s) || cmpStr(JSON.stringify(x), JSON.stringify(y)); });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
+    var lore = {};
+    [a.lore, b.lore].forEach(function (list) {
+      if (Array.isArray(list)) list.forEach(function (n) { if (isInt(n) && n >= 1 && n <= E.FLOORS) lore[n] = 1; });
+    });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N),
+      lore: Object.keys(lore).map(Number).sort(function (x, y) { return x - y; }) };
   }
   // [runs, won, deepest] for a mode, all devices.
   function totals(mode) {
@@ -489,7 +537,7 @@
     row = { b: row.b, s: JSON.parse(JSON.stringify(row.s)) };
     var v = row.s[mode] ? row.s[mode].slice() : [0, 0, 0];
     if (what === "run") v[0]++;
-    else if (what === "win") { v[0]++; v[1]++; v[2] = E.FLOORS; }
+    else if (what === "win") { v[0]++; v[1]++; v[2] = Math.max(v[2], E.FLOORS); }
     else if (what === "deep") { if (n <= v[2]) return; v[2] = n; }
     row.s[mode] = v;
     data.rows[deviceId] = row;
@@ -513,7 +561,7 @@
     if (!game || game.logged) return;
     game.logged = true;
     var v = normLast({ a: Date.now(), m: game.opts.day !== undefined ? "d" : game.opts.mode, f: st.floor, w: won ? 1 : 0,
-      c: won ? "" : (why || game.ck || ""), s: game.opts.seed });
+      c: won ? "" : (why || game.ck || ""), s: game.opts.seed, h: game.opts.hero });
     if (!v) return;
     data.last = [v].concat(data.last || []);
     data = mergeCrypt(data, data);
@@ -528,12 +576,13 @@
   }
 
   // ---------- 3. Device-local prefs + session ----------
-  var prefs = { mode: "g", tour: false };
+  var prefs = { mode: "g", hero: "f", tour: false };
   function loadPrefs() {
     try {
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object") {
         if (MODES.indexOf(p.mode) >= 0) prefs.mode = p.mode;
+        if (E.HEROES.indexOf(p.hero) >= 0) prefs.hero = p.hero;
         prefs.tour = p.tour === true;
       }
     } catch (e) {}
@@ -557,6 +606,7 @@
     if (!o || MODES.indexOf(o.mode) < 0 || typeof o.seed !== "string" || o.mode !== s.g.mode) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.end !== DAILY_END || o.mode !== "g" || s.cp)) return false;
     if (o.day === undefined && s.g.end !== undefined) return false;
+    if ((o.hero === "m") !== (s.g.hero.c === "m") || (o.hero !== undefined && o.hero !== "m") || (o.hero && o.day !== undefined)) return false;
     if (s.cp !== null && s.cp !== undefined && (!E.valid(s.cp) || s.cp.seed !== s.g.seed || s.cp.over >= 0)) return false;
     return true;
   }
@@ -595,7 +645,8 @@
     var daily = opts.day !== undefined;
     var o = { mode: opts.mode, seed: opts.seed };
     if (daily) o.day = opts.day;
-    return { g: E.newRun(opts.seed, opts.mode, daily ? DAILY_END : undefined), opts: o, cp: null, counted: false, done: false };
+    else if (opts.hero === "m") o.hero = "m";
+    return { g: E.newRun(opts.seed, opts.mode, daily ? DAILY_END : undefined, o.hero), opts: o, cp: null, counted: false, done: false };
   }
   // A Daily crypt left before its end counts as a fall where it was.
   function leaveDaily() {
@@ -626,12 +677,14 @@
   }
   // Do one action; false when it was not allowed (no turn passed).
   var shrineDue = false;     // the last step ended on the shrine
+  var loreDue = 0;           // the last step picked up this lore page
   function doAct(a) {
     if (!game || game.done || st.over >= 0) return false;
     var before = st.floor;
     var ev = E.act(st, a);
     if (!ev) return false;
     shrineDue = false;
+    loreDue = 0;
     handleEvents(ev);
     if (st.floor !== before) {
       count(game.opts.mode, "deep", st.floor);
@@ -644,16 +697,18 @@
     if (st.over >= 0) finish();
     saveSession();
     renderAll();
-    if (shrineDue && st.over < 0 && !E.watched(st)) { stopWalk(); setTimeout(shrineDialog, 120); }
+    if (loreDue) { var ln = loreDue; stopWalk(); setTimeout(function () { loreDialog([ln], 0); }, 120); }
+    else if (shrineDue && st.over < 0 && !E.watched(st)) { stopWalk(); setTimeout(shrineDialog, 120); }
     return true;
   }
   var EV_SHOW = { hit: 1, kill: 1, hurt: 1, warded: 1, chest: 1, pick: 1, full: 1, cursedHere: 1, gold: 1, trap: 1,
     floor: 1, key: 1, locked: 1, wake: 1, bell: 1, mimic: 1, split: 1, call: 1, drain: 1, ward: 1, heal: 1,
-    focus: 1, cleanse: 1, chart: 1, blink: 1, push: 1, miss: 1, shrine: 1, bought: 1 };
+    focus: 1, cleanse: 1, chart: 1, blink: 1, push: 1, miss: 1, shrine: 1, bought: 1, lore: 1 };
   function evText(e) {
     var p = {};
     if (e.n !== undefined) p.n = e.n;
     if (e.k !== undefined) p.k = /^(hit|kill|hurt|wake)$/.test(e.e) ? monName(e.k) : itemName(e.k);
+    if (e.e === "lore") p.t = t("lore.t" + e.n);
     return t("ev." + e.e, p);
   }
   function handleEvents(ev) {
@@ -671,6 +726,7 @@
       else if (e.e === "miss") addFx(e.i, "·", "miss");
       else if (e.e === "fall") { game.cause = e.k === "trap" ? t("cause.trap") : monName(e.k); game.ck = e.k; }
       else if (e.e === "shrine") shrineDue = true;
+      else if (e.e === "lore") { addLore(e.n); loreDue = e.n; }
       if (e.e === "full" || e.e === "cursedHere" || e.e === "locked" || e.e === "key" || e.e === "bell" || e.e === "mimic") toastLine(evText(e));
     });
     if (hurt) { sfx("hurt"); shake(); }
@@ -749,7 +805,7 @@
     if (d < 0 || E.monAt(st, next) || !doAct({ t: "move", d: d })) { stopWalk(); return; }
     sfx("step");
     var stop = !walk || !walk.path.length || st.hero.hp < hp || st.floor !== fl || st.pack.it.length !== items ||
-      seenFoes() > walk.foes || E.groundAt(st).length > 0 || st.over >= 0 || onShrine();
+      seenFoes() > walk.foes || E.groundAt(st).length > 0 || st.over >= 0 || onShrine() || !!loreDue;
     if (stop) { stopWalk(); return; }
     walk.timer = setTimeout(stepWalk, STEP_MS);
   }
@@ -857,6 +913,7 @@
     st.gold.forEach(function (g) { if (on[g.i]) drawGold(g.i); });
     st.loot.forEach(function (l) { if (on[l.i]) drawLoot(l.i, l.it); });
     if (st.shrine && st.seen.charAt(st.shrine.i) === "1") drawShrine(st.shrine.i);
+    if (st.page !== undefined && on[st.page]) drawPage(st.page);
     st.chests.forEach(function (ci) { if (st.seen.charAt(ci) === "1") drawChest(ci); });
     st.mons.forEach(function (m) { if (m.m && on[m.i]) drawChest(m.i); });
     // what monsters will do next
@@ -928,6 +985,18 @@
     ctx.strokeStyle = it.c ? COL.danger : "rgba(0,0,0,0.5)";
     ctx.lineWidth = 2;
     ctx.stroke();
+  }
+  // A lore page: a pale sheet with three lines.
+  function drawPage(i) {
+    var c = cellXY(i), s = c.s;
+    ctx.fillStyle = "#e9e1c8";
+    ctx.save();
+    ctx.translate(c.x + s / 2, c.y + s / 2);
+    ctx.rotate(-0.2);
+    ctx.fillRect(-s * 0.2, -s * 0.26, s * 0.4, s * 0.52);
+    ctx.fillStyle = "rgba(60,50,30,0.6)";
+    for (var k = 0; k < 3; k++) ctx.fillRect(-s * 0.13, -s * 0.15 + k * s * 0.12, s * 0.26, s * 0.035);
+    ctx.restore();
   }
   // A shrine: a small stone altar with a gold flame.
   function drawShrine(i) {
@@ -1333,6 +1402,10 @@
     var note = el("div", "dlg-note", t("mode." + o.mode + ".note"));
     dlg.appendChild(segField(t("new.mode"), MODES, o.mode, "mode.", function (v) { o.mode = v; note.textContent = t("mode." + v + ".note"); }));
     dlg.appendChild(note);
+    o.hero = prefs.hero;
+    var hnote = el("div", "dlg-note", t("hero." + o.hero + ".note"));
+    dlg.appendChild(segField(t("new.hero"), E.HEROES, o.hero, "hero.", function (v) { o.hero = v; hnote.textContent = t("hero." + v + ".note"); }));
+    dlg.appendChild(hnote);
     var seedWrap = el("label", "dlg-field");
     seedWrap.appendChild(el("span", "dlg-label", t("new.seed")));
     var seed = el("input", "dlg-input");
@@ -1347,9 +1420,10 @@
     acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); }));
     var go = button(t("new.start"), "primary", function () {
       prefs.mode = o.mode;
+      prefs.hero = o.hero;
       savePrefs();
       dlg.close();
-      startGame({ mode: o.mode, seed: cleanSeed(seed.value) || newSeed() });
+      startGame({ mode: o.mode, seed: cleanSeed(seed.value) || newSeed(), hero: o.hero });
     });
     acts.appendChild(go);
     dlg.appendChild(acts);
@@ -1487,6 +1561,7 @@
         b.type = "button";
         b.dataset.x = x; b.dataset.y = y;
         var who = g[y * st.pack.w + x];
+        if (who === -2) { b.className = "pk-cell blk"; b.disabled = true; b.setAttribute("aria-label", t("pack.blocked")); grid.appendChild(b); continue; }
         b.setAttribute("aria-label", who >= 0 ? t("pack.cellOf", { item: itemName(st.pack.it[who].k), x: x + 1, y: y + 1 }) : t("pack.cell", { x: x + 1, y: y + 1 }));
         grid.appendChild(b);
       }
@@ -1650,7 +1725,7 @@
       first = button(t("res.back", { n: game.cp.floor }), "primary", function () { dlg.close(); backToSave(); });
       acts.appendChild(first);
     }
-    acts.appendChild(button(t("res.same"), "", function () { dlg.close(); endIfWaiting(); startGame({ mode: game.opts.mode, seed: game.opts.seed }); }));
+    acts.appendChild(button(t("res.same"), "", function () { dlg.close(); endIfWaiting(); startGame({ mode: game.opts.mode, seed: game.opts.seed, hero: game.opts.hero }); }));
     var again = button(t("res.new"), first ? "" : "primary", function () { dlg.close(); endIfWaiting(); newDialog(); });
     acts.appendChild(again);
     dlg.appendChild(acts);
@@ -1683,6 +1758,14 @@
     dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
     dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
     if ((data.last || []).length) empty = false;
+    var lr = el("div", "lr-row");
+    var ltx = el("div", "lr-tx");
+    ltx.appendChild(el("div", "nm", t("lore.head") + " · " + t("lore.count", { n: (data.lore || []).length })));
+    lr.appendChild(ltx);
+    var lb = button(t("lore.read"), "", function () { dlg.close(); loreDialog([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], Math.max(0, ((data.lore || [])[0] || 1) - 1)); });
+    lb.disabled = !(data.lore || []).length;
+    lr.appendChild(lb);
+    dlg.appendChild(lr);
     lastRuns(dlg);
     if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
@@ -1700,6 +1783,45 @@
     dlg.showModal();
     close.focus();
   }
+  // ---------- Lore pages (W4) ----------
+  function addLore(n) {
+    if ((data.lore || []).indexOf(n) >= 0) return;
+    data.lore = (data.lore || []).concat([n]);
+    data = mergeCrypt(data, data);
+    save();
+  }
+  // One page, or the journal of every page (pages = the list to page
+  // through, at = the one shown).
+  function loreDialog(pages, at) {
+    if (document.querySelector("dialog[open]")) return;
+    var dlg = makeDialog("cr-lore");
+    var head = el("div", "dlg-title"), body = el("div", "lore-text"), sub = el("div", "dlg-sub");
+    dlg.appendChild(head);
+    dlg.appendChild(sub);
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    var prev = button("‹", "", function () { show(at - 1); });
+    var next = button("›", "", function () { show(at + 1); });
+    prev.setAttribute("aria-label", "−1"); next.setAttribute("aria-label", "+1");
+    if (pages.length > 1) { acts.appendChild(prev); acts.appendChild(next); }
+    var close = button(t("lore.close"), "primary", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    function show(k) {
+      at = clamp(k, 0, pages.length - 1);
+      var n = pages[at], have = (data.lore || []).indexOf(n) >= 0;
+      head.textContent = have ? t("lore.t" + n) : t("lore.missing");
+      sub.textContent = t("lore.page", { n: n }) + (pages.length > 1 ? " · " + t("lore.count", { n: (data.lore || []).length }) : "");
+      body.textContent = have ? t("lore." + n) : "…";
+      prev.disabled = at === 0;
+      next.disabled = at === pages.length - 1;
+    }
+    show(at || 0);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    close.focus();
+  }
+
   // ---------- Shrine (W3) ----------
   function onShrine() { return !!(st && st.shrine && st.hero.i === st.shrine.i); }
   function shrineDialog() {
@@ -1768,12 +1890,12 @@
       var what = v.w ? t("last.won") : t("last.fell", { n: v.f });
       if (!v.w && v.c) what += " · " + (v.c === "left" ? t("last.left") : t("last.by", { k: v.c === "trap" ? t("cause.trap") : monName(v.c) }));
       var tx = el("div", "lr-tx");
-      tx.appendChild(el("div", "nm", (v.m === "d" ? t("daily.label") : t("mode." + v.m)) + " · " + what));
+      tx.appendChild(el("div", "nm", (v.m === "d" ? t("daily.label") : t("mode." + v.m)) + (v.h ? " · " + t("hero." + v.h) : "") + " · " + what));
       tx.appendChild(el("div", "fx", (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") + v.s));
       r.appendChild(tx);
       var b = button(t("last.replay"), "", function () {
         dlg.close();
-        var go = function () { startGame({ mode: v.m === "d" ? "g" : v.m, seed: v.s }); };
+        var go = function () { startGame({ mode: v.m === "d" ? "g" : v.m, seed: v.s, hero: v.h }); };
         if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), go, t("daily.leaveYes"), t("daily.leaveNo"));
         else go();
       });

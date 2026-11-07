@@ -311,6 +311,7 @@ dialog.mm-dlg.pack { width: min(460px, calc(100vw - 16px)); }
 }
 .pk-cell.ok { background: var(--accent-soft); border-color: var(--accent); }
 .pk-cell.no { background: rgba(224, 108, 117, 0.18); border-color: var(--danger); }
+.pk-cell.blk { background: transparent; border-color: transparent; cursor: default; }
 .pk-item { position: absolute; left: 0; top: 0; pointer-events: none; }
 .pk-sq {
   position: absolute;
@@ -484,3 +485,6 @@ dialog.mm-dlg.pass::backdrop { background: var(--bg); }
 .sh-row button, .lr-row button { flex: none; min-height: 40px; }
 .lr-list { max-height: 40vh; overflow: auto; }
 .dlg-msg.bad { color: var(--danger, #e06c75); }
+
+/* Lore pages (5.57.00) */
+.lore-text { line-height: 1.55; font-style: italic; margin: 6px 0 12px; overflow-wrap: anywhere; }

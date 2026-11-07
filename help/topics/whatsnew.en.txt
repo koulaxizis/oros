@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 5.59.00
 - **Budget: areas.** When one bank account carries several parts of your life, `More` › `Areas` keeps them apart: each area has words that put a bank line in it when you import a statement (for example `viva, stripe, box now`). Lines no word fits wait under `Without an area` for you to pick; what you pick stays. The Overview's `Areas` card shows each area's income, expenses and difference for the month, and shop records can go to their own area.
 
+## Version 5.58.00
+- **Crypt: Lore pages, the Mystic and Endless.** Each of the ten floors hides a torn page of the crypt's story; Records keeps the pages you found on every device, and Read opens the journal. A second hero, the Mystic, has an L-shaped backpack, more Focus and a Bolt rune to start. The new Endless mode takes the Warden's key down past floor 10, as deep as you can go, with a shrine every third floor.
+
 ## Version 5.57.00
 - **Budget: shop records.** If your WooCommerce shop runs Production Ledger, `More` › `Shop records` keeps its paid orders as income and its costs as expenses here by themselves, VAT included, and checks every month's totals against the shop's to the cent. A cancelled order leaves by itself. When you then import a bank statement, the bank's lines for the same money (a transfer for an order, a payout from Viva, Stripe, PayPal or the courier) are marked as already here, so nothing is counted twice.
 

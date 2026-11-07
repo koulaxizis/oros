@@ -56,7 +56,7 @@ Packen kostet keine Runde, außer ein waches Monster kann dich sehen: Dann koste
 Die Schnellplätze unten halten die ersten vier Runen, Tränke und Schriftrollen im Rucksack, von links nach rechts und Reihe für Reihe gelesen. Tippe auf einen oder drücke [[1]] bis [[4]]. Der Platz einer Rune zeigt ihre Fokuskosten.
 
 ## Schreine
-Auf den Ebenen 3, 6 und 9 steht je ein Schrein, ein kleiner Steinaltar nahe der Stelle, an der du ankommst. Tritt darauf, um Gold einzutauschen:
+Auf den Ebenen 3, 6 und 9 steht je ein Schrein (in `Endlos` auch auf jeder dritten Ebene nach der 10.), ein kleiner Steinaltar nahe der Stelle, an der du ankommst. Tritt darauf, um Gold einzutauschen:
 - `Voll heilen`;
 - `Jeden Fluch lösen` im Rucksack;
 - einen von drei Gegenständen kaufen (nie verflucht). Was du kaufst, kommt in den Rucksack oder bleibt auf dem Boden, wenn es nicht passt.
@@ -86,8 +86,16 @@ Monster schlafen, bis sie dich sehen (geschlossene Augen), und werden alle drei 
 `Neuer Abstieg (N)` fragt nach dem Modus:
 - `Sanft`: mehr Leben, ein Trank zum Start und ein Speicherpunkt, wenn du die Ebenen 4, 7 und 10 erreichst. Nach einem Sturz kannst du zum letzten Speicherpunkt zurück.
 - `Gnadenlos`: ein Leben. Ein Sturz beendet den Abstieg.
+- `Endlos`: ein Leben, wie bei `Gnadenlos`. Mit dem Schlüssel des Hüters führt die Treppe auf Ebene 10 nicht hinaus, sondern weiter hinab, Ebene um Ebene, so tief du kommst. Die Monster werden alle drei Ebenen stärker. Deine tiefste Ebene ist dein Ergebnis.
+
+`Neuer Abstieg` fragt auch nach dem Helden:
+- `Kämpfer`: der volle Rucksack, ein Dolch und ein Faustschild.
+- `Mystiker`: ein L-förmiger Rucksack (die 3 × 2 Felder oben rechts fehlen), 3 Fokus mehr, ein Dolch und eine Blitzrune. Weniger Felder, mehr Zauber.
 
 Jede Gruft hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neuer Abstieg` einen Code ein, um dieselbe Gruft noch einmal hinabzusteigen, mit denselben Ebenen, Truhen und Monstern. Lass das Feld leer für eine neue Gruft.
+
+## Seiten der Geschichte
+Auf jeder der Ebenen 1 bis 10 liegt eine zerrissene Seite, ein blasses Blatt am Boden, weg von der Stelle, an der du ankommst. Tritt darauf, um sie zu lesen. Die zehn Seiten erzählen die Geschichte der Gruft, und eine gefundene Seite bleibt gefunden: Die `Bilanz` zeigt, wie viele du hast, und `Lesen` öffnet das Tagebuch mit allen Seiten, die du gefunden hast, auf jedem Gerät.
 
 ## Gruft des Tages
 Die Kalendertaste (mit einem Punkt, solange du die heutige Gruft noch nicht gespielt hast) öffnet die Gruft des Tages: an diesem Tag für alle dieselbe kurze Gruft. Sie hat fünf Ebenen, das Leben von `Sanft` und einen Trank zum Start, keine Speicherpunkte und ein Leben. Erreiche die Treppe auf Ebene 5, um hinauszukommen; ein Schlüssel ist nicht nötig. Es gibt einen Versuch am Tag: Verlässt du sie für einen neuen Abstieg, zählt das als Sturz dort, wo du warst.
