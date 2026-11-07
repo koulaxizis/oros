@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.48.00
+- **Music: share a song.** `Share` in every song's menu and in the full player opens Send to someone with the song: on a phone the share sheet (WhatsApp, Viber, Telegram, Instagram…), or a link, QR code or email. Songs from open sources play straight from the link, also for people without orOS; a song from your own server or your device shares only its name, never the server address or the file path. For a song on your device orOS asks every time: only the name, or the file itself.
+- **Send to someone: buttons for chats and social media.** Every kind of share (notes, recipes, events, songs…) now has a `Send with` row: WhatsApp, Telegram, Viber, SMS on phones, Facebook, X, Bluesky and Mastodon (it asks for your server).
+
 ## Version 5.47.04
 - **Music: an artist's whole discography.** Tapping the artist's name in the full player now opens the artist's page (the player steps aside). On Jamendo that page shows the artist's picture, every album, newest first, and every song, most played first, all loaded by itself.
 
