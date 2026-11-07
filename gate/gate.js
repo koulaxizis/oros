@@ -23,7 +23,7 @@
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
   var NEVER = ["assistant", "baby", "cycle", "diary", "health", "mail", "mood", "passwords"];
-  var SUMMARY = { budget: 1, stock: 1 };
+  var SUMMARY = { budget: 1, stock: 1, kanban: 1 };
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
   var PAGE = 500, TEXT_MAX = 1500, HITS_MAX = 60, SPAN_DAYS = 400;
@@ -645,15 +645,17 @@
     }
     if (name === "app_summary") {
       var app = String(args.app || "");
-      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget or stock." });
+      if (!SUMMARY[app]) return Promise.resolve({ ok: false, c: "app must be budget, stock or kanban." });
       if (okIds.indexOf(app) < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read " + app + "." });
       return summary().then(function (S) {
-        var n = S.normArgs({ app: app, month: args.month }, localDay());
+        var n = S.normArgs({ app: app, month: args.month, board: args.board }, localDay());
         if (!n.ok) return { ok: false, c: n.err };
         var lang = (root.orosLang || "en").slice(0, 2);
         var out = app === "budget" ? S.budgetMonth(readStore("oros-budget-data"), n.month, lang)
-                                   : S.stockMonth(readStore("oros-stock-data"), n.month, lang);
-        return { ok: true, a: [app], k: 1, c: JSON.stringify(out) };
+                : app === "stock" ? S.stockMonth(readStore("oros-stock-data"), n.month, lang)
+                : S.kanbanBoards(readStore("oros-kanban-data"), { board: n.board, today: localDay() });
+        if (out && out.ok === false) return { ok: false, c: out.err };
+        return { ok: true, a: [app], k: out && out.items ? out.items.length : 1, c: JSON.stringify(out) };
       });
     }
     var line = null;

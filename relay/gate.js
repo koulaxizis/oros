@@ -75,12 +75,13 @@ export const TOOLS = [
   },
   {
     name: "app_summary",
-    description: "Totals of one month worked out on the device: Budget (income, expenses, per category) or Stock (units and amounts sold, per product and place).",
+    description: "Worked out on the device: Budget (one month's income, expenses, per category), Stock (one month's units and amounts sold, per product and place) or Kanban (every open board with its columns and how many cards each has, late and due today, and the cards with their column, due date, labels and subtasks done; with board, only that board's cards).",
     inputSchema: {
       type: "object",
       properties: {
-        app: { type: "string", enum: ["budget", "stock"] },
-        month: { type: "string", description: "YYYY-MM; this month when left out." }
+        app: { type: "string", enum: ["budget", "stock", "kanban"] },
+        month: { type: "string", description: "Budget and Stock: YYYY-MM; this month when left out." },
+        board: { type: "string", description: "Kanban: only this board's cards (its name)." }
       },
       required: ["app"],
       additionalProperties: false

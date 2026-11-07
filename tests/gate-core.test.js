@@ -28,6 +28,7 @@ test("allowed: only apps set to read, never the closed list", () => {
   assert.ok(G.NEVER.indexOf("passwords") >= 0 && G.NEVER.indexOf("mail") >= 0);
   assert.deepEqual(G.toolsOf("budget"), ["search_data", "app_summary", "budget_lines"]);
   assert.deepEqual(G.toolsOf("notes"), ["search_data"]);
+  assert.deepEqual(G.toolsOf("kanban"), ["search_data", "app_summary"]);
 });
 
 test("budget_lines: days, order, tombstones, names, amounts, extras", () => {
