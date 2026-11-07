@@ -8,9 +8,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Banner · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=5.63.00">
-  <link rel="stylesheet" href="banner.css?v=5.63.00">
-  <link rel="stylesheet" href="../gamekit/layout.css?v=5.63.00">
+  <link rel="stylesheet" href="../fonts.css?v=5.64.00">
+  <link rel="stylesheet" href="banner.css?v=5.64.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=5.64.00">
 
 </head>
 <body>
@@ -26,6 +26,7 @@
     </div>
     <div class="tb-row" id="tb-b">
       <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="daily-btn"></button>
       <button type="button" class="icon-btn" id="stats-btn"></button>
       <button type="button" class="icon-btn" id="sfx-btn"></button>
     </div>
@@ -34,7 +35,7 @@
   <!-- Status: the two Keeps, energy, whose turn -->
   <div id="status">
     <span class="stat keep" id="k0"><span class="sw"></span><span class="bar"><span class="fill"></span></span><span class="v"></span></span>
-    <span id="mid"><span id="energy"></span><span id="who"></span></span>
+    <span id="mid"><span id="tag" hidden></span><span id="energy"></span><span id="who"></span></span>
     <span class="stat keep" id="k1"><span class="sw"></span><span class="bar"><span class="fill"></span></span><span class="v"></span></span>
   </div>
   <div id="msg" aria-hidden="true"></div>
@@ -49,12 +50,13 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=5.63.00" data-app="banner"></script>
+  <script src="../i18n.js?v=5.64.00" data-app="banner"></script>
 
-  <script src="../gamekit/haptics.js?v=5.63.00"></script>
-  <script src="cards.js?v=5.63.00"></script>
-  <script src="engine.js?v=5.63.00"></script>
-  <script src="banner.js?v=5.63.00"></script>
+  <script src="../gamekit/haptics.js?v=5.64.00"></script>
+  <script src="../gamekit/daily.js?v=5.64.00"></script>
+  <script src="cards.js?v=5.64.00"></script>
+  <script src="engine.js?v=5.64.00"></script>
+  <script src="banner.js?v=5.64.00"></script>
 
 </body>
 </html>

@@ -69,6 +69,11 @@ Bei `Zufall` wählt der Schlachtcode den Stapel.
 
 Wähle die Stapel und gib einen Schlachtcode ein, um dasselbe Feld und dasselbe Mischen noch einmal zu spielen, oder lass ihn leer für eine neue Schlacht. Jede Schlacht zeigt am Ende ihren Code, mit `Dieselbe Schlacht noch einmal`. Startest du eine neue Schlacht, während eine läuft, zählt die laufende als verloren.
 
+## Schlacht des Tages
+`Schlacht des Tages` (die Kalendertaste) ist jeden Tag für alle dieselbe Schlacht: dasselbe Feld, dieselben Stapel und dasselbe Mischen, gegen den Computer auf Mittel. Du spielst Blau. Sie hat einen Versuch: Verlässt du sie vor dem Ende oder startest eine andere Schlacht, zählt sie als verloren. Ein Punkt auf der Taste heißt, dass die heutige Schlacht noch offen ist.
+
+Am Ende siehst du, ob du gewonnen hast, in welchem Zug sie endete, was von deiner Burg übrig ist, und deine Serie gewonnener Tage. `Teilen` kopiert eine Zeile ohne Spoiler: fünf Quadrate für deine Burg und den Zug. Die Schlacht des Tages erscheint auch im [Game Center](help:a/gamecenter) unter den heutigen Tagesrätseln. Schlachten des Tages zählen in der `Bilanz` nicht bei den Computerstufen; sie haben dort eine eigene Zeile.
+
 ## Rückgängig und Tasten
 `Rückgängig` (oder [[Z]]) nimmt Schritt für Schritt zurück, was du in diesem Zug getan hast, bis du ihn beendest.
 
