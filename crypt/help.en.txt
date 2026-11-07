@@ -1,0 +1,96 @@
+# Crypt
+Crypt is a turn-based dungeon crawler with a backpack puzzle. Go down ten floors of a crypt, fight what lives there and pack your finds well: what you carry, and how it fits together, is your whole hero.
+
+## How to play
+Every action is one turn: a step, an attack, opening a chest, using an item, or waiting. The monsters move only when you do.
+
+You win when you take the key from the Warden on floor 10 and reach the stairs there, which are the way out.
+
+Each awake monster shows what it will do next. A red cell with a cross is a cell it will hit, and a light arrow shows where it will step. An attack lands only if you are still on the marked cell when the monsters move, so you can step out of it, or hit first.
+
+Damage is always the attacker's Attack minus the target's Defence, and at least 1. There are no dice in a fight. Chance decides only the floors, what you find and what you meet, and it all comes from the crypt code.
+
+## Moving and fighting
+- Tap a cell you have seen to walk there. The walk stops when a monster comes into view, when you are hurt, or when you find something.
+- Swipe, or use the arrow keys or [[W]] [[A]] [[S]] [[D]], for one step.
+- Tap a monster next to you to attack it. Tap a monster further away to read what it is and how it behaves.
+- Step into a chest to open it. What it holds drops on its cell.
+- `Wait a turn` (the hourglass, or [[Space]]) lets the monsters move.
+
+Gold and items are picked up when you step on them. An item goes into the first free place in the backpack. If it does not fit, it stays on the floor until you make room.
+
+Traps are hidden until they go off (3 damage) or until something shows them. You slowly get Health back as you walk (1 every 12 turns), and Focus too (1 every 10 turns).
+
+## The backpack
+`Backpack` (or [[I]]) opens a grid of 6 by 4 cells. It grows to 7 by 5 on floor 4 and to 8 by 5 on floor 7. Every item has a shape of 1 to 5 cells, and it works only while it is in the backpack.
+
+- Tap an item to choose it, then tap a free cell to put it there, or drag it.
+- `Rotate (R)`, or tapping the chosen item again, turns it.
+- `Take out` puts it on the floor. `Pack it` puts a floor item in the first place it fits.
+- `Use` uses a rune, a potion or a scroll.
+- `Undo (Z)` takes back the last change.
+
+Packing takes no turn, unless an awake monster can see you: then closing the backpack after a change takes one turn.
+
+**Links:** the dots on an item's edges are its ports. When two items touch and their ports face each other, they link and the dot lights up. Each link gives a bonus:
+- blade and blade: +1 Attack
+- ward and ward: +1 Defence
+- a rune with anything: +1 Focus
+- charm and charm: 5 % more gold
+- any other pair: +2 Health
+
+**Curses:** some strong items are cursed (striped). A cursed item cannot leave the backpack until you read a `Cleansing scroll`. A cursed item lying on the floor is not picked up by itself: put it in by hand if you want it.
+
+## Items
+- **Blades** add Attack. **Wards** add Defence and Health.
+- **Runes** are skills that cost Focus:
+  - `Bolt` hits the nearest monster in sight;
+  - `Push` throws back the monsters next to you;
+  - `Ward` stops the next hit;
+  - `Blink` jumps away;
+  - `Mend` heals;
+  - `Storm` hits every monster in sight.
+- **Charms** work all the time: more light, traps shown, more gold, more Focus or Health, healing over time.
+- **Potions** and **scrolls** are used up: healing, Focus, lifting curses, showing the whole floor, escaping next to the stairs, fire all around you.
+
+The quick slots at the bottom hold the first four runes, potions and scrolls in the backpack, read left to right, row by row. Tap one or press [[1]] to [[4]]. A rune's slot shows its Focus cost.
+
+## Monsters
+Each kind has one habit:
+- **Rat:** plain.
+- **Rat swarm:** splits off a rat when you hit it.
+- **Bat:** takes two steps a turn.
+- **Skeleton:** plain, but sturdier.
+- **Archer:** shoots along a row or a column and keeps its distance.
+- **Slime:** acts every other turn.
+- **Bell ghoul:** rings its bell when it wakes, and everyone near it wakes too.
+- **Mimic:** looks like a chest until you are next to it.
+- **Spider:** leaps next to you along a straight line.
+- **Wisp:** its hit also drains 1 Focus.
+- **Stone guard:** only moves while you are not in its row or column.
+- **Knight:** plain and armoured.
+- **Brute:** acts every other turn and hits very hard.
+- **Warden:** on floor 10. It calls skeletons every 6 turns and holds the key.
+
+Monsters sleep until they see you (closed eyes), and they get a little stronger every three floors.
+
+## Modes and runs
+`New run (N)` asks for the mode:
+- `Gentle`: more Health, a potion to start, and a save point when you reach floors 4, 7 and 10. After a fall you can go back to the last save point.
+- `Grim`: one life. A fall ends the run.
+
+Every crypt has a code, shown in the result window and in `Records`. Type a code in `New run` to go down the same crypt again: the same floors, chests and monsters. Leave it empty for a new crypt.
+
+## Records and sync
+`Records` shows your runs, wins and the deepest floor you reached in each mode. They sync between your devices through [orOS sync](help:t/sync), adding up the runs from every device, and they count in the [Game Center](help:a/gamecenter). The run in progress, its save point and the sound setting stay on this device, and an unfinished run continues where you left it. `Reset records` clears the records on every device.
+
+## Keyboard
+- Arrow keys or [[W]] [[A]] [[S]] [[D]]: one step. [[Space]]: wait.
+- [[I]]: backpack. In the backpack, [[R]] rotates and [[Z]] undoes.
+- [[1]] to [[4]]: quick slots. [[N]]: new run. [[+]] and [[-]]: zoom. [[Esc]]: stop walking.
+
+## Tips
+- Read the marks before you step: a cell without red is safe for one more turn.
+- Fight in corridors, where only one monster can reach you.
+- A small blade that links can beat a big one that does not: watch the dots.
+- Keep a potion in a quick slot, and leave room in the backpack for what the next chest holds.

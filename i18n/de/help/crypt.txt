@@ -1,0 +1,96 @@
+# Gruft
+Gruft ist ein rundenbasierter Dungeon Crawler mit einem Rucksack-Rätsel. Steig zehn Ebenen einer Gruft hinab, kämpfe gegen das, was dort lebt, und pack deine Funde gut: Was du trägst und wie es zusammenpasst, ist dein ganzer Held.
+
+## So wird gespielt
+Jede Aktion ist eine Runde: ein Schritt, ein Angriff, eine Truhe öffnen, einen Gegenstand benutzen oder warten. Die Monster bewegen sich nur, wenn du es tust.
+
+Du gewinnst, wenn du dem Hüter auf Ebene 10 den Schlüssel abnimmst und dort die Treppe erreichst, die der Ausgang ist.
+
+Jedes wache Monster zeigt, was es als Nächstes tut. Ein rotes Feld mit Kreuz ist ein Feld, das es treffen wird, und ein heller Pfeil zeigt, wohin es geht. Ein Angriff trifft nur, wenn du noch auf dem markierten Feld stehst, wenn die Monster ziehen. Du kannst also herausgehen oder zuerst zuschlagen.
+
+Der Schaden ist immer der Angriff des Angreifers minus die Abwehr des Ziels, mindestens 1. Im Kampf gibt es keine Würfel. Der Zufall entscheidet nur über die Ebenen, was du findest und wem du begegnest, und alles kommt aus dem Gruftcode.
+
+## Gehen und kämpfen
+- Tippe auf ein Feld, das du schon gesehen hast, um dorthin zu gehen. Der Weg endet, wenn ein Monster auftaucht, wenn du verletzt wirst oder wenn du etwas findest.
+- Wische, oder nimm die Pfeiltasten oder [[W]] [[A]] [[S]] [[D]], für einen Schritt.
+- Tippe auf ein Monster neben dir, um es anzugreifen. Tippe auf ein Monster weiter weg, um zu lesen, was es ist und wie es sich verhält.
+- Geh in eine Truhe, um sie zu öffnen. Ihr Inhalt fällt auf ihr Feld.
+- `Eine Runde warten` (die Sanduhr, oder die [[Space]]) lässt die Monster ziehen.
+
+Gold und Gegenstände nimmst du auf, wenn du auf sie trittst. Ein Gegenstand kommt an den ersten freien Platz im Rucksack. Passt er nicht, bleibt er auf dem Boden, bis du Platz machst.
+
+Fallen sind versteckt, bis sie auslösen (3 Schaden) oder etwas sie zeigt. Beim Gehen bekommst du langsam Leben zurück (1 alle 12 Runden) und auch Fokus (1 alle 10 Runden).
+
+## Der Rucksack
+`Rucksack` (oder [[I]]) öffnet ein Raster aus 6 mal 4 Feldern. Es wächst auf 7 mal 5 auf Ebene 4 und auf 8 mal 5 auf Ebene 7. Jeder Gegenstand hat eine Form aus 1 bis 5 Feldern und wirkt nur, solange er im Rucksack ist.
+
+- Tippe auf einen Gegenstand, um ihn zu wählen, und dann auf ein freies Feld, um ihn dort abzulegen, oder zieh ihn.
+- `Drehen (R)`, oder ein zweites Tippen auf den gewählten Gegenstand, dreht ihn.
+- `Herausnehmen` legt ihn auf den Boden. `Einpacken` legt einen Gegenstand vom Boden an den ersten Platz, an den er passt.
+- `Benutzen` benutzt eine Rune, einen Trank oder eine Schriftrolle.
+- `Zurück (Z)` nimmt die letzte Änderung zurück.
+
+Packen kostet keine Runde, außer ein waches Monster kann dich sehen: Dann kostet das Schließen des Rucksacks nach einer Änderung eine Runde.
+
+**Verbindungen:** Die Punkte an den Kanten eines Gegenstands sind seine Anschlüsse. Wenn sich zwei Gegenstände berühren und ihre Anschlüsse einander gegenüberliegen, verbinden sie sich und der Punkt leuchtet. Jede Verbindung gibt einen Bonus:
+- Klinge und Klinge: +1 Angriff
+- Schutz und Schutz: +1 Abwehr
+- eine Rune mit irgendetwas: +1 Fokus
+- Amulett und Amulett: 5 % mehr Gold
+- jedes andere Paar: +2 Leben
+
+**Flüche:** Manche starken Gegenstände sind verflucht (gestreift). Ein verfluchter Gegenstand verlässt den Rucksack erst, wenn du eine `Reinigungsrolle` liest. Ein verfluchter Gegenstand auf dem Boden wird nicht von selbst aufgenommen: Leg ihn von Hand hinein, wenn du ihn willst.
+
+## Gegenstände
+- **Klingen** geben Angriff. **Schutz** gibt Abwehr und Leben.
+- **Runen** sind Fähigkeiten, die Fokus kosten:
+  - `Blitz` trifft das nächste sichtbare Monster;
+  - `Stoß` wirft die Monster neben dir zurück;
+  - `Schutz` hält den nächsten Treffer auf;
+  - `Sprung` bringt dich weg;
+  - `Heilung` heilt;
+  - `Sturm` trifft jedes sichtbare Monster.
+- **Amulette** wirken immer: mehr Licht, sichtbare Fallen, mehr Gold, mehr Fokus oder Leben, Heilung mit der Zeit.
+- **Tränke** und **Schriftrollen** werden verbraucht: Heilung, Fokus, Flüche aufheben, die ganze Ebene zeigen, Flucht neben die Treppe, Feuer rund um dich.
+
+Die Schnellplätze unten halten die ersten vier Runen, Tränke und Schriftrollen im Rucksack, von links nach rechts und Reihe für Reihe gelesen. Tippe auf einen oder drücke [[1]] bis [[4]]. Der Platz einer Rune zeigt ihre Fokuskosten.
+
+## Monster
+Jede Art hat eine Eigenart:
+- **Ratte:** schlicht.
+- **Rattenschwarm:** spaltet bei einem Treffer eine Ratte ab.
+- **Fledermaus:** macht zwei Schritte pro Runde.
+- **Skelett:** schlicht, aber zäher.
+- **Bogenschütze:** schießt entlang einer Reihe oder Spalte und hält Abstand.
+- **Schleim:** handelt nur jede zweite Runde.
+- **Glockenghul:** läutet beim Erwachen seine Glocke, und alle in seiner Nähe wachen auf.
+- **Mimik:** sieht aus wie eine Truhe, bis du neben ihr stehst.
+- **Spinne:** springt in gerader Linie neben dich.
+- **Irrlicht:** sein Treffer raubt auch 1 Fokus.
+- **Steinwächter:** bewegt sich nur, solange du nicht in seiner Reihe oder Spalte stehst.
+- **Ritter:** schlicht und gepanzert.
+- **Rohling:** handelt jede zweite Runde und schlägt sehr hart zu.
+- **Hüter:** auf Ebene 10. Er ruft alle 6 Runden Skelette und hält den Schlüssel.
+
+Monster schlafen, bis sie dich sehen (geschlossene Augen), und werden alle drei Ebenen etwas stärker.
+
+## Modi und Abstiege
+`Neuer Abstieg (N)` fragt nach dem Modus:
+- `Sanft`: mehr Leben, ein Trank zum Start und ein Speicherpunkt, wenn du die Ebenen 4, 7 und 10 erreichst. Nach einem Sturz kannst du zum letzten Speicherpunkt zurück.
+- `Gnadenlos`: ein Leben. Ein Sturz beendet den Abstieg.
+
+Jede Gruft hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neuer Abstieg` einen Code ein, um dieselbe Gruft noch einmal hinabzusteigen, mit denselben Ebenen, Truhen und Monstern. Lass das Feld leer für eine neue Gruft.
+
+## Bilanz und Synchronisierung
+Die `Bilanz` zeigt deine Abstiege, Siege und die tiefste erreichte Ebene in jedem Modus. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und zählt die Abstiege aller Geräte zusammen. Sie zählt auch im [Game Center](help:a/gamecenter). Der laufende Abstieg, sein Speicherpunkt und die Toneinstellung bleiben auf diesem Gerät, und ein unfertiger Abstieg geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+
+## Tastatur
+- Pfeiltasten oder [[W]] [[A]] [[S]] [[D]]: ein Schritt. [[Space]]: warten.
+- [[I]]: Rucksack. Im Rucksack dreht [[R]], und [[Z]] nimmt zurück.
+- [[1]] bis [[4]]: Schnellplätze. [[N]]: neuer Abstieg. [[+]] und [[-]]: Zoom. [[Esc]]: Gehen anhalten.
+
+## Tipps
+- Lies die Markierungen vor jedem Schritt: Ein Feld ohne Rot ist noch eine Runde sicher.
+- Kämpfe in Gängen, wo dich nur ein Monster erreichen kann.
+- Eine kleine Klinge mit Verbindung kann eine große ohne schlagen: Achte auf die Punkte.
+- Halte einen Trank auf einem Schnellplatz und lass im Rucksack Platz für das, was die nächste Truhe enthält.

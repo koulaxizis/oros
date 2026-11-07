@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.54.00
+- **New game: Crypt.** A turn-based dungeon crawler with a backpack puzzle. Go down ten floors, read what each monster will do next and step out of the red, and pack what you find: items work only in the backpack, and items whose dots touch give a bonus. Play Gentle, with save points on floors 4, 7 and 10, or Grim, with one life. Every crypt has a code, so you can go down the same one again. It is in the Game Center under a new group, RPG and adventure.
+
 ## Version 5.53.00
 - **Realm: Island editor.** Draw your own island: paint sea, land and thicket, mark where each side starts, then play it against the computer or with friends. Every drawn island has a short code you can copy or share, and anyone can play it by typing the code in New game.
 

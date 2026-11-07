@@ -27,6 +27,7 @@ orosPack("de", "shell", {
  "app.converter": "orOS Konverter",
  "app.crm": "CRM",
  "app.crossword": "Kreuzworträtsel",
+ "app.crypt": "Gruft",
  "app.cycle": "Zyklus",
  "app.device": "Geräteinfo",
  "app.diary": "Ein-Satz-Tagebuch",

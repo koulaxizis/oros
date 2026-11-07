@@ -117,6 +117,13 @@
       var g = obj(s.g);
       return !!g && !s.done && num(g.over) < 0 && num(g.acts) > 0;
     },
+    // Crypt: {g: engine state, opts, cp, done}; under way after the
+    // first turn, until the run is over (a fall in Gentle with a save
+    // point still waits for the choice, so it is under way too).
+    crypt: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.done && num(g.turn) > 0 && (num(g.over) < 0 || !!obj(s.cp));
+    },
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);

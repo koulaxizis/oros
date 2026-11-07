@@ -1173,6 +1173,14 @@
       "type": "internal"
     },
     {
+      "id": "crypt",
+      "name": "Crypt",
+      "category": "Games",
+      "icon": "crypt",
+      "url": "crypt/",
+      "type": "internal"
+    },
+    {
       "id": "gamecenter",
       "name": "Game Center",
       "category": "Games",
