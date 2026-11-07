@@ -24,6 +24,10 @@
       "bytes": 269311,
       "ms": 42
     },
+    "banner": {
+      "bytes": 276040,
+      "ms": 116
+    },
     "battleship": {
       "bytes": 263167,
       "ms": 51

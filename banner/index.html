@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-zotibth5M7vNfjVcxVuV+yvuyh9i35Zb4gLa+pUIQR4='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=banner" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Banner · orOS</title>
+
+  <link rel="stylesheet" href="../fonts.css?v=5.60.00">
+  <link rel="stylesheet" href="banner.css?v=5.60.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=5.60.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two strips on a phone -->
+  <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Banner</h1>
+    <div class="tb-row" id="tb-a">
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="undo-btn"></button>
+      <span class="spacer"></span>
+      <button type="button" class="end-btn" id="end-btn" data-i18n="btn.end">End turn</button>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn"></button>
+    </div>
+  </header>
+
+  <!-- Status: the two Keeps, energy, whose turn -->
+  <div id="status">
+    <span class="stat keep" id="k0"><span class="sw"></span><span class="bar"><span class="fill"></span></span><span class="v"></span></span>
+    <span id="mid"><span id="energy"></span><span id="who"></span></span>
+    <span class="stat keep" id="k1"><span class="sw"></span><span class="bar"><span class="fill"></span></span><span class="v"></span></span>
+  </div>
+  <div id="msg" aria-hidden="true"></div>
+
+  <main id="board-wrap">
+    <canvas id="board" tabindex="0" role="application"></canvas>
+  </main>
+
+  <!-- The hand of the side to play -->
+  <nav id="hand"></nav>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js?v=5.60.00" data-app="banner"></script>
+
+  <script src="../gamekit/haptics.js?v=5.60.00"></script>
+  <script src="cards.js?v=5.60.00"></script>
+  <script src="engine.js?v=5.60.00"></script>
+  <script src="banner.js?v=5.60.00"></script>
+
+</body>
+</html>

@@ -1181,6 +1181,14 @@
       "type": "internal"
     },
     {
+      "id": "banner",
+      "name": "Banner",
+      "category": "Games",
+      "icon": "banner",
+      "url": "banner/",
+      "type": "internal"
+    },
+    {
       "id": "gamecenter",
       "name": "Game Center",
       "category": "Games",
