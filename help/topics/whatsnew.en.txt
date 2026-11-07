@@ -4,6 +4,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 5.66.00
 - **Banner: March and Last battles.** The flag button in Banner starts a March: eight battles in a row against a stronger computer each time, from Easy to Hard. After each win you add 1 of 3 cards to your deck or remove one, and one loss ends the march. `Records` now also shows your marches and your last 10 battles, with `Replay` to play one again.
 
+## Version 5.65.01
+- **Update notices from your other devices.** Update notices travel with sync, so a computer that had not updated yet could say "orOS was updated to" a newer version than it runs. Such a notice now adds "on another device" and the version this device runs; Settings › System always shows this device's own version.
+
 ## Version 5.65.00
 - **Suggestion of the week.** Once a week, from Monday 10:00, orOS suggests one app or game you have never opened on any of your devices, with a notice in the bell and a card at the top of Today. `Try it` opens it, `Not for me` means it is never suggested again, and `Mute suggestions` stops them on all your devices (the `Weekly app suggestion` switch in Settings › Notifications turns them back on).
 - **Game challenges everywhere.** Today has a row with how many of today's game challenges are done, and the Assistant can read it. Two new Game Center achievements: `Challenge week` (all of the day's challenges 7 days in a row) and `Challenge seeker` (on 30 days).
