@@ -1,7 +1,7 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.60.00
+## Version 5.61.00
 - **Banner, a new card battle.** In Games: each side plays cards from a deck of 20 onto a small board of 5 by 7 tiles, to put down units, change the ground or cast spells. Break the other Keep, or hold the three shrines for three turns. Four ready-made decks (Iron, Thorn, Tide, Ember), the computer on Easy, Medium or Hard, or two players on one device with the hand hidden between turns. Battle codes replay the same board and shuffle, records sync, and Banner counts in the Game Center.
 
 ## Version 5.59.00

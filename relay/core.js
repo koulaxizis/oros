@@ -19,6 +19,7 @@
 //           POST /v1  { op: "hook", act, id, tok, ... }  (Automations: incoming webhooks, see hook.js)
 //           /wh/<id>.<sec> POST one small JSON for a device's Automations (hook.js)
 //           /h/<box>/... a household's encrypted shared documents (household apps, see house.js)
+//           /mcp, /gate/..., /.well-known/oauth-* orOS Gate: Claude reads orOS through the open device (gate.js)
 //           /dav      WebDAV pass-through, target in X-Oros-Target (Sync through WebDAV, see dav.js)
 //           /nl/...   public sign-up form and one-click unsubscribe (newsletter.js)
 //           /crm/f/<k> public CRM contact form (crmform.js)
@@ -42,6 +43,7 @@ import { handleHouse } from "./house.js";
 import { validOasa, runOasa, OasaError } from "./oasa.js";
 import { validHookIn, runHookIn, handleHookIn, HookError } from "./hook.js";
 import { handlePreview } from "./preview.js";
+import { handleGate, isGatePath } from "./gate.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -253,6 +255,12 @@ export async function handle(request, env, connectFn, now, fetchFn) {
   // shared documents (relay/house.js), with its own CORS and rate limit.
   if (url.pathname.startsWith("/h/")) {
     return handleHouse(request, env, url, okOrigin, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
+  }
+
+  // orOS Gate (relay/gate.js): Claude's MCP endpoint and OAuth routes
+  // (public), plus the gate device's calls and WebSocket (allowed origins).
+  if (isGatePath(url.pathname)) {
+    return handleGate(request, env, url, okOrigin, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
   // Sync through WebDAV: one WebDAV request to the server named in

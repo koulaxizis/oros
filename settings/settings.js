@@ -796,6 +796,79 @@
     host.appendChild(c);
   }
 
+  // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
+  // through this device while orOS is open. Off by default, per device.
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false;
+  function gateApi() {
+    var p = parentWin();
+    try { return p && p.orosGate && typeof p.orosGate.enable === "function" ? p.orosGate : null; } catch (e) { return null; }
+  }
+  function gateWhen(ms) {
+    return new Date(ms).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" });
+  }
+  function secGate(host) {
+    var G = gateApi();
+    if (!G) return;
+    if (!gateOff) gateOff = G.onChange(function () { render(); });
+    var st = G.state();
+    var c = card(t("gt.title"), "gate");
+    c.appendChild(row(t("gt.switch"), switchBtn(st.on, "gt.switch", function (v) {
+      gateNote = ""; gateInfo = null;
+      (v ? G.enable() : G.disable()).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
+    }, t("gt.switch")), { hint: t("gt.hint") }));
+    if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
+    if (st.on) {
+      c.appendChild(el("div", "hint", t("gt.conn." + (["on", "connecting", "other", "gone"].indexOf(st.conn) >= 0 ? st.conn : "connecting"))));
+      var url = el("input", "dav-input");
+      url.id = "f-gt-url";
+      url.type = "text";
+      url.readOnly = true;
+      url.value = G.relayUrl;
+      c.appendChild(row(t("gt.url"), url, { hint: t("gt.url.hint"), forId: "f-gt-url", stack: true }));
+      c.appendChild(actions(button(t("gt.copy"), "gt.copy", function () {
+        var done = function () { gateNote = "gt.copied"; render(); };
+        try { navigator.clipboard.writeText(G.relayUrl).then(done, function () { url.select(); }); } catch (e) { url.select(); }
+      })));
+      c.appendChild(el("div", "hint", t("gt.apps.hint")));
+      var list = el("div", "checks");
+      G.apps().forEach(function (a) {
+        var line = el("div", "pair");
+        line.appendChild(el("span", "pair-label", a.name));
+        line.appendChild(switchBtn(a.read, "gt.app:" + a.id, function (v) {
+          if (!G.setApp(a.id, v)) gateNote = "gt.fail";
+          render();
+        }, t("gt.read", { app: a.name })));
+        list.appendChild(line);
+      });
+      c.appendChild(list);
+      c.appendChild(el("div", "hint", t("gt.never")));
+      if (!gateInfo) {
+        gateInfo = { links: null };
+        G.info().then(function (d) { gateInfo = d || { links: 0 }; render(); }, function () { gateInfo = { links: -1 }; render(); });
+      }
+      if (gateInfo.links !== null) {
+        c.appendChild(el("div", "hint", gateInfo.links < 0 ? t("gt.info.fail") :
+          t("gt.links", { n: gateInfo.links }) + (gateInfo.last ? " · " + t("gt.last", { when: gateWhen(gateInfo.last) }) : "")));
+      }
+      c.appendChild(actions(
+        confirmBtn(t("gt.revoke"), t("gt.revoke.sure"), "gt.revoke", function () {
+          G.revoke().then(function () { gateInfo = null; gateNote = "gt.revoked"; render(); }, function () { gateNote = "gt.fail"; render(); });
+        }),
+        button(t(gateLogOpen ? "gt.log.hide" : "gt.log"), "gt.log", function () { gateLogOpen = !gateLogOpen; render(); })
+      ));
+      if (gateLogOpen) {
+        var log = G.log().slice(0, 50);
+        if (!log.length) c.appendChild(el("p", "msg msg-dim", t("gt.log.none")));
+        log.forEach(function (e) {
+          c.appendChild(el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
+            " · " + (e.ok ? t("gt.log.items", { n: e.k || 0 }) : t("gt.log.refused"))));
+        });
+        if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
+      }
+    }
+    host.appendChild(c);
+  }
+
   // In the orOS Android app only (BR-PHONE v5): Health Connect.
   function secPhoneHealth(host) {
     var P = phone();
@@ -2165,6 +2238,7 @@
   }
   function secServices(host) {
     secPhoneHealth(host);
+    secGate(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
     var c0 = card(null);
