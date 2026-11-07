@@ -235,7 +235,7 @@
             if (use.moved) moves[row.id] = use.la;
             K.uniqueFits(its);
             // a PayPal reading is a PayPal file: its bank twins ("PAYPAL *…") are found
-            var plan = B.plan(its, { tx: tx, tombs: D.tombs, ac: row.ac, cur: A.cur(), rules: D.rule, xfer: D.xfer, pp: pp });
+            var plan = B.plan(its, { tx: tx, tombs: D.tombs, ac: row.ac, cur: A.cur(), rules: D.rule, xfer: D.xfer, pp: pp, areas: D.area, plArea: (D.set && D.set.pld) || "" });
             B.entries(plan, row.ac, pp).forEach(function (x) {
               if (seenIds[x.id]) return;
               seenIds[x.id] = 1;
