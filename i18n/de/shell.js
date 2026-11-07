@@ -991,6 +991,7 @@ orosPack("de", "shell", {
  "ts.tray.title": "Zeiterfassung: {p}, läuft seit {t} ({d})",
  "update.checking": "Suche nach Updates…",
  "update.none": "orOS ist auf dem neuesten Stand ({v}).",
+ "update.elsewhere": "auf einem anderen Gerät · dieses hat v{v}",
  "update.done": "orOS wurde aktualisiert auf",
  "update.ready": "Neue Version · Neu starten",
  "update.ready.title": "Eine neue Version von orOS ist bereit. Starte orOS neu, um sie zu verwenden.",

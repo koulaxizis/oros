@@ -33,8 +33,11 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.64.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.64.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
+  // notifications.js reads it to tell an update notice synced from
+  // another device (a newer version) from this one's own.
+  window.__orosAppVersion = APP_VERSION;
 
   // ---------- 1. State & registries ----------
   var state = {

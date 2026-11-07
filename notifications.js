@@ -394,7 +394,7 @@
       <div style="display:flex; justify-content:space-between; align-items:start;">
         <div style="flex:1; min-width:0;">
           <div style="font-weight:600; margin-bottom:4px; white-space:normal;">${escapeHtml(item.title)}</div>
-          <div style="font-size:0.9em; opacity:0.9; white-space:normal;">${escapeHtml(item.body)}</div>
+          <div style="font-size:0.9em; opacity:0.9; white-space:normal;">${escapeHtml(shownBody(item))}</div>
         </div>
         <div style="display:flex; align-items:center;">
           ${hasAction ? `<button class="notif-action" style="background:none; border:none; color:var(--accent); font-size:0.95em; font-weight:700; cursor:pointer; padding:8px 0 8px 12px; line-height:1;">${escapeHtml(item.action.label)}</button>` : ''}
@@ -470,7 +470,7 @@
         Notification.permission === 'granted') {
       try {
         var wn = new Notification('orOS — ' + item.title, {
-          body: item.body || '',
+          body: shownBody(item),
           tag: item.dedupKey || undefined
         });
         // A click on the OS notification lands where the in-tab one
@@ -704,6 +704,30 @@
     return map[position] || map['bottom-right'];
   }
 
+  // UPD-ELSE (Chris 2026-11-07): update notices sync between devices,
+  // so the bell of a computer still on 5.44.01 said "orOS was updated
+  // to v5.61.00" (another device's update) while its Settings showed
+  // 5.44.01. A notice naming a NEWER version than the one running here
+  // cannot be this device's own: say so, and which version runs here.
+  function cmpVer(a, b) {
+    var pa = String(a).split('.'), pb = String(b).split('.');
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var x = parseInt(pa[i] || '0', 10) || 0, y = parseInt(pb[i] || '0', 10) || 0;
+      if (x !== y) return x < y ? -1 : 1;
+    }
+    return 0;
+  }
+  function shownBody(item) {
+    var body = (item && typeof item.body === 'string') ? item.body : '';
+    if (!item || item.ns !== 'system' || item.type !== 'update') return body;
+    var here = window.__orosAppVersion;
+    var m = /^v(\d+(?:\.\d+)*)$/.exec(body);
+    if (typeof here !== 'string' || !m || cmpVer(m[1], here) <= 0) return body;
+    var tail = window.t('update.elsewhere');
+    if (!tail || tail === 'update.elsewhere') tail = 'on another device · this one runs v{v}';
+    return body + ' · ' + tail.replace('{v}', here);
+  }
+
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
@@ -907,7 +931,7 @@
           <span style="font-weight:600;">${escapeHtml(item.title)}</span>
           <span style="color:var(--text-dim); font-size:0.85em;">${timeStr}</span>
         </div>
-        <div style="opacity:0.9; font-size:0.95em;">${escapeHtml(item.body)}</div>
+        <div style="opacity:0.9; font-size:0.95em;">${escapeHtml(shownBody(item))}</div>
         ${!item.readAt ? `<div style="margin-top:8px; font-size:0.8em; color:var(--accent);">● ` +
           escapeHtml(window.t('notifs.unread')) + `</div>` : ''}
       `;
