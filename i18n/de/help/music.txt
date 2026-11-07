@@ -76,6 +76,12 @@ Im großen Player wählt die Taste mit dem Bildschirm und den Wellen (`Abspielen
 - **Smart-TV oder Netzwerklautsprecher (DLNA):** Läuft [orOS Bridge](https://useoros.online/download/) 0.10.0 oder neuer auf einem Windows- oder Linux-Computer zu Hause, zeigt dasselbe Fenster die Smart-TVs, Kodi-Boxen und Netzwerklautsprecher in deinem Netzwerk. Beim ersten Mal fragt `Mit orOS Bridge verbinden` nach dem 6-stelligen Code, den die Bridge zeigt (dieselbe Kopplung wie Studio und Scanner & PDF). Wähle ein Gerät, und es spielt; das Fenster hat dann Pause, Lautstärke und `Zurück zu diesem Gerät`. Das Gerät holt den Stream selbst, also gehen nur http- und https-Adressen. `Erneut suchen` sucht noch einmal.
 Das Gerät bekommt die eigene https-Adresse des Songs, also gehen freie Musik und Songs von deinen eigenen Servern; Songs auf deinem orOS-Laufwerk und Offline-Kopien spielen nur auf diesem Gerät. Solange ein Fernseher oder Lautsprecher spielt, bleibt Musik hier still und ist seine Fernbedienung: Nächster, vorheriger oder ein anderer Song wird dorthin geschickt.
 
+## Einen Song teilen
+`Teilen…` im ⋯-Menü eines Songs oder der Teilen-Knopf oben im großen Player sendet den Song mit [An jemanden senden](help:t/share): das Teilen-Menü deines Handys (WhatsApp, Viber, Messenger usw.), ein Link, ein QR-Code oder die Knöpfe unter `Senden mit`.
+- Ein Song aus freier Musik (Internet Archive, Jamendo, ccMixter, Openverse) oder von einem öffentlichen Link geht mit Adresse, Cover, Lizenz und Quellenangabe, also läuft er auf der Seite, die die andere Person öffnet, auch ohne orOS. `Zu meinem orOS hinzufügen` lässt ihn dort abspielen, zu den Lieblingssongs oder in eine Playlist legen.
+- Ein Song von deinem eigenen Server geht nur mit seinem Namen: Die Adresse des Servers und deine Anmeldung verlassen dein Gerät nie.
+- Bei einem Song auf diesem Gerät wird jedes Mal gefragt: den Namen als Link senden oder die Datei selbst über das Teilen-Menü (wo das Gerät Dateien senden kann, bis 100 MB). Sende eine Datei nur, wenn du sie weitergeben darfst.
+
 ## Sleep-Timer
 `Sleep-Timer` im großen Player stoppt die Musik nach 5 bis 90 Minuten oder am Ende des laufenden Songs. Die letzten zehn Sekunden werden ausgeblendet. Die Schaltfläche zeigt, wie viel Zeit übrig ist; wähle `Timer ausschalten`, um ihn abzubrechen.
 

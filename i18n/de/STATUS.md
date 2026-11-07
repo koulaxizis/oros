@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 39498 of 39767 (99%)
+- Strings: 39596 of 39868 (99%)
 - Help pages: 153 of 153 (100%)
 - Shown in the language list: yes
 
@@ -12,10 +12,10 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1756 / 1756 |
+| assistant | 100% | 1757 / 1757 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 204 / 204 |
+| automations | 100% | 258 / 258 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | battleship | 100% | 102 / 102 |
@@ -49,7 +49,7 @@ text is still written in the code. They switch over wave by wave
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 445 / 445 |
+| files | 100% | 448 / 448 |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -88,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | montage | 100% | 378 / 378 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 100% | 512 / 512 |
+| music | 100% | 522 / 522 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
 | newsletter | 99% | 1003 / 1008 |
@@ -96,7 +96,7 @@ text is still written in the code. They switch over wave by wave
 | notes | 99% | 189 / 190 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 184 / 184 |
-| passwords | 99% | 462 / 463 |
+| passwords | 99% | 467 / 468 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
@@ -120,7 +120,7 @@ text is still written in the code. They switch over wave by wave
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
 | settings | 98% | 903 / 914 |
-| share | 100% | 184 / 184 |
+| share | 100% | 205 / 205 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1093 / 1097 |
 | signature | 100% | 219 / 219 |
@@ -130,7 +130,7 @@ text is still written in the code. They switch over wave by wave
 | slides | 100% | 427 / 427 |
 | snake | 100% | 53 / 53 |
 | solitaire | 100% | 103 / 103 |
-| solo | English for now | 89 / 89 |
+| solo | English for now | 92 / 92 |
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 82% | 409 / 495 |
@@ -146,7 +146,7 @@ text is still written in the code. They switch over wave by wave
 | texttools | 100% | 315 / 315 |
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
-| timesheet | 100% | 378 / 378 |
+| timesheet | 99% | 379 / 382 |
 | today | 100% | 94 / 94 |
 | todo | 100% | 261 / 261 |
 | together | 100% | 303 / 303 |

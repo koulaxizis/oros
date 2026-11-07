@@ -100,6 +100,10 @@
       "o.err": "No answer from {s}.", "o.busy": "Too many requests to {s}. Try again in a minute.", "o.offline": "You are offline.",
       "o.retry": "Try again", "o.closed": "This item has no open licence, so Music does not play it.", "o.wait": "Searching online…",
       "o.albums": "Albums · {s}", "o.songs": "Songs · {s}",
+      "m.share": "Share…", "sh.title": "Share this song", "sh.name": "Send its name as a link",
+      "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
+      "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
+      "sh.send": "Send the file", "sh.ready": "The file is ready to send.", "sh.none": "Sharing is not available here.",
       "m.credit": "Copy credit", "m.source": "Open on {s}", "m.saveOff": "Save for offline", "m.delOff": "Remove offline copy",
       "m.saveAlbum": "Save album for offline",
       "toast.copied": "Credit copied.", "toast.offSaving": "Saving {n} for offline…", "toast.offSaved": "{n} saved for offline.",
@@ -261,6 +265,10 @@
       "o.err": "Δεν ήρθε απάντηση από {s}.", "o.busy": "Πολλά αιτήματα προς {s}. Δοκίμασε ξανά σε ένα λεπτό.", "o.offline": "Δεν υπάρχει σύνδεση.",
       "o.retry": "Δοκίμασε ξανά", "o.closed": "Αυτό δεν έχει ανοιχτή άδεια, οπότε η Μουσική δεν το παίζει.", "o.wait": "Αναζήτηση online…",
       "o.albums": "Άλμπουμ · {s}", "o.songs": "Τραγούδια · {s}",
+      "m.share": "Κοινοποίηση…", "sh.title": "Κοινοποίηση τραγουδιού", "sh.name": "Αποστολή του ονόματος ως σύνδεσμο",
+      "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
+      "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
+      "sh.send": "Αποστολή αρχείου", "sh.ready": "Το αρχείο είναι έτοιμο για αποστολή.", "sh.none": "Η κοινοποίηση δεν είναι διαθέσιμη εδώ.",
       "m.credit": "Αντιγραφή αναφοράς", "m.source": "Άνοιγμα στο {s}", "m.saveOff": "Αποθήκευση για χωρίς σύνδεση", "m.delOff": "Αφαίρεση αντιγράφου",
       "m.saveAlbum": "Αποθήκευση άλμπουμ για χωρίς σύνδεση",
       "toast.copied": "Η αναφορά αντιγράφηκε.", "toast.offSaving": "Αποθήκευση: {n} για χωρίς σύνδεση…", "toast.offSaved": "Αποθηκεύτηκαν για χωρίς σύνδεση: {n}.",
@@ -417,6 +425,7 @@
     repeat1: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><path d="M11 10h1v5"/></svg>',
     heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
     heartOn: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg>',
+    share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
     more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
@@ -667,6 +676,68 @@
       if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(ok, legacy); return; }
     } catch (e) {}
     legacy();
+  }
+  // ---------- Share one song (BR-SHARE-TRACK) ----------
+  // Through the shell's "Send to someone" (kind "track", share/kinds.js
+  // normalizes it again). An open-source song or a public link goes with
+  // its stream, cover, licence and credit; a song from the person's
+  // server or device only with its name (never the server, a login or a
+  // path). A song on this device asks every time (Chris 2026-11-07):
+  // its name as a link, or the file itself through the system's share
+  // sheet where the device can send files.
+  var SHARE_MAX = 100 * 1024 * 1024;
+  var SHARE_MIME = { mp3: "audio/mpeg", flac: "audio/flac", m4a: "audio/mp4", ogg: "audio/ogg", oga: "audio/ogg", opus: "audio/ogg", wav: "audio/wav", weba: "audio/webm", webm: "audio/webm" };
+  function shareApi() {
+    try { return window.parent !== window && window.parent.orosShare ? window.parent.orosShare : null; } catch (e) { return null; }
+  }
+  function shareData(r) {
+    var d = { t: r.t || "", a: r.a || "", s: "own" };
+    if (r.al) d.al = r.al;
+    if (r.y) d.y = String(r.y);
+    if (r.d) d.d = r.d;
+    if (!r.p && (isOpen(r) || r.s === "ln")) {
+      d.s = r.s; d.k = r.k;
+      ["u", "pg", "art", "li", "vi"].forEach(function (f) { if (typeof r[f] === "string" && r[f]) d[f] = r[f]; });
+      if (isOpen(r)) d.cr = O.credit(r, LANG);
+    }
+    return d;
+  }
+  function shareMime(p) { return SHARE_MIME[(String(p).split(".").pop() || "").toLowerCase()] || ""; }
+  function canShareFile(p) {
+    var m = shareMime(p);
+    try { return !!(m && navigator.canShare && navigator.canShare({ files: [new File([""], "a." + String(p).split(".").pop(), { type: m })] })); } catch (e) { return false; }
+  }
+  function shareSong(r) {
+    var api = shareApi();
+    if (!r) return;
+    var data = shareData(r);
+    if (r.p && !r._missing && canShareFile(r.p)) {
+      menuDlg([
+        [t("sh.name"), function () { if (api) api.open({ kind: "track", data: data }); else showToast(t("sh.none")); }],
+        [t("sh.file"), function () { shareFile(r); }]
+      ], t("sh.title"), t("sh.fileSub"));
+      return;
+    }
+    if (!api) { showToast(t("sh.none")); return; }
+    api.open({ kind: "track", data: data });
+  }
+  // The file as it is on the disk. The share sheet needs a fresh tap,
+  // so a slow read ends on a "Send the file" button instead.
+  function shareFile(r) {
+    var F = LIB.fs();
+    if (!F) { showToast(t("toast.noFs")); return; }
+    F.read(r.p).then(function (blob) {
+      if (!blob) throw new Error("read");
+      if (blob.size > SHARE_MAX) { showToast(t("sh.big")); return; }
+      var file = new File([blob], String(r.p).split("/").pop(), { type: shareMime(r.p) });
+      if (!navigator.canShare || !navigator.canShare({ files: [file] })) { showToast(t("sh.fileNo")); return; }
+      var go = function () {
+        navigator.share({ files: [file], title: r.t || "" }).catch(function (e) {
+          if (e && e.name === "NotAllowedError") menuDlg([[t("sh.send"), go]], t("sh.ready"), r.t);
+        });
+      };
+      go();
+    }).catch(function () { showToast(t("toast.cant")); });
   }
   function copyCredit(r) { copyText(O.credit(r, LANG), function () { showToast(t("toast.copied")); }); }
   function openExt(u) {
@@ -2786,6 +2857,7 @@
       if (r.pg) items.push([t("m.source", { s: O.sourceName(r) }), function () { openExt(r.pg); }]);
       items.push([t("m.info"), function () { infoRemote(r); }]);
     }
+    if (!r._missing) items.push([t("m.share"), function () { shareSong(r); }]);
     if (r.p) items.push([t("m.info"), function () { infoDlg(r); }]);
     if (r.p) items.push([t("m.delete"), function () { deleteSongs([r]); }, true]);
     menuDlg(items, r.t, r.a);
@@ -2956,6 +3028,7 @@
     var qBtn = button(t("queue"), "icon-btn", function () { showQ = !showQ; if (showQ) showLy = false; dlg._paint(true); }, I.queue);
     var cb = castButton();
     if (cb) head.appendChild(cb);
+    head.appendChild(button(t("m.share"), "icon-btn", function () { var c = H.getState().cur; if (c) shareSong(c); }, I.share));
     head.appendChild(lyBtn);
     head.appendChild(qBtn);
     dlg.appendChild(head);
@@ -3622,7 +3695,9 @@
   // { openFile: { token } } (a song from elsewhere: Files' "Open with",
   // shell fileopen.js; copied into the music folder, then played) |
   // { shuffleAll: true } (orOS Music icon shortcut: every song here,
-  // shuffled) | { addUrl: { url } } (a link shared to orOS Music).
+  // shuffled) | { addUrl: { url } } (a link shared to orOS Music) |
+  // { addRef: { ref } } / { findSong: { q } } (a song sent with "Send to
+  // someone", BR-SHARE-TRACK).
   function playPath(p) {
     // A scan already running (the one at boot) may have started before
     // the file came in: then one more scan picks it up.
@@ -3660,9 +3735,30 @@
     } else if (SV.LIST_RE.test(bare)) promptDlg(t("sv.import"), t("imp.urlPh"), u, t("imp.go"), importUrl, 1000);
     else feedDlg(u);
   }
+  // A song someone shared (share/ "Add to my orOS", BR-SHARE-TRACK):
+  // nothing is kept before a tap on Like or a playlist.
+  function addRefTarget(o) {
+    var ref = o && o.ref ? C.normRef(o.ref) : null;
+    if (!ref || !C.isRemote(ref)) { showToast(t("toast.cant")); return; }
+    menuDlg([
+      [t("play"), function () { playRows([ref], 0, { kind: "song", id: ref.k, n: ref.t }, false); }],
+      [t("like"), function () { if (!C.isLiked(D(), ref.k)) toggleLike(ref); else showToast(t("toast.liked")); }],
+      [t("m.addPl"), function () { addToPlaylist([ref]); }]
+    ], ref.t, ref.a);
+  }
+  // Only a song's name came (from someone's own server or device): the
+  // search, typed in.
+  function findSongTarget(o) {
+    var q = o && typeof o.q === "string" ? o.q.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 200) : "";
+    if (!q) return;
+    searchQ = q; onlineQ = q;
+    setTab("search");
+  }
   function openTarget(tg) {
     if (!H || !tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg.addUrl && typeof tg.addUrl === "object") { addUrlTarget(tg.addUrl); return; }
+    if (tg.addRef && typeof tg.addRef === "object") { addRefTarget(tg.addRef); return; }
+    if (tg.findSong && typeof tg.findSong === "object") { findSongTarget(tg.findSong); return; }
     if (tg.shuffleAll === true) {
       // (No songs yet: Home shows how to add them.)
       if (tracks.length) playRows(tracks, -1, { kind: "all", id: "", n: t("now.lib") }, true);
