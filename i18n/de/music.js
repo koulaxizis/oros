@@ -510,5 +510,15 @@ orosPack("de", "music", {
  "unknown.album": "Unbekanntes Album",
  "unknown.artist": "Unbekannter Künstler",
  "unlike": "Aus Lieblingssongs entfernen",
- "volume": "Lautstärke"
+ "volume": "Lautstärke",
+ "m.share": "Teilen…",
+ "sh.title": "Diesen Song teilen",
+ "sh.name": "Den Namen als Link senden",
+ "sh.file": "Die Datei selbst senden",
+ "sh.fileSub": "Ein Song auf diesem Gerät: nur den Namen senden oder die Datei selbst (nur wenn du sie weitergeben darfst).",
+ "sh.big": "Zu groß, um es als Datei zu senden (höchstens 100 MB).",
+ "sh.fileNo": "Dieses Gerät kann die Datei nicht senden. Sende lieber den Namen.",
+ "sh.send": "Datei senden",
+ "sh.ready": "Die Datei ist bereit zum Senden.",
+ "sh.none": "Teilen ist hier nicht verfügbar."
 });

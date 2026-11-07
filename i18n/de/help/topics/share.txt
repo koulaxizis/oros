@@ -1,5 +1,5 @@
 # An jemanden senden
-Sende eine Sache aus orOS an eine andere Person: eine Aufgabenliste, eine Notiz, einen Kontakt, einen Termin, ein Rezept, ein paar Lesezeichen, einen Wiki-Artikel, einen ganzen Kalender oder ein Fotoalbum. orOS packt es in einen Link. Du sendest den Link, wie du willst, und die andere Person öffnet ihn in ihrem Browser, auch wenn sie orOS nicht nutzt.
+Sende eine Sache aus orOS an eine andere Person: eine Aufgabenliste, eine Notiz, einen Kontakt, einen Termin, ein Rezept, ein paar Lesezeichen, einen Wiki-Artikel, einen ganzen Kalender, ein Fotoalbum oder einen Song. orOS packt es in einen Link. Du sendest den Link, wie du willst, und die andere Person öffnet ihn in ihrem Browser, auch wenn sie orOS nicht nutzt.
 
 ## Etwas senden
 Such in diesen Apps nach der Senden-Schaltfläche:
@@ -12,6 +12,7 @@ Such in diesen Apps nach der Senden-Schaltfläche:
 - [Wiki](app:wiki): `An jemanden senden…` im ⋯-Menü eines Artikels. Der Text reist mit; Bilder bleiben bei dir.
 - [Dateien](app:files): `Fotos an jemanden senden…` im Menü eines Bildes oder Ordners sendet ein Fotoalbum mit bis zu 200 Fotos.
 - [Fotolabor](app:photolab): `Datei` › `An jemanden senden…` sendet das Bild, das du gerade bearbeitest.
+- [Musik](app:music): `Teilen…` im ⋯-Menü eines Songs oder der Teilen-Knopf im großen Player.
 
 Das Fenster `An jemanden senden` zeigt, was mitgeschickt wird. Dann wählst du, wie du es sendest:
 - `Teilen…` öffnet das Teilen-Menü deines Handys oder Computers (Viber, WhatsApp, Signal, E-Mail und so weiter).
@@ -20,6 +21,7 @@ Das Fenster `An jemanden senden` zeigt, was mitgeschickt wird. Dann wählst du, 
 - `E-Mail` schreibt in [Mail](app:mail) eine Nachricht mit dem Link (wenn du ein Mail-Konto eingerichtet hast).
 - `Als Datei speichern` speichert eine kleine Textdatei mit dem Link, die du überall anhängen kannst.
 - `Als Text senden` (Kontakte und Rezepte) sendet einfachen Text, wie bisher.
+- Unter `Senden mit`: WhatsApp, Telegram, Viber, SMS (auf dem Handy), Facebook, X, Bluesky und Mastodon öffnen den Dienst mit dem Link, für Computer ohne Teilen-Menü. Bei Facebook, X, Bluesky und Mastodon entsteht ein öffentlicher Beitrag: Alle, die ihn sehen, können den Link öffnen. Mastodon fragt nach deinem Server (z. B. mastodon.social) und merkt ihn sich auf diesem Gerät.
 
 ## Mit einem Passwort schützen
 Setz den Haken bei `Mit Passwort schützen` und tippe ein Passwort mit mindestens 6 Zeichen ein. Dann zeigt der Link allein nichts: Die andere Person braucht auch das Passwort. Sag es ihr auf anderem Weg, persönlich oder am Telefon, nicht in derselben Nachricht wie den Link.
@@ -35,7 +37,9 @@ Sachen, die für einen einfachen Link zu lang sind (eine lange Notiz oder ein la
 Tippe auf den Link. Eine Seite mit der Sache und diesen Schaltflächen öffnet sich:
 - `Zu meinem orOS hinzufügen` öffnet die passende App mit der Sache. Aufgaben, Kontakte, Kalender, Essensplaner und Lesezeichen zeigen sie dir, bevor etwas gespeichert wird; Notizen erstellt eine neue Seite; Wiki öffnet den Artikel in seinem Editor, und er wird gespeichert, wenn du auf `Speichern` drückst.
 - `Text kopieren` kopiert sie als einfachen Text.
-- `Herunterladen` speichert sie als Datei, die auch andere Programme öffnen: einen Kontakt als .vcf, einen Termin oder Kalender als .ics, Lesezeichen als .html, einen Wiki-Artikel als .md, alles andere als .txt.
+- `Herunterladen` speichert sie als Datei, die auch andere Programme öffnen: einen Kontakt als .vcf, einen Termin oder Kalender als .ics, Lesezeichen als .html, einen Wiki-Artikel als .md, einen Song als .m3u (jeder Player öffnet ihn), alles andere als .txt.
+
+Ein Song läuft direkt auf der Seite, wenn er aus einer freien Musikquelle (Internet Archive, Jamendo, ccMixter, Openverse) oder von einem öffentlichen Link kommt; darunter stehen Lizenz und Quellenangabe. Ein Song vom eigenen Server oder Gerät einer Person kommt nur mit seinem Namen: `Zu meinem orOS hinzufügen` sucht ihn dann in [Musik](app:music), und `Auf MusicBrainz suchen` schlägt ihn dort nach.
 
 Ein Kalender öffnet sich bei einem Monat: Tippe auf einen Tag, um seine Termine zu sehen, oder wechsle zu `Liste` für den ganzen Monat; ‹ und › blättern zwischen den Monaten. Termine mit Uhrzeit erscheinen in deiner eigenen Zeitzone. `Zu meinem orOS hinzufügen` öffnet [Kalender](app:calendar), der dir sagt, wie viele Termine neu oder geändert sind, bevor er sie speichert; fügst du denselben Kalender später noch einmal hinzu, werden diese Termine aktualisiert statt verdoppelt.
 

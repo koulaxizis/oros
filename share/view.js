@@ -34,6 +34,9 @@
       "addHint.cal": "Opens Calendar, shows how many events are new and asks before saving.",
       "dl.contact": "Download (.vcf)", "dl.event": "Add to calendar (.ics)", "dl.links": "Download (.html)", "dl.wiki": "Download (.md)",
       "dl.cal": "Add to calendar (.ics)",
+      "addHint.track": "Opens Music: play it, like it or add it to a playlist.", "addHint.trackFind": "Opens Music and searches for it.",
+      "dl.track": "Download (.m3u)", trPlayHint: "It plays from {s}, straight in this page.",
+      trOpen: "Open on {s}", trFind: "Find it on MusicBrainz", trCover: "Cover",
       calMonth: "Month", calList: "List", calPrev: "Previous month", calNext: "Next month",
       calNoneDay: "Nothing on this day.", calNoneMonth: "Nothing this month.",
       calZone: "Times are in your time zone ({z}).", calAllDay: "all day",
@@ -75,6 +78,9 @@
       "addHint.cal": "Ανοίγει το Ημερολόγιο, δείχνει πόσα γεγονότα είναι καινούργια και ρωτά πριν αποθηκεύσει.",
       "dl.contact": "Λήψη (.vcf)", "dl.event": "Προσθήκη σε ημερολόγιο (.ics)", "dl.links": "Λήψη (.html)", "dl.wiki": "Λήψη (.md)",
       "dl.cal": "Προσθήκη σε ημερολόγιο (.ics)",
+      "addHint.track": "Ανοίγει τη Μουσική: παίξ' το, βάλ' το στα αγαπημένα ή σε λίστα.", "addHint.trackFind": "Ανοίγει τη Μουσική και το αναζητά.",
+      "dl.track": "Λήψη (.m3u)", trPlayHint: "Παίζει από το {s}, κατευθείαν σε αυτή τη σελίδα.",
+      trOpen: "Άνοιγμα στο {s}", trFind: "Βρες το στο MusicBrainz", trCover: "Εξώφυλλο",
       calMonth: "Μήνας", calList: "Λίστα", calPrev: "Προηγούμενος μήνας", calNext: "Επόμενος μήνας",
       calNoneDay: "Τίποτα αυτή τη μέρα.", calNoneMonth: "Τίποτα αυτόν τον μήνα.",
       calZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", calAllDay: "όλη μέρα",
@@ -297,6 +303,8 @@
     } else if (env.k === "album") {
       renderAlbum(c, env, bin);
       return;
+    } else if (env.k === "track") {
+      renderTrack(c, env);
     } else if (env.k === "cal") {
       renderCal(c, env);
     } else if (env.k === "links") {
@@ -311,6 +319,45 @@
       c.appendChild(lu);
     }
     actions(c, env);
+  }
+  // ---------- One song (BR-SHARE-TRACK) ----------
+  // The stream is an https address on the song's own source (kinds.js
+  // checks the hosts); nothing loads before Play (preload none). A song
+  // that came with only its name gets a search link instead.
+  function renderTrack(c, env) {
+    var d = env.d, S = K.strings(LANG), src = K.trackSource(d, LANG);
+    var h1 = c.querySelector("h1");
+    if (d.art) {
+      var img = el("img", "tr-art");
+      img.alt = t("trCover");
+      img.referrerPolicy = "no-referrer";
+      img.loading = "lazy";
+      img.addEventListener("error", function () { img.remove(); });
+      img.src = d.art;
+      c.insertBefore(img, h1);
+    }
+    var meta = [d.a, d.al ? d.al + (d.y ? " (" + d.y + ")" : "") : "", d.d ? K.fmtLen(d.d) : ""].filter(Boolean).join(" \u00b7 ");
+    if (meta) c.appendChild(el("p", "meta", meta));
+    if (d.u) {
+      var au = el("audio", "tr-audio");
+      au.controls = true;
+      au.preload = "none";
+      au.setAttribute("referrerpolicy", "no-referrer");
+      au.src = d.u;
+      c.appendChild(au);
+      if (src) c.appendChild(el("p", "hint", t("trPlayHint").replace("{s}", src)));
+    } else if (d.s === "own") {
+      c.appendChild(el("p", "hint", S.trOwn));
+    }
+    if (d.cr) c.appendChild(el("p", "meta tr-cr", d.cr));
+    var more = el("p", "meta");
+    if (d.pg) more.appendChild(link(d.pg, t("trOpen").replace("{s}", src || d.pg)));
+    if (!d.u) {
+      if (more.childNodes.length) more.appendChild(document.createTextNode(" \u00b7 "));
+      var q = "recording:\"" + d.t.replace(/"/g, "") + "\"" + (d.a ? " AND artist:\"" + d.a.replace(/"/g, "") + "\"" : "");
+      more.appendChild(link("https://musicbrainz.org/search?type=recording&method=advanced&query=" + encodeURIComponent(q), t("trFind")));
+    }
+    if (more.childNodes.length) c.appendChild(more);
   }
   // ---------- Free times: pick one, then answer ----------
   function myZone() {
@@ -697,9 +744,10 @@
     acts.appendChild(btn(t("add"), "prim", function () { addToOros(env); }));
     acts.appendChild(btn(t("copyText"), "", function () { copyText(K.text(env, LANG, helpers)); }));
     var f = K.file(env, LANG);
-    acts.appendChild(btn(t("dl." + env.k) || t("download"), "", function () { download(f); }));
+    var tr = env.k === "track", find = tr && !(env.d.u && env.d.k);
+    acts.appendChild(btn((tr && !env.d.u ? "" : t("dl." + env.k)) || t("download"), "", function () { download(f); }));
     c.appendChild(acts);
-    c.appendChild(el("p", "hint", t("addHint." + env.k)));
+    c.appendChild(el("p", "hint", t("addHint." + (find ? "trackFind" : env.k))));
   }
   function addToOros(env) {
     try {
