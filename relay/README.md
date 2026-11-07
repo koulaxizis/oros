@@ -794,6 +794,13 @@ counter. No orOS data, no request or answer, nothing logged.
   /gate/ws/<id>` with the subprotocols `gt1` and `t.<token>`. One socket
   per gate: a newer one closes the older (4001); `del` wipes the box and
   closes it (4004).
+- **Several devices (5.70.00):** up to 5 per gate. `invite` (an existing
+  device) makes a join code, `XXXX-XXXX`, 10 minutes, one use, held by a
+  join box `join:<code>`. `join { jc, th }` (no id) adds the new device's
+  token hash and answers the gate id and the app levels. One socket per
+  device; a call goes to a device with orOS on screen (`v1` / `v0`
+  messages) first, else the newest socket. `del` removes one device; the
+  last one wipes the box.
 - **Limits (`GATE_LIMITS`):** request 64 KB, an answer from the device
   900 KB, 25 s for the device to answer, 60 tool calls a minute per
   gate, codes 5 minutes, access tokens 1 hour, refresh tokens 30 days
