@@ -166,7 +166,11 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   const note = await rpc(w, t.access_token, { jsonrpc: "2.0", method: "notifications/initialized" });
   assert.equal(note.status, 202);
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
-  assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines"]);
+  assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
+    "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_delete"]);
+  const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
+  assert.equal(ro.length, 7, "only the three budget_* writers are not read-only");
+  assert.equal(list.result.tools.find((x) => x.name === "budget_delete").annotations.destructiveHint, true);
   const unk = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 3, method: "resources/list" })).json();
   assert.equal(unk.error.code, -32601);
   // An expired access token is refused.

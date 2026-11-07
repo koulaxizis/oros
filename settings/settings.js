@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false;
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "";
   function gateApi() {
     var p = parentWin();
     try { return p && p.orosGate && typeof p.orosGate.enable === "function" ? p.orosGate : null; } catch (e) { return null; }
@@ -823,11 +823,12 @@
       url.id = "f-gt-url";
       url.type = "text";
       url.readOnly = true;
-      url.value = G.relayUrl;
+      url.value = G.relayUrl();
       c.appendChild(row(t("gt.url"), url, { hint: t("gt.url.hint"), forId: "f-gt-url", stack: true }));
+      if (st.moved) c.appendChild(el("div", "hint", t("gt.moved")));
       c.appendChild(actions(button(t("gt.copy"), "gt.copy", function () {
         var done = function () { gateNote = "gt.copied"; render(); };
-        try { navigator.clipboard.writeText(G.relayUrl).then(done, function () { url.select(); }); } catch (e) { url.select(); }
+        try { navigator.clipboard.writeText(G.relayUrl()).then(done, function () { url.select(); }); } catch (e) { url.select(); }
       })));
       c.appendChild(el("div", "hint", t("gt.apps.hint")));
       var list = el("div", "checks");
@@ -835,12 +836,30 @@
         var line = el("div", "pair");
         line.appendChild(el("span", "pair-label", a.name));
         line.appendChild(switchBtn(a.read, "gt.app:" + a.id, function (v) {
-          if (!G.setApp(a.id, v)) gateNote = "gt.fail";
+          if (!G.setApp(a.id, v ? "read" : false)) gateNote = "gt.fail";
           render();
         }, t("gt.read", { app: a.name })));
         list.appendChild(line);
+        if (a.canWrite && a.read) {
+          var wl = el("div", "pair");
+          wl.appendChild(el("span", "pair-label", t("gt.write", { app: a.name })));
+          wl.appendChild(switchBtn(a.write, "gt.write:" + a.id, function (v) {
+            if (!G.setApp(a.id, v ? "write" : "read")) gateNote = "gt.fail";
+            render();
+          }, t("gt.write", { app: a.name })));
+          list.appendChild(wl);
+        }
       });
       c.appendChild(list);
+      var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
+      if (writers.length) {
+        c.appendChild(el("div", "hint", t("gt.win") + ": " + (st.win ? t("gt.win.open", { when: gateWhen(st.win), apps: writers.join(", ") }) : t("gt.win.closed")) + " " + t("gt.win.hint")));
+        var setWin = function (min) { if (!G.setWindow(min)) gateNote = "gt.fail"; render(); };
+        c.appendChild(st.win ? actions(button(t("gt.win.close"), "gt.win.close", function () { setWin(0); }))
+          : actions(button(t("gt.win.15"), "gt.win.15", function () { setWin(15); }),
+                    button(t("gt.win.60"), "gt.win.60", function () { setWin(60); }),
+                    button(t("gt.win.240"), "gt.win.240", function () { setWin(240); })));
+      }
       c.appendChild(el("div", "hint", t("gt.never")));
       if (!gateInfo) {
         gateInfo = { links: null };
@@ -860,9 +879,20 @@
         var log = G.log().slice(0, 50);
         if (!log.length) c.appendChild(el("p", "msg msg-dim", t("gt.log.none")));
         log.forEach(function (e) {
-          c.appendChild(el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
-            " · " + (e.ok ? t("gt.log.items", { n: e.k || 0 }) : t("gt.log.refused"))));
+          var ln = el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
+            " · " + (e.ok ? t("gt.log.items", { n: e.k || 0 }) : t("gt.log.refused")));
+          c.appendChild(ln);
+          if (e.u && G.canUndo(e.u)) {
+            c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.u, function () {
+              var r = G.undo(e.u);
+              gateNote = "";
+              if (!r.ok) gateNote = "gt.fail";
+              else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
+              render();
+            })));
+          }
         });
+        if (gateUndoMsg) c.appendChild(el("div", "hint", gateUndoMsg));
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }
