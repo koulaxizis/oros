@@ -52,9 +52,14 @@
   var REGEN = 12, FOCUS_REGEN = 10;
   var WAKE = 7;
   var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
-  var MODES = ["g", "r"];
+  // g Gentle, r Grim, e Endless (5.57.00: one life, past floor 10
+  // with the Warden's key, as deep as you can)
+  var MODES = ["g", "r", "e"];
+  var MAX_FLOOR = 999;               // Endless
+  var HEROES = ["f", "m"];           // f Fighter, m Mystic (an L-shaped pack, more Focus)
+  var MYSTIC_FO = 3;
   var CHECKPOINTS = [4, 7, 10];      // Gentle: a save point on arriving
-  var SHRINE_FLOORS = [3, 6, 9];     // a shrine shop on these floors (5.56.00)
+  var SHRINE_FLOORS = [3, 6, 9];     // a shrine shop on these floors (5.56.00), and every third floor past 10
   var TIER_PRICE = [0, 8, 16, 28];   // + 2 per floor
 
   // ---------- Random numbers (no Math.random, no clock) ----------
@@ -280,10 +285,13 @@
     return { cells: cells, ports: ports };
   }
   function packSize(floor) { return floor >= 7 ? { w: 8, h: 5 } : (floor >= 4 ? { w: 7, h: 5 } : { w: 6, h: 4 }); }
-  // grid[y * w + x] = index of the item there, or -1.
+  // The Mystic's pack is an L: the 3 × 2 cells at its top right are
+  // not part of it (5.57.00).
+  function blocked(pack, x, y) { return pack.l === 1 && y < 2 && x >= pack.w - 3; }
+  // grid[y * w + x] = index of the item there, -1 free, -2 not part of the pack.
   function packGrid(pack, skip) {
     var g = [];
-    for (var i = 0; i < pack.w * pack.h; i++) g.push(-1);
+    for (var i = 0; i < pack.w * pack.h; i++) g.push(blocked(pack, i % pack.w, Math.floor(i / pack.w)) ? -2 : -1);
     pack.it.forEach(function (p, n) {
       if (n === skip) return;
       shapeOf(p.k, p.r).cells.forEach(function (c) { g[(p.y + c[1]) * pack.w + p.x + c[0]] = n; });
@@ -294,7 +302,7 @@
     var g = packGrid(pack, skip);
     return shapeOf(k, r).cells.every(function (c) {
       var cx = x + c[0], cy = y + c[1];
-      return cx >= 0 && cy >= 0 && cx < pack.w && cy < pack.h && g[cy * pack.w + cx] < 0;
+      return cx >= 0 && cy >= 0 && cx < pack.w && cy < pack.h && g[cy * pack.w + cx] === -1;
     });
   }
   // First place (reading order, then turns) where an item fits.
@@ -344,7 +352,7 @@
   }
   // What the hero has with this backpack.
   function stats(st) {
-    var s = { atk: BASE.atk, def: BASE.def, mhp: BASE.hp + (st.mode === "g" ? GENTLE_HP : 0), mfo: BASE.fo,
+    var s = { atk: BASE.atk, def: BASE.def, mhp: BASE.hp + (st.mode === "g" ? GENTLE_HP : 0), mfo: BASE.fo + (st.hero.c === "m" ? MYSTIC_FO : 0),
       light: BASE.light, trap: 0, gold: 0, regen: REGEN, frg: FOCUS_REGEN, links: [] };
     st.pack.it.forEach(function (p) {
       var it = item(p.k);
@@ -414,7 +422,7 @@
   // start, and three items for sale (never cursed). It uses its own
   // random numbers, so the floors themselves stay as they were.
   function placeShrine(st, floor) {
-    if (SHRINE_FLOORS.indexOf(floor) < 0) return;
+    if (!hasShrine(floor)) return;
     var r = { s: hashStr("shrine:" + st.seed + ":" + floor) || 1 };
     var d = bfs(st, st.hero.i), cand = [];
     var taken = {};
@@ -435,6 +443,22 @@
       it.push({ k: x.k, r: 0, c: 0 });
     }
     st.shrine = { i: at, it: it };
+  }
+  function hasShrine(floor) { return SHRINE_FLOORS.indexOf(floor) >= 0 || (floor > FLOORS && floor % 3 === 0); }
+  // A lore page on each of floors 1–10 (5.57.00), 3+ steps from the
+  // arrival, from its own random numbers like the shrine.
+  function placePage(st, floor) {
+    if (floor > FLOORS) return;
+    var r = { s: hashStr("lore:" + st.seed + ":" + floor) || 1 };
+    var d = bfs(st, st.hero.i), taken = {}, cand = [];
+    st.mons.forEach(function (m) { taken[m.i] = 1; });
+    st.chests.forEach(function (c) { taken[c] = 1; });
+    st.loot.forEach(function (l) { taken[l.i] = 1; });
+    st.gold.forEach(function (g) { taken[g.i] = 1; });
+    st.traps.forEach(function (t) { taken[t.i] = 1; });
+    if (st.shrine) taken[st.shrine.i] = 1;
+    for (var i = 0; i < W * H; i++) if (st.map.charAt(i) === "." && d[i] >= 3 && !taken[i]) cand.push(i);
+    if (cand.length) st.page = cand[rint(r, cand.length)];
   }
   function shrinePrice(st, what) {
     if (what === "heal") return 4 + st.floor;
@@ -478,14 +502,16 @@
   // ---------- New run ----------
   // end: the last floor (the Daily crypt is a short descent, 5.55.00);
   // a run with a short end is won on that floor's stairs, no key needed.
-  function newRun(seed, mode, end) {
+  // hero: "f" Fighter (default) | "m" Mystic (5.57.00)
+  function newRun(seed, mode, end, hero) {
     mode = MODES.indexOf(mode) >= 0 ? mode : "g";
     var st = { v: 1, seed: String(seed || "crypt").slice(0, 64), mode: mode, floor: 0, W: W, H: H,
       map: "", seen: "", traps: [], chests: [], gold: [], loot: [], mons: [],
       hero: { i: 0, hp: 0, fo: 0, gold: 0, key: 0, wd: 0, kills: 0 },
       pack: { w: 6, h: 4, it: [] }, turn: 0, rng: hashStr("play:" + seed) || 1, nid: 1, over: -1 };
-    if (isInt(end) && end >= 1 && end < FLOORS) st.end = end;
-    var start = ["dagger", "buckler"].concat(mode === "g" ? ["vial"] : []);
+    if (isInt(end) && end >= 1 && end < FLOORS && mode !== "e") st.end = end;
+    if (hero === "m") { st.hero.c = "m"; st.pack.l = 1; }
+    var start = ["dagger", hero === "m" ? "bolt" : "buckler"].concat(mode === "g" ? ["vial"] : []);
     start.forEach(function (k) {
       var sp = findSpot(st.pack, k);
       st.pack.it.push({ k: k, x: sp.x, y: sp.y, r: sp.r, c: 0 });
@@ -512,7 +538,9 @@
     st.hero.i = f.start;
     st.hero.wd = 0;
     delete st.shrine;
+    delete st.page;
     placeShrine(st, floor);
+    placePage(st, floor);
     var size = packSize(floor);
     st.pack.w = Math.max(st.pack.w, size.w);
     st.pack.h = Math.max(st.pack.h, size.h);
@@ -749,9 +777,11 @@
       if (autoPick(st, n)) ev.push({ e: "pick", k: k });
       else ev.push({ e: cur ? "cursedHere" : "full", k: k });
     });
+    if (st.page !== undefined && st.page === h.i) { delete st.page; ev.push({ e: "lore", n: st.floor }); }
     if (st.shrine && st.shrine.i === h.i) ev.push({ e: "shrine" });
     if (st.map.charAt(h.i) === ">") {
       var last = st.end || FLOORS;
+      if (st.mode === "e" && st.floor < MAX_FLOOR && (st.floor !== FLOORS || h.key)) { enterFloor(st, st.floor + 1, ev); return; }
       if (st.floor < last) { enterFloor(st, st.floor + 1, ev); return; }
       if (last < FLOORS || h.key) { st.over = 1; ev.push({ e: "win" }); return; }
       ev.push({ e: "locked" });
@@ -882,14 +912,16 @@
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }
   function valid(st) {
     if (!st || typeof st !== "object" || st.v !== 1 || st.W !== W || st.H !== H) return false;
-    if (MODES.indexOf(st.mode) < 0 || typeof st.seed !== "string" || !isInt(st.floor) || st.floor < 1 || st.floor > FLOORS) return false;
+    if (MODES.indexOf(st.mode) < 0 || typeof st.seed !== "string" || !isInt(st.floor) || st.floor < 1 || st.floor > (st.mode === "e" ? MAX_FLOOR : FLOORS)) return false;
     if (typeof st.map !== "string" || st.map.length !== W * H || /[^#.>]/.test(st.map)) return false;
     if (typeof st.seen !== "string" || st.seen.length !== W * H || /[^01]/.test(st.seen)) return false;
-    if (st.end !== undefined && (!isInt(st.end) || st.end < 1 || st.end >= FLOORS || st.floor > st.end)) return false;
+    if (st.end !== undefined && (!isInt(st.end) || st.end < 1 || st.end >= FLOORS || st.floor > st.end || st.mode === "e")) return false;
+    if (st.page !== undefined && (!isInt(st.page) || st.page < 0 || st.page >= W * H || st.map.charAt(st.page) !== "." || st.floor > FLOORS)) return false;
     if (!isInt(st.turn) || st.turn < 0 || !isInt(st.rng) || !isInt(st.nid) || [-1, 0, 1].indexOf(st.over) < 0) return false;
     var n = W * H, cell = function (i) { return isInt(i) && i >= 0 && i < n; };
     var h = st.hero;
     if (!h || !cell(h.i) || !isInt(h.hp) || !isInt(h.fo) || !isInt(h.gold) || !isInt(h.kills) || (h.key !== 0 && h.key !== 1) || (h.wd !== 0 && h.wd !== 1)) return false;
+    if (h.c !== undefined && h.c !== "m") return false;
     var okIt = function (it) { return it && item(it.k) && isInt(it.r) && it.r >= 0 && it.r < 4 && (it.c === 0 || it.c === 1); };
     if (!Array.isArray(st.traps) || !st.traps.every(function (t) { return t && cell(t.i) && (t.k === 0 || t.k === 1); })) return false;
     if (!Array.isArray(st.chests) || !st.chests.every(cell) || !Array.isArray(st.chestItems) ||
@@ -907,6 +939,7 @@
     }
     var p = st.pack;
     if (!p || !isInt(p.w) || !isInt(p.h) || p.w < 6 || p.w > 8 || p.h < 4 || p.h > 5 || !Array.isArray(p.it)) return false;
+    if ((p.l !== undefined && p.l !== 1) || (p.l === 1) !== (h.c === "m")) return false;
     if (!p.it.every(function (x) { return okIt(x) && isInt(x.x) && isInt(x.y); })) return false;
     // items inside the pack and not on top of each other
     var g = [];
@@ -915,7 +948,7 @@
       var x = p.it[k], cells = shapeOf(x.k, x.r).cells;
       for (var j = 0; j < cells.length; j++) {
         var cx = x.x + cells[j][0], cy = x.y + cells[j][1];
-        if (cx < 0 || cy < 0 || cx >= p.w || cy >= p.h || g[cy * p.w + cx]) return false;
+        if (cx < 0 || cy < 0 || cx >= p.w || cy >= p.h || g[cy * p.w + cx] || blocked(p, cx, cy)) return false;
         g[cy * p.w + cx] = 1;
       }
     }
@@ -933,7 +966,7 @@
     monAt: monAt, chestAt: chestAt, makeFloor: makeFloor, monStats: monStats, item: item, shapeOf: shapeOf,
     packSize: packSize, packGrid: packGrid, fits: fits, findSpot: findSpot, packLinks: packLinks, stats: stats,
     groundAt: groundAt, packAdd: packAdd, packMove: packMove, packDrop: packDrop, autoPick: autoPick,
-    SHRINE_FLOORS: SHRINE_FLOORS, shrinePrice: shrinePrice, shrineBuy: shrineBuy, watched: watched,
+    SHRINE_FLOORS: SHRINE_FLOORS, HEROES: HEROES, MAX_FLOOR: MAX_FLOOR, blocked: blocked, hasShrine: hasShrine, shrinePrice: shrinePrice, shrineBuy: shrineBuy, watched: watched,
     newRun: newRun, visible: visible, intent: intent, act: act, usable: usable, valid: valid, clone: clone,
     timer: timer
   };

@@ -14,7 +14,7 @@ const D = require("../crypt/items.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "crypt/crypt.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var MODES = ['g','r']; var E = { FLOORS: 10 }; var MAX_DAY = 100000; var MAX_TURNS = 99999; var LAST_N = 10;"];
+  const parts = ["var DATA_VER = 1; var MODES = ['g','r','e']; var E = { FLOORS: 10, MAX_FLOOR: 999 }; var MAX_DAY = 100000; var MAX_TURNS = 99999; var LAST_N = 10;"];
   ["cmpStr", "isInt", "normDay", "dayKeyOk", "dayBetter", "normLast", "normRow", "joinRows", "mergeCrypt"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
@@ -483,4 +483,95 @@ test("crypt: Last runs merge as a join: union, newest first, at most 10, a reset
   assert.equal(m(many, null).last[0].a, 14);
   assert.deepEqual(m(A, { ver: 1, br: 4, rows: {} }).last.map((x) => x.s), ["aa"], "older than the reset drop");
   assert.deepEqual(m({ ver: 1, br: 0, rows: {} }, null).last, [], "older data has none");
+});
+
+// ---- 5.57.00: the Mystic, Endless, lore pages ----
+
+test("crypt: the Mystic has an L-shaped pack, more Focus and a Bolt rune; the Fighter is as before", () => {
+  const f = E.newRun("hero1", "r"), m = E.newRun("hero1", "r", undefined, "m");
+  assert.equal(f.hero.c, undefined); assert.equal(f.pack.l, undefined);
+  assert.deepEqual(f.pack.it.map((x) => x.k).sort(), ["buckler", "dagger"]);
+  assert.equal(m.hero.c, "m"); assert.equal(m.pack.l, 1);
+  assert.deepEqual(m.pack.it.map((x) => x.k).sort(), ["bolt", "dagger"]);
+  assert.equal(E.stats(m).mfo, E.stats(f).mfo + 3);
+  assert.equal(m.map, f.map, "the same crypt for both heroes");
+  assert.ok(E.valid(m));
+  // the 3 × 2 cells at the top right are not part of the pack
+  for (let y = 0; y < m.pack.h; y++) for (let x = 0; x < m.pack.w; x++) {
+    assert.equal(E.blocked(m.pack, x, y), y < 2 && x >= m.pack.w - 3, x + "," + y);
+    assert.equal(E.blocked(f.pack, x, y), false);
+  }
+  assert.equal(E.packGrid(m.pack)[m.pack.w - 1], -2);
+  assert.equal(E.fits(m.pack, "ring", m.pack.w - 1, 0, 0), false, "nothing goes on a missing cell");
+  assert.equal(E.fits(m.pack, "ring", m.pack.w - 1, 2, 0), true, "the row below is there");
+  const bad = E.clone(m); bad.pack.it.push({ k: "ring", x: m.pack.w - 1, y: 0, r: 0, c: 0 });
+  assert.equal(E.valid(bad), false, "an item on a missing cell");
+  const mix = E.clone(m); delete mix.pack.l;
+  assert.equal(E.valid(mix), false, "the pack shape follows the hero");
+  const odd = E.clone(m); odd.hero.c = "x"; odd.pack.l = 1;
+  assert.equal(E.valid(odd), false);
+  assert.deepEqual(E.HEROES, ["f", "m"]);
+});
+
+test("crypt: Endless goes on past floor 10 with the key, with shrines every third floor; no key, no way down", () => {
+  const st = room("e");
+  st.floor = E.FLOORS;
+  st.hero.i = at(W - 3, H - 2);
+  assert.equal(evs(E.act(st, { t: "move", d: 1 }), "locked").length, 1, "the key is still needed");
+  st.hero.i = at(W - 3, H - 2); st.hero.key = 1;
+  const ev = E.act(st, { t: "move", d: 1 });
+  assert.equal(evs(ev, "win").length, 0);
+  assert.equal(evs(ev, "floor")[0].n, 11);
+  assert.equal(st.over, -1);
+  assert.ok(E.valid(st));
+  assert.equal(st.page, undefined, "no lore pages past floor 10");
+  assert.equal(st.end, undefined);
+  assert.equal(E.newRun("x", "e", 5).end, undefined, "Endless has no short end");
+  assert.ok(E.hasShrine(12) && E.hasShrine(30) && !E.hasShrine(11) && !E.hasShrine(13) && E.hasShrine(9) && !E.hasShrine(10));
+  const g = room("g"); g.floor = 11;
+  assert.equal(E.valid(g), false, "only Endless goes past floor 10");
+  const deep = E.clone(st); deep.floor = E.MAX_FLOOR + 1;
+  assert.equal(E.valid(deep), false);
+  // a deep floor still has its stairs and its monsters
+  const f = E.makeFloor("deep", 33);
+  assert.ok(f.mons.length > 0 && f.map.indexOf(">") >= 0);
+  assert.ok(E.bfs({ map: f.map }, f.start)[f.stairs] > 0);
+});
+
+test("crypt: a lore page lies on each of floors 1–10, the same from the same code, and is read once", () => {
+  for (let k = 0; k < 20; k++) {
+    const a = E.newRun("lore" + k, "g"), b = E.newRun("lore" + k, "g", undefined, "m");
+    assert.ok(a.page !== undefined, "a page on floor 1");
+    assert.equal(a.page, b.page, "the same cell for both heroes");
+    assert.equal(a.map.charAt(a.page), ".");
+    assert.ok(E.bfs(a, a.hero.i)[a.page] >= 3, "away from the arrival");
+    assert.equal(a.map, E.makeFloor("lore" + k, 1).map, "the floor itself is unchanged");
+    assert.ok(E.valid(a));
+  }
+  const st = room();
+  st.page = at(6, 5);
+  const ev = E.act(st, { t: "move", d: 1 });
+  assert.deepEqual(evs(ev, "lore"), [{ e: "lore", n: 1 }]);
+  assert.equal(st.page, undefined);
+  E.act(st, { t: "move", d: 3 }); const ev2 = E.act(st, { t: "move", d: 1 });
+  assert.equal(evs(ev2, "lore").length, 0, "read once");
+  const bad = room(); bad.page = 0;
+  assert.equal(E.valid(bad), false, "a page on a wall");
+});
+
+test("crypt: found pages, Endless runs and Mystic runs merge as a join", () => {
+  const m = R.mergeCrypt;
+  const A = { ver: 1, br: 0, rows: { d1: { b: 0, s: { e: [3, 0, 27] } } }, lore: [3, 1, 1, 12, "x"],
+    last: [{ a: 5, m: "e", f: 27, w: 0, c: "rat", s: "aa", h: "m" }] };
+  const B = { ver: 1, br: 0, rows: { d1: { b: 0, s: { e: [2, 0, 31], r: [1, 0, 4] } } }, lore: [2, 3, 10],
+    last: [{ a: 4, m: "g", f: 27, w: 0, c: "", s: "bb" }, { a: 3, m: "e", f: 12, w: 0, c: "", s: "cc", h: "f" }] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  const M = m(A, B);
+  assert.deepEqual(M.lore, [1, 2, 3, 10], "a sorted union of 1–10");
+  assert.deepEqual(M.rows.d1.s.e, [3, 0, 31], "Endless keeps its deepest floor past 10");
+  assert.deepEqual(M.last.map((x) => x.s), ["aa"], "a Gentle floor 27 and an unknown hero are dropped");
+  assert.equal(M.last[0].h, "m");
+  assert.deepEqual(m({ ver: 1, br: 0, rows: {} }, null).lore, [], "older data has none");
+  assert.equal(m({ ver: 1, br: 0, rows: { d: { b: 0, s: { g: [1, 0, 11] } } } }, null).rows.d, undefined, "Gentle stops at 10");
 });

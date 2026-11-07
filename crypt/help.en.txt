@@ -56,7 +56,7 @@ Packing takes no turn, unless an awake monster can see you: then closing the bac
 The quick slots at the bottom hold the first four runes, potions and scrolls in the backpack, read left to right, row by row. Tap one or press [[1]] to [[4]]. A rune's slot shows its Focus cost.
 
 ## Shrines
-Floors 3, 6 and 9 each have a shrine, a small stone altar near where you arrive. Step on it to trade your gold:
+Floors 3, 6 and 9 each have a shrine (and, in Endless, every third floor past 10), a small stone altar near where you arrive. Step on it to trade your gold:
 - `Heal to full`;
 - `Lift every curse` in the backpack;
 - buy one of three items (never cursed). What you buy goes into the backpack, or onto the floor if it does not fit.
@@ -86,8 +86,16 @@ Monsters sleep until they see you (closed eyes), and they get a little stronger 
 `New run (N)` asks for the mode:
 - `Gentle`: more Health, a potion to start, and a save point when you reach floors 4, 7 and 10. After a fall you can go back to the last save point.
 - `Grim`: one life. A fall ends the run.
+- `Endless`: one life, like Grim. With the Warden's key the stairs on floor 10 do not lead out: they go on down, floor after floor, as deep as you can. The monsters keep getting stronger every three floors. Your deepest floor is your score.
+
+`New run` also asks for the hero:
+- `Fighter`: the full backpack, a dagger and a buckler.
+- `Mystic`: an L-shaped backpack (the 3 by 2 cells at its top right are missing), 3 more Focus, a dagger and a Bolt rune. Fewer cells, more spells.
 
 Every crypt has a code, shown in the result window and in `Records`. Type a code in `New run` to go down the same crypt again: the same floors, chests and monsters. Leave it empty for a new crypt.
+
+## Lore pages
+Each of floors 1 to 10 hides one torn page, a pale sheet on the floor, away from where you arrive. Step on it to read it. The ten pages tell the crypt's story, and once found a page stays found: `Records` shows how many you have, and `Read` opens the journal with every page you found, on every device.
 
 ## Daily crypt
 The calendar button (with a dot while today's crypt is not played yet) opens the Daily crypt: the same short crypt for everyone that day. It has five floors, Gentle Health and a potion to start, no save points and one life. Reach the stairs on floor 5 to get out; no key is needed. There is one try a day: leaving it for a new run counts as a fall where you were.
