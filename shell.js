@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "5.64.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "5.65.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
 
   // ---------- 1. State & registries ----------
@@ -1556,6 +1556,7 @@
       tickSafe("shelfCheckTick", shelfCheckTickThrottled); // Media Shelf: daily reading reminder (60s throttle)
       tickSafe("todayTick", todayTickThrottled);           // Today: the daily summary notice (60s throttle)
       tickSafe("challengesTick", challengesTickThrottled); // Game Center: daily challenges notice (60s throttle)
+      tickSafe("discoverTick", discoverTickThrottled);     // Weekly app suggestion notice (60s throttle)
       tickSafe("autoTick", autoTickThrottled);             // Automations: due rules (30s throttle)
       tickSafe("diaryCheckTick", diaryCheckTickThrottled); // One-Sentence Diary: evening reminder (60s throttle)
       tickSafe("stickiesTick", stickiesTick);              // Sticky Notes: ring + fade on the desktop (cheap, 1/s)
@@ -1624,6 +1625,17 @@
     challengesLastTick = now;
     var H = window.orosChallenges;
     if (H && typeof H.tick === "function") H.tick();
+  }
+  // Weekly app suggestion (discover/host.js, CH-2): the module owns
+  // the rule (Monday from 10:00, once a week, an app never opened);
+  // the shell only gives it the clock.
+  var discoverLastTick = 0;
+  function discoverTickThrottled() {
+    var now = Date.now();
+    if (now - discoverLastTick < 60000) return;
+    discoverLastTick = now;
+    var D = window.orosDiscover;
+    if (D && typeof D.tick === "function") D.tick();
   }
   // Automations (automations/host.js): the module owns the rules and
   // the once-per-run record; the shell only gives it the clock. A
@@ -11463,6 +11475,7 @@
     var prev = state.running;
     state.running = app;
     gameLastNote(app, false);   // GR-1
+    if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
     if (appAway()) backArm();
     document.body.classList.add("app-running");   // narrow bar: "?" takes the language button's place
     if (mtActive()) mtSwitch(prev, app, at);

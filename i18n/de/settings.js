@@ -132,6 +132,7 @@ orosPack("de", "settings", {
  "pc.on": "Die Dateien dieses Computers in orOS zeigen",
  "pc.title": "Dieser Computer",
  "n.apps": "Welche Apps benachrichtigen dürfen",
+ "n.discover": "Wöchentlicher App-Vorschlag",
  "n.duration": "Bleibt sichtbar",
  "n.enabled": "Benachrichtigungen",
  "n.from": "Von",

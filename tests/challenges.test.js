@@ -121,7 +121,7 @@ test("norm drops bad input and keeps only the last KEEP days", () => {
   assert.equal(Math.min(...keys), 20);
   assert.deepEqual(n.skip, {});
   assert.deepEqual(n.hide, [0, 0]);
-  assert.deepEqual(C.norm("garbage"), { v: 1, days: {}, skip: {}, hide: [0, 0] });
+  assert.deepEqual(C.norm("garbage"), { v: 1, days: {}, skip: {}, hide: [0, 0], st: [0, 0] });
 });
 
 test("the shell loads the challenges in the late bundle and ticks them; the slice is registered", () => {
@@ -137,7 +137,7 @@ test("the shell loads the challenges in the late bundle and ticks them; the slic
   assert.match(host, /registerSlice\("gamechal", sliceGet, sliceSet, null, C\.merge\)/);
   assert.match(host, /ns: NS,\n\s*key: "chal-" \+ DK\.dateStr\(day\)/);
   assert.match(host, /var NOTICE_HOUR = 18;/);
-  assert.ok(read("notifications.js").includes("'gamecenter'];"), "the Game Center switch is in Settings › Notifications");
+  assert.ok(/'gamecenter'[,\]]/.test(read("notifications.js")), "the Game Center switch is in Settings › Notifications");
 });
 
 test("the page section: mute, hide and 'Not this game' go through the shell side; text only through textContent", () => {
@@ -149,4 +149,48 @@ test("the page section: mute, hide and 'Not this game' go through the shell side
   const html = read("gamecenter/index.html");
   for (const id of ["chal-block", "chal-grid", "chal-mute", "chal-hide", "chal-show", "chal-left"])
     assert.ok(html.includes('id="' + id + '"'), id);
+});
+
+test("C3: best streak and full days only grow, survive pruning, and merge by max", () => {
+  const full = (at) => ({ at, c: [["snake", "p", 2]], b: { snake: [0, -1, -1] }, d: [0] });
+  const days = {};
+  for (let d = 100; d < 108; d++) days[d] = full(d);
+  days[110] = full(110);
+  let x = C.norm({ days });
+  assert.equal(C.bestRun(x), 8);
+  assert.deepEqual(C.records(x), { best: 8, days: 9 });
+  x = C.withRecords(x);
+  assert.deepEqual(x.st, [8, 9]);
+  assert.equal(C.withRecords(x), null, "current: nothing to write");
+  // 200 days later the old days are pruned, the records stay.
+  const later = C.withDay(x, 300, C.normDay(full(300)));
+  assert.equal(Object.keys(later.days).length, 1);
+  assert.deepEqual(C.records(later), { best: 8, days: 9 });
+  const m = C.merge({ st: [3, 40] }, { st: [9, 2] });
+  assert.deepEqual(m.st, [9, 40]);
+  assert.equal(JSON.stringify(C.merge({ st: [9, 2] }, { st: [3, 40] })), JSON.stringify(m));
+});
+
+test("C3: two challenge achievements; the Today provider only reads", () => {
+  const s = CORE.summarize(() => null, 310);
+  const a0 = CORE.achievements(s);
+  assert.equal(a0.find((a) => a.id === "chal7").have, 0);
+  const a1 = CORE.achievements(s, { best: 7, days: 12 });
+  assert.equal(a1.find((a) => a.id === "chal7").done, true);
+  assert.deepEqual([a1.find((a) => a.id === "chal30").have, a1.find((a) => a.id === "chal30").done], [12, false]);
+  const P = require("../gamecenter/today.js");
+  assert.equal(P.id, "gamecenter");
+  assert.deepEqual(P.collect({ lang: "en" }), [], "no shell side: nothing");
+  global.orosChallenges = { peek: () => ({ goals: [{}, {}, {}], open: 2, streak: 0 }) };
+  try {
+    assert.deepEqual(P.collect({ lang: "el" }), [{ id: "chal", kind: "info", title: "Προκλήσεις παιχνιδιών: 1 από 3 έγιναν" }]);
+    global.orosChallenges = { peek: () => ({ goals: [{}, {}], open: 0, streak: 1 }) };
+    assert.equal(P.collect({ lang: "en" })[0].title, "Game challenges: All done");
+  } finally { delete global.orosChallenges; }
+  const host = read("gamecenter/host.js");
+  const peek = host.slice(host.indexOf("function peek()"), host.indexOf("function skip("));
+  assert.ok(!/save\(|write\(|make\(/.test(peek), "peek never writes or makes goals");
+  const apps = JSON.parse(read("apps.json"));
+  const gc = (Array.isArray(apps) ? apps : apps.apps).find((a) => a.id === "gamecenter");
+  assert.equal(gc.today, "today.js");
 });

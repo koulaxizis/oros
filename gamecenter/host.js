@@ -74,6 +74,7 @@
     catch (e) { return false; }
   }
   function save(d) {                            // the person's own change (or a new day)
+    if (!d) return true;
     var before = JSON.stringify(read()), next = C.norm(d);
     if (JSON.stringify(next) === before) return true;
     if (!write(next)) return false;
@@ -141,6 +142,7 @@
     if (rec) {
       var upd = C.noteDone(rec, sum);
       if (upd) { data = C.withDay(read(), day, upd); save(data); rec = read().days[String(day)] || upd; }
+      save(C.withRecords(read()));             // C3: best streak + full days only grow
     }
     return { data: read(), rec: rec, sum: sum, day: day };
   }
@@ -165,8 +167,20 @@
       open: open,
       streak: C.streak(data, cur.day),
       total: C.doneCount(data),
+      records: C.records(data),
       skipped: C.skipped(data)
     };
+  }
+  // For the Today provider and the Assistant: today's goals as they
+  // stand, read-only (nothing is made or written). → null | { goals, open, streak }
+  function peek() {
+    var day = DK.today(), data = read();
+    if (data.hide[1] === 1) return null;
+    var rec = data.days[String(day)] || null;
+    if (!rec) return null;
+    var goals = C.progress(rec, summary(day)), open = 0;
+    goals.forEach(function (g) { if (!g.done) open++; });
+    return { goals: goals, open: open, streak: C.streak(data, day) };
   }
   // "Not this game" (off = true) or back on. Today's goals stay as
   // they are; the game is left out from tomorrow.
@@ -230,6 +244,7 @@
   root.orosChallenges = {
     VERSION: "1.0.0",
     state: state,
+    peek: peek,
     skip: skip,
     hide: hide,
     mute: mute,

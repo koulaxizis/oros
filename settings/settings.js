@@ -679,7 +679,7 @@
           render();
         });
         lab.appendChild(cb);
-        lab.appendChild(el("span", null, id === "system" ? "orOS" : appName(id)));
+        lab.appendChild(el("span", null, id === "system" ? "orOS" : id === "discover" ? t("n.discover") : appName(id)));
         list.appendChild(lab);
       });
       c4.appendChild(list);
