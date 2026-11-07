@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.68.01
+- **Music: a song that cannot play says which one.** When a song still cannot play after Music asked for it again, Music skips it and the next song starts at once. The notice used to say only "This song cannot play here." while the next song was already playing; it now names the song that was skipped and says that the next one is playing.
+
 ## Version 5.68.00
 - **Banner: your own decks and 20 puzzles.** `My decks` in Banner builds decks of your own from all 36 cards (20 cards, at most 3 of each). Each deck has a short code to share with a friend, and `Add from a code` turns a friend's code into your deck; pick your decks for either side when you start a battle. `Puzzles` are 20 battles to win in one turn, from easy to hard, and the solved ones sync between your devices.
 
