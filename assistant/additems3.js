@@ -3,8 +3,8 @@
 // ------------------------------------------------------------
 // create_items for Habits (habits), Workouts (finished workouts),
 // Garage (services and renewals of a vehicle), Plant Care (plants),
-// Pet Health Book (health records of a pet) and Media Shelf (titles),
-// registered into assistant/additems.js (extend), whose card, ticks,
+// Pet Health Book (health records of a pet), Media Shelf (titles)
+// and Publishing (titles the user publishes, AS-ADD7), registered into assistant/additems.js (extend), whose card, ticks,
 // look-alikes and Undo stay the same. assistant.js loads this file
 // (and the app's own core) the first time one of these apps gets new
 // items. Pure: no DOM, no storage.
@@ -23,6 +23,8 @@
 //   shelf    shelf.js editDialog: normItem field order, the history
 //            entry of the status (start / done / drop), items and
 //            sessions sorted by id
+//   publish  publish/app.js newTitleDialog (+ the release plan of its
+//            tick), every row through OrosPublishCore.put / normalize
 // A vehicle or a pet is named (its name, or a plate); with only one,
 // it may be left out. Only the user's own book, garage and garden are
 // written (a household's shared copy is changed in the app). A text
@@ -795,15 +797,205 @@
     return { ok: true, data: d };
   }
 
+  // ---------- 7. Publishing: titles the user publishes (AS-ADD7) ----------
+  // publish/app.js newTitleDialog: a title with its people, release
+  // date and the release plan counted back from it (C.makePlan, as the
+  // form's tick), plus what a list of titles usually has (subtitle,
+  // series, language, back-cover text, notes, formats with ISBN, price
+  // and pages). Every row goes through OrosPublishCore's own cleaning
+  // (C.put → cleanTitle), so opening Publishing rewrites nothing. An
+  // ISBN that is not valid, or already on another title (or marked
+  // used outside the app), is refused, never dropped.
+  var PB = { title: 200, sub: 200, ser: 120, sn: 12, lang: 40, blurb: 4000, notes: 4000, name: 120, ppl: 12, fmts: 8, max: 5000 };
+  var PB_ST = { idea: "idea", production: "prod", released: "out", out_of_print: "oop" };
+  var PB_FMT = { paperback: "pb", hardback: "hb", ebook: "eb", audiobook: "ab", other: "ot" };
+  function pubCore() {
+    if (root.OrosPublishCore) return root.OrosPublishCore;
+    if (NODE) { try { return require("../publish/core.js"); } catch (e) { return null; } }
+    return null;
+  }
+  function keyOf(map, v) { var k = ""; Object.keys(map).forEach(function (x) { if (map[x] === v) k = x; }); return k; }
+  // "A, B; C" → ["A", "B", "C"] (or a list of names)
+  function people(x, k, w) {
+    if (empty(x, k)) return { v: [] };
+    var raw = Array.isArray(x[k]) ? x[k] : typeof x[k] === "string" ? x[k].split(/[,;]/) : null;
+    if (!raw) return { err: w + k + " must be text (names separated by commas)." };
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      if (typeof raw[i] !== "string") return { err: w + k + " must be text (names separated by commas)." };
+      var n = H.one(raw[i]);
+      if (!n) continue;
+      if (n.length > PB.name) return { err: w + k + ": a name has " + n.length + " characters; Publishing keeps " + PB.name + "." };
+      if (!out.some(function (o) { return fold(o) === fold(n); })) out.push(n);
+    }
+    return { v: out };
+  }
+  function normPub(x, w) {
+    var C = pubCore();
+    if (!C) return { err: "Publishing is not available right now." };
+    var r = text1(x, "title", PB.title, w, "a book's title");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "title is required." };
+    var o = { t: r.v };
+    var tx = [["subtitle", "sub", PB.sub, "a subtitle"], ["series", "ser", PB.ser, "a series' name"], ["series_no", "sn", PB.sn, "a number in the series"],
+              ["language", "lang", PB.lang, "a language"]];
+    for (var i = 0; i < tx.length; i++) {
+      var y = empty(x, tx[i][0]) ? { v: "" } : typeof x[tx[i][0]] === "number" ? { v: String(x[tx[i][0]]) } : text1(x, tx[i][0], tx[i][2], w, tx[i][3]);
+      if (y.err) return y;
+      if (y.v.length > tx[i][2]) return { err: w + tx[i][0] + " has " + y.v.length + " characters; " + tx[i][3] + " keeps " + tx[i][2] + "." };
+      o[tx[i][1]] = y.v;
+    }
+    r = textN(x, "blurb", PB.blurb, w, "the back-cover text");
+    if (r.err) return r;
+    o.blurb = r.v;
+    r = textN(x, "note", PB.notes, w, "a title's notes");
+    if (r.err) return r;
+    o.notes = r.v;
+    var st = empty(x, "status") ? "idea" : String(x.status);
+    if (!has(PB_ST, st)) return { err: w + "status must be idea, production, released or out_of_print for publish." };
+    o.st = PB_ST[st];
+    var d = dateOf(x, "date", w);
+    if (d.err) return d;
+    if (d.v && !C.okYmd(d.v)) return { err: w + "date must be a real date as YYYY-MM-DD." };
+    o.rel = d.v;
+    if (!empty(x, "release_plan") && typeof x.release_plan !== "boolean") return { err: w + "release_plan must be true or false." };
+    if (x.release_plan === true && !o.rel) return { err: w + "release_plan needs date (the release date)." };
+    // as the form's tick: on for a book still to come; a released or
+    // out-of-print title gets none unless asked
+    o.plan = !!o.rel && (x.release_plan === true || (x.release_plan !== false && (o.st === "idea" || o.st === "prod")));
+    var ppl = [];
+    var who = [["by", "a"], ["translator", "t"], ["illustrator", "i"], ["editor", "e"]];
+    for (i = 0; i < who.length; i++) {
+      var pr = people(x, who[i][0], w);
+      if (pr.err) return pr;
+      pr.v.forEach(function (n) { ppl.push({ r: who[i][1], n: n }); });
+    }
+    if (ppl.length > PB.ppl) return { err: w + "a title keeps " + PB.ppl + " people in Publishing; give fewer." };
+    o.ppl = ppl;
+    var fl = empty(x, "formats") ? [] : x.formats;
+    if (!Array.isArray(fl)) return { err: w + "formats must be a list." };
+    if (fl.length > PB.fmts) return { err: w + "a title keeps " + PB.fmts + " formats in Publishing; give fewer." };
+    o.fmts = [];
+    var isbns = {};
+    for (i = 0; i < fl.length; i++) {
+      var f = fl[i], fw = w + "formats[" + i + "].";
+      if (!isObj(f)) return { err: w + "formats[" + i + "] must be an object." };
+      var k = empty(f, "format") ? "paperback" : String(f.format);
+      if (!has(PB_FMT, k)) return { err: fw + "format must be paperback, hardback, ebook, audiobook or other." };
+      var fo = { k: PB_FMT[k], isbn: "", price: 0, pages: 0 };
+      if (!empty(f, "isbn")) {
+        var pi = C.parseIsbn(String(f.isbn));
+        if (!pi.ok) return { err: fw + "isbn " + String(f.isbn).slice(0, 30) + " is not a valid ISBN" + (pi.why === "check" ? " (its check digit is wrong)" : "") + ". Leave it out when unsure; never make one up." };
+        if (isbns[pi.isbn]) return { err: fw + "isbn " + pi.isbn + " is given twice." };
+        isbns[pi.isbn] = 1;
+        fo.isbn = pi.isbn;
+      }
+      var p = numArg(f, "price", 0, 1e6, fw);
+      if (p.err) return p;
+      fo.price = p.v ? Math.round(p.v * 100) / 100 : 0;
+      var pg = intArg(f, "pages", 1, 100000, fw);
+      if (pg.err) return pg;
+      fo.pages = pg.v || 0;
+      o.fmts.push(fo);
+    }
+    var by = ppl.filter(function (q) { return q.r === "a"; }).map(function (q) { return fold(q.n); }).join(",");
+    return { o: o, key: fold(o.t) + "|" + by };
+  }
+  function pbBase(d) {
+    var C = pubCore();
+    return d == null ? C.empty() : isObj(d) && (d.titles == null || Array.isArray(d.titles)) ? C.normalize(d) : null;
+  }
+  function pbPlan(d, items) {
+    var C = pubCore();
+    if (!C) return bad("Publishing is not available right now.");
+    d = pbBase(d);
+    if (!d) return notOpened("Publishing");
+    var e = room(d.titles.length, items.length, PB.max, "titles", "Publishing");
+    if (e) return e;
+    var used = C.used(d), seen = {};
+    for (var i = 0; i < items.length; i++) {
+      for (var j = 0; j < items[i].fmts.length; j++) {
+        var n = items[i].fmts[j].isbn;
+        if (!n) continue;
+        if (seen[n] !== undefined) return bad("items[" + seen[n] + "] and items[" + i + "] have the same ISBN " + n + "; each book needs its own.");
+        seen[n] = i;
+        var u = used[n] ? used[n][0] : null;
+        if (!u) continue;
+        var on = u.x ? null : C.find(d, "titles", u.title);
+        if (!on || fold(on.t) !== fold(items[i].t)) {
+          return bad("items[" + i + "]: ISBN " + n + " is already " + (on ? "on \u201c" + on.t + "\u201d" : "marked as used outside Publishing") + ". Check the number; nothing was added.");
+        }
+      }
+    }
+    return { ok: true, rows: items.map(function (o) {
+      var dup = null, f = [];
+      d.titles.forEach(function (t) {
+        if (dup || fold(t.t) !== fold(o.t)) return;
+        var a1 = C.authors(t).map(fold), a2 = o.ppl.filter(function (q) { return q.r === "a"; }).map(function (q) { return fold(q.n); });
+        if (!a1.length || !a2.length || a2.some(function (a) { return a1.indexOf(a) >= 0; })) dup = { id: t.id, title: t.t, target: { title: t.id } };
+      });
+      if (o.sub) f.push(["sub", o.sub]);
+      var nm = { a: "by", t: "translator", i: "illustrator", e: "editor" };
+      ["a", "t", "i", "e"].forEach(function (r) {
+        var list = o.ppl.filter(function (q) { return q.r === r; }).map(function (q) { return q.n; });
+        if (list.length) f.push([nm[r], list.join(", ")]);
+      });
+      if (o.ser) f.push(["series", o.ser + (o.sn ? " #" + o.sn : "")]);
+      f.push(["status", keyOf(PB_ST, o.st)]);
+      if (o.rel) f.push([o.plan ? "rel" : "release", o.rel]);
+      if (o.lang) f.push(["lang", o.lang]);
+      o.fmts.forEach(function (x) {
+        f.push(["format", keyOf(PB_FMT, x.k) + (x.price ? "|" + x.price.toFixed(2) + " " + d.set.cur : "")]);
+        if (x.isbn) f.push(["isbn", C.hyphen(x.isbn, d.blocks)]);
+        if (x.pages) f.push(["pages", String(x.pages)]);
+      });
+      if (o.blurb) f.push(["blurb", preview(o.blurb, 120)]);
+      if (o.notes) f.push(["note", preview(o.notes, 120)]);
+      return { title: o.t, fields: f, dup: dup };
+    }) };
+  }
+  function pbApply(d, items, now, skip) {
+    var C = pubCore();
+    d = pbBase(d);
+    var made = [], undo = { app: "publish", t: "new", items: [] }, taken = takenOf(d, C.LISTS), s = stampAfter(now, 0);
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var id = newIdIn(now, taken);
+      var row = { id: id, t: o.t, sub: o.sub, ser: o.ser, sn: o.sn, st: o.st, rel: o.rel, lang: o.lang, ppl: o.ppl,
+                  fmts: o.fmts.map(function (f) { return { id: newIdIn(now, taken), k: f.k, isbn: f.isbn, price: f.price, pages: f.pages }; }),
+                  blurb: o.blurb, notes: o.notes };
+      if (o.plan) row.plan = C.makePlan(o.rel, [], function () { return newIdIn(now, taken); });
+      d = C.put(d, "titles", row, s);
+      var t = C.find(d, "titles", id);
+      made.push({ i: i, id: id, title: o.t, target: { title: id } });
+      undo.items.push({ id: id, x: clone(t) });
+    });
+    return { ok: true, data: C.normalize(d), made: made, undo: undo };
+  }
+  function pbUndo(d, u, now) {
+    var C = pubCore();
+    if (!C || !isObj(d) || !Array.isArray(d.titles)) return bad("Publishing has no titles.");
+    d = C.normalize(d);
+    for (var i = 0; i < u.items.length; i++) {
+      if (!unchanged(C.find(d, "titles", u.items[i].id), u.items[i].x)) return bad("A new title was changed in Publishing since; nothing was undone (delete it in Publishing).");
+    }
+    u.items.forEach(function (it) {
+      var x = C.find(d, "titles", it.id);
+      if (x) d = C.remove(d, "titles", it.id, stampAfter(now, x.m));
+    });
+    return { ok: true, data: C.normalize(d) };
+  }
+
   A.extend({
     habits: { key: "oros-habits-data", name: "Habits", norm: normHabit, plan: hbPlan, apply: hbApply, undo: hbUndo },
     fitness: { key: "oros-fitness-data", name: "Workouts", norm: normWorkout, plan: ftPlan, apply: ftApply, undo: ftUndo },
     garage: { key: "oros-garage-data", name: "Garage", norm: normGarage, plan: gPlan, apply: gApply, undo: gUndo },
     plants: { key: "oros-plants-data", name: "Plant Care", norm: normPlant, plan: plPlan, apply: plApply, undo: plUndo },
     petcare: { key: "oros-petcare-data", name: "Pet Health Book", norm: normPet, plan: pcPlan, apply: pcApply, undo: pcUndo },
-    shelf: { key: "oros-shelf-data", name: "Media Shelf", norm: normMedia, plan: shPlan, apply: shApply, undo: shUndo }
+    shelf: { key: "oros-shelf-data", name: "Media Shelf", norm: normMedia, plan: shPlan, apply: shApply, undo: shUndo },
+    publish: { key: "oros-publish-data", name: "Publishing", norm: normPub, plan: pbPlan, apply: pbApply, undo: pbUndo }
   });
-  var api = { CORES: CORES, FT_ACT: FT_ACT, PC_KIND: PC_KIND, SH_TYPES: SH_TYPES };
+  var api = { CORES: CORES, FT_ACT: FT_ACT, PC_KIND: PC_KIND, SH_TYPES: SH_TYPES, PB_ST: PB_ST, PB_FMT: PB_FMT };
   if (NODE) module.exports = api;
   if (root && root.document) root.OrosAssistAdd3 = api;
 })(typeof window !== "undefined" ? window : this);
