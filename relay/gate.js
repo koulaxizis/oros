@@ -103,7 +103,7 @@ export const TOOLS = [
       properties: {
         app: { type: "string", enum: ["budget", "stock", "kanban"] },
         month: { type: "string", description: "Budget and Stock: YYYY-MM; this month when left out." },
-        board: { type: "string", description: "Kanban: only this board's cards (its name)." }
+        board: { type: "string", description: "Kanban: only this board's cards (its name), with every column of that board in order and its id." }
       },
       required: ["app"],
       additionalProperties: false
