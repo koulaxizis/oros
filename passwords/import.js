@@ -1241,7 +1241,10 @@
       var magic = String.fromCharCode.apply(null, Array.prototype.slice.call(bytes, 0, 16));
       if (magic === "AUTHENTICATORPRO" || magic === "AuthenticatorPro")
         return Promise.resolve({ locked: "stratum", data: { bytes: bytes, legacy: magic !== "AUTHENTICATORPRO" } });
-      if (/\.aes$/i.test(name) && bytes[0] !== 0x7b && bytes[0] !== 0x5b) return Promise.resolve({ locked: "andotp", data: { bytes: bytes } });
+      // (an old-format file starts with a random nonce, which can be "{"
+      // or "[": only text that really is JSON counts as a plain export)
+      if (/\.aes$/i.test(name) && !((bytes[0] === 0x7b || bytes[0] === 0x5b) && kit().json(kit().text(bytes)) !== null))
+        return Promise.resolve({ locked: "andotp", data: { bytes: bytes } });
       if (kit().isZip(bytes)) p = fromZip(bytes, now);
       else p = Promise.resolve(parseText(kit().text(bytes), name, now));
     } catch (e) { p = Promise.resolve({ error: "format" }); }
