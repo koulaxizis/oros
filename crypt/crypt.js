@@ -16,12 +16,15 @@
 //   - Daily crypt (W2): the same five floors for everyone each day
 //     (gamekit/daily.js), Gentle, one life, one try; result, streak
 //     and a spoiler-free share line
+//   - shrines on floors 3, 6 and 9 (W3): heal, lift curses, buy one
+//     of three items with gold; Records › Last runs with replay
 // Data:
 //   - synced slice "crypt" (oros-crypt-data): runs, wins and the
 //     deepest floor per mode as per-device counter rows (each device
 //     only grows its own row; merge = per-row max, a join) + reset
 //     stamp br (same pattern as Realm) + one Daily crypt result per
-//     day (newer epoch wins, equal epochs the better one)
+//     day (newer epoch wins, equal epochs the better one) + the last
+//     10 runs of every device (union, newest first)
 //   - device-local (R10): oros-crypt-prefs (mode, tour seen),
 //     oros-crypt-session (the run in progress, its save point),
 //     oros-crypt-device (counter row id), oros-crypt-sfx (sound)
@@ -55,6 +58,7 @@
   var DAILY_END = 5;                   // the Daily crypt: floors 1–5, Gentle, one life
   var MAX_DAY = 100000;
   var MAX_TURNS = 99999;
+  var LAST_N = 10;                     // Records › Last runs
   var STEP_MS = 70;                    // one step of a walk
   var PACK_UNDO = 40;
 
@@ -103,7 +107,7 @@
       "use.heal": "Heals {n}", "use.focus": "Fills your Focus", "use.elixir": "Fills your Health and Focus",
       "use.cleanse": "Lifts every curse in the backpack", "use.chart": "Shows the whole floor and its traps",
       "use.escape": "Takes you next to the stairs", "use.fire": "Hits everything around you for 6",
-      "use.cost": "{n} Focus", "it.cursed": "Cursed: it cannot leave the backpack until a Cleansing scroll",
+      "use.cost": "{n} Focus", "it.cursed": "Cursed: it does not link and cannot leave the backpack until a Cleansing scroll or a shrine lifts the curse",
       "mon.rat": "Rat", "mon.swarm": "Rat swarm", "mon.bat": "Bat", "mon.bones": "Skeleton", "mon.archer": "Archer",
       "mon.slime": "Slime", "mon.ghoul": "Bell ghoul", "mon.mimic": "Mimic", "mon.spider": "Spider", "mon.wisp": "Wisp",
       "mon.guard": "Stone guard", "mon.knight": "Knight", "mon.brute": "Brute", "mon.warden": "Warden",
@@ -159,6 +163,14 @@
       "toast.dailyGone": "The daily crypt needs the gamekit file: reload orOS",
       "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared",
       "toast.copyFail": "Could not copy",
+      "shrine.title": "Shrine · floor {n}", "shrine.gold": "Your gold: {n}",
+      "shrine.heal": "Heal to full", "shrine.cleanse": "Lift every curse",
+      "shrine.cost": "{n} gold", "shrine.sold": "Sold", "shrine.watched": "A monster is watching: the shrine stays silent.",
+      "shrine.note": "The shrine takes no turn. What you buy goes into the backpack, or on the floor if it does not fit.",
+      "shrine.close": "Leave", "shrine.full": "Health is full", "shrine.noCurse": "Nothing is cursed",
+      "shrine.poor": "Not enough gold", "ev.shrine": "A shrine: tap your cell to trade", "ev.bought": "Bought: {k}",
+      "last.title": "Last runs", "last.won": "Got out", "last.fell": "Fell on floor {n}", "last.left": "left",
+      "last.by": "by {k}", "last.replay": "Replay", "last.replayLabel": "Replay crypt {seed}",
       "confirm.reset": "Reset your Crypt records on all your devices?", "confirm.yes": "Reset", "confirm.no": "Cancel",
       "toast.reset": "Records reset", "toast.save": "Could not save: storage is full",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
@@ -202,7 +214,7 @@
       "use.heal": "Θεραπεύει {n}", "use.focus": "Γεμίζει τη Συγκέντρωσή σου", "use.elixir": "Γεμίζει Ζωή και Συγκέντρωση",
       "use.cleanse": "Λύνει κάθε κατάρα στο σακίδιο", "use.chart": "Δείχνει όλο τον όροφο και τις παγίδες του",
       "use.escape": "Σε πάει δίπλα στη σκάλα", "use.fire": "Χτυπά ό,τι είναι γύρω σου με 6",
-      "use.cost": "{n} Συγκέντρωση", "it.cursed": "Καταραμένο: δεν βγαίνει από το σακίδιο χωρίς Πάπυρο εξαγνισμού",
+      "use.cost": "{n} Συγκέντρωση", "it.cursed": "Καταραμένο: δεν συνδέεται και δεν βγαίνει από το σακίδιο ώσπου να λύσει την κατάρα ένας Πάπυρος εξαγνισμού ή ένα ιερό",
       "mon.rat": "Αρουραίος", "mon.swarm": "Σμήνος αρουραίων", "mon.bat": "Νυχτερίδα", "mon.bones": "Σκελετός", "mon.archer": "Τοξότης",
       "mon.slime": "Γλίτσα", "mon.ghoul": "Βρικόλακας με καμπάνα", "mon.mimic": "Μιμητής", "mon.spider": "Αράχνη", "mon.wisp": "Αερικό",
       "mon.guard": "Πέτρινος φρουρός", "mon.knight": "Ιππότης", "mon.brute": "Θηρίο", "mon.warden": "Φύλακας",
@@ -258,6 +270,14 @@
       "toast.dailyGone": "Η κρύπτη της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε",
       "toast.copyFail": "Δεν αντιγράφηκε",
+      "shrine.title": "Ιερό · όροφος {n}", "shrine.gold": "Ο χρυσός σου: {n}",
+      "shrine.heal": "Πλήρης ίαση", "shrine.cleanse": "Λύση κάθε κατάρας",
+      "shrine.cost": "Χρυσός: {n}", "shrine.sold": "Πουλήθηκε", "shrine.watched": "Σε βλέπει ένα τέρας: το ιερό μένει σιωπηλό.",
+      "shrine.note": "Το ιερό δεν παίρνει γύρο. Ό,τι αγοράζεις μπαίνει στο σακίδιο ή μένει στο πάτωμα αν δεν χωράει.",
+      "shrine.close": "Φύγε", "shrine.full": "Η Ζωή είναι γεμάτη", "shrine.noCurse": "Τίποτα δεν είναι καταραμένο",
+      "shrine.poor": "Δεν φτάνει ο χρυσός", "ev.shrine": "Ένα ιερό: πάτα το κελί σου για συναλλαγή", "ev.bought": "Αγόρασες: {k}",
+      "last.title": "Τελευταίες κάθοδοι", "last.won": "Βγήκες", "last.fell": "Έπεσες στον όροφο {n}", "last.left": "την άφησες",
+      "last.by": "σε έριξε: {k}", "last.replay": "Ξανά", "last.replayLabel": "Ξανά η κρύπτη {seed}",
       "confirm.reset": "Να μηδενιστούν τα ρεκόρ της Κρύπτης σε όλες τις συσκευές σου;", "confirm.yes": "Μηδενισμός", "confirm.no": "Άκυρο",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
@@ -321,7 +341,18 @@
   // { "<day>": { b, w: 1 out | 0 fell, f: floor reached, t: turns } }.
   // The newer epoch wins; equal epochs keep the better result (out,
   // then deeper, then fewer turns: a total order, so a join).
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+  // last (5.56.00): the last 10 runs of every device,
+  // [{ a: end time ms, m: g|r|d (d = Daily), f: floor, w: 1 out | 0,
+  //    c: what ended it (monster kind, "trap", "left", "" when out), s: seed }].
+  // Union by a + s, newest first, the first 10: a join; entries older
+  // than the reset stamp br drop.
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function normLast(v) {
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "r", "d"].indexOf(v.m) < 0 ||
+        !isInt(v.f) || v.f < 1 || v.f > E.FLOORS || (v.w !== 0 && v.w !== 1) || typeof v.c !== "string" ||
+        !/^[a-z]{0,8}$/.test(v.c) || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
+    return { a: v.a, m: v.m, f: v.f, w: v.w, c: v.c, s: v.s };
+  }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
         !isInt(v.f) || v.f < 1 || v.f > E.FLOORS || !isInt(v.t) || v.t < 1 || v.t > MAX_TURNS) return null;
@@ -388,7 +419,24 @@
     });
     var sd = {};
     Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
+    var seenRun = {}, last = [];
+    [a.last, b.last].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (x) {
+        var v = normLast(x);
+        if (!v || v.a < br) return;
+        var key = v.a + ":" + v.s;
+        if (seenRun[key]) {
+          // the same run twice: keep one, by a fixed order
+          if (cmpStr(JSON.stringify(v), JSON.stringify(seenRun[key])) > 0) seenRun[key] = v;
+          return;
+        }
+        seenRun[key] = v;
+      });
+    });
+    Object.keys(seenRun).forEach(function (k) { last.push(seenRun[k]); });
+    last.sort(function (x, y) { return (y.a - x.a) || cmpStr(x.s, y.s) || cmpStr(JSON.stringify(x), JSON.stringify(y)); });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
   }
   // [runs, won, deepest] for a mode, all devices.
   function totals(mode) {
@@ -460,6 +508,17 @@
     var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
     return { n: n, w: w, cur: s2.cur, best: s2.best };
   }
+  // A run ended: into Last runs (once per run).
+  function logRun(won, why) {
+    if (!game || game.logged) return;
+    game.logged = true;
+    var v = normLast({ a: Date.now(), m: game.opts.day !== undefined ? "d" : game.opts.mode, f: st.floor, w: won ? 1 : 0,
+      c: won ? "" : (why || game.ck || ""), s: game.opts.seed });
+    if (!v) return;
+    data.last = [v].concat(data.last || []);
+    data = mergeCrypt(data, data);
+    save();
+  }
   // One try a day: the first result counts.
   function countDaily(day, won, floor, turns) {
     if (data.days[day] && data.days[day].b >= data.br) return;
@@ -508,6 +567,8 @@
         s.cp = s.cp || null;
         s.counted = s.counted === true;
         s.done = s.done === true;
+        s.logged = s.logged === true;
+        s.ck = typeof s.ck === "string" && /^[a-z]{0,8}$/.test(s.ck) ? s.ck : "";
         return s;
       }
     } catch (e) {}
@@ -540,6 +601,7 @@
   function leaveDaily() {
     if (game && game.opts.day !== undefined && !game.done && st.over < 0 && st.turn > 0) {
       countDaily(game.opts.day, false, st.floor, st.turn);
+      logRun(false, "left");
       game.done = true;
       game.counted = true;
     }
@@ -547,7 +609,8 @@
   function startGame(opts) {
     stopWalk();
     leaveDaily();
-    if (game && inProgressOf(game) && !game.counted) count(game.opts.mode, "run");
+    if (game && inProgressOf(game) && !game.counted) { count(game.opts.mode, "run"); logRun(false, "left"); }
+    else if (game && game.g.over === 0 && !game.done && !game.counted) { count(game.opts.mode, "run"); logRun(false); }   // a Gentle fall left at its result
     game = makeGame(opts);
     st = game.g;
     cursor = -1;
@@ -562,11 +625,13 @@
     $("msg").textContent = lastMsg;
   }
   // Do one action; false when it was not allowed (no turn passed).
+  var shrineDue = false;     // the last step ended on the shrine
   function doAct(a) {
     if (!game || game.done || st.over >= 0) return false;
     var before = st.floor;
     var ev = E.act(st, a);
     if (!ev) return false;
+    shrineDue = false;
     handleEvents(ev);
     if (st.floor !== before) {
       count(game.opts.mode, "deep", st.floor);
@@ -579,11 +644,12 @@
     if (st.over >= 0) finish();
     saveSession();
     renderAll();
+    if (shrineDue && st.over < 0 && !E.watched(st)) { stopWalk(); setTimeout(shrineDialog, 120); }
     return true;
   }
   var EV_SHOW = { hit: 1, kill: 1, hurt: 1, warded: 1, chest: 1, pick: 1, full: 1, cursedHere: 1, gold: 1, trap: 1,
     floor: 1, key: 1, locked: 1, wake: 1, bell: 1, mimic: 1, split: 1, call: 1, drain: 1, ward: 1, heal: 1,
-    focus: 1, cleanse: 1, chart: 1, blink: 1, push: 1, miss: 1 };
+    focus: 1, cleanse: 1, chart: 1, blink: 1, push: 1, miss: 1, shrine: 1, bought: 1 };
   function evText(e) {
     var p = {};
     if (e.n !== undefined) p.n = e.n;
@@ -603,7 +669,8 @@
       else if (e.e === "pick" || e.e === "chest") sfx("pick");
       else if (e.e === "floor") sfx("floor");
       else if (e.e === "miss") addFx(e.i, "·", "miss");
-      else if (e.e === "fall") game.cause = e.k === "trap" ? t("cause.trap") : monName(e.k);
+      else if (e.e === "fall") { game.cause = e.k === "trap" ? t("cause.trap") : monName(e.k); game.ck = e.k; }
+      else if (e.e === "shrine") shrineDue = true;
       if (e.e === "full" || e.e === "cursedHere" || e.e === "locked" || e.e === "key" || e.e === "bell" || e.e === "mimic") toastLine(evText(e));
     });
     if (hurt) { sfx("hurt"); shake(); }
@@ -614,12 +681,14 @@
     if (game.opts.day !== undefined) countDaily(game.opts.day, st.over === 1, st.floor, st.turn);
     if (st.over === 1) {
       if (!game.counted) { count(game.opts.mode, "win"); game.counted = true; }
+      logRun(true);
       game.done = true;
       sfx("win");
     } else {
       // Gentle with a save point: the run waits for the choice.
       if (!game.cp) {
         if (!game.counted) { count(game.opts.mode, "run"); game.counted = true; }
+        logRun(false);
         game.done = true;
       }
       sfx("end");
@@ -680,7 +749,7 @@
     if (d < 0 || E.monAt(st, next) || !doAct({ t: "move", d: d })) { stopWalk(); return; }
     sfx("step");
     var stop = !walk || !walk.path.length || st.hero.hp < hp || st.floor !== fl || st.pack.it.length !== items ||
-      seenFoes() > walk.foes || E.groundAt(st).length > 0 || st.over >= 0;
+      seenFoes() > walk.foes || E.groundAt(st).length > 0 || st.over >= 0 || onShrine();
     if (stop) { stopWalk(); return; }
     walk.timer = setTimeout(stepWalk, STEP_MS);
   }
@@ -787,6 +856,7 @@
     st.traps.forEach(function (tr) { if (tr.k && st.seen.charAt(tr.i) === "1") drawTrap(tr.i); });
     st.gold.forEach(function (g) { if (on[g.i]) drawGold(g.i); });
     st.loot.forEach(function (l) { if (on[l.i]) drawLoot(l.i, l.it); });
+    if (st.shrine && st.seen.charAt(st.shrine.i) === "1") drawShrine(st.shrine.i);
     st.chests.forEach(function (ci) { if (st.seen.charAt(ci) === "1") drawChest(ci); });
     st.mons.forEach(function (m) { if (m.m && on[m.i]) drawChest(m.i); });
     // what monsters will do next
@@ -858,6 +928,21 @@
     ctx.strokeStyle = it.c ? COL.danger : "rgba(0,0,0,0.5)";
     ctx.lineWidth = 2;
     ctx.stroke();
+  }
+  // A shrine: a small stone altar with a gold flame.
+  function drawShrine(i) {
+    var c = cellXY(i), s = c.s;
+    ctx.fillStyle = "#8b8f9a";
+    rr(c.x + s * 0.22, c.y + s * 0.5, s * 0.56, s * 0.3, s * 0.05);
+    ctx.fill();
+    ctx.fillStyle = "#6c707a";
+    ctx.fillRect(c.x + s * 0.3, c.y + s * 0.58, s * 0.4, s * 0.05);
+    ctx.fillStyle = COL.gold;
+    ctx.beginPath();
+    ctx.moveTo(c.x + s * 0.5, c.y + s * 0.14);
+    ctx.quadraticCurveTo(c.x + s * 0.68, c.y + s * 0.36, c.x + s * 0.5, c.y + s * 0.48);
+    ctx.quadraticCurveTo(c.x + s * 0.32, c.y + s * 0.36, c.x + s * 0.5, c.y + s * 0.14);
+    ctx.fill();
   }
   function drawChest(i) {
     var c = cellXY(i), s = c.s;
@@ -1016,7 +1101,7 @@
     if (game.done || st.over >= 0) { resultDialog(); return; }
     stopWalk();
     var h = st.hero.i;
-    if (i === h) { if (E.groundAt(st).length) packDialog(); return; }
+    if (i === h) { if (onShrine()) shrineDialog(); else if (E.groundAt(st).length) packDialog(); return; }
     var m = E.monAt(st, i);
     var vis = E.visible(st).indexOf(i) >= 0;
     if (E.dist(i, h) === 1) {
@@ -1536,7 +1621,7 @@
       endDrag();
       renderAll();
       // packing in sight of a monster takes a turn
-      if (changed && st.over < 0 && st.mons.some(function (m) { return m.aw && !m.m && E.los(st, m.i, st.hero.i) && E.cheb(m.i, st.hero.i) <= 7; })) {
+      if (changed && st.over < 0 && E.watched(st)) {
         doAct({ t: "wait" });
         toastLine(t("ev.packTurn"));
       }
@@ -1577,6 +1662,7 @@
   function endIfWaiting() {
     if (game && st.over === 0 && !game.done) {
       if (!game.counted) { count(game.opts.mode, "run"); game.counted = true; }
+      logRun(false);
       game.done = true;
       saveSession();
     }
@@ -1596,6 +1682,8 @@
     if (ds.n) empty = false;
     dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
     dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    if ((data.last || []).length) empty = false;
+    lastRuns(dlg);
     if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
     hubLink(acts, dlg);
@@ -1612,6 +1700,90 @@
     dlg.showModal();
     close.focus();
   }
+  // ---------- Shrine (W3) ----------
+  function onShrine() { return !!(st && st.shrine && st.hero.i === st.shrine.i); }
+  function shrineDialog() {
+    if (!game || game.done || st.over >= 0 || !onShrine() || document.querySelector("dialog[open]")) return;
+    stopWalk();
+    var dlg = makeDialog("cr-shrine");
+    var body = el("div", "sh-body");
+    dlg.appendChild(el("div", "dlg-title", t("shrine.title", { n: st.floor })));
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions");
+    var close = button(t("shrine.close"), "primary", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    function line(name, sub, cost, why, fn, ty) {
+      var r = el("div", "sh-row");
+      if (ty) { var sw = el("span", "sw"); sw.style.background = COL[ty]; r.appendChild(sw); }
+      var tx = el("div", "sh-tx");
+      tx.appendChild(el("div", "nm", name));
+      if (sub) tx.appendChild(el("div", "fx", sub));
+      r.appendChild(tx);
+      var b = button(cost === null ? t("shrine.sold") : t("shrine.cost", { n: cost }), "", fn);
+      b.disabled = cost === null || !!why;
+      if (why) b.title = why;
+      b.setAttribute("aria-label", name + " · " + (cost === null ? t("shrine.sold") : t("shrine.cost", { n: cost })) + (why ? " · " + why : ""));
+      r.appendChild(b);
+      body.appendChild(r);
+    }
+    function buy(what) {
+      var ev = E.shrineBuy(st, what);
+      if (!ev) { shake(); return; }
+      handleEvents(ev);
+      sfx("gold");
+      saveSession();
+      renderAll();
+      render();
+    }
+    function render() {
+      body.innerHTML = "";
+      var s2 = E.stats(st), h = st.hero, watched = E.watched(st);
+      body.appendChild(el("div", "dlg-sub", t("shrine.gold", { n: h.gold })));
+      if (watched) body.appendChild(el("div", "dlg-msg bad", t("shrine.watched")));
+      function why(cost, extra) { return watched ? t("shrine.watched") : (extra || (h.gold < cost ? t("shrine.poor") : "")); }
+      var ch = E.shrinePrice(st, "heal"), cc = E.shrinePrice(st, "cleanse");
+      line(t("shrine.heal"), h.hp + "/" + s2.mhp, ch, why(ch, h.hp >= s2.mhp ? t("shrine.full") : ""), function () { buy("heal"); });
+      line(t("shrine.cleanse"), "", cc, why(cc, st.pack.it.some(function (x) { return x.c; }) ? "" : t("shrine.noCurse")), function () { buy("cleanse"); });
+      st.shrine.it.forEach(function (x, n) {
+        if (!x) { line("—", "", null, "", function () {}); return; }
+        var def = E.item(x.k), cost = E.shrinePrice(st, n);
+        line(itemName(x.k) + " · " + t("t." + def.t), effectText(def), cost, why(cost), function () { buy(n); }, def.t);
+      });
+      body.appendChild(el("div", "dlg-note", t("shrine.note")));
+    }
+    render();
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    close.focus();
+  }
+  // Records › Last runs: what ended each one, and its code to replay.
+  function lastRuns(dlg) {
+    var list = data.last || [];
+    if (!list.length) return;
+    dlg.appendChild(el("div", "dlg-sub", t("last.title")));
+    var box = el("div", "lr-list");
+    list.forEach(function (v) {
+      var r = el("div", "lr-row");
+      var what = v.w ? t("last.won") : t("last.fell", { n: v.f });
+      if (!v.w && v.c) what += " · " + (v.c === "left" ? t("last.left") : t("last.by", { k: v.c === "trap" ? t("cause.trap") : monName(v.c) }));
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", (v.m === "d" ? t("daily.label") : t("mode." + v.m)) + " · " + what));
+      tx.appendChild(el("div", "fx", (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") + v.s));
+      r.appendChild(tx);
+      var b = button(t("last.replay"), "", function () {
+        dlg.close();
+        var go = function () { startGame({ mode: v.m === "d" ? "g" : v.m, seed: v.s }); };
+        if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), go, t("daily.leaveYes"), t("daily.leaveNo"));
+        else go();
+      });
+      b.setAttribute("aria-label", t("last.replayLabel", { seed: v.s }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+  }
+
   // ---------- Daily crypt ----------
   function today() { return DK ? DK.today() : 0; }
   function dailyOpts(day) { return { mode: "g", seed: cleanSeed(DK.seedOf("crypt", day)), day: day }; }

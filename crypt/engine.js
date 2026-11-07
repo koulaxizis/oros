@@ -54,6 +54,8 @@
   var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
   var MODES = ["g", "r"];
   var CHECKPOINTS = [4, 7, 10];      // Gentle: a save point on arriving
+  var SHRINE_FLOORS = [3, 6, 9];     // a shrine shop on these floors (5.56.00)
+  var TIER_PRICE = [0, 8, 16, 28];   // + 2 per floor
 
   // ---------- Random numbers (no Math.random, no clock) ----------
   function hashStr(s) {
@@ -304,10 +306,12 @@
     }
     return null;
   }
-  // Links: [itemA, itemB, kind] for facing ports.
+  // Links: [itemA, itemB, kind] for facing ports. A cursed item does
+  // not link until it is cleansed (5.56.00).
   function packLinks(pack) {
     var g = packGrid(pack, -1), out = [], seen = {};
     pack.it.forEach(function (p, n) {
+      if (p.c) return;
       var sh = shapeOf(p.k, p.r);
       sh.ports.forEach(function (pt) {
         var c = sh.cells[pt[0]], x = p.x + c[0], y = p.y + c[1];
@@ -315,7 +319,9 @@
         if (nx < 0 || ny < 0 || nx >= pack.w || ny >= pack.h) return;
         var m = g[ny * pack.w + nx];
         if (m < 0 || m === n) return;
-        var q = pack.it[m], sq = shapeOf(q.k, q.r);
+        var q = pack.it[m];
+        if (q.c) return;
+        var sq = shapeOf(q.k, q.r);
         var back = sq.ports.some(function (pp) {
           var cc = sq.cells[pp[0]];
           return q.x + cc[0] === nx && q.y + cc[1] === ny && pp[1] === (pt[1] + 2) % 4;
@@ -403,6 +409,72 @@
     return sp ? packAdd(st, lootIdx, sp.x, sp.y, sp.r) : false;
   }
 
+  // ---------- Shrine (5.56.00) ----------
+  // A shrine on floors 3, 6 and 9: a floor cell 2–6 steps from the
+  // start, and three items for sale (never cursed). It uses its own
+  // random numbers, so the floors themselves stay as they were.
+  function placeShrine(st, floor) {
+    if (SHRINE_FLOORS.indexOf(floor) < 0) return;
+    var r = { s: hashStr("shrine:" + st.seed + ":" + floor) || 1 };
+    var d = bfs(st, st.hero.i), cand = [];
+    var taken = {};
+    st.mons.forEach(function (m) { taken[m.i] = 1; });
+    st.chests.forEach(function (c) { taken[c] = 1; });
+    st.loot.forEach(function (l) { taken[l.i] = 1; });
+    st.gold.forEach(function (g) { taken[g.i] = 1; });
+    st.traps.forEach(function (t) { taken[t.i] = 1; });
+    for (var i = 0; i < W * H; i++) {
+      if (st.map.charAt(i) === "." && d[i] >= 2 && d[i] <= 6 && !taken[i]) cand.push(i);
+    }
+    if (!cand.length) return;
+    var at = cand[rint(r, cand.length)], it = [], got = {};
+    for (var k = 0; k < 3; k++) {
+      var x = null;
+      for (var a = 0; a < 6 && (!x || got[x.k]); a++) x = rollItem(r, floor, k === 2 ? 1 : 0);
+      got[x.k] = 1;
+      it.push({ k: x.k, r: 0, c: 0 });
+    }
+    st.shrine = { i: at, it: it };
+  }
+  function shrinePrice(st, what) {
+    if (what === "heal") return 4 + st.floor;
+    if (what === "cleanse") return 10 + 2 * st.floor;
+    var x = st.shrine && st.shrine.it[what];
+    return x ? TIER_PRICE[item(x.k).tier] + 2 * st.floor : 0;
+  }
+  // An awake monster can see the hero (packing then costs a turn, the
+  // shrine stays silent).
+  function watched(st) {
+    return st.mons.some(function (m) { return m.hp > 0 && m.aw && !m.m && cheb(m.i, st.hero.i) <= 7 && los(st, m.i, st.hero.i); });
+  }
+  // what: "heal" | "cleanse" | 0–2 (an item). No turn passes. Returns
+  // the events, or null when it is not possible (not on the shrine,
+  // watched, not enough gold, nothing to do, sold).
+  function shrineBuy(st, what) {
+    var sh = st.shrine, h = st.hero;
+    if (!sh || st.over >= 0 || h.i !== sh.i || watched(st)) return null;
+    var cost = shrinePrice(st, what), s = stats(st), ev = [];
+    if (what === "heal") {
+      if (h.hp >= s.mhp) return null;
+    } else if (what === "cleanse") {
+      if (!st.pack.it.some(function (x) { return x.c; })) return null;
+    } else if (!isInt(what) || what < 0 || what > 2 || !sh.it[what]) return null;
+    if (h.gold < cost) return null;
+    h.gold -= cost;
+    if (what === "heal") { ev.push({ e: "heal", n: s.mhp - h.hp }); h.hp = s.mhp; }
+    else if (what === "cleanse") { st.pack.it.forEach(function (x) { x.c = 0; }); ev.push({ e: "cleanse" }); }
+    else {
+      var x = sh.it[what];
+      sh.it[what] = null;
+      st.loot.push({ i: h.i, it: { k: x.k, r: 0, c: 0 } });
+      var n = st.loot.length - 1;
+      ev.push({ e: "bought", k: x.k });
+      if (autoPick(st, n)) ev.push({ e: "pick", k: x.k });
+      else ev.push({ e: "full", k: x.k });
+    }
+    return ev;
+  }
+
   // ---------- New run ----------
   // end: the last floor (the Daily crypt is a short descent, 5.55.00);
   // a run with a short end is won on that floor's stairs, no key needed.
@@ -439,6 +511,8 @@
     });
     st.hero.i = f.start;
     st.hero.wd = 0;
+    delete st.shrine;
+    placeShrine(st, floor);
     var size = packSize(floor);
     st.pack.w = Math.max(st.pack.w, size.w);
     st.pack.h = Math.max(st.pack.h, size.h);
@@ -675,6 +749,7 @@
       if (autoPick(st, n)) ev.push({ e: "pick", k: k });
       else ev.push({ e: cur ? "cursedHere" : "full", k: k });
     });
+    if (st.shrine && st.shrine.i === h.i) ev.push({ e: "shrine" });
     if (st.map.charAt(h.i) === ">") {
       var last = st.end || FLOORS;
       if (st.floor < last) { enterFloor(st, st.floor + 1, ev); return; }
@@ -825,6 +900,11 @@
       return m && MONS[m.k] && cell(m.i) && isInt(m.hp) && isInt(m.id) && isInt(m.t) && (m.aw === 0 || m.aw === 1) &&
         (m.m === 0 || m.m === 1) && (m.n === null || (m.n && typeof m.n.a === "string" && Array.isArray(m.n.c) && m.n.c.every(cell)));
     })) return false;
+    if (st.shrine !== undefined) {
+      var sh = st.shrine;
+      if (!sh || !cell(sh.i) || st.map.charAt(sh.i) !== "." || !Array.isArray(sh.it) || sh.it.length !== 3 ||
+          !sh.it.every(function (x) { return x === null || (okIt(x) && x.c === 0); })) return false;
+    }
     var p = st.pack;
     if (!p || !isInt(p.w) || !isInt(p.h) || p.w < 6 || p.w > 8 || p.h < 4 || p.h > 5 || !Array.isArray(p.it)) return false;
     if (!p.it.every(function (x) { return okIt(x) && isInt(x.x) && isInt(x.y); })) return false;
@@ -853,6 +933,7 @@
     monAt: monAt, chestAt: chestAt, makeFloor: makeFloor, monStats: monStats, item: item, shapeOf: shapeOf,
     packSize: packSize, packGrid: packGrid, fits: fits, findSpot: findSpot, packLinks: packLinks, stats: stats,
     groundAt: groundAt, packAdd: packAdd, packMove: packMove, packDrop: packDrop, autoPick: autoPick,
+    SHRINE_FLOORS: SHRINE_FLOORS, shrinePrice: shrinePrice, shrineBuy: shrineBuy, watched: watched,
     newRun: newRun, visible: visible, intent: intent, act: act, usable: usable, valid: valid, clone: clone,
     timer: timer
   };

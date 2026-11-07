@@ -14,8 +14,8 @@ const D = require("../crypt/items.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "crypt/crypt.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var MODES = ['g','r']; var E = { FLOORS: 10 }; var MAX_DAY = 100000; var MAX_TURNS = 99999;"];
-  ["cmpStr", "isInt", "normDay", "dayKeyOk", "dayBetter", "normRow", "joinRows", "mergeCrypt"].forEach((name) => {
+  const parts = ["var DATA_VER = 1; var MODES = ['g','r']; var E = { FLOORS: 10 }; var MAX_DAY = 100000; var MAX_TURNS = 99999; var LAST_N = 10;"];
+  ["cmpStr", "isInt", "normDay", "dayKeyOk", "dayBetter", "normLast", "normRow", "joinRows", "mergeCrypt"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
@@ -379,4 +379,108 @@ test("crypt: Daily results merge as a join: newer epoch, then out, deeper, fewer
   // older data without days, and a reset drops older days
   assert.deepEqual(m({ ver: 1, br: 0, rows: {} }, null).days, {});
   assert.deepEqual(m(A, { ver: 1, br: 5, rows: {} }).days, {});
+});
+
+// Walks a run down to floor n through the stairs (monsters and traps
+// cleared on the way), for the shrine tests.
+function downTo(st, n) {
+  while (st.floor < n) {
+    st.mons = []; st.traps = [];
+    const d = E.bfs(st, st.map.indexOf(">"));
+    let best = -1, bd = d[st.hero.i];
+    for (let k = 0; k < 4; k++) { const x = E.step(st.hero.i, k); if (x >= 0 && d[x] >= 0 && d[x] < bd) { bd = d[x]; best = k; } }
+    if (best < 0) { st.chests = []; st.chestItems = []; E.act(st, { t: "wait" }); continue; }
+    E.act(st, { t: "move", d: best });
+  }
+  return st;
+}
+
+test("crypt: shrines stand on floors 3, 6 and 9, the same from the same code, and leave the floors as they were", () => {
+  for (let k = 0; k < 20; k++) {
+    const a = downTo(E.newRun("sh" + k, "g"), 3), b = downTo(E.newRun("sh" + k, "g"), 3);
+    assert.ok(a.shrine, "a shrine on floor 3");
+    assert.equal(J(a.shrine), J(b.shrine));
+    assert.equal(a.map, E.makeFloor("sh" + k, 3).map, "the floor itself is unchanged");
+    assert.equal(a.shrine.it.length, 3);
+    assert.ok(a.shrine.it.every((x) => x.c === 0), "never cursed");
+    assert.ok(E.valid(a));
+    const d = E.bfs(a, a.hero.i)[a.shrine.i];
+    assert.ok(d >= 2 && d <= 6, "near the start");
+    downTo(a, 4);
+    assert.equal(a.shrine, undefined, "no shrine on floor 4");
+  }
+  assert.deepEqual(E.SHRINE_FLOORS, [3, 6, 9]);
+});
+
+test("crypt: the shrine heals, lifts curses and sells, for gold, on its cell and unwatched only", () => {
+  const st = room();
+  st.floor = 3;
+  st.shrine = { i: at(5, 5), it: [{ k: "sword", r: 0, c: 0 }, { k: "lantern", r: 0, c: 0 }, null] };
+  st.hero.gold = 100;
+  st.hero.hp = 3;
+  // heal to full
+  const ev = E.shrineBuy(st, "heal");
+  assert.ok(ev && evs(ev, "heal").length === 1);
+  assert.equal(st.hero.hp, E.stats(st).mhp);
+  assert.equal(st.hero.gold, 100 - E.shrinePrice(st, "heal"));
+  assert.equal(E.shrineBuy(st, "heal"), null, "nothing to heal");
+  assert.equal(E.shrineBuy(st, "cleanse"), null, "nothing cursed");
+  // buy an item: into the pack, sold out
+  const g = st.hero.gold, price = E.shrinePrice(st, 0);
+  assert.equal(price, 8 + 2 * 3, "tier 1 on floor 3");
+  const ev2 = E.shrineBuy(st, 0);
+  assert.ok(evs(ev2, "bought").length && evs(ev2, "pick").length);
+  assert.ok(st.pack.it.some((x) => x.k === "sword"));
+  assert.equal(st.hero.gold, g - price);
+  assert.equal(st.shrine.it[0], null);
+  assert.equal(E.shrineBuy(st, 0), null, "sold");
+  assert.equal(E.shrineBuy(st, 2), null, "an empty place");
+  // a curse lifted
+  st.pack.it.push({ k: "glass", x: 5, y: 3, r: 0, c: 1 });
+  assert.ok(E.shrineBuy(st, "cleanse"));
+  assert.ok(st.pack.it.every((x) => x.c === 0));
+  // not enough gold
+  st.hero.gold = 1;
+  assert.equal(E.shrineBuy(st, 1), null);
+  // off the shrine, or watched by an awake monster: nothing
+  st.hero.gold = 100;
+  st.hero.i = at(6, 5);
+  assert.equal(E.shrineBuy(st, 1), null);
+  st.hero.i = at(5, 5);
+  mon(st, "rat", at(8, 5));
+  assert.ok(E.watched(st));
+  assert.equal(E.shrineBuy(st, 1), null);
+  assert.ok(E.valid(st));
+  // stepping on it says so
+  const s2 = room();
+  s2.shrine = { i: at(6, 5), it: [null, null, null] };
+  assert.equal(evs(E.act(s2, { t: "move", d: 1 }), "shrine").length, 1);
+  // valid() checks the shrine
+  const bad = E.clone(s2); bad.shrine.it.push(null); assert.equal(E.valid(bad), false);
+  const bad2 = E.clone(s2); bad2.shrine.it[0] = { k: "glass", r: 0, c: 1 }; assert.equal(E.valid(bad2), false);
+  const bad3 = E.clone(s2); bad3.shrine.i = 0; assert.equal(E.valid(bad3), false);
+});
+
+test("crypt: a cursed item does not link until it is cleansed", () => {
+  const pack = { w: 6, h: 4, it: [{ k: "dagger", x: 0, y: 0, r: 0, c: 1 }, { k: "dagger", x: 2, y: 0, r: 0, c: 0 }] };
+  assert.equal(E.packLinks(pack).length, 0);
+  pack.it[0].c = 0;
+  assert.equal(E.packLinks(pack).length, 1);
+});
+
+test("crypt: Last runs merge as a join: union, newest first, at most 10, a reset clears", () => {
+  const m = R.mergeCrypt;
+  const run = (a, s, extra) => Object.assign({ a, m: "g", f: 3, w: 0, c: "rat", s }, extra || {});
+  const A = { ver: 1, br: 0, rows: {}, last: [run(5, "aa"), run(3, "bb"), run(1, "cc")] };
+  const B = { ver: 1, br: 0, rows: {}, last: [run(4, "dd", { m: "d", w: 1, c: "", f: 5 }), run(3, "bb")] };
+  const C = { ver: 1, br: 0, rows: {}, last: [run(2, "ee", { m: "x" }), run(6, "ff", { c: "left" })] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), C)), J(m(A, m(B, C))));
+  assert.equal(J(m(A, A)), J(m(A, null)));
+  assert.deepEqual(m(A, m(B, C)).last.map((x) => x.s), ["ff", "aa", "dd", "bb", "cc"], "union, newest first, bad entry dropped");
+  const many = { ver: 1, br: 0, rows: {}, last: Array.from({ length: 14 }, (_, k) => run(k + 1, "s" + k)) };
+  assert.equal(m(many, null).last.length, 10);
+  assert.equal(m(many, null).last[0].a, 14);
+  assert.deepEqual(m(A, { ver: 1, br: 4, rows: {} }).last.map((x) => x.s), ["aa"], "older than the reset drop");
+  assert.deepEqual(m({ ver: 1, br: 0, rows: {} }, null).last, [], "older data has none");
 });

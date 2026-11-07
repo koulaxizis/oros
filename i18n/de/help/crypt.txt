@@ -39,7 +39,7 @@ Packen kostet keine Runde, außer ein waches Monster kann dich sehen: Dann koste
 - Amulett und Amulett: 5 % mehr Gold
 - jedes andere Paar: +2 Leben
 
-**Flüche:** Manche starken Gegenstände sind verflucht (gestreift). Ein verfluchter Gegenstand verlässt den Rucksack erst, wenn du eine `Reinigungsrolle` liest. Ein verfluchter Gegenstand auf dem Boden wird nicht von selbst aufgenommen: Leg ihn von Hand hinein, wenn du ihn willst.
+**Flüche:** Manche starken Gegenstände sind verflucht (gestreift). Ein verfluchter Gegenstand verbindet sich nicht und verlässt den Rucksack erst, wenn du eine `Reinigungsrolle` liest oder ein Schrein den Fluch löst. Ein verfluchter Gegenstand auf dem Boden wird nicht von selbst aufgenommen: Leg ihn von Hand hinein, wenn du ihn willst.
 
 ## Gegenstände
 - **Klingen** geben Angriff. **Schutz** gibt Abwehr und Leben.
@@ -54,6 +54,14 @@ Packen kostet keine Runde, außer ein waches Monster kann dich sehen: Dann koste
 - **Tränke** und **Schriftrollen** werden verbraucht: Heilung, Fokus, Flüche aufheben, die ganze Ebene zeigen, Flucht neben die Treppe, Feuer rund um dich.
 
 Die Schnellplätze unten halten die ersten vier Runen, Tränke und Schriftrollen im Rucksack, von links nach rechts und Reihe für Reihe gelesen. Tippe auf einen oder drücke [[1]] bis [[4]]. Der Platz einer Rune zeigt ihre Fokuskosten.
+
+## Schreine
+Auf den Ebenen 3, 6 und 9 steht je ein Schrein, ein kleiner Steinaltar nahe der Stelle, an der du ankommst. Tritt darauf, um Gold einzutauschen:
+- `Voll heilen`;
+- `Jeden Fluch lösen` im Rucksack;
+- einen von drei Gegenständen kaufen (nie verflucht). Was du kaufst, kommt in den Rucksack oder bleibt auf dem Boden, wenn es nicht passt.
+
+Der Schrein kostet keine Runde, bleibt aber stumm, solange ein waches Monster dich sehen kann. Die Preise steigen mit der Ebene. Tippe auf dein Feld, um ihn wieder zu öffnen.
 
 ## Monster
 Jede Art hat eine Eigenart:
@@ -87,7 +95,7 @@ Die Kalendertaste (mit einem Punkt, solange du die heutige Gruft noch nicht gesp
 Am Ende siehst du, ob du hinausgekommen bist, die Runden und deine Serie von Tagen, an denen du hinauskamst. `Teilen` kopiert eine Zeile ohne Spoiler: fünf Quadrate für die Ebenen und deine Runden. Die Gruft des Tages steht auch im [Game Center](help:a/gamecenter) unter den heutigen Tagesrätseln. Abstiege des Tages zählen nicht in der Bilanz von `Sanft` und `Gnadenlos`; sie haben eine eigene Zeile in der `Bilanz`.
 
 ## Bilanz und Synchronisierung
-Die `Bilanz` zeigt deine Abstiege, Siege und die tiefste erreichte Ebene in jedem Modus. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und zählt die Abstiege aller Geräte zusammen. Sie zählt auch im [Game Center](help:a/gamecenter). Der laufende Abstieg, sein Speicherpunkt und die Toneinstellung bleiben auf diesem Gerät, und ein unfertiger Abstieg geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+Die `Bilanz` zeigt deine Abstiege, Siege und die tiefste erreichte Ebene in jedem Modus und die letzten 10 Abstiege von allen deinen Geräten: wie jeder endete und seinen Code, mit `Nochmal`, um dieselbe Gruft noch einmal hinabzusteigen. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und zählt die Abstiege aller Geräte zusammen. Sie zählt auch im [Game Center](help:a/gamecenter). Der laufende Abstieg, sein Speicherpunkt und die Toneinstellung bleiben auf diesem Gerät, und ein unfertiger Abstieg geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
 
 ## Tastatur
 - Pfeiltasten oder [[W]] [[A]] [[S]] [[D]]: ein Schritt. [[Space]]: warten.
