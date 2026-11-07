@@ -6,6 +6,7 @@ export { RemoteRoom } from "./remote.js";
 export { PushBox } from "./push.js";
 export { HouseBox } from "./house.js";
 export { HookBox } from "./hook.js";
+export { GateBox } from "./gate.js";
 
 function connectFn(host, port, mode) {
   return connect({ hostname: host, port: port },
