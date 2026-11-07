@@ -143,3 +143,30 @@ test("Receiving page: covers only from the music sources, audio needs a tap", ()
   assert.match(v, /au\.preload = "none"/);
   assert.match(v, /function renderTrack/);
 });
+
+test("tracks: an album / playlist keeps each song by the song rules, Music receivers", async () => {
+  const env = K.pack("tracks", { t: "Live 99", ty: "al", a: "Band", art: "https://archive.org/services/img/x", cr: "credit",
+    i: [IA, { t: "Mine", a: "Me", s: "sv", u: "https://my.server/stream?t=tok", k: "sv:abcdef12" }, "junk"] });
+  assert.equal(env.d.i.length, 2);
+  assert.equal(env.d.i[0].cr, undefined, "one credit for the list");
+  assert.deepEqual(env.d.i[1], { t: "Mine", a: "Me", s: "own" });
+  assert.equal(K.summary(env, "en"), "Album «Live 99» · Band · 2 songs");
+  assert.equal(K.file(env, "en").text, "#EXTM3U\n#EXTINF:183,The Band - Song A\n" + IA.u + "\n");
+  const go = K.target(env, "en");
+  assert.equal(go.app, "music");
+  assert.equal(go.target.addList.n, "Live 99");
+  assert.deepEqual(go.target.addList.refs.map((r) => r.k), ["ia:abc123def"]);
+  const own = K.pack("tracks", { t: "Mix", ty: "pl", i: [{ t: "Mine", a: "Me", s: "sv" }] });
+  assert.deepEqual(K.target(own, "en"), { app: "music", target: { findSong: { q: "Mix" } } });
+  assert.equal(K.file(own, "en").name, "Mix.txt");
+  assert.equal(K.pack("tracks", { t: "x", i: [] }), null);
+  assert.equal(K.norm("tracks", { i: Array.from({ length: 300 }, (_, n) => ({ t: "s" + n })) }).i.length, 200);
+  const back = await K.decode(await K.encode(env));
+  assert.deepEqual(back.env, env);
+  const m = src("music/music.js");
+  assert.match(m, /if \(tg\.addList && typeof tg\.addList === "object"\) \{ addListTarget\(tg\.addList\); return; \}/);
+  assert.match(m, /\[t\("m\.share"\), function \(\) \{ shareList\(p\.n, "pl"/);
+  assert.match(m, /\[t\("m\.share"\), function \(\) \{ shareList\(al\.n, "al", al\.a, "", al\.list, ""\); \}\]/);
+  ["sh.playAll", "sh.savePl"].forEach((k) => assert.ok(src("i18n/de/music.js").indexOf('"' + k + '":') >= 0, k));
+  assert.match(src("share/view.js"), /function renderTracks/);
+});

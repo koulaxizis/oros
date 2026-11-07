@@ -37,6 +37,8 @@
       "addHint.track": "Opens Music: play it, like it or add it to a playlist.", "addHint.trackFind": "Opens Music and searches for it.",
       "dl.track": "Download (.m3u)", trPlayHint: "It plays from {s}, straight in this page.",
       trOpen: "Open on {s}", trFind: "Find it on MusicBrainz", trCover: "Cover",
+      "addHint.tracks": "Opens Music: play them all or keep them as your playlist.", "dl.tracks": "Download (.m3u)",
+      trsHint: "Tap a song to play it here; the next one follows.", trsPlay: "Play {t}",
       calMonth: "Month", calList: "List", calPrev: "Previous month", calNext: "Next month",
       calNoneDay: "Nothing on this day.", calNoneMonth: "Nothing this month.",
       calZone: "Times are in your time zone ({z}).", calAllDay: "all day",
@@ -81,6 +83,8 @@
       "addHint.track": "Ανοίγει τη Μουσική: παίξ' το, βάλ' το στα αγαπημένα ή σε λίστα.", "addHint.trackFind": "Ανοίγει τη Μουσική και το αναζητά.",
       "dl.track": "Λήψη (.m3u)", trPlayHint: "Παίζει από το {s}, κατευθείαν σε αυτή τη σελίδα.",
       trOpen: "Άνοιγμα στο {s}", trFind: "Βρες το στο MusicBrainz", trCover: "Εξώφυλλο",
+      "addHint.tracks": "Ανοίγει τη Μουσική: παίξ' τα όλα ή κράτα τα ως δική σου λίστα.", "dl.tracks": "Λήψη (.m3u)",
+      trsHint: "Πάτα ένα τραγούδι για να παίξει εδώ· ακολουθεί το επόμενο.", trsPlay: "Αναπαραγωγή: {t}",
       calMonth: "Μήνας", calList: "Λίστα", calPrev: "Προηγούμενος μήνας", calNext: "Επόμενος μήνας",
       calNoneDay: "Τίποτα αυτή τη μέρα.", calNoneMonth: "Τίποτα αυτόν τον μήνα.",
       calZone: "Οι ώρες είναι στη ζώνη ώρας σου ({z}).", calAllDay: "όλη μέρα",
@@ -225,7 +229,7 @@
   }
   function render(env, bin) {
     var c = card(), d = env.d, S = K.strings(LANG);
-    c.appendChild(el("p", "kind", S[env.k]));
+    c.appendChild(el("p", "kind", env.k === "tracks" ? S["tracks." + d.ty] : S[env.k]));
     c.appendChild(el("h1", "", env.k === "recipe" && d.e ? d.e + " " + K.title(env, LANG) : K.title(env, LANG)));
     if (env.k === "list") {
       var ul = el("ul", "items");
@@ -305,6 +309,8 @@
       return;
     } else if (env.k === "track") {
       renderTrack(c, env);
+    } else if (env.k === "tracks") {
+      renderTracks(c, env);
     } else if (env.k === "cal") {
       renderCal(c, env);
     } else if (env.k === "links") {
@@ -358,6 +364,55 @@
       more.appendChild(link("https://musicbrainz.org/search?type=recording&method=advanced&query=" + encodeURIComponent(q), t("trFind")));
     }
     if (more.childNodes.length) c.appendChild(more);
+  }
+  // An album or a playlist: one player for the songs that came with a
+  // stream; a tapped row plays, the next playable one follows.
+  function renderTracks(c, env) {
+    var d = env.d, S = K.strings(LANG), h1 = c.querySelector("h1");
+    if (d.art) {
+      var img = el("img", "tr-art");
+      img.alt = t("trCover");
+      img.referrerPolicy = "no-referrer";
+      img.loading = "lazy";
+      img.addEventListener("error", function () { img.remove(); });
+      img.src = d.art;
+      c.insertBefore(img, h1);
+    }
+    c.appendChild(el("p", "meta", [d.a, d.i.length === 1 ? S.songs1 : S.songsN.replace("{n}", d.i.length)].filter(Boolean).join(" \u00b7 ")));
+    var playable = d.i.filter(function (x) { return x.u; });
+    var au = null, rows = [];
+    if (playable.length) {
+      au = el("audio", "tr-audio");
+      au.controls = true;
+      au.preload = "none";
+      au.setAttribute("referrerpolicy", "no-referrer");
+      c.appendChild(au);
+      c.appendChild(el("p", "hint", t("trsHint")));
+    }
+    var ol = el("ol", "tr-list");
+    d.i.forEach(function (x, n) {
+      var li = el("li");
+      var label = x.t + (x.a && x.a !== d.a ? " \u00b7 " + x.a : "");
+      var node = x.u ? btn(label, "tr-row", function () { play(n); }) : el("span", "tr-row off", label);
+      if (x.u) node.setAttribute("aria-label", t("trsPlay").replace("{t}", label));
+      li.appendChild(node);
+      if (x.d) li.appendChild(el("span", "tr-len", K.fmtLen(x.d)));
+      rows[n] = li;
+      ol.appendChild(li);
+    });
+    c.appendChild(ol);
+    var at = -1;
+    function play(n) {
+      at = n;
+      rows.forEach(function (r, i) { r.className = i === n ? "now" : ""; });
+      au.src = d.i[n].u;
+      au.play().catch(function () {});
+    }
+    if (au) au.addEventListener("ended", function () {
+      for (var n = at + 1; n < d.i.length; n++) if (d.i[n].u) { play(n); return; }
+    });
+    if (playable.length < d.i.length) c.appendChild(el("p", "hint", S.trsOwn));
+    if (d.cr) c.appendChild(el("p", "meta tr-cr", d.cr));
   }
   // ---------- Free times: pick one, then answer ----------
   function myZone() {
@@ -744,8 +799,10 @@
     acts.appendChild(btn(t("add"), "prim", function () { addToOros(env); }));
     acts.appendChild(btn(t("copyText"), "", function () { copyText(K.text(env, LANG, helpers)); }));
     var f = K.file(env, LANG);
-    var tr = env.k === "track", find = tr && !(env.d.u && env.d.k);
-    acts.appendChild(btn((tr && !env.d.u ? "" : t("dl." + env.k)) || t("download"), "", function () { download(f); }));
+    var tr = env.k === "track", trs = env.k === "tracks";
+    var find = (tr && !(env.d.u && env.d.k)) || (trs && !env.d.i.some(function (x) { return x.u && x.k; }));
+    var noM3u = (tr && !env.d.u) || (trs && !env.d.i.some(function (x) { return x.u; }));
+    acts.appendChild(btn((noM3u ? "" : t("dl." + env.k)) || t("download"), "", function () { download(f); }));
     c.appendChild(acts);
     c.appendChild(el("p", "hint", t("addHint." + (find ? "trackFind" : env.k))));
   }

@@ -1,6 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.50.00
+- **Song links show the cover in chats.** When you share a song, album or playlist, WhatsApp, Telegram, Facebook and others now show a card with the cover, the title and the artist (`Show the cover in chats`, on by default; off for links with a password or an expiry date).
+- **Music: share a whole album or playlist.** `Share` in the album and playlist menus. The person who gets it can play the list in the browser, one song after another, or save it as their own playlist in orOS Music.
+
 ## Version 5.49.00
 - **New game: Realm.** A turn-based strategy game on a hex island. Grow your land, earn gold from every hex, buy Militia, Pikemen, Riders and Champions, build Watchtowers, Forts and Mills, and take your rivals' land. Play against 1 to 5 computer sides (Easy, Medium, Hard) or with up to 6 people on one device. It is in Games and in the new Strategy group of the Game Center, and a game left open continues where you stopped.
 - **Passwords:** some older encrypted andOTP backups (`.json.aes`) could not be opened; they open now.

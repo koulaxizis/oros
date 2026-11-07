@@ -81,6 +81,8 @@ The device gets the song's own https address, so free music and songs from your 
 - A song from free music (Internet Archive, Jamendo, ccMixter, Openverse) or a public link goes with its address, cover, licence and credit, so it plays on the page the other person opens, even without orOS. `Add to my orOS` there lets them play it, like it or add it to a playlist.
 - A song from your own server goes with its name only: the server's address and your login never leave your device.
 - A song on this device asks each time: send its name as a link, or the file itself through the share menu (where the device can send files, up to 100 MB). Send a file only if it is yours to give.
+- `Share…` in an album's ⋯ menu (yours or from free music) or a playlist's ⋯ menu sends the whole list the same way: songs from free music play one after another on the page, songs of your own go with their names. `Add to my orOS` there offers `Play all` or `Save as my playlist`.
+- `Show the cover in chats` puts the cover and title in the chat's preview (see [Send to someone](help:t/share)).
 
 ## Sleep timer
 `Sleep timer` in the full player stops the music after 5 to 90 minutes, or at the end of the playing song. The last ten seconds fade out. The button shows how long is left; choose `Turn off the timer` to cancel it.

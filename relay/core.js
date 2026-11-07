@@ -41,6 +41,7 @@ import { handleDav } from "./dav.js";
 import { handleHouse } from "./house.js";
 import { validOasa, runOasa, OasaError } from "./oasa.js";
 import { validHookIn, runHookIn, handleHookIn, HookError } from "./hook.js";
+import { handlePreview } from "./preview.js";
 
 export const LIMITS = {
   bodyBytes: 64 * 1024,        // request JSON
@@ -233,6 +234,13 @@ export async function handle(request, env, connectFn, now, fetchFn) {
     if (!okOrigin) return new Response("origin not allowed", { status: 403 });
     if (limited(request.headers.get("CF-Connecting-IP") || "", now || Date.now())) return new Response("too many requests", { status: 429 });
     return handleRemote(request, env, m[1]);
+  }
+
+  // Send to someone: a song's link preview (relay/preview.js, BR-SHARE-
+  // PREVIEW): any chat app's crawler or browser, GET/HEAD only, own rate
+  // limit, nothing stored; it forwards to the share page.
+  if (url.pathname.startsWith("/p/")) {
+    return handlePreview(request, url, request.headers.get("CF-Connecting-IP") || "", now || Date.now());
   }
 
   // Send to someone: the encrypted pieces of a shared item (relay/share.js),
