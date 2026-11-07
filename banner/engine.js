@@ -163,6 +163,67 @@
   // deck it grew from).
   var MARCH_MIN = 15, MARCH_MAX = 30;
   function listOk(l) { return Array.isArray(l) && l.length >= MARCH_MIN && l.length <= MARCH_MAX && l.every(function (k) { return !!card(k); }); }
+  // ---------- Own decks (5.67.00) ----------
+  // An own deck is DECK_SIZE cards, at most COPY_MAX of each. Its share
+  // code is "b" + 15 letters: 2 bits per card (0–3 copies) in CODE_ORDER,
+  // 72 bits in base 32, then 1 check letter. CODE_ORDER never changes;
+  // a new card is added at its end (older codes stay the same deck).
+  var DECK_SIZE = 20, COPY_MAX = 3;
+  var CODE_ORDER = ["militia", "scout", "archer", "spear", "shield", "wolf", "healer", "climber", "knight", "xbow",
+    "raider", "sentinel", "druid", "eagle", "giant", "lancer", "mage", "troll", "golem", "dragon",
+    "spark", "rally", "recall", "mend", "haste", "quake", "storm", "fortify",
+    "wood", "rock", "bridge", "tower", "mire", "spring", "road", "pond"];
+  var B32 = "0123456789abcdefghjkmnpqrstvwxyz";
+  function countsOf(list) {
+    var n = {};
+    list.forEach(function (k) { n[k] = (n[k] || 0) + 1; });
+    return n;
+  }
+  function deckOk(list) {
+    if (!Array.isArray(list) || list.length !== DECK_SIZE || !list.every(function (k) { return !!card(k); })) return false;
+    var n = countsOf(list);
+    return Object.keys(n).every(function (k) { return n[k] <= COPY_MAX; });
+  }
+  // The list in CODE_ORDER (the same deck always reads the same).
+  function sortDeck(list) {
+    return list.slice().sort(function (a, b) { return CODE_ORDER.indexOf(a) - CODE_ORDER.indexOf(b); });
+  }
+  function deckCode(list) {
+    if (!deckOk(list)) return "";
+    var n = countsOf(list), bits = "";
+    CODE_ORDER.forEach(function (k) { var v = n[k] || 0; bits += (v >> 1) + "" + (v & 1); });
+    while (bits.length % 5) bits += "0";
+    var out = "", sum = 0;
+    for (var i = 0; i < bits.length; i += 5) {
+      var v = parseInt(bits.slice(i, i + 5), 2);
+      sum = (sum * 7 + v + 1) % 32;
+      out += B32.charAt(v);
+    }
+    return "b" + out + B32.charAt(sum);
+  }
+  // A code typed or pasted: case, spaces and dashes do not matter;
+  // a wrong letter, length or check letter gives null.
+  function deckFromCode(code) {
+    if (typeof code !== "string") return null;
+    var c = code.toLowerCase().replace(/[\s-]/g, "").replace(/[il]/g, "1").replace(/o/g, "0");
+    var len = Math.ceil(CODE_ORDER.length * 2 / 5);
+    if (c.length !== len + 2 || c.charAt(0) !== "b") return null;
+    var bits = "", sum = 0;
+    for (var i = 1; i <= len; i++) {
+      var v = B32.indexOf(c.charAt(i));
+      if (v < 0) return null;
+      sum = (sum * 7 + v + 1) % 32;
+      bits += ("0000" + v.toString(2)).slice(-5);
+    }
+    if (B32.charAt(sum) !== c.charAt(len + 1) || /1/.test(bits.slice(CODE_ORDER.length * 2))) return null;
+    var list = [];
+    CODE_ORDER.forEach(function (k, j) {
+      var v = parseInt(bits.slice(j * 2, j * 2 + 2), 2);
+      for (var x = 0; x < v; x++) list.push(k);
+    });
+    return deckOk(list) ? list : null;
+  }
+
   function newBattle(seed, decks, first, lists) {
     seed = String(seed);
     var dk = [0, 1].map(function (s) { return DECK_IDS.indexOf(decks && decks[s]) >= 0 ? decks[s] : DECK_IDS[s]; });
@@ -176,6 +237,27 @@
       st.hand[s] = st.deck[s].splice(0, HAND_START);
     }
     startTurn(st, [], true);
+    return st;
+  }
+
+  // ---------- Puzzles (5.67.00) ----------
+  // A "win this turn" puzzle (banner/puzzles.js): Blue to play, with
+  //   { map (W × H terrain), keep: Red's Keep, hand: [cards], en: energy,
+  //     u: [[card, side, x, y, hp?, flags?]] (flags "n": played this
+  //     turn, "m": moved, "a": attacked, "s": stuck), rally?: 1 }.
+  // The state is an ordinary battle with empty decks (Blue's turn count
+// set so the energy shown is the puzzle's);
+  // the puzzle is solved when Red's Keep breaks before the turn ends.
+  function puzzleBattle(p, id) {
+    var st = { v: 1, seed: "pz" + id, decks: [DECK_IDS[0], DECK_IDS[0]], map: p.map, keep: [KEEP_HP, p.keep],
+      hand: [p.hand.slice(), []], deck: [[], []], units: [], side: 0, turn: 11, rt: [6, 5], en: [p.en, 0],
+      hold: [0, 0], rally: [p.rally ? 1 : 0, 0], tired: [0, 0], disc: [[], []], rng: [1, 1], nid: 1, n: 0, over: -1, why: "" };
+    p.u.forEach(function (x) {
+      var fl = x[5] || "";
+      st.units.push({ id: st.nid++, k: x[0], s: x[1], i: idx(x[2], x[3]), hp: x[4] || card(x[0]).hp,
+        mv: /m/.test(fl) ? 1 : 0, at: /a/.test(fl) ? 1 : 0, f: /n/.test(fl) ? 1 : 0, st: /s/.test(fl) ? 1 : 0 });
+    });
+    st.rt[0] = Math.max(1, Math.min(EN_MAX, p.en - shrinesHeld(st, 0)));   // the energy shown is the puzzle's
     return st;
   }
 
@@ -684,6 +766,7 @@
     hashStr: hashStr, xy: xy, idx: idx, step: step, dist: dist, card: card, isKeep: isKeep, isShrine: isShrine,
     passable: passable, pathOk: pathOk, makeBoard: makeBoard, deckList: deckList, newBattle: newBattle,
     MARCH_MIN: MARCH_MIN, MARCH_MAX: MARCH_MAX, listOk: listOk,
+    DECK_SIZE: DECK_SIZE, COPY_MAX: COPY_MAX, CODE_ORDER: CODE_ORDER, deckOk: deckOk, sortDeck: sortDeck, deckCode: deckCode, deckFromCode: deckFromCode, puzzleBattle: puzzleBattle,
     unitAt: unitAt, unitById: unitById, shrinesHeld: shrinesHeld, guarded: guarded, atkOf: atkOf, dmgTo: dmgTo,
     moves: moves, attacks: attacks, targets: targets, legal: legal, act: act, valid: valid, clone: clone,
     evaluate: evaluate, aiAction: aiAction, finishTurn: finishTurn

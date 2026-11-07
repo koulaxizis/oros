@@ -15,14 +15,16 @@ const D = require("../banner/cards.js");
 const SRC = fs.readFileSync(path.join(__dirname, "..", "banner/banner.js"), "utf8");
 const R = (() => {
   const parts = ["var DATA_VER = 1; var ROW_KEYS = ['e','m','h','p','a']; var E = { KEEP_HP: 15, DECK_IDS: ['iron','thorn','tide','ember'] }; var MAX_DAY = 100000; var MAX_TURNS = 999; var MARCH_N = 8; var LAST_N = 10;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "normLast", "normDay", "dayKeyOk", "dayBetter", "mergeBanner"].forEach((name) => {
+  parts[0] = parts[0].replace("var E = { KEEP_HP: 15, DECK_IDS: ['iron','thorn','tide','ember'] };", "var E = Object.assign({}, ENGINE);");
+  ["cmpStr", "isInt", "normRow", "joinRows", "cleanName", "deckIdOk", "normDeck", "codeOk", "normLast", "normDay", "dayKeyOk", "dayBetter", "mergeBanner"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
     const line = SRC.slice(i, one);
     parts.push(/\}\s*$/.test(line) ? line : SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") + "\nreturn { mergeBanner };")();
+  parts.push("var PUZZLE_N = 20, DECKS_MAX = 12, DECKS_KEEP = 60, NAME_MAX = 24;");
+  return new Function("ENGINE", parts.join("\n") + "\nreturn { mergeBanner, normDeck };")(E);
 })();
 
 const J = JSON.stringify;
@@ -426,4 +428,104 @@ test("banner: a March deck list replaces the starter deck only when it is valid"
   assert.equal(E.card("__proto__"), null);
   const bad = E.newBattle("m1", ["iron", "ember"], 0, [["spark"], null]);
   assert.equal(bad.hand[0].length + bad.deck[0].length, E.deckList("iron").length, "a broken list falls back to the starter deck");
+});
+
+test("banner: deck share codes round trip, and a wrong letter is refused", () => {
+  assert.equal(E.CODE_ORDER.length, Object.keys(D.CARDS).length);
+  assert.ok(Object.keys(D.CARDS).every((k) => E.CODE_ORDER.includes(k)), "every card has a place in the code");
+  E.DECK_IDS.forEach((d) => {
+    const list = E.deckList(d), code = E.deckCode(list);
+    assert.match(code, /^b[0-9a-hjkmnp-tv-z]{16}$/);
+    assert.deepEqual(E.deckFromCode(code), E.sortDeck(list));
+    assert.deepEqual(E.deckFromCode(" " + code.toUpperCase().replace(/(.{4})/g, "$1-") + " "), E.sortDeck(list), "case, spaces and dashes do not matter");
+    for (let i = 1; i < code.length; i++) {
+      const alt = code.slice(0, i) + (code[i] === "2" ? "3" : "2") + code.slice(i + 1);
+      assert.equal(E.deckFromCode(alt), null, "one wrong letter at " + i);
+    }
+  });
+  assert.equal(E.deckCode(E.deckList("iron").slice(1)), "", "19 cards is not a deck");
+  assert.ok(!E.deckOk(new Array(20).fill("spark")), "at most 3 of a card");
+  assert.equal(E.deckFromCode("b"), null);
+  assert.equal(E.deckFromCode(null), null);
+});
+
+test("banner: own decks merge by the later change; puzzles solved merge as a max epoch", () => {
+  const iron = E.deckCode(E.deckList("iron")), tide = E.deckCode(E.deckList("tide"));
+  const A = { br: 5, rows: {}, decks: { abcd: { n: "Mine", c: iron, m: 100 }, efgh: { n: "Gone", c: tide, m: 50 } }, pz: { 1: 5, 3: 2, 7: 9 } };
+  const B = { br: 5, rows: {}, decks: { abcd: { n: "Mine 2", c: tide, m: 200 }, efgh: { m: 60, x: 1 } }, pz: { 1: 7, 2: 6 } };
+  const ab = R.mergeBanner(A, B);
+  assert.equal(J(ab), J(R.mergeBanner(B, A)));
+  assert.equal(J(R.mergeBanner(ab, ab)), J(ab));
+  assert.deepEqual(ab.decks.abcd, { n: "Mine 2", c: tide, m: 200 });
+  assert.deepEqual(ab.decks.efgh, { m: 60, x: 1 }, "a later delete wins");
+  assert.deepEqual(ab.pz, { 1: 7, 2: 6, 7: 9 }, "solved before the reset drops");
+  const junk = R.mergeBanner({ br: 0, rows: {}, pz: { 0: 1, 21: 1, x: 1, 4: -1 }, decks: {
+    "A!": { n: "x", c: iron, m: 1 }, good: { n: "", c: iron, m: 1 }, bad1: { n: "x", c: "b123", m: 1 }, bad2: { n: "x", c: iron, m: 0 } } }, null);
+  assert.deepEqual([junk.pz, junk.decks], [{}, {}], "bad numbers, ids, names, codes and times are refused");
+  assert.equal(R.normDeck({ n: "  a\u0007b   c  ", c: iron, m: 3 }).n, "a b c", "names are cleaned");
+  assert.equal(R.normDeck({ n: "x".repeat(40), c: iron, m: 3 }).n.length, 24);
+  assert.deepEqual(R.mergeBanner({ br: 0, rows: {} }, null).decks, {}, "older data without decks");
+  const many = { br: 0, rows: {}, decks: {} };
+  for (let i = 0; i < 70; i++) many.decks["d" + (1000 + i)] = { m: i + 1, x: 1 };
+  assert.equal(Object.keys(R.mergeBanner(many, null).decks).length, 60, "the newest 60 entries are kept");
+  // Last battles with an own deck keep its code
+  const last = R.mergeBanner({ br: 0, rows: {}, last: [{ a: 9, m: "m", w: 1, t: 3, s: "abc", k: ["iron", "tide"], c: [iron, ""] },
+    { a: 8, m: "m", w: 1, t: 3, s: "abd", k: ["iron", "tide"], c: ["bnope", ""] }] }, null).last;
+  assert.deepEqual(last.map((v) => v.c), [[iron, ""]], "a bad code is refused");
+});
+
+test("banner: an own deck plays its own cards", () => {
+  const list = E.deckFromCode(E.deckCode(E.deckList("ember")));
+  const st = E.newBattle("own1", ["iron", "iron"], 0, [list, null]);
+  assert.deepEqual(st.hand[0].concat(st.deck[0]).sort(), list.slice().sort());
+});
+
+// The shortest way to break the red Keep this turn (breadth first over
+// every action but "end", same states counted once), or -1.
+function puzzleWin(st0, budget) {
+  const key = (st) => JSON.stringify([st.map, st.keep, st.hand[0], st.en[0], st.rally[0],
+    st.units.map((u) => [u.k, u.s, u.i, u.hp, u.mv, u.at, u.f, u.st]).sort()]);
+  const seen = new Set([key(st0)]);
+  let layer = [st0], depth = 0, nodes = 0;
+  while (layer.length && nodes < budget) {
+    const next = [];
+    for (const st of layer) {
+      for (const a of E.legal(st)) {
+        if (a.t === "end") continue;
+        const c = E.clone(st);
+        if (!E.act(c, a)) continue;
+        nodes++;
+        if (c.over === 0) return depth + 1;
+        const k = key(c);
+        if (!seen.has(k)) { seen.add(k); next.push(c); }
+      }
+    }
+    layer = next;
+    depth++;
+  }
+  return -1;
+}
+
+test("banner: 20 puzzles, each a valid position that can be won this turn, never in one step", () => {
+  const P = require("../banner/puzzles.js").LIST;
+  assert.equal(P.length, 20);
+  const seen = new Set();
+  P.forEach((p, j) => {
+    const st = E.puzzleBattle(p, j + 1);
+    assert.ok(E.valid(st), "puzzle " + (j + 1) + " is a valid state");
+    assert.equal(st.seed, "pz" + (j + 1));
+    assert.ok(p.keep >= 1 && p.keep <= E.KEEP_HP && p.en >= 1 && p.en <= E.EN_MAX);
+    const k = JSON.stringify([p.map, p.u]);
+    assert.ok(!seen.has(k), "puzzle " + (j + 1) + " is not a copy");
+    seen.add(k);
+    const w = puzzleWin(st, 400000);
+    assert.ok(w >= 3, "puzzle " + (j + 1) + " needs at least 3 steps (found " + w + ")");
+  });
+});
+
+test("banner: ending the turn is not a way through a puzzle", () => {
+  const st = E.puzzleBattle(require("../banner/puzzles.js").LIST[0], 1);
+  E.act(st, { t: "end" });
+  assert.equal(st.over, -1);
+  assert.equal(st.keep[1], require("../banner/puzzles.js").LIST[0].keep);
 });

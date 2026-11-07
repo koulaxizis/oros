@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.67.00
+- **Banner: your own decks and 20 puzzles.** `My decks` in Banner builds decks of your own from all 36 cards (20 cards, at most 3 of each). Each deck has a short code to share with a friend, and `Add from a code` turns a friend's code into your deck; pick your decks for either side when you start a battle. `Puzzles` are 20 battles to win in one turn, from easy to hard, and the solved ones sync between your devices.
+
 ## Version 5.66.00
 - **Banner: March and Last battles.** The flag button in Banner starts a March: eight battles in a row against a stronger computer each time, from Easy to Hard. After each win you add 1 of 3 cards to your deck or remove one, and one loss ends the march. `Records` now also shows your marches and your last 10 battles, with `Replay` to play one again.
 

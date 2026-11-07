@@ -77,12 +77,20 @@ When it ends you see whether you won, the turn it ended on, what was left of you
 ## March
 `March` (the flag button) is eight battles in a row against the computer, each one stronger: three on Easy, three on Medium, then two on Hard. Pick a starting deck. After each win you choose 1 of 3 cards to add to your deck, or remove one card, or keep the deck as it is (a deck stays between 15 and 30 cards). One loss ends the march. Leaving a march battle before its end, or starting another battle, counts as a loss. A march carries on across battles on this device, and `Records` shows your marches and your best one.
 
+## Puzzles
+`Puzzles` (the puzzle-piece button) are 20 battles to win in one turn: break the red Keep before you end your turn. The cards in your hand, your units and the board are set; there is no draw. `Undo` takes back a step, and ending the turn shows `Try again`. Each puzzle has a way through, and none is won with a single step. Solved puzzles are marked and sync between your devices; they do not count in the battles in `Records`.
+
+## My decks
+`My decks` (the card-stack button) is where you build decks of your own: 20 cards, at most 3 of each card, from all 36 cards. Start from a ready-made deck or from nothing, and tap − and + on each card. You can keep 12 decks, and they sync between your devices.
+
+Each deck has a share code of 17 letters and digits, starting with b. `Share` copies or shares it, and `Add from a code` turns a friend's code into a deck of yours. The code holds only the cards, not the name. When you start a new battle, pick one of your decks under the deck choice for either side. `Reset records` does not delete your decks.
+
 ## Undo and keys
 `Undo` (or [[Z]]) takes back what you did in this turn, step by step, until you end it.
 
 Keys: [[1]] to [[6]] pick a card from your hand. On the board, the arrow keys move the cursor, [[Enter]] acts on the tile under it, and [[I]] reads it. [[Esc]] lets go of the chosen card or unit.
 
 ## Records and sync
-`Records` shows your battles and wins against each computer level, your two-player battles and your marches. `Last battles` lists your 10 most recent battles with their codes, and `Replay` plays one again (a March battle replays as a free battle with the starting decks). They sync between your devices through [orOS sync](help:t/sync), adding up the battles from every device, and they count in the [Game Center](help:a/gamecenter). The battle in progress and the sound setting stay on this device, and an unfinished battle continues where you left it. `Reset records` clears the records on every device.
+`Records` shows your battles and wins against each computer level, your two-player battles, your marches and your solved puzzles. `Last battles` lists your 10 most recent battles with their codes, and `Replay` plays one again (a March battle replays as a free battle with the starting decks). They sync between your devices through [orOS sync](help:t/sync), adding up the battles from every device, and they count in the [Game Center](help:a/gamecenter). The battle in progress and the sound setting stay on this device, and an unfinished battle continues where you left it. `Reset records` clears the records on every device.
 
 Banner is an original game: its rules, cards and drawings are made for orOS.
