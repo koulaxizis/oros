@@ -489,3 +489,49 @@ test("realm: campaign progress merges as a join and outlives Reset records", () 
   }
   assert.equal(J(M({ rows: {}, camp: { 0: { s: 1, r: 1 }, 100: { s: 1, r: 1 }, x: { s: 1, r: 1 } } }, null).camp), "{}");
 });
+
+test("realm: island codes round-trip, catch typos and name what is wrong with a drawing", () => {
+  ["s", "m", "l"].forEach((size, k) => {
+    const st = E.makeMap({ size, seed: "code" + k, sides: sides("p", "m", "m", "e").slice(0, 2 + k) });
+    const rows = E.toRows(st);
+    const code = E.encodeLayout({ size, rows });
+    assert.match(code, /^r1[slm][a-z0-9]+$/);
+    assert.ok(code.length <= 2400, "fits the code field");
+    assert.deepEqual(E.decodeLayout(code), { size, rows }, size + " round-trip");
+    assert.deepEqual(E.decodeLayout("  " + code.toUpperCase() + "\n"), { size, rows }, "case and spaces do not matter");
+    assert.equal(E.layoutProblem({ size, rows }), "");
+    // a changed character is caught by the check
+    for (let i = 3; i < code.length; i += 7) {
+      const ch = code.charAt(i), alt = ch === "a" ? "b" : "a";
+      assert.equal(E.decodeLayout(code.slice(0, i) + alt + code.slice(i + 1)), null, "typo at " + i);
+    }
+  });
+  for (const bad of ["", "r1", "hello world", "r1x" + "a".repeat(20), "r1s" + "a".repeat(3000), null]) {
+    assert.equal(E.decodeLayout(bad), null, J(bad));
+  }
+  // what is wrong with a drawing
+  const blank = E.blankRows("s");
+  assert.equal(E.layoutProblem({ size: "s", rows: blank }), "sides");
+  const put = (rows, r, c, ch) => rows.map((row, k) => (k === r ? row.slice(0, c) + ch + row.slice(c + 1) : row));
+  const H = blank.length, W = blank[0].length, mr = Math.floor(H / 2), mc = Math.floor(W / 2);
+  let two = put(put(blank, mr, mc - 2, "0"), mr, mc - 1, "0");
+  two = put(put(two, mr, mc + 1, "1"), mr, mc + 2, "1");
+  assert.equal(E.layoutProblem({ size: "s", rows: two }), "");
+  assert.equal(E.layoutProblem({ size: "s", rows: put(two, mr, mc + 2, "_") }), "small", "a side of one cell");
+  assert.equal(E.layoutProblem({ size: "s", rows: put(two, 0, 3, "_") }), "edge");
+  assert.equal(two[mr].charAt(2), ".", "the test islet is apart from the land");
+  assert.equal(E.layoutProblem({ size: "s", rows: put(two, mr, 1, "_") }), "pieces", "an islet apart from the land");
+  assert.equal(E.layoutProblem({ size: "s", rows: two.slice(1) }), "bad");
+  assert.equal(E.layoutProblem(null), "bad");
+  // sides 0, 2 and 5 play as three sides 0, 1, 2
+  let gap = put(put(two, mr, mc + 1, "2"), mr, mc + 2, "2");
+  gap = put(put(gap, mr + 1, mc - 1, "5"), mr + 1, mc, "5");
+  assert.equal(E.sidesIn(gap), 6);
+  const packed = E.compactRows(gap);
+  assert.equal(E.sidesIn(packed), 3);
+  assert.equal(E.layoutProblem({ size: "s", rows: packed }), "");
+  assert.equal(E.layoutProblem({ size: "s", rows: gap }), "sides", "a gap in the sides is refused until packed");
+  const g = E.fromLayout({ size: "s", rows: packed }, sides("p", "m", "e"), "m1");
+  assert.ok(E.valid(g));
+  assert.deepEqual(E.toRows(g).map((r) => r.replace(/[0-5]/g, "x")), packed.map((r) => r.replace(/[0-5]/g, "x")));
+});

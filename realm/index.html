@@ -20,6 +20,7 @@
     <h1 class="sr-only" data-i18n="app.name">Realm</h1>
     <div class="tb-row" id="tb-a">
       <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="edx-btn" hidden></button>
       <button type="button" class="icon-btn" id="undo-btn"></button>
       <button type="button" class="end-btn" id="end-btn" data-i18n="btn.end">End turn</button>
     </div>
@@ -28,6 +29,7 @@
       <button type="button" class="icon-btn" id="zin-btn"></button>
       <button type="button" class="icon-btn" id="center-btn"></button>
       <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="edm-btn" hidden></button>
       <button type="button" class="icon-btn" id="camp-btn"></button>
       <button type="button" class="icon-btn" id="daily-btn"></button>
       <button type="button" class="icon-btn" id="stats-btn"></button>
@@ -55,6 +57,19 @@
     <button type="button" class="buy" id="buy-tower"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
     <button type="button" class="buy" id="buy-fort"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
     <button type="button" class="buy" id="buy-mill"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
+  </nav>
+
+  <!-- Editor brushes (map editor): key 1-9 -->
+  <nav id="edbar" hidden>
+    <button type="button" class="buy brush" id="br-0"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-1"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-2"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-3"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-4"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-5"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-6"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-7"><span class="ic"></span><span class="nm"></span></button>
+    <button type="button" class="buy brush" id="br-8"><span class="ic"></span><span class="nm"></span></button>
   </nav>
 
   <div id="live" class="sr-only" aria-live="polite"></div>

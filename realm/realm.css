@@ -112,6 +112,9 @@ button, select { cursor: pointer; }
 }
 #daily-btn.on { color: var(--accent); border-color: var(--accent); }
 #camp-btn.on { color: var(--accent); border-color: var(--accent); }
+.dlg-code { font-family: ui-monospace, monospace; font-size: 12px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); overflow-wrap: anywhere; max-height: 96px; overflow: auto; -webkit-user-select: all; user-select: all; margin-top: 8px; }
+.dlg-row2 { display: flex; gap: 8px; margin-top: 8px; }
+.dlg-row2 .dlg-input { flex: 1 1 auto; min-width: 0; }
 
 /* Campaign: 12 islands, 3 per row (2 on a narrow phone) */
 .camp-grid {
@@ -210,7 +213,7 @@ button, select { cursor: pointer; }
 }
 
 /* ---------- 5. Buy bar ---------- */
-#buybar {
+#buybar, #edbar {
   flex-shrink: 0;
   display: flex;
   gap: 6px;
@@ -222,7 +225,7 @@ button, select { cursor: pointer; }
   overflow-x: auto;
   scrollbar-width: none;
 }
-#buybar::-webkit-scrollbar { display: none; }
+#buybar::-webkit-scrollbar, #edbar::-webkit-scrollbar { display: none; }
 .buy {
   flex: 1 0 64px;
   min-width: 64px;
@@ -246,6 +249,11 @@ button, select { cursor: pointer; }
 .buy[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 2px var(--accent-soft); }
 .buy.poor { opacity: 0.45; }
 .buy.poor .cost { color: var(--text-dim); }
+/* Editor brushes: sea, land, Thicket, the six sides */
+.brush .sw-b { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(0, 0, 0, 0.25); display: block; }
+.brush .sw-b.sea { background: var(--rm-sea); border-color: var(--border); }
+.brush .sw-b.land { background: var(--rm-land); }
+#edbar[hidden], #buybar[hidden] { display: none; }
 
 /* ---------- 6. Dialogs (R32: margin auto, scroll inside) ---------- */
 dialog.mm-dlg {
@@ -389,7 +397,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-select:focus, .dlg-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .dlg-check { display: flex; align-items: center; gap: 8px; margin: 12px 0 4px; font-size: 13px; }
 .dlg-check input { width: 18px; height: 18px; accent-color: var(--accent); }
-.dlg-note { font-size: 12px; color: var(--text-dim); margin-top: 8px; -webkit-user-select: text; user-select: text; }
+.dlg-note { font-size: 12px; color: var(--text-dim); margin-top: 8px; -webkit-user-select: text; user-select: text; overflow-wrap: anywhere; }
 .dlg-note.bad { color: var(--danger); font-weight: 700; }
 .dlg-actions.wrap { flex-wrap: wrap; }
 .dlg-actions.wrap .dlg-btn { flex: 1 1 120px; }
@@ -408,7 +416,7 @@ dialog.mm-dlg.pass::backdrop { background: var(--bg); }
   #toolbar { padding-left: 8px; padding-right: 8px; gap: 6px; }
   .tb-row { gap: 6px; }
   #status { padding: 6px 8px; gap: 8px; font-size: 12px; }
-  #buybar { padding-left: 6px; padding-right: 6px; gap: 4px; }
+  #buybar, #edbar { padding-left: 6px; padding-right: 6px; gap: 4px; }
   .buy { flex-basis: 52px; min-width: 52px; }
   .dlg-select, .dlg-input { font-size: 16px; }   /* ≥16px: no iOS zoom */
   dialog.mm-dlg { width: calc(100vw - 20px); padding: 14px; }
@@ -425,7 +433,7 @@ dialog.mm-dlg.pass::backdrop { background: var(--bg); }
 }
 /* Phone held sideways: the buy bar joins the left column (gamekit/layout.css). */
 @media (orientation: landscape) and (max-height: 520px) {
-  #buybar { flex-wrap: wrap; overflow-x: visible; border-top: 0; }
+  #buybar, #edbar { flex-wrap: wrap; overflow-x: visible; border-top: 0; }
   .buy { min-height: 44px; flex: 1 0 44px; min-width: 44px; }
   .buy .nm { display: none; }
 }

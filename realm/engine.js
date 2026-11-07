@@ -220,24 +220,27 @@
   //   2+ cells, land on the grid edge, or land in more than one piece.
   var LAYOUT_OBJ = { hall: O.HALL, tower: O.TOWER, fort: O.FORT, mill: O.MILL, u1: O.U1, u2: O.U2,
     u3: O.U3, u4: O.U4, thicket: O.THICKET, ruin: O.RUIN };
-  function fromLayout(layout, sides, seed) {
-    if (!layout || !SIZES[layout.size] || !Array.isArray(layout.rows) || !Array.isArray(sides) ||
-        sides.length < 2 || sides.length > MAX_SIDES) return null;
+  // Read a layout into a bare state (no Halls yet): { st } or { err }:
+  //   "bad" not a layout of this size, "edge" land on the grid edge,
+  //   "pieces" land in more than one piece, "sides" fewer than 2 sides,
+  //   "small" a side without 2 connected cells.
+  function readLayout(layout, nSides) {
+    if (!layout || !SIZES[layout.size] || !Array.isArray(layout.rows)) return { err: "bad" };
     var spec = SIZES[layout.size], W = spec.W, H = spec.H, n = W * H;
-    if (layout.rows.length !== H) return null;
-    var st = { v: 1, W: W, H: H, size: layout.size, seed: String(seed || "drawn").slice(0, 64),
-      land: [], own: [], obj: [], done: [], gold: [] };
+    if (layout.rows.length !== H) return { err: "bad" };
+    var st = { v: 1, W: W, H: H, size: layout.size, seed: "", land: [], own: [], obj: [], done: [], gold: [] };
+    var edge = false, seen = {};
     for (var r = 0; r < H; r++) {
       var row = layout.rows[r];
-      if (typeof row !== "string" || row.length !== W) return null;
+      if (typeof row !== "string" || row.length !== W) return { err: "bad" };
       for (var c = 0; c < W; c++) {
         var ch = row.charAt(c), side = "012345".indexOf(ch);
         var land = ch !== ".";
         if (!land) { st.land.push(0); st.own.push(-1); st.obj.push(0); }
         else if (ch === "_" || ch === "t") { st.land.push(1); st.own.push(-1); st.obj.push(ch === "t" ? O.THICKET : 0); }
-        else if (side >= 0 && side < sides.length) { st.land.push(1); st.own.push(side); st.obj.push(0); }
-        else return null;
-        if (land && (r === 0 || c === 0 || r === H - 1 || c === W - 1)) return null;
+        else if (side >= 0 && side < nSides) { st.land.push(1); st.own.push(side); st.obj.push(0); seen[side] = true; }
+        else return { err: "bad" };
+        if (land && (r === 0 || c === 0 || r === H - 1 || c === W - 1)) edge = true;
         st.done.push(0); st.gold.push(0);
       }
     }
@@ -245,18 +248,66 @@
     for (var k = 0; k < objs.length; k++) {
       var o = objs[k];
       if (!Array.isArray(o) || !isInt(o[0]) || !isInt(o[1]) || o[0] < 0 || o[0] >= H || o[1] < 0 || o[1] >= W ||
-          !LAYOUT_OBJ.hasOwnProperty(o[2])) return null;
+          !LAYOUT_OBJ.hasOwnProperty(o[2])) return { err: "bad" };
       var at = o[0] * W + o[1], code = LAYOUT_OBJ[o[2]];
-      if (!st.land[at]) return null;
+      if (!st.land[at]) return { err: "bad" };
       var free = code === O.THICKET || code === O.RUIN;
-      if (free !== (st.own[at] < 0)) return null;
+      if (free !== (st.own[at] < 0)) return { err: "bad" };
       st.obj[at] = code;
     }
-    // one piece of land
+    if (edge) return { err: "edge" };
     var first = st.land.indexOf(1);
-    if (first < 0) return null;
+    if (first < 0) return { err: "sides" };
     var dist = bfsDist(st, [first]);
-    for (var q = 0; q < n; q++) if (st.land[q] && dist[q] < 0) return null;
+    for (var q = 0; q < n; q++) if (st.land[q] && dist[q] < 0) return { err: "pieces" };
+    var count = 0;
+    for (var s1 = 0; s1 < nSides; s1++) if (seen[s1]) count++;
+    if (count < 2 || count !== nSides) return { err: "sides" };
+    st.sides = [];
+    for (var s3 = 0; s3 < nSides; s3++) st.sides.push({ k: "h", lv: "m", out: false });
+    for (var s2 = 0; s2 < nSides; s2++) {
+      if (!regions(st, s2).some(function (reg) { return reg.length >= 2; })) return { err: "small" };
+    }
+    return { st: st };
+  }
+  // The problem with a drawing, or "" when it can be played (its sides
+  // are the digits used, numbered 0.. without gaps: see compactRows).
+  function layoutProblem(layout) {
+    if (!layout || !Array.isArray(layout.rows)) return "bad";
+    return readLayout(layout, sidesIn(layout.rows)).err || "";
+  }
+  // How many sides a drawing has: the highest digit + 1.
+  function sidesIn(rows) {
+    var hi = -1;
+    rows.forEach(function (row) {
+      for (var i = 0; i < String(row).length; i++) {
+        var d = "012345".indexOf(String(row).charAt(i));
+        if (d > hi) hi = d;
+      }
+    });
+    return hi + 1;
+  }
+  // Renumber the sides used to 0, 1, 2… in order, so a drawing with
+  // sides 0, 2 and 5 plays as three sides.
+  function compactRows(rows) {
+    var used = [];
+    rows.forEach(function (row) {
+      for (var i = 0; i < row.length; i++) {
+        var d = "012345".indexOf(row.charAt(i));
+        if (d >= 0 && used.indexOf(d) < 0) used.push(d);
+      }
+    });
+    used.sort();
+    return rows.map(function (row) {
+      return row.replace(/[0-5]/g, function (ch) { return String(used.indexOf(+ch)); });
+    });
+  }
+  function fromLayout(layout, sides, seed) {
+    if (!Array.isArray(sides) || sides.length < 2 || sides.length > MAX_SIDES) return null;
+    var rd = readLayout(layout, sides.length);
+    if (rd.err) return null;
+    var st = rd.st;
+    st.seed = String(seed || "drawn").slice(0, 64);
     st.sides = sides.map(function (sd) {
       return { k: sd.k === "c" ? "c" : "h", lv: LEVELS.indexOf(sd.lv) >= 0 ? sd.lv : "m", out: false };
     });
@@ -265,13 +316,72 @@
     settle(st, -1);
     var gold = Array.isArray(layout.gold) ? layout.gold : [];
     for (var s2 = 0; s2 < sides.length; s2++) {
-      var regs = regions(st, s2).filter(function (reg) { return reg.length >= 2; });
-      if (!regs.length) return null;
       var g = isInt(gold[s2]) && gold[s2] >= 0 && gold[s2] <= 999 ? gold[s2] : START_GOLD;
-      regs.forEach(function (reg) { var h = hallOf(st, reg); if (h >= 0) st.gold[h] = g; });
+      regions(st, s2).forEach(function (reg) { var h = hallOf(st, reg); if (h >= 0) st.gold[h] = g; });
     }
     beginTurn(st);
     return st;
+  }
+
+  // ---------- Island codes (W4: share a drawn island) ----------
+  // "r1" + size + run-length cells + 2 check characters, lower-case
+  // letters and digits only, so it survives chats and copy-paste:
+  // cells "._t012345" are the letters a…i, a run of more than one cell
+  // carries its length in decimal ("a40b3d4…"). The check is
+  // FNV-1a(size + runs) mod 1296 in base 36, so a typo is caught.
+  var CELL_CH = "._t012345", CELL_LT = "abcdefghi", MAX_CODE = 2400;
+  function codeCheck(body) {
+    var c = (hashStr(body) % 1296).toString(36);
+    return c.length < 2 ? "0" + c : c;
+  }
+  function encodeLayout(layout) {
+    var flat = layout.rows.join(""), out = "", i = 0;
+    while (i < flat.length) {
+      var ch = flat.charAt(i), j = i;
+      while (j < flat.length && flat.charAt(j) === ch) j++;
+      out += CELL_LT.charAt(CELL_CH.indexOf(ch)) + (j - i > 1 ? String(j - i) : "");
+      i = j;
+    }
+    var body = layout.size + out;
+    return "r1" + body + codeCheck(body);
+  }
+  // → { size, rows } or null (not a code, a typo, wrong length).
+  function decodeLayout(code) {
+    code = String(code || "").toLowerCase().replace(/\s+/g, "");
+    if (code.length < 8 || code.length > MAX_CODE || code.slice(0, 2) !== "r1") return null;
+    var size = code.charAt(2);
+    if (!SIZES[size]) return null;
+    var body = code.slice(2, -2);
+    if (codeCheck(body) !== code.slice(-2)) return null;
+    var spec = SIZES[size], n = spec.W * spec.H, flat = "", i = 1;
+    while (i < body.length) {
+      var k = CELL_LT.indexOf(body.charAt(i));
+      if (k < 0) return null;
+      i++;
+      var num = "";
+      while (i < body.length && /[0-9]/.test(body.charAt(i))) num += body.charAt(i++);
+      var len = num ? +num : 1;
+      if (len < 1 || flat.length + len > n) return null;
+      for (var z = 0; z < len; z++) flat += CELL_CH.charAt(k);
+    }
+    if (flat.length !== n) return null;
+    var rows = [];
+    for (var r = 0; r < spec.H; r++) rows.push(flat.slice(r * spec.W, (r + 1) * spec.W));
+    return { size: size, rows: rows };
+  }
+  // An empty sea of a size (the editor's blank island has a small land
+  // in the middle).
+  function blankRows(size) {
+    var spec = SIZES[size], rows = [];
+    for (var r = 0; r < spec.H; r++) {
+      var line = "";
+      for (var c = 0; c < spec.W; c++) {
+        var dr = r - (spec.H - 1) / 2, dc = c - (spec.W - 1) / 2;
+        line += r > 0 && c > 0 && r < spec.H - 1 && c < spec.W - 1 && dr * dr + dc * dc * 0.7 < 6 ? "_" : ".";
+      }
+      rows.push(line);
+    }
+    return rows;
   }
   // The rows of a state's island as drawn (sides' land as digits).
   function toRows(st) {
@@ -1025,7 +1135,9 @@
     UNIT_COST: UNIT_COST, UNIT_UPKEEP: UNIT_UPKEEP, TOWER_COST: TOWER_COST, FORT_COST: FORT_COST,
     MILL_GAIN: MILL_GAIN, MOVE_STEPS: MOVE_STEPS, SURRENDER_SHARE: SURRENDER_SHARE,
     hashStr: hashStr, stream: stream, step: step,
-    makeMap: makeMap, fromLayout: fromLayout, toRows: toRows, START_GOLD: START_GOLD, neighbours: neighbours, around: around, regionOf: regionOf, regions: regions, hallOf: hallOf,
+    makeMap: makeMap, fromLayout: fromLayout, toRows: toRows, START_GOLD: START_GOLD,
+    layoutProblem: layoutProblem, sidesIn: sidesIn, compactRows: compactRows, encodeLayout: encodeLayout,
+    decodeLayout: decodeLayout, blankRows: blankRows, neighbours: neighbours, around: around, regionOf: regionOf, regions: regions, hallOf: hallOf,
     regionInfo: regionInfo, costOf: costOf, millCost: millCost, defence: defence,
     isUnit: isUnit, tierOf: tierOf, strengthOf: strengthOf, upkeepOf: upkeepOf,
     targets: targets, move: move, canBuy: canBuy, buyCells: buyCells, buy: buy,

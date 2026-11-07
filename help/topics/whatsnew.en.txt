@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.53.00
+- **Realm: Island editor.** Draw your own island: paint sea, land and thicket, mark where each side starts, then play it against the computer or with friends. Every drawn island has a short code you can copy or share, and anyone can play it by typing the code in New game.
+
 ## Version 5.52.00
 - **Realm: Campaign.** The flag button opens 12 islands of rising difficulty, from one Easy computer on a small island to five Hard computers on a large one. Win an island to open the next, and win in fewer rounds for up to 3 stars. Your progress syncs between your devices.
 
