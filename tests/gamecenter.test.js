@@ -195,6 +195,19 @@ test("gamecenter: the Daily battle counts in Today and the streak when won, neve
   assert.equal(sum({ "oros-banner-data": banner }).games.banner.today, 2, "a loss today: tried, not won");
 });
 
+test("gamecenter: Wayfarers counts journeys and wins from every device; a Hardy win is a hard win", () => {
+  const wf = { ver: 1, br: 1, rows: {
+    aaaaaa: { b: 1, s: { g: [4, 2, 1] }, c: { knight: 2 } },
+    bbbbbb: { b: 1, s: { h: [3, 0, 0] } },
+    oldold: { b: 0, s: { h: [9, 9, 1] } } } };
+  const s = sum({ "oros-wayfarers-data": wf });
+  assert.ok(C.GROUPS.find((g) => g.id === "rpg").games.includes("wayfarers"));
+  assert.deepEqual([s.games.wayfarers.p, s.games.wayfarers.w], [7, 2], "rows from before the reset do not count");
+  assert.ok(!ach(s, "hard").done, "no Hardy win yet");
+  wf.rows.bbbbbb.s.h = [4, 1, 1];
+  assert.ok(ach(sum({ "oros-wayfarers-data": wf }), "hard").done);
+});
+
 test("gamecenter: Crypt counts runs and wins from every device; a Grim win is a hard win", () => {
   const crypt = { ver: 1, br: 1, rows: {
     a: { b: 1, s: { g: [4, 1, 10], r: [2, 0, 5] } },

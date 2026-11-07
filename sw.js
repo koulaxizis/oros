@@ -20,7 +20,7 @@
 // GitHub Action should stamp just the version number; we prepend
 // the oros-v prefix here for cache namespace separation.
 
-var CACHE_VERSION = "oros-v5.68.00";
+var CACHE_VERSION = "oros-v5.69.00";
 var SHELL_CACHE   = "oros-shell-" + CACHE_VERSION;
 var RUNTIME_CACHE = "oros-runtime-" + CACHE_VERSION;
 // WebLLM's library (vendor/webllm, about 7 MB, loaded only when the
@@ -1099,6 +1099,8 @@ var PRECACHE_URLS = [
   "realm/help.el.txt",
   "banner/help.en.txt",
   "banner/help.el.txt",
+  "wayfarers/help.en.txt",
+  "wayfarers/help.el.txt",
   "crypt/help.en.txt",
   "crypt/help.el.txt",
   "zen/help.en.txt",
@@ -1855,6 +1857,12 @@ var PRECACHE_URLS = [
   "crypt/items.js",
   "crypt/engine.js",
   "crypt/crypt.js",
+  "wayfarers/",
+  "wayfarers/index.html",
+  "wayfarers/wayfarers.css",
+  "wayfarers/data.js",
+  "wayfarers/engine.js",
+  "wayfarers/wayfarers.js",
   "wordle/",
   "wordle/index.html",
   "wordle/wordle.css",

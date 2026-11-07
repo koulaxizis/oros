@@ -44,7 +44,7 @@
             "whack", "snake", "g2048", "wordle", "spot", "hexagon", "chess", "sudoku", "tetris",
             "minesweeper", "mahjong", "gomoku", "bubble", "checkers", "mastermind", "battleship", "rps",
             "hangman", "flow", "nonogram", "breakout", "reversi", "mancala", "pong", "backgammon",
-            "wordsearch", "solitaire", "jigsaw", "crossword", "xeri", "realm", "banner", "crypt", "petworld", "dice", "wheel", "scores"]
+            "wordsearch", "solitaire", "jigsaw", "crossword", "xeri", "realm", "banner", "crypt", "wayfarers", "petworld", "dice", "wheel", "scores"]
   };
   var ORDER = ["home", "work", "school", "create", "games"];
 

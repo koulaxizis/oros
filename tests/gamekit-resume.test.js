@@ -116,6 +116,11 @@ test("resume: each game's own test", () => {
   assert.equal(one("banner", { g: { over: -1, n: 5 }, done: true }), false);
   assert.equal(one("banner", { g: { over: -1, n: 4 }, done: false, me: false }), false, "only the computer has moved");
   assert.equal(one("banner", { g: { over: -1, n: 4 }, done: false, me: true }), true);
+  // Wayfarers: under way after the first action, until the journey is over
+  assert.equal(one("wayfarers", { g: { over: -1, acts: 0 }, counted: false }), false);
+  assert.equal(one("wayfarers", { g: { over: -1, acts: 3 }, counted: false }), true);
+  assert.equal(one("wayfarers", { g: { over: 0, acts: 30 }, counted: true }), false);
+  assert.equal(one("wayfarers", { g: { over: -1, acts: 3 }, counted: true }), false);
   // Crypt: under way after the first turn, until the run is over
   assert.equal(one("crypt", { g: { over: -1, turn: 0 }, done: false }), false);
   assert.equal(one("crypt", { g: { over: -1, turn: 12 }, done: false }), true);

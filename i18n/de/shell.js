@@ -148,6 +148,7 @@ orosPack("de", "shell", {
  "app.units": "Einheitenrechner",
  "app.wallpaper": "Hintergrundbild-Generator",
  "app.water": "Wasser",
+ "app.wayfarers": "Wanderer",
  "app.weather": "Wetter",
  "app.whack": "Hau den Maulwurf",
  "app.whiteboard": "Whiteboard",
