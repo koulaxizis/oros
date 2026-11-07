@@ -46,6 +46,18 @@ class_name = "HookBox"
 tag = "hook-v1"
 new_sqlite_classes = ["HookBox"]
 
+# orOS Gate (gate.js): one box per gate (one person's gate device),
+# holding only SHA-256 of the device token and of Claude's OAuth codes and
+# tokens. Tool calls pass through to the device's WebSocket; nothing of
+# the answers is stored. Wipes itself after 180 days unused.
+[[durable_objects.bindings]]
+name = "GATE"
+class_name = "GateBox"
+
+[[migrations]]
+tag = "gate-v1"
+new_sqlite_classes = ["GateBox"]
+
 # Newsletter's public sign-up forms and one-click unsubscribes
 # (newsletter.js). Declared here: a binding added only in the dashboard is
 # replaced on the next deploy from main.

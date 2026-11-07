@@ -1708,6 +1708,7 @@ var PRECACHE_URLS = [
   "stickies/host.js",
   "links/core.js",
   "links/host.js",
+  "gate/gate.js",
   "links/woo.js",
   "links/mydata.js",
   "links/mail.js",
