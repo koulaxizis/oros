@@ -22,6 +22,7 @@ The `Send to someone` window shows what will travel. Then pick how to send it:
 - `Save as file` saves a small text file with the link, to attach anywhere.
 - `Send as text` (contacts and recipes) sends plain text, as before.
 - Under `Send with`: WhatsApp, Telegram, Viber, SMS (on a phone), Facebook, X, Bluesky and Mastodon open that service with the link ready, for computers without a share menu. Facebook, X, Bluesky and Mastodon make a public post, so everyone who sees it can open the link. Mastodon asks for your server (like mastodon.social) and remembers it on this device.
+- For a song, `Show the cover in chats` (on unless you lock the link or give it an expiry) makes a link through the orOS server, so WhatsApp, Viber, Facebook and the others show the song's cover and title. The song's details (not the file) pass through the server on the way; nothing is stored. Untick it to keep everything inside the link.
 
 ## Lock it with a password
 Tick `Lock with a password` and type a password of at least 6 characters. Then the link alone shows nothing: the other person needs the password too. Tell it to them another way, in person or by phone, not in the same message as the link.

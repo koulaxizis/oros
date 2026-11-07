@@ -22,6 +22,7 @@ Das Fenster `An jemanden senden` zeigt, was mitgeschickt wird. Dann wählst du, 
 - `Als Datei speichern` speichert eine kleine Textdatei mit dem Link, die du überall anhängen kannst.
 - `Als Text senden` (Kontakte und Rezepte) sendet einfachen Text, wie bisher.
 - Unter `Senden mit`: WhatsApp, Telegram, Viber, SMS (auf dem Handy), Facebook, X, Bluesky und Mastodon öffnen den Dienst mit dem Link, für Computer ohne Teilen-Menü. Bei Facebook, X, Bluesky und Mastodon entsteht ein öffentlicher Beitrag: Alle, die ihn sehen, können den Link öffnen. Mastodon fragt nach deinem Server (z. B. mastodon.social) und merkt ihn sich auf diesem Gerät.
+- Bei einem Song macht `Cover in Chats zeigen` (an, außer du sperrst den Link oder gibst ihm ein Ablaufdatum) einen Link über den orOS-Server, damit WhatsApp, Viber, Facebook und die anderen Cover und Titel zeigen. Die Angaben zum Song (nicht die Datei) gehen dabei über den Server; nichts wird gespeichert. Nimm den Haken weg, damit alles im Link bleibt.
 
 ## Mit einem Passwort schützen
 Setz den Haken bei `Mit Passwort schützen` und tippe ein Passwort mit mindestens 6 Zeichen ein. Dann zeigt der Link allein nichts: Die andere Person braucht auch das Passwort. Sag es ihr auf anderem Weg, persönlich oder am Telefon, nicht in derselben Nachricht wie den Link.

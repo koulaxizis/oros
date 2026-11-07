@@ -203,5 +203,7 @@ orosPack("de", "share", {
  "trPlayHint": "Läuft direkt hier auf der Seite, von {s}.",
  "trOpen": "Auf {s} öffnen",
  "trFind": "Auf MusicBrainz suchen",
- "trCover": "Cover"
+ "trCover": "Cover",
+ "pv": "Cover in Chats zeigen",
+ "pvNote": "Der Vorschau-Link schickt die Angaben zum Song (nicht die Datei) über den orOS-Server, damit Chat-Apps Cover und Titel zeigen; nichts wird gespeichert."
 });

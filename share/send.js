@@ -70,7 +70,8 @@
       skipped: "Left out: {n} that could not be read.", cut: "Only the first {n} photos fit (25 MB or 200 photos at most).",
       imHead: "Send with", imPost: "A post on {n} is public: everyone who sees it can open the link.",
       mastoQ: "Your Mastodon server", mastoPh: "mastodon.social", mastoBad: "Write the server's name, like mastodon.social.",
-      mastoGo: "Continue", sms: "SMS"
+      mastoGo: "Continue", sms: "SMS",
+      pv: "Show the cover in chats", pvNote: "The preview link sends the song's details (not the file) through the orOS server so chat apps can show its cover and title; nothing is stored."
     },
     el: {
       title: "Στείλε σε κάποιον", close: "Κλείσιμο",
@@ -103,7 +104,8 @@
       skipped: "Έμειναν έξω: {n} που δεν διαβάστηκαν.", cut: "Χωράνε μόνο οι πρώτες {n} φωτογραφίες (έως 25 MB ή 200 φωτογραφίες).",
       imHead: "Αποστολή με", imPost: "Μια ανάρτηση στο {n} είναι δημόσια: όποιος τη δει μπορεί να ανοίξει τον σύνδεσμο.",
       mastoQ: "Ο server σου στο Mastodon", mastoPh: "mastodon.social", mastoBad: "Γράψε το όνομα του server, π.χ. mastodon.social.",
-      mastoGo: "Συνέχεια", sms: "SMS"
+      mastoGo: "Συνέχεια", sms: "SMS",
+      pv: "Εξώφυλλο στις συνομιλίες", pvNote: "Ο σύνδεσμος με προεπισκόπηση στέλνει τα στοιχεία του τραγουδιού (όχι το αρχείο) μέσω του server του orOS, ώστε οι εφαρμογές συνομιλίας να δείχνουν εξώφυλλο και τίτλο· τίποτα δεν αποθηκεύεται."
     }
   };
   // The shell's language (a pack language too: orosI18n, ../i18n.js).
@@ -256,6 +258,7 @@
   // of warning). Mastodon asks for the person's server each time,
   // filled in with the last one (kept on this device only).
   var MASTO_KEY = "oros-share-masto";
+  var PV_BASE = ((R && R.RELAY) || "https://oros-mail-relay.koulaxizis.workers.dev") + "/p/", PV_MAX = 4000;
   var HOST_RE = /^(?=.{3,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
   var IM = [
     { id: "wa", n: "WhatsApp", url: function (x, l) { return "https://wa.me/?text=" + encodeURIComponent(x + "\n" + l); } },
@@ -462,6 +465,24 @@
         body.appendChild(dayRow);
       }
 
+      // A song's link with a preview (BR-SHARE-PREVIEW, relay GET /p/):
+      // only an unlocked plain link, the person's choice (on by default).
+      var pvLab = el("label", "osh-lock"), pcb = el("input"), pvMsg = el("p", "osh-warn", T("pvNote"));
+      if (canPv) {
+        pcb.type = "checkbox";
+        pcb.checked = pvOn;
+        pvLab.appendChild(pcb);
+        pvLab.appendChild(el("span", "", T("pv")));
+        body.appendChild(pvLab);
+        body.appendChild(pvMsg);
+        pcb.addEventListener("change", function () { pvOn = pcb.checked; pvShow(); });
+      }
+      function pvShow() {
+        if (!canPv) return;
+        var off = lockOn || expOn;
+        pcb.disabled = off;
+        pvMsg.hidden = off || !pvOn;
+      }
       var lockLab = el("label", "osh-lock");
       var cb = el("input");
       cb.type = "checkbox";
@@ -516,12 +537,14 @@
         expOn = ecb.checked;
         dayRow.hidden = !expOn;
         warnText();
+        pvShow();
         check();
       });
       cb.addEventListener("change", function () {
         lockOn = cb.checked;
         passRow.hidden = !lockOn;
         warnText();
+        pvShow();
         check();
         if (lockOn) pw.focus();
       });
@@ -573,7 +596,8 @@
           busy = false;
           msg.textContent = forced && !bin ? T("forced") : "";
           if (what !== "file" && !expOn && code.length > K.MAX_LINK) { sizeCheck(code); return; }
-          var link = baseUrl() + "#" + code;
+          var link = pvOn && canPv && !lockOn && !expOn && /^1\./.test(code) && code.length <= PV_MAX
+            ? PV_BASE + code : baseUrl() + "#" + code;
           if (what === "share") {
             navigator.share({ title: K.title(env, lang()), text: K.shareLine(env, lang()), url: link }).catch(function () {});
           } else if (what.indexOf("im:") === 0) {
@@ -597,9 +621,11 @@
         });
       }
       doAct = act;
+      pvShow();
       check();
     }
     var doAct = null;
+    var canPv = env.k === "track" && !bin, pvOn = true;
     var curPass = "";
     var hasMail = typeof window.__orosOpenAt === "function" && mailReady();
 
