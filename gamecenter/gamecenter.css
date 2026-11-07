@@ -5,6 +5,7 @@
      1. Palette fallback + reset
      2. Page + blocks
      3. Today (Daily cards)
+     3a. Daily challenges
      3b. All games
      4. Achievements
      5. Statistics
@@ -119,6 +120,49 @@ button:disabled { cursor: default; opacity: 0.5; }
 }
 .day-btn:not(:disabled):hover { background: var(--accent-hover); }
 .day-card.solved .day-btn { background: transparent; color: var(--accent); }
+
+/* ---------- 3a. Daily challenges (CH-1) ---------- */
+#chal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.chal-card { gap: 8px; }
+.chal-card.done { border-color: var(--gc-ok); }
+.chal-goal { font-size: 0.95rem; }
+.chal-card.done .chal-goal { color: var(--gc-ok); font-weight: 700; }
+.chal-bar { display: block; height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.chal-fill { display: block; height: 100%; background: var(--accent); }
+.chal-card.done .chal-fill { background: var(--gc-ok); }
+.chal-count { color: var(--text-dim); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.chal-link, .chal-skip {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 32px;
+  padding: 0 2px;
+  text-align: left;
+}
+.chal-skip { color: var(--text-dim); align-self: flex-start; }
+#chal-tools { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+#chal-left .chal-link { margin-left: 4px; }
+.chal-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.chal-act {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.chal-act:hover { border-color: var(--accent); }
 
 /* ---------- 3b. All games ---------- */
 #all-find {
@@ -277,6 +321,7 @@ button:disabled { cursor: default; opacity: 0.5; }
 /* ---------- 7. Phone ---------- */
 @media (max-width: 700px) {
   #today-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #chal-grid { grid-template-columns: minmax(0, 1fr); }
   #ach-list { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 480px) {

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.63.00
+- **Game Center: today's challenges.** Every day, up to three small goals in the games you already play, such as winning a game of Reversi, beating your best score in Tetris or finishing three games of Snake. Your devices all show the same goals. `Not this game` leaves a game out, a reminder comes at 18:00 only while a goal is still open, and `Mute the reminder` or `Hide challenges` turn it off on all your devices.
+
 ## Version 5.61.00
 - **Banner, a new card battle.** In Games: each side plays cards from a deck of 20 onto a small board of 5 by 7 tiles, to put down units, change the ground or cast spells. Break the other Keep, or hold the three shrines for three turns. Four ready-made decks (Iron, Thorn, Tide, Ember), the computer on Easy, Medium or Hard, or two players on one device with the hand hidden between turns. Battle codes replay the same board and shuffle, records sync, and Banner counts in the Game Center.
 

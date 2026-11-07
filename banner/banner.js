@@ -390,6 +390,8 @@
   //   counted: bool   the battle is in the records
   //   done: bool      the battle is over
   //   pass: bool      two players: the hand stays hidden until the device is passed
+  //   me: bool        a person has made a move (a battle where only the
+  //                   computer has moved, as Red starting, is not under way)
   // }
   // Against the computer the person plays Blue (side 0).
   var game = null;
@@ -409,6 +411,7 @@
         s.counted = s.counted === true;
         s.done = s.done === true;
         s.pass = s.pass === true && s.opts.mode === "hot";
+        if (s.me !== undefined) s.me = s.me === true;
         return s;
       }
     } catch (e) {}
@@ -442,7 +445,7 @@
     var o = { mode: opts.mode === "hot" ? "hot" : "ai", seed: opts.seed, d: [opts.d[0], opts.d[1]] };
     if (o.mode === "ai") o.lv = E.LEVELS.indexOf(opts.lv) >= 0 ? opts.lv : "m";
     var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)]);
-    return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot" };
+    return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot", me: false };
   }
   function aiSide() { return game && game.opts.mode === "ai" ? 1 : -1; }
   function humanTurn() { return !!(game && !game.done && st.over < 0 && st.side !== aiSide() && !game.pass); }
@@ -474,6 +477,7 @@
     var before = E.clone(st);
     var ev = E.act(st, a);
     if (!ev) return false;
+    game.me = true;
     if (a.t === "end") undo = [];
     else { undo.push(before); if (undo.length > UNDO_MAX) undo.shift(); }
     sel = null;

@@ -16,7 +16,12 @@
 //     { all: true } scrolls to the All games section
 //   - "Continue" (GR-1): the games with a game in progress on this
 //     device, from their own sessions through gamekit/resume.js
-// Data: none (no synced slice, no device-local keys).
+//   - "Today's challenges" (CH-1): three small goals a day from the
+//     games already played, through the shell side
+//     (window.parent.orosChallenges, gamecenter/host.js), with "Not
+//     this game", mute (the Game Center notification switch) and hide
+// Data: none of its own here (the challenges' synced slice
+// "gamechal" lives in gamecenter/host.js, in the shell).
 // Sections:
 //   1. Constants, i18n, helpers
 //   2. Shell bridge (installed apps, open a game)
@@ -49,6 +54,30 @@
       "sub.streak": "Daily streak: {n} days · best {b}",
       "sub.streak1": "Daily streak: 1 day · best {b}",
       "sub.none": "Solve a daily puzzle to start a streak.",
+      "chal.title": "Today's challenges",
+      "chal.note": "{n} of {k} done",
+      "chal.noteS": "{n} of {k} done · streak {s}",
+      "chal.empty": "Play any game once and three small goals for the games you play show up here every day.",
+      "chal.p1": "Finish one game",
+      "chal.p": "Finish {n} games",
+      "chal.ps1": "Solve one puzzle",
+      "chal.ps": "Solve {n} puzzles",
+      "chal.pr": "Play {n} rounds",
+      "chal.w": "Win one game",
+      "chal.s": "Beat your best score",
+      "chal.done": "Done",
+      "chal.skip": "Not this game",
+      "chal.skipped": "From tomorrow {g} gets no more challenges.",
+      "chal.left": "Left out: {g}.",
+      "chal.back": "Put back",
+      "chal.backed": "{g} can get challenges again from tomorrow.",
+      "chal.mute": "Mute the reminder",
+      "chal.unmute": "Turn the reminder on",
+      "chal.muteNote": "A reminder comes once a day at 18:00, only while a goal is still open.",
+      "chal.mutedNote": "The reminder is muted on all your devices.",
+      "chal.hide": "Hide challenges",
+      "chal.hidden": "Daily challenges are off.",
+      "chal.show": "Turn on",
       "today.title": "Today's dailies",
       "today.note": "{n} of {k} solved",
       "today.solved": "Solved",
@@ -91,7 +120,7 @@
       "stats.daily": "Dailies",
       "stats.open": "Open {g}",
       "stats.unplayed": "Not played yet ({n})",
-      "foot.note": "Everything here is read from the games' own data on this device, which syncs with each game. Nothing extra is stored.",
+      "foot.note": "Everything here is read from the games' own data on this device, which syncs with each game. Only the daily challenges keep a small synced record of their own.",
       "dev.title": "On this device",
       "hap.label": "Vibrate on moves, mistakes and wins",
       "hap.note": "Only on this device, in every game. The game sounds have their own switch in each game.",
@@ -117,7 +146,31 @@
       "sub.streak": "Σερί ημερήσιων: {n} μέρες · καλύτερο {b}",
       "sub.streak1": "Σερί ημερήσιων: 1 μέρα · καλύτερο {b}",
       "sub.none": "Λύσε ένα ημερήσιο παζλ για να ξεκινήσεις σερί.",
-      "today.title": "Σημερινές προκλήσεις",
+      "chal.title": "Οι σημερινές προκλήσεις",
+      "chal.note": "{n} από {k} έγιναν",
+      "chal.noteS": "{n} από {k} έγιναν · σερί {s}",
+      "chal.empty": "Παίξε οποιοδήποτε παιχνίδι μία φορά και κάθε μέρα θα βρίσκεις εδώ τρεις μικρούς στόχους για τα παιχνίδια που παίζεις.",
+      "chal.p1": "Τελείωσε μία παρτίδα",
+      "chal.p": "Τελείωσε {n} παρτίδες",
+      "chal.ps1": "Λύσε έναν γρίφο",
+      "chal.ps": "Λύσε {n} γρίφους",
+      "chal.pr": "Παίξε {n} γύρους",
+      "chal.w": "Κέρδισε μία παρτίδα",
+      "chal.s": "Κάνε νέο ρεκόρ",
+      "chal.done": "Έγινε",
+      "chal.skip": "Όχι αυτό το παιχνίδι",
+      "chal.skipped": "Από αύριο το «{g}» δεν θα έχει άλλες προκλήσεις.",
+      "chal.left": "Εκτός: {g}.",
+      "chal.back": "Επαναφορά",
+      "chal.backed": "Το «{g}» μπορεί να έχει ξανά προκλήσεις από αύριο.",
+      "chal.mute": "Σίγαση υπενθύμισης",
+      "chal.unmute": "Ενεργοποίηση υπενθύμισης",
+      "chal.muteNote": "Η υπενθύμιση έρχεται μία φορά τη μέρα στις 18:00, μόνο όταν μένει ανοιχτός στόχος.",
+      "chal.mutedNote": "Η υπενθύμιση είναι σε σίγαση σε όλες τις συσκευές σου.",
+      "chal.hide": "Απόκρυψη προκλήσεων",
+      "chal.hidden": "Οι καθημερινές προκλήσεις είναι κλειστές.",
+      "chal.show": "Άνοιξέ τες",
+      "today.title": "Σημερινοί ημερήσιοι γρίφοι",
       "today.note": "{n} από {k} λυμένες",
       "today.solved": "Λύθηκε",
       "today.lost": "Δεν λύθηκε",
@@ -159,7 +212,7 @@
       "stats.daily": "Ημερήσιες",
       "stats.open": "Άνοιγμα: {g}",
       "stats.unplayed": "Δεν παίχτηκαν ακόμα ({n})",
-      "foot.note": "Όλα όσα βλέπεις εδώ διαβάζονται από τα δεδομένα των ίδιων των παιχνιδιών σε αυτή τη συσκευή, που συγχρονίζονται με κάθε παιχνίδι. Δεν αποθηκεύεται τίποτα επιπλέον.",
+      "foot.note": "Όλα όσα βλέπεις εδώ διαβάζονται από τα δεδομένα των ίδιων των παιχνιδιών σε αυτή τη συσκευή, που συγχρονίζονται με κάθε παιχνίδι. Μόνο οι καθημερινές προκλήσεις κρατούν ένα μικρό δικό τους αρχείο, που συγχρονίζεται κι αυτό.",
       "dev.title": "Σε αυτή τη συσκευή",
       "hap.label": "Δόνηση σε κινήσεις, λάθη και νίκες",
       "hap.note": "Μόνο σε αυτή τη συσκευή, σε όλα τα παιχνίδια. Οι ήχοι έχουν τον δικό τους διακόπτη μέσα σε κάθε παιχνίδι.",
@@ -289,6 +342,7 @@
     var day = today(), sum = CORE.summarize(readJSON, day);
     renderHead(sum, day);
     renderCont();
+    renderChal();
     renderToday(sum);
     renderAll(sum);
     renderAch(sum);
@@ -331,6 +385,115 @@
       b.addEventListener("click", function () { openGame(id, null); });
       li.appendChild(b);
       grid.appendChild(li);
+    });
+  }
+
+  // Daily challenges (CH-1): the shell side (gamecenter/host.js) owns
+  // the goals, their progress and the mute; standalone = no section.
+  function chalHost() {
+    try { var p = shell(), H = p && p.orosChallenges; return H && typeof H.state === "function" ? H : null; }
+    catch (e) { return null; }
+  }
+  function goalText(g) {
+    if (g.k === "w") return t("chal.w");
+    if (g.k === "s") return t("chal.s");
+    if (g.g === "rps") return t("chal.pr", { n: g.n });
+    if (SOLVES[g.g]) return g.n === 1 ? t("chal.ps1") : t("chal.ps", { n: g.n });
+    return g.n === 1 ? t("chal.p1") : t("chal.p", { n: g.n });
+  }
+  function renderChal() {
+    var H = chalHost(), box = $("chal-block"), st = null;
+    try { st = H ? H.state() : null; } catch (e) { st = null; }
+    box.hidden = !st;
+    if (!st) return;
+    var grid = $("chal-grid"), done = 0;
+    grid.textContent = "";
+    $("chal-off").hidden = !st.hidden;
+    $("chal-tools").hidden = st.hidden;
+    $("chal-empty").hidden = st.hidden || st.goals.length > 0;
+    grid.hidden = st.hidden || !st.goals.length;
+    $("chal-note").textContent = "";
+    if (st.hidden) return;
+    st.goals.forEach(function (g) {
+      if (g.done) done++;
+      var nm = nameOf(g.g), card = el("div", "day-card chal-card" + (g.done ? " done" : ""));
+      var top = el("div", "day-top");
+      top.appendChild(el("span", "day-name" + (nm.length > 13 && !/\s/.test(nm) ? " long" : ""), nm));
+      if (g.done) {
+        var ok = el("span", "day-ok");
+        ok.innerHTML = UI_ICONS.check;
+        top.appendChild(ok);
+      }
+      card.appendChild(top);
+      var goal = goalText(g);
+      card.appendChild(el("span", "chal-goal", g.done ? goal + " · " + t("chal.done") : goal));
+      if (g.n > 1) {
+        var bar = el("span", "chal-bar"), fill = el("span", "chal-fill");
+        fill.style.width = Math.round(100 * g.have / g.n) + "%";
+        bar.appendChild(fill);
+        card.appendChild(bar);
+      }
+      var foot = el("div", "day-foot");
+      foot.appendChild(el("span", "chal-count", g.n > 1 ? num(g.have) + " / " + num(g.n) : ""));
+      var b = el("button", "day-btn", t("today.play"));
+      b.type = "button";
+      b.disabled = !!APPS && !canOpen(g.g);
+      b.setAttribute("aria-label", nm + ": " + goal + ". " + t("today.play"));
+      b.addEventListener("click", function () { openGame(g.g, null); });
+      foot.appendChild(b);
+      card.appendChild(foot);
+      if (!g.done && st.skipped.indexOf(g.g) < 0) {
+        var sk = el("button", "chal-skip", t("chal.skip"));
+        sk.type = "button";
+        sk.setAttribute("aria-label", nm + ": " + t("chal.skip"));
+        sk.addEventListener("click", function () {
+          if (H.skip(g.g, true)) showToast(t("chal.skipped", { g: nm }));
+          render();
+        });
+        card.appendChild(sk);
+      }
+      grid.appendChild(card);
+    });
+    if (st.goals.length) {
+      $("chal-note").textContent = st.streak > 0 ?
+        t("chal.noteS", { n: done, k: st.goals.length, s: st.streak }) :
+        t("chal.note", { n: done, k: st.goals.length });
+    }
+    var left = $("chal-left");
+    left.textContent = "";
+    left.hidden = !st.skipped.length;
+    if (st.skipped.length) {
+      left.appendChild(document.createTextNode(t("chal.left", { g: st.skipped.map(nameOf).join(", ") }) + " "));
+      st.skipped.forEach(function (id) {
+        var nb = el("button", "chal-link", t("chal.back") + (st.skipped.length > 1 ? ": " + nameOf(id) : ""));
+        nb.type = "button";
+        nb.addEventListener("click", function () {
+          if (H.skip(id, false)) showToast(t("chal.backed", { g: nameOf(id) }));
+          render();
+        });
+        left.appendChild(nb);
+      });
+    }
+    $("chal-mute").textContent = st.muted ? t("chal.unmute") : t("chal.mute");
+    $("chal-mute").setAttribute("aria-pressed", st.muted ? "true" : "false");
+    $("chal-mute-note").textContent = st.muted ? t("chal.mutedNote") : t("chal.muteNote");
+  }
+  function wireChal() {
+    $("chal-mute").addEventListener("click", function () {
+      var H = chalHost(), st = null;
+      try { st = H ? H.state() : null; } catch (e) { st = null; }
+      if (st) H.mute(!st.muted);
+      render();
+    });
+    $("chal-hide").addEventListener("click", function () {
+      var H = chalHost();
+      if (H) H.hide(true);
+      render();
+    });
+    $("chal-show").addEventListener("click", function () {
+      var H = chalHost();
+      if (H) H.hide(false);
+      render();
     });
   }
 
@@ -606,11 +769,12 @@
     wireKeyboard();
     render();
     $("all-find").addEventListener("input", filterAll);
+    wireChal();
     wireHaptics();
     // A game's data changed (synced in, or the game was played in
     // another window): the numbers follow.
     window.addEventListener("storage", function (e) {
-      if (!e.key || /^oros-[a-z0-9]+-(data|session)$/.test(e.key) || e.key === "oros-lang") renderSoon();
+      if (!e.key || /^oros-[a-z0-9]+-(data|session)$/.test(e.key) || e.key === "oros-lang" || e.key === "oros-notifs") renderSoon();
     });
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "visible") render();
