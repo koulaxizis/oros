@@ -139,7 +139,9 @@
       "a.speedy": "Fast fingers", "d.speedy": "Solve a Sudoku in under 5 minutes.",
       "a.variety": "All-rounder", "d.variety": "Win 10 different games.",
       "a.played100": "Regular", "d.played100": "Play 100 games.",
-      "a.wins250": "Champion", "d.wins250": "Win 250 games."
+      "a.wins250": "Champion", "d.wins250": "Win 250 games.",
+      "a.chal7": "Challenge week", "d.chal7": "Finish all of the day's challenges 7 days in a row.",
+      "a.chal30": "Challenge seeker", "d.chal30": "Finish all of the day's challenges on 30 days."
     },
     el: {
       "app.name": "Κέντρο παιχνιδιών",
@@ -231,7 +233,9 @@
       "a.speedy": "Γρήγορα δάχτυλα", "d.speedy": "Λύσε ένα Σουντόκου σε λιγότερο από 5 λεπτά.",
       "a.variety": "Πολυτεχνίτης", "d.variety": "Κέρδισε σε 10 διαφορετικά παιχνίδια.",
       "a.played100": "Θαμώνας", "d.played100": "Παίξε 100 παιχνίδια.",
-      "a.wins250": "Πρωταθλητής", "d.wins250": "Κέρδισε 250 παιχνίδια."
+      "a.wins250": "Πρωταθλητής", "d.wins250": "Κέρδισε 250 παιχνίδια.",
+      "a.chal7": "Εβδομάδα προκλήσεων", "d.chal7": "Τελείωσε όλες τις προκλήσεις της ημέρας 7 μέρες στη σειρά.",
+      "a.chal30": "Κυνηγός προκλήσεων", "d.chal30": "Τελείωσε όλες τις προκλήσεις της ημέρας σε 30 μέρες."
     }
   };
   // Shown names when the shell cannot tell (standalone); the shell's
@@ -401,9 +405,11 @@
     if (SOLVES[g.g]) return g.n === 1 ? t("chal.ps1") : t("chal.ps", { n: g.n });
     return g.n === 1 ? t("chal.p1") : t("chal.p", { n: g.n });
   }
+  var chalRecords = null;                      // C3: { best, days } for the achievements
   function renderChal() {
     var H = chalHost(), box = $("chal-block"), st = null;
     try { st = H ? H.state() : null; } catch (e) { st = null; }
+    chalRecords = st && st.records ? st.records : null;
     box.hidden = !st;
     if (!st) return;
     var grid = $("chal-grid"), done = 0;
@@ -597,7 +603,7 @@
   }
 
   function renderAch(sum) {
-    var list = $("ach-list"), all = CORE.achievements(sum), n = 0;
+    var list = $("ach-list"), all = CORE.achievements(sum, chalRecords), n = 0;
     list.textContent = "";
     all.forEach(function (a) {
       if (a.done) n++;

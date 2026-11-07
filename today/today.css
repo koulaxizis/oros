@@ -378,3 +378,18 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 }
 
 .icon-btn[hidden] { display: none; }
+
+/* Weekly app suggestion (CH-2) */
+.disc {
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent);
+}
+.disc-head { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.disc-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.disc-kicker { color: var(--accent); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.disc-name { font-size: 1.05rem; overflow-wrap: anywhere; }
+.disc-line { color: var(--text-dim); font-size: 0.9rem; overflow-wrap: anywhere; }
+.disc-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
