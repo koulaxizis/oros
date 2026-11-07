@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.60.00
+- **Banner, a new card battle.** In Games: each side plays cards from a deck of 20 onto a small board of 5 by 7 tiles, to put down units, change the ground or cast spells. Break the other Keep, or hold the three shrines for three turns. Four ready-made decks (Iron, Thorn, Tide, Ember), the computer on Easy, Medium or Hard, or two players on one device with the hand hidden between turns. Battle codes replay the same board and shuffle, records sync, and Banner counts in the Game Center.
+
 ## Version 5.59.00
 - **Budget: areas.** When one bank account carries several parts of your life, `More` › `Areas` keeps them apart: each area has words that put a bank line in it when you import a statement (for example `viva, stripe, box now`). Lines no word fits wait under `Without an area` for you to pick; what you pick stays. The Overview's `Areas` card shows each area's income, expenses and difference for the month, and shop records can go to their own area.
 
