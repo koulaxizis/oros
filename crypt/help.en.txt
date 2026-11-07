@@ -39,7 +39,7 @@ Packing takes no turn, unless an awake monster can see you: then closing the bac
 - charm and charm: 5 % more gold
 - any other pair: +2 Health
 
-**Curses:** some strong items are cursed (striped). A cursed item cannot leave the backpack until you read a `Cleansing scroll`. A cursed item lying on the floor is not picked up by itself: put it in by hand if you want it.
+**Curses:** some strong items are cursed (striped). A cursed item does not link, and it cannot leave the backpack until you read a `Cleansing scroll` or a shrine lifts the curse. A cursed item lying on the floor is not picked up by itself: put it in by hand if you want it.
 
 ## Items
 - **Blades** add Attack. **Wards** add Defence and Health.
@@ -54,6 +54,14 @@ Packing takes no turn, unless an awake monster can see you: then closing the bac
 - **Potions** and **scrolls** are used up: healing, Focus, lifting curses, showing the whole floor, escaping next to the stairs, fire all around you.
 
 The quick slots at the bottom hold the first four runes, potions and scrolls in the backpack, read left to right, row by row. Tap one or press [[1]] to [[4]]. A rune's slot shows its Focus cost.
+
+## Shrines
+Floors 3, 6 and 9 each have a shrine, a small stone altar near where you arrive. Step on it to trade your gold:
+- `Heal to full`;
+- `Lift every curse` in the backpack;
+- buy one of three items (never cursed). What you buy goes into the backpack, or onto the floor if it does not fit.
+
+The shrine takes no turn, but it stays silent while an awake monster can see you. Prices grow with the floor. Tap your cell to open it again.
 
 ## Monsters
 Each kind has one habit:
@@ -87,7 +95,7 @@ The calendar button (with a dot while today's crypt is not played yet) opens the
 When it ends you see whether you got out, the turns, and your streak of days you got out. `Share` copies a line without spoilers: five squares for the floors and your turns. The Daily crypt also appears in the [Game Center](help:a/gamecenter) under Today's dailies. Daily runs do not count in the Gentle and Grim records; they have their own line in `Records`.
 
 ## Records and sync
-`Records` shows your runs, wins and the deepest floor you reached in each mode. They sync between your devices through [orOS sync](help:t/sync), adding up the runs from every device, and they count in the [Game Center](help:a/gamecenter). The run in progress, its save point and the sound setting stay on this device, and an unfinished run continues where you left it. `Reset records` clears the records on every device.
+`Records` shows your runs, wins and the deepest floor you reached in each mode, and the last 10 runs from all your devices: how each one ended and its code, with `Replay` to go down the same crypt again. They sync between your devices through [orOS sync](help:t/sync), adding up the runs from every device, and they count in the [Game Center](help:a/gamecenter). The run in progress, its save point and the sound setting stay on this device, and an unfinished run continues where you left it. `Reset records` clears the records on every device.
 
 ## Keyboard
 - Arrow keys or [[W]] [[A]] [[S]] [[D]]: one step. [[Space]]: wait.
