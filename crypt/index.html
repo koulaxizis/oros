@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-ND4i3l7kaBQWrfjsZT4vPCLU2GHeV9MdmA9sAHiClPU='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=crypt" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Crypt · orOS</title>
+
+  <link rel="stylesheet" href="../fonts.css?v=5.53.00">
+  <link rel="stylesheet" href="crypt.css?v=5.53.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=5.53.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: one line on a wide screen, two strips on a phone -->
+  <header id="toolbar">
+    <h1 class="sr-only" data-i18n="app.name">Crypt</h1>
+    <div class="tb-row" id="tb-a">
+      <button type="button" class="icon-btn" id="new-btn"></button>
+      <button type="button" class="icon-btn" id="wait-btn"></button>
+      <span class="spacer"></span>
+      <button type="button" class="end-btn" id="pack-btn" data-i18n="btn.pack">Backpack</button>
+    </div>
+    <div class="tb-row" id="tb-b">
+      <button type="button" class="icon-btn" id="zin-btn"></button>
+      <button type="button" class="icon-btn" id="zout-btn"></button>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn"></button>
+    </div>
+  </header>
+
+  <!-- Status: Health, Attack, Defence, Focus, floor, gold -->
+  <div id="status">
+    <span class="stat hp" id="s-hp"><span class="ic"></span><span class="bar"><span class="fill"></span></span><span class="v"></span></span>
+    <span class="stat" id="s-atk"><span class="ic"></span><span class="v"></span></span>
+    <span class="stat" id="s-def"><span class="ic"></span><span class="v"></span></span>
+    <span class="stat" id="s-fo"><span class="ic"></span><span class="v"></span></span>
+    <span class="stat" id="s-floor"><span class="v"></span></span>
+    <span class="stat gold" id="s-gold"><span class="ic"></span><span class="v"></span></span>
+  </div>
+  <div id="msg" aria-hidden="true"></div>
+
+  <main id="map-wrap">
+    <canvas id="map" tabindex="0" role="application"></canvas>
+  </main>
+
+  <!-- Quick slots: the first 4 runes, potions and scrolls in the backpack -->
+  <nav id="quick">
+    <button type="button" class="buy slot" id="q-0"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
+    <button type="button" class="buy slot" id="q-1"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
+    <button type="button" class="buy slot" id="q-2"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
+    <button type="button" class="buy slot" id="q-3"><span class="ic"></span><span class="nm"></span><span class="cost"></span></button>
+  </nav>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js?v=5.53.00" data-app="crypt"></script>
+
+  <script src="../gamekit/haptics.js?v=5.53.00"></script>
+  <script src="items.js?v=5.53.00"></script>
+  <script src="engine.js?v=5.53.00"></script>
+  <script src="crypt.js?v=5.53.00"></script>
+
+</body>
+</html>

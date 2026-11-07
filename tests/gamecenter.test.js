@@ -170,3 +170,16 @@ test("gamecenter: Realm's Daily island counts in Today and the streak, never in 
   // data from before the Daily island
   assert.equal(sum({ "oros-realm-data": { ver: 1, br: 0, rows: {} } }).games.realm.dn, 0);
 });
+
+test("gamecenter: Crypt counts runs and wins from every device; a Grim win is a hard win", () => {
+  const crypt = { ver: 1, br: 1, rows: {
+    a: { b: 1, s: { g: [4, 1, 10], r: [2, 0, 5] } },
+    b: { b: 1, s: { g: [3, 0, 6] } },
+    old: { b: 0, s: { g: [9, 9, 10] } } } };
+  const s = sum({ "oros-crypt-data": crypt });
+  assert.ok(C.GROUPS.find((g) => g.id === "rpg").games.includes("crypt"));
+  assert.deepEqual([s.games.crypt.p, s.games.crypt.w], [9, 1], "rows from before the reset do not count");
+  assert.ok(!ach(s, "hard").done, "a Gentle win is not a hard win");
+  crypt.rows.b.s.r = [1, 1, 10];
+  assert.ok(ach(sum({ "oros-crypt-data": crypt }), "hard").done);
+});
