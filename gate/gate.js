@@ -410,7 +410,7 @@
       b.type = "button";
       b.textContent = label;
       b.style.cssText = "min-height:40px;padding:0 16px;border-radius:8px;border:1px solid rgba(127,127,127,.4);font:inherit;cursor:pointer;" +
-        (primary ? "background:var(--accent,#3584e4);color:#fff;border-color:transparent" : "background:transparent;color:inherit");
+        (primary ? "background:var(--accent,#3584e4);color:var(--accent-ink,#fff);border-color:transparent" : "background:transparent;color:inherit");
       return b;
     }
     var no = btn(tr("gate.ask.deny"), false), yes = btn(tr("gate.ask.allow"), true);
