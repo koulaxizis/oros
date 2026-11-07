@@ -14,7 +14,8 @@
 //      date + amount + similar text), deleted earlier, skipped;
 //      money already in Budget another way: an Invoices payment, a
 //      transfer between own accounts, the other side of a PayPal
-//      payment (BK-1)
+//      payment (BK-1), a shop record or a shop payout (Production
+//      Ledger)
 // Nothing here runs imported code: files are read as text only.
 // ============================================================
 (function (root) {
@@ -765,18 +766,25 @@
     return isFinite(x) && isFinite(y) ? Math.abs(x - y) / 86400000 : 999;
   }
   var PAYPAL_RE = /paypal|pp \*|pypl/;
+  var PAYOUT_RE = /\bviva\b|vivawallet|stripe|paypal|pypl|box ?now|allover/;
   // Money already in Budget another way (BK-1), for a row that is not
   // a plain duplicate: → { x, dk } | null. dk "inv": an Invoices
   // payment kept here (BR-B3) with the same amount within 10 days;
   // "xfer": a transfer between own accounts that left / reached this
   // account within 3 days; "pp": the other side of a PayPal payment
   // (a bank's "PAYPAL *…" line and a row from PayPal's own file,
-  // pp 1) within 4 days, whatever Budget accounts they went to.
+  // pp 1) within 4 days, whatever Budget accounts they went to; "shop":
+  // a shop record (src "pl", budget/shop.js) of the same kind and
+  // amount within 10 days; "payout" (x null): a payout of a payment
+  // provider or courier while shop orders are here (they are counted
+  // one by one).
   function crossTwin(row, ctx, ac, used) {
     var hit = null;
     (ctx.tx || []).some(function (x) {
       if (used[x.id] || x.a !== row.a || x.k !== row.k) return false;
       if (row.k === "i" && x.src === "invoices" && dayGap(x.d, row.d) <= 10) { hit = { x: x, dk: "inv" }; return true; }
+      // a shop's order paid by bank transfer, or a ledger cost paid from the bank
+      if (x.src === "pl" && dayGap(x.d, row.d) <= 10) { hit = { x: x, dk: "shop" }; return true; }
       if (x.src === "bank" && dayGap(x.d, row.d) <= 4 &&
           (ctx.pp ? !x.pp && PAYPAL_RE.test(fold(x.ot || x.n)) : x.pp === 1 && PAYPAL_RE.test(fold(row.text)))) {
         hit = { x: x, dk: "pp" };
@@ -784,7 +792,14 @@
       }
       return false;
     });
-    if (hit || !ac) return hit;
+    if (hit) return hit;
+    // A payment provider's or courier's payout (Viva, Stripe, PayPal, BOX
+    // NOW / Allover cash on delivery) while shop records are here: the
+    // orders in it are already income, one by one (Production Ledger).
+    if (row.k === "i" && !ctx.pp && PAYOUT_RE.test(fold(row.text)) && (ctx.tx || []).some(function (x) {
+      return x.src === "pl" && x.k === "i" && x.d <= row.d && dayGap(x.d, row.d) <= 31;
+    })) return { x: null, dk: "payout" };
+    if (!ac) return hit;
     (ctx.xfer || []).some(function (x) {
       if (used[x.id] || dayGap(x.d, row.d) > 3) return false;
       var out = row.k === "o" && x.f === ac && x.a === row.a;
@@ -878,7 +893,10 @@
       }
       if (twin) { used[twin.id] = 1; row.st = "dup"; row.on = false; row.why = twin.id; if (row.adopt) row.dk = "noacc"; return row; }
       var cross = crossTwin(row, ctx, ac, used);
-      if (cross) { used[cross.x.id] = 1; row.st = "dup"; row.on = false; row.why = cross.x.id; row.dk = cross.dk; }
+      if (cross) {
+        if (cross.x) used[cross.x.id] = 1;
+        row.st = "dup"; row.on = false; row.why = cross.x ? cross.x.id : ""; row.dk = cross.dk;
+      }
       return row;
     });
   }
