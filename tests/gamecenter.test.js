@@ -184,6 +184,17 @@ test("gamecenter: Banner counts battles and wins from every device; two-player b
   assert.ok(ach(sum({ "oros-banner-data": banner }), "hard").done);
 });
 
+test("gamecenter: the Daily battle counts in Today and the streak when won, never in battles or Clean sweep", () => {
+  const banner = { ver: 1, br: 0, rows: { a: { b: 0, s: { m: [2, 1] } } },
+    days: { [TODAY]: { b: 0, w: 1, t: 9, k: 6 }, [TODAY - 1]: { b: 0, w: 1, t: 11, k: 2 }, [TODAY - 2]: { b: 0, w: 0, t: 7, k: 0 } } };
+  const s = sum({ "oros-banner-data": banner });
+  assert.ok(C.DAILY.includes("banner"));
+  assert.deepEqual([s.games.banner.p, s.games.banner.w, s.games.banner.dn, s.games.banner.cur, s.games.banner.today], [2, 1, 2, 2, 1]);
+  assert.deepEqual([ach(s, "sweep").have, ach(s, "sweep").need], [0, 6]);
+  banner.days[TODAY] = { b: 0, w: 0, t: 8, k: 0 };
+  assert.equal(sum({ "oros-banner-data": banner }).games.banner.today, 2, "a loss today: tried, not won");
+});
+
 test("gamecenter: Crypt counts runs and wins from every device; a Grim win is a hard win", () => {
   const crypt = { ver: 1, br: 1, rows: {
     a: { b: 1, s: { g: [4, 1, 10], r: [2, 0, 5] } },

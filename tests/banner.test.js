@@ -14,8 +14,8 @@ const D = require("../banner/cards.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "banner/banner.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var ROW_KEYS = ['e','m','h','p'];"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeBanner"].forEach((name) => {
+  const parts = ["var DATA_VER = 1; var ROW_KEYS = ['e','m','h','p']; var E = { KEEP_HP: 15 }; var MAX_DAY = 100000; var MAX_TURNS = 999;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "mergeBanner"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
@@ -357,4 +357,30 @@ test("banner: records merge as a join (symmetric, idempotent, reset epoch)", () 
   assert.ok(!ab.rows.c, "a row from before the reset is dropped");
   const junk = R.mergeBanner({ br: 1, rows: { x: { b: 1, s: { m: [1, 2], p: [2, 1], h: [-1, 0], z: [9, 9] } }, y: "no" } }, null);
   assert.deepEqual(junk.rows, {}, "won more than played, a two-player win, negatives and unknown keys are refused");
+});
+
+test("banner: Daily battle results merge as a join: newer epoch, then won, fewer turns, more Keep", () => {
+  const A = { br: 2, rows: {}, days: { 10: { b: 2, w: 0, t: 9, k: 0 }, 11: { b: 2, w: 1, t: 12, k: 4 }, 12: { b: 1, w: 1, t: 5, k: 9 } } };
+  const B = { br: 2, rows: {}, days: { 10: { b: 2, w: 1, t: 14, k: 2 }, 11: { b: 2, w: 1, t: 12, k: 7 }, 13: { b: 3, w: 0, t: 3, k: 1 } } };
+  const ab = R.mergeBanner(A, B), ba = R.mergeBanner(B, A);
+  assert.equal(J(ab), J(ba));
+  assert.equal(J(R.mergeBanner(ab, ab)), J(ab));
+  assert.deepEqual(ab.days[10], { b: 2, w: 1, t: 14, k: 2 }, "a win beats a loss");
+  assert.deepEqual(ab.days[11], { b: 2, w: 1, t: 12, k: 7 }, "same turns: more Keep left");
+  assert.ok(!ab.days[12], "older than the reset");
+  assert.deepEqual(ab.days[13], { b: 3, w: 0, t: 3, k: 1 });
+  assert.deepEqual(Object.keys(ab.days), ["10", "11", "13"]);
+  const junk = R.mergeBanner({ br: 0, rows: {}, days: { x: { b: 0, w: 1, t: 2, k: 3 }, 5: { b: 0, w: 1, t: 2, k: 0 },
+    6: { b: 0, w: 2, t: 2, k: 3 }, 7: { b: 0, w: 0, t: 0, k: 3 }, 8: { b: 0, w: 0, t: 4, k: 16 }, 9: "no" } }, null);
+  assert.deepEqual(junk.days, {}, "bad keys, a win with no Keep left, bad flags, turns and Keep are refused");
+  assert.deepEqual(R.mergeBanner({ br: 0, rows: {} }, null).days, {}, "older data without days");
+});
+
+test("banner: the Daily battle is the same for everyone on a day", () => {
+  const K = require("../gamekit/daily.js");
+  const seed = K.seedOf("banner", 300);
+  assert.equal(seed, K.seedOf("banner", 300));
+  assert.notEqual(seed, K.seedOf("banner", 301));
+  assert.notEqual(seed, K.seedOf("crypt", 300));
+  assert.ok(SRC.includes('DK.seedOf("banner", day)'));
 });

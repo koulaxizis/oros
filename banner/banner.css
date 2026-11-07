@@ -154,6 +154,21 @@ button, select { cursor: pointer; }
 #energy i.on { background: var(--accent); }
 #who { font-size: 11px; color: var(--text-dim); }
 #who.mine { color: var(--accent); }
+#tag { font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+#tag[hidden] { display: none; }
+/* Daily battle: a dot while today's battle is not played; lit while playing it */
+#daily-btn { position: relative; }
+#daily-btn.due::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#daily-btn.on { color: var(--accent); border-color: var(--accent); }
 #msg {
   flex-shrink: 0;
   min-height: 24px;

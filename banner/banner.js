@@ -13,11 +13,15 @@
 //   - tap a card, then a lit tile; tap a unit to move or attack; hold
 //     a tile or a card to read it; undo within your turn
 //   - a short "How to play" on the first battle
+//   - Daily battle (W2): the same board, decks and shuffle for everyone
+//     each day (gamekit/daily.js) against Medium, one try; result,
+//     streak and a spoiler-free share line
 // Data:
 //   - synced slice "banner" (oros-banner-data): battles and wins per
 //     computer level and two-player battles, as per-device counter rows
 //     (each device only grows its own row; merge = per-row max, a join)
-//     + reset stamp br (the Realm and Crypt pattern)
+//     + reset stamp br (the Realm and Crypt pattern) + one Daily
+//     battle result per day (newer epoch wins, equal epochs the better)
 //   - device-local (R10): oros-banner-prefs (mode, level, decks, tour
 //     seen), oros-banner-session (the battle in progress),
 //     oros-banner-device (counter row id), oros-banner-sfx (sound)
@@ -50,6 +54,10 @@
   var AI_MS = 420;                       // one computer action
   var HOLD_MS = 450;                     // a hold opens the info
   var UNDO_MAX = 60;
+  var DK = window.orosDaily || null;     // gamekit/daily.js (Daily battle)
+  var DAILY_LV = "m";                    // the Daily battle is against Medium
+  var MAX_DAY = 100000;
+  var MAX_TURNS = 999;
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -129,6 +137,20 @@
       "stats.title": "Records", "stats.head": "Battles · won", "stats.hot": "Two players", "stats.hotRow": "Battles",
       "stats.reset": "Reset records", "stats.close": "Close", "stats.code": "This battle: {seed}",
       "info.close": "Close",
+      "btn.daily": "Daily battle", "daily.label": "Daily",
+      "daily.title": "Daily battle #{n}", "daily.tag": "Daily #{n}",
+      "daily.won": "Won on turn {t}", "daily.lost": "Lost on turn {t}",
+      "daily.turns": "Turns", "daily.keep": "Your Keep", "daily.streak": "Streak", "daily.best": "Best streak",
+      "daily.oneTry": "The Daily battle has one try.", "daily.next": "A new battle tomorrow.",
+      "daily.free": "Free battle", "daily.share": "Share", "daily.games": "All games",
+      "daily.rules": "Today's battle: the same board and decks for everyone, against Medium, one try.",
+      "daily.leave": "Leave today's battle? It counts as your one try, lost.",
+      "daily.leaveYes": "Leave it", "daily.leaveNo": "Keep playing",
+      "stats.daily": "Daily battle", "stats.dailyRow": "Played · won · streak · best",
+      "share.won": "Won on turn {t}", "share.lost": "Lost on turn {t}",
+      "toast.dailyGone": "The Daily battle needs the gamekit file: reload orOS",
+      "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared",
+      "toast.copyFail": "Could not copy",
       "confirm.yes": "Yes", "confirm.no": "Cancel", "reset.ask": "Reset the records on every device?",
       "toast.reset": "Records reset", "toast.save": "Could not save: the storage is full",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
@@ -205,6 +227,20 @@
       "stats.title": "Ρεκόρ", "stats.head": "Μάχες · νίκες", "stats.hot": "Δύο παίκτες", "stats.hotRow": "Μάχες",
       "stats.reset": "Μηδενισμός ρεκόρ", "stats.close": "Κλείσιμο", "stats.code": "Αυτή η μάχη: {seed}",
       "info.close": "Κλείσιμο",
+      "btn.daily": "Μάχη της ημέρας", "daily.label": "Ημέρας",
+      "daily.title": "Μάχη της ημέρας #{n}", "daily.tag": "Ημέρας #{n}",
+      "daily.won": "Νίκη στον γύρο {t}", "daily.lost": "Ήττα στον γύρο {t}",
+      "daily.turns": "Γύροι", "daily.keep": "Το Κάστρο σου", "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
+      "daily.oneTry": "Η μάχη της ημέρας παίζεται μία φορά.", "daily.next": "Νέα μάχη αύριο.",
+      "daily.free": "Ελεύθερη μάχη", "daily.share": "Κοινοποίηση", "daily.games": "Όλα τα παιχνίδια",
+      "daily.rules": "Η σημερινή μάχη: ίδιο πεδίο και ίδιες τράπουλες για όλους, απέναντι στο Μέτριο, μία προσπάθεια.",
+      "daily.leave": "Να αφήσεις τη σημερινή μάχη; Μετρά ως η μία σου προσπάθεια, χαμένη.",
+      "daily.leaveYes": "Άφησέ την", "daily.leaveNo": "Συνέχισε",
+      "stats.daily": "Μάχη της ημέρας", "stats.dailyRow": "Μάχες · νίκες · σερί · καλύτερο",
+      "share.won": "Νίκη στον γύρο {t}", "share.lost": "Ήττα στον γύρο {t}",
+      "toast.dailyGone": "Η μάχη της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
+      "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε",
+      "toast.copyFail": "Δεν αντιγράφηκε",
       "confirm.yes": "Ναι", "confirm.no": "Άκυρο", "reset.ask": "Να μηδενιστούν τα ρεκόρ σε όλες τις συσκευές;",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
@@ -263,7 +299,23 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  // days (5.62.00, older data has none): one Daily battle per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
+  // { "<day>": { b, w: 1 won | 0 lost, t: own turns, k: own Keep left } }.
+  // The newer epoch wins; equal epochs keep the better result (won,
+  // then fewer turns, then more Keep: a total order, so a join).
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.t) || v.t < 1 || v.t > MAX_TURNS || !isInt(v.k) || v.k < 0 || v.k > E.KEEP_HP || (v.w === 1 && v.k < 1)) return null;
+    return { b: v.b, w: v.w, t: v.t, k: v.k };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  function dayBetter(a, c) {
+    if (a.w !== c.w) return a.w > c.w;
+    if (a.t !== c.t) return a.t < c.t;
+    return a.k > c.k;
+  }
   function normRow(row) {
     if (!row || typeof row !== "object" || !isInt(row.b) || row.b < 0) return null;
     var s = {}, any = false;
@@ -306,7 +358,20 @@
       ROW_KEYS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k].slice(); });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!dayKeyOk(k)) return;
+        var v = normDay(m[k]);
+        if (!v || v.b < br) return;
+        var cur = days[+k];
+        if (!cur || v.b > cur.b || (v.b === cur.b && dayBetter(v, cur))) days[+k] = v;
+      });
+    });
+    var sd = {};
+    Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
   }
   // [battles, won] for a key, all devices.
   function totals(key) {
@@ -353,6 +418,7 @@
   // One battle ended (or was left): +1 battle, +1 won when Blue won
   // against the computer.
   function count(key, won) {
+    if (game && game.opts.day !== undefined) return;   // a Daily battle counts only in days
     var row = data.rows[deviceId];
     if (!row || row.b < data.br) row = { b: data.br, s: {} };
     row = { b: row.b, s: JSON.parse(JSON.stringify(row.s)) };
@@ -386,7 +452,8 @@
 
   // game = {
   //   g: engine state,
-  //   opts: { mode: "ai" | "hot", lv: e|m|h (computer), seed, d: [deck choice, deck choice] (r = random) },
+  //   opts: { mode: "ai" | "hot", lv: e|m|h (computer), seed, d: [deck choice, deck choice] (r = random),
+  //           day: the Daily battle's day (absent in a free battle) },
   //   counted: bool   the battle is in the records
   //   done: bool      the battle is over
   //   pass: bool      two players: the hand stays hidden until the device is passed
@@ -400,6 +467,7 @@
     if (!o || (o.mode !== "ai" && o.mode !== "hot") || typeof o.seed !== "string" || s.g.seed !== o.seed) return false;
     if (o.mode === "ai" && E.LEVELS.indexOf(o.lv) < 0) return false;
     if (!Array.isArray(o.d) || o.d.length !== 2 || o.d.some(function (d) { return DECK_CHOICES.indexOf(d) < 0; })) return false;
+    if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || o.mode !== "ai" || o.lv !== DAILY_LV)) return false;
     return true;
   }
   function loadSession() {
@@ -441,6 +509,7 @@
   function makeGame(opts) {
     var o = { mode: opts.mode === "hot" ? "hot" : "ai", seed: opts.seed, d: [opts.d[0], opts.d[1]] };
     if (o.mode === "ai") o.lv = E.LEVELS.indexOf(opts.lv) >= 0 ? opts.lv : "m";
+    if (opts.day !== undefined) o.day = opts.day;
     var g = E.newBattle(o.seed, [deckOf(o.d[0], o.seed, 0), deckOf(o.d[1], o.seed, 1)]);
     return { g: g, opts: o, counted: false, done: false, pass: o.mode === "hot" };
   }
@@ -452,6 +521,7 @@
 
   function startGame(opts) {
     stopAI();
+    leaveDaily();
     if (game && inProgressOf(game) && !game.counted) count(rowKey(), false);
     game = makeGame(opts);
     st = game.g;
@@ -549,12 +619,13 @@
     if (!game.counted) {
       game.counted = true;
       count(rowKey(), game.opts.mode === "ai" && st.over === 0);
+      if (game.opts.day !== undefined) countDaily(game.opts.day, st.over === 0, st.rt[0], st.keep[0]);
     }
     game.done = true;
     saveSession();
     sfx(game.opts.mode === "ai" && st.over !== 0 ? "end" : "win");
     renderAll();
-    setTimeout(resultDialog, 500);
+    setTimeout(game.opts.day !== undefined ? function () { dailyDialog(game.opts.day); } : resultDialog, 500);
   }
 
   // ---------- 5. Board view ----------
@@ -920,6 +991,13 @@
     who.className = humanTurn() ? "mine" : "";
     $("end-btn").disabled = !humanTurn();
     $("undo-btn").disabled = !humanTurn() || !undo.length;
+    var dly = game.opts.day !== undefined;
+    var db = $("daily-btn");
+    db.hidden = !DK;
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", dly && !game.done);
+    $("tag").hidden = !dly;
+    $("tag").textContent = dly ? t("daily.tag", { n: game.opts.day + 1 }) : "";
   }
   var GS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">';
   var KIND_ICON = {
@@ -1048,6 +1126,12 @@
 
   function newDialog() {
     cancelTourWait();
+    // Today's battle under way: leaving it uses the one try.
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      confirmDialog(t("daily.leave"), function () { leaveDaily(); saveSession(); renderAll(); newDialog(); },
+        t("daily.leaveYes"), t("daily.leaveNo"));
+      return;
+    }
     var o = { mode: prefs.mode, lv: prefs.lv, d0: prefs.d0, d1: prefs.d1 };
     var dlg = makeDialog("bn-new");
     dlg.appendChild(el("div", "dlg-title", t("new.title")));
@@ -1203,8 +1287,13 @@
     if (p[0]) empty = false;
     dlg.appendChild(el("div", "dlg-sub", t("stats.hot")));
     dlg.appendChild(row(t("stats.hotRow"), String(p[0])));
-    if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
-    var acts = el("div", "dlg-actions");
+    var ds = dailyStats(today());
+    if (ds.n) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
       confirmDialog(t("reset.ask"), resetRecords);
@@ -1218,13 +1307,97 @@
     dlg.showModal();
     close.focus();
   }
-  function confirmDialog(msg, onYes) {
+  // ---------- Daily battle ----------
+  function today() { return DK ? DK.today() : 0; }
+  function dailyOpts(day) { return { mode: "ai", lv: DAILY_LV, seed: cleanSeed(DK.seedOf("banner", day)), d: ["r", "r"], day: day }; }
+  // Daily results: battles played and won, the current and best streak
+  // of won days.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0;
+    Object.keys(data.days).forEach(function (k) {
+      n++;
+      if (data.days[k].w) { on[k] = true; w++; }
+    });
+    var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: s2.cur, best: s2.best };
+  }
+  function clampInt(v, lo, hi) { return Math.max(lo, Math.min(hi, Math.round(v) || lo)); }
+  // One try a day: the first result counts.
+  function countDaily(day, won, turns, keep) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    data.days[day] = { b: data.br, w: won ? 1 : 0, t: clampInt(turns, 1, MAX_TURNS), k: won ? clampInt(keep, 1, E.KEEP_HP) : clampInt(keep, 0, E.KEEP_HP) };
+    data = mergeBanner(data, data);
+    save();
+  }
+  // A Daily battle left before its end counts as lost where it was.
+  function leaveDaily() {
+    if (game && game.opts.day !== undefined && !game.done && st && st.over < 0 && st.n > 0) {
+      countDaily(game.opts.day, false, st.rt[0], st.keep[0]);
+      game.done = true;
+      game.counted = true;
+      stopAI();
+    }
+  }
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's battle (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d); return; }
+    if (game && game.opts.day === d && !game.done) return;
+    startGame(dailyOpts(d));
+    showToast(t("daily.rules"));
+    live(t("daily.rules"));
+  }
+  function dailyDialog(day) {
+    var r = data.days[day];
+    if (!r || !DK || document.querySelector("dialog[open]")) return;
+    var s2 = dailyStats(today());
+    var dlg = makeDialog("bn-daily");
+    dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), r.w ? t("daily.won", { t: r.t }) : t("daily.lost", { t: r.t })));
+    dlg.appendChild(row(t("daily.keep"), r.k + " / " + E.KEEP_HP));
+    dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
+    dlg.appendChild(row(t("daily.best"), String(s2.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-note", t("daily.oneTry") + " " + t("daily.next")));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
+    acts.appendChild(button(t("daily.share"), "", function () { shareDaily(day); }));
+    var free = button(t("daily.free"), "primary", function () { dlg.close(); newDialog(); });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    free.focus();
+  }
+  // Spoiler-free: won or not, the own Keep as five squares (3 Health
+  // each) and the turns. Never the board, the decks or the plays.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var sq = "", full = Math.ceil(r.k / 3);
+    for (var k = 0; k < 5; k++) sq += k < full ? "🟦" : "⬜";
+    var text = DK.shareText({ game: t("app.name"), label: t("daily.label"), day: day, grid: [sq],
+      line: (r.w ? "🏰 " + t("share.won", { t: r.t }) : "💥 " + t("share.lost", { t: r.t })) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(acts, dlg) {
+    if (!DK || !DK.hasHub()) return;
+    acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("banner"); }));
+  }
+
+  function confirmDialog(msg, onYes, yesLabel, noLabel) {
     var dlg = makeDialog("bn-confirm");
     dlg.appendChild(el("div", "dlg-msg", msg));
     var acts = el("div", "dlg-actions");
-    var no = button(t("confirm.no"), "", function () { dlg.close(); });
+    var no = button(noLabel || t("confirm.no"), "", function () { dlg.close(); });
     acts.appendChild(no);
-    acts.appendChild(button(t("confirm.yes"), "danger", function () { dlg.close(); onYes(); }));
+    acts.appendChild(button(yesLabel || t("confirm.yes"), "danger", function () { dlg.close(); onYes(); }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -1337,6 +1510,7 @@
   var UI_ICONS = {
     new:    SVG + '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     undo:   SVG + '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
+    daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 20v-6l3 1.5L9 17"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>'
@@ -1413,7 +1587,7 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["daily-btn", "daily", "btn.daily"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1426,6 +1600,9 @@
     $("undo-btn").addEventListener("click", undoLast);
     $("end-btn").addEventListener("click", endTurn);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's battle.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
       paintSfxBtn();
@@ -1435,7 +1612,10 @@
     wireKeyboard();
     window.addEventListener("resize", resize);
     // Save on the way out (R10 session).
-    document.addEventListener("visibilitychange", function () { if (document.hidden && game) saveSession(); });
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden && game) saveSession();
+      if (!document.hidden && game) renderStatus();   // the Daily dot after midnight
+    });
     window.addEventListener("pagehide", function () { if (game) saveSession(); });
   }
 
@@ -1452,12 +1632,18 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
+    var tg = DK ? DK.takeTarget("banner") : null;
+    var daily = !!(tg && tg.daily && DK);
+    if (daily && !data.days[today()] && !(game && game.opts.day === today() && !game.done)) {
+      if (!game || !inProgressOf(game)) { game = makeGame(dailyOpts(today())); daily = false; }
+    }
     if (!game) game = makeGame({ mode: prefs.mode, lv: prefs.lv, seed: newSeed(), d: [prefs.d0, prefs.d1] });
     st = game.g;
     saveSession();
     resize();
     renderAll();
-    if (st.over >= 0) setTimeout(resultDialog, 300);
+    if (daily) setTimeout(openDaily, 300);
+    else if (st.over >= 0) setTimeout(game.opts.day !== undefined ? function () { dailyDialog(game.opts.day); } : resultDialog, 300);
     else {
       maybeTour();
       if (st.side === aiSide()) runAI();
