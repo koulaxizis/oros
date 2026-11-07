@@ -21,6 +21,7 @@ orosPack("de", "gamecenter", {
  "all.find": "Spiel suchen",
  "all.g.arcade": "Arcade",
  "all.g.strategy": "Strategie",
+ "all.g.rpg": "RPG & Abenteuer",
  "all.g.board": "Brettspiele und zu zweit",
  "all.g.cards": "Karten und Steine",
  "all.g.puzzle": "Rätsel",
@@ -116,5 +117,6 @@ orosPack("de", "gamecenter", {
  "wordle": "Wordle",
  "wordsearch": "Wortsuche",
  "xeri": "Xeri",
- "realm": "Ländereien"
+ "realm": "Ländereien",
+ "crypt": "Gruft"
 });

@@ -109,6 +109,12 @@ test("resume: each game's own test", () => {
   assert.equal(one("realm", { g: { over: -1, acts: 5 }, u: [], done: false }), true);
   assert.equal(one("realm", { g: { over: 1, acts: 40 }, u: [], done: true }), false);
   assert.equal(one("realm", { g: { over: -1, acts: 40 }, u: [], done: true }), false);
+  // Crypt: under way after the first turn, until the run is over
+  assert.equal(one("crypt", { g: { over: -1, turn: 0 }, done: false }), false);
+  assert.equal(one("crypt", { g: { over: -1, turn: 12 }, done: false }), true);
+  assert.equal(one("crypt", { g: { over: 0, turn: 80 }, cp: { floor: 4 }, done: false }), true);
+  assert.equal(one("crypt", { g: { over: 0, turn: 80 }, cp: null, done: true }), false);
+  assert.equal(one("crypt", { g: { over: 1, turn: 900 }, done: true }), false);
 });
 
 test("resume: list keeps the GAMES order", () => {

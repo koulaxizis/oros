@@ -68,6 +68,12 @@ const PLAY = {
     await tap(p, "#end-btn");
     for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(300);
   },
+  // Crypt: close the first-run "How to play", then wait a few turns
+  crypt: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    for (let i = 0; i < 4 && !(await inProg()); i++) await tap(p, "#wait-btn");
+  },
   // a word search counts as under way after 15 s of play
   wordsearch: async (p) => { await p.waitForTimeout(16000); }
 };
