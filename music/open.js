@@ -290,10 +290,14 @@
   }
   function jmId(v) { var s = v == null ? "" : String(v); return /^[0-9]{1,12}$/.test(s) ? s : ""; }
   function jmWord(v, n) { return String(v || "").replace(/[^\p{L}\p{N} _+-]/gu, " ").replace(/\s+/g, " ").trim().slice(0, n || 80); }
-  // o: { q, tags, mood, artist, order, page }
+  // Rows per call: PAGE.jm, or o.limit (1..200, the most Jamendo gives;
+  // an artist page asks for 200 so a whole discography takes few calls).
+  function jmLimit(o) { var n = Math.floor(+(o && o.limit) || 0); return n >= 1 ? Math.min(200, n) : PAGE.jm; }
+  // o: { q, tags, mood, artist, order, page, limit }
   function jmTracksUrl(o) {
     o = o || {};
-    var p = { limit: PAGE.jm, offset: (Math.max(1, o.page || 1) - 1) * PAGE.jm, audioformat: "mp32", imagesize: 300 };
+    var n = jmLimit(o);
+    var p = { limit: n, offset: (Math.max(1, o.page || 1) - 1) * n, audioformat: "mp32", imagesize: 300 };
     if (o.q) p.search = jmWord(o.q, 120);
     if (o.tags) p.tags = jmWord(o.tags);
     if (o.mood) p.fuzzytags = jmWord(o.mood);
@@ -304,12 +308,14 @@
   }
   function jmAlbumsUrl(o) {
     o = o || {};
-    var p = { limit: PAGE.jm, offset: (Math.max(1, o.page || 1) - 1) * PAGE.jm, imagesize: 300, order: String(o.order || "popularity_total").replace(/[^a-z_]/g, "") };
+    var n = jmLimit(o);
+    var p = { limit: n, offset: (Math.max(1, o.page || 1) - 1) * n, imagesize: 300, order: String(o.order || "popularity_total").replace(/[^a-z_]/g, "") };
     if (o.q) p.namesearch = jmWord(o.q, 120);
     if (jmId(o.artist)) p.artist_id = jmId(o.artist);
     return jmUrl("albums", p);
   }
   function jmAlbumTracksUrl(id) { return jmUrl("albums/tracks", { id: jmId(id), audioformat: "mp32", imagesize: 300 }); }
+  function jmArtistUrl(id) { return jmUrl("artists", { id: jmId(id) }); }
   function jmRadiosUrl() { return jmUrl("radios", { limit: 50, imagesize: 300 }); }
   function jmRadioStreamUrl(id) { return jmUrl("radios/stream", { id: jmId(id) }); }
   function jmResults(j) {
@@ -335,9 +341,10 @@
     if (r && +x.position > 0) r.n = +x.position;
     return r;
   }
-  function jmParseTracks(j) {
+  // lim = the rows asked for (a full page means there may be more).
+  function jmParseTracks(j, lim) {
     var list = jmResults(j);
-    return { tracks: list.map(function (x) { return jmTrack(x); }).filter(Boolean), more: list.length >= PAGE.jm };
+    return { tracks: list.map(function (x) { return jmTrack(x); }).filter(Boolean), more: list.length >= (lim || PAGE.jm) };
   }
   function jmAlbumCard(x) {
     var id = jmId(x && x.id);
@@ -345,9 +352,18 @@
     return { s: "jm", id: id, n: str(x.name) || id, a: str(x.artist_name), y: (str(x.releasedate).match(/\d{4}/) || [""])[0],
       art: https(x.image), pg: https(x.shareurl) || "https://www.jamendo.com/album/" + id, ri: jmId(x.artist_id) };
   }
-  function jmParseAlbums(j) {
+  function jmParseAlbums(j, lim) {
     var list = jmResults(j);
-    return { albums: list.map(jmAlbumCard).filter(Boolean), more: list.length >= PAGE.jm };
+    return { albums: list.map(jmAlbumCard).filter(Boolean), more: list.length >= (lim || PAGE.jm) };
+  }
+  // The artist's own card: name, picture, page and website.
+  function jmParseArtist(j) {
+    var x = jmResults(j)[0], id = jmId(x && x.id);
+    if (!id) throw new OpenError("closed");
+    var o = { s: "jm", id: id, n: str(x.name) || id, art: https(x.image), pg: https(x.shareurl) || "https://www.jamendo.com/artist/" + id };
+    var w = https(x.website);
+    if (w) o.web = w;
+    return o;
   }
   function jmParseAlbum(j) {
     var a = jmResults(j)[0];
@@ -445,6 +461,16 @@
   // Shown names in any language.
   function browseName(id, lang) { return tr("open.browse." + id, lang); }
   function moodName(id, lang) { return tr("open.mood." + id, lang); }
+  // The ways to ask Jamendo for a mood's songs, in order (MU-MOOD2):
+  // the usual one (fuzzy tag, this month's most played), then near
+  // words with all-time popularity, then the exact tag. The next one is
+  // asked only when the one before answers with no songs at all.
+  var MOOD_NEAR = { relaxed: "relaxing chill calm", happy: "joyful upbeat", energetic: "energy upbeat", romantic: "love",
+    sad: "melancholic", epic: "cinematic", dark: "gothic" };
+  function jmMoodQueries(id) {
+    if (!moodOf(id)) return [];
+    return [{ mood: id, order: "popularity_month" }, { mood: id + " " + MOOD_NEAR[id], order: "popularity_total" }, { tags: id, order: "popularity_total" }];
+  }
   function genreName(id, lang) { return tr("open.genre." + id, lang); }
 
   // ---------- 7. Credit line ----------
@@ -498,7 +524,8 @@
     return p.then(function (text) {
       var j;
       try { j = JSON.parse(text); } catch (e) { throw new OpenError("json"); }
-      cachePut(url, j);
+      // An empty answer is not kept (MU-MOOD2): the next look asks again.
+      if (!(j && Array.isArray(j.results) && !j.results.length)) cachePut(url, j);
       return j;
     });
   }
@@ -511,8 +538,12 @@
   }
   function ovSearch(o) { o = o || {}; return getJSON(ovUrl(o)).then(function (j) { return ovParse(j, o.page); }); }
   function ccSearch(o) { o = o || {}; return getJSON(ccUrl(o), { timeout: 25000 }).then(ccParse); }
-  function jmTracks(o) { return getJSON(jmTracksUrl(o)).then(jmParseTracks); }
-  function jmAlbums(o) { return getJSON(jmAlbumsUrl(o)).then(jmParseAlbums); }
+  function jmTracks(o) { return getJSON(jmTracksUrl(o)).then(function (j) { return jmParseTracks(j, jmLimit(o)); }); }
+  function jmAlbums(o) { return getJSON(jmAlbumsUrl(o)).then(function (j) { return jmParseAlbums(j, jmLimit(o)); }); }
+  function jmArtist(id) {
+    if (!jmId(id)) return Promise.reject(new OpenError("id"));
+    return getJSON(jmArtistUrl(id)).then(jmParseArtist);
+  }
   function jmAlbum(id) {
     if (!jmId(id)) return Promise.reject(new OpenError("id"));
     return getJSON(jmAlbumTracksUrl(id)).then(jmParseAlbum);
@@ -521,11 +552,11 @@
   function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
   var api = {
-    VERSION: "1.2.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.3.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
-    jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf,
-    jmTracks: jmTracks, jmAlbums: jmAlbums, jmAlbum: jmAlbum, jmRadios: jmRadios, jmRadio: jmRadio,
+    jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
+    jmTracks: jmTracks, jmAlbums: jmAlbums, jmArtist: jmArtist, jmAlbum: jmAlbum, jmRadios: jmRadios, jmRadio: jmRadio,
     licFromUrl: licFromUrl, licFromCode: licFromCode, licLabel: licLabel, licShort: licShort, licUrl: licUrl,
     secs: secs, https: https, iaWords: iaWords,
     iaSearchUrl: iaSearchUrl, iaParseSearch: iaParseSearch, iaMetaUrl: iaMetaUrl, iaParseMeta: iaParseMeta, iaIdFromPage: iaIdFromPage,

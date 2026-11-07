@@ -272,6 +272,22 @@ test("Jamendo album, albums and radios", () => {
   assert.equal(O.moodOf("happy").el, "Χαρούμενη");
 });
 
+test("Jamendo artist page: 200 rows a call, the artist's card, a full page means more", () => {
+  assert.match(O.jmTracksUrl({ artist: "7907", limit: 200, page: 3 }), /&limit=200&offset=400&.*&artist_id=7907&order=popularity_total$/);
+  assert.match(O.jmAlbumsUrl({ artist: "7907", limit: 500 }), /&limit=200&offset=0&/);
+  assert.match(O.jmTracksUrl({ limit: "x" }), /&limit=20&offset=0&/);
+  assert.equal(O.jmArtistUrl("7907"), "https://api.jamendo.com/v3.0/artists/?client_id=e04c6e83&format=json&id=7907");
+  const full = { headers: { status: "success" }, results: Array.from({ length: 200 }, (_, i) => Object.assign({}, JM_TRACK, { id: String(1000 + i) })) };
+  assert.equal(O.jmParseTracks(full, 200).more, true);
+  assert.equal(O.jmParseTracks({ headers: { status: "success" }, results: full.results.slice(0, 120) }, 200).more, false);
+  assert.equal(O.jmParseTracks({ headers: { status: "success" }, results: full.results.slice(0, 20) }).more, true);
+  const ar = O.jmParseArtist({ headers: { status: "success" }, results: [{ id: "7907", name: "Nikos Sea", website: "https://nikossea.example",
+    image: "https://usercontent.jamendo.com?type=artist&id=7907", shareurl: "https://www.jamendo.com/artist/7907" }] });
+  assert.deepEqual(ar, { s: "jm", id: "7907", n: "Nikos Sea", art: "https://usercontent.jamendo.com?type=artist&id=7907", pg: "https://www.jamendo.com/artist/7907", web: "https://nikossea.example" });
+  assert.equal(O.jmParseArtist({ headers: { status: "success" }, results: [{ id: "7", name: "X", website: "javascript:alert(1)" }] }).web, undefined);
+  assert.throws(() => O.jmParseArtist({ headers: { status: "success" }, results: [] }), (e) => e.code === "closed");
+});
+
 test("Jamendo songs keep their album and artist ids through the sync slice", () => {
   const a = O.jmParseTracks({ headers: { status: "success" }, results: [JM_TRACK] }).tracks[0];
   let d = C.setLike(C.emptyData(), a, true, 10);
@@ -279,4 +295,27 @@ test("Jamendo songs keep their album and artist ids through the sync slice", () 
   assert.equal(d.likes[0].ri, "7907");
   assert.equal(C.normRef(Object.assign({}, a, { ai: "../x", ri: "a b" })).ai, undefined);
   assert.deepEqual(C.mergeMusic(d, C.canon(JSON.parse(JSON.stringify(d)))), d);
+});
+
+test("MU-MOOD2: a mood has fallback Jamendo queries, and an empty answer is not cached", async () => {
+  const q = O.jmMoodQueries("relaxed");
+  assert.equal(q.length, 3);
+  assert.deepEqual(q[0], { mood: "relaxed", order: "popularity_month" });
+  assert.match(O.jmTracksUrl(q[0]), /&fuzzytags=relaxed&order=popularity_month$/);
+  assert.match(O.jmTracksUrl(q[1]), /&fuzzytags=relaxed%20relaxing%20chill%20calm&order=popularity_total$/);
+  assert.match(O.jmTracksUrl(q[2]), /&tags=relaxed&order=popularity_total$/);
+  assert.deepEqual(O.jmMoodQueries("nope"), []);
+  O.MOODS.forEach((m) => assert.equal(O.jmMoodQueries(m[0]).length, 3, m[0]));
+  const saved = globalThis.fetch;
+  let n = 0, empty = true;
+  globalThis.fetch = async () => { n++; const r = empty ? [] : [{ id: "5", name: "X", audio: "https://prod-1.storage.jamendo.com/?trackid=5" }];
+    return { ok: true, status: 200, text: async () => JSON.stringify({ headers: { status: "success", code: 0 }, results: r }) }; };
+  try {
+    const o = { mood: "epic", order: "popularity_month", page: 7 };
+    assert.equal((await O.jmTracks(o)).tracks.length, 0);
+    empty = false;
+    assert.equal((await O.jmTracks(o)).tracks.length, 1, "asked again, not served the empty answer from the cache");
+    assert.equal((await O.jmTracks(o)).tracks.length, 1);
+    assert.equal(n, 2, "a full answer is cached");
+  } finally { globalThis.fetch = saved; }
 });
