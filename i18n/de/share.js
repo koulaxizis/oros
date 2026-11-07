@@ -203,5 +203,17 @@ orosPack("de", "share", {
  "trPlayHint": "Läuft direkt hier auf der Seite, von {s}.",
  "trOpen": "Auf {s} öffnen",
  "trFind": "Auf MusicBrainz suchen",
- "trCover": "Cover"
+ "trCover": "Cover",
+ "pv": "Cover in Chats zeigen",
+ "pvNote": "Der Vorschau-Link schickt die Angaben zum Song (nicht die Datei) über den orOS-Server, damit Chat-Apps Cover und Titel zeigen; nichts wird gespeichert.",
+ "tracks": "Songs",
+ "tracks.al": "Album",
+ "tracks.pl": "Playlist",
+ "songsN": "{n} Songs",
+ "songs1": "1 Song",
+ "trsOwn": "Manche Songs kamen nur mit ihrem Namen: Such sie in Musik oder anderswo.",
+ "addHint.tracks": "Öffnet Musik: alle abspielen oder als deine Playlist behalten.",
+ "dl.tracks": "Herunterladen (.m3u)",
+ "trsHint": "Tippe auf einen Song, um ihn hier abzuspielen; der nächste folgt.",
+ "trsPlay": "{t} abspielen"
 });

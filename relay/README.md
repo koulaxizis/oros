@@ -525,6 +525,13 @@ relay). The tables are created on first use. Without the binding the op and `/s/
 Tests: `tests/share-relay.test.js` (an in-memory D1 that knows exactly
 the statements in `SHR_SQL`).
 
+## Send to someone: song link previews (`/p/`)
+`GET|HEAD /p/1.<base64url deflate-raw JSON>` (`relay/preview.js`, BR-SHARE-PREVIEW, Music share wave 2). Chat apps never see a share link's `#fragment`, so for an unlocked song (kind `track`) the sender may give this link instead: the relay answers with Open Graph / Twitter tags (title · artist, album · licence, the cover's own address) and a meta refresh plus a link to `https://useoros.online/share/#<the same code>`.
+- **Privacy.** The song's details reach the relay in the path (the share window says so and the person can untick it). Nothing is stored, logged or fetched: no D1, no Durable Object, the cover is only named in `og:image`, never proxied.
+- **Checks (Mail thread, 2026-11-07).** GET/HEAD only (405 otherwise); path ≤ 4 KB and no query; code `^1\.[A-Za-z0-9_-]+$` checked before decoding, so a locked code (`p1.`, `q1.`) or a relay code is never parsed; inflate stopped past 16 KB; kind `track` only, through `normTrack` (a copy of `share/kinds.js`, parity-tested). Anything else is a 302 to `/share/` that echoes nothing of the code. Fields: control and bidi characters out, caps 120 / 120 / 120 / 60, HTML-escaped. Cover: https, host `archive.org`, `jamendo.com`, `ccmixter.org`, `openverse.org`, `freesound.org`, `wikimedia.org` or a subdomain, no userinfo or port, ≤ 512 characters; else the orOS picture. The forward address is rebuilt from the checked code.
+- **Headers.** `text/html; charset=utf-8`, `nosniff`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`, CSP `default-src 'none'; img-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` (no script, no style), `Cache-Control: public, max-age=86400`. Own per-IP limit, 120 a minute per isolate (429). Fixed texts; nothing throws out of `handle()` (503 "unavailable").
+- **Tests** `tests/share-preview.test.js`.
+
 ## Studio Remote: meeting rooms (`/rt/`)
 
 Studio's remote control (`studio/remote.js`) lets a tablet or phone

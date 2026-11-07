@@ -520,5 +520,7 @@ orosPack("de", "music", {
  "sh.fileNo": "Dieses Gerät kann die Datei nicht senden. Sende lieber den Namen.",
  "sh.send": "Datei senden",
  "sh.ready": "Die Datei ist bereit zum Senden.",
- "sh.none": "Teilen ist hier nicht verfügbar."
+ "sh.none": "Teilen ist hier nicht verfügbar.",
+ "sh.playAll": "Alle abspielen",
+ "sh.savePl": "Als meine Playlist speichern"
 });
