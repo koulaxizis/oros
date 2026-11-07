@@ -183,3 +183,14 @@ test("gamecenter: Crypt counts runs and wins from every device; a Grim win is a 
   crypt.rows.b.s.r = [1, 1, 10];
   assert.ok(ach(sum({ "oros-crypt-data": crypt }), "hard").done);
 });
+
+test("gamecenter: the Daily crypt counts in Today and the streak when you get out, never in Clean sweep", () => {
+  const crypt = { ver: 1, br: 0, rows: { a: { b: 0, s: { g: [2, 0, 6] } } },
+    days: { [TODAY]: { b: 0, w: 1, f: 5, t: 300 }, [TODAY - 1]: { b: 0, w: 1, f: 5, t: 280 }, [TODAY - 2]: { b: 0, w: 0, f: 2, t: 90 } } };
+  const s = sum({ "oros-crypt-data": crypt });
+  assert.ok(C.DAILY.includes("crypt"));
+  assert.deepEqual([s.games.crypt.p, s.games.crypt.w, s.games.crypt.dn, s.games.crypt.cur, s.games.crypt.today], [2, 0, 2, 2, 1]);
+  assert.deepEqual([ach(s, "sweep").have, ach(s, "sweep").need], [0, 6]);
+  crypt.days[TODAY] = { b: 0, w: 0, f: 3, t: 120 };
+  assert.equal(sum({ "oros-crypt-data": crypt }).games.crypt.today, 2, "a fall today: tried, not out");
+});
