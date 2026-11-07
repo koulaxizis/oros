@@ -15,11 +15,16 @@
 //   GET  /.well-known/oauth-protected-resource[/mcp]   RFC 9728
 //   GET  /.well-known/oauth-authorization-server       RFC 8414
 //   POST /gate/register   RFC 7591, public clients only, nothing stored
-//   GET  /gate/authorize  → 302 to orOS (?gate=…), where the person allows it
+//   GET  /gate/authorize  → a relay page with a pairing code and a link
+//                           to useoros.online (?gate=…); the person allows
+//                           it in orOS, by that link or by typing the code
+//   GET  /gate/pair       the same page while it waits (refreshes itself;
+//                           302 back to Claude once orOS allowed it)
 //   POST /gate/token      authorization_code (PKCE S256) | refresh_token
 //   POST /mcp             JSON-RPC 2.0, Bearer access token
 // From orOS only (allowed origins, CORS):
-//   POST /gate/dev        { act:"new"|"code"|"revoke"|"info"|"del", id, tok, … }
+//   POST /gate/dev        { act:"new"|"code"|"pair"|"revoke"|"info"|"del", id, tok, … }
+//   (also from LOCAL_ORIGINS: the installed orOS, orOS Portable / USB)
 //   GET  /gate/ws/<id>    WebSocket, subprotocols ["gt1", "t.<tok>"]
 // Tokens: "<id>.<43 base64url>"; the box keeps only their SHA-256.
 // ============================================================
@@ -34,8 +39,25 @@ export const GATE_LIMITS = {
   refreshMs: 30 * 86400000,      // refresh token (renewed on every use)
   tokens: 40,                    // live tokens + codes per gate
   idleMs: 180 * 86400000,        // no use for this long: the box wipes itself
-  perIpMin: 120                  // public routes per client IP per minute (per isolate)
+  perIpMin: 120,                 // public routes per client IP per minute (per isolate)
+  pairMs: 10 * 60000,            // a pairing code waits this long
+  pairTries: 5                   // wrong pairing codes per gate per 10 minutes
 };
+
+// orOS that runs on the person's own computer (orOS Portable, the
+// installed orOS, orOS USB) serves itself from this loopback address.
+// Only a program on that computer can send this Origin; web pages cannot.
+export const LOCAL_ORIGINS = ["http://localhost:47800"];
+
+// Pairing codes: 8 letters and digits without look-alikes (0/O, 1/I/L),
+// shown as XXXX-XXXX; about 39 bits, live 10 minutes, tried only by a
+// gate's own device (its token), at most pairTries wrong ones per gate.
+export const PAIR_ABC = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const PAIR_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/;
+export function normPair(s) {
+  const t = String(s || "").toUpperCase().replace(/[\s-]+/g, "");
+  return PAIR_RE.test(t) ? t : "";
+}
 
 // Where Claude may be sent back after the person allows it.
 export const REDIRECTS = [
@@ -325,6 +347,8 @@ export async function handleGate(request, env, url, okOrigin, ip, now) {
 
     // orOS itself: device calls and the device's WebSocket.
     if (p === "/gate/dev" || WS_RE.test(p)) {
+      const o = request.headers.get("Origin") || "";
+      if (!okOrigin && LOCAL_ORIGINS.indexOf(o) >= 0) okOrigin = o;
       if (request.method === "OPTIONS") {
         if (!okOrigin) return new Response(null, { status: 403 });
         return new Response(null, { status: 204, headers: cors(okOrigin) });
@@ -338,8 +362,9 @@ export async function handleGate(request, env, url, okOrigin, ip, now) {
 
     if (ipLimited(ip, now)) return oauthErr(429, "slow_down");
     if (p === "/gate/register") return register(request);
-    if (p === "/gate/authorize") return authorize(request, env, url);
     if (!env || !env.GATE) return oauthErr(503, "temporarily_unavailable");
+    if (p === "/gate/authorize") return await authorize(request, env, url, now);
+    if (p === "/gate/pair") return await pairPage(request, env, url, now);
     if (p === "/gate/token") return token(request, env, now);
     if (p === "/mcp") return mcp(request, env, base, now);
     return oauthErr(404, "not_found");
@@ -370,10 +395,13 @@ async function register(request) {
   });
 }
 
-// The person allows it inside their unlocked orOS: the relay only sends
-// the browser there with what orOS needs to finish (redirect, state,
-// PKCE challenge). orOS asks its gate box for a code (/gate/dev "code").
-function authorize(request, env, url) {
+// The person allows it inside their unlocked orOS, in one of two ways:
+// the link to useoros.online (?gate=…, where orOS asks its gate box for
+// a code itself) or a pairing code typed into any orOS whose gate is on
+// (the installed orOS has its own browser, which this page cannot open).
+// The page keeps the PKCE challenge and the redirect in a pairing box
+// ("pair:<code>"), never on the device's side.
+async function authorize(request, env, url, now) {
   if (request.method !== "GET") return oauthErr(405, "invalid_request");
   const q = url.searchParams;
   const ru = q.get("redirect_uri") || "", st = q.get("state") || "", cc = q.get("code_challenge") || "";
@@ -383,7 +411,67 @@ function authorize(request, env, url) {
   if (q.get("code_challenge_method") !== "S256" || !TOK_RE.test(cc)) return back("invalid_request");
   if (st.length > 500) return back("invalid_request");
   const payload = b64u(new TextEncoder().encode(JSON.stringify({ r: ru, s: st, c: cc })));
-  return Response.redirect(appOrigin(env) + "/?gate=" + payload, 302);
+  const web = appOrigin(env) + "/?gate=" + payload;
+  const pc = randPair(), k = rand43();
+  const res = await stub(env, "pair:" + pc).fetch(new Request("https://gate/pairnew", {
+    method: "POST", headers: { "X-Now": String(now) },
+    body: JSON.stringify({ kh: await sha256hex(k), r: ru, s: st, c: cc, w: web })
+  }));
+  if (!res.ok) return oauthErr(503, "temporarily_unavailable");
+  return pairHtml(pc, k, web, url.origin);
+}
+
+// The waiting page asks its pairing box (with the page's own secret k).
+async function pairPage(request, env, url, now) {
+  if (request.method !== "GET") return oauthErr(405, "invalid_request");
+  const pc = normPair(url.searchParams.get("p")), k = url.searchParams.get("k") || "";
+  if (!pc || !TOK_RE.test(k)) return htmlRes(400, pageShell("orOS Gate", "<p>This sign-in link is not valid. Start again from Claude.</p>"));
+  const res = await stub(env, "pair:" + pc).fetch(new Request("https://gate/pairpoll", {
+    method: "POST", headers: { "X-Now": String(now) }, body: JSON.stringify({ k })
+  }));
+  const j = await res.json().catch(() => null);
+  if (j && j.to && validRedirect(j.to.split("?")[0])) return Response.redirect(j.to, 302);
+  if (j && j.wait) return pairHtml(pc, k, j.w, url.origin);
+  return htmlRes(410, pageShell("orOS Gate", "<p>This sign-in has expired. Start again from Claude.</p>"));
+}
+
+function randPair() {
+  const b = crypto.getRandomValues(new Uint8Array(8));
+  let s = "";
+  for (let i = 0; i < 8; i++) s += PAIR_ABC[b[i] % PAIR_ABC.length];
+  return s;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+function htmlRes(status, html, extra) {
+  return new Response(html, { status, headers: Object.assign({
+    "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY",
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+  }, extra || {}) });
+}
+function pageShell(title, body, head) {
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    (head || "") + "<title>" + esc(title) + "</title><style>" +
+    ":root{color-scheme:light dark}body{margin:0;font:16px/1.5 system-ui,sans-serif;background:#f4f4f6;color:#1d1d22;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}" +
+    "@media (prefers-color-scheme:dark){body{background:#1b1b1f;color:#ececf1}.box{background:#26262c!important}.code{background:#33333b!important}}" +
+    ".box{max-width:460px;width:100%;background:#fff;border-radius:14px;padding:24px;box-shadow:0 8px 30px rgba(0,0,0,.12)}" +
+    "h1{font-size:1.25rem;margin:0 0 12px}.code{font:700 2rem/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;text-align:center;background:#eef0f4;border-radius:10px;padding:14px;margin:12px 0}" +
+    "a.btn{display:inline-block;margin-top:8px;padding:10px 16px;border-radius:8px;background:#3b5bdb;color:#fff;text-decoration:none}.dim{opacity:.75;font-size:.92rem}" +
+    "</style></head><body><main class=\"box\">" + body + "</main></body></html>";
+}
+function pairHtml(pc, k, web, base) {
+  const self = base + "/gate/pair?p=" + pc + "&k=" + k;
+  const shown = pc.slice(0, 4) + "-" + pc.slice(4);
+  return htmlRes(200, pageShell("Connect Claude to orOS",
+    "<h1>Connect Claude to orOS</h1>" +
+    "<p>In orOS, open <b>Settings › Connected services › orOS Gate</b> and type this code under <b>Code from Claude</b>:</p>" +
+    '<div class="code" aria-label="Pairing code">' + esc(shown) + "</div>" +
+    '<p class="dim">Works in any orOS whose gate is on: the installed orOS, orOS Portable or USB, or another browser. ' +
+    "The code lasts 10 minutes. This page goes on by itself once orOS allows it.</p>" +
+    "<p>orOS open in this browser on useoros.online?</p>" +
+    '<a class="btn" href="' + esc(web) + '">Allow on useoros.online</a>' +
+    '<p class="dim" lang="el">Στο orOS: Ρυθμίσεις › Συνδεδεμένες υπηρεσίες › orOS Gate › «Κωδικός από το Claude».</p>',
+    '<meta http-equiv="refresh" content="3;url=' + esc(self) + '">'));
 }
 
 function stub(env, id) { return env.GATE.get(env.GATE.idFromName(id)); }
@@ -432,13 +520,14 @@ async function devCall(request, env, now) {
   let b;
   try { b = JSON.parse(text); } catch (e) { return devErr(400, "bad-request"); }
   if (!b || typeof b !== "object" || !ID_RE.test(b.id || "")) return devErr(400, "bad-request");
-  if (["new", "code", "revoke", "info", "del"].indexOf(b.act) < 0) return devErr(400, "bad-request");
+  if (["new", "code", "pair", "revoke", "info", "del"].indexOf(b.act) < 0) return devErr(400, "bad-request");
   if (b.act === "new" ? !HEX64_RE.test(b.th || "") : !TOK_RE.test(b.tok || "")) return devErr(400, "bad-request");
   if (b.act === "code" && (!TOK_RE.test(b.c || "") || !validRedirect(b.r))) return devErr(400, "bad-request");
+  if (b.act === "pair" && !normPair(b.pc)) return devErr(400, "bad-request");
   return stub(env, b.id).fetch(new Request("https://gate/dev", {
     method: "POST",
     headers: { "X-Now": String(now) },
-    body: JSON.stringify({ act: b.act, th: b.th, tok: b.tok, c: b.c, r: b.r })
+    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc) })
   }));
 }
 
@@ -481,6 +570,10 @@ export class GateBox {
       if (p === "/token") return await this.token(await request.json(), now);
       if (p === "/mcp") return await this.mcp(request, now);
       if (p === "/ws") return await this.accept(request, now);
+      if (p === "/pairnew") return await this.pairNew(await request.json(), now);
+      if (p === "/pairpoll") return await this.pairPoll(await request.json(), now);
+      if (p === "/pairtake") return await this.pairTake(await request.json(), now);
+      if (p === "/pairdone") return await this.pairDone(await request.json(), now);
       return devErr(404, "bad-request");
     } catch (e) {
       return devErr(503, "nostore");      // never the text
@@ -542,10 +635,60 @@ export class GateBox {
       all.forEach((v) => { if (v && v.k === "r" && v.exp > now) n++; });
       return jsonRes(200, { ok: true, data: { links: n, last: m.used || 0 } });
     }
-    // "code": the person pressed Allow in orOS.
     if (await this.prune(now) >= GATE_LIMITS.tokens) return devErr(429, "rate");
+    if (b.act === "pair") return await this.pairWith(b, m, now);
+    // "code": the person pressed Allow in orOS.
     const code = await this.issue("c", { c: b.c, r: b.r }, now);
     return jsonRes(200, { ok: true, data: { code: code } });
+  }
+
+  // "pair": the person typed the code from the relay's page into orOS.
+  // Wrong codes count against this gate (pairTries per pairMs).
+  async pairWith(b, m, now) {
+    const t = Array.isArray(m.pt) ? m.pt.filter((x) => now - x < GATE_LIMITS.pairMs) : [];
+    if (t.length >= GATE_LIMITS.pairTries) return devErr(429, "rate");
+    const box = this.env.GATE.get(this.env.GATE.idFromName("pair:" + b.pc));
+    const res = await box.fetch(new Request("https://gate/pairtake", { method: "POST", headers: { "X-Now": String(now) }, body: "{}" }));
+    const ask = await res.json().catch(() => null);
+    if (!ask || !ask.ok) {
+      t.push(now); m.pt = t;
+      await this.st.put("meta", m);
+      return devErr(404, "nopair");
+    }
+    const code = await this.issue("c", { c: ask.c, r: ask.r }, now);
+    const to = ask.r + "?code=" + encodeURIComponent(b.id + "." + code) + (ask.s ? "&state=" + encodeURIComponent(ask.s) : "");
+    await box.fetch(new Request("https://gate/pairdone", { method: "POST", headers: { "X-Now": String(now) }, body: JSON.stringify({ to }) }));
+    return jsonRes(200, { ok: true, data: { ok: true } });
+  }
+
+  // ---- a pairing box ("pair:<code>"): one sign-in that waits ----
+  // "pair" { kh, r, s, c, w, exp, st: "wait"|"taken"|"done", to? }
+  async pairNew(b, now) {
+    if (await this.st.get("pair")) return devErr(409, "exists");
+    await this.st.put("pair", { kh: b.kh, r: b.r, s: b.s, c: b.c, w: b.w, exp: now + GATE_LIMITS.pairMs, st: "wait" });
+    await this.st.setAlarm(now + GATE_LIMITS.pairMs + 60000);
+    return jsonRes(200, { ok: true });
+  }
+  async pairPoll(b, now) {
+    const x = await this.st.get("pair");
+    if (!x || !TOK_RE.test(b.k || "") || !sameText(await sha256hex(b.k), x.kh)) return jsonRes(404, { gone: true });
+    if (x.st === "done" && x.to) { await this.wipe(); return jsonRes(200, { to: x.to }); }
+    if (x.exp <= now) { await this.wipe(); return jsonRes(410, { gone: true }); }
+    return jsonRes(200, { wait: true, w: x.w });
+  }
+  async pairTake(b, now) {
+    const x = await this.st.get("pair");
+    if (!x || x.st !== "wait" || x.exp <= now) return jsonRes(404, { ok: false });
+    x.st = "taken";
+    await this.st.put("pair", x);
+    return jsonRes(200, { ok: true, r: x.r, s: x.s, c: x.c });
+  }
+  async pairDone(b, now) {
+    const x = await this.st.get("pair");
+    if (!x || x.st !== "taken" || typeof b.to !== "string") return jsonRes(404, { ok: false });
+    x.st = "done"; x.to = b.to; x.exp = now + GATE_LIMITS.pairMs;
+    await this.st.put("pair", x);
+    return jsonRes(200, { ok: true });
   }
 
   async token(b, now) {

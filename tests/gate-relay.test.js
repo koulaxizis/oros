@@ -1,5 +1,5 @@
 // orOS Gate on the relay (relay/gate.js through relay/core.js): OAuth
-// metadata, registration, authorize redirect, the device's code, the
+// metadata, registration, the authorize page and pairing code, the device's code, the
 // token exchange with PKCE, refresh rotation, revoke, the MCP methods
 // and a tool call passed to the device's socket and back. The Durable
 // Object's storage and its WebSockets are stand-ins.
@@ -103,19 +103,94 @@ test("register: only Claude's callbacks, nothing stored", async () => {
   assert.equal(w.boxes.size, 0);
 });
 
-test("authorize sends the browser to orOS with redirect, state and challenge", async () => {
+const AUTH_Q = "?response_type=code&client_id=x&redirect_uri=" + encodeURIComponent(CB) + "&state=st1&code_challenge=" + CHALLENGE + "&code_challenge_method=S256";
+async function authPage(w) {
+  const r = await call(w, "GET", "/gate/authorize" + AUTH_Q);
+  assert.equal(r.status, 200);
+  assert.match(r.headers.get("Content-Type"), /text\/html/);
+  assert.match(r.headers.get("Content-Security-Policy"), /default-src 'none'/);
+  const html = await r.text();
+  const code = /class="code"[^>]*>([A-Z0-9]{4})-([A-Z0-9]{4})</.exec(html);
+  const self = /url=([^"]+)"/.exec(html);
+  const web = /class="btn" href="([^"]+)"/.exec(html);
+  assert.ok(code && self && web, "page has the code, its refresh and the web link");
+  return { html, pc: code[1] + code[2], self: self[1].replace(/&amp;/g, "&"), web: web[1].replace(/&amp;/g, "&") };
+}
+
+test("authorize shows a pairing page with a link to orOS on the web", async () => {
   const w = world();
-  const q = "?response_type=code&client_id=x&redirect_uri=" + encodeURIComponent(CB) + "&state=st1&code_challenge=" + CHALLENGE + "&code_challenge_method=S256";
-  const r = await call(w, "GET", "/gate/authorize" + q);
-  assert.equal(r.status, 302);
-  const loc = new URL(r.headers.get("Location"));
+  const pg = await authPage(w);
+  const loc = new URL(pg.web);
   assert.equal(loc.origin, ORIGIN);
   const p = JSON.parse(Buffer.from(loc.searchParams.get("gate"), "base64url").toString());
   assert.deepEqual(p, { r: CB, s: "st1", c: CHALLENGE });
-  const plain = await call(w, "GET", "/gate/authorize" + q.replace("S256", "plain"));
+  for (const ch of pg.pc) assert.ok(G.PAIR_ABC.indexOf(ch) >= 0);
+  assert.ok(w.boxes.has("pair:" + pg.pc), "the pairing box holds the sign-in");
+  const plain = await call(w, "GET", "/gate/authorize" + AUTH_Q.replace("S256", "plain"));
   assert.match(plain.headers.get("Location"), /^https:\/\/claude\.ai\/api\/mcp\/auth_callback\?error=invalid_request&state=st1$/);
-  const evil = await call(w, "GET", "/gate/authorize" + q.replace(encodeURIComponent(CB), encodeURIComponent("https://evil.example/")));
+  const evil = await call(w, "GET", "/gate/authorize" + AUTH_Q.replace(encodeURIComponent(CB), encodeURIComponent("https://evil.example/")));
   assert.equal(evil.status, 400);
+});
+
+test("pairing: the code typed in orOS sends the waiting page back to Claude", async () => {
+  const w = world();
+  await newGate(w);
+  const pg = await authPage(w);
+  const path = pg.self.slice(BASE.length);
+  // still waiting: the same page again
+  const wait = await call(w, "GET", path);
+  assert.equal(wait.status, 200);
+  assert.match(await wait.text(), new RegExp(pg.pc.slice(0, 4) + "-" + pg.pc.slice(4)));
+  // a wrong secret on the page gets nothing
+  assert.equal((await call(w, "GET", path.replace(/k=[^&]+/, "k=" + "Z".repeat(43)))).status, 410);
+  // wrong codes count, the device token is needed
+  assert.equal((await dev(w, { act: "pair", tok: "X".repeat(43), pc: pg.pc })).status, 404);
+  assert.equal((await dev(w, { act: "pair", tok: TOK, pc: "bad" })).status, 400);
+  assert.equal((await dev(w, { act: "pair", tok: TOK, pc: "AAAAAAAA" })).status, 404);
+  // the right code, lower case with a dash, as a person types it
+  const ok = await dev(w, { act: "pair", tok: TOK, pc: (pg.pc.slice(0, 4) + "-" + pg.pc.slice(4)).toLowerCase() });
+  assert.equal(ok.status, 200);
+  assert.equal((await dev(w, { act: "pair", tok: TOK, pc: pg.pc })).status, 404, "one use");
+  const done = await call(w, "GET", path);
+  assert.equal(done.status, 302);
+  const back = new URL(done.headers.get("Location"));
+  assert.equal(back.origin + back.pathname, CB);
+  assert.equal(back.searchParams.get("state"), "st1");
+  const code = back.searchParams.get("code");
+  assert.ok(code.indexOf(ID + ".") === 0);
+  const tk = await call(w, "POST", "/gate/token", { form: { grant_type: "authorization_code", code, code_verifier: VERIFIER, redirect_uri: CB } });
+  assert.equal(tk.status, 200);
+  assert.ok((await tk.json()).access_token);
+  assert.equal((await call(w, "GET", path)).status, 410, "the page is gone after use");
+});
+
+test("pairing: at most 5 wrong codes per gate in 10 minutes", async () => {
+  const w = world();
+  await newGate(w);
+  for (let i = 0; i < 5; i++) assert.equal((await dev(w, { act: "pair", tok: TOK, pc: "AAAAAAA" + "BCDEF"[i] })).status, 404);
+  assert.equal((await dev(w, { act: "pair", tok: TOK, pc: "AAAAAAAG" })).status, 429);
+  assert.equal((await dev(w, { act: "pair", tok: TOK, pc: "AAAAAAAG" }, 1e12 + 11 * 60000)).status, 404);
+});
+
+test("pairing: an expired code is refused and the page says so", async () => {
+  const w = world();
+  await newGate(w);
+  const pg = await authPage(w);
+  const later = 1e12 + 11 * 60000;
+  assert.equal((await dev(w, { act: "pair", tok: TOK, pc: pg.pc }, later)).status, 404);
+  assert.equal((await call(w, "GET", pg.self.slice(BASE.length), { now: later })).status, 410);
+});
+
+test("the installed orOS (localhost:47800) may call /gate/dev, other pages may not", async () => {
+  const w = world();
+  const local = await call(w, "POST", "/gate/dev", { origin: "http://localhost:47800", json: { id: ID, act: "new", th: hex(TOK) } });
+  assert.equal(local.status, 200);
+  assert.equal(local.headers.get("Access-Control-Allow-Origin"), "http://localhost:47800");
+  const pre = await call(w, "OPTIONS", "/gate/dev", { origin: "http://localhost:47800" });
+  assert.equal(pre.status, 204);
+  for (const o of ["http://localhost:8080", "http://127.0.0.1:47800", "https://evil.example"]) {
+    assert.equal((await call(w, "POST", "/gate/dev", { origin: o, json: { id: ID, act: "info", tok: TOK } })).status, 403, o);
+  }
 });
 
 test("device calls need an allowed origin and the device token", async () => {

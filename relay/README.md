@@ -760,8 +760,15 @@ counter. No orOS data, no request or answer, nothing logged.
   only, stateless: the client id is not stored); `GET /gate/authorize`
   (only `response_type=code`, `code_challenge_method=S256`, a
   `redirect_uri` from the exact list `REDIRECTS`, the claude.ai and
-  claude.com MCP callbacks) answers 302 to `https://useoros.online/?gate=…`,
-  where the person allows it; `POST /gate/token` (`authorization_code`
+  claude.com MCP callbacks) answers a small page (5.66.00) with a pairing
+  code `XXXX-XXXX` and a link to `https://useoros.online/?gate=…`; the
+  person allows it either by that link or by typing the code into any
+  orOS whose gate is on (the installed orOS, Portable and USB have their
+  own browser, which Claude's page cannot open). The page refreshes
+  itself (`GET /gate/pair?p=<code>&k=<page secret>`) and goes back to
+  Claude once orOS allowed it. The sign-in waits in a box of its own
+  (`pair:<code>`: redirect, state, PKCE challenge, sha256 of the page
+  secret), 10 minutes, then wipes itself; `POST /gate/token` (`authorization_code`
   with the PKCE verifier and the same redirect, a code is single-use;
   `refresh_token` rotates); `POST /mcp` (Bearer `<id>.<secret>`; 401
   with `WWW-Authenticate: Bearer resource_metadata=…` otherwise).
@@ -777,8 +784,11 @@ counter. No orOS data, no request or answer, nothing logged.
   their own box. A person whose Mail is set up with their own relay
   gets their gate there (deploy this Worker, `ALLOWED_ORIGINS` with the
   orOS address they use).
-- **From orOS only** (allowed origins): `POST /gate/dev` `{ act: new |
-  code | revoke | info | del }` with the device token, and `GET
+- **From orOS only** (allowed origins, plus `LOCAL_ORIGINS` =
+  `http://localhost:47800`, the address of orOS Portable, USB and the
+  installed orOS): `POST /gate/dev` `{ act: new | code | pair | revoke |
+  info | del }` with the device token (`pair` takes `pc`, the code from
+  the page; at most 5 wrong codes per gate in 10 minutes), and `GET
   /gate/ws/<id>` with the subprotocols `gt1` and `t.<token>`. One socket
   per gate: a newer one closes the older (4001); `del` wipes the box and
   closes it (4004).
