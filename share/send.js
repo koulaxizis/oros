@@ -625,7 +625,7 @@
       check();
     }
     var doAct = null;
-    var canPv = env.k === "track" && !bin, pvOn = true;
+    var canPv = (env.k === "track" || env.k === "tracks") && !bin, pvOn = true;
     var curPass = "";
     var hasMail = typeof window.__orosOpenAt === "function" && mailReady();
 

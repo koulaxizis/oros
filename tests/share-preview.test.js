@@ -117,11 +117,26 @@ test("the relay's song normalizer equals share/kinds.js", () => {
 
 test("send window: the preview link only for an unlocked plain song link, the person's choice", () => {
   const s = require("fs").readFileSync(path.join(__dirname, "..", "share/send.js"), "utf8");
-  assert.match(s, /var canPv = env\.k === "track" && !bin, pvOn = true;/);
+  assert.match(s, /var canPv = \(env\.k === "track" \|\| env\.k === "tracks"\) && !bin, pvOn = true;/);
   assert.match(s, /pvOn && canPv && !lockOn && !expOn && \/\^1\\\.\/\.test\(code\) && code\.length <= PV_MAX/);
   assert.match(s, /PV_BASE = \(\(R && R\.RELAY\) \|\| "https:\/\/oros-mail-relay\.koulaxizis\.workers\.dev"\) \+ "\/p\/"/);
   ["pv", "pvNote"].forEach((k) => {
     assert.equal((s.match(new RegExp("\\b" + k + ": \"", "g")) || []).length, 2, k);
     assert.ok(require("fs").readFileSync(path.join(__dirname, "..", "i18n/de/share.js"), "utf8").indexOf('"' + k + '":') >= 0, k + " DE");
   });
+});
+
+test("albums and playlists: preview page, other kinds still none; normTracks equals kinds.js", async () => {
+  const c = code({ v: 1, k: "tracks", d: { t: "Live <99>", ty: "al", a: "Band", i: [
+    { t: "A", s: "ia", u: "https://archive.org/a.mp3", art: "https://archive.org/services/img/a" }, { t: "B", s: "sv", u: "https://my/x" }] } });
+  const h = await (await get("/p/" + c)).text();
+  assert.match(h, /og:title" content="🎵 Live &lt;99&gt; · Band"/);
+  assert.match(h, /og:description" content="Album · 2 songs · orOS"/);
+  assert.match(h, /og:image" content="https:\/\/archive\.org\/services\/img\/a"/);
+  const cases = [
+    { t: "P", ty: "pl", i: [{ t: "x", s: "ia", u: "https://archive.org/a.mp3", cr: "c", k: "ia:abcdef12" }, { t: "y", s: "sv", u: "https://my/x" }, "junk", null] },
+    { t: "A".repeat(300), ty: "zz", a: "b", art: "https://evil.example/a.png", cr: "c", i: [] },
+    { i: Array.from({ length: 250 }, (_, n) => ({ t: "s" + n })) }
+  ];
+  for (const x of cases) assert.deepEqual(P.normTracks(x), K.norm("tracks", x));
 });

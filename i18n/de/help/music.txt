@@ -81,6 +81,8 @@ Das Gerät bekommt die eigene https-Adresse des Songs, also gehen freie Musik un
 - Ein Song aus freier Musik (Internet Archive, Jamendo, ccMixter, Openverse) oder von einem öffentlichen Link geht mit Adresse, Cover, Lizenz und Quellenangabe, also läuft er auf der Seite, die die andere Person öffnet, auch ohne orOS. `Zu meinem orOS hinzufügen` lässt ihn dort abspielen, zu den Lieblingssongs oder in eine Playlist legen.
 - Ein Song von deinem eigenen Server geht nur mit seinem Namen: Die Adresse des Servers und deine Anmeldung verlassen dein Gerät nie.
 - Bei einem Song auf diesem Gerät wird jedes Mal gefragt: den Namen als Link senden oder die Datei selbst über das Teilen-Menü (wo das Gerät Dateien senden kann, bis 100 MB). Sende eine Datei nur, wenn du sie weitergeben darfst.
+- `Teilen…` im ⋯-Menü eines Albums (eigenes oder aus freier Musik) oder einer Playlist sendet die ganze Liste genauso: Songs aus freier Musik laufen auf der Seite nacheinander, eigene Songs gehen nur mit ihrem Namen. `Zu meinem orOS hinzufügen` bietet dort `Alle abspielen` oder `Als meine Playlist speichern`.
+- `Cover in Chats zeigen` bringt Cover und Titel in die Vorschau des Chats (siehe [An jemanden senden](help:t/share)).
 
 ## Sleep-Timer
 `Sleep-Timer` im großen Player stoppt die Musik nach 5 bis 90 Minuten oder am Ende des laufenden Songs. Die letzten zehn Sekunden werden ausgeblendet. Die Schaltfläche zeigt, wie viel Zeit übrig ist; wähle `Timer ausschalten`, um ihn abzubrechen.

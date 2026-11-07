@@ -105,6 +105,7 @@
       "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
       "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
       "sh.send": "Send the file", "sh.ready": "The file is ready to send.", "sh.none": "Sharing is not available here.",
+      "sh.playAll": "Play all", "sh.savePl": "Save as my playlist",
       "m.credit": "Copy credit", "m.source": "Open on {s}", "m.saveOff": "Save for offline", "m.delOff": "Remove offline copy",
       "m.saveAlbum": "Save album for offline",
       "toast.copied": "Credit copied.", "toast.offSaving": "Saving {n} for offline…", "toast.offSaved": "{n} saved for offline.",
@@ -271,6 +272,7 @@
       "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
       "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
       "sh.send": "Αποστολή αρχείου", "sh.ready": "Το αρχείο είναι έτοιμο για αποστολή.", "sh.none": "Η κοινοποίηση δεν είναι διαθέσιμη εδώ.",
+      "sh.playAll": "Αναπαραγωγή όλων", "sh.savePl": "Αποθήκευση ως δική μου λίστα",
       "m.credit": "Αντιγραφή αναφοράς", "m.source": "Άνοιγμα στο {s}", "m.saveOff": "Αποθήκευση για χωρίς σύνδεση", "m.delOff": "Αφαίρεση αντιγράφου",
       "m.saveAlbum": "Αποθήκευση άλμπουμ για χωρίς σύνδεση",
       "toast.copied": "Η αναφορά αντιγράφηκε.", "toast.offSaving": "Αποθήκευση: {n} για χωρίς σύνδεση…", "toast.offSaved": "Αποθηκεύτηκαν για χωρίς σύνδεση: {n}.",
@@ -723,6 +725,19 @@
       if (isOpen(r)) d.cr = O.credit(r, LANG);
     }
     return d;
+  }
+  // An album or a playlist (share kind "tracks"): every song by the same
+  // rules as one song; songs from the device go with their names only.
+  function shareList(name, ty, by, art, rows, cr) {
+    var api = shareApi();
+    if (!api) { showToast(t("sh.none")); return; }
+    var i = rows.filter(function (r) { return r && !r._missing; }).slice(0, 200).map(shareData).map(function (d) { delete d.cr; return d; });
+    if (!i.length) { showToast(t("toast.cant")); return; }
+    var data = { t: name || "", ty: ty, i: i };
+    if (by) data.a = by;
+    if (art && /^https:\/\//i.test(art)) data.art = art;
+    if (cr) data.cr = cr;
+    api.open({ kind: "tracks", data: data });
   }
   function shareMime(p) { return SHARE_MIME[(String(p).split(".").pop() || "").toLowerCase()] || ""; }
   function canShareFile(p) {
@@ -1567,7 +1582,8 @@
     });
   }
   function albumMenu(al) {
-    var items = [[t("m.shelf"), function () { toShelf(al.n, al.a, al.y); }]];
+    var items = [[t("m.shelf"), function () { toShelf(al.n, al.a, al.y); }],
+      [t("m.share"), function () { shareList(al.n, "al", al.a, "", al.list, ""); }]];
     if (!al.art && MX) items.push([t("m.cover"), function () { findCovers([al]); }]);
     menuDlg(items, al.n, al.a);
   }
@@ -2760,6 +2776,7 @@
         if (al.pg) items.push([t("m.source", { s: srcName(sk0) }), function () { openExt(al.pg); }]);
         if (al.li) items.push([t("info.licence") + ": " + O.licLabel(al.li, LANG), function () { openExt(O.licUrl(al.li)); }]);
         items.push([t("m.shelf"), function () { toShelf(al.n, al.a, al.y); }]);
+        if (f.list.length) items.push([t("m.share"), function () { shareList(al.n, "al", al.a, al.art, f.list, O.credit({ s: sk0, t: al.n, a: al.a, li: al.li, pg: al.pg }, LANG)); }]);
         menuDlg(items, al.n, al.a);
       }, I.more));
       pageHead(m, cover(al.art, al.n, "big"), t("kind.album") + " · " + srcName(sk0), al.n, sub, f.list.length ? f.list : null, src, extra);
@@ -2946,6 +2963,7 @@
         promptDlg(t("m.rename"), t("pl.name"), p.n, t("pl.save"), function (name) { mutate(function (d, now) { return C.renamePl(d, p.id, name, now); }); });
       }],
       [t("m.addQueue"), function () { var it = itemsOf(p.it); if (it.length) { H.addLast(it); showToast(t("toast.queued")); } }],
+      [t("m.share"), function () { shareList(p.n, "pl", "", "", p.it.map(function (r) { return playable(r) || r; }), ""); }],
       [t("m.deletePl"), function () {
         confirmDlg(t("pl.deleteQ", { n: p.n }), t("m.deletePl"), function () { mutate(function (d, now) { return C.deletePl(d, p.id, now); }); goBack(); });
       }, true]
@@ -3777,7 +3795,7 @@
   // shell fileopen.js; copied into the music folder, then played) |
   // { shuffleAll: true } (orOS Music icon shortcut: every song here,
   // shuffled) | { addUrl: { url } } (a link shared to orOS Music) |
-  // { addRef: { ref } } / { findSong: { q } } (a song sent with "Send to
+  // { addRef: { ref } } / { addList: { n, refs } } / { findSong: { q } } (a song sent with "Send to
   // someone", BR-SHARE-TRACK).
   function playPath(p) {
     // A scan already running (the one at boot) may have started before
@@ -3827,6 +3845,21 @@
       [t("m.addPl"), function () { addToPlaylist([ref]); }]
     ], ref.t, ref.a);
   }
+  // An album or a playlist someone shared: Play all, or keep it as a
+  // playlist of my own (nothing kept before that tap).
+  function addListTarget(o) {
+    var refs = o && Array.isArray(o.refs) ? o.refs.slice(0, 200).map(C.normRef).filter(function (r) { return r && C.isRemote(r); }) : [];
+    if (!refs.length) { showToast(t("toast.cant")); return; }
+    var name = o && typeof o.n === "string" ? o.n.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 100) : "";
+    menuDlg([
+      [t("sh.playAll"), function () { playRows(refs, -1, { kind: "song", id: refs[0].k, n: name || refs[0].t }, false); }],
+      [t("sh.savePl"), function () {
+        var nm = name || t("pl.my", { n: D().pls.length + 1 });
+        mutate(function (d, now) { return C.addPl(d, nm, refs, now).data; });
+        showToast(t("toast.added", { n: nm }));
+      }]
+    ], name || t("kind.pl"), nSongs(refs.length));
+  }
   // Only a song's name came (from someone's own server or device): the
   // search, typed in.
   function findSongTarget(o) {
@@ -3839,6 +3872,7 @@
     if (!H || !tg || typeof tg !== "object" || document.querySelector("dialog[open]")) return;
     if (tg.addUrl && typeof tg.addUrl === "object") { addUrlTarget(tg.addUrl); return; }
     if (tg.addRef && typeof tg.addRef === "object") { addRefTarget(tg.addRef); return; }
+    if (tg.addList && typeof tg.addList === "object") { addListTarget(tg.addList); return; }
     if (tg.findSong && typeof tg.findSong === "object") { findSongTarget(tg.findSong); return; }
     if (tg.shuffleAll === true) {
       // (No songs yet: Home shows how to add them.)

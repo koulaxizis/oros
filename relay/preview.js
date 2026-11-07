@@ -15,8 +15,9 @@
 //
 // Rules (Mail thread, 2026-11-07): GET / HEAD only (405), path ≤ 4 KB,
 // the code's characters checked before any decoding, only "1." codes
-// (a locked code is never parsed), inflate stopped past 16 KB, the same
-// song normalizer as share/kinds.js (normTrack below; parity-tested),
+// (a locked code is never parsed), inflate stopped past 16 KB, kinds
+// "track" and "tracks" (album / playlist, wave 3) only, through the same
+// normalizers as share/kinds.js (normTrack / normTracks below; parity-tested),
 // every field escaped with control and bidi characters out and capped,
 // the cover an https URL on the music hosts only (exact host or a
 // subdomain, no userinfo, no port, ≤ 512 characters), the forward URL
@@ -83,6 +84,23 @@ export function normTrack(d) {
   return o;
 }
 
+// An album or a playlist (= share/kinds.js normTracks).
+export function normTracks(d) {
+  if (!d || typeof d !== "object" || Array.isArray(d)) return null;
+  const i = [];
+  (Array.isArray(d.i) ? d.i.slice(0, 200) : []).forEach((x) => {
+    const o = x && typeof x === "object" && !Array.isArray(x) ? normTrack(x) : null;
+    if (o) { delete o.cr; i.push(o); }
+  });
+  if (!i.length) return null;
+  const o = { t: line(d.t, 200), ty: d.ty === "al" ? "al" : "pl", i };
+  const a = line(d.a, 200), art = httpsOn(d.art, OPEN_HOSTS), cr = line(d.cr, 600);
+  if (a) o.a = a;
+  if (art) o.art = art;
+  if (cr) o.cr = cr;
+  return o;
+}
+
 // ---------- decoding ----------
 function unb64u(s) {
   const b = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4));
@@ -111,14 +129,16 @@ async function inflate(bytes) {
   for (const p of parts) { out.set(p, at); at += p.length; }
   return out;
 }
-// The code → the normalized song, or null (any failure, any other kind).
+// The code → { k, d } normalized (a song, an album or a playlist), or
+// null (any failure, any other kind).
 export async function songOf(code) {
   if (typeof code !== "string" || !CODE_RE.test(code)) return null;
   try {
     const raw = await inflate(unb64u(code.slice(2)));
     const env = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(raw));
-    if (!env || env.v !== 1 || env.k !== "track") return null;
-    return normTrack(env.d);
+    if (!env || env.v !== 1) return null;
+    const d = env.k === "track" ? normTrack(env.d) : env.k === "tracks" ? normTracks(env.d) : null;
+    return d ? { k: env.k, d } : null;
   } catch (e) { return null; }
 }
 
@@ -149,10 +169,12 @@ function licText(li) {
   if (li === "lma") return "Live Music Archive";
   return "CC " + li.toUpperCase();
 }
-export function pageFor(d, code) {
-  const t = clean(d.t, PV_LIMITS.t), a = clean(d.a, PV_LIMITS.a), al = clean(d.al || "", PV_LIMITS.al);
-  const li = clean(licText(d.li), PV_LIMITS.li);
-  const img = coverOk(d.art);
+export function pageFor(item, code) {
+  const d = item.d, list = item.k === "tracks";
+  const t = clean(d.t || (list ? (d.ty === "al" ? "Album" : "Playlist") : ""), PV_LIMITS.t), a = clean(d.a, PV_LIMITS.a);
+  const al = list ? (d.ty === "al" ? "Album" : "Playlist") + " \u00b7 " + (d.i.length === 1 ? "1 song" : d.i.length + " songs") : clean(d.al || "", PV_LIMITS.al);
+  const li = list ? "" : clean(licText(d.li), PV_LIMITS.li);
+  const img = coverOk(d.art) || (list ? d.i.map((x) => coverOk(x.art)).filter(Boolean)[0] || "" : "");
   const title = "\ud83c\udfb5 " + t + (a ? " \u00b7 " + a : "");
   const desc = [al, li, "orOS"].filter(Boolean).join(" \u00b7 ");
   const go = SHARE_PAGE + "#" + code;        // code passed CODE_RE
@@ -210,9 +232,9 @@ export async function handlePreview(request, url, ip, now) {
     if (path.length > PV_LIMITS.path || url.search) return away();
     const code = path.slice(3);                 // after "/p/"
     if (!CODE_RE.test(code)) return away();
-    const d = await songOf(code);
-    if (!d) return away();
-    const body = pageFor(d, code);
+    const item = await songOf(code);
+    if (!item) return away();
+    const body = pageFor(item, code);
     return new Response(request.method === "HEAD" ? null : body, { status: 200, headers: headers({ "Cache-Control": "public, max-age=86400" }) });
   } catch (e) {
     return new Response("unavailable\n", { status: 503, headers: headers({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }) });
