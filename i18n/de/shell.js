@@ -21,6 +21,7 @@ orosPack("de", "shell", {
  "app.aura": "Aura-Maler",
  "app.baby": "Baby",
  "app.backgammon": "Backgammon",
+ "app.banner": "Banner",
  "app.battleship": "Schiffe versenken",
  "app.bookmarks": "Lesezeichen",
  "app.breakout": "Breakout",

@@ -171,6 +171,19 @@ test("gamecenter: Realm's Daily island counts in Today and the streak, never in 
   assert.equal(sum({ "oros-realm-data": { ver: 1, br: 0, rows: {} } }).games.realm.dn, 0);
 });
 
+test("gamecenter: Banner counts battles and wins from every device; two-player battles are never wins", () => {
+  const banner = { ver: 1, br: 1, rows: {
+    a: { b: 1, s: { m: [4, 3], p: [2, 0] } },
+    b: { b: 1, s: { e: [3, 1] } },
+    old: { b: 0, s: { h: [9, 9] } } } };
+  const s = sum({ "oros-banner-data": banner });
+  assert.ok(C.GROUPS.find((g) => g.id === "strategy").games.includes("banner"));
+  assert.deepEqual([s.games.banner.p, s.games.banner.w], [9, 4], "rows from before the reset do not count");
+  assert.ok(!ach(s, "hard").done, "no win against Hard yet");
+  banner.rows.b.s.h = [1, 1];
+  assert.ok(ach(sum({ "oros-banner-data": banner }), "hard").done);
+});
+
 test("gamecenter: Crypt counts runs and wins from every device; a Grim win is a hard win", () => {
   const crypt = { ver: 1, br: 1, rows: {
     a: { b: 1, s: { g: [4, 1, 10], r: [2, 0, 5] } },

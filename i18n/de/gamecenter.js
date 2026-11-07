@@ -118,5 +118,6 @@ orosPack("de", "gamecenter", {
  "wordsearch": "Wortsuche",
  "xeri": "Xeri",
  "realm": "Ländereien",
+ "banner": "Banner",
  "crypt": "Gruft"
 });
