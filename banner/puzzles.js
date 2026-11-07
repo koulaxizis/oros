@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Banner — puzzles (data only, 5.67.00)
+// orOS Banner — puzzles (data only, 5.68.00)
 // Twenty "win this turn" positions: Blue to play, break the red Keep
 // before the turn ends (engine.js puzzleBattle reads one).
 //   { map: terrain W × H (row 0 = the red home row), keep: the red Keep,

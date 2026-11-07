@@ -356,8 +356,10 @@
   // opens and changes them only after they are restored). A card is
   // late when its due date passed and it is not in its board's last
   // column (the "Done" column, as Today and the Calendar feed count).
-  // opts: { board?, today }
-  var MAX_BOARDS = 60, MAX_COLS = 30;
+  // opts: { board?, today }. With board, that board lists every column
+  // in order (up to MAX_COLS_ONE) with its id: the orOS Gate reads a
+  // per-book workflow from it (pilot #2, 2026-11-07).
+  var MAX_BOARDS = 60, MAX_COLS = 30, MAX_COLS_ONE = 300;
   function kanbanBoards(raw, opts) {
     opts = opts || {};
     var d = isObj(raw) ? raw : {}, today = opts.today || "";
@@ -390,6 +392,7 @@
       cols.forEach(function (c, ci) {
         var last = ci === cols.length - 1 && cols.length > 1;
         var cr = { name: str(c.name, 60) || "—", cards: 0 };
+        if (want && b === want) cr.id = c.id;
         arr(c.cards).forEach(function (k) {
           if (!isObj(k) || typeof k.id !== "string") return;
           cr.cards++;
@@ -411,7 +414,8 @@
         row.cards += cr.cards;
         row.columns.push(cr);
       });
-      if (row.columns.length > MAX_COLS) { row.more_columns = row.columns.length - MAX_COLS; row.columns = row.columns.slice(0, MAX_COLS); }
+      var cap = want && b === want ? MAX_COLS_ONE : MAX_COLS;
+      if (row.columns.length > cap) { row.more_columns = row.columns.length - cap; row.columns = row.columns.slice(0, cap); }
       cards += row.cards; late += row.late; dueToday += row.due_today;
       out.boards.push(row);
     });

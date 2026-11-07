@@ -830,6 +830,22 @@
         var done = function () { gateNote = "gt.copied"; render(); };
         try { navigator.clipboard.writeText(G.relayUrl()).then(done, function () { url.select(); }); } catch (e) { url.select(); }
       })));
+      if (typeof G.pair === "function") {
+        var pc = el("input", "dav-input");
+        pc.id = "f-gt-pair";
+        pc.type = "text";
+        pc.maxLength = 12;
+        pc.autocomplete = "off";
+        pc.spellcheck = false;
+        pc.placeholder = "XXXX-XXXX";
+        c.appendChild(row(t("gt.pair"), pc, { hint: t("gt.pair.hint"), forId: "f-gt-pair", stack: true }));
+        var sendPair = function () {
+          G.pair(pc.value).then(function () { gateNote = "gt.pair.ok"; gateInfo = null; render(); },
+            function (e) { gateNote = e && e.code === "nopair" ? "gt.pair.bad" : e && e.code === "rate" ? "gt.pair.rate" : "gt.fail"; render(); });
+        };
+        pc.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendPair(); } });
+        c.appendChild(actions(button(t("gt.pair.go"), "gt.pair.go", sendPair)));
+      }
       c.appendChild(el("div", "hint", t("gt.apps.hint")));
       var list = el("div", "checks");
       G.apps().forEach(function (a) {

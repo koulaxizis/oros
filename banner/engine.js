@@ -163,7 +163,7 @@
   // deck it grew from).
   var MARCH_MIN = 15, MARCH_MAX = 30;
   function listOk(l) { return Array.isArray(l) && l.length >= MARCH_MIN && l.length <= MARCH_MAX && l.every(function (k) { return !!card(k); }); }
-  // ---------- Own decks (5.67.00) ----------
+  // ---------- Own decks (5.68.00) ----------
   // An own deck is DECK_SIZE cards, at most COPY_MAX of each. Its share
   // code is "b" + 15 letters: 2 bits per card (0–3 copies) in CODE_ORDER,
   // 72 bits in base 32, then 1 check letter. CODE_ORDER never changes;
@@ -240,7 +240,7 @@
     return st;
   }
 
-  // ---------- Puzzles (5.67.00) ----------
+  // ---------- Puzzles (5.68.00) ----------
   // A "win this turn" puzzle (banner/puzzles.js): Blue to play, with
   //   { map (W × H terrain), keep: Red's Keep, hand: [cards], en: energy,
   //     u: [[card, side, x, y, hp?, flags?]] (flags "n": played this

@@ -269,3 +269,19 @@ test("KB-MOVE wiring: refs follow the moved card, many moves on one card, entry 
   const c = fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8");
   assert.match(c, /kanban move: the name of another board/);
 });
+
+test("one board: every column in order with its id; all boards: 30 at most", () => {
+  const d = kb();
+  d.boards[1].columns = Array.from({ length: 77 }, (_, i) => ({ id: "col" + i, name: "Step " + i, cards: i === 40 ? [{ id: "k40", text: "Book" }] : [] }));
+  const all = S.kanbanBoards(d, { today: TODAY });
+  assert.equal(all.boards[1].columns.length, 30);
+  assert.equal(all.boards[1].more_columns, 47);
+  assert.equal(all.boards[1].columns[0].id, undefined);
+  const one = S.kanbanBoards(d, { today: TODAY, board: d.boards[1].name });
+  const cols = one.boards[1].columns;
+  assert.equal(cols.length, 77);
+  assert.equal(one.boards[1].more_columns, undefined);
+  assert.deepEqual(cols.slice(0, 2), [{ name: "Step 0", cards: 0, id: "col0" }, { name: "Step 1", cards: 0, id: "col1" }]);
+  assert.equal(cols[40].cards, 1);
+  assert.equal(one.boards[0].columns.every((c) => c.id === undefined), true);
+});

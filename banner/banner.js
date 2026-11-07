@@ -373,11 +373,11 @@
   // last (5.66.00): the last LAST_N battles on all devices, newest first:
   // [{ a: end time (ms), m: e|m|h computer, p two players, d Daily,
   //    r March, w: 1 Blue won | 0, t: turn, s: battle code, k: [deck, deck] }]
-  // A union by (a, s), newest LAST_N kept, from br on. c (5.67.00,
+  // A union by (a, s), newest LAST_N kept, from br on. c (5.68.00,
   // optional): [code | "", code | ""], a side's own deck by its share code.
-  // pz (5.67.00): solved puzzles { "<1…PUZZLE_N>": b }, a per-key max
+  // pz (5.68.00): solved puzzles { "<1…PUZZLE_N>": b }, a per-key max
   // epoch, from br on.
-  // decks (5.67.00): own decks { "<id>": { n: name, c: share code, m: changed (ms) }
+  // decks (5.68.00): own decks { "<id>": { n: name, c: share code, m: changed (ms) }
   // | { m, x: 1 } removed }; the later m wins (equal: the larger JSON),
   // the newest DECKS_KEEP entries kept. Records' reset leaves decks.
   function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], pz: {}, decks: {} }; }
@@ -593,8 +593,8 @@
   //   opts: { mode: "ai" | "hot", lv: e|m|h (computer), seed, d: [deck choice, deck choice] (r = random),
   //           day: the Daily battle's day (absent in a free battle),
   //           march: the March battle's number 0…7 (its deck is in oros-banner-march),
-  //           own: [code | "", code | ""] a side's own deck by its share code (5.67.00),
-  //           puzzle: the puzzle's number 1…PUZZLE_N, seed "pz<n>" (5.67.00) },
+  //           own: [code | "", code | ""] a side's own deck by its share code (5.68.00),
+  //           puzzle: the puzzle's number 1…PUZZLE_N, seed "pz<n>" (5.68.00) },
   //   counted: bool   the battle is in the records
   //   done: bool      the battle is over
   //   pass: bool      two players: the hand stays hidden until the device is passed
