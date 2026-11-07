@@ -1165,6 +1165,14 @@
       "type": "internal"
     },
     {
+      "id": "realm",
+      "name": "Realm",
+      "category": "Games",
+      "icon": "realm",
+      "url": "realm/",
+      "type": "internal"
+    },
+    {
       "id": "gamecenter",
       "name": "Game Center",
       "category": "Games",

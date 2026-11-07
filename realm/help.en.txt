@@ -1,0 +1,55 @@
+# Realm
+Realm is a turn-based strategy game on an island of hexagons. Grow your land, keep your treasury healthy and take every enemy region. Play against the computer or with friends on the same device.
+
+## How to play
+Each side starts with a small region of land and a Hall. A region is a group of your cells that touch each other. Every region with two or more cells has one Hall, which holds that region's gold.
+
+At the start of your turn each region earns 1 gold for every cell that is not overgrown, plus 4 for every Mill. Then it pays the upkeep of its units and buildings. If a region cannot pay, every unit in it deserts and leaves a Ruin.
+
+You win when no other side has a region left.
+
+## Units and buildings
+- `Militia` (cost 10, upkeep 2, strength 1), `Pikeman` (20, 5, strength 2), `Rider` (30, 12, strength 3) and `Champion` (40, 22, strength 4).
+- `Watchtower` (cost 15, upkeep 1, strength 2) and `Fort` (cost 35, upkeep 4, strength 3) guard the cells around them. A Fort can also replace a Watchtower.
+- `Mill`: 4 more gold every turn. It must touch the Hall or another Mill, and each Mill of a region costs 3 more than the one before.
+- The Hall itself guards with strength 1.
+
+A cell is guarded by the strongest unit or building on it and on the cells next to it that belong to the same side. To take it, you need a unit that is stronger. Equal strength holds, so only a Champion stops a Champion.
+
+## Controls
+Tap one of your cells to choose its region: the status line shows its gold and what it earns per turn. Then:
+- Tap a unit, then a lit cell. A unit walks up to 4 cells inside its region and can take a cell next to any cell it reaches. Each unit acts once per turn; a gold dot marks the units that can still act.
+- Move a unit onto another of your units to merge them into a stronger one (Militia + Militia = Pikeman, up to Champion).
+- Tap a button in the bar at the bottom, then a lit cell, to buy. A new unit can go straight onto a cell next to the region if it is strong enough to take it.
+- `End turn` hands over to the next side. `Undo (Z)` takes back your moves of this turn, one by one.
+
+Drag to move the map, pinch or use the mouse wheel to zoom, or use the zoom buttons. `Show my land` brings your region back into view.
+
+Keyboard:
+- Arrow keys move the cursor on the map; [[Enter]] or [[Space]] acts on that cell.
+- [[1]] to [[7]] choose what to buy, [[E]] ends the turn, [[Z]] or [[Ctrl+Z]] undoes, [[N]] starts a new game, [[+]] and [[-]] zoom, [[Esc]] cancels.
+
+## Thicket and Ruins
+Thicket grows on land nobody looks after. A Ruin becomes Thicket at the next round, and Thicket can spread to an empty cell next to it. An overgrown cell earns nothing. A unit that steps on Thicket or a Ruin clears it, which is its action for that turn.
+
+## Game options
+`New game (N)` asks for the island size (`Small`, `Medium`, `Large`), how many people and how many computer sides play (2 to 6 sides in all), and the computer level (`Easy`, `Medium`, `Hard`).
+
+Every island has a code. Type a code to play the same island again, or leave it empty for a new one. `Same island again` in the result window replays the last island.
+
+With more than one person, each person's turn starts with a `Pass the device` screen, so nobody sees another player's moves.
+
+When you hold three quarters of the island, the computer offers to give up. `Accept` wins the game, `Play on` keeps playing.
+
+`Fast computer turns` plays the computer's moves at once instead of one by one. Tapping the map during a computer turn also skips to the end of it.
+
+`Records` shows your wins and losses against the computer for each level and island size, and the code of the island you are playing.
+
+## Sync
+Your wins and losses against the computer (one person against computer sides) sync between your devices through [orOS sync](help:t/sync), adding up the games from every device. The game in progress, your options and the sound setting stay on this device, and an unfinished game continues where you left it. `Reset records` clears the records on every device.
+
+## Tips
+- Mills pay for themselves in a few turns. Build them early, while your border is quiet.
+- Watch the upkeep: a Champion costs 22 every turn. A large army on a small region ends in desertion.
+- Cutting an enemy region in two splits its treasury, and a lone cell has no gold at all.
+- Taking a Hall wipes out that region's gold.

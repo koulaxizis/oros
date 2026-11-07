@@ -1,0 +1,55 @@
+# Ländereien
+Ländereien ist ein rundenbasiertes Strategiespiel auf einer Insel aus Sechsecken. Vergrößere dein Land, halte deine Kasse gesund und erobere jede gegnerische Region. Spiele gegen den Computer oder mit Freunden auf demselben Gerät.
+
+## So wird gespielt
+Jede Seite beginnt mit einer kleinen Region und einem Rathaus. Eine Region ist eine Gruppe deiner Felder, die sich berühren. Jede Region mit zwei oder mehr Feldern hat ein Rathaus, das ihr Gold verwahrt.
+
+Zu Beginn deines Zuges bringt jede Region 1 Gold für jedes Feld ohne Dickicht, dazu 4 für jede Mühle. Danach zahlt sie den Unterhalt ihrer Einheiten und Gebäude. Kann eine Region nicht zahlen, desertieren alle ihre Einheiten und hinterlassen eine Ruine.
+
+Du gewinnst, wenn keine andere Seite mehr eine Region hat.
+
+## Einheiten und Gebäude
+- `Miliz` (Kosten 10, Unterhalt 2, Stärke 1), `Pikenier` (20, 5, Stärke 2), `Reiter` (30, 12, Stärke 3) und `Held` (40, 22, Stärke 4).
+- `Wachturm` (Kosten 15, Unterhalt 1, Stärke 2) und `Festung` (Kosten 35, Unterhalt 4, Stärke 3) schützen die Felder um sich herum. Eine Festung kann auch einen Wachturm ersetzen.
+- `Mühle`: jede Runde 4 Gold mehr. Sie muss das Rathaus oder eine andere Mühle berühren, und jede Mühle einer Region kostet 3 mehr als die vorige.
+- Das Rathaus selbst schützt mit Stärke 1.
+
+Ein Feld schützt die stärkste Einheit oder das stärkste Gebäude darauf und auf den Nachbarfeldern derselben Seite. Um es zu erobern, brauchst du eine stärkere Einheit. Bei gleicher Stärke hält das Feld, also stoppt nur ein Held einen Helden.
+
+## Bedienung
+Tippe auf eines deiner Felder, um seine Region zu wählen: die Statuszeile zeigt ihr Gold und was sie pro Runde einbringt. Dann:
+- Tippe auf eine Einheit und dann auf ein helles Feld. Eine Einheit geht bis zu 4 Felder in ihrer Region und kann ein Feld neben jedem erreichten Feld erobern. Jede Einheit handelt einmal pro Zug; ein goldener Punkt zeigt die Einheiten, die noch handeln können.
+- Ziehe eine Einheit auf eine andere deiner Einheiten, um sie zu einer stärkeren zu vereinen (Miliz + Miliz = Pikenier, bis zum Helden).
+- Tippe auf einen Knopf in der unteren Leiste und dann auf ein helles Feld, um zu kaufen. Eine neue Einheit kann direkt auf ein Feld neben der Region, wenn sie stark genug ist, es zu erobern.
+- `Zug beenden` gibt an die nächste Seite weiter. `Zurück (Z)` nimmt deine Züge dieser Runde einzeln zurück.
+
+Ziehe, um die Karte zu verschieben, zoome mit zwei Fingern oder dem Mausrad, oder nimm die Zoom-Knöpfe. `Mein Land zeigen` holt deine Region wieder ins Bild.
+
+Tastatur:
+- Pfeiltasten bewegen den Cursor auf der Karte; [[Enter]] oder [[Space]] führt auf diesem Feld aus.
+- [[1]] bis [[7]] wählen, was du kaufst, [[E]] beendet den Zug, [[Z]] oder [[Ctrl+Z]] nimmt zurück, [[N]] startet ein neues Spiel, [[+]] und [[-]] zoomen, [[Esc]] bricht ab.
+
+## Dickicht und Ruinen
+Dickicht wächst auf Land, um das sich niemand kümmert. Eine Ruine wird in der nächsten Runde zu Dickicht, und Dickicht kann sich auf ein leeres Nachbarfeld ausbreiten. Ein Feld mit Dickicht bringt nichts. Eine Einheit, die auf Dickicht oder eine Ruine tritt, räumt sie weg; das ist ihre Aktion für diesen Zug.
+
+## Spieloptionen
+`Neues Spiel (N)` fragt nach der Inselgröße (`Klein`, `Mittel`, `Groß`), wie viele Personen und wie viele Computer-Seiten spielen (insgesamt 2 bis 6 Seiten) und nach der Stufe des Computers (`Leicht`, `Mittel`, `Schwer`).
+
+Jede Insel hat einen Code. Gib einen Code ein, um dieselbe Insel noch einmal zu spielen, oder lass das Feld leer für eine neue. `Dieselbe Insel noch mal` im Ergebnisfenster spielt die letzte Insel erneut.
+
+Spielen mehrere Personen, beginnt der Zug jeder Person mit dem Bildschirm `Gerät weitergeben`, damit niemand die Züge der anderen sieht.
+
+Hältst du drei Viertel der Insel, bietet der Computer an aufzugeben. `Annehmen` gewinnt das Spiel, `Weiterspielen` spielt weiter.
+
+`Schnelle Computerzüge` spielt die Züge des Computers auf einmal statt einzeln. Ein Tippen auf die Karte während eines Computerzugs springt ebenfalls an dessen Ende.
+
+`Bilanz` zeigt deine Siege und Niederlagen gegen den Computer für jede Stufe und Inselgröße sowie den Code der Insel, die du spielst.
+
+## Synchronisierung
+Deine Siege und Niederlagen gegen den Computer (eine Person gegen Computer-Seiten) werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und von allen Geräten zusammengezählt. Das laufende Spiel, deine Optionen und der Ton bleiben auf diesem Gerät, und ein unfertiges Spiel geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+
+## Tipps
+- Mühlen zahlen sich in wenigen Runden aus. Baue sie früh, solange deine Grenze ruhig ist.
+- Achte auf den Unterhalt: ein Held kostet jede Runde 22. Ein großes Heer auf einer kleinen Region endet mit Desertion.
+- Teilst du eine gegnerische Region in zwei, wird auch ihre Kasse geteilt, und ein einzelnes Feld hat gar kein Gold.
+- Wer ein Rathaus erobert, löscht das Gold dieser Region aus.

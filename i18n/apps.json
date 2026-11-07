@@ -771,6 +771,12 @@
    ]
   },
   {
+   "app": "realm",
+   "files": [
+    "realm/realm.js"
+   ]
+  },
+  {
    "app": "recipes",
    "files": [
     "recipes/share.js",

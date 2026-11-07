@@ -111,6 +111,12 @@
     // keeps a round only while it is paused (removed when it ends).
     simon: function (s) { return Array.isArray(s.seq) && s.seq.length > 0; },
     whack: present,
+    // Realm: {g: engine state, u, opts, done}; under way after the
+    // first action of any side, until the game is over.
+    realm: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.done && num(g.over) < 0 && num(g.acts) > 0;
+    },
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);
