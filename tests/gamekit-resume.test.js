@@ -104,6 +104,11 @@ test("resume: each game's own test", () => {
   assert.equal(one("xeri", deal), false);
   assert.equal(one("xeri", Object.assign({}, deal, { hands: [[1, 2, 3, 4, 5], [7, 8, 9, 10, 11, 12]] })), true);
   assert.equal(one("xeri", Object.assign({}, deal, { phase: "over", dn: 3 })), false);
+  // Realm: under way after the first action, until the game is over
+  assert.equal(one("realm", { g: { over: -1, acts: 0 }, u: [], done: false }), false);
+  assert.equal(one("realm", { g: { over: -1, acts: 5 }, u: [], done: false }), true);
+  assert.equal(one("realm", { g: { over: 1, acts: 40 }, u: [], done: true }), false);
+  assert.equal(one("realm", { g: { over: -1, acts: 40 }, u: [], done: true }), false);
 });
 
 test("resume: list keeps the GAMES order", () => {
