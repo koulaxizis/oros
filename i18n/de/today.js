@@ -92,5 +92,15 @@ orosPack("de", "today", {
  "w.together": "Zusammen",
  "w.top": "Auf einen Blick",
  "w.water": "Wasser",
- "w.weather": "Wetter"
+ "w.weather": "Wetter",
+ "disc.title": "Vorschlag der Woche",
+ "disc.game": "Ein Spiel, das du noch nicht gespielt hast.",
+ "disc.app": "Eine App, die du noch nicht geöffnet hast.",
+ "disc.open": "Öffnen",
+ "disc.try": "Ausprobieren",
+ "disc.opened": "Du hast sie diese Woche geöffnet.",
+ "disc.no": "Nicht für mich",
+ "disc.mute": "Vorschläge stummschalten",
+ "disc.noDone": "{app} wird nicht mehr vorgeschlagen.",
+ "disc.muted": "Keine wöchentlichen Vorschläge mehr. Du schaltest sie unter Einstellungen › Benachrichtigungen wieder ein."
 });

@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 40475 of 40748 (99%)
+- Strings: 40496 of 40769 (99%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -46,6 +46,7 @@ text is still written in the code. They switch over wave by wave
 | device | 100% | 124 / 124 |
 | diary | 100% | 236 / 236 |
 | dice | 100% | 52 / 52 |
+| discover | English for now | 3 / 3 |
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
@@ -56,7 +57,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 148 / 148 |
+| gamecenter | 100% | 155 / 155 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -122,7 +123,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 944 / 955 |
+| settings | 98% | 945 / 956 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1108 / 1112 |
@@ -150,7 +151,7 @@ text is still written in the code. They switch over wave by wave
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
 | timesheet | 99% | 379 / 382 |
-| today | 100% | 94 / 94 |
+| today | 100% | 104 / 104 |
 | todo | 100% | 261 / 261 |
 | together | 100% | 303 / 303 |
 | travel | 100% | 555 / 555 |

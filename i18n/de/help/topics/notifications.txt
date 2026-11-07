@@ -11,7 +11,7 @@ Neue Benachrichtigungen erscheinen für ein paar Sekunden auf dem Bildschirm (st
 - `Test senden` zeigt ein Beispiel, damit du siehst, wie es aussieht.
 - `Position auf dem Bildschirm`, `Stil`, `Ton`, `Lautstärke` und `Bleibt sichtbar` ändern, wo Pop-ups erscheinen, wie sie aussehen, welchen Ton sie machen (standardmäßig `Keiner`; deine Melodien aus dem [Klingelton-Komponisten](app:ringtones) stehen auch in der Liste, so können Erinnerungen aus Gewohnheiten, Gesundheit und jeder anderen App damit klingeln) und wie lange sie bleiben.
 - `Ruhezeiten` hält Pop-ups und Töne zwischen den Uhrzeiten `Von` und `Bis` fern (standardmäßig 22:00 bis 08:00). Benachrichtigungen kommen trotzdem im Posteingang an.
-- Unter `Welche Apps benachrichtigen dürfen` kannst du Benachrichtigungen für einzelne Apps ausschalten. `orOS` steht für Meldungen von orOS selbst, etwa zu Synchronisierung und Updates.
+- Unter `Welche Apps benachrichtigen dürfen` kannst du Benachrichtigungen für einzelne Apps ausschalten. `orOS` steht für Meldungen von orOS selbst, etwa zu Synchronisierung und Updates. `Wöchentlicher App-Vorschlag` ist der Montagsvorschlag einer App, die du noch nicht geöffnet hast ([Heute](app:today)).
 
 Diese Einstellungen reisen mit der [Synchronisierung](help:t/sync) mit, sie sind also auf all deinen Geräten gleich.
 

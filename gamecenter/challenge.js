@@ -20,7 +20,8 @@
 //   { v: 1,
 //     days: { "<day>": { at, c: [[game, kind, n]…], b: { <game>: [p, w, sc] }, d: [i…] } },
 //     skip: { <game>: [mtime, 1 off | 0 on] },
-//     hide: [mtime, 1 hidden | 0 shown] }
+//     hide: [mtime, 1 hidden | 0 shown],
+//     st: [best streak, days with every goal done] }  (C3, 5.63.00)
 //   day = orosDaily day number (1 Jan 2026 = 0, local date);
 //   at = when the goals were made; d = goals seen done (indices).
 // merge (R5 symmetric, R26 canonical):
@@ -30,6 +31,8 @@
 //     the phone before the PC made the day still counts); d is the
 //     union when both sides hold the same goals;
 //   - skip / hide: the newer mtime wins (tie → the greater JSON);
+//   - st: the larger value of each (they only grow, so the challenge
+//     achievements survive the days being pruned);
 //   - only the last KEEP days (counted from the newest day) are kept.
 // ============================================================
 (function (root) {
@@ -150,6 +153,41 @@
     while (on[d]) { n++; d--; }
     return n;
   }
+  // The longest run of full days among the kept days.
+  function bestRun(data) {
+    var on = {}, best = 0;
+    Object.keys(data.days).forEach(function (k) {
+      var r = data.days[k];
+      if (r.c.length && r.d.length >= r.c.length) on[+k] = true;
+    });
+    Object.keys(on).forEach(function (k) {
+      if (on[+k - 1]) return;
+      var n = 0, d = +k;
+      while (on[d]) { n++; d++; }
+      if (n > best) best = n;
+    });
+    return best;
+  }
+  function fullDays(data) {
+    var n = 0;
+    Object.keys(data.days).forEach(function (k) {
+      var r = data.days[k];
+      if (r.c.length && r.d.length >= r.c.length) n++;
+    });
+    return n;
+  }
+  // The records with what the kept days show folded in: { best, days }.
+  function records(data) {
+    var x = norm(data);
+    return { best: Math.max(x.st[0], bestRun(x)), days: Math.max(x.st[1], fullDays(x)) };
+  }
+  // The data with st raised to records(), or null when it is current.
+  function withRecords(data) {
+    var x = norm(data), r = records(x);
+    if (r.best === x.st[0] && r.days === x.st[1]) return null;
+    x.st = [r.best, r.days];
+    return norm(x);
+  }
   function doneCount(data) {
     var n = 0;
     Object.keys(data.days).forEach(function (k) { n += data.days[k].d.length; });
@@ -207,7 +245,9 @@
       var f = ID_RE.test(g) ? normFlag(sin[g]) : null;
       if (f) skip[g] = f;
     });
-    return { v: 1, days: days, skip: skip, hide: normFlag(x.hide) || [0, 0] };
+    var st = Array.isArray(x.st) && x.st.length === 2 ? x.st : [0, 0];
+    return { v: 1, days: days, skip: skip, hide: normFlag(x.hide) || [0, 0],
+      st: [nat(st[0]) > 99999 ? 99999 : nat(st[0]), nat(st[1]) > 99999 ? 99999 : nat(st[1])] };
   }
 
   // ---------- Merge ----------
@@ -241,7 +281,8 @@
     Object.keys(a.skip).concat(Object.keys(b.skip)).forEach(function (g) {
       skip[g] = newer(a.skip[g] || null, b.skip[g] || null);
     });
-    return norm({ v: 1, days: days, skip: skip, hide: newer(a.hide, b.hide) });
+    return norm({ v: 1, days: days, skip: skip, hide: newer(a.hide, b.hide),
+      st: [Math.max(a.st[0], b.st[0]), Math.max(a.st[1], b.st[1])] });
   }
 
   // ---------- Edits (return the new data; the caller writes it) ----------
@@ -272,6 +313,7 @@
     VERSION: "1.0.0", PER_DAY: PER_DAY, KEEP: KEEP, WIN: WIN, SCORE: SCORE, LONG: LONG,
     counters: counters, eligible: eligible, kindsOf: kindsOf, pick: pick, make: make,
     progress: progress, noteDone: noteDone, streak: streak, doneCount: doneCount,
+    bestRun: bestRun, fullDays: fullDays, records: records, withRecords: withRecords,
     norm: norm, normDay: normDay, merge: merge, withDay: withDay,
     setSkip: setSkip, setHide: setHide, skipped: skipped
   };

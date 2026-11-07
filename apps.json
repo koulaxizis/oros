@@ -1194,7 +1194,8 @@
       "category": "Games",
       "icon": "gamecenter",
       "url": "gamecenter/",
-      "type": "internal"
+      "type": "internal",
+      "today": "today.js"
     },
     {
       "id": "passwords",
