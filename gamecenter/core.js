@@ -25,8 +25,9 @@
   "use strict";
 
   // The games with a Daily challenge (Wave 49; Realm's Daily island
-  // since 5.50), in the order the Today section shows them.
-  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm"];
+  // since 5.50, Crypt's Daily crypt since 5.55), in the order the Today
+  // section shows them.
+  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm", "crypt"];
   // The "Clean sweep" achievement stays the six daily puzzles, so a
   // sweep reached before Realm had a Daily is never taken back.
   var SWEEP = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
@@ -144,7 +145,7 @@
   // Daily results of Sudoku / Nonogram / Flow Free (hints h),
   // Minesweeper and Realm (won w): fills S.dn, the streaks and today.
   function dailyPart(d, S, X, today, game) {
-    var won = game === "minesweeper" || game === "realm";
+    var won = game === "minesweeper" || game === "realm" || game === "crypt";
     var on = {}, tried = {};
     S.dn = 0;
     eachDay(d, function (day, v) {
@@ -332,14 +333,16 @@
       dailyPart(d, S, X, today, "realm");
     },
     // Crypt: "<mode>" → [runs, won, deepest floor]; a Grim win counts
-    // as a win on the hardest level
-    crypt: function (d, S, X) {
+    // as a win on the hardest level; days{day: {w, f, t}} the Daily
+    // crypt (solved = out on floor 5; not in runs and wins)
+    crypt: function (d, S, X, today) {
       S.w = 0;
       eachCell(d, function (k, v) {
         if (!Array.isArray(v) || v.length < 3) return;
         S.p += nat(v[0]); S.w += nat(v[1]);
         if (k === "r" && nat(v[1])) X.hard = true;
       });
+      dailyPart(d, S, X, today, "crypt");
     },
     xeri: function (d, S, X) {
       S.w = 0;

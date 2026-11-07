@@ -14,8 +14,8 @@ const D = require("../crypt/items.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "crypt/crypt.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var MODES = ['g','r']; var E = { FLOORS: 10 };"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeCrypt"].forEach((name) => {
+  const parts = ["var DATA_VER = 1; var MODES = ['g','r']; var E = { FLOORS: 10 }; var MAX_DAY = 100000; var MAX_TURNS = 99999;"];
+  ["cmpStr", "isInt", "normDay", "dayKeyOk", "dayBetter", "normRow", "joinRows", "mergeCrypt"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
@@ -338,4 +338,45 @@ test("crypt: the records merge is a join (symmetric, idempotent, reset wins)", (
   assert.deepEqual(out.rows.a.s, { g: [1, 0, 1] });
   // a floor past 10 is not a record
   assert.ok(!m({ ver: 1, br: 0, rows: { z: { b: 0, s: { g: [1, 0, 11] } } } }, null).rows.z);
+});
+
+test("crypt: the Daily crypt is a short descent: out on the stairs of floor 5, no key", () => {
+  const st = E.newRun("crypt20261107", "g", 5);
+  assert.equal(st.end, 5);
+  assert.ok(E.valid(st));
+  assert.equal(E.newRun("x", "g").end, undefined, "a normal run has no end field");
+  assert.equal(E.newRun("x", "g", 10).end, undefined);
+  // floor 4 → 5 still goes down
+  const r = room();
+  r.end = 5; r.floor = 4;
+  r.hero.i = at(W - 3, H - 2);
+  assert.equal(evs(E.act(r, { t: "move", d: 1 }), "floor")[0].n, 5);
+  // floor 5: the stairs are the way out
+  const q = room();
+  q.end = 5; q.floor = 5;
+  q.hero.i = at(W - 3, H - 2);
+  assert.equal(evs(E.act(q, { t: "move", d: 1 }), "win").length, 1);
+  assert.equal(q.over, 1);
+  // valid() checks end
+  const bad = E.clone(st); bad.end = 10; assert.equal(E.valid(bad), false);
+  const bad2 = E.clone(st); bad2.floor = 6; assert.equal(E.valid(bad2), false);
+  // the same day gives the same crypt
+  assert.equal(J(E.newRun("crypt20261107", "g", 5)), J(st));
+});
+
+test("crypt: Daily results merge as a join: newer epoch, then out, deeper, fewer turns", () => {
+  const m = R.mergeCrypt;
+  const A = { ver: 1, br: 0, rows: {}, days: { 310: { b: 0, w: 0, f: 3, t: 200 }, 311: { b: 0, w: 1, f: 5, t: 400 } } };
+  const B = { ver: 1, br: 0, rows: {}, days: { 310: { b: 0, w: 0, f: 4, t: 900 }, 311: { b: 0, w: 1, f: 5, t: 350 } } };
+  const C = { ver: 1, br: 0, rows: {}, days: { 310: { b: 0, w: 1, f: 5, t: 999 }, 12: { b: 0, w: 2, f: 1, t: 1 } } };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), C)), J(m(A, m(B, C))));
+  assert.equal(J(m(A, A)), J(m(A, null)));
+  assert.deepEqual(m(A, B).days[310], { b: 0, w: 0, f: 4, t: 900 }, "deeper wins");
+  assert.deepEqual(m(A, B).days[311].t, 350, "fewer turns win");
+  assert.deepEqual(m(B, C).days[310].w, 1, "out wins");
+  assert.ok(!m(C, null).days[12], "a bad entry drops");
+  // older data without days, and a reset drops older days
+  assert.deepEqual(m({ ver: 1, br: 0, rows: {} }, null).days, {});
+  assert.deepEqual(m(A, { ver: 1, br: 5, rows: {} }).days, {});
 });

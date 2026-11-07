@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.55.00
+- **Crypt: Daily crypt.** The calendar button gives everyone the same short crypt each day: five floors, Gentle Health, one life, one try. Reach the stairs on floor 5 to get out, keep a streak of days you got out and share your result without spoilers. The Daily crypt also appears in the Game Center under Today's dailies.
+
 ## Version 5.54.00
 - **New game: Crypt.** A turn-based dungeon crawler with a backpack puzzle. Go down ten floors, read what each monster will do next and step out of the red, and pack what you find: items work only in the backpack, and items whose dots touch give a bonus. Play Gentle, with save points on floors 4, 7 and 10, or Grim, with one life. Every crypt has a code, so you can go down the same one again. It is in the Game Center under a new group, RPG and adventure.
 
