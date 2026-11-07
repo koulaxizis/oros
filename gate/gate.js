@@ -820,6 +820,18 @@
       if (!p.on) return Promise.resolve({ links: 0, last: 0 });
       return devCall({ act: "info", id: p.id, tok: p.tok });
     },
+    // The code from the relay's sign-in page (orOS Portable / installed
+    // orOS, whose own browser is not the one Claude opened). → Promise;
+    // rejects with e.code "nopair" (wrong or expired) or "rate".
+    pair: function (code) {
+      var p = pref(), pc = String(code || "").toUpperCase().replace(/[\s-]+/g, "");
+      if (!p.on || !p.id || !p.tok) return Promise.reject(new Error("off"));
+      if (!/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/.test(pc)) { var e = new Error("gate"); e.code = "nopair"; return Promise.reject(e); }
+      return devCall({ act: "pair", id: p.id, tok: p.tok, pc: pc }).then(function () {
+        writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: "sign-in", a: [], k: 0, ok: 1 }));
+        changed();
+      });
+    },
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
