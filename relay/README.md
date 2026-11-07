@@ -760,7 +760,7 @@ counter. No orOS data, no request or answer, nothing logged.
   only, stateless: the client id is not stored); `GET /gate/authorize`
   (only `response_type=code`, `code_challenge_method=S256`, a
   `redirect_uri` from the exact list `REDIRECTS`, the claude.ai and
-  claude.com MCP callbacks) answers a small page (5.66.00) with a pairing
+  claude.com MCP callbacks) answers a small page (5.67.00) with a pairing
   code `XXXX-XXXX` and a link to `https://useoros.online/?gate=…`; the
   person allows it either by that link or by typing the code into any
   orOS whose gate is on (the installed orOS, Portable and USB have their
