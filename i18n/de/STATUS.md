@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 40158 of 40431 (99%)
+- Strings: 40185 of 40458 (99%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
@@ -55,7 +55,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 120 / 120 |
+| gamecenter | 100% | 147 / 147 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
