@@ -61,6 +61,13 @@ const PLAY = {
     await tap(p, "#random-btn"); await tap(p, "#start-btn"); await p.waitForTimeout(600);
     await tapAll(p, "[data-q]", inProg, true);
   },
+  // Realm: close the first-game "How to play", end the turn, let the
+  // computer sides play theirs
+  realm: async (p, inProg) => {
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, "#end-btn");
+    for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // a word search counts as under way after 15 s of play
   wordsearch: async (p) => { await p.waitForTimeout(16000); }
 };
