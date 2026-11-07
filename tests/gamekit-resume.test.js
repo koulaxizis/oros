@@ -114,6 +114,8 @@ test("resume: each game's own test", () => {
   assert.equal(one("banner", { g: { over: -1, n: 5 }, done: false }), true);
   assert.equal(one("banner", { g: { over: 1, n: 90 }, done: true }), false);
   assert.equal(one("banner", { g: { over: -1, n: 5 }, done: true }), false);
+  assert.equal(one("banner", { g: { over: -1, n: 4 }, done: false, me: false }), false, "only the computer has moved");
+  assert.equal(one("banner", { g: { over: -1, n: 4 }, done: false, me: true }), true);
   // Crypt: under way after the first turn, until the run is over
   assert.equal(one("crypt", { g: { over: -1, turn: 0 }, done: false }), false);
   assert.equal(one("crypt", { g: { over: -1, turn: 12 }, done: false }), true);

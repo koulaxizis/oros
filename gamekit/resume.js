@@ -117,11 +117,14 @@
       var g = obj(s.g);
       return !!g && !s.done && num(g.over) < 0 && num(g.acts) > 0;
     },
-    // Banner: {g: engine state, opts, counted, done, pass}; under way
-    // after the first action of either side, until the battle is over.
+    // Banner: {g: engine state, opts, counted, done, pass, me}; under
+    // way after the first move of a person (me), until the battle is
+    // over. When the computer starts, its moves alone do not count.
+    // Sessions saved before "me" existed: after any action.
     banner: function (s) {
       var g = obj(s.g);
-      return !!g && !s.done && num(g.over) < 0 && num(g.n) > 0;
+      if (!g || s.done || num(g.over) >= 0) return false;
+      return s.me === undefined ? num(g.n) > 0 : s.me === true;
     },
     // Crypt: {g: engine state, opts, cp, done}; under way after the
     // first turn, until the run is over (a fall in Gentle with a save
