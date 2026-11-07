@@ -146,6 +146,13 @@ const CASES = [
   [{ m: "GET", path: "/rs/report?date_start=2026-1-1" }, "query"],
   [{ m: "POST", path: "/rs/balances", body: { name: "x" } }, "path"],
   [{ m: "GET", path: "/rs/ledger" }, "path"],
+  // Budget «Εκδόσεις»: Production Ledger records, read only
+  [{ m: "GET", path: "/pl/records?from=2026-12-01&to=2026-12-31&page=1&per_page=500" }, ""],
+  [{ m: "GET", path: "/pl/records" }, ""],
+  [{ m: "GET", path: "/pl/records?per_page=501" }, "query"],
+  [{ m: "GET", path: "/pl/records?test=1" }, "query"],
+  [{ m: "GET", path: "/pl/records?from=2026-1-1" }, "query"],
+  [{ m: "POST", path: "/pl/records", body: {} }, "path"],
   // Newsletter N1: coupons, looked up and created only
   [{ m: "GET", path: "/coupons?code=NEWS-10" }, ""],
   [{ m: "GET", path: "/coupons?search=a" }, "query"],
