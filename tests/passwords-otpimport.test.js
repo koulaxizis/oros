@@ -167,6 +167,14 @@ test("andOTP: plain .json, encrypted .json.aes (PBKDF2-SHA1 + AES-GCM) and the o
   const old = Buffer.concat([on, gcm(okey, on, Buffer.from(JSON.stringify(list)))]);
   const u2 = await I.unlock(await parseFile("otp_accounts.json.aes", old), "test", NOW);
   assert.equal(u2.codes.length, 3);
+  // an old-format nonce may start with "{" or "[": still a locked file
+  for (const first of [0x7b, 0x5b]) {
+    const n2 = crypto.randomBytes(12); n2[0] = first;
+    const f2 = Buffer.concat([n2, gcm(okey, n2, Buffer.from(JSON.stringify(list)))]);
+    const l2 = await parseFile("otp_accounts.json.aes", f2);
+    assert.equal(l2.locked, "andotp");
+    assert.equal((await I.unlock(l2, "test", NOW)).codes.length, 3);
+  }
 });
 
 test("FreeOTP+ .json (secret as signed bytes)", () => {

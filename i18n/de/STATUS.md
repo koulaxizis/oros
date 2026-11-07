@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 39596 of 39868 (99%)
-- Help pages: 153 of 153 (100%)
+- Strings: 39712 of 39985 (99%)
+- Help pages: 154 of 154 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -54,7 +54,7 @@ text is still written in the code. They switch over wave by wave
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 116 / 116 |
+| gamecenter | 100% | 118 / 118 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -88,7 +88,7 @@ text is still written in the code. They switch over wave by wave
 | montage | 100% | 378 / 378 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 100% | 522 / 522 |
+| music | 99% | 522 / 523 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 121 / 121 |
 | newsletter | 99% | 1003 / 1008 |
@@ -111,6 +111,7 @@ text is still written in the code. They switch over wave by wave
 | qr | 100% | 248 / 248 |
 | quote | 100% | 230 / 230 |
 | radio | 100% | 103 / 103 |
+| realm | 100% | 113 / 113 |
 | recipes | 100% | 176 / 176 |
 | recordpkg | 100% | 21 / 21 |
 | remote-play | 100% | 35 / 35 |
@@ -122,7 +123,7 @@ text is still written in the code. They switch over wave by wave
 | settings | 98% | 903 / 914 |
 | share | 100% | 205 / 205 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1093 / 1097 |
+| shell | 99% | 1094 / 1098 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 383 / 383 |

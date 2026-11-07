@@ -93,6 +93,7 @@ orosPack("de", "shell", {
  "app.qr": "QR-Generator",
  "app.quote": "Angebot",
  "app.radio": "Radio",
+ "app.realm": "Ländereien",
  "app.reversi": "Reversi",
  "app.ringtones": "Klingelton-Komponist",
  "app.rps": "Schere, Stein, Papier",

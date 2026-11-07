@@ -20,6 +20,7 @@ orosPack("de", "gamecenter", {
  "ach.title": "Erfolge",
  "all.find": "Spiel suchen",
  "all.g.arcade": "Arcade",
+ "all.g.strategy": "Strategie",
  "all.g.board": "Brettspiele und zu zweit",
  "all.g.cards": "Karten und Steine",
  "all.g.puzzle": "Rätsel",
@@ -114,5 +115,6 @@ orosPack("de", "gamecenter", {
  "whack": "Hau den Maulwurf",
  "wordle": "Wordle",
  "wordsearch": "Wortsuche",
- "xeri": "Xeri"
+ "xeri": "Xeri",
+ "realm": "Ländereien"
 });
