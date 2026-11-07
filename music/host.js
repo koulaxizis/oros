@@ -195,6 +195,7 @@
   }
   var audio = mkDeck();
   var cur = null;            // item loaded
+  var live = false;          // played since this page opened (the tray chip shows only then)
   var loadSeq = 0;           // a newer load wins
   var artUrl = "", artFor = "";
   var flags = { buffering: false, error: "" };
@@ -676,6 +677,7 @@
     q.cur = cur;
     local.q = q;
     saveLocal(true);
+    live = false;            // nothing left to play: the bar lets go of the chip
     chip();
     host.notify("end");
   }
@@ -698,6 +700,7 @@
     clearDeck(audio);
     releaseBlob();
     cur = null;
+    live = false;
     local.q = C.emptyQueue();
     local.pos = 0;
     saveLocal(true);
@@ -738,7 +741,7 @@
     posState();
   });
   on("pause", function () { stallClear(); saveLocal(true); chip(); host.notify("pause"); });
-  on("playing", function () { stallClear(); flags.buffering = false; flags.error = ""; fails = 0; offWait = ""; chip(); host.notify("play"); });
+  on("playing", function () { live = true; stallClear(); flags.buffering = false; flags.error = ""; fails = 0; offWait = ""; chip(); host.notify("play"); });
   on("play", function () { hookOthers(); });
   on("waiting", function () { flags.buffering = true; stallArm(); host.notify("buffer"); });
   on("canplay", function () { flags.buffering = false; host.notify("buffer"); });
@@ -829,7 +832,10 @@
   function chip() {
     var el = doc.getElementById("mu-tray-chip");
     var bar = doc.querySelector(".bar-right");
-    if (!cur || !bar) { if (el) el.remove(); return; }
+    // Shown while a song plays, or pauses after it played here. The
+    // song last session left comes back paused but shows no chip until
+    // it plays again, so an idle bar carries no music icon.
+    if (!cur || !live || !bar) { if (el) el.remove(); return; }
     if (!doc.getElementById("mu-host-css")) {
       var st = doc.createElement("style");
       st.id = "mu-host-css";

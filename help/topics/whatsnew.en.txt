@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.47.03
+## Version 5.47.04
 - **Music: an artist's whole discography.** Tapping the artist's name in the full player now opens the artist's page (the player steps aside). On Jamendo that page shows the artist's picture, every album, newest first, and every song, most played first, all loaded by itself.
+
+## Version 5.47.03
+- **Music: the music icon on the top bar shows only when something plays.** Opening orOS no longer puts the music note on the bar for last time's song; it appears once a song plays, stays while it is paused, and goes away with Stop or at the end of the list.
 
 ## Version 5.47.02
 - **Music: mood pages no longer say "Nothing found here" while they play.** When Jamendo answers a mood (Relaxed, Happy, …) with no songs, Music now asks again in two other ways, does not keep the empty answer, and while songs of that mood are playing it shows them with `Try again`.
