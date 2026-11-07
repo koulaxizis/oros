@@ -15,12 +15,16 @@
 //   - Daily island (W2): the same island for everyone each day
 //     (gamekit/daily.js), Medium, you against 3 Medium computers, one
 //     try; result, streak and a spoiler-free share line
+//   - Campaign (W3): 12 drawn islands of rising difficulty
+//     (realm/campaign.js), unlocked one by one, 1-3 stars by rounds
 // Data:
 //   - synced slice "realm" (oros-realm-data): results vs the computer
 //     per level and island size as per-device counter rows (each
 //     device only grows its own row; merge = per-row max, a join) +
 //     reset stamp br (same pattern as Reversi) + one Daily island
 //     result per day (newer epoch wins, equal epochs the better one)
+//     + campaign progress per island (the better result: a join; not
+//     touched by Reset records)
 //   - device-local (R10): oros-realm-prefs (new-game options, fast
 //     turns, tour seen), oros-realm-session (the game in progress and
 //     the undo steps of the current turn), oros-realm-device (counter
@@ -60,6 +64,8 @@
   // Okabe-Ito colours (colour-blind safe), one per side, plus a mark
   // per side so the sides also read in greyscale.
   var DK = window.orosDaily || null;  // gamekit/daily.js (Daily island)
+  var CAMP = window.RealmCampaign || null;   // realm/campaign.js
+  var MAX_CAMP = 99;
   var DAILY_OPTS = { size: "m", people: 1, comps: 3, lv: "m" };
   var MAX_DAY = 100000;
   var MAX_ROUNDS = 9999;
@@ -110,6 +116,19 @@
       "level.e": "Easy", "level.m": "Medium", "level.h": "Hard",
       "stats.title": "Records vs computer", "stats.head": "Won · lost", "stats.reset": "Reset records",
       "stats.close": "Close", "stats.code": "This island's code: {seed}",
+      "btn.camp": "Campaign", "camp.title": "Campaign",
+      "camp.note": "Win an island to open the next one. Fewer rounds earn more stars.",
+      "camp.island": "Island {n}", "camp.locked": "Locked", "camp.open": "Not won yet",
+      "camp.won": "Island won!", "camp.lost": "Island lost",
+      "camp.next": "Next island", "camp.retry": "Try again", "camp.list": "All islands",
+      "camp.par": "3 stars in {n} rounds or fewer", "camp.best": "Your best",
+      "camp.vs": "Against", "camp.all": "Every island won!",
+      "camp.stars": "{n} of 3 stars", "camp.sum": "{w} of {k} islands · {s} stars",
+      "camp.status": "Island {n}",
+      "camp.n.1": "Quiet Cove", "camp.n.2": "Twin Shores", "camp.n.3": "Old Watch",
+      "camp.n.4": "Three Villages", "camp.n.5": "Long Coast", "camp.n.6": "The Rival",
+      "camp.n.7": "Crossroads", "camp.n.8": "Great Isle", "camp.n.9": "Iron Pair",
+      "camp.n.10": "Storm Coast", "camp.n.11": "Three Crowns", "camp.n.12": "The Last Realm",
       "btn.daily": "Daily island", "daily.label": "Daily",
       "daily.title": "Daily island #{n}", "daily.turn": "Daily #{n}",
       "daily.won": "Won in {r} rounds", "daily.lost": "Fell in round {r}",
@@ -178,6 +197,19 @@
       "level.e": "Εύκολο", "level.m": "Μεσαίο", "level.h": "Δύσκολο",
       "stats.title": "Ρεκόρ με υπολογιστή", "stats.head": "Νίκες · ήττες", "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο", "stats.code": "Κωδικός αυτού του νησιού: {seed}",
+      "btn.camp": "Εκστρατεία", "camp.title": "Εκστρατεία",
+      "camp.note": "Κέρδισε ένα νησί για να ανοίξει το επόμενο. Με λιγότερους γύρους παίρνεις περισσότερα αστέρια.",
+      "camp.island": "Νησί {n}", "camp.locked": "Κλειδωμένο", "camp.open": "Δεν κερδήθηκε ακόμα",
+      "camp.won": "Το νησί κερδήθηκε!", "camp.lost": "Το νησί χάθηκε",
+      "camp.next": "Επόμενο νησί", "camp.retry": "Ξανά", "camp.list": "Όλα τα νησιά",
+      "camp.par": "3 αστέρια σε {n} γύρους ή λιγότερους", "camp.best": "Το καλύτερό σου",
+      "camp.vs": "Αντίπαλοι", "camp.all": "Κέρδισες όλα τα νησιά!",
+      "camp.stars": "{n} από 3 αστέρια", "camp.sum": "{w} από {k} νησιά · {s} αστέρια",
+      "camp.status": "Νησί {n}",
+      "camp.n.1": "Ήσυχος Όρμος", "camp.n.2": "Δίδυμες Ακτές", "camp.n.3": "Παλιά Βίγλα",
+      "camp.n.4": "Τρία Χωριά", "camp.n.5": "Μακριά Ακτή", "camp.n.6": "Ο Αντίπαλος",
+      "camp.n.7": "Σταυροδρόμι", "camp.n.8": "Μεγάλο Νησί", "camp.n.9": "Σιδερένιο Ζευγάρι",
+      "camp.n.10": "Ακτή των Ανέμων", "camp.n.11": "Τρία Στέμματα", "camp.n.12": "Η Τελευταία Επικράτεια",
       "btn.daily": "Νησί της ημέρας", "daily.label": "Ημέρας",
       "daily.title": "Νησί της ημέρας #{n}", "daily.turn": "Ημέρας #{n}",
       "daily.won": "Νίκη σε {r} γύρους", "daily.lost": "Έπεσε στον γύρο {r}",
@@ -254,7 +286,11 @@
 
   // ---------- 2. Synced records ----------
   // data = { ver, br, rows: { <device id>: { b, s: { "<lv>:<size>": [won, lost] } } },
-  //          days: { "<day>": { b, w: 1 won | 0 lost, r: rounds, p: % of the land } } }
+  //          days: { "<day>": { b, w: 1 won | 0 lost, r: rounds, p: % of the land } },
+  //          camp: { "<island id>": { s: stars 1-3, r: rounds } } }
+  // camp (W3, older data has none): the best win on each campaign
+  // island (more stars, then fewer rounds: a total order, so a join).
+  // No epoch: Reset records leaves the campaign alone.
   // days (W2, older data has none): one Daily island per calendar day
   // (day 0 = 1 Jan 2026, gamekit/daily.js), one try. The newer epoch
   // wins; equal epochs keep the better result (a win, then more land,
@@ -266,7 +302,12 @@
   var REC_KEYS = [];
   LEVELS.forEach(function (lv) { SIZES.forEach(function (sz) { REC_KEYS.push(lv + ":" + sz); }); });
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, camp: {} }; }
+
+  function normCamp(v) {
+    if (!v || typeof v !== "object" || !isInt(v.s) || v.s < 1 || v.s > 3 || !isInt(v.r) || v.r < 1 || v.r > MAX_ROUNDS) return null;
+    return { s: v.s, r: v.r };
+  }
 
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
@@ -336,7 +377,20 @@
     });
     var sd = {};
     Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
+    var camp = {};
+    [a.camp, b.camp].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!/^\d{1,2}$/.test(k) || +k < 1 || +k > MAX_CAMP) return;
+        var v = normCamp(m[k]);
+        if (!v) return;
+        var cur = camp[+k];
+        if (!cur || v.s > cur.s || (v.s === cur.s && v.r < cur.r)) camp[+k] = v;
+      });
+    });
+    var sc = {};
+    Object.keys(camp).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sc[k] = camp[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, camp: sc };
   }
   // Totals for a level (all sizes, or one): [won, lost].
   function totals(lv, sz) {
@@ -416,6 +470,19 @@
     save();
   }
 
+  // A won campaign island: keeps the better result.
+  function countCamp(id, rounds) {
+    var isl = CAMP.byId(id);
+    var v = { s: CAMP.stars(isl, rounds), r: clamp(rounds, 1, MAX_ROUNDS) };
+    var m = {};
+    m[id] = v;
+    data = mergeRealm(data, { br: data.br, rows: {}, camp: m });
+    save();
+    return v;
+  }
+  // Island n opens when island n − 1 is won.
+  function campOpen(id) { return id === 1 || !!data.camp[id - 1]; }
+
   // ---------- 3. Device-local prefs + session ----------
   var prefs = { size: "s", people: 1, comps: 2, lv: "m", fast: false, tour: false };
 
@@ -440,7 +507,8 @@
   // game = {
   //   g: engine state,
   //   u: [engine state…]   undo steps of the current turn (≤ 40)
-  //   opts: { size, people, comps, lv, seed, day? },   day: the Daily island
+  //   opts: { size, people, comps, lv, seed, day?, camp? },
+  //         day: the Daily island; camp: a campaign island id
   //   done: bool           the game is over for this device's records
   // }
   var game = null;
@@ -452,6 +520,10 @@
         !isInt(o.people) || !isInt(o.comps) || o.people < 1 || o.people + o.comps > 6 || o.people + o.comps < 2) return false;
     if (s.g.sides.length !== o.people + o.comps) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || o.people !== 1)) return false;
+    if (o.camp !== undefined) {
+      var isl = CAMP && CAMP.byId(o.camp);
+      if (!isl || o.people !== 1 || o.comps !== isl.opp.length || o.day !== undefined) return false;
+    }
     for (var i = 0; i < s.u.length; i++) if (!E.valid(s.u[i])) return false;
     return true;
   }
@@ -496,6 +568,11 @@
   function inProgressOf(g) { return !!(g && !g.done && g.g.over < 0 && g.g.acts > 0); }
 
   function makeGame(opts) {
+    if (opts.camp !== undefined) {
+      var isl = CAMP.byId(opts.camp), cs = [{ k: "h", lv: "m" }];
+      isl.opp.forEach(function (lv) { cs.push({ k: "c", lv: lv }); });
+      return { g: E.fromLayout(isl, cs, "c" + isl.id), u: [], opts: opts, done: false };
+    }
     var sides = [];
     for (var i = 0; i < opts.people; i++) sides.push({ k: "h", lv: opts.lv });
     for (var j = 0; j < opts.comps; j++) sides.push({ k: "c", lv: opts.lv });
@@ -774,7 +851,8 @@
     var hs = [];
     st.sides.forEach(function (s, k) { if (s.k === "h") hs.push(k); });
     var won = st.over >= 0 && st.sides[st.over].k === "h";
-    if (hs.length === 1 && game.opts.comps > 0) countResult(game.opts.lv, game.opts.size, won ? 0 : 1);
+    if (game.opts.camp !== undefined) { if (won) countCamp(game.opts.camp, st.round); }
+    else if (hs.length === 1 && game.opts.comps > 0) countResult(game.opts.lv, game.opts.size, won ? 0 : 1);
     if (game.opts.day !== undefined) countDaily(game.opts.day, won, st.round, E.share(st, hs[0]));
     saveSession();
     clearSel();
@@ -1253,6 +1331,9 @@
     u.title = t(ok ? "btn.undo" : "btn.undoNone");
     u.setAttribute("aria-label", u.title);
     $("end-btn").disabled = !humanTurn();
+    var cb = $("camp-btn");
+    cb.hidden = !CAMP;
+    cb.classList.toggle("on", !!(game && game.opts.camp !== undefined && !game.done));
     var db = $("daily-btn");
     db.hidden = !DK;
     db.classList.toggle("due", !!DK && !data.days[today()]);
@@ -1268,7 +1349,8 @@
     else if (st.sides[st.turn].k === "c") txt = t("turn.ai", { who: sideName(st.turn) });
     else txt = humans() === 1 ? t("turn.you") : t("turn.person", { who: sideName(st.turn) });
     $("turn").textContent = txt;
-    $("round").textContent = (game.opts.day !== undefined ? t("daily.turn", { n: game.opts.day + 1 }) + " · " : "") +
+    $("round").textContent = (game.opts.day !== undefined ? t("daily.turn", { n: game.opts.day + 1 }) + " · " :
+      game.opts.camp !== undefined ? t("camp.status", { n: game.opts.camp }) + " · " : "") +
       t("turn.round", { n: st.round });
     var info = humanTurn() && regionCells().length ? E.regionInfo(st, region) : null;
     if (info && info.hall >= 0) {
@@ -1424,6 +1506,7 @@
   function resultDialog() {
     if (!game || !game.done) return;
     if (game.opts.day !== undefined && data.days[game.opts.day]) { dailyDialog(game.opts.day); return; }
+    if (game.opts.camp !== undefined) { campResultDialog(); return; }
     var dlg = makeDialog("rm-result");
     var hs = st.sides.filter(function (s) { return s.k === "h"; }).length;
     var won = st.over >= 0 && st.sides[st.over].k === "h";
@@ -1468,7 +1551,10 @@
     if (ds.n) empty = false;
     dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
     dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
-    if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    if (CAMP) dlg.appendChild(row(t("camp.title"), campSummary()));
+    if (game && game.opts.day === undefined && game.opts.camp === undefined) {
+      dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    }
     var acts = el("div", "dlg-actions");
     hubLink(acts, dlg);
     var reset = button(t("stats.reset"), "danger", function () {
@@ -1484,6 +1570,90 @@
     dlg.showModal();
     close.focus();
   }
+  // ---------- Campaign ----------
+  function starText(n) { var x = ""; for (var k = 1; k <= 3; k++) x += k <= n ? "★" : "☆"; return x; }
+  function campSummary() {
+    var w = 0, sum = 0;
+    CAMP.ISLANDS.forEach(function (isl) { var v = data.camp[isl.id]; if (v) { w++; sum += v.s; } });
+    return t("camp.sum", { w: w, k: CAMP.ISLANDS.length, s: sum });
+  }
+  function campOpts(id) {
+    var isl = CAMP.byId(id);
+    return { size: isl.size, people: 1, comps: isl.opp.length, lv: isl.opp[isl.opp.length - 1],
+             seed: "c" + id, camp: id };
+  }
+  function startCamp(id) {
+    if (!CAMP || !CAMP.byId(id) || !campOpen(id)) return;
+    if (game && game.opts.camp === id && !game.done) return;
+    startGame(campOpts(id));
+    live(t("camp.island", { n: id }) + ": " + t("camp.n." + id));
+  }
+  function oppText(isl) {
+    return isl.opp.map(function (lv) { return t("level." + lv); }).join(", ");
+  }
+  // The islands: number, name, stars or a lock. Tap an open one to play.
+  function campDialog() {
+    if (!CAMP) return;
+    var dlg = makeDialog("rm-camp");
+    dlg.appendChild(el("div", "dlg-title", t("camp.title")));
+    dlg.appendChild(el("div", "dlg-note", t("camp.note")));
+    var grid = el("div", "camp-grid");
+    var first = null;
+    CAMP.ISLANDS.forEach(function (isl) {
+      var open = campOpen(isl.id), v = data.camp[isl.id];
+      var b = el("button", "camp-tile" + (v ? " won" : "") + (open ? "" : " locked"));
+      b.type = "button";
+      b.disabled = !open;
+      b.appendChild(el("span", "camp-num", String(isl.id)));
+      b.appendChild(el("span", "camp-name", t("camp.n." + isl.id)));
+      b.appendChild(el("span", "camp-stars", open ? (v ? starText(v.s) : "☆☆☆") : t("camp.locked")));
+      var playing = game && game.opts.camp === isl.id && !game.done;
+      if (playing) b.classList.add("cur");
+      b.setAttribute("aria-label", t("camp.island", { n: isl.id }) + ", " + t("camp.n." + isl.id) + ", " +
+        (open ? (v ? t("camp.stars", { n: v.s }) : t("camp.open")) : t("camp.locked")) + ". " + t("camp.vs") + ": " + oppText(isl));
+      b.title = t("camp.vs") + ": " + oppText(isl);
+      b.addEventListener("click", function () { dlg.close(); startCamp(isl.id); });
+      if (open && !v && !first) first = b;
+      grid.appendChild(b);
+    });
+    dlg.appendChild(grid);
+    dlg.appendChild(el("div", "dlg-note", campSummary()));
+    var acts = el("div", "dlg-actions");
+    var close = button(t("res.close"), "primary", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    (first || close).focus();
+  }
+  function campResultDialog() {
+    var id = game.opts.camp, isl = CAMP.byId(id), v = data.camp[id];
+    var won = st.over >= 0 && st.sides[st.over].k === "h";
+    var dlg = makeDialog("rm-campres");
+    dlg.appendChild(el("div", "dlg-title", t("camp.island", { n: id }) + " · " + t("camp.n." + id)));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("camp.won") : t("camp.lost")));
+    if (won) {
+      var now = CAMP.stars(isl, st.round);
+      var sEl = el("div", "camp-big", starText(now));
+      sEl.setAttribute("aria-label", t("camp.stars", { n: now }));
+      dlg.appendChild(sEl);
+    }
+    dlg.appendChild(row(t("res.rounds"), String(st.round)));
+    if (v) dlg.appendChild(row(t("camp.best"), starText(v.s) + " · " + v.r + " " + t("res.rounds").toLowerCase()));
+    dlg.appendChild(el("div", "dlg-note", t("camp.par", { n: isl.par })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("camp.list"), "", function () { dlg.close(); campDialog(); }));
+    var next = CAMP.byId(id + 1), main;
+    if (won && next) main = button(t("camp.next"), "primary", function () { dlg.close(); startCamp(id + 1); });
+    else if (won) { dlg.appendChild(el("div", "dlg-badge", t("camp.all"))); main = button(t("res.again"), "primary", function () { dlg.close(); newDialog(); }); }
+    else main = button(t("camp.retry"), "primary", function () { dlg.close(); startGame(campOpts(id)); });
+    acts.appendChild(main);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    main.focus();
+  }
+
   // ---------- Daily island ----------
   function today() { return DK ? DK.today() : 0; }
   function dailyOpts(day) {
@@ -1726,6 +1896,7 @@
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
     zin:    SVG + '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>',
     zout:   SVG + '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>',
+    camp:   SVG + '<path d="M5 21V4"/><path d="M5 4h11l-2 3.5L16 11H5"/></svg>',
     daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="m12 13 1 2 2 .3-1.5 1.4.4 2.1-1.9-1-1.9 1 .4-2.1L9 15.3l2-.3z"/></svg>',
     center: SVG + '<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>',
     u1:     SVG + '<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/></svg>',
@@ -1809,7 +1980,7 @@
   }
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["undo-btn", "undo", "btn.undo"], ["stats-btn", "stats", "btn.stats"],
-     ["daily-btn", "daily", "btn.daily"],
+     ["camp-btn", "camp", "btn.camp"], ["daily-btn", "daily", "btn.daily"],
      ["zin-btn", "zin", "btn.zoomIn"], ["zout-btn", "zout", "btn.zoomOut"], ["center-btn", "center", "btn.center"]
     ].forEach(function (x) {
       var b = $(x[0]);
@@ -1830,6 +2001,7 @@
     $("end-btn").addEventListener("click", endTurn);
     $("stats-btn").addEventListener("click", statsDialog);
     $("daily-btn").addEventListener("click", openDaily);
+    $("camp-btn").addEventListener("click", campDialog);
     // Deep link from the Game Center: { daily: true } opens today's island.
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("zin-btn").addEventListener("click", function () { zoomBy(1.25); });

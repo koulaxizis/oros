@@ -45,11 +45,14 @@ Hältst du drei Viertel der Insel, bietet der Computer an aufzugeben. `Annehmen`
 
 `Bilanz` zeigt deine Siege und Niederlagen gegen den Computer für jede Stufe und Inselgröße sowie den Code der Insel, die du spielst.
 
+## Feldzug
+`Feldzug` (die Fahnen-Taste) hat 12 Inseln mit steigender Schwierigkeit, von einem Computer auf Leicht auf einer kleinen Insel bis zu fünf Computern auf Schwer auf einer großen. Insel 1 ist offen; wer eine Insel gewinnt, öffnet die nächste. Ein Sieg bringt Sterne nach Runden: 3 Sterne, wenn du innerhalb der Rundenvorgabe der Insel gewinnst, 2 Sterne bis zur Hälfte mehr Runden, sonst 1 Stern. Jede Insel zeigt dein bestes Ergebnis, und du kannst jede offene Insel noch einmal spielen, um mehr Sterne zu holen. Jede Insel hat der Computer auf Schwer auf deiner Seite gewonnen. Feldzug-Spiele zählen nicht in deiner Bilanz gegen den Computer, und `Bilanz zurücksetzen` lässt den Feldzug in Ruhe.
+
 ## Insel des Tages
 `Insel des Tages` (die Kalender-Taste) gibt allen jeden Tag dieselbe Insel: eine mittlere Insel, du gegen 3 Computer auf Stufe Mittel. Die Computer antworten auf dieselben Züge auf jedem Gerät gleich, so kannst du Ergebnisse mit Freunden vergleichen. Du hast einen Versuch pro Tag; die Taste zeigt einen Punkt, solange die heutige Insel noch nicht gespielt ist. Das Ergebnisfenster zeigt, ob du gewonnen hast und in wie vielen Runden, wie viel der Insel dir am Ende gehörte und deine Serie gewonnener Tage. `Teilen` schickt eine kurze Zeile ohne Spoiler. Die Insel des Tages zählt auch in deiner Bilanz und im [Spielecenter](help:a/gamecenter), und `Bilanz` zeigt auch deine Tagesergebnisse.
 
 ## Synchronisierung
-Deine Siege und Niederlagen gegen den Computer (eine Person gegen Computer-Seiten) und deine Ergebnisse der Insel des Tages werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und von allen Geräten zusammengezählt. Das laufende Spiel, deine Optionen und der Ton bleiben auf diesem Gerät, und ein unfertiges Spiel geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+Deine Siege und Niederlagen gegen den Computer (eine Person gegen Computer-Seiten) deine Ergebnisse der Insel des Tages und dein Feldzug-Fortschritt werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und von allen Geräten zusammengezählt. Das laufende Spiel, deine Optionen und der Ton bleiben auf diesem Gerät, und ein unfertiges Spiel geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
 
 ## Tipps
 - Mühlen zahlen sich in wenigen Runden aus. Baue sie früh, solange deine Grenze ruhig ist.

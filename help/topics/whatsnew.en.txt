@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.52.00
+- **Realm: Campaign.** The flag button opens 12 islands of rising difficulty, from one Easy computer on a small island to five Hard computers on a large one. Win an island to open the next, and win in fewer rounds for up to 3 stars. Your progress syncs between your devices.
+
 ## Version 5.51.00
 - **Realm: Daily island.** The calendar button gives everyone the same island each day: a Medium island, you against 3 computers, one try. See how many rounds you needed and how much of the island you held, keep a streak of won days and share your result without spoilers. The Daily island also appears in the Game Center under Today's dailies.
 
