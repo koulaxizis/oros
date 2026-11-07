@@ -33,3 +33,33 @@ test("MU-CHIP: restore loads paused and never sets live", () => {
   assert.match(r, /load\(q\.cur, local\.pos, false\)/);
   assert.doesNotMatch(r, /live\s*=/);
 });
+
+// MU-PANEL: the chip opens a control panel instead of toggling playback.
+test("MU-PANEL: chip click opens the panel, never plays or pauses", () => {
+  const c = body("chip");
+  assert.match(c, /addEventListener\("click", function \(e\) \{ e\.stopPropagation\(\); popToggle\(\); \}\)/);
+  assert.doesNotMatch(c, /audio\.paused\) play\(\); else pause\(\)/);
+  assert.match(c, /popClose\(\); return; \}/);    // no chip, no panel
+});
+test("MU-PANEL: panel has the song, seek, prev/play/next/stop/open, volume and mute", () => {
+  const p = body("popToggle");
+  for (const cls of ["mu-p-t", "mu-p-a", "mu-p-seek", "prv", "pp", "nxt", "stp", "opn", "mut", "mu-p-vol"]) {
+    assert.ok(p.includes('"' + cls + '"'), cls);
+  }
+  assert.match(p, /__orosOpenApp\("music"\)/);
+  assert.match(p, /host\.api\.setVolume\(0\)/);
+});
+test("MU-PANEL: song text goes in as text only", () => {
+  const p = body("popPaint");
+  assert.match(p, /t\.textContent = tt/);
+  assert.match(p, /a\.textContent = aa/);
+  assert.doesNotMatch(p, /innerHTML/);
+});
+test("MU-PANEL: every label in EN, EL and the German pack", () => {
+  const de = fs.readFileSync(path.join(__dirname, "..", "i18n/de/music.js"), "utf8");
+  for (const k of ["host.now", "host.paused", "host.panel", "host.prev", "host.next", "host.playBtn", "host.pauseBtn",
+    "host.stop", "host.open", "host.seek", "host.volume", "host.mute", "host.unmute"]) {
+    assert.equal(src.split('"' + k + '"').length - 1, 3, k + " in en + el + use");
+    assert.ok(de.includes('"' + k + '"'), k + " in de");
+  }
+});
