@@ -67,7 +67,10 @@
       revokeFail: "Could not take it back. Check your connection and try again.", locked: "with password",
       preparing: "Preparing photos… {n} of {all}", noPhotos: "None of these pictures could be read.",
       albumWarn: "Photos are made smaller (2048 px at most) and lose their hidden details (place, camera, time) before they leave.",
-      skipped: "Left out: {n} that could not be read.", cut: "Only the first {n} photos fit (25 MB or 200 photos at most)."
+      skipped: "Left out: {n} that could not be read.", cut: "Only the first {n} photos fit (25 MB or 200 photos at most).",
+      imHead: "Send with", imPost: "A post on {n} is public: everyone who sees it can open the link.",
+      mastoQ: "Your Mastodon server", mastoPh: "mastodon.social", mastoBad: "Write the server's name, like mastodon.social.",
+      mastoGo: "Continue", sms: "SMS"
     },
     el: {
       title: "Στείλε σε κάποιον", close: "Κλείσιμο",
@@ -97,7 +100,10 @@
       revokeFail: "Η ανάκληση απέτυχε. Έλεγξε τη σύνδεσή σου και δοκίμασε ξανά.", locked: "με κωδικό",
       preparing: "Ετοιμάζω τις φωτογραφίες… {n} από {all}", noPhotos: "Καμία από αυτές τις εικόνες δεν διαβάστηκε.",
       albumWarn: "Οι φωτογραφίες μικραίνουν (έως 2048 px) και χάνουν τα κρυφά στοιχεία τους (τοποθεσία, κάμερα, ώρα) πριν φύγουν.",
-      skipped: "Έμειναν έξω: {n} που δεν διαβάστηκαν.", cut: "Χωράνε μόνο οι πρώτες {n} φωτογραφίες (έως 25 MB ή 200 φωτογραφίες)."
+      skipped: "Έμειναν έξω: {n} που δεν διαβάστηκαν.", cut: "Χωράνε μόνο οι πρώτες {n} φωτογραφίες (έως 25 MB ή 200 φωτογραφίες).",
+      imHead: "Αποστολή με", imPost: "Μια ανάρτηση στο {n} είναι δημόσια: όποιος τη δει μπορεί να ανοίξει τον σύνδεσμο.",
+      mastoQ: "Ο server σου στο Mastodon", mastoPh: "mastodon.social", mastoBad: "Γράψε το όνομα του server, π.χ. mastodon.social.",
+      mastoGo: "Συνέχεια", sms: "SMS"
     }
   };
   // The shell's language (a pack language too: orosI18n, ../i18n.js).
@@ -177,6 +183,12 @@
     "#osh-dlg .osh-list .osh-t{font-weight:600;font-size:13.5px;overflow-wrap:anywhere}" +
     "#osh-dlg .osh-list .osh-m{font-size:12px;color:var(--text-dim);margin:2px 0 8px}" +
     "#osh-dlg .osh-list .osh-acts{grid-template-columns:1fr 1fr}" +
+    "#osh-dlg .osh-imh{margin:12px 0 6px;font-size:12.5px;color:var(--text-dim)}" +
+    "#osh-dlg .osh-im{display:flex;flex-wrap:wrap;gap:6px}" +
+    "#osh-dlg .osh-im button{padding:7px 11px;border:1px solid var(--border);border-radius:999px;background:transparent;" +
+    "color:var(--text);font:inherit;font-size:12.5px;cursor:pointer;min-height:34px}" +
+    "#osh-dlg .osh-im button:not(:disabled):hover{border-color:var(--accent)}" +
+    "#osh-dlg .osh-im button:disabled{opacity:.45;cursor:default}" +
     "@media (max-width:420px){#osh-dlg .osh-acts{grid-template-columns:1fr}}";
   function ensureCss() {
     if (document.getElementById("osh-css")) return;
@@ -236,6 +248,42 @@
       var d = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
       return !!(d && Array.isArray(d.accounts) && d.accounts.length);
     } catch (e) { return false; }
+  }
+  // Chats and social media without the system's share sheet (desktop
+  // Linux has none): plain web addresses of each service's own "share"
+  // page, opened in a new tab. No SDK, no tracker; nothing is sent
+  // until the person posts it there. pub: a public post (one more line
+  // of warning). Mastodon asks for the person's server each time,
+  // filled in with the last one (kept on this device only).
+  var MASTO_KEY = "oros-share-masto";
+  var HOST_RE = /^(?=.{3,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+  var IM = [
+    { id: "wa", n: "WhatsApp", url: function (x, l) { return "https://wa.me/?text=" + encodeURIComponent(x + "\n" + l); } },
+    { id: "tg", n: "Telegram", url: function (x, l) { return "https://t.me/share/url?url=" + encodeURIComponent(l) + "&text=" + encodeURIComponent(x); } },
+    { id: "vb", n: "Viber", url: function (x, l) { return "viber://forward?text=" + encodeURIComponent(x + "\n" + l); } },
+    { id: "sms", n: "", mobile: true, url: function (x, l) { return "sms:?&body=" + encodeURIComponent(x + "\n" + l); } },
+    { id: "fb", n: "Facebook", pub: true, url: function (x, l) { return "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(l); } },
+    { id: "x", n: "X", pub: true, url: function (x, l) { return "https://x.com/intent/post?text=" + encodeURIComponent(x) + "&url=" + encodeURIComponent(l); } },
+    { id: "bs", n: "Bluesky", pub: true, url: function (x, l) { return "https://bsky.app/intent/compose?text=" + encodeURIComponent(x + "\n" + l); } },
+    { id: "ma", n: "Mastodon", pub: true, url: function (x, l, host) { return "https://" + host + "/share?text=" + encodeURIComponent(x + "\n" + l); } }
+  ];
+  function isMobile() { return !/Windows NT|Macintosh|X11|CrOS/.test(navigator.userAgent); }
+  function mastoHost() {
+    try { var h = localStorage.getItem(MASTO_KEY) || ""; return HOST_RE.test(h) ? h : ""; } catch (e) { return ""; }
+  }
+  function openOut(u) {
+    if (/^https:\/\//i.test(u)) {
+      var w = window.open(u, "_blank", "noopener,noreferrer");
+      if (w) { try { w.opener = null; } catch (e) {} }
+      return;
+    }
+    // viber: / sms: hand over to the app; no page is replaced.
+    var a = document.createElement("a");
+    a.href = u;
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
   var qrLoad = null;
   function qrLib() {
@@ -453,7 +501,16 @@
       var bText = typeof opts.text === "string" && opts.text ? btn(T("asText"), "", sendText) : null;
       [bShare, bCopy, bQr, bMail, bFile, bText].forEach(function (b) { if (b) acts.appendChild(b); });
       body.appendChild(acts);
-      var linkBtns = [bShare, bCopy, bQr, bMail].filter(Boolean);
+      body.appendChild(el("p", "osh-imh", T("imHead")));
+      var imRow = el("div", "osh-im"), imBtns = [];
+      IM.forEach(function (s) {
+        if (s.mobile && !isMobile()) return;
+        var b = btn(s.n || T(s.id), "", function () { if (s.id === "ma") askMasto(s); else act("im:" + s.id); });
+        imBtns.push(b);
+        imRow.appendChild(b);
+      });
+      body.appendChild(imRow);
+      var linkBtns = [bShare, bCopy, bQr, bMail].filter(Boolean).concat(imBtns);
 
       ecb.addEventListener("change", function () {
         expOn = ecb.checked;
@@ -518,7 +575,9 @@
           if (what !== "file" && !expOn && code.length > K.MAX_LINK) { sizeCheck(code); return; }
           var link = baseUrl() + "#" + code;
           if (what === "share") {
-            navigator.share({ title: K.title(env, lang()), url: link }).catch(function () {});
+            navigator.share({ title: K.title(env, lang()), text: K.shareLine(env, lang()), url: link }).catch(function () {});
+          } else if (what.indexOf("im:") === 0) {
+            imSend(what.slice(3), link);
           } else if (what === "copy") {
             copy(link).then(function (ok) { toast(ok ? T("copied") : T("copyFail")); });
           } else if (what === "qr") {
@@ -537,8 +596,10 @@
           msg.textContent = errText(e);
         });
       }
+      doAct = act;
       check();
     }
+    var doAct = null;
     var curPass = "";
     var hasMail = typeof window.__orosOpenAt === "function" && mailReady();
 
@@ -554,6 +615,43 @@
         cache[key] = r.code;
         return r.code;
       });
+    }
+    function imText() { return K.shareLine(env, lang()) + (lockOn ? "\n" + T("mailPass") : ""); }
+    function imSend(id, link) {
+      var s = IM.filter(function (x) { return x.id === id; })[0];
+      if (!s) return;
+      if (s.pub) toast(T("imPost", { n: s.n }));
+      openOut(s.url(imText(), link, mastoHost()));
+    }
+    // Mastodon: the person's own server, asked once.
+    function askMasto(s) {
+      body.textContent = "";
+      var box = el("div");
+      box.appendChild(el("p", "osh-sum", T("mastoQ")));
+      var row = el("div", "osh-pass"), inp = el("input");
+      inp.type = "text";
+      inp.placeholder = T("mastoPh");
+      inp.setAttribute("aria-label", T("mastoQ"));
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.value = mastoHost();
+      row.appendChild(inp);
+      box.appendChild(row);
+      var m = el("div", "osh-msg");
+      m.setAttribute("role", "status");
+      box.appendChild(m);
+      var acts = el("div", "osh-acts");
+      acts.appendChild(btn(T("back"), "", main));
+      acts.appendChild(btn(T("mastoGo"), "prim", function () {
+        var h = inp.value.trim().replace(/^https?:\/\//i, "").replace(/^@?[^@\s]*@/, "").replace(/\/.*$/, "").toLowerCase();
+        if (!HOST_RE.test(h)) { m.className = "osh-msg err"; m.textContent = T("mastoBad"); inp.focus(); return; }
+        try { localStorage.setItem(MASTO_KEY, h); } catch (e) {}
+        main();
+        doAct("im:" + s.id);
+      }));
+      box.appendChild(acts);
+      body.appendChild(box);
+      inp.focus();
     }
     function showQr(link) {
       qrLib().then(function (Q) {

@@ -2,7 +2,8 @@
 // orOS "Send to someone" — share/kinds.js (pure core, v1.0.0)
 // One item (a To-Do list, a note, a contact, an event, a recipe,
 // a few bookmarks, a Calendar's free times, a Wiki article, a whole
-// calendar / date range of the Calendar, or a photo album)
+// calendar / date range of the Calendar, a photo album, or one song
+// from Music)
 // travels INSIDE a link:
 //   https://useoros.online/share/#1.<base64url of deflate-raw JSON>
 //   https://useoros.online/share/#p1.<base64url of salt|iv|AES-GCM>
@@ -29,8 +30,9 @@
 //   isLocked(code)                 → true for a password link
 //   codeFromHash(hash)             → the code in "#…", or ""
 //   summary(env, lang)             → one line ("List "Shop" · 12 items")
+//   shareLine(env, lang)           → the line beside a link in a chat or post
 //   text(env, lang, helpers?)      → plain text of the item
-//   file(env, lang)                → { name, mime, text } (.vcf, .ics, .html, .md, .txt)
+//   file(env, lang)                → { name, mime, text } (.vcf, .ics, .html, .md, .m3u, .txt)
 //   target(env, lang)              → { app, target } for __orosOpenAt
 //   vcard(d) / ics(d) / netscape(d) (the file builders)
 //   slotWhen(d, day, min)          → a free time ("slots") as the
@@ -47,7 +49,7 @@
   "use strict";
 
   var VER = 1;
-  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki", "cal", "album"];
+  var KINDS = ["list", "note", "contact", "event", "recipe", "links", "slots", "wiki", "cal", "album", "track"];
   var RELAY_ONLY = ["album"];
   var MAX_LINK = 32768;          // characters of the code after "#"
   var MAX_JSON = 262144;         // bytes after decompression (bomb guard)
@@ -74,7 +76,9 @@
       slotBody: "Hello{n},\n\nI'd like to take this time:\n{t}\n{w}\n\nThanks!",
       slotZone: "{w} ({z} time)",
       cal: "Calendar", calT: "Calendar", calN: "{n} events", cal1: "1 event", calFrom: "from {d}", calTo: "to {d}",
-      album: "Album", albumT: "Photos", albumN: "{n} photos", album1: "1 photo", photo: "Photo {n}"
+      album: "Album", albumT: "Photos", albumN: "{n} photos", album1: "1 photo", photo: "Photo {n}",
+      track: "Song", trArtist: "Artist", trAlbum: "Album", trLen: "Length", trSrc: "From", trLink: "a link",
+      trOwn: "Only its name came with the link: find it in Music or elsewhere."
     },
     el: {
       list: "Λίστα", note: "Σημείωμα", contact: "Επαφή", event: "Γεγονός", recipe: "Συνταγή", links: "Σύνδεσμοι", wiki: "Άρθρο wiki",
@@ -92,7 +96,9 @@
       slotBody: "Γεια σου{n},\n\nΘα ήθελα να κλείσω αυτή την ώρα:\n{t}\n{w}\n\nΕυχαριστώ!",
       slotZone: "{w} (ώρα {z})",
       cal: "Ημερολόγιο", calT: "Ημερολόγιο", calN: "{n} γεγονότα", cal1: "1 γεγονός", calFrom: "από {d}", calTo: "έως {d}",
-      album: "Άλμπουμ", albumT: "Φωτογραφίες", albumN: "{n} φωτογραφίες", album1: "1 φωτογραφία", photo: "Φωτογραφία {n}"
+      album: "Άλμπουμ", albumT: "Φωτογραφίες", albumN: "{n} φωτογραφίες", album1: "1 φωτογραφία", photo: "Φωτογραφία {n}",
+      track: "Τραγούδι", trArtist: "Καλλιτέχνης", trAlbum: "Άλμπουμ", trLen: "Διάρκεια", trSrc: "Από", trLink: "σύνδεσμο",
+      trOwn: "Ήρθε μόνο το όνομά του: βρες το στη Μουσική ή αλλού."
     }
   };
   // Another language (orOS language packs, ../i18n.js): English
@@ -384,7 +390,56 @@
     if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
     return "";
   }
-  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki, cal: normCal, album: normAlbum };
+  // One song from Music (BR-SHARE-TRACK). s: an open source ("ia"
+  // Internet Archive, "ov" Openverse, "cc" ccMixter, "jm" Jamendo), "ln"
+  // a public link the person added, or "own" (a song from their server
+  // or device: only its name travels, never the server, a login or a
+  // path). The stream (u), cover (art) and page (pg) of an open source
+  // must be https on that source's own hosts; a link (ln) keeps only a
+  // plain https address (no login, no ?query, no #part, where tokens
+  // live). k is Music's key of the song, so "Add to my orOS" finds the
+  // same song; li its licence, cr the credit line, vi Openverse's source.
+  var TRACK_SRC = ["ia", "ov", "cc", "jm", "ln", "own"];
+  var TRACK_NAMES = { ia: "Internet Archive", ov: "Openverse", cc: "ccMixter", jm: "Jamendo" };
+  var OPEN_HOSTS = /(^|\.)(archive\.org|jamendo\.com|ccmixter\.org|openverse\.org|freesound\.org|wikimedia\.org)$/i;
+  var TRACK_LI = /^(cc0|pdm|lma|by(-nc)?(-sa|-nd)?|(nc-)?sampling\+)( \d\.\d)?$/;
+  function httpsOn(v, hosts, plain) {
+    v = line(v, 2048);
+    if (!/^https:\/\//i.test(v)) return "";
+    try {
+      var u = new URL(v);
+      if (u.protocol !== "https:" || u.username || u.password) return "";
+      if (hosts && !hosts.test(u.hostname)) return "";
+      if (plain && (u.search || u.hash)) return "";
+      return u.href.length > 2048 ? "" : u.href;
+    } catch (e) { return ""; }
+  }
+  function normTrack(d) {
+    var t = line(d.t, 200);
+    if (!t) return null;
+    var s = pick(d.s, TRACK_SRC, "own");
+    var o = { t: t, a: line(d.a, 200), s: s };
+    var al = line(d.al, 200);
+    if (al) o.al = al;
+    if (typeof d.y === "string" && /^\d{4}$/.test(d.y)) o.y = d.y;
+    var len = num(d.d, 1, 359999);
+    if (len !== null) o.d = Math.round(len);
+    if (s === "own") return o;
+    var open = s !== "ln";
+    var u = httpsOn(d.u, open ? OPEN_HOSTS : null, !open);
+    if (u) o.u = u;
+    if (typeof d.k === "string" && d.k.length <= 44 && d.k.indexOf(s + ":") === 0 && /^[a-z]{1,3}:[0-9a-z]{6,40}$/.test(d.k)) o.k = d.k;
+    if (!open) return o;
+    var pg = httpsOn(d.pg, OPEN_HOSTS), art = httpsOn(d.art, OPEN_HOSTS);
+    if (pg) o.pg = pg;
+    if (art) o.art = art;
+    if (typeof d.li === "string" && TRACK_LI.test(d.li)) o.li = d.li;
+    if (typeof d.vi === "string" && /^[a-z_]{1,30}$/.test(d.vi)) o.vi = d.vi;
+    var cr = line(d.cr, 600);
+    if (cr) o.cr = cr;
+    return o;
+  }
+  var NORM = { list: normList, note: normNote, contact: normContact, event: normEvent, recipe: normRecipe, links: normLinks, slots: normSlots, wiki: normWiki, cal: normCal, album: normAlbum, track: normTrack };
   function norm(kind, data) {
     if (!NORM[kind] || !data || typeof data !== "object" || Array.isArray(data)) return null;
     try { return NORM[kind](data); } catch (e) { return null; }
@@ -575,7 +630,22 @@
     }
     if (env.k === "album") return s.album + " \u00ab" + name + "\u00bb \u00b7 " + (d.p.length === 1 ? s.album1 : fill(s.albumN, { n: d.p.length }));
     if (env.k === "cal") return s.cal + " \u00ab" + name + "\u00bb \u00b7 " + (d.ev.length === 1 ? s.cal1 : fill(s.calN, { n: d.ev.length }));
+    if (env.k === "track") return s.track + " \u00ab" + name + "\u00bb" + (d.a ? " \u00b7 " + d.a : "");
     return s[env.k] + " \u00ab" + name + "\u00bb";
+  }
+  // The line that goes with a link into a chat or a post: a song as
+  // "🎵 Title · Artist", anything else as its summary.
+  function shareLine(env, lang) {
+    if (env.k === "track") return "\ud83c\udfb5 " + env.d.t + (env.d.a ? " \u00b7 " + env.d.a : "");
+    return summary(env, lang);
+  }
+  function fmtLen(sec) {
+    var m = Math.floor(sec / 60), x = sec % 60;
+    return m >= 60 ? Math.floor(m / 60) + ":" + ("0" + (m % 60)).slice(-2) + ":" + ("0" + x).slice(-2) : m + ":" + ("0" + x).slice(-2);
+  }
+  function trackSource(d, lang) {
+    if (d.s === "ln") return L(lang).trLink;
+    return TRACK_NAMES[d.s] || "";
   }
   // "from 1 Nov 2026 to 31 Dec 2026", "" for a whole calendar.
   function calRange(d, lang) {
@@ -654,6 +724,13 @@
             (e.l ? " \u00b7 " + e.l : ""));
         });
       if (d.tz) out.push("", "(" + d.tz + ")");
+    } else if (env.k === "track") {
+      if (d.a) out.push(s.trArtist + ": " + d.a);
+      if (d.al) out.push(s.trAlbum + ": " + d.al + (d.y ? " (" + d.y + ")" : ""));
+      if (d.d) out.push(s.trLen + ": " + fmtLen(d.d));
+      if (d.cr) out.push("", d.cr);
+      else if (d.pg) out.push("", d.pg);
+      if (d.u && d.s === "ln") out.push("", d.u);
     } else if (env.k === "links") {
       out.push("");
       d.i.forEach(function (it) {
@@ -773,6 +850,11 @@
     out.push("    </DL><p>", "</DL><p>");
     return out.join("\n") + "\n";
   }
+  // A one-song playlist any player opens (the stream address only).
+  function m3u(d) {
+    var n = (d.a ? d.a + " - " : "") + d.t;
+    return "#EXTM3U\n#EXTINF:" + (d.d || -1) + "," + n.replace(/[\r\n]/g, " ") + "\n" + d.u + "\n";
+  }
   function fileName(s, ext) {
     var b = String(s || "").replace(/[\\\/:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
     return (b || "orOS") + ext;
@@ -784,6 +866,7 @@
     if (env.k === "links") return { name: fileName(name, ".html"), mime: "text/html;charset=utf-8", text: netscape(env.d, lang) };
     if (env.k === "cal") return { name: fileName(name, ".ics"), mime: "text/calendar;charset=utf-8", text: calIcs(env.d, lang) };
     if (env.k === "wiki") return { name: fileName(name, ".md"), mime: "text/markdown;charset=utf-8", text: "# " + env.d.t + "\n\n" + env.d.x + "\n" };
+    if (env.k === "track" && env.d.u) return { name: fileName(name, ".m3u"), mime: "audio/x-mpegurl;charset=utf-8", text: m3u(env.d) };
     return { name: fileName(name, ".txt"), mime: "text/plain;charset=utf-8", text: text(env, lang) + "\n" };
   }
 
@@ -807,6 +890,17 @@
     if (env.k === "wiki") return { app: "wiki", target: { addArticle: { t: d.t, x: d.x } } };
     if (env.k === "slots") return null;          // a time is picked on the page first (slotEvent)
     if (env.k === "album") return null;          // photos are saved one by one on the page
+    if (env.k === "track") {
+      // A song with its stream and key: Music asks Play / Like / Add to a
+      // playlist. Without them (a song from someone's own server or
+      // device): Music's search, typed in.
+      if (d.u && d.k) {
+        var ref = { k: d.k, t: d.t, a: d.a, s: d.s, u: d.u };
+        ["al", "d", "pg", "art", "li", "vi"].forEach(function (f) { if (d[f]) ref[f] = d[f]; });
+        return { app: "music", target: { addRef: { ref: ref } } };
+      }
+      return { app: "music", target: { findSong: { q: (d.a ? d.a + " " : "") + d.t } } };
+    }
     if (d.i.length === 1) return { app: "bookmarks", target: { add: { url: d.i[0].u, title: d.i[0].t } } };
     return { app: "bookmarks", target: { addMany: { folder: d.t || s.sharedLinks, items: d.i.map(function (it) { return { url: it.u, title: it.t }; }) } } };
   }
@@ -877,7 +971,7 @@
   var api = {
     VER: VER, KINDS: KINDS, RELAY_ONLY: RELAY_ONLY, photoType: photoType, MAX_LINK: MAX_LINK, MAX_JSON: MAX_JSON, ITER: ITER,
     norm: norm, pack: pack, encode: encode, decode: decode, isLocked: isLocked, codeFromHash: codeFromHash,
-    summary: summary, title: titleOf, text: text, file: file, target: target,
+    summary: summary, shareLine: shareLine, trackSource: trackSource, fmtLen: fmtLen, title: titleOf, text: text, file: file, target: target,
     whenText: whenText, repeatText: repeatText, addrText: addrText, contactName: contactName,
     vcard: vcard, ics: ics, calIcs: calIcs, calRange: calRange, fmtDate: fmtDate, netscape: netscape, strings: L, resetPacks: resetPacks, locale: locOf,
     slotWhen: slotWhen, slotEvent: slotEvent, slotMail: slotMail, hm: hmOf

@@ -76,6 +76,12 @@ In the full player, the button with the screen-and-waves icon (`Play on…`) cho
 - **Smart TV or network speaker (DLNA):** with [orOS Bridge](https://useoros.online/download/) 0.10.0 or newer running on a Windows or Linux computer at home, the same window lists the smart TVs, Kodi boxes and network speakers on your network. The first time, `Connect to orOS Bridge` asks for the 6-digit code the bridge shows (Studio and Scanner & PDF use the same pairing). Choose a device and it plays; the window then has pause, volume and `Back to this device`. The device fetches the stream itself, so only http and https addresses go. `Search again` looks once more.
 The device gets the song's own https address, so free music and songs from your own servers can go; songs on your orOS disk and offline copies play only on this device. While a TV or speaker plays, Music here stays quiet and works as its remote: next, previous or another song is sent to it.
 
+## Share a song
+`Share…` in a song's ⋯ menu, or the share button at the top of the full player, sends the song with [Send to someone](help:t/share): your phone's share menu (WhatsApp, Viber, Messenger and so on), a link, a QR code, or the `Send with` buttons.
+- A song from free music (Internet Archive, Jamendo, ccMixter, Openverse) or a public link goes with its address, cover, licence and credit, so it plays on the page the other person opens, even without orOS. `Add to my orOS` there lets them play it, like it or add it to a playlist.
+- A song from your own server goes with its name only: the server's address and your login never leave your device.
+- A song on this device asks each time: send its name as a link, or the file itself through the share menu (where the device can send files, up to 100 MB). Send a file only if it is yours to give.
+
 ## Sleep timer
 `Sleep timer` in the full player stops the music after 5 to 90 minutes, or at the end of the playing song. The last ten seconds fade out. The button shows how long is left; choose `Turn off the timer` to cancel it.
 
