@@ -74,12 +74,15 @@ Pick the decks, and type a battle code to play the same board and shuffle again,
 
 When it ends you see whether you won, the turn it ended on, what was left of your Keep and your streak of won days. `Share` copies a line without spoilers: five squares for your Keep and the turn. The Daily battle also appears in the [Game Center](help:a/gamecenter) under Today's dailies. Daily battles do not count in the computer levels in `Records`; they have their own line there.
 
+## March
+`March` (the flag button) is eight battles in a row against the computer, each one stronger: three on Easy, three on Medium, then two on Hard. Pick a starting deck. After each win you choose 1 of 3 cards to add to your deck, or remove one card, or keep the deck as it is (a deck stays between 15 and 30 cards). One loss ends the march. Leaving a march battle before its end, or starting another battle, counts as a loss. A march carries on across battles on this device, and `Records` shows your marches and your best one.
+
 ## Undo and keys
 `Undo` (or [[Z]]) takes back what you did in this turn, step by step, until you end it.
 
 Keys: [[1]] to [[6]] pick a card from your hand. On the board, the arrow keys move the cursor, [[Enter]] acts on the tile under it, and [[I]] reads it. [[Esc]] lets go of the chosen card or unit.
 
 ## Records and sync
-`Records` shows your battles and wins against each computer level, and your two-player battles. They sync between your devices through [orOS sync](help:t/sync), adding up the battles from every device, and they count in the [Game Center](help:a/gamecenter). The battle in progress and the sound setting stay on this device, and an unfinished battle continues where you left it. `Reset records` clears the records on every device.
+`Records` shows your battles and wins against each computer level, your two-player battles and your marches. `Last battles` lists your 10 most recent battles with their codes, and `Replay` plays one again (a March battle replays as a free battle with the starting decks). They sync between your devices through [orOS sync](help:t/sync), adding up the battles from every device, and they count in the [Game Center](help:a/gamecenter). The battle in progress and the sound setting stay on this device, and an unfinished battle continues where you left it. `Reset records` clears the records on every device.
 
 Banner is an original game: its rules, cards and drawings are made for orOS.
