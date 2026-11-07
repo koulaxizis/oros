@@ -608,7 +608,14 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 
 /* Import from Stripe (budget/payments.js) */
 #menu button[hidden] { display: none; }
-#bd-pay .pay-msg { margin-top: 10px; }
+#bd-pay .pay-msg, #bd-shop .pay-msg { margin-top: 10px; }
+#bd-shop .pay-msg p { margin: 6px 0 0; overflow-wrap: anywhere; }
+#bd-shop .pay-plan { font-weight: 600; font-size: 14px; }
+#bd-shop .pay-hint { font-size: 13px; color: var(--text-dim, inherit); line-height: 1.4; margin: 0 0 10px; }
+#bd-shop .shop-acct { margin: 0 0 8px; }
+#bd-shop .shop-chk { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; overflow-wrap: anywhere; }
+#bd-shop .shop-chk input { width: 20px; height: 20px; flex: none; margin: 0; }
+#bd-shop .shop-st { margin: 0 0 0 28px; }
 #bd-pay .pay-msg p { margin: 6px 0 0; overflow-wrap: anywhere; }
 #bd-pay .pay-plan { font-weight: 600; }
 #bd-pay .pay-hint { font-size: 13px; color: var(--text-dim, inherit); line-height: 1.4; margin: 0 0 10px; }

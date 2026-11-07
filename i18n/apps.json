@@ -98,6 +98,7 @@
     "budget/payments.js",
     "budget/planui.js",
     "budget/search.js",
+    "budget/shop.js",
     "budget/today.js"
    ]
   },

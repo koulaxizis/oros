@@ -63,7 +63,7 @@
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
         { k: "cs", re: /^cs_[a-f0-9]{40}$/ }
       ],
-      apps: ["stock", "newsletter", "publish"],
+      apps: ["stock", "newsletter", "publish", "budget"],
       probe: "/products?per_page=1"
     },
     // timologisi.online (Novus Conceptus): a Greek e-invoicing provider.

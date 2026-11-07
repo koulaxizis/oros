@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.54.00
+- **Budget: shop records.** If your WooCommerce shop runs Production Ledger, `More` › `Shop records` keeps its paid orders as income and its costs as expenses here by themselves, VAT included, and checks every month's totals against the shop's to the cent. A cancelled order leaves by itself. When you then import a bank statement, the bank's lines for the same money (a transfer for an order, a payout from Viva, Stripe, PayPal or the courier) are marked as already here, so nothing is counted twice.
+
 ## Version 5.53.00
 - **Realm: Island editor.** Draw your own island: paint sea, land and thicket, mark where each side starts, then play it against the computer or with friends. Every drawn island has a short code you can copy or share, and anyone can play it by typing the code in New game.
 
