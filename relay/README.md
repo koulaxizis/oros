@@ -742,8 +742,8 @@ the op answers 503 `nohook` and `/wh/` answers 503. Tests:
 
 ## orOS Gate (`/mcp`, `/gate/`)
 
-Claude reads a person's orOS through their own open orOS, read-only in
-phase 1. The person adds `https://<this worker>/mcp` as a custom
+Claude reads a person's orOS through their own open orOS and, inside a
+write window the person opens there, changes Budget. The person adds `https://<this worker>/mcp` as a custom
 connector in claude.ai; nothing else is configured here. Contract:
 OROS_BIBLE.md, BR-GATE.
 
@@ -766,9 +766,17 @@ counter. No orOS data, no request or answer, nothing logged.
   `refresh_token` rotates); `POST /mcp` (Bearer `<id>.<secret>`; 401
   with `WWW-Authenticate: Bearer resource_metadata=…` otherwise).
 - **MCP:** JSON-RPC 2.0, `initialize`, `ping`, `tools/list`,
-  `tools/call`, notifications get 202. Tools: `list_apps`,
-  `search_data`, `app_summary`, `budget_lines` (all `readOnlyHint`).
-  The relay only describes them; the device checks every call again.
+  `tools/call`, notifications get 202. Read tools (`readOnlyHint`):
+  `list_apps`, `search_data`, `app_summary`, `budget_lines`,
+  `invoice_list`, `stock_items`, `publish_titles`; change tools:
+  `budget_add`, `budget_change`, `budget_delete` (destructive). The
+  relay only describes them; the device checks every call again (the
+  app's level, the write window, the lock) and asks the person itself
+  before more than 5 deletions.
+- **Whose relay:** everyone on useoros.online uses this one, each with
+  their own box. A person whose Mail is set up with their own relay
+  gets their gate there (deploy this Worker, `ALLOWED_ORIGINS` with the
+  orOS address they use).
 - **From orOS only** (allowed origins): `POST /gate/dev` `{ act: new |
   code | revoke | info | del }` with the device token, and `GET
   /gate/ws/<id>` with the subprotocols `gt1` and `t.<token>`. One socket
