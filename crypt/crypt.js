@@ -13,11 +13,15 @@
 //   - the backpack: drag or tap to place, rotate, take out, use
 //   - quick slots for the first four runes, potions and scrolls
 //   - a short "How to play" on the first run
+//   - Daily crypt (W2): the same five floors for everyone each day
+//     (gamekit/daily.js), Gentle, one life, one try; result, streak
+//     and a spoiler-free share line
 // Data:
 //   - synced slice "crypt" (oros-crypt-data): runs, wins and the
 //     deepest floor per mode as per-device counter rows (each device
 //     only grows its own row; merge = per-row max, a join) + reset
-//     stamp br (same pattern as Realm)
+//     stamp br (same pattern as Realm) + one Daily crypt result per
+//     day (newer epoch wins, equal epochs the better one)
 //   - device-local (R10): oros-crypt-prefs (mode, tour seen),
 //     oros-crypt-session (the run in progress, its save point),
 //     oros-crypt-device (counter row id), oros-crypt-sfx (sound)
@@ -47,6 +51,10 @@
   var SFX_KEY     = "oros-crypt-sfx";
   var DATA_VER    = 1;
   var MODES = E.MODES;                 // g Gentle, r Grim
+  var DK = window.orosDaily || null;  // gamekit/daily.js (Daily crypt)
+  var DAILY_END = 5;                   // the Daily crypt: floors 1–5, Gentle, one life
+  var MAX_DAY = 100000;
+  var MAX_TURNS = 99999;
   var STEP_MS = 70;                    // one step of a walk
   var PACK_UNDO = 40;
 
@@ -137,6 +145,20 @@
       "res.back": "Back to floor {n}", "res.same": "Same crypt again", "res.new": "New run",
       "stats.title": "Records", "stats.head": "Runs · won · deepest floor", "stats.reset": "Reset records",
       "stats.close": "Close", "stats.code": "This crypt: {seed}",
+      "btn.daily": "Daily crypt", "daily.label": "Daily",
+      "daily.title": "Daily crypt #{n}", "daily.floor": "Daily #{n} · floor {f}/{e}",
+      "daily.won": "Out in {t} turns", "daily.lost": "Fell on floor {f}",
+      "daily.turns": "Turns", "daily.streak": "Streak", "daily.best": "Best streak",
+      "daily.oneTry": "The daily crypt has one try.", "daily.next": "A new crypt tomorrow.",
+      "daily.free": "Free run", "daily.share": "Share", "daily.games": "All games",
+      "daily.rules": "Five floors, Gentle, one life: reach the stairs on floor 5.",
+      "daily.leave": "Leave today's crypt? It counts as your one try.",
+      "daily.leaveYes": "Leave it", "daily.leaveNo": "Keep playing",
+      "stats.daily": "Daily crypt", "stats.dailyRow": "Played · out · streak · best",
+      "share.won": "Out in {t} turns", "share.lost": "Fell on floor {f}",
+      "toast.dailyGone": "The daily crypt needs the gamekit file: reload orOS",
+      "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared",
+      "toast.copyFail": "Could not copy",
       "confirm.reset": "Reset your Crypt records on all your devices?", "confirm.yes": "Reset", "confirm.no": "Cancel",
       "toast.reset": "Records reset", "toast.save": "Could not save: storage is full",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
@@ -222,6 +244,20 @@
       "res.back": "Πίσω στον όροφο {n}", "res.same": "Ίδια κρύπτη ξανά", "res.new": "Νέα κάθοδος",
       "stats.title": "Ρεκόρ", "stats.head": "Κάθοδοι · νίκες · βαθύτερος όροφος", "stats.reset": "Μηδενισμός ρεκόρ",
       "stats.close": "Κλείσιμο", "stats.code": "Αυτή η κρύπτη: {seed}",
+      "btn.daily": "Κρύπτη της ημέρας", "daily.label": "Ημέρας",
+      "daily.title": "Κρύπτη της ημέρας #{n}", "daily.floor": "Ημέρας #{n} · όροφος {f}/{e}",
+      "daily.won": "Βγήκες σε {t} γύρους", "daily.lost": "Έπεσες στον όροφο {f}",
+      "daily.turns": "Γύροι", "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
+      "daily.oneTry": "Η κρύπτη της ημέρας παίζεται μία φορά.", "daily.next": "Νέα κρύπτη αύριο.",
+      "daily.free": "Ελεύθερη κάθοδος", "daily.share": "Κοινοποίηση", "daily.games": "Όλα τα παιχνίδια",
+      "daily.rules": "Πέντε όροφοι, Ήπιο, μία ζωή: φτάσε στη σκάλα του ορόφου 5.",
+      "daily.leave": "Να αφήσεις τη σημερινή κρύπτη; Μετρά ως η μία σου προσπάθεια.",
+      "daily.leaveYes": "Άφησέ την", "daily.leaveNo": "Συνέχισε",
+      "stats.daily": "Κρύπτη της ημέρας", "stats.dailyRow": "Κάθοδοι · έξοδοι · σερί · καλύτερο",
+      "share.won": "Βγήκα σε {t} γύρους", "share.lost": "Έπεσα στον όροφο {f}",
+      "toast.dailyGone": "Η κρύπτη της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
+      "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε",
+      "toast.copyFail": "Δεν αντιγράφηκε",
       "confirm.reset": "Να μηδενιστούν τα ρεκόρ της Κρύπτης σε όλες τις συσκευές σου;", "confirm.yes": "Μηδενισμός", "confirm.no": "Άκυρο",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
@@ -280,7 +316,23 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  // days (5.55.00, older data has none): one Daily crypt per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
+  // { "<day>": { b, w: 1 out | 0 fell, f: floor reached, t: turns } }.
+  // The newer epoch wins; equal epochs keep the better result (out,
+  // then deeper, then fewer turns: a total order, so a join).
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {} }; }
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.f) || v.f < 1 || v.f > E.FLOORS || !isInt(v.t) || v.t < 1 || v.t > MAX_TURNS) return null;
+    return { b: v.b, w: v.w, f: v.f, t: v.t };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  function dayBetter(a, c) {
+    if (a.w !== c.w) return a.w > c.w;
+    if (a.f !== c.f) return a.f > c.f;
+    return a.t < c.t;
+  }
   function normRow(row) {
     if (!row || typeof row !== "object" || !isInt(row.b) || row.b < 0) return null;
     var s = {}, any = false;
@@ -323,7 +375,20 @@
       MODES.forEach(function (k) { if (r.s[k]) s[k] = r.s[k].slice(); });
       sorted[id] = { b: r.b, s: s };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!dayKeyOk(k)) return;
+        var v = normDay(m[k]);
+        if (!v || v.b < br) return;
+        var cur = days[+k];
+        if (!cur || v.b > cur.b || (v.b === cur.b && dayBetter(v, cur))) days[+k] = v;
+      });
+    });
+    var sd = {};
+    Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd };
   }
   // [runs, won, deepest] for a mode, all devices.
   function totals(mode) {
@@ -368,7 +433,9 @@
     }
   }
   // what: "run" (a run ended), "win" (a run won), "deep" (reached floor n)
+  // A Daily crypt run counts only in days, never in the mode rows.
   function count(mode, what, n) {
+    if (game && game.opts.day !== undefined) return;
     var row = data.rows[deviceId];
     if (!row || row.b < data.br) row = { b: data.br, s: {} };
     row = { b: row.b, s: JSON.parse(JSON.stringify(row.s)) };
@@ -378,6 +445,25 @@
     else if (what === "deep") { if (n <= v[2]) return; v[2] = n; }
     row.s[mode] = v;
     data.rows[deviceId] = row;
+    data = mergeCrypt(data, data);
+    save();
+  }
+
+  // Daily results: crypts played and escaped, the current and best
+  // streak of escaped days.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0;
+    Object.keys(data.days).forEach(function (k) {
+      n++;
+      if (data.days[k].w) { on[k] = true; w++; }
+    });
+    var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: s2.cur, best: s2.best };
+  }
+  // One try a day: the first result counts.
+  function countDaily(day, won, floor, turns) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    data.days[day] = { b: data.br, w: won ? 1 : 0, f: clamp(floor, 1, E.FLOORS), t: clamp(turns, 1, MAX_TURNS) };
     data = mergeCrypt(data, data);
     save();
   }
@@ -410,6 +496,8 @@
     if (!s || typeof s !== "object" || !E.valid(s.g)) return false;
     var o = s.opts;
     if (!o || MODES.indexOf(o.mode) < 0 || typeof o.seed !== "string" || o.mode !== s.g.mode) return false;
+    if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.end !== DAILY_END || o.mode !== "g" || s.cp)) return false;
+    if (o.day === undefined && s.g.end !== undefined) return false;
     if (s.cp !== null && s.cp !== undefined && (!E.valid(s.cp) || s.cp.seed !== s.g.seed || s.cp.over >= 0)) return false;
     return true;
   }
@@ -443,10 +531,22 @@
 
   function inProgressOf(g) { return !!(g && !g.done && g.g.over < 0 && g.g.turn > 0); }
   function makeGame(opts) {
-    return { g: E.newRun(opts.seed, opts.mode), opts: { mode: opts.mode, seed: opts.seed }, cp: null, counted: false, done: false };
+    var daily = opts.day !== undefined;
+    var o = { mode: opts.mode, seed: opts.seed };
+    if (daily) o.day = opts.day;
+    return { g: E.newRun(opts.seed, opts.mode, daily ? DAILY_END : undefined), opts: o, cp: null, counted: false, done: false };
+  }
+  // A Daily crypt left before its end counts as a fall where it was.
+  function leaveDaily() {
+    if (game && game.opts.day !== undefined && !game.done && st.over < 0 && st.turn > 0) {
+      countDaily(game.opts.day, false, st.floor, st.turn);
+      game.done = true;
+      game.counted = true;
+    }
   }
   function startGame(opts) {
     stopWalk();
+    leaveDaily();
     if (game && inProgressOf(game) && !game.counted) count(game.opts.mode, "run");
     game = makeGame(opts);
     st = game.g;
@@ -470,7 +570,7 @@
     handleEvents(ev);
     if (st.floor !== before) {
       count(game.opts.mode, "deep", st.floor);
-      if (game.opts.mode === "g" && E.CHECKPOINTS.indexOf(st.floor) >= 0) {
+      if (game.opts.mode === "g" && game.opts.day === undefined && E.CHECKPOINTS.indexOf(st.floor) >= 0) {
         game.cp = E.clone(st);
         toastLine(t("ev.save", { n: st.floor }));
       }
@@ -511,6 +611,7 @@
   }
   function finish() {
     stopWalk();
+    if (game.opts.day !== undefined) countDaily(game.opts.day, st.over === 1, st.floor, st.turn);
     if (st.over === 1) {
       if (!game.counted) { count(game.opts.mode, "win"); game.counted = true; }
       game.done = true;
@@ -1013,12 +1114,18 @@
     $("s-def").classList.toggle("warded", !!h.wd);
     $("s-fo").querySelector(".v").textContent = h.fo + "/" + s.mfo;
     $("s-fo").title = t("st.fo", { n: h.fo, m: s.mfo });
-    $("s-floor").querySelector(".v").textContent = (cw < 400 ? t("st.floorShort", { n: st.floor }) : t("st.floor", { n: st.floor }));
-    $("s-floor").title = t("st.floor", { n: st.floor });
+    var dly = game && game.opts.day !== undefined;
+    $("s-floor").querySelector(".v").textContent = dly ? st.floor + "/" + DAILY_END :
+      (cw < 400 ? t("st.floorShort", { n: st.floor }) : t("st.floor", { n: st.floor }));
+    $("s-floor").title = dly ? t("daily.floor", { n: game.opts.day + 1, f: st.floor, e: DAILY_END }) : t("st.floor", { n: st.floor });
     $("s-gold").querySelector(".v").textContent = h.gold;
     $("s-gold").title = t("st.gold", { n: h.gold });
     ["s-atk", "s-def", "s-fo", "s-floor", "s-gold"].forEach(function (id) { $(id).setAttribute("aria-label", $(id).title); });
     $("wait-btn").disabled = !game || game.done || st.over >= 0;
+    var db = $("daily-btn");
+    db.hidden = !DK;
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", dly && !game.done);
   }
   function slotIcon(span, ty) {
     span.innerHTML = "";
@@ -1129,6 +1236,12 @@
   function newDialog() {
     cancelTourWait();
     stopWalk();
+    // Today's crypt under way: leaving it uses the one try.
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      confirmDialog(t("daily.leave"), function () { leaveDaily(); saveSession(); renderAll(); newDialog(); },
+        t("daily.leaveYes"), t("daily.leaveNo"));
+      return;
+    }
     var o = { mode: prefs.mode };
     var dlg = makeDialog("cr-new");
     dlg.appendChild(el("div", "dlg-title", t("new.title")));
@@ -1436,6 +1549,7 @@
 
   function resultDialog() {
     if (!game || st.over < 0) return;
+    if (game.opts.day !== undefined && data.days[game.opts.day]) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("cr-result");
     var won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("mode." + game.opts.mode)));
@@ -1478,8 +1592,13 @@
       if (v[0] + v[2]) empty = false;
       dlg.appendChild(row(t("mode." + m), v[0] + " · " + v[1] + " · " + (v[2] || "–")));
     });
-    if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
-    var acts = el("div", "dlg-actions");
+    var ds = dailyStats(today());
+    if (ds.n) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
       confirmDialog(t("confirm.reset"), resetRecords);
@@ -1493,13 +1612,69 @@
     dlg.showModal();
     close.focus();
   }
-  function confirmDialog(msg, onYes) {
+  // ---------- Daily crypt ----------
+  function today() { return DK ? DK.today() : 0; }
+  function dailyOpts(day) { return { mode: "g", seed: cleanSeed(DK.seedOf("crypt", day)), day: day }; }
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's crypt (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d); return; }
+    if (game && game.opts.day === d && !game.done) return;
+    startGame(dailyOpts(d));
+    toastLine(t("daily.rules"));
+    live(t("daily.rules"));
+  }
+  function dailyDialog(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var s2 = dailyStats(today());
+    var dlg = makeDialog("cr-daily");
+    dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), r.w ? t("daily.won", { t: r.t }) : t("daily.lost", { f: r.f })));
+    dlg.appendChild(row(t("daily.turns"), String(r.t)));
+    dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
+    dlg.appendChild(row(t("daily.best"), String(s2.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-note", t("daily.oneTry") + " " + t("daily.next")));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
+    acts.appendChild(button(t("daily.share"), "", function () { shareDaily(day); }));
+    var free = button(t("daily.free"), "primary", function () { dlg.close(); newDialog(); });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+    free.focus();
+  }
+  // Spoiler-free: out or not, the floors reached as five squares and
+  // the turns. Never what was where.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var sq = "";
+    for (var k = 1; k <= DAILY_END; k++) sq += k < r.f || (k === r.f && r.w) ? "🟪" : (k === r.f ? "🟥" : "⬜");
+    var text = DK.shareText({ game: t("app.name"), label: t("daily.label"), day: day, grid: [sq],
+      line: r.w ? "🗝 " + t("share.won", { t: r.t }) : "💀 " + t("share.lost", { f: r.f }) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(acts, dlg) {
+    if (!DK || !DK.hasHub()) return;
+    acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("crypt"); }));
+  }
+
+  function confirmDialog(msg, onYes, yesLabel, noLabel) {
     var dlg = makeDialog("cr-confirm");
     dlg.appendChild(el("div", "dlg-msg", msg));
     var acts = el("div", "dlg-actions");
-    var no = button(t("confirm.no"), "", function () { dlg.close(); });
+    var no = button(noLabel || t("confirm.no"), "", function () { dlg.close(); });
     acts.appendChild(no);
-    acts.appendChild(button(t("confirm.yes"), "danger", function () { dlg.close(); onYes(); }));
+    acts.appendChild(button(yesLabel || t("confirm.yes"), "danger", function () { dlg.close(); onYes(); }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
     dlg.showModal();
@@ -1615,6 +1790,7 @@
   var UI_ICONS = {
     new:    SVG + '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     wait:   SVG + '<path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9"/></svg>',
+    daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M9 20v-4a3 3 0 0 1 6 0v4"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1709,7 +1885,7 @@
   }
   function paintStatic() {
     [["new-btn", "new", "btn.new"], ["wait-btn", "wait", "btn.wait"], ["stats-btn", "stats", "btn.stats"],
-     ["zin-btn", "zin", "btn.zoomIn"], ["zout-btn", "zout", "btn.zoomOut"]
+     ["daily-btn", "daily", "btn.daily"], ["zin-btn", "zin", "btn.zoomIn"], ["zout-btn", "zout", "btn.zoomOut"]
     ].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
@@ -1726,6 +1902,9 @@
     $("wait-btn").addEventListener("click", waitTurn);
     $("pack-btn").addEventListener("click", packDialog);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's crypt.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("zin-btn").addEventListener("click", function () { zoomBy(1.2); });
     $("zout-btn").addEventListener("click", function () { zoomBy(1 / 1.2); });
     $("sfx-btn").addEventListener("click", function () {
@@ -1739,6 +1918,7 @@
     // Save on the way out (R10 session).
     document.addEventListener("visibilitychange", function () {
       if (document.hidden && game) { stopWalk(); saveSession(); }
+      if (!document.hidden && game) renderStatus();   // the Daily dot after midnight
     });
     window.addEventListener("pagehide", function () { if (game) saveSession(); });
   }
@@ -1756,12 +1936,18 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
+    var tg = DK ? DK.takeTarget("crypt") : null;
+    var daily = !!(tg && tg.daily && DK);
+    if (daily && !data.days[today()] && !(game && game.opts.day === today() && !game.done)) {
+      if (!game || !inProgressOf(game)) { game = makeGame(dailyOpts(today())); daily = false; }
+    }
     if (!game) game = makeGame({ mode: prefs.mode, seed: newSeed() });
     st = game.g;
     saveSession();
     fitView();
     renderAll();
-    if (st.over >= 0) setTimeout(resultDialog, 300);
+    if (daily) setTimeout(openDaily, 300);
+    else if (st.over >= 0) setTimeout(resultDialog, 300);
     else maybeTour();
   }
 

@@ -462,3 +462,16 @@ dialog.mm-dlg.pass::backdrop { background: var(--bg); }
 }
 
 [hidden] { display: none !important; }
+/* Daily crypt: a dot while today's crypt is not played; lit while playing it */
+#daily-btn { position: relative; }
+#daily-btn.due::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#daily-btn.on { color: var(--accent); border-color: var(--accent); }

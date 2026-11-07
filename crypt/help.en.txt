@@ -81,6 +81,11 @@ Monsters sleep until they see you (closed eyes), and they get a little stronger 
 
 Every crypt has a code, shown in the result window and in `Records`. Type a code in `New run` to go down the same crypt again: the same floors, chests and monsters. Leave it empty for a new crypt.
 
+## Daily crypt
+The calendar button (with a dot while today's crypt is not played yet) opens the Daily crypt: the same short crypt for everyone that day. It has five floors, Gentle Health and a potion to start, no save points and one life. Reach the stairs on floor 5 to get out; no key is needed. There is one try a day: leaving it for a new run counts as a fall where you were.
+
+When it ends you see whether you got out, the turns, and your streak of days you got out. `Share` copies a line without spoilers: five squares for the floors and your turns. The Daily crypt also appears in the [Game Center](help:a/gamecenter) under Today's dailies. Daily runs do not count in the Gentle and Grim records; they have their own line in `Records`.
+
 ## Records and sync
 `Records` shows your runs, wins and the deepest floor you reached in each mode. They sync between your devices through [orOS sync](help:t/sync), adding up the runs from every device, and they count in the [Game Center](help:a/gamecenter). The run in progress, its save point and the sound setting stay on this device, and an unfinished run continues where you left it. `Reset records` clears the records on every device.
 

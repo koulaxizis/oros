@@ -81,6 +81,11 @@ Monster schlafen, bis sie dich sehen (geschlossene Augen), und werden alle drei 
 
 Jede Gruft hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neuer Abstieg` einen Code ein, um dieselbe Gruft noch einmal hinabzusteigen, mit denselben Ebenen, Truhen und Monstern. Lass das Feld leer für eine neue Gruft.
 
+## Gruft des Tages
+Die Kalendertaste (mit einem Punkt, solange du die heutige Gruft noch nicht gespielt hast) öffnet die Gruft des Tages: an diesem Tag für alle dieselbe kurze Gruft. Sie hat fünf Ebenen, das Leben von `Sanft` und einen Trank zum Start, keine Speicherpunkte und ein Leben. Erreiche die Treppe auf Ebene 5, um hinauszukommen; ein Schlüssel ist nicht nötig. Es gibt einen Versuch am Tag: Verlässt du sie für einen neuen Abstieg, zählt das als Sturz dort, wo du warst.
+
+Am Ende siehst du, ob du hinausgekommen bist, die Runden und deine Serie von Tagen, an denen du hinauskamst. `Teilen` kopiert eine Zeile ohne Spoiler: fünf Quadrate für die Ebenen und deine Runden. Die Gruft des Tages steht auch im [Game Center](help:a/gamecenter) unter den heutigen Tagesrätseln. Abstiege des Tages zählen nicht in der Bilanz von `Sanft` und `Gnadenlos`; sie haben eine eigene Zeile in der `Bilanz`.
+
 ## Bilanz und Synchronisierung
 Die `Bilanz` zeigt deine Abstiege, Siege und die tiefste erreichte Ebene in jedem Modus. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen und zählt die Abstiege aller Geräte zusammen. Sie zählt auch im [Game Center](help:a/gamecenter). Der laufende Abstieg, sein Speicherpunkt und die Toneinstellung bleiben auf diesem Gerät, und ein unfertiger Abstieg geht dort weiter, wo du aufgehört hast. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
 

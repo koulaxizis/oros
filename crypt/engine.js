@@ -404,12 +404,15 @@
   }
 
   // ---------- New run ----------
-  function newRun(seed, mode) {
+  // end: the last floor (the Daily crypt is a short descent, 5.55.00);
+  // a run with a short end is won on that floor's stairs, no key needed.
+  function newRun(seed, mode, end) {
     mode = MODES.indexOf(mode) >= 0 ? mode : "g";
     var st = { v: 1, seed: String(seed || "crypt").slice(0, 64), mode: mode, floor: 0, W: W, H: H,
       map: "", seen: "", traps: [], chests: [], gold: [], loot: [], mons: [],
       hero: { i: 0, hp: 0, fo: 0, gold: 0, key: 0, wd: 0, kills: 0 },
       pack: { w: 6, h: 4, it: [] }, turn: 0, rng: hashStr("play:" + seed) || 1, nid: 1, over: -1 };
+    if (isInt(end) && end >= 1 && end < FLOORS) st.end = end;
     var start = ["dagger", "buckler"].concat(mode === "g" ? ["vial"] : []);
     start.forEach(function (k) {
       var sp = findSpot(st.pack, k);
@@ -673,8 +676,9 @@
       else ev.push({ e: cur ? "cursedHere" : "full", k: k });
     });
     if (st.map.charAt(h.i) === ">") {
-      if (st.floor < FLOORS) { enterFloor(st, st.floor + 1, ev); return; }
-      if (h.key) { st.over = 1; ev.push({ e: "win" }); return; }
+      var last = st.end || FLOORS;
+      if (st.floor < last) { enterFloor(st, st.floor + 1, ev); return; }
+      if (last < FLOORS || h.key) { st.over = 1; ev.push({ e: "win" }); return; }
       ev.push({ e: "locked" });
     }
   }
@@ -806,6 +810,7 @@
     if (MODES.indexOf(st.mode) < 0 || typeof st.seed !== "string" || !isInt(st.floor) || st.floor < 1 || st.floor > FLOORS) return false;
     if (typeof st.map !== "string" || st.map.length !== W * H || /[^#.>]/.test(st.map)) return false;
     if (typeof st.seen !== "string" || st.seen.length !== W * H || /[^01]/.test(st.seen)) return false;
+    if (st.end !== undefined && (!isInt(st.end) || st.end < 1 || st.end >= FLOORS || st.floor > st.end)) return false;
     if (!isInt(st.turn) || st.turn < 0 || !isInt(st.rng) || !isInt(st.nid) || [-1, 0, 1].indexOf(st.over) < 0) return false;
     var n = W * H, cell = function (i) { return isInt(i) && i >= 0 && i < n; };
     var h = st.hero;
