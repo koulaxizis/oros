@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.47.02
+- **Music: mood pages no longer say "Nothing found here" while they play.** When Jamendo answers a mood (Relaxed, Happy, …) with no songs, Music now asks again in two other ways, does not keep the empty answer, and while songs of that mood are playing it shows them with `Try again`.
+
 ## Version 5.47.01
 - **Passwords: import when the phone hands over an empty file.** Some phones' file pickers pass an export on as an empty file, and Import then said "The file has no entries". It now says the file arrived empty and what to do, and the field under Google Authenticator also takes the pasted text of an export file (open it in a text app, copy all, paste, `Read`), with or without its password.
 

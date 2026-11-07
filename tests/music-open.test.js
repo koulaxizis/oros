@@ -296,3 +296,26 @@ test("Jamendo songs keep their album and artist ids through the sync slice", () 
   assert.equal(C.normRef(Object.assign({}, a, { ai: "../x", ri: "a b" })).ai, undefined);
   assert.deepEqual(C.mergeMusic(d, C.canon(JSON.parse(JSON.stringify(d)))), d);
 });
+
+test("MU-MOOD2: a mood has fallback Jamendo queries, and an empty answer is not cached", async () => {
+  const q = O.jmMoodQueries("relaxed");
+  assert.equal(q.length, 3);
+  assert.deepEqual(q[0], { mood: "relaxed", order: "popularity_month" });
+  assert.match(O.jmTracksUrl(q[0]), /&fuzzytags=relaxed&order=popularity_month$/);
+  assert.match(O.jmTracksUrl(q[1]), /&fuzzytags=relaxed%20relaxing%20chill%20calm&order=popularity_total$/);
+  assert.match(O.jmTracksUrl(q[2]), /&tags=relaxed&order=popularity_total$/);
+  assert.deepEqual(O.jmMoodQueries("nope"), []);
+  O.MOODS.forEach((m) => assert.equal(O.jmMoodQueries(m[0]).length, 3, m[0]));
+  const saved = globalThis.fetch;
+  let n = 0, empty = true;
+  globalThis.fetch = async () => { n++; const r = empty ? [] : [{ id: "5", name: "X", audio: "https://prod-1.storage.jamendo.com/?trackid=5" }];
+    return { ok: true, status: 200, text: async () => JSON.stringify({ headers: { status: "success", code: 0 }, results: r }) }; };
+  try {
+    const o = { mood: "epic", order: "popularity_month", page: 7 };
+    assert.equal((await O.jmTracks(o)).tracks.length, 0);
+    empty = false;
+    assert.equal((await O.jmTracks(o)).tracks.length, 1, "asked again, not served the empty answer from the cache");
+    assert.equal((await O.jmTracks(o)).tracks.length, 1);
+    assert.equal(n, 2, "a full answer is cached");
+  } finally { globalThis.fetch = saved; }
+});
