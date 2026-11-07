@@ -513,6 +513,7 @@ orosPack("de", "music", {
  "toast.saved": "{n} Songs hinzugefügt.",
  "toast.saved1": "1 Song hinzugefügt.",
  "toast.skip": "{n} Dateien waren keine Musik und wurden ausgelassen.",
+ "toast.skipped": "„{t}“ lässt sich hier nicht abspielen, deshalb läuft der nächste Song.",
  "toast.unliked": "Aus Lieblingssongs entfernt.",
  "today.daily": "Dein Tagesmix ist bereit",
  "today.dailyText": "Songs, die du liebst, und mehr – jeden Tag neu",

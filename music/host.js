@@ -561,11 +561,13 @@
   }
   // A song that cannot play is skipped, like other players do; after
   // five in a row (or the whole list) it stops and says so.
+  // → true when it moves on (the notice then names the skipped song).
   function skipBroken() {
     fails++;
     var n = C.normQueue(local.q).ctx.length;
-    if (fails >= 5 || fails > n) { fails = 0; note(T("host.broken")); return; }
+    if (fails >= 5 || fails > n) { fails = 0; note(T("host.broken")); return false; }
     w.setTimeout(function () { advance(true, true); }, 600);
+    return true;
   }
   function play() {
     if (!cur) return Promise.resolve(false);
@@ -615,8 +617,9 @@
       });
       return;
     }
-    flags.error = kind; chip(); host.notify("error");
-    skipBroken();
+    flags.error = kind; chip();
+    var on = skipBroken();
+    host.notify("error", on ? { skip: String(item.t || "") } : null);
   }
   // Same public client id as open.js (Chris's, registered 2026-10-16).
   var JM_CLIENT = "e04c6e83";
