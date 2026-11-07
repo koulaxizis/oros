@@ -10,7 +10,7 @@
 // Per device, never synced:
 //   localStorage "oros-gate"      { on, id, tok, r (relay it lives on), lv{appId: "read" | "write"}, w (write window ends, ms), at }
 //   localStorage "oros-gate-log"  [{ t, n, a[app ids], k (items), ok, u? (undo id) }] ≤ 300
-//   localStorage "oros-gate-undo" [{ id, t, app, n, x (budgetWrite undo) }] ≤ 20
+//   localStorage "oros-gate-undo" [{ id, t, app, n, x (budgetWrite or kanbanWrite undo) }] ≤ 20
 // Changes (wave 3) only to apps set to "write", only while the write
 // window the owner opened on this device is open; more than 5
 // deletions in one call are asked on the device.
@@ -480,8 +480,229 @@
     sortTx(d);
     return { ok: true, data: d, n: n, kept: kept };
   }
+  /* ---------- changes to Kanban (write window only, 5.68.00) ---------- */
+  // Pure: kanbanWrite(M, op, raw, args, now, newId) with M = OrosKanbanModel
+  // (kanban/model.js). Every edit follows Kanban's own sync rules: a new
+  // card gets fresh field stamps, a move stamps the placement group "p",
+  // an edit stamps only the groups it changes, and the column (or board)
+  // whose order changed gets om = now, so the next merge keeps this order.
+  // All or none per call. → { ok, data (canonical), undo, ids, text } | { ok:false, err }
+  var KB_TEXT = 500, KB_NOTES = 5000, KB_ADD = 50, KB_MOVE = 100, KB_COLS = 20;
+  function kbBoards(d) {
+    var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
+    return (Array.isArray(d.boards) ? d.boards : []).filter(function (b) {
+      return isObj(b) && typeof b.id === "string" && b.id.indexOf("tpl-") !== 0 && !b.archived &&
+        !(typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0));
+    });
+  }
+  function kbFind(list, key, what) {
+    var k = String(key == null ? "" : key).trim();
+    if (!k) return { err: what + " is missing." };
+    var byId = list.filter(function (x) { return x.id === k; });
+    if (byId.length) return { x: byId[0] };
+    var f = fold(k), hit = list.filter(function (x) { return fold(x.name) === f; });
+    if (hit.length === 1) return { x: hit[0] };
+    if (hit.length > 1) return { err: "More than one " + what + " is called \"" + k + "\"; use its id." };
+    return { err: "No " + what + " \"" + k + "\". " + what.charAt(0).toUpperCase() + what.slice(1) + "s: " +
+      list.slice(0, 80).map(function (x) { return (x.name || "—") + " (" + x.id + ")"; }).join(", ") + "." };
+  }
+  function kbCols(b) { return (Array.isArray(b.columns) ? b.columns : []).filter(function (c) { return isObj(c) && typeof c.id === "string"; }); }
+  function kbCard(b, id) {
+    var cols = kbCols(b);
+    for (var i = 0; i < cols.length; i++) {
+      var cs = Array.isArray(cols[i].cards) ? cols[i].cards : [];
+      for (var j = 0; j < cs.length; j++) if (isObj(cs[j]) && cs[j].id === id) return { col: cols[i], at: j, card: cs[j] };
+    }
+    return null;
+  }
+  function kbLabels(b, names) {
+    if (!Array.isArray(names)) return { err: "labels must be a list of label names." };
+    var list = (Array.isArray(b.labels) ? b.labels : []).filter(function (l) {
+      return isObj(l) && typeof l.id === "string" && !(isObj(b.deleted) && typeof b.deleted[l.id] === "number" && b.deleted[l.id] >= (l.mtime || 0));
+    });
+    var out = [];
+    for (var i = 0; i < names.length && i < 20; i++) {
+      var r = kbFind(list, names[i], "label");
+      if (r.err) return r;
+      if (out.indexOf(r.x.id) < 0) out.push(r.x.id);
+    }
+    return { ids: out };
+  }
+  function kbText(v, max, what) {
+    var s = String(v == null ? "" : v).replace(/\r\n?/g, "\n");
+    if (what === "text") s = s.replace(/\s+/g, " ").trim();
+    if (what === "text" && !s) return { err: "A card needs text." };
+    if (s.length > max) return { err: what + " is longer than " + max + " characters." };
+    return { s: s };
+  }
+  function kbDue(v) {
+    if (v === "" || v === null) return { d: null };
+    var s = String(v);
+    if (!YMD.test(s) || isNaN(Date.parse(s + "T00:00:00Z"))) return { err: "due must be YYYY-MM-DD, or \"\" to clear it." };
+    return { d: s };
+  }
+  function kbSnap(card, col, at) {
+    return { col: col.id, at: at, t: card.text || "", n: card.notes || "", d: card.due || null,
+             l: Array.isArray(card.labels) ? card.labels.slice() : [] };
+  }
+  function kbPlace(col, card, top) {
+    if (!Array.isArray(col.cards)) col.cards = [];
+    if (top) col.cards.unshift(card); else col.cards.push(card);
+  }
+  function kanbanWrite(M, op, raw, args, now, newId) {
+    if (!M || typeof M.canonState !== "function") return { ok: false, err: "Kanban is not loaded on the device yet; try again in a moment." };
+    var d = isObj(raw) ? clone(raw) : null;
+    if (!d || !Array.isArray(d.boards)) return { ok: false, err: "Kanban has no boards yet." };
+    args = isObj(args) ? args : {};
+    var fb = kbFind(kbBoards(d), args.board, "board");
+    if (fb.err) return { ok: false, err: fb.err + (fb.err.indexOf("No board") === 0 ? " (Archived boards and templates cannot be changed.)" : "") };
+    var b = fb.x;
+    if (!isObj(b.deleted)) b.deleted = {};
+    var undo = { k: "kanban", board: b.id, cards: {}, cols: {} }, ids = [], i, r;
+
+    if (op === "add_columns") {
+      var list = Array.isArray(args.columns) ? args.columns : [];
+      if (!list.length || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
+      for (i = 0; i < list.length; i++) {
+        var nc = isObj(list[i]) ? list[i] : {};
+        r = kbText(nc.name, 60, "text");
+        if (r.err) return { ok: false, err: "Column " + (i + 1) + ": a column needs a name of at most 60 characters." };
+        var cols = kbCols(b), where = cols.length;
+        if (nc.after != null && String(nc.after).trim()) {
+          var fa = kbFind(cols, nc.after, "column");
+          if (fa.err) return { ok: false, err: "Column " + (i + 1) + ": " + fa.err };
+          where = b.columns.indexOf(fa.x) + 1;
+        }
+        var col = { id: newId(), name: r.s, mtime: now, om: 0, pos: 0, cards: [] };
+        b.columns.splice(where, 0, col);
+        undo.cols[col.id] = now;
+        ids.push(col.id);
+      }
+      b.om = now;
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, text: "Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + "." };
+    }
+
+    if (op === "add_cards") {
+      var add = Array.isArray(args.cards) ? args.cards : [];
+      if (!add.length || add.length > KB_ADD) return { ok: false, err: "cards must hold 1 to " + KB_ADD + " cards." };
+      var touched = [];
+      for (i = 0; i < add.length; i++) {
+        var a = isObj(add[i]) ? add[i] : {}, tag = "Card " + (i + 1) + ": ";
+        var fc = kbFind(kbCols(b), a.column, "column");
+        if (fc.err) return { ok: false, err: tag + fc.err };
+        var tx = kbText(a.text, KB_TEXT, "text");
+        if (tx.err) return { ok: false, err: tag + tx.err };
+        var nt = kbText(a.notes, KB_NOTES, "notes");
+        if (nt.err) return { ok: false, err: tag + nt.err };
+        var du = a.due === undefined ? { d: null } : kbDue(a.due);
+        if (du.err) return { ok: false, err: tag + du.err };
+        var lb = a.labels === undefined ? { ids: [] } : kbLabels(b, a.labels);
+        if (lb.err) return { ok: false, err: tag + lb.err };
+        var card = { id: newId(), text: tx.s, notes: nt.s, due: du.d, labels: lb.ids, subtasks: [], info: [], mtime: now, pos: 0, fm: M.freshFm(now) };
+        kbPlace(fc.x, card, a.position === "top");
+        if (touched.indexOf(fc.x) < 0) touched.push(fc.x);
+        undo.cards[card.id] = { b: null, a: now };
+        ids.push(card.id);
+      }
+      touched.forEach(function (c) { c.om = now; });
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, text: "Added " + ids.length + " card" + (ids.length === 1 ? "" : "s") + "." };
+    }
+
+    if (op === "move_cards") {
+      var mv = Array.isArray(args.moves) ? args.moves : [];
+      if (!mv.length || mv.length > KB_MOVE) return { ok: false, err: "moves must hold 1 to " + KB_MOVE + " moves." };
+      var seen = {}, changedCols = [];
+      for (i = 0; i < mv.length; i++) {
+        var m = isObj(mv[i]) ? mv[i] : {}, mt = "Move " + (i + 1) + ": ";
+        var id = String(m.card || "");
+        if (seen[id]) return { ok: false, err: mt + "card " + id + " is moved twice in one call." };
+        seen[id] = 1;
+        var at = kbCard(b, id);
+        if (!at) return { ok: false, err: mt + "no card with id " + id + " on " + (b.name || "this board") + " (ids come from app_summary or search_data)." };
+        var to = kbFind(kbCols(b), m.column, "column");
+        if (to.err) return { ok: false, err: mt + to.err };
+        if (to.x === at.col && m.position !== "top" && m.position !== "bottom") return { ok: false, err: mt + "the card is already in " + (to.x.name || "that column") + "." };
+        undo.cards[id] = { b: kbSnap(at.card, at.col, at.at), a: 0 };
+        at.col.cards.splice(at.at, 1);
+        kbPlace(to.x, at.card, m.position === "top");
+        M.stampCard(at.card, ["p"], now);            // the placement is its own field group
+        undo.cards[id].a = at.card.mtime;
+        [at.col, to.x].forEach(function (c) { if (changedCols.indexOf(c) < 0) changedCols.push(c); });
+        ids.push(id);
+      }
+      changedCols.forEach(function (c) { c.om = now; });
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, text: "Moved " + ids.length + " card" + (ids.length === 1 ? "" : "s") + "." };
+    }
+
+    if (op === "change_card") {
+      var hit = kbCard(b, String(args.card || ""));
+      if (!hit) return { ok: false, err: "No card with id " + String(args.card || "") + " on " + (b.name || "this board") + "." };
+      var c0 = hit.card, groups = [], snap = kbSnap(c0, hit.col, hit.at), v;
+      if (args.text !== undefined) { v = kbText(args.text, KB_TEXT, "text"); if (v.err) return { ok: false, err: v.err }; if (v.s !== (c0.text || "")) { c0.text = v.s; groups.push("t"); } }
+      if (args.notes !== undefined) { v = kbText(args.notes, KB_NOTES, "notes"); if (v.err) return { ok: false, err: v.err }; if (v.s !== (c0.notes || "")) { c0.notes = v.s; groups.push("n"); } }
+      if (args.due !== undefined) { v = kbDue(args.due); if (v.err) return { ok: false, err: v.err }; if (v.d !== (c0.due || null)) { c0.due = v.d; groups.push("d"); } }
+      if (args.labels !== undefined) {
+        v = kbLabels(b, args.labels); if (v.err) return { ok: false, err: v.err };
+        var old = Array.isArray(c0.labels) ? c0.labels : [];
+        if (JSON.stringify(v.ids) !== JSON.stringify(old)) { c0.labels = v.ids; groups.push("l"); }
+      }
+      if (!groups.length) return { ok: false, err: "Nothing to change: the card already looks like this." };
+      M.stampCard(c0, groups, now);
+      undo.cards[c0.id] = { b: snap, a: c0.mtime, g: groups };
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id], text: "Changed the card." };
+    }
+    return { ok: false, err: "unknown change" };
+  }
+  // Puts back what one Kanban change did, only for the cards and columns
+  // that still look as the change left them. → { ok, data, n, kept }
+  function kanbanUndo(M, raw, u, now) {
+    if (!M || !isObj(u) || u.k !== "kanban" || !isObj(u.cards) || !isObj(u.cols)) return { ok: false, err: "bad undo" };
+    var d = isObj(raw) ? clone(raw) : null;
+    if (!d || !Array.isArray(d.boards)) return { ok: false, err: "no board" };
+    var b = d.boards.filter(function (x) { return isObj(x) && x.id === u.board; })[0];
+    if (!b) return { ok: true, data: d, n: 0, kept: Object.keys(u.cards).length + Object.keys(u.cols).length };
+    if (!isObj(b.deleted)) b.deleted = {};
+    var n = 0, kept = 0, oms = [];
+    Object.keys(u.cards).forEach(function (id) {
+      var e = u.cards[id], at = kbCard(b, id);
+      if (!at || (at.card.mtime || 0) !== e.a) { kept++; return; }
+      if (e.b === null) {                                   // the change added it
+        at.col.cards.splice(at.at, 1);
+        b.deleted[id] = Math.max(now, (at.card.mtime || 0) + 1);
+        oms.push(at.col); n++;
+        return;
+      }
+      var s = e.b, groups = [], card = at.card;
+      if (Array.isArray(e.g)) {
+        if (e.g.indexOf("t") >= 0) { card.text = s.t; groups.push("t"); }
+        if (e.g.indexOf("n") >= 0) { card.notes = s.n; groups.push("n"); }
+        if (e.g.indexOf("d") >= 0) { card.due = s.d; groups.push("d"); }
+        if (e.g.indexOf("l") >= 0) { card.labels = s.l.slice(); groups.push("l"); }
+      } else {                                              // a move: back to its column and place
+        var home = kbCols(b).filter(function (c) { return c.id === s.col; })[0];
+        if (!home) { kept++; return; }
+        at.col.cards.splice(at.at, 1);
+        if (!Array.isArray(home.cards)) home.cards = [];
+        home.cards.splice(Math.min(s.at, home.cards.length), 0, card);
+        groups.push("p");
+        oms.push(at.col, home);
+      }
+      M.stampCard(card, groups, now);
+      n++;
+    });
+    Object.keys(u.cols).forEach(function (id) {
+      var cols = kbCols(b), c = cols.filter(function (x) { return x.id === id; })[0];
+      if (!c || (c.mtime || 0) !== u.cols[id] || (Array.isArray(c.cards) && c.cards.length)) { kept++; return; }
+      b.columns.splice(b.columns.indexOf(c), 1);
+      b.deleted[id] = Math.max(now, (c.mtime || 0) + 1);
+      b.om = now; n++;
+    });
+    oms.forEach(function (c) { c.om = now; });
+    return { ok: true, data: M.canonState(d, now), n: n, kept: kept };
+  }
   // Apps whose items Claude may change, and the tools for them.
-  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete"] };
+  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete"],
+                 kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
   function canWrite(lv, win, id, now) {
     return !!(isObj(lv) && lv[id] === "write" && WRITES[id] && typeof win === "number" && win > now);
   }
@@ -494,6 +715,7 @@
 
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
+               kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo,
                WRITES: WRITES, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
@@ -542,6 +764,7 @@
   function connect() {
     var p = pref();
     if (!p.on || !p.id || !p.tok || ws) return;
+    if (isObj(p.lv) && p.lv.kanban === "write") kanbanModel().then(null, function () {});   // Undo needs it at hand
     clearTimeout(retryTimer);
     setWs("connecting");
     var sock;
@@ -674,6 +897,8 @@
     }
     var op = { budget_add: "add", budget_change: "change", budget_delete: "delete" }[name];
     if (op) return change(op, args, p, names);
+    var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
+    if (kop) return kanbanChange(kop, args, p, names);
     return Promise.resolve({ ok: false, c: "Unknown tool." });
   }
 
@@ -695,12 +920,47 @@
       if (!r.ok) return { ok: false, c: r.err };
       if (!writeJSON("oros-budget-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = now.toString(36) + randomB64u(3).replace(/[^a-z0-9]/gi, "").toLowerCase();
-      var ul = readJSON(UNDO_KEY);
-      ul = (Array.isArray(ul) ? ul : []).concat([{ id: uid, t: now, app: "budget", n: "budget_" + op, x: r.undo }]);
-      writeJSON(UNDO_KEY, ul.length > UNDO_MAX ? ul.slice(ul.length - UNDO_MAX) : ul);
+      var uid = remember("budget", "budget_" + op, r.undo, now);
       return { ok: true, a: ["budget"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     });
+  }
+  // Kanban's sync model (kanban/model.js), loaded on first use.
+  var modelP = null;
+  function kanbanModel() {
+    if (root.OrosKanbanModel) return Promise.resolve(root.OrosKanbanModel);
+    if (!modelP) {
+      modelP = new Promise(function (ok, no) {
+        var s = document.createElement("script");
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? "?v=" + encodeURIComponent(root.orosTodayEnv.version) : "";
+        s.src = "kanban/model.js" + v;
+        s.onload = function () { root.OrosKanbanModel ? ok(root.OrosKanbanModel) : no(new Error("model")); };
+        s.onerror = function () { modelP = null; no(new Error("model")); };
+        document.head.appendChild(s);
+      });
+    }
+    return modelP;
+  }
+  function kbId() { return Date.now().toString(36) + randomB64u(6).replace(/[^a-z0-9]/gi, "").toLowerCase().slice(0, 5); }   // = kanban.js uid
+  function remember(app, n, x, now) {
+    var uid = now.toString(36) + randomB64u(3).replace(/[^a-z0-9]/gi, "").toLowerCase();
+    var ul = readJSON(UNDO_KEY);
+    ul = (Array.isArray(ul) ? ul : []).concat([{ id: uid, t: now, app: app, n: n, x: x }]);
+    writeJSON(UNDO_KEY, ul.length > UNDO_MAX ? ul.slice(ul.length - UNDO_MAX) : ul);
+    return uid;
+  }
+  function kanbanChange(op, args, p, names) {
+    var now = Date.now();
+    if (!canWrite(p.lv, p.w, "kanban", now)) {
+      return Promise.resolve({ ok: false, c: "Changes to " + (names.kanban || "Kanban") + " are closed. Ask the owner to allow changes to Kanban and open a write window in orOS › Settings › Connected services › orOS Gate." });
+    }
+    return kanbanModel().then(function (M) {
+      var r = kanbanWrite(M, op, readStore("oros-kanban-data"), args, Date.now(), kbId);
+      if (!r.ok) return { ok: false, c: r.err };
+      if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
+      try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
+      var uid = remember("kanban", "kanban_" + op, r.undo, now);
+      return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
+    }, function () { return { ok: false, c: "Kanban is not loaded on the device yet; try again in a moment." }; });
   }
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
@@ -760,6 +1020,7 @@
       if (level === "write" && !WRITES[id]) return false;
       p.lv = isObj(p.lv) ? p.lv : {};
       if (level === "read" || level === "write") p.lv[id] = level; else delete p.lv[id];
+      if (id === "kanban" && level === "write") kanbanModel().then(null, function () {});
       var okW = writeJSON(PREF_KEY, p);
       changed();
       return okW;
@@ -783,8 +1044,11 @@
       l = Array.isArray(l) ? l : [];
       var e = l.filter(function (x) { return x && x.id === uid; })[0];
       if (!e) return { ok: false };
-      var r = budgetUndo(readStore("oros-budget-data"), e.x, Date.now());
-      if (!r.ok || !writeJSON("oros-budget-data", r.data)) return { ok: false };
+      var kb = e.app === "kanban", M = root.OrosKanbanModel;
+      if (kb && !M) { kanbanModel().then(changed, function () {}); return { ok: false }; }
+      var key = kb ? "oros-kanban-data" : "oros-budget-data";
+      var r = kb ? kanbanUndo(M, readStore(key), e.x, Date.now()) : budgetUndo(readStore(key), e.x, Date.now());
+      if (!r.ok || !writeJSON(key, r.data)) return { ok: false };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e2) {}
       writeJSON(UNDO_KEY, l.filter(function (x) { return x && x.id !== uid; }));
       changed();
