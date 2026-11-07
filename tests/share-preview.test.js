@@ -130,9 +130,24 @@ test("albums and playlists: preview page, other kinds still none; normTracks equ
   const c = code({ v: 1, k: "tracks", d: { t: "Live <99>", ty: "al", a: "Band", i: [
     { t: "A", s: "ia", u: "https://archive.org/a.mp3", art: "https://archive.org/services/img/a" }, { t: "B", s: "sv", u: "https://my/x" }] } });
   const h = await (await get("/p/" + c)).text();
-  assert.match(h, /og:title" content="🎵 Live &lt;99&gt; · Band"/);
+  assert.match(h, /og:title" content="🎵 Live &lt;99&gt;"/);
   assert.match(h, /og:description" content="Album · 2 songs · orOS"/);
-  assert.match(h, /og:image" content="https:\/\/archive\.org\/services\/img\/a"/);
+  assert.ok(h.indexOf("Band") < 0 && h.indexOf(">A<") < 0 && h.indexOf("\"A\"") < 0, "no artist, no song titles");
+  // only the list's own cover: a song's cover never stands in for it
+  assert.match(h, /og:image" content="https:\/\/useoros\.online\/icons\/og-image\.png"/);
+  const bad = code({ v: 1, k: "tracks", d: { t: "<script>x</script>\u202e\u2066Mix", ty: "pl", art: "https://evil.example/c.png", i: [{ t: "A" }, "junk", { a: "no title" }] } });
+  const hb = await (await get("/p/" + bad)).text();
+  assert.ok(hb.indexOf("<script") < 0 && hb.indexOf("\u202e") < 0 && hb.indexOf("\u2066") < 0);
+  assert.match(hb, /og:title" content="🎵 &lt;script&gt;x&lt;\/script&gt; Mix"/);
+  assert.match(hb, /og:description" content="Playlist · 1 song · orOS"/, "counted after the normalizer");
+  assert.match(hb, /og:image" content="https:\/\/useoros\.online\/icons\/og-image\.png"/, "foreign cover host");
+  const good = code({ v: 1, k: "tracks", d: { t: "Mix", ty: "pl", art: "https://archive.org/services/img/m", i: [{ t: "A" }] } });
+  assert.match(await (await get("/p/" + good)).text(), /og:image" content="https:\/\/archive\.org\/services\/img\/m"/);
+  const many = code({ v: 1, k: "tracks", d: { t: "Big", i: Array.from({ length: 201 }, () => ({ t: "s" })) } });
+  assert.ok(many.length < 4000, "201 songs fit the path: " + many.length);
+  await noPreview("/p/" + many);
+  const ok200 = code({ v: 1, k: "tracks", d: { t: "Big", i: Array.from({ length: 200 }, () => ({ t: "s" })) } });
+  assert.match(await (await get("/p/" + ok200)).text(), /200 songs/);
   const cases = [
     { t: "P", ty: "pl", i: [{ t: "x", s: "ia", u: "https://archive.org/a.mp3", cr: "c", k: "ia:abcdef12" }, { t: "y", s: "sv", u: "https://my/x" }, "junk", null] },
     { t: "A".repeat(300), ty: "zz", a: "b", art: "https://evil.example/a.png", cr: "c", i: [] },

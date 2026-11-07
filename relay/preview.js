@@ -137,6 +137,8 @@ export async function songOf(code) {
     const raw = await inflate(unb64u(code.slice(2)));
     const env = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(raw));
     if (!env || env.v !== 1) return null;
+    // A list over 200 songs gets no preview (never cut silently).
+    if (env.k === "tracks" && !(env.d && Array.isArray(env.d.i) && env.d.i.length <= 200)) return null;
     const d = env.k === "track" ? normTrack(env.d) : env.k === "tracks" ? normTracks(env.d) : null;
     return d ? { k: env.k, d } : null;
   } catch (e) { return null; }
@@ -171,10 +173,13 @@ function licText(li) {
 }
 export function pageFor(item, code) {
   const d = item.d, list = item.k === "tracks";
-  const t = clean(d.t || (list ? (d.ty === "al" ? "Album" : "Playlist") : ""), PV_LIMITS.t), a = clean(d.a, PV_LIMITS.a);
+  // A list shows only its name, "Album/Playlist · N songs" (N counted
+  // after the normalizer) and its own cover: no song titles, no
+  // artist, never a song's cover in its place (Mail thread, 2026-11-07).
+  const t = clean(d.t || (list ? (d.ty === "al" ? "Album" : "Playlist") : ""), PV_LIMITS.t), a = list ? "" : clean(d.a, PV_LIMITS.a);
   const al = list ? (d.ty === "al" ? "Album" : "Playlist") + " \u00b7 " + (d.i.length === 1 ? "1 song" : d.i.length + " songs") : clean(d.al || "", PV_LIMITS.al);
   const li = list ? "" : clean(licText(d.li), PV_LIMITS.li);
-  const img = coverOk(d.art) || (list ? d.i.map((x) => coverOk(x.art)).filter(Boolean)[0] || "" : "");
+  const img = coverOk(d.art);
   const title = "\ud83c\udfb5 " + t + (a ? " \u00b7 " + a : "");
   const desc = [al, li, "orOS"].filter(Boolean).join(" \u00b7 ");
   const go = SHARE_PAGE + "#" + code;        // code passed CODE_RE
