@@ -153,3 +153,20 @@ test("gamecenter: All games groups list every game exactly once, every Games app
   const src = fs.readFileSync(path.join(__dirname, "..", "gamecenter", "gamecenter.js"), "utf8");
   C.GROUPS.forEach((g) => assert.equal(src.split('"all.g.' + g.id + '"').length - 1, 2, g.id));
 });
+
+test("gamecenter: Realm's Daily island counts in Today and the streak, never in Clean sweep", () => {
+  const realm = { ver: 1, br: 0, rows: { a: { b: 0, s: { "m:m": [2, 1] } } },
+    days: { [TODAY]: { b: 0, w: 1, r: 18, p: 80 }, [TODAY - 1]: { b: 0, w: 1, r: 25, p: 77 }, [TODAY - 2]: { b: 0, w: 0, r: 9, p: 12 } } };
+  const s = sum({ "oros-realm-data": realm });
+  assert.ok(C.DAILY.includes("realm"));
+  assert.deepEqual([s.games.realm.p, s.games.realm.w, s.games.realm.dn, s.games.realm.cur, s.games.realm.today], [3, 2, 2, 2, 1]);
+  assert.equal(s.daily.todayDone, 1);
+  assert.equal(s.daily.cur, 2);
+  assert.ok(ach(s, "daily1").done);
+  assert.deepEqual([ach(s, "sweep").have, ach(s, "sweep").need], [0, 6], "Realm is not one of the six daily puzzles");
+  // a lost Daily island today: tried, not won
+  realm.days[TODAY] = { b: 0, w: 0, r: 7, p: 5 };
+  assert.equal(sum({ "oros-realm-data": realm }).games.realm.today, 2);
+  // data from before the Daily island
+  assert.equal(sum({ "oros-realm-data": { ver: 1, br: 0, rows: {} } }).games.realm.dn, 0);
+});

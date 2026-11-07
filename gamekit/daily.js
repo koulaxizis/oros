@@ -7,7 +7,8 @@
 //
 // It only defines window.orosDaily. Nothing touches the DOM at load
 // time, so the file also runs in Node (tests/gamekit.test.js).
-// Used by: Sudoku, Nonogram, Flow Free, Minesweeper, Wordle, Crossword
+// Used by: Sudoku, Nonogram, Flow Free, Minesweeper, Wordle, Crossword,
+// Realm (the Daily island)
 // and the Game Center (gamecenter/).
 //
 // The same calendar date gives the same puzzle on every device, with

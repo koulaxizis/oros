@@ -14,8 +14,9 @@ const O = E.O;
 const SRC = fs.readFileSync(path.join(__dirname, "..", "realm/realm.js"), "utf8");
 const R = (() => {
   const parts = ["var DATA_VER = 1; var LEVELS = ['e','m','h']; var SIZES = ['s','m','l'];",
-    "var REC_KEYS = []; LEVELS.forEach(function (lv) { SIZES.forEach(function (sz) { REC_KEYS.push(lv + ':' + sz); }); });"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeRealm"].forEach((name) => {
+    "var REC_KEYS = []; LEVELS.forEach(function (lv) { SIZES.forEach(function (sz) { REC_KEYS.push(lv + ':' + sz); }); });",
+    "var MAX_DAY = 100000; var MAX_ROUNDS = 9999;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "mergeRealm"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
@@ -351,4 +352,55 @@ test("realm: records merge is a join and a reset drops older rows", () => {
                      { b: 0, s: { "x:s": [1, 0] } }, null, "row"]) {
     assert.equal(J(M({ rows: { d: bad } }, null).rows), "{}", J(bad));
   }
+});
+
+test("realm: Daily island results merge as a join; a reset drops them; bad days drop", () => {
+  const M = R.mergeRealm;
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const mk = () => {
+    const days = {};
+    for (let i = 0; i < rnd(5); i++) days[String(300 + rnd(4))] = { b: rnd(3) * 100, w: rnd(2), r: 1 + rnd(30), p: rnd(101) };
+    return { ver: 1, br: rnd(4) ? 0 : rnd(3) * 100, rows: {}, days };
+  };
+  for (let i = 0; i < 4000; i++) {
+    const a = mk(), b = mk(), c = mk(), sa = J(a);
+    assert.equal(J(M(a, b)), J(M(b, a)));
+    const m = M(a, b);
+    assert.equal(J(M(m, m)), J(m));
+    assert.equal(J(M(M(a, b), c)), J(M(a, M(b, c))));
+    assert.equal(J(a), sa);
+  }
+  const win = { b: 0, w: 1, r: 20, p: 80 }, loss = { b: 0, w: 0, r: 9, p: 30 };
+  assert.deepEqual(M({ rows: {}, days: { 310: loss } }, { rows: {}, days: { 310: win } }).days[310], win, "a win beats a loss");
+  assert.deepEqual(M({ rows: {}, days: { 310: win } }, { rows: {}, days: { 310: { b: 0, w: 1, r: 12, p: 80 } } }).days[310].r, 12,
+    "equal land: fewer rounds");
+  assert.deepEqual(M({ rows: {}, days: { 310: win } }, { rows: {}, days: { 310: { b: 5, w: 0, r: 3, p: 1 } } }).days[310].b, 5,
+    "a newer epoch wins");
+  assert.equal(J(M({ br: 0, rows: {}, days: { 310: win } }, { br: 50, rows: {}, days: {} }).days), "{}", "a reset drops older days");
+  for (const bad of [{ b: 0, w: 2, r: 1, p: 1 }, { b: 0, w: 1, r: 0, p: 1 }, { b: 0, w: 1, r: 1, p: 101 }, { b: -1, w: 1, r: 1, p: 1 },
+                     { b: 0, w: 1, r: 1.5, p: 1 }, null, "x"]) {
+    assert.equal(J(M({ rows: {}, days: { 310: bad } }, null).days), "{}", J(bad));
+  }
+  assert.equal(J(M({ rows: {}, days: { "-1": win, "x": win, "100001": win } }, null).days), "{}", "bad day keys drop");
+  assert.equal(J(M({ rows: {} }, null).days), "{}", "data from before W2 has no days");
+});
+
+test("realm: the Daily island is the same for everyone on a day, and differs between days", () => {
+  const D = require("../gamekit/daily.js");
+  const seed = (day) => D.seedOf("realm", day).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 16);
+  const sides = [{ k: "h", lv: "m" }, { k: "c", lv: "m" }, { k: "c", lv: "m" }, { k: "c", lv: "m" }];
+  const a = E.makeMap({ size: "m", seed: seed(310), sides }), b = E.makeMap({ size: "m", seed: seed(310), sides });
+  assert.equal(J(a), J(b));
+  assert.ok(E.valid(a));
+  assert.notEqual(J(E.makeMap({ size: "m", seed: seed(311), sides }).land), J(a.land));
+  // the computers answer the same moves the same way
+  const x = E.clone(a), y = E.clone(a);
+  E.endTurn(x); E.endTurn(y);
+  for (let k = 0; k < 3; k++) {
+    const px = E.planTurn(x, "m"), py = E.planTurn(y, "m");
+    assert.equal(J(px), J(py));
+    px.forEach((act) => E.apply(x, act)); py.forEach((act) => E.apply(y, act));
+    E.endTurn(x); E.endTurn(y);
+  }
+  assert.equal(J(x), J(y));
 });

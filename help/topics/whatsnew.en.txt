@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.51.00
+- **Realm: Daily island.** The calendar button gives everyone the same island each day: a Medium island, you against 3 computers, one try. See how many rounds you needed and how much of the island you held, keep a streak of won days and share your result without spoilers. The Daily island also appears in the Game Center under Today's dailies.
+
 ## Version 5.50.00
 - **Song links show the cover in chats.** When you share a song, album or playlist, WhatsApp, Telegram, Facebook and others now show a card with the cover, the title and the artist (`Show the cover in chats`, on by default; off for links with a password or an expiry date).
 - **Music: share a whole album or playlist.** `Share` in the album and playlist menus. The person who gets it can play the list in the browser, one song after another, or save it as their own playlist in orOS Music.

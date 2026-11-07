@@ -98,6 +98,19 @@ button, select { cursor: pointer; }
 }
 .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .icon-btn[aria-pressed="true"] { color: var(--accent); }
+/* Daily island: a dot while today's island is not played; lit while playing it */
+#daily-btn { position: relative; }
+#daily-btn.due::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+#daily-btn.on { color: var(--accent); border-color: var(--accent); }
 .icon-btn:disabled { opacity: 0.4; cursor: default; }
 .icon-btn:disabled:hover { color: var(--text-dim); border-color: var(--border); background: var(--panel-bg); }
 .icon-btn svg { width: 18px; height: 18px; display: block; }
@@ -227,6 +240,7 @@ dialog.mm-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   color: var(--accent);
   margin: 4px 0 12px;
 }
+.dlg-hero.lost { color: var(--text); }
 .dlg-badge {
   display: block;
   width: max-content;

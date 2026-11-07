@@ -24,9 +24,12 @@
 (function (root) {
   "use strict";
 
-  // The six games with a Daily challenge (Wave 49), in the order the
-  // Today section shows them.
-  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
+  // The games with a Daily challenge (Wave 49; Realm's Daily island
+  // since 5.50), in the order the Today section shows them.
+  var DAILY = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper", "realm"];
+  // The "Clean sweep" achievement stays the six daily puzzles, so a
+  // sweep reached before Realm had a Daily is never taken back.
+  var SWEEP = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper"];
   // Every game the page knows. Unknown or missing data = not played.
   var GAMES = ["wordle", "crossword", "sudoku", "nonogram", "flow", "minesweeper",
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
@@ -137,18 +140,19 @@
       });
     };
   }
-  // Daily results of Sudoku / Nonogram / Flow Free (hints h) and
-  // Minesweeper (won w): fills S.dn, the streaks and today.
+  // Daily results of Sudoku / Nonogram / Flow Free (hints h),
+  // Minesweeper and Realm (won w): fills S.dn, the streaks and today.
   function dailyPart(d, S, X, today, game) {
+    var won = game === "minesweeper" || game === "realm";
     var on = {}, tried = {};
     S.dn = 0;
     eachDay(d, function (day, v) {
-      var ok = game === "minesweeper" ? v.w === 1 : true;
+      var ok = won ? v.w === 1 : true;
       tried[day] = true;
       if (!ok) return;
       on[day] = true;
       S.dn++;
-      if (game !== "minesweeper" && v.h === 0) X.clean = true;
+      if (!won && v.h === 0) X.clean = true;
       X.solved[day] = true;
     });
     var st = streaks(on, today);
@@ -315,14 +319,16 @@
         if (k === "h" && nat(v[0])) X.hard = true;
       });
     },
-    // Realm: "<level>:<size>" → [won, lost]
-    realm: function (d, S, X) {
+    // Realm: "<level>:<size>" → [won, lost] (the Daily island counts
+    // there too) + days{day: {w, r, p}}
+    realm: function (d, S, X, today) {
       S.w = 0;
       eachCell(d, function (k, v) {
         if (!Array.isArray(v) || v.length < 2) return;
         S.p += nat(v[0]) + nat(v[1]); S.w += nat(v[0]);
         if (/^h:/.test(k) && nat(v[0])) X.hard = true;
       });
+      dailyPart(d, S, X, today, "realm");
     },
     xeri: function (d, S, X) {
       S.w = 0;
@@ -337,7 +343,7 @@
   function summarize(read, today) {
     var X = { solved: {}, hard: false, killer: false, expert: false, fastSudoku: false,
       wordle2: false, clean: false, cards: 0 };
-    var games = {}, perDay = {};
+    var games = {}, perDay = {}, sweepDay = {};
     GAMES.forEach(function (id) {
       var S = blank(), d = null;
       try { d = read(keyOf(id)); } catch (e) { d = null; }
@@ -345,7 +351,10 @@
       try { if (d) ADAPT[id](d, S, X, today); } catch (e) { S = blank(); }
       if (DAILY.indexOf(id) >= 0) {
         if (S.dn < 0) { S.dn = 0; S.cur = 0; S.best = 0; S.today = 0; }
-        Object.keys(X.solved).forEach(function (day) { perDay[day] = (perDay[day] || 0) + 1; });
+        Object.keys(X.solved).forEach(function (day) {
+          perDay[day] = (perDay[day] || 0) + 1;
+          if (SWEEP.indexOf(id) >= 0) sweepDay[day] = (sweepDay[day] || 0) + 1;
+        });
       }
       delete S.chess;
       games[id] = S;
@@ -354,7 +363,7 @@
     var on = {};
     Object.keys(perDay).forEach(function (day) { on[day] = true; });
     var st = streaks(on, today), sweep = 0;
-    Object.keys(perDay).forEach(function (day) { sweep = Math.max(sweep, perDay[day]); });
+    Object.keys(sweepDay).forEach(function (day) { sweep = Math.max(sweep, sweepDay[day]); });
     var tot = { p: 0, w: 0, wonGames: 0, playedGames: 0, bestStreak: 0 };
     GAMES.forEach(function (id) {
       var S = games[id];
@@ -380,7 +389,7 @@
     ["daily1",   function (s) { return [s.daily.days, 1]; }],
     ["streak7",  function (s) { return [s.tot.bestStreak, 7]; }],
     ["streak30", function (s) { return [s.tot.bestStreak, 30]; }],
-    ["sweep",    function (s) { return [s.daily.sweep, DAILY.length]; }],
+    ["sweep",    function (s) { return [s.daily.sweep, SWEEP.length]; }],
     ["clean",    function (s) { return [s.x.clean ? 1 : 0, 1]; }],
     ["wordle2",  function (s) { return [s.x.wordle2 ? 1 : 0, 1]; }],
     ["killer",   function (s) { return [s.x.killer ? 1 : 0, 1]; }],
