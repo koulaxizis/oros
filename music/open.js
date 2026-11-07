@@ -445,6 +445,16 @@
   // Shown names in any language.
   function browseName(id, lang) { return tr("open.browse." + id, lang); }
   function moodName(id, lang) { return tr("open.mood." + id, lang); }
+  // The ways to ask Jamendo for a mood's songs, in order (MU-MOOD2):
+  // the usual one (fuzzy tag, this month's most played), then near
+  // words with all-time popularity, then the exact tag. The next one is
+  // asked only when the one before answers with no songs at all.
+  var MOOD_NEAR = { relaxed: "relaxing chill calm", happy: "joyful upbeat", energetic: "energy upbeat", romantic: "love",
+    sad: "melancholic", epic: "cinematic", dark: "gothic" };
+  function jmMoodQueries(id) {
+    if (!moodOf(id)) return [];
+    return [{ mood: id, order: "popularity_month" }, { mood: id + " " + MOOD_NEAR[id], order: "popularity_total" }, { tags: id, order: "popularity_total" }];
+  }
   function genreName(id, lang) { return tr("open.genre." + id, lang); }
 
   // ---------- 7. Credit line ----------
@@ -498,7 +508,8 @@
     return p.then(function (text) {
       var j;
       try { j = JSON.parse(text); } catch (e) { throw new OpenError("json"); }
-      cachePut(url, j);
+      // An empty answer is not kept (MU-MOOD2): the next look asks again.
+      if (!(j && Array.isArray(j.results) && !j.results.length)) cachePut(url, j);
       return j;
     });
   }
@@ -521,10 +532,10 @@
   function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
   var api = {
-    VERSION: "1.2.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.2.1", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
-    jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf,
+    jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmMoodQueries: jmMoodQueries,
     jmTracks: jmTracks, jmAlbums: jmAlbums, jmAlbum: jmAlbum, jmRadios: jmRadios, jmRadio: jmRadio,
     licFromUrl: licFromUrl, licFromCode: licFromCode, licLabel: licLabel, licShort: licShort, licUrl: licUrl,
     secs: secs, https: https, iaWords: iaWords,
