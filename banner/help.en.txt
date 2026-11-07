@@ -69,6 +69,11 @@ There are four ready-made decks of 20 cards, and every card is open from the sta
 
 Pick the decks, and type a battle code to play the same board and shuffle again, or leave it empty for a new battle. Each battle shows its code when it ends, with `Same battle again`. Starting a new battle while one is in progress counts that one as a loss.
 
+## Daily battle
+`Daily battle` (the calendar button) is the same battle for everyone each day: the same board, the same decks and the same shuffle, against the computer on Medium. You play Blue. It has one try: leaving it before the end, or starting another battle, counts as lost. A dot on the button means today's battle is still open.
+
+When it ends you see whether you won, the turn it ended on, what was left of your Keep and your streak of won days. `Share` copies a line without spoilers: five squares for your Keep and the turn. The Daily battle also appears in the [Game Center](help:a/gamecenter) under Today's dailies. Daily battles do not count in the computer levels in `Records`; they have their own line there.
+
 ## Undo and keys
 `Undo` (or [[Z]]) takes back what you did in this turn, step by step, until you end it.
 
