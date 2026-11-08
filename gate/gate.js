@@ -22,7 +22,7 @@
   var PREF_KEY = "oros-gate", LOG_KEY = "oros-gate-log", LOG_MAX = 300, UNDO_KEY = "oros-gate-undo", UNDO_MAX = 20;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
-  var NEVER = ["assistant", "baby", "cycle", "diary", "health", "mail", "mood", "passwords"];
+  var NEVER = ["assistant", "baby", "cycle", "diary", "fitness", "health", "mail", "mood", "passwords"];   // fitness: Chris 2026-11-08
   var SUMMARY = { budget: 1, stock: 1, kanban: 1 };
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
@@ -285,8 +285,8 @@
     });
   }
   function toolsOf(id) {
-    var t = ["search_data"];
-    if (SUMMARY[id]) t.push("app_summary");
+    var t = ["search_data", "read_item"];
+    if (SUMMARY[id] || ACT.indexOf(id) >= 0) t.push("app_summary");
     if (LINES[id]) t.push(LINES[id]);
     return t;
   }
@@ -703,8 +703,19 @@
   // Apps whose items Claude may change, and the tools for them.
   var WRITES = { budget: ["budget_add", "budget_change", "budget_delete"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
+  // GATE-ACT (2026-11-08): the apps Claude may change with the
+  // Assistant's own tools, run in a hidden Assistant frame
+  // (assistant.js GATE). = the Assistant's create / change apps, less
+  // NEVER, the apps with their own tools above (Budget, Kanban) and
+  // Files (tests/gate-act.test.js).
+  var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
+             "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "shelf", "split", "stickies", "stock",
+             "timesheet", "todo", "travel", "wiki"];
+  var ACT_TOOLS = ["search_data", "read_item", "app_summary", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change"];
+  function writable(id) { return !!WRITES[id] || ACT.indexOf(id) >= 0; }
   function canWrite(lv, win, id, now) {
-    return !!(isObj(lv) && lv[id] === "write" && WRITES[id] && typeof win === "number" && win > now);
+    return !!(isObj(lv) && lv[id] === "write" && writable(id) && NEVER.indexOf(id) < 0 && typeof win === "number" && win > now);
   }
 
   // The relay orOS uses (Mail › relay, a self-hosted one), else orOS's own.
@@ -716,7 +727,7 @@
   var core = { NEVER: NEVER, budgetLines: budgetLines, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo,
-               WRITES: WRITES, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
+               WRITES: WRITES, ACT: ACT, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
@@ -852,15 +863,41 @@
       return Promise.resolve({ ok: true, a: [], k: ok.length, c: JSON.stringify({
         apps: ok.map(function (a) {
           var o = { id: a.id, name: a.name, tools: toolsOf(a.id) };
-          if (p.lv[a.id] === "write" && WRITES[a.id]) {
-            o.change_tools = WRITES[a.id].slice();
+          if (p.lv[a.id] === "write" && writable(a.id)) {
+            o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : ACT_WRITE.slice();
             o.write_window = canWrite(p.lv, p.w, a.id, Date.now()) ? "open until " + new Date(p.w).toISOString() : "closed";
           }
           return o;
         }),
-        note: ok.length ? undefined : "The owner has not allowed any app yet (orOS › Settings › Connected services › orOS Gate)."
+        note: ok.length ? "Find items with search_data or app_summary (each item has a ref), then change them by ref. Changes need the owner's write window." : "The owner has not allowed any app yet (orOS › Settings › Connected services › orOS Gate)."
       }) });
     }
+    if (name === "__tools") {
+      return actFrame().then(function (F) {
+        var list = [];
+        try { list = F ? F.tools() || [] : []; } catch (e) { list = []; }
+        return { ok: true, c: JSON.stringify(list), quiet: 1 };
+      });
+    }
+    var budgetish = name === "app_summary" && (args.app === "budget" || args.app === "stock" || args.app === "kanban");
+    if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
+      if (ACT_WRITE.indexOf(name) >= 0 && !ok.some(function (a) { return p.lv[a.id] === "write" && ACT.indexOf(a.id) >= 0; })) {
+        return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: a change switch per app, then a write window)." });
+      }
+      return actFrame().then(function (F) {
+        if (!F) {
+          if (name === "search_data") return own();
+          return { ok: false, c: "orOS could not start its tools on the device; try again in a moment." };
+        }
+        return F.run(name, args).then(function (r) {
+          var out = { ok: !!r.ok, c: r.c || "", a: Array.isArray(r.a) ? r.a : [], k: r.k || 0 };
+          if (r.u) out.u = "a:" + r.u;
+          return out;
+        });
+      });
+    }
+    return own();
+    function own() {
     if (name === "search_data") {
       var q = String(args.query || "").replace(/\s+/g, " ").trim().slice(0, 200);
       if (!q) return Promise.resolve({ ok: false, c: "query is empty." });
@@ -912,7 +949,32 @@
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
     if (kop) return kanbanChange(kop, args, p, names);
     return Promise.resolve({ ok: false, c: "Unknown tool." });
+    }
   }
+
+  /* ---------- GATE-ACT: the Assistant's tools in a hidden frame ---------- */
+  var actP = null, actReady = null, actEl = null;
+  function actFrame() {
+    if (actEl && actEl.contentWindow && actEl.contentWindow.__asGate) return Promise.resolve(actEl.contentWindow.__asGate);
+    if (actP) return actP;
+    actP = new Promise(function (resolve) {
+      var t = setTimeout(function () { done(null); }, 20000);
+      function done(v) { clearTimeout(t); actReady = null; if (!v) { actP = null; if (actEl) { actEl.remove(); actEl = null; } } resolve(v); }
+      actReady = function () { done(actEl && actEl.contentWindow ? actEl.contentWindow.__asGate || null : null); };
+      try {
+        var v = root.orosTodayEnv && root.orosTodayEnv.version ? encodeURIComponent(root.orosTodayEnv.version) : "";
+        actEl = document.createElement("iframe");
+        actEl.setAttribute("aria-hidden", "true");
+        actEl.setAttribute("tabindex", "-1");
+        actEl.title = "orOS Gate";
+        actEl.style.cssText = "position:fixed;width:1px;height:1px;left:-9999px;top:0;border:0;opacity:0;pointer-events:none";
+        actEl.src = "assistant/index.html?gate=1" + (v ? "&v=" + v : "");
+        document.body.appendChild(actEl);
+      } catch (e) { done(null); }
+    });
+    return actP;
+  }
+  function actDrop() { if (actEl) { actEl.remove(); actEl = null; } actP = null; }
 
   function newTxId() {
     var r = new Uint32Array(1);
@@ -996,6 +1058,7 @@
       var c = typeof res.c === "string" ? res.c : "";
       if (c.length > 880000) { res = { ok: false, c: "The answer is too big; ask for a shorter period or fewer apps." }; c = res.c; }
       try { sock.send(JSON.stringify({ r: q.q, ok: !!res.ok, c: c })); } catch (e) {}
+      if (res.quiet) return;
       var entry = { t: Date.now(), n: q.n.slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0 };
       if (res.u) entry.u = res.u;
       writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
@@ -1007,6 +1070,25 @@
 
   /* ---------- API for Settings ---------- */
   var api = {
+    // For the hidden Assistant frame (assistant.js GATE).
+    frameReady: function () { if (actReady) actReady(); },
+    act: ACT.slice(),
+    levels: function () {
+      var p = pref(), out = {};
+      if (!p.on || !isObj(p.lv)) return out;
+      Object.keys(p.lv).forEach(function (id) { if (NEVER.indexOf(id) < 0 && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
+      return out;
+    },
+    // "" = Claude may change this app now; else why not (sent to Claude).
+    writeOk: function (id) {
+      var p = pref(), now = Date.now();
+      if (!p.on) return "The gate is off.";
+      if (root.orosLock && typeof root.orosLock.isLocked === "function" && root.orosLock.isLocked()) return "orOS is locked on the owner's device.";
+      if (!id || ACT.indexOf(id) < 0 || !isObj(p.lv) || p.lv[id] !== "write") return "The owner does not let Claude change " + (id || "this app") + " (orOS › Settings › Connected services › orOS Gate).";
+      if (!canWrite(p.lv, p.w, id, now)) return "Changes are closed: the owner's write window is not open. Ask the owner to open it in orOS › Settings › Connected services › orOS Gate (or Quick settings).";
+      return "";
+    },
+    askDelete: function (n) { return askDelete(n); },
     relayUrl: function () { return relay() + "/mcp"; },
     never: NEVER.slice(),
     state: function () {
@@ -1021,7 +1103,7 @@
       var lv = pref().lv || {};
       return offered().filter(function (a) { return NEVER.indexOf(a.id) < 0; }).map(function (a) {
         return { id: a.id, name: a.name, read: lv[a.id] === "read" || lv[a.id] === "write", write: lv[a.id] === "write",
-                 canWrite: !!WRITES[a.id], tools: toolsOf(a.id) };
+                 canWrite: writable(a.id), tools: toolsOf(a.id) };
       });
     },
     // level: "read" | "write" | false (off)
@@ -1029,7 +1111,7 @@
       var p = pref();
       if (NEVER.indexOf(id) >= 0) return false;
       if (level === true) level = "read";
-      if (level === "write" && !WRITES[id]) return false;
+      if (level === "write" && !writable(id)) return false;
       p.lv = isObj(p.lv) ? p.lv : {};
       if (level === "read" || level === "write") p.lv[id] = level; else delete p.lv[id];
       if (id === "kanban" && level === "write") kanbanModel().then(null, function () {});
@@ -1049,7 +1131,25 @@
       changed();
       return okW;
     },
-    canUndo: function (uid) { var l = readJSON(UNDO_KEY); return Array.isArray(l) && l.some(function (e) { return e && e.id === uid; }); },
+    canUndo: function (uid) {
+      if (/^a:/.test(String(uid))) return true;
+      var l = readJSON(UNDO_KEY); return Array.isArray(l) && l.some(function (e) { return e && e.id === uid; });
+    },
+    // GATE-ACT: a change made with the Assistant's tools → Promise<{ ok, n }>
+    undoAct: function (uid) {
+      var id = String(uid).replace(/^a:/, "");
+      return actFrame().then(function (F) {
+        if (!F || typeof F.undo !== "function") return { ok: false };
+        return F.undo(id).then(function (ok) {
+          if (ok) {
+            var l = readJSON(LOG_KEY);
+            if (Array.isArray(l)) writeJSON(LOG_KEY, l.map(function (e) { if (e && e.u === uid) { e = JSON.parse(JSON.stringify(e)); delete e.u; } return e; }));
+            changed();
+          }
+          return { ok: !!ok, n: ok ? 1 : 0 };
+        });
+      });
+    },
     // → { ok, n, kept } | { ok:false }
     undo: function (uid) {
       var l = readJSON(UNDO_KEY);
@@ -1092,7 +1192,7 @@
       return sha256hex(tok).then(function (th) { return devCall({ act: "join", jc: jc, th: th }, base); }).then(function (d) {
         var lv = {};
         if (isObj(d.lv)) Object.keys(d.lv).forEach(function (k) {
-          if (NEVER.indexOf(k) < 0 && (d.lv[k] === "read" || (d.lv[k] === "write" && WRITES[k]))) lv[k] = d.lv[k];
+          if (NEVER.indexOf(k) < 0 && (d.lv[k] === "read" || (d.lv[k] === "write" && writable(k)))) lv[k] = d.lv[k];
         });
         var np = { on: true, id: d.id, tok: tok, r: base, at: Date.now(), lv: lv };
         if (!writeJSON(PREF_KEY, np)) throw new Error("save");
@@ -1103,6 +1203,7 @@
     },
     disable: function () {
       var p = pref();
+      actDrop();
       var gone = p.id && p.tok ? devCall({ act: "del", id: p.id, tok: p.tok }).catch(function () {}) : Promise.resolve();
       drop();
       return gone.then(function () {

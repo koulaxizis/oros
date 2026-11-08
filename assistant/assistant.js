@@ -60,6 +60,15 @@
   // the sync engine could not tell when it closes); it reads settings
   // from storage and marks them dirty like a closed app's proxy does.
   var MINI = /[?&]mini=1\b/.test(location.search);
+  // GATE-ACT (2026-11-08): a hidden frame the shell's orOS Gate
+  // (gate/gate.js) loads to run the Assistant's own tools for Claude:
+  // no UI, no AI provider, no sync slice; refs live in this frame.
+  // Reads are answered at once; a change is applied only for an app the
+  // owner set to "write" in the gate while its write window is open
+  // (asked again in the shell: orosGate.writeOk), more than 5
+  // deletions are asked on the device (orosGate.askDelete). See the
+  // section "GATE" before boot().
+  var GATE = /[?&]gate=1\b/.test(location.search);
 
   // ---------- 1. Constants, i18n, helpers ----------
   // orosI18n (../i18n.js): the full language code, a pack language included.
@@ -4773,6 +4782,10 @@
   }
   // The confirm card. → Promise<bool>
   function askChange(appName, pl, action) {
+    if (GATE) {
+      var nDel = pl.del ? (pl.many ? pl.many.length : 1) : 0;
+      return gateAsk(appName, nDel).then(function (yes) { return yes ? true : false; });
+    }
     return new Promise(function (resolve) {
       var done = false;
       function finish(v) {
@@ -5252,6 +5265,12 @@
     }
   }
   function askCreate(appName, rows, link) {
+    if (GATE) {
+      var gs = {}, gl = 0;
+      rows.forEach(function (row, i) { if (row.dup || row.same) gs[i] = 1; else gl++; });
+      if (!gl) { gateNote = "Nothing new: every item is already there (see the refs)."; return Promise.resolve(false); }
+      return gateAsk(appName, 0).then(function (yes) { return yes ? { skip: gs } : false; });
+    }
     return new Promise(function (resolve) {
       var done = false;
       function finish(v) {
@@ -5494,6 +5513,7 @@
     return histLoad().then(function () {
       var q = C.undoPick(histList(), args, Date.now(), function (id) { return !!ok[id]; });
       if (!q.ok) return { content: "Error: " + q.err, err: 1 };
+      if (GATE) return gateUndo(q.list, apps);
       return { content: JSON.stringify({ shown: C.histForModel(q.list, Date.now()),
                                          note: "Shown to the user as a card with Undo. Nothing is undone before they press it." }),
                ui: { k: "undo", ids: q.list.map(function (e) { return e.id; }) } };
@@ -8441,6 +8461,109 @@
   }
   window.__orosOpenAt = openTarget;
 
+  // ---------- GATE: Claude's tools through orOS Gate (GATE-ACT) ----------
+  var gateConv = { id: "gate", refs: {}, refN: 0, msgs: [] };
+  var gateNote = "", gateCtx = null;
+  function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
+  // { read: [app], write: [app] } as the gate allows them now.
+  function gateApps() {
+    var g = gateShell(), lv = {}, act = [];
+    try { lv = g && typeof g.levels === "function" ? g.levels() || {} : {}; act = g && Array.isArray(g.act) ? g.act : []; } catch (e) { lv = {}; }
+    var p = shell(), list = [];
+    try { if (p && typeof p.orosAssistApps === "function") list = p.orosAssistApps() || []; } catch (e) { list = []; }
+    var read = [], write = [];
+    list.forEach(function (a) {
+      if (!a || !lv[a.id]) return;
+      var o = { id: String(a.id), name: String(a.name || a.id), sensitive: !!a.sensitive, perm: "always" };
+      read.push(o);
+      if (lv[a.id] === "write" && act.indexOf(o.id) >= 0) write.push(o);   // Budget and Kanban have their own gate tools
+    });
+    var byName = function (x, y) { return x.name.localeCompare(y.name); };
+    return { read: read.sort(byName), write: write.sort(byName) };
+  }
+  function gateIdOf(appName) {
+    var w = gateCtx ? gateCtx.write : [], id = "";
+    w.forEach(function (a) { if (a.name === appName) id = a.id; });
+    if (!id) ["crm", "travel"].forEach(function (x) { w.forEach(function (a) { if (a.id === x && a.name === appName) id = x; }); });
+    return id;
+  }
+  // A change is allowed only now, for this app, inside the write window.
+  function gateAsk(appName, nDel) {
+    var g = gateShell(), id = gateIdOf(appName);
+    var why = g && typeof g.writeOk === "function" ? g.writeOk(id) : "orOS Gate is not running.";
+    if (why) { gateNote = why; return Promise.resolve(false); }
+    if (nDel > 5 && typeof g.askDelete === "function") {
+      return Promise.resolve(g.askDelete(nDel)).then(function (yes) {
+        if (!yes) gateNote = "The owner did not confirm deleting " + nDel + " items on the device; nothing was deleted.";
+        return !!yes;
+      });
+    }
+    return Promise.resolve(true);
+  }
+  function gateUndo(list, apps) {
+    var g = gateShell(), n = 0, fail = 0, refused = [];
+    return list.reduce(function (p, e) {
+      return p.then(function () {
+        var why = g && typeof g.writeOk === "function" ? g.writeOk(e.app) : "orOS Gate is not running.";
+        if (why) { refused.push(why); fail++; return; }
+        return undoById(e.id).then(function (ok) { if (ok) n++; else fail++; });
+      });
+    }, Promise.resolve()).then(function () {
+      if (!n && refused.length) return { content: "Error: " + refused[0], err: 1 };
+      return { content: JSON.stringify({ undone: n, failed: fail,
+                                         note: fail ? "Some could not be undone: changed since, the app refused, or changes to that app are closed." : undefined }) };
+    });
+  }
+  // The tool list Claude sees through the gate (MCP shape).
+  function gateToolList() {
+    var ga = gateApps();
+    var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget"; });
+    var chg = changeApps(ga.write).filter(function (a) { return a.id !== "budget" && a.id !== "files"; });
+    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
+                             changes: chg.length > 0, creates: crIds,
+                             links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
+                             partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0 });
+    return C.gateTools(tools);
+  }
+  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1 };
+  // One call → Promise<{ ok, c (text), a (apps) }>.
+  function gateRun(name, args) {
+    if (C.GATE_TOOLS.indexOf(name) < 0) return Promise.resolve({ ok: false, c: "Unknown tool." });
+    var ga = gateApps();
+    gateCtx = ga;
+    gateNote = "";
+    var apps = GATE_WRITE[name] ? ga.write.filter(function (a) { return a.id !== "budget"; }) : ga.read;
+    if (!apps.length) {
+      return Promise.resolve({ ok: false, c: GATE_WRITE[name]
+        ? "The owner lets Claude change no app yet (orOS › Settings › Connected services › orOS Gate: a change switch per app, then a write window)."
+        : "The owner has not allowed any app yet." });
+    }
+    var call = { id: "g", name: name, args: args && typeof args === "object" && !Array.isArray(args) ? args : {} };
+    return runTool(gateConv, call, apps).then(function (r) {
+      var text = gateSay(typeof r.content === "string" ? r.content : "");
+      if (gateNote) return { ok: false, c: gateNote };
+      if (r.err) return { ok: false, c: text.replace(/^Error: /, "") };
+      var used = [], app = call.args.app ? String(call.args.app) : "";
+      if (app) used.push(app);
+      else if (r.ui && r.ui.apps) used = [];
+      return { ok: true, c: text, u: r.ui && r.ui.u ? r.ui.u : "", a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0 };
+    }, function () { return { ok: false, c: "The call failed on the device." }; });
+  }
+  // The results speak of "the user" pressing; through the gate nobody did.
+  function gateSay(text) {
+    return text.replace(/The user applied the changes?\b/g, "Applied").replace(/The user (added|linked|deleted|moved|made) /g, function (m, v) { return v.charAt(0).toUpperCase() + v.slice(1) + " "; })
+      .replace(/The user pressed Apply, but /g, "").replace(/They can undo it\./g, "The owner can undo it (or call undo_change).");
+  }
+  function gateBoot() {
+    load();
+    loadPrefs();
+    histLoad().then(function () {
+      window.__asGate = { v: 1, run: gateRun, tools: gateToolList,
+                          undo: function (id) { return histLoad().then(function () { return undoById(String(id)); }); } };
+      try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
+    });
+  }
+
   function boot() {
     load();
     loadPrefs();
@@ -8490,5 +8613,5 @@
     });
   }
 
-  boot();
+  if (GATE) gateBoot(); else boot();
 })();

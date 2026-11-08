@@ -928,6 +928,14 @@
           c.appendChild(ln);
           if (e.u && G.canUndo(e.u)) {
             c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.u, function () {
+              if (/^a:/.test(e.u) && typeof G.undoAct === "function") {
+                gateNote = "";
+                G.undoAct(e.u).then(function (ra) {
+                  if (!ra.ok) gateNote = "gt.fail"; else gateUndoMsg = t("gt.undo.done", { n: ra.n });
+                  render();
+                });
+                return;
+              }
               var r = G.undo(e.u);
               gateNote = "";
               if (!r.ok) gateNote = "gt.fail";

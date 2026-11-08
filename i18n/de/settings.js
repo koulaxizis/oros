@@ -861,7 +861,7 @@ orosPack("de", "settings", {
  "gt.invite.code": "Gib auf dem anderen Gerät unter Einstellungen › orOS Gate {code} bei Code von deinem anderen Gerät ein (10 Minuten, einmal).",
  "gt.apps.hint": "Was Claude lesen darf (alles aus, bis du es einschaltest):",
  "gt.read": "Claude darf {app} lesen",
- "gt.never": "Passwörter, Mail, Tagebuch, Stimmung, Zyklus, Gesundheit, Baby und der Assistent werden nie angeboten.",
+ "gt.never": "Passwörter, Mail, Tagebuch, Stimmung, Zyklus, Gesundheit, Fitness, Baby und der Assistent werden nie angeboten.",
  "gt.links": "Claude-Verbindungen: {n}",
  "gt.last": "letzter Aufruf {when}",
  "gt.info.fail": "Das Relay war nicht erreichbar.",

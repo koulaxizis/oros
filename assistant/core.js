@@ -3050,6 +3050,56 @@
     return out;
   }
 
+  // GATE-ACT (orOS Gate, 2026-11-08): the same tools for Claude through
+  // the gate (gate/gate.js runs them in a hidden Assistant frame,
+  // assistant.js GATE). No card is shown there: reads go straight to
+  // Claude, changes are applied at once while the owner's write window
+  // is open, more than 5 deletions are asked on the device. Only these
+  // tools are offered, and every sentence about cards, presses or the
+  // user's consent is replaced (tests/gate-act.test.js keeps it so).
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var GATE_SAY = [
+    [" The user sees every result first and may share only some of them, or none.", ""],
+    [" The user may be asked first.", ""],
+    [" The user sees the summary first and may hold it back.", ""],
+    ["Propose a change to an existing item", "Change an existing item"],
+    [" The user sees exactly what would change (before → after) and must press Apply; they may refuse. The result says whether it was applied.",
+     " It is applied at once while the owner's write window is open; the result says what changed."],
+    ["the user sees one card for all of them", "one change for all of them"],
+    ["pass changes instead: one card, the user can untick rows", "pass changes instead"],
+    ["One card and one Undo for all.", "One Undo for all."],
+    [" The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead.",
+     " They are saved at once while the owner's write window is open. An item that looks like one already there is left out; the result names it with its ref, so change it with change_item instead."],
+    [" The user sees the links on one card and must press Link.", " Applied at once while the owner's write window is open."],
+    ["What you (the assistant) added", "What the Assistant or Claude through orOS Gate added"],
+    [" The user sees the list as a card with Undo next to each change that can still be undone.", ""],
+    ["Take back changes you (the assistant) made, when the user asks", "Take back changes made through orOS Gate or by the Assistant, when the owner asks"],
+    [" The user sees them on one card and presses Undo once; never say it is undone before the result says so, and never tell the user you cannot undo.",
+     " They are undone at once while the owner's write window is open; never say it is undone before the result says so."]
+  ];
+  var GATE_BAD = /\bpress(es)?\b|user sees|may be asked|hold it back|untick|must press|a card\b|one card\b|on a card\b/i;
+  // tools (toolsFor output) → MCP tool list { name, description, inputSchema, annotations }
+  function gateTools(tools) {
+    return (Array.isArray(tools) ? tools : []).filter(function (t) { return t && GATE_TOOLS.indexOf(t.name) >= 0; }).map(function (t) {
+      var x = JSON.parse(JSON.stringify(t));
+      function say(s) {
+        var out = String(s || "");
+        GATE_SAY.forEach(function (r) { out = out.split(r[0]).join(r[1]); });
+        return out;
+      }
+      function walk(o) {
+        if (!o || typeof o !== "object") return;
+        if (typeof o.description === "string") o.description = say(o.description);
+        Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === "object") walk(o[k]); });
+      }
+      x.description = say(x.description);
+      walk(x.params);
+      var ro = /^(search_data|read_item|app_summary|change_history)$/.test(x.name);
+      return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
+               annotations: { readOnlyHint: ro, destructiveHint: x.name === "change_item" || x.name === "undo_change" } };
+    });
+  }
+
   var RESULT_TEXT = 400;   // characters of an item's text sent to the model
   var PER_APP     = 8;     // items per app
   var MAX_ITEMS   = 30;    // items per search
@@ -4422,7 +4472,7 @@
     labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
-    toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    toolsFor: toolsFor, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,

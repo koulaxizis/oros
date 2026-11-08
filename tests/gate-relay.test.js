@@ -362,3 +362,39 @@ test("a gate made before 5.70.00 (meta.th) still works and can take a second dev
   assert.deepEqual(m.devs.map((d) => d.th), [hex(TOK), hex(TOK2)]);
   assert.equal(m.th, undefined);
 });
+
+// GATE-ACT (2026-11-08): the open device adds its own tools; they are
+// kept for when the device is closed, and calls to them go through.
+test("tools/list asks the device for its tools, keeps them, and passes their calls", async () => {
+  const w = world();
+  await newGate(w);
+  const t = await tokens(w);
+  const b = w.boxes.get(ID);
+  const devList = [
+    { name: "change_item", description: "Change an item by ref.", inputSchema: { type: "object", properties: { ref: { type: "string" } } }, annotations: { destructiveHint: true } },
+    { name: "search_data", description: "Search, with refs.", inputSchema: { type: "object", properties: { query: { type: "string" } } } },
+    { name: "budget_add", description: "clash", inputSchema: { type: "object" } }
+  ];
+  const sock = { sent: [], closed: null, send(m) { this.sent.push(m); setTimeout(() => {
+    const q = JSON.parse(m);
+    const c = q.n === "__tools" ? JSON.stringify(devList) : JSON.stringify({ did: q.n, ref: q.a.ref });
+    b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c }));
+  }, 1); }, close(c) { this.closed = c; } };
+  b.socks.push(sock);
+  const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/list" })).json();
+  const names = list.result.tools.map((x) => x.name);
+  assert.equal(names[names.length - 1], "change_item");
+  assert.equal(names.filter((n) => n === "budget_add").length, 1);
+  assert.notEqual(list.result.tools.find((x) => x.name === "search_data").description, "Search, with refs.", "ours stays");
+  const nv = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "change_item", arguments: { app: "passwords" } } })).json();
+  assert.equal(nv.result.isError, true, "a never-app is refused on the relay too");
+  const res = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "change_item", arguments: { ref: "r1" } } })).json();
+  assert.equal(res.result.isError, false);
+  assert.deepEqual(JSON.parse(res.result.content[0].text), { did: "change_item", ref: "r1" });
+  // The device goes away: the kept list is still listed.
+  sock.closed = 1000;
+  const later = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 3, method: "tools/list" })).json();
+  assert.ok(later.result.tools.some((x) => x.name === "change_item"));
+  const unk = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "drop_all" } })).json();
+  assert.equal(unk.error.code, -32602);
+});
