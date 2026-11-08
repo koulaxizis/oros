@@ -586,3 +586,81 @@ test("fieldwarden: 30 puzzles, each one turn: the winning line solves it, doing 
   assert.deepEqual(m({ rows: {} }, {}).pz, []);
 });
 
+
+test("fieldwarden: farm codes from the editor read back the same farm, and a farm plays as one Harsh season", () => {
+  const blank = () => {
+    const t = [], g = [];
+    for (let i = 0; i < 36; i++) { t.push("d"); g.push(0); }
+    return { t, g };
+  };
+  const { t, g } = blank();
+  t[14] = "b"; t[7] = "f"; t[8] = "f"; t[20] = "f"; t[21] = "h"; t[27] = "s"; t[33] = "p";
+  g[7] = 1; g[20] = 3;
+  const m = { t, g, f: ["shepherd", "smith", "ferryman"], fa: [1, 2, 33], wx: ["c", "r", "d", "e"],
+    inv: [["wolf", 30]], arr: [["boar", 3], ["wolf", 5]] };
+  assert.equal(E.farmProblem(m), "");
+  const code = E.writeFarmCode(m);
+  // the format is fixed: a code made today plays the same farm forever
+  assert.equal(code, "f100000002100000800000450000070000060001412xcrde10u21305ia");
+  assert.deepEqual(E.readFarmCode(code), m);
+  assert.deepEqual(E.readFarmCode(code.toUpperCase().replace(/(.{6})/g, "$1 - ")), m, "case and separators do not matter");
+  // one character off fails the check
+  for (let k = 2; k < code.length; k++) {
+    const c = code.charAt(k) === "0" ? "1" : "0";
+    assert.equal(E.readFarmCode(code.slice(0, k) + c + code.slice(k + 1)), null, "changed at " + k);
+  }
+  [null, 5, "", "f1", "f2" + code.slice(2), code + "0", code.slice(0, -3)].forEach((c) => assert.equal(E.readFarmCode(c), null, String(c)));
+  // the problems the editor names
+  const cp = () => JSON.parse(J(m));
+  let x = cp(); x.t[14] = "d"; assert.equal(E.farmProblem(x), "barn");
+  x = cp(); x.t[0] = "b"; assert.equal(E.farmProblem(x), "barn");
+  x = cp(); x.t = x.t.map((c) => (c === "f" ? "d" : c)); x.g = x.g.map(() => 0); assert.equal(E.farmProblem(x), "field");
+  x = cp(); x.fa[0] = 3; x.t[1] = "h"; x.t[6] = "h"; assert.equal(E.farmProblem(x), "closed", "the corner is walled off");
+  x = cp(); x.fa[0] = -1; assert.equal(E.farmProblem(x), "folk");
+  x = cp(); x.fa[0] = 33; x.fa[2] = 4; assert.equal(E.farmProblem(x), "folk", "only the ferryman stands in the pond");
+  x = cp(); x.fa[1] = 14; assert.equal(E.farmProblem(x), "folk", "nobody stands on the barn");
+  x = cp(); x.inv = []; x.arr = []; assert.equal(E.farmProblem(x), "none");
+  x = cp(); x.inv = [["wolf", 1]]; assert.equal(E.farmProblem(x), "inv", "not on a farmhand");
+  x = cp(); x.inv = [["wolf", 33]]; assert.equal(E.farmProblem(x), "inv");
+  x = cp(); x.arr = [["crow", 6]]; assert.equal(E.farmProblem(x), "inv");
+  x = cp(); x.inv = []; for (let i = 0; i < 13; i++) x.inv.push(["crow", 3 + i]); assert.equal(E.farmProblem(x), "many");
+  x = cp(); x.g[8] = 1; x.t[8] = "d"; assert.equal(E.farmProblem(x), "bad", "only a field has a stage");
+  assert.equal(E.writeFarmCode(x), "");
+  // random farms round trip
+  let seed = 7;
+  const rnd = (n) => { seed = (seed * 48271) % 2147483647; return seed % n; };
+  let made = 0;
+  for (let k = 0; k < 400; k++) {
+    const r = blank();
+    for (let i = 0; i < 36; i++) { const c = "dddfffhps"[rnd(9)]; r.t[i] = c; if (c === "f") r.g[i] = rnd(4); }
+    r.t[rnd(36)] = "b";
+    const free = []; for (let i = 0; i < 36; i++) if (r.t[i] === "d" || r.t[i] === "f") free.push(i);
+    const pick = () => free.splice(rnd(free.length), 1)[0];
+    const trio = E.FOLK_IDS.slice().sort(() => rnd(3) - 1).slice(0, 3);
+    const mm = { t: r.t, g: r.g, f: trio, fa: [pick(), pick(), pick()], wx: [0, 1, 2, 3].map(() => "crdnesw"[rnd(7)]),
+      inv: [], arr: [] };
+    for (let i = rnd(4); i > 0; i--) mm.inv.push([E.INV_IDS[rnd(9)], pick()]);
+    for (let i = rnd(4); i > 0 || !mm.inv.length && !mm.arr.length; i--) mm.arr.push([E.INV_IDS[rnd(9)], 2 + rnd(4)]);
+    if (E.farmProblem(mm)) continue;
+    made++;
+    const c = E.writeFarmCode(mm);
+    assert.deepEqual(E.readFarmCode(c), mm, c);
+  }
+  assert.ok(made > 50, "made " + made);
+  // the season: one season on Harsh, the quota never above what the solver brings in
+  const st = E.newCustom(code);
+  assert.deepEqual([st.one, st.diff, st.end, st.cu, st.s.turn, st.s.wx.join("")], [1, "h", 1, code, 1, "cccrde"]);
+  assert.ok(E.valid(st));
+  assert.equal(J(E.newCustom(code.toUpperCase())), J(st), "the same farm for everyone");
+  assert.ok(st.s.q >= 1 && st.s.q <= E.solve(st, st.s));
+  assert.deepEqual(st.s.sched.map((l) => l.join()), ["", "", "boar", "", "wolf", ""], "an arrival on turn k comes at the end of turn k - 1");
+  assert.equal(E.newCustom(code, true).s.q, 1, "the editor's preview asks for nothing");
+  const won = E.clone(st);
+  while (won.over < 0) E.botTurn(won, true);
+  assert.equal(won.over, 1);
+  assert.equal(E.act(won, { t: "next" }), null, "no market after a farm from a code");
+  const b1 = E.clone(st); b1.cu = code.slice(0, -1) + "z"; assert.equal(E.valid(b1), false);
+  const b2 = E.clone(st); b2.pz = 3; assert.equal(E.valid(b2), false, "never a puzzle and a farm code at once");
+  const b3 = E.clone(st); delete b3.one; assert.equal(E.valid(b3), false);
+  assert.equal(E.newCustom("nonsense"), null);
+});
