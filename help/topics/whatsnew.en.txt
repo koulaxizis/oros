@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.71.00
+- **Wayfarers: the Daily trial.** The calendar button opens today's trial, the same for everyone: the Greenway on Hardy with a party of three chosen for the day, the same land and the same spoils. One try; beat the guardian to get through. The result shows your moves and your streak, `Share` copies it with no spoilers, and the trial has its own card in the Game Center's Today. `Records` now also lists your last ten journeys from all your devices, each with `Replay`.
+
 ## Version 5.70.00
 - **Wayfarers: the whole road.** After the Greenway the journey goes on through the Ash Hills and the Frost Gate, each with eight foes of its own and a guardian in three phases: the Ember Colossus and the Keeper of the Gate. Foes now Burn and Chill your heroes and some hits go through Guard. There are 20 new events, better spoils in the later regions and a short story about a lantern that must reach the Frost Gate before the long night.
 

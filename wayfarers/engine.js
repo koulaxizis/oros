@@ -11,7 +11,7 @@
 // "Wayfarers").
 //
 // State (plain JSON, kept as is in the device-local session):
-//   { v: 1, seed, diff "g" Gentle | "h" Hardy, region 1…,
+//   { v: 1, seed, diff "g" Gentle | "h" Hardy, region 1…, end (optional: last region, 5.71.00),
 //     party: [{ c class, hp, up: [upgrade ids], w weapon | "", ch charm | "", tr trained }] × 3,
 //     lvl 1-10, xp, gold, inv: { p, t, f }, bag: [gear ids],
 //     map: [{ c column 0-7, r row, k kind, e: [next node indexes] }],
@@ -198,7 +198,9 @@
   }
   function standing(st, i) { return st.party[i].hp > 0; }
 
-  function newJourney(seed, diff, classes) {
+  // end (optional, 5.71.00): the last region of a short journey (the
+  // Daily trial walks only the Greenway: end 1).
+  function newJourney(seed, diff, classes, end) {
     seed = String(seed);
     if (DIFFS.indexOf(diff) < 0) diff = "g";
     var st = {
@@ -209,8 +211,17 @@
       rng: hashStr(seed + ":play") || 1, acts: 0, stops: 0, kills: 0, over: -1
     };
     if (diff === "g") st.inv.f = 1;
+    if (isInt(end) && end >= 1 && end < REGIONS.length) st.end = end;
     for (var i = 0; i < 3; i++) st.party[i].hp = heroStats(st, i).mh;
     return st;
+  }
+  // Three classes from a code (the Daily trial's party): front row
+  // first, then in class order.
+  function dailyParty(seed) {
+    var o = { s: hashStr(String(seed) + ":party") || 1 };
+    return shuffle(o, CLASS_IDS.slice()).slice(0, 3).sort(function (a, b) {
+      return (CLASSES[a].row === "f" ? 0 : 1) - (CLASSES[b].row === "f" ? 0 : 1) || CLASS_IDS.indexOf(a) - CLASS_IDS.indexOf(b);
+    });
   }
   function partyOk(classes) {
     if (!Array.isArray(classes) || classes.length !== 3) return false;
@@ -510,7 +521,7 @@
       }
     }
     st.fight = null;
-    if (kind === "g" && st.region >= REGIONS.length) {
+    if (kind === "g" && st.region >= (st.end || REGIONS.length)) {
       gainXp(st, xp, ev);
       st.pend = [];
       st.over = 1;
@@ -895,6 +906,7 @@
   function valid(st) {
     if (!st || typeof st !== "object" || st.v !== 1 || typeof st.seed !== "string" || DIFFS.indexOf(st.diff) < 0) return false;
     if (!isInt(st.region) || st.region < 1 || st.region > REGIONS.length) return false;
+    if (st.end !== undefined && (!isInt(st.end) || st.end < 1 || st.end >= REGIONS.length || st.region > st.end)) return false;
     if (!Array.isArray(st.party) || !partyOk(st.party.map(function (h) { return h && h.c; }))) return false;
     if (!isInt(st.lvl) || st.lvl < 1 || st.lvl > MAX_LVL || !isInt(st.xp) || st.xp < 0 || !isInt(st.gold) || st.gold < 0) return false;
     for (var i = 0; i < 3; i++) {
@@ -946,7 +958,7 @@
     DIFFS: DIFFS, COLS: COLS, LEVELS: LEVELS, MAX_LVL: MAX_LVL, BAG_MAX: BAG_MAX,
     CLASSES: CLASSES, CLASS_IDS: CLASS_IDS, SKILLS: SKILLS, UPS: UPS, GEAR: GEAR, ITEMS: ITEMS,
     MOVES: MOVES, FOES: FOES, REGIONS: REGIONS, EVENTS: EVENTS,
-    hashStr: hashStr, makeMap: makeMap, newJourney: newJourney, partyOk: partyOk, heroStats: heroStats, foeStats: foeStats,
+    hashStr: hashStr, makeMap: makeMap, newJourney: newJourney, dailyParty: dailyParty, partyOk: partyOk, heroStats: heroStats, foeStats: foeStats,
     queueView: queueView, reach: reach, targets: targets, usable: usable, eventOf: eventOf, choiceOk: choiceOk,
     speedOf: speedOf, act: act, valid: valid, clone: clone
   };
