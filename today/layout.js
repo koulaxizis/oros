@@ -13,7 +13,8 @@
 //     which order, small or wide. It lives on THIS device only
 //     (localStorage "oros-today-layout", R10): a phone and a laptop
 //     want different screens, so it is never in the synced slice.
-//     The default is exactly the layout Today had before.
+//     The default is the layout Today had before plus, since T2
+//     (BR-TODAY-16), the Tips of the day under the top lines.
 //   - distribute(groups, ids): which rows each widget shows. A row
 //     goes to one widget only: Weather and Water take their app's top
 //     line, Habits the habit rows, Upcoming events Calendar's events,
@@ -35,6 +36,8 @@
   // even on a phone).
   var WIDGETS = {
     top:     { kind: "list", sizes: ["wide"], def: "wide" },
+    tips:    { kind: "list", sizes: ["small", "wide"], def: "wide" },        // T2 (BR-TODAY-16)
+    agenda:  { kind: "list", sizes: ["small", "wide"], def: "wide" },        // T3 (BR-TODAY-17)
     overdue: { kind: "list", sizes: ["small", "wide"], def: "small" },
     today:   { kind: "list", sizes: ["small", "wide"], def: "small" },
     soon:    { kind: "list", sizes: ["small", "wide"], def: "small" },
@@ -46,9 +49,10 @@
     todos:   { kind: "list", sizes: ["small", "wide"], def: "small", app: "todo" },
     together: { kind: "tile", sizes: ["small", "wide"], def: "small", app: "together" }
   };
-  var ORDER = ["top", "overdue", "today", "soon", "clock", "weather", "water", "habits", "events", "todos", "together"];
+  var ORDER = ["top", "tips", "agenda", "overdue", "today", "soon", "clock", "weather", "water", "habits", "events", "todos", "together"];
   var DEFAULT = [
     { id: "top", size: "wide" },
+    { id: "tips", size: "wide" },
     { id: "overdue", size: "small" },
     { id: "today", size: "small" },
     { id: "soon", size: "small" }

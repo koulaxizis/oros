@@ -4435,6 +4435,8 @@
   }
   function changePrep(r0) {
     if (r0 && r0.app === "flashcards") return fcPrep();
+    // PB-CHG: an edition's shop product link needs the shops of Connected services
+    if (r0 && r0.app === "publish") { if (window.OrosAssistEdits4) window.OrosAssistEdits4.setCache("woo", createCtx().woo); return Promise.resolve(); }
     var Ex = r0 && (r0.app === "music" ? window.OrosAssistEdits4 : window.OrosAssistEdits3), p = r0 && PREP_DB[r0.app];
     if (!p || !Ex) return Promise.resolve();
     return idbAll(p[0], p[1]).then(function (list) {

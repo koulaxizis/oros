@@ -110,7 +110,18 @@
       "none.together": "Nothing from Together yet. Open it to start counting.",
       det: "Details and suggestions", detOf: "Details and suggestions: {t}", tip: "Tip",
       "act.route": "Directions", "act.contact": "Open the card", "act.gift": "Gift idea to To-Do", "act.todo": "Add to To-Do",
-      "act.later": "Tomorrow", "act.tick": "Tick it", "act.sip": "+1 glass", "act.open": "Open"
+      "act.later": "Tomorrow", "act.tick": "Tick it", "act.sip": "+1 glass", "act.open": "Open",
+      "w.tips": "Tips of the day", "d.tips": "Short advice from your apps' rows together: rain and an appointment, heat, late tasks, a busy day",
+      "tp.hide": "Not today", "tp.mute": "Don't show this kind", "tp.hidden": "Hidden until tomorrow",
+      "tp.muted": "This kind of tip is off. Turn it back on in Settings.",
+      "s.tips": "Tips of the day", "s.tipsN": "{n} kinds of tip are off on this device.", "s.tipsN1": "One kind of tip is off on this device.", "s.tipsNone": "Every kind of tip is on.",
+      "s.tipsOn": "Show muted tips again", "s.tipsDone": "Every kind of tip is on again.",
+      "w.agenda": "Your day", "d.agenda": "Today's times in order, with the free stretches between them",
+      "ag.free": "Free {f}–{t} ({d})", "ag.fit": "{n} tasks without a time could go here", "ag.fit1": "a task without a time could go here",
+      "ag.none": "Nothing with a time today", "ag.m": "{m} min", "ag.h": "{h} h", "ag.hm": "{h} h {m} min",
+      "eve.title": "Tomorrow", "eve.none": "Nothing planned for tomorrow yet.", "eve.first": "Tomorrow starts at {t}.",
+      "s.eve": "Tomorrow in the evening", "s.eveHint": "From this hour Today shows tomorrow on top, so you can get ready tonight.",
+      "s.eveOff": "Off", "wk.line": "Next 7 days: {l}"
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
@@ -165,7 +176,18 @@
       "none.together": "Τίποτα από το Μαζί ακόμη. Άνοιξέ το για να αρχίσει η μέτρηση.",
       det: "Λεπτομέρειες και προτάσεις", detOf: "Λεπτομέρειες και προτάσεις: {t}", tip: "Συμβουλή",
       "act.route": "Οδηγίες", "act.contact": "Άνοιγμα καρτέλας", "act.gift": "Ιδέα για δώρο στο To-Do", "act.todo": "Στο To-Do",
-      "act.later": "Αύριο", "act.tick": "Τικ", "act.sip": "+1 ποτήρι", "act.open": "Άνοιγμα"
+      "act.later": "Αύριο", "act.tick": "Τικ", "act.sip": "+1 ποτήρι", "act.open": "Άνοιγμα",
+      "w.tips": "Συμβουλές της ημέρας", "d.tips": "Σύντομες συμβουλές από τις γραμμές των εφαρμογών σου μαζί: βροχή και ραντεβού, ζέστη, καθυστερήσεις, γεμάτη μέρα",
+      "tp.hide": "Όχι σήμερα", "tp.mute": "Να μη φαίνεται αυτό το είδος", "tp.hidden": "Κρύφτηκε ως αύριο",
+      "tp.muted": "Αυτό το είδος συμβουλής είναι κλειστό. Το ξανανοίγεις από τις Ρυθμίσεις.",
+      "s.tips": "Συμβουλές της ημέρας", "s.tipsN": "{n} είδη συμβουλών είναι κλειστά σε αυτή τη συσκευή.", "s.tipsN1": "Ένα είδος συμβουλής είναι κλειστό σε αυτή τη συσκευή.", "s.tipsNone": "Όλα τα είδη συμβουλών είναι ανοιχτά.",
+      "s.tipsOn": "Εμφάνιση ξανά των κλειστών συμβουλών", "s.tipsDone": "Όλα τα είδη συμβουλών άνοιξαν ξανά.",
+      "w.agenda": "Η μέρα σου", "d.agenda": "Οι σημερινές ώρες με τη σειρά, με τα ελεύθερα διαστήματα ανάμεσα",
+      "ag.free": "Ελεύθερα {f}–{t} ({d})", "ag.fit": "{n} εργασίες χωρίς ώρα χωράνε εδώ", "ag.fit1": "μια εργασία χωρίς ώρα χωράει εδώ",
+      "ag.none": "Τίποτα με ώρα σήμερα", "ag.m": "{m} λεπ.", "ag.h": "{h} ώρ.", "ag.hm": "{h} ώρ. {m} λεπ.",
+      "eve.title": "Αύριο", "eve.none": "Τίποτα προγραμματισμένο για αύριο ακόμα.", "eve.first": "Αύριο ξεκινάς στις {t}.",
+      "s.eve": "Το αύριο από το βράδυ", "s.eveHint": "Από αυτή την ώρα το Σήμερα δείχνει πρώτα το αύριο, για να ετοιμαστείς από απόψε.",
+      "s.eveOff": "Κλειστό", "wk.line": "Επόμενες 7 μέρες: {l}"
     }
   };
   if (window.orosI18n) window.orosI18n.table(I18N, "today", LANG);
@@ -317,6 +339,7 @@
       disc = both[1];
       last = res;
       assist = assistState(res);
+      weekAhead(res);
       $("brief-btn").hidden = !canBrief();
       if (document.querySelector(".w.dragging")) return;     // the drop renders
       render();
@@ -380,6 +403,7 @@
       parts[id].forEach(function (p) { if (p.late || p.today) due += p.rows.length; else if (p.day) soon += p.rows.length; });
     });
     var emptyAt = on.indexOf("today") >= 0 ? "today" : on.indexOf("overdue") >= 0 ? "overdue" : "";
+    if (!editing) { var ev = eveningCard(res); if (ev) main.appendChild(ev); }
     var cols = el("div", editing ? "editing" : "");
     cols.id = "cols";
     layout.items.forEach(function (it, i) {
@@ -449,6 +473,8 @@
   function widget(it, parts, res, showEmpty, soonN) {
     var id = it.id, list = parts[id] || [];
     if (id === "top") return list.length ? topLines(list[0].rows, it) : null;
+    if (id === "tips") return tipsWidget(it, res);
+    if (id === "agenda") return agendaWidget(it, res);
     if (id === "clock") return clockTile(it);
     if (id === "weather" || id === "water" || id === "together") return appTile(it, list.length ? list[0].rows : []);
     if (id === "overdue" || id === "today") {
@@ -464,7 +490,13 @@
       }
       return group(it, t(id === "overdue" ? "overdue" : "today"), headParts(list), id === "overdue" ? "late" : "", res.today);
     }
-    if (id === "soon") return list.length ? group(it, t("soon"), headParts(list), "", res.today) : null;
+    if (id === "soon") {
+      if (!list.length && !weekLine()) return null;
+      var sg = group(it, t("soon"), headParts(list), "", res.today);
+      var wl = weekLine();
+      if (wl) sg.appendChild(el("div", "more week", wl));
+      return sg;
+    }
     // habits, events, todos: the card stays even when it has nothing
     return group(it, t("w." + id), headParts(list), "", res.today, t("none." + id));
   }
@@ -500,6 +532,162 @@
     });
     box.appendChild(top);
     return box;
+  }
+
+  // ---------- 2a. Tips of the day (T2, BR-TODAY-16) ----------
+  // today/tips.js makes them from the rows of several apps and the
+  // providers' facts; "Not today" / "Don't show this kind" are this
+  // device's choices (localStorage "oros-today-tips", R10). The card
+  // is left out when no tip is left to show.
+  function tipsState() {
+    var T = window.OrosTodayTips;
+    if (!T) return null;
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(T.STATE_KEY)); } catch (e) { raw = null; }
+    return T.norm(raw, last ? last.today : "");
+  }
+  function saveTips(st) {
+    var T = window.OrosTodayTips;
+    try {
+      if (!st.hid.length && !st.mute.length) localStorage.removeItem(T.STATE_KEY);
+      else localStorage.setItem(T.STATE_KEY, JSON.stringify(st));
+    } catch (e) {}
+  }
+  function tipsOf(res) {
+    var T = window.OrosTodayTips;
+    if (!T || !res) return [];
+    var apps = (res.apps || []).map(function (a) { return a.id; });
+    try { apps = env().apps().map(function (a) { return a.id; }); } catch (e) {}
+    var A = parentWin() && parentWin().OrosTodayAgg;
+    var list = T.make({ groups: res.groups, facts: res.facts || {}, today: res.today, now: Date.now(), lang: LANG, apps: apps });
+    // the same cleaning as a row's actions
+    if (A && typeof A.cleanAct === "function") list.forEach(function (tp) {
+      tp.acts = tp.acts.map(function (a) { return A.cleanAct(a, a.app); }).filter(Boolean);
+    });
+    return T.visible(list, tipsState(), res.today);
+  }
+  function tipsWidget(it, res) {
+    var list = tipsOf(res);
+    if (!list.length) return null;
+    var box = shellOf(it);
+    box.className += " tips";
+    var head = el("div", "tips-head");
+    var ic = el("span", "ico");
+    ic.innerHTML = SVG.tip;
+    head.appendChild(ic);
+    head.appendChild(el("span", "", t("w.tips")));
+    box.appendChild(head);
+    var ul = el("ul", "tips-list");
+    list.forEach(function (tp) {
+      var li = el("li", "tip");
+      li.appendChild(el("p", "tip-text", tp.text));
+      var row = el("div", "det-acts");
+      tp.acts.forEach(function (a) {
+        var b = el("button", "det-act");
+        b.type = "button";
+        b.textContent = t("act." + a.k);
+        b.addEventListener("click", function () {
+          var H = host();
+          if (H && typeof H.act === "function") H.act(a);
+        });
+        row.appendChild(b);
+      });
+      var no = el("button", "det-act quiet");
+      no.type = "button";
+      no.textContent = t("tp.hide");
+      no.addEventListener("click", function () {
+        saveTips(window.OrosTodayTips.hide(tipsState(), tp.id, res.today));
+        say(t("tp.hidden"));
+        render();
+      });
+      row.appendChild(no);
+      var mu = el("button", "det-act quiet");
+      mu.type = "button";
+      mu.textContent = t("tp.mute");
+      mu.addEventListener("click", function () {
+        saveTips(window.OrosTodayTips.mute(tipsState(), tp.rule, res.today));
+        say(t("tp.muted"));
+        render();
+      });
+      row.appendChild(mu);
+      li.appendChild(row);
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    return box;
+  }
+
+  // ---------- 2a2. The shape of the day (T3, BR-TODAY-17) ----------
+  // "Your day": today's times in order with the free stretches between
+  // them (today/dayline.js); a suggestion only, nothing is moved.
+  function agendaWidget(it, res) {
+    var D = window.OrosTodayDay;
+    if (!D) return null;
+    var sh = D.shape(res.groups, Date.now());
+    var box = shellOf(it);
+    box.className += " group agenda";
+    var head = el("div", "group-head static");
+    head.appendChild(el("span", "", t("w.agenda")));
+    box.appendChild(head);
+    var ul = el("ul", "rows");
+    var gi = 0, said = false;
+    function gapEl(g) {
+      var li = el("li", "row gap");
+      var tx = el("div", "gap-txt");
+      tx.appendChild(el("span", "time", g.from));
+      var lab = t("ag.free", { f: g.from, t: g.to, d: dur(g.min) });
+      if (!said && sh.fit && g.min >= 60) { lab += " · " + (sh.fit === 1 ? t("ag.fit1") : t("ag.fit", { n: sh.fit })); said = true; }
+      tx.appendChild(el("span", "gap-label", lab));
+      li.appendChild(tx);
+      return li;
+    }
+    sh.items.forEach(function (x) {
+      while (gi < sh.gaps.length && sh.gaps[gi].to <= x.from) ul.appendChild(gapEl(sh.gaps[gi++]));
+      ul.appendChild(rowEl(x.row, false, res.today));
+    });
+    while (gi < sh.gaps.length) ul.appendChild(gapEl(sh.gaps[gi++]));
+    if (!ul.children.length) ul.appendChild(el("li", "more", t("ag.none")));
+    box.appendChild(ul);
+    return box;
+  }
+  function dur(m) {
+    var h = Math.floor(m / 60), r = m % 60;
+    if (!h) return t("ag.m", { m: r });
+    return r ? t("ag.hm", { h: h, m: r }) : t("ag.h", { h: h });
+  }
+  // Evening (T3): from the hour in Settings (default 19:00, off = 0),
+  // tomorrow's rows on top, so the next day can be prepared tonight.
+  function eveningCard(res) {
+    var D = window.OrosTodayDay, H = host(), A = parentWin() && parentWin().OrosTodayAgg;
+    if (!D || !H || !A) return null;
+    var eve = A.eveOf(H.settings());
+    if (!D.evening(Date.now(), eve)) return null;
+    var tm = A.addDays(res.today, 1);
+    var day = (res.groups.soon || []).filter(function (d) { return d.day === tm; })[0];
+    var rows = day ? day.rows : [];
+    var it = { id: "soon", size: "wide" };
+    var box = group(it, t("eve.title"), [{ head: "", rows: rows, more: day ? day.more : {} }], "eve", res.today, t("eve.none"));
+    box.className = box.className.replace("w-soon", "w-eve");
+    // the first thing YOU do tomorrow (a moonrise is not a start)
+    var first = rows.filter(function (r) { return r.time && r.app !== "sky"; }).map(function (r) { return r.time; }).sort()[0];
+    if (first) box.insertBefore(el("div", "more eve-first", t("eve.first", { t: first })), box.children[1] || null);
+    return box;
+  }
+  // The week ahead at a glance (T3): counts per app, under Coming up.
+  var weekRes = null, weekSeq = 0;
+  function weekAhead(res) {
+    var H = host(), my = ++weekSeq;
+    if (!H || typeof H.week !== "function") return;
+    H.week(7).then(function (list) {
+      if (my !== weekSeq) return;
+      var was = JSON.stringify(weekRes);
+      weekRes = { today: res.today, list: list };
+      if (was !== JSON.stringify(weekRes) && !editing && !document.querySelector(".w.dragging")) render();
+    }, function () {});
+  }
+  function weekLine() {
+    if (!weekRes || !last || weekRes.today !== last.today || !weekRes.list.length) return "";
+    return t("wk.line", { l: weekRes.list.slice(0, 6).map(function (x) { return x.name + " " + x.n; }).join(" · ") });
   }
 
   // Clock: hours and minutes; the wide one adds seconds and the full date.
@@ -1052,6 +1240,49 @@
     hr.appendChild(sel);
     body.appendChild(hr);
     body.appendChild(check(t("s.absorb"), t("s.absorbHint"), s.absorb.v, function (v) { save("absorb", v); }));
+    // Evening view (T3)
+    var Ag = parentWin() && parentWin().OrosTodayAgg;
+    if (Ag && typeof Ag.eveOf === "function") {
+      var er = el("div", "set-row");
+      var el2 = el("label", "");
+      el2.setAttribute("for", "set-eve");
+      el2.appendChild(document.createTextNode(t("s.eve")));
+      el2.appendChild(el("span", "hint", t("s.eveHint")));
+      var es = el("select");
+      es.id = "set-eve";
+      var curEve = Ag.eveOf(s);
+      [0].concat([15, 16, 17, 18, 19, 20, 21, 22, 23]).forEach(function (h) {
+        var o = el("option", "", h ? (h < 10 ? "0" : "") + h + ":00" : t("s.eveOff"));
+        o.value = String(h);
+        if (h === curEve) o.selected = true;
+        es.appendChild(o);
+      });
+      es.addEventListener("change", function () { save("eve", +es.value); });
+      er.appendChild(el2);
+      er.appendChild(es);
+      body.appendChild(er);
+    }
+    // Tips of the day (T2): the kinds muted on this device
+    var ts = tipsState();
+    if (ts) {
+      body.appendChild(el("div", "set-sub", t("s.tips")));
+      var tr = el("div", "set-row");
+      var tn = el("span", "hint", ts.mute.length === 1 ? t("s.tipsN1") : ts.mute.length ? t("s.tipsN", { n: ts.mute.length }) : t("s.tipsNone"));
+      tr.appendChild(tn);
+      if (ts.mute.length) {
+        var tb = el("button", "det-act");
+        tb.type = "button";
+        tb.textContent = t("s.tipsOn");
+        tb.addEventListener("click", function () {
+          saveTips(window.OrosTodayTips.unmute(tipsState(), last ? last.today : ""));
+          tn.textContent = t("s.tipsDone");
+          tb.remove();
+          render();
+        });
+        tr.appendChild(tb);
+      }
+      body.appendChild(tr);
+    }
     body.appendChild(el("div", "set-sub", t("s.apps")));
     var apps = last ? last.apps : [];
     if (!apps.length) body.appendChild(el("div", "set-row", t("s.none")));
