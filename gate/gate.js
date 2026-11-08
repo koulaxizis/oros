@@ -911,7 +911,13 @@
   }
   // The relay of this gate: the one it was made on while it is on, else
   // the one orOS uses now.
-  function relayNow() { return relayOf(readJSON("oros-mail-data")); }
+  // The owner's own relay for the gate (5.82.00, Settings › orOS Gate):
+  // a Worker they deployed from relay/ (see relay/README.md), so the
+  // gate never uses orOS's shared one. Else Mail's relay, else orOS's.
+  var OWN_KEY = "oros-gate-relay";
+  function ownRelay() { var u = readJSON(OWN_KEY); return typeof u === "string" && HTTPS_RE.test(u) ? u : ""; }
+  var HTTPS_RE = /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/;
+  function relayNow() { return ownRelay() || relayOf(readJSON("oros-mail-data")); }
   function relay() { var p = pref(); return p.on && typeof p.r === "string" && p.r ? p.r : relayNow(); }
   function devCall(body, base) {
     return fetch((base || relay()) + "/gate/dev", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
@@ -944,6 +950,7 @@
       setWs("on");
       sendVis(sock);
       if (pref().lvd) sendLv(sock);
+      else sendBase(sock);
       pushReg();
       copySoon(4000);
       clearInterval(pingTimer);
@@ -1290,6 +1297,12 @@
       writeJSON(PREF_KEY, p);
     } catch (e) {}
   }
+  // Switches set before 5.77.00 never reached the box: offer them once on
+  // each connection; the box keeps them only if it has none.
+  function sendBase(sock) {
+    var p = pref();
+    try { if (sock && sock.readyState === 1 && isObj(p.lv) && Object.keys(p.lv).length) sock.send(JSON.stringify({ lv: p.lv, base: 1 })); } catch (e) {}
+  }
   function onLv(text) {
     var o;
     try { o = JSON.parse(text); } catch (e) { return; }
@@ -1538,6 +1551,29 @@
   /* ---------- API for Settings ---------- */
   var api = {
     relayUrl: function () { return relay() + "/mcp"; },
+    // The relay this gate runs on, and which kind: own | mail | shared.
+    relayInfo: function () {
+      var r = relay(), own = ownRelay();
+      return { url: r, own: own, kind: own && r === own ? "own" : r === RELAY ? "shared" : "mail" };
+    },
+    setOwnRelay: function (u) {
+      u = String(u || "").trim().replace(/\/+$/, "");
+      if (u && !HTTPS_RE.test(u)) return false;
+      if (!u) { try { localStorage.removeItem(OWN_KEY); } catch (e) { return false; } changed(); return true; }
+      var ok = writeJSON(OWN_KEY, u);
+      if (ok) changed();
+      return ok;
+    },
+    // → Promise<boolean>: the address answers like an orOS relay with the gate.
+    testRelay: function (u) {
+      u = String(u || "").trim().replace(/\/+$/, "");
+      if (!HTTPS_RE.test(u)) return Promise.resolve(false);
+      return fetch(u + "/.well-known/oauth-authorization-server", { cache: "no-store", credentials: "omit" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) { return !!(j && typeof j.token_endpoint === "string" && /\/gate\/token$/.test(j.token_endpoint)); }, function () { return false; });
+    },
+    // orOS sync is on here: the owner's synced devices join by themselves.
+    syncOn: function () { try { return !!(root.orosSync && root.orosSync.isConnected && root.orosSync.isConnected()); } catch (e) { return false; } },
     // The address a phone opens by scanning the join QR (useoros.online or this orOS).
     joinLink: function (code) {
       var base = "";
