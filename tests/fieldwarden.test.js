@@ -14,8 +14,8 @@ const D = require("../fieldwarden/data.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "fieldwarden/fieldwarden.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE; var LAST_N = 10; var MAX_DAY = 100000; var MAX_SCORE = MAX_SHEAVES + E.WISH_BONUS;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeFieldwarden"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE; var LAST_N = 10; var MAX_DAY = 100000; var MAX_SCORE = MAX_SHEAVES + E.WISH_BONUS; var PZ_N = E.PUZZLES.length;"];
+  ["cmpStr", "isInt", "maxSeasons", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeFieldwarden"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const line = SRC.slice(i, SRC.indexOf("\n", i));
@@ -510,4 +510,157 @@ test("fieldwarden: Daily seasons and Last years merge as a join", () => {
   const many = { rows: {}, last: [] };
   for (let k = 0; k < 14; k++) many.last.push({ a: k + 1, d: "h", p: ["shepherd", "smith", "hedger"], n: k % 12, w: 0, s: "s" + k });
   assert.equal(m(many, {}).last.length, 10);
+});
+test("fieldwarden: Endless goes round the farms, harder every round, until a quota is missed", () => {
+  const trio = ["shepherd", "smith", "hedger"];
+  const st = E.newYear("endless1", "e", trio);
+  assert.equal(st.end, E.MAX_FARM);
+  assert.ok(E.valid(st));
+  assert.deepEqual([E.farmOf(1).id, E.farmOf(3).id, E.farmOf(4).id, E.farmOf(7).id], ["low", "river", "low", "low"]);
+  assert.deepEqual([1, 3, 4, 6, 7, 300].map(E.loopOf), [0, 0, 1, 1, 2, 99]);
+  // the Health bonus and the extra arrivals grow with the round; Harsh is unchanged
+  const H = E.newYear("round", "h", trio);
+  const bad = E.clone(H);
+  bad.end = E.MAX_FARM;
+  assert.equal(E.valid(bad), false, "only Endless goes past the third farm");
+  const bad2 = E.clone(st);
+  bad2.end = 3;
+  assert.equal(E.valid(bad2), false, "Endless always has MAX_FARM farms");
+  // a smart bot plays on past the third farm; the round names the farm
+  let guard = 0;
+  while (st.over < 0 && st.farm < 5 && guard++ < 400) {
+    if (st.phase === "shop") E.botShop(st); else E.botTurn(st, true);
+    assert.ok(E.valid(st));
+  }
+  assert.ok(st.farm >= 4 || st.over === 0, "the year goes on after the River Bend");
+  if (st.farm >= 4) assert.equal(st.s.hb, 2, "round 2 adds a second Health");
+  // records: e cells are [years, 0, seasons up to MAX_FARM × 4]; Last years may hold e
+  const m = R.mergeFieldwarden;
+  const ok = m({ rows: { dev001: { b: 0, s: { e: [3, 0, 140] }, hb: 0, c: {} } }, last: [{ a: 5, d: "e", p: trio, n: 140, w: 0, s: "x" }] }, {});
+  assert.deepEqual(ok.rows.dev001.s.e, [3, 0, 140]);
+  assert.equal(ok.last.length, 1);
+  const no = m({ rows: { dev001: { b: 0, s: { e: [3, 1, 14] }, hb: 0, c: {} }, dev002: { b: 0, s: { h: [1, 0, 140] }, hb: 0, c: {} } },
+    last: [{ a: 5, d: "e", p: trio, n: 14, w: 1, s: "x" }, { a: 6, d: "h", p: trio, n: 140, w: 0, s: "x" }] }, {});
+  assert.deepEqual([Object.keys(no.rows).length, no.last.length], [0, 0], "Endless is never won; other modes stop at 12 seasons");
+});
+// One winning line per puzzle (found by the search that made them).
+const PZ_SOL = [[{"t":"mv","u":1,"to":15},{"t":"tool","u":1,"at":13}],[{"t":"mv","u":1,"to":26}],[{"t":"mv","u":1,"to":15}],[{"t":"mv","u":1,"to":22}],[{"t":"mv","u":1,"to":22}],[{"t":"mv","u":1,"to":14},{"t":"tool","u":1,"at":16}],[{"t":"mv","u":1,"to":8}],[{"t":"mv","u":1,"to":20},{"t":"tool","u":1,"at":22}],[{"t":"mv","u":1,"to":4},{"t":"tool","u":1,"at":2}],[{"t":"mv","u":1,"to":34},{"t":"tool","u":1,"at":31}],[{"t":"mv","u":1,"to":9},{"t":"tool","u":1,"at":10}],[{"t":"mv","u":2,"to":27}],[{"t":"mv","u":1,"to":7},{"t":"tool","u":1,"at":13},{"t":"mv","u":2,"to":27}],[{"t":"mv","u":2,"to":10},{"t":"mv","u":1,"to":28}],[{"t":"tool","u":1,"at":7},{"t":"mv","u":2,"to":9}],[{"t":"mv","u":1,"to":4},{"t":"tool","u":1,"at":3},{"t":"mv","u":2,"to":34},{"t":"tool","u":2,"at":31}],[{"t":"mv","u":2,"to":12},{"t":"tool","u":2,"at":13},{"t":"mv","u":1,"to":7},{"t":"tool","u":1,"at":10}],[{"t":"mv","u":1,"to":15},{"t":"mv","u":2,"to":9},{"t":"tool","u":2,"at":15}],[{"t":"mv","u":1,"to":19},{"t":"mv","u":2,"to":14}],[{"t":"tool","u":1,"at":21},{"t":"mv","u":2,"to":28}],[{"t":"mv","u":1,"to":27},{"t":"tool","u":1,"at":9},{"t":"mv","u":3,"to":21}],[{"t":"mv","u":1,"to":8},{"t":"tool","u":1,"at":6},{"t":"mv","u":3,"to":26},{"t":"tool","u":3,"at":20}],[{"t":"mv","u":2,"to":9},{"t":"tool","u":2,"at":8},{"t":"mv","u":1,"to":2},{"t":"tool","u":1,"at":8}],[{"t":"mv","u":1,"to":20},{"t":"mv","u":2,"to":24},{"t":"tool","u":2,"at":12}],[{"t":"mv","u":1,"to":20},{"t":"tool","u":1,"at":18},{"t":"mv","u":3,"to":10},{"t":"tool","u":3,"at":16}],[{"t":"mv","u":3,"to":22},{"t":"mv","u":2,"to":21},{"t":"tool","u":2,"at":3}],[{"t":"mv","u":2,"to":9},{"t":"tool","u":2,"at":3},{"t":"mv","u":3,"to":14},{"t":"tool","u":3,"at":26}],[{"t":"mv","u":1,"to":32},{"t":"tool","u":1,"at":26},{"t":"mv","u":2,"to":26},{"t":"tool","u":2,"at":20},{"t":"tool","u":3,"at":3}],[{"t":"mv","u":1,"to":20},{"t":"tool","u":1,"at":2},{"t":"mv","u":3,"to":14},{"t":"tool","u":3,"at":17}],[{"t":"mv","u":1,"to":26},{"t":"tool","u":1,"at":24},{"t":"mv","u":3,"to":16}]];
+test("fieldwarden: 30 puzzles, each one turn: the winning line solves it, doing nothing and the bot do not", () => {
+  assert.equal(E.PUZZLES.length, 30);
+  assert.equal(PZ_SOL.length, 30);
+  E.PUZZLES.forEach((P, k) => {
+    const n = k + 1, tag = "puzzle " + n;
+    const onFarm = P.u.filter((e) => P.f.indexOf(e[0]) >= 0).length;
+    assert.equal(onFarm, n <= 10 ? 1 : n <= 20 ? 2 : 3, tag + " folk");
+    const st = E.newPuzzle(n);
+    assert.ok(E.valid(st), tag + " valid");
+    assert.deepEqual([st.one, st.pz, st.s.turn, st.diff], [1, n, E.T, "h"]);
+    assert.ok(st.s.u.filter((u) => u.f === 0).every((u) => u.it), tag + " every invader shows an act");
+    assert.equal(J(E.newPuzzle(n)), J(st), tag + " the same every time");
+    const win = E.clone(st);
+    PZ_SOL[k].forEach((a) => assert.ok(E.act(win, a), tag + " " + J(a)));
+    E.act(win, { t: "end" });
+    assert.deepEqual([win.over, win.s.h >= P.q], [1, true], tag + " solved");
+    assert.ok(E.valid(win));
+    const idle = E.clone(st);
+    E.act(idle, { t: "end" });
+    assert.equal(idle.over, 0, tag + " doing nothing fails");
+    const bot = E.clone(st);
+    E.botTurn(bot, true);
+    assert.equal(bot.over, 0, tag + " the solver bot fails");
+    // a puzzle never goes on to a market or a next season
+    assert.equal(E.act(win, { t: "next" }), null);
+  });
+  const bad = E.newPuzzle(3);
+  bad.pz = 31;
+  assert.equal(E.valid(bad), false);
+  const bad2 = E.newPuzzle(3);
+  delete bad2.one;
+  assert.equal(E.valid(bad2), false, "a puzzle is a one-season state");
+  // solved puzzles merge as a sorted union; bad numbers drop; reset keeps them
+  const m = R.mergeFieldwarden;
+  const A = { rows: {}, pz: [3, 1, 30] }, B = { br: 99, rows: {}, pz: [2, 3, 0, 31, 2.5, "4"] };
+  assert.deepEqual(m(A, B).pz, [1, 2, 3, 30]);
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  assert.deepEqual(m({ rows: {} }, {}).pz, []);
+});
+
+
+test("fieldwarden: farm codes from the editor read back the same farm, and a farm plays as one Harsh season", () => {
+  const blank = () => {
+    const t = [], g = [];
+    for (let i = 0; i < 36; i++) { t.push("d"); g.push(0); }
+    return { t, g };
+  };
+  const { t, g } = blank();
+  t[14] = "b"; t[7] = "f"; t[8] = "f"; t[20] = "f"; t[21] = "h"; t[27] = "s"; t[33] = "p";
+  g[7] = 1; g[20] = 3;
+  const m = { t, g, f: ["shepherd", "smith", "ferryman"], fa: [1, 2, 33], wx: ["c", "r", "d", "e"],
+    inv: [["wolf", 30]], arr: [["boar", 3], ["wolf", 5]] };
+  assert.equal(E.farmProblem(m), "");
+  const code = E.writeFarmCode(m);
+  // the format is fixed: a code made today plays the same farm forever
+  assert.equal(code, "f100000002100000800000450000070000060001412xcrde10u21305ia");
+  assert.deepEqual(E.readFarmCode(code), m);
+  assert.deepEqual(E.readFarmCode(code.toUpperCase().replace(/(.{6})/g, "$1 - ")), m, "case and separators do not matter");
+  // one character off fails the check
+  for (let k = 2; k < code.length; k++) {
+    const c = code.charAt(k) === "0" ? "1" : "0";
+    assert.equal(E.readFarmCode(code.slice(0, k) + c + code.slice(k + 1)), null, "changed at " + k);
+  }
+  [null, 5, "", "f1", "f2" + code.slice(2), code + "0", code.slice(0, -3)].forEach((c) => assert.equal(E.readFarmCode(c), null, String(c)));
+  // the problems the editor names
+  const cp = () => JSON.parse(J(m));
+  let x = cp(); x.t[14] = "d"; assert.equal(E.farmProblem(x), "barn");
+  x = cp(); x.t[0] = "b"; assert.equal(E.farmProblem(x), "barn");
+  x = cp(); x.t = x.t.map((c) => (c === "f" ? "d" : c)); x.g = x.g.map(() => 0); assert.equal(E.farmProblem(x), "field");
+  x = cp(); x.fa[0] = 3; x.t[1] = "h"; x.t[6] = "h"; assert.equal(E.farmProblem(x), "closed", "the corner is walled off");
+  x = cp(); x.fa[0] = -1; assert.equal(E.farmProblem(x), "folk");
+  x = cp(); x.fa[0] = 33; x.fa[2] = 4; assert.equal(E.farmProblem(x), "folk", "only the ferryman stands in the pond");
+  x = cp(); x.fa[1] = 14; assert.equal(E.farmProblem(x), "folk", "nobody stands on the barn");
+  x = cp(); x.inv = []; x.arr = []; assert.equal(E.farmProblem(x), "none");
+  x = cp(); x.inv = [["wolf", 1]]; assert.equal(E.farmProblem(x), "inv", "not on a farmhand");
+  x = cp(); x.inv = [["wolf", 33]]; assert.equal(E.farmProblem(x), "inv");
+  x = cp(); x.arr = [["crow", 6]]; assert.equal(E.farmProblem(x), "inv");
+  x = cp(); x.inv = []; for (let i = 0; i < 13; i++) x.inv.push(["crow", 3 + i]); assert.equal(E.farmProblem(x), "many");
+  x = cp(); x.g[8] = 1; x.t[8] = "d"; assert.equal(E.farmProblem(x), "bad", "only a field has a stage");
+  assert.equal(E.writeFarmCode(x), "");
+  // random farms round trip
+  let seed = 7;
+  const rnd = (n) => { seed = (seed * 48271) % 2147483647; return seed % n; };
+  let made = 0;
+  for (let k = 0; k < 400; k++) {
+    const r = blank();
+    for (let i = 0; i < 36; i++) { const c = "dddfffhps"[rnd(9)]; r.t[i] = c; if (c === "f") r.g[i] = rnd(4); }
+    r.t[rnd(36)] = "b";
+    const free = []; for (let i = 0; i < 36; i++) if (r.t[i] === "d" || r.t[i] === "f") free.push(i);
+    const pick = () => free.splice(rnd(free.length), 1)[0];
+    const trio = E.FOLK_IDS.slice().sort(() => rnd(3) - 1).slice(0, 3);
+    const mm = { t: r.t, g: r.g, f: trio, fa: [pick(), pick(), pick()], wx: [0, 1, 2, 3].map(() => "crdnesw"[rnd(7)]),
+      inv: [], arr: [] };
+    for (let i = rnd(4); i > 0; i--) mm.inv.push([E.INV_IDS[rnd(9)], pick()]);
+    for (let i = rnd(4); i > 0 || !mm.inv.length && !mm.arr.length; i--) mm.arr.push([E.INV_IDS[rnd(9)], 2 + rnd(4)]);
+    if (E.farmProblem(mm)) continue;
+    made++;
+    const c = E.writeFarmCode(mm);
+    assert.deepEqual(E.readFarmCode(c), mm, c);
+  }
+  assert.ok(made > 50, "made " + made);
+  // the season: one season on Harsh, the quota never above what the solver brings in
+  const st = E.newCustom(code);
+  assert.deepEqual([st.one, st.diff, st.end, st.cu, st.s.turn, st.s.wx.join("")], [1, "h", 1, code, 1, "cccrde"]);
+  assert.ok(E.valid(st));
+  assert.equal(J(E.newCustom(code.toUpperCase())), J(st), "the same farm for everyone");
+  assert.ok(st.s.q >= 1 && st.s.q <= E.solve(st, st.s));
+  assert.deepEqual(st.s.sched.map((l) => l.join()), ["", "", "boar", "", "wolf", ""], "an arrival on turn k comes at the end of turn k - 1");
+  assert.equal(E.newCustom(code, true).s.q, 1, "the editor's preview asks for nothing");
+  const won = E.clone(st);
+  while (won.over < 0) E.botTurn(won, true);
+  assert.equal(won.over, 1);
+  assert.equal(E.act(won, { t: "next" }), null, "no market after a farm from a code");
+  const b1 = E.clone(st); b1.cu = code.slice(0, -1) + "z"; assert.equal(E.valid(b1), false);
+  const b2 = E.clone(st); b2.pz = 3; assert.equal(E.valid(b2), false, "never a puzzle and a farm code at once");
+  const b3 = E.clone(st); delete b3.one; assert.equal(E.valid(b3), false);
+  assert.equal(E.newCustom("nonsense"), null);
 });

@@ -22,6 +22,8 @@
 //     per-device counter rows (each device only grows its own row;
 //     merge = per-row max, a join) + reset stamp br (as Realm, Crypt,
 //     Banner and Wayfarers)
+//   - Endless (5.82.00): a third difficulty, the farms come round harder
+//     until a quota is missed
 //   - days (5.81.00): one Daily season per calendar day, one try;
 //     last (5.81.00): the last 10 years of every device, with Replay
 //   - device-local (R10): oros-fieldwarden-prefs (difficulty, folk,
@@ -52,12 +54,16 @@
   var SESSION_KEY = "oros-fieldwarden-session";
   var DEVICE_KEY  = "oros-fieldwarden-device";
   var SFX_KEY     = "oros-fieldwarden-sfx";
+  var DRAFT_KEY   = "oros-fieldwarden-farm";   // the farm editor's draft (this device only)
   var DATA_VER    = 1;
-  var DIFFS = E.DIFFS;                 // m Mild, h Harsh
+  var DIFFS = E.DIFFS;                 // m Mild, h Harsh, e Endless
   var FOLK_IDS = E.FOLK_IDS;
   var N = E.N, SIZE = E.SIZE;
   var BIG = 1e9;
   var MAX_SEASONS = E.FARMS.length * E.SEASONS;
+  var PZ_N = E.PUZZLES.length;          // the one-turn puzzles (data.js)
+  // the most seasons one year can win: Endless goes on to MAX_FARM farms
+  function maxSeasons(d) { return d === "e" ? E.MAX_FARM * E.SEASONS : MAX_SEASONS; }
   var MAX_SHEAVES = SIZE * E.MAX_STAGE;
   var DK = window.orosDaily || null;   // gamekit/daily.js (the Daily season, the Game Center link)
   var LAST_N = 10;                     // Last years kept
@@ -84,7 +90,8 @@
       "view.label": "The farm, 6 by 6 tiles. The arrow keys move the cursor, Enter chooses a farmhand or a tile, Tab goes to the next farmhand, Escape cancels, Z undoes, E ends the turn.",
       "st.turn": "Turn {n} of {m}", "st.wx": "Weather now: {a}. Next turn: {b}", "st.crop": "Harvest if nothing more is lost: {n} sheaves. Quota: {q}",
       "st.coins": "{n} coins", "st.shop": "The market",
-      "diff.m": "Mild", "diff.h": "Harsh",
+      "diff.m": "Mild", "diff.h": "Harsh", "diff.e": "Endless",
+      "diff.e.note": "Harsh, and the year never ends: after the River Bend the three farms come round again, every round with +1 Health for the invaders, until a quota is missed.",
       "diff.m.note": "A lower quota, and once a season you can rewind the last turn.",
       "diff.h.note": "A higher quota and more invaders, with +1 Health from the second farm. No rewinds.",
       "folk.shepherd": "Shepherd", "folk.smith": "Smith", "folk.hedger": "Hedger",
@@ -140,13 +147,13 @@
       "ev.hit": "-{n}", "ev.field": "-{n}", "ev.flee": "Off!", "ev.home": "Home", "ev.wash": "Washed away", "ev.mend": "+1",
       "ev.bee": "+1", "ev.enter": "{k} comes in", "ev.block": "Kept out", "ev.plant": "Hedge",
       "ev.fire": "Fire!", "ev.douse": "Out", "ev.burnt": "Burnt", "ev.call": "{k}!", "ev.rainout": "The rain puts out the fires",
-      "msg.season": "Season {n} of {m} · {f}. Quota: {q} sheaves.", "msg.turn": "Turn {n}: the invaders show their acts",
+      "msg.season": "Season {n} of {m} · {f}. Quota: {q} sheaves.", "msg.seasonE": "Season {n} · {f}. Quota: {q} sheaves.", "msg.turn": "Turn {n}: the invaders show their acts",
       "msg.shop": "The harvest is in. Visit the market, then start the next season.",
       "live.end": "Turn {n}. Harvest so far {h} of {q}.",
-      "res.harvest": "Harvest", "res.season": "Season {n} of {m}", "res.sheaves": "{n} sheaves", "res.quota": "Quota",
+      "res.harvest": "Harvest", "res.season": "Season {n} of {m}", "res.seasonE": "Season {n}", "res.sheaves": "{n} sheaves", "res.quota": "Quota",
       "res.wish": "Village wish", "res.wishOk": "Granted", "res.wishNo": "Not this time", "res.coins": "Coins earned",
       "res.miss": "The quota was missed. The year ends here.", "res.toShop": "To the market",
-      "res.won": "The year is done!", "res.lost": "A lean year", "res.seasons": "Seasons won", "res.total": "Sheaves in all", "res.best": "Most in a season",
+      "res.won": "The year is done!", "res.lost": "A lean year", "res.endless": "The year ends after {n} seasons", "res.seasons": "Seasons won", "res.total": "Sheaves in all", "res.best": "Most in a season",
       "res.code": "Year code: {seed}", "res.same": "The same year", "res.new": "New year",
       "mk.title": "The market", "mk.coins": "Your coins: {n}", "mk.hp": "+1 Health (now {n})", "mk.mv": "+1 Move (now {n})", "mk.stats": "Health {h} · Move {m}",
       "mk.price": "{n} coins", "mk.buy": "Buy", "mk.owned": "Learned", "mk.max": "Most",
@@ -157,6 +164,32 @@
       "info.close": "Close",
       "stats.title": "Records", "stats.head": "Years · finished · most seasons won", "stats.folk": "Finished years with", "stats.best": "Most sheaves in a season",
       "stats.reset": "Reset records", "stats.close": "Close", "stats.code": "This year's code: {seed}",
+      "btn.pz": "Puzzles", "pz.title": "Puzzles", "pz.name": "Puzzle {n}",
+      "pz.note": "One turn each: the invaders show their acts, you have one turn to save the harvest. Reset turn is free.",
+      "pz.count": "Solved: {n} of {m}.", "pz.tier1": "One farmhand", "pz.tier2": "Two folk", "pz.tier3": "Three folk",
+      "pz.aSolved": "Puzzle {n}, solved", "pz.aOpen": "Puzzle {n}",
+      "pz.rules": "Puzzle {n}: one turn. Bring in at least {q} sheaves, the most this turn allows.",
+      "pz.msg": "Puzzle {n} · bring in {q} sheaves this turn.",
+      "pz.won": "Solved!", "pz.lost": "Not this time", "pz.of": "of {q} needed",
+      "pz.all": "All puzzles", "pz.again": "Try again", "pz.next": "Puzzle {n}", "pz.solvedRow": "Puzzles solved",
+      "ed.build": "Build a farm", "ed.title": "Farm editor", "ed.play": "Play", "ed.farm": "Farm",
+      "ed.note": "Build a farm of your own: choose a tile, one of the folk or an invader in the bar below and tap the board. Tap a field again to grow it a stage; tap an invader again to take it away. Play it as one season on Harsh, or share its code.",
+      "ed.ok": "The farm is ready: press Play.", "ed.away": "not placed", "ed.invN": "{n} of {m}",
+      "ed.noStand": "{k} cannot stand there.", "ed.taken": "One of the folk stands there.", "ed.maxInv": "At most {n} invaders on the farm.",
+      "ed.p.bad": "Something in this farm is not right.", "ed.p.barn": "The farm needs its barn.", "ed.p.field": "The farm needs at least one field.",
+      "ed.p.closed": "Every open tile must be reachable: hedges, haystacks, the barn and ponds wall part of the farm off.",
+      "ed.p.folk": "Place all three folk on the farm.", "ed.p.many": "Too many invaders.", "ed.p.none": "Add an invader, on the farm or arriving.",
+      "ed.p.inv": "An invader stands where it cannot.",
+      "ed.wx": "Weather (turn 1 is calm)", "ed.turn": "Turn {n}", "ed.arr": "Arrivals",
+      "ed.arrNote": "Invaders that come in at the edge at the start of their turn. Tap a name or a turn to change it.",
+      "ed.add": "Add an arrival", "ed.remove": "Remove", "ed.code": "Farm code",
+      "ed.codeNote": "Anyone can type this code in New year › Year code to play your farm.",
+      "ed.copy": "Copy the code", "ed.copied": "Farm code copied", "ed.copyFail": "Select the code and copy it.",
+      "ed.clear": "Start again", "ed.clearAsk": "Start a new farm? The one you are building is lost.", "ed.clearYes": "New farm",
+      "ed.leave": "Back to the game", "ed.close": "Close",
+      "new.codeNote": "A farm code from the farm editor plays that farm.", "new.badCode": "This is neither a year code nor a farm code.",
+      "cu.title": "Your farm", "cu.won": "Quota met!", "cu.lost": "Quota missed", "cu.edit": "Edit the farm",
+      "cu.rules": "A farm from a code: one season on Harsh. Bring in at least {q} sheaves.", "cu.msg": "Your farm · bring in {q} sheaves.",
       "btn.daily": "Daily season", "daily.label": "Daily",
       "daily.title": "Daily season #{n}", "daily.won": "{n} sheaves, quota met", "daily.lost": "{n} sheaves, quota missed",
       "daily.folk": "Folk", "daily.farm": "Farm", "daily.score": "Score", "daily.scoreNote": "Sheaves, plus {n} for the village wish",
@@ -168,7 +201,7 @@
       "daily.giveUp": "Start today's season? The year in progress counts as lost.", "daily.go": "Start the season",
       "stats.daily": "Daily season", "stats.dailyRow": "Played · quota met · streak · best score",
       "share.won": "{n} sheaves, quota met", "share.lost": "{n} sheaves, quota missed",
-      "last.title": "Last years", "last.won": "Year done", "last.met": "Quota met", "last.missed": "Quota missed", "last.seasons": "{n} of {m} seasons",
+      "last.title": "Last years", "last.won": "Year done", "last.met": "Quota met", "last.missed": "Quota missed", "last.seasons": "{n} of {m} seasons", "last.seasonsE": "{n} seasons",
       "last.replay": "Replay", "last.replayLabel": "Replay year {seed}",
       "toast.dailyGone": "The Daily season needs the gamekit file: reload orOS",
       "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared", "toast.copyFail": "Could not copy",
@@ -192,9 +225,10 @@
       "view.label": "Το αγρόκτημα, 6 επί 6 τετράγωνα. Τα βελάκια κινούν τον κέρσορα, το Enter διαλέγει χωρικό ή τετράγωνο, το Tab πάει στον επόμενο χωρικό, το Escape ακυρώνει, το Z αναιρεί, το E τελειώνει τον γύρο.",
       "st.turn": "Γύρος {n} από {m}", "st.wx": "Καιρός τώρα: {a}. Τον επόμενο γύρο: {b}", "st.crop": "Σοδειά αν δεν χαθεί τίποτα άλλο: {n} δεμάτια. Στόχος: {q}",
       "st.coins": "{n} νομίσματα", "st.shop": "Το παζάρι",
-      "diff.m": "Ήπια", "diff.h": "Σκληρή",
+      "diff.m": "Ήπια", "diff.h": "Σκληρή", "diff.e": "Ατέλειωτη",
+      "diff.e.note": "Σκληρή, και η χρονιά δεν τελειώνει: μετά τη Στροφή του ποταμού τα τρία κτήματα ξανάρχονται, κάθε γύρο με +1 Ζωή για τους εισβολείς, ώσπου να χαθεί ένας στόχος.",
       "diff.m.note": "Χαμηλότερος στόχος, και μία φορά την εποχή γυρνάς πίσω τον τελευταίο γύρο.",
-      "diff.h.note": "Ψηλότερος στόχος και περισσότεροι εισβολείς, με +1 Ζωή από τη δεύτερη φάρμα. Χωρίς γυρίσματα.",
+      "diff.h.note": "Ψηλότερος στόχος και περισσότεροι εισβολείς, με +1 Ζωή από το δεύτερο κτήμα. Χωρίς γυρίσματα.",
       "folk.shepherd": "Βοσκοπούλα", "folk.smith": "Σιδεράς", "folk.hedger": "Φυτουργός",
       "folk.beekeeper": "Μελισσοκόμα", "folk.ferryman": "Βαρκάρης", "folk.scarecrow": "Σκιαχτροποιός",
       "folk.shepherd.note": "Γκλίτσα: τραβά ένα κομμάτι έως 3 τετράγωνα μακριά ένα τετράγωνο πιο κοντά. Τα ζώα δίπλα της παίζουν τελευταία.",
@@ -248,13 +282,13 @@
       "ev.hit": "-{n}", "ev.field": "-{n}", "ev.flee": "Έφυγε!", "ev.home": "Σπίτι", "ev.wash": "Το πήρε το νερό", "ev.mend": "+1",
       "ev.bee": "+1", "ev.enter": "Μπαίνει: {k}", "ev.block": "Έμεινε έξω", "ev.plant": "Φράχτης",
       "ev.fire": "Φωτιά!", "ev.douse": "Έσβησε", "ev.burnt": "Κάηκε", "ev.call": "{k}!", "ev.rainout": "Η βροχή σβήνει τις φωτιές",
-      "msg.season": "Εποχή {n} από {m} · {f}. Στόχος: {q} δεμάτια.", "msg.turn": "Γύρος {n}: οι εισβολείς δείχνουν τι θα κάνουν",
+      "msg.season": "Εποχή {n} από {m} · {f}. Στόχος: {q} δεμάτια.", "msg.seasonE": "Εποχή {n} · {f}. Στόχος: {q} δεμάτια.", "msg.turn": "Γύρος {n}: οι εισβολείς δείχνουν τι θα κάνουν",
       "msg.shop": "Η σοδειά μαζεύτηκε. Πέρασε από το παζάρι και ξεκίνα την επόμενη εποχή.",
       "live.end": "Γύρος {n}. Σοδειά ως τώρα {h} από {q}.",
-      "res.harvest": "Σοδειά", "res.season": "Εποχή {n} από {m}", "res.sheaves": "{n} δεμάτια", "res.quota": "Στόχος",
+      "res.harvest": "Σοδειά", "res.season": "Εποχή {n} από {m}", "res.seasonE": "Εποχή {n}", "res.sheaves": "{n} δεμάτια", "res.quota": "Στόχος",
       "res.wish": "Ευχή του χωριού", "res.wishOk": "Έγινε", "res.wishNo": "Όχι αυτή τη φορά", "res.coins": "Νομίσματα",
       "res.miss": "Ο στόχος δεν πιάστηκε. Η χρονιά τελειώνει εδώ.", "res.toShop": "Στο παζάρι",
-      "res.won": "Η χρονιά ολοκληρώθηκε!", "res.lost": "Φτωχή χρονιά", "res.seasons": "Εποχές που πέτυχαν", "res.total": "Δεμάτια συνολικά", "res.best": "Τα περισσότερα σε μια εποχή",
+      "res.won": "Η χρονιά ολοκληρώθηκε!", "res.lost": "Φτωχή χρονιά", "res.endless": "Η χρονιά τελειώνει μετά από {n} εποχές", "res.seasons": "Εποχές που πέτυχαν", "res.total": "Δεμάτια συνολικά", "res.best": "Τα περισσότερα σε μια εποχή",
       "res.code": "Κωδικός χρονιάς: {seed}", "res.same": "Η ίδια χρονιά", "res.new": "Νέα χρονιά",
       "mk.title": "Το παζάρι", "mk.coins": "Τα νομίσματά σου: {n}", "mk.hp": "+1 Ζωή (τώρα {n})", "mk.mv": "+1 Κίνηση (τώρα {n})", "mk.stats": "Ζωή {h} · Κίνηση {m}",
       "mk.price": "{n} νομίσματα", "mk.buy": "Αγορά", "mk.owned": "Το έμαθε", "mk.max": "Το μέγιστο",
@@ -265,6 +299,32 @@
       "info.close": "Κλείσιμο",
       "stats.title": "Αρχείο", "stats.head": "Χρονιές · ολοκληρωμένες · οι περισσότερες εποχές", "stats.folk": "Ολοκληρωμένες χρονιές με", "stats.best": "Τα περισσότερα δεμάτια σε μια εποχή",
       "stats.reset": "Μηδένισε το αρχείο", "stats.close": "Κλείσιμο", "stats.code": "Κωδικός αυτής της χρονιάς: {seed}",
+      "btn.pz": "Γρίφοι", "pz.title": "Γρίφοι", "pz.name": "Γρίφος {n}",
+      "pz.note": "Ένας γύρος ο καθένας: οι εισβολείς δείχνουν τι θα κάνουν κι έχεις έναν γύρο να σώσεις τη σοδειά. Το «Ο γύρος από την αρχή» δεν κοστίζει τίποτα.",
+      "pz.count": "Λυμένοι: {n} από {m}.", "pz.tier1": "Ένας χωρικός", "pz.tier2": "Δύο χωρικοί", "pz.tier3": "Τρεις χωρικοί",
+      "pz.aSolved": "Γρίφος {n}, λυμένος", "pz.aOpen": "Γρίφος {n}",
+      "pz.rules": "Γρίφος {n}: ένας γύρος. Μάζεψε τουλάχιστον {q} δεμάτια, τα περισσότερα που αφήνει αυτός ο γύρος.",
+      "pz.msg": "Γρίφος {n} · μάζεψε {q} δεμάτια σε αυτόν τον γύρο.",
+      "pz.won": "Λύθηκε!", "pz.lost": "Όχι αυτή τη φορά", "pz.of": "από τα {q} που χρειάζονται",
+      "pz.all": "Όλοι οι γρίφοι", "pz.again": "Ξανά", "pz.next": "Γρίφος {n}", "pz.solvedRow": "Λυμένοι γρίφοι",
+      "ed.build": "Φτιάξε κτήμα", "ed.title": "Κατασκευή κτήματος", "ed.play": "Παίξε", "ed.farm": "Κτήμα",
+      "ed.note": "Φτιάξε δικό σου κτήμα: διάλεξε στη μπάρα από κάτω ένα πλακίδιο, έναν χωρικό ή έναν εισβολέα και πάτα στο ταμπλό. Ξαναπάτα ένα χωράφι για να μεγαλώσει ένα στάδιο· ξαναπάτα έναν εισβολέα για να φύγει. Παίξ' το ως μία εποχή στη Σκληρή ή μοιράσου τον κωδικό του.",
+      "ed.ok": "Το κτήμα είναι έτοιμο: πάτα Παίξε.", "ed.away": "εκτός", "ed.invN": "{n} από {m}",
+      "ed.noStand": "{k}: δεν μπορεί να σταθεί εκεί.", "ed.taken": "Εκεί στέκεται χωρικός.", "ed.maxInv": "Το πολύ {n} εισβολείς στο κτήμα.",
+      "ed.p.bad": "Κάτι δεν στέκει σε αυτό το κτήμα.", "ed.p.barn": "Το κτήμα θέλει τον αχυρώνα του.", "ed.p.field": "Το κτήμα θέλει τουλάχιστον ένα χωράφι.",
+      "ed.p.closed": "Κάθε ελεύθερο πλακίδιο πρέπει να φτάνεται: φράχτες, θημωνιές, ο αχυρώνας και οι λιμνούλες κλείνουν ένα κομμάτι του κτήματος.",
+      "ed.p.folk": "Βάλε και τους τρεις χωρικούς στο κτήμα.", "ed.p.many": "Πάρα πολλοί εισβολείς.", "ed.p.none": "Βάλε έναν εισβολέα, στο κτήμα ή να έρχεται.",
+      "ed.p.inv": "Ένας εισβολέας στέκεται εκεί που δεν μπορεί.",
+      "ed.wx": "Καιρός (ο 1ος γύρος έχει νηνεμία)", "ed.turn": "Γύρος {n}", "ed.arr": "Αφίξεις",
+      "ed.arrNote": "Εισβολείς που μπαίνουν από την άκρη στην αρχή του γύρου τους. Πάτα ένα όνομα ή έναν γύρο για να τα αλλάξεις.",
+      "ed.add": "Πρόσθεσε άφιξη", "ed.remove": "Αφαίρεση", "ed.code": "Κωδικός κτήματος",
+      "ed.codeNote": "Όποιος γράψει αυτόν τον κωδικό στο Νέα χρονιά › Κωδικός χρονιάς παίζει το κτήμα σου.",
+      "ed.copy": "Αντιγραφή κωδικού", "ed.copied": "Ο κωδικός αντιγράφηκε", "ed.copyFail": "Επίλεξε τον κωδικό και αντίγραψέ τον.",
+      "ed.clear": "Από την αρχή", "ed.clearAsk": "Νέο κτήμα; Αυτό που φτιάχνεις θα χαθεί.", "ed.clearYes": "Νέο κτήμα",
+      "ed.leave": "Πίσω στο παιχνίδι", "ed.close": "Κλείσιμο",
+      "new.codeNote": "Ένας κωδικός κτήματος από την κατασκευή κτήματος παίζει εκείνο το κτήμα.", "new.badCode": "Αυτός δεν είναι ούτε κωδικός χρονιάς ούτε κωδικός κτήματος.",
+      "cu.title": "Το κτήμα σου", "cu.won": "Ο στόχος πιάστηκε!", "cu.lost": "Ο στόχος δεν πιάστηκε", "cu.edit": "Άλλαξε το κτήμα",
+      "cu.rules": "Κτήμα από κωδικό: μία εποχή στη Σκληρή. Μάζεψε τουλάχιστον {q} δεμάτια.", "cu.msg": "Το κτήμα σου · μάζεψε {q} δεμάτια.",
       "btn.daily": "Εποχή της ημέρας", "daily.label": "Ημέρας",
       "daily.title": "Εποχή της ημέρας #{n}", "daily.won": "{n} δεμάτια, ο στόχος πιάστηκε", "daily.lost": "{n} δεμάτια, ο στόχος δεν πιάστηκε",
       "daily.folk": "Χωρικοί", "daily.farm": "Φάρμα", "daily.score": "Πόντοι", "daily.scoreNote": "Τα δεμάτια, και {n} για την ευχή του χωριού",
@@ -276,7 +336,7 @@
       "daily.giveUp": "Να ξεκινήσει η σημερινή εποχή; Η χρονιά που παίζεις μετρά ως χαμένη.", "daily.go": "Ξεκίνα την εποχή",
       "stats.daily": "Εποχή της ημέρας", "stats.dailyRow": "Παιγμένες · στόχοι · σερί · καλύτεροι πόντοι",
       "share.won": "{n} δεμάτια, ο στόχος πιάστηκε", "share.lost": "{n} δεμάτια, ο στόχος δεν πιάστηκε",
-      "last.title": "Τελευταίες χρονιές", "last.won": "Ολοκληρώθηκε", "last.met": "Στόχος", "last.missed": "Χωρίς στόχο", "last.seasons": "{n} από {m} εποχές",
+      "last.title": "Τελευταίες χρονιές", "last.won": "Ολοκληρώθηκε", "last.met": "Στόχος", "last.missed": "Χωρίς στόχο", "last.seasons": "{n} από {m} εποχές", "last.seasonsE": "{n} εποχές",
       "last.replay": "Ξανά", "last.replayLabel": "Ξανά η χρονιά {seed}",
       "toast.dailyGone": "Η εποχή της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
       "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε", "toast.copyFail": "Δεν αντιγράφηκε",
@@ -337,6 +397,8 @@
   //                                           c: { <folk>: finished years } } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
+  // Endless (e, 5.82.00): [years, 0, most seasons], seasons up to MAX_FARM × 4;
+  // an Endless year is never "finished", so a cell with finished > 0 drops.
   // days (5.81.00, older data has none): one Daily season per calendar
   // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
   // { "<day>": { b, w: 1 quota met | 0, h: score (sheaves + the wish
@@ -344,15 +406,16 @@
   //   end] } }. The newer epoch wins; equal epochs keep the better result
   // (quota met, then the higher score, then fewer actions, then the
   // larger JSON: a total order, so a join). Never counted in rows.
+  // pz (5.83.00): the numbers of the puzzles solved on any device, sorted.
   // last (5.81.00): the last 10 years of every device,
-  // [{ a: end time ms, d: m|h|d (d = Daily), p: [3 folk], n: seasons
+  // [{ a: end time ms, d: m|h|e|d (e = Endless, d = Daily), p: [3 folk], n: seasons
   //    won, w: 1 finished (Daily: quota met) | 0, s: year code }].
   // Union by a + s, newest first, the first 10: a join; entries older
   // than the reset stamp br drop.
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], pz: [] }; }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
         !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || !isInt(v.t) || v.t < 1 || v.t >= BIG) return null;
@@ -368,8 +431,8 @@
     return cmpStr(JSON.stringify(x), JSON.stringify(y)) > 0;
   }
   function normLast(v) {
-    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "d"].indexOf(v.d) < 0 || !E.trioOk(v.p) ||
-        !isInt(v.n) || v.n < 0 || v.n > MAX_SEASONS || (v.w !== 0 && v.w !== 1) ||
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "e", "d"].indexOf(v.d) < 0 || !E.trioOk(v.p) ||
+        !isInt(v.n) || v.n < 0 || v.n > maxSeasons(v.d) || (v.d === "e" && v.w !== 0) || (v.w !== 0 && v.w !== 1) ||
         typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
     return { a: v.a, d: v.d, p: v.p.slice(), n: v.n, w: v.w, s: v.s };
   }
@@ -378,7 +441,7 @@
     var s = {}, c = {}, any = false;
     DIFFS.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= MAX_SEASONS) {
+      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= maxSeasons(k) && (k !== "e" || v[1] === 0)) {
         s[k] = [v[0], v[1], v[2]];
         any = true;
       }
@@ -452,7 +515,14 @@
     });
     Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
     last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
+    // pz: the puzzles solved, a sorted union (a join); Reset records keeps them
+    var pz = {};
+    [a.pz, b.pz].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (n) { if (isInt(n) && n >= 1 && n <= PZ_N) pz[n] = 1; });
+    });
+    var pl = Object.keys(pz).map(Number).sort(function (x, y) { return x - y; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N), pz: pl };
   }
   // [years, finished, most seasons won] for a difficulty, all devices.
   function totals(diff) {
@@ -514,7 +584,7 @@
     var v = row.s[diff] ? row.s[diff].slice() : [0, 0, 0];
     v[0]++;
     if (won) v[1]++;
-    v[2] = Math.max(v[2], clamp(seasons, 0, MAX_SEASONS));
+    v[2] = Math.max(v[2], clamp(seasons, 0, maxSeasons(diff)));
     row.s[diff] = v;
     row.hb = Math.max(row.hb, clamp(best, 0, MAX_SHEAVES));
     if (won) trio.forEach(function (k) { row.c[k] = (row.c[k] || 0) + 1; });
@@ -545,7 +615,7 @@
   // A year (or a Daily season) ended: into Last years.
   function logYear(won) {
     var v = normLast({ a: Date.now(), d: game.opts.day !== undefined ? "d" : game.opts.diff, p: game.opts.trio,
-      n: clamp(st.won, 0, MAX_SEASONS), w: won ? 1 : 0, s: game.opts.seed });
+      n: clamp(st.won, 0, maxSeasons(game.opts.diff)), w: won ? 1 : 0, s: game.opts.seed });
     if (!v) return;
     data.last = [v].concat(data.last || []);
     data = mergeFieldwarden(data, data);
@@ -578,7 +648,8 @@
 
   // game = {
   //   g: engine state,
-  //   opts: { diff, seed, trio: [3 folk], day (the Daily season only) },
+  //   opts: { diff, seed, trio: [3 folk], day (the Daily season only),
+  //           pz (a puzzle), cu (a farm code, 5.84.00) },
   //   ts: the state at the start of this turn (Reset turn),
   //   pt: the state at the start of the turn before (Rewind, Mild) | null,
   //   counted: bool   the year's end is in the records
@@ -592,7 +663,11 @@
     if (!o || DIFFS.indexOf(o.diff) < 0 || o.diff !== s.g.diff || typeof o.seed !== "string" || o.seed !== s.g.seed) return false;
     if (!E.trioOk(o.trio) || o.trio.join() !== s.g.folk.map(function (f) { return f.c; }).join()) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.one !== 1)) return false;
-    if (o.day === undefined && s.g.one !== undefined) return false;
+    if (o.pz !== undefined && (o.pz !== s.g.pz || o.day !== undefined)) return false;
+    if (o.cu !== undefined && (o.cu !== s.g.cu || o.day !== undefined || o.pz !== undefined)) return false;
+    if (o.day === undefined && o.pz === undefined && o.cu === undefined && s.g.one !== undefined) return false;
+    if (o.pz === undefined && s.g.pz !== undefined) return false;
+    if (o.cu === undefined && s.g.cu !== undefined) return false;
     if (!E.valid(s.ts) || s.ts.seed !== s.g.seed) return false;
     if (s.pt !== null && !(E.valid(s.pt) && s.pt.seed === s.g.seed)) return false;
     return true;
@@ -603,6 +678,8 @@
       if (validSession(s)) {
         var o = { diff: s.opts.diff, seed: s.opts.seed, trio: s.opts.trio.slice() };
         if (s.opts.day !== undefined) o.day = s.opts.day;
+        if (s.opts.pz !== undefined) o.pz = s.opts.pz;
+        if (s.opts.cu !== undefined) o.cu = s.opts.cu;
         return { g: s.g, opts: o, ts: s.ts, pt: s.pt, counted: s.counted === true };
       }
     } catch (e) {}
@@ -624,12 +701,15 @@
   var cursor = 14;        // keyboard cursor tile
   var busyUntil = 0;      // input waits while the end of a turn plays
 
-  function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0); }
+  // a puzzle or a farm from a code left half done loses nothing, so it never asks
+  function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0 && g.opts.pz === undefined && g.opts.cu === undefined); }
   function makeGame(opts) {
-    var daily = opts.day !== undefined;
-    var g = daily ? E.newDaily(opts.seed) : E.newYear(opts.seed, opts.diff, opts.trio, E.FARMS.length);
-    var o = { diff: g.diff, seed: opts.seed, trio: g.folk.map(function (f) { return f.c; }) };
+    var daily = opts.day !== undefined, pz = opts.pz !== undefined, cu = opts.cu !== undefined;
+    var g = cu ? E.newCustom(opts.cu) : pz ? E.newPuzzle(opts.pz) : daily ? E.newDaily(opts.seed) : E.newYear(opts.seed, opts.diff, opts.trio, E.FARMS.length);
+    var o = { diff: g.diff, seed: g.seed, trio: g.folk.map(function (f) { return f.c; }) };
     if (daily) o.day = opts.day;
+    if (pz) o.pz = opts.pz;
+    if (cu) o.cu = g.cu;
     return { g: g, opts: o, ts: E.clone(g), pt: null, counted: false };
   }
   function setState(g) {
@@ -638,6 +718,16 @@
   }
   function endYear(won) {
     game.counted = true;
+    if (game.opts.cu !== undefined) return;   // a farm from a code is not a year
+    // a puzzle is not a year: only a solved one is noted
+    if (game.opts.pz !== undefined) {
+      if (won && data.pz.indexOf(game.opts.pz) < 0) {
+        data.pz = data.pz.concat([game.opts.pz]);
+        data = mergeFieldwarden(data, data);
+        save();
+      }
+      return;
+    }
     if (game.opts.day !== undefined) countDaily(game.opts.day, won, won ? E.dailyScore(st) : (st.res ? E.dailyScore(st) : 0), Math.max(1, st.acts), stageCounts(st.s));
     else count(game.opts.diff, won, st.won, game.opts.trio, st.best);
     logYear(won);
@@ -645,6 +735,7 @@
   function startGame(opts) {
     // a year under way and left counts as lost
     if (game && inProgressOf(game)) endYear(false);
+    ed = null;
     game = makeGame(opts);
     st = game.g;
     undo = [];
@@ -652,16 +743,32 @@
     saveSession();
     seasonMsg();
     if (game.opts.day !== undefined) setMsg(t("daily.rules"));
+    if (game.opts.pz !== undefined) setMsg(pzRules());
+    if (game.opts.cu !== undefined) setMsg(cuRules());
     renderAll();
     live($("msg").textContent);
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
-  function farmName() { return t("farm." + E.FARMS[st.farm - 1].id); }
+  // Endless names the later rounds "The Lowland II", "III"…
+  function roman(n) {
+    var out = "", v = [[10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]];
+    v.forEach(function (p) { while (n >= p[0]) { out += p[1]; n -= p[0]; } });
+    return out;
+  }
+  function farmName() {
+    var k = E.loopOf(st.farm);
+    return t("farm." + E.farmOf(st.farm).id) + (k ? " " + roman(k + 1) : "");
+  }
   function seasonNo() { return st.one ? 1 : (st.farm - 1) * E.SEASONS + st.sea; }
   function seasonsAll() { return st.one ? 1 : st.end * E.SEASONS; }
+  function endless() { return st.diff === "e"; }
+  function seasonLabel() { return endless() ? t("res.seasonE", { n: seasonNo() }) : t("res.season", { n: seasonNo(), m: seasonsAll() }); }
   function seasonMsg() {
-    setMsg(st.phase === "shop" ? t("msg.shop") : t("msg.season", { n: seasonNo(), m: seasonsAll(), f: farmName(), q: st.s.q }));
+    if (st.pz) { setMsg(t("pz.msg", { n: st.pz, q: st.s.q })); return; }
+    if (st.cu) { setMsg(t("cu.msg", { q: st.s.q })); return; }
+    setMsg(st.phase === "shop" ? t("msg.shop") : endless() ? t("msg.seasonE", { n: seasonNo(), f: farmName(), q: st.s.q }) :
+      t("msg.season", { n: seasonNo(), m: seasonsAll(), f: farmName(), q: st.s.q }));
   }
   function nameOf(u) { return u.f === 1 ? t("folk." + u.k) : t("inv." + u.k); }
   function selUnit() {
@@ -737,6 +844,7 @@
     renderAll();
   }
   function endTurn() {
+    if (ed) { edPlay(); return; }
     if (!playable()) return;
     var start = game.ts, ev = E.act(st, { t: "end" });
     if (!ev) return;
@@ -932,6 +1040,7 @@
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = colors["fw-ground"];
     ctx.fillRect(0, 0, W, H);
+    if (ed) { paintEditor(); return; }
     var pv = viewState(), s = pv ? pv.s : st.s;
     var i;
     for (i = 0; i < SIZE; i++) paintTile(s, i);
@@ -1266,6 +1375,7 @@
   // ---------- 6. Input ----------
   var kbUsed = false;
   function tap(i) {
+    if (ed) { edTap(i); return; }
     if (i < 0 || !st) return;
     if (st.phase === "shop" || st.over >= 0 || st.s.done) { describe(i); return; }
     if (Date.now() < busyUntil) return;
@@ -1290,6 +1400,7 @@
   }
   // A short line about a tile (the full text is a long press away).
   function describe(i) {
+    if (ed) { edDescribe(i); return; }
     var s = st.s, u = E.unitAt(s, i);
     if (u && u.f === 0) { setMsg(nameOf(u) + " · " + intentText(s, u)); draw(); return; }
     if (u) { setMsg(nameOf(u) + " · " + t("info.hp", { hp: u.hp, mh: u.mh })); draw(); return; }
@@ -1335,7 +1446,7 @@
         if (!press) return;
         press.long = true;
         var i = tileAt(press.x, press.y);
-        if (i >= 0) infoDialog(i);
+        if (i >= 0 && !ed) infoDialog(i);
       }, 520);
     });
     canvas.addEventListener("pointermove", function (e) {
@@ -1369,6 +1480,7 @@
       var k = e.key;
       if (k === "n" || k === "N") { e.preventDefault(); askNew(); return; }
       if (!st) return;
+      if (ed && /^[tTzZrR]$/.test(k)) return;   // the editor has no turn to undo
       if (k === "t" || k === "T") { e.preventDefault(); toggleThreat(); return; }
       if (k === "z" || k === "Z") { e.preventDefault(); undoAct(); return; }
       if (k === "r" || k === "R") { e.preventDefault(); resetTurn(); return; }
@@ -1408,7 +1520,8 @@
     draw();
   }
   function renderStatus() {
-    if (!st) return;
+    $("status").style.visibility = ed ? "hidden" : "";
+    if (!st || ed) return;
     var s = st.s;
     var turn = $("s-turn");
     turn.querySelector(".v").textContent = st.phase === "shop" ? t("st.shop") : s.turn + "/" + E.T;
@@ -1440,13 +1553,15 @@
     return UI_ICONS.wind.replace("<svg ", '<svg style="transform:rotate(' + rot + 'deg)" ');
   }
   function renderTools() {
-    var play = !!(st && st.phase === "play" && st.over < 0 && !st.s.done);
-    $("end-btn").disabled = !play;
+    var play = !ed && !!(st && st.phase === "play" && st.over < 0 && !st.s.done);
+    var end = $("end-btn");
+    end.disabled = !play && !ed;
+    end.textContent = t(ed ? "ed.play" : "btn.end");
     $("undo-btn").disabled = !play || !undo.length;
     $("reset-btn").disabled = !play || !undo.length;
     var rw = $("rewind-btn");
     rw.hidden = !(st && st.diff === "m");
-    rw.disabled = !canRewind();
+    rw.disabled = !!ed || !canRewind();
     var db = $("daily-btn");
     db.hidden = !DK;
     db.classList.toggle("due", !!DK && !data.days[today()]);
@@ -1461,6 +1576,7 @@
   function renderActs() {
     var bar = $("acts");
     bar.innerHTML = "";
+    if (ed) { edBar(bar); return; }
     if (!st) return;
     if (st.phase === "shop" && st.over < 0) {
       var mk = el("button", "act");
@@ -1589,16 +1705,22 @@
     f.appendChild(el("label", "dlg-label", t("new.seed")));
     var inp = el("input", "dlg-input");
     inp.type = "text";
-    inp.maxLength = 16;
+    inp.maxLength = 120;   // a farm code is longer than a year code
     inp.placeholder = t("new.seedHint");
     inp.setAttribute("aria-label", t("new.seed"));
     inp.autocomplete = "off";
     inp.spellcheck = false;
     f.appendChild(inp);
+    var bad = el("div", "dlg-note", t("new.codeNote"));
+    f.appendChild(bad);
     dlg.appendChild(f);
-    var acts = el("div", "dlg-actions");
+    var acts = el("div", "dlg-actions wrap");
     acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("ed.build"), "", function () { dlg.close(); openEditor(null); }));
     start = button(t("new.start"), "primary", function () {
+      // a farm code plays that farm; a longer text that is no farm code is a typo
+      if (E.readFarmCode(inp.value)) { dlg.close(); startGame({ cu: inp.value }); return; }
+      if (String(inp.value || "").toLowerCase().replace(/[^a-z0-9]/g, "").length > 16) { bad.textContent = t("new.badCode"); return; }
       if (!E.trioOk(o.trio)) return;
       prefs.diff = o.diff;
       prefs.trio = o.trio.slice();
@@ -1646,10 +1768,12 @@
   }
   function harvestDialog() {
     if (!st || !st.s.done || !st.res || document.querySelector("dialog[open]")) return;
+    if (st.pz) { puzzleEnd(); return; }
+    if (st.cu) { customEnd(); return; }
     var r = st.res, won = r.h >= r.q;
     var dlg = makeDialog("fw-harvest");
     dlg.setAttribute("data-modal", "1");
-    dlg.appendChild(el("div", "dlg-title", t("res.harvest") + " · " + t("res.season", { n: seasonNo(), m: seasonsAll() })));
+    dlg.appendChild(el("div", "dlg-title", t("res.harvest") + " · " + seasonLabel()));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), t("res.sheaves", { n: r.h })));
     dlg.appendChild(row(t("res.quota"), String(r.q)));
     dlg.appendChild(el("div", "dlg-note", wishText(st.s)));
@@ -1719,11 +1843,13 @@
   }
   function resultDialog() {
     if (!game || st.over < 0 || document.querySelector("dialog[open]")) return;
+    if (st.pz) { puzzleEnd(); return; }
+    if (st.cu) { customEnd(); return; }
     if (game.opts.day !== undefined) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("fw-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
-    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
-    dlg.appendChild(row(t("res.seasons"), st.won + "/" + seasonsAll()));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : endless() ? t("res.endless", { n: st.won }) : t("res.lost")));
+    dlg.appendChild(row(t("res.seasons"), endless() ? String(st.won) : st.won + "/" + seasonsAll()));
     dlg.appendChild(row(t("res.total"), String(st.total)));
     dlg.appendChild(row(t("res.best"), String(st.best)));
     dlg.appendChild(el("div", "dlg-note", t("res.code", { seed: game.opts.seed })));
@@ -1742,7 +1868,7 @@
     DIFFS.forEach(function (m) {
       var v = totals(m);
       if (v[0]) empty = false;
-      dlg.appendChild(row(t("diff." + m), v[0] + " · " + v[1] + " · " + v[2]));
+      dlg.appendChild(row(t("diff." + m), v[0] + " · " + (m === "e" ? "–" : v[1]) + " · " + v[2]));
     });
     dlg.appendChild(row(t("stats.best"), String(bestHarvest())));
     dlg.appendChild(el("div", "dlg-sub", t("stats.folk")));
@@ -1753,6 +1879,7 @@
       dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
       dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.top : "–"));
     }
+    if (PZ_N) dlg.appendChild(row(t("pz.solvedRow"), data.pz.length + "/" + PZ_N));
     if ((data.last || []).length) empty = false;
     lastYears(dlg);
     if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
@@ -1785,7 +1912,7 @@
     var box = el("div", "lr-list");
     list.forEach(function (v) {
       var r = el("div", "lr-row");
-      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: MAX_SEASONS }));
+      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : (v.w ? t("last.won") : v.d === "e" ? t("last.seasonsE", { n: v.n }) : t("last.seasons", { n: v.n, m: MAX_SEASONS }));
       var tx = el("div", "lr-tx");
       tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
       tx.appendChild(el("div", "fx", v.p.map(function (c) { return t("folk." + c); }).join(", ") + " · " +
@@ -1874,6 +2001,377 @@
   function hubLink(acts, dlg) {
     if (!DK || !DK.hasHub()) return;
     acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("fieldwarden"); }));
+  }
+
+  // ---------- Puzzles ----------
+  // 30 one-turn puzzles: 1-10 with one farmhand, 11-20 with two, 21-30
+  // with three. The quota is the most the fields can still give.
+  function pzRules() { return t("pz.rules", { n: st.pz, q: st.s.q }); }
+  function pzTier(n) { return n <= 10 ? 1 : n <= 20 ? 2 : 3; }
+  function openPuzzle(n) {
+    var go = function () { startGame({ pz: n }); };
+    if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); go(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+    else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), go, t("confirm.newYes"));
+    else go();
+  }
+  function puzzlesDialog() {
+    var dlg = makeDialog("fw-pz");
+    dlg.appendChild(el("div", "dlg-title", t("pz.title")));
+    dlg.appendChild(el("div", "dlg-note", t("pz.note") + " " + t("pz.count", { n: data.pz.length, m: PZ_N })));
+    var first = null;
+    [1, 2, 3].forEach(function (tier) {
+      dlg.appendChild(el("div", "dlg-sub", t("pz.tier" + tier)));
+      var grid = el("div", "pz-grid");
+      for (var n = 1; n <= PZ_N; n++) {
+        if (pzTier(n) !== tier) continue;
+        (function (n) {
+          var done = data.pz.indexOf(n) >= 0;
+          var b = el("button", "pz-btn" + (done ? " done" : ""), String(n));
+          b.type = "button";
+          b.setAttribute("aria-label", t(done ? "pz.aSolved" : "pz.aOpen", { n: n }));
+          b.addEventListener("click", function () { dlg.close(); openPuzzle(n); });
+          if (!first && !done) first = b;
+          grid.appendChild(b);
+        })(n);
+      }
+      dlg.appendChild(grid);
+    });
+    var acts = el("div", "dlg-actions");
+    var close = button(t("stats.close"), "", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    show(dlg, first || close);
+  }
+  function puzzleEnd() {
+    var n = st.pz, won = st.over === 1, r = st.res;
+    var dlg = makeDialog("fw-pzend");
+    dlg.setAttribute("data-modal", "1");
+    dlg.appendChild(el("div", "dlg-title", t("pz.name", { n: n })));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("pz.won") : t("pz.lost")));
+    dlg.appendChild(row(t("res.sheaves", { n: r.h }), t("pz.of", { q: r.q })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("pz.all"), "", function () { dlg.close(); setTimeout(puzzlesDialog, 0); }));
+    acts.appendChild(button(t("pz.again"), won ? "" : "primary", function () { dlg.close(); startGame({ pz: n }); }));
+    var nx = null;
+    for (var k = 1; k <= PZ_N && !nx; k++) { var m = ((n - 1 + k) % PZ_N) + 1; if (data.pz.indexOf(m) < 0) nx = m; }
+    var main = null;
+    if (won && nx) { main = button(t("pz.next", { n: nx }), "primary", function () { dlg.close(); startGame({ pz: nx }); }); acts.appendChild(main); }
+    dlg.appendChild(acts);
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+    sfx(won ? "win" : "end");
+    show(dlg, main || acts.lastChild);
+  }
+
+  // ---------- Farm editor (5.84.00) ----------
+  // The board becomes the farm being built: pick a tile, a farmhand or an
+  // invader in the bar and tap the board. Play turns the farm into a farm
+  // code (engine readFarmCode) and plays it as one Harsh season; the code
+  // can be shared and typed into the New year dialog. The draft is kept
+  // on this device only (DRAFT_KEY), never synced.
+  //   ed = { m: model (engine farmProblem), pick: "t:<tile>" | "f:<0-2>" | "i", inv: invader kind }
+  var ed = null;
+  var ED_TILES = ["d", "f", "h", "p", "s", "b"];
+  var WX_CYCLE = ["c", "r", "d", "n", "e", "s", "w"];
+  function edStarter() {
+    var t0 = [], g0 = [], i;
+    for (i = 0; i < SIZE; i++) { t0.push("d"); g0.push(0); }
+    [13, 14, 15, 19, 20, 21].forEach(function (j) { t0[j] = "f"; g0[j] = 1; });
+    t0[27] = "b";
+    t0[8] = "h";
+    return { t: t0, g: g0, f: prefs.trio.slice(), fa: [25, 26, 28], wx: ["c", "r", "c", "e"], inv: [["wolf", 5]], arr: [["crow", 2], ["boar", 3]] };
+  }
+  // A draft from storage, made safe to edit (anything odd: a fresh farm).
+  function edNorm(m) {
+    var ok = m && typeof m === "object" && Array.isArray(m.t) && m.t.length === SIZE && Array.isArray(m.g) && m.g.length === SIZE &&
+      m.t.every(function (c) { return ED_TILES.indexOf(c) >= 0; }) &&
+      m.g.every(function (v, i) { return isInt(v) && v >= 0 && v <= E.MAX_STAGE && (m.t[i] === "f" || !v); }) &&
+      E.trioOk(m.f) && Array.isArray(m.fa) && m.fa.length === 3 && m.fa.every(function (v) { return isInt(v) && v >= -1 && v < SIZE; }) &&
+      Array.isArray(m.wx) && m.wx.length === 4 && m.wx.every(function (c) { return WX_CYCLE.indexOf(c) >= 0; }) &&
+      Array.isArray(m.inv) && m.inv.length <= E.MAX_INV && m.inv.every(function (e) { return Array.isArray(e) && E.INV_IDS.indexOf(e[0]) >= 0 && isInt(e[1]) && e[1] >= 0 && e[1] < SIZE; }) &&
+      Array.isArray(m.arr) && m.arr.length <= E.MAX_ARR && m.arr.every(function (e) { return Array.isArray(e) && E.INV_IDS.indexOf(e[0]) >= 0 && isInt(e[1]) && e[1] >= 2 && e[1] <= E.T; });
+    return ok ? JSON.parse(JSON.stringify(m)) : null;
+  }
+  function edLoad() {
+    try { return edNorm(JSON.parse(localStorage.getItem(DRAFT_KEY) || "null")); } catch (e) { return null; }
+  }
+  function edSave() {
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify(ed.m)); } catch (e) {}
+  }
+  function openEditor(m) {
+    cancelTourWait();
+    ed = { m: edNorm(m) || edLoad() || edStarter(), pick: "t:f", inv: "wolf" };
+    sel = null;
+    edSave();
+    edMsg();
+    renderAll();
+  }
+  function leaveEditor() {
+    ed = null;
+    seasonMsg();
+    renderAll();
+  }
+  function edProblem() { return E.farmProblem(ed.m); }
+  function edMsg(extra) {
+    var p = edProblem();
+    setMsg((extra ? extra + " " : "") + (p ? t("ed.p." + p) : t("ed.ok")));
+  }
+  function edCode() { return E.writeFarmCode(ed.m); }
+  function edFolkAt(i) { return ed.m.fa.indexOf(i); }
+  function edInvAt(i) {
+    for (var k = 0; k < ed.m.inv.length; k++) if (ed.m.inv[k][1] === i) return k;
+    return -1;
+  }
+  // Can this folk (index) or an invader (fi -1) stand on tile c?
+  function edStands(c, fi) {
+    if (c === "h" || c === "s" || c === "b") return false;
+    return c !== "p" || (fi >= 0 && ed.m.f[fi] === "ferryman");
+  }
+  function edTap(i) {
+    if (i < 0) return;
+    var m = ed.m, p = ed.pick, k, note = "";
+    if (p.charAt(0) === "t") {
+      var c = p.charAt(2);
+      if (c === "f" && m.t[i] === "f") m.g[i] = (m.g[i] + 1) % (E.MAX_STAGE + 1);
+      else {
+        if (c === "b") for (k = 0; k < SIZE; k++) if (m.t[k] === "b") m.t[k] = "d";
+        m.t[i] = c;
+        m.g[i] = 0;
+      }
+      // what can no longer stand here leaves the board
+      k = edInvAt(i);
+      if (k >= 0 && !edStands(c, -1)) m.inv.splice(k, 1);
+      k = edFolkAt(i);
+      if (k >= 0 && !edStands(c, k)) m.fa[k] = -1;
+      sfx("tool");
+    } else if (p.charAt(0) === "f") {
+      var fi = +p.charAt(2);
+      if (!edStands(m.t[i], fi)) note = t("ed.noStand", { k: t("folk." + m.f[fi]) });
+      else {
+        var other = edFolkAt(i);
+        if (other >= 0 && other !== fi) m.fa[other] = m.fa[fi];
+        k = edInvAt(i);
+        if (k >= 0) m.inv.splice(k, 1);
+        m.fa[fi] = i;
+        sfx("tool");
+      }
+    } else {
+      k = edInvAt(i);
+      if (k >= 0 && m.inv[k][0] === ed.inv) m.inv.splice(k, 1);
+      else if (!edStands(m.t[i], -1)) note = t("ed.noStand", { k: t("inv." + ed.inv) });
+      else if (edFolkAt(i) >= 0) note = t("ed.taken");
+      else if (k >= 0) m.inv[k][0] = ed.inv;
+      else if (m.inv.length >= E.MAX_INV) note = t("ed.maxInv", { n: E.MAX_INV });
+      else m.inv.push([ed.inv, i]);
+      if (!note) sfx("tool");
+    }
+    cursor = i;
+    edSave();
+    edMsg(note);
+    renderActs();
+    draw();
+    live($("msg").textContent);
+  }
+  function edDescribe(i) {
+    var m = ed.m, fi = edFolkAt(i), k = edInvAt(i);
+    var base = m.t[i] === "f" ? t("tile.f") + " · " + t("stage." + m.g[i]) : t("tile." + m.t[i]);
+    setMsg(fi >= 0 ? t("folk." + m.f[fi]) + " · " + base : k >= 0 ? t("inv." + m.inv[k][0]) + " · " + base : base);
+    draw();
+  }
+  // The farm as a season the board painter knows.
+  function edSeason() {
+    var m = ed.m, z = [], i;
+    for (i = 0; i < SIZE; i++) z.push(0);
+    var s = { turn: 1, done: 1, t: m.t, g: m.g, x: m.t.map(function (c) { return c === "h" ? E.HEDGE_HP : 0; }), p: z, fire: z,
+      wx: ["c", "c"].concat(m.wx), barn: E.BARN_HP, wish: { k: "barn" }, u: [], next: [] };
+    m.fa.forEach(function (at, fi) {
+      if (at >= 0) s.u.push({ id: 100 + fi, k: m.f[fi], f: 1, at: at, hp: E.FOLK[m.f[fi]].hp, mh: E.FOLK[m.f[fi]].hp, mo: 0, ac: 0, sn: 0 });
+    });
+    m.inv.forEach(function (e, n) { s.u.push({ id: 200 + n, k: e[0], f: 0, at: e[1], hp: E.INVADERS[e[0]].hp, mh: E.INVADERS[e[0]].hp, mo: 0, ac: 0, sn: 0 }); });
+    return s;
+  }
+  function paintEditor() {
+    var s = edSeason(), i;
+    for (i = 0; i < SIZE; i++) paintTile(s, i);
+    s.u.forEach(function (u) { paintUnit(s, u); });
+    if (kbUsed && cursor >= 0) {
+      var p = tileXY(cursor);
+      ctx.strokeStyle = colors.text;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      rr(p.x + 2, p.y + 2, TS - 4, TS - 4, 6);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  function edBar(bar) {
+    function add(label, sub, pick, fn, ic) {
+      var b = el("button", "act ed");
+      b.type = "button";
+      var top = el("span", "ed-ic");
+      if (ic) top.innerHTML = ic;
+      b.appendChild(top);
+      b.appendChild(el("span", "nm", label));
+      if (sub) b.appendChild(el("span", "cost", sub));
+      if (pick) b.setAttribute("aria-pressed", ed.pick === pick ? "true" : "false");
+      b.title = label + (sub ? " · " + sub : "");
+      b.addEventListener("click", fn || function () { ed.pick = pick; edMsg(); renderActs(); });
+      bar.appendChild(b);
+    }
+    var pic = function (k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="' + P[k] + '"/></svg>'; };
+    ED_TILES.forEach(function (c) { add(t("tile." + c), "", "t:" + c, null, '<i class="sw ' + c + '"></i>'); });
+    ed.m.f.forEach(function (k, fi) { add(t("folk." + k), ed.m.fa[fi] < 0 ? t("ed.away") : "", "f:" + fi, null, pic(k)); });
+    add(t("inv." + ed.inv), t("ed.invN", { n: ed.m.inv.length, m: E.MAX_INV }), "i", function () {
+      // a second tap on the chosen invader button picks the next kind
+      if (ed.pick === "i") ed.inv = E.INV_IDS[(E.INV_IDS.indexOf(ed.inv) + 1) % E.INV_IDS.length];
+      ed.pick = "i";
+      edMsg();
+      renderActs();
+    }, pic(ed.inv));
+    add(t("ed.farm"), "", "", edDialog, UI_ICONS.crop);
+  }
+  function edPlay() {
+    var code = edCode();
+    if (!code) { edMsg(); sfx("hurt"); shake(); return; }
+    var go = function () { startGame({ cu: code }); };
+    if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); go(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+    else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), go, t("confirm.newYes"));
+    else go();
+  }
+  function wxButton(n, cur, onPick) {
+    var b = el("button", "seg-btn ed-wx");
+    b.type = "button";
+    function paintB(c) {
+      b.innerHTML = wxIcon(c);
+      b.appendChild(el("span", "", t("ed.turn", { n: n })));
+      b.title = t("ed.turn", { n: n }) + " · " + t("wx." + c);
+      b.setAttribute("aria-label", b.title);
+    }
+    paintB(cur);
+    b.addEventListener("click", function () {
+      cur = WX_CYCLE[(WX_CYCLE.indexOf(cur) + 1) % WX_CYCLE.length];
+      paintB(cur);
+      onPick(cur);
+    });
+    return b;
+  }
+  function edDialog() {
+    var dlg = makeDialog("fw-ed");
+    var m = ed.m;
+    function changed() { edSave(); edMsg(); renderActs(); draw(); paintCode(); }
+    dlg.appendChild(el("div", "dlg-title", t("ed.title")));
+    dlg.appendChild(el("div", "dlg-note", t("ed.note")));
+    var body = el("div", "dlg-scroll");
+    // the code
+    body.appendChild(el("div", "dlg-sub", t("ed.code")));
+    var codeIn = el("input", "dlg-input");
+    codeIn.type = "text";
+    codeIn.readOnly = true;
+    codeIn.setAttribute("aria-label", t("ed.code"));
+    var codeNote = el("div", "dlg-note");
+    var copy = button(t("ed.copy"), "", function () {
+      var c = edCode();
+      if (!c) return;
+      codeIn.select();
+      var done = function () { showToast(t("ed.copied")); };
+      var fail = function () { codeIn.select(); showToast(t("ed.copyFail")); };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(c).then(done, fail);
+        else fail();
+      } catch (e) { fail(); }
+    });
+    function paintCode() {
+      var c = edCode(), p = edProblem();
+      codeIn.value = c;
+      codeNote.textContent = c ? t("ed.codeNote") : t("ed.p." + p);
+      copy.disabled = !c;
+    }
+    body.appendChild(codeIn);
+    body.appendChild(codeNote);
+    body.appendChild(copy);
+    // the weather of turns 2-5 (turn 1 is always calm)
+    body.appendChild(el("div", "dlg-sub", t("ed.wx")));
+    var wxRow = el("div", "seg ed-row");
+    m.wx.forEach(function (c, n) { wxRow.appendChild(wxButton(n + 2, c, function (v) { m.wx[n] = v; changed(); })); });
+    body.appendChild(wxRow);
+    // invaders that come in at the edge
+    body.appendChild(el("div", "dlg-sub", t("ed.arr")));
+    body.appendChild(el("div", "dlg-note", t("ed.arrNote")));
+    var list = el("div", "ed-arr");
+    function paintArr() {
+      list.innerHTML = "";
+      m.arr.forEach(function (e, n) {
+        var r = el("div", "ed-arr-row");
+        r.appendChild(button(t("inv." + e[0]), "", function () { e[0] = E.INV_IDS[(E.INV_IDS.indexOf(e[0]) + 1) % E.INV_IDS.length]; paintArr(); changed(); }));
+        r.appendChild(button(t("ed.turn", { n: e[1] }), "", function () { e[1] = e[1] >= E.T ? 2 : e[1] + 1; paintArr(); changed(); }));
+        var x = button("×", "", function () { m.arr.splice(n, 1); paintArr(); changed(); });
+        x.setAttribute("aria-label", t("ed.remove"));
+        x.title = t("ed.remove");
+        r.appendChild(x);
+        list.appendChild(r);
+      });
+      if (m.arr.length < E.MAX_ARR) list.appendChild(button(t("ed.add"), "", function () { m.arr.push([ed.inv, 2]); paintArr(); changed(); }));
+    }
+    paintArr();
+    body.appendChild(list);
+    // the three folk
+    body.appendChild(el("div", "dlg-sub", t("new.folk") + " · " + t("new.pick")));
+    var grid = el("div", "pc-grid"), trio = m.f.slice();
+    function paintPick() {
+      [].forEach.call(grid.children, function (b) { b.setAttribute("aria-pressed", trio.indexOf(b.getAttribute("data-k")) >= 0 ? "true" : "false"); });
+    }
+    FOLK_IDS.forEach(function (k) {
+      var b = el("button", "pc-btn");
+      b.type = "button";
+      b.setAttribute("data-k", k);
+      b.appendChild(el("span", "nm", t("folk." + k)));
+      b.appendChild(el("span", "fx", t("folk." + k + ".note")));
+      b.addEventListener("click", function () {
+        var at = trio.indexOf(k);
+        if (at >= 0) trio.splice(at, 1);
+        else if (trio.length < 3) trio.push(k);
+        paintPick();
+        if (trio.length !== 3) return;
+        // folk who stay keep their tile; a newcomer waits off the board
+        var fa = trio.map(function (c) { var o = m.f.indexOf(c); return o >= 0 ? m.fa[o] : -1; });
+        m.f = trio.slice();
+        m.fa = fa.map(function (at, fi) { return at >= 0 && edStands(m.t[at], fi) ? at : -1; });
+        if (ed.pick.charAt(0) === "f") ed.pick = "t:f";
+        changed();
+      });
+      grid.appendChild(b);
+    });
+    body.appendChild(grid);
+    paintCode();
+    dlg.appendChild(body);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("ed.clear"), "", function () {
+      dlg.close();
+      setTimeout(function () { confirmDialog(t("ed.clearAsk"), function () { openEditor(edStarter()); }, t("ed.clearYes")); }, 0);
+    }));
+    acts.appendChild(button(t("ed.leave"), "", function () { dlg.close(); leaveEditor(); }));
+    var close = button(t("ed.close"), "primary", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    show(dlg, close);
+  }
+  // The end of a farm from a code: nothing goes in the records.
+  function cuRules() { return t("cu.rules", { q: st.s.q }); }
+  function customEnd() {
+    var won = st.over === 1, r = st.res, code = st.cu;   // no coins here, so no village wish either
+    var dlg = makeDialog("fw-cuend");
+    dlg.setAttribute("data-modal", "1");
+    dlg.appendChild(el("div", "dlg-title", t("cu.title")));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("cu.won") : t("cu.lost")));
+    dlg.appendChild(row(t("res.sheaves", { n: r.h }), t("pz.of", { q: r.q })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("cu.edit"), "", function () { dlg.close(); openEditor(E.readFarmCode(code)); }));
+    acts.appendChild(button(t("res.new"), "", function () { dlg.close(); setTimeout(newDialog, 0); }));
+    var again = button(t("pz.again"), "primary", function () { dlg.close(); startGame({ cu: code }); });
+    acts.appendChild(again);
+    dlg.appendChild(acts);
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+    sfx(won ? "win" : "end");
+    show(dlg, again);
   }
 
   function resetRecords() {
@@ -1994,6 +2492,7 @@
     rain:   SVG + '<path d="M7 15a4 4 0 0 1 0-8 5 5 0 0 1 9.5-1A4 4 0 0 1 17 15z"/><path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"/></svg>',
     wind:   SVG + '<path d="M3 12h15M13 6l6 6-6 6"/></svg>',
     drought: SVG + '<circle cx="12" cy="9" r="4"/><path d="M12 1v2M4 9H2M22 9h-2M5.6 2.6 7 4M18.4 2.6 17 4M3 21l4-4 3 3 4-4 3 3 4-4"/></svg>',
+    puzzle: SVG + '<path d="M4 4h6v2a2 2 0 1 0 4 0V4h6v6h-2a2 2 0 1 0 0 4h2v6h-6v-2a2 2 0 1 0-4 0v2H4v-6h2a2 2 0 1 0 0-4H4z"/></svg>',
     daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M12 20v-6M12 14c-2 0-3-1-3-3 2 0 3 1 3 3zM12 16c2 0 3-1 3-3-2 0-3 1-3 3z"/></svg>'
   };
   function paintSfxBtn() {
@@ -2082,7 +2581,7 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"], ["undo-btn", "undo", "btn.undo"],
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"], ["pz-btn", "puzzle", "btn.pz"], ["undo-btn", "undo", "btn.undo"],
      ["reset-btn", "reset", "btn.reset"], ["rewind-btn", "rewind", "btn.rewind"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
@@ -2104,6 +2603,7 @@
     $("rewind-btn").addEventListener("click", rewind);
     $("stats-btn").addEventListener("click", statsDialog);
     $("daily-btn").addEventListener("click", openDaily);
+    $("pz-btn").addEventListener("click", puzzlesDialog);
     // Deep link from the Game Center: { daily: true } opens today's season.
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("threat-btn").addEventListener("click", toggleThreat);
@@ -2146,6 +2646,8 @@
     saveSession();
     seasonMsg();
     if (game.opts.day !== undefined && !st.acts) setMsg(t("daily.rules"));
+    if (game.opts.pz !== undefined && !st.acts) setMsg(pzRules());
+    if (game.opts.cu !== undefined && !st.acts) setMsg(cuRules());
     resize();
     renderAll();
     if (daily) setTimeout(openDaily, 300);

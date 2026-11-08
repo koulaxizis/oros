@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Fieldwarden — rules engine (v1.1.0)
+// orOS Fieldwarden — rules engine (v1.4.0)
 // NOT the UI: no DOM, no storage. Loaded by fieldwarden/index.html
 // (window.FieldwardenEngine, after fieldwarden/data.js) and by
 // tests/fieldwarden.test.js (module.exports).
@@ -13,9 +13,12 @@
 // "Fieldwarden").
 //
 // State (plain JSON, kept as is in the device-local session):
-//   { v: 1, seed, diff "m" Mild | "h" Harsh, end (farms in the year),
+//   { v: 1, seed, diff "m" Mild | "h" Harsh | "e" Endless, end (farms in the
+//     year; Endless MAX_FARM, farm n plays farm ((n - 1) mod 3) + 1),
 //     farm 1…, sea season of the farm 1-4, one: 1 (a Daily season: this
 //     season only; absent in a year),
+//     pz: puzzle number (5.83.00, with one), cu: farm code (a farm built in
+//     the editor, 5.84.00, with one; never with pz),
 //     folk: [{ c folk id, mh most Health, mv Move, u: [0|1, 0|1] upgrades }] × 3,
 //     coins, won seasons won, total sheaves, best (most in a season),
 //     ready (fields bought a stage ahead for the next season),
@@ -27,8 +30,8 @@
 //     u: [unit], nid, next: [{ k, at }] (the invaders that come at the end of the turn),
 //     wx: [T + 1 weather c calm | r rain | d drought | n e s w wind, index = turn], sched: [T + 1 lists of invader ids],
 //     rw rewinds left (Mild), r rng, done 0|1, h harvest,
-//     fire: [36 burning 0|1], hb: 0|1 extra Health for every invader
-//     (Harsh from farm 2) }  (fire and hb since 5.81.00: absent = none)
+//     fire: [36 burning 0|1], hb: 0-4 extra Health for every invader
+//     (Harsh and Endless from farm 2, Endless +1 a round) }  (fire and hb since 5.81.00: absent = none)
 //   unit = { id, k folk or invader id, f 1 folk | 0 invader, fi folk index | -1, at tile,
 //            hp, mh, mo moved, ac acted, it: null | { d 0-3, r distance, a act }, sn stunned }
 //   tiles: d dirt (mud while it rains), f field, h hedge (Health in x), H hedge
@@ -61,14 +64,18 @@
 
   var D = root.FieldwardenData || (typeof require === "function" ? require("./data.js") : null);
   var FOLK = D.FOLK, FOLK_IDS = D.FOLK_IDS, TOOLS = D.TOOLS, UPS = D.UPS, INVADERS = D.INVADERS, ACTS = D.ACTS, FARMS = D.FARMS;
+  var PUZZLES = D.PUZZLES || [];
 
   var N = 6, SIZE = 36, T = 5, SEASONS = 4, MAX_STAGE = 3;
-  var DIFFS = ["m", "h"];
+  var DIFFS = ["m", "h", "e"];
+  // Endless (e): Harsh rules, the farms go round (4 = the Lowland again)
+  // and every round gives the invaders +1 Health, up to MAX_HB.
+  var MAX_FARM = 300, MAX_HB = 4;
   var DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
   var WIND = { n: 0, e: 1, s: 2, w: 3 };
   var BLOCK = { h: 1, H: 1, s: 1, b: 1 };
   var TILES = "dfhHpsb";
-  var QUOTA = { m: 0.6, h: 0.8 };
+  var QUOTA = { m: 0.6, h: 0.8, e: 0.8 };
   var COST = { hp: 3, mv: 3, up: 4, ready: 2 };
   var MAX_HP = 6, MAX_MV = 5, MAX_READY = 3, WISH_BONUS = 2, DRIVE_N = 3, HEDGE_HP = 2, BARN_HP = 2;
   var MAX_COINS = 9999, BIG = 1e9;
@@ -642,8 +649,15 @@
     }
     return n === free.length;
   }
+  // The farm of farm number n (Endless goes round the three) and its round 0….
+  function farmOf(n) { return FARMS[(n - 1) % FARMS.length]; }
+  function loopOf(n) { return Math.floor((n - 1) / FARMS.length); }
+  function hbOf(st) {
+    if (st.diff === "m" || st.farm < 2) return 0;
+    return Math.min(MAX_HB, 1 + (st.diff === "e" ? loopOf(st.farm) : 0));
+  }
   function layout(st, salt) {
-    var farm = FARMS[st.farm - 1], r = { s: hashStr(st.seed + ":" + st.farm + ":" + st.sea + ":" + salt) };
+    var farm = farmOf(st.farm), r = { s: hashStr(st.seed + ":" + st.farm + ":" + st.sea + ":" + salt) };
     var t, g, x, i, k, bi, fields;
     var interior = [];
     for (i = 0; i < SIZE; i++) if (!isEdge(i)) interior.push(i);
@@ -680,9 +694,13 @@
     }
     var pool = farm.pool[st.sea - 1], pick = function () { return pool[rint(r, pool.length)]; };
     var first = [];
-    for (k = 0; k < 2 + (st.sea >= 3 ? 1 : 0) + (st.diff === "h" ? 1 : 0); k++) first.push(pick());
+    for (k = 0; k < 2 + (st.sea >= 3 ? 1 : 0) + (st.diff !== "m" ? 1 : 0); k++) first.push(pick());
     if (st.sea === SEASONS) first[0] = farm.boss;
-    var per = [0, 1, 1 + (st.sea >= 2 ? 1 : 0) + (st.diff === "h" && st.sea >= 2 ? 1 : 0), 1, st.sea >= SEASONS ? 1 : 0, 0];
+    var per = [0, 1, 1 + (st.sea >= 2 ? 1 : 0) + (st.diff !== "m" && st.sea >= 2 ? 1 : 0), 1, st.sea >= SEASONS ? 1 : 0, 0];
+    // Endless: from the second round one more arrival on turn 3, from the third also on turn 1
+    var lp = st.diff === "e" ? loopOf(st.farm) : 0;
+    if (lp >= 1) per[3]++;
+    if (lp >= 2) per[1]++;
     var sched = [first];
     for (k = 1; k <= T; k++) {
       var list = [];
@@ -692,7 +710,7 @@
     var s = { turn: 1, q: 0, max: fields.length * MAX_STAGE, wish: wish, drove: 0, t: t, g: g, x: x, p: p,
       barn: BARN_HP, bi: bi, u: [], nid: 1, next: [], wx: wx, sched: sched, rw: st.diff === "m" ? 1 : 0,
       r: { s: hashStr("in:" + st.seed + ":" + st.farm + ":" + st.sea + ":" + salt) }.s, done: 0, h: 0,
-      fire: p.slice(), hb: st.diff === "h" && st.farm >= 2 ? 1 : 0 };
+      fire: p.slice(), hb: hbOf(st) };
     // the folk start next to the barn
     var spots = [];
     for (i = 0; i < SIZE; i++) if (t[i] !== "p" && !BLOCK[t[i]]) spots.push(i);
@@ -722,6 +740,8 @@
   // but never more than the solver bot brings in with these folk (so
   // every season can be won); a layout the bot does badly on is skipped
   // (the next salt, the same for every device).
+  // Endless asks 5 % more each round, up to 95 %.
+  function quotaOf(st) { return st.diff === "e" ? Math.min(0.95, QUOTA.e + 0.05 * loopOf(st.farm)) : QUOTA[st.diff]; }
   function makeSeason(st) {
     var best = null;
     for (var salt = 0; salt < 6; salt++) {
@@ -730,7 +750,7 @@
       if (!best || got / s.max > best.got / best.s.max) best = { s: s, got: got };
       if (got >= Math.ceil(s.max * 0.5)) break;
     }
-    best.s.q = Math.max(1, Math.min(Math.ceil(best.s.max * QUOTA[st.diff]), best.got));
+    best.s.q = Math.max(1, Math.min(Math.ceil(best.s.max * quotaOf(st)), best.got));
     st.ready = 0;
     return best.s;
   }
@@ -746,7 +766,7 @@
     });
   }
   function newYear(seed, diff, trio, end) {
-    var st = { v: 1, seed: String(seed), diff: diff, end: end || FARMS.length, farm: 1, sea: 1,
+    var st = { v: 1, seed: String(seed), diff: diff, end: diff === "e" ? MAX_FARM : end || FARMS.length, farm: 1, sea: 1,
       folk: trio.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
       coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
     st.s = makeSeason(st);
@@ -765,6 +785,152 @@
       folk: d.trio.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
       coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
     st.s = makeSeason(st);
+    return st;
+  }
+  // A puzzle: the last turn of a season set up by hand (data.js PUZZLES);
+  // the quota is the most the fields can still give, one try per End
+  // turn, Reset turn is free. Folk not on the farm sit the puzzle out.
+  //   { f: [3 folk ids], t: 36 tiles, g: 36 stages, x: 36 bruised / hedge
+  //     Health, u: [[folk or invader id, tile]], w: weather of the turn,
+  //     fire: [tiles], q: quota }
+  function newPuzzle(n) {
+    var P = PUZZLES[n - 1];
+    var st = { v: 1, seed: "pz" + n, diff: "h", end: 1, farm: 1, sea: 1, one: 1, pz: n,
+      folk: P.f.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
+      coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
+    var t = P.t.split(""), g = P.g.split("").map(Number), x = P.x.split("").map(Number), z = [], i;
+    for (i = 0; i < SIZE; i++) z.push(0);
+    var s = { turn: T, q: P.q, max: 0, wish: { k: "barn" }, drove: 0, t: t, g: g, x: x, p: z.slice(),
+      barn: BARN_HP, bi: t.indexOf("b"), u: [], nid: 1, next: [], wx: ["c", "c", "c", "c", "c", P.w], sched: [[], [], [], [], [], []],
+      rw: 0, r: hashStr("pz:" + n), done: 0, h: 0, fire: z.slice(), hb: 0 };
+    for (i = 0; i < SIZE; i++) if (t[i] === "f") s.max += MAX_STAGE;
+    (P.fire || []).forEach(function (j) { s.fire[j] = 1; });
+    P.u.forEach(function (e) {
+      var fi = P.f.indexOf(e[0]);
+      if (fi >= 0) s.u.push({ id: s.nid++, k: e[0], f: 1, fi: fi, at: e[1], hp: FOLK[e[0]].hp, mh: FOLK[e[0]].hp, mo: 0, ac: 0, it: null, sn: 0 });
+      else newInvader(s, e[0], e[1]);
+    });
+    st.s = s;
+    withRng(s, function () { reveal(st, s); });
+    return st;
+  }
+  // ---------- Farm codes (the farm editor) ----------
+  // A farm built by hand is one season on Harsh rules, shared as a code:
+  //   "f1" + 36 tiles (0 dirt, 1-4 a field of stage 0-3, 5 hedge, 6 pond,
+  //   7 haystack, 8 barn) + 3 folk (index in FOLK_IDS) + their 3 tiles
+  //   (base 36) + the weather of turns 2-5 (c r d n e s w) + the number
+  //   of invaders on the farm (base 36) and per invader its kind (index in
+  //   INV_IDS, base 36) and tile + the number of arrivals and per arrival
+  //   its kind and turn (2-5) + 2 check characters (FNV-1a of the rest mod
+  //   1296, base 36). Reading ignores case and anything not a letter or
+  //   digit. Ids are only ever appended to their tables, so a code keeps
+  //   its meaning; a new format takes a new prefix.
+  var INV_IDS = Object.keys(INVADERS);
+  var TILE_CODE = ["d", "f", "f", "f", "f", "h", "p", "s", "b"];
+  var WX_CODE = "crdnesw";
+  var MAX_INV = 12, MAX_ARR = 8;
+  function b36(n) { return n.toString(36); }
+  function farmCheck(rest) { var h = hashStr(rest) % 1296; return (h < 36 ? "0" : "") + b36(h); }
+  // The model the editor works on: { t[36], g[36], f[3 folk], fa[3 tiles],
+  // wx[4] turns 2-5, inv[[kind, tile]], arr[[kind, turn]] }
+  function farmProblem(m) {
+    var i;
+    if (!m || !Array.isArray(m.t) || m.t.length !== SIZE || !Array.isArray(m.g) || m.g.length !== SIZE) return "bad";
+    for (i = 0; i < SIZE; i++) {
+      if (TILE_CODE.indexOf(m.t[i]) < 0) return "bad";
+      if (!isInt(m.g[i]) || m.g[i] < 0 || m.g[i] > MAX_STAGE || (m.t[i] !== "f" && m.g[i])) return "bad";
+    }
+    if (!trioOk(m.f) || !Array.isArray(m.fa) || m.fa.length !== 3) return "bad";
+    if (!Array.isArray(m.wx) || m.wx.length !== 4 || !m.wx.every(function (c) { return typeof c === "string" && c.length === 1 && WX_CODE.indexOf(c) >= 0; })) return "bad";
+    if (!Array.isArray(m.inv) || !Array.isArray(m.arr)) return "bad";
+    if (m.t.filter(function (c) { return c === "b"; }).length !== 1) return "barn";
+    if (m.t.indexOf("f") < 0) return "field";
+    if (!connected(m.t)) return "closed";
+    var used = {}, bad = "";
+    m.fa.forEach(function (at, fi) {
+      if (bad) return;
+      if (!isInt(at) || at < 0 || at >= SIZE || used[at]) { bad = "folk"; return; }
+      if (BLOCK[m.t[at]] || (m.t[at] === "p" && m.f[fi] !== "ferryman")) { bad = "folk"; return; }
+      used[at] = 1;
+    });
+    if (bad) return bad;
+    if (m.inv.length > MAX_INV || m.arr.length > MAX_ARR) return "many";
+    if (!m.inv.length && !m.arr.length) return "none";
+    m.inv.forEach(function (e) {
+      if (bad) return;
+      if (!Array.isArray(e) || INV_IDS.indexOf(e[0]) < 0 || !isInt(e[1]) || e[1] < 0 || e[1] >= SIZE || used[e[1]]) { bad = "inv"; return; }
+      if (BLOCK[m.t[e[1]]] || m.t[e[1]] === "p") { bad = "inv"; return; }
+      used[e[1]] = 1;
+    });
+    if (bad) return bad;
+    m.arr.forEach(function (e) {
+      if (!Array.isArray(e) || INV_IDS.indexOf(e[0]) < 0 || !isInt(e[1]) || e[1] < 2 || e[1] > T) bad = "inv";
+    });
+    return bad;
+  }
+  function writeFarmCode(m) {
+    if (farmProblem(m)) return "";
+    var c = "f1", i;
+    for (i = 0; i < SIZE; i++) c += m.t[i] === "f" ? String(1 + m.g[i]) : String(TILE_CODE.indexOf(m.t[i]));
+    m.f.forEach(function (k) { c += FOLK_IDS.indexOf(k); });
+    m.fa.forEach(function (at) { c += b36(at); });
+    c += m.wx.join("") + b36(m.inv.length);
+    m.inv.forEach(function (e) { c += b36(INV_IDS.indexOf(e[0])) + b36(e[1]); });
+    c += b36(m.arr.length);
+    m.arr.forEach(function (e) { c += b36(INV_IDS.indexOf(e[0])) + e[1]; });
+    return c + farmCheck(c);
+  }
+  function readFarmCode(code) {
+    if (typeof code !== "string") return null;
+    var c = code.toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (c.length < 2 + SIZE + 6 + 4 + 2 + 2 || c.slice(0, 2) !== "f1") return null;
+    var body = c.slice(0, -2);
+    if (farmCheck(body) !== c.slice(-2)) return null;
+    var p = 2, m = { t: [], g: [], f: [], fa: [], wx: [], inv: [], arr: [] }, i, n, v;
+    var num = function (len) { var s2 = body.substr(p, len); p += len; return s2.length === len && /^[0-9a-z]+$/.test(s2) ? parseInt(s2, 36) : NaN; };
+    for (i = 0; i < SIZE; i++) {
+      v = num(1);
+      if (!(v >= 0 && v <= 8)) return null;
+      m.t.push(TILE_CODE[v]);
+      m.g.push(v >= 1 && v <= 4 ? v - 1 : 0);
+    }
+    for (i = 0; i < 3; i++) { v = num(1); if (!(v >= 0 && v < FOLK_IDS.length)) return null; m.f.push(FOLK_IDS[v]); }
+    for (i = 0; i < 3; i++) m.fa.push(num(1));
+    for (i = 0; i < 4; i++) { m.wx.push(body.charAt(p)); p++; }
+    n = num(1);
+    if (!(n >= 0 && n <= MAX_INV)) return null;
+    for (i = 0; i < n; i++) { v = num(1); m.inv.push([INV_IDS[v], num(1)]); }
+    n = num(1);
+    if (!(n >= 0 && n <= MAX_ARR)) return null;
+    for (i = 0; i < n; i++) { v = num(1); m.arr.push([INV_IDS[v], num(1)]); }
+    if (p !== body.length || farmProblem(m)) return null;
+    return m;
+  }
+  // The season of a farm code (state as a Daily season: one season, no
+  // market); cu holds the code. preview: no solver, quota 1 (the editor).
+  function newCustom(code, preview) {
+    var m = readFarmCode(code);
+    if (!m) return null;
+    var st = { v: 1, seed: "cf" + b36(hashStr(code.toLowerCase().replace(/[^a-z0-9]/g, ""))), diff: "h", end: 1, farm: 1, sea: 1, one: 1,
+      cu: writeFarmCode(m),
+      folk: m.f.map(function (c) { return { c: c, mh: FOLK[c].hp, mv: FOLK[c].mv, u: [0, 0] }; }),
+      coins: 0, won: 0, total: 0, best: 0, ready: 0, phase: "play", res: null, s: null, acts: 0, over: -1 };
+    var z = [], i;
+    for (i = 0; i < SIZE; i++) z.push(0);
+    var x = m.t.map(function (c) { return c === "h" ? HEDGE_HP : 0; });
+    var sched = [[], [], [], [], [], []];
+    m.arr.forEach(function (e) { sched[e[1] - 1].push(e[0]); });
+    var s = { turn: 1, q: 1, max: 0, wish: { k: "barn" }, drove: 0, t: m.t.slice(), g: m.g.slice(), x: x, p: z.slice(),
+      barn: BARN_HP, bi: m.t.indexOf("b"), u: [], nid: 1, next: [], wx: ["c", "c"].concat(m.wx), sched: sched,
+      rw: 0, r: hashStr("cu:" + st.cu), done: 0, h: 0, fire: z.slice(), hb: 0 };
+    for (i = 0; i < SIZE; i++) if (s.t[i] === "f") s.max += MAX_STAGE;
+    m.f.forEach(function (c, fi) {
+      s.u.push({ id: s.nid++, k: c, f: 1, fi: fi, at: m.fa[fi], hp: FOLK[c].hp, mh: FOLK[c].hp, mo: 0, ac: 0, it: null, sn: 0 });
+    });
+    m.inv.forEach(function (e) { newInvader(s, e[0], e[1]); });
+    st.s = s;
+    withRng(s, function () { pickNext(s, sched[1]); reveal(st, s); });
+    if (!preview) s.q = Math.max(1, Math.min(Math.ceil(s.max * QUOTA.h), solve(st, s)));
     return st;
   }
   // A Daily season's score: the sheaves plus the wish bonus.
@@ -1007,7 +1173,7 @@
     if (!w || ["star", "barn", "drive"].indexOf(w.k) < 0 || (w.k === "star" && !(isInt(w.i) && w.i >= 0 && w.i < SIZE))) return false;
     if (!Array.isArray(s.wx) || s.wx.length !== T + 1 || !s.wx.every(function (c) { return ["c", "r", "d", "n", "e", "s", "w"].indexOf(c) >= 0; })) return false;
     if (s.fire !== undefined && s.fire !== null && !arr(s.fire, function (v) { return v === 0 || v === 1; })) return false;
-    if (s.hb !== undefined && s.hb !== 0 && s.hb !== 1) return false;
+    if (s.hb !== undefined && !(isInt(s.hb) && s.hb >= 0 && s.hb <= MAX_HB)) return false;
     if (!Array.isArray(s.sched) || s.sched.length !== T + 1 || !s.sched.every(function (l) {
       return Array.isArray(l) && l.length <= 9 && l.every(function (k) { return INVADERS.hasOwnProperty(k); });
     })) return false;
@@ -1030,16 +1196,19 @@
   }
   function valid(st) {
     if (!st || typeof st !== "object" || st.v !== 1 || typeof st.seed !== "string" || !/^[a-z0-9]{1,16}$/.test(st.seed)) return false;
-    if (DIFFS.indexOf(st.diff) < 0 || !isInt(st.end) || st.end < 1 || st.end > FARMS.length) return false;
+    if (DIFFS.indexOf(st.diff) < 0 || !isInt(st.end) || st.end < 1) return false;
+    if (st.diff === "e" ? st.end !== MAX_FARM : st.end > FARMS.length) return false;
     if (!isInt(st.farm) || st.farm < 1 || st.farm > st.end || !isInt(st.sea) || st.sea < 1 || st.sea > SEASONS) return false;
     if (st.one !== undefined && (st.one !== 1 || st.farm !== st.end || st.diff !== "h" || st.phase !== "play")) return false;
+    if (st.pz !== undefined && (!isInt(st.pz) || st.pz < 1 || st.pz > PUZZLES.length || st.one !== 1)) return false;
+    if (st.cu !== undefined && (typeof st.cu !== "string" || st.one !== 1 || st.pz !== undefined || !readFarmCode(st.cu))) return false;
     if (!Array.isArray(st.folk) || st.folk.length !== 3 || !trioOk(st.folk.map(function (f) { return f && f.c; }))) return false;
     if (!st.folk.every(function (f) {
       return isInt(f.mh) && f.mh >= FOLK[f.c].hp && f.mh <= MAX_HP && isInt(f.mv) && f.mv >= FOLK[f.c].mv && f.mv <= MAX_MV &&
         Array.isArray(f.u) && f.u.length === 2 && f.u.every(function (v) { return v === 0 || v === 1; });
     })) return false;
     var nat = function (v, top) { return isInt(v) && v >= 0 && v <= top; };
-    if (!nat(st.coins, MAX_COINS) || !nat(st.won, 999) || !nat(st.total, BIG) || !nat(st.best, SIZE * MAX_STAGE) || !nat(st.ready, MAX_READY)) return false;
+    if (!nat(st.coins, MAX_COINS) || !nat(st.won, MAX_FARM * SEASONS) || !nat(st.total, BIG) || !nat(st.best, SIZE * MAX_STAGE) || !nat(st.ready, MAX_READY)) return false;
     if (st.phase !== "play" && st.phase !== "shop") return false;
     if (st.res !== null && !(st.res && nat(st.res.h, SIZE * MAX_STAGE) && nat(st.res.q, SIZE * MAX_STAGE) && (st.res.w === 0 || st.res.w === 1))) return false;
     if (!nat(st.acts, BIG) || (st.over !== -1 && st.over !== 0 && st.over !== 1)) return false;
@@ -1050,13 +1219,14 @@
   }
 
   var api = {
-    N: N, SIZE: SIZE, T: T, SEASONS: SEASONS, MAX_STAGE: MAX_STAGE, DIFFS: DIFFS, COST: COST, MAX_HP: MAX_HP, MAX_MV: MAX_MV,
-    MAX_READY: MAX_READY, WISH_BONUS: WISH_BONUS, DRIVE_N: DRIVE_N, BARN_HP: BARN_HP, WIND: WIND, BLOCK: BLOCK,
+    N: N, SIZE: SIZE, T: T, SEASONS: SEASONS, MAX_STAGE: MAX_STAGE, DIFFS: DIFFS, MAX_FARM: MAX_FARM, MAX_HB: MAX_HB, COST: COST, MAX_HP: MAX_HP, MAX_MV: MAX_MV,
+    MAX_READY: MAX_READY, WISH_BONUS: WISH_BONUS, DRIVE_N: DRIVE_N, BARN_HP: BARN_HP, HEDGE_HP: HEDGE_HP, WIND: WIND, BLOCK: BLOCK,
     FOLK: FOLK, FOLK_IDS: FOLK_IDS, TOOLS: TOOLS, UPS: UPS, INVADERS: INVADERS, ACTS: ACTS, FARMS: FARMS,
     hashStr: hashStr, step: step, dist: dist, dirTo: dirTo, unitAt: unitAt, unitById: unitById, folkUnit: folkUnit,
     trioOk: trioOk, newYear: newYear, toolOf: toolOf, actOrder: actOrder, intentTile: intentTile, chargePath: chargePath,
     harvestOf: harvestOf, wishOk: wishOk, shopOk: shopOk, lastSeason: lastSeason,
-    newDaily: newDaily, dailyOf: dailyOf, dailyScore: dailyScore, fireAt: fireAt,
+    farmOf: farmOf, loopOf: loopOf, newDaily: newDaily, dailyOf: dailyOf, newPuzzle: newPuzzle, PUZZLES: PUZZLES,
+    newCustom: newCustom, readFarmCode: readFarmCode, writeFarmCode: writeFarmCode, farmProblem: farmProblem, INV_IDS: INV_IDS, MAX_INV: MAX_INV, MAX_ARR: MAX_ARR, dailyScore: dailyScore, fireAt: fireAt,
     moves: function (st, id) { return movesS(st, st.s, unitById(st.s, id)); },
     targets: function (st, id) { return targetsS(st, st.s, unitById(st.s, id)); },
     projected: function (s) {
