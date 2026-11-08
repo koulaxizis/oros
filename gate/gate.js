@@ -768,6 +768,10 @@
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
   // opens on the owner's screen and applies the commands there.
   var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  // The changes the relay may queue while orOS is closed (relay/gate.js
+  // closedCall): its own change tools less budget_delete, and
+  // create_items. applyQueue runs nothing else (defence in depth).
+  var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"];
   var DOC_WRITE = ["edit_in_app", "undo_change"];
@@ -876,7 +880,7 @@
                relayOf: relayOf, RELAY: RELAY, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
-               WRITES: WRITES, ACT: ACT, DOCS: DOCS, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
+               WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
@@ -1230,7 +1234,7 @@
           if (!isObj(it) || typeof it.id !== "string") return;
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
-            if (!isObj(x) || typeof x.n !== "string" || x.n === "budget_delete" || x.n === "_key") return { ok: false, c: "refused" };
+            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
             return run(x.n, x.a).then(function (res) {
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
