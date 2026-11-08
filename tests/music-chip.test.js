@@ -58,8 +58,18 @@ test("MU-PANEL: song text goes in as text only", () => {
 test("MU-PANEL: every label in EN, EL and the German pack", () => {
   const de = fs.readFileSync(path.join(__dirname, "..", "i18n/de/music.js"), "utf8");
   for (const k of ["host.now", "host.paused", "host.panel", "host.prev", "host.next", "host.playBtn", "host.pauseBtn",
-    "host.stop", "host.open", "host.seek", "host.volume", "host.mute", "host.unmute"]) {
+    "host.stop", "host.open", "host.seek", "host.volume", "host.mute", "host.unmute", "host.like", "host.unlike"]) {
     assert.equal(src.split('"' + k + '"').length - 1, 3, k + " in en + el + use");
     assert.ok(de.includes('"' + k + '"'), k + " in de");
   }
+});
+// MU-FAV: the panel's heart likes the playing song through the synced slice.
+test("MU-FAV: heart in the panel uses the app's like (setLike via mutate)", () => {
+  const p = body("popToggle");
+  assert.ok(p.includes('"fav"'), "fav button");
+  assert.match(p, /mutate\(function \(d, now\) \{ return C\.setLike\(d, ref, on, now\); \}\)/);
+  const q = body("popPaint");
+  assert.match(q, /C\.isLiked\(data, ref\.k\)/);
+  assert.match(q, /aria-pressed/);
+  assert.match(q, /fv\.disabled = !ref/);
 });
