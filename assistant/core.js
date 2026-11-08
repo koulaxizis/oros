@@ -1981,6 +1981,9 @@
     ["translator", ["publish"], { type: "string", description: "publish: the translator (several: separated by commas)." }],
     ["illustrator", ["publish"], { type: "string", description: "publish: the illustrator (several: separated by commas)." }],
     ["editor", ["publish"], { type: "string", description: "publish: the editor (several: separated by commas)." }],
+    ["cover_designer", ["publish"], { type: "string", description: "publish: the cover designer (several: separated by commas)." }],
+    ["narrator", ["publish"], { type: "string", description: "publish: the audiobook's narrator (several: separated by commas)." }],
+    ["other", ["publish"], { type: "string", description: "publish: anyone else on the title, e.g. typesetting or proofreading (several: separated by commas); Publishing lists them as Other." }],
     ["series", ["publish"], { type: "string", description: "publish: the series (collection) it belongs to." }],
     ["series_no", ["publish"], { type: "string", description: "publish: its number in the series." }],
     ["language", ["publish"], { type: "string", description: "publish: the book's language, e.g. Greek." }],
@@ -2056,6 +2059,27 @@
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
     ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }]
   ];
+  // create_items fields the app does not take (2026-11-08, after a
+  // Publishing call through the gate lost "people" and "editions"
+  // without a word): "items[i].field", at most 8, so the model hears it.
+  function crUnknown(app, items) {
+    var known = {}, sub = {}, out = [];
+    CR_FIELDS.forEach(function (f) {
+      if (f[1].indexOf(app) < 0) return;
+      known[f[0]] = 1;
+      if (f[2].type === "array" && f[2].items && f[2].items.properties) sub[f[0]] = f[2].items.properties;
+    });
+    (Array.isArray(items) ? items : []).forEach(function (x, i) {
+      if (!x || typeof x !== "object" || Array.isArray(x)) return;
+      Object.keys(x).forEach(function (k) {
+        if (!known[k]) { out.push("items[" + i + "]." + k); return; }
+        if (sub[k] && Array.isArray(x[k])) x[k].forEach(function (y, j) {
+          if (y && typeof y === "object" && !Array.isArray(y)) Object.keys(y).forEach(function (kk) { if (!sub[k][kk]) out.push("items[" + i + "]." + k + "[" + j + "]." + kk); });
+        });
+      });
+    });
+    return { bad: out.slice(0, 8), fields: Object.keys(known) };
+  }
   // creates = the app ids the user lets it add to
   function createTool(creates) {
     var apps = Object.keys(CR_APPS).filter(function (a) { return creates.indexOf(a) >= 0; });
@@ -4598,7 +4622,7 @@
     sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
-    claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS,
+    claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS, crUnknown: crUnknown,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,
     prepHistory: prepHistory, buildRequest: buildRequest, thinkingRefused: thinkingRefused,
