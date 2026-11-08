@@ -15,7 +15,7 @@ const D = require("../fieldwarden/data.js");
 const SRC = fs.readFileSync(path.join(__dirname, "..", "fieldwarden/fieldwarden.js"), "utf8");
 const R = (() => {
   const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE; var LAST_N = 10; var MAX_DAY = 100000; var MAX_SCORE = MAX_SHEAVES + E.WISH_BONUS;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeFieldwarden"].forEach((name) => {
+  ["cmpStr", "isInt", "maxSeasons", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeFieldwarden"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const line = SRC.slice(i, SRC.indexOf("\n", i));
@@ -511,3 +511,36 @@ test("fieldwarden: Daily seasons and Last years merge as a join", () => {
   for (let k = 0; k < 14; k++) many.last.push({ a: k + 1, d: "h", p: ["shepherd", "smith", "hedger"], n: k % 12, w: 0, s: "s" + k });
   assert.equal(m(many, {}).last.length, 10);
 });
+test("fieldwarden: Endless goes round the farms, harder every round, until a quota is missed", () => {
+  const trio = ["shepherd", "smith", "hedger"];
+  const st = E.newYear("endless1", "e", trio);
+  assert.equal(st.end, E.MAX_FARM);
+  assert.ok(E.valid(st));
+  assert.deepEqual([E.farmOf(1).id, E.farmOf(3).id, E.farmOf(4).id, E.farmOf(7).id], ["low", "river", "low", "low"]);
+  assert.deepEqual([1, 3, 4, 6, 7, 300].map(E.loopOf), [0, 0, 1, 1, 2, 99]);
+  // the Health bonus and the extra arrivals grow with the round; Harsh is unchanged
+  const H = E.newYear("round", "h", trio);
+  const bad = E.clone(H);
+  bad.end = E.MAX_FARM;
+  assert.equal(E.valid(bad), false, "only Endless goes past the third farm");
+  const bad2 = E.clone(st);
+  bad2.end = 3;
+  assert.equal(E.valid(bad2), false, "Endless always has MAX_FARM farms");
+  // a smart bot plays on past the third farm; the round names the farm
+  let guard = 0;
+  while (st.over < 0 && st.farm < 5 && guard++ < 400) {
+    if (st.phase === "shop") E.botShop(st); else E.botTurn(st, true);
+    assert.ok(E.valid(st));
+  }
+  assert.ok(st.farm >= 4 || st.over === 0, "the year goes on after the River Bend");
+  if (st.farm >= 4) assert.equal(st.s.hb, 2, "round 2 adds a second Health");
+  // records: e cells are [years, 0, seasons up to MAX_FARM × 4]; Last years may hold e
+  const m = R.mergeFieldwarden;
+  const ok = m({ rows: { dev001: { b: 0, s: { e: [3, 0, 140] }, hb: 0, c: {} } }, last: [{ a: 5, d: "e", p: trio, n: 140, w: 0, s: "x" }] }, {});
+  assert.deepEqual(ok.rows.dev001.s.e, [3, 0, 140]);
+  assert.equal(ok.last.length, 1);
+  const no = m({ rows: { dev001: { b: 0, s: { e: [3, 1, 14] }, hb: 0, c: {} }, dev002: { b: 0, s: { h: [1, 0, 140] }, hb: 0, c: {} } },
+    last: [{ a: 5, d: "e", p: trio, n: 14, w: 1, s: "x" }, { a: 6, d: "h", p: trio, n: 140, w: 0, s: "x" }] }, {});
+  assert.deepEqual([Object.keys(no.rows).length, no.last.length], [0, 0], "Endless is never won; other modes stop at 12 seasons");
+});
+
