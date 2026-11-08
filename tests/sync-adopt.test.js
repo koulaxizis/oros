@@ -1,4 +1,4 @@
-// SY-AD (5.94.00): data the Assistant or orOS Gate writes for an app
+// SY-AD (5.96.00): data the Assistant or orOS Gate writes for an app
 // never opened on this device still syncs: the key → slice rule holds
 // for every app Claude may change, and both writers call adoptKey.
 const test = require("node:test");

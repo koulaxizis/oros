@@ -712,10 +712,10 @@
       "cr.v.expense": "Expense", "cr.v.income": "Income",
       "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
       "cr.textLinkItems": "{name} asks to link these CRM partners with their records in other apps. Nothing changes until you press Link; the other apps stay as they are.",
-      "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles",
+      "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles", "lkk.kb": "Kanban card", "lkk.nt": "Notes page", "lkk.ly": "Layout document", "lkk.at": "Atelier design",
       "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
-      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
+      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
       "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
@@ -1356,10 +1356,10 @@
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
       "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
       "cr.textLinkItems": "Το {name} ζητά να συνδεθούν αυτοί οι συνεργάτες του CRM με τις εγγραφές τους σε άλλες εφαρμογές. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι άλλες εφαρμογές μένουν όπως είναι.",
-      "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)",
+      "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)", "lkk.kb": "Κάρτα Kanban", "lkk.nt": "Σελίδα στις Σημειώσεις", "lkk.ly": "Έγγραφο Σελιδοποίησης", "lkk.at": "Σχέδιο στο Atelier",
       "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
-      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
+      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
       "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
@@ -4299,7 +4299,7 @@
     adoptStore(key);
     return true;
   }
-  // SY-AD (5.94.00): the app may never have been opened on this device;
+  // SY-AD (5.96.00): the app may never have been opened on this device;
   // its data must still reach the owner's other devices.
   function adoptStore(key) {
     var api = syncApi();
@@ -4949,7 +4949,7 @@
   var ADD_IDS = ["todo", "calendar", "budget", "notes", "bookmarks", "kanban"];
   // Wave A2 (AS-ADD3): a CRM customer's history, follow-ups and deals,
   // allowed whenever CRM is; refs from search_data or create_items.
-  var CRM_ADD = ["crm_activity", "crm_followup", "crm_deal"];
+  var CRM_ADD = ["crm_activity", "crm_followup", "crm_deal", "crm_contract"];
   // Wave A4 (AS-ADD5): time worked, recipes, sticky notes, and a trip's
   // itinerary and packing list (virtual apps of Travel, a trip's ref
   // each), in assistant/additems2.js with the app's own core.
@@ -5050,7 +5050,7 @@
   function addRef(c, appId, id, title, target) {
     return refFor(c, { app: appId, target: target || N.targetOf(appId, id), title: title, id: id });
   }
-  // A new ref for an item (r1, r2…). Through the gate (5.94.00) the same
+  // A new ref for an item (r1, r2…). Through the gate (5.96.00) the same
   // item keeps its ref and the refs are kept on the device
   // (oros-gate-refs), so a ref from the closed-orOS copy still names its
   // item when the queued change runs later, after a reload.
@@ -5247,7 +5247,7 @@
   // Timesheet client, an Invoices client or a person on Publishing
   // titles: CRM's own pt rows, the other apps only read (and only the
   // ones the user lets the assistant read).
-  var LINK_APPS = ["stock", "timesheet", "invoices", "publish"];
+  var LINK_APPS = ["stock", "timesheet", "invoices", "publish", "kanban", "notes", "layout", "atelier"];
   function partnerLinksOn(crIds, apps) {
     return crIds.indexOf("crm") >= 0 && apps.some(function (a) { return LINK_APPS.indexOf(a.id) >= 0; });
   }
@@ -5264,7 +5264,7 @@
   }
   function linkItems(c, args, apps) {
     var crm = createApps(apps).filter(function (a) { return a.id === "crm"; })[0];
-    if (!crm || !partnerLinksOn(["crm"], apps)) return Promise.resolve({ content: "Error: linking needs CRM and one of Stock, Timesheet, Invoices or Publishing, all allowed for the assistant.", err: 1 });
+    if (!crm || !partnerLinksOn(["crm"], apps)) return Promise.resolve({ content: "Error: linking needs CRM and one of Stock, Timesheet, Invoices, Publishing, Kanban, Notes, Layout or Atelier, all allowed for the assistant.", err: 1 });
     return crmCores().then(function () { return window.OrosAssistLinks ? true : loadOnce("links.js"); }).then(function () {
       var L = window.OrosAssistLinks, C = window.OrosCrmCore;
       if (!L || !C || !window.OrosCrmLinks) return { content: "Error: links are not available right now.", err: 1 };
@@ -8663,7 +8663,7 @@
   // ---------- GATE: Claude's tools through orOS Gate (GATE-ACT) ----------
   var gateConv = { id: "gate", refs: {}, refN: 0, msgs: [] };
   var gateNote = "", gateCtx = null;
-  // Gate refs on the device (5.94.00): { n, refs }, device-local, never
+  // Gate refs on the device (5.96.00): { n, refs }, device-local, never
   // synced; the newest GATE_REFS_MAX stay. gateKeys: app|target → ref.
   var GATE_REFS_KEY = "oros-gate-refs", GATE_REFS_MAX = 6000, gateKeys = {};
   function gateKey(rec) { var t0 = ""; try { t0 = JSON.stringify(rec.target == null ? rec.id : rec.target); } catch (e) {} return String(rec.app) + "|" + t0; }
@@ -8688,7 +8688,7 @@
     }
     try { localStorage.setItem(GATE_REFS_KEY, JSON.stringify({ n: gateConv.refN, refs: gateConv.refs })); return true; } catch (e) { return false; }
   }
-  // The closed-orOS copy's search (5.94.00): every item of these apps
+  // The closed-orOS copy's search (5.96.00): every item of these apps
   // (the gate passes the allowed apps, never the personal ones) with its
   // ref, title, a short text and date. → Promise<{ ok, items, c? }>.
   function gateIndex(ids) {

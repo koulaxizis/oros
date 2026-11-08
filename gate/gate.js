@@ -781,7 +781,7 @@
   // closedCall): its own change tools less budget_delete, and
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
-                // 5.94.00: by refs from the copy's index (kept on the device); never action delete
+                // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
@@ -908,7 +908,7 @@
   function writeJSON(k, v) {
     try { localStorage.setItem(k, JSON.stringify(v)); }
     catch (e) { toast(tr("gate.saveFail")); return false; }   // R30: never silent
-    // SY-AD (5.94.00): Budget or Kanban changed here may never have been
+    // SY-AD (5.96.00): Budget or Kanban changed here may never have been
     // opened on this device; their data must still sync.
     var am = /^oros-([a-z]+)-data$/.exec(k);
     if (am && WRITES[am[1]]) { try { if (root.orosSync && typeof root.orosSync.adoptKey === "function") root.orosSync.adoptKey(k); } catch (e) {} }
@@ -1239,7 +1239,7 @@
       if (SUMMARY[id]) {
         calls.push(["app_summary", { app: id }]);
         if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
-        // each board by its name too (5.94.00: «δουλεύεις και σε κλειστό orOS»)
+        // each board by its name too (5.96.00: «δουλεύεις και σε κλειστό orOS»)
         else {
           var kb = readStore("oros-kanban-data"), seen = {};
           (isObj(kb) ? kbBoards(kb) : []).slice(0, 30).forEach(function (b) {
@@ -1268,7 +1268,7 @@
         }, function () {});
       });
     }, Promise.resolve()).then(function () {
-      // The search index (5.94.00): every item of the allowed apps with
+      // The search index (5.96.00): every item of the allowed apps with
       // its ref, so search_data and the queued changes work with orOS
       // closed. The refs stay on this device (assistant.js gateIndex).
       if (!ok.length) return;
@@ -2099,7 +2099,7 @@
     chgSlice(0);
     digSlice(0);
     setInterval(function () { copySoon(0); }, 30 * 60000);
-    // SY-AD (5.94.00): data Claude wrote before this version for an app
+    // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
     setTimeout(adoptWritten, 8000);
     setTimeout(digCheck, 60000);

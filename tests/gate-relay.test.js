@@ -589,7 +589,7 @@ test("orOS closed, the device's own tools (GATE-ACT): reads from the copy, creat
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
 });
 
-test("orOS closed, full work (5.94.00): search over the copy's index, a board by name, changes and links by ref wait", async () => {
+test("orOS closed, full work (5.96.00): search over the copy's index, a board by name, changes and links by ref wait", async () => {
   const w = world();
   await newGate(w);
   const b = w.boxes.get(ID);

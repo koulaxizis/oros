@@ -2003,7 +2003,7 @@
   var mergeBroken = {};         // SY-D6: name -> true while that slice's merge function throws
   function deferredNames() { return Object.keys(readJson(DEFER_KEY) || {}); }
 
-  // SY-AD (5.94.00): another part of orOS (the Assistant, orOS Gate)
+  // SY-AD (5.96.00): another part of orOS (the Assistant, orOS Gate)
   // wrote an app's data while that app was never opened on this
   // device, so its slice was never registered here and the change
   // stayed on this device (Chris 08/11: «Οι τίτλοι του εκδοτικού δεν

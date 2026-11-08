@@ -36,7 +36,7 @@ test("ACT = the Assistant's create / change apps, less NEVER, SENSITIVE, Budget,
 });
 
 test("gate tools: only the gate's set, no card or press in any text", () => {
-  const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal",
+  const creates = ["todo", "calendar", "notes", "bookmarks", "contacts", "crm", "crm_activity", "crm_followup", "crm_deal", "crm_contract",
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
                             history: true, actions: ["timer"], web: true, rebuild: true, house: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
@@ -118,7 +118,7 @@ test("relay: the device's tools are cleaned and merged", () => {
 test("closed orOS: the device runs only the changes the relay may queue", () => {
   const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true)).map((t) => t.name)
     .filter((n) => n !== "budget_delete");
-  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED).sort(), "5.94.00: changes and links by ref too");
+  assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED).sort(), "5.96.00: changes and links by ref too");
   assert.ok(G.QUEUED.indexOf("budget_delete") < 0, "deletions wait for an open device");
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
   assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");

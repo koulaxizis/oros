@@ -374,7 +374,7 @@ export function neverIn(args) {
   const ids = [].concat(typeof a.app === "string" ? [a.app] : [], Array.isArray(a.apps) ? a.apps : []);
   return ids.some((x) => NEVER_APPS.indexOf(String(x).toLowerCase()) >= 0);
 }
-// ---- orOS closed: search, loose answers and changes by ref (5.94.00) ----
+// ---- orOS closed: search, loose answers and changes by ref (5.96.00) ----
 // The device tools whose changes wait in the queue by item refs.
 export const REF_QUEUED = ["change_item", "link_items", "link_contact"];
 export function foldTxt(x) {
@@ -1252,7 +1252,7 @@ export class GateBox {
       return { ok: false, c: "orOS is closed and there is no copy Claude may read (it is wiped after 7 days without an open device). Ask the owner to open orOS." };
     }
     const when = new Date(cp.at).toISOString();
-    // 5.94.00: search over the copy's index (every allowed item with its ref)
+    // 5.96.00: search over the copy's index (every allowed item with its ref)
     if (name === "search_data") return closedSearch(cp, args, when);
     if (READ_ONLY[name]) {
       const key = name + " " + stableArgs(args);
@@ -1280,7 +1280,7 @@ export class GateBox {
         return { ok: false, c: "This needs orOS open; it is closed now (the copy of " + when + " does not have it). Ask the owner to open orOS." };
       }
       if (REF_QUEUED.indexOf(name) >= 0) {
-        // 5.94.00: changes by refs from the copy's index wait too; every
+        // 5.96.00: changes by refs from the copy's index wait too; every
         // ref's app must be one Claude may change. Deletions wait for an open device.
         if (hasDelete(args)) return { ok: false, c: "Deleting waits for orOS to be open on one of the owner's devices. Nothing was deleted." };
         const ix = indexOf(cp), refs = refsIn(args);
