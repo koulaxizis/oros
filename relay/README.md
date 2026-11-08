@@ -533,6 +533,16 @@ the statements in `SHR_SQL`).
 - **Headers.** `text/html; charset=utf-8`, `nosniff`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`, CSP `default-src 'none'; img-src https:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` (no script, no style), `Cache-Control: public, max-age=86400`. Own per-IP limit, 120 a minute per isolate (429). Fixed texts; nothing throws out of `handle()` (503 "unavailable").
 - **Tests** `tests/share-preview.test.js`.
 
+### Short links (`/p/s.<id>`, BR-SHARE-SHORT, 2026-11-08)
+`POST /v1 { op:"shl", code:"1.…" }` → `{ id:"s.<10 base64url>" }`; the link is `https://<relay>/p/<id>` (`relay/short.js`). Design and checks OK'd by the Mail thread 2026-11-08.
+- **What is kept.** D1 `SHR_DB`, table `shl_link (id, k, d, size, at, last)`: the song's (or list's) NORMALIZED JSON after `normTrack` / `normTracks` (≤ 16 KB), never the sender's bytes; `at` made, `last` opened (updated at most once a day). No IP, user agent or other time. `shl_day (day, n)` counts new rows per UTC day (old days removed by the cron).
+- **Id.** `"s." +` the first 10 base64url characters of SHA-256 of `kind + "\n" + normalized JSON`: the same song is the same id (dedupe). An id held by other content answers 409 `conflict`; nothing is overwritten.
+- **Input.** Origin-gated like every `/v1` op; code ≤ 4000 characters, read by preview.js `songOf` (same checks as `/p/1.`: `1.` only so locked codes are refused, 16 KB inflate cap, kinds `track` / `tracks`, ≤ 200 songs); 400 `song` otherwise.
+- **Limits.** Per IP, own counters per isolate: 10 a minute, 100 a UTC day (429 `rate`); all senders: 5000 new rows a UTC day, kept in D1 (429 `rate`). Caps: 200,000 rows, 64 MB of JSON, and the share store's 400 MB total, which `SHR_SQL.used` counts for links with an expiry and short links together: 507 `full`, nothing evicted early.
+- **Expiry.** The hourly cron (`purgeShort`, worker.js) deletes links nobody opened for 365 days; a GET of such a link is already a plain 302. There is no take-back: the share window says the short link is public and cannot be taken back.
+- **GET.** `^s\.[A-Za-z0-9_-]{10}$` only; unknown, expired or a row that no longer normalizes → plain 302 to `/share/`. The stored JSON goes through the normalizers again, the forward `1.` code is rebuilt from it, and the page is `pageFor()` (same escaping and headers as above). D1 trouble: 503 with fixed text. Long `/p/1.` links are unchanged.
+- **Tests** `tests/share-short.test.js` (real SQLite behind a D1-shaped adapter).
+
 ## Studio Remote: meeting rooms (`/rt/`)
 
 Studio's remote control (`studio/remote.js`) lets a tablet or phone

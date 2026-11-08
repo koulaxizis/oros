@@ -295,9 +295,28 @@
     });
   }
 
+  // A shared song's short link (BR-SHARE-SHORT, relay/short.js): the
+  // relay keeps the song's public details and answers "s.<10 chars>";
+  // the link is <relay>/p/<id>. code: the song's unlocked "1." code.
+  function short(code, opts) {
+    var f;
+    try { f = fetchFn(opts); } catch (e) { return Promise.reject(new Error("net")); }
+    return f(base(opts) + "/v1", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ op: "shl", code: code }), credentials: "omit", cache: "no-store" })
+      .then(function (r) {
+        return r.json().then(function (j) { return j; }, function () { return null; });
+      }, function () { throw new Error("net"); })
+      .then(function (j) {
+        var id = j && j.ok && j.data && j.data.id;
+        if (typeof id === "string" && /^s\.[A-Za-z0-9_-]{10}$/.test(id)) return id;
+        var c = j && j.error && j.error.code;
+        throw new Error(["full", "rate", "nostore"].indexOf(c) >= 0 ? c : (j ? "bad" : "net"));
+      });
+  }
+
   var api = { RELAY: RELAY, PIECE: PIECE, MAX_PIECES: MAX_PIECES, MAX_PLAIN: MAX_PLAIN, DAYS: DAYS, ITER: ITER,
               parse: parse, isLocked: isLocked, pack: pack, seal: seal, unseal: unseal, unpack: unpack,
-              create: create, open: open, revoke: revoke, _setIter: function (n) { ITER = n; } };
+              create: create, open: open, revoke: revoke, short: short, _setIter: function (n) { ITER = n; } };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosShareRelay = api;
 })(typeof window !== "undefined" ? window : globalThis);

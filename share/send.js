@@ -71,7 +71,9 @@
       imHead: "Send with", imPost: "A post on {n} is public: everyone who sees it can open the link.",
       mastoQ: "Your Mastodon server", mastoPh: "mastodon.social", mastoBad: "Write the server's name, like mastodon.social.",
       mastoGo: "Continue", sms: "SMS",
-      pv: "Show the cover in chats", pvNote: "The preview link sends the song's details (not the file) through the orOS server so chat apps can show its cover and title; nothing is stored."
+      pv: "Show the cover in chats", pvNote: "The preview link sends the song's details (not the file) through the orOS server so chat apps can show its cover and title; nothing is stored.",
+      sh: "Short link", shNote: "The song's public details (title, artist, cover, the source's address; never who sent it) stay on the orOS server so the link can be short. Anyone with the link can open it, it cannot be taken back, and it stops working if nobody opens it for a year.",
+      shFail: "No short link right now, so the long one is used."
     },
     el: {
       title: "Στείλε σε κάποιον", close: "Κλείσιμο",
@@ -105,7 +107,9 @@
       imHead: "Αποστολή με", imPost: "Μια ανάρτηση στο {n} είναι δημόσια: όποιος τη δει μπορεί να ανοίξει τον σύνδεσμο.",
       mastoQ: "Ο server σου στο Mastodon", mastoPh: "mastodon.social", mastoBad: "Γράψε το όνομα του server, π.χ. mastodon.social.",
       mastoGo: "Συνέχεια", sms: "SMS",
-      pv: "Εξώφυλλο στις συνομιλίες", pvNote: "Ο σύνδεσμος με προεπισκόπηση στέλνει τα στοιχεία του τραγουδιού (όχι το αρχείο) μέσω του server του orOS, ώστε οι εφαρμογές συνομιλίας να δείχνουν εξώφυλλο και τίτλο· τίποτα δεν αποθηκεύεται."
+      pv: "Εξώφυλλο στις συνομιλίες", pvNote: "Ο σύνδεσμος με προεπισκόπηση στέλνει τα στοιχεία του τραγουδιού (όχι το αρχείο) μέσω του server του orOS, ώστε οι εφαρμογές συνομιλίας να δείχνουν εξώφυλλο και τίτλο· τίποτα δεν αποθηκεύεται.",
+      sh: "Σύντομος σύνδεσμος", shNote: "Τα δημόσια στοιχεία του τραγουδιού (τίτλος, καλλιτέχνης, εξώφυλλο, η διεύθυνση της πηγής· ποτέ ποιος το έστειλε) μένουν στον server του orOS, για να είναι σύντομος ο σύνδεσμος. Όποιος έχει τον σύνδεσμο μπορεί να τον ανοίξει, δεν παίρνεται πίσω και σταματά να λειτουργεί αν δεν τον ανοίξει κανείς για έναν χρόνο.",
+      shFail: "Δεν βγαίνει σύντομος σύνδεσμος αυτή τη στιγμή, οπότε μπαίνει ο μεγάλος."
     }
   };
   // The shell's language (a pack language too: orosI18n, ../i18n.js).
@@ -160,6 +164,7 @@
     "#osh-dlg .osh-sum{margin:0 0 10px;font-weight:600;font-size:13.5px;overflow-wrap:anywhere}" +
     "#osh-dlg .osh-warn{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--text-dim)}" +
     "#osh-dlg .osh-lock{display:flex;align-items:center;gap:8px;font-size:13.5px;margin:0 0 8px;cursor:pointer}" +
+    "#osh-dlg .osh-sub{margin-left:26px}" +
     "#osh-dlg .osh-pass{display:flex;gap:6px;margin:0 0 6px}" +
     "#osh-dlg .osh-pass input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;" +
     "background:var(--panel-bg);color:var(--text);font-size:14px}" +
@@ -477,11 +482,28 @@
         body.appendChild(pvMsg);
         pcb.addEventListener("change", function () { pvOn = pcb.checked; pvShow(); });
       }
+      // ...and its short form (BR-SHARE-SHORT, relay/short.js): the relay
+      // keeps the song's public details; the person's choice (on by default).
+      var shLab = el("label", "osh-lock osh-sub"), scb = el("input"), shMsg = el("p", "osh-warn osh-sub", T("shNote"));
+      if (canPv && canShort) {
+        scb.type = "checkbox";
+        scb.checked = shOn;
+        shLab.appendChild(scb);
+        shLab.appendChild(el("span", "", T("sh")));
+        body.appendChild(shLab);
+        body.appendChild(shMsg);
+        scb.addEventListener("change", function () { shOn = scb.checked; pvShow(); });
+      }
       function pvShow() {
         if (!canPv) return;
         var off = lockOn || expOn;
         pcb.disabled = off;
-        pvMsg.hidden = off || !pvOn;
+        // "nothing is stored" is true only for the long link
+        pvMsg.hidden = off || !pvOn || (canShort && shOn);
+        if (!canShort) return;
+        shLab.hidden = off || !pvOn;
+        scb.disabled = off || !pvOn;
+        shMsg.hidden = off || !pvOn || !shOn;
       }
       var lockLab = el("label", "osh-lock");
       var cb = el("input");
@@ -596,23 +618,29 @@
           busy = false;
           msg.textContent = forced && !bin ? T("forced") : "";
           if (what !== "file" && !expOn && code.length > K.MAX_LINK) { sizeCheck(code); return; }
-          var link = pvOn && canPv && !lockOn && !expOn && /^1\./.test(code) && code.length <= PV_MAX
-            ? PV_BASE + code : baseUrl() + "#" + code;
-          if (what === "share") {
-            navigator.share({ title: K.title(env, lang()), text: K.shareLine(env, lang()), url: link }).catch(function () {});
-          } else if (what.indexOf("im:") === 0) {
-            imSend(what.slice(3), link);
-          } else if (what === "copy") {
-            copy(link).then(function (ok) { toast(ok ? T("copied") : T("copyFail")); });
-          } else if (what === "qr") {
-            showQr(link);
-          } else if (what === "mail") {
-            dlg.close();
-            var bodyText = K.summary(env, lang()) + "\n\n" + link + (lockOn ? "\n\n" + T("mailPass") : "") + "\n";
-            window.__orosOpenAt("mail", { compose: { subject: K.title(env, lang()).slice(0, 300), body: bodyText } });
-          } else if (what === "file") {
-            saveFile(link);
+          var pv = pvOn && canPv && !lockOn && !expOn && /^1\./.test(code) && code.length <= PV_MAX;
+          var link = pv ? PV_BASE + code : baseUrl() + "#" + code;
+          if (pv && canShort && shOn) {
+            if (shortFor[code]) link = PV_BASE + shortFor[code];
+            else {
+              busy = true;
+              msg.className = "osh-msg";
+              msg.textContent = T("making");
+              R.short(code).then(function (id) {
+                shortFor[code] = id;
+                busy = false;
+                msg.textContent = "";
+                useLink(what, PV_BASE + id);
+              }, function () {
+                busy = false;
+                msg.className = "osh-msg";
+                msg.textContent = T("shFail");
+                useLink(what, link);
+              });
+              return;
+            }
           }
+          useLink(what, link);
         }, function (e) {
           busy = false;
           if (!d && tooBig(e)) return;
@@ -620,12 +648,31 @@
           msg.textContent = errText(e);
         });
       }
+      // what: the button pressed; link: the address it sends.
+      function useLink(what, link) {
+        if (what === "share") {
+          navigator.share({ title: K.title(env, lang()), text: K.shareLine(env, lang()), url: link }).catch(function () {});
+        } else if (what.indexOf("im:") === 0) {
+          imSend(what.slice(3), link);
+        } else if (what === "copy") {
+          copy(link).then(function (ok) { toast(ok ? T("copied") : T("copyFail")); });
+        } else if (what === "qr") {
+          showQr(link);
+        } else if (what === "mail") {
+          dlg.close();
+          var bodyText = K.summary(env, lang()) + "\n\n" + link + (lockOn ? "\n\n" + T("mailPass") : "") + "\n";
+          window.__orosOpenAt("mail", { compose: { subject: K.title(env, lang()).slice(0, 300), body: bodyText } });
+        } else if (what === "file") {
+          saveFile(link);
+        }
+      }
       doAct = act;
       pvShow();
       check();
     }
     var doAct = null;
     var canPv = (env.k === "track" || env.k === "tracks") && !bin, pvOn = true;
+    var canShort = !!(R && typeof R.short === "function"), shOn = true, shortFor = {};   // "1." code → "s.<id>"
     var curPass = "";
     var hasMail = typeof window.__orosOpenAt === "function" && mailReady();
 
