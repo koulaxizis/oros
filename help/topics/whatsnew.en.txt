@@ -1,7 +1,7 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.85.00
+## Version 5.86.00
 - **The Assistant adds many Publishing titles at once.** Ask it to add a list or catalogue of the books you publish: they come on one card with a tick on each, with authors, translator, series, status, release date (and its release plan for a book still to come), back-cover text and editions with ISBN, price, pages and the product in your WooCommerce shop. Nothing is saved before you press `Add`, and `Undo` takes them back. A wrong ISBN, or one already on another title, is refused.
 
 ## Version 5.84.00

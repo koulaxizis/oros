@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "";
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false;
   // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
   function gateQr(text) {
     var Q = window.orosQR;
@@ -850,9 +850,32 @@
     var c = card(t("gt.title"), "gate");
     c.appendChild(row(t("gt.switch"), switchBtn(st.on, "gt.switch", function (v) {
       gateNote = ""; gateInfo = null;
-      (v ? G.enable() : G.disable()).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
+      (v ? G.enable() : G.disable()).then(function () { render(); }, function (e) { gateNote = e && e.code === "norelay" ? "gt.relay.need" : "gt.fail"; render(); });
     }, t("gt.switch")), { hint: t("gt.hint") }));
     if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
+    // Own relay (5.82.00): the gate can run on the owner's own Worker.
+    if (typeof G.relayInfo === "function") {
+      var ri = G.relayInfo();
+      c.appendChild(el("div", "hint", !st.on && !ri.mine ? t("gt.relay.need") : t("gt.relay.now." + ri.kind, { url: ri.url })));
+      var ru = el("input", "dav-input");
+      ru.id = "f-gt-relay";
+      ru.type = "url";
+      ru.autocomplete = "off";
+      ru.spellcheck = false;
+      ru.placeholder = "https://my-relay.example.workers.dev";
+      ru.value = ri.own;
+      c.appendChild(row(t("gt.relay"), ru, { hint: t("gt.relay.hint"), forId: "f-gt-relay", stack: true }));
+      c.appendChild(actions(
+        button(t("gt.relay.save"), "gt.relay.save", function () {
+          var v = ru.value.trim();
+          var go = function (ok) { if (!ok) { gateNote = "gt.relay.bad"; render(); return; }
+            gateNote = G.setOwnRelay(v) ? (v ? (st.on ? "gt.relay.saved.on" : "gt.relay.saved") : "gt.relay.cleared") : "gt.fail"; render(); };
+          if (!v) go(true); else G.testRelay(v).then(go);
+        }),
+        button(t("gt.relay.test"), "gt.relay.test", function () {
+          G.testRelay(ru.value).then(function (ok) { gateNote = ok ? "gt.relay.ok" : "gt.relay.bad"; render(); });
+        })));
+    }
     if (!st.on && typeof G.join === "function") {
       // Another device of the owner already has the gate: join it.
       var jn = el("input", "dav-input");
@@ -899,12 +922,19 @@
           }
           c.appendChild(el("div", "hint", t("gt.invite.wait")));
         }
-        c.appendChild(el("div", "hint", t("gt.seat")));
-        c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
-          gateNote = "";
-          G.invite().then(function (d) { gateJoin = d; render(); gateWatchJoin(G); },
-            function (e) { gateNote = e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
-        })));
+        // With orOS sync on, the owner's devices join by themselves: the
+        // code and QR stay behind a small link for a device without sync.
+        var synced = typeof G.syncOn === "function" && G.syncOn();
+        c.appendChild(el("div", "hint", t(synced ? "gt.seat.sync" : "gt.seat")));
+        if (!synced || gateNoSync || gateJoin) {
+          c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
+            gateNote = "";
+            G.invite().then(function (d) { gateJoin = d; render(); gateWatchJoin(G); },
+              function (e) { gateNote = e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
+          })));
+        } else {
+          c.appendChild(actions(button(t("gt.nosync"), "gt.nosync", function () { gateNoSync = true; render(); })));
+        }
       }
       if (typeof G.pair === "function") {
         var pc = el("input", "dav-input");
