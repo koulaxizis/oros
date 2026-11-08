@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.70.00
+- **Wayfarers: the whole road.** After the Greenway the journey goes on through the Ash Hills and the Frost Gate, each with eight foes of its own and a guardian in three phases: the Ember Colossus and the Keeper of the Gate. Foes now Burn and Chill your heroes and some hits go through Guard. There are 20 new events, better spoils in the later regions and a short story about a lantern that must reach the Frost Gate before the long night.
+
 ## Version 5.69.00
 - **Wayfarers, a new party RPG.** In Games: pick three heroes from six classes (Knight, Ranger, Mage, Cleric, Rogue, Bard) and lead them across the Greenway to the Briar King. Choose your road at every fork: fights, camps, markets and short events. Fights are turn by turn in Speed order, every foe shows its next move, and the classes work together: Mark or Stun a foe and the Rogue hits it twice as hard, Frost it and Storm does the same. Gentle or Hardy, journey codes to walk the same land again, records that sync, and Wayfarers counts in the Game Center.
 
