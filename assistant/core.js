@@ -1947,7 +1947,9 @@
     petcare: "petcare = a pet's health record (vaccine, deworming, vet visit, medication, weight) in Pet Health Book",
     shelf: "shelf = a book, film, series, album, podcast or game on Media Shelf",
     // AS-ADD7 (assistant/additems3.js): titles the user publishes
-    publish: "publish = a book the user PUBLISHES, as a title in Publishing (a whole list of titles goes in one call)"
+    publish: "publish = a book the user PUBLISHES, as a title in Publishing (a whole list of titles goes in one call)",
+    // AS-ADD8 (GATE-PAR P4, assistant/additems3.js): saved as a draft, never issued
+    invoices: "invoices = a new invoice DRAFT in Invoices (saved as a draft; the user issues it in Invoices, which gives it its number)"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
@@ -2028,7 +2030,7 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish"], { type: "string", description: "YYYY-MM-DD. publish: the release date; todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish", "invoices"], { type: "string", description: "YYYY-MM-DD. publish: the release date; invoices: the draft's date (default today); todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
     ["end_date", ["calendar", "travel_plan"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day." }],
     ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies", "fitness"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet, fitness: when it started (required); travel_plan: departure or start; stickies: the reminder's time." }],
     ["end", ["calendar", "timesheet", "travel_plan"], { type: "string", description: "End time HH:MM (timesheet: on the same day; else give minutes)." }],
@@ -2048,13 +2050,20 @@
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish"], { type: "string", description: "A note (Publishing 4000, only for the user, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices 2000, printed on the invoice, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
     ["status", ["crm", "shelf", "publish"], { type: "string", "enum": ["lead", "active", "past", "want", "now", "done", "dropped", "idea", "production", "released", "out_of_print"], description: "crm: lead (default), active customer, or past. shelf: want (default), now (reading / watching), done or dropped. publish: idea (default), production, released or out_of_print." }],
-    ["tax_id", ["crm"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ)." }],
+    ["tax_id", ["crm", "invoices"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ). invoices: the client's tax number, to find the Invoices client." }],
     ["tax_office", ["crm"], { type: "string", description: "crm: tax office (e.g. Greek ΔΟΥ)." }],
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
-    ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }]
+    ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }],
+    ["client", ["invoices"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing)." }],
+    ["lines", ["invoices"], { type: "array", description: "invoices: the draft's lines, 1 to 50 (required).",
+               items: { type: "object", properties: { text: { type: "string", description: "What was sold or done (200 characters)." },
+                                                      qty: { type: "number", description: "Quantity, more than 0." },
+                                                      price: { type: "number", description: "Unit price before VAT, in currency units, e.g. 45.5." },
+                                                      vat: { type: "number", description: "VAT % (leave out for the user's usual rate)." } } } }],
+    ["currency", ["invoices"], { type: "string", description: "invoices: a 3-letter ISO code such as EUR (default the user's)." }]
   ];
   // creates = the app ids the user lets it add to
   function createTool(creates) {
@@ -3533,7 +3542,8 @@
                       timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
                       stickies: "sticky notes", habits: "habits", fitness: "finished workouts", garage: "Garage services and renewals",
                       plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)",
-                      publish: "titles the user publishes (Publishing; a list or catalogue of titles: all of them in one create_items call, never one card per title)" };
+                      publish: "titles the user publishes (Publishing; a list or catalogue of titles: all of them in one create_items call, never one card per title)",
+                      invoices: "invoice drafts (Invoices; saved as drafts, never issued: say the draft is ready for the user to check and issue in Invoices)" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
         (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +

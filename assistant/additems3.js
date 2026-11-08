@@ -25,6 +25,9 @@
 //            sessions sorted by id
 //   publish  publish/app.js newTitleDialog (+ the release plan of its
 //            tick), every row through OrosPublishCore.put / normalize
+//   invoices invoices.js prefillNew + saveDraft: a new invoice DRAFT
+//            (AS-ADD8), through OrosInvoicesCore.normDoc / normalize;
+//            never issued
 // A vehicle or a pet is named (its name, or a plate); with only one,
 // it may be left out. Only the user's own book, garage and garden are
 // written (a household's shared copy is changed in the app). A text
@@ -1032,6 +1035,143 @@
     return { ok: true, data: C.normalize(d) };
   }
 
+  // ---------- 8. Invoices: invoice drafts (AS-ADD8, GATE-PAR P4) ----------
+  // invoices.js prefillNew + saveDraft: a NEW invoice DRAFT, saved at
+  // once (never issued: a number, a series and the tax act are the
+  // user's step in Invoices). The draft is blankDoc's shape with the
+  // prefill's client and lines; ser "" lets the device that issues it
+  // pick its own series (invoices.js renderEdSub / askIssue). A known
+  // client (Invoices' own matchClient: tax id, then name) is linked; an
+  // unknown one is written as the draft's party only, no client is
+  // made. Every row goes through OrosInvoicesCore.normDoc and the data
+  // through normalize, so opening Invoices rewrites nothing.
+  var IV = { lines: 50, text: 200, qty: 100000, price: 10000000, client: 120, note: 2000 };
+  function invCore() {
+    if (root.OrosInvoicesCore) return root.OrosInvoicesCore;
+    if (NODE) { try { return require("../invoices/core.js"); } catch (e) { return null; } }
+    return null;
+  }
+  function normInv(x, w) {
+    var C = invCore();
+    if (!C) return { err: "Invoices is not available right now." };
+    var r = text1(x, "client", IV.client, w, "a client's name");
+    if (r.err) return r;
+    var o = { client: r.v };
+    r = empty(x, "tax_id") ? { v: "" } : text1(x, "tax_id", 60, w, "a tax id");
+    if (r.err) return r;
+    o.afm = r.v.replace(/\s+/g, "");
+    var src = x.lines;
+    if (!Array.isArray(src) || !src.length) return { err: w + "lines is required: each line with text, qty and price." };
+    if (src.length > IV.lines) return { err: w + "an invoice here takes at most " + IV.lines + " lines." };
+    o.lines = [];
+    for (var i = 0; i < src.length; i++) {
+      var L = src[i], lw = w + "lines[" + i + "].";
+      if (!isObj(L)) return { err: w + "lines[" + i + "] must be an object with text, qty and price." };
+      var d = text1(L, "text", IV.text, lw, "a line's text");
+      if (d.err) return d;
+      if (!d.v) return { err: lw + "text is required." };
+      var q = numArg(L, "qty", 0, IV.qty, lw);
+      if (q.err) return q;
+      if (!(q.v > 0)) return { err: lw + "qty must be more than 0." };
+      var p = numArg(L, "price", 0, IV.price, lw);
+      if (p.err) return p;
+      if (p.v === null) return { err: lw + "price is required (in currency units, before VAT)." };
+      var v = numArg(L, "vat", 0, 100, lw);
+      if (v.err) return v;
+      var line = { d: d.v, q: Math.round(q.v * 1000) / 1000, p: Math.round(p.v * 100) };
+      if (v.v !== null) line.vat = Math.round(v.v * 100) / 100;
+      o.lines.push(line);
+    }
+    o.cur = "";
+    if (!empty(x, "currency")) {
+      if (!C.curOk(String(x.currency))) return { err: w + "currency must be a 3-letter ISO code such as EUR." };
+      o.cur = String(x.currency);
+    }
+    r = textN(x, "note", IV.note, w, "an invoice's notes");
+    if (r.err) return r;
+    o.notes = r.v;
+    r = dateOf(x, "date", w);
+    if (r.err) return r;
+    o.date = r.v;
+    return { o: o, key: fold(o.client) + "|" + JSON.stringify(o.lines) };
+  }
+  function ivBase(d) {
+    var C = invCore();
+    return d == null ? C.empty() : isObj(d) && Array.isArray(d.docs) && Array.isArray(d.clients) ? C.normalize(d) : null;
+  }
+  // The draft a row becomes (lines with the profile's VAT when not given).
+  function ivDoc(C, d, o, today) {
+    var p = d.prof, date = o.date || today;
+    var cl = C.matchClient(d, { afm: o.afm, name: o.client });
+    var x = {
+      id: "", kind: "inv", st: "draft", ser: "", seq: 0, num: "", date: date,
+      due: p.days ? C.addDays(date, p.days) : "", cur: o.cur || p.cur, cli: cl ? cl.id : "",
+      c: cl ? C.partyOfClient(cl) : C.normParty({ name: o.client, afm: o.afm }),
+      lines: o.lines.map(function (l) { return { code: "", d: l.d, q: l.q, unit: "", p: l.p, disc: 0, vat: l.vat !== undefined ? l.vat : p.vat }; }),
+      gDisc: 0, wht: p.wht, exempt: "", terms: p.terms, notes: o.notes,
+      ref: "", crm: cl && cl.crm ? cl.crm : "", mark: "", file: "", sent: "", plang: "", xnet: 0, xvat: 0, m: 1
+    };
+    return { x: x, cl: cl };
+  }
+  function ivSame(a, b) {
+    if (a.lines.length !== b.lines.length) return false;
+    return a.lines.every(function (l, i) { var m = b.lines[i]; return l.d === m.d && l.q === m.q && l.p === m.p; });
+  }
+  function ivPlan(d, items, ctx) {
+    var C = invCore();
+    if (!C) return bad("Invoices is not available right now.");
+    d = ivBase(d);
+    if (!d) return notOpened("Invoices");
+    var today = todayOf(ctx), live = C.live(d.docs);
+    var e = room(live.length, items.length, 20000, "documents", "Invoices");
+    if (e) return e;
+    return { ok: true, rows: items.map(function (o) {
+      var r = ivDoc(C, d, o, today), x = r.x, f = [], dup = null;
+      live.forEach(function (y) {
+        if (dup || y.kind !== "inv" || y.st !== "draft" || fold(y.c.name) !== fold(x.c.name) || !ivSame(y, x)) return;
+        dup = { id: y.id, title: y.c.name || x.c.name, target: { invoice: y.id } };
+      });
+      var cur = x.cur, tot = C.totals(x);
+      if (x.c.name) f.push(["client", x.c.name + (r.cl ? "" : " · " + (ctx && ctx.lang === "el" ? "νέος" : "new"))]);
+      f.push(["date", x.date]);
+      x.lines.forEach(function (l) { f.push(["line", l.d + " · " + l.q + " × " + H.money(l.p) + " " + cur + " · " + l.vat + "%"]); });
+      f.push(["amount", H.money(tot.total) + " " + cur]);
+      if (x.notes) f.push(["note", preview(x.notes, 120)]);
+      return { title: x.c.name || o.lines[0].d, fields: f, dup: dup };
+    }) };
+  }
+  function ivApply(d, items, now, skip, ctx) {
+    var C = invCore();
+    d = ivBase(d);
+    var today = todayOf(ctx, now), made = [], undo = { app: "invoices", t: "new", items: [] }, s = stampAfter(now, 0);
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var x = ivDoc(C, d, o, today).x, id;
+      do { id = C.newId(); } while (C.anyId(d.docs, id));
+      x.id = id;
+      x.m = s;
+      d.docs.push(C.normDoc(x));
+      made.push({ i: i, id: id, title: x.c.name || o.lines[0].d, target: { invoice: id } });
+    });
+    d = C.normalize(d);
+    made.forEach(function (m) { undo.items.push({ id: m.id, x: clone(C.anyId(d.docs, m.id)) }); });
+    return { ok: true, data: d, made: made, undo: undo };
+  }
+  function ivUndo(d, u, now) {
+    var C = invCore();
+    if (!C || !isObj(d) || !Array.isArray(d.docs)) return bad("Invoices has no documents.");
+    d = C.normalize(d);
+    for (var i = 0; i < u.items.length; i++) {
+      var cur = C.anyId(d.docs, u.items[i].id);
+      if (cur && !unchanged(cur, u.items[i].x)) return bad("A new invoice draft was changed or issued in Invoices since; nothing was undone (delete the draft in Invoices).");
+    }
+    d.docs = d.docs.map(function (x) {
+      var it = u.items.filter(function (y) { return y.id === x.id; })[0];
+      return it && !x.del ? { id: x.id, m: stampAfter(now, x.m), del: 1 } : x;
+    });
+    return { ok: true, data: C.normalize(d) };
+  }
+
   A.extend({
     habits: { key: "oros-habits-data", name: "Habits", norm: normHabit, plan: hbPlan, apply: hbApply, undo: hbUndo },
     fitness: { key: "oros-fitness-data", name: "Workouts", norm: normWorkout, plan: ftPlan, apply: ftApply, undo: ftUndo },
@@ -1039,7 +1179,8 @@
     plants: { key: "oros-plants-data", name: "Plant Care", norm: normPlant, plan: plPlan, apply: plApply, undo: plUndo },
     petcare: { key: "oros-petcare-data", name: "Pet Health Book", norm: normPet, plan: pcPlan, apply: pcApply, undo: pcUndo },
     shelf: { key: "oros-shelf-data", name: "Media Shelf", norm: normMedia, plan: shPlan, apply: shApply, undo: shUndo },
-    publish: { key: "oros-publish-data", name: "Publishing", norm: normPub, plan: pbPlan, apply: pbApply, undo: pbUndo }
+    publish: { key: "oros-publish-data", name: "Publishing", norm: normPub, plan: pbPlan, apply: pbApply, undo: pbUndo },
+    invoices: { key: "oros-invoices-data", name: "Invoices", norm: normInv, plan: ivPlan, apply: ivApply, undo: ivUndo }
   });
   var api = { CORES: CORES, FT_ACT: FT_ACT, PC_KIND: PC_KIND, SH_TYPES: SH_TYPES, PB_ST: PB_ST, PB_FMT: PB_FMT };
   if (NODE) module.exports = api;
