@@ -201,7 +201,7 @@ test("device calls need an allowed origin and the device token", async () => {
   assert.equal((await dev(w, { act: "code", tok: "X".repeat(43), c: CHALLENGE, r: CB })).status, 404);
   assert.equal((await dev(w, { act: "code", tok: TOK, c: CHALLENGE, r: "https://evil.example/" })).status, 400);
   const info = await (await dev(w, { act: "info", tok: TOK })).json();
-  assert.deepEqual(info.data, { links: 0, last: 0 });
+  assert.deepEqual(info.data, { links: 0, last: 0, devices: 1 });
 });
 
 test("token: code once, PKCE and redirect checked, refresh rotates", async () => {
@@ -293,4 +293,72 @@ test("wrangler.toml declares the box and the worker exports it", () => {
   assert.match(toml, /name = "GATE"\s+class_name = "GateBox"/);
   assert.match(toml, /tag = "gate-v1"\s+new_sqlite_classes = \["GateBox"\]/);
   assert.match(fs.readFileSync(path.join(__dirname, "..", "relay", "worker.js"), "utf8"), /export \{ GateBox \} from "\.\/gate\.js";/);
+});
+
+const TOK2 = "U".repeat(43), TOK3 = "V".repeat(43);
+async function join(w, code, tok, origin) {
+  return call(w, "POST", "/gate/dev", { origin: origin || ORIGIN, json: { act: "join", jc: code, th: hex(tok) } });
+}
+
+test("another device joins with a code: once, levels passed on, up to 5 devices", async () => {
+  const w = world();
+  await newGate(w);
+  const inv = await dev(w, { act: "invite", tok: TOK, lv: { budget: "read", kanban: "write", diary: "maybe", "Bad Key": "read" } });
+  assert.equal(inv.status, 200);
+  const code = (await inv.json()).data.code;
+  assert.ok(G.normPair(code));
+  assert.equal((await join(w, "AAAAAAAA", TOK2)).status, 404);
+  const j = await join(w, code.slice(0, 4) + "-" + code.slice(4), TOK2, "http://localhost:47800");
+  assert.equal(j.status, 200);
+  const jd = (await j.json()).data;
+  assert.equal(jd.id, ID);
+  assert.deepEqual(jd.lv, { budget: "read", kanban: "write" });
+  assert.equal((await join(w, code, TOK3)).status, 404, "one use");
+  // the new device is a device of this gate now
+  const info = await (await dev(w, { act: "info", tok: TOK2 })).json();
+  assert.equal(info.data.devices, 2);
+  // a full gate refuses more devices
+  for (const t of ["W", "X", "Y"]) {
+    const c = (await (await dev(w, { act: "invite", tok: TOK })).json()).data.code;
+    assert.equal((await join(w, c, t.repeat(43))).status, 200);
+  }
+  assert.equal((await dev(w, { act: "invite", tok: TOK })).status, 429);
+});
+
+test("a device that leaves keeps the gate for the others; the last one wipes it", async () => {
+  const w = world();
+  await newGate(w);
+  const code = (await (await dev(w, { act: "invite", tok: TOK })).json()).data.code;
+  await join(w, code, TOK2);
+  const t = await tokens(w);
+  const b = w.boxes.get(ID);
+  const s2 = { closed: null, __g: { th: hex(TOK2), v: 1, at: 1 }, send() {}, close(c) { this.closed = c; } };
+  b.socks.push(s2);
+  assert.equal((await dev(w, { act: "del", tok: TOK })).status, 200);
+  assert.equal(s2.closed, null, "the other device's socket stays");
+  assert.equal((await dev(w, { act: "info", tok: TOK })).status, 404, "the first device is out");
+  const r = await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/list" });
+  assert.equal(r.status, 200, "Claude's link still works");
+  assert.equal((await dev(w, { act: "del", tok: TOK2 })).status, 200);
+  assert.equal(s2.closed, 4004);
+  assert.equal((await dev(w, { act: "info", tok: TOK2 })).status, 404);
+});
+
+test("which device answers: one on screen first, then the one that connected last", () => {
+  const s = (v, at, n) => ({ n, __g: { v, at } });
+  const order = G.pickOrder([s(0, 30, "pc hidden"), s(1, 10, "phone shown"), s(1, 20, "pc shown"), s(0, 40, "tab hidden")]);
+  assert.deepEqual(order.map((x) => x.n), ["pc shown", "phone shown", "tab hidden", "pc hidden"]);
+});
+
+test("a gate made before 5.70.00 (meta.th) still works and can take a second device", async () => {
+  const w = world();
+  w.env.GATE.get(ID);
+  const b = w.boxes.get(ID);
+  await b.st.storage.put("meta", { th: hex(TOK), at: 5, last: 1e12 });
+  assert.equal((await dev(w, { act: "info", tok: TOK })).status, 200);
+  const code = (await (await dev(w, { act: "invite", tok: TOK })).json()).data.code;
+  assert.equal((await join(w, code, TOK2)).status, 200);
+  const m = await b.st.storage.get("meta");
+  assert.deepEqual(m.devs.map((d) => d.th), [hex(TOK), hex(TOK2)]);
+  assert.equal(m.th, undefined);
 });

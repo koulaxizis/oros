@@ -23,7 +23,8 @@
 //   POST /gate/token      authorization_code (PKCE S256) | refresh_token
 //   POST /mcp             JSON-RPC 2.0, Bearer access token
 // From orOS only (allowed origins, CORS):
-//   POST /gate/dev        { act:"new"|"code"|"pair"|"revoke"|"info"|"del", id, tok, … }
+//   POST /gate/dev        { act:"new"|"code"|"pair"|"invite"|"revoke"|"info"|"del", id, tok, … }
+//                         | { act:"join", jc, th }  (another device of the same person, 5.71.00)
 //   (also from LOCAL_ORIGINS: the installed orOS, orOS Portable / USB)
 //   GET  /gate/ws/<id>    WebSocket, subprotocols ["gt1", "t.<tok>"]
 // Tokens: "<id>.<43 base64url>"; the box keeps only their SHA-256.
@@ -41,7 +42,8 @@ export const GATE_LIMITS = {
   idleMs: 180 * 86400000,        // no use for this long: the box wipes itself
   perIpMin: 120,                 // public routes per client IP per minute (per isolate)
   pairMs: 10 * 60000,            // a pairing code waits this long
-  pairTries: 5                   // wrong pairing codes per gate per 10 minutes
+  pairTries: 5,                  // wrong pairing codes per gate per 10 minutes
+  devices: 5                     // devices that answer for one gate (5.71.00)
 };
 
 // orOS that runs on the person's own computer (orOS Portable, the
@@ -564,6 +566,33 @@ function pairHtml(pc, k, web, base) {
 }
 
 function stub(env, id) { return env.GATE.get(env.GATE.idFromName(id)); }
+function randPairBox() { return randPair(); }
+
+// The devices of a gate: [{ th, at }] (a gate made before 5.71.00 keeps
+// its one device as meta.th).
+export function devList(m) {
+  if (!m) return [];
+  if (Array.isArray(m.devs)) return m.devs.filter((d) => d && HEX64_RE.test(d.th || ""));
+  return HEX64_RE.test(m.th || "") ? [{ th: m.th, at: m.at || 0 }] : [];
+}
+// A socket's note (survives hibernation): { th (its device), v (screen shown 1 / hidden 0), at }.
+function attOf(ws) {
+  try { if (typeof ws.deserializeAttachment === "function") { const a = ws.deserializeAttachment(); if (a) return a; } } catch (e) {}
+  return ws.__g || {};
+}
+function setAtt(ws, a) {
+  try { if (typeof ws.serializeAttachment === "function") ws.serializeAttachment(a); } catch (e) {}
+  ws.__g = a;
+}
+// Which device answers: one whose orOS is on screen, else the one that
+// connected last (a phone in the background often has no socket at all).
+export function pickOrder(socks) {
+  return socks.slice().sort((x, y) => {
+    const a = attOf(x), b = attOf(y);
+    if ((b.v ? 1 : 0) !== (a.v ? 1 : 0)) return (b.v ? 1 : 0) - (a.v ? 1 : 0);
+    return (b.at || 0) - (a.at || 0);
+  });
+}
 
 async function token(request, env, now) {
   if (request.method !== "POST") return oauthErr(405, "invalid_request");
@@ -608,16 +637,44 @@ async function devCall(request, env, now) {
   if (text === null) return devErr(413, "bad-request");
   let b;
   try { b = JSON.parse(text); } catch (e) { return devErr(400, "bad-request"); }
+  if (b && b.act === "join") return await joinCall(b, env, now);
   if (!b || typeof b !== "object" || !ID_RE.test(b.id || "")) return devErr(400, "bad-request");
-  if (["new", "code", "pair", "revoke", "info", "del"].indexOf(b.act) < 0) return devErr(400, "bad-request");
+  if (["new", "code", "pair", "invite", "revoke", "info", "del"].indexOf(b.act) < 0) return devErr(400, "bad-request");
   if (b.act === "new" ? !HEX64_RE.test(b.th || "") : !TOK_RE.test(b.tok || "")) return devErr(400, "bad-request");
   if (b.act === "code" && (!TOK_RE.test(b.c || "") || !validRedirect(b.r))) return devErr(400, "bad-request");
   if (b.act === "pair" && !normPair(b.pc)) return devErr(400, "bad-request");
   return stub(env, b.id).fetch(new Request("https://gate/dev", {
     method: "POST",
     headers: { "X-Now": String(now) },
-    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc) })
+    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc), lv: cleanLv(b.lv) })
   }));
+}
+
+// The app levels a device passes on to the device that joins (no secrets).
+function cleanLv(lv) {
+  const out = {};
+  if (!lv || typeof lv !== "object" || Array.isArray(lv)) return out;
+  Object.keys(lv).slice(0, 80).forEach((k) => {
+    if (/^[a-z0-9-]{1,40}$/.test(k) && (lv[k] === "read" || lv[k] === "write")) out[k] = lv[k];
+  });
+  return out;
+}
+
+// Another device of the same person joins a gate with the code an
+// existing device showed (act "invite"): the join box "join:<code>"
+// names the gate once, the gate box adds the new device's token hash.
+async function joinCall(b, env, now) {
+  const jc = normPair(b.jc);
+  if (!jc || !HEX64_RE.test(b.th || "")) return devErr(400, "bad-request");
+  const jb = stub(env, "join:" + jc);
+  const t = await (await jb.fetch(new Request("https://gate/jointake", { method: "POST", headers: { "X-Now": String(now) }, body: "{}" }))).json().catch(() => null);
+  if (!t || !t.ok || !ID_RE.test(t.id || "")) return devErr(404, "nojoin");
+  const res = await stub(env, t.id).fetch(new Request("https://gate/adddev", {
+    method: "POST", headers: { "X-Now": String(now) }, body: JSON.stringify({ th: b.th })
+  }));
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j || !j.ok) return devErr(res.status === 429 ? 429 : 404, res.status === 429 ? "full" : "nojoin");
+  return jsonRes(200, { ok: true, data: { id: t.id, lv: cleanLv(t.lv) } });
 }
 
 function wsCall(request, env, id, now) {
@@ -659,6 +716,9 @@ export class GateBox {
       if (p === "/token") return await this.token(await request.json(), now);
       if (p === "/mcp") return await this.mcp(request, now);
       if (p === "/ws") return await this.accept(request, now);
+      if (p === "/adddev") return await this.addDev(await request.json(), now);
+      if (p === "/jointake") return await this.joinTake(now);
+      if (p === "/joinnew") return await this.joinNew(await request.json(), now);
       if (p === "/pairnew") return await this.pairNew(await request.json(), now);
       if (p === "/pairpoll") return await this.pairPoll(await request.json(), now);
       if (p === "/pairtake") return await this.pairTake(await request.json(), now);
@@ -679,7 +739,33 @@ export class GateBox {
   async devOk(b) {
     const m = await this.meta();
     if (!m || !TOK_RE.test(b.tok || "")) return null;
-    return sameText(await sha256hex(b.tok), m.th) ? m : null;
+    const th = await sha256hex(b.tok);
+    return devList(m).some((d) => sameText(th, d.th)) ? m : null;
+  }
+  // A device that joined with a code (joinCall).
+  async addDev(b, now) {
+    const m = await this.meta();
+    if (!m || !HEX64_RE.test(b.th || "")) return devErr(404, "gone");
+    const list = devList(m);
+    if (list.length >= GATE_LIMITS.devices) return devErr(429, "full");
+    if (!list.some((d) => d.th === b.th)) list.push({ th: b.th, at: now });
+    m.devs = list; delete m.th;
+    await this.st.put("meta", m);
+    await this.touch(m, now);
+    return jsonRes(200, { ok: true });
+  }
+  // ---- a join box ("join:<code>"): names one gate once, 10 minutes ----
+  async joinNew(b, now) {
+    if (await this.st.get("join")) return devErr(409, "exists");
+    await this.st.put("join", { id: b.id, lv: b.lv || {}, exp: now + GATE_LIMITS.pairMs });
+    await this.st.setAlarm(now + GATE_LIMITS.pairMs + 60000);
+    return jsonRes(200, { ok: true });
+  }
+  async joinTake(now) {
+    const x = await this.st.get("join");
+    if (!x || x.exp <= now) { if (x) await this.wipe(); return jsonRes(404, { ok: false }); }
+    await this.wipe();                              // one use
+    return jsonRes(200, { ok: true, id: x.id, lv: x.lv });
   }
   async wipe() {
     for (const s of this.sockets()) { try { s.close(4004, "gone"); } catch (e) {} }
@@ -704,7 +790,7 @@ export class GateBox {
   async dev(b, now) {
     if (b.act === "new") {
       if (await this.meta()) return devErr(409, "exists");
-      const m = { th: b.th, at: now, last: now };
+      const m = { devs: [{ th: b.th, at: now }], at: now, last: now };
       await this.st.put("meta", m);
       await this.st.setAlarm(now + GATE_LIMITS.idleMs);
       return jsonRes(200, { ok: true, data: { ok: true } });
@@ -712,7 +798,24 @@ export class GateBox {
     const m = await this.devOk(b);
     if (!m) return devErr(404, "gone");
     await this.touch(m, now);
-    if (b.act === "del") { await this.wipe(); return jsonRes(200, { ok: true, data: { ok: true } }); }
+    if (b.act === "del") {                         // this device leaves; the last one wipes the gate
+      const th = await sha256hex(b.tok);
+      const rest = devList(m).filter((d) => d.th !== th);
+      if (!rest.length) { await this.wipe(); return jsonRes(200, { ok: true, data: { ok: true } }); }
+      m.devs = rest; delete m.th;
+      await this.st.put("meta", m);
+      for (const s of this.sockets()) { if (attOf(s).th === th) { try { s.close(4004, "gone"); } catch (e) {} } }
+      return jsonRes(200, { ok: true, data: { ok: true, devices: rest.length } });
+    }
+    if (b.act === "invite") {
+      if (devList(m).length >= GATE_LIMITS.devices) return devErr(429, "full");
+      const jc = randPairBox();
+      const res = await this.env.GATE.get(this.env.GATE.idFromName("join:" + jc)).fetch(new Request("https://gate/joinnew", {
+        method: "POST", headers: { "X-Now": String(now) }, body: JSON.stringify({ id: b.id, lv: b.lv })
+      }));
+      if (!res.ok) return devErr(503, "nostore");
+      return jsonRes(200, { ok: true, data: { code: jc, exp: now + GATE_LIMITS.pairMs } });
+    }
     if (b.act === "revoke") {
       const all = await this.tokens();
       if (all.size) await this.st.delete(Array.from(all.keys()));
@@ -722,7 +825,7 @@ export class GateBox {
       const all = await this.tokens();
       let n = 0;
       all.forEach((v) => { if (v && v.k === "r" && v.exp > now) n++; });
-      return jsonRes(200, { ok: true, data: { links: n, last: m.used || 0 } });
+      return jsonRes(200, { ok: true, data: { links: n, last: m.used || 0, devices: devList(m).length } });
     }
     if (await this.prune(now) >= GATE_LIMITS.tokens) return devErr(429, "rate");
     if (b.act === "pair") return await this.pairWith(b, m, now);
@@ -803,18 +906,25 @@ export class GateBox {
   }
   async accept(request, now) {
     const m = await this.meta();
-    if (!m || !sameText(await sha256hex(request.headers.get("X-Tok") || ""), m.th)) return devErr(404, "gone");
+    const th = await sha256hex(request.headers.get("X-Tok") || "");
+    if (!m || !devList(m).some((d) => sameText(th, d.th))) return devErr(404, "gone");
     await this.touch(m, now);
-    // One device answers: a newer socket replaces the older ones.
-    for (const s of this.sockets()) { try { s.close(4001, "replaced"); } catch (e) {} }
+    // One socket per device: a newer one from the same device replaces
+    // its older ones (another window, a reload). Other devices stay.
+    for (const s of this.sockets()) { if (attOf(s).th === th) { try { s.close(4001, "replaced"); } catch (e) {} } }
     const pair = new WebSocketPair();
     const client = pair[0], server = pair[1];
     this.state.acceptWebSocket(server);
+    setAtt(server, { th: th, v: 1, at: now });
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
 
   async webSocketMessage(ws, msg) {
     if (msg === "ping") { try { ws.send("pong"); } catch (e) {} return; }
+    if (msg === "v0" || msg === "v1") {             // the device's screen: shown or hidden
+      const a = attOf(ws); a.v = msg === "v1" ? 1 : 0; a.vt = Date.now(); setAtt(ws, a);
+      return;
+    }
     if (typeof msg !== "string" || msg.length > GATE_LIMITS.replyBytes) {
       try { ws.close(1009, "too big"); } catch (e) {}
       return;
@@ -840,9 +950,9 @@ export class GateBox {
 
   // Passes one tool call to the device and waits for its answer.
   ask(name, args) {
-    const live = this.sockets();
+    const live = pickOrder(this.sockets());
     if (!live.length) return Promise.resolve({ ok: false, e: "closed" });
-    const ws = live[live.length - 1];
+    const ws = live[0];
     const rid = rand43().slice(0, 16);
     return new Promise((done) => {
       const timer = setTimeout(() => { this.wait.delete(rid); done({ ok: false, e: "timeout" }); }, GATE_LIMITS.callMs);

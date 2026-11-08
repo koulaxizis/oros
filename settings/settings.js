@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "";
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null;
   function gateApi() {
     var p = parentWin();
     try { return p && p.orosGate && typeof p.orosGate.enable === "function" ? p.orosGate : null; } catch (e) { return null; }
@@ -817,6 +817,24 @@
       (v ? G.enable() : G.disable()).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
     }, t("gt.switch")), { hint: t("gt.hint") }));
     if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
+    if (!st.on && typeof G.join === "function") {
+      // Another device of the owner already has the gate: join it.
+      var jn = el("input", "dav-input");
+      jn.id = "f-gt-join";
+      jn.type = "text";
+      jn.maxLength = 12;
+      jn.autocomplete = "off";
+      jn.spellcheck = false;
+      jn.placeholder = "XXXX-XXXX";
+      c.appendChild(row(t("gt.join"), jn, { hint: t("gt.join.hint"), forId: "f-gt-join", stack: true }));
+      var sendJoin = function () {
+        gateNote = "";
+        G.join(jn.value).then(function () { gateNote = "gt.join.ok"; render(); },
+          function (e) { gateNote = e && e.code === "nojoin" ? "gt.join.bad" : e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
+      };
+      jn.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendJoin(); } });
+      c.appendChild(actions(button(t("gt.join.go"), "gt.join.go", sendJoin)));
+    }
     if (st.on) {
       c.appendChild(el("div", "hint", t("gt.conn." + (["on", "connecting", "other", "gone"].indexOf(st.conn) >= 0 ? st.conn : "connecting"))));
       var url = el("input", "dav-input");
@@ -830,6 +848,16 @@
         var done = function () { gateNote = "gt.copied"; render(); };
         try { navigator.clipboard.writeText(G.relayUrl()).then(done, function () { url.select(); }); } catch (e) { url.select(); }
       })));
+      if (typeof G.invite === "function") {
+        if (gateJoin && gateJoin.exp > Date.now()) {
+          c.appendChild(el("div", "hint", t("gt.invite.code", { code: gateJoin.code.slice(0, 4) + "-" + gateJoin.code.slice(4) })));
+        }
+        c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
+          gateNote = "";
+          G.invite().then(function (d) { gateJoin = d; render(); },
+            function (e) { gateNote = e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
+        })));
+      }
       if (typeof G.pair === "function") {
         var pc = el("input", "dav-input");
         pc.id = "f-gt-pair";
