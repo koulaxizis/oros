@@ -1774,7 +1774,7 @@
       "with board only that board's cards), stock (what sold in a month, per product and " +
       "per place: the user's own stock and each consignment shop or other warehouse; returns taken off) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
-      "plants and more). Better than search_data for questions like 'how much did I spend on food " +
+      "plants and more; an item may carry end, details, a tip and suggest: the kinds of action Today offers on it). Better than search_data for questions like 'how much did I spend on food " +
       "this month' or 'what is on this week'. calendar also lists the user's labels with how many events " +
       "each has; with label (a label's name, or \"none\" for events without a label) and/or month it lists " +
       "those events, any date, with their label, time, place and note, and a ref for change_item. " +

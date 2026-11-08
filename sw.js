@@ -2193,6 +2193,8 @@ var PRECACHE_URLS = [
   "time/cities.js",
   "time/clock-core.js",
   "today/layout.js",
+  "today/tips.js",
+  "today/dayline.js",
   "todo/model.js",
   "todo/vtodo.js",
   "todo/dav.js",

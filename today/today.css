@@ -426,3 +426,25 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 .disc-name { font-size: 1.05rem; overflow-wrap: anywhere; }
 .disc-line { color: var(--text-dim); font-size: 0.9rem; overflow-wrap: anywhere; }
 .disc-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* Tips of the day (T2, BR-TODAY-16) */
+.tips { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; }
+.tips-head { display: flex; align-items: center; gap: 8px; font-weight: 700; margin-bottom: 4px; }
+.tips-head .ico { color: var(--accent); margin-top: 0; }
+.tips-list { list-style: none; }
+.tip { padding: 8px 0; border-top: 1px solid var(--border); }
+.tip:first-child { border-top: 0; }
+.tip-text { overflow-wrap: anywhere; }
+.tip .det-acts { margin-top: 6px; }
+.det-act.quiet { color: var(--text-dim); border-style: dashed; }
+
+/* The shape of the day, the evening view, the week (T3, BR-TODAY-17) */
+.group-head.static { cursor: default; }
+.agenda { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 14px; }
+.row.gap { border-top: 1px dashed var(--border); }
+.gap-txt { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; color: var(--text-dim); font-size: 0.88rem; }
+.gap-txt .time { color: var(--text-dim); font-weight: 400; }
+.gap-label { overflow-wrap: anywhere; }
+.w-eve { margin-bottom: 12px; border-color: var(--accent); }
+.eve-first { border-top: 0; color: var(--text); }
+.more.week { font-size: 0.82rem; }

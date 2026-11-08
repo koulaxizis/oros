@@ -28,6 +28,24 @@ Many rows have an (i) button, `Details and suggestions`. It opens a small panel 
 - The water line has `+1 glass` next to it while today's goal is not met; [Water](app:water) adds it, with `Undo`.
 Today itself never changes anything: each app does the work with its own code. The tips are made on this device from your own data, with no network and no AI. When you ask the Assistant about a row, the details go with the question.
 
+## Tips of the day
+Under the top lines, `Tips of the day` gives up to five short tips made from your apps' rows together, for example:
+- rain is likely and you have an appointment with a place later today: take an umbrella (with `Directions`);
+- a hot day: drink more water (`+1 glass`), or water your plants sooner when Plant Care has some due;
+- a cold night: dress warmly and bring in plants that fear the frost;
+- three or more tasks are late: give them new dates or drop what no longer matters (opens To-Do);
+- a busy day with four or more things at a time: when it starts and ends;
+- by the afternoon you have drunk less than half of your water goal;
+- a quiet day with nothing due.
+`Not today` hides a tip until tomorrow. `Don't show this kind` turns that kind of tip off on this device; `Settings` › `Show muted tips again` brings them all back. The card shows only when there is a tip. The tips use only what is already on this device (the summary's rows and the weather Weather last fetched): no network and no AI.
+
+## Your day, tomorrow and the week
+`Your day` (add it with `Add a widget`) lists today's times in order, from start to end (an event without an end counts as an hour, a task as half an hour), and the free stretches of 30 minutes or more between now and 22:00. When a free stretch is an hour or longer and you have tasks without a time, it says they could go there. It only suggests: nothing is moved.
+
+From the evening, Today shows `Tomorrow` on top: what tomorrow holds and when it starts, so you can get ready tonight. It starts at 19:00; change the hour, or turn it off, in `Settings` › `Tomorrow in the evening`.
+
+Under `Coming up`, one line counts what each app has in the next 7 days, for example `Next 7 days: Calendar 4 · To-Do 2`.
+
 ## Widgets
 Make Today your own screen, like the widgets on a phone's home screen. Press the `Customise` button (the four squares) at the top:
 - Drag a widget by its handle (the six dots) to move it, with the mouse or a finger. The up and down arrows move it one place too, handy on a touch screen or with the keyboard.
@@ -75,6 +93,8 @@ Once a week, from Monday 10:00, orOS suggests one app or game you have never ope
 When the [Assistant](app:assistant) is set up, rows have a speech-bubble button, `Ask the Assistant about this`. It opens the Assistant with a question about that row already typed. Nothing is sent until you press `Send` there. The button follows the Assistant's own permission for each app, so it never appears for an app the Assistant may not read.
 
 The sparkles button at the top, `Briefing from the Assistant`, asks the Assistant for a short briefing of your day in one answer. It shows only when the Assistant is set up with a service that can read your data. Apps set to `Ask first` appear on one card before anything is sent; see the Assistant's help for the details.
+
+When the Assistant reads an app (and Claude through orOS Gate), it gets the same details, tip and end time you see here, and which actions Today offers on each row. The actions themselves are still yours to press.
 
 ## Settings
 Open them with the gear button:
