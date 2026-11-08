@@ -258,7 +258,8 @@
         var fm = (Array.isArray(x.fmts) ? x.fmts : []).filter(isObj).map(function (f) {
           var r = { format: FMTS[f.k] || "other" };
           put(r, "isbn", f.isbn);
-          if (typeof f.price === "number") r.price = cents(f.price);
+          // Publishing keeps the list price in units with 2 decimals (publish/core.js), not cents
+          if (typeof f.price === "number" && isFinite(f.price)) r.price = (Math.round(f.price * 100) / 100).toFixed(2);
           if (f.pages) r.pages = f.pages;
           if (f.dur) r.duration = f.dur;
           put(r, "binding", f.bind); put(r, "paper", f.paper); put(r, "note", f.note);
@@ -266,6 +267,7 @@
         });
         if (fm.length) o.formats = fm;
         if (x.blurb) o.blurb = String(x.blurb).slice(0, TEXT_MAX);
+        if (x.notes) o.notes = String(x.notes).slice(0, TEXT_MAX);
         if (x.kw) o.keywords = x.kw;
         return o;
       });

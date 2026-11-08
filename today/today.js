@@ -107,7 +107,10 @@
       "none.events": "No events in the next days",
       "none.weather": "Nothing from Weather yet. Open it to choose a place.",
       "none.water": "Nothing from Water yet. Open it to start counting.",
-      "none.together": "Nothing from Together yet. Open it to start counting."
+      "none.together": "Nothing from Together yet. Open it to start counting.",
+      det: "Details and suggestions", detOf: "Details and suggestions: {t}", tip: "Tip",
+      "act.route": "Directions", "act.contact": "Open the card", "act.gift": "Gift idea to To-Do", "act.todo": "Add to To-Do",
+      "act.later": "Tomorrow", "act.tick": "Tick it", "act.sip": "+1 glass", "act.open": "Open"
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
@@ -159,7 +162,10 @@
       "none.events": "Κανένα γεγονός τις επόμενες μέρες",
       "none.weather": "Τίποτα από τον Καιρό ακόμη. Άνοιξέ τον για να διαλέξεις τόπο.",
       "none.water": "Τίποτα από το Νερό ακόμη. Άνοιξέ το για να αρχίσεις να μετράς.",
-      "none.together": "Τίποτα από το Μαζί ακόμη. Άνοιξέ το για να αρχίσει η μέτρηση."
+      "none.together": "Τίποτα από το Μαζί ακόμη. Άνοιξέ το για να αρχίσει η μέτρηση.",
+      det: "Λεπτομέρειες και προτάσεις", detOf: "Λεπτομέρειες και προτάσεις: {t}", tip: "Συμβουλή",
+      "act.route": "Οδηγίες", "act.contact": "Άνοιγμα καρτέλας", "act.gift": "Ιδέα για δώρο στο To-Do", "act.todo": "Στο To-Do",
+      "act.later": "Αύριο", "act.tick": "Τικ", "act.sip": "+1 ποτήρι", "act.open": "Άνοιγμα"
     }
   };
   if (window.orosI18n) window.orosI18n.table(I18N, "today", LANG);
@@ -188,8 +194,18 @@
     down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     brief: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8z"/></svg>',
-    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+    // details + suggested actions (BR-TODAY-15)
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.5"/></svg>',
+    tip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>',
+    route: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6-5.4-6-10.5a6 6 0 0 1 12 0C18 15.6 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/></svg>',
+    contact: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+    gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13"/><path d="M12 8c-2-4-6-4-6-1.5S9 8 12 8zM12 8c2-4 6-4 6-1.5S15 8 12 8z"/></svg>',
+    later: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h13M13 7l5 5-5 5"/><path d="M21 5v14"/></svg>',
+    sip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l-1.6 17a1 1 0 0 1-1 .9H8.6a1 1 0 0 1-1-.9z"/><path d="M6.6 9h10.8"/></svg>',
+    go: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>'
   };
+  var ACT_ICON = { route: "route", contact: "contact", gift: "gift", todo: "plus", later: "later", tick: "check", sip: "sip", open: "go" };
 
   function host() { var p = parentWin(); try { return p && p.orosToday ? p.orosToday : null; } catch (e) { return null; } }
   // Weekly app suggestion (CH-2, discover/host.js in the shell).
@@ -467,6 +483,19 @@
         if (H) H.open(r.app, r.target);
       });
       li.appendChild(b);
+      // a top line's first suggested action, as a small button (BR-TODAY-15)
+      var a = r.acts && r.acts[0];
+      if (a) {
+        var ab = el("button", "top-act");
+        ab.type = "button";
+        ab.textContent = t("act." + a.k);
+        ab.setAttribute("aria-label", t("act." + a.k) + ": " + r.title);
+        ab.addEventListener("click", function () {
+          var H = host();
+          if (H && typeof H.act === "function") H.act(a);
+        });
+        li.appendChild(ab);
+      }
       top.appendChild(li);
     });
     box.appendChild(top);
@@ -534,6 +563,19 @@
       else H.open(app);
     });
     box.appendChild(b);
+    // the line's first suggested action (Water: +1 glass), BR-TODAY-15
+    var a = rows.length && rows[0].acts && rows[0].acts[0];
+    if (a) {
+      var ab = el("button", "tile-act");
+      ab.type = "button";
+      ab.textContent = t("act." + a.k);
+      ab.setAttribute("aria-label", t("act." + a.k) + ": " + rows[0].title);
+      ab.addEventListener("click", function () {
+        var H = host();
+        if (H && typeof H.act === "function") H.act(a);
+      });
+      box.appendChild(ab);
+    }
     return box;
   }
 
@@ -661,8 +703,77 @@
       a.addEventListener("click", function () { askAssistant(r, info); });
       li.appendChild(a);
     }
+    details(li, r);
     return li;
   }
+
+  // Details and suggested actions (BR-TODAY-15): a row with `more`,
+  // `tip` or `acts` gets an (i) button that shows them under the row.
+  // The actions only open the app that does the work (host.act);
+  // open or closed is kept for the session, per row.
+  function hasDetails(r) {
+    return !!((r.more && r.more.length) || r.tip || (r.acts && r.acts.length));
+  }
+  function details(li, r) {
+    if (!hasDetails(r)) return;
+    var key = "det:" + r.key, open = ui[key] === true;
+    var btn = el("button", "ask det-btn");
+    btn.type = "button";
+    btn.innerHTML = SVG.info;
+    btn.title = t("det");
+    btn.setAttribute("aria-label", t("detOf", { t: r.title }));
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    // before Done / Ask, right after the row's own button
+    li.insertBefore(btn, li.children[1] || null);
+    var box = el("div", "det");
+    box.id = "det-" + (++detSeq);
+    btn.setAttribute("aria-controls", box.id);
+    box.hidden = !open;
+    if (r.more && r.more.length) {
+      var ul = el("ul", "det-more");
+      r.more.forEach(function (m) { ul.appendChild(el("li", "", m)); });
+      box.appendChild(ul);
+    }
+    if (r.tip) {
+      var tp = el("p", "det-tip");
+      var ic = el("span", "ico");
+      ic.innerHTML = SVG.tip;
+      tp.appendChild(ic);
+      var tx = el("span", "", r.tip);
+      tx.setAttribute("aria-label", t("tip") + ": " + r.tip);
+      tp.appendChild(tx);
+      box.appendChild(tp);
+    }
+    if (r.acts && r.acts.length) {
+      var row = el("div", "det-acts");
+      r.acts.forEach(function (a) {
+        var label = t("act." + a.k);
+        var b = el("button", "det-act");
+        b.type = "button";
+        var ic2 = el("span", "ico");
+        var svg = Object.prototype.hasOwnProperty.call(ACT_ICON, a.k) ? SVG[ACT_ICON[a.k]] : SVG.go;
+        ic2.innerHTML = svg;                          // the app's own static icons
+        b.appendChild(ic2);
+        b.appendChild(el("span", "", label));
+        b.setAttribute("aria-label", label + ": " + r.title);
+        b.addEventListener("click", function () {
+          var H = host();
+          if (H && typeof H.act === "function") H.act(a);
+        });
+        row.appendChild(b);
+      });
+      box.appendChild(row);
+    }
+    li.appendChild(box);
+    btn.addEventListener("click", function () {
+      var o = box.hidden;
+      box.hidden = !o;
+      btn.setAttribute("aria-expanded", o ? "true" : "false");
+      if (o) ui[key] = true; else delete ui[key];
+      saveUi();
+    });
+  }
+  var detSeq = 0;
 
   // ---------- 2b. Customise (wave 48) ----------
   function wName(id) { return t("w." + id); }

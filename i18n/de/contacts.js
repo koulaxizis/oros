@@ -1,4 +1,9 @@
 orosPack("de", "contacts", {
+ "tdy.tipGift1": "Morgen: wenn du etwas schenken willst, ist heute der Tag, es zu besorgen.",
+ "tdy.tipGiftN": "In {n} Tagen: es bleibt noch Zeit, ein Geschenk auszusuchen.",
+ "tdy.tipToday": "Heute: eine kurze Nachricht oder ein Anruf bedeutet viel.",
+ "tdy.gift": "Geschenk für {name}",
+ "tdy.from": "Heute",
  "ac.btn": "Aus einem Konto",
  "ac.cancelled": "Anmeldung abgebrochen.",
  "ac.err": "Kontakte konnten nicht gelesen werden ({e}).",

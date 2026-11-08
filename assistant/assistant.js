@@ -5085,6 +5085,9 @@
   }
   function createWith2(M, c, args, apps) {
     var ctx = createCtx();
+    // a field the app does not take is an error, never dropped in silence
+    var uk = typeof C.crUnknown === "function" ? C.crUnknown(String(args.app || ""), args.items) : { bad: [] };
+    if (uk.bad.length) return Promise.resolve({ content: "Error: " + String(args.app) + " has no field " + uk.bad.join(", ") + ". Nothing was added. Its fields: " + uk.fields.join(", ") + ".", err: 1 });
     var nm = M.normItems(args, ctx);
     if (!nm.ok) return Promise.resolve({ content: "Error: " + nm.err, err: 1 });
     var app = createApps(apps).filter(function (a) { return a.id === nm.app; })[0];
