@@ -261,6 +261,7 @@ test("tools/call: closed device, then a call answered by the device", async () =
   const closed = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 5, method: "tools/call", params: { name: "list_apps", arguments: {} } })).json();
   assert.equal(closed.result.isError, true);
   assert.match(closed.result.content[0].text, /orOS is closed and there is no copy/);
+  assert.ok(closed.result.content[0].text.indexOf("the gate " + ID.slice(0, 6) + ";") > 0, "names the gate the link points to (5.90.00)");
   const b = w.boxes.get(ID);
   const sock = { sent: [], closed: null, send(m) { this.sent.push(m); setTimeout(() => {
     const q = JSON.parse(m);

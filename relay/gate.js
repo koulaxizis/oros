@@ -366,7 +366,9 @@ export function withDevTools(dev) {
 }
 // Apps never offered, also refused here for a device tool's app or
 // apps argument (orOS checks again on the device: gate/gate.js NEVER).
-export const NEVER_APPS = ["assistant", "baby", "cycle", "diary", "fitness", "health", "mail", "mood", "passwords"];
+// The personal apps (Mail, Diary, Health…) are the owner's choice since
+// 5.90.00, behind a warning on the device, and never in the closed copy.
+export const NEVER_APPS = ["assistant", "passwords"];
 export function neverIn(args) {
   const a = args && typeof args === "object" ? args : {};
   const ids = [].concat(typeof a.app === "string" ? [a.app] : [], Array.isArray(a.apps) ? a.apps : []);
@@ -721,7 +723,7 @@ async function mcp(request, env, base, now) {
   if (text === null) return jsonRes(413, rpcErr(null, -32600, "request too large"));
   const res = await stub(env, bm[1]).fetch(new Request("https://gate/mcp", {
     method: "POST",
-    headers: { "X-Now": String(now), "X-Tok": bm[2] },
+    headers: { "X-Now": String(now), "X-Tok": bm[2], "X-Gid": bm[1] },
     body: text
   }));
   if (res.status === 401) return jsonRes(401, { error: "invalid_token" }, challenge);
@@ -1304,13 +1306,17 @@ export class GateBox {
     await this.st.put("meta", m);
     await this.touch(m, now);
     let ans = await this.ask(p.name, args);
-    if (ans.e === "closed") ans = await this.closedCall(p.name, args, await this.unwrapK(tok), now);
+    // The gate this link points to (5.90.00): its first 6 characters, the
+    // id orOS › Settings › orOS Gate shows, so a link to an old gate shows.
+    const gid = String(request.headers.get("X-Gid") || "").slice(0, 6);
+    const tag = gid ? " (Claude's link is to the gate " + gid + "; orOS › Settings › Connected services › orOS Gate shows each device's gate. If it differs, the owner reconnects the connector.)" : "";
+    if (ans.e === "closed") { ans = await this.closedCall(p.name, args, await this.unwrapK(tok), now); if (!ans.ok && typeof ans.c === "string") ans.c += tag; }
     else if (ans.ok && !(await this.st.get("kw:" + await sha256hex(tok)))) {
       const kRaw = await this.keyFromDevice();          // a link made before 5.80.00: wrap the key for it now
       if (kRaw) await this.wrapK(tok, kRaw, now);
     }
     if (!ans.ok) {
-      const why = ans.e === "closed" ? "orOS is not open on the owner's gate device, or the gate is off. Ask the owner to open orOS." :
+      const why = ans.e === "closed" ? "orOS is not open on the owner's gate device, or the gate is off. Ask the owner to open orOS." + tag :
                   ans.e === "timeout" ? "orOS did not answer in time. It may be asleep or busy; ask the owner." :
                   typeof ans.c === "string" ? ans.c.slice(0, 2000) : "orOS refused the call.";
       return jsonRes(200, rpcOk(id, toolText(why, true)));
