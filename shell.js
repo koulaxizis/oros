@@ -10291,7 +10291,7 @@
       var on = parseInt(btns[i].getAttribute("data-mx-timer"), 10) === st.timer;
       btns[i].setAttribute("aria-pressed", on ? "true" : "false");
       btns[i].style.background = on ? "var(--accent)" : "transparent";
-      btns[i].style.color = on ? "var(--accent-text, #fff)" : "var(--text)";
+      btns[i].style.color = on ? "var(--accent-ink, #fff)" : "var(--text)";
     }
     var left = document.getElementById("mx-pop-left");
     if (left) {
