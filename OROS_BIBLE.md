@@ -10632,6 +10632,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js (`setApps`), settings/{settings.js,core.js,settings.css,help.en.txt,help.el.txt}, i18n/de/settings.js, tests/settings.test.js, whatsnew EN/EL, shell.js, sw.js, manifest.webmanifest.
 - **Tests:** full `node --test tests/*.test.js`; Playwright Chromium (LANG=C.UTF-8) in the real shell, 1100 px EN and 360 px EL: find keeps focus, bulk on a search result, Turn all on sets every non-personal app and no personal or never app, revoke/off clear, the personal warning in its box, no overflow, no page errors. Not tested: a live gate on a relay, a real phone, Safari.
 
+### 2026-11-08 — 5.92.01 — CRM: a partner's Publishing titles open the title (BR-CRM)
+
+- **What:** Chris (18:07, screenshot): on a CRM partner linked to one Publishing title, «Open» in the Publishing section did not open the title (it opened Royalties). Now «Open» opens the title when there is one (Royalties when there are several), and each title's name is a button that opens it (`{ title: id }`, publish/app.js `__orosOpenAt`).
+- **Files:** crm/crm.js (`renderOverview`).
+- **Tests:** full `node --test tests/*.test.js`. Playwright in the real shell: a partner with one title, the title's button opens it in Publishing, no page errors.
+
 ### 2026-11-08 — 5.93.00 — Assistant and Gate: CRM contracts and a partner's Revenue Splitter beneficiary (AS-ADD3, BR-GATE)
 
 - **What:** Chris (08/11) found CRM without any partner data and chose a new Gate tool so Claude can set up partners: `create_items` app `crm_contract` (a contract with start, end, reminder, amount, note) and `change_item` `rs_beneficiary` on a CRM customer (the exact beneficiary name in the shop's Revenue Splitter, so the partner card shows the live balance). Both write CRM's own rows (`ctr`, `rsl`) in `norm()`'s shape, with look-alikes unticked and Undo (see AS-ADD3).

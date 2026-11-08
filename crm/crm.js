@@ -1051,8 +1051,21 @@
       line(s, r.ms > 0 ? t("ov.workLine", { h: t("ov.h", { n: (Math.round(r.ms / 360000) / 10).toLocaleString(LOCALE) }), v: curMoney(r.amount, r.cur) }) : t("ov.workNone"));
     });
     if (x.pub.titles.length || Object.keys(x.pub.due).length || Object.keys(x.pub.adv).length) {
-      var sp = sec(t("ov.pub"), "publish", { view: "roy" });
-      if (x.pub.titles.length) line(sp, t("ov.titles", { n: x.pub.titles.length }), x.pub.titles.slice(0, 8).map(function (r) { return r.t; }).join(" · "));
+      // Open: the title itself when there is one, else Royalties (2026-11-08,
+      // Chris: «ο τίτλος δεν ανοίγει στο Publishing»); each title opens too.
+      var sp = sec(t("ov.pub"), "publish", x.pub.titles.length === 1 ? { title: x.pub.titles[0].id } : { view: "roy" });
+      if (x.pub.titles.length) {
+        line(sp, t("ov.titles", { n: x.pub.titles.length }), "");
+        var tl = el("div", "row-sub");
+        x.pub.titles.slice(0, 8).forEach(function (r, i) {
+          if (i) tl.appendChild(document.createTextNode(" · "));
+          var tb = el("button", "link-btn", r.t);
+          tb.type = "button";
+          tb.addEventListener("click", function () { openIn("publish", { title: r.id }); });
+          tl.appendChild(tb);
+        });
+        sp.lastChild.querySelector(".row-main").appendChild(tl);
+      }
       if (Object.keys(x.pub.due).length) line(sp, t("ov.royDue", { v: curList(x.pub.due, function (cur, v) { return curMoney(v, cur); }) }));
       if (Object.keys(x.pub.adv).length) line(sp, t("ov.adv", { v: curList(x.pub.adv, function (cur, v) { return curMoney(v, cur); }) }));
     }
