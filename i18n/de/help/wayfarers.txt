@@ -88,8 +88,13 @@ Feinde, die die vordere Reihe treffen, treffen zuerst den Ritter und den Schurke
 
 In beiden endet die Reise, wenn alle drei Helden fallen. Jede Reise hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neue Reise` einen Code ein, um dasselbe Land noch einmal zu durchwandern; lass das Feld leer für ein neues.
 
+## Prüfung des Tages
+Der Kalender-Knopf öffnet die heutige Prüfung: den Grünen Weg auf Zäh, mit einer Gruppe aus drei Helden, die für den Tag gewählt ist. Alle bekommen an diesem Tag dasselbe Land, dieselbe Gruppe und dieselbe Beute. Besiege den Wächter, dann hast du bestanden. Es gibt einen Versuch, und wer die Prüfung verlässt, gilt als dort gefallen, wo er war. Ein Punkt auf dem Knopf zeigt, dass die heutige Prüfung noch offen ist.
+
+Nach der Prüfung zeigt ein Fenster, wie weit du gekommen bist, deine Züge und deine Serie bestandener Tage. `Teilen` kopiert ein kurzes Ergebnis ohne Spoiler: ein Quadrat für jeden Halt auf dem Weg, dann deine Züge. Die heutige Prüfung hat auch eine Karte im [Game Center](help:a/gamecenter).
+
 ## Bilanz und Synchronisierung
-`Bilanz` zeigt deine Reisen, Siege und geschafften Gebiete für jede Schwierigkeit und die Siege jeder Klasse. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Reisen aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Reise, deine letzte Gruppe und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Reise geht dort weiter, wo du sie verlassen hast. Eine Reise, die du für eine neue verlässt, zählt als verloren. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+`Bilanz` zeigt deine Reisen, Siege und geschafften Gebiete für jede Schwierigkeit und die Siege jeder Klasse. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Reisen aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Reise, deine letzte Gruppe und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Reise geht dort weiter, wo du sie verlassen hast. Eine Reise, die du für eine neue verlässt, zählt als verloren. `Letzte Reisen` listet deine zehn letzten Reisen von allen Geräten, wie jede endete und ihren Code; `Nochmal` geht dieselbe Reise noch einmal (eine Prüfung des Tages als ganze Reise auf Zäh, mit derselben Gruppe). Die Prüfungen des Tages zählen nur in ihrer eigenen Zeile, nicht bei den Reisen. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
 
 ## Tastatur
 - Karte: Die Pfeiltasten wählen einen Halt, [[Enter]] geht dorthin.

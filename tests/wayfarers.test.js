@@ -14,15 +14,15 @@ const D = require("../wayfarers/data.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "wayfarers/wayfarers.js"), "utf8");
 const R = (() => {
-  const parts = ["var DATA_VER = 1; var DIFFS = ['g','h']; var CLASS_IDS = " + JSON.stringify(E.CLASS_IDS) + "; var REGIONS_N = " + E.REGIONS.length + "; var BIG = 1e9;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeWayfarers"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = ['g','h']; var CLASS_IDS = " + JSON.stringify(E.CLASS_IDS) + "; var REGIONS_N = " + E.REGIONS.length + "; var BIG = 1e9; var MAX_DAY = 100000; var MAX_ACTS = 99999; var LAST_N = 10;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeWayfarers"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const one = SRC.indexOf("\n", i);
     const line = SRC.slice(i, one);
     parts.push(/\}\s*$/.test(line) ? line : SRC.slice(i, SRC.indexOf("\n  }\n", i) + 4));
   });
-  return new Function(parts.join("\n") + "\nreturn { mergeWayfarers };")();
+  return new Function(parts.join("\n") + "\nreturn { mergeWayfarers };").call(E);
 })();
 
 const J = JSON.stringify;
@@ -135,8 +135,8 @@ function fightMove(st, smart) {
   const mk = alive.find((x) => x.st.mk > 0);
   tryA({ t: "atk", x: (mk || f).id });
 }
-function journey(seed, diff, classes, smart) {
-  const st = E.newJourney(seed, diff, classes);
+function journey(seed, diff, classes, smart, end) {
+  const st = E.newJourney(seed, diff, classes, end);
   let guard = 0;
   while (st.over < 0 && guard++ < 20000) {
     assert.ok(E.valid(st), "valid state " + seed + " at " + st.acts);
@@ -602,4 +602,58 @@ test("wayfarers: the records merge is a join (symmetric, idempotent, reset wins)
   assert.equal(AB.rows.old111, undefined, "older than the reset");
   const broken = { ver: 1, br: 0, rows: { "x": { b: 0, s: { g: [1, 1, 1] } }, cccccc3: { b: 0, s: { g: [1, 2, 0] } }, dddddd4: { b: 0, s: { g: [1, 0, 9] } }, eeeeee5: { b: 0, s: { q: [1, 0, 0] } } } };
   assert.deepEqual(m(broken, broken).rows, {}, "bad rows drop");
+});
+
+test("wayfarers: Daily trial days and Last journeys merge as a join (better result wins, newest 10, reset drops)", () => {
+  const m = R.mergeWayfarers;
+  const P = ["knight", "mage", "cleric"];
+  const A = { ver: 1, br: 0, rows: {}, days: { 10: { b: 0, w: 0, c: 5, t: 90 }, 11: { b: 0, w: 1, c: 7, t: 200 } },
+    last: [{ a: 1000, d: "h", p: P, r: 2, w: 0, s: "abc" }, { a: 900, d: "d", p: P, r: 1, w: 1, s: "wf20260110" }] };
+  const B = { ver: 1, br: 0, rows: {}, days: { 10: { b: 0, w: 1, c: 7, t: 300 }, 11: { b: 0, w: 1, c: 7, t: 150 }, 12: { b: 0, w: 0, c: 3, t: 40 } },
+    last: [{ a: 1000, d: "h", p: P, r: 2, w: 0, s: "abc" }, { a: 1100, d: "g", p: P, r: 3, w: 1, s: "zzz" }] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  const AB = m(A, B);
+  assert.deepEqual(AB.days[10], { b: 0, w: 1, c: 7, t: 300 }, "through beats a fall");
+  assert.deepEqual(AB.days[11], { b: 0, w: 1, c: 7, t: 150 }, "fewer moves win");
+  assert.deepEqual(AB.last.map((v) => v.a), [1100, 1000, 900], "newest first, the same journey once");
+  const many = { ver: 1, br: 0, rows: {}, last: [] };
+  for (let k = 1; k <= 14; k++) many.last.push({ a: k, d: "g", p: P, r: 1, w: 0, s: "s" + k });
+  assert.equal(m(many, many).last.length, 10);
+  assert.equal(m(many, many).last[0].a, 14);
+  const reset = m(AB, { ver: 1, br: 950, rows: {} });
+  assert.deepEqual(Object.keys(reset.days), [], "days of an older epoch drop");
+  assert.deepEqual(reset.last.map((v) => v.a), [1100, 1000]);
+  const bad = { ver: 1, br: 0, rows: {}, days: { x: { b: 0, w: 1, c: 7, t: 9 }, 5: { b: 0, w: 2, c: 7, t: 9 }, 6: { b: 0, w: 1, c: 8, t: 9 } },
+    last: [{ a: 5, d: "q", p: P, r: 1, w: 0, s: "a" }, { a: 5, d: "g", p: ["mage", "mage", "bard"], r: 1, w: 0, s: "a" }, { a: 5, d: "g", p: P, r: 4, w: 0, s: "a" }] };
+  assert.deepEqual([m(bad, bad).days, m(bad, bad).last], [{}, []], "bad entries drop");
+  assert.equal(J(m({ ver: 1, br: 0, rows: {} }, { ver: 1, br: 0, rows: {} })), J({ ver: 1, br: 0, rows: {}, days: {}, last: [] }), "older data has no days");
+});
+
+test("wayfarers: the Daily trial — a party of the day from the code, the Greenway only, then the journey ends", () => {
+  const p1 = E.dailyParty("wf20261108");
+  assert.deepEqual(E.dailyParty("wf20261108"), p1, "the same party from the same code");
+  assert.ok(E.partyOk(p1));
+  const front = (c) => E.CLASSES[c].row === "f";
+  for (let k = 1; k < 3; k++) assert.ok(!(front(p1[k]) && !front(p1[k - 1])), "front row first");
+  const seen = {};
+  for (let d = 0; d < 60; d++) seen[E.dailyParty("wf" + d).join()] = 1;
+  assert.ok(Object.keys(seen).length >= 10, "the party changes with the day");
+  const st = E.newJourney("wf20261108", "h", p1, 1);
+  assert.equal(st.end, 1);
+  assert.ok(E.valid(st));
+  assert.equal(E.newJourney("x", "h", p1, 3).end, undefined, "end only below the last region");
+  // the guardian of the Greenway down: the journey is won, no second region
+  let through = 0;
+  for (let d = 0; d < 20; d++) {
+    const seed = "wf" + d, g = journey(seed, "h", E.dailyParty(seed), true, 1);
+    assert.equal(g.region, 1);
+    if (g.over === 1) { through++; assert.equal(g.map[g.at].k, "g"); }
+  }
+  assert.ok(through >= 12, "a combo bot passes most daily trials: " + through + "/20");
+  const bad = JSON.parse(JSON.stringify(st));
+  bad.region = 2;
+  assert.ok(!E.valid(bad), "a trial never walks past its last region");
+  bad.region = 1; bad.end = 3;
+  assert.ok(!E.valid(bad));
 });

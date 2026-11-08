@@ -231,3 +231,13 @@ test("gamecenter: the Daily crypt counts in Today and the streak when you get ou
   crypt.days[TODAY] = { b: 0, w: 0, f: 3, t: 120 };
   assert.equal(sum({ "oros-crypt-data": crypt }).games.crypt.today, 2, "a fall today: tried, not out");
 });
+
+test("gamecenter: the Wayfarers Daily trial counts in Today and the streak when you pass it, never in journeys", () => {
+  const wf = { ver: 1, br: 0, rows: { aaaaaa: { b: 0, s: { h: [2, 1, 1] }, c: {} } },
+    days: { [TODAY]: { b: 0, w: 1, c: 7, t: 210 }, [TODAY - 1]: { b: 0, w: 0, c: 4, t: 90 } }, last: [] };
+  const s = sum({ "oros-wayfarers-data": wf });
+  assert.ok(C.DAILY.includes("wayfarers"));
+  assert.deepEqual([s.games.wayfarers.p, s.games.wayfarers.w, s.games.wayfarers.dn, s.games.wayfarers.cur, s.games.wayfarers.today], [2, 1, 1, 1, 1]);
+  wf.days[TODAY] = { b: 0, w: 0, c: 3, t: 50 };
+  assert.equal(sum({ "oros-wayfarers-data": wf }).games.wayfarers.today, 2, "a fall today: tried, not through");
+});

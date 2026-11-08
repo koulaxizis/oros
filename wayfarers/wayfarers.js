@@ -54,6 +54,11 @@
   var DK = window.orosDaily || null;  // gamekit/daily.js (the Game Center link)
   var REGIONS_N = E.REGIONS.length;
   var BIG = 1e9;
+  var DAILY_END = 1;                   // the Daily trial walks the Greenway…
+  var DAILY_DIFF = "h";                // …on Hardy
+  var MAX_DAY = 100000;
+  var MAX_ACTS = 99999;
+  var LAST_N = 10;
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -266,6 +271,20 @@
       "stats.close": "Close", "stats.code": "This journey: {seed}", "stats.classes": "Wins by class", "daily.games": "All games",
       "confirm.reset": "Reset your Wayfarers records on all your devices?", "confirm.yes": "Reset", "confirm.no": "Cancel",
       "toast.reset": "Records reset", "toast.save": "Could not save: storage is full",
+      "btn.daily": "Daily trial", "daily.label": "Daily",
+      "daily.title": "Daily trial #{n}", "daily.won": "Through in {t} moves", "daily.lost": "Fell at stop {c} of {m}",
+      "daily.party": "Party", "daily.moves": "Moves", "daily.streak": "Streak", "daily.best": "Best streak",
+      "daily.oneTry": "The daily trial has one try.", "daily.next": "A new trial tomorrow.",
+      "daily.free": "Free journey", "daily.share": "Share",
+      "daily.rules": "Daily trial: the Greenway on Hardy with today's party. Beat its guardian; one try.",
+      "daily.leave": "Leave today's trial? It counts as your one try.", "daily.leaveYes": "Leave it", "daily.leaveNo": "Keep playing",
+      "daily.giveUp": "Start today's trial? The journey in progress counts as lost.", "daily.go": "Start the trial",
+      "stats.daily": "Daily trial", "stats.dailyRow": "Played · through · streak · best",
+      "share.won": "Through in {t} moves", "share.lost": "Fell at stop {c}/{m}",
+      "last.title": "Last journeys", "last.won": "Journey done", "last.passed": "Through", "last.fell": "Fell in {r}",
+      "last.replay": "Replay", "last.replayLabel": "Replay journey {seed}",
+      "toast.dailyGone": "The daily trial needs the gamekit file: reload orOS",
+      "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared", "toast.copyFail": "Could not copy",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
       "tour.1": "Lead three heroes across the land. Tap a lit stop on the map to go there; the guardian waits at the end.",
       "tour.2": "In a fight everyone acts in Speed order, shown at the top. Each foe shows its next move and whom it will hit.",
@@ -472,6 +491,20 @@
       "stats.close": "Κλείσιμο", "stats.code": "Αυτό το ταξίδι: {seed}", "stats.classes": "Νίκες ανά τάξη", "daily.games": "Όλα τα παιχνίδια",
       "confirm.reset": "Να μηδενιστούν τα ρεκόρ των Οδοιπόρων σε όλες τις συσκευές σου;", "confirm.yes": "Μηδενισμός", "confirm.no": "Άκυρο",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
+      "btn.daily": "Δοκιμασία της ημέρας", "daily.label": "Ημέρας",
+      "daily.title": "Δοκιμασία της ημέρας #{n}", "daily.won": "Πέρασες σε {t} κινήσεις", "daily.lost": "Έπεσες στη στάση {c} από {m}",
+      "daily.party": "Ομάδα", "daily.moves": "Κινήσεις", "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
+      "daily.oneTry": "Η δοκιμασία της ημέρας παίζεται μία φορά.", "daily.next": "Νέα δοκιμασία αύριο.",
+      "daily.free": "Ελεύθερο ταξίδι", "daily.share": "Κοινοποίηση",
+      "daily.rules": "Δοκιμασία της ημέρας: ο Πράσινος Δρόμος στο Σκληρό με τη σημερινή ομάδα. Νίκησε τον φύλακά του· μία προσπάθεια.",
+      "daily.leave": "Να αφήσεις τη σημερινή δοκιμασία; Μετρά ως η μία σου προσπάθεια.", "daily.leaveYes": "Άφησέ την", "daily.leaveNo": "Συνέχισε",
+      "daily.giveUp": "Να ξεκινήσει η σημερινή δοκιμασία; Το ταξίδι που παίζεις μετρά ως χαμένο.", "daily.go": "Ξεκίνα τη δοκιμασία",
+      "stats.daily": "Δοκιμασία της ημέρας", "stats.dailyRow": "Δοκιμασίες · περάσματα · σερί · καλύτερο",
+      "share.won": "Πέρασα σε {t} κινήσεις", "share.lost": "Έπεσα στη στάση {c}/{m}",
+      "last.title": "Τελευταία ταξίδια", "last.won": "Ολοκληρώθηκε", "last.passed": "Πέρασε", "last.fell": "Έπεσε: {r}",
+      "last.replay": "Ξανά", "last.replayLabel": "Ξανά το ταξίδι {seed}",
+      "toast.dailyGone": "Η δοκιμασία της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
+      "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε", "toast.copyFail": "Δεν αντιγράφηκε",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
       "tour.1": "Οδήγησε τρεις ήρωες μέσα από τον τόπο. Πάτα μια φωτισμένη στάση στον χάρτη για να πας εκεί· στο τέλος περιμένει ο φύλακας.",
       "tour.2": "Στη μάχη ο καθένας παίζει με σειρά Ταχύτητας, που φαίνεται πάνω. Κάθε εχθρός δείχνει την επόμενη κίνησή του και ποιον θα χτυπήσει.",
@@ -523,10 +556,38 @@
   //                                           c: { <class>: wins } } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
+  // days (5.71.00, older data has none): one Daily trial per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
+  // { "<day>": { b, w: 1 through | 0 fell, c: map column reached (0–7),
+  //   t: moves } }. The newer epoch wins; equal epochs keep the better
+  // result (through, then further, then fewer moves: a total order, so
+  // a join). Daily trials never count in rows.
+  // last (5.71.00): the last 10 journeys of every device,
+  // [{ a: end time ms, d: g|h|d (d = Daily), p: [3 classes],
+  //    r: region reached, w: 1 won | 0, s: seed }].
+  // Union by a + s, newest first, the first 10: a join; entries older
+  // than the reset stamp br drop.
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.c) || v.c < 0 || v.c >= E.COLS || !isInt(v.t) || v.t < 1 || v.t > MAX_ACTS) return null;
+    return { b: v.b, w: v.w, c: v.c, t: v.t };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  function dayBetter(a, c) {
+    if (a.w !== c.w) return a.w > c.w;
+    if (a.c !== c.c) return a.c > c.c;
+    return a.t < c.t;
+  }
+  function normLast(v) {
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "h", "d"].indexOf(v.d) < 0 ||
+        !E.partyOk(v.p) || !isInt(v.r) || v.r < 1 || v.r > REGIONS_N || (v.w !== 0 && v.w !== 1) ||
+        typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
+    return { a: v.a, d: v.d, p: v.p.slice(), r: v.r, w: v.w, s: v.s };
+  }
   function normRow(row) {
     if (!row || typeof row !== "object" || !isInt(row.b) || row.b < 0) return null;
     var s = {}, c = {}, any = false;
@@ -579,7 +640,33 @@
       CLASS_IDS.forEach(function (k) { if (r.c[k]) c[k] = r.c[k]; });
       sorted[id] = { b: r.b, s: s, c: c };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!dayKeyOk(k)) return;
+        var v = normDay(m[k]);
+        if (!v || v.b < br) return;
+        var cur = days[+k];
+        if (!cur || v.b > cur.b || (v.b === cur.b && dayBetter(v, cur))) days[+k] = v;
+      });
+    });
+    var sd = {};
+    Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    var seen = {}, last = [];
+    [a.last, b.last].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (x) {
+        var v = normLast(x);
+        if (!v || v.a < br) return;
+        var key = v.a + ":" + v.s;
+        // the same journey twice: keep one, by a fixed order
+        if (!seen[key] || cmpStr(JSON.stringify(v), JSON.stringify(seen[key])) > 0) seen[key] = v;
+      });
+    });
+    Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
+    last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
   }
   // [journeys, won, regions cleared] for a difficulty, all devices.
   function totals(diff) {
@@ -644,6 +731,36 @@
     save();
   }
 
+  // Daily results: trials played and passed, the current and best
+  // streak of passed days.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0;
+    Object.keys(data.days).forEach(function (k) {
+      n++;
+      if (data.days[k].w) { on[k] = true; w++; }
+    });
+    var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: s2.cur, best: s2.best };
+  }
+  // A journey ended: into Last journeys (once per journey).
+  function logJourney(won) {
+    if (!game || game.logged) return;
+    game.logged = true;
+    var v = normLast({ a: Date.now(), d: game.opts.day !== undefined ? "d" : game.opts.diff, p: game.opts.party,
+      r: st.region, w: won ? 1 : 0, s: game.opts.seed });
+    if (!v) return;
+    data.last = [v].concat(data.last || []);
+    data = mergeWayfarers(data, data);
+    save();
+  }
+  // One try a day: the first result counts.
+  function countDaily(day, won, col, moves) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    data.days[day] = { b: data.br, w: won ? 1 : 0, c: clamp(col, 0, E.COLS - 1), t: clamp(moves, 1, MAX_ACTS) };
+    data = mergeWayfarers(data, data);
+    save();
+  }
+
   // ---------- 3. Device-local prefs + session ----------
   var prefs = { diff: "g", party: ["knight", "mage", "cleric"], tour: false, fast: false };
   function loadPrefs() {
@@ -663,8 +780,9 @@
 
   // game = {
   //   g: engine state,
-  //   opts: { diff, seed, party: [3 classes] },
+  //   opts: { diff, seed, party: [3 classes], day (the Daily trial only) },
   //   counted: bool   the journey's end is in the records
+  //   logged: bool    the journey is in Last journeys
   // }
   var game = null;
 
@@ -673,14 +791,16 @@
     var o = s.opts;
     if (!o || DIFFS.indexOf(o.diff) < 0 || o.diff !== s.g.diff || typeof o.seed !== "string" || o.seed !== s.g.seed) return false;
     if (!E.partyOk(o.party) || o.party.join() !== s.g.party.map(function (h) { return h.c; }).join()) return false;
+    if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.end !== DAILY_END || o.diff !== DAILY_DIFF)) return false;
     return true;
   }
   function loadSession() {
     try {
       var s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
       if (validSession(s)) {
-        s.counted = s.counted === true;
-        return { g: s.g, opts: s.opts, counted: s.counted };
+        var o = { diff: s.opts.diff, seed: s.opts.seed, party: s.opts.party.slice() };
+        if (s.opts.day !== undefined) o.day = s.opts.day;
+        return { g: s.g, opts: o, counted: s.counted === true, logged: s.logged === true };
       }
     } catch (e) {}
     return null;
@@ -703,27 +823,39 @@
 
   function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0); }
   function makeGame(opts) {
-    return { g: E.newJourney(opts.seed, opts.diff, opts.party), opts: { diff: opts.diff, seed: opts.seed, party: opts.party.slice() }, counted: false };
+    var daily = opts.day !== undefined;
+    var o = { diff: opts.diff, seed: opts.seed, party: opts.party.slice() };
+    if (daily) o.day = opts.day;
+    return { g: E.newJourney(opts.seed, opts.diff, opts.party, daily ? DAILY_END : undefined), opts: o, counted: false, logged: false };
   }
   // Regions cleared so far (the guardian of the region in play not yet).
   function cleared(g) { return g.over === 1 ? REGIONS_N : g.region - 1; }
+  // A journey ended: the records (a Daily trial only in its day) and
+  // Last journeys.
+  function endJourney(won) {
+    game.counted = true;
+    if (game.opts.day !== undefined) countDaily(game.opts.day, won, st.map[st.at].c, st.acts);
+    else count(game.opts.diff, won, cleared(st), game.opts.party);
+    logJourney(won);
+  }
   function finishIfOver() {
     if (!game || st.over < 0 || game.counted) return;
-    game.counted = true;
-    count(game.opts.diff, st.over === 1, cleared(st), game.opts.party);
+    endJourney(st.over === 1);
     saveSession();
   }
   function startGame(opts) {
-    // a journey under way and left counts as lost
-    if (game && inProgressOf(game)) { game.counted = true; count(game.opts.diff, false, cleared(st), game.opts.party); }
+    // a journey under way and left counts as lost (a Daily trial too:
+    // its one try)
+    if (game && inProgressOf(game)) endJourney(false);
     game = makeGame(opts);
     st = game.g;
     sel = null;
     cursor = 0;
     saveSession();
-    setMsg(t("tale.1"));
+    var first = game.opts.day !== undefined ? t("daily.rules") : t("tale.1");
+    setMsg(first);
     renderAll();
-    live(t("tale.1") + " " + t("region." + E.REGIONS[st.region - 1].id));
+    live(first + " " + t("region." + E.REGIONS[st.region - 1].id));
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
@@ -1393,6 +1525,10 @@
       n.title = t("st." + k, { n: st.inv[k] });
       n.setAttribute("aria-label", n.title);
     });
+    var db = $("daily-btn");
+    db.hidden = !DK;
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", game.opts.day !== undefined && !game.counted);
   }
   function actBtn(label, cost, on, pressed, fn, title) {
     var b = el("button", "act");
@@ -1488,6 +1624,11 @@
 
   function newDialog() {
     cancelTourWait();
+    // Today's trial under way: leaving it uses the one try.
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      confirmDialog(t("daily.leave"), function () { leaveDaily(); newDialog(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+      return;
+    }
     var o = { diff: prefs.diff, party: prefs.party.slice() };
     var dlg = makeDialog("wf-new");
     dlg.appendChild(el("div", "dlg-title", t("new.title")));
@@ -1794,6 +1935,7 @@
 
   function resultDialog() {
     if (!game || st.over < 0 || document.querySelector("dialog[open]")) return;
+    if (game.opts.day !== undefined && data.days[game.opts.day]) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("wf-result");
     var won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
@@ -1825,9 +1967,14 @@
     });
     dlg.appendChild(el("div", "dlg-sub", t("stats.classes")));
     CLASS_IDS.forEach(function (k) { dlg.appendChild(row(t("cls." + k), String(classWins(k)))); });
-    if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
+    var ds = dailyStats(today());
+    if (ds.n || (data.last || []).length) empty = false;
+    dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+    dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    lastJourneys(dlg);
+    if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
-    if (DK && DK.hasHub()) acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("wayfarers"); }));
+    hubLink(acts, dlg);
     var reset = button(t("stats.reset"), "danger", function () {
       dlg.close();
       confirmDialog(t("confirm.reset"), resetRecords);
@@ -1849,6 +1996,104 @@
     dlg.appendChild(acts);
     show(dlg, no);
   }
+  // Records › Last journeys: how each one ended, and its code to replay
+  // (a Daily trial replays as a whole journey on Hardy, same land and
+  // party, counted as a normal journey).
+  function lastJourneys(dlg) {
+    var list = data.last || [];
+    if (!list.length) return;
+    dlg.appendChild(el("div", "dlg-sub", t("last.title")));
+    var box = el("div", "lr-list");
+    list.forEach(function (v) {
+      var r = el("div", "lr-row");
+      var what = v.w ? t(v.d === "d" ? "last.passed" : "last.won") : t("last.fell", { r: t("region." + E.REGIONS[v.r - 1].id) });
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
+      tx.appendChild(el("div", "fx", v.p.map(function (c) { return t("cls." + c); }).join(", ") + " · " +
+        (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") + v.s));
+      r.appendChild(tx);
+      var b = button(t("last.replay"), "", function () {
+        dlg.close();
+        var go = function () { startGame({ diff: v.d === "d" ? DAILY_DIFF : v.d, seed: v.s, party: v.p }); };
+        if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), go, t("daily.leaveYes"), t("daily.leaveNo"));
+        else go();
+      });
+      b.setAttribute("aria-label", t("last.replayLabel", { seed: v.s }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+  }
+
+  // ---------- Daily trial ----------
+  // The Greenway on Hardy, the same land, party and spoils for everyone
+  // that day (the seed "wf" + the date: the game id would make the code
+  // longer than 16 letters), one try.
+  function today() { return DK ? DK.today() : 0; }
+  function dailyOpts(day) {
+    var seed = cleanSeed(DK.seedOf("wf", day));
+    return { diff: DAILY_DIFF, seed: seed, party: E.dailyParty(seed), day: day };
+  }
+  // A Daily trial left before its end counts as a fall where it was.
+  function leaveDaily() {
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      endJourney(false);
+      saveSession();
+      renderAll();
+    }
+  }
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's trial (resumed when it is open).
+  function openDaily() {
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d); return; }
+    if (game && game.opts.day === d && !game.counted) return;
+    var go = function () { startGame(dailyOpts(d)); };
+    if (game && inProgressOf(game)) confirmDialog(t("daily.giveUp"), go, t("daily.go"), t("daily.leaveNo"));
+    else go();
+  }
+  function dailyDialog(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var s2 = dailyStats(today());
+    var dlg = makeDialog("wf-daily");
+    dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), r.w ? t("daily.won", { t: r.t }) : t("daily.lost", { c: r.c + 1, m: E.COLS })));
+    dlg.appendChild(row(t("daily.party"), E.dailyParty(cleanSeed(DK.seedOf("wf", day))).map(function (c) { return t("cls." + c); }).join(", ")));
+    dlg.appendChild(row(t("daily.moves"), String(r.t)));
+    dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
+    dlg.appendChild(row(t("daily.best"), String(s2.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-note", t("daily.oneTry") + " " + t("daily.next")));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
+    acts.appendChild(button(t("daily.share"), "", function () { shareDaily(day); }));
+    var free = button(t("daily.free"), "primary", function () { dlg.close(); newDialog(); });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    show(dlg, free);
+  }
+  // Spoiler-free: through or not, the stops reached as squares and the
+  // moves. Never what was where.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var sq = "";
+    for (var k = 1; k < E.COLS; k++) sq += k < r.c || (k === r.c && r.w) ? "🟪" : (k === r.c ? "🟥" : "⬜");
+    var text = DK.shareText({ game: t("app.name"), label: t("daily.label"), day: day, grid: [sq],
+      line: r.w ? "⚔ " + t("share.won", { t: r.t }) : "💀 " + t("share.lost", { c: r.c + 1, m: E.COLS }) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(acts, dlg) {
+    if (!DK || !DK.hasHub()) return;
+    acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("wayfarers"); }));
+  }
+
   // Reset = a new epoch: every device drops rows older than br.
   function resetRecords() {
     data.br = Math.max(Date.now(), data.br + 1);
@@ -1961,7 +2206,8 @@
     gold:   SVG + '<circle cx="12" cy="12" r="8"/><path d="M12 8v8M9.5 10.5h4a1.5 1.5 0 0 1 0 3h-3"/></svg>',
     p:      SVG + '<path d="M9 3h6M10 3v5l-4 7a4 4 0 0 0 3.5 6h5A4 4 0 0 0 18 15l-4-7V3"/></svg>',
     t:      SVG + '<path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z"/></svg>',
-    f:      SVG + '<path d="M20 4C10 4 5 10 4 20M20 4c0 6-4 11-12 12M9 15c2-2 5-6 7-8"/></svg>'
+    f:      SVG + '<path d="M20 4C10 4 5 10 4 20M20 4c0 6-4 11-12 12M9 15c2-2 5-6 7-8"/></svg>',
+    daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M12 13l1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/></svg>'
   };
   function paintSfxBtn() {
     var b = $("sfx-btn"), on = sfxOn();
@@ -2042,7 +2288,7 @@
     $("party-btn").title = t("btn.partyKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -2058,6 +2304,9 @@
     $("new-btn").addEventListener("click", function () { newDialog(); });
     $("party-btn").addEventListener("click", partyDialog);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("daily-btn").addEventListener("click", openDaily);
+    // Deep link from the Game Center: { daily: true } opens today's trial.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("fast-btn").addEventListener("click", function () { prefs.fast = !prefs.fast; savePrefs(); paintFastBtn(); });
     $("sfx-btn").addEventListener("click", function () {
       try { localStorage.setItem(SFX_KEY, sfxOn() ? "0" : "1"); } catch (e) {}
@@ -2086,13 +2335,20 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
+    var tg = DK ? DK.takeTarget("wayfarers") : null;
+    var daily = !!(tg && tg.daily && DK);
+    if (daily && !data.days[today()] && !(game && game.opts.day === today() && !game.counted)) {
+      // today's trial straight away, unless a journey under way would count as lost
+      if (!game || !inProgressOf(game)) { game = makeGame(dailyOpts(today())); daily = false; }
+    }
     if (!game) game = makeGame({ diff: prefs.diff, seed: newSeed(), party: prefs.party });
     st = game.g;
     saveSession();
-    setMsg(st.fight ? t("fight." + st.fight.kind) : t("map.go"));
+    setMsg(st.fight ? t("fight." + st.fight.kind) : (game.opts.day !== undefined && !st.acts ? t("daily.rules") : t("map.go")));
     resize();
     renderAll();
-    if (st.over >= 0) setTimeout(resultDialog, 300);
+    if (daily) setTimeout(openDaily, 300);
+    else if (st.over >= 0) setTimeout(resultDialog, 300);
     else if (!st.fight && st.pend.length) setTimeout(pendDialog, 300);
     else maybeTour();
   }
