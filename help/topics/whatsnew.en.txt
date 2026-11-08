@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.90.02
+- **Publishing prices read right.** Claude and the Assistant read a Publishing title at 18 € as 0.18 €; they now see the real price, and a title's notes as well.
+
 ## Version 5.90.01
 - **Adding titles is stricter.** When Claude or the Assistant adds items with details an app has no place for, nothing is added and it hears which details those were, instead of losing them. Publishing titles also take the cover designer, the narrator and other people (for example typesetting).
 

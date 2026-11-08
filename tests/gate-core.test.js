@@ -158,14 +158,16 @@ test("stock_items: quantity from movements, low, query, archived", () => {
 
 test("publish_titles: status, people, formats, query by ISBN, tombstones", () => {
   const raw = { ver: 1, tombs: { t3: 9 }, titles: [
-    { id: "t1", m: 1, t: "Ψίθυρος", st: "out", rel: "2026-05-01", ppl: [{ r: "a", n: "Νίκη" }], fmts: [{ id: "f1", k: "pb", isbn: "9786185321001", price: 1500, pages: 120 }] },
+    { id: "t1", m: 1, t: "Ψίθυρος", st: "out", rel: "2026-05-01", ppl: [{ r: "a", n: "Νίκη" }], fmts: [{ id: "f1", k: "pb", isbn: "9786185321001", price: 15, pages: 120 }], notes: "Only for the owner" },
     { id: "t2", m: 1, t: "Άλφα", st: "idea" },
     { id: "t3", m: 1, t: "Gone", st: "out" }
   ] };
   const r = G.publishTitles(raw, {});
   assert.deepEqual(r.data.titles.map((t) => t.id), ["t2", "t1"]);
   assert.deepEqual(r.data.titles[1], { id: "t1", title: "Ψίθυρος", status: "published", release: "2026-05-01",
-    people: [{ role: "author", name: "Νίκη" }], formats: [{ format: "paperback", isbn: "9786185321001", price: "15.00", pages: 120 }] });
+    people: [{ role: "author", name: "Νίκη" }], formats: [{ format: "paperback", isbn: "9786185321001", price: "15.00", pages: 120 }], notes: "Only for the owner" });
+  // the list price is in units (publish/core.js), not cents (5.90.02)
+  assert.equal(G.publishTitles({ ver: 1, titles: [{ id: "t9", m: 1, t: "Άμμος", fmts: [{ id: "f", k: "pb", price: 18 }] }] }, {}).data.titles[0].formats[0].price, "18.00");
   assert.deepEqual(G.publishTitles(raw, { status: "published" }).data.titles.map((t) => t.id), ["t1"]);
   assert.deepEqual(G.publishTitles(raw, { query: "9786185321001" }).data.titles.map((t) => t.id), ["t1"]);
   assert.equal(G.publishTitles(raw, { status: "sold" }).ok, false);
