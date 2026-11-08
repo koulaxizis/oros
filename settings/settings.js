@@ -798,7 +798,7 @@
 
   // orOS Gate (gate.js, BR-GATE): Claude reads the apps set to Read,
   // through this device while orOS is open. Off by default, per device.
-  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "";
+  var gateOff = null, gateNote = "", gateInfo = null, gateLogOpen = false, gateUndoMsg = "", gateJoin = null, gateWatch = null, gatePre = "", gateNoSync = false, gateSens = "", gateFind = "";
   // The join code as a QR (qr/qr-encode.js): an <svg> of dark squares on white.
   function gateQr(text) {
     var Q = window.orosQR;
@@ -954,16 +954,55 @@
         c.appendChild(actions(button(t("gt.pair.go"), "gt.pair.go", sendPair)));
       }
       c.appendChild(el("div", "hint", t("gt.apps.hint")));
-      var list = el("div", "checks");
-      var allApps = G.apps(), sensHead = false;
-      // The personal apps last, under their own warning (5.90.00).
-      allApps.filter(function (a) { return !a.sensitive; }).concat(allApps.filter(function (a) { return a.sensitive; })).forEach(function (a) {
-        if (a.sensitive && !sensHead) {
-          sensHead = true;
-          list.appendChild(el("div", "hint gt-sens-head", t("gt.sens.head")));
-        }
-        var line = el("div", "pair");
-        line.appendChild(el("span", "pair-label", a.sensitive ? a.name + " · " + t("gt.sens.tag") : a.name));
+      // One box per app, the same in every column: the name and its read
+      // switch, and for an app Claude can change a second line «May change»
+      // (turning it on turns reading on too). Find field and bulk buttons
+      // act on the apps shown; never-apps are not in G.apps() at all.
+      var all = G.apps();
+      var nOn = all.filter(function (a) { return a.read; }).length;
+      var nW = all.filter(function (a) { return a.write; }).length;
+      c.appendChild(el("p", "m-count", t("gt.count", { n: nOn, m: all.length, w: nW })));
+      var gf = el("input", "m-find");
+      gf.type = "text";
+      gf.id = "f-gt-find";
+      gf.autocomplete = "off";
+      gf.spellcheck = false;
+      gf.placeholder = t("gt.find");
+      gf.setAttribute("aria-label", t("gt.find"));
+      gf.setAttribute("data-k", "gt-find");
+      gf.value = gateFind;
+      gf.addEventListener("input", function () { gateFind = gf.value; render(); });
+      gf.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && gf.value) { e.preventDefault(); e.stopPropagation(); gateFind = ""; render(); }
+      });
+      c.appendChild(gf);
+      var shownApps = C.gateFilter(all, gateFind);
+      var bulk = function (action) {
+        var lv = C.gateBulk(C.gateFilter(G.apps(), gateFind), action, G.never);
+        if (!Object.keys(lv).length) return;
+        var r = typeof G.setApps === "function" ? G.setApps(lv) : -1;
+        if (r < 0) gateNote = "gt.fail";
+        render();
+      };
+      var bOn = confirmBtn(t("gt.all.on"), t("gt.all.on.sure"), "gt.all.on", function () { bulk("on"); });
+      var bOff = button(t("gt.all.off"), "gt.all.off", function () { bulk("off"); });
+      var bW = confirmBtn(t("gt.all.write"), t("gt.all.write.sure"), "gt.all.write", function () { bulk("write"); });
+      var bR = button(t("gt.all.read"), "gt.all.read", function () { bulk("read"); });
+      bOn.disabled = !shownApps.some(function (a) { return !a.read; });
+      bOff.disabled = !shownApps.some(function (a) { return a.read; });
+      bW.disabled = !shownApps.some(function (a) { return a.canWrite && !a.write; });
+      bR.disabled = !shownApps.some(function (a) { return a.write; });
+      c.appendChild(actions(bOn, bOff, bW, bR));
+      if (gateFind.trim() && shownApps.length) c.appendChild(el("div", "hint", t("gt.all.shown", { n: shownApps.length })));
+      if (!shownApps.length) c.appendChild(el("p", "hint", t("gt.find.none", { q: gateFind.trim() })));
+      // The personal apps (5.90.00) last, in their own grid under their
+      // warning; a bulk button never turns one on (each needs its warning).
+      var boxOf = function (a) {
+        var box = el("div", "gt-app" + (a.read ? " on" : "") + (a.sensitive ? " sens" : ""));
+        var line = el("div", "gt-line");
+        var nm = el("span", "gt-name", a.sensitive ? a.name + " · " + t("gt.sens.tag") : a.name);
+        nm.title = a.name;
+        line.appendChild(nm);
         line.appendChild(switchBtn(a.read, "gt.app:" + a.id, function (v) {
           // A personal app: the switch first shows the warning; only
           // «Allow anyway» turns it on.
@@ -972,8 +1011,9 @@
           if (!G.setApp(a.id, v ? "read" : false)) gateNote = "gt.fail";
           render();
         }, t("gt.read", { app: a.name })));
-        list.appendChild(line);
+        box.appendChild(line);
         if (a.sensitive && gateSens === a.id && !a.read) {
+          box.classList.add("warn");
           var wb = el("div", "gt-sens-warn");
           wb.setAttribute("role", "alert");
           wb.appendChild(el("div", "hint", t("gt.sens.warn", { app: a.name })));
@@ -984,19 +1024,32 @@
               render();
             }, "danger"),
             button(t("gt.sens.no"), "gt.sens.no:" + a.id, function () { gateSens = ""; render(); })));
-          list.appendChild(wb);
+          box.appendChild(wb);
         }
-        if (a.canWrite && a.read) {
-          var wl = el("div", "pair");
-          wl.appendChild(el("span", "pair-label", t("gt.write", { app: a.name })));
+        if (a.canWrite) {
+          var wl = el("div", "gt-line gt-sub");
+          wl.appendChild(el("span", "gt-name", t("gt.change")));
           wl.appendChild(switchBtn(a.write, "gt.write:" + a.id, function (v) {
             if (!G.setApp(a.id, v ? "write" : "read")) gateNote = "gt.fail";
             render();
           }, t("gt.write", { app: a.name })));
-          list.appendChild(wl);
+          box.appendChild(wl);
         }
-      });
-      c.appendChild(list);
+        return box;
+      };
+      var plain = shownApps.filter(function (a) { return !a.sensitive; });
+      var pers = shownApps.filter(function (a) { return a.sensitive; });
+      if (plain.length) {
+        var list = el("div", "gt-apps");
+        plain.forEach(function (a) { list.appendChild(boxOf(a)); });
+        c.appendChild(list);
+      }
+      if (pers.length) {
+        c.appendChild(el("div", "hint gt-sens-head", t("gt.sens.head")));
+        var plist = el("div", "gt-apps");
+        pers.forEach(function (a) { plist.appendChild(boxOf(a)); });
+        c.appendChild(plist);
+      }
       var writers = G.apps().filter(function (a) { return a.write; }).map(function (a) { return a.name; });
       if (writers.length) {
         // One rule (5.78.00): no write window; changes can be paused.

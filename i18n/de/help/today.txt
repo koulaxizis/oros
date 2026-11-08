@@ -15,6 +15,19 @@ Tippe oder klicke auf den Titel einer Gruppe, um sie einzuklappen. Tippe oder kl
 
 Aufgaben aus [Aufgaben](app:todo) und [Pflanzenpflege](app:plants) haben außerdem einen Haken-Button, `Erledigt (öffnet die App)`. Er öffnet die App, die die Aufgabe selbst als erledigt markiert: Aufgaben hakt sie ab (dort nimmst du den Haken wieder weg) und Pflanzenpflege trägt sie ein, mit `Rückgängig` in ihrer Meldung.
 
+## Details und Vorschläge
+Viele Zeilen haben einen (i)-Button, `Details und Vorschläge`. Er öffnet unter der Zeile ein kleines Feld mit:
+- Details: Beginn und Ende eines Termins, die Tage einer Reise oder Messe, die erste Zeile der Notiz; die Priorität einer Aufgabe, wie viele ihrer Schritte erledigt sind und die erste Zeile ihrer Notiz; die Serie einer Gewohnheit;
+- einem Tipp, etwa rechtzeitig nach dem Weg zu einem Termin mit Ort zu schauen, sich am Vorabend auf einen frühen Start vorzubereiten, ein Geschenk ein paar Tage vor einem Geburtstag, oder einer Aufgabe, die über eine Woche überfällig ist, ein neues Datum zu geben;
+- bis zu drei Buttons, die die App öffnen, die die Arbeit erledigt:
+- `Route`: [Karten](app:maps) mit dem Weg zum Ort des Termins.
+- `Karte öffnen`: der Kontakt in [Kontakte](app:contacts).
+- `Geschenkidee in To-Do` und `In To-Do`: der Hinzufügen-Dialog von [Aufgaben](app:todo) mit ausgefüllter Zeile; nichts wird hinzugefügt, bevor du dort auf Hinzufügen tippst.
+- `Morgen`: Aufgaben gibt einer überfälligen oder heute fälligen Aufgabe das morgige Datum, mit `Rückgängig` in der Meldung.
+- `Abhaken`: [Gewohnheiten](app:habits) hakt die Gewohnheit für heute ab (eine gezählte Gewohnheit öffnet dort ihren Tag).
+- Neben der Wasserzeile steht `+1 Glas`, solange das heutige Ziel nicht erreicht ist; [Wasser](app:water) trägt es ein, mit `Rückgängig`.
+Heute selbst ändert nie etwas: jede App erledigt die Arbeit mit ihrem eigenen Code. Die Tipps entstehen auf diesem Gerät aus deinen eigenen Daten, ohne Netz und ohne KI. Wenn du den Assistenten zu einer Zeile fragst, gehen die Details mit der Frage mit.
+
 ## Widgets
 Mach Heute zu deinem eigenen Bildschirm, wie die Widgets auf dem Startbildschirm eines Handys. Drück oben auf `Anpassen` (die vier Quadrate):
 - Zieh ein Widget an seinem Griff (den sechs Punkten), um es zu verschieben, mit der Maus oder dem Finger. Die Pfeile nach oben und unten verschieben es ebenfalls um einen Platz, praktisch auf einem Touchscreen oder mit der Tastatur.

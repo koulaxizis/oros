@@ -25,6 +25,14 @@
 //       done   optional small JSON value: the row gets a "Done" button
 //              that opens the app with __orosOpenAt(app, { done });
 //              the APP ticks it with its own code (Today never writes)
+//       more   optional, up to 3 short PLAIN lines shown in the row's
+//              details (place, notes, how late, who) (BR-TODAY-15)
+//       tip    optional, one short PLAIN line of advice
+//       acts   optional, up to 3 suggested actions { k, app?, target }:
+//              k from ACTS (Today draws the label and icon, never the
+//              provider), app = the app that does it (default the
+//              row's), target = what that app's receiver gets. The app
+//              does the work with its own code (Today never writes)
 //   • READ-ONLY: a provider never writes storage, never talks to sync,
 //     never fetches. The date logic stays in the app's own core; the
 //     provider only turns its answer into rows.
@@ -58,6 +66,20 @@
   var ID_RE   = /^[a-z0-9][a-z0-9_-]{0,40}$/;
   var FILE_RE = /^[a-z0-9][a-z0-9_-]{0,40}\.js$/;
   var KINDS   = { task: 1, event: 1, info: 1 };
+  // Suggested actions (BR-TODAY-15): the only kinds a row may offer.
+  // "via" open = through the app's Today provider open(); at = straight
+  // to the app's own __orosOpenAt receiver.
+  var ACTS = {
+    route:   "at",     // Maps: { routeTo: { query, name } }
+    contact: "open",   // Contacts: { contact }
+    gift:    "at",     // To-Do: { addItems: { items, from } } (a dialog, nothing saved until Add)
+    todo:    "at",     // To-Do: the same dialog, for a reminder (wishes, a call)
+    later:   "at",     // To-Do: { later: { list, item, days } } (Undo in To-Do)
+    tick:    "at",     // Habits: { tick: { id, name } }
+    sip:     "at",     // Water: { sip: "glass" } (Undo in Water)
+    open:    "open"    // any app: its own item, like the row's title
+  };
+  var MORE_MAX = 3, MORE_LEN = 120, TIP_LEN = 200, ACTS_MAX = 3;
 
   function has(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
   function cmpStr(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
@@ -116,8 +138,39 @@
       text: str(r.text, TEXT_LEN),
       kind: kind,
       target: cleanTarget(r.target),
-      done: cleanTarget(r.done)
+      done: cleanTarget(r.done),
+      more: cleanMore(r.more),
+      tip: str(r.tip, TIP_LEN),
+      acts: cleanActs(r.acts, app)
     };
+  }
+  function cleanMore(list) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    for (var i = 0; i < list.length && out.length < MORE_MAX; i++) {
+      var s = str(list[i], MORE_LEN);
+      if (s && out.indexOf(s) < 0) out.push(s);
+    }
+    return out;
+  }
+  // { k, app?, target } → { k, app, target, via } or null. A target is
+  // required (the receiver needs to know what); one action per kind.
+  function cleanAct(a, app) {
+    if (!isObj(a) || typeof a.k !== "string" || !has(ACTS, a.k)) return null;
+    var to = a.app === undefined ? app : a.app;
+    if (typeof to !== "string" || !ID_RE.test(to)) return null;
+    var target = cleanTarget(a.target);
+    if (target === null) return null;
+    return { k: a.k, app: to, target: target, via: ACTS[a.k] };
+  }
+  function cleanActs(list, app) {
+    if (!Array.isArray(list)) return [];
+    var out = [], seen = {};
+    for (var i = 0; i < list.length && out.length < ACTS_MAX; i++) {
+      var a = cleanAct(list[i], app);
+      if (a && !seen[a.k]) { seen[a.k] = 1; out.push(a); }
+    }
+    return out;
   }
 
   // ---------- 3. Groups ----------
@@ -380,7 +433,8 @@
   // ---------- 7. Text for the Assistant ----------
   function askText(row, appName, day, lang) {
     var s = words(lang)["n.ask"].replace("{d}", day).replace("{a}", str(appName, 60))
-      .replace("{t}", row.title + (row.time ? " (" + row.time + ")" : "") + (row.text ? " — " + row.text : ""));
+      .replace("{t}", row.title + (row.time ? " (" + row.time + ")" : "") + (row.text ? " — " + row.text : "") +
+        (Array.isArray(row.more) && row.more.length ? " — " + row.more.join(" · ") : ""));
     return s.slice(0, 2000);
   }
 
@@ -399,7 +453,7 @@
     MIN_HOUR: MIN_HOUR, MAX_HOUR: MAX_HOUR, EMPTY_RETRY_MS: EMPTY_RETRY_MS, FAIL_GRACE_MS: FAIL_GRACE_MS,
     SYNC_WAIT_MS: SYNC_WAIT_MS, DEFAULT_OFF: DEFAULT_OFF, DATA_VER: DATA_VER, ID_RE: ID_RE,
     ymdOf: ymdOf, isYmd: isYmd, addDays: addDays, diff: diff,
-    cleanRow: cleanRow, group: group, trim: trim, counts: counts, worthNotice: worthNotice,
+    ACTS: ACTS, cleanRow: cleanRow, cleanAct: cleanAct, group: group, trim: trim, counts: counts, worthNotice: worthNotice,
     noticeText: noticeText, run: run,
     normData: normData, merge: merge, setField: setField, appOn: appOn, appOnDefault: appOnDefault,
     decide: decide, settled: settled, askText: askText, todayFiles: todayFiles

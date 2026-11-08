@@ -13,9 +13,9 @@
 //     bud), then tap a lit tile; Undo and Reset turn are free
 //   - a long press on any tile shows its text
 //   - a short "How to play" on the first year
-//   - the Daily glade (5.91.00): one season on Hardy, the same for
+//   - the Daily glade (5.94.00): one season on Hardy, the same for
 //     everyone that day, one try; in the Game Center's Today
-//   - Last years with Replay (5.91.00)
+//   - Last years with Replay (5.94.00)
 //   - a year over four glades (meadow, riverbank, rocky hill, old
 //     forest), three seasons each (5.92.00)
 //   - 20 root puzzles: one turn with a fixed amount of sap (W3b)
@@ -26,7 +26,7 @@
 //     the best year score per difficulty, and the longest root, as
 //     per-device counter rows (each device only grows its own row;
 //     merge = per-row max, a join) + reset stamp br (as Fieldwarden),
-//     days (the Daily glade) and last (Last years), 5.91.00
+//     days (the Daily glade) and last (Last years), 5.94.00
 //   - device-local (R10): oros-roots-prefs (difficulty, tour seen,
 //     quick, threats), oros-roots-session (the year in progress),
 //     oros-roots-device (counter row id), oros-roots-sfx (sound)
@@ -318,13 +318,13 @@
   //                                           lr: the longest root } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
-  // days (5.91.00, older data has none): one Daily glade per calendar
+  // days (5.94.00, older data has none): one Daily glade per calendar
   // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
   // { "<day>": { b, w: 1 quota met | 0, h: score, t: actions, n: bloom,
   //   q: quota } }. The newer epoch wins; equal epochs keep the better
   // result (quota met, then the higher score, then fewer actions, then
   // the larger JSON: a total order, so a join). Never counted in rows.
-  // last (5.91.00): the last 10 years of every device,
+  // last (5.94.00): the last 10 years of every device,
   // [{ a: end time ms, d: m|h|d (d = Daily), n: seasons met, w: 1
   //    finished (Daily: quota met) | 0, h: score, s: year code }].
   // Union by a + s, newest first, the first 10: a join; entries older

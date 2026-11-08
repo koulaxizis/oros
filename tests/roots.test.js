@@ -432,7 +432,7 @@ test("roots: a year moves through four glades, each with its own soil and pests"
 test("roots: a year saved before the glades is a one-glade year", () => {
   const st = E.newYear("old1", "m");
   delete st.gl; delete st.end; delete st.pts;
-  assert.ok(E.valid(st), "a session from 5.91.00 still loads");
+  assert.ok(E.valid(st), "a session from 5.94.00 still loads");
   st.s.turn = E.T; st.sea = 3; st.bk[1] = 4; st.s.q = 1;
   E.act(st, { t: "end" });
   assert.equal(st.over, 1, "its third season ends the year");

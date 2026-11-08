@@ -309,3 +309,33 @@ test("find: the menu search's topics land on a setting of their section", () => 
   assert.match(APP, /C\.findItem\(tg\.item\)/);
   assert.match(APP, /C\.findItem\(target\.item\)/);
 });
+
+test("orOS Gate switches: find field and bulk buttons (GT-BULK)", () => {
+  const apps = [
+    { id: "kanban", name: "Kanban", read: true, write: true, canWrite: true },
+    { id: "notes", name: "Notes", read: true, write: false, canWrite: true },
+    { id: "time", name: "Time", read: false, write: false, canWrite: false },
+    { id: "chorewheel", name: "Τροχός δουλειών", read: false, write: false, canWrite: true },
+    { id: "passwords", name: "Passwords", read: false, write: false, canWrite: true },
+    { id: "diary", name: "Diary", read: false, write: false, canWrite: false, sensitive: true },
+    { id: "mood", name: "Mood", read: true, write: false, canWrite: false, sensitive: true }
+  ];
+  const NEVER = ["passwords"];
+  assert.deepEqual(C.gateFilter(apps, "").length, 7);
+  assert.deepEqual(C.gateFilter(apps, "NOT").map((a) => a.id), ["notes"], "by name, any case");
+  assert.deepEqual(C.gateFilter(apps, "τροχος").map((a) => a.id), ["chorewheel"], "accents folded");
+  assert.deepEqual(C.gateFilter(apps, "chore").map((a) => a.id), ["chorewheel"], "by id");
+  assert.deepEqual(C.gateBulk(apps, "on", NEVER), { time: "read", chorewheel: "read" }, "a «may change» stays, never-apps and personal apps left out");
+  assert.deepEqual(C.gateBulk(apps, "off", NEVER), { kanban: false, notes: false, mood: false }, "off turns personal apps off too");
+  assert.deepEqual(C.gateBulk(apps, "write", NEVER), { notes: "write", chorewheel: "write" }, "only apps that can be changed");
+  assert.deepEqual(C.gateBulk(apps, "read", NEVER), { kanban: "read" });
+  assert.deepEqual(C.gateBulk(C.gateFilter(apps, "note"), "write", NEVER), { notes: "write" }, "acts on the apps shown");
+  assert.deepEqual(C.gateBulk(apps, "nope", NEVER), {});
+  // The page sets them in one go, through the gate, which skips never-apps itself.
+  assert.match(APP, /G\.setApps\(lv\)/);
+  const GATE = fs.readFileSync(path.join(ROOT, "gate", "gate.js"), "utf8");
+  const set = GATE.slice(GATE.indexOf("setApps: function"), GATE.indexOf("setPause: function"));
+  assert.match(set, /NEVER\.indexOf\(id\) >= 0\) return;/);
+  assert.match(set, /level === "write" && !writable\(id\)\) return;/);
+  assert.match(set, /level && sensitive\(id\) && p\.lv\[id\] !== "read"\) return;/, "bulk never turns a personal app on");
+});

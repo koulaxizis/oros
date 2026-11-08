@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 41851 of 42124 (99%)
+- Strings: 41903 of 42176 (99%)
 - Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1793 / 1793 |
+| assistant | 100% | 1799 / 1799 |
 | atelier | 100% | 1402 / 1402 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 258 / 258 |
@@ -25,7 +25,7 @@ text is still written in the code. They switch over wave by wave
 | bubble | 100% | 54 / 54 |
 | budget | 90% | 1026 / 1132 |
 | calculator | 100% | 166 / 166 |
-| calendar | 98% | 433 / 441 |
+| calendar | 98% | 440 / 448 |
 | capture | 100% | 54 / 54 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -36,7 +36,7 @@ text is still written in the code. They switch over wave by wave
 | chores | 100% | 207 / 207 |
 | commands | English for now | 81 / 81 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 334 / 334 |
+| contacts | 100% | 339 / 339 |
 | converter | 100% | 68 / 68 |
 | crm | 100% | 637 / 637 |
 | crossword | 100% | 171 / 171 |
@@ -62,13 +62,13 @@ text is still written in the code. They switch over wave by wave
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
-| habits | 100% | 173 / 173 |
+| habits | 100% | 178 / 178 |
 | hangman | 100% | 53 / 53 |
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
 | household | 99% | 142 / 143 |
-| invoices | 97% | 656 / 670 |
+| invoices | 97% | 658 / 672 |
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 276 / 276 |
 | labels | 100% | 88 / 88 |
@@ -125,7 +125,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 1002 / 1013 |
+| settings | 98% | 1013 / 1024 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1122 / 1126 |
@@ -153,8 +153,8 @@ text is still written in the code. They switch over wave by wave
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
 | timesheet | 99% | 379 / 382 |
-| today | 100% | 104 / 104 |
-| todo | 100% | 261 / 261 |
+| today | 100% | 115 / 115 |
+| todo | 100% | 266 / 266 |
 | together | 100% | 303 / 303 |
 | travel | 100% | 555 / 555 |
 | trees | 100% | 76 / 76 |

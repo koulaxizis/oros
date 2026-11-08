@@ -1,4 +1,11 @@
 orosPack("de", "calendar", {
+ "tdy.span": "{s}–{e}",
+ "tdy.days": "Vom {s} bis {e}",
+ "tdy.tipLeave": "Beginnt um {t} in „{p}“: schau rechtzeitig nach dem Weg.",
+ "tdy.tipEarly": "Morgen geht es früh los ({t}): leg dir heute Abend bereit, was du brauchst.",
+ "tdy.tipWish": "Eine kurze Nachricht oder ein Anruf am Namenstag bedeutet viel.",
+ "tdy.wish": "Glückwünsche zum Namenstag: {name}",
+ "tdy.from": "Heute",
  "ag.empty": "Nichts geplant in den nächsten 30 Tagen",
  "ag.more": "Mehr anzeigen",
  "age1": "1 Jahr alt",

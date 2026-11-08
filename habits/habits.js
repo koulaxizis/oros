@@ -2674,17 +2674,23 @@
     if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     return s.replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
   }
+  // { tick: { name } } (Assistant, Quick window) or, from the Today
+  // summary (BR-TODAY-15), { tick: { id, name } }: the id wins when
+  // that habit still lives, else the name as before.
   function tickByName(x) {
     var want = foldName(x && typeof x.name === "string" ? x.name.slice(0, 200) : "");
-    if (!want || document.querySelector("dialog[open]")) return;
-    var hs = livingHabits(), h = null, part = [];
-    hs.forEach(function (c) {
+    if (document.querySelector("dialog[open]")) return;
+    var byId = x && typeof x.id === "string" ? habitById(x.id) : null;
+    if (byId && byId.del) byId = null;
+    if (!want && !byId) return;
+    var hs = livingHabits(), h = byId, part = [];
+    if (!h) hs.forEach(function (c) {
       var n = foldName(c.name);
       if (n === want) h = h || c;
       else if (n.indexOf(want) === 0) part.push(c);
     });
     if (!h && part.length === 1) h = part[0];
-    if (!h) { toast(fmt("toast.nohabit", x.name.slice(0, 60))); return; }
+    if (!h) { toast(fmt("toast.nohabit", String(x.name || "").slice(0, 60))); return; }
     var dk = todayKey(), d = new Date();
     if (isDone(h.id, dk) && !isNum(h)) { toast(fmt("toast.already", h.name)); return; }
     if (isNum(h) || (isSkipped(h.id, dk) && !isDone(h.id, dk)) ||
