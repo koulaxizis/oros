@@ -293,7 +293,7 @@ orosPack("de", "assistant", {
  "f.group": "Gruppe",
  "f.ingredients": "Zutaten",
  "f.inlist": "Liste",
- "f.isbn": "ISBN", "f.line": "Position",
+ "f.isbn": "ISBN", "f.line": "Position", "f.num": "Nummer",
  "f.job": "Berufsbezeichnung",
  "f.kind": "Art",
  "f.km": "Kilometerstand (km)",

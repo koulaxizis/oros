@@ -93,3 +93,52 @@ test("invoices in create_items: the tool, the prompt, the Gate", () => {
   assert.match(src, /ADD3_IDS = \[[^\]]*"invoices"/);
   assert.match(src, /invoices: \["OrosInvoicesCore", "\.\.\/invoices\/core\.js"\]/);
 });
+
+// ---------- Quote Builder (AS-ADD8) ----------
+const QC = require("../quote/core.js");
+function qitems(list) { const n = A.normItems({ app: "quote", items: list }, CTX); assert.equal(n.ok, true, n.err); return n.items; }
+function qbase() {
+  return QC.canonState({ ver: 1, om: 10, deleted: {}, quotes: [{ id: "q1", num: "OFF-2026-004", clientId: "c1", status: "sent", date: "2026-10-01", dueDate: "", currency: "EUR",
+    items: [], gDisc: 0, payment: "", notes: "", instalments: [], mtime: 10, pos: 0 }],
+    clients: [{ id: "c1", name: "ACME", email: "", phone: "", address: "", taxId: "", mtime: 5, pos: 0 }], templates: [], payMethods: [] });
+}
+
+test("quote: new quotes in Quote's canonical form, next OFF number, client matched or made; Undo", () => {
+  assert.ok(A.APP_IDS.includes("quote"));
+  assert.equal(A.storageKey("quote"), "oros-quote-data");
+  const d = qbase();
+  const it = qitems([{ client: "acme", lines: [{ text: "Design", qty: 3, price: 50 }] }, { client: "Beta", tax_id: "123", lines: [{ text: "Print", qty: 100, price: 1.2, vat: 6 }], currency: "GBP" }]);
+  const p = A.plan("quote", clone(d), it, CTX);
+  assert.equal(p.ok, true, p.err);
+  assert.deepEqual(p.rows.map((r) => r.fields.find((f) => f[0] === "num")[1]), ["OFF-2026-005", "OFF-2026-006"]);
+  assert.ok(p.rows[0].fields.some((f) => f[0] === "amount" && f[1] === "186.00 EUR"));
+  const r = A.apply("quote", clone(d), it, NOW, [false, false], CTX);
+  assert.equal(r.ok, true, r.err);
+  assert.equal(JSON.stringify(QC.canonState(r.data)), JSON.stringify(r.data), "opening Quote rewrites nothing");
+  assert.equal(JSON.stringify(QC.merge(r.data, r.data)), JSON.stringify(r.data));
+  const [a, b] = r.made.map((m) => r.data.quotes.find((q) => q.id === m.id));
+  assert.equal(a.num, "OFF-2026-005"); assert.equal(b.num, "OFF-2026-006");
+  assert.equal(a.status, "draft"); assert.equal(a.clientId, "c1"); assert.equal(a.date, "2026-11-08");
+  assert.deepEqual(a.items.map((x) => [x.desc, x.qty, x.price, x.vat]), [["Design", 3, 50, 24]]);
+  const beta = r.data.clients.find((c) => c.name === "Beta");
+  assert.ok(beta); assert.equal(beta.taxId, "123"); assert.equal(b.clientId, beta.id); assert.equal(b.currency, "GBP");
+  assert.ok(r.data.om > 10);
+  // the same quote again: a look-alike
+  assert.equal(A.plan("quote", clone(r.data), it.slice(0, 1), CTX).rows[0].dup.id, a.id);
+  // a merge with the old copy keeps them (another device)
+  assert.equal(QC.merge(d, r.data).quotes.length, 3);
+  const u = A.undo("quote", clone(r.data), r.undo, NOW + 1000);
+  assert.equal(u.ok, true, u.err);
+  assert.deepEqual(u.data.quotes.map((q) => q.id), ["q1"]);
+  assert.deepEqual(u.data.clients.map((c) => c.id), ["c1"], "the client it made goes too");
+  assert.equal(QC.merge(r.data, u.data).quotes.length, 1, "the deletion wins over the old copy");
+});
+
+test("quote: a quote changed since is not undone; never opened = empty Quote", () => {
+  const r = A.apply("quote", null, qitems([{ lines: [{ text: "A", qty: 1, price: 1 }] }]), NOW, null, CTX);
+  assert.equal(r.ok, true, r.err);
+  assert.equal(r.data.quotes[0].num, "OFF-2026-001");
+  const x = clone(r.data); x.quotes[0].status = "sent"; x.quotes[0].mtime = NOW + 5;
+  const u = A.undo("quote", x, r.undo, NOW + 10);
+  assert.equal(u.ok, false);
+});

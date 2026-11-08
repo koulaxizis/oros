@@ -28,6 +28,8 @@
 //   invoices invoices.js prefillNew + saveDraft: a new invoice DRAFT
 //            (AS-ADD8), through OrosInvoicesCore.normDoc / normalize;
 //            never issued
+//   quote    quote.js applyQuotePrefill + commitSave: a new quote in
+//            status draft (AS-ADD8), through OrosQuoteCore.canonState
 // A vehicle or a pet is named (its name, or a plate); with only one,
 // it may be left out. Only the user's own book, garage and garden are
 // written (a household's shared copy is changed in the app). A text
@@ -1054,6 +1056,10 @@
   function normInv(x, w) {
     var C = invCore();
     if (!C) return { err: "Invoices is not available right now." };
+    return normDraft(x, w, C.curOk);
+  }
+  // An invoice or quote draft: client, lines, currency, note, date.
+  function normDraft(x, w, curOk) {
     var r = text1(x, "client", IV.client, w, "a client's name");
     if (r.err) return r;
     var o = { client: r.v };
@@ -1084,7 +1090,7 @@
     }
     o.cur = "";
     if (!empty(x, "currency")) {
-      if (!C.curOk(String(x.currency))) return { err: w + "currency must be a 3-letter ISO code such as EUR." };
+      if (!curOk(String(x.currency))) return { err: w + "currency must be a 3-letter ISO code such as EUR." };
       o.cur = String(x.currency);
     }
     r = textN(x, "note", IV.note, w, "an invoice's notes");
@@ -1172,6 +1178,127 @@
     return { ok: true, data: C.normalize(d) };
   }
 
+  // ---------- 9. Quote Builder: new quotes (AS-ADD8, GATE-PAR P4) ----------
+  // quote.js applyQuotePrefill + commitSave: a NEW quote in status
+  // draft with the next OFF-YYYY-NNN number of the year (nextNumber),
+  // its lines as newItemObj (VAT 24 unless given), the client matched
+  // by name (case ignored) or, unknown, made as quote.js's New client
+  // with the name (and tax id). The data goes through
+  // OrosQuoteCore.canonState (1.3, the app's own canonical form), so
+  // opening Quote rewrites nothing. Undo removes the quote (and a client
+  // it made, while no other quote uses it) while unchanged.
+  function quoteCore() {
+    if (root.OrosQuoteCore && root.OrosQuoteCore.canonState) return root.OrosQuoteCore;
+    if (NODE) { try { return require("../quote/core.js"); } catch (e) { return null; } }
+    return null;
+  }
+  function normQuote(x, w) {
+    return normDraft(x, w, function (c) { return /^[A-Z]{3}$/.test(c); });
+  }
+  function qtBase(d) {
+    var Q = quoteCore();
+    if (d == null) return Q.canonState({ ver: Q.DATA_VER, om: 0, deleted: {}, quotes: [], clients: [], templates: [], payMethods: [] });
+    return isObj(d) && Array.isArray(d.quotes) && Array.isArray(d.clients) && Array.isArray(d.templates) ? Q.canonState(d) : null;
+  }
+  function qtNum(d, year, n) {
+    var re = /^OFF-(\d{4})-(\d+)$/, max = 0;
+    d.quotes.forEach(function (q) { var m = re.exec(q.num || ""); if (m && +m[1] === year && +m[2] > max) max = +m[2]; });
+    return "OFF-" + year + "-" + ("000" + (max + 1 + n)).slice(-3);
+  }
+  function qtClient(d, o) {
+    var low = o.client.toLocaleLowerCase(), hit = null;
+    if (!o.client) return null;
+    d.clients.forEach(function (c) { if (!hit && String(c.name || "").trim().toLocaleLowerCase() === low) hit = c; });
+    return hit;
+  }
+  function qtLines(o) {
+    return o.lines.map(function (l) { return { code: "", desc: l.d, qty: l.q, price: l.p / 100, disc: 0, vat: l.vat !== undefined ? l.vat : 24 }; });
+  }
+  function qtTotal(lines) {
+    var t = 0;
+    lines.forEach(function (l) { var net = l.qty * l.price; t += net + net * l.vat / 100; });
+    return Math.round(t * 100);
+  }
+  function qtPlan(d, items, ctx) {
+    var Q = quoteCore();
+    if (!Q) return bad("Quote is not available right now.");
+    d = qtBase(d);
+    if (!d) return notOpened("Quote");
+    var e = room(d.quotes.length, items.length, 5000, "quotes", "Quote");
+    if (e) return e;
+    var year = +todayOf(ctx).slice(0, 4);
+    return { ok: true, rows: items.map(function (o, i) {
+      var cl = qtClient(d, o), ls = qtLines(o), cur = o.cur || "EUR", f = [], dup = null;
+      d.quotes.forEach(function (q) {
+        if (dup || q.status !== "draft" || (cl ? q.clientId !== cl.id : !!q.clientId) || q.items.length !== ls.length) return;
+        if (q.items.every(function (it, k) { return it.desc === ls[k].desc && it.qty === ls[k].qty && it.price === ls[k].price; })) dup = { id: q.id, title: q.num, target: { quote: q.id } };
+      });
+      f.push(["num", qtNum(d, year, i)]);
+      if (o.client) f.push(["client", o.client + (cl ? "" : " · " + (ctx && ctx.lang === "el" ? "νέος" : "new"))]);
+      f.push(["date", o.date || todayOf(ctx)]);
+      ls.forEach(function (l) { f.push(["line", l.desc + " · " + l.qty + " × " + l.price.toFixed(2) + " " + cur + " · " + l.vat + "%"]); });
+      f.push(["amount", H.money(qtTotal(ls)) + " " + cur]);
+      if (o.notes) f.push(["note", preview(o.notes, 120)]);
+      return { title: o.client || o.lines[0].d, fields: f, dup: dup };
+    }) };
+  }
+  function qtApply(d, items, now, skip, ctx) {
+    var Q = quoteCore();
+    d = qtBase(d);
+    var today = todayOf(ctx, now), year = +today.slice(0, 4), s = stampAfter(now, d.om || 0);
+    var taken = {}, made = [], undo = { app: "quote", t: "new", items: [] }, n = 0;
+    ["quotes", "clients", "templates"].forEach(function (k) { d[k].forEach(function (x) { taken[x.id] = 1; }); });
+    Object.keys(d.deleted).forEach(function (k) { taken[k] = 1; });
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var cl = qtClient(d, o), madeCl = "";
+      if (!cl && o.client) {
+        cl = { id: newIdIn(now, taken), name: o.client, email: "", phone: "", address: "", taxId: o.afm, mtime: s, pos: d.clients.length };
+        d.clients.push(cl);
+        madeCl = cl.id;
+      }
+      var q = { id: newIdIn(now, taken), num: qtNum(d, year, 0), clientId: cl ? cl.id : null, status: "draft", date: o.date || today,
+                dueDate: "", currency: o.cur || "EUR", gDisc: 0, payment: "", notes: o.notes, instalments: [], mtime: s, pos: d.quotes.length };
+      q.items = qtLines(o).map(function (l) { return { id: newIdIn(now, taken), code: l.code, desc: l.desc, qty: l.qty, price: l.price, disc: l.disc, vat: l.vat }; });
+      d.quotes.push(q);
+      n++;
+      made.push({ i: i, id: q.id, title: q.num + (o.client ? " · " + o.client : ""), target: { quote: q.id }, cl: madeCl });
+    });
+    d.om = s;
+    d = Q.canonState(d);
+    made.forEach(function (m) {
+      var q = d.quotes.filter(function (x) { return x.id === m.id; })[0], c = m.cl ? d.clients.filter(function (x) { return x.id === m.cl; })[0] : null;
+      undo.items.push({ id: m.id, x: clone(q), cl: m.cl, cx: c ? clone(c) : null });
+      delete m.cl;
+    });
+    return { ok: true, data: d, made: made, undo: undo };
+  }
+  function qtUndo(d, u, now) {
+    var Q = quoteCore();
+    if (!Q || !isObj(d) || !Array.isArray(d.quotes)) return bad("Quote has no quotes.");
+    d = Q.canonState(d);
+    var norm = function (x) { var y = clone(x); delete y.pos; return y; };
+    var find = function (k, id) { return d[k].filter(function (x) { return x.id === id; })[0]; };
+    for (var i = 0; i < u.items.length; i++) {
+      var q = find("quotes", u.items[i].id);
+      if (q && !unchanged(norm(q), norm(u.items[i].x))) return bad("A new quote was changed in Quote since; nothing was undone (delete it in Quote).");
+    }
+    var gone = {};
+    u.items.forEach(function (it) { gone[it.id] = 1; });
+    u.items.forEach(function (it) {
+      var q = find("quotes", it.id);
+      if (q) d.deleted[it.id] = stampAfter(now, Math.max(d.deleted[it.id] || 0, q.mtime || 0));
+      var c = it.cl ? find("clients", it.cl) : null;
+      var used = c && d.quotes.some(function (x) { return !gone[x.id] && x.clientId === c.id; });
+      if (c && !used && unchanged(norm(c), norm(it.cx))) d.deleted[c.id] = stampAfter(now, Math.max(d.deleted[c.id] || 0, c.mtime || 0));
+    });
+    var dead = d.deleted;
+    d.quotes = d.quotes.filter(function (x) { return !(dead[x.id] !== undefined && (x.mtime || 0) <= dead[x.id]); });
+    d.clients = d.clients.filter(function (x) { return !(dead[x.id] !== undefined && (x.mtime || 0) <= dead[x.id]); });
+    d.om = stampAfter(now, d.om || 0);
+    return { ok: true, data: Q.canonState(d) };
+  }
+
   A.extend({
     habits: { key: "oros-habits-data", name: "Habits", norm: normHabit, plan: hbPlan, apply: hbApply, undo: hbUndo },
     fitness: { key: "oros-fitness-data", name: "Workouts", norm: normWorkout, plan: ftPlan, apply: ftApply, undo: ftUndo },
@@ -1180,7 +1307,8 @@
     petcare: { key: "oros-petcare-data", name: "Pet Health Book", norm: normPet, plan: pcPlan, apply: pcApply, undo: pcUndo },
     shelf: { key: "oros-shelf-data", name: "Media Shelf", norm: normMedia, plan: shPlan, apply: shApply, undo: shUndo },
     publish: { key: "oros-publish-data", name: "Publishing", norm: normPub, plan: pbPlan, apply: pbApply, undo: pbUndo },
-    invoices: { key: "oros-invoices-data", name: "Invoices", norm: normInv, plan: ivPlan, apply: ivApply, undo: ivUndo }
+    invoices: { key: "oros-invoices-data", name: "Invoices", norm: normInv, plan: ivPlan, apply: ivApply, undo: ivUndo },
+    quote: { key: "oros-quote-data", name: "Quote", norm: normQuote, plan: qtPlan, apply: qtApply, undo: qtUndo }
   });
   var api = { CORES: CORES, FT_ACT: FT_ACT, PC_KIND: PC_KIND, SH_TYPES: SH_TYPES, PB_ST: PB_ST, PB_FMT: PB_FMT };
   if (NODE) module.exports = api;

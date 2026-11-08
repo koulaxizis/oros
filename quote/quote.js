@@ -585,30 +585,7 @@
     return data;
   }
 
-  // Q-1: deterministic tombstone pruning (HB-3 / MD-4 / NT-2
-  // pattern). The cutoff derives from the dataset's newest mtime,
-  // never the wall clock — same data yields the same payload on
-  // every device at any time. Payload-only: local state keeps
-  // every tombstone, so a lagging device can never resurrect an
-  // entity by re-sending it alive.
-  function datasetMaxTs(data) {
-    var max = 0;
-    ["quotes", "clients", "templates", "payMethods"].forEach(function (k) {
-      (data[k] || []).forEach(function (e) {
-        if ((e.mtime || 0) > max) max = e.mtime;
-      });
-    });
-    return max;
-  }
-
-  function pruneDeletedMap(deleted, data) {
-    var tomb = {};
-    var cutoff = datasetMaxTs(data) - TOMB_LIFETIME_MS;
-    Object.keys(deleted || {}).forEach(function (id) {
-      if (deleted[id] >= cutoff) tomb[id] = deleted[id];
-    });
-    return tomb;
-  }
+  var pruneDeletedMap = QC.pruneDeleted;   // quote/core.js (Q-1)
 
   function readPrefs() {
     try {
@@ -688,142 +665,10 @@
   }
 
   // ---------- 3. Merge engine (cross-device) ----------
-  // QT-11: κανονική μορφή — ταξινομημένα keys σε κάθε επίπεδο, pos =
-  // θέση στη λίστα, tombstones κλαδεμένα ντετερμινιστικά. Getter,
-  // merge και δίσκος δίνουν byte-ίδια έξοδο για τα ίδια δεδομένα,
-  // αλλιώς κάθε γύρος sync ανεβάζει ξανά (A67 Q4).
-  var ENTITY_LISTS = ["quotes", "clients", "templates", "payMethods"];
-
-  function canonObj(v) {
-    if (Array.isArray(v)) return v.map(canonObj);
-    if (!v || typeof v !== "object") return v;
-    var out = {};
-    Object.keys(v).sort().forEach(function (k) {
-      if (v[k] !== undefined) out[k] = canonObj(v[k]);
-    });
-    return out;
-  }
-
-  function canonState(s) {
-    var src = s || {};
-    var out = {};
-    Object.keys(src).forEach(function (k) {
-      if (k !== "activeQuoteId") out[k] = src[k];
-    });
-    out = canonObj(out);
-    out.ver = DATA_VER;
-    out.om = typeof out.om === "number" ? out.om : 0;
-    ENTITY_LISTS.forEach(function (k) {
-      var arr = Array.isArray(out[k]) ? out[k] : [];
-      arr.forEach(function (e, i) { e.pos = i; });
-      out[k] = arr;
-    });
-    out.deleted = pruneDeletedMap(out.deleted, out);
-    return canonObj(out);
-  }
-
-  function mergeEntityMaps(aDel, bDel) {
-    var out = {};
-    var a = aDel || {}, b = bDel || {};
-    Object.keys(a).forEach(function (id) { out[id] = a[id]; });
-    Object.keys(b).forEach(function (id) {
-      out[id] = Math.max(out[id] || 0, b[id]);
-    });
-    return out;
-  }
-
-  function entAlive(ent, tomb) {
-    var ts = tomb[ent.id];
-    return ts === undefined || (ent.mtime || 0) > ts;
-  }
-
-  function newerEntity(a, b) {
-    if ((a.mtime || 0) !== (b.mtime || 0)) {
-      return (a.mtime || 0) > (b.mtime || 0) ? a : b;
-    }
-    // QT-11: tie-break σε κανονική μορφή — η σειρά των keys δεν
-    // επιτρέπεται να αλλάζει τον νικητή ανάλογα με τη συσκευή.
-    return JSON.stringify(canonObj(a)) >= JSON.stringify(canonObj(b)) ? a : b;
-  }
-
-  function unionEntities(aArr, bArr, tomb) {
-    var map = {};
-    (aArr || []).forEach(function (e) { map[e.id] = e; });
-    (bArr || []).forEach(function (e) {
-      map[e.id] = map[e.id] ? newerEntity(map[e.id], e) : e;
-    });
-    var out = [];
-    Object.keys(map).forEach(function (id) {
-      if (entAlive(map[id], tomb)) out.push(map[id]);
-    });
-    return out;
-  }
-
-  function orderEntities(entities, refArr) {
-    var idx = {};
-    (refArr || []).forEach(function (e, i) { idx[e.id] = i; });
-    entities.sort(function (x, y) {
-      var ix = idx[x.id] !== undefined ? idx[x.id] : Infinity;
-      var iy = idx[y.id] !== undefined ? idx[y.id] : Infinity;
-      if (ix !== iy) return ix - iy;
-      if ((x.mtime || 0) !== (y.mtime || 0)) return (x.mtime || 0) - (y.mtime || 0);
-      return x.id < y.id ? -1 : (x.id > y.id ? 1 : 0);
-    });
-    entities.forEach(function (e, i) { e.pos = i; });
-    return entities;
-  }
-
-  // QT-11: με ίσο om καμία πλευρά δεν είναι «νεότερη». Αναφορά γίνεται
-  // η πλευρά που περιέχει ΟΛΑ τα ζωντανά entities· αν το κάνουν και οι
-  // δύο με διαφορετική σειρά (ή καμία), η σειρά βγαίνει μόνο από
-  // mtime/id. Έτσι η merge είναι συμμετρική, idempotent και
-  // merge(merge(a, b), b) = merge(a, b).
-  function pickRef(aArr, bArr, aOm, bOm, out) {
-    if ((aOm || 0) !== (bOm || 0)) return (aOm || 0) > (bOm || 0) ? aArr : bArr;
-    var alive = {};
-    out.forEach(function (e) { alive[e.id] = true; });
-    var seq = function (arr) {
-      return (arr || []).filter(function (e) { return alive[e.id]; })
-                        .map(function (e) { return e.id; }).join("\u0001");
-    };
-    var full = function (arr) {
-      var seen = {}, n = 0;
-      (arr || []).forEach(function (e) {
-        if (alive[e.id] && !seen[e.id]) { seen[e.id] = true; n++; }
-      });
-      return n === out.length;
-    };
-    var fa = full(aArr), fb = full(bArr);
-    if (fa && fb) return seq(aArr) === seq(bArr) ? aArr : [];
-    if (fa) return aArr;
-    if (fb) return bArr;
-    return [];
-  }
-
-  function mergeQuoteStates(A, B) {
-    var a = JSON.parse(JSON.stringify(A || {}));
-    var b = JSON.parse(JSON.stringify(B || {}));
-
-    // Q-1: pruning moved to the sliceGet payload boundary and made
-    // deterministic (dataset maxTs) — never Date.now(). The merge
-    // itself stays pure: same inputs, same output, every device.
-    var tomb = mergeEntityMaps(a.deleted, b.deleted);
-
-    var quotes   = unionEntities(a.quotes, b.quotes, tomb);
-    var clients  = unionEntities(a.clients, b.clients, tomb);
-    var templates = unionEntities(a.templates, b.templates, tomb);
-    var payMethods = unionEntities(a.payMethods, b.payMethods, tomb);
-
-    return canonState({
-      ver: DATA_VER,
-      om: Math.max(a.om || 0, b.om || 0),
-      deleted: tomb,
-      quotes: orderEntities(quotes, pickRef(a.quotes, b.quotes, a.om, b.om, quotes)),
-      clients: orderEntities(clients, pickRef(a.clients, b.clients, a.om, b.om, clients)),
-      templates: orderEntities(templates, pickRef(a.templates, b.templates, a.om, b.om, templates)),
-      payMethods: orderEntities(payMethods, pickRef(a.payMethods, b.payMethods, a.om, b.om, payMethods))
-    });
-  }
+  // QT-11 canonical form and the merge live in quote/core.js (1.3,
+  // GATE-PAR P4), so the Assistant writes a new quote exactly as this
+  // app does (OrosQuoteCore.canonState / merge, one copy).
+  var canonObj = QC.canonObj, canonState = QC.canonState, mergeQuoteStates = QC.merge;
 
   // ---------- 4. Υπολογισμοί (pure functions) ----------
   function itemNet(it, gDisc) {
