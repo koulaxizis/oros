@@ -139,6 +139,12 @@
       var g = obj(s.g);
       return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
     },
+    // Roots: {g: engine state, opts, ts, pt, counted}; under way after
+    // the first action, until the year is over.
+    roots: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
+    },
     // Wayfarers: {g: engine state, opts, counted}; under way after the
     // first action, until the journey is over.
     wayfarers: function (s) {

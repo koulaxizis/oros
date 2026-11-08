@@ -126,6 +126,11 @@ test("resume: each game's own test", () => {
   assert.equal(one("fieldwarden", { g: { over: -1, acts: 2 }, counted: false }), true);
   assert.equal(one("fieldwarden", { g: { over: 1, acts: 80 }, counted: true }), false);
   assert.equal(one("fieldwarden", { g: { over: -1, acts: 2 }, counted: true }), false);
+  // Roots: under way after the first action, until the year is over
+  assert.equal(one("roots", { g: { over: -1, acts: 0 }, counted: false }), false);
+  assert.equal(one("roots", { g: { over: -1, acts: 3 }, counted: false }), true);
+  assert.equal(one("roots", { g: { over: 0, acts: 40 }, counted: true }), false);
+  assert.equal(one("roots", { g: { over: -1, acts: 3 }, counted: true }), false);
   // Crypt: under way after the first turn, until the run is over
   assert.equal(one("crypt", { g: { over: -1, turn: 0 }, done: false }), false);
   assert.equal(one("crypt", { g: { over: -1, turn: 12 }, done: false }), true);

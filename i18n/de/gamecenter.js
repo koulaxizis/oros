@@ -122,6 +122,7 @@ orosPack("de", "gamecenter", {
  "crypt": "Gruft",
  "wayfarers": "Wanderer",
  "fieldwarden": "Feldhüter",
+ "roots": "Wurzeln",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
  "chal.done": "Geschafft",

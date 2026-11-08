@@ -1197,6 +1197,14 @@
       "type": "internal"
     },
     {
+      "id": "roots",
+      "name": "Roots",
+      "category": "Games",
+      "icon": "roots",
+      "url": "roots/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",
