@@ -1090,7 +1090,7 @@ export class GateBox {
     }
     let o;
     try { o = JSON.parse(msg); } catch (e) { return; }
-    if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv); return; }
+    if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv, o.base === 1); return; }
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && Array.isArray(o.cqa) && o.r === undefined) { await this.queueDone(ws, o.cqa); return; }
     if (!o || typeof o.r !== "string") return;
@@ -1103,11 +1103,14 @@ export class GateBox {
   // A device changed its app switches: keep them (the newest wins) and
   // pass them to the gate's other devices. Each device checks them again
   // against its own NEVER list and the apps that may be changed.
-  async shareLv(ws, raw) {
+  // base (5.82.00): a device's switches as they are when it connects;
+  // kept only while the box has none yet (switches set before 5.77.00).
+  async shareLv(ws, raw, base) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
     const lv = cleanLv(raw);
     const m = await this.meta();
     if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    if (base && (m.lv || !Object.keys(lv).length)) return;
     m.lv = lv; m.lvt = Date.now();
     await this.st.put("meta", m);
     const msg = JSON.stringify({ lv: lv, lvt: m.lvt });

@@ -587,3 +587,23 @@ test("orOS closed, the device's own tools (GATE-ACT): reads from the copy, creat
   assert.match((await tc("edit_in_app", { app: "writer", steps: [] })).content[0].text, /needs orOS open/);
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
 });
+
+test("switches set before 5.77.00 reach the box once: a device's base is kept only while the box has none (5.82.00)", async () => {
+  const w = world();
+  await newGate(w);
+  const inv = await (await dev(w, { act: "invite", tok: TOK })).json();
+  await join(w, inv.data.code, TOK2);
+  const b = w.boxes.get(ID);
+  const s1 = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(m) { this.sent.push(m); }, close() {} };
+  const s2 = { sent: [], __g: { th: hex(TOK2), v: 1, at: 2 }, send(m) { this.sent.push(m); }, close() {} };
+  b.socks.push(s1, s2);
+  await b.box.webSocketMessage(s2, JSON.stringify({ lv: {}, base: 1 }));
+  assert.equal((await b.st.storage.get("meta")).lv, undefined, "an empty base never claims it");
+  await b.box.webSocketMessage(s1, JSON.stringify({ lv: { budget: "write", kanban: "read" }, base: 1 }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" });
+  assert.deepEqual(JSON.parse(s2.sent[0]).lv, { budget: "write", kanban: "read" }, "passed to the other device");
+  await b.box.webSocketMessage(s2, JSON.stringify({ lv: { invoices: "read" }, base: 1 }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { budget: "write", kanban: "read" }, "a later base does not win");
+  await b.box.webSocketMessage(s2, JSON.stringify({ lv: { invoices: "read" } }));
+  assert.deepEqual((await b.st.storage.get("meta")).lv, { invoices: "read" }, "a real change does");
+});
