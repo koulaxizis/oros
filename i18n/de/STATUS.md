@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 41479 of 41752 (99%)
+- Strings: 41507 of 41780 (99%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -51,7 +51,7 @@ text is still written in the code. They switch over wave by wave
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 325 / 325 |
-| fieldwarden | 100% | 262 / 262 |
+| fieldwarden | 100% | 268 / 268 |
 | fileopen | 100% | 6 / 6 |
 | files | 100% | 448 / 448 |
 | fitness | 100% | 413 / 413 |
@@ -124,7 +124,7 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 342 / 342 |
 | scores | 100% | 147 / 147 |
-| settings | 98% | 959 / 970 |
+| settings | 98% | 981 / 992 |
 | share | 100% | 217 / 217 |
 | shelf | 100% | 291 / 291 |
 | shell | 99% | 1111 / 1115 |
