@@ -279,3 +279,13 @@ test("gamecenter: the Fieldwarden Daily season counts in Today and the streak wh
   fw.days[TODAY] = { b: 0, w: 0, h: 9, t: 20, f: [3, 3, 2, 1] };
   assert.equal(sum({ "oros-fieldwarden-data": fw }).games.fieldwarden.today, 2, "quota missed today: tried, not solved");
 });
+
+test("gamecenter: the Roots Daily glade counts in Today and the streak when the quota is met, never in years", () => {
+  const rt = { ver: 1, br: 0, rows: { aaaaaa: { b: 0, s: { m: [3, 1, 30] }, lr: 9 } },
+    days: { [TODAY]: { b: 0, w: 1, h: 26, t: 40, n: 3, q: 2 }, [TODAY - 1]: { b: 0, w: 1, h: 20, t: 35, n: 2, q: 2 } }, last: [] };
+  const s = sum({ "oros-roots-data": rt });
+  assert.ok(C.DAILY.includes("roots"));
+  assert.deepEqual([s.games.roots.p, s.games.roots.w, s.games.roots.dn, s.games.roots.cur, s.games.roots.today], [3, 1, 2, 2, 1]);
+  rt.days[TODAY] = { b: 0, w: 0, h: 9, t: 20, n: 1, q: 2 };
+  assert.equal(sum({ "oros-roots-data": rt }).games.roots.today, 2, "quota missed today: tried, not solved");
+});

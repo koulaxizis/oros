@@ -12,8 +12,8 @@ const E = require("../roots/engine.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "roots/roots.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SCORE = 999;"];
-  ["cmpStr", "isInt", "normRow", "joinRows", "mergeRoots"].forEach((name) => {
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SCORE = 999; var MAX_DAY = 99999; var LAST_N = 10; var PZ_N = E.PUZZLES.length;"];
+  ["cmpStr", "isInt", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeRoots"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
     const line = SRC.slice(i, SRC.indexOf("\n", i));
@@ -283,7 +283,7 @@ test("roots: bot years end with no illegal state; the balance holds", () => {
   const run = (seed, diff, smart) => {
     const st = E.newYear(seed, diff);
     let guard = 0;
-    while (st.over < 0 && guard++ < 100) {
+    while (st.over < 0 && guard++ < 200) {
       assert.ok(E.valid(st), seed);
       if (smart) E.botTurn(st); else simple(st);
     }
@@ -319,4 +319,202 @@ test("roots: records merge as a join", () => {
   assert.ok(!m({ rows: { zzzzzz: { b: 0, s: { m: [1, 2, 0] } } } }, {}).rows.zzzzzz, "finished > played drops");
   assert.ok(!m({ rows: { "BAD!": { b: 0, s: { m: [1, 0, 0] } } } }, {}).rows["BAD!"], "a bad row id drops");
   assert.equal(m({ rows: { cccccc: { b: 0, s: { m: [1, 0, 5] }, lr: 999 } } }, {}).rows.cccccc.lr, 0, "a root longer than the glade drops to 0");
+});
+
+test("roots: the Daily glade is one Hardy season from a bare tree, the same for the same code", () => {
+  const seeds = {};
+  for (let k = 0; k < 24; k++) {
+    const seed = "rt2026" + (1000 + k), st = E.newDaily(seed);
+    assert.equal(J(st), J(E.newDaily(seed)), "the same code, the same glade");
+    assert.ok(E.valid(st), "valid " + seed);
+    assert.equal(st.one, 1);
+    assert.equal(st.diff, "h");
+    assert.equal(st.sea, E.dailyOf(seed).sea);
+    assert.equal(J(st.t), J(E.layout(seed, st.gl)), "the glade of the code");
+    assert.equal(st.end, st.gl, "one glade");
+    assert.equal(st.r.filter((v) => v).length, 1, "only the base root");
+    seeds[st.sea] = 1;
+  }
+  assert.deepEqual(Object.keys(seeds).sort(), ["1", "2", "3"], "every season comes up");
+  const bad = E.newDaily("rt20261108");
+  bad.diff = "m";
+  assert.ok(!E.valid(bad), "a Daily glade is always Hardy");
+  const two = E.newDaily("rt20261108");
+  two.one = 2;
+  assert.ok(!E.valid(two));
+});
+
+test("roots: the Daily glade ends with its one season, quota met or missed", () => {
+  for (const seed of ["rt20261108", "rt20261109", "rt20261110"]) {
+    const st = E.newDaily(seed);
+    let guard = 0;
+    while (st.over < 0 && guard++ < 10) E.botTurn(st);
+    assert.ok(st.over >= 0, "over after one season");
+    assert.equal(st.bloom.length, 1);
+    assert.equal(st.over, st.res.b >= st.res.q ? 1 : 0);
+    assert.equal(st.phase, "play", "no rest between seasons");
+    assert.equal(E.act(st, { t: "next" }), null, "no next season");
+    assert.ok(E.valid(st));
+  }
+  const st = blank("h", 2);
+  st.one = 1;
+  st.s.turn = E.T;
+  st.bk[1] = 4;
+  st.r[at(1, 1)] = 1; st.r[at(2, 1)] = 1;
+  end(st);
+  assert.equal(st.over, 1, "the quota met ends the Daily glade as done");
+});
+
+test("roots: Daily results and Last years merge as a join", () => {
+  const m = R.mergeRoots;
+  const A = { ver: 1, br: 5, rows: {}, days: { 310: { b: 5, w: 1, h: 20, t: 30, n: 3, q: 2 }, 311: { b: 5, w: 0, h: 9, t: 12, n: 1, q: 2 } },
+    last: [{ a: 100, d: "d", n: 1, w: 1, h: 20, s: "rt20261107" }, { a: 90, d: "m", n: 2, w: 0, h: 15, s: "abcdef" }] };
+  const B = { ver: 1, br: 5, rows: {}, days: { 311: { b: 5, w: 1, h: 14, t: 20, n: 2, q: 2 }, 312: { b: 1, w: 1, h: 30, t: 9, n: 4, q: 2 } },
+    last: [{ a: 120, d: "h", n: 3, w: 1, h: 33, s: "ghjkmn" }, { a: 100, d: "d", n: 1, w: 1, h: 20, s: "rt20261107" }] };
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  assert.equal(J(m(m(A, B), A)), J(m(A, B)));
+  const x = m(A, B);
+  assert.deepEqual(Object.keys(x.days), ["310", "311"], "a day from before the reset drops");
+  assert.equal(x.days[311].w, 1, "the quota met wins on the same epoch");
+  assert.deepEqual(x.last.map((v) => v.s), ["ghjkmn", "rt20261107", "abcdef"], "newest first, the same year once");
+  assert.ok(!m({ days: { 9: { b: 0, w: 1, h: 5, t: 3, n: 1, q: 2 } } }, {}).days[9], "met with bloom under the quota drops");
+  assert.ok(!m({ last: [{ a: 1, d: "d", n: 2, w: 1, h: 5, s: "abc" }] }, {}).last.length, "a Daily glade has one season");
+  const many = [];
+  for (let k = 0; k < 15; k++) many.push({ a: 1000 + k, d: "m", n: 1, w: 0, h: k, s: "s" + k });
+  const y = m({ last: many }, {});
+  assert.equal(y.last.length, 10, "the last 10");
+  assert.equal(y.last[0].s, "s14");
+  assert.deepEqual(m({ rows: {} }, {}).days, {}, "older data: no days");
+});
+
+test("roots: a year moves through four glades, each with its own soil and pests", () => {
+  assert.deepEqual(E.GLADE_IDS, ["meadow", "river", "hill", "forest"]);
+  // the meadow is the glade of 5.88.00: a code plays the same first glade
+  assert.equal(J(E.layout("abc123")), J(E.layout("abc123", 1)));
+  assert.equal(J(E.newYear("abc123", "m").t), J(E.layout("abc123", 1)));
+  const count = (t, c) => t.filter((x) => x === c).length;
+  E.GLADES.forEach((G, k) => {
+    for (let n = 0; n < 20; n++) {
+      const t = E.layout("g" + n, k + 1);
+      assert.equal(count(t, "#"), G.st, G.id + " stones");
+      assert.equal(count(t, "w"), G.sp.length, G.id + " springs");
+      assert.equal(count(t, "m"), G.mi, G.id + " minerals");
+      assert.equal(count(t, "c"), G.cl, G.id + " clay");
+    }
+    assert.notEqual(J(E.layout("g1", k + 1)), J(E.layout("g1", ((k + 1) % 4) + 1)), "glades differ");
+  });
+  // the forest has blight from spring; the meadow only in autumn
+  assert.ok(E.GLADES[3].wv[0].some((w) => w[0] === "blight"));
+  assert.ok(!E.GLADES[0].wv[0].some((w) => w[0] === "blight"));
+  const st = E.newYear("four", "m");
+  assert.deepEqual([st.gl, st.end, st.pts], [1, 4, 0]);
+  // play to the end of the meadow's autumn, then on to the riverbank
+  let guard = 0;
+  while (!(st.sea === 3 && st.phase === "rest") && st.over < 0 && guard++ < 40) E.botTurn(st);
+  assert.equal(st.phase, "rest", "the meadow done");
+  const carry = E.springs(st) + E.longest(st), before = E.score(st);
+  assert.ok(E.act(st, { t: "next" }).some((e) => e.k === "glade"));
+  assert.deepEqual([st.gl, st.sea, st.sap, st.pts], [2, 1, 5, carry]);
+  assert.equal(J(st.t), J(E.layout("four", 2)), "the riverbank of the code");
+  assert.equal(st.r.filter((v) => v).length, 1, "a bare tree again");
+  assert.equal(E.score(st), before, "the score keeps the meadow");
+  assert.ok(E.valid(st));
+  assert.equal(st.bloom.length, 3);
+  // the same code gives the same riverbank seasons
+  const again = E.newYear("four", "m");
+  guard = 0;
+  while (!(again.sea === 3 && again.phase === "rest") && guard++ < 40) E.botTurn(again);
+  E.act(again, { t: "next" });
+  assert.equal(J(again.s.sched), J(st.s.sched));
+});
+
+test("roots: a year saved before the glades is a one-glade year", () => {
+  const st = E.newYear("old1", "m");
+  delete st.gl; delete st.end; delete st.pts;
+  assert.ok(E.valid(st), "a session from 5.97.00 still loads");
+  st.s.turn = E.T; st.sea = 3; st.bk[1] = 4; st.s.q = 1;
+  E.act(st, { t: "end" });
+  assert.equal(st.over, 1, "its third season ends the year");
+  const bad = E.newYear("old2", "m");
+  delete bad.gl;
+  assert.ok(!E.valid(bad), "end without gl is refused");
+  const b2 = E.newYear("old3", "m");
+  b2.gl = 5;
+  assert.ok(!E.valid(b2), "no fifth glade");
+});
+
+test("roots: 20 root puzzles, each one turn: doing nothing and the planner fall short of the goal, the best set of growths meets it", () => {
+  assert.equal(E.PUZZLES.length, 20);
+  const result = (st) => { const c = E.clone(st); E.act(c, { t: "end" }); return c; };
+  // the best set of growths, by a search over every reachable position
+  const best = (st0) => {
+    const seen = new Set(); let top = -1;
+    const go = (st) => {
+      const k = st.r.join("") + st.th.join("") + st.bk.join("") + st.sap;
+      if (seen.has(k)) return;
+      seen.add(k);
+      top = Math.max(top, result(st).res.b);
+      for (const a of E.options(st)) { const c = E.clone(st); if (E.act(c, a)) go(c); }
+    };
+    go(st0);
+    return top;
+  };
+  for (let n = 1; n <= 20; n++) {
+    const st = E.newPuzzle(n), P = E.PUZZLES[n - 1];
+    assert.ok(E.valid(st), "valid " + n);
+    assert.deepEqual([st.pz, st.one, st.sap, st.s.q, st.gl], [n, 1, P.sap, P.q, P.g]);
+    const none = result(st);
+    assert.equal(none.over, 0, "doing nothing fails " + n);
+    assert.ok(none.s.done && E.valid(none), "one turn " + n);
+    const pl = E.clone(st); E.planTurn(pl);
+    assert.equal(result(pl).over, 0, "the planner fails " + n);
+    if (n <= 12) assert.equal(best(st), P.q, "the goal is the best " + n);
+  }
+  const bad = E.newPuzzle(3);
+  bad.pz = 21;
+  assert.ok(!E.valid(bad));
+});
+
+test("roots: solved puzzles merge as a sorted union", () => {
+  const m = R.mergeRoots;
+  const A = { pz: [3, 1, 99, 0] }, B = { pz: [2, 3], br: 9 };
+  assert.deepEqual(m(A, B).pz, [1, 2, 3], "out-of-range numbers drop; Reset records keeps them");
+  assert.equal(J(m(A, B)), J(m(B, A)));
+});
+
+test("roots: Endless goes round the glades, one a year, harder every year, until a quota is missed", () => {
+  assert.ok(E.DIFFS.includes("e"));
+  const st = E.newYear("endless1", "e");
+  assert.deepEqual([st.yr, st.gl, st.s.rw], [1, 1, 0], "year 1 on the meadow, no rewinds");
+  assert.ok(E.valid(st));
+  let guard = 0;
+  const seen = [];
+  while (st.over < 0 && guard++ < 900) {
+    const was = st.yr;
+    E.botTurn(st);
+    assert.ok(E.valid(st), "valid in year " + st.yr);
+    if (st.yr !== was) seen.push(st.gl);
+    assert.ok(st.bloom.length <= E.SEASONS, "a year's bloom only");
+  }
+  assert.equal(st.over, 0, "an Endless run only ends with a missed quota");
+  assert.deepEqual(seen.slice(0, 4), [2, 3, 4, 1].slice(0, Math.min(4, seen.length)), "the glades go round");
+  // year 1 has Hardy's pests and quota; later years ask more
+  assert.equal(J(E.newYear("endless2", "e").s.sched), J(E.newYear("endless2", "h").s.sched), "year 1 has Hardy's pests");
+  assert.equal(E.newYear("endless2", "e").s.q, E.newYear("endless2", "h").s.q, "and Hardy's quota");
+  const bad = E.newYear("endless3", "e");
+  bad.yr = 0;
+  assert.ok(!E.valid(bad), "a year 0 is refused");
+  const noYr = E.newYear("endless3", "h");
+  noYr.yr = 2;
+  assert.ok(!E.valid(noYr), "only Endless has years");
+});
+
+test("roots: Endless records keep the most years and never a finish", () => {
+  const m = R.mergeRoots;
+  const x = m({ rows: { aaaaaa: { b: 0, s: { e: [4, 0, 7] }, lr: 3 } } }, { rows: { aaaaaa: { b: 0, s: { e: [5, 0, 6] }, lr: 2 } } });
+  assert.deepEqual(x.rows.aaaaaa.s.e, [5, 0, 7]);
+  assert.ok(!m({ rows: { bbbbbb: { b: 0, s: { e: [2, 1, 3] } } } }, {}).rows.bbbbbb, "an Endless finish drops");
+  assert.equal(m({ last: [{ a: 5, d: "e", n: 14, w: 0, h: 120, s: "abc" }] }, {}).last.length, 1, "14 years in Last years");
+  assert.equal(m({ last: [{ a: 5, d: "e", n: 3, w: 1, h: 20, s: "abc" }] }, {}).last.length, 0, "never finished");
 });
