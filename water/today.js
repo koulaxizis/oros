@@ -22,6 +22,14 @@
         // "+1 glass" (BR-TODAY-15): Water's own receiver { sip: "glass" }, with its Undo
         acts: total < goal ? [{ k: "sip", target: { sip: "glass" } }] : [] }];
     },
+    // Today's total and goal in ml for the tips of the day (BR-TODAY-16)
+    facts: function (ctx) {
+      var C = root.orosWaterCore;
+      if (!C) return null;
+      var data = C.parse(ctx.readRaw(C.STORAGE_KEY));
+      if (!data || !C.hasAny(data)) return null;
+      return { total: C.dayTotal(data, ctx.today), goal: C.goalFor(data, ctx.today) };
+    },
     open: function (target, win) {
       if (typeof win.__orosOpenApp === "function") win.__orosOpenApp("water");
     }
