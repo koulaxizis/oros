@@ -18,7 +18,7 @@
 //     bk: [63 surface 0 | 1 leaf bud | 2 flower bud | 3 leaf | 4 flower], ba: [63 bud turns left],
 //     bloom: [bloom of each season played], best (longest root), phase "play" | "rest",
 //     res: null | { b bloom, q quota }, s: season, acts, over: -1 | 0 a quota missed | 1 the year done,
-//     one: 1 (a Daily glade, 5.96.00: this season only, always Hardy; absent in a year),
+//     one: 1 (a Daily glade, 5.97.00: this season only, always Hardy; absent in a year),
 //     gl glade 1-4, end the glades in the year, pts the points of the glades
 //     left behind (springs + longest root), 5.92.00; absent = a one-glade
 //     year on the meadow (a session from before),
@@ -613,7 +613,7 @@
     st.s = makeSeason(st);
     return st;
   }
-  // The Daily glade (5.96.00): one season on Hardy from a bare tree; the
+  // The Daily glade (5.97.00): one season on Hardy from a bare tree; the
   // glade and the season come from the code (the same for everyone that day).
   function dailyOf(seed) {
     var r = { s: hashStr(String(seed) + ":daily") };

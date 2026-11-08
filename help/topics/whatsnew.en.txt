@@ -1,8 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 5.96.00
+## Version 5.97.00
 - **Roots: the Daily glade, Last years, four glades, puzzles and Endless.** A new calendar button in Roots opens today's glade: one season on Hardy from a bare tree, the same for everyone, with one try. Meet the bloom quota to keep your streak, share a spoiler-free result, and find it in the Game Center's Today. `Records` now also lists your last 10 years with `Replay`. And a year now walks four glades, the meadow, the riverbank, the rocky hill and the old forest, each with its own soil and pests, the new puzzle button holds 20 one-turn root puzzles, and Endless lets the tree live on, year after year, until a quota is missed.
+
+- **Claude also works with orOS closed.** Through orOS Gate, Claude now searches your allowed apps, reads each Kanban board and links or changes items while no device has orOS open, from the encrypted copy; changes wait and are applied when orOS opens, and deletions still wait for you. What Claude or the Assistant adds to an app you have never opened on this device (Publishing, CRM…) now reaches your other devices too.
 
 ## Version 5.95.00
 - **A partner's cards, notes and files in CRM.** A CRM partner's overview can now list the Kanban cards, Notes pages, Layout documents and Atelier designs about them, each with `Open` (a Kanban card opens in whatever column it is now). Claude and the Assistant link them for you; × takes one off, with `Undo`.
