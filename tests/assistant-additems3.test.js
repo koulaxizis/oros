@@ -386,3 +386,8 @@ test("publish: an edition carries its shop product link (wc_id → fmt.wp), chec
   assert.ok(t.params.properties.items.items.properties.formats.items.properties.wc_id);
   assert.ok(t.params.properties.items.items.properties.shop);
 });
+
+test("publish: cover designer, narrator and other people get Publishing's roles c, n, o (2026-11-08)", () => {
+  const it = items("publish", [{ title: "Άμμος", by: "A. Writer", cover_designer: "C. Art", narrator: "N. Voice", other: "T. Setter, P. Reader" }]);
+  assert.deepEqual(it[0].ppl, [{ r: "a", n: "A. Writer" }, { r: "c", n: "C. Art" }, { r: "n", n: "N. Voice" }, { r: "o", n: "T. Setter" }, { r: "o", n: "P. Reader" }]);
+});
