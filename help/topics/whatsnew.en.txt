@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.96.00
+- **Claude also works with orOS closed.** Through orOS Gate, Claude now searches your allowed apps, reads each Kanban board and links or changes items while no device has orOS open, from the encrypted copy; changes wait and are applied when orOS opens, and deletions still wait for you. What Claude or the Assistant adds to an app you have never opened on this device (Publishing, CRM…) now reaches your other devices too.
+
 ## Version 5.95.00
 - **A partner's cards, notes and files in CRM.** A CRM partner's overview can now list the Kanban cards, Notes pages, Layout documents and Atelier designs about them, each with `Open` (a Kanban card opens in whatever column it is now). Claude and the Assistant link them for you; × takes one off, with `Undo`.
 

@@ -3306,9 +3306,7 @@
         ch.always.forEach(function (id) { setPerm(id, "always"); });
         var shared = free.concat(ch.chosen);
         shared.forEach(function (it) {
-          c.refN = (c.refN || 0) + 1;
-          it.ref = "r" + c.refN;
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q, id: it.id };
+          it.ref = refFor(c, { app: it.app, target: it.target, title: it.title, q: q, id: it.id });
         });
         var held = ask.length - ch.chosen.length;
         um.found = { q: q, text: C.searchResult(q, shared, { declined: held }) };
@@ -3421,11 +3419,9 @@
         ch.always.forEach(function (id) { setPerm(id, "always"); });
         var shared = free.concat(ch.chosen);
         shared.forEach(function (it) {
-          c.refN = (c.refN || 0) + 1;
-          it.ref = "r" + c.refN;
           // read_item finds the item again with the same search (q),
           // or by its label when there were no words.
-          c.refs[it.ref] = { app: it.app, target: it.target, title: it.title, q: q || it.title, id: it.id };
+          it.ref = refFor(c, { app: it.app, target: it.target, title: it.title, q: q || it.title, id: it.id });
         });
         var held = ask.length - ch.chosen.length;
         var names = [];
@@ -4299,7 +4295,15 @@
   }
   function writeStore(key, value) {
     if (key === "disk:flashcards") return fcStore(value);
-    try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; }
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { return false; }
+    adoptStore(key);
+    return true;
+  }
+  // SY-AD (5.96.00): the app may never have been opened on this device;
+  // its data must still reach the owner's other devices.
+  function adoptStore(key) {
+    var api = syncApi();
+    try { if (api && typeof api.adoptKey === "function") api.adoptKey(key); } catch (e) {}
   }
   function markAppDirty() {
     var api = syncApi();
@@ -5044,9 +5048,21 @@
     try { return window.OrosCrmCore && typeof window.OrosCrmCore.norm === "function" ? window.OrosCrmCore.norm(d) : d; } catch (e) { return d; }
   }
   function addRef(c, appId, id, title, target) {
+    return refFor(c, { app: appId, target: target || N.targetOf(appId, id), title: title, id: id });
+  }
+  // A new ref for an item (r1, r2…). Through the gate (5.96.00) the same
+  // item keeps its ref and the refs are kept on the device
+  // (oros-gate-refs), so a ref from the closed-orOS copy still names its
+  // item when the queued change runs later, after a reload.
+  function refFor(c, rec) {
+    if (c === gateConv) {
+      var k = gateKey(rec), old = gateKeys[k];
+      if (old && c.refs[old]) { c.refs[old] = rec; return old; }
+    }
     c.refN = (c.refN || 0) + 1;
     var ref = "r" + c.refN;
-    c.refs[ref] = { app: appId, target: target || N.targetOf(appId, id), title: title, id: id };
+    c.refs[ref] = rec;
+    if (c === gateConv) gateKeys[gateKey(rec)] = ref;
     return ref;
   }
   function noCreate(apps, id) {
@@ -8647,6 +8663,52 @@
   // ---------- GATE: Claude's tools through orOS Gate (GATE-ACT) ----------
   var gateConv = { id: "gate", refs: {}, refN: 0, msgs: [] };
   var gateNote = "", gateCtx = null;
+  // Gate refs on the device (5.96.00): { n, refs }, device-local, never
+  // synced; the newest GATE_REFS_MAX stay. gateKeys: app|target → ref.
+  var GATE_REFS_KEY = "oros-gate-refs", GATE_REFS_MAX = 6000, gateKeys = {};
+  function gateKey(rec) { var t0 = ""; try { t0 = JSON.stringify(rec.target == null ? rec.id : rec.target); } catch (e) {} return String(rec.app) + "|" + t0; }
+  function gateRefsLoad() {
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(GATE_REFS_KEY) || "null"); } catch (e) { o = null; }
+    if (!o || typeof o !== "object" || !o.refs || typeof o.refs !== "object") return;
+    gateConv.refN = typeof o.n === "number" && o.n > 0 ? o.n : 0;
+    Object.keys(o.refs).forEach(function (r) {
+      var x = o.refs[r];
+      if (/^r\d{1,6}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
+    });
+  }
+  // → false when the device could not keep them (R30: the index then
+  // says so and the copy goes without it).
+  function gateRefsSave() {
+    var keys = Object.keys(gateConv.refs);
+    if (keys.length > GATE_REFS_MAX) {
+      keys.sort(function (a, b) { return +a.slice(1) - +b.slice(1); }).slice(0, keys.length - GATE_REFS_MAX).forEach(function (r) {
+        delete gateKeys[gateKey(gateConv.refs[r])]; delete gateConv.refs[r];
+      });
+    }
+    try { localStorage.setItem(GATE_REFS_KEY, JSON.stringify({ n: gateConv.refN, refs: gateConv.refs })); return true; } catch (e) { return false; }
+  }
+  // The closed-orOS copy's search (5.96.00): every item of these apps
+  // (the gate passes the allowed apps, never the personal ones) with its
+  // ref, title, a short text and date. → Promise<{ ok, items, c? }>.
+  function gateIndex(ids) {
+    var ga = gateApps(), byId = {}, p = shell();
+    ga.read.forEach(function (a) { byId[a.id] = a; });
+    var want = (Array.isArray(ids) ? ids : []).filter(function (id) { return byId[id]; });
+    if (!want.length || !p || typeof p.orosAssistSearch !== "function") return Promise.resolve({ ok: true, items: [] });
+    return Promise.resolve(p.orosAssistSearch("", want, { all: true })).then(function (groups) {
+      var items = C.packHits(groups, function (id) { return byId[id] ? byId[id].name : id; }, { wide: true, max: 3000 });
+      var out = items.map(function (it) {
+        var o = { r: refFor(gateConv, { app: it.app, target: it.target, title: it.title, q: it.title, id: it.id }), a: it.app, t: it.title };
+        if (it.text) o.x = it.text.slice(0, 160);
+        if (it.date) o.d = it.date;
+        if (it.labels && it.labels.length) o.l = it.labels.slice(0, 8);
+        return o;
+      });
+      if (!gateRefsSave()) return { ok: false, c: "This device could not keep the refs (storage full)." };
+      return { ok: true, items: out };
+    });
+  }
   function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
   // { read: [app], write: [app] } as the gate allows them now.
   function gateApps() {
@@ -8920,7 +8982,10 @@
     loadPrefs();
     var have = installed(), lazy = Object.keys(EDIT_LAZY).filter(function (id) { return have[id]; });
     Promise.all([histLoad(), editLoadMods(lazy)]).then(function () {
-      window.__asGate = { v: 1, run: gateRun, tools: gateToolList,
+      gateRefsLoad();
+      window.__asGate = { v: 1, run: function (n, a) {
+                            return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
+                          }, tools: gateToolList, index: gateIndex,
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });
