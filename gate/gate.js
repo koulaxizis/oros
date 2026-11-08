@@ -1665,7 +1665,7 @@
       // A gate of this owner already exists (its seat came through sync): sit in it.
       return sit(true).then(function (done) {
         if (done) return;
-        // Only on the owner's own relay (Chris 08/11, 5.83.00): a new gate
+        // Only on the owner's own relay (Chris 08/11, 5.84.00): a new gate
         // never goes to orOS's shared one; joining an existing gate is fine.
         if (!mineRelay()) { var ne = new Error("norelay"); ne.code = "norelay"; throw ne; }
         p = pref();

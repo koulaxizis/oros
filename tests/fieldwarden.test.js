@@ -14,7 +14,7 @@ const D = require("../fieldwarden/data.js");
 
 const SRC = fs.readFileSync(path.join(__dirname, "..", "fieldwarden/fieldwarden.js"), "utf8");
 const R = (() => {
-  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE; var LAST_N = 10; var MAX_DAY = 100000; var MAX_SCORE = MAX_SHEAVES + E.WISH_BONUS;"];
+  const parts = ["var E = this; var DATA_VER = 1; var DIFFS = E.DIFFS; var FOLK_IDS = E.FOLK_IDS; var BIG = 1e9; var SIZE = E.SIZE; var MAX_SEASONS = E.FARMS.length * E.SEASONS; var MAX_SHEAVES = E.SIZE * E.MAX_STAGE; var LAST_N = 10; var MAX_DAY = 100000; var MAX_SCORE = MAX_SHEAVES + E.WISH_BONUS; var PZ_N = E.PUZZLES.length;"];
   ["cmpStr", "isInt", "maxSeasons", "normRow", "joinRows", "normDay", "dayKeyOk", "dayBetter", "normLast", "mergeFieldwarden"].forEach((name) => {
     const i = SRC.indexOf("  function " + name + "(");
     if (i < 0) throw new Error("missing function " + name);
@@ -542,5 +542,47 @@ test("fieldwarden: Endless goes round the farms, harder every round, until a quo
   const no = m({ rows: { dev001: { b: 0, s: { e: [3, 1, 14] }, hb: 0, c: {} }, dev002: { b: 0, s: { h: [1, 0, 140] }, hb: 0, c: {} } },
     last: [{ a: 5, d: "e", p: trio, n: 14, w: 1, s: "x" }, { a: 6, d: "h", p: trio, n: 140, w: 0, s: "x" }] }, {});
   assert.deepEqual([Object.keys(no.rows).length, no.last.length], [0, 0], "Endless is never won; other modes stop at 12 seasons");
+});
+// One winning line per puzzle (found by the search that made them).
+const PZ_SOL = [[{"t":"mv","u":1,"to":15},{"t":"tool","u":1,"at":13}],[{"t":"mv","u":1,"to":26}],[{"t":"mv","u":1,"to":15}],[{"t":"mv","u":1,"to":22}],[{"t":"mv","u":1,"to":22}],[{"t":"mv","u":1,"to":14},{"t":"tool","u":1,"at":16}],[{"t":"mv","u":1,"to":8}],[{"t":"mv","u":1,"to":20},{"t":"tool","u":1,"at":22}],[{"t":"mv","u":1,"to":4},{"t":"tool","u":1,"at":2}],[{"t":"mv","u":1,"to":34},{"t":"tool","u":1,"at":31}],[{"t":"mv","u":1,"to":9},{"t":"tool","u":1,"at":10}],[{"t":"mv","u":2,"to":27}],[{"t":"mv","u":1,"to":7},{"t":"tool","u":1,"at":13},{"t":"mv","u":2,"to":27}],[{"t":"mv","u":2,"to":10},{"t":"mv","u":1,"to":28}],[{"t":"tool","u":1,"at":7},{"t":"mv","u":2,"to":9}],[{"t":"mv","u":1,"to":4},{"t":"tool","u":1,"at":3},{"t":"mv","u":2,"to":34},{"t":"tool","u":2,"at":31}],[{"t":"mv","u":2,"to":12},{"t":"tool","u":2,"at":13},{"t":"mv","u":1,"to":7},{"t":"tool","u":1,"at":10}],[{"t":"mv","u":1,"to":15},{"t":"mv","u":2,"to":9},{"t":"tool","u":2,"at":15}],[{"t":"mv","u":1,"to":19},{"t":"mv","u":2,"to":14}],[{"t":"tool","u":1,"at":21},{"t":"mv","u":2,"to":28}],[{"t":"mv","u":1,"to":27},{"t":"tool","u":1,"at":9},{"t":"mv","u":3,"to":21}],[{"t":"mv","u":1,"to":8},{"t":"tool","u":1,"at":6},{"t":"mv","u":3,"to":26},{"t":"tool","u":3,"at":20}],[{"t":"mv","u":2,"to":9},{"t":"tool","u":2,"at":8},{"t":"mv","u":1,"to":2},{"t":"tool","u":1,"at":8}],[{"t":"mv","u":1,"to":20},{"t":"mv","u":2,"to":24},{"t":"tool","u":2,"at":12}],[{"t":"mv","u":1,"to":20},{"t":"tool","u":1,"at":18},{"t":"mv","u":3,"to":10},{"t":"tool","u":3,"at":16}],[{"t":"mv","u":3,"to":22},{"t":"mv","u":2,"to":21},{"t":"tool","u":2,"at":3}],[{"t":"mv","u":2,"to":9},{"t":"tool","u":2,"at":3},{"t":"mv","u":3,"to":14},{"t":"tool","u":3,"at":26}],[{"t":"mv","u":1,"to":32},{"t":"tool","u":1,"at":26},{"t":"mv","u":2,"to":26},{"t":"tool","u":2,"at":20},{"t":"tool","u":3,"at":3}],[{"t":"mv","u":1,"to":20},{"t":"tool","u":1,"at":2},{"t":"mv","u":3,"to":14},{"t":"tool","u":3,"at":17}],[{"t":"mv","u":1,"to":26},{"t":"tool","u":1,"at":24},{"t":"mv","u":3,"to":16}]];
+test("fieldwarden: 30 puzzles, each one turn: the winning line solves it, doing nothing and the bot do not", () => {
+  assert.equal(E.PUZZLES.length, 30);
+  assert.equal(PZ_SOL.length, 30);
+  E.PUZZLES.forEach((P, k) => {
+    const n = k + 1, tag = "puzzle " + n;
+    const onFarm = P.u.filter((e) => P.f.indexOf(e[0]) >= 0).length;
+    assert.equal(onFarm, n <= 10 ? 1 : n <= 20 ? 2 : 3, tag + " folk");
+    const st = E.newPuzzle(n);
+    assert.ok(E.valid(st), tag + " valid");
+    assert.deepEqual([st.one, st.pz, st.s.turn, st.diff], [1, n, E.T, "h"]);
+    assert.ok(st.s.u.filter((u) => u.f === 0).every((u) => u.it), tag + " every invader shows an act");
+    assert.equal(J(E.newPuzzle(n)), J(st), tag + " the same every time");
+    const win = E.clone(st);
+    PZ_SOL[k].forEach((a) => assert.ok(E.act(win, a), tag + " " + J(a)));
+    E.act(win, { t: "end" });
+    assert.deepEqual([win.over, win.s.h >= P.q], [1, true], tag + " solved");
+    assert.ok(E.valid(win));
+    const idle = E.clone(st);
+    E.act(idle, { t: "end" });
+    assert.equal(idle.over, 0, tag + " doing nothing fails");
+    const bot = E.clone(st);
+    E.botTurn(bot, true);
+    assert.equal(bot.over, 0, tag + " the solver bot fails");
+    // a puzzle never goes on to a market or a next season
+    assert.equal(E.act(win, { t: "next" }), null);
+  });
+  const bad = E.newPuzzle(3);
+  bad.pz = 31;
+  assert.equal(E.valid(bad), false);
+  const bad2 = E.newPuzzle(3);
+  delete bad2.one;
+  assert.equal(E.valid(bad2), false, "a puzzle is a one-season state");
+  // solved puzzles merge as a sorted union; bad numbers drop; reset keeps them
+  const m = R.mergeFieldwarden;
+  const A = { rows: {}, pz: [3, 1, 30] }, B = { br: 99, rows: {}, pz: [2, 3, 0, 31, 2.5, "4"] };
+  assert.deepEqual(m(A, B).pz, [1, 2, 3, 30]);
+  assert.equal(J(m(A, B)), J(m(B, A)));
+  assert.equal(J(m(m(A, B), B)), J(m(A, B)));
+  assert.deepEqual(m({ rows: {} }, {}).pz, []);
 });
 
