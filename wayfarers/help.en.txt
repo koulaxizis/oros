@@ -85,8 +85,15 @@ Foes that hit the front row hit the Knight and the Rogue first; archers aim at t
 `New journey (N)` asks for the difficulty and the party:
 - `Gentle`: 20 % more Health, fallen heroes stand up after every fight won, and a phoenix feather to start.
 - `Hardy`: fallen heroes stand up only at a camp.
+- `Endless`: Hardy rules, but after the Frost Gate the road goes on: the three lands come round again (The Greenway II, then III…), and each time round the foes have more Health, Power and Guard. The journey ends only when the party falls; `Records` keeps the most regions cleared.
 
-In both, if all three heroes fall, the journey ends. Every journey has a code, shown in the result window and in `Records`. Type a code in `New journey` to walk the same land again; leave it empty for a new one.
+In every difficulty, if all three heroes fall, the journey ends. Every journey has a code, shown in the result window and in `Records`. Type a code in `New journey` to walk the same land again; leave it empty for a new one.
+
+## Lore book
+Every foe you meet gets a page in the lore book: its numbers, its habit and a short line about it. Open it from `Records`. Foes you have not met yet show as ???. The book syncs between your devices and `Reset records` leaves it alone.
+
+## Party codes
+At the end of a journey, `Party code` turns your party into a code: the difficulty, the three classes, the level, how far you got, each hero's gear and skill upgrades, and the journey code. `Share` copies it with a short message. A friend types it in `New journey`, in the code field: the window shows your party, and `Set out` starts the same land with the same three classes, from level 1. The message line says how far your party got, so they know what to beat.
 
 ## Daily trial
 The calendar button opens today's trial: the Greenway on Hardy, with a party of three chosen for the day. Everyone gets the same land, the same party and the same spoils that day. Beat the guardian and you are through. There is one try, and leaving the trial counts as a fall where you were. A dot on the button means today's trial is still open.

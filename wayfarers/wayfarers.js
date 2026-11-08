@@ -59,6 +59,8 @@
   var MAX_DAY = 100000;
   var MAX_ACTS = 99999;
   var LAST_N = 10;
+  var MAX_REGION = E.MAX_REGION;       // Endless (5.74.00)
+  var FOE_IDS = Object.keys(E.FOES);
 
   // ---------- 1. Constants, i18n, helpers ----------
   function appLang() {
@@ -263,7 +265,7 @@
       "party.use": "Use", "party.fallen": "fallen", "party.level": "Level {n} · {x} XP", "party.inFight": "Gear can change only between fights.",
       "party.ups": "Upgrades",
       "new.title": "New journey", "new.diff": "Difficulty", "new.party": "Party: choose three", "new.count": "{n} of 3 chosen",
-      "new.seed": "Journey code (empty = new land)", "new.start": "Set out", "new.cancel": "Cancel", "new.giveUp": "The journey in progress counts as lost.",
+      "new.seed": "Journey or party code (empty = new land)", "new.start": "Set out", "new.cancel": "Cancel", "new.giveUp": "The journey in progress counts as lost.",
       "res.won": "The journey is done!", "res.fell": "The party fell", "res.at": "At: {k}",
       "res.stops": "Stops", "res.kills": "Foes", "res.lvl": "Level", "res.gold": "Gold", "res.code": "Journey code: {seed}",
       "res.same": "Same journey again", "res.new": "New journey",
@@ -271,6 +273,53 @@
       "stats.close": "Close", "stats.code": "This journey: {seed}", "stats.classes": "Wins by class", "daily.games": "All games",
       "confirm.reset": "Reset your Wayfarers records on all your devices?", "confirm.yes": "Reset", "confirm.no": "Cancel",
       "toast.reset": "Records reset", "toast.save": "Could not save: storage is full",
+      "diff.e": "Endless",
+      "diff.e.note": "Hardy rules, and after the Frost Gate the road goes on with ever stronger foes until the party falls.",
+      "res.cleared": "Regions cleared",
+      "tale.e": "The lantern burns on, and so does the road: {r}, darker than before. Every hero rests on the way and the fallen stand again.",
+      "pc.btn": "Party code",
+      "pc.title": "Party code",
+      "pc.what": "Your party as a code. A friend types it in New journey to walk the same land with the same three classes.",
+      "pc.copy": "Share",
+      "pc.share": "My Wayfarers party, can you do better? Type this code in New journey: {code}",
+      "pc.head": "{d} · level {n} · {r}",
+      "pc.won": "the journey done",
+      "pc.reached": "reached {r}",
+      "pc.got": "A friend's party: same land, same classes",
+      "pc.goal": "Your friend's party reached {r} at level {n}. Go further!",
+      "pc.goalWon": "Your friend's party finished the journey at level {n}. Can you do it too?",
+      "lore.title": "Lore book",
+      "lore.count": "{n} of {m}",
+      "lore.read": "Read",
+      "lore.stats": "Health {hp} · Power {pw} · Guard {gd} · Speed {sp}",
+      "lore.unmet": "Not met yet",
+      "lore.sprout": "Thorns that learned to walk. Where one grows, three more are waiting.",
+      "lore.wolf": "Grey wolves follow travellers for days, waiting for one to fall behind.",
+      "lore.boar": "It does not hate you. It just will not leave the path.",
+      "lore.sprite": "River sprites guard the fords and mend each other with river water.",
+      "lore.archer": "Bandits of the Greenway shoot from the trees at whoever walks last.",
+      "lore.moss": "Moss grows on its back for a hundred years. It wakes when stepped on.",
+      "lore.witch": "She speaks to the briars, and the briars listen.",
+      "lore.captain": "The captain shouts, the band grows bolder, and then the blades come.",
+      "lore.king": "The old king of the woods. The thorns are his crown and his army.",
+      "lore.imp": "Sparks that broke loose from the old forge, quick and spiteful.",
+      "lore.lizard": "It basks on hot stones and bites anything that casts a shadow on it.",
+      "lore.bat": "Cinder bats fly out of the chimneys at dusk in black clouds.",
+      "lore.golem": "Built to guard the forge, it still guards it, long after the smiths left.",
+      "lore.shaman": "Ash shamans read the smoke and sing the dead fires back to life.",
+      "lore.brute": "Too big for a cave and too angry for a village, it lives on the hills.",
+      "lore.salamander": "The forge's own child. It swims through fire as fish swim through water.",
+      "lore.raider": "Hill raiders take what the ash spares and leave nothing behind.",
+      "lore.colossus": "The forge's last work, never finished. Its heart is still burning.",
+      "lore.wisp": "A breath of the long night, drifting ahead of it.",
+      "lore.icewolf": "Faster than the grey wolves and hungrier, with frost in its fur.",
+      "lore.sentinel": "Stone guards set at the Gate in an age no one remembers.",
+      "lore.caller": "They stand on the cliffs and call the storm down on the road.",
+      "lore.yeti": "Most travellers never see one. Those who do rarely say so.",
+      "lore.drake": "A young drake of the ice, all teeth and cold breath.",
+      "lore.spirit": "The snow remembers everyone lost in it, and sometimes it walks.",
+      "lore.reaver": "Reavers wait for the night to fall and the roads to close.",
+      "lore.keeper": "It keeps the Gate shut, and the long night behind it. Or so it believes.",
       "btn.daily": "Daily trial", "daily.label": "Daily",
       "daily.title": "Daily trial #{n}", "daily.won": "Through in {t} moves", "daily.lost": "Fell at stop {c} of {m}",
       "daily.party": "Party", "daily.moves": "Moves", "daily.streak": "Streak", "daily.best": "Best streak",
@@ -483,7 +532,7 @@
       "party.use": "Χρήση", "party.fallen": "έπεσε", "party.level": "Επίπεδο {n} · {x} XP", "party.inFight": "Ο εξοπλισμός αλλάζει μόνο ανάμεσα στις μάχες.",
       "party.ups": "Βελτιώσεις",
       "new.title": "Νέο ταξίδι", "new.diff": "Δυσκολία", "new.party": "Ομάδα: διάλεξε τρεις", "new.count": "{n} από 3",
-      "new.seed": "Κωδικός ταξιδιού (κενό = νέος τόπος)", "new.start": "Ξεκίνα", "new.cancel": "Άκυρο", "new.giveUp": "Το ταξίδι που παίζεις μετρά ως χαμένο.",
+      "new.seed": "Κωδικός ταξιδιού ή ομάδας (κενό = νέος τόπος)", "new.start": "Ξεκίνα", "new.cancel": "Άκυρο", "new.giveUp": "Το ταξίδι που παίζεις μετρά ως χαμένο.",
       "res.won": "Το ταξίδι ολοκληρώθηκε!", "res.fell": "Η ομάδα έπεσε", "res.at": "Στο: {k}",
       "res.stops": "Στάσεις", "res.kills": "Εχθροί", "res.lvl": "Επίπεδο", "res.gold": "Χρυσός", "res.code": "Κωδικός ταξιδιού: {seed}",
       "res.same": "Ίδιο ταξίδι ξανά", "res.new": "Νέο ταξίδι",
@@ -491,6 +540,53 @@
       "stats.close": "Κλείσιμο", "stats.code": "Αυτό το ταξίδι: {seed}", "stats.classes": "Νίκες ανά τάξη", "daily.games": "Όλα τα παιχνίδια",
       "confirm.reset": "Να μηδενιστούν τα ρεκόρ των Οδοιπόρων σε όλες τις συσκευές σου;", "confirm.yes": "Μηδενισμός", "confirm.no": "Άκυρο",
       "toast.reset": "Τα ρεκόρ μηδενίστηκαν", "toast.save": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος",
+      "diff.e": "Ατέλειωτο",
+      "diff.e.note": "Κανόνες του Σκληρού, και μετά την Παγωμένη Πύλη ο δρόμος συνεχίζει με όλο και πιο δυνατούς εχθρούς ώσπου να πέσει η ομάδα.",
+      "res.cleared": "Περιοχές",
+      "tale.e": "Το φανάρι καίει ακόμα, και ο δρόμος συνεχίζει: {r}, πιο σκοτεινά από πριν. Όλοι ξεκουράζονται στον δρόμο και όσοι έπεσαν σηκώνονται ξανά.",
+      "pc.btn": "Κωδικός ομάδας",
+      "pc.title": "Κωδικός ομάδας",
+      "pc.what": "Η ομάδα σου σε κωδικό. Ένας φίλος τον γράφει στο Νέο ταξίδι για να περπατήσει τον ίδιο τόπο με τις ίδιες τρεις τάξεις.",
+      "pc.copy": "Κοινοποίηση",
+      "pc.share": "Η ομάδα μου στους Οδοιπόρους, μπορείς καλύτερα; Γράψε αυτόν τον κωδικό στο Νέο ταξίδι: {code}",
+      "pc.head": "{d} · επίπεδο {n} · {r}",
+      "pc.won": "ολοκλήρωσε το ταξίδι",
+      "pc.reached": "έφτασε: {r}",
+      "pc.got": "Ομάδα φίλου: ίδιος τόπος, ίδιες τάξεις",
+      "pc.goal": "Η ομάδα του φίλου σου έφτασε στο επίπεδο {n} και ως την περιοχή «{r}». Πήγαινε πιο μακριά!",
+      "pc.goalWon": "Η ομάδα του φίλου σου ολοκλήρωσε το ταξίδι στο επίπεδο {n}. Μπορείς κι εσύ;",
+      "lore.title": "Βιβλίο θρύλων",
+      "lore.count": "{n} από {m}",
+      "lore.read": "Άνοιξε",
+      "lore.stats": "Ζωή {hp} · Δύναμη {pw} · Άμυνα {gd} · Ταχύτητα {sp}",
+      "lore.unmet": "Δεν το συνάντησες ακόμα",
+      "lore.sprout": "Αγκάθια που έμαθαν να περπατούν. Όπου φυτρώνει ένα, περιμένουν άλλα τρία.",
+      "lore.wolf": "Οι γκρίζοι λύκοι ακολουθούν τους ταξιδιώτες για μέρες, περιμένοντας κάποιον να μείνει πίσω.",
+      "lore.boar": "Δεν σε μισεί. Απλώς δεν φεύγει από το μονοπάτι.",
+      "lore.sprite": "Οι νεράιδες φυλάνε τα περάσματα του ποταμού και γιατρεύουν η μία την άλλη με νερό.",
+      "lore.archer": "Οι ληστές του Πράσινου Δρόμου ρίχνουν από τα δέντρα σε όποιον περπατά τελευταίος.",
+      "lore.moss": "Το βρύο μεγαλώνει στην πλάτη της εκατό χρόνια. Ξυπνά όταν την πατήσεις.",
+      "lore.witch": "Μιλά στα βάτα, και τα βάτα την ακούνε.",
+      "lore.captain": "Ο αρχιληστής φωνάζει, η συμμορία παίρνει θάρρος, και μετά έρχονται τα σπαθιά.",
+      "lore.king": "Ο παλιός βασιλιάς του δάσους. Τα αγκάθια είναι το στέμμα και ο στρατός του.",
+      "lore.imp": "Σπίθες που ξέφυγαν από το παλιό σιδηρουργείο, γρήγορες και κακές.",
+      "lore.lizard": "Λιάζεται σε καυτές πέτρες και δαγκώνει ό,τι του ρίχνει σκιά.",
+      "lore.bat": "Οι νυχτερίδες της θράκας βγαίνουν από τις καμινάδες το σούρουπο σαν μαύρα σύννεφα.",
+      "lore.golem": "Φτιάχτηκε για να φυλάει το σιδηρουργείο και το φυλάει ακόμα, χρόνια μετά τους σιδεράδες.",
+      "lore.shaman": "Οι σαμάνοι της στάχτης διαβάζουν τον καπνό και ξαναζωντανεύουν με τραγούδια τις σβησμένες φωτιές.",
+      "lore.brute": "Πολύ μεγάλο για σπηλιά και πολύ θυμωμένο για χωριό, ζει στους λόφους.",
+      "lore.salamander": "Το παιδί του σιδηρουργείου. Κολυμπά στη φωτιά όπως τα ψάρια στο νερό.",
+      "lore.raider": "Οι ληστές των λόφων παίρνουν ό,τι αφήνει η στάχτη και δεν αφήνουν τίποτα πίσω τους.",
+      "lore.colossus": "Το τελευταίο έργο του σιδηρουργείου, που δεν τελείωσε ποτέ. Η καρδιά του καίει ακόμα.",
+      "lore.wisp": "Μια ανάσα της μεγάλης νύχτας, που ταξιδεύει μπροστά της.",
+      "lore.icewolf": "Πιο γρήγορος και πιο πεινασμένος από τους γκρίζους λύκους, με πάγο στο τρίχωμα.",
+      "lore.sentinel": "Πέτρινοι φρουροί που στήθηκαν στην Πύλη σε μια εποχή που κανείς δεν θυμάται.",
+      "lore.caller": "Στέκονται στους γκρεμούς και καλούν τη θύελλα πάνω στον δρόμο.",
+      "lore.yeti": "Οι περισσότεροι ταξιδιώτες δεν βλέπουν ποτέ ένα. Όσοι το βλέπουν σπάνια το λένε.",
+      "lore.drake": "Ένας νεαρός δράκος του πάγου, όλο δόντια και κρύα ανάσα.",
+      "lore.spirit": "Το χιόνι θυμάται όλους όσους χάθηκαν μέσα του, και κάποτε περπατά.",
+      "lore.reaver": "Οι πλιατσικολόγοι περιμένουν να πέσει η νύχτα και να κλείσουν οι δρόμοι.",
+      "lore.keeper": "Κρατά την Πύλη κλειστή και τη μεγάλη νύχτα πίσω της. Ή έτσι πιστεύει.",
       "btn.daily": "Δοκιμασία της ημέρας", "daily.label": "Ημέρας",
       "daily.title": "Δοκιμασία της ημέρας #{n}", "daily.won": "Πέρασες σε {t} κινήσεις", "daily.lost": "Έπεσες στη στάση {c} από {m}",
       "daily.party": "Ομάδα", "daily.moves": "Κινήσεις", "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
@@ -564,13 +660,18 @@
   // a join). Daily trials never count in rows.
   // last (5.71.00): the last 10 journeys of every device,
   // [{ a: end time ms, d: g|h|d (d = Daily), p: [3 classes],
-  //    r: region reached, w: 1 won | 0, s: seed }].
+  //    r: region reached, w: 1 won | 0, s: seed }]; d is also "e"
+  //    (Endless, 5.74.00) with r up to MAX_REGION.
+  // lore (5.74.00): the foes met (ids, sorted); a union, so a join.
+  // Never cleared by Reset records.
   // Union by a + s, newest first, the first 10: a join; entries older
   // than the reset stamp br drop.
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], lore: [] }; }
+  // The most regions one journey of this difficulty can clear.
+  function capOf(diff) { return diff === "e" ? MAX_REGION : REGIONS_N; }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
         !isInt(v.c) || v.c < 0 || v.c >= E.COLS || !isInt(v.t) || v.t < 1 || v.t > MAX_ACTS) return null;
@@ -583,8 +684,8 @@
     return a.t < c.t;
   }
   function normLast(v) {
-    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "h", "d"].indexOf(v.d) < 0 ||
-        !E.partyOk(v.p) || !isInt(v.r) || v.r < 1 || v.r > REGIONS_N || (v.w !== 0 && v.w !== 1) ||
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a <= 0 || v.a > 1e13 || ["g", "h", "e", "d"].indexOf(v.d) < 0 ||
+        !E.partyOk(v.p) || !isInt(v.r) || v.r < 1 || v.r > (v.d === "e" ? MAX_REGION : REGIONS_N) || (v.w !== 0 && v.w !== 1) ||
         typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
     return { a: v.a, d: v.d, p: v.p.slice(), r: v.r, w: v.w, s: v.s };
   }
@@ -593,7 +694,7 @@
     var s = {}, c = {}, any = false;
     DIFFS.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[2] <= REGIONS_N && v[1] <= v[0]) {
+      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[2] <= capOf(k) && v[1] <= v[0] && (k !== "e" || v[1] === 0)) {
         s[k] = [v[0], v[1], v[2]];
         any = true;
       }
@@ -666,7 +767,12 @@
     });
     Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
     last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
+    var lore = {};
+    [a.lore, b.lore].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (k) { if (typeof k === "string" && E.FOES.hasOwnProperty(k)) lore[k] = 1; });
+    });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N), lore: Object.keys(lore).sort(cmpStr) };
   }
   // [journeys, won, regions cleared] for a difficulty, all devices.
   function totals(diff) {
@@ -723,7 +829,7 @@
     var v = row.s[diff] ? row.s[diff].slice() : [0, 0, 0];
     v[0]++;
     if (won) v[1]++;
-    v[2] = Math.max(v[2], clamp(cleared, 0, REGIONS_N));
+    v[2] = Math.max(v[2], clamp(cleared, 0, capOf(diff)));
     row.s[diff] = v;
     if (won) party.forEach(function (k) { row.c[k] = (row.c[k] || 0) + 1; });
     data.rows[deviceId] = row;
@@ -830,6 +936,25 @@
   }
   // Regions cleared so far (the guardian of the region in play not yet).
   function cleared(g) { return g.over === 1 ? REGIONS_N : g.region - 1; }
+  // A region's name; Endless loops add a number: The Greenway II.
+  function roman(n) {
+    var out = "", v = [100, 90, 50, 40, 10, 9, 5, 4, 1], r = ["C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+    for (var i = 0; i < v.length; i++) while (n >= v[i]) { out += r[i]; n -= v[i]; }
+    return out;
+  }
+  function regionName(n) {
+    var base = t("region." + E.regionOf(n).id), lp = E.loopOf(n);
+    return lp ? base + " " + roman(lp + 1) : base;
+  }
+  // Foes met go into the lore book (synced, never reset).
+  function noteLore() {
+    if (!st || !st.fight) return;
+    var add = st.fight.foes.map(function (f) { return f.k; }).filter(function (k) { return (data.lore || []).indexOf(k) < 0; });
+    if (!add.length) return;
+    data.lore = (data.lore || []).concat(add);
+    data = mergeWayfarers(data, data);
+    save();
+  }
   // A journey ended: the records (a Daily trial only in its day) and
   // Last journeys.
   function endJourney(won) {
@@ -855,7 +980,7 @@
     var first = game.opts.day !== undefined ? t("daily.rules") : t("tale.1");
     setMsg(first);
     renderAll();
-    live(first + " " + t("region." + E.REGIONS[st.region - 1].id));
+    live(first + " " + regionName(st.region));
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
@@ -882,6 +1007,7 @@
     var wasFight = !!st.fight;
     var ev = E.act(st, a);
     if (!ev) return false;
+    noteLore();
     sel = null;
     cursor = 0;
     saveSession();
@@ -908,7 +1034,7 @@
       case "xp": return t("ev.xp", p);
       case "goldUp": return t("ev.goldUp", p);
       case "mhp": return t("ev.mhp");
-      case "region": return t("ev.region", { r: t("region." + E.REGIONS[e.n - 1].id) });
+      case "region": return t("ev.region", { r: regionName(e.n) });
     }
     return "";
   }
@@ -939,7 +1065,7 @@
     ["fight", "hit", "hurt", "heal", "use", "fall", "lvl", "win", "end"].forEach(function (k) { if (sounds[k]) sfx(k); });
     // the message line walks through what happened
     if (!wasFight && st.fight) lines.push(t("fight." + st.fight.kind));
-    if (!wasFight && st.fight && st.fight.kind === "g") lines.push(t("tale.g" + st.region));
+    if (!wasFight && st.fight && st.fight.kind === "g") lines.push(t("tale.g" + ((st.region - 1) % REGIONS_N + 1)));
     if (st.fight && curHero() >= 0) lines.push(t("fight.your", { k: heroName(curHero()) }));
     var shown = lines.filter(function (x) { return x; });
     if (!shown.length) return;
@@ -1141,7 +1267,7 @@
     ctx.fillStyle = colors["text-dim"];
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(t("map.at", { r: t("region." + E.REGIONS[st.region - 1].id), n: st.map[st.at].c + 1, m: E.COLS }), 12, 15);
+    ctx.fillText(t("map.at", { r: regionName(st.region), n: st.map[st.at].c + 1, m: E.COLS }), 12, 15);
     // roads
     st.map.forEach(function (n, i) {
       n.e.forEach(function (j) {
@@ -1648,7 +1774,7 @@
         b.setAttribute("aria-pressed", o.party.indexOf(b.getAttribute("data-c")) >= 0 ? "true" : "false");
       });
       countNote.textContent = t("new.count", { n: o.party.length });
-      if (go) go.disabled = o.party.length !== 3;
+      if (go) go.disabled = o.party.length !== 3 && !readPartyCode(seed.value);
     }
     CLASS_IDS.forEach(function (c) {
       var b = el("button", "pc-btn");
@@ -1672,15 +1798,36 @@
     seedWrap.appendChild(el("span", "dlg-label", t("new.seed")));
     var seed = el("input", "dlg-input");
     seed.type = "text";
-    seed.maxLength = 16;
+    seed.maxLength = 64;
     seed.autocomplete = "off";
     seed.spellcheck = false;
     seedWrap.appendChild(seed);
     dlg.appendChild(seedWrap);
+    // a friend's party code: the same journey with the same classes
+    var pcBox = el("div", "pc-box");
+    pcBox.setAttribute("aria-live", "polite");
+    dlg.appendChild(pcBox);
+    seed.addEventListener("input", function () {
+      var pc = readPartyCode(seed.value);
+      pcBox.textContent = "";
+      refresh();
+      if (!pc) return;
+      pcBox.appendChild(el("div", "dlg-label", t("pc.got")));
+      partyLines(pc).forEach(function (x) { pcBox.appendChild(el("div", "dlg-note", x)); });
+    });
     if (game && inProgressOf(game)) dlg.appendChild(el("div", "dlg-note", t("new.giveUp")));
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("new.cancel"), "", function () { dlg.close(); }));
     go = button(t("new.start"), "primary", function () {
+      var pc = readPartyCode(seed.value);
+      if (pc) {
+        dlg.close();
+        startGame({ diff: pc.d, seed: pc.s, party: pc.p });
+        var goal = pc.w ? t("pc.goalWon", { n: pc.lvl }) : t("pc.goal", { r: regionName(pc.r), n: pc.lvl });
+        setMsg(goal);
+        live(goal);
+        return;
+      }
       if (o.party.length !== 3) return;
       // keep the party in the order of the class list: front row first
       var party = CLASS_IDS.filter(function (c) { return o.party.indexOf(c) >= 0; });
@@ -1887,8 +2034,8 @@
       marketDialog();
       return;
     } else if (p.k === "tale") {
-      dlg.appendChild(el("div", "dlg-title", t("region." + E.REGIONS[p.n - 1].id)));
-      dlg.appendChild(el("div", "ev-text", t("tale." + p.n)));
+      dlg.appendChild(el("div", "dlg-title", regionName(p.n)));
+      dlg.appendChild(el("div", "ev-text", p.n <= REGIONS_N ? t("tale." + p.n) : t("tale.e", { r: regionName(p.n) })));
       choice(t("tale.on"), function () { doAct({ t: "on" }); });
     } else if (p.k === "ev") {
       var ev = E.eventOf(p.id);
@@ -1941,7 +2088,8 @@
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
     dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.fell")));
     if (won) dlg.appendChild(el("div", "ev-text", t("tale.end")));
-    if (!won) dlg.appendChild(el("div", "dlg-msg", t("res.at", { k: t("stop." + st.map[st.at].k) + " · " + t("region." + E.REGIONS[st.region - 1].id) })));
+    if (!won) dlg.appendChild(el("div", "dlg-msg", t("res.at", { k: t("stop." + st.map[st.at].k) + " · " + regionName(st.region) })));
+    if (game.opts.diff === "e") dlg.appendChild(row(t("res.cleared"), String(st.region - 1)));
     dlg.appendChild(row(t("res.lvl"), String(st.lvl)));
     dlg.appendChild(row(t("res.stops"), String(st.stops)));
     dlg.appendChild(row(t("res.kills"), String(st.kills)));
@@ -1949,6 +2097,7 @@
     dlg.appendChild(el("div", "dlg-note", t("res.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
     acts.appendChild(button(t("res.same"), "", function () { dlg.close(); startGame({ diff: game.opts.diff, seed: game.opts.seed, party: game.opts.party }); }));
+    acts.appendChild(button(t("pc.btn"), "", function () { dlg.close(); codeDialog(); }));
     var again = button(t("res.new"), "primary", function () { dlg.close(); newDialog(); });
     acts.appendChild(again);
     dlg.appendChild(acts);
@@ -1963,7 +2112,7 @@
     DIFFS.forEach(function (m) {
       var v = totals(m);
       if (v[0]) empty = false;
-      dlg.appendChild(row(t("diff." + m), v[0] + " · " + v[1] + " · " + v[2]));
+      dlg.appendChild(row(t("diff." + m), v[0] + " · " + (m === "e" ? "–" : v[1]) + " · " + v[2]));
     });
     dlg.appendChild(el("div", "dlg-sub", t("stats.classes")));
     CLASS_IDS.forEach(function (k) { dlg.appendChild(row(t("cls." + k), String(classWins(k)))); });
@@ -1971,6 +2120,14 @@
     if (ds.n || (data.last || []).length) empty = false;
     dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
     dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.best : "–"));
+    var lr = el("div", "lr-row");
+    var ltx = el("div", "lr-tx");
+    ltx.appendChild(el("div", "nm", t("lore.title") + " · " + t("lore.count", { n: (data.lore || []).length, m: FOE_IDS.length })));
+    lr.appendChild(ltx);
+    var lb = button(t("lore.read"), "", function () { dlg.close(); loreDialog(); });
+    lb.disabled = !(data.lore || []).length;
+    lr.appendChild(lb);
+    dlg.appendChild(lr);
     lastJourneys(dlg);
     if (game && game.opts.day === undefined) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions wrap");
@@ -1996,6 +2153,130 @@
     dlg.appendChild(acts);
     show(dlg, no);
   }
+  // ---------- Party codes (5.74.00) ----------
+  // A finished party as text: "w1", difficulty, the 3 classes (digits
+  // 0–5 in CLASS_IDS), level (base 36), region reached (2 × base 36),
+  // won 0|1, then per hero weapon and charm (index + 1 in the gear
+  // list, base 36, 0 = none) and the skill upgrades taken (a bit per
+  // upgrade of the class, in table order, one digit 0–7), then the
+  // journey code and 2 check characters (FNV-1a of the rest mod 1296,
+  // base 36). Gear and upgrades are only ever appended to the tables,
+  // so a code keeps its meaning.
+  var GEAR_IDS = Object.keys(E.GEAR);
+  function classUps(c) { return Object.keys(E.UPS).filter(function (u) { return E.UPS[u].c === c; }); }
+  function b36(n, w) { var x = n.toString(36); while (x.length < w) x = "0" + x; return x; }
+  function checkOf(body) { return b36(E.hashStr(body) % 1296, 2); }
+  function partyCode(g) {
+    var s2 = g.g, body = "w1" + g.opts.diff;
+    s2.party.forEach(function (h) { body += CLASS_IDS.indexOf(h.c); });
+    body += b36(s2.lvl, 1) + b36(Math.min(s2.region, 1295), 2) + (s2.over === 1 ? "1" : "0");
+    s2.party.forEach(function (h) {
+      var m = 0;
+      classUps(h.c).forEach(function (u, k) { if (h.up.indexOf(u) >= 0) m |= 1 << k; });
+      body += b36(h.w ? GEAR_IDS.indexOf(h.w) + 1 : 0, 1) + b36(h.ch ? GEAR_IDS.indexOf(h.ch) + 1 : 0, 1) + m;
+    });
+    body += g.opts.seed;
+    return body + checkOf(body);
+  }
+  // A code typed or pasted back: null unless it is whole and right.
+  function readPartyCode(text) {
+    var c = String(text || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (!/^w1[ghe][0-5]{3}[1-9a][0-9a-z]{2}[01]([0-9a-z]{2}[0-7]){3}[a-z0-9]{1,16}[0-9a-z]{2}$/.test(c)) return null;
+    var body = c.slice(0, -2);
+    if (checkOf(body) !== c.slice(-2)) return null;
+    var party = [0, 1, 2].map(function (k) { return CLASS_IDS[+c.charAt(3 + k)]; });
+    if (!E.partyOk(party)) return null;
+    var out = { d: c.charAt(2), p: party, lvl: parseInt(c.charAt(6), 36), r: parseInt(c.slice(7, 9), 36), w: +c.charAt(9), h: [], s: body.slice(19) };
+    if (out.lvl > E.MAX_LVL || out.r < 1 || out.r > (out.d === "e" ? MAX_REGION : REGIONS_N) || (out.w && out.d === "e")) return null;
+    for (var k = 0; k < 3; k++) {
+      var at = 10 + 3 * k, wi = parseInt(c.charAt(at), 36), ci = parseInt(c.charAt(at + 1), 36), m = +c.charAt(at + 2);
+      var w = wi ? GEAR_IDS[wi - 1] : "", ch = ci ? GEAR_IDS[ci - 1] : "";
+      if ((wi && (!w || E.GEAR[w].s !== "w")) || (ci && (!ch || E.GEAR[ch].s !== "c"))) return null;
+      var ups = classUps(party[k]).filter(function (u, b) { return m & (1 << b); });
+      if (m >= 1 << classUps(party[k]).length) return null;
+      out.h.push({ w: w, ch: ch, up: ups });
+    }
+    return out;
+  }
+  // What a code holds, in words (one line for the journey, one per hero).
+  function partyLines(pc) {
+    var head = t("pc.head", { d: t("diff." + pc.d), n: pc.lvl, r: pc.w ? t("pc.won") : t("pc.reached", { r: regionName(pc.r) }) });
+    return [head].concat(pc.h.map(function (h, k) {
+      var bits = [h.w ? t("gear." + h.w) : "", h.ch ? t("gear." + h.ch) : ""].concat(h.up.map(function (u) { return t("up." + u); }))
+        .filter(function (x) { return x; });
+      return t("cls." + pc.p[k]) + (bits.length ? ": " + bits.join(", ") : "");
+    }));
+  }
+  function codeDialog() {
+    if (!game || st.over < 0) return;
+    var code = partyCode(game), pc = readPartyCode(code);
+    var dlg = makeDialog("wf-code");
+    dlg.appendChild(el("div", "dlg-title", t("pc.title")));
+    dlg.appendChild(el("div", "dlg-msg", t("pc.what")));
+    var box = el("input", "dlg-input code");
+    box.type = "text";
+    box.readOnly = true;
+    box.value = code;
+    box.setAttribute("aria-label", t("pc.title"));
+    dlg.appendChild(box);
+    if (pc) partyLines(pc).forEach(function (x) { dlg.appendChild(el("div", "dlg-note", x)); });
+    var acts = el("div", "dlg-actions wrap");
+    var copy = button(t("pc.copy"), "primary", function () {
+      var text = t("pc.share", { code: code });
+      if (!DK) { box.select(); return; }
+      DK.share(text, "orOS " + t("app.name")).then(function (how) {
+        if (how === "copied") showToast(t("toast.copied"));
+        else if (how === "shared") live(t("toast.shared"));
+        else if (how === "failed") { box.select(); showToast(t("toast.copyFail")); }
+      });
+    });
+    acts.appendChild(button(t("stats.close"), "", function () { dlg.close(); }));
+    acts.appendChild(copy);
+    dlg.appendChild(acts);
+    show(dlg, copy);
+  }
+
+  // ---------- Lore book (5.74.00) ----------
+  // Every foe met gets a page: its numbers, its habit and a short line.
+  function regionFoes(r) {
+    var out = [], G = E.REGIONS[r].groups;
+    ["t1", "t2", "h", "g"].forEach(function (k) {
+      G[k].forEach(function (grp) { grp.forEach(function (f) { if (out.indexOf(f) < 0) out.push(f); }); });
+    });
+    return out;
+  }
+  function loreDialog() {
+    var met = data.lore || [];
+    var dlg = makeDialog("wf-lore");
+    dlg.appendChild(el("div", "dlg-title", t("lore.title") + " · " + t("lore.count", { n: met.length, m: FOE_IDS.length })));
+    var box = el("div", "lr-list lore-list");
+    E.REGIONS.forEach(function (R, r) {
+      box.appendChild(el("div", "dlg-sub", t("region." + R.id)));
+      regionFoes(r).forEach(function (k) {
+        var row2 = el("div", "lr-row");
+        var tx = el("div", "lr-tx");
+        if (met.indexOf(k) >= 0) {
+          var F = E.FOES[k];
+          tx.appendChild(el("div", "nm", t("foe." + k)));
+          tx.appendChild(el("div", "fx", t("lore.stats", { hp: F.hp, pw: F.pw, gd: F.gd, sp: F.sp })));
+          tx.appendChild(el("div", "fx", t("hab." + k)));
+          tx.appendChild(el("div", "lore-text", t("lore." + k)));
+        } else {
+          tx.appendChild(el("div", "nm", "???"));
+          tx.appendChild(el("div", "fx", t("lore.unmet")));
+        }
+        row2.appendChild(tx);
+        box.appendChild(row2);
+      });
+    });
+    dlg.appendChild(box);
+    var acts = el("div", "dlg-actions");
+    var close = button(t("stats.close"), "primary", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    show(dlg, close);
+  }
+
   // Records › Last journeys: how each one ended, and its code to replay
   // (a Daily trial replays as a whole journey on Hardy, same land and
   // party, counted as a normal journey).
@@ -2006,7 +2287,7 @@
     var box = el("div", "lr-list");
     list.forEach(function (v) {
       var r = el("div", "lr-row");
-      var what = v.w ? t(v.d === "d" ? "last.passed" : "last.won") : t("last.fell", { r: t("region." + E.REGIONS[v.r - 1].id) });
+      var what = v.w ? t(v.d === "d" ? "last.passed" : "last.won") : t("last.fell", { r: regionName(v.r) });
       var tx = el("div", "lr-tx");
       tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
       tx.appendChild(el("div", "fx", v.p.map(function (c) { return t("cls." + c); }).join(", ") + " · " +
