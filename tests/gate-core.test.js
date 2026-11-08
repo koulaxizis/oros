@@ -26,9 +26,10 @@ test("allowed: only apps set to read, never the closed list", () => {
   const ok = G.allowed(offered, { budget: "read", diary: "read", notes: "off" });
   assert.deepEqual(ok.map((a) => a.id), ["budget"]);
   assert.ok(G.NEVER.indexOf("passwords") >= 0 && G.NEVER.indexOf("mail") >= 0);
-  assert.deepEqual(G.toolsOf("budget"), ["search_data", "app_summary", "budget_lines"]);
-  assert.deepEqual(G.toolsOf("notes"), ["search_data"]);
-  assert.deepEqual(G.toolsOf("kanban"), ["search_data", "app_summary"]);
+  assert.deepEqual(G.toolsOf("budget"), ["search_data", "read_item", "app_summary", "budget_lines"]);
+  assert.deepEqual(G.toolsOf("notes"), ["search_data", "read_item", "app_summary"]);   // GATE-ACT
+  assert.deepEqual(G.toolsOf("weather"), ["search_data", "read_item"]);
+  assert.deepEqual(G.toolsOf("kanban"), ["search_data", "read_item", "app_summary"]);
 });
 
 test("budget_lines: days, order, tombstones, names, amounts, extras", () => {
@@ -170,9 +171,9 @@ test("publish_titles: status, people, formats, query by ISBN, tombstones", () =>
 });
 
 test("tools per app and the relay a gate is made on", () => {
-  assert.deepEqual(G.toolsOf("invoices"), ["search_data", "invoice_list"]);
-  assert.deepEqual(G.toolsOf("stock"), ["search_data", "app_summary", "stock_items"]);
-  assert.deepEqual(G.toolsOf("publish"), ["search_data", "publish_titles"]);
+  assert.deepEqual(G.toolsOf("invoices"), ["search_data", "read_item", "app_summary", "invoice_list"]);
+  assert.deepEqual(G.toolsOf("stock"), ["search_data", "read_item", "app_summary", "stock_items"]);
+  assert.deepEqual(G.toolsOf("publish"), ["search_data", "read_item", "app_summary", "publish_titles"]);
   assert.equal(G.relayOf(null), G.RELAY);
   assert.equal(G.relayOf({ relay: { url: "https://relay.example.org/" } }), "https://relay.example.org");
   assert.equal(G.relayOf({ relay: { url: "http://relay.example.org" } }), G.RELAY);
@@ -251,13 +252,17 @@ test("write rules: only write level, unless the owner paused changes (one rule, 
   assert.equal(G.canWrite({ budget: "write" }, 900, "budget", 1000), true, "a pause that ended");
   assert.equal(G.canWrite({ budget: "write" }, 2000, "budget", 1000), false, "paused");
   assert.equal(G.canWrite({ budget: "read" }, 0, "budget", 1000), false);
-  assert.equal(G.canWrite({ notes: "write" }, 0, "notes", 1000), false, "only apps with write tools");
+  assert.equal(G.canWrite({ weather: "write" }, 0, "weather", 1000), false, "only apps with write tools");
+  assert.equal(G.canWrite({ notes: "write" }, 0, "notes", 1000), true, "GATE-ACT: the Assistant's apps");
+  assert.equal(G.canWrite({ writer: "write" }, 0, "writer", 1000), true, "GATE-ACT W5: documents");
+  assert.equal(G.canWrite({ notes: "write" }, 2000, "notes", 1000), false, "paused");
+  assert.equal(G.canWrite({ fitness: "write" }, 0, "fitness", 1000), false, "fitness is never offered");
   assert.deepEqual(G.allowed([{ id: "budget" }], { budget: "write" }).map((a) => a.id), ["budget"], "write also reads");
 });
 
 test("switches from another device: never-apps off, write only where allowed (5.77.00)", () => {
-  assert.deepEqual(G.lvFrom({ budget: "write", diary: "read", passwords: "write", invoices: "write", kanban: "write", stock: "read", x: "maybe" }),
-    { budget: "write", invoices: "read", kanban: "write", stock: "read" });
+  assert.deepEqual(G.lvFrom({ budget: "write", diary: "read", passwords: "write", invoices: "write", kanban: "write", stock: "read", weather: "write", writer: "write", x: "maybe" }),
+    { budget: "write", invoices: "write", kanban: "write", stock: "read", weather: "read", writer: "write" }, "GATE-ACT: the everyday apps and documents keep write");
   assert.deepEqual(G.lvFrom(null), {});
   assert.deepEqual(G.lvFrom(["budget"]), {});
 });

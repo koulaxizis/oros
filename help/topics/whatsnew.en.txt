@@ -4,6 +4,12 @@ The newest changes come first. When orOS updates itself, the update notice opens
 ## Version 5.88.00
 - **Roots, a new strategy game.** You are an old tree in a glade: grow roots through the soil to reach springs and minerals, and buds on the surface that open into leaves and flowers. Beetles, moles, aphids and blight show what they will do before they act, and anything cut off from the trunk withers in 2 turns unless you join it again. Meet the bloom quota of spring, summer and autumn to finish the year. In Games and the Game Center (Strategy).
 
+## Version 5.87.00
+- **Claude runs your everyday apps through orOS Gate.** With `Claude may also change …` on for an app, Claude (claude.ai, with the orOS Gate connector) adds, changes, moves and links items in To-Do, Calendar, Notes, Contacts, CRM, Timesheet, Publishing and the other everyday apps, with the Assistant's own rules. It changes your documents in Writer, Slides, Spreadsheet, Mind Map, Whiteboard, Atelier, Layout, Photo Lab, Montage and Studio: the app opens on your screen and does it there. It can also start a timer, fill in an alarm, open something, play something or show directions. Every change is in `Claude's changes` with `Undo`. Fitness is never offered. The `Claude` button in Quick settings pauses Claude's changes.
+
+## Version 5.86.00
+- **The Assistant adds many Publishing titles at once.** Ask it to add a list or catalogue of the books you publish: they come on one card with a tick on each, with authors, translator, series, status, release date (and its release plan for a book still to come), back-cover text and editions with ISBN, price, pages and the product in your WooCommerce shop. Nothing is saved before you press `Add`, and `Undo` takes them back. A wrong ISBN, or one already on another title, is refused.
+
 ## Version 5.84.00
 - **Fieldwarden: build your own farm.** `New year` › `Build a farm` turns the board into a farm editor: place fields, hedges, ponds, haystacks, the barn, your three folk and the invaders, set the weather and who comes in on which turn, then `Play` it as one season on Harsh. Every farm has a code: share it, and anyone who types it in `New year` plays the same farm.
 

@@ -293,3 +293,96 @@ test("create_items lists the six apps only when allowed, with their fields", () 
   const p2 = t2.params.properties.items.items.properties;
   ["pet", "record", "weight_kg", "next_due", "activity", "distance_km", "species", "water_days"].forEach((k) => assert.ok(p2[k], k));
 });
+
+// ---------- Publishing (AS-ADD7) ----------
+const PB = require("../publish/core.js");
+test("publish: a list of titles in one call; Publishing's own form; release plan; ISBN checks; look-alike; Undo", () => {
+  assert.ok(A.APP_IDS.includes("publish"));
+  assert.equal(A.storageKey("publish"), "oros-publish-data");
+  const d = PB.put(PB.empty(), "titles", { id: "t0", t: "Old one", st: "out", ppl: [{ r: "a", n: "Ann Lee" }],
+    fmts: [{ id: "f0", k: "pb", isbn: "9780306406157" }] }, T0);
+  const r = add("publish", clone(d), [
+    { title: "The Forest", by: "A. Papas, B. Nikou", translator: "C. Ray", date: "2027-03-01", series: "Prose", series_no: 4,
+      formats: [{ format: "paperback", isbn: "978-1-4028-9462-6", price: 14.5, pages: 240 }, { format: "ebook", price: 6.99 }],
+      blurb: "Two lines\n\nof text", language: "Greek" },
+    { title: "Back list", status: "released", date: "2019-05-02" },
+    { title: "old ONE", by: "Ann Lee" }
+  ]);
+  // the look-alike starts unticked
+  assert.deepEqual(r.p.rows.map((x) => !!x.dup), [false, false, true]);
+  assert.deepEqual(r.p.rows[0].fields.find((f) => f[0] === "format"), ["format", "paperback|14.50 EUR"]);
+  assert.deepEqual(r.p.rows[0].fields.find((f) => f[0] === "isbn"), ["isbn", "9781402894626"]);
+  assert.deepEqual(r.p.rows[0].fields.find((f) => f[0] === "pages"), ["pages", "240"]);
+  const a = A.apply("publish", clone(d), r.it, NOW, { 2: 1 }, CTX);
+  assert.equal(a.ok, true, a.err);
+  assert.equal(a.made.length, 2);
+  // what Publishing's own merge makes of it, byte for byte
+  assert.equal(J(a.data), PB.serialize(a.data));
+  assert.equal(PB.serialize(PB.merge(a.data, d)), J(a.data));
+  const t1 = PB.find(a.data, "titles", a.made[0].id), t2 = PB.find(a.data, "titles", a.made[1].id);
+  assert.deepEqual(t1.ppl, [{ r: "a", n: "A. Papas" }, { r: "a", n: "B. Nikou" }, { r: "t", n: "C. Ray" }]);
+  assert.equal(t1.st, "idea");
+  assert.equal(t1.rel, "2027-03-01");
+  assert.equal(t1.sn, "4");
+  assert.deepEqual(t1.fmts.map((f) => [f.k, f.isbn, f.price, f.pages]), [["pb", "9781402894626", 14.5, 240], ["eb", "", 6.99, 0]]);
+  assert.equal(t1.plan.length, PB.STAGES.length - 1);
+  assert.equal(t1.plan.find((s) => s.k === "print").d, PB.addDays("2027-03-01", PB.STAGE_DAYS.print));
+  assert.equal(t2.st, "out");
+  assert.equal(t2.plan, undefined);                 // a released book gets no plan unless asked
+  // ISBN: invalid, made-up check digit, twice, or on another title → refused
+  assert.match(err("publish", [{ title: "X", formats: [{ isbn: "978-1-4028-9462-7" }] }]), /check digit/);
+  assert.match(err("publish", [{ title: "X", formats: [{ isbn: "9781402894626" }, { format: "ebook", isbn: "9781402894626" }] }]), /given twice/);
+  const it = items("publish", [{ title: "Other", formats: [{ isbn: "9780306406157" }] }]);
+  assert.match(A.plan("publish", d, it, CTX).err, /already on .Old one/);
+  assert.match(err("publish", [{ title: "X", status: "printing" }]), /idea, production, released or out_of_print/);
+  assert.match(err("publish", [{ title: "X", release_plan: true }]), /needs date/);
+  // Undo takes back only what is unchanged
+  const u = A.undo("publish", a.data, a.undo, NOW + 5);
+  assert.equal(u.ok, true, u.err);
+  assert.deepEqual(u.data.titles.map((x) => x.id), ["t0"]);
+  const edited = PB.put(a.data, "titles", Object.assign({}, t2, { sub: "new" }), NOW + 3);
+  assert.match(A.undo("publish", edited, a.undo, NOW + 5).err, /changed in Publishing/);
+  // never opened: starts from Publishing's empty data
+  const e = add("publish", null, [{ title: "First" }]);
+  assert.equal(e.a.data.titles.length, 1);
+});
+
+test("create_items offers publish with its fields, and says a list goes in one call", () => {
+  const t = core.toolsFor({ creates: ["publish"] }).find((x) => x.name === "create_items");
+  assert.deepEqual(t.params.properties.app.enum, ["publish"]);
+  const p = t.params.properties.items.items.properties;
+  ["title", "by", "translator", "series", "status", "date", "release_plan", "formats", "blurb", "language"].forEach((k) => assert.ok(p[k], k));
+  assert.ok(p.status.enum.includes("out_of_print"));
+  assert.ok(!p.media && !p.vehicle);
+  assert.match(AS, /publish: \["OrosPublishCore", "\.\.\/publish\/core\.js"\]/);
+  const sp = core.systemPrompt({ data: true, creates: ["publish"] });
+  assert.match(sp, /titles the user publishes \(Publishing; a list or catalogue of titles: all of them in one create_items call/);
+});
+
+test("publish: an edition carries its shop product link (wc_id → fmt.wp), checked against the user's shops", () => {
+  const one = Object.assign({}, CTX, { woo: [{ id: "w1", name: "My shop", site: "https://shop.example" }] });
+  const two = Object.assign({}, CTX, { woo: [{ id: "w1", name: "My shop", site: "https://shop.example" }, { id: "w2", name: "Second", site: "https://two.example" }] });
+  const n = A.normItems({ app: "publish", items: [{ title: "A", formats: [{ isbn: "9781402894626", wc_id: 412 }, { format: "ebook", wc_id: 413 }] }] }, one);
+  assert.equal(n.ok, true, n.err);
+  const p = A.plan("publish", null, n.items, one);
+  assert.deepEqual(p.rows[0].fields.filter((f) => f[0] === "product"), [["product", "#412 · My shop"], ["product", "#413 · My shop"]]);
+  p.rows[0].fields.forEach((f) => assert.ok(LABELS.has(f[0]), f[0]));
+  const a = A.apply("publish", null, n.items, NOW, {}, one);
+  assert.deepEqual(a.data.titles[0].fmts.map((f) => f.wp), [{ a: "w1", id: 412 }, { a: "w1", id: 413 }]);
+  assert.equal(J(a.data), PB.serialize(a.data));
+  // several shops: by name or address; unknown, missing or none → refused
+  const ok = A.normItems({ app: "publish", items: [{ title: "B", shop: "two.example", formats: [{ wc_id: 9 }] }] }, two);
+  assert.equal(ok.ok, true, ok.err);
+  assert.deepEqual(ok.items[0].fmts[0].wp, { a: "w2", id: 9 });
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", formats: [{ wc_id: 9 }] }] }, two).err, /several shops/);
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", shop: "Nope", formats: [{ wc_id: 9 }] }] }, two).err, /not one of the user's shops/);
+  assert.match(err("publish", [{ title: "B", formats: [{ wc_id: 9 }] }]), /Connected services/);
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", formats: [{ wc_id: 9 }, { format: "ebook", wc_id: 9 }] }] }, one).err, /given twice/);
+  assert.match(A.normItems({ app: "publish", items: [{ title: "B", formats: [{ wc_id: -3 }] }] }, one).err, /whole number/);
+  // already linked to another title → refused; to the same title → a look-alike
+  const it = A.normItems({ app: "publish", items: [{ title: "C", formats: [{ wc_id: 412 }] }] }, one).items;
+  assert.match(A.plan("publish", a.data, it, one).err, /already linked to .A/);
+  const t = core.toolsFor({ creates: ["publish"] }).find((x) => x.name === "create_items");
+  assert.ok(t.params.properties.items.items.properties.formats.items.properties.wc_id);
+  assert.ok(t.params.properties.items.items.properties.shop);
+});

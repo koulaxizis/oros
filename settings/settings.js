@@ -1010,11 +1010,14 @@
             (e.dv ? " · " + e.dv : "") + (e.done ? " · " + t("gt.chg.undone") : "")));
           if (e.undo) {
             c.appendChild(actions(button(t("gt.undo"), "gt.undo:" + e.id, function () {
-              var r = G.undo(e.id);
-              gateNote = "";
-              if (!r.ok) gateUndoMsg = r.later ? t("gt.undo.later") : t("gt.undo.fail");
-              else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
-              render();
+              // a change made with the Assistant's tools answers later (a Promise)
+              Promise.resolve(G.undo(e.id)).then(function (r) {
+                r = r || { ok: false };
+                gateNote = "";
+                if (!r.ok) gateUndoMsg = r.later ? t("gt.undo.later") : t("gt.undo.fail");
+                else gateUndoMsg = r.kept ? t("gt.undo.kept", { n: r.n, k: r.kept }) : t("gt.undo.done", { n: r.n });
+                render();
+              });
             })));
           }
         });

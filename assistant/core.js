@@ -1663,7 +1663,7 @@
       "media (title, media book|film|series|album|podcast|game, status want|now|done|dropped, by?, year?: Media Shelf, also books) · " +
       "place (title, lat+lon or query: Maps, the user saves it) · " +
       "shared_expense (group?, title?, amount?, paid_by?, date?, currency?, note?: Split) · " +
-      "book (title, by?, date?, isbn?: a title the user PUBLISHES, in Publishing; date = the release date, and the card offers the release plan counted back from it) · " +
+      "book (title, by?, date?, isbn?: a title the user PUBLISHES, in Publishing; date = the release date, and the card offers the release plan counted back from it; when create_items can add to publish, use that instead, for one title or many) · " +
       "post (text, date, start?, networks?, title?: one social post the user plans in Publishing's Posts and posts themselves on its day; title = the book it is about; " +
       "for a series of posts make one call per post, each on its own day, and keep each text within the shortest limit of its networks: bluesky 300, x 280, mastodon and threads 500) · " +
       "settlement (shop: a consignment shop in Stock; opens its settlement, where the user counts what is left on the shop's shelf) · " +
@@ -1945,13 +1945,15 @@
     garage: "garage = a vehicle's service (done) or renewal (an expiry: insurance, road tax, MOT…) in Garage",
     plants: "plants = a plant in Plant Care",
     petcare: "petcare = a pet's health record (vaccine, deworming, vet visit, medication, weight) in Pet Health Book",
-    shelf: "shelf = a book, film, series, album, podcast or game on Media Shelf"
+    shelf: "shelf = a book, film, series, album, podcast or game on Media Shelf",
+    // AS-ADD7 (assistant/additems3.js): titles the user publishes
+    publish: "publish = a book the user PUBLISHES, as a title in Publishing (a whole list of titles goes in one call)"
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
     ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
     ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "timesheet", "meals", "travel_plan", "travel_pack",
-               "habits", "fitness", "garage", "plants", "petcare", "shelf"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant or shelf title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight)." }],
+               "habits", "fitness", "garage", "plants", "petcare", "shelf", "publish"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant, shelf title or published book's title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight)." }],
     ["days", ["habits"], { type: "array", items: { type: "integer" }, description: "habits: weekdays, 0 = Monday … 6 = Sunday (leave out for any day)." }],
     ["per_week", ["habits"], { type: "integer", description: "habits: times a week, instead of days." }],
     ["per_month", ["habits"], { type: "integer", description: "habits: times a month, instead of days." }],
@@ -1965,7 +1967,7 @@
     ["pet", ["petcare"], { type: "string", description: "petcare: the pet's name (may be left out when there is one)." }],
     ["record", ["garage", "petcare"], { type: "string", "enum": ["service", "renewal", "vaccine", "deworm", "visit", "medication", "weight"], description: "garage: service (done, default) or renewal (something that expires on date). petcare: vaccine, deworm, visit, medication or weight (required)." }],
     ["km", ["garage"], { type: "integer", description: "garage service: the odometer in km." }],
-    ["shop", ["garage"], { type: "string", description: "garage service: the garage or mechanic." }],
+    ["shop", ["garage", "publish"], { type: "string", description: "garage service: the garage or mechanic. publish with a wc_id: the WooCommerce shop's name or address in Connected services, only when the user has several." }],
     ["next_due", ["petcare"], { type: "string", description: "petcare vaccine, deworm, visit: the next dose or recheck, YYYY-MM-DD." }],
     ["vet", ["petcare"], { type: "string", description: "petcare vaccine, visit: the vet." }],
     ["dose", ["petcare"], { type: "string", description: "petcare medication: the dose, e.g. 1/2 tablet twice a day." }],
@@ -1974,7 +1976,22 @@
     ["species", ["plants"], { type: "string", description: "plants: the species (a ready one such as Monstera fills its care values; else kept as the scientific name)." }],
     ["water_days", ["plants"], { type: "integer", description: "plants: water every this many days (default the species', else 7)." }],
     ["media", ["shelf"], { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: what it is (default book)." }],
-    ["by", ["shelf"], { type: "string", description: "shelf: the author, director, creator, artist, host or studio." }],
+    ["by", ["shelf", "publish"], { type: "string", description: "shelf: the author, director, creator, artist, host or studio. publish: the author (several: separated by commas)." }],
+    ["subtitle", ["publish"], { type: "string", description: "publish: the subtitle." }],
+    ["translator", ["publish"], { type: "string", description: "publish: the translator (several: separated by commas)." }],
+    ["illustrator", ["publish"], { type: "string", description: "publish: the illustrator (several: separated by commas)." }],
+    ["editor", ["publish"], { type: "string", description: "publish: the editor (several: separated by commas)." }],
+    ["series", ["publish"], { type: "string", description: "publish: the series (collection) it belongs to." }],
+    ["series_no", ["publish"], { type: "string", description: "publish: its number in the series." }],
+    ["language", ["publish"], { type: "string", description: "publish: the book's language, e.g. Greek." }],
+    ["blurb", ["publish"], { type: "string", description: "publish: the back-cover text (up to 4000 characters)." }],
+    ["release_plan", ["publish"], { type: "boolean", description: "publish with date: true adds the release plan counted back from the release date, false leaves it out (default: a plan for a book still to come, none for one released or out of print)." }],
+    ["formats", ["publish"], { type: "array", description: "publish: the book's editions, up to 8; only numbers the user gave, never a made-up ISBN.",
+               items: { type: "object", properties: { format: { type: "string", "enum": ["paperback", "hardback", "ebook", "audiobook", "other"] },
+                                                      isbn: { type: "string", description: "ISBN-13 (or ISBN-10), hyphens allowed." },
+                                                      price: { type: "number", description: "The list price in the app's currency, e.g. 14.5." },
+                                                      pages: { type: "integer" },
+                                                      wc_id: { type: "integer", description: "The id of this edition's product in the user's WooCommerce shop, when the user gave it (links it as Publishing's Send to the shop does)." } } } }],
     ["year", ["shelf"], { type: "integer", description: "shelf: the year it came out." }],
     ["platform", ["shelf"], { type: "string", description: "shelf game: the platform, e.g. Switch." }],
     ["trip", ["travel_plan", "travel_pack"], { type: "string", description: "travel_*: the trip's ref (from search_data, app travel), required." }],
@@ -2011,7 +2028,7 @@
                              region: { type: "string" }, country: { type: "string" },
                              type: { type: "string", "enum": ["home", "work", "other"] } } }],
     ["birthday", ["contacts"], { type: "string", description: "contacts: YYYY-MM-DD, or MM-DD without a year." }],
-    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare"], { type: "string", description: "YYYY-MM-DD. todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
+    ["date", ["todo", "calendar", "budget", "kanban", "crm_activity", "crm_followup", "crm_deal", "timesheet", "travel_plan", "stickies", "fitness", "garage", "petcare", "publish"], { type: "string", description: "YYYY-MM-DD. publish: the release date; todo, kanban: the due date; calendar, crm_followup, timesheet: the day (required); budget, crm_activity, fitness, petcare, garage service: the day (default today, never later); crm_deal: the expected close; travel_plan: the day; stickies: the reminder's day (leave out for none); garage renewal: the day it expires (required)." }],
     ["end_date", ["calendar", "travel_plan"], { type: "string", description: "calendar: last day of an event over several days. travel_plan: the arrival or check-out day." }],
     ["start", ["calendar", "crm_activity", "crm_followup", "timesheet", "travel_plan", "stickies", "fitness"], { type: "string", description: "HH:MM (24h). calendar: start time, leave out for all day; crm_*: the time, if said; timesheet, fitness: when it started (required); travel_plan: departure or start; stickies: the reminder's time." }],
     ["end", ["calendar", "timesheet", "travel_plan"], { type: "string", description: "End time HH:MM (timesheet: on the same day; else give minutes)." }],
@@ -2031,9 +2048,9 @@
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf: tags, any)." }],
-    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare"], { type: "string", description: "A note (Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
+    ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish"], { type: "string", description: "A note (Publishing 4000, only for the user, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
     ["kind", ["crm"], { type: "string", "enum": ["person", "company"], description: "crm: a person or a company (default company)." }],
-    ["status", ["crm", "shelf"], { type: "string", "enum": ["lead", "active", "past", "want", "now", "done", "dropped"], description: "crm: lead (default), active customer, or past. shelf: want (default), now (reading / watching), done or dropped." }],
+    ["status", ["crm", "shelf", "publish"], { type: "string", "enum": ["lead", "active", "past", "want", "now", "done", "dropped", "idea", "production", "released", "out_of_print"], description: "crm: lead (default), active customer, or past. shelf: want (default), now (reading / watching), done or dropped. publish: idea (default), production, released or out_of_print." }],
     ["tax_id", ["crm"], { type: "string", description: "crm: VAT / tax number (e.g. Greek ΑΦΜ)." }],
     ["tax_office", ["crm"], { type: "string", description: "crm: tax office (e.g. Greek ΔΟΥ)." }],
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
@@ -3070,6 +3087,67 @@
     return out;
   }
 
+  // GATE-ACT (orOS Gate, 2026-11-08): the same tools for Claude through
+  // the gate (gate/gate.js runs them in a hidden Assistant frame,
+  // assistant.js GATE). No card is shown there: reads go straight to
+  // Claude, changes are applied at once unless the owner paused them
+  // (one rule, 5.78.00), more than 5 deletions are asked on the device. Only these
+  // tools are offered, and every sentence about cards, presses or the
+  // user's consent is replaced (tests/gate-act.test.js keeps it so).
+  // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): edit_in_app and
+  // do_action too; the app opens on the owner's screen and does it there.
+  var GATE_TOOLS = ["search_data", "read_item", "app_summary", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change"];
+  var GATE_SAY = [
+    [" The user sees every result first and may share only some of them, or none.", ""],
+    [" The user may be asked first.", ""],
+    [" The user sees the summary first and may hold it back.", ""],
+    ["Propose a change to an existing item", "Change an existing item"],
+    [" The user sees exactly what would change (before → after) and must press Apply; they may refuse. The result says whether it was applied.",
+     " It is applied at once (unless the owner paused Claude's changes; the owner is notified); the result says what changed."],
+    ["the user sees one card for all of them", "one change for all of them"],
+    ["pass changes instead: one card, the user can untick rows", "pass changes instead"],
+    ["One card and one Undo for all.", "One Undo for all."],
+    [" The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead.",
+     " They are saved at once (unless the owner paused Claude's changes; the owner is notified). An item that looks like one already there is left out; the result names it with its ref, so change it with change_item instead."],
+    [" The user sees the links on one card and must press Link.", " Applied at once (unless the owner paused Claude's changes; the owner is notified)."],
+    ["What you (the assistant) added", "What the Assistant or Claude through orOS Gate added"],
+    [" The user sees the list as a card with Undo next to each change that can still be undone.", ""],
+    ["Take back changes you (the assistant) made, when the user asks", "Take back changes made through orOS Gate or by the Assistant, when the owner asks"],
+    [" The user sees them on one card and presses Undo once; never say it is undone before the result says so, and never tell the user you cannot undo.",
+     " They are undone at once (unless the owner paused Claude's changes; the owner is notified); never say it is undone before the result says so."],
+    [" The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back.",
+     " The app opens on the owner's screen and applies them at once (unless the owner paused Claude's changes; the owner is notified); undo_change takes everything back. Removing more than 5 things is asked on the device first."],
+    ["Do one thing for the user in an orOS app when they press the card's button: ", "Do one thing for the owner in an orOS app, on their screen: "],
+    ["fills Time's alarm form; the user presses Add", "fills Time's alarm form on the owner's screen; the alarm is kept once the owner confirms it there"],
+    ["Nothing happens before the press, so say it is ready, never that it is done.", "It happens at once unless the owner paused Claude's changes; it cannot be undone, but the owner can stop it in the app."]
+  ];
+  // edit_in_app's per-app command guides are long; through the gate
+  // they come with read_in_app's result for that app instead.
+  var GATE_EDIT_GUIDE = " Call read_in_app for the document first: its result lists that app's commands (commands), the only ones edit_in_app takes.";
+  var GATE_BAD = /\bpress(es)?\b|user sees|may be asked|hold it back|untick|must press|a card\b|one card\b|on a card\b/i;
+  // tools (toolsFor output) → MCP tool list { name, description, inputSchema, annotations }
+  function gateTools(tools) {
+    return (Array.isArray(tools) ? tools : []).filter(function (t) { return t && GATE_TOOLS.indexOf(t.name) >= 0; }).map(function (t) {
+      var x = JSON.parse(JSON.stringify(t));
+      function say(s) {
+        var out = String(s || "");
+        GATE_SAY.forEach(function (r) { out = out.split(r[0]).join(r[1]); });
+        return out;
+      }
+      function walk(o) {
+        if (!o || typeof o !== "object") return;
+        if (typeof o.description === "string") o.description = say(o.description);
+        Object.keys(o).forEach(function (k) { if (o[k] && typeof o[k] === "object") walk(o[k]); });
+      }
+      x.description = say(x.description);
+      if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
+      walk(x.params);
+      var ro = /^(search_data|read_item|app_summary|read_in_app|change_history)$/.test(x.name);
+      return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
+               annotations: { readOnlyHint: ro, destructiveHint: /^(change_item|undo_change|edit_in_app)$/.test(x.name) } };
+    });
+  }
+
   var RESULT_TEXT = 400;   // characters of an item's text sent to the model
   var PER_APP     = 8;     // items per app
   var MAX_ITEMS   = 30;    // items per search
@@ -3367,7 +3445,8 @@
                       crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals",
                       timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
                       stickies: "sticky notes", habits: "habits", fitness: "finished workouts", garage: "Garage services and renewals",
-                      plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)" };
+                      plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)",
+                      publish: "titles the user publishes (Publishing; a list or catalogue of titles: all of them in one create_items call, never one card per title)" };
       lines.push("To add new " + opts.creates.map(function (a) { return CR_WHAT[a] || a; }).join(", ") +
         ", call create_items (all of one app in one call, even a single one) instead of propose_entry: the user ticks and adds them on one card. Say they were added only when the result says so, and which ones the user left out or were already there. When the user hasn't said where (which list, board, notebook…), leave it out and the app's default is used." +
         (opts.creates.indexOf("crm_deal") >= 0 ? " CRM history, follow-ups and deals belong to a customer: give its ref as customer (search_data first; add the customer first when it is missing), never a name. Something done or said for a customer is crm_activity; something still to do on a day is crm_followup." : "") +
@@ -4442,7 +4521,7 @@
     labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
-    toolsFor: toolsFor, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    toolsFor: toolsFor, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,

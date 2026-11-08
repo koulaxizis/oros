@@ -876,7 +876,7 @@ orosPack("de", "settings", {
  "gt.invite.code": "Gib auf dem anderen Gerät unter Einstellungen › orOS Gate {code} bei Code von deinem anderen Gerät ein (10 Minuten, einmal).",
  "gt.apps.hint": "Was Claude lesen darf (alles aus, bis du es einschaltest):",
  "gt.read": "Claude darf {app} lesen",
- "gt.never": "Passwörter, Mail, Tagebuch, Stimmung, Zyklus, Gesundheit, Baby und der Assistent werden nie angeboten.",
+ "gt.never": "Passwörter, Mail, Tagebuch, Stimmung, Zyklus, Gesundheit, Fitness, Baby und der Assistent werden nie angeboten.",
  "gt.seat": "Deine anderen Geräte mit orOS-Sync treten diesem Tor von selbst bei, sobald orOS dort öffnet (schaltest du es auf einem aus, bleibt es dort aus). Code und QR sind für ein Gerät ohne Sync.",
  "gt.invite.qr": "QR-Code zum Beitreten",
  "gt.invite.qr.hint": "Oder scanne ihn mit der Kamera des anderen Geräts: orOS öffnet sich mit dem eingetragenen Code.",
