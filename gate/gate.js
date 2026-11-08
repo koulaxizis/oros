@@ -918,6 +918,8 @@
   function ownRelay() { var u = readJSON(OWN_KEY); return typeof u === "string" && HTTPS_RE.test(u) ? u : ""; }
   var HTTPS_RE = /^https:\/\/[^\s/?#]+(\/[^\s?#]*)?$/;
   function relayNow() { return ownRelay() || relayOf(readJSON("oros-mail-data")); }
+  // The owner set a relay of their own here or in Mail.
+  function mineRelay() { return !!ownRelay() || relayOf(readJSON("oros-mail-data")) !== RELAY; }
   function relay() { var p = pref(); return p.on && typeof p.r === "string" && p.r ? p.r : relayNow(); }
   function devCall(body, base) {
     return fetch((base || relay()) + "/gate/dev", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
@@ -1554,7 +1556,7 @@
     // The relay this gate runs on, and which kind: own | mail | shared.
     relayInfo: function () {
       var r = relay(), own = ownRelay();
-      return { url: r, own: own, kind: own && r === own ? "own" : r === RELAY ? "shared" : "mail" };
+      return { url: r, own: own, mine: mineRelay(), kind: own && r === own ? "own" : r === RELAY ? "shared" : "mail" };
     },
     setOwnRelay: function (u) {
       u = String(u || "").trim().replace(/\/+$/, "");
@@ -1663,6 +1665,9 @@
       // A gate of this owner already exists (its seat came through sync): sit in it.
       return sit(true).then(function (done) {
         if (done) return;
+        // Only on the owner's own relay (Chris 08/11, 5.83.00): a new gate
+        // never goes to orOS's shared one; joining an existing gate is fine.
+        if (!mineRelay()) { var ne = new Error("norelay"); ne.code = "norelay"; throw ne; }
         p = pref();
         var id = randomB64u(16).slice(0, 22), tok = randomB64u(32), base = relayNow();
         return sha256hex(tok).then(function (th) { return devCall({ act: "new", id: id, th: th }, base); }).then(function () {

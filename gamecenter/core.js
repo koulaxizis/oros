@@ -376,7 +376,7 @@
       });
       dailyPart(d, S, X, today, "wayfarers");
     },
-    // Fieldwarden: "<diff>" (m Mild, h Harsh) → [years, finished, most
+    // Fieldwarden: "<diff>" (m Mild, h Harsh, e Endless, never finished) → [years, finished, most
     // seasons won]; a Harsh year finished counts as a win on the
     // hardest level;
     // days{day: {w, h, t, f}} the Daily season (solved = quota met; not

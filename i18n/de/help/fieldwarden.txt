@@ -74,6 +74,7 @@ Ein Jahr führt über drei Höfe mit je vier Jahreszeiten, zwölf Jahreszeiten i
 `Neues Jahr (N)` fragt nach der Schwierigkeit und deinen drei Leuten:
 - `Mild`: ein niedrigeres Soll, und einmal pro Jahreszeit nimmt `Zurückspulen` den ganzen letzten Zug zurück, nachdem du ihn gesehen hast.
 - `Hart`: ein höheres Soll, ein Eindringling mehr zu Beginn jeder Jahreszeit und noch einer während der Jahreszeit, und ab dem zweiten Hof hat jeder Eindringling 1 Gesundheit mehr.
+- `Endlos`: Hart, aber das Jahr endet nie. Nach der Flussbiegung kommen die drei Höfe wieder (Die Niederung II, Obstgartenhügel II…), und jede Runde haben die Eindringlinge 1 Gesundheit mehr (bis 4), in jeder Jahreszeit kommt einer mehr, und das Soll verlangt 5 % mehr. Das Jahr endet beim ersten verfehlten Soll; die `Bestwerte` behalten die meisten gewonnenen Jahreszeiten.
 
 Jedes Soll ist erreichbar: Wer die Jahreszeit baut, spielt sie vor dir mit deinen Leuten und verlangt nie mehr, als er eingebracht hat. Jedes Jahr hat einen Code, der im Ergebnisfenster und in den `Bestwerten` steht. Gib einen Code bei `Neues Jahr` ein, um dasselbe Jahr mit denselben Leuten noch einmal zu spielen; lass das Feld leer für ein neues.
 

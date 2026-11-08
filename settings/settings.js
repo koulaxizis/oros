@@ -850,13 +850,13 @@
     var c = card(t("gt.title"), "gate");
     c.appendChild(row(t("gt.switch"), switchBtn(st.on, "gt.switch", function (v) {
       gateNote = ""; gateInfo = null;
-      (v ? G.enable() : G.disable()).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
+      (v ? G.enable() : G.disable()).then(function () { render(); }, function (e) { gateNote = e && e.code === "norelay" ? "gt.relay.need" : "gt.fail"; render(); });
     }, t("gt.switch")), { hint: t("gt.hint") }));
     if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
     // Own relay (5.82.00): the gate can run on the owner's own Worker.
     if (typeof G.relayInfo === "function") {
       var ri = G.relayInfo();
-      c.appendChild(el("div", "hint", t("gt.relay.now." + ri.kind, { url: ri.url })));
+      c.appendChild(el("div", "hint", !st.on && !ri.mine ? t("gt.relay.need") : t("gt.relay.now." + ri.kind, { url: ri.url })));
       var ru = el("input", "dav-input");
       ru.id = "f-gt-relay";
       ru.type = "url";

@@ -74,6 +74,7 @@ A year crosses three farms of four seasons each, twelve seasons in all: the Lowl
 `New year (N)` asks for the difficulty and your three folk:
 - `Mild`: a lower quota, and once a season `Rewind` takes back the whole last turn after you have seen it.
 - `Harsh`: a higher quota, one invader more at the start of every season and another one during it, and from the second farm every invader has 1 more Health.
+- `Endless`: Harsh, but the year never ends. After the River Bend the three farms come round again (The Lowland II, Orchard Hill II…), and every round the invaders get 1 more Health (up to 4), one more comes in during each season, and the quota asks 5% more. The year ends at the first missed quota; `Records` keeps the most seasons you won.
 
 Every quota can be met: the season maker plays each season with your folk before you do and never asks for more than it brought in. Every year has a code, shown in the result window and in `Records`. Type a code in `New year` to play the same year again with the same folk; leave it empty for a new one.
 
