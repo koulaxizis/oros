@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.69.00
+- **Wayfarers, a new party RPG.** In Games: pick three heroes from six classes (Knight, Ranger, Mage, Cleric, Rogue, Bard) and lead them across the Greenway to the Briar King. Choose your road at every fork: fights, camps, markets and short events. Fights are turn by turn in Speed order, every foe shows its next move, and the classes work together: Mark or Stun a foe and the Rogue hits it twice as hard, Frost it and Storm does the same. Gentle or Hardy, journey codes to walk the same land again, records that sync, and Wayfarers counts in the Game Center.
+
 ## Version 5.68.03
 - **Assistant: web search with Tavily no longer stops at "The search did not work".** After a search, the Assistant could not open the pages the search had found when the AI wrote their address a little differently, and every such step said only "The search did not work". The pages a search finds now open however their address is written. When a page can't be opened, the line says which page and why, and that writing the site's address in your message lets the Assistant read the whole site. Every other step that fails also says what went wrong.
 

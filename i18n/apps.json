@@ -1115,6 +1115,12 @@
    ]
   },
   {
+   "app": "wayfarers",
+   "files": [
+    "wayfarers/wayfarers.js"
+   ]
+  },
+  {
    "app": "weather",
    "files": [
     "weather/core.js",
