@@ -128,6 +128,11 @@ The assistant can also add a whole list at once, on one card with a tick on each
 - [Pet Health Book](app:petcare): a vaccine, deworming, vet visit, medication or weight for one of your pets, by name.
 - [Media Shelf](app:shelf): books, films, series, albums, podcasts and games, with their status, creator and year ("add these ten books to my wishlist").
 - [Publishing](app:publish): the books you publish, a whole list or catalogue at once ("add these twelve titles to Publishing"), each with its authors, translator, series, status, release date (a book still to come gets its release plan), language, back-cover text and editions with ISBN, price, pages and, when you give it, the id of its product in your WooCommerce shop (linked the same way as a draft Publishing makes in the shop). An ISBN that is not valid, or is already on another title, is refused, never guessed.
+- [Invoices](app:invoices): invoice drafts ("make an invoice draft for ACME: 3 hours of design at 50"), with the client, lines, VAT, currency and notes. They are saved as drafts: you check them and press `Issue` in Invoices, which gives the number. A client already in Invoices is linked; a new one is only written on the draft.
+- [Quote](app:quote): new quotes, saved as drafts with their next number, with the client, lines, VAT, currency and notes. A client not in Quote yet is added there by name. You check the quote and send it from Quote.
+- [Wiki](app:wiki): new articles with their text ("write a Wiki article about watering tomatoes"), in the wiki you name (or your only one). A title the wiki already has is changed instead, not added twice.
+- [Flashcards](app:flashcards): new cards: front and back, both ways, or a gap text like {{c1::Athens}} is the capital; in a deck you already have, with tags. They go into the assistant's own notes file, so nothing of yours is overwritten.
+- [Split](app:split): a shared expense in one of your groups, split equally ("I paid 60 for dinner in Naxos"), paid by you unless you say who, between everyone unless you name the people. Uneven splits, several payers and other currencies are done in Split.
 Only your own garage, garden and pet book get these; a household's shared one is changed in the app. Something that looks like one already there starts unticked, and `Undo` doesn't take back a habit you ticked, a plant you watered or a title you logged progress on since.
 
 ## Wiki articles, Reader, Podcasts and Stock
@@ -194,7 +199,7 @@ What it can change:
 - [Plant Care](app:plants): mark a plant watered today, rename it, change its notes.
 - [Notes](app:notes): rename a page, replace its text or add a paragraph at the end ("add day 2: Vatican to my Rome note"), change its labels, move it to another notebook, delete it (the pages under it move up one level and stay).
 - [Timesheet](app:timesheet): change a time entry's title, day, start or end.
-- [Invoices](app:invoices): mark an issued invoice paid, in full or in part ("ACME paid 50 of invoice 12 by bank transfer yesterday"): it adds the payment, as `Add payment` does. Everything else is done in Invoices.
+- [Invoices](app:invoices): mark an issued invoice paid, in full or in part ("ACME paid 50 of invoice 12 by bank transfer yesterday"): it adds the payment, as `Add payment` does. New drafts are above; issuing, editing and deleting are done in Invoices.
 - [Chore Wheel](app:chores): tick or untick today's chore (for the person the wheel gives it to), rename a chore.
 - [Meal Planner](app:meals): change a recipe's name, note or servings. The week's plan is changed in the app.
 - [Travel](app:travel): rename a trip or change its dates or notes; tick or untick a packing item; change a plan item's title, day, time or note.
