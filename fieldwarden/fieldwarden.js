@@ -60,6 +60,7 @@
   var N = E.N, SIZE = E.SIZE;
   var BIG = 1e9;
   var MAX_SEASONS = E.FARMS.length * E.SEASONS;
+  var PZ_N = E.PUZZLES.length;          // the one-turn puzzles (data.js)
   // the most seasons one year can win: Endless goes on to MAX_FARM farms
   function maxSeasons(d) { return d === "e" ? E.MAX_FARM * E.SEASONS : MAX_SEASONS; }
   var MAX_SHEAVES = SIZE * E.MAX_STAGE;
@@ -162,6 +163,14 @@
       "info.close": "Close",
       "stats.title": "Records", "stats.head": "Years · finished · most seasons won", "stats.folk": "Finished years with", "stats.best": "Most sheaves in a season",
       "stats.reset": "Reset records", "stats.close": "Close", "stats.code": "This year's code: {seed}",
+      "btn.pz": "Puzzles", "pz.title": "Puzzles", "pz.name": "Puzzle {n}",
+      "pz.note": "One turn each: the invaders show their acts, you have one turn to save the harvest. Reset turn is free.",
+      "pz.count": "Solved: {n} of {m}.", "pz.tier1": "One farmhand", "pz.tier2": "Two folk", "pz.tier3": "Three folk",
+      "pz.aSolved": "Puzzle {n}, solved", "pz.aOpen": "Puzzle {n}",
+      "pz.rules": "Puzzle {n}: one turn. Bring in at least {q} sheaves, the most this turn allows.",
+      "pz.msg": "Puzzle {n} · bring in {q} sheaves this turn.",
+      "pz.won": "Solved!", "pz.lost": "Not this time", "pz.of": "of {q} needed",
+      "pz.all": "All puzzles", "pz.again": "Try again", "pz.next": "Puzzle {n}", "pz.solvedRow": "Puzzles solved",
       "btn.daily": "Daily season", "daily.label": "Daily",
       "daily.title": "Daily season #{n}", "daily.won": "{n} sheaves, quota met", "daily.lost": "{n} sheaves, quota missed",
       "daily.folk": "Folk", "daily.farm": "Farm", "daily.score": "Score", "daily.scoreNote": "Sheaves, plus {n} for the village wish",
@@ -271,6 +280,14 @@
       "info.close": "Κλείσιμο",
       "stats.title": "Αρχείο", "stats.head": "Χρονιές · ολοκληρωμένες · οι περισσότερες εποχές", "stats.folk": "Ολοκληρωμένες χρονιές με", "stats.best": "Τα περισσότερα δεμάτια σε μια εποχή",
       "stats.reset": "Μηδένισε το αρχείο", "stats.close": "Κλείσιμο", "stats.code": "Κωδικός αυτής της χρονιάς: {seed}",
+      "btn.pz": "Γρίφοι", "pz.title": "Γρίφοι", "pz.name": "Γρίφος {n}",
+      "pz.note": "Ένας γύρος ο καθένας: οι εισβολείς δείχνουν τι θα κάνουν κι έχεις έναν γύρο να σώσεις τη σοδειά. Το «Ο γύρος από την αρχή» δεν κοστίζει τίποτα.",
+      "pz.count": "Λυμένοι: {n} από {m}.", "pz.tier1": "Ένας χωρικός", "pz.tier2": "Δύο χωρικοί", "pz.tier3": "Τρεις χωρικοί",
+      "pz.aSolved": "Γρίφος {n}, λυμένος", "pz.aOpen": "Γρίφος {n}",
+      "pz.rules": "Γρίφος {n}: ένας γύρος. Μάζεψε τουλάχιστον {q} δεμάτια, τα περισσότερα που αφήνει αυτός ο γύρος.",
+      "pz.msg": "Γρίφος {n} · μάζεψε {q} δεμάτια σε αυτόν τον γύρο.",
+      "pz.won": "Λύθηκε!", "pz.lost": "Όχι αυτή τη φορά", "pz.of": "από τα {q} που χρειάζονται",
+      "pz.all": "Όλοι οι γρίφοι", "pz.again": "Ξανά", "pz.next": "Γρίφος {n}", "pz.solvedRow": "Λυμένοι γρίφοι",
       "btn.daily": "Εποχή της ημέρας", "daily.label": "Ημέρας",
       "daily.title": "Εποχή της ημέρας #{n}", "daily.won": "{n} δεμάτια, ο στόχος πιάστηκε", "daily.lost": "{n} δεμάτια, ο στόχος δεν πιάστηκε",
       "daily.folk": "Χωρικοί", "daily.farm": "Φάρμα", "daily.score": "Πόντοι", "daily.scoreNote": "Τα δεμάτια, και {n} για την ευχή του χωριού",
@@ -352,6 +369,7 @@
   //   end] } }. The newer epoch wins; equal epochs keep the better result
   // (quota met, then the higher score, then fewer actions, then the
   // larger JSON: a total order, so a join). Never counted in rows.
+  // pz (5.83.00): the numbers of the puzzles solved on any device, sorted.
   // last (5.81.00): the last 10 years of every device,
   // [{ a: end time ms, d: m|h|e|d (e = Endless, d = Daily), p: [3 folk], n: seasons
   //    won, w: 1 finished (Daily: quota met) | 0, s: year code }].
@@ -360,7 +378,7 @@
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [] }; }
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], pz: [] }; }
   function normDay(v) {
     if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
         !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || !isInt(v.t) || v.t < 1 || v.t >= BIG) return null;
@@ -460,7 +478,14 @@
     });
     Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
     last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
-    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N) };
+    // pz: the puzzles solved, a sorted union (a join); Reset records keeps them
+    var pz = {};
+    [a.pz, b.pz].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (n) { if (isInt(n) && n >= 1 && n <= PZ_N) pz[n] = 1; });
+    });
+    var pl = Object.keys(pz).map(Number).sort(function (x, y) { return x - y; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N), pz: pl };
   }
   // [years, finished, most seasons won] for a difficulty, all devices.
   function totals(diff) {
@@ -600,7 +625,9 @@
     if (!o || DIFFS.indexOf(o.diff) < 0 || o.diff !== s.g.diff || typeof o.seed !== "string" || o.seed !== s.g.seed) return false;
     if (!E.trioOk(o.trio) || o.trio.join() !== s.g.folk.map(function (f) { return f.c; }).join()) return false;
     if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.one !== 1)) return false;
-    if (o.day === undefined && s.g.one !== undefined) return false;
+    if (o.pz !== undefined && (o.pz !== s.g.pz || o.day !== undefined)) return false;
+    if (o.day === undefined && o.pz === undefined && s.g.one !== undefined) return false;
+    if (o.pz === undefined && s.g.pz !== undefined) return false;
     if (!E.valid(s.ts) || s.ts.seed !== s.g.seed) return false;
     if (s.pt !== null && !(E.valid(s.pt) && s.pt.seed === s.g.seed)) return false;
     return true;
@@ -611,6 +638,7 @@
       if (validSession(s)) {
         var o = { diff: s.opts.diff, seed: s.opts.seed, trio: s.opts.trio.slice() };
         if (s.opts.day !== undefined) o.day = s.opts.day;
+        if (s.opts.pz !== undefined) o.pz = s.opts.pz;
         return { g: s.g, opts: o, ts: s.ts, pt: s.pt, counted: s.counted === true };
       }
     } catch (e) {}
@@ -632,12 +660,14 @@
   var cursor = 14;        // keyboard cursor tile
   var busyUntil = 0;      // input waits while the end of a turn plays
 
-  function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0); }
+  // a puzzle left half done loses nothing, so it never asks
+  function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0 && g.opts.pz === undefined); }
   function makeGame(opts) {
-    var daily = opts.day !== undefined;
-    var g = daily ? E.newDaily(opts.seed) : E.newYear(opts.seed, opts.diff, opts.trio, E.FARMS.length);
-    var o = { diff: g.diff, seed: opts.seed, trio: g.folk.map(function (f) { return f.c; }) };
+    var daily = opts.day !== undefined, pz = opts.pz !== undefined;
+    var g = pz ? E.newPuzzle(opts.pz) : daily ? E.newDaily(opts.seed) : E.newYear(opts.seed, opts.diff, opts.trio, E.FARMS.length);
+    var o = { diff: g.diff, seed: g.seed, trio: g.folk.map(function (f) { return f.c; }) };
     if (daily) o.day = opts.day;
+    if (pz) o.pz = opts.pz;
     return { g: g, opts: o, ts: E.clone(g), pt: null, counted: false };
   }
   function setState(g) {
@@ -646,6 +676,15 @@
   }
   function endYear(won) {
     game.counted = true;
+    // a puzzle is not a year: only a solved one is noted
+    if (game.opts.pz !== undefined) {
+      if (won && data.pz.indexOf(game.opts.pz) < 0) {
+        data.pz = data.pz.concat([game.opts.pz]);
+        data = mergeFieldwarden(data, data);
+        save();
+      }
+      return;
+    }
     if (game.opts.day !== undefined) countDaily(game.opts.day, won, won ? E.dailyScore(st) : (st.res ? E.dailyScore(st) : 0), Math.max(1, st.acts), stageCounts(st.s));
     else count(game.opts.diff, won, st.won, game.opts.trio, st.best);
     logYear(won);
@@ -660,6 +699,7 @@
     saveSession();
     seasonMsg();
     if (game.opts.day !== undefined) setMsg(t("daily.rules"));
+    if (game.opts.pz !== undefined) setMsg(pzRules());
     renderAll();
     live($("msg").textContent);
     maybeTour();
@@ -680,6 +720,7 @@
   function endless() { return st.diff === "e"; }
   function seasonLabel() { return endless() ? t("res.seasonE", { n: seasonNo() }) : t("res.season", { n: seasonNo(), m: seasonsAll() }); }
   function seasonMsg() {
+    if (st.pz) { setMsg(t("pz.msg", { n: st.pz, q: st.s.q })); return; }
     setMsg(st.phase === "shop" ? t("msg.shop") : endless() ? t("msg.seasonE", { n: seasonNo(), f: farmName(), q: st.s.q }) :
       t("msg.season", { n: seasonNo(), m: seasonsAll(), f: farmName(), q: st.s.q }));
   }
@@ -1666,6 +1707,7 @@
   }
   function harvestDialog() {
     if (!st || !st.s.done || !st.res || document.querySelector("dialog[open]")) return;
+    if (st.pz) { puzzleEnd(); return; }
     var r = st.res, won = r.h >= r.q;
     var dlg = makeDialog("fw-harvest");
     dlg.setAttribute("data-modal", "1");
@@ -1739,6 +1781,7 @@
   }
   function resultDialog() {
     if (!game || st.over < 0 || document.querySelector("dialog[open]")) return;
+    if (st.pz) { puzzleEnd(); return; }
     if (game.opts.day !== undefined) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("fw-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
@@ -1773,6 +1816,7 @@
       dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
       dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.top : "–"));
     }
+    if (PZ_N) dlg.appendChild(row(t("pz.solvedRow"), data.pz.length + "/" + PZ_N));
     if ((data.last || []).length) empty = false;
     lastYears(dlg);
     if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
@@ -1896,6 +1940,65 @@
     acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("fieldwarden"); }));
   }
 
+  // ---------- Puzzles ----------
+  // 30 one-turn puzzles: 1-10 with one farmhand, 11-20 with two, 21-30
+  // with three. The quota is the most the fields can still give.
+  function pzRules() { return t("pz.rules", { n: st.pz, q: st.s.q }); }
+  function pzTier(n) { return n <= 10 ? 1 : n <= 20 ? 2 : 3; }
+  function openPuzzle(n) {
+    var go = function () { startGame({ pz: n }); };
+    if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); go(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+    else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), go, t("confirm.newYes"));
+    else go();
+  }
+  function puzzlesDialog() {
+    var dlg = makeDialog("fw-pz");
+    dlg.appendChild(el("div", "dlg-title", t("pz.title")));
+    dlg.appendChild(el("div", "dlg-note", t("pz.note") + " " + t("pz.count", { n: data.pz.length, m: PZ_N })));
+    var first = null;
+    [1, 2, 3].forEach(function (tier) {
+      dlg.appendChild(el("div", "dlg-sub", t("pz.tier" + tier)));
+      var grid = el("div", "pz-grid");
+      for (var n = 1; n <= PZ_N; n++) {
+        if (pzTier(n) !== tier) continue;
+        (function (n) {
+          var done = data.pz.indexOf(n) >= 0;
+          var b = el("button", "pz-btn" + (done ? " done" : ""), String(n));
+          b.type = "button";
+          b.setAttribute("aria-label", t(done ? "pz.aSolved" : "pz.aOpen", { n: n }));
+          b.addEventListener("click", function () { dlg.close(); openPuzzle(n); });
+          if (!first && !done) first = b;
+          grid.appendChild(b);
+        })(n);
+      }
+      dlg.appendChild(grid);
+    });
+    var acts = el("div", "dlg-actions");
+    var close = button(t("stats.close"), "", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    show(dlg, first || close);
+  }
+  function puzzleEnd() {
+    var n = st.pz, won = st.over === 1, r = st.res;
+    var dlg = makeDialog("fw-pzend");
+    dlg.setAttribute("data-modal", "1");
+    dlg.appendChild(el("div", "dlg-title", t("pz.name", { n: n })));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("pz.won") : t("pz.lost")));
+    dlg.appendChild(row(t("res.sheaves", { n: r.h }), t("pz.of", { q: r.q })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("pz.all"), "", function () { dlg.close(); setTimeout(puzzlesDialog, 0); }));
+    acts.appendChild(button(t("pz.again"), won ? "" : "primary", function () { dlg.close(); startGame({ pz: n }); }));
+    var nx = null;
+    for (var k = 1; k <= PZ_N && !nx; k++) { var m = ((n - 1 + k) % PZ_N) + 1; if (data.pz.indexOf(m) < 0) nx = m; }
+    var main = null;
+    if (won && nx) { main = button(t("pz.next", { n: nx }), "primary", function () { dlg.close(); startGame({ pz: nx }); }); acts.appendChild(main); }
+    dlg.appendChild(acts);
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+    sfx(won ? "win" : "end");
+    show(dlg, main || acts.lastChild);
+  }
+
   function resetRecords() {
     data.br = Math.max(Date.now(), data.br + 1);
     data = mergeFieldwarden(data, data);
@@ -2014,6 +2117,7 @@
     rain:   SVG + '<path d="M7 15a4 4 0 0 1 0-8 5 5 0 0 1 9.5-1A4 4 0 0 1 17 15z"/><path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"/></svg>',
     wind:   SVG + '<path d="M3 12h15M13 6l6 6-6 6"/></svg>',
     drought: SVG + '<circle cx="12" cy="9" r="4"/><path d="M12 1v2M4 9H2M22 9h-2M5.6 2.6 7 4M18.4 2.6 17 4M3 21l4-4 3 3 4-4 3 3 4-4"/></svg>',
+    puzzle: SVG + '<path d="M4 4h6v2a2 2 0 1 0 4 0V4h6v6h-2a2 2 0 1 0 0 4h2v6h-6v-2a2 2 0 1 0-4 0v2H4v-6h2a2 2 0 1 0 0-4H4z"/></svg>',
     daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M12 20v-6M12 14c-2 0-3-1-3-3 2 0 3 1 3 3zM12 16c2 0 3-1 3-3-2 0-3 1-3 3z"/></svg>'
   };
   function paintSfxBtn() {
@@ -2102,7 +2206,7 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"], ["undo-btn", "undo", "btn.undo"],
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"], ["pz-btn", "puzzle", "btn.pz"], ["undo-btn", "undo", "btn.undo"],
      ["reset-btn", "reset", "btn.reset"], ["rewind-btn", "rewind", "btn.rewind"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
@@ -2124,6 +2228,7 @@
     $("rewind-btn").addEventListener("click", rewind);
     $("stats-btn").addEventListener("click", statsDialog);
     $("daily-btn").addEventListener("click", openDaily);
+    $("pz-btn").addEventListener("click", puzzlesDialog);
     // Deep link from the Game Center: { daily: true } opens today's season.
     window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("threat-btn").addEventListener("click", toggleThreat);
@@ -2166,6 +2271,7 @@
     saveSession();
     seasonMsg();
     if (game.opts.day !== undefined && !st.acts) setMsg(t("daily.rules"));
+    if (game.opts.pz !== undefined && !st.acts) setMsg(pzRules());
     resize();
     renderAll();
     if (daily) setTimeout(openDaily, 300);
