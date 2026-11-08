@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.3.0)
+// orOS Music — host.js (player + data owner, v1.4.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -21,8 +21,8 @@
 //   - Media Session (lock screen, headphones, media keys: play,
 //     pause, previous, next, seek);
 //   - the tray chip on the shell bar and its control panel (MU-PANEL:
-//     the song, position, previous / play-pause / next, stop, open
-//     Music, volume and mute);
+//     the song, a heart to like it (MU-FAV), position, previous /
+//     play-pause / next, stop, open Music, volume and mute);
 //   - audio focus: Radio or Podcasts starting pauses the music, and
 //     music starting pauses them;
 //   - ListenBrainz listens with the person's own token (lb.js, loaded
@@ -50,7 +50,8 @@
       "host.panel": "Music controls", "host.prev": "Previous", "host.next": "Next",
       "host.playBtn": "Play", "host.pauseBtn": "Pause", "host.stop": "Stop",
       "host.open": "Open Music", "host.seek": "Position", "host.volume": "Volume",
-      "host.mute": "Mute", "host.unmute": "Unmute"
+      "host.mute": "Mute", "host.unmute": "Unmute",
+      "host.like": "Save to Liked songs", "host.unlike": "Remove from Liked songs"
     },
     el: {
       "host.full": "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές στη Μουσική δεν αποθηκεύτηκαν.",
@@ -60,7 +61,8 @@
       "host.panel": "Χειρισμός μουσικής", "host.prev": "Προηγούμενο", "host.next": "Επόμενο",
       "host.playBtn": "Αναπαραγωγή", "host.pauseBtn": "Παύση", "host.stop": "Διακοπή",
       "host.open": "Άνοιγμα Μουσικής", "host.seek": "Θέση", "host.volume": "Ένταση",
-      "host.mute": "Σίγαση", "host.unmute": "Κατάργηση σίγασης"
+      "host.mute": "Σίγαση", "host.unmute": "Κατάργηση σίγασης",
+      "host.like": "Αποθήκευση στα αγαπημένα", "host.unlike": "Αφαίρεση από τα αγαπημένα"
     }
   };
   // orosI18n (../i18n.js, loaded by the shell): the full language
@@ -859,6 +861,8 @@
         "width:300px;max-width:calc(100vw - 16px);box-sizing:border-box;background:var(--panel-bg);color:var(--text);" +
         "border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px var(--shadow);padding:12px;" +
         "display:flex;flex-direction:column;gap:10px}" +
+        "#mu-tray-pop .mu-p-hd{display:flex;align-items:center;gap:8px}#mu-tray-pop .mu-p-hd>div{flex:1;min-width:0}" +
+        "#mu-tray-pop button.fav[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}" +
         "#mu-tray-pop .mu-p-t{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
         "#mu-tray-pop .mu-p-a{font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}" +
         "#mu-tray-pop .mu-p-row{display:flex;align-items:center;gap:6px}" +
@@ -903,6 +907,7 @@
   var popTimer = 0, popWired = false, muteFrom = 0;
   var SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" ' +
     'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var HEART = '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21.2l8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/>';
   var IC = {
     prev: SVG + '<polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>',
     next: SVG + '<polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>',
@@ -914,7 +919,9 @@
     vol: SVG + '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>' +
       '<path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
     mute: SVG + '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/>' +
-      '<line x1="17" y1="9" x2="23" y2="15"/></svg>'
+      '<line x1="17" y1="9" x2="23" y2="15"/></svg>',
+    heart: SVG + HEART + '</svg>',
+    heartOn: SVG.replace('fill="none"', 'fill="currentColor"') + HEART + '</svg>'
   };
   function popEl() { return doc.getElementById(POP_ID); }
   function popClose() {
@@ -959,10 +966,20 @@
     // Clicks inside stay inside (the buttons repaint their own icons).
     p.addEventListener("click", function (e) { e.stopPropagation(); });
 
-    var head = doc.createElement("div");
+    var head = doc.createElement("div"); head.className = "mu-p-hd";
+    var txt = doc.createElement("div");
     var t = doc.createElement("div"); t.className = "mu-p-t";
     var a = doc.createElement("div"); a.className = "mu-p-a";
-    head.appendChild(t); head.appendChild(a);
+    txt.appendChild(t); txt.appendChild(a);
+    head.appendChild(txt);
+    // MU-FAV: the same like as the app's heart (synced slice, one mutation).
+    head.appendChild(popBtn("fav", function () {
+      var ref = curRef();
+      if (!ref) return;
+      var on = !C.isLiked(data, ref.k);
+      mutate(function (d, now) { return C.setLike(d, ref, on, now); });
+      popPaint();
+    }));
     p.appendChild(head);
 
     var sr = doc.createElement("div"); sr.className = "mu-p-row";
@@ -1012,6 +1029,8 @@
     popPaint();
     popTimer = w.setInterval(popPaint, 500);
   }
+  // The playing song as a like reference (null: it cannot be liked).
+  function curRef() { return cur ? C.normRef(C.refOf(cur)) : null; }
   // Labels go in through textContent / title / aria-label only.
   function setTip(b, ic, tip) {
     if (b.getAttribute("data-ic") !== ic) {
@@ -1039,6 +1058,10 @@
       tms[0].textContent = C.fmtTime(pos);
     }
     tms[1].textContent = dur ? C.fmtTime(dur) : "";
+    var fv = p.querySelector(".fav"), ref = curRef(), liked = !!ref && C.isLiked(data, ref.k);
+    fv.disabled = !ref;
+    setTip(fv, liked ? "heartOn" : "heart", T(liked ? "host.unlike" : "host.like"));
+    if (fv.getAttribute("aria-pressed") !== String(liked)) fv.setAttribute("aria-pressed", String(liked));
     var paused = audio.paused;
     setTip(p.querySelector(".prv"), "prev", T("host.prev"));
     setTip(p.querySelector(".pp"), paused ? "play" : "pause", T(paused ? "host.playBtn" : "host.pauseBtn"));
