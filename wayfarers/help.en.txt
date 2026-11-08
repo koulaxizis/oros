@@ -88,8 +88,13 @@ Foes that hit the front row hit the Knight and the Rogue first; archers aim at t
 
 In both, if all three heroes fall, the journey ends. Every journey has a code, shown in the result window and in `Records`. Type a code in `New journey` to walk the same land again; leave it empty for a new one.
 
+## Daily trial
+The calendar button opens today's trial: the Greenway on Hardy, with a party of three chosen for the day. Everyone gets the same land, the same party and the same spoils that day. Beat the guardian and you are through. There is one try, and leaving the trial counts as a fall where you were. A dot on the button means today's trial is still open.
+
+After the trial, a window shows how far you got, your moves and your streak of days passed. `Share` copies a short result with no spoilers: one square for each stop on the road, then your moves. Today's trial also has a card in the [Game Center](help:a/gamecenter).
+
 ## Records and sync
-`Records` shows your journeys, wins and regions cleared for each difficulty, and the wins of each class. They sync between your devices through [orOS sync](help:t/sync), adding up the journeys from every device, and they count in the [Game Center](help:a/gamecenter). The journey in progress, your last party and the sound setting stay on this device, and an unfinished journey continues where you left it. A journey left for a new one counts as lost. `Reset records` clears the records on every device.
+`Records` shows your journeys, wins and regions cleared for each difficulty, and the wins of each class. They sync between your devices through [orOS sync](help:t/sync), adding up the journeys from every device, and they count in the [Game Center](help:a/gamecenter). The journey in progress, your last party and the sound setting stay on this device, and an unfinished journey continues where you left it. A journey left for a new one counts as lost. `Last journeys` lists your ten latest journeys from all your devices, how each one ended and its code; `Replay` walks the same journey again (a Daily trial as a whole journey on Hardy, with the same party). Daily trials count only in their own line, not in the journeys. `Reset records` clears the records on every device.
 
 ## Keyboard
 - Map: arrow keys choose a stop, [[Enter]] goes there.
