@@ -589,6 +589,42 @@ test("orOS closed, the device's own tools (GATE-ACT): reads from the copy, creat
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
 });
 
+test("orOS closed, full work (5.96.00): search over the copy's index, a board by name, changes and links by ref wait", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); const q = JSON.parse(x); if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1); }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", ["change_item", "link_items", "link_contact"].map((n) => ({ name: n, description: n, inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: n === "change_item" } })));
+  const index = [{ r: "r1", a: "crm", t: "Στέφανος Ξεφτέρης" }, { r: "r2", a: "kanban", t: "Η Κατερίνα και η Λαμπιτώ", x: "Βιβλία · Σε παραγωγή", l: ["Παιδικά"] },
+                 { r: "r3", a: "notes", t: "Σημειώσεις Λαμπιτώ" }, { r: "r4", a: "contacts", t: "Άννα" }];
+  const copy = { at: 1e12, lv: { crm: "write", kanban: "write", notes: "write", contacts: "read" }, hold: 0,
+                 ans: { __index: JSON.stringify(index), 'app_summary {"app":"kanban","board":"Βιβλία"}': '{"board":"Βιβλία"}' } };
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify(copy)) }));
+  sock.closed = true;
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  let r = await tc("search_data", { query: "λαμπιτω" });
+  assert.equal(r.isError, false);
+  const found = JSON.parse(r.content[0].text.split("\n").slice(1).join("\n"));
+  assert.deepEqual(found.results.map((x) => x.ref), ["r2", "r3"], "words match without accents or case");
+  assert.deepEqual(JSON.parse((await tc("search_data", { query: "λαμπιτω", apps: ["notes"] })).content[0].text.split("\n")[1]).results.map((x) => x.ref), ["r3"]);
+  assert.deepEqual(JSON.parse((await tc("search_data", { label: "παιδικα" })).content[0].text.split("\n")[1]).results.map((x) => x.ref), ["r2"]);
+  assert.match((await tc("app_summary", { app: "kanban", board: "βιβλια" })).content[0].text, /\{"board":"Βιβλία"\}$/, "a board's name in other case");
+  r = await tc("link_items", { links: [{ customer: "r1", item: "r2" }] });
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /"queued":true/);
+  assert.match((await tc("change_item", { ref: "r3", action: "update", text_add: "x" })).content[0].text, /"queued":true/);
+  assert.match((await tc("change_item", { ref: "r3", action: "delete" })).content[0].text, /Deleting waits/);
+  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /Deleting waits/);
+  assert.match((await tc("link_contact", { links: [{ customer: "r1", contact: "r4" }] })).content[0].text, /may not change contacts/);
+  assert.match((await tc("change_item", { ref: "r99", action: "update" })).content[0].text, /Unknown ref r99/);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+  assert.deepEqual(G.refsIn({ ref: "oros:r1", refs: ["r2", "x"], changes: [{ ref: "r3" }], links: [{ customer: "r4", item: "r5" }] }), ["r1", "r2", "r3", "r4", "r5"]);
+});
+
 test("switches set before 5.77.00 reach the box once: a device's base is kept only while the box has none (5.82.00)", async () => {
   const w = world();
   await newGate(w);

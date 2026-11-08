@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Roots — App logic (v1.0.0)
+// orOS Roots — App logic (v1.2.0)
 // A turn-based growing game: an old tree grows roots under a 7 × 9 glade
 // to reach springs and minerals, and buds on the surface that open into
 // leaves and flowers. Pests show what they will do before they act;
@@ -13,11 +13,20 @@
 //     bud), then tap a lit tile; Undo and Reset turn are free
 //   - a long press on any tile shows its text
 //   - a short "How to play" on the first year
+//   - the Daily glade (5.97.00): one season on Hardy, the same for
+//     everyone that day, one try; in the Game Center's Today
+//   - Last years with Replay (5.97.00)
+//   - a year over four glades (meadow, riverbank, rocky hill, old
+//     forest), three seasons each (5.92.00)
+//   - 20 root puzzles: one turn with a fixed amount of sap (W3b)
+//   - Endless (W3c): one glade a year round the four, every year harder,
+//     until a quota is missed; the records keep the most years
 // Data:
 //   - synced slice "roots" (oros-roots-data): years, years finished and
 //     the best year score per difficulty, and the longest root, as
 //     per-device counter rows (each device only grows its own row;
-//     merge = per-row max, a join) + reset stamp br (as Fieldwarden)
+//     merge = per-row max, a join) + reset stamp br (as Fieldwarden),
+//     days (the Daily glade) and last (Last years), 5.97.00
 //   - device-local (R10): oros-roots-prefs (difficulty, tour seen,
 //     quick, threats), oros-roots-session (the year in progress),
 //     oros-roots-device (counter row id), oros-roots-sfx (sound)
@@ -29,7 +38,8 @@
 //   5. Scene (layout, drawing the glade)
 //   6. Input (tap, long press, keyboard)
 //   7. Panels (status, growth bar)
-//   8. Dialogs (new year, info, bloom, result, records, tour)
+//   8. Dialogs (new year, info, bloom, result, records, Last years,
+//      Daily glade, tour)
 //   9. Toasts
 //  10. Sound
 //  11. Sync slice + palette
@@ -39,6 +49,7 @@
   "use strict";
 
   var E = window.RootsEngine;
+  var DK = window.orosDaily || null;   // gamekit/daily.js (the Daily glade, the Game Center link)
 
   var STORAGE_KEY = "oros-roots-data";
   var PREFS_KEY   = "oros-roots-prefs";
@@ -46,10 +57,13 @@
   var DEVICE_KEY  = "oros-roots-device";
   var SFX_KEY     = "oros-roots-sfx";
   var DATA_VER    = 1;
-  var DIFFS = E.DIFFS;                 // m Mild, h Hardy
+  var DIFFS = E.DIFFS;                 // m Mild, h Hardy, e Endless
   var BW = E.W, BH = E.H, SIZE = E.SIZE;
   var BIG = 1e9;
   var MAX_SCORE = 999;
+  var MAX_DAY = 99999;
+  var LAST_N = 10;
+  var PZ_N = E.PUZZLES.length;
   var GROW = ["root", "thick", "thorn", "leaf", "flower"];
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -70,7 +84,12 @@
       "btn.sfxOn": "Sound on", "btn.sfxOff": "Sound off", "btn.fastOn": "Quick pests: on", "btn.fastOff": "Quick pests: off",
       "btn.threatOn": "Show every threat", "btn.threatOff": "Show the pests' moves",
       "view.label": "The glade: the surface on top, the soil below",
-      "diff.m": "Mild", "diff.h": "Hardy",
+      "diff.m": "Mild", "diff.h": "Hardy", "diff.e": "Endless",
+      "diff.e.note": "One glade a year, round and round, with Hardy's pests and more every year, until a quota is missed. The records keep the most years.",
+      "msg.year": "Year {y}.", "st.year": "Year {n}",
+      "res.lived": "The tree lived {n} years", "res.lived1": "The tree lived 1 year", "res.lived0": "The first year ended",
+      "res.years": "Years lived", "res.best": "Most years", "stats.endless": "Endless: runs · – · most years",
+      "last.yearsE": "{n} years",
       "diff.m.note": "A lower quota, and once a season Rewind takes back the whole last turn.",
       "diff.h.note": "More pests and a higher quota. No rewinds.",
       "sea.1": "Spring", "sea.2": "Summer", "sea.3": "Autumn",
@@ -94,13 +113,20 @@
       "pest.beetle.note": "Walks up to 2 tiles through the soil to the nearest root and chews it: a thin root breaks, a thick one turns thin. Leaves after 3 turns.",
       "pest.mole.note": "Digs a straight line of up to 3 tiles, harming every root in it. Leaves after 2 turns.",
       "pest.aphid.note": "Walks along the surface to the nearest bud and eats it. Open leaves and flowers are safe. Leaves after 3 turns.",
-      "pest.blight.note": "Autumn. Spreads to a thin root next to it every turn and stays; thick roots and thorns stop it, a thorn kills it.",
+      "pest.blight.note": "Autumn (in the old forest, all year). Spreads to a thin root next to it every turn and stays; thick roots and thorns stop it, a thorn kills it.",
       "it.chew": "will chew this root", "it.walk": "walks on", "it.dig": "digs {d}", "it.eat": "will eat this bud", "it.spread": "spreads here", "it.idle": "waits",
       "it.hp": "Health {n}", "it.left": "leaves in {n}",
       "dir.0": "up", "dir.1": "right", "dir.2": "down", "dir.3": "left",
       "info.comes": "{k} comes in here at the end of the turn",
       "info.close": "Close",
-      "msg.season": "{s} · season {n} of 3. Bloom quota: {q}.", "msg.turn": "Turn {n}.", "msg.pick": "{g}: tap a lit tile.",
+      "msg.season": "{g} · {s}, season {n} of 3. Bloom quota: {q}.", "msg.daily": "{g}, {s} · Daily glade. Bloom quota: {q}.",
+      "glade.meadow": "The meadow", "glade.river": "The riverbank", "glade.hill": "The rocky hill", "glade.forest": "The old forest",
+      "glade.meadow.note": "Soft soil, three springs: beetles and aphids, moles from summer.",
+      "glade.river.note": "Five springs and wet clay: moles and aphids all year.",
+      "glade.hill.note": "Stone everywhere, two deep springs and many minerals: beetles in numbers.",
+      "glade.forest.note": "Blight in every season, and every pest at once.",
+      "st.glade": "Glade {n} of {m}",
+      "res.nextGlade": "Next glade", "res.metGlade": "Quota met: the tree seeds {g}.", "res.glades": "Glades", "msg.turn": "Turn {n}.", "msg.pick": "{g}: tap a lit tile.",
       "msg.frost": "Frost tonight: buds with no leaf beside them freeze.",
       "msg.none": "Nothing to grow there.", "msg.sap": "Not enough sap.",
       "live.end": "Turn {n}. Sap {s}. Bloom {b} of {q}.",
@@ -109,7 +135,7 @@
       "res.bloom": "Bloom", "res.flowers": "Flowers", "res.springs": "Springs reached", "res.quota": "Quota",
       "res.met": "Quota met: on to the next season.", "res.miss": "The quota was missed: the year ends.",
       "res.next": "Next season", "res.won": "The year is done!", "res.lost": "A dry year",
-      "res.score": "Year score", "res.scoreNote": "Bloom of every season, springs reached and the longest root.",
+      "res.score": "Year score", "res.scoreNote": "Bloom of every season, and the springs reached and the longest root of every glade.",
       "res.longest": "Longest root", "res.code": "Year code: {seed}", "res.same": "The same year", "res.new": "New year",
       "new.title": "New year", "new.diff": "Difficulty", "new.seed": "Year code",
       "new.seedHint": "Empty for a new year", "new.start": "Start", "new.cancel": "Cancel",
@@ -119,6 +145,30 @@
       "confirm.new": "Start a new year? The year in progress counts as not finished.", "confirm.newYes": "New year",
       "toast.save": "Not saved: the browser's storage is full", "toast.reset": "Records reset",
       "toast.rewind": "The last turn is rewound ({n} left)",
+      "btn.daily": "Daily glade", "daily.label": "Daily",
+      "daily.title": "Daily glade #{n}", "daily.won": "Score {n}, quota met", "daily.lost": "Score {n}, quota missed",
+      "daily.season": "Season", "daily.bloom": "Bloom · quota", "daily.score": "Score", "daily.scoreNote": "The bloom, the springs reached and the longest root.",
+      "daily.streak": "Streak", "daily.best": "Best streak",
+      "daily.oneTry": "The Daily glade has one try.", "daily.next": "A new one tomorrow.",
+      "daily.free": "New year", "daily.share": "Share", "daily.games": "All games",
+      "daily.rules": "Daily glade: one season on Hardy from a bare tree, the same for everyone today. Meet the bloom quota; the score is the bloom, the springs and the longest root.",
+      "daily.leave": "Leave today's glade? It counts as your one try.", "daily.leaveYes": "Leave it", "daily.leaveNo": "Keep playing",
+      "daily.giveUp": "Start today's glade? The year in progress counts as not finished.", "daily.go": "Start the glade",
+      "stats.daily": "Daily glade", "stats.dailyRow": "Played · quota met · streak · best score",
+      "last.title": "Last years", "last.won": "Year done", "last.met": "Quota met", "last.missed": "Quota missed",
+      "last.seasons": "{n} of {m} seasons", "last.score": "score {n}",
+      "last.replay": "Replay", "last.replayLabel": "Replay year {seed}",
+      "share.won": "Score {n}, quota met", "share.lost": "Score {n}, quota missed",
+      "toast.copied": "Copied: paste it into a chat", "toast.shared": "Shared", "toast.copyFail": "Could not copy",
+      "toast.dailyGone": "The Daily glade needs the gamekit file: reload orOS",
+      "btn.pz": "Puzzles", "pz.title": "Root puzzles", "pz.name": "Puzzle {n}",
+      "pz.note": "One turn each with a fixed amount of sap: the pests show what they will do. Join the network again, stop the blight, keep what earns. Undo and Reset turn are free.",
+      "pz.count": "Solved: {n} of {m}.", "pz.tier1": "Seedlings", "pz.tier2": "Saplings", "pz.tier3": "Old trees", "pz.tier4": "Ancient roots",
+      "pz.aSolved": "Puzzle {n}, solved", "pz.aOpen": "Puzzle {n}",
+      "pz.rules": "Puzzle {n}: one turn with {s} sap. After the pests act, the tree must earn at least {q} sap the next turn, the most this turn allows.",
+      "pz.earn": "Earns {n} now; the goal is {q} after the pests act", "pz.earned": "Earns next turn",
+      "pz.won": "Solved!", "pz.lost": "Not this time", "pz.of": "{n} of {q}",
+      "pz.all": "All puzzles", "pz.again": "Try again", "pz.next": "Puzzle {n}", "pz.solvedRow": "Puzzles solved",
       "tour.title": "How to play", "tour.next": "Next", "tour.skip": "Skip", "tour.done": "Play",
       "tour.1": "You are an old tree. Grow roots through the soil from the trunk to reach springs and minerals: every joined one gives sap each turn.",
       "tour.2": "On the surface, buds open into leaves (more sap) and flowers. At the end of each season, flowers and springs reached must meet the bloom quota.",
@@ -132,7 +182,12 @@
       "btn.sfxOn": "Ήχος ανοιχτός", "btn.sfxOff": "Ήχος κλειστός", "btn.fastOn": "Γρήγορα ζωύφια: ναι", "btn.fastOff": "Γρήγορα ζωύφια: όχι",
       "btn.threatOn": "Δείξε κάθε κίνδυνο", "btn.threatOff": "Δείξε τις κινήσεις των ζωυφίων",
       "view.label": "Το ξέφωτο: η επιφάνεια πάνω, το χώμα από κάτω",
-      "diff.m": "Ήπια", "diff.h": "Σκληρή",
+      "diff.m": "Ήπια", "diff.h": "Σκληρή", "diff.e": "Ατελείωτη",
+      "diff.e.note": "Ένα ξέφωτο τον χρόνο, γύρω γύρω, με τα ζωύφια της Σκληρής και περισσότερα κάθε χρόνο, ώσπου να χαθεί ένας στόχος. Το αρχείο κρατά τις περισσότερες χρονιές.",
+      "msg.year": "Χρονιά {y}.", "st.year": "Χρονιά {n}",
+      "res.lived": "Το δέντρο έζησε {n} χρονιές", "res.lived1": "Το δέντρο έζησε 1 χρονιά", "res.lived0": "Η πρώτη χρονιά τελείωσε",
+      "res.years": "Χρονιές", "res.best": "Οι περισσότερες χρονιές", "stats.endless": "Ατελείωτη: παιχνίδια · – · περισσότερες χρονιές",
+      "last.yearsE": "{n} χρονιές",
       "diff.m.note": "Χαμηλότερος στόχος, και μία φορά σε κάθε εποχή το Γύρνα πίσω παίρνει πίσω όλο τον τελευταίο γύρο.",
       "diff.h.note": "Περισσότερα ζωύφια και ψηλότερος στόχος. Χωρίς γυρίσματα.",
       "sea.1": "Άνοιξη", "sea.2": "Καλοκαίρι", "sea.3": "Φθινόπωρο",
@@ -156,13 +211,20 @@
       "pest.beetle.note": "Περπατά ως 2 τετράγωνα μέσα στο χώμα ως την πιο κοντινή ρίζα και τη ροκανίζει: η λεπτή σπάει, η χοντρή γίνεται λεπτή. Φεύγει σε 3 γύρους.",
       "pest.mole.note": "Σκάβει μια ευθεία ως 3 τετράγωνα και χτυπά κάθε ρίζα πάνω της. Φεύγει σε 2 γύρους.",
       "pest.aphid.note": "Περπατά στην επιφάνεια ως το πιο κοντινό μπουμπούκι και το τρώει. Τα ανοιχτά φύλλα και λουλούδια είναι ασφαλή. Φεύγει σε 3 γύρους.",
-      "pest.blight.note": "Φθινόπωρο. Κάθε γύρο απλώνεται σε μια λεπτή ρίζα δίπλα της και μένει· οι χοντρές ρίζες και τα αγκάθια τη σταματούν, ένα αγκάθι τη σκοτώνει.",
+      "pest.blight.note": "Φθινόπωρο (στο παλιό δάσος, όλο τον χρόνο). Κάθε γύρο απλώνεται σε μια λεπτή ρίζα δίπλα της και μένει· οι χοντρές ρίζες και τα αγκάθια τη σταματούν, ένα αγκάθι τη σκοτώνει.",
       "it.chew": "θα ροκανίσει αυτή τη ρίζα", "it.walk": "προχωρά", "it.dig": "σκάβει προς τα {d}", "it.eat": "θα φάει αυτό το μπουμπούκι", "it.spread": "απλώνεται εδώ", "it.idle": "περιμένει",
       "it.hp": "Ζωή {n}", "it.left": "φεύγει σε {n}",
       "dir.0": "πάνω", "dir.1": "δεξιά", "dir.2": "κάτω", "dir.3": "αριστερά",
       "info.comes": "{k}: μπαίνει εδώ στο τέλος του γύρου",
       "info.close": "Κλείσιμο",
-      "msg.season": "{s} · εποχή {n} από 3. Στόχος άνθισης: {q}.", "msg.turn": "Γύρος {n}.", "msg.pick": "{g}: πάτα ένα φωτισμένο τετράγωνο.",
+      "msg.season": "{g} · {s}, εποχή {n} από 3. Στόχος άνθισης: {q}.", "msg.daily": "{g}, {s} · Ξέφωτο της ημέρας. Στόχος άνθισης: {q}.",
+      "glade.meadow": "Το λιβάδι", "glade.river": "Η όχθη", "glade.hill": "Ο πετρόλοφος", "glade.forest": "Το παλιό δάσος",
+      "glade.meadow.note": "Μαλακό χώμα, τρεις πηγές: σκαθάρια και αφίδες, τυφλοπόντικες από το καλοκαίρι.",
+      "glade.river.note": "Πέντε πηγές και υγρός πηλός: τυφλοπόντικες και αφίδες όλο τον χρόνο.",
+      "glade.hill.note": "Πέτρα παντού, δύο βαθιές πηγές και πολλά μεταλλεύματα: σκαθάρια σε πλήθος.",
+      "glade.forest.note": "Σήψη σε κάθε εποχή, και όλα τα ζωύφια μαζί.",
+      "st.glade": "Ξέφωτο {n} από {m}",
+      "res.nextGlade": "Επόμενο ξέφωτο", "res.metGlade": "Ο στόχος πιάστηκε: το δέντρο πάει στο επόμενο ξέφωτο, {g}.", "res.glades": "Ξέφωτα", "msg.turn": "Γύρος {n}.", "msg.pick": "{g}: πάτα ένα φωτισμένο τετράγωνο.",
       "msg.frost": "Παγωνιά απόψε: τα μπουμπούκια χωρίς φύλλο δίπλα τους παγώνουν.",
       "msg.none": "Δεν φυτρώνει τίποτα εκεί.", "msg.sap": "Δεν φτάνει ο χυμός.",
       "live.end": "Γύρος {n}. Χυμός {s}. Άνθιση {b} από {q}.",
@@ -171,7 +233,7 @@
       "res.bloom": "Άνθιση", "res.flowers": "Λουλούδια", "res.springs": "Πηγές που έφτασες", "res.quota": "Στόχος",
       "res.met": "Ο στόχος πιάστηκε: πάμε στην επόμενη εποχή.", "res.miss": "Ο στόχος δεν πιάστηκε: η χρονιά τελειώνει.",
       "res.next": "Επόμενη εποχή", "res.won": "Η χρονιά ολοκληρώθηκε!", "res.lost": "Μια ξερή χρονιά",
-      "res.score": "Πόντοι της χρονιάς", "res.scoreNote": "Η άνθιση κάθε εποχής, οι πηγές που έφτασες και η πιο μακριά ρίζα.",
+      "res.score": "Πόντοι της χρονιάς", "res.scoreNote": "Η άνθιση κάθε εποχής, και οι πηγές που έφτασες και η πιο μακριά ρίζα κάθε ξέφωτου.",
       "res.longest": "Η πιο μακριά ρίζα", "res.code": "Κωδικός χρονιάς: {seed}", "res.same": "Η ίδια χρονιά", "res.new": "Νέα χρονιά",
       "new.title": "Νέα χρονιά", "new.diff": "Δυσκολία", "new.seed": "Κωδικός χρονιάς",
       "new.seedHint": "Κενό για νέα χρονιά", "new.start": "Ξεκίνα", "new.cancel": "Άκυρο",
@@ -181,6 +243,30 @@
       "confirm.new": "Να ξεκινήσει νέα χρονιά; Αυτή που παίζεις μετρά ως μη ολοκληρωμένη.", "confirm.newYes": "Νέα χρονιά",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε", "toast.reset": "Το αρχείο μηδενίστηκε",
       "toast.rewind": "Ο τελευταίος γύρος αναιρέθηκε (μένουν {n})",
+      "btn.daily": "Ξέφωτο της ημέρας", "daily.label": "Ημέρας",
+      "daily.title": "Ξέφωτο της ημέρας #{n}", "daily.won": "{n} πόντοι, ο στόχος πιάστηκε", "daily.lost": "{n} πόντοι, ο στόχος δεν πιάστηκε",
+      "daily.season": "Εποχή", "daily.bloom": "Άνθιση · στόχος", "daily.score": "Πόντοι", "daily.scoreNote": "Η άνθιση, οι πηγές που έφτασες και η πιο μακριά ρίζα.",
+      "daily.streak": "Σερί", "daily.best": "Καλύτερο σερί",
+      "daily.oneTry": "Το ξέφωτο της ημέρας παίζεται μία φορά.", "daily.next": "Νέο αύριο.",
+      "daily.free": "Νέα χρονιά", "daily.share": "Κοινοποίηση", "daily.games": "Όλα τα παιχνίδια",
+      "daily.rules": "Ξέφωτο της ημέρας: μία εποχή στη Σκληρή από γυμνό δέντρο, ίδια για όλους σήμερα. Πιάσε τον στόχο άνθισης· οι πόντοι είναι η άνθιση, οι πηγές και η πιο μακριά ρίζα.",
+      "daily.leave": "Να αφήσεις το σημερινό ξέφωτο; Μετρά ως η μία σου προσπάθεια.", "daily.leaveYes": "Άφησέ το", "daily.leaveNo": "Συνέχισε",
+      "daily.giveUp": "Να ξεκινήσει το σημερινό ξέφωτο; Η χρονιά που παίζεις μετρά ως μη ολοκληρωμένη.", "daily.go": "Ξεκίνα το ξέφωτο",
+      "stats.daily": "Ξέφωτο της ημέρας", "stats.dailyRow": "Παιγμένα · στόχοι · σερί · καλύτεροι πόντοι",
+      "last.title": "Τελευταίες χρονιές", "last.won": "Ολοκληρώθηκε", "last.met": "Στόχος", "last.missed": "Χωρίς στόχο",
+      "last.seasons": "{n} από {m} εποχές", "last.score": "{n} πόντοι",
+      "last.replay": "Ξανά", "last.replayLabel": "Ξανά η χρονιά {seed}",
+      "share.won": "{n} πόντοι, ο στόχος πιάστηκε", "share.lost": "{n} πόντοι, ο στόχος δεν πιάστηκε",
+      "toast.copied": "Αντιγράφηκε: επικόλλησέ το σε μια συνομιλία", "toast.shared": "Κοινοποιήθηκε", "toast.copyFail": "Δεν αντιγράφηκε",
+      "toast.dailyGone": "Το ξέφωτο της ημέρας θέλει το αρχείο gamekit: φόρτωσε ξανά το orOS",
+      "btn.pz": "Γρίφοι", "pz.title": "Γρίφοι ριζών", "pz.name": "Γρίφος {n}",
+      "pz.note": "Ένας γύρος ο καθένας με ορισμένο χυμό: τα ζωύφια δείχνουν τι θα κάνουν. Ένωσε ξανά το δίκτυο, σταμάτα τη σήψη, κράτα ό,τι αποδίδει. Η αναίρεση και ο γύρος από την αρχή είναι δωρεάν.",
+      "pz.count": "Λυμένοι: {n} από {m}.", "pz.tier1": "Σπορόφυτα", "pz.tier2": "Δενδρύλλια", "pz.tier3": "Γέρικα δέντρα", "pz.tier4": "Αρχαίες ρίζες",
+      "pz.aSolved": "Γρίφος {n}, λυμένος", "pz.aOpen": "Γρίφος {n}",
+      "pz.rules": "Γρίφος {n}: ένας γύρος με {s} χυμό. Αφού παίξουν τα ζωύφια, το δέντρο πρέπει να βγάζει τουλάχιστον {q} χυμό τον επόμενο γύρο, όσο περισσότερο επιτρέπει αυτός ο γύρος.",
+      "pz.earn": "Βγάζει {n} τώρα· ο στόχος είναι {q} αφού παίξουν τα ζωύφια", "pz.earned": "Βγάζει τον επόμενο γύρο",
+      "pz.won": "Λύθηκε!", "pz.lost": "Όχι αυτή τη φορά", "pz.of": "{n} από {q}",
+      "pz.all": "Όλοι οι γρίφοι", "pz.again": "Ξανά", "pz.next": "Γρίφος {n}", "pz.solvedRow": "Λυμένοι γρίφοι",
       "tour.title": "Πώς παίζεται", "tour.next": "Επόμενο", "tour.skip": "Παράλειψη", "tour.done": "Παίξε",
       "tour.1": "Είσαι ένα γέρικο δέντρο. Άπλωσε ρίζες στο χώμα από τον κορμό ως τις πηγές και τα μεταλλεύματα: καθένα που ενώνεται δίνει χυμό κάθε γύρο.",
       "tour.2": "Στην επιφάνεια τα μπουμπούκια ανοίγουν σε φύλλα (περισσότερος χυμός) και λουλούδια. Στο τέλος κάθε εποχής τα λουλούδια και οι πηγές που έφτασες πρέπει να πιάσουν τον στόχο άνθισης.",
@@ -232,16 +318,48 @@
   //                                           lr: the longest root } } }
   // Each device only grows its own row, so a per-row max is a join and
   // nothing is double-counted however the devices meet.
+  // days (5.97.00, older data has none): one Daily glade per calendar
+  // day (day 0 = 1 Jan 2026, gamekit/daily.js), one try:
+  // { "<day>": { b, w: 1 quota met | 0, h: score, t: actions, n: bloom,
+  //   q: quota } }. The newer epoch wins; equal epochs keep the better
+  // result (quota met, then the higher score, then fewer actions, then
+  // the larger JSON: a total order, so a join). Never counted in rows.
+  // last (5.97.00): the last 10 years of every device,
+  // [{ a: end time ms, d: m|h|d (d = Daily), n: seasons met, w: 1
+  //    finished (Daily: quota met) | 0, h: score, s: year code }].
+  // Union by a + s, newest first, the first 10: a join; entries older
+  // than the reset stamp br drop.
   var data = null;
   var deviceId = null;
 
-  function defaultData() { return { ver: DATA_VER, br: 0, rows: {} }; }
+  // pz (W3b): the numbers of the puzzles solved on any device, sorted;
+  // a union (a join); Reset records keeps them.
+  function defaultData() { return { ver: DATA_VER, br: 0, rows: {}, days: {}, last: [], pz: [] }; }
+  function normDay(v) {
+    if (!v || typeof v !== "object" || !isInt(v.b) || v.b < 0 || (v.w !== 0 && v.w !== 1) ||
+        !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || !isInt(v.t) || v.t < 1 || v.t >= BIG ||
+        !isInt(v.n) || v.n < 0 || v.n > 99 || !isInt(v.q) || v.q < 1 || v.q > 99 || (v.w === 1) !== (v.n >= v.q)) return null;
+    return { b: v.b, w: v.w, h: v.h, t: v.t, n: v.n, q: v.q };
+  }
+  function dayKeyOk(k) { return /^\d{1,6}$/.test(k) && +k <= MAX_DAY; }
+  function dayBetter(x, y) {
+    if (x.w !== y.w) return x.w > y.w;
+    if (x.h !== y.h) return x.h > y.h;
+    if (x.t !== y.t) return x.t < y.t;
+    return cmpStr(JSON.stringify(x), JSON.stringify(y)) > 0;
+  }
+  function normLast(v) {
+    if (!v || typeof v !== "object" || !isInt(v.a) || v.a < 0 || ["m", "h", "e", "d"].indexOf(v.d) < 0 ||
+        !isInt(v.n) || v.n < 0 || v.n > (v.d === "d" ? 1 : v.d === "e" ? E.MAX_YEARS : E.SEASONS * E.GLADES.length) || (v.w !== 0 && v.w !== 1) || (v.d === "e" && v.w !== 0) ||
+        !isInt(v.h) || v.h < 0 || v.h > MAX_SCORE || typeof v.s !== "string" || !/^[a-z0-9]{1,16}$/.test(v.s)) return null;
+    return { a: v.a, d: v.d, n: v.n, w: v.w, h: v.h, s: v.s };
+  }
   function normRow(row) {
     if (!row || typeof row !== "object" || !isInt(row.b) || row.b < 0) return null;
     var s = {}, any = false;
     DIFFS.forEach(function (k) {
       var v = row.s && row.s[k];
-      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= MAX_SCORE) {
+      if (Array.isArray(v) && v.length === 3 && v.every(function (x) { return isInt(x) && x >= 0 && x < BIG; }) && v[1] <= v[0] && v[2] <= MAX_SCORE && (k !== "e" || v[1] === 0)) {
         s[k] = [v[0], v[1], v[2]];
         any = true;
       }
@@ -280,7 +398,39 @@
       DIFFS.forEach(function (k) { if (r.s[k]) s[k] = r.s[k].slice(); });
       sorted[id] = { b: r.b, s: s, lr: r.lr };
     });
-    return { ver: DATA_VER, br: br, rows: sorted };
+    var days = {};
+    [a.days, b.days].forEach(function (m) {
+      if (!m || typeof m !== "object" || Array.isArray(m)) return;
+      Object.keys(m).forEach(function (k) {
+        if (!dayKeyOk(k)) return;
+        var v = normDay(m[k]);
+        if (!v || v.b < br) return;
+        var cur = days[+k];
+        if (!cur || v.b > cur.b || (v.b === cur.b && dayBetter(v, cur))) days[+k] = v;
+      });
+    });
+    var sd = {};
+    Object.keys(days).map(Number).sort(function (x, y) { return x - y; }).forEach(function (k) { sd[k] = days[k]; });
+    var seen = {}, last = [];
+    [a.last, b.last].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (x) {
+        var v = normLast(x);
+        if (!v || v.a < br) return;
+        var key = v.a + ":" + v.s;
+        // the same year twice: keep one, by a fixed order
+        if (!seen[key] || cmpStr(JSON.stringify(v), JSON.stringify(seen[key])) > 0) seen[key] = v;
+      });
+    });
+    Object.keys(seen).forEach(function (k) { last.push(seen[k]); });
+    last.sort(function (x, y) { return y.a - x.a || cmpStr(x.s, y.s); });
+    var pz = {};
+    [a.pz, b.pz].forEach(function (list) {
+      if (!Array.isArray(list)) return;
+      list.forEach(function (n) { if (isInt(n) && n >= 1 && n <= PZ_N) pz[n] = 1; });
+    });
+    var pl = Object.keys(pz).map(Number).sort(function (x, y) { return x - y; });
+    return { ver: DATA_VER, br: br, rows: sorted, days: sd, last: last.slice(0, LAST_N), pz: pl };
   }
   // [years, finished, best score] for a difficulty, all devices.
   function totals(diff) {
@@ -344,6 +494,39 @@
     data = mergeRoots(data, data);
     save();
   }
+  // Daily results: glades played, quota met, the current and best
+  // streak of days with the quota met, the best score.
+  function dailyStats(todayIdx) {
+    var on = {}, n = 0, w = 0, best = 0;
+    Object.keys(data.days).forEach(function (k) {
+      var v = data.days[k];
+      n++;
+      best = Math.max(best, v.h);
+      if (v.w) { on[k] = true; w++; }
+    });
+    var s2 = DK ? DK.streaks(on, todayIdx) : { cur: 0, best: 0 };
+    return { n: n, w: w, cur: s2.cur, best: s2.best, top: best };
+  }
+  // One try a day: the first result counts.
+  function countDaily(day, won, score, acts, bloom, quota) {
+    if (data.days[day] && data.days[day].b >= data.br) return;
+    var q = clamp(quota, 1, 99), n = clamp(bloom, 0, 99);
+    data.days[day] = { b: data.br, w: n >= q ? 1 : 0, h: clamp(score, 0, MAX_SCORE), t: clamp(acts, 1, BIG - 1), n: n, q: q };
+    data = mergeRoots(data, data);
+    save();
+  }
+  // A year (or a Daily glade) ended: into Last years.
+  function logYear(won) {
+    var daily = game.opts.day !== undefined;
+    // every season in bloom[] met its quota but a missed last one; Endless: the years lived
+    var met = game.opts.diff === "e" ? lived() : st.bloom.length - (st.over === 0 ? 1 : 0);
+    var v = normLast({ a: Date.now(), d: daily ? "d" : game.opts.diff, n: clamp(met, 0, daily ? 1 : game.opts.diff === "e" ? E.MAX_YEARS : E.SEASONS * E.GLADES.length),
+      w: won ? 1 : 0, h: clamp(E.score(st), 0, MAX_SCORE), s: game.opts.seed });
+    if (!v) return;
+    data.last = [v].concat(data.last || []);
+    data = mergeRoots(data, data);
+    save();
+  }
 
   // ---------- 3. Device-local prefs + session ----------
   var prefs = { diff: "m", tour: false, fast: false, threat: false };
@@ -364,7 +547,7 @@
 
   // game = {
   //   g: engine state,
-  //   opts: { diff, seed },
+  //   opts: { diff, seed, day (the Daily glade only), pz (a puzzle) },
   //   ts: the state at the start of this turn (Reset turn),
   //   pt: the state at the start of the turn before (Rewind, Mild) | null,
   //   counted: bool   the year's end is in the records
@@ -376,6 +559,10 @@
     if (!s || typeof s !== "object" || !E.valid(s.g)) return false;
     var o = s.opts;
     if (!o || DIFFS.indexOf(o.diff) < 0 || o.diff !== s.g.diff || typeof o.seed !== "string" || o.seed !== s.g.seed) return false;
+    if (o.day !== undefined && (!isInt(o.day) || o.day < 0 || o.day > MAX_DAY || s.g.one !== 1)) return false;
+    if (o.pz !== undefined && (o.pz !== s.g.pz || o.day !== undefined)) return false;
+    if (o.pz === undefined && s.g.pz !== undefined) return false;
+    if (o.day === undefined && o.pz === undefined && s.g.one !== undefined) return false;
     if (!E.valid(s.ts) || s.ts.seed !== s.g.seed) return false;
     if (s.pt !== null && !(E.valid(s.pt) && s.pt.seed === s.g.seed)) return false;
     return true;
@@ -383,7 +570,12 @@
   function loadSession() {
     try {
       var s = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-      if (validSession(s)) return { g: s.g, opts: { diff: s.opts.diff, seed: s.opts.seed }, ts: s.ts, pt: s.pt, counted: s.counted === true };
+      if (validSession(s)) {
+        var o = { diff: s.opts.diff, seed: s.opts.seed };
+        if (s.opts.day !== undefined) o.day = s.opts.day;
+        if (s.opts.pz !== undefined) o.pz = s.opts.pz;
+        return { g: s.g, opts: o, ts: s.ts, pt: s.pt, counted: s.counted === true };
+      }
     } catch (e) {}
     return null;
   }
@@ -403,10 +595,15 @@
   var cursor = 17;        // keyboard cursor tile
   var busyUntil = 0;      // input waits while the end of a turn plays
 
-  function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0); }
+  // a puzzle left half done loses nothing, so it never asks
+  function inProgressOf(g) { return !!(g && !g.counted && g.g.over < 0 && g.g.acts > 0 && g.opts.pz === undefined); }
   function makeGame(opts) {
-    var g = E.newYear(opts.seed, opts.diff);
-    return { g: g, opts: { diff: opts.diff, seed: opts.seed }, ts: E.clone(g), pt: null, counted: false };
+    var daily = opts.day !== undefined, pz = opts.pz !== undefined;
+    var g = pz ? E.newPuzzle(opts.pz) : daily ? E.newDaily(opts.seed) : E.newYear(opts.seed, opts.diff);
+    var o = { diff: g.diff, seed: g.seed };
+    if (daily) o.day = opts.day;
+    if (pz) o.pz = opts.pz;
+    return { g: g, opts: o, ts: E.clone(g), pt: null, counted: false };
   }
   function setState(g) {
     game.g = g;
@@ -414,7 +611,19 @@
   }
   function endYear(won) {
     game.counted = true;
-    count(game.opts.diff, won, E.score(st), Math.max(st.best, E.longest(st)));
+    // a puzzle is not a year: only a solved one is noted
+    if (game.opts.pz !== undefined) {
+      if (won && data.pz.indexOf(game.opts.pz) < 0) {
+        data.pz = data.pz.concat([game.opts.pz]);
+        data = mergeRoots(data, data);
+        save();
+      }
+      return;
+    }
+    if (game.opts.day !== undefined) countDaily(game.opts.day, won, E.score(st), Math.max(1, st.acts), st.res ? st.res.b : 0, st.s.q);
+    // Endless keeps the most years where the others keep the best score
+    else count(game.opts.diff, won, game.opts.diff === "e" ? lived() : E.score(st), Math.max(st.best, E.longest(st)));
+    logYear(won);
   }
   function startGame(opts) {
     // a year under way and left counts as not finished
@@ -424,14 +633,24 @@
     undo = [];
     saveSession();
     seasonMsg();
+    if (game.opts.day !== undefined) setMsg(t("daily.rules"));
+    if (game.opts.pz !== undefined) setMsg(pzRules());
     renderAll();
     live($("msg").textContent);
     maybeTour();
   }
   function setMsg(text) { $("msg").textContent = text || ""; }
+  function gladeName(g) { return t("glade." + (g || E.gladeOf(st)).id); }
+  function nextGlade() { return E.GLADES[(st.gl || 1) % E.GLADES.length]; }
+  // "the riverbank" inside a sentence (the names start upper case)
+  function gladeLower(g) { var n = gladeName(g); return n.charAt(0).toLowerCase() + n.slice(1); }
+  function gladeEnds() { return st.sea >= E.SEASONS && (st.diff === "e" || (st.gl || 1) < (st.end || 1)); }
+  // Endless: the years the tree lived through to the end
+  function lived() { return Math.max(0, (st.yr || 1) - 1); }
   function seasonMsg() {
-    if (st.phase === "rest") { setMsg(t("res.met")); return; }
-    var m = t("msg.season", { s: t("sea." + st.sea), n: st.sea, q: st.s.q });
+    if (st.pz) { setMsg(pzRules()); return; }
+    if (st.phase === "rest") { setMsg(gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met")); return; }
+    var m = (st.yr ? t("msg.year", { y: st.yr }) + " " : "") + (st.one ? t("msg.daily", { g: gladeName(), s: t("sea." + st.sea), q: st.s.q }) : t("msg.season", { g: gladeName(), s: t("sea." + st.sea), n: st.sea, q: st.s.q }));
     if (E.frost(st, st.s)) m += " " + t("msg.frost");
     setMsg(m);
   }
@@ -515,8 +734,12 @@
     if (bad) shake();
     if (st.over >= 0 && !game.counted) endYear(st.over === 1);
     saveSession();
-    if (st.s.done) {
-      setMsg(st.over === 0 ? t("res.miss") : st.over === 1 ? t("res.won") : t("res.met"));
+    if (st.s.done && st.pz) {
+      setMsg(t(st.over === 1 ? "pz.won" : "pz.lost") + " " + t("pz.of", { n: st.res.b, q: st.res.q }));
+      setTimeout(puzzleEnd, Math.max(300, busyUntil - Date.now() + 200));
+    }
+    else if (st.s.done) {
+      setMsg(st.one ? t(st.over === 1 ? "daily.won" : "daily.lost", { n: E.score(st) }) : st.over === 0 ? t("res.miss") : st.over === 1 ? t("res.won") : gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met"));
       setTimeout(bloomDialog, Math.max(300, busyUntil - Date.now() + 200));
     }
     else {
@@ -565,6 +788,7 @@
     BY = Math.floor((CH - TS * BH) / 2);
     draw();
   }
+  var GLADE_TINT = { river: "rt-spring", hill: "rt-stone", forest: "rt-bark" };
   function readColors() {
     var cs = getComputedStyle(document.documentElement);
     ["--bg", "--text", "--text-dim", "--accent", "--panel-bg", "--border", "--danger",
@@ -697,6 +921,14 @@
     if (i < BW) {
       ctx.fillStyle = colors["rt-sky"];
       ctx.fillRect(p.x, p.y, TS, TS);
+      // each glade tints its sky (the meadow keeps it clear)
+      var gt = GLADE_TINT[E.gladeOf(st).id];
+      if (gt) {
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = colors[gt];
+        ctx.fillRect(p.x, p.y, TS, TS);
+        ctx.globalAlpha = 1;
+      }
       ctx.fillStyle = colors["rt-grass"];
       ctx.fillRect(p.x, p.y + TS * 0.84, TS, TS * 0.16);
       if (E.frost(st, st.s) && !st.s.done) {
@@ -1092,9 +1324,15 @@
   function renderStatus() {
     if (!st) return;
     var s = st.s, inc = E.income(st), b = s.done && st.res ? st.res.b : E.bloomOf(st);
-    stat("s-sea", t("sea." + st.sea), t("sea." + st.sea) + " · " + st.sea + "/" + E.SEASONS);
+    stat("s-sea", t("sea." + st.sea), gladeName() + " · " + (st.yr ? t("st.year", { n: st.yr }) : t("st.glade", { n: st.gl || 1, m: st.end || 1 })) + " · " + t("sea." + st.sea) + " · " + st.sea + "/" + E.SEASONS);
     stat("s-turn", s.turn + "/" + E.T, t("st.turn", { n: s.turn, m: E.T }));
     stat("s-sap", st.sap + " +" + inc, t("st.sap", { n: st.sap, g: inc }));
+    if (st.pz) {
+      // a puzzle's goal is next turn's sap, not bloom
+      var e = s.done && st.res ? st.res.b : inc;
+      stat("s-bloom", e + "/" + s.q, t("pz.earn", { n: e, q: s.q }), e >= s.q ? "ok" : "low");
+      return;
+    }
     stat("s-bloom", b + "/" + s.q, t("st.bloom", { n: b, q: s.q }), b >= s.q ? "ok" : "low");
   }
   function renderTools() {
@@ -1105,6 +1343,10 @@
     var rw = $("rewind-btn");
     rw.hidden = !(st && st.diff === "m");
     rw.disabled = !canRewind();
+    var db = $("daily-btn");
+    db.hidden = !DK;
+    db.classList.toggle("due", !!DK && !data.days[today()]);
+    db.classList.toggle("on", !!(game && game.opts.day !== undefined && !game.counted));
   }
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -1119,8 +1361,8 @@
     if (st.phase === "rest" && st.over < 0) {
       var nx = el("button", "act wide");
       nx.type = "button";
-      nx.appendChild(el("span", "nm", t("res.next")));
-      nx.appendChild(el("span", "cost", t("sea." + (st.sea + 1))));
+      nx.appendChild(el("span", "nm", t(gladeEnds() ? "res.nextGlade" : "res.next")));
+      nx.appendChild(el("span", "cost", gladeEnds() ? gladeName(nextGlade()) : t("sea." + (st.sea + 1))));
       nx.addEventListener("click", nextSeason);
       bar.appendChild(nx);
       return;
@@ -1204,7 +1446,8 @@
 
   function askNew() {
     cancelTourWait();
-    if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), newDialog, t("confirm.newYes"));
+    if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); newDialog(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+    else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), newDialog, t("confirm.newYes"));
     else newDialog();
   }
   function newDialog() {
@@ -1262,17 +1505,19 @@
   }
   function bloomDialog() {
     if (!st || !st.res || document.querySelector("dialog[open]")) return;
+    if (st.pz) { puzzleEnd(); return; }
     var r = st.res, met = r.b >= r.q, on = E.joined(st);
     var dlg = makeDialog("rt-bloom");
     dlg.setAttribute("data-modal", "1");
-    dlg.appendChild(el("div", "dlg-title", t("res.bloom") + " · " + t("sea." + st.sea)));
+    dlg.appendChild(el("div", "dlg-title", t("res.bloom") + " · " + gladeName() + " · " + t("sea." + st.sea)));
     dlg.appendChild(el("div", "dlg-hero" + (met ? "" : " lost"), t("res.bloom") + " " + r.b));
     dlg.appendChild(row(t("res.flowers"), String(E.flowers(st))));
     dlg.appendChild(row(t("res.springs"), String(E.springs(st, on))));
     dlg.appendChild(row(t("res.quota"), String(r.q)));
-    dlg.appendChild(el("div", "dlg-msg", met ? (st.over === 1 ? t("res.won") : t("res.met")) : t("res.miss")));
+    dlg.appendChild(el("div", "dlg-msg", st.one ? t(met ? "daily.won" : "daily.lost", { n: E.score(st) }) : met ? (st.over === 1 ? t("res.won") : gladeEnds() ? t("res.metGlade", { g: gladeLower(nextGlade()) }) : t("res.met")) : t("res.miss")));
+    if (met && gladeEnds()) dlg.appendChild(el("div", "dlg-note", t("glade." + nextGlade().id + ".note")));
     var acts = el("div", "dlg-actions");
-    var go = button(st.over >= 0 ? t("info.close") : t("res.next"), "primary", function () {
+    var go = button(st.over >= 0 ? t("info.close") : t(gladeEnds() ? "res.nextGlade" : "res.next"), "primary", function () {
       dlg.close();
       if (st.over >= 0) setTimeout(resultDialog, 0);
       else nextSeason();
@@ -1285,10 +1530,23 @@
   }
   function resultDialog() {
     if (!game || st.over < 0 || document.querySelector("dialog[open]")) return;
+    if (st.pz) { puzzleEnd(); return; }
+    if (game.opts.day !== undefined) { dailyDialog(game.opts.day); return; }
     var dlg = makeDialog("rt-result"), won = st.over === 1;
     dlg.appendChild(el("div", "dlg-title", t("app.name") + " · " + t("diff." + game.opts.diff)));
-    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
-    st.bloom.forEach(function (b, k) { dlg.appendChild(row(t("sea." + (k + 1)), String(b))); });
+    if (st.diff === "e") {
+      var n = lived();
+      dlg.appendChild(el("div", "dlg-hero" + (n ? "" : " lost"), n > 1 ? t("res.lived", { n: n }) : t(n ? "res.lived1" : "res.lived0")));
+      dlg.appendChild(row(t("res.years"), String(n)));
+      dlg.appendChild(row(t("res.best"), String(totals("e")[2])));
+    } else {
+      dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("res.won") : t("res.lost")));
+      dlg.appendChild(row(t("res.glades"), (st.gl || 1) + "/" + (st.end || 1)));
+    }
+    // the bloom of each season, a row per glade ("3 · 4 · 5")
+    for (var gk = 0; st.diff !== "e" && gk * E.SEASONS < st.bloom.length; gk++) {
+      dlg.appendChild(row(t("glade." + E.GLADES[gk].id), st.bloom.slice(gk * E.SEASONS, (gk + 1) * E.SEASONS).join(" · ")));
+    }
     dlg.appendChild(row(t("res.springs"), String(E.springs(st))));
     dlg.appendChild(row(t("res.longest"), String(E.longest(st))));
     dlg.appendChild(row(t("res.score"), String(E.score(st))));
@@ -1309,9 +1567,19 @@
     DIFFS.forEach(function (m) {
       var v = totals(m);
       if (v[0]) empty = false;
-      dlg.appendChild(row(t("diff." + m), v[0] + " · " + v[1] + " · " + v[2]));
+      if (m === "e") dlg.appendChild(el("div", "dlg-sub", t("stats.endless")));
+      dlg.appendChild(row(t("diff." + m), v[0] + " · " + (m === "e" ? "–" : v[1]) + " · " + v[2]));
     });
     dlg.appendChild(row(t("stats.long"), String(longestEver())));
+    if (DK) {
+      var ds = dailyStats(today());
+      if (ds.n) empty = false;
+      dlg.appendChild(el("div", "dlg-sub", t("stats.daily") + " · " + t("stats.dailyRow")));
+      dlg.appendChild(row(t("daily.label"), ds.n ? ds.n + " · " + ds.w + " · " + ds.cur + " · " + ds.top : "–"));
+    }
+    if (PZ_N) dlg.appendChild(row(t("pz.solvedRow"), data.pz.length + "/" + PZ_N));
+    if ((data.last || []).length) empty = false;
+    lastYears(dlg);
     if (game) dlg.appendChild(el("div", "dlg-note", t("stats.code", { seed: game.opts.seed })));
     var acts = el("div", "dlg-actions");
     var reset = button(t("stats.reset"), "danger", function () {
@@ -1335,6 +1603,166 @@
     dlg.appendChild(acts);
     show(dlg, no);
   }
+  function lastYears(dlg) {
+    var list = data.last || [];
+    if (!list.length) return;
+    dlg.appendChild(el("div", "dlg-sub", t("last.title")));
+    var box = el("div", "lr-list");
+    list.forEach(function (v) {
+      var r = el("div", "lr-row");
+      var what = v.d === "d" ? t(v.w ? "last.met" : "last.missed") : v.d === "e" ? t("last.yearsE", { n: v.n }) : (v.w ? t("last.won") : t("last.seasons", { n: v.n, m: E.SEASONS * E.GLADES.length }));
+      var tx = el("div", "lr-tx");
+      tx.appendChild(el("div", "nm", (v.d === "d" ? t("daily.label") : t("diff." + v.d)) + " · " + what));
+      tx.appendChild(el("div", "fx", t("last.score", { n: v.h }) + " · " +
+        (DK ? DK.dateLabel(DK.dayIndex(new Date(v.a)), LANG) + " · " : "") + v.s));
+      r.appendChild(tx);
+      // a Daily glade replays as a whole year on Hardy on its glade
+      var b = button(t("last.replay"), "", function () {
+        dlg.close();
+        var go = function () { startGame({ diff: v.d === "d" ? "h" : v.d, seed: v.s }); };
+        if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); go(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+        else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), go, t("confirm.newYes"));
+        else go();
+      });
+      b.setAttribute("aria-label", t("last.replayLabel", { seed: v.s }));
+      r.appendChild(b);
+      box.appendChild(r);
+    });
+    dlg.appendChild(box);
+  }
+
+  // ---------- Daily glade ----------
+  // One season on Hardy from a bare tree: the glade and the season come
+  // from the seed "rt" + the date, the same for everyone that day; one try.
+  function today() { return DK ? DK.today() : 0; }
+  function dailyOpts(day) {
+    return { diff: "h", seed: cleanSeed(DK.seedOf("rt", day)), day: day };
+  }
+  // A Daily glade left before its end counts as a missed quota.
+  function leaveDaily() {
+    if (game && game.opts.day !== undefined && inProgressOf(game)) {
+      endYear(false);
+      saveSession();
+      renderAll();
+    }
+  }
+  // The Daily button: today's result when it is played (here or on
+  // another device), else today's glade (resumed when it is open).
+  function openDaily() {
+    cancelTourWait();
+    if (!DK) { showToast(t("toast.dailyGone")); return; }
+    var d = today();
+    if (data.days[d]) { dailyDialog(d); return; }
+    if (game && game.opts.day === d && !game.counted) return;
+    var go = function () { startGame(dailyOpts(d)); };
+    if (game && inProgressOf(game)) confirmDialog(t("daily.giveUp"), go, t("daily.go"), t("daily.leaveNo"));
+    else go();
+  }
+  function dailyDialog(day) {
+    var r = data.days[day];
+    if (!r || !DK || document.querySelector("dialog[open]")) return;
+    var s2 = dailyStats(today()), info = E.dailyOf(cleanSeed(DK.seedOf("rt", day)));
+    var dlg = makeDialog("rt-daily");
+    dlg.appendChild(el("div", "dlg-title", t("daily.title", { n: day + 1 }) + " · " + DK.dateLabel(day, LANG)));
+    dlg.appendChild(el("div", "dlg-hero" + (r.w ? "" : " lost"), t(r.w ? "daily.won" : "daily.lost", { n: r.h })));
+    dlg.appendChild(el("div", "dlg-note", t("daily.scoreNote")));
+    dlg.appendChild(row(t("daily.season"), t("glade." + E.GLADES[info.gl - 1].id) + " · " + t("sea." + info.sea)));
+    dlg.appendChild(row(t("daily.bloom"), r.n + " · " + r.q));
+    dlg.appendChild(row(t("daily.streak"), String(s2.cur)));
+    dlg.appendChild(row(t("daily.best"), String(s2.best)));
+    if (day === today()) dlg.appendChild(el("div", "dlg-note", t("daily.oneTry") + " " + t("daily.next")));
+    var acts = el("div", "dlg-actions wrap");
+    hubLink(acts, dlg);
+    acts.appendChild(button(t("daily.share"), "", function () { shareDaily(day); }));
+    var free = button(t("daily.free"), "primary", function () { dlg.close(); newDialog(); });
+    acts.appendChild(free);
+    dlg.appendChild(acts);
+    show(dlg, free);
+  }
+  // Spoiler-free: a flower for every bloom up to the quota (a bare
+  // square for each one missing), the score and whether it was met.
+  function shareDaily(day) {
+    var r = data.days[day];
+    if (!r || !DK) return;
+    var sq = "", k;
+    for (k = 0; k < Math.min(r.n, r.q); k++) sq += "🌸";
+    for (k = r.n; k < r.q; k++) sq += "🟫";
+    if (r.n > r.q) sq += " +" + (r.n - r.q);
+    var text = DK.shareText({ game: t("app.name"), label: t("daily.label"), day: day, grid: [sq],
+      line: (r.w ? "🌳 " : "🍂 ") + t(r.w ? "share.won" : "share.lost", { n: r.h }) });
+    DK.share(text, "orOS " + t("app.name")).then(function (how) {
+      if (how === "copied") showToast(t("toast.copied"));
+      else if (how === "shared") live(t("toast.shared"));
+      else if (how === "failed") showToast(t("toast.copyFail"));
+    });
+  }
+  // "All games" (the Game Center), only when it is installed.
+  function hubLink(acts, dlg) {
+    if (!DK || !DK.hasHub()) return;
+    acts.appendChild(button(t("daily.games"), "", function () { dlg.close(); DK.openHub("roots"); }));
+  }
+
+  // ---------- Puzzles ----------
+  // 20 one-turn puzzles in four tiers of five; the goal is the sap the
+  // tree earns the turn after, the most the turn allows.
+  function pzRules() { return t("pz.rules", { n: st.pz, s: E.PUZZLES[st.pz - 1].sap, q: st.s.q }); }
+  function pzTier(n) { return Math.min(4, Math.ceil(n / 5)); }
+  function openPuzzle(n) {
+    var go = function () { startGame({ pz: n }); };
+    if (game && game.opts.day !== undefined && inProgressOf(game)) confirmDialog(t("daily.leave"), function () { leaveDaily(); go(); }, t("daily.leaveYes"), t("daily.leaveNo"));
+    else if (game && inProgressOf(game)) confirmDialog(t("confirm.new"), go, t("confirm.newYes"));
+    else go();
+  }
+  function puzzlesDialog() {
+    cancelTourWait();
+    var dlg = makeDialog("rt-pz");
+    dlg.appendChild(el("div", "dlg-title", t("pz.title")));
+    dlg.appendChild(el("div", "dlg-note", t("pz.note") + " " + t("pz.count", { n: data.pz.length, m: PZ_N })));
+    var first = null;
+    [1, 2, 3, 4].forEach(function (tier) {
+      dlg.appendChild(el("div", "dlg-sub", t("pz.tier" + tier)));
+      var grid = el("div", "pz-grid");
+      for (var n = 1; n <= PZ_N; n++) {
+        if (pzTier(n) !== tier) continue;
+        (function (n) {
+          var done = data.pz.indexOf(n) >= 0;
+          var b = el("button", "pz-btn" + (done ? " done" : ""), String(n));
+          b.type = "button";
+          b.setAttribute("aria-label", t(done ? "pz.aSolved" : "pz.aOpen", { n: n }));
+          b.addEventListener("click", function () { dlg.close(); openPuzzle(n); });
+          if (!first && !done) first = b;
+          grid.appendChild(b);
+        })(n);
+      }
+      dlg.appendChild(grid);
+    });
+    var acts = el("div", "dlg-actions");
+    var close = button(t("stats.close"), "", function () { dlg.close(); });
+    acts.appendChild(close);
+    dlg.appendChild(acts);
+    show(dlg, first || close);
+  }
+  function puzzleEnd() {
+    if (!st || !st.pz || !st.res || document.querySelector("dialog[open]")) return;
+    var n = st.pz, won = st.over === 1, r = st.res;
+    var dlg = makeDialog("rt-pzend");
+    dlg.setAttribute("data-modal", "1");
+    dlg.appendChild(el("div", "dlg-title", t("pz.name", { n: n })));
+    dlg.appendChild(el("div", "dlg-hero" + (won ? "" : " lost"), won ? t("pz.won") : t("pz.lost")));
+    dlg.appendChild(row(t("pz.earned"), t("pz.of", { n: r.b, q: r.q })));
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(button(t("pz.all"), "", function () { dlg.close(); setTimeout(puzzlesDialog, 0); }));
+    acts.appendChild(button(t("pz.again"), won ? "" : "primary", function () { dlg.close(); startGame({ pz: n }); }));
+    var nx = null;
+    for (var k = 1; k <= PZ_N && !nx; k++) { var m = ((n - 1 + k) % PZ_N) + 1; if (data.pz.indexOf(m) < 0) nx = m; }
+    var main = null;
+    if (won && nx) { main = button(t("pz.next", { n: nx }), "primary", function () { dlg.close(); startGame({ pz: nx }); }); acts.appendChild(main); }
+    dlg.appendChild(acts);
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); dlg.close(); });
+    sfx(won ? "win" : "end");
+    show(dlg, main || acts.lastChild);
+  }
+
   function resetRecords() {
     data.br = Math.max(Date.now(), data.br + 1);
     data = mergeRoots(data, data);
@@ -1441,6 +1869,8 @@
     undo:   SVG + '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>',
     reset:  SVG + '<path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>',
     rewind: SVG + '<path d="M11 6 4 12l7 6zM20 6l-7 6 7 6z"/></svg>',
+    puzzle: SVG + '<path d="M4 4h6v2a2 2 0 1 0 4 0V4h6v6h-2a2 2 0 1 0 0 4h2v6h-6v-2a2 2 0 1 0-4 0v2H4v-6h2a2 2 0 1 0 0-4H4z"/></svg>',
+    daily:  SVG + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/><path d="M12 20v-5M12 15c0-2-1.5-3-3.5-3M12 17c0-2 1.5-3 3.5-3"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1535,7 +1965,7 @@
     $("end-btn").title = t("btn.endKey");
   }
   function paintStatic() {
-    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["undo-btn", "undo", "btn.undo"],
+    [["new-btn", "new", "btn.new"], ["stats-btn", "stats", "btn.stats"], ["daily-btn", "daily", "btn.daily"], ["pz-btn", "puzzle", "btn.pz"], ["undo-btn", "undo", "btn.undo"],
      ["reset-btn", "reset", "btn.reset"], ["rewind-btn", "rewind", "btn.rewind"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = UI_ICONS[x[1]];
@@ -1556,6 +1986,10 @@
     $("reset-btn").addEventListener("click", resetTurn);
     $("rewind-btn").addEventListener("click", rewind);
     $("stats-btn").addEventListener("click", statsDialog);
+    $("daily-btn").addEventListener("click", openDaily);
+    $("pz-btn").addEventListener("click", puzzlesDialog);
+    // Deep link from the Game Center: { daily: true } opens today's glade.
+    window.__orosOpenAt = function (tg) { if (tg && tg.daily) openDaily(); };
     $("threat-btn").addEventListener("click", toggleThreat);
     $("fast-btn").addEventListener("click", function () { prefs.fast = !prefs.fast; savePrefs(); paintFastBtn(); });
     $("sfx-btn").addEventListener("click", function () {
@@ -1585,13 +2019,21 @@
     inheritPalette();
     watchPalette();
     game = loadSession();
+    var tg = DK ? DK.takeTarget("roots") : null;
+    var daily = !!(tg && tg.daily && DK);
+    if (daily && !data.days[today()] && !(game && game.opts.day === today() && !game.counted)) {
+      // today's glade straight away, unless a year under way would count as not finished
+      if (!game || !inProgressOf(game)) { game = makeGame(dailyOpts(today())); daily = false; }
+    }
     if (!game) game = makeGame({ diff: prefs.diff, seed: newSeed() });
     st = game.g;
     saveSession();
     seasonMsg();
+    if (game.opts.day !== undefined && !st.acts) setMsg(t("daily.rules"));
     resize();
     renderAll();
-    if (st.res && (st.phase === "rest" || st.over >= 0)) setTimeout(bloomDialog, 300);
+    if (daily) setTimeout(openDaily, 300);
+    else if (st.res && (st.phase === "rest" || st.over >= 0)) setTimeout(bloomDialog, 300);
     else maybeTour();
   }
 

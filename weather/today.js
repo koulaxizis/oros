@@ -53,6 +53,19 @@
       if (typeof row.pop === "number") text += " · " + w["row.rain"].replace("{p}", Math.round(row.pop));
       return [{ id: "wx", kind: "info", title: (city.label || "") + ": " + text }];
     },
+    // Today's numbers for the tips of the day (BR-TODAY-16): °C, %.
+    facts: function (ctx) {
+      var data = ctx.readJSON("oros-weatherapp-data"), cache = ctx.readJSON("oros-weatherapp-cache");
+      if (!data || !Array.isArray(data.cities) || !cache || typeof cache !== "object") return null;
+      var city = pickCity(data, ctx.readJSON("oros-weather"));
+      var p = city && cache[city.id];
+      if (!p || typeof p.at !== "number" || ctx.now - p.at > DAY_MS || !Array.isArray(p.daily)) return null;
+      var row = null;
+      p.daily.forEach(function (d) { if (d && d.date === ctx.today) row = d; });
+      if (!row) return null;
+      var num = function (v) { return typeof v === "number" && isFinite(v) ? Math.round(v * 10) / 10 : null; };
+      return { max: num(row.max), min: num(row.min), pop: num(row.pop), imp: data.units === "imperial" };
+    },
     open: function (target, win) {
       if (typeof win.__orosOpenWeather === "function") win.__orosOpenWeather();
     }

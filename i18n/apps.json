@@ -1056,6 +1056,7 @@
    "app": "today",
    "files": [
     "today/agg.js",
+    "today/tips.js",
     "today/today.js"
    ]
   },

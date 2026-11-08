@@ -1,6 +1,34 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.99.00
+- **Claude and the Assistant fill in your Publishing titles.** They can now change a title that is already in Publishing: release date, status, subtitle, series, language, keywords, back-cover text, author bio, the people on it, each edition (ISBN, price, pages, size, spine, weight, binding, paper, the shop product) and the royalty terms. Nothing is removed, and an ISBN that belongs to another title is refused.
+
+## Version 5.98.00
+- **Today: tips of the day, your day in order, and tomorrow in the evening.** A new `Tips of the day` card gives up to five short tips from your apps together: an umbrella when rain meets an appointment with a place, water and shade on a hot day, a cold night, a pile of late tasks, a busy day, water in the afternoon. `Not today` hides one, `Don't show this kind` mutes it on this device. `Your day` (Add a widget) lists today's times in order with the free stretches between them, and says where tasks without a time could go. From 19:00 Today shows `Tomorrow` on top (change the hour or turn it off in Settings), and a line under Coming up counts the next 7 days. The Assistant and Claude through orOS Gate now see the same details, tips and end times. Everything is made on your device, with no network and no AI.
+
+## Version 5.97.00
+- **Roots: the Daily glade, Last years, four glades, puzzles and Endless.** A new calendar button in Roots opens today's glade: one season on Hardy from a bare tree, the same for everyone, with one try. Meet the bloom quota to keep your streak, share a spoiler-free result, and find it in the Game Center's Today. `Records` now also lists your last 10 years with `Replay`. And a year now walks four glades, the meadow, the riverbank, the rocky hill and the old forest, each with its own soil and pests, the new puzzle button holds 20 one-turn root puzzles, and Endless lets the tree live on, year after year, until a quota is missed.
+
+## Version 5.96.00
+- **Claude also works with orOS closed.** Through orOS Gate, Claude now searches your allowed apps, reads each Kanban board and links or changes items while no device has orOS open, from the encrypted copy; changes wait and are applied when orOS opens, and deletions still wait for you. What Claude or the Assistant adds to an app you have never opened on this device (Publishing, CRM…) now reaches your other devices too.
+
+## Version 5.95.00
+- **A partner's cards, notes and files in CRM.** A CRM partner's overview can now list the Kanban cards, Notes pages, Layout documents and Atelier designs about them, each with `Open` (a Kanban card opens in whatever column it is now). Claude and the Assistant link them for you; × takes one off, with `Undo`.
+
+## Version 5.94.00
+- **CRM partners from Claude and the Assistant.** They can now add a contract to a CRM partner (start, end, a reminder before it ends, amount, note) and link a partner to their beneficiary in your shop's Revenue Splitter, so the partner card shows what they are owed. Same card, ticks and `Undo` as for other CRM records.
+
+## Version 5.93.00
+- **Invoice drafts and quotes straight from the Assistant or Claude.** Ask the Assistant, or Claude through orOS Gate, for an invoice or a quote: it is saved at once as a draft in Invoices or Quote, with the client, lines, VAT, currency and notes, and `Undo` takes it back while you haven't changed it. An invoice is never issued for you: you check it and press `Issue` in Invoices, which gives the number. A quote gets its next number and a new client is added to Quote by name.
+- **Wiki articles, study cards and shared expenses too.** The same way, the Assistant and Claude can write a new Wiki article, add Flashcards cards (front and back, both ways, or a gap text) to a deck you have, and add a shared expense to a Split group, split equally. Each comes with `Undo`.
+
+## Version 5.92.01
+- **CRM opens a partner's titles.** On a partner's card, each Publishing title opens in Publishing, and `Open` goes straight to the title when there is only one.
+
+## Version 5.92.00
+- **Tidier Claude switches.** In `Settings › Connected services › orOS Gate`, every app now has its own box with its switch, and the apps Claude can change have `May change` right under it, so the columns stay straight. A search field finds an app or service, and `Turn all on`, `Turn all off`, `Allow all changes` and `Revoke all changes` act on the apps shown (the two that give Claude more ask for a second press). Personal apps stay in their own group: the buttons never turn one on, each still needs its own warning.
+
 ## Version 5.91.00
 - **Today: details, tips and actions on every row.** Many rows now have an (i) button with more about them: an event's start and end, the first line of its note, a task's priority and steps, a habit's streak. It also gives one tip, such as checking the way before an appointment with a place, getting ready the night before an early start, a gift a few days before a birthday, or a new date for a task late more than a week. And it has buttons that open the app that does the job: `Directions` in Maps, `Open the card`, `Gift idea to To-Do`, `Tomorrow` for a late task (with `Undo` in To-Do), `Tick it` for a habit, and `+1 glass` next to the water line. Today itself changes nothing, and the tips are made on your device, with no network and no AI.
 
