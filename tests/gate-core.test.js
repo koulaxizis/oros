@@ -173,7 +173,7 @@ test("publish_titles: status, people, formats, query by ISBN, tombstones", () =>
 test("tools per app and the relay a gate is made on", () => {
   assert.deepEqual(G.toolsOf("invoices"), ["search_data", "read_item", "app_summary", "invoice_list"]);
   assert.deepEqual(G.toolsOf("stock"), ["search_data", "read_item", "app_summary", "stock_items"]);
-  assert.deepEqual(G.toolsOf("publish"), ["search_data", "read_item", "publish_titles"]);
+  assert.deepEqual(G.toolsOf("publish"), ["search_data", "read_item", "app_summary", "publish_titles"]);
   assert.equal(G.relayOf(null), G.RELAY);
   assert.equal(G.relayOf({ relay: { url: "https://relay.example.org/" } }), "https://relay.example.org");
   assert.equal(G.relayOf({ relay: { url: "http://relay.example.org" } }), G.RELAY);

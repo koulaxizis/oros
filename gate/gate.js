@@ -762,7 +762,7 @@
   // NEVER, the apps with their own tools above (Budget, Kanban) and
   // Files (tests/gate-act.test.js).
   var ACT = ["bookmarks", "calendar", "chores", "contacts", "crm", "feeds", "flashcards", "garage", "habits", "invoices",
-             "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "shelf", "split", "stickies", "stock",
+             "library", "meals", "music", "notes", "petcare", "plants", "podcasts", "publish", "shelf", "split", "stickies", "stock",
              "timesheet", "todo", "travel", "wiki"];
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
