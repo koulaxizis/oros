@@ -84,6 +84,10 @@ The keys of a connected service never go into your synced data in clear. Each de
 
 Changes: Claude changes nothing unless you let it. Under Budget, turn on `Claude may also change Budget`, then open a `Write window` for 15 minutes, 1 hour or 4 hours. Only while it is open can Claude add, change or delete Budget entries; it closes by itself, or press `Close now`. Entries that come from a shop or another app, entries with receipts and amounts typed in another currency are refused. When Claude wants to delete more than 5 entries at once, orOS asks you first and waits 20 seconds. Every change is in `Activity` with `Undo`, which puts back what that change did (an entry changed again since is left as it is).
 
+Kanban works the same way: turn on `Claude may also change Kanban` and open a write window. Claude can then add cards and columns, move cards between columns and change a card's text, notes, due date and labels (labels the board already has). It never deletes a card, a column or a board, and never touches archived boards or templates. Each change has its own `Undo` in `Activity`; a card you changed after Claude stays as you left it.
+
+Several devices (your computer, the installed orOS, your phone): turn the gate on on one, press `Add another device`, and on the other device type the code under `Code from your other device` (10 minutes, once; up to 5 devices). Each device keeps its own app switches (they start as the first device's) and its own write window. Claude gets the answer from a device whose orOS is open on screen, else from the one that connected last. A phone's browser drops the connection soon after orOS goes to the background, so the phone answers only while orOS is open on it. Turning the gate off on one device takes only that device out.
+
 If Mail is set up with your own relay, a gate you turn on uses that relay too, and the address for Claude changes with it. After you change the relay in Mail, turn the gate off and on again and connect Claude once more.
 
 ### Your own calendar and contacts server

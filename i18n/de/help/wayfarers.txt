@@ -1,5 +1,5 @@
 # Wanderer
-Wanderer ist ein rundenbasiertes Gruppen-Rollenspiel. Wähle drei Helden aus sechs Klassen und führe sie durchs Land: Wähle an jeder Gabelung deinen Weg, kämpfe gegen das, was dir begegnet, raste im Lager, handle auf Märkten und brich am Ende des Weges den Wächter. Das Herz des Spiels ist, wie die drei Helden zusammenarbeiten.
+Wanderer ist ein rundenbasiertes Gruppen-Rollenspiel. Wähle drei Helden aus sechs Klassen und führe sie durchs Land: Wähle an jeder Gabelung deinen Weg, kämpfe gegen das, was dir begegnet, raste im Lager, handle auf Märkten und brich am Ende des Weges den Wächter. Das Herz des Spiels ist, wie die drei Helden zusammenarbeiten. Die drei Wanderer tragen eine Laterne zum Frosttor, bevor die lange Nacht fällt.
 
 ## So spielst du
 Die Reise beginnt links auf der Wegkarte und endet rechts beim Wächter des Gebiets. Tippe auf einen leuchtenden Halt (oder nutze die Pfeiltasten und [[Enter]]), um dorthin zu gehen. Wege führen nur weiter, nie zurück, also ist jede Gabelung eine Wahl:
@@ -7,7 +7,7 @@ Die Reise beginnt links auf der Wegkarte und endet rechts beim Wächter des Gebi
 - **Lager**: Gefallene stehen wieder auf. Dann rastest du (jeder Held heilt 50 %) oder übst mit einem Helden (+1 Kraft für immer).
 - **Markt**: Kaufe Ausrüstung, Tränke, Stärkungen und Phönixfedern mit Gold.
 - **Ereignis**: eine kurze Szene mit zwei oder drei Möglichkeiten.
-- **Wächter**: das Ende des Gebiets. Der Dornenkönig bewacht den Grünen Weg.
+- **Wächter**: das Ende eines Gebiets. Der Weg führt durch drei: den Grünen Weg (der Dornenkönig bewacht ihn), die Aschenhügel (der Glutkoloss) und das Frosttor (der Hüter des Tores). Fällt ein Wächter, ruht die Gruppe unterwegs (jeder Held heilt 50 %, Gefallene stehen mit einem Viertel ihres Lebens auf) und zieht weiter ins nächste Gebiet. Spätere Gebiete bringen mehr Gold und Erfahrung und bessere Beute: Die Wächter der Aschenhügel und des Frosttors lassen Ausrüstung der vierten Stufe zurück, die kein Markt verkauft.
 
 Die Helden teilen ihre Erfahrung. Mit jeder Stufe wählt jeder Held eine von zwei Verbesserungen: mehr Leben, Kraft, Abwehr, Tempo oder Fokus, oder eine stärkere Fertigkeit.
 
@@ -24,6 +24,8 @@ Wähle im Zug eines Helden unten eine Aktion und tippe dann auf ein leuchtendes 
 
 Eine Fertigkeit ohne Ziel (ein Lied, Herausfordern, Verstecken, Pfeilhagel) braucht einen zweiten Tipp. Tippe noch einmal auf die gewählte Aktion oder drücke [[Esc]], um eine andere zu wählen. Langes Drücken auf einen Feind oder Helden zeigt seine Werte, Zustände und seinen nächsten Zug; ein Tipp tut dasselbe, wenn keine Aktion gewählt ist.
 
+Manche Feinde lassen einen Helden brennen oder erstarren (Erstarrung: 3 weniger Tempo); `Reinigen` des Priesters beendet beides. Ein paar Züge der Feinde gehen durch die Abwehr; die Zahl, die sie zeigen, rechnet das schon ein.
+
 Schaden ist Kraft × der Faktor der Fertigkeit, minus die Abwehr des Ziels, und mindestens 1. Schützen halbiert ihn. Es gibt keine Würfel und keine Fehlschläge: Der Zufall bestimmt nur die Karte, die Feinde und die Beute, und alles kommt aus dem Reisecode.
 
 ## Die Klassen
@@ -38,7 +40,7 @@ Feinde, die die vordere Reihe treffen, treffen zuerst den Ritter und den Schurke
 
 ## Kombos
 - Markieren (Waldläufer) oder Betäuben (Ritter), dann der Schurke: doppelter Schaden.
-- Frost (Magier), dann Sturm: doppelt so hart. Flussfeinde sind immer nass, also trifft Sturm sie sofort hart.
+- Frost (Magier), dann Sturm: doppelt so hart. Flussgeister, Moosrücken, Sturmrufer und Schneegeister sind immer nass, also trifft Sturm sie sofort hart.
 - Betäube einen Feind, der einen großen Treffer zeigt, und der Treffer kommt nie.
 - Herausfordern oder Deckung mit dem Ritter, während der Priester heilt.
 - Hymne, bevor die starken Schläger handeln; Takt, um vor den Feinden zu handeln.
@@ -54,6 +56,28 @@ Feinde, die die vordere Reihe treffen, treffen zuerst den Ritter und den Schurke
 - **Räuberhauptmann:** schlägt zu, sammelt die Bande (+2 Kraft), dann fegt er über jeden Helden.
 - **Dornenkönig:** der Wächter. Bei zwei Dritteln seines Lebens ruft er zwei Dornlinge, und bei einem Drittel tobt er (+2 Kraft) und stürmt.
 
+## Feinde der Aschenhügel
+- **Glutteufel:** ein Treffer, der brennt, dann ein einfacher Treffer.
+- **Aschenechse:** beißt den Schwächsten; jeden zweiten Zug zieht sie sich in ihren Panzer zurück.
+- **Glutfledermaus:** schnell; stürzt sich auf die hintere Reihe.
+- **Steingolem:** sehr langsam und hart; Panzer, dann ein Schmettern auf die vordere Reihe mit 1,5 ×.
+- **Aschenschamane:** flickt einen verletzten Feind, sammelt die Bande (+2 Kraft), dann schlägt er zu.
+- **Hügelungetüm:** langsam; ein Treffer, dann ein Beben gegen jeden Helden.
+- **Salamander:** zwei Treffer, die brennen, dann fegt er über jeden Helden.
+- **Hügelräuber:** schlägt zweimal zu, dann sammelt er die Bande.
+- **Glutkoloss:** der Wächter. Bei zwei Dritteln seines Lebens ruft er zwei Glutteufel und lodert (jeder Held brennt); bei einem Drittel tobt er (+2 Kraft).
+
+## Feinde des Frosttors
+- **Frostlicht:** schnell; Raureif ist ein Treffer, der erstarren lässt.
+- **Eiswolf:** sehr schnell; beißt den Schwächsten, dann heult er (jeder Feind +1 Kraft).
+- **Torwächter:** sehr hart; Panzer, dann ein Schmettern auf die vordere Reihe.
+- **Sturmrufer:** immer nass; Blitz trifft die hintere Reihe durch die Abwehr, dann flickt er einen Feind.
+- **Yeti:** langsam und stark; zwei Treffer, dann ein Ansturm auf die vordere Reihe.
+- **Eisdrache:** Raureif auf den Schwächsten, dann Frostatem gegen jeden Helden, durch die Abwehr und mit Erstarrung.
+- **Schneegeist:** immer nass; flickt einen verletzten Feind, dann Raureif.
+- **Frostplünderer:** schlägt zu, sammelt die Bande, dann fegt er über jeden Helden.
+- **Hüter des Tores:** der Wächter. Sein Atem geht durch die Abwehr. Bei zwei Dritteln seines Lebens ruft er zwei Frostlichter; bei einem Drittel tobt er (+2 Kraft) und stürmt.
+
 ## Ausrüstung und Gruppe
 `Gruppe` (oder [[P]]) zeigt jeden Helden: Leben, Kraft, Abwehr, Tempo, Fokus, Fertigkeiten, Verbesserungen und Ausrüstung. Jeder Held hat eine Waffe und ein Amulett. Zwischen den Kämpfen gibst du einem Helden ein Stück aus dem Beutel oder nimmst eines ab, und du nutzt Tränke und Phönixfedern. Der Beutel fasst 8 Stücke.
 
@@ -64,8 +88,13 @@ Feinde, die die vordere Reihe treffen, treffen zuerst den Ritter und den Schurke
 
 In beiden endet die Reise, wenn alle drei Helden fallen. Jede Reise hat einen Code, der im Ergebnisfenster und in der `Bilanz` steht. Gib in `Neue Reise` einen Code ein, um dasselbe Land noch einmal zu durchwandern; lass das Feld leer für ein neues.
 
+## Prüfung des Tages
+Der Kalender-Knopf öffnet die heutige Prüfung: den Grünen Weg auf Zäh, mit einer Gruppe aus drei Helden, die für den Tag gewählt ist. Alle bekommen an diesem Tag dasselbe Land, dieselbe Gruppe und dieselbe Beute. Besiege den Wächter, dann hast du bestanden. Es gibt einen Versuch, und wer die Prüfung verlässt, gilt als dort gefallen, wo er war. Ein Punkt auf dem Knopf zeigt, dass die heutige Prüfung noch offen ist.
+
+Nach der Prüfung zeigt ein Fenster, wie weit du gekommen bist, deine Züge und deine Serie bestandener Tage. `Teilen` kopiert ein kurzes Ergebnis ohne Spoiler: ein Quadrat für jeden Halt auf dem Weg, dann deine Züge. Die heutige Prüfung hat auch eine Karte im [Game Center](help:a/gamecenter).
+
 ## Bilanz und Synchronisierung
-`Bilanz` zeigt deine Reisen, Siege und geschafften Gebiete für jede Schwierigkeit und die Siege jeder Klasse. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Reisen aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Reise, deine letzte Gruppe und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Reise geht dort weiter, wo du sie verlassen hast. Eine Reise, die du für eine neue verlässt, zählt als verloren. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
+`Bilanz` zeigt deine Reisen, Siege und geschafften Gebiete für jede Schwierigkeit und die Siege jeder Klasse. Sie wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen, die Reisen aller Geräte zählen zusammen, und sie zählt im [Game Center](help:a/gamecenter). Die laufende Reise, deine letzte Gruppe und die Toneinstellung bleiben auf diesem Gerät, und eine unfertige Reise geht dort weiter, wo du sie verlassen hast. Eine Reise, die du für eine neue verlässt, zählt als verloren. `Letzte Reisen` listet deine zehn letzten Reisen von allen Geräten, wie jede endete und ihren Code; `Nochmal` geht dieselbe Reise noch einmal (eine Prüfung des Tages als ganze Reise auf Zäh, mit derselben Gruppe). Die Prüfungen des Tages zählen nur in ihrer eigenen Zeile, nicht bei den Reisen. `Bilanz zurücksetzen` löscht die Bilanz auf allen Geräten.
 
 ## Tastatur
 - Karte: Die Pfeiltasten wählen einen Halt, [[Enter]] geht dorthin.
