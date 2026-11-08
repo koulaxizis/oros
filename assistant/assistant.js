@@ -525,7 +525,7 @@
       "st.idea": "Idea", "st.production": "In production", "st.released": "Released", "st.out_of_print": "Out of print",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
       "f.deck": "Deck", "f.front": "Front", "f.back": "Back", "f.songs": "Songs", "chg.disk": "The change could not be written to the orOS disk.", "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
-      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.networks": "Where", "f.book": "About",
+      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.line": "Line", "f.num": "Number", "f.wiki": "Wiki", "f.paid_by": "Paid by", "f.shared_by": "Split between", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
       "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
@@ -706,7 +706,7 @@
       "cr.linkRow": "{cust} ↔ {name}",
       "cr.done": "Added to {app} ({n})", "cr.linked": "Linked in {app} ({n})", "cr.declined": "Not added: you said no",
       "cr.declinedLink": "Not linked: you said no", "cr.failed": "Not saved: {msg}",
-      "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
+      "cr.v.person": "Person", "cr.v.company": "Company", "cr.v.rev": "Both ways (a reversed card too)", "cr.v.lead": "Lead", "cr.v.active": "Active", "cr.v.past": "Past",
       "f.people": "People",
       "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
       "cr.v.expense": "Expense", "cr.v.income": "Income",
@@ -1169,7 +1169,7 @@
       "st.idea": "Ιδέα", "st.production": "Σε παραγωγή", "st.released": "Κυκλοφορεί", "st.out_of_print": "Εξαντλημένο",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
       "f.deck": "Τράπουλα", "f.front": "Μπροστά", "f.back": "Πίσω", "f.songs": "Τραγούδια", "chg.disk": "Η αλλαγή δεν γράφτηκε στον δίσκο του orOS.", "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
-      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.networks": "Πού", "f.book": "Για",
+      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.line": "Γραμμή", "f.num": "Αριθμός", "f.wiki": "Wiki", "f.paid_by": "Πλήρωσε", "f.shared_by": "Μοιράζεται σε", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
       "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
@@ -1350,7 +1350,7 @@
       "cr.linkRow": "{cust} ↔ {name}",
       "cr.done": "Προστέθηκαν ({app}): {n}", "cr.linked": "Συνδέθηκαν ({app}): {n}", "cr.declined": "Δεν προστέθηκαν: είπες όχι",
       "cr.declinedLink": "Δεν συνδέθηκαν: είπες όχι", "cr.failed": "Δεν αποθηκεύτηκε: {msg}",
-      "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
+      "cr.v.person": "Πρόσωπο", "cr.v.company": "Εταιρεία", "cr.v.rev": "Και αντίστροφα (και αντίστροφη κάρτα)", "cr.v.lead": "Υποψήφιος", "cr.v.active": "Ενεργός", "cr.v.past": "Παλιός",
       "f.people": "Άνθρωποι",
       "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
@@ -4958,10 +4958,14 @@
   // titles, in assistant/additems3.js with the app's own core.
   // AS-ADD7: titles the user publishes (Publishing), same file, with
   // Publishing's own core.
-  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish"];
+  // AS-ADD8 (GATE-PAR P4): invoice drafts and new quotes, same file, with
+  // Invoices' and Quote's own cores.
+  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "invoices", "quote", "wiki", "flashcards", "split"];
   var ADD3_CORES = { habits: ["OrosHabitsModel", "../habits/model.js"], plants: ["OrosPlantsCore", "../plants/core.js"],
                      petcare: ["OrosPetcareCore", "../petcare/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
-                     publish: ["OrosPublishCore", "../publish/core.js"] };
+                     publish: ["OrosPublishCore", "../publish/core.js"], invoices: ["OrosInvoicesCore", "../invoices/core.js"],
+                     quote: ["OrosQuoteCore", "../quote/core.js"], wiki: ["WikiCore", "../wiki/core.js"],
+                     flashcards: ["FlashcardsCore", "../flashcards/core.js"] };
   ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, ADD3_IDS);
   var addScripts = {};
   function loadOnce(src) {
@@ -5112,7 +5116,7 @@
       }
     }
     var key = M.storageKey(app.id);
-    return (isCrm(app.id) ? crmCores() : Promise.resolve()).then(function () {
+    return (isCrm(app.id) ? crmCores() : key === "disk:flashcards" ? fcPrep() : Promise.resolve()).then(function () {
       if (app.id === "stickies" && !stickiesHost()) return { content: "Error: Sticky Notes is not running in this orOS window.", err: 1 };
       var pl = M.plan(app.id, addRead(app.id, key), items, ctx);
       if (!pl.ok) return { content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } };
@@ -5135,6 +5139,9 @@
           return { content: "Error: the records could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base };
         }
         markAppDirty();
+        // AS-ADD9: files the new records also write to the orOS disk
+        // (Wiki's first revision), after the data, best effort
+        (Array.isArray(res.disk) ? res.disk : []).forEach(changeDisk);
         var added = res.made.map(function (m) { return { ref: addRef(c, app.of || app.id, m.sid || m.id, m.title, m.target), name: m.title }; });
         var left = [];
         pl.rows.forEach(function (row, i) {
@@ -5518,6 +5525,9 @@
     if (!mem.cr || !N) return Promise.resolve(undoFail(t("hist.noMod")));
     return (isCrm(mem.app) ? crmCores() : Promise.resolve()).then(function () {
       return mem.mod || (mem.via === "add" ? createMod(mem.app) : N);
+    }).then(function (M) {
+      // AS-ADD9: Flashcards' notes are read fresh from the disk first
+      return M && mem.key === "disk:flashcards" ? fcPrep().then(function () { return M; }) : M;
     }).then(function (M) {
       if (!M) return undoFail(t("hist.noMod"));
       if (mem.app === "stickies" && !stickiesHost()) return undoFail(t("hist.noStickies"));
