@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 5.94.00
+- **A partner's cards, notes and files in CRM.** A CRM partner's overview can now list the Kanban cards, Notes pages, Layout documents and Atelier designs about them, each with `Open` (a Kanban card opens in whatever column it is now). Claude and the Assistant link them for you; × takes one off, with `Undo`.
+
 ## Version 5.93.00
 - **CRM partners from Claude and the Assistant.** They can now add a contract to a CRM partner (start, end, a reminder before it ends, amount, note) and link a partner to their beneficiary in your shop's Revenue Splitter, so the partner card shows what they are owed. Same card, ticks and `Undo` as for other CRM records.
 
