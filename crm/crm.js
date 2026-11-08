@@ -95,6 +95,7 @@
       "fr.cust": "Customers", "fr.sup": "Suppliers", "fr.shop": "Shops", "fr.auth": "Authors", "fr.assoc": "Associates",
       "ed.roles": "Role", "ed.rolesHint": "More than one is fine.",
       "sec.links": "In other apps", "links.add": "+ Link",
+      "sec.items": "Cards, notes and files", "it.kb": "Kanban card", "it.nt": "Notes page", "it.ly": "Layout document", "it.at": "Atelier design",
       "links.none": "Not linked yet to a supplier, a consignment shop, a client or a title in another app.",
       "lk.sup": "Stock · supplier", "lk.wh": "Stock · consignment shop", "lk.tsc": "Work hours · client", "lk.inv": "Invoices · client",
       "lk.pub": "Publishing · titles: {n}", "lk.gone": "No longer there", "lk.auto": "set in Publishing", "lk.unlink": "Unlink",
@@ -292,6 +293,7 @@
       "fr.cust": "Πελάτες", "fr.sup": "Προμηθευτές", "fr.shop": "Καταστήματα", "fr.auth": "Συγγραφείς", "fr.assoc": "Συνεργάτες",
       "ed.roles": "Ρόλος", "ed.rolesHint": "Μπορείς να διαλέξεις περισσότερους από έναν.",
       "sec.links": "Σε άλλες εφαρμογές", "links.add": "+ Σύνδεση",
+      "sec.items": "Κάρτες, σημειώσεις και αρχεία", "it.kb": "Κάρτα Kanban", "it.nt": "Σελίδα στις Σημειώσεις", "it.ly": "Έγγραφο Σελιδοποίησης", "it.at": "Σχέδιο στο Atelier",
       "links.none": "Δεν έχει συνδεθεί ακόμη με προμηθευτή, κατάστημα παρακαταθήκης, πελάτη ή τίτλο άλλης εφαρμογής.",
       "lk.sup": "Απόθεμα · προμηθευτής", "lk.wh": "Απόθεμα · κατάστημα παρακαταθήκης", "lk.tsc": "Ώρες εργασίας · πελάτης", "lk.inv": "Τιμολόγια · πελάτης",
       "lk.pub": "Εκδόσεις · τίτλοι: {n}", "lk.gone": "Δεν υπάρχει πια", "lk.auto": "από τις Εκδόσεις", "lk.unlink": "Αποσύνδεση",
@@ -1073,8 +1075,9 @@
       line(sbu, t("ov.budYear", { i: curMoney(x.budget.year.i, x.budget.cur), o: curMoney(x.budget.year.o, x.budget.cur) }),
         t("ov.budAll", { n: x.budget.n, i: curMoney(x.budget.all.i, x.budget.cur), o: curMoney(x.budget.all.o, x.budget.cur) }));
     }
-    if (!C.linksOf(data, c).length && !C.rsOf(data, c) && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
+    if (!C.linksOf(data, c).length && !C.rsOf(data, c) && !C.itemsOf(data, c).length && !x.pub.titles.length && !x.bills.n && !x.budget.n) pane.appendChild(el("p", "hint", t("ov.none")));
     renderContracts(pane, c);
+    renderItems(pane, c);
     // the relationship itself
     var sr = sec(t("ov.rel"));
     line(sr, lastLine(x.crm.last), x.crm.next ? t("next", { d: relDay(x.crm.next) }) : "", !!(x.crm.next && x.crm.next < todayYmd()));
@@ -1141,6 +1144,44 @@
     if (data.tombs[custId] && data.tombs[custId] >= next.m) next.m = data.tombs[custId] + 1;
     if (prev) data.rsl[data.rsl.indexOf(prev)] = next; else data.rsl.push(next);
     return commit();
+  }
+  // ----- Linked items (1.9): Kanban cards, Notes pages, Layout and
+  // Atelier documents on the partner's card (core ix rows) -----
+  function saveIx(custId, items) {
+    if (!data.ix) data.ix = [];
+    var prev = C.byId(data.ix, custId), next = C.itemsRow(data, custId, items);
+    next.m = stamp(prev);
+    if (data.tombs[custId] && data.tombs[custId] >= next.m) next.m = data.tombs[custId] + 1;
+    if (prev) data.ix[data.ix.indexOf(prev)] = next; else data.ix.push(next);
+    return commit();
+  }
+  function renderItems(pane, c) {
+    var items = C.itemsOf(data, c);
+    if (!items.length) return;
+    var s = el("div", "sec");
+    s.appendChild(secHead(t("sec.items")));
+    items.forEach(function (it) {
+      var row = el("div", "person");
+      var main = el("div", "row-main");
+      main.appendChild(el("div", "row-title", it.t || t("it." + it.k)));
+      main.appendChild(el("div", "row-sub", t("it." + it.k)));
+      row.appendChild(main);
+      var go = C.itemTarget(it);
+      if (go) {
+        var b = el("button", "link-btn", t("ov.open"));
+        b.type = "button";
+        b.addEventListener("click", function () { openIn(go.app, go.target); });
+        row.appendChild(b);
+      }
+      row.appendChild(iconBtn("x", t("lk.unlink") + " " + (it.t || ""), function () {
+        var before = C.itemsOf(data, c), key = C.itemKey(it);
+        if (saveIx(c.id, before.filter(function (x) { return C.itemKey(x) !== key; }))) {
+          undoToast(t("lk.undone", { name: it.t || t("it." + it.k) }), function () { saveIx(c.id, before); });
+        }
+      }, "mini"));
+      s.appendChild(row);
+    });
+    pane.appendChild(s);
   }
   function renderRs(pane, c) {
     var RS = window.OrosCrmRs, list = shops();

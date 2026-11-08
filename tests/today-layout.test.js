@@ -14,8 +14,8 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const L = require("../today/layout.js");
 
-test("norm: the default is the layout Today always had", () => {
-  assert.deepEqual(L.defaults().items.map((x) => x.id), ["top", "overdue", "today", "soon"]);
+test("norm: the default is the layout Today always had, with the Tips of the day (T2) under the top lines", () => {
+  assert.deepEqual(L.defaults().items.map((x) => x.id), ["top", "tips", "overdue", "today", "soon"]);
   assert.deepEqual(L.norm(null), L.defaults());
   assert.deepEqual(L.norm({}), L.defaults());
   assert.deepEqual(L.norm({ items: "x" }), L.defaults());
@@ -34,7 +34,7 @@ test("norm: unknown widgets, doubles and bad sizes are cleaned; an empty screen 
 });
 
 test("editing: move, move by id, reorder (lossless), add, remove, size", () => {
-  let l = L.defaults();
+  let l = L.norm({ items: ["top", "overdue", "today", "soon"] });     // the layout before T2
   l = L.move(l, 3, 0);
   assert.deepEqual(L.ids(l), ["soon", "top", "overdue", "today"]);
   assert.deepEqual(L.ids(L.move(l, 0, 99)), ["top", "overdue", "today", "soon"]);
@@ -47,7 +47,7 @@ test("editing: move, move by id, reorder (lossless), add, remove, size", () => {
   l = L.add(l, "weather", 0);
   l = L.add(l, "nope");
   assert.deepEqual(L.ids(l), ["weather", "soon", "top", "overdue", "today", "clock"]);
-  assert.deepEqual(L.hidden(l), ["water", "habits", "events", "todos", "together"]);
+  assert.deepEqual(L.hidden(l), ["tips", "agenda", "water", "habits", "events", "todos", "together"]);
   l = L.remove(l, "top");
   assert.ok(!L.ids(l).includes("top"));
   l = L.setSize(l, "clock", "wide");

@@ -849,7 +849,16 @@
       var it = { title: str(r.title, 160) };
       if (due) it.date = due;
       if (typeof r.time === "string" && /^\d{2}:\d{2}$/.test(r.time)) it.time = r.time;
+      if (it.time && typeof r.end === "string" && /^\d{2}:\d{2}$/.test(r.end) && r.end > it.time) it.end = r.end;
       if (str(r.text, 240)) it.text = str(r.text, 240);
+      // Today T4 (BR-TODAY-18): the row's details, its tip and the
+      // kinds of action Today offers on it, so the Assistant and orOS
+      // Gate (same file) say what Today says. Texts only, no targets.
+      var det = arr(r.more).map(function (x) { return str(x, 120); }).filter(Boolean).slice(0, 3);
+      if (det.length) it.details = det;
+      if (str(r.tip, 200)) it.tip = str(r.tip, 200);
+      var sug = arr(r.acts).map(function (x) { return isObj(x) && typeof x.k === "string" && /^[a-z]{2,12}$/.test(x.k) ? x.k : ""; }).filter(Boolean).slice(0, 3);
+      if (sug.length) it.suggest = sug;
       if (due && due < today) it.late = true;
       if (r.kind === "info") it.info = true;
       if (r.target !== undefined && r.target !== null) it.target = r.target;   // → a ref (assistant.js)

@@ -393,3 +393,19 @@ test("order → Stock sale (BR-ST-OUT), Invoices, Budget, CRM prefills that the 
   assert.equal(crm.email, "maria@example.gr");
   assert.equal(crm.subject, "Order #1055 · €38.70");
 });
+
+test("ST-SHOPF: only published, one brand; brands by count", () => {
+  const W2 = require("../links/woo.js");
+  const P = [
+    { id: 1, status: "publish", brands: [{ id: 49854, name: "Γλαρόλυκοι" }] },
+    { id: 2, status: "draft", brands: [{ id: 49854, name: "Γλαρόλυκοι" }] },
+    { id: 3, status: "publish", brands: [{ id: 56724, name: "Εκδόσεις &amp; Τελεία" }] },
+    { id: 4, status: "private" },
+    { id: 5, status: "publish", brands: [{ id: 49854, name: "Γλαρόλυκοι" }] }
+  ];
+  assert.deepEqual(W2.shopFilter(P, { pub: true }).map((p) => p.id), [1, 3, 5]);
+  assert.deepEqual(W2.shopFilter(P, { pub: true, brand: 49854 }).map((p) => p.id), [1, 5]);
+  assert.deepEqual(W2.shopFilter(P, { pub: false, brand: 49854 }).map((p) => p.id), [1, 2, 5]);
+  assert.equal(W2.shopFilter(P, {}).length, 5);
+  assert.deepEqual(W2.shopBrands(P), [{ id: 49854, name: "Γλαρόλυκοι", n: 3 }, { id: 56724, name: "Εκδόσεις & Τελεία", n: 1 }]);
+});
