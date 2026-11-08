@@ -34,8 +34,8 @@ export const GATE_LIMITS = {
   bodyBytes: 64 * 1024,          // a JSON-RPC request or a /gate/dev call
   replyBytes: 900 * 1024,        // one answer from the device
   callMs: 25000,                 // the device must answer within this
-  callsPerMin: 60,
-  toolsMs: 6000,                 // the device's tool list (GATE-ACT); the frame may need to start               // tools/call per gate
+  callsPerMin: 60,               // tools/call per gate
+  toolsMs: 6000,                 // the device's tool list (GATE-ACT); the frame may need to start
   codeMs: 5 * 60000,             // authorization code
   accessMs: 3600000,             // access token
   refreshMs: 30 * 86400000,      // refresh token (renewed on every use)
@@ -366,7 +366,8 @@ export function cleanDevTools(list) {
     const a = t.annotations && typeof t.annotations === "object" ? t.annotations : {};
     seen[t.name] = 1;
     out.push({ name: t.name, description: t.description.slice(0, 8000), inputSchema: schema,
-               annotations: { readOnlyHint: a.readOnlyHint === true, destructiveHint: a.destructiveHint === true } });
+               // MCP's default for a tool that writes is destructive.
+               annotations: { readOnlyHint: a.readOnlyHint === true, destructiveHint: a.readOnlyHint === true ? false : a.destructiveHint !== false } });
   }
   return JSON.stringify(out).length <= DEV_TOOLS_BYTES ? out : [];
 }

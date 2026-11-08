@@ -69,6 +69,13 @@ test("relay: the device's tools are cleaned and merged", () => {
   ]);
   assert.deepEqual(clean.map((t) => t.name), ["change_item"], "our names are never taken by a device tool");
   assert.deepEqual(clean[0].annotations, { readOnlyHint: false, destructiveHint: true });
+  const ann = R.cleanDevTools([
+    { name: "plain_write", description: "", inputSchema: { type: "object" } },
+    { name: "safe_write", description: "", inputSchema: { type: "object" }, annotations: { destructiveHint: false } },
+    { name: "just_read", description: "", inputSchema: { type: "object" }, annotations: { readOnlyHint: true, destructiveHint: true } }
+  ]).map((t) => t.annotations);
+  assert.deepEqual(ann, [{ readOnlyHint: false, destructiveHint: true }, { readOnlyHint: false, destructiveHint: false },
+                         { readOnlyHint: true, destructiveHint: false }], "no annotations = destructive, as MCP's default");
   const big = [{ name: "huge_tool", description: "y".repeat(8000), inputSchema: { type: "object", properties: { a: { type: "string", description: "z".repeat(200000) } } } }];
   assert.deepEqual(R.cleanDevTools(big), [], "an oversized list is dropped");
   assert.equal(R.cleanDevTools(new Array(30).fill(0).map((_, i) => ({ name: "tool_" + "abcdefghijklmnopqrstuvwxyz"[i % 26] + i, description: "", inputSchema: { type: "object" } }))).length, 0,
