@@ -1,0 +1,76 @@
+# Fieldwarden
+Fieldwarden is a turn-based tactics game on a small farm. Three village folk guard the fields through a growing season, until the harvest is in. Wolves, boars, crows and bandits come out of the woods at the edges of the farm, and every one of them shows what it will do before it acts. You never guess: you answer what you see coming.
+
+## How to play
+The farm has 6 by 6 tiles. A season lasts 5 turns. In each turn:
+1. **The invaders show their acts.** An arrow points from each invader to the tile it will hit, with an icon for what it will do (bite, eat, dig, trample, club, charge) and a number for the order. Tiles in danger are red. Dashed circles at the edges show the invaders that come in at the end of the turn.
+2. **Your folk act.** Tap a farmhand (on the farm or its card at the bottom). Green tiles show where it can move, orange tiles what its tool can reach. Each farmhand may move once and then use its tool once, in any order you like. Tap an orange tile once to see what will happen (ghost arrows show where each piece will go), and again to do it.
+3. **End turn.** The invaders act in the order shown, the wind blows, the fields grow, and new invaders come in.
+
+`Undo` takes back the last move or tool, and `Reset turn` goes back to the start of the turn. Both are free, so try things out.
+
+## The harvest
+Every field grows a stage each turn: sown, sprout, green, ripe. At the end of the season you bring in a sheaf for each stage (a ripe field gives 3), and the harvest must reach the season's **quota**. The status row shows the harvest you get if nothing more is lost, against the quota.
+
+A field that is hit loses a stage (a mole digs two away) and stops growing for the rest of the season: a cross marks it. So a hit early on a young field costs the most. Sometimes the best answer is to let a field go to save another one.
+
+Each season also has a **village wish**: keep the starred field unhurt, keep the barn whole, or drive off 3 invaders. A wish granted pays 2 coins.
+
+## The key rule
+An act lands on whatever stands on its target tile when it comes. So:
+- Push an invader and its act moves with it, in the same direction. Push a wolf one tile aside and its bite lands on an empty tile, or on another invader.
+- Stand on a field and a crow pecks you instead of eating the field.
+- Push an invader into another piece: both take 1 damage and an invader that is bumped loses its act this turn.
+- Push an invader off the edge of the farm and it runs away. Push a ground invader into the pond and the water carries it off.
+- Pushed into a hedge, a haystack or the barn, a piece takes 1 damage.
+
+There are no dice and no misses. Chance decides only the farm, the invaders and the weather, and it all comes from the year code.
+
+## The folk
+Pick three of six at the start of a year. Each has Health, Move, a tool and a knack:
+- **Shepherd:** `Crook` pulls a piece up to 3 tiles away one tile closer to her. Knack: animals next to her are calmed and act last.
+- **Smith:** `Hammer` does 2 damage to a piece next to him and pushes it a tile. Knack: next to the barn at the end of the turn, he mends it.
+- **Hedger:** plants a hedge on bare dirt next to her, or shoves a piece next to her a tile. Knack: her hedges never break.
+- **Beekeeper:** `Swarm` makes a piece up to 3 tiles away, over anything, flee 2 tiles away from her. Knack: once a season, each field next to her grows two stages in a turn.
+- **Ferryman:** `Pole` pushes a piece next to him and the one behind it a tile. Knack: he can stand in the pond.
+- **Scarecrow-maker:** `Turnip` does 1 damage and pushes a piece up to 4 tiles away. Knack: crows will not go for a field next to her.
+
+A farmhand at 0 Health goes home for the rest of the season and comes back for the next one with full Health. Nothing on the farm is killed: invaders run away.
+
+## The invaders
+- **Wolf:** goes for the farmhand with the least Health and bites for 1. With no one in reach it tramples a field.
+- **Boar:** charges in a straight line until something stops it, trampling every field on the way. What stops it takes 2 (a hedge loses a stage of its two, the barn takes 1).
+- **Crow:** flies over anything to the ripest field and eats a stage. The wind blows it a tile.
+- **Mole:** goes for the nearest field and digs two stages away.
+- **Bandit captain:** comes in the last season of the farm. He clubs a farmhand for 2 and pushes them, or the barn. Once he is hurt to half his Health, he whistles for a wolf every turn.
+
+## Weather
+The status row shows the weather now and in the next turn:
+- **Calm:** nothing happens.
+- **Wind:** at the end of the turn every crow is blown a tile with the wind; a crow blown off the farm is gone.
+- **Rain:** bare dirt turns to mud. A piece pushed onto mud stops there, and a charging boar stops in the mud.
+
+## The year
+A year is four seasons on the Lowland; the last one brings the bandit captain. After each harvest you get a coin for every sheaf above the quota, plus the village wish. Spend them at the **market**: +1 Health, +1 Move, the two tool upgrades of each farmhand, or a field that starts the next season a stage ahead. If a harvest misses its quota, the year ends.
+
+## Difficulty and years
+`New year (N)` asks for the difficulty and your three folk:
+- `Mild`: a lower quota, and once a season `Rewind` takes back the whole last turn after you have seen it.
+- `Harsh`: a higher quota, one invader more at the start of every season and another one during it.
+
+Every quota can be met: the season maker plays each season with your folk before you do and never asks for more than it brought in. Every year has a code, shown in the result window and in `Records`. Type a code in `New year` to play the same year again with the same folk; leave it empty for a new one.
+
+## Records and sync
+`Records` shows your years, the years you finished and the most seasons won for each difficulty, the most sheaves in a season, and the finished years of each farmhand. They sync between your devices through [orOS sync](help:t/sync), adding up the years from every device, and they count in the [Game Center](help:a/gamecenter). The year in progress, your last folk and the sound setting stay on this device, and an unfinished year continues where you left it. A year left for a new one counts as lost. `Reset records` clears the records on every device.
+
+## Keyboard
+- Arrow keys move the cursor; [[Enter]] chooses a farmhand or a tile; [[Tab]] goes to the next farmhand; [[Esc]] cancels.
+- [[Z]]: undo. [[R]]: reset turn. [[E]]: end turn. [[T]]: threats only. [[N]]: new year.
+- A long press on any tile or piece shows its text.
+- The warning sign in the toolbar shows only the tiles in danger; the double arrow makes the end of a turn play faster.
+
+## Tips
+- Read the numbers: the first invader to act is the one whose push can spoil the others' plans.
+- Pushing an invader into another stops both acts at once.
+- The pond and the edges are your friends: an invader that leaves the farm is gone for the season.
+- Young fields are worth more than ripe ones early in the season; ripe ones matter most at the end.

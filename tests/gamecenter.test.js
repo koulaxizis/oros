@@ -208,6 +208,20 @@ test("gamecenter: Wayfarers counts journeys and wins from every device; a Hardy 
   assert.ok(ach(sum({ "oros-wayfarers-data": wf }), "hard").done);
 });
 
+test("gamecenter: Fieldwarden counts years and finished years from every device; a Harsh finish is a hard win", () => {
+  const fw = { ver: 1, br: 1, rows: {
+    aaaaaa: { b: 1, s: { m: [5, 2, 4] }, c: { smith: 2 } },
+    bbbbbb: { b: 1, s: { h: [3, 0, 2] } },
+    oldold: { b: 0, s: { h: [9, 9, 4] } } } };
+  const s = sum({ "oros-fieldwarden-data": fw });
+  assert.ok(C.GROUPS.find((g) => g.id === "strategy").games.includes("fieldwarden"));
+  assert.ok(C.GAMES.includes("fieldwarden"));
+  assert.deepEqual([s.games.fieldwarden.p, s.games.fieldwarden.w], [8, 2], "rows from before the reset do not count");
+  assert.ok(!ach(s, "hard").done, "no Harsh year finished yet");
+  fw.rows.bbbbbb.s.h = [4, 1, 4];
+  assert.ok(ach(sum({ "oros-fieldwarden-data": fw }), "hard").done);
+});
+
 test("gamecenter: Crypt counts runs and wins from every device; a Grim win is a hard win", () => {
   const crypt = { ver: 1, br: 1, rows: {
     a: { b: 1, s: { g: [4, 1, 10], r: [2, 0, 5] } },
